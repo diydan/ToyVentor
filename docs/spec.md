@@ -1,0 +1,202 @@
+# ToyForge — Spec (toyforge.app)
+
+Oct 27, 2026 · Dan O · Indie track · Build for Your World
+
+I was a Lego fanatic as a kid and I'm a robotics fanatic as an adult, and ToyForge is me trying to hand that bug to my son without handing him a worksheet: his toy box is already full of cars and figures he loved and then abandoned, so why not start there? You scan one, AI helps find where a part could actually snap on, and then you build the upgrade in the browser, print it, and see the same toy come back alive in AR and in a little game.
+
+## At a glance
+
+- Problem: no easy path from toys kids own to real engineering and robotics skills.
+- Built: scan a toy, build and test upgrades in the browser, see them in AR and a mini game, export a 3D print-ready file.
+- Meta models: SAM 3.1 outlines the toy. Muse Image makes skins. Muse Spark reads the scene and drafts STEM content. Muse Voice Transcribe handles voice commands. Mureka API makes songs and sound effects.
+- Demo truth: scan, virtual builder with live checks, AR try-on, mini game, STL export, Reveal are live. Billing, delivery, real electronics are mocked or later. Table below says which is which.
+
+## Demo (90 seconds)
+
+1. Scan a car with SAM 3.1. Preloaded toy is backup if live scan fails.
+2. Pick a Snap part. See it on the car in AR at true scale.
+3. Show a Pro gear set on the same Forge Mount.
+4. Make a skin with Muse Image. Equip in mini game. Show boost.
+5. Export STL. Show checks pass.
+6. Play the Reveal: entrance animation, 15 second theme, character card.
+
+## Why
+
+If robotics is going to be the next big wave, I don't think it starts with another expensive kit that gets built once and shelved — it probably starts earlier and messier, with a kid bolting a spoiler onto a car they already care about and discovering, almost by accident, why it wobbles. That's the bet, anyway. The path I want is snap-on upgrades first, then gears and motion, then (much later) sensors and control, and each step gets designed and tested in the browser before anything is printed and held in a hand.
+
+The loop itself is simple enough that it doesn't need its own diagram: scan the toy, build on it in the builder and check the fit in AR, print the part, then play with the upgraded toy in AR and the mini game — and every finished build gets its Reveal, an entrance animation, a 15 second theme, and a character card.
+
+## Two product lines
+
+| | ToyForge Snap | ToyForge Pro |
+| --- | --- | --- |
+| Who | Younger kids with a grown-up | Ages 8+ and makers |
+| Connect | Studs, snap-fit, no tools | Hole grid with pins, axles, optional screws |
+| Parts | Bricks, plates, skins, character add-ons | Beams, gears, axles, joints, motion capsules |
+| Game | Looks + stat upgrades | Speed, spin, function stats |
+| Electronics | None | Optional, later |
+
+Both share one adapter, the Forge Mount, one part format, one set of checks. Any part works in builder, AR, game, and printer. A bridge plate with studs on one side and holes on the other mixes Snap and Pro in one build.
+
+## Virtual builder
+
+You don't need to own a single physical part to build here — that's the point, since most families won't — but Print and Order stay greyed out until the checks pass, because an STL that fails on the bed is worse than no STL at all.
+
+- Same part models that print. What you see is what prints.
+- Scanned toy shows as stand-in body at its attach point.
+- Parts snap to stud grid (Snap) or hole grid (Pro). Collisions caught. Undo and redo.
+- Live checks: on grid, fits toy size, prints without supports, fits printer bed.
+- Snap gets fit, stacking, stat preview. Pro gets motion tests: gears mesh, axles turn, joints move, gear ratio shown.
+- Finish gives parts list, filament and print time estimate, print files.
+- Hackathon ships viewer, grid snapping, live checks, stand-in body. Pro motion for one gear pair is stretch.
+
+## STEM mode (stretch, off by default)
+
+Optional layer on the same builds. Mostly Pro 8+, lighter for Snap.
+
+- Challenges with a goal: gear train at set ratio, lever, ramp.
+- Predict, build, test. Guess, build in builder, test, compare. Builder shows measured ratio and speed.
+- Short concept cards: gear ratio, torque, friction, center of gravity, simple machines.
+- Finishing challenges unlocks parts and skins in game.
+- Downloadable worksheets and mission cards.
+- Challenges and cards live in the same set file as parts. A monthly set can include a STEM unit.
+- Classroom tools come later.
+
+Path to robotics, each step virtual first: 1 structures, 2 motion, 3 power, 4 sense, 5 control, 6 full robot. Hackathon covers steps 1 and 2. One gear ratio challenge is stretch.
+
+## Live Play (Game Mode, stretch)
+
+Play with a real toy while phone listens and watches. App answers with music that follows the story.
+
+- Voice: commands and story words like "start adventure", "danger", "play my theme". Voice triggers boosts in AR and game.
+- Camera: spots toy, parts, motion, surroundings.
+- Moods: joy, suspense, danger, calm, triumph, mystery.
+- Near table edge gives suspense. Fast motion or "attack" gives danger. Two toys facing gives battle theme. Finished build gives triumph with character theme.
+- Music is pre-made loops and stems per mood and character theme. App crossfades live. No on-the-fly song generation. Reveal theme returns as motif.
+- Target follow time about 2 seconds.
+- Hackathon: mood buttons and a few voice keywords drive four loops. Camera scene detection is later.
+
+## Forge Club
+
+A monthly themed set — 6 parts, 2 skins, a theme loop, and at least one part you can actually print — because if nothing in the box ever becomes physical, we've just built another skin shop. Free players get the base parts and a daily pack; members get the monthly set plus an extra daily roll, and if you stop paying you keep what you've unlocked and simply miss the new drops (old sets move to the Market, so nothing's gone forever). Billing will go through an outside provider eventually; in the demo it's mocked, with two seeded sets.
+
+## Under the hood
+
+- Cloudflare Workers and Static Assets serve the PWA.
+- Cloudflare KV and D1 track what each player owns. Sets are static JSON files.
+- Meta Model API handles AI. Mureka API makes songs and sound effects.
+- Seed content made ahead so demo never waits. Preloaded toy covers live scan failure.
+- Android Chrome with WebXR is main target. Model viewer fallback on iPhone.
+- Every part is parametric OpenSCAD. One definition makes STL for printing and GLB for AR and game.
+- Forge Mount is the snap-on adapter that touches the original toy and gives it a stud grid, a hole grid, or both.
+
+| Part field | What it holds |
+| --- | --- |
+| id | Part name and ID |
+| line | Snap or Pro |
+| mount type | Stud, hole, or Forge Mount |
+| size class | Small or large |
+| grid | Grid spacing the part sits on |
+| stat | One stat per part. Rarity changes look only |
+| printable | Whether a print file exists and passes checks |
+| skin | Game and AR only. Printed parts are one color |
+
+So a single part looks something like this in its set file — note there's only ever one stat, because the moment a part is good at two things it becomes the default pick and the rest of the library might as well not exist:
+
+```json
+{
+  "id": "snap-spoiler-01",
+  "line": "snap",
+  "mount": "stud",
+  "sizeClass": "small",
+  "grid": { "units": [2, 1], "profile": "stud_profile_small" },
+  "stat": { "name": "speed", "value": 2 },
+  "printable": true,
+  "orientation": "flat",
+  "skin": "month1/racer-red"
+}
+```
+
+Checks: watertight, prints without supports in listed orientation, fits printer bed in both sizes, sits on grid, fits toy size class. STL export under 10 seconds.
+
+### Where we use Meta models
+
+We build on the Meta Model API. Scan is [SAM 3.1](https://ai.meta.com/blog/segment-anything-model-3/), prompted with text like "toy car" rather than clicks, because a parent holding a phone in one hand and a toy in the other isn't going to tap out a mask.
+
+| Feature | Model | What it does |
+| --- | --- | --- |
+| Scan | SAM 3.1 | Outlines toy from text prompt like "toy car". Mask for size and attach points |
+| Skins | Muse Image | Generates and edits skins, made ahead for seed sets |
+| Scene detection | SAM 3.1 + Muse Spark | Tracks toy and reads surroundings |
+| Mood | Muse Spark | Turns scene and story words into a mood |
+| Voice commands | Muse Voice Transcribe | Live speech to text with keyword boosting |
+| STEM content | Muse Spark | Drafts challenges and hints, human reviewed |
+
+Theme songs, loops, sound effects come from Mureka API. Parts are parametric OpenSCAD and are not generated. Checks, grid snapping, motion tests are plain code.
+
+Two things I considered and rejected, for the record. First, generating part geometry with a model: tempting in a Meta hackathon, but a generated mesh can't promise watertight, support-free, on-grid — and the whole pitch collapses the first time a kid's print fails, so geometry stays boring parametric OpenSCAD and the AI stays on the seeing/talking/skin side. Second, generating songs on the fly inside Live Play: latency and mood whiplash killed it, which is why Live Play crossfades pre-made loops instead and only the Reveal theme is generated (ahead of time, where a 20 second wait doesn't matter).
+
+## What is real in the demo
+
+| Feature | Live in demo | Pre-made or mocked |
+| --- | --- | --- |
+| Scan | SAM 3.1 outline, size, attach point | Seed toy as backup |
+| Skins | Muse Image skin for scanned toy | Seed skins as backup |
+| Virtual builder | Grid snapping, live checks, stand-in body | Part library made ahead |
+| Play | AR try-on, mini game, boost | Animations from Mixamo clips |
+| 3D print | STL export with checks | Delivery handoff mocked |
+| Reveal | Entrance animation, character card | Theme songs from Mureka API |
+| Live Play (stretch) | Mood buttons + voice keywords | Loops and SFX made ahead with Mureka |
+| STEM mode (stretch) | One gear ratio challenge | Cards and hints drafted with Muse Spark |
+| Pro line | Rounded SU05 beams, friction pins, one gear set | Rest of Pro parts later |
+| Forge Club | Two seeded sets, fit filter | Billing mocked |
+
+## What success looks like
+
+- Scan to colored upgrade in game on phone in under 60 seconds.
+- Every pack item works in AR and game. One printable part per pack.
+- STL export in under 10 seconds with checks passing.
+- Market only shows parts that fit the scanned toy.
+- New expansion set loads from set file with no code change.
+- Reveal plays once, then saves.
+- Virtual build passes checks with no physical parts.
+
+## Safety and privacy
+
+- Snap large size for youngest kids. Rounded edges, no sharp corners, no small loose pieces on young-kid parts.
+- Live Play listens and watches only during active play. Parent starts and stops the session. Mood buttons work with camera and mic off.
+- Character add-ons use original designs. Calibration piece and per-printer offsets handle snap fit variance.
+
+## ToyForge Snap
+
+The kid line: snap-fit, tool-free, stud grid in two sizes. Full part types, design rules, print and game behavior live in [snap.md](snap.md), which is canonical for this line — this spec no longer duplicates it. Headline risk, stated there too: as of Oct 27 nothing in Snap has been printed yet, so its dimensions are targets until the Day 4 calibration test.
+
+## ToyForge Pro
+
+The mechanical line for ages 8+ and makers, on the open STEMFIE hole grid. Full standard, part families, and print rules live in [pro.md](pro.md), which is canonical for this line. Hackathon scope stays narrow: rounded SU05 beams, friction pins, one gear set, shown as a teaser on the demo Forge Mount.
+
+## Open source
+
+Part system is open source: Forge Mount spec, parts library, checks, part format, set file format. Code MIT. Designs and STLs CC BY. Pro builds on open STEMFIE and credits it. App, skins, songs, animations stay closed. Contributions via pull requests.
+
+## Hackathon build order
+
+Ship the loop first: scan with its backup toy, the Snap builder with grid and checks, AR try-on, the mini game boost, STL under 10s, and the Reveal. Be ruthless about everything hanging off it. Pro is an SU05 beam, a pin, and one gear pair pretending to be a product line (which, for a teaser, is fine), Live Play is 3 voice keywords and 4 loops, and STEM is a single gear challenge if there's time and nothing if there isn't. Merge Forge, Recycle, Color, and electronics stay on the roadmap, where I can enjoy imagining them without having to debug them.
+
+## Open questions
+
+Things this spec asserts but hasn't earned yet:
+
+- Will a SAM mask from a wobbly, badly lit phone photo actually give a usable size and attach point, or does the parent end up nudging a slider every time? The preloaded backup toy hides this in the demo, but it doesn't answer it, and shiny or translucent toys are my main worry.
+- Can one snap-fit clearance work across home printers, or does the per-printer offset become homework nobody does? If the Day 4 calibration prints say "it depends," the honest fallback is shipping Snap in a single size on a single known-good profile and saying so.
+- Is the "printed part gives a game boost" loop motivating, or does it just punish kids without a printer? I have a guess, not evidence.
+
+## Roadmap
+
+- Merge Forge: 2-3 donors in, 1 new toy out, at most 2 new adapters. Printed parts reusable as donors.
+- Recycle: reuse intact parts, broken to bases and terrain. No melting filament.
+- Color: AR preview, printable masks, pen holder for standard markers.
+- Real electronics: motors, lights, sensors on Pro line.
+- Delivery: live 3D print service integration.
+- Classroom tools: class codes, assignments, progress.
+- Camera scene detection and narration in Live Play.

@@ -1,0 +1,8 @@
+node_modules/
+dist/
+generated/*
+!generated/.gitkeep
+.dev.vars
+.wrangler/
+.DS_Store
+*.local
