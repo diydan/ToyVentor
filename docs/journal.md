@@ -11,8 +11,8 @@ questions; each evening say "end day N" and we'll log what shipped. Submission d
 ## Day 1 — Mon Oct 26: Kickoff + Scope lock (in progress, extended into Oct 27 morning)
 
 ### Start of Day
-- [ ] Watched kickoff livestream (optional)? Key takeaways:
-- [x] Track confirmed: indie. Theme: Build for Your World / Push the Frontier
+- [x] Watched kickoff livestream
+- [x] Track confirmed: indie. Theme: Build for Your World
 - [x] Scope locked to spec.md
 
 ### End of Day
@@ -37,11 +37,52 @@ Goal: photo a toy, detect mount + size class, save to toybox (wireframe p.2-3).
 - [ ] Workshops/office hours to attend today:
 
 ### End of Day
-- Shipped:
-- Demo-able right now (yes/no, what):
-- SAM segmentation: working / flaky / blocked (details):
-- Blockers:
-- Tomorrow's first task:
+- Shipped: a lot. Docs reorganised into docs/ with Snap and Pro as their own
+  canonical files; spec de-duplicated and given its origin story, an example
+  part record, rejected alternatives, and honest open questions. App
+  foundation committed: React + TypeScript + Vite SPA for Cloudflare
+  Workers (PWA-ready, not hosted, no service worker yet), Factory/Toybox/
+  Scan screens, Worker API, shared part/toy/set schemas, the four builder
+  checks as pure functions, base set as data with a validator, seed car +
+  seed figure. 30 unit tests green.
+  Also today: under-8 gameplay guidance for Snap (open-ended, no fail
+  states, 2.5D, ages 1-3 narration layer); household-object characters
+  added to the spec (SAM outlines a cup or slipper, it sprouts limbs and
+  becomes a character); push-to-talk in the wireframe; design guide and
+  mockups; four Snap sample parts in OpenSCAD (Brick 2x2 both sizes,
+  Dragon Wing, Glow Star Capsule) matched to the base set, none printed.
+- Discovery: [BlockML](https://blockml.org/), an open modeling language
+  where one model can be rendered out to software, documents, and physical
+  things. If it holds up, describing our parts once and rendering the
+  builder models, print files, and set data from that single source could
+  save hours if not days and accelerate a significant portion of this
+  project — the parts pipeline is exactly the multi-output problem it
+  targets. Unproven until tomorrow's spike: one real part through it,
+  compare against hand-written OpenSCAD, decide before Day 4's print gate.
+- Demo-able right now: yes, locally. Factory -> Scan -> photo + SAM outline
+  -> Toybox with part cards and live check results. Not deployed, and not
+  yet run on an actual phone.
+- SAM segmentation: WORKING. Day 2 test subjects ended up a coffee cup and
+  a water bottle, which fits the household-object direction better than the
+  car did. Live sam-3.1 through our Worker: image inline as a base64 data
+  URL (the Files-upload path is video-only and silently returns zero
+  matches for images), streaming Responses API, boxes parsed from the
+  output_text lane. "cup" and "water bottle" both matched first try on the
+  generated test photo; a 210mm scale anchor on the bottle derived a 65mm
+  width. Lessons: one short noun per request ("coffee cup" missed, "cup"
+  hit), SAM gives proportions not millimetres so a human still sets the
+  real longest side, and toys it can't outline are saved "by hand", never
+  fake-scanned. Still to prove: real phone photos of the real cup/bottle.
+  Caught in time: the API key briefly sat in a committed file; moved to
+  gitignored .dev.vars before any commit touched it.
+- Blockers: OpenSCAD not installed here, so zero STLs and zero prints —
+  Day 4's calibration test is the hard deadline on that (the BlockML spike
+  may reroute how parts get authored, but not that deadline). Nothing
+  deployed yet (no D1/KV bindings, no domain). Journal day goals and plan
+  day steps have drifted apart; plan wins from tomorrow.
+- Tomorrow's first task: real cup + bottle photos on a phone, a timeboxed
+  BlockML spike on one part, then Day 3 per the plan: virtual builder
+  viewer with grid snapping on the scanned toy's stand-in body.
 
 ---
 
