@@ -1,0 +1,4 @@
+# Copy to .dev.vars for local dev. Names are placeholders until the
+# hackathon-issued keys land; the Worker reads these, the browser never does.
+META_MODEL_API_KEY=
+MUREKA_API_KEY=

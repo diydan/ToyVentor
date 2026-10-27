@@ -1,0 +1,84 @@
+{
+  "id": "base",
+  "name": "Base Library",
+  "parts": [
+    {
+      "id": "snap-spoiler-01",
+      "name": "Spoiler",
+      "line": "snap",
+      "mount": "stud",
+      "sizeClass": "small",
+      "grid": { "units": [2, 1], "profile": "stud_profile_small" },
+      "footprintMm": [32, 16],
+      "stat": { "name": "speed", "value": 2 },
+      "printable": true,
+      "orientation": "flat",
+      "supportFree": true,
+      "skin": "month1/racer-red"
+    },
+    {
+      "id": "snap-brick-2x2-small",
+      "name": "Brick 2×2",
+      "line": "snap",
+      "mount": "stud",
+      "sizeClass": "small",
+      "grid": { "units": [2, 2], "profile": "stud_profile_small" },
+      "footprintMm": [32, 32],
+      "stat": { "name": "spin", "value": 1 },
+      "printable": true,
+      "orientation": "flat",
+      "supportFree": true
+    },
+    {
+      "id": "forge-mount-small",
+      "name": "Forge Mount",
+      "line": "snap",
+      "mount": "forge-mount",
+      "sizeClass": "small",
+      "grid": { "units": [3, 2], "profile": "stud_profile_small" },
+      "footprintMm": [48, 32],
+      "stat": { "name": "glow", "value": 1 },
+      "printable": true,
+      "orientation": "flat",
+      "supportFree": true
+    },
+    {
+      "id": "snap-wing-01",
+      "name": "Dragon Wing",
+      "line": "snap",
+      "mount": "stud",
+      "sizeClass": "small",
+      "grid": { "units": [2, 1], "profile": "stud_profile_small" },
+      "footprintMm": [32, 16],
+      "stat": { "name": "glow", "value": 2 },
+      "printable": true,
+      "orientation": "flat",
+      "supportFree": true
+    },
+    {
+      "id": "pro-beam-su05",
+      "name": "Beam STR RND SU05x01x01",
+      "line": "pro",
+      "mount": "hole",
+      "sizeClass": "small",
+      "grid": { "units": [5, 1], "profile": "stemfie_12.5" },
+      "footprintMm": [62.5, 12.5],
+      "stat": { "name": "torque", "value": 2 },
+      "printable": true,
+      "orientation": "flat",
+      "supportFree": true
+    },
+    {
+      "id": "skin-racer-red",
+      "name": "Racer Red Skin",
+      "line": "snap",
+      "mount": "stud",
+      "sizeClass": "small",
+      "grid": { "units": [2, 1], "profile": "stud_profile_small" },
+      "footprintMm": [32, 16],
+      "stat": { "name": "speed", "value": 1 },
+      "printable": false,
+      "skin": "month1/racer-red"
+    }
+  ]
+}

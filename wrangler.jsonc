@@ -1,0 +1,14 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "toyforge",
+  "main": "worker/index.ts",
+  "compatibility_date": "2026-10-26",
+  "assets": {
+    // Client routes (tabs, pushed screens) fall back to the SPA shell
+    // instead of 404ing or reaching the Worker.
+    "not_found_handling": "single-page-application"
+  }
+  // Bindings land when the real resources exist (plan Day 2+):
+  // "kv_namespaces": [{ "binding": "OWNERSHIP_KV", "id": "<create with wrangler kv namespace create>" }],
+  // "d1_databases": [{ "binding": "DB", "database_name": "toyforge", "database_id": "<create with wrangler d1 create toyforge>" }]
+}

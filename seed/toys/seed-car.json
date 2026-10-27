@@ -1,0 +1,13 @@
+{
+  "id": "seed-car",
+  "name": "Seed Car (backup toy)",
+  "kind": "car",
+  "sizeClass": "small",
+  "lengthMm": 110,
+  "widthMm": 55,
+  "attachPoints": [
+    { "id": "roof", "label": "Roof" },
+    { "id": "rear", "label": "Rear deck" }
+  ],
+  "source": "seed"
+}

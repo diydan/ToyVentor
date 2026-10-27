@@ -1,0 +1,12 @@
+{
+  "name": "ToyForge",
+  "short_name": "ToyForge",
+  "description": "Scan a toy, build printable upgrades on it, play in AR.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#1c1a17",
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}
