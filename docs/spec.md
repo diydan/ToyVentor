@@ -70,6 +70,10 @@ Play with a real toy while phone listens and watches. App answers with music tha
 
 - Voice: commands and story words like "start adventure", "danger", "play my theme". Voice triggers boosts in AR and game.
 - Camera: spots toy, parts, motion, surroundings.
+- Household objects become characters: SAM outlines an everyday object (a coffee cup,
+  a slipper), it sprouts legs, arms, and a face, and can run off mid-story. Two render
+  paths: a 3D clip rig when the character needs to persist in AR and the game, or a
+  video model when a one-off animated moment is enough.
 - Moods: joy, suspense, danger, calm, triumph, mystery.
 - Near table edge gives suspense. Fast motion or "attack" gives danger. Two toys facing gives battle theme. Finished build gives triumph with character theme.
 - Music is pre-made loops and stems per mood and character theme. App crossfades live. No on-the-fly song generation. Reveal theme returns as motif.
