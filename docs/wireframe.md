@@ -1,9 +1,11 @@
 # ToyForge — Wireframe (12 pages, rough)
 
-Mobile PWA. Bottom bar: Factory, Toybox, Packs, Market, Play.
+Mobile PWA. Bottom bar: Factory, Toybox, Packs, Market, Play. The app opens
+on Toybox so previous uploads and built-in assets are available immediately.
 
 1. Factory Home: station map, 8 dots, resume card, daily nudge. CTA: Continue.
-2. Toybox: toys + printed parts + donors. Filter chips. Cards show mount + size. CTA: Scan new.
+2. Toybox (landing page): Your uploads + Built-in starter toys + built-in parts.
+   Filter chips. Cards show mount + size. CTA: Scan new.
 3. Scan: camera, auto mount detect, size slider, save. Push-to-talk:
    "Hold and say what this is" ("toy car") → SAM text prompt. CTA: Save. Next: Augment.
 4. Augment: 3D preview, parts tray, AR toggle. Push-to-talk: "Describe the look"

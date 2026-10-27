@@ -5,10 +5,10 @@ import { PlaceholderScreen } from "./screens/PlaceholderScreen";
 import { ScanScreen } from "./screens/ScanScreen";
 import { ToyboxScreen } from "./screens/ToyboxScreen";
 
-// Five bottom-bar tabs (wireframe) plus Scan as a pushed screen on top of
-// Toybox/Factory. Shell state, no router — revisit when deep links matter.
+// The app opens on the Toybox so previous uploads and built-in assets are
+// immediately available. Scan remains a pushed screen above the five tabs.
 export default function App() {
-  const [tab, setTab] = useState<TabId>("factory");
+  const [tab, setTab] = useState<TabId>("toybox");
   const [scanning, setScanning] = useState(false);
 
   const openScan = () => setScanning(true);

@@ -6,12 +6,20 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import type { Toy } from "../../shared/toy";
+import {
+  isBuiltInToy,
+  mergeToyboxToys,
+  toyboxUploads,
+  type Toy,
+} from "../../shared/toy";
+import { backupToys } from "../features/scan/scan";
 
 const STORAGE_KEY = "toyforge:toybox:v1";
 
 interface ToyboxState {
   toys: Toy[];
+  uploadedToys: Toy[];
+  builtInToys: Toy[];
   selected: Toy | undefined;
   addToy: (toy: Toy) => void;
   selectToy: (id: string) => void;
@@ -31,14 +39,16 @@ function loadToys(): Toy[] {
 }
 
 export function ToyboxProvider({ children }: { children: ReactNode }) {
-  const [toys, setToys] = useState<Toy[]>(loadToys);
+  const [toys, setToys] = useState<Toy[]>(() =>
+    mergeToyboxToys(loadToys(), backupToys),
+  );
   const [selectedId, setSelectedId] = useState<string | undefined>(
-    () => loadToys()[0]?.id,
+    () => toys[0]?.id,
   );
 
   useEffect(() => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(toys));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(toyboxUploads(toys)));
     } catch {
       // Storage full or unavailable: toybox just won't persist.
     }
@@ -47,6 +57,8 @@ export function ToyboxProvider({ children }: { children: ReactNode }) {
   const value = useMemo<ToyboxState>(
     () => ({
       toys,
+      uploadedToys: toyboxUploads(toys),
+      builtInToys: toys.filter(isBuiltInToy),
       selected: toys.find((t) => t.id === selectedId) ?? toys[0],
       addToy: (toy) => {
         setToys((prev) =>

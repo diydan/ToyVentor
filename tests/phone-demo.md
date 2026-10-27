@@ -5,11 +5,12 @@ Run after each plan day, on a real phone. Time it; log the result in
 
 Foundation version (Oct 27):
 
-1. Open the app → Factory shows with a "Scan your first toy" button.
-2. Tap it → Scan screen explains the backup toy.
-3. Tap "Use backup toy" → lands in Toybox, Seed Car selected.
+1. Open the app → Toybox shows Your uploads and Built-in starter toys.
+2. Pick a built-in toy → its built-in Base Library parts appear.
+3. Tap "Scan new" → save a toy by hand or outline it with SAM.
 4. Part cards list the base set; every printable part shows 4 checks.
-5. Reload → the toy is still in the Toybox (local persistence).
+5. Reload → uploaded toys are still in the Toybox (local persistence);
+   built-in starter toys are bundled and always available.
 6. Bottom tabs switch: Factory, Toybox live; Packs/Market/Play say which
    plan day they land.
 

@@ -54,6 +54,7 @@ size rather than two).
 ## Content
 
 - Base library made ahead of time. Post-launch roadmap: two seeded sets (Month 1 and Month 2).
+- First four sample parts designed (both sizes): see [snap-samples.md](snap-samples.md).
 - Pack Rips: 3 items per daily pack, 1 printable part guaranteed.
 - Market filters by mount type and size class.
 

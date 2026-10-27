@@ -12,9 +12,9 @@ if ! command -v openscad >/dev/null 2>&1; then
 fi
 
 mkdir -p generated/stl
-shopt -s globstar nullglob
 count=0
-for src in parts/**/*.scad; do
+# find, not globstar: stock macOS bash 3.2 has no globstar.
+while IFS= read -r src; do
   case "$src" in
     parts/profiles/*) continue ;; # library/include files, not parts
   esac
@@ -22,6 +22,6 @@ for src in parts/**/*.scad; do
   echo "openscad: $src -> generated/stl/$name.stl"
   openscad -o "generated/stl/$name.stl" "$src"
   count=$((count + 1))
-done
+done < <(find parts -name '*.scad' | sort)
 echo "build-parts: $count STL file(s) in generated/stl/"
 echo "build-parts: GLB export not wired yet (see header note)."

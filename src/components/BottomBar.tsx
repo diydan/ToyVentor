@@ -25,6 +25,7 @@ export function BottomBar({
           aria-current={t.id === tab ? "page" : undefined}
           onClick={() => onTab(t.id)}
         >
+          <span className="tab-orb" aria-hidden="true" />
           {t.label}
         </button>
       ))}

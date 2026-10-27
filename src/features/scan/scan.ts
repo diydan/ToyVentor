@@ -1,19 +1,56 @@
 import seedCarJson from "../../../seed/toys/seed-car.json";
+import seedFigureJson from "../../../seed/toys/seed-figure.json";
 import type { Toy } from "../../../shared/toy";
-import { fetchScanToy } from "../../lib/api";
+import { fetchScanToy, postScanToy, type ScanPostResult } from "../../lib/api";
 
-// Single source of truth for the backup toy: the same JSON the Worker serves.
+// Single source of truth for the backup toys: the same JSON the Worker serves.
 export const seedCar = seedCarJson as Toy;
+export const seedFigure = seedFigureJson as Toy;
+export const backupToys: Toy[] = [seedCar, seedFigure];
 
-/**
- * Try the live scan route first; fall back to the bundled seed toy so the
- * demo path works with the API down. Either way the returned Toy carries
- * source:"seed" today — live SAM (Day 2) is what flips that to "scan".
- */
+/** Backup path: try the scan route first (it serves the seed car today),
+ *  fall back to the bundled copy so the demo works with the API down. */
 export async function scanToy(): Promise<Toy> {
   try {
     return await fetchScanToy();
   } catch {
     return seedCar;
   }
+}
+
+/** Send a photographed/measured toy through the Worker for validation.
+ *  Returns null when offline — the caller still keeps the toy locally. */
+export async function submitScan(toy: Toy, prompt: string): Promise<ScanPostResult | null> {
+  try {
+    return await postScanToy(toy, prompt);
+  } catch {
+    return null;
+  }
+}
+
+const MAX_PHOTO_EDGE = 512;
+
+/** Downscale a camera photo to a small JPEG data URL for display and
+ *  local storage. Full-res phone photos would blow the storage quota. */
+export function downscalePhoto(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const scale = Math.min(1, MAX_PHOTO_EDGE / Math.max(img.width, img.height));
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.round(img.width * scale);
+      canvas.height = Math.round(img.height * scale);
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return reject(new Error("canvas unavailable"));
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      resolve(canvas.toDataURL("image/jpeg", 0.8));
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error("could not read that photo"));
+    };
+    img.src = url;
+  });
 }

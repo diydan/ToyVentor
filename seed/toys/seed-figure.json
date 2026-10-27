@@ -1,0 +1,13 @@
+{
+  "id": "seed-figure",
+  "name": "Seed Figure (backup toy)",
+  "kind": "figure",
+  "sizeClass": "small",
+  "lengthMm": 95,
+  "widthMm": 45,
+  "attachPoints": [
+    { "id": "head", "label": "Head" },
+    { "id": "back", "label": "Back" }
+  ],
+  "source": "seed"
+}

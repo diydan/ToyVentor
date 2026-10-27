@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ToyForge — mockups</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@500;700;800&family=Figtree:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --night-900:#080f2b; --surface:#101a44; --surface-2:#18265e; --surface-3:#22337e;
+  --line:#7f9bff; --line-soft:#2c3f94;
+  --ink:#f4f7ff; --ink-muted:#bfcaf5; --ink-disabled:#7b86c4;
+  --ink-on-sky:#06122b; --ink-on-violet:#10062b;
+  --sky-500:#52b7ff; --sky-300:#9bd4ff; --sky-700:#2a7fcc;
+  --violet-500:#a78bff; --violet-300:#c9b8ff; --violet-700:#6f55d6;
+  --gold:#ffd24d; --coral:#ff9d5c; --mint:#5af0b0; --danger:#ff6a5c;
+  --rarity-common:#b7c2ee; --rarity-uncommon:#5af0b0; --rarity-rare:#52b7ff;
+  --rarity-epic:#a78bff; --rarity-legendary:#ffd24d;
+  --mood-joy:#ffd24d; --mood-suspense:#a78bff; --mood-danger:#ff6a5c;
+  --mood-calm:#7fd6ff; --mood-triumph:#ff9d5c; --mood-mystery:#8f9dff;
+  --stat-speed:#52b7ff; --stat-spin:#5af0b0; --stat-glow:#ffd24d; --stat-torque:#ff9d5c;
+  --glass:rgba(255,255,255,.07); --glass-line:rgba(255,255,255,.22);
+  --glass-strong:rgba(255,255,255,.10); --focus:#ffd24d;
+  --font-display:'Rubik','Figtree',system-ui,sans-serif;
+  --font-body:'Figtree',system-ui,sans-serif;
+  --space-1:4px; --space-2:8px; --space-3:12px; --space-4:16px; --space-5:20px;
+  --space-6:24px; --space-8:32px; --space-10:40px;
+  --touch-min:44px; --touch-comfy:56px; --tabbar-h:64px;
+  --radius-sm:8px; --radius-md:12px; --radius-lg:16px; --radius-pill:999px;
+  --shadow-glass:0 4px 14px rgba(2,6,28,.5);
+  --shadow-glass-selected:0 0 0 1px #52b7ff, 0 0 8px rgba(82,183,255,.35);
+  --shadow-btn-sky:inset 0 2px 0 rgba(255,255,255,.40), 0 5px 0 #2a7fcc, 0 12px 20px rgba(82,183,255,.30);
+  --shadow-btn-sky-pressed:inset 0 2px 0 rgba(255,255,255,.25), 0 1px 0 #2a7fcc, 0 3px 8px rgba(82,183,255,.25);
+  --shadow-btn-violet:inset 0 2px 0 rgba(255,255,255,.40), 0 5px 0 #6f55d6, 0 12px 20px rgba(167,139,255,.30);
+  --shadow-btn-violet-pressed:inset 0 2px 0 rgba(255,255,255,.25), 0 1px 0 #6f55d6, 0 3px 8px rgba(167,139,255,.25);
+  --shadow-btn-ghost:0 4px 0 #2c3f94;
+  --shadow-sheet:0 16px 40px rgba(2,6,28,.65);
+  --shadow-glow-gold:0 0 0 3px rgba(255,210,77,.45), 0 0 36px rgba(255,210,77,.65);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;color:var(--ink);font-family:var(--font-body);font-weight:500;font-size:16px;line-height:1.5;
+  background:radial-gradient(70% 30% at 14% 0,rgba(82,183,255,.28),transparent 70%),
+             radial-gradient(60% 28% at 92% 4%,rgba(167,139,255,.26),transparent 70%),var(--night-900);
+  background-attachment:fixed}
+a{color:var(--sky-300)}
+header.hero,main,footer{max-width:1120px;margin:0 auto;padding:0 24px}
+header.hero{padding:64px 24px 8px}
+.kicker{font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-muted)}
+h1{font-family:var(--font-display);font-weight:700;font-size:56px;line-height:1;margin:8px 0 12px}
+h2{font-family:var(--font-display);font-weight:700;font-size:34px;line-height:1.1;margin:0 0 16px}
+h3{font-family:var(--font-display);font-weight:700;font-size:20px;margin:28px 0 12px}
+p{margin:0 0 12px}
+.lead{font-size:19px;color:var(--ink-muted);max-width:760px;margin-bottom:16px}
+nav.toc{position:sticky;top:0;z-index:5;background:rgba(8,15,43,.86);backdrop-filter:blur(8px);border-bottom:1px solid var(--glass-line)}
+nav.toc ul{list-style:none;margin:0 auto;padding:0 24px;max-width:1120px;display:flex;gap:4px;overflow-x:auto}
+nav.toc a{display:block;padding:14px 12px;color:var(--ink-muted);text-decoration:none;font-size:14px;font-weight:700;white-space:nowrap}
+nav.toc a:hover,nav.toc a:focus-visible{color:var(--ink);outline:none;box-shadow:inset 0 -3px 0 var(--sky-500)}
+main{padding-bottom:64px}
+section{padding:48px 0 8px}
+.glass{background:var(--glass);border:1px solid var(--glass-line);border-radius:var(--radius-lg);box-shadow:var(--shadow-glass);padding:24px}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}
+@media(max-width:700px){.grid2{grid-template-columns:1fr}}
+.tbl{width:100%;border-collapse:collapse;font-size:15px}
+.tbl th{text-align:left;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-muted);padding:8px 10px;border-bottom:1px solid var(--glass-line)}
+.tbl td{padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.08);vertical-align:middle}
+code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;background:rgba(255,255,255,.08);padding:2px 6px;border-radius:6px}
+pre{background:#050a1f;border:1px solid var(--glass-line);border-radius:var(--radius-md);padding:16px;overflow:auto;font-size:13px;line-height:1.5}
+pre code{background:none;padding:0}
+.dot{display:inline-block;width:18px;height:18px;border-radius:5px;border:1.5px solid rgba(255,255,255,.35);vertical-align:-4px;margin-right:8px}
+.row{display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+.demo{display:flex;flex-direction:column;gap:8px}
+.cap{font-size:12px;color:var(--ink-muted);font-weight:700}
+ul.clean{margin:0;padding-left:20px} ul.clean li{margin:6px 0}
+footer{padding:24px 24px 64px;color:var(--ink-muted);font-size:14px}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important;animation:none!important}}
+@media(max-width:640px){h1{font-size:40px}header.hero{padding-top:40px}.tbl{display:block;overflow-x:auto}}
+/* Components */
+.btn{font-family:var(--font-display);font-weight:700;font-size:20px;line-height:1;min-height:var(--touch-comfy);
+  padding:0 28px;border:0;border-radius:var(--radius-md);cursor:pointer;color:var(--ink-on-sky);margin-bottom:6px;
+  transition:transform 80ms ease-out,box-shadow 80ms ease-out}
+.btn small{display:block;font-family:var(--font-body);font-weight:700;font-size:12px;margin-top:3px}
+.btn-primary{background:var(--sky-500);box-shadow:var(--shadow-btn-sky)}
+.btn-secondary{background:var(--violet-500);color:var(--ink-on-violet);box-shadow:var(--shadow-btn-violet)}
+.btn-ghost{background:transparent;color:var(--ink);border:2px solid var(--line);box-shadow:var(--shadow-btn-ghost)}
+.btn-primary:active,.btn-primary.pressed{transform:translateY(4px);box-shadow:var(--shadow-btn-sky-pressed)}
+.btn-secondary:active,.btn-secondary.pressed{transform:translateY(4px);box-shadow:var(--shadow-btn-violet-pressed)}
+.btn-ghost:active,.btn-ghost.pressed{transform:translateY(3px);box-shadow:0 1px 0 #2c3f94}
+.btn:disabled{background:rgba(255,255,255,.10);color:var(--ink-disabled);box-shadow:none;transform:none;cursor:not-allowed}
+.btn:focus-visible,.chip:focus-visible,.opt:focus-visible,.tab:focus-visible{outline:3px solid var(--focus);outline-offset:3px}
+.chip{font-family:var(--font-display);font-weight:700;font-size:15px;min-height:var(--touch-min);padding:0 18px;
+  border-radius:var(--radius-pill);border:2px solid var(--line);background:transparent;color:var(--ink);
+  cursor:pointer}
+.chip.on{background:var(--sky-500);border-color:var(--sky-500);color:var(--ink-on-sky)}
+.scroll{display:flex;gap:12px;overflow-x:auto;padding:6px 6px 14px;max-width:100%}
+.opt{flex:none;width:108px;min-height:136px;border-radius:var(--radius-lg);background:var(--glass);
+  border:1px solid var(--glass-line);box-shadow:var(--shadow-glass);color:var(--ink);padding:10px;
+  display:flex;flex-direction:column;gap:8px;text-align:left;cursor:pointer;font-family:var(--font-body);
+  font-weight:700;position:relative}
+.optimg{height:72px;border-radius:var(--radius-sm);background:var(--surface-3)}
+.opt.picked{box-shadow:var(--shadow-glass-selected);border-color:var(--sky-500)}
+.opt.picked::after{content:"Picked";position:absolute;top:12px;right:12px;font:700 11px var(--font-display);
+  letter-spacing:.5px;text-transform:uppercase;background:var(--sky-500);color:var(--ink-on-sky);
+  padding:2px 7px;border-radius:6px}
+.opt.custom{border-style:dashed;border-color:var(--line);align-items:center;justify-content:center;text-align:center}
+.plus{font:700 32px/32px var(--font-display)} .hint{font-size:12px;color:var(--ink-muted)}
+.rar{width:104px;display:flex;flex-direction:column;gap:8px;align-items:center}
+.rarframe{width:104px;height:104px;border-radius:var(--radius-md);background:var(--glass);border:3px solid}
+.rarname{font:700 14px var(--font-display);letter-spacing:.8px;text-transform:uppercase}
+.pips{display:flex;gap:3px}
+.pip{width:9px;height:9px;border-radius:50%;background:var(--c);border:1.5px solid var(--c)}
+.pip.off{background:transparent;border-color:var(--ink-muted)}
+.stat{display:grid;grid-template-columns:72px 1fr 44px;gap:12px;align-items:center;min-height:var(--touch-min);max-width:420px}
+.statname{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-muted)}
+.track{height:14px;border-radius:999px;background:var(--glass-strong);overflow:hidden}
+.fill{height:100%;border-radius:999px}
+.statval{font:700 22px var(--font-display);text-align:right}
+.checks{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;max-width:420px}
+.check{display:flex;align-items:center;gap:8px;background:var(--glass);border:1px solid var(--glass-line);
+  border-radius:10px;padding:6px 12px;font-size:14px;font-weight:700}
+.ok{font:700 12px var(--font-display);background:var(--mint);color:#06122b;border-radius:6px;padding:1px 8px;letter-spacing:.5px}
+.tabbar{display:flex;align-items:center;height:var(--tabbar-h);max-width:420px;background:var(--surface);
+  border-top:1px solid rgba(255,255,255,.14);border-radius:var(--radius-md)}
+.tab{flex:1;min-height:52px;border:0;background:transparent;color:var(--ink-muted);font:600 12px var(--font-body);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer}
+.tab .orb{width:24px;height:24px;border-radius:50%;border:2px solid var(--ink-muted)}
+.tab.on{color:var(--ink)} .tab.on .orb{border:0;background:var(--sky-500);box-shadow:0 0 10px rgba(82,183,255,.5)}
+/* Phones */
+.phones{display:flex;flex-wrap:wrap;gap:32px;justify-content:center}
+.pw{width:328px;height:709px;flex:none}
+.phone{width:390px;height:844px;border-radius:36px;overflow:hidden;transform:scale(.84);transform-origin:top left;
+  box-shadow:0 0 0 8px #02061a,0 0 0 9px rgba(255,255,255,.2),0 30px 60px rgba(0,0,0,.5);display:flex;flex-direction:column;
+  background:radial-gradient(80% 36% at 16% 0%,rgba(82,183,255,.26),transparent 70%),
+             radial-gradient(70% 34% at 90% 8%,rgba(167,139,255,.24),transparent 70%),var(--night-900);
+  font-weight:600;font-size:15px;line-height:1.35}
+.p-head{height:56px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 16px;
+  background:var(--surface);border-bottom:1px solid rgba(255,255,255,.14)}
+.p-title{font-family:var(--font-display);font-weight:700;font-size:22px}
+.p-seg{display:flex;gap:6px}
+.p-segbtn{min-height:44px;padding:0 16px;border-radius:12px;font-family:var(--font-display);font-weight:700;
+  font-size:14px;border:2px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.p-segbtn.on{background:var(--sky-500);border-color:var(--sky-500);color:var(--ink-on-sky)}
+.p-body{flex:1;min-height:0;padding:14px 16px;display:flex;flex-direction:column;gap:12px;overflow:hidden}
+.p-label{font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-muted)}
+.p-card{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.16);border-radius:16px;
+  box-shadow:var(--shadow-glass);padding:10px}
+.p-resume{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.p-tiles{flex:1;display:grid;grid-template-columns:1fr 1fr;grid-auto-rows:1fr;gap:12px;min-height:0}
+.p-tile{display:flex;flex-direction:column;justify-content:space-between;gap:10px}
+.p-tile .ic{width:48px;height:48px;border-radius:12px;background:var(--surface-3);display:flex;align-items:center;justify-content:center}
+.p-tile .verb{font-family:var(--font-display);font-weight:700;font-size:22px;line-height:1.05}
+.p-tile .sub{font-size:13px;font-weight:700;margin-top:3px}
+.p-tile .meta{font-size:12px;font-weight:700;color:var(--ink-muted);margin-top:6px}
+.soon{font-size:12px;font-weight:800;border-radius:4px;padding:1px 6px;background:var(--gold);color:#080f2b;letter-spacing:.4px}
+.p-stage{height:190px;display:flex;align-items:center;justify-content:center}
+.p-strip{display:flex;gap:10px;overflow:hidden}
+.p-part{flex:none;width:112px}
+.p-part .art{height:60px;border-radius:10px;background:var(--surface-3);display:flex;align-items:center;justify-content:center}
+.p-part .art i{width:34px;height:34px;border-radius:8px;display:block}
+.p-part .nm{font-family:var(--font-display);font-weight:700;font-size:14px;line-height:1.15;margin-top:5px}
+.p-part .tg{font-size:12px;font-weight:700;color:var(--ink-muted)}
+.p-cta{flex:none;padding:8px 16px 12px}
+.p-cta .btn{width:100%;font-size:18px}
+.p-pack{display:flex;gap:10px}
+.p-pack .p-part{flex:1;width:auto}
+.p-pack .art{height:70px;border-width:3px;border-style:solid}
+.p-stack{display:flex;flex-direction:column;gap:14px}
+.p-stack .btn{width:100%;font-size:18px;min-height:68px}
+.p-cam{height:300px;border-radius:16px;background:var(--surface-3);display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:12px;border:1px solid rgba(255,255,255,.16)}
+.p-outline{width:180px;height:110px;border:3px dashed var(--mint);border-radius:14px;display:flex;
+  align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--mint)}
+.p-kv{display:flex;justify-content:space-between;gap:12px;padding:8px 2px;border-bottom:1px solid rgba(255,255,255,.1);font-size:14px}
+.p-kv span:first-child{color:var(--ink-muted);font-weight:700}
+.p-kv span:last-child{font-weight:700;text-align:right}
+.p-mic{width:100%;min-height:52px;border-radius:var(--radius-pill);border:2px dashed var(--line);
+  background:transparent;color:var(--ink);font-family:var(--font-display);font-weight:700;font-size:15px;cursor:pointer}
+.p-moods{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.p-mood{min-height:56px;border-radius:12px;border:2px solid var(--line);background:var(--surface);
+  color:var(--ink);font:700 12px var(--font-body);cursor:pointer}
+.p-mood.on{border-color:var(--gold);color:var(--gold)}
+.p-hero{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center}
+.p-name{font-family:var(--font-display);font-weight:700;font-size:48px;line-height:1}
+.p-theme{width:100%}
+.p-theme .bar{height:8px;border-radius:999px;background:var(--glass-strong);overflow:hidden}
+.p-theme .bar i{display:block;height:100%;width:38%;background:var(--gold);border-radius:999px}
+.p-card-sm{width:100%;text-align:left}
+</style>
+</head>
+<body>
+<header class="hero">
+<div class="kicker">ToyForge · mockups · Oct 27, 2026</div>
+<h1>Mockups</h1>
+<p class="lead">The 90-second demo loop from <a href="spec.md">the spec</a>, styled with the
+<a href="design-guide.html">ToyForge design guide</a>. Layout and flow follow
+<a href="wireframe.md">the wireframe</a>. Quality bar: quick and readable, not final art.</p>
+</header>
+<main>
+<section id="screens"><h2>Screens</h2>
+<p class="lead">The 90-second demo loop from the spec, in plan order: Scan (Day 2),
+Build (Days 3–4), AR try-on (Day 5), Print (Day 4), Play (Days 6/9), Reveal (Day 6).
+If a screen isn't on this path, it doesn't get styled before the freeze.</p>
+<div class="phones">
+
+<div class="demo"><div class="pw"><div class="phone">
+<div class="p-head"><div class="p-title">Scan</div><span class="p-label">Day 2</span></div>
+<div class="p-body">
+<div class="p-cam"><div class="p-outline">SAM outline</div><div class="p-label" style="color:var(--mint)">Found: toy car</div></div>
+<div class="row" style="gap:8px"><button class="chip on" type="button">"toy car"</button><button class="chip" type="button">Retake</button></div>
+<div>
+<div class="p-kv"><span>Size class</span><span>Small</span></div>
+<div class="p-kv"><span>Mount</span><span>Forge Mount</span></div>
+<div class="p-kv"><span>Attach point</span><span>Top</span></div>
+</div>
+<button type="button" class="p-mic">Hold and say what this is</button>
+<div class="p-tile meta" style="font-size:12px;font-weight:700;color:var(--ink-muted)">Live scan failed? The preloaded backup toy loads instead — same code path.</div>
+</div>
+<div class="p-cta"><button type="button" class="btn btn-primary">Save to Toybox</button></div>
+<div class="tabbar"><button type="button" class="tab"><span class="orb"></span>Home</button><button type="button" class="tab on"><span class="orb"></span>Toybox</button><button type="button" class="tab"><span class="orb"></span>Build</button><button type="button" class="tab"><span class="orb"></span>Play</button><button type="button" class="tab"><span class="orb"></span>More</button></div>
+</div></div><span class="cap">Scan — SAM prompt, size, attach point</span></div>
+
+<div class="demo"><div class="pw"><div class="phone">
+<div class="p-head"><div class="p-title">Build</div>
+<div class="p-seg"><button type="button" class="p-segbtn on">Snap</button><button type="button" class="p-segbtn">Pro</button></div></div>
+<div class="p-body">
+<div class="p-card"><div class="p-stage"><svg width="220" height="165" viewBox="0 0 200 150" aria-hidden="true"><polygon points="100,34 170,66 100,98 30,66" fill="#7fcaff" stroke="#06122b" stroke-width="1.5" stroke-linejoin="round"/><polygon points="30,66 100,98 100,134 30,102" fill="#2a7fcc" stroke="#06122b" stroke-width="1.5" stroke-linejoin="round"/><polygon points="100,98 170,66 170,102 100,134" fill="#4aa0e8" stroke="#06122b" stroke-width="1.5" stroke-linejoin="round"/><ellipse cx="100" cy="49" rx="13" ry="6.5" fill="#b5e0ff" stroke="#06122b" stroke-width="1.5"/><ellipse cx="123" cy="60.5" rx="13" ry="6.5" fill="#b5e0ff" stroke="#06122b" stroke-width="1.5"/><ellipse cx="77" cy="60.5" rx="13" ry="6.5" fill="#b5e0ff" stroke="#06122b" stroke-width="1.5"/><ellipse cx="100" cy="72" rx="13" ry="6.5" fill="#b5e0ff" stroke="#06122b" stroke-width="1.5"/></svg></div></div>
+<div class="checks"><div class="check"><span class="ok">OK</span>On grid</div><div class="check"><span class="ok">OK</span>Fits size</div><div class="check"><span class="ok">OK</span>3D prints</div><div class="check"><span class="ok">OK</span>Fits bed</div></div>
+<div class="row" style="gap:8px"><button class="chip on" type="button">Accessories</button><button class="chip" type="button">Vehicles</button><button class="chip" type="button">Characters</button></div>
+<div class="p-strip">
+<div class="p-part p-card" style="border-color:var(--sky-500)"><div class="art"><i style="background:#52b7ff"></i></div><div class="nm">Rockets</div><div class="tg">3D print</div></div>
+<div class="p-part p-card"><div class="art"><i style="background:#a78bff"></i></div><div class="nm">Glow shoes</div><div class="tg">3D print</div></div>
+<div class="p-part p-card"><div class="art"><i style="background:#ffd24d"></i></div><div class="nm">Wings</div><div class="tg">3D print</div></div>
+</div>
+</div>
+<div class="p-cta"><button type="button" class="btn btn-primary">Preview in AR</button></div>
+<div class="tabbar"><button type="button" class="tab"><span class="orb"></span>Home</button><button type="button" class="tab"><span class="orb"></span>Toybox</button><button type="button" class="tab on"><span class="orb"></span>Build</button><button type="button" class="tab"><span class="orb"></span>Play</button><button type="button" class="tab"><span class="orb"></span>More</button></div>
+</div></div><span class="cap">Build — grid snap + live checks (Days 3–4)</span></div>
+
+<div class="demo"><div class="pw"><div class="phone">
+<div class="p-head"><div class="p-title">AR try-on</div><span class="p-label">Day 5</span></div>
+<div class="p-body">
+<div class="p-cam" style="height:340px"><div class="p-outline" style="border-color:var(--sky-500);color:var(--sky-500)">Car + spoiler</div><div class="p-label" style="color:var(--sky-300)">True scale · sits on Forge Mount</div></div>
+<div class="p-label">Skin</div>
+<div class="row" style="gap:8px"><button class="chip on" type="button">Racer red</button><button class="chip" type="button">Ocean</button><button class="chip" type="button">Custom…</button></div>
+<button type="button" class="p-mic">Hold and describe the look</button>
+<div class="stat"><span class="statname">Speed</span><div class="track"><div class="fill" style="background:var(--stat-speed);width:70%"></div></div><span class="statval">+7</span></div>
+</div>
+<div class="p-cta"><button type="button" class="btn btn-primary">Equip part</button></div>
+<div class="tabbar"><button type="button" class="tab"><span class="orb"></span>Home</button><button type="button" class="tab"><span class="orb"></span>Toybox</button><button type="button" class="tab on"><span class="orb"></span>Build</button><button type="button" class="tab"><span class="orb"></span>Play</button><button type="button" class="tab"><span class="orb"></span>More</button></div>
+</div></div><span class="cap">AR try-on — true scale before anything prints</span></div>
+
+<div class="demo"><div class="pw"><div class="phone">
+<div class="p-head"><div class="p-title">3D print</div><span class="p-label">Day 4</span></div>
+<div class="p-body">
+<div class="p-card"><div class="p-stage" style="height:150px"><svg width="180" height="120" viewBox="0 0 200 150" aria-hidden="true"><polygon points="100,34 170,66 100,98 30,66" fill="#7fcaff" stroke="#06122b" stroke-width="1.5" stroke-linejoin="round"/><polygon points="30,66 100,98 100,134 30,102" fill="#2a7fcc" stroke="#06122b" stroke-width="1.5" stroke-linejoin="round"/><polygon points="100,98 170,66 170,102 100,134" fill="#4aa0e8" stroke="#06122b" stroke-width="1.5" stroke-linejoin="round"/></svg></div></div>
+<div class="checks"><div class="check"><span class="ok">OK</span>Watertight</div><div class="check"><span class="ok">OK</span>No supports</div><div class="check"><span class="ok">OK</span>Fits bed</div><div class="check"><span class="ok">OK</span>On grid</div></div>
+<div>
+<div class="p-kv"><span>Orientation</span><span>Flat</span></div>
+<div class="p-kv"><span>Layer height</span><span>0.2 mm</span></div>
+<div class="p-kv"><span>Material</span><span>PLA</span></div>
+<div class="p-kv"><span>Export</span><span>Under 10 s</span></div>
+</div>
+<div class="p-tile meta" style="font-size:12px;font-weight:700;color:var(--ink-muted)">Print and Order stay greyed out until every check passes.</div>
+</div>
+<div class="p-cta"><button type="button" class="btn btn-primary">Export STL</button></div>
+<div class="tabbar"><button type="button" class="tab"><span class="orb"></span>Home</button><button type="button" class="tab"><span class="orb"></span>Toybox</button><button type="button" class="tab on"><span class="orb"></span>Build</button><button type="button" class="tab"><span class="orb"></span>Play</button><button type="button" class="tab"><span class="orb"></span>More</button></div>
+</div></div><span class="cap">Print — checks gate the export</span></div>
+
+<div class="demo"><div class="pw"><div class="phone">
+<div class="p-head"><div class="p-title">Play</div><span class="p-label">Days 6/9</span></div>
+<div class="p-body">
+<div class="p-cam" style="height:300px"><div class="p-outline" style="border-color:var(--violet-500);color:var(--violet-300)">Mini game · 2.5D</div><div class="p-label" style="color:var(--gold)">Boost on: printed spoiler</div></div>
+<div class="stat"><span class="statname">Speed</span><div class="track"><div class="fill" style="background:var(--stat-speed);width:85%"></div></div><span class="statval">+7</span></div>
+<div class="p-label">Mood</div>
+<div class="p-moods"><button type="button" class="p-mood on">Joy</button><button type="button" class="p-mood">Danger</button><button type="button" class="p-mood">Calm</button><button type="button" class="p-mood">Triumph</button></div>
+<button type="button" class="p-mic">Hold to tell the story</button>
+</div>
+<div class="p-cta"><button type="button" class="btn btn-primary">Play in AR</button></div>
+<div class="tabbar"><button type="button" class="tab"><span class="orb"></span>Home</button><button type="button" class="tab"><span class="orb"></span>Toybox</button><button type="button" class="tab"><span class="orb"></span>Build</button><button type="button" class="tab on"><span class="orb"></span>Play</button><button type="button" class="tab"><span class="orb"></span>More</button></div>
+</div></div><span class="cap">Play — boost, moods, story mic</span></div>
+
+<div class="demo"><div class="pw"><div class="phone">
+<div class="p-head"><div class="p-title">Reveal</div><span class="p-label">Day 6 · no tab bar</span></div>
+<div class="p-body">
+<div class="p-hero">
+<div class="p-label" style="color:var(--gold)">New character</div>
+<div class="p-name">Bobo</div>
+<div class="p-label">Red car · Snap · Racer red skin</div>
+<div class="p-outline" style="border-color:var(--gold);color:var(--gold);box-shadow:var(--shadow-glow-gold)">Entrance clip</div>
+<div class="p-theme"><div class="p-kv"><span>Theme song</span><span>0:06 / 0:15</span></div><div class="bar"><i></i></div></div>
+<div class="p-card p-card-sm"><div class="p-kv"><span>Stat</span><span>Speed +7</span></div><div class="p-kv"><span>Part</span><span>Spoiler · 3D printed</span></div><div class="p-kv"><span>Boost</span><span>On in game</span></div></div>
+</div>
+</div>
+<div class="p-cta"><button type="button" class="btn btn-primary">Save character</button></div>
+</div></div><span class="cap">Reveal — clip + 15s theme + card, plays once then saves</span></div>
+
+</div></section>
+</main>
+<footer>ToyForge mockups. Look and tokens live in <a href="design-guide.html">the design guide</a>.</footer>
+</body>
+</html>

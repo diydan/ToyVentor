@@ -7,16 +7,16 @@ export function FactoryScreen({
   onScan: () => void;
   onToybox: () => void;
 }) {
-  const { toys } = useToybox();
+  const { uploadedToys } = useToybox();
   return (
     <section>
       <h1>ToyForge</h1>
       <p className="lede">
         Scan a toy your kid already owns. Bolt something better onto it.
       </p>
-      {toys.length > 0 ? (
+      {uploadedToys.length > 0 ? (
         <button type="button" className="cta" onClick={onToybox}>
-          Continue — {toys.length} {toys.length === 1 ? "toy" : "toys"} in your Toybox
+          Continue — {uploadedToys.length} {uploadedToys.length === 1 ? "toy" : "toys"} in your Toybox
         </button>
       ) : (
         <button type="button" className="cta" onClick={onScan}>

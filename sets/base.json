@@ -30,6 +30,19 @@
       "supportFree": true
     },
     {
+      "id": "snap-brick-2x2-large",
+      "name": "Big Brick 2×2",
+      "line": "snap",
+      "mount": "stud",
+      "sizeClass": "large",
+      "grid": { "units": [2, 2], "profile": "stud_profile_large" },
+      "footprintMm": [64, 64],
+      "stat": { "name": "spin", "value": 1 },
+      "printable": true,
+      "orientation": "flat",
+      "supportFree": true
+    },
+    {
       "id": "forge-mount-small",
       "name": "Forge Mount",
       "line": "snap",
@@ -51,6 +64,19 @@
       "grid": { "units": [2, 1], "profile": "stud_profile_small" },
       "footprintMm": [32, 16],
       "stat": { "name": "glow", "value": 2 },
+      "printable": true,
+      "orientation": "flat",
+      "supportFree": true
+    },
+    {
+      "id": "snap-glow-capsule-01",
+      "name": "Glow Star Capsule",
+      "line": "snap",
+      "mount": "stud",
+      "sizeClass": "small",
+      "grid": { "units": [2, 2], "profile": "stud_profile_small" },
+      "footprintMm": [32, 32],
+      "stat": { "name": "glow", "value": 3 },
       "printable": true,
       "orientation": "flat",
       "supportFree": true

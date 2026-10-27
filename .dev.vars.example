@@ -1,4 +1,5 @@
-# Copy to .dev.vars for local dev. Names are placeholders until the
-# hackathon-issued keys land; the Worker reads these, the browser never does.
-META_MODEL_API_KEY=
+# Copy to .dev.vars for local dev. Never put real values in THIS file:
+# it is committed. The Worker reads these, the browser never does.
+MODEL_API_KEY=
+META_MODEL_API_URL=https://api.meta.ai/v1
 MUREKA_API_KEY=
