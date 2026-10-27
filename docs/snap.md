@@ -43,6 +43,12 @@ size rather than two).
 
 - AR try-on at true scale from the saved size class and attach point.
 - The mini game equips the part and applies its stat. A printed add-on adds a boost.
+- Under-8 gameplay is open-ended and low-pressure: discovery-first, no fail
+  states, no timers, nothing to lose. Presented in 2.5D. Tapping things makes
+  them react; experimenting is the game, and every outcome counts as playing
+  it right.
+- Ages 1-3 layer: spoken color names, cheeky animal character names, and simple
+  narration that names what the kid just did ("You added a blue tail!").
 - Humanoids use Mixamo clips, tagged per the minimo contract. Everything else gets bounce, spin, and wobble.
 
 ## Content
