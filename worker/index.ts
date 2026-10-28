@@ -10,8 +10,9 @@ import {
   type ToyKind,
 } from "../shared/toy";
 import { makeSkin, samConfigured, segmentToy, type MetaEnv } from "./meta";
+import { handleOwnership, type OwnershipEnv } from "./ownership";
 
-export interface Env extends MetaEnv {
+export interface Env extends MetaEnv, OwnershipEnv {
   MUREKA_API_KEY?: string;
   ASSETS?: { fetch: (request: Request) => Promise<Response> };
 }
@@ -170,6 +171,10 @@ export default {
     if (url.pathname === "/api/skin") {
       if (request.method === "POST") return handleSkinPost(request, env);
       return json({ error: "method not allowed" }, 405);
+    }
+
+    if (url.pathname === "/api/ownership" || url.pathname.startsWith("/api/ownership/")) {
+      return handleOwnership(request, env, url.pathname.slice("/api/ownership".length));
     }
 
     if (url.pathname.startsWith("/api/")) {

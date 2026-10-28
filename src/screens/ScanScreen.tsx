@@ -5,6 +5,8 @@ import {
   type ToyKind,
 } from "../../shared/toy";
 import { postSamScan } from "../lib/api";
+import { pushOwnership } from "../lib/sync";
+import type { Toy } from "../../shared/toy";
 import { backupToys, downscalePhoto, submitScan } from "../features/scan/scan";
 import { useToybox } from "../state/toybox";
 
@@ -16,6 +18,10 @@ export function ScanScreen({
   onCancel: () => void;
 }) {
   const { addToy } = useToybox();
+  const saveToy = (toy: Toy) => {
+    addToy(toy);
+    void pushOwnership({ type: "toy", id: toy.id, payload: toy });
+  };
   const [name, setName] = useState("");
   const [kind, setKind] = useState<ToyKind>("car");
   const [prompt, setPrompt] = useState("car");
@@ -49,7 +55,7 @@ export function ScanScreen({
     });
     // Worker validates and (later) runs SAM. Offline is fine: keep locally.
     await submitScan(toy, prompt);
-    addToy(toy);
+    saveToy(toy);
     onDone();
   };
 
@@ -67,7 +73,7 @@ export function ScanScreen({
         imageDataUrl: photo,
       });
       if (result.toy && result.sam.applied) {
-        addToy({ ...result.toy, imageDataUrl: photo });
+        saveToy({ ...result.toy, imageDataUrl: photo });
         onDone();
         return;
       }
@@ -87,7 +93,7 @@ export function ScanScreen({
   const useBackup = (toyId: string) => {
     const toy = backupToys.find((t) => t.id === toyId);
     if (toy) {
-      addToy(toy);
+      saveToy(toy);
       onDone();
     }
   };
