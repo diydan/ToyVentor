@@ -1,0 +1,36 @@
+# Design log
+
+A dated record of the design decisions behind this system, kept as evidence of independent design. Each entry says what was decided and why. The generator code, the specs' changelogs and the selftests hold the detail; keep the whole folder under version control (git) so every change is dated, and never rewrite history.
+
+The geometry is our own throughout: our lattice, our stud and hole dimensions, our fit numbers. Existing construction systems were looked at only as background research; no files, dimensions or code from them are used, and a selftest fails the build if a third-party construction-system name appears in any file.
+
+## On or before 2026-10-28 (earlier sessions)
+
+- **Two lines on one lattice.** Snap (young children, studs) and Pro (ages 8 and up, pins and bores), both on a 12.5 mm unit (TU). Small studs at 1 TU, Large at 2 TU, the Pro hole grid at 1 TU. Chosen as our own unit, unrelated to any existing system's pitch.
+- **Single source of truth.** Every number, check level and safety constant lives in `interfaces.json`; code and documents are generated from it.
+- **Check system.** Geometry, printability, interface, safety and metadata checks, with severities as data. Physical checks (printed fit, breakage) are always pending until a print is tested.
+- **Shared Forge Mount.** One mount definition for both lines, attaching to the scanned toy and exposing a stud or bore face.
+- **Safety screen.** A conservative small-parts screen against the 31.75 mm cylinder; the Large size is the only one meant for under-3s.
+
+## 2026-10-28
+
+- **Add-ons re-proportioned** to the lattice (body scale 1.5625); wing roots buried in the foot to remove an overhang.
+- **Status is derived, not declared.** A part is verified only when no blocking check fails, the small-parts result is not marginal and a Large part clears the cylinder.
+- **Fit is measured.** Parts are sliced at mid-engagement and each stud or pin gap is measured from the built geometry. A cavity 0.5 mm too loose had passed the old overlap-only check; it is now blocked. Fit-critical cylinders moved to 96 segments because 32-segment facets were as large as the 0.05 mm design gap. Calibration target: printer surface offset within about -0.07 to +0.08 mm.
+- **End game set:** the top 30 Snap and 30 Pro parts, tracked in `catalog.json`; one catalog row per part.
+- **Round block replaced by a dome.** A round outline cannot hold a stud grid on the lattice (it needs 28.4 mm against a 24.8 mm footprint).
+- **Small slope at 30 degrees.** At 45 degrees it landed in the marginal small-parts band.
+- **Pro rules enforced:** bores on the lattice and really present, pins and bores built to the interface, gears whose pitch diameters are whole TU, and pin-and-bore mating in the validator.
+- **Pro core:** beams, pins, shafts and bushings. Pins and shafts print lying on a flat for strength; parts may print in a different orientation than they assemble.
+- **Snap characters and capsules** built from size-parametric builders; the small Forge Mount uses a 5x5 grid so a 2x2 part grips four studs.
+- **Gears, rack, ring gear, corner beams, Pro mount and the Snap-to-Pro adapter.** The worm pair was dropped after testing: a module 2.5 worm needs supports at 20 and 30 degrees and has no tooth left at 45. Replaced by an internal ring gear and a Z25 spur gear.
+- **Round Forge Mounts** sized from the scan, refused if a 2x2 part would grip fewer than 3 studs.
+- **Integrated bases.** Add-ons and capsules no longer stand on a plate: stud holes are cut into their own underside or a small pad, direction-sensitive parts are locked against turning, and every one is checked on a full plate.
+- **Legal review.** Licensing drafted (`LICENSING.md`), compliance checklist written (`COMPLIANCE.md`). Name screen: the current product name is already used by others in toys (an AI sketch-to-printable-toy tool, and an action-figure maker's brand), so a replacement name needs clearing before launch.
+- **Hugging Forge Mount, two parts.** Tested a one-piece hugging mount on 12 stand-in surfaces: 11 needed supports, and a one-piece seat touched only 13 to 60 percent of the surface. Chose a shoe that prints hugging-face-up (no supports, full contact) joined to the usual mount face by friction pins. Large faces join permanently, because removable pins are small parts and the Large line is for under-3s.
+- **Clip-on shoes for limbs and tails.** The shoe's C wall wraps a limb up to 240 degrees and snaps on; the wrap is chosen so the estimated strain stays under 2% and each arm opens at least 0.25 mm (five times the calibrated print error). The first version's clip was missing because a cutting shape was wound the wrong way; a render caught it, and a geometric test (the limb must sit free but not drop out) now guards it.
+- **BlockML and MachineBlocks evaluated, not adopted.** A spike and a pilot looked at both. The MachineBlocks geometry files carry non-commercial share-alike headers despite the package's Apache-2.0 declaration, and BlockML did not enforce rules across connected parts. No code, files or outputs were carried over (see `WHY_NOT_BLOCKML_MACHINEBLOCKS.md`).
+- **Specs rewritten clean (v2.3)** with the current state; build history moved to this log. New Forge Mount spec; `specs/` is assembled by `make_specs.py`.
+- **W5 done; catalog complete (60 of 60 verified).** Wheels, a hinge leaf and a cross connector. Connectors may now point along any axis and parts may tip in quarter turns, so builds can have horizontal axles and hinge pins. Horizontal free bores print as teardrops and fixed bores flats-up with 50 degree shoulders. The gate caught three slips along the way: a teardrop drawn with a coarse circle (gap 0.193 against 0.200 mm), the fit matrix measuring sideways bores as if vertical, and a shaft seated with its flats crosswise to a fixed bore (0.75 mm interference). Seating now lines up flats.
+- **Lattice decided (Dan, 2026-10-28).** Snap's 8/16 mm pitch became 12.5/25 mm on 2026-10-27 as a proposal from Muse that was implemented and built on but never formally confirmed; Dan confirmed it today. Reasons: it is the only way Snap and Pro share one lattice without permanent adapters; 8/16 mm matched the spacing of the market-leading brick systems without matching their studs, which invites a fit expectation it cannot meet; Large parts clear the small-parts cylinder comfortably at 25 mm (16 mm cleared it by 14%); bigger studs tolerate home-printer error better. Cost: Large parts are about 1.6x the size of a toddler brick at the old spacing and use about 3.5x the material. Condition: at the calibration print, a printed Large 2x2 must feel right in a toddler's hand and on a real toy; if it is too big, shrink Large on the same lattice rather than return to 16 mm.
+- **Renamed to ToyVentor (Dan, 2026-10-28).** The product was called ToyForge until today; the name screen (above) found that name already used by others in toys. Dan chose ToyVentor (toyventor.com). Code modules, generated file names and current documents were renamed the same day and the gate re-run; dated entries before this one keep the old name where they describe the past. Trademark clearance and registration are still to confirm with counsel before publishing.

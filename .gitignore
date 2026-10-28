@@ -9,3 +9,5 @@ generated/*
 .wrangler/
 .DS_Store
 *.local
+.agents/memory/.muse-memory.lock
+docs/PartSpec/pkg/

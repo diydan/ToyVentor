@@ -1,17 +1,29 @@
 # ToyVentor Snap
 
 Snap is the kid line. Younger kids, with a parent or older sibling helping. Everything is
-snap-fit and tool-free — no screws. Most parts are shapes with a game function: one stat
+snap-fit and tool-free: no screws. Most parts are shapes with a game function: one stat
 plus a behavior in AR and the mini game.
 
 ## Connection
 
 Stud grid, two sizes: small and large. Large is for the youngest kids. Stud geometry lives
-behind a `stud_profile` setting so the standard can change without redoing every part, mostly
-because the right clearance isn't known yet: as of Oct 27 nothing in Snap has been printed, so
-these numbers are targets, not measurements. They lock only after a calibration piece has
-been through a few fit loops on a real printer (planned Day 4; if it slips, Snap ships in one
-size rather than two).
+behind a `stud_profile` setting so the standard can change without redoing every part.
+
+Fit is designed to not need user calibration. Sockets are compliant: a lead-in taper plus
+relief slots let the rim flex over a range of printer tolerances, and clearances start from
+library-tested defaults at Snap's generous scale. The one remaining unknown is handled
+invisibly: the first Forge Mount print (`forge-mount-first-print`) carries a breakaway
+selector strip with three dotted sockets (1 snug, 2 standard, 3 easy) and a loose test
+brick. The user snaps the brick into each, answers "which clicked best?" once, breaks the
+strip off, and that choice becomes the printer's stored offset. Later mounts print plain.
+Known printer profiles may skip the question entirely. There is never a standalone
+calibration step in the product; the five-step calibration piece in parts/calibration/
+remains an internal engineering tool for our own fit loops.
+
+As of Oct 28 nothing in Snap has been printed, so clearances are still targets, not
+measurements. The compliant range widens the acceptable window; it does not retire the
+Day 4 print proof. If no variant clicks acceptably on the test printer, Snap ships in one
+size rather than two while geometry is reworked.
 
 ## Part types
 
@@ -26,7 +38,9 @@ size rather than two).
 ## Design rules
 
 - Every part prints without supports in a listed orientation; overhang limits live in the set file.
-- Snap fit varies by printer, so each printer gets a calibration piece and offsets.
+- Snap fit varies by printer, so sockets are compliant first (lead-in taper, relief slots,
+  wide clearance band); the per-printer offset comes from the first-print selector, never
+  from a user-facing calibration task.
 - Rounded edges, no sharp corners. No small loose pieces on parts for the youngest kids.
 - Every part lists mount type, size class, one stat, and whether it prints.
 - Character add-ons are original designs.
@@ -62,3 +76,5 @@ size rather than two).
 
 - A Snap part is scanned, fitted, equipped in the game, and exported as a valid STL in the demo.
 - Checks pass in both sizes.
+- The first-print selector produces an acceptable click on the test printer, and the
+  chosen variant is stored as that printer's offset.

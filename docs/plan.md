@@ -29,7 +29,7 @@ Build one car end to end, then widen. Scan -> builder -> AR -> game -> STL -> Re
 10. **Day 10 — Nov 4: Submit.** Core: final demo record, form/video/screenshots by 9 PM ET, code hard stop 6 PM ET. Stretch if ahead overall: 3 voice keywords via Muse Voice Transcribe + 1 STEM gear ratio challenge.
 
 ## Validation Plan
-- Daily: end-of-day phone check — what is demo-able right now, logged in journal.
+- Daily: end-of-day phone check of what is demo-able right now, logged in journal.
 - Day 4: Mount + Snap part prints support-free; checks pass in demo size.
 - Day 6: full scan-to-Reveal loop under 60s; STL timed under 10s.
 - Day 7: Market returns only fitting parts on 2 hero toys; frozen build runs with backup path.

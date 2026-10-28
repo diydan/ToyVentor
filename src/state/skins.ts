@@ -1,4 +1,4 @@
-const KEY = "toyventor:skins:v1";
+const KEY = "toyforge:skins:v1";
 
 type SkinMap = Record<string, string>;
 

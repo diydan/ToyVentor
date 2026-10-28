@@ -22,9 +22,9 @@ I was a Lego fanatic as a kid and I'm a robotics fanatic as an adult, and ToyVen
 
 ## Why
 
-If robotics is going to be the next big wave, I don't think it starts with another expensive kit that gets built once and shelved — it probably starts earlier and messier, with a kid bolting a spoiler onto a car they already care about and discovering, almost by accident, why it wobbles. That's the bet, anyway. The path I want is snap-on upgrades first, then gears and motion, then (much later) sensors and control, and each step gets designed and tested in the browser before anything is printed and held in a hand.
+If robotics is going to be the next big wave, I don't think it starts with another expensive kit that gets built once and shelved; it probably starts earlier and messier, with a kid bolting a spoiler onto a car they already care about and discovering, almost by accident, why it wobbles. That's the bet, anyway. The path I want is snap-on upgrades first, then gears and motion, then (much later) sensors and control, and each step gets designed and tested in the browser before anything is printed and held in a hand.
 
-The loop itself is simple enough that it doesn't need its own diagram: scan the toy, build on it in the builder and check the fit in AR, print the part, then play with the upgraded toy in AR and the mini game — and every finished build gets its Reveal, an entrance animation, a 15 second theme, and a character card.
+The loop itself is simple enough that it doesn't need its own diagram: scan the toy, build on it in the builder and check the fit in AR, print the part, then play with the upgraded toy in AR and the mini game, and every finished build gets its Reveal, an entrance animation, a 15 second theme, and a character card.
 
 ## Two product lines
 
@@ -40,7 +40,7 @@ Both share one adapter, the Forge Mount, one part format, one set of checks. Any
 
 ## Virtual builder
 
-You don't need to own a single physical part to build here — that's the point, since most families won't — but Print and Order stay greyed out until the checks pass, because an STL that fails on the bed is worse than no STL at all.
+You don't need to own a single physical part to build here (that's the point, since most families won't), but Print and Order stay greyed out until the checks pass, because an STL that fails on the bed is worse than no STL at all.
 
 - Same part models that print. What you see is what prints.
 - Scanned toy shows as stand-in body at its attach point.
@@ -82,7 +82,7 @@ Play with a real toy while phone listens and watches. App answers with music tha
 
 ## Forge Club
 
-A monthly themed set — 6 parts, 2 skins, a theme loop, and at least one part you can actually print — because if nothing in the box ever becomes physical, we've just built another skin shop. Free players get the base parts and a daily pack; members get the monthly set plus an extra daily roll, and if you stop paying you keep what you've unlocked and simply miss the new drops (old sets move to the Market, so nothing's gone forever). Billing will go through an outside provider eventually; in the demo it's mocked, with two seeded sets.
+A monthly themed set: 6 parts, 2 skins, a theme loop, and at least one part you can actually print, because if nothing in the box ever becomes physical, we've just built another skin shop. Free players get the base parts and a daily pack; members get the monthly set plus an extra daily roll, and if you stop paying you keep what you've unlocked and simply miss the new drops (old sets move to the Market, so nothing's gone forever). Billing will go through an outside provider eventually; in the demo it's mocked, with two seeded sets.
 
 ## Under the hood
 
@@ -105,7 +105,7 @@ A monthly themed set — 6 parts, 2 skins, a theme loop, and at least one part y
 | printable | Whether a print file exists and passes checks |
 | skin | Game and AR only. Printed parts are one color |
 
-So a single part looks something like this in its set file — note there's only ever one stat, because the moment a part is good at two things it becomes the default pick and the rest of the library might as well not exist:
+So a single part looks something like this in its set file. Note there's only ever one stat, because the moment a part is good at two things it becomes the default pick and the rest of the library might as well not exist:
 
 ```json
 {
@@ -138,7 +138,7 @@ We build on the Meta Model API. Scan is [SAM 3.1](https://ai.meta.com/blog/segme
 
 Theme songs, loops, sound effects come from Mureka API. Parts are parametric OpenSCAD and are not generated. Checks, grid snapping, motion tests are plain code.
 
-Two things I considered and rejected, for the record. First, generating part geometry with a model: tempting in a Meta hackathon, but a generated mesh can't promise watertight, support-free, on-grid — and the whole pitch collapses the first time a kid's print fails, so geometry stays boring parametric OpenSCAD and the AI stays on the seeing/talking/skin side. Second, generating songs on the fly inside Live Play: latency and mood whiplash killed it, which is why Live Play crossfades pre-made loops instead and only the Reveal theme is generated (ahead of time, where a 20 second wait doesn't matter).
+Two things I considered and rejected, for the record. First, generating part geometry with a model: tempting in a Meta hackathon, but a generated mesh can't promise watertight, support-free, on-grid, and the whole pitch collapses the first time a kid's print fails, so geometry stays boring parametric OpenSCAD and the AI stays on the seeing/talking/skin side. Second, generating songs on the fly inside Live Play: latency and mood whiplash killed it, which is why Live Play crossfades pre-made loops instead and only the Reveal theme is generated (ahead of time, where a 20 second wait doesn't matter).
 
 ## What is real in the demo
 
@@ -173,7 +173,7 @@ Two things I considered and rejected, for the record. First, generating part geo
 
 ## ToyVentor Snap
 
-The kid line: snap-fit, tool-free, stud grid in two sizes. Full part types, design rules, print and game behavior live in [snap.md](snap.md), which is canonical for this line — this spec no longer duplicates it. Headline risk, stated there too: as of Oct 27 nothing in Snap has been printed yet, so its dimensions are targets until the Day 4 calibration test.
+The kid line: snap-fit, tool-free, stud grid in two sizes. Full part types, design rules, print and game behavior live in [snap.md](snap.md), which is canonical for this line; this spec no longer duplicates it. Headline risk, stated there too: as of Oct 27 nothing in Snap has been printed yet, so its dimensions are targets until the Day 4 calibration test.
 
 ## ToyVentor Pro
 

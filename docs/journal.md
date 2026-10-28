@@ -19,9 +19,9 @@ questions; each evening say "end day N" and we'll log what shipped. Submission d
 - Shipped: ideation + landed on ToyForge. Foundational building blocks: ToyForge Snap
   + ToyForge Pro (what Pro covers: TBD). Started basic product design concepts.
 - Origin story: Lego fanatic as a kid, robotics fanatic as an adult, and wanting to encourage my son's
-  ingenuity and creativity — with hidden STEM elements inside a gamified, next-gen, AI-powered Lego.
+  ingenuity and creativity, with hidden STEM elements inside a gamified, next-gen, AI-powered Lego.
 - Demo-able right now: spec + wireframe (12 pages) only, no code yet.
-- Blockers: none — idea stage.
+- Blockers: none (idea stage).
 - Tomorrow's first task: Scan + Toybox (Day 2).
 
 ---
@@ -56,7 +56,7 @@ Goal: photo a toy, detect mount + size class, save to toybox (wireframe p.2-3).
   things. If it holds up, describing our parts once and rendering the
   builder models, print files, and set data from that single source could
   save hours if not days and accelerate a significant portion of this
-  project — the parts pipeline is exactly the multi-output problem it
+  project: the parts pipeline is exactly the multi-output problem it
   targets. Unproven until tomorrow's spike: one real part through it,
   compare against hand-written OpenSCAD, decide before Day 4's print gate.
 - Demo-able right now: yes, locally. Factory -> Scan -> photo + SAM outline
@@ -75,7 +75,7 @@ Goal: photo a toy, detect mount + size class, save to toybox (wireframe p.2-3).
   fake-scanned. Still to prove: real phone photos of the real cup/bottle.
   Caught in time: the API key briefly sat in a committed file; moved to
   gitignored .dev.vars before any commit touched it.
-- Blockers: OpenSCAD not installed here, so zero STLs and zero prints —
+- Blockers: OpenSCAD not installed here, so zero STLs and zero prints.
   Day 4's calibration test is the hard deadline on that (the BlockML spike
   may reroute how parts get authored, but not that deadline). Nothing
   deployed yet (no D1/KV bindings, no domain). Journal day goals and plan
@@ -105,7 +105,7 @@ Goal: snap-on parts tray + true-scale AR preview (wireframe p.4).
   drag/snap/collisions/undo, per-toy saved builds), mini game driven by
   build stats, fit-filtered Market, seeded daily Packs, STL downloads,
   GLB pipeline (OpenSCAD 2026.10.11 is installed now; all 8 parts render
-  to manifold STLs — Day 2's "no OpenSCAD" blocker is gone), Reveal with
+  to manifold STLs, Day 2's "no OpenSCAD" blocker is gone), Reveal with
   saved character cards + synth theme, offline PWA shell.
 - Done this morning, not yet committed (Muse session only): SAM outline
   now persists on scanned toys; AR try-on crops to the outline and places
@@ -133,11 +133,57 @@ Goal: snap-on parts tray + true-scale AR preview (wireframe p.4).
   game/Reveal landed early). Treat plan.md scope-freeze dates as canonical.
 
 ### End of Day
-- Shipped:
-- Demo-able right now (yes/no, what):
-- AR try-on: working / flaky / blocked (details):
-- Blockers:
-- Tomorrow's first task:
+- Shipped (committed earlier today): virtual builder + mini game +
+  Market/Packs + STL/GLB pipeline (c64839f), Reveal + offline PWA (76e5c48),
+  SAM outline try-on + Muse Image skins + Live Play mood buttons (2543997),
+  app restyled to the design guide, Toybox as landing page
+  (uploads + built-ins), ToyForge -> ToyVentor rename incl. Worker name
+  (fce89a6), and the D1 ownership backend with device sync (7415b83).
+- Later Day 3, now landing: a hidden-calibration first-print selector —
+  compliant sockets in the small stud profile plus a one-piece
+  `forge-mount-first-print` whose breakaway strip carries three dotted
+  sockets (snug / standard / easy) and a loose test brick, with the choice
+  logic and tests in `shared/calibration.ts`. No standalone calibration task
+  ever reaches the user; the five-step calibration piece stays an
+  engineering tool.
+- Parts geometry fork, surfaced and recorded: PartSpec landed under
+  `docs/PartSpec/` — a Python/manifold3d generator on one 12.5 mm TU
+  lattice (Snap Small 12.5, Large 25, Pro 12.5) with 60 catalog parts
+  passing its geometry + measured-fit gate in scratch. Decision 0005
+  (proposed) makes it the geometry canon only after the Large hand-feel
+  print passes, freezes new 16/32 mm app-lane geometry in the meantime, and
+  sketches the merge back into the app. A fail-closed bridge
+  (`scripts/bridge-partspec.ts`, `shared/partspec.ts`) already converts a
+  6-part TU demo subset into `sets/partspec-demo.json` (validates, ships
+  nowhere yet), and the first TU print in the queue is the PartSpec Large
+  2x2 for that hand-feel check — ahead of rebuilding the selector on TU.
+- SAM mask spike (decision 0006): real masks are available inline in the
+  sam-3.1 stream and Meta's official `@meta-sam/parser` decodes them in
+  scratch (cup silhouette + handle, 72.1% coverage). Not integrated:
+  license check first, box-only path stays the fallback. This is also the
+  2D half of the scan export PartSpec's hugging/clip-on shoes wait on.
+- Docs organised: a `docs/README.md` index (start-here, both parts lanes,
+  decision index), PartSpec de-duplicated to one `specs/` snapshot plus a
+  pointer README, the duplicated wireframes PDF dropped, and
+  `snap-samples.md` bannered as the 16/32 mm app-lane prototype record.
+  `.gitignore` now also covers the Muse memory lock and the nested
+  PartSpec `pkg/` repo (standalone, to be pushed separately).
+- Demo-able right now: yes, scan -> build on grid -> AR try-on at footprint
+  scale -> game boost -> STL export -> Reveal, in the browser on desktop.
+  The tonight-must-work item is met.
+- AR try-on: working on desktop Chrome (outline crop + GLB at footprint
+  scale, screenshot-verified this morning). Real phone / Android Chrome
+  still untested, carries to Day 4.
+- Blockers: still no physical print from either lane (Day 4 decides the
+  Large hand-feel condition, then the TU selector rebuild, then real
+  clearances and the one-size call); license email drafted (0004), not
+  sent; toyventor.com route not attached yet (deploy preflight script now
+  names the exact wrangler steps); stats vocabulary between the app's 4
+  and PartSpec's 19 needs a game-design decision before a PartSpec set
+  ships.
+- Tomorrow's first task: Day 4 per plan.md — print the PartSpec Large 2x2
+  for the hand-feel condition, then the calibration piece + 1-2 Snap
+  samples, settle one-size vs two.
 
 ---
 
@@ -251,7 +297,7 @@ Goal: full demo run on phone, in demo time. No new features after today.
 
 ## Day 10 — Wed Nov 4: Submit by 9 PM ET
 
-Goal: submission in. No code after 6 PM ET — buffer for the form, video, screenshots.
+Goal: submission in. No code after 6 PM ET, to buffer for the form, video, screenshots.
 
 ### Start of Day
 - [ ] Submission checklist: video recorded, screenshots taken, description drafted?

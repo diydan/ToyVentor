@@ -8,7 +8,7 @@ Oct 28, 2026. Spike lives in /tmp/blockml-spike, deliberately outside this repo.
   CompositeBlock at size 2x2x3) renders through `@machineblocks/cli` to
   OpenSCAD, and OpenSCAD renders that to a valid 2.9 MB STL.
 - `@machineblocks/core` ships a real brick/block library (studs, sockets,
-  grids, presets) — the geometry ToyForge Snap was about to invent by hand,
+  grids, presets): the geometry ToyForge Snap was about to invent by hand,
   including the fit tolerances our hand-written stud_profile admits are
   unmeasured targets.
 - OpenSCAD 2026.10.11 is now installed locally; `npm run parts` renders all
@@ -18,8 +18,8 @@ Oct 28, 2026. Spike lives in /tmp/blockml-spike, deliberately outside this repo.
 ## What was not proven
 
 - That a MachineBlocks brick matches our set-file contract (footprint,
-  size classes, Forge Mount interface) without fighting its defaults —
-  its native grid is LEGO-like (15.9 mm 2x2), ours is a target 32 mm.
+  size classes, Forge Mount interface) without fighting its defaults.
+  Its native grid is LEGO-like (15.9 mm 2x2), ours is a target 32 mm.
 - Print quality or snap fit of anything. Nothing is printed yet.
 - Any GLB path. OpenSCAD has no glb export; STL/3MF conversion is separate
   work regardless of authoring language.

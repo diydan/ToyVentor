@@ -1,7 +1,7 @@
 # 0003 — BlockML spike results: grid proven, license gate found
 
 Oct 28, 2026. Completes step 2 of
-[0002](0002-blockml-machineblocks.md) — expressing Brick 2×2 small in
+[0002](0002-blockml-machineblocks.md): expressing Brick 2×2 small in
 BlockML and comparing against `parts/snap/`. The decision in 0002
 stands (hand OpenSCAD stays the committed source for the demo); this
 record adds the measurements 0002 asked for, plus one new blocker it
@@ -77,7 +77,7 @@ LEGO grid; 3.2 doubles every mbu-dimensioned feature at once.
 The ×2 brick lands on our small grid almost exactly, with a proper
 0.1 mm/side fit gap and a real hollow underside (tubes, pillars,
 printer configs, calibration blocks). Our brick is a solid body with
-cone-roof sockets — simpler, and its fit is equally unproven until
+cone-roof sockets: simpler, and its fit is equally unproven until
 something prints. Stud-height splits above are totals only; the
 body/stud split was inferred from grid math, not measured directly.
 

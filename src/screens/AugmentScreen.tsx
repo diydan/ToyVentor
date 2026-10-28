@@ -22,7 +22,7 @@ const baseSet = baseSetJson as ToySet;
 const setErrors = validateSet(baseSetJson);
 const partsById = new Map(baseSet.parts.map((p) => [p.id, p]));
 
-const storageKey = (toyId: string) => `toyventor:build:v1:${toyId}`;
+const storageKey = (toyId: string) => `toyforge:build:v1:${toyId}`;
 
 function loadBuild(toyId: string): Placement[] {
   try {

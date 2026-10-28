@@ -4,7 +4,7 @@ Scan a toy, build printable upgrades on it in the browser, and play with the
 upgraded toy in AR and a mini game. Built for the Meta Global AI Developer
 Hackathon (indie track), due Nov 4, 2026.
 
-Docs: [spec](docs/spec.md) · [plan](docs/plan.md) ·
+Docs: [index](docs/README.md) · [spec](docs/spec.md) · [plan](docs/plan.md) ·
 [wireframe](docs/wireframe.md) · [Snap](docs/snap.md) · [Pro](docs/pro.md) ·
 [journal](docs/journal.md)
 
