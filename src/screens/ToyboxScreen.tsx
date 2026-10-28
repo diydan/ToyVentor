@@ -2,6 +2,7 @@ import baseSetJson from "../../sets/base.json";
 import { validateSet, type ToySet } from "../../shared/part";
 import type { Toy } from "../../shared/toy";
 import { PartCard } from "../components/PartCard";
+import { revealsForToy } from "../state/reveals";
 import { useToybox } from "../state/toybox";
 
 const baseSet = baseSetJson as ToySet;
@@ -47,9 +48,11 @@ function ToyChipList({
 export function ToyboxScreen({
   onScan,
   onBuild,
+  onReveal,
 }: {
   onScan: () => void;
   onBuild?: () => void;
+  onReveal?: () => void;
 }) {
   const { uploadedToys, builtInToys, selected, selectToy } = useToybox();
 
@@ -92,6 +95,16 @@ export function ToyboxScreen({
               Build upgrades on {selected.name}
             </button>
           )}
+          {revealsForToy(selected.id).map((card) => (
+            <button
+              key={card.id}
+              type="button"
+              className="cta cta-quiet"
+              onClick={onReveal}
+            >
+              Character: {card.title}
+            </button>
+          ))}
           <h2>Built-in parts for {selected.name}</h2>
           {setErrors.length > 0 ? (
             <p className="error">Base set is invalid: {setErrors.join("; ")}</p>

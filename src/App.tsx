@@ -6,6 +6,7 @@ import { AugmentScreen } from "./screens/AugmentScreen";
 import { MarketScreen } from "./screens/MarketScreen";
 import { PacksScreen } from "./screens/PacksScreen";
 import { PlayScreen } from "./screens/PlayScreen";
+import { RevealScreen } from "./screens/RevealScreen";
 import { ToyboxScreen } from "./screens/ToyboxScreen";
 
 // The app opens on the Toybox so previous uploads and built-in assets are
@@ -14,6 +15,7 @@ export default function App() {
   const [tab, setTab] = useState<TabId>("toybox");
   const [scanning, setScanning] = useState(false);
   const [building, setBuilding] = useState(false);
+  const [reveal, setReveal] = useState<{ first: boolean } | null>(null);
 
   const openScan = () => setScanning(true);
   const closeScan = () => setScanning(false);
@@ -27,12 +29,21 @@ export default function App() {
       <main className="screen">
         {scanning ? (
           <ScanScreen onDone={finishScan} onCancel={closeScan} />
+        ) : reveal ? (
+          <RevealScreen firstReveal={reveal.first} onBack={() => setReveal(null)} />
         ) : building ? (
-          <AugmentScreen onBack={() => setBuilding(false)} />
+          <AugmentScreen
+            onBack={() => setBuilding(false)}
+            onFinish={(first) => { setBuilding(false); setReveal({ first }); }}
+          />
         ) : tab === "factory" ? (
           <FactoryScreen onScan={openScan} onToybox={() => setTab("toybox")} />
         ) : tab === "toybox" ? (
-          <ToyboxScreen onScan={openScan} onBuild={() => setBuilding(true)} />
+          <ToyboxScreen
+            onScan={openScan}
+            onBuild={() => setBuilding(true)}
+            onReveal={() => setReveal({ first: false })}
+          />
         ) : tab === "packs" ? (
           <PacksScreen onBuild={() => setBuilding(true)} />
         ) : tab === "market" ? (
@@ -46,6 +57,7 @@ export default function App() {
         onTab={(next) => {
           setScanning(false);
           setBuilding(false);
+          setReveal(null);
           setTab(next);
         }}
       />

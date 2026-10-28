@@ -11,7 +11,9 @@ import {
 } from "../../shared/build";
 import { allPass, runChecks } from "../../shared/checks";
 import { validateSet, type Part, type ToySet } from "../../shared/part";
+import { buildSignature } from "../../shared/reveal";
 import { PartPreview } from "../features/ar/PartPreview";
+import { revealForBuild } from "../state/reveals";
 import { BuilderCanvas } from "../features/builder/BuilderCanvas";
 import { colorOf } from "../features/builder/engine/render";
 import { useToybox } from "../state/toybox";
@@ -35,7 +37,13 @@ function loadBuild(toyId: string): Placement[] {
   }
 }
 
-export function AugmentScreen({ onBack }: { onBack: () => void }) {
+export function AugmentScreen({
+  onBack,
+  onFinish,
+}: {
+  onBack: () => void;
+  onFinish?: (firstReveal: boolean) => void;
+}) {
   const { selected: toy } = useToybox();
   const [placements, setPlacements] = useState<Placement[]>([]);
   const [selectedId, setSelectedId] = useState<string | undefined>(undefined);
@@ -264,6 +272,17 @@ export function AugmentScreen({ onBack }: { onBack: () => void }) {
               ? "Checks pass. This build is ready for AR try-on when it lands (Day 5)."
               : "Not ready yet: every placed part must pass its checks."}
           </p>
+          {ready && onFinish && (
+            <button
+              type="button"
+              className="cta"
+              onClick={() => onFinish(!revealForBuild(toy.id, buildSignature(placements)))}
+            >
+              {revealForBuild(toy.id, buildSignature(placements))
+                ? "View character card"
+                : "Finish — reveal this character!"}
+            </button>
+          )}
           {ready && (
             <>
               <h2>Print files</h2>

@@ -28,9 +28,12 @@ browser never sees them; only `worker/` reads them.
 `parts/` parametric OpenSCAD · `sets/` content as data · `seed/` pre-made
 fallback content · `generated/` build output (never edited by hand).
 
-## Status (Oct 27, 2026)
+## Status (Oct 28, 2026)
 
-Foundation only: app shell, Toybox + Scan screens running on the seed toy,
-shared schemas/checks with tests, and the docs above. Builder, AR, game,
-STL export, and Reveal land per [the plan](docs/plan.md). No physical part
-has been printed yet.
+Working end to end locally: live SAM 3.1 scan (with by-hand and seed
+fallbacks), Toybox, isometric virtual builder with snapping/collisions/
+undo, STL downloads and GLB 3D/AR part previews, fit-filtered Market,
+seeded daily Packs, Reveal with saved character cards, and a mini game
+driven by build stats. 55 unit tests. Not deployed yet, nothing printed
+yet, and the Reveal theme is a synth placeholder until Mureka is wired.
+See [the plan](docs/plan.md) and [the journal](docs/journal.md).
