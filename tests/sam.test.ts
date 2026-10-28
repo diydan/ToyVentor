@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { dimensionsFromBox, largestBox, parseSegmentationBoxes } from "../shared/sam";
+import { dimensionsFromBox, largestBox, normalizeBox, parseSegmentationBoxes } from "../shared/sam";
 
 // Real line prefixes captured from live sam-3.1 calls on 2026-10-27
 // (cup + water bottle test image, 1920x1280). Mask payloads truncated;
@@ -35,6 +35,16 @@ describe("parseSegmentationBoxes", () => {
     expect(boxes).toHaveLength(2);
     expect(boxes[1]?.confidence).toBeCloseTo(0.96);
     expect(largestBox(boxes)?.objectId).toBe(2);
+  });
+});
+
+describe("normalizeBox", () => {
+  it("turns pixel boxes into photo fractions", () => {
+    const [box] = parseSegmentationBoxes(CUP);
+    const n = normalizeBox(box!);
+    expect(n.x1).toBeCloseTo(347 / 1920, 5);
+    expect(n.y2).toBeCloseTo(1104 / 1280, 5);
+    expect(Object.values(n).every((v) => v >= 0 && v <= 1)).toBe(true);
   });
 });
 

@@ -12,7 +12,7 @@ import {
 import { allPass, runChecks } from "../../shared/checks";
 import { validateSet, type Part, type ToySet } from "../../shared/part";
 import { buildSignature } from "../../shared/reveal";
-import { PartPreview } from "../features/ar/PartPreview";
+import { TryOn } from "../features/ar/TryOn";
 import { revealForBuild } from "../state/reveals";
 import { BuilderCanvas } from "../features/builder/BuilderCanvas";
 import { colorOf } from "../features/builder/engine/render";
@@ -22,7 +22,7 @@ const baseSet = baseSetJson as ToySet;
 const setErrors = validateSet(baseSetJson);
 const partsById = new Map(baseSet.parts.map((p) => [p.id, p]));
 
-const storageKey = (toyId: string) => `toyforge:build:v1:${toyId}`;
+const storageKey = (toyId: string) => `toyventor:build:v1:${toyId}`;
 
 function loadBuild(toyId: string): Placement[] {
   try {
@@ -54,8 +54,11 @@ export function AugmentScreen({
   // Load this toy's saved build whenever the toy changes.
   useEffect(() => {
     if (!toy) return;
-    setPlacements(loadBuild(toy.id));
-    setSelectedId(undefined);
+    const saved = loadBuild(toy.id);
+    setPlacements(saved);
+    // Reopening a build should show its try-on immediately, not an
+    // empty preview until something is tapped.
+    setSelectedId(saved[0]?.instanceId);
     setPast([]);
     setFuture([]);
     setNote(null);
@@ -202,15 +205,12 @@ export function AugmentScreen({
 
       {selected && partsById.get(selected.partId) && stlFile[selected.partId] && (
         <>
-          <h2>{partsById.get(selected.partId)!.name} in 3D</h2>
-          <PartPreview
+          <h2>Try on: {partsById.get(selected.partId)!.name}</h2>
+          <TryOn
+            toy={toy}
+            part={partsById.get(selected.partId)!}
             glbFile={stlFile[selected.partId]!.replace(/\.stl$/, ".glb")}
-            partName={partsById.get(selected.partId)!.name}
           />
-          <p className="fine-print">
-            Drag to orbit. On Android Chrome the AR button places it at true
-            scale; full AR-on-the-toy try-on is Day 5.
-          </p>
         </>
       )}
 

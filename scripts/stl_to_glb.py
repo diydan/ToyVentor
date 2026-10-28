@@ -49,7 +49,7 @@ def write_glb(path: Path, positions: list[float], normals: list[float]) -> None:
     count = len(positions) // 3
     xs, ys, zs = positions[0::3], positions[1::3], positions[2::3]
     gltf = {
-        "asset": {"version": "2.0", "generator": "toyforge stl_to_glb.py"},
+        "asset": {"version": "2.0", "generator": "toyventor stl_to_glb.py"},
         "scene": 0,
         "scenes": [{"nodes": [0]}],
         "nodes": [{"mesh": 0, "name": path.stem}],

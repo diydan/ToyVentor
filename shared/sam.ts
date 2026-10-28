@@ -40,6 +40,24 @@ export function parseSegmentationBoxes(text: string): SamBox[] {
 
 /** The match to build on: largest box wins when a concept matches several
  *  instances (the hero toy should be the prominent one in frame). */
+/** Box as fractions of the source image (0..1), so it survives the
+ *  client downscaling the photo to a different pixel size. */
+export interface NormalizedBox {
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+}
+
+export function normalizeBox(box: SamBox): NormalizedBox {
+  return {
+    x1: box.x1 / box.imageWidth,
+    y1: box.y1 / box.imageHeight,
+    x2: box.x2 / box.imageWidth,
+    y2: box.y2 / box.imageHeight,
+  };
+}
+
 export function largestBox(boxes: SamBox[]): SamBox | undefined {
   return boxes.reduce<SamBox | undefined>((best, box) => {
     const area = (box.x2 - box.x1) * (box.y2 - box.y1);

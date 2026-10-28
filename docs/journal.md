@@ -1,7 +1,7 @@
-# Hackathon Journal — ToyForge
+# Hackathon Journal — ToyVentor
 
 Meta Global AI Developer Hackathon, Oct 26 – Nov 4 (10 days × morning + evening = 20 check-ins).
-Project: ToyForge on toyforge.app. Track: indie. Key phrase: "multi-modal Lego — scan it, augment it, print it, play it."
+Project: ToyVentor on toyventor.com (renamed from ToyForge on Oct 28). Track: indie. Key phrase: "multi-modal Lego — scan it, augment it, print it, play it."
 
 How this works: each morning say "start day N" and I'll walk you through the Start of Day
 questions; each evening say "end day N" and we'll log what shipped. Submission due Nov 4, 9:00 PM ET.
@@ -26,7 +26,7 @@ questions; each evening say "end day N" and we'll log what shipped. Submission d
 
 ---
 
-## Day 2 — Tue Oct 27: Scan + Toybox (today)
+## Day 2 — Tue Oct 27: Scan + Toybox
 
 Goal: photo a toy, detect mount + size class, save to toybox (wireframe p.2-3).
 
@@ -86,14 +86,51 @@ Goal: photo a toy, detect mount + size class, save to toybox (wireframe p.2-3).
 
 ---
 
-## Day 3 — Wed Oct 28: Augment + AR try-on
+## Day 3 — Wed Oct 28: Augment + AR try-on (today, day 3 of 10)
 
 Goal: snap-on parts tray + true-scale AR preview (wireframe p.4).
 
 ### Start of Day
-- [ ] One thing that must work by tonight:
-- [ ] Parts to build first (from the 24-part hero set):
-- [ ] AR: which device/browser are you testing on?
+- [x] One thing that must work by tonight: scan -> build on the grid ->
+  try the part on at footprint scale, end to end in the browser.
+- [x] Parts to build first (from the 24-part hero set): the 8-part base
+  set already in sets/base.json (Spoiler, Brick 2x2 small + large, Forge
+  Mount, Dragon Wing, Glow Star Capsule, SU05 beam teaser, Racer skin).
+  The other 16 wait for proof the first 8 fit and print.
+- [ ] AR: which device/browser are you testing on? So far: headless Chrome
+  on desktop only. Real phone (Android Chrome for the AR button) still owes.
+
+### Midday (13:09)
+- Done since last night, committed: virtual builder (isometric canvas,
+  drag/snap/collisions/undo, per-toy saved builds), mini game driven by
+  build stats, fit-filtered Market, seeded daily Packs, STL downloads,
+  GLB pipeline (OpenSCAD 2026.10.11 is installed now; all 8 parts render
+  to manifold STLs — Day 2's "no OpenSCAD" blocker is gone), Reveal with
+  saved character cards + synth theme, offline PWA shell.
+- Done this morning, not yet committed (Muse session only): SAM outline
+  now persists on scanned toys; AR try-on crops to the outline and places
+  the part's real GLB at footprint scale (verified visually in a browser
+  after three fixes the screenshots caught); Muse Image skins live in
+  the Toybox, probed and verified through our own Worker. 56 tests green.
+- BlockML spike outcome: MachineBlocks bricks would fit the 16mm grid at
+  x2, but a CC BY-NC-SA vs Apache-2.0 conflict in their sources
+  hard-gates adoption. Hand OpenSCAD stays canonical; license email
+  drafted (decisions 0002-0004), not sent.
+- Name change: ToyForge is now **ToyVentor**, and toyventor.com is
+  secured. "ToyForge" was already in use by others in toys, so the new
+  name was chosen and the domain registered before anything public
+  launches. Forward-facing surfaces renamed (app title, package, Worker
+  name, spec/plan docs); historical entries and the license email keep
+  their context, and trademark clearance beyond the domain is still
+  unverified and on the pre-publish list.
+- Still to do today (Dan): real cup + bottle photos on a phone; print the
+  calibration piece and 1-2 Snap samples ahead of Day 4's gate; decide
+  on sending the license email; try AR on Android Chrome.
+- Still to do today (agent lanes): deploy prep + ownership backend
+  against local D1/KV, SAM mask decoding for cutouts/attach points,
+  Live Play mood buttons, STEM gear challenge.
+- Note: plan.md day themes now run ahead of this journal's (Packs/Market/
+  game/Reveal landed early). Treat plan.md scope-freeze dates as canonical.
 
 ### End of Day
 - Shipped:

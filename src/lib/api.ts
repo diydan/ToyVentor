@@ -53,6 +53,21 @@ export async function postSamScan(scan: SamScanRequest): Promise<SamScanResponse
   return (await res.json()) as SamScanResponse;
 }
 
+export interface SkinResponse {
+  imageDataUrl: string | null;
+  skin: { applied: boolean; status?: string; message?: string };
+}
+
+export async function postSkin(imageDataUrl: string, style: string): Promise<SkinResponse> {
+  const res = await fetch("/api/skin", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ imageDataUrl, style }),
+  });
+  if (!res.ok) throw new Error(`skin failed: ${res.status}`);
+  return (await res.json()) as SkinResponse;
+}
+
 export async function fetchHealth(): Promise<boolean> {
   try {
     const res = await fetch("/api/health");

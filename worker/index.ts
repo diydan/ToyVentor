@@ -1,15 +1,15 @@
-// ToyForge API Worker. Static assets are served before this Worker runs;
+// ToyVentor API Worker. Static assets are served before this Worker runs;
 // it only sees /api/* (plus SPA fallback misses). Secrets live here and in
 // .dev.vars locally — never in the browser bundle.
 import seedCar from "../seed/toys/seed-car.json";
-import { dimensionsFromBox } from "../shared/sam";
+import { dimensionsFromBox, normalizeBox } from "../shared/sam";
 import {
   toyFromScanInput,
   validateToy,
   type Toy,
   type ToyKind,
 } from "../shared/toy";
-import { samConfigured, segmentToy, type MetaEnv } from "./meta";
+import { makeSkin, samConfigured, segmentToy, type MetaEnv } from "./meta";
 
 export interface Env extends MetaEnv {
   MUREKA_API_KEY?: string;
@@ -78,6 +78,7 @@ async function handleSamScan(scan: NonNullable<ScanBody["scan"]>, env: Env) {
     lengthMm: dims.lengthMm,
     widthMm: dims.widthMm,
     source: "scan",
+    outline: normalizeBox(result.box),
   });
   // The client already holds the photo; don't echo ~150KB back at it.
   return json({
@@ -117,12 +118,45 @@ async function handleScanPost(request: Request, env: Env): Promise<Response> {
   });
 }
 
+async function handleSkinPost(request: Request, env: Env): Promise<Response> {
+  const contentType = request.headers.get("content-type") ?? "";
+  if (!contentType.includes("application/json"))
+    return json({ error: "expected application/json" }, 415);
+  const declared = Number(request.headers.get("content-length") ?? "0");
+  if (declared > MAX_SCAN_BYTES)
+    return json({ error: `skin payload over ${MAX_SCAN_BYTES} bytes` }, 413);
+  let body: { imageDataUrl?: unknown; style?: unknown };
+  try {
+    body = (await request.json()) as typeof body;
+  } catch {
+    return json({ error: "invalid JSON body" }, 400);
+  }
+  const { imageDataUrl, style } = body;
+  if (
+    typeof imageDataUrl !== "string" || !imageDataUrl.startsWith("data:image/") ||
+    typeof style !== "string" || !style || style.length > 140
+  ) {
+    return json({ error: "invalid skin request" }, 422);
+  }
+  const result = await makeSkin(env, imageDataUrl, style);
+  console.log(JSON.stringify({ event: "skin", status: result.status }));
+  if (result.status === "ok") return json({ skin: { applied: true }, imageDataUrl: result.imageDataUrl });
+  return json({
+    skin: {
+      applied: false,
+      status: result.status,
+      ...(result.status === "error" ? { message: result.message } : {}),
+    },
+    imageDataUrl: null,
+  });
+}
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
 
     if (url.pathname === "/api/health") {
-      return json({ ok: true, service: "toyforge", samConfigured: samConfigured(env) });
+      return json({ ok: true, service: "toyventor", samConfigured: samConfigured(env) });
     }
 
     if (url.pathname === "/api/scan") {
@@ -130,6 +164,11 @@ export default {
       // live SAM; POST with {toy} validates a hand-measured toy.
       if (request.method === "POST") return handleScanPost(request, env);
       if (request.method === "GET") return json(seedCar);
+      return json({ error: "method not allowed" }, 405);
+    }
+
+    if (url.pathname === "/api/skin") {
+      if (request.method === "POST") return handleSkinPost(request, env);
       return json({ error: "method not allowed" }, 405);
     }
 

@@ -26,6 +26,9 @@ export interface Toy {
   source: ToySource;
   /** Downscaled photo of the toy, when one was taken. Display only. */
   imageDataUrl?: string;
+  /** SAM outline as fractions of the photo (0..1). Present only when a
+   *  model actually outlined this toy; used to place AR try-ons. */
+  outline?: { x1: number; y1: number; x2: number; y2: number };
 }
 
 /** Toys up to this length take "small" parts; past it they take "large".
@@ -82,6 +85,7 @@ export interface ScanInput {
   widthMm: number;
   source: Extract<ToySource, "scan" | "manual">;
   imageDataUrl?: string;
+  outline?: Toy["outline"];
 }
 
 /** Build a Toy from scan/manual input, deriving size class and attach
@@ -97,6 +101,7 @@ export function toyFromScanInput(input: ScanInput): Toy {
     attachPoints: attachPointsForKind(input.kind),
     source: input.source,
     ...(input.imageDataUrl ? { imageDataUrl: input.imageDataUrl } : {}),
+    ...(input.outline ? { outline: input.outline } : {}),
   };
 }
 
@@ -120,5 +125,14 @@ export function validateToy(value: unknown): string[] {
     errors.push("attachPoints must be a non-empty array");
   if (!SOURCES.includes(v.source as ToySource))
     errors.push(`source must be one of ${SOURCES.join(", ")}`);
+  if (v.outline !== undefined) {
+    const o = v.outline as Record<string, unknown> | null;
+    const ok =
+      typeof o === "object" && o !== null &&
+      ["x1", "y1", "x2", "y2"].every(
+        (k) => typeof o[k] === "number" && (o[k] as number) >= 0 && (o[k] as number) <= 1,
+      );
+    if (!ok) errors.push("outline must be {x1,y1,x2,y2} fractions in 0..1");
+  }
   return errors;
 }

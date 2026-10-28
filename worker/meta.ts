@@ -28,11 +28,59 @@ export function samConfigured(env: MetaEnv): boolean {
   return Boolean(apiKey(env));
 }
 
-function responsesUrl(env: MetaEnv): string {
+function apiUrl(env: MetaEnv, path: string): string {
   const base = (env.META_MODEL_API_URL ?? "https://api.meta.ai/v1")
     .replace(/\/+$/, "")
     .replace(/\/responses$/, "");
-  return `${base}/responses`;
+  return `${base}${path}`;
+}
+
+function responsesUrl(env: MetaEnv): string {
+  return apiUrl(env, "/responses");
+}
+
+export type SkinResult =
+  | { status: "ok"; imageDataUrl: string }
+  | { status: "not-configured" }
+  | { status: "error"; message: string };
+
+/** Muse Image edit: repaint the toy's surface, keep everything else. */
+export async function makeSkin(
+  env: MetaEnv,
+  imageDataUrl: string,
+  style: string,
+): Promise<SkinResult> {
+  const key = apiKey(env);
+  if (!key) return { status: "not-configured" };
+  if (!imageDataUrl.startsWith("data:image/"))
+    return { status: "error", message: "image must be a data:image URL" };
+  let res: Response;
+  try {
+    res = await fetch(apiUrl(env, "/images/edits"), {
+      method: "POST",
+      headers: { authorization: `Bearer ${key}`, "content-type": "application/json" },
+      body: JSON.stringify({
+        model: "muse-image-1.0",
+        prompt: `Repaint the main object's surface only: ${style}. Keep the exact same object shape, camera angle, table, background and lighting unchanged.`,
+        images: [{ image_url: imageDataUrl }],
+        n: 1,
+      }),
+    });
+  } catch (err) {
+    return { status: "error", message: `skin request failed: ${(err as Error).message}` };
+  }
+  if (!res.ok) {
+    const detail = (await res.text()).slice(0, 300);
+    return { status: "error", message: `skin returned ${res.status}: ${detail}` };
+  }
+  const body = (await res.json()) as {
+    data?: { b64_json?: string }[];
+    output_format?: string;
+  };
+  const b64 = body.data?.[0]?.b64_json;
+  if (!b64) return { status: "error", message: "skin response had no image" };
+  const format = body.output_format === "png" ? "png" : "webp";
+  return { status: "ok", imageDataUrl: `data:image/${format};base64,${b64}` };
 }
 
 /** Read an SSE body to completion, collecting output_text deltas. The

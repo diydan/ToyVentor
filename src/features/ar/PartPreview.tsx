@@ -11,6 +11,9 @@ declare module "react" {
         "ar-modes"?: string;
         "camera-controls"?: boolean;
         "shadow-intensity"?: string;
+        "interaction-prompt"?: string;
+        "field-of-view"?: string;
+        "camera-orbit"?: string;
         style?: CSSProperties;
         className?: string;
       };
@@ -24,7 +27,18 @@ declare module "react" {
  * only where the platform supports it (WebXR / Scene Viewer on Android,
  * Quick Look needs USDZ, which we don't generate yet).
  */
-export function PartPreview({ glbFile, partName }: { glbFile: string; partName: string }) {
+export function PartPreview({
+  glbFile,
+  partName,
+  fill = false,
+  cameraOrbit,
+}: {
+  glbFile: string;
+  partName: string;
+  /** Fill the parent box (try-on overlay) instead of a fixed stage. */
+  fill?: boolean;
+  cameraOrbit?: string;
+}) {
   // model-viewer is ~600KB of three.js; load it only when a preview shows.
   const [ready, setReady] = useState(false);
   useEffect(() => {
@@ -39,10 +53,17 @@ export function PartPreview({ glbFile, partName }: { glbFile: string; partName: 
       src={`/parts-glb/${glbFile}`}
       alt={`${partName} in 3D`}
       camera-controls
+      interaction-prompt="none"
+      field-of-view={fill ? "25deg" : undefined}
+      camera-orbit={cameraOrbit}
       ar
       ar-modes="webxr scene-viewer quick-look"
       shadow-intensity="0.7"
-      style={{ width: "100%", height: 240, background: "#f7f3ea", borderRadius: 10 }}
+      style={
+        fill
+          ? { width: "100%", height: "100%" }
+          : { width: "100%", height: 240, background: "#f7f3ea", borderRadius: 10 }
+      }
     />
   );
 }

@@ -1,4 +1,4 @@
-# ToyForge
+# ToyVentor
 
 Scan a toy, build printable upgrades on it in the browser, and play with the
 upgraded toy in AR and a mini game. Built for the Meta Global AI Developer
@@ -21,6 +21,21 @@ npm run parts      # regenerate STL from parts/*.scad (needs OpenSCAD)
 
 Secrets for local dev go in `.dev.vars` (see `.dev.vars.example`). The
 browser never sees them; only `worker/` reads them.
+
+## Deploy
+
+Config validates today (`npx wrangler deploy --dry-run` passes). Going
+live still needs, in order:
+
+```sh
+npx wrangler login
+npx wrangler secret put MODEL_API_KEY   # same value as .dev.vars
+npm run deploy                          # build + wrangler deploy
+```
+
+Then attach the toyventor.com route in the Cloudflare dashboard.
+D1/KV bindings are commented placeholders in
+[wrangler.jsonc](wrangler.jsonc) until the ownership backend lands.
 
 ## Layout
 

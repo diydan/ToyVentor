@@ -8,13 +8,15 @@ import {
   type GameStats,
 } from "../features/game/engine/game";
 import { colorOf } from "../features/builder/engine/render";
+import { buildSignature } from "../../shared/reveal";
+import { LivePlayPanel } from "../features/liveplay/LivePlayPanel";
 import { useToybox } from "../state/toybox";
 
 const partsById = new Map((baseSetJson as ToySet).parts.map((p) => [p.id, p]));
 
 function loadBuild(toyId: string): Placement[] {
   try {
-    const raw = localStorage.getItem(`toyforge:build:v1:${toyId}`);
+    const raw = localStorage.getItem(`toyventor:build:v1:${toyId}`);
     if (!raw) return [];
     const parsed: unknown = JSON.parse(raw);
     return Array.isArray(parsed) ? (parsed as Placement[]) : [];
@@ -133,6 +135,10 @@ export function PlayScreen({ onBuild }: { onBuild?: () => void }) {
           Build upgrades first (they make it faster)
         </button>
       )}
+
+      <LivePlayPanel
+        themeSignature={placements.length > 0 ? buildSignature(placements) : undefined}
+      />
     </section>
   );
 }

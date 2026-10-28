@@ -2,6 +2,7 @@ import baseSetJson from "../../sets/base.json";
 import { validateSet, type ToySet } from "../../shared/part";
 import type { Toy } from "../../shared/toy";
 import { PartCard } from "../components/PartCard";
+import { SkinPanel } from "../features/skin/SkinPanel";
 import { revealsForToy } from "../state/reveals";
 import { useToybox } from "../state/toybox";
 
@@ -83,13 +84,7 @@ export function ToyboxScreen({
 
       {selected && (
         <>
-          {selected.imageDataUrl && (
-            <img
-              className="toy-thumb"
-              src={selected.imageDataUrl}
-              alt={selected.name}
-            />
-          )}
+          <SkinPanel key={selected.id} toy={selected} />
           {onBuild && (
             <button type="button" className="cta" onClick={onBuild}>
               Build upgrades on {selected.name}
