@@ -1,8 +1,11 @@
 import { useState } from "react";
 import { BottomBar, type TabId } from "./components/BottomBar";
 import { FactoryScreen } from "./screens/FactoryScreen";
-import { PlaceholderScreen } from "./screens/PlaceholderScreen";
 import { ScanScreen } from "./screens/ScanScreen";
+import { AugmentScreen } from "./screens/AugmentScreen";
+import { MarketScreen } from "./screens/MarketScreen";
+import { PacksScreen } from "./screens/PacksScreen";
+import { PlayScreen } from "./screens/PlayScreen";
 import { ToyboxScreen } from "./screens/ToyboxScreen";
 
 // The app opens on the Toybox so previous uploads and built-in assets are
@@ -10,6 +13,7 @@ import { ToyboxScreen } from "./screens/ToyboxScreen";
 export default function App() {
   const [tab, setTab] = useState<TabId>("toybox");
   const [scanning, setScanning] = useState(false);
+  const [building, setBuilding] = useState(false);
 
   const openScan = () => setScanning(true);
   const closeScan = () => setScanning(false);
@@ -23,22 +27,25 @@ export default function App() {
       <main className="screen">
         {scanning ? (
           <ScanScreen onDone={finishScan} onCancel={closeScan} />
+        ) : building ? (
+          <AugmentScreen onBack={() => setBuilding(false)} />
         ) : tab === "factory" ? (
           <FactoryScreen onScan={openScan} onToybox={() => setTab("toybox")} />
         ) : tab === "toybox" ? (
-          <ToyboxScreen onScan={openScan} />
+          <ToyboxScreen onScan={openScan} onBuild={() => setBuilding(true)} />
         ) : tab === "packs" ? (
-          <PlaceholderScreen title="Packs" day="Day 7 (seeded daily pack)" />
+          <PacksScreen onBuild={() => setBuilding(true)} />
         ) : tab === "market" ? (
-          <PlaceholderScreen title="Market" day="Day 7 (fit-filtered market)" />
+          <MarketScreen onBuild={() => setBuilding(true)} />
         ) : (
-          <PlaceholderScreen title="Play" day="Day 6 (mini game + Reveal)" />
+          <PlayScreen onBuild={() => setBuilding(true)} />
         )}
       </main>
       <BottomBar
         tab={tab}
         onTab={(next) => {
           setScanning(false);
+          setBuilding(false);
           setTab(next);
         }}
       />

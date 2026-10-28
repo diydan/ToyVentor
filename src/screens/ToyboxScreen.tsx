@@ -44,7 +44,13 @@ function ToyChipList({
   );
 }
 
-export function ToyboxScreen({ onScan }: { onScan: () => void }) {
+export function ToyboxScreen({
+  onScan,
+  onBuild,
+}: {
+  onScan: () => void;
+  onBuild?: () => void;
+}) {
   const { uploadedToys, builtInToys, selected, selectToy } = useToybox();
 
   return (
@@ -80,6 +86,11 @@ export function ToyboxScreen({ onScan }: { onScan: () => void }) {
               src={selected.imageDataUrl}
               alt={selected.name}
             />
+          )}
+          {onBuild && (
+            <button type="button" className="cta" onClick={onBuild}>
+              Build upgrades on {selected.name}
+            </button>
           )}
           <h2>Built-in parts for {selected.name}</h2>
           {setErrors.length > 0 ? (
