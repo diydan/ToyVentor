@@ -11,7 +11,9 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "validate": "tsx scripts/validate-sets.ts",
-    "parts": "bash scripts/build-parts.sh"
+    "parts": "bash scripts/build-parts.sh",
+    "bridge": "tsx scripts/bridge-partspec.ts",
+    "preflight": "tsx scripts/preflight-deploy.ts"
   },
   "dependencies": {
     "@google/model-viewer": "^4.4.0",

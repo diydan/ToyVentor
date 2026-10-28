@@ -36,6 +36,28 @@ module socket() {
   }
 }
 
+// Compliant socket: same cavity plus a lead-in taper and four relief
+// slots, so the socket rim can flex over a small range of stud sizes
+// instead of depending on one exact clearance. Used by the first-print
+// fit selector; clearance is explicit per socket so one plate can carry
+// snug / standard / easy variants side by side.
+module compliant_socket(clearance_mm) {
+  d = stud_diameter_mm + clearance_mm;
+  union() {
+    // Lead-in: wider mouth for the first millimetre, then the grip bore.
+    // Total depth matches socket() so plates sized for it still work.
+    cylinder(d1 = d + 0.8, d2 = d, h = 1, $fn = 32);
+    translate([0, 0, 1]) cylinder(d = d, h = socket_depth_mm - 1, $fn = 32);
+    translate([0, 0, socket_depth_mm])
+      cylinder(d1 = d, d2 = 3, h = (d - 3) / 2, $fn = 32);
+    // Relief slots through the grip depth: the remaining bridges flex.
+    for (angle = [0, 90, 180, 270])
+      rotate([0, 0, angle])
+        translate([0, -0.6, -0.1])
+          cube([d / 2 + 2.5, 1.2, socket_depth_mm + 0.1]);
+  }
+}
+
 // Plate with rounded vertical edges and a rolled top edge, flat bottom
 // for bed adhesion (docs/snap.md: rounded edges, no sharp corners).
 module rounded_plate(units_x, units_y, h, r = 2) {

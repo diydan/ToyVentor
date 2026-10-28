@@ -1,0 +1,156 @@
+{
+  "id": "partspec-demo",
+  "name": "PartSpec Demo (TU lattice, pending print decision)",
+  "parts": [
+    {
+      "id": "partspec-ridge-fin",
+      "name": "Ridge Fin",
+      "line": "snap",
+      "mount": "stud",
+      "sizeClass": "small",
+      "grid": {
+        "units": [
+          1,
+          2
+        ],
+        "profile": "tu_stud_small"
+      },
+      "footprintMm": [
+        12.5,
+        25
+      ],
+      "stat": {
+        "name": "speed",
+        "value": 1
+      },
+      "printable": true,
+      "orientation": "bed = z0; flat, studs up",
+      "supportFree": true
+    },
+    {
+      "id": "partspec-zoom-capsule-s",
+      "name": "Zoom Capsule (Small)",
+      "line": "snap",
+      "mount": "stud",
+      "sizeClass": "small",
+      "grid": {
+        "units": [
+          1,
+          1
+        ],
+        "profile": "tu_stud_small"
+      },
+      "footprintMm": [
+        12.5,
+        12.5
+      ],
+      "stat": {
+        "name": "speed",
+        "value": 1
+      },
+      "printable": true,
+      "orientation": "bed = z0; flat, studs up",
+      "supportFree": true
+    },
+    {
+      "id": "partspec-glow-capsule",
+      "name": "Glow Capsule",
+      "line": "snap",
+      "mount": "stud",
+      "sizeClass": "small",
+      "grid": {
+        "units": [
+          1,
+          1
+        ],
+        "profile": "tu_stud_small"
+      },
+      "footprintMm": [
+        12.5,
+        12.5
+      ],
+      "stat": {
+        "name": "glow",
+        "value": 1
+      },
+      "printable": true,
+      "orientation": "bed = z0; flat, studs up",
+      "supportFree": true
+    },
+    {
+      "id": "partspec-zoom-capsule",
+      "name": "Zoom Capsule",
+      "line": "snap",
+      "mount": "stud",
+      "sizeClass": "large",
+      "grid": {
+        "units": [
+          1,
+          1
+        ],
+        "profile": "tu_stud_large"
+      },
+      "footprintMm": [
+        25,
+        25
+      ],
+      "stat": {
+        "name": "speed",
+        "value": 1
+      },
+      "printable": true,
+      "orientation": "bed = z0; flat, studs up",
+      "supportFree": true
+    },
+    {
+      "id": "partspec-glow-capsule-l",
+      "name": "Glow Capsule (Large)",
+      "line": "snap",
+      "mount": "stud",
+      "sizeClass": "large",
+      "grid": {
+        "units": [
+          1,
+          1
+        ],
+        "profile": "tu_stud_large"
+      },
+      "footprintMm": [
+        25,
+        25
+      ],
+      "stat": {
+        "name": "glow",
+        "value": 1
+      },
+      "printable": true,
+      "orientation": "bed = z0; flat, studs up",
+      "supportFree": true
+    },
+    {
+      "id": "partspec-spin-capsule",
+      "name": "Spin Capsule",
+      "line": "snap",
+      "mount": "stud",
+      "sizeClass": "large",
+      "grid": {
+        "units": [
+          1,
+          1
+        ],
+        "profile": "tu_stud_large"
+      },
+      "footprintMm": [
+        25,
+        25
+      ],
+      "stat": {
+        "name": "spin",
+        "value": 1
+      },
+      "printable": true,
+      "orientation": "bed = z0; flat, studs up",
+      "supportFree": true
+    }
+  ]
+}
