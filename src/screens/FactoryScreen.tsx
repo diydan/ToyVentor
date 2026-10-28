@@ -10,7 +10,7 @@ export function FactoryScreen({
   const { uploadedToys } = useToybox();
   return (
     <section>
-      <h1>ToyForge</h1>
+      <h1>ToyVentor</h1>
       <p className="lede">
         Scan a toy your kid already owns. Bolt something better onto it.
       </p>

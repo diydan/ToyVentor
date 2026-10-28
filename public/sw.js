@@ -1,7 +1,7 @@
-/* ToyForge app-shell cache. Static assets cache-first so the demo opens
+/* ToyVentor app-shell cache. Static assets cache-first so the demo opens
    offline with seed content; /api/* always goes to the network so scan
    results are never stale. Bump the version when the shell changes. */
-const CACHE = "toyforge-v1";
+const CACHE = "toyventor-v1";
 const SHELL = ["/", "/manifest.webmanifest", "/icon.svg"];
 
 self.addEventListener("install", (event) => {

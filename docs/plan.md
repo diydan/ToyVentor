@@ -1,7 +1,7 @@
-# ToyForge — 10-Day Plan
+# ToyVentor — 10-Day Plan
 
 ## Goal
-Ship ToyForge ("multi-modal Lego — scan it, augment it, print it, play it") for the Meta Global AI Developer Hackathon (indie track), submitted by Nov 4, 9:00 PM ET. Grounded in [spec](spec.md) and [wireframe](wireframe.md); progress logged in [journal](journal.md).
+Ship ToyVentor ("multi-modal Lego — scan it, augment it, print it, play it") for the Meta Global AI Developer Hackathon (indie track), submitted by Nov 4, 9:00 PM ET. Grounded in [spec](spec.md) and [wireframe](wireframe.md); progress logged in [journal](journal.md).
 
 ## Success Criteria
 - Scan a car to a colored upgrade in the game on a phone in under 60 seconds.

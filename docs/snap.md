@@ -1,4 +1,4 @@
-# ToyForge Snap
+# ToyVentor Snap
 
 Snap is the kid line. Younger kids, with a parent or older sibling helping. Everything is
 snap-fit and tool-free — no screws. Most parts are shapes with a game function: one stat

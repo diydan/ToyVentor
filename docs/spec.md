@@ -1,8 +1,8 @@
-# ToyForge — Spec (toyforge.app)
+# ToyVentor — Spec (toyventor.com)
 
 Oct 27, 2026 · Dan O · Indie track · Build for Your World
 
-I was a Lego fanatic as a kid and I'm a robotics fanatic as an adult, and ToyForge is me trying to hand that bug to my son without handing him a worksheet: his toy box is already full of cars and figures he loved and then abandoned, so why not start there? You scan one, AI helps find where a part could actually snap on, and then you build the upgrade in the browser, print it, and see the same toy come back alive in AR and in a little game.
+I was a Lego fanatic as a kid and I'm a robotics fanatic as an adult, and ToyVentor is me trying to hand that bug to my son without handing him a worksheet: his toy box is already full of cars and figures he loved and then abandoned, so why not start there? You scan one, AI helps find where a part could actually snap on, and then you build the upgrade in the browser, print it, and see the same toy come back alive in AR and in a little game.
 
 ## At a glance
 
@@ -28,7 +28,7 @@ The loop itself is simple enough that it doesn't need its own diagram: scan the 
 
 ## Two product lines
 
-| | ToyForge Snap | ToyForge Pro |
+| | ToyVentor Snap | ToyVentor Pro |
 | --- | --- | --- |
 | Who | Younger kids with a grown-up | Ages 8+ and makers |
 | Connect | Studs, snap-fit, no tools | Hole grid with pins, axles, optional screws |
@@ -171,11 +171,11 @@ Two things I considered and rejected, for the record. First, generating part geo
 - Live Play listens and watches only during active play. Parent starts and stops the session. Mood buttons work with camera and mic off.
 - Character add-ons use original designs. Calibration piece and per-printer offsets handle snap fit variance.
 
-## ToyForge Snap
+## ToyVentor Snap
 
 The kid line: snap-fit, tool-free, stud grid in two sizes. Full part types, design rules, print and game behavior live in [snap.md](snap.md), which is canonical for this line — this spec no longer duplicates it. Headline risk, stated there too: as of Oct 27 nothing in Snap has been printed yet, so its dimensions are targets until the Day 4 calibration test.
 
-## ToyForge Pro
+## ToyVentor Pro
 
 The mechanical line for ages 8+ and makers, on the open STEMFIE hole grid. Full standard, part families, and print rules live in [pro.md](pro.md), which is canonical for this line. Hackathon scope stays narrow: rounded SU05 beams, friction pins, one gear set, shown as a teaser on the demo Forge Mount.
 

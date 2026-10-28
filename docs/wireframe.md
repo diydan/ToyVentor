@@ -1,4 +1,4 @@
-# ToyForge — Wireframe (12 pages, rough)
+# ToyVentor — Wireframe (12 pages, rough)
 
 Mobile PWA. Bottom bar: Factory, Toybox, Packs, Market, Play. The app opens
 on Toybox so previous uploads and built-in assets are available immediately.

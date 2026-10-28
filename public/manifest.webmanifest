@@ -1,6 +1,6 @@
 {
-  "name": "ToyForge",
-  "short_name": "ToyForge",
+  "name": "ToyVentor",
+  "short_name": "ToyVentor",
   "description": "Scan a toy, build printable upgrades on it, play in AR.",
   "start_url": "/",
   "display": "standalone",

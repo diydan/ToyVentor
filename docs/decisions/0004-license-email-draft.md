@@ -5,7 +5,7 @@ Subject: MachineBlocks license question — Apache-2.0 vs CC BY-NC-SA headers?
 
 Hi Jan Philipp,
 
-I'm building ToyForge (toyforge.app), an open system for 3D-printable
+I'm building ToyVentor (toyventor.com), an open system for 3D-printable
 snap-on toy upgrades, currently for a hackathon ending Nov 4. I spent
 an evening spiking BlockML + MachineBlocks (@machineblocks/core
 3.0.0-A5, @machineblocks/cli 0.1.6) and I'm impressed — with
@@ -31,7 +31,7 @@ Three questions:
    MachineBlocks target, are the outputs (generated .scad, exported
    STL/3MF, and the resulting part designs) encumbered by NC-SA, or
    are they mine to license as I choose?
-3. ToyForge plans commercial elements later (paid monthly part sets,
+3. ToyVentor plans commercial elements later (paid monthly part sets,
    a market for print files) alongside an open-source part format.
    Is commercial use of the library permitted? If not under the
    current terms, do you offer a commercial license?
@@ -41,4 +41,4 @@ useful. Thanks for building this in the open.
 
 Best,
 [Your name]
-ToyForge — [link]
+ToyVentor — https://toyventor.com
