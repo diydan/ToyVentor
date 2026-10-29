@@ -95,7 +95,7 @@ Goal: snap-on parts tray + true-scale AR preview (wireframe p.4).
   try the part on at footprint scale, end to end in the browser.
 - [x] Parts to build first (from the 24-part hero set): the 8-part base
   set already in sets/base.json (Spoiler, Brick 2x2 small + large, Forge
-  Mount, Dragon Wing, Glow Star Capsule, SU05 beam teaser, Racer skin).
+  Mount, Dragon Wing, Glow Star Capsule, TU05 beam teaser, Racer skin).
   The other 16 wait for proof the first 8 fit and print.
 - [ ] AR: which device/browser are you testing on? So far: headless Chrome
   on desktop only. Real phone (Android Chrome for the AR button) still owes.
@@ -185,6 +185,25 @@ Goal: snap-on parts tray + true-scale AR preview (wireframe p.4).
   for the hand-feel condition, then the calibration piece + 1-2 Snap
   samples, settle one-size vs two.
 
+### Addendum — recorded Thu Oct 29
+- Closing the Day 3 PartSpec thread: the recurring new-parts runbook
+  ([creating-parts.md](creating-parts.md)) and binary-STL support in
+  `scripts/stl_to_glb.py` landed on Oct 29 (`d388b74`), with regression
+  tests for both STL encodings and independent geometry checks on all six
+  demo-subset conversions. This is Day 4 follow-through, recorded here so
+  the Day 3 fork does not read as dropped; it does not change the Day 3
+  close-out above.
+- Still open from Day 3 at the time of this addendum: the first physical
+  print from either lane (the PartSpec Large 2x2 hand-feel condition in
+  decision 0005 stays first in the queue), the calibration piece +
+  1-2 Snap samples, a real Android Chrome AR pass, and the send/don't-send
+  call on the drafted license email (0004). The app's 4-stat vs PartSpec's
+  19-stat vocabulary gap also remains a game-design decision before any
+  PartSpec set ships.
+- Also landed Oct 29 and counted as Day 4 work, not backfilled here: the
+  product vision + modular-system spec alignment (`ea75f33`) — see
+  [vision.md](vision.md) and the Day 4 entry below.
+
 ---
 
 ## Day 4 — Thu Oct 29: Pack Rips
@@ -197,18 +216,37 @@ Goal: daily pack, 3 items, 1 printable guaranteed, rarity + one stat (wireframe 
 - [ ] Muse Image skins: which prompts are you pre-generating?
 
 ### End of Day
-- Shipped: a recurring creating-parts runbook
-  ([creating-parts.md](creating-parts.md)) covering the part brief, catalog
-  slot, PartSpec digital gate, assembly proof, app bridge and print record,
-  and binary-STL support in `scripts/stl_to_glb.py` so PartSpec output can
-  reach the GLB/AR path. Regression tests cover ASCII and binary encodings
-  (95 app tests green), and all six demo-subset STL-to-GLB conversions were
-  geometry-checked independently. No new part was created, and the Large
-  hand-feel print still gates the TU lattice decision.
-- Demo-able right now (yes/no, what):
-- Every pack item works in AR + game (yes/no):
-- Blockers:
-- Tomorrow's first task:
+- Shipped: the hand-off between the app and ToyVentor World, and the model
+  route behind Create mode. The game now lives in the repo
+  (`game/engine25.js` plus `game/build25.py`, source of truth unchanged)
+  and is served from the app's own origin at `/world/ToyVentor-World.html`,
+  so Create mode can reach the Worker without a cross-site call. The toy
+  contract (`toyventor.toy/1`, base64url in the URL hash) carries the
+  kid's toy, the parts they placed, and the paint colors, so the Play
+  button opens the world already wearing the build. The Worker gained
+  `/api/muse/spark`: it runs Meta Muse Spark, holds the kid-facing rules
+  (short lines, safe topics, no identifying details, no brands), and
+  checks the recipe against the game's own level shape before sending it
+  back. Live check: a snowy world recipe came back in 6.8 seconds. 93
+  unit tests green, plus the engine tests for the editor, Create mode,
+  parts and the toy contract itself.
+- Parts workflow: added [creating-parts.md](creating-parts.md) as the
+  recurring runbook for new robots, figurines, add-ons and mechanisms, and
+  fixed `scripts/stl_to_glb.py` to accept PartSpec's binary STLs as well as
+  the app lane's ASCII STLs. The new regression tests cover both encodings;
+  the full app suite is 95 green, and all six demo-subset STL-to-GLB
+  conversions were geometry-checked independently. No new part was created,
+  and the Large hand-feel print still gates the TU lattice decision.
+- Demo-able right now (yes/no, what): yes. Scan, build, Play opens the
+  world with the build on it, Create mode writes a world. The 90-second
+  run is in [demo-script.md](demo-script.md).
+- Every pack item works in AR + game (yes/no): not re-checked this round.
+- Blockers: the published game artifacts still hold the old game build,
+  so the public game page needs a republish by hand. The e16 mission test
+  is flaky in this headless environment (fails at the bridge slot on one
+  run, passes on the next, same result on the unmodified engine).
+- Tomorrow's first task: republish the artifacts, then the rename sweep
+  (ToyForge) in the landing page and the drafts folder.
 
 ---
 
