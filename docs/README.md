@@ -15,6 +15,12 @@ geometry, see "Two parts lanes" below — that split is deliberate until
 | [wireframe.md](wireframe.md) + [ToyVentor Wireframes.pdf](ToyVentor%20Wireframes.pdf) | The 12 screens |
 | [design-guide.html](design-guide.html) + [mockups.html](mockups.html) | Visual design. Open in a browser |
 
+## Creating parts
+
+| File | What it is |
+| --- | --- |
+| [creating-parts.md](creating-parts.md) | The recurring runbook for new robots, figurines, add-ons and mechanisms: brief, catalog slot, PartSpec gate, assembly proof, app bridge, printing and handoff |
+
 ## Product lines (app lane — what the demo runs today)
 
 | File | What it is |

@@ -197,7 +197,14 @@ Goal: daily pack, 3 items, 1 printable guaranteed, rarity + one stat (wireframe 
 - [ ] Muse Image skins: which prompts are you pre-generating?
 
 ### End of Day
-- Shipped:
+- Shipped: a recurring creating-parts runbook
+  ([creating-parts.md](creating-parts.md)) covering the part brief, catalog
+  slot, PartSpec digital gate, assembly proof, app bridge and print record,
+  and binary-STL support in `scripts/stl_to_glb.py` so PartSpec output can
+  reach the GLB/AR path. Regression tests cover ASCII and binary encodings
+  (95 app tests green), and all six demo-subset STL-to-GLB conversions were
+  geometry-checked independently. No new part was created, and the Large
+  hand-feel print still gates the TU lattice decision.
 - Demo-able right now (yes/no, what):
 - Every pack item works in AR + game (yes/no):
 - Blockers:

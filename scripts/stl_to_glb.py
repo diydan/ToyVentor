@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Convert OpenSCAD ASCII STL files to minimal binary glTF (.glb).
+"""Convert ASCII or binary STL files to minimal binary glTF (.glb).
 
 Standard library only, on purpose: the parts pipeline must run anywhere
 `npm run parts` runs, with no Python environment to maintain. Geometry is
@@ -9,11 +9,24 @@ with one neutral material; the viewer tints parts itself.
 Usage: stl_to_glb.py <input-dir> <output-dir>
 """
 import json
+import math
 import struct
 import sys
 from pathlib import Path
 
 SCALE = 0.001  # STL millimetres to glTF metres
+BINARY_STL_PREFIX_BYTES = 84  # 80-byte header + 4-byte triangle count
+BINARY_STL_RECORD_BYTES = 50
+
+
+def _transform_point(point: tuple[float, float, float]) -> list[float]:
+    x, y, z = (coordinate * SCALE for coordinate in point)
+    # glTF is Y-up; STL here is Z-up. Map (x, y, z) -> (x, z, -y).
+    return [x, z, -y]
+
+
+def _transform_normal(normal: tuple[float, float, float]) -> list[float]:
+    return [normal[0], normal[2], -normal[1]]
 
 
 def parse_ascii_stl(text: str):
@@ -27,11 +40,43 @@ def parse_ascii_stl(text: str):
         if parts[0] == "facet" and len(parts) >= 5:
             normal = (float(parts[2]), float(parts[3]), float(parts[4]))
         elif parts[0] == "vertex" and len(parts) >= 4:
-            x, y, z = (float(parts[1]) * SCALE, float(parts[2]) * SCALE, float(parts[3]) * SCALE)
-            # glTF is Y-up; OpenSCAD/STL here is Z-up. Map (x, y, z) -> (x, z, -y).
-            positions.extend([x, z, -y])
-            normals.extend([normal[0], normal[2], -normal[1]])
+            point = (float(parts[1]), float(parts[2]), float(parts[3]))
+            positions.extend(_transform_point(point))
+            normals.extend(_transform_normal(normal))
     return positions, normals
+
+
+def _is_binary_stl(data: bytes) -> bool:
+    if len(data) < BINARY_STL_PREFIX_BYTES:
+        return False
+    triangles = struct.unpack_from("<I", data, 80)[0]
+    if len(data) != BINARY_STL_PREFIX_BYTES + triangles * BINARY_STL_RECORD_BYTES:
+        return False
+    # Binary headers may also begin with "solid". An early facet line is the
+    # reliable sign that this size match belongs to an ASCII file instead.
+    sample = data[:512].lower()
+    return not (sample.lstrip().startswith(b"solid") and b"facet normal" in sample)
+
+
+def parse_binary_stl(data: bytes):
+    positions: list[float] = []
+    normals: list[float] = []
+    for record in struct.iter_unpack("<3f3f3f3fH", data[BINARY_STL_PREFIX_BYTES:]):
+        values = record[:12]
+        if not all(math.isfinite(value) for value in values):
+            raise ValueError("binary STL contains a non-finite coordinate")
+        normal = values[0:3]
+        for offset in (3, 6, 9):
+            point = values[offset:offset + 3]
+            positions.extend(_transform_point(point))
+            normals.extend(_transform_normal(normal))
+    return positions, normals
+
+
+def parse_stl(data: bytes):
+    if _is_binary_stl(data):
+        return parse_binary_stl(data)
+    return parse_ascii_stl(data.decode())
 
 
 def pad4(data: bytes, pad_byte: bytes = b"\x00") -> bytes:
@@ -98,7 +143,7 @@ def main() -> int:
     dst.mkdir(parents=True, exist_ok=True)
     count = 0
     for stl in sorted(src.glob("*.stl")):
-        positions, normals = parse_ascii_stl(stl.read_text())
+        positions, normals = parse_stl(stl.read_bytes())
         out = dst / (stl.stem + ".glb")
         write_glb(out, positions, normals)
         print(f"glb: {stl.name} -> {out.name} ({len(positions) // 3} vertices)")

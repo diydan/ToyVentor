@@ -12,6 +12,12 @@ must feel right in a toddler's hand and on a real toy. Until then the app
 lane (`parts/` OpenSCAD, 16/32 mm) is what the demo runs on, and it is
 frozen for new geometry. Nothing from either lane has been printed yet.
 
+**Creating a part?** Start with the recurring runbook in
+[Creating new parts](../creating-parts.md). It covers the brief and catalog-slot
+decision, family vs bespoke builders, the full digital gate, assembly proof,
+app bridging and the physical print record. The numbered specs below remain
+the normative source when the two differ.
+
 ## Layout
 
 | Path | What it is |
