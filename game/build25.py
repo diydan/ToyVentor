@@ -5,9 +5,26 @@ OUT = os.environ.get("TOYVENTOR_OUT", "/tmp/toyventor-outputs")
 TEST_OUT = os.environ.get("TOYVENTOR_TEST_OUT", "/tmp/exp")
 os.makedirs(OUT, exist_ok=True)
 os.makedirs(TEST_OUT, exist_ok=True)
-FILES = ["build/three.min.js","examples/js/shaders/CopyShader.js","examples/js/shaders/LuminosityHighPassShader.js","examples/js/shaders/FXAAShader.js","examples/js/shaders/GammaCorrectionShader.js","examples/js/postprocessing/EffectComposer.js","examples/js/postprocessing/RenderPass.js","examples/js/postprocessing/ShaderPass.js","examples/js/postprocessing/UnrealBloomPass.js"]
+THREE_VERSION = "0.160.0"
 def scripts(base):
-    return "\n".join('<script src="%s%s"></script>' % (base, f) for f in FILES)
+    # three >=0.160 ships addons only as ES modules. The engine IIFE runs
+    # inside this module script (inlined by page()), after the addons are
+    # merged into one THREE namespace exactly as the r128 examples/js
+    # globals used to provide them.
+    return '''<script type="importmap">
+{"imports":{"three":"%sbuild/three.module.js","three/addons/":"%sexamples/jsm/"}}
+</script>
+<script type="module">
+import * as ThreeModule from 'three';
+import {EffectComposer} from 'three/addons/postprocessing/EffectComposer.js';
+import {RenderPass} from 'three/addons/postprocessing/RenderPass.js';
+import {ShaderPass} from 'three/addons/postprocessing/ShaderPass.js';
+import {UnrealBloomPass} from 'three/addons/postprocessing/UnrealBloomPass.js';
+import {OutputPass} from 'three/addons/postprocessing/OutputPass.js';
+import {FXAAShader} from 'three/addons/shaders/FXAAShader.js';
+const THREE = Object.assign({}, ThreeModule, {EffectComposer, RenderPass, ShaderPass, UnrealBloomPass, OutputPass, FXAAShader});
+window.THREE = THREE;
+''' % (base, base)
 def page(three_src):
     return '''<!doctype html>
 <html lang="en">
@@ -237,11 +254,10 @@ button:focus-visible{outline:3px solid var(--focus);outline-offset:3px}
 <div class="toast" id="toast" role="status"></div><div class="bubble" id="bub"></div>
 <div class="load" id="load">Loading the worlds…</div>
 ''' + scripts(three_src) + '''
-<script>
 ''' + engine + '''
 </script>
 </body>
 </html>'''
-open(os.path.join(OUT, "ToyVentor-World.html"), "w").write(page("https://cdn.jsdelivr.net/npm/three@0.128.0/"))
+open(os.path.join(OUT, "ToyVentor-World.html"), "w").write(page("https://cdn.jsdelivr.net/npm/three@%s/" % THREE_VERSION))
 open(os.path.join(TEST_OUT, "test-25v2.html"), "w").write(page("file:///tmp/shot/node_modules/three/"))
 print("built; em dashes:", engine.count("\u2014"))
