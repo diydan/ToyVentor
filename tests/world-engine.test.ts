@@ -2,15 +2,23 @@ import { describe, expect, it, vi } from "vitest";
 import type { ToyContract } from "../shared/toycontract";
 import {
   applyWorldEvent,
+  chipWord,
+  closedCreateSnapshot,
   closedCustomizerSnapshot,
+  closedEditorSnapshot,
   closedMissionPanelSnapshot,
   createWorldStore,
   diffFoundKeys,
   initialWorldState,
   nextZoom,
+  normalizeCreateSnapshot,
   normalizeCustomizerSnapshot,
+  normalizeEditorSnapshot,
   normalizeMissionPanelSnapshot,
+  normalizeRecipe,
+  sameCreateSnapshot,
   sameCustomizerSnapshot,
+  sameEditorSnapshot,
   sameMissionPanelSnapshot,
   worldUrlFor,
   zoomClicks,
@@ -226,6 +234,116 @@ describe("world engine facade helpers", () => {
       panel: closedMissionPanelSnapshot,
     });
     expect(closed.missionTitle).toBeNull();
+  });
+
+  it("normalizes Create mode into React panel data", () => {
+    const create = normalizeCreateSnapshot({
+      open: true,
+      busy: false,
+      say: " I made you a garden. ",
+      inputValue: " three snowmen ",
+      chips: ["❄️ snow", "⛄ snowmen"],
+      cards: [
+        { title: "Place", text: "Snow Peak" },
+        { title: "", text: "" },
+      ],
+      canUndo: true,
+      codeVisible: true,
+      recipe: {
+        format: "toyventor.level/1",
+        id: "kid-world",
+        name: "Snow Day",
+        theme: "snow",
+        props: [{ type: "snowman", x: 8 }],
+        spots: [{ part: "character.hat.flower", hide: "snowcannon", x: 6 }],
+      },
+    });
+    expect(create).toMatchObject({
+      open: true,
+      say: "I made you a garden.",
+      inputValue: "three snowmen",
+      cards: [{ title: "Place", text: "Snow Peak" }],
+      canUndo: true,
+      codeVisible: true,
+    });
+    expect(create.recipe?.props).toHaveLength(1);
+    expect(chipWord("❄️ snow")).toBe("snow");
+    expect(chipWord("🕳️ a cave to hide a part")).toBe("a cave to hide a part");
+
+    const state = applyWorldEvent(initialWorldState, { type: "create", create });
+    expect(state.create).toEqual(create);
+    expect(sameCreateSnapshot(create, structuredClone(create))).toBe(true);
+    expect(normalizeCreateSnapshot({ open: false, say: "stale" })).toEqual(
+      closedCreateSnapshot,
+    );
+  });
+
+  it("normalizes the level editor and preserves testing state", () => {
+    const editor = normalizeEditorSnapshot({
+      open: true,
+      name: " My level ",
+      theme: "sky",
+      tabs: [
+        { id: "spots", label: "Hiding spots", selected: false },
+        { id: "checks", label: "Checks 4/6", selected: true },
+      ],
+      canUndo: true,
+      lines: [" Tap a pin to edit it. "],
+      palette: [
+        {
+          index: 8,
+          label: "Junk machine",
+          detail: "Unscrew",
+          selected: true,
+          color: "#f4f7ff",
+        },
+      ],
+      checks: [{ title: "Five hidden parts", detail: "3 placed", ok: false }],
+      io: {
+        open: true,
+        title: "Export this level",
+        text: "{}",
+        readOnly: true,
+        canCopy: true,
+        canLoad: false,
+      },
+      recipe: {
+        format: "toyventor.level/1",
+        id: "my-level",
+        name: "My level",
+        theme: "sky",
+        props: [],
+        spots: [],
+      },
+    });
+    expect(editor).toMatchObject({
+      open: true,
+      name: "My level",
+      theme: "sky",
+      tab: "checks",
+      canUndo: true,
+    });
+    expect(editor.palette[0]?.index).toBe(0);
+    expect(editor.checks[0]?.ok).toBe(false);
+
+    const testing = normalizeEditorSnapshot({
+      open: false,
+      testing: true,
+      mode: "create",
+      backLabel: "Back to making",
+    });
+    expect(testing).toEqual({
+      ...closedEditorSnapshot,
+      testing: true,
+      mode: "create",
+      backLabel: "Back to making",
+    });
+    const state = applyWorldEvent(initialWorldState, { type: "editor", editor });
+    expect(sameEditorSnapshot(editor, structuredClone(editor))).toBe(true);
+    expect(applyWorldEvent(state, { type: "editor", editor: structuredClone(editor) })).toBe(
+      state,
+    );
+    expect(normalizeRecipe({ format: "nope", props: [] })).toBeNull();
   });
 
   it("notifies store subscribers only when state changes", () => {

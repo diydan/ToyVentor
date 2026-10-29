@@ -17,6 +17,8 @@ import {
 } from "./engine";
 import { ToyCustomizer } from "./ToyCustomizer";
 import { MissionPanel } from "./MissionPanel";
+import { CreatePanel } from "./CreatePanel";
+import { EditorPanel } from "./EditorPanel";
 
 /**
  * React host for ToyVentor World (port step 1). The legacy engine keeps
@@ -82,7 +84,12 @@ export function GameCanvas({ contract }: { contract: ToyContract | null }) {
   const engine = () => engineRef.current;
   const customizer = state.customizer;
   const missionPanel = state.missionPanel;
-  const frameHeight = customizer.open || missionPanel.open ? Math.min(height, 360) : height;
+  const create = state.create;
+  const editor = state.editor;
+  const frameHeight =
+    customizer.open || missionPanel.open || create.open || editor.open
+      ? Math.min(height, 360)
+      : height;
 
   return (
     <div ref={hostRef}>
@@ -120,6 +127,22 @@ export function GameCanvas({ contract }: { contract: ToyContract | null }) {
         </button>
         <button
           type="button"
+          aria-pressed={create.open}
+          className={create.open ? "mood-active" : undefined}
+          onClick={() => (create.open ? engine()?.closeCreate() : engine()?.openCreate())}
+        >
+          Create
+        </button>
+        <button
+          type="button"
+          aria-pressed={editor.open}
+          className={editor.open ? "mood-active" : undefined}
+          onClick={() => (editor.open ? engine()?.closeEditor() : engine()?.openEditor())}
+        >
+          Editor
+        </button>
+        <button
+          type="button"
           onClick={() => engine()?.setZoom(nextZoom(state.zoom))}
           aria-label={`Zoom: ${ZOOM_LEVELS[state.zoom]}. Tap to change`}
         >
@@ -151,6 +174,45 @@ export function GameCanvas({ contract }: { contract: ToyContract | null }) {
           ? `${state.foundTotal} hidden parts found${state.toast ? ` · ${state.toast}` : ""}`
           : "Loading ToyVentor World…"}
       </p>
+
+      {editor.testing && !editor.open && !create.open && (
+        <div className="builder-actions" role="group" aria-label="Play test">
+          <span>Play-testing your world.</span>
+          <button
+            type="button"
+            className="mood-active"
+            onClick={() => engine()?.editorAction("back")}
+          >
+            {editor.backLabel}
+          </button>
+        </div>
+      )}
+
+      {create.open && (
+        <CreatePanel
+          snapshot={create}
+          onClose={() => engine()?.closeCreate()}
+          onMake={(text) => engine()?.createMake(text)}
+          onAction={(action) => engine()?.createAction(action)}
+        />
+      )}
+
+      {editor.open && (
+        <EditorPanel
+          snapshot={editor}
+          onClose={() => engine()?.closeEditor()}
+          onAction={(action) => engine()?.editorAction(action)}
+          onName={(name) => engine()?.setEditorName(name)}
+          onTheme={(theme) => engine()?.setEditorTheme(theme)}
+          onNew={(value) => engine()?.editorNew(value)}
+          onTab={(tab) => engine()?.setEditorTab(tab)}
+          onPalette={(index) => engine()?.editorPalette(index)}
+          onControl={(index) => engine()?.editorControl(index)}
+          onSelect={(index, value) => engine()?.setEditorSelect(index, value)}
+          onIoText={(text) => engine()?.setEditorIoText(text)}
+          onIoAction={(action) => engine()?.editorIoAction(action)}
+        />
+      )}
 
       {customizer.open && (
         <ToyCustomizer
