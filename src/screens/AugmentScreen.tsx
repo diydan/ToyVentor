@@ -17,25 +17,11 @@ import { revealForBuild } from "../state/reveals";
 import { BuilderCanvas } from "../features/builder/BuilderCanvas";
 import { colorOf } from "../features/builder/engine/render";
 import { useToybox } from "../state/toybox";
+import { loadBuild as readBuild, saveBuild as writeBuild } from "../lib/builds";
 
 const baseSet = baseSetJson as ToySet;
 const setErrors = validateSet(baseSetJson);
 const partsById = new Map(baseSet.parts.map((p) => [p.id, p]));
-
-const storageKey = (toyId: string) => `toyforge:build:v1:${toyId}`;
-
-function loadBuild(toyId: string): Placement[] {
-  try {
-    const raw = localStorage.getItem(storageKey(toyId));
-    if (!raw) return [];
-    const parsed: unknown = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
-    // Drop placements whose parts no longer exist in the set.
-    return (parsed as Placement[]).filter((p) => partsById.has(p.partId));
-  } catch {
-    return [];
-  }
-}
 
 export function AugmentScreen({
   onBack,
@@ -54,7 +40,7 @@ export function AugmentScreen({
   // Load this toy's saved build whenever the toy changes.
   useEffect(() => {
     if (!toy) return;
-    const saved = loadBuild(toy.id);
+    const saved = readBuild(toy.id, partsById);
     setPlacements(saved);
     // Reopening a build should show its try-on immediately, not an
     // empty preview until something is tapped.
@@ -66,11 +52,7 @@ export function AugmentScreen({
 
   useEffect(() => {
     if (!toy) return;
-    try {
-      localStorage.setItem(storageKey(toy.id), JSON.stringify(placements));
-    } catch {
-      // Storage unavailable: the build simply won't persist.
-    }
+    writeBuild(toy.id, placements);
   }, [toy, placements]);
 
   const board = useMemo(() => (toy ? boardForToy(toy) : null), [toy]);

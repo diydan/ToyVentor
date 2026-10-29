@@ -35,20 +35,23 @@ if (!existsSync(join(root, "migrations/0001_ownership.sql")))
 else ok("ownership migration present");
 
 // 4. Built client exists or the deploy script will build it.
-if (existsSync(join(root, "dist/index.html"))) ok("dist/ build present");
+if (existsSync(join(root, "dist/client/index.html"))) ok("dist/ build present");
 else console.log("preflight note: no dist/ yet — `npm run deploy` builds first, this is fine");
 
-console.log(`
-Deploy sequence (Dan, needs your Cloudflare login):
-  npx wrangler login
-  npx wrangler d1 create toyventor        # then paste id into wrangler.jsonc
-  npx wrangler secret put MODEL_API_KEY   # value from .dev.vars
-  npx wrangler d1 migrations apply toyventor --remote
-  npm run deploy
-  # then attach toyventor.com as a custom domain on the Worker`);
+// 5. ToyVentor World is in the client build: the Play button opens it.
+if (existsSync(join(root, "public/world/ToyVentor-World.html")))
+  ok("ToyVentor World page present (public/world/ToyVentor-World.html)");
+else fail("public/world/ToyVentor-World.html missing: run `npm run build:world`");
 
 if (failures > 0) {
+  console.log(`
+First-deploy remediation (Dan, needs your Cloudflare login):
+  npx wrangler login
+  npx wrangler d1 create toyventor        # only if the database does not exist
+  npx wrangler secret put MODEL_API_KEY   # value from .dev.vars, never committed
+  npx wrangler d1 migrations apply toyventor --remote
+  npm run deploy`);
   console.error(`preflight: ${failures} blocking item(s) above`);
   process.exit(1);
 }
-console.log("preflight: local checks pass");
+console.log("preflight: local checks pass — redeploy with `npm run deploy`");

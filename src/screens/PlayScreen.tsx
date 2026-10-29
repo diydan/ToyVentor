@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import baseSetJson from "../../sets/base.json";
-import { buildStats, type Placement } from "../../shared/build";
+import { buildStats } from "../../shared/build";
 import type { ToySet } from "../../shared/part";
+import { toyContractFromBuild, toyWorldUrl } from "../../shared/toycontract";
 import {
   runGame,
   type GameSnapshot,
@@ -11,19 +12,9 @@ import { colorOf } from "../features/builder/engine/render";
 import { buildSignature } from "../../shared/reveal";
 import { LivePlayPanel } from "../features/liveplay/LivePlayPanel";
 import { useToybox } from "../state/toybox";
+import { loadBuild } from "../lib/builds";
 
 const partsById = new Map((baseSetJson as ToySet).parts.map((p) => [p.id, p]));
-
-function loadBuild(toyId: string): Placement[] {
-  try {
-    const raw = localStorage.getItem(`toyforge:build:v1:${toyId}`);
-    if (!raw) return [];
-    const parsed: unknown = JSON.parse(raw);
-    return Array.isArray(parsed) ? (parsed as Placement[]) : [];
-  } catch {
-    return [];
-  }
-}
 
 export function PlayScreen({ onBuild }: { onBuild?: () => void }) {
   const { selected: toy } = useToybox();
@@ -33,8 +24,14 @@ export function PlayScreen({ onBuild }: { onBuild?: () => void }) {
   const [snap, setSnap] = useState<GameSnapshot | null>(null);
   const [round, setRound] = useState(0);
 
-  const placements = useMemo(() => (toy ? loadBuild(toy.id) : []), [toy, round]);
+  const placements = useMemo(() => (toy ? loadBuild(toy.id, partsById) : []), [toy, round]);
   const totals = useMemo(() => buildStats(placements, partsById).statTotals, [placements]);
+  // The toy contract is what travels to ToyVentor World: the kid's toy,
+  // the parts they placed, and the paint colors.
+  const contract = useMemo(
+    () => (toy ? toyContractFromBuild(toy, placements, partsById, colorOf) : null),
+    [toy, placements],
+  );
   const stats: GameStats = {
     speed: totals.speed ?? 0,
     spin: totals.spin ?? 0,
@@ -100,8 +97,33 @@ export function PlayScreen({ onBuild }: { onBuild?: () => void }) {
     <section>
       <h1>Play {toy.name}</h1>
       <p className="fine-print" style={{ marginTop: 0 }}>
-        Thirty seconds, grab the stars. Your build drives the toy:
-        speed {stats.speed}, spin {stats.spin}, glow {stats.glow}
+        {placements.length > 0 ? (
+          <>
+            Your build comes with you. ToyVentor World opens with{" "}
+            {toy.name} already wearing the parts you placed.
+          </>
+        ) : (
+          <>
+            ToyVentor World opens with {toy.name}. Add parts in the builder
+            and they come along too.
+          </>
+        )}
+      </p>
+
+      {contract && (
+        <a
+          className="cta"
+          href={toyWorldUrl(contract)}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Play in ToyVentor World
+        </a>
+      )}
+
+      <p className="fine-print" style={{ marginTop: 0 }}>
+        Quick round: thirty seconds, grab the stars. Your build drives the
+        toy: speed {stats.speed}, spin {stats.spin}, glow {stats.glow}
         {placements.length === 0 ? " (no build yet, so it's stock)" : ""}.
       </p>
 

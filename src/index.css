@@ -226,6 +226,11 @@ p {
   box-shadow: var(--shadow-btn-sky-pressed);
 }
 
+a.cta {
+  text-decoration: none;
+  text-align: center;
+}
+
 .cta-quiet {
   border: 2px solid var(--line);
   background: transparent;
