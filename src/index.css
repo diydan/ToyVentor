@@ -570,9 +570,9 @@ a.cta {
 .tryon-part model-viewer { --poster-color: transparent; background: transparent; }
 
 .builder-actions button.mood-active {
-  background: var(--accent);
-  color: var(--accent-ink);
-  border-color: var(--accent);
+  background: var(--sky-500);
+  color: var(--ink-on-sky);
+  border-color: var(--sky-500);
 }
 
 @media (prefers-reduced-motion: reduce) {

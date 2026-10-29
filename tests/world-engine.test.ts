@@ -2,13 +2,21 @@ import { describe, expect, it, vi } from "vitest";
 import type { ToyContract } from "../shared/toycontract";
 import {
   applyWorldEvent,
+  closedCustomizerSnapshot,
+  closedMissionPanelSnapshot,
   createWorldStore,
   diffFoundKeys,
   initialWorldState,
   nextZoom,
+  normalizeCustomizerSnapshot,
+  normalizeMissionPanelSnapshot,
+  sameCustomizerSnapshot,
+  sameMissionPanelSnapshot,
   worldUrlFor,
   zoomClicks,
   ZOOM_LEVELS,
+  type CustomizerSnapshot,
+  type MissionPanelSnapshot,
 } from "../src/features/game/world/engine";
 
 const contract: ToyContract = {
@@ -61,6 +69,163 @@ describe("world engine facade helpers", () => {
     });
     state = applyWorldEvent(state, { type: "mission", title: null });
     expect(state.missionTitle).toBeNull();
+  });
+
+  it("normalizes a legacy customizer snapshot into React state", () => {
+    const snapshot = normalizeCustomizerSnapshot({
+      open: true,
+      types: [
+        { id: "character", label: "Character", selected: false },
+        { id: "vehicle", label: "Vehicle", selected: true },
+      ],
+      slots: [
+        { id: "chassis", label: "Chassis", selected: false },
+        { id: "rear", label: "Rear", selected: true },
+      ],
+      options: [
+        {
+          id: "spoiler",
+          label: "Spoiler",
+          detail: "Snap · Speed",
+          selected: true,
+          locked: false,
+          lockLabel: "",
+        },
+        {
+          id: "booster",
+          label: "Booster",
+          detail: "Snap · Speed",
+          selected: false,
+          locked: true,
+          lockLabel: "Find in the Beach",
+        },
+      ],
+      paintZones: [
+        { id: "c1", label: "Main", selected: false },
+        { id: "c2", label: "Accent", selected: true },
+      ],
+      paints: [{ color: "#52b7ff", selected: true }],
+      moves: "Moves: Dash",
+      checkText: "Ready to 3D print",
+      checkOk: true,
+      scrap: 4,
+    });
+
+    expect(snapshot).toMatchObject({
+      open: true,
+      toyType: "vehicle",
+      slot: "rear",
+      paintZone: "c2",
+      moves: "Moves: Dash",
+      checkOk: true,
+      scrap: 4,
+    });
+    expect(snapshot.options[1]).toMatchObject({ locked: true, lockLabel: "Find in the Beach" });
+    expect(normalizeCustomizerSnapshot({ open: false, scrap: 9 })).toEqual({
+      ...closedCustomizerSnapshot,
+      scrap: 9,
+    });
+  });
+
+  it("does not rerender HUD state for an identical customizer snapshot", () => {
+    const customizer: CustomizerSnapshot = normalizeCustomizerSnapshot({
+      open: true,
+      types: [{ id: "robot", label: "Robot", selected: true }],
+      slots: [{ id: "head", label: "Head", selected: true }],
+    });
+    const state = applyWorldEvent(initialWorldState, { type: "customizer", customizer });
+    const again = applyWorldEvent(state, {
+      type: "customizer",
+      customizer: structuredClone(customizer),
+    });
+    expect(sameCustomizerSnapshot(customizer, structuredClone(customizer))).toBe(true);
+    expect(again).toBe(state);
+    expect(applyWorldEvent(state, { type: "customizer", customizer: closedCustomizerSnapshot }))
+      .not.toBe(state);
+  });
+
+  it("normalizes every legacy mission panel into shared panel data", () => {
+    const panel = normalizeMissionPanelSnapshot({
+      open: true,
+      title: " Bridge the river ",
+      goal: " Put parts in the slots. ",
+      lines: [" Deck empty ", "", "Support: Triangle brace"],
+      chips: [{ text: "?", question: true }],
+      controls: [
+        {
+          index: 99,
+          label: "Beam (1)",
+          disabled: false,
+          primary: true,
+          active: false,
+          danger: false,
+          dataset: { use: "deck:beam" },
+          group: "Deck empty",
+        },
+        {
+          index: 42,
+          label: "Take out",
+          disabled: false,
+          primary: false,
+          active: false,
+          danger: false,
+          dataset: { out: "support" },
+          group: "Support Triangle brace",
+        },
+      ],
+      actionLabel: " Test it ",
+      forgeAvailable: true,
+      binText: "Scrap 3",
+    });
+
+    expect(panel).toMatchObject({
+      open: true,
+      title: "Bridge the river",
+      goal: "Put parts in the slots.",
+      lines: ["Deck empty", "Support: Triangle brace"],
+      actionLabel: "Test it",
+      forgeAvailable: true,
+      binText: "Scrap 3",
+    });
+    expect(panel.controls.map((control) => control.index)).toEqual([0, 1]);
+    expect(panel.controls[0]?.dataset).toEqual({ use: "deck:beam" });
+    expect(normalizeMissionPanelSnapshot({ open: false, title: "Stale" })).toEqual(
+      closedMissionPanelSnapshot,
+    );
+  });
+
+  it("folds mission panel snapshots into state without duplicate renders", () => {
+    const panel: MissionPanelSnapshot = normalizeMissionPanelSnapshot({
+      open: true,
+      title: "Measure the gap",
+      goal: "Make exactly 6.",
+      lines: ["2 + 3 = 5 of 6"],
+      controls: [
+        {
+          index: 0,
+          label: "Add 2",
+          disabled: false,
+          primary: true,
+          active: false,
+          danger: false,
+          dataset: { a: "2" },
+        },
+      ],
+    });
+    const state = applyWorldEvent(initialWorldState, { type: "missionPanel", panel });
+    const again = applyWorldEvent(state, {
+      type: "missionPanel",
+      panel: structuredClone(panel),
+    });
+    expect(state.missionTitle).toBe("Measure the gap");
+    expect(state.missionPanel).toEqual(panel);
+    expect(sameMissionPanelSnapshot(panel, structuredClone(panel))).toBe(true);
+    expect(again).toBe(state);
+    const closed = applyWorldEvent(state, {
+      type: "missionPanel",
+      panel: closedMissionPanelSnapshot,
+    });
+    expect(closed.missionTitle).toBeNull();
   });
 
   it("notifies store subscribers only when state changes", () => {

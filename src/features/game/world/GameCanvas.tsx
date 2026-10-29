@@ -15,6 +15,8 @@ import {
   worldUrlFor,
   type EngineHandle,
 } from "./engine";
+import { ToyCustomizer } from "./ToyCustomizer";
+import { MissionPanel } from "./MissionPanel";
 
 /**
  * React host for ToyVentor World (port step 1). The legacy engine keeps
@@ -78,12 +80,43 @@ export function GameCanvas({ contract }: { contract: ToyContract | null }) {
   }, []);
 
   const engine = () => engineRef.current;
+  const customizer = state.customizer;
+  const missionPanel = state.missionPanel;
+  const frameHeight = customizer.open || missionPanel.open ? Math.min(height, 360) : height;
 
   return (
     <div ref={hostRef}>
       <div className="builder-actions" role="group" aria-label="ToyVentor World">
-        <button type="button" onClick={() => engine()?.start()}>
+        <button
+          type="button"
+          onClick={() =>
+            customizer.open ? engine()?.closeCustomizer() : engine()?.start()
+          }
+        >
           Play
+        </button>
+        <button
+          type="button"
+          aria-pressed={customizer.open && !customizer.forge}
+          className={customizer.open && !customizer.forge ? "mood-active" : undefined}
+          onClick={() => {
+            if (!customizer.open) engine()?.openCustomizer("build");
+            else if (customizer.forge) engine()?.factoryAction("forge");
+            else engine()?.closeCustomizer();
+          }}
+        >
+          Customize
+        </button>
+        <button
+          type="button"
+          aria-pressed={customizer.open && customizer.forge}
+          className={customizer.open && customizer.forge ? "mood-active" : undefined}
+          onClick={() => {
+            if (!customizer.open) engine()?.openCustomizer("forge");
+            else if (!customizer.forge) engine()?.factoryAction("forge");
+          }}
+        >
+          Forge
         </button>
         <button
           type="button"
@@ -105,18 +138,12 @@ export function GameCanvas({ contract }: { contract: ToyContract | null }) {
         ))}
       </div>
 
-      {state.missionTitle && (
-        <div className="builder-actions" role="group" aria-label="Mission">
-          <span>
-            Mission: <strong>{state.missionTitle}</strong>
-          </span>
-          <button type="button" onClick={() => engine()?.missionAction("test")}>
-            Test it
-          </button>
-          <button type="button" onClick={() => engine()?.missionAction("later")}>
-            Later
-          </button>
-        </div>
+      {missionPanel.open && (
+        <MissionPanel
+          snapshot={missionPanel}
+          onAction={(action) => engine()?.missionAction(action)}
+          onControl={(index) => engine()?.missionControl(index)}
+        />
       )}
 
       <p className="fine-print" style={{ marginTop: 0 }} aria-live="polite">
@@ -125,12 +152,27 @@ export function GameCanvas({ contract }: { contract: ToyContract | null }) {
           : "Loading ToyVentor World…"}
       </p>
 
+      {customizer.open && (
+        <ToyCustomizer
+          snapshot={customizer}
+          onClose={() => engine()?.closeCustomizer()}
+          onSetToyType={(toyType) => engine()?.setToyType(toyType)}
+          onSelectSlot={(slot) => engine()?.selectSlot(slot)}
+          onSelectPart={(partId) => engine()?.selectPart(partId)}
+          onSetPaintZone={(zone) => engine()?.setPaintZone(zone)}
+          onSetPaint={(color) => engine()?.setPaint(color)}
+          onFactoryAction={(action) => engine()?.factoryAction(action)}
+          onForgeTool={(toolId) => engine()?.forgeTool(toolId)}
+          onPrintTool={(toolId) => engine()?.printTool(toolId)}
+        />
+      )}
+
       <iframe
         ref={frameRef}
         title="ToyVentor World"
         style={{
           width: "100%",
-          height,
+          height: frameHeight,
           border: 0,
           display: "block",
           background: "#080f2b",

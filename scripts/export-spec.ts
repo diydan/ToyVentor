@@ -21,7 +21,7 @@ const HEADER = `> Review copy, generated ${new Date().toISOString().slice(0, 10)
 | Section | Change | Why |
 | --- | --- | --- |
 | Whole spec, Oct 29 review pass | Demo table, model table, contract, Create mode, Pro, STEM, and Forge Club claims corrected to match the code as built. Dates updated. | A code review against the running app found rows that overstated what is live (Mureka, voice model, pin and gear set, gear ratio challenge, KV). |
-| Roadmap | Added the React port decision for ToyVentor World: wrap the engine behind a typed facade, do not rewrite it, three.js upgrade last. Step 1 (facade, canvas host, HUD) has started locally; the standalone page remains the demo path. | The port had been reviewed separately. The decision belongs in the spec, recorded with its actual progress, not as if the whole port were done. |
+| Roadmap | Added the React port decision for ToyVentor World: wrap the engine behind a typed facade, do not rewrite it, three.js upgrade last. Steps 1 to 3 (facade, canvas host, HUD, React Factory/customizer, React mission panels) are in locally; the standalone page remains the demo path. | The port had been reviewed separately. The decision belongs in the spec, recorded with its actual progress, not as if the whole port were done. |
 | ToyVentor World | New section. The app and the 2.5D world are now one toy: the Play button opens the world already wearing the kid's build, through the \`toyventor.toy/1\` contract in the page URL. | The hand-off between app and game was undefined. It is now a documented contract with a stated mapping rule and a stated failure behaviour. |
 | Create mode | New section. The model route, the kid-facing rules it holds, and the recipe check. | Create mode now runs on Meta Muse Spark through the Worker's \`/api/muse/spark\` route, with the game's word parser as the fallback. The spec should say so. |
 | Where we use Meta models | Added the Create mode row. | The model list was missing the one place a model writes game content. |
@@ -48,10 +48,11 @@ Five things are worth your attention, in this order.
    route's filter enforces and which are prompts to the model only (brands,
    names), and splits the recipe check between the route and the game. Check both
    halves, not the claim. The route also has no rate limit yet; the spec says so.
-4. **The React port is step 1 only.** The Roadmap records a wrap-don't-rewrite
-   decision for moving ToyVentor World into React. Only the facade, canvas host,
-   and HUD exist, locally in the Play tab. Nothing in the demo depends on it. If
-   any section reads as if more of the port were done, that is a finding.
+4. **The React port is steps 1 to 3 only.** The Roadmap records a
+   wrap-don't-rewrite decision for moving ToyVentor World into React. The facade,
+   canvas host, HUD, Factory/customizer, and mission panels exist locally in the
+   Play tab. Nothing in the demo depends on them. If any section reads as if
+   Create mode, the editor, or the three.js upgrade were done, that is a finding.
 5. **The open questions are still open.** The section at the end lists what the
    spec asserts but has not earned. If something in that list has since been
    answered, it should be updated rather than left as a question.
