@@ -35,7 +35,8 @@ export interface ToyContract {
   type: ToyType;
   /** Game part keys, e.g. "vehicle.rear.spoiler". */
   parts: string[];
-  /** Main paint, accent paint, and skin tone (character only). */
+  /** Main paint, accent paint, and skin tone (character only). Each is a
+   *  #rrggbb color, or "" to leave the game's current paint untouched. */
   col: { c1: string; c2: string; skin: string };
   /** Totals for the kid's build, kept for the game's own reading. */
   stats: Partial<Record<StatName, number>>;
@@ -63,9 +64,6 @@ const STAT_PART: Record<ToyType, Record<StatName, string>> = {
   },
 };
 
-const DEFAULT_ACCENT = "#52b7ff";
-const DEFAULT_SKIN = "#f2b98c";
-
 const TYPES: ToyType[] = ["character", "robot", "vehicle"];
 const STATS: StatName[] = ["speed", "spin", "torque", "glow"];
 const HEX = /^#[0-9a-f]{6}$/i;
@@ -87,8 +85,8 @@ function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === "object" && v !== null && !Array.isArray(v);
 }
 
-function isHex(v: unknown): v is string {
-  return typeof v === "string" && HEX.test(v);
+function isHexOrEmpty(v: unknown): v is string {
+  return typeof v === "string" && (v === "" || HEX.test(v));
 }
 
 /** Returns human-readable errors; empty array means the contract is valid. */
@@ -113,9 +111,9 @@ export function validateToyContract(value: unknown): string[] {
   if (!isRecord(value.col)) {
     errors.push("col must be an object");
   } else {
-    if (!isHex(value.col.c1)) errors.push("col.c1 must be a #rrggbb color");
-    if (!isHex(value.col.c2)) errors.push("col.c2 must be a #rrggbb color");
-    if (!isHex(value.col.skin)) errors.push("col.skin must be a #rrggbb color");
+    if (!isHexOrEmpty(value.col.c1)) errors.push("col.c1 must be a #rrggbb color or empty");
+    if (!isHexOrEmpty(value.col.c2)) errors.push("col.c2 must be a #rrggbb color or empty");
+    if (!isHexOrEmpty(value.col.skin)) errors.push("col.skin must be a #rrggbb color or empty");
   }
   if (value.stats !== undefined) {
     if (!isRecord(value.stats)) errors.push("stats must be an object");
@@ -171,7 +169,6 @@ export function toyContractFromBuild(
   const stats: Partial<Record<StatName, number>> = {};
   let main = "";
   let accent = "";
-  let skin = DEFAULT_SKIN;
 
   for (const placement of placements) {
     const part = partsById.get(placement.partId);
@@ -196,7 +193,9 @@ export function toyContractFromBuild(
     name: toy.name,
     type,
     parts: [...best.values()].map((entry) => entry.key),
-    col: { c1: main || DEFAULT_ACCENT, c2: accent || DEFAULT_ACCENT, skin },
+    // Unset colors stay "": the app never picks a skin tone, and a build
+    // with no paint must not repaint the toy the kid set up in the game.
+    col: { c1: main, c2: accent, skin: "" },
     stats,
   };
 }

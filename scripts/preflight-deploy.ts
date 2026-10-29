@@ -3,7 +3,9 @@
 // Local checks only — Cloudflare auth, remote D1 and Worker secrets can
 // only be confirmed by Dan's `wrangler login` session; the exact commands
 // are printed at the end either way.
-import { existsSync, readFileSync } from "node:fs";
+import { execFileSync } from "node:child_process";
+import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 const root = process.cwd();
@@ -38,10 +40,28 @@ else ok("ownership migration present");
 if (existsSync(join(root, "dist/client/index.html"))) ok("dist/ build present");
 else console.log("preflight note: no dist/ yet — `npm run deploy` builds first, this is fine");
 
-// 5. ToyVentor World is in the client build: the Play button opens it.
-if (existsSync(join(root, "public/world/ToyVentor-World.html")))
-  ok("ToyVentor World page present (public/world/ToyVentor-World.html)");
-else fail("public/world/ToyVentor-World.html missing: run `npm run build:world`");
+// 5. ToyVentor World is in the client build and current: the Play button
+// opens it, and a stale page would ship the old game next to a new app.
+const worldPage = join(root, "public/world/ToyVentor-World.html");
+if (!existsSync(worldPage)) {
+  fail("public/world/ToyVentor-World.html missing: run `npm run build:world`");
+} else {
+  const scratch = mkdtempSync(join(tmpdir(), "toyventor-preflight-"));
+  try {
+    execFileSync("python3", [join(root, "game/build25.py")], {
+      env: { ...process.env, TOYVENTOR_OUT: scratch, TOYVENTOR_TEST_OUT: scratch },
+      stdio: "pipe",
+    });
+    const fresh = readFileSync(join(scratch, "ToyVentor-World.html"));
+    if (fresh.equals(readFileSync(worldPage)))
+      ok("ToyVentor World page present and current (public/world/ToyVentor-World.html)");
+    else fail("public/world/ToyVentor-World.html is stale vs game/engine25.js: run `npm run build:world`");
+  } catch {
+    fail("could not rebuild the world page to check freshness: run `npm run build:world` by hand");
+  } finally {
+    rmSync(scratch, { recursive: true, force: true });
+  }
+}
 
 if (failures > 0) {
   console.log(`

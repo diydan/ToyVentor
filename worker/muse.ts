@@ -257,14 +257,16 @@ export async function handleMuseSpark(request: Request, env: MuseEnv): Promise<R
       // Older models do not know the reasoning parameter.
       res = await attempt(false);
     }
-  } catch (err) {
-    return json({ error: `muse request failed: ${(err as Error).message}` }, 502);
+  } catch {
+    // Error detail stays server side. The game only needs to know the
+    // call failed so it can fall back to its word parser.
+    console.log(JSON.stringify({ event: "muse_spark", status: "fetch-failed" }));
+    return json({ error: "muse request failed" }, 502);
   }
 
   if (!res.ok) {
-    const detail = (await res.text()).slice(0, 300);
     console.log(JSON.stringify({ event: "muse_spark", status: res.status }));
-    return json({ error: `muse returned ${res.status}: ${detail}` }, 502);
+    return json({ error: `muse returned ${res.status}` }, 502);
   }
 
   const raw = (await res.json()) as unknown;

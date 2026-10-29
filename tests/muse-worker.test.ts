@@ -188,6 +188,36 @@ describe("muse spark route", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
+  it("keeps upstream error details out of the browser response", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response("invalid api key sk-SECRETDETAIL", { status: 500 })),
+    );
+    const res = await handleMuseSpark(
+      post({ model: "muse-spark", input: "a garden", format: "json" }),
+      { MODEL_API_KEY: "test-key" },
+    );
+    expect(res.status).toBe(502);
+    const text = await res.text();
+    expect(text).not.toContain("SECRETDETAIL");
+    expect(text).not.toContain("invalid api key");
+  });
+
+  it("keeps fetch failure details out of the browser response", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => {
+        throw new Error("dial tcp 10.0.0.9:443 SECRETDETAIL");
+      }),
+    );
+    const res = await handleMuseSpark(
+      post({ model: "muse-spark", input: "a garden", format: "json" }),
+      { MODEL_API_KEY: "test-key" },
+    );
+    expect(res.status).toBe(502);
+    expect(await res.text()).not.toContain("SECRETDETAIL");
+  });
+
   it("answers a GET with the route status for the deploy check", async () => {
     const res = await handleMuseSpark(
       new Request("https://toyventor.com/api/muse/spark"),

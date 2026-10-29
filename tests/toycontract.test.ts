@@ -101,6 +101,18 @@ describe("toy contract", () => {
     expect(validateToyContract(decoded)).toEqual([]);
   });
 
+  it("sends no paint when the build supplied none, so the game keeps its own", () => {
+    const empty = toyContractFromBuild(car, [], byId, colorOf);
+    expect(empty.col).toEqual({ c1: "", c2: "", skin: "" });
+    expect(validateToyContract(empty)).toEqual([]);
+    expect(decodeToyContract(encodeToyContract(empty))).toEqual(empty);
+    // One part paints the main color only; the accent stays the game's.
+    const one = toyContractFromBuild(car, [at("snap-spoiler-01", 0, 0)], byId, colorOf);
+    expect(one.col.c1).toBe("#e85d1f");
+    expect(one.col.c2).toBe("");
+    expect(one.col.skin).toBe("");
+  });
+
   it("refuses malformed contracts", () => {
     expect(decodeToyContract("not-base64!!")).toBeNull();
     expect(validateToyContract({ format: "toyventor.toy/2" }).length).toBeGreaterThan(0);
