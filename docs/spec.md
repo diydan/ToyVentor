@@ -1,4 +1,4 @@
-# ToyVentor — Spec (toyventor.com)
+# ToyVentor: Spec (toyventor.com)
 
 Oct 27, 2026 · Dan O · Indie track · Build for Your World
 
@@ -13,14 +13,16 @@ I was a brick-building fanatic as a kid and I'm a robotics fanatic as an adult, 
 
 ## Vision
 
-ToyVentor helps the next generation grow into robotics through play: sandbox creativity, modular construction, gentle discovery, and hands-on engineering in one physical-digital loop. The long-term direction — one cross-line module system, delivery-first access, an open catalogue layer, and child-safe commercial guardrails — lives in [vision.md](vision.md). This spec stays canonical for product behaviour and the hackathon demo.
+ToyVentor helps the next generation grow into robotics through play: sandbox creativity, modular construction, gentle discovery, and hands-on engineering in one physical-digital loop. The long-term direction (one cross-line module system, delivery-first access, an open catalogue layer, and child-safe commercial guardrails) lives in [vision.md](vision.md). This spec stays canonical for product behaviour and the hackathon demo.
 
 ## Demo (90 seconds)
 
+The run, beat by beat, with the backup clips and the pre-flight checks, lives in [demo-script.md](demo-script.md). In short:
+
 1. Scan a car with SAM 3.1. Preloaded toy is backup if live scan fails.
 2. Pick a Snap part. See it on the car in AR at true scale.
-3. Show a Pro gear set on the same Forge Mount.
-4. Make a skin with Muse Image. Equip in mini game. Show boost.
+3. Open ToyVentor World with the kid's build, play the Garden, solve the bridge mission.
+4. Describe a world in Create mode. The model writes it, the game loads it.
 5. Export STL. Show checks pass.
 6. Play the Reveal: entrance animation, 15 second theme, character card.
 
@@ -55,6 +57,24 @@ You don't need to own a single physical part to build here (that's the point, si
 - Snap gets fit, stacking, stat preview. Pro gets motion tests: gears mesh, axles turn, joints move, gear ratio shown.
 - Finish gives parts list, filament and print time estimate, print files.
 - Hackathon ships viewer, grid snapping, live checks, stand-in body. Pro motion for one gear pair is stretch.
+
+## ToyVentor World
+
+The app and the 2.5D world are two halves of one toy. The Play button in the app opens ToyVentor World already wearing the kid's build, through a small contract that travels in the page URL.
+
+- Contract format `toyventor.toy/1`, JSON, base64url in the URL hash. No server call, nothing stored, no personal data on this path.
+- The contract carries the toy id and name, the toy type (character, robot, vehicle), the game part keys for the slots the kid filled, and the paint colors.
+- Mapping rule: the world gives every slot a stat, and each app part carries one stat too, so a placed part lands on the slot with the same stat. Two parts with the same stat compete, and the stronger one wins. The two part libraries stay separate, so a new set in the app never breaks the world and a new part in the world never breaks the app.
+- The world is served from the app's own origin (`/world/ToyVentor-World.html`), so Create mode can reach the Worker's model route without a cross-site call.
+- Bad contract in, stock toy out. The world never fails to start because of a URL.
+
+## Create mode
+
+Kids describe a world, the model writes the recipe, the world loads it. The word parser in the game is the fallback and still works with no model at all.
+
+- The game posts to `/api/muse/spark` on the Worker, which runs the model on Meta Muse Spark and answers with a level recipe plus one warm sentence for the kid.
+- The route holds the kid-facing rules: short lines, safe topics, no real names or identifying details, no brands, and no long text. What the kid reads is cleaned before it is shown.
+- The recipe is checked against the world's own level shape before it is sent. If it does not fit, the game falls back to its word parser.
 
 ## STEM mode (stretch, off by default)
 
@@ -142,6 +162,7 @@ We build on the Meta Model API. Scan is [SAM 3.1](https://ai.meta.com/blog/segme
 | Scene detection | SAM 3.1 + Muse Spark | Tracks toy and reads surroundings |
 | Mood | Muse Spark | Turns scene and story words into a mood |
 | Voice commands | Muse Voice Transcribe | Live speech to text with keyword boosting |
+| Create mode | Muse Spark | Turns a kid's description into a world recipe |
 | STEM content | Muse Spark | Drafts challenges and hints, human reviewed |
 
 Theme songs, loops, sound effects come from Mureka API. Parts are parametric OpenSCAD and are not generated. Checks, grid snapping, motion tests are plain code.

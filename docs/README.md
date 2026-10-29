@@ -14,8 +14,18 @@ long-term direction; if two documents disagree about product behaviour,
 | [spec.md](spec.md) | Product spec. Canonical for what ToyVentor is and what the demo proves |
 | [plan.md](plan.md) | 10-day plan to the Nov 4 submission |
 | [journal.md](journal.md) | Dated progress log |
+| [demo-script.md](demo-script.md) | The 90-second demo run: beats, shot list, backups, pre-flight checks |
 | [wireframe.md](wireframe.md) + [ToyVentor Wireframes.pdf](ToyVentor%20Wireframes.pdf) | The 12 screens |
 | [design-guide.html](design-guide.html) + [mockups.html](mockups.html) | Visual design. Open in a browser |
+
+## ToyVentor World (the 2.5D game)
+
+| Path | What it is |
+| --- | --- |
+| `game/engine25.js` | The game source. One script, the source of truth |
+| `game/build25.py` | Builds the single-page game from that source: `npm run build:world` |
+| `public/world/ToyVentor-World.html` | The built game, served from the app's origin at `/world/ToyVentor-World.html` |
+| `shared/toycontract.ts` | The toy contract: how the app hands the kid's build to the game |
 
 ## Creating parts
 
