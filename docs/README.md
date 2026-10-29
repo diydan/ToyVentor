@@ -1,14 +1,16 @@
 # ToyVentor docs
 
-One map for everything in this folder. If two documents disagree about
-product behaviour, [spec.md](spec.md) wins. If they disagree about part
-geometry, see "Two parts lanes" below — that split is deliberate until
+One map for everything in this folder. [vision.md](vision.md) states the
+long-term direction; if two documents disagree about product behaviour,
+[spec.md](spec.md) wins. If they disagree about part geometry, see
+"Two parts lanes" below — that split is deliberate until
 [decision 0005](decisions/0005-partspec-lattice-merge.md) resolves it.
 
 ## Start here
 
 | File | What it is |
 | --- | --- |
+| [vision.md](vision.md) | Product vision: robotics through play, one modular system, access model and guardrails |
 | [spec.md](spec.md) | Product spec. Canonical for what ToyVentor is and what the demo proves |
 | [plan.md](plan.md) | 10-day plan to the Nov 4 submission |
 | [journal.md](journal.md) | Dated progress log |

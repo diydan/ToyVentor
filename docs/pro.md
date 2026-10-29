@@ -33,6 +33,28 @@ e.g. Beam STR RND SU05x01x01.
 | Motion capsules | Motor, wheel, light, or sensor modules; digital at launch |
 | Forge Mount adapter | Snap-on base that gives the scanned toy a hole grid |
 
+## Humanoid and cross-line modules
+
+The articulated humanoid is the reference layout for the simplified,
+fixed-pose Snap figures: one anatomy expressed at two levels of mechanical
+complexity. Heads, torsos, limb segments, tails, accessories and end
+effectors use the same named module roles across humans, animals and
+robots.
+
+Every humanoid or robot part must emit the same typed connection metadata
+as any other system part: connector kind and gender, interface, size class,
+frame and normal, axis, allowed mates, fit class, print orientation and
+safety status. Geometry that merely touches in an assembly is not
+compatible until those connections exist in the manifest and pass assembly
+and measured-fit checks.
+
+Cross-line parts should use a direct shared interface wherever scale makes
+that physically sound. A Pro head is Snap-compatible only when it
+demonstrates a declared Snap mate, or uses an explicit fit-checked adapter
+in a validated assembly. Humanoid proportions and joint axes should also
+map to a standard animation rig so one motion library can drive both Pro
+articulated figures and their Snap counterparts.
+
 ## Look and print rules
 
 - Fillet everything: 1.5 mm or more, 0.5 mm or more on small features.
@@ -67,3 +89,6 @@ e.g. Beam STR RND SU05x01x01.
 
 - SU05 beam, friction pin, and gear set pass checks: on the grid, holes fit the axles, no supports.
 - A Pro part mounts on a Forge Mount and equips in the game.
+- Any humanoid part counted toward the one-system claim has complete typed
+  connector metadata, at least one validated intended assembly, and a
+  demonstrated direct Snap mate or fit-checked adapter for shared heads.

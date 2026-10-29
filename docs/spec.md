@@ -2,7 +2,7 @@
 
 Oct 27, 2026 · Dan O · Indie track · Build for Your World
 
-I was a Lego fanatic as a kid and I'm a robotics fanatic as an adult, and ToyVentor is me trying to hand that bug to my son without handing him a worksheet: his toy box is already full of cars and figures he loved and then abandoned, so why not start there? You scan one, AI helps find where a part could actually snap on, and then you build the upgrade in the browser, print it, and see the same toy come back alive in AR and in a little game.
+I was a brick-building fanatic as a kid and I'm a robotics fanatic as an adult, and ToyVentor is me trying to hand that bug to my son without handing him a worksheet: his toy box is already full of cars and figures he loved and then abandoned, so why not start there? You scan one, AI helps find where a part could actually snap on, and then you build the upgrade in the browser, print it, and see the same toy come back alive in AR and in a little game.
 
 ## At a glance
 
@@ -10,6 +10,10 @@ I was a Lego fanatic as a kid and I'm a robotics fanatic as an adult, and ToyVen
 - Built: scan a toy, build and test upgrades in the browser, see them in AR and a mini game, export a 3D print-ready file.
 - Meta models: SAM 3.1 outlines the toy. Muse Image makes skins. Muse Spark reads the scene and drafts STEM content. Muse Voice Transcribe handles voice commands. Mureka API makes songs and sound effects.
 - Demo truth: scan, virtual builder with live checks, AR try-on, mini game, STL export, Reveal are live. Billing, delivery, real electronics are mocked or later. Table below says which is which.
+
+## Vision
+
+ToyVentor helps the next generation grow into robotics through play: sandbox creativity, modular construction, gentle discovery, and hands-on engineering in one physical-digital loop. The long-term direction — one cross-line module system, delivery-first access, an open catalogue layer, and child-safe commercial guardrails — lives in [vision.md](vision.md). This spec stays canonical for product behaviour and the hackathon demo.
 
 ## Demo (90 seconds)
 
@@ -30,13 +34,15 @@ The loop itself is simple enough that it doesn't need its own diagram: scan the 
 
 | | ToyVentor Snap | ToyVentor Pro |
 | --- | --- | --- |
-| Who | Younger kids with a grown-up | Ages 8+ and makers |
+| Who | Ages 3+ with a grown-up | Ages 8+ and makers |
 | Connect | Studs, snap-fit, no tools | Hole grid with pins, axles, optional screws |
 | Parts | Bricks, plates, skins, character add-ons | Beams, gears, axles, joints, motion capsules |
 | Game | Looks + stat upgrades | Speed, spin, function stats |
 | Electronics | None | Optional, later |
 
 Both share one adapter, the Forge Mount, one part format, one set of checks. Any part works in builder, AR, game, and printer. A bridge plate with studs on one side and holes on the other mixes Snap and Pro in one build.
+
+Humans, animals, robots, tails, wings and accessories are one module vocabulary, not separate catalogues. Every printable part carries typed connection metadata so builders and AI design only from parts that can really mate. Modules should swap directly between Snap and Pro wherever physical scale allows; where it does not, the system uses an explicit fit-checked adapter rather than claiming compatibility from similar-looking geometry. Snap is the simplified, fixed-pose expression of the Pro humanoid layout, and humanoid joint layouts should map to standard animation rigs so motion clips can be reused across characters.
 
 ## Virtual builder
 
@@ -82,7 +88,9 @@ Play with a real toy while phone listens and watches. App answers with music tha
 
 ## Forge Club
 
-A monthly themed set: 6 parts, 2 skins, a theme loop, and at least one part you can actually print, because if nothing in the box ever becomes physical, we've just built another skin shop. Free players get the base parts and a daily pack; members get the monthly set plus an extra daily roll, and if you stop paying you keep what you've unlocked and simply miss the new drops (old sets move to the Market, so nothing's gone forever). Billing will go through an outside provider eventually; in the demo it's mocked, with two seeded sets.
+A monthly themed set: 6 parts, 2 skins, a theme loop, and at least one part you can actually print, because if nothing in the box ever becomes physical, we've just built another skin shop. Free players get the base parts and a free daily pack; members get the monthly set, and if you stop paying you keep what you've unlocked and simply miss the new drops (old sets move to the Market, so nothing's gone forever). Children are never sold chance-based packs. Billing will go through an outside provider eventually; in the demo it's mocked, with two seeded sets.
+
+The product is delivery-first because most families do not own a printer. The business targets are delivered custom parts starting at $1 and direct print costs of $0.50–$5 per design, with seasonal physical packs tied to engineering and science activities. The launch market is the US. Those economics are targets to prove, not claims about the hackathon build.
 
 ## Under the hood
 
@@ -147,7 +155,7 @@ Two things I considered and rejected, for the record. First, generating part geo
 | Scan | SAM 3.1 outline, size, attach point | Seed toy as backup |
 | Skins | Muse Image skin for scanned toy | Seed skins as backup |
 | Virtual builder | Grid snapping, live checks, stand-in body | Part library made ahead |
-| Play | AR try-on, mini game, boost | Animations from Mixamo clips |
+| Play | AR try-on, mini game, boost | Reusable clips on a standard humanoid rig |
 | 3D print | STL export with checks | Delivery handoff mocked |
 | Reveal | Entrance animation, character card | Theme songs from Mureka API |
 | Live Play (stretch) | Mood buttons + voice keywords | Loops and SFX made ahead with Mureka |
@@ -194,6 +202,7 @@ Things this spec asserts but hasn't earned yet:
 - Will a SAM mask from a wobbly, badly lit phone photo actually give a usable size and attach point, or does the parent end up nudging a slider every time? The preloaded backup toy hides this in the demo, but it doesn't answer it, and shiny or translucent toys are my main worry.
 - Can one snap-fit clearance work across home printers, or does the per-printer offset become homework nobody does? If the Day 4 calibration prints say "it depends," the honest fallback is shipping Snap in a single size on a single known-good profile and saying so.
 - Is the "printed part gives a game boost" loop motivating, or does it just punish kids without a printer? I have a guess, not evidence.
+- Do the Pro humanoid parts yet prove the one-system claim? They still need standard typed connection metadata, and the new heads need a demonstrated Snap mate or explicit fit-checked adapter before either line can claim cross-line head swaps.
 
 ## Roadmap
 

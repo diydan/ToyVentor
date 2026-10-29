@@ -1,7 +1,9 @@
 # ToyVentor Snap
 
-Snap is the kid line. Younger kids, with a parent or older sibling helping. Everything is
-snap-fit and tool-free: no screws. Most parts are shapes with a game function: one stat
+Snap is the entry line for ages 3+, with a parent or older sibling helping.
+Everything is snap-fit and tool-free: no screws. Its parts use soft, rounded,
+collectible character forms; robots are part of the same family and are
+fixed-pose at this level. Most parts are shapes with a game function: one stat
 plus a behavior in AR and the mini game.
 
 ## Connection
@@ -35,6 +37,16 @@ size rather than two while geometry is reworked.
 | Function capsule | Printed shell; the function (speed, glow, spin) lives in AR and the game | Shell only |
 | Skin | Texture for a part | No, game and AR only |
 
+## Shared character modules
+
+Heads, bodies, limbs, tails, wings and accessories use one shared module
+vocabulary across humans, animals and robots. Snap is the simplified,
+fixed-pose expression of the Pro humanoid layout rather than a separate
+character system. A head or accessory may be described as cross-line only
+when its declared connector directly mates with the other line or through an
+explicit fit-checked adapter; similar proportions alone are not
+compatibility.
+
 ## Design rules
 
 - Every part prints without supports in a listed orientation; overhang limits live in the set file.
@@ -43,13 +55,21 @@ size rather than two while geometry is reworked.
   from a user-facing calibration task.
 - Rounded edges, no sharp corners. No small loose pieces on parts for the youngest kids.
 - Every part lists mount type, size class, one stat, and whether it prints.
-- Character add-ons are original designs.
+- Every claim of compatibility is backed by typed connection metadata:
+  connector kind, gender, size class, orientation, intended mates, fit,
+  print constraints and safety status. A mesh without declared mates is a
+  shape, not yet a system part.
+- Character add-ons are original designs. Learn from play principles, do not
+  copy another product's features, art or geometry.
 
 ## 3D print
 
 - Home: download the STL plus a settings card (orientation, layer height, material). Fit check
   runs before export.
-- Delivery: hand the files to an outside print service for a quote. No checkout in the app.
+- Delivery: families do not need to own a printer. The product target is
+  delivered custom parts from $1, with direct print costs held to
+  $0.50–$5 per design; those economics still need supplier proof. The demo
+  hands files to an outside print service for a quote, with no checkout.
   Skins never print.
 - A printed part gives its boost once the user confirms they printed or ordered it.
 
@@ -63,14 +83,20 @@ size rather than two while geometry is reworked.
   it right.
 - Ages 1-3 layer: spoken color names, cheeky animal character names, and simple
   narration that names what the kid just did ("You added a blue tail!").
-- Humanoids use Mixamo clips, tagged per the minimo contract. Everything else gets bounce, spin, and wobble.
+- Humanoid joint layouts map to a standard animation rig so reusable motion
+  clips can drive different characters. Everything else gets bounce, spin,
+  and wobble.
 
 ## Content
 
 - Base library made ahead of time. Post-launch roadmap: two seeded sets (Month 1 and Month 2).
 - First four sample parts designed (both sizes): see [snap-samples.md](snap-samples.md).
-- Pack Rips: 3 items per daily pack, 1 printable part guaranteed.
-- Market filters by mount type and size class.
+- Pack Rips: 3 items per free daily pack, 1 printable part guaranteed.
+  Chance-based packs are never sold to children.
+- A monthly subscription delivers known seasonal physical packs tied to
+  engineering and science activities.
+- Market filters by mount type and size class; a print-file marketplace is a
+  later step after the core catalogue and manufacturing workflow are proven.
 
 ## Done when
 

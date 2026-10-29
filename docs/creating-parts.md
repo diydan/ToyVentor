@@ -106,6 +106,26 @@ Do not reuse a retired part ID for different geometry. Part IDs are compatibilit
 - A **full character made of several bespoke pieces** is several parts plus an assembly recipe. Each piece needs its own catalog decision and physical connectors.
 - For Large/under-3 use, prefer one chunky piece. Removable pins, small limbs and break-off details need explicit safety justification and still require professional/lab review before sale.
 
+### Shared character anatomy
+
+Snap fixed-pose figures and Pro articulated figures are two expressions of
+one anatomy, not separate character systems. Use the same named roles for
+heads, torsos, limb segments, tails, accessories and end effectors across
+humans, animals and robots.
+
+- Give every bespoke character piece typed connectors for every join it
+  claims. A posed collection of meshes with missing connector metadata is
+  only modelled; it is not compatible or conforming.
+- Reuse a direct shared head/accessory interface where scale is physically
+  sound. Otherwise make the adapter itself a declared, fit-measured part.
+  Never call a head cross-line compatible from matching visual proportions.
+- Keep humanoid proportions, joint names and axes mappable to a standard
+  animation rig, and record any non-obvious axis or facing convention in
+  the catalog note or assembly recipe.
+- Acceptance for a claimed shared module includes a validated assembly on
+  each line it claims to support and, for a moving Pro figure, the same
+  travel and collision checks required of any other joint.
+
 ## 3. Set up and establish a clean baseline
 
 PartSpec lives in a nested standalone repository. Check both worktrees before editing so concurrent work is not mistaken for yours:
