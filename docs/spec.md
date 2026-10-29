@@ -13,7 +13,7 @@ I was a brick-building fanatic as a kid and I'm a robotics fanatic as an adult, 
 
 ## Vision
 
-ToyVentor helps the next generation grow into robotics through play: sandbox creativity, modular construction, gentle discovery, and hands-on engineering in one physical-digital loop. The long-term direction (one cross-line module system, delivery-first access, an open catalogue layer, and child-safe commercial guardrails) lives in [vision.md](vision.md). This spec stays canonical for product behaviour and the hackathon demo.
+ToyVentor helps the next generation grow into robotics through play: sandbox creativity, modular construction, gentle discovery, and hands-on engineering in one physical-digital loop. The initial playtesting audience is children aged 4 to 9 with grown-ups nearby. The long-term internal direction lives in [vision.md](vision.md); the tighter hackathon-facing narrative is [submission-vision.md](submission-vision.md). This spec stays canonical for product behaviour and what the demo does — and does not yet — prove.
 
 ## Demo (90 seconds)
 
@@ -36,7 +36,7 @@ The loop itself is simple enough that it doesn't need its own diagram: scan the 
 
 | | ToyVentor Snap | ToyVentor Pro |
 | --- | --- | --- |
-| Who | Ages 3+ with a grown-up | Ages 8+ and makers |
+| Who | Ages 4+ with a grown-up; initial playtests target 4–9 | Older kids in that range, ages 8+, and makers |
 | Connect | Studs, snap-fit, no tools | Hole grid with pins, axles, optional screws |
 | Parts | Bricks, plates, skins, character add-ons | Beams, gears, axles, joints, motion capsules |
 | Game | Looks + stat upgrades | Speed, spin, function stats |
@@ -196,7 +196,7 @@ Two things I considered and rejected, for the record. First, generating part geo
 
 ## Safety and privacy
 
-- Snap large size for youngest kids. Rounded edges, no sharp corners, no small loose pieces on young-kid parts.
+- Snap Large is the easiest-handling format. Rounded edges, no sharp corners, no small loose pieces on young-kid parts. Printed parts remain prototypes until fit, durability and formal age-safety review are complete; they are not yet safety-certified or formally age-graded.
 - Live Play listens and watches only during active play. Parent starts and stops the session. Mood buttons work with camera and mic off.
 - Character add-ons use original designs. Calibration piece and per-printer offsets handle snap fit variance.
 
@@ -214,7 +214,7 @@ The intended open layer is the part system: Forge Mount spec, parts library, che
 
 ## Hackathon build order
 
-Ship the loop first: scan with its backup toy, the Snap builder with grid and checks, AR try-on, the mini game boost, STL under 10s, and the Reveal. Be ruthless about everything hanging off it. Pro is a TU05 beam, a pin, and one gear pair pretending to be a product line (which, for a teaser, is fine), Live Play is 3 voice keywords and 4 loops, and STEM is a single gear challenge if there's time and nothing if there isn't. Merge Forge, Recycle, Color, and electronics stay on the roadmap, where I can enjoy imagining them without having to debug them.
+Ship one loop first: scan with its backup toy, build with grid and checks, open ToyVentor World wearing that build, solve one STEM mission, create one validated world, then show the STL/print queue. AR try-on, Reveal and Live Play are supporting beats when they strengthen that run rather than separate stories competing with it. Be ruthless about everything hanging off the chain. Pro stays a teaser, electronics and fulfilment stay on the roadmap, and anything not shown live is labelled mocked, pre-made or next.
 
 ## Open questions
 

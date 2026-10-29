@@ -1,5 +1,9 @@
 # ToyVentor vision
 
+For the tighter hackathon-facing narrative, see
+[submission-vision.md](submission-vision.md). This document remains the
+internal long-term direction.
+
 ## Grow into robotics through play
 
 ToyVentor helps the next generation grow into robotics through play. A child scans a favourite toy, designs an upgrade, receives or prints the physical parts, snaps them on, then continues playing with the upgraded character in AR and a web mini-game.
@@ -10,7 +14,7 @@ The learning path is progressive. Children begin with characters, stories and si
 
 ## Two lines, one system
 
-**Snap** is for ages 3+. It uses large, rounded, easy-to-handle stud-and-socket modules to make soft-looking modular characters. Robots belong here too, initially as fixed-pose characters.
+**Snap** is the entry line for the initial playtesting audience: children aged 4 to 9 with grown-ups nearby. It uses large, rounded, easy-to-handle stud-and-socket modules to make soft-looking modular characters. Robots belong here too, initially as fixed-pose characters. Printed parts are not yet safety-certified or formally age-graded.
 
 **Pro** is for older builders. It introduces beams, pins, shafts, gears and articulated figures based on an openly licensed ball-jointed humanoid. Snap is the simplified expression of the same body layout, so children can progress without learning a completely new system.
 

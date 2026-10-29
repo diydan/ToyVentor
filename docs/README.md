@@ -11,6 +11,7 @@ long-term direction; if two documents disagree about product behaviour,
 | File | What it is |
 | --- | --- |
 | [vision.md](vision.md) | Product vision: robotics through play, one modular system, access model and guardrails |
+| [submission-vision.md](submission-vision.md) | One-page hackathon narrative: pillars, demo proof, business sketch and next evidence |
 | [spec.md](spec.md) | Product spec. Canonical for what ToyVentor is and what the demo proves |
 | [plan.md](plan.md) | 10-day plan to the Nov 4 submission |
 | [journal.md](journal.md) | Dated progress log |

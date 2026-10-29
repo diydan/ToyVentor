@@ -1,6 +1,8 @@
 # ToyVentor Snap
 
-Snap is the entry line for ages 3+, with a parent or older sibling helping.
+Snap is the entry line for the initial playtesting audience, ages 4+ with a
+parent or older sibling helping. Printed parts are prototypes until fit,
+durability and formal age-safety review are complete.
 Everything is snap-fit and tool-free: no screws. Its parts use soft, rounded,
 collectible character forms; robots are part of the same family and are
 fixed-pose at this level. Most parts are shapes with a game function: one stat
@@ -8,7 +10,7 @@ plus a behavior in AR and the mini game.
 
 ## Connection
 
-Stud grid, two sizes: small and large. Large is for the youngest kids. Stud geometry lives
+Stud grid, two sizes: small and large. Large is the easiest-handling format. Stud geometry lives
 behind a `stud_profile` setting so the standard can change without redoing every part.
 
 Fit is designed to not need user calibration. Sockets are compliant: a lead-in taper plus
@@ -81,8 +83,8 @@ compatibility.
   states, no timers, nothing to lose. Presented in 2.5D. Tapping things makes
   them react; experimenting is the game, and every outcome counts as playing
   it right.
-- Ages 1-3 layer: spoken color names, cheeky animal character names, and simple
-  narration that names what the kid just did ("You added a blue tail!").
+- Pre-reader layer: spoken color names, character names, picture prompts and
+  simple narration that names what the kid just did ("You added a blue tail!").
 - Humanoid joint layouts map to a standard animation rig so reusable motion
   clips can drive different characters. Everything else gets bounce, spin,
   and wobble.
