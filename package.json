@@ -14,7 +14,8 @@
     "validate": "tsx scripts/validate-sets.ts",
     "parts": "bash scripts/build-parts.sh",
     "bridge": "tsx scripts/bridge-partspec.ts",
-    "preflight": "tsx scripts/preflight-deploy.ts"
+    "preflight": "tsx scripts/preflight-deploy.ts",
+    "spec:review": "tsx scripts/export-spec.ts"
   },
   "dependencies": {
     "@google/model-viewer": "^4.4.0",

@@ -9,6 +9,7 @@ import {
   type GameStats,
 } from "../features/game/engine/game";
 import { colorOf } from "../features/builder/engine/render";
+import { GameCanvas } from "../features/game/world/GameCanvas";
 import { buildSignature } from "../../shared/reveal";
 import { LivePlayPanel } from "../features/liveplay/LivePlayPanel";
 import { useToybox } from "../state/toybox";
@@ -110,14 +111,16 @@ export function PlayScreen({ onBuild }: { onBuild?: () => void }) {
         )}
       </p>
 
+      <GameCanvas contract={contract} />
+
       {contract && (
         <a
-          className="cta"
+          className="cta cta-quiet"
           href={toyWorldUrl(contract)}
           target="_blank"
           rel="noopener noreferrer"
         >
-          Play in ToyVentor World
+          Open ToyVentor World full screen
         </a>
       )}
 
