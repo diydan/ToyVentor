@@ -3,3 +3,6 @@
 MODEL_API_KEY=
 META_MODEL_API_URL=https://api.meta.ai/v1
 MUREKA_API_KEY=
+# Optional: model id for Create mode (/api/muse/spark). Empty means the
+# default in worker/muse.ts.
+MUSE_SPARK_MODEL=

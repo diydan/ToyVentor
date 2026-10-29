@@ -14,9 +14,10 @@ import {
   type ToyKind,
 } from "../shared/toy";
 import { makeSkin, samConfigured, segmentToy, type MetaEnv } from "./meta";
+import { handleMuseSpark, museConfigured, type MuseEnv } from "./muse";
 import { handleOwnership, type OwnershipEnv } from "./ownership";
 
-export interface Env extends MetaEnv, OwnershipEnv {
+export interface Env extends MetaEnv, MuseEnv, OwnershipEnv {
   MUREKA_API_KEY?: string;
   ASSETS?: { fetch: (request: Request) => Promise<Response> };
 }
@@ -175,7 +176,12 @@ export default {
     const url = new URL(request.url);
 
     if (url.pathname === "/api/health") {
-      return json({ ok: true, service: "toyventor", samConfigured: samConfigured(env) });
+      return json({
+        ok: true,
+        service: "toyventor",
+        samConfigured: samConfigured(env),
+        museConfigured: museConfigured(env),
+      });
     }
 
     if (url.pathname === "/api/scan") {
@@ -189,6 +195,12 @@ export default {
     if (url.pathname === "/api/skin") {
       if (request.method === "POST") return handleSkinPost(request, env);
       return json({ error: "method not allowed" }, 405);
+    }
+
+    if (url.pathname === "/api/muse/spark") {
+      // Create mode in ToyVentor World: the game asks for a level recipe
+      // and gets {say, recipe} back.
+      return handleMuseSpark(request, env);
     }
 
     if (url.pathname === "/api/ownership" || url.pathname.startsWith("/api/ownership/")) {
