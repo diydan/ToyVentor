@@ -41,4 +41,5 @@ Build one car end to end, then widen. Scan -> builder -> AR -> game -> STL -> Re
 - Fit at ~0.1 mm play needs calibration loops. One demo size only to halve print tests.
 - Song latency hurts Reveal. Pre-generate hero songs; animation must not wait on audio.
 - The one-system claim is unproven for the newest Pro humanoid work until every humanoid part emits typed connection metadata and a new head demonstrates a direct Snap mate or fit-checked adapter in a validated assembly.
+- Parametric part authoring is still contested: hand-written OpenSCAD, the PartSpec generator, and the best AI-assisted design/review workflow are not yet one route. This must lock by end of Day 5 (Oct 30) — lattice, connector/metadata contract and export path — because broad print tests cannot start until there is exactly one geometry truth to print.
 - Non-goals stay cut: full Pro families, camera scene detection, STEM library + classroom, Merge Forge, Recycle, Color rig, electronics, delivery, open UGC, checkout, native app.

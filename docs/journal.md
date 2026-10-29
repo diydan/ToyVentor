@@ -211,8 +211,8 @@ Goal: snap-on parts tray + true-scale AR preview (wireframe p.4).
 Goal: daily pack, 3 items, 1 printable guaranteed, rarity + one stat (wireframe p.5).
 
 ### Start of Day
-- [ ] One thing that must work by tonight:
-- [ ] Pack odds/content table defined? Paste it here:
+- [x] One thing that must work by tonight: Packs show the deterministic daily pack (3 parts, first printable), rarity badges, and one stat per part.
+- [x] Pack odds/content table defined? Paste it here: free date-seeded pack, same for everyone; no paid odds or shop. Rarity is display-only: common = stat +1, uncommon = stat +2, rare = stat +3. Epic/legendary colors are reserved for future sets.
 - [ ] Muse Image skins: which prompts are you pre-generating?
 
 ### End of Day
@@ -245,6 +245,11 @@ Goal: daily pack, 3 items, 1 printable guaranteed, rarity + one stat (wireframe 
   so the public game page needs a republish by hand. The e16 mission test
   is flaky in this headless environment (fails at the bridge slot on one
   run, passes on the next, same result on the unmodified engine).
+- Parametric 3D parts are still hard to produce at pace while the optimal
+  AI-assisted authoring/review workflow is unsettled. The single route must
+  be locked by end of Day 5 (Oct 30): frozen lattice, shared
+  connector/metadata contract and export path. Until then, broad print
+  tests stay blocked; only the existing demo-size control can move.
 - Tomorrow's first task: republish the artifacts, then the rename sweep
   (ToyForge) in the landing page and the drafts folder.
 
