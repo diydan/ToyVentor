@@ -2,7 +2,11 @@
 // it only sees /api/* (plus SPA fallback misses). Secrets live here and in
 // .dev.vars locally — never in the browser bundle.
 import seedCar from "../seed/toys/seed-car.json";
-import { dimensionsFromBox, normalizeBox } from "../shared/sam";
+import {
+  dimensionsFromBox,
+  dimensionsFromPixelSize,
+  normalizeBox,
+} from "../shared/sam";
 import {
   toyFromScanInput,
   validateToy,
@@ -57,7 +61,12 @@ async function handleSamScan(scan: NonNullable<ScanBody["scan"]>, env: Env) {
 
   const result = await segmentToy(env, imageDataUrl, prompt);
   console.log(
-    JSON.stringify({ event: "sam_scan", prompt, status: result.status }),
+    JSON.stringify({
+      event: "sam_scan",
+      prompt,
+      status: result.status,
+      ...(result.status === "ok" ? { maskApplied: Boolean(result.mask) } : {}),
+    }),
   );
   if (result.status !== "ok") {
     return json({
@@ -71,7 +80,9 @@ async function handleSamScan(scan: NonNullable<ScanBody["scan"]>, env: Env) {
     });
   }
 
-  const dims = dimensionsFromBox(result.box, lengthMm);
+  const dims = result.mask
+    ? dimensionsFromPixelSize(result.mask.pixelWidth, result.mask.pixelHeight, lengthMm)
+    : dimensionsFromBox(result.box, lengthMm);
   const toy = toyFromScanInput({
     id,
     name,
@@ -79,12 +90,19 @@ async function handleSamScan(scan: NonNullable<ScanBody["scan"]>, env: Env) {
     lengthMm: dims.lengthMm,
     widthMm: dims.widthMm,
     source: "scan",
-    outline: normalizeBox(result.box),
+    outline: result.mask?.outline ?? normalizeBox(result.box),
+    ...(result.mask ? { mask: result.mask } : {}),
   });
   // The client already holds the photo; don't echo ~150KB back at it.
   return json({
     toy,
-    sam: { configured: true, applied: true, matches: result.matches, box: result.box },
+    sam: {
+      configured: true,
+      applied: true,
+      maskApplied: Boolean(result.mask),
+      matches: result.matches,
+      box: result.box,
+    },
   });
 }
 

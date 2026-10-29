@@ -40,8 +40,9 @@ export function TryOn({
   const perMmX = ow / Math.max(toy.widthMm, 1);
   const overlayW = ((part.footprintMm[0] * perMmX) / cropW) * 100;
   const overlayH = Math.min(80, overlayW * 0.85);
-  const cx = inCrop((outline.x1 + outline.x2) / 2, cropX, cropW);
-  const anchorY = inCrop(outline.y1 + oh * 0.16, cropY, cropH);
+  const anchor = toy.mask?.topAnchor;
+  const cx = inCrop(anchor?.x ?? (outline.x1 + outline.x2) / 2, cropX, cropW);
+  const anchorY = inCrop(anchor?.y ?? outline.y1 + oh * 0.16, cropY, cropH);
 
   return (
     <div>
@@ -73,7 +74,18 @@ export function TryOn({
             width: `${(ow / cropW) * 100}%`,
             height: `${(oh / cropH) * 100}%`,
           }}
-        />
+        >
+          {toy.mask?.silhouette && (
+            <svg
+              className="tryon-silhouette"
+              viewBox={`0 0 ${toy.mask.silhouette.width} ${toy.mask.silhouette.height}`}
+              preserveAspectRatio="none"
+              aria-hidden="true"
+            >
+              <path d={toy.mask.silhouette.path} />
+            </svg>
+          )}
+        </div>
         <div
           className="tryon-part"
           style={{
@@ -92,9 +104,11 @@ export function TryOn({
         </div>
       </div>
       <p className="fine-print">
-        {toy.outline
-          ? "Zoomed to SAM's outline of your toy, part at footprint scale. Photo perspective makes this a preview, not a fit guarantee."
-          : "No SAM outline for this toy yet, so the part sits mid-photo as a rough preview. Scan it with SAM for a placed fit."}
+        {toy.mask
+          ? "Zoomed to SAM's mask silhouette, with the part anchored to the top of the toy at footprint scale. Photo perspective makes this a preview, not a fit guarantee."
+          : toy.outline
+            ? "Zoomed to SAM's outline of your toy, part at footprint scale. Photo perspective makes this a preview, not a fit guarantee."
+            : "No SAM outline for this toy yet, so the part sits mid-photo as a rough preview. Scan it with SAM for a placed fit."}
       </p>
     </div>
   );

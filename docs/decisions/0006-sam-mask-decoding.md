@@ -1,6 +1,8 @@
-# 0006 — SAM mask decoding spike: masks are available, official parser works
+# 0006 — SAM mask decoding: official parser, Worker-only, box fallback kept
 
-Date: 2026-10-28. Status: spike proven in scratch; not yet integrated.
+Date: 2026-10-28. Status: approved by Dan, integrated, deployed, and
+live-verified the same day. Conditions: official parser only in the
+Worker, exact version pinned, box-only fallback retained.
 
 ## What we believed before
 
@@ -29,27 +31,43 @@ stream (`/tmp/sam_raw.txt`, probe `/tmp/sam_mask_probe.py`):
   → 182,161 bytes, 72.1% coverage; ASCII preview shows the cup body and
   handle clearly.
 
-## License check before bundling
+## License decision
 
-The parser ships under the SAM License (not a standard OSS license;
-"SEE LICENSE IN LICENSE"). Read the redistribution/attribution clauses
-before adding it to the Worker bundle; the nodetool integration notes it
-requires attribution and shipping the license. Alternative that avoids
-the dependency question entirely: keep decoding server-side in the
-Worker (still redistribution), or implement from `protocol/sam3.md`
-(arithmetic codec — days, not hours; rejected for the hackathon).
+Dan approved the SAM License on 2026-10-28 with these constraints:
 
-## Integration plan (when approved)
+- `@meta-sam/parser` is pinned to 0.1.0 and imported only by
+  `worker/meta.ts`; browser code never imports it.
+- The full agreement is kept at `licenses/SAM-LICENSE.txt`, with the
+  package, purpose and acknowledgement recorded in `THIRD_PARTY.md`.
+- The local box parser remains a complete fallback. If Meta changes the
+  SAM License into terms ToyVentor cannot accept, remove the Worker
+  parser import and continue with box outlines.
+- Implementing the arithmetic codec from `protocol/sam3.md` was rejected
+  for the hackathon: the official reader is the supported path.
 
-1. Worker: parse the mask record alongside the box; decode to raster.
-2. Derive a normalized silhouette (column/row extents or a downsampled
-   outline polygon) and merge into the existing outline type used by
-   try-on, replacing the box-crop approximation.
-3. Attach points from the mask: topmost occupied row band (mount seat),
-   centroid, and widest row — replacing kind presets where a mask exists.
-4. Keep the box-only path as fallback (empty SAM lane, parser diagnostics,
-   non-mask objects). SAM still gives proportions, not millimetres: the
-   human "real longest side" anchor stays.
+## Integrated v1
+
+1. The Worker collects structural SSE events alongside output text, with
+   event/text caps. The existing local parser chooses the largest box;
+   the official parser then decodes the matching mask in a fail-soft
+   step. Any parser, diagnostic, matching or codec failure leaves the
+   box result unchanged.
+2. `shared/sam.ts` summarizes the raster into storage-safe facts: actual
+   occupied outline and pixel size, coverage, centroid, top anchor,
+   widest-row anchor, and a coarse filled-cell silhouette capped at
+   48 x 36 cells / 8,000 path characters.
+3. Scan dimensions use the mask's actual pixel extents when present.
+   The first kind-preset attach point gains the mask top anchor as a
+   photo-space hint; labels and IDs are unchanged.
+4. AR try-on draws the coarse silhouette inside the scan outline and
+   anchors the part to the mask top anchor. Without a mask it uses the
+   prior box centre/top behaviour.
+5. SAM still gives proportions, not millimetres: the human "real longest
+   side" anchor stays.
+6. Live verification on `toyventor.com`: the cup probe returned
+   `maskApplied: true`, coverage 0.7208, and a silhouette; a D1 ownership
+   round-trip with the scanned toy was written, listed, deleted, and
+   confirmed empty.
 
 ## Consequences
 

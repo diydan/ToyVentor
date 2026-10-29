@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@google/model-viewer": "^4.4.0",
+    "@meta-sam/parser": "0.1.0",
     "react": "^19.3.1",
     "react-dom": "^19.3.1"
   },

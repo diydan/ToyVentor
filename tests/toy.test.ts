@@ -40,6 +40,32 @@ describe("toyFromScanInput", () => {
     expect(sizeClassForLength(121)).toBe("large");
   });
 
+  it("keeps SAM mask facts and puts the mask top anchor on the first attach point", () => {
+    const toy = toyFromScanInput({
+      id: "masked-car",
+      name: "Masked Car",
+      kind: "car",
+      lengthMm: 110,
+      widthMm: 55,
+      source: "scan",
+      outline: { x1: 0.2, y1: 0.3, x2: 0.7, y2: 0.8 },
+      mask: {
+        coverage: 0.72,
+        outline: { x1: 0.2, y1: 0.3, x2: 0.7, y2: 0.8 },
+        pixelWidth: 500,
+        pixelHeight: 250,
+        centroid: { x: 0.45, y: 0.55 },
+        topAnchor: { x: 0.46, y: 0.31 },
+        widestAnchor: { x: 0.44, y: 0.6 },
+        silhouette: { path: "M0 0h2v1h-2Z", width: 2, height: 1 },
+      },
+    });
+    expect(toy.mask?.coverage).toBe(0.72);
+    expect(toy.attachPoints[0]).toMatchObject({ id: "roof", x: 0.46, y: 0.31 });
+    expect(toy.attachPoints[1]).toEqual({ id: "rear", label: "Rear deck" });
+    expect(validateToy(toy)).toEqual([]);
+  });
+
   it("keeps manual toys manual — never silently becomes a scan", () => {
     const toy = toyFromScanInput({
       id: "t2",
@@ -90,6 +116,16 @@ describe("toybox home catalog", () => {
 });
 
 describe("validateToy", () => {
+  it("rejects malformed mask summaries and partial attach-point hints", () => {
+    const errors = validateToy({
+      ...seedCar,
+      attachPoints: [{ id: "roof", label: "Roof", x: 0.5 }],
+      mask: { coverage: 2 },
+    }).join(" ");
+    expect(errors).toMatch(/attachPoint/);
+    expect(errors).toMatch(/mask/);
+  });
+
   it("rejects bad kind, source, and dimensions", () => {
     const errors = validateToy({
       ...seedCar,

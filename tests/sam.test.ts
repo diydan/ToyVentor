@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { dimensionsFromBox, largestBox, normalizeBox, parseSegmentationBoxes } from "../shared/sam";
+import {
+  dimensionsFromBox,
+  largestBox,
+  normalizeBox,
+  parseSegmentationBoxes,
+  summarizeMaskRaster,
+} from "../shared/sam";
 
 // Real line prefixes captured from live sam-3.1 calls on 2026-10-27
 // (cup + water bottle test image, 1920x1280). Mask payloads truncated;
@@ -45,6 +51,50 @@ describe("normalizeBox", () => {
     expect(n.x1).toBeCloseTo(347 / 1920, 5);
     expect(n.y2).toBeCloseTo(1104 / 1280, 5);
     expect(Object.values(n).every((v) => v >= 0 && v <= 1)).toBe(true);
+  });
+});
+
+describe("summarizeMaskRaster", () => {
+  const width = 10;
+  const height = 8;
+  const raster = new Uint8Array(width * height);
+  const fill = (y: number, xs: number[]) => xs.forEach((x) => { raster[y * width + x] = 1; });
+  fill(1, [4, 5]);
+  fill(2, [3, 4, 5, 6]);
+  fill(3, [3, 4, 5, 6]);
+  fill(4, [2, 3, 4, 5, 6, 7]);
+
+  it("derives actual extents, anchors, coverage, and a compact silhouette", () => {
+    const summary = summarizeMaskRaster(
+      raster,
+      width,
+      height,
+      { left: 100, top: 50, right: 110, bottom: 58 },
+      200,
+      100,
+    );
+    expect(summary).toMatchObject({
+      coverage: 0.2,
+      pixelWidth: 6,
+      pixelHeight: 4,
+      outline: { x1: 0.51, y1: 0.51, x2: 0.54, y2: 0.55 },
+      centroid: { x: 0.525, y: 0.5337 },
+      topAnchor: { x: 0.525, y: 0.515 },
+      widestAnchor: { x: 0.525, y: 0.545 },
+      silhouette: {
+        width: 6,
+        height: 4,
+        path: "M2 0h2v1h-2ZM1 1h4v1h-4ZM1 2h4v1h-4ZM0 3h6v1h-6Z",
+      },
+    });
+  });
+
+  it("returns undefined for empty and malformed rasters", () => {
+    const bounds = { left: 0, top: 0, right: 10, bottom: 8 };
+    expect(summarizeMaskRaster(new Uint8Array(80), width, height, bounds, 200, 100))
+      .toBeUndefined();
+    expect(summarizeMaskRaster(new Uint8Array(3), width, height, bounds, 200, 100))
+      .toBeUndefined();
   });
 });
 

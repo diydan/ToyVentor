@@ -3,7 +3,20 @@
 // image goes inline as a base64 data URL (file_id uploads are video-only),
 // masks arrive as special-token text in the output_text lane, and an empty
 // lane means zero matches for that prompt — retry with a shorter noun.
-import { largestBox, parseSegmentationBoxes, type SamBox } from "../shared/sam";
+// Meta's SAM parser is imported only in this Worker module. The local box
+// parser below remains the fallback if mask parsing fails for any reason.
+import {
+  decodeMaskToRaster,
+  parseImageStream,
+  recordsOfKind,
+} from "@meta-sam/parser";
+import {
+  largestBox,
+  parseSegmentationBoxes,
+  summarizeMaskRaster,
+  type SamBox,
+  type SamMaskSummary,
+} from "../shared/sam";
 
 export interface MetaEnv {
   /** Name used by every Meta example. */
@@ -15,7 +28,7 @@ export interface MetaEnv {
 }
 
 export type SamResult =
-  | { status: "ok"; box: SamBox; matches: number }
+  | { status: "ok"; box: SamBox; matches: number; mask?: SamMaskSummary }
   | { status: "no-match" }
   | { status: "not-configured" }
   | { status: "error"; message: string };
@@ -83,30 +96,61 @@ export async function makeSkin(
   return { status: "ok", imageDataUrl: `data:image/${format};base64,${b64}` };
 }
 
-/** Read an SSE body to completion, collecting output_text deltas. The
- *  stream is consumed and aggregated here; callers get one JSON result. */
-async function collectStream(body: ReadableStream<Uint8Array>): Promise<string> {
+interface SamWireEvent {
+  readonly type: string;
+  readonly delta?: unknown;
+  readonly [key: string]: unknown;
+}
+
+const MAX_SAM_EVENTS = 10_000;
+const MAX_SAM_TEXT_CHARS = 2_000_000;
+
+function isSamWireEvent(value: unknown): value is SamWireEvent {
+  return (
+    typeof value === "object" && value !== null &&
+    typeof (value as { type?: unknown }).type === "string"
+  );
+}
+
+/** Read an SSE body to completion, collecting both output text (for the
+ *  local box fallback) and structural events (for the official mask
+ *  parser). Caps keep a malformed upstream stream from buffering without
+ *  bound in Worker memory. */
+async function collectStream(body: ReadableStream<Uint8Array>): Promise<{
+  text: string;
+  events: SamWireEvent[];
+  truncated: boolean;
+}> {
   const reader = body.getReader();
   const decoder = new TextDecoder();
   let buffer = "";
   let text = "";
+  let truncated = false;
+  const events: SamWireEvent[] = [];
   try {
     for (;;) {
       const { done, value } = await reader.read();
       if (done) break;
       buffer += decoder.decode(value, { stream: true });
+      if (buffer.length > MAX_SAM_TEXT_CHARS) truncated = true;
       let nl: number;
       while ((nl = buffer.indexOf("\n")) >= 0) {
         const line = buffer.slice(0, nl).trim();
         buffer = buffer.slice(nl + 1);
         if (!line.startsWith("data:") || line === "data: [DONE]") continue;
         try {
-          const event = JSON.parse(line.slice(5)) as {
-            type?: string;
-            delta?: string;
-          };
-          if (event.type === "response.output_text.delta" && event.delta)
-            text += event.delta;
+          const parsed: unknown = JSON.parse(line.slice(5));
+          if (!isSamWireEvent(parsed)) continue;
+          if (events.length < MAX_SAM_EVENTS) events.push(parsed);
+          else truncated = true;
+          if (
+            parsed.type === "response.output_text.delta" &&
+            typeof parsed.delta === "string"
+          ) {
+            if (text.length + parsed.delta.length <= MAX_SAM_TEXT_CHARS) {
+              text += parsed.delta;
+            } else truncated = true;
+          }
         } catch {
           // Non-JSON keepalive lines are not segmentation output.
         }
@@ -115,7 +159,45 @@ async function collectStream(body: ReadableStream<Uint8Array>): Promise<string> 
   } finally {
     reader.releaseLock();
   }
-  return text;
+  return { text, events, truncated };
+}
+
+async function decodeMaskSummary(
+  events: SamWireEvent[],
+  box: SamBox,
+): Promise<SamMaskSummary | undefined> {
+  try {
+    async function* source(): AsyncIterable<SamWireEvent> {
+      yield* events;
+    }
+    const result = await parseImageStream(source()).finalResult;
+    if (result.outcome.status !== "completed") return undefined;
+    if (result.diagnostics.some((d) => d.severity === "error")) return undefined;
+
+    const masks = recordsOfKind(result.records, "mask");
+    const record =
+      masks.find((r) => Number(r.objectId) === box.objectId) ??
+      masks.find(
+        (r) =>
+          Math.abs(r.bounds.left - box.x1) <= 1 &&
+          Math.abs(r.bounds.top - box.y1) <= 1 &&
+          Math.abs(r.bounds.right - (box.x2 + 1)) <= 1 &&
+          Math.abs(r.bounds.bottom - (box.y2 + 1)) <= 1,
+      );
+    if (!record) return undefined;
+
+    return summarizeMaskRaster(
+      decodeMaskToRaster(record.mask),
+      record.mask.width,
+      record.mask.height,
+      record.bounds,
+      box.imageWidth,
+      box.imageHeight,
+    );
+  } catch {
+    // Any parser/codec failure degrades to the existing box result.
+    return undefined;
+  }
 }
 
 export async function segmentToy(
@@ -162,8 +244,17 @@ export async function segmentToy(
     return { status: "error", message: `SAM returned ${res.status}: ${detail}` };
   }
 
-  const boxes = parseSegmentationBoxes(await collectStream(res.body));
+  const collected = await collectStream(res.body);
+  const boxes = parseSegmentationBoxes(collected.text);
   const box = largestBox(boxes);
   if (!box) return { status: "no-match" };
-  return { status: "ok", box, matches: boxes.length };
+  const mask = collected.truncated
+    ? undefined
+    : await decodeMaskSummary(collected.events, box);
+  return {
+    status: "ok",
+    box,
+    matches: boxes.length,
+    ...(mask ? { mask } : {}),
+  };
 }

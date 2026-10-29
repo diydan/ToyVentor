@@ -36,6 +36,7 @@ export interface SamScanResponse {
   sam: {
     configured: boolean;
     applied: boolean;
+    maskApplied?: boolean;
     status?: string;
     message?: string;
     matches?: number;
