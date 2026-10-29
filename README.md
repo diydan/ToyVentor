@@ -26,18 +26,16 @@ browser never sees them; only `worker/` reads them.
 
 ## Deploy
 
-Config validates today (`npx wrangler deploy --dry-run` passes). Going
-live still needs, in order:
+https://toyventor.com is up on the previous build. The current build
+(ToyVentor World and Create mode) goes up with the next deploy. The D1
+ownership binding and custom domains for the apex and www (workers.dev
+kept as a fallback) are configured in [wrangler.jsonc](wrangler.jsonc);
+`MODEL_API_KEY` is stored as a Worker secret, never in source.
 
 ```sh
-npx wrangler login
-npx wrangler secret put MODEL_API_KEY   # same value as .dev.vars
-npm run deploy                          # build + wrangler deploy
+npm run preflight   # local deploy-input checks
+npm run deploy      # build + wrangler deploy
 ```
-
-Then attach the toyventor.com route in the Cloudflare dashboard.
-D1/KV bindings are commented placeholders in
-[wrangler.jsonc](wrangler.jsonc) until the ownership backend lands.
 
 ## Layout
 
@@ -45,12 +43,14 @@ D1/KV bindings are commented placeholders in
 `parts/` parametric OpenSCAD · `sets/` content as data · `seed/` pre-made
 fallback content · `generated/` build output (never edited by hand).
 
-## Status (Oct 28, 2026)
+## Status (Oct 29, 2026)
 
-Working end to end locally: live SAM 3.1 scan (with by-hand and seed
-fallbacks), Toybox, isometric virtual builder with snapping/collisions/
-undo, STL downloads and GLB 3D/AR part previews, fit-filtered Market,
-seeded daily Packs, Reveal with saved character cards, and a mini game
-driven by build stats. 55 unit tests. Not deployed yet, nothing printed
-yet, and the Reveal theme is a synth placeholder until Mureka is wired.
+Working end to end locally, redeploy pending: live SAM 3.1 scan (with
+by-hand and seed fallbacks), Toybox, isometric virtual builder with
+snapping/collisions/undo, STL downloads and GLB 3D/AR part previews,
+fit-filtered Market, seeded daily Packs, Reveal with saved character
+cards, a mini game driven by build stats, the hand-off into ToyVentor
+World, and Create mode writing worlds through the Muse Spark route.
+100 unit tests. Nothing printed yet, and the Reveal theme is a synth
+placeholder until Mureka is wired.
 See [the plan](docs/plan.md) and [the journal](docs/journal.md).

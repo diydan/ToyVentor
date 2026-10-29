@@ -1,27 +1,32 @@
 {
-  "$schema": "./node_modules/wrangler/config-schema.json",
-  "name": "toyventor",
-  "main": "worker/index.ts",
-  "compatibility_date": "2026-10-26",
-  "assets": {
-    // Client routes (tabs, pushed screens) fall back to the SPA shell
-    // instead of 404ing or reaching the Worker.
-    "not_found_handling": "single-page-application"
-  },
-  "observability": {
-    "enabled": true,
-    "traces": { "enabled": true }
-  },
-  // Ownership store. The all-zero id is a local-development placeholder:
-  // `wrangler dev`/vite uses a local SQLite file regardless. Before the
-  // first real deploy, run `npx wrangler d1 create toyventor` and put
-  // the returned id here, then `wrangler d1 migrations apply toyventor --remote`.
-  "d1_databases": [
-    {
-      "binding": "DB",
-      "database_name": "toyventor",
-      "database_id": "00000000-0000-0000-0000-000000000000",
-      "migrations_dir": "migrations"
-    }
-  ]
+	"$schema": "./node_modules/wrangler/config-schema.json",
+	"name": "toyventor",
+	"main": "worker/index.ts",
+	"compatibility_date": "2026-10-26",
+	"routes": [
+		{ "pattern": "toyventor.com", "custom_domain": true },
+		{ "pattern": "www.toyventor.com", "custom_domain": true }
+	],
+	"workers_dev": true,
+	"assets": {
+		// Client routes (tabs, pushed screens) fall back to the SPA shell
+		// instead of 404ing or reaching the Worker.
+		"not_found_handling": "single-page-application"
+	},
+	"observability": {
+		"enabled": true,
+		"traces": {
+			"enabled": true
+		}
+	},
+	// Ownership store. Local dev uses its own SQLite file; this id targets
+	// the remote D1 database for deploys and --remote commands.
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "toyventor",
+			"database_id": "98804f95-0577-4f18-997d-4b26a0d484f7",
+			"migrations_dir": "migrations"
+		}
+	]
 }
