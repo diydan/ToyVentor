@@ -58,7 +58,7 @@ describe("drawBuild", () => {
       toyLabel: "Test",
       placements: [
         { instanceId: "a", partId: "snap-spoiler-01", xMm: 0, yMm: 0, rotation: 0 },
-        { instanceId: "b", partId: "pro-beam-su05", xMm: 32, yMm: 16, rotation: 90 },
+        { instanceId: "b", partId: "pro-beam-tu05", xMm: 32, yMm: 16, rotation: 90 },
       ],
       partsById: byId,
       selectedId: "a",

@@ -28,7 +28,7 @@ long-term direction; if two documents disagree about product behaviour,
 | File | What it is |
 | --- | --- |
 | [snap.md](snap.md) | Snap (kid line): part types, design rules, print, game and AR behaviour. Canonical for the line per spec |
-| [pro.md](pro.md) | Pro (8+ mechanical line) on the open STEMFIE 12.5 mm grid. Canonical for the line per spec |
+| [pro.md](pro.md) | Pro (8+ mechanical line) on ToyVentor's own 12.5 mm hole grid. Canonical for the line per spec |
 | [snap-samples.md](snap-samples.md) | First app-lane sample parts at the old 16/32 mm scale. Prototype record; see decision 0005 before building on it |
 
 ## Parts geometry (PartSpec lane)

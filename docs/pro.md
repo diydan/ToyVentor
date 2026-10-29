@@ -6,7 +6,8 @@ good on the shelf too.
 
 ## Base standard
 
-Pro follows the open [STEMFIE](https://www.stemfie.org/about) grid.
+Pro follows ToyVentor's own hole grid, specified in the PartSpec interface standard. Every Pro part is
+generated from those numbers and checked against them.
 
 | Item | Value |
 | --- | --- |
@@ -16,9 +17,10 @@ Pro follows the open [STEMFIE](https://www.stemfie.org/about) grid.
 | Axle | 6.6 mm round, 5.0 mm flats, 2 mm center hole |
 | Beam base | About 12.5 x 12.5 mm, scalable |
 
-Fixed hole plus axle flats leaves about 0.1 mm of play, which is tight on a home printer. Each
-printer gets a calibration piece and offsets. Part names follow STEMFIE style plus a style tag,
-e.g. Beam STR RND SU05x01x01.
+Fixed hole plus axle flats leaves about 0.1 mm of play, which is tight on a home printer. Fit
+offsets are an engineering and manufacturing concern, not a standalone
+user-facing calibration task. Part names are component, sub-type, style tag, then
+size in grid units, e.g. Beam STR RND TU05x01x01.
 
 ## Part families
 
@@ -26,10 +28,10 @@ e.g. Beam STR RND SU05x01x01.
 | --- | --- |
 | Beams | Straight, angled, T, L, X; SU03 to SU15 and up; rounded ends; optional side panels |
 | Pins and connectors | Friction pins (snap), long pins, axles, bushings, cross-axles, rounded heads |
-| Gears | Spur, bevel, worm, rack; printable tooth shape; hubs take the STEMFIE socket |
+| Gears | Spur, bevel, worm, rack; printable tooth shape; hubs take the fixed bore |
 | Panels and plates | Thin covers that clip onto beams |
 | Joints | Hinges, universal joints, turntables, rounded housings |
-| Fasteners | STEMFIE screws and nuts, plus friction pins for tool-free builds |
+| Fasteners | Standard screws and nuts on the same 5.1 mm flats, plus friction pins for tool-free builds |
 | Motion capsules | Motor, wheel, light, or sensor modules; digital at launch |
 | Forge Mount adapter | Snap-on base that gives the scanned toy a hole grid |
 
@@ -82,12 +84,12 @@ articulated figures and their Snap counterparts.
 
 ## Hackathon scope
 
-- Rounded SU05 beams, matching friction pins, one gear set.
+- Rounded TU05 beams, matching friction pins, one gear set.
 - Teaser on the demo toy's Forge Mount. Not the full family.
 
 ## Done when
 
-- SU05 beam, friction pin, and gear set pass checks: on the grid, holes fit the axles, no supports.
+- TU05 beam, friction pin, and gear set pass checks: on the grid, holes fit the axles, no supports.
 - A Pro part mounts on a Forge Mount and equips in the game.
 - Any humanoid part counted toward the one-system claim has complete typed
   connector metadata, at least one validated intended assembly, and a

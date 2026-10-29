@@ -24,7 +24,7 @@ Build one car end to end, then widen. Scan -> builder -> AR -> game -> STL -> Re
 5. **Day 5 — Oct 30: AR + Skin.** Core: AR try-on true-scale, Muse Image skin, equip (p.4). Stretch: second seeded skin.
 6. **Day 6 — Oct 31: Game + Reveal.** Core: mini game with printed-part boost (p.11), entrance clip + Mureka song + character card, plays once then saves (p.12). Stretch: win clip reuse.
 7. **Day 7 — Nov 1: Market freeze.** Core: My Toys fit filter, 2 seeded Forge Club sets, seeded daily pack (p.5, p.7-8). Core demo frozen end of day. Stretch: pack rip animation.
-8. **Day 8 — Nov 2: Pro teaser.** Core: rounded SU05 beam, friction pin, 1 gear pair on same Mount; Pro part equips in game. Stretch: gear ratio readout.
+8. **Day 8 — Nov 2: Pro teaser.** Core: rounded TU05 beam, friction pin, 1 gear pair on same Mount; Pro part equips in game. Stretch: gear ratio readout.
 9. **Day 9 — Nov 3: Live Play + Rehearsal.** Core: 4 mood buttons + 4 loop crossfades, two clean timed runs, backup video recorded. Stretch: offline cache check on 4G.
 10. **Day 10 — Nov 4: Submit.** Core: final demo record, form/video/screenshots by 9 PM ET, code hard stop 6 PM ET. Stretch if ahead overall: 3 voice keywords via Muse Voice Transcribe + 1 STEM gear ratio challenge.
 

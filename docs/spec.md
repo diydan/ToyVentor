@@ -160,7 +160,7 @@ Two things I considered and rejected, for the record. First, generating part geo
 | Reveal | Entrance animation, character card | Theme songs from Mureka API |
 | Live Play (stretch) | Mood buttons + voice keywords | Loops and SFX made ahead with Mureka |
 | STEM mode (stretch) | One gear ratio challenge | Cards and hints drafted with Muse Spark |
-| Pro line | Rounded SU05 beams, friction pins, one gear set | Rest of Pro parts later |
+| Pro line | Rounded TU05 beams, friction pins, one gear set | Rest of Pro parts later |
 | Forge Club | Two seeded sets, fit filter | Billing mocked |
 
 ## What success looks like
@@ -185,15 +185,15 @@ The kid line: snap-fit, tool-free, stud grid in two sizes. Full part types, desi
 
 ## ToyVentor Pro
 
-The mechanical line for ages 8+ and makers, on the open STEMFIE hole grid. Full standard, part families, and print rules live in [pro.md](pro.md), which is canonical for this line. Hackathon scope stays narrow: rounded SU05 beams, friction pins, one gear set, shown as a teaser on the demo Forge Mount.
+The mechanical line for ages 8+ and makers, on ToyVentor's own 12.5 mm hole grid. Full standard, part families, and print rules live in [pro.md](pro.md), which is canonical for this line. Hackathon scope stays narrow: rounded TU05 beams, friction pins, one gear set, shown as a teaser on the demo Forge Mount.
 
 ## Open source
 
-Part system is open source: Forge Mount spec, parts library, checks, part format, set file format. Code MIT. Designs and STLs CC BY. Pro builds on open STEMFIE and credits it. App, skins, songs, animations stay closed. Contributions via pull requests.
+The intended open layer is the part system: Forge Mount spec, parts library, checks, part format, and set file format. The intended release terms are Apache-2.0 for code and CC BY 4.0 for designs and STLs, to be applied with the matching licence files before public release. App content, skins, songs, and animations may stay closed. Contributions via pull requests.
 
 ## Hackathon build order
 
-Ship the loop first: scan with its backup toy, the Snap builder with grid and checks, AR try-on, the mini game boost, STL under 10s, and the Reveal. Be ruthless about everything hanging off it. Pro is an SU05 beam, a pin, and one gear pair pretending to be a product line (which, for a teaser, is fine), Live Play is 3 voice keywords and 4 loops, and STEM is a single gear challenge if there's time and nothing if there isn't. Merge Forge, Recycle, Color, and electronics stay on the roadmap, where I can enjoy imagining them without having to debug them.
+Ship the loop first: scan with its backup toy, the Snap builder with grid and checks, AR try-on, the mini game boost, STL under 10s, and the Reveal. Be ruthless about everything hanging off it. Pro is a TU05 beam, a pin, and one gear pair pretending to be a product line (which, for a teaser, is fine), Live Play is 3 voice keywords and 4 loops, and STEM is a single gear challenge if there's time and nothing if there isn't. Merge Forge, Recycle, Color, and electronics stay on the roadmap, where I can enjoy imagining them without having to debug them.
 
 ## Open questions
 

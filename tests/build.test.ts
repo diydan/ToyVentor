@@ -31,7 +31,7 @@ const at = (partId: string, xMm: number, yMm: number, rotation: Placement["rotat
 describe("grid geometry", () => {
   it("derives pitch from footprint and grid units", () => {
     expect(pitchOf(part("snap-brick-2x2-small"), 0)).toEqual([16, 16]);
-    expect(pitchOf(part("pro-beam-su05"), 0)).toEqual([12.5, 12.5]);
+    expect(pitchOf(part("pro-beam-tu05"), 0)).toEqual([12.5, 12.5]);
   });
 
   it("rotation swaps the footprint", () => {

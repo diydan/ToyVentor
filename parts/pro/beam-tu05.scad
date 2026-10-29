@@ -1,5 +1,5 @@
-// pro-beam-su05 — STEMFIE grid: 5 units at 12.5 mm pitch, 7.0 mm free holes.
-// Simplified blockout of the rounded SU05 teaser beam (docs/pro.md):
+// pro-beam-tu05 — ToyVentor hole grid: 5 units at 12.5 mm pitch, 7.0 mm free holes.
+// Simplified blockout of the rounded TU05 teaser beam (docs/pro.md):
 // correct pitch and hole pattern first, fillets come with the print tests.
 pitch = 12.5;
 units = 5;

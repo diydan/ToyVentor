@@ -82,12 +82,12 @@
       "supportFree": true
     },
     {
-      "id": "pro-beam-su05",
-      "name": "Beam STR RND SU05x01x01",
+      "id": "pro-beam-tu05",
+      "name": "Beam STR RND TU05x01x01",
       "line": "pro",
       "mount": "hole",
       "sizeClass": "small",
-      "grid": { "units": [5, 1], "profile": "stemfie_12.5" },
+      "grid": { "units": [5, 1], "profile": "tu_12.5" },
       "footprintMm": [62.5, 12.5],
       "stat": { "name": "torque", "value": 2 },
       "printable": true,

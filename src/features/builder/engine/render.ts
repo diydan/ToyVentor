@@ -53,7 +53,7 @@ const PART_COLORS: Record<string, string> = {
   "forge-mount-small": "#57534e",
   "snap-wing-01": "#0f766e",
   "snap-glow-capsule-01": "#d97706",
-  "pro-beam-su05": "#4d7c0f",
+  "pro-beam-tu05": "#4d7c0f",
   "skin-racer-red": "#b91c1c",
 };
 
@@ -64,7 +64,7 @@ const PART_HEIGHTS_MM: Record<string, number> = {
   "forge-mount-small": 6,
   "snap-wing-01": 28,
   "snap-glow-capsule-01": 18,
-  "pro-beam-su05": 8,
+  "pro-beam-tu05": 8,
   "skin-racer-red": 3,
 };
 

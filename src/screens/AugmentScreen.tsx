@@ -166,7 +166,7 @@ export function AugmentScreen({
     "forge-mount-small": "forge-mount.stl",
     "snap-wing-01": "dragon-wing.stl",
     "snap-glow-capsule-01": "glow-capsule.stl",
-    "pro-beam-su05": "beam-su05.stl",
+    "pro-beam-tu05": "beam-tu05.stl",
   };
 
   return (

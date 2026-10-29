@@ -16,7 +16,7 @@ export interface Part {
   grid: {
     /** Whole units on the stud (snap) or hole (pro) grid. */
     units: [number, number];
-    /** e.g. "stud_profile_small" or "stemfie_12.5". Behind a setting so the
+    /** e.g. "stud_profile_small" or "tu_12.5". Behind a setting so the
      *  standard can change without redoing every part. */
     profile: string;
   };
