@@ -1,23 +1,77 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { buildStats, type Placement } from "../shared/build";
+import { buildSignature } from "../shared/reveal";
+import { validateToy, type Toy } from "../shared/toy";
+import {
+  decodeToyContract,
+  kipDemoUrl,
+  toyContractFromBuild,
+  type ToyContract,
+} from "../shared/toycontract";
+import { colorOf } from "./features/builder/engine/render";
+import {
+  GameCanvas,
+  type InitialOverlay,
+} from "./features/game/world/GameCanvas";
+import { seedCar } from "./features/scan/scan";
+import { loadBuild } from "./lib/builds";
+import { partsById } from "./lib/catalog";
 import { pullOwnership, pushOwnership } from "./lib/sync";
 import { useToybox } from "./state/toybox";
-import { validateToy, type Toy } from "../shared/toy";
-import { BottomBar, type TabId } from "./components/BottomBar";
-import { ScanScreen } from "./screens/ScanScreen";
-import { AugmentScreen } from "./screens/AugmentScreen";
-import { PacksScreen } from "./screens/PacksScreen";
-import { PlayScreen } from "./screens/PlayScreen";
-import { RevealScreen } from "./screens/RevealScreen";
-import { ToyboxScreen } from "./screens/ToyboxScreen";
 
-// The app opens on the Toybox so previous uploads and built-in assets are
-// immediately available. Scan and Reveal push above the four main tabs.
+function parseInitialOverlay(): InitialOverlay {
+  try {
+    const q = new URLSearchParams(window.location.search).get("tab");
+    if (q === "packs" || q === "pack") return "pack";
+    if (q === "toybox" || q === "factory") return "toy";
+    if (q === "scan") return "scan";
+    if (q === "build" || q === "market" || q === "augment") return "build";
+    if (q === "reveal") return "reveal";
+  } catch {
+    /* ignore */
+  }
+  return null;
+}
+
+function parseHashToyContract(): ToyContract | null {
+  try {
+    const raw = window.location.hash.replace(/^#/, "");
+    const match = raw.match(/(?:^|&)toy=([^&]+)/);
+    if (!match?.[1]) return null;
+    return decodeToyContract(decodeURIComponent(match[1]));
+  } catch {
+    return null;
+  }
+}
+
 export default function App() {
-  const { toys, addToy } = useToybox();
+  const { toys, selected, addToy } = useToybox();
   const syncedRef = useRef(false);
+  const toy = selected ?? toys[0] ?? seedCar;
 
-  // One ownership sync per load: pull server toys we do not have, push
-  // local ones the server does not. Best-effort in both directions.
+  const [initialOverlay] = useState<InitialOverlay>(parseInitialOverlay);
+  const [sharedContract, setSharedContract] = useState<ToyContract | null>(
+    parseHashToyContract,
+  );
+  const [placements, setPlacements] = useState<Placement[]>(() =>
+    loadBuild(toy.id, partsById),
+  );
+  const [, setSkinVersion] = useState(0);
+
+  // Sync placements from localStorage whenever the active toy switches.
+  useEffect(() => {
+    setPlacements(loadBuild(toy.id, partsById));
+  }, [toy.id]);
+
+  // Clear one-time shared hash override when the kid switches to another toy.
+  const firstToyIdRef = useRef(toy.id);
+  useEffect(() => {
+    if (toy.id !== firstToyIdRef.current) {
+      setSharedContract(null);
+    }
+  }, [toy.id]);
+
+  // One ownership sync per load: pull server toys we do not have, push local ones.
   useEffect(() => {
     if (syncedRef.current) return;
     syncedRef.current = true;
@@ -32,84 +86,67 @@ export default function App() {
         if (!localIds.has(record.id) && validateToy(record.payload).length === 0)
           addToy(record.payload as Toy);
       }
-      for (const toy of toys) {
-        if (!remoteToyIds.has(toy.id))
-          void pushOwnership({ type: "toy", id: toy.id, payload: toy });
+      for (const localToy of toys) {
+        if (!remoteToyIds.has(localToy.id))
+          void pushOwnership({ type: "toy", id: localToy.id, payload: localToy });
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const [tab, setTab] = useState<TabId>(() => {
-    try {
-      const q = new URLSearchParams(window.location.search).get("tab");
-      if (q === "toybox" || q === "build" || q === "packs" || q === "play") {
-        return q;
-      }
-      if (q === "market") return "build";
-      if (q === "factory") return "toybox";
-    } catch {
-      /* ignore */
-    }
-    return "toybox";
-  });
-  const [scanning, setScanning] = useState(false);
-  const [reveal, setReveal] = useState<{ first: boolean } | null>(null);
-
-  const openScan = () => {
-    setReveal(null);
-    setScanning(true);
-  };
-  const closeScan = () => setScanning(false);
-  const finishScan = () => {
-    setScanning(false);
-    setTab("build");
-  };
-  const goToTab = (next: TabId) => {
-    setScanning(false);
-    setReveal(null);
-    setTab(next);
+  const handlePlacementsChange = (next: Placement[]) => {
+    setSharedContract(null);
+    setPlacements(next);
   };
 
-  const isPlayStage = !scanning && !reveal && tab === "play";
+  const totals = useMemo(
+    () => buildStats(placements, partsById).statTotals,
+    [placements],
+  );
+
+  const localContract = useMemo(
+    () => toyContractFromBuild(toy, placements, partsById, colorOf),
+    [toy, placements],
+  );
+
+  const contract = sharedContract ?? localContract;
+
+  const leadPart = placements[0]
+    ? partsById.get(placements[0].partId)
+    : undefined;
+  const toyColor =
+    sharedContract?.col.c1 ||
+    (leadPart ? colorOf(leadPart) : toy.id === "seed-kip" ? "#ffd24d" : "#52b7ff");
+
+  const statEntries = Object.entries(totals).filter(([, v]) => (v ?? 0) > 0);
+  const statSummary =
+    statEntries.length > 0
+      ? statEntries.map(([k, v]) => `${k} +${v}`).join(" · ")
+      : undefined;
 
   return (
-    <div className={isPlayStage ? "app app-play" : "app"}>
-      <main className={isPlayStage ? "screen screen-play" : "screen"}>
-        {scanning ? (
-          <ScanScreen onDone={finishScan} onCancel={closeScan} />
-        ) : reveal ? (
-          <RevealScreen
-            firstReveal={reveal.first}
-            onBack={() => setReveal(null)}
-            onPlay={() => goToTab("play")}
-          />
-        ) : tab === "toybox" ? (
-          <ToyboxScreen
-            onScan={openScan}
-            onBuild={() => goToTab("build")}
-            onPlay={() => goToTab("play")}
-            onReveal={() => setReveal({ first: false })}
-          />
-        ) : tab === "build" ? (
-          <AugmentScreen
-            onBack={() => goToTab("toybox")}
-            onPlay={() => goToTab("play")}
-            onFinish={(first) => setReveal({ first })}
-          />
-        ) : tab === "packs" ? (
-          <PacksScreen
-            onBuild={() => goToTab("build")}
-            onPlay={() => goToTab("play")}
-          />
-        ) : (
-          <PlayScreen
-            onBuild={() => goToTab("build")}
-            onToybox={() => goToTab("toybox")}
-          />
-        )}
+    <div className="app app-play">
+      <main className="screen screen-play">
+        <GameCanvas
+          toy={toy}
+          placements={placements}
+          onPlacementsChange={handlePlacementsChange}
+          onSkinChange={() => setSkinVersion((n) => n + 1)}
+          contract={contract}
+          toyName={sharedContract ? sharedContract.name : toy.name}
+          toyColor={toyColor}
+          statSummary={statSummary}
+          themeSignature={
+            placements.length > 0 ? buildSignature(placements) : undefined
+          }
+          kipUrl={
+            (sharedContract ? sharedContract.type === "character" : toy.kind === "figure")
+              ? kipDemoUrl(contract)
+              : undefined
+          }
+          initialOverlay={initialOverlay}
+        />
       </main>
-      {!reveal && <BottomBar tab={tab} onTab={goToTab} />}
     </div>
   );
 }

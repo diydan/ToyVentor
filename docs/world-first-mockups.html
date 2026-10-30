@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ToyVentor — One Stage (World-First) Mockups</title>
+<title>ToyVentor · One Stage (World-First) Mockups</title>
 <style>
 @font-face {
   font-family: 'Figtree'; font-style: normal; font-weight: 500 700; font-display: swap;
@@ -84,7 +84,7 @@ section.sec{padding:36px 0 12px;scroll-margin-top:56px}
 .phone-cap{font-size:13px;font-weight:700;color:var(--ink-muted);padding:0 4px}
 .phone-cap b{color:var(--ink);font-family:var(--font-display)}
 
-/* Top Studio Dock (48px, fits 390px with ZERO horizontal scroll) */
+/* Top Studio Dock (52px, fits 390px with ZERO horizontal scroll) */
 .tv-dock{
   height:52px; flex:none; padding:6px 10px; display:flex; align-items:center; justify-content:space-between; gap:6px;
   background:rgba(16,26,68,.95); border-bottom:1px solid rgba(255,255,255,.15); z-index:12;
@@ -132,23 +132,23 @@ section.sec{padding:36px 0 12px;scroll-margin-top:56px}
 
 /* Raised CTA */
 .cta{
-  width:100%; min-height:50px; padding:6px 18px; border:0; border-radius:13px;
+  width:100%; min-height:48px; padding:6px 16px; border:0; border-radius:13px;
   background:var(--sky-500); color:var(--ink-on-sky); box-shadow:var(--shadow-btn-sky);
-  font-family:var(--font-display); font-size:17px; font-weight:800;
+  font-family:var(--font-display); font-size:16px; font-weight:800;
   display:flex; align-items:center; justify-content:center; gap:8px; text-decoration:none;
 }
 .cta-violet{background:var(--violet-500);color:var(--ink-on-violet);box-shadow:var(--shadow-btn-violet)}
 .cta-quiet{
-  width:100%; min-height:40px; border-radius:11px; border:2px solid var(--line-soft);
+  width:100%; min-height:38px; border-radius:11px; border:2px solid var(--line-soft);
   background:rgba(8,15,43,.6); color:var(--ink-muted); font-family:var(--font-display); font-size:13px; font-weight:700;
 }
 
 /* Frosted-Glass Bottom Sheet (.tv-sheet) */
 .tv-sheet{
   position:absolute; left:0; right:0; bottom:0; max-height:62%; overflow-y:auto;
-  padding:13px 14px 16px; background:rgba(14,23,62,.96); backdrop-filter:blur(14px);
+  padding:12px 14px 14px; background:rgba(14,23,62,.96); backdrop-filter:blur(14px);
   border-top:1.5px solid rgba(255,255,255,.26); border-radius:22px 22px 0 0;
-  box-shadow:var(--shadow-sheet); z-index:10; display:flex; flex-direction:column; gap:10px;
+  box-shadow:var(--shadow-sheet); z-index:10; display:flex; flex-direction:column; gap:8px;
 }
 .sh-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .sh-title{font-family:var(--font-display);font-size:17px;font-weight:800;margin:0}
@@ -170,38 +170,47 @@ section.sec{padding:36px 0 12px;scroll-margin-top:56px}
 .toy-sub{font-size:11px;color:var(--ink-muted)}
 
 .scan-box{
-  height:122px; border-radius:14px; background:var(--surface-3); border:2px dashed var(--mint);
-  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; color:var(--mint);
+  height:96px; border-radius:14px; background:var(--surface-3); border:2px dashed var(--mint);
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; color:var(--mint);
   font-family:var(--font-display); font-size:13px; font-weight:700;
 }
 .chips{display:flex;gap:6px;flex-wrap:wrap}
 .chip{
-  height:34px; padding:0 11px; border-radius:10px; border:2px solid var(--line-soft);
+  height:32px; padding:0 10px; border-radius:10px; border:2px solid var(--line-soft);
   background:var(--surface); font-family:var(--font-display); font-size:12px; font-weight:700;
 }
 .chip.on{border-color:var(--sky-500);background:var(--sky-500);color:var(--ink-on-sky)}
 .inp{
-  width:100%; height:38px; border-radius:10px; border:2px solid var(--line);
+  width:100%; height:36px; border-radius:10px; border:2px solid var(--line);
   background:rgba(8,15,43,.9); padding:0 10px; font-size:13px; font-weight:700;
+}
+.backup-strip{
+  display:flex; align-items:center; justify-content:space-between; gap:6px;
+  padding:6px 8px; border-radius:11px; background:rgba(8,15,43,.65); border:1px solid var(--line-soft);
+  font-size:11.5px; color:var(--ink-muted);
+}
+.mini-pill{
+  height:28px; padding:0 9px; border-radius:8px; border:1.5px solid var(--line);
+  background:var(--surface-2); font-family:var(--font-display); font-size:11.5px; font-weight:700;
 }
 
 /* Customizer + Print Drawer */
 .opts-row{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
 .opt-card{
-  padding:8px 6px; border-radius:13px; border:2px solid var(--line-soft); background:var(--surface);
-  display:flex; flex-direction:column; align-items:center; gap:3px; text-align:center; font-family:var(--font-display); font-size:12px; font-weight:700;
+  padding:7px 6px; border-radius:12px; border:2px solid var(--line-soft); background:var(--surface);
+  display:flex; flex-direction:column; align-items:center; gap:2px; text-align:center; font-family:var(--font-display); font-size:12px; font-weight:700;
 }
 .opt-card.on{border-color:var(--sky-500);background:var(--surface-3);box-shadow:0 0 10px rgba(82,183,255,.35)}
 .opt-meta{font-family:var(--font-body);font-size:11px;color:var(--ink-muted);display:flex;align-items:center;gap:4px}
 .swatches{display:flex;align-items:center;gap:6px}
-.sw{width:28px;height:28px;border-radius:8px;border:2px solid rgba(255,255,255,.45)}
+.sw{width:26px;height:26px;border-radius:8px;border:2px solid rgba(255,255,255,.45)}
 .sw.on{border:3px solid #fff;box-shadow:0 0 0 2px var(--sky-500)}
 
 .disclosure{
-  border-radius:14px; border:1.5px solid rgba(82,183,255,.4); background:rgba(8,15,43,.72); padding:9px 11px;
+  border-radius:14px; border:1.5px solid rgba(82,183,255,.4); background:rgba(8,15,43,.76); padding:8px 10px;
 }
 .disclosure summary{
-  cursor:pointer; font-family:var(--font-display); font-size:13px; font-weight:700;
+  cursor:pointer; font-family:var(--font-display); font-size:12.5px; font-weight:700;
   display:flex; align-items:center; justify-content:space-between; list-style:none;
 }
 .disclosure summary::-webkit-details-marker{display:none}
@@ -209,13 +218,21 @@ section.sec{padding:36px 0 12px;scroll-margin-top:56px}
   padding:2px 7px; border-radius:6px; background:rgba(90,240,176,.18); color:var(--mint);
   font-size:11px; font-weight:800;
 }
+.tv-seg{
+  display:inline-flex; padding:2px; border-radius:9px; background:var(--surface); border:1px solid var(--line-soft); gap:2px;
+}
+.seg-btn{
+  height:24px; padding:0 9px; border-radius:7px; border:0; background:transparent;
+  font-family:var(--font-display); font-size:11px; font-weight:700; color:var(--ink-muted);
+}
+.seg-btn.on{background:var(--sky-500); color:var(--ink-on-sky)}
 .ar-preview-row{
-  display:grid; grid-template-columns:96px 1fr; gap:10px; align-items:center; margin-top:9px;
+  display:grid; grid-template-columns:98px 1fr; gap:9px; align-items:center; margin-top:7px;
 }
 .ar-box{
-  height:78px; border-radius:11px; background:radial-gradient(circle at 50% 45%,rgba(82,183,255,.35),#101a44);
+  height:80px; border-radius:11px; background:radial-gradient(circle at 50% 45%,rgba(82,183,255,.35),#101a44);
   border:1.5px dashed var(--mint); display:flex; flex-direction:column; align-items:center; justify-content:center;
-  font-size:10px; font-weight:800; color:var(--mint); text-align:center; padding:4px;
+  font-size:10px; font-weight:800; color:var(--mint); text-align:center; padding:4px; line-height:1.25;
 }
 
 /* Full-Stage Modal (Daily Pack & Character Card) */
@@ -275,7 +292,7 @@ footer{padding:36px 24px 56px;color:var(--ink-muted);font-size:13px}
   <h1>One Stage: ToyVentor World IS the App</h1>
   <p class="lead">
     Zero bottom tab bar. Zero duplicate part walls. The app opens directly onto the full-screen 3D World stage, with
-    <b>My Toy &amp; SAM Scan</b>, <b>Build &amp; 3D Print</b>, <b>Create World</b>, and <b>Daily Pack</b> as clean overlays on one unified canvas.
+    <b>My Toy &amp; Meta SAM 3.1 Scan</b>, <b>Build &amp; 3D Print</b>, <b>Create World (Meta Muse)</b>, and <b>Daily Pack</b> as clean overlays on one unified canvas.
     Read <a href="world-first-spec.md">world-first-spec.md</a>.
   </p>
 </header>
@@ -292,7 +309,7 @@ footer{padding:36px 24px 56px;color:var(--ink-muted);font-size:13px}
   <!-- SECTION 1: INTERACTIVE PROTOTYPE -->
   <section id="interactive" class="sec">
     <h2>Interactive Stage Prototype (390 × 844)</h2>
-    <p class="lead">Tap the top studio bar inside the phone — or use the state buttons on the right — to test how every feature fits on one 3D stage.</p>
+    <p class="lead">Tap the top studio bar inside the phone (or use the state buttons on the right) to test how every feature fits on one 3D stage.</p>
 
     <div class="proto-grid">
       <!-- Interactive Phone -->
@@ -381,7 +398,7 @@ footer{padding:36px 24px 56px;color:var(--ink-muted);font-size:13px}
             </button>
           </div>
 
-          <!-- SHEET 1: MY TOY & SAM SCAN -->
+          <!-- SHEET 1: MY TOY & META SAM 3.1 SCAN -->
           <section class="tv-sheet" id="layer-toy" hidden aria-label="My Toy and Scan">
             <div id="toy-step-shelf">
               <div class="sh-head" style="margin-bottom:8px">
@@ -409,7 +426,7 @@ footer{padding:36px 24px 56px;color:var(--ink-muted);font-size:13px}
               </div>
               <details class="disclosure" style="margin-bottom:10px">
                 <summary>
-                  <span>🎨 Paint photo skin (Muse Image)</span>
+                  <span>🎨 Paint photo skin (Meta Muse)</span>
                   <span style="color:var(--sky-300);font-size:12px">4 styles ▾</span>
                 </summary>
                 <div class="chips" style="margin-top:8px">
@@ -420,27 +437,27 @@ footer{padding:36px 24px 56px;color:var(--ink-muted);font-size:13px}
                 </div>
               </details>
               <button type="button" class="cta" onclick="showScanStep(true)">
-                📷 Scan a Real Toy (SAM 3.1)
+                📷 Scan a Real Toy (Meta SAM 3.1)
               </button>
             </div>
 
             <div id="toy-step-scan" hidden>
-              <div class="sh-head" style="margin-bottom:8px">
+              <div class="sh-head" style="margin-bottom:7px">
                 <b class="sh-title">Scan Real Toy</b>
                 <button type="button" class="tv-ctl" onclick="showScanStep(false)">← Toys</button>
               </div>
-              <div class="scan-box" style="margin-bottom:8px">
+              <div class="scan-box" style="margin-bottom:7px">
                 <span>Tap to snap a photo of your toy</span>
                 <span style="font-size:11px;color:var(--ink-muted)">Meta SAM 3.1 finds the outline automatically</span>
               </div>
-              <div class="chips" style="margin-bottom:8px">
+              <div class="chips" style="margin-bottom:7px">
                 <button type="button" class="chip on">Car</button>
                 <button type="button" class="chip">Figure</button>
                 <button type="button" class="chip">Cup</button>
                 <button type="button" class="chip">Bottle</button>
                 <button type="button" class="chip">Other</button>
               </div>
-              <div style="display:grid;grid-template-columns:1fr auto;gap:6px;margin-bottom:8px">
+              <div style="display:grid;grid-template-columns:1fr auto;gap:6px;margin-bottom:7px">
                 <input class="inp" value="Desk Cruiser" aria-label="Toy name" readonly>
                 <div class="chips" style="flex-wrap:nowrap">
                   <button type="button" class="chip">S</button>
@@ -448,9 +465,16 @@ footer{padding:36px 24px 56px;color:var(--ink-muted);font-size:13px}
                   <button type="button" class="chip">L</button>
                 </div>
               </div>
-              <button type="button" class="cta" onclick="pickToy('Desk Cruiser','#5af0b0');showScanStep(false);setMode('home')">
-                ✨ Outline with SAM &amp; Play
+              <button type="button" class="cta" style="margin-bottom:7px" onclick="pickToy('Desk Cruiser','#5af0b0');showScanStep(false);setMode('home')">
+                ✨ Outline with Meta SAM 3.1
               </button>
+              <div class="backup-strip">
+                <span>No camera handy?</span>
+                <div style="display:flex;gap:5px">
+                  <button type="button" class="mini-pill" onclick="pickToy('Red Racer','#ff6a5c');showScanStep(false);setMode('home')">🚗 Red Racer</button>
+                  <button type="button" class="mini-pill" onclick="pickToy('Kip','#ffd24d');showScanStep(false);setMode('home')">🤖 Kip</button>
+                </div>
+              </div>
             </div>
           </section>
 
@@ -460,7 +484,7 @@ footer{padding:36px 24px 56px;color:var(--ink-muted);font-size:13px}
               <b class="sh-title">Build your toy</b>
               <div style="display:flex;gap:6px">
                 <button type="button" class="tv-ctl">Forge (4)</button>
-                <button type="button" class="tv-ctl tv-ctl-gold" onclick="setMode('home')">Done</button>
+                <button type="button" class="tv-ctl tv-ctl-gold" onclick="finishBuild()">Done</button>
               </div>
             </div>
             <div class="chips">
@@ -493,14 +517,21 @@ footer{padding:36px 24px 56px;color:var(--ink-muted);font-size:13px}
             </div>
             <details class="disclosure" open>
               <summary>
-                <span>🖨️ 3D Print &amp; AR Try-On (9 fit Kip)</span>
-                <span class="ok-pill">✓ All checks OK</span>
+                <span>🖨️ 3D Print &amp; AR (9 fit Kip)</span>
+                <span class="ok-pill">✓ 4/4 checks</span>
               </summary>
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-top:7px">
+                <div class="tv-seg" role="tablist" aria-label="Preview mode">
+                  <button type="button" class="seg-btn on" id="seg-ar" onclick="setPrintView('ar')">AR View</button>
+                  <button type="button" class="seg-btn" id="seg-grid" onclick="setPrintView('grid')">Stud Grid</button>
+                </div>
+                <span style="font-size:10.5px;color:var(--gold);font-weight:700">Prototype · 3+ check</span>
+              </div>
               <div class="ar-preview-row">
-                <div class="ar-box">3D / AR GLB<br>True Scale</div>
-                <div style="display:flex;flex-direction:column;gap:6px">
-                  <div style="font-size:12px"><b>Jetpack</b> · Snap Small · Support-free PLA</div>
-                  <button type="button" class="cta cta-violet" style="min-height:40px;font-size:14px;padding:4px 12px">
+                <div class="ar-box" id="print-preview-box">3D / AR GLB<br>True Scale</div>
+                <div style="display:flex;flex-direction:column;gap:5px">
+                  <div style="font-size:11.5px;line-height:1.25"><b>Jetpack</b> · 0.2 mm PLA · flat · support-free</div>
+                  <button type="button" class="cta cta-violet" style="min-height:38px;font-size:13.5px;padding:4px 10px">
                     ⬇ Download Jetpack.stl
                   </button>
                 </div>
@@ -508,7 +539,7 @@ footer{padding:36px 24px 56px;color:var(--ink-muted);font-size:13px}
             </details>
           </section>
 
-          <!-- SHEET 3: CREATE WORLD (MUSE SPARK) -->
+          <!-- SHEET 3: CREATE WORLD (META MUSE) -->
           <section class="tv-sheet" id="layer-create" hidden aria-label="Create World">
             <div class="sh-head">
               <b class="sh-title">Create a World</b>
@@ -525,9 +556,9 @@ footer{padding:36px 24px 56px;color:var(--ink-muted);font-size:13px}
             </div>
             <div style="display:flex;gap:6px">
               <input class="inp" value="snowy mountain with a rainbow bridge" aria-label="Describe world" readonly>
-              <button type="button" class="tv-ctl" aria-label="Voice prompt">🎤</button>
+              <button type="button" class="tv-ctl" aria-label="Push-to-talk voice prompt">🎤 Hold</button>
             </div>
-            <button type="button" class="cta cta-violet" onclick="setMode('home')">✨ Make with Muse Spark</button>
+            <button type="button" class="cta cta-violet" onclick="setMode('home')">✨ Make with Meta Muse</button>
           </section>
 
           <!-- MODAL 4: DAILY PACK RIP -->
@@ -563,12 +594,12 @@ footer{padding:36px 24px 56px;color:var(--ink-muted);font-size:13px}
               <div style="display:flex;justify-content:space-between;align-items:center">
                 <div>
                   <b style="font-family:var(--font-display);font-size:16px">Jetpack</b>
-                  <span style="color:var(--sky-300);font-size:13px;margin-left:6px">speed +3 · ✓ Fits Kip</span>
+                  <span style="color:var(--sky-300);font-size:12.5px;margin-left:6px">speed +3 · ✓ 4/4 checks</span>
                 </div>
-                <span class="ok-pill">3D STL</span>
+                <span class="ok-pill">0.2mm PLA</span>
               </div>
               <button type="button" class="cta" onclick="claimPack()">⚡ Equip Jetpack on Kip</button>
-              <button type="button" class="cta-quiet">⬇ Download support-free STL</button>
+              <button type="button" class="cta-quiet">⬇ Download support-free STL (Prototype)</button>
             </div>
           </div>
 
@@ -597,6 +628,7 @@ footer{padding:36px 24px 56px;color:var(--ink-muted);font-size:13px}
               <b class="sh-title">Story Moods &amp; Voice</b>
               <button type="button" class="tv-ctl tv-ctl-gold" onclick="setMode('home')">Done</button>
             </div>
+            <div style="font-size:11.5px;color:var(--ink-muted)">Parent-started mic · Mood chips work with mic off</div>
             <div class="chips">
               <button type="button" class="chip on">🌟 Joy</button>
               <button type="button" class="chip">🔮 Suspense</button>
@@ -604,13 +636,13 @@ footer{padding:36px 24px 56px;color:var(--ink-muted);font-size:13px}
               <button type="button" class="chip">🌊 Calm</button>
               <button type="button" class="chip">🏆 Triumph</button>
             </div>
-            <button type="button" class="cta">🎤 Hold &amp; say “start adventure”</button>
+            <button type="button" class="cta">🎤 Hold to talk: “start adventure”</button>
           </section>
 
           <!-- MODAL 6: CHARACTER REVEAL CARD -->
           <div class="tv-modal" id="layer-reveal" hidden role="dialog" aria-label="Character Card">
             <div class="sh-head">
-              <span class="k-lbl" style="color:var(--gold)">Character Card Unlocked</span>
+              <span class="k-lbl" style="color:var(--gold)">Character Card · Auto-plays once per build</span>
               <button type="button" class="tv-ctl" onclick="setMode('home')">✕</button>
             </div>
             <div class="reveal-card">
@@ -651,13 +683,14 @@ footer{padding:36px 24px 56px;color:var(--ink-muted);font-size:13px}
           <button type="button" class="sw-btn" data-mode="reveal" aria-selected="false" onclick="setMode('reveal')">6b. Character Card</button>
         </div>
 
-        <h3>What changed &amp; why it works</h3>
+        <h3>What changed &amp; canonical <code>spec.md</code> rules folded in</h3>
         <ul style="padding-left:18px;color:var(--ink-muted);display:flex;flex-direction:column;gap:8px">
           <li><b style="color:var(--ink)">Bottom tab bar deleted (+64 px vertical stage):</b> Kids land immediately in the 3D world instead of scrolling past 124 engineering check rows in Toybox.</li>
-          <li><b style="color:var(--ink)">Top dock trimmed from 9 scrolling buttons → 4 fixed controls + <code>⋯</code>:</b> <code>[Kip ▾]</code>, <code>Build</code>, <code>Create</code>, <code>Pack</code>, and <code>⋯</code> fit cleanly inside 390 px with zero horizontal scrolling.</li>
-          <li><b style="color:var(--ink)">One builder instead of two:</b> <code>Build</code> uses World's live 3D turntable and tucks <b>Market's fit-filtered catalog + AR Try-On + support-free STL downloads</b> into one expandable <code>3D Print &amp; AR Try-On</code> drawer.</li>
-          <li><b style="color:var(--ink)">SAM 3.1 Scan in 3 taps:</b> Tap <code>[Kip ▾]</code> → <code>Scan a Real Toy</code> → Photo + Object chip + <code>Outline with SAM &amp; Play</code>. Duplicate dropdowns, noun inputs, and millimeter essays are gone.</li>
-          <li><b style="color:var(--ink)">Pack Rip stripped of prototype chrome:</b> Slow-mo, reduced-motion button, and shake debug pills are removed; ripping equips directly onto your active 3D toy.</li>
+          <li><b style="color:var(--ink)">Top dock fits 390 px with zero horizontal scroll:</b> <code>[Kip ▾]</code>, <code>Build</code>, <code>Create</code>, <code>Pack</code>, and <code>⋯</code> replace the 9-button horizontal scroll strip.</li>
+          <li><b style="color:var(--ink)"><code>AR View</code> + <code>Stud Grid</code> (<code>BuilderCanvas</code>) + hard-gated STL:</b> <code>Build</code> keeps stud/hole snapping &amp; the 4 live green checks via a compact toggle, hides <code>.stl</code> downloads until all checks pass, and shows <code>0.2 mm PLA</code> prototype + <code>3+</code> small-parts notices.</li>
+          <li><b style="color:var(--ink)">Character Reveal plays once per new build:</b> Tapping <code>Done</code> in <code>Build</code> auto-opens <code>Character Card</code> once for a new build signature; replays stay manual in <code>⋯ -&gt; Character Card</code>.</li>
+          <li><b style="color:var(--ink)">Meta SAM 3.1 Scan + 1-tap demo backup:</b> Photo + Object chip + <code>S/M/L</code> pill + <code>Outline with Meta SAM 3.1</code>, plus a quiet 1-tap <code>Red Racer</code> / <code>Kip</code> backup row if live camera is unavailable.</li>
+          <li><b style="color:var(--ink)">Privacy &amp; copy hygiene:</b> Push-to-talk parent-started mic (moods work with mic off), consistent <code>Meta SAM 3.1</code> &amp; <code>Meta Muse</code> naming, and zero em dashes anywhere on screen.</li>
         </ul>
       </div>
     </div>
@@ -692,22 +725,22 @@ footer{padding:36px 24px 56px;color:var(--ink-muted);font-size:13px}
           <tr>
             <td><b>World top dock</b></td>
             <td>9 items in a horizontal scroll strip (<code>Badge</code>, <code>+ Upgrades</code>, <code>Customize</code>, <code>Forge</code>, <code>Create</code>, <code>Editor</code>, <code>Moods</code>, <code>Kip 3D</code>, <code>Full</code>)</td>
-            <td><b>4 fixed controls + <code>⋯</code></b> (<code>[Toy ▾]</code>, <code>Build</code>, <code>Create</code>, <code>Pack•</code>, <code>⋯</code>) — fits 390 px with zero horizontal scroll.</td>
+            <td><b>4 fixed controls + <code>⋯</code></b> (<code>[Toy ▾]</code>, <code>Build</code>, <code>Create</code>, <code>Pack•</code>, <code>⋯</code>), fitting 390 px with zero horizontal scroll.</td>
           </tr>
           <tr>
-            <td><b>Where parts live</b></td>
-            <td>Duplicated in 4 places: <code>Toybox</code> (31 × 4-check cards), <code>Market</code>, 2D <code>AugmentScreen</code>, and 3D <code>ToyCustomizer</code></td>
-            <td><b>1 place: <code>Build</code> sheet</b> (3D slot customizer + fit-filtered <code>3D Print &amp; AR</code> drawer).</td>
+            <td><b>Build, AR &amp; 3D Print</b></td>
+            <td>Split across <code>Toybox</code>, <code>Market</code>, 2D <code>AugmentScreen</code>, and 3D <code>ToyCustomizer</code></td>
+            <td><b>1 <code>Build</code> sheet</b> with <code>AR View</code> (<code>TryOn</code>) / <code>Stud Grid</code> (<code>BuilderCanvas</code>) toggle, 4 live checks, and check-gated <code>0.2 mm PLA</code> prototype STL export.</td>
           </tr>
           <tr>
-            <td><b>Scan a toy (SAM 3.1)</b></td>
+            <td><b>Scan a toy (Meta SAM 3.1)</b></td>
             <td>Photo + 4 chips + <code>&lt;select&gt;</code> + <code>Outline noun</code> input + 2 mm sliders + 2 CTAs + backup list</td>
-            <td><b>Photo + Object chip + S/M/L pill + 1 CTA</b> (exact mm tucked under <code>Exact mm</code>).</td>
+            <td><b>Photo + Object chip + S/M/L pill + 1 CTA</b> + quiet 1-tap <code>Red Racer</code> / <code>Kip</code> demo backup row.</td>
           </tr>
           <tr>
-            <td><b>Daily Pack Rip</b></td>
-            <td>6 prototype debug buttons (<code>Slow motion</code>, <code>Reduced motion</code>, <code>Shake</code>...) + 4-check card + 3 stacked giant CTAs</td>
-            <td><b>Pure foil rip modal</b> + 1 primary CTA (<code>Equip on {Toy}</code>) + quiet <code>Download STL</code> link.</td>
+            <td><b>Character Reveal &amp; Pack Rip</b></td>
+            <td>Separate <code>RevealScreen</code> route + 6 prototype debug toggles on <code>PacksScreen</code></td>
+            <td><b>Auto-Reveal modal once per new build</b> (replay in <code>⋯</code>) + clean foil rip modal with 1-tap <code>Equip on {Toy}</code>.</td>
           </tr>
         </tbody>
       </table>
@@ -721,6 +754,7 @@ footer{padding:36px 24px 56px;color:var(--ink-muted);font-size:13px}
 
 <script>
 const LAYERS = ['home', 'toy', 'build', 'create', 'pack', 'more', 'moods', 'reveal'];
+let buildRevealedOnce = false;
 
 function setMode(mode) {
   const effective = mode === 'home-playing' ? 'home' : mode;
@@ -744,6 +778,28 @@ function setMode(mode) {
                   (m === effective && m !== 'toy');
     btn.setAttribute('aria-selected', String(match));
   });
+}
+
+function finishBuild() {
+  if (!buildRevealedOnce) {
+    buildRevealedOnce = true;
+    setMode('reveal');
+  } else {
+    setMode('home');
+  }
+}
+
+function setPrintView(view) {
+  const arBtn = document.getElementById('seg-ar');
+  const gridBtn = document.getElementById('seg-grid');
+  const box = document.getElementById('print-preview-box');
+  if (arBtn) arBtn.classList.toggle('on', view === 'ar');
+  if (gridBtn) gridBtn.classList.toggle('on', view === 'grid');
+  if (box) {
+    box.innerHTML = view === 'grid'
+      ? '12.5mm Stud Grid<br>4/4 Checks Green'
+      : '3D / AR GLB<br>True Scale';
+  }
 }
 
 function showScanStep(scan) {
@@ -770,11 +826,11 @@ function claimPack() {
 // Build static 6-phone storyboard by cloning #live-phone in each state
 const STORYBOARD = [
   { mode: 'home', scan: false, title: '1. World Stage (Home)', desc: 'Opens straight into 3D World. 4-item dock fits 390 px; zero bottom tab bar.' },
-  { mode: 'toy', scan: true, title: '2. My Toy & SAM 3.1 Scan', desc: 'Tap [Kip ▾] to switch toys or snap a photo + object chip for SAM 3.1.' },
-  { mode: 'build', scan: false, title: '3. Build, Forge & 3D Print', desc: 'Live 3D turntable above + slot upgrades + collapsible AR & STL print drawer.' },
+  { mode: 'toy', scan: true, title: '2. My Toy & Meta SAM 3.1 Scan', desc: 'Photo + object chip + S/M/L pill, plus 1-tap Red Racer / Kip backup row.' },
+  { mode: 'build', scan: false, title: '3. Build, Forge & 3D Print', desc: 'AR View / Stud Grid toggle, 4/4 check-gated 0.2mm PLA STL, auto-Reveal on Done.' },
   { mode: 'pack', scan: false, title: '4. Daily Pack Rip Modal', desc: 'Debug toggles removed; 1 primary CTA equips pulled parts straight onto your 3D toy.' },
-  { mode: 'create', scan: false, title: '5. Create World (Muse Spark)', desc: 'Describe or speak a world; live 3D preview stays visible behind the sheet.' },
-  { mode: 'reveal', scan: false, title: '6. Character Card & ⋯ Menu', desc: '15s entrance synth, build stats, and #toy= share link modal from ⋯.' },
+  { mode: 'create', scan: false, title: '5. Create World (Meta Muse)', desc: 'Type or push-to-talk a world; live 3D preview stays visible behind the sheet.' },
+  { mode: 'reveal', scan: false, title: '6. Character Card & ⋯ Menu', desc: 'Auto-plays once per new build (replay in ⋯) with 16-step synth & #toy= link.' },
 ];
 
 (function renderStoryboard() {
@@ -795,7 +851,7 @@ const STORYBOARD = [
     wrap.appendChild(clone);
     const cap = document.createElement('div');
     cap.className = 'phone-cap';
-    cap.innerHTML = '<b>' + item.title + '</b> — ' + item.desc;
+    cap.innerHTML = '<b>' + item.title + '</b> · ' + item.desc;
     card.appendChild(wrap);
     card.appendChild(cap);
     grid.appendChild(card);

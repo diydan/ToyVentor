@@ -800,6 +800,8 @@ interface LegacySave {
   type?: string;
   scrap?: number;
   found?: Record<string, boolean>;
+  sel?: Record<string, Record<string, string>>;
+  col?: Record<string, string>;
 }
 
 interface LegacyPlayer {
@@ -886,14 +888,7 @@ export function createEngine(
     }
   };
 
-  const load = (contract: ToyContract | null) => {
-    const url = worldUrlFor(contract);
-    if (url === lastUrl && frame.src.includes("ToyVentor-World.html")) return;
-    lastUrl = url;
-    ready = false;
-    frame.src = url;
-  };
-  load(initial.contract);
+  let boundDoc: Document | null = null;
 
   const click = (selector: string) => {
     doc()?.querySelector<HTMLElement>(selector)?.click();
@@ -912,6 +907,60 @@ export function createEngine(
     return true;
   };
 
+  const load = (contract: ToyContract | null) => {
+    const url = worldUrlFor(contract);
+    if (url === lastUrl && frame.src.includes("ToyVentor-World.html")) return;
+    const hadLoadedWorld = Boolean(lastUrl && frame.src.includes("ToyVentor-World.html"));
+    lastUrl = url;
+
+    const frameDoc = doc();
+    const save = hooks()?.S;
+    const sheetOpen = ready && Boolean(frameDoc?.querySelector("#sheet:not([hidden])"));
+    if (hadLoadedWorld && sheetOpen && contract && save) {
+      save.sel = save.sel ?? {};
+      save.found = save.found ?? {};
+      save.col = save.col ?? {};
+      const sl = save.sel[contract.type] ?? (save.sel[contract.type] = {});
+      for (const partKey of contract.parts) {
+        const [t, slot, id] = partKey.split(".");
+        if (t === contract.type && slot && id) {
+          sl[slot] = id;
+          save.found[partKey] = true;
+        }
+      }
+      for (const zone of ["c1", "c2", "skin"] as const) {
+        const hex = contract.col?.[zone] ?? "";
+        if (/^#[0-9a-f]{6}$/i.test(hex)) save.col[zone] = hex;
+      }
+      const tag = frameDoc?.getElementById("toy-tag");
+      if (tag && contract.name) {
+        tag.textContent = `Your toy: ${contract.name.slice(0, 40)}`;
+        tag.hidden = false;
+      }
+      try {
+        win()?.history?.replaceState?.(null, "", url);
+      } catch {
+        // Ignore history state restrictions on unloaded frames.
+      }
+      save.type = contract.type === "vehicle" ? "robot" : "vehicle";
+      if (!clickWhere("#types button", (b) => b.dataset.t === contract.type)) {
+        save.type = contract.type;
+      }
+      return;
+    }
+
+    ready = false;
+    boundDoc = null;
+    const frameWin = win();
+    if (hadLoadedWorld && frameWin?.location) {
+      frameWin.location.replace(url);
+      frameWin.location.reload();
+      return;
+    }
+    frame.src = url;
+  };
+  load(initial.contract);
+
   const textOf = (element: Node | null | undefined): string =>
     (element?.textContent ?? "").replace(/\s+/g, " ").trim();
 
@@ -921,7 +970,6 @@ export function createEngine(
   // React renders customizer, mission, Create, and editor sheets as overlays
   // over the viewport; the legacy sheets stay hidden in the frame as backing
   // control surfaces until their definitions emit data natively.
-  let boundDoc: Document | null = null;
   const suppressLegacyPanels = () => {
     const frameDoc = doc();
     if (!frameDoc?.head) return;

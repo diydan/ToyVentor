@@ -10,7 +10,7 @@ export interface CreatePanelProps {
 
 /**
  * Frosted-glass bottom sheet for Create-a-world mode powered by Meta Muse.
- * Matches the standalone ToyVentor World Create sheet over the live 3D world.
+ * Runs directly over the live 3D World stage.
  */
 export function CreatePanel({ snapshot, onClose, onMake, onAction }: CreatePanelProps) {
   const [draft, setDraft] = useState(snapshot.inputValue);
@@ -43,7 +43,7 @@ export function CreatePanel({ snapshot, onClose, onMake, onAction }: CreatePanel
       aria-label="Create a world"
     >
       <div className="tv-sh-top">
-        <b className="tv-sh-title">Create a world</b>
+        <b className="tv-sh-title">Create a World</b>
         <button
           type="button"
           className="tv-ctl tv-ctl-primary"
@@ -53,7 +53,7 @@ export function CreatePanel({ snapshot, onClose, onMake, onAction }: CreatePanel
           Play it
         </button>
         <button type="button" className="tv-ctl" onClick={onClose}>
-          Exit
+          Close
         </button>
       </div>
 
@@ -62,7 +62,7 @@ export function CreatePanel({ snapshot, onClose, onMake, onAction }: CreatePanel
           className="tv-input tv-grow"
           value={draft}
           maxLength={160}
-          placeholder="Tell me your world..."
+          placeholder="Describe your world (e.g. snowy mountain with cave)"
           aria-label="Describe your world"
           onChange={(event) => setDraft(event.target.value)}
           onKeyDown={(event) => {
@@ -76,10 +76,10 @@ export function CreatePanel({ snapshot, onClose, onMake, onAction }: CreatePanel
           <button
             type="button"
             className="tv-ctl"
-            aria-label="Speak"
+            aria-label="Parent-started voice prompt"
             onClick={() => onAction("mic")}
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
               <rect x="9" y="3" width="6" height="11" rx="3" fill="currentColor" />
               <path
                 d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"
@@ -121,7 +121,7 @@ export function CreatePanel({ snapshot, onClose, onMake, onAction }: CreatePanel
           disabled={snapshot.busy || !draft.trim()}
           onClick={submit}
         >
-          {snapshot.busy ? "Making..." : "Make it!"}
+          {snapshot.busy ? "Making with Meta Muse..." : "Make with Meta Muse"}
         </button>
         <button
           type="button"
@@ -129,7 +129,7 @@ export function CreatePanel({ snapshot, onClose, onMake, onAction }: CreatePanel
           disabled={!snapshot.canUndo || snapshot.busy}
           onClick={() => onAction("undo")}
         >
-          Go back
+          Undo
         </button>
         <button
           type="button"
@@ -137,7 +137,7 @@ export function CreatePanel({ snapshot, onClose, onMake, onAction }: CreatePanel
           disabled={snapshot.busy}
           onClick={() => onAction("keep")}
         >
-          Keep it
+          Save world
         </button>
       </div>
 
@@ -163,7 +163,7 @@ export function CreatePanel({ snapshot, onClose, onMake, onAction }: CreatePanel
         className="tv-link"
         onClick={() => onAction("code")}
       >
-        {snapshot.codeVisible ? "Hide the code" : "Show the code"}
+        {snapshot.codeVisible ? "Hide world recipe" : "Show world recipe"}
       </button>
 
       {snapshot.codeVisible && snapshot.recipe && (

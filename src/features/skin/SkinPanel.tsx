@@ -6,26 +6,23 @@ import { clearSkin, saveSkin, skinForToy } from "../../state/skins";
 const PRESETS = [
   { label: "Racer red", prompt: "bold red racing stripes with a white number roundel" },
   { label: "Dragon scales", prompt: "green dragon scales with gold trim" },
-  { label: "Galaxy stars", prompt: "deep-space galaxy swirls with tiny stars" },
-  { label: "Color blocks", prompt: "bright rainbow colour blocks" },
+  { label: "Galaxy", prompt: "deep-space galaxy swirls with tiny stars" },
+  { label: "Rainbow", prompt: "bright rainbow colour blocks" },
 ];
 
-export function SkinPanel({ toy }: { toy: Toy }) {
+export function SkinPanel({
+  toy,
+  onSkinChange,
+}: {
+  toy: Toy;
+  onSkinChange?: () => void;
+}) {
   const [skin, setSkin] = useState<string | undefined>(() => skinForToy(toy.id));
   const [style, setStyle] = useState(PRESETS[0]!.prompt);
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<string | null>(null);
 
-  if (!toy.imageDataUrl) {
-    return (
-      <div className="glass-card" style={{ marginTop: 12 }}>
-        <span className="kicker-label">Muse Image skin</span>
-        <p className="fine-print" style={{ margin: 0 }}>
-          Skins repaint a scanned photo. Scan a real toy first to paint custom skins on it.
-        </p>
-      </div>
-    );
-  }
+  if (!toy.imageDataUrl) return null;
 
   const make = async () => {
     setBusy(true);
@@ -35,10 +32,11 @@ export function SkinPanel({ toy }: { toy: Toy }) {
       if (result.imageDataUrl) {
         saveSkin(toy.id, result.imageDataUrl);
         setSkin(result.imageDataUrl);
+        onSkinChange?.();
       } else {
         setNote(
           result.skin.status === "not-configured"
-            ? "Skin generation is not configured on the server yet."
+            ? "Meta Muse skin painting is not configured on this server yet."
             : `Skin did not come back${result.skin.message ? `: ${result.skin.message}` : ""}. Try again.`,
         );
       }
@@ -51,18 +49,18 @@ export function SkinPanel({ toy }: { toy: Toy }) {
   const remove = () => {
     clearSkin(toy.id);
     setSkin(undefined);
+    onSkinChange?.();
   };
 
   const isCustom = !PRESETS.some((p) => p.prompt === style);
 
   return (
-    <div className="glass-card" style={{ marginTop: 12 }}>
-      <span className="kicker-label">Muse Image skin</span>
+    <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 8 }}>
       <img
         className="toy-thumb"
         src={skin ?? toy.imageDataUrl}
-        alt={skin ? `${toy.name} with its skin on` : toy.name}
-        style={{ marginTop: 4 }}
+        alt={skin ? `${toy.name} with painted skin` : toy.name}
+        style={{ margin: 0, maxHeight: 132 }}
       />
 
       <div className="pill-row" role="group" aria-label="Skin presets">
@@ -70,9 +68,7 @@ export function SkinPanel({ toy }: { toy: Toy }) {
           <button
             key={p.label}
             type="button"
-            className={
-              style === p.prompt ? "pill-chip pill-chip-on" : "pill-chip"
-            }
+            className={style === p.prompt ? "pill-chip pill-chip-on" : "pill-chip"}
             onClick={() => setStyle(p.prompt)}
           >
             {p.label}
@@ -80,39 +76,36 @@ export function SkinPanel({ toy }: { toy: Toy }) {
         ))}
       </div>
 
-      <label className="field" style={{ margin: "10px 0" }}>
-        <span style={{ fontSize: 13, color: "var(--ink-muted)" }}>
-          Or describe your own look
-        </span>
-        <input
-          value={isCustom ? style : ""}
-          placeholder="e.g. shiny gold with lightning bolts"
-          maxLength={140}
-          onChange={(e) => setStyle(e.target.value || PRESETS[0]!.prompt)}
-        />
-      </label>
+      <input
+        className="tv-input"
+        value={isCustom ? style : ""}
+        placeholder="Or describe your own look (e.g. shiny gold bolts)"
+        aria-label="Custom skin style"
+        maxLength={140}
+        onChange={(e) => setStyle(e.target.value || PRESETS[0]!.prompt)}
+      />
 
-      {note && <p className="error">{note}</p>}
+      {note && <p className="error" style={{ margin: 0, fontSize: 13 }}>{note}</p>}
 
       <button
         type="button"
         className="cta cta-violet"
-        style={{ marginBottom: skin ? 8 : 0 }}
+        style={{ margin: 0, minHeight: 44, fontSize: 15 }}
         disabled={busy}
         onClick={make}
       >
         {busy
-          ? "Painting with Muse Image (~20s)..."
+          ? "Painting with Meta Muse..."
           : skin
-            ? "Paint a new skin"
-            : "Paint skin with Muse Image"}
+            ? "Paint a new skin (Meta Muse)"
+            : "Paint skin with Meta Muse"}
       </button>
 
       {skin && (
         <button
           type="button"
           className="cta cta-quiet"
-          style={{ margin: 0, minHeight: 44 }}
+          style={{ margin: 0, minHeight: 38, fontSize: 13 }}
           onClick={remove}
         >
           Back to original photo

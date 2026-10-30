@@ -7,21 +7,42 @@ import {
   type CSSProperties,
   type MouseEvent,
 } from "react";
+import { allPass, runChecks } from "../../../../shared/checks";
 import {
   RARITY_PIPS,
   dailyPack,
   rarityForPart,
   sortPackForReveal,
   type PackRarity,
-} from "../../shared/pack";
-import { PartCard } from "../components/PartCard";
-import { CardBackStarSvg, FoilPackSvg, PartCardArt } from "../features/packs/PartArt";
-import { createPackAudio, vibrate, type PackAudio } from "../features/packs/packAudio";
-import { allParts, stlFileFor } from "../lib/catalog";
-import { useToybox } from "../state/toybox";
+} from "../../../../shared/pack";
+import type { Placement } from "../../../../shared/build";
+import type { Toy } from "../../../../shared/toy";
+import { equipPartOnBuild } from "../../../../shared/world-parts";
+import { CheckList } from "../../../components/CheckList";
+import { loadBuild, saveBuild } from "../../../lib/builds";
+import { allParts, partsById, stlFileFor } from "../../../lib/catalog";
+import {
+  CardBackStarSvg,
+  FoilPackSvg,
+  PartCardArt,
+} from "../../packs/PartArt";
+import { createPackAudio, vibrate, type PackAudio } from "../../packs/packAudio";
 
-const KEY = "toyforge:pack-claimed";
+export const PACK_CLAIMED_KEY = "toyforge:pack-claimed";
 const RING_CIRCUMFERENCE = 704;
+
+export function todayISO(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+export function isPackClaimedToday(today = todayISO()): boolean {
+  try {
+    return localStorage.getItem(PACK_CLAIMED_KEY) === today;
+  } catch {
+    return false;
+  }
+}
 
 const RARITY_STYLE: Record<
   PackRarity,
@@ -66,18 +87,9 @@ const STARS: ReadonlyArray<{ left: string; top: string; delay: string }> = [
 ];
 
 type RipPhase = "idle" | "tearing" | "out" | "reveal" | "done";
-type HintState = "idle" | "holding" | "shaking";
+type HintState = "idle" | "holding";
 
-type MotionWithPermission = typeof DeviceMotionEvent & {
-  requestPermission?: () => Promise<"granted" | "denied" | "default">;
-};
-
-function todayISO(): string {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-}
-
-function readInitialReducedMotion(): boolean {
+function readReducedMotion(): boolean {
   try {
     return Boolean(window.matchMedia?.("(prefers-reduced-motion: reduce)").matches);
   } catch {
@@ -85,29 +97,47 @@ function readInitialReducedMotion(): boolean {
   }
 }
 
-export function PacksScreen({
-  onBuild,
-  onPlay,
+export function PackOverlay({
+  open,
+  toy,
+  onClose,
+  onClaimed,
+  onEquipped,
 }: {
-  onBuild?: () => void;
-  onPlay?: () => void;
+  open: boolean;
+  toy: Toy;
+  onClose: () => void;
+  onClaimed?: () => void;
+  onEquipped: (placements: Placement[]) => void;
 }) {
-  const { selected: toy } = useToybox();
-  const today = todayISO();
+  if (!open) return null;
+  return (
+    <PackOverlayInner
+      toy={toy}
+      onClose={onClose}
+      onClaimed={onClaimed}
+      onEquipped={onEquipped}
+    />
+  );
+}
 
-  // Seeded daily drop, ordered lowest-to-highest rarity so card 3 is the climax.
+function PackOverlayInner({
+  toy,
+  onClose,
+  onClaimed,
+  onEquipped,
+}: {
+  toy: Toy;
+  onClose: () => void;
+  onClaimed?: () => void;
+  onEquipped: (placements: Placement[]) => void;
+}) {
+  const today = todayISO();
   const cards = useMemo(
     () => sortPackForReveal(dailyPack(allParts, today)),
     [today],
   );
-
-  const initiallyClaimed = useMemo(() => {
-    try {
-      return localStorage.getItem(KEY) === today;
-    } catch {
-      return false;
-    }
-  }, [today]);
+  const initiallyClaimed = useMemo(() => isPackClaimedToday(today), [today]);
 
   const [phase, setPhase] = useState<RipPhase>(() =>
     initiallyClaimed ? "done" : "idle",
@@ -122,16 +152,9 @@ export function PacksScreen({
   const [selectedIndex, setSelectedIndex] = useState<number>(() =>
     Math.max(0, cards.length - 1),
   );
-
-  // Interactive controls ported from drafts/ToyVentor-PackRip-ToyWorld.html
   const [soundOn, setSoundOn] = useState(true);
-  const [slowMo, setSlowMo] = useState(false);
-  const [reducedMotion, setReducedMotion] = useState(readInitialReducedMotion);
-  const [shakeOn, setShakeOn] = useState(false);
-  const [showTryShake, setShowTryShake] = useState(false);
-  const [toast, setToast] = useState<string | null>(null);
+  const [reducedMotion] = useState(readReducedMotion);
 
-  // Refs for 60fps imperative hold/shake updates and leak-free teardown
   const stageRef = useRef<HTMLDivElement>(null);
   const packShakeRef = useRef<HTMLDivElement>(null);
   const ringRef = useRef<SVGCircleElement>(null);
@@ -143,24 +166,14 @@ export function PacksScreen({
   phaseRef.current = phase;
   const flippedRef = useRef(flipped);
   flippedRef.current = flipped;
-  const slowRef = useRef(slowMo);
-  slowRef.current = slowMo;
   const reduceRef = useRef(reducedMotion);
   reduceRef.current = reducedMotion;
-  const shakeOnRef = useRef(shakeOn);
-  shakeOnRef.current = shakeOn;
 
   const progressRef = useRef(0);
-  const shakeProgressRef = useRef(0);
   const holdingRef = useRef(false);
   const autoRef = useRef(false);
   const tearingLockRef = useRef(false);
   const downAtRef = useRef(0);
-  const lastPeakRef = useRef(0);
-  const kickAtRef = useRef(0);
-  const kickVecRef = useRef<[number, number]>([0, 0]);
-  const lastMotionRef = useRef<[number, number, number] | null>(null);
-  const sensorSeenRef = useRef(false);
   const hintRef = useRef<HintState>("idle");
   const runIdRef = useRef(0);
   const timersRef = useRef<Set<number>>(new Set());
@@ -181,17 +194,6 @@ export function PacksScreen({
     timersRef.current.clear();
   }, []);
 
-  const showToast = useCallback(
-    (msg: string) => {
-      setToast(msg);
-      scheduleTimeout(() => {
-        setToast((cur) => (cur === msg ? null : cur));
-      }, 2400);
-    },
-    [scheduleTimeout],
-  );
-
-  // Audio lifecycle: created once per mount, closed on unmount.
   useEffect(() => {
     const audio = createPackAudio(true);
     audioRef.current = audio;
@@ -210,7 +212,6 @@ export function PacksScreen({
       if (reduceRef.current) return;
       const layer = particlesRef.current;
       if (!layer) return;
-      const k = slowRef.current ? 2 : 1;
       for (let i = 0; i < count; i++) {
         const dot = document.createElement("span");
         dot.className = "pack-particle";
@@ -225,7 +226,7 @@ export function PacksScreen({
         dot.style.setProperty("--dx", `${(Math.cos(angle) * dist).toFixed(1)}px`);
         dot.style.setProperty("--dy", `${(Math.sin(angle) * dist).toFixed(1)}px`);
         layer.appendChild(dot);
-        scheduleTimeout(() => dot.remove(), 1000 * k);
+        scheduleTimeout(() => dot.remove(), 1000);
       }
     },
     [scheduleTimeout],
@@ -263,7 +264,6 @@ export function PacksScreen({
         spawnBurst(cx, cy, meta.burst, 14, 90);
         vibrate(25);
       } else {
-        // Finale card always gets the fanfare + double burst
         audioRef.current?.fan();
         spawnBurst(cx, cy, "#ffd24d", 26, 130);
         spawnBurst(cx, cy, meta.burst, 14, 95);
@@ -276,17 +276,17 @@ export function PacksScreen({
 
   const persistClaim = useCallback(() => {
     try {
-      localStorage.setItem(KEY, today);
+      localStorage.setItem(PACK_CLAIMED_KEY, today);
     } catch {
       /* ignore quota/privacy errors */
     }
-  }, [today]);
+    onClaimed?.();
+  }, [today, onClaimed]);
 
-  const waitScaled = useCallback(
+  const waitMs = useCallback(
     (ms: number) =>
       new Promise<void>((resolve) => {
-        const k = slowRef.current ? 2 : 1;
-        scheduleTimeout(resolve, ms * k);
+        scheduleTimeout(resolve, ms);
       }),
     [scheduleTimeout],
   );
@@ -309,53 +309,51 @@ export function PacksScreen({
       spawnBurst(stage.clientWidth / 2, stage.clientHeight * 0.36, "#ffe9a0", 18, 120);
     }
 
-    await waitScaled(400);
+    await waitMs(400);
     if (id !== runIdRef.current) return;
 
     setPhase("out");
     phaseRef.current = "out";
     audioRef.current?.whoosh();
 
-    await waitScaled(100);
+    await waitMs(100);
     if (id !== runIdRef.current) return;
 
     setPhase("reveal");
     phaseRef.current = "reveal";
-    const k = slowRef.current ? 2 : 1;
     [0, 1, 2].forEach((i) => {
       scheduleTimeout(() => {
         audioRef.current?.pop(i);
         vibrate(12);
-      }, 120 * i * k);
+      }, 120 * i);
     });
 
-    await waitScaled(650);
+    await waitMs(650);
     if (id !== runIdRef.current) return;
     flipCard(0);
 
-    await waitScaled(1050);
+    await waitMs(1050);
     if (id !== runIdRef.current) return;
     flipCard(1);
 
-    await waitScaled(1050);
+    await waitMs(1050);
     if (id !== runIdRef.current) return;
     if (!flippedRef.current[2]) {
       setVigOn(true);
       const [cx, cy] = cardCenter(2);
       spawnBurst(cx, cy, "#ffd24d", 10, 60);
-      await waitScaled(380);
+      await waitMs(380);
       if (id !== runIdRef.current) return;
       flipCard(2);
     }
 
-    await waitScaled(900);
+    await waitMs(900);
     if (id !== runIdRef.current) return;
     setSettled(true);
     setPhase("done");
     phaseRef.current = "done";
-  }, [cardCenter, flipCard, persistClaim, scheduleTimeout, spawnBurst, waitScaled]);
+  }, [cardCenter, flipCard, persistClaim, scheduleTimeout, spawnBurst, waitMs]);
 
-  // 60fps hold & shake loop while idle; stops cleanly on unmount.
   useEffect(() => {
     let rafId = 0;
     let last = performance.now();
@@ -365,30 +363,17 @@ export function PacksScreen({
       last = now;
 
       if (phaseRef.current === "idle") {
-        const k = slowRef.current ? 2 : 1;
         const active = holdingRef.current || autoRef.current;
         progressRef.current = active
-          ? Math.min(1, progressRef.current + dt / (1000 * k))
-          : Math.max(0, progressRef.current - dt / (300 * k));
+          ? Math.min(1, progressRef.current + dt / 1000)
+          : Math.max(0, progressRef.current - dt / 300);
 
-        if (now - lastPeakRef.current > 350) {
-          shakeProgressRef.current = Math.max(0, shakeProgressRef.current - dt / 1200);
-        }
-
-        const pp = Math.max(progressRef.current, shakeProgressRef.current);
+        const pp = progressRef.current;
         const amp = reduceRef.current ? 0 : 1 + 9 * pp;
-        let kx = 0;
-        let ky = 0;
-        const kd = now - kickAtRef.current;
-        if (!reduceRef.current && kd < 160) {
-          const kf = 1 - kd / 160;
-          kx = kickVecRef.current[0] * kf;
-          ky = kickVecRef.current[1] * kf;
-        }
 
         if (packShakeRef.current) {
-          const tx = (Math.random() - 0.5) * 2 * amp + kx;
-          const ty = (Math.random() - 0.5) * 2 * amp + ky;
+          const tx = (Math.random() - 0.5) * 2 * amp;
+          const ty = (Math.random() - 0.5) * 2 * amp;
           const rot = (Math.random() - 0.5) * amp * 0.35;
           const sc = 1 + 0.05 * pp;
           packShakeRef.current.style.transform = `translate(${tx.toFixed(1)}px, ${ty.toFixed(1)}px) rotate(${rot.toFixed(2)}deg) scale(${sc.toFixed(3)})`;
@@ -397,15 +382,13 @@ export function PacksScreen({
           stageRef.current.style.setProperty("--p", pp.toFixed(3));
         }
         if (ringRef.current) {
-          ringRef.current.style.strokeDashoffset = (RING_CIRCUMFERENCE * (1 - pp)).toFixed(1);
+          ringRef.current.style.strokeDashoffset = (
+            RING_CIRCUMFERENCE *
+            (1 - pp)
+          ).toFixed(1);
         }
 
-        const nextHint: HintState =
-          pp > 0.05 && (active || shakeProgressRef.current > 0.05)
-            ? shakeProgressRef.current > progressRef.current
-              ? "shaking"
-              : "holding"
-            : "idle";
+        const nextHint: HintState = pp > 0.05 && active ? "holding" : "idle";
         if (nextHint !== hintRef.current) {
           hintRef.current = nextHint;
           setHintState(nextHint);
@@ -421,100 +404,19 @@ export function PacksScreen({
     };
 
     rafId = window.requestAnimationFrame(frame);
-    const vibTimer = window.setInterval(() => {
-      if (phaseRef.current === "idle" && holdingRef.current && progressRef.current > 0.05) {
-        vibrate(Math.round(8 + progressRef.current * 30));
-      }
-    }, 100);
-
     return () => {
       window.cancelAnimationFrame(rafId);
-      window.clearInterval(vibTimer);
       clearAllTimers();
       runIdRef.current++;
     };
   }, [clearAllTimers, runRip]);
-
-  const jolt = useCallback(() => {
-    if (phaseRef.current !== "idle") return;
-    const now = performance.now();
-    lastPeakRef.current = now;
-    shakeProgressRef.current = Math.min(1, shakeProgressRef.current + 0.26);
-    kickAtRef.current = now;
-    kickVecRef.current = [(Math.random() - 0.5) * 34, (Math.random() - 0.5) * 34];
-    audioRef.current?.unlock();
-    audioRef.current?.tick(shakeProgressRef.current);
-    vibrate(Math.round(12 + shakeProgressRef.current * 30));
-  }, []);
-
-  // Optional device-motion shake listener, cleaned up when turned off or unmounted.
-  useEffect(() => {
-    if (!shakeOn) {
-      shakeProgressRef.current = 0;
-      lastMotionRef.current = null;
-      return;
-    }
-    const onMotion = (event: DeviceMotionEvent) => {
-      const a = event.accelerationIncludingGravity;
-      if (!a || a.x == null) return;
-      sensorSeenRef.current = true;
-      const x = a.x || 0;
-      const y = a.y || 0;
-      const z = a.z || 0;
-      const prev = lastMotionRef.current;
-      if (prev && shakeOnRef.current && phaseRef.current === "idle" && !document.hidden) {
-        const dx = x - prev[0];
-        const dy = y - prev[1];
-        const dz = z - prev[2];
-        const delta = Math.sqrt(dx * dx + dy * dy + dz * dz);
-        if (delta > 12 && performance.now() - lastPeakRef.current > 110) {
-          jolt();
-        }
-      }
-      lastMotionRef.current = [x, y, z];
-    };
-    window.addEventListener("devicemotion", onMotion);
-    return () => window.removeEventListener("devicemotion", onMotion);
-  }, [jolt, shakeOn]);
-
-  const toggleShake = async () => {
-    if (shakeOn) {
-      setShakeOn(false);
-      setShowTryShake(false);
-      return;
-    }
-    let perm = "";
-    try {
-      const Motion =
-        typeof DeviceMotionEvent !== "undefined"
-          ? (DeviceMotionEvent as MotionWithPermission)
-          : undefined;
-      if (typeof Motion?.requestPermission === "function") {
-        perm = await Motion.requestPermission();
-      }
-    } catch {
-      perm = "error";
-    }
-    sensorSeenRef.current = false;
-    lastMotionRef.current = null;
-    setShakeOn(true);
-    scheduleTimeout(() => {
-      if (!shakeOnRef.current || sensorSeenRef.current) return;
-      const prefix =
-        perm === "denied" || perm === "error"
-          ? "Motion access was not allowed. "
-          : "No motion sensor found here. ";
-      showToast(`${prefix}Hold or tap still works, and Try a shake previews it.`);
-      setShowTryShake(true);
-    }, 1500);
-  };
 
   const holdStart = () => {
     if (phaseRef.current !== "idle") return;
     downAtRef.current = performance.now();
     holdingRef.current = true;
     audioRef.current?.unlock();
-    audioRef.current?.riser(slowRef.current ? 2 : 1);
+    audioRef.current?.riser(1);
     vibrate(10);
   };
 
@@ -528,12 +430,10 @@ export function PacksScreen({
   };
 
   const handleRipClick = (event: MouseEvent<HTMLButtonElement>) => {
-    // Pointer taps/holds are handled by pointerdown/pointerup; click with
-    // detail === 0 covers keyboard and assistive-tech activation.
     if (event.detail !== 0) return;
     if (phaseRef.current !== "idle" || autoRef.current || holdingRef.current) return;
     audioRef.current?.unlock();
-    audioRef.current?.riser(slowRef.current ? 2 : 1);
+    audioRef.current?.riser(1);
     autoRef.current = true;
   };
 
@@ -552,7 +452,6 @@ export function PacksScreen({
     runIdRef.current++;
     clearAllTimers();
     progressRef.current = 0;
-    shakeProgressRef.current = 0;
     holdingRef.current = false;
     autoRef.current = false;
     tearingLockRef.current = false;
@@ -568,7 +467,9 @@ export function PacksScreen({
     if (particlesRef.current) particlesRef.current.innerHTML = "";
     if (packShakeRef.current) packShakeRef.current.style.transform = "none";
     if (stageRef.current) stageRef.current.style.setProperty("--p", "0");
-    if (ringRef.current) ringRef.current.style.strokeDashoffset = String(RING_CIRCUMFERENCE);
+    if (ringRef.current) {
+      ringRef.current.style.strokeDashoffset = String(RING_CIRCUMFERENCE);
+    }
   };
 
   const handleCardClick = (index: number) => {
@@ -596,6 +497,26 @@ export function PacksScreen({
   };
 
   const activePart = cards[selectedIndex] ?? cards[cards.length - 1] ?? cards[0];
+  const checks = useMemo(
+    () => (activePart ? runChecks(activePart, toy) : []),
+    [activePart, toy],
+  );
+  const checksPass = checks.length > 0 && allPass(checks);
+  const stlFile = stlFileFor(activePart);
+  const canDownloadStl = Boolean(
+    activePart?.printable && stlFile && checksPass,
+  );
+
+  const equipPulledPart = () => {
+    if (!activePart) return;
+    const current = loadBuild(toy.id, partsById);
+    const res = equipPartOnBuild(toy, activePart, current, partsById);
+    if (!res.ok) return;
+    saveBuild(toy.id, res.placements);
+    onEquipped(res.placements);
+    onClose();
+  };
+
   const stageClasses = [
     "pack-stage",
     reducedMotion ? "pack-reduce" : "",
@@ -607,28 +528,46 @@ export function PacksScreen({
     .filter(Boolean)
     .join(" ");
 
-  const hintPrimary =
-    hintState === "shaking"
-      ? "Keep shaking"
-      : hintState === "holding"
-        ? "Keep holding"
-        : shakeOn
-          ? "Hold or shake to rip"
-          : "Hold to rip";
-
   return (
-    <section>
-      <header className="screen-head">
-        <h1 className="screen-title">Daily Pack</h1>
-        <span className="kicker-label kicker-gold" style={{ margin: 0 }}>
-          {today}
-        </span>
-      </header>
+    <div className="tv-modal" role="dialog" aria-modal="true" aria-label="Daily Pack">
+      <div className="tv-sh-top">
+        <div>
+          <span className="kicker-label kicker-gold" style={{ margin: 0 }}>
+            Daily Drop · {today}
+          </span>
+          <b className="tv-sh-title">
+            {phase === "done" ? "Pack Opened!" : "Daily Pack"}
+          </b>
+        </div>
+        <div style={{ display: "flex", gap: 6 }}>
+          {phase === "done" && (
+            <button type="button" className="tv-ctl" onClick={replayRip}>
+              Replay
+            </button>
+          )}
+          <button
+            type="button"
+            className="tv-ctl"
+            aria-pressed={!soundOn}
+            onClick={() => setSoundOn((s) => !s)}
+          >
+            {soundOn ? "Sound" : "Muted"}
+          </button>
+          <button
+            type="button"
+            className="tv-ctl"
+            aria-label="Close Daily Pack"
+            onClick={onClose}
+          >
+            ✕
+          </button>
+        </div>
+      </div>
 
       <div
         ref={stageRef}
         className={stageClasses}
-        style={{ "--k": slowMo ? 2 : 1 } as CSSProperties}
+        style={{ "--k": 1 } as CSSProperties}
         role="region"
         aria-label="Daily pack rip stage"
       >
@@ -643,7 +582,6 @@ export function PacksScreen({
         </div>
         <div className="pack-glow-behind" aria-hidden="true" />
 
-        {/* Floating crimped foil pack */}
         <div
           className="pack-float"
           onPointerDown={holdStart}
@@ -662,7 +600,6 @@ export function PacksScreen({
           </div>
         </div>
 
-        {/* Hold progress ring */}
         <div className="pack-ring-wrap" aria-hidden="true">
           <svg viewBox="0 0 240 240">
             <circle className="pack-ring-bg" cx="120" cy="120" r="112" />
@@ -678,7 +615,6 @@ export function PacksScreen({
           </svg>
         </div>
 
-        {/* Tear burst rays, shockwave, vignette & flash */}
         {burstKey > 0 && (
           <div key={burstKey} aria-hidden="true">
             <div className="pack-rays pack-go" />
@@ -687,7 +623,6 @@ export function PacksScreen({
           </div>
         )}
 
-        {/* Three fanned 3D reveal cards */}
         <div ref={cardsWrapRef} className="pack-fan-cards">
           {cards.map((part, idx) => {
             const rarity = rarityForPart(part);
@@ -754,10 +689,9 @@ export function PacksScreen({
         <div className={vigOn ? "pack-vig on" : "pack-vig"} aria-hidden="true" />
         <div ref={particlesRef} className="pack-particles" aria-hidden="true" />
 
-        {/* Idle prompt & Hold-to-rip CTA */}
         <div className="pack-hint" aria-live="polite">
-          <span>{hintPrimary}</span>
-          <small>{shakeOn ? "Or shake your phone" : "Or tap the button once"}</small>
+          <span>{hintState === "holding" ? "Keep holding" : "Hold to rip"}</span>
+          <small>Or tap the button once</small>
         </div>
 
         <button
@@ -779,149 +713,92 @@ export function PacksScreen({
           Hold to rip
         </button>
 
-        <button type="button" className="pack-skip-btn" onClick={skipToResult}>
-          Skip
-        </button>
-
-        {toast && (
-          <div className="pack-toast on" role="status">
-            {toast}
-          </div>
-        )}
-      </div>
-
-      {/* Tactile & accessibility controls from the pack-rip prototype */}
-      <div className="pack-controls" role="group" aria-label="Pack rip controls">
-        {phase === "done" && (
-          <button type="button" className="tv-ctl" onClick={replayRip}>
-            Replay rip
-          </button>
-        )}
-        <button
-          type="button"
-          className="tv-ctl"
-          aria-pressed={soundOn}
-          onClick={() => setSoundOn((v) => !v)}
-        >
-          {soundOn ? "Sound on" : "Sound off"}
-        </button>
-        <button
-          type="button"
-          className="tv-ctl"
-          aria-pressed={slowMo}
-          onClick={() => setSlowMo((v) => !v)}
-        >
-          Slow motion
-        </button>
-        <button
-          type="button"
-          className="tv-ctl"
-          aria-pressed={reducedMotion}
-          onClick={() => setReducedMotion((v) => !v)}
-        >
-          Reduced motion
-        </button>
-        {phase === "idle" && (
+        {(phase === "tearing" || phase === "out" || phase === "reveal") && (
           <button
             type="button"
-            className="tv-ctl"
-            aria-pressed={shakeOn}
-            onClick={() => void toggleShake()}
+            className="pack-skip-btn"
+            style={{ opacity: 1, pointerEvents: "auto" }}
+            onClick={skipToResult}
           >
-            Shake to rip: {shakeOn ? "on" : "off"}
-          </button>
-        )}
-        {phase === "idle" && showTryShake && (
-          <button type="button" className="tv-ctl" onClick={jolt}>
-            Try a shake
+            Skip
           </button>
         )}
       </div>
 
-      {phase === "idle" && (
-        <p className="fine-print" style={{ marginTop: 8, textAlign: "center" }}>
-          Three parts inside, at least one 3D printable. Seeded by date — same
-          drop for everyone today.
-        </p>
-      )}
-
-      {/* Result sheet & fit inspector once revealed */}
       {phase === "done" && activePart && (
-        <div className="pack-result-panel">
-          <div className="pack-result-head">
+        <div className="tv-pack-summary">
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 8,
+            }}
+          >
             <div>
-              <span className="kicker-label kicker-gold" style={{ marginBottom: 2 }}>
-                Card {selectedIndex + 1} of {cards.length} · Tap any card above
+              <strong style={{ fontFamily: "var(--font-display)", fontSize: 16 }}>
+                {activePart.name}
+              </strong>
+              <span
+                style={{
+                  color: "var(--sky-300)",
+                  fontSize: 13,
+                  marginLeft: 8,
+                  fontWeight: 700,
+                }}
+              >
+                {activePart.stat.name} +{activePart.stat.value}
               </span>
-              <h2 className="pack-result-title">
-                What next for {activePart.name}?
-              </h2>
             </div>
+            <span className={checksPass ? "tv-ok-pill" : "tv-warn-pill"}>
+              {checksPass
+                ? `Fits ${toy.name}`
+                : `${activePart.sizeClass} toy part`}
+            </span>
           </div>
 
-          {toy ? (
-            <PartCard
-              part={activePart}
-              toy={toy}
-              rarity={rarityForPart(activePart)}
-            />
-          ) : (
-            <div className="glass-card" style={{ marginBottom: 12 }}>
-              <strong>{activePart.name}</strong> · {activePart.stat.name} +
-              {activePart.stat.value}
-            </div>
-          )}
-
-          {activePart.printable && stlFileFor(activePart) ? (
-            <>
-              <a
-                className="cta cta-violet"
-                style={{ flexDirection: "column" }}
-                href={`/parts-stl/${stlFileFor(activePart)}`}
-                download
-              >
-                <span>3D print at home · {activePart.name}</span>
-                <span className="cta-sub">
-                  Download support-free 12.5 mm TU STL for your 3D printer
-                </span>
-              </a>
-              {activePart.smallPartWarning && (
-                <p className="fine-print" role="note" style={{ marginTop: 4, marginBottom: 12 }}>
-                  Ages 3+ · Choking hazard (small parts — 16 CFR § 1500.19).
-                </p>
-              )}
-            </>
-          ) : (
-            <p className="fine-print" style={{ marginTop: 4, marginBottom: 12 }}>
-              Only physical parts can be printed. Skins stay in AR and the game.
+          {activePart.smallPartWarning && (
+            <p className="tv-small-part-warn" style={{ margin: 0 }} role="note">
+              Ages 3+ · Choking hazard (small parts, ASTM F963 / 16 CFR § 1500.19).
             </p>
           )}
 
-          {onBuild && toy && (
-            <button
-              type="button"
-              className="cta"
-              style={{ flexDirection: "column" }}
-              onClick={onBuild}
+          <button
+            type="button"
+            className="cta"
+            style={{ margin: 0, minHeight: 48, fontSize: 16 }}
+            disabled={!checksPass}
+            onClick={equipPulledPart}
+          >
+            {checksPass
+              ? `Equip ${activePart.name} on ${toy.name}`
+              : `Fits ${activePart.sizeClass} toys (${toy.name} is ${toy.sizeClass})`}
+          </button>
+
+          {canDownloadStl && (
+            <a
+              className="cta cta-quiet"
+              style={{ margin: 0, minHeight: 38, fontSize: 13 }}
+              href={`/parts-stl/${stlFile}`}
+              download={stlFile}
             >
-              <span>Build with today's parts</span>
-              <span className="cta-sub">
-                Snap onto {toy.name} and preview in AR
-              </span>
-            </button>
+              Download {activePart.name}.stl (0.2 mm PLA · Prototype)
+            </a>
           )}
 
-          {onPlay && (
-            <button
-              type="button"
-              className="cta cta-quiet"
-              onClick={onPlay}
-            >
-              Open ToyVentor World with {toy ? toy.name : "these parts"}
-            </button>
-          )}
+          <details className="tv-disclosure" style={{ padding: "6px 10px" }}>
+            <summary>
+              <span>Fit &amp; print check</span>
+              <span className="tv-disclosure-meta">
+                {activePart.printable ? "0.2 mm PLA · flat" : "Digital skin"}
+              </span>
+            </summary>
+            <div style={{ marginTop: 8 }}>
+              <CheckList results={checks} />
+            </div>
+          </details>
         </div>
       )}
-    </section>
+    </div>
   );
 }

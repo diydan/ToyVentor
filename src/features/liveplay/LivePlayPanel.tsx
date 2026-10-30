@@ -35,15 +35,22 @@ const MOOD_COLORS: Record<Mood, string> = {
   mystery: "var(--mood-mystery)",
 };
 
+export interface LivePlayStatus {
+  playing: boolean;
+  listening: boolean;
+}
+
 export function LivePlayPanel({
   themeSignature,
   onClose,
   onActiveChange,
+  onStatusChange,
 }: {
   /** Build signature for "play my theme"; undefined until a build exists. */
   themeSignature?: string;
   onClose?: () => void;
   onActiveChange?: (active: boolean) => void;
+  onStatusChange?: (status: LivePlayStatus) => void;
 }) {
   const playerRef = useRef<LoopPlayer | null>(null);
   const themeRef = useRef<ThemeHandle | null>(null);
@@ -57,7 +64,8 @@ export function LivePlayPanel({
 
   useEffect(() => {
     onActiveChange?.(playing || listening);
-  }, [playing, listening, onActiveChange]);
+    onStatusChange?.({ playing, listening });
+  }, [playing, listening, onActiveChange, onStatusChange]);
 
   const setMood = (next: Mood) => {
     setMoodState(next);
@@ -79,7 +87,7 @@ export function LivePlayPanel({
       themeRef.current?.stop();
       themeRef.current = playTheme(themeNotes(themeSignature));
     } else if (hit.playTheme) {
-      setNote("No character theme yet. Finish a build and Reveal it first.");
+      setNote("No character theme yet. Equip a part in Build first.");
     }
   };
 
@@ -107,7 +115,7 @@ export function LivePlayPanel({
     const Ctor = speechCtor();
     if (!Ctor) {
       setNote(
-        "Voice is not available in this browser. Type a story word below instead.",
+        "Voice is not available in this browser. Tap a mood chip or type a story word below.",
       );
       return;
     }
@@ -124,7 +132,7 @@ export function LivePlayPanel({
     recogRef.current = recog;
     recog.start();
     setListening(true);
-    setNote('Listening... try "start adventure", "danger", or "play my theme".');
+    setNote('Microphone listening. Try "start adventure", "danger", or "play my theme".');
   };
 
   useEffect(
@@ -139,7 +147,7 @@ export function LivePlayPanel({
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
       <div className="tv-sh-top">
-        <b className="tv-sh-title">Live Play moods</b>
+        <b className="tv-sh-title">Story Moods &amp; Voice</b>
         {onClose && (
           <button
             type="button"
@@ -152,7 +160,7 @@ export function LivePlayPanel({
       </div>
 
       <p className="tv-moves">
-        Tap a mood or say a story word. Music keeps playing while you explore the world.
+        Parent-started mic · Mood chips work with microphone off.
       </p>
 
       <div className="tv-fg-b">
@@ -165,10 +173,11 @@ export function LivePlayPanel({
         </button>
         <button
           type="button"
-          className={listening ? "tv-ctl tv-ctl-sky" : "tv-ctl"}
+          className={listening ? "tv-ctl tv-ctl-danger" : "tv-ctl"}
+          aria-pressed={listening}
           onClick={toggleListen}
         >
-          {listening ? "Stop listening" : "Story mic"}
+          {listening ? "Stop mic (listening)" : "Start story mic"}
         </button>
       </div>
 

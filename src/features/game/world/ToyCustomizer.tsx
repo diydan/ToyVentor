@@ -1,11 +1,21 @@
+import { useState } from "react";
+import type { Placement } from "../../../../shared/build";
+import type { Toy } from "../../../../shared/toy";
+import { toyTypeForKind, type ToyType } from "../../../../shared/toycontract";
 import type {
   CustomizerChoice,
   CustomizerSnapshot,
   FactoryAction,
   PaintZone,
 } from "./engine";
+import { PrintDrawer } from "./PrintDrawer";
 
 export interface ToyCustomizerProps {
+  toy: Toy;
+  placements: Placement[];
+  onPlacementsChange: (next: Placement[]) => void;
+  hasCharacterCard?: boolean;
+  onOpenCharacterCard?: () => void;
   snapshot: CustomizerSnapshot;
   onClose: () => void;
   onSetToyType: (toyType: string) => void;
@@ -45,11 +55,21 @@ function SegmentedChips({
   );
 }
 
+function normalizeToyType(raw: string, fallbackKind: Toy["kind"]): ToyType {
+  if (raw === "vehicle" || raw === "character" || raw === "robot") return raw;
+  return toyTypeForKind(fallbackKind);
+}
+
 /**
- * Frosted-glass bottom sheet for the ToyVentor World Factory & Forge.
- * Overlaid on the bottom of the 3D stage so the live toy stays visible above.
+ * Frosted-glass bottom sheet for the ToyVentor World Factory, Merge Forge,
+ * and 3D Print & AR Try-On drawer.
  */
 export function ToyCustomizer({
+  toy,
+  placements,
+  onPlacementsChange,
+  hasCharacterCard,
+  onOpenCharacterCard,
   snapshot,
   onClose,
   onSetToyType,
@@ -61,8 +81,10 @@ export function ToyCustomizer({
   onForgeTool,
   onPrintTool,
 }: ToyCustomizerProps) {
+  const [mockOrderNote, setMockOrderNote] = useState(false);
   const selectedSlot =
     snapshot.slots.find((slot) => slot.id === snapshot.slot)?.label ?? "Part";
+  const resolvedToyType = normalizeToyType(snapshot.toyType, toy.kind);
 
   return (
     <section className="tv-sheet" role="dialog" aria-label="Build your toy">
@@ -70,6 +92,15 @@ export function ToyCustomizer({
         <b className="tv-sh-title">
           {snapshot.forge ? "Forge parts" : "Build your toy"}
         </b>
+        {hasCharacterCard && onOpenCharacterCard && !snapshot.forge && (
+          <button
+            type="button"
+            className="tv-ctl"
+            onClick={onOpenCharacterCard}
+          >
+            Card
+          </button>
+        )}
         <button
           type="button"
           className="tv-ctl tv-ctl-gold-ring"
@@ -88,7 +119,9 @@ export function ToyCustomizer({
       </div>
 
       {snapshot.types.length === 0 && !snapshot.forge ? (
-        <p className="tv-moves" aria-live="polite">Opening the Factory...</p>
+        <p className="tv-moves" aria-live="polite">
+          Opening the Factory...
+        </p>
       ) : snapshot.forge ? (
         <ForgeList
           snapshot={snapshot}
@@ -177,6 +210,14 @@ export function ToyCustomizer({
             </div>
           </div>
 
+          <PrintDrawer
+            toy={toy}
+            slot={snapshot.slot}
+            toyType={resolvedToyType}
+            placements={placements}
+            onPlacementsChange={onPlacementsChange}
+          />
+
           {snapshot.moves && <p className="tv-moves">{snapshot.moves}</p>}
 
           {(snapshot.checkText || snapshot.checkOk !== null) && (
@@ -205,13 +246,22 @@ export function ToyCustomizer({
               {snapshot.checkOk === true && (
                 <button
                   type="button"
-                  className="tv-ctl tv-ctl-primary"
-                  onClick={() => onFactoryAction("order")}
+                  className="tv-ctl"
+                  onClick={() => {
+                    setMockOrderNote(true);
+                    onFactoryAction("order");
+                  }}
                 >
-                  Order
+                  Order preview (mock)
                 </button>
               )}
             </div>
+          )}
+
+          {mockOrderNote && (
+            <p className="tv-moves" role="status">
+              Delivery checkout is a mocked prototype preview. Download support-free STLs above to print at home today.
+            </p>
           )}
 
           <button
@@ -242,7 +292,8 @@ function ForgeList({
   return (
     <>
       <p className="tv-moves">
-        Scrap in bin: <strong style={{ color: "var(--gold)" }}>{snapshot.scrap}</strong>
+        Scrap in bin:{" "}
+        <strong style={{ color: "var(--gold)" }}>{snapshot.scrap}</strong>
       </p>
       <div className="tv-fg-list">
         {snapshot.forgeItems.map((item, index) => (
@@ -284,7 +335,7 @@ function ForgeList({
                   disabled={item.onPrintList}
                   onClick={() => onPrintTool(item.id as string)}
                 >
-                  {item.printLabel || "Print it for real"}
+                  {item.printLabel || "Queue for home print"}
                 </button>
               </div>
             )}
