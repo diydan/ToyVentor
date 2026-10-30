@@ -1,0 +1,301 @@
+{
+  "id": "kip-wardrobe",
+  "name": "Forge Club · Kip & Critter Wardrobe",
+  "parts": [
+    {
+      "id": "bumper-horns",
+      "name": "Bumper Horns",
+      "line": "snap",
+      "mount": "stud",
+      "sizeClass": "small",
+      "grid": {
+        "units": [
+          2,
+          1
+        ],
+        "profile": "tu_stud_small"
+      },
+      "footprintMm": [
+        25,
+        12.5
+      ],
+      "stat": {
+        "name": "torque",
+        "value": 2
+      },
+      "printable": true,
+      "orientation": "bed = z0; flat, studs up",
+      "supportFree": true,
+      "stlFile": "bumper-horns.stl",
+      "glbFile": "bumper-horns.glb",
+      "bboxMm": [
+        29.6,
+        11.9,
+        23.6
+      ],
+      "smallPartWarning": true
+    },
+    {
+      "id": "pointy-ears",
+      "name": "Pointy Ears",
+      "line": "snap",
+      "mount": "stud",
+      "sizeClass": "small",
+      "grid": {
+        "units": [
+          2,
+          1
+        ],
+        "profile": "tu_stud_small"
+      },
+      "footprintMm": [
+        25,
+        12.5
+      ],
+      "stat": {
+        "name": "spin",
+        "value": 1
+      },
+      "printable": true,
+      "orientation": "bed = z0; flat, studs up",
+      "supportFree": true,
+      "stlFile": "pointy-ears.stl",
+      "glbFile": "pointy-ears.glb",
+      "bboxMm": [
+        24.4,
+        11.9,
+        21.7
+      ],
+      "smallPartWarning": true
+    },
+    {
+      "id": "wobble-hat",
+      "name": "Wobble Hat",
+      "line": "snap",
+      "mount": "stud",
+      "sizeClass": "small",
+      "grid": {
+        "units": [
+          1,
+          1
+        ],
+        "profile": "tu_stud_small"
+      },
+      "footprintMm": [
+        12.5,
+        12.5
+      ],
+      "stat": {
+        "name": "glow",
+        "value": 2
+      },
+      "printable": true,
+      "orientation": "bed = z0; flat, studs up",
+      "supportFree": true,
+      "stlFile": "wobble-hat.stl",
+      "glbFile": "wobble-hat.glb",
+      "bboxMm": [
+        17.2,
+        17.2,
+        26
+      ],
+      "smallPartWarning": true
+    },
+    {
+      "id": "waddle-tail-s",
+      "name": "Waddle Tail",
+      "line": "snap",
+      "mount": "stud",
+      "sizeClass": "small",
+      "grid": {
+        "units": [
+          1,
+          3
+        ],
+        "profile": "tu_stud_small"
+      },
+      "footprintMm": [
+        12.5,
+        37.5
+      ],
+      "stat": {
+        "name": "glow",
+        "value": 2
+      },
+      "printable": true,
+      "orientation": "bed = z0; flat, studs up",
+      "supportFree": true,
+      "stlFile": "waddle-tail-s.stl",
+      "glbFile": "waddle-tail-s.glb",
+      "bboxMm": [
+        16.8,
+        26.8,
+        40.4
+      ],
+      "smallPartWarning": true
+    },
+    {
+      "id": "robot-back-jetpack",
+      "name": "Jetpack",
+      "line": "snap",
+      "mount": "stud",
+      "sizeClass": "small",
+      "grid": {
+        "units": [
+          2,
+          1
+        ],
+        "profile": "tu_stud_small"
+      },
+      "footprintMm": [
+        25,
+        12.5
+      ],
+      "stat": {
+        "name": "speed",
+        "value": 3
+      },
+      "printable": true,
+      "orientation": "bed = z0; flat, studs up",
+      "supportFree": true,
+      "stlFile": "robot-back-jetpack.stl",
+      "glbFile": "robot-back-jetpack.glb",
+      "bboxMm": [
+        24.8,
+        18.8,
+        19.5
+      ],
+      "smallPartWarning": true
+    },
+    {
+      "id": "robot-head-visor",
+      "name": "Visor Head",
+      "line": "snap",
+      "mount": "stud",
+      "sizeClass": "small",
+      "grid": {
+        "units": [
+          2,
+          1
+        ],
+        "profile": "tu_stud_small"
+      },
+      "footprintMm": [
+        25,
+        12.5
+      ],
+      "stat": {
+        "name": "spin",
+        "value": 1
+      },
+      "printable": true,
+      "orientation": "bed = z0; flat, studs up",
+      "supportFree": true,
+      "stlFile": "robot-head-visor.stl",
+      "glbFile": "robot-head-visor.glb",
+      "bboxMm": [
+        38,
+        26.4,
+        32.8
+      ]
+    },
+    {
+      "id": "pack-explorer",
+      "name": "Explorer Rucksack",
+      "line": "snap",
+      "mount": "stud",
+      "sizeClass": "small",
+      "grid": {
+        "units": [
+          2,
+          2
+        ],
+        "profile": "tu_stud_small"
+      },
+      "footprintMm": [
+        25,
+        25
+      ],
+      "stat": {
+        "name": "torque",
+        "value": 2
+      },
+      "printable": true,
+      "orientation": "bed = z0; flat, studs up",
+      "supportFree": true,
+      "stlFile": "pack-explorer.stl",
+      "glbFile": "pack-explorer.glb",
+      "bboxMm": [
+        26.8,
+        26.7,
+        18.8
+      ],
+      "smallPartWarning": true
+    },
+    {
+      "id": "prop-wrench",
+      "name": "Builder Spanner",
+      "line": "pro",
+      "mount": "hole",
+      "sizeClass": "small",
+      "grid": {
+        "units": [
+          1,
+          1
+        ],
+        "profile": "tu_12.5"
+      },
+      "footprintMm": [
+        12.5,
+        12.5
+      ],
+      "stat": {
+        "name": "torque",
+        "value": 1
+      },
+      "printable": true,
+      "orientation": "bed = z0; lying on a flat, axis horizontal",
+      "supportFree": true,
+      "stlFile": "prop-wrench.stl",
+      "glbFile": "prop-wrench.glb",
+      "bboxMm": [
+        23,
+        59.9,
+        5
+      ],
+      "smallPartWarning": true
+    },
+    {
+      "id": "prop-star-shield",
+      "name": "Star Emblem Wand",
+      "line": "pro",
+      "mount": "hole",
+      "sizeClass": "small",
+      "grid": {
+        "units": [
+          1,
+          1
+        ],
+        "profile": "tu_12.5"
+      },
+      "footprintMm": [
+        12.5,
+        12.5
+      ],
+      "stat": {
+        "name": "glow",
+        "value": 3
+      },
+      "printable": true,
+      "orientation": "bed = z0; lying on a flat, axis horizontal",
+      "supportFree": true,
+      "stlFile": "prop-star-shield.stl",
+      "glbFile": "prop-star-shield.glb",
+      "bboxMm": [
+        32,
+        60.8,
+        7
+      ]
+    }
+  ]
+}

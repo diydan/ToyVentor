@@ -16,24 +16,33 @@ import {
 
 const parts = (baseSetJson as ToySet).parts;
 const byId = new Map(parts.map((p) => [p.id, p]));
-const part = (id: string): Part => byId.get(id)!;
 
 const colors: Record<string, string> = {
-  "snap-spoiler-01": "#e85d1f",
-  "snap-brick-2x2-small": "#2563eb",
-  "snap-glow-capsule-01": "#d97706",
+  "racer-spoiler": "#e85d1f",
+  "dome-s-2x2": "#2563eb",
+  "glow-capsule": "#d97706",
   "skin-racer-red": "#b91c1c",
 };
 const colorOf = (p: Part) => colors[p.id] ?? "#78716c";
 
 const car: Toy = {
-  id: "toy-1", name: "Red racer", kind: "car", sizeClass: "small",
-  lengthMm: 110, widthMm: 55,
-  attachPoints: [{ id: "roof", label: "Roof" }], source: "scan",
+  id: "toy-1",
+  name: "Red racer",
+  kind: "car",
+  sizeClass: "small",
+  lengthMm: 110,
+  widthMm: 55,
+  attachPoints: [{ id: "roof", label: "Roof" }],
+  source: "scan",
 };
 
-const at = (partId: string, xMm: number, yMm: number): Placement =>
-  ({ instanceId: `${partId}@${xMm},${yMm}`, partId, xMm, yMm, rotation: 0 });
+const at = (partId: string, xMm: number, yMm: number): Placement => ({
+  instanceId: `${partId}@${xMm},${yMm}`,
+  partId,
+  xMm,
+  yMm,
+  rotation: 0,
+});
 
 describe("toy contract", () => {
   it("maps a scanned toy to a game toy type", () => {
@@ -53,7 +62,11 @@ describe("toy contract", () => {
   it("turns the kid's build into game parts and colors", () => {
     const contract = toyContractFromBuild(
       car,
-      [at("snap-spoiler-01", 0, 0), at("snap-glow-capsule-01", 32, 0), at("skin-racer-red", 0, 32)],
+      [
+        at("racer-spoiler", 0, 0),
+        at("glow-capsule", 25, 0),
+        at("skin-racer-red", 0, 25),
+      ],
       byId,
       colorOf,
     );
@@ -70,28 +83,29 @@ describe("toy contract", () => {
   it("keeps the stronger part when two parts share a stat", () => {
     const contract = toyContractFromBuild(
       car,
-      [at("snap-wing-01", 0, 0), at("snap-glow-capsule-01", 32, 0)],
+      [at("racer-spoiler", 0, 0), at("gear-spur-z20", 25, 0)],
       byId,
       colorOf,
     );
-    // Both are glow parts and both want the glow slot: the stronger one wins.
-    expect(contract.parts).toEqual(["vehicle.front.lightbar"]);
+    // Both are speed parts (spoiler +2, Z20 gear +3): stronger one wins the slot.
+    expect(contract.parts).toEqual(["vehicle.rear.spoiler"]);
+    expect(contract.stats).toMatchObject({ speed: 5 });
   });
 
   it("puts parts with different stats on different slots", () => {
     const contract = toyContractFromBuild(
       car,
-      [at("snap-spoiler-01", 0, 0), at("snap-brick-2x2-large", 32, 0)],
+      [at("racer-spoiler", 0, 0), at("spin-capsule", 25, 0)],
       byId,
       colorOf,
     );
-    // The spoiler is speed 2, the big brick is spin 1: two different slots.
+    // Spoiler is speed, spin-capsule is spin: two different slots.
     expect(contract.parts).toContain("vehicle.rear.spoiler");
     expect(contract.parts).toContain("vehicle.wheels.small");
   });
 
   it("survives a round trip through the URL hash", () => {
-    const contract = toyContractFromBuild(car, [at("snap-spoiler-01", 0, 0)], byId, colorOf);
+    const contract = toyContractFromBuild(car, [at("racer-spoiler", 0, 0)], byId, colorOf);
     const url = toyWorldUrl(contract);
     expect(url).toContain("/world/ToyVentor-World.html#toy=");
     const encoded = url.split("#toy=")[1]!;
@@ -107,7 +121,7 @@ describe("toy contract", () => {
     expect(validateToyContract(empty)).toEqual([]);
     expect(decodeToyContract(encodeToyContract(empty))).toEqual(empty);
     // One part paints the main color only; the accent stays the game's.
-    const one = toyContractFromBuild(car, [at("snap-spoiler-01", 0, 0)], byId, colorOf);
+    const one = toyContractFromBuild(car, [at("racer-spoiler", 0, 0)], byId, colorOf);
     expect(one.col.c1).toBe("#e85d1f");
     expect(one.col.c2).toBe("");
     expect(one.col.skin).toBe("");

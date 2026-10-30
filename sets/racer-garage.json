@@ -1,0 +1,268 @@
+{
+  "id": "racer-garage",
+  "name": "Forge Club · Racer Garage",
+  "parts": [
+    {
+      "id": "racer-bull-bar",
+      "name": "Bull Bar",
+      "line": "snap",
+      "mount": "stud",
+      "sizeClass": "small",
+      "grid": {
+        "units": [
+          2,
+          1
+        ],
+        "profile": "tu_stud_small"
+      },
+      "footprintMm": [
+        25,
+        12.5
+      ],
+      "stat": {
+        "name": "torque",
+        "value": 1
+      },
+      "printable": true,
+      "orientation": "bed = z0; flat, studs up",
+      "supportFree": true,
+      "stlFile": "racer-bull-bar.stl",
+      "glbFile": "racer-bull-bar.glb",
+      "bboxMm": [
+        24.4,
+        11.9,
+        15.3
+      ],
+      "smallPartWarning": true
+    },
+    {
+      "id": "racer-hood-scoop",
+      "name": "Hood Scoop",
+      "line": "snap",
+      "mount": "stud",
+      "sizeClass": "small",
+      "grid": {
+        "units": [
+          2,
+          2
+        ],
+        "profile": "tu_stud_small"
+      },
+      "footprintMm": [
+        25,
+        25
+      ],
+      "stat": {
+        "name": "torque",
+        "value": 2
+      },
+      "printable": true,
+      "orientation": "bed = z0; flat, studs up",
+      "supportFree": true,
+      "stlFile": "racer-hood-scoop.stl",
+      "glbFile": "racer-hood-scoop.glb",
+      "bboxMm": [
+        24.4,
+        24.4,
+        9.8
+      ],
+      "smallPartWarning": true
+    },
+    {
+      "id": "racer-twin-exhaust",
+      "name": "Twin Exhaust",
+      "line": "snap",
+      "mount": "stud",
+      "sizeClass": "small",
+      "grid": {
+        "units": [
+          1,
+          2
+        ],
+        "profile": "tu_stud_small"
+      },
+      "footprintMm": [
+        12.5,
+        25
+      ],
+      "stat": {
+        "name": "speed",
+        "value": 2
+      },
+      "printable": true,
+      "orientation": "bed = z0; flat, studs up",
+      "supportFree": true,
+      "stlFile": "racer-twin-exhaust.stl",
+      "glbFile": "racer-twin-exhaust.glb",
+      "bboxMm": [
+        11.9,
+        24.4,
+        15.3
+      ],
+      "smallPartWarning": true
+    },
+    {
+      "id": "racer-light-bar",
+      "name": "Light Bar",
+      "line": "snap",
+      "mount": "stud",
+      "sizeClass": "small",
+      "grid": {
+        "units": [
+          2,
+          1
+        ],
+        "profile": "tu_stud_small"
+      },
+      "footprintMm": [
+        25,
+        12.5
+      ],
+      "stat": {
+        "name": "glow",
+        "value": 3
+      },
+      "printable": true,
+      "orientation": "bed = z0; flat, studs up",
+      "supportFree": true,
+      "stlFile": "racer-light-bar.stl",
+      "glbFile": "racer-light-bar.glb",
+      "bboxMm": [
+        24.4,
+        11.9,
+        10.2
+      ],
+      "smallPartWarning": true
+    },
+    {
+      "id": "racer-roof-rack",
+      "name": "Roof Rack",
+      "line": "snap",
+      "mount": "stud",
+      "sizeClass": "small",
+      "grid": {
+        "units": [
+          2,
+          2
+        ],
+        "profile": "tu_stud_small"
+      },
+      "footprintMm": [
+        25,
+        25
+      ],
+      "stat": {
+        "name": "torque",
+        "value": 2
+      },
+      "printable": true,
+      "orientation": "bed = z0; flat, studs up",
+      "supportFree": true,
+      "stlFile": "racer-roof-rack.stl",
+      "glbFile": "racer-roof-rack.glb",
+      "bboxMm": [
+        24.8,
+        24.8,
+        13.7
+      ],
+      "smallPartWarning": true
+    },
+    {
+      "id": "racer-wheel",
+      "name": "Racer Wheel",
+      "line": "snap",
+      "mount": "hole",
+      "sizeClass": "small",
+      "grid": {
+        "units": [
+          1,
+          1
+        ],
+        "profile": "tu_12.5"
+      },
+      "footprintMm": [
+        12.5,
+        12.5
+      ],
+      "stat": {
+        "name": "spin",
+        "value": 2
+      },
+      "printable": true,
+      "orientation": "bed = z0; flat, studs up",
+      "supportFree": true,
+      "stlFile": "racer-wheel.stl",
+      "glbFile": "racer-wheel.glb",
+      "bboxMm": [
+        17.9,
+        17.9,
+        6
+      ],
+      "smallPartWarning": true
+    },
+    {
+      "id": "veh-wheel-sport",
+      "name": "Sport 5-Spoke Wheel",
+      "line": "pro",
+      "mount": "hole",
+      "sizeClass": "small",
+      "grid": {
+        "units": [
+          1,
+          1
+        ],
+        "profile": "tu_12.5"
+      },
+      "footprintMm": [
+        12.5,
+        12.5
+      ],
+      "stat": {
+        "name": "speed",
+        "value": 2
+      },
+      "printable": true,
+      "orientation": "bed = z0; lying flat, bores and pins along z",
+      "supportFree": true,
+      "stlFile": "veh-wheel-sport.stl",
+      "glbFile": "veh-wheel-sport.glb",
+      "bboxMm": [
+        36,
+        36,
+        13.5
+      ]
+    },
+    {
+      "id": "veh-car-hood-cover",
+      "name": "Aero Hood & Fender Cover",
+      "line": "snap",
+      "mount": "stud",
+      "sizeClass": "small",
+      "grid": {
+        "units": [
+          2,
+          2
+        ],
+        "profile": "tu_stud_small"
+      },
+      "footprintMm": [
+        25,
+        25
+      ],
+      "stat": {
+        "name": "speed",
+        "value": 1
+      },
+      "printable": true,
+      "orientation": "bed = z0; flat, studs up",
+      "supportFree": true,
+      "stlFile": "veh-car-hood-cover.stl",
+      "glbFile": "veh-car-hood-cover.glb",
+      "bboxMm": [
+        41.2,
+        34.4,
+        17.3
+      ]
+    }
+  ]
+}

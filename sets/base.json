@@ -1,98 +1,428 @@
 {
   "id": "base",
-  "name": "Base Library",
+  "name": "Base Library (12.5 mm TU)",
   "parts": [
     {
-      "id": "snap-spoiler-01",
+      "id": "racer-spoiler",
       "name": "Spoiler",
       "line": "snap",
       "mount": "stud",
       "sizeClass": "small",
-      "grid": { "units": [2, 1], "profile": "stud_profile_small" },
-      "footprintMm": [32, 16],
-      "stat": { "name": "speed", "value": 2 },
+      "grid": {
+        "units": [
+          2,
+          1
+        ],
+        "profile": "tu_stud_small"
+      },
+      "footprintMm": [
+        25,
+        12.5
+      ],
+      "stat": {
+        "name": "speed",
+        "value": 2
+      },
       "printable": true,
-      "orientation": "flat",
+      "orientation": "bed = z0; flat, studs up",
       "supportFree": true,
+      "stlFile": "racer-spoiler.stl",
+      "glbFile": "racer-spoiler.glb",
+      "bboxMm": [
+        24.8,
+        11.9,
+        13.8
+      ],
+      "smallPartWarning": true,
       "skin": "month1/racer-red"
     },
     {
-      "id": "snap-brick-2x2-small",
-      "name": "Brick 2×2",
+      "id": "brick-s-2x2",
+      "name": "Mini Brick 2x2",
       "line": "snap",
       "mount": "stud",
       "sizeClass": "small",
-      "grid": { "units": [2, 2], "profile": "stud_profile_small" },
-      "footprintMm": [32, 32],
-      "stat": { "name": "spin", "value": 1 },
+      "grid": {
+        "units": [
+          2,
+          2
+        ],
+        "profile": "tu_stud_small"
+      },
+      "footprintMm": [
+        25,
+        25
+      ],
+      "stat": {
+        "name": "torque",
+        "value": 1
+      },
       "printable": true,
-      "orientation": "flat",
-      "supportFree": true
+      "orientation": "bed = z0; studs/body up; underside cavity down",
+      "supportFree": true,
+      "stlFile": "brick-s-2x2.stl",
+      "glbFile": "brick-s-2x2.glb",
+      "bboxMm": [
+        24.8,
+        24.8,
+        17.8
+      ],
+      "smallPartWarning": true
     },
     {
-      "id": "snap-brick-2x2-large",
-      "name": "Big Brick 2×2",
+      "id": "dome-s-2x2",
+      "name": "Mini Dome",
+      "line": "snap",
+      "mount": "stud",
+      "sizeClass": "small",
+      "grid": {
+        "units": [
+          2,
+          2
+        ],
+        "profile": "tu_stud_small"
+      },
+      "footprintMm": [
+        25,
+        25
+      ],
+      "stat": {
+        "name": "spin",
+        "value": 1
+      },
+      "printable": true,
+      "orientation": "bed = z0; studs/body up; underside cavity down",
+      "supportFree": true,
+      "stlFile": "dome-s-2x2.stl",
+      "glbFile": "dome-s-2x2.glb",
+      "bboxMm": [
+        24.8,
+        24.8,
+        16.4
+      ],
+      "smallPartWarning": true
+    },
+    {
+      "id": "big-blue-brick",
+      "name": "Big Blue Brick",
       "line": "snap",
       "mount": "stud",
       "sizeClass": "large",
-      "grid": { "units": [2, 2], "profile": "stud_profile_large" },
-      "footprintMm": [64, 64],
-      "stat": { "name": "spin", "value": 1 },
+      "grid": {
+        "units": [
+          2,
+          2
+        ],
+        "profile": "tu_stud_large"
+      },
+      "footprintMm": [
+        50,
+        50
+      ],
+      "stat": {
+        "name": "torque",
+        "value": 1
+      },
       "printable": true,
-      "orientation": "flat",
-      "supportFree": true
+      "orientation": "bed = z0; studs/body up; underside cavity down",
+      "supportFree": true,
+      "stlFile": "big-blue-brick.stl",
+      "glbFile": "big-blue-brick.glb",
+      "bboxMm": [
+        49.7,
+        49.7,
+        35.6
+      ]
     },
     {
-      "id": "forge-mount-small",
-      "name": "Forge Mount",
+      "id": "spin-capsule",
+      "name": "Spin Capsule",
+      "line": "snap",
+      "mount": "stud",
+      "sizeClass": "large",
+      "grid": {
+        "units": [
+          1,
+          1
+        ],
+        "profile": "tu_stud_large"
+      },
+      "footprintMm": [
+        25,
+        25
+      ],
+      "stat": {
+        "name": "spin",
+        "value": 2
+      },
+      "printable": true,
+      "orientation": "bed = z0; flat, studs up",
+      "supportFree": true,
+      "stlFile": "spin-capsule.stl",
+      "glbFile": "spin-capsule.glb",
+      "bboxMm": [
+        65.6,
+        65.6,
+        54.7
+      ]
+    },
+    {
+      "id": "adapter-snap-pro",
+      "name": "Snap-to-Pro Adapter Plate",
+      "line": "pro",
+      "mount": "forge-mount",
+      "sizeClass": "small",
+      "grid": {
+        "units": [
+          2,
+          2
+        ],
+        "profile": "tu_12.5"
+      },
+      "footprintMm": [
+        25,
+        25
+      ],
+      "stat": {
+        "name": "torque",
+        "value": 2
+      },
+      "printable": true,
+      "orientation": "bed = z0; lying flat, bores and pins along z",
+      "supportFree": true,
+      "stlFile": "adapter-snap-pro.stl",
+      "glbFile": "adapter-snap-pro.glb",
+      "bboxMm": [
+        37.5,
+        37.5,
+        15.3
+      ]
+    },
+    {
+      "id": "forge-mount-ring-s",
+      "name": "Forge Mount (stud face, small)",
       "line": "snap",
       "mount": "forge-mount",
       "sizeClass": "small",
-      "grid": { "units": [3, 2], "profile": "stud_profile_small" },
-      "footprintMm": [48, 32],
-      "stat": { "name": "glow", "value": 1 },
+      "grid": {
+        "units": [
+          5,
+          5
+        ],
+        "profile": "tu_stud_small"
+      },
+      "footprintMm": [
+        62.5,
+        62.5
+      ],
+      "stat": {
+        "name": "torque",
+        "value": 2
+      },
       "printable": true,
-      "orientation": "flat",
-      "supportFree": true
+      "orientation": "bed = z0; flat, studs up",
+      "supportFree": true,
+      "stlFile": "forge-mount-ring-s.stl",
+      "glbFile": "forge-mount-ring-s.glb",
+      "bboxMm": [
+        62.3,
+        62.3,
+        7.8
+      ]
     },
     {
-      "id": "snap-wing-01",
-      "name": "Dragon Wing",
+      "id": "cloud-wings",
+      "name": "Cloud Wings",
       "line": "snap",
       "mount": "stud",
       "sizeClass": "small",
-      "grid": { "units": [2, 1], "profile": "stud_profile_small" },
-      "footprintMm": [32, 16],
-      "stat": { "name": "glow", "value": 2 },
+      "grid": {
+        "units": [
+          2,
+          2
+        ],
+        "profile": "tu_stud_small"
+      },
+      "footprintMm": [
+        25,
+        25
+      ],
+      "stat": {
+        "name": "speed",
+        "value": 2
+      },
       "printable": true,
-      "orientation": "flat",
-      "supportFree": true
+      "orientation": "bed = z0; flat, studs up",
+      "supportFree": true,
+      "stlFile": "cloud-wings.stl",
+      "glbFile": "cloud-wings.glb",
+      "bboxMm": [
+        58.2,
+        42.2,
+        39.9
+      ]
     },
     {
-      "id": "snap-glow-capsule-01",
-      "name": "Glow Star Capsule",
+      "id": "glow-capsule",
+      "name": "Glow Capsule",
       "line": "snap",
       "mount": "stud",
       "sizeClass": "small",
-      "grid": { "units": [2, 2], "profile": "stud_profile_small" },
-      "footprintMm": [32, 32],
-      "stat": { "name": "glow", "value": 3 },
+      "grid": {
+        "units": [
+          1,
+          1
+        ],
+        "profile": "tu_stud_small"
+      },
+      "footprintMm": [
+        12.5,
+        12.5
+      ],
+      "stat": {
+        "name": "glow",
+        "value": 3
+      },
       "printable": true,
-      "orientation": "flat",
-      "supportFree": true
+      "orientation": "bed = z0; flat, studs up",
+      "supportFree": true,
+      "stlFile": "glow-capsule.stl",
+      "glbFile": "glow-capsule.glb",
+      "bboxMm": [
+        37.5,
+        37.5,
+        46.9
+      ]
     },
     {
-      "id": "pro-beam-tu05",
+      "id": "beam-str-tu05",
       "name": "Beam STR RND TU05x01x01",
       "line": "pro",
       "mount": "hole",
       "sizeClass": "small",
-      "grid": { "units": [5, 1], "profile": "tu_12.5" },
-      "footprintMm": [62.5, 12.5],
-      "stat": { "name": "torque", "value": 2 },
+      "grid": {
+        "units": [
+          5,
+          1
+        ],
+        "profile": "tu_12.5"
+      },
+      "footprintMm": [
+        62.5,
+        12.5
+      ],
+      "stat": {
+        "name": "torque",
+        "value": 2
+      },
       "printable": true,
-      "orientation": "flat",
-      "supportFree": true
+      "orientation": "bed = z0; lying flat, bores and pins along z",
+      "supportFree": true,
+      "stlFile": "beam-str-tu05.stl",
+      "glbFile": "beam-str-tu05.glb",
+      "bboxMm": [
+        62.5,
+        12.5,
+        12.5
+      ]
+    },
+    {
+      "id": "pin-friction",
+      "name": "Friction Pin",
+      "line": "pro",
+      "mount": "hole",
+      "sizeClass": "small",
+      "grid": {
+        "units": [
+          1,
+          1
+        ],
+        "profile": "tu_12.5"
+      },
+      "footprintMm": [
+        12.5,
+        12.5
+      ],
+      "stat": {
+        "name": "torque",
+        "value": 1
+      },
+      "printable": true,
+      "orientation": "bed = z0; lying on a flat, axis horizontal",
+      "supportFree": true,
+      "stlFile": "pin-friction.stl",
+      "glbFile": "pin-friction.glb",
+      "bboxMm": [
+        7.4,
+        25,
+        5
+      ],
+      "smallPartWarning": true
+    },
+    {
+      "id": "gear-spur-z10",
+      "name": "Gear Spur Z10",
+      "line": "pro",
+      "mount": "hole",
+      "sizeClass": "small",
+      "grid": {
+        "units": [
+          1,
+          1
+        ],
+        "profile": "tu_12.5"
+      },
+      "footprintMm": [
+        12.5,
+        12.5
+      ],
+      "stat": {
+        "name": "speed",
+        "value": 2
+      },
+      "printable": true,
+      "orientation": "bed = z0; lying flat, bores and pins along z",
+      "supportFree": true,
+      "stlFile": "gear-spur-z10.stl",
+      "glbFile": "gear-spur-z10.glb",
+      "bboxMm": [
+        30,
+        28.9,
+        6.2
+      ],
+      "smallPartWarning": true
+    },
+    {
+      "id": "gear-spur-z20",
+      "name": "Gear Spur Z20",
+      "line": "pro",
+      "mount": "hole",
+      "sizeClass": "small",
+      "grid": {
+        "units": [
+          1,
+          1
+        ],
+        "profile": "tu_12.5"
+      },
+      "footprintMm": [
+        12.5,
+        12.5
+      ],
+      "stat": {
+        "name": "speed",
+        "value": 3
+      },
+      "printable": true,
+      "orientation": "bed = z0; lying flat, bores and pins along z",
+      "supportFree": true,
+      "stlFile": "gear-spur-z20.stl",
+      "glbFile": "gear-spur-z20.glb",
+      "bboxMm": [
+        55,
+        55,
+        6.2
+      ]
     },
     {
       "id": "skin-racer-red",
@@ -100,9 +430,21 @@
       "line": "snap",
       "mount": "stud",
       "sizeClass": "small",
-      "grid": { "units": [2, 1], "profile": "stud_profile_small" },
-      "footprintMm": [32, 16],
-      "stat": { "name": "speed", "value": 1 },
+      "grid": {
+        "units": [
+          2,
+          1
+        ],
+        "profile": "tu_stud_small"
+      },
+      "footprintMm": [
+        25,
+        12.5
+      ],
+      "stat": {
+        "name": "speed",
+        "value": 1
+      },
       "printable": false,
       "skin": "month1/racer-red"
     }
