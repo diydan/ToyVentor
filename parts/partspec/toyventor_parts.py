@@ -843,27 +843,105 @@ def robot_arms_grabber(size="small", grid=(2, 2), **_):
     return _robot_studs(m, size, 2, 2, T), conns + [stud_conn(size, 2, 2, T)], ex
 
 
+def _superellipse_cs(w, d, p=2.30, n=96):
+    """Smooth 96-segment superellipse cross-section for Kip-family helmets and rounded robot shells."""
+    rx, ry = max(0.4, w * 0.5), max(0.4, d * 0.5)
+    ex = 2.0 / p
+    pts = []
+    for i in range(n):
+        ang = 2.0 * math.pi * i / n
+        ca, sa = math.cos(ang), math.sin(ang)
+        pts.append((rx * (abs(ca) ** ex) * (1.0 if ca >= 0 else -1.0),
+                    ry * (abs(sa) ** ex) * (1.0 if sa >= 0 else -1.0)))
+    return CrossSection([pts])
+
+
+def _superellipse_chain(slices):
+    """Pairwise hull across adjacent (z, w, d, p[, x, y]) superellipse wafer slices."""
+    z_max = max(float(s[0]) for s in slices)
+    plates = []
+    for k, s in enumerate(slices):
+        z, w, d, p = float(s[0]), float(s[1]), float(s[2]), float(s[3])
+        x = float(s[4]) if len(s) > 4 else 0.0
+        y = float(s[5]) if len(s) > 5 else 0.0
+        h = 0.04 if k < len(slices) - 1 else 0.10
+        z0 = z - h if abs(z - z_max) < 1e-6 and z > h else z
+        plates.append(Manifold.extrude(_superellipse_cs(w, d, p), h).translate((x, y, z0)))
+    return union([Manifold.batch_hull([plates[i], plates[i + 1]]) for i in range(len(plates) - 1)])
+
+
 def robot_head_visor(size="small", grid=(2, 1), **_):
-    """A big head on a 2x1 neck: it sits on the arms' front row, flares forward and sideways at under 40 degrees (so it prints without
-    supports) to 38 x 26 mm, and rounds off to a crown with two studs for hats, ears and horns. Its back stays flat at the row line, clear
-    of the back pack. A visor slot runs across the face (its ceiling is a bridge between closed ends)."""
-    hx, hy = _half(size, grid[0]), _half(size, grid[1])
-    width, depth = 38.0, 26.0                                     # clearly above the small-parts band (a marginal size is ambiguous)
-    yc = hy - depth / 2                                           # back face flush with the neck's back edge
-    body = Manifold.batch_hull([_rr(2 * hx, 2 * hy, 3.0, 1.0), _rr(width, depth, 9.0, 5.0, 16.5, y=yc), _rr(30.0, 19.0, 8.0, 2.0, 28.0, y=-3.0)])
-    body = body - Manifold.cube((18.0, 2.4, 3.0)).translate((-9.0, yc - depth / 2 - 1.2, 17.5))   # 18 mm visor: a bridge within the limit
+    """Centered plump rounded-back robot helmet on a 2x1 neck: curves smoothly under 42 degrees in every direction (full rounded rear cranium,
+    sleek side comm-pods, support-free chamfered visor bezel pocket on -Y, and 2x1 crown studs for hats, ears and horns) while clearing the
+    angled back pack on the rear shoulder row."""
+    H_dome = 31.6
+    w_max, d_max = 40.8, 34.8
+    w0, d0 = 29.2, 12.4
+    plates = []
+    def add_plate(z, w, d, p, yc=0.0):
+        plates.append(Manifold.extrude(_superellipse_cs(w, d, p), 0.02).translate((0.0, yc, z)))
+
+    plates.append(Manifold.extrude(rrect(25.2, 12.2, 5.95), 0.02).translate((0.0, 0.0, 0.0)))
+    plates.append(Manifold.extrude(rrect(25.8, 12.3, 5.95), 0.02).translate((0.0, 0.0, 0.45)))
+    add_plate(2.95, w0, d0, 2.30, 0.0)
+
+    z_x1, z_yf, z_yb, z2 = 11.8, 16.4, 19.2, 22.2
+    for k in range(1, 25):
+        z = 2.95 + (z_yb - 2.95) * (k / 24)
+        tx = min(1.0, (z - 2.95) / (z_x1 - 2.95))
+        tyf = min(1.0, (z - 2.95) / (z_yf - 2.95))
+        tyb = (z - 2.95) / (z_yb - 2.95)
+        sx = _c1_ramp(tx, f=0.26)
+        syf = _c1_ramp(tyf, f=0.22)
+        syb = _c1_ramp(tyb, f=0.20)
+        yf = -d0 * 0.5 - (d_max * 0.5 - d0 * 0.5) * syf
+        yb =  d0 * 0.5 + (d_max * 0.5 - d0 * 0.5) * syb
+        add_plate(z, w0 + (w_max - w0) * sx, yb - yf, 2.28, 0.5 * (yb + yf))
+    for k in range(1, 5):
+        z = z_yb + (z2 - z_yb) * (k / 4)
+        add_plate(z, w_max, d_max, 2.28, 0.0)
+    cw, cd = 28.4, 16.0
+    for k in range(1, 19):
+        t = k / 18
+        u = max(0.0, 1.0 - (t ** 2.15)) ** (1.0 / 2.15)
+        z = z2 + (H_dome - z2) * t
+        add_plate(z, cw + (w_max - cw) * u, cd + (d_max - cd) * u, 2.28 - 0.25 * t, 0.0)
+    helmet = union([Manifold.batch_hull([plates[i], plates[i + 1]]) for i in range(len(plates) - 1)])
+    pods = []
+    for sx in (-1, 1):
+        pods.append(_ellipse_chain([
+            (9.2,  4.4,  5.6, sx * 13.5, 0.0),
+            (15.0, 5.8,  8.8, sx * 18.4, 0.0),
+            (18.6, 6.2, 10.0, sx * 19.6, 0.0),
+            (21.6, 5.6,  8.8, sx * 18.6, 0.0),
+            (24.4, 4.2,  5.4, sx * 15.6, 0.0),
+        ]))
+    body = helmet + pods[0] + pods[1]
+    body = body - _face_pocket_cutter(y_floor=-15.4, z_c=17.8, w_in=25.0, h_in=11.0, r_in=4.2)
     m, conns, ex = integrated_sockets(body, size, False)
-    H = 30.0
-    return _robot_studs(m, size, 2, 1, H), conns + [stud_conn(size, 2, 1, H)], ex
+    return _robot_studs(m, size, 2, 1, H_dome), conns + [stud_conn(size, 2, 1, H_dome)], ex
 
 
 def robot_back_jetpack(size="small", grid=(2, 1), **_):
-    """A rounded 2x1 back pack with two domed tanks behind it. The tanks stand on the bed and end in domes, so nothing hangs over."""
+    """A sleek low-profile 2x1 twin-booster jetpack (beveled front saddle gives full nape clearance for Bolt's rounded head and hugs Kip's spine)."""
     hx, hy = _half(size, grid[0]), _half(size, grid[1])
-    body = _rr(2 * hx, 2 * hy, 4.5, 13.0)
+    saddle = Manifold.batch_hull([
+        _rr(2 * hx, 2 * hy, 4.8, 0.5, 0.0, y=0.0),
+        _rr(2 * hx - 0.8, 8.4, 3.8, 0.5, 4.8, y=1.4),
+        _rr(20.4, 8.2, 3.2, 0.6, 11.4, y=5.6),
+    ])
+    pods = []
     for sx in (-1, 1):
-        x, y = sx * 6.25, hy + 2.0
-        body = body + cyl(15.0, 4.5, 0.0, x, y) + sph(4.5, (x, y, 15.0))
+        x = sx * 6.25
+        pods.append(_ellipse_chain([
+            (0.0,  8.4,  7.8, x, 2.1),
+            (4.2,  8.8,  9.6, x, 4.5),
+            (8.8,  9.0, 12.2, x, 7.0),
+            (11.6, 8.4, 11.8, x, 7.6),
+            (13.8, 6.2,  8.8, x, 7.8),
+            (14.8, 3.8,  5.6, x, 7.8),
+        ]))
+    body = saddle + pods[0] + pods[1]
     m, conns, ex = integrated_sockets(body, size, False)
     return m, conns, ex
 
@@ -1079,26 +1157,49 @@ def _face_pocket_cutter(y_floor=-14.0625, z_c=14.0625, w_in=23.2, h_in=11.4, r_i
 
 
 def char_head_kid(size="small", grid=(2, 1), lock=True, **_):
-    """Plump crease-free human base head (z_stud=22.4 mm nestled inside 25.4 mm barrel skull) with flush front face-plate pocket, anti-rotation fixed face_slot bore and 2x1 crown buds."""
-    H_rim = 25.4
-    z_stud = 22.4
-    body = _organic_skull(H=H_rim, w_max=43.2, d_max=36.0, z1=14.3, z2=18.8, crown_w=34.6, crown_d=23.6) + _smooth_ear_pair(z0=6.0, z_pk=14.8, z1=20.2, x_out=23.0)
-    body = body - _crown_saddle_cutter(z_stud, H_rim)
-    body = body - _face_pocket_cutter(y_floor=-14.0625, z_c=14.0625)
+    """Round Kip-proportioned human base head (40.8 x 36.2 x 28.0 mm squircle skull + subtle human ears, 43.2 x 35.7 x 30.8 mm with crown buds)
+    with plump rounded back, flush front emotion face-plate seat on axis8, broad 35.2 x 23.6 mm crown for seamless hair caps, and proud 2x1 crown buds."""
+    H_dome = 28.0
+    w_max, d_max = 40.8, 36.2
+    w0, d0 = 30.2, 18.0
+    slices = [
+        (0.0,  27.4, 15.6, 2.30),
+        (0.45, 28.2, 16.2, 2.30),
+        (2.90, w0,   d0,   2.28),
+    ]
+    z_x1, z_y1, z2 = 12.0, 17.6, 21.6
+    for k in range(1, 23):
+        z = 2.90 + (z_y1 - 2.90) * (k / 22)
+        tx = min(1.0, (z - 2.90) / (z_x1 - 2.90))
+        ty = (z - 2.90) / (z_y1 - 2.90)
+        sx = _c1_ramp(tx, f=0.14)
+        sy = _c1_ramp(ty, f=0.14)
+        slices.append((z, w0 + (w_max - w0) * sx, d0 + (d_max - d0) * sy, 2.26))
+    for k in range(1, 5):
+        z = z_y1 + (z2 - z_y1) * (k / 4)
+        slices.append((z, w_max, d_max, 2.26))
+    cw, cd = 35.2, 23.6
+    for k in range(1, 17):
+        t = k / 16
+        u = max(0.0, 1.0 - (t ** 2.15)) ** (1.0 / 2.15)
+        z = z2 + (H_dome - z2) * t
+        slices.append((z, cw + (w_max - cw) * u, cd + (d_max - cd) * u, 2.26 - 0.16 * t))
+    body = _superellipse_chain(slices) + _smooth_ear_pair(z0=7.4, z_pk=15.0, z1=20.2, x_out=21.6, y_c=-0.4, d_ear=8.2)
+    body = body - _face_pocket_cutter(y_floor=-13.95, z_c=14.0625, w_in=21.8, h_in=10.6, r_in=4.3)
     body = body - pro.bore_cutter_axis("fixed", 12.9, (0.0, -7.7125, 14.0625), "y")
     c_face = pro._axis_bore_conn("face_slot", "fixed", (0.0, -7.8125, 14.0625), "y", 12.5, lattice="axis8")
     m, conns, ex = integrated_sockets(body, size, lock)
-    m, c_top = add_studs_at(m, size, 2, 1, 0.0, 0.0, z_stud, "top_studs")
+    m, c_top = add_studs_at(m, size, 2, 1, 0.0, 0.0, H_dome, "top_studs")
     return m, conns + [c_top, c_face], ex
 
 
 def char_faceplate(stem_tu=1, **_):
     """Slim 2.0 mm pill-rounded swappable emotion face plate on z = 0 with upright 1 TU anti-rotation flat-keyed stem mating flush into char_head_kid.face_slot."""
-    w, h, t_plate = 22.6, 10.8, 2.0
+    w, h, t_plate = 21.4, 10.2, 2.0
     bezel = Manifold.batch_hull([
-        Manifold.extrude(rrect(w - 0.9, h - 0.9, 4.0), 0.02),
-        Manifold.extrude(rrect(w, h, 4.4), t_plate - 0.8).translate((0.0, 0.0, 0.40)),
-        Manifold.extrude(rrect(w - 0.7, h - 0.7, 4.1), 0.02).translate((0.0, 0.0, t_plate - 0.02)),
+        Manifold.extrude(rrect(w - 0.9, h - 0.9, 3.9), 0.02),
+        Manifold.extrude(rrect(w, h, 4.3), t_plate - 0.8).translate((0.0, 0.0, 0.40)),
+        Manifold.extrude(rrect(w - 0.7, h - 0.7, 4.0), 0.02).translate((0.0, 0.0, t_plate - 0.02)),
     ])
     hub = Manifold.cylinder(t_plate + 0.4, 4.3, 4.3, 64)
     stem_len = stem_tu * pro.TU
@@ -1168,180 +1269,180 @@ def char_head_bear(size="small", grid=(2, 1), lock=True, **_):
     return m, conns + [c_top], ex
 
 
-def _hair_dome(h_top=15.0, w_peak=36.6, d_peak=23.8, z1=7.0, z2=7.6, y_shift=0.0, crown_w=22.8, crown_d=11.2):
-    """Crease-free brow-hugging C1 elliptical hair dome: 3 mm hidden saddle base + 4.0 mm gentle temple round-out + tall 72% rounded elliptical crown!"""
-    w0, d0 = 30.4, 17.8
-    slices = [
-        (0.0,  28.4, 16.0, 0.0, 0.0),
-        (0.35, 29.0, 16.4, 0.0, 0.0),
-        (2.95, w0,   d0,   0.0, 0.0),
-    ]
+def _hair_dome(h_top=10.8, w_peak=41.6, d_peak=35.6, z_x1=5.8, z_y1=9.2, z2=9.4, y_shift=0.0, crown_w=25.6, crown_d=14.8, p_cap=2.08, w_foot=34.8, d_foot=22.6):
+    """Broad-seated C1 full-coverage hair dome: starts at 34.8 x 22.6 mm (2x1 sockets + automatic 45-deg side reliefs) so it wraps the full
+    41.6 x 35.6 mm forehead & rear skull of char_head_kid with zero waist pinch and >12% above_cylinder 3+ choke safety."""
+    w0, d0 = w_foot + 0.8, d_foot + 0.8
+    z_flare = 1.20 if w_foot > 32.0 else 2.85
+    plates = []
+    def add_plate(z, w, d, p, yc=0.0):
+        plates.append(Manifold.extrude(_superellipse_cs(w, d, p), 0.02).translate((0.0, yc, z)))
+
+    add_plate(0.0,     w_foot,       d_foot,       2.12, 0.0)
+    add_plate(0.35,    w_foot + 0.4, d_foot + 0.4, 2.12, 0.0)
+    add_plate(z_flare, w0,           d0,           2.10, 0.0)
+
+    z_top_ramp = max(z_x1, z_y1)
+    for k in range(1, 21):
+        z = z_flare + (z_top_ramp - z_flare) * (k / 20)
+        tx = min(1.0, (z - z_flare) / max(0.5, z_x1 - z_flare))
+        ty = min(1.0, (z - z_flare) / max(0.5, z_y1 - z_flare))
+        sx = _c1_ramp(tx, f=0.08)
+        sy = _c1_ramp(ty, f=0.08)
+        add_plate(z, w0 + (w_peak - w0) * sx, d0 + (d_peak - d0) * sy, p_cap, y_shift * sy)
+    if z2 > z_top_ramp + 0.05:
+        for k in range(1, 3):
+            z = z_top_ramp + (z2 - z_top_ramp) * (k / 2)
+            add_plate(z, w_peak, d_peak, p_cap, y_shift)
+    else:
+        z2 = z_top_ramp
     for k in range(1, 13):
-        z = 2.95 + (z1 - 2.95) * (k / 12)
-        s = _c1_ramp((z - 2.95) / (z1 - 2.95), f=0.22)
-        slices.append((z, w0 + (w_peak - w0) * s, d0 + (d_peak - d0) * s, 0.0, y_shift * s))
-    for k in range(1, 4):
-        z = z1 + (z2 - z1) * (k / 3)
-        slices.append((z, w_peak, d_peak, 0.0, y_shift))
-    for k in range(1, 19):
-        t = k / 18
+        t = k / 12
         q = math.sin(t * math.pi * 0.5)
         z = z2 + (h_top - z2) * q
         e = math.cos(t * math.pi * 0.5)
-        w = crown_w + (w_peak - crown_w) * e
-        d = crown_d + (d_peak - crown_d) * e
-        slices.append((z, w, d, 0.0, y_shift * e))
-    return _ellipse_chain(slices)
+        add_plate(z, crown_w + (w_peak - crown_w) * e, crown_d + (d_peak - crown_d) * e, max(2.0, p_cap - 0.06 * t), y_shift * e)
+    return union([Manifold.batch_hull([plates[i], plates[i + 1]]) for i in range(len(plates) - 1)])
 
 
 def hair_short_swept(size="small", grid=(2, 1), lock=True, **_):
-    """Hat-ready side-swept short hair piece: brow-hugging rounded hair dome with diagonal side-parted quiff bangs and compact 2x1 top_studs for hats or ears."""
-    H = 14.8
-    cap = _hair_dome(H, 36.8, 24.0, z1=7.0, z2=7.6, crown_w=22.8, crown_d=11.2)
+    """Hat-ready side-swept short hair piece: full-coverage hair cap with diagonal side-parted quiff bangs and 2x1 top_studs for hats or ears."""
+    H = 10.6
+    cap = _hair_dome(H + 0.25, 41.6, 35.6, z_x1=5.8, z_y1=9.3, z2=9.5, crown_w=25.6, crown_d=14.6)
     quiff = _ellipse_chain([
-        (3.8,  14.8, 6.0, 0.8, -5.8),
-        (6.8,  18.2, 7.2, 1.6, -7.6),
-        (9.8,  20.6, 8.0, 2.4, -9.2),
-        (12.4, 18.0, 6.8, 1.6, -7.4),
-        (H,    14.0, 5.2, 0.6, -4.2),
+        (4.0,  16.0, 6.2, 1.4,  -9.2),
+        (7.0,  19.8, 7.6, 2.4, -11.2),
+        (9.5,  22.0, 8.4, 3.0, -12.5),
+        (H + 0.25, 17.6, 7.0, 2.2, -10.4),
     ])
-    raw = (cap + quiff) ^ Manifold.cube((120.0, 120.0, H)).translate((-60.0, -60.0, 0.0))
+    raw = ((cap + quiff) ^ Manifold.cube((120.0, 120.0, H)).translate((-60.0, -60.0, 0.0))).simplify(0.004)
     m, conns, ex = integrated_sockets(raw, size, lock)
     m, c_top = add_studs_at(m, size, 2, 1, 0.0, 0.0, H, "top_studs")
     return m, conns + [c_top], ex
 
 
 def hair_bob(size="small", grid=(2, 1), lock=True, **_):
-    """Hat-ready rounded bob hair piece: brow-hugging cheek-framing side bells, parted bangs, plump elliptical dome and 2x1 top_studs for hats or ears."""
-    H = 15.2
-    cap = _hair_dome(H, 37.0, 24.0, z1=7.1, z2=7.8, crown_w=23.0, crown_d=11.4)
+    """Hat-ready rounded bob hair piece: full-coverage cap with cheek-framing side bells, parted bangs and 2x1 top_studs for hats or ears."""
+    H = 10.8
+    cap = _hair_dome(H + 0.25, 42.2, 35.8, z_x1=6.0, z_y1=9.4, z2=9.6, crown_w=26.0, crown_d=14.8)
     wings = None
     for sx in (-1, 1):
         wg = _ellipse_chain([
-            (3.6,   7.4, 10.8, sx * 11.4, -0.2),
-            (6.8,   9.4, 13.8, sx * 13.6, -0.3),
-            (10.0, 10.6, 16.0, sx * 15.4, -0.3),
-            (12.8,  9.0, 13.4, sx * 13.2, -0.2),
-            (H,     6.4,  9.4, sx *  9.2, -0.1),
+            (3.4,   8.0, 12.0, sx * 13.4, -0.2),
+            (6.6,  10.0, 15.8, sx * 15.4, -0.2),
+            (9.4,  11.0, 18.2, sx * 17.0, -0.2),
+            (H + 0.25, 8.6, 14.2, sx * 14.2, -0.1),
         ])
         wings = wg if wings is None else wings + wg
     bangs = None
     for sx in (-1, 1):
         bg = _ellipse_chain([
-            (3.8,   9.4, 5.6, sx * 5.0, -5.8),
-            (6.8,  11.0, 6.8, sx * 5.6, -7.6),
-            (9.8,  12.0, 7.4, sx * 5.6, -9.2),
-            (12.8, 10.2, 6.2, sx * 4.8, -7.4),
-            (H,     7.8, 4.8, sx * 3.8, -4.0),
+            (4.0,   9.8, 6.0, sx * 5.6,  -9.2),
+            (7.0,  11.6, 7.2, sx * 6.2, -11.4),
+            (9.4,  12.6, 8.2, sx * 6.4, -12.8),
+            (H + 0.25, 9.6, 6.4, sx * 5.0, -10.2),
         ])
         bangs = bg if bangs is None else bangs + bg
-    raw = (cap + wings + bangs) ^ Manifold.cube((120.0, 120.0, H)).translate((-60.0, -60.0, 0.0))
+    raw = ((cap + wings + bangs) ^ Manifold.cube((120.0, 120.0, H)).translate((-60.0, -60.0, 0.0))).simplify(0.004)
     m, conns, ex = integrated_sockets(raw, size, lock)
     m, c_top = add_studs_at(m, size, 2, 1, 0.0, 0.0, H, "top_studs")
     return m, conns + [c_top], ex
 
 
 def hair_swoosh(size="small", grid=(2, 1), lock=True, **_):
-    """Hat-ready wind-swept surf wave hair piece: asymmetric rounded wave crest curving into 2x1 top_studs crown for hats or ears."""
-    H = 15.4
-    cap = _hair_dome(H, 36.8, 24.0, z1=7.0, z2=7.6, crown_w=22.8, crown_d=11.2)
+    """Hat-ready wind-swept surf wave hair piece: full-coverage cap with asymmetric rounded wave crest and 2x1 top_studs for hats or ears."""
+    H = 10.8
+    cap = _hair_dome(H + 0.25, 41.6, 35.6, z_x1=5.8, z_y1=9.2, z2=9.4, crown_w=25.6, crown_d=14.6)
     wave = _ellipse_chain([
-        (3.8,  10.6, 10.4,  8.6, -0.3),
-        (7.0,  12.4, 12.6, 10.8, -0.6),
-        (10.2, 13.8, 14.4, 13.0, -0.9),
-        (13.2, 11.6, 12.0, 10.8, -0.6),
-        (H,     8.2,  8.8,  7.6, -0.3),
+        (3.6,  10.4, 11.2, 10.2, -0.8),
+        (6.6,  12.4, 14.0, 12.2, -1.6),
+        (9.4,  13.8, 16.0, 14.0, -2.2),
+        (H + 0.25, 10.6, 12.2, 11.0, -1.6),
     ])
-    raw = (cap + wave) ^ Manifold.cube((120.0, 120.0, H)).translate((-60.0, -60.0, 0.0))
+    raw = ((cap + wave) ^ Manifold.cube((120.0, 120.0, H)).translate((-60.0, -60.0, 0.0))).simplify(0.004)
     m, conns, ex = integrated_sockets(raw, size, lock)
     m, c_top = add_studs_at(m, size, 2, 1, 0.0, 0.0, H, "top_studs")
     return m, conns + [c_top], ex
 
 
 def hair_spiky(size="small", grid=(2, 1), lock=True, **_):
-    """Sculpted-top anime spiky hair piece (no top studs): compact brow-hugging hair dome with seven bold radial spikes fanning from brow to crown."""
-    cap = _hair_dome(15.2, 36.6, 23.8, z1=7.0, z2=7.6, crown_w=6.2, crown_d=5.2)
+    """Sculpted-top anime spiky hair piece (no top studs): full-coverage hair cap with seven bold radial spikes fanning from brow to crown."""
+    cap = _hair_dome(11.8, 41.8, 35.8, z_x1=6.0, z_y1=9.4, z2=9.8, crown_w=8.4, crown_d=7.2)
     spike_defs = [
-        (  0.0, -11.6, 19.6, 12.4, 10.2,   0.0, -4.6,  5.0),
-        (-14.2,  -7.2, 19.2, 11.8, 10.0,  -8.2, -3.2,  5.2),
-        ( 14.6,  -7.0, 19.6, 11.8, 10.0,   8.4, -3.2,  5.2),
-        (-17.8,   1.0, 18.2, 11.6, 10.4, -10.0,  0.5,  5.0),
-        ( 17.8,   1.0, 18.4, 11.6, 10.4,  10.0,  0.5,  5.0),
-        (  0.0,  -1.2, 21.4, 13.2, 11.4,   0.0, -0.5,  6.8),
-        (  0.0,  10.2, 18.2, 12.0, 10.2,   0.0,  4.4,  5.2),
+        (  0.0, -16.8, 13.8, 13.4, 10.6,   0.0, -8.6,  5.4),
+        (-16.4, -10.4, 13.4, 12.6, 10.4,  -9.4, -5.6,  5.2),
+        ( 16.8, -10.2, 13.8, 12.6, 10.4,   9.6, -5.6,  5.2),
+        (-20.4,   1.2, 13.0, 12.4, 11.2, -12.0,  0.6,  5.0),
+        ( 20.4,   1.2, 13.2, 12.4, 11.2,  12.0,  0.6,  5.0),
+        (  0.0,  -1.0, 15.0, 14.2, 12.4,   0.0, -0.5,  5.8),
+        (  0.0,  15.6, 13.0, 13.2, 10.8,   0.0,  8.0,  5.4),
     ]
     spikes = [_ellipse_chain([
         (zr,              wr,        dr,        xr,                    yr),
-        ((zr + zt) * 0.5, wr * 0.68, dr * 0.68, xr + (xt - xr) * 0.54, yr + (yt - yr) * 0.54),
-        (zt,              3.8,       3.8,       xt,                    yt),
+        ((zr + zt) * 0.5, wr * 0.68, dr * 0.68, xr + (xt - xr) * 0.56, yr + (yt - yr) * 0.56),
+        (zt,              4.0,       4.0,       xt,                    yt),
     ]) for xt, yt, zt, wr, dr, xr, yr, zr in spike_defs]
-    return integrated_sockets(cap + union(spikes), size, lock)
+    return integrated_sockets((cap + union(spikes)).simplify(0.004), size, lock)
 
 
 def hair_pigtails(size="small", grid=(2, 1), lock=True, **_):
-    """Sculpted-top closed parted elliptical hair dome with two bouncy side twin-tail puffs spanning 45.0 mm wide (no top studs)."""
-    cap = _hair_dome(15.2, 36.6, 23.8, z1=7.0, z2=7.6, crown_w=6.2, crown_d=5.2)
+    """Sculpted-top parted hair dome with two bouncy side twin-tail puffs spanning 48.4 mm wide (no top studs)."""
+    cap = _hair_dome(11.6, 41.6, 35.6, z_x1=5.8, z_y1=9.2, z2=9.6, crown_w=7.8, crown_d=6.8)
     puffs = None
     for sx in (-1, 1):
         pf = _ellipse_chain([
-            (3.6,   8.8, 10.2, sx * 10.6, -0.1),
-            (7.4,  11.0, 12.4, sx * 12.6, -0.1),
-            (11.2, 12.8, 14.4, sx * 14.6, -0.1),
-            (14.4, 13.4, 14.8, sx * 15.6, -0.1),
-            (16.6, 10.8, 12.2, sx * 14.6, -0.1),
-            (18.2,  7.0,  8.2, sx * 13.4, -0.1),
+            (3.2,   8.4, 10.8, sx * 13.4, -0.2),
+            (6.8,  11.2, 13.8, sx * 15.4, -0.2),
+            (10.4, 13.2, 15.8, sx * 17.6, -0.2),
+            (12.2, 11.6, 14.2, sx * 17.4, -0.2),
+            (13.6,  7.8,  9.6, sx * 15.8, -0.2),
         ])
         puffs = pf if puffs is None else puffs + pf
-    return integrated_sockets(cap + puffs, size, lock)
+    return integrated_sockets((cap + puffs).simplify(0.004), size, lock)
 
 
 def hair_ponytail(size="small", grid=(2, 1), lock=True, **_):
-    """Sculpted-top sleek brow-hugging hair dome with voluminous arched rear ponytail plume sweeping off the back (no top studs)."""
-    cap = _hair_dome(15.0, 36.6, 23.8, z1=7.0, z2=7.6, crown_w=6.6, crown_d=5.6)
+    """Sculpted-top full-coverage hair dome with voluminous arched rear ponytail plume sweeping off the back (no top studs)."""
+    cap = _hair_dome(11.6, 41.6, 35.6, z_x1=5.8, z_y1=9.2, z2=9.6, crown_w=8.0, crown_d=7.0)
     tail = _ellipse_chain([
-        (3.8,  10.6,  9.2, 0.0,  2.2),
-        (7.2,  12.6, 11.2, 0.0,  4.4),
-        (10.6, 14.0, 12.8, 0.0,  6.8),
-        (13.8, 14.4, 13.4, 0.0,  9.2),
-        (16.6, 12.4, 12.0, 0.0, 10.2),
-        (18.6,  8.2,  8.4, 0.0,  9.4),
+        (3.8,  10.8, 10.0, 0.0,  6.8),
+        (7.4,  12.8, 12.6, 0.0,  8.8),
+        (11.0, 14.6, 14.8, 0.0, 10.8),
+        (13.2, 13.8, 14.0, 0.0, 12.4),
+        (14.6,  9.4,  9.8, 0.0, 12.2),
     ])
     return integrated_sockets((cap + tail).simplify(0.005), size, lock)
 
 
 def hair_curly(size="small", grid=(2, 1), lock=True, **_):
     """Sculpted-top 360-deg volumetric cloud-curl afro halo (no top studs): lush overlapping curls covering the entire dome from brow to crown."""
-    cap = _hair_dome(15.0, 36.2, 23.6, z1=7.0, z2=7.6, crown_w=6.8, crown_d=5.8)
+    cap = _hair_dome(11.6, 41.6, 35.6, z_x1=5.8, z_y1=9.2, z2=9.6, crown_w=8.2, crown_d=7.2)
     curl_pts = [
-        # Lush high rounded crown curls
-        (  0.0,  -0.1, 17.2, 5.8),
-        ( -6.8,  -3.4, 16.2, 5.4), (  6.8,  -3.4, 16.2, 5.4),
-        ( -6.8,   3.2, 16.0, 5.4), (  6.8,   3.2, 16.0, 5.4),
-        (  0.0,  -7.2, 14.8, 5.0), (  0.0,   7.0, 14.6, 5.0),
-        (-12.0,  -0.1, 14.8, 5.0), ( 12.0,  -0.1, 14.8, 5.0),
-        (-10.4,  -5.4, 14.0, 4.8), ( 10.4,  -5.4, 14.0, 4.8),
-        (-10.4,   5.2, 13.8, 4.8), ( 10.4,   5.2, 13.8, 4.8),
-        # Lower 360-deg brow, temple & nape curl ring right at the hairline!
-        ( -4.6,  -8.8, 11.6, 4.4), (  4.6,  -8.8, 11.6, 4.4),
-        (-10.8,  -6.8, 11.6, 4.4), ( 10.8,  -6.8, 11.6, 4.4),
-        (-14.8,  -2.8, 11.4, 4.4), ( 14.8,  -2.8, 11.4, 4.4),
-        (-14.8,   2.6, 11.4, 4.4), ( 14.8,   2.6, 11.4, 4.4),
-        (-10.8,   6.6, 11.6, 4.4), ( 10.8,   6.6, 11.6, 4.4),
-        ( -4.6,   8.6, 11.6, 4.4), (  4.6,   8.6, 11.6, 4.4),
+        (  0.0,   0.0, 12.0, 4.8),
+        ( -7.8,  -4.6, 11.4, 4.6), (  7.8,  -4.6, 11.4, 4.6),
+        ( -7.8,   4.6, 11.2, 4.6), (  7.8,   4.6, 11.2, 4.6),
+        (  0.0, -10.2, 10.8, 4.4), (  0.0,  10.2, 10.6, 4.4),
+        (-13.8,   0.0, 10.8, 4.4), ( 13.8,   0.0, 10.8, 4.4),
+        (-11.8,  -7.4, 10.6, 4.2), ( 11.8,  -7.4, 10.6, 4.2),
+        (-11.8,   7.4, 10.4, 4.2), ( 11.8,   7.4, 10.4, 4.2),
+        ( -5.2, -12.4, 10.4, 3.8), (  5.2, -12.4, 10.4, 3.8),
+        (-15.8,  -3.8, 10.0, 3.8), ( 15.8,  -3.8, 10.0, 3.8),
+        (-15.8,   3.8, 10.0, 3.8), ( 15.8,   3.8, 10.0, 3.8),
+        ( -5.2,  12.4, 10.4, 3.8), (  5.2,  12.4, 10.4, 3.8),
     ]
-    puffs = [_curl_lobe(px, py, pz, pr, px * 0.72, py * 0.72, pr * 0.78, 3.8) for px, py, pz, pr in curl_pts]
-    return integrated_sockets(cap + union(puffs), size, lock)
+    puffs = [_curl_lobe(px, py, pz, pr, px * 0.78, py * 0.78, pr * 0.80, 3.6) for px, py, pz, pr in curl_pts]
+    return integrated_sockets((cap + union(puffs)).simplify(0.004), size, lock)
 
 
 def hair_mohawk(size="small", grid=(2, 1), lock=True, **_):
-    """Sculpted-top five-peak punk mohawk crest arcing front-to-back over a sleek brow-hugging fade dome (no top studs)."""
-    cap = _hair_dome(14.6, 36.4, 23.8, z1=7.0, z2=7.6, crown_w=6.4, crown_d=5.4)
+    """Sculpted-top five-peak punk mohawk crest arcing front-to-back over a sleek side-faded dome (no top studs)."""
+    cap = _hair_dome(14.2, 38.4, 35.6, z_x1=9.6, z_y1=12.9, z2=13.1, crown_w=7.6, crown_d=7.2, w_foot=29.8, d_foot=18.0)
     fins = [_ellipse_chain([
-        (5.2,  9.8, 9.4, 0.0, yc * 0.54),
-        (11.6, 8.2, 8.8, 0.0, yc * 0.84),
+        (7.4,  9.8, 9.6, 0.0, yc * 0.55),
+        (12.2, 8.0, 8.8, 0.0, yc * 0.84),
         (zt,   4.6, 5.8, 0.0, yc),
-    ]) for yc, zt in ((-8.8, 19.2), (-4.4, 21.0), (0.0, 21.8), (4.4, 20.6), (8.6, 18.6))]
-    return integrated_sockets(cap + union(fins), size, lock)
+    ]) for yc, zt in ((-12.2, 16.6), (-6.1, 18.0), (0.0, 18.6), (6.1, 17.8), (12.0, 16.2))]
+    return integrated_sockets((cap + union(fins)).simplify(0.004), size, lock)
 
 
 def pack_explorer(size="small", grid=(2, 2), lock=True, **_):

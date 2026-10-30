@@ -160,7 +160,7 @@ Each size has its own clearance value (stud_small.fit, stud_large.fit). Both sta
 | `robot_legs_stomper` | snap | small | verified | Balance | `under_sockets` socket_grid/F 2x2; `top_studs` stud_grid/M 2x2 |
 | `robot_torso_core` | snap | small | verified | Power | `under_sockets` socket_grid/F 2x2; `top_studs` stud_grid/M 2x2 |
 | `robot_arms_grabber` | snap | small | verified | Grip | `under_sockets` socket_grid/F 2x2; `top_studs` stud_grid/M 2x2 |
-| `robot_head_visor` | snap | small | verified | Awareness | `under_sockets` socket_grid/F 2x1; `top_studs` stud_grid/M 2x1 |
+| `robot_head_visor` | snap | small | verified | Awareness | `under_sockets` socket_grid/F 1x1; `top_studs` stud_grid/M 2x1 |
 | `robot_back_jetpack` | snap | small | verified | Lift | `under_sockets` socket_grid/F 2x1 |
 | `char_head_kid` | snap | small | verified | Glow | `under_sockets` socket_grid/F 2x1; `top_studs` stud_grid/M 2x1; `face_slot` bore_grid/F 1x1 |
 | `char_faceplate` | pro | pro | verified | Glow | `axis` pin/M 1x1 |
@@ -302,7 +302,7 @@ After each part is built, the generator seats it on its matching reference part,
 | `robot_legs_stomper` | 4 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
 | `robot_torso_core` | 4 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
 | `robot_arms_grabber` | 4 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
-| `robot_head_visor` | 2 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
+| `robot_head_visor` | 1 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
 | `robot_back_jetpack` | 2 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
 | `char_head_kid` | 3 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
 | `char_faceplate` | 2 | +0.050 to +0.200 | 0.050 | -0.075 to +0.075 |

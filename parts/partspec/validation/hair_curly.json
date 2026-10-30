@@ -1,59 +1,29 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_hair_curly_S.stl",
-  "file_sha256": "b6ef916ad4b16918869a71b54173535d970450ee461b488167f0291ce50fc906",
+  "file_sha256": "abb9a4230073b818a1030b4c15187a8e3d7535e429fd268ede79a6a80898edca",
   "part_id": "hair_curly",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-10-30T18:42:22Z",
+  "checked_at": "2026-10-30T19:44:22Z",
   "metrics": {
     "bbox_mm": [
-      38.4,
-      26.2,
-      23.0
+      36.4,
+      25.0,
+      19.8
     ],
-    "volume_cm3": 11.74,
-    "surface_cm2": 30.68,
-    "triangles": 16596,
+    "volume_cm3": 9.16,
+    "surface_cm2": 26.35,
+    "triangles": 15716,
     "ledges": [],
-    "layers": 115,
-    "bed_contact_mm2": 290.9,
-    "height_mm": 23.0,
-    "slenderness": 1.35,
+    "layers": 99,
+    "bed_contact_mm2": 283.9,
+    "height_mm": 19.8,
+    "slenderness": 1.18,
     "centre_of_mass_over_contact": true,
     "min_wall_mm": null,
     "thin_wall_regions": []
   },
   "bridges": [
-    {
-      "z_mm": 4.14,
-      "span_mm": 0.15,
-      "area_mm2": 0.2
-    },
-    {
-      "z_mm": 4.14,
-      "span_mm": 0.15,
-      "area_mm2": 0.2
-    },
-    {
-      "z_mm": 3.8,
-      "span_mm": 0.19,
-      "area_mm2": 0.3
-    },
-    {
-      "z_mm": 3.8,
-      "span_mm": 0.19,
-      "area_mm2": 0.3
-    },
-    {
-      "z_mm": 3.8,
-      "span_mm": 0.06,
-      "area_mm2": 0.1
-    },
-    {
-      "z_mm": 3.8,
-      "span_mm": 0.06,
-      "area_mm2": 0.1
-    },
     {
       "z_mm": 3.2,
       "span_mm": 6.7,
@@ -87,9 +57,9 @@
       "level": "block",
       "result": "pass",
       "value": [
-        38.4,
-        26.2,
-        23.0
+        36.4,
+        25.0,
+        19.8
       ],
       "limit": [
         180,
@@ -120,7 +90,7 @@
       "result": "pass",
       "value": 6.7,
       "limit": 20,
-      "detail": "8 bridge(s); widest unsupported span in mm"
+      "detail": "2 bridge(s); widest unsupported span in mm"
     },
     {
       "id": "V5_no_floating_islands",
@@ -142,9 +112,9 @@
       "id": "V9_bed_contact",
       "level": "info",
       "result": "pass",
-      "value": 290.9,
+      "value": 283.9,
       "limit": null,
-      "detail": "height / sqrt(contact) = 1.35; above about 3 the slicer often asks for a brim"
+      "detail": "height / sqrt(contact) = 1.18; above about 3 the slicer often asks for a brim"
     },
     {
       "id": "V8_wall_thickness",

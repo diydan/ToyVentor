@@ -1,24 +1,24 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_hair_ponytail_S.stl",
-  "file_sha256": "465076c1780c689fa3251b449f058be77181071a33574f5d0cafbc3cd4906df1",
+  "file_sha256": "b48a8ff4f313be336bac62d1354c2190319ee99bcd6c19a95eef21a5ff5c63c0",
   "part_id": "hair_ponytail",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-10-30T18:40:30Z",
+  "checked_at": "2026-10-30T19:42:42Z",
   "metrics": {
     "bbox_mm": [
-      36.6,
-      28.1,
-      18.6
+      35.8,
+      27.1,
+      16.4
     ],
-    "volume_cm3": 7.99,
-    "surface_cm2": 24.46,
-    "triangles": 8842,
+    "volume_cm3": 6.09,
+    "surface_cm2": 22.08,
+    "triangles": 8418,
     "ledges": [],
-    "layers": 93,
-    "bed_contact_mm2": 290.9,
-    "height_mm": 18.6,
-    "slenderness": 1.09,
+    "layers": 82,
+    "bed_contact_mm2": 283.9,
+    "height_mm": 16.4,
+    "slenderness": 0.97,
     "centre_of_mass_over_contact": true,
     "min_wall_mm": null,
     "thin_wall_regions": []
@@ -57,9 +57,9 @@
       "level": "block",
       "result": "pass",
       "value": [
-        36.6,
-        28.1,
-        18.6
+        35.8,
+        27.1,
+        16.4
       ],
       "limit": [
         180,
@@ -112,9 +112,9 @@
       "id": "V9_bed_contact",
       "level": "info",
       "result": "pass",
-      "value": 290.9,
+      "value": 283.9,
       "limit": null,
-      "detail": "height / sqrt(contact) = 1.09; above about 3 the slicer often asks for a brim"
+      "detail": "height / sqrt(contact) = 0.97; above about 3 the slicer often asks for a brim"
     },
     {
       "id": "V8_wall_thickness",

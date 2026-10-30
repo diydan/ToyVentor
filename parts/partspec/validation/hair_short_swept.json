@@ -1,24 +1,24 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_hair_short_swept_S.stl",
-  "file_sha256": "2714321d17e157cb076bb49930076956babcf69fdbbc93eede3eef9d12ce323f",
+  "file_sha256": "d626499446b657317f1007ef2a701c7c77658f646b187d14aeabc6af31a20c31",
   "part_id": "hair_short_swept",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-10-30T18:41:11Z",
+  "checked_at": "2026-10-30T19:43:19Z",
   "metrics": {
     "bbox_mm": [
-      36.8,
-      25.2,
-      17.6
+      35.6,
+      24.0,
+      12.6
     ],
-    "volume_cm3": 8.04,
-    "surface_cm2": 24.52,
-    "triangles": 11964,
+    "volume_cm3": 5.04,
+    "surface_cm2": 20.55,
+    "triangles": 10572,
     "ledges": [],
-    "layers": 88,
-    "bed_contact_mm2": 290.9,
-    "height_mm": 17.6,
-    "slenderness": 1.03,
+    "layers": 63,
+    "bed_contact_mm2": 283.9,
+    "height_mm": 12.6,
+    "slenderness": 0.75,
     "centre_of_mass_over_contact": true,
     "min_wall_mm": null,
     "thin_wall_regions": []
@@ -57,9 +57,9 @@
       "level": "block",
       "result": "pass",
       "value": [
-        36.8,
-        25.2,
-        17.6
+        35.6,
+        24.0,
+        12.6
       ],
       "limit": [
         180,
@@ -72,7 +72,7 @@
       "id": "V4_no_steep_overhang",
       "level": "block",
       "result": "pass",
-      "value": 0.0,
+      "value": 0.56,
       "limit": 1.0,
       "detail": "mm2 of downward surface steeper than 45 deg (flat bridges excluded)"
     },
@@ -112,9 +112,9 @@
       "id": "V9_bed_contact",
       "level": "info",
       "result": "pass",
-      "value": 290.9,
+      "value": 283.9,
       "limit": null,
-      "detail": "height / sqrt(contact) = 1.03; above about 3 the slicer often asks for a brim"
+      "detail": "height / sqrt(contact) = 0.75; above about 3 the slicer often asks for a brim"
     },
     {
       "id": "V8_wall_thickness",

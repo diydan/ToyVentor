@@ -4,10 +4,10 @@ import { createDecalExpressionCanvas } from './kip-forge-sdk.js';
 
 export const WARDROBE_HEADS = [
   { id: 'classic', label: 'Kip Classic', crownY: 42.2 },
-  { id: 'kid',     label: 'Human Head',  crownY: 22.4 },
+  { id: 'kid',     label: 'Human Head',  crownY: 31.2 },
   { id: 'fox',     label: 'Fox',         crownY: 26.2 },
-  { id: 'bear',    label: 'Bear',        crownY: 26.2 },
-  { id: 'robot',   label: 'Bolt Robot',  crownY: 30.0 },
+  { id: 'bear',    label: 'Bear',        crownY: 27.2 },
+  { id: 'robot',   label: 'Bolt Robot',  crownY: 31.6 },
 ];
 
 export const SKIN_TONES = [
@@ -29,9 +29,9 @@ export const HAIR_COLORS = [
 
 export const HAIR_OPTIONS = [
   { id: 'off',         label: 'None',               hatReady: true,  topH: 0.0 },
-  { id: 'short_swept', label: 'Swept (Hat-Ready)',  hatReady: true,  topH: 14.8 },
-  { id: 'bob',         label: 'Bob (Hat-Ready)',    hatReady: true,  topH: 15.2 },
-  { id: 'swoosh',      label: 'Swoosh (Hat-Ready)', hatReady: true,  topH: 15.4 },
+  { id: 'short_swept', label: 'Swept (Hat-Ready)',  hatReady: true,  topH: 9.8 },
+  { id: 'bob',         label: 'Bob (Hat-Ready)',    hatReady: true,  topH: 10.0 },
+  { id: 'swoosh',      label: 'Swoosh (Hat-Ready)', hatReady: true,  topH: 10.2 },
   { id: 'spiky',       label: 'Spiky',              hatReady: false, topH: 0.0 },
   { id: 'pigtails',    label: 'Twin Pigtails',      hatReady: false, topH: 0.0 },
   { id: 'ponytail',    label: 'Sleek Ponytail',     hatReady: false, topH: 0.0 },
@@ -84,7 +84,7 @@ export async function loadExpansionGeos(loadSTL) {
     ['charFaceplate',     loadSTL('/kip/partspec/toyventor_char_faceplate_P.stl', 40)],
     ['charHeadFox',       loadSTL('/kip/partspec/toyventor_char_head_fox_S.stl', 62)],
     ['charHeadBear',      loadSTL('/kip/partspec/toyventor_char_head_bear_S.stl', 62)],
-    ['robotHeadVisor',    loadSTL('/kip/partspec/toyventor_robot_head_visor_S.stl', 36)],
+    ['robotHeadVisor',    loadSTL('/kip/partspec/toyventor_robot_head_visor_S.stl', 62)],
     // 8 Separate Clip-On 2x1 Hairstyles (3 Hat-Ready with top_studs + 5 Sculpted-Top) + Horns
     ['hairShortSwept',    loadSTL('/kip/partspec/toyventor_hair_short_swept_S.stl', 62)],
     ['hairBob',           loadSTL('/kip/partspec/toyventor_hair_bob_S.stl', 62)],
@@ -256,7 +256,7 @@ export function attachExpansionToKipRig(THREE, kip, expGeos, baseParts, mats, sc
   faceplateMesh.receiveShadow = true;
   // STL has front bezel on z_stl = 0 and 12.5 mm stem on +z_stl; rotate Y by PI so z_stl=0 faces +Z and stem inserts along -Z into face_slot!
   faceplateMesh.rotation.y = Math.PI;
-  faceplateMesh.position.set(0, 14.0625, 16.4625);
+  faceplateMesh.position.set(0, 15.625, 18.025);
   faceplateSlot.add(faceplateMesh);
 
   // Conformal 2D Vinyl/Screen Decal Expression Meshes for Fox / Bear / Robot (`BRAND_STYLE.md` rule 5: zero moulded 3D faces!)
@@ -289,7 +289,7 @@ export function attachExpansionToKipRig(THREE, kip, expGeos, baseParts, mats, sc
   const headDecalGeos = {
     fox:   buildConformalDecalGeo(expGeos.charHeadFox,    15.0, 28.4, 14.2),
     bear:  buildConformalDecalGeo(expGeos.charHeadBear,   14.8, 28.0, 14.0),
-    robot: buildConformalDecalGeo(expGeos.robotHeadVisor, 16.6, 25.0, 12.2),
+    robot: buildConformalDecalGeo(expGeos.robotHeadVisor, 17.8, 24.0, 10.6),
   };
 
   const classicWrapGeo = new THREE.PlaneGeometry(25.5, 12.8, 16, 1);
@@ -314,7 +314,7 @@ export function attachExpansionToKipRig(THREE, kip, expGeos, baseParts, mats, sc
 
   // 2D emotion print directly on the slim `char_faceplate` tile (travels with `faceplateSlot` in Explode & Pile -> Build!)
   const faceplateDecalPlane = new THREE.Mesh(new THREE.PlaneGeometry(21.4, 10.0), decalMat);
-  faceplateDecalPlane.position.set(0, 14.0625, 16.54);
+  faceplateDecalPlane.position.set(0, 15.625, 18.10);
   faceplateDecalPlane.renderOrder = 2;
   faceplateSlot.add(faceplateDecalPlane);
 

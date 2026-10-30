@@ -1,24 +1,24 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_hair_pigtails_S.stl",
-  "file_sha256": "c8ac1c1fc2bd56eb6aa733cb0cf3666dbf1c2b99d8d60ff72582201b4141ec00",
+  "file_sha256": "350dc12c038fcc3637a67457c2533f700d7cac22701e0cec73074893e284cd9e",
   "part_id": "hair_pigtails",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-10-30T18:40:40Z",
+  "checked_at": "2026-10-30T19:42:52Z",
   "metrics": {
     "bbox_mm": [
-      44.6,
-      23.8,
-      18.2
+      42.4,
+      24.0,
+      15.6
     ],
-    "volume_cm3": 9.03,
-    "surface_cm2": 27.54,
-    "triangles": 10014,
+    "volume_cm3": 6.89,
+    "surface_cm2": 24.61,
+    "triangles": 9572,
     "ledges": [],
-    "layers": 91,
-    "bed_contact_mm2": 290.9,
-    "height_mm": 18.2,
-    "slenderness": 1.07,
+    "layers": 78,
+    "bed_contact_mm2": 283.9,
+    "height_mm": 15.6,
+    "slenderness": 0.93,
     "centre_of_mass_over_contact": true,
     "min_wall_mm": null,
     "thin_wall_regions": []
@@ -57,9 +57,9 @@
       "level": "block",
       "result": "pass",
       "value": [
-        44.6,
-        23.8,
-        18.2
+        42.4,
+        24.0,
+        15.6
       ],
       "limit": [
         180,
@@ -112,9 +112,9 @@
       "id": "V9_bed_contact",
       "level": "info",
       "result": "pass",
-      "value": 290.9,
+      "value": 283.9,
       "limit": null,
-      "detail": "height / sqrt(contact) = 1.07; above about 3 the slicer often asks for a brim"
+      "detail": "height / sqrt(contact) = 0.93; above about 3 the slicer often asks for a brim"
     },
     {
       "id": "V8_wall_thickness",

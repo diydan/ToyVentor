@@ -2,7 +2,7 @@
   "validator": "preprint_check 1.2.0",
   "profile": "fdm_pla_0.4",
   "slicer": "PrusaSlicer-2.8.1",
-  "generated_at": "2026-10-30T18:42:23Z",
+  "generated_at": "2026-10-30T19:44:27Z",
   "counts": {
     "pass": 95,
     "pass_with_settings": 10,
@@ -299,9 +299,9 @@
       "print_time_min": null,
       "filament_cost_usd": null,
       "brim_mm": 0,
-      "height_mm": 25.35,
-      "bed_contact_mm2": 290.9,
-      "slenderness": 1.49,
+      "height_mm": 34.0,
+      "bed_contact_mm2": 254.2,
+      "slenderness": 2.13,
       "min_wall_mm": null
     },
     {
@@ -551,9 +551,9 @@
       "print_time_min": null,
       "filament_cost_usd": null,
       "brim_mm": 0,
-      "height_mm": 18.0,
-      "bed_contact_mm2": 290.9,
-      "slenderness": 1.06,
+      "height_mm": 12.8,
+      "bed_contact_mm2": 283.9,
+      "slenderness": 0.76,
       "min_wall_mm": null
     },
     {
@@ -565,9 +565,9 @@
       "print_time_min": null,
       "filament_cost_usd": null,
       "brim_mm": 0,
-      "height_mm": 23.0,
-      "bed_contact_mm2": 290.9,
-      "slenderness": 1.35,
+      "height_mm": 19.8,
+      "bed_contact_mm2": 283.9,
+      "slenderness": 1.18,
       "min_wall_mm": null
     },
     {
@@ -579,9 +579,9 @@
       "print_time_min": null,
       "filament_cost_usd": null,
       "brim_mm": 0,
-      "height_mm": 21.8,
-      "bed_contact_mm2": 290.9,
-      "slenderness": 1.28,
+      "height_mm": 18.6,
+      "bed_contact_mm2": 283.9,
+      "slenderness": 1.1,
       "min_wall_mm": null
     },
     {
@@ -593,9 +593,9 @@
       "print_time_min": null,
       "filament_cost_usd": null,
       "brim_mm": 0,
-      "height_mm": 18.2,
-      "bed_contact_mm2": 290.9,
-      "slenderness": 1.07,
+      "height_mm": 15.6,
+      "bed_contact_mm2": 283.9,
+      "slenderness": 0.93,
       "min_wall_mm": null
     },
     {
@@ -607,9 +607,9 @@
       "print_time_min": null,
       "filament_cost_usd": null,
       "brim_mm": 0,
-      "height_mm": 18.6,
-      "bed_contact_mm2": 290.9,
-      "slenderness": 1.09,
+      "height_mm": 16.4,
+      "bed_contact_mm2": 283.9,
+      "slenderness": 0.97,
       "min_wall_mm": null
     },
     {
@@ -621,9 +621,9 @@
       "print_time_min": null,
       "filament_cost_usd": null,
       "brim_mm": 0,
-      "height_mm": 17.6,
-      "bed_contact_mm2": 290.9,
-      "slenderness": 1.03,
+      "height_mm": 12.6,
+      "bed_contact_mm2": 283.9,
+      "slenderness": 0.75,
       "min_wall_mm": null
     },
     {
@@ -635,9 +635,9 @@
       "print_time_min": null,
       "filament_cost_usd": null,
       "brim_mm": 0,
-      "height_mm": 21.4,
-      "bed_contact_mm2": 290.9,
-      "slenderness": 1.25,
+      "height_mm": 17.8,
+      "bed_contact_mm2": 283.9,
+      "slenderness": 1.06,
       "min_wall_mm": null
     },
     {
@@ -649,9 +649,9 @@
       "print_time_min": null,
       "filament_cost_usd": null,
       "brim_mm": 0,
-      "height_mm": 18.2,
-      "bed_contact_mm2": 290.9,
-      "slenderness": 1.07,
+      "height_mm": 13.0,
+      "bed_contact_mm2": 283.9,
+      "slenderness": 0.77,
       "min_wall_mm": null
     },
     {
@@ -1041,10 +1041,10 @@
       "print_time_min": null,
       "filament_cost_usd": null,
       "brim_mm": 0,
-      "height_mm": 19.5,
-      "bed_contact_mm2": 284.0,
+      "height_mm": 19.4,
+      "bed_contact_mm2": 279.7,
       "slenderness": 1.16,
-      "min_wall_mm": 0.183
+      "min_wall_mm": null
     },
     {
       "part_id": "robot_head_visor",
@@ -1055,9 +1055,9 @@
       "print_time_min": null,
       "filament_cost_usd": null,
       "brim_mm": 0,
-      "height_mm": 32.8,
-      "bed_contact_mm2": 229.4,
-      "slenderness": 2.17,
+      "height_mm": 34.4,
+      "bed_contact_mm2": 178.4,
+      "slenderness": 2.58,
       "min_wall_mm": null
     },
     {

@@ -917,7 +917,7 @@
         "id": "head",
         "part": "robot_head_visor",
         "pose": {
-          "x": 0.0,
+          "x": -6.25,
           "y": -6.25,
           "z": 43.0,
           "rot": 0
@@ -955,7 +955,7 @@
       {
         "male": "arms.top_studs",
         "female": "head.under_sockets",
-        "engaged_studs": 2,
+        "engaged_studs": 1,
         "gap_min_mm": 0.05,
         "gap_max_mm": 0.05
       },
@@ -1504,13 +1504,13 @@
         "id": "faceplate",
         "part": "char_faceplate",
         "pose": {
-          "x": -1.5920408388915593e-16,
-          "y": -24.475,
+          "x": -2.9391523179536476e-16,
+          "y": -24.275,
           "z": 56.625,
-          "rot": 1,
+          "rot": 2,
           "tilt": [
-            0.0,
-            90.0
+            90.0,
+            0.0
           ]
         }
       },
@@ -1520,7 +1520,7 @@
         "pose": {
           "x": 0.0,
           "y": -6.25,
-          "z": 69.0,
+          "z": 72.2,
           "rot": 0
         }
       },
@@ -1530,7 +1530,7 @@
         "pose": {
           "x": -6.25,
           "y": -6.25,
-          "z": 80.8,
+          "z": 82.0,
           "rot": 0
         }
       }
@@ -1564,9 +1564,9 @@
         "male": "faceplate.axis",
         "female": "head.face_slot",
         "engaged_studs": 1,
-        "fit": "free",
-        "gap_min_mm": 0.2,
-        "gap_max_mm": 0.2
+        "fit": "press",
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
       },
       {
         "male": "head.top_studs",

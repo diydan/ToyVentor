@@ -1237,10 +1237,6 @@
   },
   {
     "male": "pin_friction.axis",
-    "female": "char_head_kid.face_slot"
-  },
-  {
-    "male": "pin_friction.axis",
     "female": "prop_skateboard_deck.axle_front"
   },
   {
@@ -1369,10 +1365,6 @@
   },
   {
     "male": "pin_friction_long.axis",
-    "female": "char_head_kid.face_slot"
-  },
-  {
-    "male": "pin_friction_long.axis",
     "female": "prop_skateboard_deck.axle_front"
   },
   {
@@ -1498,10 +1490,6 @@
   {
     "male": "pin_free.axis",
     "female": "racer_axle_block.axle"
-  },
-  {
-    "male": "pin_free.axis",
-    "female": "char_head_kid.face_slot"
   },
   {
     "male": "pin_free.axis",
@@ -3817,11 +3805,39 @@
   },
   {
     "male": "char_faceplate.axis",
+    "female": "bushing_half.hub"
+  },
+  {
+    "male": "char_faceplate.axis",
+    "female": "bushing_tu01.hub"
+  },
+  {
+    "male": "char_faceplate.axis",
+    "female": "gear_spur_z10.hub"
+  },
+  {
+    "male": "char_faceplate.axis",
+    "female": "gear_spur_z15.hub"
+  },
+  {
+    "male": "char_faceplate.axis",
+    "female": "gear_spur_z20.hub"
+  },
+  {
+    "male": "char_faceplate.axis",
+    "female": "gear_spur_z30.hub"
+  },
+  {
+    "male": "char_faceplate.axis",
     "female": "gear_rack_tu05.bores"
   },
   {
     "male": "char_faceplate.axis",
     "female": "gear_ring_z40.frame_bores"
+  },
+  {
+    "male": "char_faceplate.axis",
+    "female": "gear_spur_z25.hub"
   },
   {
     "male": "char_faceplate.axis",
@@ -3849,7 +3865,15 @@
   },
   {
     "male": "char_faceplate.axis",
+    "female": "wheel_tu04.hub"
+  },
+  {
+    "male": "char_faceplate.axis",
     "female": "wheel_tu04.cranks"
+  },
+  {
+    "male": "char_faceplate.axis",
+    "female": "wheel_tu06.hub"
   },
   {
     "male": "char_faceplate.axis",
@@ -3869,7 +3893,19 @@
   },
   {
     "male": "char_faceplate.axis",
+    "female": "cross_connector_tu01.axle_z"
+  },
+  {
+    "male": "char_faceplate.axis",
+    "female": "cross_connector_tu01.axle_y"
+  },
+  {
+    "male": "char_faceplate.axis",
     "female": "racer_axle_block.axle"
+  },
+  {
+    "male": "char_faceplate.axis",
+    "female": "racer_wheel.hub"
   },
   {
     "male": "char_faceplate.axis",
@@ -3882,6 +3918,18 @@
   {
     "male": "char_faceplate.axis",
     "female": "prop_skateboard_deck.axle_rear"
+  },
+  {
+    "male": "char_faceplate.axis",
+    "female": "veh_wheel_sport.hub"
+  },
+  {
+    "male": "char_faceplate.axis",
+    "female": "veh_wheel_offroad.hub"
+  },
+  {
+    "male": "char_faceplate.axis",
+    "female": "veh_wheel_moto.hub"
   },
   {
     "male": "char_faceplate.axis",
@@ -7330,10 +7378,6 @@
   {
     "male": "veh_steering_wheel.axis",
     "female": "racer_axle_block.axle"
-  },
-  {
-    "male": "veh_steering_wheel.axis",
-    "female": "char_head_kid.face_slot"
   },
   {
     "male": "veh_steering_wheel.axis",
