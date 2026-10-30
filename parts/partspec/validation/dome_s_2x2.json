@@ -1,0 +1,176 @@
+{
+  "validator": "preprint_check 1.2.0",
+  "file": "toyventor_dome_s_2x2_S.stl",
+  "file_sha256": "4d8be731ff38665c874785b12d92d70ab5bddc4d4aef3ad3c7f0904d8d3d9a78",
+  "part_id": "dome_s_2x2",
+  "profile": "fdm_pla_0.4",
+  "checked_at": "2026-10-30T08:20:22Z",
+  "metrics": {
+    "bbox_mm": [
+      24.8,
+      24.8,
+      16.4
+    ],
+    "volume_cm3": 4.77,
+    "surface_cm2": 25.09,
+    "triangles": 2014,
+    "ledges": [],
+    "layers": 82,
+    "bed_contact_mm2": 201.6,
+    "height_mm": 16.4,
+    "slenderness": 1.15,
+    "centre_of_mass_over_contact": true,
+    "min_wall_mm": null,
+    "thin_wall_regions": []
+  },
+  "bridges": [
+    {
+      "z_mm": 3.5,
+      "span_mm": 7.64,
+      "area_mm2": 338.1
+    },
+    {
+      "z_mm": 3.5,
+      "span_mm": 6.7,
+      "area_mm2": 35.2
+    }
+  ],
+  "checks": [
+    {
+      "id": "V1_mesh_sound",
+      "level": "block",
+      "result": "pass",
+      "value": null,
+      "limit": null,
+      "detail": "watertight True, consistent winding True, 1 body(ies)"
+    },
+    {
+      "id": "V2_on_bed",
+      "level": "block",
+      "result": "pass",
+      "value": 0.0,
+      "limit": 0.0,
+      "detail": "lowest point must be on the bed (z = 0)"
+    },
+    {
+      "id": "V3_fits_bed",
+      "level": "block",
+      "result": "pass",
+      "value": [
+        24.8,
+        24.8,
+        16.4
+      ],
+      "limit": [
+        180,
+        180,
+        180
+      ],
+      "detail": ""
+    },
+    {
+      "id": "V4_no_steep_overhang",
+      "level": "block",
+      "result": "pass",
+      "value": 0.0,
+      "limit": 1.0,
+      "detail": "mm2 of downward surface steeper than 45 deg (flat bridges excluded)"
+    },
+    {
+      "id": "V10_no_ledges",
+      "level": "block",
+      "result": "pass",
+      "value": 0.0,
+      "limit": 1.0,
+      "detail": "mm2 of flat underside held on one side only (a ledge over air, not a bridge)"
+    },
+    {
+      "id": "V6_bridge_span",
+      "level": "block",
+      "result": "pass",
+      "value": 7.64,
+      "limit": 20,
+      "detail": "2 bridge(s); widest unsupported span in mm"
+    },
+    {
+      "id": "V5_no_floating_islands",
+      "level": "block",
+      "result": "pass",
+      "value": 0,
+      "limit": 0,
+      "detail": "material not resting, layer by layer, on anything that reaches the bed"
+    },
+    {
+      "id": "V7_min_feature",
+      "level": "warn",
+      "result": "pass",
+      "value": 0,
+      "limit": 0,
+      "detail": "layer pieces narrower than 0.4 mm"
+    },
+    {
+      "id": "V9_bed_contact",
+      "level": "info",
+      "result": "pass",
+      "value": 201.6,
+      "limit": null,
+      "detail": "height / sqrt(contact) = 1.15; above about 3 the slicer often asks for a brim"
+    },
+    {
+      "id": "V8_wall_thickness",
+      "level": "warn",
+      "result": "pass",
+      "value": 0,
+      "limit": 0,
+      "detail": "regions where the wall is under 0.8 mm (two nozzle widths) over 2.0 mm2, or under 0.4 mm (one nozzle width) over 0.25 mm2; sharp edges and slivers are ignored"
+    },
+    {
+      "id": "S1_slices",
+      "level": "block",
+      "result": "pass",
+      "value": null,
+      "limit": null,
+      "detail": "sliced without errors"
+    },
+    {
+      "id": "S2_slicer_stability",
+      "level": "warn",
+      "result": "pass",
+      "value": null,
+      "limit": null,
+      "detail": "noted: Long bridging extrusions"
+    },
+    {
+      "id": "S3_slicer_blocking",
+      "level": "block",
+      "result": "pass",
+      "value": null,
+      "limit": null,
+      "detail": "nothing the slicer would print in mid-air"
+    }
+  ],
+  "print_settings": {},
+  "slicer": {
+    "ok": true,
+    "brim_mm": 0,
+    "seconds_to_slice": 2.1,
+    "warnings": [
+      "Long bridging extrusions"
+    ],
+    "filament_g": 3.43,
+    "filament_m": 1.15,
+    "filament_cost_usd": 0.07,
+    "print_time_s": 1152,
+    "layers": 82,
+    "warnings_without_brim": [
+      "Long bridging extrusions"
+    ],
+    "brims_tried_mm": [
+      0
+    ],
+    "engine": "PrusaSlicer-2.8.1",
+    "reused_from": "2026-10-30T08:08:59Z"
+  },
+  "verdict": "pass",
+  "summary": "Prints as is"
+}

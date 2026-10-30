@@ -1,0 +1,208 @@
+{
+  "id": "kip",
+  "name": "Kip",
+  "standard": "ToyVentor 12.5mm TU",
+  "tuMm": 12.5,
+  "viewerUrl": "/kip/Kip-Demo.html",
+  "scadSource": "parts/kip/kip.scad",
+  "partspecSource": "parts/kip/kip_partspec.py",
+  "partspecManifestUrl": "/kip/kip-partspec-manifest.json",
+  "safety": {
+    "minAgeYears": 3,
+    "smallPartsWarningRequired": true,
+    "regulations": ["16 CFR 1500.19", "EN 71-1"],
+    "warningText": "WARNING: CHOKING HAZARD — Small parts. Not for children under 3 years."
+  },
+  "palette": {
+    "shell": "#f4efe6",
+    "hood": "#ccc1ae",
+    "spark": "#ff6b4a",
+    "visor": "#1c2338",
+    "eyes": "#b8e8ff"
+  },
+  "editions": {
+    "pro": {
+      "label": "Pro (8+)",
+      "ageGroup": "8+",
+      "heightMm": 150.0,
+      "heightTu": 12.0,
+      "joints": 14,
+      "exclusiveParts": [
+        "torso",
+        "upper_arm",
+        "forearm",
+        "thigh",
+        "shin",
+        "spark_peg_big",
+        "spark_peg_sml"
+      ]
+    },
+    "snap": {
+      "label": "Snap (3+)",
+      "ageGroup": "3+",
+      "heightMm": 137.5,
+      "heightTu": 11.0,
+      "joints": 10,
+      "exclusiveParts": [
+        "snap_torso",
+        "snap_arm",
+        "snap_leg",
+        "snap_turret_big",
+        "snap_turret"
+      ],
+      "seatedLowerBody": "char_legs_seated"
+    }
+  },
+  "sharedParts": [
+    "head_shell",
+    "head_hood",
+    "crown_buds",
+    "crown_cap_blank",
+    "ear_pod_l",
+    "ear_pod_r",
+    "visor",
+    "face_eyes",
+    "face_glints",
+    "face_cheeks",
+    "back_dock_studs",
+    "hand_l",
+    "hand_r",
+    "boot",
+    "neck_turret_2x1"
+  ],
+  "testAccessories": [
+    "ear_acc_l",
+    "ear_acc_r",
+    "tail_acc"
+  ],
+  "wardrobe": {
+    "heads": ["classic", "char_head_kid", "robot_head_visor", "char_head_fox", "char_head_bear"],
+    "decalSkins": ["spark", "happy", "wink", "cool", "starry", "blank"],
+    "hairsAndCrowns": [
+      "buds",
+      "hair_swoosh",
+      "hair_pigtails",
+      "hair_curly",
+      "hair_mohawk",
+      "pointy_ears",
+      "bumper_horns",
+      "wobble_hat",
+      "blank"
+    ],
+    "backpacks": ["off", "pack_explorer", "robot_back_jetpack", "cloud_wings", "pro_gears"],
+    "props": ["off", "prop_wrench", "prop_star_shield", "pro_spinner", "prop_skateboard_deck"]
+  },
+  "vehicles": [
+    {
+      "id": "car",
+      "name": "Roadster Car",
+      "gridTu": [4, 10],
+      "chassisPart": "veh_car_chassis",
+      "steeringPart": "veh_steering_wheel",
+      "axlePart": "shaft_tu07",
+      "wheelPart": "wheel_tu04",
+      "racerAddons": ["racer_bull_bar", "racer_hood_scoop", "racer_light_bar", "racer_spoiler", "racer_twin_exhaust"]
+    },
+    {
+      "id": "truck",
+      "name": "Hauler Truck",
+      "gridTu": [4, 12],
+      "chassisPart": "veh_truck_chassis",
+      "steeringPart": "veh_steering_wheel",
+      "axlePart": "shaft_tu07",
+      "wheelPart": "wheel_tu06",
+      "racerAddons": ["racer_bull_bar", "racer_roof_rack", "pack_explorer"]
+    },
+    {
+      "id": "scooter",
+      "name": "Step-Through Motor Scooter",
+      "gridTu": [2, 10],
+      "chassisPart": "veh_scooter_frame",
+      "steeringPart": "veh_handlebar_fork",
+      "axlePart": "shaft_tu05",
+      "wheelPart": "wheel_tu04",
+      "racerAddons": ["racer_twin_exhaust"]
+    },
+    {
+      "id": "moto",
+      "name": "2-in-1 Sport Motorbike",
+      "gridTu": [2, 10],
+      "chassisPart": "veh_scooter_frame",
+      "cowlingPart": "veh_moto_cowling",
+      "steeringPart": "veh_handlebar_fork",
+      "axlePart": "shaft_tu05",
+      "wheelPart": "wheel_tu04",
+      "racerAddons": ["racer_twin_exhaust"]
+    }
+  ],
+  "llmSdk": {
+    "sdkModule": "parts/kip/sdk/kip_partspec_sdk.py",
+    "promptDoc": "parts/kip/sdk/LLM_PART_PROMPT.md",
+    "publicPromptUrl": "/kip/LLM_PART_PROMPT.md",
+    "customStlBaseUrl": "/kip/custom",
+    "examples": ["custom_wizard_hat", "custom_star_wand", "custom_hood_crest"]
+  },
+  "photoForge": {
+    "prints": false,
+    "digitalOnly": true,
+    "supportedSlots": ["hand", "crown", "wings", "hood"]
+  },
+  "ports": [
+    {
+      "id": "crown",
+      "label": "1x2 Crown Dock",
+      "interface": "stud_small",
+      "grid": [1, 2],
+      "gameSlot": "character.eyes.big",
+      "stat": "glow",
+      "options": ["buds", "swoosh", "pigtails", "curly", "mohawk", "ears", "horns", "hat", "blank"]
+    },
+    {
+      "id": "ears",
+      "label": "±X Ear-Pod Ø6.6 Bosses",
+      "interface": "stud_small",
+      "grid": [1, 1],
+      "gameSlot": "character.eyes.big",
+      "stat": "glow",
+      "options": ["off", "comm", "pro"]
+    },
+    {
+      "id": "back",
+      "label": "2x2 Back Dock + Central Ø7.0 Pro Bore",
+      "interface": "stud_small",
+      "proInterface": "bore_grid",
+      "grid": [2, 2],
+      "gameSlot": "character.back.jetpack",
+      "stat": "speed",
+      "options": ["off", "explorer", "jetpack", "wings", "gears"]
+    },
+    {
+      "id": "tail",
+      "label": "1x1 Lower-Back Tail Port (2.0 TU below Back Dock)",
+      "interface": "bore_grid",
+      "grid": [1, 1],
+      "offsetFromBackTu": [0, -2],
+      "gameSlot": "character.tail.curly",
+      "stat": "spin",
+      "options": ["off", "wag", "pro"]
+    },
+    {
+      "id": "hand",
+      "label": "Right Hand Ø6.6 Pro-Shaft Cradle",
+      "interface": "pro_shaft_6p6",
+      "grid": [1, 1],
+      "gameSlot": "character.base.block",
+      "stat": "torque",
+      "options": ["off", "wrench", "shield", "shaft", "skateboard"]
+    }
+  ],
+  "assets": {
+    "stlBaseUrl": "/kip/stls",
+    "partspecBaseUrl": "/kip/partspec",
+    "customBaseUrl": "/kip/custom",
+    "mixamoClips": [
+      "/kip/mixamo/Xbot.glb",
+      "/kip/mixamo/Michelle.glb"
+    ]
+  }
+}

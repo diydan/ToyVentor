@@ -13,6 +13,7 @@ long-term direction; if two documents disagree about product behaviour,
 | [vision.md](vision.md) | Product vision: robotics through play, one modular system, access model and guardrails |
 | [submission-vision.md](submission-vision.md) | One-page hackathon narrative: pillars, demo proof, business sketch and next evidence |
 | [spec.md](spec.md) | Product spec. Canonical for what ToyVentor is and what the demo proves |
+| [spec-for-review.md](spec-for-review.md) | Generated review copy of the spec, ready to publish. Run `npm run spec:review` after changing the spec |
 | [plan.md](plan.md) | 10-day plan to the Nov 4 submission |
 | [journal.md](journal.md) | Dated progress log |
 | [demo-script.md](demo-script.md) | The 90-second demo run: beats, shot list, backups, pre-flight checks |
@@ -28,11 +29,28 @@ long-term direction; if two documents disagree about product behaviour,
 | `public/world/ToyVentor-World.html` | The built game, served from the app's origin at `/world/ToyVentor-World.html` |
 | `shared/toycontract.ts` | The toy contract: how the app hands the kid's build to the game |
 
+## Drafts (not served by the app)
+
+| Path | What it is |
+| --- | --- |
+| `drafts/ToyVentor-Landing-Public.html` | The public landing page, renamed from ToyForge. Source for the published landing page artifact |
+| `drafts/ToyVentor-Waitlist-Worker.js` | Standalone Worker for the landing page's waitlist form at `/api/waitlist`. Not part of the main app Worker |
+| `drafts/ToyVentor-Waitlist-schema.sql` | D1 waitlist table for that Worker |
+| `drafts/ToyVentor-PackRip-ToyWorld.html`, `drafts/ToyVentor-Build-Brew-Play.html` | Older prototypes, kept for reference |
+
 ## Creating parts
 
 | File | What it is |
 | --- | --- |
 | [creating-parts.md](creating-parts.md) | The recurring runbook for new robots, figurines, add-ons and mechanisms: brief, catalog slot, PartSpec gate, assembly proof, app bridge, printing and handoff |
+| [parts-review.md](parts-review.md) | Full engineering and product-spec review of Snap and Pro part libraries and parametric specs across the OpenSCAD app lane, PartSpec v1, and PartSpec v2 |
+
+## Stretch specs
+
+| File | What it is |
+| --- | --- |
+| [scan-to-3d.md](scan-to-3d.md) | Stretch: a real 3D body from the kid's photo, and every route to one. Not in the demo path |
+| [parent-time-gate.md](parent-time-gate.md) | Stretch: parent-set session timers and STEM-challenge time earning, inside a daily limit. Not in the demo path |
 
 ## Product lines (app lane — what the demo runs today)
 
@@ -42,28 +60,38 @@ long-term direction; if two documents disagree about product behaviour,
 | [pro.md](pro.md) | Pro (8+ mechanical line) on ToyVentor's own 12.5 mm hole grid. Canonical for the line per spec |
 | [snap-samples.md](snap-samples.md) | First app-lane sample parts at the old 16/32 mm scale. Prototype record; see decision 0005 before building on it |
 
-## Parts geometry (PartSpec lane)
+## Parts geometry (`parts/` and PartSpec specs)
 
 | Path | What it is |
 | --- | --- |
-| [PartSpec/README.md](PartSpec/README.md) | Entry point: status, layout, how the snapshot is refreshed |
+| [`../parts/README.md`](../parts/README.md) | Overview of the unified `parts/` folder (`parts/partspec/` + `parts/scad/`) |
+| [`../parts/partspec/`](../parts/partspec/INTERFACE_STANDARD.md) | Self-contained PartSpec v2 Python generator, validator, calibration kit, and app exporter (tracked in repo, `~2.5 MB`) |
+| [PartSpec/README.md](PartSpec/README.md) | Entry point: status, layout, how the spec snapshot is refreshed |
 | [PartSpec/specs/](PartSpec/specs/README.md) | Numbered specs 01–11: interface standard, Snap/Pro/Forge Mount specs, catalog, agent instructions, compliance, licensing, design log |
 
 ## Two parts lanes
 
-There are two geometry sources and their parts do not snap to each other:
+Both live under `parts/`, and their parts do not snap to each other:
 
-- **App lane** — `parts/` (OpenSCAD, 16 mm small / 32 mm large) plus
+- **App lane** — `parts/scad/` (OpenSCAD, 16 mm small / 32 mm large) plus
   `sets/base.json`. The builder, downloads and try-on use these numbers
   today. Frozen for new geometry.
-- **PartSpec lane** — `docs/PartSpec/pkg/` (Python generator, one
-  12.5 mm TU lattice). 60 parts pass its geometry and measured-fit gate;
-  nothing printed yet.
+- **PartSpec lane** — `parts/partspec/` (Python generator, one 12.5 mm TU
+  lattice). 75 parts (45 Snap + 30 Pro) pass its geometry, preprint, and
+  measured-fit gate; nothing printed yet.
 
 Decision [0005](decisions/0005-partspec-lattice-merge.md) (proposed)
 makes PartSpec the geometry canon once Dan's Large hand-feel print
 passes, then migrates the app to TU footprints. Until that print, do not
 mix numbers from the two lanes.
+
+## Archived v2 handover notes (gitignored)
+
+`docs/part spec v2/` holds the local audit and handover notes from importing
+PartSpec v2 (`AUDIT.md`, `REVIEW_PROMPT.md`, `files/HANDOVER*.md`). The
+package itself is now folded directly into [`parts/partspec/`](../parts/partspec/INTERFACE_STANDARD.md)
+so this repository is self-contained; `docs/part spec v2/` remains gitignored
+as local working history.
 
 ## Decisions
 
@@ -72,7 +100,7 @@ mix numbers from the two lanes.
 | [0001](decisions/0001-react-spa.md) | React SPA, no SSR |
 | [0002](decisions/0002-blockml-machineblocks.md) | BlockML/MachineBlocks: adopt beside OpenSCAD, not instead (yet) |
 | [0003](decisions/0003-blockml-spike.md) | Spike results: grid proven, licence gate found |
-| [0004](decisions/0004-license-email-draft.md) | Draft licence-clarification email (not sent) — appendix to 0003 |
+| [0004](decisions/0004-license-email-draft.md) | Retired licence-clarification draft — do not send; superseded by PartSpec's no-contact decision |
 | [0005](decisions/0005-partspec-lattice-merge.md) | PartSpec lattice and the merge back into the app (proposed) |
 | [0006](decisions/0006-sam-mask-decoding.md) | SAM mask decoding spike |
 

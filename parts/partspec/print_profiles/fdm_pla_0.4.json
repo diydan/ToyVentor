@@ -1,0 +1,55 @@
+{
+  "id": "fdm_pla_0.4",
+  "name": "FDM, PLA, 0.4 mm nozzle (ToyVentor default)",
+  "note": "Matches the print rules in the specs. Limits come from interfaces.json where it has them. Printer offsets (XY compensation) come from the calibration print.",
+  "printer": {
+    "bed_mm": [
+      180,
+      180,
+      180
+    ],
+    "nozzle_mm": 0.4,
+    "filament_diameter_mm": 1.75
+  },
+  "process": {
+    "layer_height_mm": 0.2,
+    "first_layer_height_mm": 0.2,
+    "perimeters": 3,
+    "infill_pct": 15,
+    "top_layers": 4,
+    "bottom_layers": 3,
+    "supports": false
+  },
+  "filament": {
+    "material": "PLA",
+    "density_g_cm3": 1.24,
+    "cost_per_kg_usd": 20.0
+  },
+  "limits": {
+    "max_overhang_deg": 45,
+    "max_bridge_mm": 20,
+    "first_layer_exclusion_mm": 0.7,
+    "min_wall_mm": 0.8,
+    "min_feature_mm": 0.4,
+    "steep_area_tolerance_mm2": 1.0,
+    "thin_wall_area_tolerance_mm2": 2.0,
+    "thin_wall_severe_area_tolerance_mm2": 0.25,
+    "ledge_max_mm2": 1.0,
+    "ledge_cantilever_mm": 1.0
+  },
+  "brim_steps_mm": [
+    3,
+    5,
+    8
+  ],
+  "slicer_warning_levels": {
+    "_note": "How each PrusaSlicer stability warning counts. block: do not print. warn: printable, flag for review. brim: fix by escalating the brim. info: recorded only (our own V6 check already caps bridge spans).",
+    "Floating object part": "block",
+    "Empty layer": "block",
+    "Collapsing overhang": "warn",
+    "Floating bridge anchors": "warn",
+    "Loose extrusions": "warn",
+    "Low bed adhesion": "brim",
+    "Long bridging extrusions": "info"
+  }
+}

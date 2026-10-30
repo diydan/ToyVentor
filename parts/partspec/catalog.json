@@ -1,0 +1,2919 @@
+{
+  "version": "0.1.0-draft",
+  "goal": "The top 30 Snap parts and the top 30 Pro parts, every one verified by the generator gate.",
+  "criteria": [
+    "Covers every connection type and size class, so the standard is exercised end to end.",
+    "Useful on a scanned toy first: add-ons, capsules and mounts weigh more than plain bricks, because that is the product.",
+    "Prints without supports and passes the fit gate; a part that cannot is replaced, not forced.",
+    "Reused by other parts and by the AI design loop; family-built so each new variant is one catalog row.",
+    "Original designs only. No third-party names."
+  ],
+  "rules": [
+    "Snap grids are at least 2x2: a 1xN part has no tubes, so nothing holds its studs.",
+    "Skins are game-only and are not counted.",
+    "Every Large part must clear the small-parts cylinder.",
+    "Attach slots: character add-ons and vehicle parts carry attach.kind (character or vehicle), attach.slots, and attach.front: the part's local -y or +y faces the toy's front, or the part is symmetric. Slot names: character head, back, body, top, tail; vehicle front, rear, hood, roof, wheels; robot legs, torso, arms, head, back."
+  ],
+  "targets": {
+    "snap": 59,
+    "pro": 34
+  },
+  "waves": [
+    {
+      "id": "W0",
+      "name": "Foundation",
+      "requires": [],
+      "effort": "M",
+      "scope": "Done: catalog-driven registration (one catalog row per part), the block, tile, slope and dome families, Pro checks I4 to I6 and pin-and-bore mating in the validator, all proven on fixtures. The round block was replaced by a dome because a round outline cannot carry studs on the lattice.",
+      "done": true
+    },
+    {
+      "id": "W1",
+      "name": "Snap base and shape blocks",
+      "requires": [
+        "W0"
+      ],
+      "effort": "S",
+      "scope": "11 parts, all from the block, tile, slope and dome families on the existing foot and tube code."
+    },
+    {
+      "id": "W2",
+      "name": "Pro core",
+      "requires": [
+        "W0"
+      ],
+      "effort": "M",
+      "scope": "13 parts: five straight beams, pins, shafts and bushings. First Pro fit windows. Pro rows need a `stat` before they register."
+    },
+    {
+      "id": "W3",
+      "name": "Snap characters, capsules and small mount",
+      "requires": [
+        "W1"
+      ],
+      "effort": "L",
+      "scope": "10 parts, mostly bespoke shapes that need a visual review as well as the gate."
+    },
+    {
+      "id": "W4",
+      "name": "Pro gears, corner beams, mount and adapter",
+      "requires": [
+        "W2"
+      ],
+      "effort": "L",
+      "scope": "13 parts: involute gears on module 2.5, rack, worm, L/T/angled beams, the Pro Forge Mount and the Snap-to-Pro adapter."
+    },
+    {
+      "id": "W5",
+      "name": "Pro joints and wheels",
+      "requires": [
+        "W2"
+      ],
+      "effort": "M",
+      "scope": "4 parts: two wheels, a hinge, a cross connector."
+    },
+    {
+      "id": "W6",
+      "name": "Forge Club Month 1: Racer",
+      "requires": [
+        "W3"
+      ],
+      "effort": "M",
+      "scope": "Six car add-ons (Spoiler, Bull Bar, Hood Scoop, Twin Exhaust, Light Bar, Roof Rack) and a wheel set (Axle Block, Racer Wheel, Racer Axle), Snap Small on 1 and 2 stud footprints, built print-first. The first seeded Forge Club set."
+    },
+    {
+      "id": "W7",
+      "name": "Forge Club Month 2: Critters",
+      "requires": [
+        "W3"
+      ],
+      "effort": "S",
+      "scope": "A Small Waddle Tail, so every character slot has a part in the size on offer, and the Critters set: Pointy Ears, Bumper Horns, Cloud Wings, Pebble Armor Shell, Waddle Tail and Bounce Capsule."
+    },
+    {
+      "id": "W8",
+      "name": "Snap robots: Bolt",
+      "requires": [
+        "W3"
+      ],
+      "effort": "M",
+      "scope": "The first Snap robot: one part for each of the five robot slots (legs, torso, arms, head, back), stacking on studs, fixed pose, ages 3+. Four more parts per slot follow."
+    },
+    {
+      "id": "W9",
+      "name": "Kip wardrobe and modular TU vehicles",
+      "requires": [
+        "W5",
+        "W6",
+        "W8"
+      ],
+      "effort": "M",
+      "scope": "18 parts (14 Snap Small, 4 Pro): swappable blank-canvas character heads (Kid, Fox, Bear) with 2x1 crown buds, four 2x1 snap-on hair silhouettes, Explorer Rucksack, Builder Spanner, Star Emblem Wand, Street Skateboard Deck, Seated Snap Legs, and three modular 12.5 mm TU vehicles (Roadster Car, Hauler Truck, and 2-in-1 Scooter / Sport Motorbike with steering controls and straddle cowling)."
+    }
+  ],
+  "parts": [
+    {
+      "id": "big_blue_brick",
+      "name": "Big Blue Brick",
+      "line": "snap",
+      "family": "block",
+      "size": "large",
+      "wave": null,
+      "note": "Large brick 2x2.",
+      "stat": "Sturdiness",
+      "type": "Brick and plate",
+      "behavior": "Wobbles when tapped; stacks with a soft click",
+      "tags": [
+        "brick",
+        "base",
+        "stackable"
+      ],
+      "build": {
+        "kind": "brick",
+        "grid": [
+          2,
+          2
+        ]
+      }
+    },
+    {
+      "id": "mini_plate",
+      "name": "Mini Plate 2x4",
+      "line": "snap",
+      "family": "block",
+      "size": "small",
+      "wave": null,
+      "note": "Small plate 2x4.",
+      "stat": "Balance",
+      "type": "Brick and plate",
+      "behavior": "Bounces once when placed",
+      "tags": [
+        "plate",
+        "base",
+        "stackable"
+      ],
+      "build": {
+        "kind": "plate",
+        "grid": [
+          4,
+          2
+        ]
+      }
+    },
+    {
+      "id": "forge_mount_ring",
+      "name": "Forge Mount (stud face, large)",
+      "line": "snap",
+      "family": "forge_mount",
+      "size": "large",
+      "wave": null,
+      "note": "Shared mount definition, Large stud face.",
+      "stat": "Grip",
+      "type": "Forge Mount",
+      "behavior": "Snaps onto the scanned toy; the grid glows on attach",
+      "tags": [
+        "forge_mount",
+        "adapter",
+        "toy_attach"
+      ],
+      "build": {
+        "fn": "forge_mount",
+        "face": "stud_large",
+        "grid": [
+          2,
+          2
+        ]
+      }
+    },
+    {
+      "id": "waddle_tail",
+      "name": "Waddle Tail",
+      "line": "snap",
+      "family": "addon",
+      "size": "large",
+      "wave": null,
+      "note": "Integrated base: two stud holes in a small pad under the tail's curl, so the tail cannot swivel.",
+      "stat": "Charm",
+      "type": "Character add-on",
+      "behavior": "Wags when tapped",
+      "tags": [
+        "tail",
+        "character",
+        "add_on",
+        "back"
+      ],
+      "build": {
+        "fn": "waddle_tail",
+        "grid": [
+          2,
+          2
+        ],
+        "base": "integrated",
+        "pad": [
+          [
+            0,
+            0
+          ],
+          [
+            0,
+            -1
+          ]
+        ],
+        "lock": true
+      },
+      "attach": {
+        "kind": "character",
+        "slots": [
+          "tail"
+        ],
+        "front": "+y"
+      }
+    },
+    {
+      "id": "cloud_wings",
+      "name": "Cloud Wings",
+      "line": "snap",
+      "family": "addon",
+      "size": "small",
+      "wave": null,
+      "note": "Integrated 2x2 pad with four stud holes so the wings center and rotation-lock on any 2x2 back dock or brick.",
+      "stat": "Lift",
+      "type": "Character add-on",
+      "behavior": "Flaps and hovers briefly",
+      "tags": [
+        "wings",
+        "character",
+        "add_on",
+        "back",
+        "flying"
+      ],
+      "build": {
+        "fn": "cloud_wings",
+        "grid": [
+          2,
+          2
+        ],
+        "base": "integrated",
+        "pad": [
+          [
+            -0.5,
+            -0.5
+          ],
+          [
+            0.5,
+            -0.5
+          ],
+          [
+            -0.5,
+            0.5
+          ],
+          [
+            0.5,
+            0.5
+          ]
+        ],
+        "lock": true
+      },
+      "attach": {
+        "kind": "character",
+        "slots": [
+          "back"
+        ],
+        "front": "symmetric"
+      }
+    },
+    {
+      "id": "pebble_armor_shell",
+      "name": "Pebble Armor Shell",
+      "line": "snap",
+      "family": "addon",
+      "size": "small",
+      "wave": null,
+      "note": "",
+      "stat": "Toughness",
+      "type": "Character add-on",
+      "behavior": "Clinks and shimmers when tapped",
+      "tags": [
+        "armor",
+        "shell",
+        "character",
+        "add_on",
+        "back"
+      ],
+      "build": {
+        "fn": "pebble_armor_shell",
+        "grid": [
+          4,
+          4
+        ],
+        "base": "integrated",
+        "lock": true
+      },
+      "attach": {
+        "kind": "character",
+        "slots": [
+          "body",
+          "back"
+        ],
+        "front": "symmetric"
+      }
+    },
+    {
+      "id": "zoom_capsule",
+      "name": "Zoom Capsule",
+      "line": "snap",
+      "family": "capsule",
+      "size": "large",
+      "wave": null,
+      "note": "",
+      "stat": "Speed",
+      "type": "Function capsule (shell only)",
+      "behavior": "Toy zips around in the game, leaving a trail",
+      "tags": [
+        "capsule",
+        "function",
+        "speed"
+      ],
+      "build": {
+        "fn": "zoom_capsule",
+        "grid": [
+          2,
+          2
+        ],
+        "base": "integrated",
+        "lock": true
+      },
+      "attach": {
+        "kind": "character",
+        "slots": [
+          "back"
+        ],
+        "front": "-y"
+      }
+    },
+    {
+      "id": "glow_capsule",
+      "name": "Glow Capsule",
+      "line": "snap",
+      "family": "capsule",
+      "size": "small",
+      "wave": null,
+      "note": "",
+      "stat": "Glow",
+      "type": "Function capsule (shell only)",
+      "behavior": "Lights up the toy; colour changes per tap",
+      "tags": [
+        "capsule",
+        "function",
+        "glow"
+      ],
+      "build": {
+        "fn": "glow_capsule",
+        "grid": [
+          2,
+          2
+        ],
+        "base": "integrated"
+      },
+      "attach": {
+        "kind": "character",
+        "slots": [
+          "back",
+          "top"
+        ],
+        "front": "symmetric"
+      }
+    },
+    {
+      "id": "spin_capsule",
+      "name": "Spin Capsule",
+      "line": "snap",
+      "family": "capsule",
+      "size": "large",
+      "wave": null,
+      "note": "",
+      "stat": "Spin",
+      "type": "Function capsule (shell only)",
+      "behavior": "Toy twirls; each tap changes direction",
+      "tags": [
+        "capsule",
+        "function",
+        "spin"
+      ],
+      "build": {
+        "fn": "spin_capsule",
+        "grid": [
+          2,
+          2
+        ],
+        "base": "integrated"
+      },
+      "attach": {
+        "kind": "character",
+        "slots": [
+          "back",
+          "top"
+        ],
+        "front": "symmetric"
+      }
+    },
+    {
+      "id": "brick_l_2x4",
+      "name": "Big Blue Brick 2x4",
+      "line": "snap",
+      "family": "block",
+      "size": "large",
+      "wave": "W1",
+      "note": "",
+      "stat": "Sturdiness",
+      "type": "Brick and plate",
+      "build": {
+        "kind": "brick",
+        "grid": [
+          4,
+          2
+        ]
+      },
+      "behavior": "Wobbles when tapped; stacks with a soft click",
+      "tags": [
+        "brick",
+        "base",
+        "stackable"
+      ]
+    },
+    {
+      "id": "plate_l_2x2",
+      "name": "Big Plate 2x2",
+      "line": "snap",
+      "family": "block",
+      "size": "large",
+      "wave": "W1",
+      "note": "",
+      "stat": "Balance",
+      "type": "Brick and plate",
+      "build": {
+        "kind": "plate",
+        "grid": [
+          2,
+          2
+        ]
+      },
+      "behavior": "Bounces once when placed",
+      "tags": [
+        "plate",
+        "base",
+        "stackable"
+      ]
+    },
+    {
+      "id": "plate_l_2x4",
+      "name": "Big Plate 2x4",
+      "line": "snap",
+      "family": "block",
+      "size": "large",
+      "wave": "W1",
+      "note": "",
+      "stat": "Balance",
+      "type": "Brick and plate",
+      "build": {
+        "kind": "plate",
+        "grid": [
+          4,
+          2
+        ]
+      },
+      "behavior": "Bounces once when placed",
+      "tags": [
+        "plate",
+        "base",
+        "stackable"
+      ]
+    },
+    {
+      "id": "plate_s_2x2",
+      "name": "Mini Plate 2x2",
+      "line": "snap",
+      "family": "block",
+      "size": "small",
+      "wave": "W1",
+      "note": "",
+      "stat": "Balance",
+      "type": "Brick and plate",
+      "build": {
+        "kind": "plate",
+        "grid": [
+          2,
+          2
+        ]
+      },
+      "behavior": "Bounces once when placed",
+      "tags": [
+        "plate",
+        "base",
+        "stackable"
+      ]
+    },
+    {
+      "id": "plate_s_4x4",
+      "name": "Mini Plate 4x4",
+      "line": "snap",
+      "family": "block",
+      "size": "small",
+      "wave": "W1",
+      "note": "",
+      "stat": "Balance",
+      "type": "Brick and plate",
+      "build": {
+        "kind": "plate",
+        "grid": [
+          4,
+          4
+        ]
+      },
+      "behavior": "Bounces once when placed",
+      "tags": [
+        "plate",
+        "base",
+        "stackable"
+      ]
+    },
+    {
+      "id": "brick_s_2x2",
+      "name": "Mini Brick 2x2",
+      "line": "snap",
+      "family": "block",
+      "size": "small",
+      "wave": "W1",
+      "note": "",
+      "stat": "Sturdiness",
+      "type": "Brick and plate",
+      "build": {
+        "kind": "brick",
+        "grid": [
+          2,
+          2
+        ]
+      },
+      "behavior": "Wobbles when tapped; stacks with a soft click",
+      "tags": [
+        "brick",
+        "base",
+        "stackable"
+      ]
+    },
+    {
+      "id": "tile_s_2x2",
+      "name": "Mini Smooth Tile",
+      "line": "snap",
+      "family": "tile",
+      "size": "small",
+      "wave": "W1",
+      "note": "Socket side only, flat top.",
+      "stat": "Slide",
+      "type": "Shape block",
+      "build": {
+        "grid": [
+          2,
+          2
+        ]
+      },
+      "behavior": "Slides smoothly across the game board",
+      "tags": [
+        "tile",
+        "smooth",
+        "cover"
+      ]
+    },
+    {
+      "id": "tile_l_2x2",
+      "name": "Big Smooth Tile",
+      "line": "snap",
+      "family": "tile",
+      "size": "large",
+      "wave": "W1",
+      "note": "",
+      "stat": "Slide",
+      "type": "Shape block",
+      "build": {
+        "grid": [
+          2,
+          2
+        ]
+      },
+      "behavior": "Slides smoothly across the game board",
+      "tags": [
+        "tile",
+        "smooth",
+        "cover"
+      ]
+    },
+    {
+      "id": "slope_s_2x2",
+      "name": "Mini Slope",
+      "line": "snap",
+      "family": "slope",
+      "size": "small",
+      "wave": "W1",
+      "note": "30 degree face: at 45 degrees the Small size lands in the marginal small-parts band and cannot be verified. Prints without supports.",
+      "stat": "Launch",
+      "type": "Shape block",
+      "build": {
+        "grid": [
+          2,
+          2
+        ],
+        "angle_deg": 30
+      },
+      "behavior": "Launches the toy up a ramp",
+      "tags": [
+        "slope",
+        "ramp",
+        "shape"
+      ]
+    },
+    {
+      "id": "slope_l_2x2",
+      "name": "Big Slope",
+      "line": "snap",
+      "family": "slope",
+      "size": "large",
+      "wave": "W1",
+      "note": "45 degree face, prints without supports.",
+      "stat": "Launch",
+      "type": "Shape block",
+      "build": {
+        "grid": [
+          2,
+          2
+        ],
+        "angle_deg": 45
+      },
+      "behavior": "Launches the toy up a ramp",
+      "tags": [
+        "slope",
+        "ramp",
+        "shape"
+      ]
+    },
+    {
+      "id": "dome_s_2x2",
+      "name": "Mini Dome",
+      "line": "snap",
+      "family": "dome",
+      "size": "small",
+      "wave": "W1",
+      "note": "Female-only: a round dome on the standard foot. A round block that also carries studs cannot fit the lattice: the cavity must reach the corner studs, which needs a 28.4 mm outline against a 24.8 mm footprint.",
+      "stat": "Roll",
+      "type": "Shape block",
+      "build": {
+        "grid": [
+          2,
+          2
+        ]
+      },
+      "behavior": "Rolls a little when tapped",
+      "tags": [
+        "dome",
+        "round",
+        "shape"
+      ]
+    },
+    {
+      "id": "forge_mount_ring_s",
+      "name": "Forge Mount (stud face, small)",
+      "line": "snap",
+      "family": "forge_mount",
+      "size": "small",
+      "wave": "W3",
+      "note": "Same definition as the Large ring with the Small stud face on a 5x5 grid: a 3x3 grid keeps only the four corner studs around an 18 mm hole, so a Small part would sit on one stud.",
+      "stat": "Grip",
+      "type": "Forge Mount",
+      "behavior": "Snaps onto the scanned toy; the grid glows on attach",
+      "tags": [
+        "forge_mount",
+        "adapter",
+        "toy_attach"
+      ],
+      "build": {
+        "fn": "forge_mount",
+        "face": "stud_small",
+        "grid": [
+          2,
+          2
+        ],
+        "n": 5
+      }
+    },
+    {
+      "id": "bumper_horns",
+      "name": "Bumper Horns",
+      "line": "snap",
+      "family": "addon",
+      "size": "small",
+      "wave": "W3",
+      "note": "Integrated base: a small pad joins the horns and carries two stud holes.",
+      "stat": "Power",
+      "type": "Character add-on",
+      "behavior": "Charges forward when tapped",
+      "tags": [
+        "horns",
+        "head",
+        "character"
+      ],
+      "build": {
+        "fn": "bumper_horns",
+        "grid": [
+          2,
+          2
+        ],
+        "base": "integrated",
+        "pad": [
+          [
+            -0.5,
+            0
+          ],
+          [
+            0.5,
+            0
+          ]
+        ],
+        "lock": true
+      },
+      "attach": {
+        "kind": "character",
+        "slots": [
+          "head"
+        ],
+        "front": "symmetric"
+      }
+    },
+    {
+      "id": "pointy_ears",
+      "name": "Pointy Ears",
+      "line": "snap",
+      "family": "addon",
+      "size": "small",
+      "wave": "W3",
+      "note": "Integrated base: a small pad joins the ears and carries two stud holes.",
+      "stat": "Awareness",
+      "type": "Character add-on",
+      "behavior": "Twitches when a sound plays",
+      "tags": [
+        "ears",
+        "head",
+        "character"
+      ],
+      "build": {
+        "fn": "pointy_ears",
+        "grid": [
+          2,
+          2
+        ],
+        "base": "integrated",
+        "pad": [
+          [
+            -0.5,
+            0
+          ],
+          [
+            0.5,
+            0
+          ]
+        ],
+        "lock": true
+      },
+      "attach": {
+        "kind": "character",
+        "slots": [
+          "head"
+        ],
+        "front": "symmetric"
+      }
+    },
+    {
+      "id": "wobble_hat",
+      "name": "Wobble Hat",
+      "line": "snap",
+      "family": "addon",
+      "size": "small",
+      "wave": "W3",
+      "note": "Integrated base: one stud hole; the brim stops short of the neighbouring studs, so it needs no notches. It may turn on its stud.",
+      "stat": "Style",
+      "type": "Character add-on",
+      "behavior": "Wobbles when the toy moves",
+      "tags": [
+        "hat",
+        "head",
+        "character"
+      ],
+      "build": {
+        "fn": "wobble_hat",
+        "grid": [
+          2,
+          2
+        ],
+        "base": "integrated"
+      },
+      "attach": {
+        "kind": "character",
+        "slots": [
+          "head"
+        ],
+        "front": "-y"
+      }
+    },
+    {
+      "id": "ridge_fin",
+      "name": "Ridge Fin",
+      "line": "snap",
+      "family": "addon",
+      "size": "small",
+      "wave": "W3",
+      "note": "Integrated base: a small pad under the blade carries two stud holes.",
+      "stat": "Speed",
+      "type": "Character add-on",
+      "behavior": "Cuts through the air for a speed boost",
+      "tags": [
+        "fin",
+        "back",
+        "character"
+      ],
+      "build": {
+        "fn": "ridge_fin",
+        "grid": [
+          2,
+          2
+        ],
+        "base": "integrated",
+        "pad": [
+          [
+            0,
+            -0.5
+          ],
+          [
+            0,
+            0.5
+          ]
+        ],
+        "lock": true
+      },
+      "attach": {
+        "kind": "character",
+        "slots": [
+          "back",
+          "head"
+        ],
+        "front": "-y"
+      }
+    },
+    {
+      "id": "cloud_wings_l",
+      "name": "Cloud Wings (Large)",
+      "line": "snap",
+      "family": "addon",
+      "size": "large",
+      "wave": "W3",
+      "note": "Cloud Wings at twice the size; integrated base keyed by reliefs so it cannot swivel; clears the small-parts cylinder.",
+      "stat": "Lift",
+      "type": "Character add-on",
+      "behavior": "Flaps and hovers briefly",
+      "tags": [
+        "wings",
+        "character",
+        "add_on",
+        "back",
+        "flying"
+      ],
+      "build": {
+        "fn": "cloud_wings",
+        "grid": [
+          2,
+          2
+        ],
+        "scale": 2.0,
+        "base": "integrated",
+        "lock": true
+      },
+      "attach": {
+        "kind": "character",
+        "slots": [
+          "back"
+        ],
+        "front": "symmetric"
+      }
+    },
+    {
+      "id": "pebble_armor_shell_l",
+      "name": "Pebble Armor Shell (Large)",
+      "line": "snap",
+      "family": "addon",
+      "size": "large",
+      "wave": "W3",
+      "note": "The Small shell's shape with Large stud holes in its underside (two holes and four reliefs).",
+      "stat": "Toughness",
+      "type": "Character add-on",
+      "behavior": "Clinks and shimmers when tapped",
+      "tags": [
+        "armor",
+        "shell",
+        "character",
+        "add_on",
+        "back"
+      ],
+      "build": {
+        "fn": "pebble_armor_shell",
+        "grid": [
+          2,
+          2
+        ],
+        "scale": 1.0,
+        "base": "integrated",
+        "lock": true
+      },
+      "attach": {
+        "kind": "character",
+        "slots": [
+          "body",
+          "back"
+        ],
+        "front": "symmetric"
+      }
+    },
+    {
+      "id": "zoom_capsule_s",
+      "name": "Zoom Capsule (Small)",
+      "line": "snap",
+      "family": "capsule",
+      "size": "small",
+      "wave": "W3",
+      "note": "",
+      "stat": "Speed",
+      "type": "Function capsule (shell only)",
+      "behavior": "Toy zips around in the game, leaving a trail",
+      "tags": [
+        "capsule",
+        "function",
+        "speed"
+      ],
+      "build": {
+        "fn": "zoom_capsule",
+        "grid": [
+          2,
+          2
+        ],
+        "scale": 0.5,
+        "base": "integrated",
+        "lock": true
+      },
+      "attach": {
+        "kind": "character",
+        "slots": [
+          "back"
+        ],
+        "front": "-y"
+      }
+    },
+    {
+      "id": "glow_capsule_l",
+      "name": "Glow Capsule (Large)",
+      "line": "snap",
+      "family": "capsule",
+      "size": "large",
+      "wave": "W3",
+      "note": "",
+      "stat": "Glow",
+      "type": "Function capsule (shell only)",
+      "behavior": "Lights up the toy; colour changes per tap",
+      "tags": [
+        "capsule",
+        "function",
+        "glow"
+      ],
+      "build": {
+        "fn": "glow_capsule",
+        "grid": [
+          2,
+          2
+        ],
+        "scale": 2.0,
+        "base": "integrated"
+      },
+      "attach": {
+        "kind": "character",
+        "slots": [
+          "back",
+          "top"
+        ],
+        "front": "symmetric"
+      }
+    },
+    {
+      "id": "bounce_capsule_s",
+      "name": "Bounce Capsule",
+      "line": "snap",
+      "family": "capsule",
+      "size": "small",
+      "wave": "W3",
+      "note": "Integrated base: one stud hole; round, so turning on its stud does not matter.",
+      "stat": "Bounce",
+      "type": "Function capsule (shell only)",
+      "behavior": "Makes the toy hop",
+      "tags": [
+        "capsule",
+        "bounce",
+        "function"
+      ],
+      "build": {
+        "fn": "bounce_capsule",
+        "grid": [
+          2,
+          2
+        ],
+        "coils": 1,
+        "base": "integrated"
+      },
+      "attach": {
+        "kind": "character",
+        "slots": [
+          "top",
+          "back"
+        ],
+        "front": "symmetric"
+      }
+    },
+    {
+      "id": "beam_str_tu03",
+      "name": "Beam STR RND TU03x01x01",
+      "line": "pro",
+      "family": "beam",
+      "size": "pro",
+      "wave": "W2",
+      "note": "",
+      "type": "Beam",
+      "stat": "Reach",
+      "behavior": "Extends the build; longer beams reach further",
+      "tags": [
+        "beam",
+        "straight",
+        "structure"
+      ],
+      "build": {
+        "fn": "beam",
+        "length_tu": 3
+      }
+    },
+    {
+      "id": "beam_str_tu05",
+      "name": "Beam STR RND TU05x01x01",
+      "line": "pro",
+      "family": "beam",
+      "size": "pro",
+      "wave": "W2",
+      "note": "Hackathon part.",
+      "type": "Beam",
+      "stat": "Reach",
+      "behavior": "Extends the build; longer beams reach further",
+      "tags": [
+        "beam",
+        "straight",
+        "structure"
+      ],
+      "build": {
+        "fn": "beam",
+        "length_tu": 5
+      }
+    },
+    {
+      "id": "beam_str_tu07",
+      "name": "Beam STR RND TU07x01x01",
+      "line": "pro",
+      "family": "beam",
+      "size": "pro",
+      "wave": "W2",
+      "note": "",
+      "type": "Beam",
+      "stat": "Reach",
+      "behavior": "Extends the build; longer beams reach further",
+      "tags": [
+        "beam",
+        "straight",
+        "structure"
+      ],
+      "build": {
+        "fn": "beam",
+        "length_tu": 7
+      }
+    },
+    {
+      "id": "beam_str_tu10",
+      "name": "Beam STR RND TU10x01x01",
+      "line": "pro",
+      "family": "beam",
+      "size": "pro",
+      "wave": "W2",
+      "note": "",
+      "type": "Beam",
+      "stat": "Reach",
+      "behavior": "Extends the build; longer beams reach further",
+      "tags": [
+        "beam",
+        "straight",
+        "structure"
+      ],
+      "build": {
+        "fn": "beam",
+        "length_tu": 10
+      }
+    },
+    {
+      "id": "beam_str_tu14",
+      "name": "Beam STR RND TU14x01x01",
+      "line": "pro",
+      "family": "beam",
+      "size": "pro",
+      "wave": "W2",
+      "note": "Longest standard part (175 mm); proves the bed limit.",
+      "type": "Beam",
+      "stat": "Reach",
+      "behavior": "Extends the build; longer beams reach further",
+      "tags": [
+        "beam",
+        "straight",
+        "structure"
+      ],
+      "build": {
+        "fn": "beam",
+        "length_tu": 14
+      }
+    },
+    {
+      "id": "pin_friction",
+      "name": "Friction Pin",
+      "line": "pro",
+      "family": "pin",
+      "size": "pro",
+      "wave": "W2",
+      "note": "Slotted core with a fin on each round side per TU of length; fins 1.5 mm wider than the bore across. Prints lying on a flat.",
+      "type": "Pin",
+      "stat": "Grip",
+      "behavior": "Clicks two beams together",
+      "tags": [
+        "pin",
+        "friction",
+        "connector"
+      ],
+      "build": {
+        "fn": "friction_pin",
+        "length_tu": 2
+      }
+    },
+    {
+      "id": "pin_friction_long",
+      "name": "Friction Pin Long",
+      "line": "pro",
+      "family": "pin",
+      "size": "pro",
+      "wave": "W2",
+      "note": "",
+      "type": "Pin",
+      "stat": "Grip",
+      "behavior": "Clicks three beams together",
+      "tags": [
+        "pin",
+        "friction",
+        "connector"
+      ],
+      "build": {
+        "fn": "friction_pin",
+        "length_tu": 3
+      }
+    },
+    {
+      "id": "pin_free",
+      "name": "Free Pin",
+      "line": "pro",
+      "family": "pin",
+      "size": "pro",
+      "wave": "W2",
+      "note": "Round pin with a 9 mm head that stops it on the beam face; turns in a free bore. Prints standing on its head.",
+      "type": "Pin",
+      "stat": "Spin",
+      "behavior": "Lets parts swing freely",
+      "tags": [
+        "pin",
+        "free",
+        "pivot"
+      ],
+      "build": {
+        "fn": "free_pin",
+        "length_tu": 2
+      }
+    },
+    {
+      "id": "shaft_tu03",
+      "name": "Shaft TU03",
+      "line": "pro",
+      "family": "shaft",
+      "size": "pro",
+      "wave": "W2",
+      "note": "6.6 round, 5.0 flats, teardrop centre hole. Prints lying on a flat.",
+      "type": "Shaft",
+      "stat": "Torque",
+      "behavior": "Carries spin from part to part",
+      "tags": [
+        "shaft",
+        "axle",
+        "drive"
+      ],
+      "build": {
+        "fn": "shaft",
+        "length_tu": 3
+      }
+    },
+    {
+      "id": "shaft_tu05",
+      "name": "Shaft TU05",
+      "line": "pro",
+      "family": "shaft",
+      "size": "pro",
+      "wave": "W2",
+      "note": "",
+      "type": "Shaft",
+      "stat": "Torque",
+      "behavior": "Carries spin from part to part",
+      "tags": [
+        "shaft",
+        "axle",
+        "drive"
+      ],
+      "build": {
+        "fn": "shaft",
+        "length_tu": 5
+      }
+    },
+    {
+      "id": "shaft_tu07",
+      "name": "Shaft TU07",
+      "line": "pro",
+      "family": "shaft",
+      "size": "pro",
+      "wave": "W2",
+      "note": "",
+      "type": "Shaft",
+      "stat": "Torque",
+      "behavior": "Carries spin from part to part",
+      "tags": [
+        "shaft",
+        "axle",
+        "drive"
+      ],
+      "build": {
+        "fn": "shaft",
+        "length_tu": 7
+      }
+    },
+    {
+      "id": "bushing_half",
+      "name": "Bushing 1/2 TU",
+      "line": "pro",
+      "family": "bushing",
+      "size": "pro",
+      "wave": "W2",
+      "note": "Spacer that grips a flat shaft (fixed bore); 11 mm across.",
+      "type": "Bushing",
+      "stat": "Grip",
+      "behavior": "Locks a shaft in place",
+      "tags": [
+        "bushing",
+        "spacer",
+        "stop"
+      ],
+      "build": {
+        "fn": "bushing",
+        "thickness_tu": 0.5
+      }
+    },
+    {
+      "id": "bushing_tu01",
+      "name": "Bushing TU01",
+      "line": "pro",
+      "family": "bushing",
+      "size": "pro",
+      "wave": "W2",
+      "note": "",
+      "type": "Bushing",
+      "stat": "Grip",
+      "behavior": "Locks a shaft in place",
+      "tags": [
+        "bushing",
+        "spacer",
+        "stop"
+      ],
+      "build": {
+        "fn": "bushing",
+        "thickness_tu": 1
+      }
+    },
+    {
+      "id": "gear_spur_z10",
+      "name": "Gear Spur Z10",
+      "line": "pro",
+      "family": "gear",
+      "size": "pro",
+      "wave": "W4",
+      "note": "Module 2.5; pitch diameter 2 TU.",
+      "type": "Gear",
+      "stat": "Speed",
+      "behavior": "Turns the next gear; the tooth ratio changes speed",
+      "tags": [
+        "gear",
+        "spur",
+        "drive"
+      ],
+      "build": {
+        "fn": "spur_gear",
+        "teeth": 10
+      }
+    },
+    {
+      "id": "gear_spur_z15",
+      "name": "Gear Spur Z15",
+      "line": "pro",
+      "family": "gear",
+      "size": "pro",
+      "wave": "W4",
+      "note": "",
+      "type": "Gear",
+      "stat": "Speed",
+      "behavior": "Turns the next gear; the tooth ratio changes speed",
+      "tags": [
+        "gear",
+        "spur",
+        "drive"
+      ],
+      "build": {
+        "fn": "spur_gear",
+        "teeth": 15
+      }
+    },
+    {
+      "id": "gear_spur_z20",
+      "name": "Gear Spur Z20",
+      "line": "pro",
+      "family": "gear",
+      "size": "pro",
+      "wave": "W4",
+      "note": "Pairs with Z10 at 3 TU.",
+      "type": "Gear",
+      "stat": "Speed",
+      "behavior": "Turns the next gear; the tooth ratio changes speed",
+      "tags": [
+        "gear",
+        "spur",
+        "drive"
+      ],
+      "build": {
+        "fn": "spur_gear",
+        "teeth": 20
+      }
+    },
+    {
+      "id": "gear_spur_z30",
+      "name": "Gear Spur Z30",
+      "line": "pro",
+      "family": "gear",
+      "size": "pro",
+      "wave": "W4",
+      "note": "",
+      "type": "Gear",
+      "stat": "Speed",
+      "behavior": "Turns the next gear; the tooth ratio changes speed",
+      "tags": [
+        "gear",
+        "spur",
+        "drive"
+      ],
+      "build": {
+        "fn": "spur_gear",
+        "teeth": 30
+      }
+    },
+    {
+      "id": "gear_rack_tu05",
+      "name": "Gear Rack TU05",
+      "line": "pro",
+      "family": "gear",
+      "size": "pro",
+      "wave": "W4",
+      "note": "",
+      "type": "Gear",
+      "stat": "Speed",
+      "behavior": "Turns spin into a straight push",
+      "tags": [
+        "gear",
+        "rack",
+        "drive"
+      ],
+      "build": {
+        "fn": "rack",
+        "length_tu": 5
+      }
+    },
+    {
+      "id": "gear_ring_z40",
+      "name": "Gear Ring Z40",
+      "line": "pro",
+      "family": "gear",
+      "size": "pro",
+      "wave": "W4",
+      "note": "Replaces the worm: a module 2.5 worm cannot print without supports (1,069 mm2 of steep overhang at 20 degrees, 1,162 mm2 at 30, and no tooth left at 45). Internal teeth in a 10 TU frame held by four corner bores; Z10, Z15 and Z20 mesh inside it at 3, 2.5 and 2 TU.",
+      "type": "Gear",
+      "stat": "Speed",
+      "behavior": "Turns the gears that run inside it",
+      "tags": [
+        "gear",
+        "ring",
+        "drive"
+      ],
+      "build": {
+        "fn": "ring_gear",
+        "teeth": 40,
+        "frame_tu": 10
+      }
+    },
+    {
+      "id": "gear_spur_z25",
+      "name": "Gear Spur Z25",
+      "line": "pro",
+      "family": "gear",
+      "size": "pro",
+      "wave": "W4",
+      "note": "Replaces the worm wheel (see the ring gear). Pitch diameter 5 TU.",
+      "type": "Gear",
+      "stat": "Speed",
+      "behavior": "Turns the next gear; the tooth ratio changes speed",
+      "tags": [
+        "gear",
+        "spur",
+        "drive"
+      ],
+      "build": {
+        "fn": "spur_gear",
+        "teeth": 25
+      }
+    },
+    {
+      "id": "beam_l_tu03x03",
+      "name": "Beam L RND TU03x03",
+      "line": "pro",
+      "family": "beam",
+      "size": "pro",
+      "wave": "W4",
+      "note": "Corner beam.",
+      "build": {
+        "fn": "beam_cells",
+        "cells": [
+          [
+            0,
+            0
+          ],
+          [
+            1,
+            0
+          ],
+          [
+            2,
+            0
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            2
+          ]
+        ]
+      },
+      "type": "Beam",
+      "stat": "Reach",
+      "behavior": "Turns the build a corner",
+      "tags": [
+        "beam",
+        "corner",
+        "structure"
+      ]
+    },
+    {
+      "id": "beam_l_tu05x03",
+      "name": "Beam L RND TU05x03",
+      "line": "pro",
+      "family": "beam",
+      "size": "pro",
+      "wave": "W4",
+      "note": "",
+      "build": {
+        "fn": "beam_cells",
+        "cells": [
+          [
+            0,
+            0
+          ],
+          [
+            1,
+            0
+          ],
+          [
+            2,
+            0
+          ],
+          [
+            3,
+            0
+          ],
+          [
+            4,
+            0
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            2
+          ]
+        ]
+      },
+      "type": "Beam",
+      "stat": "Reach",
+      "behavior": "Turns the build a corner",
+      "tags": [
+        "beam",
+        "corner",
+        "structure"
+      ]
+    },
+    {
+      "id": "beam_t_tu05x03",
+      "name": "Beam T RND TU05x03",
+      "line": "pro",
+      "family": "beam",
+      "size": "pro",
+      "wave": "W4",
+      "note": "All bores vertical. A cross hole needs perpendicular pins, which arrive with the cross connector (W5).",
+      "build": {
+        "fn": "beam_cells",
+        "cells": [
+          [
+            0,
+            0
+          ],
+          [
+            1,
+            0
+          ],
+          [
+            2,
+            0
+          ],
+          [
+            3,
+            0
+          ],
+          [
+            4,
+            0
+          ],
+          [
+            2,
+            1
+          ],
+          [
+            2,
+            2
+          ]
+        ]
+      },
+      "type": "Beam",
+      "stat": "Reach",
+      "behavior": "Branches the build three ways",
+      "tags": [
+        "beam",
+        "tee",
+        "structure"
+      ]
+    },
+    {
+      "id": "beam_ang45_tu05",
+      "name": "Beam ANG45 TU05",
+      "line": "pro",
+      "family": "beam",
+      "size": "pro",
+      "wave": "W4",
+      "note": "The arm's bores are 1 TU apart in x and y (1.41 TU along the arm), so every bore stays on the lattice. Rounded ends.",
+      "build": {
+        "fn": "beam_path",
+        "path": [
+          [
+            0,
+            0
+          ],
+          [
+            1,
+            0
+          ],
+          [
+            2,
+            0
+          ],
+          [
+            3,
+            1
+          ],
+          [
+            4,
+            2
+          ]
+        ]
+      },
+      "type": "Beam",
+      "stat": "Reach",
+      "behavior": "Bends the build at 45 degrees",
+      "tags": [
+        "beam",
+        "angled",
+        "structure"
+      ]
+    },
+    {
+      "id": "forge_mount_pro",
+      "name": "Forge Mount (hole-grid face)",
+      "line": "pro",
+      "family": "forge_mount",
+      "size": "pro",
+      "wave": "W4",
+      "note": "Same mount definition with the Pro face: a 1 TU plate, free bores on every 5x5 cell centre that clears the 18 mm hole (20 bores).",
+      "build": {
+        "fn": "forge_mount",
+        "face": "bore_grid",
+        "n": 5,
+        "grid": [
+          2,
+          2
+        ]
+      },
+      "type": "Forge Mount",
+      "stat": "Grip",
+      "behavior": "Snaps onto the scanned toy; the grid glows on attach",
+      "tags": [
+        "forge_mount",
+        "adapter",
+        "toy_attach"
+      ]
+    },
+    {
+      "id": "adapter_snap_pro",
+      "name": "Snap-to-Pro Adapter Plate",
+      "line": "pro",
+      "family": "adapter",
+      "size": "pro",
+      "wave": "W4",
+      "note": "3 x 3 TU plate, 1 TU thick: Pro free bores on the 9 cell centres, Small 2x2 studs on the inner cell corners, so each stud stands on solid plate between four bores.",
+      "build": {
+        "fn": "snap_pro_adapter"
+      },
+      "type": "Adapter",
+      "stat": "Grip",
+      "behavior": "Joins Snap parts to Pro beams",
+      "tags": [
+        "adapter",
+        "snap",
+        "pro"
+      ]
+    },
+    {
+      "id": "wheel_tu04",
+      "name": "Wheel TU04",
+      "line": "pro",
+      "family": "wheel",
+      "size": "pro",
+      "wave": "W5",
+      "note": "50 mm. Fixed-bore hub (a flat shaft drives it, or it turns with a shaft in free beam bores); crank bores 1 TU from the axis take pins.",
+      "build": {
+        "fn": "wheel",
+        "diameter_tu": 4
+      },
+      "type": "Wheel",
+      "stat": "Speed",
+      "behavior": "Rolls the build along",
+      "tags": [
+        "wheel",
+        "drive",
+        "motion"
+      ]
+    },
+    {
+      "id": "wheel_tu06",
+      "name": "Wheel TU06",
+      "line": "pro",
+      "family": "wheel",
+      "size": "pro",
+      "wave": "W5",
+      "note": "75 mm. Same hub; crank bores at 1 and 2 TU from the axis.",
+      "build": {
+        "fn": "wheel",
+        "diameter_tu": 6
+      },
+      "type": "Wheel",
+      "stat": "Speed",
+      "behavior": "Rolls the build along",
+      "tags": [
+        "wheel",
+        "drive",
+        "motion"
+      ]
+    },
+    {
+      "id": "hinge_tu02",
+      "name": "Hinge TU02",
+      "line": "pro",
+      "family": "joint",
+      "size": "pro",
+      "wave": "W5",
+      "note": "One leaf; a hinge is two leaves (the second turned 180 degrees) and a free pin through the interleaved knuckles. Knuckle bores print as teardrops.",
+      "build": {
+        "fn": "hinge_leaf"
+      },
+      "type": "Joint",
+      "stat": "Swing",
+      "behavior": "Lets parts fold and swing",
+      "tags": [
+        "hinge",
+        "joint",
+        "pivot"
+      ]
+    },
+    {
+      "id": "cross_connector_tu01",
+      "name": "Cross Connector TU01",
+      "line": "pro",
+      "family": "joint",
+      "size": "pro",
+      "wave": "W5",
+      "note": "2 x 1 x 1 TU: a vertical fixed bore in one cell and a fixed bore along y in the other, so two shafts cross at 90 degrees without meeting.",
+      "build": {
+        "fn": "cross_connector"
+      },
+      "type": "Joint",
+      "stat": "Torque",
+      "behavior": "Turns a shaft through a right angle",
+      "tags": [
+        "connector",
+        "joint",
+        "axle"
+      ]
+    },
+    {
+      "id": "racer_spoiler",
+      "name": "Spoiler",
+      "line": "snap",
+      "family": "racer",
+      "size": "small",
+      "wave": "W6",
+      "note": "Rear wing between two end plates; the wing's underside bridges 18.8 mm between them. Replaces the app's old-grid Spoiler.",
+      "stat": "Speed",
+      "type": "Car add-on",
+      "behavior": "Keeps the car planted at top speed",
+      "tags": [
+        "spoiler",
+        "car",
+        "racer"
+      ],
+      "build": {
+        "fn": "racer_spoiler",
+        "grid": [
+          2,
+          1
+        ],
+        "base": "integrated",
+        "pad": [
+          [
+            -0.5,
+            0
+          ],
+          [
+            0.5,
+            0
+          ]
+        ],
+        "lock": true
+      },
+      "attach": {
+        "kind": "vehicle",
+        "slots": [
+          "rear"
+        ],
+        "front": "-y"
+      }
+    },
+    {
+      "id": "racer_bull_bar",
+      "name": "Bull Bar",
+      "line": "snap",
+      "family": "racer",
+      "size": "small",
+      "wave": "W6",
+      "note": "Front guard: two posts, a grille, three diamond-section bars (no flat undersides).",
+      "stat": "Toughness",
+      "type": "Car add-on",
+      "behavior": "Shrugs off crashes",
+      "tags": [
+        "bumper",
+        "car",
+        "racer"
+      ],
+      "build": {
+        "fn": "racer_bull_bar",
+        "grid": [
+          2,
+          1
+        ],
+        "base": "integrated",
+        "pad": [
+          [
+            -0.5,
+            0
+          ],
+          [
+            0.5,
+            0
+          ]
+        ],
+        "lock": true
+      },
+      "attach": {
+        "kind": "vehicle",
+        "slots": [
+          "front"
+        ],
+        "front": "-y"
+      }
+    },
+    {
+      "id": "racer_hood_scoop",
+      "name": "Hood Scoop",
+      "line": "snap",
+      "family": "racer",
+      "size": "small",
+      "wave": "W6",
+      "note": "Low wedge with an air intake; the intake roof is a 10 mm bridge.",
+      "stat": "Power",
+      "type": "Car add-on",
+      "behavior": "Gulps air for more power",
+      "tags": [
+        "scoop",
+        "car",
+        "racer"
+      ],
+      "build": {
+        "fn": "racer_hood_scoop",
+        "grid": [
+          2,
+          2
+        ],
+        "base": "integrated",
+        "pad": [
+          [
+            -0.5,
+            -0.5
+          ],
+          [
+            0.5,
+            -0.5
+          ],
+          [
+            -0.5,
+            0.5
+          ],
+          [
+            0.5,
+            0.5
+          ]
+        ],
+        "lock": true
+      },
+      "attach": {
+        "kind": "vehicle",
+        "slots": [
+          "hood"
+        ],
+        "front": "-y"
+      }
+    },
+    {
+      "id": "racer_twin_exhaust",
+      "name": "Twin Exhaust",
+      "line": "snap",
+      "family": "racer",
+      "size": "small",
+      "wave": "W6",
+      "note": "Two hollow pipes rising backwards at 40 degrees from a muffler box.",
+      "stat": "Launch",
+      "type": "Car add-on",
+      "behavior": "Blasts off the line",
+      "tags": [
+        "exhaust",
+        "car",
+        "racer"
+      ],
+      "build": {
+        "fn": "racer_twin_exhaust",
+        "grid": [
+          1,
+          2
+        ],
+        "base": "integrated",
+        "pad": [
+          [
+            0,
+            -0.5
+          ],
+          [
+            0,
+            0.5
+          ]
+        ],
+        "lock": true
+      },
+      "attach": {
+        "kind": "vehicle",
+        "slots": [
+          "rear"
+        ],
+        "front": "-y"
+      }
+    },
+    {
+      "id": "racer_light_bar",
+      "name": "Light Bar",
+      "line": "snap",
+      "family": "racer",
+      "size": "small",
+      "wave": "W6",
+      "note": "Low housing with four lamp domes on top.",
+      "stat": "Glow",
+      "type": "Car add-on",
+      "behavior": "Lights up the road ahead",
+      "tags": [
+        "lights",
+        "car",
+        "racer"
+      ],
+      "build": {
+        "fn": "racer_light_bar",
+        "grid": [
+          2,
+          1
+        ],
+        "base": "integrated",
+        "pad": [
+          [
+            -0.5,
+            0
+          ],
+          [
+            0.5,
+            0
+          ]
+        ],
+        "lock": true
+      },
+      "attach": {
+        "kind": "vehicle",
+        "slots": [
+          "roof"
+        ],
+        "front": "symmetric"
+      }
+    },
+    {
+      "id": "racer_roof_rack",
+      "name": "Roof Rack",
+      "line": "snap",
+      "family": "racer",
+      "size": "small",
+      "wave": "W6",
+      "note": "Raised stud deck on four legs; each leg's foot carries a stud hole. Studs on top take more parts.",
+      "stat": "Reach",
+      "type": "Car add-on",
+      "behavior": "Carries more parts up top",
+      "tags": [
+        "rack",
+        "car",
+        "racer"
+      ],
+      "build": {
+        "fn": "racer_roof_rack",
+        "grid": [
+          2,
+          2
+        ],
+        "base": "integrated"
+      },
+      "attach": {
+        "kind": "vehicle",
+        "slots": [
+          "roof"
+        ],
+        "front": "symmetric"
+      }
+    },
+    {
+      "id": "racer_axle_block",
+      "name": "Axle Block",
+      "line": "snap",
+      "family": "racer",
+      "size": "small",
+      "wave": "W6",
+      "note": "A Snap brick with studs on top and a free bore across it; the axle turns in it. Flat underside: it rides on its wheels.",
+      "stat": "Grip",
+      "type": "Wheel set",
+      "behavior": "Holds an axle so wheels can roll",
+      "tags": [
+        "wheels",
+        "axle",
+        "car",
+        "racer"
+      ],
+      "build": {
+        "fn": "racer_axle_block",
+        "grid": [
+          2,
+          2
+        ],
+        "base": "integrated"
+      },
+      "attach": {
+        "kind": "vehicle",
+        "slots": [
+          "wheels"
+        ],
+        "front": "symmetric"
+      }
+    },
+    {
+      "id": "racer_wheel",
+      "name": "Racer Wheel",
+      "line": "snap",
+      "family": "racer",
+      "size": "small",
+      "wave": "W6",
+      "note": "18 mm wheel on a fixed-bore hub; presses onto the axle's flats. Use two per axle.",
+      "stat": "Roll",
+      "type": "Wheel set",
+      "behavior": "Rolls the car along",
+      "tags": [
+        "wheels",
+        "car",
+        "racer"
+      ],
+      "build": {
+        "fn": "racer_wheel",
+        "grid": [
+          1,
+          1
+        ],
+        "base": "integrated"
+      },
+      "attach": {
+        "kind": "vehicle",
+        "slots": [
+          "wheels"
+        ],
+        "front": "symmetric"
+      }
+    },
+    {
+      "id": "racer_axle",
+      "name": "Racer Axle",
+      "line": "snap",
+      "family": "racer",
+      "size": "small",
+      "wave": "W6",
+      "note": "A 3 TU flat shaft, printed lying on a flat. Turns in the axle block; a wheel on each end.",
+      "stat": "Spin",
+      "type": "Wheel set",
+      "behavior": "Joins two wheels through an axle block",
+      "tags": [
+        "wheels",
+        "axle",
+        "car",
+        "racer"
+      ],
+      "build": {
+        "fn": "racer_axle",
+        "grid": [
+          3,
+          1
+        ],
+        "base": "integrated"
+      },
+      "attach": {
+        "kind": "vehicle",
+        "slots": [
+          "wheels"
+        ],
+        "front": "symmetric"
+      }
+    },
+    {
+      "id": "waddle_tail_s",
+      "name": "Waddle Tail",
+      "line": "snap",
+      "family": "addon",
+      "size": "small",
+      "wave": "W7",
+      "note": "The Small Waddle Tail: half the Large tail's size on a two-hole pad. Curls backwards and up.",
+      "stat": "Charm",
+      "type": "Character add-on",
+      "behavior": "Wags when the toy is happy",
+      "tags": [
+        "tail",
+        "back",
+        "character"
+      ],
+      "build": {
+        "fn": "waddle_tail",
+        "grid": [
+          2,
+          2
+        ],
+        "base": "integrated",
+        "pad": [
+          [
+            0,
+            0
+          ],
+          [
+            0,
+            -1
+          ]
+        ],
+        "lock": true,
+        "scale": 0.5
+      },
+      "attach": {
+        "kind": "character",
+        "slots": [
+          "tail"
+        ],
+        "front": "+y"
+      }
+    },
+    {
+      "id": "robot_legs_stomper",
+      "name": "Stomper Legs",
+      "line": "snap",
+      "family": "robot",
+      "size": "small",
+      "wave": "W8",
+      "note": "Big feet carry four stud holes, so the robot stands on any plate; the hips widen from the legs at 41 degrees and carry 2x2 studs.",
+      "stat": "Balance",
+      "type": "Robot part",
+      "behavior": "Stomps along and never tips over",
+      "tags": [
+        "robot",
+        "legs",
+        "bolt"
+      ],
+      "build": {
+        "fn": "robot_legs_stomper",
+        "grid": [
+          2,
+          2
+        ],
+        "base": "integrated"
+      },
+      "attach": {
+        "kind": "robot",
+        "slots": [
+          "legs"
+        ],
+        "front": "-y"
+      }
+    },
+    {
+      "id": "robot_torso_core",
+      "name": "Core Torso",
+      "line": "snap",
+      "family": "robot",
+      "size": "small",
+      "wave": "W8",
+      "note": "A 2x2 brick-sized core with full-height chest vents (no ceilings to bridge).",
+      "stat": "Power",
+      "type": "Robot part",
+      "behavior": "Hums with stored energy",
+      "tags": [
+        "robot",
+        "torso",
+        "bolt"
+      ],
+      "build": {
+        "fn": "robot_torso_core",
+        "grid": [
+          2,
+          2
+        ],
+        "base": "integrated"
+      },
+      "attach": {
+        "kind": "robot",
+        "slots": [
+          "torso"
+        ],
+        "front": "-y"
+      }
+    },
+    {
+      "id": "robot_arms_grabber",
+      "name": "Grabber Arms",
+      "line": "snap",
+      "family": "robot",
+      "size": "small",
+      "wave": "W8",
+      "note": "A 5 mm shoulder yoke with both arms built in, flat at shoulder height; relief cuts under the arms let it rest on any plate.",
+      "stat": "Grip",
+      "type": "Robot part",
+      "behavior": "Picks things up with two-finger claws",
+      "tags": [
+        "robot",
+        "arms",
+        "bolt"
+      ],
+      "build": {
+        "fn": "robot_arms_grabber",
+        "grid": [
+          2,
+          2
+        ],
+        "base": "integrated"
+      },
+      "attach": {
+        "kind": "robot",
+        "slots": [
+          "arms"
+        ],
+        "front": "-y"
+      }
+    },
+    {
+      "id": "robot_head_visor",
+      "name": "Visor Head",
+      "line": "snap",
+      "family": "robot",
+      "size": "small",
+      "wave": "W8",
+      "note": "Visor slot (an 18 mm bridge between closed ends), ear panels down to the bed, studs on top for hats, ears and horns.",
+      "stat": "Awareness",
+      "type": "Robot part",
+      "behavior": "Scans the room through its visor",
+      "tags": [
+        "robot",
+        "head",
+        "bolt"
+      ],
+      "build": {
+        "fn": "robot_head_visor",
+        "grid": [
+          2,
+          1
+        ],
+        "base": "integrated"
+      },
+      "attach": {
+        "kind": "robot",
+        "slots": [
+          "head"
+        ],
+        "front": "-y"
+      }
+    },
+    {
+      "id": "robot_back_jetpack",
+      "name": "Jetpack",
+      "line": "snap",
+      "family": "robot",
+      "size": "small",
+      "wave": "W8",
+      "note": "A 2x1 pack with two domed tanks behind it; sits on the arms' rear studs, behind the head.",
+      "stat": "Lift",
+      "type": "Robot part",
+      "behavior": "Hops higher with a puff of air",
+      "tags": [
+        "robot",
+        "back",
+        "bolt"
+      ],
+      "build": {
+        "fn": "robot_back_jetpack",
+        "grid": [
+          2,
+          1
+        ],
+        "base": "integrated"
+      },
+      "attach": {
+        "kind": "robot",
+        "slots": [
+          "back"
+        ],
+        "front": "-y"
+      }
+    },
+    {
+      "id": "char_head_kid",
+      "name": "Kid Canvas Head",
+      "line": "snap",
+      "family": "addon",
+      "size": "small",
+      "wave": "W9",
+      "note": "Blank-canvas 2x1 character head with smooth decal brow, side ear reliefs and 2x1 crown buds.",
+      "stat": "Glow",
+      "type": "Character head",
+      "behavior": "Swappable Boy/Girl blank-canvas head with 2x1 Spark Crown Buds",
+      "tags": [
+        "character",
+        "head",
+        "kip"
+      ],
+      "build": {
+        "fn": "char_head_kid",
+        "grid": [
+          2,
+          1
+        ],
+        "base": "integrated",
+        "lock": true
+      },
+      "attach": {
+        "kind": "robot",
+        "slots": [
+          "head"
+        ],
+        "front": "-y"
+      }
+    },
+    {
+      "id": "char_head_fox",
+      "name": "Fox Critter Head",
+      "line": "snap",
+      "family": "addon",
+      "size": "small",
+      "wave": "W9",
+      "note": "Fox critter head on a 2x1 neck with swept side cheek ruffs, tapered snout and 2x1 crown buds.",
+      "stat": "Speed",
+      "type": "Character head",
+      "behavior": "Swappable Fox critter head with swept cheek ruffs and 2x1 Crown Buds",
+      "tags": [
+        "character",
+        "head",
+        "critter",
+        "kip"
+      ],
+      "build": {
+        "fn": "char_head_fox",
+        "grid": [
+          2,
+          1
+        ],
+        "base": "integrated",
+        "lock": true
+      },
+      "attach": {
+        "kind": "robot",
+        "slots": [
+          "head"
+        ],
+        "front": "-y"
+      }
+    },
+    {
+      "id": "char_head_bear",
+      "name": "Bear Critter Head",
+      "line": "snap",
+      "family": "addon",
+      "size": "small",
+      "wave": "W9",
+      "note": "Bear cub head on a 2x1 neck with plump muzzle and wide-set round ears flanking 2x1 crown buds.",
+      "stat": "Torque",
+      "type": "Character head",
+      "behavior": "Swappable Bear cub head with round ears flanking 2x1 Crown Buds",
+      "tags": [
+        "character",
+        "head",
+        "critter",
+        "kip"
+      ],
+      "build": {
+        "fn": "char_head_bear",
+        "grid": [
+          2,
+          1
+        ],
+        "base": "integrated",
+        "lock": true
+      },
+      "attach": {
+        "kind": "robot",
+        "slots": [
+          "head"
+        ],
+        "front": "-y"
+      }
+    },
+    {
+      "id": "hair_swoosh",
+      "name": "Swoosh Hair",
+      "line": "snap",
+      "family": "addon",
+      "size": "small",
+      "wave": "W9",
+      "note": "Side-swept wave crest on a 2x1 integrated pad; locks onto any character or robot head crown.",
+      "stat": "Speed",
+      "type": "Crown hair",
+      "behavior": "Side-swept hero wave hair for any 2x1 head crown",
+      "tags": [
+        "character",
+        "hair",
+        "crown",
+        "kip"
+      ],
+      "build": {
+        "fn": "hair_swoosh",
+        "grid": [
+          2,
+          1
+        ],
+        "base": "integrated",
+        "pad": [
+          [
+            -0.5,
+            0
+          ],
+          [
+            0.5,
+            0
+          ]
+        ],
+        "lock": true
+      },
+      "attach": {
+        "kind": "character",
+        "slots": [
+          "head"
+        ],
+        "front": "-y"
+      }
+    },
+    {
+      "id": "hair_pigtails",
+      "name": "Twin-Puff Pigtails",
+      "line": "snap",
+      "family": "addon",
+      "size": "small",
+      "wave": "W9",
+      "note": "Parted crown cap flaring at under 35 degrees to twin side puffs on a 2x1 integrated pad.",
+      "stat": "Spin",
+      "type": "Crown hair",
+      "behavior": "Parted crown cap with bouncy twin side puffs for any 2x1 head crown",
+      "tags": [
+        "character",
+        "hair",
+        "crown",
+        "kip"
+      ],
+      "build": {
+        "fn": "hair_pigtails",
+        "grid": [
+          2,
+          1
+        ],
+        "base": "integrated",
+        "pad": [
+          [
+            -0.5,
+            0
+          ],
+          [
+            0.5,
+            0
+          ]
+        ],
+        "lock": true
+      },
+      "attach": {
+        "kind": "character",
+        "slots": [
+          "head"
+        ],
+        "front": "-y"
+      }
+    },
+    {
+      "id": "hair_curly",
+      "name": "Cloud Curls",
+      "line": "snap",
+      "family": "addon",
+      "size": "small",
+      "wave": "W9",
+      "note": "Volumetric cloud-puff curl crown on a 2x1 integrated pad.",
+      "stat": "Glow",
+      "type": "Crown hair",
+      "behavior": "Volumetric cloud-puff curls for any 2x1 head crown",
+      "tags": [
+        "character",
+        "hair",
+        "crown",
+        "kip"
+      ],
+      "build": {
+        "fn": "hair_curly",
+        "grid": [
+          2,
+          1
+        ],
+        "base": "integrated",
+        "pad": [
+          [
+            -0.5,
+            0
+          ],
+          [
+            0.5,
+            0
+          ]
+        ],
+        "lock": true
+      },
+      "attach": {
+        "kind": "character",
+        "slots": [
+          "head"
+        ],
+        "front": "-y"
+      }
+    },
+    {
+      "id": "hair_mohawk",
+      "name": "Action Mohawk",
+      "line": "snap",
+      "family": "addon",
+      "size": "small",
+      "wave": "W9",
+      "note": "Three-peak action crest on a 2x1 integrated pad.",
+      "stat": "Speed",
+      "type": "Crown hair",
+      "behavior": "Three-peak action crest locked onto 2x1 crown buds",
+      "tags": [
+        "character",
+        "hair",
+        "crown",
+        "kip"
+      ],
+      "build": {
+        "fn": "hair_mohawk",
+        "grid": [
+          2,
+          1
+        ],
+        "base": "integrated",
+        "pad": [
+          [
+            -0.5,
+            0
+          ],
+          [
+            0.5,
+            0
+          ]
+        ],
+        "lock": true
+      },
+      "attach": {
+        "kind": "character",
+        "slots": [
+          "head"
+        ],
+        "front": "-y"
+      }
+    },
+    {
+      "id": "pack_explorer",
+      "name": "Explorer Rucksack",
+      "line": "snap",
+      "family": "addon",
+      "size": "small",
+      "wave": "W9",
+      "note": "2x2 field rucksack with rolled upper bedroll and top 2x1 accessory studs.",
+      "stat": "Torque",
+      "type": "Back add-on",
+      "behavior": "2x2 field backpack with bedroll and top 2x1 accessory studs",
+      "tags": [
+        "character",
+        "back",
+        "pack",
+        "kip"
+      ],
+      "build": {
+        "fn": "pack_explorer",
+        "grid": [
+          2,
+          2
+        ],
+        "base": "integrated",
+        "lock": true
+      },
+      "attach": {
+        "kind": "character",
+        "slots": [
+          "back"
+        ],
+        "front": "-y"
+      }
+    },
+    {
+      "id": "prop_wrench",
+      "name": "Builder Spanner",
+      "line": "pro",
+      "family": "shaft",
+      "size": "pro",
+      "wave": "W9",
+      "note": "Open-jaw spanner on a 3 TU 6.6 mm flat-sided Pro grip shaft; prints lying on a flat.",
+      "stat": "Torque",
+      "type": "Hand prop",
+      "behavior": "Open-jaw spanner on a 6.6 mm flat Pro grip shaft",
+      "tags": [
+        "prop",
+        "hand",
+        "tool",
+        "kip"
+      ],
+      "build": {
+        "fn": "prop_wrench",
+        "grip_tu": 3
+      }
+    },
+    {
+      "id": "prop_star_shield",
+      "name": "Star Emblem Wand",
+      "line": "pro",
+      "family": "shaft",
+      "size": "pro",
+      "wave": "W9",
+      "note": "Five-point rounded star emblem on a 2 TU 6.6 mm flat-sided Pro grip shaft; prints lying on a flat.",
+      "stat": "Glow",
+      "type": "Hand prop",
+      "behavior": "Five-point rounded star shield/wand on a 6.6 mm flat Pro grip shaft",
+      "tags": [
+        "prop",
+        "hand",
+        "shield",
+        "kip"
+      ],
+      "build": {
+        "fn": "prop_star_shield",
+        "grip_tu": 2
+      }
+    },
+    {
+      "id": "prop_skateboard_deck",
+      "name": "Street Skateboard Deck",
+      "line": "snap",
+      "family": "vehicle",
+      "size": "small",
+      "wave": "W9",
+      "note": "2x4 stud deck with two horizontal teardrop free axle bores for Wave 6 racer axles and wheels.",
+      "stat": "Speed",
+      "type": "Foot vehicle",
+      "behavior": "2x4 stud deck with two free axle bores for Wave 6 racer axles and wheels",
+      "tags": [
+        "prop",
+        "vehicle",
+        "skateboard",
+        "kip"
+      ],
+      "build": {
+        "fn": "prop_skateboard_deck",
+        "grid": [
+          2,
+          4
+        ],
+        "base": "integrated"
+      }
+    },
+    {
+      "id": "char_legs_seated",
+      "name": "Seated Snap Legs",
+      "line": "snap",
+      "family": "addon",
+      "size": "small",
+      "wave": "W9",
+      "note": "One-piece 90-degree seated 2x2 Snap lower body: 2x2 seat sockets underneath and 2x2 waist studs on top.",
+      "stat": "Torque",
+      "type": "Character legs",
+      "behavior": "90-degree seated 2x2 Snap lower body for cars, trucks, and scooters",
+      "tags": [
+        "character",
+        "legs",
+        "seated",
+        "kip"
+      ],
+      "build": {
+        "fn": "char_legs_seated",
+        "grid": [
+          2,
+          2
+        ],
+        "base": "integrated",
+        "lock": true
+      },
+      "attach": {
+        "kind": "robot",
+        "slots": [
+          "legs"
+        ],
+        "front": "-y"
+      }
+    },
+    {
+      "id": "veh_car_chassis",
+      "name": "Roadster Car Chassis",
+      "line": "snap",
+      "family": "vehicle",
+      "size": "small",
+      "wave": "W9",
+      "note": "4x10 TU modular roadster chassis with 4x2 recessed cockpit, five Wave 6 Racer add-on ports, dash steering bore and two X-axle bores.",
+      "stat": "Speed",
+      "type": "Vehicle chassis",
+      "behavior": "4x10 TU modular roadster accepting Wave 6 racer add-ons and Wave 5 wheels",
+      "tags": [
+        "vehicle",
+        "car",
+        "racer",
+        "kip"
+      ],
+      "build": {
+        "fn": "veh_car_chassis",
+        "grid": [
+          4,
+          10
+        ],
+        "base": "integrated"
+      }
+    },
+    {
+      "id": "veh_steering_wheel",
+      "name": "Roadster Steering Wheel",
+      "line": "pro",
+      "family": "pin",
+      "size": "pro",
+      "wave": "W9",
+      "note": "Three-spoke steering wheel printed flat on its rim with an upright 2 TU free-pin steering stem.",
+      "stat": "Spin",
+      "type": "Vehicle control",
+      "behavior": "Three-spoke steering wheel on a turning Pro free-pin stem",
+      "tags": [
+        "vehicle",
+        "car",
+        "truck",
+        "kip"
+      ],
+      "build": {
+        "fn": "veh_steering_wheel",
+        "stem_tu": 2
+      }
+    },
+    {
+      "id": "veh_truck_chassis",
+      "name": "Hauler Truck Chassis",
+      "line": "snap",
+      "family": "vehicle",
+      "size": "small",
+      "wave": "W9",
+      "note": "4x12 TU modular pickup truck sharing the roadster front cab, plus a 2x2 cab roof arch and open 4x3 stud cargo bed.",
+      "stat": "Torque",
+      "type": "Vehicle chassis",
+      "behavior": "4x12 TU modular pickup truck with 4x3 stud cargo bed and roof rack mount",
+      "tags": [
+        "vehicle",
+        "truck",
+        "hauler",
+        "kip"
+      ],
+      "build": {
+        "fn": "veh_truck_chassis",
+        "grid": [
+          4,
+          12
+        ],
+        "base": "integrated"
+      }
+    },
+    {
+      "id": "veh_scooter_frame",
+      "name": "2-in-1 Scooter Frame",
+      "line": "snap",
+      "family": "vehicle",
+      "size": "small",
+      "wave": "W9",
+      "note": "2x10 TU step-through scooter frame with 2x2 floorboard, raised 2x2 saddle, headtube steering bore and rear exhaust port.",
+      "stat": "Speed",
+      "type": "Vehicle chassis",
+      "behavior": "2x10 TU step-through scooter frame convertible to a sport motorbike",
+      "tags": [
+        "vehicle",
+        "scooter",
+        "motorbike",
+        "kip"
+      ],
+      "build": {
+        "fn": "veh_scooter_frame",
+        "grid": [
+          2,
+          10
+        ],
+        "base": "integrated"
+      }
+    },
+    {
+      "id": "veh_handlebar_fork",
+      "name": "Scooter Handlebar Stem",
+      "line": "pro",
+      "family": "shaft",
+      "size": "pro",
+      "wave": "W9",
+      "note": "T-bar steering stem with twin 6.6 mm Pro-shaft handgrips; prints lying on a flat.",
+      "stat": "Spin",
+      "type": "Vehicle control",
+      "behavior": "Turning Pro steering stem with twin 6.6 mm C-grip handlebars",
+      "tags": [
+        "vehicle",
+        "scooter",
+        "motorbike",
+        "kip"
+      ],
+      "build": {
+        "fn": "veh_handlebar_fork",
+        "stem_tu": 2
+      }
+    },
+    {
+      "id": "veh_moto_cowling",
+      "name": "Sport Moto Cowling",
+      "line": "snap",
+      "family": "vehicle",
+      "size": "small",
+      "wave": "W9",
+      "note": "2x2 snap-on straddle fuel tank and windscreen converting the 2-in-1 Scooter into a Sport Motorbike.",
+      "stat": "Speed",
+      "type": "Vehicle add-on",
+      "behavior": "2x2 snap-on straddle fuel tank and windscreen converting Scooter to Motorbike",
+      "tags": [
+        "vehicle",
+        "motorbike",
+        "addon",
+        "kip"
+      ],
+      "build": {
+        "fn": "veh_moto_cowling",
+        "grid": [
+          2,
+          2
+        ],
+        "base": "integrated",
+        "lock": true
+      },
+      "attach": {
+        "kind": "vehicle",
+        "slots": [
+          "hood"
+        ],
+        "front": "-y"
+      }
+    }
+  ],
+  "families": {
+    "block": "Brick or plate: studs on top, socket underside. build: kind (brick|plate), grid [nx, ny].",
+    "tile": "Flat top, socket underside only. build: grid.",
+    "slope": "Female-only wedge with a 45 degree face on the standard foot. build: grid.",
+    "dome": "Female-only dome on the standard foot. build: grid.",
+    "addon": "Bespoke character shape with an integrated base: stud holes cut into its own underside (or a small pad). build: fn, grid, base, optional pad and lock.",
+    "capsule": "Bespoke function shell with an integrated base. build: fn, grid, base, optional pad and lock.",
+    "forge_mount": "Shared mount with a face option. build: fn, face, grid (reference grid).",
+    "_note": "A row without `build` is planned. Adding `build`, `type`, `behavior` and `tags` to a row registers it with the generator: one catalog row per new part.",
+    "racer": "Racer set (Forge Club Month 1): car add-ons with integrated bases, plus a wheel set (axle block, wheel, axle). build: fn, grid, base, optional pad and lock.",
+    "robot": "Snap robots: five slots that stack on studs (legs, torso, arms, head on the front row, back pack on the rear row). build: fn, grid, base integrated.",
+    "vehicle": "Modular 12.5 mm TU vehicles and decks: recessed stud cockpits, Wave 6 Racer add-on ports, Pro steering bores and horizontal teardrop axle bores. build: fn, grid, base integrated, optional lock."
+  }
+}

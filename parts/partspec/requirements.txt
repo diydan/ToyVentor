@@ -1,0 +1,9 @@
+# ToyVentor PartSpec v2 Python dependencies (see THIRD_PARTY.md for licences).
+manifold3d
+trimesh
+numpy
+scipy
+jsonschema
+pygltflib
+# Optional — preview/diagnostic PNG renderers only:
+# matplotlib

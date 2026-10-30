@@ -10,18 +10,20 @@ Snap sits on the shared lattice: 1 TU = 12.5 mm, the same unit as Pro.
 
 | | Small | Large |
 | --- | --- | --- |
-| For | Ages 3 and up | The youngest children; must clear the small-parts cylinder |
+| For | Ages 3 and up (the only size offered) | Parked: the youngest children; would have to clear the small-parts cylinder |
 | Stud pitch | 12.5 mm (1 TU) | 25.0 mm (2 TU) |
 | Stud | 6.6 mm across, 2.8 mm tall | 13.2 mm across, 5.6 mm tall |
 | Plate / brick height | 5.0 / 15.0 mm | 10.0 / 30.0 mm |
 | Wall | 2.0 mm | 3.0 mm |
 | Stud fit | 0.1 mm across (0.05 mm a side) | 0.1 mm across (0.05 mm a side) |
 
+Snap is ages 3 and up only: Small is the one size offered. Large was parked on 2026-10-28. Its parts stay verified in the repo but are not exported, printed or extended until the line returns.
+
 Large is twice Small on every lattice dimension, so both share one grid. Small studs are the same diameter as the Pro shaft and sit on the Pro hole grid; Large studs land on every other Pro hole.
 
 Nothing has been printed yet: every fit number is a target until a calibration print sets the printer offsets.
 
-The lattice was decided on 2026-10-28 (8/16 mm became 12.5/25 mm). It holds on one condition, checked at the calibration print: a printed Large 2x2 must feel right in a toddler's hand and on a real toy. If it is too big, Large shrinks on this same lattice rather than returning to 16 mm.
+The lattice was decided on 2026-10-28 (8/16 mm became 12.5/25 mm). Its one condition, a hand-feel check of a printed Large 2x2, was withdrawn the same day when Large was parked.
 
 ## Part types
 
@@ -64,8 +66,8 @@ The lattice was decided on 2026-10-28 (8/16 mm became 12.5/25 mm). It holds on o
 ## Safety
 
 - Every part is screened against the small-parts test cylinder (31.75 mm across, 25.4 to 57.1 mm deep). The screen is conservative and is not a lab test.
-- Small parts are for ages 3 and up and carry the choking-hazard warning.
-- Anything for under 3 must be Large, clear the cylinder, pass the breakage check (nothing that breaks off may fit the cylinder) and be lab tested before sale.
+- Snap is for ages 3 and up. Its parts are small parts and carry the choking-hazard warning.
+- Nothing is offered for under 3. If Large returns, its parts must clear the cylinder, pass the breakage check (nothing that breaks off may fit the cylinder) and be lab tested before sale.
 - Every printed part carries the general notice: not tested to toy-safety standards, adult supervision, inspect before use, stop using anything broken.
 - The US requirements and their status are in the compliance checklist.
 
@@ -92,11 +94,10 @@ Fit is measured from the built geometry: each part is seated on its partner and 
 
 ## Open items
 
-- Large hand-feel check (the condition on the lattice decision): print a Large 2x2 at calibration and try it in a toddler's hand and on a real toy.
-- Calibration print: sets printer offsets and turns fit targets into measurements. Pass criterion: the printer's surface offset lands inside every part's fit window (about -0.07 to +0.08 mm). For users this must stay invisible: the plan is a first-print Forge Mount whose breakaway selector strip carries three dotted sockets spanning the fit window, so one "which clicked best?" answer sets the offset (app-side prototype exists on the old 16 mm lattice in parts/mount/forge-mount-first-print.scad; it needs rebuilding on the TU lattice and validating against these fit windows). The standalone calibration print remains the engineering tool.
+- Calibration print: sets printer offsets and turns fit targets into measurements. Pass criterion: the printer's surface offset lands inside every part's fit window (about -0.07 to +0.08 mm).
 - Printed-fit and breakage checks for every part.
 - The minimo animation contract.
-- Product name: renamed to ToyVentor on 2026-10-28 after the old name screened as used by others in toys; trademark clearance and registration for ToyVentor still to confirm before launch.
+- Product name: ToyVentor (toyventor.com) replaces the earlier name. Run a trademark search before launch; the nearest names found on the web are a toy-collector magazine called Toy-Ventures and a new toy venture called ToyVerse.
 
 ## Done when
 

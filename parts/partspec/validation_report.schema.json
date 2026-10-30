@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://toyventor.com/schemas/validation_report.schema.json",
+  "title": "ToyVentor pre-print validation report",
+  "description": "One report per STL, written by preprint_check.py. The app reads verdict, summary and print_settings; metrics and slicer feed pricing and print queues.",
+  "type": "object",
+  "required": ["validator", "file", "part_id", "profile", "checked_at", "verdict", "summary", "checks", "metrics", "print_settings"],
+  "properties": {
+    "validator": {"type": "string", "description": "Tool and version, e.g. 'preprint_check 1.0.0'."},
+    "file": {"type": "string"},
+    "part_id": {"type": "string", "description": "Catalog id, or the file stem for an uploaded or generated STL."},
+    "profile": {"type": "string", "description": "Print profile id from print_profiles/."},
+    "checked_at": {"type": "string", "format": "date-time"},
+    "verdict": {
+      "enum": ["pass", "pass_with_settings", "pass_with_warnings", "fail"],
+      "description": "pass: print as is. pass_with_settings: print with print_settings applied. pass_with_warnings: printable, but show the warnings. fail: do not print or sell."
+    },
+    "summary": {"type": "string", "description": "One line for the UI."},
+    "checks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "level", "result"],
+        "properties": {
+          "id": {"type": "string", "description": "V* checks are geometry (always run); S* checks come from the slicer."},
+          "level": {"enum": ["block", "warn", "info"]},
+          "result": {"enum": ["pass", "warn", "fail"]},
+          "value": {},
+          "limit": {},
+          "detail": {"type": "string"}
+        }
+      }
+    },
+    "metrics": {
+      "type": "object",
+      "properties": {
+        "bbox_mm": {"type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3},
+        "volume_cm3": {"type": ["number", "null"]},
+        "surface_cm2": {"type": "number"},
+        "triangles": {"type": "integer"},
+        "layers": {"type": "integer"},
+        "height_mm": {"type": "number"},
+        "bed_contact_mm2": {"type": "number"},
+        "slenderness": {"type": ["number", "null"], "description": "Height divided by the square root of the bed contact area."},
+        "centre_of_mass_over_contact": {"type": ["boolean", "null"]},
+        "min_wall_mm": {"type": ["number", "null"]},
+        "min_wall_at_mm": {"type": ["array", "null"], "items": {"type": "number"}},
+        "ledges": {"type": "array", "description": "Flat undersides held on one side only: z, area and a point near the worst one."}
+      }
+    },
+    "bridges": {"type": "array", "items": {"type": "object", "properties": {"z_mm": {"type": "number"}, "span_mm": {"type": "number"}, "area_mm2": {"type": "number"}}}},
+    "print_settings": {
+      "type": "object",
+      "description": "Per-part settings the print must use, e.g. a brim. Empty when the profile's defaults are enough.",
+      "properties": {"brim_width_mm": {"type": "number"}}
+    },
+    "slicer": {
+      "type": ["object", "null"],
+      "description": "Null when no slicer was available (geometry checks only).",
+      "properties": {
+        "engine": {"type": "string"},
+        "ok": {"type": "boolean"},
+        "brim_mm": {"type": "number"},
+        "filament_g": {"type": "number"},
+        "filament_m": {"type": "number"},
+        "filament_cost_usd": {"type": "number", "description": "Filament only, at the profile's price per kg. Not a print price."},
+        "print_time_s": {"type": ["integer", "null"]},
+        "layers": {"type": "integer"},
+        "warnings": {"type": "array", "items": {"type": "string"}},
+        "warnings_without_brim": {"type": "array", "items": {"type": "string"}},
+        "brims_tried_mm": {"type": "array", "items": {"type": "number"}},
+        "seconds_to_slice": {"type": "number"},
+        "slice_logic": {"type": "string", "description": "Version of the slicing stage; a cached slice is reused while it, the file fingerprint and the profile match."},
+        "reused_from": {"type": "string", "description": "When this slice was reused from an earlier report, that report's check time."}
+      }
+    }
+  }
+}

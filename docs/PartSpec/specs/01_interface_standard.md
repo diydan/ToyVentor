@@ -1,6 +1,6 @@
 # ToyVentor Interface Standard v0.4.0-draft
 
-> **Status:** TARGETS ONLY - nothing has been printed yet. Values lock after the calibration piece has been through fit loops on a real printer. All 60 catalog parts pass the geometry and fit checks; the printed-fit and breakage checks stay pending until a real print.
+> **Status:** TARGETS ONLY - nothing has been printed yet. Values lock after the calibration piece has been through fit loops on a real printer. Verified so far only for brick, plate and Forge Mount geometry; add-ons and capsules still need re-proportioning to the TU lattice.
 
 This document is generated from `interfaces.json`. Edit the JSON, not this file.
 
@@ -12,7 +12,7 @@ Every interface pitch is an integer multiple of the TU, so all product lines sha
 
 **Nesting:** Snap Large studs land on every other Pro bore position; Snap Small studs land on every Pro bore position.
 
-**Decision:** Decided 2026-10-28 by Dan: Snap moves from 8/16 mm to 12.5/25 mm so Snap and Pro share one lattice. Condition: at the calibration print, check that a printed Large 2x2 feels right in a toddler's hand and on a real toy. If it is too big, shrink Large on this same lattice; do not return to 16 mm.
+**Decision:** Decided 2026-10-28 by Dan: Snap moves from 8/16 mm to 12.5/25 mm so Snap and Pro share one lattice. Its one condition (a hand-feel check of a printed Large 2x2) was withdrawn the same day, when Snap became ages 3 and up only and Large was parked.
 
 ## 2. Interfaces
 
@@ -96,6 +96,7 @@ Severity is data: each check's level lives in `interfaces.json` and nowhere else
 | `G5_fits_bed` | geometry | block | Bounding box fits limits.bed_mm. |
 | `P1_no_supports` | printability | block | Downward-facing surface steeper than limits.max_overhang_deg totals less than limits.steep_overhang_max_mm2 (flat bridges and the first layers are handled separately). |
 | `P2_bridge_span` | printability | block | Longest unsupported flat span (cavity roof) is within limits.max_bridge_mm. |
+| `P4_no_ledges` | printability | block | Every flat downward face is a real bridge: each point has support on both sides along some straight line within limits.max_bridge_mm, or lies within limits.ledge_cantilever_mm of support. Ledges held on one side only total less than limits.ledge_max_mm2. |
 | `P3_wall_min` | printability | info | Design wall thickness is at least limits.min_wall_mm (3 perimeters of a 0.4 mm nozzle). |
 | `I1_lattice` | interface | warn | Interface pitch is an integer multiple or divisor of lattice.unit_mm. |
 | `I2_connectors_on_part` | interface | block | Every connector cell lies on the part. |
@@ -109,6 +110,7 @@ Severity is data: each check's level lives in `interfaces.json` and nowhere else
 | `I4_bore_on_grid` | interface | block | Every bore is on the lattice and really exists. Bores are a multiple of 1/8 TU apart and sit on the centre of a cell measured from the part's corner (beams and plates) or on the part's axis (gears and wheels). A bore exists when an empty probe fits inside it and there is material in a ring just outside. |
 | `I5_pin_fits_bore` | interface | block | Every pin and bore is accepted by at least one pin_bore rule, and the built section matches the interface numbers (free bore 7.0, fixed bore 5.1 flats, shaft 6.6 round with 5.0 flats). The measured clearance is T1 and T2. |
 | `I6_gear_on_grid` | interface | block | A gear's module equals the interface module, its pitch diameter is a whole number of TU (so any two gears centre on the 0.5 TU grid), and the built tip diameter matches module x (teeth + 2). |
+| `I7_hole_roof` | interface | block | Every integrated stud hole is closed by at least 1.2 mm of material above its ceiling (six layers), so no hole opens into the part's surface. The builder adds a boss, clipped to the part's own footprint, where the shape is thinner. |
 
 Each check says where it applies (`applies`: connector kinds or part families). A check that applies to a part must be emitted for it. A check that applies to no part yet is dormant, and the build still tests it with fixtures.
 
@@ -135,7 +137,7 @@ Fit is measured, not assumed. After a part is built it is seated on its matching
 
 TARGETS until the calibration print. A surface offset moves every material surface by that amount, so a stud and a tube that both print oversize by e lose 2e of radial gap. Surface error is the spread left after a printer's offsets are applied. Max interference is the deepest radial interference still pushable by hand; max play is the loosest radial clearance still held firmly.
 
-**Limits used by the checks:** `max_overhang_deg` = 45, `bed_mm` = [180, 180, 180], `max_bridge_mm` = 20, `first_layer_exclusion_mm` = 0.7, `min_wall_mm` = 1.2, `steep_overhang_max_mm2` = 1.0, `seat_overlap_max_mm3` = 0.5, `addon_body_scale` = 1.5625, `addon_body_scale_note` = 12.5 / 8: add-on body dimensions drawn for the old 8 mm lattice scale by this; wall, clearance, fillet and embed constants stay fixed (Snap v2.1)., `fit_segments` = 96, `fit_segments_note` = Polygon count for every fit-critical cylinder (studs, tubes). At 32 the chord error on a Large stud was about 0.03 mm, as big as the 0.05 mm design gap..
+**Limits used by the checks:** `max_overhang_deg` = 45, `bed_mm` = [180, 180, 180], `max_bridge_mm` = 20, `first_layer_exclusion_mm` = 0.7, `min_wall_mm` = 1.2, `steep_overhang_max_mm2` = 1.0, `seat_overlap_max_mm3` = 0.5, `addon_body_scale` = 1.5625, `addon_body_scale_note` = 12.5 / 8: add-on body dimensions drawn for the old 8 mm lattice scale by this; wall, clearance, fillet and embed constants stay fixed (Snap v2.1)., `fit_segments` = 96, `fit_segments_note` = Polygon count for every fit-critical cylinder (studs, tubes). At 32 the chord error on a Large stud was about 0.03 mm, as big as the 0.05 mm design gap., `min_roof_mm` = 1.2, `ledge_max_mm2` = 1.0, `ledge_cantilever_mm` = 1.0.
 
 ## 6. Safety and the print page
 

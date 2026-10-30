@@ -1,0 +1,478 @@
+{
+  "standard": "ToyVentor Interface Standard",
+  "version": "0.4.0-draft",
+  "status": "TARGETS ONLY - nothing has been printed yet. Values lock after the calibration piece has been through fit loops on a real printer. Verified so far only for brick, plate and Forge Mount geometry; add-ons and capsules still need re-proportioning to the TU lattice.",
+  "units": "mm",
+  "lattice": {
+    "unit_name": "TU",
+    "unit_mm": 12.5,
+    "rule": "Every interface pitch is an integer multiple of the TU, so all product lines share one lattice. Snap Small = 1 TU, Snap Large = 2 TU, Pro holes = 1 TU (halving to 1/8 TU).",
+    "nesting": "Snap Large studs land on every other Pro bore position; Snap Small studs land on every Pro bore position.",
+    "decision": "Decided 2026-10-28 by Dan: Snap moves from 8/16 mm to 12.5/25 mm so Snap and Pro share one lattice. Its one condition (a hand-feel check of a printed Large 2x2) was withdrawn the same day, when Snap became ages 3 and up only and Large was parked."
+  },
+  "limits": {
+    "max_overhang_deg": 45,
+    "bed_mm": [
+      180,
+      180,
+      180
+    ],
+    "max_bridge_mm": 20,
+    "first_layer_exclusion_mm": 0.7,
+    "min_wall_mm": 1.2,
+    "steep_overhang_max_mm2": 1.0,
+    "seat_overlap_max_mm3": 0.5,
+    "addon_body_scale": 1.5625,
+    "addon_body_scale_note": "12.5 / 8: add-on body dimensions drawn for the old 8 mm lattice scale by this; wall, clearance, fillet and embed constants stay fixed (Snap v2.1).",
+    "fit_segments": 96,
+    "fit_segments_note": "Polygon count for every fit-critical cylinder (studs, tubes). At 32 the chord error on a Large stud was about 0.03 mm, as big as the 0.05 mm design gap.",
+    "min_roof_mm": 1.2,
+    "ledge_max_mm2": 1.0,
+    "ledge_cantilever_mm": 1.0
+  },
+  "safety": {
+    "small_parts_cylinder": {
+      "diameter_mm": 31.75,
+      "depth_min_mm": 25.4,
+      "depth_max_mm": 57.1,
+      "note": "US 16 CFR 1501 / EN 71-1 style test; a part (or any piece that can break off) that fits entirely inside, in any orientation, is a small part."
+    },
+    "marginal_pct": 10
+  },
+  "interfaces": {
+    "stud_small": {
+      "kind": "stud_grid",
+      "size_class": "small",
+      "fit_class": "FRICTION",
+      "pitch": 12.5,
+      "stud_d": 6.6,
+      "stud_h": 2.8,
+      "fit": 0.1,
+      "wall": 2.0,
+      "gap": 0.1,
+      "edge_r": 1.5,
+      "bed_chamfer": 0.5,
+      "plate_h": 5.0,
+      "brick_h": 15.0,
+      "plate_top": 1.5,
+      "brick_top": 2.0,
+      "note": "Stud diameter equals the Pro shaft diameter (6.6), so it also fits a Pro 7.0 mm bore."
+    },
+    "stud_large": {
+      "kind": "stud_grid",
+      "size_class": "large",
+      "fit_class": "FRICTION",
+      "pitch": 25.0,
+      "stud_d": 13.2,
+      "stud_h": 5.6,
+      "fit": 0.1,
+      "wall": 3.0,
+      "gap": 0.15,
+      "edge_r": 2.4,
+      "bed_chamfer": 0.6,
+      "plate_h": 10.0,
+      "brick_h": 30.0,
+      "plate_top": 3.0,
+      "brick_top": 3.0,
+      "note": "Exactly 2x Small on every lattice dimension. For the youngest kids; must clear the small-parts cylinder."
+    },
+    "bore_grid": {
+      "kind": "bore_grid",
+      "size_class": "pro",
+      "fit_class": "PIN",
+      "pitch_tu": 1.0,
+      "free_d": 7.0,
+      "fixed_flats": 5.1,
+      "shaft_d": 6.6,
+      "shaft_flats": 5.0,
+      "shaft_center_hole": 2.0,
+      "note": "Pro hole grid. Free bore: shaft turns. Fixed bore: shaft drives."
+    },
+    "pin_friction": {
+      "kind": "pin",
+      "size_class": "pro",
+      "fit_class": "PIN",
+      "pitch_tu": 1.0,
+      "shaft_d": 6.6,
+      "shaft_flats": 5.0,
+      "shaft_center_hole": 2.0,
+      "fin_oversize_mm": 1.5,
+      "note": "Friction pin: flat-sided core (6.6 round, 5.0 flats) split by a lengthwise slot so the two halves flex; a fin on each round side at the centre of every TU of length stands fin_oversize_mm wider across than the free bore (TARGET, tuned on the calibration piece; PETG may be needed). Prints lying on a flat.",
+      "profile": "friction",
+      "slot_width_mm": 1.6,
+      "slot_end_mm": 3.0,
+      "fin_length_mm": 4.0
+    },
+    "pin_free": {
+      "kind": "pin",
+      "size_class": "pro",
+      "fit_class": "PIN_FREE",
+      "pitch_tu": 1.0,
+      "profile": "round",
+      "shaft_d": 6.6,
+      "note": "Plain round pin with a head that stops it on the beam face: turns in a free bore. Prints standing on its head.",
+      "head_d_mm": 9.0,
+      "head_h_mm": 1.5
+    },
+    "shaft_drive": {
+      "kind": "pin",
+      "size_class": "pro",
+      "fit_class": "PIN_DRIVE",
+      "pitch_tu": 1.0,
+      "profile": "flats",
+      "shaft_d": 6.6,
+      "shaft_flats": 5.0,
+      "shaft_center_hole": 2.0,
+      "note": "Shaft with flats: turns in a free bore, drives in a fixed bore. Prints lying on a flat; the centre hole is a teardrop so it needs no support."
+    }
+  },
+  "mates": [
+    {
+      "male": "stud_grid",
+      "female": "socket_grid",
+      "rule": "same size_class; opposed normals; seat planes coincide; cell centres coincide"
+    },
+    {
+      "male": "pin",
+      "female": "bore_grid",
+      "rule": "pin profile fits bore class (free or fixed); axes coincide"
+    }
+  ],
+  "forge_mount": {
+    "definition": "ONE part family for both product lines. It gives a scanned toy a connector face.",
+    "frame": {
+      "origin": "centre of the toy attach point, on the mount's underside plane",
+      "z": "points away from the toy (outward)",
+      "x": "toy forward axis as captured by the scan"
+    },
+    "attach": {
+      "hole_d_default_mm": 18.0,
+      "lead_in_mm": 1.6,
+      "crush_ribs": 3,
+      "rib_w_mm": 2.0,
+      "rib_h_mm": 1.2,
+      "note": "hole_d comes from the scan at generation time; 18 mm is a stand-in."
+    },
+    "face_options": [
+      "stud_large",
+      "stud_small",
+      "bore_grid"
+    ],
+    "demo_choice": "stud_small",
+    "rule": "A mount carries exactly one face option. Pro and Snap share the frame, the attach method and the generator; they differ only in the face option.",
+    "grid_rule": "A stud is omitted if its edge lies within hole_d/2 + lead_in + 0.5 mm of the attach centre. At least 4 studs must remain, otherwise use a larger grid.",
+    "outlines": {
+      "square": "n x n grid (n from the catalog row).",
+      "round": "A disc outer_d across, sized from the scan, filled with every lattice position whose stud or bore fits inside the rim and clears the attach hole. Studs take whichever lattice phase (on the axis, or half a pitch off) seats a 2x2 part best; Pro bores stay a whole number of TU from the axis. The generator refuses a mount on which a 2x2 part would grip fewer than 3 studs: with an 18 mm hole that is about 64 mm across for Small and 100 mm for Large, against 62 and 75 mm for the square mounts, because a circle loses the corners."
+    },
+    "shoe": {
+      "gap_mm": 0.2,
+      "skin_mm": 2.0,
+      "join_wall_mm": 1.0,
+      "note": "Hugging Forge Mount, two parts: a shoe whose underside follows the toy (from the scan) and the usual mount face on top. The shoe prints with its hugging face up, so it needs no supports and touches the toy everywhere. Small and Pro faces join the shoe with friction pins through holes between the studs (Small) or through the face's own bores (Pro). Large faces are for under-3s: a pin that can be pulled out is a small part, so a Large face joins its shoe permanently and the generator refuses pins for it.",
+      "clip": {
+        "wall_mm": 2.2,
+        "hug_half_deg": 60,
+        "gamma_min_deg": 12,
+        "gamma_max_deg": 30,
+        "max_strain_pct": 2.0,
+        "note": "Clip-on shoe for limbs and tails: a C wall wraps the limb 2 x (90 + gamma) degrees, gamma past the widest point on each side, so the opening is narrower than the limb and the shoe snaps on. Gamma never exceeds 45 degrees, so the curled lips print without supports. The generator picks the largest gamma whose estimated bending strain stays within max_strain_pct (a TARGET for PLA; PETG allows more) and refuses a limb where no gamma works. The strain is a curved-beam estimate; the real snap needs a print test. Each arm must also open at least min_snap_mm (five times the calibrated print error), or the clip would not really grip.",
+        "min_snap_mm": 0.25
+      }
+    }
+  },
+  "print_page_warnings": {
+    "always": "Printed at home or by a print service. Not tested to toy-safety standards. Adult supervision required. Check for cracks, sharp edges and loose pieces before each use, and stop using anything that has broken.",
+    "small_part": "CHOKING HAZARD - Small parts. Not for children under 3 years.",
+    "marginal": "This part is close to the small-parts size limit. Treat it as not suitable for children under 3 years.",
+    "above_cylinder": "Larger than the small-parts test size in our size check. This is not a safety certification, and it is not rated for children under 3 years."
+  },
+  "fit_note": "Each size has its own clearance value (stud_small.fit, stud_large.fit). Both start at 0.10 mm as placeholders. Print clearance does not scale linearly with part size, so Large is expected to need more; the calibration piece sets both.",
+  "checks": {
+    "G1_watertight": {
+      "group": "geometry",
+      "level": "block",
+      "description": "Mesh is closed (no holes)."
+    },
+    "G2_winding": {
+      "group": "geometry",
+      "level": "block",
+      "description": "Triangle winding is consistent (no flipped faces)."
+    },
+    "G3_single_body": {
+      "group": "geometry",
+      "level": "block",
+      "description": "Exactly one connected body."
+    },
+    "G4_on_bed": {
+      "group": "geometry",
+      "level": "block",
+      "description": "Lowest point is exactly on the bed plane (z = 0)."
+    },
+    "G5_fits_bed": {
+      "group": "geometry",
+      "level": "block",
+      "description": "Bounding box fits limits.bed_mm."
+    },
+    "P1_no_supports": {
+      "group": "printability",
+      "level": "block",
+      "description": "Downward-facing surface steeper than limits.max_overhang_deg totals less than limits.steep_overhang_max_mm2 (flat bridges and the first layers are handled separately)."
+    },
+    "P2_bridge_span": {
+      "group": "printability",
+      "level": "block",
+      "description": "Longest unsupported flat span (cavity roof) is within limits.max_bridge_mm."
+    },
+    "P4_no_ledges": {
+      "group": "printability",
+      "level": "block",
+      "description": "Every flat downward face is a real bridge: each point has support on both sides along some straight line within limits.max_bridge_mm, or lies within limits.ledge_cantilever_mm of support. Ledges held on one side only total less than limits.ledge_max_mm2."
+    },
+    "P3_wall_min": {
+      "group": "printability",
+      "level": "info",
+      "description": "Design wall thickness is at least limits.min_wall_mm (3 perimeters of a 0.4 mm nozzle)."
+    },
+    "I1_lattice": {
+      "group": "interface",
+      "level": "warn",
+      "description": "Interface pitch is an integer multiple or divisor of lattice.unit_mm.",
+      "applies": {
+        "always": true
+      }
+    },
+    "I2_connectors_on_part": {
+      "group": "interface",
+      "level": "block",
+      "description": "Every connector cell lies on the part."
+    },
+    "I3_seats_on_reference": {
+      "group": "interface",
+      "level": "block",
+      "description": "Part seats on a matching reference part with overlap below limits.seat_overlap_max_mm3 at target clearance.",
+      "applies": {
+        "connector_kinds": [
+          "stud_grid",
+          "socket_grid"
+        ]
+      }
+    },
+    "S1_small_part_screen": {
+      "group": "safety",
+      "level": "warn",
+      "description": "Design-time screen against safety.small_parts_cylinder (conservative; not a lab test)."
+    },
+    "M1_manifest_schema": {
+      "group": "metadata",
+      "level": "block",
+      "description": "Manifest entry validates against part_manifest.schema.json."
+    },
+    "F1_printed_fit": {
+      "group": "physical",
+      "level": "block",
+      "pending": true,
+      "description": "Printed parts seat as intended: the measured printer surface offset falls inside the part's fit window (see manifest `fit`). Needs a calibration print."
+    },
+    "F2_breakage": {
+      "group": "physical",
+      "level": "block",
+      "pending": true,
+      "description": "PENDING: no piece produced by breakage fits the small-parts cylinder."
+    },
+    "T1_fit_as_designed": {
+      "group": "tolerance",
+      "level": "block",
+      "description": "Seated on its partner, every engaged stud's measured radial gap equals the interface's design gap (fit / 2) within the faceting allowance, and the design gap itself is inside the max play and max interference limits. Catches cavities built too loose, too tight or without the tubes that hold the stud, and an interface changed to a clearance that cannot work.",
+      "applies": {
+        "connector_kinds": [
+          "stud_grid",
+          "socket_grid",
+          "pin",
+          "bore_grid"
+        ]
+      }
+    },
+    "T2_fit_tolerance_window": {
+      "group": "tolerance",
+      "level": "warn",
+      "description": "With printers calibrated to the stated surface error, the connection stays between the max interference and max play limits. Also records the printer surface offset window the calibration print must land in.",
+      "applies": {
+        "connector_kinds": [
+          "stud_grid",
+          "socket_grid",
+          "pin",
+          "bore_grid"
+        ]
+      }
+    },
+    "I4_bore_on_grid": {
+      "group": "interface",
+      "level": "block",
+      "applies": {
+        "connector_kinds": [
+          "bore_grid"
+        ]
+      },
+      "description": "Every bore is on the lattice and really exists. Bores are a multiple of 1/8 TU apart and sit on the centre of a cell measured from the part's corner (beams and plates) or on the part's axis (gears and wheels). A bore exists when an empty probe fits inside it and there is material in a ring just outside."
+    },
+    "I5_pin_fits_bore": {
+      "group": "interface",
+      "level": "block",
+      "applies": {
+        "connector_kinds": [
+          "pin",
+          "bore_grid"
+        ]
+      },
+      "description": "Every pin and bore is accepted by at least one pin_bore rule, and the built section matches the interface numbers (free bore 7.0, fixed bore 5.1 flats, shaft 6.6 round with 5.0 flats). The measured clearance is T1 and T2."
+    },
+    "I6_gear_on_grid": {
+      "group": "interface",
+      "level": "block",
+      "applies": {
+        "families": [
+          "gear"
+        ]
+      },
+      "description": "A gear's module equals the interface module, its pitch diameter is a whole number of TU (so any two gears centre on the 0.5 TU grid), and the built tip diameter matches module x (teeth + 2)."
+    },
+    "I7_hole_roof": {
+      "group": "interface",
+      "level": "block",
+      "applies": {
+        "connector_styles": [
+          "holes"
+        ]
+      },
+      "description": "Every integrated stud hole is closed by at least 1.2 mm of material above its ceiling (six layers), so no hole opens into the part's surface. The builder adds a boss, clipped to the part's own footprint, where the shape is thinner."
+    }
+  },
+  "tooling": {
+    "source_of_truth": "interfaces.json (this file). Everything else is generated from it or from the part code.",
+    "commands": {
+      "generate": "python3 toyventor_parts.py out",
+      "build_check": "python3 toyventor_assembly.py out   (also writes out/fit_matrix.json: every mating pair in the catalog, fit-measured)",
+      "index": "python3 toyventor_index.py out COMMAND NAME   (COMMAND: list, used-by, uses, impact, checks)",
+      "standard": "python3 make_standard.py out/INTERFACE_STANDARD.md",
+      "agents": "python3 make_agents.py out",
+      "selftest": "python3 selftest.py out",
+      "catalog": "python3 make_catalog.py out   (progress toward the top 30 Snap and top 30 Pro parts; writes CATALOG.md)",
+      "specs": "python3 make_specs.py out   (assembles specs/: the numbered documents to build against)"
+    }
+  },
+  "pro": {
+    "beam": {
+      "section_tu": 1.0,
+      "max_length_tu": 14,
+      "fillet_outer_mm": 1.5,
+      "fillet_small_mm": 0.5,
+      "hole_mouth_chamfer_mm": 0.4,
+      "bed_chamfer_mm": 0.5,
+      "bore_rule": "One bore on the centre of every TU cell along the length (first bore 0.5 TU from the end).",
+      "hackathon_part": "beam_str_rnd_tu05x01x01"
+    },
+    "gear": {
+      "module_mm": 2.5,
+      "grid_rule": "module_mm * (z1 + z2) / 2 must be a multiple of 0.5 TU (6.25 mm), so meshing gears sit on the hole grid. With module 2.5, z1 + z2 must be a multiple of 5.",
+      "hub": "fixed bore (5.1 mm flats)",
+      "note": "Module, backlash and thickness are TARGETS. Involute teeth, 20 degree pressure angle; each gear thins its teeth by backlash / 2 at the pitch circle. Gears are 0.5 TU thick and print flat.",
+      "pressure_angle_deg": 20,
+      "backlash_mm": 0.2,
+      "thickness_tu": 0.5
+    },
+    "bushing": {
+      "outer_d_mm": 11.0,
+      "bore_class": "fixed",
+      "note": "Spacer that grips a flat shaft (fixed bore). Outer diameter leaves 0.75 mm to the cell edge. TARGET."
+    }
+  },
+  "planned_checks": {
+    "_note": "Planned, not enforced. Each moves into `checks` in the same change that adds the code that emits it. (Currently none planned.)"
+  },
+  "conformance": {
+    "status_rule": {
+      "verified": "No blocking check fails, the small-parts screen is not marginal, and a Large part clears the small-parts cylinder. Pending physical checks do not count against it.",
+      "needs_reproportion": "Anything else. A build that uses such a part gets an unverified_part warning."
+    },
+    "status_note": "design_status is computed by the generator from the check results. It is never set by hand.",
+    "authoring_steps": [
+      "Pick the line, the size class and the interface the part exposes (an entry in `interfaces`).",
+      "Add a catalog row (`catalog.json`) with `family`, `size`, `build`, `type`, `behavior` and `tags`. A row in a family (block, tile, slope, dome) needs no code. A bespoke part (add-on, capsule, Pro part) names one function that returns (manifold, connectors, extras), built with `block()`, `stud_conn()`, `socket_conn()` or the Pro primitives so geometry and metadata cannot drift. Take every number from `interfaces.json`.",
+      "Run `generate`. Read every failing check, fix the geometry or the row's parameters, and run again until no `block` check fails and the small-parts result is not `marginal`.",
+      "Run `build_check`, regenerate the standard, agent and catalog files, then run `selftest`. All must pass before the part is used."
+    ],
+    "authoring_rules": [
+      "Never type a footprint. The foot comes from the interface, so it is on the lattice by construction.",
+      "Body dimensions drawn at the old 8 mm scale are multiplied by `limits.addon_body_scale`. Walls, clearances, fillets and embed depths are print-limited constants and are not scaled.",
+      "Nothing tilted or curved above the foot may leave an underside steeper than `limits.max_overhang_deg`. Bury roots in the foot and let `keep_above()` trim them flush.",
+      "If the small-parts result is `marginal`, resize the part until it is clearly inside or clearly outside the cylinder. A Small part may be `small_part` (ages 3 and up, carries the warning). A Large part must be `above_cylinder`.",
+      "A part has exactly the connectors it physically has. Never claim a mate the validator does not enforce.",
+      "Fit-critical cylinders (studs, tubes, bores) use `limits.fit_segments` polygons. A coarser cylinder shrinks the printed gap by more than the design gap.",
+      "Every mating feature is fit-measured. If a part adds a new kind of mating feature, extend `seat_pair()` so `fit_report()` measures it; a connection the fit check cannot see is not verified.",
+      "When a family parameter puts a part in the marginal small-parts band, change the parameter in the catalog row (a Small slope uses 30 degrees, not 45), not the family code.",
+      "A round outline cannot carry studs on the lattice: the cavity must reach the corner studs, which needs a 28.4 mm outline against a 24.8 mm footprint at Small. Use a dome or other female-only shape on the standard foot.",
+      "A part may print in a different orientation than it assembles (pins and shafts lie on a flat for strength along the axis). The part returns `print_rotation_deg`; printability checks (bed, overhang, bridge, small parts) run on the printed mesh, connector checks run in the assembly frame, and the STL is exported as printed.",
+      "On a square Small 2x2 foot, keep the part under about 25 mm tall or over 57 mm: the foot is 33.8 mm across its rounded diagonal, so anything in between measures marginal in the small-parts screen however it is shaped. Use a larger foot (Small 4x4 or Large 2x2) for a tall Small-line part.",
+      "Add-ons and capsules use an integrated base (`base: integrated`): no plate around the part, stud holes in its own underside. A shape too thin for a hole gets a small pad on two lattice points (`pad`), and a part whose direction matters (`lock`) needs two holes, or one hole plus a relief that keys it against a neighbouring stud; the generator refuses it otherwise. Every integrated part is checked sitting on a full plate, so no stud can hit it where it has no hole."
+    ],
+    "check_applicability": "Each check says where it applies (`applies`: connector kinds or part families). A check that applies to a part must be emitted for it. A check that applies to no part yet is dormant, and the build still tests it with fixtures."
+  },
+  "tolerance": {
+    "surface_error_calibrated_mm": 0.05,
+    "surface_error_uncalibrated_mm": 0.1,
+    "max_interference_mm": 0.1,
+    "max_play_mm": 0.2,
+    "design_gap_tol_mm": 0.005,
+    "note": "TARGETS until the calibration print. A surface offset moves every material surface by that amount, so a stud and a tube that both print oversize by e lose 2e of radial gap. Surface error is the spread left after a printer's offsets are applied. Max interference is the deepest radial interference still pushable by hand; max play is the loosest radial clearance still held firmly.",
+    "classes": {
+      "free": {
+        "max_interference_mm": 0.0,
+        "max_play_mm": 0.35,
+        "note": "A round pin or shaft that must turn in a free bore: it may never bind, and may rattle no more than this. TARGETS."
+      },
+      "friction": {
+        "note": "Compliant friction-pin fins: interference is by design (fin_oversize / 2). Not measured here; retention needs a print."
+      }
+    }
+  },
+  "pin_bore": {
+    "rules": [
+      {
+        "pin": "pin_free",
+        "bore": "free",
+        "fit": "free"
+      },
+      {
+        "pin": "shaft_drive",
+        "bore": "free",
+        "fit": "free"
+      },
+      {
+        "pin": "shaft_drive",
+        "bore": "fixed",
+        "fit": "press"
+      },
+      {
+        "pin": "pin_friction",
+        "bore": "free",
+        "fit": "friction"
+      }
+    ],
+    "note": "A pin and bore that are not listed cannot mate (a round pin in a fixed bore, for example). The fit class picks the limits: press uses the top-level tolerance numbers, free and friction use tolerance.classes."
+  },
+  "socket_styles": {
+    "cage": "Square foot: a socket cavity with tubes that hold the studs (bricks, plates, tiles, slopes, dome).",
+    "holes": "Integrated base (add-ons and capsules): no plate around the part. Stud holes, the stud diameter plus the fit, are cut into the part's own underside or a small pad, wherever the shape wraps a hole with a full wall; reliefs clear any other stud the shape would touch, so it sits flat on any plate. Same 0.05 mm stud fit as the cage."
+  },
+  "product": {
+    "snap_sizes_offered": [
+      "small"
+    ],
+    "snap_min_age": 3,
+    "pro_min_age": 8,
+    "parked": {
+      "large": "Parked 2026-10-28 (Dan): Snap is ages 3 and up only. Large parts stay verified in the repo but are not exported, printed or extended until the line returns."
+    }
+  }
+}

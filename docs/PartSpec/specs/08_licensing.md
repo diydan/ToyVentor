@@ -21,6 +21,6 @@ Copyright 2026 [legal owner].
 
 ## Before publishing
 
-1. Clear and register the product name (see `DESIGN_LOG.md`, 2026-10-28: the previous name screened as used by others in toys and was replaced with ToyVentor the same day; clearance for ToyVentor itself is still to confirm).
+1. Clear and register the product name, ToyVentor (toyventor.com), chosen on 2026-10-28 to replace an earlier name that others already use in toys (see `DESIGN_LOG.md`). Run a USPTO trademark search first.
 2. Confirm the licence choice with counsel, and fill in [legal owner].
 3. Decide on any patent first. Publishing counts as public disclosure: the US allows one year after your own disclosure; most other countries allow none.

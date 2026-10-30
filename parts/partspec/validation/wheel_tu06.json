@@ -1,0 +1,161 @@
+{
+  "validator": "preprint_check 1.2.0",
+  "file": "toyventor_wheel_tu06_P.stl",
+  "file_sha256": "8b04b183920d8b50a1ed869abd127e794ebc0d88ee179711c2525a54311cc763",
+  "part_id": "wheel_tu06",
+  "profile": "fdm_pla_0.4",
+  "checked_at": "2026-10-30T08:21:21Z",
+  "metrics": {
+    "bbox_mm": [
+      74.98,
+      75.0,
+      12.5
+    ],
+    "volume_cm3": 49.34,
+    "surface_cm2": 146.74,
+    "triangles": 8400,
+    "ledges": [],
+    "layers": 62,
+    "bed_contact_mm2": 3853.0,
+    "height_mm": 12.5,
+    "slenderness": 0.2,
+    "centre_of_mass_over_contact": true,
+    "min_wall_mm": null,
+    "thin_wall_regions": []
+  },
+  "bridges": [],
+  "checks": [
+    {
+      "id": "V1_mesh_sound",
+      "level": "block",
+      "result": "pass",
+      "value": null,
+      "limit": null,
+      "detail": "watertight True, consistent winding True, 1 body(ies)"
+    },
+    {
+      "id": "V2_on_bed",
+      "level": "block",
+      "result": "pass",
+      "value": 0.0,
+      "limit": 0.0,
+      "detail": "lowest point must be on the bed (z = 0)"
+    },
+    {
+      "id": "V3_fits_bed",
+      "level": "block",
+      "result": "pass",
+      "value": [
+        75.0,
+        75.0,
+        12.5
+      ],
+      "limit": [
+        180,
+        180,
+        180
+      ],
+      "detail": ""
+    },
+    {
+      "id": "V4_no_steep_overhang",
+      "level": "block",
+      "result": "pass",
+      "value": 0.0,
+      "limit": 1.0,
+      "detail": "mm2 of downward surface steeper than 45 deg (flat bridges excluded)"
+    },
+    {
+      "id": "V10_no_ledges",
+      "level": "block",
+      "result": "pass",
+      "value": 0.0,
+      "limit": 1.0,
+      "detail": "mm2 of flat underside held on one side only (a ledge over air, not a bridge)"
+    },
+    {
+      "id": "V6_bridge_span",
+      "level": "block",
+      "result": "pass",
+      "value": 0.0,
+      "limit": 20,
+      "detail": "0 bridge(s); widest unsupported span in mm"
+    },
+    {
+      "id": "V5_no_floating_islands",
+      "level": "block",
+      "result": "pass",
+      "value": 0,
+      "limit": 0,
+      "detail": "material not resting, layer by layer, on anything that reaches the bed"
+    },
+    {
+      "id": "V7_min_feature",
+      "level": "warn",
+      "result": "pass",
+      "value": 0,
+      "limit": 0,
+      "detail": "layer pieces narrower than 0.4 mm"
+    },
+    {
+      "id": "V9_bed_contact",
+      "level": "info",
+      "result": "pass",
+      "value": 3853.0,
+      "limit": null,
+      "detail": "height / sqrt(contact) = 0.2; above about 3 the slicer often asks for a brim"
+    },
+    {
+      "id": "V8_wall_thickness",
+      "level": "warn",
+      "result": "pass",
+      "value": 0,
+      "limit": 0,
+      "detail": "regions where the wall is under 0.8 mm (two nozzle widths) over 2.0 mm2, or under 0.4 mm (one nozzle width) over 0.25 mm2; sharp edges and slivers are ignored"
+    },
+    {
+      "id": "S1_slices",
+      "level": "block",
+      "result": "pass",
+      "value": null,
+      "limit": null,
+      "detail": "sliced without errors"
+    },
+    {
+      "id": "S2_slicer_stability",
+      "level": "warn",
+      "result": "pass",
+      "value": null,
+      "limit": null,
+      "detail": "no stability warnings"
+    },
+    {
+      "id": "S3_slicer_blocking",
+      "level": "block",
+      "result": "pass",
+      "value": null,
+      "limit": null,
+      "detail": "nothing the slicer would print in mid-air"
+    }
+  ],
+  "print_settings": {},
+  "slicer": {
+    "ok": true,
+    "brim_mm": 0,
+    "seconds_to_slice": 7.0,
+    "warnings": [],
+    "filament_g": 24.21,
+    "filament_m": 8.12,
+    "filament_cost_usd": 0.48,
+    "print_time_s": 9713,
+    "layers": 63,
+    "warnings_without_brim": [],
+    "brims_tried_mm": [
+      0
+    ],
+    "engine": "PrusaSlicer-2.8.1",
+    "reused_from": "2026-10-30T08:09:31Z"
+  },
+  "verdict": "pass",
+  "summary": "Prints as is"
+}

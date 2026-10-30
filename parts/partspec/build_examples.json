@@ -1,0 +1,2579 @@
+{
+  "valid_ring_brick_tail": {
+    "build": [
+      {
+        "id": "ring",
+        "part": "forge_mount_ring",
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "rot": 0
+        }
+      },
+      {
+        "id": "brick",
+        "part": "big_blue_brick",
+        "pose": {
+          "x": -12.5,
+          "y": -12.5,
+          "z": 10.0,
+          "rot": 0
+        }
+      },
+      {
+        "id": "tail",
+        "part": "waddle_tail",
+        "pose": {
+          "x": -25.0,
+          "y": 0.0,
+          "z": 40.0,
+          "rot": 0
+        }
+      }
+    ],
+    "ok": true,
+    "errors": [],
+    "warnings": [],
+    "edges": [
+      {
+        "male": "ring.top_studs",
+        "female": "brick.under_sockets",
+        "engaged_studs": 3,
+        "gap_min_mm": 0.058,
+        "gap_max_mm": 0.058
+      },
+      {
+        "male": "brick.top_studs",
+        "female": "tail.under_sockets",
+        "engaged_studs": 2,
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      }
+    ]
+  },
+  "valid_plate_glow": {
+    "build": [
+      {
+        "id": "plate",
+        "part": "mini_plate",
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "rot": 0
+        }
+      },
+      {
+        "id": "glow",
+        "part": "glow_capsule",
+        "pose": {
+          "x": -18.75,
+          "y": -6.25,
+          "z": 5.0,
+          "rot": 0
+        }
+      }
+    ],
+    "ok": true,
+    "errors": [],
+    "warnings": [],
+    "edges": [
+      {
+        "male": "plate.top_studs",
+        "female": "glow.under_sockets",
+        "engaged_studs": 1,
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      }
+    ]
+  },
+  "valid_plate_wings": {
+    "build": [
+      {
+        "id": "plate",
+        "part": "mini_plate",
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "rot": 0
+        }
+      },
+      {
+        "id": "wings",
+        "part": "cloud_wings",
+        "pose": {
+          "x": 12.5,
+          "y": 0.0,
+          "z": 5.0,
+          "rot": 0
+        }
+      }
+    ],
+    "ok": true,
+    "errors": [],
+    "warnings": [],
+    "edges": [
+      {
+        "male": "plate.top_studs",
+        "female": "wings.under_sockets",
+        "engaged_studs": 4,
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      }
+    ]
+  },
+  "INVALID_glow_and_wings_collide": {
+    "build": [
+      {
+        "id": "plate",
+        "part": "mini_plate",
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "rot": 0
+        }
+      },
+      {
+        "id": "glow",
+        "part": "glow_capsule",
+        "pose": {
+          "x": -18.75,
+          "y": -6.25,
+          "z": 5.0,
+          "rot": 0
+        }
+      },
+      {
+        "id": "wings",
+        "part": "cloud_wings",
+        "pose": {
+          "x": 12.5,
+          "y": 0.0,
+          "z": 5.0,
+          "rot": 0
+        }
+      }
+    ],
+    "ok": false,
+    "errors": [
+      {
+        "code": "collision",
+        "detail": "glow and wings overlap by 2529 mm3"
+      }
+    ],
+    "warnings": [],
+    "edges": [
+      {
+        "male": "plate.top_studs",
+        "female": "glow.under_sockets",
+        "engaged_studs": 1,
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      },
+      {
+        "male": "plate.top_studs",
+        "female": "wings.under_sockets",
+        "engaged_studs": 4,
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      }
+    ]
+  },
+  "valid_offset_stack_2_studs": {
+    "build": [
+      {
+        "id": "b1",
+        "part": "big_blue_brick",
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "rot": 0
+        }
+      },
+      {
+        "id": "b2",
+        "part": "big_blue_brick",
+        "pose": {
+          "x": 25.0,
+          "y": 0.0,
+          "z": 30.0,
+          "rot": 0
+        }
+      }
+    ],
+    "ok": true,
+    "errors": [],
+    "warnings": [],
+    "edges": [
+      {
+        "male": "b1.top_studs",
+        "female": "b2.under_sockets",
+        "engaged_studs": 2,
+        "gap_min_mm": 0.058,
+        "gap_max_mm": 0.058
+      }
+    ]
+  },
+  "valid_beams_friction_pin": {
+    "build": [
+      {
+        "id": "b1",
+        "part": "beam_str_tu05",
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "rot": 0
+        }
+      },
+      {
+        "id": "b2",
+        "part": "beam_str_tu05",
+        "pose": {
+          "x": 0,
+          "y": 0,
+          "z": 12.5,
+          "rot": 0
+        }
+      },
+      {
+        "id": "fp",
+        "part": "pin_friction",
+        "pose": {
+          "x": -25.0,
+          "y": 0.0,
+          "z": 0.0,
+          "rot": 0
+        }
+      }
+    ],
+    "ok": true,
+    "errors": [],
+    "warnings": [],
+    "edges": [
+      {
+        "male": "fp.axis",
+        "female": "b1.bores",
+        "engaged_studs": 1,
+        "fit": "friction"
+      },
+      {
+        "male": "fp.axis",
+        "female": "b2.bores",
+        "engaged_studs": 1,
+        "fit": "friction"
+      }
+    ]
+  },
+  "valid_shaft_beam_bushing": {
+    "build": [
+      {
+        "id": "bm",
+        "part": "beam_str_tu03",
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "rot": 0
+        }
+      },
+      {
+        "id": "sh",
+        "part": "shaft_tu03",
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "rot": 0
+        }
+      },
+      {
+        "id": "bu",
+        "part": "bushing_half",
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 12.5,
+          "rot": 0
+        }
+      }
+    ],
+    "ok": true,
+    "errors": [],
+    "warnings": [],
+    "edges": [
+      {
+        "male": "sh.axis",
+        "female": "bm.bores",
+        "engaged_studs": 1,
+        "fit": "free",
+        "gap_min_mm": 0.2,
+        "gap_max_mm": 0.2
+      },
+      {
+        "male": "sh.axis",
+        "female": "bu.hub",
+        "engaged_studs": 1,
+        "fit": "press",
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      }
+    ]
+  },
+  "valid_gear_pair_3tu": {
+    "build": [
+      {
+        "id": "bm",
+        "part": "beam_str_tu05",
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "rot": 0
+        }
+      },
+      {
+        "id": "s0",
+        "part": "shaft_tu03",
+        "pose": {
+          "x": -25.0,
+          "y": 0.0,
+          "z": 0.0,
+          "rot": 0
+        }
+      },
+      {
+        "id": "s3",
+        "part": "shaft_tu03",
+        "pose": {
+          "x": 12.5,
+          "y": 0.0,
+          "z": 0.0,
+          "rot": 0
+        }
+      },
+      {
+        "id": "g10",
+        "part": "gear_spur_z10",
+        "pose": {
+          "x": -25.0,
+          "y": 0.0,
+          "z": 12.5,
+          "rot": 0
+        }
+      },
+      {
+        "id": "g20",
+        "part": "gear_spur_z20",
+        "pose": {
+          "x": 12.5,
+          "y": 0.0,
+          "z": 12.5,
+          "rot": 0
+        }
+      }
+    ],
+    "ok": true,
+    "errors": [],
+    "warnings": [],
+    "edges": [
+      {
+        "male": "g10.teeth",
+        "female": "g20.teeth",
+        "engaged_studs": 1,
+        "fit": "mesh"
+      },
+      {
+        "male": "s0.axis",
+        "female": "bm.bores",
+        "engaged_studs": 1,
+        "fit": "free",
+        "gap_min_mm": 0.2,
+        "gap_max_mm": 0.2
+      },
+      {
+        "male": "s3.axis",
+        "female": "bm.bores",
+        "engaged_studs": 1,
+        "fit": "free",
+        "gap_min_mm": 0.2,
+        "gap_max_mm": 0.2
+      },
+      {
+        "male": "s0.axis",
+        "female": "g10.hub",
+        "engaged_studs": 1,
+        "fit": "press",
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      },
+      {
+        "male": "s3.axis",
+        "female": "g20.hub",
+        "engaged_studs": 1,
+        "fit": "press",
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      }
+    ]
+  },
+  "INVALID_gears_2tu_apart": {
+    "build": [
+      {
+        "id": "bm",
+        "part": "beam_str_tu05",
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "rot": 0
+        }
+      },
+      {
+        "id": "s0",
+        "part": "shaft_tu03",
+        "pose": {
+          "x": -25.0,
+          "y": 0.0,
+          "z": 0.0,
+          "rot": 0
+        }
+      },
+      {
+        "id": "s2",
+        "part": "shaft_tu03",
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "rot": 0
+        }
+      },
+      {
+        "id": "g10",
+        "part": "gear_spur_z10",
+        "pose": {
+          "x": -25.0,
+          "y": 0.0,
+          "z": 12.5,
+          "rot": 0
+        }
+      },
+      {
+        "id": "g20",
+        "part": "gear_spur_z20",
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 12.5,
+          "rot": 0
+        }
+      }
+    ],
+    "ok": false,
+    "errors": [
+      {
+        "code": "gear_mesh_distance",
+        "detail": "g10 and g20 are 25.00 mm apart; their teeth meet but they mesh at 37.50 mm"
+      },
+      {
+        "code": "collision",
+        "detail": "s0 and g20 overlap by 102 mm3"
+      },
+      {
+        "code": "collision",
+        "detail": "g10 and g20 overlap by 1080 mm3"
+      }
+    ],
+    "warnings": [],
+    "edges": [
+      {
+        "male": "s0.axis",
+        "female": "bm.bores",
+        "engaged_studs": 1,
+        "fit": "free",
+        "gap_min_mm": 0.2,
+        "gap_max_mm": 0.2
+      },
+      {
+        "male": "s2.axis",
+        "female": "bm.bores",
+        "engaged_studs": 1,
+        "fit": "free",
+        "gap_min_mm": 0.2,
+        "gap_max_mm": 0.2
+      },
+      {
+        "male": "s0.axis",
+        "female": "g10.hub",
+        "engaged_studs": 1,
+        "fit": "press",
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      },
+      {
+        "male": "s2.axis",
+        "female": "g20.hub",
+        "engaged_studs": 1,
+        "fit": "press",
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      }
+    ]
+  },
+  "valid_rack_and_pinion": {
+    "build": [
+      {
+        "id": "rack",
+        "part": "gear_rack_tu05",
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "rot": 0
+        }
+      },
+      {
+        "id": "g10",
+        "part": "gear_spur_z10",
+        "pose": {
+          "x": 0,
+          "y": 25.0,
+          "z": 0,
+          "rot": 0
+        }
+      }
+    ],
+    "ok": true,
+    "errors": [],
+    "warnings": [],
+    "edges": [
+      {
+        "male": "rack.teeth",
+        "female": "g10.teeth",
+        "engaged_studs": 1,
+        "fit": "mesh"
+      }
+    ]
+  },
+  "valid_ring_and_pinion": {
+    "build": [
+      {
+        "id": "ring",
+        "part": "gear_ring_z40",
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "rot": 0
+        }
+      },
+      {
+        "id": "g10",
+        "part": "gear_spur_z10",
+        "pose": {
+          "x": 37.5,
+          "y": 0,
+          "z": 0,
+          "rot": 0
+        }
+      }
+    ],
+    "ok": true,
+    "errors": [],
+    "warnings": [],
+    "edges": [
+      {
+        "male": "ring.teeth",
+        "female": "g10.teeth",
+        "engaged_studs": 1,
+        "fit": "mesh"
+      }
+    ]
+  },
+  "valid_snap_on_pro_adapter": {
+    "build": [
+      {
+        "id": "beam",
+        "part": "beam_str_tu03",
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "rot": 0
+        }
+      },
+      {
+        "id": "adapter",
+        "part": "adapter_snap_pro",
+        "pose": {
+          "x": 0,
+          "y": 0,
+          "z": 12.5,
+          "rot": 0
+        }
+      },
+      {
+        "id": "pin",
+        "part": "pin_friction",
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "rot": 0
+        }
+      },
+      {
+        "id": "brick",
+        "part": "brick_s_2x2",
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 25.0,
+          "rot": 0
+        }
+      }
+    ],
+    "ok": true,
+    "errors": [],
+    "warnings": [],
+    "edges": [
+      {
+        "male": "pin.axis",
+        "female": "beam.bores",
+        "engaged_studs": 1,
+        "fit": "friction"
+      },
+      {
+        "male": "pin.axis",
+        "female": "adapter.bores",
+        "engaged_studs": 1,
+        "fit": "friction"
+      },
+      {
+        "male": "adapter.top_studs",
+        "female": "brick.under_sockets",
+        "engaged_studs": 4,
+        "gap_min_mm": 0.058,
+        "gap_max_mm": 0.058
+      }
+    ]
+  },
+  "valid_beam_on_pro_mount": {
+    "build": [
+      {
+        "id": "mount",
+        "part": "forge_mount_pro",
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "rot": 0
+        }
+      },
+      {
+        "id": "beam",
+        "part": "beam_str_tu05",
+        "pose": {
+          "x": 0,
+          "y": -25.0,
+          "z": 12.5,
+          "rot": 0
+        }
+      },
+      {
+        "id": "pin",
+        "part": "pin_friction",
+        "pose": {
+          "x": -25.0,
+          "y": -25.0,
+          "z": 0.0,
+          "rot": 0
+        }
+      }
+    ],
+    "ok": true,
+    "errors": [],
+    "warnings": [],
+    "edges": [
+      {
+        "male": "pin.axis",
+        "female": "mount.bores",
+        "engaged_studs": 1,
+        "fit": "friction"
+      },
+      {
+        "male": "pin.axis",
+        "female": "beam.bores",
+        "engaged_studs": 1,
+        "fit": "friction"
+      }
+    ]
+  },
+  "valid_pro_gear_scene": {
+    "build": [
+      {
+        "id": "mount",
+        "part": "forge_mount_pro",
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "rot": 0
+        }
+      },
+      {
+        "id": "beam",
+        "part": "beam_str_tu05",
+        "pose": {
+          "x": 0,
+          "y": -25.0,
+          "z": 12.5,
+          "rot": 0
+        }
+      },
+      {
+        "id": "pin1",
+        "part": "pin_friction",
+        "pose": {
+          "x": -12.5,
+          "y": -25.0,
+          "z": 0.0,
+          "rot": 0
+        }
+      },
+      {
+        "id": "pin2",
+        "part": "pin_friction",
+        "pose": {
+          "x": 0.0,
+          "y": -25.0,
+          "z": 0.0,
+          "rot": 0
+        }
+      },
+      {
+        "id": "shaftA",
+        "part": "shaft_tu03",
+        "pose": {
+          "x": -25.0,
+          "y": -25.0,
+          "z": 0.0,
+          "rot": 0
+        }
+      },
+      {
+        "id": "shaftB",
+        "part": "shaft_tu03",
+        "pose": {
+          "x": 12.5,
+          "y": -25.0,
+          "z": 0.0,
+          "rot": 0
+        }
+      },
+      {
+        "id": "gearA",
+        "part": "gear_spur_z10",
+        "pose": {
+          "x": -25.0,
+          "y": -25.0,
+          "z": 25.0,
+          "rot": 0
+        }
+      },
+      {
+        "id": "gearB",
+        "part": "gear_spur_z20",
+        "pose": {
+          "x": 12.5,
+          "y": -25.0,
+          "z": 25.0,
+          "rot": 0
+        }
+      }
+    ],
+    "ok": true,
+    "errors": [],
+    "warnings": [],
+    "edges": [
+      {
+        "male": "gearA.teeth",
+        "female": "gearB.teeth",
+        "engaged_studs": 1,
+        "fit": "mesh"
+      },
+      {
+        "male": "pin1.axis",
+        "female": "mount.bores",
+        "engaged_studs": 1,
+        "fit": "friction"
+      },
+      {
+        "male": "pin2.axis",
+        "female": "mount.bores",
+        "engaged_studs": 1,
+        "fit": "friction"
+      },
+      {
+        "male": "shaftA.axis",
+        "female": "mount.bores",
+        "engaged_studs": 1,
+        "fit": "free",
+        "gap_min_mm": 0.2,
+        "gap_max_mm": 0.2
+      },
+      {
+        "male": "shaftB.axis",
+        "female": "mount.bores",
+        "engaged_studs": 1,
+        "fit": "free",
+        "gap_min_mm": 0.2,
+        "gap_max_mm": 0.2
+      },
+      {
+        "male": "pin1.axis",
+        "female": "beam.bores",
+        "engaged_studs": 1,
+        "fit": "friction"
+      },
+      {
+        "male": "pin2.axis",
+        "female": "beam.bores",
+        "engaged_studs": 1,
+        "fit": "friction"
+      },
+      {
+        "male": "shaftA.axis",
+        "female": "beam.bores",
+        "engaged_studs": 1,
+        "fit": "free",
+        "gap_min_mm": 0.2,
+        "gap_max_mm": 0.2
+      },
+      {
+        "male": "shaftB.axis",
+        "female": "beam.bores",
+        "engaged_studs": 1,
+        "fit": "free",
+        "gap_min_mm": 0.2,
+        "gap_max_mm": 0.2
+      },
+      {
+        "male": "shaftA.axis",
+        "female": "gearA.hub",
+        "engaged_studs": 1,
+        "fit": "press",
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      },
+      {
+        "male": "shaftB.axis",
+        "female": "gearB.hub",
+        "engaged_studs": 1,
+        "fit": "press",
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      }
+    ]
+  },
+  "valid_robot_bolt": {
+    "build": [
+      {
+        "id": "legs",
+        "part": "robot_legs_stomper",
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "rot": 0
+        }
+      },
+      {
+        "id": "torso",
+        "part": "robot_torso_core",
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 18.0,
+          "rot": 0
+        }
+      },
+      {
+        "id": "arms",
+        "part": "robot_arms_grabber",
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 38.0,
+          "rot": 0
+        }
+      },
+      {
+        "id": "head",
+        "part": "robot_head_visor",
+        "pose": {
+          "x": 0.0,
+          "y": -6.25,
+          "z": 43.0,
+          "rot": 0
+        }
+      },
+      {
+        "id": "pack",
+        "part": "robot_back_jetpack",
+        "pose": {
+          "x": 0.0,
+          "y": 6.25,
+          "z": 43.0,
+          "rot": 0
+        }
+      }
+    ],
+    "ok": true,
+    "errors": [],
+    "warnings": [],
+    "edges": [
+      {
+        "male": "legs.top_studs",
+        "female": "torso.under_sockets",
+        "engaged_studs": 4,
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      },
+      {
+        "male": "torso.top_studs",
+        "female": "arms.under_sockets",
+        "engaged_studs": 4,
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      },
+      {
+        "male": "arms.top_studs",
+        "female": "head.under_sockets",
+        "engaged_studs": 2,
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      },
+      {
+        "male": "arms.top_studs",
+        "female": "pack.under_sockets",
+        "engaged_studs": 2,
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      }
+    ]
+  },
+  "valid_hinge": {
+    "build": [
+      {
+        "id": "leafA",
+        "part": "hinge_tu02",
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "rot": 0
+        }
+      },
+      {
+        "id": "leafB",
+        "part": "hinge_tu02",
+        "pose": {
+          "x": 0,
+          "y": 25.0,
+          "z": 0,
+          "rot": 2
+        }
+      },
+      {
+        "id": "pin",
+        "part": "pin_free",
+        "pose": {
+          "x": -14.0,
+          "y": 12.5,
+          "z": 6.25,
+          "rot": 0,
+          "tilt": [
+            0.0,
+            90.0
+          ]
+        }
+      }
+    ],
+    "ok": true,
+    "errors": [],
+    "warnings": [],
+    "edges": [
+      {
+        "male": "pin.axis",
+        "female": "leafA.knuckle0",
+        "engaged_studs": 1,
+        "fit": "free",
+        "gap_min_mm": 0.2,
+        "gap_max_mm": 0.2
+      },
+      {
+        "male": "pin.axis",
+        "female": "leafA.knuckle1",
+        "engaged_studs": 1,
+        "fit": "free",
+        "gap_min_mm": 0.2,
+        "gap_max_mm": 0.2
+      },
+      {
+        "male": "pin.axis",
+        "female": "leafB.knuckle0",
+        "engaged_studs": 1,
+        "fit": "free",
+        "gap_min_mm": 0.2,
+        "gap_max_mm": 0.2
+      },
+      {
+        "male": "pin.axis",
+        "female": "leafB.knuckle1",
+        "engaged_studs": 1,
+        "fit": "free",
+        "gap_min_mm": 0.2,
+        "gap_max_mm": 0.2
+      }
+    ]
+  },
+  "valid_cart_axle": {
+    "build": [
+      {
+        "id": "beam",
+        "part": "beam_str_tu05",
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "rot": 0
+        }
+      },
+      {
+        "id": "cross",
+        "part": "cross_connector_tu01",
+        "pose": {
+          "x": -18.75,
+          "y": 0,
+          "z": 12.5,
+          "rot": 0
+        }
+      },
+      {
+        "id": "post",
+        "part": "shaft_tu03",
+        "pose": {
+          "x": -25.0,
+          "y": 0.0,
+          "z": 0.0,
+          "rot": 0
+        }
+      },
+      {
+        "id": "axle",
+        "part": "shaft_tu05",
+        "pose": {
+          "x": -12.5,
+          "y": -31.25,
+          "z": 18.75,
+          "rot": 2,
+          "tilt": [
+            90.0,
+            0.0
+          ]
+        }
+      },
+      {
+        "id": "wheelA",
+        "part": "wheel_tu04",
+        "pose": {
+          "x": -12.5,
+          "y": -31.25,
+          "z": 18.75,
+          "rot": 2,
+          "tilt": [
+            90.0,
+            0.0
+          ]
+        }
+      },
+      {
+        "id": "wheelB",
+        "part": "wheel_tu04",
+        "pose": {
+          "x": -12.499999999999995,
+          "y": 18.75,
+          "z": 18.750000000000004,
+          "rot": 2,
+          "tilt": [
+            90.0,
+            0.0
+          ]
+        }
+      }
+    ],
+    "ok": true,
+    "errors": [],
+    "warnings": [],
+    "edges": [
+      {
+        "male": "post.axis",
+        "female": "beam.bores",
+        "engaged_studs": 1,
+        "fit": "free",
+        "gap_min_mm": 0.2,
+        "gap_max_mm": 0.2
+      },
+      {
+        "male": "post.axis",
+        "female": "cross.axle_z",
+        "engaged_studs": 1,
+        "fit": "press",
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      },
+      {
+        "male": "axle.axis",
+        "female": "cross.axle_y",
+        "engaged_studs": 1,
+        "fit": "press",
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      },
+      {
+        "male": "axle.axis",
+        "female": "wheelA.hub",
+        "engaged_studs": 1,
+        "fit": "press",
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      },
+      {
+        "male": "axle.axis",
+        "female": "wheelB.hub",
+        "engaged_studs": 1,
+        "fit": "press",
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      }
+    ]
+  },
+  "INVALID_axle_off_its_bore": {
+    "build": [
+      {
+        "id": "beam",
+        "part": "beam_str_tu05",
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "rot": 0
+        }
+      },
+      {
+        "id": "cross",
+        "part": "cross_connector_tu01",
+        "pose": {
+          "x": -18.75,
+          "y": 0,
+          "z": 12.5,
+          "rot": 0
+        }
+      },
+      {
+        "id": "post",
+        "part": "shaft_tu03",
+        "pose": {
+          "x": -25.0,
+          "y": 0.0,
+          "z": 0.0,
+          "rot": 0
+        }
+      },
+      {
+        "id": "axle",
+        "part": "shaft_tu05",
+        "pose": {
+          "x": -10.5,
+          "y": -31.25,
+          "z": 18.75,
+          "rot": 2,
+          "tilt": [
+            90.0,
+            0.0
+          ]
+        }
+      }
+    ],
+    "ok": false,
+    "errors": [
+      {
+        "code": "floating",
+        "detail": "axle is not connected to beam"
+      },
+      {
+        "code": "collision",
+        "detail": "cross and axle overlap by 111 mm3"
+      }
+    ],
+    "warnings": [],
+    "edges": [
+      {
+        "male": "post.axis",
+        "female": "beam.bores",
+        "engaged_studs": 1,
+        "fit": "free",
+        "gap_min_mm": 0.2,
+        "gap_max_mm": 0.2
+      },
+      {
+        "male": "post.axis",
+        "female": "cross.axle_z",
+        "engaged_studs": 1,
+        "fit": "press",
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      }
+    ]
+  },
+  "INVALID_shaft_flats_crosswise": {
+    "build": [
+      {
+        "id": "beam",
+        "part": "beam_str_tu05",
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "rot": 0
+        }
+      },
+      {
+        "id": "cross",
+        "part": "cross_connector_tu01",
+        "pose": {
+          "x": -18.75,
+          "y": 0,
+          "z": 12.5,
+          "rot": 0
+        }
+      },
+      {
+        "id": "post",
+        "part": "shaft_tu03",
+        "pose": {
+          "x": -25.0,
+          "y": 0.0,
+          "z": 0.0,
+          "rot": 0
+        }
+      },
+      {
+        "id": "axle",
+        "part": "shaft_tu05",
+        "pose": {
+          "x": -12.5,
+          "y": -31.25,
+          "z": 18.75,
+          "rot": 2,
+          "tilt": [
+            90.0,
+            90.0
+          ]
+        }
+      }
+    ],
+    "ok": false,
+    "errors": [
+      {
+        "code": "collision",
+        "detail": "cross and axle overlap by 54 mm3"
+      }
+    ],
+    "warnings": [
+      {
+        "code": "fit_out_of_tolerance",
+        "detail": "axle.axis with cross.axle_y: measured gap -0.746 to -0.746 mm is outside the press limits"
+      }
+    ],
+    "edges": [
+      {
+        "male": "post.axis",
+        "female": "beam.bores",
+        "engaged_studs": 1,
+        "fit": "free",
+        "gap_min_mm": 0.2,
+        "gap_max_mm": 0.2
+      },
+      {
+        "male": "post.axis",
+        "female": "cross.axle_z",
+        "engaged_studs": 1,
+        "fit": "press",
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      },
+      {
+        "male": "axle.axis",
+        "female": "cross.axle_y",
+        "engaged_studs": 1,
+        "fit": "press",
+        "gap_min_mm": -0.746,
+        "gap_max_mm": -0.746
+      }
+    ]
+  },
+  "INVALID_tipped_brick": {
+    "build": [
+      {
+        "id": "brick",
+        "part": "big_blue_brick",
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "rot": 0,
+          "tilt": [
+            90.0,
+            0.0
+          ]
+        }
+      }
+    ],
+    "ok": false,
+    "errors": [
+      {
+        "code": "unsupported_pose",
+        "detail": "brick has studs or sockets and is tipped over; stud parts stay upright"
+      }
+    ],
+    "warnings": [],
+    "edges": []
+  },
+  "valid_racer_wheels": {
+    "build": [
+      {
+        "id": "block",
+        "part": "racer_axle_block",
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "rot": 0
+        }
+      },
+      {
+        "id": "axle",
+        "part": "racer_axle",
+        "pose": {
+          "x": -18.75,
+          "y": 0.0,
+          "z": 6.25,
+          "rot": 0,
+          "tilt": [
+            0.0,
+            90.0
+          ]
+        }
+      },
+      {
+        "id": "wheelL",
+        "part": "racer_wheel",
+        "pose": {
+          "x": -18.75,
+          "y": 0.0,
+          "z": 6.25,
+          "rot": 0,
+          "tilt": [
+            0.0,
+            90.0
+          ]
+        }
+      },
+      {
+        "id": "wheelR",
+        "part": "racer_wheel",
+        "pose": {
+          "x": 12.75,
+          "y": 0.0,
+          "z": 6.250000000000002,
+          "rot": 0,
+          "tilt": [
+            0.0,
+            90.0
+          ]
+        }
+      },
+      {
+        "id": "chassis",
+        "part": "plate_s_2x2",
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 15.0,
+          "rot": 0
+        }
+      }
+    ],
+    "ok": true,
+    "errors": [],
+    "warnings": [],
+    "edges": [
+      {
+        "male": "axle.axis",
+        "female": "block.axle",
+        "engaged_studs": 1,
+        "fit": "free",
+        "gap_min_mm": 0.2,
+        "gap_max_mm": 0.2
+      },
+      {
+        "male": "block.top_studs",
+        "female": "chassis.under_sockets",
+        "engaged_studs": 4,
+        "gap_min_mm": 0.058,
+        "gap_max_mm": 0.058
+      },
+      {
+        "male": "axle.axis",
+        "female": "wheelL.hub",
+        "engaged_studs": 1,
+        "fit": "press",
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      },
+      {
+        "male": "axle.axis",
+        "female": "wheelR.hub",
+        "engaged_studs": 1,
+        "fit": "press",
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      }
+    ]
+  },
+  "valid_kip_seated_wardrobe": {
+    "build": [
+      {
+        "id": "legs",
+        "part": "char_legs_seated",
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "rot": 0
+        }
+      },
+      {
+        "id": "torso",
+        "part": "robot_torso_core",
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 16.0,
+          "rot": 0
+        }
+      },
+      {
+        "id": "arms",
+        "part": "robot_arms_grabber",
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 36.0,
+          "rot": 0
+        }
+      },
+      {
+        "id": "head",
+        "part": "char_head_kid",
+        "pose": {
+          "x": 0.0,
+          "y": -6.25,
+          "z": 41.0,
+          "rot": 0
+        }
+      },
+      {
+        "id": "jetpack",
+        "part": "robot_back_jetpack",
+        "pose": {
+          "x": 0.0,
+          "y": 6.25,
+          "z": 41.0,
+          "rot": 0
+        }
+      },
+      {
+        "id": "hair",
+        "part": "hair_pigtails",
+        "pose": {
+          "x": 0.0,
+          "y": -6.25,
+          "z": 71.5,
+          "rot": 0
+        }
+      }
+    ],
+    "ok": true,
+    "errors": [],
+    "warnings": [],
+    "edges": [
+      {
+        "male": "legs.top_studs",
+        "female": "torso.under_sockets",
+        "engaged_studs": 4,
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      },
+      {
+        "male": "torso.top_studs",
+        "female": "arms.under_sockets",
+        "engaged_studs": 4,
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      },
+      {
+        "male": "arms.top_studs",
+        "female": "head.under_sockets",
+        "engaged_studs": 2,
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      },
+      {
+        "male": "arms.top_studs",
+        "female": "jetpack.under_sockets",
+        "engaged_studs": 2,
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      },
+      {
+        "male": "head.top_studs",
+        "female": "hair.under_sockets",
+        "engaged_studs": 2,
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      }
+    ]
+  },
+  "valid_kip_roadster_car": {
+    "build": [
+      {
+        "id": "car",
+        "part": "veh_car_chassis",
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "rot": 0
+        }
+      },
+      {
+        "id": "bull_bar",
+        "part": "racer_bull_bar",
+        "pose": {
+          "x": 0.0,
+          "y": -56.25,
+          "z": 15.5,
+          "rot": 0
+        }
+      },
+      {
+        "id": "hood_scoop",
+        "part": "racer_hood_scoop",
+        "pose": {
+          "x": 0.0,
+          "y": -37.5,
+          "z": 19.0,
+          "rot": 0
+        }
+      },
+      {
+        "id": "light_bar",
+        "part": "racer_light_bar",
+        "pose": {
+          "x": 0.0,
+          "y": 18.75,
+          "z": 23.0,
+          "rot": 0
+        }
+      },
+      {
+        "id": "spoiler",
+        "part": "racer_spoiler",
+        "pose": {
+          "x": 0.0,
+          "y": 31.25,
+          "z": 19.0,
+          "rot": 0
+        }
+      },
+      {
+        "id": "exhaust",
+        "part": "racer_twin_exhaust",
+        "pose": {
+          "x": 0.0,
+          "y": 50.0,
+          "z": 15.5,
+          "rot": 0
+        }
+      },
+      {
+        "id": "driver_legs",
+        "part": "char_legs_seated",
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 13.5,
+          "rot": 0
+        }
+      },
+      {
+        "id": "wheel_steer",
+        "part": "veh_steering_wheel",
+        "pose": {
+          "x": 0.0,
+          "y": -20.3125,
+          "z": -13.0,
+          "rot": 0
+        }
+      },
+      {
+        "id": "ax_f",
+        "part": "shaft_tu07",
+        "pose": {
+          "x": -43.75,
+          "y": -37.5,
+          "z": 6.25,
+          "rot": 0,
+          "tilt": [
+            0.0,
+            90.0
+          ]
+        }
+      },
+      {
+        "id": "wl_f",
+        "part": "wheel_tu04",
+        "pose": {
+          "x": -43.75,
+          "y": -37.5,
+          "z": 6.25,
+          "rot": 0,
+          "tilt": [
+            0.0,
+            90.0
+          ]
+        }
+      },
+      {
+        "id": "wr_f",
+        "part": "wheel_tu04",
+        "pose": {
+          "x": 31.25,
+          "y": -37.5,
+          "z": 6.250000000000004,
+          "rot": 0,
+          "tilt": [
+            0.0,
+            90.0
+          ]
+        }
+      },
+      {
+        "id": "ax_r",
+        "part": "shaft_tu07",
+        "pose": {
+          "x": -43.75,
+          "y": 37.5,
+          "z": 6.25,
+          "rot": 0,
+          "tilt": [
+            0.0,
+            90.0
+          ]
+        }
+      },
+      {
+        "id": "wl_r",
+        "part": "wheel_tu04",
+        "pose": {
+          "x": -43.75,
+          "y": 37.5,
+          "z": 6.25,
+          "rot": 0,
+          "tilt": [
+            0.0,
+            90.0
+          ]
+        }
+      },
+      {
+        "id": "wr_r",
+        "part": "wheel_tu04",
+        "pose": {
+          "x": 31.25,
+          "y": 37.5,
+          "z": 6.250000000000004,
+          "rot": 0,
+          "tilt": [
+            0.0,
+            90.0
+          ]
+        }
+      }
+    ],
+    "ok": true,
+    "errors": [],
+    "warnings": [],
+    "edges": [
+      {
+        "male": "car.front_studs",
+        "female": "bull_bar.under_sockets",
+        "engaged_studs": 2,
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      },
+      {
+        "male": "car.hood_studs",
+        "female": "hood_scoop.under_sockets",
+        "engaged_studs": 4,
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      },
+      {
+        "male": "car.rollbar_studs",
+        "female": "light_bar.under_sockets",
+        "engaged_studs": 2,
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      },
+      {
+        "male": "car.spoiler_studs",
+        "female": "spoiler.under_sockets",
+        "engaged_studs": 2,
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      },
+      {
+        "male": "car.exhaust_studs",
+        "female": "exhaust.under_sockets",
+        "engaged_studs": 2,
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      },
+      {
+        "male": "car.top_studs",
+        "female": "driver_legs.under_sockets",
+        "engaged_studs": 4,
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      },
+      {
+        "male": "wheel_steer.axis",
+        "female": "car.dash_bore",
+        "engaged_studs": 1,
+        "fit": "free",
+        "gap_min_mm": 0.2,
+        "gap_max_mm": 0.2
+      },
+      {
+        "male": "ax_f.axis",
+        "female": "car.axle_front",
+        "engaged_studs": 1,
+        "fit": "free",
+        "gap_min_mm": 0.2,
+        "gap_max_mm": 0.2
+      },
+      {
+        "male": "ax_r.axis",
+        "female": "car.axle_rear",
+        "engaged_studs": 1,
+        "fit": "free",
+        "gap_min_mm": 0.2,
+        "gap_max_mm": 0.2
+      },
+      {
+        "male": "ax_f.axis",
+        "female": "wl_f.hub",
+        "engaged_studs": 1,
+        "fit": "press",
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      },
+      {
+        "male": "ax_f.axis",
+        "female": "wr_f.hub",
+        "engaged_studs": 1,
+        "fit": "press",
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      },
+      {
+        "male": "ax_r.axis",
+        "female": "wl_r.hub",
+        "engaged_studs": 1,
+        "fit": "press",
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      },
+      {
+        "male": "ax_r.axis",
+        "female": "wr_r.hub",
+        "engaged_studs": 1,
+        "fit": "press",
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      }
+    ]
+  },
+  "valid_kip_hauler_truck": {
+    "build": [
+      {
+        "id": "truck",
+        "part": "veh_truck_chassis",
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "rot": 0
+        }
+      },
+      {
+        "id": "bull_bar",
+        "part": "racer_bull_bar",
+        "pose": {
+          "x": 0.0,
+          "y": -56.25,
+          "z": 16.0,
+          "rot": 0
+        }
+      },
+      {
+        "id": "roof_rack",
+        "part": "racer_roof_rack",
+        "pose": {
+          "x": 0.0,
+          "y": 25.0,
+          "z": 26.0,
+          "rot": 0
+        }
+      },
+      {
+        "id": "cargo_pack",
+        "part": "pack_explorer",
+        "pose": {
+          "x": 0.0,
+          "y": 50.0,
+          "z": 14.5,
+          "rot": 0
+        }
+      },
+      {
+        "id": "wheel_steer",
+        "part": "veh_steering_wheel",
+        "pose": {
+          "x": 0.0,
+          "y": -20.3125,
+          "z": -13.0,
+          "rot": 0
+        }
+      },
+      {
+        "id": "ax_f",
+        "part": "shaft_tu07",
+        "pose": {
+          "x": -43.75,
+          "y": -37.5,
+          "z": 6.25,
+          "rot": 0,
+          "tilt": [
+            0.0,
+            90.0
+          ]
+        }
+      },
+      {
+        "id": "wl_f",
+        "part": "wheel_tu06",
+        "pose": {
+          "x": -43.75,
+          "y": -37.5,
+          "z": 6.25,
+          "rot": 0,
+          "tilt": [
+            0.0,
+            90.0
+          ]
+        }
+      },
+      {
+        "id": "wr_f",
+        "part": "wheel_tu06",
+        "pose": {
+          "x": 31.25,
+          "y": -37.5,
+          "z": 6.250000000000004,
+          "rot": 0,
+          "tilt": [
+            0.0,
+            90.0
+          ]
+        }
+      },
+      {
+        "id": "ax_r",
+        "part": "shaft_tu07",
+        "pose": {
+          "x": -43.75,
+          "y": 56.25,
+          "z": 6.25,
+          "rot": 0,
+          "tilt": [
+            0.0,
+            90.0
+          ]
+        }
+      },
+      {
+        "id": "wl_r",
+        "part": "wheel_tu06",
+        "pose": {
+          "x": -43.75,
+          "y": 56.25,
+          "z": 6.25,
+          "rot": 0,
+          "tilt": [
+            0.0,
+            90.0
+          ]
+        }
+      },
+      {
+        "id": "wr_r",
+        "part": "wheel_tu06",
+        "pose": {
+          "x": 31.25,
+          "y": 56.25,
+          "z": 6.250000000000004,
+          "rot": 0,
+          "tilt": [
+            0.0,
+            90.0
+          ]
+        }
+      }
+    ],
+    "ok": true,
+    "errors": [],
+    "warnings": [],
+    "edges": [
+      {
+        "male": "truck.front_studs",
+        "female": "bull_bar.under_sockets",
+        "engaged_studs": 2,
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      },
+      {
+        "male": "truck.roof_studs",
+        "female": "roof_rack.under_sockets",
+        "engaged_studs": 4,
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      },
+      {
+        "male": "truck.cargo_studs",
+        "female": "cargo_pack.under_sockets",
+        "engaged_studs": 4,
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      },
+      {
+        "male": "wheel_steer.axis",
+        "female": "truck.dash_bore",
+        "engaged_studs": 1,
+        "fit": "free",
+        "gap_min_mm": 0.2,
+        "gap_max_mm": 0.2
+      },
+      {
+        "male": "ax_f.axis",
+        "female": "truck.axle_front",
+        "engaged_studs": 1,
+        "fit": "free",
+        "gap_min_mm": 0.2,
+        "gap_max_mm": 0.2
+      },
+      {
+        "male": "ax_r.axis",
+        "female": "truck.axle_rear",
+        "engaged_studs": 1,
+        "fit": "free",
+        "gap_min_mm": 0.2,
+        "gap_max_mm": 0.2
+      },
+      {
+        "male": "ax_f.axis",
+        "female": "wl_f.hub",
+        "engaged_studs": 1,
+        "fit": "press",
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      },
+      {
+        "male": "ax_f.axis",
+        "female": "wr_f.hub",
+        "engaged_studs": 1,
+        "fit": "press",
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      },
+      {
+        "male": "ax_r.axis",
+        "female": "wl_r.hub",
+        "engaged_studs": 1,
+        "fit": "press",
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      },
+      {
+        "male": "ax_r.axis",
+        "female": "wr_r.hub",
+        "engaged_studs": 1,
+        "fit": "press",
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      }
+    ]
+  },
+  "valid_kip_sport_moto": {
+    "build": [
+      {
+        "id": "scooter",
+        "part": "veh_scooter_frame",
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "rot": 0
+        }
+      },
+      {
+        "id": "moto_cowling",
+        "part": "veh_moto_cowling",
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 13.5,
+          "rot": 0
+        }
+      },
+      {
+        "id": "rider_legs",
+        "part": "char_legs_seated",
+        "pose": {
+          "x": 0.0,
+          "y": 25.0,
+          "z": 21.0,
+          "rot": 0
+        }
+      },
+      {
+        "id": "exhaust",
+        "part": "racer_twin_exhaust",
+        "pose": {
+          "x": 0.0,
+          "y": 50.0,
+          "z": 15.5,
+          "rot": 0
+        }
+      },
+      {
+        "id": "handlebars",
+        "part": "veh_handlebar_fork",
+        "pose": {
+          "x": 0.0,
+          "y": -25.0,
+          "z": 0.0,
+          "rot": 0
+        }
+      },
+      {
+        "id": "ax_f",
+        "part": "shaft_tu05",
+        "pose": {
+          "x": -31.25,
+          "y": -43.75,
+          "z": 6.25,
+          "rot": 0,
+          "tilt": [
+            0.0,
+            90.0
+          ]
+        }
+      },
+      {
+        "id": "wl_f",
+        "part": "wheel_tu04",
+        "pose": {
+          "x": -31.25,
+          "y": -43.75,
+          "z": 6.25,
+          "rot": 0,
+          "tilt": [
+            0.0,
+            90.0
+          ]
+        }
+      },
+      {
+        "id": "wr_f",
+        "part": "wheel_tu04",
+        "pose": {
+          "x": 18.75,
+          "y": -43.75,
+          "z": 6.250000000000003,
+          "rot": 0,
+          "tilt": [
+            0.0,
+            90.0
+          ]
+        }
+      },
+      {
+        "id": "ax_r",
+        "part": "shaft_tu05",
+        "pose": {
+          "x": -31.25,
+          "y": 43.75,
+          "z": 6.25,
+          "rot": 0,
+          "tilt": [
+            0.0,
+            90.0
+          ]
+        }
+      },
+      {
+        "id": "wl_r",
+        "part": "wheel_tu04",
+        "pose": {
+          "x": -31.25,
+          "y": 43.75,
+          "z": 6.25,
+          "rot": 0,
+          "tilt": [
+            0.0,
+            90.0
+          ]
+        }
+      },
+      {
+        "id": "wr_r",
+        "part": "wheel_tu04",
+        "pose": {
+          "x": 18.75,
+          "y": 43.75,
+          "z": 6.250000000000003,
+          "rot": 0,
+          "tilt": [
+            0.0,
+            90.0
+          ]
+        }
+      }
+    ],
+    "ok": true,
+    "errors": [],
+    "warnings": [],
+    "edges": [
+      {
+        "male": "scooter.top_studs",
+        "female": "moto_cowling.under_sockets",
+        "engaged_studs": 4,
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      },
+      {
+        "male": "scooter.seat_studs",
+        "female": "rider_legs.under_sockets",
+        "engaged_studs": 4,
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      },
+      {
+        "male": "scooter.exhaust_studs",
+        "female": "exhaust.under_sockets",
+        "engaged_studs": 2,
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      },
+      {
+        "male": "handlebars.axis",
+        "female": "scooter.headtube",
+        "engaged_studs": 1,
+        "fit": "free",
+        "gap_min_mm": 0.2,
+        "gap_max_mm": 0.2
+      },
+      {
+        "male": "ax_f.axis",
+        "female": "scooter.axle_front",
+        "engaged_studs": 1,
+        "fit": "free",
+        "gap_min_mm": 0.2,
+        "gap_max_mm": 0.2
+      },
+      {
+        "male": "ax_r.axis",
+        "female": "scooter.axle_rear",
+        "engaged_studs": 1,
+        "fit": "free",
+        "gap_min_mm": 0.2,
+        "gap_max_mm": 0.2
+      },
+      {
+        "male": "ax_f.axis",
+        "female": "wl_f.hub",
+        "engaged_studs": 1,
+        "fit": "press",
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      },
+      {
+        "male": "ax_f.axis",
+        "female": "wr_f.hub",
+        "engaged_studs": 1,
+        "fit": "press",
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      },
+      {
+        "male": "ax_r.axis",
+        "female": "wl_r.hub",
+        "engaged_studs": 1,
+        "fit": "press",
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      },
+      {
+        "male": "ax_r.axis",
+        "female": "wr_r.hub",
+        "engaged_studs": 1,
+        "fit": "press",
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      }
+    ]
+  },
+  "valid_kip_skateboard": {
+    "build": [
+      {
+        "id": "deck",
+        "part": "prop_skateboard_deck",
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "rot": 0
+        }
+      },
+      {
+        "id": "ax_f",
+        "part": "racer_axle",
+        "pose": {
+          "x": -18.75,
+          "y": -18.75,
+          "z": 6.25,
+          "rot": 0,
+          "tilt": [
+            0.0,
+            90.0
+          ]
+        }
+      },
+      {
+        "id": "wl_f",
+        "part": "racer_wheel",
+        "pose": {
+          "x": -18.75,
+          "y": -18.75,
+          "z": 6.25,
+          "rot": 0,
+          "tilt": [
+            0.0,
+            90.0
+          ]
+        }
+      },
+      {
+        "id": "wr_f",
+        "part": "racer_wheel",
+        "pose": {
+          "x": 12.75,
+          "y": -18.75,
+          "z": 6.250000000000002,
+          "rot": 0,
+          "tilt": [
+            0.0,
+            90.0
+          ]
+        }
+      },
+      {
+        "id": "ax_r",
+        "part": "racer_axle",
+        "pose": {
+          "x": -18.75,
+          "y": 18.75,
+          "z": 6.25,
+          "rot": 0,
+          "tilt": [
+            0.0,
+            90.0
+          ]
+        }
+      },
+      {
+        "id": "wl_r",
+        "part": "racer_wheel",
+        "pose": {
+          "x": -18.75,
+          "y": 18.75,
+          "z": 6.25,
+          "rot": 0,
+          "tilt": [
+            0.0,
+            90.0
+          ]
+        }
+      },
+      {
+        "id": "wr_r",
+        "part": "racer_wheel",
+        "pose": {
+          "x": 12.75,
+          "y": 18.75,
+          "z": 6.250000000000002,
+          "rot": 0,
+          "tilt": [
+            0.0,
+            90.0
+          ]
+        }
+      }
+    ],
+    "ok": true,
+    "errors": [],
+    "warnings": [],
+    "edges": [
+      {
+        "male": "ax_f.axis",
+        "female": "deck.axle_front",
+        "engaged_studs": 1,
+        "fit": "free",
+        "gap_min_mm": 0.2,
+        "gap_max_mm": 0.2
+      },
+      {
+        "male": "ax_r.axis",
+        "female": "deck.axle_rear",
+        "engaged_studs": 1,
+        "fit": "free",
+        "gap_min_mm": 0.2,
+        "gap_max_mm": 0.2
+      },
+      {
+        "male": "ax_f.axis",
+        "female": "wl_f.hub",
+        "engaged_studs": 1,
+        "fit": "press",
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      },
+      {
+        "male": "ax_f.axis",
+        "female": "wr_f.hub",
+        "engaged_studs": 1,
+        "fit": "press",
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      },
+      {
+        "male": "ax_r.axis",
+        "female": "wl_r.hub",
+        "engaged_studs": 1,
+        "fit": "press",
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      },
+      {
+        "male": "ax_r.axis",
+        "female": "wr_r.hub",
+        "engaged_studs": 1,
+        "fit": "press",
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      }
+    ]
+  },
+  "INVALID_round_pin_in_bushing": {
+    "build": [
+      {
+        "id": "bu",
+        "part": "bushing_tu01",
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "rot": 0
+        }
+      },
+      {
+        "id": "pin",
+        "part": "pin_free",
+        "pose": {
+          "x": 0,
+          "y": 0,
+          "z": -1.5,
+          "rot": 0
+        }
+      }
+    ],
+    "ok": false,
+    "errors": [
+      {
+        "code": "profile_mismatch",
+        "detail": "pin.axis (pin_free) cannot mate with bu.hub (fixed bore)"
+      },
+      {
+        "code": "floating",
+        "detail": "pin is not connected to bu"
+      },
+      {
+        "code": "collision",
+        "detail": "bu and pin overlap by 54 mm3"
+      }
+    ],
+    "warnings": [],
+    "edges": []
+  },
+  "INVALID_large_tail_on_small_plate": {
+    "build": [
+      {
+        "id": "plate",
+        "part": "mini_plate",
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "rot": 0
+        }
+      },
+      {
+        "id": "tail",
+        "part": "waddle_tail",
+        "pose": {
+          "x": 0,
+          "y": 0,
+          "z": 5.0,
+          "rot": 0
+        }
+      }
+    ],
+    "ok": false,
+    "errors": [
+      {
+        "code": "size_mismatch",
+        "detail": "plate.top_studs (small) vs tail.under_sockets (large)"
+      },
+      {
+        "code": "floating",
+        "detail": "tail is not connected to plate"
+      },
+      {
+        "code": "collision",
+        "detail": "plate and tail overlap by 293 mm3"
+      }
+    ],
+    "warnings": [],
+    "edges": []
+  },
+  "INVALID_floating_wings": {
+    "build": [
+      {
+        "id": "plate",
+        "part": "mini_plate",
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "rot": 0
+        }
+      },
+      {
+        "id": "wings",
+        "part": "cloud_wings",
+        "pose": {
+          "x": 0,
+          "y": 0,
+          "z": 40,
+          "rot": 0
+        }
+      }
+    ],
+    "ok": false,
+    "errors": [
+      {
+        "code": "floating",
+        "detail": "wings is not connected to plate"
+      }
+    ],
+    "warnings": [],
+    "edges": []
+  },
+  "INVALID_overlapping_bricks": {
+    "build": [
+      {
+        "id": "b1",
+        "part": "big_blue_brick",
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "rot": 0
+        }
+      },
+      {
+        "id": "b2",
+        "part": "big_blue_brick",
+        "pose": {
+          "x": 16,
+          "y": 0,
+          "z": 0,
+          "rot": 0
+        }
+      }
+    ],
+    "ok": false,
+    "errors": [
+      {
+        "code": "floating",
+        "detail": "b2 is not connected to b1"
+      },
+      {
+        "code": "collision",
+        "detail": "b1 and b2 overlap by 14136 mm3"
+      }
+    ],
+    "warnings": [],
+    "edges": []
+  }
+}

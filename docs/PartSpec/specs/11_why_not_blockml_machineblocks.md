@@ -32,7 +32,7 @@ Our own Python pipeline, generated from one data file (`interfaces.json`):
 - **Gate:** checks geometry, printability, interfaces, small parts, and fit measured from the built geometry.
 - **Validator:** checks how parts connect in a build: studs, pins and bores, and gear meshing.
 
-As of 2026-10-28 it verifies all 60 planned parts (geometry and fit; physical checks pending a print) in under two minutes.
+As of 2026-10-28 it verifies 56 of the 60 planned parts in under two minutes.
 
 Third-party code is limited to permissive libraries (see `THIRD_PARTY.md`): manifold3d (Apache-2.0), trimesh (MIT), numpy (BSD), scipy (BSD) and jsonschema (MIT). All dimensions and geometry are our own.
 

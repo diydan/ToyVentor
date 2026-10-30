@@ -1,0 +1,16 @@
+{
+  "id": "seed-kip",
+  "name": "Kip (Modular Hero)",
+  "kind": "figure",
+  "sizeClass": "small",
+  "lengthMm": 115,
+  "widthMm": 52,
+  "attachPoints": [
+    { "id": "head", "label": "1×2 Crown Dock" },
+    { "id": "ears", "label": "±X Ear-Pod Bosses" },
+    { "id": "back", "label": "2×2 Back Dock" },
+    { "id": "tail", "label": "1×1 Lower-Back Tail Port" },
+    { "id": "hand", "label": "Right Hand Ø6.6 Shaft" }
+  ],
+  "source": "seed"
+}

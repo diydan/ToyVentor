@@ -10,4 +10,13 @@ generated/*
 .DS_Store
 *.local
 .agents/memory/.muse-memory.lock
-docs/PartSpec/pkg/
+# Local handover/audit notes archived during the PartSpec v2 import
+docs/part spec v2/
+
+# PartSpec v2 generator (parts/partspec/): track sources, manifests, and cached
+# validation JSONs; ignore regenerable meshes and scratch outputs
+parts/partspec/out/
+parts/partspec/*.stl
+parts/partspec/*.png
+parts/partspec/calibration/
+parts/partspec/app_export/

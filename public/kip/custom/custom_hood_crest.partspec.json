@@ -1,0 +1,198 @@
+{
+  "id": "custom_hood_crest",
+  "name": "Turbo Aero Hood Crest",
+  "type": "Custom hood part",
+  "line": "snap",
+  "family": "addon",
+  "size_class": "small",
+  "stat": "Speed",
+  "behavior": "Swept aero intake fin that snaps onto the Roadster Car 2x2 hood port",
+  "prints": true,
+  "tags": [
+    "custom",
+    "llm",
+    "hood",
+    "kip"
+  ],
+  "file": "toyventor_custom_hood_crest_S.stl",
+  "bbox_mm": [
+    24.4,
+    25.6,
+    18.6
+  ],
+  "volume_cm3": 6.84,
+  "connectors": [
+    {
+      "id": "under_sockets",
+      "kind": "socket_grid",
+      "gender": "F",
+      "interface": "stud_small",
+      "size_class": "small",
+      "fit_class": "FRICTION",
+      "frame": {
+        "origin": [
+          0,
+          0,
+          0
+        ],
+        "normal": [
+          0,
+          0,
+          -1
+        ]
+      },
+      "grid": {
+        "nx": 2,
+        "ny": 2,
+        "pitch": 12.5
+      },
+      "style": "holes"
+    }
+  ],
+  "safety": {
+    "small_part_status": "small_part",
+    "min_enclosing_diameter_mm": 26.72,
+    "margin_pct": -15.9,
+    "print_page_warning": [
+      "Printed at home or by a print service. Not tested to toy-safety standards. Adult supervision required. Check for cracks, sharp edges and loose pieces before each use, and stop using anything that has broken.",
+      "CHOKING HAZARD - Small parts. Not for children under 3 years."
+    ]
+  },
+  "print": {
+    "orientation": "bed = z0; flat, studs up",
+    "supports": false
+  },
+  "design_status": "verified",
+  "fit": {
+    "studs_measured": 4,
+    "design_gap_mm": 0.05,
+    "gap_min_mm": 0.05,
+    "gap_max_mm": 0.05,
+    "surface_offset_window_mm": [
+      -0.075,
+      0.075
+    ],
+    "residual_error_mm": 0.05
+  },
+  "checks": [
+    {
+      "id": "G1_watertight",
+      "level": "block",
+      "result": "pass",
+      "detail": ""
+    },
+    {
+      "id": "G2_winding",
+      "level": "block",
+      "result": "pass",
+      "detail": ""
+    },
+    {
+      "id": "G3_single_body",
+      "level": "block",
+      "result": "pass",
+      "detail": "1 body(ies)"
+    },
+    {
+      "id": "G4_on_bed",
+      "level": "block",
+      "result": "pass",
+      "detail": "zmin=0.000"
+    },
+    {
+      "id": "G5_fits_bed",
+      "level": "block",
+      "result": "pass",
+      "detail": "[24.4, 25.6, 18.6] vs [180, 180, 180]"
+    },
+    {
+      "id": "P1_no_supports",
+      "level": "block",
+      "result": "pass",
+      "detail": "0.0 mm2 steeper than 45 deg"
+    },
+    {
+      "id": "P4_no_ledges",
+      "level": "block",
+      "result": "pass",
+      "detail": "0.0 mm2 of flat underside held on one side only"
+    },
+    {
+      "id": "P2_bridge_span",
+      "level": "block",
+      "result": "pass",
+      "detail": "no cavity"
+    },
+    {
+      "id": "P3_wall_min",
+      "level": "info",
+      "result": "pass",
+      "detail": "wall 2.0 mm vs minimum 1.2"
+    },
+    {
+      "id": "I1_lattice",
+      "level": "warn",
+      "result": "pass",
+      "detail": "pitch 12.5 mm vs TU 12.5 mm (ratio 1.000)"
+    },
+    {
+      "id": "I2_connectors_on_part",
+      "level": "block",
+      "result": "pass",
+      "detail": "1 connector(s)"
+    },
+    {
+      "id": "I7_hole_roof",
+      "level": "block",
+      "result": "pass",
+      "detail": "4 hole(s); least-covered roof 100% (needs 1.2 mm closed above every ceiling)"
+    },
+    {
+      "id": "I3_seats_on_reference",
+      "level": "block",
+      "result": "pass",
+      "detail": "overlap 0.000 mm3 with matching reference part"
+    },
+    {
+      "id": "S1_small_part_screen",
+      "level": "warn",
+      "result": "fail",
+      "detail": "small_part: best-fit diameter 26.72 mm vs 31.75 mm cylinder"
+    },
+    {
+      "id": "T1_fit_as_designed",
+      "level": "block",
+      "result": "pass",
+      "detail": "4 stud(s): gap +0.050 to +0.050 mm, design 0.050, allowed +0.045 to +0.060"
+    },
+    {
+      "id": "T2_fit_tolerance_window",
+      "level": "warn",
+      "result": "pass",
+      "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+    },
+    {
+      "id": "F1_printed_fit",
+      "level": "block",
+      "result": "pending",
+      "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+    },
+    {
+      "id": "F2_breakage",
+      "level": "block",
+      "result": "pending",
+      "detail": "needs break/impact test: no piece may fit the cylinder after failure"
+    },
+    {
+      "id": "M1_manifest_schema",
+      "level": "block",
+      "result": "pass",
+      "detail": ""
+    }
+  ],
+  "sockets": {
+    "holes": 4,
+    "reliefs": 0,
+    "locked": true
+  }
+}

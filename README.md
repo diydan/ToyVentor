@@ -18,7 +18,8 @@ npm run dev        # Vite + local Workers runtime (app + /api/*)
 npm test           # shared checks/schema tests
 npm run validate   # every file in sets/ passes the shared schema
 npm run build      # typecheck + production build
-npm run parts      # regenerate STL from parts/*.scad (needs OpenSCAD)
+npm run parts      # regenerate legacy STLs from parts/scad/*.scad (needs OpenSCAD)
+npm run bridge     # bridge verified PartSpec v2 parts from parts/partspec/ into sets/
 ```
 
 Secrets for local dev go in `.dev.vars` (see `.dev.vars.example`). The
@@ -40,7 +41,8 @@ npm run deploy      # build + wrangler deploy
 ## Layout
 
 `src/` React app · `worker/` API Worker · `shared/` pure types + checks ·
-`parts/` parametric OpenSCAD · `sets/` content as data · `seed/` pre-made
+`parts/` parametric parts (`parts/partspec/` 12.5 mm TU Python generator +
+`parts/scad/` legacy OpenSCAD) · `sets/` content as data · `seed/` pre-made
 fallback content · `generated/` build output (never edited by hand).
 
 ## Status (Oct 29, 2026)

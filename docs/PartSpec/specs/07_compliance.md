@@ -15,14 +15,14 @@
 | Third-party testing at a CPSC-accepted lab | Every part family tested to F963-23 and the rules below | Not started |
 | Children's Product Certificate | Issued from the lab results, kept on file, available on request | Not started |
 | Tracking labels (CPSIA section 103) | Batch and source marks on the product and packaging, so a print run can be traced | Not designed: needs a way to mark printed parts |
-| Small parts ban for under 3 (16 CFR 1501) | Large-line parts must never fit the small-parts cylinder, also after use-and-abuse tests | Design screen in place (Large parts must clear the cylinder); lab test pending |
+| Small parts ban for under 3 (16 CFR 1501) | Nothing is offered for under 3 while Snap is 3 and up only (Large parked 2026-10-28). If Large returns, its parts must never fit the small-parts cylinder, also after use-and-abuse tests | Design screen in place (Large parts must clear the cylinder); lab test pending |
 | Small parts warning for ages 3 to 6 (16 CFR 1500.19) | Small-line parts that fit the cylinder carry the choking-hazard warning on packaging and listing | Warning text generated per part; packaging not designed |
 | Use-and-abuse tests | Drop, torque, tension and compression, then the small-parts check on anything that comes off | Check F2 is pending: needs printed samples |
 | Sharp points and edges (16 CFR 1500.48 and 1500.49) | Printed edges, gear teeth and thin fins must pass | Not tested |
 | Lead in substrate and coatings, phthalates (CPSIA; 16 CFR 1303, 1307) | Filament and any paint or coating must meet the limits | Need supplier certificates for every filament colour |
 | Batteries (F963-23 battery requirements) | Only if a capsule gets a battery: secure compartment, labelling. Toys that meet F963 are outside Reese's Law | No batteries yet |
 | Removable join pins in hugging mounts | Pins are small parts. Allowed with the warning on Small (3 and up) and Pro (8 and up) mounts; never on Large (under 3), which joins permanently | Enforced by the generator |
-| Age grading | Snap Large: under 3; Snap Small: 3 and up; Pro: 8 and up | Set in the spec |
+| Age grading | Snap Small: 3 and up (the only Snap size offered); Pro: 8 and up. Snap Large (under 3) is parked | Set in the spec |
 
 ## How our design checks map to this
 

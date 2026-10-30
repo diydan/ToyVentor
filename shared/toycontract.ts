@@ -26,6 +26,10 @@ export type ToyType = "character" | "robot" | "vehicle";
  *  the game can reach the Worker's /api/muse/spark route. */
 export const WORLD_PATH = "/world/ToyVentor-World.html";
 
+/** Standalone 3D Modular Rig Demo for Kip (Pro 8+ & Snap 4–8, Mixamo locomotion,
+ *  Exploded View, and Tabletop Part-Pile-to-Build animation). */
+export const KIP_DEMO_PATH = "/kip/Kip-Demo.html";
+
 export interface ToyContract {
   format: typeof TOY_CONTRACT_FORMAT;
   /** The kid's toy id, so the game can tell two toys apart. */
@@ -153,6 +157,12 @@ export function decodeToyContract(text: string): ToyContract | null {
 /** The game URL that opens ToyVentor World with this toy. */
 export function toyWorldUrl(contract: ToyContract, base = ""): string {
   return `${base}${WORLD_PATH}#toy=${encodeToyContract(contract)}`;
+}
+
+/** The viewer URL that opens Kip's 3D Modular Rig Demo with an optional toy build contract. */
+export function kipDemoUrl(contract?: ToyContract | null, base = ""): string {
+  if (!contract) return `${base}${KIP_DEMO_PATH}`;
+  return `${base}${KIP_DEMO_PATH}#toy=${encodeToyContract(contract)}`;
 }
 
 /** Build the contract for a kid's toy and the parts they placed on it.

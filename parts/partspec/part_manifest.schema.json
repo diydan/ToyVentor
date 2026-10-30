@@ -1,0 +1,351 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ToyVentor part manifest",
+  "type": "object",
+  "required": [
+    "id",
+    "name",
+    "type",
+    "line",
+    "size_class",
+    "stat",
+    "behavior",
+    "prints",
+    "connectors",
+    "safety",
+    "print",
+    "checks"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9_]+$"
+    },
+    "name": {
+      "type": "string"
+    },
+    "type": {
+      "type": "string"
+    },
+    "line": {
+      "enum": [
+        "snap",
+        "pro",
+        "shared"
+      ]
+    },
+    "size_class": {
+      "enum": [
+        "small",
+        "large",
+        "pro",
+        "n/a"
+      ]
+    },
+    "stat": {
+      "type": "string"
+    },
+    "behavior": {
+      "type": "string"
+    },
+    "prints": {
+      "type": "boolean"
+    },
+    "file": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "bbox_mm": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      },
+      "minItems": 3,
+      "maxItems": 3
+    },
+    "volume_cm3": {
+      "type": "number"
+    },
+    "mount_frame": {
+      "type": "object",
+      "required": [
+        "origin",
+        "z"
+      ],
+      "properties": {
+        "origin": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "minItems": 3,
+          "maxItems": 3
+        },
+        "z": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "minItems": 3,
+          "maxItems": 3
+        }
+      }
+    },
+    "connectors": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "kind",
+          "gender",
+          "interface",
+          "size_class",
+          "frame"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "stud_grid",
+              "socket_grid",
+              "bore_grid",
+              "pin",
+              "bore"
+            ]
+          },
+          "gender": {
+            "enum": [
+              "M",
+              "F"
+            ]
+          },
+          "interface": {
+            "type": "string"
+          },
+          "size_class": {
+            "enum": [
+              "small",
+              "large",
+              "pro"
+            ]
+          },
+          "fit_class": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string"
+          },
+          "frame": {
+            "type": "object",
+            "required": [
+              "origin",
+              "normal"
+            ],
+            "properties": {
+              "origin": {
+                "type": "array",
+                "items": {
+                  "type": "number"
+                },
+                "minItems": 3,
+                "maxItems": 3
+              },
+              "normal": {
+                "type": "array",
+                "items": {
+                  "type": "number"
+                },
+                "minItems": 3,
+                "maxItems": 3
+              }
+            }
+          },
+          "grid": {
+            "type": "object",
+            "required": [
+              "nx",
+              "ny",
+              "pitch"
+            ],
+            "properties": {
+              "nx": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "ny": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "pitch": {
+                "type": "number"
+              },
+              "omit_cells": {
+                "type": "array",
+                "items": {
+                  "type": "array",
+                  "items": {
+                    "type": "integer"
+                  },
+                  "minItems": 2,
+                  "maxItems": 2
+                }
+              },
+              "anchor": {
+                "enum": [
+                  "center",
+                  "corner"
+                ]
+              }
+            }
+          },
+          "bore": {
+            "type": "object"
+          },
+          "bore_class": {
+            "enum": [
+              "free",
+              "fixed"
+            ]
+          },
+          "profile": {
+            "enum": [
+              "round",
+              "flats",
+              "friction"
+            ]
+          },
+          "length_mm": {
+            "type": "number"
+          },
+          "depth_mm": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "safety": {
+      "type": "object",
+      "required": [
+        "small_part_status",
+        "print_page_warning"
+      ],
+      "properties": {
+        "small_part_status": {
+          "enum": [
+            "small_part",
+            "marginal",
+            "above_cylinder"
+          ]
+        },
+        "min_enclosing_diameter_mm": {
+          "type": "number"
+        },
+        "margin_pct": {
+          "type": "number"
+        },
+        "print_page_warning": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1
+        }
+      }
+    },
+    "print": {
+      "type": "object",
+      "required": [
+        "orientation"
+      ],
+      "properties": {
+        "orientation": {
+          "type": "string"
+        },
+        "supports": {
+          "type": "boolean"
+        }
+      }
+    },
+    "checks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "level",
+          "result"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "level": {
+            "enum": [
+              "block",
+              "warn",
+              "info"
+            ]
+          },
+          "result": {
+            "enum": [
+              "pass",
+              "fail",
+              "pending"
+            ]
+          },
+          "detail": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "design_status": {
+      "enum": [
+        "verified",
+        "needs_reproportion"
+      ]
+    },
+    "fit": {
+      "type": "object",
+      "properties": {
+        "studs_measured": {
+          "type": "integer"
+        },
+        "design_gap_mm": {
+          "type": "number"
+        },
+        "gap_min_mm": {
+          "type": "number"
+        },
+        "gap_max_mm": {
+          "type": "number"
+        },
+        "surface_offset_window_mm": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "residual_error_mm": {
+          "type": "number"
+        }
+      }
+    },
+    "family": {
+      "type": "string"
+    }
+  }
+}

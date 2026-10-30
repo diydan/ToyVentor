@@ -12,3 +12,8 @@
 The box-only scan fallback does not depend on this package. If the SAM
 License terms change in a way ToyVentor cannot accept, remove the parser
 import from the Worker and retain the local box parser in `shared/sam.ts`.
+
+## Three.js & Mixamo Sample Animation Clips (Kip 3D Demo Viewer)
+
+- Package: `three` (MIT License) — bundled into `public/kip/vendor/three-kip.js` via `scripts/build-kip.ts`.
+- Sample skeletal animation clips (`public/kip/mixamo/Xbot.glb`, `public/kip/mixamo/Michelle.glb`): bare bone hierarchies and keyframe curves extracted from `mrdoob/three.js` (`examples/models/gltf/`, MIT repository distribution), with all third-party character meshes, materials, and textures stripped; retargeted at runtime onto Kip's clean-room parametric ToyVentor `12.5 mm` TU rig (`parts/kip/kip.scad`).

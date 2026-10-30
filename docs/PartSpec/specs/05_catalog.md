@@ -6,8 +6,8 @@
 
 | Line | Verified | Built, not verified | Target |
 | --- | --- | --- | --- |
-| Snap | 30 | 0 | 30 |
-| Pro | 30 | 0 | 30 |
+| Snap | 59 | 0 | 59 |
+| Pro | 34 | 0 | 34 |
 
 ## Waves
 
@@ -19,6 +19,10 @@
 | W3 | Snap characters, capsules and small mount | 10 | 10 | W1 | L | done |
 | W4 | Pro gears, corner beams, mount and adapter | 13 | 13 | W2 | L | done |
 | W5 | Pro joints and wheels | 4 | 4 | W2 | M | done |
+| W6 | Forge Club Month 1: Racer | 9 | 9 | W3 | M | done |
+| W7 | Forge Club Month 2: Critters | 1 | 1 | W3 | S | done |
+| W8 | Snap robots: Bolt | 5 | 5 | W3 | M | done |
+| W9 | Kip wardrobe and modular TU vehicles | 18 | 18 | W5, W6, W8 | M | done |
 
 - **W0:** Done: catalog-driven registration (one catalog row per part), the block, tile, slope and dome families, Pro checks I4 to I6 and pin-and-bore mating in the validator, all proven on fixtures. The round block was replaced by a dome because a round outline cannot carry studs on the lattice.
 - **W1:** 11 parts, all from the block, tile, slope and dome families on the existing foot and tube code.
@@ -26,6 +30,10 @@
 - **W3:** 10 parts, mostly bespoke shapes that need a visual review as well as the gate.
 - **W4:** 13 parts: involute gears on module 2.5, rack, worm, L/T/angled beams, the Pro Forge Mount and the Snap-to-Pro adapter.
 - **W5:** 4 parts: two wheels, a hinge, a cross connector.
+- **W6:** Six car add-ons (Spoiler, Bull Bar, Hood Scoop, Twin Exhaust, Light Bar, Roof Rack) and a wheel set (Axle Block, Racer Wheel, Racer Axle), Snap Small on 1 and 2 stud footprints, built print-first. The first seeded Forge Club set.
+- **W7:** A Small Waddle Tail, so every character slot has a part in the size on offer, and the Critters set: Pointy Ears, Bumper Horns, Cloud Wings, Pebble Armor Shell, Waddle Tail and Bounce Capsule.
+- **W8:** The first Snap robot: one part for each of the five robot slots (legs, torso, arms, head, back), stacking on studs, fixed pose, ages 3+. Four more parts per slot follow.
+- **W9:** 18 parts (14 Snap Small, 4 Pro): swappable blank-canvas character heads (Kid, Fox, Bear) with 2x1 crown buds, four 2x1 snap-on hair silhouettes, Explorer Rucksack, Builder Spanner, Star Emblem Wand, Street Skateboard Deck, Seated Snap Legs, and three modular 12.5 mm TU vehicles (Roadster Car, Hauler Truck, and 2-in-1 Scooter / Sport Motorbike with steering controls and straddle cowling).
 
 ## How parts were picked
 
@@ -40,13 +48,14 @@
 - Snap grids are at least 2x2: a 1xN part has no tubes, so nothing holds its studs.
 - Skins are game-only and are not counted.
 - Every Large part must clear the small-parts cylinder.
+- Attach slots: character add-ons and vehicle parts carry attach.kind (character or vehicle), attach.slots, and attach.front: the part's local -y or +y faces the toy's front, or the part is symmetric. Slot names: character head, back, body, top, tail; vehicle front, rear, hood, roof, wheels; robot legs, torso, arms, head, back.
 
 ## Snap parts
 
 | Id | Name | Family | Size | Wave | Status | Notes |
 | --- | --- | --- | --- | --- | --- | --- |
 | `big_blue_brick` | Big Blue Brick | block | large | built | verified | Sturdiness. Large brick 2x2. |
-| `cloud_wings` | Cloud Wings | addon | small | built | verified | Lift.  |
+| `cloud_wings` | Cloud Wings | addon | small | built | verified | Lift. Integrated 2x2 pad with four stud holes so the wings center and rotation-lock on any 2x2 back dock or brick. |
 | `forge_mount_ring` | Forge Mount (stud face, large) | forge_mount | large | built | verified | Grip. Shared mount definition, Large stud face. |
 | `glow_capsule` | Glow Capsule | capsule | small | built | verified | Glow.  |
 | `mini_plate` | Mini Plate 2x4 | block | small | built | verified | Balance. Small plate 2x4. |
@@ -75,6 +84,35 @@
 | `ridge_fin` | Ridge Fin | addon | small | W3 | verified | Speed. Integrated base: a small pad under the blade carries two stud holes. |
 | `wobble_hat` | Wobble Hat | addon | small | W3 | verified | Style. Integrated base: one stud hole; the brim stops short of the neighbouring studs, so it needs no notches. It may turn on its stud. |
 | `zoom_capsule_s` | Zoom Capsule (Small) | capsule | small | W3 | verified | Speed.  |
+| `racer_axle` | Racer Axle | racer | small | W6 | verified | Spin. A 3 TU flat shaft, printed lying on a flat. Turns in the axle block; a wheel on each end. |
+| `racer_axle_block` | Axle Block | racer | small | W6 | verified | Grip. A Snap brick with studs on top and a free bore across it; the axle turns in it. Flat underside: it rides on its wheels. |
+| `racer_bull_bar` | Bull Bar | racer | small | W6 | verified | Toughness. Front guard: two posts, a grille, three diamond-section bars (no flat undersides). |
+| `racer_hood_scoop` | Hood Scoop | racer | small | W6 | verified | Power. Low wedge with an air intake; the intake roof is a 10 mm bridge. |
+| `racer_light_bar` | Light Bar | racer | small | W6 | verified | Glow. Low housing with four lamp domes on top. |
+| `racer_roof_rack` | Roof Rack | racer | small | W6 | verified | Reach. Raised stud deck on four legs; each leg's foot carries a stud hole. Studs on top take more parts. |
+| `racer_spoiler` | Spoiler | racer | small | W6 | verified | Speed. Rear wing between two end plates; the wing's underside bridges 18.8 mm between them. Replaces the app's old-grid Spoiler. |
+| `racer_twin_exhaust` | Twin Exhaust | racer | small | W6 | verified | Launch. Two hollow pipes rising backwards at 40 degrees from a muffler box. |
+| `racer_wheel` | Racer Wheel | racer | small | W6 | verified | Roll. 18 mm wheel on a fixed-bore hub; presses onto the axle's flats. Use two per axle. |
+| `waddle_tail_s` | Waddle Tail | addon | small | W7 | verified | Charm. The Small Waddle Tail: half the Large tail's size on a two-hole pad. Curls backwards and up. |
+| `robot_arms_grabber` | Grabber Arms | robot | small | W8 | verified | Grip. A 5 mm shoulder yoke with both arms built in, flat at shoulder height; relief cuts under the arms let it rest on any plate. |
+| `robot_back_jetpack` | Jetpack | robot | small | W8 | verified | Lift. A 2x1 pack with two domed tanks behind it; sits on the arms' rear studs, behind the head. |
+| `robot_head_visor` | Visor Head | robot | small | W8 | verified | Awareness. Visor slot (an 18 mm bridge between closed ends), ear panels down to the bed, studs on top for hats, ears and horns. |
+| `robot_legs_stomper` | Stomper Legs | robot | small | W8 | verified | Balance. Big feet carry four stud holes, so the robot stands on any plate; the hips widen from the legs at 41 degrees and carry 2x2 studs. |
+| `robot_torso_core` | Core Torso | robot | small | W8 | verified | Power. A 2x2 brick-sized core with full-height chest vents (no ceilings to bridge). |
+| `char_head_bear` | Bear Critter Head | addon | small | W9 | verified | Torque. Bear cub head on a 2x1 neck with plump muzzle and wide-set round ears flanking 2x1 crown buds. |
+| `char_head_fox` | Fox Critter Head | addon | small | W9 | verified | Speed. Fox critter head on a 2x1 neck with swept side cheek ruffs, tapered snout and 2x1 crown buds. |
+| `char_head_kid` | Kid Canvas Head | addon | small | W9 | verified | Glow. Blank-canvas 2x1 character head with smooth decal brow, side ear reliefs and 2x1 crown buds. |
+| `char_legs_seated` | Seated Snap Legs | addon | small | W9 | verified | Torque. One-piece 90-degree seated 2x2 Snap lower body: 2x2 seat sockets underneath and 2x2 waist studs on top. |
+| `hair_curly` | Cloud Curls | addon | small | W9 | verified | Glow. Volumetric cloud-puff curl crown on a 2x1 integrated pad. |
+| `hair_mohawk` | Action Mohawk | addon | small | W9 | verified | Speed. Three-peak action crest on a 2x1 integrated pad. |
+| `hair_pigtails` | Twin-Puff Pigtails | addon | small | W9 | verified | Spin. Parted crown cap flaring at under 35 degrees to twin side puffs on a 2x1 integrated pad. |
+| `hair_swoosh` | Swoosh Hair | addon | small | W9 | verified | Speed. Side-swept wave crest on a 2x1 integrated pad; locks onto any character or robot head crown. |
+| `pack_explorer` | Explorer Rucksack | addon | small | W9 | verified | Torque. 2x2 field rucksack with rolled upper bedroll and top 2x1 accessory studs. |
+| `prop_skateboard_deck` | Street Skateboard Deck | vehicle | small | W9 | verified | Speed. 2x4 stud deck with two horizontal teardrop free axle bores for Wave 6 racer axles and wheels. |
+| `veh_car_chassis` | Roadster Car Chassis | vehicle | small | W9 | verified | Speed. 4x10 TU modular roadster chassis with 4x2 recessed cockpit, five Wave 6 Racer add-on ports, dash steering bore and two X-axle bores. |
+| `veh_moto_cowling` | Sport Moto Cowling | vehicle | small | W9 | verified | Speed. 2x2 snap-on straddle fuel tank and windscreen converting the 2-in-1 Scooter into a Sport Motorbike. |
+| `veh_scooter_frame` | 2-in-1 Scooter Frame | vehicle | small | W9 | verified | Speed. 2x10 TU step-through scooter frame with 2x2 floorboard, raised 2x2 saddle, headtube steering bore and rear exhaust port. |
+| `veh_truck_chassis` | Hauler Truck Chassis | vehicle | small | W9 | verified | Torque. 4x12 TU modular pickup truck sharing the roadster front cab, plus a 2x2 cab roof arch and open 4x3 stud cargo bed. |
 
 ## Pro parts
 
@@ -110,3 +148,7 @@
 | `hinge_tu02` | Hinge TU02 | joint | pro | W5 | verified | Swing. One leaf; a hinge is two leaves (the second turned 180 degrees) and a free pin through the interleaved knuckles. Knuckle bores print as teardrops. |
 | `wheel_tu04` | Wheel TU04 | wheel | pro | W5 | verified | Speed. 50 mm. Fixed-bore hub (a flat shaft drives it, or it turns with a shaft in free beam bores); crank bores 1 TU from the axis take pins. |
 | `wheel_tu06` | Wheel TU06 | wheel | pro | W5 | verified | Speed. 75 mm. Same hub; crank bores at 1 and 2 TU from the axis. |
+| `prop_star_shield` | Star Emblem Wand | shaft | pro | W9 | verified | Glow. Five-point rounded star emblem on a 2 TU 6.6 mm flat-sided Pro grip shaft; prints lying on a flat. |
+| `prop_wrench` | Builder Spanner | shaft | pro | W9 | verified | Torque. Open-jaw spanner on a 3 TU 6.6 mm flat-sided Pro grip shaft; prints lying on a flat. |
+| `veh_handlebar_fork` | Scooter Handlebar Stem | shaft | pro | W9 | verified | Spin. T-bar steering stem with twin 6.6 mm Pro-shaft handgrips; prints lying on a flat. |
+| `veh_steering_wheel` | Roadster Steering Wheel | pin | pro | W9 | verified | Spin. Three-spoke steering wheel printed flat on its rim with an upright 2 TU free-pin steering stem. |

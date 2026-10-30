@@ -7,6 +7,8 @@
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "build:world": "TOYVENTOR_OUT=public/world TOYVENTOR_TEST_OUT=/tmp/exp python3 game/build25.py",
+    "build:kip": "tsx scripts/build-kip.ts",
+    "kip:validate-part": "tsx scripts/validate-llm-part.ts",
     "preview": "vite preview",
     "deploy": "npm run build:world && npm run build && wrangler deploy",
     "typecheck": "tsc --noEmit",
