@@ -1,7 +1,7 @@
 # Spec: Four-Stage Progressive Power & Robotics System (`Snap → Pro → Momentum → Mech`)
 
 Oct 30, 2026 · Plan & Architecture Spec (No-Code Stage)  
-Companion to: [`flatpack-modular-craft-spec.md`](file:///Users/dan/Code/toyforge/docs/flatpack-modular-craft-spec.md), [`snap.md`](file:///Users/dan/Code/toyforge/docs/snap.md), [`pro.md`](file:///Users/dan/Code/toyforge/docs/pro.md), and [`vision.md`](file:///Users/dan/Code/toyforge/docs/vision.md)
+Companion to: [`flatpack-modular-craft-spec.md`](flatpack-modular-craft-spec.md), [`snap.md`](snap.md), [`pro.md`](pro.md), and [`vision.md`](vision.md)
 
 ---
 
@@ -69,20 +69,21 @@ Why electronics retrofits usually fail when deferred is that Phase 1 chassis for
 | Verification Gate (Run in Phase 1–2) | What It Tests | Phase 3 Failure Prevented |
 | --- | --- | --- |
 | **G1. CAD "Ghost Solid" Keep-Outs (`toyventor_assembly.py`)** | Places exact parametric keep-out meshes (`ghost_xiao_esp32` + `18 mm` USB-C plug cone, `ghost_n20_motor` ×2, `ghost_servo_sg90`, `ghost_battery_3aaa`, `9.8 × 4.5 mm` JST-PH plug sweep) inside virtual `4×4×2` & `2×4×2 TU` bricks across all 9 craft (`0.000 mm³` collision required). | Prevents discovering later that a stud, cab arch, dump knuckle, or USB-C cable collides with the chassis. |
-| **G2. `Pro` Hand-Rack Steering Proof** | Drives front kingpins + `gear_rack_tu05` via `#15` steering stem + `gear_spur_z10` on physical Phase 1 prints. | Proves full lock-to-lock tire clearance (`±22°`) and rack travel before mounting `SG90` servo. |
+| **G2. `Pro` Hand-Rack Steering Proof** | Drives front kingpins + `pro_steer_linkage` (`2×` bellcranks + module-`2.5` rack) via `#15` steering stem + `gear_spur_z10` on Phase 1–2 prints. | Proves full lock-to-lock tire clearance (`±26°`, `+4.05 mm` margin at `±28°`) and rack travel before mounting `SG90` servo. |
 | **G3. `#64` Rubber-Band Torque Stress Test** | Applies `40–80 N·mm` burst torque through the `2.0 TU` `Z10:Z10` rear axle mesh and `5.0 mm` wheel D-hubs in Phase 2. | Exceeds `6V 200 RPM` `N20` continuous torque (`30 N·mm`), proving printed gear teeth and hubs won't strip. |
 | **G4. `100 g` Coin-Ballast Physical Test** | Loads `~100 g` of coins (`20` nickels) into the Power Bay during Phase 2 rolling, tipping, and bathtub tests (`2× #10` hollow pontoons + sponsons sized for `>= 240 cm³` displacement). | Proves full `Mech` battery + motor mass won't bottom out axles, stall the dump hinge, or sink the Catamaran Boat. |
 
 ---
 
-## 3. Stage 3 Deep Dive: `Momentum` (100% Kid-Safe, Dry, Zero-Syringe Physics!)
+## 3. Stage 2.5 / Stage 3 Deep Dive: `Card E` (`Pro` Steering + `Momentum` Stored-Energy Pack!)
 
-Dropping syringes keeps `Momentum` **100% dry, spill-free, and kid-safe** while expanding play value with five support-free printable modules on **`Card E: Momentum Pack` (`<= 175 × 175 mm`)**:
+Dropping syringes and moving the smaller `Pro` steering knuckles off `Cards A–D` keeps the `Snap` starter kit **100% small-parts choke-safe** (`Ø35.2 mm` tires & `Ø36.0 mm` circular T-spinner flanges exceed `Ø31.75 mm × 1.10 = 34.93 mm` in every 3D orientation), while packing **`Pro` rack steering + five 100% dry, mess-free `Momentum` physics engines** onto **`Card E` (`<= 175 × 175 mm`)**:
 
-### 3.1 The Five Kid-Safe `Momentum` Mechanisms (`Card E`)
+### 3.1 Complete `Card E` Module Lineup (`Pro` Steering + `5` Kid-Safe `Momentum` Engines)
 
-| Mode | Printable Module (`Card E`) | Household Item | Real Physics Output | Vehicle Propulsion Roles | Powered Accessory Roles |
+| Mode | Printable Module (`Card E`) | Household Item | Real Physics Output | Vehicle Propulsion / Control Roles | Powered Accessory Roles |
 | --- | --- | --- | --- | --- | --- |
+| **P1. `Pro` Rack Steering** | `pro_steer_linkage` (`2×` `LAY_FLAT` 3-point bellcrank knuckles + detented module-`2.5` steering rack) | None (`100%` printed) | `±26°` synchronized front steering (`Z10` hand shaft in `Pro` -> detents in `Momentum` -> `9g` servo in `Mech`!) | **Race Car**, **Dump Truck**, **Tractor**, **Taxiing Plane**, **Space Shuttle Crawler** | — |
 | **M1a. Balloon Reaction Jet** | `mom_jet_valve` (fits `#13` Booster Pod or `2×4` studs + click-shut valve + 3 STEM nozzles) | `9"–12"` balloon + `6 mm` straw | `0.15–0.22 N` (`15–22 gf`) thrust for `8–12 s` (`> 6×` rolling drag on `4 mm` bearing lands!) | **Race Car**, **Bathtub Speedboat** (`45°` water/air jet!), **Uphill Zip-Line Space Shuttle / Jet Plane**! | Spinning reaction tip-jets on `#14` Turntable / Carousel |
 | **M1b. Balloon Bellows Bladder** | `mom_bellows_hinge` (`4 × 4` hinged clamshell leaf under `#11` or `#2`) | `9"` balloon + straw (or dry squeeze bulb; `3 kPa × 30 cm²`) | **`~9.0 N` (`900 gf` / `2 lbs`!)** smooth pneumatic lift! | Pop-up stunt ramp / wheelie bar | **Lifts brick-loaded `#11` Dump Truck & Trailer beds `55°`**, **raises `#2 + #12` Tractor Loader**! |
 | **M2. Pull-Back Band Engine** | `mom_band_core` (`4 × 4 × 2 TU` Power Core + auto-freewheel axle spool) | `#32` or `#64` rubber band (`100 mm` under-keel stretch) | High wheel torque (`40–80 N·mm`) + **one-way freewheel release** (`4–7 m` coast!) | **Tractor** (climbs rugs!), **Dump Truck + Trailer Rig**, **Taxiing Prop Plane** (`#6` prop drive) | **Motorized Tow-Truck Winch**, rotating `#14` Turntable |
@@ -181,5 +182,5 @@ flowchart TB
 
 | Phase | Deliverable | How Phase 3 (`Mech`) Is Guaranteed |
 | --- | --- | --- |
-| **Phase 1 + 2 (First CAD Build: `Cards A–E`)** | • **`Cards A–D`:** `15` rigid modules + `3` shape-out flex skins with all `5` future-proof datums baked into `#1 kit_keel_base`.<br>• **`Card E: Momentum Pack`:** `mom_jet_valve`, `mom_bellows_hinge`, `mom_band_core`, `mom_bumper_trigger`, and `mom_ripcord_zipline` (100% dry, kid-safe, zero syringes). | Runs **all 4 Phase-3 Verification Gates (`G1–G4`)**: CAD keep-out ghost solids (`XIAO ESP32`, `N20`, `SG90`, `3×AAA`, `USB-C` & `JST-PH` plug sweeps = `0.000 mm³` collision), `Pro` rack steering, `#64` band `Z10` torque test, and `100 g` coin-ballast rolling/buoyancy test. |
+| **Phase 1 + 2 (First CAD Build: `Cards A–E`)** | • **`Cards A–D` (`Snap` Starter):** `15` rigid modules + `3` Book-Fold flex skins (`0` loose small pins, `100%` `16 CFR 1501` choke-safe, all `5` future-proof datums baked into `#1 kit_keel_base`).<br>• **`Card E` (`Pro` + `Momentum` Pack):** `pro_steer_linkage` (`2×` bellcranks + detented rack), `mom_jet_valve`, `mom_bellows_hinge`, `mom_band_core`, `mom_bumper_trigger`, and `mom_ripcord_zipline` (100% dry, kid-safe, zero syringes). | Runs **all 4 Phase-3 Verification Gates (`G1–G4`)**: CAD keep-out ghost solids (`XIAO ESP32`, `N20`, `SG90`, `3×AAA`, `USB-C` & `JST-PH` plug sweeps = `0.000 mm³` collision), `Pro` `±26°` rack steering, `#64` band `Z10` torque test, and `100 g` coin-ballast rolling/buoyancy test. |
 | **Phase 3 (Follow-On Pack: `Card F: Mech` + WebBLE)** | Parametric shells (`mech_brain_esp32`, `mech_drive_n20`, `mech_servo_9g`, `mech_coupler_n20`, `mech_horn_pro`) + `XIAO ESP32` WebBluetooth firmware + `ToyVentor World` live RC controller bridge. | Drops straight onto Phase 1–2 vehicles with **zero chassis edits** (`< 5 min` snap-in upgrade, zero soldering). |

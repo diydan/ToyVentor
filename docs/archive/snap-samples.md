@@ -2,11 +2,11 @@
 
 > **App-lane prototype record (16/32 mm).** These samples proved the
 > OpenSCAD pipeline. Geometry canon is now decided by
-> [decision 0005](decisions/0005-partspec-lattice-merge.md): PartSpec's
+> [decision 0005](../decisions/0005-partspec-lattice-merge.md): PartSpec's
 > 12.5/25 mm TU lattice, pending the Large hand-feel print. Do not build
 > new parts at this scale.
 
-Designed Oct 27, 2026, against [snap.md](snap.md). Status matches the rest
+Designed Oct 27, 2026, against [snap.md](../snap.md). Status matches the rest
 of Snap: **nothing here has been printed.** Every dimension is a target
 until the Day 4 calibration piece has been through fit loops on a real
 printer. STLs do render clean since Oct 28 (`npm run parts`): all parts

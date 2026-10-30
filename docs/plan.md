@@ -1,7 +1,7 @@
 # ToyVentor — 10-Day Plan
 
 ## Goal
-Ship ToyVentor — helping the next generation grow into robotics through play: scan it, augment it, print it, play it — for the Meta Global AI Developer Hackathon (indie track), submitted by Nov 4, 9:00 PM ET. Grounded in [vision](vision.md), [submission vision](submission-vision.md), [spec](spec.md) and [wireframe](wireframe.md); progress logged in [journal](journal.md).
+Ship ToyVentor — helping the next generation grow into robotics through play: scan it, augment it, print it, play it — for the Meta Global AI Developer Hackathon (indie track), submitted by Nov 4, 9:00 PM ET. Grounded in [vision](vision.md), [submission vision](submission-vision.md), [spec](spec.md) and [wireframe](archive/wireframe.md); progress logged in [journal](journal.md).
 
 ## Success Criteria
 - Scan a car to a colored upgrade in the game on a phone in under 60 seconds.

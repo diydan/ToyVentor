@@ -7,7 +7,7 @@ toy in AR and a mini game. Built for the Meta Global AI Developer Hackathon
 
 Docs: [index](docs/README.md) · [vision](docs/vision.md) ·
 [spec](docs/spec.md) · [plan](docs/plan.md) ·
-[wireframe](docs/wireframe.md) · [Snap](docs/snap.md) · [Pro](docs/pro.md) ·
+[wireframe (archived)](docs/archive/wireframe.md) · [Snap](docs/snap.md) · [Pro](docs/pro.md) ·
 [journal](docs/journal.md)
 
 ## Run it
