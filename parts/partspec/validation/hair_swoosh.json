@@ -1,24 +1,24 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_hair_swoosh_S.stl",
-  "file_sha256": "39c07c13b47a089f4e33069419efe96a5dbf115451d658fbcc432b03e045b8ac",
+  "file_sha256": "e8f6f06230a64933c02b49c2df16240aa0ab75da6703fc838391d439e56676df",
   "part_id": "hair_swoosh",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-10-30T19:43:17Z",
+  "checked_at": "2026-10-30T20:30:39Z",
   "metrics": {
     "bbox_mm": [
+      41.7,
       35.6,
-      24.0,
-      13.0
+      13.6
     ],
-    "volume_cm3": 5.26,
-    "surface_cm2": 20.74,
-    "triangles": 10220,
+    "volume_cm3": 9.65,
+    "surface_cm2": 34.1,
+    "triangles": 13844,
     "ledges": [],
-    "layers": 65,
-    "bed_contact_mm2": 283.9,
-    "height_mm": 13.0,
-    "slenderness": 0.77,
+    "layers": 68,
+    "bed_contact_mm2": 524.2,
+    "height_mm": 13.6,
+    "slenderness": 0.59,
     "centre_of_mass_over_contact": true,
     "min_wall_mm": null,
     "thin_wall_regions": []
@@ -57,9 +57,9 @@
       "level": "block",
       "result": "pass",
       "value": [
+        41.7,
         35.6,
-        24.0,
-        13.0
+        13.6
       ],
       "limit": [
         180,
@@ -112,9 +112,9 @@
       "id": "V9_bed_contact",
       "level": "info",
       "result": "pass",
-      "value": 283.9,
+      "value": 524.2,
       "limit": null,
-      "detail": "height / sqrt(contact) = 0.77; above about 3 the slicer often asks for a brim"
+      "detail": "height / sqrt(contact) = 0.59; above about 3 the slicer often asks for a brim"
     },
     {
       "id": "V8_wall_thickness",

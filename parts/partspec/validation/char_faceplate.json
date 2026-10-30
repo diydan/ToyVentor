@@ -1,24 +1,24 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_char_faceplate_P.stl",
-  "file_sha256": "28515aa0086a58f7b391fd4c7946445215aa6e20bb5c60ee1b388540911ed265",
+  "file_sha256": "70952f67e2e3067189d4369b0d1733eb56e52c99b5d23841ea7ceba3e8788682",
   "part_id": "char_faceplate",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-10-30T18:05:09Z",
+  "checked_at": "2026-10-30T20:27:15Z",
   "metrics": {
     "bbox_mm": [
-      22.6,
-      10.8,
+      21.4,
+      10.2,
       14.9
     ],
-    "volume_cm3": 0.79,
-    "surface_cm2": 8.91,
+    "volume_cm3": 0.74,
+    "surface_cm2": 8.35,
     "triangles": 860,
     "ledges": [],
     "layers": 74,
-    "bed_contact_mm2": 207.0,
+    "bed_contact_mm2": 183.1,
     "height_mm": 14.9,
-    "slenderness": 1.04,
+    "slenderness": 1.1,
     "centre_of_mass_over_contact": true,
     "min_wall_mm": null,
     "thin_wall_regions": []
@@ -46,8 +46,8 @@
       "level": "block",
       "result": "pass",
       "value": [
-        22.6,
-        10.8,
+        21.4,
+        10.2,
         14.9
       ],
       "limit": [
@@ -101,9 +101,9 @@
       "id": "V9_bed_contact",
       "level": "info",
       "result": "pass",
-      "value": 207.0,
+      "value": 183.1,
       "limit": null,
-      "detail": "height / sqrt(contact) = 1.04; above about 3 the slicer often asks for a brim"
+      "detail": "height / sqrt(contact) = 1.1; above about 3 the slicer often asks for a brim"
     },
     {
       "id": "V8_wall_thickness",

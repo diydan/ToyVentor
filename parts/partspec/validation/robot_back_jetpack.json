@@ -1,24 +1,24 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_robot_back_jetpack_S.stl",
-  "file_sha256": "fc902b360b2ef6d9a3c2f8e35c718c80a4b23961dec6a6256455b2775f245c96",
+  "file_sha256": "d5cad36fe4e6d9eb889fe7f26c1892b32959de44575fcc47aee605af90b47d74",
   "part_id": "robot_back_jetpack",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-10-30T19:41:52Z",
+  "checked_at": "2026-10-30T20:26:23Z",
   "metrics": {
     "bbox_mm": [
       24.8,
-      20.1,
-      19.4
+      19.65,
+      14.8
     ],
-    "volume_cm3": 4.15,
-    "surface_cm2": 21.04,
-    "triangles": 3842,
+    "volume_cm3": 3.15,
+    "surface_cm2": 15.69,
+    "triangles": 3356,
     "ledges": [],
-    "layers": 97,
-    "bed_contact_mm2": 279.7,
-    "height_mm": 19.4,
-    "slenderness": 1.16,
+    "layers": 74,
+    "bed_contact_mm2": 214.7,
+    "height_mm": 14.8,
+    "slenderness": 1.01,
     "centre_of_mass_over_contact": true,
     "min_wall_mm": null,
     "thin_wall_regions": []
@@ -58,8 +58,8 @@
       "result": "pass",
       "value": [
         24.8,
-        20.1,
-        19.4
+        19.7,
+        14.8
       ],
       "limit": [
         180,
@@ -112,9 +112,9 @@
       "id": "V9_bed_contact",
       "level": "info",
       "result": "pass",
-      "value": 279.7,
+      "value": 214.7,
       "limit": null,
-      "detail": "height / sqrt(contact) = 1.16; above about 3 the slicer often asks for a brim"
+      "detail": "height / sqrt(contact) = 1.01; above about 3 the slicer often asks for a brim"
     },
     {
       "id": "V8_wall_thickness",

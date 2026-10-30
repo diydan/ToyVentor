@@ -21,6 +21,7 @@ long-term direction; if two documents disagree about product behaviour,
 | [design-guide.html](design-guide.html) + [mockups.html](mockups.html) | Visual design. Open in a browser |
 | [world-first-spec.md](world-first-spec.md) + [world-first-mockups.html](world-first-mockups.html) | Active UX/UI lane: One-stage World-first UI consolidation spec and interactive mockups |
 | [parts-tu-spec.md](parts-tu-spec.md) | Active Parts lane: `12.5 mm` / `25 mm` TU PartSpec, Kip v2, hidden-calibration selector, and physical print loop |
+| [app-continuation-spec.md](app-continuation-spec.md) | Post-consolidation roadmap: Phase 1 `My Toys` Kip + modular craft roster (2 active starters + greyed-out unlocks), Phase 2 accuracy-bonus STEM XP & difficulty/Pro unlocks, Phase 3 weekly STEM pack drops |
 
 ## ToyVentor World (the 2.5D game)
 

@@ -1,24 +1,24 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_hair_bob_S.stl",
-  "file_sha256": "845f1dc514b5672021e8cef093a3d16bf752c0c4aae1e8093bb819754982fef2",
+  "file_sha256": "81ad40526d70402c686f1fb94bcab5edd18db755e238970419d61b856a71b7c1",
   "part_id": "hair_bob",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-10-30T19:43:22Z",
+  "checked_at": "2026-10-30T20:29:23Z",
   "metrics": {
     "bbox_mm": [
-      38.0,
-      24.2,
-      12.8
+      45.0,
+      35.8,
+      13.6
     ],
-    "volume_cm3": 5.26,
-    "surface_cm2": 21.38,
-    "triangles": 11692,
+    "volume_cm3": 9.84,
+    "surface_cm2": 35.13,
+    "triangles": 15098,
     "ledges": [],
-    "layers": 64,
-    "bed_contact_mm2": 283.9,
-    "height_mm": 12.8,
-    "slenderness": 0.76,
+    "layers": 68,
+    "bed_contact_mm2": 524.2,
+    "height_mm": 13.6,
+    "slenderness": 0.59,
     "centre_of_mass_over_contact": true,
     "min_wall_mm": null,
     "thin_wall_regions": []
@@ -57,9 +57,9 @@
       "level": "block",
       "result": "pass",
       "value": [
-        38.0,
-        24.2,
-        12.8
+        45.0,
+        35.8,
+        13.6
       ],
       "limit": [
         180,
@@ -112,9 +112,9 @@
       "id": "V9_bed_contact",
       "level": "info",
       "result": "pass",
-      "value": 283.9,
+      "value": 524.2,
       "limit": null,
-      "detail": "height / sqrt(contact) = 0.76; above about 3 the slicer often asks for a brim"
+      "detail": "height / sqrt(contact) = 0.59; above about 3 the slicer often asks for a brim"
     },
     {
       "id": "V8_wall_thickness",
