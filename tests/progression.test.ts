@@ -2,16 +2,19 @@ import { describe, expect, it } from "vitest";
 import {
   applySolve,
   canAccessTier,
+  canAccessVehicle,
   computeAward,
   emptyProgression,
   familyOf,
   familyStars,
+  grandfatherToyIds,
   hasProStatUnlock,
   mergeProgression,
   normalizeProgression,
   rankFor,
   resetProgression,
   starsFor,
+  unlockedVehiclesFor,
   type ProgressionState,
 } from "../src/lib/progression";
 
@@ -164,13 +167,47 @@ describe("ranks and family gates", () => {
     ).toBe(true);
   });
 
-  it("unlocks Pro stats on a 3-star solve in a matching lab", () => {
+  it("unlocks Pro stats on a 3-star solve in a matching lab or world mission", () => {
     const prog = solved(emptyProgression(), {
       missionId: "lab1.bridge",
       attempts: 1,
     }).next;
     expect(hasProStatUnlock(prog, "torque")).toBe(true);
     expect(hasProStatUnlock(prog, "spin")).toBe(false);
+
+    expect(familyOf("garden.bridge")).toBe("lab1");
+    expect(familyOf("junk.lift")).toBe("lab2");
+    const gardenProg = solved(emptyProgression(), {
+      missionId: "garden.bridge",
+      attempts: 1,
+    }).next;
+    expect(hasProStatUnlock(gardenProg, "torque")).toBe(true);
+  });
+
+  it("checks vehicle access cumulatively across ranks and preserves starter/grandfathered vehicles", () => {
+    const rank1 = emptyProgression();
+    expect(canAccessVehicle(rank1, "Red Racer")).toBe(true);
+    expect(canAccessVehicle(rank1, "Hauler Truck")).toBe(false);
+
+    const rank3: ProgressionState = { ...emptyProgression(), totalXp: 600 };
+    expect(canAccessVehicle(rank3, "Hauler Truck")).toBe(true);
+    expect(canAccessVehicle(rank3, "Sport Motorbike")).toBe(true);
+    expect(canAccessVehicle(rank3, "Prop Aeroplane")).toBe(false);
+    expect(unlockedVehiclesFor(600)).toEqual([
+      "Hauler Truck",
+      "Motor Scooter",
+      "Sport Motorbike",
+      "Loader Tractor & Trailer",
+    ]);
+
+    const grandfathered = grandfatherToyIds(emptyProgression(), [
+      "seed-truck",
+      "Prop Aeroplane",
+    ]).next;
+    expect(canAccessVehicle(grandfathered, "Hauler Truck", "seed-truck")).toBe(
+      true,
+    );
+    expect(canAccessVehicle(grandfathered, "Prop Aeroplane")).toBe(true);
   });
 });
 
@@ -180,10 +217,12 @@ describe("persistence helpers", () => {
       totalXp: 300,
       missionStars: { "lab1.bridge:t1": 3, bogus: 9 },
       unlockedIds: ["seed-car"],
+      resetAt: 1700000000000,
     });
     expect(prog.totalXp).toBe(300);
     expect(prog.missionStars["lab1.bridge:t1"]).toBe(3);
     expect(prog.missionStars.bogus).toBeUndefined();
+    expect(prog.resetAt).toBe(1700000000000);
   });
 
   it("merges remote progression without losing stars or unlocks", () => {
@@ -202,7 +241,7 @@ describe("persistence helpers", () => {
     expect(merged.unlockedIds).toContain("scanned-1");
   });
 
-  it("reset wipes XP and stars but keeps grandfathered unlocks", () => {
+  it("reset wipes XP and stars, keeps grandfathered unlocks, and wins over stale remote XP", () => {
     const prog: ProgressionState = {
       ...solved(emptyProgression(), {
         missionId: "lab1.bridge",
@@ -210,9 +249,24 @@ describe("persistence helpers", () => {
       }).next,
       unlockedIds: ["seed-figure", "scanned-1"],
     };
-    const reset = resetProgression(prog);
+    const reset = resetProgression(prog, 1700000005000);
     expect(reset.totalXp).toBe(0);
     expect(reset.missionStars).toEqual({});
     expect(reset.unlockedIds).toEqual(["seed-figure", "scanned-1"]);
+
+    const staleRemote: ProgressionState = {
+      ...emptyProgression(),
+      totalXp: 850,
+      missionStars: { "lab1.bridge:t1": 3 },
+      unlockedIds: ["remote-scan"],
+    };
+    const merged = mergeProgression(reset, staleRemote);
+    expect(merged.totalXp).toBe(0);
+    expect(merged.missionStars).toEqual({});
+    expect(merged.unlockedIds).toEqual([
+      "seed-figure",
+      "scanned-1",
+      "remote-scan",
+    ]);
   });
 });

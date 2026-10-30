@@ -22,6 +22,7 @@ import {
 } from "../../../lib/parentTime";
 import {
   applySolve,
+  grandfatherToyIds,
   loadProgression,
   mergeProgression,
   MISSION_STAT,
@@ -63,6 +64,7 @@ export type InitialOverlay =
 
 export interface GameCanvasProps {
   toy: Toy;
+  toyIds?: readonly string[];
   placements: Placement[];
   onPlacementsChange: (next: Placement[]) => void;
   onSkinChange?: () => void;
@@ -82,6 +84,7 @@ export interface GameCanvasProps {
  */
 export function GameCanvas({
   toy,
+  toyIds,
   placements,
   onPlacementsChange,
   onSkinChange,
@@ -154,6 +157,18 @@ export function GameCanvas({
     void pullParentTime().then(setParentSnapshot);
   }, []);
 
+  // Grandfather every currently selectable toy into the permanent unlock set
+  // (Decision 6). Single writer in GameCanvas avoids clobbering XP state.
+  useEffect(() => {
+    if (!toyIds || toyIds.length === 0) return;
+    const { next, changed } = grandfatherToyIds(progressionRef.current, toyIds);
+    if (changed) {
+      saveProgression(next);
+      setProgression(next);
+      void pushProgression(next);
+    }
+  }, [toyIds]);
+
   // Pull synced progression once on boot and merge without losing stars.
   useEffect(() => {
     void (async () => {
@@ -180,11 +195,14 @@ export function GameCanvas({
             );
           }
           if (event.type === "missionSolved") {
-            const { key, attempts, error } = event.detail;
+            const { key, attempts, error, stats } = event.detail;
             const type = missionTypeOf(key) as MissionType;
             const stat = MISSION_STAT[type];
             const totals = buildStats(placementsRef.current, partsById).statTotals;
-            const partMatch = stat ? (totals[stat] ?? 0) > 0 : false;
+            const stageHasStat = Boolean(stat && stats?.includes(stat));
+            const partMatch = stat
+              ? (totals[stat] ?? 0) > 0 || stageHasStat
+              : false;
             const timezone = getLocalParentSnapshot().settings.timezone;
             const result = applySolve(progressionRef.current, {
               missionId: key,
@@ -452,7 +470,7 @@ export function GameCanvas({
           <span className="tv-toy-pill-name">{label}</span>
           <span
             className="tv-rank-pip"
-            title={`${nextRankProgress(progression.totalXp).rank.title} · ${progression.totalXp} XP`}
+            title={nextRankProgress(progression.totalXp).rank.title}
             aria-label={`Rank ${nextRankProgress(progression.totalXp).rank.rank}: ${nextRankProgress(progression.totalXp).rank.title}`}
           >
             ★{nextRankProgress(progression.totalXp).rank.rank}

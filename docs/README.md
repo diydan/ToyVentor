@@ -47,10 +47,11 @@ on geometry conflicts, [parts-tu-spec.md](parts/parts-tu-spec.md) and
 
 ## ToyVentor World (the 2.5D game)
 
-The game lane stays imperative and runs same-origin until Phase 0 (`native-world-port-spec.md`) lands:
-`game/engine25.js`, `game/build25.py`, `public/world/ToyVentor-World.html`,
-and `shared/toycontract.ts` for the app-to-game handoff. Phase 0 ports the
-stage natively and deletes the iframe bundle.
+Phase 0A (`native-world-port-spec.md`) ported the 2.5D stage natively into the
+Vite/React app: `src/features/game/world/runtime/world.ts`,
+`src/features/game/world/runtime/stageDom.ts`, `src/features/game/world/engine.ts`,
+and `shared/toycontract.ts` (`/#toy=…` handoff; legacy
+`/world/ToyVentor-World.html` 302-redirects to `/`).
 
 ## Product lines and parts
 

@@ -17,6 +17,7 @@ import {
 import {
   familyStars,
   rankFor,
+  unlockedVehiclesFor,
   type ProgressionState,
 } from "../../../lib/progression";
 
@@ -90,11 +91,13 @@ export function GrownUpsSheet({
       cancelHold();
       setGateError(null);
       setStatusNote(null);
+      setConfirmResetXp(false);
       return;
     }
     setAnswerInput("");
     setGateError(null);
     setStatusNote(null);
+    setConfirmResetXp(false);
 
     if (
       snapshot.settings.gateStrictness === "sitting_window" &&
@@ -464,6 +467,12 @@ export function GrownUpsSheet({
                   )
                   .join(" · ")}
               </p>
+              {unlockedVehiclesFor(progression.totalXp).length > 0 && (
+                <p className="tv-moves" style={{ margin: 0, fontSize: 12 }}>
+                  Rank vehicles:{" "}
+                  {unlockedVehiclesFor(progression.totalXp).join(", ")}
+                </p>
+              )}
               <p className="tv-moves" style={{ margin: 0, fontSize: 12 }}>
                 XP lives on this device. Reset keeps scanned and saved toys
                 unlocked.

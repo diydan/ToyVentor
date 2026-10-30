@@ -590,6 +590,7 @@ export interface MissionSolveDetail {
   key: string;
   attempts: number;
   error: number;
+  stats?: string[];
 }
 
 export type WorldEvent =
@@ -816,7 +817,13 @@ interface LegacySave {
   mdone?: Record<string, number | boolean>;
   ma?: Record<string, number>;
   me?: Record<string, number>;
-  lastWin?: { key: string; attempts: number; error: number; at: number };
+  lastWin?: {
+    key: string;
+    attempts: number;
+    error: number;
+    stats?: string[];
+    at: number;
+  };
   sel?: Record<string, Record<string, string>>;
   col?: Record<string, string>;
 }
@@ -888,6 +895,7 @@ export function createEngine(
   let runtime: ReturnType<typeof createWorldRuntime> | null = null;
   const hooks = (): LegacyHooks | null => (runtime as unknown as LegacyHooks | null) ?? null;
   const doc = (): HTMLElement | null => hostEl;
+  const hostCtrl = new AbortController();
   let boundDoc: HTMLElement | null = null;
   let notifyQueued = false;
   const schedulePoll = () => {
@@ -929,12 +937,18 @@ export function createEngine(
   // control surfaces until their definitions emit data natively.
   const suppressLegacyPanels = () => {
     const frameDoc = doc();
-    if (!frameDoc) return;
+    if (!frameDoc || disposed) return;
     if (boundDoc !== frameDoc) {
       boundDoc = frameDoc;
       const syncSoon = () => schedulePoll();
-      frameDoc.addEventListener("click", syncSoon, { passive: true });
-      frameDoc.addEventListener("keyup", syncSoon, { passive: true });
+      frameDoc.addEventListener("click", syncSoon, {
+        passive: true,
+        signal: hostCtrl.signal,
+      });
+      frameDoc.addEventListener("keyup", syncSoon, {
+        passive: true,
+        signal: hostCtrl.signal,
+      });
     }
   };
 
@@ -1380,6 +1394,13 @@ export function createEngine(
             key: win.key,
             attempts: Math.max(1, Math.floor(win.attempts) || 1),
             error: typeof win.error === "number" ? win.error : 0,
+            ...(Array.isArray(win.stats)
+              ? {
+                  stats: win.stats.filter(
+                    (s): s is string => typeof s === "string",
+                  ),
+                }
+              : {}),
           },
         });
       }
@@ -1603,6 +1624,7 @@ export function createEngine(
     dispose: () => {
       if (disposed) return;
       disposed = true;
+      hostCtrl.abort();
       runtime?.dispose();
       runtime = null;
     },

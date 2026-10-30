@@ -4,7 +4,7 @@ Standalone sign-off spec required by [app-continuation-spec.md §4.1](app-contin
 No Phase 3 implementation starts until every decision below is signed off.
 Code-grounded: 11 mission types exist (`bridge`, `measure`, `balance`,
 `logic`, `lift`, `lever`, `circuit`, `code`, `pattern`, `clean`, `raft`);
-completion arrives today as binary flags only (`S.mdone`, scraped as
+completion arrives today as binary flags only (`S.mdone`, emitted as
 `missionsDone` keys); no attempt counter exists anywhere. The existing
 ledger already records `completedMissionIds` and STEM `earnedMinutes` per
 day, and ownership sync accepts toys/parts/skins/characters payloads.
@@ -197,7 +197,7 @@ and reset.
 Binary done-flags cannot score accuracy. Phase 0B mission state must emit
 per-mission attempt counts (Test-it presses on the solving run) and a
 clean-solve flag with the measured error for the measure family. The
-facade scrapes these alongside `missionsDone`; React never touches the
+runtime facade emits these alongside `missionsDone`; React never touches the
 engine per frame.
 
 **Resolved implementation.** Legacy state gains `S.ma` (attempts since

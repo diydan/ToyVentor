@@ -118,6 +118,8 @@ export interface ProgressionState {
   unlockedIds: string[];
   /** Grown-up demo override: gates open without changing earned XP. */
   sandboxUnlockAll: boolean;
+  /** Epoch ms of most recent parent XP reset, so offline resets beat stale remote totals. */
+  resetAt?: number;
 }
 
 export function emptyProgression(): ProgressionState {
@@ -139,8 +141,10 @@ export function missionTypeOf(missionId: string): string {
   return missionId.split(".").pop() ?? missionId;
 }
 
-/** Lab family of a mission id: "lab1.measure" -> "lab1". */
+/** Lab family of a mission id: "lab1.measure" -> "lab1" (world torque missions map to Lab 1/2). */
 export function familyOf(missionId: string): string {
+  if (missionId === "garden.bridge") return "lab1";
+  if (missionId === "junk.lift") return "lab2";
   const dot = missionId.indexOf(".");
   return dot > 0 ? missionId.slice(0, dot) : missionId;
 }
@@ -177,6 +181,11 @@ export function rankFor(totalXp: number): MakerRank {
     if (totalXp >= rank.xp) current = rank;
   }
   return current;
+}
+
+export function unlockedVehiclesFor(totalXp: number): string[] {
+  const current = rankFor(totalXp);
+  return RANKS.filter((r) => r.rank <= current.rank).flatMap((r) => r.vehicles);
 }
 
 export function nextRankProgress(totalXp: number): {
@@ -247,9 +256,17 @@ export function hasProStatUnlock(
 export function canAccessVehicle(
   prog: ProgressionState,
   vehicle: string,
+  toyId?: string,
 ): boolean {
   if (prog.sandboxUnlockAll) return true;
-  return rankFor(prog.totalXp).vehicles.includes(vehicle);
+  if (toyId && prog.unlockedIds.includes(toyId)) return true;
+  if (prog.unlockedIds.includes(vehicle)) return true;
+  const current = rankFor(prog.totalXp);
+  const gatedInAnyRank = RANKS.some((r) => r.vehicles.includes(vehicle));
+  if (!gatedInAnyRank) return true;
+  return RANKS.some(
+    (r) => r.rank <= current.rank && r.vehicles.includes(vehicle),
+  );
 }
 
 export type AwardKind = "full" | "delta" | "practice" | "none";
@@ -390,6 +407,10 @@ export function normalizeProgression(raw: unknown): ProgressionState {
       if (Object.keys(cleaned).length > 0) daily[day] = cleaned;
     }
   }
+  const resetAt =
+    typeof v.resetAt === "number" && Number.isFinite(v.resetAt) && v.resetAt > 0
+      ? Math.floor(v.resetAt)
+      : undefined;
   return {
     version: 1,
     totalXp:
@@ -402,14 +423,29 @@ export function normalizeProgression(raw: unknown): ProgressionState {
       ? [...new Set(v.unlockedIds.filter((id): id is string => typeof id === "string"))]
       : [],
     sandboxUnlockAll: v.sandboxUnlockAll === true,
+    ...(resetAt !== undefined ? { resetAt } : {}),
   };
 }
 
-/** Union merge: highest XP/stars win, unlocks union, sandbox OR. */
+/** Union merge: highest XP/stars win unless one side carries a newer parent reset. */
 export function mergeProgression(
   local: ProgressionState,
   remote: ProgressionState,
 ): ProgressionState {
+  const localReset = local.resetAt ?? 0;
+  const remoteReset = remote.resetAt ?? 0;
+  const unlockedIds = [
+    ...new Set([...local.unlockedIds, ...remote.unlockedIds]),
+  ];
+  const sandboxUnlockAll = local.sandboxUnlockAll || remote.sandboxUnlockAll;
+  if (localReset !== remoteReset) {
+    const newer = localReset > remoteReset ? local : remote;
+    return {
+      ...newer,
+      unlockedIds,
+      sandboxUnlockAll,
+    };
+  }
   const missionStars: Record<string, number> = { ...remote.missionStars };
   for (const [key, stars] of Object.entries(local.missionStars)) {
     missionStars[key] = Math.max(missionStars[key] ?? 0, stars);
@@ -438,17 +474,22 @@ export function mergeProgression(
     totalXp: Math.max(local.totalXp, remote.totalXp),
     missionStars,
     daily,
-    unlockedIds: [...new Set([...local.unlockedIds, ...remote.unlockedIds])],
-    sandboxUnlockAll: local.sandboxUnlockAll || remote.sandboxUnlockAll,
+    unlockedIds,
+    sandboxUnlockAll,
+    ...(localReset > 0 ? { resetAt: localReset } : {}),
   };
 }
 
 /** XP reset wipes totals and stars only; grandfathered unlocks survive. */
-export function resetProgression(prog: ProgressionState): ProgressionState {
+export function resetProgression(
+  prog: ProgressionState,
+  now = Date.now(),
+): ProgressionState {
   return {
     ...emptyProgression(),
     unlockedIds: [...prog.unlockedIds],
     sandboxUnlockAll: prog.sandboxUnlockAll,
+    resetAt: Math.max(1, Math.floor(now)),
   };
 }
 

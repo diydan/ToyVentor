@@ -12,14 +12,14 @@ export const HAIR_WRAP_MM = 16.5;
 export const HUMAN_HEAD_IDS = new Set(['kid', 'chibi', 'chin', 'tall']);
 
 export const WARDROBE_HEADS = [
-  { id: 'classic', label: 'Kip Classic',            crownY: 42.2, faceY: 19.8 },
-  { id: 'kid',     label: 'Human 1 · Round Kid',    crownY: 28.8, faceY: 7.8125 },
-  { id: 'chibi',   label: 'Human 2 · Chibi Cheeks', crownY: 28.0, faceY: 7.8125 },
-  { id: 'chin',    label: 'Human 3 · Soft Chin',    crownY: 30.8, faceY: 9.3750 },
-  { id: 'tall',    label: 'Human 4 · Oval Youth',   crownY: 33.2, faceY: 10.9375 },
-  { id: 'fox',     label: 'Fox',                    crownY: 26.2, faceY: 15.0 },
-  { id: 'bear',    label: 'Bear',                   crownY: 27.2, faceY: 14.8 },
-  { id: 'robot',   label: 'Bolt Robot',             crownY: 31.6, faceY: 17.8 },
+  { id: 'classic', label: 'Kip Classic',              crownY: 42.2, faceY: 19.8 },
+  { id: 'kid',     label: 'Human 1 · Hero Poly',      crownY: 36.8, faceY: 18.75 },
+  { id: 'chibi',   label: 'Human 2 · Slender Poly',   crownY: 36.0, faceY: 18.75 },
+  { id: 'chin',    label: 'Human 3 · Youth Poly',     crownY: 35.6, faceY: 18.75 },
+  { id: 'tall',    label: 'Human 4 · Vanguard Poly',  crownY: 39.2, faceY: 20.3125 },
+  { id: 'fox',     label: 'Fox',                      crownY: 26.2, faceY: 15.0 },
+  { id: 'bear',    label: 'Bear',                     crownY: 27.2, faceY: 14.8 },
+  { id: 'robot',   label: 'Bolt Robot',               crownY: 31.6, faceY: 17.8 },
 ];
 
 export const SHIRT_OPTIONS = [
@@ -109,13 +109,13 @@ export async function loadExpansionGeos(loadSTL) {
   const entries = await Promise.all([
     // Compact low-profile neck collar (`kip.scad`)
     ['neckTurret2x1',     loadSTL('/kip/stls/neck_turret_2x1.stl', 36)],
-    // Phase 1 Plump Symmetric Base Heads (4 Human Variants + Critters + Bolt) + Swappable Emotion Face Plate
+    // Phase 1 Asaro Low-Poly Humanoid Heads (creaseAngle=12 preserves crisp sculpted planes!) + Critters + Bolt
     ['crownBuds2x1',      loadSTL('/kip/partspec/toyventor_crown_buds_2x1.stl', 34)],
-    ['charHeadKid',       loadSTL('/kip/partspec/toyventor_char_head_kid_S.stl', 28)],
-    ['charHeadChibi',     loadSTL('/kip/partspec/toyventor_char_head_chibi_S.stl', 28)],
-    ['charHeadChin',      loadSTL('/kip/partspec/toyventor_char_head_chin_S.stl', 28)],
-    ['charHeadTall',      loadSTL('/kip/partspec/toyventor_char_head_tall_S.stl', 28)],
-    ['charFaceplate',     loadSTL('/kip/partspec/toyventor_char_faceplate_P.stl', 34)],
+    ['charHeadKid',       loadSTL('/kip/partspec/toyventor_char_head_kid_S.stl', 12)],
+    ['charHeadChibi',     loadSTL('/kip/partspec/toyventor_char_head_chibi_S.stl', 12)],
+    ['charHeadChin',      loadSTL('/kip/partspec/toyventor_char_head_chin_S.stl', 12)],
+    ['charHeadTall',      loadSTL('/kip/partspec/toyventor_char_head_tall_S.stl', 12)],
+    ['charFaceplate',     loadSTL('/kip/partspec/toyventor_char_faceplate_P.stl', 12)],
     ['charHeadFox',       loadSTL('/kip/partspec/toyventor_char_head_fox_S.stl', 62)],
     ['charHeadBear',      loadSTL('/kip/partspec/toyventor_char_head_bear_S.stl', 62)],
     ['robotHeadVisor',    loadSTL('/kip/partspec/toyventor_robot_head_visor_S.stl', 28)],
@@ -284,13 +284,13 @@ export function attachExpansionToKipRig(THREE, kip, expGeos, baseParts, mats, sc
   altCrownBuds.scale.set(1.006, 1.01, 1.006);
   altHeadSlot.add(altCrownBuds);
 
-  // 1b. Flush 3D Convex-Curved Human Face Plate (`char_faceplate` -> mates into `char_head_*.face_slot` & pops forward +Z in Explode/Build!)
+  // 1b. Flush Asaro Low-Poly Human Face Plate (`char_faceplate` -> mates at `z = +12.50` (`-1.0 TU`) & pops forward +Z in Explode/Build!)
   const faceplateGroup = new THREE.Group();
   faceplateGroup.visible = false;
   kip.headLocal.add(faceplateGroup);
   const faceplateSlot = createSlot('char_faceplate', faceplateGroup, [0, 8, 56], 4.35, 'both', 'alt_head');
   const faceplateHolder = new THREE.Group();
-  faceplateHolder.position.set(0, 7.8125 - 2.50, 10.9375);
+  faceplateHolder.position.set(0, 18.75 - 2.50, 12.50);
   faceplateSlot.add(faceplateHolder);
 
   const fpOrient = new THREE.Group();
@@ -299,31 +299,38 @@ export function attachExpansionToKipRig(THREE, kip, expGeos, baseParts, mats, sc
   fpOrient.add(faceplateMesh);
   faceplateHolder.add(fpOrient);
 
-  // Conformal 2D Vinyl/Screen Decal Expression Meshes (`BRAND_STYLE.md` rule 3: eyes set low & wide, zero moulded 3D faces!)
+  // Conformal 2D Vinyl/Stencil Decal Expression Meshes (`BRAND_STYLE.md` rule 3: zero moulded 3D eyes/mouths!)
   const raycaster = new THREE.Raycaster();
   const rayOrigin = new THREE.Vector3();
   const rayDir = new THREE.Vector3(0, 0, -1);
 
-  function buildConformalFaceplateDecalGeo(width = 26.8, height = 12.2, centerY = 7.45) {
+  function buildConformalFaceplateDecalGeo(width = 16.6, height = 10.6, centerY = 1.90) {
     const probeHolder = new THREE.Group();
     probeHolder.rotation.y = Math.PI;
     const probe = scadMesh(expGeos.charFaceplate, mats.shell);
     probeHolder.add(probe);
     probeHolder.updateMatrixWorld(true);
 
-    const g = new THREE.PlaneGeometry(width, height, 28, 16);
+    const g = new THREE.PlaneGeometry(width, height, 28, 18);
     g.translate(0, centerY, 0);
     const pos = g.attributes.position;
     for (let i = 0; i < pos.count; i++) {
       const vx = pos.getX(i);
       const vy = pos.getY(i);
-      rayOrigin.set(vx, vy, 28);
-      raycaster.set(rayOrigin, rayDir);
-      const hits = raycaster.intersectObject(probeHolder, true);
-      const hitZ = (hits.length > 0 && hits[0].point.z > 0.2)
-        ? hits[0].point.z
-        : (7.05 - (vx * vx) * 0.015);
-      pos.setZ(i, hitZ + 0.26);
+      let hitZ = null;
+      if (vy >= 0.05) {
+        rayOrigin.set(vx, vy, 28);
+        raycaster.set(rayOrigin, rayDir);
+        const hits = raycaster.intersectObject(probeHolder, true);
+        if (hits.length > 0 && hits[0].point.z > 0.2) {
+          hitZ = hits[0].point.z;
+        }
+      }
+      // Below `vy = 0` (`z_b = 0` sub-nasal crease), conform smoothly onto the unbroken upper-lip/chin plane (`z_head ~ 15.15 mm` => `z_local ~ 2.65 mm`)!
+      if (hitZ === null) {
+        hitZ = 2.68 - (vx * vx) * 0.005 + Math.min(0, vy) * 0.06;
+      }
+      pos.setZ(i, hitZ + 0.28);
     }
     g.computeVertexNormals();
     return g;
@@ -943,21 +950,16 @@ export function attachExpansionToKipRig(THREE, kip, expGeos, baseParts, mats, sc
     return dm;
   }
 
+  // Front-only chest stencil sticker mapped onto the flat front chest of `torso` (`centerY = 86.8, width = 18.8, height = 21.6`)
   const torsoOutfitDecals = [
-    attachSlotDecal('torso_pro',  bodyMeshes.torsoPro,  81.2, 21.4, 38.0, torsoDecalMat, 24, 30),
-    attachSlotDecal('torso_snap', bodyMeshes.torsoSnap, 81.2, 21.4, 38.0, torsoDecalMat, 24, 30),
+    attachSlotDecal('torso_pro',  bodyMeshes.torsoPro,  86.8, 18.8, 21.6, torsoDecalMat, 22, 24),
+    attachSlotDecal('torso_snap', bodyMeshes.torsoSnap, 86.8, 18.8, 21.6, torsoDecalMat, 22, 24),
   ].filter(Boolean);
 
-  const legOutfitDecals = [
-    attachSlotDecal('thigh_l',    bodyMeshes.thighL,   -12.8, 11.4, 15.6, legDecalMat, 16, 18),
-    attachSlotDecal('thigh_r',    bodyMeshes.thighR,   -12.8, 11.4, 15.6, legDecalMat, 16, 18),
-    attachSlotDecal('snap_leg_l', bodyMeshes.snapLegL,  -8.6, 12.2, 10.4, legDecalMat, 16, 16),
-    attachSlotDecal('snap_leg_r', bodyMeshes.snapLegR,  -8.6, 12.2, 10.4, legDecalMat, 16, 16),
-  ].filter(Boolean);
+  const legOutfitDecals = [];
 
   const tmpColA = new THREE.Color();
   const tmpColB = new THREE.Color();
-  const tmpColC = new THREE.Color();
 
   function paintMeshByCoord(mesh, coordArray, fnPickColor) {
     if (!mesh) return;
@@ -982,9 +984,7 @@ export function attachExpansionToKipRig(THREE, kip, expGeos, baseParts, mats, sc
     // Keep head skin material synced for all 4 human heads + face plate
     expMats.skin.color.set(skinObj.hex);
 
-    // Determine exposed body tone:
-    // - Human & Classic heads always use the selected Skin Tone across head, neck, hands, forearms, shins & torso!
-    // - Fox / Bear / Bolt default to their fur/silver chassis when Skin is on default Vinyl Cream, OR use the selected Skin Tone if changed!
+    // Exposed skin tone: matches head/face skin tone across neck, hands, short-sleeve forearms, and shorts shins!
     let bodySkinHex = skinObj.hex;
     if (skinObj.id === 'vinyl_cream') {
       if (head === 'fox') bodySkinHex = '#E86F38';
@@ -999,7 +999,6 @@ export function attachExpansionToKipRig(THREE, kip, expGeos, baseParts, mats, sc
       pants.id === 'off'
     );
 
-    // Neck collar (`neck_turret_2x1`): match skin on human heads, fur/slate on critters/robot!
     if (HUMAN_HEAD_IDS.has(head)) {
       neckMat.color.set(bodySkinHex);
     } else if (head === 'fox') {
@@ -1012,140 +1011,100 @@ export function attachExpansionToKipRig(THREE, kip, expGeos, baseParts, mats, sc
       neckMat.color.set('#FF6B4A');
     }
 
-    const hasShirt = (shirt.id !== 'off');
-    const hasPants = (pants.id !== 'off');
-    const chestHex  = hasShirt ? shirt.chestHex  : bodySkinHex;
-    const sleeveHex = hasShirt ? shirt.sleeveHex : bodySkinHex;
-    const waistHex  = hasPants ? pants.waistHex  : bodySkinHex;
-    const thighHex  = hasPants ? pants.legHex    : bodySkinHex;
+    const hasShirt   = (shirt.id !== 'off');
+    const hasPants   = (pants.id !== 'off');
+    const chestHex   = hasShirt ? shirt.chestHex  : bodySkinHex;
+    const sleeveHex  = hasShirt ? shirt.sleeveHex : bodySkinHex;
+    const forearmHex = (hasShirt && shirt.longSleeve) ? shirt.sleeveHex : bodySkinHex;
+    const thighHex   = hasPants ? pants.legHex    : bodySkinHex;
+    const shinHex    = (hasPants && !pants.isShorts) ? pants.legHex : bodySkinHex;
 
-    // 1. Torso (`z_stl >= 70.5` = Shirt chest above sculpted waist V-groove; `< 70.5` = Pants/Shorts pelvis waistband!)
+    // 1. Solid Single-Filament Torso (`torso` = solid shirt color when wearing a shirt, else solid body skin!)
     tmpColA.set(chestHex);
-    tmpColB.set(waistHex);
     for (const tm of [bodyMeshes.torsoPro, bodyMeshes.torsoSnap]) {
       if (!tm) continue;
-      paintMeshByCoord(tm, tm.userData.restZ, z => (z >= 70.5 ? tmpColA : tmpColB));
+      paintMeshByCoord(tm, tm.userData.restZ, () => tmpColA);
     }
 
-    // 2. Pro Upper Arms (`z_stl = 0..22`, `0` = elbow cuff) + Forearms (`z_stl = 0..21`, `0` = wrist cuff)
+    // 2. Pro Upper Arms (`upper_arm_l/r` = solid shirt/sleeve color!) + Pro Forearms (`forearm_l/r` = solid skin for short-sleeve, solid sleeve for long-sleeve!)
     tmpColA.set(sleeveHex);
-    tmpColB.set((hasShirt && !shirt.longSleeve && shirt.cuffHex) ? shirt.cuffHex : sleeveHex);
     for (const ua of [bodyMeshes.upperArmL, bodyMeshes.upperArmR]) {
       if (!ua) continue;
-      paintMeshByCoord(ua, ua.userData.restZ, z => (z < 2.8 ? tmpColB : tmpColA));
+      paintMeshByCoord(ua, ua.userData.restZ, () => tmpColA);
     }
 
-    tmpColA.set(hasShirt && shirt.longSleeve ? sleeveHex : bodySkinHex);
-    tmpColB.set(hasShirt && shirt.longSleeve && shirt.cuffHex ? shirt.cuffHex : (hasShirt && shirt.longSleeve ? sleeveHex : bodySkinHex));
+    tmpColA.set(forearmHex);
     for (const fa of [bodyMeshes.forearmL, bodyMeshes.forearmR]) {
       if (!fa) continue;
-      paintMeshByCoord(fa, fa.userData.restZ, z => (z < 3.6 ? tmpColB : tmpColA));
+      paintMeshByCoord(fa, fa.userData.restZ, () => tmpColA);
     }
 
-    // 3. Snap 1-Piece Arms (`restY = -34.6..-0.6`; short-sleeve splits right above elbow at `ry = -16.2`!)
+    // 3. Snap 1-Piece Arms (`snap_arm_l/r`: clean elbow split at `ry = -15.6` for short-sleeve, zero cuff stripes)
     tmpColA.set(sleeveHex);
-    tmpColB.set(bodySkinHex);
-    tmpColC.set((hasShirt && shirt.cuffHex) ? shirt.cuffHex : sleeveHex);
+    tmpColB.set(forearmHex);
     for (const sa of [bodyMeshes.snapArmL, bodyMeshes.snapArmR]) {
       if (!sa) continue;
-      paintMeshByCoord(sa, sa.userData.restY, ry => {
-        if (!hasShirt) return tmpColB;
-        if (shirt.longSleeve) return ry < -30.8 ? tmpColC : tmpColA;
-        if (ry >= -13.6) return tmpColA;
-        if (ry >= -16.2) return tmpColC;
-        return tmpColB;
-      });
+      paintMeshByCoord(sa, sa.userData.restY, ry => (ry >= -15.6 ? tmpColA : tmpColB));
     }
 
-    // 4. Shared 3-Finger Hands (`hand_l` / `hand_r`): always exposed skin tone!
+    // 4. Shared 3-Finger Hands (`hand_l` / `hand_r`): always solid skin tone matching the face!
     tmpColA.set(bodySkinHex);
     for (const hm of [bodyMeshes.handL, bodyMeshes.handR]) {
       if (!hm) continue;
       paintMeshByCoord(hm, hm.userData.restZ, () => tmpColA);
     }
 
-    // 5. Pro Thighs (`z_stl = 0..24`) + Shins (`z_stl = 0..24.5`, `0` = ankle cuff)
+    // 5. Pro Thighs (`thigh_l/r` = solid shorts/pants color) + Pro Shins (`shin_l/r` = solid skin tone for shorts, solid pants color for long pants!)
     tmpColA.set(thighHex);
     for (const th of [bodyMeshes.thighL, bodyMeshes.thighR]) {
       if (!th) continue;
       paintMeshByCoord(th, th.userData.restZ, () => tmpColA);
     }
 
-    const shinMainHex = (hasPants && !pants.isShorts) ? pants.legHex : bodySkinHex;
-    const shinCuffHex = hasPants
-      ? (pants.cuffHex || (pants.isShorts ? bodySkinHex : pants.legHex))
-      : bodySkinHex;
-    tmpColA.set(shinMainHex);
-    tmpColB.set(shinCuffHex);
+    tmpColA.set(shinHex);
     for (const sh of [bodyMeshes.shinL, bodyMeshes.shinR]) {
       if (!sh) continue;
-      paintMeshByCoord(sh, sh.userData.restZ, z => (z < 4.6 ? tmpColB : tmpColA));
+      paintMeshByCoord(sh, sh.userData.restZ, () => tmpColA);
     }
 
-    // 6. Snap 1-Piece Legs (`restY = -38.6..-0.6`; shorts split cleanly at knee `ry = -19.6`!)
+    // 6. Snap 1-Piece Legs (`snap_leg_l/r`: clean knee split at `ry = -19.6` for shorts, zero cuff stripes)
     tmpColA.set(thighHex);
-    tmpColB.set(shinMainHex);
-    tmpColC.set(shinCuffHex);
+    tmpColB.set(shinHex);
     for (const sl of [bodyMeshes.snapLegL, bodyMeshes.snapLegR]) {
       if (!sl) continue;
-      paintMeshByCoord(sl, sl.userData.restY, ry => {
-        if (!hasPants) return tmpColB;
-        if (pants.isShorts) {
-          if (ry >= -19.6) return tmpColA;
-          return ry < -34.0 ? tmpColC : tmpColB;
-        }
-        return ry < -33.8 ? tmpColC : tmpColA;
-      });
+      paintMeshByCoord(sl, sl.userData.restY, ry => (ry >= -19.6 ? tmpColA : tmpColB));
     }
-    seatedLegsMesh.material.color.set(hasPants ? pants.legHex : bodySkinHex);
+    seatedLegsMesh.material.color.set(thighHex);
 
-    // 7. Two-Tone Sneaker Boots (`z_stl < 4.35` = white rubber midsole; `>= 4.35` = sneaker upper + white rubber toe cap!)
+    // 7. Solid Single-Filament Sneaker Boots (`boot_l/r` = one solid filament color per boot part!)
     const activeShoeHex = pants.shoeHex || shirt.shoeHex || (isDefaultCleanKip ? '#F4EFE6' : '#283044');
-    if (isDefaultCleanKip) {
-      tmpColA.set('#F4EFE6');
-      for (const bm of [bodyMeshes.bootL, bodyMeshes.bootR]) {
-        if (!bm) continue;
-        paintMeshByCoord(bm, bm.userData.restZ, () => tmpColA);
-      }
-    } else {
-      tmpColA.set(activeShoeHex); // Sneaker canvas upper
-      tmpColB.set('#F7F5F0');     // Crisp white vulcanized rubber midsole & toe cap
-      for (const bm of [bodyMeshes.bootL, bodyMeshes.bootR]) {
-        if (!bm) continue;
-        const rY = bm.userData.restY;
-        paintMeshByCoord(bm, bm.userData.restZ, (z, idx) => {
-          if (z < 4.35) return tmpColB;
-          if (rY[idx] < -14.2 && z < 8.4) return tmpColB;
-          return tmpColA;
-        });
-      }
+    tmpColA.set(activeShoeHex);
+    for (const bm of [bodyMeshes.bootL, bodyMeshes.bootR]) {
+      if (!bm) continue;
+      paintMeshByCoord(bm, bm.userData.restZ, () => tmpColA);
     }
 
-    // 8. Joint Pegs & Snap Turrets: keep Spark `#FF6B4A` on Clean Kip, or blend seamlessly into sleeves/shorts/skin!
+    // 8. Joint Pegs & Snap Turrets: solid filament colors matching adjacent limb parts!
     if (isDefaultCleanKip) {
       for (const jm of Object.values(jointMats)) jm.color.set('#FF6B4A');
     } else {
       jointMats.shoulder.color.set(sleeveHex);
-      jointMats.elbow.color.set(hasShirt && shirt.longSleeve ? sleeveHex : bodySkinHex);
-      jointMats.wrist.color.set(hasShirt && shirt.longSleeve && shirt.cuffHex ? shirt.cuffHex : bodySkinHex);
-      jointMats.hip.color.set(waistHex);
-      jointMats.knee.color.set(shinMainHex);
-      jointMats.ankle.color.set(shinCuffHex);
+      jointMats.elbow.color.set(forearmHex);
+      jointMats.wrist.color.set(bodySkinHex);
+      jointMats.hip.color.set(thighHex);
+      jointMats.knee.color.set(shinHex);
+      jointMats.ankle.color.set(activeShoeHex);
     }
 
-    // 9. Conformal 2D Torso & Thigh Clothing Decals
-    const showTorsoDecal = hasShirt || hasPants;
-    const showLegDecal   = hasPants;
+    // 9. Front-Only Chest Stencil Sticker (placed strictly on the flat front chest when wearing a shirt!)
+    const showTorsoDecal = hasShirt;
     for (const dm of torsoOutfitDecals) dm.visible = showTorsoDecal;
-    for (const dm of legOutfitDecals)   dm.visible = showLegDecal;
 
-    const decalKey = `${shirt.id}|${pants.id}|${bodySkinHex}`;
-    if ((showTorsoDecal || showLegDecal) && decalKey !== lastDecalKey) {
+    const decalKey = `${shirt.id}|${bodySkinHex}`;
+    if (showTorsoDecal && decalKey !== lastDecalKey) {
       lastDecalKey = decalKey;
       torsoDecalTex.image = createTorsoOutfitDecalCanvas(shirt.id, pants.id, bodySkinHex);
       torsoDecalTex.needsUpdate = true;
-      legDecalTex.image = createLegOutfitDecalCanvas(pants.id);
-      legDecalTex.needsUpdate = true;
     }
   }
 

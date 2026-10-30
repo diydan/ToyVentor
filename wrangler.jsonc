@@ -10,8 +10,10 @@
 	"workers_dev": true,
 	"assets": {
 		// Client routes (tabs, pushed screens) fall back to the SPA shell
-		// instead of 404ing or reaching the Worker.
-		"not_found_handling": "single-page-application"
+		// instead of 404ing or reaching the Worker; API and legacy World
+		// share-link redirects run in the Worker first.
+		"not_found_handling": "single-page-application",
+		"run_worker_first": ["/api/*", "/world/ToyVentor-World.html"]
 	},
 	"observability": {
 		"enabled": true,
