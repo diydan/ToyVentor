@@ -7,10 +7,8 @@ export interface MissionPanelProps {
 }
 
 /**
- * The one React mission panel (port step 3). Every legacy mission -- the
- * bridge and lift slots plus all nine STEM playground panels -- arrives as
- * the same typed snapshot: lines, chips, and controls. This component
- * renders that data only; results still come from the engine underneath.
+ * Frosted-glass bottom sheet for bridge, lift, and STEM Playground missions.
+ * Keeps the 3D scene visible above the sheet while placing parts or solving puzzles.
  */
 export function MissionPanel({ snapshot, onAction, onControl }: MissionPanelProps) {
   const groups: Array<{ name: string | undefined; controls: typeof snapshot.controls }> = [];
@@ -22,67 +20,54 @@ export function MissionPanel({ snapshot, onAction, onControl }: MissionPanelProp
 
   return (
     <section
+      className="tv-sheet tv-sheet-mission"
+      role="region"
       aria-label="Mission"
-      style={{
-        margin: "12px 0",
-        padding: "14px",
-        border: "2px solid var(--gold)",
-        borderRadius: "var(--radius-md)",
-        background: "var(--surface)",
-      }}
     >
-      <div
-        style={{
-          display: "flex",
-          alignItems: "flex-start",
-          justifyContent: "space-between",
-          gap: 12,
-        }}
-      >
-        <div>
-          <p style={{ margin: "0 0 2px", color: "var(--gold)", fontWeight: 800 }}>
+      <div className="tv-sh-top" style={{ alignItems: "flex-start" }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <span className="kicker-label kicker-gold" style={{ marginBottom: 2 }}>
             Mission
-          </p>
-          <h2 style={{ marginTop: 0 }}>{snapshot.title}</h2>
+          </span>
+          <b className="tv-sh-title">{snapshot.title}</b>
         </div>
         <button
           type="button"
-          className="cta cta-quiet"
-          style={{ width: "auto" }}
+          className="tv-ctl"
           onClick={() => onAction("later")}
         >
           Later
         </button>
       </div>
 
-      {snapshot.goal && <p>{snapshot.goal}</p>}
+      {snapshot.goal && (
+        <p className="tv-moves" style={{ fontSize: 13 }}>
+          {snapshot.goal}
+        </p>
+      )}
+
       {snapshot.lines.map((line, index) => (
-        <p key={`${line}-${index}`} style={{ fontWeight: 700 }}>
+        <p
+          key={`${line}-${index}`}
+          style={{ margin: 0, fontSize: 14, fontWeight: 700 }}
+        >
           {line}
         </p>
       ))}
 
       {snapshot.chips.length > 0 && (
-        <div
-          style={{ display: "flex", flexWrap: "wrap", gap: 6, margin: "8px 0" }}
-          aria-label="Mission sequence"
-        >
+        <div className="tv-pseq" aria-label="Mission sequence">
           {snapshot.chips.map((chip, index) => (
             <span
               key={`${chip.text}-${index}`}
-              style={{
-                minWidth: 34,
-                height: 34,
-                padding: "4px 7px",
-                border: "2px solid var(--glass-line)",
-                borderRadius: "50%",
-                background: chip.background || "var(--surface-2)",
-                color: chip.question ? "var(--gold)" : "var(--ink)",
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontWeight: 800,
-              }}
+              className={
+                chip.question ? "tv-pseq-chip tv-pseq-q" : "tv-pseq-chip"
+              }
+              style={
+                !chip.question && chip.background
+                  ? { background: chip.background }
+                  : undefined
+              }
             >
               {chip.text}
             </span>
@@ -90,44 +75,87 @@ export function MissionPanel({ snapshot, onAction, onControl }: MissionPanelProp
         </div>
       )}
 
-      {groups.map((group) => (
-        <div key={group.name ?? "mission-controls"}>
-          {group.name && <h3>{group.name}</h3>}
-          <div className="builder-actions" role="group" aria-label={group.name ?? "Mission controls"}>
-            {group.controls.map((control) => (
-              <button
-                key={control.index}
-                type="button"
-                disabled={control.disabled}
-                aria-pressed={control.active || undefined}
-                className={control.primary || control.active ? "mood-active" : undefined}
-                onClick={() => onControl(control.index)}
-                style={{
-                  borderColor: control.danger
-                    ? "var(--danger)"
-                    : control.borderColor || undefined,
-                  boxShadow: control.danger ? "0 0 0 2px var(--danger)" : undefined,
-                }}
-              >
-                {control.label}
-              </button>
-            ))}
+      {groups.map((group) => {
+        const isNumberPad =
+          !group.name &&
+          group.controls.length >= 6 &&
+          group.controls.every((c) => /^\d+$/.test(c.label));
+        const [slotTitle, slotStatus] = group.name ? group.name.split(" · ") : [];
+
+        const buttons = group.controls.map((control) => {
+          const classes = ["tv-ctl"];
+          if (control.primary && !control.active) classes.push("tv-ctl-sky");
+          if (control.active) classes.push("tv-ctl-gold-ring");
+          if (control.danger) classes.push("tv-ctl-danger");
+          return (
+            <button
+              key={control.index}
+              type="button"
+              disabled={control.disabled}
+              aria-pressed={control.active || undefined}
+              className={classes.join(" ")}
+              onClick={() => onControl(control.index)}
+              style={
+                !control.danger && control.borderColor
+                  ? { borderColor: control.borderColor }
+                  : undefined
+              }
+            >
+              {control.label}
+            </button>
+          );
+        });
+
+        if (group.name) {
+          return (
+            <div key={group.name} className="tv-mp-slot">
+              <div className="tv-mp-sn">
+                <b>{slotTitle}</b>
+                {slotStatus && (
+                  <span style={{ color: "var(--gold)", fontSize: 13 }}>
+                    {slotStatus}
+                  </span>
+                )}
+              </div>
+              <div className="tv-mp-sb" role="group" aria-label={group.name}>
+                {buttons}
+              </div>
+            </div>
+          );
+        }
+
+        return (
+          <div
+            key="mission-controls"
+            className={isNumberPad ? "tv-cgrid" : "tv-mp-sb"}
+            role="group"
+            aria-label="Mission controls"
+          >
+            {buttons}
           </div>
-        </div>
-      ))}
+        );
+      })}
 
-      {snapshot.binText && <p className="fine-print">{snapshot.binText}</p>}
-
-      <div className="builder-actions">
-        <button type="button" className="mood-active" onClick={() => onAction("test")}>
+      <div className="tv-fg-b">
+        <button
+          type="button"
+          className="tv-ctl tv-ctl-primary"
+          onClick={() => onAction("test")}
+        >
           {snapshot.actionLabel}
         </button>
         {snapshot.forgeAvailable && (
-          <button type="button" onClick={() => onAction("forge")}>
+          <button
+            type="button"
+            className="tv-ctl"
+            onClick={() => onAction("forge")}
+          >
             Forge parts
           </button>
         )}
       </div>
+
+      {snapshot.binText && <p className="tv-moves">{snapshot.binText}</p>}
     </section>
   );
 }

@@ -19,13 +19,18 @@ import {
 } from "../../../../shared/toycontract";
 
 export const WORLDS = [
-  { id: "garden", label: "Garden" },
-  { id: "sky", label: "Sky Meadow" },
-  { id: "junk", label: "Junkyard" },
-  { id: "beach", label: "Beach" },
-  { id: "snow", label: "Snow Peak" },
-  { id: "room", label: "Toy Room" },
-  { id: "lab1", label: "Lab 1" },
+  { id: "garden", label: "Garden", lab: false },
+  { id: "sky", label: "Sky Meadow", lab: false },
+  { id: "junk", label: "Junkyard", lab: false },
+  { id: "beach", label: "Beach", lab: false },
+  { id: "snow", label: "Snow Peak", lab: false },
+  { id: "room", label: "Toy Room", lab: false },
+  { id: "lab1", label: "Lab 1", lab: true },
+  { id: "lab2", label: "Lab 2", lab: true },
+  { id: "lab3", label: "Lab 3", lab: true },
+  { id: "lab4", label: "Lab 4", lab: true },
+  { id: "lab5", label: "Lab 5", lab: true },
+  { id: "lab6", label: "Lab 6", lab: true },
 ] as const;
 
 export type WorldId = (typeof WORLDS)[number]["id"];
@@ -837,7 +842,7 @@ interface LegacyWindow extends Window {
   __x?: LegacyHooks;
 }
 
-const POLL_MS = 300;
+const POLL_MS = 100;
 
 /**
  * Host the legacy engine page in `frame` and talk to it through this
@@ -855,7 +860,6 @@ export function createEngine(
   let pendingWorld: WorldId | null = null;
   let pendingCustomizer: "build" | "forge" | null = null;
   let pendingPanel: "create" | "editor" | null = null;
-  let sheetSuppressed = false;
   let lastWorld = "";
   let lastZoom = -1;
   let lastFound = new Set<string>();
@@ -914,27 +918,11 @@ export function createEngine(
   const pressed = (button: HTMLElement): boolean =>
     button.getAttribute("aria-pressed") === "true" || button.classList.contains("on");
 
-  // React renders the customizer while the legacy sheet remains only as
-  // the engine's backing control surface during this port step.
-  const suppressLegacySheet = (on: boolean) => {
-    sheetSuppressed = on;
-    const frameDoc = doc();
-    if (!frameDoc) return;
-    const id = "toyventor-react-customizer-style";
-    const existing = frameDoc.getElementById(id);
-    if (on && !existing) {
-      const style = frameDoc.createElement("style");
-      style.id = id;
-      style.textContent = "#sheet{display:none!important}";
-      frameDoc.head.appendChild(style);
-    }
-    if (!on) existing?.remove();
-  };
-
-  // React renders mission, Create, and editor panels for this host; the
-  // legacy panels stay as backing control surfaces until their definitions
-  // emit data natively.
-  const suppressLegacyMissionPanel = () => {
+  // React renders customizer, mission, Create, and editor sheets as overlays
+  // over the viewport; the legacy sheets stay hidden in the frame as backing
+  // control surfaces until their definitions emit data natively.
+  let boundDoc: Document | null = null;
+  const suppressLegacyPanels = () => {
     const frameDoc = doc();
     if (!frameDoc?.head) return;
     const id = "toyventor-react-mission-style";
@@ -944,7 +932,15 @@ export function createEngine(
       style.id = id;
       frameDoc.head.appendChild(style);
     }
-    style.textContent = "#mp,#cr,#ed,#ed-io,#ed-back{display:none!important}";
+    style.textContent = "#sheet,#mp,#cr,#ed,#ed-io,#ed-back{display:none!important}";
+    if (boundDoc !== frameDoc) {
+      boundDoc = frameDoc;
+      const syncSoon = () => {
+        if (!disposed) window.setTimeout(poll, 0);
+      };
+      frameDoc.addEventListener("click", syncSoon, { passive: true });
+      frameDoc.addEventListener("keyup", syncSoon, { passive: true });
+    }
   };
 
   const textLines = (element: Element): string[] => {
@@ -1292,7 +1288,7 @@ export function createEngine(
       pendingCustomizer = mode;
       return;
     }
-    suppressLegacySheet(true);
+    suppressLegacyPanels();
     if (api.P?.title) api.start?.(true);
     else if (!doc()?.querySelector("#sheet:not([hidden])")) api.open?.();
     if (mode === "forge" && !doc()?.body.classList.contains("forging")) click("#forgeb");
@@ -1303,13 +1299,12 @@ export function createEngine(
     if (disposed) return;
     pendingCustomizer = null;
     hooks()?.close?.();
-    suppressLegacySheet(false);
     poll();
   }
 
   const poll = () => {
     if (disposed) return;
-    suppressLegacyMissionPanel();
+    suppressLegacyPanels();
     const api = hooks();
     const save = api?.S;
     if (!api || !save) return;
@@ -1372,7 +1367,6 @@ export function createEngine(
     }
     lastToast = toast;
 
-    if (sheetSuppressed) suppressLegacySheet(true);
     const customizer = readCustomizer(save);
     if (!sameCustomizerSnapshot(lastCustomizer, customizer)) {
       lastCustomizer = customizer;
@@ -1409,7 +1403,7 @@ export function createEngine(
       for (let i = 0; i < clicks; i++) click("#zoom");
     },
     missionAction: (action) => {
-      if (action === "forge") suppressLegacySheet(true);
+      suppressLegacyPanels();
       click(action === "test" ? "#mp-go" : action === "forge" ? "#mp-forge" : "#mp-x");
       poll();
     },

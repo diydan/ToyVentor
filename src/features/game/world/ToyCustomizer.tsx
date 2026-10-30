@@ -18,7 +18,7 @@ export interface ToyCustomizerProps {
   onPrintTool: (toolId: string) => void;
 }
 
-function ChoiceRow({
+function SegmentedChips({
   label,
   choices,
   onChoose,
@@ -29,30 +29,25 @@ function ChoiceRow({
 }) {
   if (choices.length === 0) return null;
   return (
-    <>
-      <h3>{label}</h3>
-      <div className="builder-actions" role="group" aria-label={label}>
-        {choices.map((choice) => (
-          <button
-            key={choice.id}
-            type="button"
-            aria-pressed={choice.selected}
-            className={choice.selected ? "mood-active" : undefined}
-            onClick={() => onChoose(choice.id)}
-          >
-            {choice.label}
-          </button>
-        ))}
-      </div>
-    </>
+    <div className="tv-chips" role="group" aria-label={label}>
+      {choices.map((choice) => (
+        <button
+          key={choice.id}
+          type="button"
+          className="tv-sc"
+          aria-pressed={choice.selected}
+          onClick={() => onChoose(choice.id)}
+        >
+          {choice.label}
+        </button>
+      ))}
+    </div>
   );
 }
 
 /**
- * React replacement for the legacy Factory sheet (port step 2). It renders
- * only the typed snapshot from the facade; every action goes back through
- * the engine handle, so the 3D model, saves, locks, and print checks stay
- * owned by the engine until their own port steps land.
+ * Frosted-glass bottom sheet for the ToyVentor World Factory & Forge.
+ * Overlaid on the bottom of the 3D stage so the live toy stays visible above.
  */
 export function ToyCustomizer({
   snapshot,
@@ -70,148 +65,162 @@ export function ToyCustomizer({
     snapshot.slots.find((slot) => slot.id === snapshot.slot)?.label ?? "Part";
 
   return (
-    <section
-      aria-label="Toy Factory"
-      style={{
-        margin: "12px 0",
-        padding: "14px",
-        border: "2px solid var(--line)",
-        borderRadius: "var(--radius-md)",
-        background: "var(--surface)",
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          alignItems: "flex-start",
-          justifyContent: "space-between",
-          gap: 12,
-        }}
-      >
-        <div>
-          <h2 style={{ marginTop: 0 }}>
-            {snapshot.forge ? "Forge parts" : "Build your toy"}
-          </h2>
-          <p className="fine-print" style={{ marginTop: 0 }}>
-            {snapshot.forge
-              ? `${snapshot.scrap} scrap available.`
-              : "React controls, same ToyVentor World toy underneath."}
-          </p>
-        </div>
-        <button type="button" className="cta cta-quiet" style={{ width: "auto" }} onClick={onClose}>
+    <section className="tv-sheet" role="dialog" aria-label="Build your toy">
+      <div className="tv-sh-top">
+        <b className="tv-sh-title">
+          {snapshot.forge ? "Forge parts" : "Build your toy"}
+        </b>
+        <button
+          type="button"
+          className="tv-ctl tv-ctl-gold-ring"
+          aria-pressed={snapshot.forge}
+          onClick={() => onFactoryAction("forge")}
+        >
+          Forge{snapshot.scrap > 0 ? ` (${snapshot.scrap})` : ""}
+        </button>
+        <button
+          type="button"
+          className="tv-ctl tv-ctl-primary"
+          onClick={onClose}
+        >
           Done
         </button>
       </div>
 
-      <div className="builder-actions" role="group" aria-label="Factory mode">
-        <button
-          type="button"
-          aria-pressed={!snapshot.forge}
-          className={!snapshot.forge ? "mood-active" : undefined}
-          onClick={() => snapshot.forge && onFactoryAction("forge")}
-        >
-          Build
-        </button>
-        <button
-          type="button"
-          aria-pressed={snapshot.forge}
-          className={snapshot.forge ? "mood-active" : undefined}
-          onClick={() => !snapshot.forge && onFactoryAction("forge")}
-        >
-          Forge
-        </button>
-      </div>
-
       {snapshot.types.length === 0 && !snapshot.forge ? (
-        <p aria-live="polite">Opening the Factory…</p>
+        <p className="tv-moves" aria-live="polite">Opening the Factory...</p>
       ) : snapshot.forge ? (
-        <ForgeList snapshot={snapshot} onForgeTool={onForgeTool} onPrintTool={onPrintTool} />
+        <ForgeList
+          snapshot={snapshot}
+          onForgeTool={onForgeTool}
+          onPrintTool={onPrintTool}
+        />
       ) : (
         <>
-          <ChoiceRow label="Toy type" choices={snapshot.types} onChoose={onSetToyType} />
-          <ChoiceRow label="Part slot" choices={snapshot.slots} onChoose={onSelectSlot} />
+          <SegmentedChips
+            label="Toy type"
+            choices={snapshot.types}
+            onChoose={onSetToyType}
+          />
+          <SegmentedChips
+            label="Part slot"
+            choices={snapshot.slots}
+            onChoose={onSelectSlot}
+          />
 
-          <h3>{selectedSlot}</h3>
-          <ul className="tray" aria-label={`${selectedSlot} options`}>
-            {snapshot.options.map((option) => (
-              <li key={option.id}>
+          <div
+            className="tv-opts"
+            role="group"
+            aria-label={`${selectedSlot} options`}
+          >
+            {snapshot.options.map((option) => {
+              const classes = ["tv-opt"];
+              if (option.selected) classes.push("tv-opt-on");
+              if (option.locked) classes.push("tv-opt-lock");
+              return (
                 <button
+                  key={option.id}
                   type="button"
-                  className="tray-part"
+                  className={classes.join(" ")}
                   aria-pressed={option.selected}
-                  aria-describedby={option.locked ? `lock-${option.id}` : undefined}
                   onClick={() => onSelectPart(option.id)}
-                  style={
-                    option.selected
-                      ? { borderColor: "var(--sky-500)", background: "var(--surface-3)" }
-                      : undefined
+                >
+                  <span>{option.label}</span>
+                  {option.detail && (
+                    <span className="tv-opt-meta">
+                      {option.statColor && (
+                        <i
+                          className="tv-opt-dot"
+                          aria-hidden="true"
+                          style={{ background: option.statColor }}
+                        />
+                      )}
+                      {option.detail}
+                    </span>
+                  )}
+                  {option.locked && option.lockLabel && (
+                    <span className="tv-opt-lk">{option.lockLabel}</span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="tv-paint">
+            {snapshot.paintZones.length > 0 && (
+              <div className="tv-seg" role="group" aria-label="Paint zone">
+                {snapshot.paintZones.map((zone) => (
+                  <button
+                    key={zone.id}
+                    type="button"
+                    className="tv-sc"
+                    aria-pressed={zone.selected}
+                    onClick={() => onSetPaintZone(zone.id)}
+                  >
+                    {zone.label}
+                  </button>
+                ))}
+              </div>
+            )}
+            <div className="tv-sw" role="group" aria-label="Paint color">
+              {snapshot.paints.map((paint) => (
+                <button
+                  key={paint.color}
+                  type="button"
+                  className="tv-swt"
+                  aria-label={`Paint ${paint.color}`}
+                  aria-pressed={paint.selected}
+                  onClick={() => onSetPaint(paint.color)}
+                  style={{ background: paint.color }}
+                />
+              ))}
+            </div>
+          </div>
+
+          {snapshot.moves && <p className="tv-moves">{snapshot.moves}</p>}
+
+          {(snapshot.checkText || snapshot.checkOk !== null) && (
+            <div className="tv-check-row">
+              {snapshot.checkText && (
+                <p
+                  role="status"
+                  className={
+                    snapshot.checkOk === false
+                      ? "tv-ck tv-ck-bad"
+                      : "tv-ck tv-ck-ok"
                   }
                 >
-                  <span
-                    className="tray-swatch"
-                    aria-hidden="true"
-                    style={{ background: option.statColor || "var(--line-soft)" }}
-                  />
-                  <span>{option.label}</span>
-                  <span className="tray-meta">
-                    {option.locked ? option.lockLabel : option.detail}
-                  </span>
+                  {snapshot.checkText}
+                </p>
+              )}
+              {snapshot.checkOk === false && (
+                <button
+                  type="button"
+                  className="tv-ctl tv-ctl-primary"
+                  onClick={() => onFactoryAction("fix")}
+                >
+                  Fix it for me
                 </button>
-                {option.locked && (
-                  <span id={`lock-${option.id}`} className="fine-print">
-                    Hidden part. {option.lockLabel}.
-                  </span>
-                )}
-              </li>
-            ))}
-          </ul>
-
-          <ChoiceRow
-            label="Paint"
-            choices={snapshot.paintZones}
-            onChoose={(id) => onSetPaintZone(id as PaintZone)}
-          />
-          <div className="builder-actions" role="group" aria-label="Paint color">
-            {snapshot.paints.map((paint) => (
-              <button
-                key={paint.color}
-                type="button"
-                aria-label={`Paint ${paint.color}`}
-                aria-pressed={paint.selected}
-                onClick={() => onSetPaint(paint.color)}
-                style={{
-                  width: 44,
-                  height: 44,
-                  padding: 0,
-                  background: paint.color,
-                  borderColor: paint.selected ? "var(--focus)" : "var(--glass-line)",
-                  boxShadow: paint.selected ? "0 0 0 2px var(--focus)" : undefined,
-                }}
-              />
-            ))}
-          </div>
-
-          {snapshot.moves && <p>{snapshot.moves}</p>}
-          {snapshot.checkText && (
-            <p role="status" style={{ fontWeight: 700 }}>
-              {snapshot.checkText}
-            </p>
+              )}
+              {snapshot.checkOk === true && (
+                <button
+                  type="button"
+                  className="tv-ctl tv-ctl-primary"
+                  onClick={() => onFactoryAction("order")}
+                >
+                  Order
+                </button>
+              )}
+            </div>
           )}
-          <div className="builder-actions">
-            {snapshot.checkOk === false && (
-              <button type="button" onClick={() => onFactoryAction("fix")}>
-                Fix it for me
-              </button>
-            )}
-            {snapshot.checkOk === true && (
-              <button type="button" onClick={() => onFactoryAction("order")}>
-                Order
-              </button>
-            )}
-            <button type="button" onClick={() => onFactoryAction("reset")}>
-              Reset hidden parts
-            </button>
-          </div>
+
+          <button
+            type="button"
+            className="tv-link"
+            onClick={() => onFactoryAction("reset")}
+          >
+            Reset hidden parts
+          </button>
         </>
       )}
     </section>
@@ -227,42 +236,61 @@ function ForgeList({
   onForgeTool: (toolId: string) => void;
   onPrintTool: (toolId: string) => void;
 }) {
-  if (snapshot.forgeItems.length === 0) return <p aria-live="polite">Opening the Forge…</p>;
+  if (snapshot.forgeItems.length === 0) {
+    return <p className="tv-moves" aria-live="polite">Opening the Forge...</p>;
+  }
   return (
-    <div style={{ display: "grid", gap: 10 }}>
-      {snapshot.forgeItems.map((item, index) => (
-        <article
-          key={item.id ?? `${item.label}-${index}`}
-          style={{
-            padding: "10px",
-            border: "2px solid var(--line-soft)",
-            borderRadius: "var(--radius-sm)",
-            opacity: item.locked ? 0.62 : 1,
-          }}
-        >
-          <h3>{item.label}</h3>
-          <p>{item.description}</p>
-          {item.owned != null && <p className="fine-print">You have {item.owned}.</p>}
-          {item.id && (
-            <div className="builder-actions">
-              <button
-                type="button"
-                disabled={!item.canForge}
-                onClick={() => onForgeTool(item.id as string)}
-              >
-                {item.forgeLabel || "Forge"}
-              </button>
-              <button
-                type="button"
-                disabled={item.onPrintList}
-                onClick={() => onPrintTool(item.id as string)}
-              >
-                {item.printLabel || "Print it for real"}
-              </button>
+    <>
+      <p className="tv-moves">
+        Scrap in bin: <strong style={{ color: "var(--gold)" }}>{snapshot.scrap}</strong>
+      </p>
+      <div className="tv-fg-list">
+        {snapshot.forgeItems.map((item, index) => (
+          <article
+            key={item.id ?? `${item.label}-${index}`}
+            className={item.locked ? "tv-fg-it tv-fg-lock" : "tv-fg-it"}
+          >
+            <div>
+              <strong style={{ fontFamily: "var(--font-display)", fontSize: 15 }}>
+                {item.label}
+              </strong>
+              {item.description && (
+                <p className="tv-moves" style={{ marginTop: 2 }}>
+                  {item.description}
+                </p>
+              )}
+              {item.owned != null && (
+                <p
+                  className="tv-moves"
+                  style={{ marginTop: 2, color: "var(--gold)", fontWeight: 700 }}
+                >
+                  You have {item.owned}.
+                </p>
+              )}
             </div>
-          )}
-        </article>
-      ))}
-    </div>
+            {item.id && (
+              <div className="tv-fg-b">
+                <button
+                  type="button"
+                  className="tv-ctl tv-ctl-primary"
+                  disabled={!item.canForge}
+                  onClick={() => onForgeTool(item.id as string)}
+                >
+                  {item.forgeLabel || "Forge"}
+                </button>
+                <button
+                  type="button"
+                  className="tv-ctl"
+                  disabled={item.onPrintList}
+                  onClick={() => onPrintTool(item.id as string)}
+                >
+                  {item.printLabel || "Print it for real"}
+                </button>
+              </div>
+            )}
+          </article>
+        ))}
+      </div>
+    </>
   );
 }

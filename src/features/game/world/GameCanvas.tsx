@@ -6,12 +6,10 @@ import {
   useSyncExternalStore,
 } from "react";
 import type { ToyContract } from "../../../../shared/toycontract";
+import { LivePlayPanel } from "../../liveplay/LivePlayPanel";
 import {
-  WORLDS,
-  ZOOM_LEVELS,
   createEngine,
   createWorldStore,
-  nextZoom,
   worldUrlFor,
   type EngineHandle,
 } from "./engine";
@@ -20,14 +18,31 @@ import { MissionPanel } from "./MissionPanel";
 import { CreatePanel } from "./CreatePanel";
 import { EditorPanel } from "./EditorPanel";
 
+export interface GameCanvasProps {
+  contract: ToyContract | null;
+  toyName?: string;
+  toyColor?: string;
+  statSummary?: string;
+  themeSignature?: string;
+  kipUrl?: string;
+  onBuild?: () => void;
+}
+
 /**
- * React host for ToyVentor World (port step 1). The legacy engine keeps
- * its own canvas and render loop inside the frame; React owns this HUD
- * around it and talks through createEngine. Mounting is StrictMode-safe:
- * the effect cleanup disposes the engine, and a remount creates a fresh
- * one on the same frame element.
+ * Full-bleed React host for ToyVentor World.
+ * The 3D Three.js engine runs full-height inside the stage while React owns
+ * the studio dock above and the frosted-glass bottom sheets (Customizer,
+ * Forge, Mission, Create, Editor, and Live Play Moods) overlaid on the stage.
  */
-export function GameCanvas({ contract }: { contract: ToyContract | null }) {
+export function GameCanvas({
+  contract,
+  toyName,
+  toyColor = "#52b7ff",
+  statSummary,
+  themeSignature,
+  kipUrl,
+  onBuild,
+}: GameCanvasProps) {
   const hostRef = useRef<HTMLDivElement>(null);
   const frameRef = useRef<HTMLIFrameElement>(null);
   const engineRef = useRef<EngineHandle | null>(null);
@@ -35,9 +50,12 @@ export function GameCanvas({ contract }: { contract: ToyContract | null }) {
   contractRef.current = contract;
   const [store] = useState(createWorldStore);
   const state = useSyncExternalStore(store.subscribe, store.getState);
-  const [height, setHeight] = useState(420);
   const toyUrl = useMemo(() => worldUrlFor(contract), [contract]);
   const firstToy = useRef(true);
+
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [moodsOpen, setMoodsOpen] = useState(false);
+  const [moodsActive, setMoodsActive] = useState(false);
 
   // Create the engine once per mount; dispose on unmount and on HMR.
   useEffect(() => {
@@ -67,179 +85,250 @@ export function GameCanvas({ contract }: { contract: ToyContract | null }) {
     engineRef.current?.setToy(contract);
   }, [toyUrl, contract]);
 
-  // Size from the container, not the window: keep a play-friendly aspect.
   useEffect(() => {
-    const host = hostRef.current;
-    if (!host || typeof ResizeObserver === "undefined") return;
-    const observer = new ResizeObserver((entries) => {
-      const width = entries[0]?.contentRect.width ?? 0;
-      if (!width) return;
-      const next = Math.round(Math.max(340, Math.min(560, width * 0.62)));
-      setHeight((prev) => (Math.abs(prev - next) >= 2 ? next : prev));
-    });
-    observer.observe(host);
-    return () => observer.disconnect();
+    const onChange = () =>
+      setIsFullscreen(document.fullscreenElement === hostRef.current);
+    document.addEventListener("fullscreenchange", onChange);
+    return () => document.removeEventListener("fullscreenchange", onChange);
   }, []);
 
-  const engine = () => engineRef.current;
   const customizer = state.customizer;
   const missionPanel = state.missionPanel;
   const create = state.create;
   const editor = state.editor;
-  const frameHeight =
-    customizer.open || missionPanel.open || create.open || editor.open
-      ? Math.min(height, 360)
-      : height;
+  const anyGameSheetOpen =
+    customizer.open || missionPanel.open || create.open || editor.open;
+
+  // Close the Moods drawer automatically if a game sheet opens.
+  useEffect(() => {
+    if (anyGameSheetOpen && moodsOpen) setMoodsOpen(false);
+  }, [anyGameSheetOpen, moodsOpen]);
+
+  const toggleFullscreen = () => {
+    const host = hostRef.current as
+      | (HTMLDivElement & {
+          webkitRequestFullscreen?: () => Promise<void> | void;
+        })
+      | null;
+    try {
+      if (document.fullscreenElement) void document.exitFullscreen();
+      else if (host?.requestFullscreen) void host.requestFullscreen();
+      else host?.webkitRequestFullscreen?.();
+    } catch {
+      // Fullscreen can be refused by browser policy; keep playing.
+    }
+  };
+
+  const engine = () => engineRef.current;
+  const label = toyName || contract?.name || "ToyVentor World";
 
   return (
-    <div ref={hostRef}>
-      <div className="builder-actions" role="group" aria-label="ToyVentor World">
-        <button
-          type="button"
-          onClick={() =>
-            customizer.open ? engine()?.closeCustomizer() : engine()?.start()
-          }
-        >
-          Play
-        </button>
-        <button
-          type="button"
-          aria-pressed={customizer.open && !customizer.forge}
-          className={customizer.open && !customizer.forge ? "mood-active" : undefined}
-          onClick={() => {
-            if (!customizer.open) engine()?.openCustomizer("build");
-            else if (customizer.forge) engine()?.factoryAction("forge");
-            else engine()?.closeCustomizer();
-          }}
-        >
-          Customize
-        </button>
-        <button
-          type="button"
-          aria-pressed={customizer.open && customizer.forge}
-          className={customizer.open && customizer.forge ? "mood-active" : undefined}
-          onClick={() => {
-            if (!customizer.open) engine()?.openCustomizer("forge");
-            else if (!customizer.forge) engine()?.factoryAction("forge");
-          }}
-        >
-          Forge
-        </button>
-        <button
-          type="button"
-          aria-pressed={create.open}
-          className={create.open ? "mood-active" : undefined}
-          onClick={() => (create.open ? engine()?.closeCreate() : engine()?.openCreate())}
-        >
-          Create
-        </button>
-        <button
-          type="button"
-          aria-pressed={editor.open}
-          className={editor.open ? "mood-active" : undefined}
-          onClick={() => (editor.open ? engine()?.closeEditor() : engine()?.openEditor())}
-        >
-          Editor
-        </button>
-        <button
-          type="button"
-          onClick={() => engine()?.setZoom(nextZoom(state.zoom))}
-          aria-label={`Zoom: ${ZOOM_LEVELS[state.zoom]}. Tap to change`}
-        >
-          Zoom: {ZOOM_LEVELS[state.zoom]}
-        </button>
-        {WORLDS.map((world) => (
+    <div
+      ref={hostRef}
+      className={isFullscreen ? "tv-host tv-host-fullscreen" : "tv-host"}
+    >
+      <div className="tv-dock" role="toolbar" aria-label="ToyVentor World studio">
+        <span className="tv-toy-badge" title={statSummary ? `${label} (${statSummary})` : label}>
+          <span
+            className="tv-toy-dot"
+            aria-hidden="true"
+            style={{ background: toyColor }}
+          />
+          <span>{label}</span>
+          {statSummary && (
+            <span style={{ color: "var(--gold)", fontSize: 12 }}>
+              · {statSummary}
+            </span>
+          )}
+        </span>
+
+        <div className="tv-dock-scroll">
+          {onBuild && (
+            <button
+              type="button"
+              className="tv-ctl"
+              onClick={onBuild}
+              title="Snap parts onto your toy in the builder"
+            >
+              {statSummary ? "Edit build" : "+ Upgrades"}
+            </button>
+          )}
+          {state.ready && (
+            <>
+              <button
+                type="button"
+                className="tv-ctl"
+                aria-pressed={customizer.open && !customizer.forge}
+                onClick={() => {
+                  setMoodsOpen(false);
+                  if (!customizer.open) engine()?.openCustomizer("build");
+                  else if (customizer.forge) engine()?.factoryAction("forge");
+                  else engine()?.closeCustomizer();
+                }}
+              >
+                Customize
+              </button>
+              <button
+                type="button"
+                className="tv-ctl tv-ctl-gold-ring"
+                aria-pressed={customizer.open && customizer.forge}
+                onClick={() => {
+                  setMoodsOpen(false);
+                  if (!customizer.open) engine()?.openCustomizer("forge");
+                  else if (!customizer.forge) engine()?.factoryAction("forge");
+                  else engine()?.closeCustomizer();
+                }}
+              >
+                Forge
+              </button>
+              <button
+                type="button"
+                className="tv-ctl tv-ctl-violet"
+                aria-pressed={create.open}
+                onClick={() => {
+                  setMoodsOpen(false);
+                  if (create.open) engine()?.closeCreate();
+                  else engine()?.openCreate();
+                }}
+              >
+                Create
+              </button>
+              <button
+                type="button"
+                className="tv-ctl"
+                aria-pressed={editor.open}
+                onClick={() => {
+                  setMoodsOpen(false);
+                  if (editor.open) engine()?.closeEditor();
+                  else engine()?.openEditor();
+                }}
+              >
+                Editor
+              </button>
+            </>
+          )}
           <button
-            key={world.id}
             type="button"
-            aria-pressed={state.world === world.id}
-            className={state.world === world.id ? "mood-active" : undefined}
-            onClick={() => engine()?.goWorld(world.id)}
+            className="tv-ctl"
+            aria-pressed={moodsOpen}
+            onClick={() => {
+              if (!moodsOpen) {
+                if (customizer.open) engine()?.closeCustomizer();
+                if (create.open) engine()?.closeCreate();
+                if (editor.open) engine()?.closeEditor();
+              }
+              setMoodsOpen((open) => !open);
+            }}
           >
-            {world.label}
+            {moodsActive && (
+              <span
+                className="tv-opt-dot"
+                aria-hidden="true"
+                style={{ background: "var(--gold)" }}
+              />
+            )}
+            Moods
           </button>
-        ))}
+          {kipUrl && (
+            <a
+              className="tv-ctl"
+              href={kipUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Kip 3D
+            </a>
+          )}
+          <button
+            type="button"
+            className="tv-ctl"
+            aria-pressed={isFullscreen}
+            onClick={toggleFullscreen}
+          >
+            {isFullscreen ? "Exit" : "Full"}
+          </button>
+        </div>
       </div>
 
-      {missionPanel.open && (
-        <MissionPanel
-          snapshot={missionPanel}
-          onAction={(action) => engine()?.missionAction(action)}
-          onControl={(index) => engine()?.missionControl(index)}
+      <div className="tv-stage">
+        <iframe
+          ref={frameRef}
+          className="tv-frame"
+          title="ToyVentor World"
         />
-      )}
 
-      <p className="fine-print" style={{ marginTop: 0 }} aria-live="polite">
-        {state.ready
-          ? `${state.foundTotal} hidden parts found${state.toast ? ` · ${state.toast}` : ""}`
-          : "Loading ToyVentor World…"}
-      </p>
-
-      {editor.testing && !editor.open && !create.open && (
-        <div className="builder-actions" role="group" aria-label="Play test">
-          <span>Play-testing your world.</span>
+        {editor.testing && !editor.open && !create.open && (
           <button
             type="button"
-            className="mood-active"
+            className="tv-ctl tv-ctl-primary tv-ed-back"
             onClick={() => engine()?.editorAction("back")}
           >
             {editor.backLabel}
           </button>
-        </div>
-      )}
+        )}
 
-      {create.open && (
-        <CreatePanel
-          snapshot={create}
-          onClose={() => engine()?.closeCreate()}
-          onMake={(text) => engine()?.createMake(text)}
-          onAction={(action) => engine()?.createAction(action)}
-        />
-      )}
+        {missionPanel.open && (
+          <MissionPanel
+            snapshot={missionPanel}
+            onAction={(action) => engine()?.missionAction(action)}
+            onControl={(index) => engine()?.missionControl(index)}
+          />
+        )}
 
-      {editor.open && (
-        <EditorPanel
-          snapshot={editor}
-          onClose={() => engine()?.closeEditor()}
-          onAction={(action) => engine()?.editorAction(action)}
-          onName={(name) => engine()?.setEditorName(name)}
-          onTheme={(theme) => engine()?.setEditorTheme(theme)}
-          onNew={(value) => engine()?.editorNew(value)}
-          onTab={(tab) => engine()?.setEditorTab(tab)}
-          onPalette={(index) => engine()?.editorPalette(index)}
-          onControl={(index) => engine()?.editorControl(index)}
-          onSelect={(index, value) => engine()?.setEditorSelect(index, value)}
-          onIoText={(text) => engine()?.setEditorIoText(text)}
-          onIoAction={(action) => engine()?.editorIoAction(action)}
-        />
-      )}
+        {create.open && (
+          <CreatePanel
+            snapshot={create}
+            onClose={() => engine()?.closeCreate()}
+            onMake={(text) => engine()?.createMake(text)}
+            onAction={(action) => engine()?.createAction(action)}
+          />
+        )}
 
-      {customizer.open && (
-        <ToyCustomizer
-          snapshot={customizer}
-          onClose={() => engine()?.closeCustomizer()}
-          onSetToyType={(toyType) => engine()?.setToyType(toyType)}
-          onSelectSlot={(slot) => engine()?.selectSlot(slot)}
-          onSelectPart={(partId) => engine()?.selectPart(partId)}
-          onSetPaintZone={(zone) => engine()?.setPaintZone(zone)}
-          onSetPaint={(color) => engine()?.setPaint(color)}
-          onFactoryAction={(action) => engine()?.factoryAction(action)}
-          onForgeTool={(toolId) => engine()?.forgeTool(toolId)}
-          onPrintTool={(toolId) => engine()?.printTool(toolId)}
-        />
-      )}
+        {editor.open && (
+          <EditorPanel
+            snapshot={editor}
+            onClose={() => engine()?.closeEditor()}
+            onAction={(action) => engine()?.editorAction(action)}
+            onName={(name) => engine()?.setEditorName(name)}
+            onTheme={(theme) => engine()?.setEditorTheme(theme)}
+            onNew={(value) => engine()?.editorNew(value)}
+            onTab={(tab) => engine()?.setEditorTab(tab)}
+            onPalette={(index) => engine()?.editorPalette(index)}
+            onControl={(index) => engine()?.editorControl(index)}
+            onSelect={(index, value) => engine()?.setEditorSelect(index, value)}
+            onIoText={(text) => engine()?.setEditorIoText(text)}
+            onIoAction={(action) => engine()?.editorIoAction(action)}
+          />
+        )}
 
-      <iframe
-        ref={frameRef}
-        title="ToyVentor World"
-        style={{
-          width: "100%",
-          height: frameHeight,
-          border: 0,
-          display: "block",
-          background: "#080f2b",
-        }}
-      />
+        {customizer.open && (
+          <ToyCustomizer
+            snapshot={customizer}
+            onClose={() => engine()?.closeCustomizer()}
+            onSetToyType={(toyType) => engine()?.setToyType(toyType)}
+            onSelectSlot={(slot) => engine()?.selectSlot(slot)}
+            onSelectPart={(partId) => engine()?.selectPart(partId)}
+            onSetPaintZone={(zone) => engine()?.setPaintZone(zone)}
+            onSetPaint={(color) => engine()?.setPaint(color)}
+            onFactoryAction={(action) => engine()?.factoryAction(action)}
+            onForgeTool={(toolId) => engine()?.forgeTool(toolId)}
+            onPrintTool={(toolId) => engine()?.printTool(toolId)}
+          />
+        )}
+
+        <section
+          className="tv-sheet"
+          role="dialog"
+          aria-label="Live Play moods"
+          hidden={!moodsOpen}
+        >
+          <LivePlayPanel
+            themeSignature={themeSignature}
+            onClose={() => setMoodsOpen(false)}
+            onActiveChange={setMoodsActive}
+          />
+        </section>
+      </div>
     </div>
   );
 }
