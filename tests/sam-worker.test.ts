@@ -1,5 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { segmentToy } from "../worker/meta";
+import {
+  makeSkin,
+  SAM_TIMEOUT_MS,
+  segmentToy,
+  SKIN_TIMEOUT_MS,
+} from "../worker/meta";
 
 // Complete output_text captured from a live sam-3.1 call on 2026-10-28
 // (cup in the cup + water-bottle photo, 1920x1280, one_bit masks).
@@ -61,5 +66,62 @@ describe("segmentToy mask integration", () => {
     );
     expect(result).toMatchObject({ status: "ok", matches: 1 });
     if (result.status === "ok") expect(result.mask).toBeUndefined();
+  });
+});
+
+describe("upstream timeouts", () => {
+  // Faithful hang: never resolves, rejects when the caller's signal aborts,
+  // exactly like a real fetch against an unroutable upstream.
+  function stubHang(): void {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(
+        (_input: unknown, init?: { signal?: AbortSignal | null }) =>
+          new Promise((_resolve, reject) => {
+            init?.signal?.addEventListener("abort", () => {
+              reject(
+                init.signal instanceof AbortSignal ? init.signal.reason : new Error("aborted"),
+              );
+            });
+          }),
+      ),
+    );
+  }
+
+  it("pins generous default budgets", () => {
+    expect(SAM_TIMEOUT_MS).toBe(20_000);
+    expect(SKIN_TIMEOUT_MS).toBe(45_000);
+  });
+
+  it("gives up on a hanging SAM upstream instead of spinning forever", async () => {
+    stubHang();
+    const started = Date.now();
+    const result = await segmentToy(
+      { MODEL_API_KEY: "test-key" },
+      "data:image/jpeg;base64,x",
+      "cup",
+      50,
+    );
+    expect(Date.now() - started).toBeLessThan(10_000);
+    expect(result.status).toBe("error");
+    if (result.status !== "error") return;
+    expect(result.message).toMatch(/timed out/);
+    expect(result.message).not.toMatch(/Bearer|test-key/);
+  });
+
+  it("gives up on a hanging skin upstream instead of spinning forever", async () => {
+    stubHang();
+    const started = Date.now();
+    const result = await makeSkin(
+      { MODEL_API_KEY: "test-key" },
+      "data:image/jpeg;base64,x",
+      "red",
+      50,
+    );
+    expect(Date.now() - started).toBeLessThan(10_000);
+    expect(result.status).toBe("error");
+    if (result.status !== "error") return;
+    expect(result.message).toMatch(/timed out/);
+    expect(result.message).not.toMatch(/Bearer|test-key/);
   });
 });

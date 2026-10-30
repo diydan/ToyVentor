@@ -57,11 +57,30 @@ export type SkinResult =
   | { status: "not-configured" }
   | { status: "error"; message: string };
 
+/** Budgets cover the whole upstream operation, including streaming the
+ *  response body. The client budgets sit above these so a server-side
+ *  timeout answers before the client gives up. Measured 2026-10-30:
+ *  live SAM ~2-8s, live skin image edit ~22s. */
+export const SAM_TIMEOUT_MS = 20_000;
+export const SKIN_TIMEOUT_MS = 45_000;
+
+/** A timed-out upstream degrades to a generic message: no raw upstream
+ *  text and no credentials ever reach the child's UI. */
+function upstreamError(prefix: string, err: unknown): string {
+  if (
+    err instanceof DOMException && (err.name === "TimeoutError" || err.name === "AbortError")
+  ) {
+    return `${prefix} timed out`;
+  }
+  return `${prefix} failed: ${(err as Error).message}`;
+}
+
 /** Muse Image edit: repaint the toy's surface, keep everything else. */
 export async function makeSkin(
   env: MetaEnv,
   imageDataUrl: string,
   style: string,
+  timeoutMs = SKIN_TIMEOUT_MS,
 ): Promise<SkinResult> {
   const key = apiKey(env);
   if (!key) return { status: "not-configured" };
@@ -78,18 +97,24 @@ export async function makeSkin(
         images: [{ image_url: imageDataUrl }],
         n: 1,
       }),
+      signal: AbortSignal.timeout(timeoutMs),
     });
   } catch (err) {
-    return { status: "error", message: `skin request failed: ${(err as Error).message}` };
+    return { status: "error", message: upstreamError("skin request", err) };
   }
   if (!res.ok) {
     const detail = (await res.text()).slice(0, 300);
     return { status: "error", message: `skin returned ${res.status}: ${detail}` };
   }
-  const body = (await res.json()) as {
+  let body: {
     data?: { b64_json?: string }[];
     output_format?: string;
   };
+  try {
+    body = (await res.json()) as typeof body;
+  } catch (err) {
+    return { status: "error", message: upstreamError("skin request", err) };
+  }
   const b64 = body.data?.[0]?.b64_json;
   if (!b64) return { status: "error", message: "skin response had no image" };
   const format = body.output_format === "png" ? "png" : "webp";
@@ -204,6 +229,7 @@ export async function segmentToy(
   env: MetaEnv,
   imageDataUrl: string,
   prompt: string,
+  timeoutMs = SAM_TIMEOUT_MS,
 ): Promise<SamResult> {
   const key = apiKey(env);
   if (!key) return { status: "not-configured" };
@@ -234,9 +260,10 @@ export async function segmentToy(
         stream: true,
         metadata: { mask_encoding: "one_bit" },
       }),
+      signal: AbortSignal.timeout(timeoutMs),
     });
   } catch (err) {
-    return { status: "error", message: `SAM request failed: ${(err as Error).message}` };
+    return { status: "error", message: upstreamError("SAM request", err) };
   }
 
   if (!res.ok || !res.body) {
@@ -244,7 +271,14 @@ export async function segmentToy(
     return { status: "error", message: `SAM returned ${res.status}: ${detail}` };
   }
 
-  const collected = await collectStream(res.body);
+  // The timeout also covers streaming: an abort mid-stream degrades to an
+  // error result instead of an unhandled rejection.
+  let collected: Awaited<ReturnType<typeof collectStream>>;
+  try {
+    collected = await collectStream(res.body);
+  } catch (err) {
+    return { status: "error", message: upstreamError("SAM request", err) };
+  }
   const boxes = parseSegmentationBoxes(collected.text);
   const box = largestBox(boxes);
   if (!box) return { status: "no-match" };
