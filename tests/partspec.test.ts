@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { convertPartSpecPart } from "../shared/partspec";
+import { convertPartSpecPart, EXTENDED_STAT_MAP } from "../shared/partspec";
 import { validatePart } from "../shared/part";
 
 const catalog = {
@@ -14,10 +14,12 @@ const manifest = {
   design_status: "verified",
   prints: true,
   file: "toyventor_ridge_fin_S.stl",
+  bbox_mm: [11.9, 24.4, 23.8] as [number, number, number],
   connectors: [
     { kind: "socket_grid", interface: "stud_small", grid: { nx: 1, ny: 2, pitch: 12.5 } },
   ],
   print: { orientation: "flat underside down", supports: false },
+  safety: { small_part_status: "small_part" },
 };
 
 describe("PartSpec bridge", () => {
@@ -32,7 +34,7 @@ describe("PartSpec bridge", () => {
     expect(validatePart(r.part)).toEqual([]);
   });
 
-  it("uses the TU pitch for large parts", () => {
+  it("uses the 25 mm TU pitch for large parts", () => {
     const r = convertPartSpecPart(
       { ...catalog, id: "zoom_capsule", size: "large" },
       {
@@ -46,17 +48,48 @@ describe("PartSpec bridge", () => {
     expect(r.ok && r.part.footprintMm).toEqual([25, 25]);
   });
 
-  it("skips unmapped stats instead of guessing a game mapping", () => {
+  it("skips unmapped stats and Pro parts in default strict mode", () => {
     const r = convertPartSpecPart({ ...catalog, stat: "Sturdiness" }, manifest);
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.reason).toContain("Sturdiness");
-  });
 
-  it("skips Pro parts and non-verified parts", () => {
     expect(convertPartSpecPart({ ...catalog, line: "pro", size: "pro" }, manifest).ok).toBe(false);
     expect(
       convertPartSpecPart(catalog, { ...manifest, design_status: "needs_reproportion" }).ok,
     ).toBe(false);
     expect(convertPartSpecPart(catalog, undefined).ok).toBe(false);
+  });
+
+  it("bridges Pro parts, Forge Mounts, all 19 stats, bboxMm, and CPSC small-part warnings in full TU mode", () => {
+    expect(Object.keys(EXTENDED_STAT_MAP).length).toBeGreaterThanOrEqual(19);
+
+    const proGear = convertPartSpecPart(
+      { id: "gear_spur_z10", name: "Gear Spur Z10", line: "pro", size: "pro", stat: "Speed" },
+      {
+        id: "gear_spur_z10",
+        design_status: "verified",
+        prints: true,
+        file: "toyventor_gear_spur_z10_P.stl",
+        bbox_mm: [30, 28.9, 6.2],
+        connectors: [
+          { kind: "bore_grid", interface: "bore_grid", grid: { nx: 1, ny: 1, pitch: 12.5 } },
+        ],
+        print: { orientation: "flat", supports: false },
+        safety: { small_part_status: "small_part" },
+      },
+      { mapAllStats: true, includePro: true, idPrefix: "", deriveStatValue: true, includeAssets: true },
+    );
+    expect(proGear.ok).toBe(true);
+    if (!proGear.ok) return;
+    expect(proGear.part.id).toBe("gear-spur-z10");
+    expect(proGear.part.line).toBe("pro");
+    expect(proGear.part.mount).toBe("hole");
+    expect(proGear.part.sizeClass).toBe("small");
+    expect(proGear.part.footprintMm).toEqual([12.5, 12.5]);
+    expect(proGear.part.bboxMm).toEqual([30, 28.9, 6.2]);
+    expect(proGear.part.stlFile).toBe("gear-spur-z10.stl");
+    expect(proGear.part.glbFile).toBe("gear-spur-z10.glb");
+    expect(proGear.part.smallPartWarning).toBe(true);
+    expect(validatePart(proGear.part)).toEqual([]);
   });
 });

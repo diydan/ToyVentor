@@ -28,14 +28,20 @@ export function runChecks(
 
   const [fx, fy] = part.footprintMm;
   const sizeMatch = part.sizeClass === toy.sizeClass;
-  const footprintFits = fx <= toy.lengthMm && fy <= toy.widthMm;
+  const footprintFits =
+    (fx <= toy.lengthMm && fy <= toy.widthMm) ||
+    (fy <= toy.lengthMm && fx <= toy.widthMm);
   const fitsToy = sizeMatch && footprintFits;
 
   const supportFree = part.printable
     ? part.supportFree === true && Boolean(part.orientation)
     : true; // skins and digital-only parts never print, so never need supports
 
-  const fitsBed = !part.printable || (fx <= bedMm[0] && fy <= bedMm[1]);
+  const [bx, by] = part.bboxMm ? [part.bboxMm[0], part.bboxMm[1]] : [fx, fy];
+  const fitsBed =
+    !part.printable ||
+    (bx <= bedMm[0] && by <= bedMm[1]) ||
+    (by <= bedMm[0] && bx <= bedMm[1]);
 
   return [
     {

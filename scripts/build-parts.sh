@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Regenerate STL files from parts/**/*.scad into generated/stl/, serve
+# Regenerate STL files from parts/scad/**/*.scad into generated/stl/, serve
 # them from public/parts-stl/, and convert to GLB in public/parts-glb/
 # for the AR/3D viewer (scripts/stl_to_glb.py, stdlib only).
 set -euo pipefail
@@ -15,7 +15,7 @@ count=0
 # find, not globstar: stock macOS bash 3.2 has no globstar.
 while IFS= read -r src; do
   case "$src" in
-    parts/profiles/*) continue ;; # library/include files, not parts
+    parts/scad/profiles/*) continue ;; # library/include files, not parts
   esac
   name="$(basename "$src" .scad)"
   echo "openscad: $src -> generated/stl/$name.stl"
@@ -23,6 +23,6 @@ while IFS= read -r src; do
   # The web app serves downloadable STLs from public/ (STL export, spec).
   cp "generated/stl/$name.stl" "public/parts-stl/$name.stl"
   count=$((count + 1))
-done < <(find parts -name '*.scad' | sort)
+done < <(find parts/scad -name '*.scad' | sort)
 echo "build-parts: $count STL file(s) in generated/stl/"
 python3 scripts/stl_to_glb.py generated/stl public/parts-glb

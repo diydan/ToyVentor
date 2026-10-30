@@ -30,6 +30,14 @@ export interface Part {
    *  parts (skins) omit it. */
   orientation?: string;
   supportFree?: boolean;
+  /** True 3D mesh bounding box [x, y, z] in mm in print orientation. */
+  bboxMm?: [number, number, number];
+  /** Generated binary STL filename under public/parts-stl/. */
+  stlFile?: string;
+  /** Generated GLB filename under public/parts-glb/. */
+  glbFile?: string;
+  /** True when ASTM F963 / 16 CFR 1500.19 small-parts cylinder warning applies (3+). */
+  smallPartWarning?: boolean;
   /** AR/game texture id. Printed parts are one color; skins never print. */
   skin?: string;
 }
@@ -53,6 +61,14 @@ function isPair(v: unknown): v is [number, number] {
   return (
     Array.isArray(v) &&
     v.length === 2 &&
+    v.every((n) => typeof n === "number" && Number.isFinite(n))
+  );
+}
+
+function isTriple(v: unknown): v is [number, number, number] {
+  return (
+    Array.isArray(v) &&
+    v.length === 3 &&
     v.every((n) => typeof n === "number" && Number.isFinite(n))
   );
 }
@@ -95,6 +111,14 @@ export function validatePart(value: unknown): string[] {
       at("printable parts must list a print orientation");
     if (value.supportFree !== true) at("printable parts must claim supportFree: true");
   }
+  if (value.bboxMm !== undefined && !isTriple(value.bboxMm))
+    at("bboxMm must be [number, number, number]");
+  if (value.stlFile !== undefined && (typeof value.stlFile !== "string" || !value.stlFile.endsWith(".stl")))
+    at("stlFile must be a .stl filename");
+  if (value.glbFile !== undefined && (typeof value.glbFile !== "string" || !value.glbFile.endsWith(".glb")))
+    at("glbFile must be a .glb filename");
+  if (value.smallPartWarning !== undefined && typeof value.smallPartWarning !== "boolean")
+    at("smallPartWarning must be a boolean");
   return errors;
 }
 
