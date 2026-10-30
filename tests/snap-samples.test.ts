@@ -36,7 +36,7 @@ const part = (id: string): Part => {
   return found;
 };
 
-/** Grid pitch per profile, mirroring parts/profiles/*.scad. */
+/** Grid pitch per profile, mirroring parts/scad/profiles/*.scad. */
 const PITCH_MM: Record<string, number> = {
   stud_profile_small: 16,
   stud_profile_large: 32,
@@ -44,12 +44,12 @@ const PITCH_MM: Record<string, number> = {
 
 /** Printable Snap part -> the SCAD file that must generate its STL. */
 const SCAD_BY_PART: Record<string, string> = {
-  "snap-spoiler-01": "parts/snap/spoiler.scad",
-  "snap-brick-2x2-small": "parts/snap/brick-2x2-small.scad",
-  "snap-brick-2x2-large": "parts/snap/brick-2x2-large.scad",
-  "forge-mount-small": "parts/mount/forge-mount.scad",
-  "snap-wing-01": "parts/snap/dragon-wing.scad",
-  "snap-glow-capsule-01": "parts/snap/glow-capsule.scad",
+  "snap-spoiler-01": "parts/scad/snap/spoiler.scad",
+  "snap-brick-2x2-small": "parts/scad/snap/brick-2x2-small.scad",
+  "snap-brick-2x2-large": "parts/scad/snap/brick-2x2-large.scad",
+  "forge-mount-small": "parts/scad/mount/forge-mount.scad",
+  "snap-wing-01": "parts/scad/snap/dragon-wing.scad",
+  "snap-glow-capsule-01": "parts/scad/snap/glow-capsule.scad",
 };
 
 describe("snap samples in the base set", () => {
