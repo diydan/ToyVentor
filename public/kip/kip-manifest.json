@@ -76,17 +76,35 @@
     "tail_acc"
   ],
   "wardrobe": {
-    "heads": ["classic", "char_head_kid", "robot_head_visor", "char_head_fox", "char_head_bear"],
-    "decalSkins": ["spark", "happy", "wink", "cool", "starry", "blank"],
-    "hairsAndCrowns": [
-      "buds",
-      "hair_swoosh",
+    "heads": [
+      "classic",
+      "char_head_kid",
+      "char_head_fox",
+      "char_head_bear",
+      "robot_head_visor"
+    ],
+    "faceplatePart": "char_faceplate",
+    "decalSkins": ["spark", "happy", "wink", "cool", "starry", "surprised", "blank"],
+    "skinTones": ["warm_peach", "golden_tan", "rich_cocoa", "soft_ivory", "vinyl_cream"],
+    "hairColors": ["chestnut", "espresso", "golden_blonde", "auburn_ginger", "berry_pop", "cobalt"],
+    "hatReadyHairs": [
+      "hair_short_swept",
+      "hair_bob",
+      "hair_swoosh"
+    ],
+    "sculptedTopHairs": [
+      "hair_spiky",
       "hair_pigtails",
+      "hair_ponytail",
       "hair_curly",
-      "hair_mohawk",
+      "hair_mohawk"
+    ],
+    "hatsAndCrowns": [
+      "buds",
+      "wobble_hat",
       "pointy_ears",
       "bumper_horns",
-      "wobble_hat",
+      "hair_ponytail",
       "blank"
     ],
     "backpacks": ["off", "pack_explorer", "robot_back_jetpack", "cloud_wings", "pro_gears"],
@@ -98,9 +116,10 @@
       "name": "Roadster Car",
       "gridTu": [4, 10],
       "chassisPart": "veh_car_chassis",
+      "coverParts": ["veh_car_hood_cover", "veh_cab_roof_cover"],
       "steeringPart": "veh_steering_wheel",
-      "axlePart": "shaft_tu07",
-      "wheelPart": "wheel_tu04",
+      "axlePart": "shaft_tu05",
+      "wheelPart": "veh_wheel_sport",
       "racerAddons": ["racer_bull_bar", "racer_hood_scoop", "racer_light_bar", "racer_spoiler", "racer_twin_exhaust"]
     },
     {
@@ -108,9 +127,10 @@
       "name": "Hauler Truck",
       "gridTu": [4, 12],
       "chassisPart": "veh_truck_chassis",
+      "coverParts": ["veh_car_hood_cover", "veh_cab_roof_cover", "veh_truck_bed_cover"],
       "steeringPart": "veh_steering_wheel",
-      "axlePart": "shaft_tu07",
-      "wheelPart": "wheel_tu06",
+      "axlePart": "shaft_tu05",
+      "wheelPart": "veh_wheel_offroad",
       "racerAddons": ["racer_bull_bar", "racer_roof_rack", "pack_explorer"]
     },
     {
@@ -118,9 +138,10 @@
       "name": "Step-Through Motor Scooter",
       "gridTu": [2, 10],
       "chassisPart": "veh_scooter_frame",
+      "coverParts": ["veh_scooter_fairing"],
       "steeringPart": "veh_handlebar_fork",
-      "axlePart": "shaft_tu05",
-      "wheelPart": "wheel_tu04",
+      "axlePart": "racer_axle",
+      "wheelPart": "veh_wheel_moto",
       "racerAddons": ["racer_twin_exhaust"]
     },
     {
@@ -129,10 +150,11 @@
       "gridTu": [2, 10],
       "chassisPart": "veh_scooter_frame",
       "cowlingPart": "veh_moto_cowling",
+      "coverParts": ["veh_scooter_fairing", "veh_moto_cowling"],
       "steeringPart": "veh_handlebar_fork",
-      "axlePart": "shaft_tu05",
-      "wheelPart": "wheel_tu04",
-      "racerAddons": ["racer_twin_exhaust"]
+      "axlePart": "racer_axle",
+      "wheelPart": "veh_wheel_moto",
+      "racerAddons": ["racer_twin_exhaust", "glow_capsule"]
     }
   ],
   "llmSdk": {
@@ -155,7 +177,7 @@
       "grid": [1, 2],
       "gameSlot": "character.eyes.big",
       "stat": "glow",
-      "options": ["buds", "swoosh", "pigtails", "curly", "mohawk", "ears", "horns", "hat", "blank"]
+      "options": ["buds", "swoosh", "spiky", "pigtails", "ponytail", "curly", "mohawk", "ears", "horns", "hat", "blank"]
     },
     {
       "id": "ears",

@@ -65,7 +65,7 @@ test("complementary() is symmetric", all(ix.complementary(a, b) == ix.complement
 
 # 7. build validator regressions
 res = asm.demo(out / "toyventor_parts.json", out)
-want_ok = ["valid_ring_brick_tail", "valid_offset_stack_2_studs", "valid_beams_friction_pin", "valid_shaft_beam_bushing", "valid_gear_pair_3tu", "valid_rack_and_pinion", "valid_ring_and_pinion", "valid_snap_on_pro_adapter", "valid_beam_on_pro_mount", "valid_hinge", "valid_cart_axle", "valid_racer_wheels", "valid_pro_gear_scene", "valid_robot_bolt", "valid_kip_seated_wardrobe", "valid_kip_roadster_car", "valid_kip_hauler_truck", "valid_kip_sport_moto", "valid_kip_skateboard"]
+want_ok = ["valid_ring_brick_tail", "valid_offset_stack_2_studs", "valid_beams_friction_pin", "valid_shaft_beam_bushing", "valid_gear_pair_3tu", "valid_rack_and_pinion", "valid_ring_and_pinion", "valid_snap_on_pro_adapter", "valid_beam_on_pro_mount", "valid_hinge", "valid_cart_axle", "valid_racer_wheels", "valid_pro_gear_scene", "valid_robot_bolt", "valid_kip_seated_wardrobe", "valid_kip_roadster_car", "valid_kip_hauler_truck", "valid_kip_motor_scooter", "valid_kip_sport_moto", "valid_kip_skateboard"]
 test("known-good builds are accepted", all(res[k]["ok"] for k in want_ok))
 codes = lambda k: {e["code"] for e in res[k]["errors"]}  # noqa: E731
 test("size mismatch is caught", "size_mismatch" in codes("INVALID_large_tail_on_small_plate"))
@@ -541,10 +541,10 @@ if (HERE / "app_export" / "robots" / "bolt.json").exists():
 
 # 7t. W9: Kip wardrobe & modular TU vehicles
 w9_ids = [r["id"] for r in tp.CATALOG["parts"] if r.get("wave") == "W9"]
-test("W9 Kip wardrobe and modular TU vehicles: all 18 parts are verified with zero blocking failures",
-     len(w9_ids) == 18 and all(by_id[i]["design_status"] == "verified" for i in w9_ids))
-test("W9 modular vehicles mate cleanly with Wave 5 wheels, Wave 6 Racer add-ons and Wave 8 Snap characters",
-     all(res[k]["ok"] and not res[k]["warnings"] for k in ("valid_kip_seated_wardrobe", "valid_kip_roadster_car", "valid_kip_hauler_truck", "valid_kip_sport_moto", "valid_kip_skateboard")))
+test("W9 Kip wardrobe and modular TU vehicles: all 30 parts are verified with zero blocking failures",
+     len(w9_ids) == 30 and all(by_id[i]["design_status"] == "verified" for i in w9_ids))
+test("W9 modular vehicles mate cleanly with stylized wheels, snap-on covers, Wave 6 Racer add-ons and Wave 8 Snap characters",
+     all(res[k]["ok"] and not res[k]["warnings"] for k in ("valid_kip_seated_wardrobe", "valid_kip_roadster_car", "valid_kip_hauler_truck", "valid_kip_motor_scooter", "valid_kip_sport_moto", "valid_kip_skateboard")))
 
 # 8. generated instructions list every part and nothing third-party
 agents = (out / "AGENTS.md").read_text() if (out / "AGENTS.md").exists() else ""

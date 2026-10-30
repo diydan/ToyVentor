@@ -1,25 +1,54 @@
-// ToyVentor Kip — Phase 1 Wardrobe + Phase 2 Modular Vehicles & Sit/Ride/Straddle Poses
+// ToyVentor Kip — Phase 1 Wardrobe (Symmetric Plump Heads, Swappable Face Plate, Separate Hat-Ready & Sculpted-Top Hairs)
+// + Phase 2 V2 Modular Vehicles (Stylized Multi-Spoke Wheels & Snap-On Body Covers)
 import { createDecalExpressionCanvas } from './kip-forge-sdk.js';
 
 export const WARDROBE_HEADS = [
   { id: 'classic', label: 'Kip Classic', crownY: 42.2 },
-  { id: 'kid',     label: 'Kid (Boy/Girl)', crownY: 36.0 },
-  { id: 'robot',   label: 'Bolt Robot',     crownY: 35.5 },
-  { id: 'fox',     label: 'Fox',            crownY: 35.5 },
-  { id: 'bear',    label: 'Bear',           crownY: 35.5 },
+  { id: 'kid',     label: 'Human Head',  crownY: 23.8 },
+  { id: 'fox',     label: 'Fox',         crownY: 25.8 },
+  { id: 'bear',    label: 'Bear',        crownY: 25.8 },
+  { id: 'robot',   label: 'Bolt Robot',  crownY: 30.0 },
 ];
 
-export const CROWN_OPTIONS = [
-  { id: 'buds',     label: 'Spark Buds' },
-  { id: 'swoosh',   label: 'Swoosh Hair' },
-  { id: 'pigtails', label: 'Pigtails' },
-  { id: 'curly',    label: 'Curly Hair' },
-  { id: 'mohawk',   label: 'Mohawk' },
-  { id: 'ears',     label: 'Pointy Ears' },
-  { id: 'horns',    label: 'Bumper Horns' },
-  { id: 'hat',      label: 'Wobble Hat' },
-  { id: 'blank',    label: 'Blank Cap' },
+export const SKIN_TONES = [
+  { id: 'warm_peach',  label: 'Warm Peach',  hex: '#F6C8A6' },
+  { id: 'golden_tan',  label: 'Golden Tan',  hex: '#DF9F72' },
+  { id: 'rich_cocoa',  label: 'Rich Cocoa',  hex: '#8C5338' },
+  { id: 'soft_ivory',  label: 'Soft Ivory',  hex: '#FCE3CE' },
+  { id: 'vinyl_cream', label: 'Vinyl Cream', hex: '#F4EFE6' },
 ];
+
+export const HAIR_COLORS = [
+  { id: 'chestnut',      label: 'Chestnut',      hex: '#6E412A' },
+  { id: 'espresso',      label: 'Espresso',      hex: '#2A211E' },
+  { id: 'golden_blonde', label: 'Golden Blonde', hex: '#F2B83B' },
+  { id: 'auburn_ginger', label: 'Auburn Ginger', hex: '#D85A2B' },
+  { id: 'berry_pop',     label: 'Berry Pop',     hex: '#D9468F' },
+  { id: 'cobalt',        label: 'Cobalt Blue',   hex: '#2E6FDB' },
+];
+
+export const HAIR_OPTIONS = [
+  { id: 'off',         label: 'None',               hatReady: true,  topH: 0.0 },
+  { id: 'short_swept', label: 'Swept (Hat-Ready)',  hatReady: true,  topH: 18.2 },
+  { id: 'bob',         label: 'Bob (Hat-Ready)',    hatReady: true,  topH: 18.4 },
+  { id: 'swoosh',      label: 'Swoosh (Hat-Ready)', hatReady: true,  topH: 18.6 },
+  { id: 'spiky',       label: 'Spiky',              hatReady: false, topH: 0.0 },
+  { id: 'pigtails',    label: 'Twin Pigtails',      hatReady: false, topH: 0.0 },
+  { id: 'ponytail',    label: 'Sleek Ponytail',     hatReady: false, topH: 0.0 },
+  { id: 'curly',       label: 'Cloud Curls',        hatReady: false, topH: 0.0 },
+  { id: 'mohawk',      label: 'Crest Mohawk',       hatReady: false, topH: 0.0 },
+];
+
+export const HAT_OPTIONS = [
+  { id: 'buds',  label: 'Spark Buds' },
+  { id: 'hat',   label: 'Wobble Hat' },
+  { id: 'ears',  label: 'Pointy Ears' },
+  { id: 'horns', label: 'Bumper Horns' },
+  { id: 'blank', label: 'Blank Cap' },
+];
+
+// Keep CROWN_OPTIONS alias pointing to HAT_OPTIONS for external callers
+export const CROWN_OPTIONS = HAT_OPTIONS;
 
 export const BACK_OPTIONS = [
   { id: 'off',      label: 'Off' },
@@ -47,47 +76,63 @@ export const VEHICLE_OPTIONS = [
 
 export async function loadExpansionGeos(loadSTL) {
   const entries = await Promise.all([
-    // Universal neck collar (`kip.scad`)
-    ['neckTurret2x1',   loadSTL('/kip/stls/neck_turret_2x1.stl', 36)],
-    // Phase 1 Wardrobe STLs
-    ['charHeadKid',     loadSTL('/kip/partspec/toyventor_char_head_kid_S.stl', 34)],
-    ['charHeadFox',     loadSTL('/kip/partspec/toyventor_char_head_fox_S.stl', 34)],
-    ['charHeadBear',    loadSTL('/kip/partspec/toyventor_char_head_bear_S.stl', 34)],
-    ['robotHeadVisor',  loadSTL('/kip/partspec/toyventor_robot_head_visor_S.stl', 35)],
-    ['hairSwoosh',      loadSTL('/kip/partspec/toyventor_hair_swoosh_S.stl', 32)],
-    ['hairPigtails',    loadSTL('/kip/partspec/toyventor_hair_pigtails_S.stl', 32)],
-    ['hairCurly',       loadSTL('/kip/partspec/toyventor_hair_curly_S.stl', 30)],
-    ['hairMohawk',      loadSTL('/kip/partspec/toyventor_hair_mohawk_S.stl', 34)],
-    ['bumperHorns',     loadSTL('/kip/partspec/toyventor_bumper_horns_S.stl', 34)],
-    ['packExplorer',    loadSTL('/kip/partspec/toyventor_pack_explorer_S.stl', 35)],
-    ['robotJetpack',    loadSTL('/kip/partspec/toyventor_robot_back_jetpack_S.stl', 35)],
-    ['propWrench',      loadSTL('/kip/partspec/toyventor_prop_wrench_P.stl', 35)],
-    ['propStarShield',  loadSTL('/kip/partspec/toyventor_prop_star_shield_P.stl', 35)],
-    ['skateboardDeck',  loadSTL('/kip/partspec/toyventor_prop_skateboard_deck_S.stl', 35)],
-    ['racerAxle',       loadSTL('/kip/partspec/toyventor_racer_axle_S.stl', 35)],
-    ['racerWheel',      loadSTL('/kip/partspec/toyventor_racer_wheel_S.stl', 30)],
-    // Phase 2 Seated Snap & Modular Vehicles
-    ['charLegsSeated',  loadSTL('/kip/partspec/toyventor_char_legs_seated_S.stl', 35)],
-    ['vehCarChassis',   loadSTL('/kip/partspec/toyventor_veh_car_chassis_S.stl', 35)],
-    ['vehSteeringWheel',loadSTL('/kip/partspec/toyventor_veh_steering_wheel_P.stl', 32)],
-    ['vehTruckChassis', loadSTL('/kip/partspec/toyventor_veh_truck_chassis_S.stl', 35)],
-    ['vehScooterFrame', loadSTL('/kip/partspec/toyventor_veh_scooter_frame_S.stl', 35)],
-    ['vehHandlebarFork',loadSTL('/kip/partspec/toyventor_veh_handlebar_fork_P.stl', 35)],
-    ['vehMotoCowling',  loadSTL('/kip/partspec/toyventor_veh_moto_cowling_S.stl', 35)],
-    ['shaftTu07',       loadSTL('/kip/partspec/toyventor_shaft_tu07_P.stl', 35)],
-    ['wheelTu06',       loadSTL('/kip/partspec/toyventor_wheel_tu06_P.stl', 30)],
+    // Compact low-profile neck collar (`kip.scad`)
+    ['neckTurret2x1',     loadSTL('/kip/stls/neck_turret_2x1.stl', 36)],
+    // Phase 1 Plump Symmetric Base Heads + Swappable Emotion Face Plate
+    ['crownBuds2x1',      loadSTL('/kip/partspec/toyventor_crown_buds_2x1.stl', 34)],
+    ['charHeadKid',       loadSTL('/kip/partspec/toyventor_char_head_kid_S.stl', 66)],
+    ['charFaceplate',     loadSTL('/kip/partspec/toyventor_char_faceplate_P.stl', 40)],
+    ['charHeadFox',       loadSTL('/kip/partspec/toyventor_char_head_fox_S.stl', 62)],
+    ['charHeadBear',      loadSTL('/kip/partspec/toyventor_char_head_bear_S.stl', 62)],
+    ['robotHeadVisor',    loadSTL('/kip/partspec/toyventor_robot_head_visor_S.stl', 36)],
+    // 8 Separate Clip-On 2x1 Hairstyles (3 Hat-Ready with top_studs + 5 Sculpted-Top) + Horns
+    ['hairShortSwept',    loadSTL('/kip/partspec/toyventor_hair_short_swept_S.stl', 62)],
+    ['hairBob',           loadSTL('/kip/partspec/toyventor_hair_bob_S.stl', 62)],
+    ['hairSwoosh',        loadSTL('/kip/partspec/toyventor_hair_swoosh_S.stl', 62)],
+    ['hairSpiky',         loadSTL('/kip/partspec/toyventor_hair_spiky_S.stl', 56)],
+    ['hairPigtails',      loadSTL('/kip/partspec/toyventor_hair_pigtails_S.stl', 62)],
+    ['hairPonytail',      loadSTL('/kip/partspec/toyventor_hair_ponytail_S.stl', 62)],
+    ['hairCurly',         loadSTL('/kip/partspec/toyventor_hair_curly_S.stl', 62)],
+    ['hairMohawk',        loadSTL('/kip/partspec/toyventor_hair_mohawk_S.stl', 54)],
+    ['bumperHorns',       loadSTL('/kip/partspec/toyventor_bumper_horns_S.stl', 34)],
+    // Backpacks & Props
+    ['packExplorer',      loadSTL('/kip/partspec/toyventor_pack_explorer_S.stl', 35)],
+    ['robotJetpack',      loadSTL('/kip/partspec/toyventor_robot_back_jetpack_S.stl', 35)],
+    ['propWrench',        loadSTL('/kip/partspec/toyventor_prop_wrench_P.stl', 35)],
+    ['propStarShield',    loadSTL('/kip/partspec/toyventor_prop_star_shield_P.stl', 35)],
+    ['skateboardDeck',    loadSTL('/kip/partspec/toyventor_prop_skateboard_deck_S.stl', 35)],
+    ['racerAxle',         loadSTL('/kip/partspec/toyventor_racer_axle_S.stl', 35)],
+    ['racerWheel',        loadSTL('/kip/partspec/toyventor_racer_wheel_S.stl', 30)],
+    // Phase 2 V2 Modular Vehicles, Stylized Multi-Spoke Wheels & Snap-On Body Covers
+    ['charLegsSeated',    loadSTL('/kip/partspec/toyventor_char_legs_seated_S.stl', 35)],
+    ['vehCarChassis',     loadSTL('/kip/partspec/toyventor_veh_car_chassis_S.stl', 34)],
+    ['vehTruckChassis',   loadSTL('/kip/partspec/toyventor_veh_truck_chassis_S.stl', 34)],
+    ['vehScooterFrame',   loadSTL('/kip/partspec/toyventor_veh_scooter_frame_S.stl', 34)],
+    ['vehCarHoodCover',   loadSTL('/kip/partspec/toyventor_veh_car_hood_cover_S.stl', 32)],
+    ['vehCabRoofCover',   loadSTL('/kip/partspec/toyventor_veh_cab_roof_cover_S.stl', 32)],
+    ['vehTruckBedCover',  loadSTL('/kip/partspec/toyventor_veh_truck_bed_cover_S.stl', 34)],
+    ['vehScooterFairing', loadSTL('/kip/partspec/toyventor_veh_scooter_fairing_S.stl', 32)],
+    ['vehMotoCowling',    loadSTL('/kip/partspec/toyventor_veh_moto_cowling_S.stl', 32)],
+    ['vehSteeringWheel',  loadSTL('/kip/partspec/toyventor_veh_steering_wheel_P.stl', 32)],
+    ['vehHandlebarFork',  loadSTL('/kip/partspec/toyventor_veh_handlebar_fork_P.stl', 35)],
+    ['vehWheelSport',     loadSTL('/kip/partspec/toyventor_veh_wheel_sport_P.stl', 30)],
+    ['vehWheelSportRim',  loadSTL('/kip/partspec/toyventor_veh_wheel_sport_rim.stl', 32)],
+    ['vehWheelOffroad',   loadSTL('/kip/partspec/toyventor_veh_wheel_offroad_P.stl', 30)],
+    ['vehWheelOffroadRim',loadSTL('/kip/partspec/toyventor_veh_wheel_offroad_rim.stl', 32)],
+    ['vehWheelMoto',      loadSTL('/kip/partspec/toyventor_veh_wheel_moto_P.stl', 30)],
+    ['vehWheelMotoRim',   loadSTL('/kip/partspec/toyventor_veh_wheel_moto_rim.stl', 32)],
     // Wave 6 Racer Kit Add-Ons
-    ['racerBullBar',    loadSTL('/kip/partspec/toyventor_racer_bull_bar_S.stl', 35)],
-    ['racerHoodScoop',  loadSTL('/kip/partspec/toyventor_racer_hood_scoop_S.stl', 35)],
-    ['racerLightBar',   loadSTL('/kip/partspec/toyventor_racer_light_bar_S.stl', 35)],
-    ['racerRoofRack',   loadSTL('/kip/partspec/toyventor_racer_roof_rack_S.stl', 35)],
-    ['racerSpoiler',    loadSTL('/kip/partspec/toyventor_racer_spoiler_S.stl', 35)],
-    ['racerTwinExhaust',loadSTL('/kip/partspec/toyventor_racer_twin_exhaust_S.stl', 35)],
-    ['glowCapsule',     loadSTL('/kip/partspec/toyventor_glow_capsule_S.stl', 32)],
+    ['racerBullBar',      loadSTL('/kip/partspec/toyventor_racer_bull_bar_S.stl', 35)],
+    ['racerHoodScoop',    loadSTL('/kip/partspec/toyventor_racer_hood_scoop_S.stl', 35)],
+    ['racerLightBar',     loadSTL('/kip/partspec/toyventor_racer_light_bar_S.stl', 35)],
+    ['racerRoofRack',     loadSTL('/kip/partspec/toyventor_racer_roof_rack_S.stl', 35)],
+    ['racerSpoiler',      loadSTL('/kip/partspec/toyventor_racer_spoiler_S.stl', 35)],
+    ['racerTwinExhaust',  loadSTL('/kip/partspec/toyventor_racer_twin_exhaust_S.stl', 35)],
+    ['glowCapsule',       loadSTL('/kip/partspec/toyventor_glow_capsule_S.stl', 32)],
     // Phase 3 Pre-Verified LLM SDK Examples
-    ['customWizardHat', loadSTL('/kip/custom/toyventor_custom_wizard_hat_S.stl', 32)],
-    ['customStarWand',  loadSTL('/kip/custom/toyventor_custom_star_wand_P.stl', 35)],
-    ['customHoodCrest', loadSTL('/kip/custom/toyventor_custom_hood_crest_S.stl', 34)],
+    ['customWizardHat',   loadSTL('/kip/custom/toyventor_custom_wizard_hat_S.stl', 32)],
+    ['customStarWand',    loadSTL('/kip/custom/toyventor_custom_star_wand_P.stl', 35)],
+    ['customHoodCrest',   loadSTL('/kip/custom/toyventor_custom_hood_crest_S.stl', 34)],
   ]);
   const out = {};
   for (const [k, p] of entries) out[k] = await p;
@@ -95,20 +140,24 @@ export async function loadExpansionGeos(loadSTL) {
 }
 
 export function attachExpansionToKipRig(THREE, kip, expGeos, baseParts, mats, scadMesh, createSlot) {
-  // Brand-aligned wardrobe materials (`BRAND_STYLE.md`)
+  // Brand-aligned wardrobe, skin/hair, and alloy wheel materials (`BRAND_STYLE.md`)
   const expMats = {
-    cobalt:  new THREE.MeshPhysicalMaterial({ color: '#2E6FDB', roughness: 0.34, clearcoat: 0.45, envMapIntensity: 0.76 }),
-    teal:    new THREE.MeshPhysicalMaterial({ color: '#1FA6A0', roughness: 0.35, clearcoat: 0.44, envMapIntensity: 0.76 }),
-    plum:    new THREE.MeshPhysicalMaterial({ color: '#7C4DFF', roughness: 0.34, clearcoat: 0.45, envMapIntensity: 0.76 }),
-    sun:     new THREE.MeshPhysicalMaterial({ color: '#FFB830', roughness: 0.34, clearcoat: 0.46, envMapIntensity: 0.78 }),
-    fox:     new THREE.MeshPhysicalMaterial({ color: '#E86F38', roughness: 0.44, clearcoat: 0.24, envMapIntensity: 0.70 }),
-    bear:    new THREE.MeshPhysicalMaterial({ color: '#B58052', roughness: 0.48, clearcoat: 0.18, envMapIntensity: 0.66 }),
-    botSilv: new THREE.MeshPhysicalMaterial({ color: '#DCE3EE', roughness: 0.32, metalness: 0.12, clearcoat: 0.48, envMapIntensity: 0.80 }),
-    tire:    new THREE.MeshPhysicalMaterial({ color: '#20232A', roughness: 0.56, clearcoat: 0.15, envMapIntensity: 0.55 }),
-    custom:  new THREE.MeshPhysicalMaterial({ color: '#7C4DFF', roughness: 0.32, clearcoat: 0.50, envMapIntensity: 0.80 }),
+    skin:     new THREE.MeshPhysicalMaterial({ color: SKIN_TONES[0].hex, roughness: 0.46, clearcoat: 0.14, envMapIntensity: 0.68 }),
+    hair:     new THREE.MeshPhysicalMaterial({ color: HAIR_COLORS[0].hex, roughness: 0.40, clearcoat: 0.26, envMapIntensity: 0.74 }),
+    cobalt:   new THREE.MeshPhysicalMaterial({ color: '#2E6FDB', roughness: 0.34, clearcoat: 0.45, envMapIntensity: 0.76 }),
+    teal:     new THREE.MeshPhysicalMaterial({ color: '#1FA6A0', roughness: 0.35, clearcoat: 0.44, envMapIntensity: 0.76 }),
+    plum:     new THREE.MeshPhysicalMaterial({ color: '#7C4DFF', roughness: 0.34, clearcoat: 0.45, envMapIntensity: 0.76 }),
+    sun:      new THREE.MeshPhysicalMaterial({ color: '#FFB830', roughness: 0.34, clearcoat: 0.46, envMapIntensity: 0.78 }),
+    fox:      new THREE.MeshPhysicalMaterial({ color: '#E86F38', roughness: 0.44, clearcoat: 0.24, envMapIntensity: 0.70 }),
+    bear:     new THREE.MeshPhysicalMaterial({ color: '#B58052', roughness: 0.48, clearcoat: 0.18, envMapIntensity: 0.66 }),
+    botSilv:  new THREE.MeshPhysicalMaterial({ color: '#DCE3EE', roughness: 0.32, metalness: 0.12, clearcoat: 0.48, envMapIntensity: 0.80 }),
+    tire:     new THREE.MeshPhysicalMaterial({ color: '#20232A', roughness: 0.56, clearcoat: 0.15, envMapIntensity: 0.55 }),
+    rimAlloy: new THREE.MeshPhysicalMaterial({ color: '#EDF2F8', roughness: 0.26, metalness: 0.22, clearcoat: 0.55, envMapIntensity: 0.88 }),
+    rimGold:  new THREE.MeshPhysicalMaterial({ color: '#FFD25A', roughness: 0.28, metalness: 0.18, clearcoat: 0.52, envMapIntensity: 0.86 }),
+    custom:   new THREE.MeshPhysicalMaterial({ color: '#7C4DFF', roughness: 0.32, clearcoat: 0.50, envMapIntensity: 0.80 }),
   };
 
-  // Helper: convert LAY_FLAT ([90,0,0]) shaft STL (y_stl = -L..0, z_stl = 0..5) into X-centered horizontal axle
+  // Convert LAY_FLAT ([90,0,0]) shaft STL (y_stl = -L..0, z_stl = 0..5) into X-centered horizontal axle
   function makeAxleX(shaftGeo, lengthMm, mat = mats.proSlate) {
     const g = new THREE.Group();
     const m = new THREE.Mesh(shaftGeo, mat);
@@ -126,8 +175,32 @@ export function attachExpansionToKipRig(THREE, kip, expGeos, baseParts, mats, sc
     m.receiveShadow = true;
     m.position.z = -widthMm * 0.5;
     const orient = new THREE.Group();
-    orient.rotation.y = Math.PI / 2; // local Z -> world +X
+    orient.rotation.y = Math.PI / 2;
     orient.add(m);
+    spinGrp.add(orient);
+    return spinGrp;
+  }
+
+  // Stylized two-tone multi-spoke wheel (`sideSign = +1` for Left `+X` outward, `-1` for Right `-X` outward)
+  function makeStylizedWheelX(tireGeo, rimGeo, widthMm, sideSign = 1, rimMat = expMats.rimAlloy) {
+    const spinGrp = new THREE.Group();
+    const orient = new THREE.Group();
+    orient.rotation.y = (sideSign >= 0 ? 1 : -1) * (Math.PI / 2);
+
+    const tireMesh = new THREE.Mesh(tireGeo, expMats.tire);
+    tireMesh.castShadow = true;
+    tireMesh.receiveShadow = true;
+    tireMesh.position.z = -widthMm * 0.5;
+    orient.add(tireMesh);
+
+    if (rimGeo) {
+      const rimMesh = new THREE.Mesh(rimGeo, rimMat);
+      rimMesh.castShadow = true;
+      rimMesh.receiveShadow = true;
+      rimMesh.position.z = -widthMm * 0.5;
+      rimMesh.scale.set(1.003, 1.003, 1.004);
+      orient.add(rimMesh);
+    }
     spinGrp.add(orient);
     return spinGrp;
   }
@@ -139,15 +212,15 @@ export function attachExpansionToKipRig(THREE, kip, expGeos, baseParts, mats, sc
     m.receiveShadow = true;
     m.position.set(0, gripCenterZ, -halfThick);
     g.add(m);
-    g.rotation.z = Math.PI / 2; // blade extends along +X out of Kip's C-grip palm!
+    g.rotation.z = Math.PI / 2;
     g.position.set(0, -11.4, 2.3);
     return g;
   }
 
-  // 1. Universal Neck Turret (`neck_turret_2x1`) + 4 Swappable PartSpec Heads (`kid`, `robot`, `fox`, `bear`)
-  const neckTurret2x1Slot = createSlot('neck_turret_2x1', kip.neckAnchor, [0, 22, 0], 3.85, 'both');
+  // 1. Compact Low-Profile Neck Turret (`neck_turret_2x1`: seats deep inside neck socket so heads sit at world y = 108.0 mm!)
+  const neckTurret2x1Slot = createSlot('neck_turret_2x1', kip.neckAnchor, [0, 18, 0], 3.85, 'both');
   const ntMesh = scadMesh(expGeos.neckTurret2x1, mats.spark);
-  ntMesh.position.y = -3.3;
+  ntMesh.position.y = -7.4; // top 2x1 stud seat at 106.8 - 7.4 + 8.6 = 108.0 mm (`kip.headLocal` origin!)
   neckTurret2x1Slot.add(ntMesh);
   neckTurret2x1Slot.visible = false;
 
@@ -155,31 +228,38 @@ export function attachExpansionToKipRig(THREE, kip, expGeos, baseParts, mats, sc
   altHeadsGroup.visible = false;
   kip.headLocal.add(altHeadsGroup);
 
-  const altHeadSlot = createSlot('alt_head', altHeadsGroup, [0, 44, 0], 4.05, 'both', 'neck_anchor');
+  const altHeadSlot = createSlot('alt_head', altHeadsGroup, [0, 40, 0], 4.05, 'both', 'neck_anchor');
   const headMeshes = {
-    kid:   scadMesh(expGeos.charHeadKid, mats.shell),
-    robot: scadMesh(expGeos.robotHeadVisor, expMats.botSilv),
+    kid:   scadMesh(expGeos.charHeadKid, expMats.skin),
     fox:   scadMesh(expGeos.charHeadFox, expMats.fox),
     bear:  scadMesh(expGeos.charHeadBear, expMats.bear),
+    robot: scadMesh(expGeos.robotHeadVisor, expMats.botSilv),
   };
   for (const hm of Object.values(headMeshes)) {
-    hm.position.y = 5.5;
+    hm.position.y = 0.0;
     hm.visible = false;
     altHeadSlot.add(hm);
   }
 
-  // Mandatory `#FF6B4A` 2x1 Spark Crown Buds overlay on PartSpec heads (`BRAND_STYLE.md` rule 3)
-  const altCrownBuds = new THREE.Group();
-  for (const sx of [-6.25, 6.25]) {
-    const bud = new THREE.Mesh(new THREE.CylinderGeometry(3.42, 3.42, 2.9, 28), mats.spark);
-    bud.castShadow = true;
-    bud.position.set(sx, 1.45, 0);
-    altCrownBuds.add(bud);
-  }
+  // Mandatory `#FF6B4A` 2x1 Spark Crown Buds overlay on base heads (`BRAND_STYLE.md` rule 3)
+  const altCrownBuds = scadMesh(expGeos.crownBuds2x1, mats.spark);
+  altCrownBuds.scale.set(1.006, 1.01, 1.006);
   altHeadSlot.add(altCrownBuds);
 
-  // Conformal Shrink-Wrapped 2D Vinyl/Screen Decal Expression Meshes (`BRAND_STYLE.md` rule 5: zero moulded 3D faces!)
-  // Raycasts a fine 20x12 grid directly onto each head's front shell + 0.42 mm so decals hug every brow, snout & muzzle with zero clipping!
+  // 1b. Slim Swappable Emotion Face Plate (`char_faceplate` -> mates into `char_head_kid.face_slot` & pops forward +Z in Explode/Build!)
+  const faceplateGroup = new THREE.Group();
+  faceplateGroup.visible = false;
+  kip.headLocal.add(faceplateGroup);
+  const faceplateSlot = createSlot('char_faceplate', faceplateGroup, [0, 8, 56], 4.35, 'both', 'alt_head');
+  const faceplateMesh = new THREE.Mesh(expGeos.charFaceplate, expMats.skin);
+  faceplateMesh.castShadow = true;
+  faceplateMesh.receiveShadow = true;
+  // STL has front bezel on z_stl = 0 and 12.5 mm stem on +z_stl; rotate Y by PI so z_stl=0 faces +Z and stem inserts along -Z into face_slot!
+  faceplateMesh.rotation.y = Math.PI;
+  faceplateMesh.position.set(0, 14.0625, 16.4625);
+  faceplateSlot.add(faceplateMesh);
+
+  // Conformal 2D Vinyl/Screen Decal Expression Meshes for Fox / Bear / Robot (`BRAND_STYLE.md` rule 5: zero moulded 3D faces!)
   const raycaster = new THREE.Raycaster();
   const rayOrigin = new THREE.Vector3();
   const rayDir = new THREE.Vector3(0, 0, -1);
@@ -187,7 +267,7 @@ export function attachExpansionToKipRig(THREE, kip, expGeos, baseParts, mats, sc
   function buildConformalDecalGeo(headGeo, centerY, width, height) {
     const probe = new THREE.Mesh(headGeo, mats.shell);
     probe.rotation.x = -Math.PI / 2;
-    probe.position.y = 5.5;
+    probe.position.y = 0.0;
     probe.updateMatrixWorld(true);
 
     const g = new THREE.PlaneGeometry(width, height, 20, 12);
@@ -199,18 +279,17 @@ export function attachExpansionToKipRig(THREE, kip, expGeos, baseParts, mats, sc
       rayOrigin.set(vx, vy, 50);
       raycaster.set(rayOrigin, rayDir);
       const hits = raycaster.intersectObject(probe, false);
-      const hitZ = hits.length > 0 ? hits[0].point.z : (19.5 - (vx * vx) * 0.015);
-      pos.setZ(i, hitZ + 0.42);
+      const hitZ = hits.length > 0 ? hits[0].point.z : (19.0 - (vx * vx) * 0.015);
+      pos.setZ(i, hitZ + 0.38);
     }
     g.computeVertexNormals();
     return g;
   }
 
   const headDecalGeos = {
-    kid:   buildConformalDecalGeo(expGeos.charHeadKid,     22.6, 25.0, 12.6),
-    robot: buildConformalDecalGeo(expGeos.robotHeadVisor,  22.8, 24.4, 12.0),
-    fox:   buildConformalDecalGeo(expGeos.charHeadFox,     22.8, 26.5, 13.4),
-    bear:  buildConformalDecalGeo(expGeos.charHeadBear,    22.4, 25.0, 13.0),
+    fox:   buildConformalDecalGeo(expGeos.charHeadFox,    15.0, 28.4, 14.2),
+    bear:  buildConformalDecalGeo(expGeos.charHeadBear,   14.8, 28.0, 14.0),
+    robot: buildConformalDecalGeo(expGeos.robotHeadVisor, 16.6, 25.0, 12.2),
   };
 
   const classicWrapGeo = new THREE.PlaneGeometry(25.5, 12.8, 16, 1);
@@ -232,36 +311,68 @@ export function attachExpansionToKipRig(THREE, kip, expGeos, baseParts, mats, sc
     polygonOffset: true,
     polygonOffsetFactor: -2,
   });
-  const decalPlane = new THREE.Mesh(headDecalGeos.kid, decalMat);
+
+  // 2D emotion print directly on the slim `char_faceplate` tile (travels with `faceplateSlot` in Explode & Pile -> Build!)
+  const faceplateDecalPlane = new THREE.Mesh(new THREE.PlaneGeometry(21.4, 10.0), decalMat);
+  faceplateDecalPlane.position.set(0, 14.0625, 16.54);
+  faceplateDecalPlane.renderOrder = 2;
+  faceplateSlot.add(faceplateDecalPlane);
+
+  // Conformal 2D decal plane for Critter / Robot heads
+  const decalPlane = new THREE.Mesh(headDecalGeos.fox, decalMat);
+  decalPlane.visible = false;
   decalPlane.renderOrder = 2;
   altHeadSlot.add(decalPlane);
 
-  // Also add a curved visor decal overlay for Classic Kip so all 6 expressions work on Classic Kip too!
   const classicDecalPlane = new THREE.Mesh(classicWrapGeo, decalMat);
   classicDecalPlane.position.set(0, 19.8, 23.0);
   classicDecalPlane.visible = false;
   classicDecalPlane.renderOrder = 2;
   kip.visorSlot.add(classicDecalPlane);
 
-  // 2. Dynamic Crown Accessory Anchor (adjusts Y automatically between Classic Kip 42.2 mm & PartSpec heads 35.5-36.0 mm!)
+  // 2a. Separate Clip-On 2x1 Hair Slot (`hairSlot`: clips onto head crown; Hat-Ready hairs expose `#FF6B4A` 2x1 studs on top!)
+  const hairGroup = new THREE.Group();
+  hairGroup.visible = false;
+  kip.headLocal.add(hairGroup);
+  const hairSlot = createSlot('hair_clip', hairGroup, [0, 72, 0], 4.65, 'both', 'alt_head');
+  const hairAnchor = new THREE.Group();
+  hairAnchor.position.set(0, 28.0, 0);
+  hairSlot.add(hairAnchor);
+
+  const hairMeshes = {
+    short_swept: scadMesh(expGeos.hairShortSwept, expMats.hair),
+    bob:         scadMesh(expGeos.hairBob,        expMats.hair),
+    swoosh:      scadMesh(expGeos.hairSwoosh,     expMats.hair),
+    spiky:       scadMesh(expGeos.hairSpiky,      expMats.hair),
+    pigtails:    scadMesh(expGeos.hairPigtails,   expMats.hair),
+    ponytail:    scadMesh(expGeos.hairPonytail,   expMats.hair),
+    curly:       scadMesh(expGeos.hairCurly,      expMats.hair),
+    mohawk:      scadMesh(expGeos.hairMohawk,     expMats.hair),
+  };
+  for (const m of Object.values(hairMeshes)) {
+    m.visible = false;
+    hairAnchor.add(m);
+  }
+  const hairCrownBuds = scadMesh(expGeos.crownBuds2x1, mats.spark);
+  hairCrownBuds.scale.set(1.006, 1.01, 1.006);
+  hairCrownBuds.visible = false;
+  hairAnchor.add(hairCrownBuds);
+
+  // 2b. Stackable Hat / Top Accessory Anchor (`kip.crownAccSlot`: sits on head crown OR stacks on top of Hat-Ready hair!)
   const crownAnchor = new THREE.Group();
   crownAnchor.position.set(0, 42.2, 0);
   kip.crownAccSlot.add(crownAnchor);
 
-  // Re-parent existing pointyEars & wobbleHat into crownAnchor at local y = 0!
   kip.pointyEars.position.set(0, 0, 0);
   kip.wobbleHat.position.set(6.25, 0, 0);
   crownAnchor.add(kip.pointyEars, kip.wobbleHat);
 
-  const crownHairMeshes = {
-    swoosh:    scadMesh(expGeos.hairSwoosh, expMats.cobalt),
-    pigtails:  scadMesh(expGeos.hairPigtails, expMats.sun),
-    curly:     scadMesh(expGeos.hairCurly, expMats.plum),
-    mohawk:    scadMesh(expGeos.hairMohawk, mats.spark),
-    horns:     scadMesh(expGeos.bumperHorns, expMats.sun),
+  const hatMeshes = {
+    horns:     scadMesh(expGeos.bumperHorns,     expMats.sun),
+    ponytail:  scadMesh(expGeos.hairPonytail,    expMats.hair),
     wizardHat: scadMesh(expGeos.customWizardHat, expMats.plum),
   };
-  for (const m of Object.values(crownHairMeshes)) {
+  for (const m of Object.values(hatMeshes)) {
     m.visible = false;
     crownAnchor.add(m);
   }
@@ -270,7 +381,7 @@ export function attachExpansionToKipRig(THREE, kip, expGeos, baseParts, mats, sc
   const customCrownContainer = new THREE.Group();
   crownAnchor.add(customCrownContainer);
   const customHeadContainer = new THREE.Group();
-  customHeadContainer.position.y = 5.5;
+  customHeadContainer.position.y = 0.0;
   altHeadSlot.add(customHeadContainer);
 
   // 3. Backpacks (`pack_explorer`, `robot_back_jetpack`, plus Custom/Photo-Wings!)
@@ -336,7 +447,7 @@ export function attachExpansionToKipRig(THREE, kip, expGeos, baseParts, mats, sc
   kip.mover.add(skateboardGroup);
   const skateDeckSlot = createSlot('skate_deck', skateboardGroup, [0, -18, 0], 0.1, 'both');
   const deckMesh = scadMesh(expGeos.skateboardDeck, mats.spark);
-  deckMesh.position.y = 2.75; // 9.0 mm wheel radius - 6.25 mm axle height = 2.75 mm belly clearance!
+  deckMesh.position.y = 2.75;
   skateDeckSlot.add(deckMesh);
 
   const skateWheels = [];
@@ -363,27 +474,27 @@ export function attachExpansionToKipRig(THREE, kip, expGeos, baseParts, mats, sc
   snapSeatedLegsSlot.add(seatedLegsMesh);
 
   // =========================================================================
-  // 7. PHASE 2: MODULAR 12.5 mm TU VEHICLES (`Car`, `Truck`, `Scooter / Moto`)
+  // 7. PHASE 2 V2: WIDE-BODY ROLLING CHASSIS + STYLIZED WHEELS + SNAP-ON COVERS
   // =========================================================================
   const vehiclesRoot = new THREE.Group();
   kip.mover.add(vehiclesRoot);
 
-  // --- A) ROADSTER CAR (`4x10 TU` + `wheel_tu04` + `veh_steering_wheel` + Wave 6 Racer Kit) ---
+  // --- A) V2 ROADSTER CAR (`veh_car_chassis` + 5-spoke `veh_wheel_sport` + `veh_car_hood_cover` + `veh_cab_roof_cover`) ---
   const carGroup = new THREE.Group();
   carGroup.visible = false;
   vehiclesRoot.add(carGroup);
-  const carY = 18.75; // 25.0 mm wheel radius - 6.25 mm axle bore height -> tires tangent to y = 0!
+  const carY = 11.75; // 18.0 mm sport wheel radius - 6.25 mm axle height -> tires tangent to y = 0!
 
   const carBodySlot = createSlot('veh_car_chassis', carGroup, [0, -10, 0], 0.5, 'both');
   const carChassisMesh = scadMesh(expGeos.vehCarChassis, mats.spark);
   carChassisMesh.position.y = carY;
   carBodySlot.add(carChassisMesh);
 
-  const carSteerSlot = createSlot('car_steer', carGroup, [0, 38, 22], 1.4, 'both', 'veh_car_chassis');
+  const carSteerSlot = createSlot('car_steer', carGroup, [0, 36, 22], 1.35, 'both', 'veh_car_chassis');
   const carSteerPivot = new THREE.Group();
-  carSteerPivot.position.set(0, carY + 34.5, 20.3125);
+  carSteerPivot.position.set(0, carY + 34.5, 18.75);
   const carSteerFlip = new THREE.Group();
-  carSteerFlip.rotation.x = Math.PI / 2; // rim on top, pin pointing -Y down into dash_bore!
+  carSteerFlip.rotation.x = Math.PI / 2;
   const carSteerMesh = new THREE.Mesh(expGeos.vehSteeringWheel, expMats.tire);
   carSteerMesh.castShadow = true;
   carSteerFlip.add(carSteerMesh);
@@ -391,58 +502,71 @@ export function attachExpansionToKipRig(THREE, kip, expGeos, baseParts, mats, sc
   carSteerSlot.add(carSteerPivot);
 
   const carWheels = [];
-  for (const [sfx, zAx] of [['f', 37.5], ['r', -37.5]]) {
-    const axSlot = createSlot(`car_ax_${sfx}`, carGroup, [0, -24, zAx * 0.5], 0.25, 'both', 'veh_car_chassis');
-    const ax = makeAxleX(expGeos.shaftTu07, 87.5, mats.proSlate);
-    ax.position.set(0, 25.0, zAx);
+  for (const [sfx, zAx] of [['f', 43.75], ['r', -43.75]]) {
+    const axSlot = createSlot(`car_ax_${sfx}`, carGroup, [0, -24, zAx * 0.45], 0.25, 'both', 'veh_car_chassis');
+    const ax = makeAxleX(baseParts.shaftTu05, 62.5, mats.proSlate);
+    ax.position.set(0, 18.0, zAx);
     axSlot.add(ax);
-    for (const [ws, wx] of [['l', 37.5], ['r', -37.5]]) {
-      const wSlot = createSlot(`car_w_${sfx}_${ws}`, carGroup, [wx * 1.6, -16, zAx * 0.4], 0.1, 'both', `car_ax_${sfx}`);
-      const wSpin = makeWheelX(baseParts.wheelTu04, 12.5, expMats.tire);
-      wSpin.position.set(wx, 25.0, zAx);
+    for (const [ws, wx] of [['l', 24.5], ['r', -24.5]]) {
+      const wSlot = createSlot(`car_w_${sfx}_${ws}`, carGroup, [wx * 2.1, -14, zAx * 0.35], 0.1, 'both', `car_ax_${sfx}`);
+      const wSpin = makeStylizedWheelX(expGeos.vehWheelSport, expGeos.vehWheelSportRim, 13.5, wx > 0 ? 1 : -1, expMats.rimAlloy);
+      wSpin.position.set(wx, 18.0, zAx);
       wSlot.add(wSpin);
       carWheels.push(wSpin);
     }
   }
 
-  // Roadster Car Wave 6 Racer Kit Add-Ons + Custom Hood Mount!
+  // Roadster Car Snap-On Body Covers (`veh_car_hood_cover` + `veh_cab_roof_cover`)
+  const carCoversGroup = new THREE.Group();
+  carGroup.add(carCoversGroup);
+  const carHoodCoverSlot = createSlot('car_hood_cover', carCoversGroup, [0, 28, 30], 1.5, 'both', 'veh_car_chassis');
+  const carHoodCoverMesh = scadMesh(expGeos.vehCarHoodCover, mats.shell);
+  carHoodCoverMesh.position.set(0, carY + 17.5, 37.5);
+  carHoodCoverSlot.add(carHoodCoverMesh);
+
+  const carCabCoverSlot = createSlot('car_cab_cover', carCoversGroup, [0, 30, -22], 1.55, 'both', 'veh_car_chassis');
+  const carCabCoverMesh = scadMesh(expGeos.vehCabRoofCover, mats.shell);
+  carCabCoverMesh.position.set(0, carY + 22.5, -18.75);
+  carCabCoverSlot.add(carCabCoverMesh);
+
+  // Roadster Car Wave 6 Racer Kit Add-Ons + Custom Hood Mount
   const carRacerGroup = new THREE.Group();
   carGroup.add(carRacerGroup);
-  const addCarAddon = (id, geo, mat, x, yLocal, z, exVec) => {
-    const sl = createSlot(id, carRacerGroup, exVec, 1.8, 'both', 'veh_car_chassis');
+  const addCarAddon = (id, geo, mat, x, yLocal, z, exVec, guide = 'veh_car_chassis') => {
+    const sl = createSlot(id, carRacerGroup, exVec, 1.85, 'both', guide);
     const m = scadMesh(geo, mat);
     m.position.set(x, carY + yLocal, z);
     sl.add(m);
     return { slot: sl, mesh: m };
   };
-  addCarAddon('car_bull', expGeos.racerBullBar, expMats.sun, 0, 15.5, 56.25, [0, 14, 58]);
-  const carHoodScoopAddon = addCarAddon('car_scoop', expGeos.racerHoodScoop, expMats.cobalt, 0, 19.0, 37.5, [0, 34, 28]);
-  addCarAddon('car_light', expGeos.racerLightBar, expMats.sun, 0, 23.0, -18.75, [0, 42, -18]);
-  addCarAddon('car_spoiler', expGeos.racerSpoiler, expMats.cobalt, 0, 19.0, -31.25, [0, 36, -42]);
-  addCarAddon('car_exhaust', expGeos.racerTwinExhaust, mats.shell, 0, 15.5, -50.0, [0, 16, -64]);
+  addCarAddon('car_bull', expGeos.racerBullBar, expMats.sun, 0, 15.5, 56.25, [0, 12, 60]);
+  const carHoodScoopAddon = addCarAddon('car_scoop', expGeos.racerHoodScoop, expMats.cobalt, 0, 28.5, 37.5, [0, 52, 34], 'car_hood_cover');
+  const carLightBarAddon  = addCarAddon('car_light', expGeos.racerLightBar, expMats.sun, 0, 31.0, -18.75, [0, 56, -22], 'car_cab_cover');
+  addCarAddon('car_spoiler', expGeos.racerSpoiler, expMats.cobalt, 0, 19.0, -31.25, [0, 38, -46]);
+  addCarAddon('car_exhaust', expGeos.racerTwinExhaust, mats.shell, 0, 15.5, -50.0, [0, 16, -66]);
 
   const customHoodGroup = new THREE.Group();
   customHoodGroup.visible = false;
   carGroup.add(customHoodGroup);
-  const customHoodSlot = createSlot('custom_hood', customHoodGroup, [0, 38, 28], 1.85, 'both', 'veh_car_chassis');
+  const customHoodSlot = createSlot('custom_hood', customHoodGroup, [0, 54, 34], 1.9, 'both', 'car_hood_cover');
   const customHoodContainer = new THREE.Group();
-  customHoodContainer.position.set(0, carY + 19.0, 37.5);
+  customHoodContainer.position.set(0, carY + 28.5, 37.5);
   customHoodSlot.add(customHoodContainer);
 
-  // --- B) HAULER TRUCK (`4x12 TU` + `wheel_tu06` Monster Wheels + Roof Rack + Cargo Bed!) ---
+  // --- B) V2 HAULER TRUCK (`veh_truck_chassis` + 6-window beadlock `veh_wheel_offroad` + Hood/Cab/Bed Covers!) ---
   const truckGroup = new THREE.Group();
   truckGroup.visible = false;
   vehiclesRoot.add(truckGroup);
-  const truckY = 31.25; // 37.5 mm wheel_tu06 radius - 6.25 mm axle height!
+  const truckY = 15.75; // 22.0 mm off-road wheel radius - 6.25 mm axle height!
 
-  const truckBodySlot = createSlot('veh_truck_chassis', truckGroup, [0, -8, 0], 0.5, 'both');
+  const truckBodySlot = createSlot('veh_truck_chassis', truckGroup, [0, -10, 0], 0.5, 'both');
   const truckChassisMesh = scadMesh(expGeos.vehTruckChassis, expMats.teal);
   truckChassisMesh.position.y = truckY;
   truckBodySlot.add(truckChassisMesh);
 
-  const truckSteerSlot = createSlot('truck_steer', truckGroup, [0, 38, 22], 1.4, 'both', 'veh_truck_chassis');
+  const truckSteerSlot = createSlot('truck_steer', truckGroup, [0, 36, 22], 1.35, 'both', 'veh_truck_chassis');
   const truckSteerPivot = new THREE.Group();
-  truckSteerPivot.position.set(0, truckY + 34.5, 20.3125);
+  truckSteerPivot.position.set(0, truckY + 35.0, 18.75);
   const truckSteerFlip = new THREE.Group();
   truckSteerFlip.rotation.x = Math.PI / 2;
   const truckSteerMesh = new THREE.Mesh(expGeos.vehSteeringWheel, expMats.tire);
@@ -452,58 +576,74 @@ export function attachExpansionToKipRig(THREE, kip, expGeos, baseParts, mats, sc
   truckSteerSlot.add(truckSteerPivot);
 
   const truckWheels = [];
-  for (const [sfx, zAx] of [['f', 37.5], ['r', -56.25]]) {
-    const axSlot = createSlot(`trk_ax_${sfx}`, truckGroup, [0, -26, zAx * 0.4], 0.25, 'both', 'veh_truck_chassis');
-    const ax = makeAxleX(expGeos.shaftTu07, 87.5, mats.proSlate);
-    ax.position.set(0, 37.5, zAx);
+  for (const [sfx, zAx] of [['f', 43.75], ['r', -53.125]]) {
+    const axSlot = createSlot(`trk_ax_${sfx}`, truckGroup, [0, -24, zAx * 0.4], 0.25, 'both', 'veh_truck_chassis');
+    const ax = makeAxleX(baseParts.shaftTu05, 62.5, mats.proSlate);
+    ax.position.set(0, 22.0, zAx);
     axSlot.add(ax);
-    for (const [ws, wx] of [['l', 37.5], ['r', -37.5]]) {
-      const wSlot = createSlot(`trk_w_${sfx}_${ws}`, truckGroup, [wx * 1.7, -18, zAx * 0.3], 0.1, 'both', `trk_ax_${sfx}`);
-      const wSpin = makeWheelX(expGeos.wheelTu06, 12.5, expMats.tire);
-      wSpin.position.set(wx, 37.5, zAx);
+    for (const [ws, wx] of [['l', 24.25], ['r', -24.25]]) {
+      const wSlot = createSlot(`trk_w_${sfx}_${ws}`, truckGroup, [wx * 2.2, -16, zAx * 0.3], 0.1, 'both', `trk_ax_${sfx}`);
+      const wSpin = makeStylizedWheelX(expGeos.vehWheelOffroad, expGeos.vehWheelOffroadRim, 14.0, wx > 0 ? 1 : -1, expMats.rimGold);
+      wSpin.position.set(wx, 22.0, zAx);
       wSlot.add(wSpin);
       truckWheels.push(wSpin);
     }
   }
 
+  // Hauler Truck Snap-On Body Covers (interchangeable Hood + Cab Roof + `2x3` Pickup Bed Cover!)
+  const truckCoversGroup = new THREE.Group();
+  truckGroup.add(truckCoversGroup);
+  const trkHoodCoverSlot = createSlot('trk_hood_cover', truckCoversGroup, [0, 28, 30], 1.5, 'both', 'veh_truck_chassis');
+  const trkHoodCoverMesh = scadMesh(expGeos.vehCarHoodCover, mats.shell);
+  trkHoodCoverMesh.position.set(0, truckY + 18.0, 37.5);
+  trkHoodCoverSlot.add(trkHoodCoverMesh);
+
+  const trkCabCoverSlot = createSlot('trk_cab_cover', truckCoversGroup, [0, 32, -20], 1.55, 'both', 'veh_truck_chassis');
+  const trkCabCoverMesh = scadMesh(expGeos.vehCabRoofCover, mats.shell);
+  trkCabCoverMesh.position.set(0, truckY + 26.0, -18.75);
+  trkCabCoverSlot.add(trkCabCoverMesh);
+
+  const trkBedCoverSlot = createSlot('trk_bed_cover', truckCoversGroup, [0, 28, -48], 1.6, 'both', 'veh_truck_chassis');
+  const trkBedCoverMesh = scadMesh(expGeos.vehTruckBedCover, expMats.sun);
+  trkBedCoverMesh.position.set(0, truckY + 15.0, -56.25);
+  trkBedCoverSlot.add(trkBedCoverMesh);
+
   const truckRacerGroup = new THREE.Group();
   truckGroup.add(truckRacerGroup);
-  const trkBullSlot = createSlot('trk_bull', truckRacerGroup, [0, 14, 58], 1.8, 'both', 'veh_truck_chassis');
+  const trkBullSlot = createSlot('trk_bull', truckRacerGroup, [0, 12, 60], 1.8, 'both', 'veh_truck_chassis');
   const trkBullMesh = scadMesh(expGeos.racerBullBar, expMats.sun);
   trkBullMesh.position.set(0, truckY + 16.0, 56.25);
   trkBullSlot.add(trkBullMesh);
 
-  const trkRackSlot = createSlot('trk_rack', truckRacerGroup, [0, 44, -25], 1.85, 'both', 'veh_truck_chassis');
+  const trkRackSlot = createSlot('trk_rack', truckRacerGroup, [0, 56, -20], 1.85, 'both', 'trk_cab_cover');
   const trkRackMesh = scadMesh(expGeos.racerRoofRack, mats.spark);
-  trkRackMesh.position.set(0, truckY + 26.0, -25.0);
+  trkRackMesh.position.set(0, truckY + 34.5, -18.75);
   trkRackSlot.add(trkRackMesh);
 
-  const trkCargoSlot = createSlot('trk_cargo', truckRacerGroup, [-16, 36, -56], 1.9, 'both', 'veh_truck_chassis');
-  const trkCargoPack = scadMesh(expGeos.packExplorer, expMats.sun);
-  trkCargoPack.position.set(-12.5, truckY + 14.5, -56.25);
-  const trkGlow = scadMesh(expGeos.glowCapsule, expMats.plum);
-  trkGlow.position.set(12.5, truckY + 14.5, -56.25);
-  trkCargoSlot.add(trkCargoPack, trkGlow);
+  const trkCargoSlot = createSlot('trk_cargo', truckRacerGroup, [0, 52, -58], 1.9, 'both', 'trk_bed_cover');
+  const trkCargoPack = scadMesh(expGeos.packExplorer, expMats.cobalt);
+  trkCargoPack.position.set(0, truckY + 20.5, -56.25);
+  trkCargoSlot.add(trkCargoPack);
 
-  // --- C) 2-IN-1 MOTOR SCOOTER & SPORT MOTORBIKE (`2x10 TU` + `veh_handlebar_fork` + `veh_moto_cowling`) ---
+  // --- C) V2 TRUE 2-WHEEL INLINE MOTOR SCOOTER & SPORT MOTORBIKE (`veh_scooter_frame` + 2x `veh_wheel_moto` + Fairing + Cowling!) ---
   const bikeGroup = new THREE.Group();
   bikeGroup.visible = false;
   vehiclesRoot.add(bikeGroup);
-  const bikeLeanGroup = new THREE.Group(); // leans into turns dynamically!
+  const bikeLeanGroup = new THREE.Group();
   bikeGroup.add(bikeLeanGroup);
-  const bikeY = 18.75; // 25.0 mm wheel_tu04 radius - 6.25 mm axle height!
+  const bikeY = 11.75; // 18.0 mm moto wheel radius - 6.25 mm axle height!
 
   const bikeFrameSlot = createSlot('veh_scooter_frame', bikeLeanGroup, [0, -10, 0], 0.5, 'both');
   const bikeFrameMesh = scadMesh(expGeos.vehScooterFrame, expMats.cobalt);
   bikeFrameMesh.position.y = bikeY;
   bikeFrameSlot.add(bikeFrameMesh);
 
-  // Turning Handlebar Fork (`LAY_FLAT` STL: y_stl = [-44..0], z_stl = [0..6.6])
-  const bikeForkSlot = createSlot('veh_handlebar_fork', bikeLeanGroup, [0, 42, 26], 1.4, 'both', 'veh_scooter_frame');
+  // Turning Handlebar Fork at V2 headtube `z = +18.75`
+  const bikeForkSlot = createSlot('veh_handlebar_fork', bikeLeanGroup, [0, 42, 22], 1.35, 'both', 'veh_scooter_frame');
   const bikeForkPivot = new THREE.Group();
-  bikeForkPivot.position.set(0, bikeY + 10.0, 25.0); // stem rises inside headtube at z = 25.0!
+  bikeForkPivot.position.set(0, bikeY + 10.0, 18.75);
   const bikeForkOrient = new THREE.Group();
-  bikeForkOrient.rotation.x = Math.PI; // -y_stl -> +Y_three (stem 0..25, riser/bars 25..44!), z centered
+  bikeForkOrient.rotation.x = Math.PI;
   const bikeForkMesh = new THREE.Mesh(expGeos.vehHandlebarFork, expMats.tire);
   bikeForkMesh.castShadow = true;
   bikeForkMesh.position.set(0, 0, -3.3);
@@ -511,35 +651,65 @@ export function attachExpansionToKipRig(THREE, kip, expGeos, baseParts, mats, sc
   bikeForkPivot.add(bikeForkOrient);
   bikeForkSlot.add(bikeForkPivot);
 
-  // Detachable `2x2` Sport Motorbike Tank & Windscreen Cowling!
+  // Snap-On Front Scooter Leg-Shield Fairing (`veh_scooter_fairing`)
+  const bikeCoversGroup = new THREE.Group();
+  bikeLeanGroup.add(bikeCoversGroup);
+  const scooterFairingSlot = createSlot('veh_scooter_fairing', bikeCoversGroup, [0, 32, 42], 1.55, 'both', 'veh_scooter_frame');
+  const scooterFairingMesh = scadMesh(expGeos.vehScooterFairing, mats.shell);
+  scooterFairingMesh.position.set(0, bikeY + 29.0, 37.5);
+  scooterFairingSlot.add(scooterFairingMesh);
+
+  // Detachable `2x2` V2 Sport Motorbike Tank & Windscreen Cowling (`veh_moto_cowling`)
   const motoCowlingGroup = new THREE.Group();
   motoCowlingGroup.visible = false;
   bikeLeanGroup.add(motoCowlingGroup);
   const motoCowlingSlot = createSlot('veh_moto_cowling', motoCowlingGroup, [0, 38, 6], 1.65, 'both', 'veh_scooter_frame');
   const motoCowlingMesh = scadMesh(expGeos.vehMotoCowling, mats.spark);
-  motoCowlingMesh.position.set(0, bikeY + 13.5, 0);
+  motoCowlingMesh.position.set(0, bikeY + 12.0, 0);
   motoCowlingSlot.add(motoCowlingMesh);
 
   const bikeRacerGroup = new THREE.Group();
   bikeLeanGroup.add(bikeRacerGroup);
-  const bikeExhSlot = createSlot('bike_exhaust', bikeRacerGroup, [0, 16, -62], 1.75, 'both', 'veh_scooter_frame');
+  const bikeExhSlot = createSlot('bike_exhaust', bikeRacerGroup, [0, 20, -64], 1.75, 'both', 'veh_scooter_frame');
   const bikeExhMesh = scadMesh(expGeos.racerTwinExhaust, mats.shell);
-  bikeExhMesh.position.set(0, bikeY + 15.5, -50.0);
+  bikeExhMesh.position.set(0, bikeY + 26.5, -50.0);
   bikeExhSlot.add(bikeExhMesh);
 
+  // True 2-Wheel Inline Scooter & Motorbike Wheels (2 centered `veh_wheel_moto` at `x = 0` on flush `37.5 mm` `racer_axle`s!)
   const bikeWheels = [];
-  for (const [sfx, zAx] of [['f', 43.75], ['r', -43.75]]) {
-    const axSlot = createSlot(`bike_ax_${sfx}`, bikeLeanGroup, [0, -24, zAx * 0.4], 0.25, 'both', 'veh_scooter_frame');
-    const ax = makeAxleX(baseParts.shaftTu05, 62.5, mats.proSlate);
-    ax.position.set(0, 25.0, zAx);
+  for (const [sfx, zAx] of [['f', 43.75], ['r', -50.0]]) {
+    const axSlot = createSlot(`bike_ax_${sfx}`, bikeLeanGroup, [-32, -16, zAx * 0.3], 0.25, 'both', 'veh_scooter_frame');
+    const ax = makeAxleX(expGeos.racerAxle, 37.5, mats.proSlate);
+    ax.position.set(0, 18.0, zAx);
     axSlot.add(ax);
-    for (const [ws, wx] of [['l', 25.0], ['r', -25.0]]) {
-      const wSlot = createSlot(`bike_w_${sfx}_${ws}`, bikeLeanGroup, [wx * 1.8, -16, zAx * 0.3], 0.1, 'both', `bike_ax_${sfx}`);
-      const wSpin = makeWheelX(baseParts.wheelTu04, 12.5, expMats.tire);
-      wSpin.position.set(wx, 25.0, zAx);
-      wSlot.add(wSpin);
-      bikeWheels.push(wSpin);
-    }
+
+    const wSlot = createSlot(`bike_w_${sfx}`, bikeLeanGroup, [0, -24, zAx * 0.45], 0.1, 'both', `bike_ax_${sfx}`);
+    const wSpin = makeStylizedWheelX(expGeos.vehWheelMoto, expGeos.vehWheelMotoRim, 14.0, 1, expMats.rimAlloy);
+    wSpin.position.set(0, 18.0, zAx);
+    wSlot.add(wSpin);
+    bikeWheels.push(wSpin);
+  }
+
+  // Toggle snap-on covers (`Covers: On / Off`) while keeping top Racer add-ons cleanly seated in both modes!
+  function setCoversVisible(on, vehicleMode = 'none') {
+    const cov = Boolean(on);
+    carCoversGroup.visible   = cov;
+    truckCoversGroup.visible = cov;
+    bikeCoversGroup.visible  = cov;
+    motoCowlingGroup.visible = (vehicleMode === 'moto') && cov;
+
+    // Reseat add-ons onto bare chassis studs when covers are popped off!
+    carHoodScoopAddon.mesh.position.y = carY + (cov ? 28.5 : 17.5);
+    carHoodScoopAddon.slot.guideTo    = cov ? 'car_hood_cover' : 'veh_car_chassis';
+    customHoodContainer.position.y    = carY + (cov ? 28.5 : 17.5);
+    customHoodSlot.guideTo            = cov ? 'car_hood_cover' : 'veh_car_chassis';
+    carLightBarAddon.mesh.position.y  = carY + (cov ? 31.0 : 22.5);
+    carLightBarAddon.slot.guideTo     = cov ? 'car_cab_cover'  : 'veh_car_chassis';
+
+    trkRackMesh.position.y   = truckY + (cov ? 34.5 : 26.0);
+    trkRackSlot.guideTo      = cov ? 'trk_cab_cover' : 'veh_truck_chassis';
+    trkCargoPack.position.y  = truckY + (cov ? 20.5 : 15.0);
+    trkCargoSlot.guideTo     = cov ? 'trk_bed_cover' : 'veh_truck_chassis';
   }
 
   return {
@@ -547,14 +717,25 @@ export function attachExpansionToKipRig(THREE, kip, expGeos, baseParts, mats, sc
     expMats,
     neckTurret2x1Slot,
     altHeadsGroup,
+    altHeadSlot,
     headMeshes,
     headDecalGeos,
     altCrownBuds,
+    faceplateGroup,
+    faceplateSlot,
+    faceplateMesh,
+    faceplateDecalPlane,
     decalPlane,
     classicDecalPlane,
     decalTex,
+    hairGroup,
+    hairSlot,
+    hairAnchor,
+    hairMeshes,
+    hairCrownBuds,
     crownAnchor,
-    crownHairMeshes,
+    hatMeshes,
+    crownHairMeshes: hatMeshes,
     explorerGroup,
     jetpackGroup,
     wrenchGroup,
@@ -564,22 +745,26 @@ export function attachExpansionToKipRig(THREE, kip, expGeos, baseParts, mats, sc
     skateWheels,
     snapSeatedLegsGroup,
     snapSeatedLegsSlot,
-    // Vehicles
+    // Vehicles & Snap-On Covers
     carGroup,
+    carCoversGroup,
     carSteerPivot,
     carWheels,
     carRacerGroup,
     carHoodScoopAddon,
     truckGroup,
+    truckCoversGroup,
     truckSteerPivot,
     truckWheels,
     truckRacerGroup,
     bikeGroup,
+    bikeCoversGroup,
     bikeLeanGroup,
     bikeForkPivot,
     motoCowlingGroup,
     bikeRacerGroup,
     bikeWheels,
+    setCoversVisible,
     // Custom / Photo-Forge containers
     customCrownContainer,
     customHeadContainer,
@@ -637,21 +822,21 @@ export function makeDriveSitClip(THREE) {
   return buildKeyframedKipClip(THREE, 'drive_sit', 2.2, (ph, setQ) => {
     const bob = Math.sin(ph * 2) * 0.6;
     const steerOsc = Math.sin(ph) * 4.0;
-    setQ('Hips', -4, 0, Math.sin(ph) * 1.2);
-    setQ('Head', 4 + Math.cos(ph) * 2.0, steerOsc * 1.8, Math.sin(ph) * 2.0);
+    setQ('Hips', -2, 0, Math.sin(ph) * 1.2);
+    setQ('Head', 2 + Math.cos(ph) * 2.0, steerOsc * 1.8, Math.sin(ph) * 2.0);
 
     // Symmetric two-hand inward reach onto the Ø 36 mm 3-spoke steering wheel rim!
-    setQ('LeftArm',  -54 + steerOsc, -12, -16);
-    setQ('LeftForeArm', -24, -10, -6);
-    setQ('LeftHand', 6, 0, -10);
+    setQ('LeftArm',  -44 + steerOsc, -12, -16);
+    setQ('LeftForeArm', -22, -10, -6);
+    setQ('LeftHand', 8, 0, -10);
 
-    setQ('RightArm', -54 - steerOsc,  12,  16);
-    setQ('RightForeArm', -24,  10,  6);
-    setQ('RightHand', 6, 0, 10);
+    setQ('RightArm', -44 - steerOsc,  12,  16);
+    setQ('RightForeArm', -22,  10,  6);
+    setQ('RightHand', 8, 0, 10);
 
-    // Seated 90-deg hips + tucked knees inside recessed 4x2 cockpit!
-    setQ('LeftUpLeg',  -84, -4,  5); setQ('LeftLeg',  56, 0, 0); setQ('LeftFoot',  14, 0, 0);
-    setQ('RightUpLeg', -84,  4, -5); setQ('RightLeg', 56, 0, 0); setQ('RightFoot', 14, 0, 0);
+    // Seated 90-deg hips + tucked knees inside recessed 4x2 wide-body cockpit!
+    setQ('LeftUpLeg',  -84, -4,  5); setQ('LeftLeg',  58, 0, 0); setQ('LeftFoot',  14, 0, 0);
+    setQ('RightUpLeg', -84,  4, -5); setQ('RightLeg', 58, 0, 0); setQ('RightFoot', 14, 0, 0);
     return [0, 61.5 + bob, 0];
   });
 }
@@ -660,19 +845,19 @@ export function makeDriveSitClip(THREE) {
 export function makeScooterRideClip(THREE) {
   return buildKeyframedKipClip(THREE, 'scooter_ride', 2.0, (ph, setQ) => {
     const bob = Math.sin(ph * 2) * 0.7;
-    setQ('Hips', 4, 0, Math.sin(ph) * 1.5);
-    setQ('Head', -4, Math.sin(ph) * 6.0, Math.cos(ph) * 2.5);
+    setQ('Hips', 6, 0, Math.sin(ph) * 1.5);
+    setQ('Head', -6, Math.sin(ph) * 6.0, Math.cos(ph) * 2.5);
 
     // Relaxed upright arms reaching forward onto twin Ø6.60 mm scooter handlebars!
-    setQ('LeftArm',  -64,  6, 10);
-    setQ('LeftForeArm', -18, -6, 0);
+    setQ('LeftArm',  -60,  6, 10);
+    setQ('LeftForeArm', -22, -6, 0);
     setQ('LeftHand', 8, 0, 0);
 
-    setQ('RightArm', -64, -6, -10);
-    setQ('RightForeArm', -18, 6, 0);
+    setQ('RightArm', -60, -6, -10);
+    setQ('RightForeArm', -22, 6, 0);
     setQ('RightHand', 8, 0, 0);
 
-    // Feet together forward on the 2x2 step-through floorboard!
+    // Feet together forward on the 2x2 step-through floorboard behind the curved fairing!
     setQ('LeftUpLeg',  -78, -2,  3); setQ('LeftLeg',  74, 0, 0); setQ('LeftFoot',  0, 0, 0);
     setQ('RightUpLeg', -78,  2, -3); setQ('RightLeg', 74, 0, 0); setQ('RightFoot', 0, 0, 0);
     return [0, 61.5 + bob, 0];
@@ -688,12 +873,12 @@ export function makeMotoStraddleClip(THREE) {
     setQ('Head', -20, Math.sin(ph) * 5.0, Math.sin(ph) * 2.5);
 
     // Forward reach gripping the twin Ø6.60 mm sport handlebars!
-    setQ('LeftArm',  -76,  8, 14);
-    setQ('LeftForeArm', -16, -8, 0);
+    setQ('LeftArm',  -72,  8, 14);
+    setQ('LeftForeArm', -20, -8, 0);
     setQ('LeftHand', 12, 0, 0);
 
-    setQ('RightArm', -76, -8, -14);
-    setQ('RightForeArm', -16, 8, 0);
+    setQ('RightArm', -72, -8, -14);
+    setQ('RightForeArm', -20, 8, 0);
     setQ('RightHand', 12, 0, 0);
 
     // Thighs splayed wide (+-24 deg) straddling the 2x2 tank cowling, knees tucked back onto rear pegs!
@@ -707,7 +892,6 @@ export function makeMotoStraddleClip(THREE) {
 export function makeSkateboardClip(THREE) {
   return buildKeyframedKipClip(THREE, 'skate_cruise', 2.0, (ph, setQ) => {
     const carve = Math.sin(ph);
-    // Sideways goofy/regular skate torso twist looking forward (+Z)!
     setQ('Hips', 8, -42, carve * 4.0);
     setQ('Head', -6, 42 + carve * 6.0, carve * 3.0);
 

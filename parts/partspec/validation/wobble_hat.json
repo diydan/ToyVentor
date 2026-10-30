@@ -4,7 +4,7 @@
   "file_sha256": "a18448514d546ea681c5c028dcf11cf66514ef3a6b89b080cb56b6fe7f571665",
   "part_id": "wobble_hat",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-10-30T08:20:43Z",
+  "checked_at": "2026-10-30T17:11:46Z",
   "metrics": {
     "bbox_mm": [
       17.2,
@@ -160,7 +160,7 @@
       0
     ],
     "engine": "PrusaSlicer-2.8.1",
-    "reused_from": "2026-10-30T08:09:12Z"
+    "reused_from": "2026-10-30T16:40:22Z"
   },
   "verdict": "pass",
   "summary": "Prints as is"

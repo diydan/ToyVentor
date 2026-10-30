@@ -4,7 +4,7 @@
   "file_sha256": "22c281b03d08b28cb00a3bdf7f0dd86a47d755f6c446ba30572a095535a24960",
   "part_id": "bushing_tu01",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-10-30T08:20:52Z",
+  "checked_at": "2026-10-30T17:11:52Z",
   "metrics": {
     "bbox_mm": [
       11.0,
@@ -154,7 +154,7 @@
       0
     ],
     "engine": "PrusaSlicer-2.8.1",
-    "reused_from": "2026-10-30T08:09:18Z"
+    "reused_from": "2026-10-30T16:40:28Z"
   },
   "verdict": "pass",
   "summary": "Prints as is"

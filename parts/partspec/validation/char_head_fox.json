@@ -1,29 +1,39 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_char_head_fox_S.stl",
-  "file_sha256": "cd5a1fdacbc58727b914b50170d44e97569120625644885f01f577746c41fdab",
+  "file_sha256": "60ac3ebb5e3e5256670f175f0d31a5f1e0aba1c529bc37e7c4c5763fb84ee7e3",
   "part_id": "char_head_fox",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-10-30T08:21:51Z",
+  "checked_at": "2026-10-30T17:13:44Z",
   "metrics": {
     "bbox_mm": [
-      43.5,
-      28.34,
-      32.8
+      48.8,
+      36.7,
+      36.8
     ],
-    "volume_cm3": 21.03,
-    "surface_cm2": 44.71,
-    "triangles": 4756,
+    "volume_cm3": 23.48,
+    "surface_cm2": 51.55,
+    "triangles": 11344,
     "ledges": [],
-    "layers": 164,
-    "bed_contact_mm2": 225.4,
-    "height_mm": 32.8,
-    "slenderness": 2.18,
+    "layers": 184,
+    "bed_contact_mm2": 346.1,
+    "height_mm": 36.8,
+    "slenderness": 1.98,
     "centre_of_mass_over_contact": true,
     "min_wall_mm": null,
     "thin_wall_regions": []
   },
   "bridges": [
+    {
+      "z_mm": 5.5,
+      "span_mm": 0.35,
+      "area_mm2": 0.9
+    },
+    {
+      "z_mm": 5.5,
+      "span_mm": 0.35,
+      "area_mm2": 0.9
+    },
     {
       "z_mm": 3.2,
       "span_mm": 6.7,
@@ -57,9 +67,9 @@
       "level": "block",
       "result": "pass",
       "value": [
-        43.5,
-        28.3,
-        32.8
+        48.8,
+        36.7,
+        36.8
       ],
       "limit": [
         180,
@@ -90,7 +100,7 @@
       "result": "pass",
       "value": 6.7,
       "limit": 20,
-      "detail": "2 bridge(s); widest unsupported span in mm"
+      "detail": "4 bridge(s); widest unsupported span in mm"
     },
     {
       "id": "V5_no_floating_islands",
@@ -112,9 +122,9 @@
       "id": "V9_bed_contact",
       "level": "info",
       "result": "pass",
-      "value": 225.4,
+      "value": 346.1,
       "limit": null,
-      "detail": "height / sqrt(contact) = 2.18; above about 3 the slicer often asks for a brim"
+      "detail": "height / sqrt(contact) = 1.98; above about 3 the slicer often asks for a brim"
     },
     {
       "id": "V8_wall_thickness",

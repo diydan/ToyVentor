@@ -15,8 +15,8 @@
     "Attach slots: character add-ons and vehicle parts carry attach.kind (character or vehicle), attach.slots, and attach.front: the part's local -y or +y faces the toy's front, or the part is symmetric. Slot names: character head, back, body, top, tail; vehicle front, rear, hood, roof, wheels; robot legs, torso, arms, head, back."
   ],
   "targets": {
-    "snap": 59,
-    "pro": 34
+    "snap": 67,
+    "pro": 38
   },
   "waves": [
     {
@@ -108,7 +108,7 @@
         "W8"
       ],
       "effort": "M",
-      "scope": "18 parts (14 Snap Small, 4 Pro): swappable blank-canvas character heads (Kid, Fox, Bear) with 2x1 crown buds, four 2x1 snap-on hair silhouettes, Explorer Rucksack, Builder Spanner, Star Emblem Wand, Street Skateboard Deck, Seated Snap Legs, and three modular 12.5 mm TU vehicles (Roadster Car, Hauler Truck, and 2-in-1 Scooter / Sport Motorbike with steering controls and straddle cowling)."
+      "scope": "30 parts (22 Snap Small, 8 Pro): three plump symmetric-back character base heads (Human Base Head with recessed face-plate dock, Fox, Bear) with 2x1 crown buds, slim snap-in Swappable Emotion Face Plate, eight separate clip-on 2x1 hair parts (three Hat-Ready with top 2x1 crown studs: Short Swept, Flared Bob, Swoosh; five clean Sculpted-Top with no studs: Spiky, Pigtails, Ponytail, Cloud Curls, Mohawk), Explorer Rucksack, Builder Spanner, Star Emblem Wand, Street Skateboard Deck, Seated Snap Legs, three stylized Pro vehicle wheels, and V2 modular rolling vehicle chassis with interchangeable snap-on body covers."
     }
   ],
   "parts": [
@@ -2333,18 +2333,19 @@
     },
     {
       "id": "char_head_kid",
-      "name": "Kid Canvas Head",
+      "name": "Human Base Head",
       "line": "snap",
       "family": "addon",
       "size": "small",
       "wave": "W9",
-      "note": "Blank-canvas 2x1 character head with smooth decal brow, side ear reliefs and 2x1 crown buds.",
+      "note": "Plump symmetric 36.4 mm-deep 2x1 human head with rounded C-ears, recessed front face-plate dock bore, and centered 2x1 crown buds.",
       "stat": "Glow",
       "type": "Character head",
-      "behavior": "Swappable Boy/Girl blank-canvas head with 2x1 Spark Crown Buds",
+      "behavior": "Swappable plump human base head with snap-in face-plate dock and 2x1 Spark Crown Buds",
       "tags": [
         "character",
         "head",
+        "human",
         "kip"
       ],
       "build": {
@@ -2365,16 +2366,106 @@
       }
     },
     {
+      "id": "char_faceplate",
+      "name": "Swappable Emotion Face Plate",
+      "line": "pro",
+      "family": "pin",
+      "size": "pro",
+      "wave": "W9",
+      "note": "Slim 22.6x10.8 mm rounded-bezel snap-in face plate printed flat on its front face with a 1 TU anti-rotation flat-keyed rear stem mating into char_head_kid.face_slot.",
+      "stat": "Glow",
+      "type": "Face plate",
+      "behavior": "Quick-swap slim emotion face plate snapping into the Human Base Head front bezel dock",
+      "tags": [
+        "character",
+        "face",
+        "head",
+        "kip"
+      ],
+      "build": {
+        "fn": "char_faceplate",
+        "stem_tu": 1
+      }
+    },
+    {
+      "id": "hair_short_swept",
+      "name": "Short Swept Hair (Hat-Ready)",
+      "line": "snap",
+      "family": "addon",
+      "size": "small",
+      "wave": "W9",
+      "note": "Separate 2x1 clip-on short side-swept hair with sideburns, diagonal bangs, and top 2x1 crown studs for stacking hats, ears, or horns.",
+      "stat": "Speed",
+      "type": "Crown hair",
+      "behavior": "Clip-on short swept hair with top 2x1 studs for stacking hats or ears",
+      "tags": [
+        "character",
+        "hair",
+        "crown",
+        "kip"
+      ],
+      "build": {
+        "fn": "hair_short_swept",
+        "grid": [
+          2,
+          1
+        ],
+        "base": "integrated",
+        "lock": true
+      },
+      "attach": {
+        "kind": "character",
+        "slots": [
+          "head"
+        ],
+        "front": "-y"
+      }
+    },
+    {
+      "id": "hair_bob",
+      "name": "Flared Bob Hair (Hat-Ready)",
+      "line": "snap",
+      "family": "addon",
+      "size": "small",
+      "wave": "W9",
+      "note": "Separate 2x1 clip-on flared chin-frame bob hair with parted curtain bangs and top 2x1 crown studs for stacking hats or ponytails.",
+      "stat": "Glow",
+      "type": "Crown hair",
+      "behavior": "Clip-on flared bob hair with top 2x1 studs for stacking hats or ponytails",
+      "tags": [
+        "character",
+        "hair",
+        "crown",
+        "kip"
+      ],
+      "build": {
+        "fn": "hair_bob",
+        "grid": [
+          2,
+          1
+        ],
+        "base": "integrated",
+        "lock": true
+      },
+      "attach": {
+        "kind": "character",
+        "slots": [
+          "head"
+        ],
+        "front": "-y"
+      }
+    },
+    {
       "id": "char_head_fox",
       "name": "Fox Critter Head",
       "line": "snap",
       "family": "addon",
       "size": "small",
       "wave": "W9",
-      "note": "Fox critter head on a 2x1 neck with swept side cheek ruffs, tapered snout and 2x1 crown buds.",
+      "note": "Fox critter head on a 2x1 neck with fluffy swept cheek ruffs, smooth snout, perky fox ears and centered 2x1 crown buds.",
       "stat": "Speed",
       "type": "Character head",
-      "behavior": "Swappable Fox critter head with swept cheek ruffs and 2x1 Crown Buds",
+      "behavior": "Swappable Fox critter head with fluffy cheek ruffs, perky ears and 2x1 Crown Buds",
       "tags": [
         "character",
         "head",
@@ -2405,7 +2496,7 @@
       "family": "addon",
       "size": "small",
       "wave": "W9",
-      "note": "Bear cub head on a 2x1 neck with plump muzzle and wide-set round ears flanking 2x1 crown buds.",
+      "note": "Bear cub head on a 2x1 neck with plump rounded snout and chubby round ears flanking centered 2x1 crown buds.",
       "stat": "Torque",
       "type": "Character head",
       "behavior": "Swappable Bear cub head with round ears flanking 2x1 Crown Buds",
@@ -2434,15 +2525,15 @@
     },
     {
       "id": "hair_swoosh",
-      "name": "Swoosh Hair",
+      "name": "Swoosh Hair (Hat-Ready)",
       "line": "snap",
       "family": "addon",
       "size": "small",
       "wave": "W9",
-      "note": "Side-swept wave crest on a 2x1 integrated pad; locks onto any character or robot head crown.",
+      "note": "Separate 2x1 clip-on side-swept wave hair with sculpted fringe and top 2x1 crown studs for stacking hats, ears, or horns.",
       "stat": "Speed",
       "type": "Crown hair",
-      "behavior": "Side-swept hero wave hair for any 2x1 head crown",
+      "behavior": "Clip-on side-swept wave hair with top 2x1 studs for stacking hats or ears",
       "tags": [
         "character",
         "hair",
@@ -2456,16 +2547,40 @@
           1
         ],
         "base": "integrated",
-        "pad": [
-          [
-            -0.5,
-            0
-          ],
-          [
-            0.5,
-            0
-          ]
+        "lock": true
+      },
+      "attach": {
+        "kind": "character",
+        "slots": [
+          "head"
         ],
+        "front": "-y"
+      }
+    },
+    {
+      "id": "hair_spiky",
+      "name": "Spiky Tufts Hair",
+      "line": "snap",
+      "family": "addon",
+      "size": "small",
+      "wave": "W9",
+      "note": "Full-crown 38 mm spiky action hair with five sculpted tufts on a 2x1 integrated scalp cap.",
+      "stat": "Speed",
+      "type": "Crown hair",
+      "behavior": "Full-crown spiky action hair tufts for any 2x1 head crown",
+      "tags": [
+        "character",
+        "hair",
+        "crown",
+        "kip"
+      ],
+      "build": {
+        "fn": "hair_spiky",
+        "grid": [
+          2,
+          1
+        ],
+        "base": "integrated",
         "lock": true
       },
       "attach": {
@@ -2483,10 +2598,10 @@
       "family": "addon",
       "size": "small",
       "wave": "W9",
-      "note": "Parted crown cap flaring at under 35 degrees to twin side puffs on a 2x1 integrated pad.",
+      "note": "Full-crown parted scalp cap flaring smoothly to 47 mm twin side puffs on a 2x1 integrated base.",
       "stat": "Spin",
       "type": "Crown hair",
-      "behavior": "Parted crown cap with bouncy twin side puffs for any 2x1 head crown",
+      "behavior": "Full-crown parted cap with bouncy twin side puffs for any 2x1 head crown",
       "tags": [
         "character",
         "hair",
@@ -2500,16 +2615,40 @@
           1
         ],
         "base": "integrated",
-        "pad": [
-          [
-            -0.5,
-            0
-          ],
-          [
-            0.5,
-            0
-          ]
+        "lock": true
+      },
+      "attach": {
+        "kind": "character",
+        "slots": [
+          "head"
         ],
+        "front": "-y"
+      }
+    },
+    {
+      "id": "hair_ponytail",
+      "name": "High Ponytail Hair",
+      "line": "snap",
+      "family": "addon",
+      "size": "small",
+      "wave": "W9",
+      "note": "Full-crown 37 mm sleek scalp cap with high rear ponytail sweeping over the back of any 2x1 head.",
+      "stat": "Spin",
+      "type": "Crown hair",
+      "behavior": "Full-crown sleek cap with high rear ponytail for any 2x1 head crown",
+      "tags": [
+        "character",
+        "hair",
+        "crown",
+        "kip"
+      ],
+      "build": {
+        "fn": "hair_ponytail",
+        "grid": [
+          2,
+          1
+        ],
+        "base": "integrated",
         "lock": true
       },
       "attach": {
@@ -2527,10 +2666,10 @@
       "family": "addon",
       "size": "small",
       "wave": "W9",
-      "note": "Volumetric cloud-puff curl crown on a 2x1 integrated pad.",
+      "note": "Full-crown 38 mm volumetric cloud-puff curl cap on a 2x1 integrated base.",
       "stat": "Glow",
       "type": "Crown hair",
-      "behavior": "Volumetric cloud-puff curls for any 2x1 head crown",
+      "behavior": "Full-crown volumetric cloud-puff curls for any 2x1 head crown",
       "tags": [
         "character",
         "hair",
@@ -2544,16 +2683,6 @@
           1
         ],
         "base": "integrated",
-        "pad": [
-          [
-            -0.5,
-            0
-          ],
-          [
-            0.5,
-            0
-          ]
-        ],
         "lock": true
       },
       "attach": {
@@ -2571,10 +2700,10 @@
       "family": "addon",
       "size": "small",
       "wave": "W9",
-      "note": "Three-peak action crest on a 2x1 integrated pad.",
+      "note": "Four-peak punk mohawk crest on a 2x1 integrated scalp cap.",
       "stat": "Speed",
       "type": "Crown hair",
-      "behavior": "Three-peak action crest locked onto 2x1 crown buds",
+      "behavior": "Four-peak action crest locked onto 2x1 crown buds",
       "tags": [
         "character",
         "hair",
@@ -2588,16 +2717,6 @@
           1
         ],
         "base": "integrated",
-        "pad": [
-          [
-            -0.5,
-            0
-          ],
-          [
-            0.5,
-            0
-          ]
-        ],
         "lock": true
       },
       "attach": {
@@ -2747,16 +2866,101 @@
       }
     },
     {
+      "id": "veh_wheel_sport",
+      "name": "Sport 5-Spoke Wheel",
+      "line": "pro",
+      "family": "wheel",
+      "size": "pro",
+      "wave": "W9",
+      "note": "36 x 13.5 mm radial roadster tire with deep-dish 5-spoke star alloy rim and fixed-bore Pro hub.",
+      "stat": "Speed",
+      "type": "Vehicle wheel",
+      "behavior": "36 mm 5-spoke deep-dish sport wheel on a Pro flat shaft",
+      "tags": [
+        "vehicle",
+        "wheel",
+        "car",
+        "kip"
+      ],
+      "build": {
+        "fn": "veh_wheel_sport"
+      },
+      "attach": {
+        "kind": "vehicle",
+        "slots": [
+          "wheels"
+        ],
+        "front": "symmetric"
+      }
+    },
+    {
+      "id": "veh_wheel_offroad",
+      "name": "Off-Road Beadlock Wheel",
+      "line": "pro",
+      "family": "wheel",
+      "size": "pro",
+      "wave": "W9",
+      "note": "44 x 14 mm chunky mud-lug truck tire with 6-window beadlock rim and fixed-bore Pro hub; mounts flush on 5-TU shafts.",
+      "stat": "Torque",
+      "type": "Vehicle wheel",
+      "behavior": "44 mm 6-window off-road truck wheel on a Pro flat shaft",
+      "tags": [
+        "vehicle",
+        "wheel",
+        "truck",
+        "kip"
+      ],
+      "build": {
+        "fn": "veh_wheel_offroad"
+      },
+      "attach": {
+        "kind": "vehicle",
+        "slots": [
+          "wheels"
+        ],
+        "front": "symmetric"
+      }
+    },
+    {
+      "id": "veh_wheel_moto",
+      "name": "Moto 3-Spoke Wheel",
+      "line": "pro",
+      "family": "wheel",
+      "size": "pro",
+      "wave": "W9",
+      "note": "36 x 14 mm symmetric street scooter and motorbike tire with 3-spoke turbine rim and fixed-bore Pro hub.",
+      "stat": "Speed",
+      "type": "Vehicle wheel",
+      "behavior": "36 mm 3-spoke inline scooter and motorbike wheel on a Pro flat shaft",
+      "tags": [
+        "vehicle",
+        "wheel",
+        "scooter",
+        "motorbike",
+        "kip"
+      ],
+      "build": {
+        "fn": "veh_wheel_moto"
+      },
+      "attach": {
+        "kind": "vehicle",
+        "slots": [
+          "wheels"
+        ],
+        "front": "symmetric"
+      }
+    },
+    {
       "id": "veh_car_chassis",
       "name": "Roadster Car Chassis",
       "line": "snap",
       "family": "vehicle",
       "size": "small",
       "wave": "W9",
-      "note": "4x10 TU modular roadster chassis with 4x2 recessed cockpit, five Wave 6 Racer add-on ports, dash steering bore and two X-axle bores.",
+      "note": "V2 58 mm wide-body roadster rolling chassis with raised side doors, 4x2 recessed cockpit, 33.6 mm wheel-well tunnels and modular snap-on cover bays.",
       "stat": "Speed",
       "type": "Vehicle chassis",
-      "behavior": "4x10 TU modular roadster accepting Wave 6 racer add-ons and Wave 5 wheels",
+      "behavior": "Wide-body modular roadster rolling chassis accepting snap-on hood and cab covers",
       "tags": [
         "vehicle",
         "car",
@@ -2770,6 +2974,76 @@
           10
         ],
         "base": "integrated"
+      }
+    },
+    {
+      "id": "veh_car_hood_cover",
+      "name": "Aero Hood & Fender Cover",
+      "line": "snap",
+      "family": "vehicle",
+      "size": "small",
+      "wave": "W9",
+      "note": "2x2 snap-on winged GT bonnet and headlight pods fitting both Roadster Car and Hauler Truck, with top 2x2 studs for a hood scoop.",
+      "stat": "Speed",
+      "type": "Vehicle cover",
+      "behavior": "Interchangeable 2x2 snap-on aero hood cover with twin headlight pods and top 2x2 studs",
+      "tags": [
+        "vehicle",
+        "cover",
+        "car",
+        "truck",
+        "kip"
+      ],
+      "build": {
+        "fn": "veh_car_hood_cover",
+        "grid": [
+          2,
+          2
+        ],
+        "base": "integrated",
+        "lock": true
+      },
+      "attach": {
+        "kind": "vehicle",
+        "slots": [
+          "hood"
+        ],
+        "front": "-y"
+      }
+    },
+    {
+      "id": "veh_cab_roof_cover",
+      "name": "Cab Targa Canopy Cover",
+      "line": "snap",
+      "family": "vehicle",
+      "size": "small",
+      "wave": "W9",
+      "note": "2x1 snap-on cab roof / GT targa canopy cover fitting both Roadster Car and Hauler Truck, with top 2x2 studs for light bars or roof racks.",
+      "stat": "Torque",
+      "type": "Vehicle cover",
+      "behavior": "Interchangeable 2x1 snap-on cab roof / targa canopy cover with top 2x2 studs",
+      "tags": [
+        "vehicle",
+        "cover",
+        "car",
+        "truck",
+        "kip"
+      ],
+      "build": {
+        "fn": "veh_cab_roof_cover",
+        "grid": [
+          2,
+          1
+        ],
+        "base": "integrated",
+        "lock": true
+      },
+      "attach": {
+        "kind": "vehicle",
+        "slots": [
+          "roof"
+        ],
+        "front": "-y"
       }
     },
     {
@@ -2801,10 +3075,10 @@
       "family": "vehicle",
       "size": "small",
       "wave": "W9",
-      "note": "4x12 TU modular pickup truck sharing the roadster front cab, plus a 2x2 cab roof arch and open 4x3 stud cargo bed.",
+      "note": "V2 58 mm wide-body pickup truck rolling chassis sharing the roadster front cab, plus a 2x1 cab roof arch, 33.6 mm off-road axle tunnels and 2x3 cargo bay.",
       "stat": "Torque",
       "type": "Vehicle chassis",
-      "behavior": "4x12 TU modular pickup truck with 4x3 stud cargo bed and roof rack mount",
+      "behavior": "Wide-body modular pickup truck chassis accepting snap-on hood, cab and bed covers",
       "tags": [
         "vehicle",
         "truck",
@@ -2821,16 +3095,51 @@
       }
     },
     {
-      "id": "veh_scooter_frame",
-      "name": "2-in-1 Scooter Frame",
+      "id": "veh_truck_bed_cover",
+      "name": "Pickup Bed Side-Rails Cover",
       "line": "snap",
       "family": "vehicle",
       "size": "small",
       "wave": "W9",
-      "note": "2x10 TU step-through scooter frame with 2x2 floorboard, raised 2x2 saddle, headtube steering bore and rear exhaust port.",
+      "note": "2x3 snap-on wide-body pickup bedsides and tailgate arch with recessed inner 2x2 bed_studs for cargo packs.",
+      "stat": "Torque",
+      "type": "Vehicle cover",
+      "behavior": "2x3 snap-on pickup bed side-rails and fender cover with inner 2x2 cargo studs",
+      "tags": [
+        "vehicle",
+        "cover",
+        "truck",
+        "hauler",
+        "kip"
+      ],
+      "build": {
+        "fn": "veh_truck_bed_cover",
+        "grid": [
+          2,
+          3
+        ],
+        "base": "integrated",
+        "lock": true
+      },
+      "attach": {
+        "kind": "vehicle",
+        "slots": [
+          "rear"
+        ],
+        "front": "-y"
+      }
+    },
+    {
+      "id": "veh_scooter_frame",
+      "name": "2-in-1 Inline Scooter Frame",
+      "line": "snap",
+      "family": "vehicle",
+      "size": "small",
+      "wave": "W9",
+      "note": "V2 true 2-wheel inline scooter and motorbike frame with twin-leg front clevis fork, rear swingarm, 2x2 step-through bay, 2x1 fairing mount and raised 2x2 saddle.",
       "stat": "Speed",
       "type": "Vehicle chassis",
-      "behavior": "2x10 TU step-through scooter frame convertible to a sport motorbike",
+      "behavior": "True 2-wheel inline step-through scooter frame convertible to a sport motorbike",
       "tags": [
         "vehicle",
         "scooter",
@@ -2844,6 +3153,41 @@
           10
         ],
         "base": "integrated"
+      }
+    },
+    {
+      "id": "veh_scooter_fairing",
+      "name": "Scooter Front Leg-Shield Fairing",
+      "line": "snap",
+      "family": "vehicle",
+      "size": "small",
+      "wave": "W9",
+      "note": "2x1 snap-on curved scooter front leg-shield and round headlight nacelle mounting on fairing_studs.",
+      "stat": "Speed",
+      "type": "Vehicle cover",
+      "behavior": "2x1 snap-on scooter front leg-shield fairing with sculpted round headlight bezel",
+      "tags": [
+        "vehicle",
+        "cover",
+        "scooter",
+        "motorbike",
+        "kip"
+      ],
+      "build": {
+        "fn": "veh_scooter_fairing",
+        "grid": [
+          2,
+          1
+        ],
+        "base": "integrated",
+        "lock": true
+      },
+      "attach": {
+        "kind": "vehicle",
+        "slots": [
+          "front"
+        ],
+        "front": "-y"
       }
     },
     {
@@ -2870,17 +3214,18 @@
     },
     {
       "id": "veh_moto_cowling",
-      "name": "Sport Moto Cowling",
+      "name": "Superbike Tank Cowling",
       "line": "snap",
       "family": "vehicle",
       "size": "small",
       "wave": "W9",
-      "note": "2x2 snap-on straddle fuel tank and windscreen converting the 2-in-1 Scooter into a Sport Motorbike.",
+      "note": "V2 2x2 snap-on muscular straddle fuel tank and radiator shrouds converting the 2-in-1 Scooter into a Sport Motorbike, with top 2x1 tank_studs.",
       "stat": "Speed",
-      "type": "Vehicle add-on",
-      "behavior": "2x2 snap-on straddle fuel tank and windscreen converting Scooter to Motorbike",
+      "type": "Vehicle cover",
+      "behavior": "2x2 snap-on superbike straddle fuel tank and shrouds converting Scooter to Motorbike",
       "tags": [
         "vehicle",
+        "cover",
         "motorbike",
         "addon",
         "kip"

@@ -1064,8 +1064,8 @@ module part_snap_turret(d = PEG_SML_D) {
 module part_neck_turret_2x1() {
     r  = PEG_BIG_D / 2;   // 4.5 mm
     zb = 2.25;            // ball equator z (truncated flat at z = 0, <= 41.4 deg overhang)
-    zp = 9.0;             // 2x1 collar top start
-    zt = 10.0;            // 2x1 stud seat plane (seats at z_world = 108.85 mm on Kip's torso!)
+    zp = 8.00;            // low-profile 2x1 collar start (<= 44.7 deg support-free flare!)
+    zt = 8.60;            // 2x1 stud seat plane (seats low on Kip's neck collar at y = 107.8 mm!)
     difference() {
         union() {
             // Lower compliant Ø 9.0 mm snap-ball
@@ -1073,14 +1073,14 @@ module part_neck_turret_2x1() {
                 translate([0, 0, zb]) sphere(r = r, $fn = 72);
                 cylinder(h = zb + r + 1, r = r + 1, $fn = 72);
             }
-            // Support-free <= 44 deg flare from neck ball into rounded 2x1 TU collar pad
+            // Support-free <= 44.7 deg flare from neck ball into compact 2x1 TU collar pad
             hull() {
-                translate([0, 0, 2.5])
-                    cylinder(h = 0.2, r = 4.3, $fn = 72);
+                translate([0, 0, zb])
+                    cylinder(h = 0.2, r = r - 0.05, $fn = 72);
                 translate([0, 0, zp])
-                    pill_box(21.2, 10.6, zt - zp, 4.8);
+                    pill_box(20.4, 10.4, zt - zp, 4.6);
             }
-            // Centered 2x1 ToyVentor Small Studs (x = +-6.25 mm, y = 0, z = 10.0 mm)
+            // Centered 2x1 ToyVentor Small Studs (x = +-6.25 mm, y = 0, z = 8.60 mm)
             for (sx = [-0.5, 0.5]) {
                 translate([sx * TU, 0, zt])
                     tv_stud(0.2);
@@ -1090,7 +1090,7 @@ module part_neck_turret_2x1() {
         translate([-0.52, -r - 1, -0.1])
             cube([1.04, 2 * r + 2, 4.1]);
         translate([0, 0, -0.1])
-            cylinder(h = 6.2, r = 1.0, $fn = 36);
+            cylinder(h = 5.8, r = 1.0, $fn = 36);
     }
 }
 

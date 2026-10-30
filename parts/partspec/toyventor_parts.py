@@ -936,152 +936,398 @@ def cut_x_axle_bore(m, cid, y, zc, width, bore_class="free"):
     return m, conn
 
 
-def char_head_kid(size="small", grid=(2, 1), lock=True, **_):
-    """Blank-canvas rounded Kid head (Boy/Girl via snap-on 2x1 hair and decal skins, zero moulded facial features)."""
-    hx, hy = _half(size, grid[0]), _half(size, grid[1])
-    width, depth, H = 39.0, 26.8, 30.5
-    yc = hy - depth / 2
-    collar = _rr(2 * hx, 2 * hy, 3.2, 1.2, 0.0)
-    mid = _rr(width, depth, 10.5, 6.5, 14.5, y=yc)
-    crown = _rr(30.5, 19.5, 8.2, 2.0, H - 2.0, y=-3.2)
-    shell = Manifold.batch_hull([collar, mid, crown])
+def _slice_plate(z, w, d, r, h=0.25, x=0.0, y=0.0):
+    rc = min(r, w / 2 - 0.15, d / 2 - 0.15)
+    return Manifold.extrude(rrect(w, d, max(0.35, rc)), h).translate((x, y, z))
+
+
+def _hull_slices(slices):
+    """Single convex hull over (z, w, d, r[, x, y, h]) slices with flush top height."""
+    z_max = max(float(s[0]) for s in slices)
+    plates = []
+    for s in slices:
+        z, w, d, r = float(s[0]), float(s[1]), float(s[2]), float(s[3])
+        x = float(s[4]) if len(s) > 4 else 0.0
+        y = float(s[5]) if len(s) > 5 else 0.0
+        h = float(s[6]) if len(s) > 6 else 0.25
+        z0 = z - h if abs(z - z_max) < 1e-6 and z > h else z
+        plates.append(_slice_plate(z0, w, d, r, h, x, y))
+    return Manifold.batch_hull(plates)
+
+
+def _cut_clevis_x_bores(m, cid_l, cid_r, x_outer, x_inner, y, zc, bore_class="free"):
+    """Cut left and right inline clevis fork X-axle bores on the 1/8 TU Pro lattice."""
+    w = x_outer - x_inner
+    conns = []
+    for cid, xc in ((cid_l, -(x_outer + x_inner) / 2), (cid_r, (x_outer + x_inner) / 2)):
+        m = m - pro.bore_cutter_axis(bore_class, w, (xc, y, zc), "x")
+        conns.append(pro._axis_bore_conn(cid, bore_class, (round(xc, 4), y, zc), "x", round(w, 4), lattice="axis8"))
+    return m, conns
+
+
+def _collar_base_2x1(h=2.6):
+    """Centered 28.8 x 16.4 mm pill-shaped 2x1 collar base: clears adjacent 6x5 test-plate studs without any side-relief cutouts."""
+    return _rr(28.8, 16.4, 7.9, h, 0.0, y=0.0)
+
+
+def _ellipse_plate(z, w, d, h=0.24, x=0.0, y=0.0):
+    """True C-infinity 72-segment elliptical slice (zero flat-to-arc corner tangent seams)."""
+    cs = CrossSection.circle(1.0, 72).scale((max(0.4, w / 2.0), max(0.4, d / 2.0)))
+    return Manifold.extrude(cs, h).translate((x, y, z))
+
+
+def _ellipse_chain(slices):
+    """Pairwise hull across adjacent (z, w, d[, x, y]) elliptical wafer slices so S-curves and plump cheeks are never bridged by a global hull."""
+    z_max = max(float(s[0]) for s in slices)
+    plates = []
+    for k, s in enumerate(slices):
+        z, w, d = float(s[0]), float(s[1]), float(s[2])
+        x = float(s[3]) if len(s) > 3 else 0.0
+        y = float(s[4]) if len(s) > 4 else 0.0
+        h = 0.05 if k < len(slices) - 1 else 0.12
+        z0 = z - h if abs(z - z_max) < 1e-6 and z > h else z
+        plates.append(_ellipse_plate(z0, w, d, h, x, y))
+    segs = [Manifold.batch_hull([plates[i], plates[i + 1]]) for i in range(len(plates) - 1)]
+    return union(segs)
+
+
+def _crown_saddle_cutter(z_floor, z_rim, w_in=30.4, d_in=18.4):
+    """Shallow upward-opening 2x1 scalp saddle (pill-shaped floor clearing both 28.8x16.4 hair collars and 17.2x17.2 1x1 hats with 0 mm3 overlap)."""
+    dz = z_rim - z_floor + 0.6
+    s_in = _rr(w_in, d_in, 7.6, 0.05, z_floor)
+    s_out = _rr(w_in + 2.2 * dz, d_in + 2.2 * dz, 7.6 + dz, 0.25, z_floor + dz)
+    return Manifold.batch_hull([s_in, s_out])
+
+
+def _curl_lobe(px, py, pz, pr, rx, ry, r_root=None, z_root_min=8.4):
+    """Support-free teardrop curl puff rooted strictly inside the hair dome (<= 33 deg overhang, zero P4 ledges)."""
+    rr = pr * 0.58 if r_root is None else r_root
+    d_xy = math.hypot(px - rx, py - ry)
+    ang = math.radians(33.0)
+    z_tan = pz - pr * math.sin(ang)
+    r_tan = pr * math.cos(ang)
+    dz = max(2.0, (d_xy + max(0.0, r_tan - rr)) / 0.60)
+    z_root = max(z_root_min, z_tan - dz)
+    return Manifold.batch_hull([
+        Manifold.cylinder(0.25, rr, rr, 48).translate((rx, ry, z_root)),
+        sph(pr, (px, py, pz)),
+    ])
+
+
+def _smooth_ear_pair(z0=5.2, z_pk=15.4, z1=20.8, x_out=23.4, y_c=-0.3, d_ear=8.4):
+    """Support-free rounded human C-ears rooted inside the elliptical skull (<= 36 deg overhang)."""
     ears = []
     for sx in (-1, 1):
-        ear = Manifold.batch_hull([
-            _rr(3.0, 6.8, 1.2, 1.0, 9.0, x=sx * 15.5, y=yc + 1.0),
-            _rr(5.4, 8.6, 2.4, 5.2, 15.6, x=sx * 19.5, y=yc + 1.0),
-            _rr(2.6, 6.0, 1.1, 0.8, 23.0, x=sx * 17.0, y=yc + 1.0),
-        ])
-        ears.append(ear)
-    body = collar + flare_clip(shell + ears[0] + ears[1], collar.slice(1.0), 1.0)
+        sl = [
+            (z0,         4.4, 5.2,          sx * 13.8,          y_c),
+            (z0 + 5.0,   5.2, 6.8,          sx * 16.8,          y_c),
+            (z_pk,       5.8, d_ear,        sx * (x_out - 2.9), y_c),
+            (z_pk + 2.8, 5.4, d_ear * 0.90, sx * (x_out - 3.3), y_c),
+            (z1,         4.2, 5.4,          sx * 16.8,          y_c),
+        ]
+        ears.append(_ellipse_chain(sl))
+    return ears[0] + ears[1]
+
+
+def _organic_skull(H=25.8, w_max=44.6, d_max=36.2, z_eq=15.2, crown_w=36.2, crown_d=26.6):
+    """Pairwise elliptical-slice plump symmetric chibi skull (<= 37.7 deg overhang, zero polygonal facet lines)."""
+    collar = _collar_base_2x1(2.5)
+    trans = Manifold.batch_hull([
+        _rr(28.8, 16.4, 7.9, 0.16, 2.2),
+        _ellipse_plate(3.8, 30.2, 18.4, 0.16),
+    ])
+    slices = [(3.8, 30.2, 18.4, 0.0, 0.0)]
+    for k in range(1, 15):
+        z = 3.8 + (z_eq - 3.8) * (k / 14)
+        u = (z - 3.8) / (z_eq - 3.8)
+        # Strict <= 38 deg slope: (36.2 - 18.4)/2 = 8.9 mm over dz = 11.4 mm -> 0.781 * 1.01 = 0.789 (38.3 deg)
+        s = 1.01 * u if u <= 0.90 else 1.0 - ((1.0 - u) / 0.10) ** 2 * (1.0 - 1.01 * 0.90)
+        w = 30.2 + (w_max - 30.2) * s
+        d = 18.4 + (d_max - 18.4) * s
+        slices.append((z, w, d, 0.0, 0.0))
+    for k in range(1, 12):
+        z = z_eq + (H - z_eq) * (k / 11)
+        q = (z - z_eq) / max(1.0, H - z_eq)
+        s_top = 1.0 - math.cos(q * math.pi * 0.5)
+        w = w_max + (crown_w - w_max) * s_top
+        d = d_max + (crown_d - d_max) * s_top
+        slices.append((z, w, d, 0.0, 0.0))
+    return collar + trans + _ellipse_chain(slices)
+
+
+def _face_pocket_cutter(y_floor=-14.0625, z_c=14.0625, w_in=23.2, h_in=11.4, r_in=4.6):
+    """Support-free 36-deg softly rounded front face-plate bezel pocket extending cleanly past the -18.1 mm nose (single body, zero ceiling overhang)."""
+    dy = 5.2
+    dz = 7.2
+    dx = 5.8
+    cs_in = rrect(w_in, h_in, r_in)
+    cs_out = rrect(w_in + 2 * dx, h_in + 2 * dz, r_in + 3.4)
+    p_in = Manifold.extrude(cs_in, 0.05).rotate((90, 0, 0)).translate((0.0, y_floor + 0.05, z_c))
+    p_out = Manifold.extrude(cs_out, 0.6).rotate((90, 0, 0)).translate((0.0, y_floor - dy, z_c))
+    return Manifold.batch_hull([p_in, p_out])
+
+
+def char_head_kid(size="small", grid=(2, 1), lock=True, **_):
+    """Plump symmetric human base head (z_stud=23.8 mm nestled inside 25.8 mm elliptical dome) with flush front face-plate pocket, anti-rotation fixed face_slot bore and 2x1 crown buds."""
+    H_rim = 25.8
+    z_stud = 23.8
+    body = _organic_skull(H=H_rim, w_max=44.6, d_max=36.2, z_eq=15.2, crown_w=36.2, crown_d=26.6) + _smooth_ear_pair(z0=5.2, z_pk=15.4, z1=20.8)
+    body = body - _crown_saddle_cutter(z_stud, H_rim)
+    body = body - _face_pocket_cutter(y_floor=-14.0625, z_c=14.0625)
+    body = body - pro.bore_cutter_axis("fixed", 12.9, (0.0, -7.7125, 14.0625), "y")
+    c_face = pro._axis_bore_conn("face_slot", "fixed", (0.0, -7.8125, 14.0625), "y", 12.5, lattice="axis8")
     m, conns, ex = integrated_sockets(body, size, lock)
-    m, c_top = add_studs_at(m, size, 2, 1, 0.0, 0.0, H, "top_studs")
-    return m, conns + [c_top], ex
+    m, c_top = add_studs_at(m, size, 2, 1, 0.0, 0.0, z_stud, "top_studs")
+    return m, conns + [c_top, c_face], ex
+
+
+def char_faceplate(stem_tu=1, **_):
+    """Slim 2.0 mm pill-rounded swappable emotion face plate on z = 0 with upright 1 TU anti-rotation flat-keyed stem mating flush into char_head_kid.face_slot."""
+    w, h, t_plate = 22.6, 10.8, 2.0
+    bezel = Manifold.batch_hull([
+        Manifold.extrude(rrect(w - 0.9, h - 0.9, 4.0), 0.02),
+        Manifold.extrude(rrect(w, h, 4.4), t_plate - 0.8).translate((0.0, 0.0, 0.40)),
+        Manifold.extrude(rrect(w - 0.7, h - 0.7, 4.1), 0.02).translate((0.0, 0.0, t_plate - 0.02)),
+    ])
+    hub = Manifold.cylinder(t_plate + 0.4, 4.3, 4.3, 64)
+    stem_len = stem_tu * pro.TU
+    stem = pro.pin_solid("flats", stem_len + 0.4, z0=t_plate)
+    m = bezel + hub + stem
+    conn = pro._pin_conn("shaft_drive", "flats", stem_len, z0=t_plate + 0.4)
+    return m, [conn], {}
 
 
 def char_head_fox(size="small", grid=(2, 1), lock=True, **_):
-    """Fox critter head: swept side cheek ruffs, tapered forward snout and smooth decal brow with 2x1 crown buds."""
-    hx, hy = _half(size, grid[0]), _half(size, grid[1])
-    H = 30.0
-    collar = _rr(2 * hx, 2 * hy, 3.2, 1.2, 0.0)
-    cheeks = _rr(43.5, 23.0, 7.5, 4.2, 14.8, y=hy - 11.5)
-    snout = Manifold.batch_hull([
-        _rr(24.0, 16.0, 6.0, 3.0, 11.5, y=-8.0),
-        _rr(13.0, 10.0, 4.6, 4.2, 14.2, y=-17.2),
-        _rr(18.0, 14.0, 6.0, 2.5, 20.5, y=-9.5),
+    """Fox critter head: plump elliptical skull, fluffy swept cheek ruffs, smooth snout, perky fox ears and centered 2x1 crown buds."""
+    H_rim = 27.6
+    z_stud = 25.8
+    skull = _organic_skull(H=H_rim, w_max=43.6, d_max=35.4, z_eq=15.0, crown_w=35.2, crown_d=26.0) - _crown_saddle_cutter(z_stud, H_rim)
+    ruffs = None
+    for sx in (-1, 1):
+        rf = _ellipse_chain([
+            (5.5,   5.8,  7.8, sx * 12.6, -2.2),
+            (11.5,  8.0, 10.6, sx * 15.6, -2.8),
+            (16.8,  9.6, 12.6, sx * 18.4, -3.2),
+            (20.4,  8.0, 11.2, sx * 17.2, -3.0),
+            (23.4,  5.8,  9.0, sx * 14.6, -2.6),
+        ])
+        ruffs = rf if ruffs is None else ruffs + rf
+    snout = _ellipse_chain([
+        (6.0,  14.8,  6.4, 0.0,  -6.5),
+        (11.5, 17.6,  9.6, 0.0,  -9.4),
+        (16.6, 16.0, 11.6, 0.0, -12.4),
+        (19.4, 14.0, 11.2, 0.0, -13.4),
+        (22.2, 16.0,  9.0, 0.0, -11.4),
     ])
-    crown = _rr(29.0, 18.5, 7.2, 2.0, H - 2.0, y=-2.8)
-    raw = Manifold.batch_hull([collar, cheeks, crown]) + Manifold.batch_hull([collar, snout])
-    body = collar + flare_clip(raw, collar.slice(1.0), 1.0)
+    ears = None
+    for sx in (-1, 1):
+        er = _ellipse_chain([
+            (17.0, 8.4, 8.0, sx * 14.2, -1.2),
+            (23.0, 9.4, 8.8, sx * 17.8, -1.2),
+            (28.4, 8.4, 7.8, sx * 20.2, -1.1),
+            (33.2, 6.0, 5.6, sx * 21.4, -1.0),
+            (36.8, 3.4, 3.4, sx * 22.0, -0.9),
+        ])
+        ears = er if ears is None else ears + er
+    body = skull + ruffs + snout + ears
     m, conns, ex = integrated_sockets(body, size, lock)
-    m, c_top = add_studs_at(m, size, 2, 1, 0.0, 0.0, H, "top_studs")
+    m, c_top = add_studs_at(m, size, 2, 1, 0.0, 0.0, z_stud, "top_studs")
     return m, conns + [c_top], ex
 
 
 def char_head_bear(size="small", grid=(2, 1), lock=True, **_):
-    """Bear cub head: plump muzzle and wide-set round ears flanking the 2x1 crown buds."""
-    hx, hy = _half(size, grid[0]), _half(size, grid[1])
-    width, depth, H = 39.5, 26.5, 30.0
-    yc = hy - depth / 2
-    collar = _rr(2 * hx, 2 * hy, 3.2, 1.2, 0.0)
-    skull = Manifold.batch_hull([
-        collar,
-        _rr(width, depth, 11.2, 6.5, 14.5, y=yc),
-        _rr(31.0, 19.5, 8.5, 2.0, H - 2.0, y=-3.0),
-    ])
-    muzzle = Manifold.batch_hull([
-        _rr(18.0, 8.0, 3.8, 1.5, 10.5, y=-11.5),
-        _rr(17.5, 10.0, 4.8, 5.2, 13.5, y=-16.8),
-        _rr(14.0, 8.0, 3.8, 1.2, 20.2, y=-13.5),
+    """Bear cub head: plump elliptical skull, rounded snout and chubby round ears flanking centered 2x1 crown buds."""
+    H_rim = 27.6
+    z_stud = 25.8
+    skull = _organic_skull(H=H_rim, w_max=44.0, d_max=35.6, z_eq=15.0, crown_w=35.4, crown_d=26.2) - _crown_saddle_cutter(z_stud, H_rim)
+    muzzle = _ellipse_chain([
+        (6.0,  15.6,  6.4, 0.0,  -6.5),
+        (11.5, 19.0,  9.4, 0.0,  -9.4),
+        (16.6, 20.0, 11.4, 0.0, -12.4),
+        (19.4, 18.8, 11.0, 0.0, -13.2),
+        (22.2, 15.8,  8.8, 0.0, -11.2),
     ])
     ears = None
     for sx in (-1, 1):
-        ear = Manifold.batch_hull([
-            _rr(6.5, 5.8, 2.6, 1.0, 22.5, x=sx * 15.8, y=-2.5),
-            sph(5.2, (sx * 16.8, -2.5, 29.2)),
-        ])
-        ears = ear if ears is None else ears + ear
-    body = collar + flare_clip(skull + muzzle + ears, collar.slice(1.0), 1.0)
+        er = _curl_lobe(sx * 21.6, -1.0, 27.4, 5.5, sx * 15.2, -1.0, 3.4, 14.6)
+        ears = er if ears is None else ears + er
+    body = skull + muzzle + ears
     m, conns, ex = integrated_sockets(body, size, lock)
+    m, c_top = add_studs_at(m, size, 2, 1, 0.0, 0.0, z_stud, "top_studs")
+    return m, conns + [c_top], ex
+
+
+def _hair_dome(h_top=18.2, w_peak=45.0, d_peak=35.0, z_eq=14.6, y_shift=-0.25, crown_w=28.8, crown_d=17.0):
+    """Full-volume pairwise elliptical hair dome: seats flush in head saddle, wraps full 45.0 x 35.0 mm temple/forehead/back width at <= 37.5 deg, then domes smoothly inward!"""
+    base = _collar_base_2x1(2.5)
+    trans = Manifold.batch_hull([
+        _rr(28.8, 16.4, 7.9, 0.08, 2.2),
+        _ellipse_plate(3.7, 30.2, 18.2, 0.08, 0.0, y_shift * 0.12),
+    ])
+    slices = [(3.7, 30.2, 18.2, 0.0, y_shift * 0.12)]
+    for k in range(1, 15):
+        z = 3.7 + (z_eq - 3.7) * (k / 14)
+        u = (z - 3.7) / (z_eq - 3.7)
+        # Strict <= 38 deg overhang: (35.0 - 18.2)/2 + 0.22 = 8.62 mm over dz = 10.9 mm -> 0.791 * 1.01 = 0.798 (38.6 deg)
+        s = 1.01 * u if u <= 0.90 else 1.0 - ((1.0 - u) / 0.10) ** 2 * (1.0 - 1.01 * 0.90)
+        w = 30.2 + (w_peak - 30.2) * s
+        d = 18.2 + (d_peak - 18.2) * s
+        slices.append((z, w, d, 0.0, y_shift * (0.12 + 0.88 * s)))
+    for k in range(1, 10):
+        z = z_eq + (h_top - z_eq) * (k / 9)
+        q = (z - z_eq) / max(0.8, h_top - z_eq)
+        s_top = 1.0 - math.cos(q * math.pi * 0.5)
+        w = w_peak + (crown_w - w_peak) * s_top
+        d = d_peak + (crown_d - d_peak) * s_top
+        slices.append((z, w, d, 0.0, y_shift * (1.0 - s_top)))
+    return base + trans + _ellipse_chain(slices)
+
+
+def hair_short_swept(size="small", grid=(2, 1), lock=True, **_):
+    """Hat-ready side-swept short hair piece: full 45.0 x 35.4 mm rounded hair volume with side-parted quiff bangs and 2x1 top_studs for hats or ears."""
+    H = 18.2
+    cap = _hair_dome(H, 45.0, 35.0, z_eq=14.6, y_shift=-0.25, crown_w=28.8, crown_d=16.8)
+    quiff = _ellipse_chain([
+        (5.2,  18.0, 6.4, 0.8,  -6.4),
+        (9.8,  22.6, 8.2, 1.8,  -9.0),
+        (14.6, 25.4, 9.2, 2.6, -12.0),
+        (16.6, 21.8, 7.8, 1.8, -10.2),
+        (H,    16.6, 6.0, 0.6,  -5.6),
+    ])
+    raw = (cap + quiff) ^ Manifold.cube((120.0, 120.0, H)).translate((-60.0, -60.0, 0.0))
+    m, conns, ex = integrated_sockets(raw, size, lock)
     m, c_top = add_studs_at(m, size, 2, 1, 0.0, 0.0, H, "top_studs")
     return m, conns + [c_top], ex
 
 
-def hair_swoosh(size="small", grid=(2, 1), base="integrated", pad=((-0.5, 0.0), (0.5, 0.0)), lock=True, **_):
-    """Side-swept surf/hero wave hair crest sweeping forward over the brow."""
-    _, fh, foot = _foot(size, grid, base, pad)
-    z0 = fh - 0.5
-    base_cap = _rr(23.8, 11.6, 4.8, 2.0, z0)
-    fringe = _rr(27.6, 16.4, 6.2, 3.4, z0 + 7.2, x=1.6, y=-2.3)
-    crest = _rr(20.5, 14.5, 5.5, 2.6, z0 + 12.0, x=5.5, y=-3.6)
-    tip = sph(3.9, (11.5, -4.0, z0 + 15.6))
-    wave = Manifold.batch_hull([base_cap, fringe, crest]) + Manifold.batch_hull([crest, tip])
-    body = flare_clip(wave, foot.slice(z0), z0) if foot is not None else wave
-    return _finish(size, grid, foot, lock, body, fh, base)
+def hair_bob(size="small", grid=(2, 1), lock=True, **_):
+    """Hat-ready flared A-line bob hair piece: wide 48.0 x 35.2 mm cheek-framing side wings, parted bangs, rounded back and 2x1 top_studs for hats or ears."""
+    H = 18.4
+    cap = _hair_dome(H, 45.4, 35.0, z_eq=14.8, y_shift=-0.25, crown_w=29.2, crown_d=17.0)
+    wings = None
+    for sx in (-1, 1):
+        wg = _ellipse_chain([
+            (4.8,   7.6, 12.2, sx * 12.0, -0.3),
+            (9.8,   9.6, 15.8, sx * 15.4, -0.5),
+            (14.8, 11.2, 19.2, sx * 18.4, -0.6),
+            (16.8,  9.4, 16.2, sx * 16.0, -0.4),
+            (H,     7.2, 12.6, sx * 12.2, -0.2),
+        ])
+        wings = wg if wings is None else wings + wg
+    bangs = None
+    for sx in (-1, 1):
+        bg = _ellipse_chain([
+            (5.4,  10.4, 6.0, sx * 6.0,  -6.4),
+            (10.0, 12.2, 7.4, sx * 6.6,  -9.2),
+            (14.8, 13.2, 8.2, sx * 6.4, -12.0),
+            (16.8, 11.4, 7.0, sx * 5.6,  -9.8),
+            (H,     9.4, 5.8, sx * 4.8,  -5.6),
+        ])
+        bangs = bg if bangs is None else bangs + bg
+    raw = (cap + wings + bangs) ^ Manifold.cube((120.0, 120.0, H)).translate((-60.0, -60.0, 0.0))
+    m, conns, ex = integrated_sockets(raw, size, lock)
+    m, c_top = add_studs_at(m, size, 2, 1, 0.0, 0.0, H, "top_studs")
+    return m, conns + [c_top], ex
 
 
-def hair_pigtails(size="small", grid=(2, 1), base="integrated", pad=((-0.5, 0.0), (0.5, 0.0)), lock=True, **_):
-    """Parted crown cap and bangs flaring smoothly to twin bouncy side puffs."""
-    _, fh, foot = _foot(size, grid, base, pad)
-    z0 = fh - 0.5
-    cap = Manifold.batch_hull([
-        _rr(23.8, 11.6, 4.8, 1.5, z0),
-        _rr(27.2, 15.8, 6.0, 3.6, z0 + 6.8, y=-2.0),
-        _rr(20.5, 13.5, 5.2, 1.8, z0 + 10.8, y=-2.2),
+def hair_swoosh(size="small", grid=(2, 1), lock=True, **_):
+    """Hat-ready wind-swept surf wave hair piece: asymmetric 47.4 x 35.2 mm wave crest curving inward to 2x1 top_studs crown for hats or ears."""
+    H = 18.6
+    cap = _hair_dome(H, 45.0, 35.0, z_eq=14.8, y_shift=-0.25, crown_w=28.8, crown_d=16.8)
+    wave = _ellipse_chain([
+        (4.8,  11.6, 11.8,  9.2, -1.0),
+        (9.8,  14.0, 15.0, 12.4, -1.8),
+        (15.0, 15.6, 17.6, 15.8, -2.4),
+        (17.0, 13.0, 14.6, 13.4, -1.8),
+        (H,     9.8, 11.0,  9.8, -0.8),
     ])
+    raw = (cap + wave) ^ Manifold.cube((120.0, 120.0, H)).translate((-60.0, -60.0, 0.0))
+    m, conns, ex = integrated_sockets(raw, size, lock)
+    m, c_top = add_studs_at(m, size, 2, 1, 0.0, 0.0, H, "top_studs")
+    return m, conns + [c_top], ex
+
+
+def hair_spiky(size="small", grid=(2, 1), lock=True, **_):
+    """Sculpted-top anime spiky hair piece (no top studs): full 45.0 x 35.0 mm cranial hair dome crowned by six bold radial spikes."""
+    cap = _hair_dome(19.2, 45.0, 35.0, z_eq=14.6, y_shift=-0.25, crown_w=15.0, crown_d=12.0)
+    spike_defs = [
+        (  0.0, -13.6, 25.6, 14.0, 12.0,   0.0, -6.8),
+        (-16.0,  -7.6, 24.4, 13.0, 11.6,  -9.6, -4.0),
+        ( 16.4,  -7.2, 24.8, 13.0, 11.6,   9.8, -4.0),
+        (-18.4,   2.4, 23.0, 12.4, 11.4, -11.4,  1.2),
+        ( 18.4,   2.4, 23.2, 12.4, 11.4,  11.4,  1.2),
+        (  0.0,  11.6, 22.8, 13.0, 11.6,   0.0,  6.0),
+    ]
+    spikes = [_ellipse_chain([
+        (10.0, wr,        dr,        xr,                 yr),
+        (17.2, wr * 0.72, dr * 0.72, (xr + xt) * 0.52, (yr + yt) * 0.52),
+        (zt,   4.8,       4.8,       xt,                 yt),
+    ]) for xt, yt, zt, wr, dr, xr, yr in spike_defs]
+    return integrated_sockets(cap + union(spikes), size, lock)
+
+
+def hair_pigtails(size="small", grid=(2, 1), lock=True, **_):
+    """Sculpted-top parted hair dome with bouncy side twin-tail puffs spanning 53.6 mm wide x 35.0 mm deep (no top studs)."""
+    cap = _hair_dome(19.2, 44.8, 35.0, z_eq=14.6, y_shift=-0.25, crown_w=14.6, crown_d=11.8)
     puffs = None
     for sx in (-1, 1):
-        puff = Manifold.batch_hull([
-            _rr(7.6, 8.8, 3.4, 1.5, z0 + 1.5, x=sx * 8.2, y=-0.4),
-            _rr(11.0, 11.2, 4.8, 4.0, z0 + 9.2, x=sx * 12.6, y=-1.2),
-            _rr(7.8, 8.4, 3.6, 1.8, z0 + 14.4, x=sx * 12.2, y=-1.2),
+        pf = _ellipse_chain([
+            (4.8,   9.2, 11.4, sx * 11.0, -0.3),
+            (9.8,  11.8, 14.4, sx * 14.2, -0.3),
+            (14.8, 13.8, 16.6, sx * 17.4, -0.3),
+            (18.8, 14.8, 17.4, sx * 19.4, -0.3),
+            (21.8, 12.2, 14.6, sx * 18.6, -0.3),
+            (23.8,  8.0,  9.8, sx * 17.0, -0.3),
         ])
-        puffs = puff if puffs is None else puffs + puff
-    raw = cap + puffs
-    body = flare_clip(raw, foot.slice(z0), z0) if foot is not None else raw
-    return _finish(size, grid, foot, lock, body, fh, base)
+        puffs = pf if puffs is None else puffs + pf
+    return integrated_sockets(cap + puffs, size, lock)
 
 
-def hair_curly(size="small", grid=(2, 1), base="integrated", pad=((-0.5, 0.0), (0.5, 0.0)), lock=True, **_):
-    """Volumetric cloud-curl crown framing the brow."""
-    _, fh, foot = _foot(size, grid, base, pad)
-    z0 = fh - 0.5
-    core = Manifold.batch_hull([
-        _rr(23.8, 11.6, 4.8, 2.0, z0),
-        _rr(27.4, 16.8, 7.2, 4.6, z0 + 7.0, y=-2.2),
+def hair_ponytail(size="small", grid=(2, 1), lock=True, **_):
+    """Sculpted-top sleek swept-back hair dome with voluminous high rear ponytail plume sweeping to y = +22.0 mm (no top studs)."""
+    cap = _hair_dome(19.0, 44.8, 34.8, z_eq=14.6, y_shift=-0.2, crown_w=14.6, crown_d=11.8)
+    tail = _ellipse_chain([
+        (4.6,  10.8,  9.6, 0.0,  3.2),
+        (9.4,  13.2, 12.4, 0.0,  6.4),
+        (14.2, 15.0, 14.8, 0.0,  9.6),
+        (18.6, 15.8, 16.2, 0.0, 12.8),
+        (22.2, 14.4, 15.2, 0.0, 14.2),
+        (25.0,  9.8, 10.6, 0.0, 13.6),
     ])
-    puffs = [
-        sph(5.8, (0.0, -2.0, z0 + 12.2)),
-        sph(5.0, (-8.4, -2.4, z0 + 10.6)),
-        sph(5.0, (8.4, -2.4, z0 + 10.6)),
-        sph(4.8, (-7.8, 1.6, z0 + 10.4)),
-        sph(4.8, (7.8, 1.6, z0 + 10.4)),
-        sph(4.6, (0.0, -5.6, z0 + 10.4)),
-        sph(4.6, (0.0, 2.6, z0 + 10.4)),
+    return integrated_sockets(cap + tail, size, lock)
+
+
+def hair_curly(size="small", grid=(2, 1), lock=True, **_):
+    """Sculpted-top 360-deg volumetric cloud-curl afro halo spanning 49 x 36.4 mm (no top studs): lush overlapping curls from brow to crown."""
+    cap = _hair_dome(19.4, 45.4, 35.2, z_eq=14.8, y_shift=-0.25, crown_w=18.0, crown_d=14.6)
+    curl_pts = [
+        # Upper crown cloud dome
+        (  0.0,  -0.4, 22.0, 5.8),
+        ( -8.0,  -4.2, 21.0, 5.4), (  8.0,  -4.2, 21.0, 5.4),
+        ( -8.0,   3.6, 20.8, 5.4), (  8.0,   3.6, 20.8, 5.4),
+        (  0.0,  -8.8, 19.6, 5.2), (  0.0,   8.2, 19.4, 5.2),
+        (-14.6,  -0.2, 19.8, 5.2), ( 14.6,  -0.2, 19.8, 5.2),
+        # Lower 360-deg brow, temple & nape curl ring (rooted deep inside the 45.4 x 35.2 mm dome -> zero P4 ledges!)
+        ( -5.6, -12.0, 17.6, 4.7), (  5.6, -12.0, 17.6, 4.7),
+        (-13.6,  -9.0, 17.6, 4.7), ( 13.6,  -9.0, 17.6, 4.7),
+        (-18.8,  -3.6, 17.4, 4.7), ( 18.8,  -3.6, 17.4, 4.7),
+        (-18.8,   3.2, 17.4, 4.7), ( 18.8,   3.2, 17.4, 4.7),
+        (-13.6,   8.8, 17.6, 4.7), ( 13.6,   8.8, 17.6, 4.7),
+        ( -5.6,  11.6, 17.6, 4.7), (  5.6,  11.6, 17.6, 4.7),
     ]
-    raw = core + union(puffs)
-    body = flare_clip(raw, foot.slice(z0), z0) if foot is not None else raw
-    return _finish(size, grid, foot, lock, body, fh, base)
+    puffs = [_curl_lobe(px, py, pz, pr, px * 0.68, py * 0.68, pr * 0.62, 6.2) for px, py, pz, pr in curl_pts]
+    return integrated_sockets(cap + union(puffs), size, lock)
 
 
-def hair_mohawk(size="small", grid=(2, 1), base="integrated", pad=((-0.5, 0.0), (0.5, 0.0)), lock=True, **_):
-    """Bold three-peak action mohawk fin sweeping forward across the brow."""
-    _, fh, foot = _foot(size, grid, base, pad)
-    z0 = fh - 0.5
-    pad_cap = Manifold.batch_hull([
-        _rr(23.6, 11.4, 4.6, 1.8, z0),
-        _rr(24.4, 14.0, 5.0, 2.0, z0 + 5.5, y=-1.3),
-    ])
-    fins = []
-    for yc, h_pk in ((-5.6, 16.5), (-0.8, 18.2), (3.8, 14.5)):
-        fin = Manifold.batch_hull([
-            _rr(6.6, 5.8, 2.6, 1.2, z0 + 1.5, y=yc * 0.45),
-            _rr(4.8, 5.4, 2.1, 2.0, z0 + h_pk, y=yc),
-        ])
-        fins.append(fin)
-    raw = pad_cap + union(fins)
-    body = flare_clip(raw, foot.slice(z0), z0) if foot is not None else raw
-    return _finish(size, grid, foot, lock, body, fh, base)
+def hair_mohawk(size="small", grid=(2, 1), lock=True, **_):
+    """Sculpted-top five-peak punk mohawk crest arcing front-to-back over a full 45.0 x 35.4 mm rounded fade dome (no top studs)."""
+    cap = _hair_dome(17.8, 45.0, 35.4, z_eq=14.8, y_shift=-0.2, crown_w=14.6, crown_d=13.0)
+    fins = [_ellipse_chain([
+        (8.6,  10.2, 10.6, 0.0, yc * 0.56),
+        (16.0,  8.8,  9.8, 0.0, yc * 0.84),
+        (zt,    5.6,  6.8, 0.0, yc),
+    ]) for yc, zt in ((-10.2, 24.0), (-5.2, 25.6), (0.0, 26.2), (5.2, 25.0), (10.0, 23.0))]
+    return integrated_sockets(cap + union(fins), size, lock)
 
 
 def pack_explorer(size="small", grid=(2, 2), lock=True, **_):
@@ -1178,40 +1424,236 @@ def char_legs_seated(size="small", grid=(2, 2), lock=True, **_):
     return m, conns + [c_top], ex
 
 
+def wheel_rim_sport(H=13.5):
+    """Visual companion alloy rim mesh for two-tone 3D rendering of veh_wheel_sport."""
+    hub = Manifold.batch_hull([
+        Manifold.cylinder(0.1, 6.7, 6.7, 64).translate((0, 0, 7.75)),
+        Manifold.cylinder(0.1, 5.9, 5.9, 64).translate((0, 0, H - 0.34)),
+    ])
+    lip = (
+        Manifold.cylinder(1.0, 12.9, 12.9, 84).translate((0, 0, H - 0.94))
+        - Manifold.cylinder(1.4, 11.4, 11.4, 84).translate((0, 0, H - 1.1))
+    )
+    spokes = None
+    for k in range(5):
+        sp = Manifold.batch_hull([
+            _rr(3.5, 8.7, 1.2, 0.2, 7.75, y=7.2),
+            _rr(2.7, 8.5, 1.0, 0.2, H - 0.64, y=7.3),
+        ]).rotate((0, 0, 72.0 * k))
+        spokes = sp if spokes is None else spokes + sp
+    return (hub + lip + spokes) - pro.bore_cutter("fixed", H + 1.0)
+
+
+def veh_wheel_sport(**_):
+    """36 mm x 13.5 mm 5-spoke deep-dish sport alloy wheel with radial tire shoulder."""
+    D, H = 36.0, 13.5
+    R = D / 2
+    tire = Manifold.batch_hull([
+        Manifold.cylinder(0.02, R - 1.6, R - 1.6, 96),
+        Manifold.cylinder(H - 4.2, R, R, 96).translate((0, 0, 2.0)),
+        Manifold.cylinder(0.02, R - 2.2, R - 2.2, 96).translate((0, 0, H - 0.02)),
+    ])
+    groove = Manifold.cube((1.6, 1.2, H + 2.0)).translate((R - 0.85, -0.6, -1.0))
+    for k in range(24):
+        tire = tire - groove.rotate((0, 0, 15.0 * k))
+    dish = Manifold.batch_hull([
+        Manifold.cylinder(0.05, 10.8, 10.8, 84).translate((0, 0, 8.0)),
+        Manifold.cylinder(1.0, 12.6, 12.6, 84).translate((0, 0, H - 0.5)),
+    ])
+    hub = Manifold.batch_hull([
+        Manifold.cylinder(0.1, 6.6, 6.6, 64).translate((0, 0, 7.8)),
+        Manifold.cylinder(0.1, 5.8, 5.8, 64).translate((0, 0, H - 0.4)),
+    ])
+    spokes = None
+    for k in range(5):
+        sp = Manifold.batch_hull([
+            _rr(3.4, 8.6, 1.2, 0.2, 7.8, y=7.2),
+            _rr(2.6, 8.4, 1.0, 0.2, H - 0.7, y=7.3),
+        ]).rotate((0, 0, 72.0 * k))
+        spokes = sp if spokes is None else spokes + sp
+    body = (tire - dish + hub + spokes) - pro.bore_cutter("fixed", H)
+    return body, [pro._hub_conn(H)], {}
+
+
+def wheel_rim_offroad(H=14.0):
+    """Visual companion 6-window beadlock alloy rim mesh for two-tone 3D rendering of veh_wheel_offroad."""
+    hub = Manifold.batch_hull([
+        Manifold.cylinder(0.1, 12.5, 12.5, 72).translate((0, 0, 8.05)),
+        Manifold.cylinder(0.1, 11.5, 11.5, 72).translate((0, 0, H - 0.64)),
+    ])
+    lip = (
+        Manifold.cylinder(1.0, 14.5, 14.5, 84).translate((0, 0, H - 0.94))
+        - Manifold.cylinder(1.4, 12.8, 12.8, 84).translate((0, 0, H - 1.1))
+    )
+    for k in range(6):
+        ang = math.radians(60.0 * k)
+        wx, wy = 8.4 * math.cos(ang), 8.4 * math.sin(ang)
+        hub = hub - Manifold.cylinder(8.0, 2.05, 2.05, 36).translate((wx, wy, 7.8))
+    return (hub + lip) - pro.bore_cutter("fixed", H + 1.0)
+
+
+def veh_wheel_offroad(**_):
+    """44 mm x 14.0 mm chunky 6-window beadlock off-road wheel with deep mud lugs."""
+    D, H = 44.0, 14.0
+    R = D / 2
+    tire = Manifold.batch_hull([
+        Manifold.cylinder(0.02, R - 1.8, R - 1.8, 96),
+        Manifold.cylinder(H - 4.6, R, R, 96).translate((0, 0, 2.2)),
+        Manifold.cylinder(0.02, R - 2.4, R - 2.4, 96).translate((0, 0, H - 0.02)),
+    ])
+    lug = Manifold.cube((2.6, 2.4, H + 2.0)).translate((R - 1.4, -1.2, -1.0))
+    for k in range(18):
+        tire = tire - lug.rotate((0, 0, 20.0 * k))
+    dish = Manifold.batch_hull([
+        Manifold.cylinder(0.05, 12.2, 12.2, 84).translate((0, 0, 8.2)),
+        Manifold.cylinder(1.0, 14.2, 14.2, 84).translate((0, 0, H - 0.5)),
+    ])
+    hub = Manifold.batch_hull([
+        Manifold.cylinder(0.1, 12.4, 12.4, 72).translate((0, 0, 8.1)),
+        Manifold.cylinder(0.1, 11.4, 11.4, 72).translate((0, 0, H - 0.7)),
+    ])
+    for k in range(6):
+        ang = math.radians(60.0 * k)
+        wx, wy = 8.4 * math.cos(ang), 8.4 * math.sin(ang)
+        hub = hub - Manifold.cylinder(8.0, 2.1, 2.1, 36).translate((wx, wy, 7.8))
+    body = (tire - dish + hub) - pro.bore_cutter("fixed", H)
+    return body, [pro._hub_conn(H)], {}
+
+
+def wheel_rim_moto(H=14.0):
+    """Dual-sided visual companion 3-spoke turbine alloy rim mesh for inline 2-wheel scooter and motorbike rendering."""
+    hub = Manifold.cylinder(H + 0.12, 6.1, 6.1, 64).translate((0, 0, -0.06))
+    lip_hi = (
+        Manifold.cylinder(0.9, 12.4, 12.4, 84).translate((0, 0, H - 0.84))
+        - Manifold.cylinder(1.3, 10.9, 10.9, 84).translate((0, 0, H - 1.0))
+    )
+    lip_lo = (
+        Manifold.cylinder(0.5, 12.4, 12.4, 84).translate((0, 0, -0.06))
+        - Manifold.cylinder(0.9, 10.9, 10.9, 84).translate((0, 0, -0.2))
+    )
+    spokes = None
+    for k in range(3):
+        sp_hi = Manifold.batch_hull([
+            _rr(4.1, 8.7, 1.4, 0.2, 8.95, y=7.0),
+            _rr(3.1, 8.5, 1.2, 0.2, H - 0.54, y=7.0),
+        ]).rotate((0, 0, 120.0 * k))
+        sp_lo = _rr(3.4, 8.6, 1.2, 0.5, -0.06, y=7.0).rotate((0, 0, 120.0 * k))
+        part_s = sp_hi + sp_lo
+        spokes = part_s if spokes is None else spokes + part_s
+    return (hub + lip_hi + lip_lo + spokes) - pro.bore_cutter("fixed", H + 1.0).translate((0, 0, -0.5))
+
+
+def veh_wheel_moto(**_):
+    """36 mm x 14.0 mm symmetric fat-crown 3-spoke turbine scooter and motorbike street tire."""
+    D, H = 36.0, 14.0
+    R = D / 2
+    tire = Manifold.batch_hull([
+        Manifold.cylinder(0.02, R - 2.4, R - 2.4, 96),
+        Manifold.cylinder(H - 6.0, R, R, 96).translate((0, 0, 3.0)),
+        Manifold.cylinder(0.02, R - 2.4, R - 2.4, 96).translate((0, 0, H - 0.02)),
+    ])
+    groove = Manifold.cube((1.3, 1.0, H + 2.0)).translate((R - 0.7, -0.5, -1.0))
+    for k in range(24):
+        tire = tire - groove.rotate((0, 0, 15.0 * k))
+    dish_top = Manifold.batch_hull([
+        Manifold.cylinder(0.05, 10.4, 10.4, 84).translate((0, 0, 9.2)),
+        Manifold.cylinder(1.0, 12.2, 12.2, 84).translate((0, 0, H - 0.5)),
+    ])
+    hub = Manifold.cylinder(H, 6.0, 6.0, 64)
+    spokes = None
+    for k in range(3):
+        sp = Manifold.batch_hull([
+            _rr(4.0, 8.6, 1.4, 0.2, 9.0, y=7.0),
+            _rr(3.0, 8.4, 1.2, 0.2, H - 0.6, y=7.0),
+        ]).rotate((0, 0, 120.0 * k))
+        spokes = sp if spokes is None else spokes + sp
+    body = (tire - dish_top + hub + spokes) - pro.bore_cutter("fixed", H)
+    return body, [pro._hub_conn(H)], {}
+
+
 def veh_car_chassis(size="small", grid=(4, 10), **_):
-    """4x10 TU Roadster Car chassis: recessed 4x2 cockpit, W6 Racer ports, steering bore and X-axle bores."""
-    W = 2 * _half(size, 4)
-    L_y = 2 * _half(size, 10)
-    z_seat = 13.5
+    """V2 Modular Wide-Body Roadster Rolling Chassis: 58 mm sculpted tub with raised side doors, 33.6 mm wheel-well axle tunnels and snap-on cover bays."""
+    W_cab = 58.0
+    W_tunnel = 33.6
     zc_axle = 6.25
-    sill = _flat_box(W, L_y, z_seat, r=5.0, bed_ch=0.6)
-    nose = _rr(W - 3.0, 12.0, 4.2, 15.5 - z_seat + 1.0, z_seat - 1.0, y=-56.0)
-    hood = Manifold.batch_hull([
-        _rr(W - 3.0, 35.0, 4.0, 1.0, z_seat - 0.5, y=-32.5),
-        _rr(W - 4.0, 34.0, 4.0, 19.0 - z_seat, z_seat, y=-32.0),
+    z_seat = 13.5
+    spine = _flat_box(W_tunnel, 124.6, z_seat, r=4.8, bed_ch=0.6)
+    tub = _flat_box(W_cab, 46.0, z_seat, r=5.6, bed_ch=0.6, y=2.0)
+    doors = None
+    for sx in (-1, 1):
+        dr = _hull_slices([
+            (z_seat - 0.5, 3.8, 38.0, 1.7, sx * 27.1, 0.0),
+            (19.0,         3.4, 32.0, 1.5, sx * 27.0, 0.0),
+        ])
+        doors = dr if doors is None else doors + dr
+    nose = _flat_box(33.6, 12.6, 15.5, r=4.2, bed_ch=0.6, y=-56.0)
+    hood_bay = _rr(W_tunnel - 0.4, 24.8, 3.8, 17.5 - z_seat + 1.0, z_seat - 1.0, y=-37.5)
+    cowl = _hull_slices([
+        (z_seat - 0.5, 42.0, 11.4, 3.6, 0.0, -18.5),
+        (20.5,         36.0, 11.0, 3.6, 0.0, -18.5),
     ])
-    dash = _rr(W - 5.0, 9.6, 3.2, 20.5 - 18.5, 18.5, y=-20.1)
-    rollbar = Manifold.batch_hull([
-        _rr(W - 3.0, 11.4, 3.8, 1.0, z_seat - 0.5, y=18.75),
-        _rr(32.0, 11.0, 3.8, 2.0, 21.0, y=18.75),
+    rear_arch = _hull_slices([
+        (z_seat - 0.5, 44.0, 11.4, 3.8, 0.0, 18.75),
+        (22.5,         32.0, 11.0, 3.8, 0.0, 18.75),
     ])
-    trunk = _rr(W - 3.5, 11.8, 3.8, 19.0 - z_seat + 1.0, z_seat - 1.0, y=31.25)
-    diffuser = _rr(W - 3.0, 24.0, 4.2, 15.5 - z_seat + 1.0, z_seat - 1.0, y=49.8)
-    m = sill + nose + hood + dash + rollbar + trunk + diffuser
+    rear_deck = _rr(W_tunnel - 0.4, 12.0, 3.6, 18.5 - z_seat + 1.0, z_seat - 1.0, y=31.25)
+    diffuser = _flat_box(33.6, 16.0, 15.5, r=4.2, bed_ch=0.6, y=54.0)
+    exh_pad = _rr(16.0, 24.8, 3.8, 15.5 - z_seat + 1.0, z_seat - 1.0, y=50.0)
+    m = spine + tub + doors + nose + hood_bay + cowl + rear_arch + rear_deck + diffuser + exh_pad
     conns = []
     m, c_cockpit = add_studs_at(m, size, 4, 2, 0.0, 0.0, z_seat, "top_studs")
-    conns.append(c_cockpit)
     m, c_front = add_studs_at(m, size, 2, 1, 0.0, -56.25, 15.5, "front_studs")
-    m, c_hood = add_studs_at(m, size, 2, 2, 0.0, -37.5, 19.0, "hood_studs")
-    m, c_roll = add_studs_at(m, size, 2, 1, 0.0, 18.75, 23.0, "rollbar_studs")
-    m, c_spoil = add_studs_at(m, size, 2, 1, 0.0, 31.25, 19.0, "spoiler_studs")
+    m, c_hood = add_studs_at(m, size, 2, 2, 0.0, -37.5, 17.5, "hood_studs")
+    m, c_roll = add_studs_at(m, size, 2, 1, 0.0, 18.75, 22.5, "rollbar_studs")
+    m, c_spoil = add_studs_at(m, size, 2, 1, 0.0, 31.25, 18.5, "spoiler_studs")
     m, c_exh = add_studs_at(m, size, 1, 2, 0.0, 50.0, 15.5, "exhaust_studs")
-    conns.extend([c_front, c_hood, c_roll, c_spoil, c_exh])
-    m, c_dash = cut_vertical_bore(m, "dash_bore", 0.0, -20.3125, 0.0, 20.5, "free")
-    m, c_af = cut_x_axle_bore(m, "axle_front", -37.5, zc_axle, W, "free")
-    m, c_ar = cut_x_axle_bore(m, "axle_rear", 37.5, zc_axle, W, "free")
+    conns.extend([c_cockpit, c_front, c_hood, c_roll, c_spoil, c_exh])
+    m, c_dash = cut_vertical_bore(m, "dash_bore", 0.0, -18.75, 0.0, 20.5, "free")
+    m, c_af = cut_x_axle_bore(m, "axle_front", -43.75, zc_axle, W_tunnel, "free")
+    m, c_ar = cut_x_axle_bore(m, "axle_rear", 43.75, zc_axle, W_tunnel, "free")
     conns.extend([c_dash, c_af, c_ar])
     return m, conns, {}
+
+
+def veh_car_hood_cover(size="small", grid=(2, 2), lock=True, **_):
+    """Snap-on sculpted Aero Hood & Fender Cover: snaps onto 2x2 hood_studs on Roadster Car or Hauler Truck, with top 2x2 studs."""
+    H = 14.5
+    base = _rr(24.6, 24.6, 4.2, 3.2, 0.0)
+    shell = _hull_slices([
+        (3.0,  24.6, 24.6, 4.2, 0.0,  0.0),
+        (9.2,  33.6, 30.8, 6.8, 0.0, -1.2),
+        (13.4, 41.2, 34.4, 8.4, 0.0, -1.8),
+        (H,    33.6, 29.0, 6.8, 0.0, -1.0),
+    ])
+    pods = None
+    for sx in (-1, 1):
+        pd = _hull_slices([
+            (9.2,  6.4, 13.0, 2.8, sx * 12.8, -4.6),
+            (13.8, 7.6, 16.4, 3.5, sx * 16.2, -5.8),
+            (16.0, 5.8, 12.0, 2.6, sx * 15.6, -5.0),
+        ])
+        pods = pd if pods is None else pods + pd
+    m, conns, ex = integrated_sockets(base + shell + pods, size, lock)
+    m, c_top = add_studs_at(m, size, 2, 2, 0.0, 0.0, H, "top_studs")
+    return m, conns + [c_top], ex
+
+
+def veh_cab_roof_cover(size="small", grid=(2, 1), lock=True, **_):
+    """Snap-on Cab Roof / GT Targa Canopy Cover: snaps onto 2x1 rollbar_studs or roof_studs and carries top 2x2 studs."""
+    H = 17.5
+    base = _rr(24.6, 12.1, 3.8, 3.2, 0.0)
+    pillar = _hull_slices([
+        (3.0,  24.6, 12.1, 3.8, 0.0, 0.0),
+        (8.0,  31.6, 12.2, 4.6, 0.0, 0.0),
+    ])
+    canopy = _hull_slices([
+        (7.7,  31.2, 12.0, 4.5, 0.0,  0.0),
+        (16.2, 39.6, 24.4, 6.8, 0.0, -0.4),
+        (H,    36.4, 24.8, 6.2, 0.0,  0.0),
+    ])
+    m, conns, ex = integrated_sockets(base + pillar + canopy, size, lock)
+    m, c_top = add_studs_at(m, size, 2, 2, 0.0, 0.0, H, "top_studs")
+    return m, conns + [c_top], ex
 
 
 def veh_steering_wheel(stem_tu=2, **_):
@@ -1238,69 +1680,154 @@ def veh_steering_wheel(stem_tu=2, **_):
 
 
 def veh_truck_chassis(size="small", grid=(4, 12), **_):
-    """4x12 TU Hauler Truck: shares front cab and 4x2 cockpit, adds 2x2 cab roof arch and open 4x3 TU stud cargo bed."""
-    W = 2 * _half(size, 4)
-    z_seat = 13.5
+    """V2 Modular Wide-Body Hauler Pickup Chassis: 58 mm sculpted cab with side doors, 33.6 mm off-road axle tunnels and 2x3 cargo bed bay."""
+    W_cab = 58.0
+    W_tunnel = 33.6
     zc_axle = 6.25
-    sill = _flat_box(W, 149.6, z_seat, r=5.0, bed_ch=0.6, y=12.5)
-    nose = _rr(W - 3.0, 12.0, 4.2, 16.0 - z_seat + 1.0, z_seat - 1.0, y=-56.0)
-    hood = Manifold.batch_hull([
-        _rr(W - 3.0, 35.0, 4.0, 1.0, z_seat - 0.5, y=-32.5),
-        _rr(W - 3.5, 34.0, 4.0, 19.5 - z_seat, z_seat, y=-32.0),
+    z_seat = 13.5
+    spine = _flat_box(W_tunnel, 149.6, z_seat, r=4.8, bed_ch=0.6, y=12.5)
+    tub = _flat_box(W_cab, 46.0, z_seat, r=5.6, bed_ch=0.6, y=2.0)
+    doors = None
+    for sx in (-1, 1):
+        dr = _hull_slices([
+            (z_seat - 0.5, 3.8, 38.0, 1.7, sx * 27.1, 0.0),
+            (19.5,         3.4, 32.0, 1.5, sx * 27.0, 0.0),
+        ])
+        doors = dr if doors is None else doors + dr
+    nose = _flat_box(33.6, 12.6, 16.0, r=4.2, bed_ch=0.6, y=-56.0)
+    hood_bay = _rr(W_tunnel - 0.4, 24.8, 3.8, 18.0 - z_seat + 1.0, z_seat - 1.0, y=-37.5)
+    cowl = _hull_slices([
+        (z_seat - 0.5, 42.0, 11.4, 3.6, 0.0, -18.5),
+        (21.0,         36.0, 11.0, 3.6, 0.0, -18.5),
     ])
-    dash = _rr(W - 5.0, 9.6, 3.2, 21.0 - 19.0, 19.0, y=-20.1)
-    cab_back = Manifold.batch_hull([
-        _rr(W - 3.0, 24.0, 4.0, 1.0, z_seat - 0.5, y=25.0),
-        _rr(30.0, 23.5, 4.2, 2.0, 24.0, y=25.0),
+    cab_arch = _hull_slices([
+        (z_seat - 0.5, 44.0, 11.4, 3.8, 0.0, 18.75),
+        (26.0,         30.0, 11.2, 3.8, 0.0, 18.75),
     ])
-    bed_floor = _rr(W - 2.5, 38.0, 3.2, 14.5 - z_seat + 1.0, z_seat - 1.0, y=56.25)
-    tailgate = _rr(W - 3.0, 11.6, 4.0, 17.5 - z_seat + 1.0, z_seat - 1.0, y=81.25)
-    m = sill + nose + hood + dash + cab_back + bed_floor + tailgate
+    bed_floor = _rr(W_tunnel - 0.4, 38.0, 3.4, 15.0 - z_seat + 1.0, z_seat - 1.0, y=56.25)
+    tailgate = _flat_box(33.6, 12.0, 18.5, r=4.0, bed_ch=0.6, y=81.25)
+    m = spine + tub + doors + nose + hood_bay + cowl + cab_arch + bed_floor + tailgate
     conns = []
     m, c_cockpit = add_studs_at(m, size, 4, 2, 0.0, 0.0, z_seat, "top_studs")
-    conns.append(c_cockpit)
     m, c_front = add_studs_at(m, size, 2, 1, 0.0, -56.25, 16.0, "front_studs")
-    m, c_hood = add_studs_at(m, size, 2, 2, 0.0, -37.5, 19.5, "hood_studs")
-    m, c_roof = add_studs_at(m, size, 2, 2, 0.0, 25.0, 26.0, "roof_studs")
-    m, c_cargo = add_studs_at(m, size, 4, 3, 0.0, 56.25, 14.5, "cargo_studs")
-    m, c_rear = add_studs_at(m, size, 2, 1, 0.0, 81.25, 17.5, "rear_studs")
-    conns.extend([c_front, c_hood, c_roof, c_cargo, c_rear])
-    m, c_dash = cut_vertical_bore(m, "dash_bore", 0.0, -20.3125, 0.0, 21.0, "free")
-    m, c_af = cut_x_axle_bore(m, "axle_front", -37.5, zc_axle, W, "free")
-    m, c_ar = cut_x_axle_bore(m, "axle_rear", 56.25, zc_axle, W, "free")
+    m, c_hood = add_studs_at(m, size, 2, 2, 0.0, -37.5, 18.0, "hood_studs")
+    m, c_roof = add_studs_at(m, size, 2, 1, 0.0, 18.75, 26.0, "roof_studs")
+    m, c_cargo = add_studs_at(m, size, 2, 3, 0.0, 56.25, 15.0, "cargo_studs")
+    conns.extend([c_cockpit, c_front, c_hood, c_roof, c_cargo])
+    m, c_dash = cut_vertical_bore(m, "dash_bore", 0.0, -18.75, 0.0, 21.0, "free")
+    m, c_af = cut_x_axle_bore(m, "axle_front", -43.75, zc_axle, W_tunnel, "free")
+    m, c_ar = cut_x_axle_bore(m, "axle_rear", 53.125, zc_axle, W_tunnel, "free")
     conns.extend([c_dash, c_af, c_ar])
     return m, conns, {}
 
 
+def veh_truck_bed_cover(size="small", grid=(2, 3), lock=True, **_):
+    """Snap-on Pickup Bed Side-Rails & Fender Cover: snaps onto 2x3 cargo_studs with sculpted wide-body bedsides and inner 2x2 bed_studs."""
+    H_floor = 9.2
+    foot = _rr(24.6, 37.1, 4.2, 3.2, 0.0)
+    bed_tub = _hull_slices([
+        (3.0,     24.6, 37.1, 4.2, 0.0, 0.0),
+        (H_floor, 33.2, 38.4, 4.8, 0.0, 0.0),
+    ])
+    rails = None
+    for sx in (-1, 1):
+        rl_low = _hull_slices([
+            (H_floor - 0.4, 2.7, 30.0, 1.2, sx * 15.15, 0.0),
+            (14.0,          2.8, 32.0, 1.3, sx * 15.20, 0.0),
+        ])
+        rl_hi = _hull_slices([
+            (13.7, 2.7, 31.6, 1.2, sx * 15.15, 0.0),
+            (20.2, 7.2, 34.4, 3.0, sx * 17.85, 0.0),
+        ])
+        part_r = rl_low + rl_hi
+        rails = part_r if rails is None else rails + part_r
+    tail_low = _hull_slices([
+        (H_floor - 0.4, 26.0, 4.2, 1.8, 0.0, 15.8),
+        (14.0,          31.0, 4.6, 2.0, 0.0, 16.0),
+    ])
+    tail_hi = _hull_slices([
+        (13.7, 30.6, 4.4, 1.9, 0.0, 16.0),
+        (19.8, 39.0, 5.2, 2.4, 0.0, 16.6),
+    ])
+    m, conns, ex = integrated_sockets(foot + bed_tub + rails + tail_low + tail_hi, size, lock)
+    m, c_bed = add_studs_at(m, size, 2, 2, 0.0, -4.5, H_floor, "bed_studs")
+    return m, conns + [c_bed], ex
+
+
 def veh_scooter_frame(size="small", grid=(2, 10), **_):
-    """2x10 TU 2-in-1 Motor Scooter and Sport Motorbike frame with 2x2 floorboard, raised 2x2 saddle, headtube and X-axle bores."""
-    W = 2 * _half(size, 2)
-    L_y = 2 * _half(size, 10)
-    z_floor = 13.5
+    """V2 True 2-Wheel Inline Scooter & Sport Motorbike Frame: twin-leg front clevis fork and rear swingarm holding two centered inline wheels."""
+    W_fork = 37.5
+    slot_w = 15.6
+    x_in = slot_w / 2
+    x_out = W_fork / 2
+    rw = x_out - x_in
+    xc_leg = (x_in + x_out) / 2
     zc_axle = 6.25
-    base = _flat_box(W, L_y, z_floor, r=5.5, bed_ch=0.6)
-    apron = Manifold.batch_hull([
-        _rr(W - 2.4, 42.0, 4.2, 1.0, z_floor - 0.5, y=-36.0),
-        _rr(W - 2.8, 17.5, 4.2, 25.0 - z_floor, z_floor, y=-25.0),
-        _rr(W - 3.2, 14.0, 4.0, 16.0 - z_floor, z_floor, y=-48.0),
+    z_floor = 12.0
+    rails = None
+    for sx in (-1, 1):
+        xc = sx * xc_leg
+        rl = _flat_box(rw, 134.0, z_floor, r=3.8, bed_ch=0.5, y=3.0).translate((xc, 0.0, 0.0))
+        f_leg = _hull_slices([
+            (z_floor - 0.5, rw,       36.0, 3.6, xc, -42.0),
+            (26.5,          rw - 0.6, 30.0, 3.2, xc, -39.0),
+        ])
+        r_leg = _hull_slices([
+            (z_floor - 0.5, rw,       42.0, 3.6, xc, 47.0),
+            (26.5,          rw - 0.6, 38.0, 3.2, xc, 45.0),
+        ])
+        part_r = rl + f_leg + r_leg
+        rails = part_r if rails is None else rails + part_r
+    center_tub = _flat_box(W_fork, 56.0, z_floor, r=4.8, bed_ch=0.5, y=3.2)
+    neck_pillar = _hull_slices([
+        (z_floor - 0.5, 28.0, 11.6, 4.0, 0.0, -19.0),
+        (25.0,          26.4, 11.4, 4.0, 0.0, -19.0),
     ])
-    saddle = Manifold.batch_hull([
-        _rr(W - 2.4, 23.6, 4.2, 1.0, z_floor - 0.5, y=25.0),
-        _rr(W - 2.8, 23.2, 4.2, 21.0 - z_floor, z_floor, y=25.0),
+    front_crown = _hull_slices([
+        (25.2, W_fork - 2.0, 20.0, 4.0, 0.0, -37.0),
+        (29.0, 26.8,         16.0, 4.0, 0.0, -37.5),
     ])
-    tail = _rr(W - 2.8, 23.6, 4.2, 15.5 - z_floor + 1.0, z_floor - 1.0, y=50.0)
-    m = base + apron + saddle + tail
+    seat_pedestal = _hull_slices([
+        (z_floor - 0.5, 30.0, 18.0, 4.4, 0.0, 22.2),
+        (26.5,          28.0, 25.6, 4.4, 0.0, 26.0),
+    ])
+    tail_fender = _hull_slices([
+        (24.8, W_fork - 2.0, 34.0, 4.2, 0.0, 45.0),
+        (26.5, 26.8,         32.0, 4.2, 0.0, 46.0),
+    ])
+    m = rails + center_tub + neck_pillar + front_crown + seat_pedestal + tail_fender
     conns = []
     m, c_floor = add_studs_at(m, size, 2, 2, 0.0, 0.0, z_floor, "top_studs")
-    conns.append(c_floor)
-    m, c_seat = add_studs_at(m, size, 2, 2, 0.0, 25.0, 21.0, "seat_studs")
-    m, c_exh = add_studs_at(m, size, 1, 2, 0.0, 50.0, 15.5, "exhaust_studs")
-    conns.extend([c_seat, c_exh])
-    m, c_ht = cut_vertical_bore(m, "headtube", 0.0, -25.0, 0.0, 25.0, "free")
-    m, c_af = cut_x_axle_bore(m, "axle_front", -43.75, zc_axle, W, "free")
-    m, c_ar = cut_x_axle_bore(m, "axle_rear", 43.75, zc_axle, W, "free")
-    conns.extend([c_ht, c_af, c_ar])
+    m, c_fair = add_studs_at(m, size, 2, 1, 0.0, -37.5, 29.0, "fairing_studs")
+    m, c_seat = add_studs_at(m, size, 2, 2, 0.0, 25.0, 26.5, "seat_studs")
+    m, c_exh = add_studs_at(m, size, 1, 2, 0.0, 50.0, 26.5, "exhaust_studs")
+    conns.extend([c_floor, c_fair, c_seat, c_exh])
+    m, c_head = cut_vertical_bore(m, "headtube", 0.0, -18.75, 0.0, 25.0, "free")
+    m, c_af = _cut_clevis_x_bores(m, "axle_front", "axle_front_r", x_out, x_in, -43.75, zc_axle, "free")
+    m, c_ar = _cut_clevis_x_bores(m, "axle_rear", "axle_rear_r", x_out, x_in, 50.0, zc_axle, "free")
+    conns.append(c_head)
+    conns.extend(c_af)
+    conns.extend(c_ar)
     return m, conns, {}
+
+
+def veh_scooter_fairing(size="small", grid=(2, 1), lock=True, **_):
+    """Snap-on Scooter Front Leg-Shield Fairing & Round Headlight Nacelle on 2x1 fairing_studs."""
+    H = 15.0
+    base = _rr(24.6, 12.1, 4.0, 3.2, 0.0)
+    shield = _hull_slices([
+        (3.0,  24.6, 12.1, 4.0, 0.0,  0.0),
+        (8.5,  30.6, 16.6, 6.2, 0.0, -1.8),
+        (13.0, 33.4, 19.2, 7.2, 0.0, -3.0),
+        (H,    26.0, 15.4, 5.8, 0.0, -2.5),
+    ])
+    lamp = _hull_slices([
+        (3.2,  11.0,  8.0, 3.2, 0.0, -1.5),
+        (9.5,  13.2, 11.0, 4.4, 0.0, -4.8),
+        (13.2, 13.8, 12.4, 4.8, 0.0, -7.2),
+        (14.8, 11.4, 10.0, 4.0, 0.0, -6.6),
+    ])
+    return integrated_sockets(base + shield + lamp, size, lock)
 
 
 def veh_handlebar_fork(stem_tu=2, **_):
@@ -1324,22 +1851,19 @@ def veh_handlebar_fork(stem_tu=2, **_):
 
 
 def veh_moto_cowling(size="small", grid=(2, 2), lock=True, **_):
-    """Snap-on 2x2 Sport Motorbike straddle fuel tank and windscreen converting Scooter to Motorbike."""
-    hx, hy = _half(size, grid[0]), _half(size, grid[1])
-    H = 20.0
-    base = _rr(2 * hx, 2 * hy, 5.2, 2.0, 0.0)
-    tank = Manifold.batch_hull([
-        base,
-        _rr(21.5, 22.0, 6.2, 5.5, 7.5, y=-2.8),
-        _rr(18.0, 17.5, 5.2, 2.0, H - 2.0, y=-1.5),
+    """V2 Superbike Straddle Fuel Tank & Radiator Shrouds snapping onto the 2x2 step-through bay with top 2x1 tank_studs."""
+    H = 29.0
+    base = _rr(24.6, 24.6, 4.4, 3.2, 0.0)
+    tank = _hull_slices([
+        (3.0,  24.6, 24.6, 4.4, 0.0,  0.0),
+        (9.5,  32.6, 24.6, 6.8, 0.0,  0.0),
+        (14.5, 38.6, 23.2, 7.8, 0.0, -1.6),
+        (21.5, 39.6, 22.8, 8.2, 0.0, -2.2),
+        (26.5, 31.6, 19.6, 6.8, 0.0, -2.2),
+        (H,    24.8, 15.0, 4.8, 0.0, -2.0),
     ])
-    screen = Manifold.batch_hull([
-        _rr(16.5, 7.5, 3.2, 2.0, 9.0, y=-8.0),
-        _rr(13.5, 5.5, 2.5, 2.0, 23.0, y=-10.2),
-    ])
-    raw = base + flare_clip(tank + screen, base.slice(1.0), 1.0)
-    m, conns, ex = integrated_sockets(raw, size, lock)
-    m, c_top = add_studs_at(m, size, 2, 1, 0.0, -1.5, H, "tank_studs")
+    m, conns, ex = integrated_sockets(base + tank, size, lock)
+    m, c_top = add_studs_at(m, size, 2, 1, 0.0, -2.0, H, "tank_studs")
     return m, conns + [c_top], ex
 
 

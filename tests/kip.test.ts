@@ -69,13 +69,13 @@ describe("Kip modular character rig & 3D demo viewer integration", () => {
     }
   });
 
-  it("verifies all 18 Phase 1 & 2 PartSpec v2 parts and 9 multi-part assemblies as Conforming", () => {
+  it("verifies all 30 Phase 1 & 2 V2 PartSpec v2 parts and 14 multi-part assemblies as Conforming", () => {
     const manifestPath = join(root, "public/kip/kip-partspec-manifest.json");
     expect(existsSync(manifestPath)).toBe(true);
     const psManifest = JSON.parse(readFileSync(manifestPath, "utf8"));
     expect(psManifest.status).toBe("verified");
-    expect(psManifest.parts).toHaveLength(18);
-    expect(psManifest.assemblies).toHaveLength(9);
+    expect(psManifest.parts).toHaveLength(30);
+    expect(psManifest.assemblies).toHaveLength(14);
 
     const validStats = new Set(["Speed", "Spin", "Torque", "Glow"]);
     for (const part of psManifest.parts) {
@@ -145,7 +145,7 @@ describe("Kip modular character rig & 3D demo viewer integration", () => {
     }
   });
 
-  it("promotes all 18 Kip wardrobe and vehicle parts into parts/partspec as verified Wave 9 (W9)", () => {
+  it("promotes all 30 Kip wardrobe and V2 vehicle parts into parts/partspec as verified Wave 9 (W9)", () => {
     const catalog = JSON.parse(readFileSync(join(root, "parts/partspec/catalog.json"), "utf8"));
     const mainManifest = JSON.parse(
       readFileSync(join(root, "parts/partspec/toyventor_parts.json"), "utf8"),
@@ -154,9 +154,9 @@ describe("Kip modular character rig & 3D demo viewer integration", () => {
     expect(wave9Wave).toBeDefined();
 
     const w9Rows = catalog.parts.filter((p: { wave?: string }) => p.wave === "W9");
-    expect(w9Rows).toHaveLength(18);
-    expect(w9Rows.filter((p: { line: string }) => p.line === "snap")).toHaveLength(14);
-    expect(w9Rows.filter((p: { line: string }) => p.line === "pro")).toHaveLength(4);
+    expect(w9Rows).toHaveLength(30);
+    expect(w9Rows.filter((p: { line: string }) => p.line === "snap")).toHaveLength(22);
+    expect(w9Rows.filter((p: { line: string }) => p.line === "pro")).toHaveLength(8);
 
     const byId = new Map<string, Record<string, unknown>>(
       mainManifest.parts.map((p: { id: string }) => [p.id, p]),

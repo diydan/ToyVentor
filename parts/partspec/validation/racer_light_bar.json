@@ -4,7 +4,7 @@
   "file_sha256": "a4b8db6adf97ef2e3c926c69afcd34579bf3ebdac20f0da83a7a2bb6aeb57457",
   "part_id": "racer_light_bar",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-10-30T08:21:25Z",
+  "checked_at": "2026-10-30T17:13:14Z",
   "metrics": {
     "bbox_mm": [
       24.4,
@@ -166,7 +166,7 @@
     ],
     "engine": "PrusaSlicer-2.8.1",
     "slice_logic": "1",
-    "reused_from": "2026-10-30T08:09:33Z"
+    "reused_from": "2026-10-30T16:41:50Z"
   },
   "verdict": "pass",
   "summary": "Prints as is"

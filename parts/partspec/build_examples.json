@@ -486,7 +486,7 @@
       },
       {
         "code": "collision",
-        "detail": "g10 and g20 overlap by 1080 mm3"
+        "detail": "g10 and g20 overlap by 1088 mm3"
       }
     ],
     "warnings": [],
@@ -1501,22 +1501,36 @@
         }
       },
       {
-        "id": "jetpack",
-        "part": "robot_back_jetpack",
+        "id": "faceplate",
+        "part": "char_faceplate",
         "pose": {
-          "x": 0.0,
-          "y": 6.25,
-          "z": 41.0,
-          "rot": 0
+          "x": -1.5920408388915593e-16,
+          "y": -24.475,
+          "z": 56.625,
+          "rot": 1,
+          "tilt": [
+            0.0,
+            90.0
+          ]
         }
       },
       {
         "id": "hair",
-        "part": "hair_pigtails",
+        "part": "hair_short_swept",
         "pose": {
           "x": 0.0,
           "y": -6.25,
-          "z": 71.5,
+          "z": 69.0,
+          "rot": 0
+        }
+      },
+      {
+        "id": "hat",
+        "part": "wobble_hat",
+        "pose": {
+          "x": -6.25,
+          "y": -6.25,
+          "z": 80.8,
           "rot": 0
         }
       }
@@ -1547,16 +1561,24 @@
         "gap_max_mm": 0.05
       },
       {
-        "male": "arms.top_studs",
-        "female": "jetpack.under_sockets",
-        "engaged_studs": 2,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "male": "faceplate.axis",
+        "female": "head.face_slot",
+        "engaged_studs": 1,
+        "fit": "free",
+        "gap_min_mm": 0.2,
+        "gap_max_mm": 0.2
       },
       {
         "male": "head.top_studs",
         "female": "hair.under_sockets",
         "engaged_studs": 2,
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      },
+      {
+        "male": "hair.top_studs",
+        "female": "hat.under_sockets",
+        "engaged_studs": 1,
         "gap_min_mm": 0.05,
         "gap_max_mm": 0.05
       }
@@ -1571,6 +1593,26 @@
           "x": 0.0,
           "y": 0.0,
           "z": 0.0,
+          "rot": 0
+        }
+      },
+      {
+        "id": "hood_cover",
+        "part": "veh_car_hood_cover",
+        "pose": {
+          "x": 0.0,
+          "y": -37.5,
+          "z": 17.5,
+          "rot": 0
+        }
+      },
+      {
+        "id": "cab_cover",
+        "part": "veh_cab_roof_cover",
+        "pose": {
+          "x": 0.0,
+          "y": 18.75,
+          "z": 22.5,
           "rot": 0
         }
       },
@@ -1590,7 +1632,7 @@
         "pose": {
           "x": 0.0,
           "y": -37.5,
-          "z": 19.0,
+          "z": 32.0,
           "rot": 0
         }
       },
@@ -1599,8 +1641,8 @@
         "part": "racer_light_bar",
         "pose": {
           "x": 0.0,
-          "y": 18.75,
-          "z": 23.0,
+          "y": 12.5,
+          "z": 40.0,
           "rot": 0
         }
       },
@@ -1610,7 +1652,7 @@
         "pose": {
           "x": 0.0,
           "y": 31.25,
-          "z": 19.0,
+          "z": 18.5,
           "rot": 0
         }
       },
@@ -1639,17 +1681,17 @@
         "part": "veh_steering_wheel",
         "pose": {
           "x": 0.0,
-          "y": -20.3125,
+          "y": -18.75,
           "z": -13.0,
           "rot": 0
         }
       },
       {
         "id": "ax_f",
-        "part": "shaft_tu07",
+        "part": "shaft_tu05",
         "pose": {
-          "x": -43.75,
-          "y": -37.5,
+          "x": -31.25,
+          "y": -43.75,
           "z": 6.25,
           "rot": 0,
           "tilt": [
@@ -1660,10 +1702,10 @@
       },
       {
         "id": "wl_f",
-        "part": "wheel_tu04",
+        "part": "veh_wheel_sport",
         "pose": {
-          "x": -43.75,
-          "y": -37.5,
+          "x": -31.25,
+          "y": -43.75,
           "z": 6.25,
           "rot": 0,
           "tilt": [
@@ -1674,11 +1716,11 @@
       },
       {
         "id": "wr_f",
-        "part": "wheel_tu04",
+        "part": "veh_wheel_sport",
         "pose": {
-          "x": 31.25,
-          "y": -37.5,
-          "z": 6.250000000000004,
+          "x": 17.75,
+          "y": -43.75,
+          "z": 6.250000000000003,
           "rot": 0,
           "tilt": [
             0.0,
@@ -1688,10 +1730,10 @@
       },
       {
         "id": "ax_r",
-        "part": "shaft_tu07",
+        "part": "shaft_tu05",
         "pose": {
-          "x": -43.75,
-          "y": 37.5,
+          "x": -31.25,
+          "y": 43.75,
           "z": 6.25,
           "rot": 0,
           "tilt": [
@@ -1702,10 +1744,10 @@
       },
       {
         "id": "wl_r",
-        "part": "wheel_tu04",
+        "part": "veh_wheel_sport",
         "pose": {
-          "x": -43.75,
-          "y": 37.5,
+          "x": -31.25,
+          "y": 43.75,
           "z": 6.25,
           "rot": 0,
           "tilt": [
@@ -1716,11 +1758,11 @@
       },
       {
         "id": "wr_r",
-        "part": "wheel_tu04",
+        "part": "veh_wheel_sport",
         "pose": {
-          "x": 31.25,
-          "y": 37.5,
-          "z": 6.250000000000004,
+          "x": 17.75,
+          "y": 43.75,
+          "z": 6.250000000000003,
           "rot": 0,
           "tilt": [
             0.0,
@@ -1734,22 +1776,22 @@
     "warnings": [],
     "edges": [
       {
-        "male": "car.front_studs",
-        "female": "bull_bar.under_sockets",
-        "engaged_studs": 2,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
-      },
-      {
         "male": "car.hood_studs",
-        "female": "hood_scoop.under_sockets",
+        "female": "hood_cover.under_sockets",
         "engaged_studs": 4,
         "gap_min_mm": 0.05,
         "gap_max_mm": 0.05
       },
       {
         "male": "car.rollbar_studs",
-        "female": "light_bar.under_sockets",
+        "female": "cab_cover.under_sockets",
+        "engaged_studs": 2,
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      },
+      {
+        "male": "car.front_studs",
+        "female": "bull_bar.under_sockets",
         "engaged_studs": 2,
         "gap_min_mm": 0.05,
         "gap_max_mm": 0.05
@@ -1800,6 +1842,20 @@
         "gap_max_mm": 0.2
       },
       {
+        "male": "hood_cover.top_studs",
+        "female": "hood_scoop.under_sockets",
+        "engaged_studs": 4,
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      },
+      {
+        "male": "cab_cover.top_studs",
+        "female": "light_bar.under_sockets",
+        "engaged_studs": 2,
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      },
+      {
         "male": "ax_f.axis",
         "female": "wl_f.hub",
         "engaged_studs": 1,
@@ -1846,6 +1902,36 @@
         }
       },
       {
+        "id": "hood_cover",
+        "part": "veh_car_hood_cover",
+        "pose": {
+          "x": 0.0,
+          "y": -37.5,
+          "z": 18.0,
+          "rot": 0
+        }
+      },
+      {
+        "id": "cab_cover",
+        "part": "veh_cab_roof_cover",
+        "pose": {
+          "x": 0.0,
+          "y": 18.75,
+          "z": 26.0,
+          "rot": 0
+        }
+      },
+      {
+        "id": "bed_cover",
+        "part": "veh_truck_bed_cover",
+        "pose": {
+          "x": 0.0,
+          "y": 56.25,
+          "z": 15.0,
+          "rot": 0
+        }
+      },
+      {
         "id": "bull_bar",
         "part": "racer_bull_bar",
         "pose": {
@@ -1860,8 +1946,8 @@
         "part": "racer_roof_rack",
         "pose": {
           "x": 0.0,
-          "y": 25.0,
-          "z": 26.0,
+          "y": 18.75,
+          "z": 43.5,
           "rot": 0
         }
       },
@@ -1870,8 +1956,18 @@
         "part": "pack_explorer",
         "pose": {
           "x": 0.0,
-          "y": 50.0,
-          "z": 14.5,
+          "y": 51.75,
+          "z": 24.2,
+          "rot": 0
+        }
+      },
+      {
+        "id": "driver_legs",
+        "part": "char_legs_seated",
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 13.5,
           "rot": 0
         }
       },
@@ -1880,17 +1976,17 @@
         "part": "veh_steering_wheel",
         "pose": {
           "x": 0.0,
-          "y": -20.3125,
+          "y": -18.75,
           "z": -13.0,
           "rot": 0
         }
       },
       {
         "id": "ax_f",
-        "part": "shaft_tu07",
+        "part": "shaft_tu05",
         "pose": {
-          "x": -43.75,
-          "y": -37.5,
+          "x": -31.25,
+          "y": -43.75,
           "z": 6.25,
           "rot": 0,
           "tilt": [
@@ -1901,10 +1997,10 @@
       },
       {
         "id": "wl_f",
-        "part": "wheel_tu06",
+        "part": "veh_wheel_offroad",
         "pose": {
-          "x": -43.75,
-          "y": -37.5,
+          "x": -31.25,
+          "y": -43.75,
           "z": 6.25,
           "rot": 0,
           "tilt": [
@@ -1915,11 +2011,11 @@
       },
       {
         "id": "wr_f",
-        "part": "wheel_tu06",
+        "part": "veh_wheel_offroad",
         "pose": {
-          "x": 31.25,
-          "y": -37.5,
-          "z": 6.250000000000004,
+          "x": 17.25,
+          "y": -43.75,
+          "z": 6.250000000000003,
           "rot": 0,
           "tilt": [
             0.0,
@@ -1929,10 +2025,10 @@
       },
       {
         "id": "ax_r",
-        "part": "shaft_tu07",
+        "part": "shaft_tu05",
         "pose": {
-          "x": -43.75,
-          "y": 56.25,
+          "x": -31.25,
+          "y": 53.125,
           "z": 6.25,
           "rot": 0,
           "tilt": [
@@ -1943,10 +2039,10 @@
       },
       {
         "id": "wl_r",
-        "part": "wheel_tu06",
+        "part": "veh_wheel_offroad",
         "pose": {
-          "x": -43.75,
-          "y": 56.25,
+          "x": -31.25,
+          "y": 53.125,
           "z": 6.25,
           "rot": 0,
           "tilt": [
@@ -1957,11 +2053,11 @@
       },
       {
         "id": "wr_r",
-        "part": "wheel_tu06",
+        "part": "veh_wheel_offroad",
         "pose": {
-          "x": 31.25,
-          "y": 56.25,
-          "z": 6.250000000000004,
+          "x": 17.25,
+          "y": 53.125,
+          "z": 6.250000000000003,
           "rot": 0,
           "tilt": [
             0.0,
@@ -1975,6 +2071,27 @@
     "warnings": [],
     "edges": [
       {
+        "male": "truck.hood_studs",
+        "female": "hood_cover.under_sockets",
+        "engaged_studs": 4,
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      },
+      {
+        "male": "truck.roof_studs",
+        "female": "cab_cover.under_sockets",
+        "engaged_studs": 2,
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      },
+      {
+        "male": "truck.cargo_studs",
+        "female": "bed_cover.under_sockets",
+        "engaged_studs": 6,
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      },
+      {
         "male": "truck.front_studs",
         "female": "bull_bar.under_sockets",
         "engaged_studs": 2,
@@ -1982,15 +2099,8 @@
         "gap_max_mm": 0.05
       },
       {
-        "male": "truck.roof_studs",
-        "female": "roof_rack.under_sockets",
-        "engaged_studs": 4,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
-      },
-      {
-        "male": "truck.cargo_studs",
-        "female": "cargo_pack.under_sockets",
+        "male": "truck.top_studs",
+        "female": "driver_legs.under_sockets",
         "engaged_studs": 4,
         "gap_min_mm": 0.05,
         "gap_max_mm": 0.05
@@ -2018,6 +2128,20 @@
         "fit": "free",
         "gap_min_mm": 0.2,
         "gap_max_mm": 0.2
+      },
+      {
+        "male": "cab_cover.top_studs",
+        "female": "roof_rack.under_sockets",
+        "engaged_studs": 4,
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      },
+      {
+        "male": "bed_cover.bed_studs",
+        "female": "cargo_pack.under_sockets",
+        "engaged_studs": 4,
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
       },
       {
         "male": "ax_f.axis",
@@ -2053,7 +2177,7 @@
       }
     ]
   },
-  "valid_kip_sport_moto": {
+  "valid_kip_motor_scooter": {
     "build": [
       {
         "id": "scooter",
@@ -2066,12 +2190,12 @@
         }
       },
       {
-        "id": "moto_cowling",
-        "part": "veh_moto_cowling",
+        "id": "fairing",
+        "part": "veh_scooter_fairing",
         "pose": {
           "x": 0.0,
-          "y": 0.0,
-          "z": 13.5,
+          "y": -37.5,
+          "z": 29.0,
           "rot": 0
         }
       },
@@ -2081,7 +2205,7 @@
         "pose": {
           "x": 0.0,
           "y": 25.0,
-          "z": 21.0,
+          "z": 26.5,
           "rot": 0
         }
       },
@@ -2091,7 +2215,7 @@
         "pose": {
           "x": 0.0,
           "y": 50.0,
-          "z": 15.5,
+          "z": 26.5,
           "rot": 0
         }
       },
@@ -2100,16 +2224,16 @@
         "part": "veh_handlebar_fork",
         "pose": {
           "x": 0.0,
-          "y": -25.0,
+          "y": -18.75,
           "z": 0.0,
           "rot": 0
         }
       },
       {
         "id": "ax_f",
-        "part": "shaft_tu05",
+        "part": "racer_axle",
         "pose": {
-          "x": -31.25,
+          "x": -18.75,
           "y": -43.75,
           "z": 6.25,
           "rot": 0,
@@ -2120,26 +2244,12 @@
         }
       },
       {
-        "id": "wl_f",
-        "part": "wheel_tu04",
+        "id": "wm_f",
+        "part": "veh_wheel_moto",
         "pose": {
-          "x": -31.25,
+          "x": -7.0,
           "y": -43.75,
-          "z": 6.25,
-          "rot": 0,
-          "tilt": [
-            0.0,
-            90.0
-          ]
-        }
-      },
-      {
-        "id": "wr_f",
-        "part": "wheel_tu04",
-        "pose": {
-          "x": 18.75,
-          "y": -43.75,
-          "z": 6.250000000000003,
+          "z": 6.250000000000001,
           "rot": 0,
           "tilt": [
             0.0,
@@ -2149,10 +2259,10 @@
       },
       {
         "id": "ax_r",
-        "part": "shaft_tu05",
+        "part": "racer_axle",
         "pose": {
-          "x": -31.25,
-          "y": 43.75,
+          "x": -18.75,
+          "y": 50.0,
           "z": 6.25,
           "rot": 0,
           "tilt": [
@@ -2162,26 +2272,12 @@
         }
       },
       {
-        "id": "wl_r",
-        "part": "wheel_tu04",
+        "id": "wm_r",
+        "part": "veh_wheel_moto",
         "pose": {
-          "x": -31.25,
-          "y": 43.75,
-          "z": 6.25,
-          "rot": 0,
-          "tilt": [
-            0.0,
-            90.0
-          ]
-        }
-      },
-      {
-        "id": "wr_r",
-        "part": "wheel_tu04",
-        "pose": {
-          "x": 18.75,
-          "y": 43.75,
-          "z": 6.250000000000003,
+          "x": -7.0,
+          "y": 50.0,
+          "z": 6.250000000000001,
           "rot": 0,
           "tilt": [
             0.0,
@@ -2195,9 +2291,9 @@
     "warnings": [],
     "edges": [
       {
-        "male": "scooter.top_studs",
-        "female": "moto_cowling.under_sockets",
-        "engaged_studs": 4,
+        "male": "scooter.fairing_studs",
+        "female": "fairing.under_sockets",
+        "engaged_studs": 2,
         "gap_min_mm": 0.05,
         "gap_max_mm": 0.05
       },
@@ -2232,6 +2328,14 @@
         "gap_max_mm": 0.2
       },
       {
+        "male": "ax_f.axis",
+        "female": "scooter.axle_front_r",
+        "engaged_studs": 1,
+        "fit": "free",
+        "gap_min_mm": 0.2,
+        "gap_max_mm": 0.2
+      },
+      {
         "male": "ax_r.axis",
         "female": "scooter.axle_rear",
         "engaged_studs": 1,
@@ -2240,16 +2344,16 @@
         "gap_max_mm": 0.2
       },
       {
-        "male": "ax_f.axis",
-        "female": "wl_f.hub",
+        "male": "ax_r.axis",
+        "female": "scooter.axle_rear_r",
         "engaged_studs": 1,
-        "fit": "press",
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "fit": "free",
+        "gap_min_mm": 0.2,
+        "gap_max_mm": 0.2
       },
       {
         "male": "ax_f.axis",
-        "female": "wr_f.hub",
+        "female": "wm_f.hub",
         "engaged_studs": 1,
         "fit": "press",
         "gap_min_mm": 0.05,
@@ -2257,7 +2361,218 @@
       },
       {
         "male": "ax_r.axis",
-        "female": "wl_r.hub",
+        "female": "wm_r.hub",
+        "engaged_studs": 1,
+        "fit": "press",
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      }
+    ]
+  },
+  "valid_kip_sport_moto": {
+    "build": [
+      {
+        "id": "scooter",
+        "part": "veh_scooter_frame",
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "rot": 0
+        }
+      },
+      {
+        "id": "fairing",
+        "part": "veh_scooter_fairing",
+        "pose": {
+          "x": 0.0,
+          "y": -37.5,
+          "z": 29.0,
+          "rot": 0
+        }
+      },
+      {
+        "id": "rider_legs",
+        "part": "char_legs_seated",
+        "pose": {
+          "x": 0.0,
+          "y": 25.0,
+          "z": 26.5,
+          "rot": 0
+        }
+      },
+      {
+        "id": "exhaust",
+        "part": "racer_twin_exhaust",
+        "pose": {
+          "x": 0.0,
+          "y": 50.0,
+          "z": 26.5,
+          "rot": 0
+        }
+      },
+      {
+        "id": "handlebars",
+        "part": "veh_handlebar_fork",
+        "pose": {
+          "x": 0.0,
+          "y": -18.75,
+          "z": 0.0,
+          "rot": 0
+        }
+      },
+      {
+        "id": "ax_f",
+        "part": "racer_axle",
+        "pose": {
+          "x": -18.75,
+          "y": -43.75,
+          "z": 6.25,
+          "rot": 0,
+          "tilt": [
+            0.0,
+            90.0
+          ]
+        }
+      },
+      {
+        "id": "wm_f",
+        "part": "veh_wheel_moto",
+        "pose": {
+          "x": -7.0,
+          "y": -43.75,
+          "z": 6.250000000000001,
+          "rot": 0,
+          "tilt": [
+            0.0,
+            90.0
+          ]
+        }
+      },
+      {
+        "id": "ax_r",
+        "part": "racer_axle",
+        "pose": {
+          "x": -18.75,
+          "y": 50.0,
+          "z": 6.25,
+          "rot": 0,
+          "tilt": [
+            0.0,
+            90.0
+          ]
+        }
+      },
+      {
+        "id": "wm_r",
+        "part": "veh_wheel_moto",
+        "pose": {
+          "x": -7.0,
+          "y": 50.0,
+          "z": 6.250000000000001,
+          "rot": 0,
+          "tilt": [
+            0.0,
+            90.0
+          ]
+        }
+      },
+      {
+        "id": "moto_cowling",
+        "part": "veh_moto_cowling",
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 12.0,
+          "rot": 0
+        }
+      },
+      {
+        "id": "tank_pod",
+        "part": "glow_capsule",
+        "pose": {
+          "x": -6.25,
+          "y": -2.0,
+          "z": 41.0,
+          "rot": 0
+        }
+      }
+    ],
+    "ok": true,
+    "errors": [],
+    "warnings": [],
+    "edges": [
+      {
+        "male": "scooter.fairing_studs",
+        "female": "fairing.under_sockets",
+        "engaged_studs": 2,
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      },
+      {
+        "male": "scooter.seat_studs",
+        "female": "rider_legs.under_sockets",
+        "engaged_studs": 4,
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      },
+      {
+        "male": "scooter.exhaust_studs",
+        "female": "exhaust.under_sockets",
+        "engaged_studs": 2,
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      },
+      {
+        "male": "handlebars.axis",
+        "female": "scooter.headtube",
+        "engaged_studs": 1,
+        "fit": "free",
+        "gap_min_mm": 0.2,
+        "gap_max_mm": 0.2
+      },
+      {
+        "male": "ax_f.axis",
+        "female": "scooter.axle_front",
+        "engaged_studs": 1,
+        "fit": "free",
+        "gap_min_mm": 0.2,
+        "gap_max_mm": 0.2
+      },
+      {
+        "male": "ax_f.axis",
+        "female": "scooter.axle_front_r",
+        "engaged_studs": 1,
+        "fit": "free",
+        "gap_min_mm": 0.2,
+        "gap_max_mm": 0.2
+      },
+      {
+        "male": "ax_r.axis",
+        "female": "scooter.axle_rear",
+        "engaged_studs": 1,
+        "fit": "free",
+        "gap_min_mm": 0.2,
+        "gap_max_mm": 0.2
+      },
+      {
+        "male": "ax_r.axis",
+        "female": "scooter.axle_rear_r",
+        "engaged_studs": 1,
+        "fit": "free",
+        "gap_min_mm": 0.2,
+        "gap_max_mm": 0.2
+      },
+      {
+        "male": "scooter.top_studs",
+        "female": "moto_cowling.under_sockets",
+        "engaged_studs": 4,
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      },
+      {
+        "male": "ax_f.axis",
+        "female": "wm_f.hub",
         "engaged_studs": 1,
         "fit": "press",
         "gap_min_mm": 0.05,
@@ -2265,9 +2580,16 @@
       },
       {
         "male": "ax_r.axis",
-        "female": "wr_r.hub",
+        "female": "wm_r.hub",
         "engaged_studs": 1,
         "fit": "press",
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      },
+      {
+        "male": "moto_cowling.tank_studs",
+        "female": "tank_pod.under_sockets",
+        "engaged_studs": 1,
         "gap_min_mm": 0.05,
         "gap_max_mm": 0.05
       }
@@ -2459,7 +2781,7 @@
       },
       {
         "code": "collision",
-        "detail": "bu and pin overlap by 54 mm3"
+        "detail": "bu and pin overlap by 24 mm3"
       }
     ],
     "warnings": [],

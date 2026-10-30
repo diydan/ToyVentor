@@ -96,12 +96,12 @@
       "shaft_d": 6.6,
       "shaft_flats": 5.0,
       "shaft_center_hole": 2.0,
-      "fin_oversize_mm": 1.5,
-      "note": "Friction pin: flat-sided core (6.6 round, 5.0 flats) split by a lengthwise slot so the two halves flex; a fin on each round side at the centre of every TU of length stands fin_oversize_mm wider across than the free bore (TARGET, tuned on the calibration piece; PETG may be needed). Prints lying on a flat.",
+      "fin_oversize_mm": 0.4,
+      "note": "Friction pin: flat-sided core (6.6 round, 5.0 flats) split open through both insertion ends with solid center web(s) between TU modules so the cantilever prongs flex elastically (<2% PLA strain); a fin on each round side at the centre of every TU stands fin_oversize_mm wider across than the free bore. Prints lying on a flat.",
       "profile": "friction",
-      "slot_width_mm": 1.6,
-      "slot_end_mm": 3.0,
-      "fin_length_mm": 4.0
+      "slot_width_mm": 2.2,
+      "slot_end_mm": 1.0,
+      "fin_length_mm": 3.6
     },
     "pin_free": {
       "kind": "pin",
@@ -110,7 +110,8 @@
       "pitch_tu": 1.0,
       "profile": "round",
       "shaft_d": 6.6,
-      "note": "Plain round pin with a head that stops it on the beam face: turns in a free bore. Prints standing on its head.",
+      "shaft_flats": 5.6,
+      "note": "Free-turning pin with a 9.0 mm stop head and 5.6 mm bed-seating flats (>5.1 mm fixed bore so it cannot enter fixed hubs, while turning freely in 7.0 mm round bores). Prints lying on a flat so filament runs axially.",
       "head_d_mm": 9.0,
       "head_h_mm": 1.5
     },

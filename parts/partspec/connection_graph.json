@@ -165,6 +165,14 @@
   },
   {
     "male": "mini_plate.top_studs",
+    "female": "hair_short_swept.under_sockets"
+  },
+  {
+    "male": "mini_plate.top_studs",
+    "female": "hair_bob.under_sockets"
+  },
+  {
+    "male": "mini_plate.top_studs",
     "female": "char_head_fox.under_sockets"
   },
   {
@@ -177,7 +185,15 @@
   },
   {
     "male": "mini_plate.top_studs",
+    "female": "hair_spiky.under_sockets"
+  },
+  {
+    "male": "mini_plate.top_studs",
     "female": "hair_pigtails.under_sockets"
+  },
+  {
+    "male": "mini_plate.top_studs",
+    "female": "hair_ponytail.under_sockets"
   },
   {
     "male": "mini_plate.top_studs",
@@ -194,6 +210,22 @@
   {
     "male": "mini_plate.top_studs",
     "female": "char_legs_seated.under_sockets"
+  },
+  {
+    "male": "mini_plate.top_studs",
+    "female": "veh_car_hood_cover.under_sockets"
+  },
+  {
+    "male": "mini_plate.top_studs",
+    "female": "veh_cab_roof_cover.under_sockets"
+  },
+  {
+    "male": "mini_plate.top_studs",
+    "female": "veh_truck_bed_cover.under_sockets"
+  },
+  {
+    "male": "mini_plate.top_studs",
+    "female": "veh_scooter_fairing.under_sockets"
   },
   {
     "male": "mini_plate.top_studs",
@@ -509,6 +541,14 @@
   },
   {
     "male": "plate_s_2x2.top_studs",
+    "female": "hair_short_swept.under_sockets"
+  },
+  {
+    "male": "plate_s_2x2.top_studs",
+    "female": "hair_bob.under_sockets"
+  },
+  {
+    "male": "plate_s_2x2.top_studs",
     "female": "char_head_fox.under_sockets"
   },
   {
@@ -521,7 +561,15 @@
   },
   {
     "male": "plate_s_2x2.top_studs",
+    "female": "hair_spiky.under_sockets"
+  },
+  {
+    "male": "plate_s_2x2.top_studs",
     "female": "hair_pigtails.under_sockets"
+  },
+  {
+    "male": "plate_s_2x2.top_studs",
+    "female": "hair_ponytail.under_sockets"
   },
   {
     "male": "plate_s_2x2.top_studs",
@@ -538,6 +586,22 @@
   {
     "male": "plate_s_2x2.top_studs",
     "female": "char_legs_seated.under_sockets"
+  },
+  {
+    "male": "plate_s_2x2.top_studs",
+    "female": "veh_car_hood_cover.under_sockets"
+  },
+  {
+    "male": "plate_s_2x2.top_studs",
+    "female": "veh_cab_roof_cover.under_sockets"
+  },
+  {
+    "male": "plate_s_2x2.top_studs",
+    "female": "veh_truck_bed_cover.under_sockets"
+  },
+  {
+    "male": "plate_s_2x2.top_studs",
+    "female": "veh_scooter_fairing.under_sockets"
   },
   {
     "male": "plate_s_2x2.top_studs",
@@ -661,6 +725,14 @@
   },
   {
     "male": "plate_s_4x4.top_studs",
+    "female": "hair_short_swept.under_sockets"
+  },
+  {
+    "male": "plate_s_4x4.top_studs",
+    "female": "hair_bob.under_sockets"
+  },
+  {
+    "male": "plate_s_4x4.top_studs",
     "female": "char_head_fox.under_sockets"
   },
   {
@@ -673,7 +745,15 @@
   },
   {
     "male": "plate_s_4x4.top_studs",
+    "female": "hair_spiky.under_sockets"
+  },
+  {
+    "male": "plate_s_4x4.top_studs",
     "female": "hair_pigtails.under_sockets"
+  },
+  {
+    "male": "plate_s_4x4.top_studs",
+    "female": "hair_ponytail.under_sockets"
   },
   {
     "male": "plate_s_4x4.top_studs",
@@ -690,6 +770,22 @@
   {
     "male": "plate_s_4x4.top_studs",
     "female": "char_legs_seated.under_sockets"
+  },
+  {
+    "male": "plate_s_4x4.top_studs",
+    "female": "veh_car_hood_cover.under_sockets"
+  },
+  {
+    "male": "plate_s_4x4.top_studs",
+    "female": "veh_cab_roof_cover.under_sockets"
+  },
+  {
+    "male": "plate_s_4x4.top_studs",
+    "female": "veh_truck_bed_cover.under_sockets"
+  },
+  {
+    "male": "plate_s_4x4.top_studs",
+    "female": "veh_scooter_fairing.under_sockets"
   },
   {
     "male": "plate_s_4x4.top_studs",
@@ -813,6 +909,14 @@
   },
   {
     "male": "brick_s_2x2.top_studs",
+    "female": "hair_short_swept.under_sockets"
+  },
+  {
+    "male": "brick_s_2x2.top_studs",
+    "female": "hair_bob.under_sockets"
+  },
+  {
+    "male": "brick_s_2x2.top_studs",
     "female": "char_head_fox.under_sockets"
   },
   {
@@ -825,7 +929,15 @@
   },
   {
     "male": "brick_s_2x2.top_studs",
+    "female": "hair_spiky.under_sockets"
+  },
+  {
+    "male": "brick_s_2x2.top_studs",
     "female": "hair_pigtails.under_sockets"
+  },
+  {
+    "male": "brick_s_2x2.top_studs",
+    "female": "hair_ponytail.under_sockets"
   },
   {
     "male": "brick_s_2x2.top_studs",
@@ -842,6 +954,22 @@
   {
     "male": "brick_s_2x2.top_studs",
     "female": "char_legs_seated.under_sockets"
+  },
+  {
+    "male": "brick_s_2x2.top_studs",
+    "female": "veh_car_hood_cover.under_sockets"
+  },
+  {
+    "male": "brick_s_2x2.top_studs",
+    "female": "veh_cab_roof_cover.under_sockets"
+  },
+  {
+    "male": "brick_s_2x2.top_studs",
+    "female": "veh_truck_bed_cover.under_sockets"
+  },
+  {
+    "male": "brick_s_2x2.top_studs",
+    "female": "veh_scooter_fairing.under_sockets"
   },
   {
     "male": "brick_s_2x2.top_studs",
@@ -965,6 +1093,14 @@
   },
   {
     "male": "forge_mount_ring_s.top_studs",
+    "female": "hair_short_swept.under_sockets"
+  },
+  {
+    "male": "forge_mount_ring_s.top_studs",
+    "female": "hair_bob.under_sockets"
+  },
+  {
+    "male": "forge_mount_ring_s.top_studs",
     "female": "char_head_fox.under_sockets"
   },
   {
@@ -977,7 +1113,15 @@
   },
   {
     "male": "forge_mount_ring_s.top_studs",
+    "female": "hair_spiky.under_sockets"
+  },
+  {
+    "male": "forge_mount_ring_s.top_studs",
     "female": "hair_pigtails.under_sockets"
+  },
+  {
+    "male": "forge_mount_ring_s.top_studs",
+    "female": "hair_ponytail.under_sockets"
   },
   {
     "male": "forge_mount_ring_s.top_studs",
@@ -994,6 +1138,22 @@
   {
     "male": "forge_mount_ring_s.top_studs",
     "female": "char_legs_seated.under_sockets"
+  },
+  {
+    "male": "forge_mount_ring_s.top_studs",
+    "female": "veh_car_hood_cover.under_sockets"
+  },
+  {
+    "male": "forge_mount_ring_s.top_studs",
+    "female": "veh_cab_roof_cover.under_sockets"
+  },
+  {
+    "male": "forge_mount_ring_s.top_studs",
+    "female": "veh_truck_bed_cover.under_sockets"
+  },
+  {
+    "male": "forge_mount_ring_s.top_studs",
+    "female": "veh_scooter_fairing.under_sockets"
   },
   {
     "male": "forge_mount_ring_s.top_studs",
@@ -1077,6 +1237,10 @@
   },
   {
     "male": "pin_friction.axis",
+    "female": "char_head_kid.face_slot"
+  },
+  {
+    "male": "pin_friction.axis",
     "female": "prop_skateboard_deck.axle_front"
   },
   {
@@ -1117,7 +1281,15 @@
   },
   {
     "male": "pin_friction.axis",
+    "female": "veh_scooter_frame.axle_front_r"
+  },
+  {
+    "male": "pin_friction.axis",
     "female": "veh_scooter_frame.axle_rear"
+  },
+  {
+    "male": "pin_friction.axis",
+    "female": "veh_scooter_frame.axle_rear_r"
   },
   {
     "male": "pin_friction_long.axis",
@@ -1197,6 +1369,10 @@
   },
   {
     "male": "pin_friction_long.axis",
+    "female": "char_head_kid.face_slot"
+  },
+  {
+    "male": "pin_friction_long.axis",
     "female": "prop_skateboard_deck.axle_front"
   },
   {
@@ -1237,7 +1413,15 @@
   },
   {
     "male": "pin_friction_long.axis",
+    "female": "veh_scooter_frame.axle_front_r"
+  },
+  {
+    "male": "pin_friction_long.axis",
     "female": "veh_scooter_frame.axle_rear"
+  },
+  {
+    "male": "pin_friction_long.axis",
+    "female": "veh_scooter_frame.axle_rear_r"
   },
   {
     "male": "pin_free.axis",
@@ -1317,6 +1501,10 @@
   },
   {
     "male": "pin_free.axis",
+    "female": "char_head_kid.face_slot"
+  },
+  {
+    "male": "pin_free.axis",
     "female": "prop_skateboard_deck.axle_front"
   },
   {
@@ -1357,7 +1545,15 @@
   },
   {
     "male": "pin_free.axis",
+    "female": "veh_scooter_frame.axle_front_r"
+  },
+  {
+    "male": "pin_free.axis",
     "female": "veh_scooter_frame.axle_rear"
+  },
+  {
+    "male": "pin_free.axis",
+    "female": "veh_scooter_frame.axle_rear_r"
   },
   {
     "male": "shaft_tu03.axis",
@@ -1485,11 +1681,27 @@
   },
   {
     "male": "shaft_tu03.axis",
+    "female": "char_head_kid.face_slot"
+  },
+  {
+    "male": "shaft_tu03.axis",
     "female": "prop_skateboard_deck.axle_front"
   },
   {
     "male": "shaft_tu03.axis",
     "female": "prop_skateboard_deck.axle_rear"
+  },
+  {
+    "male": "shaft_tu03.axis",
+    "female": "veh_wheel_sport.hub"
+  },
+  {
+    "male": "shaft_tu03.axis",
+    "female": "veh_wheel_offroad.hub"
+  },
+  {
+    "male": "shaft_tu03.axis",
+    "female": "veh_wheel_moto.hub"
   },
   {
     "male": "shaft_tu03.axis",
@@ -1525,7 +1737,15 @@
   },
   {
     "male": "shaft_tu03.axis",
+    "female": "veh_scooter_frame.axle_front_r"
+  },
+  {
+    "male": "shaft_tu03.axis",
     "female": "veh_scooter_frame.axle_rear"
+  },
+  {
+    "male": "shaft_tu03.axis",
+    "female": "veh_scooter_frame.axle_rear_r"
   },
   {
     "male": "shaft_tu05.axis",
@@ -1653,11 +1873,27 @@
   },
   {
     "male": "shaft_tu05.axis",
+    "female": "char_head_kid.face_slot"
+  },
+  {
+    "male": "shaft_tu05.axis",
     "female": "prop_skateboard_deck.axle_front"
   },
   {
     "male": "shaft_tu05.axis",
     "female": "prop_skateboard_deck.axle_rear"
+  },
+  {
+    "male": "shaft_tu05.axis",
+    "female": "veh_wheel_sport.hub"
+  },
+  {
+    "male": "shaft_tu05.axis",
+    "female": "veh_wheel_offroad.hub"
+  },
+  {
+    "male": "shaft_tu05.axis",
+    "female": "veh_wheel_moto.hub"
   },
   {
     "male": "shaft_tu05.axis",
@@ -1693,7 +1929,15 @@
   },
   {
     "male": "shaft_tu05.axis",
+    "female": "veh_scooter_frame.axle_front_r"
+  },
+  {
+    "male": "shaft_tu05.axis",
     "female": "veh_scooter_frame.axle_rear"
+  },
+  {
+    "male": "shaft_tu05.axis",
+    "female": "veh_scooter_frame.axle_rear_r"
   },
   {
     "male": "shaft_tu07.axis",
@@ -1821,11 +2065,27 @@
   },
   {
     "male": "shaft_tu07.axis",
+    "female": "char_head_kid.face_slot"
+  },
+  {
+    "male": "shaft_tu07.axis",
     "female": "prop_skateboard_deck.axle_front"
   },
   {
     "male": "shaft_tu07.axis",
     "female": "prop_skateboard_deck.axle_rear"
+  },
+  {
+    "male": "shaft_tu07.axis",
+    "female": "veh_wheel_sport.hub"
+  },
+  {
+    "male": "shaft_tu07.axis",
+    "female": "veh_wheel_offroad.hub"
+  },
+  {
+    "male": "shaft_tu07.axis",
+    "female": "veh_wheel_moto.hub"
   },
   {
     "male": "shaft_tu07.axis",
@@ -1861,9 +2121,17 @@
   },
   {
     "male": "shaft_tu07.axis",
+    "female": "veh_scooter_frame.axle_front_r"
+  },
+  {
+    "male": "shaft_tu07.axis",
     "female": "veh_scooter_frame.axle_rear"
   },
   {
+    "male": "shaft_tu07.axis",
+    "female": "veh_scooter_frame.axle_rear_r"
+  },
+  {
     "male": "adapter_snap_pro.top_studs",
     "female": "mini_plate.under_sockets"
   },
@@ -1981,6 +2249,14 @@
   },
   {
     "male": "adapter_snap_pro.top_studs",
+    "female": "hair_short_swept.under_sockets"
+  },
+  {
+    "male": "adapter_snap_pro.top_studs",
+    "female": "hair_bob.under_sockets"
+  },
+  {
+    "male": "adapter_snap_pro.top_studs",
     "female": "char_head_fox.under_sockets"
   },
   {
@@ -1993,7 +2269,15 @@
   },
   {
     "male": "adapter_snap_pro.top_studs",
+    "female": "hair_spiky.under_sockets"
+  },
+  {
+    "male": "adapter_snap_pro.top_studs",
     "female": "hair_pigtails.under_sockets"
+  },
+  {
+    "male": "adapter_snap_pro.top_studs",
+    "female": "hair_ponytail.under_sockets"
   },
   {
     "male": "adapter_snap_pro.top_studs",
@@ -2010,6 +2294,22 @@
   {
     "male": "adapter_snap_pro.top_studs",
     "female": "char_legs_seated.under_sockets"
+  },
+  {
+    "male": "adapter_snap_pro.top_studs",
+    "female": "veh_car_hood_cover.under_sockets"
+  },
+  {
+    "male": "adapter_snap_pro.top_studs",
+    "female": "veh_cab_roof_cover.under_sockets"
+  },
+  {
+    "male": "adapter_snap_pro.top_studs",
+    "female": "veh_truck_bed_cover.under_sockets"
+  },
+  {
+    "male": "adapter_snap_pro.top_studs",
+    "female": "veh_scooter_fairing.under_sockets"
   },
   {
     "male": "adapter_snap_pro.top_studs",
@@ -2133,6 +2433,14 @@
   },
   {
     "male": "racer_roof_rack.top_studs",
+    "female": "hair_short_swept.under_sockets"
+  },
+  {
+    "male": "racer_roof_rack.top_studs",
+    "female": "hair_bob.under_sockets"
+  },
+  {
+    "male": "racer_roof_rack.top_studs",
     "female": "char_head_fox.under_sockets"
   },
   {
@@ -2145,7 +2453,15 @@
   },
   {
     "male": "racer_roof_rack.top_studs",
+    "female": "hair_spiky.under_sockets"
+  },
+  {
+    "male": "racer_roof_rack.top_studs",
     "female": "hair_pigtails.under_sockets"
+  },
+  {
+    "male": "racer_roof_rack.top_studs",
+    "female": "hair_ponytail.under_sockets"
   },
   {
     "male": "racer_roof_rack.top_studs",
@@ -2162,6 +2478,22 @@
   {
     "male": "racer_roof_rack.top_studs",
     "female": "char_legs_seated.under_sockets"
+  },
+  {
+    "male": "racer_roof_rack.top_studs",
+    "female": "veh_car_hood_cover.under_sockets"
+  },
+  {
+    "male": "racer_roof_rack.top_studs",
+    "female": "veh_cab_roof_cover.under_sockets"
+  },
+  {
+    "male": "racer_roof_rack.top_studs",
+    "female": "veh_truck_bed_cover.under_sockets"
+  },
+  {
+    "male": "racer_roof_rack.top_studs",
+    "female": "veh_scooter_fairing.under_sockets"
   },
   {
     "male": "racer_roof_rack.top_studs",
@@ -2285,6 +2617,14 @@
   },
   {
     "male": "racer_axle_block.top_studs",
+    "female": "hair_short_swept.under_sockets"
+  },
+  {
+    "male": "racer_axle_block.top_studs",
+    "female": "hair_bob.under_sockets"
+  },
+  {
+    "male": "racer_axle_block.top_studs",
     "female": "char_head_fox.under_sockets"
   },
   {
@@ -2297,7 +2637,15 @@
   },
   {
     "male": "racer_axle_block.top_studs",
+    "female": "hair_spiky.under_sockets"
+  },
+  {
+    "male": "racer_axle_block.top_studs",
     "female": "hair_pigtails.under_sockets"
+  },
+  {
+    "male": "racer_axle_block.top_studs",
+    "female": "hair_ponytail.under_sockets"
   },
   {
     "male": "racer_axle_block.top_studs",
@@ -2314,6 +2662,22 @@
   {
     "male": "racer_axle_block.top_studs",
     "female": "char_legs_seated.under_sockets"
+  },
+  {
+    "male": "racer_axle_block.top_studs",
+    "female": "veh_car_hood_cover.under_sockets"
+  },
+  {
+    "male": "racer_axle_block.top_studs",
+    "female": "veh_cab_roof_cover.under_sockets"
+  },
+  {
+    "male": "racer_axle_block.top_studs",
+    "female": "veh_truck_bed_cover.under_sockets"
+  },
+  {
+    "male": "racer_axle_block.top_studs",
+    "female": "veh_scooter_fairing.under_sockets"
   },
   {
     "male": "racer_axle_block.top_studs",
@@ -2445,11 +2809,27 @@
   },
   {
     "male": "racer_axle.axis",
+    "female": "char_head_kid.face_slot"
+  },
+  {
+    "male": "racer_axle.axis",
     "female": "prop_skateboard_deck.axle_front"
   },
   {
     "male": "racer_axle.axis",
     "female": "prop_skateboard_deck.axle_rear"
+  },
+  {
+    "male": "racer_axle.axis",
+    "female": "veh_wheel_sport.hub"
+  },
+  {
+    "male": "racer_axle.axis",
+    "female": "veh_wheel_offroad.hub"
+  },
+  {
+    "male": "racer_axle.axis",
+    "female": "veh_wheel_moto.hub"
   },
   {
     "male": "racer_axle.axis",
@@ -2485,9 +2865,17 @@
   },
   {
     "male": "racer_axle.axis",
+    "female": "veh_scooter_frame.axle_front_r"
+  },
+  {
+    "male": "racer_axle.axis",
     "female": "veh_scooter_frame.axle_rear"
   },
   {
+    "male": "racer_axle.axis",
+    "female": "veh_scooter_frame.axle_rear_r"
+  },
+  {
     "male": "robot_legs_stomper.top_studs",
     "female": "mini_plate.under_sockets"
   },
@@ -2605,6 +2993,14 @@
   },
   {
     "male": "robot_legs_stomper.top_studs",
+    "female": "hair_short_swept.under_sockets"
+  },
+  {
+    "male": "robot_legs_stomper.top_studs",
+    "female": "hair_bob.under_sockets"
+  },
+  {
+    "male": "robot_legs_stomper.top_studs",
     "female": "char_head_fox.under_sockets"
   },
   {
@@ -2617,7 +3013,15 @@
   },
   {
     "male": "robot_legs_stomper.top_studs",
+    "female": "hair_spiky.under_sockets"
+  },
+  {
+    "male": "robot_legs_stomper.top_studs",
     "female": "hair_pigtails.under_sockets"
+  },
+  {
+    "male": "robot_legs_stomper.top_studs",
+    "female": "hair_ponytail.under_sockets"
   },
   {
     "male": "robot_legs_stomper.top_studs",
@@ -2634,6 +3038,22 @@
   {
     "male": "robot_legs_stomper.top_studs",
     "female": "char_legs_seated.under_sockets"
+  },
+  {
+    "male": "robot_legs_stomper.top_studs",
+    "female": "veh_car_hood_cover.under_sockets"
+  },
+  {
+    "male": "robot_legs_stomper.top_studs",
+    "female": "veh_cab_roof_cover.under_sockets"
+  },
+  {
+    "male": "robot_legs_stomper.top_studs",
+    "female": "veh_truck_bed_cover.under_sockets"
+  },
+  {
+    "male": "robot_legs_stomper.top_studs",
+    "female": "veh_scooter_fairing.under_sockets"
   },
   {
     "male": "robot_legs_stomper.top_studs",
@@ -2757,6 +3177,14 @@
   },
   {
     "male": "robot_torso_core.top_studs",
+    "female": "hair_short_swept.under_sockets"
+  },
+  {
+    "male": "robot_torso_core.top_studs",
+    "female": "hair_bob.under_sockets"
+  },
+  {
+    "male": "robot_torso_core.top_studs",
     "female": "char_head_fox.under_sockets"
   },
   {
@@ -2769,7 +3197,15 @@
   },
   {
     "male": "robot_torso_core.top_studs",
+    "female": "hair_spiky.under_sockets"
+  },
+  {
+    "male": "robot_torso_core.top_studs",
     "female": "hair_pigtails.under_sockets"
+  },
+  {
+    "male": "robot_torso_core.top_studs",
+    "female": "hair_ponytail.under_sockets"
   },
   {
     "male": "robot_torso_core.top_studs",
@@ -2786,6 +3222,22 @@
   {
     "male": "robot_torso_core.top_studs",
     "female": "char_legs_seated.under_sockets"
+  },
+  {
+    "male": "robot_torso_core.top_studs",
+    "female": "veh_car_hood_cover.under_sockets"
+  },
+  {
+    "male": "robot_torso_core.top_studs",
+    "female": "veh_cab_roof_cover.under_sockets"
+  },
+  {
+    "male": "robot_torso_core.top_studs",
+    "female": "veh_truck_bed_cover.under_sockets"
+  },
+  {
+    "male": "robot_torso_core.top_studs",
+    "female": "veh_scooter_fairing.under_sockets"
   },
   {
     "male": "robot_torso_core.top_studs",
@@ -2909,6 +3361,14 @@
   },
   {
     "male": "robot_arms_grabber.top_studs",
+    "female": "hair_short_swept.under_sockets"
+  },
+  {
+    "male": "robot_arms_grabber.top_studs",
+    "female": "hair_bob.under_sockets"
+  },
+  {
+    "male": "robot_arms_grabber.top_studs",
     "female": "char_head_fox.under_sockets"
   },
   {
@@ -2921,7 +3381,15 @@
   },
   {
     "male": "robot_arms_grabber.top_studs",
+    "female": "hair_spiky.under_sockets"
+  },
+  {
+    "male": "robot_arms_grabber.top_studs",
     "female": "hair_pigtails.under_sockets"
+  },
+  {
+    "male": "robot_arms_grabber.top_studs",
+    "female": "hair_ponytail.under_sockets"
   },
   {
     "male": "robot_arms_grabber.top_studs",
@@ -2938,6 +3406,22 @@
   {
     "male": "robot_arms_grabber.top_studs",
     "female": "char_legs_seated.under_sockets"
+  },
+  {
+    "male": "robot_arms_grabber.top_studs",
+    "female": "veh_car_hood_cover.under_sockets"
+  },
+  {
+    "male": "robot_arms_grabber.top_studs",
+    "female": "veh_cab_roof_cover.under_sockets"
+  },
+  {
+    "male": "robot_arms_grabber.top_studs",
+    "female": "veh_truck_bed_cover.under_sockets"
+  },
+  {
+    "male": "robot_arms_grabber.top_studs",
+    "female": "veh_scooter_fairing.under_sockets"
   },
   {
     "male": "robot_arms_grabber.top_studs",
@@ -3061,6 +3545,14 @@
   },
   {
     "male": "robot_head_visor.top_studs",
+    "female": "hair_short_swept.under_sockets"
+  },
+  {
+    "male": "robot_head_visor.top_studs",
+    "female": "hair_bob.under_sockets"
+  },
+  {
+    "male": "robot_head_visor.top_studs",
     "female": "char_head_fox.under_sockets"
   },
   {
@@ -3073,7 +3565,15 @@
   },
   {
     "male": "robot_head_visor.top_studs",
+    "female": "hair_spiky.under_sockets"
+  },
+  {
+    "male": "robot_head_visor.top_studs",
     "female": "hair_pigtails.under_sockets"
+  },
+  {
+    "male": "robot_head_visor.top_studs",
+    "female": "hair_ponytail.under_sockets"
   },
   {
     "male": "robot_head_visor.top_studs",
@@ -3090,6 +3590,22 @@
   {
     "male": "robot_head_visor.top_studs",
     "female": "char_legs_seated.under_sockets"
+  },
+  {
+    "male": "robot_head_visor.top_studs",
+    "female": "veh_car_hood_cover.under_sockets"
+  },
+  {
+    "male": "robot_head_visor.top_studs",
+    "female": "veh_cab_roof_cover.under_sockets"
+  },
+  {
+    "male": "robot_head_visor.top_studs",
+    "female": "veh_truck_bed_cover.under_sockets"
+  },
+  {
+    "male": "robot_head_visor.top_studs",
+    "female": "veh_scooter_fairing.under_sockets"
   },
   {
     "male": "robot_head_visor.top_studs",
@@ -3213,6 +3729,14 @@
   },
   {
     "male": "char_head_kid.top_studs",
+    "female": "hair_short_swept.under_sockets"
+  },
+  {
+    "male": "char_head_kid.top_studs",
+    "female": "hair_bob.under_sockets"
+  },
+  {
+    "male": "char_head_kid.top_studs",
     "female": "char_head_fox.under_sockets"
   },
   {
@@ -3225,7 +3749,15 @@
   },
   {
     "male": "char_head_kid.top_studs",
+    "female": "hair_spiky.under_sockets"
+  },
+  {
+    "male": "char_head_kid.top_studs",
     "female": "hair_pigtails.under_sockets"
+  },
+  {
+    "male": "char_head_kid.top_studs",
+    "female": "hair_ponytail.under_sockets"
   },
   {
     "male": "char_head_kid.top_studs",
@@ -3245,6 +3777,522 @@
   },
   {
     "male": "char_head_kid.top_studs",
+    "female": "veh_car_hood_cover.under_sockets"
+  },
+  {
+    "male": "char_head_kid.top_studs",
+    "female": "veh_cab_roof_cover.under_sockets"
+  },
+  {
+    "male": "char_head_kid.top_studs",
+    "female": "veh_truck_bed_cover.under_sockets"
+  },
+  {
+    "male": "char_head_kid.top_studs",
+    "female": "veh_scooter_fairing.under_sockets"
+  },
+  {
+    "male": "char_head_kid.top_studs",
+    "female": "veh_moto_cowling.under_sockets"
+  },
+  {
+    "male": "char_faceplate.axis",
+    "female": "beam_str_tu03.bores"
+  },
+  {
+    "male": "char_faceplate.axis",
+    "female": "beam_str_tu05.bores"
+  },
+  {
+    "male": "char_faceplate.axis",
+    "female": "beam_str_tu07.bores"
+  },
+  {
+    "male": "char_faceplate.axis",
+    "female": "beam_str_tu10.bores"
+  },
+  {
+    "male": "char_faceplate.axis",
+    "female": "beam_str_tu14.bores"
+  },
+  {
+    "male": "char_faceplate.axis",
+    "female": "gear_rack_tu05.bores"
+  },
+  {
+    "male": "char_faceplate.axis",
+    "female": "gear_ring_z40.frame_bores"
+  },
+  {
+    "male": "char_faceplate.axis",
+    "female": "beam_l_tu03x03.bores"
+  },
+  {
+    "male": "char_faceplate.axis",
+    "female": "beam_l_tu05x03.bores"
+  },
+  {
+    "male": "char_faceplate.axis",
+    "female": "beam_t_tu05x03.bores"
+  },
+  {
+    "male": "char_faceplate.axis",
+    "female": "beam_ang45_tu05.bores"
+  },
+  {
+    "male": "char_faceplate.axis",
+    "female": "forge_mount_pro.bores"
+  },
+  {
+    "male": "char_faceplate.axis",
+    "female": "adapter_snap_pro.bores"
+  },
+  {
+    "male": "char_faceplate.axis",
+    "female": "wheel_tu04.cranks"
+  },
+  {
+    "male": "char_faceplate.axis",
+    "female": "wheel_tu06.cranks"
+  },
+  {
+    "male": "char_faceplate.axis",
+    "female": "hinge_tu02.bores"
+  },
+  {
+    "male": "char_faceplate.axis",
+    "female": "hinge_tu02.knuckle0"
+  },
+  {
+    "male": "char_faceplate.axis",
+    "female": "hinge_tu02.knuckle1"
+  },
+  {
+    "male": "char_faceplate.axis",
+    "female": "racer_axle_block.axle"
+  },
+  {
+    "male": "char_faceplate.axis",
+    "female": "char_head_kid.face_slot"
+  },
+  {
+    "male": "char_faceplate.axis",
+    "female": "prop_skateboard_deck.axle_front"
+  },
+  {
+    "male": "char_faceplate.axis",
+    "female": "prop_skateboard_deck.axle_rear"
+  },
+  {
+    "male": "char_faceplate.axis",
+    "female": "veh_car_chassis.dash_bore"
+  },
+  {
+    "male": "char_faceplate.axis",
+    "female": "veh_car_chassis.axle_front"
+  },
+  {
+    "male": "char_faceplate.axis",
+    "female": "veh_car_chassis.axle_rear"
+  },
+  {
+    "male": "char_faceplate.axis",
+    "female": "veh_truck_chassis.dash_bore"
+  },
+  {
+    "male": "char_faceplate.axis",
+    "female": "veh_truck_chassis.axle_front"
+  },
+  {
+    "male": "char_faceplate.axis",
+    "female": "veh_truck_chassis.axle_rear"
+  },
+  {
+    "male": "char_faceplate.axis",
+    "female": "veh_scooter_frame.headtube"
+  },
+  {
+    "male": "char_faceplate.axis",
+    "female": "veh_scooter_frame.axle_front"
+  },
+  {
+    "male": "char_faceplate.axis",
+    "female": "veh_scooter_frame.axle_front_r"
+  },
+  {
+    "male": "char_faceplate.axis",
+    "female": "veh_scooter_frame.axle_rear"
+  },
+  {
+    "male": "char_faceplate.axis",
+    "female": "veh_scooter_frame.axle_rear_r"
+  },
+  {
+    "male": "hair_short_swept.top_studs",
+    "female": "mini_plate.under_sockets"
+  },
+  {
+    "male": "hair_short_swept.top_studs",
+    "female": "cloud_wings.under_sockets"
+  },
+  {
+    "male": "hair_short_swept.top_studs",
+    "female": "pebble_armor_shell.under_sockets"
+  },
+  {
+    "male": "hair_short_swept.top_studs",
+    "female": "glow_capsule.under_sockets"
+  },
+  {
+    "male": "hair_short_swept.top_studs",
+    "female": "plate_s_2x2.under_sockets"
+  },
+  {
+    "male": "hair_short_swept.top_studs",
+    "female": "plate_s_4x4.under_sockets"
+  },
+  {
+    "male": "hair_short_swept.top_studs",
+    "female": "brick_s_2x2.under_sockets"
+  },
+  {
+    "male": "hair_short_swept.top_studs",
+    "female": "tile_s_2x2.under_sockets"
+  },
+  {
+    "male": "hair_short_swept.top_studs",
+    "female": "slope_s_2x2.under_sockets"
+  },
+  {
+    "male": "hair_short_swept.top_studs",
+    "female": "dome_s_2x2.under_sockets"
+  },
+  {
+    "male": "hair_short_swept.top_studs",
+    "female": "bumper_horns.under_sockets"
+  },
+  {
+    "male": "hair_short_swept.top_studs",
+    "female": "pointy_ears.under_sockets"
+  },
+  {
+    "male": "hair_short_swept.top_studs",
+    "female": "wobble_hat.under_sockets"
+  },
+  {
+    "male": "hair_short_swept.top_studs",
+    "female": "ridge_fin.under_sockets"
+  },
+  {
+    "male": "hair_short_swept.top_studs",
+    "female": "zoom_capsule_s.under_sockets"
+  },
+  {
+    "male": "hair_short_swept.top_studs",
+    "female": "bounce_capsule_s.under_sockets"
+  },
+  {
+    "male": "hair_short_swept.top_studs",
+    "female": "racer_spoiler.under_sockets"
+  },
+  {
+    "male": "hair_short_swept.top_studs",
+    "female": "racer_bull_bar.under_sockets"
+  },
+  {
+    "male": "hair_short_swept.top_studs",
+    "female": "racer_hood_scoop.under_sockets"
+  },
+  {
+    "male": "hair_short_swept.top_studs",
+    "female": "racer_twin_exhaust.under_sockets"
+  },
+  {
+    "male": "hair_short_swept.top_studs",
+    "female": "racer_light_bar.under_sockets"
+  },
+  {
+    "male": "hair_short_swept.top_studs",
+    "female": "racer_roof_rack.under_sockets"
+  },
+  {
+    "male": "hair_short_swept.top_studs",
+    "female": "waddle_tail_s.under_sockets"
+  },
+  {
+    "male": "hair_short_swept.top_studs",
+    "female": "robot_legs_stomper.under_sockets"
+  },
+  {
+    "male": "hair_short_swept.top_studs",
+    "female": "robot_torso_core.under_sockets"
+  },
+  {
+    "male": "hair_short_swept.top_studs",
+    "female": "robot_arms_grabber.under_sockets"
+  },
+  {
+    "male": "hair_short_swept.top_studs",
+    "female": "robot_head_visor.under_sockets"
+  },
+  {
+    "male": "hair_short_swept.top_studs",
+    "female": "robot_back_jetpack.under_sockets"
+  },
+  {
+    "male": "hair_short_swept.top_studs",
+    "female": "char_head_kid.under_sockets"
+  },
+  {
+    "male": "hair_short_swept.top_studs",
+    "female": "hair_short_swept.under_sockets"
+  },
+  {
+    "male": "hair_short_swept.top_studs",
+    "female": "hair_bob.under_sockets"
+  },
+  {
+    "male": "hair_short_swept.top_studs",
+    "female": "char_head_fox.under_sockets"
+  },
+  {
+    "male": "hair_short_swept.top_studs",
+    "female": "char_head_bear.under_sockets"
+  },
+  {
+    "male": "hair_short_swept.top_studs",
+    "female": "hair_swoosh.under_sockets"
+  },
+  {
+    "male": "hair_short_swept.top_studs",
+    "female": "hair_spiky.under_sockets"
+  },
+  {
+    "male": "hair_short_swept.top_studs",
+    "female": "hair_pigtails.under_sockets"
+  },
+  {
+    "male": "hair_short_swept.top_studs",
+    "female": "hair_ponytail.under_sockets"
+  },
+  {
+    "male": "hair_short_swept.top_studs",
+    "female": "hair_curly.under_sockets"
+  },
+  {
+    "male": "hair_short_swept.top_studs",
+    "female": "hair_mohawk.under_sockets"
+  },
+  {
+    "male": "hair_short_swept.top_studs",
+    "female": "pack_explorer.under_sockets"
+  },
+  {
+    "male": "hair_short_swept.top_studs",
+    "female": "char_legs_seated.under_sockets"
+  },
+  {
+    "male": "hair_short_swept.top_studs",
+    "female": "veh_car_hood_cover.under_sockets"
+  },
+  {
+    "male": "hair_short_swept.top_studs",
+    "female": "veh_cab_roof_cover.under_sockets"
+  },
+  {
+    "male": "hair_short_swept.top_studs",
+    "female": "veh_truck_bed_cover.under_sockets"
+  },
+  {
+    "male": "hair_short_swept.top_studs",
+    "female": "veh_scooter_fairing.under_sockets"
+  },
+  {
+    "male": "hair_short_swept.top_studs",
+    "female": "veh_moto_cowling.under_sockets"
+  },
+  {
+    "male": "hair_bob.top_studs",
+    "female": "mini_plate.under_sockets"
+  },
+  {
+    "male": "hair_bob.top_studs",
+    "female": "cloud_wings.under_sockets"
+  },
+  {
+    "male": "hair_bob.top_studs",
+    "female": "pebble_armor_shell.under_sockets"
+  },
+  {
+    "male": "hair_bob.top_studs",
+    "female": "glow_capsule.under_sockets"
+  },
+  {
+    "male": "hair_bob.top_studs",
+    "female": "plate_s_2x2.under_sockets"
+  },
+  {
+    "male": "hair_bob.top_studs",
+    "female": "plate_s_4x4.under_sockets"
+  },
+  {
+    "male": "hair_bob.top_studs",
+    "female": "brick_s_2x2.under_sockets"
+  },
+  {
+    "male": "hair_bob.top_studs",
+    "female": "tile_s_2x2.under_sockets"
+  },
+  {
+    "male": "hair_bob.top_studs",
+    "female": "slope_s_2x2.under_sockets"
+  },
+  {
+    "male": "hair_bob.top_studs",
+    "female": "dome_s_2x2.under_sockets"
+  },
+  {
+    "male": "hair_bob.top_studs",
+    "female": "bumper_horns.under_sockets"
+  },
+  {
+    "male": "hair_bob.top_studs",
+    "female": "pointy_ears.under_sockets"
+  },
+  {
+    "male": "hair_bob.top_studs",
+    "female": "wobble_hat.under_sockets"
+  },
+  {
+    "male": "hair_bob.top_studs",
+    "female": "ridge_fin.under_sockets"
+  },
+  {
+    "male": "hair_bob.top_studs",
+    "female": "zoom_capsule_s.under_sockets"
+  },
+  {
+    "male": "hair_bob.top_studs",
+    "female": "bounce_capsule_s.under_sockets"
+  },
+  {
+    "male": "hair_bob.top_studs",
+    "female": "racer_spoiler.under_sockets"
+  },
+  {
+    "male": "hair_bob.top_studs",
+    "female": "racer_bull_bar.under_sockets"
+  },
+  {
+    "male": "hair_bob.top_studs",
+    "female": "racer_hood_scoop.under_sockets"
+  },
+  {
+    "male": "hair_bob.top_studs",
+    "female": "racer_twin_exhaust.under_sockets"
+  },
+  {
+    "male": "hair_bob.top_studs",
+    "female": "racer_light_bar.under_sockets"
+  },
+  {
+    "male": "hair_bob.top_studs",
+    "female": "racer_roof_rack.under_sockets"
+  },
+  {
+    "male": "hair_bob.top_studs",
+    "female": "waddle_tail_s.under_sockets"
+  },
+  {
+    "male": "hair_bob.top_studs",
+    "female": "robot_legs_stomper.under_sockets"
+  },
+  {
+    "male": "hair_bob.top_studs",
+    "female": "robot_torso_core.under_sockets"
+  },
+  {
+    "male": "hair_bob.top_studs",
+    "female": "robot_arms_grabber.under_sockets"
+  },
+  {
+    "male": "hair_bob.top_studs",
+    "female": "robot_head_visor.under_sockets"
+  },
+  {
+    "male": "hair_bob.top_studs",
+    "female": "robot_back_jetpack.under_sockets"
+  },
+  {
+    "male": "hair_bob.top_studs",
+    "female": "char_head_kid.under_sockets"
+  },
+  {
+    "male": "hair_bob.top_studs",
+    "female": "hair_short_swept.under_sockets"
+  },
+  {
+    "male": "hair_bob.top_studs",
+    "female": "hair_bob.under_sockets"
+  },
+  {
+    "male": "hair_bob.top_studs",
+    "female": "char_head_fox.under_sockets"
+  },
+  {
+    "male": "hair_bob.top_studs",
+    "female": "char_head_bear.under_sockets"
+  },
+  {
+    "male": "hair_bob.top_studs",
+    "female": "hair_swoosh.under_sockets"
+  },
+  {
+    "male": "hair_bob.top_studs",
+    "female": "hair_spiky.under_sockets"
+  },
+  {
+    "male": "hair_bob.top_studs",
+    "female": "hair_pigtails.under_sockets"
+  },
+  {
+    "male": "hair_bob.top_studs",
+    "female": "hair_ponytail.under_sockets"
+  },
+  {
+    "male": "hair_bob.top_studs",
+    "female": "hair_curly.under_sockets"
+  },
+  {
+    "male": "hair_bob.top_studs",
+    "female": "hair_mohawk.under_sockets"
+  },
+  {
+    "male": "hair_bob.top_studs",
+    "female": "pack_explorer.under_sockets"
+  },
+  {
+    "male": "hair_bob.top_studs",
+    "female": "char_legs_seated.under_sockets"
+  },
+  {
+    "male": "hair_bob.top_studs",
+    "female": "veh_car_hood_cover.under_sockets"
+  },
+  {
+    "male": "hair_bob.top_studs",
+    "female": "veh_cab_roof_cover.under_sockets"
+  },
+  {
+    "male": "hair_bob.top_studs",
+    "female": "veh_truck_bed_cover.under_sockets"
+  },
+  {
+    "male": "hair_bob.top_studs",
+    "female": "veh_scooter_fairing.under_sockets"
+  },
+  {
+    "male": "hair_bob.top_studs",
     "female": "veh_moto_cowling.under_sockets"
   },
   {
@@ -3365,6 +4413,14 @@
   },
   {
     "male": "char_head_fox.top_studs",
+    "female": "hair_short_swept.under_sockets"
+  },
+  {
+    "male": "char_head_fox.top_studs",
+    "female": "hair_bob.under_sockets"
+  },
+  {
+    "male": "char_head_fox.top_studs",
     "female": "char_head_fox.under_sockets"
   },
   {
@@ -3377,7 +4433,15 @@
   },
   {
     "male": "char_head_fox.top_studs",
+    "female": "hair_spiky.under_sockets"
+  },
+  {
+    "male": "char_head_fox.top_studs",
     "female": "hair_pigtails.under_sockets"
+  },
+  {
+    "male": "char_head_fox.top_studs",
+    "female": "hair_ponytail.under_sockets"
   },
   {
     "male": "char_head_fox.top_studs",
@@ -3394,6 +4458,22 @@
   {
     "male": "char_head_fox.top_studs",
     "female": "char_legs_seated.under_sockets"
+  },
+  {
+    "male": "char_head_fox.top_studs",
+    "female": "veh_car_hood_cover.under_sockets"
+  },
+  {
+    "male": "char_head_fox.top_studs",
+    "female": "veh_cab_roof_cover.under_sockets"
+  },
+  {
+    "male": "char_head_fox.top_studs",
+    "female": "veh_truck_bed_cover.under_sockets"
+  },
+  {
+    "male": "char_head_fox.top_studs",
+    "female": "veh_scooter_fairing.under_sockets"
   },
   {
     "male": "char_head_fox.top_studs",
@@ -3517,6 +4597,14 @@
   },
   {
     "male": "char_head_bear.top_studs",
+    "female": "hair_short_swept.under_sockets"
+  },
+  {
+    "male": "char_head_bear.top_studs",
+    "female": "hair_bob.under_sockets"
+  },
+  {
+    "male": "char_head_bear.top_studs",
     "female": "char_head_fox.under_sockets"
   },
   {
@@ -3529,7 +4617,15 @@
   },
   {
     "male": "char_head_bear.top_studs",
+    "female": "hair_spiky.under_sockets"
+  },
+  {
+    "male": "char_head_bear.top_studs",
     "female": "hair_pigtails.under_sockets"
+  },
+  {
+    "male": "char_head_bear.top_studs",
+    "female": "hair_ponytail.under_sockets"
   },
   {
     "male": "char_head_bear.top_studs",
@@ -3549,6 +4645,206 @@
   },
   {
     "male": "char_head_bear.top_studs",
+    "female": "veh_car_hood_cover.under_sockets"
+  },
+  {
+    "male": "char_head_bear.top_studs",
+    "female": "veh_cab_roof_cover.under_sockets"
+  },
+  {
+    "male": "char_head_bear.top_studs",
+    "female": "veh_truck_bed_cover.under_sockets"
+  },
+  {
+    "male": "char_head_bear.top_studs",
+    "female": "veh_scooter_fairing.under_sockets"
+  },
+  {
+    "male": "char_head_bear.top_studs",
+    "female": "veh_moto_cowling.under_sockets"
+  },
+  {
+    "male": "hair_swoosh.top_studs",
+    "female": "mini_plate.under_sockets"
+  },
+  {
+    "male": "hair_swoosh.top_studs",
+    "female": "cloud_wings.under_sockets"
+  },
+  {
+    "male": "hair_swoosh.top_studs",
+    "female": "pebble_armor_shell.under_sockets"
+  },
+  {
+    "male": "hair_swoosh.top_studs",
+    "female": "glow_capsule.under_sockets"
+  },
+  {
+    "male": "hair_swoosh.top_studs",
+    "female": "plate_s_2x2.under_sockets"
+  },
+  {
+    "male": "hair_swoosh.top_studs",
+    "female": "plate_s_4x4.under_sockets"
+  },
+  {
+    "male": "hair_swoosh.top_studs",
+    "female": "brick_s_2x2.under_sockets"
+  },
+  {
+    "male": "hair_swoosh.top_studs",
+    "female": "tile_s_2x2.under_sockets"
+  },
+  {
+    "male": "hair_swoosh.top_studs",
+    "female": "slope_s_2x2.under_sockets"
+  },
+  {
+    "male": "hair_swoosh.top_studs",
+    "female": "dome_s_2x2.under_sockets"
+  },
+  {
+    "male": "hair_swoosh.top_studs",
+    "female": "bumper_horns.under_sockets"
+  },
+  {
+    "male": "hair_swoosh.top_studs",
+    "female": "pointy_ears.under_sockets"
+  },
+  {
+    "male": "hair_swoosh.top_studs",
+    "female": "wobble_hat.under_sockets"
+  },
+  {
+    "male": "hair_swoosh.top_studs",
+    "female": "ridge_fin.under_sockets"
+  },
+  {
+    "male": "hair_swoosh.top_studs",
+    "female": "zoom_capsule_s.under_sockets"
+  },
+  {
+    "male": "hair_swoosh.top_studs",
+    "female": "bounce_capsule_s.under_sockets"
+  },
+  {
+    "male": "hair_swoosh.top_studs",
+    "female": "racer_spoiler.under_sockets"
+  },
+  {
+    "male": "hair_swoosh.top_studs",
+    "female": "racer_bull_bar.under_sockets"
+  },
+  {
+    "male": "hair_swoosh.top_studs",
+    "female": "racer_hood_scoop.under_sockets"
+  },
+  {
+    "male": "hair_swoosh.top_studs",
+    "female": "racer_twin_exhaust.under_sockets"
+  },
+  {
+    "male": "hair_swoosh.top_studs",
+    "female": "racer_light_bar.under_sockets"
+  },
+  {
+    "male": "hair_swoosh.top_studs",
+    "female": "racer_roof_rack.under_sockets"
+  },
+  {
+    "male": "hair_swoosh.top_studs",
+    "female": "waddle_tail_s.under_sockets"
+  },
+  {
+    "male": "hair_swoosh.top_studs",
+    "female": "robot_legs_stomper.under_sockets"
+  },
+  {
+    "male": "hair_swoosh.top_studs",
+    "female": "robot_torso_core.under_sockets"
+  },
+  {
+    "male": "hair_swoosh.top_studs",
+    "female": "robot_arms_grabber.under_sockets"
+  },
+  {
+    "male": "hair_swoosh.top_studs",
+    "female": "robot_head_visor.under_sockets"
+  },
+  {
+    "male": "hair_swoosh.top_studs",
+    "female": "robot_back_jetpack.under_sockets"
+  },
+  {
+    "male": "hair_swoosh.top_studs",
+    "female": "char_head_kid.under_sockets"
+  },
+  {
+    "male": "hair_swoosh.top_studs",
+    "female": "hair_short_swept.under_sockets"
+  },
+  {
+    "male": "hair_swoosh.top_studs",
+    "female": "hair_bob.under_sockets"
+  },
+  {
+    "male": "hair_swoosh.top_studs",
+    "female": "char_head_fox.under_sockets"
+  },
+  {
+    "male": "hair_swoosh.top_studs",
+    "female": "char_head_bear.under_sockets"
+  },
+  {
+    "male": "hair_swoosh.top_studs",
+    "female": "hair_swoosh.under_sockets"
+  },
+  {
+    "male": "hair_swoosh.top_studs",
+    "female": "hair_spiky.under_sockets"
+  },
+  {
+    "male": "hair_swoosh.top_studs",
+    "female": "hair_pigtails.under_sockets"
+  },
+  {
+    "male": "hair_swoosh.top_studs",
+    "female": "hair_ponytail.under_sockets"
+  },
+  {
+    "male": "hair_swoosh.top_studs",
+    "female": "hair_curly.under_sockets"
+  },
+  {
+    "male": "hair_swoosh.top_studs",
+    "female": "hair_mohawk.under_sockets"
+  },
+  {
+    "male": "hair_swoosh.top_studs",
+    "female": "pack_explorer.under_sockets"
+  },
+  {
+    "male": "hair_swoosh.top_studs",
+    "female": "char_legs_seated.under_sockets"
+  },
+  {
+    "male": "hair_swoosh.top_studs",
+    "female": "veh_car_hood_cover.under_sockets"
+  },
+  {
+    "male": "hair_swoosh.top_studs",
+    "female": "veh_cab_roof_cover.under_sockets"
+  },
+  {
+    "male": "hair_swoosh.top_studs",
+    "female": "veh_truck_bed_cover.under_sockets"
+  },
+  {
+    "male": "hair_swoosh.top_studs",
+    "female": "veh_scooter_fairing.under_sockets"
+  },
+  {
+    "male": "hair_swoosh.top_studs",
     "female": "veh_moto_cowling.under_sockets"
   },
   {
@@ -3669,6 +4965,14 @@
   },
   {
     "male": "pack_explorer.pack_top_studs",
+    "female": "hair_short_swept.under_sockets"
+  },
+  {
+    "male": "pack_explorer.pack_top_studs",
+    "female": "hair_bob.under_sockets"
+  },
+  {
+    "male": "pack_explorer.pack_top_studs",
     "female": "char_head_fox.under_sockets"
   },
   {
@@ -3681,7 +4985,15 @@
   },
   {
     "male": "pack_explorer.pack_top_studs",
+    "female": "hair_spiky.under_sockets"
+  },
+  {
+    "male": "pack_explorer.pack_top_studs",
     "female": "hair_pigtails.under_sockets"
+  },
+  {
+    "male": "pack_explorer.pack_top_studs",
+    "female": "hair_ponytail.under_sockets"
   },
   {
     "male": "pack_explorer.pack_top_studs",
@@ -3698,6 +5010,22 @@
   {
     "male": "pack_explorer.pack_top_studs",
     "female": "char_legs_seated.under_sockets"
+  },
+  {
+    "male": "pack_explorer.pack_top_studs",
+    "female": "veh_car_hood_cover.under_sockets"
+  },
+  {
+    "male": "pack_explorer.pack_top_studs",
+    "female": "veh_cab_roof_cover.under_sockets"
+  },
+  {
+    "male": "pack_explorer.pack_top_studs",
+    "female": "veh_truck_bed_cover.under_sockets"
+  },
+  {
+    "male": "pack_explorer.pack_top_studs",
+    "female": "veh_scooter_fairing.under_sockets"
   },
   {
     "male": "pack_explorer.pack_top_studs",
@@ -3829,11 +5157,27 @@
   },
   {
     "male": "prop_wrench.axis",
+    "female": "char_head_kid.face_slot"
+  },
+  {
+    "male": "prop_wrench.axis",
     "female": "prop_skateboard_deck.axle_front"
   },
   {
     "male": "prop_wrench.axis",
     "female": "prop_skateboard_deck.axle_rear"
+  },
+  {
+    "male": "prop_wrench.axis",
+    "female": "veh_wheel_sport.hub"
+  },
+  {
+    "male": "prop_wrench.axis",
+    "female": "veh_wheel_offroad.hub"
+  },
+  {
+    "male": "prop_wrench.axis",
+    "female": "veh_wheel_moto.hub"
   },
   {
     "male": "prop_wrench.axis",
@@ -3869,7 +5213,15 @@
   },
   {
     "male": "prop_wrench.axis",
+    "female": "veh_scooter_frame.axle_front_r"
+  },
+  {
+    "male": "prop_wrench.axis",
     "female": "veh_scooter_frame.axle_rear"
+  },
+  {
+    "male": "prop_wrench.axis",
+    "female": "veh_scooter_frame.axle_rear_r"
   },
   {
     "male": "prop_star_shield.axis",
@@ -3997,11 +5349,27 @@
   },
   {
     "male": "prop_star_shield.axis",
+    "female": "char_head_kid.face_slot"
+  },
+  {
+    "male": "prop_star_shield.axis",
     "female": "prop_skateboard_deck.axle_front"
   },
   {
     "male": "prop_star_shield.axis",
     "female": "prop_skateboard_deck.axle_rear"
+  },
+  {
+    "male": "prop_star_shield.axis",
+    "female": "veh_wheel_sport.hub"
+  },
+  {
+    "male": "prop_star_shield.axis",
+    "female": "veh_wheel_offroad.hub"
+  },
+  {
+    "male": "prop_star_shield.axis",
+    "female": "veh_wheel_moto.hub"
   },
   {
     "male": "prop_star_shield.axis",
@@ -4037,9 +5405,17 @@
   },
   {
     "male": "prop_star_shield.axis",
+    "female": "veh_scooter_frame.axle_front_r"
+  },
+  {
+    "male": "prop_star_shield.axis",
     "female": "veh_scooter_frame.axle_rear"
   },
   {
+    "male": "prop_star_shield.axis",
+    "female": "veh_scooter_frame.axle_rear_r"
+  },
+  {
     "male": "prop_skateboard_deck.top_studs",
     "female": "mini_plate.under_sockets"
   },
@@ -4157,6 +5533,14 @@
   },
   {
     "male": "prop_skateboard_deck.top_studs",
+    "female": "hair_short_swept.under_sockets"
+  },
+  {
+    "male": "prop_skateboard_deck.top_studs",
+    "female": "hair_bob.under_sockets"
+  },
+  {
+    "male": "prop_skateboard_deck.top_studs",
     "female": "char_head_fox.under_sockets"
   },
   {
@@ -4169,7 +5553,15 @@
   },
   {
     "male": "prop_skateboard_deck.top_studs",
+    "female": "hair_spiky.under_sockets"
+  },
+  {
+    "male": "prop_skateboard_deck.top_studs",
     "female": "hair_pigtails.under_sockets"
+  },
+  {
+    "male": "prop_skateboard_deck.top_studs",
+    "female": "hair_ponytail.under_sockets"
   },
   {
     "male": "prop_skateboard_deck.top_studs",
@@ -4186,6 +5578,22 @@
   {
     "male": "prop_skateboard_deck.top_studs",
     "female": "char_legs_seated.under_sockets"
+  },
+  {
+    "male": "prop_skateboard_deck.top_studs",
+    "female": "veh_car_hood_cover.under_sockets"
+  },
+  {
+    "male": "prop_skateboard_deck.top_studs",
+    "female": "veh_cab_roof_cover.under_sockets"
+  },
+  {
+    "male": "prop_skateboard_deck.top_studs",
+    "female": "veh_truck_bed_cover.under_sockets"
+  },
+  {
+    "male": "prop_skateboard_deck.top_studs",
+    "female": "veh_scooter_fairing.under_sockets"
   },
   {
     "male": "prop_skateboard_deck.top_studs",
@@ -4309,6 +5717,14 @@
   },
   {
     "male": "char_legs_seated.top_studs",
+    "female": "hair_short_swept.under_sockets"
+  },
+  {
+    "male": "char_legs_seated.top_studs",
+    "female": "hair_bob.under_sockets"
+  },
+  {
+    "male": "char_legs_seated.top_studs",
     "female": "char_head_fox.under_sockets"
   },
   {
@@ -4321,7 +5737,15 @@
   },
   {
     "male": "char_legs_seated.top_studs",
+    "female": "hair_spiky.under_sockets"
+  },
+  {
+    "male": "char_legs_seated.top_studs",
     "female": "hair_pigtails.under_sockets"
+  },
+  {
+    "male": "char_legs_seated.top_studs",
+    "female": "hair_ponytail.under_sockets"
   },
   {
     "male": "char_legs_seated.top_studs",
@@ -4338,6 +5762,22 @@
   {
     "male": "char_legs_seated.top_studs",
     "female": "char_legs_seated.under_sockets"
+  },
+  {
+    "male": "char_legs_seated.top_studs",
+    "female": "veh_car_hood_cover.under_sockets"
+  },
+  {
+    "male": "char_legs_seated.top_studs",
+    "female": "veh_cab_roof_cover.under_sockets"
+  },
+  {
+    "male": "char_legs_seated.top_studs",
+    "female": "veh_truck_bed_cover.under_sockets"
+  },
+  {
+    "male": "char_legs_seated.top_studs",
+    "female": "veh_scooter_fairing.under_sockets"
   },
   {
     "male": "char_legs_seated.top_studs",
@@ -4461,6 +5901,14 @@
   },
   {
     "male": "veh_car_chassis.top_studs",
+    "female": "hair_short_swept.under_sockets"
+  },
+  {
+    "male": "veh_car_chassis.top_studs",
+    "female": "hair_bob.under_sockets"
+  },
+  {
+    "male": "veh_car_chassis.top_studs",
     "female": "char_head_fox.under_sockets"
   },
   {
@@ -4473,7 +5921,15 @@
   },
   {
     "male": "veh_car_chassis.top_studs",
+    "female": "hair_spiky.under_sockets"
+  },
+  {
+    "male": "veh_car_chassis.top_studs",
     "female": "hair_pigtails.under_sockets"
+  },
+  {
+    "male": "veh_car_chassis.top_studs",
+    "female": "hair_ponytail.under_sockets"
   },
   {
     "male": "veh_car_chassis.top_studs",
@@ -4490,6 +5946,22 @@
   {
     "male": "veh_car_chassis.top_studs",
     "female": "char_legs_seated.under_sockets"
+  },
+  {
+    "male": "veh_car_chassis.top_studs",
+    "female": "veh_car_hood_cover.under_sockets"
+  },
+  {
+    "male": "veh_car_chassis.top_studs",
+    "female": "veh_cab_roof_cover.under_sockets"
+  },
+  {
+    "male": "veh_car_chassis.top_studs",
+    "female": "veh_truck_bed_cover.under_sockets"
+  },
+  {
+    "male": "veh_car_chassis.top_studs",
+    "female": "veh_scooter_fairing.under_sockets"
   },
   {
     "male": "veh_car_chassis.top_studs",
@@ -4613,6 +6085,14 @@
   },
   {
     "male": "veh_car_chassis.front_studs",
+    "female": "hair_short_swept.under_sockets"
+  },
+  {
+    "male": "veh_car_chassis.front_studs",
+    "female": "hair_bob.under_sockets"
+  },
+  {
+    "male": "veh_car_chassis.front_studs",
     "female": "char_head_fox.under_sockets"
   },
   {
@@ -4625,7 +6105,15 @@
   },
   {
     "male": "veh_car_chassis.front_studs",
+    "female": "hair_spiky.under_sockets"
+  },
+  {
+    "male": "veh_car_chassis.front_studs",
     "female": "hair_pigtails.under_sockets"
+  },
+  {
+    "male": "veh_car_chassis.front_studs",
+    "female": "hair_ponytail.under_sockets"
   },
   {
     "male": "veh_car_chassis.front_studs",
@@ -4642,6 +6130,22 @@
   {
     "male": "veh_car_chassis.front_studs",
     "female": "char_legs_seated.under_sockets"
+  },
+  {
+    "male": "veh_car_chassis.front_studs",
+    "female": "veh_car_hood_cover.under_sockets"
+  },
+  {
+    "male": "veh_car_chassis.front_studs",
+    "female": "veh_cab_roof_cover.under_sockets"
+  },
+  {
+    "male": "veh_car_chassis.front_studs",
+    "female": "veh_truck_bed_cover.under_sockets"
+  },
+  {
+    "male": "veh_car_chassis.front_studs",
+    "female": "veh_scooter_fairing.under_sockets"
   },
   {
     "male": "veh_car_chassis.front_studs",
@@ -4765,6 +6269,14 @@
   },
   {
     "male": "veh_car_chassis.hood_studs",
+    "female": "hair_short_swept.under_sockets"
+  },
+  {
+    "male": "veh_car_chassis.hood_studs",
+    "female": "hair_bob.under_sockets"
+  },
+  {
+    "male": "veh_car_chassis.hood_studs",
     "female": "char_head_fox.under_sockets"
   },
   {
@@ -4777,7 +6289,15 @@
   },
   {
     "male": "veh_car_chassis.hood_studs",
+    "female": "hair_spiky.under_sockets"
+  },
+  {
+    "male": "veh_car_chassis.hood_studs",
     "female": "hair_pigtails.under_sockets"
+  },
+  {
+    "male": "veh_car_chassis.hood_studs",
+    "female": "hair_ponytail.under_sockets"
   },
   {
     "male": "veh_car_chassis.hood_studs",
@@ -4794,6 +6314,22 @@
   {
     "male": "veh_car_chassis.hood_studs",
     "female": "char_legs_seated.under_sockets"
+  },
+  {
+    "male": "veh_car_chassis.hood_studs",
+    "female": "veh_car_hood_cover.under_sockets"
+  },
+  {
+    "male": "veh_car_chassis.hood_studs",
+    "female": "veh_cab_roof_cover.under_sockets"
+  },
+  {
+    "male": "veh_car_chassis.hood_studs",
+    "female": "veh_truck_bed_cover.under_sockets"
+  },
+  {
+    "male": "veh_car_chassis.hood_studs",
+    "female": "veh_scooter_fairing.under_sockets"
   },
   {
     "male": "veh_car_chassis.hood_studs",
@@ -4917,6 +6453,14 @@
   },
   {
     "male": "veh_car_chassis.rollbar_studs",
+    "female": "hair_short_swept.under_sockets"
+  },
+  {
+    "male": "veh_car_chassis.rollbar_studs",
+    "female": "hair_bob.under_sockets"
+  },
+  {
+    "male": "veh_car_chassis.rollbar_studs",
     "female": "char_head_fox.under_sockets"
   },
   {
@@ -4929,7 +6473,15 @@
   },
   {
     "male": "veh_car_chassis.rollbar_studs",
+    "female": "hair_spiky.under_sockets"
+  },
+  {
+    "male": "veh_car_chassis.rollbar_studs",
     "female": "hair_pigtails.under_sockets"
+  },
+  {
+    "male": "veh_car_chassis.rollbar_studs",
+    "female": "hair_ponytail.under_sockets"
   },
   {
     "male": "veh_car_chassis.rollbar_studs",
@@ -4946,6 +6498,22 @@
   {
     "male": "veh_car_chassis.rollbar_studs",
     "female": "char_legs_seated.under_sockets"
+  },
+  {
+    "male": "veh_car_chassis.rollbar_studs",
+    "female": "veh_car_hood_cover.under_sockets"
+  },
+  {
+    "male": "veh_car_chassis.rollbar_studs",
+    "female": "veh_cab_roof_cover.under_sockets"
+  },
+  {
+    "male": "veh_car_chassis.rollbar_studs",
+    "female": "veh_truck_bed_cover.under_sockets"
+  },
+  {
+    "male": "veh_car_chassis.rollbar_studs",
+    "female": "veh_scooter_fairing.under_sockets"
   },
   {
     "male": "veh_car_chassis.rollbar_studs",
@@ -5069,6 +6637,14 @@
   },
   {
     "male": "veh_car_chassis.spoiler_studs",
+    "female": "hair_short_swept.under_sockets"
+  },
+  {
+    "male": "veh_car_chassis.spoiler_studs",
+    "female": "hair_bob.under_sockets"
+  },
+  {
+    "male": "veh_car_chassis.spoiler_studs",
     "female": "char_head_fox.under_sockets"
   },
   {
@@ -5081,7 +6657,15 @@
   },
   {
     "male": "veh_car_chassis.spoiler_studs",
+    "female": "hair_spiky.under_sockets"
+  },
+  {
+    "male": "veh_car_chassis.spoiler_studs",
     "female": "hair_pigtails.under_sockets"
+  },
+  {
+    "male": "veh_car_chassis.spoiler_studs",
+    "female": "hair_ponytail.under_sockets"
   },
   {
     "male": "veh_car_chassis.spoiler_studs",
@@ -5098,6 +6682,22 @@
   {
     "male": "veh_car_chassis.spoiler_studs",
     "female": "char_legs_seated.under_sockets"
+  },
+  {
+    "male": "veh_car_chassis.spoiler_studs",
+    "female": "veh_car_hood_cover.under_sockets"
+  },
+  {
+    "male": "veh_car_chassis.spoiler_studs",
+    "female": "veh_cab_roof_cover.under_sockets"
+  },
+  {
+    "male": "veh_car_chassis.spoiler_studs",
+    "female": "veh_truck_bed_cover.under_sockets"
+  },
+  {
+    "male": "veh_car_chassis.spoiler_studs",
+    "female": "veh_scooter_fairing.under_sockets"
   },
   {
     "male": "veh_car_chassis.spoiler_studs",
@@ -5221,6 +6821,14 @@
   },
   {
     "male": "veh_car_chassis.exhaust_studs",
+    "female": "hair_short_swept.under_sockets"
+  },
+  {
+    "male": "veh_car_chassis.exhaust_studs",
+    "female": "hair_bob.under_sockets"
+  },
+  {
+    "male": "veh_car_chassis.exhaust_studs",
     "female": "char_head_fox.under_sockets"
   },
   {
@@ -5233,7 +6841,15 @@
   },
   {
     "male": "veh_car_chassis.exhaust_studs",
+    "female": "hair_spiky.under_sockets"
+  },
+  {
+    "male": "veh_car_chassis.exhaust_studs",
     "female": "hair_pigtails.under_sockets"
+  },
+  {
+    "male": "veh_car_chassis.exhaust_studs",
+    "female": "hair_ponytail.under_sockets"
   },
   {
     "male": "veh_car_chassis.exhaust_studs",
@@ -5253,6 +6869,390 @@
   },
   {
     "male": "veh_car_chassis.exhaust_studs",
+    "female": "veh_car_hood_cover.under_sockets"
+  },
+  {
+    "male": "veh_car_chassis.exhaust_studs",
+    "female": "veh_cab_roof_cover.under_sockets"
+  },
+  {
+    "male": "veh_car_chassis.exhaust_studs",
+    "female": "veh_truck_bed_cover.under_sockets"
+  },
+  {
+    "male": "veh_car_chassis.exhaust_studs",
+    "female": "veh_scooter_fairing.under_sockets"
+  },
+  {
+    "male": "veh_car_chassis.exhaust_studs",
+    "female": "veh_moto_cowling.under_sockets"
+  },
+  {
+    "male": "veh_car_hood_cover.top_studs",
+    "female": "mini_plate.under_sockets"
+  },
+  {
+    "male": "veh_car_hood_cover.top_studs",
+    "female": "cloud_wings.under_sockets"
+  },
+  {
+    "male": "veh_car_hood_cover.top_studs",
+    "female": "pebble_armor_shell.under_sockets"
+  },
+  {
+    "male": "veh_car_hood_cover.top_studs",
+    "female": "glow_capsule.under_sockets"
+  },
+  {
+    "male": "veh_car_hood_cover.top_studs",
+    "female": "plate_s_2x2.under_sockets"
+  },
+  {
+    "male": "veh_car_hood_cover.top_studs",
+    "female": "plate_s_4x4.under_sockets"
+  },
+  {
+    "male": "veh_car_hood_cover.top_studs",
+    "female": "brick_s_2x2.under_sockets"
+  },
+  {
+    "male": "veh_car_hood_cover.top_studs",
+    "female": "tile_s_2x2.under_sockets"
+  },
+  {
+    "male": "veh_car_hood_cover.top_studs",
+    "female": "slope_s_2x2.under_sockets"
+  },
+  {
+    "male": "veh_car_hood_cover.top_studs",
+    "female": "dome_s_2x2.under_sockets"
+  },
+  {
+    "male": "veh_car_hood_cover.top_studs",
+    "female": "bumper_horns.under_sockets"
+  },
+  {
+    "male": "veh_car_hood_cover.top_studs",
+    "female": "pointy_ears.under_sockets"
+  },
+  {
+    "male": "veh_car_hood_cover.top_studs",
+    "female": "wobble_hat.under_sockets"
+  },
+  {
+    "male": "veh_car_hood_cover.top_studs",
+    "female": "ridge_fin.under_sockets"
+  },
+  {
+    "male": "veh_car_hood_cover.top_studs",
+    "female": "zoom_capsule_s.under_sockets"
+  },
+  {
+    "male": "veh_car_hood_cover.top_studs",
+    "female": "bounce_capsule_s.under_sockets"
+  },
+  {
+    "male": "veh_car_hood_cover.top_studs",
+    "female": "racer_spoiler.under_sockets"
+  },
+  {
+    "male": "veh_car_hood_cover.top_studs",
+    "female": "racer_bull_bar.under_sockets"
+  },
+  {
+    "male": "veh_car_hood_cover.top_studs",
+    "female": "racer_hood_scoop.under_sockets"
+  },
+  {
+    "male": "veh_car_hood_cover.top_studs",
+    "female": "racer_twin_exhaust.under_sockets"
+  },
+  {
+    "male": "veh_car_hood_cover.top_studs",
+    "female": "racer_light_bar.under_sockets"
+  },
+  {
+    "male": "veh_car_hood_cover.top_studs",
+    "female": "racer_roof_rack.under_sockets"
+  },
+  {
+    "male": "veh_car_hood_cover.top_studs",
+    "female": "waddle_tail_s.under_sockets"
+  },
+  {
+    "male": "veh_car_hood_cover.top_studs",
+    "female": "robot_legs_stomper.under_sockets"
+  },
+  {
+    "male": "veh_car_hood_cover.top_studs",
+    "female": "robot_torso_core.under_sockets"
+  },
+  {
+    "male": "veh_car_hood_cover.top_studs",
+    "female": "robot_arms_grabber.under_sockets"
+  },
+  {
+    "male": "veh_car_hood_cover.top_studs",
+    "female": "robot_head_visor.under_sockets"
+  },
+  {
+    "male": "veh_car_hood_cover.top_studs",
+    "female": "robot_back_jetpack.under_sockets"
+  },
+  {
+    "male": "veh_car_hood_cover.top_studs",
+    "female": "char_head_kid.under_sockets"
+  },
+  {
+    "male": "veh_car_hood_cover.top_studs",
+    "female": "hair_short_swept.under_sockets"
+  },
+  {
+    "male": "veh_car_hood_cover.top_studs",
+    "female": "hair_bob.under_sockets"
+  },
+  {
+    "male": "veh_car_hood_cover.top_studs",
+    "female": "char_head_fox.under_sockets"
+  },
+  {
+    "male": "veh_car_hood_cover.top_studs",
+    "female": "char_head_bear.under_sockets"
+  },
+  {
+    "male": "veh_car_hood_cover.top_studs",
+    "female": "hair_swoosh.under_sockets"
+  },
+  {
+    "male": "veh_car_hood_cover.top_studs",
+    "female": "hair_spiky.under_sockets"
+  },
+  {
+    "male": "veh_car_hood_cover.top_studs",
+    "female": "hair_pigtails.under_sockets"
+  },
+  {
+    "male": "veh_car_hood_cover.top_studs",
+    "female": "hair_ponytail.under_sockets"
+  },
+  {
+    "male": "veh_car_hood_cover.top_studs",
+    "female": "hair_curly.under_sockets"
+  },
+  {
+    "male": "veh_car_hood_cover.top_studs",
+    "female": "hair_mohawk.under_sockets"
+  },
+  {
+    "male": "veh_car_hood_cover.top_studs",
+    "female": "pack_explorer.under_sockets"
+  },
+  {
+    "male": "veh_car_hood_cover.top_studs",
+    "female": "char_legs_seated.under_sockets"
+  },
+  {
+    "male": "veh_car_hood_cover.top_studs",
+    "female": "veh_car_hood_cover.under_sockets"
+  },
+  {
+    "male": "veh_car_hood_cover.top_studs",
+    "female": "veh_cab_roof_cover.under_sockets"
+  },
+  {
+    "male": "veh_car_hood_cover.top_studs",
+    "female": "veh_truck_bed_cover.under_sockets"
+  },
+  {
+    "male": "veh_car_hood_cover.top_studs",
+    "female": "veh_scooter_fairing.under_sockets"
+  },
+  {
+    "male": "veh_car_hood_cover.top_studs",
+    "female": "veh_moto_cowling.under_sockets"
+  },
+  {
+    "male": "veh_cab_roof_cover.top_studs",
+    "female": "mini_plate.under_sockets"
+  },
+  {
+    "male": "veh_cab_roof_cover.top_studs",
+    "female": "cloud_wings.under_sockets"
+  },
+  {
+    "male": "veh_cab_roof_cover.top_studs",
+    "female": "pebble_armor_shell.under_sockets"
+  },
+  {
+    "male": "veh_cab_roof_cover.top_studs",
+    "female": "glow_capsule.under_sockets"
+  },
+  {
+    "male": "veh_cab_roof_cover.top_studs",
+    "female": "plate_s_2x2.under_sockets"
+  },
+  {
+    "male": "veh_cab_roof_cover.top_studs",
+    "female": "plate_s_4x4.under_sockets"
+  },
+  {
+    "male": "veh_cab_roof_cover.top_studs",
+    "female": "brick_s_2x2.under_sockets"
+  },
+  {
+    "male": "veh_cab_roof_cover.top_studs",
+    "female": "tile_s_2x2.under_sockets"
+  },
+  {
+    "male": "veh_cab_roof_cover.top_studs",
+    "female": "slope_s_2x2.under_sockets"
+  },
+  {
+    "male": "veh_cab_roof_cover.top_studs",
+    "female": "dome_s_2x2.under_sockets"
+  },
+  {
+    "male": "veh_cab_roof_cover.top_studs",
+    "female": "bumper_horns.under_sockets"
+  },
+  {
+    "male": "veh_cab_roof_cover.top_studs",
+    "female": "pointy_ears.under_sockets"
+  },
+  {
+    "male": "veh_cab_roof_cover.top_studs",
+    "female": "wobble_hat.under_sockets"
+  },
+  {
+    "male": "veh_cab_roof_cover.top_studs",
+    "female": "ridge_fin.under_sockets"
+  },
+  {
+    "male": "veh_cab_roof_cover.top_studs",
+    "female": "zoom_capsule_s.under_sockets"
+  },
+  {
+    "male": "veh_cab_roof_cover.top_studs",
+    "female": "bounce_capsule_s.under_sockets"
+  },
+  {
+    "male": "veh_cab_roof_cover.top_studs",
+    "female": "racer_spoiler.under_sockets"
+  },
+  {
+    "male": "veh_cab_roof_cover.top_studs",
+    "female": "racer_bull_bar.under_sockets"
+  },
+  {
+    "male": "veh_cab_roof_cover.top_studs",
+    "female": "racer_hood_scoop.under_sockets"
+  },
+  {
+    "male": "veh_cab_roof_cover.top_studs",
+    "female": "racer_twin_exhaust.under_sockets"
+  },
+  {
+    "male": "veh_cab_roof_cover.top_studs",
+    "female": "racer_light_bar.under_sockets"
+  },
+  {
+    "male": "veh_cab_roof_cover.top_studs",
+    "female": "racer_roof_rack.under_sockets"
+  },
+  {
+    "male": "veh_cab_roof_cover.top_studs",
+    "female": "waddle_tail_s.under_sockets"
+  },
+  {
+    "male": "veh_cab_roof_cover.top_studs",
+    "female": "robot_legs_stomper.under_sockets"
+  },
+  {
+    "male": "veh_cab_roof_cover.top_studs",
+    "female": "robot_torso_core.under_sockets"
+  },
+  {
+    "male": "veh_cab_roof_cover.top_studs",
+    "female": "robot_arms_grabber.under_sockets"
+  },
+  {
+    "male": "veh_cab_roof_cover.top_studs",
+    "female": "robot_head_visor.under_sockets"
+  },
+  {
+    "male": "veh_cab_roof_cover.top_studs",
+    "female": "robot_back_jetpack.under_sockets"
+  },
+  {
+    "male": "veh_cab_roof_cover.top_studs",
+    "female": "char_head_kid.under_sockets"
+  },
+  {
+    "male": "veh_cab_roof_cover.top_studs",
+    "female": "hair_short_swept.under_sockets"
+  },
+  {
+    "male": "veh_cab_roof_cover.top_studs",
+    "female": "hair_bob.under_sockets"
+  },
+  {
+    "male": "veh_cab_roof_cover.top_studs",
+    "female": "char_head_fox.under_sockets"
+  },
+  {
+    "male": "veh_cab_roof_cover.top_studs",
+    "female": "char_head_bear.under_sockets"
+  },
+  {
+    "male": "veh_cab_roof_cover.top_studs",
+    "female": "hair_swoosh.under_sockets"
+  },
+  {
+    "male": "veh_cab_roof_cover.top_studs",
+    "female": "hair_spiky.under_sockets"
+  },
+  {
+    "male": "veh_cab_roof_cover.top_studs",
+    "female": "hair_pigtails.under_sockets"
+  },
+  {
+    "male": "veh_cab_roof_cover.top_studs",
+    "female": "hair_ponytail.under_sockets"
+  },
+  {
+    "male": "veh_cab_roof_cover.top_studs",
+    "female": "hair_curly.under_sockets"
+  },
+  {
+    "male": "veh_cab_roof_cover.top_studs",
+    "female": "hair_mohawk.under_sockets"
+  },
+  {
+    "male": "veh_cab_roof_cover.top_studs",
+    "female": "pack_explorer.under_sockets"
+  },
+  {
+    "male": "veh_cab_roof_cover.top_studs",
+    "female": "char_legs_seated.under_sockets"
+  },
+  {
+    "male": "veh_cab_roof_cover.top_studs",
+    "female": "veh_car_hood_cover.under_sockets"
+  },
+  {
+    "male": "veh_cab_roof_cover.top_studs",
+    "female": "veh_cab_roof_cover.under_sockets"
+  },
+  {
+    "male": "veh_cab_roof_cover.top_studs",
+    "female": "veh_truck_bed_cover.under_sockets"
+  },
+  {
+    "male": "veh_cab_roof_cover.top_studs",
+    "female": "veh_scooter_fairing.under_sockets"
+  },
+  {
+    "male": "veh_cab_roof_cover.top_studs",
     "female": "veh_moto_cowling.under_sockets"
   },
   {
@@ -5333,6 +7333,10 @@
   },
   {
     "male": "veh_steering_wheel.axis",
+    "female": "char_head_kid.face_slot"
+  },
+  {
+    "male": "veh_steering_wheel.axis",
     "female": "prop_skateboard_deck.axle_front"
   },
   {
@@ -5373,9 +7377,17 @@
   },
   {
     "male": "veh_steering_wheel.axis",
+    "female": "veh_scooter_frame.axle_front_r"
+  },
+  {
+    "male": "veh_steering_wheel.axis",
     "female": "veh_scooter_frame.axle_rear"
   },
   {
+    "male": "veh_steering_wheel.axis",
+    "female": "veh_scooter_frame.axle_rear_r"
+  },
+  {
     "male": "veh_truck_chassis.top_studs",
     "female": "mini_plate.under_sockets"
   },
@@ -5493,6 +7505,14 @@
   },
   {
     "male": "veh_truck_chassis.top_studs",
+    "female": "hair_short_swept.under_sockets"
+  },
+  {
+    "male": "veh_truck_chassis.top_studs",
+    "female": "hair_bob.under_sockets"
+  },
+  {
+    "male": "veh_truck_chassis.top_studs",
     "female": "char_head_fox.under_sockets"
   },
   {
@@ -5505,7 +7525,15 @@
   },
   {
     "male": "veh_truck_chassis.top_studs",
+    "female": "hair_spiky.under_sockets"
+  },
+  {
+    "male": "veh_truck_chassis.top_studs",
     "female": "hair_pigtails.under_sockets"
+  },
+  {
+    "male": "veh_truck_chassis.top_studs",
+    "female": "hair_ponytail.under_sockets"
   },
   {
     "male": "veh_truck_chassis.top_studs",
@@ -5522,6 +7550,22 @@
   {
     "male": "veh_truck_chassis.top_studs",
     "female": "char_legs_seated.under_sockets"
+  },
+  {
+    "male": "veh_truck_chassis.top_studs",
+    "female": "veh_car_hood_cover.under_sockets"
+  },
+  {
+    "male": "veh_truck_chassis.top_studs",
+    "female": "veh_cab_roof_cover.under_sockets"
+  },
+  {
+    "male": "veh_truck_chassis.top_studs",
+    "female": "veh_truck_bed_cover.under_sockets"
+  },
+  {
+    "male": "veh_truck_chassis.top_studs",
+    "female": "veh_scooter_fairing.under_sockets"
   },
   {
     "male": "veh_truck_chassis.top_studs",
@@ -5645,6 +7689,14 @@
   },
   {
     "male": "veh_truck_chassis.front_studs",
+    "female": "hair_short_swept.under_sockets"
+  },
+  {
+    "male": "veh_truck_chassis.front_studs",
+    "female": "hair_bob.under_sockets"
+  },
+  {
+    "male": "veh_truck_chassis.front_studs",
     "female": "char_head_fox.under_sockets"
   },
   {
@@ -5657,7 +7709,15 @@
   },
   {
     "male": "veh_truck_chassis.front_studs",
+    "female": "hair_spiky.under_sockets"
+  },
+  {
+    "male": "veh_truck_chassis.front_studs",
     "female": "hair_pigtails.under_sockets"
+  },
+  {
+    "male": "veh_truck_chassis.front_studs",
+    "female": "hair_ponytail.under_sockets"
   },
   {
     "male": "veh_truck_chassis.front_studs",
@@ -5674,6 +7734,22 @@
   {
     "male": "veh_truck_chassis.front_studs",
     "female": "char_legs_seated.under_sockets"
+  },
+  {
+    "male": "veh_truck_chassis.front_studs",
+    "female": "veh_car_hood_cover.under_sockets"
+  },
+  {
+    "male": "veh_truck_chassis.front_studs",
+    "female": "veh_cab_roof_cover.under_sockets"
+  },
+  {
+    "male": "veh_truck_chassis.front_studs",
+    "female": "veh_truck_bed_cover.under_sockets"
+  },
+  {
+    "male": "veh_truck_chassis.front_studs",
+    "female": "veh_scooter_fairing.under_sockets"
   },
   {
     "male": "veh_truck_chassis.front_studs",
@@ -5797,6 +7873,14 @@
   },
   {
     "male": "veh_truck_chassis.hood_studs",
+    "female": "hair_short_swept.under_sockets"
+  },
+  {
+    "male": "veh_truck_chassis.hood_studs",
+    "female": "hair_bob.under_sockets"
+  },
+  {
+    "male": "veh_truck_chassis.hood_studs",
     "female": "char_head_fox.under_sockets"
   },
   {
@@ -5809,7 +7893,15 @@
   },
   {
     "male": "veh_truck_chassis.hood_studs",
+    "female": "hair_spiky.under_sockets"
+  },
+  {
+    "male": "veh_truck_chassis.hood_studs",
     "female": "hair_pigtails.under_sockets"
+  },
+  {
+    "male": "veh_truck_chassis.hood_studs",
+    "female": "hair_ponytail.under_sockets"
   },
   {
     "male": "veh_truck_chassis.hood_studs",
@@ -5826,6 +7918,22 @@
   {
     "male": "veh_truck_chassis.hood_studs",
     "female": "char_legs_seated.under_sockets"
+  },
+  {
+    "male": "veh_truck_chassis.hood_studs",
+    "female": "veh_car_hood_cover.under_sockets"
+  },
+  {
+    "male": "veh_truck_chassis.hood_studs",
+    "female": "veh_cab_roof_cover.under_sockets"
+  },
+  {
+    "male": "veh_truck_chassis.hood_studs",
+    "female": "veh_truck_bed_cover.under_sockets"
+  },
+  {
+    "male": "veh_truck_chassis.hood_studs",
+    "female": "veh_scooter_fairing.under_sockets"
   },
   {
     "male": "veh_truck_chassis.hood_studs",
@@ -5949,6 +8057,14 @@
   },
   {
     "male": "veh_truck_chassis.roof_studs",
+    "female": "hair_short_swept.under_sockets"
+  },
+  {
+    "male": "veh_truck_chassis.roof_studs",
+    "female": "hair_bob.under_sockets"
+  },
+  {
+    "male": "veh_truck_chassis.roof_studs",
     "female": "char_head_fox.under_sockets"
   },
   {
@@ -5961,7 +8077,15 @@
   },
   {
     "male": "veh_truck_chassis.roof_studs",
+    "female": "hair_spiky.under_sockets"
+  },
+  {
+    "male": "veh_truck_chassis.roof_studs",
     "female": "hair_pigtails.under_sockets"
+  },
+  {
+    "male": "veh_truck_chassis.roof_studs",
+    "female": "hair_ponytail.under_sockets"
   },
   {
     "male": "veh_truck_chassis.roof_studs",
@@ -5978,6 +8102,22 @@
   {
     "male": "veh_truck_chassis.roof_studs",
     "female": "char_legs_seated.under_sockets"
+  },
+  {
+    "male": "veh_truck_chassis.roof_studs",
+    "female": "veh_car_hood_cover.under_sockets"
+  },
+  {
+    "male": "veh_truck_chassis.roof_studs",
+    "female": "veh_cab_roof_cover.under_sockets"
+  },
+  {
+    "male": "veh_truck_chassis.roof_studs",
+    "female": "veh_truck_bed_cover.under_sockets"
+  },
+  {
+    "male": "veh_truck_chassis.roof_studs",
+    "female": "veh_scooter_fairing.under_sockets"
   },
   {
     "male": "veh_truck_chassis.roof_studs",
@@ -6101,6 +8241,14 @@
   },
   {
     "male": "veh_truck_chassis.cargo_studs",
+    "female": "hair_short_swept.under_sockets"
+  },
+  {
+    "male": "veh_truck_chassis.cargo_studs",
+    "female": "hair_bob.under_sockets"
+  },
+  {
+    "male": "veh_truck_chassis.cargo_studs",
     "female": "char_head_fox.under_sockets"
   },
   {
@@ -6113,7 +8261,15 @@
   },
   {
     "male": "veh_truck_chassis.cargo_studs",
+    "female": "hair_spiky.under_sockets"
+  },
+  {
+    "male": "veh_truck_chassis.cargo_studs",
     "female": "hair_pigtails.under_sockets"
+  },
+  {
+    "male": "veh_truck_chassis.cargo_studs",
+    "female": "hair_ponytail.under_sockets"
   },
   {
     "male": "veh_truck_chassis.cargo_studs",
@@ -6130,161 +8286,209 @@
   {
     "male": "veh_truck_chassis.cargo_studs",
     "female": "char_legs_seated.under_sockets"
+  },
+  {
+    "male": "veh_truck_chassis.cargo_studs",
+    "female": "veh_car_hood_cover.under_sockets"
+  },
+  {
+    "male": "veh_truck_chassis.cargo_studs",
+    "female": "veh_cab_roof_cover.under_sockets"
+  },
+  {
+    "male": "veh_truck_chassis.cargo_studs",
+    "female": "veh_truck_bed_cover.under_sockets"
+  },
+  {
+    "male": "veh_truck_chassis.cargo_studs",
+    "female": "veh_scooter_fairing.under_sockets"
   },
   {
     "male": "veh_truck_chassis.cargo_studs",
     "female": "veh_moto_cowling.under_sockets"
   },
   {
-    "male": "veh_truck_chassis.rear_studs",
+    "male": "veh_truck_bed_cover.bed_studs",
     "female": "mini_plate.under_sockets"
   },
   {
-    "male": "veh_truck_chassis.rear_studs",
+    "male": "veh_truck_bed_cover.bed_studs",
     "female": "cloud_wings.under_sockets"
   },
   {
-    "male": "veh_truck_chassis.rear_studs",
+    "male": "veh_truck_bed_cover.bed_studs",
     "female": "pebble_armor_shell.under_sockets"
   },
   {
-    "male": "veh_truck_chassis.rear_studs",
+    "male": "veh_truck_bed_cover.bed_studs",
     "female": "glow_capsule.under_sockets"
   },
   {
-    "male": "veh_truck_chassis.rear_studs",
+    "male": "veh_truck_bed_cover.bed_studs",
     "female": "plate_s_2x2.under_sockets"
   },
   {
-    "male": "veh_truck_chassis.rear_studs",
+    "male": "veh_truck_bed_cover.bed_studs",
     "female": "plate_s_4x4.under_sockets"
   },
   {
-    "male": "veh_truck_chassis.rear_studs",
+    "male": "veh_truck_bed_cover.bed_studs",
     "female": "brick_s_2x2.under_sockets"
   },
   {
-    "male": "veh_truck_chassis.rear_studs",
+    "male": "veh_truck_bed_cover.bed_studs",
     "female": "tile_s_2x2.under_sockets"
   },
   {
-    "male": "veh_truck_chassis.rear_studs",
+    "male": "veh_truck_bed_cover.bed_studs",
     "female": "slope_s_2x2.under_sockets"
   },
   {
-    "male": "veh_truck_chassis.rear_studs",
+    "male": "veh_truck_bed_cover.bed_studs",
     "female": "dome_s_2x2.under_sockets"
   },
   {
-    "male": "veh_truck_chassis.rear_studs",
+    "male": "veh_truck_bed_cover.bed_studs",
     "female": "bumper_horns.under_sockets"
   },
   {
-    "male": "veh_truck_chassis.rear_studs",
+    "male": "veh_truck_bed_cover.bed_studs",
     "female": "pointy_ears.under_sockets"
   },
   {
-    "male": "veh_truck_chassis.rear_studs",
+    "male": "veh_truck_bed_cover.bed_studs",
     "female": "wobble_hat.under_sockets"
   },
   {
-    "male": "veh_truck_chassis.rear_studs",
+    "male": "veh_truck_bed_cover.bed_studs",
     "female": "ridge_fin.under_sockets"
   },
   {
-    "male": "veh_truck_chassis.rear_studs",
+    "male": "veh_truck_bed_cover.bed_studs",
     "female": "zoom_capsule_s.under_sockets"
   },
   {
-    "male": "veh_truck_chassis.rear_studs",
+    "male": "veh_truck_bed_cover.bed_studs",
     "female": "bounce_capsule_s.under_sockets"
   },
   {
-    "male": "veh_truck_chassis.rear_studs",
+    "male": "veh_truck_bed_cover.bed_studs",
     "female": "racer_spoiler.under_sockets"
   },
   {
-    "male": "veh_truck_chassis.rear_studs",
+    "male": "veh_truck_bed_cover.bed_studs",
     "female": "racer_bull_bar.under_sockets"
   },
   {
-    "male": "veh_truck_chassis.rear_studs",
+    "male": "veh_truck_bed_cover.bed_studs",
     "female": "racer_hood_scoop.under_sockets"
   },
   {
-    "male": "veh_truck_chassis.rear_studs",
+    "male": "veh_truck_bed_cover.bed_studs",
     "female": "racer_twin_exhaust.under_sockets"
   },
   {
-    "male": "veh_truck_chassis.rear_studs",
+    "male": "veh_truck_bed_cover.bed_studs",
     "female": "racer_light_bar.under_sockets"
   },
   {
-    "male": "veh_truck_chassis.rear_studs",
+    "male": "veh_truck_bed_cover.bed_studs",
     "female": "racer_roof_rack.under_sockets"
   },
   {
-    "male": "veh_truck_chassis.rear_studs",
+    "male": "veh_truck_bed_cover.bed_studs",
     "female": "waddle_tail_s.under_sockets"
   },
   {
-    "male": "veh_truck_chassis.rear_studs",
+    "male": "veh_truck_bed_cover.bed_studs",
     "female": "robot_legs_stomper.under_sockets"
   },
   {
-    "male": "veh_truck_chassis.rear_studs",
+    "male": "veh_truck_bed_cover.bed_studs",
     "female": "robot_torso_core.under_sockets"
   },
   {
-    "male": "veh_truck_chassis.rear_studs",
+    "male": "veh_truck_bed_cover.bed_studs",
     "female": "robot_arms_grabber.under_sockets"
   },
   {
-    "male": "veh_truck_chassis.rear_studs",
+    "male": "veh_truck_bed_cover.bed_studs",
     "female": "robot_head_visor.under_sockets"
   },
   {
-    "male": "veh_truck_chassis.rear_studs",
+    "male": "veh_truck_bed_cover.bed_studs",
     "female": "robot_back_jetpack.under_sockets"
   },
   {
-    "male": "veh_truck_chassis.rear_studs",
+    "male": "veh_truck_bed_cover.bed_studs",
     "female": "char_head_kid.under_sockets"
   },
   {
-    "male": "veh_truck_chassis.rear_studs",
+    "male": "veh_truck_bed_cover.bed_studs",
+    "female": "hair_short_swept.under_sockets"
+  },
+  {
+    "male": "veh_truck_bed_cover.bed_studs",
+    "female": "hair_bob.under_sockets"
+  },
+  {
+    "male": "veh_truck_bed_cover.bed_studs",
     "female": "char_head_fox.under_sockets"
   },
   {
-    "male": "veh_truck_chassis.rear_studs",
+    "male": "veh_truck_bed_cover.bed_studs",
     "female": "char_head_bear.under_sockets"
   },
   {
-    "male": "veh_truck_chassis.rear_studs",
+    "male": "veh_truck_bed_cover.bed_studs",
     "female": "hair_swoosh.under_sockets"
   },
   {
-    "male": "veh_truck_chassis.rear_studs",
+    "male": "veh_truck_bed_cover.bed_studs",
+    "female": "hair_spiky.under_sockets"
+  },
+  {
+    "male": "veh_truck_bed_cover.bed_studs",
     "female": "hair_pigtails.under_sockets"
   },
   {
-    "male": "veh_truck_chassis.rear_studs",
+    "male": "veh_truck_bed_cover.bed_studs",
+    "female": "hair_ponytail.under_sockets"
+  },
+  {
+    "male": "veh_truck_bed_cover.bed_studs",
     "female": "hair_curly.under_sockets"
   },
   {
-    "male": "veh_truck_chassis.rear_studs",
+    "male": "veh_truck_bed_cover.bed_studs",
     "female": "hair_mohawk.under_sockets"
   },
   {
-    "male": "veh_truck_chassis.rear_studs",
+    "male": "veh_truck_bed_cover.bed_studs",
     "female": "pack_explorer.under_sockets"
   },
   {
-    "male": "veh_truck_chassis.rear_studs",
+    "male": "veh_truck_bed_cover.bed_studs",
     "female": "char_legs_seated.under_sockets"
   },
   {
-    "male": "veh_truck_chassis.rear_studs",
+    "male": "veh_truck_bed_cover.bed_studs",
+    "female": "veh_car_hood_cover.under_sockets"
+  },
+  {
+    "male": "veh_truck_bed_cover.bed_studs",
+    "female": "veh_cab_roof_cover.under_sockets"
+  },
+  {
+    "male": "veh_truck_bed_cover.bed_studs",
+    "female": "veh_truck_bed_cover.under_sockets"
+  },
+  {
+    "male": "veh_truck_bed_cover.bed_studs",
+    "female": "veh_scooter_fairing.under_sockets"
+  },
+  {
+    "male": "veh_truck_bed_cover.bed_studs",
     "female": "veh_moto_cowling.under_sockets"
   },
   {
@@ -6405,6 +8609,14 @@
   },
   {
     "male": "veh_scooter_frame.top_studs",
+    "female": "hair_short_swept.under_sockets"
+  },
+  {
+    "male": "veh_scooter_frame.top_studs",
+    "female": "hair_bob.under_sockets"
+  },
+  {
+    "male": "veh_scooter_frame.top_studs",
     "female": "char_head_fox.under_sockets"
   },
   {
@@ -6417,7 +8629,15 @@
   },
   {
     "male": "veh_scooter_frame.top_studs",
+    "female": "hair_spiky.under_sockets"
+  },
+  {
+    "male": "veh_scooter_frame.top_studs",
     "female": "hair_pigtails.under_sockets"
+  },
+  {
+    "male": "veh_scooter_frame.top_studs",
+    "female": "hair_ponytail.under_sockets"
   },
   {
     "male": "veh_scooter_frame.top_studs",
@@ -6437,6 +8657,206 @@
   },
   {
     "male": "veh_scooter_frame.top_studs",
+    "female": "veh_car_hood_cover.under_sockets"
+  },
+  {
+    "male": "veh_scooter_frame.top_studs",
+    "female": "veh_cab_roof_cover.under_sockets"
+  },
+  {
+    "male": "veh_scooter_frame.top_studs",
+    "female": "veh_truck_bed_cover.under_sockets"
+  },
+  {
+    "male": "veh_scooter_frame.top_studs",
+    "female": "veh_scooter_fairing.under_sockets"
+  },
+  {
+    "male": "veh_scooter_frame.top_studs",
+    "female": "veh_moto_cowling.under_sockets"
+  },
+  {
+    "male": "veh_scooter_frame.fairing_studs",
+    "female": "mini_plate.under_sockets"
+  },
+  {
+    "male": "veh_scooter_frame.fairing_studs",
+    "female": "cloud_wings.under_sockets"
+  },
+  {
+    "male": "veh_scooter_frame.fairing_studs",
+    "female": "pebble_armor_shell.under_sockets"
+  },
+  {
+    "male": "veh_scooter_frame.fairing_studs",
+    "female": "glow_capsule.under_sockets"
+  },
+  {
+    "male": "veh_scooter_frame.fairing_studs",
+    "female": "plate_s_2x2.under_sockets"
+  },
+  {
+    "male": "veh_scooter_frame.fairing_studs",
+    "female": "plate_s_4x4.under_sockets"
+  },
+  {
+    "male": "veh_scooter_frame.fairing_studs",
+    "female": "brick_s_2x2.under_sockets"
+  },
+  {
+    "male": "veh_scooter_frame.fairing_studs",
+    "female": "tile_s_2x2.under_sockets"
+  },
+  {
+    "male": "veh_scooter_frame.fairing_studs",
+    "female": "slope_s_2x2.under_sockets"
+  },
+  {
+    "male": "veh_scooter_frame.fairing_studs",
+    "female": "dome_s_2x2.under_sockets"
+  },
+  {
+    "male": "veh_scooter_frame.fairing_studs",
+    "female": "bumper_horns.under_sockets"
+  },
+  {
+    "male": "veh_scooter_frame.fairing_studs",
+    "female": "pointy_ears.under_sockets"
+  },
+  {
+    "male": "veh_scooter_frame.fairing_studs",
+    "female": "wobble_hat.under_sockets"
+  },
+  {
+    "male": "veh_scooter_frame.fairing_studs",
+    "female": "ridge_fin.under_sockets"
+  },
+  {
+    "male": "veh_scooter_frame.fairing_studs",
+    "female": "zoom_capsule_s.under_sockets"
+  },
+  {
+    "male": "veh_scooter_frame.fairing_studs",
+    "female": "bounce_capsule_s.under_sockets"
+  },
+  {
+    "male": "veh_scooter_frame.fairing_studs",
+    "female": "racer_spoiler.under_sockets"
+  },
+  {
+    "male": "veh_scooter_frame.fairing_studs",
+    "female": "racer_bull_bar.under_sockets"
+  },
+  {
+    "male": "veh_scooter_frame.fairing_studs",
+    "female": "racer_hood_scoop.under_sockets"
+  },
+  {
+    "male": "veh_scooter_frame.fairing_studs",
+    "female": "racer_twin_exhaust.under_sockets"
+  },
+  {
+    "male": "veh_scooter_frame.fairing_studs",
+    "female": "racer_light_bar.under_sockets"
+  },
+  {
+    "male": "veh_scooter_frame.fairing_studs",
+    "female": "racer_roof_rack.under_sockets"
+  },
+  {
+    "male": "veh_scooter_frame.fairing_studs",
+    "female": "waddle_tail_s.under_sockets"
+  },
+  {
+    "male": "veh_scooter_frame.fairing_studs",
+    "female": "robot_legs_stomper.under_sockets"
+  },
+  {
+    "male": "veh_scooter_frame.fairing_studs",
+    "female": "robot_torso_core.under_sockets"
+  },
+  {
+    "male": "veh_scooter_frame.fairing_studs",
+    "female": "robot_arms_grabber.under_sockets"
+  },
+  {
+    "male": "veh_scooter_frame.fairing_studs",
+    "female": "robot_head_visor.under_sockets"
+  },
+  {
+    "male": "veh_scooter_frame.fairing_studs",
+    "female": "robot_back_jetpack.under_sockets"
+  },
+  {
+    "male": "veh_scooter_frame.fairing_studs",
+    "female": "char_head_kid.under_sockets"
+  },
+  {
+    "male": "veh_scooter_frame.fairing_studs",
+    "female": "hair_short_swept.under_sockets"
+  },
+  {
+    "male": "veh_scooter_frame.fairing_studs",
+    "female": "hair_bob.under_sockets"
+  },
+  {
+    "male": "veh_scooter_frame.fairing_studs",
+    "female": "char_head_fox.under_sockets"
+  },
+  {
+    "male": "veh_scooter_frame.fairing_studs",
+    "female": "char_head_bear.under_sockets"
+  },
+  {
+    "male": "veh_scooter_frame.fairing_studs",
+    "female": "hair_swoosh.under_sockets"
+  },
+  {
+    "male": "veh_scooter_frame.fairing_studs",
+    "female": "hair_spiky.under_sockets"
+  },
+  {
+    "male": "veh_scooter_frame.fairing_studs",
+    "female": "hair_pigtails.under_sockets"
+  },
+  {
+    "male": "veh_scooter_frame.fairing_studs",
+    "female": "hair_ponytail.under_sockets"
+  },
+  {
+    "male": "veh_scooter_frame.fairing_studs",
+    "female": "hair_curly.under_sockets"
+  },
+  {
+    "male": "veh_scooter_frame.fairing_studs",
+    "female": "hair_mohawk.under_sockets"
+  },
+  {
+    "male": "veh_scooter_frame.fairing_studs",
+    "female": "pack_explorer.under_sockets"
+  },
+  {
+    "male": "veh_scooter_frame.fairing_studs",
+    "female": "char_legs_seated.under_sockets"
+  },
+  {
+    "male": "veh_scooter_frame.fairing_studs",
+    "female": "veh_car_hood_cover.under_sockets"
+  },
+  {
+    "male": "veh_scooter_frame.fairing_studs",
+    "female": "veh_cab_roof_cover.under_sockets"
+  },
+  {
+    "male": "veh_scooter_frame.fairing_studs",
+    "female": "veh_truck_bed_cover.under_sockets"
+  },
+  {
+    "male": "veh_scooter_frame.fairing_studs",
+    "female": "veh_scooter_fairing.under_sockets"
+  },
+  {
+    "male": "veh_scooter_frame.fairing_studs",
     "female": "veh_moto_cowling.under_sockets"
   },
   {
@@ -6557,6 +8977,14 @@
   },
   {
     "male": "veh_scooter_frame.seat_studs",
+    "female": "hair_short_swept.under_sockets"
+  },
+  {
+    "male": "veh_scooter_frame.seat_studs",
+    "female": "hair_bob.under_sockets"
+  },
+  {
+    "male": "veh_scooter_frame.seat_studs",
     "female": "char_head_fox.under_sockets"
   },
   {
@@ -6569,7 +8997,15 @@
   },
   {
     "male": "veh_scooter_frame.seat_studs",
+    "female": "hair_spiky.under_sockets"
+  },
+  {
+    "male": "veh_scooter_frame.seat_studs",
     "female": "hair_pigtails.under_sockets"
+  },
+  {
+    "male": "veh_scooter_frame.seat_studs",
+    "female": "hair_ponytail.under_sockets"
   },
   {
     "male": "veh_scooter_frame.seat_studs",
@@ -6586,6 +9022,22 @@
   {
     "male": "veh_scooter_frame.seat_studs",
     "female": "char_legs_seated.under_sockets"
+  },
+  {
+    "male": "veh_scooter_frame.seat_studs",
+    "female": "veh_car_hood_cover.under_sockets"
+  },
+  {
+    "male": "veh_scooter_frame.seat_studs",
+    "female": "veh_cab_roof_cover.under_sockets"
+  },
+  {
+    "male": "veh_scooter_frame.seat_studs",
+    "female": "veh_truck_bed_cover.under_sockets"
+  },
+  {
+    "male": "veh_scooter_frame.seat_studs",
+    "female": "veh_scooter_fairing.under_sockets"
   },
   {
     "male": "veh_scooter_frame.seat_studs",
@@ -6709,6 +9161,14 @@
   },
   {
     "male": "veh_scooter_frame.exhaust_studs",
+    "female": "hair_short_swept.under_sockets"
+  },
+  {
+    "male": "veh_scooter_frame.exhaust_studs",
+    "female": "hair_bob.under_sockets"
+  },
+  {
+    "male": "veh_scooter_frame.exhaust_studs",
     "female": "char_head_fox.under_sockets"
   },
   {
@@ -6721,7 +9181,15 @@
   },
   {
     "male": "veh_scooter_frame.exhaust_studs",
+    "female": "hair_spiky.under_sockets"
+  },
+  {
+    "male": "veh_scooter_frame.exhaust_studs",
     "female": "hair_pigtails.under_sockets"
+  },
+  {
+    "male": "veh_scooter_frame.exhaust_studs",
+    "female": "hair_ponytail.under_sockets"
   },
   {
     "male": "veh_scooter_frame.exhaust_studs",
@@ -6738,6 +9206,22 @@
   {
     "male": "veh_scooter_frame.exhaust_studs",
     "female": "char_legs_seated.under_sockets"
+  },
+  {
+    "male": "veh_scooter_frame.exhaust_studs",
+    "female": "veh_car_hood_cover.under_sockets"
+  },
+  {
+    "male": "veh_scooter_frame.exhaust_studs",
+    "female": "veh_cab_roof_cover.under_sockets"
+  },
+  {
+    "male": "veh_scooter_frame.exhaust_studs",
+    "female": "veh_truck_bed_cover.under_sockets"
+  },
+  {
+    "male": "veh_scooter_frame.exhaust_studs",
+    "female": "veh_scooter_fairing.under_sockets"
   },
   {
     "male": "veh_scooter_frame.exhaust_studs",
@@ -6869,11 +9353,27 @@
   },
   {
     "male": "veh_handlebar_fork.axis",
+    "female": "char_head_kid.face_slot"
+  },
+  {
+    "male": "veh_handlebar_fork.axis",
     "female": "prop_skateboard_deck.axle_front"
   },
   {
     "male": "veh_handlebar_fork.axis",
     "female": "prop_skateboard_deck.axle_rear"
+  },
+  {
+    "male": "veh_handlebar_fork.axis",
+    "female": "veh_wheel_sport.hub"
+  },
+  {
+    "male": "veh_handlebar_fork.axis",
+    "female": "veh_wheel_offroad.hub"
+  },
+  {
+    "male": "veh_handlebar_fork.axis",
+    "female": "veh_wheel_moto.hub"
   },
   {
     "male": "veh_handlebar_fork.axis",
@@ -6909,7 +9409,15 @@
   },
   {
     "male": "veh_handlebar_fork.axis",
+    "female": "veh_scooter_frame.axle_front_r"
+  },
+  {
+    "male": "veh_handlebar_fork.axis",
     "female": "veh_scooter_frame.axle_rear"
+  },
+  {
+    "male": "veh_handlebar_fork.axis",
+    "female": "veh_scooter_frame.axle_rear_r"
   },
   {
     "male": "veh_moto_cowling.tank_studs",
@@ -7029,6 +9537,14 @@
   },
   {
     "male": "veh_moto_cowling.tank_studs",
+    "female": "hair_short_swept.under_sockets"
+  },
+  {
+    "male": "veh_moto_cowling.tank_studs",
+    "female": "hair_bob.under_sockets"
+  },
+  {
+    "male": "veh_moto_cowling.tank_studs",
     "female": "char_head_fox.under_sockets"
   },
   {
@@ -7041,7 +9557,15 @@
   },
   {
     "male": "veh_moto_cowling.tank_studs",
+    "female": "hair_spiky.under_sockets"
+  },
+  {
+    "male": "veh_moto_cowling.tank_studs",
     "female": "hair_pigtails.under_sockets"
+  },
+  {
+    "male": "veh_moto_cowling.tank_studs",
+    "female": "hair_ponytail.under_sockets"
   },
   {
     "male": "veh_moto_cowling.tank_studs",
@@ -7058,6 +9582,22 @@
   {
     "male": "veh_moto_cowling.tank_studs",
     "female": "char_legs_seated.under_sockets"
+  },
+  {
+    "male": "veh_moto_cowling.tank_studs",
+    "female": "veh_car_hood_cover.under_sockets"
+  },
+  {
+    "male": "veh_moto_cowling.tank_studs",
+    "female": "veh_cab_roof_cover.under_sockets"
+  },
+  {
+    "male": "veh_moto_cowling.tank_studs",
+    "female": "veh_truck_bed_cover.under_sockets"
+  },
+  {
+    "male": "veh_moto_cowling.tank_studs",
+    "female": "veh_scooter_fairing.under_sockets"
   },
   {
     "male": "veh_moto_cowling.tank_studs",

@@ -1,49 +1,29 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_hair_swoosh_S.stl",
-  "file_sha256": "d7e19019769059b851a75fc4b059471d45264cc6c36e76952a353914d398b8b3",
+  "file_sha256": "f464040df34ebedd43715dd8d65dfe1be38a212b3199151d52ab19f1ce245741",
   "part_id": "hair_swoosh",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-10-30T08:21:55Z",
+  "checked_at": "2026-10-30T17:13:53Z",
   "metrics": {
     "bbox_mm": [
-      27.95,
-      16.8,
-      23.8
+      46.1,
+      35.0,
+      21.4
     ],
-    "volume_cm3": 6.65,
-    "surface_cm2": 21.6,
-    "triangles": 1484,
+    "volume_cm3": 13.97,
+    "surface_cm2": 37.28,
+    "triangles": 8192,
     "ledges": [],
-    "layers": 119,
-    "bed_contact_mm2": 189.3,
-    "height_mm": 23.8,
-    "slenderness": 1.73,
+    "layers": 107,
+    "bed_contact_mm2": 346.1,
+    "height_mm": 21.4,
+    "slenderness": 1.15,
     "centre_of_mass_over_contact": true,
     "min_wall_mm": null,
     "thin_wall_regions": []
   },
   "bridges": [
-    {
-      "z_mm": 4.3,
-      "span_mm": 0.16,
-      "area_mm2": 0.5
-    },
-    {
-      "z_mm": 4.3,
-      "span_mm": 0.16,
-      "area_mm2": 0.5
-    },
-    {
-      "z_mm": 4.3,
-      "span_mm": 0.16,
-      "area_mm2": 0.5
-    },
-    {
-      "z_mm": 4.3,
-      "span_mm": 0.16,
-      "area_mm2": 0.5
-    },
     {
       "z_mm": 3.2,
       "span_mm": 6.7,
@@ -77,9 +57,9 @@
       "level": "block",
       "result": "pass",
       "value": [
-        27.9,
-        16.8,
-        23.8
+        46.1,
+        35.0,
+        21.4
       ],
       "limit": [
         180,
@@ -110,7 +90,7 @@
       "result": "pass",
       "value": 6.7,
       "limit": 20,
-      "detail": "6 bridge(s); widest unsupported span in mm"
+      "detail": "2 bridge(s); widest unsupported span in mm"
     },
     {
       "id": "V5_no_floating_islands",
@@ -132,9 +112,9 @@
       "id": "V9_bed_contact",
       "level": "info",
       "result": "pass",
-      "value": 189.3,
+      "value": 346.1,
       "limit": null,
-      "detail": "height / sqrt(contact) = 1.73; above about 3 the slicer often asks for a brim"
+      "detail": "height / sqrt(contact) = 1.15; above about 3 the slicer often asks for a brim"
     },
     {
       "id": "V8_wall_thickness",

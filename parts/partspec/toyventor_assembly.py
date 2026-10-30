@@ -248,10 +248,55 @@ def gear_mesh(lib, a, b):
             want = mod * (ga["teeth"] + gb["teeth"]) / 2
             touching = d < (ga["outer_d_mm"] + gb["outer_d_mm"]) / 2
     if abs(d - want) <= 0.05:
+        if not _clocked_gear_clears(lib, a, ga, b, gb, ka, kb):
+            return {"error": {"code": "gear_tooth_interference", "detail": f"{a['id']} and {b['id']} interfere during conjugate rotation at {d:.2f} mm"}}
         return {"edge": {"male": f"{a['id']}.teeth", "female": f"{b['id']}.teeth", "engaged_studs": 1, "fit": "mesh"}, "exempt": True}
     if touching:
         return {"error": {"code": "gear_mesh_distance", "detail": f"{a['id']} and {b['id']} are {d:.2f} mm apart; their teeth meet but they mesh at {want:.2f} mm"}}
     return {}
+
+
+def _clocked_gear_clears(lib, a, ga, b, gb, ka, kb):
+    """Verify real 3D conjugate tooth clearance: find a meshing phase across one tooth pitch and check 8 roll steps for < 0.05 mm^3 overlap."""
+    # Pick the spur gear to phase-search around its Z axis
+    if ka == "spur":
+        sa, sg, ob, og, ok = a, ga, b, gb, kb
+    else:
+        sa, sg, ob, og, ok = b, gb, a, ga, ka
+    zs = sg["teeth"]
+    pitch_deg = 360.0 / zs
+    pa, pb = sa["pose"], ob["pose"]
+    ga_raw, gb_raw = lib.geometry(sa["part"]), lib.geometry(ob["part"])
+    mb0 = gb_raw.rotate((0, 0, 90 * pb["rot"])).translate((pb["x"], pb["y"], pb["z"]))
+    phi0 = None
+    for s in range(32):
+        ph = 90 * pa["rot"] + pitch_deg * s / 32
+        ma0 = ga_raw.rotate((0, 0, ph)).translate((pa["x"], pa["y"], pa["z"]))
+        if (ma0 ^ mb0).volume() < 0.05:
+            phi0 = ph
+            break
+    if phi0 is None:
+        return False
+    for rstep in range(1, 8):
+        da = pitch_deg * rstep / 8
+        ma = ga_raw.rotate((0, 0, phi0 + da)).translate((pa["x"], pa["y"], pa["z"]))
+        if ok == "spur":
+            db = -da * (zs / og["teeth"])
+            mb = gb_raw.rotate((0, 0, 90 * pb["rot"] + db)).translate((pb["x"], pb["y"], pb["z"]))
+        elif ok == "ring":
+            db = da * (zs / og["teeth"])
+            mb = gb_raw.rotate((0, 0, 90 * pb["rot"] + db)).translate((pb["x"], pb["y"], pb["z"]))
+        else:  # rack: slide along rack tangent by pitch_radius * radians(da)
+            ang = math.radians(90 * pb["rot"])
+            ux, uy = math.cos(ang), math.sin(ang)
+            dx, dy = pa["x"] - pb["x"], pa["y"] - pb["y"]
+            # Sign of rack motion matching +da rotation of gear at (pa - pb)
+            side = 1.0 if (-dx * uy + dy * ux) >= 0 else -1.0
+            ds = side * (sg["pitch_d_mm"] / 2) * math.radians(da)
+            mb = gb_raw.rotate((0, 0, 90 * pb["rot"])).translate((pb["x"] + ux * ds, pb["y"] + uy * ds, pb["z"]))
+        if (ma ^ mb).volume() >= 0.05:
+            return False
+    return True
 
 
 def validate(lib, build):
@@ -511,16 +556,19 @@ def demo(manifest_path, out_dir):
             s_torso = attach(lib, s_legs, "top_studs", "robot_torso_core", "under_sockets", pid="torso")
             s_arms = attach(lib, s_torso, "top_studs", "robot_arms_grabber", "under_sockets", pid="arms")
             s_head = attach(lib, s_arms, "top_studs", "char_head_kid", "under_sockets", (0, 0), (0, 0), pid="head")
-            s_pack = attach(lib, s_arms, "top_studs", "robot_back_jetpack", "under_sockets", (0, 1), (0, 0), pid="jetpack")
-            s_hair = attach(lib, s_head, "top_studs", "hair_pigtails", "under_sockets", pid="hair")
-            cases["valid_kip_seated_wardrobe"] = [s_legs, s_torso, s_arms, s_head, s_pack, s_hair]
+            s_face = place_on_axis(lib, s_head, "face_slot", "char_faceplate", "axis", along=0.0, pid="faceplate")
+            s_hair = attach(lib, s_head, "top_studs", "hair_short_swept", "under_sockets", pid="hair")
+            s_hat = attach(lib, s_hair, "top_studs", "wobble_hat", "under_sockets", pid="hat")
+            cases["valid_kip_seated_wardrobe"] = [s_legs, s_torso, s_arms, s_head, s_face, s_hair, s_hat]
 
             car = place("veh_car_chassis", pid="car")
+            c_hood = attach(lib, car, "hood_studs", "veh_car_hood_cover", "under_sockets", pid="hood_cover")
+            c_cab = attach(lib, car, "rollbar_studs", "veh_cab_roof_cover", "under_sockets", pid="cab_cover")
             b_car = [
-                car,
+                car, c_hood, c_cab,
                 attach(lib, car, "front_studs", "racer_bull_bar", "under_sockets", pid="bull_bar"),
-                attach(lib, car, "hood_studs", "racer_hood_scoop", "under_sockets", pid="hood_scoop"),
-                attach(lib, car, "rollbar_studs", "racer_light_bar", "under_sockets", pid="light_bar"),
+                attach(lib, c_hood, "top_studs", "racer_hood_scoop", "under_sockets", pid="hood_scoop"),
+                attach(lib, c_cab, "top_studs", "racer_light_bar", "under_sockets", (0, 0), (0, 0), pid="light_bar"),
                 attach(lib, car, "spoiler_studs", "racer_spoiler", "under_sockets", pid="spoiler"),
                 attach(lib, car, "exhaust_studs", "racer_twin_exhaust", "under_sockets", pid="exhaust"),
                 attach(lib, car, "top_studs", "char_legs_seated", "under_sockets", (1, 0), (0, 0), pid="driver_legs"),
@@ -528,44 +576,54 @@ def demo(manifest_path, out_dir):
             ]
             w_car = lib.conn("veh_car_chassis", "axle_front")["depth_mm"]
             for tag, bore_id in (("f", "axle_front"), ("r", "axle_rear")):
-                ax = place_on_axis(lib, car, bore_id, "shaft_tu07", "axis", along=(w_car - 87.5) / 2, pid=f"ax_{tag}")
-                b_car += [ax, place_on_axis(lib, ax, "axis", "wheel_tu04", "hub", along=0.0, pid=f"wl_{tag}"),
-                          place_on_axis(lib, ax, "axis", "wheel_tu04", "hub", along=87.5 - 12.5, pid=f"wr_{tag}")]
+                ax = place_on_axis(lib, car, bore_id, "shaft_tu05", "axis", along=(w_car - 62.5) / 2, pid=f"ax_{tag}")
+                b_car += [ax, place_on_axis(lib, ax, "axis", "veh_wheel_sport", "hub", along=0.0, pid=f"wl_{tag}"),
+                          place_on_axis(lib, ax, "axis", "veh_wheel_sport", "hub", along=62.5 - 13.5, pid=f"wr_{tag}")]
             cases["valid_kip_roadster_car"] = b_car
 
             trk = place("veh_truck_chassis", pid="truck")
+            t_hood = attach(lib, trk, "hood_studs", "veh_car_hood_cover", "under_sockets", pid="hood_cover")
+            t_cab = attach(lib, trk, "roof_studs", "veh_cab_roof_cover", "under_sockets", pid="cab_cover")
+            t_bed = attach(lib, trk, "cargo_studs", "veh_truck_bed_cover", "under_sockets", pid="bed_cover")
             b_trk = [
-                trk,
+                trk, t_hood, t_cab, t_bed,
                 attach(lib, trk, "front_studs", "racer_bull_bar", "under_sockets", pid="bull_bar"),
-                attach(lib, trk, "roof_studs", "racer_roof_rack", "under_sockets", pid="roof_rack"),
-                attach(lib, trk, "cargo_studs", "pack_explorer", "under_sockets", (1, 0), (0, 0), pid="cargo_pack"),
+                attach(lib, t_cab, "top_studs", "racer_roof_rack", "under_sockets", pid="roof_rack"),
+                attach(lib, t_bed, "bed_studs", "pack_explorer", "under_sockets", pid="cargo_pack"),
+                attach(lib, trk, "top_studs", "char_legs_seated", "under_sockets", (1, 0), (0, 0), pid="driver_legs"),
                 place_on_axis(lib, trk, "dash_bore", "veh_steering_wheel", "axis", along=-7.0, pid="wheel_steer"),
             ]
+            w_trk = lib.conn("veh_truck_chassis", "axle_front")["depth_mm"]
             for tag, bore_id in (("f", "axle_front"), ("r", "axle_rear")):
-                ax = place_on_axis(lib, trk, bore_id, "shaft_tu07", "axis", along=(w_car - 87.5) / 2, pid=f"ax_{tag}")
-                b_trk += [ax, place_on_axis(lib, ax, "axis", "wheel_tu06", "hub", along=0.0, pid=f"wl_{tag}"),
-                          place_on_axis(lib, ax, "axis", "wheel_tu06", "hub", along=87.5 - 12.5, pid=f"wr_{tag}")]
+                ax = place_on_axis(lib, trk, bore_id, "shaft_tu05", "axis", along=(w_trk - 62.5) / 2, pid=f"ax_{tag}")
+                b_trk += [ax, place_on_axis(lib, ax, "axis", "veh_wheel_offroad", "hub", along=0.0, pid=f"wl_{tag}"),
+                          place_on_axis(lib, ax, "axis", "veh_wheel_offroad", "hub", along=62.5 - 14.0, pid=f"wr_{tag}")]
             cases["valid_kip_hauler_truck"] = b_trk
 
             sc = place("veh_scooter_frame", pid="scooter")
-            w_sc = lib.conn("veh_scooter_frame", "axle_front")["depth_mm"]
-            b_moto = [
+            b_sc = [
                 sc,
-                attach(lib, sc, "top_studs", "veh_moto_cowling", "under_sockets", pid="moto_cowling"),
+                attach(lib, sc, "fairing_studs", "veh_scooter_fairing", "under_sockets", pid="fairing"),
                 attach(lib, sc, "seat_studs", "char_legs_seated", "under_sockets", pid="rider_legs"),
                 attach(lib, sc, "exhaust_studs", "racer_twin_exhaust", "under_sockets", pid="exhaust"),
                 place_on_axis(lib, sc, "headtube", "veh_handlebar_fork", "axis", along=0.0, pid="handlebars"),
             ]
             for tag, bore_id in (("f", "axle_front"), ("r", "axle_rear")):
-                ax = place_on_axis(lib, sc, bore_id, "shaft_tu05", "axis", along=(w_sc - 62.5) / 2, pid=f"ax_{tag}")
-                b_moto += [ax, place_on_axis(lib, ax, "axis", "wheel_tu04", "hub", along=0.0, pid=f"wl_{tag}"),
-                           place_on_axis(lib, ax, "axis", "wheel_tu04", "hub", along=62.5 - 12.5, pid=f"wr_{tag}")]
-            cases["valid_kip_sport_moto"] = b_moto
+                ax = place_on_axis(lib, sc, bore_id, "racer_axle", "axis", along=0.0, pid=f"ax_{tag}")
+                b_sc += [ax, place_on_axis(lib, ax, "axis", "veh_wheel_moto", "hub", along=(37.5 - 14.0) / 2, pid=f"wm_{tag}")]
+            cases["valid_kip_motor_scooter"] = b_sc
+
+            cowling = attach(lib, sc, "top_studs", "veh_moto_cowling", "under_sockets", pid="moto_cowling")
+            cases["valid_kip_sport_moto"] = list(b_sc) + [
+                cowling,
+                attach(lib, cowling, "tank_studs", "glow_capsule", "under_sockets", pid="tank_pod"),
+            ]
 
             sk = place("prop_skateboard_deck", pid="deck")
+            w_sk = lib.conn("prop_skateboard_deck", "axle_front")["depth_mm"]
             b_sk = [sk]
             for tag, bore_id in (("f", "axle_front"), ("r", "axle_rear")):
-                ax = place_on_axis(lib, sk, bore_id, "racer_axle", "axis", along=(w_sc - 37.5) / 2, pid=f"ax_{tag}")
+                ax = place_on_axis(lib, sk, bore_id, "racer_axle", "axis", along=(w_sk - 37.5) / 2, pid=f"ax_{tag}")
                 b_sk += [ax, place_on_axis(lib, ax, "axis", "racer_wheel", "hub", along=0.0, pid=f"wl_{tag}"),
                          place_on_axis(lib, ax, "axis", "racer_wheel", "hub", along=37.5 - 6.0, pid=f"wr_{tag}")]
             cases["valid_kip_skateboard"] = b_sk

@@ -40,7 +40,7 @@ Pitch 1.0 TU (12.5 mm), halving down to 1/8 TU. Free bore 7.0 mm. Fixed bore fla
 
 ### Pro parts (pin, beam, gear)
 
-**Friction pin:** shaft 6.6 mm round, flats 5.0 mm, 2.0 mm centre hole; fins 1.5 mm wider across than the bore (target). Friction pin: flat-sided core (6.6 round, 5.0 flats) split by a lengthwise slot so the two halves flex; a fin on each round side at the centre of every TU of length stands fin_oversize_mm wider across than the free bore (TARGET, tuned on the calibration piece; PETG may be needed). Prints lying on a flat.
+**Friction pin:** shaft 6.6 mm round, flats 5.0 mm, 2.0 mm centre hole; fins 0.4 mm wider across than the bore (target). Friction pin: flat-sided core (6.6 round, 5.0 flats) split open through both insertion ends with solid center web(s) between TU modules so the cantilever prongs flex elastically (<2% PLA strain); a fin on each round side at the centre of every TU stands fin_oversize_mm wider across than the free bore. Prints lying on a flat.
 
 **Beam:** 1.0 TU section, longest 14 TU (175.0 mm); outside fillet 1.5 mm (0.5 mm on small features); hole-mouth chamfer 0.4 mm; bed-edge chamfer 0.5 mm. One bore on the centre of every TU cell along the length (first bore 0.5 TU from the end).
 

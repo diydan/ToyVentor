@@ -162,11 +162,16 @@ Each size has its own clearance value (stud_small.fit, stud_large.fit). Both sta
 | `robot_arms_grabber` | snap | small | verified | Grip | `under_sockets` socket_grid/F 2x2; `top_studs` stud_grid/M 2x2 |
 | `robot_head_visor` | snap | small | verified | Awareness | `under_sockets` socket_grid/F 2x1; `top_studs` stud_grid/M 2x1 |
 | `robot_back_jetpack` | snap | small | verified | Lift | `under_sockets` socket_grid/F 2x1 |
-| `char_head_kid` | snap | small | verified | Glow | `under_sockets` socket_grid/F 2x1; `top_studs` stud_grid/M 2x1 |
+| `char_head_kid` | snap | small | verified | Glow | `under_sockets` socket_grid/F 2x1; `top_studs` stud_grid/M 2x1; `face_slot` bore_grid/F 1x1 |
+| `char_faceplate` | pro | pro | verified | Glow | `axis` pin/M 1x1 |
+| `hair_short_swept` | snap | small | verified | Speed | `under_sockets` socket_grid/F 2x1; `top_studs` stud_grid/M 2x1 |
+| `hair_bob` | snap | small | verified | Glow | `under_sockets` socket_grid/F 2x1; `top_studs` stud_grid/M 2x1 |
 | `char_head_fox` | snap | small | verified | Speed | `under_sockets` socket_grid/F 2x1; `top_studs` stud_grid/M 2x1 |
 | `char_head_bear` | snap | small | verified | Torque | `under_sockets` socket_grid/F 2x1; `top_studs` stud_grid/M 2x1 |
-| `hair_swoosh` | snap | small | verified | Speed | `under_sockets` socket_grid/F 2x1 |
+| `hair_swoosh` | snap | small | verified | Speed | `under_sockets` socket_grid/F 2x1; `top_studs` stud_grid/M 2x1 |
+| `hair_spiky` | snap | small | verified | Speed | `under_sockets` socket_grid/F 2x1 |
 | `hair_pigtails` | snap | small | verified | Spin | `under_sockets` socket_grid/F 2x1 |
+| `hair_ponytail` | snap | small | verified | Spin | `under_sockets` socket_grid/F 2x1 |
 | `hair_curly` | snap | small | verified | Glow | `under_sockets` socket_grid/F 2x1 |
 | `hair_mohawk` | snap | small | verified | Speed | `under_sockets` socket_grid/F 2x1 |
 | `pack_explorer` | snap | small | verified | Torque | `under_sockets` socket_grid/F 2x2; `pack_top_studs` stud_grid/M 2x1 |
@@ -174,10 +179,17 @@ Each size has its own clearance value (stud_small.fit, stud_large.fit). Both sta
 | `prop_star_shield` | pro | pro | verified | Glow | `axis` pin/M 1x1 |
 | `prop_skateboard_deck` | snap | small | verified | Speed | `top_studs` stud_grid/M 2x4; `axle_front` bore_grid/F 1x1; `axle_rear` bore_grid/F 1x1 |
 | `char_legs_seated` | snap | small | verified | Torque | `under_sockets` socket_grid/F 2x2; `top_studs` stud_grid/M 2x2 |
+| `veh_wheel_sport` | pro | pro | verified | Speed | `hub` bore_grid/F 1x1 |
+| `veh_wheel_offroad` | pro | pro | verified | Torque | `hub` bore_grid/F 1x1 |
+| `veh_wheel_moto` | pro | pro | verified | Speed | `hub` bore_grid/F 1x1 |
 | `veh_car_chassis` | snap | small | verified | Speed | `top_studs` stud_grid/M 4x2; `front_studs` stud_grid/M 2x1; `hood_studs` stud_grid/M 2x2; `rollbar_studs` stud_grid/M 2x1; `spoiler_studs` stud_grid/M 2x1; `exhaust_studs` stud_grid/M 1x2; `dash_bore` bore_grid/F 1x1; `axle_front` bore_grid/F 1x1; `axle_rear` bore_grid/F 1x1 |
+| `veh_car_hood_cover` | snap | small | verified | Speed | `under_sockets` socket_grid/F 2x2; `top_studs` stud_grid/M 2x2 |
+| `veh_cab_roof_cover` | snap | small | verified | Torque | `under_sockets` socket_grid/F 2x1; `top_studs` stud_grid/M 2x2 |
 | `veh_steering_wheel` | pro | pro | verified | Spin | `axis` pin/M 1x1 |
-| `veh_truck_chassis` | snap | small | verified | Torque | `top_studs` stud_grid/M 4x2; `front_studs` stud_grid/M 2x1; `hood_studs` stud_grid/M 2x2; `roof_studs` stud_grid/M 2x2; `cargo_studs` stud_grid/M 4x3; `rear_studs` stud_grid/M 2x1; `dash_bore` bore_grid/F 1x1; `axle_front` bore_grid/F 1x1; `axle_rear` bore_grid/F 1x1 |
-| `veh_scooter_frame` | snap | small | verified | Speed | `top_studs` stud_grid/M 2x2; `seat_studs` stud_grid/M 2x2; `exhaust_studs` stud_grid/M 1x2; `headtube` bore_grid/F 1x1; `axle_front` bore_grid/F 1x1; `axle_rear` bore_grid/F 1x1 |
+| `veh_truck_chassis` | snap | small | verified | Torque | `top_studs` stud_grid/M 4x2; `front_studs` stud_grid/M 2x1; `hood_studs` stud_grid/M 2x2; `roof_studs` stud_grid/M 2x1; `cargo_studs` stud_grid/M 2x3; `dash_bore` bore_grid/F 1x1; `axle_front` bore_grid/F 1x1; `axle_rear` bore_grid/F 1x1 |
+| `veh_truck_bed_cover` | snap | small | verified | Torque | `under_sockets` socket_grid/F 2x3; `bed_studs` stud_grid/M 2x2 |
+| `veh_scooter_frame` | snap | small | verified | Speed | `top_studs` stud_grid/M 2x2; `fairing_studs` stud_grid/M 2x1; `seat_studs` stud_grid/M 2x2; `exhaust_studs` stud_grid/M 1x2; `headtube` bore_grid/F 1x1; `axle_front` bore_grid/F 1x1; `axle_front_r` bore_grid/F 1x1; `axle_rear` bore_grid/F 1x1; `axle_rear_r` bore_grid/F 1x1 |
+| `veh_scooter_fairing` | snap | small | verified | Speed | `under_sockets` socket_grid/F 2x1 |
 | `veh_handlebar_fork` | pro | pro | verified | Spin | `axis` pin/M 1x1 |
 | `veh_moto_cowling` | snap | small | verified | Speed | `under_sockets` socket_grid/F 2x2; `tank_studs` stud_grid/M 2x1 |
 
@@ -292,11 +304,16 @@ After each part is built, the generator seats it on its matching reference part,
 | `robot_arms_grabber` | 4 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
 | `robot_head_visor` | 2 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
 | `robot_back_jetpack` | 2 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
-| `char_head_kid` | 2 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
+| `char_head_kid` | 3 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
+| `char_faceplate` | 2 | +0.050 to +0.200 | 0.050 | -0.075 to +0.075 |
+| `hair_short_swept` | 2 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
+| `hair_bob` | 2 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
 | `char_head_fox` | 2 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
 | `char_head_bear` | 2 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
 | `hair_swoosh` | 2 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
+| `hair_spiky` | 2 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
 | `hair_pigtails` | 2 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
+| `hair_ponytail` | 2 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
 | `hair_curly` | 2 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
 | `hair_mohawk` | 2 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
 | `pack_explorer` | 4 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
@@ -304,10 +321,17 @@ After each part is built, the generator seats it on its matching reference part,
 | `prop_star_shield` | 2 | +0.050 to +0.200 | 0.050 | -0.075 to +0.075 |
 | `prop_skateboard_deck` | 12 | +0.056 to +0.200 | 0.050 | -0.071 to +0.078 |
 | `char_legs_seated` | 4 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
+| `veh_wheel_sport` | 1 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
+| `veh_wheel_offroad` | 1 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
+| `veh_wheel_moto` | 1 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
 | `veh_car_chassis` | 14 | +0.056 to +0.200 | 0.050 | -0.071 to +0.078 |
+| `veh_car_hood_cover` | 4 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
+| `veh_cab_roof_cover` | 2 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
 | `veh_steering_wheel` | 1 | +0.200 to +0.200 | 0.200 | -0.075 to +0.100 |
 | `veh_truck_chassis` | 14 | +0.056 to +0.200 | 0.050 | -0.071 to +0.078 |
-| `veh_scooter_frame` | 10 | +0.058 to +0.200 | 0.050 | -0.071 to +0.079 |
+| `veh_truck_bed_cover` | 6 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
+| `veh_scooter_frame` | 14 | +0.058 to +0.200 | 0.050 | -0.071 to +0.079 |
+| `veh_scooter_fairing` | 2 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
 | `veh_handlebar_fork` | 2 | +0.050 to +0.200 | 0.050 | -0.075 to +0.075 |
 | `veh_moto_cowling` | 4 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
 
@@ -366,13 +390,13 @@ python3 toyventor_index.py out checks S1_small_part_screen
 
 | Interface | Parts using it | Mating pairs |
 | --- | --- | --- |
-| `bore_grid` | `adapter_snap_pro`, `beam_ang45_tu05`, `beam_l_tu03x03`, `beam_l_tu05x03`, `beam_str_tu03`, `beam_str_tu05`, `beam_str_tu07`, `beam_str_tu10`, `beam_str_tu14`, `beam_t_tu05x03`, `bushing_half`, `bushing_tu01`, `cross_connector_tu01`, `forge_mount_pro`, `gear_rack_tu05`, `gear_ring_z40`, `gear_spur_z10`, `gear_spur_z15`, `gear_spur_z20`, `gear_spur_z25`, `gear_spur_z30`, `hinge_tu02`, `prop_skateboard_deck`, `racer_axle_block`, `racer_wheel`, `veh_car_chassis`, `veh_scooter_frame`, `veh_truck_chassis`, `wheel_tu04`, `wheel_tu06` | 0 |
+| `bore_grid` | `adapter_snap_pro`, `beam_ang45_tu05`, `beam_l_tu03x03`, `beam_l_tu05x03`, `beam_str_tu03`, `beam_str_tu05`, `beam_str_tu07`, `beam_str_tu10`, `beam_str_tu14`, `beam_t_tu05x03`, `bushing_half`, `bushing_tu01`, `char_head_kid`, `cross_connector_tu01`, `forge_mount_pro`, `gear_rack_tu05`, `gear_ring_z40`, `gear_spur_z10`, `gear_spur_z15`, `gear_spur_z20`, `gear_spur_z25`, `gear_spur_z30`, `hinge_tu02`, `prop_skateboard_deck`, `racer_axle_block`, `racer_wheel`, `veh_car_chassis`, `veh_scooter_frame`, `veh_truck_chassis`, `veh_wheel_moto`, `veh_wheel_offroad`, `veh_wheel_sport`, `wheel_tu04`, `wheel_tu06` | 0 |
 | `forge_mount.attach` | `forge_mount_pro`, `forge_mount_ring`, `forge_mount_ring_s` | 0 |
-| `pin_free` | `pin_free`, `veh_steering_wheel` | 60 |
-| `pin_friction` | `pin_friction`, `pin_friction_long` | 60 |
-| `shaft_drive` | `prop_star_shield`, `prop_wrench`, `racer_axle`, `shaft_tu03`, `shaft_tu05`, `shaft_tu07`, `veh_handlebar_fork` | 294 |
+| `pin_free` | `pin_free`, `veh_steering_wheel` | 64 |
+| `pin_friction` | `pin_friction`, `pin_friction_long` | 64 |
+| `shaft_drive` | `char_faceplate`, `prop_star_shield`, `prop_wrench`, `racer_axle`, `shaft_tu03`, `shaft_tu05`, `shaft_tu07`, `veh_handlebar_fork` | 384 |
 | `stud_large` | `big_blue_brick`, `brick_l_2x4`, `cloud_wings_l`, `forge_mount_ring`, `glow_capsule_l`, `pebble_armor_shell_l`, `plate_l_2x2`, `plate_l_2x4`, `slope_l_2x2`, `spin_capsule`, `tile_l_2x2`, `waddle_tail`, `zoom_capsule` | 60 |
-| `stud_small` | `adapter_snap_pro`, `bounce_capsule_s`, `brick_s_2x2`, `bumper_horns`, `char_head_bear`, `char_head_fox`, `char_head_kid`, `char_legs_seated`, `cloud_wings`, `dome_s_2x2`, `forge_mount_ring_s`, `glow_capsule`, `hair_curly`, `hair_mohawk`, `hair_pigtails`, `hair_swoosh`, `mini_plate`, `pack_explorer`, `pebble_armor_shell`, `plate_s_2x2`, `plate_s_4x4`, `pointy_ears`, `prop_skateboard_deck`, `racer_axle_block`, `racer_bull_bar`, `racer_hood_scoop`, `racer_light_bar`, `racer_roof_rack`, `racer_spoiler`, `racer_twin_exhaust`, `ridge_fin`, `robot_arms_grabber`, `robot_back_jetpack`, `robot_head_visor`, `robot_legs_stomper`, `robot_torso_core`, `slope_s_2x2`, `tile_s_2x2`, `veh_car_chassis`, `veh_moto_cowling`, `veh_scooter_frame`, `veh_truck_chassis`, `waddle_tail_s`, `wobble_hat`, `zoom_capsule_s` | 1292 |
+| `stud_small` | `adapter_snap_pro`, `bounce_capsule_s`, `brick_s_2x2`, `bumper_horns`, `char_head_bear`, `char_head_fox`, `char_head_kid`, `char_legs_seated`, `cloud_wings`, `dome_s_2x2`, `forge_mount_ring_s`, `glow_capsule`, `hair_bob`, `hair_curly`, `hair_mohawk`, `hair_pigtails`, `hair_ponytail`, `hair_short_swept`, `hair_spiky`, `hair_swoosh`, `mini_plate`, `pack_explorer`, `pebble_armor_shell`, `plate_s_2x2`, `plate_s_4x4`, `pointy_ears`, `prop_skateboard_deck`, `racer_axle_block`, `racer_bull_bar`, `racer_hood_scoop`, `racer_light_bar`, `racer_roof_rack`, `racer_spoiler`, `racer_twin_exhaust`, `ridge_fin`, `robot_arms_grabber`, `robot_back_jetpack`, `robot_head_visor`, `robot_legs_stomper`, `robot_torso_core`, `slope_s_2x2`, `tile_s_2x2`, `veh_cab_roof_cover`, `veh_car_chassis`, `veh_car_hood_cover`, `veh_moto_cowling`, `veh_scooter_fairing`, `veh_scooter_frame`, `veh_truck_bed_cover`, `veh_truck_chassis`, `waddle_tail_s`, `wobble_hat`, `zoom_capsule_s` | 1840 |
 
 ## Catalog (end game)
 
@@ -380,8 +404,8 @@ The top 30 Snap parts and the top 30 Pro parts, every one verified by the genera
 
 | Line | Verified | Built, not verified | Target |
 | --- | --- | --- | --- |
-| Snap | 59 | 0 | 59 |
-| Pro | 34 | 0 | 34 |
+| Snap | 67 | 0 | 67 |
+| Pro | 38 | 0 | 38 |
 
 Ready to build now: none.
 

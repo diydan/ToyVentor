@@ -317,9 +317,12 @@
   </div>
   <div class="row">
     <span class="row-label">Wardrobe</span>
-    <button id="btn-head" class="spark-active" title="Cycle universal 2x1 character heads: Classic Kip / Kid (Boy-Girl) / Bolt Robot / Fox / Bear">Head: Kip Classic</button>
-    <button id="btn-face" title="Cycle 2D vinyl/visor decal expressions (zero moulded 3D faces per BRAND_STYLE.md)">Face: Spark</button>
-    <button id="btn-crown" class="spark-active" title="Cycle 2x1 Crown &amp; Hair silhouettes: Spark Buds / Swoosh / Pigtails / Curly / Mohawk / Pointy Ears / Bumper Horns / Wobble Hat / Blank">Crown: Spark Buds</button>
+    <button id="btn-head" class="spark-active" title="Cycle universal 2x1 character heads: Kip Classic / Human Head / Fox / Bear / Bolt Robot">Head: Kip Classic</button>
+    <button id="btn-face" title="Cycle slim swappable emotion Face Plates &amp; 2D expressions (zero moulded 3D faces per BRAND_STYLE.md)">Face: Spark</button>
+    <button id="btn-hair" title="Cycle separate clip-on 2x1 hairstyles: 3 Hat-Ready styles (with top studs) + 5 Sculpted-Top styles">Hair: None</button>
+    <button id="btn-crown" class="spark-active" title="Cycle 2x1 Hats &amp; Toppers (stacks on top of base heads &amp; Hat-Ready hairstyles!): Spark Buds / Wobble Hat / Pointy Ears / Bumper Horns / Clip Ponytail / Blank Cap">Hat: Spark Buds</button>
+    <button id="btn-skin" title="Cycle human head &amp; face-plate skin tones: Warm Peach / Golden Tan / Rich Cocoa / Soft Ivory / Vinyl Cream">Skin: Warm Peach</button>
+    <button id="btn-hair-col" title="Cycle separate clip-on hair colors: Chestnut / Espresso / Golden Blonde / Auburn Ginger / Berry Pop / Cobalt Blue">Hair Tone: Chestnut</button>
     <button id="btn-back" title="Cycle 2x2 Back Dock: Off / Explorer Pack / Bolt Jetpack / Cloud Wings / Pro 2:1 Gears">Back: Off</button>
     <button id="btn-hand" title="Cycle Hand &amp; Foot Props: Off / Pro Wrench / Star Shield / Pro Spinner / Skateboard">Prop: Off</button>
     <button id="btn-ears" title="Cycle ±X Ear-Pod Ø6.6 Bosses: Off / Comm-Pods / Pro Scanner">Ears: Off</button>
@@ -333,8 +336,9 @@
     <button id="btn-veh-scooter" data-veh="scooter">🛵 Motor Scooter</button>
     <button id="btn-veh-moto" data-veh="moto">🏍️ Sport Motorbike</button>
     <span class="sep"></span>
+    <button id="btn-veh-covers" class="spark-active" title="Toggle interchangeable snap-on vehicle body covers (Car/Truck Hood &amp; Cab Roof, Pickup Bed Cover, Scooter Fairing, Moto Tank Cowling)">Covers: On</button>
     <button id="btn-racer-kit" class="spark-active" title="Toggle Wave 6 Racer Add-Ons (Bull Bar, Hood Scoop, Light Bar / Roof Rack, Spoiler, Twin Exhaust)">Racer Kit: On</button>
-    <button id="btn-preset" title="Cycle Clean / Boy Explorer / Girl Star Skater / All Pro 8+">Preset: Clean</button>
+    <button id="btn-preset" title="Cycle Clean / Leo Explorer / Maya Skater / Zoe Roadster / Fox Scooter / Bolt Pro 8+">Preset: Clean</button>
   </div>
   <div class="row">
     <span class="row-label">Build &amp; AI</span>
@@ -487,6 +491,10 @@ import {
 } from '/kip/kip-forge-sdk.js';
 import {
   WARDROBE_HEADS,
+  SKIN_TONES,
+  HAIR_COLORS,
+  HAIR_OPTIONS,
+  HAT_OPTIONS,
   CROWN_OPTIONS,
   BACK_OPTIONS,
   PROP_OPTIONS,
@@ -811,8 +819,86 @@ function buildKipRig(geos, partspec) {
   faceDetailSlot.add(faceDetailGrp);
 
   // --- ARMS (Pro 2-segment + pegs vs Snap 1-piece curved sleeve + turrets; 100% SHARED 3-finger hands!) ---
+  // Spherical Rodrigues Pivot Flex for Snap (`3+`) 1-piece limbs:
+  // Keeps physical `snap_arm.stl` / `snap_leg.stl` 100% 1-piece for 3D printing & Exploded/Pile views,
+  // while smoothly flexing mid-limb elbows & knees during character animations!
+  function makeFlexSnapLimb(srcGeo, mat, offsetY, midY, midZ, band) {
+    const g = srcGeo.clone();
+    g.rotateX(-Math.PI / 2);
+    g.translate(0, offsetY, 0);
+    const posAttr = g.attributes.position;
+    const normAttr = g.attributes.normal;
+    const restPos = new Float32Array(posAttr.array);
+    const restNorm = new Float32Array(normAttr.array);
+    const count = posAttr.count;
+    const weights = new Float32Array(count);
+    for (let i = 0; i < count; i++) {
+      const ry = restPos[i * 3 + 1];
+      weights[i] = THREE.MathUtils.smoothstep(midY - ry, -band, band);
+    }
+    const mesh = new THREE.Mesh(g, mat);
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+    let isDirty = false;
+
+    function deform(qDistal) {
+      let qx = qDistal.x, qy = qDistal.y, qz = qDistal.z, qw = qDistal.w;
+      if (qw < 0) { qx = -qx; qy = -qy; qz = -qz; qw = -qw; }
+      const sinHalf = Math.hypot(qx, qy, qz);
+      if (sinHalf < 1e-4) {
+        if (isDirty) {
+          posAttr.array.set(restPos);
+          normAttr.array.set(restNorm);
+          posAttr.needsUpdate = true;
+          normAttr.needsUpdate = true;
+          isDirty = false;
+        }
+        return;
+      }
+      const ux = qx / sinHalf, uy = qy / sinHalf, uz = qz / sinHalf;
+      const theta = 2.0 * Math.acos(Math.min(1.0, qw));
+      const pArr = posAttr.array;
+      const nArr = normAttr.array;
+      for (let i = 0; i < count; i++) {
+        const w = weights[i];
+        const i3 = i * 3;
+        if (w <= 1e-4) {
+          pArr[i3]     = restPos[i3];
+          pArr[i3 + 1] = restPos[i3 + 1];
+          pArr[i3 + 2] = restPos[i3 + 2];
+          nArr[i3]     = restNorm[i3];
+          nArr[i3 + 1] = restNorm[i3 + 1];
+          nArr[i3 + 2] = restNorm[i3 + 2];
+          continue;
+        }
+        const ang = w * theta;
+        const c = Math.cos(ang), s = Math.sin(ang), omc = 1.0 - c;
+        const vx = restPos[i3], vy = restPos[i3 + 1] - midY, vz = restPos[i3 + 2] - midZ;
+        const vDot = ux * vx + uy * vy + uz * vz;
+        pArr[i3]     = vx * c + (uy * vz - uz * vy) * s + ux * vDot * omc;
+        pArr[i3 + 1] = midY + vy * c + (uz * vx - ux * vz) * s + uy * vDot * omc;
+        pArr[i3 + 2] = midZ + vz * c + (ux * vy - uy * vx) * s + uz * vDot * omc;
+
+        const nx = restNorm[i3], ny = restNorm[i3 + 1], nz = restNorm[i3 + 2];
+        const nDot = ux * nx + uy * ny + uz * nz;
+        nArr[i3]     = nx * c + (uy * nz - uz * ny) * s + ux * nDot * omc;
+        nArr[i3 + 1] = ny * c + (uz * nx - ux * nz) * s + uy * nDot * omc;
+        nArr[i3 + 2] = nz * c + (ux * ny - uy * nx) * s + uz * nDot * omc;
+      }
+      posAttr.needsUpdate = true;
+      normAttr.needsUpdate = true;
+      isDirty = true;
+    }
+
+    return { mesh, deform };
+  }
+
   const joints = { Hips: hips, Head: head };
   const editionParts = { pro: [proTorsoSlot, proNeckPeg], snap: [snapTorsoSlot, snapNeckTurret] };
+  const flexArms = {};
+  const flexLegs = {};
+  const snapWriAnchors = {};
+  const snapAnkAnchors = {};
 
   for (const side of [1, -1]) {
     const tag = side === 1 ? 'Left' : 'Right';
@@ -850,18 +936,19 @@ function buildKipRig(geos, partspec) {
     addProPegMesh(elbPegSlot, false, 'y');
     editionParts.pro.push(elbPegSlot);
 
-    // Snap 1-Piece Curved Arm + Wrist Turret
+    // Snap 1-Piece Curved Arm + Wrist Turret (digital "fake elbow" flex around (0, -17.5, 1.2) during animations!)
     const snapArmSlot = createSlot(`snap_arm_${sTag}`, arm, [side * 38, -6, 0], 3.05, 'snap', `sho_turret_${sTag}`);
-    const sa = scadMesh(geos.snap_arm, mats.shell);
-    sa.position.y = -34.6;
-    snapArmSlot.add(sa);
+    const flexArm = makeFlexSnapLimb(geos.snap_arm, mats.shell, -34.6, -17.5, 1.2, 8.0);
+    snapArmSlot.add(flexArm.mesh);
     snapArmSlot.visible = false;
     editionParts.snap.push(snapArmSlot);
+    flexArms[tag] = flexArm;
 
     const snapWriAnchor = new THREE.Group();
     snapWriAnchor.position.set(0, -35.0, 3.8);
     snapWriAnchor.rotation.x = THREE.MathUtils.degToRad(-11);
     arm.add(snapWriAnchor);
+    snapWriAnchors[tag] = snapWriAnchor;
     const snapWriTurret = createSlot(`snap_wri_${sTag}`, snapWriAnchor, [side * 52, -20, 4], 3.25, 'snap', `snap_arm_${sTag}`);
     addSnapTurretMesh(snapWriTurret, false, 'y');
     snapWriTurret.visible = false;
@@ -949,17 +1036,18 @@ function buildKipRig(geos, partspec) {
     addProPegMesh(knePegSlot, false, 'y');
     editionParts.pro.push(knePegSlot);
 
-    // Snap 1-Piece Chunky Trouser-Leg + Ankle Turret
+    // Snap 1-Piece Chunky Trouser-Leg + Ankle Turret (digital "fake knee" flex around (0, -19.6, 0) during animations!)
     const snapLegSlot = createSlot(`snap_leg_${sTag}`, upLeg, [side * 16, -34, 0], 1.1, 'snap', `hip_turret_${sTag}`);
-    const sl = scadMesh(geos.snap_leg, mats.shell);
-    sl.position.y = -38.6;
-    snapLegSlot.add(sl);
+    const flexLeg = makeFlexSnapLimb(geos.snap_leg, mats.shell, -38.6, -19.6, 0.0, 8.5);
+    snapLegSlot.add(flexLeg.mesh);
     snapLegSlot.visible = false;
     editionParts.snap.push(snapLegSlot);
+    flexLegs[tag] = flexLeg;
 
     const snapAnkAnchor = new THREE.Group();
     snapAnkAnchor.position.set(0, -39.2, 0);
     upLeg.add(snapAnkAnchor);
+    snapAnkAnchors[tag] = snapAnkAnchor;
     const snapAnkTurret = createSlot(`snap_ank_${sTag}`, snapAnkAnchor, [side * 20, -54, 0], 0.7, 'snap', `snap_leg_${sTag}`);
     addSnapTurretMesh(snapAnkTurret, false, 'y');
     snapAnkTurret.visible = false;
@@ -1233,6 +1321,7 @@ function buildKipRig(geos, partspec) {
 
   return {
     mover, grounder, hips, joints, partSlots, editionParts, createSlot,
+    flexArms, flexLegs, snapWriAnchors, snapAnkAnchors,
     neckAnchor, proNeckPeg, snapNeckTurret,
     headLocal, headShellSlot, headHoodSlot, crownSlot, earPodLSlot, earPodRSlot, visorSlot, faceDetailSlot,
     crownAccSlot, snapStandingLegSlots, bootSlots,
@@ -1787,12 +1876,17 @@ const keys = new Set();
 
 const loco = {
   edition: 'pro',      // 'pro' (8+) | 'snap' (3+)
-  head: 'classic',     // 'classic' | 'kid' | 'robot' | 'fox' | 'bear' | 'custom'
-  expr: 'spark',       // 'spark' | 'happy' | 'wink' | 'cool' | 'starry' | 'blank'
-  crown: 'buds',
+  head: 'classic',     // 'classic' | 'kid' | 'fox' | 'bear' | 'robot' | 'custom'
+  skin: 'warm_peach',
+  hairColor: 'chestnut',
+  hair: 'off',         // 'off' | 'short_swept' | 'bob' | 'swoosh' | 'spiky' | 'pigtails' | 'ponytail' | 'curly' | 'mohawk'
+  expr: 'spark',       // 'spark' | 'happy' | 'wink' | 'cool' | 'starry' | 'surprised' | 'blank'
+  hat: 'buds',         // 'buds' | 'hat' | 'ears' | 'horns' | 'ponytail' | 'blank' | 'wizardHat' | 'custom'
+  crown: 'buds',       // synced alias of `hat` for #toy= contract compatibility
   back: 'off',
   prop: 'off',         // 'off' | 'wrench' | 'shield' | 'shaft' | 'skateboard' | 'wand' | 'custom'
   vehicle: 'none',     // 'none' | 'car' | 'truck' | 'scooter' | 'moto'
+  vehCovers: true,
   racerKit: true,
   hasPhotoAccessory: false,
   photoWingGroup: null,
@@ -1915,7 +2009,9 @@ function applyCameraPreset(presetName) {
   } else if (presetName === 'vehicle') {
     camera.position.set(cx + 255, 165, cz + 320 + uiShift * 1.2); controls.target.set(cx, 54 - uiShift, cz - 6);
   } else if (presetName === 'exploded') {
-    camera.position.set(cx + 255, 225, cz + 615); controls.target.set(cx, 78 - uiShift * 0.6, cz);
+    camera.position.set(cx + 245, 240, cz + 655); controls.target.set(cx, 108 - uiShift * 0.6, cz);
+  } else if (presetName === 'head_exploded') {
+    camera.position.set(cx - 158, 226, cz + 365); controls.target.set(cx, 168, cz + 6);
   } else if (presetName === 'pile') {
     camera.position.set(cx + 165, 415, cz + 495); controls.target.set(cx, -12, cz + 45);
   }
@@ -2092,18 +2188,23 @@ async function init() {
     }
   }
 
-  // Apply URL query overrides (Wardrobe + Vehicles + Modals + Camera)
+  // Initialize default head/faceplate/hair/hat layout, then apply URL query overrides
+  syncHeadHairHatLayout();
   if (params.get('edition') === 'snap') setEdition('snap');
   const startPreset = params.get('loadout') || params.get('preset');
   if (startPreset) applyPreset(startPreset);
   if (params.get('head'))    setHeadMode(params.get('head'));
-  if (params.get('expr'))    setFaceMode(params.get('expr'));
-  if (params.get('crown'))   setCrownMode(params.get('crown'));
+  if (params.get('skin'))    setSkinTone(params.get('skin'));
+  if (params.get('haircol')) setHairColor(params.get('haircol'));
+  if (params.get('hair'))    setHairMode(params.get('hair'));
+  if (params.get('face') || params.get('expr')) setFaceMode(params.get('face') || params.get('expr'));
+  if (params.get('hat') || params.get('crown')) setCrownMode(params.get('hat') || params.get('crown'));
   if (params.get('ears'))    setEarMode(params.get('ears'));
   if (params.get('back'))    setBackMode(params.get('back'));
   if (params.get('tail'))    setTailMode(params.get('tail'));
   if (params.get('prop'))    setPropMode(params.get('prop'));
   else if (params.get('hand')) setPropMode(['1', 'shaft', 'pro'].includes(params.get('hand')) ? 'shaft' : params.get('hand'));
+  if (params.get('covers') !== null) setVehicleCovers(params.get('covers') !== '0');
   if (params.get('racer') !== null) setRacerKit(params.get('racer') !== '0');
   if (params.get('vehicle')) setVehicleMode(params.get('vehicle'), !params.get('cam'));
   if (params.get('sdk'))     equipSdkDemo(params.get('sdk'));
@@ -2169,12 +2270,11 @@ function syncNeckAndSeatedVisibility() {
   kip.snapNeckTurret.visible = isClassicHead && !isPro;
   kip.exp.neckTurret2x1Slot.visible = !isClassicHead;
 
-  // Seated Snap (`3+`): swap 1-piece straight standing legs + boots for 90-deg `char_legs_seated` inside vehicles!
-  const inVehicle = loco.vehicle !== 'none';
-  const useSeatedSnap = !isPro && inVehicle;
-  for (const s of kip.snapStandingLegSlots) s.visible = !isPro && !inVehicle;
-  for (const b of kip.bootSlots)            b.visible = !useSeatedSnap;
-  kip.exp.snapSeatedLegsGroup.visible = useSeatedSnap;
+  // Snap (`3+`) 1-piece legs now smoothly flex at hips & digital knees in animations (including all 4 vehicles!),
+  // while straightening right back into rigid 1-piece printable parts in Exploded View & Part Pile!
+  for (const s of kip.snapStandingLegSlots) s.visible = !isPro;
+  for (const b of kip.bootSlots)            b.visible = true;
+  kip.exp.snapSeatedLegsGroup.visible = false;
 }
 
 function setEdition(ed) {
@@ -2183,13 +2283,23 @@ function setEdition(ed) {
   for (const s of kip.editionParts.pro)  s.visible = isPro;
   for (const s of kip.editionParts.snap) s.visible = !isPro;
 
-  // Restore joint offsets cleanly when switching back to Pro 8+
+  // Restore joint offsets & rest Snap limb meshes cleanly when switching back to Pro 8+
   for (const tag of ['Left', 'Right']) {
     if (isPro) {
       kip.joints[`${tag}ForeArm`].position.set(0, -23.8, 0);
       kip.joints[`${tag}Hand`].position.set(0, -22.6, 0);
       kip.joints[`${tag}Leg`].position.set(0, -25.6, 0);
       kip.joints[`${tag}Foot`].position.set(0, -26.0, -1.5);
+    }
+    if (kip.flexArms[tag]) kip.flexArms[tag].deform(new THREE.Quaternion());
+    if (kip.flexLegs[tag]) kip.flexLegs[tag].deform(new THREE.Quaternion());
+    if (kip.snapWriAnchors[tag]) {
+      kip.snapWriAnchors[tag].position.set(0, -35.0, 3.8);
+      kip.snapWriAnchors[tag].rotation.set(THREE.MathUtils.degToRad(-11), 0, 0);
+    }
+    if (kip.snapAnkAnchors[tag]) {
+      kip.snapAnkAnchors[tag].position.set(0, -39.2, 0);
+      kip.snapAnkAnchors[tag].quaternion.identity();
     }
   }
   syncNeckAndSeatedVisibility();
@@ -2266,12 +2376,12 @@ function exitPileMode() {
 
 function enterPartPile(autoFrame = false) {
   setExplodeAmount(0, true);
+  loco.buildMode = 'pile';
+  loco.buildTime = 0;
   playClip(getDefaultRestClip(), 0.01);
   kipMixer.setTime(0);
   applySnapJointOverrides();
   layoutPartPile(kip, loco.edition);
-  loco.buildMode = 'pile';
-  loco.buildTime = 0;
   btnPile.classList.add('active');
   btnBuild.classList.remove('spark-active');
   if (autoFrame) applyCameraPreset('pile');
@@ -2280,12 +2390,12 @@ function enterPartPile(autoFrame = false) {
 
 function startPileToBuild(autoFrame = false) {
   setExplodeAmount(0, true);
+  loco.buildMode = 'building';
+  loco.buildTime = 0;
   playClip(getDefaultRestClip(), 0.01);
   kipMixer.setTime(0);
   applySnapJointOverrides();
   layoutPartPile(kip, loco.edition);
-  loco.buildMode = 'building';
-  loco.buildTime = 0;
   btnPile.classList.remove('active');
   btnBuild.classList.add('spark-active');
   if (autoFrame) applyCameraPreset('pile');
@@ -2302,34 +2412,66 @@ function refreshPileIfActive() {
   if (kip && loco.buildMode !== 'assembled') layoutPartPile(kip, loco.edition);
 }
 
-// --- PHASE 1: UNIVERSAL SWAPPABLE HEADS, 2D DECAL SKINS, HAIR, BACKPACKS & PROPS ---
+// --- PHASE 1: SYMMETRIC PLUMP HEADS, SLIM SWAPPABLE FACE PLATES, SEPARATE CLIP-ON HAIRS & STACKABLE HATS ---
 const HEAD_DECAL_TRANSFORMS = {
-  kid:   { y: 23.2, z: 20.95, rx: -0.02, s: 1.00, crownY: 36.0 },
-  robot: { y: 23.8, z: 20.15, rx:  0.00, s: 0.96, crownY: 35.5 },
-  fox:   { y: 24.8, z: 19.35, rx: -0.46, s: 0.90, crownY: 35.5 },
-  bear:  { y: 23.8, z: 21.35, rx: -0.14, s: 0.94, crownY: 35.5 },
-  custom:{ y: 23.2, z: 20.95, rx: -0.02, s: 0.95, crownY: 36.0 },
+  kid:    { crownY: 23.8 },
+  fox:    { crownY: 25.8 },
+  bear:   { crownY: 25.8 },
+  robot:  { crownY: 30.0 },
+  custom: { crownY: 29.0 },
 };
+
+const LEGACY_HEAD_HAIR_MAP = {
+  boy:   { head: 'kid', hair: 'short_swept' },
+  bob:   { head: 'kid', hair: 'bob' },
+  curls: { head: 'kid', hair: 'curly' },
+  human: { head: 'kid', hair: null },
+};
+
+function setSkinTone(skinId) {
+  const found = SKIN_TONES.find(s => s.id === skinId) || SKIN_TONES[0];
+  loco.skin = found.id;
+  if (kip && kip.exp) kip.exp.expMats.skin.color.set(found.hex);
+  const btn = document.getElementById('btn-skin');
+  btn.textContent = `Skin: ${found.label}`;
+  btn.classList.toggle('spark-active', loco.skin !== SKIN_TONES[0].id);
+}
+document.getElementById('btn-skin').addEventListener('click', () => {
+  const curIdx = SKIN_TONES.findIndex(s => s.id === loco.skin);
+  const next = SKIN_TONES[(curIdx + 1) % SKIN_TONES.length];
+  setSkinTone(next.id);
+});
+
+function setHairColor(colId) {
+  const found = HAIR_COLORS.find(c => c.id === colId) || HAIR_COLORS[0];
+  loco.hairColor = found.id;
+  if (kip && kip.exp) kip.exp.expMats.hair.color.set(found.hex);
+  const btn = document.getElementById('btn-hair-col');
+  btn.textContent = `Hair Tone: ${found.label}`;
+  btn.classList.toggle('spark-active', loco.hairColor !== HAIR_COLORS[0].id);
+}
+document.getElementById('btn-hair-col').addEventListener('click', () => {
+  const curIdx = HAIR_COLORS.findIndex(c => c.id === loco.hairColor);
+  const next = HAIR_COLORS[(curIdx + 1) % HAIR_COLORS.length];
+  setHairColor(next.id);
+});
 
 function refreshDecalTexture() {
   if (!kip || !kip.exp) return;
-  const hType = loco.head === 'classic' ? 'kid' : loco.head;
+  const hType = (loco.head === 'classic' || loco.head === 'custom') ? 'kid' : loco.head;
   const newCanvas = createDecalExpressionCanvas(loco.expr, hType);
   kip.exp.decalTex.image = newCanvas;
   kip.exp.decalTex.needsUpdate = true;
-
-  // Classic Kip: keep sculpted 3D visor glints on 'spark', use 2D decal overlay for Happy/Wink/Cool/Starry!
-  const isClassic = loco.head === 'classic';
-  kip.faceDetailGrp.visible = isClassic && loco.expr === 'spark';
-  kip.exp.classicDecalPlane.visible = isClassic && (loco.expr !== 'spark' && loco.expr !== 'blank');
-  kip.exp.decalPlane.visible = !isClassic && loco.head !== 'custom' && loco.expr !== 'blank';
 }
 
-function setHeadMode(headId) {
-  const valid = WARDROBE_HEADS.some(h => h.id === headId) || headId === 'custom';
-  loco.head = valid ? headId : 'classic';
+function syncHeadHairHatLayout() {
+  if (!kip || !kip.exp) return;
   const isClassic = loco.head === 'classic';
+  const isKid = loco.head === 'kid';
+  const dt = HEAD_DECAL_TRANSFORMS[loco.head] || HEAD_DECAL_TRANSFORMS.kid;
+  const headCrownY = isClassic ? 42.2 : dt.crownY;
 
+  // 1. Base Head shell visibility
   kip.headShellSlot.visible  = isClassic;
   kip.headHoodSlot.visible   = isClassic;
   kip.crownSlot.visible      = isClassic;
@@ -2344,26 +2486,102 @@ function setHeadMode(headId) {
   }
   kip.exp.customHeadContainer.visible = (loco.head === 'custom');
 
-  if (isClassic) {
-    kip.exp.crownAnchor.position.y = 42.2;
-  } else {
-    const dt = HEAD_DECAL_TRANSFORMS[loco.head] || HEAD_DECAL_TRANSFORMS.kid;
-    kip.exp.crownAnchor.position.y = dt.crownY;
-    kip.exp.altCrownBuds.position.y = dt.crownY;
-    kip.exp.decalPlane.geometry = kip.exp.headDecalGeos[loco.head] || kip.exp.headDecalGeos.kid;
+  // 2. Slim Swappable Emotion Face Plate (`char_faceplate` on `kid`) vs Conformal 2D Decal (`fox`/`bear`/`robot`)
+  refreshDecalTexture();
+  kip.exp.faceplateGroup.visible = isKid;
+  kip.exp.faceplateDecalPlane.visible = isKid && (loco.expr !== 'blank');
+
+  kip.faceDetailGrp.visible = isClassic && loco.expr === 'spark';
+  kip.exp.classicDecalPlane.visible = isClassic && (loco.expr !== 'spark' && loco.expr !== 'blank');
+
+  const usesConformalDecal = !isClassic && !isKid && loco.head !== 'custom';
+  if (usesConformalDecal && kip.exp.headDecalGeos[loco.head]) {
+    kip.exp.decalPlane.geometry = kip.exp.headDecalGeos[loco.head];
     kip.exp.decalPlane.position.set(0, 0, 0);
     kip.exp.decalPlane.rotation.set(0, 0, 0);
     kip.exp.decalPlane.scale.setScalar(1.0);
   }
-  kip.exp.altCrownBuds.visible = !isClassic && loco.crown !== 'blank';
+  kip.exp.decalPlane.visible = usesConformalDecal && (loco.expr !== 'blank');
+
+  // 3. Separate Clip-On 2x1 Hair (`3 Hat-Ready` with top_studs + `5 Sculpted-Top` studless)
+  const hairOpt = HAIR_OPTIONS.find(h => h.id === loco.hair) || HAIR_OPTIONS[0];
+  const hasHair = (hairOpt.id !== 'off');
+  kip.exp.hairGroup.visible = hasHair;
+  kip.exp.hairAnchor.position.y = headCrownY;
+  for (const [k, m] of Object.entries(kip.exp.hairMeshes)) {
+    m.visible = (k === hairOpt.id);
+  }
+  kip.exp.hairCrownBuds.position.y = hairOpt.topH;
+  kip.exp.hairCrownBuds.visible = hasHair && hairOpt.hatReady && (loco.hat !== 'blank');
+
+  // Base head 2x1 Crown Buds
+  kip.crownBudsMesh.visible  = (loco.hat !== 'blank' || hasHair);
+  kip.crownBlankMesh.visible = (!hasHair && loco.hat === 'blank');
+  kip.exp.altCrownBuds.position.y = headCrownY;
+  kip.exp.altCrownBuds.visible = !isClassic && (loco.hat !== 'blank' || hasHair);
+
+  // 4. Stackable 2x1 Hat / Topper (`crownAnchor` sits on head crown OR on top of Hat-Ready hair!)
+  const canWearHat = hairOpt.hatReady;
+  kip.crownAccSlot.visible = canWearHat;
+  kip.exp.crownAnchor.position.y = headCrownY + (hasHair ? hairOpt.topH : 0.0);
+
+  kip.pointyEars.visible = canWearHat && (loco.hat === 'ears');
+  kip.wobbleHat.visible  = canWearHat && (loco.hat === 'hat');
+  for (const [k, m] of Object.entries(kip.exp.hatMeshes)) {
+    m.visible = canWearHat && (k === loco.hat);
+  }
+  kip.exp.customCrownContainer.visible = canWearHat && (loco.hat === 'custom');
+
+  // Dynamic Explode guide lines & pull heights when Hat stacks on Hair!
+  const hairSlotEntry = kip.partSlots.find(s => s.id === 'hair_clip');
+  if (hairSlotEntry) {
+    hairSlotEntry.guideTo = isClassic ? 'crown' : 'alt_head';
+    hairSlotEntry.explodeVec.set(0, 70, 0);
+  }
+  const crownSlotEntry = kip.partSlots.find(s => s.id === 'crown_acc');
+  if (crownSlotEntry) {
+    crownSlotEntry.guideTo = hasHair ? 'hair_clip' : (isClassic ? 'crown' : 'alt_head');
+    crownSlotEntry.explodeVec.set(0, hasHair ? 110 : 84, 0);
+  }
 
   syncNeckAndSeatedVisibility();
-  refreshDecalTexture();
 
+  // 5. Update Wardrobe Dock button labels
   const hObj = WARDROBE_HEADS.find(h => h.id === loco.head);
-  const btn = document.getElementById('btn-head');
-  btn.textContent = `Head: ${hObj ? hObj.label : 'Custom Head'}`;
-  btn.classList.toggle('spark-active', true);
+  const btnHead = document.getElementById('btn-head');
+  btnHead.textContent = `Head: ${hObj ? hObj.label : 'Custom Head'}`;
+  btnHead.classList.toggle('spark-active', true);
+
+  const fObj = DECAL_EXPRESSIONS.find(e => e.id === loco.expr) || DECAL_EXPRESSIONS[0];
+  const btnFace = document.getElementById('btn-face');
+  btnFace.textContent = `${isKid ? 'Face Plate' : 'Face'}: ${fObj.label}`;
+  btnFace.classList.toggle('spark-active', loco.expr !== 'blank');
+
+  const btnHair = document.getElementById('btn-hair');
+  btnHair.textContent = `Hair: ${hairOpt.label}`;
+  btnHair.classList.toggle('spark-active', hasHair);
+
+  const hatObj = HAT_OPTIONS.find(c => c.id === loco.hat);
+  const hatLbl = hatObj ? hatObj.label : (loco.hat === 'wizardHat' ? 'Wizard Hat (SDK)' : 'Custom Hat');
+  const btnHat = document.getElementById('btn-crown');
+  btnHat.textContent = canWearHat ? `Hat: ${hatLbl}` : 'Hat: N/A (Sculpted)';
+  btnHat.classList.toggle('spark-active', canWearHat && loco.hat !== 'blank');
+}
+
+function setHeadMode(headId) {
+  if (LEGACY_HEAD_HAIR_MAP[headId]) {
+    const mapped = LEGACY_HEAD_HAIR_MAP[headId];
+    loco.head = mapped.head;
+    if (mapped.hair) {
+      loco.hair = mapped.hair;
+      const ho = HAIR_OPTIONS.find(h => h.id === loco.hair);
+      if (ho && !ho.hatReady) { loco.hat = 'buds'; loco.crown = 'buds'; }
+    }
+  } else {
+    const valid = WARDROBE_HEADS.some(h => h.id === headId) || headId === 'custom';
+    loco.head = valid ? headId : 'classic';
+  }
+  syncHeadHairHatLayout();
   refreshPileIfActive();
   updateStatusText();
 }
@@ -2377,10 +2595,8 @@ document.getElementById('btn-head').addEventListener('click', () => {
 function setFaceMode(exprId) {
   const found = DECAL_EXPRESSIONS.find(e => e.id === exprId) || DECAL_EXPRESSIONS[0];
   loco.expr = found.id;
-  refreshDecalTexture();
-  const btn = document.getElementById('btn-face');
-  btn.textContent = `Face: ${found.label}`;
-  btn.classList.toggle('spark-active', loco.expr !== 'blank');
+  syncHeadHairHatLayout();
+  refreshPileIfActive();
 }
 
 document.getElementById('btn-face').addEventListener('click', () => {
@@ -2389,32 +2605,57 @@ document.getElementById('btn-face').addEventListener('click', () => {
   setFaceMode(next.id);
 });
 
-function setCrownMode(mode) {
-  const extraValid = mode === 'wizardHat' || mode === 'custom';
-  const found = CROWN_OPTIONS.find(c => c.id === mode);
-  loco.crown = (found || extraValid) ? mode : 'buds';
-
-  kip.crownBudsMesh.visible  = (loco.crown !== 'blank');
-  kip.crownBlankMesh.visible = (loco.crown === 'blank');
-  kip.exp.altCrownBuds.visible = (loco.head !== 'classic' && loco.crown !== 'blank');
-
-  kip.pointyEars.visible = (loco.crown === 'ears');
-  kip.wobbleHat.visible  = (loco.crown === 'hat');
-  for (const [k, m] of Object.entries(kip.exp.crownHairMeshes)) {
-    m.visible = (k === loco.crown);
+function setHairMode(hairId) {
+  const found = HAIR_OPTIONS.find(h => h.id === hairId) || HAIR_OPTIONS[0];
+  loco.hair = found.id;
+  if (!found.hatReady) {
+    loco.hat = 'buds';
+    loco.crown = 'buds';
   }
-  kip.exp.customCrownContainer.visible = (loco.crown === 'custom');
-
-  const lbl = found ? found.label : (loco.crown === 'wizardHat' ? 'Wizard Hat (SDK)' : 'Custom Crown');
-  const btn = document.getElementById('btn-crown');
-  btn.textContent = `Crown: ${lbl}`;
-  btn.classList.toggle('spark-active', loco.crown !== 'blank');
+  syncHeadHairHatLayout();
   refreshPileIfActive();
+  updateStatusText();
+}
+
+document.getElementById('btn-hair').addEventListener('click', () => {
+  if (loco.head === 'classic') loco.head = 'kid';
+  const curIdx = HAIR_OPTIONS.findIndex(h => h.id === loco.hair);
+  const next = HAIR_OPTIONS[(curIdx + 1) % HAIR_OPTIONS.length];
+  setHairMode(next.id);
+});
+
+function setCrownMode(mode) {
+  // Support legacy `?crown=spiky` / `curly` / `swoosh` / `ponytail` URL params by routing hair IDs to `setHairMode`!
+  const isHairOnly = HAIR_OPTIONS.some(h => h.id === mode && h.id !== 'off');
+  if (isHairOnly) {
+    setHairMode(mode);
+    return;
+  }
+  const extraValid = mode === 'wizardHat' || mode === 'custom';
+  const found = HAT_OPTIONS.find(c => c.id === mode);
+  const nextHat = (found || extraValid) ? mode : 'buds';
+
+  // If equipping a physical hat/topper while wearing a studless Sculpted-Top hair, switch to Hat-Ready hair!
+  const curHair = HAIR_OPTIONS.find(h => h.id === loco.hair) || HAIR_OPTIONS[0];
+  if (!curHair.hatReady && nextHat !== 'buds' && nextHat !== 'blank') {
+    loco.hair = (loco.head === 'kid') ? 'short_swept' : 'off';
+  }
+  loco.hat = nextHat;
+  loco.crown = nextHat;
+  syncHeadHairHatLayout();
+  refreshPileIfActive();
+  updateStatusText();
 }
 
 document.getElementById('btn-crown').addEventListener('click', () => {
-  const curIdx = CROWN_OPTIONS.findIndex(c => c.id === loco.crown);
-  const next = CROWN_OPTIONS[(curIdx + 1) % CROWN_OPTIONS.length];
+  const curHair = HAIR_OPTIONS.find(h => h.id === loco.hair) || HAIR_OPTIONS[0];
+  if (!curHair.hatReady) {
+    loco.hair = (loco.head === 'kid') ? 'short_swept' : 'off';
+    setCrownMode('hat');
+    return;
+  }
+  const curIdx = HAT_OPTIONS.findIndex(c => c.id === loco.hat);
+  const next = HAT_OPTIONS[(curIdx + 1) % HAT_OPTIONS.length];
   setCrownMode(next.id);
 });
 
@@ -2517,7 +2758,17 @@ document.getElementById('btn-hand').addEventListener('click', () => {
   setPropMode(next.id);
 });
 
-// --- PHASE 2: MODULAR 12.5 mm TU VEHICLES (`Car`, `Truck`, `2-in-1 Scooter & Motorbike`) ---
+// --- PHASE 2 V2: MODULAR 12.5 mm TU VEHICLES + SNAP-ON BODY COVERS + STYLIZED WHEELS ---
+function setVehicleCovers(on) {
+  loco.vehCovers = Boolean(on);
+  if (kip && kip.exp) kip.exp.setCoversVisible(loco.vehCovers, loco.vehicle);
+  const btn = document.getElementById('btn-veh-covers');
+  btn.textContent = loco.vehCovers ? 'Covers: On' : 'Covers: Off';
+  btn.classList.toggle('spark-active', loco.vehCovers);
+  refreshPileIfActive();
+}
+document.getElementById('btn-veh-covers').addEventListener('click', () => setVehicleCovers(!loco.vehCovers));
+
 function setRacerKit(on) {
   loco.racerKit = Boolean(on);
   kip.exp.carRacerGroup.visible   = loco.racerKit;
@@ -2545,10 +2796,10 @@ function setVehicleMode(vehId, autoFrame = true) {
     hb.classList.remove('spark-active');
   }
 
-  kip.exp.carGroup.visible         = (loco.vehicle === 'car');
-  kip.exp.truckGroup.visible       = (loco.vehicle === 'truck');
-  kip.exp.bikeGroup.visible        = (loco.vehicle === 'scooter' || loco.vehicle === 'moto');
-  kip.exp.motoCowlingGroup.visible = (loco.vehicle === 'moto');
+  kip.exp.carGroup.visible   = (loco.vehicle === 'car');
+  kip.exp.truckGroup.visible = (loco.vehicle === 'truck');
+  kip.exp.bikeGroup.visible  = (loco.vehicle === 'scooter' || loco.vehicle === 'moto');
+  kip.exp.setCoversVisible(loco.vehCovers, loco.vehicle);
   kip.exp.bikeLeanGroup.rotation.z = 0;
 
   document.querySelectorAll('button[data-veh]').forEach(b => {
@@ -2576,11 +2827,12 @@ document.querySelectorAll('button[data-veh]').forEach(btn => {
   btn.addEventListener('click', () => setVehicleMode(btn.dataset.veh, true));
 });
 
-const presets = ['clean', 'boy', 'girl', 'fox', 'pro'];
+const presets = ['clean', 'boy', 'girl', 'zoe', 'fox', 'pro'];
 const presetLabels = {
   clean: 'Clean',
-  boy:   'Boy Explorer',
-  girl:  'Girl Star Skater',
+  boy:   'Leo Explorer',
+  girl:  'Maya Skater',
+  zoe:   'Zoe Roadster',
   fox:   'Fox Scooter',
   pro:   'Bolt Pro 8+',
 };
@@ -2592,23 +2844,33 @@ function applyPreset(name) {
   const p = presets[presetIdx];
   if (p === 'clean') {
     setVehicleMode('none', false);
-    setHeadMode('classic'); setFaceMode('spark'); setCrownMode('buds');
+    setHeadMode('classic'); setSkinTone('warm_peach'); setHairColor('chestnut');
+    setHairMode('off'); setFaceMode('spark'); setCrownMode('buds');
     setEarMode('off'); setBackMode('off'); setTailMode('off'); setPropMode('off');
   } else if (p === 'boy') {
     setVehicleMode('none', false);
-    setHeadMode('kid'); setFaceMode('cool'); setCrownMode('swoosh');
+    setHeadMode('kid'); setSkinTone('warm_peach'); setHairColor('chestnut');
+    setHairMode('short_swept'); setCrownMode('hat'); setFaceMode('cool');
     setEarMode('off'); setBackMode('explorer'); setTailMode('off'); setPropMode('wrench');
   } else if (p === 'girl') {
     setVehicleMode('none', false);
-    setHeadMode('kid'); setFaceMode('wink'); setCrownMode('pigtails');
+    setHeadMode('kid'); setSkinTone('golden_tan'); setHairColor('berry_pop');
+    setHairMode('bob'); setCrownMode('ears'); setFaceMode('wink');
     setEarMode('off'); setBackMode('wings'); setTailMode('off'); setPropMode('skateboard');
+  } else if (p === 'zoe') {
+    setHeadMode('kid'); setSkinTone('rich_cocoa'); setHairColor('espresso');
+    setHairMode('curly'); setCrownMode('buds'); setFaceMode('starry');
+    setEarMode('off'); setBackMode('off'); setTailMode('off'); setPropMode('off');
+    setVehicleCovers(true);
+    setVehicleMode('car', false);
   } else if (p === 'fox') {
-    setHeadMode('fox'); setFaceMode('happy'); setCrownMode('ears');
+    setHeadMode('fox'); setHairMode('off'); setFaceMode('happy'); setCrownMode('ears');
     setEarMode('off'); setBackMode('explorer'); setTailMode('wag'); setPropMode('off');
+    setVehicleCovers(true);
     setVehicleMode('scooter', false);
   } else if (p === 'pro') {
     setVehicleMode('none', false);
-    setHeadMode('robot'); setFaceMode('spark'); setCrownMode('horns');
+    setHeadMode('robot'); setHairMode('off'); setFaceMode('spark'); setCrownMode('horns');
     setEarMode('pro'); setBackMode('gears'); setTailMode('pro'); setPropMode('shaft');
   }
   const btn = document.getElementById('btn-preset');
@@ -2943,7 +3205,9 @@ document.getElementById('btn-sync-hash').addEventListener('click', () => {
     hasPhotoAccessory: loco.hasPhotoAccessory,
     parts: [
       `head_${loco.head}`,
-      `crown_${loco.crown}`,
+      loco.head === 'kid' ? `faceplate_${loco.expr}` : null,
+      loco.hair !== 'off' ? `hair_${loco.hair}` : null,
+      `crown_${loco.hat}`,
       loco.back !== 'off' ? `back_${loco.back}` : null,
       loco.prop !== 'off' ? `prop_${loco.prop}` : null,
       loco.vehicle !== 'none' ? `veh_${loco.vehicle}` : null,
@@ -3026,36 +3290,72 @@ window.addEventListener('keydown', e => {
 window.addEventListener('keyup', e => keys.delete(e.key.toLowerCase()));
 
 const snapCuffQuat = new THREE.Quaternion().setFromEuler(new THREE.Euler(THREE.MathUtils.degToRad(-11), 0, 0));
+// `snap_arm.stl` already has ~15 deg of natural forward elbow bend sculpted into its rest molding;
+// subtracting that rest bend when flexing keeps Snap Kip's hands aligned 1:1 with Pro Kip on steering wheels & handlebars!
+const snapArmRestInvQuat = new THREE.Quaternion().setFromEuler(new THREE.Euler(THREE.MathUtils.degToRad(15), 0, 0));
 const tmpSnapQ = new THREE.Quaternion();
+const tmpSnapRelQ = new THREE.Quaternion();
+const tmpSnapFlexQ = new THREE.Quaternion();
+const tmpSnapCuffQ = new THREE.Quaternion();
+const tmpSnapVec = new THREE.Vector3();
 
-// In Snap (4-8) mode, arms & legs are chunky 1-piece Snap moldings (no separate elbow or knee peg!)
-// while sharing the exact same Head, 3-Finger Hands, and 1x2 Sneaker Boots!
+// In Snap (`3+`) mode, physical `snap_arm.stl` & `snap_leg.stl` stay 1-piece moldings for 3D printing & Exploded/Pile views,
+// while smoothly flexing mid-limb digital "fake joints" (`makeFlexSnapLimb`) during character & vehicle animations!
 function applySnapJointOverrides() {
   if (!kip || loco.edition !== 'snap') return;
+  const canFlex = loco.buildMode === 'assembled' && activeClipName !== 'TPose';
+  const flexFactor = canFlex ? (1.0 - loco.explodeAmount) * 0.94 : 0.0;
+
   for (const tag of ['Left', 'Right']) {
     const arm = kip.joints[`${tag}Arm`];
     const fore = kip.joints[`${tag}ForeArm`];
     const hand = kip.joints[`${tag}Hand`];
 
-    // Transfer 55% of ForeArm gesture (raise & supination, e.g. HeroWave!) into shoulder + wrist swivel,
-    // then lock ForeArm onto snap_arm's sculpted -11 deg cuff!
-    tmpSnapQ.identity().slerp(fore.quaternion, 0.55);
+    // Blend residual `(1 - flexFactor)` into shoulder + wrist when rigid, while `qElbow` drives smooth mid-arm flex!
+    tmpSnapQ.identity().slerp(fore.quaternion, (1.0 - flexFactor) * 0.55);
     arm.quaternion.multiply(tmpSnapQ);
     hand.quaternion.premultiply(tmpSnapQ);
-    fore.position.set(0, -35.0, 3.8);
-    fore.quaternion.copy(snapCuffQuat);
+
+    tmpSnapRelQ.multiplyQuaternions(snapArmRestInvQuat, fore.quaternion);
+    tmpSnapFlexQ.identity().slerp(tmpSnapRelQ, flexFactor);
+    if (kip.flexArms[tag]) kip.flexArms[tag].deform(tmpSnapFlexQ);
+
+    // Distal wrist cuff center: pivot `(0, -17.5, 1.2)` + rotated `(0, -17.5, 2.6)` (`rest = (0, -35.0, 3.8)`)
+    tmpSnapVec.set(0, -17.5, 2.6).applyQuaternion(tmpSnapFlexQ);
+    tmpSnapVec.y += -17.5;
+    tmpSnapVec.z += 1.2;
+    tmpSnapCuffQ.multiplyQuaternions(tmpSnapFlexQ, snapCuffQuat);
+
+    if (kip.snapWriAnchors[tag]) {
+      kip.snapWriAnchors[tag].position.copy(tmpSnapVec);
+      kip.snapWriAnchors[tag].quaternion.copy(tmpSnapCuffQ);
+    }
+    fore.position.copy(tmpSnapVec);
+    fore.quaternion.copy(tmpSnapCuffQ);
     hand.position.set(0, -0.5, 0);
 
-    // 1-piece chunky leg: fold 35% of knee pitch into hip stride + keep ankle angle natural, lock knee straight!
+    // Leg: smooth mid-limb knee flex around `(0, -19.6, 0.0)` + residual hip/ankle transfer when rigid!
     const upLeg = kip.joints[`${tag}UpLeg`];
     const leg = kip.joints[`${tag}Leg`];
     const foot = kip.joints[`${tag}Foot`];
 
-    tmpSnapQ.identity().slerp(leg.quaternion, 0.35);
+    tmpSnapQ.identity().slerp(leg.quaternion, (1.0 - flexFactor) * 0.35);
     upLeg.quaternion.multiply(tmpSnapQ);
     foot.quaternion.premultiply(tmpSnapQ);
-    leg.position.set(0, -39.2, 0);
-    leg.quaternion.identity();
+
+    tmpSnapFlexQ.identity().slerp(leg.quaternion, flexFactor);
+    if (kip.flexLegs[tag]) kip.flexLegs[tag].deform(tmpSnapFlexQ);
+
+    // Distal ankle cuff center: pivot `(0, -19.6, 0.0)` + rotated `(0, -19.6, 0.0)` (`rest = (0, -39.2, 0.0)`)
+    tmpSnapVec.set(0, -19.6, 0.0).applyQuaternion(tmpSnapFlexQ);
+    tmpSnapVec.y += -19.6;
+
+    if (kip.snapAnkAnchors[tag]) {
+      kip.snapAnkAnchors[tag].position.copy(tmpSnapVec);
+      kip.snapAnkAnchors[tag].quaternion.copy(tmpSnapFlexQ);
+    }
+    leg.position.copy(tmpSnapVec);
+    leg.quaternion.copy(tmpSnapFlexQ);
     foot.position.set(0, -0.4, -1.5);
   }
 }
@@ -3077,22 +3377,15 @@ const moverInvMat = new THREE.Matrix4();
 function pinAndGroundKipFeet(isLocomoting, dt = 0) {
   const lift = loco.jumpY + loco.explodeAmount * 64;
 
-  // --- VEHICLE SEATED / STRADDLE GROUNDING (`car`, `truck`, `scooter`, `moto`) ---
+  // --- V2 VEHICLE SEATED / STRADDLE GROUNDING (`car`, `truck`, `scooter`, `moto`) ---
   if (loco.vehicle !== 'none') {
-    const isPro = loco.edition === 'pro';
     if (loco.vehicle === 'car') {
-      kip.grounder.position.set(0, (isPro ? -16.2 : -9.8) + lift, isPro ? -5.5 : -4.0);
-      kip.exp.snapSeatedLegsGroup.position.set(0, 32.25 + lift, -4.0);
-      kip.exp.snapSeatedLegsGroup.rotation.z = 0;
+      kip.grounder.position.set(0, -23.2 + lift, -1.5);
     } else if (loco.vehicle === 'truck') {
-      kip.grounder.position.set(0, (isPro ? -3.7 : 2.7) + lift, isPro ? -5.5 : -4.0);
-      kip.exp.snapSeatedLegsGroup.position.set(0, 44.75 + lift, -4.0);
-      kip.exp.snapSeatedLegsGroup.rotation.z = 0;
+      kip.grounder.position.set(0, -19.2 + lift, -1.5);
     } else {
-      // 2-in-1 Motor Scooter & Sport Motorbike (`bikeY = 18.75`, rear saddle at `y = 37.25, z = -25.0`)
-      kip.grounder.position.set(0, (isPro ? -11.2 : -4.8) + lift, isPro ? -22.5 : -25.0);
-      kip.exp.snapSeatedLegsGroup.position.set(0, 37.25 + lift, -25.0);
-      kip.exp.snapSeatedLegsGroup.rotation.z = kip.exp.bikeLeanGroup.rotation.z;
+      // V2 2-Wheel Inline Motor Scooter & Sport Motorbike (`bikeY = 11.75`, rear saddle at `y = 38.25, z = -25.0`)
+      kip.grounder.position.set(0, -10.2 + lift, -22.5);
     }
     kip.grounder.rotation.z = (loco.vehicle === 'scooter' || loco.vehicle === 'moto')
       ? kip.exp.bikeLeanGroup.rotation.z
@@ -3192,12 +3485,6 @@ const slotCenterMap = new Map();
 const tmpBox = new THREE.Box3();
 
 function updateExplodeAndPileTransforms(dt) {
-  // Smooth springy interpolation toward explodeTarget
-  const prevExplode = loco.explodeAmount;
-  loco.explodeAmount += (loco.explodeTarget - loco.explodeAmount) * Math.min(1, dt * 9.5);
-  if (Math.abs(loco.explodeTarget - loco.explodeAmount) < 0.001) loco.explodeAmount = loco.explodeTarget;
-  if (Math.abs(prevExplode - loco.explodeAmount) > 0.005) updateStatusText();
-
   // Fast path: normal assembled character
   if (loco.buildMode === 'assembled' && loco.explodeAmount <= 0.001) {
     explodeLines.visible = false;
@@ -3376,7 +3663,13 @@ function animate() {
     if (loco.jumpY <= 0) { loco.jumpY = 0; loco.jumpVel = 0; }
   }
 
-  // Advance skeletal animation + Snap 3+ 1-piece limb constraints
+  // Smooth springy interpolation toward explodeTarget BEFORE Snap flex & foot grounding!
+  const prevExplode = loco.explodeAmount;
+  loco.explodeAmount += (loco.explodeTarget - loco.explodeAmount) * Math.min(1, dt * 9.5);
+  if (Math.abs(loco.explodeTarget - loco.explodeAmount) < 0.001) loco.explodeAmount = loco.explodeTarget;
+  if (Math.abs(prevExplode - loco.explodeAmount) > 0.005) updateStatusText();
+
+  // Advance skeletal animation + Snap 3+ digital fake-joint limb flex
   const mixerDt = (loco.buildMode === 'assembled') ? dt : 0;
   if (kipMixer) kipMixer.update(mixerDt);
   if (refMixer) refMixer.update(mixerDt);
@@ -3389,11 +3682,11 @@ function animate() {
   // Physically accurate wheel rotation (`dTheta = dDist / R` around local X)!
   if (dDist !== 0) {
     if (loco.vehicle === 'car') {
-      for (const w of kip.exp.carWheels) w.rotation.x += dDist / 25.0;
+      for (const w of kip.exp.carWheels) w.rotation.x += dDist / 18.0;
     } else if (loco.vehicle === 'truck') {
-      for (const w of kip.exp.truckWheels) w.rotation.x += dDist / 37.5;
+      for (const w of kip.exp.truckWheels) w.rotation.x += dDist / 22.0;
     } else if (loco.vehicle === 'scooter' || loco.vehicle === 'moto') {
-      for (const w of kip.exp.bikeWheels) w.rotation.x += dDist / 25.0;
+      for (const w of kip.exp.bikeWheels) w.rotation.x += dDist / 18.0;
     } else if (onSkate) {
       for (const w of kip.exp.skateWheels) w.rotation.x += dDist / 9.0;
     }

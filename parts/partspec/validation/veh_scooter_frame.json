@@ -1,29 +1,40 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_veh_scooter_frame_S.stl",
-  "file_sha256": "3a9b4c35ec1572b5fcc66e53ea57cecdae0bfca902337e1067c820021e0cf895",
+  "file_sha256": "56e0b0395e0d82851d82e5a41b84c1b14691c3ab15b53aa667db5b25e0f837c7",
   "part_id": "veh_scooter_frame",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-10-30T08:24:17Z",
+  "checked_at": "2026-10-30T17:15:40Z",
   "metrics": {
     "bbox_mm": [
-      24.8,
-      124.8,
-      25.0
+      37.5,
+      134.0,
+      31.8
     ],
-    "volume_cm3": 51.85,
-    "surface_cm2": 136.46,
-    "triangles": 17390,
+    "volume_cm3": 79.19,
+    "surface_cm2": 227.79,
+    "triangles": 22040,
     "ledges": [],
-    "layers": 125,
-    "bed_contact_mm2": 2878.8,
-    "height_mm": 25.0,
-    "slenderness": 0.47,
+    "layers": 159,
+    "bed_contact_mm2": 3543.2,
+    "height_mm": 31.8,
+    "slenderness": 0.53,
     "centre_of_mass_over_contact": true,
     "min_wall_mm": null,
     "thin_wall_regions": []
   },
-  "bridges": [],
+  "bridges": [
+    {
+      "z_mm": 25.2,
+      "span_mm": 16.15,
+      "area_mm2": 322.9
+    },
+    {
+      "z_mm": 24.8,
+      "span_mm": 16.13,
+      "area_mm2": 386.4
+    }
+  ],
   "checks": [
     {
       "id": "V1_mesh_sound",
@@ -46,9 +57,9 @@
       "level": "block",
       "result": "pass",
       "value": [
-        24.8,
-        124.8,
-        25.0
+        37.5,
+        134.0,
+        31.8
       ],
       "limit": [
         180,
@@ -77,9 +88,9 @@
       "id": "V6_bridge_span",
       "level": "block",
       "result": "pass",
-      "value": 0.0,
+      "value": 16.15,
       "limit": 20,
-      "detail": "0 bridge(s); widest unsupported span in mm"
+      "detail": "2 bridge(s); widest unsupported span in mm"
     },
     {
       "id": "V5_no_floating_islands",
@@ -101,9 +112,9 @@
       "id": "V9_bed_contact",
       "level": "info",
       "result": "pass",
-      "value": 2878.8,
+      "value": 3543.2,
       "limit": null,
-      "detail": "height / sqrt(contact) = 0.47; above about 3 the slicer often asks for a brim"
+      "detail": "height / sqrt(contact) = 0.53; above about 3 the slicer often asks for a brim"
     },
     {
       "id": "V8_wall_thickness",

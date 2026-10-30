@@ -4,12 +4,13 @@
 //   3) `#toy=` ToyContract URL encoder & LLM PartSpec Prompt loader
 
 export const DECAL_EXPRESSIONS = [
-  { id: 'spark',  label: 'Spark' },
-  { id: 'happy',  label: 'Happy' },
-  { id: 'wink',   label: 'Wink' },
-  { id: 'cool',   label: 'Cool Shades' },
-  { id: 'starry', label: 'Starry' },
-  { id: 'blank',  label: 'Blank Canvas' },
+  { id: 'spark',     label: 'Spark' },
+  { id: 'happy',     label: 'Happy' },
+  { id: 'wink',      label: 'Wink' },
+  { id: 'cool',      label: 'Cool Shades' },
+  { id: 'starry',    label: 'Starry' },
+  { id: 'surprised', label: 'Surprised' },
+  { id: 'blank',     label: 'Blank Plate' },
 ];
 
 export function createDecalExpressionCanvas(expression = 'spark', headType = 'kid') {
@@ -22,136 +23,224 @@ export function createDecalExpressionCanvas(expression = 'spark', headType = 'ki
 
   const isRobot = headType === 'robot';
   const isAnimal = headType === 'fox' || headType === 'bear';
+  const isHuman = !isRobot && !isAnimal;
 
-  // Soft dark rounded visor pill for Kid & Robot heads; transparent sticker backing for Fox & Bear!
-  if (!isAnimal) {
-    ctx.fillStyle = isRobot ? '#161d30' : '#1f2538';
+  // Dark LED visor screen ONLY for Robot head; Human & Critter heads use visor-free transparent decal skin!
+  if (isRobot) {
+    ctx.fillStyle = '#161d30';
     roundRect(ctx, 36, 36, 440, 184, 82);
     ctx.fill();
     ctx.lineWidth = 6;
-    ctx.strokeStyle = isRobot ? 'rgba(184, 232, 255, 0.35)' : 'rgba(255, 255, 255, 0.14)';
+    ctx.strokeStyle = 'rgba(184, 232, 255, 0.38)';
     ctx.stroke();
   }
 
-  const eyeCol = isAnimal ? '#20232A' : '#b8e8ff';
+  // Soft cream muzzle mask + button nose + critter mouth for Fox & Bear
+  if (isAnimal) {
+    ctx.fillStyle = 'rgba(252, 246, 236, 0.94)';
+    ctx.beginPath();
+    ctx.ellipse(256, 178, headType === 'bear' ? 92 : 82, 56, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  const eyeCol = isRobot ? '#b8e8ff' : '#231A16';
+  const mouthCol = isRobot ? '#b8e8ff' : '#3A231C';
   const glintCol = '#ffffff';
   const cheekCol = '#ff6b4a';
 
   // Signature Coral Spark cheek blushes
   ctx.fillStyle = cheekCol;
-  ctx.globalAlpha = isAnimal ? 0.85 : 0.92;
-  drawCapsule(ctx, 108, 174, 38, 18);
-  drawCapsule(ctx, 404, 174, 38, 18);
+  ctx.globalAlpha = isHuman ? 0.62 : (isAnimal ? 0.74 : 0.90);
+  drawCapsule(ctx, 84, 176, 52, 24);
+  drawCapsule(ctx, 428, 176, 52, 24);
   ctx.globalAlpha = 1.0;
+
+  // Expressive human eyebrows + warm stylized button nose hint
+  if (isHuman && expression !== 'cool') {
+    ctx.strokeStyle = 'rgba(62, 38, 25, 0.82)';
+    ctx.lineWidth = 11.5;
+    ctx.lineCap = 'round';
+    for (const [bx, dir] of [[152, -1], [360, 1]]) {
+      ctx.beginPath();
+      const lift = expression === 'surprised' ? -10 : (expression === 'wink' && dir === 1 ? 7 : 0);
+      ctx.arc(bx, 84 + lift, 39, Math.PI * 1.22, Math.PI * 1.78);
+      ctx.stroke();
+    }
+    ctx.fillStyle = 'rgba(196, 102, 80, 0.50)';
+    ctx.beginPath();
+    ctx.ellipse(256, 152, 11, 6.5, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
 
   // Cute stylized button nose tip for Fox / Bear (2D decal only — zero 3D nostril holes!)
   if (isAnimal) {
     ctx.fillStyle = '#20232A';
     ctx.beginPath();
-    ctx.ellipse(256, 162, headType === 'bear' ? 22 : 17, 13, 0, 0, Math.PI * 2);
+    ctx.ellipse(256, 154, headType === 'bear' ? 26 : 21, 15, 0, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = 'rgba(255,255,255,0.55)';
+    ctx.fillStyle = 'rgba(255,255,255,0.65)';
     ctx.beginPath();
-    ctx.ellipse(250, 158, 6, 3.5, 0, 0, Math.PI * 2);
+    ctx.ellipse(249, 149, 7, 4, 0, 0, Math.PI * 2);
     ctx.fill();
   }
 
-  if (expression === 'spark') {
-    for (const cx of [168, 344]) {
-      ctx.fillStyle = eyeCol;
-      roundRect(ctx, cx - 28, 86, 56, 70, 26);
-      ctx.fill();
-      ctx.fillStyle = glintCol;
+  const drawHumanOrCritterEye = (cx, cy = 122) => {
+    ctx.fillStyle = eyeCol;
+    roundRect(ctx, cx - 33, cy - 39, 66, 78, 31);
+    ctx.fill();
+    if (isHuman) {
+      // Warm iris crescent at bottom of eye
+      ctx.fillStyle = '#734830';
       ctx.beginPath();
-      ctx.arc(cx - 9, 106, 10, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.beginPath();
-      ctx.arc(cx + 11, 134, 4.5, 0, Math.PI * 2);
+      ctx.ellipse(cx, cy + 18, 21, 12, 0, 0, Math.PI * 2);
       ctx.fill();
     }
-    if (!isRobot && !isAnimal) {
-      ctx.strokeStyle = eyeCol;
-      ctx.lineWidth = 8;
+    ctx.fillStyle = glintCol;
+    ctx.beginPath();
+    ctx.arc(cx - 11, cy - 15, 13, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(cx + 12, cy + 14, 6, 0, Math.PI * 2);
+    ctx.fill();
+  };
+
+  if (expression === 'spark') {
+    for (const cx of [152, 360]) {
+      drawHumanOrCritterEye(cx, 122);
+    }
+    if (isHuman) {
+      ctx.strokeStyle = mouthCol;
+      ctx.lineWidth = 11;
       ctx.lineCap = 'round';
       ctx.beginPath();
-      ctx.arc(256, 152, 22, 0.18 * Math.PI, 0.82 * Math.PI);
+      ctx.arc(256, 168, 31, 0.16 * Math.PI, 0.84 * Math.PI);
+      ctx.stroke();
+    } else if (isAnimal) {
+      ctx.strokeStyle = mouthCol;
+      ctx.lineWidth = 8.5;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.arc(237, 174, 19, 0.08 * Math.PI, 0.92 * Math.PI);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(275, 174, 19, 0.08 * Math.PI, 0.92 * Math.PI);
       ctx.stroke();
     }
   } else if (expression === 'happy') {
     ctx.strokeStyle = eyeCol;
-    ctx.lineWidth = 15;
+    ctx.lineWidth = 16;
     ctx.lineCap = 'round';
-    for (const cx of [168, 344]) {
+    for (const cx of [152, 360]) {
       ctx.beginPath();
-      ctx.arc(cx, 136, 30, Math.PI * 1.12, Math.PI * 1.88);
+      ctx.arc(cx, 140, 35, Math.PI * 1.12, Math.PI * 1.88);
       ctx.stroke();
     }
-    ctx.lineWidth = 10;
-    ctx.beginPath();
-    ctx.arc(256, 152, 28, 0.12 * Math.PI, 0.88 * Math.PI);
-    ctx.stroke();
+    if (isHuman) {
+      // Cheerful open D-smile with rosy tongue accent!
+      ctx.fillStyle = mouthCol;
+      ctx.beginPath();
+      ctx.arc(256, 170, 35, 0, Math.PI, false);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = '#FF7E6B';
+      ctx.beginPath();
+      ctx.ellipse(256, 192, 19, 10, 0, 0, Math.PI * 2);
+      ctx.fill();
+    } else {
+      ctx.strokeStyle = mouthCol;
+      ctx.lineWidth = 11;
+      ctx.beginPath();
+      ctx.arc(256, 168, 30, 0.12 * Math.PI, 0.88 * Math.PI);
+      ctx.stroke();
+    }
   } else if (expression === 'wink') {
-    // Left eye open, right eye playful wink!
-    ctx.fillStyle = eyeCol;
-    roundRect(ctx, 168 - 28, 86, 56, 70, 26);
-    ctx.fill();
-    ctx.fillStyle = glintCol;
-    ctx.beginPath();
-    ctx.arc(159, 106, 10, 0, Math.PI * 2);
-    ctx.fill();
+    drawHumanOrCritterEye(152, 122);
 
     ctx.strokeStyle = eyeCol;
-    ctx.lineWidth = 14;
+    ctx.lineWidth = 15;
     ctx.lineCap = 'round';
     ctx.beginPath();
-    ctx.moveTo(314, 112);
-    ctx.lineTo(364, 126);
-    ctx.lineTo(316, 142);
+    ctx.moveTo(324, 112);
+    ctx.lineTo(384, 126);
+    ctx.lineTo(326, 144);
     ctx.stroke();
 
-    ctx.lineWidth = 9;
+    ctx.strokeStyle = mouthCol;
+    ctx.lineWidth = 11;
     ctx.beginPath();
-    ctx.arc(262, 154, 24, 0.15 * Math.PI, 0.78 * Math.PI);
+    ctx.arc(262, 168, 30, 0.15 * Math.PI, 0.80 * Math.PI);
     ctx.stroke();
   } else if (expression === 'cool') {
     // Bold ToyVentor Geometric Aviator Shades
     ctx.fillStyle = '#20232A';
     ctx.strokeStyle = '#FFB830';
-    ctx.lineWidth = 8;
-    roundRect(ctx, 98, 84, 136, 68, 18);
+    ctx.lineWidth = 9;
+    roundRect(ctx, 74, 78, 162, 80, 22);
     ctx.fill();
     ctx.stroke();
-    roundRect(ctx, 278, 84, 136, 68, 18);
+    roundRect(ctx, 276, 78, 162, 80, 22);
     ctx.fill();
     ctx.stroke();
     ctx.beginPath();
-    ctx.moveTo(234, 104);
-    ctx.lineTo(278, 104);
+    ctx.moveTo(236, 102);
+    ctx.lineTo(276, 102);
     ctx.stroke();
     // Diagonal white lens sheen
-    ctx.strokeStyle = 'rgba(255,255,255,0.65)';
-    ctx.lineWidth = 9;
+    ctx.strokeStyle = 'rgba(255,255,255,0.68)';
+    ctx.lineWidth = 10;
     ctx.lineCap = 'round';
-    for (const ox of [122, 302]) {
+    for (const ox of [104, 306]) {
       ctx.beginPath();
-      ctx.moveTo(ox, 136);
-      ctx.lineTo(ox + 28, 98);
+      ctx.moveTo(ox, 140);
+      ctx.lineTo(ox + 34, 94);
       ctx.stroke();
     }
     // Confident smirk
-    ctx.strokeStyle = isAnimal ? '#20232A' : '#FFB830';
-    ctx.lineWidth = 8;
+    ctx.strokeStyle = isRobot ? '#FFB830' : mouthCol;
+    ctx.lineWidth = 10;
     ctx.beginPath();
-    ctx.arc(266, 166, 24, 0.18 * Math.PI, 0.72 * Math.PI);
+    ctx.arc(266, 174, 28, 0.18 * Math.PI, 0.74 * Math.PI);
     ctx.stroke();
   } else if (expression === 'starry') {
-    for (const cx of [168, 344]) {
-      drawStar(ctx, cx, 120, 5, 36, 16, '#FFB830');
-      drawStar(ctx, cx, 120, 4, 14, 5, '#ffffff');
+    if (isHuman) {
+      for (const cx of [152, 360]) {
+        ctx.fillStyle = eyeCol;
+        roundRect(ctx, cx - 34, 82, 68, 80, 32);
+        ctx.fill();
+        drawStar(ctx, cx, 121, 5, 26, 11.5, '#FFB830');
+        drawStar(ctx, cx - 12, 101, 4, 9.5, 3.5, '#ffffff');
+      }
+    } else {
+      for (const cx of [152, 360]) {
+        drawStar(ctx, cx, 120, 5, 40, 18, '#FFB830');
+        drawStar(ctx, cx, 120, 4, 16, 6, '#ffffff');
+      }
     }
-    ctx.fillStyle = eyeCol;
+    ctx.fillStyle = mouthCol;
     ctx.beginPath();
-    ctx.ellipse(256, 166, 16, 12, 0, 0, Math.PI * 2);
+    ctx.ellipse(256, 178, 18, 13, 0, 0, Math.PI * 2);
+    ctx.fill();
+  } else if (expression === 'surprised') {
+    for (const cx of [152, 360]) {
+      ctx.fillStyle = eyeCol;
+      ctx.beginPath();
+      ctx.arc(cx, 120, 36, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = glintCol;
+      ctx.beginPath();
+      ctx.arc(cx - 11, 108, 12, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(cx + 12, 132, 5.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.fillStyle = mouthCol;
+    ctx.beginPath();
+    ctx.ellipse(256, 180, 18, 22, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#FF7E6B';
+    ctx.beginPath();
+    ctx.ellipse(256, 191, 11, 8, 0, 0, Math.PI * 2);
     ctx.fill();
   }
   return c;

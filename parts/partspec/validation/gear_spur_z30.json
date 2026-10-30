@@ -1,22 +1,22 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_gear_spur_z30_P.stl",
-  "file_sha256": "1391c4159e8fbeda9506734ec3481424959d1a1bf0a886b1b5222cd3a53d5fa9",
+  "file_sha256": "508b3499c9040ad739dd2204cc825bf359637581b32d26bb41d47a1de160c1ae",
   "part_id": "gear_spur_z30",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-10-30T08:20:55Z",
+  "checked_at": "2026-10-30T17:12:41Z",
   "metrics": {
     "bbox_mm": [
       80.0,
       79.72,
       6.25
     ],
-    "volume_cm3": 26.93,
-    "surface_cm2": 118.04,
-    "triangles": 5256,
+    "volume_cm3": 26.98,
+    "surface_cm2": 117.5,
+    "triangles": 35376,
     "ledges": [],
     "layers": 31,
-    "bed_contact_mm2": 4308.8,
+    "bed_contact_mm2": 4317.1,
     "height_mm": 6.25,
     "slenderness": 0.1,
     "centre_of_mass_over_contact": true,
@@ -101,7 +101,7 @@
       "id": "V9_bed_contact",
       "level": "info",
       "result": "pass",
-      "value": 4308.8,
+      "value": 4317.1,
       "limit": null,
       "detail": "height / sqrt(contact) = 0.1; above about 3 the slicer often asks for a brim"
     },
@@ -112,50 +112,10 @@
       "value": 0,
       "limit": 0,
       "detail": "regions where the wall is under 0.8 mm (two nozzle widths) over 2.0 mm2, or under 0.4 mm (one nozzle width) over 0.25 mm2; sharp edges and slivers are ignored"
-    },
-    {
-      "id": "S1_slices",
-      "level": "block",
-      "result": "pass",
-      "value": null,
-      "limit": null,
-      "detail": "sliced without errors"
-    },
-    {
-      "id": "S2_slicer_stability",
-      "level": "warn",
-      "result": "pass",
-      "value": null,
-      "limit": null,
-      "detail": "no stability warnings"
-    },
-    {
-      "id": "S3_slicer_blocking",
-      "level": "block",
-      "result": "pass",
-      "value": null,
-      "limit": null,
-      "detail": "nothing the slicer would print in mid-air"
     }
   ],
   "print_settings": {},
-  "slicer": {
-    "ok": true,
-    "brim_mm": 0,
-    "seconds_to_slice": 4.1,
-    "warnings": [],
-    "filament_g": 15.23,
-    "filament_m": 5.11,
-    "filament_cost_usd": 0.3,
-    "print_time_s": 5198,
-    "layers": 31,
-    "warnings_without_brim": [],
-    "brims_tried_mm": [
-      0
-    ],
-    "engine": "PrusaSlicer-2.8.1",
-    "reused_from": "2026-10-30T08:09:19Z"
-  },
+  "slicer": null,
   "verdict": "pass",
   "summary": "Prints as is"
 }

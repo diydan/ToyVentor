@@ -1,24 +1,24 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_veh_moto_cowling_S.stl",
-  "file_sha256": "e2c0f835eaf0a8661a681751e0b49504d500c45a53436033fd79682894dd546c",
+  "file_sha256": "991c62080a6d7c2ec09ba99e0b1e9c30ba316a25ae145426533eff9a1ee28c6c",
   "part_id": "veh_moto_cowling",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-10-30T08:24:19Z",
+  "checked_at": "2026-10-30T17:15:41Z",
   "metrics": {
     "bbox_mm": [
-      24.8,
-      26.2,
-      25.0
+      39.6,
+      25.9,
+      31.8
     ],
-    "volume_cm3": 9.84,
-    "surface_cm2": 31.12,
-    "triangles": 5276,
+    "volume_cm3": 20.87,
+    "surface_cm2": 45.11,
+    "triangles": 5028,
     "ledges": [],
-    "layers": 125,
-    "bed_contact_mm2": 449.9,
-    "height_mm": 25.0,
-    "slenderness": 1.18,
+    "layers": 159,
+    "bed_contact_mm2": 446.9,
+    "height_mm": 31.8,
+    "slenderness": 1.5,
     "centre_of_mass_over_contact": true,
     "min_wall_mm": null,
     "thin_wall_regions": []
@@ -43,16 +43,6 @@
       "z_mm": 3.2,
       "span_mm": 6.7,
       "area_mm2": 35.2
-    },
-    {
-      "z_mm": 20.0,
-      "span_mm": 0.55,
-      "area_mm2": 1.4
-    },
-    {
-      "z_mm": 20.0,
-      "span_mm": 0.55,
-      "area_mm2": 1.4
     }
   ],
   "checks": [
@@ -77,9 +67,9 @@
       "level": "block",
       "result": "pass",
       "value": [
-        24.8,
-        26.2,
-        25.0
+        39.6,
+        25.9,
+        31.8
       ],
       "limit": [
         180,
@@ -110,7 +100,7 @@
       "result": "pass",
       "value": 6.7,
       "limit": 20,
-      "detail": "6 bridge(s); widest unsupported span in mm"
+      "detail": "4 bridge(s); widest unsupported span in mm"
     },
     {
       "id": "V5_no_floating_islands",
@@ -132,9 +122,9 @@
       "id": "V9_bed_contact",
       "level": "info",
       "result": "pass",
-      "value": 449.9,
+      "value": 446.9,
       "limit": null,
-      "detail": "height / sqrt(contact) = 1.18; above about 3 the slicer often asks for a brim"
+      "detail": "height / sqrt(contact) = 1.5; above about 3 the slicer often asks for a brim"
     },
     {
       "id": "V8_wall_thickness",
