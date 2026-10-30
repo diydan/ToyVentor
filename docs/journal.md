@@ -338,6 +338,14 @@ Goal: 2-3 donors in, 1 toy out, max 2 new adapters (wireframe p.6).
 - Blockers:
 - Tomorrow's first task:
 
+### Decision recorded — Fri Oct 30
+- No rollover on earned time (parent time gates, stretch spec
+  [parent-time-gate.md](parent-time-gate.md)): the day resets at local midnight
+  in the family's stored timezone, the daily limit stays put, and yesterday's
+  surplus is gone. A child cannot bank time for tomorrow. The ledger is keyed
+  by day, so rollover is not even representable — the rule is enforced by the
+  shape of the data, not by a check someone has to remember to write.
+
 ---
 
 ## Day 6 — Sat Oct 31: Market + Print
