@@ -1,10 +1,13 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   MAX_HEARTBEAT_SECONDS,
   PARENT_PRESETS,
+  PIN_COOLDOWN_MS,
+  PIN_MAX_ATTEMPTS,
   applyParentAction,
   defaultParentSettings,
   emptyLedgerForDay,
+  evaluatePinAttempt,
   evaluatePlayTime,
   isInQuietHours,
   localDay,
@@ -13,6 +16,12 @@ import {
   validateAndMergeParentSettings,
   type ParentSettings,
 } from "../shared/parent-time";
+import {
+  getLocalPinCooldownUntil,
+  requestGateChallenge,
+  updateParentSettings,
+  verifyGateAnswer,
+} from "../src/lib/parentTime";
 import worker from "../worker/index";
 import type { D1Like } from "../worker/ownership";
 
@@ -515,5 +524,327 @@ describe("/api/parent/* Cloudflare Worker routes", () => {
     };
     expect(otherBody.settings.enabled).toBe(false);
     expect(otherBody.ledger.usedSeconds).toBe(0);
+  });
+
+  it("enforces 5-tries / 30s PIN cooldown on worker verify and allows Forgot-PIN math reset", async () => {
+    vi.useFakeTimers();
+    try {
+      const startMs = Date.parse("2026-04-17T18:00:00Z");
+      vi.setSystemTime(startMs);
+      const env = { DB: fakeParentDb(), PARENT_GATE_SECRET: "unit-test-secret" };
+
+      const chRes = await callParent(env, "/api/parent/gate", {
+        method: "POST",
+        body: JSON.stringify({ action: "challenge" }),
+      });
+      const ch = (await chRes.json()) as {
+        a: number;
+        b: number;
+        challengeToken: string;
+      };
+      const okMath = await callParent(env, "/api/parent/gate", {
+        method: "POST",
+        body: JSON.stringify({
+          action: "verify",
+          challengeToken: ch.challengeToken,
+          answer: ch.a * ch.b,
+        }),
+      });
+      const { proofToken } = (await okMath.json()) as { proofToken: string };
+
+      await callParent(env, "/api/parent/settings", {
+        method: "PUT",
+        headers: { "x-parent-proof": proofToken },
+        body: JSON.stringify({ pin: "1357" }),
+      });
+
+      // Tries 1..4 return 403 with decreasing attemptsRemaining
+      for (let attempt = 1; attempt < PIN_MAX_ATTEMPTS; attempt++) {
+        const bad = await callParent(env, "/api/parent/gate", {
+          method: "POST",
+          body: JSON.stringify({ action: "verify", pin: "0000" }),
+        });
+        expect(bad.status).toBe(403);
+        const body = (await bad.json()) as { attemptsRemaining: number };
+        expect(body.attemptsRemaining).toBe(PIN_MAX_ATTEMPTS - attempt);
+      }
+
+      // 5th failed try triggers 429 + 30s cooldown
+      const fifth = await callParent(env, "/api/parent/gate", {
+        method: "POST",
+        body: JSON.stringify({ action: "verify", pin: "9999" }),
+      });
+      expect(fifth.status).toBe(429);
+      expect(fifth.headers.get("retry-after")).toBe("30");
+      const fifthBody = (await fifth.json()) as {
+        error: string;
+        cooldownUntil: number;
+        retryAfterSeconds: number;
+        attemptsRemaining: number;
+      };
+      expect(fifthBody.error).toBe("pin_cooldown");
+      expect(fifthBody.cooldownUntil).toBe(startMs + PIN_COOLDOWN_MS);
+      expect(fifthBody.retryAfterSeconds).toBe(30);
+      expect(fifthBody.attemptsRemaining).toBe(0);
+
+      // Even the RIGHT PIN is rejected during the 30s cooldown window
+      vi.setSystemTime(startMs + 12_000);
+      const blockedRightPin = await callParent(env, "/api/parent/gate", {
+        method: "POST",
+        body: JSON.stringify({ action: "verify", pin: "1357" }),
+      });
+      expect(blockedRightPin.status).toBe(429);
+
+      // After 30s, the right PIN succeeds again
+      vi.setSystemTime(startMs + PIN_COOLDOWN_MS + 100);
+      const afterCooldown = await callParent(env, "/api/parent/gate", {
+        method: "POST",
+        body: JSON.stringify({ action: "verify", pin: "1357" }),
+      });
+      expect(afterCooldown.status).toBe(200);
+
+      // Trigger cooldown again and verify Forgot-PIN math recovery resets PIN + cooldown
+      for (let i = 0; i < PIN_MAX_ATTEMPTS; i++) {
+        await callParent(env, "/api/parent/gate", {
+          method: "POST",
+          body: JSON.stringify({ action: "verify", pin: "1111" }),
+        });
+      }
+      const recoveryChRes = await callParent(env, "/api/parent/gate", {
+        method: "POST",
+        body: JSON.stringify({ action: "challenge" }),
+      });
+      const recoveryCh = (await recoveryChRes.json()) as {
+        a: number;
+        b: number;
+        challengeToken: string;
+        cooldownUntil: number | null;
+      };
+      expect(recoveryCh.cooldownUntil).toBeGreaterThan(Date.now());
+
+      const recoveryVerify = await callParent(env, "/api/parent/gate", {
+        method: "POST",
+        body: JSON.stringify({
+          action: "verify",
+          challengeToken: recoveryCh.challengeToken,
+          answer: recoveryCh.a * recoveryCh.b,
+        }),
+      });
+      expect(recoveryVerify.status).toBe(200);
+      const { proofToken: recoveryProof } = (await recoveryVerify.json()) as {
+        proofToken: string;
+      };
+
+      const resetPinRes = await callParent(env, "/api/parent/settings", {
+        method: "PUT",
+        headers: { "x-parent-proof": recoveryProof },
+        body: JSON.stringify({ pin: "2468" }),
+      });
+      expect(resetPinRes.status).toBe(200);
+
+      // New PIN works immediately with cooldown cleared
+      const unlockedNew = await callParent(env, "/api/parent/gate", {
+        method: "POST",
+        body: JSON.stringify({ action: "verify", pin: "2468" }),
+      });
+      expect(unlockedNew.status).toBe(200);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});
+
+describe("offline local-verify PIN lockout (airplane-mode parity)", () => {
+  const originalFetch = globalThis.fetch;
+  const originalStorage = globalThis.localStorage;
+
+  function makeMemoryStorage(): Storage {
+    const map = new Map<string, string>();
+    return {
+      get length() {
+        return map.size;
+      },
+      clear: () => map.clear(),
+      getItem: (k: string) => map.get(k) ?? null,
+      key: (i: number) => [...map.keys()][i] ?? null,
+      removeItem: (k: string) => {
+        map.delete(k);
+      },
+      setItem: (k: string, v: string) => {
+        map.set(k, String(v));
+      },
+    };
+  }
+
+  afterEach(() => {
+    vi.useRealTimers();
+    globalThis.fetch = originalFetch;
+    Object.defineProperty(globalThis, "localStorage", {
+      value: originalStorage,
+      configurable: true,
+      writable: true,
+    });
+  });
+
+  it("evaluates pure PIN state machine across 5 failures and 30s cooldown", () => {
+    let settings = defaultParentSettings("UTC");
+    const t0 = 1_700_000_000_000;
+    for (let i = 1; i <= 4; i++) {
+      const r = evaluatePinAttempt(settings, t0, false);
+      expect(r.status).toBe("mismatch");
+      if (r.status === "mismatch") expect(r.attemptsRemaining).toBe(5 - i);
+      settings = r.settings;
+    }
+    const fifth = evaluatePinAttempt(settings, t0, false);
+    expect(fifth.status).toBe("cooldown");
+    if (fifth.status === "cooldown") {
+      expect(fifth.cooldownUntil).toBe(t0 + PIN_COOLDOWN_MS);
+      expect(fifth.retryAfterSeconds).toBe(30);
+    }
+    // Right PIN during cooldown still stays in cooldown
+    const during = evaluatePinAttempt(fifth.settings, t0 + 5_000, true);
+    expect(during.status).toBe("cooldown");
+    // Right PIN after 30s clears cooldown
+    const after = evaluatePinAttempt(fifth.settings, t0 + 30_000, true);
+    expect(after.status).toBe("ok");
+    expect(after.settings.pinFailedAttempts).toBe(0);
+    expect(after.settings.pinCooldownUntil).toBeNull();
+  });
+
+  it("triggers 30s cooldown locally in airplane mode, persists across reload, and blocks server->offline bypass", async () => {
+    vi.useFakeTimers();
+    const t0 = Date.parse("2026-04-17T19:00:00Z");
+    vi.setSystemTime(t0);
+
+    const memStorage = makeMemoryStorage();
+    Object.defineProperty(globalThis, "localStorage", {
+      value: memStorage,
+      configurable: true,
+      writable: true,
+    });
+
+    // Airplane mode: every network request rejects with TypeError("Failed to fetch").
+    globalThis.fetch = vi.fn(async () => {
+      throw new TypeError("Failed to fetch");
+    }) as unknown as typeof fetch;
+
+    // 1. Bootstrap setup offline + save 4-tap PIN "2580"
+    const bootChallenge = await requestGateChallenge(t0);
+    expect(bootChallenge.challengeToken).toBe("local");
+    expect(bootChallenge.mode).toBe("math");
+
+    const bootVerify = await verifyGateAnswer({
+      challenge: bootChallenge,
+      answer: bootChallenge.a * bootChallenge.b,
+    });
+    expect(bootVerify.ok).toBe(true);
+    if (!bootVerify.ok) throw new Error("expected bootstrap verify");
+
+    const saved = await updateParentSettings(
+      { pin: "2580" },
+      bootVerify.session.proofToken,
+    );
+    expect(saved.ok).toBe(true);
+
+    // 2. Re-open gate in airplane mode -> PIN challenge
+    const pinChallenge = await requestGateChallenge(t0);
+    expect(pinChallenge.challengeToken).toBe("local");
+    expect(pinChallenge.mode).toBe("pin");
+    expect(pinChallenge.cooldownUntil).toBeNull();
+
+    // 3. Tries 1..4 fail locally with attemptsRemaining 4..1
+    for (let i = 1; i <= 4; i++) {
+      const attempt = await verifyGateAnswer({
+        challenge: pinChallenge,
+        pin: `000${i}`,
+      });
+      expect(attempt.ok).toBe(false);
+      if (!attempt.ok) {
+        expect(attempt.attemptsRemaining).toBe(5 - i);
+        expect(attempt.cooldownUntil).toBeUndefined();
+      }
+    }
+
+    // 4. 5th failed try triggers local 30s cooldown
+    const fifth = await verifyGateAnswer({
+      challenge: pinChallenge,
+      pin: "9999",
+    });
+    expect(fifth.ok).toBe(false);
+    if (!fifth.ok) {
+      expect(fifth.attemptsRemaining).toBe(0);
+      expect(fifth.retryAfterSeconds).toBe(30);
+      expect(fifth.cooldownUntil).toBe(t0 + PIN_COOLDOWN_MS);
+    }
+
+    // 5. Simulate page reload 10s later while still offline: localStorage preserves deadline
+    vi.setSystemTime(t0 + 10_000);
+    expect(getLocalPinCooldownUntil()).toBe(t0 + PIN_COOLDOWN_MS);
+    const reloadedChallenge = await requestGateChallenge();
+    expect(reloadedChallenge.cooldownUntil).toBe(t0 + PIN_COOLDOWN_MS);
+
+    // Even the CORRECT PIN ("2580") is blocked locally during cooldown!
+    const blockedRightPin = await verifyGateAnswer({
+      challenge: reloadedChallenge,
+      pin: "2580",
+    });
+    expect(blockedRightPin.ok).toBe(false);
+    if (!blockedRightPin.ok) {
+      expect(blockedRightPin.retryAfterSeconds).toBe(20);
+      expect(blockedRightPin.cooldownUntil).toBe(t0 + PIN_COOLDOWN_MS);
+    }
+
+    // 6. Advance past 30s -> local cooldown expires and correct PIN unlocks
+    vi.setSystemTime(t0 + PIN_COOLDOWN_MS + 50);
+    expect(getLocalPinCooldownUntil()).toBeNull();
+    const unlocked = await verifyGateAnswer({
+      challenge: await requestGateChallenge(),
+      pin: "2580",
+    });
+    expect(unlocked.ok).toBe(true);
+
+    // 7. Server -> airplane-mode handoff: 4 online 403s + 1 offline try immediately triggers 30s cooldown
+    const t2 = t0 + 120_000;
+    vi.setSystemTime(t2);
+    let onlineTry = 0;
+    globalThis.fetch = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
+      const body = init?.body ? (JSON.parse(String(init.body)) as { action?: string }) : {};
+      if (body.action === "challenge") {
+        return new Response(
+          JSON.stringify({
+            mode: "pin",
+            pinSet: true,
+            a: 4,
+            b: 6,
+            challengeToken: "srv-token",
+            cooldownUntil: null,
+          }),
+          { status: 200 },
+        );
+      }
+      onlineTry += 1;
+      return new Response(
+        JSON.stringify({ ok: false, attemptsRemaining: PIN_MAX_ATTEMPTS - onlineTry }),
+        { status: 403 },
+      );
+    }) as unknown as typeof fetch;
+
+    const srvCh = await requestGateChallenge(t2);
+    for (let i = 1; i <= 4; i++) {
+      const r = await verifyGateAnswer({ challenge: srvCh, pin: "0000" });
+      expect(r.ok).toBe(false);
+    }
+
+    // Kid flips on airplane mode before the 5th try — still hits the 30s cooldown on try #5!
+    globalThis.fetch = vi.fn(async () => {
+      throw new TypeError("Failed to fetch");
+    }) as unknown as typeof fetch;
+
+    const offlineFifth = await verifyGateAnswer({ challenge: srvCh, pin: "0000" });
+    expect(offlineFifth.ok).toBe(false);
+    if (!offlineFifth.ok) {
+      expect(offlineFifth.attemptsRemaining).toBe(0);
+      expect(offlineFifth.cooldownUntil).toBe(t2 + PIN_COOLDOWN_MS);
+    }
   });
 });

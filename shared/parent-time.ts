@@ -29,9 +29,14 @@ export interface ParentSettings {
   /** Salted SHA-256 hex digest when a 4-digit parent PIN is configured;
    *  stripped before sending settings to the browser. */
   pinHash?: string | null;
+  /** Consecutive failed PIN tries toward the 5-attempt cooldown; stripped before public responses. */
+  pinFailedAttempts?: number;
+  /** Epoch ms deadline for an active 30s PIN cooldown; stripped before public responses. */
+  pinCooldownUntil?: number | null;
 }
 
-export interface PublicParentSettings extends Omit<ParentSettings, "pinHash"> {
+export interface PublicParentSettings
+  extends Omit<ParentSettings, "pinHash" | "pinFailedAttempts" | "pinCooldownUntil"> {
   pinSet: boolean;
 }
 
@@ -148,6 +153,98 @@ export const PARENT_PRESETS: readonly ParentPreset[] = [
 ] as const;
 
 export const MAX_HEARTBEAT_SECONDS = 65;
+export const PIN_MAX_ATTEMPTS = 5;
+export const PIN_COOLDOWN_MS = 30_000;
+
+export type PinAttemptOutcome =
+  | {
+      status: "ok";
+      settings: ParentSettings;
+      attemptsRemaining: number;
+    }
+  | {
+      status: "mismatch";
+      settings: ParentSettings;
+      attemptsRemaining: number;
+    }
+  | {
+      status: "cooldown";
+      settings: ParentSettings;
+      cooldownUntil: number;
+      retryAfterSeconds: number;
+      attemptsRemaining: 0;
+    };
+
+export function activePinCooldownUntil(
+  settings: Pick<ParentSettings, "pinCooldownUntil">,
+  nowMs: number,
+): number | null {
+  const until = settings.pinCooldownUntil;
+  return typeof until === "number" && Number.isFinite(until) && until > nowMs
+    ? until
+    : null;
+}
+
+/** Shared 5-attempt / 30 s PIN cooldown state machine used by both Worker D1 and offline localStorage. */
+export function evaluatePinAttempt(
+  settings: ParentSettings,
+  nowMs: number,
+  pinMatches: boolean,
+): PinAttemptOutcome {
+  const activeUntil = activePinCooldownUntil(settings, nowMs);
+  if (activeUntil !== null) {
+    return {
+      status: "cooldown",
+      settings,
+      cooldownUntil: activeUntil,
+      retryAfterSeconds: Math.max(1, Math.ceil((activeUntil - nowMs) / 1000)),
+      attemptsRemaining: 0,
+    };
+  }
+
+  const priorAttempts =
+    typeof settings.pinCooldownUntil === "number" && settings.pinCooldownUntil <= nowMs
+      ? 0
+      : Math.max(0, Math.floor(Number(settings.pinFailedAttempts) || 0));
+
+  if (pinMatches) {
+    return {
+      status: "ok",
+      settings: {
+        ...settings,
+        pinFailedAttempts: 0,
+        pinCooldownUntil: null,
+      },
+      attemptsRemaining: PIN_MAX_ATTEMPTS,
+    };
+  }
+
+  const nextAttempts = priorAttempts + 1;
+  if (nextAttempts >= PIN_MAX_ATTEMPTS) {
+    const cooldownUntil = nowMs + PIN_COOLDOWN_MS;
+    return {
+      status: "cooldown",
+      settings: {
+        ...settings,
+        pinFailedAttempts: nextAttempts,
+        pinCooldownUntil: cooldownUntil,
+      },
+      cooldownUntil,
+      retryAfterSeconds: Math.max(1, Math.ceil(PIN_COOLDOWN_MS / 1000)),
+      attemptsRemaining: 0,
+    };
+  }
+
+  return {
+    status: "mismatch",
+    settings: {
+      ...settings,
+      pinFailedAttempts: nextAttempts,
+      pinCooldownUntil: null,
+    },
+    attemptsRemaining: PIN_MAX_ATTEMPTS - nextAttempts,
+  };
+}
 
 const HH_MM_RE = /^([01]\d|2[0-3]):([0-5]\d)$/;
 const MISSION_ID_RE = /^[A-Za-z0-9_.-]{2,64}$/;
@@ -196,11 +293,18 @@ export function defaultParentSettings(timezone = defaultTimeZone()): ParentSetti
     },
     gateStrictness: "every_time",
     pinHash: null,
+    pinFailedAttempts: 0,
+    pinCooldownUntil: null,
   };
 }
 
 export function sanitizeParentSettings(settings: ParentSettings): PublicParentSettings {
-  const { pinHash, ...rest } = settings;
+  const {
+    pinHash,
+    pinFailedAttempts: _attempts,
+    pinCooldownUntil: _cooldown,
+    ...rest
+  } = settings;
   return {
     ...rest,
     pinSet: Boolean(pinHash),
@@ -629,6 +733,12 @@ export function validateAndMergeParentSettings(
       quietHours,
       gateStrictness: gateStrictness as GateStrictness,
       pinHash: current.pinHash ?? null,
+      pinFailedAttempts:
+        newPin !== undefined
+          ? 0
+          : Math.max(0, Math.floor(Number(current.pinFailedAttempts) || 0)),
+      pinCooldownUntil:
+        newPin !== undefined ? null : (current.pinCooldownUntil ?? null),
     },
     ...(newPin !== undefined ? { newPin } : {}),
   };

@@ -800,6 +800,8 @@ export interface EngineHandle {
   start: () => void;
   /** Quiet the engine's background music when the calm Sleep Curtain fades in. */
   muteSound: () => void;
+  /** Stock blueprints, forged tools, and Garden river position for Demo Mode v1 without mutating earned XP. */
+  seedDemoSave?: () => void;
   /** Dispose the runtime, destroying its WebGL context. */
   dispose: () => void;
 }
@@ -840,6 +842,7 @@ interface LegacyHooks {
   start?: (build: boolean) => void;
   open?: () => void;
   close?: () => void;
+  seedDemo?: () => void;
   cr?: {
     enter?: () => void;
     make?: (text: string) => void;
@@ -1620,6 +1623,10 @@ export function createEngine(
       if (snd && snd.getAttribute("aria-pressed") === "true") {
         snd.click();
       }
+    },
+    seedDemoSave: () => {
+      hooks()?.seedDemo?.();
+      poll();
     },
     dispose: () => {
       if (disposed) return;

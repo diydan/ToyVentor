@@ -57,14 +57,12 @@ export function MyToySheet({
   progression,
   onClose,
   onSkinChange,
-  onOpenGrownUps,
 }: {
   open: boolean;
   initialStep?: "shelf" | "scan";
   progression?: ProgressionState;
   onClose: () => void;
   onSkinChange?: () => void;
-  onOpenGrownUps?: () => void;
 }) {
   const { uploadedToys, builtInToys, selected, addToy, selectToy } = useToybox();
   const [step, setStep] = useState<"shelf" | "scan">(initialStep);
@@ -171,12 +169,12 @@ export function MyToySheet({
     <section
       className="tv-sheet"
       role="dialog"
-      aria-label={step === "scan" ? "Scan Real Toy" : "My Toys"}
+      aria-label={step === "scan" ? "Scan Real Toy" : "Toy Box"}
     >
       {step === "shelf" ? (
         <>
           <div className="tv-sh-top">
-            <b className="tv-sh-title">My Toys</b>
+            <b className="tv-sh-title">Toy Box</b>
             <button
               type="button"
               className="tv-ctl tv-ctl-primary"
@@ -287,22 +285,6 @@ export function MyToySheet({
           >
             Scan a Real Toy (Meta SAM 3.1)
           </button>
-
-          {onOpenGrownUps && (
-            <div style={{ display: "flex", justifyContent: "center" }}>
-              <button
-                type="button"
-                className="tv-ctl"
-                style={{ minHeight: 36, fontSize: 12 }}
-                onClick={() => {
-                  onClose();
-                  onOpenGrownUps();
-                }}
-              >
-                Grown-ups · Play Time
-              </button>
-            </div>
-          )}
         </>
       ) : (
         <>
@@ -313,7 +295,7 @@ export function MyToySheet({
               className="tv-ctl"
               onClick={() => setStep("shelf")}
             >
-              My Toys
+              Toy Box
             </button>
           </div>
 

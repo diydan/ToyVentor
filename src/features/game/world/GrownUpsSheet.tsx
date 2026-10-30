@@ -5,7 +5,9 @@ import {
   type GateStrictness,
   type ParentSettingsUpdateInput,
 } from "../../../../shared/parent-time";
+import { kipDemoUrl } from "../../../../shared/toycontract";
 import {
+  getLocalPinCooldownUntil,
   requestGateChallenge,
   runParentTimeAction,
   updateParentSettings,
@@ -20,20 +22,39 @@ import {
   unlockedVehiclesFor,
   type ProgressionState,
 } from "../../../lib/progression";
+import { WORLDS, type WorldId } from "./engine";
 
 export interface GrownUpsSheetProps {
   open: boolean;
+  /** True when the parent already completed the 1.2s hold on the top-bar ⚙️ control. */
+  holdSatisfied?: boolean;
   snapshot: ParentSnapshot;
   progression?: ProgressionState;
+  demoMode?: boolean;
+  onToggleDemoMode?: (next: boolean) => void;
+  onSeedDemoSave?: () => void;
+  onOpenEditor?: () => void;
+  onJumpWorld?: (worldId: WorldId) => void;
+  currentWorld?: string;
+  kipUrl?: string;
   onResetXp?: () => void;
   onToggleSandbox?: () => void;
   onSnapshotChange: (next: ParentSnapshot) => void;
   onClose: () => void;
 }
 
-type GateStep = "hold" | "challenge" | "confirm_sitting" | "unlocked";
+type GateStep =
+  | "hold"
+  | "confirm_sitting"
+  | "pin_unlock"
+  | "math_check"
+  | "pin_setup"
+  | "unlocked";
+
+type MathReason = "bootstrap" | "forgot_pin";
 
 const HOLD_DURATION_MS = 1200;
+const PIN_PAD_DIGITS = ["1", "2", "3", "4", "5", "6", "7", "8", "9"] as const;
 const BASE_OPTIONS = [15, 20, 30, 45, 60, 90] as const;
 const LIMIT_OPTIONS = [20, 30, 45, 60, 90, 120] as const;
 const BONUS_OPTIONS = [0, 3, 5, 10] as const;
@@ -41,8 +62,16 @@ const SESSION_OPTIONS = [null, 10, 15, 20, 30, 45] as const;
 
 export function GrownUpsSheet({
   open,
+  holdSatisfied = false,
   snapshot,
   progression,
+  demoMode = false,
+  onToggleDemoMode,
+  onSeedDemoSave,
+  onOpenEditor,
+  onJumpWorld,
+  currentWorld,
+  kipUrl,
   onResetXp,
   onToggleSandbox,
   onSnapshotChange,
@@ -51,18 +80,25 @@ export function GrownUpsSheet({
   const [step, setStep] = useState<GateStep>("hold");
   const [holdProgress, setHoldProgress] = useState(0);
   const [challenge, setChallenge] = useState<GateChallenge | null>(null);
+  const [mathReason, setMathReason] = useState<MathReason>("bootstrap");
   const [answerInput, setAnswerInput] = useState("");
+  const [pinDigits, setPinDigits] = useState("");
+  const [setupStage, setSetupStage] = useState<"first" | "confirm">("first");
+  const [firstPinDraft, setFirstPinDraft] = useState("");
+  const [cooldownUntil, setCooldownUntil] = useState<number | null>(null);
+  const [nowTick, setNowTick] = useState<number>(() => Date.now());
   const [gateError, setGateError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [statusNote, setStatusNote] = useState<string | null>(null);
-  const [pinDraft, setPinDraft] = useState("");
   const [confirmResetXp, setConfirmResetXp] = useState(false);
   const [sittingSession, setSittingSession] = useState<GateSession | null>(null);
   const [activeProof, setActiveProof] = useState<string>("local-proof");
 
   const holdRafRef = useRef<number | null>(null);
+  const holdTimerRef = useRef<number | null>(null);
   const holdStartRef = useRef<number>(0);
   const holdingRef = useRef(false);
+  const wasOpenRef = useRef(false);
 
   const cancelHold = useCallback(() => {
     holdingRef.current = false;
@@ -70,8 +106,34 @@ export function GrownUpsSheet({
       window.cancelAnimationFrame(holdRafRef.current);
       holdRafRef.current = null;
     }
+    if (holdTimerRef.current !== null) {
+      window.clearTimeout(holdTimerRef.current);
+      holdTimerRef.current = null;
+    }
     setHoldProgress(0);
   }, []);
+
+  const enterGateChallenge = useCallback(async () => {
+    cancelHold();
+    setBusy(true);
+    setGateError(null);
+    setPinDigits("");
+    setAnswerInput("");
+    const nextChallenge = await requestGateChallenge();
+    setChallenge(nextChallenge);
+    const activeCd =
+      nextChallenge.cooldownUntil ?? getLocalPinCooldownUntil(Date.now());
+    setCooldownUntil(activeCd);
+    setNowTick(Date.now());
+    setBusy(false);
+
+    if (nextChallenge.mode === "pin") {
+      setStep("pin_unlock");
+    } else {
+      setMathReason("bootstrap");
+      setStep("math_check");
+    }
+  }, [cancelHold]);
 
   // Immediately revoke any sitting unlock when the app is backgrounded.
   useEffect(() => {
@@ -85,16 +147,43 @@ export function GrownUpsSheet({
     return () => document.removeEventListener("visibilitychange", onVisibility);
   }, [open]);
 
-  // Reset entry step whenever the sheet opens.
+  // Tick 1s countdown while a PIN cooldown is active.
+  useEffect(() => {
+    if (!open || !cooldownUntil) return;
+    if (cooldownUntil <= Date.now()) {
+      setCooldownUntil(null);
+      return;
+    }
+    const id = window.setInterval(() => {
+      const now = Date.now();
+      setNowTick(now);
+      if (now >= cooldownUntil) {
+        setCooldownUntil(null);
+        setGateError((prev) =>
+          prev && prev.startsWith("Too many PIN tries") ? null : prev,
+        );
+      }
+    }, 250);
+    return () => window.clearInterval(id);
+  }, [open, cooldownUntil]);
+
+  // Reset entry step whenever the sheet transitions from closed -> open.
   useEffect(() => {
     if (!open) {
+      wasOpenRef.current = false;
       cancelHold();
       setGateError(null);
       setStatusNote(null);
+      setPinDigits("");
+      setAnswerInput("");
       setConfirmResetXp(false);
       return;
     }
+    if (wasOpenRef.current) return;
+    wasOpenRef.current = true;
+
     setAnswerInput("");
+    setPinDigits("");
     setGateError(null);
     setStatusNote(null);
     setConfirmResetXp(false);
@@ -106,52 +195,213 @@ export function GrownUpsSheet({
     ) {
       setActiveProof(sittingSession.proofToken);
       setStep("confirm_sitting");
+    } else if (holdSatisfied) {
+      setSittingSession(null);
+      void enterGateChallenge();
     } else {
       setSittingSession(null);
       setStep("hold");
     }
-  }, [open, cancelHold, sittingSession, snapshot.settings.gateStrictness]);
-
-  const finishHoldIntoChallenge = useCallback(async () => {
-    cancelHold();
-    setBusy(true);
-    setGateError(null);
-    const nextChallenge = await requestGateChallenge();
-    setChallenge(nextChallenge);
-    setAnswerInput("");
-    setBusy(false);
-    setStep("challenge");
-  }, [cancelHold]);
+  }, [
+    open,
+    holdSatisfied,
+    cancelHold,
+    enterGateChallenge,
+    sittingSession,
+    snapshot.settings.gateStrictness,
+  ]);
 
   const startHold = useCallback(() => {
     if (holdingRef.current || busy) return;
     holdingRef.current = true;
     holdStartRef.current = performance.now();
 
+    const completeHold = () => {
+      if (!holdingRef.current) return;
+      void enterGateChallenge();
+    };
+
+    holdTimerRef.current = window.setTimeout(completeHold, HOLD_DURATION_MS);
+
     const tick = (now: number) => {
       if (!holdingRef.current) return;
       const pct = Math.min(1, (now - holdStartRef.current) / HOLD_DURATION_MS);
       setHoldProgress(pct);
       if (pct >= 1) {
-        void finishHoldIntoChallenge();
+        completeHold();
         return;
       }
       holdRafRef.current = window.requestAnimationFrame(tick);
     };
     holdRafRef.current = window.requestAnimationFrame(tick);
-  }, [busy, finishHoldIntoChallenge]);
+  }, [busy, enterGateChallenge]);
 
-  const submitChallenge = async (e: React.FormEvent) => {
+  const recordUnlockedSession = useCallback(
+    (session: GateSession) => {
+      setActiveProof(session.proofToken);
+      if (snapshot.settings.gateStrictness === "sitting_window") {
+        setSittingSession(session);
+      } else {
+        setSittingSession(null);
+      }
+    },
+    [snapshot.settings.gateStrictness],
+  );
+
+  const remainingCooldownSec =
+    cooldownUntil && cooldownUntil > nowTick
+      ? Math.max(1, Math.ceil((cooldownUntil - nowTick) / 1000))
+      : 0;
+
+  const verifyPinDigits = useCallback(
+    async (fourDigits: string) => {
+      if (!challenge || busy || !isValidPin(fourDigits)) return;
+      setBusy(true);
+      setGateError(null);
+      const res = await verifyGateAnswer({ challenge, pin: fourDigits });
+      setBusy(false);
+
+      if (!res.ok) {
+        setPinDigits("");
+        if (res.cooldownUntil) {
+          setCooldownUntil(res.cooldownUntil);
+          setNowTick(Date.now());
+        }
+        setGateError(res.error);
+        return;
+      }
+
+      setPinDigits("");
+      setCooldownUntil(null);
+      recordUnlockedSession(res.session);
+      setStep("unlocked");
+    },
+    [busy, challenge, recordUnlockedSession],
+  );
+
+  const commitSetupPin = useCallback(
+    async (confirmedPin: string) => {
+      if (busy || !isValidPin(confirmedPin)) return;
+      setBusy(true);
+      setGateError(null);
+      const res = await updateParentSettings({ pin: confirmedPin }, activeProof);
+      setBusy(false);
+
+      if (!res.ok) {
+        setPinDigits("");
+        setFirstPinDraft("");
+        setSetupStage("first");
+        setGateError(res.error);
+        if (res.error.includes("expired")) {
+          setSittingSession(null);
+          setStep("hold");
+        }
+        return;
+      }
+
+      onSnapshotChange(res.snapshot);
+      setPinDigits("");
+      setFirstPinDraft("");
+      setSetupStage("first");
+      setCooldownUntil(null);
+      setStatusNote("4-tap parent PIN saved.");
+      setStep("unlocked");
+    },
+    [activeProof, busy, onSnapshotChange],
+  );
+
+  const handlePadDigit = useCallback(
+    (digit: string) => {
+      if (busy) return;
+      if (step === "pin_unlock" && remainingCooldownSec > 0) return;
+      if (pinDigits.length >= 4) return;
+
+      const next = pinDigits + digit;
+      setGateError(null);
+      setPinDigits(next);
+
+      if (next.length === 4) {
+        if (step === "pin_unlock") {
+          void verifyPinDigits(next);
+        } else if (step === "pin_setup") {
+          if (setupStage === "first") {
+            setFirstPinDraft(next);
+            setPinDigits("");
+            setSetupStage("confirm");
+          } else if (next === firstPinDraft) {
+            void commitSetupPin(next);
+          } else {
+            setFirstPinDraft("");
+            setPinDigits("");
+            setSetupStage("first");
+            setGateError("Those two PINs did not match. Tap 4 digits again.");
+          }
+        }
+      }
+    },
+    [
+      busy,
+      commitSetupPin,
+      firstPinDraft,
+      pinDigits,
+      remainingCooldownSec,
+      setupStage,
+      step,
+      verifyPinDigits,
+    ],
+  );
+
+  const handlePadBackspace = useCallback(() => {
+    if (busy) return;
+    setPinDigits((prev) => prev.slice(0, -1));
+  }, [busy]);
+
+  const handlePadClear = useCallback(() => {
+    if (busy) return;
+    setPinDigits("");
+  }, [busy]);
+
+  // Allow keyboard digit entry on the 4-tap PIN pad as well.
+  useEffect(() => {
+    if (!open || (step !== "pin_unlock" && step !== "pin_setup")) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      if (/^[0-9]$/.test(e.key)) {
+        e.preventDefault();
+        handlePadDigit(e.key);
+      } else if (e.key === "Backspace") {
+        e.preventDefault();
+        handlePadBackspace();
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [open, step, handlePadDigit, handlePadBackspace]);
+
+  const openForgotPinMath = async () => {
+    if (busy) return;
+    setBusy(true);
+    setGateError(null);
+    setPinDigits("");
+    setAnswerInput("");
+    const fresh = await requestGateChallenge();
+    setChallenge(fresh);
+    setMathReason("forgot_pin");
+    setBusy(false);
+    setStep("math_check");
+  };
+
+  const submitMathCheck = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!challenge || busy) return;
     setBusy(true);
     setGateError(null);
 
     const trimmed = answerInput.trim();
-    const res =
-      challenge.mode === "pin"
-        ? await verifyGateAnswer({ challenge, pin: trimmed })
-        : await verifyGateAnswer({ challenge, answer: Number(trimmed) });
+    const res = await verifyGateAnswer({
+      challenge,
+      answer: Number(trimmed),
+    });
     setBusy(false);
 
     if (!res.ok) {
@@ -160,13 +410,12 @@ export function GrownUpsSheet({
       return;
     }
 
-    setActiveProof(res.session.proofToken);
-    if (snapshot.settings.gateStrictness === "sitting_window") {
-      setSittingSession(res.session);
-    } else {
-      setSittingSession(null);
-    }
-    setStep("unlocked");
+    recordUnlockedSession(res.session);
+    setAnswerInput("");
+    setPinDigits("");
+    setFirstPinDraft("");
+    setSetupStage("first");
+    setStep("pin_setup");
   };
 
   const lockAndClose = () => {
@@ -235,6 +484,7 @@ export function GrownUpsSheet({
     settings.enabled && totalCapToday > 0
       ? Math.min(100, Math.round((status.usedSeconds / (totalCapToday * 60)) * 100))
       : 0;
+  const effectiveKipUrl = kipUrl ?? kipDemoUrl();
 
   return (
     <section
@@ -248,7 +498,7 @@ export function GrownUpsSheet({
           <span className="kicker-label kicker-gold" style={{ margin: 0 }}>
             Grown-Ups Corner
           </span>
-          <b className="tv-sh-title">Play Time &amp; STEM Bonus</b>
+          <b className="tv-sh-title">Play Time &amp; Settings</b>
         </div>
         <div style={{ display: "flex", gap: 6 }}>
           {step === "unlocked" && settings.gateStrictness === "sitting_window" && (
@@ -273,7 +523,7 @@ export function GrownUpsSheet({
       {step === "hold" && (
         <div className="tv-parent-gate-card">
           <p className="tv-moves" style={{ fontSize: 14 }}>
-            Grown-ups only. Press and hold the button below for 1.2 seconds to open family time controls.
+            Grown-ups only. Press and hold for 1.2 seconds to open the parent PIN pad.
           </p>
 
           <button
@@ -338,26 +588,149 @@ export function GrownUpsSheet({
         </div>
       )}
 
-      {step === "challenge" && challenge && (
-        <form className="tv-parent-gate-card" onSubmit={(e) => void submitChallenge(e)}>
+      {(step === "pin_unlock" || step === "pin_setup") && (
+        <div className="tv-parent-gate-card" aria-live="polite">
+          <div className="tv-pin-head">
+            <strong className="tv-parent-prompt">
+              {step === "pin_unlock"
+                ? "Tap your 4-digit parent PIN"
+                : setupStage === "first"
+                  ? "Choose a 4-tap parent PIN"
+                  : "Confirm your 4-tap PIN"}
+            </strong>
+            <span className="tv-pin-sub">
+              {step === "pin_unlock"
+                ? remainingCooldownSec > 0
+                  ? `Cooldown active: wait ${remainingCooldownSec}s`
+                  : "4 taps unlocks settings"
+                : setupStage === "first"
+                  ? "Step 1 of 2 · Tap 4 digits"
+                  : "Step 2 of 2 · Tap the same 4 digits"}
+            </span>
+          </div>
+
+          <div
+            className="tv-pin-dots"
+            role="status"
+            aria-label={`${pinDigits.length} of 4 digits entered`}
+          >
+            {[0, 1, 2, 3].map((idx) => (
+              <span
+                key={idx}
+                className={
+                  idx < pinDigits.length ? "tv-pin-dot tv-pin-dot-on" : "tv-pin-dot"
+                }
+                aria-hidden="true"
+              />
+            ))}
+          </div>
+
+          <div className="tv-pin-pad" role="group" aria-label="4-tap PIN keypad">
+            {PIN_PAD_DIGITS.map((digit) => (
+              <button
+                key={digit}
+                type="button"
+                className="tv-pin-key"
+                disabled={
+                  busy || (step === "pin_unlock" && remainingCooldownSec > 0)
+                }
+                onClick={() => handlePadDigit(digit)}
+              >
+                {digit}
+              </button>
+            ))}
+            <button
+              type="button"
+              className="tv-pin-key tv-pin-key-aux"
+              disabled={busy || pinDigits.length === 0}
+              onClick={handlePadClear}
+            >
+              Clear
+            </button>
+            <button
+              type="button"
+              className="tv-pin-key"
+              disabled={
+                busy || (step === "pin_unlock" && remainingCooldownSec > 0)
+              }
+              onClick={() => handlePadDigit("0")}
+            >
+              0
+            </button>
+            <button
+              type="button"
+              className="tv-pin-key tv-pin-key-aux"
+              aria-label="Delete last digit"
+              disabled={busy || pinDigits.length === 0}
+              onClick={handlePadBackspace}
+            >
+              ⌫
+            </button>
+          </div>
+
+          {(gateError || remainingCooldownSec > 0) && (
+            <p className="tv-small-part-warn" style={{ margin: 0 }} role="alert">
+              {remainingCooldownSec > 0
+                ? `Too many PIN tries. Wait ${remainingCooldownSec}s before trying again.`
+                : gateError}
+            </p>
+          )}
+
+          <div className="tv-pin-foot">
+            {step === "pin_unlock" ? (
+              <button
+                type="button"
+                className="tv-pin-link"
+                disabled={busy}
+                onClick={() => void openForgotPinMath()}
+              >
+                Forgot PIN?
+              </button>
+            ) : setupStage === "confirm" ? (
+              <button
+                type="button"
+                className="tv-pin-link"
+                disabled={busy}
+                onClick={() => {
+                  setFirstPinDraft("");
+                  setPinDigits("");
+                  setSetupStage("first");
+                  setGateError(null);
+                }}
+              >
+                Start over
+              </button>
+            ) : null}
+          </div>
+        </div>
+      )}
+
+      {step === "math_check" && challenge && (
+        <form
+          className="tv-parent-gate-card"
+          onSubmit={(e) => void submitMathCheck(e)}
+        >
+          <span className="tv-pin-sub">
+            {mathReason === "forgot_pin"
+              ? "Reset forgotten PIN: solve once to set a new 4-tap PIN"
+              : "First-time setup: solve once, then choose your 4-tap PIN"}
+          </span>
           <label htmlFor="tv-parent-answer" className="tv-parent-prompt">
-            {challenge.mode === "pin"
-              ? "Enter your 4-digit parent PIN"
-              : `Quick STEM check: what is ${challenge.a} × ${challenge.b}?`}
+            {`What is ${challenge.a} × ${challenge.b}?`}
           </label>
           <div style={{ display: "flex", gap: 8 }}>
             <input
               id="tv-parent-answer"
-              type={challenge.mode === "pin" ? "password" : "text"}
+              type="text"
               inputMode="numeric"
               autoComplete="off"
               autoFocus
-              maxLength={challenge.mode === "pin" ? 4 : 4}
+              maxLength={4}
               value={answerInput}
               onChange={(e) =>
                 setAnswerInput(e.target.value.replace(/[^0-9]/g, ""))
               }
-              placeholder={challenge.mode === "pin" ? "4 digits" : "Answer"}
+              placeholder="Answer"
               className="tv-parent-input"
             />
             <button
@@ -366,13 +739,29 @@ export function GrownUpsSheet({
               style={{ margin: 0, minHeight: 48, padding: "0 20px", fontSize: 16 }}
               disabled={busy || answerInput.length === 0}
             >
-              Unlock
+              Continue
             </button>
           </div>
           {gateError && (
             <p className="tv-small-part-warn" style={{ margin: 0 }} role="alert">
               {gateError}
             </p>
+          )}
+          {mathReason === "forgot_pin" && settings.pinSet && (
+            <div className="tv-pin-foot">
+              <button
+                type="button"
+                className="tv-pin-link"
+                disabled={busy}
+                onClick={() => {
+                  setGateError(null);
+                  setAnswerInput("");
+                  setStep("pin_unlock");
+                }}
+              >
+                Back to PIN pad
+              </button>
+            </div>
           )}
         </form>
       )}
@@ -434,6 +823,108 @@ export function GrownUpsSheet({
                 </button>
               )}
             </div>
+          </div>
+
+          {/* Demo Mode v1 (default Off) */}
+          <div className="tv-parent-ledger">
+            <div className="tv-parent-row-head" style={{ marginBottom: 0 }}>
+              <div>
+                <span className="kicker-label" style={{ margin: 0, display: "block" }}>
+                  Showcase &amp; Developer
+                </span>
+                <b>Demo Mode</b>
+              </div>
+              <button
+                type="button"
+                className={demoMode ? "tv-ctl tv-ctl-sky" : "tv-ctl"}
+                aria-pressed={demoMode}
+                onClick={() => onToggleDemoMode?.(!demoMode)}
+              >
+                {demoMode ? "Demo Mode: On" : "Demo Mode: Off"}
+              </button>
+            </div>
+            <p className="tv-moves" style={{ margin: 0, fontSize: 12 }}>
+              {demoMode
+                ? "Full 12-world / Lab 1-6 bar, Level Editor, Kip 3D Rig, Seed Demo Save, and sandbox unlock-all active (earned XP stays untouched)."
+                : "Default Off: boots straight onto a clean stage with a compact Worlds selector."}
+            </p>
+
+            {demoMode && (
+              <div className="tv-demo-tools">
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                  {onSeedDemoSave && (
+                    <button
+                      type="button"
+                      className="tv-ctl tv-ctl-primary"
+                      onClick={() => {
+                        onSeedDemoSave();
+                        setStatusNote(
+                          "Demo save seeded in Garden (blueprints & parts stocked; earned XP unchanged).",
+                        );
+                      }}
+                    >
+                      Seed Demo Save
+                    </button>
+                  )}
+                  {onOpenEditor && (
+                    <button
+                      type="button"
+                      className="tv-ctl"
+                      onClick={() => {
+                        onClose();
+                        onOpenEditor();
+                      }}
+                    >
+                      Level Editor
+                    </button>
+                  )}
+                  <a
+                    className="tv-ctl"
+                    href={effectiveKipUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Kip 3D Rig
+                  </a>
+                  {progression && onToggleSandbox && (
+                    <button
+                      type="button"
+                      className="tv-ctl"
+                      aria-pressed={progression.sandboxUnlockAll}
+                      onClick={onToggleSandbox}
+                    >
+                      {progression.sandboxUnlockAll
+                        ? "Sandbox: all unlocked (on)"
+                        : "Sandbox: unlock everything"}
+                    </button>
+                  )}
+                </div>
+
+                {onJumpWorld && (
+                  <div>
+                    <span className="tv-parent-stat-k" style={{ marginBottom: 4 }}>
+                      Quick-jump Worlds &amp; STEM Labs
+                    </span>
+                    <div className="tv-chips">
+                      {WORLDS.map((w) => (
+                        <button
+                          key={w.id}
+                          type="button"
+                          className="tv-sc"
+                          aria-pressed={currentWorld === w.id}
+                          onClick={() => {
+                            onJumpWorld(w.id);
+                            onClose();
+                          }}
+                        >
+                          {w.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {progression && (
@@ -763,32 +1254,23 @@ export function GrownUpsSheet({
 
               <div>
                 <div className="tv-parent-row-head">
-                  <b>Optional 4-digit PIN</b>
-                  <span>{settings.pinSet ? "PIN active" : "Using STEM math"}</span>
+                  <b>4-tap parent PIN</b>
+                  <span>{settings.pinSet ? "PIN active" : "Set on next unlock"}</span>
                 </div>
-                <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
-                  <input
-                    type="password"
-                    inputMode="numeric"
-                    maxLength={4}
-                    placeholder="New 4-digit PIN"
-                    value={pinDraft}
-                    onChange={(e) =>
-                      setPinDraft(e.target.value.replace(/[^0-9]/g, ""))
-                    }
-                    className="tv-parent-input"
-                  />
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 4 }}>
                   <button
                     type="button"
                     className="tv-ctl tv-ctl-primary"
-                    disabled={busy || !isValidPin(pinDraft)}
+                    disabled={busy}
                     onClick={() => {
-                      const nextPin = pinDraft;
-                      setPinDraft("");
-                      void applyPatch({ pin: nextPin }, "4-digit parent PIN saved.");
+                      setGateError(null);
+                      setPinDigits("");
+                      setFirstPinDraft("");
+                      setSetupStage("first");
+                      setStep("pin_setup");
                     }}
                   >
-                    Save PIN
+                    {settings.pinSet ? "Change 4-tap PIN" : "Set 4-tap PIN"}
                   </button>
                   {settings.pinSet && (
                     <button
@@ -798,11 +1280,11 @@ export function GrownUpsSheet({
                       onClick={() =>
                         void applyPatch(
                           { pin: "clear" },
-                          "PIN cleared. Using STEM multiplication check.",
+                          "PIN cleared. Next unlock will set a new PIN.",
                         )
                       }
                     >
-                      Use Math
+                      Clear PIN
                     </button>
                   )}
                 </div>

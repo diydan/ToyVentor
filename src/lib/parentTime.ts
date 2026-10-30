@@ -3,10 +3,13 @@
 // awards, and the calm Sleep Curtain work offline and sync with `/api/parent/*`
 // whenever D1 is reachable.
 import {
+  PIN_MAX_ATTEMPTS,
+  activePinCooldownUntil,
   applyParentAction,
   defaultParentSettings,
   defaultTimeZone,
   emptyLedgerForDay,
+  evaluatePinAttempt,
   evaluatePlayTime,
   isValidPin,
   localDay,
@@ -44,12 +47,23 @@ export interface GateChallenge {
   b: number;
   challengeToken: string;
   localExpectedAnswer?: number;
+  cooldownUntil?: number | null;
 }
 
 export interface GateSession {
   proofToken: string;
   expiresAt: number;
 }
+
+export type GateVerifyResult =
+  | { ok: true; session: GateSession }
+  | {
+      ok: false;
+      error: string;
+      cooldownUntil?: number;
+      retryAfterSeconds?: number;
+      attemptsRemaining?: number;
+    };
 
 function randomIntInclusive(min: number, max: number): number {
   const buf = new Uint32Array(1);
@@ -80,6 +94,15 @@ export function loadLocalParentBundle(nowMs = Date.now()): LocalParentBundle {
           pinHash:
             typeof parsed.settings?.pinHash === "string"
               ? parsed.settings.pinHash
+              : null,
+          pinFailedAttempts: Math.max(
+            0,
+            Math.floor(Number(parsed.settings?.pinFailedAttempts) || 0),
+          ),
+          pinCooldownUntil:
+            typeof parsed.settings?.pinCooldownUntil === "number" &&
+            Number.isFinite(parsed.settings.pinCooldownUntil)
+              ? parsed.settings.pinCooldownUntil
               : null,
         }
       : fallbackSettings;
@@ -116,6 +139,11 @@ function baseHeaders(proofToken?: string): Record<string, string> {
   };
 }
 
+export function getLocalPinCooldownUntil(nowMs = Date.now()): number | null {
+  const { settings } = loadLocalParentBundle(nowMs);
+  return activePinCooldownUntil(settings, nowMs);
+}
+
 function mergeRemoteIntoLocal(
   remoteSettings: PublicParentSettings,
   remoteLedger: TimeLedgerRow,
@@ -127,6 +155,12 @@ function mergeRemoteIntoLocal(
     ? {
         ...remoteSettings,
         pinHash: remoteSettings.pinSet ? (local.settings.pinHash ?? "server-pin") : null,
+        pinFailedAttempts: remoteSettings.pinSet
+          ? (local.settings.pinFailedAttempts ?? 0)
+          : 0,
+        pinCooldownUntil: remoteSettings.pinSet
+          ? (local.settings.pinCooldownUntil ?? null)
+          : null,
       }
     : local.settings;
   const normRemote = normalizeLedgerForNow(remoteLedger, nextSettings, nowMs);
@@ -185,7 +219,8 @@ export async function pullParentTime(): Promise<ParentSnapshot> {
   return getLocalParentSnapshot();
 }
 
-export async function requestGateChallenge(): Promise<GateChallenge> {
+export async function requestGateChallenge(nowMs = Date.now()): Promise<GateChallenge> {
+  const localCooldown = getLocalPinCooldownUntil(nowMs);
   try {
     const res = await fetch("/api/parent/gate", {
       method: "POST",
@@ -195,13 +230,24 @@ export async function requestGateChallenge(): Promise<GateChallenge> {
     if (res.ok) {
       const body = (await res.json()) as GateChallenge;
       if (typeof body.a === "number" && typeof body.b === "number") {
-        return body;
+        const serverCooldown =
+          typeof body.cooldownUntil === "number" && body.cooldownUntil > nowMs
+            ? body.cooldownUntil
+            : null;
+        const effectiveCooldown =
+          serverCooldown && localCooldown
+            ? Math.max(serverCooldown, localCooldown)
+            : (serverCooldown ?? localCooldown);
+        return {
+          ...body,
+          cooldownUntil: effectiveCooldown,
+        };
       }
     }
   } catch {
     /* offline fallback */
   }
-  const { settings } = loadLocalParentBundle();
+  const { settings } = loadLocalParentBundle(nowMs);
   const a = randomIntInclusive(12, 19);
   const b = randomIntInclusive(4, 9);
   return {
@@ -211,15 +257,50 @@ export async function requestGateChallenge(): Promise<GateChallenge> {
     b,
     challengeToken: "local",
     localExpectedAnswer: a * b,
+    cooldownUntil: activePinCooldownUntil(settings, nowMs),
   };
+}
+
+function pinCooldownMessage(retryAfterSeconds: number): string {
+  return `Too many PIN tries. Wait ${retryAfterSeconds}s or tap Forgot PIN?`;
+}
+
+function pinMismatchMessage(attemptsRemaining?: number): string {
+  if (typeof attemptsRemaining === "number") {
+    return `That PIN did not match (${attemptsRemaining} ${attemptsRemaining === 1 ? "try" : "tries"} left).`;
+  }
+  return "That answer did not match. Try once more.";
 }
 
 export async function verifyGateAnswer(params: {
   challenge: GateChallenge;
   answer?: number;
   pin?: string;
-}): Promise<{ ok: true; session: GateSession } | { ok: false; error: string }> {
+  nowMs?: number;
+}): Promise<GateVerifyResult> {
   const { challenge, answer, pin } = params;
+  const nowMs = params.nowMs ?? Date.now();
+
+  // Enforce persisted local PIN cooldown before any network or offline attempt
+  // so toggling airplane mode or reloading cannot bypass an active cooldown.
+  if (pin !== undefined) {
+    const localBundle = loadLocalParentBundle(nowMs);
+    const localActiveUntil = activePinCooldownUntil(localBundle.settings, nowMs);
+    if (localActiveUntil !== null) {
+      const retryAfterSeconds = Math.max(
+        1,
+        Math.ceil((localActiveUntil - nowMs) / 1000),
+      );
+      return {
+        ok: false,
+        error: pinCooldownMessage(retryAfterSeconds),
+        cooldownUntil: localActiveUntil,
+        retryAfterSeconds,
+        attemptsRemaining: 0,
+      };
+    }
+  }
+
   if (challenge.challengeToken !== "local") {
     try {
       const res = await fetch("/api/parent/gate", {
@@ -232,8 +313,64 @@ export async function verifyGateAnswer(params: {
           ...(pin !== undefined ? { pin } : {}),
         }),
       });
+      if (res.status === 429) {
+        const body = (await res.json().catch(() => ({}))) as {
+          cooldownUntil?: number;
+          retryAfterSeconds?: number;
+        };
+        const retryAfterSeconds = Math.max(
+          1,
+          Math.floor(Number(body.retryAfterSeconds) || 30),
+        );
+        const cooldownUntil =
+          typeof body.cooldownUntil === "number" && body.cooldownUntil > nowMs
+            ? body.cooldownUntil
+            : nowMs + retryAfterSeconds * 1000;
+        const latest = loadLocalParentBundle(nowMs);
+        saveLocalParentBundle({
+          settings: {
+            ...latest.settings,
+            pinFailedAttempts: PIN_MAX_ATTEMPTS,
+            pinCooldownUntil: cooldownUntil,
+          },
+          ledger: latest.ledger,
+        });
+        return {
+          ok: false,
+          error: pinCooldownMessage(retryAfterSeconds),
+          cooldownUntil,
+          retryAfterSeconds,
+          attemptsRemaining: 0,
+        };
+      }
       if (res.status === 403) {
-        return { ok: false, error: "That answer did not match. Try once more." };
+        const body = (await res.json().catch(() => ({}))) as {
+          attemptsRemaining?: number;
+        };
+        if (pin !== undefined && typeof body.attemptsRemaining === "number") {
+          const latest = loadLocalParentBundle(nowMs);
+          saveLocalParentBundle({
+            settings: {
+              ...latest.settings,
+              pinFailedAttempts: Math.max(
+                0,
+                PIN_MAX_ATTEMPTS - body.attemptsRemaining,
+              ),
+              pinCooldownUntil: null,
+            },
+            ledger: latest.ledger,
+          });
+        }
+        return {
+          ok: false,
+          error:
+            pin !== undefined
+              ? pinMismatchMessage(body.attemptsRemaining)
+              : "That answer did not match. Try once more.",
+          ...(typeof body.attemptsRemaining === "number"
+            ? { attemptsRemaining: body.attemptsRemaining }
+            : {}),
+        };
       }
       if (res.ok) {
         const body = (await res.json()) as {
@@ -242,6 +379,20 @@ export async function verifyGateAnswer(params: {
           expiresAt?: number;
         };
         if (body.ok && body.proofToken && body.expiresAt) {
+          const latest = loadLocalParentBundle(nowMs);
+          if (
+            (latest.settings.pinFailedAttempts ?? 0) > 0 ||
+            latest.settings.pinCooldownUntil
+          ) {
+            saveLocalParentBundle({
+              settings: {
+                ...latest.settings,
+                pinFailedAttempts: 0,
+                pinCooldownUntil: null,
+              },
+              ledger: latest.ledger,
+            });
+          }
           return {
             ok: true,
             session: { proofToken: body.proofToken, expiresAt: body.expiresAt },
@@ -254,19 +405,41 @@ export async function verifyGateAnswer(params: {
   }
 
   // Local verification fallback (when D1 is unbound or device is offline).
-  const { settings } = loadLocalParentBundle();
-  let ok = false;
-  if (pin !== undefined && settings.pinHash && settings.pinHash !== "server-pin") {
-    if (isValidPin(pin)) {
+  const local = loadLocalParentBundle(nowMs);
+  const { settings } = local;
+
+  if (pin !== undefined) {
+    let pinMatches = false;
+    if (settings.pinHash && settings.pinHash !== "server-pin" && isValidPin(pin)) {
       const candidate = await localPinHash(pin);
-      ok = candidate === settings.pinHash;
+      pinMatches = candidate === settings.pinHash;
+    }
+    const outcome = evaluatePinAttempt(settings, nowMs, pinMatches);
+    saveLocalParentBundle({ settings: outcome.settings, ledger: local.ledger });
+
+    if (outcome.status === "cooldown") {
+      return {
+        ok: false,
+        error: pinCooldownMessage(outcome.retryAfterSeconds),
+        cooldownUntil: outcome.cooldownUntil,
+        retryAfterSeconds: outcome.retryAfterSeconds,
+        attemptsRemaining: 0,
+      };
+    }
+    if (outcome.status === "mismatch") {
+      return {
+        ok: false,
+        error: pinMismatchMessage(outcome.attemptsRemaining),
+        attemptsRemaining: outcome.attemptsRemaining,
+      };
     }
   } else if (answer !== undefined) {
     const expected = challenge.localExpectedAnswer ?? challenge.a * challenge.b;
-    ok = Number.isInteger(answer) && answer === expected;
-  }
-
-  if (!ok) {
+    const ok = Number.isInteger(answer) && answer === expected;
+    if (!ok) {
+      return { ok: false, error: "That answer did not match. Try once more." };
+    }
+  } else {
     return { ok: false, error: "That answer did not match. Try once more." };
   }
 
@@ -275,7 +448,7 @@ export async function verifyGateAnswer(params: {
     ok: true,
     session: {
       proofToken: "local-proof",
-      expiresAt: Date.now() + ttlMs,
+      expiresAt: nowMs + ttlMs,
     },
   };
 }

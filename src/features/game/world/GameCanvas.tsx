@@ -14,6 +14,7 @@ import { revealForBuild } from "../../../state/reveals";
 import { buildStats } from "../../../../shared/build";
 import { localDay } from "../../../../shared/parent-time";
 import { partsById } from "../../../lib/catalog";
+import { loadDemoMode, saveDemoMode } from "../../../lib/demoMode";
 import {
   getLocalParentSnapshot,
   pullParentTime,
@@ -52,6 +53,7 @@ import { isPackClaimedToday, PackOverlay } from "./PackOverlay";
 import { RevealOverlay } from "./RevealOverlay";
 import { SleepCurtain } from "./SleepCurtain";
 import { ToyCustomizer } from "./ToyCustomizer";
+import { ToyMiniIcon } from "./ToyMiniIcon";
 
 export type InitialOverlay =
   | "toy"
@@ -99,6 +101,7 @@ export function GameCanvas({
   const hostRef = useRef<HTMLDivElement>(null);
   const stageHostRef = useRef<HTMLDivElement>(null);
   const moreWrapRef = useRef<HTMLDivElement>(null);
+  const worldsWrapRef = useRef<HTMLDivElement>(null);
   const engineRef = useRef<EngineHandle | null>(null);
   const contractRef = useRef(contract);
   contractRef.current = contract;
@@ -128,7 +131,17 @@ export function GameCanvas({
     listening: false,
   });
   const [moreOpen, setMoreOpen] = useState(false);
+  const [worldsOpen, setWorldsOpen] = useState(false);
+  const [demoMode, setDemoMode] = useState<boolean>(() => loadDemoMode());
+  const [skinTick, setSkinTick] = useState(0);
   const [grownUpsOpen, setGrownUpsOpen] = useState(initialOverlay === "parent");
+  const [grownUpsHoldSatisfied, setGrownUpsHoldSatisfied] = useState(false);
+  const [gearHoldPct, setGearHoldPct] = useState(0);
+  const gearHoldRafRef = useRef<number | null>(null);
+  const gearHoldTimerRef = useRef<number | null>(null);
+  const gearHoldStartRef = useRef(0);
+  const gearHoldingRef = useRef(false);
+  const gearLongPressFiredRef = useRef(false);
   const [parentSnapshot, setParentSnapshot] = useState<ParentSnapshot>(() =>
     getLocalParentSnapshot(),
   );
@@ -332,19 +345,23 @@ export function GameCanvas({
     parentSnapshot.status.reason !== "quiet_hours";
   const sleepActive = parentSnapshot.status.locked && !missionGraceActive;
 
-  // Close `⋯` popover on outside pointerdown or Escape.
+  // Close `⋯` or compact `Worlds` popover on outside pointerdown or Escape.
   useEffect(() => {
-    if (!moreOpen) return;
+    if (!moreOpen && !worldsOpen) return;
     const onPointerDown = (e: PointerEvent) => {
-      if (
-        moreWrapRef.current &&
-        !moreWrapRef.current.contains(e.target as Node)
-      ) {
+      const target = e.target as Node;
+      if (moreOpen && moreWrapRef.current && !moreWrapRef.current.contains(target)) {
         setMoreOpen(false);
+      }
+      if (worldsOpen && worldsWrapRef.current && !worldsWrapRef.current.contains(target)) {
+        setWorldsOpen(false);
       }
     };
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setMoreOpen(false);
+      if (e.key === "Escape") {
+        setMoreOpen(false);
+        setWorldsOpen(false);
+      }
     };
     document.addEventListener("pointerdown", onPointerDown);
     document.addEventListener("keydown", onKeyDown);
@@ -352,7 +369,7 @@ export function GameCanvas({
       document.removeEventListener("pointerdown", onPointerDown);
       document.removeEventListener("keydown", onKeyDown);
     };
-  }, [moreOpen]);
+  }, [moreOpen, worldsOpen]);
 
   const engine = () => engineRef.current;
 
@@ -369,15 +386,77 @@ export function GameCanvas({
     setRevealState(null);
     setMoodsOpen(false);
     setMoreOpen(false);
+    setWorldsOpen(false);
     setGrownUpsOpen(false);
   }, []);
 
-  const openGrownUps = useCallback(() => {
-    closeEngineSheets();
+  const openGrownUps = useCallback(
+    (holdDone = false) => {
+      closeEngineSheets();
+      closeReactOverlays();
+      setParentSnapshot(getLocalParentSnapshot());
+      setGrownUpsHoldSatisfied(holdDone);
+      setGrownUpsOpen(true);
+    },
+    [closeEngineSheets, closeReactOverlays],
+  );
+
+  const cancelGearHold = useCallback(() => {
+    gearHoldingRef.current = false;
+    if (gearHoldRafRef.current !== null) {
+      window.cancelAnimationFrame(gearHoldRafRef.current);
+      gearHoldRafRef.current = null;
+    }
+    if (gearHoldTimerRef.current !== null) {
+      window.clearTimeout(gearHoldTimerRef.current);
+      gearHoldTimerRef.current = null;
+    }
+    setGearHoldPct(0);
+  }, []);
+
+  const startGearHold = useCallback(() => {
+    if (gearHoldingRef.current) return;
+    gearHoldingRef.current = true;
+    gearLongPressFiredRef.current = false;
+    gearHoldStartRef.current = performance.now();
+
+    const completeHold = () => {
+      if (!gearHoldingRef.current) return;
+      cancelGearHold();
+      gearLongPressFiredRef.current = true;
+      openGrownUps(true);
+    };
+
+    gearHoldTimerRef.current = window.setTimeout(completeHold, 1200);
+
+    const tick = (now: number) => {
+      if (!gearHoldingRef.current) return;
+      const pct = Math.min(1, (now - gearHoldStartRef.current) / 1200);
+      setGearHoldPct(pct);
+      if (pct >= 1) {
+        completeHold();
+        return;
+      }
+      gearHoldRafRef.current = window.requestAnimationFrame(tick);
+    };
+    gearHoldRafRef.current = window.requestAnimationFrame(tick);
+  }, [cancelGearHold, openGrownUps]);
+
+  useEffect(() => () => cancelGearHold(), [cancelGearHold]);
+
+  const openEditorSheet = useCallback(() => {
     closeReactOverlays();
-    setParentSnapshot(getLocalParentSnapshot());
-    setGrownUpsOpen(true);
-  }, [closeEngineSheets, closeReactOverlays]);
+    if (customizer.open) engine()?.closeCustomizer();
+    if (create.open) engine()?.closeCreate();
+    if (editor.open) engine()?.closeEditor();
+    else if (state.ready) engine()?.openEditor();
+    else pendingEngineOpenRef.current = "editor";
+  }, [closeReactOverlays, create.open, customizer.open, editor.open, state.ready]);
+
+  const handleToggleDemoMode = useCallback((next: boolean) => {
+    setDemoMode(next);
+    saveDemoMode(next);
+  }, []);
 
   // Calmly wind down audio, mic, and open kid sheets when the Sleep Curtain activates.
   useEffect(() => {
@@ -388,6 +467,7 @@ export function GameCanvas({
     setRevealState(null);
     setMoodsOpen(false);
     setMoreOpen(false);
+    setWorldsOpen(false);
     setLiveStatus({ playing: false, listening: false });
     engine()?.muteSound();
   }, [sleepActive, closeEngineSheets]);
@@ -429,6 +509,8 @@ export function GameCanvas({
   };
 
   const label = toyName || contract?.name || toy.name;
+  const currentWorldEntry =
+    WORLDS.find((w) => w.id === state.world) ?? WORLDS[0];
   const hasSavedCard = Boolean(
     themeSignature && revealForBuild(toy.id, themeSignature),
   );
@@ -438,6 +520,12 @@ export function GameCanvas({
     : liveStatus.playing
       ? "More (story music playing)"
       : "More";
+
+  const gearAriaLabel = parentSnapshot.settings.enabled
+    ? "Grown-up settings (Play Time active, hold 1.2s)"
+    : demoMode
+      ? "Grown-up settings (Demo Mode active, hold 1.2s)"
+      : "Grown-up settings (hold 1.2s)";
 
   return (
     <div
@@ -449,6 +537,7 @@ export function GameCanvas({
           type="button"
           className="tv-toy-pill"
           disabled={sleepActive}
+          aria-label={`Toy Box: ${label} active`}
           aria-pressed={toySheetOpen}
           title={statSummary ? `${label} (${statSummary})` : label}
           onClick={() => {
@@ -462,12 +551,12 @@ export function GameCanvas({
             setToySheetOpen(true);
           }}
         >
-          <span
-            className="tv-toy-dot"
-            aria-hidden="true"
-            style={{ background: toyColor }}
+          <ToyMiniIcon
+            toy={toy}
+            accentColor={toyColor}
+            skinVersion={skinTick}
           />
-          <span className="tv-toy-pill-name">{label}</span>
+          <span className="tv-toy-pill-name">Toy Box</span>
           <span
             className="tv-rank-pip"
             title={nextRankProgress(progression.totalXp).rank.title}
@@ -549,7 +638,6 @@ export function GameCanvas({
                 moreOpen ||
                 moodsOpen ||
                 editor.open ||
-                grownUpsOpen ||
                 Boolean(revealState)
               }
               onClick={() => setMoreOpen((open) => !open)}
@@ -557,7 +645,7 @@ export function GameCanvas({
               {liveStatus.listening ? (
                 <span className="tv-mic-dot" aria-hidden="true" />
               ) : liveStatus.playing ? (
-                <span className="tv-badge-dot" aria-hidden="true" />
+                <span className="tv-music-dot" aria-hidden="true" />
               ) : null}
               ⋯
             </button>
@@ -606,27 +694,22 @@ export function GameCanvas({
                   </span>
                 </button>
 
-                <button
-                  type="button"
-                  role="menuitem"
-                  className="tv-menu-item"
-                  disabled={sleepActive}
-                  onClick={() => {
-                    closeReactOverlays();
-                    if (customizer.open) engine()?.closeCustomizer();
-                    if (create.open) engine()?.closeCreate();
-                    if (editor.open) engine()?.closeEditor();
-                    else if (state.ready) engine()?.openEditor();
-                    else pendingEngineOpenRef.current = "editor";
-                  }}
-                >
-                  <span>Level Editor</span>
-                  <span className="tv-menu-meta">
-                    {editor.open ? "Open" : "Grid"}
-                  </span>
-                </button>
+                {demoMode && (
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className="tv-menu-item"
+                    disabled={sleepActive}
+                    onClick={openEditorSheet}
+                  >
+                    <span>Level Editor</span>
+                    <span className="tv-menu-meta">
+                      {editor.open ? "Open" : "Grid"}
+                    </span>
+                  </button>
+                )}
 
-                {kipUrl && !sleepActive && (
+                {demoMode && kipUrl && !sleepActive && (
                   <a
                     role="menuitem"
                     className="tv-menu-item"
@@ -639,18 +722,6 @@ export function GameCanvas({
                     <span className="tv-menu-meta">Open</span>
                   </a>
                 )}
-
-                <button
-                  type="button"
-                  role="menuitem"
-                  className="tv-menu-item"
-                  onClick={openGrownUps}
-                >
-                  <span>Grown-ups</span>
-                  <span className="tv-menu-meta">
-                    {parentSnapshot.settings.enabled ? "On" : "Time"}
-                  </span>
-                </button>
 
                 <button
                   type="button"
@@ -669,20 +740,150 @@ export function GameCanvas({
               </div>
             )}
           </div>
+
+          <button
+            type="button"
+            className="tv-ctl tv-ctl-gear"
+            aria-label={gearAriaLabel}
+            aria-pressed={grownUpsOpen}
+            title="Hold 1.2s for Grown-up settings"
+            onPointerDown={startGearHold}
+            onPointerUp={cancelGearHold}
+            onPointerLeave={cancelGearHold}
+            onPointerCancel={cancelGearHold}
+            onKeyDown={(e) => {
+              if ((e.key === " " || e.key === "Enter") && !e.repeat) {
+                e.preventDefault();
+                startGearHold();
+              }
+            }}
+            onKeyUp={(e) => {
+              if (e.key === " " || e.key === "Enter") {
+                e.preventDefault();
+                const fired = gearLongPressFiredRef.current;
+                cancelGearHold();
+                if (!fired) {
+                  if (grownUpsOpen) setGrownUpsOpen(false);
+                  else openGrownUps(false);
+                }
+                gearLongPressFiredRef.current = false;
+              }
+            }}
+            onClick={() => {
+              if (gearLongPressFiredRef.current) {
+                gearLongPressFiredRef.current = false;
+                return;
+              }
+              if (grownUpsOpen) {
+                setGrownUpsOpen(false);
+                return;
+              }
+              openGrownUps(false);
+            }}
+          >
+            {gearHoldPct > 0 && (
+              <span
+                className="tv-gear-hold-fill"
+                style={{ width: `${Math.round(gearHoldPct * 100)}%` }}
+                aria-hidden="true"
+              />
+            )}
+            {(parentSnapshot.settings.enabled || demoMode) && (
+              <span className="tv-parent-dot" aria-hidden="true" />
+            )}
+            <span aria-hidden="true">⚙️</span>
+          </button>
         </div>
       </div>
 
       <div className="tv-stage">
         <div ref={stageHostRef} className="tv-stage-canvas-host" />
-        {!sleepActive && (
-          <div className="tv-worlds" role="tablist" aria-label="Worlds">
-            {WORLDS.map((w) => (
-              <button key={w.id} type="button" role="tab" aria-selected={state.world === w.id}
-                className={state.world === w.id ? "tv-world tv-world-on" : "tv-world"}
-                onClick={() => engine()?.goWorld(w.id)}>{w.label}</button>
-            ))}
-          </div>
-        )}
+        {!sleepActive &&
+          (demoMode ? (
+            <div className="tv-worlds" role="tablist" aria-label="Worlds">
+              {WORLDS.map((w) => (
+                <button
+                  key={w.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={state.world === w.id}
+                  className={
+                    state.world === w.id ? "tv-world tv-world-on" : "tv-world"
+                  }
+                  onClick={() => engine()?.goWorld(w.id)}
+                >
+                  {w.label}
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div ref={worldsWrapRef} className="tv-worlds-compact">
+              <button
+                type="button"
+                className="tv-worlds-btn"
+                aria-label={`Worlds: ${currentWorldEntry.label} active`}
+                aria-haspopup="dialog"
+                aria-expanded={worldsOpen}
+                aria-pressed={worldsOpen}
+                onClick={() => setWorldsOpen((open) => !open)}
+              >
+                <span>{currentWorldEntry.label}</span>
+                <span className="tv-toy-pill-caret" aria-hidden="true">
+                  ▾
+                </span>
+              </button>
+              {worldsOpen && (
+                <div
+                  className="tv-worlds-popover"
+                  role="dialog"
+                  aria-label="Worlds"
+                >
+                  <span className="tv-worlds-group-k">Worlds</span>
+                  <div className="tv-worlds-grid">
+                    {WORLDS.filter((w) => !w.lab).map((w) => (
+                      <button
+                        key={w.id}
+                        type="button"
+                        className={
+                          state.world === w.id
+                            ? "tv-world tv-world-on"
+                            : "tv-world"
+                        }
+                        aria-pressed={state.world === w.id}
+                        onClick={() => {
+                          engine()?.goWorld(w.id);
+                          setWorldsOpen(false);
+                        }}
+                      >
+                        {w.label}
+                      </button>
+                    ))}
+                  </div>
+                  <span className="tv-worlds-group-k">STEM Labs</span>
+                  <div className="tv-worlds-grid">
+                    {WORLDS.filter((w) => w.lab).map((w) => (
+                      <button
+                        key={w.id}
+                        type="button"
+                        className={
+                          state.world === w.id
+                            ? "tv-world tv-world-on"
+                            : "tv-world"
+                        }
+                        aria-pressed={state.world === w.id}
+                        onClick={() => {
+                          engine()?.goWorld(w.id);
+                          setWorldsOpen(false);
+                        }}
+                      >
+                        {w.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
 
         {editor.testing && !editor.open && !create.open && (
           <button
@@ -705,8 +906,10 @@ export function GameCanvas({
           initialStep={toySheetStep}
           progression={progression}
           onClose={() => setToySheetOpen(false)}
-          onSkinChange={onSkinChange}
-          onOpenGrownUps={openGrownUps}
+          onSkinChange={() => {
+            setSkinTick((n) => n + 1);
+            onSkinChange?.();
+          }}
         />
 
         {missionPanel.open && (
@@ -803,13 +1006,21 @@ export function GameCanvas({
           quietEnd={parentSnapshot.settings.quietHours.end}
           toyName={label}
           missionGraceActive={missionGraceActive}
-          onOpenGrownUps={openGrownUps}
+          onOpenGrownUps={() => openGrownUps(false)}
         />
 
         <GrownUpsSheet
           open={grownUpsOpen}
+          holdSatisfied={grownUpsHoldSatisfied}
           snapshot={parentSnapshot}
           progression={progression}
+          demoMode={demoMode}
+          onToggleDemoMode={handleToggleDemoMode}
+          onSeedDemoSave={() => engine()?.seedDemoSave?.()}
+          onOpenEditor={openEditorSheet}
+          onJumpWorld={(worldId) => engine()?.goWorld(worldId)}
+          currentWorld={state.world}
+          kipUrl={kipUrl}
           onResetXp={() => {
             const next = resetProgression(progressionRef.current);
             saveProgression(next);
@@ -826,7 +1037,10 @@ export function GameCanvas({
             void pushProgression(next);
           }}
           onSnapshotChange={setParentSnapshot}
-          onClose={() => setGrownUpsOpen(false)}
+          onClose={() => {
+            setGrownUpsHoldSatisfied(false);
+            setGrownUpsOpen(false);
+          }}
         />
       </div>
     </div>

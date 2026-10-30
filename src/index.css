@@ -1810,22 +1810,22 @@ a.cta {
 .tv-dock {
   flex: none;
   min-height: 50px;
-  padding: 6px 8px;
+  padding: 6px 6px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 6px;
+  gap: 4px;
   background: rgba(16, 26, 68, 0.95);
   border-bottom: 1px solid rgba(255, 255, 255, 0.14);
   z-index: 14;
 }
 
 .tv-toy-pill {
-  flex: 0 1 124px;
+  flex: 0 1 142px;
   min-width: 0;
-  max-width: 132px;
+  max-width: 148px;
   min-height: 36px;
-  padding: 0 9px 0 8px;
+  padding: 0 7px 0 6px;
   border-radius: 11px;
   border: 2px solid rgba(255, 255, 255, 0.24);
   background: rgba(255, 255, 255, 0.08);
@@ -1835,7 +1835,7 @@ a.cta {
   font-weight: 700;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   cursor: pointer;
   white-space: nowrap;
   overflow: hidden;
@@ -1901,21 +1901,53 @@ a.cta {
   flex: none;
 }
 
+.tv-toy-mini-icon {
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  background: rgba(8, 14, 42, 0.65);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  overflow: hidden;
+}
+
+.tv-toy-mini-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
 .tv-dock-right {
   flex: none;
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
 }
 
 .tv-dock-right .tv-ctl {
-  padding: 0 10px;
-  font-size: 13px;
+  position: relative;
+  padding: 0 8px;
+  font-size: 12.5px;
 }
 
-.tv-ctl-more {
-  min-width: 36px;
-  padding: 0 8px !important;
+.tv-ctl-more,
+.tv-ctl-gear {
+  min-width: 34px;
+  padding: 0 7px !important;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+}
+
+.tv-gear-hold-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: linear-gradient(90deg, rgba(82, 183, 255, 0.5), rgba(90, 240, 176, 0.6));
+  pointer-events: none;
 }
 
 .tv-badge-dot {
@@ -1937,6 +1969,39 @@ a.cta {
   display: inline-block;
   flex: none;
   animation: tv-mic-pulse 1.1s ease-in-out infinite;
+}
+
+.tv-music-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--sky-500);
+  box-shadow: 0 0 8px var(--sky-500);
+  display: inline-block;
+  flex: none;
+}
+
+.tv-parent-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--mint);
+  box-shadow: 0 0 7px var(--mint);
+  display: inline-block;
+  flex: none;
+}
+
+/* Quiet corner pips inside `.tv-dock-right` never shift or expand dock buttons. */
+.tv-dock-right .tv-badge-dot,
+.tv-dock-right .tv-mic-dot,
+.tv-dock-right .tv-music-dot,
+.tv-dock-right .tv-parent-dot {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 7px;
+  height: 7px;
+  pointer-events: none;
 }
 
 @keyframes tv-mic-pulse {
@@ -2233,8 +2298,56 @@ a.cta {
 }
 .tv-worlds { position: absolute; top: 8px; left: 8px; right: 8px; display: flex; gap: 4px; overflow-x: auto; z-index: 5; scrollbar-width: none; }
 .tv-worlds::-webkit-scrollbar { display: none; }
-.tv-world { flex: 0 0 auto; min-height: 30px; padding: 0 8px; border-radius: 9px; border: 2px solid var(--line); background: rgba(16,26,68,.85); color: var(--ink); font: 700 11px var(--font-display); }
+.tv-world { flex: 0 0 auto; min-height: 30px; padding: 0 8px; border-radius: 9px; border: 2px solid var(--line); background: rgba(16,26,68,.85); color: var(--ink); font: 700 11px var(--font-display); cursor: pointer; }
 .tv-world-on { background: var(--sky, #52b7ff); color: #06122b; }
+
+.tv-worlds-compact {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 8;
+}
+
+.tv-worlds-btn {
+  min-height: 32px;
+  padding: 0 10px;
+  border-radius: 10px;
+  border: 2px solid var(--line);
+  background: rgba(16, 26, 68, 0.88);
+  color: var(--ink);
+  font: 700 12px var(--font-display);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.tv-worlds-popover {
+  margin-top: 6px;
+  width: min(300px, calc(100vw - 16px));
+  padding: 10px;
+  border-radius: 14px;
+  background: rgba(16, 26, 68, 0.97);
+  border: 2px solid var(--line);
+  box-shadow: 0 16px 36px rgba(2, 6, 28, 0.72);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tv-worlds-group-k {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--ink-muted);
+}
+
+.tv-worlds-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 5px;
+}
 
 .tv-ctl {
   flex: none;
@@ -3152,6 +3265,105 @@ a.cta {
   background: rgba(8, 15, 43, 0.95);
   color: var(--ink);
   font-family: var(--font-body);
+}
+
+.tv-pin-head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  text-align: center;
+}
+
+.tv-pin-sub {
+  font-size: 12px;
+  color: var(--ink-muted);
+}
+
+.tv-pin-dots {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  padding: 4px 0;
+}
+
+.tv-pin-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid var(--line);
+  background: rgba(8, 15, 43, 0.9);
+  transition: background-color 100ms ease, border-color 100ms ease, transform 100ms ease;
+}
+
+.tv-pin-dot-on {
+  background: var(--sky-500);
+  border-color: var(--sky-500);
+  transform: scale(1.1);
+}
+
+.tv-pin-pad {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.tv-pin-key {
+  min-height: 52px;
+  border-radius: 13px;
+  border: 2px solid var(--line);
+  background: rgba(10, 19, 54, 0.95);
+  box-shadow: 0 3px 0 var(--line-soft);
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 800;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: transform 80ms ease, background-color 120ms ease;
+}
+
+.tv-pin-key:active:not(:disabled) {
+  transform: translateY(2px) scale(0.97);
+  background: rgba(82, 183, 255, 0.22);
+}
+
+.tv-pin-key:disabled {
+  opacity: 0.42;
+  box-shadow: none;
+  cursor: default;
+}
+
+.tv-pin-key-aux {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink-muted);
+}
+
+.tv-pin-foot {
+  display: flex;
+  justify-content: center;
+  min-height: 24px;
+}
+
+.tv-pin-link {
+  border: 0;
+  background: transparent;
+  color: var(--sky-500);
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+
+.tv-demo-tools {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 4px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 @media (prefers-reduced-motion: reduce) {

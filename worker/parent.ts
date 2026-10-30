@@ -3,9 +3,11 @@
 // `x-parent-proof` token issued after solving the 2-digit STEM math or PIN gate.
 import { isPlayerId } from "../shared/ownership";
 import {
+  activePinCooldownUntil,
   applyParentAction,
   defaultParentSettings,
   emptyLedgerForDay,
+  evaluatePinAttempt,
   evaluatePlayTime,
   isValidPin,
   isValidTimeZone,
@@ -53,10 +55,14 @@ const CREATE_TIME_LEDGER_SQL =
 const CREATE_TIME_LEDGER_INDEX_SQL =
   "CREATE INDEX IF NOT EXISTS idx_time_ledger_player ON time_ledger (player_id)";
 
-function json(data: unknown, status = 200): Response {
+function json(
+  data: unknown,
+  status = 200,
+  extraHeaders?: Record<string, string>,
+): Response {
   return new Response(JSON.stringify(data), {
     status,
-    headers: { "content-type": "application/json" },
+    headers: { "content-type": "application/json", ...(extraHeaders ?? {}) },
   });
 }
 
@@ -230,6 +236,12 @@ async function readSettings(
       settings: {
         ...merged.settings,
         pinHash: typeof parsed.pinHash === "string" ? parsed.pinHash : null,
+        pinFailedAttempts: Math.max(0, Math.floor(Number(parsed.pinFailedAttempts) || 0)),
+        pinCooldownUntil:
+          typeof parsed.pinCooldownUntil === "number" &&
+          Number.isFinite(parsed.pinCooldownUntil)
+            ? parsed.pinCooldownUntil
+            : null,
       },
       persisted: true,
     };
@@ -411,13 +423,33 @@ export async function handleParent(
           a,
           b,
           challengeToken,
+          cooldownUntil: activePinCooldownUntil(settings, nowMs),
         });
       }
 
       if (body.action === "verify") {
         let verified = false;
-        if (typeof body.pin === "string" && settings.pinHash) {
-          if (isValidPin(body.pin)) {
+        if (typeof body.pin === "string") {
+          const activeUntil = activePinCooldownUntil(settings, nowMs);
+          if (activeUntil !== null) {
+            const retryAfterSeconds = Math.max(
+              1,
+              Math.ceil((activeUntil - nowMs) / 1000),
+            );
+            return json(
+              {
+                ok: false,
+                error: "pin_cooldown",
+                cooldownUntil: activeUntil,
+                retryAfterSeconds,
+                attemptsRemaining: 0,
+              },
+              429,
+              { "retry-after": String(retryAfterSeconds) },
+            );
+          }
+
+          if (settings.pinHash && isValidPin(body.pin)) {
             const candidateHash = await hashPin(playerId, body.pin);
             const expectedBytes = new TextEncoder().encode(settings.pinHash);
             const candidateBytes = new TextEncoder().encode(candidateHash);
@@ -431,6 +463,42 @@ export async function handleParent(
                 candidateBytes,
               );
             }
+          }
+
+          const outcome = evaluatePinAttempt(settings, nowMs, verified);
+          if (
+            outcome.settings.pinFailedAttempts !== (settings.pinFailedAttempts ?? 0) ||
+            outcome.settings.pinCooldownUntil !== (settings.pinCooldownUntil ?? null)
+          ) {
+            await writeSettings(db, playerId, outcome.settings);
+          }
+
+          if (outcome.status === "cooldown") {
+            console.log(
+              JSON.stringify({ event: "parent_gate", status: "pin_cooldown" }),
+            );
+            return json(
+              {
+                ok: false,
+                error: "pin_cooldown",
+                cooldownUntil: outcome.cooldownUntil,
+                retryAfterSeconds: outcome.retryAfterSeconds,
+                attemptsRemaining: 0,
+              },
+              429,
+              { "retry-after": String(outcome.retryAfterSeconds) },
+            );
+          }
+
+          if (outcome.status === "mismatch") {
+            return json(
+              {
+                ok: false,
+                error: "incorrect answer",
+                attemptsRemaining: outcome.attemptsRemaining,
+              },
+              403,
+            );
           }
         } else if (typeof body.challengeToken === "string") {
           const challenge = await verifySignedPayload<ChallengeTokenPayload>(
