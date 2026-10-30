@@ -47,17 +47,40 @@ export function invertBoard(view: View, sx: number, sy: number, zMm = 0) {
 }
 
 const PART_COLORS: Record<string, string> = {
-  "snap-spoiler-01": "#e85d1f",
-  "snap-brick-2x2-small": "#2563eb",
-  "snap-brick-2x2-large": "#1e40af",
-  "forge-mount-small": "#57534e",
-  "snap-wing-01": "#0f766e",
-  "snap-glow-capsule-01": "#d97706",
-  "pro-beam-tu05": "#4d7c0f",
-  "skin-racer-red": "#b91c1c",
+  // Canonical 12.5 mm / 25 mm TU PartSpec catalog parts
+  "racer-spoiler": "#ff7a45",
+  "brick-s-2x2": "#52b7ff",
+  "dome-s-2x2": "#38c98e",
+  "big-blue-brick": "#2a7fcc",
+  "spin-capsule": "#4ecdc4",
+  "adapter-snap-pro": "#7f9bff",
+  "forge-mount-ring-s": "#7f9bff",
+  "cloud-wings": "#5af0b0",
+  "glow-capsule": "#ffd24d",
+  "beam-str-tu05": "#a78bff",
+  "pin-friction": "#8f75ff",
+  "gear-spur-z10": "#c084fc",
+  "gear-spur-z20": "#9333ea",
+  "skin-racer-red": "#ff5c72",
+  // Legacy IDs kept for backwards-compatible unit fixtures
+  "snap-spoiler-01": "#ff7a45",
+  "snap-brick-2x2-small": "#52b7ff",
+  "snap-brick-2x2-large": "#2a7fcc",
+  "forge-mount-small": "#7f9bff",
+  "snap-wing-01": "#5af0b0",
+  "snap-glow-capsule-01": "#ffd24d",
+  "pro-beam-tu05": "#a78bff",
+};
+
+const STAT_FALLBACK_HEX: Record<Part["stat"]["name"], string> = {
+  speed: "#ff7a45",
+  spin: "#52b7ff",
+  torque: "#a78bff",
+  glow: "#ffd24d",
 };
 
 const PART_HEIGHTS_MM: Record<string, number> = {
+  "skin-racer-red": 3,
   "snap-spoiler-01": 16,
   "snap-brick-2x2-small": 18,
   "snap-brick-2x2-large": 30,
@@ -65,15 +88,18 @@ const PART_HEIGHTS_MM: Record<string, number> = {
   "snap-wing-01": 28,
   "snap-glow-capsule-01": 18,
   "pro-beam-tu05": 8,
-  "skin-racer-red": 3,
 };
 
 export function heightOf(part: Part): number {
-  return PART_HEIGHTS_MM[part.id] ?? 14;
+  if (PART_HEIGHTS_MM[part.id] !== undefined) return PART_HEIGHTS_MM[part.id]!;
+  if (part.bboxMm) return Math.max(4, Math.min(38, Math.round(part.bboxMm[2])));
+  return part.printable ? 14 : 3;
 }
 
 export function colorOf(part: Part): string {
-  return PART_COLORS[part.id] ?? "#78716c";
+  if (PART_COLORS[part.id]) return PART_COLORS[part.id]!;
+  if (part.line === "pro" && part.stat.name !== "glow") return "#a78bff";
+  return STAT_FALLBACK_HEX[part.stat.name] ?? "#52b7ff";
 }
 
 function shade(hex: string, factor: number): string {
@@ -114,12 +140,12 @@ function cuboid(
   const right = [top[1]!, top[2]!, project(view, x + w, y + d, 0), project(view, x + w, y, 0)];
   poly(ctx, left, shade(color, 0.68));
   poly(ctx, right, shade(color, 0.84));
-  poly(ctx, top, shade(color, 1.08), selected ? "#1c1a17" : shade(color, 0.7));
+  poly(ctx, top, shade(color, 1.08), selected ? "#ffd24d" : shade(color, 0.55));
   if (selected) {
     ctx.beginPath();
     top.forEach((p, i) => (i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y)));
     ctx.closePath();
-    ctx.strokeStyle = "#1c1a17";
+    ctx.strokeStyle = "#ffd24d";
     ctx.lineWidth = 2.5;
     ctx.stroke();
   }
@@ -140,11 +166,11 @@ export function drawBuild(ctx: CanvasRenderingContext2D, view: View, opts: DrawO
   ctx.clearRect(0, 0, view.width, view.height);
 
   // Stand-in toy body: slab at true board proportions.
-  cuboid(ctx, view, 0, 0, board.lengthMm, board.widthMm, 7, "#d6d0c2", false);
+  cuboid(ctx, view, 0, 0, board.lengthMm, board.widthMm, 7, "#243685", false);
 
   // Grid on the slab top.
   const pitch = opts.gridPitchMm ?? 16;
-  ctx.strokeStyle = "rgba(28,26,23,0.16)";
+  ctx.strokeStyle = "rgba(155, 212, 255, 0.28)";
   ctx.lineWidth = 1;
   for (let x = pitch; x < board.lengthMm; x += pitch) {
     const a = project(view, x, 0, 7);
@@ -167,7 +193,7 @@ export function drawBuild(ctx: CanvasRenderingContext2D, view: View, opts: DrawO
     ctx.translate(0, -7 * view.scale);
     cuboid(
       ctx, view, p.xMm, p.yMm, w, d, heightOf(part),
-      isGhost && (p as { valid?: boolean }).valid === false ? "#b3261e" : colorOf(part),
+      isGhost && (p as { valid?: boolean }).valid === false ? "#ff6a5c" : colorOf(part),
       p.instanceId === selectedId && !isGhost,
     );
     ctx.restore();
@@ -180,10 +206,10 @@ export function drawBuild(ctx: CanvasRenderingContext2D, view: View, opts: DrawO
   }
   if (ghost) drawOne(ghost, 0.75, true);
 
-  ctx.fillStyle = "#5c574f";
-  ctx.font = "12px 'Avenir Next', 'Trebuchet MS', sans-serif";
+  ctx.fillStyle = "#bfcaf5";
+  ctx.font = "600 12px 'Figtree', system-ui, sans-serif";
   ctx.fillText(
-    `${opts.toyLabel} · ${board.lengthMm}×${board.widthMm} mm top · stand-in body, true proportions`,
-    10, view.height - 10,
+    `${opts.toyLabel} · ${board.lengthMm}×${board.widthMm} mm top · true proportions`,
+    12, view.height - 10,
   );
 }

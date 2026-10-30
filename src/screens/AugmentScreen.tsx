@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from "react";
-import baseSetJson from "../../sets/base.json";
 import {
   boardForToy,
   buildStats,
@@ -9,25 +8,37 @@ import {
   rotatePlacement,
   type Placement,
 } from "../../shared/build";
-import { allPass, runChecks } from "../../shared/checks";
-import { validateSet, type Part, type ToySet } from "../../shared/part";
+import { allPass, runChecks, type CheckId } from "../../shared/checks";
+import type { Part } from "../../shared/part";
 import { buildSignature } from "../../shared/reveal";
 import { TryOn } from "../features/ar/TryOn";
-import { revealForBuild } from "../state/reveals";
 import { BuilderCanvas } from "../features/builder/BuilderCanvas";
 import { colorOf } from "../features/builder/engine/render";
-import { useToybox } from "../state/toybox";
 import { loadBuild as readBuild, saveBuild as writeBuild } from "../lib/builds";
+import {
+  allParts,
+  catalogErrors as setErrors,
+  glbFileFor,
+  partsById,
+  stlFileFor,
+} from "../lib/catalog";
+import { revealForBuild } from "../state/reveals";
+import { useToybox } from "../state/toybox";
 
-const baseSet = baseSetJson as ToySet;
-const setErrors = validateSet(baseSetJson);
-const partsById = new Map(baseSet.parts.map((p) => [p.id, p]));
+const CHECK_LABELS: ReadonlyArray<{ id: CheckId; label: string }> = [
+  { id: "on-grid", label: "On grid" },
+  { id: "fits-toy", label: "Fits size" },
+  { id: "support-free", label: "No supports" },
+  { id: "fits-bed", label: "Fits bed" },
+];
 
 export function AugmentScreen({
   onBack,
+  onPlay,
   onFinish,
 }: {
   onBack: () => void;
+  onPlay?: () => void;
   onFinish?: (firstReveal: boolean) => void;
 }) {
   const { selected: toy } = useToybox();
@@ -36,6 +47,7 @@ export function AugmentScreen({
   const [past, setPast] = useState<Placement[][]>([]);
   const [future, setFuture] = useState<Placement[][]>([]);
   const [note, setNote] = useState<string | null>(null);
+  const [lineFilter, setLineFilter] = useState<"all" | "snap" | "pro">("all");
 
   // Load this toy's saved build whenever the toy changes.
   useEffect(() => {
@@ -62,9 +74,18 @@ export function AugmentScreen({
   if (!toy || !board) {
     return (
       <section>
-        <h1>Augment</h1>
-        <p>Pick a toy in the Toybox first.</p>
-        <button type="button" className="cta" onClick={onBack}>Back to Toybox</button>
+        <header className="screen-head">
+          <h1 className="screen-title">Build</h1>
+          <button type="button" className="tv-ctl" onClick={onBack}>
+            Back
+          </button>
+        </header>
+        <div className="glass-card">
+          <p style={{ marginTop: 0 }}>Pick a toy in the Toybox first.</p>
+          <button type="button" className="cta" onClick={onBack}>
+            Back to Toybox
+          </button>
+        </div>
       </section>
     );
   }
@@ -85,7 +106,11 @@ export function AugmentScreen({
       );
       return;
     }
-    const placement: Placement = { instanceId: crypto.randomUUID(), partId: part.id, ...spot };
+    const placement: Placement = {
+      instanceId: crypto.randomUUID(),
+      partId: part.id,
+      ...spot,
+    };
     commit([...placements, placement]);
     setSelectedId(placement.instanceId);
     setNote(null);
@@ -104,7 +129,9 @@ export function AugmentScreen({
       setNote("No room to rotate it there. Drag it somewhere roomier first.");
       return;
     }
-    commit(placements.map((p) => (p.instanceId === rotated.instanceId ? rotated : p)));
+    commit(
+      placements.map((p) => (p.instanceId === rotated.instanceId ? rotated : p)),
+    );
     setNote(null);
   };
 
@@ -135,162 +162,322 @@ export function AugmentScreen({
   const placedParts = [...new Set(placements.map((p) => p.partId))]
     .map((id) => partsById.get(id))
     .filter((p): p is Part => Boolean(p));
-  const failing = placedParts.filter((p) => !allPass(runChecks(p, toy)));
+  const checkSets = placedParts.map((p) => runChecks(p, toy));
+  const failing = placedParts.filter((_, idx) => !allPass(checkSets[idx]!));
   const ready = placements.length > 0 && failing.length === 0;
   const [gridPitch] = selected
     ? pitchOf(partsById.get(selected.partId)!, selected.rotation)
-    : [16];
-  // Part id -> generated STL basename in public/parts-stl (npm run parts).
-  const stlFile: Record<string, string> = {
-    "snap-spoiler-01": "spoiler.stl",
-    "snap-brick-2x2-small": "brick-2x2-small.stl",
-    "snap-brick-2x2-large": "brick-2x2-large.stl",
-    "forge-mount-small": "forge-mount.stl",
-    "snap-wing-01": "dragon-wing.stl",
-    "snap-glow-capsule-01": "glow-capsule.stl",
-    "pro-beam-tu05": "beam-tu05.stl",
-  };
+    : [toy.sizeClass === "large" ? 25 : 12.5];
+
+  const filteredParts = allParts.filter((part) =>
+    lineFilter === "all" ? true : part.line === lineFilter,
+  );
+  const selectedPart = selected ? partsById.get(selected.partId) : undefined;
+  const selectedGlb = glbFileFor(selectedPart);
+  const printablePlaced = placedParts.filter(
+    (p) => p.printable && Boolean(stlFileFor(p)),
+  );
+  const hasSmallPartWarning = printablePlaced.some((p) => p.smallPartWarning);
+  const statSummary =
+    Object.entries(stats.statTotals)
+      .filter(([, v]) => v > 0)
+      .map(([k, v]) => `${k} +${v}`)
+      .join(" · ") || "no stat boost yet";
+  const alreadyRevealed = Boolean(
+    revealForBuild(toy.id, buildSignature(placements)),
+  );
 
   return (
     <section>
-      <h1>Augment {toy.name}</h1>
-      <p className="fine-print" style={{ marginTop: 0 }}>
-        Drag parts on the grid. They snap, collide, and only count when the
-        checks pass. This is the same footprint data that prints.
-      </p>
-
-      <BuilderCanvas
-        board={board}
-        toyLabel={toy.name}
-        placements={placements}
-        partsById={partsById}
-        selectedId={selectedId}
-        gridPitchMm={gridPitch}
-        onSelect={setSelectedId}
-        onMove={movePlacement}
-      />
-
-      <div className="builder-actions">
-        <button type="button" onClick={undo} disabled={past.length === 0}>Undo</button>
-        <button type="button" onClick={redo} disabled={future.length === 0}>Redo</button>
-        <button type="button" onClick={rotateSelected} disabled={!selected}>Rotate</button>
-        <button type="button" onClick={removeSelected} disabled={!selected}>Remove</button>
-        <button
-          type="button"
-          onClick={() => { commit([]); setSelectedId(undefined); }}
-          disabled={placements.length === 0}
-        >
-          Clear
+      <header className="screen-head">
+        <h1 className="screen-title">Build · {toy.name}</h1>
+        <button type="button" className="tv-ctl" onClick={onBack}>
+          Back
         </button>
+      </header>
+
+      <div className="glass-card" style={{ marginBottom: 12 }}>
+        <BuilderCanvas
+          board={board}
+          toyLabel={toy.name}
+          placements={placements}
+          partsById={partsById}
+          selectedId={selectedId}
+          gridPitchMm={gridPitch}
+          onSelect={setSelectedId}
+          onMove={movePlacement}
+        />
+
+        <div className="tv-fg-b" style={{ flexWrap: "wrap", marginTop: 10 }}>
+          <button
+            type="button"
+            className="tv-ctl"
+            onClick={undo}
+            disabled={past.length === 0}
+          >
+            Undo
+          </button>
+          <button
+            type="button"
+            className="tv-ctl"
+            onClick={redo}
+            disabled={future.length === 0}
+          >
+            Redo
+          </button>
+          <button
+            type="button"
+            className="tv-ctl tv-ctl-sky"
+            onClick={rotateSelected}
+            disabled={!selected}
+          >
+            Rotate
+          </button>
+          <button
+            type="button"
+            className="tv-ctl"
+            onClick={removeSelected}
+            disabled={!selected}
+          >
+            Remove
+          </button>
+          <button
+            type="button"
+            className="tv-ctl"
+            onClick={() => {
+              commit([]);
+              setSelectedId(undefined);
+            }}
+            disabled={placements.length === 0}
+          >
+            Clear
+          </button>
+        </div>
+
+        {note && (
+          <p className="error" style={{ marginBottom: 0 }}>
+            {note}
+          </p>
+        )}
       </div>
-      {note && <p className="error">{note}</p>}
 
-      {selected && partsById.get(selected.partId) && stlFile[selected.partId] && (
-        <>
-          <h2>Try on: {partsById.get(selected.partId)!.name}</h2>
-          <TryOn
-            toy={toy}
-            part={partsById.get(selected.partId)!}
-            glbFile={stlFile[selected.partId]!.replace(/\.stl$/, ".glb")}
-          />
-        </>
-      )}
-
-      <h2>Parts tray</h2>
-      {setErrors.length > 0 ? (
-        <p className="error">Base set is invalid: {setErrors.join("; ")}</p>
-      ) : (
-        <ul className="tray">
-          {baseSet.parts.map((part) => {
-            const fits = canPlace(part, 0, 0, 0, [], partsById, board).ok;
-            const checksPass = allPass(runChecks(part, toy));
+      <div className="glass-card" style={{ marginBottom: 12 }}>
+        <span className="kicker-label">Live print & fit checks</span>
+        <div className="checks-grid">
+          {CHECK_LABELS.map(({ id, label }) => {
+            const hasParts = checkSets.length > 0;
+            const passes =
+              hasParts &&
+              checkSets.every(
+                (results) => results.find((r) => r.id === id)?.pass === true,
+              );
+            const pillClass = !hasParts
+              ? "check-pill"
+              : passes
+                ? "check-pill check-pill-ok"
+                : "check-pill check-pill-bad";
+            const tag = !hasParts ? "WAIT" : passes ? "OK" : "FIX";
             return (
-              <li key={part.id}>
+              <div key={id} className={pillClass}>
+                <span className="check-pill-tag">{tag}</span>
+                <span>{label}</span>
+              </div>
+            );
+          })}
+        </div>
+        <p className="fine-print" style={{ margin: "10px 0 0" }}>
+          {placements.length === 0
+            ? "Tap a part below to snap it onto the grid."
+            : `${placements.length} placed · ${statSummary} · ${stats.printableCount} printable`}
+        </p>
+      </div>
+
+      <div className="glass-card" style={{ marginBottom: 12 }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 8,
+            marginBottom: 10,
+            flexWrap: "wrap",
+          }}
+        >
+          <span className="kicker-label" style={{ margin: 0 }}>
+            Parts tray
+          </span>
+          <div className="pill-row">
+            <button
+              type="button"
+              className={
+                lineFilter === "all" ? "pill-chip pill-chip-on" : "pill-chip"
+              }
+              aria-pressed={lineFilter === "all"}
+              onClick={() => setLineFilter("all")}
+            >
+              All
+            </button>
+            <button
+              type="button"
+              className={
+                lineFilter === "snap" ? "pill-chip pill-chip-on" : "pill-chip"
+              }
+              aria-pressed={lineFilter === "snap"}
+              onClick={() => setLineFilter("snap")}
+            >
+              Snap
+            </button>
+            <button
+              type="button"
+              className={
+                lineFilter === "pro"
+                  ? "pill-chip pill-chip-pro pill-chip-on"
+                  : "pill-chip pill-chip-pro"
+              }
+              aria-pressed={lineFilter === "pro"}
+              onClick={() => setLineFilter("pro")}
+            >
+              Pro
+            </button>
+          </div>
+        </div>
+
+        {setErrors.length > 0 ? (
+          <p className="error">Base set is invalid: {setErrors.join("; ")}</p>
+        ) : (
+          <div className="tv-opts">
+            {filteredParts.map((part) => {
+              const fits = canPlace(part, 0, 0, 0, [], partsById, board).ok;
+              const checksPass = allPass(runChecks(part, toy));
+              const placedCount = placements.filter(
+                (p) => p.partId === part.id,
+              ).length;
+              return (
                 <button
+                  key={part.id}
                   type="button"
-                  className="tray-part"
+                  className={
+                    placedCount > 0 ? "tv-opt tv-opt-on" : "tv-opt"
+                  }
                   disabled={!fits}
                   onClick={() => addPart(part)}
                 >
-                  <span className="tray-swatch" style={{ background: colorOf(part) }} aria-hidden="true" />
-                  {part.name}
-                  <span className="tray-meta">
-                    {part.stat.name} +{part.stat.value}
-                    {!fits ? " · too big" : checksPass ? "" : " · check size"}
+                  <span>
+                    {part.name}
+                    {placedCount > 0 ? ` ×${placedCount}` : ""}
+                  </span>
+                  <span className="tv-opt-meta">
+                    <span
+                      className="tv-opt-dot"
+                      style={{ background: colorOf(part) }}
+                      aria-hidden="true"
+                    />
+                    {part.line === "pro" ? "Pro" : "Snap"} · {part.stat.name} +
+                    {part.stat.value}
+                  </span>
+                  <span className="tv-opt-lk">
+                    {!fits
+                      ? "Too big"
+                      : !checksPass
+                        ? "Wrong size"
+                        : part.printable
+                          ? "3D print"
+                          : "Game only"}
                   </span>
                 </button>
-              </li>
-            );
-          })}
-        </ul>
-      )}
+              );
+            })}
+          </div>
+        )}
 
-      <h2>Build</h2>
-      {placements.length === 0 ? (
-        <p>Nothing placed yet. Tap a part above to drop it on the toy.</p>
-      ) : (
-        <>
-          <ul className="build-list">
-            {placedParts.map((part) => {
-              const count = placements.filter((p) => p.partId === part.id).length;
-              const failed = runChecks(part, toy).filter((r) => !r.pass);
+        {placedParts.length > 0 && failing.length > 0 && (
+          <ul className="build-list" style={{ marginTop: 10 }}>
+            {failing.map((part) => {
+              const failedLabels = runChecks(part, toy)
+                .filter((r) => !r.pass)
+                .map((r) => r.label)
+                .join(", ");
               return (
                 <li key={part.id}>
-                  <strong>{part.name}</strong> ×{count}
-                  {failed.length > 0 && (
-                    <span className="error"> — failing: {failed.map((f) => f.label).join(", ")}</span>
-                  )}
+                  <strong>{part.name}</strong>
+                  <span className="error"> (fix: {failedLabels})</span>
                 </li>
               );
             })}
           </ul>
-          <p>
-            Stats:{" "}
-            {Object.entries(stats.statTotals).map(([k, v]) => `${k} +${v}`).join(", ") || "none"}
-            {" · "}{stats.printableCount} printable
-          </p>
-          <p className={ready ? "check-pass" : "error"}>
-            {ready
-              ? "Checks pass. This build is ready for AR try-on when it lands (Day 5)."
-              : "Not ready yet: every placed part must pass its checks."}
-          </p>
-          {ready && onFinish && (
-            <button
-              type="button"
-              className="cta"
-              onClick={() => onFinish(!revealForBuild(toy.id, buildSignature(placements)))}
-            >
-              {revealForBuild(toy.id, buildSignature(placements))
-                ? "View character card"
-                : "Finish — reveal this character!"}
-            </button>
-          )}
-          {ready && (
-            <>
-              <h2>Print files</h2>
-              <p className="fine-print" style={{ marginTop: 0 }}>
-                Generated from the same OpenSCAD source. Targets only —
-                nothing has been test-printed yet (Day 4 calibration).
-              </p>
-              <ul className="build-list">
-                {placedParts
-                  .filter((p) => p.printable && stlFile[p.id])
-                  .map((p) => (
-                    <li key={p.id}>
-                      <a href={`/parts-stl/${stlFile[p.id]}`} download>
-                        Download {p.name} STL
-                      </a>
-                    </li>
-                  ))}
-              </ul>
-            </>
-          )}
-        </>
+        )}
+      </div>
+
+      {ready && onFinish && (
+        <button
+          type="button"
+          className="cta"
+          onClick={() => onFinish(!alreadyRevealed)}
+        >
+          {alreadyRevealed
+            ? "View character card"
+            : "Finish: reveal this character!"}
+        </button>
       )}
 
-      <button type="button" className="cta cta-quiet" onClick={onBack}>
-        Back to Toybox
-      </button>
+      {onPlay && (
+        <button type="button" className="cta cta-violet" onClick={onPlay}>
+          Play in ToyVentor World
+        </button>
+      )}
+
+      {selectedPart && selectedGlb && (
+        <div className="glass-card" style={{ marginTop: 12 }}>
+          <span className="kicker-label kicker-gold">
+            AR Try-On · {selectedPart.name}
+          </span>
+          <TryOn
+            toy={toy}
+            part={selectedPart}
+            glbFile={selectedGlb}
+          />
+        </div>
+      )}
+
+      {ready && printablePlaced.length > 0 && (
+        <div className="glass-card" style={{ marginTop: 12 }}>
+          <span className="kicker-label">3D Print queue</span>
+          <div style={{ marginBottom: 10 }}>
+            <div className="kv-row">
+              <span>Lattice & orientation</span>
+              <span>12.5 mm TU · Flat · support-free</span>
+            </div>
+            <div className="kv-row">
+              <span>Layer & filament</span>
+              <span>0.2 mm PLA</span>
+            </div>
+            <div className="kv-row">
+              <span>Bed check</span>
+              <span>220×220 mm passed</span>
+            </div>
+          </div>
+          {hasSmallPartWarning && (
+            <p className="fine-print" role="note" style={{ marginTop: 0, marginBottom: 10 }}>
+              <strong>WARNING: CHOKING HAZARD — Small parts.</strong> Not for
+              children under 3 years (ASTM F963 / 16 CFR § 1500.19). Adult
+              supervision required when printing and assembling small parts.
+            </p>
+          )}
+          <div className="tv-fg-b" style={{ flexWrap: "wrap" }}>
+            {printablePlaced.map((p) => (
+              <a
+                key={p.id}
+                className="tv-ctl tv-ctl-sky"
+                style={{ minHeight: 40 }}
+                href={`/parts-stl/${stlFileFor(p)}`}
+                download
+              >
+                Download {p.name} STL
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
     </section>
   );
 }

@@ -3,23 +3,21 @@ import { pullOwnership, pushOwnership } from "./lib/sync";
 import { useToybox } from "./state/toybox";
 import { validateToy, type Toy } from "../shared/toy";
 import { BottomBar, type TabId } from "./components/BottomBar";
-import { FactoryScreen } from "./screens/FactoryScreen";
 import { ScanScreen } from "./screens/ScanScreen";
 import { AugmentScreen } from "./screens/AugmentScreen";
-import { MarketScreen } from "./screens/MarketScreen";
 import { PacksScreen } from "./screens/PacksScreen";
 import { PlayScreen } from "./screens/PlayScreen";
 import { RevealScreen } from "./screens/RevealScreen";
 import { ToyboxScreen } from "./screens/ToyboxScreen";
 
 // The app opens on the Toybox so previous uploads and built-in assets are
-// immediately available. Scan remains a pushed screen above the five tabs.
+// immediately available. Scan and Reveal push above the four main tabs.
 export default function App() {
   const { toys, addToy } = useToybox();
   const syncedRef = useRef(false);
 
-  // One ownership sync per load: pull server toys we don't have, push
-  // local ones the server doesn't. Best-effort in both directions.
+  // One ownership sync per load: pull server toys we do not have, push
+  // local ones the server does not. Best-effort in both directions.
   useEffect(() => {
     if (syncedRef.current) return;
     syncedRef.current = true;
@@ -39,59 +37,79 @@ export default function App() {
           void pushOwnership({ type: "toy", id: toy.id, payload: toy });
       }
     })();
-    // Initial toys only: this is a load-time reconcile, not a subscription.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const [tab, setTab] = useState<TabId>("toybox");
+  const [tab, setTab] = useState<TabId>(() => {
+    try {
+      const q = new URLSearchParams(window.location.search).get("tab");
+      if (q === "toybox" || q === "build" || q === "packs" || q === "play") {
+        return q;
+      }
+      if (q === "market") return "build";
+      if (q === "factory") return "toybox";
+    } catch {
+      /* ignore */
+    }
+    return "toybox";
+  });
   const [scanning, setScanning] = useState(false);
-  const [building, setBuilding] = useState(false);
   const [reveal, setReveal] = useState<{ first: boolean } | null>(null);
 
-  const openScan = () => setScanning(true);
+  const openScan = () => {
+    setReveal(null);
+    setScanning(true);
+  };
   const closeScan = () => setScanning(false);
   const finishScan = () => {
     setScanning(false);
-    setTab("toybox");
+    setTab("build");
+  };
+  const goToTab = (next: TabId) => {
+    setScanning(false);
+    setReveal(null);
+    setTab(next);
   };
 
+  const isPlayStage = !scanning && !reveal && tab === "play";
+
   return (
-    <div className="app">
-      <main className="screen">
+    <div className={isPlayStage ? "app app-play" : "app"}>
+      <main className={isPlayStage ? "screen screen-play" : "screen"}>
         {scanning ? (
           <ScanScreen onDone={finishScan} onCancel={closeScan} />
         ) : reveal ? (
-          <RevealScreen firstReveal={reveal.first} onBack={() => setReveal(null)} />
-        ) : building ? (
-          <AugmentScreen
-            onBack={() => setBuilding(false)}
-            onFinish={(first) => { setBuilding(false); setReveal({ first }); }}
+          <RevealScreen
+            firstReveal={reveal.first}
+            onBack={() => setReveal(null)}
+            onPlay={() => goToTab("play")}
           />
-        ) : tab === "factory" ? (
-          <FactoryScreen onScan={openScan} onToybox={() => setTab("toybox")} />
         ) : tab === "toybox" ? (
           <ToyboxScreen
             onScan={openScan}
-            onBuild={() => setBuilding(true)}
+            onBuild={() => goToTab("build")}
+            onPlay={() => goToTab("play")}
             onReveal={() => setReveal({ first: false })}
           />
+        ) : tab === "build" ? (
+          <AugmentScreen
+            onBack={() => goToTab("toybox")}
+            onPlay={() => goToTab("play")}
+            onFinish={(first) => setReveal({ first })}
+          />
         ) : tab === "packs" ? (
-          <PacksScreen onBuild={() => setBuilding(true)} />
-        ) : tab === "market" ? (
-          <MarketScreen onBuild={() => setBuilding(true)} />
+          <PacksScreen
+            onBuild={() => goToTab("build")}
+            onPlay={() => goToTab("play")}
+          />
         ) : (
-          <PlayScreen onBuild={() => setBuilding(true)} />
+          <PlayScreen
+            onBuild={() => goToTab("build")}
+            onToybox={() => goToTab("toybox")}
+          />
         )}
       </main>
-      <BottomBar
-        tab={tab}
-        onTab={(next) => {
-          setScanning(false);
-          setBuilding(false);
-          setReveal(null);
-          setTab(next);
-        }}
-      />
+      {!reveal && <BottomBar tab={tab} onTab={goToTab} />}
     </div>
   );
 }

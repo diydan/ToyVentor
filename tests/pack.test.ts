@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 import baseSetJson from "../sets/base.json";
-import { dailyPack, hashSeed } from "../shared/pack";
+import {
+  RARITY_PIPS,
+  dailyPack,
+  hashSeed,
+  rarityForPart,
+  sortPackForReveal,
+} from "../shared/pack";
 import type { ToySet } from "../shared/part";
 
 const parts = (baseSetJson as ToySet).parts;
@@ -22,6 +28,30 @@ describe("dailyPack", () => {
       ),
     );
     expect(ids.size).toBeGreaterThan(1);
+  });
+
+  it("derives display-only rarity from stat value", () => {
+    expect(rarityForPart({ stat: { name: "speed", value: 1 } })).toBe("common");
+    expect(rarityForPart({ stat: { name: "torque", value: 2 } })).toBe("uncommon");
+    expect(rarityForPart({ stat: { name: "glow", value: 3 } })).toBe("rare");
+  });
+
+  it("sorts reveal cards from lowest rarity to highest while keeping tie order", () => {
+    const sample = [
+      { id: "r", stat: { name: "glow" as const, value: 3 } },
+      { id: "c1", stat: { name: "spin" as const, value: 1 } },
+      { id: "u", stat: { name: "speed" as const, value: 2 } },
+      { id: "c2", stat: { name: "glow" as const, value: 1 } },
+    ];
+    expect(sortPackForReveal(sample).map((p) => p.id)).toEqual(["c1", "c2", "u", "r"]);
+
+    // Every day's 3-card reveal ends on its highest-rarity pull.
+    for (const date of ["2026-10-28", "2026-10-29", "2026-10-30", "2026-10-31"]) {
+      const sorted = sortPackForReveal(dailyPack(parts, date));
+      const ranks = sorted.map((p) => RARITY_PIPS[rarityForPart(p)]);
+      expect(ranks[0]).toBeLessThanOrEqual(ranks[1]!);
+      expect(ranks[1]).toBeLessThanOrEqual(ranks[2]!);
+    }
   });
 
   it("hash is stable", () => {

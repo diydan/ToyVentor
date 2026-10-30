@@ -62,7 +62,13 @@ export function PartPreview({
       style={
         fill
           ? { width: "100%", height: "100%" }
-          : { width: "100%", height: 240, background: "#f7f3ea", borderRadius: 10 }
+          : {
+              width: "100%",
+              height: 220,
+              background: "radial-gradient(circle at 50% 35%, #22337e, #080f2b)",
+              borderRadius: 12,
+              border: "1px solid var(--glass-line)",
+            }
       }
     />
   );

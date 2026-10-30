@@ -39,3 +39,35 @@ export function dailyPack(parts: Part[], dateISO: string, count = 3): Part[] {
   take([...printables, ...rest], 1);
   return pick.slice(0, count);
 }
+
+/**
+ * Display-only pack rarity from a part's stat value. Epic and legendary
+ * colors already exist for future sets, but the current eight-part base set
+ * tops out at rare — which keeps tonight's demo honest.
+ */
+export type PackRarity = "common" | "uncommon" | "rare";
+
+export const RARITY_PIPS: Record<PackRarity, number> = {
+  common: 1,
+  uncommon: 2,
+  rare: 3,
+};
+
+export function rarityForPart(part: Pick<Part, "stat">): PackRarity {
+  if (part.stat.value >= 3) return "rare";
+  if (part.stat.value >= 2) return "uncommon";
+  return "common";
+}
+
+/**
+ * Order a pack's cards from lowest rarity to highest so the 3-card reveal
+ * always builds toward the best pull on the final flip (ties keep pack order).
+ */
+export function sortPackForReveal<T extends Pick<Part, "stat">>(
+  pack: readonly T[],
+): T[] {
+  return pack
+    .map((part, index) => ({ part, index, rank: RARITY_PIPS[rarityForPart(part)] }))
+    .sort((a, b) => a.rank - b.rank || a.index - b.index)
+    .map((entry) => entry.part);
+}

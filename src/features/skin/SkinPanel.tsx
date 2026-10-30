@@ -4,24 +4,26 @@ import { postSkin } from "../../lib/api";
 import { clearSkin, saveSkin, skinForToy } from "../../state/skins";
 
 const PRESETS = [
-  "bold red racing stripes with a white number roundel",
-  "green dragon scales with gold trim",
-  "deep-space galaxy swirls with tiny stars",
-  "bright rainbow colour blocks",
+  { label: "Racer red", prompt: "bold red racing stripes with a white number roundel" },
+  { label: "Dragon scales", prompt: "green dragon scales with gold trim" },
+  { label: "Galaxy stars", prompt: "deep-space galaxy swirls with tiny stars" },
+  { label: "Color blocks", prompt: "bright rainbow colour blocks" },
 ];
 
 export function SkinPanel({ toy }: { toy: Toy }) {
   const [skin, setSkin] = useState<string | undefined>(() => skinForToy(toy.id));
-  const [style, setStyle] = useState(PRESETS[0]!);
+  const [style, setStyle] = useState(PRESETS[0]!.prompt);
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<string | null>(null);
 
   if (!toy.imageDataUrl) {
     return (
-      <>
-        <h2>Skin</h2>
-        <p>Skins repaint a toy's photo, so this one needs a scan photo first. Built-in starter toys can't be skinned yet.</p>
-      </>
+      <div className="glass-card" style={{ marginTop: 12 }}>
+        <span className="kicker-label">Muse Image skin</span>
+        <p className="fine-print" style={{ margin: 0 }}>
+          Skins repaint a scanned photo. Scan a real toy first to paint custom skins on it.
+        </p>
+      </div>
     );
   }
 
@@ -36,12 +38,12 @@ export function SkinPanel({ toy }: { toy: Toy }) {
       } else {
         setNote(
           result.skin.status === "not-configured"
-            ? "Skin generation isn't configured on the server yet."
-            : `Skin didn't come back${result.skin.message ? `: ${result.skin.message}` : ""}. Try again.`,
+            ? "Skin generation is not configured on the server yet."
+            : `Skin did not come back${result.skin.message ? `: ${result.skin.message}` : ""}. Try again.`,
         );
       }
     } catch {
-      setNote("Skin didn't reach the server. Try again.");
+      setNote("Skin request did not reach the server. Try again.");
     }
     setBusy(false);
   };
@@ -51,40 +53,71 @@ export function SkinPanel({ toy }: { toy: Toy }) {
     setSkin(undefined);
   };
 
+  const isCustom = !PRESETS.some((p) => p.prompt === style);
+
   return (
-    <>
-      <h2>Skin</h2>
+    <div className="glass-card" style={{ marginTop: 12 }}>
+      <span className="kicker-label">Muse Image skin</span>
       <img
         className="toy-thumb"
         src={skin ?? toy.imageDataUrl}
         alt={skin ? `${toy.name} with its skin on` : toy.name}
+        style={{ marginTop: 4 }}
       />
-      <label className="field">
-        Style
-        <select value={style} onChange={(e) => setStyle(e.target.value)}>
-          {PRESETS.map((p) => (
-            <option key={p} value={p}>{p}</option>
-          ))}
-        </select>
-      </label>
-      <label className="field">
-        Or describe your own
+
+      <div className="pill-row" role="group" aria-label="Skin presets">
+        {PRESETS.map((p) => (
+          <button
+            key={p.label}
+            type="button"
+            className={
+              style === p.prompt ? "pill-chip pill-chip-on" : "pill-chip"
+            }
+            onClick={() => setStyle(p.prompt)}
+          >
+            {p.label}
+          </button>
+        ))}
+      </div>
+
+      <label className="field" style={{ margin: "10px 0" }}>
+        <span style={{ fontSize: 13, color: "var(--ink-muted)" }}>
+          Or describe your own look
+        </span>
         <input
-          value={PRESETS.includes(style) ? "" : style}
-          placeholder="e.g. shiny gold with black spots"
+          value={isCustom ? style : ""}
+          placeholder="e.g. shiny gold with lightning bolts"
           maxLength={140}
-          onChange={(e) => setStyle(e.target.value || PRESETS[0]!)}
+          onChange={(e) => setStyle(e.target.value || PRESETS[0]!.prompt)}
         />
       </label>
+
       {note && <p className="error">{note}</p>}
-      <button type="button" className="cta" disabled={busy} onClick={make}>
-        {busy ? "Painting (can take ~20s)…" : skin ? "Make a new skin" : "Make a skin with Muse Image"}
+
+      <button
+        type="button"
+        className="cta cta-violet"
+        style={{ marginBottom: skin ? 8 : 0 }}
+        disabled={busy}
+        onClick={make}
+      >
+        {busy
+          ? "Painting with Muse Image (~20s)..."
+          : skin
+            ? "Paint a new skin"
+            : "Paint skin with Muse Image"}
       </button>
+
       {skin && (
-        <button type="button" className="cta cta-quiet" onClick={remove}>
-          Back to the original photo
+        <button
+          type="button"
+          className="cta cta-quiet"
+          style={{ margin: 0, minHeight: 44 }}
+          onClick={remove}
+        >
+          Back to original photo
         </button>
       )}
-    </>
+    </div>
   );
 }

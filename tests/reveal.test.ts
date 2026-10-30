@@ -12,8 +12,8 @@ const toy: Toy = {
   attachPoints: [{ id: "roof", label: "Roof" }], source: "seed",
 };
 const build: Placement[] = [
-  { instanceId: "1", partId: "snap-spoiler-01", xMm: 0, yMm: 0, rotation: 0 },
-  { instanceId: "2", partId: "snap-wing-01", xMm: 32, yMm: 0, rotation: 0 },
+  { instanceId: "1", partId: "racer-spoiler", xMm: 0, yMm: 0, rotation: 0 },
+  { instanceId: "2", partId: "glow-capsule", xMm: 25, yMm: 0, rotation: 0 },
 ];
 
 describe("buildSignature", () => {
@@ -22,7 +22,7 @@ describe("buildSignature", () => {
     expect(buildSignature(reordered)).toBe(buildSignature(build));
   });
   it("changes when a part moves", () => {
-    const moved = build.map((p) => (p.instanceId === "2" ? { ...p, xMm: 48 } : p));
+    const moved = build.map((p) => (p.instanceId === "2" ? { ...p, xMm: 37.5 } : p));
     expect(buildSignature(moved)).not.toBe(buildSignature(build));
   });
 });
@@ -32,9 +32,9 @@ describe("characterFromBuild", () => {
     const a = characterFromBuild(toy, build, byId, "2026-10-28");
     const b = characterFromBuild(toy, build, byId, "2026-10-28");
     expect(a).toEqual(b);
-    expect(a.leadStat).toBe("speed"); // spoiler speed 2 ties wing glow 2, first entry wins
+    expect(a.leadStat).toBe("glow"); // glow-capsule glow +3 beats spoiler speed +2
     expect(a.title).toMatch(/Seed Car$/);
-    expect(a.partNames).toEqual(["Spoiler", "Dragon Wing"]);
+    expect(a.partNames).toEqual(["Spoiler", "Glow Capsule"]);
   });
 });
 

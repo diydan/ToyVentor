@@ -57,12 +57,12 @@ describe("drawBuild", () => {
       board,
       toyLabel: "Test",
       placements: [
-        { instanceId: "a", partId: "snap-spoiler-01", xMm: 0, yMm: 0, rotation: 0 },
-        { instanceId: "b", partId: "pro-beam-tu05", xMm: 32, yMm: 16, rotation: 90 },
+        { instanceId: "a", partId: "racer-spoiler", xMm: 0, yMm: 0, rotation: 0 },
+        { instanceId: "b", partId: "beam-str-tu05", xMm: 25, yMm: 12.5, rotation: 90 },
       ],
       partsById: byId,
       selectedId: "a",
-      ghost: { instanceId: "a", partId: "snap-spoiler-01", xMm: 16, yMm: 16, rotation: 0, valid: false },
+      ghost: { instanceId: "a", partId: "racer-spoiler", xMm: 12.5, yMm: 12.5, rotation: 0, valid: false },
     });
     expect(fills).toBeGreaterThan(6); // slab (3) + 2 blocks (3 each)
   });

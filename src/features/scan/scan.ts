@@ -1,12 +1,14 @@
 import seedCarJson from "../../../seed/toys/seed-car.json";
 import seedFigureJson from "../../../seed/toys/seed-figure.json";
+import seedKipJson from "../../../seed/toys/seed-kip.json";
 import type { Toy } from "../../../shared/toy";
 import { fetchScanToy, postScanToy, type ScanPostResult } from "../../lib/api";
 
 // Single source of truth for the backup toys: the same JSON the Worker serves.
 export const seedCar = seedCarJson as Toy;
 export const seedFigure = seedFigureJson as Toy;
-export const backupToys: Toy[] = [seedCar, seedFigure];
+export const seedKip = seedKipJson as Toy;
+export const backupToys: Toy[] = [seedCar, seedFigure, seedKip];
 
 /** Backup path: try the scan route first (it serves the seed car today),
  *  fall back to the bundled copy so the demo works with the API down. */
