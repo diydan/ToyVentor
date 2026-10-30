@@ -256,4 +256,72 @@ describe("muse spark route", () => {
     expect(body.ok).toBe(true);
     expect(body.configured).toBe(true);
   });
+
+  it("answers 429 past ten requests a minute from one IP, without calling upstream", async () => {
+    const fetchMock = stubModel(JSON.stringify({ say: "ok", recipe: RECIPE }));
+    const withIp = (body: unknown) =>
+      new Request("https://toyventor.com/api/muse/spark", {
+        method: "POST",
+        headers: { "content-type": "application/json", "cf-connecting-ip": "9.9.9.9" },
+        body: JSON.stringify(body),
+      });
+    const statuses: number[] = [];
+    for (let i = 0; i < 15; i += 1) {
+      const res = await handleMuseSpark(
+        withIp({ model: "muse-spark", input: "a garden", format: "json" }),
+        { MODEL_API_KEY: "test-key" },
+      );
+      statuses.push(res.status);
+    }
+    expect(statuses.slice(0, 10)).toEqual(new Array(10).fill(200));
+    expect(statuses.slice(10)).toEqual(new Array(5).fill(429));
+    expect(fetchMock).toHaveBeenCalledTimes(10);
+    const rejected = await handleMuseSpark(
+      withIp({ model: "muse-spark", input: "a garden", format: "json" }),
+      { MODEL_API_KEY: "test-key" },
+    );
+    expect(await rejected.text()).toContain("one world at a time");
+  });
+
+  it("clamps recipe coordinates into the playable strip", async () => {
+    stubModel(
+      JSON.stringify({
+        say: "ok",
+        recipe: {
+          ...RECIPE,
+          props: [{ type: "lantern", x: 99999 }],
+          spots: [{ part: "character.hat.flower", hide: "scarecrow", x: -5 }],
+        },
+      }),
+    );
+    const res = await handleMuseSpark(
+      post({ model: "muse-spark", input: "a garden", format: "json" }),
+      { MODEL_API_KEY: "test-key" },
+    );
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as {
+      recipe: { props: { x: number }[]; spots: { x: number }[] };
+    };
+    expect(body.recipe.props[0]?.x).toBe(45);
+    expect(body.recipe.spots[0]?.x).toBe(0);
+  });
+
+  it("rejects a chunked body over the byte cap without buffering it", async () => {
+    const big = new ReadableStream({
+      start(controller) {
+        controller.enqueue(new TextEncoder().encode(`{"input":"${"x".repeat(100_000)}"}`));
+        controller.close();
+      },
+    });
+    const res = await handleMuseSpark(
+      new Request("https://toyventor.com/api/muse/spark", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: big,
+        duplex: "half",
+      } as RequestInit),
+      { MODEL_API_KEY: "test-key" },
+    );
+    expect(res.status).toBe(413);
+  });
 });

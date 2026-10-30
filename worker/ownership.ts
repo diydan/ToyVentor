@@ -9,6 +9,10 @@ import {
   type OwnershipRecord,
 } from "../shared/ownership";
 import { validateToy } from "../shared/toy";
+import { readCappedJson } from "./body";
+
+/** Ownership records stay small (400KB payload ceiling plus envelope). */
+const MAX_OWNERSHIP_BYTES = 1_000_000;
 
 /** Minimal D1 surface this module uses (avoids a types dependency). */
 export interface D1Like {
@@ -93,12 +97,13 @@ export async function handleOwnership(
     }
 
     if (request.method === "POST" && rest === "") {
-      let body: unknown;
-      try {
-        body = await request.json();
-      } catch {
-        return json({ error: "invalid JSON body" }, 400);
-      }
+      const parsed = await readCappedJson(request, MAX_OWNERSHIP_BYTES);
+      if (!parsed.ok)
+        return json(
+          { error: parsed.over ? "request body too large" : "invalid JSON body" },
+          parsed.over ? 413 : 400,
+        );
+      const body: unknown = parsed.value;
       const errors = validateOwnershipRecord(body);
       if (errors.length > 0) return json({ error: "invalid record", errors }, 422);
       const record = body as OwnershipRecord;

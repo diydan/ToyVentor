@@ -103,8 +103,11 @@ export async function makeSkin(
     return { status: "error", message: upstreamError("skin request", err) };
   }
   if (!res.ok) {
+    // Upstream detail stays server side (see worker/muse.ts): the UI gets
+    // a generic line so raw provider text never reaches a child.
     const detail = (await res.text()).slice(0, 300);
-    return { status: "error", message: `skin returned ${res.status}: ${detail}` };
+    console.log(JSON.stringify({ event: "skin-upstream", status: res.status, detail }));
+    return { status: "error", message: "skin request failed" };
   }
   let body: {
     data?: { b64_json?: string }[];
@@ -268,7 +271,8 @@ export async function segmentToy(
 
   if (!res.ok || !res.body) {
     const detail = res.body ? (await res.text()).slice(0, 300) : "no body";
-    return { status: "error", message: `SAM returned ${res.status}: ${detail}` };
+    console.log(JSON.stringify({ event: "sam-upstream", status: res.status, detail }));
+    return { status: "error", message: "SAM request failed" };
   }
 
   // The timeout also covers streaming: an abort mid-stream degrades to an

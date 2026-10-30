@@ -69,6 +69,35 @@ describe("segmentToy mask integration", () => {
   });
 });
 
+describe("upstream error redaction", () => {
+  function stubStatus(status: number, text: string): void {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response(text, { status, headers: { "content-type": "text/plain" } })),
+    );
+  }
+
+  it("keeps raw SAM error bodies out of the kid-facing message", async () => {
+    stubStatus(500, 'upstream exploded: card 1234-5678 detail "SECRETDETAIL"');
+    const result = await segmentToy(
+      { MODEL_API_KEY: "test-key" },
+      "data:image/jpeg;base64,x",
+      "cup",
+    );
+    expect(result).toMatchObject({ status: "error", message: "SAM request failed" });
+  });
+
+  it("keeps raw skin error bodies out of the kid-facing message", async () => {
+    stubStatus(500, 'card 1234-5678 "SECRETDETAIL"');
+    const result = await makeSkin(
+      { MODEL_API_KEY: "test-key" },
+      "data:image/jpeg;base64,x",
+      "red",
+    );
+    expect(result).toMatchObject({ status: "error", message: "skin request failed" });
+  });
+});
+
 describe("upstream timeouts", () => {
   // Faithful hang: never resolves, rejects when the caller's signal aborts,
   // exactly like a real fetch against an unroutable upstream.

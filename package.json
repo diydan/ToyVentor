@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit && vite build",
+    "build": "tsc --noEmit && vite build && rm -f dist/toyventor/.dev.vars",
     "build:world": "TOYVENTOR_OUT=public/world TOYVENTOR_TEST_OUT=/tmp/exp python3 game/build25.py",
     "build:kip": "tsx scripts/build-kip.ts",
     "kip:validate-part": "tsx scripts/validate-llm-part.ts",

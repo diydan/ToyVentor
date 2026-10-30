@@ -13,6 +13,7 @@ import {
   type Toy,
   type ToyKind,
 } from "../shared/toy";
+import { readCappedJson } from "./body";
 import { makeSkin, samConfigured, segmentToy, type MetaEnv } from "./meta";
 import { handleMuseSpark, museConfigured, type MuseEnv } from "./muse";
 import { handleOwnership, type OwnershipEnv } from "./ownership";
@@ -113,16 +114,13 @@ async function handleScanPost(request: Request, env: Env): Promise<Response> {
   if (!contentType.includes("application/json"))
     return json({ error: "expected application/json" }, 415);
 
-  const declared = Number(request.headers.get("content-length") ?? "0");
-  if (declared > MAX_SCAN_BYTES)
-    return json({ error: `scan payload over ${MAX_SCAN_BYTES} bytes` }, 413);
-
-  let body: ScanBody;
-  try {
-    body = (await request.json()) as ScanBody;
-  } catch {
-    return json({ error: "invalid JSON body" }, 400);
-  }
+  const parsedScan = await readCappedJson(request, MAX_SCAN_BYTES);
+  if (!parsedScan.ok)
+    return json(
+      { error: parsedScan.over ? `scan payload over ${MAX_SCAN_BYTES} bytes` : "invalid JSON body" },
+      parsedScan.over ? 413 : 400,
+    );
+  const body = parsedScan.value as ScanBody;
 
   if (body.scan) return handleSamScan(body.scan, env);
 
@@ -143,16 +141,13 @@ async function handleSkinPost(request: Request, env: Env): Promise<Response> {
   const contentType = request.headers.get("content-type") ?? "";
   if (!contentType.includes("application/json"))
     return json({ error: "expected application/json" }, 415);
-  const declared = Number(request.headers.get("content-length") ?? "0");
-  if (declared > MAX_SCAN_BYTES)
-    return json({ error: `skin payload over ${MAX_SCAN_BYTES} bytes` }, 413);
-  let body: { imageDataUrl?: unknown; style?: unknown };
-  try {
-    body = (await request.json()) as typeof body;
-  } catch {
-    return json({ error: "invalid JSON body" }, 400);
-  }
-  const { imageDataUrl, style } = body;
+  const parsedSkin = await readCappedJson(request, MAX_SCAN_BYTES);
+  if (!parsedSkin.ok)
+    return json(
+      { error: parsedSkin.over ? `skin payload over ${MAX_SCAN_BYTES} bytes` : "invalid JSON body" },
+      parsedSkin.over ? 413 : 400,
+    );
+  const { imageDataUrl, style } = parsedSkin.value as { imageDataUrl?: unknown; style?: unknown };
   if (
     typeof imageDataUrl !== "string" || !imageDataUrl.startsWith("data:image/") ||
     typeof style !== "string" || !style || style.length > 140

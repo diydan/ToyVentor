@@ -8,6 +8,7 @@
 //
 // The game falls back to its own word parser when this route answers with
 // an error, so a model hiccup never breaks Create mode for a kid.
+import { readCappedJson } from "./body";
 import type { MetaEnv } from "./meta";
 
 export interface MuseEnv extends MetaEnv {
@@ -21,6 +22,23 @@ const DEFAULT_MODEL = "muse-spark-1.3";
 const MAX_INPUT_CHARS = 8_000;
 const MAX_SAY_CHARS = 160;
 const MAX_NAME_CHARS = 40;
+/** Request bodies stay small (input ceiling plus envelope); the byte cap
+ *  is enforced while reading so a missing content-length cannot bypass it. */
+const MAX_BODY_BYTES = 64_000;
+/** In-isolate per-IP budget for the metered kid-facing route. Best effort
+ *  only: requests can land on different isolates, so the Cloudflare
+ *  dashboard rule recorded in docs/spec.md is the durable limit. */
+const RATE_WINDOW_MS = 60_000;
+const RATE_MAX_PER_WINDOW = 10;
+const recentHits = new Map<string, number[]>();
+
+export function museRateLimited(ip: string | null | undefined, now = Date.now()): boolean {
+  if (!ip) return false;
+  const hits = (recentHits.get(ip) ?? []).filter((t) => now - t < RATE_WINDOW_MS);
+  hits.push(now);
+  recentHits.set(ip, hits);
+  return hits.length > RATE_MAX_PER_WINDOW;
+}
 /** The game gives up after 18s, so answer before that. This budget covers
  *  every attempt combined, including the reasoning-parameter retry. */
 const MODEL_TIMEOUT_MS = 13_000;
@@ -174,10 +192,16 @@ function cleanRecipe(value: unknown): CleanRecipe | null {
   const name = kidSafeText(rawName) ? rawName : "My world";
   const props = Array.isArray(value.props) ? value.props : [];
   const spots = Array.isArray(value.spots) ? value.spots : [];
+  // Positions clamp into the playable strip, matching the editor's edSnap
+  // (game/engine25.js): the spec's "clamps positions into range" holds here.
+  const clampX = (x: number) => Math.min(45, Math.max(0, x));
   const cleanProps = props
     .filter((p) => isRecord(p) && typeof p.type === "string" && typeof p.x === "number")
     .slice(0, 32)
-    .map((p) => ({ type: (p as Record<string, unknown>).type as string, x: (p as Record<string, unknown>).x as number }));
+    .map((p) => ({
+      type: (p as Record<string, unknown>).type as string,
+      x: clampX((p as Record<string, unknown>).x as number),
+    }));
   const cleanSpots = spots
     .filter(
       (s) =>
@@ -190,7 +214,7 @@ function cleanRecipe(value: unknown): CleanRecipe | null {
     .map((s) => ({
       part: (s as Record<string, unknown>).part as string,
       hide: (s as Record<string, unknown>).hide as string,
-      x: (s as Record<string, unknown>).x as number,
+      x: clampX((s as Record<string, unknown>).x as number),
     }));
   return {
     format: "toyventor.level/1",
@@ -213,16 +237,20 @@ export async function handleMuseSpark(request: Request, env: MuseEnv): Promise<R
   }
   if (request.method !== "POST") return json({ error: "method not allowed" }, 405);
 
+  if (museRateLimited(request.headers.get("CF-Connecting-IP")))
+    return json({ error: "Slow down, one world at a time. Try again in a minute." }, 429);
+
   const contentType = request.headers.get("content-type") ?? "";
   if (!contentType.includes("application/json"))
     return json({ error: "expected application/json" }, 415);
 
-  let body: { model?: unknown; input?: unknown; format?: unknown };
-  try {
-    body = (await request.json()) as typeof body;
-  } catch {
-    return json({ error: "invalid JSON body" }, 400);
-  }
+  const parsedBody = await readCappedJson(request, MAX_BODY_BYTES);
+  if (!parsedBody.ok)
+    return json(
+      { error: parsedBody.over ? "request body too large" : "invalid JSON body" },
+      parsedBody.over ? 413 : 400,
+    );
+  const body = parsedBody.value as { model?: unknown; input?: unknown; format?: unknown };
 
   const input = typeof body.input === "string" ? body.input : "";
   if (!input.trim()) return json({ error: "input is required" }, 422);

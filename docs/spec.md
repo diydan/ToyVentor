@@ -199,7 +199,7 @@ Two things I considered and rejected, for the record. First, generating part geo
 
 - Snap Large is the easiest-handling format. Rounded edges, no sharp corners, no small loose pieces on young-kid parts. Printed parts remain prototypes until fit, durability and formal age-safety review are complete; they are not yet safety-certified or formally age-graded.
 - Live Play listens and watches only during active play. Parent starts and stops the session. Mood buttons work with camera and mic off.
-- The Create mode model route has no login in the demo build, so its output rules and filter are the protection. Rate limits on that route are still to add before a public launch.
+- The Create mode model route has no login in the demo build, so its output rules and filter are the protection. Rate limits on `/api/muse/spark`: a Cloudflare dashboard rule of 10 requests/minute per IP is the durable limit (confirm it in the dashboard before a public launch); worker/muse.ts carries a best-effort in-isolate backstop over the same budget that answers 429.
 - Character add-ons use original designs. Calibration piece and per-printer offsets handle snap fit variance.
 
 ## ToyVentor Snap
