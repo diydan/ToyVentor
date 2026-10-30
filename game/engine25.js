@@ -760,7 +760,7 @@ function edMarkers(){if(ED.g)scene.remove(ED.g);ED.g=new T.Group();ED.pins=[];sc
  linearize(ED.g)}
 function edFit(units){return Math.max(12,Math.min(120,units/(2*Math.tan(camera.fov*Math.PI/360)*camera.aspect)))}function edZoom(f){ED.d=Math.max(12,Math.min(120,ED.d*f));edMarkers()}function edView(){var W0=window.innerWidth,H0=window.innerHeight;camera.setViewOffset(W0,H0,0,H0*.22,W0,H0)}
 function edEnter(){if(!ED.R){try{ED.R=JSON.parse(localStorage.getItem("tvLevel")||"null")}catch(e){}if(!edValid(ED.R))ED.R=edCopy("garden")}
- if(P.busy)return;if(!ED.testing)ED.prev=S.world;ED.on=true;P.title=false;document.body.classList.remove("titled","building","testing");$("#title").hidden=true;$("#sheet").hidden=true;$("#pcard").hidden=true;$("#ed-back").hidden=true;
+ if(P.busy)return;if(!ED.testing)ED.prev=S.world;ED.on=true;P.title=false;S.started=true;save();document.body.classList.remove("titled","building","testing");$("#title").hidden=true;$("#sheet").hidden=true;$("#pcard").hidden=true;$("#ed-back").hidden=true;
  P.showcase=false;P.target=null;P.root.visible=false;P.pos.set(-40,0,0);if(!ED.dSet){ED.d=edFit(17);ED.dSet=true}document.body.classList.add("editing");$("#ed").hidden=false;$("#ed-name").value=ED.R.name;$("#ed-theme").value=ED.R.theme;
  edView();WORLDS.custom=edEngine(ED.R);buildWorld("custom");edMarkers();edPanel();flash();if(ED.kid)crUI(true)}
 function edExit(){ED.on=false;ED.sel=null;ED.arm=null;if(ED.g){scene.remove(ED.g);ED.g=null}document.body.classList.remove("editing");$("#ed").hidden=true;camera.clearViewOffset();
@@ -816,7 +816,7 @@ $("#ed-close").addEventListener("click",function(){$("#ed-io").hidden=true});
 $("#ed-copy").addEventListener("click",function(){var ta=$("#ed-txt");ta.select();var done=function(){toast("Copied. Paste it into the level file or a message.")};if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(ta.value).then(done,function(){try{document.execCommand("copy");done()}catch(e){toast("Select the text and copy it by hand.")}});else{try{document.execCommand("copy");done()}catch(e){toast("Select the text and copy it by hand.")}}});
 $("#ed-load").addEventListener("click",function(){var R=null;try{R=JSON.parse($("#ed-txt").value)}catch(e){}if(!edValid(R)){toast("That isn't a ToyVentor level. Check the format line and the part names.");return}edPush();ED.R=R;ED.sel=null;$("#ed-io").hidden=true;$("#ed-name").value=R.name||"My world";$("#ed-theme").value=R.theme;edApply();toast("Level imported.")});
 window.addEventListener("resize",function(){if(ED.on)edView()});
-if(location.hash==="#edit"||/[?&]edit\b/.test(location.search))setTimeout(function(){if(P.title)edEnter()},400);
+if(location.hash==="#edit"||/[?&]edit\b/.test(location.search))setTimeout(function(){if(P.title||S.started)edEnter()},400);
 window.addEventListener("keydown",function(e){if(!ED.on)return;e.stopImmediatePropagation();var tg=e.target&&e.target.tagName;if(tg==="INPUT"||tg==="TEXTAREA"||tg==="SELECT")return;var k=e.key,mod=e.ctrlKey||e.metaKey;
  if(mod&&k.toLowerCase()==="z"){e.preventDefault();if(e.shiftKey)edRedo();else edUndo()}else if(mod&&k.toLowerCase()==="y"){e.preventDefault();edRedo()}
  else if((k==="Delete"||k==="Backspace")&&ED.sel){e.preventDefault();var d=$("#ed-del");if(d)d.click()}
@@ -1030,7 +1030,7 @@ $("#cr-keep").addEventListener("click",function(){var L0=[];try{L0=JSON.parse(lo
 $("#cr-play").addEventListener("click",function(){edPlay()});$("#cr-exit").addEventListener("click",crExit);
 $("#cr-code-t").addEventListener("click",function(){CR.code=!CR.code;$("#cr-code").hidden=!CR.code;this.textContent=CR.code?"Hide the code":"Show the code"});
 (function(){var SR=window.SpeechRecognition||window.webkitSpeechRecognition,mb=$("#cr-mic");if(!SR){mb.hidden=true;return}mb.addEventListener("click",function(){try{var r=new SR();r.lang="en-US";r.interimResults=false;r.maxAlternatives=1;mb.classList.add("on");r.onresult=function(e){$("#cr-in").value=e.results[0][0].transcript};r.onend=function(){mb.classList.remove("on")};r.onerror=function(){mb.classList.remove("on")};r.start()}catch(e){mb.hidden=true}})})();
-$("#tcreate").addEventListener("click",function(){ctx();P.title=false;crEnter()});
+$("#tcreate").addEventListener("click",function(){ctx();P.title=false;S.started=true;save();crEnter()});
 
 /* ===== STEM playground missions in 2.5D: measure, balance, logic door, raft ===== */
 var MT={};
@@ -1204,11 +1204,11 @@ toyFromURL();
 mInit();
 if(!WORLDS[S.world])S.world="garden";
 setupPost();buildFactory();buildWorld(S.world);buildPlayer(null);moves();updHud();resize();
-P.title=true;P.showcase=true;P.pos.set(FX,0,0);cam.x=FX;facA=-.55;document.body.classList.add("titled");
-function startPlay(build){if(!P.title)return;P.title=false;document.body.classList.remove("titled");$("#title").hidden=true;ctx();musInit();MUS.on=true;musGain(sound?.7:0,1.2);
+P.title=true;P.showcase=true;P.pos.set(FX,0,0);cam.x=FX;facA=-.55;document.body.classList.add("titled");if(S.started)startPlay(false);
+function startPlay(build){if(!P.title)return;P.title=false;S.started=true;save();document.body.classList.remove("titled");$("#title").hidden=true;ctx();musInit();MUS.on=true;musGain(sound?.7:0,1.2);
  if(build){P.pos.set(2,0,0);P.showcase=false;openSheet();return}
  camera.clearViewOffset();P.showcase=false;P.pos.set(2,0,0);P.face=P.tface=0;cam.x=3;flash();setTimeout(function(){showIntro(S.world)},250);setTimeout(function(){var h=$(".how");if(h)h.classList.add("gone")},9000)}
-$("#play").addEventListener("click",function(){startPlay(false)});function goHome(){if(P.title||P.busy||ED.on||ED.testing)return;if(document.body.classList.contains("building")){document.body.classList.remove("building");$("#sheet").hidden=true;$("#tray").hidden=false}$("#pcard").hidden=true;var tp=$(".tip");if(tp)tp.hidden=true;P.target=null;save();P.title=true;P.showcase=true;P.pos.set(FX,0,0);cam.x=FX;facA=-.55;document.body.classList.add("titled");$("#title").hidden=false;musGain(sound?.3:0,1);flash();sfx.pop()}$("#home").addEventListener("click",goHome);$("#tbuild").addEventListener("click",function(){startPlay(true)});
+$("#play").addEventListener("click",function(){startPlay(false)});function goHome(){if(P.title||P.busy||ED.on||ED.testing)return;if(document.body.classList.contains("building")){document.body.classList.remove("building");$("#sheet").hidden=true;$("#tray").hidden=false}$("#pcard").hidden=true;var tp=$(".tip");if(tp)tp.hidden=true;P.target=null;S.started=false;save();P.title=true;P.showcase=true;P.pos.set(FX,0,0);cam.x=FX;facA=-.55;document.body.classList.add("titled");$("#title").hidden=false;musGain(sound?.3:0,1);flash();sfx.pop()}$("#home").addEventListener("click",goHome);$("#tbuild").addEventListener("click",function(){startPlay(true)});
 setTimeout(function(){$("#load").classList.add("gone")},150);
 requestAnimationFrame(frame);
 window.__x={MT:MT,Wm:function(){return W.missions},cr:{enter:crEnter,make:crMake,exit:crExit,R:function(){return ED.R},CR:CR},ed:{ED:ED,enter:edEnter,play:edPlay,back:edBack,exit:edExit,checks:function(){return edChecks(ED.R)},scr:function(x,y){var v=new T.Vector3(x,y,0).project(camera),r=canvas.getBoundingClientRect();return [(v.x+1)/2*r.width+r.left,(1-v.y)/2*r.height+r.top]}},face:function(a){facA=a},start:startPlay,composer:function(){return !!composer},P:P,spots:spots,bolts:bolts,ability:ability,S:S,unbolt:unbolt,go:function(w){$('.wt[data-w="'+w+'"]').click()},open:openSheet,close:closeSheet};
