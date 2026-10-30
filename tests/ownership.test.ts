@@ -104,4 +104,54 @@ describe("/api/ownership", () => {
     const list = (await (await call(env, "/api/ownership")).json()) as { items: unknown[] };
     expect(list.items).toEqual([]);
   });
+
+  it("self-bootstraps when a fresh local D1 lacks the ownership table", async () => {
+    let tableReady = false;
+    const base = fakeDb();
+    const unmigrated: D1Like = {
+      prepare: (sql) => ({
+        bind: (...values: unknown[]) => ({
+          run: async () => {
+            if (sql.startsWith("CREATE TABLE")) {
+              tableReady = true;
+              return {};
+            }
+            if (sql.startsWith("CREATE INDEX")) return {};
+            if (!tableReady) throw new Error("D1_ERROR: no such table: ownership: SQLITE_ERROR");
+            return base.prepare(sql).bind(...values).run();
+          },
+          all: async () => {
+            if (!tableReady) throw new Error("D1_ERROR: no such table: ownership: SQLITE_ERROR");
+            return base.prepare(sql).bind(...values).all();
+          },
+        }),
+      }),
+    };
+
+    const getRes = await call({ DB: unmigrated }, "/api/ownership");
+    expect(getRes.status).toBe(200);
+    expect(tableReady).toBe(true);
+    expect(await getRes.json()).toEqual({ items: [] });
+  });
+
+  it("returns 503 local-only JSON instead of throwing on unexpected D1 errors", async () => {
+    const broken: D1Like = {
+      prepare: () => ({
+        bind: () => ({
+          run: async () => {
+            throw new Error("D1_ERROR: disk I/O error");
+          },
+          all: async () => {
+            throw new Error("D1_ERROR: disk I/O error");
+          },
+        }),
+      }),
+    };
+    const res = await call({ DB: broken }, "/api/ownership");
+    expect(res.status).toBe(503);
+    expect(await res.json()).toEqual({
+      error: "ownership store unavailable",
+      mode: "local-only",
+    });
+  });
 });
