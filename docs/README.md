@@ -46,6 +46,8 @@ long-term direction; if two documents disagree about product behaviour,
 | --- | --- |
 | [creating-parts.md](creating-parts.md) | The recurring runbook for new robots, figurines, add-ons and mechanisms: brief, catalog slot, PartSpec gate, assembly proof, app bridge, printing and handoff |
 | [parts-review.md](parts-review.md) | Full engineering and product-spec review of Snap and Pro part libraries and parametric specs across the OpenSCAD app lane, PartSpec v1, and PartSpec v2 |
+| [flatpack-modular-craft-spec.md](flatpack-modular-craft-spec.md) | Multi-pass architecture (`52 -> 15` rigid modules + `3` shape-out flex skins across `4` flat-pack kit cards) adapting `/Users/dan/Code/parts` onto the `50 mm` (`4 TU`) / `12.5 mm` TU modular system for Cars, Trucks, Tractors, Trailers, Bikes, Planes, Boats, Helicopters & Spaceships |
+| [progressive-power-system-spec.md](progressive-power-system-spec.md) | Four-stage progressive power & robotics architecture (`Snap → Pro → Momentum → Mech`): shared `4×4×2 TU` Power Core datum + Phase-3 keep-out verification gates for balloon jets/bellows, pull-back rubber-band spools, bumper-trigger auto-actuators, rip-cord gyros, string zip-lines, and drop-in no-solder ESP32 + N20 + 9g servo bricks |
 
 ## Stretch specs
 
