@@ -102,76 +102,85 @@ or fallback.
 
 ### 4.1 Gate: standalone XP spec first (no code before sign-off)
 
-XP is a system, not a feature, and none of it exists in `src/` today. No
-implementation starts until the XP spec answers seven items: accuracy defined
-per mission type; anti-farming replay rules with numbers; persistence
-(device vs. synced, new-device and cleared-storage behavior); one shared pool
-vs. per-kid profiles; one currency vs. split currencies for difficulty,
-vehicles, and parts; grandfathering mechanics; and a required read-only parent
-XP summary with a reset control. Scoring changes XP meaning only; physics,
-checks, rarity, and audio cadence do not change.
+XP is a system, not a feature, and none of it exists in `src/` today. All seven
+open design questions, exact formulas, mission tolerances, `S.mdone` migration,
+and D1 sync encoding are resolved in **[`xp-system-spec.md`](xp-system-spec.md)**
+(the authoritative Phase 3 gate). No Phase 3 code or Phase 4 lock copy ships
+until `xp-system-spec.md` is signed off. Scoring changes XP meaning only;
+physics, checks, rarity, and audio cadence do not change.
 
 
 ### 4.2 Core Philosophy: Reward Precision Without Punishing Exploration
 
-Attempts never lose XP. Harder challenges scale reward, not loss. First-try,
-calibrated, quiz-verified, and combo successes earn the same voltage for the
-same outcome. Every completed mission awards full base XP whatever the attempt
-count; high accuracy adds +25–50% bonus XP with improvable 1–3★ mastery stars.
+Attempts never lose XP. Harder challenges scale reward, not loss. Every
+completed mission awards full base XP whatever the `failedChecks` count; high
+accuracy (`0` or `1` failed checks, plus within-tolerance calibration on
+`measure`, `balance`, and `lever`) adds `+25–50%` bonus XP with improvable
+`1–3★` mastery stars.
 
 
-### 4.3 Draft XP Math — PROPOSAL, pending §4.1 sign-off
+### 4.3 XP Math Summary — Governed by [`xp-system-spec.md`](xp-system-spec.md)
 
-Award equals base XP by difficulty tier (100/150/220 XP) times one plus
-accuracy and part-match bonuses, times a replay factor. Mastery: 3★ for
-first-try exact solves (+50%), 2★ for second-try fixes (+25%), 1★ for solved
-in 3+ tries (full base). Equipped parts matching the mission stat add +10%.
-First daily solve of a mission-tier pays full; improving a star pays the full
-uncollected delta at once; repeating an earned 3★ pays quarter practice XP so
-progress comes from new labs, not farming. The proposal keeps separate
-per-toy XP, sparks, quiz state, and anti-grind limits. Success animation and
-sound occur once per completed mission; attempts are visible, but only
-completed checkpoints affect XP.
-
-
-
-### 4.4 Unlockable STEM Level Difficulty Tiers
-
-Difficulty tiers unlock harder missions and parts without changing the meaning
-of completed work. Tier visuals stay distinct from rarity and stats: Tier 1
-Starter (default, forgiving, Snap, ages 4–6); Tier 2 Tinker (rank- or
-2★-gated, tighter budgets, hints behind a tap, ages 6–8); Tier 3 Engineer
-(rank-gated, exact gear ratios, multi-step patterns, part-efficiency goals,
-ages 8+).
+- **Shared device pool** (superseding earlier per-toy XP drafts): one unified
+  `totalXp`, `rank`, `missionStars`, and permanent `unlockedIds` per device in
+  `localStorage["toyforge:progression:v1"]`, synced through `/api/ownership` as
+  `{ type: "character", id: "progression:v1", payload }`.
+- **Run multiplier:** `M = 1 + accuracyBonus + partMatchBonus` (`3★ = +0.50`,
+  `2★ = +0.25`, `1★ = +0.00`; `+0.10` when active toy provides `>= 1` point of
+  the mission's matching `stat`), rounded via `Math.round`.
+- **Daily replay & delta rules (keyed by `"{missionId}:t{tier}"` on
+  `localDay(nowMs, settings.timezone)`):** first daily solve pays
+  `Math.round(Base * M)`; improving `todayBestMultiplier` pays the exact
+  uncollected delta `Math.round(Base * M) - Math.round(Base * todayBestMultiplier)`;
+  same-day non-improving practice replays pay `0.25x` up to `2` paid practice
+  replays per `(missionId, tier)` per day.
 
 
-### 4.5 Draft Maker Ranks & Advanced Part Unlocks — PROPOSAL, pending §4.1 sign-off
+### 4.4 Unlockable STEM Level Difficulty Tiers (Track B: Lab Mastery)
 
-Ranks unlock vehicles (as playable cards in Phase 4) and advanced part
-families in Build/PrintDrawer in catalog order; thresholds below are the draft
-the XP spec must confirm, split, or replace. No rank grants unsafe,
-unverified, or unprinted geometry.
+Difficulty tiers and Pro parts are gated by **Lab Mastery (`missionStars`)**,
+never by Maker Rank (`totalXp`), so vehicle progression and lab mastery cannot
+stall each other:
 
-| Rank | Title | Draft XP | Vehicles | Parts & difficulty |
-| --- | --- | --- | --- | --- |
-| 1 | Snap Sprout | 0 | Kip, Red Racer, SAM Scan | Core Snap parts, Tier 1 labs 1–6 |
-| 2 | Workshop Builder | 250 | Hauler Truck, Motor Scooter | Heavy Snap add-ons, Tier 2 labs 1–3 |
-| 3 | Gearhead | 600 | Sport Motorbike, Loader Tractor & Trailer | Pro mechanical line unlocked |
-| 4 | Sky & Sea Pilot | 1,100 | Prop Aeroplane, Catamaran Boat | Flat-pack aero/marine modules, Tier 2 labs 4–6, Tier 3 labs 1–2 |
-| 5 | Aero Captain | 1,800 | Rescue Helicopter, Space Shuttle | Momentum stored-energy modules, Tier 3 labs 3–6 |
-| 6 | Mech Inventor | 2,700 | Bolt Power Mech | Mech robotics preview brick |
+- **Tier 1 Starter (`100` base XP):** unlocked on boot across all missions.
+- **Tier 2 Tinker (`150` base XP):** unlocks per mission once
+  `stars("{missionId}:t1") >= 2`.
+- **Tier 3 Engineer (`220` base XP):** unlocks per mission once
+  `stars("{missionId}:t2") >= 2`.
+- **Pro parts by `(line === "Pro", stat)`:** unlock on earning `3★` in the
+  matching lab family (`torque` -> `Lab 1`/`Lab 2`; `speed` -> `Lab 3`/`Lab 4`;
+  `glow` -> `Lab 2`/`Lab 4`; `spin` -> `Lab 5`/`Lab 6`).
+- Phase 3 must ship parameterized `Tier 2` and `Tier 3` presets across
+  `Lab 1–6` before Phase 4 enables Rank 5–6 vehicle locks (`1,800` / `2,700 XP`).
+
+
+### 4.5 Maker Ranks & Vehicle Unlocks (Track A: `totalXp` -> Vehicles Only)
+
+Maker Ranks unlock Phase 4 vehicles in catalog order; thresholds are defined in
+[`xp-system-spec.md`](xp-system-spec.md). No rank grants unsafe, unverified, or
+unprinted geometry, and `Star Scout` (`seed-figure`) is grandfathered rather
+than rank-locked.
+
+| Rank | Title | XP Threshold | Vehicles Unlocked (Phase 4) |
+| --- | --- | --- | --- |
+| 1 | Snap Sprout | 0 | Kip, Red Racer, SAM Scan |
+| 2 | Workshop Builder | 250 | Hauler Truck, Motor Scooter |
+| 3 | Gearhead | 600 | Sport Motorbike, Loader Tractor & Trailer |
+| 4 | Sky & Sea Pilot | 1,100 | Prop Aeroplane, Catamaran Boat |
+| 5 | Aero Captain | 1,800 | Rescue Helicopter, Space Shuttle |
+| 6 | Mech Inventor | 2,700 | Bolt Power Mech |
 
 
 ### 4.6 Persistence, HUD Footprint & Parent Visibility
 
-Progression records use payload shapes accepted by ownership: toys, parts,
-skins, or characters. Zero HUD clutter on the stage: a subtle rank pip on the
-toy pill, a progress bar in My Toys, and a short celebratory toast per
-completed mission. Persistence is local-first with D1 sync when an identity
-exists (final call in the XP spec). Parents get a read-only XP summary with
-current rank, recent unlocks, and a confirmed reset control beside the play
-time ledger, behind the PIN gate. An optional grown-up sandbox toggle can
-unlock everything for demos without changing earned XP.
+Progression syncs inside the existing ownership `character` lane (`id:
+"progression:v1"`), including permanent `unlockedIds` so grandfathered and
+scanned toys survive `Reset XP` and device restore. Zero HUD clutter on the
+stage: a subtle rank pip on `Toy Box`, a progress bar inside `Toy Box`, `1–3★`
+badges on lab cards, and a short celebratory toast per completed mission.
+Parents get a read-only Maker Progress summary (`totalXp`, rank, stars per lab,
+recent unlocks), a confirmed `Reset XP` button, and a non-destructive `Sandbox
+Unlock All` toggle beside the Play Time ledger behind the `⚙️` PIN gate.
 
 
 ## 5. Phase 4 — Greyed-Out Roster Wired to XP

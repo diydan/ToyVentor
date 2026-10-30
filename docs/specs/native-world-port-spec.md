@@ -7,10 +7,9 @@ the Vite/React bundle instead of a scraped same-origin `<iframe>`.
 
 ## 1. Problem & Goal
 
-Today [`GameCanvas.tsx`](../../src/features/game/world/GameCanvas.tsx) mounts
-`<iframe src="/world/ToyVentor-World.html">` compiled by
-[`game/build25.py`](../../game/build25.py) from
-[`game/engine25.js`](../../game/engine25.js) (`1,152` lines), while
+Before Phase 0A, [`GameCanvas.tsx`](../../src/features/game/world/GameCanvas.tsx) mounted
+`<iframe src="/world/ToyVentor-World.html">` compiled by `game/build25.py` from
+`game/engine25.js` (now ported to [`src/features/game/world/runtime/world.ts`](../../src/features/game/world/runtime/world.ts), `1,152` lines), while
 [`engine.ts`](../../src/features/game/world/engine.ts) polls hidden iframe DOM
 sheets (`#sheet`, `#mp`, `#cr`, `#ed`) every `100 ms` and forwards actions via
 synthetic `.click()` calls.

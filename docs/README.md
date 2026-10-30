@@ -11,8 +11,9 @@ on geometry conflicts, [parts-tu-spec.md](parts/parts-tu-spec.md) and
   journal, demo script.
 - `ux/`: one-stage World spec, interactive mockups, and design guide.
 - `specs/`: `app-continuation-spec.md`, `native-world-port-spec.md`
-  (Phase 0), `stage-simplification-and-kip-spec.md`, parent time gate,
-  flat-pack craft, progressive power, and scan-to-3D.
+  (Phase 0), `stage-simplification-and-kip-spec.md`, `xp-system-spec.md`
+  (Phase 3 gate), parent time gate, flat-pack craft, progressive power, and
+  scan-to-3D.
 - `parts/`: Snap and Pro summaries, creating-parts runbook, TU spec, and the
   generated PartSpec snapshot.
 - `decisions/`: dated records `0001`–`0006`.
@@ -38,6 +39,7 @@ on geometry conflicts, [parts-tu-spec.md](parts/parts-tu-spec.md) and
 | [native-world-port-spec.md](specs/native-world-port-spec.md) | **Phase 0:** native Vite/React Three.js stage port, removing the `<iframe>` and `public/world/**`. |
 | [stage-simplification-and-kip-spec.md](specs/stage-simplification-and-kip-spec.md) | Companion spec for `Demo Mode`, cog-mesh fix, Kip V2 unification (`25` `robot.*` aliases), and retiring `#fix`. |
 | [app-continuation-spec.md](specs/app-continuation-spec.md) | **Phases 1-5:** `Toy Box` bar & `⚙️` PIN gate, enabled roster, STEM XP, locked roster, and weekly packs. |
+| [xp-system-spec.md](specs/xp-system-spec.md) | **Phase 3 gate:** STEM XP scoring, 11-mission tolerances, two-track gating, and D1 sync contract. |
 | [parent-time-gate.md](specs/parent-time-gate.md) | Implemented parent caps and earned STEM time. |
 | [flatpack-modular-craft-spec.md](specs/flatpack-modular-craft-spec.md) | Proposed flat-pack vehicle/craft grammar. |
 | [progressive-power-system-spec.md](specs/progressive-power-system-spec.md) | Proposed momentum-to-robotics stages. |

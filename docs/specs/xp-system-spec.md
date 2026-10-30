@@ -9,11 +9,11 @@ completion arrives today as binary flags only (`S.mdone`, scraped as
 ledger already records `completedMissionIds` and STEM `earnedMinutes` per
 day, and ownership sync accepts toys/parts/skins/characters payloads.
 
-> Status: **ACCEPTED — implement.** Decisions 1–7 resolved below. This spec
-> supersedes continuation §4.3's "separate per-toy XP" line and §4.4's
-> rank-gated tier wording: family stars gate tiers, Maker Rank gates
-> vehicles. Greyed-out roster wiring stays Phase 4; Phase 3 ships awards,
-> stars, ranks, persistence, parent visibility, and instrumentation.
+> Status: **ACCEPTED — implement.** Decisions 1–7 resolved below, aligned
+> with continuation §4.3–§4.6 (shared device pool, daily multiplier rules,
+> per-mission tier gates). Maker Rank gates vehicles only. Greyed-out
+> roster wiring stays Phase 4; Phase 3 ships awards, stars, ranks,
+> persistence, parent visibility, and instrumentation.
 
 ## Decision 1 — Accuracy per mission type
 
@@ -64,18 +64,20 @@ for the measure family only.
 **Resolved details.**
 
 - Keys: `missionId` = legacy `world.type` (e.g. `lab1.measure`);
-  progression key = `${missionId}@${tier}`. All shipped missions are
+  progression key = `${missionId}:t${tier}`. All shipped missions are
   Tier 1 today; Tier 2/3 variants reuse the id at higher tiers.
 - Legacy `mdone` flags map to Tier 1 with attempts unknown: they count
   as solved for play-time, and stars/XP are earned on the next scored
   solve (no retroactive accuracy bonus).
-- "Full" means full *uncollected* award. Delta = `Award(newBest) −
-  alreadyPaid(key)`, clamped at 0, evaluated with the improving solve's
-  part-match. Worked example (Tier 1, no part-match): 1-star solve pays
-  100; later 3-star solve pays `150 − 100 = 50`; a further 3-star
-  repeat pays `round(150 × 0.25) = 38` practice XP.
-- Practice XP has no cap. Grinding the easiest Tier 1 still progresses
-  at 4x slower than breadth; that trade-off is accepted (no caps UI).
+- Daily rules use the day's best multiplier `M = 1 + accuracy +
+  partMatch` per key (`localDay(now, settings.timezone)`): first solve
+  of the day pays `Math.round(Base × M)`; improving the day's best pays
+  `Math.round(Base × M_new) − Math.round(Base × M_best)`; non-improving
+  repeats pay `Math.round(Base × M × 0.25)`, at most 2 paid practice
+  replays per key per day. Worked example (Tier 1, no part-match):
+  1-star solve pays 100; a later same-day 3-star solve pays
+  `150 − 100 = 50`; a further same-day 3-star repeat pays
+  `round(150 × 0.25) = 38` practice XP.
 - Solved missions reopen for improvement/practice (near detection no
   longer requires unsolved). Scrap rewards still pay once via the chest.
 - Local day = `localDay(now, settings.timezone)` from the parent-time
@@ -87,19 +89,19 @@ Recommendation: adopt as written. One formula, no caps UI to explain.
 
 Local-first in `localStorage["toyforge:progression:v1"]`
 (`totalXp`, `rank`, `missionStars`, `sandboxUnlockAll`), synced through
-ownership as `type: "progression"` when a device identity exists — same
-pattern the Toy Box uses today. New device without an identity starts
+ownership in the existing `character` lane as
+`{ type: "character", id: "progression:v1", payload }` when a device
+identity exists — same pattern the Toy Box uses today, no parallel
+payload path. New device without an identity starts
 fresh; cleared storage is identical to a new device. The parent sheet
 states this honestly ("XP lives on this device").
 
 **Resolved details.**
 
-- `progression` is a new ownership `OwnedItemType` (validator, worker,
-  and D1 `item_type` text column accept it; no migration needed).
-  Record id is the constant `local` (one shared pool per device).
-- Stored shape: `totalXp`, `missionStars`, `paidXp`, `lastPaidDay`,
-  `unlockedIds`, `sandboxUnlockAll`. `rank` is derived, never stored.
-- Merge on pull: max `totalXp`/`paidXp`, max stars per key, union
+- Stored shape: `totalXp`, `missionStars`, `daily` (per-day best
+  multiplier and practice counts), `unlockedIds`, `sandboxUnlockAll`.
+  `rank` is derived, never stored.
+- Merge on pull: max `totalXp`, max stars and daily bests per key, union
   `unlockedIds`, OR `sandboxUnlockAll`. Local storage stays
   authoritative offline; sync is best-effort.
 
@@ -127,10 +129,13 @@ on one grind. Split along data already planned:
 
 **Resolved details.**
 
-- *Family* = lab (`lab1`…`lab6`, the `missionId` prefix). Family stars
-  = sum of best stars across that lab's missions and tiers.
-- This spec governs tier gating; continuation §4.4's "rank-gated"
-  wording is superseded. Maker Rank never gates tiers or parts.
+- Per continuation §4.4: Tier 2 unlocks per mission at
+  `stars("{missionId}:t1") >= 2`; Tier 3 at
+  `stars("{missionId}:t2") >= 2`. *Family* = lab (`lab1`…`lab6`);
+  family stars (sum per lab) drive the parent view and Pro-stat
+  unlocks (`torque` → Lab 1/2, `speed` → Lab 3/4, `glow` → Lab 2/4,
+  `spin` → Lab 5/6, each on any 3★ in a matching lab). Maker Rank
+  never gates tiers or parts.
 - Part-match bonus (+10%): each mission type has one stat
   (`bridge`/`lift`/`lever`/`balance` → torque, `raft` → speed,
   `circuit`/`measure`/`clean` → glow, `code`/`pattern`/`logic` →
