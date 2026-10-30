@@ -354,6 +354,11 @@ button:focus-visible{outline:3px solid var(--focus);outline-offset:3px}
 </script>
 </body>
 </html>'''
-open(os.path.join(OUT, "ToyVentor-World.html"), "w").write(page("https://cdn.jsdelivr.net/npm/three@%s/" % THREE_VERSION))
+# Published page loads three from this origin (public/world/three/,
+# vendored from the three-v160 devDependency pinned to THREE_VERSION
+# above: keep them in sync) so the world renders with no runtime CDN
+# dependency. three-v160 is an install alias so the top-level "three"
+# stays at the model-viewer release the client bundle builds against.
+open(os.path.join(OUT, "ToyVentor-World.html"), "w").write(page("/world/three/"))
 open(os.path.join(TEST_OUT, "test-25v2.html"), "w").write(page("file:///tmp/shot/node_modules/three/"))
 print("built; em dashes:", engine.count("\u2014"))
