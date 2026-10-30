@@ -16,8 +16,9 @@ import {
 import { makeSkin, samConfigured, segmentToy, type MetaEnv } from "./meta";
 import { handleMuseSpark, museConfigured, type MuseEnv } from "./muse";
 import { handleOwnership, type OwnershipEnv } from "./ownership";
+import { handleParent, type ParentEnv } from "./parent";
 
-export interface Env extends MetaEnv, MuseEnv, OwnershipEnv {
+export interface Env extends MetaEnv, MuseEnv, OwnershipEnv, ParentEnv {
   MUREKA_API_KEY?: string;
   ASSETS?: { fetch: (request: Request) => Promise<Response> };
 }
@@ -205,6 +206,10 @@ export default {
 
     if (url.pathname === "/api/ownership" || url.pathname.startsWith("/api/ownership/")) {
       return handleOwnership(request, env, url.pathname.slice("/api/ownership".length));
+    }
+
+    if (url.pathname.startsWith("/api/parent/")) {
+      return handleParent(request, env, url.pathname.slice("/api/parent".length));
     }
 
     if (url.pathname.startsWith("/api/")) {

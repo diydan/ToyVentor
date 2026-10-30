@@ -36,6 +36,10 @@ if (!existsSync(join(root, "migrations/0001_ownership.sql")))
   fail("migrations/0001_ownership.sql missing");
 else ok("ownership migration present");
 
+if (!existsSync(join(root, "migrations/0002_parent_time.sql")))
+  fail("migrations/0002_parent_time.sql missing");
+else ok("parent time migration present");
+
 // 4. Built client exists or the deploy script will build it.
 if (existsSync(join(root, "dist/client/index.html"))) ok("dist/ build present");
 else console.log("preflight note: no dist/ yet — `npm run deploy` builds first, this is fine");

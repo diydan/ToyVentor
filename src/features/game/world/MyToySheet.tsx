@@ -52,11 +52,13 @@ export function MyToySheet({
   initialStep = "shelf",
   onClose,
   onSkinChange,
+  onOpenGrownUps,
 }: {
   open: boolean;
   initialStep?: "shelf" | "scan";
   onClose: () => void;
   onSkinChange?: () => void;
+  onOpenGrownUps?: () => void;
 }) {
   const { uploadedToys, builtInToys, selected, addToy, selectToy } = useToybox();
   const [step, setStep] = useState<"shelf" | "scan">(initialStep);
@@ -258,6 +260,22 @@ export function MyToySheet({
           >
             Scan a Real Toy (Meta SAM 3.1)
           </button>
+
+          {onOpenGrownUps && (
+            <div style={{ display: "flex", justifyContent: "center" }}>
+              <button
+                type="button"
+                className="tv-ctl"
+                style={{ minHeight: 36, fontSize: 12 }}
+                onClick={() => {
+                  onClose();
+                  onOpenGrownUps();
+                }}
+              >
+                Grown-ups · Play Time
+              </button>
+            </div>
+          )}
         </>
       ) : (
         <>

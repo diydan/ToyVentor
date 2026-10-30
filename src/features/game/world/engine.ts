@@ -597,6 +597,7 @@ export type WorldEvent =
   | { type: "world"; world: string }
   | { type: "zoom"; zoom: ZoomLevel }
   | { type: "found"; keys: string[]; total: number }
+  | { type: "missionsDone"; keys: string[]; total: number }
   | { type: "mission"; title: string | null }
   | { type: "toast"; text: string }
   | { type: "customizer"; customizer: CustomizerSnapshot }
@@ -609,6 +610,7 @@ export interface WorldState {
   world: string;
   zoom: ZoomLevel;
   foundTotal: number;
+  missionsDoneTotal: number;
   missionTitle: string | null;
   toast: string;
   customizer: CustomizerSnapshot;
@@ -622,6 +624,7 @@ export const initialWorldState: WorldState = {
   world: "garden",
   zoom: 0,
   foundTotal: 0,
+  missionsDoneTotal: 0,
   missionTitle: null,
   toast: "",
   customizer: closedCustomizerSnapshot,
@@ -643,6 +646,10 @@ export function applyWorldEvent(state: WorldState, event: WorldEvent): WorldStat
       return state.foundTotal === event.total
         ? state
         : { ...state, foundTotal: event.total };
+    case "missionsDone":
+      return state.missionsDoneTotal === event.total
+        ? state
+        : { ...state, missionsDoneTotal: event.total };
     case "mission":
       return state.missionTitle === event.title
         ? state
@@ -786,6 +793,8 @@ export interface EngineHandle {
   editorIoAction: (action: EditorIoAction) => void;
   /** Leave the title screen and start playing. */
   start: () => void;
+  /** Quiet the engine's background music when the calm Sleep Curtain fades in. */
+  muteSound: () => void;
   /** Stop polling and unload the frame, which destroys its WebGL context. */
   dispose: () => void;
 }
@@ -800,6 +809,7 @@ interface LegacySave {
   type?: string;
   scrap?: number;
   found?: Record<string, boolean>;
+  mdone?: Record<string, number | boolean>;
   sel?: Record<string, Record<string, string>>;
   col?: Record<string, string>;
 }
@@ -865,6 +875,7 @@ export function createEngine(
   let lastWorld = "";
   let lastZoom = -1;
   let lastFound = new Set<string>();
+  let lastMissionsDone = new Set<string>();
   let lastMission: string | null | undefined;
   let lastToast = "";
   let lastCustomizer = closedCustomizerSnapshot;
@@ -1359,7 +1370,19 @@ export function createEngine(
     if (!ready) {
       ready = true;
       lastFound = new Set(Object.keys(save.found ?? {}));
+      lastMissionsDone = new Set(
+        Object.entries(save.mdone ?? {})
+          .filter(([, done]) => Boolean(done))
+          .map(([key]) => key),
+      );
       events.onEvent({ type: "ready" });
+      if (lastMissionsDone.size > 0) {
+        events.onEvent({
+          type: "missionsDone",
+          keys: [],
+          total: lastMissionsDone.size,
+        });
+      }
       if (pendingWorld) {
         api.go?.(pendingWorld);
         pendingWorld = null;
@@ -1395,6 +1418,21 @@ export function createEngine(
       events.onEvent({ type: "found", keys: fresh, total: foundKeys.size });
     }
     lastFound = foundKeys;
+
+    const mdoneKeys = new Set(
+      Object.entries(save.mdone ?? {})
+        .filter(([, done]) => Boolean(done))
+        .map(([key]) => key),
+    );
+    const freshMissions = diffFoundKeys(lastMissionsDone, mdoneKeys);
+    if (freshMissions.length > 0 || mdoneKeys.size !== lastMissionsDone.size) {
+      events.onEvent({
+        type: "missionsDone",
+        keys: freshMissions,
+        total: mdoneKeys.size,
+      });
+    }
+    lastMissionsDone = mdoneKeys;
 
     const frameDoc = doc();
     const missionPanel = readMissionPanel();
@@ -1601,6 +1639,12 @@ export function createEngine(
     },
     start: () => {
       hooks()?.start?.(false);
+    },
+    muteSound: () => {
+      const snd = doc()?.querySelector<HTMLButtonElement>("#snd");
+      if (snd && snd.getAttribute("aria-pressed") === "true") {
+        snd.click();
+      }
     },
     dispose: () => {
       if (disposed) return;

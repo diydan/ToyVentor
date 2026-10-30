@@ -66,12 +66,18 @@ describe("world engine facade helpers", () => {
     let state = applyWorldEvent(initialWorldState, { type: "ready" });
     state = applyWorldEvent(state, { type: "world", world: "sky" });
     state = applyWorldEvent(state, { type: "found", keys: ["a.b.c"], total: 3 });
+    state = applyWorldEvent(state, {
+      type: "missionsDone",
+      keys: ["lab1.measure"],
+      total: 1,
+    });
     state = applyWorldEvent(state, { type: "mission", title: "Bridge" });
     state = applyWorldEvent(state, { type: "toast", text: "You found it" });
     expect(state).toMatchObject({
       ready: true,
       world: "sky",
       foundTotal: 3,
+      missionsDoneTotal: 1,
       missionTitle: "Bridge",
       toast: "You found it",
     });

@@ -27,6 +27,7 @@ function parseInitialOverlay(): InitialOverlay {
     if (q === "scan") return "scan";
     if (q === "build" || q === "market" || q === "augment") return "build";
     if (q === "reveal") return "reveal";
+    if (q === "parent" || q === "grownups") return "parent";
   } catch {
     /* ignore */
   }

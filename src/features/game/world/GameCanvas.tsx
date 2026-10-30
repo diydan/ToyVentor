@@ -11,6 +11,12 @@ import { buildSignature } from "../../../../shared/reveal";
 import type { Toy } from "../../../../shared/toy";
 import type { ToyContract } from "../../../../shared/toycontract";
 import { revealForBuild } from "../../../state/reveals";
+import {
+  getLocalParentSnapshot,
+  pullParentTime,
+  recordPlayProgress,
+  type ParentSnapshot,
+} from "../../../lib/parentTime";
 import { LivePlayPanel, type LivePlayStatus } from "../../liveplay/LivePlayPanel";
 import { CreatePanel } from "./CreatePanel";
 import { EditorPanel } from "./EditorPanel";
@@ -20,10 +26,12 @@ import {
   worldUrlFor,
   type EngineHandle,
 } from "./engine";
+import { GrownUpsSheet } from "./GrownUpsSheet";
 import { MissionPanel } from "./MissionPanel";
 import { MyToySheet } from "./MyToySheet";
 import { isPackClaimedToday, PackOverlay } from "./PackOverlay";
 import { RevealOverlay } from "./RevealOverlay";
+import { SleepCurtain } from "./SleepCurtain";
 import { ToyCustomizer } from "./ToyCustomizer";
 
 export type InitialOverlay =
@@ -32,6 +40,7 @@ export type InitialOverlay =
   | "build"
   | "pack"
   | "reveal"
+  | "parent"
   | null;
 
 export interface GameCanvasProps {
@@ -98,6 +107,17 @@ export function GameCanvas({
     listening: false,
   });
   const [moreOpen, setMoreOpen] = useState(false);
+  const [grownUpsOpen, setGrownUpsOpen] = useState(initialOverlay === "parent");
+  const [parentSnapshot, setParentSnapshot] = useState<ParentSnapshot>(() =>
+    getLocalParentSnapshot(),
+  );
+  const [missionGraceUntil, setMissionGraceUntil] = useState(0);
+  const prevLockedRef = useRef(parentSnapshot.status.locked);
+
+  // Sync Play Time settings + today's ledger on boot.
+  useEffect(() => {
+    void pullParentTime().then(setParentSnapshot);
+  }, []);
 
   // Create the engine once per mount; dispose on unmount and on HMR.
   useEffect(() => {
@@ -105,7 +125,16 @@ export function GameCanvas({
     if (!frame) return;
     const engine = createEngine(
       frame,
-      { onEvent: (event) => store.apply(event) },
+      {
+        onEvent: (event) => {
+          store.apply(event);
+          if (event.type === "missionsDone" && event.keys.length > 0) {
+            void recordPlayProgress({ completedMissionIds: event.keys }).then(
+              ({ snapshot }) => setParentSnapshot(snapshot),
+            );
+          }
+        },
+      },
       { contract: contractRef.current },
     );
     engineRef.current = engine;
@@ -117,6 +146,22 @@ export function GameCanvas({
       if (engineRef.current === engine) engineRef.current = null;
     };
   }, [store]);
+
+  // Active-play 5-second heartbeat (paused while backgrounded, locked, or in Grown-ups).
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      if (document.visibilityState !== "visible") return;
+      const cur = getLocalParentSnapshot();
+      if (grownUpsOpen || cur.status.locked) {
+        setParentSnapshot(cur);
+        return;
+      }
+      void recordPlayProgress({ activeSecondsDelta: 5 }).then(({ snapshot }) =>
+        setParentSnapshot(snapshot),
+      );
+    }, 5_000);
+    return () => window.clearInterval(timer);
+  }, [grownUpsOpen]);
 
   // Honor queued Build/Create/Editor open once the World iframe reports ready.
   useEffect(() => {
@@ -159,7 +204,43 @@ export function GameCanvas({
     setRevealState(null);
     setMoodsOpen(false);
     setMoreOpen(false);
+    setGrownUpsOpen(false);
   }, [anyGameSheetOpen]);
+
+  // Grant up to 25s of calm mid-mission grace if time runs out mid-lab/bridge/lift.
+  useEffect(() => {
+    const wasLocked = prevLockedRef.current;
+    const nowLocked = parentSnapshot.status.locked;
+    prevLockedRef.current = nowLocked;
+
+    if (
+      !wasLocked &&
+      nowLocked &&
+      missionPanel.open &&
+      parentSnapshot.status.reason !== "quiet_hours"
+    ) {
+      setMissionGraceUntil(Date.now() + 25_000);
+    } else if (!nowLocked || !missionPanel.open) {
+      setMissionGraceUntil(0);
+    }
+  }, [
+    missionPanel.open,
+    parentSnapshot.status.locked,
+    parentSnapshot.status.reason,
+  ]);
+
+  useEffect(() => {
+    if (missionGraceUntil <= 0) return;
+    const ms = Math.max(50, missionGraceUntil - Date.now() + 25);
+    const id = window.setTimeout(() => setMissionGraceUntil(0), ms);
+    return () => window.clearTimeout(id);
+  }, [missionGraceUntil]);
+
+  const missionGraceActive =
+    missionGraceUntil > Date.now() &&
+    missionPanel.open &&
+    parentSnapshot.status.reason !== "quiet_hours";
+  const sleepActive = parentSnapshot.status.locked && !missionGraceActive;
 
   // Close `⋯` popover on outside pointerdown or Escape.
   useEffect(() => {
@@ -198,7 +279,28 @@ export function GameCanvas({
     setRevealState(null);
     setMoodsOpen(false);
     setMoreOpen(false);
+    setGrownUpsOpen(false);
   }, []);
+
+  const openGrownUps = useCallback(() => {
+    closeEngineSheets();
+    closeReactOverlays();
+    setParentSnapshot(getLocalParentSnapshot());
+    setGrownUpsOpen(true);
+  }, [closeEngineSheets, closeReactOverlays]);
+
+  // Calmly wind down audio, mic, and open kid sheets when the Sleep Curtain activates.
+  useEffect(() => {
+    if (!sleepActive) return;
+    closeEngineSheets();
+    setToySheetOpen(false);
+    setPackOpen(false);
+    setRevealState(null);
+    setMoodsOpen(false);
+    setMoreOpen(false);
+    setLiveStatus({ playing: false, listening: false });
+    engine()?.muteSound();
+  }, [sleepActive, closeEngineSheets]);
 
   const openBuildSheet = useCallback(() => {
     closeReactOverlays();
@@ -256,6 +358,7 @@ export function GameCanvas({
         <button
           type="button"
           className="tv-toy-pill"
+          disabled={sleepActive}
           aria-pressed={toySheetOpen}
           title={statSummary ? `${label} (${statSummary})` : label}
           onClick={() => {
@@ -284,6 +387,7 @@ export function GameCanvas({
           <button
             type="button"
             className="tv-ctl"
+            disabled={sleepActive}
             aria-pressed={customizer.open}
             onClick={() => {
               if (customizer.open) {
@@ -299,6 +403,7 @@ export function GameCanvas({
           <button
             type="button"
             className="tv-ctl tv-ctl-violet"
+            disabled={sleepActive}
             aria-pressed={create.open}
             onClick={() => {
               if (create.open) {
@@ -318,6 +423,7 @@ export function GameCanvas({
           <button
             type="button"
             className="tv-ctl"
+            disabled={sleepActive}
             aria-pressed={packOpen}
             onClick={() => {
               if (packOpen) {
@@ -342,7 +448,13 @@ export function GameCanvas({
               aria-label={moreAriaLabel}
               aria-haspopup="menu"
               aria-expanded={moreOpen}
-              aria-pressed={moreOpen || moodsOpen || editor.open || Boolean(revealState)}
+              aria-pressed={
+                moreOpen ||
+                moodsOpen ||
+                editor.open ||
+                grownUpsOpen ||
+                Boolean(revealState)
+              }
               onClick={() => setMoreOpen((open) => !open)}
             >
               {liveStatus.listening ? (
@@ -363,6 +475,7 @@ export function GameCanvas({
                   type="button"
                   role="menuitem"
                   className="tv-menu-item"
+                  disabled={sleepActive}
                   onClick={() => {
                     closeEngineSheets();
                     closeReactOverlays();
@@ -383,6 +496,7 @@ export function GameCanvas({
                   type="button"
                   role="menuitem"
                   className="tv-menu-item"
+                  disabled={sleepActive}
                   onClick={() => {
                     closeEngineSheets();
                     closeReactOverlays();
@@ -399,6 +513,7 @@ export function GameCanvas({
                   type="button"
                   role="menuitem"
                   className="tv-menu-item"
+                  disabled={sleepActive}
                   onClick={() => {
                     closeReactOverlays();
                     if (customizer.open) engine()?.closeCustomizer();
@@ -414,7 +529,7 @@ export function GameCanvas({
                   </span>
                 </button>
 
-                {kipUrl && (
+                {kipUrl && !sleepActive && (
                   <a
                     role="menuitem"
                     className="tv-menu-item"
@@ -427,6 +542,18 @@ export function GameCanvas({
                     <span className="tv-menu-meta">Open</span>
                   </a>
                 )}
+
+                <button
+                  type="button"
+                  role="menuitem"
+                  className="tv-menu-item"
+                  onClick={openGrownUps}
+                >
+                  <span>Grown-ups</span>
+                  <span className="tv-menu-meta">
+                    {parentSnapshot.settings.enabled ? "On" : "Time"}
+                  </span>
+                </button>
 
                 <button
                   type="button"
@@ -470,6 +597,7 @@ export function GameCanvas({
           initialStep={toySheetStep}
           onClose={() => setToySheetOpen(false)}
           onSkinChange={onSkinChange}
+          onOpenGrownUps={openGrownUps}
         />
 
         {missionPanel.open && (
@@ -536,6 +664,7 @@ export function GameCanvas({
           hidden={!moodsOpen}
         >
           <LivePlayPanel
+            key={sleepActive ? "sleep" : "live"}
             themeSignature={themeSignature}
             onClose={() => setMoodsOpen(false)}
             onStatusChange={setLiveStatus}
@@ -558,6 +687,21 @@ export function GameCanvas({
           contract={contract}
           onClose={() => setRevealState(null)}
           onOpenBuild={openBuildSheet}
+        />
+
+        <SleepCurtain
+          status={parentSnapshot.status}
+          quietEnd={parentSnapshot.settings.quietHours.end}
+          toyName={label}
+          missionGraceActive={missionGraceActive}
+          onOpenGrownUps={openGrownUps}
+        />
+
+        <GrownUpsSheet
+          open={grownUpsOpen}
+          snapshot={parentSnapshot}
+          onSnapshotChange={setParentSnapshot}
+          onClose={() => setGrownUpsOpen(false)}
         />
       </div>
     </div>
