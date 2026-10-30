@@ -9,6 +9,8 @@ generated/*
 .wrangler/
 .DS_Store
 *.local
+# Zip archives: handover packages and exports — regenerable, never tracked
+*.zip
 .agents/memory/.muse-memory.lock
 # Standalone HTML drafts
 drafts/
