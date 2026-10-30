@@ -141,7 +141,7 @@ Optional layer on the same builds. Mostly Pro 8+, lighter for Snap.
 - Challenges and cards live in the same set file as parts. A monthly set can include a STEM unit.
 - Classroom tools come later.
 
-Path to robotics, each step virtual first: 1 structures, 2 motion, 3 power, 4 sense, 5 control, 6 full robot. Hackathon covers steps 1 and 2. In the hackathon build STEM lives in ToyVentor World's Lab missions (measure, balance, lever, logic, raft, circuit, code, pattern, clean-up). A gear ratio challenge is not in yet.
+Path to robotics, each step virtual first: 1 structures, 2 motion, 3 power, 4 sense, 5 control, 6 full robot. Hackathon covers steps 1 and 2. In the hackathon build STEM lives in ToyVentor World's Lab missions (bridge, measure, balance, lever, logic, lift, raft, circuit, code, pattern, clean-up). A gear ratio challenge is not in yet.
 
 ## Live Play (Game Mode, stretch)
 
@@ -203,7 +203,7 @@ So a single part looks something like this in its set file. Note there's only ev
 }
 ```
 
-Checks: watertight, prints without supports in listed orientation, fits printer bed in both sizes, sits on grid, fits toy size class. STL export under 10 seconds.
+Checks: sits on grid, fits toy size class, prints without supports in listed orientation, fits printer bed in both sizes. STL export under 10 seconds.
 
 ### Where we use Meta models
 
@@ -234,7 +234,7 @@ Two things I considered and rejected, for the record. First, generating part geo
 | 3D print | Pre-generated STL downloads, shown when checks pass | Delivery handoff mocked |
 | Reveal | Entrance animation, character card, synth theme | Mureka theme songs not wired yet |
 | Live Play (stretch) | Mood buttons + voice keywords (browser speech) | Synth loop stand-ins, not Mureka stems |
-| STEM mode (stretch) | Nine Lab missions in ToyVentor World | Gear ratio challenge later. Cards and hints drafted with Muse Spark |
+| STEM mode (stretch) | Eleven Lab missions in ToyVentor World | Gear ratio challenge later. Cards and hints drafted with Muse Spark |
 | Pro line | One rounded TU05 beam | Friction pin and gear set still to make |
 | Forge Club | Base set, daily pack, fit filter | Second set is not loaded by the app yet. Billing mocked |
 

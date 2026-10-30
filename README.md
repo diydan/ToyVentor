@@ -53,6 +53,6 @@ snapping/collisions/undo, STL downloads and GLB 3D/AR part previews,
 fit-filtered Market, seeded daily Packs, Reveal with saved character
 cards, a mini game driven by build stats, the hand-off into ToyVentor
 World, and Create mode writing worlds through the Muse Spark route.
-100 unit tests. Nothing printed yet, and the Reveal theme is a synth
+156 unit tests across 23 files. Nothing printed yet, and the Reveal theme is a synth
 placeholder until Mureka is wired.
 See [the plan](docs/plan.md) and [the journal](docs/journal.md).
