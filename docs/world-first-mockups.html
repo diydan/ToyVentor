@@ -1,0 +1,808 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ToyVentor — One Stage (World-First) Mockups</title>
+<style>
+@font-face {
+  font-family: 'Figtree'; font-style: normal; font-weight: 500 700; font-display: swap;
+  src: url(../public/fonts/figtree-latin.woff2) format('woff2');
+}
+@font-face {
+  font-family: 'Rubik'; font-style: normal; font-weight: 500 800; font-display: swap;
+  src: url(../public/fonts/rubik-latin.woff2) format('woff2');
+}
+:root {
+  --night-900:#080f2b; --surface:#101a44; --surface-2:#18265e; --surface-3:#22337e;
+  --line:#7f9bff; --line-soft:#2c3f94;
+  --ink:#f4f7ff; --ink-muted:#bfcaf5; --ink-disabled:#7b86c4;
+  --ink-on-sky:#06122b; --ink-on-violet:#10062b;
+  --sky-500:#52b7ff; --sky-300:#9bd4ff; --sky-700:#2a7fcc;
+  --violet-500:#a78bff; --violet-300:#c9b8ff; --violet-700:#6f55d6;
+  --gold:#ffd24d; --coral:#ff9d5c; --mint:#5af0b0; --danger:#ff6a5c;
+  --rarity-common:#b7c2ee; --rarity-uncommon:#5af0b0; --rarity-rare:#52b7ff;
+  --glass:rgba(255,255,255,.07); --glass-line:rgba(255,255,255,.22);
+  --glass-strong:rgba(255,255,255,.12); --focus:#ffd24d;
+  --font-display:'Rubik','Figtree',system-ui,sans-serif;
+  --font-body:'Figtree',system-ui,sans-serif;
+  --shadow-glass:0 4px 14px rgba(2,6,28,.5);
+  --shadow-btn-sky:inset 0 2px 0 rgba(255,255,255,.40), 0 4px 0 #2a7fcc, 0 10px 18px rgba(82,183,255,.28);
+  --shadow-btn-violet:inset 0 2px 0 rgba(255,255,255,.40), 0 4px 0 #6f55d6, 0 10px 18px rgba(167,139,255,.28);
+  --shadow-sheet:0 -16px 40px rgba(2,6,28,.72);
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{
+  margin:0; color:var(--ink); font-family:var(--font-body); font-weight:600; font-size:15px; line-height:1.45;
+  background:
+    radial-gradient(70% 30% at 14% 0,rgba(82,183,255,.26),transparent 70%),
+    radial-gradient(60% 28% at 92% 4%,rgba(167,139,255,.24),transparent 70%),
+    var(--night-900);
+  background-attachment:fixed;
+}
+a{color:var(--sky-300)}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer;-webkit-tap-highlight-color:transparent}
+button:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+
+header.hero,main,footer{max-width:1180px;margin:0 auto;padding:0 24px}
+header.hero{padding:44px 24px 16px}
+.kicker{font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--gold)}
+h1{font-family:var(--font-display);font-weight:800;font-size:clamp(32px,4.5vw,50px);line-height:1.04;margin:6px 0 10px}
+h2{font-family:var(--font-display);font-weight:800;font-size:28px;line-height:1.15;margin:0 0 8px}
+h3{font-family:var(--font-display);font-weight:700;font-size:18px;margin:0 0 6px}
+.lead{font-size:17px;color:var(--ink-muted);max-width:760px;margin:0 0 14px}
+
+nav.toc{position:sticky;top:0;z-index:30;background:rgba(8,15,43,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--glass-line)}
+nav.toc ul{list-style:none;margin:0 auto;padding:0 24px;max-width:1180px;display:flex;gap:8px;overflow-x:auto}
+nav.toc a{display:block;padding:12px 12px;color:var(--ink-muted);text-decoration:none;font-size:14px;font-weight:700;white-space:nowrap}
+nav.toc a:hover{color:var(--ink);box-shadow:inset 0 -3px 0 var(--sky-500)}
+
+section.sec{padding:36px 0 12px;scroll-margin-top:56px}
+
+/* Interactive section layout */
+.proto-grid{display:grid;grid-template-columns:390px minmax(0,1fr);gap:32px;align-items:start}
+@media(max-width:860px){.proto-grid{grid-template-columns:1fr;justify-items:center}}
+.proto-notes{background:var(--glass);border:1px solid var(--glass-line);border-radius:20px;padding:22px;box-shadow:var(--shadow-glass)}
+.state-switcher{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 18px}
+.sw-btn{min-height:40px;padding:0 13px;border-radius:12px;border:2px solid var(--line);background:var(--surface);font-family:var(--font-display);font-size:13px;font-weight:700;box-shadow:0 3px 0 var(--line-soft)}
+.sw-btn[aria-selected="true"]{background:var(--sky-500);border-color:var(--sky-500);color:var(--ink-on-sky);box-shadow:0 3px 0 var(--sky-700)}
+
+/* 390 x 844 Phone Frame */
+.phone{
+  position:relative; width:390px; height:844px; border-radius:36px; overflow:hidden; flex:none;
+  box-shadow:0 0 0 8px #02061a, 0 0 0 9px rgba(255,255,255,.22), 0 28px 56px rgba(0,0,0,.55);
+  display:flex; flex-direction:column; background:var(--night-900); user-select:none;
+}
+.phones-grid{display:grid;grid-template-columns:repeat(3,344px);gap:28px 22px;justify-content:center;margin-top:20px}
+@media(max-width:1120px){.phones-grid{grid-template-columns:repeat(2,344px)}}
+@media(max-width:740px){.phones-grid{grid-template-columns:344px}}
+.phone-card{display:flex;flex-direction:column;gap:8px}
+.phone-scale-wrap{width:344px;height:744px;position:relative}
+.phone-scale-wrap .phone{transform:scale(0.882);transform-origin:top left}
+.phone-cap{font-size:13px;font-weight:700;color:var(--ink-muted);padding:0 4px}
+.phone-cap b{color:var(--ink);font-family:var(--font-display)}
+
+/* Top Studio Dock (48px, fits 390px with ZERO horizontal scroll) */
+.tv-dock{
+  height:52px; flex:none; padding:6px 10px; display:flex; align-items:center; justify-content:space-between; gap:6px;
+  background:rgba(16,26,68,.95); border-bottom:1px solid rgba(255,255,255,.15); z-index:12;
+}
+.tv-toy-pill{
+  min-width:0; max-width:124px; height:36px; padding:0 10px 0 8px; border-radius:11px;
+  border:2px solid rgba(255,255,255,.24); background:rgba(255,255,255,.08);
+  display:inline-flex; align-items:center; gap:6px; font-family:var(--font-display); font-size:13px; font-weight:700;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.tv-toy-pill[aria-pressed="true"]{border-color:var(--sky-500);background:var(--surface-3)}
+.tv-dot{width:10px;height:10px;border-radius:50%;flex:none}
+.tv-dock-right{display:flex;align-items:center;gap:5px;flex:none}
+.tv-ctl{
+  height:36px; padding:0 10px; border-radius:11px; border:2px solid var(--line);
+  background:rgba(16,26,68,.92); box-shadow:0 3px 0 var(--line-soft);
+  font-family:var(--font-display); font-size:13px; font-weight:700;
+  display:inline-flex; align-items:center; justify-content:center; gap:5px; white-space:nowrap;
+}
+.tv-ctl[aria-pressed="true"], .tv-ctl-sky{
+  background:var(--sky-500); color:var(--ink-on-sky); border-color:var(--sky-500); box-shadow:0 3px 0 var(--sky-700);
+}
+.tv-ctl-violet{border-color:var(--violet-500);background:linear-gradient(180deg,#3a2c8a,#22337e)}
+.tv-ctl-gold{background:var(--gold);color:#2b1d00;border-color:var(--gold);box-shadow:0 3px 0 #b8901f}
+.tv-badge-dot{width:8px;height:8px;border-radius:50%;background:var(--gold);box-shadow:0 0 8px var(--gold);display:inline-block}
+
+/* 3D World Stage Mock */
+.tv-stage{position:relative;flex:1;min-height:0;overflow:hidden;background:#0b173d}
+.world-svg{position:absolute;inset:0;width:100%;height:100%;display:block}
+.world-hud-top{
+  position:absolute;top:12px;left:12px;right:12px;display:flex;justify-content:space-between;align-items:center;pointer-events:none;z-index:3;
+}
+.world-pill{
+  pointer-events:auto; height:34px; padding:0 12px; border-radius:999px;
+  background:rgba(8,15,43,.78); backdrop-filter:blur(8px); border:1.5px solid rgba(255,255,255,.22);
+  font-family:var(--font-display); font-size:12px; font-weight:700; display:inline-flex; align-items:center; gap:6px;
+}
+.world-play-hero{
+  position:absolute;left:24px;right:24px;bottom:26px;display:flex;flex-direction:column;align-items:center;gap:10px;z-index:3;
+}
+.world-title-tag{
+  padding:4px 12px;border-radius:999px;background:rgba(8,15,43,.8);border:1px solid rgba(255,210,77,.45);
+  color:var(--gold);font-size:12px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;
+}
+
+/* Raised CTA */
+.cta{
+  width:100%; min-height:50px; padding:6px 18px; border:0; border-radius:13px;
+  background:var(--sky-500); color:var(--ink-on-sky); box-shadow:var(--shadow-btn-sky);
+  font-family:var(--font-display); font-size:17px; font-weight:800;
+  display:flex; align-items:center; justify-content:center; gap:8px; text-decoration:none;
+}
+.cta-violet{background:var(--violet-500);color:var(--ink-on-violet);box-shadow:var(--shadow-btn-violet)}
+.cta-quiet{
+  width:100%; min-height:40px; border-radius:11px; border:2px solid var(--line-soft);
+  background:rgba(8,15,43,.6); color:var(--ink-muted); font-family:var(--font-display); font-size:13px; font-weight:700;
+}
+
+/* Frosted-Glass Bottom Sheet (.tv-sheet) */
+.tv-sheet{
+  position:absolute; left:0; right:0; bottom:0; max-height:62%; overflow-y:auto;
+  padding:13px 14px 16px; background:rgba(14,23,62,.96); backdrop-filter:blur(14px);
+  border-top:1.5px solid rgba(255,255,255,.26); border-radius:22px 22px 0 0;
+  box-shadow:var(--shadow-sheet); z-index:10; display:flex; flex-direction:column; gap:10px;
+}
+.sh-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.sh-title{font-family:var(--font-display);font-size:17px;font-weight:800;margin:0}
+.k-lbl{font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-muted)}
+
+/* Toy Shelf & Scan inside MyToySheet */
+.toy-shelf{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px}
+.toy-tile{
+  flex:0 0 112px; padding:8px; border-radius:14px; border:2px solid var(--line-soft);
+  background:var(--surface); display:flex; flex-direction:column; align-items:center; gap:4px; text-align:center; position:relative;
+}
+.toy-tile.on{border-color:var(--sky-500);background:var(--surface-3);box-shadow:0 0 12px rgba(82,183,255,.38)}
+.toy-tag{
+  position:absolute; top:5px; right:5px; padding:1px 5px; border-radius:5px;
+  font-family:var(--font-display); font-size:9px; font-weight:800; text-transform:uppercase;
+  background:var(--mint); color:#052418;
+}
+.toy-nm{font-family:var(--font-display);font-size:13px;font-weight:700;line-height:1.15}
+.toy-sub{font-size:11px;color:var(--ink-muted)}
+
+.scan-box{
+  height:122px; border-radius:14px; background:var(--surface-3); border:2px dashed var(--mint);
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; color:var(--mint);
+  font-family:var(--font-display); font-size:13px; font-weight:700;
+}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{
+  height:34px; padding:0 11px; border-radius:10px; border:2px solid var(--line-soft);
+  background:var(--surface); font-family:var(--font-display); font-size:12px; font-weight:700;
+}
+.chip.on{border-color:var(--sky-500);background:var(--sky-500);color:var(--ink-on-sky)}
+.inp{
+  width:100%; height:38px; border-radius:10px; border:2px solid var(--line);
+  background:rgba(8,15,43,.9); padding:0 10px; font-size:13px; font-weight:700;
+}
+
+/* Customizer + Print Drawer */
+.opts-row{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.opt-card{
+  padding:8px 6px; border-radius:13px; border:2px solid var(--line-soft); background:var(--surface);
+  display:flex; flex-direction:column; align-items:center; gap:3px; text-align:center; font-family:var(--font-display); font-size:12px; font-weight:700;
+}
+.opt-card.on{border-color:var(--sky-500);background:var(--surface-3);box-shadow:0 0 10px rgba(82,183,255,.35)}
+.opt-meta{font-family:var(--font-body);font-size:11px;color:var(--ink-muted);display:flex;align-items:center;gap:4px}
+.swatches{display:flex;align-items:center;gap:6px}
+.sw{width:28px;height:28px;border-radius:8px;border:2px solid rgba(255,255,255,.45)}
+.sw.on{border:3px solid #fff;box-shadow:0 0 0 2px var(--sky-500)}
+
+.disclosure{
+  border-radius:14px; border:1.5px solid rgba(82,183,255,.4); background:rgba(8,15,43,.72); padding:9px 11px;
+}
+.disclosure summary{
+  cursor:pointer; font-family:var(--font-display); font-size:13px; font-weight:700;
+  display:flex; align-items:center; justify-content:space-between; list-style:none;
+}
+.disclosure summary::-webkit-details-marker{display:none}
+.ok-pill{
+  padding:2px 7px; border-radius:6px; background:rgba(90,240,176,.18); color:var(--mint);
+  font-size:11px; font-weight:800;
+}
+.ar-preview-row{
+  display:grid; grid-template-columns:96px 1fr; gap:10px; align-items:center; margin-top:9px;
+}
+.ar-box{
+  height:78px; border-radius:11px; background:radial-gradient(circle at 50% 45%,rgba(82,183,255,.35),#101a44);
+  border:1.5px dashed var(--mint); display:flex; flex-direction:column; align-items:center; justify-content:center;
+  font-size:10px; font-weight:800; color:var(--mint); text-align:center; padding:4px;
+}
+
+/* Full-Stage Modal (Daily Pack & Character Card) */
+.tv-modal{
+  position:absolute; inset:0; background:rgba(6,11,30,.82); backdrop-filter:blur(8px);
+  z-index:11; display:flex; flex-direction:column; justify-content:space-between; padding:12px 14px 16px;
+}
+.pack-fan{
+  position:relative; height:210px; display:flex; align-items:center; justify-content:center; gap:8px;
+}
+.p-card3d{
+  width:104px; height:152px; border-radius:15px; padding:8px;
+  background:linear-gradient(165deg,#1b2a6e,#0d1438 74%);
+  display:flex; flex-direction:column; justify-content:space-between; text-align:left;
+}
+.p-card3d.c0{border:2.5px solid var(--rarity-common);transform:rotate(-6deg) translateY(8px)}
+.p-card3d.c1{border:2.5px solid var(--rarity-uncommon);transform:translateY(-4px)}
+.p-card3d.c2{border:3px solid var(--rarity-rare);transform:rotate(6deg) translateY(4px) scale(1.05);box-shadow:0 0 0 2px #fff,0 0 24px rgba(82,183,255,.65)}
+.p-art{height:58px;border-radius:9px;background:rgba(82,183,255,.22);display:flex;align-items:center;justify-content:center}
+.p-rar{font-family:var(--font-display);font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.05em}
+
+/* More Popover Menu */
+.tv-more-menu{
+  position:absolute; top:6px; right:10px; width:212px; padding:6px;
+  border-radius:16px; background:rgba(16,26,68,.98); border:1.5px solid var(--line);
+  box-shadow:0 16px 36px rgba(0,0,0,.65); z-index:15; display:flex; flex-direction:column; gap:4px;
+}
+.menu-item{
+  height:40px; padding:0 11px; border-radius:10px; border:0; background:transparent;
+  display:flex; align-items:center; justify-content:space-between; font-family:var(--font-display); font-size:13px; font-weight:700;
+}
+.menu-item:hover{background:var(--surface-3)}
+
+/* Reveal Card */
+.reveal-card{
+  margin:auto 0; padding:18px 16px; border-radius:20px; border:2px solid var(--gold);
+  background:radial-gradient(70% 60% at 50% 25%,rgba(255,210,77,.22),rgba(16,26,68,.95));
+  box-shadow:0 0 0 3px rgba(255,210,77,.3), 0 18px 40px rgba(0,0,0,.6);
+  text-align:center; display:flex; flex-direction:column; gap:10px;
+}
+.stat-bar{display:grid;grid-template-columns:58px 1fr 34px;gap:8px;align-items:center;font-size:12px;font-weight:800}
+.stat-trk{height:10px;border-radius:99px;background:rgba(255,255,255,.12);overflow:hidden}
+.stat-fl{height:100%;border-radius:99px}
+
+/* Comparison table */
+.cmp-card{background:var(--glass);border:1px solid var(--glass-line);border-radius:20px;padding:22px;margin-top:16px}
+.tbl{width:100%;border-collapse:collapse;font-size:14px}
+.tbl th{text-align:left;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-muted);padding:10px;border-bottom:1px solid var(--glass-line)}
+.tbl td{padding:10px;border-bottom:1px solid rgba(255,255,255,.08);vertical-align:top}
+footer{padding:36px 24px 56px;color:var(--ink-muted);font-size:13px}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="kicker">ToyVentor · UI Simplification Spec &amp; Mockups · Oct 30, 2026</div>
+  <h1>One Stage: ToyVentor World IS the App</h1>
+  <p class="lead">
+    Zero bottom tab bar. Zero duplicate part walls. The app opens directly onto the full-screen 3D World stage, with
+    <b>My Toy &amp; SAM Scan</b>, <b>Build &amp; 3D Print</b>, <b>Create World</b>, and <b>Daily Pack</b> as clean overlays on one unified canvas.
+    Read <a href="world-first-spec.md">world-first-spec.md</a>.
+  </p>
+</header>
+
+<nav class="toc" aria-label="Sections">
+  <ul>
+    <li><a href="#interactive">Interactive Prototype</a></li>
+    <li><a href="#storyboard">6-Screen Storyboard</a></li>
+    <li><a href="#before-after">Before vs. After</a></li>
+  </ul>
+</nav>
+
+<main>
+  <!-- SECTION 1: INTERACTIVE PROTOTYPE -->
+  <section id="interactive" class="sec">
+    <h2>Interactive Stage Prototype (390 × 844)</h2>
+    <p class="lead">Tap the top studio bar inside the phone — or use the state buttons on the right — to test how every feature fits on one 3D stage.</p>
+
+    <div class="proto-grid">
+      <!-- Interactive Phone -->
+      <div class="phone" id="live-phone">
+        <div class="tv-dock" role="toolbar" aria-label="ToyVentor World studio">
+          <button type="button" class="tv-toy-pill" id="btn-toy" aria-pressed="false" onclick="setMode('toy')">
+            <span class="tv-dot" id="live-toy-dot" style="background:#ffd24d"></span>
+            <span id="live-toy-name">Kip</span>
+            <span style="opacity:.7;font-size:11px">▾</span>
+          </button>
+          <div class="tv-dock-right">
+            <button type="button" class="tv-ctl" id="btn-build" aria-pressed="false" onclick="setMode('build')">Build</button>
+            <button type="button" class="tv-ctl tv-ctl-violet" id="btn-create" aria-pressed="false" onclick="setMode('create')">Create</button>
+            <button type="button" class="tv-ctl" id="btn-pack" aria-pressed="false" onclick="setMode('pack')">
+              Pack <span class="tv-badge-dot" id="pack-dot"></span>
+            </button>
+            <button type="button" class="tv-ctl" id="btn-more" aria-pressed="false" onclick="setMode('more')" aria-label="More">⋯</button>
+          </div>
+        </div>
+
+        <div class="tv-stage">
+          <!-- 3D World SVG Backdrop -->
+          <svg class="world-svg" viewBox="0 0 390 792" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+            <defs>
+              <linearGradient id="skyG" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#19337a"/>
+                <stop offset="52%" stop-color="#2858a8"/>
+                <stop offset="53%" stop-color="#2c8c69"/>
+                <stop offset="100%" stop-color="#164c45"/>
+              </linearGradient>
+              <radialGradient id="padGlow" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stop-color="#52b7ff" stop-opacity="0.55"/>
+                <stop offset="100%" stop-color="#52b7ff" stop-opacity="0"/>
+              </radialGradient>
+            </defs>
+            <rect width="390" height="792" fill="url(#skyG)"/>
+            <!-- Distant hills & clouds -->
+            <circle cx="72" cy="110" r="28" fill="rgba(255,255,255,0.14)"/>
+            <circle cx="102" cy="106" r="36" fill="rgba(255,255,255,0.16)"/>
+            <circle cx="310" cy="140" r="26" fill="rgba(255,255,255,0.12)"/>
+            <ellipse cx="95" cy="420" rx="180" ry="60" fill="#35a179"/>
+            <ellipse cx="320" cy="430" rx="170" ry="56" fill="#27795c"/>
+            <!-- Path & river -->
+            <path d="M 0 510 Q 195 470 390 525 L 390 575 Q 195 520 0 560 Z" fill="#39a0ed" opacity="0.82"/>
+            <rect x="156" y="492" width="78" height="72" rx="8" fill="#c78c4e" stroke="#080f2b" stroke-width="3"/>
+            <!-- Stylised 3D trees -->
+            <g transform="translate(56,336)">
+              <rect x="-7" y="42" width="14" height="28" rx="4" fill="#7c4f2b"/>
+              <circle cx="0" cy="24" r="28" fill="#5af0b0" stroke="#080f2b" stroke-width="3"/>
+              <circle cx="-10" cy="16" r="10" fill="rgba(255,255,255,0.22)"/>
+            </g>
+            <g transform="translate(332,348)">
+              <rect x="-7" y="40" width="14" height="26" rx="4" fill="#7c4f2b"/>
+              <circle cx="0" cy="22" r="26" fill="#5af0b0" stroke="#080f2b" stroke-width="3"/>
+            </g>
+            <!-- Turntable / Hero Toy in upper half so sheets never cover it -->
+            <ellipse cx="195" cy="272" rx="94" ry="30" fill="url(#padGlow)"/>
+            <ellipse cx="195" cy="272" rx="70" ry="20" fill="#101a44" stroke="#52b7ff" stroke-width="2.5"/>
+            <g id="hero-kip" transform="translate(195,212)">
+              <!-- Jetpack glow wing upgrade -->
+              <rect x="-38" y="-8" width="16" height="36" rx="6" fill="#52b7ff" stroke="#080f2b" stroke-width="3"/>
+              <rect x="22" y="-8" width="16" height="36" rx="6" fill="#52b7ff" stroke="#080f2b" stroke-width="3"/>
+              <!-- Kip Body & Head -->
+              <rect x="-24" y="6" width="48" height="44" rx="14" fill="#a78bff" stroke="#080f2b" stroke-width="3.5"/>
+              <circle cx="0" cy="-22" r="26" fill="#ffd24d" stroke="#080f2b" stroke-width="3.5"/>
+              <circle cx="-27" cy="-22" r="8" fill="#52b7ff" stroke="#080f2b" stroke-width="2.5"/>
+              <circle cx="27" cy="-22" r="8" fill="#52b7ff" stroke="#080f2b" stroke-width="2.5"/>
+              <circle cx="-9" cy="-24" r="4" fill="#080f2b"/>
+              <circle cx="9" cy="-24" r="4" fill="#080f2b"/>
+              <!-- Crown / Hat -->
+              <rect x="-13" y="-56" width="26" height="12" rx="5" fill="#5af0b0" stroke="#080f2b" stroke-width="2.5"/>
+            </g>
+          </svg>
+
+          <!-- In-World Floating Pills -->
+          <div class="world-hud-top">
+            <span class="world-pill">🌳 Garden · 3/6 parts found</span>
+            <span class="world-pill">Zoom: Mid</span>
+          </div>
+
+          <!-- HOME STATE: Clean Play CTA -->
+          <div class="world-play-hero" id="layer-home">
+            <span class="world-title-tag">Wearing Jetpack + Wobble Hat · Speed +3</span>
+            <button type="button" class="cta" style="max-width:260px" onclick="setMode('home-playing')">
+              ▶ Explore Garden
+            </button>
+          </div>
+
+          <!-- SHEET 1: MY TOY & SAM SCAN -->
+          <section class="tv-sheet" id="layer-toy" hidden aria-label="My Toy and Scan">
+            <div id="toy-step-shelf">
+              <div class="sh-head" style="margin-bottom:8px">
+                <b class="sh-title">My Toys</b>
+                <button type="button" class="tv-ctl tv-ctl-gold" onclick="setMode('home')">Done</button>
+              </div>
+              <div class="toy-shelf" style="margin-bottom:10px">
+                <button type="button" class="toy-tile on" onclick="pickToy('Kip','#ffd24d')">
+                  <span class="toy-tag" style="background:var(--gold)">Active</span>
+                  <div style="font-size:26px">🤖</div>
+                  <div class="toy-nm">Kip</div>
+                  <div class="toy-sub">2 parts on</div>
+                </button>
+                <button type="button" class="toy-tile" onclick="pickToy('Blue Car','#52b7ff')">
+                  <span class="toy-tag">SAM</span>
+                  <div style="font-size:26px">🏎️</div>
+                  <div class="toy-nm">Blue Car</div>
+                  <div class="toy-sub">Scanned photo</div>
+                </button>
+                <button type="button" class="toy-tile" onclick="pickToy('Red Racer','#ff6a5c')">
+                  <div style="font-size:26px">🚗</div>
+                  <div class="toy-nm">Red Racer</div>
+                  <div class="toy-sub">Starter car</div>
+                </button>
+              </div>
+              <details class="disclosure" style="margin-bottom:10px">
+                <summary>
+                  <span>🎨 Paint photo skin (Muse Image)</span>
+                  <span style="color:var(--sky-300);font-size:12px">4 styles ▾</span>
+                </summary>
+                <div class="chips" style="margin-top:8px">
+                  <span class="chip on">Racer red</span>
+                  <span class="chip">Dragon scales</span>
+                  <span class="chip">Galaxy</span>
+                  <span class="chip">Rainbow</span>
+                </div>
+              </details>
+              <button type="button" class="cta" onclick="showScanStep(true)">
+                📷 Scan a Real Toy (SAM 3.1)
+              </button>
+            </div>
+
+            <div id="toy-step-scan" hidden>
+              <div class="sh-head" style="margin-bottom:8px">
+                <b class="sh-title">Scan Real Toy</b>
+                <button type="button" class="tv-ctl" onclick="showScanStep(false)">← Toys</button>
+              </div>
+              <div class="scan-box" style="margin-bottom:8px">
+                <span>Tap to snap a photo of your toy</span>
+                <span style="font-size:11px;color:var(--ink-muted)">Meta SAM 3.1 finds the outline automatically</span>
+              </div>
+              <div class="chips" style="margin-bottom:8px">
+                <button type="button" class="chip on">Car</button>
+                <button type="button" class="chip">Figure</button>
+                <button type="button" class="chip">Cup</button>
+                <button type="button" class="chip">Bottle</button>
+                <button type="button" class="chip">Other</button>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr auto;gap:6px;margin-bottom:8px">
+                <input class="inp" value="Desk Cruiser" aria-label="Toy name" readonly>
+                <div class="chips" style="flex-wrap:nowrap">
+                  <button type="button" class="chip">S</button>
+                  <button type="button" class="chip on">M</button>
+                  <button type="button" class="chip">L</button>
+                </div>
+              </div>
+              <button type="button" class="cta" onclick="pickToy('Desk Cruiser','#5af0b0');showScanStep(false);setMode('home')">
+                ✨ Outline with SAM &amp; Play
+              </button>
+            </div>
+          </section>
+
+          <!-- SHEET 2: BUILD, FORGE & 3D PRINT -->
+          <section class="tv-sheet" id="layer-build" hidden aria-label="Build and 3D Print">
+            <div class="sh-head">
+              <b class="sh-title">Build your toy</b>
+              <div style="display:flex;gap:6px">
+                <button type="button" class="tv-ctl">Forge (4)</button>
+                <button type="button" class="tv-ctl tv-ctl-gold" onclick="setMode('home')">Done</button>
+              </div>
+            </div>
+            <div class="chips">
+              <button type="button" class="chip on">Back</button>
+              <button type="button" class="chip">Head</button>
+              <button type="button" class="chip">Tail</button>
+              <button type="button" class="chip">Eyes</button>
+            </div>
+            <div class="opts-row">
+              <div class="opt-card on">
+                <span>Jetpack</span>
+                <span class="opt-meta"><i class="tv-dot" style="background:#52b7ff;width:7px;height:7px"></i>speed +3</span>
+              </div>
+              <div class="opt-card">
+                <span>Cloud Wings</span>
+                <span class="opt-meta"><i class="tv-dot" style="background:#ffd24d;width:7px;height:7px"></i>glow +2</span>
+              </div>
+              <div class="opt-card">
+                <span>Explorer Pack</span>
+                <span class="opt-meta"><i class="tv-dot" style="background:#ff9d5c;width:7px;height:7px"></i>torque +2</span>
+              </div>
+            </div>
+            <div class="swatches">
+              <span class="k-lbl" style="margin-right:4px">Paint</span>
+              <span class="sw on" style="background:#a78bff"></span>
+              <span class="sw" style="background:#52b7ff"></span>
+              <span class="sw" style="background:#ffd24d"></span>
+              <span class="sw" style="background:#ff6a5c"></span>
+              <span class="sw" style="background:#5af0b0"></span>
+            </div>
+            <details class="disclosure" open>
+              <summary>
+                <span>🖨️ 3D Print &amp; AR Try-On (9 fit Kip)</span>
+                <span class="ok-pill">✓ All checks OK</span>
+              </summary>
+              <div class="ar-preview-row">
+                <div class="ar-box">3D / AR GLB<br>True Scale</div>
+                <div style="display:flex;flex-direction:column;gap:6px">
+                  <div style="font-size:12px"><b>Jetpack</b> · Snap Small · Support-free PLA</div>
+                  <button type="button" class="cta cta-violet" style="min-height:40px;font-size:14px;padding:4px 12px">
+                    ⬇ Download Jetpack.stl
+                  </button>
+                </div>
+              </div>
+            </details>
+          </section>
+
+          <!-- SHEET 3: CREATE WORLD (MUSE SPARK) -->
+          <section class="tv-sheet" id="layer-create" hidden aria-label="Create World">
+            <div class="sh-head">
+              <b class="sh-title">Create a World</b>
+              <button type="button" class="tv-ctl tv-ctl-gold" onclick="setMode('home')">Play it</button>
+            </div>
+            <div style="padding:8px 11px;border-radius:12px;background:rgba(82,183,255,.13);border:1px solid rgba(82,183,255,.35);font-size:13px">
+              “I built a snowy peak with a rainbow bridge and 3 hidden rocket parts!”
+            </div>
+            <div class="chips">
+              <span class="chip">❄️ Snow</span>
+              <span class="chip">🌉 Bridge</span>
+              <span class="chip">🌈 Rainbow</span>
+              <span class="chip">🌲 Pines</span>
+            </div>
+            <div style="display:flex;gap:6px">
+              <input class="inp" value="snowy mountain with a rainbow bridge" aria-label="Describe world" readonly>
+              <button type="button" class="tv-ctl" aria-label="Voice prompt">🎤</button>
+            </div>
+            <button type="button" class="cta cta-violet" onclick="setMode('home')">✨ Make with Muse Spark</button>
+          </section>
+
+          <!-- MODAL 4: DAILY PACK RIP -->
+          <div class="tv-modal" id="layer-pack" hidden role="dialog" aria-label="Daily Pack">
+            <div class="sh-head">
+              <div>
+                <span class="k-lbl" style="color:var(--gold)">Daily Drop · 3 Parts</span>
+                <div class="sh-title">Pack Opened!</div>
+              </div>
+              <div style="display:flex;gap:6px">
+                <button type="button" class="tv-ctl" aria-label="Sound on">Sound</button>
+                <button type="button" class="tv-ctl" onclick="setMode('home')" aria-label="Close">✕</button>
+              </div>
+            </div>
+            <div class="pack-fan">
+              <div class="p-card3d c0">
+                <div class="p-art">🧱</div>
+                <div style="font-size:12px;font-weight:800">Mini Brick</div>
+                <div class="p-rar" style="color:var(--rarity-common)">Common</div>
+              </div>
+              <div class="p-card3d c1">
+                <div class="p-art">🎩</div>
+                <div style="font-size:12px;font-weight:800">Wobble Hat</div>
+                <div class="p-rar" style="color:var(--rarity-uncommon)">Uncommon</div>
+              </div>
+              <div class="p-card3d c2">
+                <div class="p-art">🚀</div>
+                <div style="font-size:12px;font-weight:800">Jetpack</div>
+                <div class="p-rar" style="color:var(--rarity-rare)">Rare · Print</div>
+              </div>
+            </div>
+            <div style="background:rgba(16,26,68,.9);border:1px solid var(--glass-line);border-radius:16px;padding:12px;display:flex;flex-direction:column;gap:8px">
+              <div style="display:flex;justify-content:space-between;align-items:center">
+                <div>
+                  <b style="font-family:var(--font-display);font-size:16px">Jetpack</b>
+                  <span style="color:var(--sky-300);font-size:13px;margin-left:6px">speed +3 · ✓ Fits Kip</span>
+                </div>
+                <span class="ok-pill">3D STL</span>
+              </div>
+              <button type="button" class="cta" onclick="claimPack()">⚡ Equip Jetpack on Kip</button>
+              <button type="button" class="cta-quiet">⬇ Download support-free STL</button>
+            </div>
+          </div>
+
+          <!-- POPOVER 5: MORE MENU -->
+          <div class="tv-more-menu" id="layer-more" hidden role="menu">
+            <button type="button" class="menu-item" onclick="setMode('moods')">
+              <span>♪ Story Moods &amp; Mic</span><span class="tv-badge-dot"></span>
+            </button>
+            <button type="button" class="menu-item" onclick="setMode('reveal')">
+              <span>★ Character Card</span><span style="color:var(--ink-muted);font-size:11px">Song</span>
+            </button>
+            <button type="button" class="menu-item" onclick="setMode('home')">
+              <span>⊞ Level Editor</span><span style="color:var(--ink-muted);font-size:11px">6/6</span>
+            </button>
+            <button type="button" class="menu-item" onclick="setMode('home')">
+              <span>◈ Kip 3D Rig</span><span style="color:var(--ink-muted);font-size:11px">↗</span>
+            </button>
+            <button type="button" class="menu-item" onclick="setMode('home')">
+              <span>⛶ Fullscreen</span><span style="color:var(--ink-muted);font-size:11px">Full</span>
+            </button>
+          </div>
+
+          <!-- SHEET 5B: STORY MOODS -->
+          <section class="tv-sheet" id="layer-moods" hidden aria-label="Story Moods">
+            <div class="sh-head">
+              <b class="sh-title">Story Moods &amp; Voice</b>
+              <button type="button" class="tv-ctl tv-ctl-gold" onclick="setMode('home')">Done</button>
+            </div>
+            <div class="chips">
+              <button type="button" class="chip on">🌟 Joy</button>
+              <button type="button" class="chip">🔮 Suspense</button>
+              <button type="button" class="chip">🔥 Danger</button>
+              <button type="button" class="chip">🌊 Calm</button>
+              <button type="button" class="chip">🏆 Triumph</button>
+            </div>
+            <button type="button" class="cta">🎤 Hold &amp; say “start adventure”</button>
+          </section>
+
+          <!-- MODAL 6: CHARACTER REVEAL CARD -->
+          <div class="tv-modal" id="layer-reveal" hidden role="dialog" aria-label="Character Card">
+            <div class="sh-head">
+              <span class="k-lbl" style="color:var(--gold)">Character Card Unlocked</span>
+              <button type="button" class="tv-ctl" onclick="setMode('home')">✕</button>
+            </div>
+            <div class="reveal-card">
+              <div style="font-size:44px">🤖🚀</div>
+              <div style="font-family:var(--font-display);font-size:30px;font-weight:800;line-height:1.05">Sky-Dash Kip</div>
+              <div style="font-size:13px;color:var(--ink-muted)">Jetpack + Wobble Hat · 16-step synth playing ♪</div>
+              <div class="stat-bar">
+                <span>SPEED</span>
+                <div class="stat-trk"><div class="stat-fl" style="width:78%;background:var(--sky-500)"></div></div>
+                <span>+5</span>
+              </div>
+              <div class="stat-bar">
+                <span>SPIN</span>
+                <div class="stat-trk"><div class="stat-fl" style="width:48%;background:var(--mint)"></div></div>
+                <span>+2</span>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <button type="button" class="cta" onclick="setMode('home')">🔗 Copy #toy= Share Link</button>
+              <button type="button" class="cta-quiet" onclick="setMode('home')">Back to World</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Interactive Prototype Controls & Notes -->
+      <div class="proto-notes">
+        <div class="kicker">Click to inspect every overlay</div>
+        <h3 style="font-size:22px;margin-top:4px">6 states, 1 canvas, 0 bottom tabs</h3>
+        <div class="state-switcher" role="tablist">
+          <button type="button" class="sw-btn" data-mode="home" aria-selected="true" onclick="setMode('home')">1. World Stage</button>
+          <button type="button" class="sw-btn" data-mode="toy" aria-selected="false" onclick="showScanStep(false);setMode('toy')">2a. My Toys Shelf</button>
+          <button type="button" class="sw-btn" data-mode="scan" aria-selected="false" onclick="setMode('toy');showScanStep(true)">2b. SAM 3.1 Scan</button>
+          <button type="button" class="sw-btn" data-mode="build" aria-selected="false" onclick="setMode('build')">3. Build + 3D Print</button>
+          <button type="button" class="sw-btn" data-mode="pack" aria-selected="false" onclick="setMode('pack')">4. Daily Pack Rip</button>
+          <button type="button" class="sw-btn" data-mode="create" aria-selected="false" onclick="setMode('create')">5. Create World</button>
+          <button type="button" class="sw-btn" data-mode="more" aria-selected="false" onclick="setMode('more')">6a. ⋯ Menu</button>
+          <button type="button" class="sw-btn" data-mode="reveal" aria-selected="false" onclick="setMode('reveal')">6b. Character Card</button>
+        </div>
+
+        <h3>What changed &amp; why it works</h3>
+        <ul style="padding-left:18px;color:var(--ink-muted);display:flex;flex-direction:column;gap:8px">
+          <li><b style="color:var(--ink)">Bottom tab bar deleted (+64 px vertical stage):</b> Kids land immediately in the 3D world instead of scrolling past 124 engineering check rows in Toybox.</li>
+          <li><b style="color:var(--ink)">Top dock trimmed from 9 scrolling buttons → 4 fixed controls + <code>⋯</code>:</b> <code>[Kip ▾]</code>, <code>Build</code>, <code>Create</code>, <code>Pack</code>, and <code>⋯</code> fit cleanly inside 390 px with zero horizontal scrolling.</li>
+          <li><b style="color:var(--ink)">One builder instead of two:</b> <code>Build</code> uses World's live 3D turntable and tucks <b>Market's fit-filtered catalog + AR Try-On + support-free STL downloads</b> into one expandable <code>3D Print &amp; AR Try-On</code> drawer.</li>
+          <li><b style="color:var(--ink)">SAM 3.1 Scan in 3 taps:</b> Tap <code>[Kip ▾]</code> → <code>Scan a Real Toy</code> → Photo + Object chip + <code>Outline with SAM &amp; Play</code>. Duplicate dropdowns, noun inputs, and millimeter essays are gone.</li>
+          <li><b style="color:var(--ink)">Pack Rip stripped of prototype chrome:</b> Slow-mo, reduced-motion button, and shake debug pills are removed; ripping equips directly onto your active 3D toy.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 2: 6-PHONE SIDE-BY-SIDE STORYBOARD -->
+  <section id="storyboard" class="sec">
+    <h2>All 6 Surfaces Side-by-Side</h2>
+    <p class="lead">Every state of the 90-second Meta Hackathon demo rendered on 390 × 844 mobile viewports.</p>
+
+    <div class="phones-grid" id="storyboard-grid"></div>
+  </section>
+
+  <!-- SECTION 3: BEFORE VS AFTER -->
+  <section id="before-after" class="sec">
+    <h2>Before vs. After Simplification</h2>
+    <div class="cmp-card">
+      <table class="tbl">
+        <thead>
+          <tr>
+            <th>Surface / Metric</th>
+            <th>Before (Current 2-App Split)</th>
+            <th>After (One Stage: World-First)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><b>Top-level navigation</b></td>
+            <td>5 bottom tabs (<code>Factory</code>, <code>Toybox</code>, <code>Packs</code>, <code>Market</code>, <code>Play</code>) + 3 pushed screens (<code>Scan</code>, <code>Build</code>, <code>Reveal</code>)</td>
+            <td><b>0 bottom tabs.</b> 1 full-screen 3D World stage with 1 active sheet at a time.</td>
+          </tr>
+          <tr>
+            <td><b>World top dock</b></td>
+            <td>9 items in a horizontal scroll strip (<code>Badge</code>, <code>+ Upgrades</code>, <code>Customize</code>, <code>Forge</code>, <code>Create</code>, <code>Editor</code>, <code>Moods</code>, <code>Kip 3D</code>, <code>Full</code>)</td>
+            <td><b>4 fixed controls + <code>⋯</code></b> (<code>[Toy ▾]</code>, <code>Build</code>, <code>Create</code>, <code>Pack•</code>, <code>⋯</code>) — fits 390 px with zero horizontal scroll.</td>
+          </tr>
+          <tr>
+            <td><b>Where parts live</b></td>
+            <td>Duplicated in 4 places: <code>Toybox</code> (31 × 4-check cards), <code>Market</code>, 2D <code>AugmentScreen</code>, and 3D <code>ToyCustomizer</code></td>
+            <td><b>1 place: <code>Build</code> sheet</b> (3D slot customizer + fit-filtered <code>3D Print &amp; AR</code> drawer).</td>
+          </tr>
+          <tr>
+            <td><b>Scan a toy (SAM 3.1)</b></td>
+            <td>Photo + 4 chips + <code>&lt;select&gt;</code> + <code>Outline noun</code> input + 2 mm sliders + 2 CTAs + backup list</td>
+            <td><b>Photo + Object chip + S/M/L pill + 1 CTA</b> (exact mm tucked under <code>Exact mm</code>).</td>
+          </tr>
+          <tr>
+            <td><b>Daily Pack Rip</b></td>
+            <td>6 prototype debug buttons (<code>Slow motion</code>, <code>Reduced motion</code>, <code>Shake</code>...) + 4-check card + 3 stacked giant CTAs</td>
+            <td><b>Pure foil rip modal</b> + 1 primary CTA (<code>Equip on {Toy}</code>) + quiet <code>Download STL</code> link.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</main>
+
+<footer>
+  ToyVentor · World-First UI Simplification Mockups · Companion to <code>docs/world-first-spec.md</code>
+</footer>
+
+<script>
+const LAYERS = ['home', 'toy', 'build', 'create', 'pack', 'more', 'moods', 'reveal'];
+
+function setMode(mode) {
+  const effective = mode === 'home-playing' ? 'home' : mode;
+  for (const id of LAYERS) {
+    const el = document.getElementById('layer-' + id);
+    if (el) el.hidden = (id !== effective);
+  }
+  if (mode === 'home-playing') {
+    document.getElementById('layer-home').hidden = true;
+  }
+  const mapBtn = { toy: 'btn-toy', build: 'btn-build', create: 'btn-create', pack: 'btn-pack', more: 'btn-more' };
+  for (const [k, btnId] of Object.entries(mapBtn)) {
+    const b = document.getElementById(btnId);
+    if (b) b.setAttribute('aria-pressed', String(k === effective));
+  }
+  document.querySelectorAll('.sw-btn').forEach((btn) => {
+    const m = btn.getAttribute('data-mode');
+    const isScan = !document.getElementById('toy-step-scan').hidden;
+    const match = (m === 'scan' && effective === 'toy' && isScan) ||
+                  (m === 'toy' && effective === 'toy' && !isScan) ||
+                  (m === effective && m !== 'toy');
+    btn.setAttribute('aria-selected', String(match));
+  });
+}
+
+function showScanStep(scan) {
+  document.getElementById('toy-step-shelf').hidden = scan;
+  document.getElementById('toy-step-scan').hidden = !scan;
+  document.querySelectorAll('.sw-btn').forEach((btn) => {
+    const m = btn.getAttribute('data-mode');
+    if (m === 'toy') btn.setAttribute('aria-selected', String(!scan));
+    if (m === 'scan') btn.setAttribute('aria-selected', String(scan));
+  });
+}
+
+function pickToy(name, color) {
+  document.getElementById('live-toy-name').textContent = name;
+  document.getElementById('live-toy-dot').style.background = color;
+}
+
+function claimPack() {
+  const dot = document.getElementById('pack-dot');
+  if (dot) dot.style.display = 'none';
+  setMode('home');
+}
+
+// Build static 6-phone storyboard by cloning #live-phone in each state
+const STORYBOARD = [
+  { mode: 'home', scan: false, title: '1. World Stage (Home)', desc: 'Opens straight into 3D World. 4-item dock fits 390 px; zero bottom tab bar.' },
+  { mode: 'toy', scan: true, title: '2. My Toy & SAM 3.1 Scan', desc: 'Tap [Kip ▾] to switch toys or snap a photo + object chip for SAM 3.1.' },
+  { mode: 'build', scan: false, title: '3. Build, Forge & 3D Print', desc: 'Live 3D turntable above + slot upgrades + collapsible AR & STL print drawer.' },
+  { mode: 'pack', scan: false, title: '4. Daily Pack Rip Modal', desc: 'Debug toggles removed; 1 primary CTA equips pulled parts straight onto your 3D toy.' },
+  { mode: 'create', scan: false, title: '5. Create World (Muse Spark)', desc: 'Describe or speak a world; live 3D preview stays visible behind the sheet.' },
+  { mode: 'reveal', scan: false, title: '6. Character Card & ⋯ Menu', desc: '15s entrance synth, build stats, and #toy= share link modal from ⋯.' },
+];
+
+(function renderStoryboard() {
+  const grid = document.getElementById('storyboard-grid');
+  const src = document.getElementById('live-phone');
+  if (!grid || !src) return;
+  for (const item of STORYBOARD) {
+    setMode(item.mode);
+    showScanStep(item.scan);
+    const clone = src.cloneNode(true);
+    clone.removeAttribute('id');
+    clone.querySelectorAll('[id]').forEach((n) => n.removeAttribute('id'));
+    clone.querySelectorAll('[onclick]').forEach((n) => n.removeAttribute('onclick'));
+    const card = document.createElement('div');
+    card.className = 'phone-card';
+    const wrap = document.createElement('div');
+    wrap.className = 'phone-scale-wrap';
+    wrap.appendChild(clone);
+    const cap = document.createElement('div');
+    cap.className = 'phone-cap';
+    cap.innerHTML = '<b>' + item.title + '</b> — ' + item.desc;
+    card.appendChild(wrap);
+    card.appendChild(cap);
+    grid.appendChild(card);
+  }
+  showScanStep(false);
+  setMode('home');
+})();
+</script>
+</body>
+</html>

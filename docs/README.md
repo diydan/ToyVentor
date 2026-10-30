@@ -19,6 +19,7 @@ long-term direction; if two documents disagree about product behaviour,
 | [demo-script.md](demo-script.md) | The 90-second demo run: beats, shot list, backups, pre-flight checks |
 | [wireframe.md](wireframe.md) + [ToyVentor Wireframes.pdf](ToyVentor%20Wireframes.pdf) | The 12 screens |
 | [design-guide.html](design-guide.html) + [mockups.html](mockups.html) | Visual design. Open in a browser |
+| [world-first-spec.md](world-first-spec.md) + [world-first-mockups.html](world-first-mockups.html) | One-stage World-first UI consolidation spec and interactive mockups |
 
 ## ToyVentor World (the 2.5D game)
 
