@@ -1,0 +1,132 @@
+{
+  "validator": "preprint_check 1.2.0",
+  "file": "toyventor_hair_mohawk_S.stl",
+  "file_sha256": "76978833c4e9550c69d2f43a0d044e3cb15cff174d51150c7715008109f5fe94",
+  "part_id": "toyventor_hair_mohawk_S",
+  "profile": "fdm_pla_0.4",
+  "checked_at": "2026-10-30T21:27:02Z",
+  "metrics": {
+    "bbox_mm": [
+      38.4,
+      35.6,
+      18.4
+    ],
+    "volume_cm3": 10.22,
+    "surface_cm2": 32.83,
+    "triangles": 11330,
+    "ledges": [],
+    "layers": 92,
+    "bed_contact_mm2": 336.6,
+    "height_mm": 18.4,
+    "slenderness": 1.0,
+    "centre_of_mass_over_contact": true,
+    "min_wall_mm": null,
+    "thin_wall_regions": []
+  },
+  "bridges": [
+    {
+      "z_mm": 3.2,
+      "span_mm": 6.7,
+      "area_mm2": 35.2
+    },
+    {
+      "z_mm": 3.2,
+      "span_mm": 6.7,
+      "area_mm2": 35.2
+    }
+  ],
+  "checks": [
+    {
+      "id": "V1_mesh_sound",
+      "level": "block",
+      "result": "pass",
+      "value": null,
+      "limit": null,
+      "detail": "watertight True, consistent winding True, 1 body(ies)"
+    },
+    {
+      "id": "V2_on_bed",
+      "level": "block",
+      "result": "pass",
+      "value": 0.0,
+      "limit": 0.0,
+      "detail": "lowest point must be on the bed (z = 0)"
+    },
+    {
+      "id": "V3_fits_bed",
+      "level": "block",
+      "result": "pass",
+      "value": [
+        38.4,
+        35.6,
+        18.4
+      ],
+      "limit": [
+        180,
+        180,
+        180
+      ],
+      "detail": ""
+    },
+    {
+      "id": "V4_no_steep_overhang",
+      "level": "block",
+      "result": "pass",
+      "value": 0.0,
+      "limit": 1.0,
+      "detail": "mm2 of downward surface steeper than 45 deg (flat bridges excluded)"
+    },
+    {
+      "id": "V10_no_ledges",
+      "level": "block",
+      "result": "pass",
+      "value": 0.0,
+      "limit": 1.0,
+      "detail": "mm2 of flat underside held on one side only (a ledge over air, not a bridge)"
+    },
+    {
+      "id": "V6_bridge_span",
+      "level": "block",
+      "result": "pass",
+      "value": 6.7,
+      "limit": 20,
+      "detail": "2 bridge(s); widest unsupported span in mm"
+    },
+    {
+      "id": "V5_no_floating_islands",
+      "level": "block",
+      "result": "pass",
+      "value": 0,
+      "limit": 0,
+      "detail": "material not resting, layer by layer, on anything that reaches the bed"
+    },
+    {
+      "id": "V7_min_feature",
+      "level": "warn",
+      "result": "pass",
+      "value": 0,
+      "limit": 0,
+      "detail": "layer pieces narrower than 0.4 mm"
+    },
+    {
+      "id": "V9_bed_contact",
+      "level": "info",
+      "result": "pass",
+      "value": 336.6,
+      "limit": null,
+      "detail": "height / sqrt(contact) = 1.0; above about 3 the slicer often asks for a brim"
+    },
+    {
+      "id": "V8_wall_thickness",
+      "level": "warn",
+      "result": "pass",
+      "value": 0,
+      "limit": 0,
+      "detail": "regions where the wall is under 0.8 mm (two nozzle widths) over 2.0 mm2, or under 0.4 mm (one nozzle width) over 0.25 mm2; sharp edges and slivers are ignored"
+    }
+  ],
+  "print_settings": {},
+  "slicer": null,
+  "verdict": "pass",
+  "summary": "Prints as is"
+}

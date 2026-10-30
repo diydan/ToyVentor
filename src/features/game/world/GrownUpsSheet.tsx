@@ -14,10 +14,18 @@ import {
   type GateSession,
   type ParentSnapshot,
 } from "../../../lib/parentTime";
+import {
+  familyStars,
+  rankFor,
+  type ProgressionState,
+} from "../../../lib/progression";
 
 export interface GrownUpsSheetProps {
   open: boolean;
   snapshot: ParentSnapshot;
+  progression?: ProgressionState;
+  onResetXp?: () => void;
+  onToggleSandbox?: () => void;
   onSnapshotChange: (next: ParentSnapshot) => void;
   onClose: () => void;
 }
@@ -33,6 +41,9 @@ const SESSION_OPTIONS = [null, 10, 15, 20, 30, 45] as const;
 export function GrownUpsSheet({
   open,
   snapshot,
+  progression,
+  onResetXp,
+  onToggleSandbox,
   onSnapshotChange,
   onClose,
 }: GrownUpsSheetProps) {
@@ -44,6 +55,7 @@ export function GrownUpsSheet({
   const [busy, setBusy] = useState(false);
   const [statusNote, setStatusNote] = useState<string | null>(null);
   const [pinDraft, setPinDraft] = useState("");
+  const [confirmResetXp, setConfirmResetXp] = useState(false);
   const [sittingSession, setSittingSession] = useState<GateSession | null>(null);
   const [activeProof, setActiveProof] = useState<string>("local-proof");
 
@@ -420,6 +432,70 @@ export function GrownUpsSheet({
               )}
             </div>
           </div>
+
+          {progression && (
+            <div className="tv-parent-ledger">
+              <span
+                className="kicker-label"
+                style={{ marginBottom: 6, display: "block" }}
+              >
+                STEM XP (read-only)
+              </span>
+              <div className="tv-parent-stats">
+                <div>
+                  <span className="tv-parent-stat-k">Total XP</span>
+                  <strong className="tv-parent-stat-v">
+                    {progression.totalXp}
+                  </strong>
+                </div>
+                <div>
+                  <span className="tv-parent-stat-k">Maker Rank</span>
+                  <strong className="tv-parent-stat-v">
+                    {rankFor(progression.totalXp).rank} ·{" "}
+                    {rankFor(progression.totalXp).title}
+                  </strong>
+                </div>
+              </div>
+              <p className="tv-moves" style={{ margin: 0, fontSize: 12 }}>
+                {["lab1", "lab2", "lab3", "lab4", "lab5", "lab6"]
+                  .map(
+                    (lab) =>
+                      `${lab.replace("lab", "Lab ")} ★${familyStars(progression, lab)}`,
+                  )
+                  .join(" · ")}
+              </p>
+              <p className="tv-moves" style={{ margin: 0, fontSize: 12 }}>
+                XP lives on this device. Reset keeps scanned and saved toys
+                unlocked.
+              </p>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                <button
+                  type="button"
+                  className="tv-ctl"
+                  aria-pressed={progression.sandboxUnlockAll}
+                  onClick={onToggleSandbox}
+                >
+                  {progression.sandboxUnlockAll
+                    ? "Sandbox: all unlocked (on)"
+                    : "Sandbox: unlock everything"}
+                </button>
+                <button
+                  type="button"
+                  className="tv-ctl tv-ctl-danger"
+                  onClick={() => {
+                    if (!confirmResetXp) {
+                      setConfirmResetXp(true);
+                      return;
+                    }
+                    setConfirmResetXp(false);
+                    onResetXp?.();
+                  }}
+                >
+                  {confirmResetXp ? "Tap again to confirm Reset XP" : "Reset XP"}
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* 2. One-Tap Presets */}
           <div>

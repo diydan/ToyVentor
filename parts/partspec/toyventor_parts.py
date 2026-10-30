@@ -1156,41 +1156,136 @@ def _face_pocket_cutter(y_floor=-14.0625, z_c=14.0625, w_in=23.2, h_in=11.4, r_i
     return Manifold.batch_hull([p_in, p_out])
 
 
-def char_head_kid(size="small", grid=(2, 1), lock=True, **_):
-    """Round Kip-proportioned human base head (40.8 x 36.2 x 28.0 mm squircle skull + subtle human ears, 43.2 x 35.7 x 30.8 mm with crown buds)
-    with plump rounded back, flush front emotion face-plate seat on axis8, broad 35.2 x 23.6 mm crown for seamless hair caps, and proud 2x1 crown buds."""
-    H_dome = 28.0
-    w_max, d_max = 40.8, 36.2
-    w0, d0 = 30.2, 18.0
-    slices = [
-        (0.0,  27.4, 15.6, 2.30),
-        (0.45, 28.2, 16.2, 2.30),
-        (2.90, w0,   d0,   2.28),
-    ]
-    z_x1, z_y1, z2 = 12.0, 17.6, 21.6
-    for k in range(1, 23):
-        z = 2.90 + (z_y1 - 2.90) * (k / 22)
-        tx = min(1.0, (z - 2.90) / (z_x1 - 2.90))
-        ty = (z - 2.90) / (z_y1 - 2.90)
-        sx = _c1_ramp(tx, f=0.14)
-        sy = _c1_ramp(ty, f=0.14)
-        slices.append((z, w0 + (w_max - w0) * sx, d0 + (d_max - d0) * sy, 2.26))
-    for k in range(1, 5):
-        z = z_y1 + (z2 - z_y1) * (k / 4)
-        slices.append((z, w_max, d_max, 2.26))
-    cw, cd = 35.2, 23.6
+def _add_human_head_features(skull, ears, size, lock, z_stud, z_face):
+    """Attach rounded human C-ears, flush axis8 front face-plate pocket + fixed bore, 2x1 neck sockets, and proud 2x1 crown buds."""
+    body = skull + ears
+    body = body - _face_pocket_cutter(y_floor=-13.95, z_c=z_face, w_in=21.8, h_in=10.6, r_in=4.3)
+    body = body - pro.bore_cutter_axis("fixed", 12.9, (0.0, -7.7125, z_face), "y")
+    c_face = pro._axis_bore_conn("face_slot", "fixed", (0.0, -7.8125, z_face), "y", 12.5, lattice="axis8")
+    m, conns, ex = integrated_sockets(body, size, lock)
+    m, c_top = add_studs_at(m, size, 2, 1, 0.0, 0.0, z_stud, "top_studs")
+    return m, conns + [c_top, c_face], ex
+
+
+def _upper_cranium_slices(z_band_top, z_stud, w_top, d_top, p_top):
+    """Smooth rounded upper cranium dome from z_band_top up to z_stud that stays strictly inside the wrap-around wig vault."""
+    out = []
+    cw, cd = 23.0, 12.2
     for k in range(1, 17):
         t = k / 16
-        u = max(0.0, 1.0 - (t ** 2.15)) ** (1.0 / 2.15)
-        z = z2 + (H_dome - z2) * t
-        slices.append((z, cw + (w_max - cw) * u, cd + (d_max - cd) * u, 2.26 - 0.16 * t))
-    body = _superellipse_chain(slices) + _smooth_ear_pair(z0=7.4, z_pk=15.0, z1=20.2, x_out=21.6, y_c=-0.4, d_ear=8.2)
-    body = body - _face_pocket_cutter(y_floor=-13.95, z_c=14.0625, w_in=21.8, h_in=10.6, r_in=4.3)
-    body = body - pro.bore_cutter_axis("fixed", 12.9, (0.0, -7.7125, 14.0625), "y")
-    c_face = pro._axis_bore_conn("face_slot", "fixed", (0.0, -7.8125, 14.0625), "y", 12.5, lattice="axis8")
-    m, conns, ex = integrated_sockets(body, size, lock)
-    m, c_top = add_studs_at(m, size, 2, 1, 0.0, 0.0, H_dome, "top_studs")
-    return m, conns + [c_top, c_face], ex
+        u = 1.0 - (t ** 1.18)
+        z = z_band_top + (z_stud - z_band_top) * t
+        out.append((z, cw + (w_top - cw) * u, cd + (d_top - cd) * u, p_top - (p_top - 2.02) * t, 0.0, 0.0))
+    return out
+
+
+def char_head_kid(size="small", grid=(2, 1), lock=True, **_):
+    """Human Head V1 (Balanced Pill): 42.8 x 33.9 x 31.2 mm soft-squircle skull with ears & crown buds,
+    plump 360-deg rounded occiput, flush axis8 face_slot at z = 14.0625 mm, and smooth 28.4 mm crown dome."""
+    z_stud, z_face = 28.4, 14.0625
+    w_max, d_max = 39.8, 36.6
+    w0, d0 = 30.0, 17.6
+    slices = [
+        (0.0,  27.4, 15.6, 2.28, 0.0, 0.0),
+        (0.45, 28.2, 16.2, 2.28, 0.0, 0.0),
+        (2.90, w0,   d0,   2.26, 0.0, 0.0),
+    ]
+    z_x1, z_y1, z2 = 11.4, 15.8, z_stud - 9.8
+    for k in range(1, 21):
+        z = 2.90 + (z_y1 - 2.90) * (k / 20)
+        sx = _c1_ramp(min(1.0, (z - 2.90) / (z_x1 - 2.90)), f=0.16)
+        sy = _c1_ramp((z - 2.90) / (z_y1 - 2.90), f=0.16)
+        slices.append((z, w0 + (w_max - w0) * sx, d0 + (d_max - d0) * sy, 2.20, 0.0, 0.0))
+    for k in range(1, 5):
+        z = z_y1 + (z2 - z_y1) * (k / 4)
+        slices.append((z, w_max, d_max, 2.18, 0.0, 0.0))
+    slices.extend(_upper_cranium_slices(z2, z_stud, w_max, d_max, 2.18))
+    skull = _superellipse_chain(slices)
+    ears = _smooth_ear_pair(z0=6.6, z_pk=14.4, z1=19.2, x_out=21.4, y_c=-0.3, d_ear=8.0)
+    return _add_human_head_features(skull, ears, size, lock, z_stud, z_face)
+
+
+def char_head_chibi(size="small", grid=(2, 1), lock=True, **_):
+    """Human Head V2 (Chibi Cheeks): 44.8 x 34.5 x 30.8 mm plush round apple-cheek doll head with low button ears & crown buds,
+    circular p = 2.02 planform, full baby cheeks peaking low around z = 11.4 mm, and flush axis8 face_slot at z = 12.50 mm."""
+    z_stud, z_face = 28.0, 12.50
+    w_cheek, w_top, d_max = 43.4, 40.2, 36.8
+    w0, d0 = 30.6, 17.8
+    slices = [
+        (0.0,  28.0, 15.8, 2.14, 0.0, 0.0),
+        (0.45, 28.8, 16.4, 2.12, 0.0, 0.0),
+        (2.90, w0,   d0,   2.08, 0.0, 0.0),
+    ]
+    z_pk, z2 = 11.4, z_stud - 9.8
+    for k in range(1, 19):
+        z = 2.90 + (z_pk - 2.90) * (k / 18)
+        sx = _c1_ramp((z - 2.90) / (z_pk - 2.90), f=0.16)
+        sy = _c1_ramp(min(1.0, (z - 2.90) / 12.8), f=0.16)
+        slices.append((z, w0 + (w_cheek - w0) * sx, d0 + (d_max - d0) * sy, 2.02, 0.0, 0.0))
+    for k in range(1, 9):
+        t = k / 8
+        z = z_pk + (z2 - z_pk) * t
+        s = t * t * (3.0 - 2.0 * t)
+        sy = _c1_ramp(min(1.0, (z - 2.90) / 12.8), f=0.16)
+        slices.append((z, w_cheek + (w_top - w_cheek) * s, d0 + (d_max - d0) * sy, 2.02 + 0.08 * s, 0.0, 0.0))
+    slices.extend(_upper_cranium_slices(z2, z_stud, w_top, d_max, 2.10))
+    skull = _superellipse_chain(slices)
+    ears = _smooth_ear_pair(z0=5.2, z_pk=13.0, z1=18.0, x_out=22.4, y_c=-0.3, d_ear=8.0)
+    return _add_human_head_features(skull, ears, size, lock, z_stud, z_face)
+
+
+def char_head_chin(size="small", grid=(2, 1), lock=True, **_):
+    """Human Head V3 (Sculpted Jaw): 42.0 x 33.4 x 33.6 mm animated-hero silhouette with ears & crown buds,
+    sleek tapered chin flaring smoothly up to sculpted cheekbones, flush axis8 face_slot at z = 15.625 mm, and domed brow."""
+    z_stud, z_face = 30.8, 15.625
+    w_max, d_max = 39.2, 36.0
+    w0, d0 = 28.4, 17.6
+    slices = [
+        (0.0,  26.6, 15.6, 2.22, 0.0, 0.0),
+        (0.45, 27.4, 16.2, 2.22, 0.0, 0.0),
+        (2.90, w0,   d0,   2.20, 0.0, 0.0),
+    ]
+    z_y1, z_x1, z2 = 15.8, 18.0, z_stud - 11.2
+    for k in range(1, 23):
+        z = 2.90 + (z_x1 - 2.90) * (k / 22)
+        ux = (z - 2.90) / (z_x1 - 2.90)
+        sx = (ux ** 1.40) * (2.0 - (ux ** 1.40))
+        sy = _c1_ramp(min(1.0, (z - 2.90) / (z_y1 - 2.90)), f=0.18)
+        yc = -0.35 * math.sin(ux * math.pi)
+        slices.append((z, w0 + (w_max - w0) * sx, d0 + (d_max - d0) * sy, 2.16, 0.0, yc))
+    for k in range(1, 4):
+        z = z_x1 + (z2 - z_x1) * (k / 3)
+        slices.append((z, w_max, d_max, 2.16, 0.0, 0.0))
+    slices.extend(_upper_cranium_slices(z2, z_stud, w_max, d_max, 2.16))
+    skull = _superellipse_chain(slices)
+    ears = _smooth_ear_pair(z0=8.8, z_pk=16.4, z1=21.2, x_out=21.0, y_c=-0.3, d_ear=8.0)
+    return _add_human_head_features(skull, ears, size, lock, z_stud, z_face)
+
+
+def char_head_tall(size="small", grid=(2, 1), lock=True, **_):
+    """Human Head V4 (Tall Capsule): 41.2 x 33.5 x 36.0 mm upright designer-vinyl vertical capsule with compact ears & buds,
+    crisp p = 2.40 squircle planform, tall vertical brow & cheek wall, and flush axis8 face_slot at z = 17.1875 mm."""
+    z_stud, z_face = 33.2, 17.1875
+    w_max, d_max = 38.4, 35.6
+    w0, d0 = 29.4, 17.6
+    slices = [
+        (0.0,  27.0, 15.6, 2.36, 0.0, 0.0),
+        (0.45, 27.8, 16.2, 2.38, 0.0, 0.0),
+        (2.90, w0,   d0,   2.40, 0.0, 0.0),
+    ]
+    z_x1, z_y1, z2 = 10.8, 15.8, z_stud - 11.2
+    for k in range(1, 21):
+        z = 2.90 + (z_y1 - 2.90) * (k / 20)
+        sx = _c1_ramp(min(1.0, (z - 2.90) / (z_x1 - 2.90)), f=0.18)
+        sy = _c1_ramp((z - 2.90) / (z_y1 - 2.90), f=0.16)
+        slices.append((z, w0 + (w_max - w0) * sx, d0 + (d_max - d0) * sy, 2.40, 0.0, 0.0))
+    for k in range(1, 6):
+        z = z_y1 + (z2 - z_y1) * (k / 5)
+        slices.append((z, w_max, d_max, 2.34, 0.0, 0.0))
+    slices.extend(_upper_cranium_slices(z2, z_stud, w_max, d_max, 2.30))
+    skull = _superellipse_chain(slices)
+    ears = _smooth_ear_pair(z0=10.8, z_pk=18.4, z1=23.4, x_out=20.6, y_c=-0.3, d_ear=7.8)
+    return _add_human_head_features(skull, ears, size, lock, z_stud, z_face)
 
 
 def char_faceplate(stem_tu=1, **_):
@@ -1269,180 +1364,217 @@ def char_head_bear(size="small", grid=(2, 1), lock=True, **_):
     return m, conns + [c_top], ex
 
 
-def _hair_dome(h_top=10.8, w_peak=41.6, d_peak=35.6, z_x1=5.8, z_y1=9.2, z2=9.4, y_shift=0.0, crown_w=25.6, crown_d=14.8, p_cap=2.08, w_foot=34.8, d_foot=22.6):
-    """Broad-seated C1 full-coverage hair dome: starts at 34.8 x 22.6 mm (2x1 sockets + automatic 45-deg side reliefs) so it wraps the full
-    41.6 x 35.6 mm forehead & rear skull of char_head_kid with zero waist pinch and >12% above_cylinder 3+ choke safety."""
-    w0, d0 = w_foot + 0.8, d_foot + 0.8
-    z_flare = 1.20 if w_foot > 32.0 else 2.85
-    plates = []
-    def add_plate(z, w, d, p, yc=0.0):
-        plates.append(Manifold.extrude(_superellipse_cs(w, d, p), 0.02).translate((0.0, yc, z)))
+HAIR_WRAP_MM = 16.5
 
-    add_plate(0.0,     w_foot,       d_foot,       2.12, 0.0)
-    add_plate(0.35,    w_foot + 0.4, d_foot + 0.4, 2.12, 0.0)
-    add_plate(z_flare, w0,           d0,           2.10, 0.0)
 
-    z_top_ramp = max(z_x1, z_y1)
-    for k in range(1, 21):
-        z = z_flare + (z_top_ramp - z_flare) * (k / 20)
-        tx = min(1.0, (z - z_flare) / max(0.5, z_x1 - z_flare))
-        ty = min(1.0, (z - z_flare) / max(0.5, z_y1 - z_flare))
-        sx = _c1_ramp(tx, f=0.08)
-        sy = _c1_ramp(ty, f=0.08)
-        add_plate(z, w0 + (w_peak - w0) * sx, d0 + (d_peak - d0) * sy, p_cap, y_shift * sy)
-    if z2 > z_top_ramp + 0.05:
-        for k in range(1, 3):
-            z = z_top_ramp + (z2 - z_top_ramp) * (k / 2)
-            add_plate(z, w_peak, d_peak, p_cap, y_shift)
+def _wrap_wig_cavity(ear_cover=False):
+    """42-deg pure-ellipse self-supporting inner skull vault from z = -17.0 up to 29.0 x 19.6 mm ceiling at z = 0.0 (zero overhang, zero ledge)."""
+    if ear_cover:
+        slices = [
+            (-17.0, 46.8, 39.0, 2.08, 0.0, 0.0),
+            (-10.1, 46.8, 38.8, 2.04, 0.0, 0.0),
+            (  0.0, 29.0, 19.6, 2.00, 0.0, 0.0),
+        ]
     else:
-        z2 = z_top_ramp
+        slices = [
+            (-17.0, 45.0, 39.0, 2.10, 0.0, 0.0),
+            (-10.1, 44.6, 38.8, 2.04, 0.0, 0.0),
+            (  0.0, 29.0, 19.6, 2.00, 0.0, 0.0),
+        ]
+    return _superellipse_chain(slices)
+
+
+def _front_and_ear_arch_cutter(ear_cover=False, bang_tilt_x=0.0):
+    """Zero-ledge, zero-overhang forehead hairline + optional exposed-ear side arch (dz/dy = 1.14 => 41.3 deg overhang from vertical)."""
+    s = 1.14
+    if ear_cover:
+        y0, y_front = -11.6, -34.0
+        pts = [
+            (y_front, -24.0),
+            (y0,      -24.0),
+            (y0,      -16.5),
+            (y_front, -16.5 + s * (y0 - y_front)),
+        ]
+        cutter = Manifold.extrude(CrossSection([pts]), 80.0).translate((0.0, 0.0, -40.0)).rotate((90.0, 0.0, 90.0))
+    else:
+        y0, y_front = -11.6, -34.0
+        pts_front = [
+            (y_front, -24.0),
+            (y0,      -24.0),
+            (y0,      -16.5),
+            (y_front, -16.5 + s * (y0 - y_front)),
+        ]
+        front_cut = Manifold.extrude(CrossSection([pts_front]), 80.0).translate((0.0, 0.0, -40.0)).rotate((90.0, 0.0, 90.0))
+        pts_ear = [
+            (-6.8, -24.0),
+            ( 6.6, -24.0),
+            ( 6.6, -16.5),
+            (-0.1, -16.5 + s * 6.7),
+            (-6.8, -16.5),
+        ]
+        ear_cut = Manifold.extrude(CrossSection([pts_ear]), 80.0).translate((0.0, 0.0, -40.0)).rotate((90.0, 0.0, 90.0))
+        cutter = front_cut + ear_cut
+
+    if abs(bang_tilt_x) > 1e-3:
+        cutter = cutter.rotate((0.0, bang_tilt_x, 0.0))
+    return cutter
+
+
+def _finish_wrap_wig(outer_body, size="small", ear_cover=False, bang_tilt_x=0.0, top_studs_z=None):
+    """Trim bottom skirt cleanly at z = -16.5 mm, carve self-supporting skull vault + ear/bang arches + 2x1 stud sockets at z = 0, and shift to z_bed = 0 on print."""
+    p = STUD[size]
+    hole_r = (p["stud_d"] + p["fit"]) / 2
+    depth = p["stud_h"] + 0.4
+
+    body = keep_above(outer_body, -HAIR_WRAP_MM)
+    body = body - _wrap_wig_cavity(ear_cover=ear_cover)
+    body = body - _front_and_ear_arch_cutter(ear_cover=ear_cover, bang_tilt_x=bang_tilt_x)
+    for sx in (-0.5, 0.5):
+        body = body - cyl(depth + 0.02, hole_r, -0.02, sx * p["pitch"], 0.0, FIT_SEG)
+
+    conns = [socket_conn(size, 2, 1)]
+    if top_studs_z is not None:
+        body, c_top = add_studs_at(body, size, 2, 1, 0.0, 0.0, top_studs_z, "top_studs")
+        conns.append(c_top)
+    return body, conns, {"print_rotation_deg": [0, 0, 0]}
+
+
+def _outer_wig_shell(w_base=49.8, d_base=45.0, w_mid=50.8, d_mid=46.0, h_top=10.6, flat_crown=False, p_exp=2.14, back_shift=0.6):
+    """Plump sculpted wrap-around wig volume from z = -16.5 mm up to +h_top."""
+    slices = [
+        (-HAIR_WRAP_MM,        w_base - 0.7, d_base - 0.7, p_exp, 0.0, back_shift),
+        (-HAIR_WRAP_MM + 0.45, w_base,       d_base,       p_exp, 0.0, back_shift),
+        (-8.5,                 w_mid,        d_mid,        p_exp, 0.0, back_shift * 0.6),
+        ( 0.0,                 w_mid - 1.6,  d_mid - 1.6,  p_exp, 0.0, 0.0),
+    ]
+    cw, cd = (27.6, 16.4) if flat_crown else (18.4, 14.4)
     for k in range(1, 13):
         t = k / 12
-        q = math.sin(t * math.pi * 0.5)
-        z = z2 + (h_top - z2) * q
-        e = math.cos(t * math.pi * 0.5)
-        add_plate(z, crown_w + (w_peak - crown_w) * e, crown_d + (d_peak - crown_d) * e, max(2.0, p_cap - 0.06 * t), y_shift * e)
-    return union([Manifold.batch_hull([plates[i], plates[i + 1]]) for i in range(len(plates) - 1)])
+        u = max(0.0, 1.0 - (t ** 1.95)) ** (1.0 / 1.95)
+        z = h_top * t
+        slices.append((z, cw + (w_mid - 1.6 - cw) * u, cd + (d_mid - 1.6 - cd) * u, max(2.0, p_exp - 0.12 * t), 0.0, 0.0))
+    return _superellipse_chain(slices)
 
 
 def hair_short_swept(size="small", grid=(2, 1), lock=True, **_):
-    """Hat-ready side-swept short hair piece: full-coverage hair cap with diagonal side-parted quiff bangs and 2x1 top_studs for hats or ears."""
-    H = 10.6
-    cap = _hair_dome(H + 0.25, 41.6, 35.6, z_x1=5.8, z_y1=9.3, z2=9.5, crown_w=25.6, crown_d=14.6)
-    quiff = _ellipse_chain([
-        (4.0,  16.0, 6.2, 1.4,  -9.2),
-        (7.0,  19.8, 7.6, 2.4, -11.2),
-        (9.5,  22.0, 8.4, 3.0, -12.5),
-        (H + 0.25, 17.6, 7.0, 2.2, -10.4),
+    """Hat-ready wrap-around short swept wig: sideburns, exposed-ear arches, deep nape wrap, diagonal fringe bangs, and 2x1 top_studs."""
+    outer = _outer_wig_shell(w_base=49.8, d_base=45.0, w_mid=50.8, d_mid=46.0, h_top=10.6, flat_crown=True, back_shift=0.6)
+    fringe = _ellipse_chain([
+        (-10.0, 22.0,  7.0, 2.0, -16.6),
+        ( -2.5, 29.0, 10.6, 2.8, -18.6),
+        (  4.5, 26.0, 10.8, 2.2, -15.0),
+        (  9.8, 16.5,  7.2, 1.0,  -9.8),
     ])
-    raw = ((cap + quiff) ^ Manifold.cube((120.0, 120.0, H)).translate((-60.0, -60.0, 0.0))).simplify(0.004)
-    m, conns, ex = integrated_sockets(raw, size, lock)
-    m, c_top = add_studs_at(m, size, 2, 1, 0.0, 0.0, H, "top_studs")
-    return m, conns + [c_top], ex
+    return _finish_wrap_wig(outer + fringe, size=size, ear_cover=False, bang_tilt_x=3.5, top_studs_z=10.6)
 
 
 def hair_bob(size="small", grid=(2, 1), lock=True, **_):
-    """Hat-ready rounded bob hair piece: full-coverage cap with cheek-framing side bells, parted bangs and 2x1 top_studs for hats or ears."""
-    H = 10.8
-    cap = _hair_dome(H + 0.25, 42.2, 35.8, z_x1=6.0, z_y1=9.4, z2=9.6, crown_w=26.0, crown_d=14.8)
-    wings = None
-    for sx in (-1, 1):
-        wg = _ellipse_chain([
-            (3.4,   8.0, 12.0, sx * 13.4, -0.2),
-            (6.6,  10.0, 15.8, sx * 15.4, -0.2),
-            (9.4,  11.0, 18.2, sx * 17.0, -0.2),
-            (H + 0.25, 8.6, 14.2, sx * 14.2, -0.1),
-        ])
-        wings = wg if wings is None else wings + wg
-    bangs = None
-    for sx in (-1, 1):
-        bg = _ellipse_chain([
-            (4.0,   9.8, 6.0, sx * 5.6,  -9.2),
-            (7.0,  11.6, 7.2, sx * 6.2, -11.4),
-            (9.4,  12.6, 8.2, sx * 6.4, -12.8),
-            (H + 0.25, 9.6, 6.4, sx * 5.0, -10.2),
-        ])
-        bangs = bg if bangs is None else bangs + bg
-    raw = ((cap + wings + bangs) ^ Manifold.cube((120.0, 120.0, H)).translate((-60.0, -60.0, 0.0))).simplify(0.004)
-    m, conns, ex = integrated_sockets(raw, size, lock)
-    m, c_top = add_studs_at(m, size, 2, 1, 0.0, 0.0, H, "top_studs")
-    return m, conns + [c_top], ex
+    """Hat-ready wrap-around bob wig: cheek-framing curtains, deep nape wrap, full bangs, and 2x1 top_studs."""
+    outer = _outer_wig_shell(w_base=52.2, d_base=45.2, w_mid=53.6, d_mid=46.2, h_top=10.8, flat_crown=True, p_exp=2.10, back_shift=0.6)
+    bangs = _ellipse_chain([
+        (-10.0, 26.0,  7.2, 0.0, -16.8),
+        ( -2.0, 32.0, 10.0, 0.0, -18.8),
+        (  5.0, 29.0, 10.0, 0.0, -15.2),
+        ( 10.0, 19.0,  7.4, 0.0, -10.2),
+    ])
+    return _finish_wrap_wig(outer + bangs, size=size, ear_cover=True, bang_tilt_x=0.0, top_studs_z=10.8)
 
 
 def hair_swoosh(size="small", grid=(2, 1), lock=True, **_):
-    """Hat-ready wind-swept surf wave hair piece: full-coverage cap with asymmetric rounded wave crest and 2x1 top_studs for hats or ears."""
-    H = 10.8
-    cap = _hair_dome(H + 0.25, 41.6, 35.6, z_x1=5.8, z_y1=9.2, z2=9.4, crown_w=25.6, crown_d=14.6)
+    """Hat-ready wrap-around surf-wave wig: sideburns, exposed-ear arches, deep nape wrap, asymmetric wave crest, and 2x1 top_studs."""
+    outer = _outer_wig_shell(w_base=50.0, d_base=45.0, w_mid=51.2, d_mid=46.2, h_top=10.8, flat_crown=True, back_shift=0.6)
     wave = _ellipse_chain([
-        (3.6,  10.4, 11.2, 10.2, -0.8),
-        (6.6,  12.4, 14.0, 12.2, -1.6),
-        (9.4,  13.8, 16.0, 14.0, -2.2),
-        (H + 0.25, 10.6, 12.2, 11.0, -1.6),
+        (-10.0, 21.0,  7.2, 2.6, -16.6),
+        ( -1.5, 28.0, 11.2, 4.2, -18.8),
+        (  5.2, 25.0, 11.8, 4.8, -15.2),
+        ( 10.0, 15.5,  8.0, 3.0, -10.0),
     ])
-    raw = ((cap + wave) ^ Manifold.cube((120.0, 120.0, H)).translate((-60.0, -60.0, 0.0))).simplify(0.004)
-    m, conns, ex = integrated_sockets(raw, size, lock)
-    m, c_top = add_studs_at(m, size, 2, 1, 0.0, 0.0, H, "top_studs")
-    return m, conns + [c_top], ex
+    return _finish_wrap_wig(outer + wave, size=size, ear_cover=False, bang_tilt_x=4.0, top_studs_z=10.8)
 
 
 def hair_spiky(size="small", grid=(2, 1), lock=True, **_):
-    """Sculpted-top anime spiky hair piece (no top studs): full-coverage hair cap with seven bold radial spikes fanning from brow to crown."""
-    cap = _hair_dome(11.8, 41.8, 35.8, z_x1=6.0, z_y1=9.4, z2=9.8, crown_w=8.4, crown_d=7.2)
-    spike_defs = [
-        (  0.0, -16.8, 13.8, 13.4, 10.6,   0.0, -8.6,  5.4),
-        (-16.4, -10.4, 13.4, 12.6, 10.4,  -9.4, -5.6,  5.2),
-        ( 16.8, -10.2, 13.8, 12.6, 10.4,   9.6, -5.6,  5.2),
-        (-20.4,   1.2, 13.0, 12.4, 11.2, -12.0,  0.6,  5.0),
-        ( 20.4,   1.2, 13.2, 12.4, 11.2,  12.0,  0.6,  5.0),
-        (  0.0,  -1.0, 15.0, 14.2, 12.4,   0.0, -0.5,  5.8),
-        (  0.0,  15.6, 13.0, 13.2, 10.8,   0.0,  8.0,  5.4),
+    """Sculpted-top wrap-around spiky wig (no top studs): sideburns, exposed-ear arches, deep nape wrap, and seven bold radial crown spikes."""
+    outer = _outer_wig_shell(w_base=49.8, d_base=45.0, w_mid=51.0, d_mid=46.0, h_top=10.2, flat_crown=False, back_shift=0.6)
+    spikes = [
+        (  0.0, -9.5,  0.0, -6.5, 16.4, 12.6, 12.0),
+        (-10.5, -5.0, -5.5, -2.5, 15.0, 11.6, 11.6),
+        ( 10.5, -5.0,  5.5, -2.5, 15.0, 11.6, 11.6),
+        (-12.5,  4.0, -6.5,  3.0, 14.2, 11.6, 11.6),
+        ( 12.5,  4.0,  6.5,  3.0, 14.2, 11.6, 11.6),
+        (  0.0,  2.0,  0.0,  1.5, 16.8, 13.2, 13.2),
+        (  0.0, 10.5,  0.0,  7.0, 13.8, 12.0, 11.6),
     ]
-    spikes = [_ellipse_chain([
-        (zr,              wr,        dr,        xr,                    yr),
-        ((zr + zt) * 0.5, wr * 0.68, dr * 0.68, xr + (xt - xr) * 0.56, yr + (yt - yr) * 0.56),
-        (zt,              4.0,       4.0,       xt,                    yt),
-    ]) for xt, yt, zt, wr, dr, xr, yr, zr in spike_defs]
-    return integrated_sockets((cap + union(spikes)).simplify(0.004), size, lock)
+    parts = [outer]
+    for x0, y0, x1, y1, zt, bw, bd in spikes:
+        parts.append(_ellipse_chain([
+            (1.0,        bw,        bd,        x0 * 0.65, y0 * 0.65),
+            (zt * 0.55,  bw * 0.72, bd * 0.72, x0 * 0.90, y0 * 0.90),
+            (zt,         4.6,       4.6,       x1,        y1),
+        ]))
+    return _finish_wrap_wig(union(parts), size=size, ear_cover=False, bang_tilt_x=2.5, top_studs_z=None)
 
 
 def hair_pigtails(size="small", grid=(2, 1), lock=True, **_):
-    """Sculpted-top parted hair dome with two bouncy side twin-tail puffs spanning 48.4 mm wide (no top studs)."""
-    cap = _hair_dome(11.6, 41.6, 35.6, z_x1=5.8, z_y1=9.2, z2=9.6, crown_w=7.8, crown_d=6.8)
-    puffs = None
+    """Sculpted-top wrap-around twin-pigtail wig (no top studs): cheek curtains, deep nape wrap, and bouncy twin side puffs."""
+    outer = _outer_wig_shell(w_base=52.2, d_base=45.2, w_mid=53.4, d_mid=46.2, h_top=11.4, flat_crown=False, p_exp=2.10, back_shift=0.6)
+    puffs = [outer]
     for sx in (-1, 1):
-        pf = _ellipse_chain([
-            (3.2,   8.4, 10.8, sx * 13.4, -0.2),
-            (6.8,  11.2, 13.8, sx * 15.4, -0.2),
-            (10.4, 13.2, 15.8, sx * 17.6, -0.2),
-            (12.2, 11.6, 14.2, sx * 17.4, -0.2),
-            (13.6,  7.8,  9.6, sx * 15.8, -0.2),
-        ])
-        puffs = pf if puffs is None else puffs + pf
-    return integrated_sockets((cap + puffs).simplify(0.004), size, lock)
+        puffs.append(_ellipse_chain([
+            (-10.5, 11.0, 12.0, sx * 19.3, 1.5),
+            ( -2.0, 16.4, 16.8, sx * 23.1, 1.9),
+            (  6.5, 18.0, 18.2, sx * 25.7, 2.2),
+            ( 13.6, 10.4, 10.8, sx * 22.9, 2.2),
+        ]))
+    return _finish_wrap_wig(union(puffs), size=size, ear_cover=True, bang_tilt_x=0.0, top_studs_z=None)
 
 
 def hair_ponytail(size="small", grid=(2, 1), lock=True, **_):
-    """Sculpted-top full-coverage hair dome with voluminous arched rear ponytail plume sweeping off the back (no top studs)."""
-    cap = _hair_dome(11.6, 41.6, 35.6, z_x1=5.8, z_y1=9.2, z2=9.6, crown_w=8.0, crown_d=7.0)
+    """Sculpted-top wrap-around ponytail wig (no top studs): sideburns, exposed-ear arches, deep nape wrap, and arched rear ponytail plume."""
+    outer = _outer_wig_shell(w_base=49.8, d_base=45.0, w_mid=51.0, d_mid=46.0, h_top=11.4, flat_crown=False, back_shift=0.8)
     tail = _ellipse_chain([
-        (3.8,  10.8, 10.0, 0.0,  6.8),
-        (7.4,  12.8, 12.6, 0.0,  8.8),
-        (11.0, 14.6, 14.8, 0.0, 10.8),
-        (13.2, 13.8, 14.0, 0.0, 12.4),
-        (14.6,  9.4,  9.8, 0.0, 12.2),
+        (-13.5, 13.0,  9.6, 0.0, 16.6),
+        ( -4.0, 16.8, 14.0, 0.0, 20.8),
+        (  5.0, 18.4, 16.8, 0.0, 24.4),
+        ( 12.6, 14.4, 13.6, 0.0, 25.6),
+        ( 16.2,  8.2,  8.4, 0.0, 24.0),
     ])
-    return integrated_sockets((cap + tail).simplify(0.005), size, lock)
+    return _finish_wrap_wig(outer + tail, size=size, ear_cover=False, bang_tilt_x=2.0, top_studs_z=None)
 
 
 def hair_curly(size="small", grid=(2, 1), lock=True, **_):
-    """Sculpted-top 360-deg volumetric cloud-curl afro halo (no top studs): lush overlapping curls covering the entire dome from brow to crown."""
-    cap = _hair_dome(11.6, 41.6, 35.6, z_x1=5.8, z_y1=9.2, z2=9.6, crown_w=8.2, crown_d=7.2)
-    curl_pts = [
-        (  0.0,   0.0, 12.0, 4.8),
-        ( -7.8,  -4.6, 11.4, 4.6), (  7.8,  -4.6, 11.4, 4.6),
-        ( -7.8,   4.6, 11.2, 4.6), (  7.8,   4.6, 11.2, 4.6),
-        (  0.0, -10.2, 10.8, 4.4), (  0.0,  10.2, 10.6, 4.4),
-        (-13.8,   0.0, 10.8, 4.4), ( 13.8,   0.0, 10.8, 4.4),
-        (-11.8,  -7.4, 10.6, 4.2), ( 11.8,  -7.4, 10.6, 4.2),
-        (-11.8,   7.4, 10.4, 4.2), ( 11.8,   7.4, 10.4, 4.2),
-        ( -5.2, -12.4, 10.4, 3.8), (  5.2, -12.4, 10.4, 3.8),
-        (-15.8,  -3.8, 10.0, 3.8), ( 15.8,  -3.8, 10.0, 3.8),
-        (-15.8,   3.8, 10.0, 3.8), ( 15.8,   3.8, 10.0, 3.8),
-        ( -5.2,  12.4, 10.4, 3.8), (  5.2,  12.4, 10.4, 3.8),
+    """Sculpted-top wrap-around cloud-curl wig (no top studs): lush overlapping curls framing the forehead, cheeks, and nape."""
+    outer = _outer_wig_shell(w_base=52.4, d_base=45.4, w_mid=54.4, d_mid=47.0, h_top=13.2, flat_crown=False, p_exp=2.04, back_shift=0.8)
+    puffs = [outer]
+    ring = [
+        (  0.0, -13.4, 14.6, 17.6, 14.8),
+        (-13.0,  -7.8, 14.0, 16.6, 16.0),
+        ( 13.0,  -7.8, 14.0, 16.6, 16.0),
+        (-16.0,   2.8, 14.2, 17.0, 17.4),
+        ( 16.0,   2.8, 14.2, 17.0, 17.4),
+        ( -9.5,  12.4, 14.4, 17.4, 16.6),
+        (  9.5,  12.4, 14.4, 17.4, 16.6),
+        (  0.0,   1.0, 16.2, 21.6, 20.6),
     ]
-    puffs = [_curl_lobe(px, py, pz, pr, px * 0.78, py * 0.78, pr * 0.80, 3.6) for px, py, pz, pr in curl_pts]
-    return integrated_sockets((cap + union(puffs)).simplify(0.004), size, lock)
+    for cx, cy, zt, pw, pd in ring:
+        puffs.append(_ellipse_chain([
+            (-9.0,       pw * 0.62, pd * 0.62, cx * 0.78, cy * 0.78),
+            (zt * 0.45,  pw,        pd,        cx,        cy),
+            (zt,         pw * 0.56, pd * 0.56, cx * 0.90, cy * 0.90),
+        ]))
+    return _finish_wrap_wig(union(puffs), size=size, ear_cover=True, bang_tilt_x=0.0, top_studs_z=None)
 
 
 def hair_mohawk(size="small", grid=(2, 1), lock=True, **_):
-    """Sculpted-top five-peak punk mohawk crest arcing front-to-back over a sleek side-faded dome (no top studs)."""
-    cap = _hair_dome(14.2, 38.4, 35.6, z_x1=9.6, z_y1=12.9, z2=13.1, crown_w=7.6, crown_d=7.2, w_foot=29.8, d_foot=18.0)
-    fins = [_ellipse_chain([
-        (7.4,  9.8, 9.6, 0.0, yc * 0.55),
-        (12.2, 8.0, 8.8, 0.0, yc * 0.84),
-        (zt,   4.6, 5.8, 0.0, yc),
-    ]) for yc, zt in ((-12.2, 16.6), (-6.1, 18.0), (0.0, 18.6), (6.1, 17.8), (12.0, 16.2))]
-    return integrated_sockets((cap + union(fins)).simplify(0.004), size, lock)
+    """Sculpted-top wrap-around mohawk wig (no top studs): sideburns, exposed-ear arches, deep nape wrap, and four-peak punk crest."""
+    outer = _outer_wig_shell(w_base=49.6, d_base=44.8, w_mid=50.6, d_mid=45.8, h_top=9.8, flat_crown=False, back_shift=0.6)
+    fins = [outer]
+    for yc, zt, dy in [(-12.5, 15.6, 10.5), (-4.0, 17.6, 11.5), (4.5, 17.0, 11.5), (12.5, 14.6, 10.5)]:
+        fins.append(_ellipse_chain([
+            (0.0,       12.2, dy,        0.0, yc * 0.88),
+            (zt * 0.55, 10.2, dy * 0.92, 0.0, yc),
+            (zt,         5.4, dy * 0.65, 0.0, yc * 1.02),
+        ]))
+    return _finish_wrap_wig(union(fins), size=size, ear_cover=False, bang_tilt_x=0.0, top_studs_z=None)
 
 
 def pack_explorer(size="small", grid=(2, 2), lock=True, **_):
@@ -2306,7 +2438,7 @@ def hole_roof(m, conns):
     return worst > 0.99, f"{n} hole(s); least-covered roof {worst * 100:.0f}% (needs {LIM['min_roof_mm']} mm closed above every ceiling)"
 
 
-def run_checks(part, m, tm, conns, small, fit, extras):
+def run_checks(part, m, tm, conns, small, fit, extras, mp=None):
     out = []
     fam = part["family"]
 
@@ -2333,7 +2465,7 @@ def run_checks(part, m, tm, conns, small, fit, extras):
     if applies("P4_no_ledges"):
         import toyventor_ledge as _tl
         _tl.CANTILEVER_MM = LIM["ledge_cantilever_mm"]
-        ledge_area, ledge_regions = _tl.ledges(tm, m, LIM["max_bridge_mm"], LIM["first_layer_exclusion_mm"])
+        ledge_area, ledge_regions = _tl.ledges(tm, mp if mp is not None else m, LIM["max_bridge_mm"], LIM["first_layer_exclusion_mm"])
         add("P4_no_ledges", ledge_area < LIM["ledge_max_mm2"],
             f"{ledge_area:.1f} mm2 of flat underside held on one side only" + (f"; worst at z {ledge_regions[0]['z_mm']} mm near {ledge_regions[0]['at_mm']}" if ledge_regions else ""))
     if part["cavity"]:
@@ -2433,7 +2565,7 @@ def evaluate(part, validator):
     tm = to_trimesh(mp)
     small = small_part_status(tm)
     fit = fit_for(part, m, conns)
-    checks = run_checks(part, m, tm, conns, small, fit, extras)
+    checks = run_checks(part, m, tm, conns, small, fit, extras, mp=mp)
     entry = {
         "id": part["id"], "name": part["name"], "type": part["type"], "line": part["line"], "family": part["family"], "size_class": part["size"],
         "stat": part["stat"], "behavior": part["behavior"], "prints": True, "tags": part["tags"],

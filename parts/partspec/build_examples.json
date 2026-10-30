@@ -934,9 +934,19 @@
         }
       }
     ],
-    "ok": true,
-    "errors": [],
-    "warnings": [],
+    "ok": false,
+    "errors": [
+      {
+        "code": "collision",
+        "detail": "arms and head overlap by 149 mm3"
+      }
+    ],
+    "warnings": [
+      {
+        "code": "fit_out_of_tolerance",
+        "detail": "arms.top_studs with head.under_sockets: measured gap -2.0 to -2.0 mm is outside the allowed [0.045, 0.06] mm"
+      }
+    ],
     "edges": [
       {
         "male": "legs.top_studs",
@@ -956,8 +966,8 @@
         "male": "arms.top_studs",
         "female": "head.under_sockets",
         "engaged_studs": 1,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": -2.0,
+        "gap_max_mm": -2.0
       },
       {
         "male": "arms.top_studs",
@@ -1535,9 +1545,27 @@
         }
       }
     ],
-    "ok": true,
-    "errors": [],
-    "warnings": [],
+    "ok": false,
+    "errors": [
+      {
+        "code": "collision",
+        "detail": "head and faceplate overlap by 97 mm3"
+      },
+      {
+        "code": "collision",
+        "detail": "hair and hat overlap by 163 mm3"
+      }
+    ],
+    "warnings": [
+      {
+        "code": "fit_out_of_tolerance",
+        "detail": "faceplate.axis with head.face_slot: measured gap -1.149 to -1.149 mm is outside the press limits"
+      },
+      {
+        "code": "fit_out_of_tolerance",
+        "detail": "head.top_studs with hair.under_sockets: measured gap None to None mm is outside the allowed None mm"
+      }
+    ],
     "edges": [
       {
         "male": "legs.top_studs",
@@ -1565,15 +1593,13 @@
         "female": "head.face_slot",
         "engaged_studs": 1,
         "fit": "press",
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": -1.149,
+        "gap_max_mm": -1.149
       },
       {
         "male": "head.top_studs",
         "female": "hair.under_sockets",
-        "engaged_studs": 2,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "engaged_studs": 2
       },
       {
         "male": "hair.top_studs",

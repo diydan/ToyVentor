@@ -16,6 +16,12 @@ import {
 import { seedCar } from "./features/scan/scan";
 import { loadBuild } from "./lib/builds";
 import { partsById } from "./lib/catalog";
+import {
+  grandfatherToyIds,
+  loadProgression,
+  pushProgression,
+  saveProgression,
+} from "./lib/progression";
 import { pullOwnership, pushOwnership } from "./lib/sync";
 import { useToybox } from "./state/toybox";
 
@@ -64,6 +70,20 @@ export default function App() {
       setSharedContract(null);
     }
   }, [toy.id]);
+
+  // Grandfather every currently selectable toy into the permanent unlock
+  // set (Decision 6). Scanned toys are added here at roster time, and XP
+  // reset never wipes this set.
+  useEffect(() => {
+    const { next, changed } = grandfatherToyIds(
+      loadProgression(),
+      toys.map((t) => t.id),
+    );
+    if (changed) {
+      saveProgression(next);
+      void pushProgression(next);
+    }
+  }, [toys]);
 
   // One ownership sync per load: pull server toys we do not have, push local ones.
   useEffect(() => {

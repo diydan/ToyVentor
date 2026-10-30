@@ -586,12 +586,19 @@ export function sameCustomizerSnapshot(
   return JSON.stringify(a) === JSON.stringify(b);
 }
 
+export interface MissionSolveDetail {
+  key: string;
+  attempts: number;
+  error: number;
+}
+
 export type WorldEvent =
   | { type: "ready" }
   | { type: "world"; world: string }
   | { type: "zoom"; zoom: ZoomLevel }
   | { type: "found"; keys: string[]; total: number }
   | { type: "missionsDone"; keys: string[]; total: number }
+  | { type: "missionSolved"; detail: MissionSolveDetail }
   | { type: "mission"; title: string | null }
   | { type: "toast"; text: string }
   | { type: "customizer"; customizer: CustomizerSnapshot }
@@ -644,6 +651,9 @@ export function applyWorldEvent(state: WorldState, event: WorldEvent): WorldStat
       return state.missionsDoneTotal === event.total
         ? state
         : { ...state, missionsDoneTotal: event.total };
+    case "missionSolved":
+      // Scoring detail for the XP layer; HUD totals come from missionsDone.
+      return state;
     case "mission":
       return state.missionTitle === event.title
         ? state
@@ -804,6 +814,9 @@ interface LegacySave {
   scrap?: number;
   found?: Record<string, boolean>;
   mdone?: Record<string, number | boolean>;
+  ma?: Record<string, number>;
+  me?: Record<string, number>;
+  lastWin?: { key: string; attempts: number; error: number; at: number };
   sel?: Record<string, Record<string, string>>;
   col?: Record<string, string>;
 }
@@ -870,6 +883,7 @@ export function createEngine(
   let lastMissionPanel = closedMissionPanelSnapshot;
   let lastCreate = closedCreateSnapshot;
   let lastEditor = closedEditorSnapshot;
+  let lastWinAt = -1;
 
   let runtime: ReturnType<typeof createWorldRuntime> | null = null;
   const hooks = (): LegacyHooks | null => (runtime as unknown as LegacyHooks | null) ?? null;
@@ -1296,6 +1310,8 @@ export function createEngine(
           .map(([key]) => key),
       );
       events.onEvent({ type: "ready" });
+      // Ignore wins recorded before this mount so reloads never re-award XP.
+      lastWinAt = save.lastWin?.at ?? -1;
       if (lastMissionsDone.size > 0) {
         events.onEvent({
           type: "missionsDone",
@@ -1353,6 +1369,21 @@ export function createEngine(
       });
     }
     lastMissionsDone = mdoneKeys;
+
+    const win = save.lastWin;
+    if (win && win.at !== lastWinAt) {
+      lastWinAt = win.at;
+      if (ready) {
+        events.onEvent({
+          type: "missionSolved",
+          detail: {
+            key: win.key,
+            attempts: Math.max(1, Math.floor(win.attempts) || 1),
+            error: typeof win.error === "number" ? win.error : 0,
+          },
+        });
+      }
+    }
 
     const frameDoc = doc();
     const missionPanel = readMissionPanel();

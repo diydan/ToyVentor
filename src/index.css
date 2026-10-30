@@ -1864,6 +1864,36 @@ a.cta {
   font-size: 11px;
 }
 
+.tv-rank-pip {
+  flex: none;
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--gold);
+}
+
+.tv-xp-toast {
+  position: absolute;
+  top: 52px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 30;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: rgba(10, 20, 48, 0.88);
+  color: #fff;
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 700;
+  pointer-events: none;
+}
+
+.tv-rank-progress {
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
 .tv-toy-dot {
   width: 10px;
   height: 10px;

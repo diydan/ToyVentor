@@ -2333,15 +2333,15 @@
     },
     {
       "id": "char_head_kid",
-      "name": "Human Base Head",
+      "name": "Human Head V1 (Round Kid)",
       "line": "snap",
       "family": "addon",
       "size": "small",
       "wave": "W9",
-      "note": "Plump symmetric 36.4 mm-deep 2x1 human head with rounded C-ears, recessed front face-plate dock bore, and centered 2x1 crown buds.",
+      "note": "Soft spherical egg-proportioned 2x1 human child head (47.6x35.3x31.6 mm) with true-ellipse skull, prominent round cup ears, flush front face-cradle bore at z=7.8125 mm, and 2x1 crown buds.",
       "stat": "Glow",
       "type": "Character head",
-      "behavior": "Swappable plump human base head with snap-in face-plate dock and 2x1 Spark Crown Buds",
+      "behavior": "Soft spherical child head with round cup ears, flush curved face-plate dock and 2x1 Spark Crown Buds",
       "tags": [
         "character",
         "head",
@@ -2366,16 +2366,119 @@
       }
     },
     {
+      "id": "char_head_chibi",
+      "name": "Human Head V2 (Chibi Cheeks)",
+      "line": "snap",
+      "family": "addon",
+      "size": "small",
+      "wave": "W9",
+      "note": "Plush apple-cheeked chibi toddler 2x1 human head (49.2x35.3x30.8 mm) with wide low 44.2 mm cheeks, low round button ears, flush front face-cradle bore at z=7.8125 mm, and 2x1 crown buds.",
+      "stat": "Glow",
+      "type": "Character head",
+      "behavior": "Plump chibi human head with wide low apple cheeks, flush curved face-plate dock and 2x1 Spark Crown Buds",
+      "tags": [
+        "character",
+        "head",
+        "human",
+        "chibi",
+        "kip"
+      ],
+      "build": {
+        "fn": "char_head_chibi",
+        "grid": [
+          2,
+          1
+        ],
+        "base": "integrated",
+        "lock": true
+      },
+      "attach": {
+        "kind": "robot",
+        "slots": [
+          "head"
+        ],
+        "front": "-y"
+      }
+    },
+    {
+      "id": "char_head_chin",
+      "name": "Human Head V3 (Soft Chin)",
+      "line": "snap",
+      "family": "addon",
+      "size": "small",
+      "wave": "W9",
+      "note": "Animated-hero 2x1 human head (47.2x35.2x33.6 mm) with soft S-curve tapered chin flaring to fuller cheekbones, round cup ears, flush front face-cradle bore at z=9.375 mm, and 2x1 crown buds.",
+      "stat": "Speed",
+      "type": "Character head",
+      "behavior": "Soft tapered-chin human head with fuller cheekbones, flush curved face-plate dock and 2x1 Spark Crown Buds",
+      "tags": [
+        "character",
+        "head",
+        "human",
+        "kip"
+      ],
+      "build": {
+        "fn": "char_head_chin",
+        "grid": [
+          2,
+          1
+        ],
+        "base": "integrated",
+        "lock": true
+      },
+      "attach": {
+        "kind": "robot",
+        "slots": [
+          "head"
+        ],
+        "front": "-y"
+      }
+    },
+    {
+      "id": "char_head_tall",
+      "name": "Human Head V4 (Oval Youth)",
+      "line": "snap",
+      "family": "addon",
+      "size": "small",
+      "wave": "W9",
+      "note": "Graceful oval egg-proportioned 2x1 human youth head (45.4x35.1x36.0 mm) with smooth true-ellipse dome, mid-high cup ears, flush front face-cradle bore at z=10.9375 mm, and 2x1 crown buds.",
+      "stat": "Spin",
+      "type": "Character head",
+      "behavior": "Smooth oval youth human head with mid-high cup ears, flush curved face-plate dock and 2x1 Spark Crown Buds",
+      "tags": [
+        "character",
+        "head",
+        "human",
+        "kip"
+      ],
+      "build": {
+        "fn": "char_head_tall",
+        "grid": [
+          2,
+          1
+        ],
+        "base": "integrated",
+        "lock": true
+      },
+      "attach": {
+        "kind": "robot",
+        "slots": [
+          "head"
+        ],
+        "front": "-y"
+      }
+    },
+    {
       "id": "char_faceplate",
       "name": "Swappable Emotion Face Plate",
       "line": "pro",
       "family": "pin",
       "size": "pro",
       "wave": "W9",
-      "note": "Slim 22.6x10.8 mm rounded-bezel snap-in face plate printed flat on its front face with a 1 TU anti-rotation flat-keyed rear stem mating into char_head_kid.face_slot.",
+      "note": "Flush 32.0x15.9 mm 3D convex-curved cheek-to-cheek human face plate printed upright on its flat chin and 1 TU flat-keyed rear stem via LAY_FLAT ([90,0,0]) with a 39-deg upper brow scarf joint.",
       "stat": "Glow",
       "type": "Face plate",
-      "behavior": "Quick-swap slim emotion face plate snapping into the Human Base Head front bezel dock",
+      "behavior": "Quick-swap 3D curved human emotion face plate mating flush into any Human Head front face cradle",
       "tags": [
         "character",
         "face",
@@ -2394,10 +2497,10 @@
       "family": "addon",
       "size": "small",
       "wave": "W9",
-      "note": "Separate 2x1 clip-on short side-swept hair with sideburns, diagonal bangs, and top 2x1 crown studs for stacking hats, ears, or horns.",
+      "note": "Wrap-around 2x1 clip-on short side-swept wig with sideburns, ear arches, deep nape skirt, diagonal bangs, and top 2x1 crown studs for stacking hats, ears, or horns.",
       "stat": "Speed",
       "type": "Crown hair",
-      "behavior": "Clip-on short swept hair with top 2x1 studs for stacking hats or ears",
+      "behavior": "Wrap-around short swept wig with top 2x1 studs for stacking hats or ears",
       "tags": [
         "character",
         "hair",
@@ -2410,7 +2513,6 @@
           2,
           1
         ],
-        "base": "integrated",
         "lock": true
       },
       "attach": {
@@ -2428,10 +2530,10 @@
       "family": "addon",
       "size": "small",
       "wave": "W9",
-      "note": "Separate 2x1 clip-on flared chin-frame bob hair with parted curtain bangs and top 2x1 crown studs for stacking hats or ponytails.",
+      "note": "Wrap-around 2x1 clip-on flared chin-frame bob wig with cheek curtains, deep nape skirt, parted bangs, and top 2x1 crown studs for stacking hats or ears.",
       "stat": "Glow",
       "type": "Crown hair",
-      "behavior": "Clip-on flared bob hair with top 2x1 studs for stacking hats or ponytails",
+      "behavior": "Wrap-around flared bob wig with top 2x1 studs for stacking hats or ears",
       "tags": [
         "character",
         "hair",
@@ -2444,7 +2546,6 @@
           2,
           1
         ],
-        "base": "integrated",
         "lock": true
       },
       "attach": {
@@ -2530,10 +2631,10 @@
       "family": "addon",
       "size": "small",
       "wave": "W9",
-      "note": "Separate 2x1 clip-on side-swept wave hair with sculpted fringe and top 2x1 crown studs for stacking hats, ears, or horns.",
+      "note": "Wrap-around 2x1 clip-on side-swept wave wig with sideburns, ear arches, deep nape skirt, sculpted fringe, and top 2x1 crown studs for stacking hats, ears, or horns.",
       "stat": "Speed",
       "type": "Crown hair",
-      "behavior": "Clip-on side-swept wave hair with top 2x1 studs for stacking hats or ears",
+      "behavior": "Wrap-around side-swept wave wig with top 2x1 studs for stacking hats or ears",
       "tags": [
         "character",
         "hair",
@@ -2546,7 +2647,6 @@
           2,
           1
         ],
-        "base": "integrated",
         "lock": true
       },
       "attach": {
@@ -2564,10 +2664,10 @@
       "family": "addon",
       "size": "small",
       "wave": "W9",
-      "note": "Full-crown 38 mm spiky action hair with five sculpted tufts on a 2x1 integrated scalp cap.",
+      "note": "Wrap-around spiky action wig with sideburns, ear arches, deep nape skirt, and seven sculpted crown spikes on a 2x1 stud socket.",
       "stat": "Speed",
       "type": "Crown hair",
-      "behavior": "Full-crown spiky action hair tufts for any 2x1 head crown",
+      "behavior": "Wrap-around spiky action hair tufts for any 2x1 human head",
       "tags": [
         "character",
         "hair",
@@ -2580,7 +2680,6 @@
           2,
           1
         ],
-        "base": "integrated",
         "lock": true
       },
       "attach": {
@@ -2598,10 +2697,10 @@
       "family": "addon",
       "size": "small",
       "wave": "W9",
-      "note": "Full-crown parted scalp cap flaring smoothly to 47 mm twin side puffs on a 2x1 integrated base.",
+      "note": "Wrap-around parted wig with cheek-framing curtains, deep nape skirt, and bouncy twin side puffs on a 2x1 stud socket.",
       "stat": "Spin",
       "type": "Crown hair",
-      "behavior": "Full-crown parted cap with bouncy twin side puffs for any 2x1 head crown",
+      "behavior": "Wrap-around parted wig with bouncy twin side puffs for any 2x1 human head",
       "tags": [
         "character",
         "hair",
@@ -2614,7 +2713,6 @@
           2,
           1
         ],
-        "base": "integrated",
         "lock": true
       },
       "attach": {
@@ -2632,10 +2730,10 @@
       "family": "addon",
       "size": "small",
       "wave": "W9",
-      "note": "Full-crown 37 mm sleek scalp cap with high rear ponytail sweeping over the back of any 2x1 head.",
+      "note": "Wrap-around sleek wig with sideburns, ear arches, deep nape skirt, and arched rear ponytail plume on a 2x1 stud socket.",
       "stat": "Spin",
       "type": "Crown hair",
-      "behavior": "Full-crown sleek cap with high rear ponytail for any 2x1 head crown",
+      "behavior": "Wrap-around sleek wig with high rear ponytail for any 2x1 human head",
       "tags": [
         "character",
         "hair",
@@ -2648,7 +2746,6 @@
           2,
           1
         ],
-        "base": "integrated",
         "lock": true
       },
       "attach": {
@@ -2666,10 +2763,10 @@
       "family": "addon",
       "size": "small",
       "wave": "W9",
-      "note": "Full-crown 38 mm volumetric cloud-puff curl cap on a 2x1 integrated base.",
+      "note": "Wrap-around volumetric cloud-puff curl wig framing the temples, ears, and nape on a 2x1 stud socket.",
       "stat": "Glow",
       "type": "Crown hair",
-      "behavior": "Full-crown volumetric cloud-puff curls for any 2x1 head crown",
+      "behavior": "Wrap-around volumetric cloud-puff curls for any 2x1 human head",
       "tags": [
         "character",
         "hair",
@@ -2682,7 +2779,6 @@
           2,
           1
         ],
-        "base": "integrated",
         "lock": true
       },
       "attach": {
@@ -2700,10 +2796,10 @@
       "family": "addon",
       "size": "small",
       "wave": "W9",
-      "note": "Four-peak punk mohawk crest on a 2x1 integrated scalp cap.",
+      "note": "Wrap-around side-faded wig with sideburns, ear arches, deep nape skirt, and four-peak punk mohawk crest on a 2x1 stud socket.",
       "stat": "Speed",
       "type": "Crown hair",
-      "behavior": "Four-peak action crest locked onto 2x1 crown buds",
+      "behavior": "Wrap-around four-peak action crest locked onto 2x1 crown buds",
       "tags": [
         "character",
         "hair",
@@ -2716,7 +2812,6 @@
           2,
           1
         ],
-        "base": "integrated",
         "lock": true
       },
       "attach": {

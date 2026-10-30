@@ -60,6 +60,15 @@ describe("validation", () => {
     expect(validateOwnershipRecord({ type: "part", id: "p", payload: "x".repeat(500_000) }).join(" ")).toMatch(/over/);
     expect(validateOwnershipRecord({ type: "part", id: "p" })).toEqual([]);
   });
+  it("accepts progression payloads in the character lane", () => {
+    expect(
+      validateOwnershipRecord({
+        type: "character",
+        id: "progression:v1",
+        payload: { totalXp: 42, missionStars: {} },
+      }),
+    ).toEqual([]);
+  });
 });
 
 describe("/api/ownership", () => {

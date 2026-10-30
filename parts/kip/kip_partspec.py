@@ -44,8 +44,11 @@ add_studs_at = tp.add_studs_at
 cut_vertical_bore = tp.cut_vertical_bore
 cut_x_axle_bore = tp.cut_x_axle_bore
 
-# Re-export all 30 Wave 9 (`W9`) builders from `toyventor_parts.py`
+# Re-export all 33 Wave 9 (`W9`) builders from `toyventor_parts.py`
 char_head_kid = tp.char_head_kid
+char_head_chibi = tp.char_head_chibi
+char_head_chin = tp.char_head_chin
+char_head_tall = tp.char_head_tall
 char_faceplate = tp.char_faceplate
 char_head_fox = tp.char_head_fox
 char_head_bear = tp.char_head_bear
@@ -164,12 +167,15 @@ def verify_assemblies(kip_entries: list[dict]) -> list[tuple[str, dict]]:
     for asm_name, head_id, with_face, crown_id, hat_id in [
         ("kid_faceplate_bob_with_ears", "char_head_kid", True, "hair_bob", "pointy_ears"),
         ("kid_faceplate_swoosh_with_horns", "char_head_kid", True, "hair_swoosh", "bumper_horns"),
-        ("kid_faceplate_with_hair_spiky", "char_head_kid", True, "hair_spiky", None),
+        ("chibi_faceplate_bob_with_ears", "char_head_chibi", True, "hair_bob", "pointy_ears"),
+        ("chin_faceplate_with_hair_ponytail", "char_head_chin", True, "hair_ponytail", None),
+        ("tall_faceplate_with_hair_spiky", "char_head_tall", True, "hair_spiky", None),
+        ("kid_faceplate_with_hair_mohawk", "char_head_kid", True, "hair_mohawk", None),
         ("kid_faceplate_with_hair_pigtails", "char_head_kid", True, "hair_pigtails", None),
         ("kid_faceplate_with_hair_ponytail", "char_head_kid", True, "hair_ponytail", None),
         ("kid_faceplate_with_hair_curly", "char_head_kid", True, "hair_curly", None),
         ("char_head_fox_with_wobble_hat", "char_head_fox", False, "wobble_hat", None),
-        ("char_head_bear_with_hair_mohawk", "char_head_bear", False, "hair_mohawk", None),
+        ("char_head_bear_with_bumper_horns", "char_head_bear", False, "bumper_horns", None),
     ]:
         h_build = [asm.place(head_id, pid="head")]
         if with_face:

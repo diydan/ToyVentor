@@ -11,12 +11,29 @@ import { buildSignature } from "../../../../shared/reveal";
 import type { Toy } from "../../../../shared/toy";
 import type { ToyContract } from "../../../../shared/toycontract";
 import { revealForBuild } from "../../../state/reveals";
+import { buildStats } from "../../../../shared/build";
+import { localDay } from "../../../../shared/parent-time";
+import { partsById } from "../../../lib/catalog";
 import {
   getLocalParentSnapshot,
   pullParentTime,
   recordPlayProgress,
   type ParentSnapshot,
 } from "../../../lib/parentTime";
+import {
+  applySolve,
+  loadProgression,
+  mergeProgression,
+  MISSION_STAT,
+  missionTypeOf,
+  nextRankProgress,
+  pullProgression,
+  pushProgression,
+  resetProgression,
+  saveProgression,
+  type MissionType,
+  type ProgressionState,
+} from "../../../lib/progression";
 import { LivePlayPanel, type LivePlayStatus } from "../../liveplay/LivePlayPanel";
 import { CreatePanel } from "./CreatePanel";
 import { EditorPanel } from "./EditorPanel";
@@ -114,10 +131,38 @@ export function GameCanvas({
   );
   const [missionGraceUntil, setMissionGraceUntil] = useState(0);
   const prevLockedRef = useRef(parentSnapshot.status.locked);
+  const [progression, setProgression] = useState<ProgressionState>(() =>
+    loadProgression(),
+  );
+  const progressionRef = useRef(progression);
+  progressionRef.current = progression;
+  const placementsRef = useRef(placements);
+  placementsRef.current = placements;
+  const [xpToast, setXpToast] = useState<string | null>(null);
+  const xpToastTimerRef = useRef<number | null>(null);
+
+  const showXpToast = useCallback((text: string) => {
+    setXpToast(text);
+    if (xpToastTimerRef.current !== null) {
+      window.clearTimeout(xpToastTimerRef.current);
+    }
+    xpToastTimerRef.current = window.setTimeout(() => setXpToast(null), 4000);
+  }, []);
 
   // Sync Play Time settings + today's ledger on boot.
   useEffect(() => {
     void pullParentTime().then(setParentSnapshot);
+  }, []);
+
+  // Pull synced progression once on boot and merge without losing stars.
+  useEffect(() => {
+    void (async () => {
+      const remote = await pullProgression();
+      if (!remote) return;
+      const merged = mergeProgression(progressionRef.current, remote);
+      saveProgression(merged);
+      setProgression(merged);
+    })();
   }, []);
 
   // Create the engine once per mount; dispose on unmount and on HMR.
@@ -133,6 +178,32 @@ export function GameCanvas({
             void recordPlayProgress({ completedMissionIds: event.keys }).then(
               ({ snapshot }) => setParentSnapshot(snapshot),
             );
+          }
+          if (event.type === "missionSolved") {
+            const { key, attempts, error } = event.detail;
+            const type = missionTypeOf(key) as MissionType;
+            const stat = MISSION_STAT[type];
+            const totals = buildStats(placementsRef.current, partsById).statTotals;
+            const partMatch = stat ? (totals[stat] ?? 0) > 0 : false;
+            const timezone = getLocalParentSnapshot().settings.timezone;
+            const result = applySolve(progressionRef.current, {
+              missionId: key,
+              tier: 1,
+              attempts,
+              clean: error === 0,
+              partMatch,
+              day: localDay(Date.now(), timezone),
+            });
+            saveProgression(result.next);
+            setProgression(result.next);
+            void pushProgression(result.next);
+            if (result.awarded > 0) {
+              showXpToast(
+                `+${result.awarded} XP · ${"★".repeat(result.stars)}${"☆".repeat(3 - result.stars)}`,
+              );
+            } else if (result.stars > 0) {
+              showXpToast(`${"★".repeat(result.stars)}${"☆".repeat(3 - result.stars)}`);
+            }
           }
         },
       },
@@ -379,6 +450,13 @@ export function GameCanvas({
             style={{ background: toyColor }}
           />
           <span className="tv-toy-pill-name">{label}</span>
+          <span
+            className="tv-rank-pip"
+            title={`${nextRankProgress(progression.totalXp).rank.title} · ${progression.totalXp} XP`}
+            aria-label={`Rank ${nextRankProgress(progression.totalXp).rank.rank}: ${nextRankProgress(progression.totalXp).rank.title}`}
+          >
+            ★{nextRankProgress(progression.totalXp).rank.rank}
+          </span>
           <span className="tv-toy-pill-caret" aria-hidden="true">
             ▾
           </span>
@@ -598,9 +676,16 @@ export function GameCanvas({
           </button>
         )}
 
+        {xpToast && (
+          <div className="tv-xp-toast" role="status">
+            {xpToast}
+          </div>
+        )}
+
         <MyToySheet
           open={toySheetOpen}
           initialStep={toySheetStep}
+          progression={progression}
           onClose={() => setToySheetOpen(false)}
           onSkinChange={onSkinChange}
           onOpenGrownUps={openGrownUps}
@@ -706,6 +791,22 @@ export function GameCanvas({
         <GrownUpsSheet
           open={grownUpsOpen}
           snapshot={parentSnapshot}
+          progression={progression}
+          onResetXp={() => {
+            const next = resetProgression(progressionRef.current);
+            saveProgression(next);
+            setProgression(next);
+            void pushProgression(next);
+          }}
+          onToggleSandbox={() => {
+            const next = {
+              ...progressionRef.current,
+              sandboxUnlockAll: !progressionRef.current.sandboxUnlockAll,
+            };
+            saveProgression(next);
+            setProgression(next);
+            void pushProgression(next);
+          }}
           onSnapshotChange={setParentSnapshot}
           onClose={() => setGrownUpsOpen(false)}
         />

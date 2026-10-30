@@ -71,7 +71,7 @@ waddle_tail_s [snap, small] tags=tail,back,character stat=Charm connectors=(unde
 robot_legs_stomper [snap, small] tags=robot,legs,bolt stat=Balance connectors=(under_sockets:socket_grid/F/small/2x2; top_studs:stud_grid/M/small/2x2)
 robot_torso_core [snap, small] tags=robot,torso,bolt stat=Power connectors=(under_sockets:socket_grid/F/small/2x2; top_studs:stud_grid/M/small/2x2)
 robot_arms_grabber [snap, small] tags=robot,arms,bolt stat=Grip connectors=(under_sockets:socket_grid/F/small/2x2; top_studs:stud_grid/M/small/2x2)
-robot_head_visor [snap, small] tags=robot,head,bolt stat=Awareness connectors=(under_sockets:socket_grid/F/small/2x1; top_studs:stud_grid/M/small/2x1)
+robot_head_visor [snap, small] tags=robot,head,bolt stat=Awareness connectors=(under_sockets:socket_grid/F/small/1x1; top_studs:stud_grid/M/small/2x1)
 robot_back_jetpack [snap, small] tags=robot,back,bolt stat=Lift connectors=(under_sockets:socket_grid/F/small/2x1)
 char_head_kid [snap, small] tags=character,head,human,kip stat=Glow connectors=(under_sockets:socket_grid/F/small/2x1; top_studs:stud_grid/M/small/2x1; face_slot:bore_grid/F/pro/1x1)
 char_faceplate [pro, pro] tags=character,face,head,kip stat=Glow connectors=(axis:pin/M/pro/1x1)

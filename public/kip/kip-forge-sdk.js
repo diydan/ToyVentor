@@ -277,6 +277,336 @@ function drawStar(ctx, cx, cy, pts, rOut, rIn, color) {
 }
 
 // ===========================================================================
+// 2D CLOTHING DECALS FOR SHIRTS, JACKETS, OVERALLS, PANTS & SHORTS
+// (`BRAND_STYLE.md`: surface graphics as crisp 2D decals/game skins, zero 3D spaghetti)
+// Torso plane covers y_torso = 62.0..101.0 mm (py = 0..398 is Shirt chest; py = 398..512 is Pelvis waistband!)
+// ===========================================================================
+export function createTorsoOutfitDecalCanvas(shirtId = 'off', pantsId = 'off', skinHex = '#F6C8A6') {
+  const c = document.createElement('canvas');
+  c.width = 512;
+  c.height = 512;
+  const ctx = c.getContext('2d');
+  ctx.clearRect(0, 0, 512, 512);
+
+  const beltY = 398;
+
+  // --- 1. SHIRT / JACKET / OVERALLS CHEST ZONE (py = 0 .. 398) ---
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(0, 0, 512, beltY + 2);
+  ctx.clip();
+
+  if (shirtId === 'spark_tee') {
+    // Crew-neck skin cutout + crisp white ribbed collar + ToyVentor Spark Bolt emblem!
+    ctx.fillStyle = skinHex;
+    ctx.beginPath();
+    ctx.ellipse(256, 8, 92, 54, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#FFFFFF';
+    ctx.lineWidth = 18;
+    ctx.beginPath();
+    ctx.ellipse(256, 8, 98, 58, 0, 0.08 * Math.PI, 0.92 * Math.PI);
+    ctx.stroke();
+
+    // Chest badge circle + golden lightning spark
+    ctx.fillStyle = '#FFFFFF';
+    ctx.beginPath();
+    ctx.arc(256, 206, 78, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#FFB830';
+    ctx.lineWidth = 10;
+    ctx.stroke();
+
+    ctx.fillStyle = '#FF6B4A';
+    ctx.beginPath();
+    ctx.moveTo(272, 144);
+    ctx.lineTo(216, 212);
+    ctx.lineTo(254, 212);
+    ctx.lineTo(236, 270);
+    ctx.lineTo(298, 198);
+    ctx.lineTo(258, 198);
+    ctx.closePath();
+    ctx.fill();
+  } else if (shirtId === 'hoodie') {
+    // Center metallic zip seam + white hoodie drawstrings + kangaroo pocket + chest patch
+    ctx.strokeStyle = 'rgba(18, 28, 52, 0.55)';
+    ctx.lineWidth = 10;
+    ctx.beginPath();
+    ctx.moveTo(256, 28);
+    ctx.lineTo(256, beltY);
+    ctx.stroke();
+    ctx.strokeStyle = '#DCE4F2';
+    ctx.lineWidth = 4;
+    ctx.setLineDash([8, 6]);
+    ctx.beginPath();
+    ctx.moveTo(256, 34);
+    ctx.lineTo(256, beltY);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Kangaroo pocket
+    ctx.fillStyle = 'rgba(16, 36, 84, 0.28)';
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.55)';
+    ctx.lineWidth = 6;
+    roundRect(ctx, 108, 256, 296, 118, 34);
+    ctx.fill();
+    ctx.stroke();
+
+    // Drawstrings + aglets
+    ctx.strokeStyle = '#FFFFFF';
+    ctx.lineWidth = 11;
+    ctx.lineCap = 'round';
+    for (const [sx, ex] of [[204, 194], [308, 318]]) {
+      ctx.beginPath();
+      ctx.moveTo(sx, 36);
+      ctx.quadraticCurveTo(sx, 110, ex, 162);
+      ctx.stroke();
+      ctx.fillStyle = '#FF6B4A';
+      roundRect(ctx, ex - 8, 156, 16, 22, 6);
+      ctx.fill();
+    }
+
+    // Mini Spark patch on left chest
+    ctx.fillStyle = '#FF6B4A';
+    roundRect(ctx, 316, 116, 76, 52, 14);
+    ctx.fill();
+    drawStar(ctx, 354, 142, 5, 17, 7.5, '#FFB830');
+  } else if (shirtId === 'varsity') {
+    // V-neck striped rib collar + center cream placket & snap buttons + bold "K" chenille patch + striped waist rib!
+    ctx.fillStyle = '#F4EFE6';
+    ctx.fillRect(236, 24, 40, beltY - 24);
+    for (const by of [88, 162, 236, 310]) {
+      ctx.fillStyle = '#20232A';
+      ctx.beginPath();
+      ctx.arc(256, by, 10, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#FFFFFF';
+      ctx.beginPath();
+      ctx.arc(253, by - 3, 3.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    // Striped bottom rib band
+    ctx.fillStyle = '#F4EFE6';
+    ctx.fillRect(24, beltY - 38, 464, 38);
+    ctx.fillStyle = '#FF6B4A';
+    ctx.fillRect(24, beltY - 24, 464, 12);
+
+    // Angled side welt pockets
+    ctx.strokeStyle = '#F4EFE6';
+    ctx.lineWidth = 12;
+    ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(118, 250); ctx.lineTo(152, 326); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(394, 250); ctx.lineTo(360, 326); ctx.stroke();
+
+    // Bold "K" Varsity Letter Patch
+    ctx.fillStyle = '#FF6B4A';
+    ctx.strokeStyle = '#F4EFE6';
+    ctx.lineWidth = 9;
+    roundRect(ctx, 306, 104, 96, 106, 22);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = '900 72px system-ui, -apple-system, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('K', 354, 160);
+  } else if (shirtId === 'overalls') {
+    // Indigo Denim Bib + Shoulder Straps + Brass Buttons + Amber Top-Stitching over Sunny Tee!
+    ctx.fillStyle = '#2F5596';
+    // Straps
+    roundRect(ctx, 106, -10, 62, 170, 14);
+    ctx.fill();
+    roundRect(ctx, 344, -10, 62, 170, 14);
+    ctx.fill();
+    // Main Bib
+    roundRect(ctx, 96, 134, 320, beltY - 128, 24);
+    ctx.fill();
+
+    // Amber contrast stitching
+    ctx.strokeStyle = '#F2B83B';
+    ctx.lineWidth = 5;
+    ctx.setLineDash([10, 7]);
+    roundRect(ctx, 108, 146, 296, beltY - 150, 18);
+    ctx.stroke();
+    // Center bib pocket
+    roundRect(ctx, 182, 206, 148, 118, 20);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Brass overall buttons
+    for (const bx of [137, 375]) {
+      ctx.fillStyle = '#FFB830';
+      ctx.strokeStyle = '#8C5319';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.arc(bx, 164, 15, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+    }
+    // Red woven tab on pocket
+    ctx.fillStyle = '#FF6B4A';
+    roundRect(ctx, 318, 226, 22, 34, 5);
+    ctx.fill();
+  } else if (shirtId === 'stripe_tee') {
+    // Crisp Breton Cream horizontal stripes + Coral chest pocket!
+    ctx.fillStyle = '#F4EFE6';
+    for (let sy = 56; sy < beltY - 16; sy += 52) {
+      ctx.fillRect(16, sy, 480, 24);
+    }
+    ctx.fillStyle = skinHex;
+    ctx.beginPath();
+    ctx.ellipse(256, 8, 92, 52, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#FF6B4A';
+    ctx.lineWidth = 16;
+    ctx.beginPath();
+    ctx.ellipse(256, 8, 96, 56, 0, 0.08 * Math.PI, 0.92 * Math.PI);
+    ctx.stroke();
+
+    // Coral patch pocket on chest
+    ctx.fillStyle = '#FF6B4A';
+    roundRect(ctx, 312, 138, 84, 92, 18);
+    ctx.fill();
+    drawStar(ctx, 354, 184, 5, 20, 9, '#FFFFFF');
+  } else if (shirtId === 'track_top') {
+    // Asymmetric twin vertical racing stripes + zipper + checkered flag badge!
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(142, 10, 26, beltY);
+    ctx.fillStyle = '#FF6B4A';
+    ctx.fillRect(176, 10, 26, beltY);
+
+    ctx.strokeStyle = '#20232A';
+    ctx.lineWidth = 9;
+    ctx.beginPath();
+    ctx.moveTo(256, 12);
+    ctx.lineTo(256, beltY);
+    ctx.stroke();
+
+    // Checkered racing badge
+    ctx.fillStyle = '#FFFFFF';
+    roundRect(ctx, 306, 122, 92, 68, 14);
+    ctx.fill();
+    ctx.fillStyle = '#20232A';
+    for (let r = 0; r < 3; r++) {
+      for (let col = 0; col < 4; col++) {
+        if ((r + col) % 2 === 0) ctx.fillRect(314 + col * 19, 130 + r * 18, 19, 18);
+      }
+    }
+  }
+  ctx.restore();
+
+  // --- 2. PELVIS WAISTBAND, BELT & POCKET TOP ZONE (py = 398 .. 512) ---
+  if (pantsId === 'jeans' || pantsId === 'overalls_jeans') {
+    if (pantsId === 'jeans') {
+      // Warm leather belt + brass buckle!
+      ctx.fillStyle = '#6E412A';
+      ctx.fillRect(20, beltY, 472, 34);
+      ctx.strokeStyle = '#FFB830';
+      ctx.lineWidth = 9;
+      roundRect(ctx, 224, beltY - 2, 64, 38, 9);
+      ctx.stroke();
+    }
+    // Amber denim fly + scoop pockets
+    ctx.strokeStyle = '#F2B83B';
+    ctx.lineWidth = 5;
+    ctx.setLineDash([9, 6]);
+    ctx.beginPath();
+    ctx.moveTo(256, beltY + 36);
+    ctx.lineTo(256, 504);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(110, beltY + 34, 68, 0, 0.48 * Math.PI);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(402, beltY + 34, 68, 0.52 * Math.PI, Math.PI);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  } else if (pantsId === 'cargo_shorts') {
+    // Woven utility belt + matte buckle + button fly
+    ctx.fillStyle = '#4A3F32';
+    ctx.fillRect(20, beltY, 472, 30);
+    ctx.fillStyle = '#FFB830';
+    roundRect(ctx, 230, beltY - 2, 52, 34, 7);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(74, 63, 50, 0.55)';
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.moveTo(256, beltY + 34);
+    ctx.lineTo(256, 504);
+    ctx.stroke();
+  } else if (pantsId === 'sport_shorts' || pantsId === 'joggers') {
+    // Ribbed elastic waistband + white athletic drawstrings
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.22)';
+    ctx.fillRect(20, beltY, 472, 28);
+    ctx.strokeStyle = '#FFFFFF';
+    ctx.lineWidth = 8;
+    ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(242, beltY + 14); ctx.quadraticCurveTo(226, beltY + 56, 232, beltY + 78); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(270, beltY + 14); ctx.quadraticCurveTo(286, beltY + 56, 280, beltY + 78); ctx.stroke();
+  }
+
+  return c;
+}
+
+export function createLegOutfitDecalCanvas(pantsId = 'off') {
+  const c = document.createElement('canvas');
+  c.width = 256;
+  c.height = 256;
+  const ctx = c.getContext('2d');
+  ctx.clearRect(0, 0, 256, 256);
+
+  if (pantsId === 'jeans') {
+    ctx.strokeStyle = '#F2B83B';
+    ctx.lineWidth = 6;
+    ctx.setLineDash([10, 7]);
+    ctx.beginPath();
+    ctx.arc(128, 22, 84, 0.15 * Math.PI, 0.85 * Math.PI);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  } else if (pantsId === 'overalls_jeans') {
+    // Reinforced workwear knee/thigh patch with amber stitching!
+    ctx.fillStyle = 'rgba(24, 48, 96, 0.48)';
+    roundRect(ctx, 48, 76, 160, 118, 26);
+    ctx.fill();
+    ctx.strokeStyle = '#F2B83B';
+    ctx.lineWidth = 6;
+    ctx.setLineDash([9, 6]);
+    roundRect(ctx, 48, 76, 160, 118, 26);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  } else if (pantsId === 'cargo_shorts') {
+    // Stitched cargo pocket + flap + button!
+    ctx.fillStyle = 'rgba(92, 74, 52, 0.26)';
+    roundRect(ctx, 44, 62, 168, 134, 22);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(72, 56, 38, 0.65)';
+    ctx.lineWidth = 5;
+    roundRect(ctx, 44, 62, 168, 134, 22);
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(92, 74, 52, 0.42)';
+    roundRect(ctx, 40, 56, 176, 46, 14);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = '#4A3F32';
+    ctx.beginPath();
+    ctx.arc(128, 82, 9, 0, Math.PI * 2);
+    ctx.fill();
+  } else if (pantsId === 'sport_shorts') {
+    // Crisp white retro athletic hem stripe!
+    ctx.fillStyle = '#FFFFFF';
+    roundRect(ctx, 18, 186, 220, 24, 10);
+    ctx.fill();
+  } else if (pantsId === 'joggers') {
+    // Twin vertical athletic stripes!
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(46, 8, 18, 240);
+    ctx.fillStyle = '#FF6B4A';
+    ctx.fillRect(72, 8, 14, 240);
+  }
+  return c;
+}
+
+// ===========================================================================
 // PHASE 4: PHOTO-TO-ACCESSORY FORGE (`prints: false` Digital Game Accessories)
 // ===========================================================================
 export const KID_DRAWING_PRESETS = {

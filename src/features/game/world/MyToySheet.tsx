@@ -7,6 +7,10 @@ import {
 } from "../../../../shared/toy";
 import { loadBuild } from "../../../lib/builds";
 import { partsById } from "../../../lib/catalog";
+import {
+  nextRankProgress,
+  type ProgressionState,
+} from "../../../lib/progression";
 import { postSamScan } from "../../../lib/api";
 import { pushOwnership } from "../../../lib/sync";
 import { skinForToy } from "../../../state/skins";
@@ -50,12 +54,14 @@ function glyphForToy(toy: Toy): string {
 export function MyToySheet({
   open,
   initialStep = "shelf",
+  progression,
   onClose,
   onSkinChange,
   onOpenGrownUps,
 }: {
   open: boolean;
   initialStep?: "shelf" | "scan";
+  progression?: ProgressionState;
   onClose: () => void;
   onSkinChange?: () => void;
   onOpenGrownUps?: () => void;
@@ -179,6 +185,27 @@ export function MyToySheet({
               Done
             </button>
           </div>
+
+          {progression &&
+            (() => {
+              const progress = nextRankProgress(progression.totalXp);
+              return (
+                <div className="tv-rank-progress">
+                  <span>
+                    ★ {progress.rank.title}
+                    {progress.next
+                      ? ` · ${progress.into}/${progress.span} to ${progress.next.title}`
+                      : " · Top rank"}
+                  </span>
+                  <div className="theme-progress" aria-hidden="true">
+                    <div
+                      className="theme-progress-fill"
+                      style={{ width: `${progress.pct}%` }}
+                    />
+                  </div>
+                </div>
+              );
+            })()}
 
           <div className="tv-toy-shelf" role="listbox" aria-label="Owned toys">
             {orderedToys.map((toy) => {

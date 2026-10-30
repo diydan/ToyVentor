@@ -43,33 +43,54 @@ export function createDecalExpressionCanvas(expression = 'spark', headType = 'ki
     ctx.fill();
   }
 
-  const eyeCol = isRobot ? '#b8e8ff' : '#231A16';
-  const mouthCol = isRobot ? '#b8e8ff' : '#3A231C';
+  const eyeCol = isRobot ? '#b8e8ff' : '#241814';
+  const mouthCol = isRobot ? '#b8e8ff' : '#3B221B';
   const glintCol = '#ffffff';
   const cheekCol = '#ff6b4a';
 
-  // Signature Coral Spark cheek blushes
+  // Signature Coral Spark cheek blushes (wider out on the curved cheeks for Human faces!)
   ctx.fillStyle = cheekCol;
-  ctx.globalAlpha = isHuman ? 0.62 : (isAnimal ? 0.74 : 0.90);
-  drawCapsule(ctx, 84, 176, 52, 24);
-  drawCapsule(ctx, 428, 176, 52, 24);
-  ctx.globalAlpha = 1.0;
-
-  // Expressive human eyebrows + warm stylized button nose hint
-  if (isHuman && expression !== 'cool') {
-    ctx.strokeStyle = 'rgba(62, 38, 25, 0.82)';
-    ctx.lineWidth = 11.5;
-    ctx.lineCap = 'round';
-    for (const [bx, dir] of [[152, -1], [360, 1]]) {
+  if (isHuman) {
+    for (const bx of [68, 444]) {
+      const rg = ctx.createRadialGradient(bx, 180, 4, bx, 180, 38);
+      rg.addColorStop(0, 'rgba(255, 107, 74, 0.62)');
+      rg.addColorStop(0.65, 'rgba(255, 118, 92, 0.30)');
+      rg.addColorStop(1, 'rgba(255, 118, 92, 0.0)');
+      ctx.fillStyle = rg;
       ctx.beginPath();
-      const lift = expression === 'surprised' ? -10 : (expression === 'wink' && dir === 1 ? 7 : 0);
-      ctx.arc(bx, 84 + lift, 39, Math.PI * 1.22, Math.PI * 1.78);
+      ctx.ellipse(bx, 180, 38, 22, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  } else {
+    ctx.globalAlpha = isAnimal ? 0.74 : 0.90;
+    drawCapsule(ctx, 84, 176, 52, 24);
+    drawCapsule(ctx, 428, 176, 52, 24);
+    ctx.globalAlpha = 1.0;
+  }
+
+  // Expressive human eyebrows + warm stylized 2D button nose hint (visible on all human expressions including Cool Shades!)
+  if (isHuman) {
+    ctx.strokeStyle = 'rgba(58, 34, 22, 0.86)';
+    ctx.lineWidth = 10.5;
+    ctx.lineCap = 'round';
+    for (const [bx, dir] of [[138, -1], [374, 1]]) {
+      ctx.beginPath();
+      const lift = expression === 'surprised'
+        ? -14
+        : (expression === 'cool' ? -10 : (expression === 'wink' && dir === 1 ? 8 : 0));
+      ctx.arc(bx, 78 + lift, 44, Math.PI * 1.20, Math.PI * 1.80);
       ctx.stroke();
     }
-    ctx.fillStyle = 'rgba(196, 102, 80, 0.50)';
+    // Cute painted 2D human nose crescent + soft highlight
+    ctx.fillStyle = 'rgba(182, 92, 68, 0.42)';
     ctx.beginPath();
-    ctx.ellipse(256, 152, 11, 6.5, 0, 0, Math.PI * 2);
+    ctx.ellipse(256, 152, 13, 7.5, 0, 0, Math.PI * 2);
     ctx.fill();
+    ctx.strokeStyle = 'rgba(148, 68, 48, 0.55)';
+    ctx.lineWidth = 4.5;
+    ctx.beginPath();
+    ctx.arc(256, 150, 10, 0.15 * Math.PI, 0.85 * Math.PI);
+    ctx.stroke();
   }
 
   // Cute stylized button nose tip for Fox / Bear (2D decal only — zero 3D nostril holes!)
@@ -84,17 +105,60 @@ export function createDecalExpressionCanvas(expression = 'spark', headType = 'ki
     ctx.fill();
   }
 
-  const drawHumanOrCritterEye = (cx, cy = 122) => {
+  const eyeCenters = isHuman ? [138, 374] : [152, 360];
+
+  const drawHumanOrCritterEye = (cx, cy = 124, side = 0) => {
+    if (isHuman) {
+      // Soft rounded human eye oval + warm iris + curved upper eyelash line
+      ctx.fillStyle = eyeCol;
+      ctx.beginPath();
+      ctx.ellipse(cx, cy, 37, 42, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Warm chestnut-amber iris crescent
+      ctx.fillStyle = '#8B5437';
+      ctx.beginPath();
+      ctx.ellipse(cx, cy + 17, 25, 15, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#BA7D56';
+      ctx.beginPath();
+      ctx.ellipse(cx + 4, cy + 21, 15, 7.5, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Re-deepen pupil center
+      ctx.fillStyle = eyeCol;
+      ctx.beginPath();
+      ctx.arc(cx, cy - 2, 20, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Soft upper eyelash sweep
+      ctx.strokeStyle = eyeCol;
+      ctx.lineWidth = 8.5;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.arc(cx, cy + 3, 40, Math.PI * 1.08, Math.PI * 1.92);
+      ctx.stroke();
+      if (side !== 0) {
+        ctx.beginPath();
+        ctx.moveTo(cx + side * 34, cy - 12);
+        ctx.lineTo(cx + side * 44, cy - 20);
+        ctx.stroke();
+      }
+
+      // Twin lively catchlights
+      ctx.fillStyle = glintCol;
+      ctx.beginPath();
+      ctx.arc(cx - 12, cy - 15, 13.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(cx + 13, cy + 14, 6.2, 0, Math.PI * 2);
+      ctx.fill();
+      return;
+    }
+
     ctx.fillStyle = eyeCol;
     roundRect(ctx, cx - 33, cy - 39, 66, 78, 31);
     ctx.fill();
-    if (isHuman) {
-      // Warm iris crescent at bottom of eye
-      ctx.fillStyle = '#734830';
-      ctx.beginPath();
-      ctx.ellipse(cx, cy + 18, 21, 12, 0, 0, Math.PI * 2);
-      ctx.fill();
-    }
     ctx.fillStyle = glintCol;
     ctx.beginPath();
     ctx.arc(cx - 11, cy - 15, 13, 0, Math.PI * 2);
@@ -105,15 +169,14 @@ export function createDecalExpressionCanvas(expression = 'spark', headType = 'ki
   };
 
   if (expression === 'spark') {
-    for (const cx of [152, 360]) {
-      drawHumanOrCritterEye(cx, 122);
-    }
+    drawHumanOrCritterEye(eyeCenters[0], 124, -1);
+    drawHumanOrCritterEye(eyeCenters[1], 124, 1);
     if (isHuman) {
       ctx.strokeStyle = mouthCol;
-      ctx.lineWidth = 11;
+      ctx.lineWidth = 10.5;
       ctx.lineCap = 'round';
       ctx.beginPath();
-      ctx.arc(256, 168, 31, 0.16 * Math.PI, 0.84 * Math.PI);
+      ctx.arc(256, 168, 34, 0.16 * Math.PI, 0.84 * Math.PI);
       ctx.stroke();
     } else if (isAnimal) {
       ctx.strokeStyle = mouthCol;
@@ -128,24 +191,29 @@ export function createDecalExpressionCanvas(expression = 'spark', headType = 'ki
     }
   } else if (expression === 'happy') {
     ctx.strokeStyle = eyeCol;
-    ctx.lineWidth = 16;
+    ctx.lineWidth = 15;
     ctx.lineCap = 'round';
-    for (const cx of [152, 360]) {
+    for (const cx of eyeCenters) {
       ctx.beginPath();
-      ctx.arc(cx, 140, 35, Math.PI * 1.12, Math.PI * 1.88);
+      ctx.arc(cx, 138, 37, Math.PI * 1.12, Math.PI * 1.88);
       ctx.stroke();
     }
     if (isHuman) {
-      // Cheerful open D-smile with rosy tongue accent!
-      ctx.fillStyle = mouthCol;
+      // Cheerful open D-laugh with crisp upper tooth strip & rosy tongue!
+      ctx.save();
       ctx.beginPath();
-      ctx.arc(256, 170, 35, 0, Math.PI, false);
+      ctx.arc(256, 170, 37, 0, Math.PI, false);
       ctx.closePath();
+      ctx.fillStyle = mouthCol;
       ctx.fill();
+      ctx.clip();
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(216, 168, 80, 11);
       ctx.fillStyle = '#FF7E6B';
       ctx.beginPath();
-      ctx.ellipse(256, 192, 19, 10, 0, 0, Math.PI * 2);
+      ctx.ellipse(256, 198, 22, 13, 0, 0, Math.PI * 2);
       ctx.fill();
+      ctx.restore();
     } else {
       ctx.strokeStyle = mouthCol;
       ctx.lineWidth = 11;
@@ -154,93 +222,127 @@ export function createDecalExpressionCanvas(expression = 'spark', headType = 'ki
       ctx.stroke();
     }
   } else if (expression === 'wink') {
-    drawHumanOrCritterEye(152, 122);
+    drawHumanOrCritterEye(eyeCenters[0], 124, -1);
 
     ctx.strokeStyle = eyeCol;
-    ctx.lineWidth = 15;
+    ctx.lineWidth = 14;
     ctx.lineCap = 'round';
+    const wx = eyeCenters[1];
     ctx.beginPath();
-    ctx.moveTo(324, 112);
-    ctx.lineTo(384, 126);
-    ctx.lineTo(326, 144);
+    ctx.arc(wx, 136, 35, Math.PI * 1.12, Math.PI * 1.88);
     ctx.stroke();
+    if (isHuman) {
+      ctx.lineWidth = 8.5;
+      ctx.beginPath();
+      ctx.moveTo(wx + 31, 124);
+      ctx.lineTo(wx + 43, 116);
+      ctx.stroke();
+    }
 
     ctx.strokeStyle = mouthCol;
-    ctx.lineWidth = 11;
+    ctx.lineWidth = 10.5;
     ctx.beginPath();
-    ctx.arc(262, 168, 30, 0.15 * Math.PI, 0.80 * Math.PI);
+    ctx.arc(262, 169, 32, 0.14 * Math.PI, 0.82 * Math.PI);
     ctx.stroke();
   } else if (expression === 'cool') {
-    // Bold ToyVentor Geometric Aviator Shades
-    ctx.fillStyle = '#20232A';
-    ctx.strokeStyle = '#FFB830';
-    ctx.lineWidth = 9;
-    roundRect(ctx, 74, 78, 162, 80, 22);
-    ctx.fill();
-    ctx.stroke();
-    roundRect(ctx, 276, 78, 162, 80, 22);
-    ctx.fill();
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(236, 102);
-    ctx.lineTo(276, 102);
-    ctx.stroke();
-    // Diagonal white lens sheen
-    ctx.strokeStyle = 'rgba(255,255,255,0.68)';
-    ctx.lineWidth = 10;
-    ctx.lineCap = 'round';
-    for (const ox of [104, 306]) {
+    if (isHuman) {
+      // Playful oversized rounded human sunglasses (warm dark frames + tinted gradient lenses + visible brows!)
+      for (const lx of [138, 374]) {
+        const lg = ctx.createLinearGradient(lx, 80, lx, 162);
+        lg.addColorStop(0, 'rgba(34, 39, 54, 0.94)');
+        lg.addColorStop(1, 'rgba(72, 48, 62, 0.86)');
+        ctx.fillStyle = lg;
+        ctx.strokeStyle = '#241B18';
+        ctx.lineWidth = 10;
+        ctx.beginPath();
+        ctx.ellipse(lx, 120, 74, 43, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        // Crisp lens highlight slash
+        ctx.strokeStyle = 'rgba(255,255,255,0.68)';
+        ctx.lineWidth = 9;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(lx - 34, 140);
+        ctx.lineTo(lx - 4, 96);
+        ctx.stroke();
+      }
+      // Curved nose bridge
+      ctx.strokeStyle = '#241B18';
+      ctx.lineWidth = 10;
       ctx.beginPath();
-      ctx.moveTo(ox, 140);
-      ctx.lineTo(ox + 34, 94);
+      ctx.arc(256, 118, 22, Math.PI * 1.15, Math.PI * 1.85);
+      ctx.stroke();
+    } else {
+      ctx.fillStyle = '#20232A';
+      ctx.strokeStyle = '#FFB830';
+      ctx.lineWidth = 9;
+      roundRect(ctx, 74, 78, 162, 80, 22);
+      ctx.fill();
+      ctx.stroke();
+      roundRect(ctx, 276, 78, 162, 80, 22);
+      ctx.fill();
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(236, 102);
+      ctx.lineTo(276, 102);
       ctx.stroke();
     }
     // Confident smirk
     ctx.strokeStyle = isRobot ? '#FFB830' : mouthCol;
-    ctx.lineWidth = 10;
+    ctx.lineWidth = 10.5;
+    ctx.lineCap = 'round';
     ctx.beginPath();
-    ctx.arc(266, 174, 28, 0.18 * Math.PI, 0.74 * Math.PI);
+    ctx.arc(266, 174, 30, 0.16 * Math.PI, 0.76 * Math.PI);
     ctx.stroke();
   } else if (expression === 'starry') {
     if (isHuman) {
-      for (const cx of [152, 360]) {
+      for (const cx of eyeCenters) {
         ctx.fillStyle = eyeCol;
-        roundRect(ctx, cx - 34, 82, 68, 80, 32);
+        ctx.beginPath();
+        ctx.ellipse(cx, 124, 38, 43, 0, 0, Math.PI * 2);
         ctx.fill();
-        drawStar(ctx, cx, 121, 5, 26, 11.5, '#FFB830');
-        drawStar(ctx, cx - 12, 101, 4, 9.5, 3.5, '#ffffff');
+        drawStar(ctx, cx, 124, 5, 27, 12, '#FFB830');
+        drawStar(ctx, cx - 13, 102, 4, 10, 3.8, '#ffffff');
       }
     } else {
-      for (const cx of [152, 360]) {
+      for (const cx of eyeCenters) {
         drawStar(ctx, cx, 120, 5, 40, 18, '#FFB830');
         drawStar(ctx, cx, 120, 4, 16, 6, '#ffffff');
       }
     }
     ctx.fillStyle = mouthCol;
     ctx.beginPath();
-    ctx.ellipse(256, 178, 18, 13, 0, 0, Math.PI * 2);
+    ctx.ellipse(256, 180, 18, 13, 0, 0, Math.PI * 2);
     ctx.fill();
   } else if (expression === 'surprised') {
-    for (const cx of [152, 360]) {
+    for (const cx of eyeCenters) {
       ctx.fillStyle = eyeCol;
       ctx.beginPath();
-      ctx.arc(cx, 120, 36, 0, Math.PI * 2);
+      ctx.arc(cx, 122, 37, 0, Math.PI * 2);
       ctx.fill();
+      if (isHuman) {
+        ctx.fillStyle = '#8B5437';
+        ctx.beginPath();
+        ctx.ellipse(cx, 138, 22, 12, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
       ctx.fillStyle = glintCol;
       ctx.beginPath();
-      ctx.arc(cx - 11, 108, 12, 0, Math.PI * 2);
+      ctx.arc(cx - 11, 109, 12.5, 0, Math.PI * 2);
       ctx.fill();
       ctx.beginPath();
-      ctx.arc(cx + 12, 132, 5.5, 0, Math.PI * 2);
+      ctx.arc(cx + 12, 133, 5.5, 0, Math.PI * 2);
       ctx.fill();
     }
     ctx.fillStyle = mouthCol;
     ctx.beginPath();
-    ctx.ellipse(256, 180, 18, 22, 0, 0, Math.PI * 2);
+    ctx.ellipse(256, 181, 18, 22, 0, 0, Math.PI * 2);
     ctx.fill();
     ctx.fillStyle = '#FF7E6B';
     ctx.beginPath();
-    ctx.ellipse(256, 191, 11, 8, 0, 0, Math.PI * 2);
+    ctx.ellipse(256, 192, 11, 8, 0, 0, Math.PI * 2);
     ctx.fill();
   }
   return c;
@@ -274,6 +376,336 @@ function drawStar(ctx, cx, cy, pts, rOut, rIn, color) {
   }
   ctx.closePath();
   ctx.fill();
+}
+
+// ===========================================================================
+// 2D CLOTHING DECALS FOR SHIRTS, JACKETS, OVERALLS, PANTS & SHORTS
+// (`BRAND_STYLE.md`: surface graphics as crisp 2D decals/game skins, zero 3D spaghetti)
+// Torso plane covers y_torso = 62.0..101.0 mm (py = 0..398 is Shirt chest; py = 398..512 is Pelvis waistband!)
+// ===========================================================================
+export function createTorsoOutfitDecalCanvas(shirtId = 'off', pantsId = 'off', skinHex = '#F6C8A6') {
+  const c = document.createElement('canvas');
+  c.width = 512;
+  c.height = 512;
+  const ctx = c.getContext('2d');
+  ctx.clearRect(0, 0, 512, 512);
+
+  const beltY = 398;
+
+  // --- 1. SHIRT / JACKET / OVERALLS CHEST ZONE (py = 0 .. 398) ---
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(0, 0, 512, beltY + 2);
+  ctx.clip();
+
+  if (shirtId === 'spark_tee') {
+    // Crew-neck skin cutout + crisp white ribbed collar + ToyVentor Spark Bolt emblem!
+    ctx.fillStyle = skinHex;
+    ctx.beginPath();
+    ctx.ellipse(256, 8, 92, 54, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#FFFFFF';
+    ctx.lineWidth = 18;
+    ctx.beginPath();
+    ctx.ellipse(256, 8, 98, 58, 0, 0.08 * Math.PI, 0.92 * Math.PI);
+    ctx.stroke();
+
+    // Chest badge circle + golden lightning spark
+    ctx.fillStyle = '#FFFFFF';
+    ctx.beginPath();
+    ctx.arc(256, 206, 78, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#FFB830';
+    ctx.lineWidth = 10;
+    ctx.stroke();
+
+    ctx.fillStyle = '#FF6B4A';
+    ctx.beginPath();
+    ctx.moveTo(272, 144);
+    ctx.lineTo(216, 212);
+    ctx.lineTo(254, 212);
+    ctx.lineTo(236, 270);
+    ctx.lineTo(298, 198);
+    ctx.lineTo(258, 198);
+    ctx.closePath();
+    ctx.fill();
+  } else if (shirtId === 'hoodie') {
+    // Center metallic zip seam + white hoodie drawstrings + kangaroo pocket + chest patch
+    ctx.strokeStyle = 'rgba(18, 28, 52, 0.55)';
+    ctx.lineWidth = 10;
+    ctx.beginPath();
+    ctx.moveTo(256, 28);
+    ctx.lineTo(256, beltY);
+    ctx.stroke();
+    ctx.strokeStyle = '#DCE4F2';
+    ctx.lineWidth = 4;
+    ctx.setLineDash([8, 6]);
+    ctx.beginPath();
+    ctx.moveTo(256, 34);
+    ctx.lineTo(256, beltY);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Kangaroo pocket
+    ctx.fillStyle = 'rgba(16, 36, 84, 0.28)';
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.55)';
+    ctx.lineWidth = 6;
+    roundRect(ctx, 108, 256, 296, 118, 34);
+    ctx.fill();
+    ctx.stroke();
+
+    // Drawstrings + aglets
+    ctx.strokeStyle = '#FFFFFF';
+    ctx.lineWidth = 11;
+    ctx.lineCap = 'round';
+    for (const [sx, ex] of [[204, 194], [308, 318]]) {
+      ctx.beginPath();
+      ctx.moveTo(sx, 36);
+      ctx.quadraticCurveTo(sx, 110, ex, 162);
+      ctx.stroke();
+      ctx.fillStyle = '#FF6B4A';
+      roundRect(ctx, ex - 8, 156, 16, 22, 6);
+      ctx.fill();
+    }
+
+    // Mini Spark patch on left chest
+    ctx.fillStyle = '#FF6B4A';
+    roundRect(ctx, 316, 116, 76, 52, 14);
+    ctx.fill();
+    drawStar(ctx, 354, 142, 5, 17, 7.5, '#FFB830');
+  } else if (shirtId === 'varsity') {
+    // V-neck striped rib collar + center cream placket & snap buttons + bold "K" chenille patch + striped waist rib!
+    ctx.fillStyle = '#F4EFE6';
+    ctx.fillRect(236, 24, 40, beltY - 24);
+    for (const by of [88, 162, 236, 310]) {
+      ctx.fillStyle = '#20232A';
+      ctx.beginPath();
+      ctx.arc(256, by, 10, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#FFFFFF';
+      ctx.beginPath();
+      ctx.arc(253, by - 3, 3.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    // Striped bottom rib band
+    ctx.fillStyle = '#F4EFE6';
+    ctx.fillRect(24, beltY - 38, 464, 38);
+    ctx.fillStyle = '#FF6B4A';
+    ctx.fillRect(24, beltY - 24, 464, 12);
+
+    // Angled side welt pockets
+    ctx.strokeStyle = '#F4EFE6';
+    ctx.lineWidth = 12;
+    ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(118, 250); ctx.lineTo(152, 326); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(394, 250); ctx.lineTo(360, 326); ctx.stroke();
+
+    // Bold "K" Varsity Letter Patch
+    ctx.fillStyle = '#FF6B4A';
+    ctx.strokeStyle = '#F4EFE6';
+    ctx.lineWidth = 9;
+    roundRect(ctx, 306, 104, 96, 106, 22);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = '900 72px system-ui, -apple-system, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('K', 354, 160);
+  } else if (shirtId === 'overalls') {
+    // Indigo Denim Bib + Shoulder Straps + Brass Buttons + Amber Top-Stitching over Sunny Tee!
+    ctx.fillStyle = '#2F5596';
+    // Straps
+    roundRect(ctx, 106, -10, 62, 170, 14);
+    ctx.fill();
+    roundRect(ctx, 344, -10, 62, 170, 14);
+    ctx.fill();
+    // Main Bib
+    roundRect(ctx, 96, 134, 320, beltY - 128, 24);
+    ctx.fill();
+
+    // Amber contrast stitching
+    ctx.strokeStyle = '#F2B83B';
+    ctx.lineWidth = 5;
+    ctx.setLineDash([10, 7]);
+    roundRect(ctx, 108, 146, 296, beltY - 150, 18);
+    ctx.stroke();
+    // Center bib pocket
+    roundRect(ctx, 182, 206, 148, 118, 20);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Brass overall buttons
+    for (const bx of [137, 375]) {
+      ctx.fillStyle = '#FFB830';
+      ctx.strokeStyle = '#8C5319';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.arc(bx, 164, 15, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+    }
+    // Red woven tab on pocket
+    ctx.fillStyle = '#FF6B4A';
+    roundRect(ctx, 318, 226, 22, 34, 5);
+    ctx.fill();
+  } else if (shirtId === 'stripe_tee') {
+    // Crisp Breton Cream horizontal stripes + Coral chest pocket!
+    ctx.fillStyle = '#F4EFE6';
+    for (let sy = 56; sy < beltY - 16; sy += 52) {
+      ctx.fillRect(16, sy, 480, 24);
+    }
+    ctx.fillStyle = skinHex;
+    ctx.beginPath();
+    ctx.ellipse(256, 8, 92, 52, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#FF6B4A';
+    ctx.lineWidth = 16;
+    ctx.beginPath();
+    ctx.ellipse(256, 8, 96, 56, 0, 0.08 * Math.PI, 0.92 * Math.PI);
+    ctx.stroke();
+
+    // Coral patch pocket on chest
+    ctx.fillStyle = '#FF6B4A';
+    roundRect(ctx, 312, 138, 84, 92, 18);
+    ctx.fill();
+    drawStar(ctx, 354, 184, 5, 20, 9, '#FFFFFF');
+  } else if (shirtId === 'track_top') {
+    // Asymmetric twin vertical racing stripes + zipper + checkered flag badge!
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(142, 10, 26, beltY);
+    ctx.fillStyle = '#FF6B4A';
+    ctx.fillRect(176, 10, 26, beltY);
+
+    ctx.strokeStyle = '#20232A';
+    ctx.lineWidth = 9;
+    ctx.beginPath();
+    ctx.moveTo(256, 12);
+    ctx.lineTo(256, beltY);
+    ctx.stroke();
+
+    // Checkered racing badge
+    ctx.fillStyle = '#FFFFFF';
+    roundRect(ctx, 306, 122, 92, 68, 14);
+    ctx.fill();
+    ctx.fillStyle = '#20232A';
+    for (let r = 0; r < 3; r++) {
+      for (let col = 0; col < 4; col++) {
+        if ((r + col) % 2 === 0) ctx.fillRect(314 + col * 19, 130 + r * 18, 19, 18);
+      }
+    }
+  }
+  ctx.restore();
+
+  // --- 2. PELVIS WAISTBAND, BELT & POCKET TOP ZONE (py = 398 .. 512) ---
+  if (pantsId === 'jeans' || pantsId === 'overalls_jeans') {
+    if (pantsId === 'jeans') {
+      // Warm leather belt + brass buckle!
+      ctx.fillStyle = '#6E412A';
+      ctx.fillRect(20, beltY, 472, 34);
+      ctx.strokeStyle = '#FFB830';
+      ctx.lineWidth = 9;
+      roundRect(ctx, 224, beltY - 2, 64, 38, 9);
+      ctx.stroke();
+    }
+    // Amber denim fly + scoop pockets
+    ctx.strokeStyle = '#F2B83B';
+    ctx.lineWidth = 5;
+    ctx.setLineDash([9, 6]);
+    ctx.beginPath();
+    ctx.moveTo(256, beltY + 36);
+    ctx.lineTo(256, 504);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(110, beltY + 34, 68, 0, 0.48 * Math.PI);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(402, beltY + 34, 68, 0.52 * Math.PI, Math.PI);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  } else if (pantsId === 'cargo_shorts') {
+    // Woven utility belt + matte buckle + button fly
+    ctx.fillStyle = '#4A3F32';
+    ctx.fillRect(20, beltY, 472, 30);
+    ctx.fillStyle = '#FFB830';
+    roundRect(ctx, 230, beltY - 2, 52, 34, 7);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(74, 63, 50, 0.55)';
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.moveTo(256, beltY + 34);
+    ctx.lineTo(256, 504);
+    ctx.stroke();
+  } else if (pantsId === 'sport_shorts' || pantsId === 'joggers') {
+    // Ribbed elastic waistband + white athletic drawstrings
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.22)';
+    ctx.fillRect(20, beltY, 472, 28);
+    ctx.strokeStyle = '#FFFFFF';
+    ctx.lineWidth = 8;
+    ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(242, beltY + 14); ctx.quadraticCurveTo(226, beltY + 56, 232, beltY + 78); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(270, beltY + 14); ctx.quadraticCurveTo(286, beltY + 56, 280, beltY + 78); ctx.stroke();
+  }
+
+  return c;
+}
+
+export function createLegOutfitDecalCanvas(pantsId = 'off') {
+  const c = document.createElement('canvas');
+  c.width = 256;
+  c.height = 256;
+  const ctx = c.getContext('2d');
+  ctx.clearRect(0, 0, 256, 256);
+
+  if (pantsId === 'jeans') {
+    ctx.strokeStyle = '#F2B83B';
+    ctx.lineWidth = 6;
+    ctx.setLineDash([10, 7]);
+    ctx.beginPath();
+    ctx.arc(128, 22, 84, 0.15 * Math.PI, 0.85 * Math.PI);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  } else if (pantsId === 'overalls_jeans') {
+    // Reinforced workwear knee/thigh patch with amber stitching!
+    ctx.fillStyle = 'rgba(24, 48, 96, 0.48)';
+    roundRect(ctx, 48, 76, 160, 118, 26);
+    ctx.fill();
+    ctx.strokeStyle = '#F2B83B';
+    ctx.lineWidth = 6;
+    ctx.setLineDash([9, 6]);
+    roundRect(ctx, 48, 76, 160, 118, 26);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  } else if (pantsId === 'cargo_shorts') {
+    // Stitched cargo pocket + flap + button!
+    ctx.fillStyle = 'rgba(92, 74, 52, 0.26)';
+    roundRect(ctx, 44, 62, 168, 134, 22);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(72, 56, 38, 0.65)';
+    ctx.lineWidth = 5;
+    roundRect(ctx, 44, 62, 168, 134, 22);
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(92, 74, 52, 0.42)';
+    roundRect(ctx, 40, 56, 176, 46, 14);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = '#4A3F32';
+    ctx.beginPath();
+    ctx.arc(128, 82, 9, 0, Math.PI * 2);
+    ctx.fill();
+  } else if (pantsId === 'sport_shorts') {
+    // Crisp white retro athletic hem stripe!
+    ctx.fillStyle = '#FFFFFF';
+    roundRect(ctx, 18, 186, 220, 24, 10);
+    ctx.fill();
+  } else if (pantsId === 'joggers') {
+    // Twin vertical athletic stripes!
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(46, 8, 18, 240);
+    ctx.fillStyle = '#FF6B4A';
+    ctx.fillRect(72, 8, 14, 240);
+  }
+  return c;
 }
 
 // ===========================================================================

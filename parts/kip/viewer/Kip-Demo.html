@@ -92,7 +92,7 @@
   .dock {
     position: fixed;
     left: 50%;
-    bottom: 12px;
+    bottom: 36px;
     transform: translateX(-50%);
     background: var(--glass);
     backdrop-filter: blur(14px);
@@ -105,6 +105,32 @@
     gap: 6px;
     max-width: calc(100vw - 24px);
     z-index: 10;
+  }
+  #version-pill {
+    position: fixed;
+    left: 14px;
+    bottom: 8px;
+    z-index: 65;
+    pointer-events: none;
+    background: rgba(27, 34, 56, 0.88);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 999px;
+    padding: 3px 10px;
+    font-size: 11px;
+    font-weight: 750;
+    letter-spacing: 0.02em;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 4px 14px rgba(27, 34, 56, 0.18);
+  }
+  #version-pill .ver-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--spark);
+    display: inline-block;
   }
   .row {
     display: flex;
@@ -196,7 +222,7 @@
     pointer-events: none;
   }
   body.dragging #drop-overlay { display: flex; }
-  body.clean-ui .topbar, body.clean-ui .dock, body.clean-ui .modal-backdrop { display: none !important; }
+  body.clean-ui .topbar, body.clean-ui .dock, body.clean-ui .modal-backdrop, body.clean-ui #version-pill { display: none !important; }
 
   .modal-backdrop {
     position: fixed;
@@ -292,6 +318,7 @@
 </head>
 <body>
 <div id="viewport"></div>
+<div id="version-pill"><span class="ver-dot"></span><span id="version-label">Kip v8.0 · Organic Heads · Curved Faceplates · Wrap Hair</span></div>
 <div id="drop-overlay">Drop Custom PartSpec .stl or Mixamo .fbx/.glb onto Kip</div>
 
 <div class="topbar">
@@ -317,12 +344,14 @@
   </div>
   <div class="row">
     <span class="row-label">Wardrobe</span>
-    <button id="btn-head" class="spark-active" title="Cycle universal 2x1 character heads: Kip Classic / Human Head / Fox / Bear / Bolt Robot">Head: Kip Classic</button>
+    <button id="btn-head" class="spark-active" title="Cycle universal 2x1 character heads: Kip Classic / 4 Organic Human Variants (Round Kid, Chibi Cheeks, Soft Chin, Oval Youth) / Fox / Bear / Bolt Robot">Head: Kip Classic</button>
     <button id="btn-face" title="Cycle slim swappable emotion Face Plates &amp; 2D expressions (zero moulded 3D faces per BRAND_STYLE.md)">Face: Spark</button>
     <button id="btn-hair" title="Cycle separate clip-on 2x1 hairstyles: 3 Hat-Ready styles (with top studs) + 5 Sculpted-Top styles">Hair: None</button>
-    <button id="btn-crown" class="spark-active" title="Cycle 2x1 Hats &amp; Toppers (stacks on top of base heads &amp; Hat-Ready hairstyles!): Spark Buds / Wobble Hat / Pointy Ears / Bumper Horns / Clip Ponytail / Blank Cap">Hat: Spark Buds</button>
-    <button id="btn-skin" title="Cycle human head &amp; face-plate skin tones: Warm Peach / Golden Tan / Rich Cocoa / Soft Ivory / Vinyl Cream">Skin: Warm Peach</button>
+    <button id="btn-crown" class="spark-active" title="Cycle 2x1 Hats &amp; Toppers (stacks on top of base heads &amp; Hat-Ready hairstyles!): Spark Buds / Wobble Hat / Pointy Ears / Bumper Horns / Blank Cap">Hat: Spark Buds</button>
+    <button id="btn-skin" title="Cycle full-body exposed skin tones (head, face plate, neck, hands, bare forearms &amp; shins): Warm Peach / Golden Tan / Rich Cocoa / Soft Ivory / Vinyl Cream">Skin: Vinyl Cream</button>
     <button id="btn-hair-col" title="Cycle separate clip-on hair colors: Chestnut / Espresso / Golden Blonde / Auburn Ginger / Berry Pop / Cobalt Blue">Hair Tone: Chestnut</button>
+    <button id="btn-shirt" title="Cycle 2D decal shirts, hoodies, jackets &amp; overalls: Off / Spark Bolt Tee / Cobalt Hoodie / Varsity Jacket / Denim Overalls / Breton Stripes / Racing Track Top">Shirt: Off</button>
+    <button id="btn-pants" title="Cycle 2D decal pants &amp; shorts: Off / Cuffed Jeans / Cargo Shorts / Sport Shorts / Track Joggers / Overall Denim">Pants: Off</button>
     <button id="btn-back" title="Cycle 2x2 Back Dock: Off / Explorer Pack / Bolt Jetpack / Cloud Wings / Pro 2:1 Gears">Back: Off</button>
     <button id="btn-hand" title="Cycle Hand &amp; Foot Props: Off / Pro Wrench / Star Shield / Pro Spinner / Skateboard">Prop: Off</button>
     <button id="btn-ears" title="Cycle ±X Ear-Pod Ø6.6 Bosses: Off / Comm-Pods / Pro Scanner">Ears: Off</button>
@@ -488,9 +517,13 @@ import {
   trySamScanEndpoint,
   buildPhotoAccessoryMesh,
   encodeToyContractHash,
-} from '/kip/kip-forge-sdk.js';
+} from '/kip/kip-forge-sdk.js?v=8.0';
 import {
+  KIP_BUILD_VERSION,
+  HUMAN_HEAD_IDS,
   WARDROBE_HEADS,
+  SHIRT_OPTIONS,
+  PANTS_OPTIONS,
   SKIN_TONES,
   HAIR_COLORS,
   HAIR_OPTIONS,
@@ -505,7 +538,7 @@ import {
   makeScooterRideClip,
   makeMotoStraddleClip,
   makeSkateboardClip,
-} from '/kip/kip-vehicles-wardrobe.js';
+} from '/kip/kip-vehicles-wardrobe.js?v=8.0';
 
 if (window.self !== window.top) document.body.classList.add('in-iframe');
 
@@ -628,7 +661,8 @@ const gltfLoader = new GLTFLoader();
 const fbxLoader = new FBXLoader();
 
 async function loadSTL(url, creaseDeg = 38) {
-  const raw = await stlLoader.loadAsync(url);
+  const bustedUrl = (url.startsWith('blob:') || url.includes('?')) ? url : `${url}?v=${KIP_BUILD_VERSION}`;
+  const raw = await stlLoader.loadAsync(bustedUrl);
   raw.deleteAttribute('normal');
   const merged = mergeVertices(raw, 1e-4);
   merged.computeVertexNormals();
@@ -1876,9 +1910,11 @@ const keys = new Set();
 
 const loco = {
   edition: 'pro',      // 'pro' (8+) | 'snap' (3+)
-  head: 'classic',     // 'classic' | 'kid' | 'fox' | 'bear' | 'robot' | 'custom'
-  skin: 'warm_peach',
+  head: 'classic',     // 'classic' | 'kid' | 'chibi' | 'chin' | 'tall' | 'fox' | 'bear' | 'robot' | 'custom'
+  skin: 'vinyl_cream',
   hairColor: 'chestnut',
+  shirt: 'off',
+  pants: 'off',
   hair: 'off',         // 'off' | 'short_swept' | 'bob' | 'swoosh' | 'spiky' | 'pigtails' | 'ponytail' | 'curly' | 'mohawk'
   expr: 'spark',       // 'spark' | 'happy' | 'wink' | 'cool' | 'starry' | 'surprised' | 'blank'
   hat: 'buds',         // 'buds' | 'hat' | 'ears' | 'horns' | 'ponytail' | 'blank' | 'wizardHat' | 'custom'
@@ -2012,6 +2048,12 @@ function applyCameraPreset(presetName) {
     camera.position.set(cx + 245, 240, cz + 655); controls.target.set(cx, 108 - uiShift * 0.6, cz);
   } else if (presetName === 'head_exploded') {
     camera.position.set(cx - 158, 226, cz + 365); controls.target.set(cx, 168, cz + 6);
+  } else if (presetName === 'head_close') {
+    camera.position.set(cx - 52, 146, cz + 188); controls.target.set(cx, 118, cz + 2);
+  } else if (presetName === 'head_side34') {
+    camera.position.set(cx - 146, 146, cz + 132); controls.target.set(cx, 120, cz);
+  } else if (presetName === 'head_back34') {
+    camera.position.set(cx - 122, 150, cz - 156); controls.target.set(cx, 116, cz - 4);
   } else if (presetName === 'pile') {
     camera.position.set(cx + 165, 415, cz + 495); controls.target.set(cx, -12, cz + 45);
   }
@@ -2195,6 +2237,8 @@ async function init() {
   if (startPreset) applyPreset(startPreset);
   if (params.get('head'))    setHeadMode(params.get('head'));
   if (params.get('skin'))    setSkinTone(params.get('skin'));
+  if (params.get('shirt'))   setShirtMode(params.get('shirt'));
+  if (params.get('pants'))   setPantsMode(params.get('pants'));
   if (params.get('haircol')) setHairColor(params.get('haircol'));
   if (params.get('hair'))    setHairMode(params.get('hair'));
   if (params.get('face') || params.get('expr')) setFaceMode(params.get('face') || params.get('expr'));
@@ -2412,13 +2456,16 @@ function refreshPileIfActive() {
   if (kip && loco.buildMode !== 'assembled') layoutPartPile(kip, loco.edition);
 }
 
-// --- PHASE 1: SYMMETRIC PLUMP HEADS, SLIM SWAPPABLE FACE PLATES, SEPARATE CLIP-ON HAIRS & STACKABLE HATS ---
+// --- PHASE 1: 4 HUMAN HEAD VARIANTS, ROUNDED BOLT, SWAPPABLE FACE PLATES, WRAP-AROUND HAIRS, FULL-BODY SKIN & 2D CLOTHING DECALS ---
 const HEAD_DECAL_TRANSFORMS = {
-  kid:    { crownY: 28.0 },
-  fox:    { crownY: 26.2 },
-  bear:   { crownY: 27.2 },
-  robot:  { crownY: 31.6 },
-  custom: { crownY: 29.0 },
+  kid:    { crownY: 28.8, faceY: 7.8125 },
+  chibi:  { crownY: 28.0, faceY: 7.8125 },
+  chin:   { crownY: 30.8, faceY: 9.3750 },
+  tall:   { crownY: 33.2, faceY: 10.9375 },
+  fox:    { crownY: 26.2, faceY: 15.0 },
+  bear:   { crownY: 27.2, faceY: 14.8 },
+  robot:  { crownY: 31.6, faceY: 17.8 },
+  custom: { crownY: 28.8, faceY: 7.8125 },
 };
 
 const LEGACY_HEAD_HAIR_MAP = {
@@ -2431,15 +2478,38 @@ const LEGACY_HEAD_HAIR_MAP = {
 function setSkinTone(skinId) {
   const found = SKIN_TONES.find(s => s.id === skinId) || SKIN_TONES[0];
   loco.skin = found.id;
-  if (kip && kip.exp) kip.exp.expMats.skin.color.set(found.hex);
-  const btn = document.getElementById('btn-skin');
-  btn.textContent = `Skin: ${found.label}`;
-  btn.classList.toggle('spark-active', loco.skin !== SKIN_TONES[0].id);
+  syncHeadHairHatLayout();
 }
 document.getElementById('btn-skin').addEventListener('click', () => {
   const curIdx = SKIN_TONES.findIndex(s => s.id === loco.skin);
   const next = SKIN_TONES[(curIdx + 1) % SKIN_TONES.length];
   setSkinTone(next.id);
+});
+
+function setShirtMode(shirtId) {
+  const found = SHIRT_OPTIONS.find(s => s.id === shirtId) || SHIRT_OPTIONS[0];
+  loco.shirt = found.id;
+  // Auto-pair denim overalls with overall denim pants if pants are currently Off!
+  if (loco.shirt === 'overalls' && loco.pants === 'off') {
+    loco.pants = 'overalls_jeans';
+  }
+  syncHeadHairHatLayout();
+}
+document.getElementById('btn-shirt').addEventListener('click', () => {
+  const curIdx = SHIRT_OPTIONS.findIndex(s => s.id === loco.shirt);
+  const next = SHIRT_OPTIONS[(curIdx + 1) % SHIRT_OPTIONS.length];
+  setShirtMode(next.id);
+});
+
+function setPantsMode(pantsId) {
+  const found = PANTS_OPTIONS.find(p => p.id === pantsId) || PANTS_OPTIONS[0];
+  loco.pants = found.id;
+  syncHeadHairHatLayout();
+}
+document.getElementById('btn-pants').addEventListener('click', () => {
+  const curIdx = PANTS_OPTIONS.findIndex(p => p.id === loco.pants);
+  const next = PANTS_OPTIONS[(curIdx + 1) % PANTS_OPTIONS.length];
+  setPantsMode(next.id);
 });
 
 function setHairColor(colId) {
@@ -2458,7 +2528,9 @@ document.getElementById('btn-hair-col').addEventListener('click', () => {
 
 function refreshDecalTexture() {
   if (!kip || !kip.exp) return;
-  const hType = (loco.head === 'classic' || loco.head === 'custom') ? 'kid' : loco.head;
+  const hType = (loco.head === 'classic' || loco.head === 'custom' || HUMAN_HEAD_IDS.has(loco.head))
+    ? 'kid'
+    : loco.head;
   const newCanvas = createDecalExpressionCanvas(loco.expr, hType);
   kip.exp.decalTex.image = newCanvas;
   kip.exp.decalTex.needsUpdate = true;
@@ -2467,7 +2539,7 @@ function refreshDecalTexture() {
 function syncHeadHairHatLayout() {
   if (!kip || !kip.exp) return;
   const isClassic = loco.head === 'classic';
-  const isKid = loco.head === 'kid';
+  const isHuman = HUMAN_HEAD_IDS.has(loco.head);
   const dt = HEAD_DECAL_TRANSFORMS[loco.head] || HEAD_DECAL_TRANSFORMS.kid;
   const headCrownY = isClassic ? 42.2 : dt.crownY;
 
@@ -2486,15 +2558,16 @@ function syncHeadHairHatLayout() {
   }
   kip.exp.customHeadContainer.visible = (loco.head === 'custom');
 
-  // 2. Slim Swappable Emotion Face Plate (`char_faceplate` on `kid`) vs Conformal 2D Decal (`fox`/`bear`/`robot`)
+  // 2. Flush 3D Convex-Curved Swappable Face Plate (`char_faceplate` on all 4 Human Heads) vs Conformal 2D Decal (`fox`/`bear`/`robot`)
   refreshDecalTexture();
-  kip.exp.faceplateGroup.visible = isKid;
-  kip.exp.faceplateDecalPlane.visible = isKid && (loco.expr !== 'blank');
+  kip.exp.faceplateGroup.visible = isHuman;
+  kip.exp.faceplateHolder.position.y = dt.faceY - 2.50;
+  kip.exp.faceplateDecalPlane.visible = isHuman && (loco.expr !== 'blank');
 
   kip.faceDetailGrp.visible = isClassic && loco.expr === 'spark';
   kip.exp.classicDecalPlane.visible = isClassic && (loco.expr !== 'spark' && loco.expr !== 'blank');
 
-  const usesConformalDecal = !isClassic && !isKid && loco.head !== 'custom';
+  const usesConformalDecal = !isClassic && !isHuman && loco.head !== 'custom';
   if (usesConformalDecal && kip.exp.headDecalGeos[loco.head]) {
     kip.exp.decalPlane.geometry = kip.exp.headDecalGeos[loco.head];
     kip.exp.decalPlane.position.set(0, 0, 0);
@@ -2544,9 +2617,17 @@ function syncHeadHairHatLayout() {
     crownSlotEntry.explodeVec.set(0, hasHair ? 110 : 84, 0);
   }
 
+  // 5. Full-Body Skin Tones + Two-Zone Clothing + Conformal 2D Outfit Decals
+  kip.exp.applyBodySkinAndClothing({
+    head: loco.head,
+    skinId: loco.skin,
+    shirtId: loco.shirt,
+    pantsId: loco.pants,
+  });
+
   syncNeckAndSeatedVisibility();
 
-  // 5. Update Wardrobe Dock button labels
+  // 6. Update Wardrobe Dock button labels
   const hObj = WARDROBE_HEADS.find(h => h.id === loco.head);
   const btnHead = document.getElementById('btn-head');
   btnHead.textContent = `Head: ${hObj ? hObj.label : 'Custom Head'}`;
@@ -2554,7 +2635,7 @@ function syncHeadHairHatLayout() {
 
   const fObj = DECAL_EXPRESSIONS.find(e => e.id === loco.expr) || DECAL_EXPRESSIONS[0];
   const btnFace = document.getElementById('btn-face');
-  btnFace.textContent = `${isKid ? 'Face Plate' : 'Face'}: ${fObj.label}`;
+  btnFace.textContent = `${isHuman ? 'Face Plate' : 'Face'}: ${fObj.label}`;
   btnFace.classList.toggle('spark-active', loco.expr !== 'blank');
 
   const btnHair = document.getElementById('btn-hair');
@@ -2566,6 +2647,21 @@ function syncHeadHairHatLayout() {
   const btnHat = document.getElementById('btn-crown');
   btnHat.textContent = canWearHat ? `Hat: ${hatLbl}` : 'Hat: N/A (Sculpted)';
   btnHat.classList.toggle('spark-active', canWearHat && loco.hat !== 'blank');
+
+  const skinObj = SKIN_TONES.find(s => s.id === loco.skin) || SKIN_TONES[0];
+  const btnSkin = document.getElementById('btn-skin');
+  btnSkin.textContent = `Skin: ${skinObj.label}`;
+  btnSkin.classList.toggle('spark-active', loco.skin !== 'vinyl_cream');
+
+  const shirtObj = SHIRT_OPTIONS.find(s => s.id === loco.shirt) || SHIRT_OPTIONS[0];
+  const btnShirt = document.getElementById('btn-shirt');
+  btnShirt.textContent = `Shirt: ${shirtObj.label}`;
+  btnShirt.classList.toggle('spark-active', loco.shirt !== 'off');
+
+  const pantsObj = PANTS_OPTIONS.find(p => p.id === loco.pants) || PANTS_OPTIONS[0];
+  const btnPants = document.getElementById('btn-pants');
+  btnPants.textContent = `Pants: ${pantsObj.label}`;
+  btnPants.classList.toggle('spark-active', loco.pants !== 'off');
 }
 
 function setHeadMode(headId) {
@@ -2580,6 +2676,14 @@ function setHeadMode(headId) {
   } else {
     const valid = WARDROBE_HEADS.some(h => h.id === headId) || headId === 'custom';
     loco.head = valid ? headId : 'classic';
+  }
+  // When switching from default Clean Kip (`vinyl_cream`) to a Human head, auto-select Warm Peach skin!
+  if (HUMAN_HEAD_IDS.has(loco.head) && loco.skin === 'vinyl_cream') {
+    loco.skin = 'warm_peach';
+  }
+  // Wrap-around human wigs hug the 4 human skulls; clear hair when switching to Critter / Bolt / Classic heads!
+  if (!HUMAN_HEAD_IDS.has(loco.head) && loco.hair !== 'off') {
+    loco.hair = 'off';
   }
   syncHeadHairHatLayout();
   refreshPileIfActive();
@@ -2618,7 +2722,10 @@ function setHairMode(hairId) {
 }
 
 document.getElementById('btn-hair').addEventListener('click', () => {
-  if (loco.head === 'classic') loco.head = 'kid';
+  if (!HUMAN_HEAD_IDS.has(loco.head)) {
+    loco.head = 'kid';
+    if (loco.skin === 'vinyl_cream') loco.skin = 'warm_peach';
+  }
   const curIdx = HAIR_OPTIONS.findIndex(h => h.id === loco.hair);
   const next = HAIR_OPTIONS[(curIdx + 1) % HAIR_OPTIONS.length];
   setHairMode(next.id);
@@ -2638,7 +2745,7 @@ function setCrownMode(mode) {
   // If equipping a physical hat/topper while wearing a studless Sculpted-Top hair, switch to Hat-Ready hair!
   const curHair = HAIR_OPTIONS.find(h => h.id === loco.hair) || HAIR_OPTIONS[0];
   if (!curHair.hatReady && nextHat !== 'buds' && nextHat !== 'blank') {
-    loco.hair = (loco.head === 'kid') ? 'short_swept' : 'off';
+    loco.hair = HUMAN_HEAD_IDS.has(loco.head) ? 'short_swept' : 'off';
   }
   loco.hat = nextHat;
   loco.crown = nextHat;
@@ -2650,7 +2757,7 @@ function setCrownMode(mode) {
 document.getElementById('btn-crown').addEventListener('click', () => {
   const curHair = HAIR_OPTIONS.find(h => h.id === loco.hair) || HAIR_OPTIONS[0];
   if (!curHair.hatReady) {
-    loco.hair = (loco.head === 'kid') ? 'short_swept' : 'off';
+    loco.hair = HUMAN_HEAD_IDS.has(loco.head) ? 'short_swept' : 'off';
     setCrownMode('hat');
     return;
   }
@@ -2827,12 +2934,13 @@ document.querySelectorAll('button[data-veh]').forEach(btn => {
   btn.addEventListener('click', () => setVehicleMode(btn.dataset.veh, true));
 });
 
-const presets = ['clean', 'boy', 'girl', 'zoe', 'fox', 'pro'];
+const presets = ['clean', 'boy', 'girl', 'zoe', 'kai', 'fox', 'pro'];
 const presetLabels = {
   clean: 'Clean',
   boy:   'Leo Explorer',
   girl:  'Maya Skater',
   zoe:   'Zoe Roadster',
+  kai:   'Kai Moto',
   fox:   'Fox Scooter',
   pro:   'Bolt Pro 8+',
 };
@@ -2844,34 +2952,49 @@ function applyPreset(name) {
   const p = presets[presetIdx];
   if (p === 'clean') {
     setVehicleMode('none', false);
-    setHeadMode('classic'); setSkinTone('warm_peach'); setHairColor('chestnut');
+    setHeadMode('classic'); setSkinTone('vinyl_cream'); setHairColor('chestnut');
+    setShirtMode('off'); setPantsMode('off');
     setHairMode('off'); setFaceMode('spark'); setCrownMode('buds');
     setEarMode('off'); setBackMode('off'); setTailMode('off'); setPropMode('off');
   } else if (p === 'boy') {
     setVehicleMode('none', false);
     setHeadMode('kid'); setSkinTone('warm_peach'); setHairColor('chestnut');
-    setHairMode('short_swept'); setCrownMode('hat'); setFaceMode('cool');
+    setShirtMode('spark_tee'); setPantsMode('cargo_shorts');
+    setHairMode('short_swept'); setCrownMode('hat'); setFaceMode('spark');
     setEarMode('off'); setBackMode('explorer'); setTailMode('off'); setPropMode('wrench');
   } else if (p === 'girl') {
     setVehicleMode('none', false);
-    setHeadMode('kid'); setSkinTone('golden_tan'); setHairColor('berry_pop');
+    setHeadMode('chibi'); setSkinTone('golden_tan'); setHairColor('berry_pop');
+    setShirtMode('varsity'); setPantsMode('jeans');
     setHairMode('bob'); setCrownMode('ears'); setFaceMode('wink');
     setEarMode('off'); setBackMode('wings'); setTailMode('off'); setPropMode('skateboard');
   } else if (p === 'zoe') {
-    setHeadMode('kid'); setSkinTone('rich_cocoa'); setHairColor('espresso');
+    setHeadMode('chin'); setSkinTone('rich_cocoa'); setHairColor('espresso');
+    setShirtMode('overalls'); setPantsMode('overalls_jeans');
     setHairMode('curly'); setCrownMode('buds'); setFaceMode('starry');
     setEarMode('off'); setBackMode('off'); setTailMode('off'); setPropMode('off');
     setVehicleCovers(true);
     setVehicleMode('car', false);
+  } else if (p === 'kai') {
+    setHeadMode('tall'); setSkinTone('soft_ivory'); setHairColor('cobalt');
+    setShirtMode('track_top'); setPantsMode('joggers');
+    setHairMode('spiky'); setCrownMode('buds'); setFaceMode('cool');
+    setEarMode('off'); setBackMode('jetpack'); setTailMode('off'); setPropMode('off');
+    setVehicleCovers(true);
+    setVehicleMode('moto', false);
   } else if (p === 'fox') {
-    setHeadMode('fox'); setHairMode('off'); setFaceMode('happy'); setCrownMode('ears');
+    setHeadMode('fox'); setSkinTone('vinyl_cream'); setHairMode('off');
+    setShirtMode('stripe_tee'); setPantsMode('sport_shorts');
+    setFaceMode('happy'); setCrownMode('ears');
     setEarMode('off'); setBackMode('explorer'); setTailMode('wag'); setPropMode('off');
     setVehicleCovers(true);
     setVehicleMode('scooter', false);
   } else if (p === 'pro') {
     setVehicleMode('none', false);
-    setHeadMode('robot'); setHairMode('off'); setFaceMode('spark'); setCrownMode('horns');
-    setEarMode('pro'); setBackMode('gears'); setTailMode('pro'); setPropMode('shaft');
+    setHeadMode('robot'); setSkinTone('vinyl_cream'); setHairMode('off');
+    setShirtMode('off'); setPantsMode('off');
+    setFaceMode('spark'); setCrownMode('horns');
+    setEarMode('pro'); setBackMode('jetpack'); setTailMode('pro'); setPropMode('shaft');
   }
   const btn = document.getElementById('btn-preset');
   btn.textContent = `Preset: ${presetLabels[p]}`;
@@ -3205,7 +3328,10 @@ document.getElementById('btn-sync-hash').addEventListener('click', () => {
     hasPhotoAccessory: loco.hasPhotoAccessory,
     parts: [
       `head_${loco.head}`,
-      loco.head === 'kid' ? `faceplate_${loco.expr}` : null,
+      HUMAN_HEAD_IDS.has(loco.head) ? `faceplate_${loco.expr}` : null,
+      `skin_${loco.skin}`,
+      loco.shirt !== 'off' ? `shirt_${loco.shirt}` : null,
+      loco.pants !== 'off' ? `pants_${loco.pants}` : null,
       loco.hair !== 'off' ? `hair_${loco.hair}` : null,
       `crown_${loco.hat}`,
       loco.back !== 'off' ? `back_${loco.back}` : null,
