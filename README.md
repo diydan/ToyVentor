@@ -45,14 +45,11 @@ npm run deploy      # build + wrangler deploy
 `parts/scad/` legacy OpenSCAD) · `sets/` content as data · `seed/` pre-made
 fallback content · `generated/` build output (never edited by hand).
 
-## Status (Oct 29, 2026)
+## Status (Oct 30, 2026)
 
-Working end to end locally, redeploy pending: live SAM 3.1 scan (with
-by-hand and seed fallbacks), Toybox, isometric virtual builder with
-snapping/collisions/undo, STL downloads and GLB 3D/AR part previews,
-fit-filtered Market, seeded daily Packs, Reveal with saved character
-cards, a mini game driven by build stats, the hand-off into ToyVentor
-World, and Create mode writing worlds through the Muse Spark route.
-156 unit tests across 23 files. Nothing printed yet, and the Reveal theme is a synth
-placeholder until Mureka is wired.
+One-stage app working locally, redeploy pending: SAM scan with seed fallbacks,
+Toybox, builder with snapping and undo, gated STL/GLB previews, daily Packs,
+Reveal with saved cards, build-driven worlds and labs, parent time gates, and
+Create mode. 165 tests across 24 files. Nothing printed yet; the Reveal theme
+is still a synth placeholder.
 See [the plan](docs/product/plan.md) and [the journal](docs/product/journal.md).

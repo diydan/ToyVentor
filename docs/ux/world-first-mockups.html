@@ -291,9 +291,8 @@ footer{padding:36px 24px 56px;color:var(--ink-muted);font-size:13px}
   <div class="kicker">ToyVentor · UI Simplification Spec &amp; Mockups · Oct 30, 2026</div>
   <h1>One Stage: ToyVentor World IS the App</h1>
   <p class="lead">
-    Zero bottom tab bar. Zero duplicate part walls. The app opens directly onto the full-screen 3D World stage, with
-    <b>My Toy &amp; Meta SAM 3.1 Scan</b>, <b>Build &amp; 3D Print</b>, <b>Create World (Meta Muse)</b>, and <b>Daily Pack</b> as clean overlays on one unified canvas.
-    Read <a href="world-first-spec.md">world-first-spec.md</a>.
+    No tabs and no duplicate part walls: one full-screen 3D stage carries My Toys, scan, Build, Create,
+    Pack, and Reveal. Read <a href="world-first-spec.md">world-first-spec.md</a>.
   </p>
 </header>
 
@@ -635,6 +634,7 @@ footer{padding:36px 24px 56px;color:var(--ink-muted);font-size:13px}
               <button type="button" class="chip">🔥 Danger</button>
               <button type="button" class="chip">🌊 Calm</button>
               <button type="button" class="chip">🏆 Triumph</button>
+              <button type="button" class="chip">🔮 Mystery</button>
             </div>
             <button type="button" class="cta">🎤 Hold to talk: “start adventure”</button>
           </section>
@@ -685,12 +685,12 @@ footer{padding:36px 24px 56px;color:var(--ink-muted);font-size:13px}
 
         <h3>What changed &amp; canonical <code>spec.md</code> rules folded in</h3>
         <ul style="padding-left:18px;color:var(--ink-muted);display:flex;flex-direction:column;gap:8px">
-          <li><b style="color:var(--ink)">Bottom tab bar deleted (+64 px vertical stage):</b> Kids land immediately in the 3D world instead of scrolling past 124 engineering check rows in Toybox.</li>
+          <li><b style="color:var(--ink)">Bottom tab bar deleted:</b> kids land directly in the 3D world.</li>
           <li><b style="color:var(--ink)">Top dock fits 390 px with zero horizontal scroll:</b> <code>[Kip ▾]</code>, <code>Build</code>, <code>Create</code>, <code>Pack</code>, and <code>⋯</code> replace the 9-button horizontal scroll strip.</li>
-          <li><b style="color:var(--ink)"><code>AR View</code> + <code>Stud Grid</code> (<code>BuilderCanvas</code>) + hard-gated STL:</b> <code>Build</code> keeps stud/hole snapping &amp; the 4 live green checks via a compact toggle, hides <code>.stl</code> downloads until all checks pass, and shows <code>0.2 mm PLA</code> prototype + <code>3+</code> small-parts notices.</li>
+          <li><b style="color:var(--ink)"><code>AR View</code> + <code>Stud Grid</code> + gated STL:</b> <code>Build</code> keeps the four live checks, hides STL until they pass, and labels prototype material and small-part warnings.</li>
           <li><b style="color:var(--ink)">Character Reveal plays once per new build:</b> Tapping <code>Done</code> in <code>Build</code> auto-opens <code>Character Card</code> once for a new build signature; replays stay manual in <code>⋯ -&gt; Character Card</code>.</li>
-          <li><b style="color:var(--ink)">Meta SAM 3.1 Scan + 1-tap demo backup:</b> Photo + Object chip + <code>S/M/L</code> pill + <code>Outline with Meta SAM 3.1</code>, plus a quiet 1-tap <code>Red Racer</code> / <code>Kip</code> backup row if live camera is unavailable.</li>
-          <li><b style="color:var(--ink)">Privacy &amp; copy hygiene:</b> Push-to-talk parent-started mic (moods work with mic off), consistent <code>Meta SAM 3.1</code> &amp; <code>Meta Muse</code> naming, and zero em dashes anywhere on screen.</li>
+          <li><b style="color:var(--ink)">SAM scan + demo backup:</b> photo, object chip, size pill, automatic outline, plus quiet Red Racer/Kip fallbacks.</li>
+          <li><b style="color:var(--ink)">Privacy &amp; copy hygiene:</b> parent-started mic works muted; model names are consistent; screens avoid em dashes.</li>
         </ul>
       </div>
     </div>

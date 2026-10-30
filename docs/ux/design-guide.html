@@ -27,7 +27,7 @@
   --font-body:'Figtree',system-ui,sans-serif;
   --space-1:4px; --space-2:8px; --space-3:12px; --space-4:16px; --space-5:20px;
   --space-6:24px; --space-8:32px; --space-10:40px;
-  --touch-min:44px; --touch-comfy:56px; --dock-h:52px;
+  --touch-min:44px; --touch-comfy:56px; --dock-h:50px;
   --radius-sm:8px; --radius-md:12px; --radius-lg:16px; --radius-pill:999px;
   --shadow-glass:0 4px 14px rgba(2,6,28,.5);
   --shadow-glass-selected:0 0 0 1px #52b7ff, 0 0 8px rgba(82,183,255,.35);
@@ -221,8 +221,8 @@ motion, and what's still owed from design.</p>
 <p>Panels are frosted glass: thin rim, one soft shadow. Buttons are the only raised
 objects, with a solid edge underneath that invites a press.</p></div>
 <div class="glass"><h3 style="margin-top:0">One sky button</h3>
-<p>Sky blue marks the single main action, the selected state, and the open sheet's dock button.
-Violet is the second action and the Pro tag. The Snap/Pro switch uses sky for selected.</p></div>
+<p>Sky blue marks the single main action and its selected state. Violet is the
+second action and Pro. Gold stays rare.</p></div>
 <div class="glass"><h3 style="margin-top:0">Gold means reward</h3>
 <p>Gold stays rare: legendary items, big rewards, and the Snap tag. Use it anywhere
 else and it stops meaning anything.</p></div>
@@ -257,7 +257,7 @@ unless noted.</p>
 </tbody></table>
 <h3>Semantic color (always paired with a word or number)</h3>
 <table class="tbl"><thead><tr><th>Group</th><th>Tokens</th><th>Rule</th></tr></thead><tbody>
-<tr><td>Rarity</td><td>Common <code>#b7c2ee</code> · Uncommon <code>#5af0b0</code> · Rare <code>#52b7ff</code> · Epic <code>#a78bff</code> · Legendary <code>#ffd24d</code></td><td>Word + pips (1–5). Epic gets a soft glow, legendary the gold glow. Rarity changes look only, never the stat.</td></tr>
+<tr><td>Rarity</td><td>Common <code>#b7c2ee</code> · Uncommon <code>#5af0b0</code> · Rare <code>#52b7ff</code> · Epic <code>#a78bff</code> · Legendary <code>#ffd24d</code></td><td>Word + pips (1–3 today; Epic/Legendary styles reserved). Rarity changes look only, never stats.</td></tr>
 <tr><td>Game Mode moods</td><td>Joy <code>#ffd24d</code> · Suspense <code>#a78bff</code> · Danger <code>#ff6a5c</code> · Calm <code>#7fd6ff</code> · Triumph <code>#ff9d5c</code> · Mystery <code>#8f9dff</code></td><td>Mood name always shown with its tint.</td></tr>
 <tr><td>Stats</td><td>Speed <code>#52b7ff</code> · Spin <code>#5af0b0</code> · Glow <code>#ffd24d</code> · Torque <code>#ff9d5c</code></td><td>Name + bar + number.</td></tr>
 </tbody></table>
@@ -270,13 +270,12 @@ unless noted.</p>
 <tr><td><code>glow-gold</code></td><td>rgba(255,210,77,.55)</td><td>Legendary and big rewards</td></tr>
 <tr><td><code>focus</code></td><td>#ffd24d</td><td>Focus ring: 3px, 3px offset</td></tr>
 </tbody></table>
-<p class="cap" style="margin-top:10px">All text pairs above clear 4.5:1 on <code>surface</code>;
-controls clear 3:1. The tightest pair is <code>danger</code> at 6.0:1.</p>
+<p class="cap" style="margin-top:10px">Text clears 4.5:1 on <code>surface</code>; controls clear 3:1.</p>
 </section>
 
 <section id="type"><h2>Type</h2>
-<p class="lead">Rubik for headers, numbers, and buttons. Figtree for everything players
-read. Load with <code>display=swap</code>; serve the files from our own origin in the app.</p>
+<p class="lead">Rubik for headers, numbers, and buttons; Figtree for reading. Serve both
+from our own origin with <code>display=swap</code>.</p>
 <table class="tbl"><thead><tr><th>Style</th><th>Face</th><th>Size / line</th><th>Use</th></tr></thead><tbody>
 <tr><td><code>display-xl</code></td><td>Rubik 700</td><td>48 / 52</td><td>Reveal character name, intro moment. One per screen max</td></tr>
 <tr><td><code>display-lg</code></td><td>Rubik 700</td><td>36 / 40</td><td>Screen titles, pack names</td></tr>
@@ -290,8 +289,7 @@ read. Load with <code>display=swap</code>; serve the files from our own origin i
 <tr><td><code>label</code></td><td>Figtree 700 caps, 0.06em</td><td>12 / 16</td><td>Section labels and tags</td></tr>
 <tr><td><code>stat</code></td><td>Rubik 700</td><td>32 / 32</td><td>Big numbers: gear ratio, stat values</td></tr>
 </tbody></table>
-<p class="cap" style="margin-top:12px">Sentence case everywhere. Capitals only on labels and
-badges, with 0.06em spacing. 15px is the smallest body size, 12px the smallest anything.</p>
+<p class="cap" style="margin-top:12px">Sentence case; capitals only for labels and badges. Minimums: 15px body, 12px anything.</p>
 </section>
 
 <section id="space"><h2>Space and shape</h2>
@@ -299,7 +297,7 @@ badges, with 0.06em spacing. 15px is the smallest body size, 12px the smallest a
 <tr><td><code>space-1 … 10</code></td><td>4, 8, 12, 16, 20, 24, 32, 40 px</td><td>4px base scale. <code>space-4</code> = screen edge + card padding</td></tr>
 <tr><td><code>touch-min</code></td><td>44 px</td><td>Smallest tap target</td></tr>
 <tr><td><code>touch-comfy</code></td><td>56 px</td><td>Button height</td></tr>
-<tr><td><code>dock-h</code></td><td>52 px</td><td>Top dock height. Fits 390 px with no horizontal scrolling</td></tr>
+<tr><td><code>dock-h</code></td><td>50 px</td><td>Top dock height. Fits 390 px with no horizontal scrolling</td></tr>
 <tr><td><code>radius-sm / md / lg</code></td><td>8 / 12 / 16 px</td><td>Tags · buttons, chips, inputs · cards, panels, sheets</td></tr>
 <tr><td><code>radius-pill</code></td><td>999 px</td><td>Bars, pips, toggles only</td></tr>
 </tbody></table>
@@ -317,7 +315,7 @@ badges, with 0.06em spacing. 15px is the smallest body size, 12px the smallest a
 <ul class="clean">
 <li>56px tall, <code>radius-md</code>, Rubik 700 label.</li>
 <li>Solid darker edge 5px below (<code>sky-700</code>/<code>violet-700</code>), lit top edge, soft colored shadow.</li>
-<li>Pressed: sinks 4px as the edge shrinks to 1px, in 80ms.</li>
+<li>Pressed: sinks 4px in 80ms.</li>
 <li>Ghost buttons get a 3–4px edge in <code>line-soft</code>. Disabled is flat.
 Chips stay flat pills with no edge, so they never read as buttons.</li>
 <li>Label is always the dark ink color, never white.</li>
@@ -369,14 +367,12 @@ peeks in so players know to swipe. Options change with age.</p>
 <code>Check details</code> disclosure, not on the stage.</p>
 <h3>Top dock (no tab bar)</h3>
 <div class="dock"><button type="button" class="toypill"><span class="dotnav"></span>Kip ▾</button><button type="button" class="dockbtn on">Build</button><button type="button" class="dockbtn">Create</button><button type="button" class="dockbtn">Pack<span class="gold-dot"></span></button><button type="button" class="dockbtn" aria-label="More">⋯</button></div>
-<p class="cap" style="margin-top:8px">The whole app is one full-screen 3D stage. There is no bottom
-tab bar. The 48–52px top dock holds the active toy pill, three primary buttons
-(<code>Build</code>, <code>Create</code>, <code>Pack</code>) and a <code>⋯</code> overflow for
-grown-up and Pro tools. It fits a 390px phone with no horizontal scrolling. A gold dot on
-<code>Pack</code> means today's pack is unclaimed.</p>
+<p class="cap" style="margin-top:8px">One full-screen 3D stage; no bottom tab bar. The 50px dock
+holds the toy pill, <code>Build</code>, <code>Create</code>, <code>Pack</code>, and
+<code>⋯</code> overflow. A gold dot means today's pack is unclaimed.</p>
 <h3>Bottom sheet</h3>
 <div class="sheet"><h4>Build your toy</h4>
-<p class="hint" style="margin:0 0 14px">One sheet at a time, at most 62% of the stage. The top of the stage stays visible, so the toy reacts live.</p>
+<p class="hint" style="margin:0 0 14px">One sheet at a time, at most 60% of the stage, so the toy stays visible.</p>
 <button class="btn btn-primary" type="button">Done</button>
 <p class="cap" style="margin:8px 0 0">One primary raised CTA per sheet. Opening a sheet closes any other.</p></div>
 <p class="cap" style="margin-top:8px">Full-stage modal is reserved for the Daily Pack rip and the
@@ -402,16 +398,14 @@ Character Card Reveal. Everything else is a frosted-glass sheet over the stage.<
 <tr><td>Legendary</td><td>Rising chime and a hit</td><td>Heavy tap</td></tr>
 <tr><td>Win</td><td>Triumph sting</td><td>Medium tap</td></tr>
 </tbody></table>
-<p class="cap" style="margin-top:10px">Reduced motion: replace shakes, particles, and bounces
-with a fade and a glow. Keep the sounds.</p>
+<p class="cap" style="margin-top:10px">Reduced motion: fade and glow instead of shakes, particles, and bounces. Keep sounds.</p>
 </section>
 
 <section id="a11y"><h2>Accessibility</h2>
 <ul class="clean">
 <li>Text meets 4.5:1 on its surface; controls, focus rings, and bar fills meet 3:1.</li>
 <li>Every tap target 44px or taller. Buttons are 56px.</li>
-<li>Color never works alone: rarity has a word and pips, moods have their word,
-Snap and Pro have their names, checks say OK.</li>
+<li>Color never works alone: rarity has word + pips; moods, lines, and checks are labeled.</li>
 <li>Focus ring is 3px gold with a 3px offset on every control.</li>
 <li>No flashing faster than 3 times a second — glow, Reveal, and intro included.</li>
 <li>Every sound has a visual twin. The app is fully playable muted.</li>
@@ -435,7 +429,7 @@ defined the same way in the stylesheet.</p>
   --font-body:'Figtree',system-ui,sans-serif;
   --space-1:4px; --space-2:8px; --space-3:12px; --space-4:16px; --space-5:20px;
   --space-6:24px; --space-8:32px; --space-10:40px;
-  --touch-min:44px; --touch-comfy:56px; --dock-h:52px;
+  --touch-min:44px; --touch-comfy:56px; --dock-h:50px;
   --radius-sm:8px; --radius-md:12px; --radius-lg:16px; --radius-pill:999px;
   --shadow-glass:0 4px 14px rgba(2,6,28,.5);
   --shadow-btn-sky:inset 0 2px 0 rgba(255,255,255,.40), 0 5px 0 #2a7fcc, 0 12px 20px rgba(82,183,255,.30);
@@ -448,13 +442,11 @@ defined the same way in the stylesheet.</p>
 <section id="todo"><h2>Needed from design</h2>
 <div class="grid2">
 <div class="glass"><h3 style="margin-top:0">Brand</h3>
-<ul class="clean"><li>Logo, wordmark, app icon.</li>
-<li>Mascot for empty states and the Reveal card.</li>
+<ul class="clean"><li>Logo, wordmark, app icon, and reveal mascot.</li>
 <li>Icon set: rounded, 2.5px stroke, round caps. No emoji.</li></ul></div>
 <div class="glass"><h3 style="margin-top:0">Art</h3>
-<ul class="clean"><li>Lit render style for 3D parts on dark, with a rim light.</li>
-<li>Pack art, character card frames, the five rarity frames.</li>
-<li>Skin styles; star and glow art for the ground.</li></ul></div>
+<ul class="clean"><li>Lit 3D-part render style on dark, with rim light.</li>
+<li>Pack art, character frames, rarity frames, skins, and ground art.</li></ul></div>
 <div class="glass"><h3 style="margin-top:0">Surfaces still to style</h3>
 <ul class="clean"><li>Onboarding over the stage; the Scan view inside My Toys.</li>
 <li>Part detail and 3D Print &amp; AR Try-On, inside the Build sheet.</li>

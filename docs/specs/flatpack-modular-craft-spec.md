@@ -1,135 +1,135 @@
-# Spec: Universal Flat-Pack Modular Vehicle & Craft System (Pass 4d Locked)
+# Spec: Universal Flat-Pack Modular Vehicle & Craft System (Pass 4e — Post-Review Canonical)
 
-Oct 30, 2026 · Clean-Room Parametric Architecture on the `12.5 mm` TU Lattice (`50.0 mm` = `4 TU` Hull Standard)  
-Reference Library: `/Users/dan/Code/parts/README.md` (external, not in repo) (`65` categorized open-source sets across `01`–`08`, `4` SHA-verified duplicates isolated in `_duplicates/`)  
-Progressive Propulsion & Robotics Spec: [`progressive-power-system-spec.md`](progressive-power-system-spec.md) (`Snap → Pro → Momentum → Mech`)
+## Status, Scope & Canonical Authority
 
----
-
-## 1. Locked Design Decisions
-
-| Decision | Locked Choice | Engineering & Play Rationale |
-| --- | --- | --- |
-| **1. Lattice & Fasteners** | **Hybrid `50.0 mm` (`4 TU`) Hull Grid** using `12.5 mm` Small (`stud_small`, `Ø6.6 mm`) studs + Pro `Ø7.0 mm` free bores / `5.1 mm` fixed flats | Preserves chunky `50 mm` (`ModuTown` / `2×2 Large`) toddler-friendly vehicle proportions while mating **100% natively** with Kip (`char_legs_seated` `2×2` Small feet), all `105` verified W1–W9 PartSpec parts, W6 racer add-ons, and W4 Pro gears/shafts without adapters. |
-| **2. Core Module Count** | **`15` Universal Rigid Modules + `3` Universal "Shape-Out" Flex Skins** | Retains unmistakable silhouettes across all **9 craft categories** (dedicated Tilting Dump Tub, Loader Scoop, Skids/Pontoons, and Jet/Balloon Pods) while achieving **60%–85% cross-category part reuse**. |
-| **3. Flat-Pack "Shape-Out" Mechanics** | **Dual-Layer Kit System:**<br>• **Cards A–C:** Rigid flat-printed snap-out sprue cards (`--sprue` & `--loose` modes) for structural load-bearing bones, wheels, wings, and pinless `260°` C-clip hinges.<br>• **Card D:** Thin (`1.2 mm` flat / `0.6 mm` hinge web) kerf-ribbed **Flex-Shell Skins** that print flat in ~12 min and fold/click by hand into 3D hoods, bubble canopies, and payload doors. | Structural chassis, barbell axles, and dump/loader C-jaws survive **hundreds of rebuild cycles** with **zero loose small pins**, while **1-Handed Book-Fold Rails** keep `< 1.2%` PLA bend strain and allow hinged canopies/doors to swing open without falling loose. |
+- **Status:** Pre-CAD Engineering Specification (**Pass 4e**, incorporating all `P0`, `P1`, and `P2` findings from two independent pre-CAD engineering reviews). **No repository code has been modified; CAD implementation in `parts/partspec/` remains gated on sign-off of this document.**
+- **Canonical note:** This document supersedes both the Pass 4d baseline (`ae0dfaa`) and the temporary condensed summary draft. All coordinates, clearances, `S1` small-part margins, strain bounds, and `<= 170.0 × 170.0 mm` 2D kit-card layouts below are deterministically verified.
+- **Lattice & verification honesty:** All interface constants inherit from [`parts/partspec/interfaces.json`](../../parts/partspec/interfaces.json) (`v0.4.0-draft`, `1 TU = 12.50 mm`) and [parts-tu-spec.md](../parts/parts-tu-spec.md). Existing `105` catalog parts (`67` Snap + `38` Pro) are **generator-verified (`TARGETS ONLY`)**; physical checks `F1_printed_fit` and `F2_breakage` remain `pending` until physical calibration prints and use-and-abuse testing are completed.
+- **Age grading & safety scope:** Aligned strictly with [`parts/partspec/COMPLIANCE.md`](../../parts/partspec/COMPLIANCE.md) (United States scope: `ASTM F963-23` / `16 CFR 1250`; `EN 71` out of scope until an EU launch). Stage 1 (`Snap`, Cards `A–D`) is rated **Ages `3+`** (`Snap Small`; `Large` under-3 remains parked). Intact parts on Cards `A–D` clear the design-time `S1_small_part_screen` (`above_cylinder`, `> +13%` margin), which is **not** a safety certification and **never** implies suitability for children under 3 years. Every kit carries `print_page_warnings.always` plus the `16 CFR 1500.19` small-parts warning whenever paired with `Snap Small` character accessories or `Pro` components.
+- **Clean-room & licensing hygiene:** All geometry is authored from scratch on the `12.50 mm` `TU` lattice under Apache-2.0 (generator code) and CC BY 4.0 (designs/docs) per [`parts/partspec/LICENSING.md`](../../parts/partspec/LICENSING.md). External reference studies, third-party source filenames, and licence audits are kept strictly outside repository specs; no NC or SA source geometry is adapted or derived.
 
 ---
 
-## 2. Empirical Patterns Adapted from `/Users/dan/Code/parts`
+## 1. Core Architectural Decisions (Pass 4e Resolved)
 
-> [!IMPORTANT]
-> **Clean-Room Rule (`COMPLIANCE.md` / `LICENSING.md`):** `/Users/dan/Code/parts` is an external reference archive outside the git repository. Every ToyVentor part is authored cleanly from scratch in parametric `manifold3d` Python on the `12.5 mm` TU lattice with zero third-party mesh derivatives and zero third-party brand names in code, filenames, or UI strings.
-
-| Reference Category & Set | Measured Reference Geometry | Clean-Room ToyVentor Adaptation |
-| --- | --- | --- |
-| `03-.../modutown-modular-construction-pack` (external, not in repo) | Exact **`50.0 mm` (`4 TU`)** shared hull width across `Truck_Front`, `DumpTruckBack`, `CementTruck_Base`, `BulldozerBase`, `ExcavatorBase`; `12.5 mm` (`1 TU`) track axles | Standardize universal hull width to **`4 TU = 50.0 mm`** (`49.8 mm` nominal outer width with `0.1 mm` PartSpec clearance gap) across `#1`, `#7`, `#8`, `#11`, and `#12`. |
-| `03-.../modular-tractor-system-v1` (external, not in repo) & `minimod-core-vehicle-bulldozer` (external, not in repo) | Shared core rail chassis + staggered `Ø34 / Ø46 mm` front/rear wheels + front loader/blade clevis + rear 3-point hitch | Equip `#1 kit_keel_base` with **dual-tier (`low` `z = 6.25 mm` open-bottom `260°` C-clip jaw, `high` `z = 14.25 mm` bore)** X-axles: `4× Ø35.2 mm` in `high` = slammed **Race Car** (`3.35 mm` clearance); `2× Ø35.2 mm` front (`low`) + `2× Ø51.2 mm` rear (`high`) = **dead-level Tractor** (`11.35 mm` clearance)! |
-| `01-.../tipper-trailer-wagon` (external, not in repo) & `geared-360-turntable` (external, not in repo) | Towable wagon chassis + rear dump hinge knuckle + `360°` slew turntable | Put **symmetrical `1 TU` Front & Rear Clevis/Hitch Ports** on `#1 kit_keel_base` so a second keel becomes a **Trailer**, and `#14 kit_turntable_hitch` adds both articulated towing and `360°` crane/loader rotation. |
-| `04-.../osa-scooter-kit-card` (external, not in repo) & `minibike-kit-card` (external, not in repo) | Flat `8–11 mm` color-grouped sprue kit cards (`114–150 mm`) with twist-off gates | Pack Cards A–D inside **`<= 175 × 175 mm`** (fits Bambu A1 Mini `180 mm` bed) with V-notched chamfer gates recessed inside the `0.5 mm` bed chamfer so gate vestige never interferes with mating faces. |
-| `05-.../duplo-helicopter-3part` (external, not in repo), `modular-prop-airplane-v12` (external, not in repo) & `duplo-space-shuttle` (external, not in repo) | Flat lower keel + snap-on upper cabin + plug-in wings, skids, rotors & cargo doors | Unify Car, Truck, Tractor, Trailer, Aeroplane, Boat, Helicopter, and Spaceship onto **one shared `#1 kit_keel_base`** by adding stadium flank wing/skid slots and Book-Fold flex-skin latch rails. |
+1. **Hybrid `50 mm` (`4 TU`) Hull Grid:** `#1 kit_keel_base` (`49.8 × 124.8 × 15.3 mm`, `4×10 TU`) exposes `12.50 mm` `stud_small` top decks alongside `Pro` `bore_grid` (`Ø7.00 mm` free, `5.10 mm` double-D fixed) and `shaft_drive` (`Ø6.60 mm` round, `5.00 mm` flats) running gear, mating with Kip seated legs (`char_legs_seated`), vehicle/racer add-ons, and `Pro` gears without adapters (physical fit pending `F1` calibration).
+2. **Single Universal On-Lattice Axle Tier (`z_axle = 6.25 mm = 0.5 TU`):** The off-lattice `high` axle bore is **deleted**. Every axle station on `#1` (`rows 0, 2, 7, 8`) uses one bottom-entry `45°`-teardrop `c_jaw_tu01` tier at **`z_axle = 6.25 mm`** inside the `12.50 mm` solid deck (`1.30 mm >= 1.20 mm` roof). All land builds (**Race Car, Dump Truck, Farm Tractor**) therefore share bottom-click barbell assembly and the exact **`25.00 mm` (`2.0 TU`)** rear PTO gear center distance (`z = 6.25 mm ↔ z = 31.25 mm`).
+3. **Steered Front Axle at `row 0` (`Y = 6.25 mm`) + Separate `Pro` Bridge:** Positioning the front axle at `row 0` ahead of the `2×3 TU` tapered nose (`rows 0..2`) eliminates rear-edge tire-to-shoulder clash (`+7.41 mm` shoulder and `+4.17 mm` nose clearance at `±26°` lock with `Ø36.0 mm` wheels; `+2.08 mm` shoulder and `+2.87 mm` nose clearance at `±22°` lock with `Ø50.0 mm` wheels). `#1` carries no protruding kingpin ears; Stage 2 (`Pro`) snaps `pro_steer_bridge` onto `rows 0..1` nose studs above the axle jaw.
+4. **Exact `10-Row` (`3 + 3 + 4 = 10`) Deck Allocation & Open-Top Cockpit:**
+   - `rows 0..2` (`2×3 TU`): Tapered nose + `#7 kit_aero_wedge` (`24.8 mm` wide, clear of steered tire sweep).
+   - `rows 3..5` (`4×3 TU`): Open-top `#8 kit_windscreen_frame` (`22.0 mm` tall, zero roof bridge) + Kip `2×2` seat (`rows 4..5`), giving unrestricted head-out clearance for the full Kip seated stack (`43.0 × 36.0 × 68.0 mm` above deck).
+   - `rows 6..9` (`4×4 TU`): Rear Power & Cargo Bay (`#11 kit_tilting_tub` sized `4×4 TU = 49.8 × 49.8 × 18.0 mm`), with a **`10.0 × 33.0 mm` PTO through-slot** centered on `row 8` (`10` perimeter studs retained).
+5. **15 Rigid Modules + 3 Smooth `PETG`/`TPU` Flex Skins across 4 Compact `<= 170 × 170 mm` Cards (`A–D`):** Unlocks all 9 canonical craft silhouettes (`60–85%` cross-craft part reuse) with `>= 5.0 mm` bed margin per side on a `180 × 180 mm` printer bed so `preprint_check.py` auto-brims never overflow.
 
 ---
 
-## 3. Multi-Pass Part Reduction & Integer `TU` Mechanics (`52 -> 15 + 3`)
+## 2. Coordinate Frame, Keel Datum Map & New Interface Primitives
 
-### 3.1 Pass-by-Pass Compression Trace
-- **Pass 1 — Naive 1:1 Adaptation (`52` unique parts):** Separate chassis for car, truck, tractor, trailer, bike, plane fuselage, boat hull, helicopter body, and shuttle delta base (`< 15%` cross-category reuse).
-- **Pass 2 — Unified Land & Air Keels (`23` unique parts):** Merged 4-wheel land vehicles onto a `50 mm` chassis and air/sea craft onto an aero keel, still duplicating booms, wings, and covers.
-- **Pass 3 — Cross-Domain Structural Unification (`15` rigid modules):**
-  1. **Single `4×10 TU` Keel (`#1 kit_keel_base`):** Serves **8 of 9 craft** directly (Race Car, Truck, Tractor, Trailer, Plane, Boat, Helicopter, Spaceship).
-  2. **4-Role Clevis Spine (`#2 kit_clevis_spine`, `2×8 TU`):** Twin-fork slotted beam (`1 TU = 12.5 mm` center slot between `0.5 TU = 6.25 mm` fork cheeks) works as the **inline Motorbike Frame**, **Helicopter Tail Boom**, **Tractor/Truck Articulated Loader & Tow Boom**, and **Trailer Drawbar**.
-  3. **Half-Lap Stackable Rotor (`#6 kit_rotor_blade`):** `50%` center lap notch lets `1×` spin as an **Aeroplane / Airboat 2-Blade Propeller**, while `2×` crossed at `90°` lock flush (`4.5 mm` total thickness, zero height growth) into a **4-Blade Helicopter Rotor**.
-  4. **L/R Reversible Swept Foil (`#9 kit_foil_wing`):** Symmetric `5.0 mm` airfoil section flips left/right as **Plane & Shuttle Main Wings**, stands upright in the rear spine slot as a **Vertical Tail Fin**, bridges rear studs as a **Race Car GT Wing**, or clips onto the rear clevis as **Trailer Loading Ramps**.
-- **Pass 4 / 4b — Integer `TU` Axle Math & Book-Fold Flex Skins (`+3` skins on `Card D`):**
-  - **Exact `6 TU` Outboard Axle & `1 TU` Coaxial Clevis Geometry:**
-    - **Outboard Wheel Barbell (`6 TU = 75.0 mm`):** `1 TU` (`12.5 mm`) left wheel hub + `4 TU` (`50.0 mm`) keel body + `1 TU` (`12.5 mm`) right wheel hub = **`6 TU` exact**. Wheels clear the full `50 mm` hull with zero wheel-well cutouts, so any wheel (`Ø35.2 mm`, `Ø51.2 mm`, or existing W5/W9 Pro wheels) can mount at **any** longitudinal bore along `#1`!
-    - **Coaxial `1 TU` Clevis & `2 TU` Pro Upgrade Axis:** `0.5 TU` fork cheek + `1 TU` wheel/knuckle/rotor hub + `0.5 TU` fork cheek = **`2 TU` (`25.0 mm`) exact**. In `Snap`, compliant `260°` C-clip jaws and `Ø36 mm` flanged T-spinners eliminate loose `25 mm` pins; in `Pro / Momentum / Mech`, standard `Ø6.6 mm` shafts and servo horns engage the exact same coaxial `Ø7.0 mm` outer bores.
-  - **Spring-Tuck "Book-Fold" Flex-Skin Retention (`< 1.20%` Elastic Strain):**
-    - Each `Card D` flex skin is `1.20 mm` thick (`0.60 mm` continuous 3-layer outer skin + `0.60 mm` transverse stiffening ribs every `4.0 mm`). Bending `t = 0.60 mm` around the tightest `R = 25.0 mm` (`2 TU`) bulkhead gives outer-fiber strain $\varepsilon = \frac{t}{2R} = \frac{0.60}{50.0} = 1.20\% < 1.80\%$ PLA yield limit.
-    - **1-Handed Book-Fold Latch:** Left edge hooks onto `2×` oversized lead-in hinge tabs with zero spring tension, folds smoothly over the bulkhead with one hand, and clicks down via a single chunky rounded thumb-tab on the right rail—letting canopies (`#17`) and Shuttle payload doors (`#18`) swing open on the left hinge without falling loose!
-- **Pass 4d — `Snap`-First Pinless Simplification (`Zero Loose Small Pins on Cards A–D`, `100%` Coaxial `Pro/Mech` Ready):**
-  1. **Coaxial `260°` C-Clip Jaws Replace Loose `25 mm` Hinge/Hitch Pins:** `#1` (front/rear clevis & `low` axle cradles) and `#2` (end forks) use compliant `LAY_FLAT` `260°` C-clip jaws (`5.6 mm` entry throat -> `Ø7.0 mm` coaxial Pro bore), while `#11` Dump Tub and `#12` Scoop carry integral `Ø6.6 mm` crossbars. In `Snap`, dump beds, scoops, and trailer hitches **click straight in with 1 hand and 0 loose pins**; in `Pro/Momentum/Mech`, standard `Ø6.6` shafts/servos pass coaxially through the outer ears!
-  2. **Bottom-Click Barbell Wheelsets:** Pressing `2×` wheels onto a `75 mm` (`6 TU`) shaft once creates a 1-piece Duplo-style **wheel barbell** that clicks straight into `#1`'s bottom `260°` `low` axle jaws in `1 second` (no threading shafts through holes!), while gravity pushes the vehicle *into* the top bearing land.
-  3. **1-Click Pop-Out Rotor Spinner (`#3`):** Propellers/rotors (`#6`) click onto a chunky `> 35 mm` flanged spinner post in `Snap` (`0` loose pins), which pops out when upgrading to a live `Pro/Momentum/Mech` drive shaft.
-  4. **100% Choke-Cylinder Safe (`> 10%` Margin on Every `Cards A–D` Piece):** Sizing `kit_wheel_med = Ø35.2 mm` (`> 31.75 mm × 1.10 = 34.93 mm`) and `kit_wheel_giant = Ø51.2 mm` (`8.0 mm` radius step preserved!), keeping axles `75.0 mm` (`> 57.1 mm`), and moving the smaller `Pro` bellcrank steering knuckles + rack onto the `Pro / Card E` upgrade pack ensures **every single piece in the `Snap` starter kit (`Cards A–D`) passes `16 CFR 1501` small-parts screening with >10% margin**!
-  5. **100% End-to-End Poka-Yoke Symmetry:** `#2 kit_clevis_spine`, `#9 kit_foil_wing`, and `#10 kit_skid_pontoon` are symmetric so a 4-year-old can never snap them on "backwards", while distinct connector shapes (`round stud` = stack, `crescent C-jaw` = swing/spin, `stadium flank slot` = wing/skid) prevent wrong-port jams.
+### 2.1 `#1 kit_keel_base` Coordinate System & `10-Row` Allocation (`49.8 × 124.8 × 15.3 mm`)
 
----
+- **Origin:** `X = 0.0 mm` on longitudinal centerline (`-24.9 .. +24.9 mm`), `Y = 0.0 mm` at nominal front `TU` lattice boundary (part body `Y = 0.10 .. 124.90 mm`), `Z = 0.0 mm` on print bed.
+- **Z-Stack:** Bed `z = 0.00 mm` -> Universal axle centerline `z_axle = 6.25 mm` (`0.5 TU`) -> `45°` teardrop apex `z = 11.20 mm` (`R_fillet = 1.00 mm`) -> Solid deck top `z_deck = 12.50 mm` (`1.30 mm >= 1.20 mm` `min_roof_mm`) -> `stud_small` tops `z_top = 15.30 mm` (`stud_h = 2.80 mm`).
+- **CPSIA Section 103 Tracking Mark:** `24.0 × 8.0 × 0.40 mm` debossed batch/source code recess centered on the flat `z = 0.00 mm` underside across `rows 4..5` (`Y = 50.0 .. 74.0 mm`, bridged `< 8.0 mm`).
 
-## 4. Master Module Catalog (`15` Rigid Modules + `3` Flex Skins)
+| Rows | `Y` Span (`mm`) | Hull Width (`mm`) | Top `stud_small` Grid | Underside / Flank / End Features | Assigned Craft Modules |
+| :--- | :--- | :--- | :--- | :--- | :---
+| **`rows 0..2`** | `0.10 .. 37.50` | `24.8` (`2 TU`, `|X| <= 12.4`) | `2×3` (`6` studs; `row 2` center has `Ø7.0` vertical steering bore at `Y = 31.25`) | **Front end (`Y = 0.1`):** transverse `c_jaw_tu01` (`z = 6.25`, opens `-Y`) for loader/plow.<br>**`row 0` (`Y = 6.25`) & `row 2` (`Y = 31.25`):** bottom-entry `c_jaw_tu01` axle stations (`z = 6.25`).<br>**`rows 1..2` (`Y = 14.0..37.5`):** center `5.5×5.0 mm` upper cable channel (`z = 7.5..12.5`). | Steered/fixed front wheels (`row 0`), `#7` Aero Wedge (`2×3`), `pro_steer_bridge` (`rows 0..1`), `#15` steering stem (`row 2`). |
+| **`rows 3..5`** | `37.50 .. 75.00` | `49.8` (`4 TU`, `|X| <= 24.9`) | `4×3` (`12` studs; Kip `char_legs_seated` seats on inner `2×2` of `rows 4..5`, centered at `Y = 62.50`) | **Flanks (`rows 4..5`, `Y = 50.0..75.0`):** keyed rectangular wing/skid mortises `flank_rail_tu02` (`18.0 × 4.6 × 8.0 mm` at `z = 4.0..8.6`).<br>**Gunwales (`X = ±18.75`, `z = 7.5..12.5`):** twin `5.5×5.0 mm` cable channels clear of axles. | `#8` Open Windscreen (`4×3`), Kip pilot (`z = 12.5..80.5`), main `#9` Wings or `#10` Skids. |
+| **`rows 6..9`** | `75.00 .. 124.90` | `49.8` (`4 TU`, `|X| <= 24.9`) | **`10` perimeter studs** (`row 6` all `4` cols; `rows 7..9` outer cols `0, 3`). Center `10.0 × 33.0 mm` **PTO through-slot** (`X = ±5.0`, `Y = 89.75..122.75`, `2.15 mm` rear cross-tie). | **`row 7` (`Y = 93.75`) & `row 8` (`Y = 106.25`):** bottom-entry `c_jaw_tu01` axle stations (`z = 6.25`; `row 8` is primary PTO axle).<br>**Flanks (`rows 7..8`):** rear `flank_rail_tu02` mortises (`2× #13` pods / delta wings).<br>**Rear edge (`Y = 124.9`, `X = ±14.0`, `z = 9.50`):** twin rearward `c_jaw_tu01` jaws for `#11` Tub hinge, `#2` Boom, or `#9` Ramps. | `#11` `4×4` Dump Tub, `#14` `4×4` Turntable, `#7` Heli Mast House, or `4×4×3 TU` Power Core. |
 
-### 4A. Rigid Structural & Functional Modules (`Cards A, B, C` — Zero Loose Small Parts!)
+### 2.2 Toolchain & `interfaces.json` Gap Report (Per `AGENTS.md` Rule 3)
 
-| # | Part ID | Flat BBox (`mm`) | Key `12.5 mm` TU Interfaces (`Snap` Pinless + `Pro/Mech` Coaxial) | Car | Truck | Tractor | Trailer | Bike | Plane | Boat | Heli | Space |
-| --- | --- | --- | --- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **1** | `kit_keel_base` | `49.8 × 124.8 × 15.3` | `4×10 TU` keel: tapered `2×3 TU` (`24.8 mm`) nose + `X = ±18.75 mm` kingpin ears + `row 2` rack slot, `4×4` Kip cockpit, `4×4` rear Power Bay (`2×2 TU` PTO window + `12.5 × 6.0 mm` conduit), bottom-click `260°` `low` axle jaws + enclosed `high` X-bores, stadium flank slots, F/R `260°` C-jaws + hitch post | `1` | `1` | `1` | `1` | — | `1` | `1` | `1` | `1` |
-| **2** | `kit_clevis_spine` | `24.8 × 99.8 × 15.3` | `100%` end-symmetric `2×8 TU` beam: twin `1 TU` `260°` C-clip/coaxial-bore forks (click onto `#1`/`#12` crossbars or hold `#4` inline bike wheels) + `2×4` top `stud_small` + steering head bore | — | `◐` | `1` | `1` | `1` | — | — | `1` | — |
-| **3** | `kit_barbell_shaft_pack` | `75.0 × 5.6` & `Ø36` spinner | Choke-safe `LAY_FLAT` `6 TU` (`75 mm > 57.1 mm`) barbell wheel shafts + flanged 1-click rotor/inline-wheel T-spinners (`Ø36 mm` flange clears choke tube!) | `2` | `2` | `2` | `2` | `2` | `2` | `1` | `2` | `1` |
-| **4** | `kit_wheel_med` | `Ø35.2 × 12.3` | Choke-safe (`> 34.93 mm` `10%` margin!) `1 TU` tire (`R = 17.6 mm` gives `2.6 mm` clearance around `gear_spur_z10`!): center D-bore presses onto `#3` as a 1-click wheel barbell | `4` | `4` | `2` | `2–4` | `2` | `2` | — | — | `◐` |
-| **5** | `kit_wheel_giant` | `Ø51.2 × 12.3` | `1 TU` wide deep-chevron tractor/monster tire: exact `8.0 mm` radius step (`(51.2 - 35.2)/2 = 8.0 mm`) matches `#1`'s `8.0 mm` (`high - low`) bore delta for `0.0°` level Tractor! | `◐` | `◐` | `2` | `◐` | `◐` | — | — | — | — |
-| **6** | `kit_rotor_blade` | `100.0 × 16.0 × 4.5` | `2`-blade prop/rotor with D-bore + `2.25 mm` half-lap cross notch (clicks onto `#3` T-spinner in `Snap`; takes live `Pro/Momentum/Mech` drive shaft later) | — | — | — | — | — | `1` | `1` | `2+1` | — |
-| **7** | `kit_aero_wedge` | `49.8 × 37.3 × 16.0` | `4×3 TU` `38°` swept nose/hood/bow (`socket_small` bottom, `2×2` `stud_small` top, front spinner bore, Book-Fold flex-cowl rails) | `1` | `◐` | — | — | `1` | `1` | `1` | `1` | `1` |
-| **8** | `kit_cab_arch` | `49.8 × 37.3 × 24.0` | Flat-printed `4×3 TU` U-frame ROPS/cockpit cage (gunwale mount framing Kip, `2×2` roof `stud_small` + center rotor/steering bore + Book-Fold canopy rails) | `◐` | `1` | `1` | — | — | `1` | `1` | `1` | `1` |
-| **9** | `kit_foil_wing` | `74.8 × 49.8 × 5.0` | Symmetric L/R reversible swept foil (stadium root tongue plugs into `#1` flank slots or rear tail slot; tip `stud_small`; doubles as GT wing / clip-on trailer ramp) | `1` | — | — | `◐` | — | `3` | `◐` | — | `3` |
-| **10** | `kit_skid_pontoon` | `112.3 × 18.0 × 16.0` | End-symmetric hollow ski/catamaran float with stadium struts plugging into `#1` flank slots (`240 cm³` system buoyancy with `#13` sponsons!) | — | `◐` | — | — | — | `◐` | `2` | `2` | — |
-| **11** | `kit_tilting_tub` | `49.8 × 62.3 × 18.0` | `4×5 TU` dump/cargo/payload bed with **integral `Ø6.6` rear hinge bar** (1-hand click into `#1` rear C-jaw for `55°` tipping + coaxial outer Pro servo/cam ears!) | — | `1` | — | `1` | `◐` | — | `1` | — | `1` |
-| **12** | `kit_scoop_blade` | `49.8 × 37.3 × 20.0` | Curved loader bucket / snowplow with **integral `Ø6.6` crossbar** (1-hand click into `#1` front C-jaw or `#2` boom C-jaw + coaxial Pro linkage bores!) | — | `◐` | `1` | — | — | — | — | — | — |
-| **13** | `kit_booster_pod` | `24.8 × 49.8 × 18.0` | `2×4 TU` sealed twin-nozzle jet/sponson pod (`socket_small` bottom + stadium wing peg + `Ø7.0` balloon-straw/valve throat; doubles as Boat trimaran float!) | `1` | `◐` | — | — | `◐` | `2` | `2` | — | `2` |
-| **14** | `kit_turntable_hitch` | `Ø49.8 × 10.0` | Captive 1-piece snap-ring `360°` turntable (`4×4` `socket_small` base, `2×2` `stud_small` + `260°` C-jaw top): Crane slew ring & toddler articulated steering pivot! | — | `◐` | `1` | `1` | `◐` | — | — | — | — |
-| **15** | `kit_yoke_hbar` | `58.0 × 38.0 × 5.6` | Choke-safe (`58 mm`) `LAY_FLAT` 1-piece steering wheel / Kip-grip handlebar stem (`Snap` dash spin & Bike steering; drives `Pro` steering rack when paired with `Pro/Card E` knuckles!) | `1` | `1` | `1` | — | `1` | `1` | `1` | `1` | `1` |
+Before authoring Pass 5 CAD, the following four connector/socket definitions must be registered in `interfaces.json` and `seat_pair()` / `toyventor_assembly.py` (which currently validates `stud_grid`, `socket_grid`, `bore_grid`, and `pin` in `90°` `Z`-turns only; arbitrary-angle hinge/steer sweeps are verified via dedicated pose scripts in Gate `G1`):
 
-*(Legend: `1..6` = canonical build count · `◐` = optional variant/combo attachment · `—` = not required)*
-
-### 4B. "Shape-Out" Curved Flex-Shell Skins (`Card D` · `1.2 mm` Flat Print)
-
-| # | Skin ID | Flat Size (`mm`) | Curvature Target & Multi-Craft Roles (`Book-Fold` Left Hinge + Right Thumb Latch) |
-| --- | --- | --- | --- |
-| **16** | `skin_aero_cowl` | `96.0 × 49.8 × 1.2` | Folds over `#7 kit_aero_wedge` or `#2 kit_clevis_spine` Book-Fold rails into a **Formula Race Nose**, **Rounded Tractor Bonnet**, **Sportbike Front Fairing**, or **Speedboat Wave-Piercing Bow**. |
-| **17** | `skin_canopy_arch` | `112.0 × 37.3 × 1.2` | Framed windshield cutouts; folds over `#8 kit_cab_arch` into an **Opening Helicopter Bubble Canopy**, **GT Fastback Roof**, **Truck Aero Sleeper**, or **Shuttle Flight Deck**. |
-| **18** | `skin_cargo_shroud` | `116.0 × 62.3 × 1.2` | Folds over `#11 kit_tilting_tub` into **Hinged Space Shuttle Payload Doors** (unclick right thumb tab to swing open on left hinge!), **Covered Wagon / Camper Canopy**, **Tanker Drum**, or **Boat Cabin Cuddy**. |
+1. **`socket_small` Reference Geometry (Codifying `toyventor_parts.py` `tube_dims` & `integrated_sockets`):**
+   - **`cage` style** (`#7, #8, #11, #14`, Power Cores): outer rim wall `2.00 mm`, design radial stud gap `0.05 mm` (`fit = 0.10 mm`), internal coupling tubes `ID = 6.70 mm` (`ri = 3.35 mm`), `OD = 10.98 mm` (`ro = 5.49 mm`), socket depth `>= 3.20 mm` (`stud_h + 0.40 mm`), closed ceiling roof `>= 1.50 mm` (plates) / `2.00 mm` (bricks), `96` segments (`FIT_SEG`).
+   - **`holes` style** (`#13` pod pads): blind stud holes `ID = 6.70 mm`, surrounding boss wall `>= 2.00 mm` (`OD >= 10.70 mm`), depth `3.20 mm`, closed ceiling roof `>= 1.20 mm` (`check I7_hole_roof`).
+2. **`c_jaw_tu01` (Pinless Compliant `Ø6.60 mm` Shaft / Hinge Jaw):**
+   - **Geometry:** `Ø7.00 mm` (`r = 3.50 mm`) circular seat with `45°` teardrop crown (`R_fillet = 1.00 mm` at apex to suppress notch stress), `242.0°` wrap angle -> **`6.00 mm` throat opening** (`0.60 mm` diametral interference on `Ø6.60 mm` `shaft_drive`, i.e., `δ = 0.30 mm/prong >= 0.25 mm` `min_snap_mm`), prong wall thickness **`t = 1.60 mm`**, axial bearing land **`b = 3.00 mm`** per side wall (central tunnel relieved to `Ø8.20 mm` to prevent shaft binding), `30°` entry lead-in chamfers.
+   - **Mechanics (Castigliano curved-beam with `1.3×` inner-fiber factor):** Peak inner-fiber bending strain **`1.01%`** (`< 1.80%` PLA yield; `< 2.30%` PETG yield), radial spreading force **`9.4 N/prong`** (`~10–14 N` palm click-in across twin axle lands), **`0.0%` resting strain** once seated in the `Ø7.00 mm` bore.
+   - **Calibration Gate:** Added as a mandatory `F1` coupon printed in `#1`'s exact `z = 0` orientation (`Gate G7`: `500` cycles + `24 h @ 40 °C`, post-test pull-out `>= 6.0 N`).
+3. **`flank_rail_tu02` (Asymmetric Keyed Wing/Skid Mortise — True Geometric Poka-Yoke):**
+   - **Geometry:** Rectangular pocket `18.0 mm` (`Y`) × `4.60 mm` (`Z`, `z = 4.00 .. 8.60 mm`, `45°` chamfered ceiling, span `<= 8.0 mm < 20.0 mm` bridge limit) × `8.0 mm` deep (`X`), with a **`3.0 × 2.0 mm` forward index step** on the `-Y` edge only and dual `0.25 mm` horizontal friction detents (`fit = 0.12 mm`).
+   - **Poka-Yoke Separation:** Cannot accept a `Ø6.60 mm / 5.00 mm` shaft (`4.60 mm < 5.00 mm`), and `#9` swept wings / `#10` skids cannot be inserted backwards (eliminating accidental forward-swept wing reversal).
+4. **Rotary Bearing Relief Rule:** Relieved central axle tunnels (`Ø8.20 mm` between `3.00 mm` outer bearing lands) prevent FDM seam/over-extrusion binding along `50 mm` bores; any friction delta vs. full-length bores is logged empirically during `F1` rather than claimed a priori.
 
 ---
 
-## 5. Canonical 9-Craft Assembly Recipes & Functional Play Loops
+## 3. Master Module Catalog (`15` Rigid Modules + `3` Smooth Flex Skins)
 
-| # | Craft | Core Bones | Wheels / Running Gear (`Snap` Pinless) | Aesthetic Shells & Wings | Functional Front / Rear Play Mechanisms |
-| --- | --- | --- | --- | --- | --- |
-| **1** | **Race Car** | `#1` Keel | `2×` `#4` Med barbells in **`high`** bores (`3.35 mm` slammed ride height) | `#7` Aero Wedge + `#16` Flex Cowl, rear `#9` GT Spoiler | `#15` Yoke spins in dash (`Pro/Mech`: rack steering!), `#13` rear twin exhaust (straw + balloon ready!), Kip in `2×2` cockpit |
-| **2** | **Dump / Tow Truck** | `#1` Keel | `2×` `#4` Med barbells clicked into **`low`** bottom C-jaws (`11.35 mm` clearance) | `#8` Cab Arch + `#17` Hinged Flex Canopy | Rear **`55°` tipping `#11` Dump Bed** (1-hand C-jaw click, `0` pins!); front `#12` Snowplow option; rear post tows `#4` Trailer |
-| **3** | **Farm / Loader Tractor** | `#1` Keel + `#2` Boom | `1× #4` Med barbell front (`low` C-jaw) + `1× #5` Giant barbell rear (`high` bore) = **`0.0°` level stance** | `#8` ROPS Roll Arch + `#16` Rounded Tractor Bonnet | **Articulated Front Loader** (`#2` Spine clicked onto `#14` Turntable C-jaw + `#12` C-click Loader Scoop) + rear tow hitch |
-| **4** | **Modular Trailer** | 2nd `#1` Keel + `#2` Drawbar | `1×` or `2×` `#4` Med barbells (`low` C-jaws) | Configurable: `#11` Tipper Tub, `#18` Covered Wagon Shroud, or open Flatbed | `#2` Drawbar + `#14` Turntable Hitch gives **1-hand drop-on coupling + multi-axis pitch/yaw**; `2× #9` clip to rear C-jaw as Car-Hauler Ramps |
-| **5** | **Motorbike (& Trike)** | `#2` Clevis Spine (solo!) | `2× #4` Med wheels held inline inside `#2`'s end forks via `2× #3` flanged `Ø36 mm` T-spinners | `#7` + `#16` Flex Sport Fairing on front studs | `#15` Handlebars steer front fork; Kip straddles center `2×4` studs (`+ #14` & `#11` on rear fork = **Cargo Trike**!) |
-| **6** | **Prop / Jet Aeroplane** | `#1` Keel | `1× #4` Med barbell main gear (front `low` C-jaw) + rear tail skid | `#7` Nose + `#8` Canopy + `2× #9` Main Wings (stadium flank slots) + `1× #9` Tail Fin | Free-spinning `#6` **2-Blade Nose Propeller** on `#3` T-spinner + optional `2× #13` underwing Jet Pods |
-| **7** | **Catamaran / Speedboat** | `#1` Keel | `2× #10` Hollow Pontoons plugged into stadium flank slots (`+ 2× #13` sponsons = `240 cm³` lift) | `#7` Bow + `#16` Foredeck Skin + `#8` Bridge + `#11` Aft Deck | Stern-mounted `#6` **Spinning Airboat Fan** on `#3` T-spinner (or `2× #13` balloon water/air jets!) |
-| **8** | **Rescue Helicopter** | `#1` Keel + `#2` Tail Boom | `2× #10` Landing Skids in stadium flank slots | `#7` Chin + `#8` Arch + `#17` **Opening Bubble Canopy** | `2× #6` half-lap crossed on `#8` roof T-spinner = **spinning 4-Blade Main Rotor**; `#2` Boom clicks onto `#1` rear jaw carrying `1× #6` **Tail Rotor** |
-| **9** | **Space Shuttle** | `#1` Keel | Retracted flat keel (or `2× #4` barbell landing gear) | `#7` Nose Cone + `#8`/`#17` Flight Deck + `2× #9` Delta Wings + `1× #9` Tail Fin | `#11` Payload Bay + `#18` **Book-Fold Hinged Payload Doors** (unclick right thumb tab to deploy satellite / Kip!) + `2× #13` Twin Thrusters |
+### 3.1 Complete Dimensional, Printability (`preprint_check.py`) & `S1` Screen Audit
 
----
+All `Cards A–D` rigid parts print in `PLA` or `PETG` (`0.4 mm` nozzle, `0.20 mm` layers, `0` supports); `Card D` flex skins print in **`PETG` (recommended) or `95A TPU` (`PLA` prohibited due to sustained `~42 MPa` latch creep)**. `S1` values below are computed using the exact 3D projection + minimum-enclosing-circle algorithm from `parts/partspec/toyventor_parts.py:2231` (`Ø31.75 × 57.1 mm` cylinder, `> 10.0%` required for `above_cylinder`).
 
-## 6. Four-Card Flat-Pack Kit Layout (`<= 175 × 175 mm`, Bambu A1 Mini Ready)
-
-```mermaid
-flowchart LR
-    CardA["Card A: Core Drive & Bike\n172 x 165 x 15.3 mm · 0 Small Loose Pins!\n#1 Keel, #2 Spine, 4x #4 Ø35.2 Wheels,\n2x #3 75mm Shafts + 2x Ø36 T-Spinners,\n#14 Hitch/Turntable, #15 58mm Yoke"]
-    CardB["Card B: Heavy Truck & Tractor\n168 x 158 x 24.0 mm\n2x #5 Giant Wheels, #8 Cab Arch,\n#11 Tilting Tub, #12 Scoop Blade"]
-    CardC["Card C: Air, Sea & Space\n175 x 165 x 18.0 mm\n#7 Aero Wedge, 3x #9 Foils,\n2x #10 Skids, 2x #6 Rotors, 2x #13 Pods"]
-    CardD["Card D: Shape-Out Flex Skins\n170 x 165 x 1.2 mm (~12 min print)\n#16 Aero Cowl, #17 Canopy Arch,\n#18 Cargo Shroud"]
-
-    CardA --> Solo["Standalone Card A:\nGo-Kart + Motorbike"]
-    CardA & CardB --> Land["A + B Unlocks:\nDump Truck, Tractor + Loader,\nTow Truck, Cargo Trike\n(+2nd Card A = Full Trailer Rig)"]
-    CardA & CardC --> AirSea["A + C Unlocks:\nRace Car, Prop/Jet Plane,\nCatamaran Boat, Helicopter,\nSpace Shuttle"]
-    CardD -. "Snap-on curved multi-color shells" .-> Solo & Land & AirSea
-```
-
-### Sprue Gate Standard (`--sprue` vs. `--loose`)
-- **Dual Export Modes:** Every kit card exports both as `card_<id>_loose.stl` (0-burr multi-body plate ready for Bambu Studio / PrusaSlicer per-object coloring) and `card_<id>_sprue.stl` (connected giftable flat-pack kit card).
-- **Zero-Interference Gate Placement:** A `2.4 × 1.6 mm` rectangular perimeter runner connects parts strictly inside the bottom `z = 0.0..1.0 mm` zone via `1.4 mm`-wide V-notched gates (`0.55 mm` waist) recessed `0.3 mm` inside the `0.5 mm` bed chamfer — so twisting a part free leaves **zero raised nub** against any mating face, bore, or stud.
+| # | Part ID | Card (Qty) | As-Printed `BBox` (`X × Y × Z mm`) | Print Pose & Key `P1/P2/V4/V6` Feature | Max Overhang / Max Bridge | `S1` Min Diam (` Margin `) | Primary Roles Across 9 Craft |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **1** | `kit_keel_base` | `A` (`1×`) | `49.8 × 124.8 × 15.3` | Flat (`z=0`), studs up; `45°` teardrops (`1.30 mm` roof); `10×33` PTO slot | `45°` / `8.0 mm` | `125.73 mm` (`+296.0%`) | Universal `4×10 TU` hull for 8 of 9 craft |
+| **2** | `kit_clevis_spine` | `A` (`1×`) | `27.8 × 99.8 × 15.3` | Flat (`z=0`), studs up; `15.0 mm` clevis slots (`6.4 mm` cheeks), `45°` kickstand jaw | `45°` / `0.0 mm` | `99.80 mm` (`+214.3%`) | Bike/Trike frame, Heli boom (`+10°` stop), Loader boom, Drawbar |
+| **3a** | `kit_barbell_shaft` | `A` (`2×`) | `6.6 × 76.0 × 5.0` | `LAY_FLAT` on `5.0 mm` `shaft_drive` flat (`2.0 mm` teardrop core hole) | `45°` / `0.0 mm` | `57.68 mm` (`+81.7%`) | `76.0 mm` outboard wheel axle (`+0.80 mm/side` clearance) & `90 mm` Heli mast |
+| **3b** | `kit_spinner_pin` | `A` (`2×`), `B` (`1×`) | `36.0 × 48.5 × 5.0` | `LAY_FLAT` on `5.0 mm` flat: `Ø36.0 mm` grip ring + `12.5 mm` split-fin stem (axial grain!) | `45°` / `0.0 mm` | `36.05 mm` (`+13.5%`) | Bike clevis axle pin, Plane/Heli rotor retainer, Turntable center lock |
+| **4** | `kit_wheel_med` | `A` (`4×`) | `36.0 × 36.0 × 12.3` | Flat (`z=0`), `5.1 mm` fixed double-D hub (`veh_wheel_sport` `Ø36` outer profile) | `42°` / `0.0 mm` | `36.00 mm` (`+13.4%`) | Race Car, Truck, Trailer, Bike/Trike, Plane gear, Tractor front (`11.75 mm` clear) |
+| **5** | `kit_wheel_giant` | `B` (`2×`) | `50.0 × 50.0 × 12.3` | Flat (`z=0`), `5.1 mm` fixed hub + `4× Ø7.0` face bores (`wheel_tu04` `Ø50` profile) | `42°` / `0.0 mm` | `50.00 mm` (`+57.5%`) | Tractor rear (`4.01°` forward rake), Monster Truck, Paddlewheel |
+| **6** | `kit_rotor_blade` | `C` (`3×`) | `68.0 × 20.0 × 6.0` | Flat (`z=0`), `Ø20.0 mm` reinforced hub (`6.5 mm` wall), `3.0 mm` `90°` half-lap | `35°` / `6.5 mm` | `50.68 mm` (`+59.6%`) | `1×` 2-blade Plane/Boat prop; `2×` crossed 4-blade Heli main + `1×` Heli tail |
+| **7** | `kit_aero_wedge` | `C` (`1×`) | `24.8 × 37.3 × 33.2` | Flat (`z=0`), `2×3` `cage` sockets; `z=27.0` horizontal `45°` prop bore (`1.25 mm` roof) + top vertical `fixed` mast bore | `45°` / `10.9 mm` | `41.44 mm` (`+30.5%`) | Race/Plane nose (`+4.75 mm` prop clear), Heli rear mast house (`rows 6..8`), Shuttle nose |
+| **8** | `kit_windscreen` | `B` (`1×`) | `49.8 × 37.3 × 22.0` | Flat (`z=0`), **open-top U-frame** (`0 mm` roof bridge!), `4×3` perimeter sockets | `45°` / `10.9 mm` | `43.30 mm` (`+36.4%`) | Head-out windscreen/roll-hoop for Kip (`39.8 mm` inner hip width, open above `z=22`) |
+| **9** | `kit_foil_wing` | `C` (`3×`) | `74.8 × 49.8 × 5.0` | **Flat-bottom plank airfoil** (`45°` bevel leading edge, `0 mm` underside overhang!), keyed root + `Ø6.6` ramp hook | `45°` / `0.0 mm` | `74.97 mm` (`+136.1%`) | Plane/Shuttle wings & vertical tail (`2+1`), Race GT wing (`1×`), Trailer ramps (`2×`) |
+| **10** | `kit_skid_runner` | `C` (`2×`) | `112.3 × 18.0 × 20.0` | Flat (`z=0`), upturned `45°` bow ski, twin `flank_rail_tu02` tongues + underside `Ø60` foam-noodle clips | `45°` / `8.0 mm` | `112.17 mm` (`+253.3%`) | Heli landing skids (`16 mm` drop), Snowmobile skis, Catamaran dry runners + sponson mounts |
+| **11** | `kit_tilting_tub` | `B` (`1×`) | `49.8 × 49.8 × 18.0` | Flat (`z=0`), **`4×4 TU`** cargo tub, rear `Ø6.6` hinge bar (`45°` gussets, `55°` stop blocks -> `>= 12 mm` finger gap) | `45°` / `10.9 mm` | `52.95 mm` (`+66.8%`) | Truck/Trailer `55°` tipping dump bed (fits `#1` OR `3 TU` Power Core!), Shuttle bay |
+| **12** | `kit_scoop_blade` | `B` (`1×`) | `49.8 × 37.3 × 20.0` | **Printed on flat back wall (`z=0`)** so curved bucket faces upward (`0°` underside overhang!), `Ø6.6` rear crossbar | `40°` / `8.0 mm` | `42.32 mm` (`+33.3%`) | Tractor front loader bucket, Truck snowplow, Heli rescue basket |
+| **13** | `kit_booster_pod` | `B` (`2×`) | `24.8 × 65.0 × 28.0` | Flat (`z=0`), `2×4` `holes` sockets + `flank_rail_tu02` tongue, twin chamfered exhaust bells | `45°` / `3.2 mm` | `68.67 mm` (`+116.3%`) | Race/Truck sidepods, Shuttle OMS pods, Plane/Boat jet nacelles |
+| **14** | `kit_turntable` | `B` (`1×`) | `49.8 × 49.8 × 8.0` | Flat (`z=0`), **1-piece rotary disc** (`Ø7.0` center `free` bore + smooth `0.30 mm` glide ring, `4×4` top studs + `c_jaw_tu01` saddle), pinned by `#3b` | `45°` / `0.0 mm` | `49.80 mm` (`+56.9%`) | `360°` Tow/Forestry crane slew base & Fifth-wheel Trailer hitch (zero print-in-place fusion risk!) |
+| **15** | `kit_yoke_hbar` | `A` (`1×`) | `46.0 × 38.0 × 5.6` | `LAY_FLAT` (`46.0 mm < 49.8 mm` hull width!), `25.0 mm` `shaft_drive` stem + `Ø6.6` handgrips | `45°` / `0.0 mm` | `38.41 mm` (`+21.0%`) | Car/Truck/Plane/Boat steering yoke (`row 2`) & Bike/Trike handlebars |
+| **16** | `skin_aero_cowl` | `D` (`1×`) | `96.0 × 37.3 × 0.6` | **Un-grooved `0.60 mm` `PETG`/`TPU` sheet** (`1.2 mm` edge frame stopped `8 mm` from `R >= 20 mm` bend; `V8` thin-wall waiver) | `0°` / `0.0 mm` | `85.59 mm` (`+169.6%`) | Curved hood/fuselage nose cowl (`1.50%` max strain at `R=20 mm`, zero tear-off strips) |
+| **17** | `skin_windscreen` | `D` (`1×`) | `96.0 × 36.0 × 0.6` | **Un-grooved `0.60 mm` `PETG`/`TPU` sheet**, dual side slot latches onto `#8` front posts | `0°` / `0.0 mm` | `85.06 mm` (`+167.9%`) | Wrap-around front windscreen / jet visor (stays ahead of Kip's head!) |
+| **18** | `skin_cargo_shroud` | `D` (`1×`) | `112.0 × 49.8 × 0.6` | **Un-grooved `0.60 mm` `PETG`/`TPU` sheet**, center `8.0 mm` rib-free `Book-Fold` corridor (`R >= 25 mm`, `1.20%` strain) | `0°` / `0.0 mm` | `112.00 mm` (`+252.8%`) | Shuttle clamshell payload doors, Camper/Wagon canopy, Boat spray deck |
 
 ---
 
-## 7. Next Step — Pass 5 Parametric CAD & 9-Craft Verification
+## 4. Canonical 9-Craft Assembly Trace & Clearance Proofs
 
-1. **Author `parts/partspec/toyventor_kitcard.py`:** Parametric `manifold3d` generators for `#1`–`#15` rigid modules + `#16`–`#18` kerf-ribbed flex skins + `pack_kit_card(mode="sprue"|"loose")`, strictly importing `interfaces.json` (`stud_small`, `bore_grid`, `pin_free`, `shaft_drive`).
-2. **Gate & Fit Verification (`selftest.py` + `preprint_check.py`):** Verify zero overhangs `> 45°`, zero unsupported bridges `> 20 mm`, small-parts compliance, and zero third-party brand strings.
-3. **9-Craft Assembly Proofs (`toyventor_assembly.py`):** Assemble all 9 canonical craft programmatically with `0.000 mm³` collision overlap and export interactive flat-card vs. 3D-assembled preview GLBs/STLs.
+- **Kip Seated Ghost (`ghost_kip_seated`):** Derived from `char_legs_seated` (`24.8 × 27.1 × 18.8 mm`) + `robot_torso_core` (`24.8 × 24.8 × 22.8 mm`) + `char_head_kid` (`40.2 × 35.2 × 34.0 mm`) + `hair_pigtails` (`42.4 mm` wide) = **`43.0 × 36.0 × 68.0 mm`** above the `z = 12.50 mm` seat deck (`z = 12.5 .. 80.5 mm`, centered on `rows 4..5` at `Y = 62.50 mm`), plus `25.0 mm` vertical hand-entry clearance above `z = 80.5 mm`. Every occupied craft below leaves `z > 22.0 mm` across `Y = 44.0 .. 80.5 mm` completely unobstructed.
+
+| # | Craft | Cards Required | Exact Row & Module Assignment | Verified Clearance, Stability & Buoyancy Proof |
+| :--- | :--- | :--- | :--- | :--- |
+| **1** | **Formula / GT Race Car** | `A + C` (`+ B` pods/arch, `+ D` cowl) | `#1` Keel; `4× #4` (`Ø36`) on `2× #3a` (`rows 0, 8`); `#7` Wedge (`rows 0..2`); Kip + opt. `#8` (`rows 3..5`); `1× #9` GT Wing on `row 9` rear studs/riser (`rows 6..8` open for Power Core!); opt. `2× #13` flank pods (`rows 7..8`); `#15` Yoke (`row 2`). | Ground clear `11.75 mm` (`3.0 mm` over `Z10` gear); `row 0` steer lock `±26°` (`+4.17 mm` nose, `+7.41 mm` shoulder, `51.9 cm` circle); `rows 6..9` fits `4×4×3 TU` Power Core with GT wing mounted on Core top-rear studs. |
+| **2** | **Dump / Tow Truck** | `A + B` (`+ D` visor) | `#1` Keel; `4× #4` (`rows 0, 8`); `#8` Windscreen + Kip (`rows 3..5`); `#15` (`row 2`); `#11` `4×4` Dump Tub (`rows 6..9`, rear hinge bar in `#1` `Y=124.9` C-jaws) **OR** `#14` Turntable + `#2` Crane Boom (`rows 6..9`); opt. `#12` Front Plow (`Y=0.1` C-jaw). | `rows 3..5` (`#8`) + `rows 6..9` (`#11`) = `7` four-wide rows (`0.2 mm` design gap, zero overlap). `#11` tips `55°` on `#1` **and** on top of any `3 TU` Power Core (replicated top-rear C-jaw at `z=47.0 mm`); rear-tip payload limit `~220 g`. |
+| **3** | **Farm / Loader Tractor** | `A + B` | `#1` Keel; `2× #4` (`Ø36`) front (`row 0`) + `2× #5` (`Ø50`) rear (`row 8`) on `2× #3a`; `#8` + Kip (`rows 3..5`); `#15` (`row 2`); `#2` Loader Boom clicked into `#1` **front `Y=0.1` C-jaw** + `#12` Scoop; opt. `#14` Rear PTO Implement Deck (`rows 6..9`). | Single `z_axle = 6.25 mm` tier gives `4.01°` forward rake & **full `25.00 mm` PTO mesh**! Front `Ø36` clears `±26°` steering (`+7.41 mm`). Static front-axle tip limit is `117 g` at `Y = -65 mm` -> **rated safe scoop load `<= 75 g` unpowered (`<= 150 g` with rear Power Core)**. |
+| **4** | **Modular Trailer** | `2nd A + B` (`+ C` ramps) | `#1` Keel (`4× #4` bogie on `rows 7, 8`); `#2` Drawbar clicked into Trailer `Y=0.1` front C-jaw (`±25°` pitch) and pinned via `#3b` to Towing `#14` Fifth-Wheel Turntable (`360°` yaw); `#11` Tub or `2× #9` Car-Hauler Ramps hooked on rear `Y=124.9` C-jaws. | True 2-axis (`360°` yaw + `±25°` pitch) articulation; `#9` integral `Ø6.6` root hook clicks natively into `#1`'s `X = ±14.0 mm` rear C-jaws. |
+| **5** | **Motorbike & Cargo Trike** | `A` standalone (`+ B` tub) | **Inline Bike:** `#2` Spine (`15.0 mm` clevis slots) + `2× #4` (`Ø36 × 12.3 mm`) pinned by `2× #3b` + `#15` Handlebar (`vertical front bore`) + `1× #3a` clicked into `#2`'s `45°` side kickstand jaw.<br>**Cargo Trike:** `#2` + `1× #4` front (`#3b`) + `2× #4` rear outboard on `1× #3a` (`76.0 mm`). | Clevis axial wheel clearance `(15.0 - 12.3)/2 = +1.35 mm/side` (`>= 0.50 mm` rule). `Card A` alone builds **both** the kickstand-supported 2-wheel Bike and self-standing 3-wheel Trike (`Card E1` adds `15°` raked steerable fork). |
+| **6** | **Prop / Jet Aeroplane** | `A + C` (`+ B` pods/arch) | `#1` Keel; `2× #4` main gear (`row 0`) + rear keel tail-skid; `#7` Wedge (`rows 0..2`, `z=27.0` bore) + `1× #6` (`Ø68`) Prop pinned by `#3b`; Kip (`rows 4..5`); `2× #9` Main Wings (`rows 4..5` flanks) + `1× #9` Vertical Tail (`rows 8..9` center). | Even dead-level on `Ø36` wheels (`ground z = -11.75 mm`), `#7`'s `z = 27.0 mm` prop axis holds `Ø68.0 mm` (`R = 34.0 mm`) blade tips **`+4.75 mm` above ground** (`+11 mm` in tail-dragger stance); wings (`z = 4.0..9.0`, `Y = 50..124`) clear `row 0` wheels by `> 25 mm`. |
+| **7** | **Catamaran / Speedboat** | `A + C` (`+ foam sponsons` for water) | `#1` Keel; `2× #10` Runners in `rows 4..5` / `7..8` `flank_rail_tu02` mortises; `#7` Bow (`rows 0..2`); Kip (`rows 4..5`); `#15` Helm (`row 2`); `1× #9` Sail/Wing or stern `#6` Air-Prop. | **Honest Buoyancy Rule:** `2× #10` gross external volume is `80.9 cm³` (`~45 cm³` net) -> **dry-floor / tabletop runner craft** as printed. For **waterborne play**, clip two household `Ø60 × 125 mm` closed-cell polyethylene pool-noodle cylinders (`706 cm³` gross, **`~424 gf` buoyancy at `60%` draft**) into `#10`'s underside clips (`zero` FDM water weeping). |
+| **8** | **Rescue Helicopter** | `A + C` (`+ B` scoop basket) | `#1` Keel; `2× #10` Landing Skids (`16.0 mm` drop -> `ground z = -16.0 mm`); Kip (`rows 4..5`); `#7` Mast House (`rows 6..8`) + vertical `1× #3a` (`76 mm` mast -> `z_top = 109.2 mm`) + **`2× #6` crossed 4-blade Main Rotor** (`z = 96.0 mm`, `#3b`); `#2` Boom on rear C-jaw (`+10°` stop) + **`3rd #6` Tail Rotor** (`#3b`). | Builds 100% from `Cards A + C` (`3× #6` included!). Main rotor at `z = 96.0 mm` clears full-stack Kip (`z = 80.5 mm`) by **`+15.5 mm`**; `+10°` tail boom puts tail rotor center at `z = 26.83 mm` (`42.83 mm` above skid ground -> **`+8.83 mm` ground clearance**). |
+| **9** | **Space Shuttle Orbiter** | `A + C` (`+ B` tub/pods, `+ D` `#18` doors) | `#1` Keel; `4× #4` landing gear (`rows 0, 8`); `#7` Nose (`rows 0..2`); Kip + opt. `#8` (`rows 3..5`); `2× #9` Delta Wings (`rows 7..8` flanks) + `1× #9` Vertical Tail Fin; opt. `#11` Payload Bay + `#18` `Book-Fold` Bay Doors (`rows 6..9`) + `2× #13` OMS Pods. | Zero row overlap (`#7` `rows 0..2`, Kip/`#8` `rows 3..5`, `#11`/`#18` `rows 6..9`); `#18` `PETG` clamshell bends at `R = 25.0 mm` (`1.20%` strain) with `8.0 mm` rib-free center corridor. |
+
+---
+
+## 5. Verified Four-Card Kit Layout (`<= 170.0 × 170.0 mm`, `180 mm` Bed Ready)
+
+- **Hard Packing Envelope:** Outer runner frame **`<= 170.0 × 170.0 mm`** (`>= 5.0 mm` margin per side on a `180 × 180 mm` print bed to accommodate `preprint_check.py` auto-brims), outer runner width `3.0 mm × 1.0 mm`, inter-part clearance **`>= 5.0 mm`** between every axis-aligned bounding box.
+- **Dual Export & Reinforced Sprue Gates:** Every card exports `card_<id>_loose.stl` (multi-object plate) and `card_<id>_sprue.stl`. Gates are **`1.60 mm` wide × `0.80 mm` tall** (`1.28 mm²`), recessed `0.50 mm` inside the part's `bed_chamfer` with symmetric `45°` V-nicks (`>= 4` gates on parts `> 15 g`; `0` gates on tire treads, gear teeth, or mating faces) so cards survive a `0.5 m` shipping drop test and twist free without leaving sharp points (`16 CFR 1500.48`).
+- **Print Times & Materials:** Cards `A–C` print in `PLA` or `PETG` (`~1.8–2.8 h` per card at standard `0.20 mm` profile); Card `D` prints in **`PETG` or `95A TPU`** (`~22–35 min` for `3` layers + `1.2 mm` perimeter frames).
+
+### 5.1 Deterministically Verified `(x, y, w, h)` Bounding-Box Placements (`mm`)
+
+- **`Card A` — Core Chassis, Roadster, Bike & Trike (`11` items, `166.8 × 163.9 mm` outer, `70.6%` box density):**
+  - `#1_keel`: `(3.0, 57.6, 124.8, 49.8)` | `#2_spine`: `(136.0, 14.6, 27.8, 99.8)` | `#15_yoke_hbar`: `(85.0, 14.6, 46.0, 38.0)`
+  - `#4_wheel_med_1..4`: `(126.0, 119.4, 36.0, 36.0)`, `(3.0, 3.0, 36.0, 36.0)`, `(44.0, 3.0, 36.0, 36.0)`, `(3.0, 112.4, 36.0, 36.0)`
+  - `#3a_shaft_1..2`: `(85.0, 3.0, 76.0, 6.6)`, `(3.0, 44.0, 76.0, 6.6)` | `#3b_spinner_1..2`: `(44.0, 112.4, 36.0, 48.5)`, `(85.0, 112.4, 36.0, 48.5)`
+- **`Card B` — Heavy Truck, Tractor, Turntable & Booster Pods (`9` items, `165.8 × 168.9 mm` outer, `64.5%` box density):**
+  - `#5_wheel_gnt_1..2`: `(3.0, 32.8, 50.0, 50.0)`, `(58.0, 32.8, 50.0, 50.0)` | `#8_windscreen`: `(113.0, 32.8, 49.8, 37.3)`
+  - `#11_tilting_tub`: `(113.0, 75.1, 49.8, 49.8)` | `#12_scoop_blade`: `(3.0, 87.8, 49.8, 37.3)` | `#14_turntable`: `(57.8, 87.8, 49.8, 49.8)`
+  - `#13_pod_1..2`: `(3.0, 3.0, 65.0, 24.8)`, `(73.0, 3.0, 65.0, 24.8)` | `#3b_spinner_3`: `(112.6, 129.9, 48.5, 36.0)`
+- **`Card C` — Aero, Rotor & Ski/Runner Pack (`9` items including `3× #6`, `170.0 × 168.3 mm` outer, `70.0%` box density):**
+  - `#9_foil_wing_1..3`: `(57.8, 57.8, 49.8, 74.8)`, `(3.0, 57.8, 49.8, 74.8)`, `(3.0, 3.0, 74.8, 49.8)` | `#7_aero_wedge`: `(82.8, 28.0, 37.3, 24.8)`
+  - `#10_skid_1..2`: `(125.1, 28.0, 18.0, 112.3)`, `(149.0, 28.0, 18.0, 112.3)`
+  - `#6_rotor_1..3`: `(82.8, 3.0, 68.0, 20.0)`, `(76.0, 145.3, 68.0, 20.0)`, `(3.0, 137.6, 68.0, 20.0)`
+- **`Card D` — Smooth `PETG`/`TPU` Shape-Out Flex Skins (`3` items, `159.0 × 102.0 mm` outer, `43.6%` box density):**
+  - `#18_cargo_shroud`: `(3.0, 3.0, 112.0, 49.8)` | `#16_aero_cowl`: `(3.0, 57.8, 96.0, 37.3)` | `#17_windscreen`: `(120.0, 3.0, 36.0, 96.0)`
+
+---
+
+## 6. Pre-CAD Sign-Off Checklist (Gate to Pass 5 CAD)
+
+1. Register `socket_small` (`cage` & `holes` documentation), `c_jaw_tu01`, and `flank_rail_tu02` in `parts/partspec/interfaces.json` and extend `selftest.py` brand hygiene scanning across `docs/` with expanded third-party system/vendor patterns.
+2. Print and cycle-test the `c_jaw_tu01` (`PLA` & `PETG`) and `Card D` `0.60 mm` `PETG` fold coupons (`F1` / Gate `G7`) before freezing `#1 kit_keel_base`.
+3. Author `parts/partspec/toyventor_kitcard.py`, run `toyventor_parts.py`, `preprint_check.py`, and pose-sweep collision checks across all 9 canonical craft recipes, and keep `F1_printed_fit` / `F2_breakage` explicitly `pending` until physical validation completes.
