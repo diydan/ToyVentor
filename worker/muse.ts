@@ -27,7 +27,7 @@ const MAX_NAME_CHARS = 40;
 const MAX_BODY_BYTES = 64_000;
 /** In-isolate per-IP budget for the metered kid-facing route. Best effort
  *  only: requests can land on different isolates, so the Cloudflare
- *  dashboard rule recorded in docs/spec.md is the durable limit. */
+ *  dashboard rule recorded in docs/product/spec.md is the durable limit. */
 const RATE_WINDOW_MS = 60_000;
 const RATE_MAX_PER_WINDOW = 10;
 const recentHits = new Map<string, number[]>();

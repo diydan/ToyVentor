@@ -10,8 +10,7 @@ generated/*
 .DS_Store
 *.local
 .agents/memory/.muse-memory.lock
-# Local handover/audit notes and standalone HTML drafts
-docs/part spec v2/
+# Standalone HTML drafts
 drafts/
 
 # PartSpec v2 generator (parts/partspec/): track sources, manifests, and cached

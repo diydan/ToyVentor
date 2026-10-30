@@ -1,7 +1,7 @@
 # Phone demo check (90 seconds, manual)
 
 Run after each plan day, on a real phone. Time it; log the result in
-[docs/journal.md](../docs/journal.md).
+[docs/product/journal.md](../docs/product/journal.md).
 
 Foundation version (Oct 27):
 

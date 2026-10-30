@@ -6,7 +6,7 @@ Date: 2026-10-28 (updated 2026-10-30). Status: migrated in code (`sets/base.json
 
 Two parts lanes exist:
 
-- **PartSpec** (`parts/partspec/` generator, specs snapshot in `docs/PartSpec/specs/`): Python
+- **PartSpec** (`parts/partspec/` generator, specs snapshot in `docs/parts/partspec/specs/`): Python
   `manifold3d` pipeline, one TU lattice at 12.5 mm (Snap Small 12.5, Snap Large
   25, Pro holes 12.5), 75 catalog parts passing geometry + measured-fit checks,
   connector manifests, safety screens. Its design log records Dan confirming

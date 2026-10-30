@@ -26,7 +26,7 @@ DOCS = [
 
 def build(out, dest=None):
     out = Path(out).resolve()
-    repo_specs = (HERE.parent.parent / "docs" / "PartSpec" / "specs").resolve()
+    repo_specs = (HERE.parent.parent / "docs" / "parts" / "partspec" / "specs").resolve()
     dest = Path(dest) if dest else (repo_specs if out == HERE.resolve() and repo_specs.parent.exists() else out / "specs")
     dest.mkdir(parents=True, exist_ok=True)
     for name, src, _ in DOCS:

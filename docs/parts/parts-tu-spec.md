@@ -1,6 +1,6 @@
 # Spec: Parts, Kip & 12.5 mm TU Print Calibration
 
-Oct 30, 2026 · Parts, Mechanical Engineering & Physical Print Lane (companion to [`docs/world-first-spec.md`](world-first-spec.md), [`docs/creating-parts.md`](creating-parts.md), and [decision 0005](decisions/0005-partspec-lattice-merge.md))
+Oct 30, 2026 · Parts, Mechanical Engineering & Physical Print Lane (companion to [`docs/ux/world-first-spec.md`](../ux/world-first-spec.md), [`docs/parts/creating-parts.md`](creating-parts.md), and [decision 0005](../decisions/0005-partspec-lattice-merge.md))
 
 ## Goal
 
@@ -8,18 +8,18 @@ Own ToyVentor's single `12.5 mm` / `25 mm` TU physical-to-digital geometry truth
 
 1. Keep `parts/partspec/` (`manifold3d` Python generator + validator) and `parts/kip/` (`30`-part OpenSCAD articulated character rig) 100% verified, support-free (`0.20 mm` PLA, flat on bed), and CPSC/ASTM small-part screened.
 2. Finalize and sync any remaining Wave 9 character heads, hair, wardrobe, and vehicle STLs/GLBs across `public/kip/` and `public/parts-{stl,glb}/`.
-3. Rebuild the hidden-calibration first-print Forge Mount selector (`1 / 2 / 3` embossed dots, zero user-facing calibration jargon) natively on the `12.5 mm` TU lattice per [decision 0005](decisions/0005-partspec-lattice-merge.md).
+3. Rebuild the hidden-calibration first-print Forge Mount selector (`1 / 2 / 3` embossed dots, zero user-facing calibration jargon) natively on the `12.5 mm` TU lattice per [decision 0005](../decisions/0005-partspec-lattice-merge.md).
 4. Execute the physical PLA print loop (`parts/test-print-tu/` Plates 1-3) so `parts/partspec/interfaces.json` graduates from `"TARGETS ONLY"` to `"CALIBRATED"` before final submission.
 
 ---
 
 ## Parallel Lane Ownership & Read-Only UI Contract
 
-Work is split into two non-overlapping lanes so physical part engineering and the single-stage World-First UI consolidation ([`docs/world-first-spec.md`](world-first-spec.md)) run in parallel without merge conflicts:
+Work is split into two non-overlapping lanes so physical part engineering and the single-stage World-First UI consolidation ([`docs/ux/world-first-spec.md`](../ux/world-first-spec.md)) run in parallel without merge conflicts:
 
 | Boundary | Paths | Rule |
 | --- | --- | --- |
-| **Owned by this Parts Lane** | `parts/**`, `sets/*.json`, `public/kip/**`, `public/parts-stl/**`, `public/parts-glb/**`, `scripts/bridge-partspec.ts`, `scripts/build-kip.ts`, `shared/calibration.ts`, `tests/{partspec,snap-samples,kip,calibration}.test.ts`, `docs/parts-tu-spec.md`, `docs/decisions/0005-partspec-lattice-merge.md` | Full read/write ownership. |
+| **Owned by this Parts Lane** | `parts/**`, `sets/*.json`, `public/kip/**`, `public/parts-stl/**`, `public/parts-glb/**`, `scripts/bridge-partspec.ts`, `scripts/build-kip.ts`, `shared/calibration.ts`, `tests/{partspec,snap-samples,kip,calibration}.test.ts`, `docs/parts/parts-tu-spec.md`, `docs/decisions/0005-partspec-lattice-merge.md` | Full read/write ownership. |
 | **Shared Schema Contract (Frozen unless coordinated)** | `shared/part.ts`, `shared/partspec.ts`, `shared/checks.ts`, `src/lib/catalog.ts` | Keep stable (`Part`, `bboxMm`, `stlFile`, `glbFile`, `smallPartWarning`, `allParts`, `stlFileFor`, `glbFileFor`). |
 | **Read-Only (Owned by World-First UX/UI Lane)** | `src/**` (except `src/lib/catalog.ts`), `worker/**`, `game/**`, `public/world/**`, `shared/world-parts.ts`, `tests/world-parts.test.ts`, `docs/world-first-*` | Do not edit. |
 
@@ -59,7 +59,7 @@ Unstaged Wave 9 updates currently sit in `parts/partspec/toyventor_parts.py`, `p
 - Run `npm run bridge` so any updated Wave 9 meshes referenced by `sets/kip-wardrobe.json` stay byte-synced across `public/parts-stl/` and `public/parts-glb/`.
 - Run `npm run build:kip` and `npx vitest run tests/kip.test.ts` to verify `public/kip/Kip-Demo.html` and `public/kip/kip-manifest.json`.
 
-### 2. `12.5 mm` TU Hidden-Calibration First-Print Selector ([Decision 0005](decisions/0005-partspec-lattice-merge.md) #3)
+### 2. `12.5 mm` TU Hidden-Calibration First-Print Selector ([Decision 0005](../decisions/0005-partspec-lattice-merge.md) #3)
 
 Kids and parents never run a calibration wizard; the first Forge Mount print carries a 3-socket selector strip (`1`, `2`, `3` embossed dots) and asks one question (`"Snap the little brick into each dotted slot. Which clicked best?"`):
 
@@ -71,7 +71,7 @@ Kids and parents never run a calibration wizard; the first Forge Mount print car
 
 ### 3. Physical PLA Print & Tolerance Lock-In (`parts/test-print-tu/`)
 
-Slice and print Plates 1-3 (`0.20 mm` PLA, `0.4 mm` nozzle, `3` walls, `4` top/bottom shells, `15-20%` gyroid infill, **supports OFF**) per [`parts/test-print-tu/README.md`](../parts/test-print-tu/README.md):
+Slice and print Plates 1-3 (`0.20 mm` PLA, `0.4 mm` nozzle, `3` walls, `4` top/bottom shells, `15-20%` gyroid infill, **supports OFF**) per [`parts/test-print-tu/README.md`](../../parts/test-print-tu/README.md):
 
 | Plate | Key Physical Gate | Pass Criterion |
 | --- | --- | --- |
@@ -82,11 +82,11 @@ Slice and print Plates 1-3 (`0.20 mm` PLA, `0.4 mm` nozzle, `3` walls, `4` top/b
 When physical measurements are recorded:
 1. Adjust only the empirical clearance/oversize fields in `parts/partspec/interfaces.json` and update its status note from `"TARGETS ONLY"` to `"CALIBRATED"` with printer + filament metadata.
 2. Re-run `selftest.py`, `npm run bridge`, `npm run build:kip`, and regenerate `parts/test-print-tu/`.
-3. Update [decision 0005](decisions/0005-partspec-lattice-merge.md) status to `accepted & calibrated`.
+3. Update [decision 0005](../decisions/0005-partspec-lattice-merge.md) status to `accepted & calibrated`.
 
 ### 4. Curated Expansion Packs (Optional, Zero UI Code)
 
-- Follow [`docs/creating-parts.md`](creating-parts.md) to add any extra themed sets (`sets/<pack-id>.json`) from verified PartSpec catalog entries via `scripts/bridge-partspec.ts`.
+- Follow [`docs/parts/creating-parts.md`](creating-parts.md) to add any extra themed sets (`sets/<pack-id>.json`) from verified PartSpec catalog entries via `scripts/bridge-partspec.ts`.
 
 ---
 

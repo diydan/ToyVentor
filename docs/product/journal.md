@@ -147,7 +147,7 @@ Goal: snap-on parts tray + true-scale AR preview (wireframe p.4).
   ever reaches the user; the five-step calibration piece stays an
   engineering tool.
 - Parts geometry fork, surfaced and recorded: PartSpec landed under
-  `docs/PartSpec/` — a Python/manifold3d generator on one 12.5 mm TU
+  `docs/parts/partspec/` — a Python/manifold3d generator on one 12.5 mm TU
   lattice (Snap Small 12.5, Large 25, Pro 12.5) with 60 catalog parts
   passing its geometry + measured-fit gate in scratch. Decision 0005
   (proposed) makes it the geometry canon only after the Large hand-feel
@@ -187,7 +187,7 @@ Goal: snap-on parts tray + true-scale AR preview (wireframe p.4).
 
 ### Addendum — recorded Thu Oct 29
 - Closing the Day 3 PartSpec thread: the recurring new-parts runbook
-  ([creating-parts.md](creating-parts.md)) and binary-STL support in
+  ([creating-parts.md](../parts/creating-parts.md)) and binary-STL support in
   `scripts/stl_to_glb.py` landed on Oct 29 (`d388b74`), with regression
   tests for both STL encodings and independent geometry checks on all six
   demo-subset conversions. This is Day 4 follow-through, recorded here so
@@ -230,7 +230,7 @@ Goal: daily pack, 3 items, 1 printable guaranteed, rarity + one stat (wireframe 
   back. Live check: a snowy world recipe came back in 6.8 seconds. 93
   unit tests green, plus the engine tests for the editor, Create mode,
   parts and the toy contract itself.
-- Parts workflow: added [creating-parts.md](creating-parts.md) as the
+- Parts workflow: added [creating-parts.md](../parts/creating-parts.md) as the
   recurring runbook for new robots, figurines, add-ons and mechanisms, and
   fixed `scripts/stl_to_glb.py` to accept PartSpec's binary STLs as well as
   the app lane's ASCII STLs. The new regression tests cover both encodings;
@@ -256,7 +256,7 @@ Goal: daily pack, 3 items, 1 printable guaranteed, rarity + one stat (wireframe 
 ### Stretch goal — scan to 3D (recorded Thu Oct 29, 22:50)
 - Stretch goal, not in the demo path: a real 3D body for the kid's actual toy,
   from the same photo the scan already takes. Spec drafted in
-  [scan-to-3d.md](scan-to-3d.md). Route is a recommendation, not a decision.
+  [scan-to-3d.md](../specs/scan-to-3d.md). Route is a recommendation, not a decision.
 - Why it matters: the game can only render three body presets
   (`shared/toycontract.ts:71` — car -> vehicle, figure -> character, anything
   else -> robot), so the coffee cup that proved our segmentation becomes a
@@ -289,7 +289,7 @@ Goal: daily pack, 3 items, 1 printable guaranteed, rarity + one stat (wireframe 
 
 ### Stretch goal — parent time gates (recorded Thu Oct 29, 23:18)
 - Second stretch goal, also not in the demo path: parents set the rules, the
-  kid earns time. Spec drafted in [parent-time-gate.md](parent-time-gate.md).
+  kid earns time. Spec drafted in [parent-time-gate.md](../specs/parent-time-gate.md).
 - The controls: a session timer for right now, and cumulative STEM challenges
   that award minutes, inside a daily limit that earned time can never push
   past. Daily budget, daily limit, session timer and minutes-per-challenge are
@@ -340,7 +340,7 @@ Goal: 2-3 donors in, 1 toy out, max 2 new adapters (wireframe p.6).
 
 ### Decision recorded — Fri Oct 30
 - No rollover on earned time (parent time gates, stretch spec
-  [parent-time-gate.md](parent-time-gate.md)): the day resets at local midnight
+  [parent-time-gate.md](../specs/parent-time-gate.md)): the day resets at local midnight
   in the family's stored timezone, the daily limit stays put, and yesterday's
   surplus is gone. A child cannot bank time for tomorrow. The ledger is keyed
   by day, so rollover is not even representable — the rule is enforced by the

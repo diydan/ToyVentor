@@ -1,4 +1,4 @@
-// Builds docs/spec-for-review.md from the canonical spec.
+// Builds docs/product/spec-for-review.md from the canonical spec.
 //
 // The spec artifact and the review copy must never drift apart, so the
 // review copy is generated, not hand-edited. Relative links are turned
@@ -10,10 +10,10 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 const root = process.cwd();
-const spec = readFileSync(join(root, "docs/spec.md"), "utf8");
+const spec = readFileSync(join(root, "docs/product/spec.md"), "utf8");
 
 const headerFor = (date: string) =>
-  `> Review copy, generated ${date} from \`docs/spec.md\`. Do not
+  `> Review copy, generated ${date} from \`docs/product/spec.md\`. Do not
 > edit this file by hand: run \`npm run spec:review\` after changing the spec.
 > The block below is for reviewers. Delete it before publishing.
 
@@ -92,7 +92,7 @@ export function buildReviewCopy(specText: string, date: string): string {
 
 if (process.argv[1]?.endsWith("export-spec.ts")) {
   const out = buildReviewCopy(spec, new Date().toISOString().slice(0, 10));
-  writeFileSync(join(root, "docs/spec-for-review.md"), out);
+  writeFileSync(join(root, "docs/product/spec-for-review.md"), out);
 
   const emDashes = (out.match(/\u2014/g) ?? []).length;
   console.log(`spec-for-review.md written (${out.length} bytes, em dashes: ${emDashes})`);

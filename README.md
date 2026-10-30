@@ -5,10 +5,10 @@ build printable upgrades on it in the browser, then play with the upgraded
 toy in AR and a mini game. Built for the Meta Global AI Developer Hackathon
 (indie track), due Nov 4, 2026.
 
-Docs: [index](docs/README.md) · [vision](docs/vision.md) ·
-[spec](docs/spec.md) · [plan](docs/plan.md) ·
-[wireframe (archived)](docs/archive/wireframe.md) · [Snap](docs/snap.md) · [Pro](docs/pro.md) ·
-[journal](docs/journal.md)
+Docs: [index](docs/README.md) · [vision](docs/product/vision.md) ·
+[spec](docs/product/spec.md) · [plan](docs/product/plan.md) ·
+[wireframe (archived)](docs/archive/wireframe.md) · [Snap](docs/parts/snap.md) · [Pro](docs/parts/pro.md) ·
+[journal](docs/product/journal.md)
 
 ## Run it
 
@@ -55,4 +55,4 @@ cards, a mini game driven by build stats, the hand-off into ToyVentor
 World, and Create mode writing worlds through the Muse Spark route.
 156 unit tests across 23 files. Nothing printed yet, and the Reveal theme is a synth
 placeholder until Mureka is wired.
-See [the plan](docs/plan.md) and [the journal](docs/journal.md).
+See [the plan](docs/product/plan.md) and [the journal](docs/product/journal.md).

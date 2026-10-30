@@ -92,7 +92,7 @@ compatibility.
 ## Content
 
 - Base library made ahead of time. Post-launch roadmap: two seeded sets (Month 1 and Month 2).
-- First four sample parts designed (both sizes): see [snap-samples.md](archive/snap-samples.md).
+- First four sample parts designed (both sizes): see [snap-samples.md](../archive/snap-samples.md).
 - Pack Rips: 3 items per free daily pack, 1 printable part guaranteed.
   Chance-based packs are never sold to children.
 - A monthly subscription delivers known seasonal physical packs tied to

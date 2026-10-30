@@ -10,7 +10,7 @@ export interface SleepCurtainProps {
 }
 
 /**
- * Kid-facing wind-down surface (`docs/parent-time-gate.md` & `docs/snap.md`).
+ * Kid-facing wind-down surface (`docs/specs/parent-time-gate.md` & `docs/parts/snap.md`).
  * Never renders a visible countdown clock or fail state:
  * - Final 60 seconds: subtle non-interactive warm twilight vignette.
  * - Time ended / quiet hours: calm night-sky fade-out with a Grown-ups corner button.

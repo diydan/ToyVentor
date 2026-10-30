@@ -146,17 +146,17 @@ try {
 // already embedded in the existing file and require byte equality. That
 // catches body drift without churning the date on every run.
 {
-  const reviewPath = join(root, "docs/spec-for-review.md");
-  const specPath = join(root, "docs/spec.md");
-  if (!existsSync(reviewPath)) fail("docs/spec-for-review.md missing");
+  const reviewPath = join(root, "docs/product/spec-for-review.md");
+  const specPath = join(root, "docs/product/spec.md");
+  if (!existsSync(reviewPath)) fail("docs/product/spec-for-review.md missing");
   else {
     const existing = readFileSync(reviewPath, "utf8");
     const date = existing.match(/generated (\d{4}-\d{2}-\d{2})/)?.[1];
-    if (!date) fail("docs/spec-for-review.md has no generation date to rebuild with");
+    if (!date) fail("docs/product/spec-for-review.md has no generation date to rebuild with");
     else {
       const rebuilt = buildReviewCopy(readFileSync(specPath, "utf8"), date);
       if (rebuilt === existing) ok("review copy of the spec is current");
-      else fail("docs/spec-for-review.md drifted from docs/spec.md: run `npm run spec:review`");
+      else fail("docs/product/spec-for-review.md drifted from docs/product/spec.md: run `npm run spec:review`");
     }
   }
 }

@@ -1,7 +1,7 @@
 # ToyVentor — 10-Day Plan
 
 ## Goal
-Ship ToyVentor — helping the next generation grow into robotics through play: scan it, augment it, print it, play it — for the Meta Global AI Developer Hackathon (indie track), submitted by Nov 4, 9:00 PM ET. Grounded in [vision](vision.md), [submission vision](submission-vision.md), [spec](spec.md) and [wireframe](archive/wireframe.md); progress logged in [journal](journal.md).
+Ship ToyVentor — helping the next generation grow into robotics through play: scan it, augment it, print it, play it — for the Meta Global AI Developer Hackathon (indie track), submitted by Nov 4, 9:00 PM ET. Grounded in [vision](vision.md), [submission vision](submission-vision.md), [spec](spec.md) and [wireframe](../archive/wireframe.md); progress logged in [journal](journal.md).
 
 ## Success Criteria
 - Scan a car to a colored upgrade in the game on a phone in under 60 seconds.
@@ -26,7 +26,7 @@ Build one car end to end, then widen. Scan -> builder -> AR -> game -> STL -> Re
 7. **Day 7 — Nov 1: Market freeze.** Core: My Toys fit filter, 2 seeded Forge Club sets, seeded daily pack (p.5, p.7-8). Core demo frozen end of day. Stretch: pack rip animation.
 8. **Day 8 — Nov 2: Pro teaser.** Core: rounded TU05 beam, friction pin, 1 gear pair on same Mount; Pro part equips in game. Stretch: gear ratio readout.
 9. **Day 9 — Nov 3: Live Play + Rehearsal.** Core: 4 mood buttons + 4 loop crossfades, two clean timed runs, backup video recorded. Stretch: offline cache check on 4G.
-10. **Day 10 — Nov 4: Submit.** Core: final demo record, form/video/screenshots by 9 PM ET, code hard stop 6 PM ET. Stretch if ahead overall: 3 voice keywords via Muse Voice Transcribe + 1 STEM gear ratio challenge; plus a photo-derived 3D body for the scanned toy ([scan-to-3d.md](scan-to-3d.md)) and parent-set time gates ([parent-time-gate.md](parent-time-gate.md)).
+10. **Day 10 — Nov 4: Submit.** Core: final demo record, form/video/screenshots by 9 PM ET, code hard stop 6 PM ET. Stretch if ahead overall: 3 voice keywords via Muse Voice Transcribe + 1 STEM gear ratio challenge; plus a photo-derived 3D body for the scanned toy ([scan-to-3d.md](../specs/scan-to-3d.md)) and parent-set time gates ([parent-time-gate.md](../specs/parent-time-gate.md)).
 
 ## Validation Plan
 - Daily: end-of-day phone check of what is demo-able right now, logged in journal.

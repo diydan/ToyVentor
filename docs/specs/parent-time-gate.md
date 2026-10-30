@@ -1,6 +1,6 @@
 # Spec: Parent Time Gates & STEM Earned Play Time
 
-Status: Active · Single-Stage Architecture (aligned with `docs/world-first-spec.md` & `docs/snap.md`)
+Status: Active · Single-Stage Architecture (aligned with `docs/ux/world-first-spec.md` & `docs/parts/snap.md`)
 
 Decided (Dan, Oct 30): **Earned time never rolls over.** The day resets at local midnight in the family's stored IANA timezone, and yesterday's surplus is gone. A child cannot bank time for tomorrow, and the daily ceiling stays the trust anchor.
 
@@ -17,14 +17,14 @@ Parent Time Gates give grown-ups calm, predictable boundaries without turning a 
    - **Base Daily Time (`dailyBaseMinutes`):** Guaranteed play minutes today (e.g. `20 min`).
    - **Hard Daily Ceiling (`dailyLimitMinutes`):** Maximum daily minutes including STEM bonuses (e.g. `30 min`, `>= dailyBaseMinutes`). Completed STEM missions (`S.mdone` across the 9 STEM Playground labs + Bridge + Lift) earn `+minutesPerChallenge` (default `+5 min` per unique mission today), **strictly capped at `dailyLimitMinutes`**.
    - **Optional Sitting Timer & Bedtime Quiet Hours:** A right-now session cap (e.g. `15 min` for this sitting) and local-time bedtime window (e.g. `19:30` to `07:00`).
-3. **Calm fade-out, never a countdown (`docs/snap.md`):** Kids never see a ticking clock, warning banner, or fail state. During the final minute, a subtle warm twilight vignette tints the stage edges; when time runs out, the world fades smoothly into a warm **"Resting for tonight / Time for a break"** card while muting background audio and mic.
+3. **Calm fade-out, never a countdown (`docs/parts/snap.md`):** Kids never see a ticking clock, warning banner, or fail state. During the final minute, a subtle warm twilight vignette tints the stage edges; when time runs out, the world fades smoothly into a warm **"Resting for tonight / Time for a break"** card while muting background audio and mic.
 
 ---
 
 ## What Changed From the Draft Spec (Design Improvements)
 
 1. **Single-Stage Native Placement (Replaces Retired `Toybox` Route):**
-   - `ToyboxScreen` was retired in `docs/world-first-spec.md`. Grown-ups now lives in **`⋯ -> Grown-ups`**, a quiet **`Grown-ups · Play Time`** footer link inside `MyToySheet`, `?tab=parent`, and the corner button on the **`SleepCurtain`** fade-out card. Zero buttons or clocks are added to the kid's 4-control top dock.
+   - `ToyboxScreen` was retired in `docs/ux/world-first-spec.md`. Grown-ups now lives in **`⋯ -> Grown-ups`**, a quiet **`Grown-ups · Play Time`** footer link inside `MyToySheet`, `?tab=parent`, and the corner button on the **`SleepCurtain`** fade-out card. Zero buttons or clocks are added to the kid's 4-control top dock.
 2. **7 Overlapping Knobs Simplified to Presets + 3 Clear Controls:**
    - Removed the weekly *"Cumulative target"* (contradicted non-rollover and encouraged multi-day grind).
    - Paired `dailyBaseMinutes` + `dailyLimitMinutes` with 1-tap presets (`Weeknight 20m / 30m cap`, `Weekend 45m / 60m cap`, `Quick 15m`) and tucked `sessionLimitMinutes` + `quietHours` into one clean disclosure.

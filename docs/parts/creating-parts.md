@@ -4,16 +4,16 @@ Use this guide for every recurring part task: robot parts, figurines and charact
 
 This guide does **not** replace the standards. If anything here conflicts with them, the standards and data win:
 
-1. Product behaviour: [spec.md](spec.md), then [snap.md](snap.md) or [pro.md](pro.md).
-2. Part numbers, checks, interfaces and warnings: [`interfaces.json`](../parts/partspec/interfaces.json).
-3. PartSpec rules: the [Interface Standard](PartSpec/specs/01_interface_standard.md), followed by the relevant line spec in [PartSpec/specs](PartSpec/specs/README.md).
-4. Generator workflow and live catalog: the generated [agent instructions](PartSpec/specs/06_agent_instructions.md). Regenerate it instead of editing it.
+1. Product behaviour: [spec.md](../product/spec.md), then [snap.md](snap.md) or [pro.md](pro.md).
+2. Part numbers, checks, interfaces and warnings: [`interfaces.json`](../../parts/partspec/interfaces.json).
+3. PartSpec rules: the [Interface Standard](partspec/specs/01_interface_standard.md), followed by the relevant line spec in [PartSpec/specs](../README.md).
+4. Generator workflow and live catalog: the generated [agent instructions](partspec/specs/06_agent_instructions.md). Regenerate it instead of editing it.
 
 ## Current lane rule
 
-New geometry goes in **PartSpec**, the TU-lattice Python system under [`parts/partspec`](../parts/partspec/INTERFACE_STANDARD.md). Do not create new parts in the frozen OpenSCAD app lane (`parts/scad/`, 16/32 mm) unless Dan explicitly asks for emergency maintenance of the current demo.
+New geometry goes in **PartSpec**, the TU-lattice Python system under [`parts/partspec`](../../parts/partspec/INTERFACE_STANDARD.md). Do not create new parts in the frozen OpenSCAD app lane (`parts/scad/`, 16/32 mm) unless Dan explicitly asks for emergency maintenance of the current demo.
 
-PartSpec is still the *proposed* geometry canon until the Large hand-feel print condition in [decision 0005](decisions/0005-partspec-lattice-merge.md) passes. A digitally verified PartSpec part therefore does not automatically ship in the current app.
+PartSpec is still the *proposed* geometry canon until the Large hand-feel print condition in [decision 0005](../decisions/0005-partspec-lattice-merge.md) passes. A digitally verified PartSpec part therefore does not automatically ship in the current app.
 
 ## What "finished" means
 
@@ -223,7 +223,7 @@ Edit sources only:
 - `parts/partspec/toyventor_pro.py` — Pro builders and mechanical primitives
 - `parts/partspec/interfaces.json` — only for an approved standards change
 - `parts/partspec/toyventor_fit.py`, `toyventor_assembly.py` or `toyventor_index.py` — only when a genuinely new mating feature must be measured or validated
-- Human-authored package docs in `parts/partspec/` (`snap_v2.md`, `pro_v2.md`, `FORGE_MOUNT.md`, `COMPLIANCE.md`, `LICENSING.md`, `DESIGN_LOG.md`) — only when the product rule or decision itself changes; never edit their assembled copies under `docs/PartSpec/specs/`
+- Human-authored package docs in `parts/partspec/` (`snap_v2.md`, `pro_v2.md`, `FORGE_MOUNT.md`, `COMPLIANCE.md`, `LICENSING.md`, `DESIGN_LOG.md`) — only when the product rule or decision itself changes; never edit their assembled copies under `docs/parts/partspec/specs/`
 
 Never hand-edit generated STLs, `toyventor_parts.json`, `toyventor_index.json`, `AGENTS.md`, `CATALOG.md`, `INTERFACE_STANDARD.md` or the assembled specs. Change the source and regenerate.
 
@@ -400,7 +400,7 @@ Compatibility acceptance for the part:
 
 ## 8. Promote the passing model into the tracked package
 
-`parts/partspec/` tracks the pre-computed manifests and markdown in git (while `*.stl` meshes remain gitignored), and the app bridge reads them there. After the scratch `out/` gate is green, rerun the same sequence with `parts/partspec` as the output location (`make_specs.py .` automatically refreshes `../../docs/PartSpec/specs/`):
+`parts/partspec/` tracks the pre-computed manifests and markdown in git (while `*.stl` meshes remain gitignored), and the app bridge reads them there. After the scratch `out/` gate is green, rerun the same sequence with `parts/partspec` as the output location (`make_specs.py .` automatically refreshes `../../docs/parts/partspec/specs/`):
 
 ```bash
 python toyventor_parts.py .
@@ -522,7 +522,7 @@ Digital compatibility and conformity
 Publication inside PartSpec
 - [ ] Manifests and generated markdown refreshed in `parts/partspec/` and diffs reviewed
 - [ ] `CATALOG.md`, `AGENTS.md` and `INTERFACE_STANDARD.md` regenerated
-- [ ] `docs/PartSpec/specs` snapshot refreshed (`python3 make_specs.py .`)
+- [ ] `docs/parts/partspec/specs` snapshot refreshed (`python3 make_specs.py .`)
 - [ ] Design-log entry added if a real decision was made
 
 App (only if in scope)
@@ -576,4 +576,4 @@ Unverified or blocked:
 - ...
 ```
 
-A useful future request is therefore short: “Create `<part>` by following `docs/creating-parts.md`; take it to `<digital verified / app-bridged / print candidate>` and report with the handoff format.” The standard still governs the numbers; this guide governs the work.
+A useful future request is therefore short: “Create `<part>` by following `docs/parts/creating-parts.md`; take it to `<digital verified / app-bridged / print candidate>` and report with the handoff format.” The standard still governs the numbers; this guide governs the work.

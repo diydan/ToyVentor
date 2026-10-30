@@ -204,11 +204,11 @@ Two things I considered and rejected, for the record. First, generating part geo
 
 ## ToyVentor Snap
 
-The kid line: snap-fit, tool-free, stud grid in two sizes. Full part types, design rules, print and game behavior live in [snap.md](snap.md), which is canonical for this line; this spec no longer duplicates it. Headline risk, stated there too: as of Oct 29 nothing in Snap has been printed yet. The Day 4 calibration gate slipped, so its dimensions stay targets until the first print proof.
+The kid line: snap-fit, tool-free, stud grid in two sizes. Full part types, design rules, print and game behavior live in [snap.md](../parts/snap.md), which is canonical for this line; this spec no longer duplicates it. Headline risk, stated there too: as of Oct 29 nothing in Snap has been printed yet. The Day 4 calibration gate slipped, so its dimensions stay targets until the first print proof.
 
 ## ToyVentor Pro
 
-The mechanical line for ages 8+ and makers, on ToyVentor's own 12.5 mm hole grid. Full standard, part families, and print rules live in [pro.md](pro.md), which is canonical for this line. Hackathon scope stays narrow: one rounded TU05 beam is in the build today, shown as a teaser on the demo Forge Mount. A friction pin and one gear set are still to make.
+The mechanical line for ages 8+ and makers, on ToyVentor's own 12.5 mm hole grid. Full standard, part families, and print rules live in [pro.md](../parts/pro.md), which is canonical for this line. Hackathon scope stays narrow: one rounded TU05 beam is in the build today, shown as a teaser on the demo Forge Mount. A friction pin and one gear set are still to make.
 
 ## Open source
 

@@ -1,7 +1,7 @@
 # Spec: Four-Stage Progressive Power & Robotics System (`Snap → Pro → Momentum → Mech`)
 
 Oct 30, 2026 · Plan & Architecture Spec (No-Code Stage)  
-Companion to: [`flatpack-modular-craft-spec.md`](flatpack-modular-craft-spec.md), [`snap.md`](snap.md), [`pro.md`](pro.md), and [`vision.md`](vision.md)
+Companion to: [`flatpack-modular-craft-spec.md`](flatpack-modular-craft-spec.md), [`snap.md`](../parts/snap.md), [`pro.md`](../parts/pro.md), and [`vision.md`](../product/vision.md)
 
 ---
 
