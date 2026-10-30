@@ -1,5 +1,5 @@
 /* ToyVentor app-shell cache.
-   - Navigations, the app shell (/) and the world page (/world/...) are
+   - Navigations, the app shell (/) and the app root are
      network-first: a redeploy must reach returning visitors. The cached
      copy is only a fallback when the network fails, so the demo still
      opens offline with seed content.

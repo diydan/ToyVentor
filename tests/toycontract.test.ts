@@ -5,6 +5,7 @@ import type { Part, ToySet } from "../shared/part";
 import type { Toy } from "../shared/toy";
 import {
   TOY_CONTRACT_FORMAT,
+  decodeToyContractFromHash,
   decodeToyContract,
   encodeToyContract,
   gamePartForStat,
@@ -107,7 +108,7 @@ describe("toy contract", () => {
   it("survives a round trip through the URL hash", () => {
     const contract = toyContractFromBuild(car, [at("racer-spoiler", 0, 0)], byId, colorOf);
     const url = toyWorldUrl(contract);
-    expect(url).toContain("/world/ToyVentor-World.html#toy=");
+    expect(url).toContain("/#toy=");
     const encoded = url.split("#toy=")[1]!;
     expect(encoded).toMatch(/^[A-Za-z0-9_-]+$/);
     const decoded = decodeToyContract(encoded);
@@ -125,6 +126,13 @@ describe("toy contract", () => {
     expect(one.col.c1).toBe("#e85d1f");
     expect(one.col.c2).toBe("");
     expect(one.col.skin).toBe("");
+  });
+
+  it("reads contracts from a location hash on boot", () => {
+    const contract = toyContractFromBuild(car, [at("racer-spoiler", 0, 0)], byId, colorOf);
+    expect(decodeToyContractFromHash(`#toy=${encodeToyContract(contract)}`)).toEqual(contract);
+    expect(decodeToyContractFromHash("#other=1")).toBeNull();
+    expect(decodeToyContractFromHash("")).toBeNull();
   });
 
   it("refuses malformed contracts", () => {

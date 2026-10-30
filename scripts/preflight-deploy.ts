@@ -52,28 +52,14 @@ else ok("parent time migration present");
 if (existsSync(join(root, "dist/client/index.html"))) ok("dist/ build present");
 else console.log("preflight note: no dist/ yet — `npm run deploy` builds first, this is fine");
 
-// 5. ToyVentor World is in the client build and current: the Play button
-// opens it, and a stale page would ship the old game next to a new app.
-const worldPage = join(root, "public/world/ToyVentor-World.html");
-if (!existsSync(worldPage)) {
-  fail("public/world/ToyVentor-World.html missing: run `npm run build:world`");
-} else {
-  const scratch = mkdtempSync(join(tmpdir(), "toyventor-preflight-"));
-  try {
-    execFileSync("python3", [join(root, "game/build25.py")], {
-      env: { ...process.env, TOYVENTOR_OUT: scratch, TOYVENTOR_TEST_OUT: scratch },
-      stdio: "pipe",
-    });
-    const fresh = readFileSync(join(scratch, "ToyVentor-World.html"));
-    if (fresh.equals(readFileSync(worldPage)))
-      ok("ToyVentor World page present and current (public/world/ToyVentor-World.html)");
-    else fail("public/world/ToyVentor-World.html is stale vs game/engine25.js: run `npm run build:world`");
-  } catch {
-    fail("could not rebuild the world page to check freshness: run `npm run build:world` by hand");
-  } finally {
-    rmSync(scratch, { recursive: true, force: true });
-  }
-}
+// 5. Native stage: no stale iframe bundle, runtime entry exists (Phase 0A).
+if (existsSync(join(root, "public/world/ToyVentor-World.html")))
+  fail("public/world/ToyVentor-World.html still present: stale iframe bundle must be deleted (Phase 0A)");
+else if (existsSync(join(root, "public/world/three")))
+  fail("public/world/three still present: stale vendored three must be deleted (Phase 0A)");
+else if (!existsSync(join(root, "src/features/game/world/runtime/world.ts")))
+  fail("src/features/game/world/runtime/world.ts missing: native runtime entry not found");
+else ok("native stage runtime present, no stale iframe bundle (public/world absent)");
 
 // 6. No untracked source files that a clean checkout would lack (the P2-2
 // class: sources present here but missing after a fresh clone). Git never

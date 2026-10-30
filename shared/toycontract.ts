@@ -24,7 +24,9 @@ export type ToyType = "character" | "robot" | "vehicle";
 
 /** Where the game page lives. Same origin as the app, so Create mode in
  *  the game can reach the Worker's /api/muse/spark route. */
-export const WORLD_PATH = "/world/ToyVentor-World.html";
+export const WORLD_PATH = "/";
+/** Legacy iframe world path; worker 302-redirects it to `/` (hash preserved). */
+export const LEGACY_WORLD_PATH = "/world/ToyVentor-World.html";
 
 /** Standalone 3D Modular Rig Demo for Kip (Pro 8+ & Snap 4–8, Mixamo locomotion,
  *  Exploded View, and Tabletop Part-Pile-to-Build animation). */
@@ -157,6 +159,18 @@ export function decodeToyContract(text: string): ToyContract | null {
 /** The game URL that opens ToyVentor World with this toy. */
 export function toyWorldUrl(contract: ToyContract, base = ""): string {
   return `${base}${WORLD_PATH}#toy=${encodeToyContract(contract)}`;
+}
+
+/** Read a `#toy=` contract from a hash string (app boot / share links). */
+export function decodeToyContractFromHash(hash: string): ToyContract | null {
+  try {
+    const raw = hash.replace(/^#/, "");
+    const match = raw.match(/(?:^|&)toy=([^&]+)/);
+    if (!match?.[1]) return null;
+    return decodeToyContract(decodeURIComponent(match[1]));
+  } catch {
+    return null;
+  }
 }
 
 /** The viewer URL that opens Kip's 3D Modular Rig Demo with an optional toy build contract. */

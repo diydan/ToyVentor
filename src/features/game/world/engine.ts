@@ -1,22 +1,16 @@
-// ToyVentor World engine facade, port step 1: wrap, do not rewrite.
+// ToyVentor World engine facade (Phase 0A: native in-process stage).
 //
-// The 2.5D engine in game/engine25.js stays imperative three.js 0.128 and
-// keeps its canvas and render loop. For now it still runs as the standalone
-// page built by game/build25.py, hosted same-origin in an iframe. This
-// module is the only door between React and that page: commands go in
-// through the engine's own UI (world tabs, zoom button, mission buttons,
-// the #toy= contract on load), and state comes out as typed events read
-// from the engine's save object, diffed a few times a second. React never
-// touches the engine per frame.
-//
-// Later port steps replace pieces behind this same interface: React-owned
-// HUD, Factory/customizer, mission panels, Create mode, and the editor are
-// in. The three.js upgrade comes last, on its own.
+// The 2.5D runtime in runtime/world.ts runs in-process behind this
+// interface. Commands go through the runtime's own controls, and state
+// comes out as typed events emitted via a microtask-batched notify()
+// on every mutation — no polling, no iframe. React never touches the
+// engine per frame.
 import {
   WORLD_PATH,
   toyWorldUrl,
   type ToyContract,
 } from "../../../../shared/toycontract";
+import { createWorldRuntime } from "./runtime";
 
 export const WORLDS = [
   { id: "garden", label: "Garden", lab: false },
@@ -727,7 +721,7 @@ export function nextZoom(zoom: ZoomLevel): ZoomLevel {
 }
 
 export interface EngineHandle {
-  /** Reload the world wearing this contract (or stock when null). */
+  /** Apply this contract in-memory (or stock when null); no reload. */
   setToy: (contract: ToyContract | null) => void;
   /** Switch world through the engine's own world tabs. Queued until ready. */
   goWorld: (world: WorldId) => void;
@@ -795,7 +789,7 @@ export interface EngineHandle {
   start: () => void;
   /** Quiet the engine's background music when the calm Sleep Curtain fades in. */
   muteSound: () => void;
-  /** Stop polling and unload the frame, which destroys its WebGL context. */
+  /** Dispose the runtime, destroying its WebGL context. */
   dispose: () => void;
 }
 
@@ -850,25 +844,19 @@ interface LegacyHooks {
   };
 }
 
-interface LegacyWindow extends Window {
-  __x?: LegacyHooks;
-}
-
-const POLL_MS = 100;
 
 /**
- * Host the legacy engine page in `frame` and talk to it through this
- * handle. Safe under StrictMode double-mounting: dispose unloads the
- * frame, and a fresh createEngine on the same element reloads it.
+ * Host the native runtime in `hostEl` and talk to it through this
+ * handle. Safe under StrictMode double-mounting: dispose tears down
+ * the WebGL context, and a fresh createEngine remounts cleanly.
  */
 export function createEngine(
-  frame: HTMLIFrameElement,
+  hostEl: HTMLElement,
   events: EngineEvents,
   initial: { contract: ToyContract | null },
 ): EngineHandle {
   let disposed = false;
   let ready = false;
-  let lastUrl = "";
   let pendingWorld: WorldId | null = null;
   let pendingCustomizer: "build" | "forge" | null = null;
   let pendingPanel: "create" | "editor" | null = null;
@@ -883,23 +871,16 @@ export function createEngine(
   let lastCreate = closedCreateSnapshot;
   let lastEditor = closedEditorSnapshot;
 
-  const win = (): LegacyWindow | null => {
-    try {
-      return (frame.contentWindow as LegacyWindow | null) ?? null;
-    } catch {
-      return null;
-    }
+  let runtime: ReturnType<typeof createWorldRuntime> | null = null;
+  const hooks = (): LegacyHooks | null => (runtime as unknown as LegacyHooks | null) ?? null;
+  const doc = (): HTMLElement | null => hostEl;
+  let boundDoc: HTMLElement | null = null;
+  let notifyQueued = false;
+  const schedulePoll = () => {
+    if (disposed || notifyQueued) return;
+    notifyQueued = true;
+    queueMicrotask(() => { notifyQueued = false; poll(); });
   };
-  const hooks = (): LegacyHooks | null => win()?.__x ?? null;
-  const doc = (): Document | null => {
-    try {
-      return frame.contentDocument;
-    } catch {
-      return null;
-    }
-  };
-
-  let boundDoc: Document | null = null;
 
   const click = (selector: string) => {
     doc()?.querySelector<HTMLElement>(selector)?.click();
@@ -919,58 +900,9 @@ export function createEngine(
   };
 
   const load = (contract: ToyContract | null) => {
-    const url = worldUrlFor(contract);
-    if (url === lastUrl && frame.src.includes("ToyVentor-World.html")) return;
-    const hadLoadedWorld = Boolean(lastUrl && frame.src.includes("ToyVentor-World.html"));
-    lastUrl = url;
-
-    const frameDoc = doc();
-    const save = hooks()?.S;
-    const sheetOpen = ready && Boolean(frameDoc?.querySelector("#sheet:not([hidden])"));
-    if (hadLoadedWorld && sheetOpen && contract && save) {
-      save.sel = save.sel ?? {};
-      save.found = save.found ?? {};
-      save.col = save.col ?? {};
-      const sl = save.sel[contract.type] ?? (save.sel[contract.type] = {});
-      for (const partKey of contract.parts) {
-        const [t, slot, id] = partKey.split(".");
-        if (t === contract.type && slot && id) {
-          sl[slot] = id;
-          save.found[partKey] = true;
-        }
-      }
-      for (const zone of ["c1", "c2", "skin"] as const) {
-        const hex = contract.col?.[zone] ?? "";
-        if (/^#[0-9a-f]{6}$/i.test(hex)) save.col[zone] = hex;
-      }
-      const tag = frameDoc?.getElementById("toy-tag");
-      if (tag && contract.name) {
-        tag.textContent = `Your toy: ${contract.name.slice(0, 40)}`;
-        tag.hidden = false;
-      }
-      try {
-        win()?.history?.replaceState?.(null, "", url);
-      } catch {
-        // Ignore history state restrictions on unloaded frames.
-      }
-      save.type = contract.type === "vehicle" ? "robot" : "vehicle";
-      if (!clickWhere("#types button", (b) => b.dataset.t === contract.type)) {
-        save.type = contract.type;
-      }
-      return;
-    }
-
-    ready = false;
-    boundDoc = null;
-    const frameWin = win();
-    if (hadLoadedWorld && frameWin?.location) {
-      frameWin.location.replace(url);
-      frameWin.location.reload();
-      return;
-    }
-    frame.src = url;
+    runtime?.setToy(contract);
   };
-  load(initial.contract);
+
 
   const textOf = (element: Node | null | undefined): string =>
     (element?.textContent ?? "").replace(/\s+/g, " ").trim();
@@ -983,20 +915,10 @@ export function createEngine(
   // control surfaces until their definitions emit data natively.
   const suppressLegacyPanels = () => {
     const frameDoc = doc();
-    if (!frameDoc?.head) return;
-    const id = "toyventor-react-mission-style";
-    let style = frameDoc.getElementById(id) as HTMLStyleElement | null;
-    if (!style) {
-      style = frameDoc.createElement("style");
-      style.id = id;
-      frameDoc.head.appendChild(style);
-    }
-    style.textContent = "#sheet,#mp,#cr,#ed,#ed-io,#ed-back{display:none!important}";
+    if (!frameDoc) return;
     if (boundDoc !== frameDoc) {
       boundDoc = frameDoc;
-      const syncSoon = () => {
-        if (!disposed) window.setTimeout(poll, 0);
-      };
+      const syncSoon = () => schedulePoll();
       frameDoc.addEventListener("click", syncSoon, { passive: true });
       frameDoc.addEventListener("keyup", syncSoon, { passive: true });
     }
@@ -1090,7 +1012,7 @@ export function createEngine(
       !panel ||
       panel.hidden ||
       api?.ed?.ED?.testing ||
-      frameDoc.body.classList.contains("testing")
+      frameDoc.classList.contains("testing")
     ) {
       return normalizeCreateSnapshot();
     }
@@ -1116,21 +1038,19 @@ export function createEngine(
     });
   };
 
-  const newFrameEvent = (frameWindow: LegacyWindow, name: string): Event =>
-    new (frameWindow as unknown as { Event: typeof Event }).Event(name, {
-      bubbles: true,
-    });
+  const newFrameEvent = (_frameWindow: unknown, name: string): Event =>
+    new Event(name, { bubbles: true });
 
   const setFrameValue = (
     selector: string,
     value: string,
     eventName?: "input" | "change",
   ): boolean => {
-    const frameWindow = win();
+    const frameWindow = window;
     const element = doc()?.querySelector<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>(
       selector,
     );
-    if (!frameWindow || !element) return false;
+    if (!element) return false;
     element.value = value;
     if (eventName) {
       element.dispatchEvent(newFrameEvent(frameWindow, eventName));
@@ -1147,7 +1067,7 @@ export function createEngine(
     }
     if (api.ed?.ED?.on && !api.ed.ED.kid) api.ed.exit?.();
     if (api.P?.title) click("#tcreate");
-    else if (!doc()?.body.classList.contains("creating")) api.cr.enter?.();
+    else if (!doc()?.classList.contains("creating")) api.cr.enter?.();
     poll();
   }
 
@@ -1269,7 +1189,7 @@ export function createEngine(
       return normalizeCustomizerSnapshot({ open: false, scrap: save.scrap });
     }
 
-    const forge = frameDoc.body.classList.contains("forging");
+    const forge = frameDoc.classList.contains("forging");
     const options = buttonList(frameDoc, "#opts button").map((button) => ({
       id: button.dataset.id ?? "",
       label: textOf(button.querySelector("b")) || textOf(button),
@@ -1350,7 +1270,7 @@ export function createEngine(
     suppressLegacyPanels();
     if (api.P?.title) api.start?.(true);
     else if (!doc()?.querySelector("#sheet:not([hidden])")) api.open?.();
-    if (mode === "forge" && !doc()?.body.classList.contains("forging")) click("#forgeb");
+    if (mode === "forge" && !doc()?.classList.contains("forging")) click("#forgeb");
     poll();
   }
 
@@ -1469,7 +1389,10 @@ export function createEngine(
       events.onEvent({ type: "editor", editor });
     }
   };
-  const timer = window.setInterval(poll, POLL_MS);
+  runtime = createWorldRuntime(hostEl, {
+    contract: initial.contract,
+    onNotify: schedulePoll,
+  });
   poll();
 
   return {
@@ -1624,8 +1547,8 @@ export function createEngine(
     },
     setEditorSelect: (index, value) => {
       const select = doc()?.querySelectorAll<HTMLSelectElement>("#ed-body select")[index];
-      const frameWindow = win();
-      if (!select || !frameWindow) return;
+      const frameWindow = window;
+      if (!select) return;
       select.value = value;
       select.dispatchEvent(newFrameEvent(frameWindow, "change"));
       poll();
@@ -1649,11 +1572,8 @@ export function createEngine(
     dispose: () => {
       if (disposed) return;
       disposed = true;
-      window.clearInterval(timer);
-      lastUrl = "";
-      // Unloading the frame tears down its renderer, render loop,
-      // listeners, and audio context with the document.
-      frame.src = "about:blank";
+      runtime?.dispose();
+      runtime = null;
     },
   };
 }

@@ -39,9 +39,9 @@ const contract: ToyContract = {
 
 describe("world engine facade helpers", () => {
   it("builds the world URL with and without a contract", () => {
-    expect(worldUrlFor(null)).toBe("/world/ToyVentor-World.html");
+    expect(worldUrlFor(null)).toBe("/");
     const withToy = worldUrlFor(contract);
-    expect(withToy.startsWith("/world/ToyVentor-World.html#toy=")).toBe(true);
+    expect(withToy.startsWith("/#toy=")).toBe(true);
     expect(withToy).not.toContain("Playtest");
   });
 

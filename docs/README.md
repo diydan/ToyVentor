@@ -1,110 +1,91 @@
 # ToyVentor docs
 
-One map for everything in this folder. [vision.md](product/vision.md) states the
-long-term direction; if two documents disagree about product behaviour,
-[spec.md](product/spec.md) wins. For part geometry, the TU lattice in
-[parts-tu-spec.md](parts/parts-tu-spec.md) and [PartSpec/specs/](parts/partspec/specs/README.md)
-wins: [decision 0005](decisions/0005-partspec-lattice-merge.md) migrated the
-app onto it, and the old 16/32 mm lane is a frozen prototype record in
-[archive/snap-samples.md](archive/snap-samples.md).
+Start with [vision.md](product/vision.md) for direction and
+[spec.md](product/spec.md) for behavior. On product conflicts, the spec wins;
+on geometry conflicts, [parts-tu-spec.md](parts/parts-tu-spec.md) and
+[partspec/specs/](parts/partspec/specs/README.md) win.
 
 ## Layout
 
-Only this index sits at the root. Everything else lives in a topic folder:
-
-| Folder | Holds |
-| --- | --- |
-| `product/` | Vision, canonical spec and its generated review copy, plan, journal, demo script |
-| `ux/` | One-stage World spec, interactive mockups, design guide |
-| `specs/` | Feature specs: app continuation, parent time gate, flat-pack craft, progressive power, scan-to-3D |
-| `parts/` | Snap and Pro product lines, the creating-parts runbook, the TU parts spec |
-| `parts/partspec/` | Numbered geometry specs 01–11 (several generated; see below), inside `parts/` |
-| `decisions/` | Dated decision records 0001–0006 |
-| `archive/` | Retired docs, each with its superseding document |
+- `product/`: vision, submission story, canonical spec and review copy, plan,
+  journal, demo script.
+- `ux/`: one-stage World spec, interactive mockups, and design guide.
+- `specs/`: `app-continuation-spec.md`, `native-world-port-spec.md`
+  (Phase 0), `stage-simplification-and-kip-spec.md`, parent time gate,
+  flat-pack craft, progressive power, and scan-to-3D.
+- `parts/`: Snap and Pro summaries, creating-parts runbook, TU spec, and the
+  generated PartSpec snapshot.
+- `decisions/`: dated records `0001`–`0006`.
+- `archive/`: retired docs with their replacements.
 
 ## Start here
 
 | File | What it is |
 | --- | --- |
-| [vision.md](product/vision.md) | Internal long-term product vision |
-| [submission-vision.md](product/submission-vision.md) | Tighter hackathon-facing narrative. For the Nov 4 submission, use this |
-| [spec.md](product/spec.md) | Product spec. Canonical for what ToyVentor is and what the demo proves |
-| [plan.md](product/plan.md) | 10-day plan to the Nov 4 submission |
-| [journal.md](product/journal.md) | Dated progress log |
-| [demo-script.md](product/demo-script.md) | The 90-second demo run: beats, shot list, backups, pre-flight checks |
-| [world-first-spec.md](ux/world-first-spec.md) + [world-first-mockups.html](ux/world-first-mockups.html) | Active UX/UI lane: one-stage World-first UI consolidation |
-| [design-guide.html](ux/design-guide.html) | Visual design tokens and components for the one-stage app: top dock, sheets, no tab bar. Open in a browser |
-| [parts-tu-spec.md](parts/parts-tu-spec.md) | Active parts lane: 12.5 mm / 25 mm TU PartSpec, Kip v2, hidden-calibration selector, physical print loop |
+| [vision.md](product/vision.md) | Internal long-term direction. |
+| [submission-vision.md](product/submission-vision.md) | External hackathon narrative for November 4. |
+| [spec.md](product/spec.md) | Canonical behavior, demo proof, safety, and delivery scope. |
+| [plan.md](product/plan.md) | Work plan to the November 4 submission. |
+| [demo-script.md](product/demo-script.md) | The 90-second run, stills, and failure replies. |
+| [world-first-spec.md](ux/world-first-spec.md) | Active one-stage UX, dock, sheets, overflow, transitions, and demo path. |
+| [design-guide.html](ux/design-guide.html) | Tokens, components, motion, accessibility, and open design needs. |
+| [parts-tu-spec.md](parts/parts-tu-spec.md) | Active 12.5/25 mm geometry canon, catalog targets, sets, and print loop. |
 
 ## Active specs (post-consolidation)
 
 | File | What it is |
 | --- | --- |
-| [app-continuation-spec.md](specs/app-continuation-spec.md) | Roadmap after consolidation: My Toys roster (Kip + craft), accuracy-bonus STEM XP, weekly STEM packs |
-| [parent-time-gate.md](specs/parent-time-gate.md) | Parent time gates and STEM earned play time. Implemented. Its header status is authoritative |
-| [flatpack-modular-craft-spec.md](specs/flatpack-modular-craft-spec.md) | Flat-pack modular vehicle and craft system on the TU lattice. References an external parts archive outside this repo |
-| [progressive-power-system-spec.md](specs/progressive-power-system-spec.md) | Four-stage progressive power and robotics system (`Snap → Pro → Momentum → Mech`). Plan stage, no code yet |
-| [scan-to-3d.md](specs/scan-to-3d.md) | Stretch: a real 3D body from a photo. Recommendation, not a decision. Not in the demo path |
+| [native-world-port-spec.md](specs/native-world-port-spec.md) | **Phase 0:** native Vite/React Three.js stage port, removing the `<iframe>` and `public/world/**`. |
+| [stage-simplification-and-kip-spec.md](specs/stage-simplification-and-kip-spec.md) | Companion spec for `Demo Mode`, cog-mesh fix, Kip V2 unification (`25` `robot.*` aliases), and retiring `#fix`. |
+| [app-continuation-spec.md](specs/app-continuation-spec.md) | **Phases 1-5:** `Toy Box` bar & `⚙️` PIN gate, enabled roster, STEM XP, locked roster, and weekly packs. |
+| [parent-time-gate.md](specs/parent-time-gate.md) | Implemented parent caps and earned STEM time. |
+| [flatpack-modular-craft-spec.md](specs/flatpack-modular-craft-spec.md) | Proposed flat-pack vehicle/craft grammar. |
+| [progressive-power-system-spec.md](specs/progressive-power-system-spec.md) | Proposed momentum-to-robotics stages. |
+| [scan-to-3d.md](specs/scan-to-3d.md) | Recommended scan-body route and acceptance tests. |
 
 ## ToyVentor World (the 2.5D game)
 
-| Path | What it is |
-| --- | --- |
-| `game/engine25.js` | The game source. One script, the source of truth |
-| `game/build25.py` | Builds the single-page game from that source: `npm run build:world` |
-| `public/world/ToyVentor-World.html` | The built game, served from the app's origin at `/world/ToyVentor-World.html` |
-| `shared/toycontract.ts` | The toy contract: how the app hands the kid's build to the game |
+The game lane stays imperative and runs same-origin until Phase 0 (`native-world-port-spec.md`) lands:
+`game/engine25.js`, `game/build25.py`, `public/world/ToyVentor-World.html`,
+and `shared/toycontract.ts` for the app-to-game handoff. Phase 0 ports the
+stage natively and deletes the iframe bundle.
 
 ## Product lines and parts
 
 | File | What it is |
 | --- | --- |
-| [snap.md](parts/snap.md) | Snap (kid line): part types, design rules, print, game and AR behaviour |
-| [pro.md](parts/pro.md) | Pro (8+ mechanical line) on the 12.5 mm TU hole grid |
-| [creating-parts.md](parts/creating-parts.md) | The recurring runbook for new parts: brief, catalog slot, PartSpec gate, assembly proof, app bridge, printing, handoff |
-| [`../parts/README.md`](../parts/README.md) | Overview of `parts/` (`parts/partspec/` + retired `parts/scad/`) |
-| [PartSpec/README.md](parts/partspec/README.md) | Entry point to the numbered PartSpec specs: status, layout, how the snapshot is refreshed |
-| [PartSpec/specs/](parts/partspec/specs/README.md) | Numbered specs 01–11: interface standard, Snap/Pro/Forge Mount, catalog, agent instructions, compliance, licensing, design log |
+| [snap.md](parts/snap.md) / [pro.md](parts/pro.md) | Product summaries; normative geometry stays in generated PartSpec copies. |
+| [creating-parts.md](parts/creating-parts.md) | Runbook for new parts and families. |
+| [PartSpec](parts/partspec/README.md) / [specs](parts/partspec/specs/README.md) | Generated readable snapshot; edit sources, then regenerate. |
+| [`../parts/README.md`](../parts/README.md) | Package overview for `parts/partspec/` and retired `parts/scad/`. |
 
 ## Generated — do not edit by hand
 
-| File | Generated from |
-| --- | --- |
-| [spec-for-review.md](product/spec-for-review.md) | `docs/product/spec.md` via `npm run spec:review` (`scripts/export-spec.ts`). `npm run preflight` checks it is in sync |
-| [PartSpec/specs/01_interface_standard.md](parts/partspec/specs/01_interface_standard.md), [05_catalog.md](parts/partspec/specs/05_catalog.md), [06_agent_instructions.md](parts/partspec/specs/06_agent_instructions.md) | `parts/partspec/` sources via its `make_*.py` generators. Edit the source (`interfaces.json`, catalog, part code), then regenerate |
+Do not hand-edit [spec-for-review.md](product/spec-for-review.md),
+`partspec/specs/01_interface_standard.md`, `05_catalog.md`, or
+`06_agent_instructions.md`. Regenerate them from `docs/product/spec.md` or
+`parts/partspec/` sources.
 
 ## Drafts (not served by the app)
 
-| Path | What it is |
-| --- | --- |
-| `drafts/ToyVentor-Landing-Public.html` | The public landing page. Source for the published landing page artifact |
-| `drafts/ToyVentor-Waitlist-Worker.js` | Standalone Worker for the landing page's waitlist form. Not part of the main app Worker |
-| `drafts/ToyVentor-Waitlist-schema.sql` | D1 waitlist table for that Worker |
-| `drafts/ToyVentor-PackRip-ToyWorld.html`, `drafts/ToyVentor-Build-Brew-Play.html` | Older prototypes, kept for reference |
+`drafts/` holds the public landing source, standalone waitlist worker/schema,
+and older prototypes for reference.
 
 ## Archive
 
-[archive/](archive/README.md) holds retired docs, each with its superseding
-document: the 12-screen wireframe and its PDF, pre-consolidation mockups, the
-16/32 mm Snap sample record, the raw brain-dump now formalised in
-[app-continuation-spec.md](specs/app-continuation-spec.md), and the
-point-in-time [parts review](archive/parts-review.md) (2026-10-30).
+[archive/](archive/README.md) holds retired docs with replacements: the 5-tab
+wireframe and PDF, pre-consolidation mockups, 16/32 mm samples, raw
+brain-dump, and point-in-time parts review.
+Archive entries are history; do not update them to match today.
 
-The PartSpec v2 import bundle that used to sit in a gitignored local folder
-was deleted 2026-10-30: its package is folded into `parts/partspec/`.
+## Changing these docs
+
+Keep headings and section order; cut prose, never requirements. Verify changed
+facts against code before writing them, and regenerate generated files from
+their sources instead of editing them.
+
 
 ## Decisions
 
-| File | What it decides |
-| --- | --- |
-| [0001](decisions/0001-react-spa.md) | React SPA, no SSR |
-| [0002](decisions/0002-blockml-machineblocks.md) | BlockML/MachineBlocks: adopt beside OpenSCAD, not instead (yet) |
-| [0003](decisions/0003-blockml-spike.md) | Spike results: grid proven, licence gate found |
-| [0004](decisions/0004-license-email-draft.md) | Retired licence-clarification draft — do not send |
-| [0005](decisions/0005-partspec-lattice-merge.md) | PartSpec TU lattice and the merge back into the app. Migrated in code |
-| [0006](decisions/0006-sam-mask-decoding.md) | SAM mask decoding: official parser, Worker-only, box fallback kept |
-
-Decision records are dated history. They keep the product's old name
-(ToyForge) where they describe the past; the rename to ToyVentor on
-2026-10-28 is recorded in [journal.md](product/journal.md) and in PartSpec's
-design log.
+Dated records `0001`–`0006`; the TU merge in
+[0005](decisions/0005-partspec-lattice-merge.md) remains the geometry authority.

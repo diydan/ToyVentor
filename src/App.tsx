@@ -3,7 +3,7 @@ import { buildStats, type Placement } from "../shared/build";
 import { buildSignature } from "../shared/reveal";
 import { validateToy, type Toy } from "../shared/toy";
 import {
-  decodeToyContract,
+  decodeToyContractFromHash,
   kipDemoUrl,
   toyContractFromBuild,
   type ToyContract,
@@ -35,14 +35,7 @@ function parseInitialOverlay(): InitialOverlay {
 }
 
 function parseHashToyContract(): ToyContract | null {
-  try {
-    const raw = window.location.hash.replace(/^#/, "");
-    const match = raw.match(/(?:^|&)toy=([^&]+)/);
-    if (!match?.[1]) return null;
-    return decodeToyContract(decodeURIComponent(match[1]));
-  } catch {
-    return null;
-  }
+  return decodeToyContractFromHash(window.location.hash);
 }
 
 export default function App() {

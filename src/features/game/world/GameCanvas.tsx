@@ -24,6 +24,7 @@ import {
   createEngine,
   createWorldStore,
   worldUrlFor,
+  WORLDS,
   type EngineHandle,
 } from "./engine";
 import { GrownUpsSheet } from "./GrownUpsSheet";
@@ -76,7 +77,7 @@ export function GameCanvas({
   initialOverlay = null,
 }: GameCanvasProps) {
   const hostRef = useRef<HTMLDivElement>(null);
-  const frameRef = useRef<HTMLIFrameElement>(null);
+  const stageHostRef = useRef<HTMLDivElement>(null);
   const moreWrapRef = useRef<HTMLDivElement>(null);
   const engineRef = useRef<EngineHandle | null>(null);
   const contractRef = useRef(contract);
@@ -121,10 +122,10 @@ export function GameCanvas({
 
   // Create the engine once per mount; dispose on unmount and on HMR.
   useEffect(() => {
-    const frame = frameRef.current;
-    if (!frame) return;
+    const host = stageHostRef.current;
+    if (!host) return;
     const engine = createEngine(
-      frame,
+      host,
       {
         onEvent: (event) => {
           store.apply(event);
@@ -576,11 +577,16 @@ export function GameCanvas({
       </div>
 
       <div className="tv-stage">
-        <iframe
-          ref={frameRef}
-          className="tv-frame"
-          title="ToyVentor World"
-        />
+        <div ref={stageHostRef} className="tv-stage-canvas-host" />
+        {!sleepActive && (
+          <div className="tv-worlds" role="tablist" aria-label="Worlds">
+            {WORLDS.map((w) => (
+              <button key={w.id} type="button" role="tab" aria-selected={state.world === w.id}
+                className={state.world === w.id ? "tv-world tv-world-on" : "tv-world"}
+                onClick={() => engine()?.goWorld(w.id)}>{w.label}</button>
+            ))}
+          </div>
+        )}
 
         {editor.testing && !editor.open && !create.open && (
           <button

@@ -171,6 +171,11 @@ export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
 
+    if (url.pathname === "/world/ToyVentor-World.html") {
+      // Legacy share links: browsers preserve the #toy= fragment across 302.
+      return new Response(null, { status: 302, headers: { location: "/" } });
+    }
+
     if (url.pathname === "/api/health") {
       return json({
         ok: true,
