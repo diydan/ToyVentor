@@ -427,6 +427,7 @@ Goal: submission in. No code after 6 PM ET, to buffer for the form, video, scree
 ### Start of Day
 - [ ] Submission checklist: video recorded, screenshots taken, description drafted?
 - [ ] Track + theme stated on the entry?
+- [ ] Cloudflare dashboard rate-limit rule confirmed on `/api/muse/spark` (10/min/IP)? The in-isolate backstop in `worker/muse.ts` is best-effort only — the dashboard rule is what actually bounds the cost. Do this before any public URL goes out.
 - [ ] Hard stop time for code today:
 
 ### End of Day (after submitting)
