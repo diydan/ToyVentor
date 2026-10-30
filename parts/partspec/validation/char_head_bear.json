@@ -1,24 +1,24 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_char_head_bear_S.stl",
-  "file_sha256": "4238e91d1848fc10db1515ac40d35b4bc830f4447e93229c605a6690ccd40d90",
+  "file_sha256": "11c62fadc5a34171e431523a76c8440730e4bcc95c9d5eeea55f508dbe1fe444",
   "part_id": "char_head_bear",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-10-30T17:13:49Z",
+  "checked_at": "2026-10-30T18:42:17Z",
   "metrics": {
     "bbox_mm": [
-      54.2,
-      36.5,
-      32.9
+      54.8,
+      37.6,
+      34.4
     ],
-    "volume_cm3": 24.12,
-    "surface_cm2": 52.24,
-    "triangles": 10560,
+    "volume_cm3": 28.08,
+    "surface_cm2": 56.76,
+    "triangles": 14248,
     "ledges": [],
-    "layers": 165,
-    "bed_contact_mm2": 346.1,
-    "height_mm": 32.9,
-    "slenderness": 1.77,
+    "layers": 172,
+    "bed_contact_mm2": 290.9,
+    "height_mm": 34.4,
+    "slenderness": 2.02,
     "centre_of_mass_over_contact": true,
     "min_wall_mm": null,
     "thin_wall_regions": []
@@ -57,9 +57,9 @@
       "level": "block",
       "result": "pass",
       "value": [
-        54.2,
-        36.5,
-        32.9
+        54.8,
+        37.6,
+        34.4
       ],
       "limit": [
         180,
@@ -112,9 +112,9 @@
       "id": "V9_bed_contact",
       "level": "info",
       "result": "pass",
-      "value": 346.1,
+      "value": 290.9,
       "limit": null,
-      "detail": "height / sqrt(contact) = 1.77; above about 3 the slicer often asks for a brim"
+      "detail": "height / sqrt(contact) = 2.02; above about 3 the slicer often asks for a brim"
     },
     {
       "id": "V8_wall_thickness",

@@ -6,8 +6,8 @@
 
 | Line | Verified | Built, not verified | Target |
 | --- | --- | --- | --- |
-| Snap | 68 | 0 | 68 |
-| Pro | 37 | 0 | 37 |
+| Snap | 67 | 0 | 67 |
+| Pro | 38 | 0 | 38 |
 
 ## Waves
 
@@ -33,7 +33,7 @@
 - **W6:** Six car add-ons (Spoiler, Bull Bar, Hood Scoop, Twin Exhaust, Light Bar, Roof Rack) and a wheel set (Axle Block, Racer Wheel, Racer Axle), Snap Small on 1 and 2 stud footprints, built print-first. The first seeded Forge Club set.
 - **W7:** A Small Waddle Tail, so every character slot has a part in the size on offer, and the Critters set: Pointy Ears, Bumper Horns, Cloud Wings, Pebble Armor Shell, Waddle Tail and Bounce Capsule.
 - **W8:** The first Snap robot: one part for each of the five robot slots (legs, torso, arms, head, back), stacking on studs, fixed pose, ages 3+. Four more parts per slot follow.
-- **W9:** 30 parts (23 Snap Small, 7 Pro): six organic character heads (Kid, Side-Sweep Boy, Flared Bob, Curly Halo, Fox, Bear) with 2x1 crown buds, six full-crown 2x1 snap-on hair options (Swoosh, Spiky, Pigtails, Ponytail, Cloud Curls, Mohawk), Explorer Rucksack, Builder Spanner, Star Emblem Wand, Street Skateboard Deck, Seated Snap Legs, three stylized Pro vehicle wheels (5-spoke Sport, 6-window Off-Road, 3-spoke Moto), and V2 modular rolling vehicle chassis with interchangeable snap-on body covers (Roadster Car, Hauler Truck, and true 2-wheel inline Motor Scooter / Sport Motorbike).
+- **W9:** 30 parts (22 Snap Small, 8 Pro): three plump symmetric-back character base heads (Human Base Head with recessed face-plate dock, Fox, Bear) with 2x1 crown buds, slim snap-in Swappable Emotion Face Plate, eight separate clip-on 2x1 hair parts (three Hat-Ready with top 2x1 crown studs: Short Swept, Flared Bob, Swoosh; five clean Sculpted-Top with no studs: Spiky, Pigtails, Ponytail, Cloud Curls, Mohawk), Explorer Rucksack, Builder Spanner, Star Emblem Wand, Street Skateboard Deck, Seated Snap Legs, three stylized Pro vehicle wheels, and V2 modular rolling vehicle chassis with interchangeable snap-on body covers.
 
 ## How parts were picked
 
@@ -100,18 +100,17 @@
 | `robot_legs_stomper` | Stomper Legs | robot | small | W8 | verified | Balance. Big feet carry four stud holes, so the robot stands on any plate; the hips widen from the legs at 41 degrees and carry 2x2 studs. |
 | `robot_torso_core` | Core Torso | robot | small | W8 | verified | Power. A 2x2 brick-sized core with full-height chest vents (no ceilings to bridge). |
 | `char_head_bear` | Bear Critter Head | addon | small | W9 | verified | Torque. Bear cub head on a 2x1 neck with plump rounded snout and chubby round ears flanking centered 2x1 crown buds. |
-| `char_head_bob` | Flared Bob Head | addon | small | W9 | verified | Glow. Human 2x1 character head with chin-length flared A-line bob, parted curtain bangs and centered 2x1 crown buds. |
-| `char_head_boy` | Side-Sweep Kid Head | addon | small | W9 | verified | Speed. Human 2x1 character head with wrap-around short swept hair, sideburns, diagonal bangs and centered 2x1 crown buds. |
-| `char_head_curls` | Curly Halo Head | addon | small | W9 | verified | Spin. Human 2x1 character head with 360-degree volumetric curly puff halo and centered 2x1 crown buds. |
 | `char_head_fox` | Fox Critter Head | addon | small | W9 | verified | Speed. Fox critter head on a 2x1 neck with fluffy swept cheek ruffs, smooth snout, perky fox ears and centered 2x1 crown buds. |
-| `char_head_kid` | Kid Canvas Head | addon | small | W9 | verified | Glow. Smooth organic 2x1 human chibi head with rounded C-ears, visor-free decal face canvas and centered 2x1 crown buds. |
+| `char_head_kid` | Human Base Head | addon | small | W9 | verified | Glow. Plump symmetric 36.4 mm-deep 2x1 human head with rounded C-ears, recessed front face-plate dock bore, and centered 2x1 crown buds. |
 | `char_legs_seated` | Seated Snap Legs | addon | small | W9 | verified | Torque. One-piece 90-degree seated 2x2 Snap lower body: 2x2 seat sockets underneath and 2x2 waist studs on top. |
+| `hair_bob` | Flared Bob Hair (Hat-Ready) | addon | small | W9 | verified | Glow. Separate 2x1 clip-on flared chin-frame bob hair with parted curtain bangs and top 2x1 crown studs for stacking hats or ponytails. |
 | `hair_curly` | Cloud Curls | addon | small | W9 | verified | Glow. Full-crown 38 mm volumetric cloud-puff curl cap on a 2x1 integrated base. |
 | `hair_mohawk` | Action Mohawk | addon | small | W9 | verified | Speed. Four-peak punk mohawk crest on a 2x1 integrated scalp cap. |
 | `hair_pigtails` | Twin-Puff Pigtails | addon | small | W9 | verified | Spin. Full-crown parted scalp cap flaring smoothly to 47 mm twin side puffs on a 2x1 integrated base. |
 | `hair_ponytail` | High Ponytail Hair | addon | small | W9 | verified | Spin. Full-crown 37 mm sleek scalp cap with high rear ponytail sweeping over the back of any 2x1 head. |
+| `hair_short_swept` | Short Swept Hair (Hat-Ready) | addon | small | W9 | verified | Speed. Separate 2x1 clip-on short side-swept hair with sideburns, diagonal bangs, and top 2x1 crown studs for stacking hats, ears, or horns. |
 | `hair_spiky` | Spiky Tufts Hair | addon | small | W9 | verified | Speed. Full-crown 38 mm spiky action hair with five sculpted tufts on a 2x1 integrated scalp cap. |
-| `hair_swoosh` | Swoosh Hair | addon | small | W9 | verified | Speed. Full-crown 38 mm side-swept wave crest on a 2x1 integrated scalp cap; locks onto any character or robot head crown. |
+| `hair_swoosh` | Swoosh Hair (Hat-Ready) | addon | small | W9 | verified | Speed. Separate 2x1 clip-on side-swept wave hair with sculpted fringe and top 2x1 crown studs for stacking hats, ears, or horns. |
 | `pack_explorer` | Explorer Rucksack | addon | small | W9 | verified | Torque. 2x2 field rucksack with rolled upper bedroll and top 2x1 accessory studs. |
 | `prop_skateboard_deck` | Street Skateboard Deck | vehicle | small | W9 | verified | Speed. 2x4 stud deck with two horizontal teardrop free axle bores for Wave 6 racer axles and wheels. |
 | `veh_cab_roof_cover` | Cab Targa Canopy Cover | vehicle | small | W9 | verified | Torque. 2x1 snap-on cab roof / GT targa canopy cover fitting both Roadster Car and Hauler Truck, with top 2x2 studs for light bars or roof racks. |
@@ -157,6 +156,7 @@
 | `hinge_tu02` | Hinge TU02 | joint | pro | W5 | verified | Swing. One leaf; a hinge is two leaves (the second turned 180 degrees) and a free pin through the interleaved knuckles. Knuckle bores print as teardrops. |
 | `wheel_tu04` | Wheel TU04 | wheel | pro | W5 | verified | Speed. 50 mm. Fixed-bore hub (a flat shaft drives it, or it turns with a shaft in free beam bores); crank bores 1 TU from the axis take pins. |
 | `wheel_tu06` | Wheel TU06 | wheel | pro | W5 | verified | Speed. 75 mm. Same hub; crank bores at 1 and 2 TU from the axis. |
+| `char_faceplate` | Swappable Emotion Face Plate | pin | pro | W9 | verified | Glow. Slim 22.6x10.8 mm rounded-bezel snap-in face plate printed flat on its front face with a 1 TU anti-rotation flat-keyed rear stem mating into char_head_kid.face_slot. |
 | `prop_star_shield` | Star Emblem Wand | shaft | pro | W9 | verified | Glow. Five-point rounded star emblem on a 2 TU 6.6 mm flat-sided Pro grip shaft; prints lying on a flat. |
 | `prop_wrench` | Builder Spanner | shaft | pro | W9 | verified | Torque. Open-jaw spanner on a 3 TU 6.6 mm flat-sided Pro grip shaft; prints lying on a flat. |
 | `veh_handlebar_fork` | Scooter Handlebar Stem | shaft | pro | W9 | verified | Spin. T-bar steering stem with twin 6.6 mm Pro-shaft handgrips; prints lying on a flat. |

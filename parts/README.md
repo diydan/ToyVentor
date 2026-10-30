@@ -6,9 +6,10 @@ All parametric 3D part generation, validation, and legacy OpenSCAD prototypes li
 
 | Path | Role | Lattice | Status |
 | --- | --- | --- | --- |
-| [`partspec/`](partspec/INTERFACE_STANDARD.md) | **PartSpec v2** Python (`manifold3d` + `trimesh`) parametric generator, fit/ledge/preprint validators, assembly solver, calibration kit, and app exporter | **`12.5 mm` TU** (`1 TU` Small & Pro, `2 TU = 25 mm` Large) | **Proposed geometry canon** (75 verified parts: 45 Snap + 30 Pro). All new catalog geometry goes here; see [`docs/creating-parts.md`](../docs/creating-parts.md). |
+| [`partspec/`](partspec/INTERFACE_STANDARD.md) | **PartSpec v2** Python (`manifold3d` + `trimesh`) parametric generator, fit/ledge/preprint validators, assembly solver, hidden-calibration first-print selector, and app exporter | **`12.5 mm` TU** (`1 TU` Small & Pro, `2 TU = 25 mm` Large) | **Active geometry canon** (`105` verified parts across Snap, Pro, and Kip Wave 9). All catalog and calibration geometry lives here; see [`docs/parts-tu-spec.md`](../docs/parts-tu-spec.md) and [`docs/creating-parts.md`](../docs/creating-parts.md). |
 | [`kip/`](kip/README.md) | **Kip** clean-room parametric OpenSCAD hero character (`Pro 8+` & `Snap 3+`), rig manifest, and interactive 3D viewer source | **`12.5 mm` TU** (`stud_small` + Pro `Ø 7.0 mm` / `Ø 6.6 mm` ports) | **Active hero character rig** (`npm run build:kip` / `npx tsx scripts/build-kip.ts --scad` → `public/kip/`). |
-| `scad/` | Frozen OpenSCAD prototype library (`profiles/`, `snap/`, `pro/`, `mount/`, `calibration/`) | `16 / 32 mm` Snap + `12.5 mm` Pro stub | **Frozen legacy app lane** backing the current `sets/base.json` demo STLs until Decision 0005 cuts over. |
+| [`test-print-tu/`](test-print-tu/README.md) | Pre-oriented, support-free `12.5 mm` / `25 mm` TU PLA test-print bundle (`z_min = 0.000 mm`) | **`12.5 mm` / `25 mm` TU** | **Ready to slice & print** (`17` binary STLs across Plates 1–3 + first-print selector). |
+| [`scad/`](scad/README.md) | Retired OpenSCAD prototype library (`profiles/`, `snap/`, `pro/`, `mount/`, `calibration/`) | `16 / 32 mm` Snap + `12.5 mm` Pro stub | **Retired legacy prototype history** (superseded by `partspec/` and `make_calibration.forge_mount_first_print` per [Decision 0005](../docs/decisions/0005-partspec-lattice-merge.md)). |
 
 ## Related Paths in Repo
 

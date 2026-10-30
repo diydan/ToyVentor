@@ -1,20 +1,24 @@
 #!/usr/bin/env python3
 """Calibration kit: turns the fit targets into measurements on one printer.
 
-Each ladder is a row of 8 holes whose clearance steps up by 0.1 mm across (extra clearance D = -0.1, 0.0, ..., +0.6 mm).
-Step 2 (D = 0) is the designed fit and carries a dimple. Step 1 is at the notched end.
-The step that fits as intended gives the printer's surface offset: s = D / 4 (each surface grows by s, so the stud or shaft grows by 2s
-across and the hole shrinks by 2s across). Set the slicer's XY / hole compensation to -s, then reprint a designed-fit part to confirm.
+Includes two complementary pathways on the single 12.5 mm TU lattice:
+1. Hidden user first-print selector (`forge_mount_first_print`): a 3x2 Small Forge Mount joined by 1.2 mm breakaway tabs
+   to a 3-socket selector strip (1 / 2 / 3 embossed dots = snug 0.00 mm, standard 0.10 mm, easy 0.26 mm diametral clearance)
+   and a 2x1 finger-grip test brick. Validated with `toyventor_fit.fit_report` so the 3 sockets continuously span
+   printer surface offsets [-0.100, +0.115] mm (covering PartSpec's [-0.071, +0.079] mm fit window and +/-0.10 mm uncalibrated variance).
+2. Engineering 8-step ladders (`snap_ladder`, `pro_ladder`, `stud_tester`): internal calibration tools whose hole clearances
+   step by 0.1 mm across (extra clearance D = -0.1, 0.0, ..., +0.6 mm; s = D / 4).
 
-The holes reuse the catalog's own code (stud-hole size from interfaces.json, Pro bores from toyventor_pro.bore_cutter), so the ladder
-tests what the parts will actually be. Outputs go to calibration/. Exit code is non-zero if any piece fails a print check.
+Outputs go to calibration/. Exit code is non-zero if any piece fails a print or fit check.
 """
 import json
+import math
 import sys
 from pathlib import Path
 
 from manifold3d import Manifold
 
+import toyventor_fit as tf
 import toyventor_parts as tp
 import toyventor_pro as pro
 from toyventor_geom import rbox
@@ -22,8 +26,9 @@ from toyventor_geom import rbox
 HERE = Path(__file__).parent
 STEPS = [round(-0.1 + 0.1 * k, 2) for k in range(8)]        # extra clearance across, mm
 NOMINAL = STEPS.index(0.0)
+FIRST_PRINT_CLEARANCES = [0.00, 0.10, 0.26]                 # snug (1 dot), standard (2 dots), easy (3 dots), mm across
 TU = pro.TU
-SEGS = 96
+SEGS = tp.FIT_SEG
 
 
 def marks(body, length, width, height, y_mark):
@@ -50,6 +55,104 @@ def stud_tester():
     p = tp.STUD["small"]
     body = tp.block("small", 3, 1, p["plate_h"], p["plate_top"], studs=False)
     return body + tp.stud(p).translate((-TU, 0, p["plate_h"]))
+
+
+def _underside_socket_cutter(r_sock, depth):
+    """Support-free underside socket: 0.4 mm 45-deg mouth lead-in, cylindrical grip wall covering mid-stud height,
+    and a 40-deg conical roof (steeper than the 45-deg overhang limit, closed apex = zero flat bridge or internal ledge)."""
+    lead = 0.4
+    mouth = Manifold.cylinder(lead + 0.02, r_sock + lead, r_sock, SEGS).translate((0, 0, -0.02))
+    bore = Manifold.cylinder(depth - lead + 0.02, r_sock, r_sock, SEGS).translate((0, 0, lead - 0.01))
+    cone_h = (r_sock - 0.15) / math.tan(math.radians(40.0))
+    roof = Manifold.cylinder(cone_h, r_sock, 0.15, SEGS).translate((0, 0, depth))
+    return mouth + bore + roof
+
+
+def _build_first_print_components():
+    """Returns (combined_print, strip_centered_at_origin, reference_stud_at_origin, socket_ys)."""
+    p = tp.STUD["small"]
+    gap = p["gap"]
+    plate_h = p["plate_h"]
+    depth = p["stud_h"] + 0.4
+
+    # 1. 3x2 Small Forge Mount (solid bottom for toy attachment, 6 Small studs on top)
+    m_nx, m_ny = 3, 2
+    w_m, d_m = m_nx * TU - 2 * gap, m_ny * TU - 2 * gap
+    mount = rbox(w_m, d_m, plate_h, p["edge_r"], p["bed_chamfer"])
+    st = tp.stud(p)
+    for i in range(m_nx):
+        for j in range(m_ny):
+            mount = mount + st.translate(((i + 0.5 - m_nx / 2) * TU, (j + 0.5 - m_ny / 2) * TU, plate_h))
+
+    # 2. Breakaway 3-socket selector strip (1 / 2 / 3 embossed dots on top, underside sockets on 12.5 mm TU pitch)
+    bridge_gap = 3.6
+    w_s, d_s, h_s = 15.0, 3 * TU - 2 * gap, 9.0
+    x_s = w_m / 2 + bridge_gap + w_s / 2
+    strip_local = rbox(w_s, d_s, h_s, p["edge_r"], p["bed_chamfer"])
+    socket_ys = [-TU, 0.0, TU]
+    for idx, (y_c, clr) in enumerate(zip(socket_ys, FIRST_PRINT_CLEARANCES)):
+        r_sock = (p["stud_d"] + clr) / 2.0
+        strip_local = strip_local - _underside_socket_cutter(r_sock, depth).translate((0.0, y_c, 0.0))
+        dots = idx + 1
+        for k in range(dots):
+            dx = (k - (dots - 1) / 2.0) * 3.8
+            dot = (Manifold.cylinder(0.6, 1.35, 1.35, 32)
+                   + Manifold.cylinder(0.25, 1.35, 1.10, 32).translate((0, 0, 0.6))).translate((dx, y_c, h_s - 0.05))
+            strip_local = strip_local + dot
+    strip = strip_local.translate((x_s, 0.0, 0.0))
+
+    # 3. 2x1 Small finger-grip test brick token (single stud at outer cell so the handle clears adjacent cells)
+    w_t, d_t = 2 * TU - 2 * gap, 1 * TU - 2 * gap
+    x_t = x_s + w_s / 2 + bridge_gap + w_t / 2
+    token = rbox(w_t, d_t, plate_h, p["edge_r"], p["bed_chamfer"]).translate((x_t, 0.0, 0.0)) + st.translate((x_t + TU / 2.0, 0.0, plate_h))
+
+    # 4. Breakaway bridges (1.2 mm tall x 3.2 mm wide, extending past bed chamfers into each body)
+    tab_len, tab_w, tab_h = bridge_gap + 3.0, 3.2, 1.2
+    tabs = (rbox(tab_len, tab_w, tab_h, 0.4, 0.3).translate((w_m / 2 + bridge_gap / 2, -6.25, 0.0))
+            + rbox(tab_len, tab_w, tab_h, 0.4, 0.3).translate((w_m / 2 + bridge_gap / 2, +6.25, 0.0))
+            + rbox(tab_len, tab_w, tab_h, 0.4, 0.3).translate((x_s + w_s / 2 + bridge_gap / 2, 0.0, 0.0)))
+
+    center_shift = -((x_t + w_t / 2) - w_m / 2) / 2.0
+    combined = (mount + strip + token + tabs).translate((center_shift, 0.0, 0.0))
+    ref_stud = tp.block("small", 1, 1, plate_h, p["plate_top"], studs=False).translate((0, 0, -plate_h)) + st
+    return combined, strip_local, ref_stud, socket_ys
+
+
+def forge_mount_first_print():
+    """Hidden-calibration first Forge Mount print on the 12.5 mm TU lattice (Decision 0005)."""
+    return _build_first_print_components()[0]
+
+
+def verify_first_print_selector():
+    """Measures all 3 dotted selector sockets with toyventor_fit.fit_report and verifies continuous window coverage."""
+    _, strip_local, ref_stud, socket_ys = _build_first_print_components()
+    z_mid = tp.STUD["small"]["stud_h"] / 2.0
+    ids = ("snug", "standard", "easy")
+    sockets = []
+    for idx, (fit_id, y_c, clr) in enumerate(zip(ids, socket_ys, FIRST_PRINT_CLEARANCES)):
+        rep = tf.fit_report(ref_stud.translate((0.0, y_c, 0.0)), strip_local, z_mid, only=[(0.0, y_c)])
+        verd = tp.fit_verdict(rep, "small")
+        within = (rep["studs"] == 1
+                  and rep["gap_max"] <= tp.TOL["max_play_mm"]
+                  and rep["gap_min"] >= -tp.TOL["max_interference_mm"])
+        sockets.append({
+            "id": fit_id,
+            "dots": idx + 1,
+            "clearance_mm": clr,
+            "measured_gap_mm": round(rep["gap_min"], 4) if rep["studs"] else None,
+            "as_designed": verd["as_designed"],
+            "within_limits": within,
+            "surface_offset_window_mm": verd["window"],
+        })
+    windows = [s["surface_offset_window_mm"] for s in sockets if s["surface_offset_window_mm"]]
+    combined = [min(w[0] for w in windows), max(w[1] for w in windows)] if len(windows) == 3 else [0.0, 0.0]
+    contiguous = len(windows) == 3 and windows[0][1] > windows[1][0] and windows[1][1] > windows[2][0]
+    ok = (all(s["within_limits"] for s in sockets)
+          and sockets[1]["as_designed"]
+          and contiguous
+          and combined[0] <= -0.075
+          and combined[1] >= 0.08)
+    return {"ok": ok, "combined_window_mm": combined, "sockets": sockets}
 
 
 def pro_ladder():
@@ -99,6 +202,10 @@ def face_plate():
 
 
 PIECES = {
+    "toyventor_cal_forge_mount_first_print.stl": (
+        forge_mount_first_print,
+        "Hidden-calibration 3x2 Small Forge Mount + 1/2/3-dot selector strip + 2x1 test brick",
+    ),
     "toyventor_cal_snap_ladder.stl": (snap_ladder, "Snap stud-hole ladder, 8 steps"),
     "toyventor_cal_stud_tester.stl": (stud_tester, "One designed Small stud on a handle"),
     "toyventor_cal_pro_ladder.stl": (pro_ladder, "Pro ladder: fixed bores (top row) and free bores (bottom row), 8 steps"),
@@ -133,16 +240,25 @@ def main(out="calibration", src=None):
         ok &= not fails
         report.append({"file": name, "what": what, "size_mm": (tm.bounds[1] - tm.bounds[0]).round(1).tolist(),
                        "volume_cm3": round(tm.volume / 1000, 1), "checks": "pass" if not fails else fails})
-        print(f"{'PASS' if not fails else 'FAIL'}  {name:34s} {report[-1]['size_mm']}  {report[-1]['volume_cm3']} cm3  {'' if not fails else fails}")
+        print(f"{'PASS' if not fails else 'FAIL'}  {name:42s} {report[-1]['size_mm']}  {report[-1]['volume_cm3']} cm3  {'' if not fails else fails}")
+    selector_fit = verify_first_print_selector()
+    ok &= selector_fit["ok"]
+    print(f"{'PASS' if selector_fit['ok'] else 'FAIL'}  first_print_selector fit window {selector_fit['combined_window_mm']} mm")
     for name in FROM_CATALOG:
         found = next((d / name for d in search_dirs if (d / name).exists()), None)
         if found is None:
             raise FileNotFoundError(f"{name} not found in {[str(d) for d in search_dirs]}; generate catalog STLs first")
         (out / name).write_bytes(found.read_bytes())
-    (out / "calibration_kit.json").write_text(json.dumps({"steps_mm": STEPS, "nominal_step": NOMINAL + 1, "pieces": report,
-                                                          "from_catalog": FROM_CATALOG, "offset_rule": "s = D / 4; slicer XY compensation = -s"}, indent=2) + "\n")
+    (out / "calibration_kit.json").write_text(json.dumps({
+        "steps_mm": STEPS,
+        "nominal_step": NOMINAL + 1,
+        "first_print_selector": selector_fit,
+        "pieces": report,
+        "from_catalog": FROM_CATALOG,
+        "offset_rule": "s = D / 4; slicer XY compensation = -s",
+    }, indent=2) + "\n")
     return ok
 
 
 if __name__ == "__main__":
-    sys.exit(0 if main() else 1)
+    sys.exit(0 if main(*(sys.argv[1:3])) else 1)

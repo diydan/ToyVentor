@@ -4,9 +4,9 @@ import { createDecalExpressionCanvas } from './kip-forge-sdk.js';
 
 export const WARDROBE_HEADS = [
   { id: 'classic', label: 'Kip Classic', crownY: 42.2 },
-  { id: 'kid',     label: 'Human Head',  crownY: 23.8 },
-  { id: 'fox',     label: 'Fox',         crownY: 25.8 },
-  { id: 'bear',    label: 'Bear',        crownY: 25.8 },
+  { id: 'kid',     label: 'Human Head',  crownY: 22.4 },
+  { id: 'fox',     label: 'Fox',         crownY: 26.2 },
+  { id: 'bear',    label: 'Bear',        crownY: 26.2 },
   { id: 'robot',   label: 'Bolt Robot',  crownY: 30.0 },
 ];
 
@@ -29,9 +29,9 @@ export const HAIR_COLORS = [
 
 export const HAIR_OPTIONS = [
   { id: 'off',         label: 'None',               hatReady: true,  topH: 0.0 },
-  { id: 'short_swept', label: 'Swept (Hat-Ready)',  hatReady: true,  topH: 18.2 },
-  { id: 'bob',         label: 'Bob (Hat-Ready)',    hatReady: true,  topH: 18.4 },
-  { id: 'swoosh',      label: 'Swoosh (Hat-Ready)', hatReady: true,  topH: 18.6 },
+  { id: 'short_swept', label: 'Swept (Hat-Ready)',  hatReady: true,  topH: 14.8 },
+  { id: 'bob',         label: 'Bob (Hat-Ready)',    hatReady: true,  topH: 15.2 },
+  { id: 'swoosh',      label: 'Swoosh (Hat-Ready)', hatReady: true,  topH: 15.4 },
   { id: 'spiky',       label: 'Spiky',              hatReady: false, topH: 0.0 },
   { id: 'pigtails',    label: 'Twin Pigtails',      hatReady: false, topH: 0.0 },
   { id: 'ponytail',    label: 'Sleek Ponytail',     hatReady: false, topH: 0.0 },

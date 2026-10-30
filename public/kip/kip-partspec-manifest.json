@@ -22,11 +22,11 @@
       ],
       "file": "toyventor_char_head_kid_S.stl",
       "bbox_mm": [
-        46.8,
-        33.9,
-        26.6
+        46.0,
+        34.5,
+        25.3
       ],
-      "volume_cm3": 20.24,
+      "volume_cm3": 20.28,
       "connectors": [
         {
           "id": "under_sockets",
@@ -65,7 +65,7 @@
             "origin": [
               0,
               0,
-              23.8
+              22.4
             ],
             "normal": [
               0,
@@ -116,8 +116,8 @@
       ],
       "safety": {
         "small_part_status": "above_cylinder",
-        "min_enclosing_diameter_mm": 35.25,
-        "margin_pct": 11.0,
+        "min_enclosing_diameter_mm": 36.23,
+        "margin_pct": 14.1,
         "print_page_warning": [
           "Printed at home or by a print service. Not tested to toy-safety standards. Adult supervision required. Check for cracks, sharp edges and loose pieces before each use, and stop using anything that has broken.",
           "Larger than the small-parts test size in our size check. This is not a safety certification, and it is not rated for children under 3 years."
@@ -199,7 +199,7 @@
           "id": "G5_fits_bed",
           "level": "block",
           "result": "pass",
-          "detail": "[46.8, 33.9, 26.6] vs [180, 180, 180]"
+          "detail": "[46.0, 34.5, 25.3] vs [180, 180, 180]"
         },
         {
           "id": "P1_no_supports",
@@ -247,7 +247,7 @@
           "id": "I3_seats_on_reference",
           "level": "block",
           "result": "pass",
-          "detail": "overlap -0.000 mm3 with matching reference part"
+          "detail": "overlap 0.000 mm3 with matching reference part"
         },
         {
           "id": "I4_bore_on_grid",
@@ -265,7 +265,7 @@
           "id": "S1_small_part_screen",
           "level": "warn",
           "result": "pass",
-          "detail": "above_cylinder: best-fit diameter 35.25 mm vs 31.75 mm cylinder"
+          "detail": "above_cylinder: best-fit diameter 36.23 mm vs 31.75 mm cylinder"
         },
         {
           "id": "T1_fit_as_designed",
@@ -527,11 +527,11 @@
       ],
       "file": "toyventor_hair_short_swept_S.stl",
       "bbox_mm": [
-        45.0,
-        35.0,
-        21.0
+        36.8,
+        25.2,
+        17.6
       ],
-      "volume_cm3": 13.55,
+      "volume_cm3": 8.04,
       "connectors": [
         {
           "id": "under_sockets",
@@ -570,7 +570,7 @@
             "origin": [
               0,
               0,
-              18.2
+              14.8
             ],
             "normal": [
               0,
@@ -586,12 +586,12 @@
         }
       ],
       "safety": {
-        "small_part_status": "above_cylinder",
-        "min_enclosing_diameter_mm": 34.98,
-        "margin_pct": 10.2,
+        "small_part_status": "small_part",
+        "min_enclosing_diameter_mm": 25.26,
+        "margin_pct": -20.4,
         "print_page_warning": [
           "Printed at home or by a print service. Not tested to toy-safety standards. Adult supervision required. Check for cracks, sharp edges and loose pieces before each use, and stop using anything that has broken.",
-          "Larger than the small-parts test size in our size check. This is not a safety certification, and it is not rated for children under 3 years."
+          "CHOKING HAZARD - Small parts. Not for children under 3 years."
         ]
       },
       "print": {
@@ -639,7 +639,7 @@
           "id": "G5_fits_bed",
           "level": "block",
           "result": "pass",
-          "detail": "[45.0, 35.0, 21.0] vs [180, 180, 180]"
+          "detail": "[36.8, 25.2, 17.6] vs [180, 180, 180]"
         },
         {
           "id": "P1_no_supports",
@@ -687,13 +687,13 @@
           "id": "I3_seats_on_reference",
           "level": "block",
           "result": "pass",
-          "detail": "overlap -0.000 mm3 with matching reference part"
+          "detail": "overlap 0.000 mm3 with matching reference part"
         },
         {
           "id": "S1_small_part_screen",
           "level": "warn",
-          "result": "pass",
-          "detail": "above_cylinder: best-fit diameter 34.98 mm vs 31.75 mm cylinder"
+          "result": "fail",
+          "detail": "small_part: best-fit diameter 25.26 mm vs 31.75 mm cylinder"
         },
         {
           "id": "T1_fit_as_designed",
@@ -750,11 +750,11 @@
       ],
       "file": "toyventor_hair_bob_S.stl",
       "bbox_mm": [
-        48.0,
-        35.0,
-        21.2
+        41.4,
+        24.9,
+        18.0
       ],
-      "volume_cm3": 14.19,
+      "volume_cm3": 8.65,
       "connectors": [
         {
           "id": "under_sockets",
@@ -793,7 +793,7 @@
             "origin": [
               0,
               0,
-              18.4
+              15.2
             ],
             "normal": [
               0,
@@ -809,12 +809,12 @@
         }
       ],
       "safety": {
-        "small_part_status": "above_cylinder",
-        "min_enclosing_diameter_mm": 34.98,
-        "margin_pct": 10.2,
+        "small_part_status": "small_part",
+        "min_enclosing_diameter_mm": 25.06,
+        "margin_pct": -21.1,
         "print_page_warning": [
           "Printed at home or by a print service. Not tested to toy-safety standards. Adult supervision required. Check for cracks, sharp edges and loose pieces before each use, and stop using anything that has broken.",
-          "Larger than the small-parts test size in our size check. This is not a safety certification, and it is not rated for children under 3 years."
+          "CHOKING HAZARD - Small parts. Not for children under 3 years."
         ]
       },
       "print": {
@@ -862,7 +862,7 @@
           "id": "G5_fits_bed",
           "level": "block",
           "result": "pass",
-          "detail": "[48.0, 35.0, 21.2] vs [180, 180, 180]"
+          "detail": "[41.4, 24.9, 18.0] vs [180, 180, 180]"
         },
         {
           "id": "P1_no_supports",
@@ -910,13 +910,13 @@
           "id": "I3_seats_on_reference",
           "level": "block",
           "result": "pass",
-          "detail": "overlap -0.000 mm3 with matching reference part"
+          "detail": "overlap 0.000 mm3 with matching reference part"
         },
         {
           "id": "S1_small_part_screen",
           "level": "warn",
-          "result": "pass",
-          "detail": "above_cylinder: best-fit diameter 34.98 mm vs 31.75 mm cylinder"
+          "result": "fail",
+          "detail": "small_part: best-fit diameter 25.06 mm vs 31.75 mm cylinder"
         },
         {
           "id": "T1_fit_as_designed",
@@ -974,10 +974,10 @@
       "file": "toyventor_char_head_fox_S.stl",
       "bbox_mm": [
         48.8,
-        36.7,
-        36.8
+        37.8,
+        38.0
       ],
-      "volume_cm3": 23.48,
+      "volume_cm3": 27.31,
       "connectors": [
         {
           "id": "under_sockets",
@@ -1016,7 +1016,7 @@
             "origin": [
               0,
               0,
-              25.8
+              26.2
             ],
             "normal": [
               0,
@@ -1033,8 +1033,8 @@
       ],
       "safety": {
         "small_part_status": "above_cylinder",
-        "min_enclosing_diameter_mm": 38.79,
-        "margin_pct": 22.2,
+        "min_enclosing_diameter_mm": 39.85,
+        "margin_pct": 25.5,
         "print_page_warning": [
           "Printed at home or by a print service. Not tested to toy-safety standards. Adult supervision required. Check for cracks, sharp edges and loose pieces before each use, and stop using anything that has broken.",
           "Larger than the small-parts test size in our size check. This is not a safety certification, and it is not rated for children under 3 years."
@@ -1085,7 +1085,7 @@
           "id": "G5_fits_bed",
           "level": "block",
           "result": "pass",
-          "detail": "[48.8, 36.7, 36.8] vs [180, 180, 180]"
+          "detail": "[48.8, 37.8, 38.0] vs [180, 180, 180]"
         },
         {
           "id": "P1_no_supports",
@@ -1133,13 +1133,13 @@
           "id": "I3_seats_on_reference",
           "level": "block",
           "result": "pass",
-          "detail": "overlap -0.000 mm3 with matching reference part"
+          "detail": "overlap 0.000 mm3 with matching reference part"
         },
         {
           "id": "S1_small_part_screen",
           "level": "warn",
           "result": "pass",
-          "detail": "above_cylinder: best-fit diameter 38.79 mm vs 31.75 mm cylinder"
+          "detail": "above_cylinder: best-fit diameter 39.85 mm vs 31.75 mm cylinder"
         },
         {
           "id": "T1_fit_as_designed",
@@ -1196,11 +1196,11 @@
       ],
       "file": "toyventor_char_head_bear_S.stl",
       "bbox_mm": [
-        54.2,
-        36.5,
-        32.9
+        54.8,
+        37.6,
+        34.4
       ],
-      "volume_cm3": 24.12,
+      "volume_cm3": 28.82,
       "connectors": [
         {
           "id": "under_sockets",
@@ -1239,7 +1239,7 @@
             "origin": [
               0,
               0,
-              25.8
+              27.2
             ],
             "normal": [
               0,
@@ -1256,8 +1256,8 @@
       ],
       "safety": {
         "small_part_status": "above_cylinder",
-        "min_enclosing_diameter_mm": 36.82,
-        "margin_pct": 16.0,
+        "min_enclosing_diameter_mm": 38.48,
+        "margin_pct": 21.2,
         "print_page_warning": [
           "Printed at home or by a print service. Not tested to toy-safety standards. Adult supervision required. Check for cracks, sharp edges and loose pieces before each use, and stop using anything that has broken.",
           "Larger than the small-parts test size in our size check. This is not a safety certification, and it is not rated for children under 3 years."
@@ -1308,7 +1308,7 @@
           "id": "G5_fits_bed",
           "level": "block",
           "result": "pass",
-          "detail": "[54.2, 36.5, 32.9] vs [180, 180, 180]"
+          "detail": "[54.8, 37.6, 34.4] vs [180, 180, 180]"
         },
         {
           "id": "P1_no_supports",
@@ -1356,13 +1356,13 @@
           "id": "I3_seats_on_reference",
           "level": "block",
           "result": "pass",
-          "detail": "overlap -0.000 mm3 with matching reference part"
+          "detail": "overlap 0.000 mm3 with matching reference part"
         },
         {
           "id": "S1_small_part_screen",
           "level": "warn",
           "result": "pass",
-          "detail": "above_cylinder: best-fit diameter 36.82 mm vs 31.75 mm cylinder"
+          "detail": "above_cylinder: best-fit diameter 38.48 mm vs 31.75 mm cylinder"
         },
         {
           "id": "T1_fit_as_designed",
@@ -1419,11 +1419,11 @@
       ],
       "file": "toyventor_hair_swoosh_S.stl",
       "bbox_mm": [
-        46.1,
-        35.0,
-        21.4
+        38.3,
+        24.0,
+        18.2
       ],
-      "volume_cm3": 13.97,
+      "volume_cm3": 8.37,
       "connectors": [
         {
           "id": "under_sockets",
@@ -1462,7 +1462,7 @@
             "origin": [
               0,
               0,
-              18.6
+              15.4
             ],
             "normal": [
               0,
@@ -1478,12 +1478,12 @@
         }
       ],
       "safety": {
-        "small_part_status": "above_cylinder",
-        "min_enclosing_diameter_mm": 34.98,
-        "margin_pct": 10.2,
+        "small_part_status": "small_part",
+        "min_enclosing_diameter_mm": 24.01,
+        "margin_pct": -24.4,
         "print_page_warning": [
           "Printed at home or by a print service. Not tested to toy-safety standards. Adult supervision required. Check for cracks, sharp edges and loose pieces before each use, and stop using anything that has broken.",
-          "Larger than the small-parts test size in our size check. This is not a safety certification, and it is not rated for children under 3 years."
+          "CHOKING HAZARD - Small parts. Not for children under 3 years."
         ]
       },
       "print": {
@@ -1531,7 +1531,7 @@
           "id": "G5_fits_bed",
           "level": "block",
           "result": "pass",
-          "detail": "[46.1, 35.0, 21.4] vs [180, 180, 180]"
+          "detail": "[38.3, 24.0, 18.2] vs [180, 180, 180]"
         },
         {
           "id": "P1_no_supports",
@@ -1584,8 +1584,8 @@
         {
           "id": "S1_small_part_screen",
           "level": "warn",
-          "result": "pass",
-          "detail": "above_cylinder: best-fit diameter 34.98 mm vs 31.75 mm cylinder"
+          "result": "fail",
+          "detail": "small_part: best-fit diameter 24.01 mm vs 31.75 mm cylinder"
         },
         {
           "id": "T1_fit_as_designed",
@@ -1642,11 +1642,11 @@
       ],
       "file": "toyventor_hair_spiky_S.stl",
       "bbox_mm": [
-        45.0,
-        35.0,
-        25.6
+        39.4,
+        25.6,
+        21.4
       ],
-      "volume_cm3": 15.05,
+      "volume_cm3": 8.47,
       "connectors": [
         {
           "id": "under_sockets",
@@ -1676,12 +1676,12 @@
         }
       ],
       "safety": {
-        "small_part_status": "above_cylinder",
-        "min_enclosing_diameter_mm": 36.22,
-        "margin_pct": 14.1,
+        "small_part_status": "small_part",
+        "min_enclosing_diameter_mm": 29.2,
+        "margin_pct": -8.0,
         "print_page_warning": [
           "Printed at home or by a print service. Not tested to toy-safety standards. Adult supervision required. Check for cracks, sharp edges and loose pieces before each use, and stop using anything that has broken.",
-          "Larger than the small-parts test size in our size check. This is not a safety certification, and it is not rated for children under 3 years."
+          "CHOKING HAZARD - Small parts. Not for children under 3 years."
         ]
       },
       "print": {
@@ -1729,7 +1729,7 @@
           "id": "G5_fits_bed",
           "level": "block",
           "result": "pass",
-          "detail": "[45.0, 35.0, 25.6] vs [180, 180, 180]"
+          "detail": "[39.4, 25.6, 21.4] vs [180, 180, 180]"
         },
         {
           "id": "P1_no_supports",
@@ -1777,13 +1777,13 @@
           "id": "I3_seats_on_reference",
           "level": "block",
           "result": "pass",
-          "detail": "overlap -0.000 mm3 with matching reference part"
+          "detail": "overlap 0.000 mm3 with matching reference part"
         },
         {
           "id": "S1_small_part_screen",
           "level": "warn",
-          "result": "pass",
-          "detail": "above_cylinder: best-fit diameter 36.22 mm vs 31.75 mm cylinder"
+          "result": "fail",
+          "detail": "small_part: best-fit diameter 29.2 mm vs 31.75 mm cylinder"
         },
         {
           "id": "T1_fit_as_designed",
@@ -1840,11 +1840,11 @@
       ],
       "file": "toyventor_hair_pigtails_S.stl",
       "bbox_mm": [
-        53.6,
-        35.0,
-        23.8
+        44.6,
+        23.8,
+        18.2
       ],
-      "volume_cm3": 16.12,
+      "volume_cm3": 9.03,
       "connectors": [
         {
           "id": "under_sockets",
@@ -1874,12 +1874,12 @@
         }
       ],
       "safety": {
-        "small_part_status": "above_cylinder",
-        "min_enclosing_diameter_mm": 34.98,
-        "margin_pct": 10.2,
+        "small_part_status": "small_part",
+        "min_enclosing_diameter_mm": 23.8,
+        "margin_pct": -25.0,
         "print_page_warning": [
           "Printed at home or by a print service. Not tested to toy-safety standards. Adult supervision required. Check for cracks, sharp edges and loose pieces before each use, and stop using anything that has broken.",
-          "Larger than the small-parts test size in our size check. This is not a safety certification, and it is not rated for children under 3 years."
+          "CHOKING HAZARD - Small parts. Not for children under 3 years."
         ]
       },
       "print": {
@@ -1927,7 +1927,7 @@
           "id": "G5_fits_bed",
           "level": "block",
           "result": "pass",
-          "detail": "[53.6, 35.0, 23.8] vs [180, 180, 180]"
+          "detail": "[44.6, 23.8, 18.2] vs [180, 180, 180]"
         },
         {
           "id": "P1_no_supports",
@@ -1975,13 +1975,13 @@
           "id": "I3_seats_on_reference",
           "level": "block",
           "result": "pass",
-          "detail": "overlap -0.000 mm3 with matching reference part"
+          "detail": "overlap 0.000 mm3 with matching reference part"
         },
         {
           "id": "S1_small_part_screen",
           "level": "warn",
-          "result": "pass",
-          "detail": "above_cylinder: best-fit diameter 34.98 mm vs 31.75 mm cylinder"
+          "result": "fail",
+          "detail": "small_part: best-fit diameter 23.8 mm vs 31.75 mm cylinder"
         },
         {
           "id": "T1_fit_as_designed",
@@ -2038,11 +2038,11 @@
       ],
       "file": "toyventor_hair_ponytail_S.stl",
       "bbox_mm": [
-        44.8,
-        39.4,
-        25.0
+        36.6,
+        28.1,
+        18.6
       ],
-      "volume_cm3": 14.69,
+      "volume_cm3": 7.99,
       "connectors": [
         {
           "id": "under_sockets",
@@ -2072,12 +2072,12 @@
         }
       ],
       "safety": {
-        "small_part_status": "above_cylinder",
-        "min_enclosing_diameter_mm": 38.87,
-        "margin_pct": 22.4,
+        "small_part_status": "small_part",
+        "min_enclosing_diameter_mm": 29.86,
+        "margin_pct": -6.0,
         "print_page_warning": [
           "Printed at home or by a print service. Not tested to toy-safety standards. Adult supervision required. Check for cracks, sharp edges and loose pieces before each use, and stop using anything that has broken.",
-          "Larger than the small-parts test size in our size check. This is not a safety certification, and it is not rated for children under 3 years."
+          "CHOKING HAZARD - Small parts. Not for children under 3 years."
         ]
       },
       "print": {
@@ -2125,7 +2125,7 @@
           "id": "G5_fits_bed",
           "level": "block",
           "result": "pass",
-          "detail": "[44.8, 39.4, 25.0] vs [180, 180, 180]"
+          "detail": "[36.6, 28.1, 18.6] vs [180, 180, 180]"
         },
         {
           "id": "P1_no_supports",
@@ -2173,13 +2173,13 @@
           "id": "I3_seats_on_reference",
           "level": "block",
           "result": "pass",
-          "detail": "overlap -0.000 mm3 with matching reference part"
+          "detail": "overlap 0.000 mm3 with matching reference part"
         },
         {
           "id": "S1_small_part_screen",
           "level": "warn",
-          "result": "pass",
-          "detail": "above_cylinder: best-fit diameter 38.87 mm vs 31.75 mm cylinder"
+          "result": "fail",
+          "detail": "small_part: best-fit diameter 29.86 mm vs 31.75 mm cylinder"
         },
         {
           "id": "T1_fit_as_designed",
@@ -2236,11 +2236,11 @@
       ],
       "file": "toyventor_hair_curly_S.stl",
       "bbox_mm": [
-        47.0,
-        35.2,
-        27.8
+        38.4,
+        26.2,
+        23.0
       ],
-      "volume_cm3": 19.98,
+      "volume_cm3": 11.74,
       "connectors": [
         {
           "id": "under_sockets",
@@ -2270,12 +2270,12 @@
         }
       ],
       "safety": {
-        "small_part_status": "above_cylinder",
-        "min_enclosing_diameter_mm": 35.18,
-        "margin_pct": 10.8,
+        "small_part_status": "small_part",
+        "min_enclosing_diameter_mm": 26.54,
+        "margin_pct": -16.4,
         "print_page_warning": [
           "Printed at home or by a print service. Not tested to toy-safety standards. Adult supervision required. Check for cracks, sharp edges and loose pieces before each use, and stop using anything that has broken.",
-          "Larger than the small-parts test size in our size check. This is not a safety certification, and it is not rated for children under 3 years."
+          "CHOKING HAZARD - Small parts. Not for children under 3 years."
         ]
       },
       "print": {
@@ -2323,7 +2323,7 @@
           "id": "G5_fits_bed",
           "level": "block",
           "result": "pass",
-          "detail": "[47.0, 35.2, 27.8] vs [180, 180, 180]"
+          "detail": "[38.4, 26.2, 23.0] vs [180, 180, 180]"
         },
         {
           "id": "P1_no_supports",
@@ -2371,13 +2371,13 @@
           "id": "I3_seats_on_reference",
           "level": "block",
           "result": "pass",
-          "detail": "overlap -0.000 mm3 with matching reference part"
+          "detail": "overlap 0.000 mm3 with matching reference part"
         },
         {
           "id": "S1_small_part_screen",
           "level": "warn",
-          "result": "pass",
-          "detail": "above_cylinder: best-fit diameter 35.18 mm vs 31.75 mm cylinder"
+          "result": "fail",
+          "detail": "small_part: best-fit diameter 26.54 mm vs 31.75 mm cylinder"
         },
         {
           "id": "T1_fit_as_designed",
@@ -2434,11 +2434,11 @@
       ],
       "file": "toyventor_hair_mohawk_S.stl",
       "bbox_mm": [
-        45.0,
-        35.4,
-        26.2
+        36.4,
+        23.8,
+        21.8
       ],
-      "volume_cm3": 13.93,
+      "volume_cm3": 7.87,
       "connectors": [
         {
           "id": "under_sockets",
@@ -2468,12 +2468,12 @@
         }
       ],
       "safety": {
-        "small_part_status": "above_cylinder",
-        "min_enclosing_diameter_mm": 35.38,
-        "margin_pct": 11.4,
+        "small_part_status": "small_part",
+        "min_enclosing_diameter_mm": 27.71,
+        "margin_pct": -12.7,
         "print_page_warning": [
           "Printed at home or by a print service. Not tested to toy-safety standards. Adult supervision required. Check for cracks, sharp edges and loose pieces before each use, and stop using anything that has broken.",
-          "Larger than the small-parts test size in our size check. This is not a safety certification, and it is not rated for children under 3 years."
+          "CHOKING HAZARD - Small parts. Not for children under 3 years."
         ]
       },
       "print": {
@@ -2521,7 +2521,7 @@
           "id": "G5_fits_bed",
           "level": "block",
           "result": "pass",
-          "detail": "[45.0, 35.4, 26.2] vs [180, 180, 180]"
+          "detail": "[36.4, 23.8, 21.8] vs [180, 180, 180]"
         },
         {
           "id": "P1_no_supports",
@@ -2569,13 +2569,13 @@
           "id": "I3_seats_on_reference",
           "level": "block",
           "result": "pass",
-          "detail": "overlap -0.000 mm3 with matching reference part"
+          "detail": "overlap 0.000 mm3 with matching reference part"
         },
         {
           "id": "S1_small_part_screen",
           "level": "warn",
-          "result": "pass",
-          "detail": "above_cylinder: best-fit diameter 35.38 mm vs 31.75 mm cylinder"
+          "result": "fail",
+          "detail": "small_part: best-fit diameter 27.71 mm vs 31.75 mm cylinder"
         },
         {
           "id": "T1_fit_as_designed",

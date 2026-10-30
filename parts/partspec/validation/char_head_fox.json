@@ -1,39 +1,29 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_char_head_fox_S.stl",
-  "file_sha256": "60ac3ebb5e3e5256670f175f0d31a5f1e0aba1c529bc37e7c4c5763fb84ee7e3",
+  "file_sha256": "cf96e58832083ab7379b9729c3e8f4ed142fe802f027611047578c16fbb1d772",
   "part_id": "char_head_fox",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-10-30T17:13:44Z",
+  "checked_at": "2026-10-30T18:42:22Z",
   "metrics": {
     "bbox_mm": [
       48.8,
-      36.7,
-      36.8
+      37.8,
+      38.0
     ],
-    "volume_cm3": 23.48,
-    "surface_cm2": 51.55,
-    "triangles": 11344,
+    "volume_cm3": 27.31,
+    "surface_cm2": 55.82,
+    "triangles": 15796,
     "ledges": [],
-    "layers": 184,
-    "bed_contact_mm2": 346.1,
-    "height_mm": 36.8,
-    "slenderness": 1.98,
+    "layers": 190,
+    "bed_contact_mm2": 290.9,
+    "height_mm": 38.0,
+    "slenderness": 2.23,
     "centre_of_mass_over_contact": true,
     "min_wall_mm": null,
     "thin_wall_regions": []
   },
   "bridges": [
-    {
-      "z_mm": 5.5,
-      "span_mm": 0.35,
-      "area_mm2": 0.9
-    },
-    {
-      "z_mm": 5.5,
-      "span_mm": 0.35,
-      "area_mm2": 0.9
-    },
     {
       "z_mm": 3.2,
       "span_mm": 6.7,
@@ -68,8 +58,8 @@
       "result": "pass",
       "value": [
         48.8,
-        36.7,
-        36.8
+        37.8,
+        38.0
       ],
       "limit": [
         180,
@@ -100,7 +90,7 @@
       "result": "pass",
       "value": 6.7,
       "limit": 20,
-      "detail": "4 bridge(s); widest unsupported span in mm"
+      "detail": "2 bridge(s); widest unsupported span in mm"
     },
     {
       "id": "V5_no_floating_islands",
@@ -122,9 +112,9 @@
       "id": "V9_bed_contact",
       "level": "info",
       "result": "pass",
-      "value": 346.1,
+      "value": 290.9,
       "limit": null,
-      "detail": "height / sqrt(contact) = 1.98; above about 3 the slicer often asks for a brim"
+      "detail": "height / sqrt(contact) = 2.23; above about 3 the slicer often asks for a brim"
     },
     {
       "id": "V8_wall_thickness",

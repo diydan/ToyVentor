@@ -1,6 +1,6 @@
 # 0005 — PartSpec lattice and the merge back into the app
 
-Date: 2026-10-28 (updated 2026-10-30). Status: migrated in code (`sets/base.json`, `sets/racer-garage.json`, `sets/kip-wardrobe.json` + `parts/test-print-tu/` 16-STL print bundle); awaiting physical hand-feel confirmation on Plate 1 (`01_big_blue_brick_L_2x2.stl`).
+Date: 2026-10-28 (updated 2026-10-30). Status: migrated in code (`sets/base.json`, `sets/racer-garage.json`, `sets/kip-wardrobe.json`, `make_calibration.forge_mount_first_print` + `shared/calibration.ts`, and `parts/test-print-tu/` 17-STL print bundle); awaiting physical hand-feel and fit confirmation on Plate 1 (`01_big_blue_brick_L_2x2.stl` + `17_forge_mount_first_print_selector.stl`).
 
 ## Context
 

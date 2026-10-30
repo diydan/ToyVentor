@@ -19,7 +19,8 @@ long-term direction; if two documents disagree about product behaviour,
 | [demo-script.md](demo-script.md) | The 90-second demo run: beats, shot list, backups, pre-flight checks |
 | [wireframe.md](wireframe.md) + [ToyVentor Wireframes.pdf](ToyVentor%20Wireframes.pdf) | The 12 screens |
 | [design-guide.html](design-guide.html) + [mockups.html](mockups.html) | Visual design. Open in a browser |
-| [world-first-spec.md](world-first-spec.md) + [world-first-mockups.html](world-first-mockups.html) | One-stage World-first UI consolidation spec and interactive mockups |
+| [world-first-spec.md](world-first-spec.md) + [world-first-mockups.html](world-first-mockups.html) | Active UX/UI lane: One-stage World-first UI consolidation spec and interactive mockups |
+| [parts-tu-spec.md](parts-tu-spec.md) | Active Parts lane: `12.5 mm` / `25 mm` TU PartSpec, Kip v2, hidden-calibration selector, and physical print loop |
 
 ## ToyVentor World (the 2.5D game)
 
@@ -74,17 +75,8 @@ long-term direction; if two documents disagree about product behaviour,
 
 Both live under `parts/`, and their parts do not snap to each other:
 
-- **App lane** — `parts/scad/` (OpenSCAD, 16 mm small / 32 mm large) plus
-  `sets/base.json`. The builder, downloads and try-on use these numbers
-  today. Frozen for new geometry.
-- **PartSpec lane** — `parts/partspec/` (Python generator, one 12.5 mm TU
-  lattice). 75 parts (45 Snap + 30 Pro) pass its geometry, preprint, and
-  measured-fit gate; nothing printed yet.
-
-Decision [0005](decisions/0005-partspec-lattice-merge.md) (proposed)
-makes PartSpec the geometry canon once Dan's Large hand-feel print
-passes, then migrates the app to TU footprints. Until that print, do not
-mix numbers from the two lanes.
+- **Canonical TU lane (live in app)** — `parts/partspec/` (Python `manifold3d`, one `12.5 mm` / `25 mm` TU lattice, `105` verified parts) + `parts/kip/` (`30`-part OpenSCAD Kip v2 rig). `sets/base.json`, `sets/racer-garage.json`, `sets/kip-wardrobe.json`, and `public/parts-{stl,glb}/` are generated from this lane via `npm run bridge` (see [parts-tu-spec.md](parts-tu-spec.md)).
+- **Frozen legacy prototype** — `parts/scad/` (OpenSCAD, `16 mm` small / `32 mm` large). Kept read-only until the `12.5 mm` TU first-print selector and Plate 1 physical print confirm [decision 0005](decisions/0005-partspec-lattice-merge.md). Do not mix numbers from the two lanes.
 
 ## Archived v2 handover notes (gitignored)
 

@@ -439,6 +439,9 @@ _snap = [_np.ptp(_np.asarray(p)[:, 0]) for p in _mc.snap_ladder().slice(4.0).to_
 test("calibration kit prints without supports, and its Snap ladder steps 0.1 mm from the designed hole",
      _mc.main(out / "calibration", src=out) and len(_snap) == 8 and all(abs(b - a - 0.1) < 0.01 for a, b in zip(sorted(_snap), sorted(_snap)[1:]))
      and abs(sorted(_snap)[_mc.NOMINAL] - (tp.STUD["small"]["stud_d"] + tp.STUD["small"]["fit"])) < 0.01)
+_fps = _mc.verify_first_print_selector()
+test("first-print Forge Mount selector spans the PartSpec surface-offset window (-0.07 to +0.08 mm) across 1/2/3-dot sockets",
+     _fps["ok"] and _fps["combined_window_mm"][0] <= -0.075 and _fps["combined_window_mm"][1] >= 0.08 and _fps["sockets"][1]["as_designed"])
 
 # 7o. pre-print validator (synthetic fixtures, so the checks are proven whatever the catalog holds)
 import preprint_check as _pc

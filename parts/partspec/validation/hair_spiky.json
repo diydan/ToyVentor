@@ -1,24 +1,24 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_hair_spiky_S.stl",
-  "file_sha256": "c8ccd25219a40413908ed67ed8890ce030b53cae84f0c209999fd8f4fb0f2e9a",
+  "file_sha256": "71fbe513fd30002980632705bcf451b1f44f7d5294ac7ca94a9ffc0ba9ec5df0",
   "part_id": "hair_spiky",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-10-30T17:13:56Z",
+  "checked_at": "2026-10-30T18:41:21Z",
   "metrics": {
     "bbox_mm": [
-      45.0,
-      35.0,
-      25.6
+      39.4,
+      25.6,
+      21.4
     ],
-    "volume_cm3": 15.05,
-    "surface_cm2": 42.39,
-    "triangles": 7964,
+    "volume_cm3": 8.47,
+    "surface_cm2": 28.89,
+    "triangles": 12624,
     "ledges": [],
-    "layers": 128,
-    "bed_contact_mm2": 346.1,
-    "height_mm": 25.6,
-    "slenderness": 1.38,
+    "layers": 107,
+    "bed_contact_mm2": 290.9,
+    "height_mm": 21.4,
+    "slenderness": 1.25,
     "centre_of_mass_over_contact": true,
     "min_wall_mm": null,
     "thin_wall_regions": []
@@ -57,9 +57,9 @@
       "level": "block",
       "result": "pass",
       "value": [
-        45.0,
-        35.0,
-        25.6
+        39.4,
+        25.6,
+        21.4
       ],
       "limit": [
         180,
@@ -112,9 +112,9 @@
       "id": "V9_bed_contact",
       "level": "info",
       "result": "pass",
-      "value": 346.1,
+      "value": 290.9,
       "limit": null,
-      "detail": "height / sqrt(contact) = 1.38; above about 3 the slicer often asks for a brim"
+      "detail": "height / sqrt(contact) = 1.25; above about 3 the slicer often asks for a brim"
     },
     {
       "id": "V8_wall_thickness",

@@ -4,7 +4,7 @@
   "file_sha256": "b325a1a02a7133cf69811e5974de4e4b6cc847a5089ba3310c747fe1c181e9b6",
   "part_id": "brick_l_2x4",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-10-30T17:11:03Z",
+  "checked_at": "2026-10-30T17:58:34Z",
   "metrics": {
     "bbox_mm": [
       99.7,
@@ -179,7 +179,7 @@
       0
     ],
     "engine": "PrusaSlicer-2.8.1",
-    "reused_from": "2026-10-30T16:39:43Z"
+    "reused_from": "2026-10-30T17:11:03Z"
   },
   "verdict": "pass",
   "summary": "Prints as is"
