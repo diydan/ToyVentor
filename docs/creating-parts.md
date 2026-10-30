@@ -5,13 +5,13 @@ Use this guide for every recurring part task: robot parts, figurines and charact
 This guide does **not** replace the standards. If anything here conflicts with them, the standards and data win:
 
 1. Product behaviour: [spec.md](spec.md), then [snap.md](snap.md) or [pro.md](pro.md).
-2. Part numbers, checks, interfaces and warnings: [`interfaces.json`](PartSpec/pkg/interfaces.json).
+2. Part numbers, checks, interfaces and warnings: [`interfaces.json`](../parts/partspec/interfaces.json).
 3. PartSpec rules: the [Interface Standard](PartSpec/specs/01_interface_standard.md), followed by the relevant line spec in [PartSpec/specs](PartSpec/specs/README.md).
 4. Generator workflow and live catalog: the generated [agent instructions](PartSpec/specs/06_agent_instructions.md). Regenerate it instead of editing it.
 
 ## Current lane rule
 
-New geometry goes in **PartSpec**, the TU-lattice Python system under [`docs/PartSpec/pkg`](PartSpec/pkg). Do not create new parts in the frozen OpenSCAD app lane (`parts/`, 16/32 mm) unless Dan explicitly asks for emergency maintenance of the current demo.
+New geometry goes in **PartSpec**, the TU-lattice Python system under [`parts/partspec`](../parts/partspec/INTERFACE_STANDARD.md). Do not create new parts in the frozen OpenSCAD app lane (`parts/scad/`, 16/32 mm) unless Dan explicitly asks for emergency maintenance of the current demo.
 
 PartSpec is still the *proposed* geometry canon until the Large hand-feel print condition in [decision 0005](decisions/0005-partspec-lattice-merge.md) passes. A digitally verified PartSpec part therefore does not automatically ship in the current app.
 
@@ -74,7 +74,7 @@ Copy this into the task, issue or working notes before modelling. Do not leave t
 
 ### Resolve the catalog slot before writing geometry
 
-The selftest currently enforces the catalog targets in `catalog.json`: **exactly 30 Snap rows and 30 Pro rows**. A new row added casually will fail that test. Choose one route explicitly:
+The selftest currently enforces the catalog targets in `catalog.json`: **exactly 45 Snap rows and 30 Pro rows**. A new row added casually will fail that test. Choose one route explicitly:
 
 | Route | Use when | Required product action |
 | --- | --- | --- |
@@ -128,13 +128,12 @@ humans, animals and robots.
 
 ## 3. Set up and establish a clean baseline
 
-PartSpec lives in a nested standalone repository. Check both worktrees before editing so concurrent work is not mistaken for yours:
+PartSpec lives directly in `parts/partspec/` inside this repository. Check git status before editing so concurrent work is not mistaken for yours:
 
 ```bash
 cd "$(git rev-parse --show-toplevel)"
 git status --short
-git -C docs/PartSpec/pkg status --short
-cd docs/PartSpec/pkg
+cd parts/partspec
 ```
 
 Create the Python environment inside the PartSpec package if it does not already exist:
@@ -219,12 +218,12 @@ Family variants intentionally need less. For example, a new `block` row supplies
 
 Edit sources only:
 
-- `docs/PartSpec/pkg/catalog.json` — catalog row and approved targets/waves
-- `docs/PartSpec/pkg/toyventor_parts.py` — Snap builders and shared generator logic
-- `docs/PartSpec/pkg/toyventor_pro.py` — Pro builders and mechanical primitives
-- `docs/PartSpec/pkg/interfaces.json` — only for an approved standards change
-- `docs/PartSpec/pkg/toyventor_fit.py`, `toyventor_assembly.py` or `toyventor_index.py` — only when a genuinely new mating feature must be measured or validated
-- Human-authored package docs in `docs/PartSpec/pkg` (`snap_v2.md`, `pro_v2.md`, `FORGE_MOUNT.md`, `COMPLIANCE.md`, `LICENSING.md`, `DESIGN_LOG.md`) — only when the product rule or decision itself changes; never edit their assembled copies under `specs/`
+- `parts/partspec/catalog.json` — catalog row and approved targets/waves
+- `parts/partspec/toyventor_parts.py` — Snap builders and shared generator logic
+- `parts/partspec/toyventor_pro.py` — Pro builders and mechanical primitives
+- `parts/partspec/interfaces.json` — only for an approved standards change
+- `parts/partspec/toyventor_fit.py`, `toyventor_assembly.py` or `toyventor_index.py` — only when a genuinely new mating feature must be measured or validated
+- Human-authored package docs in `parts/partspec/` (`snap_v2.md`, `pro_v2.md`, `FORGE_MOUNT.md`, `COMPLIANCE.md`, `LICENSING.md`, `DESIGN_LOG.md`) — only when the product rule or decision itself changes; never edit their assembled copies under `docs/PartSpec/specs/`
 
 Never hand-edit generated STLs, `toyventor_parts.json`, `toyventor_index.json`, `AGENTS.md`, `CATALOG.md`, `INTERFACE_STANDARD.md` or the assembled specs. Change the source and regenerate.
 
@@ -401,7 +400,7 @@ Compatibility acceptance for the part:
 
 ## 8. Promote the passing model into the tracked package
 
-The nested PartSpec package tracks generated artifacts in its root, and the app bridge reads them there. After the scratch `out/` gate is green, rerun the same sequence with the package root as the output location:
+`parts/partspec/` tracks the pre-computed manifests and markdown in git (while `*.stl` meshes remain gitignored), and the app bridge reads them there. After the scratch `out/` gate is green, rerun the same sequence with `parts/partspec` as the output location (`make_specs.py .` automatically refreshes `../../docs/PartSpec/specs/`):
 
 ```bash
 python toyventor_parts.py .
@@ -411,28 +410,18 @@ python make_agents.py .
 python make_catalog.py .
 python make_specs.py .
 python selftest.py .
-```
-
-Then refresh the outer committed snapshot and inspect both diffs:
-
-```bash
-cp specs/*.md ../specs/
-git status --short
-cd ../../..
+cd ../..
 git status --short
 ```
 
 Review generated diffs as evidence, not as nuisance. In particular:
 
-- Did only the intended STL and manifest rows change?
+- Did only the intended manifest rows change?
 - Did an interface edit move other parts' fit windows or statuses?
 - Did `CATALOG.md`, `AGENTS.md` and the interface standard pick up the new part exactly once?
-- Are old STLs removed when a part is renamed or retired, rather than left as orphans?
 - Is any generated file missing because a command was run against the wrong output directory?
 
-Add a dated entry to `docs/PartSpec/pkg/DESIGN_LOG.md` when the change makes a real design decision: a new interface, a changed number, a catalog replacement/expansion, a safety interpretation, or a naming/originality call. Routine family variants that follow existing decisions do not need a new essay; the catalog `note` should carry their local rationale.
-
-PartSpec is a standalone nested repository. Commit inside `docs/PartSpec/pkg` separately from the app repository when asked; never assume an app-repo commit captured it, because the outer repo ignores `pkg/`.
+Add a dated entry to `parts/partspec/DESIGN_LOG.md` when the change makes a real design decision: a new interface, a changed number, a catalog replacement/expansion, a safety interpretation, or a naming/originality call. Routine family variants that follow existing decisions do not need a new essay; the catalog `note` should carry their local rationale.
 
 ## 9. Bridge to the app only when that is in scope
 
@@ -531,11 +520,10 @@ Digital compatibility and conformity
 - [ ] Full PartSpec selftest passes
 
 Publication inside PartSpec
-- [ ] Root artifacts regenerated and diffs reviewed
-- [ ] CATALOG.md, AGENTS.md and interface standard regenerated
-- [ ] docs/PartSpec/specs snapshot refreshed
+- [ ] Manifests and generated markdown refreshed in `parts/partspec/` and diffs reviewed
+- [ ] `CATALOG.md`, `AGENTS.md` and `INTERFACE_STANDARD.md` regenerated
+- [ ] `docs/PartSpec/specs` snapshot refreshed (`python3 make_specs.py .`)
 - [ ] Design-log entry added if a real decision was made
-- [ ] Nested PartSpec repo status reviewed separately
 
 App (only if in scope)
 - [ ] Bridge result is ok, or the exact skip reason is accepted

@@ -22,10 +22,10 @@ Glow Star Capsule). All four live in `sets/base.json` and pass
 
 | Part | Type | Mount | Size | Stat | Prints | Geometry |
 | --- | --- | --- | --- | --- | --- | --- |
-| Brick 2×2 | Brick and plate | stud | small | spin 1 | Yes | `parts/snap/brick-2x2-small.scad` |
-| Big Brick 2×2 | Brick and plate | stud | large | spin 1 | Yes | `parts/snap/brick-2x2-large.scad` |
-| Dragon Wing | Character add-on | stud | small | glow 2 | Yes, one color | `parts/snap/dragon-wing.scad` |
-| Glow Star Capsule | Function capsule | stud | small | glow 3 | Shell only | `parts/snap/glow-capsule.scad` |
+| Brick 2×2 | Brick and plate | stud | small | spin 1 | Yes | `parts/scad/snap/brick-2x2-small.scad` |
+| Big Brick 2×2 | Brick and plate | stud | large | spin 1 | Yes | `parts/scad/snap/brick-2x2-large.scad` |
+| Dragon Wing | Character add-on | stud | small | glow 2 | Yes, one color | `parts/scad/snap/dragon-wing.scad` |
+| Glow Star Capsule | Function capsule | stud | small | glow 3 | Shell only | `parts/scad/snap/glow-capsule.scad` |
 
 ## Shared geometry changes
 
@@ -117,7 +117,7 @@ SCAD wins:
 
 ## Open / next
 
-- Large calibration bar (only the small one exists in `parts/calibration/`).
+- Large calibration bar (only the small one exists in `parts/scad/calibration/`).
 - Forge Mount in large, so big toys get a grid too.
 - Spoiler retrofit: still a sharp solid plate with no sockets. It should
   move onto `socket_plate()` before anything prints for the demo.

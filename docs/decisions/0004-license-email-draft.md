@@ -1,4 +1,10 @@
-# Draft — license clarification email (not sent)
+# Retired — license clarification email (do not send)
+
+Status, Oct 29, 2026: **Do not contact the MachineBlocks author.** The
+PartSpec record controls: we evaluated the library, found the Apache-2.0
+versus CC BY-NC-SA ambiguity unresolved, and chose not to build on it
+rather than ask for clarification. The message below is retained only as
+a historical appendix.
 
 To: Jan Philipp Knöller <pk@pksoftware.de>
 Subject: MachineBlocks license question (Apache-2.0 vs CC BY-NC-SA headers?)

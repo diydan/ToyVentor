@@ -6,8 +6,8 @@
 
 | Line | Verified | Built, not verified | Target |
 | --- | --- | --- | --- |
-| Snap | 59 | 0 | 59 |
-| Pro | 34 | 0 | 34 |
+| Snap | 68 | 0 | 68 |
+| Pro | 37 | 0 | 37 |
 
 ## Waves
 
@@ -22,7 +22,7 @@
 | W6 | Forge Club Month 1: Racer | 9 | 9 | W3 | M | done |
 | W7 | Forge Club Month 2: Critters | 1 | 1 | W3 | S | done |
 | W8 | Snap robots: Bolt | 5 | 5 | W3 | M | done |
-| W9 | Kip wardrobe and modular TU vehicles | 18 | 18 | W5, W6, W8 | M | done |
+| W9 | Kip wardrobe and modular TU vehicles | 30 | 30 | W5, W6, W8 | M | done |
 
 - **W0:** Done: catalog-driven registration (one catalog row per part), the block, tile, slope and dome families, Pro checks I4 to I6 and pin-and-bore mating in the validator, all proven on fixtures. The round block was replaced by a dome because a round outline cannot carry studs on the lattice.
 - **W1:** 11 parts, all from the block, tile, slope and dome families on the existing foot and tube code.
@@ -33,7 +33,7 @@
 - **W6:** Six car add-ons (Spoiler, Bull Bar, Hood Scoop, Twin Exhaust, Light Bar, Roof Rack) and a wheel set (Axle Block, Racer Wheel, Racer Axle), Snap Small on 1 and 2 stud footprints, built print-first. The first seeded Forge Club set.
 - **W7:** A Small Waddle Tail, so every character slot has a part in the size on offer, and the Critters set: Pointy Ears, Bumper Horns, Cloud Wings, Pebble Armor Shell, Waddle Tail and Bounce Capsule.
 - **W8:** The first Snap robot: one part for each of the five robot slots (legs, torso, arms, head, back), stacking on studs, fixed pose, ages 3+. Four more parts per slot follow.
-- **W9:** 18 parts (14 Snap Small, 4 Pro): swappable blank-canvas character heads (Kid, Fox, Bear) with 2x1 crown buds, four 2x1 snap-on hair silhouettes, Explorer Rucksack, Builder Spanner, Star Emblem Wand, Street Skateboard Deck, Seated Snap Legs, and three modular 12.5 mm TU vehicles (Roadster Car, Hauler Truck, and 2-in-1 Scooter / Sport Motorbike with steering controls and straddle cowling).
+- **W9:** 30 parts (23 Snap Small, 7 Pro): six organic character heads (Kid, Side-Sweep Boy, Flared Bob, Curly Halo, Fox, Bear) with 2x1 crown buds, six full-crown 2x1 snap-on hair options (Swoosh, Spiky, Pigtails, Ponytail, Cloud Curls, Mohawk), Explorer Rucksack, Builder Spanner, Star Emblem Wand, Street Skateboard Deck, Seated Snap Legs, three stylized Pro vehicle wheels (5-spoke Sport, 6-window Off-Road, 3-spoke Moto), and V2 modular rolling vehicle chassis with interchangeable snap-on body covers (Roadster Car, Hauler Truck, and true 2-wheel inline Motor Scooter / Sport Motorbike).
 
 ## How parts were picked
 
@@ -99,20 +99,29 @@
 | `robot_head_visor` | Visor Head | robot | small | W8 | verified | Awareness. Visor slot (an 18 mm bridge between closed ends), ear panels down to the bed, studs on top for hats, ears and horns. |
 | `robot_legs_stomper` | Stomper Legs | robot | small | W8 | verified | Balance. Big feet carry four stud holes, so the robot stands on any plate; the hips widen from the legs at 41 degrees and carry 2x2 studs. |
 | `robot_torso_core` | Core Torso | robot | small | W8 | verified | Power. A 2x2 brick-sized core with full-height chest vents (no ceilings to bridge). |
-| `char_head_bear` | Bear Critter Head | addon | small | W9 | verified | Torque. Bear cub head on a 2x1 neck with plump muzzle and wide-set round ears flanking 2x1 crown buds. |
-| `char_head_fox` | Fox Critter Head | addon | small | W9 | verified | Speed. Fox critter head on a 2x1 neck with swept side cheek ruffs, tapered snout and 2x1 crown buds. |
-| `char_head_kid` | Kid Canvas Head | addon | small | W9 | verified | Glow. Blank-canvas 2x1 character head with smooth decal brow, side ear reliefs and 2x1 crown buds. |
+| `char_head_bear` | Bear Critter Head | addon | small | W9 | verified | Torque. Bear cub head on a 2x1 neck with plump rounded snout and chubby round ears flanking centered 2x1 crown buds. |
+| `char_head_bob` | Flared Bob Head | addon | small | W9 | verified | Glow. Human 2x1 character head with chin-length flared A-line bob, parted curtain bangs and centered 2x1 crown buds. |
+| `char_head_boy` | Side-Sweep Kid Head | addon | small | W9 | verified | Speed. Human 2x1 character head with wrap-around short swept hair, sideburns, diagonal bangs and centered 2x1 crown buds. |
+| `char_head_curls` | Curly Halo Head | addon | small | W9 | verified | Spin. Human 2x1 character head with 360-degree volumetric curly puff halo and centered 2x1 crown buds. |
+| `char_head_fox` | Fox Critter Head | addon | small | W9 | verified | Speed. Fox critter head on a 2x1 neck with fluffy swept cheek ruffs, smooth snout, perky fox ears and centered 2x1 crown buds. |
+| `char_head_kid` | Kid Canvas Head | addon | small | W9 | verified | Glow. Smooth organic 2x1 human chibi head with rounded C-ears, visor-free decal face canvas and centered 2x1 crown buds. |
 | `char_legs_seated` | Seated Snap Legs | addon | small | W9 | verified | Torque. One-piece 90-degree seated 2x2 Snap lower body: 2x2 seat sockets underneath and 2x2 waist studs on top. |
-| `hair_curly` | Cloud Curls | addon | small | W9 | verified | Glow. Volumetric cloud-puff curl crown on a 2x1 integrated pad. |
-| `hair_mohawk` | Action Mohawk | addon | small | W9 | verified | Speed. Three-peak action crest on a 2x1 integrated pad. |
-| `hair_pigtails` | Twin-Puff Pigtails | addon | small | W9 | verified | Spin. Parted crown cap flaring at under 35 degrees to twin side puffs on a 2x1 integrated pad. |
-| `hair_swoosh` | Swoosh Hair | addon | small | W9 | verified | Speed. Side-swept wave crest on a 2x1 integrated pad; locks onto any character or robot head crown. |
+| `hair_curly` | Cloud Curls | addon | small | W9 | verified | Glow. Full-crown 38 mm volumetric cloud-puff curl cap on a 2x1 integrated base. |
+| `hair_mohawk` | Action Mohawk | addon | small | W9 | verified | Speed. Four-peak punk mohawk crest on a 2x1 integrated scalp cap. |
+| `hair_pigtails` | Twin-Puff Pigtails | addon | small | W9 | verified | Spin. Full-crown parted scalp cap flaring smoothly to 47 mm twin side puffs on a 2x1 integrated base. |
+| `hair_ponytail` | High Ponytail Hair | addon | small | W9 | verified | Spin. Full-crown 37 mm sleek scalp cap with high rear ponytail sweeping over the back of any 2x1 head. |
+| `hair_spiky` | Spiky Tufts Hair | addon | small | W9 | verified | Speed. Full-crown 38 mm spiky action hair with five sculpted tufts on a 2x1 integrated scalp cap. |
+| `hair_swoosh` | Swoosh Hair | addon | small | W9 | verified | Speed. Full-crown 38 mm side-swept wave crest on a 2x1 integrated scalp cap; locks onto any character or robot head crown. |
 | `pack_explorer` | Explorer Rucksack | addon | small | W9 | verified | Torque. 2x2 field rucksack with rolled upper bedroll and top 2x1 accessory studs. |
 | `prop_skateboard_deck` | Street Skateboard Deck | vehicle | small | W9 | verified | Speed. 2x4 stud deck with two horizontal teardrop free axle bores for Wave 6 racer axles and wheels. |
-| `veh_car_chassis` | Roadster Car Chassis | vehicle | small | W9 | verified | Speed. 4x10 TU modular roadster chassis with 4x2 recessed cockpit, five Wave 6 Racer add-on ports, dash steering bore and two X-axle bores. |
-| `veh_moto_cowling` | Sport Moto Cowling | vehicle | small | W9 | verified | Speed. 2x2 snap-on straddle fuel tank and windscreen converting the 2-in-1 Scooter into a Sport Motorbike. |
-| `veh_scooter_frame` | 2-in-1 Scooter Frame | vehicle | small | W9 | verified | Speed. 2x10 TU step-through scooter frame with 2x2 floorboard, raised 2x2 saddle, headtube steering bore and rear exhaust port. |
-| `veh_truck_chassis` | Hauler Truck Chassis | vehicle | small | W9 | verified | Torque. 4x12 TU modular pickup truck sharing the roadster front cab, plus a 2x2 cab roof arch and open 4x3 stud cargo bed. |
+| `veh_cab_roof_cover` | Cab Targa Canopy Cover | vehicle | small | W9 | verified | Torque. 2x1 snap-on cab roof / GT targa canopy cover fitting both Roadster Car and Hauler Truck, with top 2x2 studs for light bars or roof racks. |
+| `veh_car_chassis` | Roadster Car Chassis | vehicle | small | W9 | verified | Speed. V2 58 mm wide-body roadster rolling chassis with raised side doors, 4x2 recessed cockpit, 33.6 mm wheel-well tunnels and modular snap-on cover bays. |
+| `veh_car_hood_cover` | Aero Hood & Fender Cover | vehicle | small | W9 | verified | Speed. 2x2 snap-on winged GT bonnet and headlight pods fitting both Roadster Car and Hauler Truck, with top 2x2 studs for a hood scoop. |
+| `veh_moto_cowling` | Superbike Tank Cowling | vehicle | small | W9 | verified | Speed. V2 2x2 snap-on muscular straddle fuel tank and radiator shrouds converting the 2-in-1 Scooter into a Sport Motorbike, with top 2x1 tank_studs. |
+| `veh_scooter_fairing` | Scooter Front Leg-Shield Fairing | vehicle | small | W9 | verified | Speed. 2x1 snap-on curved scooter front leg-shield and round headlight nacelle mounting on fairing_studs. |
+| `veh_scooter_frame` | 2-in-1 Inline Scooter Frame | vehicle | small | W9 | verified | Speed. V2 true 2-wheel inline scooter and motorbike frame with twin-leg front clevis fork, rear swingarm, 2x2 step-through bay, 2x1 fairing mount and raised 2x2 saddle. |
+| `veh_truck_bed_cover` | Pickup Bed Side-Rails Cover | vehicle | small | W9 | verified | Torque. 2x3 snap-on wide-body pickup bedsides and tailgate arch with recessed inner 2x2 bed_studs for cargo packs. |
+| `veh_truck_chassis` | Hauler Truck Chassis | vehicle | small | W9 | verified | Torque. V2 58 mm wide-body pickup truck rolling chassis sharing the roadster front cab, plus a 2x1 cab roof arch, 33.6 mm off-road axle tunnels and 2x3 cargo bay. |
 
 ## Pro parts
 
@@ -152,3 +161,6 @@
 | `prop_wrench` | Builder Spanner | shaft | pro | W9 | verified | Torque. Open-jaw spanner on a 3 TU 6.6 mm flat-sided Pro grip shaft; prints lying on a flat. |
 | `veh_handlebar_fork` | Scooter Handlebar Stem | shaft | pro | W9 | verified | Spin. T-bar steering stem with twin 6.6 mm Pro-shaft handgrips; prints lying on a flat. |
 | `veh_steering_wheel` | Roadster Steering Wheel | pin | pro | W9 | verified | Spin. Three-spoke steering wheel printed flat on its rim with an upright 2 TU free-pin steering stem. |
+| `veh_wheel_moto` | Moto 3-Spoke Wheel | wheel | pro | W9 | verified | Speed. 36 x 14 mm symmetric street scooter and motorbike tire with 3-spoke turbine rim and fixed-bore Pro hub. |
+| `veh_wheel_offroad` | Off-Road Beadlock Wheel | wheel | pro | W9 | verified | Torque. 44 x 14 mm chunky mud-lug truck tire with 6-window beadlock rim and fixed-bore Pro hub; mounts flush on 5-TU shafts. |
+| `veh_wheel_sport` | Sport 5-Spoke Wheel | wheel | pro | W9 | verified | Speed. 36 x 13.5 mm radial roadster tire with deep-dish 5-spoke star alloy rim and fixed-bore Pro hub. |

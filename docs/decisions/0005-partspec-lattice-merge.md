@@ -1,18 +1,18 @@
 # 0005 — PartSpec lattice and the merge back into the app
 
-Date: 2026-10-28. Status: proposed; needs Dan's Large hand-feel print before the app migrates.
+Date: 2026-10-28 (updated 2026-10-30). Status: migrated in code (`sets/base.json`, `sets/racer-garage.json`, `sets/kip-wardrobe.json` + `parts/test-print-tu/` 16-STL print bundle); awaiting physical hand-feel confirmation on Plate 1 (`01_big_blue_brick_L_2x2.stl`).
 
 ## Context
 
 Two parts lanes exist:
 
-- **PartSpec** (`docs/PartSpec/`, generator in the nested `pkg/` repo): Python
+- **PartSpec** (`parts/partspec/` generator, specs snapshot in `docs/PartSpec/specs/`): Python
   `manifold3d` pipeline, one TU lattice at 12.5 mm (Snap Small 12.5, Snap Large
-  25, Pro holes 12.5), 60 catalog parts passing geometry + measured-fit checks,
+  25, Pro holes 12.5), 75 catalog parts passing geometry + measured-fit checks,
   connector manifests, safety screens. Its design log records Dan confirming
   the 12.5/25 lattice on 2026-10-28, conditional on a printed Large 2x2 feeling
   right in a toddler's hand and on a real toy.
-- **App lane** (`parts/` OpenSCAD profiles, `sets/base.json`, builder): 16 mm
+- **App lane** (`parts/scad/` OpenSCAD profiles, `sets/base.json`, builder): 16 mm
   small / 32 mm large pitch, 8 parts. Everything user-facing today (builder
   grid, STL/GLB downloads, try-on scale) is built on these numbers.
 
@@ -32,7 +32,7 @@ Until then:
    step. The selector's three dotted sockets must span PartSpec's fit window
    (surface offset about -0.07 to +0.08 mm), validated with its fit checker;
    the standalone calibration print stays an engineering tool. Prototype:
-   `parts/mount/forge-mount-first-print.scad` (old lattice) +
+   `parts/scad/mount/forge-mount-first-print.scad` (old lattice) +
    `shared/calibration.ts`.
 4. Migration, when approved: generate `sets/*.json` from PartSpec's
    `catalog.json`/manifest (part IDs mapped once), serve its STLs through the

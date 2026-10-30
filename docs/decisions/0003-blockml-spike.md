@@ -7,11 +7,12 @@ stands (hand OpenSCAD stays the committed source for the demo); this
 record adds the measurements 0002 asked for, plus one new blocker it
 did not know about.
 
-Two follow-ups are owed before any adoption step in 0002: print
-their brick next to ours in the Day 4 calibration batch, and get a
-written license clarification from the author (draft:
-[0004-license-email-draft.md](0004-license-email-draft.md)). The
-license answer gates 0002's step 3 regardless of print results.
+Neither old follow-up is owed for adoption. A side-by-side print is no
+longer on the product path, and the written license clarification is no
+longer being pursued: [0004-license-email-draft.md](0004-license-email-draft.md)
+is retired in favor of PartSpec's no-contact decision. If the author ever
+clarifies the terms unprompted, that only updates the documentation; it
+does not reopen adoption before Nov 4.
 
 This record exists so the spike evidence survives. It ran entirely in
 `/tmp/blockml-spike` on Oct 27–28; nothing in the repo depends on it.

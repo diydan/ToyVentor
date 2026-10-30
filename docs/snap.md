@@ -21,7 +21,7 @@ selector strip with three dotted sockets (1 snug, 2 standard, 3 easy) and a loos
 brick. The user snaps the brick into each, answers "which clicked best?" once, breaks the
 strip off, and that choice becomes the printer's stored offset. Later mounts print plain.
 Known printer profiles may skip the question entirely. There is never a standalone
-calibration step in the product; the five-step calibration piece in parts/calibration/
+calibration step in the product; the five-step calibration piece in parts/scad/calibration/
 remains an internal engineering tool for our own fit loops.
 
 As of Oct 28 nothing in Snap has been printed, so clearances are still targets, not
