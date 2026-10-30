@@ -218,6 +218,34 @@ describe("muse spark route", () => {
     expect(await res.text()).not.toContain("SECRETDETAIL");
   });
 
+  it("redacts contact details before the words reach the model", async () => {
+    let sent = "";
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (_url: string, init: RequestInit) => {
+        sent = JSON.parse(String(init.body)).input as string;
+        return new Response(
+          JSON.stringify({ output: [{ content: [{ type: "output_text", text: JSON.stringify({ say: "ok", recipe: RECIPE }) }] }] }),
+          { status: 200, headers: { "content-type": "application/json" } },
+        );
+      }),
+    );
+    const res = await handleMuseSpark(
+      post({
+        model: "muse-spark",
+        input: 'A garden please. My email is sam@example.com and my number is 555-123-4567.',
+        format: "json",
+      }),
+      { MODEL_API_KEY: "test-key" },
+    );
+    expect(res.status).toBe(200);
+    expect(sent).not.toContain("sam@example.com");
+    expect(sent).not.toContain("555-123-4567");
+    expect(sent).toContain("[email removed]");
+    expect(sent).toContain("[number removed]");
+    expect(sent).toContain("A garden please.");
+  });
+
   it("answers a GET with the route status for the deploy check", async () => {
     const res = await handleMuseSpark(
       new Request("https://toyventor.com/api/muse/spark"),

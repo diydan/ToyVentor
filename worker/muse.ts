@@ -121,6 +121,15 @@ function childSaidOf(input: string): string {
   return match ? squish(match[1] ?? "") : "";
 }
 
+/** Redact what looks like contact details before the child's words reach
+ *  the model. Narrow on purpose: emails and phone-like digit runs only,
+ *  so ordinary world descriptions pass through untouched. */
+function scrubContactDetails(text: string): string {
+  return text
+    .replace(/[\w.+-]+@[\w-]+(?:\.[\w-]+)+/g, "[email removed]")
+    .replace(/\+?\d[\d\s().-]{6,}\d/g, "[number removed]");
+}
+
 function kidSafeText(text: string, childSaid = ""): boolean {
   if (!text) return true;
   if (UNSAFE_TERMS.test(text) || LINKISH.test(text) || CONTACTISH.test(text)) return false;
@@ -227,7 +236,7 @@ export async function handleMuseSpark(request: Request, env: MuseEnv): Promise<R
   const key = apiKey(env);
   if (!key) return json({ error: "muse is not configured" }, 503);
 
-  const prompt = `${SAFETY}\n\n${input}`;
+  const prompt = `${SAFETY}\n\n${scrubContactDetails(input)}`;
 
   // Low reasoning effort keeps a kid's wait short: the task is a small
   // JSON recipe, not a hard problem. If a model refuses the parameter,

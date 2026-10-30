@@ -1,6 +1,6 @@
 # ToyVentor: Spec (toyventor.com)
 
-> Review copy, generated 2026-10-29 from `docs/spec.md`. Do not
+> Review copy, generated 2026-10-30 from `docs/spec.md`. Do not
 > edit this file by hand: run `npm run spec:review` after changing the spec.
 > The block below is for reviewers. Delete it before publishing.
 
@@ -119,7 +119,7 @@ The app and the 2.5D world are two halves of one toy. The Play button in the app
 - The contract carries the toy id and name, the toy type (character, robot, vehicle), the game part keys for the slots the kid filled, the paint colors, and the build's stat totals. The world does not use the totals yet.
 - Mapping rule: the app holds one canonical game part per toy type and stat, so a placed part lands as the game part for its stat. Two parts with the same stat compete, and the stronger one wins. A game part key the world no longer knows is ignored, and that slot comes up stock. The two part libraries stay separate, so a new set in the app never breaks the world and a new part in the world never breaks the app. Opening the world with a build also unlocks those game parts on that device.
 - The world is served from the app's own origin (`/world/ToyVentor-World.html`), so Create mode can reach the Worker's model route without a cross-site call. The world ships as a standalone generated page, and that page remains the full-screen and demo path. The React port has reached step 5 locally (the three.js 0.160 upgrade included): the Play tab hosts the same page through a typed engine facade (`GameCanvas`), with a React HUD, Factory/customizer, mission panels, Create mode, and level editor around it. The engine still owns the toy model, locks, saves, mission and level logic, and the print check. See Roadmap.
-- Bad contract in, the world still starts. An unreadable contract is ignored and the stock toy comes up. A readable one applies what it can: toy type, paint colors, and any part keys the game still knows.
+- Bad contract in, the world still starts. A contract with the wrong shape (bad type, missing parts list or paint block, malformed colors) is refused whole and the stock toy comes up with nothing saved. A well-shaped one applies: toy type, paint colors, and any part keys the game still knows.
 
 ## Create mode
 

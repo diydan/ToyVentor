@@ -57,6 +57,11 @@ live run breaks, cut the clips together. Keep each clip under 20 seconds.
 - The phone is on Do Not Disturb and the screen brightness is up.
 - The app is already open on the Toybox, signed in state loaded.
 - ToyVentor World is warm in a second tab (so the first open is not cold).
+- The demo save is pre-seeded: open the Garden, collect at least 4 scrap
+  from hidden parts, then open the bridge mission and press Test it once
+  with no deck so it sags and grants the Triangle brace blueprint. The
+  live bridge beat needs 4 scrap and that blueprint, and neither exists
+  on a fresh save.
 - The print list is empty and the account has no pending order.
 - 4G or 5G, not wifi, if the submission room wifi is slow.
 

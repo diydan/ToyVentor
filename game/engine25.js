@@ -981,7 +981,7 @@ if(!S.tool)S.tool="screwdriver";if(S.zoom==null)S.zoom=0;beltIcon();zoomUI();
 /* ===== Create mode: kids describe a world, Muse (or a word parser) builds it, they test and tweak ===== */
 var CR={busy:false,code:false};
 /* the in-game model is Meta Muse Spark, reached through the ToyVentor Worker; with no Worker (this prototype) the word parser builds worlds */
-var MUSE={url:window.TOYVENTOR_MUSE_URL||(/(^|\.)toyventor\.com$|^localhost$|^127\./.test(location.hostname)?"/api/muse/spark":null),model:"muse-spark"};
+var MUSE={url:window.TOYVENTOR_MUSE_URL||(/(^|\.)toyventor\.com$|\.workers\.dev$|^localhost$|^127\./.test(location.hostname)?"/api/muse/spark":null),model:"muse-spark"};
 async function museJSON(prompt){if(!MUSE.url)return null;var ctl=new AbortController(),tm=setTimeout(function(){ctl.abort()},18000);try{var r=await fetch(MUSE.url,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({model:MUSE.model,input:prompt,format:"json"}),signal:ctl.signal});if(!r.ok)return null;var j=await r.json();if(j&&j.recipe)return j;var txt=j&&(j.output_text||j.text);if(!txt)return null;var a=txt.indexOf("{"),b=txt.lastIndexOf("}");return a>=0?JSON.parse(txt.slice(a,b+1)):null}catch(e){return null}finally{clearTimeout(tm)}}
 var CHIPS=["🌸 garden","☁️ sky","🔩 junkyard","🏖️ beach","❄️ snow","🧸 toy room","🌲 trees","⛄ snowmen","🌴 palm trees","🏰 sandcastles","💡 lanterns","🧱 toy blocks","📚 books","☁️ clouds","🕳️ a cave to hide a part","🗼 a high tower","⚽ a giant ball","🤖 a junk machine","lots of","three","more","no"];
 var TNAME={garden:"Garden",sky:"Sky Meadow",junk:"Junkyard",beach:"Beach",snow:"Snow Peak",room:"Toy Room"};
@@ -1192,9 +1192,11 @@ $("#tlab").addEventListener("click",function(){ctx();startPlay(false);setTimeout
 /* ---------- toy contract: the app hands over the kid's own build ---------- */
 /* Wire format toyventor.toy/1, base64url in the page hash (#toy=...). The
    app sends the toy type, the game part keys for the slots the kid filled,
-   and the paint colors. Anything unexpected is ignored, never fatal. */
+   and the paint colors ("" keeps the game's paint). A contract with the
+   wrong shape is refused whole, never applied halfway: bad contract in,
+   stock toy out. Unknown part keys inside a good contract are skipped. */
 function toyB64(s){try{var p=String(s).replace(/-/g,"+").replace(/_/g,"/");while(p.length%4)p+="=";var b=atob(p),u=new Uint8Array(b.length);for(var i=0;i<b.length;i++)u[i]=b.charCodeAt(i);return JSON.parse(new TextDecoder("utf-8").decode(u))}catch(e){return null}}
-function toyApply(c){if(!c||c.format!=="toyventor.toy/1")return null;if(c.type!=="character"&&c.type!=="robot"&&c.type!=="vehicle")return null;var sl=S.sel[c.type]||{},parts=Array.isArray(c.parts)?c.parts:[],got=0;parts.forEach(function(k){var p=PART[k];if(!p||p.t!==c.type)return;sl[p.s]=p.id;S.found[k]=true;got++});S.type=c.type;S.sel[c.type]=sl;var col=c.col||{};["c1","c2","skin"].forEach(function(z){if(/^#[0-9a-f]{6}$/i.test(col[z]||""))S.col[z]=col[z]});if(!got&&!parts.length)return c;return c}
+function toyApply(c){if(!c||c.format!=="toyventor.toy/1")return null;if(c.type!=="character"&&c.type!=="robot"&&c.type!=="vehicle")return null;if(!Array.isArray(c.parts))return null;var col=c.col;if(!col||typeof col!=="object")return null;var colOk=true;["c1","c2","skin"].forEach(function(z){var v=col[z];if(v!==""&&!/^#[0-9a-f]{6}$/i.test(v||""))colOk=false});if(!colOk)return null;var sl=S.sel[c.type]||{};c.parts.forEach(function(k){var p=PART[k];if(!p||p.t!==c.type)return;sl[p.s]=p.id;S.found[k]=true});S.type=c.type;S.sel[c.type]=sl;["c1","c2","skin"].forEach(function(z){if(/^#[0-9a-f]{6}$/i.test(col[z]||""))S.col[z]=col[z]});return c}
 function toyFromURL(){var q=(location.search||"")+"&"+(location.hash||"").replace(/^#/,""),m=/(?:^|[?&])toy=([^&]+)/.exec(q);if(!m)return null;var c=toyApply(toyB64(m[1]));if(!c)return null;save();var tag=document.getElementById("toy-tag");if(tag&&c.name){tag.textContent="Your toy: "+String(c.name).slice(0,40);tag.hidden=false}return c}
 /* ---------- boot ---------- */
 ["character","robot","vehicle"].forEach(function(t){var sl=S.sel[t];if(!sl)return;for(var q in sl){var kk=t+"."+q+"."+sl[q];if(PART[kk]&&PART[kk].w&&!S.found[kk])S.found[kk]=true}});
