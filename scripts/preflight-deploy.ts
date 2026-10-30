@@ -4,9 +4,17 @@
 // only be confirmed by Dan's `wrangler login` session; the exact commands
 // are printed at the end either way.
 import { execFileSync } from "node:child_process";
-import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
+import {
+  existsSync,
+  mkdtempSync,
+  readFileSync,
+  readdirSync,
+  rmSync,
+  statSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { buildReviewCopy } from "./export-spec";
 
 const root = process.cwd();
 let failures = 0;
@@ -65,6 +73,111 @@ if (!existsSync(worldPage)) {
   } finally {
     rmSync(scratch, { recursive: true, force: true });
   }
+}
+
+// 6. No untracked source files that a clean checkout would lack (the P2-2
+// class: sources present here but missing after a fresh clone). Git never
+// reports ignored paths, so .gitignore cover stays excluded automatically.
+// Without a git repository (zip/CI artifact) the check is skipped, not failed.
+try {
+  const status = execFileSync("git", ["status", "--porcelain", "--untracked-files=all"], {
+    encoding: "utf8",
+    stdio: "pipe",
+  });
+  const srcDirs = [
+    "src/", "worker/", "shared/", "tests/", "public/", "scripts/",
+    "seed/", "game/", "sets/", "parts/",
+  ];
+  const stray = status
+    .split("\n")
+    .filter((line) => line.startsWith("??"))
+    .map((line) => line.slice(2).trim())
+    .filter((p) => srcDirs.some((d) => p.startsWith(d)));
+  if (stray.length > 0)
+    fail(`untracked source files a clean checkout would lack: ${stray.join(", ")}`);
+  else ok("no untracked source files outside .gitignore cover");
+} catch {
+  console.log("preflight note: no git repository — untracked-file check skipped");
+}
+
+// 7. Every printable part resolves to a real, valid STL and GLB. Filenames
+// come from set data via the same rule as src/lib/catalog.ts (stlFile field,
+// .stl -> .glb); the hand-maintained UI maps are gone, so there is nothing
+// left to drift — this checks the catalogue against the payloads instead.
+{
+  const problems: string[] = [];
+  const isValidStl = (path: string): boolean => {
+    const buf = readFileSync(path);
+    if (buf.length === 0) return false;
+    const sample = buf.subarray(0, 300).toString("ascii");
+    // ASCII STL starts with "solid" plus an early facet line; binary
+    // headers may also start with "solid", so the facet decides.
+    if (sample.trimStart().startsWith("solid") && sample.includes("facet")) return true;
+    if (buf.length < 84) return false;
+    const triangles = buf.readUInt32LE(80);
+    return buf.length === 84 + triangles * 50;
+  };
+  const setFiles = readdirSync(join(root, "sets")).filter((f) => f.endsWith(".json"));
+  for (const file of setFiles) {
+    const set = JSON.parse(readFileSync(join(root, "sets", file), "utf8")) as {
+      parts?: { id: string; printable?: boolean; stlFile?: string; glbFile?: string }[];
+    };
+    for (const part of set.parts ?? []) {
+      if (!part.printable) continue;
+      if (!part.stlFile) {
+        problems.push(`${file}:${part.id} printable but has no stlFile`);
+        continue;
+      }
+      const stl = join(root, "public/parts-stl", part.stlFile);
+      if (!existsSync(stl) || statSync(stl).size === 0)
+        problems.push(`${file}:${part.id} missing or empty public/parts-stl/${part.stlFile}`);
+      else if (!isValidStl(stl)) problems.push(`${file}:${part.id} invalid STL header in ${part.stlFile}`);
+      const glbName = part.glbFile ?? part.stlFile.replace(/\.stl$/i, ".glb");
+      const glb = join(root, "public/parts-glb", glbName);
+      if (!existsSync(glb) || statSync(glb).size === 0)
+        problems.push(`${file}:${part.id} missing or empty public/parts-glb/${glbName}`);
+    }
+  }
+  if (problems.length > 0) fail(`print payload gaps: ${problems.join("; ")}`);
+  else ok(`print payloads present and valid (${setFiles.join(", ")})`);
+}
+
+// 8. The review copy of the spec has not drifted: rebuild it with the date
+// already embedded in the existing file and require byte equality. That
+// catches body drift without churning the date on every run.
+{
+  const reviewPath = join(root, "docs/spec-for-review.md");
+  const specPath = join(root, "docs/spec.md");
+  if (!existsSync(reviewPath)) fail("docs/spec-for-review.md missing");
+  else {
+    const existing = readFileSync(reviewPath, "utf8");
+    const date = existing.match(/generated (\d{4}-\d{2}-\d{2})/)?.[1];
+    if (!date) fail("docs/spec-for-review.md has no generation date to rebuild with");
+    else {
+      const rebuilt = buildReviewCopy(readFileSync(specPath, "utf8"), date);
+      if (rebuilt === existing) ok("review copy of the spec is current");
+      else fail("docs/spec-for-review.md drifted from docs/spec.md: run `npm run spec:review`");
+    }
+  }
+}
+
+// 9. The service worker cannot serve a stale build: assert the Phase 2
+// strategy is still intact as simple concept checks, not brittle regexes.
+// (If these ever disagree with the file, fix the check, not the file.)
+{
+  const sw = readFileSync(join(root, "public/sw.js"), "utf8");
+  const swProblems: string[] = [];
+  const version = sw.match(/toyventor-v(\d+)/)?.[1];
+  if (!version || Number(version) < 2)
+    swProblems.push("cache version not bumped past toyventor-v1");
+  if (!sw.includes("/sw.js")) swProblems.push("/sw.js itself is not excluded from caching");
+  if (!sw.includes("/api/")) swProblems.push("/api/ is not excluded from caching");
+  if (!sw.includes("navigate")) swProblems.push("no navigation fallback for offline shell");
+  if (!sw.includes("networkFirst")) swProblems.push("no network-first path for shell/world");
+  if (!sw.includes("cacheFirst") || !/IMMUTABLE|isImmutable/.test(sw))
+    swProblems.push("cache-first is not gated on immutable paths");
+  if (swProblems.length > 0) fail(`service worker strategy drift: ${swProblems.join("; ")}`);
+  else ok(`service worker strategy intact (cache toyventor-v${version})`);
 }
 
 if (failures > 0) {

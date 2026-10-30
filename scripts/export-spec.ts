@@ -12,7 +12,8 @@ import { join } from "node:path";
 const root = process.cwd();
 const spec = readFileSync(join(root, "docs/spec.md"), "utf8");
 
-const HEADER = `> Review copy, generated ${new Date().toISOString().slice(0, 10)} from \`docs/spec.md\`. Do not
+const headerFor = (date: string) =>
+  `> Review copy, generated ${date} from \`docs/spec.md\`. Do not
 > edit this file by hand: run \`npm run spec:review\` after changing the spec.
 > The block below is for reviewers. Delete it before publishing.
 
@@ -79,13 +80,20 @@ function flattenLinks(body: string): string {
 }
 
 // The spec keeps its own title. The review note goes under it, clearly
-// marked, so publishing is a delete of one block.
-const titleMatch = spec.match(/^# .+$/m);
-const title = titleMatch ? titleMatch[0] : "# ToyVentor: Spec (toyventor.com)";
-const body = flattenLinks(spec).replace(/^# .+\n/, "");
-const out = `${title}\n\n${HEADER}\n${body.trimStart()}`;
+// marked, so publishing is a delete of one block. Exported so the deploy
+// preflight can rebuild the copy with a pinned date instead of duplicating
+// the transformation.
+export function buildReviewCopy(specText: string, date: string): string {
+  const titleMatch = specText.match(/^# .+$/m);
+  const title = titleMatch ? titleMatch[0] : "# ToyVentor: Spec (toyventor.com)";
+  const body = flattenLinks(specText).replace(/^# .+\n/, "");
+  return `${title}\n\n${headerFor(date)}\n${body.trimStart()}`;
+}
 
-writeFileSync(join(root, "docs/spec-for-review.md"), out);
+if (process.argv[1]?.endsWith("export-spec.ts")) {
+  const out = buildReviewCopy(spec, new Date().toISOString().slice(0, 10));
+  writeFileSync(join(root, "docs/spec-for-review.md"), out);
 
-const emDashes = (out.match(/\u2014/g) ?? []).length;
-console.log(`spec-for-review.md written (${out.length} bytes, em dashes: ${emDashes})`);
+  const emDashes = (out.match(/\u2014/g) ?? []).length;
+  console.log(`spec-for-review.md written (${out.length} bytes, em dashes: ${emDashes})`);
+}
