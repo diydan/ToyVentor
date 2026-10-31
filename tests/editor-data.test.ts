@@ -89,11 +89,18 @@ describe("editor snapshot builder mirrors the legacy template", () => {
 
 describe("editor bridge shape", () => {
   it("runtime exposes live snapshot data and native actions", async () => {
+    // Unit 2e: editor logic lives in editor.ts; the shipped runtime is both files.
     const fs = await import("node:fs/promises");
-    const text = await fs.readFile(
-      new URL("../src/features/game/world/runtime/world.ts", import.meta.url),
-      "utf8",
-    );
+    const text = (
+      await Promise.all(
+        ["world.ts", "editor.ts"].map((f) =>
+          fs.readFile(
+            new URL(`../src/features/game/world/runtime/${f}`, import.meta.url),
+            "utf8",
+          ),
+        ),
+      )
+    ).join("\n");
     for (const token of [
       "function edSnap()",
       "function edSetTab(t)",
