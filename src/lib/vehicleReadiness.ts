@@ -612,3 +612,15 @@ export function resolvePhase4VehicleRoster(
 
   return { unlockedVehicles, lockedVehicles };
 }
+
+const LAB_WORLD_PATTERN = /^lab[1-6]$/;
+
+/**
+ * Lab world id behind a locked card's "Play a STEM Lab" CTA, taken from
+ * the entry's first recommended mission. Falls back to `lab1` so a bad
+ * row can never strand the CTA.
+ */
+export function labWorldForEntry(entry: VehicleReadinessEntry): string {
+  const worldId = (entry.recommendedMissions[0] ?? "").split(".")[0] ?? "";
+  return LAB_WORLD_PATTERN.test(worldId) ? worldId : "lab1";
+}

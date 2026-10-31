@@ -1,4 +1,4 @@
-import { useEffect, useState, type ChangeEvent } from "react";
+import { useEffect, useMemo, useState, type ChangeEvent } from "react";
 import {
   FIT_QUESTION,
   FIT_VARIANTS,
@@ -28,6 +28,10 @@ import { useToybox } from "../../../state/toybox";
 import { colorOf } from "../../builder/engine/render";
 import { downscalePhoto, submitScan } from "../../scan/scan";
 import { SkinPanel } from "../../skin/SkinPanel";
+import {
+  resolvePhase4VehicleRoster,
+  type LockedVehicleCard,
+} from "../../../lib/vehicleReadiness";
 import { ToyMiniIcon } from "./ToyMiniIcon";
 
 type ObjectChipId = "car" | "figure" | "cup" | "bottle" | "other";
@@ -141,6 +145,7 @@ export function MyToySheet({
   onClose,
   onSkinChange,
   onOpenBuild,
+  onPlayLab,
   onOpenCharacterCard,
 }: {
   open: boolean;
@@ -151,6 +156,7 @@ export function MyToySheet({
   onClose: () => void;
   onSkinChange?: () => void;
   onOpenBuild?: () => void;
+  onPlayLab?: (card: LockedVehicleCard) => void;
   onOpenCharacterCard?: () => void;
 }) {
   const { uploadedToys, builtInToys, selected, addToy, selectToy } = useToybox();
@@ -173,6 +179,44 @@ export function MyToySheet({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const renderLockedCard = (card: LockedVehicleCard) => (
+    <div
+      key={card.entry.id}
+      className="tv-roster-card tv-roster-card-lock"
+      role="option"
+      aria-selected={false}
+      aria-disabled="true"
+      aria-label={`${card.entry.name}, locked. ${card.guidance}`}
+    >
+      <div className="tv-roster-card-main">
+        <ToyMiniIcon
+          toy={card.toy}
+          accentColor={accentForRosterToy(card.toy)}
+          skinVersion={skinVersion}
+          size="tile"
+        />
+        <span className="tv-roster-card-copy">
+          <span className="tv-roster-card-head">
+            <span className="tv-toy-tile-name">{card.entry.name}</span>
+            <span className="tv-toy-tag tv-roster-inline-tag">
+              {card.entry.xpThreshold} XP · Rank {card.entry.rank}
+            </span>
+          </span>
+          <span className="tv-toy-tile-sub">{card.guidance}</span>
+        </span>
+      </div>
+      {onPlayLab && (
+        <button
+          type="button"
+          className="tv-ctl tv-roster-card-act"
+          onClick={() => onPlayLab(card)}
+        >
+          Play a STEM Lab
+        </button>
+      )}
+    </div>
+  );
+
   if (!open) return null;
 
   const activeChip =
@@ -183,6 +227,27 @@ export function MyToySheet({
 
   const starterCharacters = builtInToys.filter((t) => t.kind !== "car");
   const starterVehicles = builtInToys.filter((t) => t.kind === "car");
+  const phase4 = useMemo<{
+    unlockedVehicles: Toy[];
+    lockedVehicles: LockedVehicleCard[];
+  }>(
+    () =>
+      progression
+        ? resolvePhase4VehicleRoster(progression, {
+            activeToyId: selected?.id,
+          })
+        : { unlockedVehicles: [], lockedVehicles: [] },
+    // selected?.id seeds grandfathering; the object identity is stable.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [progression, selected?.id],
+  );
+  const phase4Unlocked = useMemo(
+    () =>
+      phase4.unlockedVehicles.filter(
+        (v) => !builtInToys.some((t) => t.id === v.id),
+      ),
+    [phase4, builtInToys],
+  );
   const allEnabledToys = [...starterCharacters, ...starterVehicles, ...uploadedToys];
 
   let totalSavedParts = 0;
@@ -413,8 +478,18 @@ export function MyToySheet({
               <span className="tv-roster-group-k">Vehicles</span>
               <div className="tv-roster-grid">
                 {starterVehicles.map((toy) => renderToyCard(toy, "vehicle"))}
+                {phase4Unlocked.map((toy) => renderToyCard(toy, "vehicle"))}
               </div>
             </div>
+
+            {phase4.lockedVehicles.length > 0 && (
+              <div className="tv-roster-group">
+                <span className="tv-roster-group-k">Locked</span>
+                <div className="tv-roster-grid">
+                  {phase4.lockedVehicles.map((card) => renderLockedCard(card))}
+                </div>
+              </div>
+            )}
 
             <div className="tv-roster-group">
               <div className="tv-roster-group-head">

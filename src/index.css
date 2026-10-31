@@ -2250,6 +2250,10 @@ a.cta {
   box-shadow: var(--shadow-glass-selected);
 }
 
+.tv-roster-card-lock {
+  opacity: 0.8;
+}
+
 .tv-roster-card-main {
   flex: 1;
   min-width: 0;

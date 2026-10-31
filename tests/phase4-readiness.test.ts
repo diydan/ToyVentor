@@ -39,6 +39,7 @@ import {
 import {
   findVehicleAuditByIdOrAlias,
   formatLockedVehicleGuidance,
+  labWorldForEntry,
   readyPhase4Vehicles,
   resolvePhase4VehicleRoster,
   VEHICLE_READINESS_AUDIT,
@@ -389,5 +390,30 @@ describe("Phase 4 locked-card guidance & grandfathering (§5.3)", () => {
     expect(postResetRoster.lockedVehicles.map((l) => l.entry.id)).toEqual([
       "seed-scooter",
     ]);
+  });
+});
+
+describe("Phase 4A CTA lab worlds", () => {
+  it("derives the lab world from the first recommended mission", () => {
+    const byId = (id: string) =>
+      VEHICLE_READINESS_AUDIT.find((e) => e.id === id)!;
+    expect(labWorldForEntry(byId("seed-truck"))).toBe("lab1");
+    expect(labWorldForEntry(byId("seed-scooter"))).toBe("lab1");
+    expect(labWorldForEntry(byId("seed-motorbike"))).toBe("lab2");
+  });
+
+  it("falls back to lab1 when the row has no parseable mission", () => {
+    expect(
+      labWorldForEntry({
+        ...VEHICLE_READINESS_AUDIT[0]!,
+        recommendedMissions: [],
+      }),
+    ).toBe("lab1");
+    expect(
+      labWorldForEntry({
+        ...VEHICLE_READINESS_AUDIT[0]!,
+        recommendedMissions: ["garden.bridge"],
+      }),
+    ).toBe("lab1");
   });
 });

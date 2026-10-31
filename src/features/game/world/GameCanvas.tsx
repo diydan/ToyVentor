@@ -22,6 +22,10 @@ import {
   type ParentSnapshot,
 } from "../../../lib/parentTime";
 import {
+  labWorldForEntry,
+  type LockedVehicleCard,
+} from "../../../lib/vehicleReadiness";
+import {
   applySolve,
   familyStars,
   grandfatherToyIds,
@@ -940,6 +944,13 @@ export function GameCanvas({
             onSkinChange?.();
           }}
           onOpenBuild={openBuildSheet}
+          onPlayLab={(card: LockedVehicleCard) => {
+            const target = WORLDS.find(
+              (w) => w.id === labWorldForEntry(card.entry),
+            );
+            setToySheetOpen(false);
+            if (target) engine()?.goWorld(target.id);
+          }}
           onOpenCharacterCard={() => {
             closeEngineSheets();
             closeReactOverlays();

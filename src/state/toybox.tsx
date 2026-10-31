@@ -13,6 +13,11 @@ import {
 } from "../../shared/toy";
 import { decodeToyContractFromHash } from "../../shared/toycontract";
 import { seedFigure, seedKip } from "../features/scan/scan";
+import { loadProgression } from "../lib/progression";
+import {
+  findVehicleAuditByIdOrAlias,
+  resolvePhase4VehicleRoster,
+} from "../lib/vehicleReadiness";
 import {
   canonicalToyName,
   checkStarScoutGrandfatheredFromStorage,
@@ -71,6 +76,15 @@ export function ToyboxProvider({ children }: { children: ReactNode }) {
       savedToys: saved,
       hasSavedBuild: grandfathered,
     });
+    // Re-materialize rank-unlocked Phase 4 vehicles so a stored active toy
+    // (or earned unlock) survives reloads; uploads persist separately below.
+    const { unlockedVehicles } = resolvePhase4VehicleRoster(loadProgression(), {
+      activeToyId: activeId,
+      savedToys: saved,
+    });
+    for (const vehicle of unlockedVehicles) {
+      if (!merged.some((t) => t.id === vehicle.id)) merged.push(vehicle);
+    }
     const resolvedSelectedId =
       merged.find((t) => t.id === activeId)?.id ?? merged[0]?.id ?? seedKip.id;
     return { merged, resolvedSelectedId };
@@ -115,6 +129,19 @@ export function ToyboxProvider({ children }: { children: ReactNode }) {
           setToys((prev) =>
             prev.some((t) => t.id === seedFigure.id) ? prev : [...prev, seedFigure],
           );
+        } else {
+          // Materialize rank-unlocked Phase 4 seeds on demand. Only
+          // audit-ready entries resolve here, so unverified geometry can
+          // never load; XP-gating itself is enforced by the sheet UI.
+          const entry = findVehicleAuditByIdOrAlias(id);
+          if (entry?.ready && entry.seedToy) {
+            const seedToy = entry.seedToy;
+            setToys((prev) =>
+              prev.some((t) => t.id === seedToy.id)
+                ? prev
+                : [...prev, { ...seedToy }],
+            );
+          }
         }
         setSelectedId(id);
       },

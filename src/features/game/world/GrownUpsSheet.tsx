@@ -22,6 +22,7 @@ import {
   unlockedVehiclesFor,
   type ProgressionState,
 } from "../../../lib/progression";
+import { resolvePhase4VehicleRoster } from "../../../lib/vehicleReadiness";
 import { WORLDS, type WorldId } from "./engine";
 
 export interface GrownUpsSheetProps {
@@ -964,6 +965,16 @@ export function GrownUpsSheet({
                   {unlockedVehiclesFor(progression.totalXp).join(", ")}
                 </p>
               )}
+              {(() => {
+                const upNext =
+                  resolvePhase4VehicleRoster(progression).lockedVehicles[0];
+                return upNext ? (
+                  <p className="tv-moves" style={{ margin: 0, fontSize: 12 }}>
+                    Up next: {upNext.entry.name} at {upNext.entry.xpThreshold}{" "}
+                    XP ({upNext.entry.recommendedLabLabel}). {upNext.guidance}
+                  </p>
+                ) : null;
+              })()}
               <p className="tv-moves" style={{ margin: 0, fontSize: 12 }}>
                 XP lives on this device. Reset keeps scanned and saved toys
                 unlocked.
