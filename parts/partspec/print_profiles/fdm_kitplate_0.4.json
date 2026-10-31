@@ -1,0 +1,54 @@
+{
+  "id": "fdm_kitplate_0.4",
+  "name": "FDM, PLA/PETG, 0.4 mm nozzle (<=170x170 mm Flat-Pack Kit Plate)",
+  "note": "Plate-level profile for full <=170.0 x 170.0 mm flat-pack kit cards on a 180 x 180 mm bed. Caps auto-brim escalation at <=5.0 mm (<=180.0 mm total).",
+  "printer": {
+    "bed_mm": [
+      180,
+      180,
+      180
+    ],
+    "nozzle_mm": 0.4,
+    "filament_diameter_mm": 1.75
+  },
+  "process": {
+    "layer_height_mm": 0.2,
+    "first_layer_height_mm": 0.2,
+    "perimeters": 3,
+    "infill_pct": 15,
+    "top_layers": 4,
+    "bottom_layers": 3,
+    "supports": false
+  },
+  "filament": {
+    "material": "PLA",
+    "density_g_cm3": 1.24,
+    "cost_per_kg_usd": 20.0
+  },
+  "limits": {
+    "max_overhang_deg": 45,
+    "max_bridge_mm": 20,
+    "first_layer_exclusion_mm": 0.7,
+    "min_wall_mm": 0.8,
+    "min_feature_mm": 0.4,
+    "steep_area_tolerance_mm2": 10.0,
+    "thin_wall_area_tolerance_mm2": 10.0,
+    "thin_wall_severe_area_tolerance_mm2": 1.0,
+    "ledge_max_mm2": 4.0,
+    "ledge_cantilever_mm": 1.0
+  },
+  "brim_steps_mm": [
+    3,
+    5
+  ],
+  "slicer_warning_levels": {
+    "_note": "Same stability levels as fdm_pla_0.4, with brim_steps_mm capped at 5 mm so 170 mm kit cards stay within the 180 mm bed.",
+    "Floating object part": "block",
+    "Empty layer": "block",
+    "Collapsing overhang": "warn",
+    "Floating bridge anchors": "warn",
+    "Loose extrusions": "warn",
+    "Low bed adhesion": "brim",
+    "Long bridging extrusions": "info"
+  }
+}

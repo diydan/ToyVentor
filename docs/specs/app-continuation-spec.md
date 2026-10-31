@@ -21,6 +21,19 @@ Each phase must keep roster identity, save compatibility, and ledger
 auditability intact. Nothing here overrides the canonical spec, the one-stage
 UX rules, or the TU geometry canon.
 
+## Build status (Oct 31, 2026 — code-verified)
+
+- Phase 0 (port + typed runtime + cog mesh + `#fix` removal): landed.
+- Phase 1 (Toy Box pill, PIN pad with dual-path lockout, Demo v1): landed.
+- Phase 2 (enabled roster, Star Scout grandfathering, Kip unification): landed.
+- Phase 3 (XP math, Tier 2/3 presets, badges, Pro-part gating): landed.
+- Phase 4A (locked cards for the 3 ready vehicles): landed.
+- Phase 4B (Ranks 3–5 flips): open — tractor awaits chin-strap verdict,
+  ranks 4–6 await Wave-10 proofs; truck/scooter/motorbike already live.
+- Phase 5 (weekly packs): parked by decision — no owner; weekly drops ship
+  post-freeze, locked-card probe procedure adopted for the 4A verify.
+- Open verification: live Toy Box probe of locked-card promote-at-threshold.
+
 
 ## 2. Phase 1 — Top Bar & Grown-Up Unlock
 
