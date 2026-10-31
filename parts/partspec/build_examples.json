@@ -917,7 +917,7 @@
         "id": "head",
         "part": "robot_head_visor",
         "pose": {
-          "x": -6.25,
+          "x": 0.0,
           "y": -6.25,
           "z": 43.0,
           "rot": 0
@@ -934,19 +934,9 @@
         }
       }
     ],
-    "ok": false,
-    "errors": [
-      {
-        "code": "collision",
-        "detail": "arms and head overlap by 149 mm3"
-      }
-    ],
-    "warnings": [
-      {
-        "code": "fit_out_of_tolerance",
-        "detail": "arms.top_studs with head.under_sockets: measured gap -2.0 to -2.0 mm is outside the allowed [0.045, 0.06] mm"
-      }
-    ],
+    "ok": true,
+    "errors": [],
+    "warnings": [],
     "edges": [
       {
         "male": "legs.top_studs",
@@ -965,9 +955,9 @@
       {
         "male": "arms.top_studs",
         "female": "head.under_sockets",
-        "engaged_studs": 1,
-        "gap_min_mm": -2.0,
-        "gap_max_mm": -2.0
+        "engaged_studs": 2,
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
       },
       {
         "male": "arms.top_studs",
@@ -1514,9 +1504,9 @@
         "id": "faceplate",
         "part": "char_faceplate",
         "pose": {
-          "x": -2.9391523179536476e-16,
-          "y": -24.275,
-          "z": 56.625,
+          "x": 0.0,
+          "y": -18.75,
+          "z": 53.5,
           "rot": 2,
           "tilt": [
             90.0,
@@ -1530,7 +1520,7 @@
         "pose": {
           "x": 0.0,
           "y": -6.25,
-          "z": 72.2,
+          "z": 72.4,
           "rot": 0
         }
       },
@@ -1540,32 +1530,14 @@
         "pose": {
           "x": -6.25,
           "y": -6.25,
-          "z": 82.0,
+          "z": 80.4,
           "rot": 0
         }
       }
     ],
-    "ok": false,
-    "errors": [
-      {
-        "code": "collision",
-        "detail": "head and faceplate overlap by 97 mm3"
-      },
-      {
-        "code": "collision",
-        "detail": "hair and hat overlap by 163 mm3"
-      }
-    ],
-    "warnings": [
-      {
-        "code": "fit_out_of_tolerance",
-        "detail": "faceplate.axis with head.face_slot: measured gap -1.149 to -1.149 mm is outside the press limits"
-      },
-      {
-        "code": "fit_out_of_tolerance",
-        "detail": "head.top_studs with hair.under_sockets: measured gap None to None mm is outside the allowed None mm"
-      }
-    ],
+    "ok": true,
+    "errors": [],
+    "warnings": [],
     "edges": [
       {
         "male": "legs.top_studs",
@@ -1593,18 +1565,255 @@
         "female": "head.face_slot",
         "engaged_studs": 1,
         "fit": "press",
-        "gap_min_mm": -1.149,
-        "gap_max_mm": -1.149
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
       },
       {
         "male": "head.top_studs",
         "female": "hair.under_sockets",
-        "engaged_studs": 2
+        "engaged_studs": 2,
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
       },
       {
         "male": "hair.top_studs",
         "female": "hat.under_sockets",
         "engaged_studs": 1,
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      }
+    ]
+  },
+  "valid_kip_seated_jumbo": {
+    "build": [
+      {
+        "id": "legs",
+        "part": "char_legs_seated",
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "rot": 0
+        }
+      },
+      {
+        "id": "torso",
+        "part": "robot_torso_core",
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 16.0,
+          "rot": 0
+        }
+      },
+      {
+        "id": "arms",
+        "part": "robot_arms_grabber",
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 36.0,
+          "rot": 0
+        }
+      },
+      {
+        "id": "head",
+        "part": "char_head_jumbo",
+        "pose": {
+          "x": 0.0,
+          "y": -6.25,
+          "z": 41.0,
+          "rot": 0
+        }
+      },
+      {
+        "id": "faceplate",
+        "part": "char_faceplate",
+        "pose": {
+          "x": 0.0,
+          "y": -18.75,
+          "z": 55.0625,
+          "rot": 2,
+          "tilt": [
+            90.0,
+            0.0
+          ]
+        }
+      },
+      {
+        "id": "hat",
+        "part": "hat_ballcap",
+        "pose": {
+          "x": 0.0,
+          "y": -6.25,
+          "z": 73.0,
+          "rot": 0
+        }
+      }
+    ],
+    "ok": true,
+    "errors": [],
+    "warnings": [],
+    "edges": [
+      {
+        "male": "legs.top_studs",
+        "female": "torso.under_sockets",
+        "engaged_studs": 4,
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      },
+      {
+        "male": "torso.top_studs",
+        "female": "arms.under_sockets",
+        "engaged_studs": 4,
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      },
+      {
+        "male": "arms.top_studs",
+        "female": "head.under_sockets",
+        "engaged_studs": 2,
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      },
+      {
+        "male": "faceplate.axis",
+        "female": "head.face_slot",
+        "engaged_studs": 1,
+        "fit": "press",
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      },
+      {
+        "male": "head.top_studs",
+        "female": "hat.under_sockets",
+        "engaged_studs": 2,
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      }
+    ]
+  },
+  "valid_kip_seated_tall": {
+    "build": [
+      {
+        "id": "legs",
+        "part": "char_legs_seated",
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "rot": 0
+        }
+      },
+      {
+        "id": "torso",
+        "part": "robot_torso_core",
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 16.0,
+          "rot": 0
+        }
+      },
+      {
+        "id": "arms",
+        "part": "robot_arms_grabber",
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 36.0,
+          "rot": 0
+        }
+      },
+      {
+        "id": "head",
+        "part": "char_head_tall",
+        "pose": {
+          "x": 0.0,
+          "y": -6.25,
+          "z": 41.0,
+          "rot": 0
+        }
+      },
+      {
+        "id": "faceplate",
+        "part": "char_faceplate",
+        "pose": {
+          "x": 0.0,
+          "y": -18.75,
+          "z": 55.0625,
+          "rot": 2,
+          "tilt": [
+            90.0,
+            0.0
+          ]
+        }
+      },
+      {
+        "id": "hair",
+        "part": "hair_short_swept",
+        "pose": {
+          "x": 0.0,
+          "y": -6.25,
+          "z": 74.4,
+          "rot": 0
+        }
+      },
+      {
+        "id": "hat",
+        "part": "hat_ballcap",
+        "pose": {
+          "x": 0.0,
+          "y": -6.25,
+          "z": 82.4,
+          "rot": 0
+        }
+      }
+    ],
+    "ok": true,
+    "errors": [],
+    "warnings": [],
+    "edges": [
+      {
+        "male": "legs.top_studs",
+        "female": "torso.under_sockets",
+        "engaged_studs": 4,
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      },
+      {
+        "male": "torso.top_studs",
+        "female": "arms.under_sockets",
+        "engaged_studs": 4,
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      },
+      {
+        "male": "arms.top_studs",
+        "female": "head.under_sockets",
+        "engaged_studs": 2,
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      },
+      {
+        "male": "faceplate.axis",
+        "female": "head.face_slot",
+        "engaged_studs": 1,
+        "fit": "press",
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      },
+      {
+        "male": "head.top_studs",
+        "female": "hair.under_sockets",
+        "engaged_studs": 2,
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      },
+      {
+        "male": "hair.top_studs",
+        "female": "hat.under_sockets",
+        "engaged_studs": 2,
         "gap_min_mm": 0.05,
         "gap_max_mm": 0.05
       }
@@ -2769,6 +2978,463 @@
         "fit": "press",
         "gap_min_mm": 0.05,
         "gap_max_mm": 0.05
+      }
+    ]
+  },
+  "valid_kit_race_car": {
+    "build": [
+      {
+        "id": "keel",
+        "part": "kit_keel_base",
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "rot": 0
+        }
+      },
+      {
+        "id": "nose_wedge",
+        "part": "kit_aero_wedge",
+        "pose": {
+          "x": 0.0,
+          "y": -43.75,
+          "z": 12.5,
+          "rot": 0
+        }
+      },
+      {
+        "id": "windscreen",
+        "part": "kit_windscreen",
+        "pose": {
+          "x": 0.0,
+          "y": -6.25,
+          "z": 12.5,
+          "rot": 0
+        }
+      },
+      {
+        "id": "pilot_legs",
+        "part": "char_legs_seated",
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 12.5,
+          "rot": 0
+        }
+      },
+      {
+        "id": "gt_wing",
+        "part": "kit_foil_wing",
+        "pose": {
+          "x": 0.0,
+          "y": 56.25,
+          "z": 12.5,
+          "rot": 1
+        }
+      },
+      {
+        "id": "yoke",
+        "part": "kit_yoke_hbar",
+        "pose": {
+          "x": 0.0,
+          "y": -31.25,
+          "z": 32.75,
+          "rot": 0
+        }
+      }
+    ],
+    "ok": true,
+    "errors": [],
+    "warnings": [],
+    "edges": [
+      {
+        "male": "keel.top_studs",
+        "female": "nose_wedge.under_sockets",
+        "engaged_studs": 6,
+        "gap_min_mm": 0.056,
+        "gap_max_mm": 0.058
+      },
+      {
+        "male": "keel.top_studs",
+        "female": "windscreen.under_sockets",
+        "engaged_studs": 8,
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      },
+      {
+        "male": "keel.top_studs",
+        "female": "pilot_legs.under_sockets",
+        "engaged_studs": 4,
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      },
+      {
+        "male": "keel.top_studs",
+        "female": "gt_wing.under_sockets",
+        "engaged_studs": 4,
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      },
+      {
+        "male": "yoke.axis",
+        "female": "nose_wedge.mast_bore",
+        "engaged_studs": 1,
+        "fit": "free",
+        "gap_min_mm": 0.2,
+        "gap_max_mm": 0.2
+      }
+    ]
+  },
+  "valid_kit_dump_truck": {
+    "build": [
+      {
+        "id": "keel",
+        "part": "kit_keel_base",
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "rot": 0
+        }
+      },
+      {
+        "id": "windscreen",
+        "part": "kit_windscreen",
+        "pose": {
+          "x": 0.0,
+          "y": -6.25,
+          "z": 12.5,
+          "rot": 0
+        }
+      },
+      {
+        "id": "driver_legs",
+        "part": "char_legs_seated",
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 12.5,
+          "rot": 0
+        }
+      },
+      {
+        "id": "dump_tub",
+        "part": "kit_tilting_tub",
+        "pose": {
+          "x": 0.0,
+          "y": 37.5,
+          "z": 12.5,
+          "rot": 0
+        }
+      },
+      {
+        "id": "yoke",
+        "part": "kit_yoke_hbar",
+        "pose": {
+          "x": 0.0,
+          "y": -37.5,
+          "z": 0.0,
+          "rot": 0
+        }
+      }
+    ],
+    "ok": true,
+    "errors": [],
+    "warnings": [],
+    "edges": [
+      {
+        "male": "keel.top_studs",
+        "female": "windscreen.under_sockets",
+        "engaged_studs": 8,
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      },
+      {
+        "male": "keel.top_studs",
+        "female": "driver_legs.under_sockets",
+        "engaged_studs": 4,
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      },
+      {
+        "male": "keel.top_studs",
+        "female": "dump_tub.under_sockets",
+        "engaged_studs": 10,
+        "gap_min_mm": 0.056,
+        "gap_max_mm": 0.058
+      },
+      {
+        "male": "yoke.axis",
+        "female": "keel.steer_bore",
+        "engaged_studs": 1,
+        "fit": "free",
+        "gap_min_mm": 0.2,
+        "gap_max_mm": 0.2
+      }
+    ]
+  },
+  "valid_kit_helicopter": {
+    "build": [
+      {
+        "id": "keel",
+        "part": "kit_keel_base",
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "rot": 0
+        }
+      },
+      {
+        "id": "pilot_legs",
+        "part": "char_legs_seated",
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 12.5,
+          "rot": 0
+        }
+      },
+      {
+        "id": "mast_deck",
+        "part": "kit_turntable",
+        "pose": {
+          "x": 0.0,
+          "y": 37.5,
+          "z": 12.5,
+          "rot": 0
+        }
+      },
+      {
+        "id": "mast_house",
+        "part": "kit_aero_wedge",
+        "pose": {
+          "x": 0.0,
+          "y": 43.75,
+          "z": 17.7,
+          "rot": 0
+        }
+      },
+      {
+        "id": "rotor_mast",
+        "part": "mom_spindle_shaft",
+        "pose": {
+          "x": 0.0,
+          "y": 56.25,
+          "z": 37.95,
+          "rot": 0
+        }
+      },
+      {
+        "id": "main_rotor",
+        "part": "kit_rotor_blade",
+        "pose": {
+          "x": 0.0,
+          "y": 56.25,
+          "z": 109.95,
+          "rot": 0
+        }
+      }
+    ],
+    "ok": true,
+    "errors": [],
+    "warnings": [],
+    "edges": [
+      {
+        "male": "keel.top_studs",
+        "female": "pilot_legs.under_sockets",
+        "engaged_studs": 4,
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      },
+      {
+        "male": "keel.top_studs",
+        "female": "mast_deck.under_sockets",
+        "engaged_studs": 10,
+        "gap_min_mm": 0.056,
+        "gap_max_mm": 0.058
+      },
+      {
+        "male": "mast_deck.top_studs",
+        "female": "mast_house.under_sockets",
+        "engaged_studs": 6,
+        "gap_min_mm": 0.056,
+        "gap_max_mm": 0.058
+      },
+      {
+        "male": "rotor_mast.axis",
+        "female": "mast_house.mast_bore",
+        "engaged_studs": 1,
+        "fit": "free",
+        "gap_min_mm": 0.2,
+        "gap_max_mm": 0.2
+      },
+      {
+        "male": "rotor_mast.axis",
+        "female": "main_rotor.hub",
+        "engaged_studs": 1,
+        "fit": "press",
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      }
+    ]
+  },
+  "valid_pro_steered_racer": {
+    "build": [
+      {
+        "id": "keel",
+        "part": "kit_keel_base",
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "rot": 0
+        }
+      },
+      {
+        "id": "steer_bridge",
+        "part": "pro_steer_bridge",
+        "pose": {
+          "x": 0.0,
+          "y": -50.0,
+          "z": 12.5,
+          "rot": 0
+        }
+      },
+      {
+        "id": "steer_stem",
+        "part": "shaft_tu03",
+        "pose": {
+          "x": 0.0,
+          "y": -37.5,
+          "z": 0.0,
+          "rot": 0
+        }
+      },
+      {
+        "id": "steer_pinion",
+        "part": "gear_spur_z10",
+        "pose": {
+          "x": 0.0,
+          "y": -37.5,
+          "z": 28.0,
+          "rot": 0
+        }
+      },
+      {
+        "id": "steer_rack",
+        "part": "pro_steer_rack",
+        "pose": {
+          "x": 0.0,
+          "y": -56.25,
+          "z": 28.0,
+          "rot": 0
+        }
+      }
+    ],
+    "ok": true,
+    "errors": [],
+    "warnings": [],
+    "edges": [
+      {
+        "male": "steer_pinion.teeth",
+        "female": "steer_rack.teeth",
+        "engaged_studs": 1,
+        "fit": "mesh"
+      },
+      {
+        "male": "keel.top_studs",
+        "female": "steer_bridge.under_sockets",
+        "engaged_studs": 4,
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      },
+      {
+        "male": "steer_stem.axis",
+        "female": "keel.steer_bore",
+        "engaged_studs": 1,
+        "fit": "free",
+        "gap_min_mm": 0.2,
+        "gap_max_mm": 0.2
+      },
+      {
+        "male": "steer_stem.axis",
+        "female": "steer_pinion.hub",
+        "engaged_studs": 1,
+        "fit": "press",
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      }
+    ]
+  },
+  "valid_mom_band_truck": {
+    "build": [
+      {
+        "id": "keel",
+        "part": "kit_keel_base",
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "rot": 0
+        }
+      },
+      {
+        "id": "band_tray",
+        "part": "mom_band_core_tray",
+        "pose": {
+          "x": 0.0,
+          "y": 37.5,
+          "z": 12.5,
+          "rot": 0
+        }
+      },
+      {
+        "id": "band_lid",
+        "part": "mom_band_core_lid",
+        "pose": {
+          "x": 0.0,
+          "y": 37.5,
+          "z": 44.8,
+          "rot": 0
+        }
+      },
+      {
+        "id": "dump_tub",
+        "part": "kit_tilting_tub",
+        "pose": {
+          "x": 0.0,
+          "y": 37.5,
+          "z": 50.0,
+          "rot": 0
+        }
+      }
+    ],
+    "ok": true,
+    "errors": [],
+    "warnings": [],
+    "edges": [
+      {
+        "male": "keel.top_studs",
+        "female": "band_tray.under_sockets",
+        "engaged_studs": 10,
+        "gap_min_mm": 0.056,
+        "gap_max_mm": 0.058
+      },
+      {
+        "male": "band_tray.rim_studs",
+        "female": "band_lid.under_sockets",
+        "engaged_studs": 4,
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      },
+      {
+        "male": "band_lid.top_studs",
+        "female": "dump_tub.under_sockets",
+        "engaged_studs": 16,
+        "gap_min_mm": 0.054,
+        "gap_max_mm": 0.058
       }
     ]
   },

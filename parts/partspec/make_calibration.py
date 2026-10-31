@@ -201,6 +201,42 @@ def face_plate():
     return plate + plug
 
 
+def cjaw_coupon():
+    """Gate G7 physical calibration coupon for c_jaw_tu01: a 3-station #1-pose keel section (-0.05, 0.00, +0.05 mm throat steps
+    at z_axle = 6.25 mm inside a 12.5 mm solid deck with 50-deg teardrop roof) joined by breakaway tabs to a LAY_FLAT 6.6 mm test bar."""
+    import toyventor_kitcard as kc
+    L, W, H = 3 * TU, 2 * TU - 0.2, TU
+    blk = rbox(W, L, H, 1.5, 0.5)
+    p = tp.STUD["small"]
+    for ix in (-0.5, 0.5):
+        for iy in (-1.0, 0.0, 1.0):
+            blk = blk + kc._anchored_stud(p, ix * TU, iy * TU, H)
+    sec_bore = pro.bore_section_print("free")
+    for k, d_throat in enumerate((-0.05, 0.00, 0.05)):
+        yc = (k - 1) * TU
+        hw = (6.00 + d_throat) / 2.0
+        throat = kc._ccw_poly([(-hw, 0.0), (hw, 0.0), (hw, -1.81), (4.00, -6.50), (-4.00, -6.50), (-hw, -1.81)])
+        sec_land = (sec_bore + throat).rotate(90)
+        blk = blk - Manifold.extrude(sec_land, W + 0.8).rotate((0, 90, 0)).translate((-W / 2 - 0.4, yc, 6.25))
+    # LAY_FLAT 6.6 x 5.0 mm shaft_drive test bar beside the block, joined by two 1.2 mm breakaway tabs
+    bar = pro.pin_solid("flats", L).rotate(pro.LAY_FLAT)
+    bb = bar.bounding_box()
+    cx_b, cy_b = (bb[0] + bb[3]) / 2, (bb[1] + bb[4]) / 2
+    bridge_gap = 3.6
+    x_bar = W / 2 + bridge_gap + (bb[3] - bb[0]) / 2
+    bar = bar.translate((x_bar - cx_b, -cy_b, -bb[2]))
+    tabs = (rbox(bridge_gap + 3.0, 3.2, 1.2, 0.4, 0.3).translate((W / 2 + bridge_gap / 2, -TU / 2, 0.0))
+            + rbox(bridge_gap + 3.0, 3.2, 1.2, 0.4, 0.3).translate((W / 2 + bridge_gap / 2, +TU / 2, 0.0)))
+    return blk + bar + tabs
+
+
+def flex_skin_coupon():
+    """Gate G7 Card-D fold endurance coupon: 5x2 TU 0.80 mm sheet with 0.60 mm-web Book-Fold corridors and integrated stud sockets."""
+    import toyventor_kitcard as kc
+    m, _, _ = kc._build_flex_skin(5 * TU - 0.2, 2 * TU - 0.2, size="small", center_book_fold=True)
+    return m
+
+
 PIECES = {
     "toyventor_cal_forge_mount_first_print.stl": (
         forge_mount_first_print,
@@ -211,6 +247,8 @@ PIECES = {
     "toyventor_cal_pro_ladder.stl": (pro_ladder, "Pro ladder: fixed bores (top row) and free bores (bottom row), 8 steps"),
     "toyventor_cal_cube_cell.stl": (cube_cell, "Print-optimised experiment: cube cell with a hole in every face (print 2)"),
     "toyventor_cal_face_plate.stl": (face_plate, "Print-optimised experiment: face plate with a crush-rib plug (print 2)"),
+    "toyventor_cal_cjaw_coupon.stl": (cjaw_coupon, "Gate G7 c_jaw_tu01 3-step keel-pose snap coupon + 6.6 mm test bar (500 cycles + 40 C)"),
+    "toyventor_cal_flex_skin_coupon.stl": (flex_skin_coupon, "Gate G7 Card D 0.80/0.60 mm PETG Book-Fold endurance coupon (500 folds)"),
 }
 FROM_CATALOG = {
     "toyventor_shaft_tu03_P.stl": "Shaft for the fixed-bore row",

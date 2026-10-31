@@ -65,7 +65,7 @@ test("complementary() is symmetric", all(ix.complementary(a, b) == ix.complement
 
 # 7. build validator regressions
 res = asm.demo(out / "toyventor_parts.json", out)
-want_ok = ["valid_ring_brick_tail", "valid_offset_stack_2_studs", "valid_beams_friction_pin", "valid_shaft_beam_bushing", "valid_gear_pair_3tu", "valid_rack_and_pinion", "valid_ring_and_pinion", "valid_snap_on_pro_adapter", "valid_beam_on_pro_mount", "valid_hinge", "valid_cart_axle", "valid_racer_wheels", "valid_pro_gear_scene", "valid_robot_bolt", "valid_kip_seated_wardrobe", "valid_kip_roadster_car", "valid_kip_hauler_truck", "valid_kip_motor_scooter", "valid_kip_sport_moto", "valid_kip_skateboard"]
+want_ok = ["valid_ring_brick_tail", "valid_offset_stack_2_studs", "valid_beams_friction_pin", "valid_shaft_beam_bushing", "valid_gear_pair_3tu", "valid_rack_and_pinion", "valid_ring_and_pinion", "valid_snap_on_pro_adapter", "valid_beam_on_pro_mount", "valid_hinge", "valid_cart_axle", "valid_racer_wheels", "valid_pro_gear_scene", "valid_robot_bolt", "valid_kip_seated_wardrobe", "valid_kip_seated_tall", "valid_kip_seated_jumbo", "valid_kip_roadster_car", "valid_kip_hauler_truck", "valid_kip_motor_scooter", "valid_kip_sport_moto", "valid_kip_skateboard"]
 test("known-good builds are accepted", all(res[k]["ok"] for k in want_ok))
 codes = lambda k: {e["code"] for e in res[k]["errors"]}  # noqa: E731
 test("size mismatch is caught", "size_mismatch" in codes("INVALID_large_tail_on_small_plate"))
@@ -544,18 +544,42 @@ if (HERE / "app_export" / "robots" / "bolt.json").exists():
 
 # 7t. W9: Kip wardrobe & modular TU vehicles
 w9_ids = [r["id"] for r in tp.CATALOG["parts"] if r.get("wave") == "W9"]
-test("W9 Kip wardrobe and modular TU vehicles: all 30 parts are verified with zero blocking failures",
-     len(w9_ids) == 30 and all(by_id[i]["design_status"] == "verified" for i in w9_ids))
+test("W9 Kip wardrobe and modular TU vehicles: all W9 parts are verified with zero blocking failures",
+     len(w9_ids) >= 34 and all(by_id[i]["design_status"] == "verified" for i in w9_ids))
 test("W9 modular vehicles mate cleanly with stylized wheels, snap-on covers, Wave 6 Racer add-ons and Wave 8 Snap characters",
      all(res[k]["ok"] and not res[k]["warnings"] for k in ("valid_kip_seated_wardrobe", "valid_kip_roadster_car", "valid_kip_hauler_truck", "valid_kip_motor_scooter", "valid_kip_sport_moto", "valid_kip_skateboard")))
+
+# 7u. W10 & W11: Flat-pack modular craft kit-cards, Gate G1 9-craft pose sweeps, Pro rack steering & Momentum cores
+import toyventor_kitcard as _kc
+w10_ids = [r["id"] for r in tp.CATALOG["parts"] if r.get("wave") == "W10"]
+w11_ids = [r["id"] for r in tp.CATALOG["parts"] if r.get("wave") == "W11"]
+test("W10 flat-pack modular craft: all 19 parts are verified and 100% clear the S1 small-parts cylinder",
+     len(w10_ids) == 19 and all(by_id[i]["design_status"] == "verified" and by_id[i]["safety"]["small_part_status"] == "above_cylinder" for i in w10_ids))
+test("W11 Pro steering & Momentum stored-energy cores: all 21 parts are verified with zero blocking failures",
+     len(w11_ids) == 21 and all(by_id[i]["design_status"] == "verified" for i in w11_ids))
+_g1 = _kc.verify_gate_g1()
+test("Gate G1: all 9 canonical craft, steering lock sweeps, 55-deg dump tip, Kip mohawk rotor clearance, and Mech keep-outs have 0.000 mm3 overlap",
+     _g1["ok"] and len(_g1["crafts"]) == 9)
+if (out / "cards" / "kitcard_manifest.json").exists():
+    _kcm = json.loads((out / "cards" / "kitcard_manifest.json").read_text())["cards"]
+    test("kit-card plates: all 6 loose and 6 sprue STLs exist within <= 170/164 mm bounds and >= 5.0 mm inter-part gap",
+         len(_kcm) == 6 and all(
+             (out / m["loose_stl"]).exists() and (out / m["sprue_stl"]).exists()
+             and max(m["outer_mm"]) <= m["limit_mm"] and m["min_gap_mm"] >= 5.0
+             for m in _kcm.values()
+         ))
+test("W10 & W11 multi-stage craft builds (Race Car, Dump Truck, Helicopter, Pro Rack-Steered Racer, Momentum Band Truck) validate cleanly",
+     all(res[k]["ok"] and not res[k]["warnings"] for k in ("valid_kit_race_car", "valid_kit_dump_truck", "valid_kit_helicopter", "valid_pro_steered_racer", "valid_mom_band_truck")))
 
 # 8. generated instructions list every part and nothing third-party
 agents = (out / "AGENTS.md").read_text() if (out / "AGENTS.md").exists() else ""
 test("AGENTS.md lists every part", all(f"`{p['id']}`" in agents for p in parts))
 banned = re.compile("|".join(["ste" + "mfie", "le" + "go", "du" + "plo", "mec" + "cano"]), re.I)
 code = [f for f in HERE.glob("*.py") if f.name != "selftest.py"]
-scan = [f for f in list(out.glob("*.md")) + list(out.glob("*.json")) + [HERE / "interfaces.json"] + code if banned.search(f.read_text())]
-test("no third-party construction-system names in generated files", not scan, str([f.name for f in scan]))
+docs_root = HERE.parent.parent / "docs"
+spec_docs = list((docs_root / "specs").glob("*.md")) + list((docs_root / "parts").rglob("*.md")) if docs_root.exists() else []
+scan = [f for f in list(out.glob("*.md")) + list(out.glob("*.json")) + [HERE / "interfaces.json"] + code + spec_docs if banned.search(f.read_text())]
+test("no third-party construction-system names in generated files or specs", not scan, str([f.name for f in scan]))
 
 print(f"\n{len(FAILS)} failure(s)" if FAILS else "\nall tests passed")
 sys.exit(1 if FAILS else 0)

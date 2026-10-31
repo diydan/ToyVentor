@@ -1,33 +1,33 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_char_head_kid_S.stl",
-  "file_sha256": "553e1297109e680327bf3d427a4a5f7230ef8632a64f609a4bc540a7ddbc2ef9",
+  "file_sha256": "715ddb6f9a493676ef6fd62fa079bad151eda857e314a97215e7e0544d30e30f",
   "part_id": "char_head_kid",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-10-30T20:27:11Z",
+  "checked_at": "2026-10-31T11:24:25Z",
   "metrics": {
     "bbox_mm": [
-      43.2,
-      35.7,
-      30.8
+      38.18,
+      27.55,
+      34.2
     ],
-    "volume_cm3": 24.77,
-    "surface_cm2": 50.69,
-    "triangles": 13818,
+    "volume_cm3": 19.81,
+    "surface_cm2": 44.42,
+    "triangles": 10886,
     "ledges": [],
-    "layers": 154,
-    "bed_contact_mm2": 287.1,
-    "height_mm": 30.8,
-    "slenderness": 1.82,
+    "layers": 171,
+    "bed_contact_mm2": 207.5,
+    "height_mm": 34.2,
+    "slenderness": 2.37,
     "centre_of_mass_over_contact": true,
     "min_wall_mm": null,
     "thin_wall_regions": []
   },
   "bridges": [
     {
-      "z_mm": 16.61,
+      "z_mm": 15.05,
       "span_mm": 4.86,
-      "area_mm2": 61.9
+      "area_mm2": 62.7
     },
     {
       "z_mm": 3.2,
@@ -62,9 +62,9 @@
       "level": "block",
       "result": "pass",
       "value": [
-        43.2,
-        35.7,
-        30.8
+        38.2,
+        27.6,
+        34.2
       ],
       "limit": [
         180,
@@ -117,9 +117,9 @@
       "id": "V9_bed_contact",
       "level": "info",
       "result": "pass",
-      "value": 287.1,
+      "value": 207.5,
       "limit": null,
-      "detail": "height / sqrt(contact) = 1.82; above about 3 the slicer often asks for a brim"
+      "detail": "height / sqrt(contact) = 2.37; above about 3 the slicer often asks for a brim"
     },
     {
       "id": "V8_wall_thickness",

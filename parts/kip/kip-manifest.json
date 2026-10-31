@@ -4,6 +4,7 @@
   "standard": "ToyVentor 12.5mm TU",
   "tuMm": 12.5,
   "viewerUrl": "/kip/Kip-Demo.html",
+  "demoVersion": "v10.0",
   "scadSource": "parts/kip/kip.scad",
   "partspecSource": "parts/kip/kip_partspec.py",
   "partspecManifestUrl": "/kip/kip-partspec-manifest.json",
@@ -77,22 +78,47 @@
   ],
   "wardrobe": {
     "heads": [
-      "classic",
       "char_head_kid",
+      "char_head_chibi",
+      "char_head_tall",
+      "classic",
+      "robot_head_visor",
+      "robot_head_scout",
       "char_head_fox",
       "char_head_bear",
-      "robot_head_visor"
+      "char_head_cat",
+      "char_head_dragon",
+      "char_head_alien",
+      "char_head_imp"
     ],
+    "headCategories": {
+      "human": ["char_head_kid", "char_head_chibi", "char_head_tall"],
+      "robot": ["classic", "robot_head_visor", "robot_head_scout"],
+      "animal": ["char_head_fox", "char_head_bear", "char_head_cat"],
+      "creature": ["char_head_dragon", "char_head_alien", "char_head_imp"]
+    },
     "faceplatePart": "char_faceplate",
-    "decalSkins": ["spark", "happy", "wink", "cool", "starry", "surprised", "blank"],
+    "faceplateParts": [
+      "char_faceplate",
+      "char_faceplate_vinyl",
+      "char_faceplate_flat"
+    ],
+    "decalSkins": ["spark", "button", "happy", "wink", "cool", "starry", "surprised", "blank"],
     "skinTones": ["warm_peach", "golden_tan", "rich_cocoa", "soft_ivory", "vinyl_cream"],
-    "hairColors": ["chestnut", "espresso", "golden_blonde", "auburn_ginger", "berry_pop", "cobalt"],
+    "hairColors": ["chestnut", "espresso", "golden_blonde", "auburn_ginger", "berry_spark", "cobalt"],
+    "hatColors": ["cobalt_cap", "crimson_red", "adventure_tan", "safety_gold", "ranger_olive", "charcoal_ink", "coral_spark", "cream_felt"],
     "hatReadyHairs": [
       "hair_short_swept",
       "hair_bob",
-      "hair_swoosh"
+      "hair_swoosh",
+      "hair_long_layered",
+      "hair_twin_braids",
+      "hair_shag"
     ],
     "sculptedTopHairs": [
+      "hair_pompadour",
+      "hair_top_bun",
+      "hair_side_sweep",
       "hair_spiky",
       "hair_pigtails",
       "hair_ponytail",
@@ -101,14 +127,120 @@
     ],
     "hatsAndCrowns": [
       "buds",
+      "hat_ballcap",
+      "hat_beanie",
+      "hat_cowboy",
+      "hat_hardhat",
+      "hat_ranger",
+      "hat_tophat",
+      "hat_pirate",
       "wobble_hat",
       "pointy_ears",
       "bumper_horns",
-      "hair_ponytail",
       "blank"
     ],
     "backpacks": ["off", "pack_explorer", "robot_back_jetpack", "cloud_wings", "pro_gears"],
-    "props": ["off", "prop_wrench", "prop_star_shield", "pro_spinner", "prop_skateboard_deck"]
+    "props": [
+      "off",
+      "prop_wrench",
+      "prop_star_shield",
+      "pro_spinner",
+      "prop_skateboard_deck",
+      "prop_hammer",
+      "prop_screwdriver",
+      "prop_paint_roller",
+      "prop_mop",
+      "prop_broom",
+      "prop_scrub_brush",
+      "prop_vacuum",
+      "prop_guitar",
+      "prop_trumpet",
+      "prop_maracas",
+      "prop_flag",
+      "prop_magnifier"
+    ],
+    "propCategories": {
+      "tools": ["prop_wrench", "pro_spinner", "prop_hammer", "prop_screwdriver", "prop_paint_roller"],
+      "cleaning": ["prop_mop", "prop_broom", "prop_scrub_brush", "prop_vacuum"],
+      "instruments": ["prop_guitar", "prop_trumpet", "prop_maracas"],
+      "play": ["prop_star_shield", "prop_skateboard_deck", "prop_flag", "prop_magnifier"]
+    },
+    "faceInserts": [
+      { "id": "sculpted", "label": "3D Nose & Orbitals",     "part": "char_faceplate" },
+      { "id": "vinyl",    "label": "3D Button Eyes & Nose",  "part": "char_faceplate_vinyl" },
+      { "id": "flat",     "label": "Flat Decal Insert",      "part": "char_faceplate_flat" }
+    ],
+    "faceInsertNote": "One universal face_slot on all 3 human heads, so every insert fits every human head. Robot, animal and creature heads take a conformal 2D decal instead.",
+    "shirts": [
+      { "id": "spark_tee",  "label": "Spark Bolt Tee" },
+      { "id": "hoodie",     "label": "Cobalt Hoodie" },
+      { "id": "varsity",    "label": "Varsity Jacket" },
+      { "id": "overalls",   "label": "Denim Overalls" },
+      { "id": "stripe_tee", "label": "Breton Stripes" },
+      { "id": "track_top",  "label": "Racing Track Top" }
+    ],
+    "pants": [
+      { "id": "jeans",          "label": "Cuffed Jeans" },
+      { "id": "cargo_shorts",   "label": "Cargo Shorts" },
+      { "id": "sport_shorts",   "label": "Sport Shorts" },
+      { "id": "joggers",        "label": "Track Joggers" },
+      { "id": "overalls_jeans", "label": "Overall Denim" }
+    ],
+    "outfitNote": "Shirts and pants are solid-filament colour zones with front chest stencil stickers (no longer 2D decals). 'off' is also valid for both."
+  },
+  "categoryControls": {
+    "human":    ["faceInsert", "hair", "hairColor", "hat", "hatColor", "skin", "shirt", "pants", "back", "prop"],
+    "robot":    ["visor", "crown", "hatColor", "ears (classic head only)", "tail", "back", "prop"],
+    "animal":   ["face", "topper", "hatColor", "shirt", "pants", "tail", "back", "prop"],
+    "creature": ["face", "crown", "hatColor", "shirt", "pants", "tail", "back", "prop"],
+    "note": "Mirrors syncWardrobeCategoryUi() in Kip-Demo.html: the Wardrobe row shows only the controls that fit the chosen head type. hatColor appears only while a wearable hat is on."
+  },
+  "pending": [
+    {
+      "id": "char_head_jumbo",
+      "category": "human",
+      "status": "in catalog.json and toyventor_parts.py, not yet in Kip-Demo.html (demo ships exactly 12 heads, 3 per category)"
+    }
+  ],
+  "presets": [
+    { "id": "clean",  "label": "Clean",               "head": "classic" },
+    { "id": "boy",    "label": "Leo Explorer",        "head": "kid" },
+    { "id": "girl",   "label": "Maya Skater",         "head": "chibi" },
+    { "id": "kai",    "label": "Kai Moto",            "head": "tall",   "vehicle": "moto" },
+    { "id": "scout",  "label": "Mecha Scout",         "head": "scout" },
+    { "id": "cat",    "label": "Whisker Cat Scooter", "head": "cat",    "vehicle": "scooter" },
+    { "id": "fox",    "label": "Fox Scooter",         "head": "fox",    "vehicle": "scooter" },
+    { "id": "dragon", "label": "Drake Dragon",        "head": "dragon" },
+    { "id": "imp",    "label": "Yeti Imp",            "head": "imp" },
+    { "id": "pro",    "label": "Bolt Pro 8+",         "head": "robot" }
+  ],
+  "urlParams": {
+    "hash": "#toy=<base64url ToyContract> (see shared/toycontract.ts kipDemoUrl())",
+    "query": {
+      "edition": "snap (default pro)",
+      "preset|loadout": "clean | boy | girl | kai | scout | cat | fox | dragon | imp | pro",
+      "cat": "human | robot | animal | creature",
+      "head": "kid | chibi | tall | classic | robot | scout | fox | bear | cat | dragon | alien | imp",
+      "insert": "sculpted | vinyl | flat",
+      "face|expr": "spark | button | happy | wink | cool | starry | surprised | blank",
+      "skin": "warm_peach | golden_tan | rich_cocoa | soft_ivory | vinyl_cream",
+      "hair": "off | 14 wig ids (wardrobe.hatReadyHairs + sculptedTopHairs, without the hair_ prefix)",
+      "haircol": "wardrobe.hairColors",
+      "hat|crown": "ports[crown].options",
+      "hatcol": "wardrobe.hatColors",
+      "shirt": "off | wardrobe.shirts",
+      "pants": "off | wardrobe.pants",
+      "back": "off | explorer | jetpack | wings | gears",
+      "ears": "off | comm | pro",
+      "tail": "off | wag | pro",
+      "prop|hand": "ports[hand].options (hand=1|shaft|pro selects the Pro spinner)",
+      "vehicle": "none | car | truck | scooter | moto",
+      "covers|racer": "0 turns the snap-on body covers / racer kit off",
+      "view": "exploded | pile | building (with explode=0..1, bt=build time)",
+      "cam": "front | wave | back34 | side34 | vehicle | exploded | pile | head_exploded | head_front | head_close | head_hat | head_side34 | head_profile | head_back34",
+      "clip|t": "animation clip key and seek time in seconds",
+      "sdk|photo|modal|ref": "wizardHat-style SDK demo, kid-sketch photo forge, open llm/photo modal, reference skeleton"
+    }
   },
   "vehicles": [
     {
@@ -177,7 +309,8 @@
       "grid": [1, 2],
       "gameSlot": "character.eyes.big",
       "stat": "glow",
-      "options": ["buds", "swoosh", "spiky", "pigtails", "ponytail", "curly", "mohawk", "ears", "horns", "hat", "blank"]
+      "options": ["buds", "ballcap", "beanie", "cowboy", "hardhat", "ranger", "tophat", "pirate", "hat", "ears", "horns", "blank"],
+      "note": "Hats and toppers only. Hair is a separate clip-on wardrobe row (see wardrobe.hatReadyHairs / sculptedTopHairs); a hat only seats on a bald head or a Hat-Ready wig."
     },
     {
       "id": "ears",
@@ -215,7 +348,14 @@
       "grid": [1, 1],
       "gameSlot": "character.base.block",
       "stat": "torque",
-      "options": ["off", "wrench", "shield", "shaft", "skateboard"]
+      "options": [
+        "off", "wrench", "shield", "shaft", "skateboard",
+        "hammer", "screwdriver", "paint_roller",
+        "mop", "broom", "scrub_brush", "vacuum",
+        "guitar", "trumpet", "maracas",
+        "flag", "magnifier"
+      ],
+      "note": "Every prop is a flat-printed head on the same 6.6 mm flat-sided Pro grip shaft as prop_wrench. See wardrobe.propCategories for the demo's category filter."
     }
   ],
   "assets": {

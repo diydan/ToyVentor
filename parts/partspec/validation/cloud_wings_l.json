@@ -4,7 +4,7 @@
   "file_sha256": "ad31d5e391fe56d714c8e3b511e74c4d014197a53624e720a3a1b280035c0441",
   "part_id": "cloud_wings_l",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-10-30T17:11:46Z",
+  "checked_at": "2026-10-31T11:19:53Z",
   "metrics": {
     "bbox_mm": [
       116.4,
@@ -161,7 +161,7 @@
     ],
     "engine": "PrusaSlicer-2.8.1",
     "slice_logic": "1",
-    "reused_from": "2026-10-30T16:40:22Z"
+    "reused_from": "2026-10-31T10:23:38Z"
   },
   "verdict": "pass",
   "summary": "Prints as is"

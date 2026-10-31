@@ -6,7 +6,7 @@ Decided by Dan, 2026-10-29. Every character, robot, animal and accessory follows
 
 1. **Crown buds.** Every head carries two studs on its crown, centred, in the accent colour. They are the silhouette mark and stay functional (hats, ears and horns fit on them).
 2. **Made of pieces.** A waist band at every joint: each part's lower edge steps in (about 35 degrees, printable), so every build reads as stacked parts.
-3. **One face language.** Big head; eyes set low and wide; expressions as decals or game skins, never moulded, so a child projects the feeling.
+3. **One face language.** Big head; eyes set low and wide; expressions as decals or game skins, never moulded, so a child projects the feeling. On the human heads, fixed facial relief lives only on the swappable face insert, never in the head shell. Every insert carries a neutral resting-smile ridge, so every face has a mouth; the `3D Nose & Orbitals` insert adds a nose prism and eye-socket planes, the `3D Button Eyes & Nose` insert adds button-eye domes and a nose wedge, and the `Flat Decal Insert` adds nothing. Decals paint the emotion over all three.
 4. **One accent colour.** The spark, `#FF6B4A`, on the crown buds of every character.
 5. **One signature motion.** The toy waddle, the hop and the victory spin, the same for every character in the game.
 6. **One idea: "I was made."** Every character is proud to have been built: a name, a one-line story and a page in the Toybook, plus earned rare variants.

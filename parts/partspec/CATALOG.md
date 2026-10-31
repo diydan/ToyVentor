@@ -6,8 +6,8 @@
 
 | Line | Verified | Built, not verified | Target |
 | --- | --- | --- | --- |
-| Snap | 67 | 0 | 67 |
-| Pro | 38 | 0 | 38 |
+| Snap | 109 | 0 | 109 |
+| Pro | 71 | 0 | 71 |
 
 ## Waves
 
@@ -22,7 +22,10 @@
 | W6 | Forge Club Month 1: Racer | 9 | 9 | W3 | M | done |
 | W7 | Forge Club Month 2: Critters | 1 | 1 | W3 | S | done |
 | W8 | Snap robots: Bolt | 5 | 5 | W3 | M | done |
-| W9 | Kip wardrobe and modular TU vehicles | 30 | 30 | W5, W6, W8 | M | done |
+| W9 | Kip wardrobe and modular TU vehicles | 53 | 53 | W5, W6, W8 | M | done |
+| W10 | Universal Flat-Pack Modular Craft (Cards A-D) | 19 | 19 | W5, W6, W8, W9 | L | done |
+| W11 | Progressive Power: Pro Steering & Momentum Cores (Cards E1-E2) | 21 | 21 | W4, W5, W10 | L | done |
+| W12 | Workshop Props | 12 | 12 | none | M | done |
 
 - **W0:** Done: catalog-driven registration (one catalog row per part), the block, tile, slope and dome families, Pro checks I4 to I6 and pin-and-bore mating in the validator, all proven on fixtures. The round block was replaced by a dome because a round outline cannot carry studs on the lattice.
 - **W1:** 11 parts, all from the block, tile, slope and dome families on the existing foot and tube code.
@@ -33,7 +36,10 @@
 - **W6:** Six car add-ons (Spoiler, Bull Bar, Hood Scoop, Twin Exhaust, Light Bar, Roof Rack) and a wheel set (Axle Block, Racer Wheel, Racer Axle), Snap Small on 1 and 2 stud footprints, built print-first. The first seeded Forge Club set.
 - **W7:** A Small Waddle Tail, so every character slot has a part in the size on offer, and the Critters set: Pointy Ears, Bumper Horns, Cloud Wings, Pebble Armor Shell, Waddle Tail and Bounce Capsule.
 - **W8:** The first Snap robot: one part for each of the five robot slots (legs, torso, arms, head, back), stacking on studs, fixed pose, ages 3+. Four more parts per slot follow.
-- **W9:** 30 parts (22 Snap Small, 8 Pro): three plump symmetric-back character base heads (Human Base Head with recessed face-plate dock, Fox, Bear) with 2x1 crown buds, slim snap-in Swappable Emotion Face Plate, eight separate clip-on 2x1 hair parts (three Hat-Ready with top 2x1 crown studs: Short Swept, Flared Bob, Swoosh; five clean Sculpted-Top with no studs: Spiky, Pigtails, Ponytail, Cloud Curls, Mohawk), Explorer Rucksack, Builder Spanner, Star Emblem Wand, Street Skateboard Deck, Seated Snap Legs, three stylized Pro vehicle wheels, and V2 modular rolling vehicle chassis with interchangeable snap-on body covers.
+- **W9:** 52 parts (42 Snap Small, 10 Pro): ten Wave 9 character and robot heads across 4 categories (3 smooth organic humanoid heads: Soft Youth, Vinyl Squircle, Heroic Jaw; 1 Mecha Scout robot head pairing with Kip Classic & Bolt Robot; 3 animal critter heads: Fox, Bear, Whisker Cat; 3 creature heads: Drake Dragon, Starling Alien, Yeti Imp) with 2x1 crown buds, three universal interchangeable 1 TU facial inserts (3D Nose & Orbital Face Insert, 3D Button Eyes & Nose Face Insert, and Smooth Flush Decal Face Insert), fourteen sculpted multi-strand wrap-around 2x1 crown wigs (6 Hat-Ready with top 2x1 crown studs + 8 Sculpted-Top), seven wearable 2x1 crown hats, Explorer Rucksack, Builder Spanner, Star Emblem Wand, Street Skateboard Deck, Seated Snap Legs, three stylized Pro vehicle wheels, and V2 modular rolling vehicle chassis with interchangeable snap-on body covers.
+- **W10:** 19 parts (14 Snap Small, 5 Pro): 16 rigid flat-pack modular craft modules plus 3 smooth 0.80 mm PETG/TPU flex skins across Cards A-D (<= 170 x 170 mm), unlocking 9 canonical craft (Race Car, Dump Truck, Tractor, Trailer, Motorbike/Trike, Aeroplane, Catamaran, Helicopter, Space Shuttle) with 100% intact parts clearing the S1 small-parts cylinder.
+- **W11:** 21 parts (7 Snap Small, 14 Pro): Stage-2 Pro row-0 Ackermann rack steering linkage, axle keepers, and positive-trail bike fork adapter, plus Stage-3 Momentum stored-energy propulsion and actuator modules (enclosed #64 band core, bumper trigger, captive slam launcher, balloon jet valve + 3-orifice nozzle selector, 10-deg bellows clamshell, and shrouded 42 mm vertical rip-cord turbine core) across Cards E1-E2 (<= 164 x 164 mm).
+- **W12:** 12 parts (12 Pro): handheld workshop and play props on the Pro grip shaft.
 
 ## How parts were picked
 
@@ -74,6 +80,27 @@
 | `slope_s_2x2` | Mini Slope | slope | small | W1 | verified | Launch. 30 degree face: at 45 degrees the Small size lands in the marginal small-parts band and cannot be verified. Prints without supports. |
 | `tile_l_2x2` | Big Smooth Tile | tile | large | W1 | verified | Slide.  |
 | `tile_s_2x2` | Mini Smooth Tile | tile | small | W1 | verified | Slide. Socket side only, flat top. |
+| `kit_aero_wedge` | Aero Nose Cone & Heli Mast House | vehicle | small | W10 | verified | Speed. 24.8 x 37.3 x 33.25 mm 2x3 TU sculpted nose wedge with horizontal z = 26.5625 mm (17/8 TU) teardrop prop bore and vertical top mast/helm bore. |
+| `kit_booster_pod` | Twin-Bell Sidepod & Jet Nacelle | vehicle | small | W10 | verified | Launch. 24.8 x 65.0 x 28.0 mm sculpted booster pod with twin 50-deg teardrop rocket exhaust bells and integrated 2x5 underside stud sockets. |
+| `kit_clevis_spine` | Universal 2x8 Clevis Spine & Boom | vehicle | small | W10 | verified | Reach. 27.8 x 99.8 x 15.3 mm inline motorbike/trike spine, helicopter tail boom, tractor loader boom, and fifth-wheel trailer drawbar with twin 15.0 mm double-cheek clevis slots, 2x2 saddle studs, and side kickstand jaw. |
+| `kit_foil_wing` | Swept Foil Wing, GT Spoiler & Ramp | vehicle | small | W10 | verified | Lift. 74.8 x 49.8 x 5.0 mm flat-bottom plank airfoil with keyed flank_rail_tu02 root tongue and integrated underside stud sockets for aeroplane/shuttle wings, GT wings, and trailer ramps. |
+| `kit_keel_base` | Universal 4x10 Craft Keel Base | vehicle | small | W10 | verified | Sturdiness. Universal 4x10 TU solid-deck craft hull (49.8 x 124.8 x 15.3 mm) with single z_axle = 6.25 mm bottom-entry c_jaw_tu01 axle stations (rows 0, 7, 8), rear row-9 hinge jaws, flank_rail_tu02 wing/skid mortises, inter-row Y=25.0 steering bore, and 10.0 x 31.4 mm PTO slot. |
+| `kit_scoop_blade` | Front Loader Bucket & Snowplow Blade | vehicle | small | W10 | verified | Power. 49.8 x 37.3 x 20.0 mm upward-printed loader scoop bucket, snowplow blade, and helicopter rescue basket with integrated rear stud sockets. |
+| `kit_skid_runner` | Landing Skid, Snow Ski & Hull Runner | vehicle | small | W10 | verified | Slide. 17.6 x 112.3 x 20.0 mm flat-bottom ski runner with upturned 45-deg bow, twin riser struts, and 9 integrated stud sockets for helicopter skids and catamaran runners. |
+| `kit_tilting_tub` | 4x4 Tipping Dump Tub & Payload Bay | vehicle | small | W10 | verified | Toughness. 49.8 x 49.8 x 18.0 mm 4x4 TU cargo tub that seats directly onto the rear keel bay or atop any 4x4x3 TU Power Core and tips to 55 deg. |
+| `kit_turntable` | Rotary Slew Deck, Hitch & Mast Plate | vehicle | small | W10 | verified | Spin. 49.8 x 49.8 x 8.0 mm 4x4 TU rotary turntable plate with central free kingpin bore, 16 top studs, and 4x4 cage sockets; serves as crane slew base, fifth-wheel hitch, and 10-stud helicopter mast deck. |
+| `kit_windscreen` | Open-Top Cockpit Windscreen & Wire Sill | vehicle | small | W10 | verified | Awareness. 49.8 x 37.3 x 23.5 mm 4x3 TU open-top U-frame windscreen with 25.2 mm clear Kip pilot corridor, footwell clearance, corner accessory studs, and above-socket Stage-4 wire troughs. |
+| `skin_aero_cowl` | Flex Skin: Wrap-Around Aero Nose Cowl | vehicle | small | W10 | verified | Style. 96.0 x 37.3 x 4.4 mm smooth 0.80 mm PETG/TPU shape-out flex skin with 0.60 mm rib-free fold corridors (R >= 20 mm) and integrated stud sockets. |
+| `skin_cargo_shroud` | Flex Skin: Book-Fold Payload Bay Doors | vehicle | small | W10 | verified | Style. 112.0 x 49.8 x 4.4 mm smooth 0.80 mm PETG/TPU clamshell canopy and Space Shuttle payload bay shroud with center 0.60 mm Book-Fold corridors. |
+| `skin_windscreen` | Flex Skin: Wrap-Around Cockpit Visor | vehicle | small | W10 | verified | Style. 96.0 x 36.0 x 4.4 mm smooth 0.80 mm PETG/TPU wrap-around windscreen visor with 0.60 mm fold corridors snapping onto windscreen bolsters. |
+| `mom_band_core_lid` | Momentum Band Core Safety Lid | vehicle | small | W11 | verified | Sturdiness. 49.8 x 49.8 x 8.0 mm enclosed 4x4 TU top safety lid sealing the elastomer band cavity while exposing full 4x4 top studs for stacking Dump Tub or cargo. |
+| `mom_band_core_tray` | Momentum Enclosed Band Core Tray | vehicle | small | W11 | verified | Power. 49.8 x 49.8 x 35.1 mm 4x4x3 TU enclosed elastomer Power Core tray with twin R=4.0 mm front band posts, Z_pto = 31.25 mm output bores, and bottom PTO window. |
+| `mom_bellows_base` | Momentum 10-Deg Pneumatic Bellows Base | vehicle | small | W11 | verified | Lift. 49.8 x 49.8 x 16.0 mm 4x4 TU pneumatic clamshell base with 10-deg pre-angled start stop and lateral balloon containment curtains. |
+| `mom_bellows_leaf` | Momentum Hinged Bellows Upper Leaf | vehicle | small | W11 | verified | Lift. 49.8 x 49.8 x 8.0 mm 4x4 TU upper bellows lift plate with top studs to raise the tipping dump tub under low-pressure air inflation. |
+| `mom_flywheel_lid` | Momentum Turbine Core Upper Journal Lid | vehicle | small | W11 | verified | Spin. 49.8 x 49.8 x 8.0 mm 4x4 TU upper turbine shroud lid with central free spindle journal and 12 perimeter studs. |
+| `mom_flywheel_tray` | Momentum Shrouded Turbine Core Tray | vehicle | small | W11 | verified | Spin. 49.8 x 49.8 x 35.1 mm 4x4x3 TU vertical-spindle turbine shroud with central spindle step bearing, rip-cord guide slot, and finger-safe < 2.6 mm acoustic siren vents. |
+| `mom_jet_valve_body` | Momentum Balloon Collar & Jet Valve | vehicle | small | W11 | verified | Speed. 49.8 x 24.8 x 18.5 mm 4x2 TU upright-printed smooth balloon collar and nozzle mount block (hand-pump inflation, zero mouthpiece). |
+| `pro_steer_bridge` | Pro Row-0 Ackermann Steering Bridge | vehicle | small | W11 | verified | Balance. 48.1 x 24.8 x 15.3 mm T-planform steering bridge mounting onto #1 rows 0..1 with cylindrical kingpin bosses at X = +-18.75 mm, smooth front rack slideway, and rear 2x1 top servo studs. |
 | `bounce_capsule_s` | Bounce Capsule | capsule | small | W3 | verified | Bounce. Integrated base: one stud hole; round, so turning on its stud does not matter. |
 | `bumper_horns` | Bumper Horns | addon | small | W3 | verified | Power. Integrated base: a small pad joins the horns and carries two stud holes. |
 | `cloud_wings_l` | Cloud Wings (Large) | addon | large | W3 | verified | Lift. Cloud Wings at twice the size; integrated base keyed by reliefs so it cannot swivel; clears the small-parts cylinder. |
@@ -99,20 +126,41 @@
 | `robot_head_visor` | Visor Head | robot | small | W8 | verified | Awareness. Visor slot (an 18 mm bridge between closed ends), ear panels down to the bed, studs on top for hats, ears and horns. |
 | `robot_legs_stomper` | Stomper Legs | robot | small | W8 | verified | Balance. Big feet carry four stud holes, so the robot stands on any plate; the hips widen from the legs at 41 degrees and carry 2x2 studs. |
 | `robot_torso_core` | Core Torso | robot | small | W8 | verified | Power. A 2x2 brick-sized core with full-height chest vents (no ceilings to bridge). |
+| `char_head_alien` | Starling Alien Head | addon | small | W9 | verified | Glow. Smooth cosmic starling alien head on a 2x1 neck with narrow tapered chin, large bulbous cranium dome, curved side telepathy antennae, and centered 2x1 crown buds at z=35.6 mm. |
 | `char_head_bear` | Bear Critter Head | addon | small | W9 | verified | Torque. Bear cub head on a 2x1 neck with plump rounded snout and chubby round ears flanking centered 2x1 crown buds. |
+| `char_head_cat` | Whisker Cat Head | addon | small | W9 | verified | Speed. Plump feline critter head on a 2x1 neck with soft twin whisker cheeks, short rounded muzzle pad, perky triangular cat ears, and centered 2x1 crown buds at z=26.8 mm. |
+| `char_head_chibi` | Human Head 2 (Vinyl Squircle) | addon | small | W9 | verified | Glow. Smooth collector-vinyl squircle humanoid head (40.0 mm wide) on a compact 2x1 neck collar with broad rounded jawline, smooth curved squircle side walls, flatter squircle back, broad forehead above universal 24.4x10.6 mm face_slot at z=14.0625 mm, mid-cheek smooth ears, and 2x1 crown buds at z=31.4 mm. |
+| `char_head_dragon` | Drake Dragon Head | addon | small | W9 | verified | Torque. Friendly mythical drake dragon head on a 2x1 neck with sculpted forward snout, armored brow ridges, swept-back dragon horns, cheek frill spikes, and centered 2x1 crown buds at z=27.6 mm. |
 | `char_head_fox` | Fox Critter Head | addon | small | W9 | verified | Speed. Fox critter head on a 2x1 neck with fluffy swept cheek ruffs, smooth snout, perky fox ears and centered 2x1 crown buds. |
-| `char_head_kid` | Human Base Head | addon | small | W9 | verified | Glow. Plump symmetric 36.4 mm-deep 2x1 human head with rounded C-ears, recessed front face-plate dock bore, and centered 2x1 crown buds. |
+| `char_head_imp` | Yeti Imp Head | addon | small | W9 | verified | Spin. Chunky mountain yeti-imp creature head on a 2x1 neck with broad playful underbite jaw, swept sideways imp ears, twin forehead horn nubs, and centered 2x1 crown buds at z=28.4 mm. |
+| `char_head_jumbo` | Human Head (Jumbo Vinyl) | addon | small | W9 | verified | Glow. Big square collector-vinyl display head on a 2x1 neck with huge flat-ish forehead dome, full square cheeks, tiny chin, flatter back, universal 24.4x10.6 mm flush face_slot at z=14.0625 mm, small nub ears, and 2x1 crown buds at z=32.0 mm. |
+| `char_head_kid` | Human Head 1 (Soft Youth) | addon | small | W9 | verified | Glow. Smooth organic youth humanoid head on a compact 2x1 neck collar with gentle heart-oval chin, rounded cheek contours, flatter upright occipital back, smooth rounded ears, universal 24.4x10.6 mm flush face_slot at z=15.625 mm, and 2x1 crown buds at z=34.2 mm. |
+| `char_head_tall` | Human Head 3 (Heroic Jaw) | addon | small | W9 | verified | Spin. Smooth sculpted heroic humanoid head on a compact 2x1 neck collar with confident squared jaw, smooth sculpted cheekbones, athletic brow contour, flatter upright back, smooth ears, universal 24.4x10.6 mm flush face_slot at z=17.1875 mm, and 2x1 crown buds at z=37.2 mm. |
 | `char_legs_seated` | Seated Snap Legs | addon | small | W9 | verified | Torque. One-piece 90-degree seated 2x2 Snap lower body: 2x2 seat sockets underneath and 2x2 waist studs on top. |
-| `hair_bob` | Flared Bob Hair (Hat-Ready) | addon | small | W9 | verified | Glow. Separate 2x1 clip-on flared chin-frame bob hair with parted curtain bangs and top 2x1 crown studs for stacking hats or ponytails. |
-| `hair_curly` | Cloud Curls | addon | small | W9 | verified | Glow. Full-crown 38 mm volumetric cloud-puff curl cap on a 2x1 integrated base. |
-| `hair_mohawk` | Action Mohawk | addon | small | W9 | verified | Speed. Four-peak punk mohawk crest on a 2x1 integrated scalp cap. |
-| `hair_pigtails` | Twin-Puff Pigtails | addon | small | W9 | verified | Spin. Full-crown parted scalp cap flaring smoothly to 47 mm twin side puffs on a 2x1 integrated base. |
-| `hair_ponytail` | High Ponytail Hair | addon | small | W9 | verified | Spin. Full-crown 37 mm sleek scalp cap with high rear ponytail sweeping over the back of any 2x1 head. |
-| `hair_short_swept` | Short Swept Hair (Hat-Ready) | addon | small | W9 | verified | Speed. Separate 2x1 clip-on short side-swept hair with sideburns, diagonal bangs, and top 2x1 crown studs for stacking hats, ears, or horns. |
-| `hair_spiky` | Spiky Tufts Hair | addon | small | W9 | verified | Speed. Full-crown 38 mm spiky action hair with five sculpted tufts on a 2x1 integrated scalp cap. |
-| `hair_swoosh` | Swoosh Hair (Hat-Ready) | addon | small | W9 | verified | Speed. Separate 2x1 clip-on side-swept wave hair with sculpted fringe and top 2x1 crown studs for stacking hats, ears, or horns. |
+| `hair_bob` | Flared Bob Hair (Hat-Ready) | hair | small | W9 | verified | Glow. Multi-strand wrap-around 2x1 clip-on flared chin-frame bob wig with sculpted cheek curtains, bevelled bob locks, parted bangs, recessed hat-seat crown, and top 2x1 crown studs at z=12.4 mm for stacking hats or ears. |
+| `hair_curly` | Cloud Curls | hair | small | W9 | verified | Glow. Rich multi-cluster volumetric cloud-curl wrap-around wig framing the forehead, temples, cheeks, and nape on a 2x1 stud socket. |
+| `hair_long_layered` | Long Layered Flow (Hat-Ready) | hair | small | W9 | verified | Glow. Shoulder-length multi-strand wrap-around 2x1 wig with center-parted bangs, cheek-framing locks, sculpted rear cascade locks, recessed hat-seat crown, and top 2x1 crown studs at z=12.4 mm. |
+| `hair_mohawk` | Action Mohawk | hair | small | W9 | verified | Speed. Wrap-around side-faded wig with shaved-side temple ribs, ear arches, deep nape skirt, and five-blade fanned mohawk crest on a 2x1 stud socket. |
+| `hair_pigtails` | Twin-Puff Pigtails | hair | small | W9 | verified | Spin. Multi-strand wrap-around parted wig with cheek-framing curtains, hair ties, and sculpted multi-lobe twin side puffs on a 2x1 stud socket. |
+| `hair_pompadour` | Sculpted Pompadour | hair | small | W9 | verified | Speed. Wrap-around 2x1 clip-on pompadour wig with clean sideburns, ear arches, slick combed side ridges, and high rolled front quiff crest. |
+| `hair_ponytail` | High Ponytail Hair | hair | small | W9 | verified | Spin. Multi-strand wrap-around sleek wig with sideburns, ear arches, combed crown ridges, hair tie cuff, and arched multi-strand rear ponytail plume on a 2x1 stud socket. |
+| `hair_shag` | Feathered Shag (Hat-Ready) | hair | small | W9 | verified | Spin. Tousled multi-strand feathered shag 2x1 wig with textured bangs, layered side locks, flared nape flicks, recessed hat-seat crown, and top 2x1 crown studs at z=12.4 mm. |
+| `hair_short_swept` | Short Swept Hair (Hat-Ready) | hair | small | W9 | verified | Speed. Multi-strand wrap-around 2x1 clip-on short side-swept wig with sculpted sideburns, ear arches, layered nape locks, diagonal bangs, recessed hat-seat crown, and top 2x1 crown studs at z=12.4 mm for stacking hats, ears, or horns. |
+| `hair_side_sweep` | Asymmetric Side Sweep | hair | small | W9 | verified | Glow. Wrap-around 2x1 clip-on asymmetric side-parted wig with deep left side part, sweeping right curtain wave locks, and sculpted crown crest. |
+| `hair_spiky` | Spiky Tufts Hair | hair | small | W9 | verified | Speed. Multi-strand wrap-around spiky action wig with sideburns, ear arches, layered nape locks, forehead bangs, and nine dynamic radial crown spikes on a 2x1 stud socket. |
+| `hair_swoosh` | Swoosh Hair (Hat-Ready) | hair | small | W9 | verified | Speed. Multi-strand wrap-around 2x1 clip-on side-swept wave wig with sideburns, ear arches, layered nape locks, sweeping forehead fringe, recessed hat-seat crown, and top 2x1 crown studs at z=12.4 mm for stacking hats, ears, or horns. |
+| `hair_top_bun` | Sleek Top Bun | hair | small | W9 | verified | Spin. Wrap-around 2x1 clip-on updo wig with parted curtain bangs, upward-swept crown strands, collar band, and sculpted top knot bun. |
+| `hair_twin_braids` | Twin Braids (Hat-Ready) | hair | small | W9 | verified | Torque. Wrap-around 2x1 wig with parted curtain bangs, sculpted five-segment plaited twin side braids, recessed hat-seat crown, and top 2x1 crown studs at z=12.4 mm. |
+| `hat_ballcap` | Sport Ballcap | hair | small | W9 | verified | Speed. Support-free 6-panel sport baseball cap with forward curved visor bill, seam ridges, top button, and -6.0 mm wearable crown rim that seats cleanly on bald heads or Hat-Ready wigs. |
+| `hat_beanie` | Ribbed Cuff Beanie | hair | small | W9 | verified | Glow. Support-free ribbed knit watch-cap beanie with thick folded cuff, vertical knit ribs, and top pom-pom on a -6.0 mm wearable 2x1 crown rim. |
+| `hat_cowboy` | Frontier Cowboy Hat | hair | small | W9 | verified | Torque. Support-free western cowboy hat with upturned curled side brims, hatband, and pinched cattleman crown crease on a -6.0 mm wearable 2x1 crown rim. |
+| `hat_hardhat` | Builder Hardhat | hair | small | W9 | verified | Torque. Support-free construction safety hardhat with front visor peak, wrap safety rim, center reinforcement spine ridge, and front badge plate on a -6.0 mm wearable 2x1 crown rim. |
+| `hat_pirate` | Buccaneer Tricorne | hair | small | W9 | verified | Spin. Support-free buccaneer tricorne hat with upturned three-point folded brim walls and domed inner crown on a -6.0 mm wearable 2x1 crown rim. |
+| `hat_ranger` | Explorer Safari Hat | hair | small | W9 | verified | Speed. Support-free wide-brim explorer ranger hat with hatband and four-pinch campaign peak crown on a -6.0 mm wearable 2x1 crown rim. |
+| `hat_tophat` | Dapper Top Hat | hair | small | W9 | verified | Glow. Support-free dapper stovepipe top hat with curled dress brim, ribbon band, and flared top cylinder on a -6.0 mm wearable 2x1 crown rim. |
 | `pack_explorer` | Explorer Rucksack | addon | small | W9 | verified | Torque. 2x2 field rucksack with rolled upper bedroll and top 2x1 accessory studs. |
 | `prop_skateboard_deck` | Street Skateboard Deck | vehicle | small | W9 | verified | Speed. 2x4 stud deck with two horizontal teardrop free axle bores for Wave 6 racer axles and wheels. |
+| `robot_head_scout` | Mecha Scout Robot Head | addon | small | W9 | verified | Speed. Sleek mecha scout robot helmet on a 2x1 neck with panoramic visor pocket, central sensor brow crest, swept side telemetry fins, and centered 2x1 crown buds at z=32.8 mm. |
 | `veh_cab_roof_cover` | Cab Targa Canopy Cover | vehicle | small | W9 | verified | Torque. 2x1 snap-on cab roof / GT targa canopy cover fitting both Roadster Car and Hauler Truck, with top 2x2 studs for light bars or roof racks. |
 | `veh_car_chassis` | Roadster Car Chassis | vehicle | small | W9 | verified | Speed. V2 58 mm wide-body roadster rolling chassis with raised side doors, 4x2 recessed cockpit, 33.6 mm wheel-well tunnels and modular snap-on cover bays. |
 | `veh_car_hood_cover` | Aero Hood & Fender Cover | vehicle | small | W9 | verified | Speed. 2x2 snap-on winged GT bonnet and headlight pods fitting both Roadster Car and Hauler Truck, with top 2x2 studs for a hood scoop. |
@@ -126,6 +174,37 @@
 
 | Id | Name | Family | Size | Wave | Status | Notes |
 | --- | --- | --- | --- | --- | --- | --- |
+| `kit_barbell_shaft` | Outboard Barbell Axle & Rotor Mast | shaft | pro | W10 | verified | Spin. 78.0 mm (6.24 TU) LAY_FLAT Pro drive shaft with 4-way indexed top rotor tip, providing +1.80 mm/side wheel clearance across 49.8 mm hulls and full-height helicopter rotor mast support. |
+| `kit_rotor_blade` | Airfoil Prop & Crossed Rotor Blade | wheel | pro | W10 | verified | Lift. 68.0 x 20.0 x 6.0 mm flat-bottom airfoil propeller/rotor blade with 20.0 mm fixed Pro hub; stacks 90-deg crossed in pairs for a 4-blade helicopter main rotor. |
+| `kit_spinner_pin` | Pull-Ring Clevis & Prop Spinner Pin | shaft | pro | W10 | verified | Spin. 36.0 x 65.0 x 5.0 mm LAY_FLAT ergonomic ring pin with 1.0 mm thrust boss and 28.0 mm Pro drive stem spanning full 27.8 mm bike clevises, nose prop bores, and fifth-wheel turntables while clearing the S1 cylinder. |
+| `kit_wheel_giant` | Giant 1-TU Tractor & Paddle Wheel | wheel | pro | W10 | verified | Grip. 50.0 x 50.0 x 12.3 mm (1 TU wide) giant lugged wheel with central fixed Pro hub plus four 1-TU eccentric crank/paddle face bores. |
+| `kit_wheel_med` | Medium 1-TU Modular Craft Wheel | wheel | pro | W10 | verified | Roll. 36.0 x 36.0 x 12.3 mm (1 TU wide) modular lugged wheel with 5.10 mm fixed Pro hub for Race Car, Truck, Trailer, Inline Bike, Cargo Trike, Aeroplane gear, and Tractor front. |
+| `kit_yoke_hbar` | Universal Flight Yoke, Helm & Handlebar | shaft | pro | W10 | verified | Balance. 46.0 x 38.0 x 5.6 mm LAY_FLAT cockpit steering yoke, boat helm, and motorbike handlebar with 25.0 mm Pro drive stem. |
+| `mom_band_spool_pawl` | Momentum Band Wind-Up Spool & Ratchet | wheel | pro | W11 | verified | Torque. 26.0 x 26.0 x 12.5 mm internal D-spool and 8-tooth freewheel ratchet hub winding doubled #64 bands with coasting overrun. |
+| `mom_bumper_trigger` | Momentum Contact-Release Bumper Trigger | beam | pro | W11 | verified | Awareness. 62.3 x 24.8 x 12.5 mm mechanical IF-contact-THEN-release front bumper bar tripping stored band actuators on obstacle touch. |
+| `mom_flywheel_rotor` | Momentum 42 mm Inertial Turbine Rotor | wheel | pro | W11 | verified | Spin. 42.0 x 42.0 x 12.0 mm 1-piece solid PLA inertial flywheel rotor (S1 +32.3%, zero loose metal weights) with fixed Pro hub. |
+| `mom_nozzle_set` | Momentum 3-Orifice Jet Nozzle Selector | beam | pro | W11 | verified | Speed. 44.0 x 18.0 x 12.5 mm 1-piece indexed convergent nozzle bar with 3.0 mm (endurance), 4.5 mm (cruise), and 6.0 mm (sprint) orifices. |
+| `mom_ripcord_rack_150` | Momentum 150 mm Toothed Rip-Cord | gear | pro | W11 | verified | Launch. 150.0 x 12.0 x 6.2 mm LAY_FLAT module-2.5 toothed pull rack with finger/lanyard ring bore; meshes 1:1 with internal Z10 pinion and exits cleanly for coasting spin. |
+| `mom_slam_base` | Momentum Captive Slam-Launcher Base | beam | pro | W11 | verified | Launch. 62.3 x 36.0 x 18.0 mm stationary tabletop launcher block with captive plunger stop bore and enclosed band anchor posts. |
+| `mom_slam_plunger` | Momentum Captive Slam Plunger Rod | shaft | pro | W11 | verified | Launch. 18.0 x 76.0 x 5.0 mm LAY_FLAT T-head push rod delivering a captive 35 mm impulse stroke against the craft keel. |
+| `mom_spindle_shaft` | Momentum 78 mm Vertical Turbine Spindle | shaft | pro | W11 | verified | Spin. 6.6 x 78.0 x 5.0 mm LAY_FLAT vertical spindle shaft coupling the enclosed 42 mm turbine rotor and Z10 pinion to overhead helicopter rotors. |
+| `pro_axle_keeper` | Pro Under-Keel PTO Axle Keeper Clip | joint | pro | W11 | verified | Sturdiness. 36.0 x 11.0 x 11.0 mm under-keel axle retention saddle closing the row-8 PTO jaw into a full 360-deg bearing eye under high band or motor burst torque. |
+| `pro_fork_rake_adpt` | Pro Positive-Trail Bike Fork Adapter | joint | pro | W11 | verified | Balance. 27.8 x 24.8 x 12.5 mm motorbike/trike steering headtube adapter adding positive mechanical trail for self-centering roll stability. |
+| `pro_steer_knuckle_l` | Pro Left 15 mm-Scrub Steering Knuckle | joint | pro | W11 | verified | Balance. 25.6 x 16.0 x 27.5 mm left bellcrank steering knuckle printed stub-up on flat cheek with 15.0 mm kingpin-to-wheel scrub offset and tie-rod bore. |
+| `pro_steer_knuckle_r` | Pro Right 15 mm-Scrub Steering Knuckle | joint | pro | W11 | verified | Balance. 25.6 x 16.0 x 27.5 mm right bellcrank steering knuckle printed stub-up on flat cheek with 15.0 mm kingpin-to-wheel scrub offset and tie-rod bore. |
+| `pro_steer_rack` | Pro Module-2.5 Steering Gear Rack | gear | pro | W11 | verified | Balance. 36.0 x 15.1 x 6.2 mm module-2.5 conjugate steering rack meshing at 12.50 mm center distance with a Z10 pinion at (0, 25.0 mm) and linking to both knuckles. |
+| `prop_broom` | Bristle Broom | shaft | pro | W12 | verified | Balance. Tapered bristle broom with slotted gaps on a 3 TU 6.6 mm flat-sided Pro grip shaft; prints lying on a flat. Category: Cleaning. |
+| `prop_flag` | Swallow-Tail Flag | shaft | pro | W12 | verified | Style. Pennant flag with star-dot hole and ball finial on a 3 TU 6.6 mm flat-sided Pro grip shaft; prints lying on a flat. Category: Play. |
+| `prop_guitar` | Acoustic Guitar | shaft | pro | W12 | verified | Glow. Chunky figure-8 guitar with neck, headstock and sound hole on a 3 TU 6.6 mm flat-sided Pro grip shaft; prints lying on a flat. Category: Instruments. |
+| `prop_hammer` | Claw Hammer | shaft | pro | W12 | verified | Torque. Chunky claw hammer on a 3 TU 6.6 mm flat-sided Pro grip shaft; prints lying on a flat. Category: Tools. |
+| `prop_magnifier` | Magnifying Glass | shaft | pro | W12 | verified | Glow. Magnifying glass with open lens window on a 3 TU 6.6 mm flat-sided Pro grip shaft; prints lying on a flat. Category: Play. |
+| `prop_maracas` | Rattle Maraca | shaft | pro | W12 | verified | Glow. Egg-shaped maraca with rattle-dot holes on a 3 TU 6.6 mm flat-sided Pro grip shaft; prints lying on a flat. Category: Instruments. |
+| `prop_mop` | String Mop | shaft | pro | W12 | verified | Balance. Five-strand slotted mop head on a 3 TU 6.6 mm flat-sided Pro grip shaft; prints lying on a flat. Category: Cleaning. |
+| `prop_paint_roller` | Paint Roller | shaft | pro | W12 | verified | Grip. Striped paint roller on a stem on a 3 TU 6.6 mm flat-sided Pro grip shaft; prints lying on a flat. Category: Tools. |
+| `prop_screwdriver` | Flat Screwdriver | shaft | pro | W12 | verified | Torque. Fat-handled screwdriver with shank and flared tip on a 3 TU 6.6 mm flat-sided Pro grip shaft; prints lying on a flat. Category: Tools. |
+| `prop_scrub_brush` | Scrub Brush | shaft | pro | W12 | verified | Grip. Oval scrub brush with bristle-dot holes on a 3 TU 6.6 mm flat-sided Pro grip shaft; prints lying on a flat. Category: Cleaning. |
+| `prop_trumpet` | Brass Trumpet | shaft | pro | W12 | verified | Glow. Trumpet with three valve lobes and flared bell on a 3 TU 6.6 mm flat-sided Pro grip shaft; prints lying on a flat. Category: Instruments. |
+| `prop_vacuum` | Handheld Vacuum | shaft | pro | W12 | verified | Speed. Handheld vacuum with dust window and flared nozzle on a 3 TU 6.6 mm flat-sided Pro grip shaft; prints lying on a flat. Category: Cleaning. |
 | `beam_str_tu03` | Beam STR RND TU03x01x01 | beam | pro | W2 | verified | Reach.  |
 | `beam_str_tu05` | Beam STR RND TU05x01x01 | beam | pro | W2 | verified | Reach. Hackathon part. |
 | `beam_str_tu07` | Beam STR RND TU07x01x01 | beam | pro | W2 | verified | Reach.  |
@@ -156,7 +235,9 @@
 | `hinge_tu02` | Hinge TU02 | joint | pro | W5 | verified | Swing. One leaf; a hinge is two leaves (the second turned 180 degrees) and a free pin through the interleaved knuckles. Knuckle bores print as teardrops. |
 | `wheel_tu04` | Wheel TU04 | wheel | pro | W5 | verified | Speed. 50 mm. Fixed-bore hub (a flat shaft drives it, or it turns with a shaft in free beam bores); crank bores 1 TU from the axis take pins. |
 | `wheel_tu06` | Wheel TU06 | wheel | pro | W5 | verified | Speed. 75 mm. Same hub; crank bores at 1 and 2 TU from the axis. |
-| `char_faceplate` | Swappable Emotion Face Plate | pin | pro | W9 | verified | Glow. Slim 22.6x10.8 mm rounded-bezel snap-in face plate printed flat on its front face with a 1 TU anti-rotation flat-keyed rear stem mating into char_head_kid.face_slot. |
+| `char_faceplate` | 3D Nose & Orbital Face Insert | pin | pro | W9 | verified | Glow. Universal 24.2x10.5 mm planar low-poly facial insert with sculpted 3D nose prism, wide orbital eye-socket planes, and flush mouth base on a 1 TU flat-keyed rear stem via LAY_FLAT ([90,0,0]), compatible with all 3 Human Heads. |
+| `char_faceplate_flat` | Smooth Flush Decal Face Insert | pin | pro | W9 | verified | Glow. Universal smooth flush 24.2x10.5 mm planar facial decal insert (zero 3D nose or socket relief, relying purely on printed 2D expression decals) on a 1 TU flat-keyed rear stem via LAY_FLAT ([90,0,0]), compatible with all 3 Human Heads. |
+| `char_faceplate_vinyl` | 3D Button Eyes & Nose Face Insert | pin | pro | W9 | verified | Glow. Universal 24.2x10.5 mm collector-vinyl style facial insert with physical 3D raised circular button-eye domes at x=+-7.3 mm and central 3D horizontal triangle nose wedge on a 1 TU flat-keyed rear stem via LAY_FLAT ([90,0,0]), compatible with all 3 Human Heads. |
 | `prop_star_shield` | Star Emblem Wand | shaft | pro | W9 | verified | Glow. Five-point rounded star emblem on a 2 TU 6.6 mm flat-sided Pro grip shaft; prints lying on a flat. |
 | `prop_wrench` | Builder Spanner | shaft | pro | W9 | verified | Torque. Open-jaw spanner on a 3 TU 6.6 mm flat-sided Pro grip shaft; prints lying on a flat. |
 | `veh_handlebar_fork` | Scooter Handlebar Stem | shaft | pro | W9 | verified | Spin. T-bar steering stem with twin 6.6 mm Pro-shaft handgrips; prints lying on a flat. |

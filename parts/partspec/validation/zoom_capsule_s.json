@@ -4,7 +4,7 @@
   "file_sha256": "cbf610ed43b1b5d0ae559d240821261c575aa0e526debfe24317658cc09dd633",
   "part_id": "zoom_capsule_s",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-10-30T17:11:46Z",
+  "checked_at": "2026-10-31T11:19:54Z",
   "metrics": {
     "bbox_mm": [
       17.19,
@@ -167,7 +167,7 @@
     ],
     "engine": "PrusaSlicer-2.8.1",
     "slice_logic": "1",
-    "reused_from": "2026-10-30T16:40:23Z"
+    "reused_from": "2026-10-31T10:23:40Z"
   },
   "verdict": "pass_with_settings",
   "summary": "Prints with brim_width_mm = 5"

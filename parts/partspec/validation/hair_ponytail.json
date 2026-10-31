@@ -1,36 +1,68 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_hair_ponytail_S.stl",
-  "file_sha256": "656ecb8253e924d6abbf04765fb5d53fc953b77af75cf42640814177e4e28aec",
+  "file_sha256": "eeaf109eb13688f01cc141c4f754f9131dc5c07800dfe3be09c9f770c731acc2",
   "part_id": "hair_ponytail",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-10-30T20:31:25Z",
+  "checked_at": "2026-10-31T11:33:24Z",
   "metrics": {
     "bbox_mm": [
-      41.6,
-      37.2,
-      14.6
+      43.6,
+      50.52,
+      33.3
     ],
-    "volume_cm3": 10.43,
-    "surface_cm2": 34.5,
-    "triangles": 11826,
-    "ledges": [],
-    "layers": 73,
-    "bed_contact_mm2": 524.2,
-    "height_mm": 14.6,
-    "slenderness": 0.64,
+    "volume_cm3": 10.1,
+    "surface_cm2": 68.29,
+    "triangles": 3810,
+    "ledges": [
+      {
+        "z_mm": 3.0,
+        "area_mm2": 0.5,
+        "at_mm": [
+          1.9,
+          19.0
+        ]
+      },
+      {
+        "z_mm": 3.0,
+        "area_mm2": 0.3,
+        "at_mm": [
+          -0.5,
+          19.5
+        ]
+      }
+    ],
+    "layers": 166,
+    "bed_contact_mm2": 73.5,
+    "height_mm": 33.3,
+    "slenderness": 3.88,
     "centre_of_mass_over_contact": true,
     "min_wall_mm": null,
     "thin_wall_regions": []
   },
   "bridges": [
     {
-      "z_mm": 3.2,
+      "z_mm": 3.0,
+      "span_mm": 0.89,
+      "area_mm2": 1.4
+    },
+    {
+      "z_mm": 3.0,
+      "span_mm": 1.17,
+      "area_mm2": 2.7
+    },
+    {
+      "z_mm": 16.6,
+      "span_mm": 9.65,
+      "area_mm2": 483.0
+    },
+    {
+      "z_mm": 19.7,
       "span_mm": 6.7,
       "area_mm2": 35.2
     },
     {
-      "z_mm": 3.2,
+      "z_mm": 19.7,
       "span_mm": 6.7,
       "area_mm2": 35.2
     }
@@ -57,9 +89,9 @@
       "level": "block",
       "result": "pass",
       "value": [
-        41.6,
-        37.2,
-        14.6
+        43.6,
+        50.5,
+        33.3
       ],
       "limit": [
         180,
@@ -80,17 +112,17 @@
       "id": "V10_no_ledges",
       "level": "block",
       "result": "pass",
-      "value": 0.0,
+      "value": 0.8,
       "limit": 1.0,
-      "detail": "mm2 of flat underside held on one side only (a ledge over air, not a bridge)"
+      "detail": "mm2 of flat underside held on one side only (a ledge over air, not a bridge); worst at z 3.0 mm near [1.9, 19.0]"
     },
     {
       "id": "V6_bridge_span",
       "level": "block",
       "result": "pass",
-      "value": 6.7,
+      "value": 9.65,
       "limit": 20,
-      "detail": "2 bridge(s); widest unsupported span in mm"
+      "detail": "5 bridge(s); widest unsupported span in mm"
     },
     {
       "id": "V5_no_floating_islands",
@@ -112,9 +144,9 @@
       "id": "V9_bed_contact",
       "level": "info",
       "result": "pass",
-      "value": 524.2,
+      "value": 73.5,
       "limit": null,
-      "detail": "height / sqrt(contact) = 0.64; above about 3 the slicer often asks for a brim"
+      "detail": "height / sqrt(contact) = 3.88; above about 3 the slicer often asks for a brim"
     },
     {
       "id": "V8_wall_thickness",

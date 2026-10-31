@@ -4,7 +4,7 @@
   "file_sha256": "73616e229a97680ca1080a64619d890518515322af7bb957b7fcb0bdd75257e0",
   "part_id": "racer_twin_exhaust",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-10-30T17:13:13Z",
+  "checked_at": "2026-10-31T11:23:35Z",
   "metrics": {
     "bbox_mm": [
       11.9,
@@ -166,7 +166,7 @@
     ],
     "engine": "PrusaSlicer-2.8.1",
     "slice_logic": "1",
-    "reused_from": "2026-10-30T16:41:49Z"
+    "reused_from": "2026-10-31T10:26:03Z"
   },
   "verdict": "pass",
   "summary": "Prints as is"

@@ -4,7 +4,7 @@
   "file_sha256": "0cf1c56be4ac589e6b820ff7a8c1129d8982494eb3c4b2eff01c8a33174b2d91",
   "part_id": "spin_capsule",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-10-30T17:57:56Z",
+  "checked_at": "2026-10-31T11:18:54Z",
   "metrics": {
     "bbox_mm": [
       65.62,
@@ -161,7 +161,7 @@
     ],
     "engine": "PrusaSlicer-2.8.1",
     "slice_logic": "1",
-    "reused_from": "2026-10-30T17:10:56Z"
+    "reused_from": "2026-10-31T10:22:14Z"
   },
   "verdict": "pass",
   "summary": "Prints as is"

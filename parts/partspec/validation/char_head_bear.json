@@ -1,19 +1,19 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_char_head_bear_S.stl",
-  "file_sha256": "11c62fadc5a34171e431523a76c8440730e4bcc95c9d5eeea55f508dbe1fe444",
+  "file_sha256": "9d81e2a07ac6be7eba473baf44d7adad49b933aa433d1c07eb849139ea462863",
   "part_id": "char_head_bear",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-10-30T18:42:17Z",
+  "checked_at": "2026-10-31T11:26:48Z",
   "metrics": {
     "bbox_mm": [
       54.8,
       37.6,
       34.4
     ],
-    "volume_cm3": 28.08,
-    "surface_cm2": 56.76,
-    "triangles": 14248,
+    "volume_cm3": 28.82,
+    "surface_cm2": 56.37,
+    "triangles": 14372,
     "ledges": [],
     "layers": 172,
     "bed_contact_mm2": 290.9,

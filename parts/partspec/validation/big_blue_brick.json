@@ -4,7 +4,7 @@
   "file_sha256": "df83c2f9eb1d0bfea099bcc81958dfb8b4adebcda27fbd509c3738025b1246d4",
   "part_id": "big_blue_brick",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-10-30T17:56:53Z",
+  "checked_at": "2026-10-31T11:18:35Z",
   "metrics": {
     "bbox_mm": [
       49.7,
@@ -169,7 +169,7 @@
       0
     ],
     "engine": "PrusaSlicer-2.8.1",
-    "reused_from": "2026-10-30T17:10:44Z"
+    "reused_from": "2026-10-31T10:21:43Z"
   },
   "verdict": "pass",
   "summary": "Prints as is"

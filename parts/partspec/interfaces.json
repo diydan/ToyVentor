@@ -125,6 +125,38 @@
       "shaft_flats": 5.0,
       "shaft_center_hole": 2.0,
       "note": "Shaft with flats: turns in a free bore, drives in a fixed bore. Prints lying on a flat; the centre hole is a teardrop so it needs no support."
+    },
+    "c_jaw_tu01": {
+      "kind": "c_jaw",
+      "size_class": "pro",
+      "fit_class": "SNAP_JAW",
+      "pitch_tu": 1.0,
+      "seat_d_mm": 7.0,
+      "shaft_d_mm": 6.6,
+      "throat_mm": 6.0,
+      "wrap_deg": 242.0,
+      "teardrop_roof_deg": 50.0,
+      "prong_thickness_mm": 1.6,
+      "bearing_land_mm": 3.0,
+      "relief_tunnel_d_mm": 8.2,
+      "min_snap_per_prong_mm": 0.3,
+      "note": "Pinless compliant C-jaw cradling a 6.6 mm Pro shaft in a 7.0 mm free seat across a 6.0 mm throat (0.30 mm/prong snap deflection, 50 deg teardrop roof + flat-bridged 8.2 mm central relief tunnel). TARGET until Gate G7 physical coupon print."
+    },
+    "flank_rail_tu02": {
+      "kind": "mortise",
+      "size_class": "small",
+      "fit_class": "FRICTION",
+      "span_tu": 2,
+      "pocket_y_mm": 18.0,
+      "pocket_z_mm": 4.6,
+      "depth_x_mm": 8.0,
+      "index_step_mm": [
+        3.0,
+        2.0
+      ],
+      "fit_mm": 0.12,
+      "detent_mm": 0.25,
+      "note": "Asymmetric keyed rectangular flank mortise for modular craft wings, skids and sidepods; forward index step prevents backward insertion and rejects 5.0 mm shaft flats. TARGET."
     }
   },
   "mates": [
@@ -463,8 +495,8 @@
     "note": "A pin and bore that are not listed cannot mate (a round pin in a fixed bore, for example). The fit class picks the limits: press uses the top-level tolerance numbers, free and friction use tolerance.classes."
   },
   "socket_styles": {
-    "cage": "Square foot: a socket cavity with tubes that hold the studs (bricks, plates, tiles, slopes, dome).",
-    "holes": "Integrated base (add-ons and capsules): no plate around the part. Stud holes, the stud diameter plus the fit, are cut into the part's own underside or a small pad, wherever the shape wraps a hole with a full wall; reliefs clear any other stud the shape would touch, so it sits flat on any plate. Same 0.05 mm stud fit as the cage."
+    "cage": "Square foot: a socket cavity (2.00 mm outer rim wall, 0.10 mm diametral stud fit, >= 3.20 mm socket depth, >= 1.50 mm plate / 2.00 mm brick closed ceiling roof) with 96-segment coupling tubes (ID 6.70 mm, OD 10.98 mm) that hold the studs (bricks, plates, tiles, slopes, dome, modular craft cores).",
+    "holes": "Integrated base (add-ons, capsules, bolsters and pods): no plate around the part. Blind 96-segment stud holes (ID 6.70 mm, depth 3.20 mm, >= 2.00 mm surrounding wall, >= 1.20 mm closed ceiling roof checked by I7_hole_roof) are cut into the part's own underside or pad; reliefs clear any other stud the shape would touch. Same 0.05 mm radial stud fit as the cage."
   },
   "product": {
     "snap_sizes_offered": [
@@ -472,6 +504,8 @@
     ],
     "snap_min_age": 3,
     "pro_min_age": 8,
+    "momentum_min_age": 8,
+    "mech_min_age": 10,
     "parked": {
       "large": "Parked 2026-10-28 (Dan): Snap is ages 3 and up only. Large parts stay verified in the repo but are not exported, printed or extended until the line returns."
     }

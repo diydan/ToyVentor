@@ -4,7 +4,7 @@
   "file_sha256": "dc57d0efab2c6f47fd42981eb18b18baa8e85356fcf98ddaab3fa8ecb45750ad",
   "part_id": "forge_mount_ring_s",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-10-30T17:11:45Z",
+  "checked_at": "2026-10-31T11:19:52Z",
   "metrics": {
     "bbox_mm": [
       62.3,
@@ -154,7 +154,7 @@
       0
     ],
     "engine": "PrusaSlicer-2.8.1",
-    "reused_from": "2026-10-30T16:40:21Z"
+    "reused_from": "2026-10-31T10:23:35Z"
   },
   "verdict": "pass",
   "summary": "Prints as is"
