@@ -561,6 +561,23 @@ def demo(manifest_path, out_dir):
             s_hat = attach(lib, s_hair, "top_studs", "wobble_hat", "under_sockets", pid="hat")
             cases["valid_kip_seated_wardrobe"] = [s_legs, s_torso, s_arms, s_head, s_face, s_hair, s_hat]
 
+            j_legs = place("char_legs_seated", pid="legs")
+            j_torso = attach(lib, j_legs, "top_studs", "robot_torso_core", "under_sockets", pid="torso")
+            j_arms = attach(lib, j_torso, "top_studs", "robot_arms_grabber", "under_sockets", pid="arms")
+            j_head = attach(lib, j_arms, "top_studs", "char_head_jumbo", "under_sockets", (0, 0), (0, 0), pid="head")
+            j_face = place_on_axis(lib, j_head, "face_slot", "char_faceplate", "axis", along=0.0, pid="faceplate")
+            j_hat = attach(lib, j_head, "top_studs", "hat_ballcap", "under_sockets", pid="hat")
+            cases["valid_kip_seated_jumbo"] = [j_legs, j_torso, j_arms, j_head, j_face, j_hat]
+
+            r_legs = place("char_legs_seated", pid="legs")
+            r_torso = attach(lib, r_legs, "top_studs", "robot_torso_core", "under_sockets", pid="torso")
+            r_arms = attach(lib, r_torso, "top_studs", "robot_arms_grabber", "under_sockets", pid="arms")
+            r_head = attach(lib, r_arms, "top_studs", "char_head_tall", "under_sockets", (0, 0), (0, 0), pid="head")
+            r_face = place_on_axis(lib, r_head, "face_slot", "char_faceplate", "axis", along=0.0, pid="faceplate")
+            r_hair = attach(lib, r_head, "top_studs", "hair_short_swept", "under_sockets", pid="hair")
+            r_hat = attach(lib, r_hair, "top_studs", "hat_ballcap", "under_sockets", pid="hat")
+            cases["valid_kip_seated_tall"] = [r_legs, r_torso, r_arms, r_head, r_face, r_hair, r_hat]
+
             car = place("veh_car_chassis", pid="car")
             c_hood = attach(lib, car, "hood_studs", "veh_car_hood_cover", "under_sockets", pid="hood_cover")
             c_cab = attach(lib, car, "rollbar_studs", "veh_cab_roof_cover", "under_sockets", pid="cab_cover")
@@ -627,6 +644,42 @@ def demo(manifest_path, out_dir):
                 b_sk += [ax, place_on_axis(lib, ax, "axis", "racer_wheel", "hub", along=0.0, pid=f"wl_{tag}"),
                          place_on_axis(lib, ax, "axis", "racer_wheel", "hub", along=37.5 - 6.0, pid=f"wr_{tag}")]
             cases["valid_kip_skateboard"] = b_sk
+        if "kit_keel_base" in lib.parts:                    # W10 & W11: Flat-pack modular craft & progressive power
+            k_rc = place("kit_keel_base", pid="keel")
+            rc_wedge = attach(lib, k_rc, "top_studs", "kit_aero_wedge", "under_sockets", (1, 0), (0, 0), pid="nose_wedge")
+            rc_wind = attach(lib, k_rc, "top_studs", "kit_windscreen", "under_sockets", (0, 3), (0, 0), pid="windscreen")
+            rc_legs = attach(lib, k_rc, "top_studs", "char_legs_seated", "under_sockets", (1, 4), (0, 0), pid="pilot_legs")
+            rc_wing = attach(lib, k_rc, "top_studs", "kit_foil_wing", "under_sockets", (0, 9), (2, 3), rot=1, pid="gt_wing")
+            rc_yoke = place_on_axis(lib, rc_wedge, "mast_bore", "kit_yoke_hbar", "axis", along=0.0, pid="yoke")
+            cases["valid_kit_race_car"] = [k_rc, rc_wedge, rc_wind, rc_legs, rc_wing, rc_yoke]
+
+            k_dt = place("kit_keel_base", pid="keel")
+            dt_wind = attach(lib, k_dt, "top_studs", "kit_windscreen", "under_sockets", (0, 3), (0, 0), pid="windscreen")
+            dt_legs = attach(lib, k_dt, "top_studs", "char_legs_seated", "under_sockets", (1, 4), (0, 0), pid="driver_legs")
+            dt_tub = attach(lib, k_dt, "top_studs", "kit_tilting_tub", "under_sockets", (0, 6), (0, 0), pid="dump_tub")
+            dt_yoke = place_on_axis(lib, k_dt, "steer_bore", "kit_yoke_hbar", "axis", along=0.0, pid="yoke")
+            cases["valid_kit_dump_truck"] = [k_dt, dt_wind, dt_legs, dt_tub, dt_yoke]
+
+            k_hl = place("kit_keel_base", pid="keel")
+            hl_legs = attach(lib, k_hl, "top_studs", "char_legs_seated", "under_sockets", (1, 4), (0, 0), pid="pilot_legs")
+            hl_turn = attach(lib, k_hl, "top_studs", "kit_turntable", "under_sockets", (0, 6), (0, 0), pid="mast_deck")
+            hl_house = attach(lib, hl_turn, "top_studs", "kit_aero_wedge", "under_sockets", (1, 1), (0, 0), pid="mast_house")
+            hl_mast = place_on_axis(lib, hl_house, "mast_bore", "mom_spindle_shaft", "axis", along=0.0, pid="rotor_mast")
+            hl_rotor = place_on_axis(lib, hl_mast, "axis", "kit_rotor_blade", "hub", along=78.0 - 6.0, pid="main_rotor")
+            cases["valid_kit_helicopter"] = [k_hl, hl_legs, hl_turn, hl_house, hl_mast, hl_rotor]
+
+            k_st = place("kit_keel_base", pid="keel")
+            st_br = attach(lib, k_st, "top_studs", "pro_steer_bridge", "under_sockets", (1, 0), (0, 0), pid="steer_bridge")
+            st_stem = place_on_axis(lib, k_st, "steer_bore", "shaft_tu03", "axis", along=0.0, pid="steer_stem")
+            st_pin = place_on_axis(lib, st_stem, "axis", "gear_spur_z10", "hub", along=28.0, pid="steer_pinion")
+            st_rack = place("pro_steer_rack", 0.0, -56.25, 28.0, pid="steer_rack")
+            cases["valid_pro_steered_racer"] = [k_st, st_br, st_stem, st_pin, st_rack]
+
+            k_mb = place("kit_keel_base", pid="keel")
+            mb_tray = attach(lib, k_mb, "top_studs", "mom_band_core_tray", "under_sockets", (0, 6), (0, 0), pid="band_tray")
+            mb_lid = attach(lib, mb_tray, "rim_studs", "mom_band_core_lid", "under_sockets", (0, 0), (0, 0), pid="band_lid")
+            mb_tub = attach(lib, mb_lid, "top_studs", "kit_tilting_tub", "under_sockets", (0, 0), (0, 0), pid="dump_tub")
+            cases["valid_mom_band_truck"] = [k_mb, mb_tray, mb_lid, mb_tub]
         bu = place("bushing_tu01", pid="bu")
         cases["INVALID_round_pin_in_bushing"] = [bu, place("pin_free", 0, 0, -lib.conn("pin_free", "axis")["frame"]["origin"][2], pid="pin")]   # attach() refuses it
 

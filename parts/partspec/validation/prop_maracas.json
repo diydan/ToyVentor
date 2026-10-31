@@ -1,0 +1,121 @@
+{
+  "validator": "preprint_check 1.2.0",
+  "file": "toyventor_prop_maracas_P.stl",
+  "file_sha256": "e0dd8f4c2df9f21685ba11007284af371586734d77ae41e475f6c85d9d48ca8f",
+  "part_id": "prop_maracas",
+  "profile": "fdm_pla_0.4",
+  "checked_at": "2026-10-31T11:34:45Z",
+  "metrics": {
+    "bbox_mm": [
+      26.99,
+      75.0,
+      6.8
+    ],
+    "volume_cm3": 4.61,
+    "surface_cm2": 31.75,
+    "triangles": 1052,
+    "ledges": [],
+    "layers": 34,
+    "bed_contact_mm2": 887.4,
+    "height_mm": 6.8,
+    "slenderness": 0.23,
+    "centre_of_mass_over_contact": true,
+    "min_wall_mm": null,
+    "thin_wall_regions": []
+  },
+  "bridges": [],
+  "checks": [
+    {
+      "id": "V1_mesh_sound",
+      "level": "block",
+      "result": "pass",
+      "value": null,
+      "limit": null,
+      "detail": "watertight True, consistent winding True, 1 body(ies)"
+    },
+    {
+      "id": "V2_on_bed",
+      "level": "block",
+      "result": "pass",
+      "value": 0.0,
+      "limit": 0.0,
+      "detail": "lowest point must be on the bed (z = 0)"
+    },
+    {
+      "id": "V3_fits_bed",
+      "level": "block",
+      "result": "pass",
+      "value": [
+        27.0,
+        75.0,
+        6.8
+      ],
+      "limit": [
+        180,
+        180,
+        180
+      ],
+      "detail": ""
+    },
+    {
+      "id": "V4_no_steep_overhang",
+      "level": "block",
+      "result": "pass",
+      "value": 0.0,
+      "limit": 1.0,
+      "detail": "mm2 of downward surface steeper than 45 deg (flat bridges excluded)"
+    },
+    {
+      "id": "V10_no_ledges",
+      "level": "block",
+      "result": "pass",
+      "value": 0.0,
+      "limit": 1.0,
+      "detail": "mm2 of flat underside held on one side only (a ledge over air, not a bridge)"
+    },
+    {
+      "id": "V6_bridge_span",
+      "level": "block",
+      "result": "pass",
+      "value": 0.0,
+      "limit": 20,
+      "detail": "0 bridge(s); widest unsupported span in mm"
+    },
+    {
+      "id": "V5_no_floating_islands",
+      "level": "block",
+      "result": "pass",
+      "value": 0,
+      "limit": 0,
+      "detail": "material not resting, layer by layer, on anything that reaches the bed"
+    },
+    {
+      "id": "V7_min_feature",
+      "level": "warn",
+      "result": "pass",
+      "value": 0,
+      "limit": 0,
+      "detail": "layer pieces narrower than 0.4 mm"
+    },
+    {
+      "id": "V9_bed_contact",
+      "level": "info",
+      "result": "pass",
+      "value": 887.4,
+      "limit": null,
+      "detail": "height / sqrt(contact) = 0.23; above about 3 the slicer often asks for a brim"
+    },
+    {
+      "id": "V8_wall_thickness",
+      "level": "warn",
+      "result": "pass",
+      "value": 0,
+      "limit": 0,
+      "detail": "regions where the wall is under 0.8 mm (two nozzle widths) over 2.0 mm2, or under 0.4 mm (one nozzle width) over 0.25 mm2; sharp edges and slivers are ignored"
+    }
+  ],
+  "print_settings": {},
+  "slicer": null,
+  "verdict": "pass",
+  "summary": "Prints as is"
+}

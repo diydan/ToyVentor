@@ -4,7 +4,7 @@
   "file_sha256": "22deda1dff2cbf2b0f462f3dd6fc6c5c1dc8795238179d4f7097d19e48300481",
   "part_id": "bumper_horns",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-10-30T17:11:46Z",
+  "checked_at": "2026-10-31T11:19:53Z",
   "metrics": {
     "bbox_mm": [
       29.6,
@@ -170,7 +170,7 @@
       3
     ],
     "engine": "PrusaSlicer-2.8.1",
-    "reused_from": "2026-10-30T16:40:22Z"
+    "reused_from": "2026-10-31T10:23:37Z"
   },
   "verdict": "pass_with_settings",
   "summary": "Prints with brim_width_mm = 3"

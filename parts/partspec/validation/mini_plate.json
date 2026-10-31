@@ -4,7 +4,7 @@
   "file_sha256": "2e842337d9823fe26f72f68f227c7cb03e16540124cedfcfaf5fae8220c14677",
   "part_id": "mini_plate",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-10-30T17:57:15Z",
+  "checked_at": "2026-10-31T11:18:43Z",
   "metrics": {
     "bbox_mm": [
       49.8,
@@ -179,7 +179,7 @@
       0
     ],
     "engine": "PrusaSlicer-2.8.1",
-    "reused_from": "2026-10-30T17:10:49Z"
+    "reused_from": "2026-10-31T10:21:55Z"
   },
   "verdict": "pass",
   "summary": "Prints as is"

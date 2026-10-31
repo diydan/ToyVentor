@@ -15,8 +15,8 @@
     "Attach slots: character add-ons and vehicle parts carry attach.kind (character or vehicle), attach.slots, and attach.front: the part's local -y or +y faces the toy's front, or the part is symmetric. Slot names: character head, back, body, top, tail; vehicle front, rear, hood, roof, wheels; robot legs, torso, arms, head, back."
   ],
   "targets": {
-    "snap": 67,
-    "pro": 38
+    "snap": 109,
+    "pro": 71
   },
   "waves": [
     {
@@ -108,7 +108,37 @@
         "W8"
       ],
       "effort": "M",
-      "scope": "30 parts (22 Snap Small, 8 Pro): three plump symmetric-back character base heads (Human Base Head with recessed face-plate dock, Fox, Bear) with 2x1 crown buds, slim snap-in Swappable Emotion Face Plate, eight separate clip-on 2x1 hair parts (three Hat-Ready with top 2x1 crown studs: Short Swept, Flared Bob, Swoosh; five clean Sculpted-Top with no studs: Spiky, Pigtails, Ponytail, Cloud Curls, Mohawk), Explorer Rucksack, Builder Spanner, Star Emblem Wand, Street Skateboard Deck, Seated Snap Legs, three stylized Pro vehicle wheels, and V2 modular rolling vehicle chassis with interchangeable snap-on body covers."
+      "scope": "52 parts (42 Snap Small, 10 Pro): ten Wave 9 character and robot heads across 4 categories (3 smooth organic humanoid heads: Soft Youth, Vinyl Squircle, Heroic Jaw; 1 Mecha Scout robot head pairing with Kip Classic & Bolt Robot; 3 animal critter heads: Fox, Bear, Whisker Cat; 3 creature heads: Drake Dragon, Starling Alien, Yeti Imp) with 2x1 crown buds, three universal interchangeable 1 TU facial inserts (3D Nose & Orbital Face Insert, 3D Button Eyes & Nose Face Insert, and Smooth Flush Decal Face Insert), fourteen sculpted multi-strand wrap-around 2x1 crown wigs (6 Hat-Ready with top 2x1 crown studs + 8 Sculpted-Top), seven wearable 2x1 crown hats, Explorer Rucksack, Builder Spanner, Star Emblem Wand, Street Skateboard Deck, Seated Snap Legs, three stylized Pro vehicle wheels, and V2 modular rolling vehicle chassis with interchangeable snap-on body covers."
+    },
+    {
+      "id": "W10",
+      "name": "Universal Flat-Pack Modular Craft (Cards A-D)",
+      "requires": [
+        "W5",
+        "W6",
+        "W8",
+        "W9"
+      ],
+      "effort": "L",
+      "scope": "19 parts (14 Snap Small, 5 Pro): 16 rigid flat-pack modular craft modules plus 3 smooth 0.80 mm PETG/TPU flex skins across Cards A-D (<= 170 x 170 mm), unlocking 9 canonical craft (Race Car, Dump Truck, Tractor, Trailer, Motorbike/Trike, Aeroplane, Catamaran, Helicopter, Space Shuttle) with 100% intact parts clearing the S1 small-parts cylinder."
+    },
+    {
+      "id": "W11",
+      "name": "Progressive Power: Pro Steering & Momentum Cores (Cards E1-E2)",
+      "requires": [
+        "W4",
+        "W5",
+        "W10"
+      ],
+      "effort": "L",
+      "scope": "21 parts (7 Snap Small, 14 Pro): Stage-2 Pro row-0 Ackermann rack steering linkage, axle keepers, and positive-trail bike fork adapter, plus Stage-3 Momentum stored-energy propulsion and actuator modules (enclosed #64 band core, bumper trigger, captive slam launcher, balloon jet valve + 3-orifice nozzle selector, 10-deg bellows clamshell, and shrouded 42 mm vertical rip-cord turbine core) across Cards E1-E2 (<= 164 x 164 mm)."
+    },
+    {
+      "id": "W12",
+      "name": "Workshop Props",
+      "requires": [],
+      "effort": "M",
+      "scope": "12 parts (12 Pro): handheld workshop and play props on the Pro grip shaft."
     }
   ],
   "parts": [
@@ -2333,15 +2363,15 @@
     },
     {
       "id": "char_head_kid",
-      "name": "Human Head V1 (Round Kid)",
+      "name": "Human Head 1 (Soft Youth)",
       "line": "snap",
       "family": "addon",
       "size": "small",
       "wave": "W9",
-      "note": "Soft spherical egg-proportioned 2x1 human child head (47.6x35.3x31.6 mm) with true-ellipse skull, prominent round cup ears, flush front face-cradle bore at z=7.8125 mm, and 2x1 crown buds.",
+      "note": "Smooth organic youth humanoid head on a compact 2x1 neck collar with gentle heart-oval chin, rounded cheek contours, flatter upright occipital back, smooth rounded ears, universal 24.4x10.6 mm flush face_slot at z=15.625 mm, and 2x1 crown buds at z=34.2 mm.",
       "stat": "Glow",
       "type": "Character head",
-      "behavior": "Soft spherical child head with round cup ears, flush curved face-plate dock and 2x1 Spark Crown Buds",
+      "behavior": "Smooth organic youth human head with rounded cheeks, soft heart-oval chin, universal facial dock and 2x1 Spark Crown Buds",
       "tags": [
         "character",
         "head",
@@ -2367,15 +2397,15 @@
     },
     {
       "id": "char_head_chibi",
-      "name": "Human Head V2 (Chibi Cheeks)",
+      "name": "Human Head 2 (Vinyl Squircle)",
       "line": "snap",
       "family": "addon",
       "size": "small",
       "wave": "W9",
-      "note": "Plush apple-cheeked chibi toddler 2x1 human head (49.2x35.3x30.8 mm) with wide low 44.2 mm cheeks, low round button ears, flush front face-cradle bore at z=7.8125 mm, and 2x1 crown buds.",
+      "note": "Smooth collector-vinyl squircle humanoid head (40.0 mm wide) on a compact 2x1 neck collar with broad rounded jawline, smooth curved squircle side walls, flatter squircle back, broad forehead above universal 24.4x10.6 mm face_slot at z=14.0625 mm, mid-cheek smooth ears, and 2x1 crown buds at z=31.4 mm.",
       "stat": "Glow",
       "type": "Character head",
-      "behavior": "Plump chibi human head with wide low apple cheeks, flush curved face-plate dock and 2x1 Spark Crown Buds",
+      "behavior": "Smooth collector-vinyl squircle human head with curved sides, flatter back, universal low-set facial dock and 2x1 Spark Crown Buds",
       "tags": [
         "character",
         "head",
@@ -2401,24 +2431,25 @@
       }
     },
     {
-      "id": "char_head_chin",
-      "name": "Human Head V3 (Soft Chin)",
+      "id": "char_head_jumbo",
+      "name": "Human Head (Jumbo Vinyl)",
       "line": "snap",
       "family": "addon",
       "size": "small",
       "wave": "W9",
-      "note": "Animated-hero 2x1 human head (47.2x35.2x33.6 mm) with soft S-curve tapered chin flaring to fuller cheekbones, round cup ears, flush front face-cradle bore at z=9.375 mm, and 2x1 crown buds.",
-      "stat": "Speed",
+      "note": "Big square collector-vinyl display head on a 2x1 neck with huge flat-ish forehead dome, full square cheeks, tiny chin, flatter back, universal 24.4x10.6 mm flush face_slot at z=14.0625 mm, small nub ears, and 2x1 crown buds at z=32.0 mm.",
+      "stat": "Glow",
       "type": "Character head",
-      "behavior": "Soft tapered-chin human head with fuller cheekbones, flush curved face-plate dock and 2x1 Spark Crown Buds",
+      "behavior": "Big square vinyl display head with flat-ish forehead dome, square cheeks, universal facial dock and 2x1 Spark Crown Buds",
       "tags": [
         "character",
         "head",
         "human",
+        "vinyl",
         "kip"
       ],
       "build": {
-        "fn": "char_head_chin",
+        "fn": "char_head_jumbo",
         "grid": [
           2,
           1
@@ -2436,15 +2467,15 @@
     },
     {
       "id": "char_head_tall",
-      "name": "Human Head V4 (Oval Youth)",
+      "name": "Human Head 3 (Heroic Jaw)",
       "line": "snap",
       "family": "addon",
       "size": "small",
       "wave": "W9",
-      "note": "Graceful oval egg-proportioned 2x1 human youth head (45.4x35.1x36.0 mm) with smooth true-ellipse dome, mid-high cup ears, flush front face-cradle bore at z=10.9375 mm, and 2x1 crown buds.",
+      "note": "Smooth sculpted heroic humanoid head on a compact 2x1 neck collar with confident squared jaw, smooth sculpted cheekbones, athletic brow contour, flatter upright back, smooth ears, universal 24.4x10.6 mm flush face_slot at z=17.1875 mm, and 2x1 crown buds at z=37.2 mm.",
       "stat": "Spin",
       "type": "Character head",
-      "behavior": "Smooth oval youth human head with mid-high cup ears, flush curved face-plate dock and 2x1 Spark Crown Buds",
+      "behavior": "Smooth sculpted heroic human head with squared jaw, athletic brow, universal facial dock and 2x1 Spark Crown Buds",
       "tags": [
         "character",
         "head",
@@ -2470,15 +2501,15 @@
     },
     {
       "id": "char_faceplate",
-      "name": "Swappable Emotion Face Plate",
+      "name": "3D Nose & Orbital Face Insert",
       "line": "pro",
       "family": "pin",
       "size": "pro",
       "wave": "W9",
-      "note": "Flush 32.0x15.9 mm 3D convex-curved cheek-to-cheek human face plate printed upright on its flat chin and 1 TU flat-keyed rear stem via LAY_FLAT ([90,0,0]) with a 39-deg upper brow scarf joint.",
+      "note": "Universal 24.2x10.5 mm planar low-poly facial insert with sculpted 3D nose prism, wide orbital eye-socket planes, and flush mouth base on a 1 TU flat-keyed rear stem via LAY_FLAT ([90,0,0]), compatible with all 3 Human Heads.",
       "stat": "Glow",
       "type": "Face plate",
-      "behavior": "Quick-swap 3D curved human emotion face plate mating flush into any Human Head front face cradle",
+      "behavior": "Quick-swap universal 3D nose and orbital facial insert mating flush into any Human Head face_slot",
       "tags": [
         "character",
         "face",
@@ -2491,16 +2522,62 @@
       }
     },
     {
+      "id": "char_faceplate_vinyl",
+      "name": "3D Button Eyes & Nose Face Insert",
+      "line": "pro",
+      "family": "pin",
+      "size": "pro",
+      "wave": "W9",
+      "note": "Universal 24.2x10.5 mm collector-vinyl style facial insert with physical 3D raised circular button-eye domes at x=+-7.3 mm and central 3D horizontal triangle nose wedge on a 1 TU flat-keyed rear stem via LAY_FLAT ([90,0,0]), compatible with all 3 Human Heads.",
+      "stat": "Glow",
+      "type": "Face plate",
+      "behavior": "Quick-swap universal 3D button-eye and triangle-nose facial insert mating flush into any Human Head face_slot",
+      "tags": [
+        "character",
+        "face",
+        "head",
+        "vinyl",
+        "kip"
+      ],
+      "build": {
+        "fn": "char_faceplate_vinyl",
+        "stem_tu": 1
+      }
+    },
+    {
+      "id": "char_faceplate_flat",
+      "name": "Smooth Flush Decal Face Insert",
+      "line": "pro",
+      "family": "pin",
+      "size": "pro",
+      "wave": "W9",
+      "note": "Universal smooth flush 24.2x10.5 mm planar facial decal insert (zero 3D nose or socket relief, relying purely on printed 2D expression decals) on a 1 TU flat-keyed rear stem via LAY_FLAT ([90,0,0]), compatible with all 3 Human Heads.",
+      "stat": "Glow",
+      "type": "Face plate",
+      "behavior": "Quick-swap universal smooth flush printed-decal facial insert mating into any Human Head face_slot",
+      "tags": [
+        "character",
+        "face",
+        "head",
+        "decal",
+        "kip"
+      ],
+      "build": {
+        "fn": "char_faceplate_flat",
+        "stem_tu": 1
+      }
+    },
+    {
       "id": "hair_short_swept",
       "name": "Short Swept Hair (Hat-Ready)",
       "line": "snap",
-      "family": "addon",
+      "family": "hair",
       "size": "small",
       "wave": "W9",
-      "note": "Wrap-around 2x1 clip-on short side-swept wig with sideburns, ear arches, deep nape skirt, diagonal bangs, and top 2x1 crown studs for stacking hats, ears, or horns.",
+      "note": "Multi-strand wrap-around 2x1 clip-on short side-swept wig with sculpted sideburns, ear arches, layered nape locks, diagonal bangs, recessed hat-seat crown, and top 2x1 crown studs at z=12.4 mm for stacking hats, ears, or horns.",
       "stat": "Speed",
       "type": "Crown hair",
-      "behavior": "Wrap-around short swept wig with top 2x1 studs for stacking hats or ears",
+      "behavior": "Multi-strand wrap-around short swept wig with top 2x1 studs for stacking hats or ears",
       "tags": [
         "character",
         "hair",
@@ -2527,13 +2604,13 @@
       "id": "hair_bob",
       "name": "Flared Bob Hair (Hat-Ready)",
       "line": "snap",
-      "family": "addon",
+      "family": "hair",
       "size": "small",
       "wave": "W9",
-      "note": "Wrap-around 2x1 clip-on flared chin-frame bob wig with cheek curtains, deep nape skirt, parted bangs, and top 2x1 crown studs for stacking hats or ears.",
+      "note": "Multi-strand wrap-around 2x1 clip-on flared chin-frame bob wig with sculpted cheek curtains, bevelled bob locks, parted bangs, recessed hat-seat crown, and top 2x1 crown studs at z=12.4 mm for stacking hats or ears.",
       "stat": "Glow",
       "type": "Crown hair",
-      "behavior": "Wrap-around flared bob wig with top 2x1 studs for stacking hats or ears",
+      "behavior": "Multi-strand wrap-around flared bob wig with top 2x1 studs for stacking hats or ears",
       "tags": [
         "character",
         "hair",
@@ -2625,16 +2702,190 @@
       }
     },
     {
-      "id": "hair_swoosh",
-      "name": "Swoosh Hair (Hat-Ready)",
+      "id": "robot_head_scout",
+      "name": "Mecha Scout Robot Head",
       "line": "snap",
       "family": "addon",
       "size": "small",
       "wave": "W9",
-      "note": "Wrap-around 2x1 clip-on side-swept wave wig with sideburns, ear arches, deep nape skirt, sculpted fringe, and top 2x1 crown studs for stacking hats, ears, or horns.",
+      "note": "Sleek mecha scout robot helmet on a 2x1 neck with panoramic visor pocket, central sensor brow crest, swept side telemetry fins, and centered 2x1 crown buds at z=32.8 mm.",
+      "stat": "Speed",
+      "type": "Character head",
+      "behavior": "Sleek mecha scout helmet with panoramic visor bay, telemetry side fins and 2x1 Crown Buds",
+      "tags": [
+        "robot",
+        "head",
+        "scout",
+        "kip"
+      ],
+      "build": {
+        "fn": "robot_head_scout",
+        "grid": [
+          2,
+          1
+        ],
+        "base": "integrated",
+        "lock": true
+      },
+      "attach": {
+        "kind": "robot",
+        "slots": [
+          "head"
+        ],
+        "front": "-y"
+      }
+    },
+    {
+      "id": "char_head_cat",
+      "name": "Whisker Cat Head",
+      "line": "snap",
+      "family": "addon",
+      "size": "small",
+      "wave": "W9",
+      "note": "Plump feline critter head on a 2x1 neck with soft twin whisker cheeks, short rounded muzzle pad, perky triangular cat ears, and centered 2x1 crown buds at z=26.8 mm.",
+      "stat": "Speed",
+      "type": "Character head",
+      "behavior": "Swappable Whisker Cat head with rounded whisker cheeks, pointed ears and 2x1 Crown Buds",
+      "tags": [
+        "character",
+        "head",
+        "critter",
+        "animal",
+        "kip"
+      ],
+      "build": {
+        "fn": "char_head_cat",
+        "grid": [
+          2,
+          1
+        ],
+        "base": "integrated",
+        "lock": true
+      },
+      "attach": {
+        "kind": "robot",
+        "slots": [
+          "head"
+        ],
+        "front": "-y"
+      }
+    },
+    {
+      "id": "char_head_dragon",
+      "name": "Drake Dragon Head",
+      "line": "snap",
+      "family": "addon",
+      "size": "small",
+      "wave": "W9",
+      "note": "Friendly mythical drake dragon head on a 2x1 neck with sculpted forward snout, armored brow ridges, swept-back dragon horns, cheek frill spikes, and centered 2x1 crown buds at z=27.6 mm.",
+      "stat": "Torque",
+      "type": "Character head",
+      "behavior": "Swappable Drake Dragon creature head with swept horns, snout ridge and 2x1 Crown Buds",
+      "tags": [
+        "character",
+        "head",
+        "creature",
+        "dragon",
+        "kip"
+      ],
+      "build": {
+        "fn": "char_head_dragon",
+        "grid": [
+          2,
+          1
+        ],
+        "base": "integrated",
+        "lock": true
+      },
+      "attach": {
+        "kind": "robot",
+        "slots": [
+          "head"
+        ],
+        "front": "-y"
+      }
+    },
+    {
+      "id": "char_head_alien",
+      "name": "Starling Alien Head",
+      "line": "snap",
+      "family": "addon",
+      "size": "small",
+      "wave": "W9",
+      "note": "Smooth cosmic starling alien head on a 2x1 neck with narrow tapered chin, large bulbous cranium dome, curved side telepathy antennae, and centered 2x1 crown buds at z=35.6 mm.",
+      "stat": "Glow",
+      "type": "Character head",
+      "behavior": "Swappable Starling Alien creature head with cosmic cranium dome, side antennae and 2x1 Crown Buds",
+      "tags": [
+        "character",
+        "head",
+        "creature",
+        "alien",
+        "kip"
+      ],
+      "build": {
+        "fn": "char_head_alien",
+        "grid": [
+          2,
+          1
+        ],
+        "base": "integrated",
+        "lock": true
+      },
+      "attach": {
+        "kind": "robot",
+        "slots": [
+          "head"
+        ],
+        "front": "-y"
+      }
+    },
+    {
+      "id": "char_head_imp",
+      "name": "Yeti Imp Head",
+      "line": "snap",
+      "family": "addon",
+      "size": "small",
+      "wave": "W9",
+      "note": "Chunky mountain yeti-imp creature head on a 2x1 neck with broad playful underbite jaw, swept sideways imp ears, twin forehead horn nubs, and centered 2x1 crown buds at z=28.4 mm.",
+      "stat": "Spin",
+      "type": "Character head",
+      "behavior": "Swappable Yeti Imp creature head with broad jaw, sideways ears, horn nubs and 2x1 Crown Buds",
+      "tags": [
+        "character",
+        "head",
+        "creature",
+        "imp",
+        "kip"
+      ],
+      "build": {
+        "fn": "char_head_imp",
+        "grid": [
+          2,
+          1
+        ],
+        "base": "integrated",
+        "lock": true
+      },
+      "attach": {
+        "kind": "robot",
+        "slots": [
+          "head"
+        ],
+        "front": "-y"
+      }
+    },
+    {
+      "id": "hair_swoosh",
+      "name": "Swoosh Hair (Hat-Ready)",
+      "line": "snap",
+      "family": "hair",
+      "size": "small",
+      "wave": "W9",
+      "note": "Multi-strand wrap-around 2x1 clip-on side-swept wave wig with sideburns, ear arches, layered nape locks, sweeping forehead fringe, recessed hat-seat crown, and top 2x1 crown studs at z=12.4 mm for stacking hats, ears, or horns.",
       "stat": "Speed",
       "type": "Crown hair",
-      "behavior": "Wrap-around side-swept wave wig with top 2x1 studs for stacking hats or ears",
+      "behavior": "Multi-strand wrap-around side-swept wave wig with top 2x1 studs for stacking hats or ears",
       "tags": [
         "character",
         "hair",
@@ -2658,13 +2909,211 @@
       }
     },
     {
+      "id": "hair_long_layered",
+      "name": "Long Layered Flow (Hat-Ready)",
+      "line": "snap",
+      "family": "hair",
+      "size": "small",
+      "wave": "W9",
+      "note": "Shoulder-length multi-strand wrap-around 2x1 wig with center-parted bangs, cheek-framing locks, sculpted rear cascade locks, recessed hat-seat crown, and top 2x1 crown studs at z=12.4 mm.",
+      "stat": "Glow",
+      "type": "Crown hair",
+      "behavior": "Shoulder-length layered multi-strand wig with top 2x1 studs for stacking hats or ears",
+      "tags": [
+        "character",
+        "hair",
+        "crown",
+        "kip"
+      ],
+      "build": {
+        "fn": "hair_long_layered",
+        "grid": [
+          2,
+          1
+        ],
+        "lock": true
+      },
+      "attach": {
+        "kind": "character",
+        "slots": [
+          "head"
+        ],
+        "front": "-y"
+      }
+    },
+    {
+      "id": "hair_twin_braids",
+      "name": "Twin Braids (Hat-Ready)",
+      "line": "snap",
+      "family": "hair",
+      "size": "small",
+      "wave": "W9",
+      "note": "Wrap-around 2x1 wig with parted curtain bangs, sculpted five-segment plaited twin side braids, recessed hat-seat crown, and top 2x1 crown studs at z=12.4 mm.",
+      "stat": "Torque",
+      "type": "Crown hair",
+      "behavior": "Wrap-around twin-braided wig with top 2x1 studs for stacking ranger, cowboy, or adventure hats",
+      "tags": [
+        "character",
+        "hair",
+        "crown",
+        "kip"
+      ],
+      "build": {
+        "fn": "hair_twin_braids",
+        "grid": [
+          2,
+          1
+        ],
+        "lock": true
+      },
+      "attach": {
+        "kind": "character",
+        "slots": [
+          "head"
+        ],
+        "front": "-y"
+      }
+    },
+    {
+      "id": "hair_shag",
+      "name": "Feathered Shag (Hat-Ready)",
+      "line": "snap",
+      "family": "hair",
+      "size": "small",
+      "wave": "W9",
+      "note": "Tousled multi-strand feathered shag 2x1 wig with textured bangs, layered side locks, flared nape flicks, recessed hat-seat crown, and top 2x1 crown studs at z=12.4 mm.",
+      "stat": "Spin",
+      "type": "Crown hair",
+      "behavior": "Tousled feathered shag wig with top 2x1 studs for stacking hats or ears",
+      "tags": [
+        "character",
+        "hair",
+        "crown",
+        "kip"
+      ],
+      "build": {
+        "fn": "hair_shag",
+        "grid": [
+          2,
+          1
+        ],
+        "lock": true
+      },
+      "attach": {
+        "kind": "character",
+        "slots": [
+          "head"
+        ],
+        "front": "-y"
+      }
+    },
+    {
+      "id": "hair_pompadour",
+      "name": "Sculpted Pompadour",
+      "line": "snap",
+      "family": "hair",
+      "size": "small",
+      "wave": "W9",
+      "note": "Wrap-around 2x1 clip-on pompadour wig with clean sideburns, ear arches, slick combed side ridges, and high rolled front quiff crest.",
+      "stat": "Speed",
+      "type": "Crown hair",
+      "behavior": "High-volume sculpted pompadour quiff wig for any 2x1 human head",
+      "tags": [
+        "character",
+        "hair",
+        "crown",
+        "kip"
+      ],
+      "build": {
+        "fn": "hair_pompadour",
+        "grid": [
+          2,
+          1
+        ],
+        "lock": true
+      },
+      "attach": {
+        "kind": "character",
+        "slots": [
+          "head"
+        ],
+        "front": "-y"
+      }
+    },
+    {
+      "id": "hair_top_bun",
+      "name": "Sleek Top Bun",
+      "line": "snap",
+      "family": "hair",
+      "size": "small",
+      "wave": "W9",
+      "note": "Wrap-around 2x1 clip-on updo wig with parted curtain bangs, upward-swept crown strands, collar band, and sculpted top knot bun.",
+      "stat": "Spin",
+      "type": "Crown hair",
+      "behavior": "Sleek parted updo wig with sculpted crown bun for any 2x1 human head",
+      "tags": [
+        "character",
+        "hair",
+        "crown",
+        "kip"
+      ],
+      "build": {
+        "fn": "hair_top_bun",
+        "grid": [
+          2,
+          1
+        ],
+        "lock": true
+      },
+      "attach": {
+        "kind": "character",
+        "slots": [
+          "head"
+        ],
+        "front": "-y"
+      }
+    },
+    {
+      "id": "hair_side_sweep",
+      "name": "Asymmetric Side Sweep",
+      "line": "snap",
+      "family": "hair",
+      "size": "small",
+      "wave": "W9",
+      "note": "Wrap-around 2x1 clip-on asymmetric side-parted wig with deep left side part, sweeping right curtain wave locks, and sculpted crown crest.",
+      "stat": "Glow",
+      "type": "Crown hair",
+      "behavior": "Dramatic side-parted multi-strand wave wig for any 2x1 human head",
+      "tags": [
+        "character",
+        "hair",
+        "crown",
+        "kip"
+      ],
+      "build": {
+        "fn": "hair_side_sweep",
+        "grid": [
+          2,
+          1
+        ],
+        "lock": true
+      },
+      "attach": {
+        "kind": "character",
+        "slots": [
+          "head"
+        ],
+        "front": "-y"
+      }
+    },
+    {
       "id": "hair_spiky",
       "name": "Spiky Tufts Hair",
       "line": "snap",
-      "family": "addon",
+      "family": "hair",
       "size": "small",
       "wave": "W9",
-      "note": "Wrap-around spiky action wig with sideburns, ear arches, deep nape skirt, and seven sculpted crown spikes on a 2x1 stud socket.",
+      "note": "Multi-strand wrap-around spiky action wig with sideburns, ear arches, layered nape locks, forehead bangs, and nine dynamic radial crown spikes on a 2x1 stud socket.",
       "stat": "Speed",
       "type": "Crown hair",
       "behavior": "Wrap-around spiky action hair tufts for any 2x1 human head",
@@ -2694,10 +3143,10 @@
       "id": "hair_pigtails",
       "name": "Twin-Puff Pigtails",
       "line": "snap",
-      "family": "addon",
+      "family": "hair",
       "size": "small",
       "wave": "W9",
-      "note": "Wrap-around parted wig with cheek-framing curtains, deep nape skirt, and bouncy twin side puffs on a 2x1 stud socket.",
+      "note": "Multi-strand wrap-around parted wig with cheek-framing curtains, hair ties, and sculpted multi-lobe twin side puffs on a 2x1 stud socket.",
       "stat": "Spin",
       "type": "Crown hair",
       "behavior": "Wrap-around parted wig with bouncy twin side puffs for any 2x1 human head",
@@ -2727,10 +3176,10 @@
       "id": "hair_ponytail",
       "name": "High Ponytail Hair",
       "line": "snap",
-      "family": "addon",
+      "family": "hair",
       "size": "small",
       "wave": "W9",
-      "note": "Wrap-around sleek wig with sideburns, ear arches, deep nape skirt, and arched rear ponytail plume on a 2x1 stud socket.",
+      "note": "Multi-strand wrap-around sleek wig with sideburns, ear arches, combed crown ridges, hair tie cuff, and arched multi-strand rear ponytail plume on a 2x1 stud socket.",
       "stat": "Spin",
       "type": "Crown hair",
       "behavior": "Wrap-around sleek wig with high rear ponytail for any 2x1 human head",
@@ -2760,10 +3209,10 @@
       "id": "hair_curly",
       "name": "Cloud Curls",
       "line": "snap",
-      "family": "addon",
+      "family": "hair",
       "size": "small",
       "wave": "W9",
-      "note": "Wrap-around volumetric cloud-puff curl wig framing the temples, ears, and nape on a 2x1 stud socket.",
+      "note": "Rich multi-cluster volumetric cloud-curl wrap-around wig framing the forehead, temples, cheeks, and nape on a 2x1 stud socket.",
       "stat": "Glow",
       "type": "Crown hair",
       "behavior": "Wrap-around volumetric cloud-puff curls for any 2x1 human head",
@@ -2793,13 +3242,13 @@
       "id": "hair_mohawk",
       "name": "Action Mohawk",
       "line": "snap",
-      "family": "addon",
+      "family": "hair",
       "size": "small",
       "wave": "W9",
-      "note": "Wrap-around side-faded wig with sideburns, ear arches, deep nape skirt, and four-peak punk mohawk crest on a 2x1 stud socket.",
+      "note": "Wrap-around side-faded wig with shaved-side temple ribs, ear arches, deep nape skirt, and five-blade fanned mohawk crest on a 2x1 stud socket.",
       "stat": "Speed",
       "type": "Crown hair",
-      "behavior": "Wrap-around four-peak action crest locked onto 2x1 crown buds",
+      "behavior": "Wrap-around five-blade action crest locked onto 2x1 crown buds",
       "tags": [
         "character",
         "hair",
@@ -2808,6 +3257,237 @@
       ],
       "build": {
         "fn": "hair_mohawk",
+        "grid": [
+          2,
+          1
+        ],
+        "lock": true
+      },
+      "attach": {
+        "kind": "character",
+        "slots": [
+          "head"
+        ],
+        "front": "-y"
+      }
+    },
+    {
+      "id": "hat_ballcap",
+      "name": "Sport Ballcap",
+      "line": "snap",
+      "family": "hair",
+      "size": "small",
+      "wave": "W9",
+      "note": "Support-free 6-panel sport baseball cap with forward curved visor bill, seam ridges, top button, and -6.0 mm wearable crown rim that seats cleanly on bald heads or Hat-Ready wigs.",
+      "stat": "Speed",
+      "type": "Crown headgear",
+      "behavior": "Wearable 2x1 sport ballcap that fits bald character heads and stacks onto Hat-Ready hairstyles",
+      "tags": [
+        "character",
+        "hat",
+        "crown",
+        "kip"
+      ],
+      "build": {
+        "fn": "hat_ballcap",
+        "grid": [
+          2,
+          1
+        ],
+        "lock": true
+      },
+      "attach": {
+        "kind": "character",
+        "slots": [
+          "head"
+        ],
+        "front": "-y"
+      }
+    },
+    {
+      "id": "hat_beanie",
+      "name": "Ribbed Cuff Beanie",
+      "line": "snap",
+      "family": "hair",
+      "size": "small",
+      "wave": "W9",
+      "note": "Support-free ribbed knit watch-cap beanie with thick folded cuff, vertical knit ribs, and top pom-pom on a -6.0 mm wearable 2x1 crown rim.",
+      "stat": "Glow",
+      "type": "Crown headgear",
+      "behavior": "Wearable 2x1 ribbed cuff beanie with pom-pom for bald heads and Hat-Ready hairstyles",
+      "tags": [
+        "character",
+        "hat",
+        "crown",
+        "kip"
+      ],
+      "build": {
+        "fn": "hat_beanie",
+        "grid": [
+          2,
+          1
+        ],
+        "lock": true
+      },
+      "attach": {
+        "kind": "character",
+        "slots": [
+          "head"
+        ],
+        "front": "-y"
+      }
+    },
+    {
+      "id": "hat_cowboy",
+      "name": "Frontier Cowboy Hat",
+      "line": "snap",
+      "family": "hair",
+      "size": "small",
+      "wave": "W9",
+      "note": "Support-free western cowboy hat with upturned curled side brims, hatband, and pinched cattleman crown crease on a -6.0 mm wearable 2x1 crown rim.",
+      "stat": "Torque",
+      "type": "Crown headgear",
+      "behavior": "Wearable 2x1 western cowboy hat with curled side brims and cattleman crease",
+      "tags": [
+        "character",
+        "hat",
+        "crown",
+        "kip"
+      ],
+      "build": {
+        "fn": "hat_cowboy",
+        "grid": [
+          2,
+          1
+        ],
+        "lock": true
+      },
+      "attach": {
+        "kind": "character",
+        "slots": [
+          "head"
+        ],
+        "front": "-y"
+      }
+    },
+    {
+      "id": "hat_hardhat",
+      "name": "Builder Hardhat",
+      "line": "snap",
+      "family": "hair",
+      "size": "small",
+      "wave": "W9",
+      "note": "Support-free construction safety hardhat with front visor peak, wrap safety rim, center reinforcement spine ridge, and front badge plate on a -6.0 mm wearable 2x1 crown rim.",
+      "stat": "Torque",
+      "type": "Crown headgear",
+      "behavior": "Wearable 2x1 construction builder hardhat for bald heads and Hat-Ready hairstyles",
+      "tags": [
+        "character",
+        "hat",
+        "crown",
+        "kip"
+      ],
+      "build": {
+        "fn": "hat_hardhat",
+        "grid": [
+          2,
+          1
+        ],
+        "lock": true
+      },
+      "attach": {
+        "kind": "character",
+        "slots": [
+          "head"
+        ],
+        "front": "-y"
+      }
+    },
+    {
+      "id": "hat_ranger",
+      "name": "Explorer Safari Hat",
+      "line": "snap",
+      "family": "hair",
+      "size": "small",
+      "wave": "W9",
+      "note": "Support-free wide-brim explorer ranger hat with hatband and four-pinch campaign peak crown on a -6.0 mm wearable 2x1 crown rim.",
+      "stat": "Speed",
+      "type": "Crown headgear",
+      "behavior": "Wearable 2x1 wide-brim explorer safari hat for bald heads and Hat-Ready hairstyles",
+      "tags": [
+        "character",
+        "hat",
+        "crown",
+        "kip"
+      ],
+      "build": {
+        "fn": "hat_ranger",
+        "grid": [
+          2,
+          1
+        ],
+        "lock": true
+      },
+      "attach": {
+        "kind": "character",
+        "slots": [
+          "head"
+        ],
+        "front": "-y"
+      }
+    },
+    {
+      "id": "hat_tophat",
+      "name": "Dapper Top Hat",
+      "line": "snap",
+      "family": "hair",
+      "size": "small",
+      "wave": "W9",
+      "note": "Support-free dapper stovepipe top hat with curled dress brim, ribbon band, and flared top cylinder on a -6.0 mm wearable 2x1 crown rim.",
+      "stat": "Glow",
+      "type": "Crown headgear",
+      "behavior": "Wearable 2x1 dapper stovepipe top hat for bald heads and Hat-Ready hairstyles",
+      "tags": [
+        "character",
+        "hat",
+        "crown",
+        "kip"
+      ],
+      "build": {
+        "fn": "hat_tophat",
+        "grid": [
+          2,
+          1
+        ],
+        "lock": true
+      },
+      "attach": {
+        "kind": "character",
+        "slots": [
+          "head"
+        ],
+        "front": "-y"
+      }
+    },
+    {
+      "id": "hat_pirate",
+      "name": "Buccaneer Tricorne",
+      "line": "snap",
+      "family": "hair",
+      "size": "small",
+      "wave": "W9",
+      "note": "Support-free buccaneer tricorne hat with upturned three-point folded brim walls and domed inner crown on a -6.0 mm wearable 2x1 crown rim.",
+      "stat": "Spin",
+      "type": "Crown headgear",
+      "behavior": "Wearable 2x1 buccaneer tricorne hat for bald heads and Hat-Ready hairstyles",
+      "tags": [
+        "character",
+        "hat",
+        "crown",
+        "kip"
+      ],
+      "build": {
+        "fn": "hat_pirate",
         "grid": [
           2,
           1
@@ -2898,6 +3578,282 @@
       "build": {
         "fn": "prop_star_shield",
         "grip_tu": 2
+      }
+    },
+    {
+      "id": "prop_hammer",
+      "name": "Claw Hammer",
+      "line": "pro",
+      "family": "shaft",
+      "size": "pro",
+      "wave": "W12",
+      "note": "Chunky claw hammer on a 3 TU 6.6 mm flat-sided Pro grip shaft; prints lying on a flat. Category: Tools.",
+      "stat": "Torque",
+      "type": "Hand prop",
+      "behavior": "Claw hammer on a 6.6 mm flat Pro grip shaft",
+      "tags": [
+        "prop",
+        "hand",
+        "tool",
+        "cat-tools",
+        "kip"
+      ],
+      "build": {
+        "fn": "prop_hammer",
+        "grip_tu": 3
+      }
+    },
+    {
+      "id": "prop_mop",
+      "name": "String Mop",
+      "line": "pro",
+      "family": "shaft",
+      "size": "pro",
+      "wave": "W12",
+      "note": "Five-strand slotted mop head on a 3 TU 6.6 mm flat-sided Pro grip shaft; prints lying on a flat. Category: Cleaning.",
+      "stat": "Balance",
+      "type": "Hand prop",
+      "behavior": "String mop on a 6.6 mm flat Pro grip shaft",
+      "tags": [
+        "prop",
+        "hand",
+        "cleaning",
+        "cat-cleaning",
+        "kip"
+      ],
+      "build": {
+        "fn": "prop_mop",
+        "grip_tu": 3
+      }
+    },
+    {
+      "id": "prop_guitar",
+      "name": "Acoustic Guitar",
+      "line": "pro",
+      "family": "shaft",
+      "size": "pro",
+      "wave": "W12",
+      "note": "Chunky figure-8 guitar with neck, headstock and sound hole on a 3 TU 6.6 mm flat-sided Pro grip shaft; prints lying on a flat. Category: Instruments.",
+      "stat": "Glow",
+      "type": "Hand prop",
+      "behavior": "Acoustic guitar on a 6.6 mm flat Pro grip shaft",
+      "tags": [
+        "prop",
+        "hand",
+        "instrument",
+        "cat-instruments",
+        "kip"
+      ],
+      "build": {
+        "fn": "prop_guitar",
+        "grip_tu": 3
+      }
+    },
+    {
+      "id": "prop_screwdriver",
+      "name": "Flat Screwdriver",
+      "line": "pro",
+      "family": "shaft",
+      "size": "pro",
+      "wave": "W12",
+      "note": "Fat-handled screwdriver with shank and flared tip on a 3 TU 6.6 mm flat-sided Pro grip shaft; prints lying on a flat. Category: Tools.",
+      "stat": "Torque",
+      "type": "Hand prop",
+      "behavior": "Fat-handled screwdriver with shank and flared tip on a 6.6 mm flat Pro grip shaft",
+      "tags": [
+        "prop",
+        "hand",
+        "tool",
+        "cat-tools",
+        "kip"
+      ],
+      "build": {
+        "fn": "prop_screwdriver",
+        "grip_tu": 3
+      }
+    },
+    {
+      "id": "prop_paint_roller",
+      "name": "Paint Roller",
+      "line": "pro",
+      "family": "shaft",
+      "size": "pro",
+      "wave": "W12",
+      "note": "Striped paint roller on a stem on a 3 TU 6.6 mm flat-sided Pro grip shaft; prints lying on a flat. Category: Tools.",
+      "stat": "Grip",
+      "type": "Hand prop",
+      "behavior": "Striped paint roller on a stem on a 6.6 mm flat Pro grip shaft",
+      "tags": [
+        "prop",
+        "hand",
+        "tool",
+        "cat-tools",
+        "kip"
+      ],
+      "build": {
+        "fn": "prop_paint_roller",
+        "grip_tu": 3
+      }
+    },
+    {
+      "id": "prop_broom",
+      "name": "Bristle Broom",
+      "line": "pro",
+      "family": "shaft",
+      "size": "pro",
+      "wave": "W12",
+      "note": "Tapered bristle broom with slotted gaps on a 3 TU 6.6 mm flat-sided Pro grip shaft; prints lying on a flat. Category: Cleaning.",
+      "stat": "Balance",
+      "type": "Hand prop",
+      "behavior": "Tapered bristle broom with slotted gaps on a 6.6 mm flat Pro grip shaft",
+      "tags": [
+        "prop",
+        "hand",
+        "cleaning",
+        "cat-cleaning",
+        "kip"
+      ],
+      "build": {
+        "fn": "prop_broom",
+        "grip_tu": 3
+      }
+    },
+    {
+      "id": "prop_scrub_brush",
+      "name": "Scrub Brush",
+      "line": "pro",
+      "family": "shaft",
+      "size": "pro",
+      "wave": "W12",
+      "note": "Oval scrub brush with bristle-dot holes on a 3 TU 6.6 mm flat-sided Pro grip shaft; prints lying on a flat. Category: Cleaning.",
+      "stat": "Grip",
+      "type": "Hand prop",
+      "behavior": "Oval scrub brush with bristle-dot holes on a 6.6 mm flat Pro grip shaft",
+      "tags": [
+        "prop",
+        "hand",
+        "cleaning",
+        "cat-cleaning",
+        "kip"
+      ],
+      "build": {
+        "fn": "prop_scrub_brush",
+        "grip_tu": 3
+      }
+    },
+    {
+      "id": "prop_vacuum",
+      "name": "Handheld Vacuum",
+      "line": "pro",
+      "family": "shaft",
+      "size": "pro",
+      "wave": "W12",
+      "note": "Handheld vacuum with dust window and flared nozzle on a 3 TU 6.6 mm flat-sided Pro grip shaft; prints lying on a flat. Category: Cleaning.",
+      "stat": "Speed",
+      "type": "Hand prop",
+      "behavior": "Handheld vacuum with dust window and flared nozzle on a 6.6 mm flat Pro grip shaft",
+      "tags": [
+        "prop",
+        "hand",
+        "cleaning",
+        "cat-cleaning",
+        "kip"
+      ],
+      "build": {
+        "fn": "prop_vacuum",
+        "grip_tu": 3
+      }
+    },
+    {
+      "id": "prop_trumpet",
+      "name": "Brass Trumpet",
+      "line": "pro",
+      "family": "shaft",
+      "size": "pro",
+      "wave": "W12",
+      "note": "Trumpet with three valve lobes and flared bell on a 3 TU 6.6 mm flat-sided Pro grip shaft; prints lying on a flat. Category: Instruments.",
+      "stat": "Glow",
+      "type": "Hand prop",
+      "behavior": "Trumpet with three valve lobes and flared bell on a 6.6 mm flat Pro grip shaft",
+      "tags": [
+        "prop",
+        "hand",
+        "instrument",
+        "cat-instruments",
+        "kip"
+      ],
+      "build": {
+        "fn": "prop_trumpet",
+        "grip_tu": 3
+      }
+    },
+    {
+      "id": "prop_maracas",
+      "name": "Rattle Maraca",
+      "line": "pro",
+      "family": "shaft",
+      "size": "pro",
+      "wave": "W12",
+      "note": "Egg-shaped maraca with rattle-dot holes on a 3 TU 6.6 mm flat-sided Pro grip shaft; prints lying on a flat. Category: Instruments.",
+      "stat": "Glow",
+      "type": "Hand prop",
+      "behavior": "Egg-shaped maraca with rattle-dot holes on a 6.6 mm flat Pro grip shaft",
+      "tags": [
+        "prop",
+        "hand",
+        "instrument",
+        "cat-instruments",
+        "kip"
+      ],
+      "build": {
+        "fn": "prop_maracas",
+        "grip_tu": 3
+      }
+    },
+    {
+      "id": "prop_flag",
+      "name": "Swallow-Tail Flag",
+      "line": "pro",
+      "family": "shaft",
+      "size": "pro",
+      "wave": "W12",
+      "note": "Pennant flag with star-dot hole and ball finial on a 3 TU 6.6 mm flat-sided Pro grip shaft; prints lying on a flat. Category: Play.",
+      "stat": "Style",
+      "type": "Hand prop",
+      "behavior": "Pennant flag with star-dot hole and ball finial on a 6.6 mm flat Pro grip shaft",
+      "tags": [
+        "prop",
+        "hand",
+        "play",
+        "cat-play",
+        "kip"
+      ],
+      "build": {
+        "fn": "prop_flag",
+        "grip_tu": 3
+      }
+    },
+    {
+      "id": "prop_magnifier",
+      "name": "Magnifying Glass",
+      "line": "pro",
+      "family": "shaft",
+      "size": "pro",
+      "wave": "W12",
+      "note": "Magnifying glass with open lens window on a 3 TU 6.6 mm flat-sided Pro grip shaft; prints lying on a flat. Category: Play.",
+      "stat": "Glow",
+      "type": "Hand prop",
+      "behavior": "Magnifying glass with open lens window on a 6.6 mm flat Pro grip shaft",
+      "tags": [
+        "prop",
+        "hand",
+        "play",
+        "cat-play",
+        "kip"
+      ],
+      "build": {
+        "fn": "prop_magnifier",
+        "grip_tu": 3
       }
     },
     {
@@ -3341,6 +4297,1040 @@
         ],
         "front": "-y"
       }
+    },
+    {
+      "id": "kit_keel_base",
+      "name": "Universal 4x10 Craft Keel Base",
+      "line": "snap",
+      "family": "vehicle",
+      "size": "small",
+      "wave": "W10",
+      "note": "Universal 4x10 TU solid-deck craft hull (49.8 x 124.8 x 15.3 mm) with single z_axle = 6.25 mm bottom-entry c_jaw_tu01 axle stations (rows 0, 7, 8), rear row-9 hinge jaws, flank_rail_tu02 wing/skid mortises, inter-row Y=25.0 steering bore, and 10.0 x 31.4 mm PTO slot.",
+      "stat": "Sturdiness",
+      "type": "Vehicle chassis",
+      "behavior": "Universal 4x10 TU solid-deck hull shared across 8 of 9 flat-pack craft",
+      "tags": [
+        "vehicle",
+        "craft",
+        "kitcard",
+        "chassis",
+        "kip"
+      ],
+      "build": {
+        "fn": "kit_keel_base",
+        "grid": [
+          4,
+          10
+        ],
+        "base": "integrated"
+      }
+    },
+    {
+      "id": "kit_clevis_spine",
+      "name": "Universal 2x8 Clevis Spine & Boom",
+      "line": "snap",
+      "family": "vehicle",
+      "size": "small",
+      "wave": "W10",
+      "note": "27.8 x 99.8 x 15.3 mm inline motorbike/trike spine, helicopter tail boom, tractor loader boom, and fifth-wheel trailer drawbar with twin 15.0 mm double-cheek clevis slots, 2x2 saddle studs, and side kickstand jaw.",
+      "stat": "Reach",
+      "type": "Vehicle frame",
+      "behavior": "Multi-role 2x8 TU inline bike frame, loader boom, helicopter tail boom, and drawbar",
+      "tags": [
+        "vehicle",
+        "craft",
+        "kitcard",
+        "motorbike",
+        "boom"
+      ],
+      "build": {
+        "fn": "kit_clevis_spine",
+        "grid": [
+          2,
+          8
+        ],
+        "base": "integrated"
+      }
+    },
+    {
+      "id": "kit_barbell_shaft",
+      "name": "Outboard Barbell Axle & Rotor Mast",
+      "line": "pro",
+      "family": "shaft",
+      "size": "pro",
+      "wave": "W10",
+      "note": "78.0 mm (6.24 TU) LAY_FLAT Pro drive shaft with 4-way indexed top rotor tip, providing +1.80 mm/side wheel clearance across 49.8 mm hulls and full-height helicopter rotor mast support.",
+      "stat": "Spin",
+      "type": "Drive shaft",
+      "behavior": "78 mm full-span outboard barbell axle and 4-way indexed helicopter rotor mast",
+      "tags": [
+        "vehicle",
+        "craft",
+        "kitcard",
+        "axle",
+        "shaft"
+      ],
+      "build": {
+        "fn": "kit_barbell_shaft"
+      }
+    },
+    {
+      "id": "kit_spinner_pin",
+      "name": "Pull-Ring Clevis & Prop Spinner Pin",
+      "line": "pro",
+      "family": "shaft",
+      "size": "pro",
+      "wave": "W10",
+      "note": "36.0 x 65.0 x 5.0 mm LAY_FLAT ergonomic ring pin with 1.0 mm thrust boss and 28.0 mm Pro drive stem spanning full 27.8 mm bike clevises, nose prop bores, and fifth-wheel turntables while clearing the S1 cylinder.",
+      "stat": "Spin",
+      "type": "Clevis pin",
+      "behavior": "Choke-safe pull-ring clevis axle pin, propeller spinner, and turntable kingpin",
+      "tags": [
+        "vehicle",
+        "craft",
+        "kitcard",
+        "pin",
+        "propeller"
+      ],
+      "build": {
+        "fn": "kit_spinner_pin"
+      }
+    },
+    {
+      "id": "kit_wheel_med",
+      "name": "Medium 1-TU Modular Craft Wheel",
+      "line": "pro",
+      "family": "wheel",
+      "size": "pro",
+      "wave": "W10",
+      "note": "36.0 x 36.0 x 12.3 mm (1 TU wide) modular lugged wheel with 5.10 mm fixed Pro hub for Race Car, Truck, Trailer, Inline Bike, Cargo Trike, Aeroplane gear, and Tractor front.",
+      "stat": "Roll",
+      "type": "Vehicle wheel",
+      "behavior": "36 mm x 12.3 mm 1-TU modular wheel with fixed Pro drive hub",
+      "tags": [
+        "vehicle",
+        "craft",
+        "kitcard",
+        "wheel"
+      ],
+      "build": {
+        "fn": "kit_wheel_med"
+      },
+      "attach": {
+        "kind": "vehicle",
+        "slots": [
+          "wheels"
+        ],
+        "front": "symmetric"
+      }
+    },
+    {
+      "id": "kit_wheel_giant",
+      "name": "Giant 1-TU Tractor & Paddle Wheel",
+      "line": "pro",
+      "family": "wheel",
+      "size": "pro",
+      "wave": "W10",
+      "note": "50.0 x 50.0 x 12.3 mm (1 TU wide) giant lugged wheel with central fixed Pro hub plus four 1-TU eccentric crank/paddle face bores.",
+      "stat": "Grip",
+      "type": "Vehicle wheel",
+      "behavior": "50 mm x 12.3 mm giant tractor, monster truck, and paddlewheel with 4 crank bores",
+      "tags": [
+        "vehicle",
+        "craft",
+        "kitcard",
+        "wheel",
+        "tractor"
+      ],
+      "build": {
+        "fn": "kit_wheel_giant"
+      },
+      "attach": {
+        "kind": "vehicle",
+        "slots": [
+          "wheels"
+        ],
+        "front": "symmetric"
+      }
+    },
+    {
+      "id": "kit_rotor_blade",
+      "name": "Airfoil Prop & Crossed Rotor Blade",
+      "line": "pro",
+      "family": "wheel",
+      "size": "pro",
+      "wave": "W10",
+      "note": "68.0 x 20.0 x 6.0 mm flat-bottom airfoil propeller/rotor blade with 20.0 mm fixed Pro hub; stacks 90-deg crossed in pairs for a 4-blade helicopter main rotor.",
+      "stat": "Lift",
+      "type": "Propeller blade",
+      "behavior": "68 mm airfoil nose propeller, airboat fan, and stackable 4-blade helicopter rotor",
+      "tags": [
+        "vehicle",
+        "craft",
+        "kitcard",
+        "rotor",
+        "aero"
+      ],
+      "build": {
+        "fn": "kit_rotor_blade"
+      }
+    },
+    {
+      "id": "kit_aero_wedge",
+      "name": "Aero Nose Cone & Heli Mast House",
+      "line": "snap",
+      "family": "vehicle",
+      "size": "small",
+      "wave": "W10",
+      "note": "24.8 x 37.3 x 33.25 mm 2x3 TU sculpted nose wedge with horizontal z = 26.5625 mm (17/8 TU) teardrop prop bore and vertical top mast/helm bore.",
+      "stat": "Speed",
+      "type": "Vehicle nose",
+      "behavior": "2x3 TU aero nose cone with front prop bore and top helm/rotor-mast bore",
+      "tags": [
+        "vehicle",
+        "craft",
+        "kitcard",
+        "aero",
+        "nose"
+      ],
+      "build": {
+        "fn": "kit_aero_wedge",
+        "grid": [
+          2,
+          3
+        ]
+      },
+      "attach": {
+        "kind": "vehicle",
+        "slots": [
+          "hood",
+          "front"
+        ],
+        "front": "-y"
+      }
+    },
+    {
+      "id": "kit_windscreen",
+      "name": "Open-Top Cockpit Windscreen & Wire Sill",
+      "line": "snap",
+      "family": "vehicle",
+      "size": "small",
+      "wave": "W10",
+      "note": "49.8 x 37.3 x 23.5 mm 4x3 TU open-top U-frame windscreen with 25.2 mm clear Kip pilot corridor, footwell clearance, corner accessory studs, and above-socket Stage-4 wire troughs.",
+      "stat": "Awareness",
+      "type": "Vehicle canopy",
+      "behavior": "Open-top head-out cockpit windscreen with side bolsters and above-socket wire troughs",
+      "tags": [
+        "vehicle",
+        "craft",
+        "kitcard",
+        "cockpit",
+        "kip"
+      ],
+      "build": {
+        "fn": "kit_windscreen",
+        "grid": [
+          4,
+          3
+        ],
+        "base": "integrated",
+        "lock": true
+      },
+      "attach": {
+        "kind": "vehicle",
+        "slots": [
+          "roof"
+        ],
+        "front": "-y"
+      }
+    },
+    {
+      "id": "kit_foil_wing",
+      "name": "Swept Foil Wing, GT Spoiler & Ramp",
+      "line": "snap",
+      "family": "vehicle",
+      "size": "small",
+      "wave": "W10",
+      "note": "74.8 x 49.8 x 5.0 mm flat-bottom plank airfoil with keyed flank_rail_tu02 root tongue and integrated underside stud sockets for aeroplane/shuttle wings, GT wings, and trailer ramps.",
+      "stat": "Lift",
+      "type": "Vehicle wing",
+      "behavior": "Multi-role swept foil wing, vertical stabilizer, GT spoiler, and car-hauler ramp",
+      "tags": [
+        "vehicle",
+        "craft",
+        "kitcard",
+        "wing",
+        "aero"
+      ],
+      "build": {
+        "fn": "kit_foil_wing",
+        "grid": [
+          6,
+          4
+        ],
+        "base": "integrated",
+        "lock": true
+      },
+      "attach": {
+        "kind": "vehicle",
+        "slots": [
+          "rear"
+        ],
+        "front": "-y"
+      }
+    },
+    {
+      "id": "kit_skid_runner",
+      "name": "Landing Skid, Snow Ski & Hull Runner",
+      "line": "snap",
+      "family": "vehicle",
+      "size": "small",
+      "wave": "W10",
+      "note": "17.6 x 112.3 x 20.0 mm flat-bottom ski runner with upturned 45-deg bow, twin riser struts, and 9 integrated stud sockets for helicopter skids and catamaran runners.",
+      "stat": "Slide",
+      "type": "Vehicle runner",
+      "behavior": "112 mm upturned ski runner and 16 mm-drop helicopter landing skid",
+      "tags": [
+        "vehicle",
+        "craft",
+        "kitcard",
+        "skid",
+        "boat"
+      ],
+      "build": {
+        "fn": "kit_skid_runner",
+        "grid": [
+          2,
+          9
+        ],
+        "base": "integrated",
+        "lock": true
+      }
+    },
+    {
+      "id": "kit_tilting_tub",
+      "name": "4x4 Tipping Dump Tub & Payload Bay",
+      "line": "snap",
+      "family": "vehicle",
+      "size": "small",
+      "wave": "W10",
+      "note": "49.8 x 49.8 x 18.0 mm 4x4 TU cargo tub that seats directly onto the rear keel bay or atop any 4x4x3 TU Power Core and tips to 55 deg.",
+      "stat": "Toughness",
+      "type": "Vehicle bed",
+      "behavior": "4x4 TU tipping dump truck bed, trailer cargo box, and shuttle payload bay",
+      "tags": [
+        "vehicle",
+        "craft",
+        "kitcard",
+        "truck",
+        "cargo"
+      ],
+      "build": {
+        "fn": "kit_tilting_tub",
+        "grid": [
+          4,
+          4
+        ]
+      },
+      "attach": {
+        "kind": "vehicle",
+        "slots": [
+          "rear"
+        ],
+        "front": "-y"
+      }
+    },
+    {
+      "id": "kit_scoop_blade",
+      "name": "Front Loader Bucket & Snowplow Blade",
+      "line": "snap",
+      "family": "vehicle",
+      "size": "small",
+      "wave": "W10",
+      "note": "49.8 x 37.3 x 20.0 mm upward-printed loader scoop bucket, snowplow blade, and helicopter rescue basket with integrated rear stud sockets.",
+      "stat": "Power",
+      "type": "Vehicle tool",
+      "behavior": "4x3 TU tractor front loader bucket, truck snowplow, and rescue basket",
+      "tags": [
+        "vehicle",
+        "craft",
+        "kitcard",
+        "tractor",
+        "scoop"
+      ],
+      "build": {
+        "fn": "kit_scoop_blade",
+        "grid": [
+          4,
+          3
+        ],
+        "base": "integrated",
+        "lock": true
+      },
+      "attach": {
+        "kind": "vehicle",
+        "slots": [
+          "front"
+        ],
+        "front": "-y"
+      }
+    },
+    {
+      "id": "kit_booster_pod",
+      "name": "Twin-Bell Sidepod & Jet Nacelle",
+      "line": "snap",
+      "family": "vehicle",
+      "size": "small",
+      "wave": "W10",
+      "note": "24.8 x 65.0 x 28.0 mm sculpted booster pod with twin 50-deg teardrop rocket exhaust bells and integrated 2x5 underside stud sockets.",
+      "stat": "Launch",
+      "type": "Vehicle booster",
+      "behavior": "Twin-bell race sidepod, jet nacelle, and space shuttle orbital pod",
+      "tags": [
+        "vehicle",
+        "craft",
+        "kitcard",
+        "booster",
+        "shuttle"
+      ],
+      "build": {
+        "fn": "kit_booster_pod",
+        "grid": [
+          2,
+          5
+        ],
+        "base": "integrated",
+        "lock": true
+      },
+      "attach": {
+        "kind": "vehicle",
+        "slots": [
+          "rear"
+        ],
+        "front": "-y"
+      }
+    },
+    {
+      "id": "kit_turntable",
+      "name": "Rotary Slew Deck, Hitch & Mast Plate",
+      "line": "snap",
+      "family": "vehicle",
+      "size": "small",
+      "wave": "W10",
+      "note": "49.8 x 49.8 x 8.0 mm 4x4 TU rotary turntable plate with central free kingpin bore, 16 top studs, and 4x4 cage sockets; serves as crane slew base, fifth-wheel hitch, and 10-stud helicopter mast deck.",
+      "stat": "Spin",
+      "type": "Vehicle turntable",
+      "behavior": "360-deg crane slew base, fifth-wheel trailer hitch, and helicopter rotor mast deck",
+      "tags": [
+        "vehicle",
+        "craft",
+        "kitcard",
+        "turntable",
+        "helicopter"
+      ],
+      "build": {
+        "fn": "kit_turntable",
+        "grid": [
+          4,
+          4
+        ]
+      },
+      "attach": {
+        "kind": "vehicle",
+        "slots": [
+          "rear"
+        ],
+        "front": "symmetric"
+      }
+    },
+    {
+      "id": "kit_yoke_hbar",
+      "name": "Universal Flight Yoke, Helm & Handlebar",
+      "line": "pro",
+      "family": "shaft",
+      "size": "pro",
+      "wave": "W10",
+      "note": "46.0 x 38.0 x 5.6 mm LAY_FLAT cockpit steering yoke, boat helm, and motorbike handlebar with 25.0 mm Pro drive stem.",
+      "stat": "Balance",
+      "type": "Vehicle control",
+      "behavior": "Universal cockpit steering yoke, boat helm, and motorbike handlebar",
+      "tags": [
+        "vehicle",
+        "craft",
+        "kitcard",
+        "steering",
+        "kip"
+      ],
+      "build": {
+        "fn": "kit_yoke_hbar"
+      }
+    },
+    {
+      "id": "skin_aero_cowl",
+      "name": "Flex Skin: Wrap-Around Aero Nose Cowl",
+      "line": "snap",
+      "family": "vehicle",
+      "size": "small",
+      "wave": "W10",
+      "note": "96.0 x 37.3 x 4.4 mm smooth 0.80 mm PETG/TPU shape-out flex skin with 0.60 mm rib-free fold corridors (R >= 20 mm) and integrated stud sockets.",
+      "stat": "Style",
+      "type": "Flex skin",
+      "behavior": "Curved wrap-around PETG/TPU nose cowl snapping over 2x3/4x3 hull studs",
+      "tags": [
+        "vehicle",
+        "craft",
+        "kitcard",
+        "flexskin",
+        "aero"
+      ],
+      "build": {
+        "fn": "skin_aero_cowl",
+        "grid": [
+          8,
+          3
+        ],
+        "base": "integrated",
+        "lock": true
+      }
+    },
+    {
+      "id": "skin_windscreen",
+      "name": "Flex Skin: Wrap-Around Cockpit Visor",
+      "line": "snap",
+      "family": "vehicle",
+      "size": "small",
+      "wave": "W10",
+      "note": "96.0 x 36.0 x 4.4 mm smooth 0.80 mm PETG/TPU wrap-around windscreen visor with 0.60 mm fold corridors snapping onto windscreen bolsters.",
+      "stat": "Style",
+      "type": "Flex skin",
+      "behavior": "Wrap-around PETG/TPU front windscreen and jet canopy visor",
+      "tags": [
+        "vehicle",
+        "craft",
+        "kitcard",
+        "flexskin",
+        "cockpit"
+      ],
+      "build": {
+        "fn": "skin_windscreen",
+        "grid": [
+          8,
+          3
+        ],
+        "base": "integrated",
+        "lock": true
+      }
+    },
+    {
+      "id": "skin_cargo_shroud",
+      "name": "Flex Skin: Book-Fold Payload Bay Doors",
+      "line": "snap",
+      "family": "vehicle",
+      "size": "small",
+      "wave": "W10",
+      "note": "112.0 x 49.8 x 4.4 mm smooth 0.80 mm PETG/TPU clamshell canopy and Space Shuttle payload bay shroud with center 0.60 mm Book-Fold corridors.",
+      "stat": "Style",
+      "type": "Flex skin",
+      "behavior": "Book-fold PETG/TPU Space Shuttle payload doors and wagon canopy shroud",
+      "tags": [
+        "vehicle",
+        "craft",
+        "kitcard",
+        "flexskin",
+        "shuttle"
+      ],
+      "build": {
+        "fn": "skin_cargo_shroud",
+        "grid": [
+          9,
+          4
+        ],
+        "base": "integrated",
+        "lock": true
+      }
+    },
+    {
+      "id": "pro_steer_bridge",
+      "name": "Pro Row-0 Ackermann Steering Bridge",
+      "line": "snap",
+      "family": "vehicle",
+      "size": "small",
+      "wave": "W11",
+      "note": "48.1 x 24.8 x 15.3 mm T-planform steering bridge mounting onto #1 rows 0..1 with cylindrical kingpin bosses at X = +-18.75 mm, smooth front rack slideway, and rear 2x1 top servo studs.",
+      "stat": "Balance",
+      "type": "Steering linkage",
+      "behavior": "Row-0 T-planform steering bridge with 37.5 mm kingpin span and top servo mount",
+      "tags": [
+        "pro",
+        "steering",
+        "kitcard",
+        "vehicle"
+      ],
+      "build": {
+        "fn": "pro_steer_bridge",
+        "grid": [
+          2,
+          2
+        ],
+        "base": "integrated",
+        "lock": true
+      }
+    },
+    {
+      "id": "pro_steer_knuckle_l",
+      "name": "Pro Left 15 mm-Scrub Steering Knuckle",
+      "line": "pro",
+      "family": "joint",
+      "size": "pro",
+      "wave": "W11",
+      "note": "25.6 x 16.0 x 27.5 mm left bellcrank steering knuckle printed stub-up on flat cheek with 15.0 mm kingpin-to-wheel scrub offset and tie-rod bore.",
+      "stat": "Balance",
+      "type": "Steering knuckle",
+      "behavior": "Left bellcrank steering knuckle with 15 mm scrub offset and Pro wheel stub",
+      "tags": [
+        "pro",
+        "steering",
+        "kitcard",
+        "joint"
+      ],
+      "build": {
+        "fn": "pro_steer_knuckle_l"
+      }
+    },
+    {
+      "id": "pro_steer_knuckle_r",
+      "name": "Pro Right 15 mm-Scrub Steering Knuckle",
+      "line": "pro",
+      "family": "joint",
+      "size": "pro",
+      "wave": "W11",
+      "note": "25.6 x 16.0 x 27.5 mm right bellcrank steering knuckle printed stub-up on flat cheek with 15.0 mm kingpin-to-wheel scrub offset and tie-rod bore.",
+      "stat": "Balance",
+      "type": "Steering knuckle",
+      "behavior": "Right bellcrank steering knuckle with 15 mm scrub offset and Pro wheel stub",
+      "tags": [
+        "pro",
+        "steering",
+        "kitcard",
+        "joint"
+      ],
+      "build": {
+        "fn": "pro_steer_knuckle_r"
+      }
+    },
+    {
+      "id": "pro_steer_rack",
+      "name": "Pro Module-2.5 Steering Gear Rack",
+      "line": "pro",
+      "family": "gear",
+      "size": "pro",
+      "wave": "W11",
+      "note": "36.0 x 15.1 x 6.2 mm module-2.5 conjugate steering rack meshing at 12.50 mm center distance with a Z10 pinion at (0, 25.0 mm) and linking to both knuckles.",
+      "stat": "Balance",
+      "type": "Gear rack",
+      "behavior": "36 mm module-2.5 steering rack driven by Z10 stem pinion or Stage-4 micro servo",
+      "tags": [
+        "pro",
+        "steering",
+        "kitcard",
+        "gear"
+      ],
+      "build": {
+        "fn": "pro_steer_rack"
+      }
+    },
+    {
+      "id": "pro_fork_rake_adpt",
+      "name": "Pro Positive-Trail Bike Fork Adapter",
+      "line": "pro",
+      "family": "joint",
+      "size": "pro",
+      "wave": "W11",
+      "note": "27.8 x 24.8 x 12.5 mm motorbike/trike steering headtube adapter adding positive mechanical trail for self-centering roll stability.",
+      "stat": "Balance",
+      "type": "Steering adapter",
+      "behavior": "Positive-trail steerable fork offset block for Inline Motorbike and Cargo Trike",
+      "tags": [
+        "pro",
+        "steering",
+        "kitcard",
+        "motorbike"
+      ],
+      "build": {
+        "fn": "pro_fork_rake_adpt"
+      }
+    },
+    {
+      "id": "pro_axle_keeper",
+      "name": "Pro Under-Keel PTO Axle Keeper Clip",
+      "line": "pro",
+      "family": "joint",
+      "size": "pro",
+      "wave": "W11",
+      "note": "36.0 x 11.0 x 11.0 mm under-keel axle retention saddle closing the row-8 PTO jaw into a full 360-deg bearing eye under high band or motor burst torque.",
+      "stat": "Sturdiness",
+      "type": "Axle retainer",
+      "behavior": "Positive-lock under-keel PTO axle keeper preventing shaft pop-out under burst torque",
+      "tags": [
+        "pro",
+        "pto",
+        "kitcard",
+        "joint"
+      ],
+      "build": {
+        "fn": "pro_axle_keeper"
+      }
+    },
+    {
+      "id": "mom_band_core_tray",
+      "name": "Momentum Enclosed Band Core Tray",
+      "line": "snap",
+      "family": "vehicle",
+      "size": "small",
+      "wave": "W11",
+      "note": "49.8 x 49.8 x 35.1 mm 4x4x3 TU enclosed elastomer Power Core tray with twin R=4.0 mm front band posts, Z_pto = 31.25 mm output bores, and bottom PTO window.",
+      "stat": "Power",
+      "type": "Power core",
+      "behavior": "Self-contained 4x4x3 TU doubled-#64 band propulsion core tray meshing with row-8 PTO",
+      "tags": [
+        "momentum",
+        "power",
+        "kitcard",
+        "band"
+      ],
+      "build": {
+        "fn": "mom_band_core_tray",
+        "grid": [
+          4,
+          4
+        ]
+      }
+    },
+    {
+      "id": "mom_band_core_lid",
+      "name": "Momentum Band Core Safety Lid",
+      "line": "snap",
+      "family": "vehicle",
+      "size": "small",
+      "wave": "W11",
+      "note": "49.8 x 49.8 x 8.0 mm enclosed 4x4 TU top safety lid sealing the elastomer band cavity while exposing full 4x4 top studs for stacking Dump Tub or cargo.",
+      "stat": "Sturdiness",
+      "type": "Power core lid",
+      "behavior": "4x4 TU protective Power Core lid with full top stud grid",
+      "tags": [
+        "momentum",
+        "power",
+        "kitcard",
+        "band"
+      ],
+      "build": {
+        "fn": "mom_band_core_lid",
+        "grid": [
+          4,
+          4
+        ],
+        "base": "integrated",
+        "lock": true
+      }
+    },
+    {
+      "id": "mom_band_spool_pawl",
+      "name": "Momentum Band Wind-Up Spool & Ratchet",
+      "line": "pro",
+      "family": "wheel",
+      "size": "pro",
+      "wave": "W11",
+      "note": "26.0 x 26.0 x 12.5 mm internal D-spool and 8-tooth freewheel ratchet hub winding doubled #64 bands with coasting overrun.",
+      "stat": "Torque",
+      "type": "Ratchet spool",
+      "behavior": "Internal elastomer wind-up drum with 8-tooth freewheel coasting ratchet",
+      "tags": [
+        "momentum",
+        "power",
+        "kitcard",
+        "band"
+      ],
+      "build": {
+        "fn": "mom_band_spool_pawl"
+      }
+    },
+    {
+      "id": "mom_bumper_trigger",
+      "name": "Momentum Contact-Release Bumper Trigger",
+      "line": "pro",
+      "family": "beam",
+      "size": "pro",
+      "wave": "W11",
+      "note": "62.3 x 24.8 x 12.5 mm mechanical IF-contact-THEN-release front bumper bar tripping stored band actuators on obstacle touch.",
+      "stat": "Awareness",
+      "type": "Mechanical trigger",
+      "behavior": "Mechanical IF-bump-THEN-release front contact bar for auto-dump and scoop action",
+      "tags": [
+        "momentum",
+        "trigger",
+        "kitcard",
+        "bumper"
+      ],
+      "build": {
+        "fn": "mom_bumper_trigger"
+      }
+    },
+    {
+      "id": "mom_slam_base",
+      "name": "Momentum Captive Slam-Launcher Base",
+      "line": "pro",
+      "family": "beam",
+      "size": "pro",
+      "wave": "W11",
+      "note": "62.3 x 36.0 x 18.0 mm stationary tabletop launcher block with captive plunger stop bore and enclosed band anchor posts.",
+      "stat": "Launch",
+      "type": "Launcher base",
+      "behavior": "Stationary tabletop slam-launcher base with non-detachable plunger retention",
+      "tags": [
+        "momentum",
+        "launcher",
+        "kitcard",
+        "power"
+      ],
+      "build": {
+        "fn": "mom_slam_base"
+      }
+    },
+    {
+      "id": "mom_slam_plunger",
+      "name": "Momentum Captive Slam Plunger Rod",
+      "line": "pro",
+      "family": "shaft",
+      "size": "pro",
+      "wave": "W11",
+      "note": "18.0 x 76.0 x 5.0 mm LAY_FLAT T-head push rod delivering a captive 35 mm impulse stroke against the craft keel.",
+      "stat": "Launch",
+      "type": "Launcher plunger",
+      "behavior": "Captive 35 mm-stroke impulse push rod for tabletop craft launches",
+      "tags": [
+        "momentum",
+        "launcher",
+        "kitcard",
+        "shaft"
+      ],
+      "build": {
+        "fn": "mom_slam_plunger"
+      }
+    },
+    {
+      "id": "mom_jet_valve_body",
+      "name": "Momentum Balloon Collar & Jet Valve",
+      "line": "snap",
+      "family": "vehicle",
+      "size": "small",
+      "wave": "W11",
+      "note": "49.8 x 24.8 x 18.5 mm 4x2 TU upright-printed smooth balloon collar and nozzle mount block (hand-pump inflation, zero mouthpiece).",
+      "stat": "Speed",
+      "type": "Jet thruster",
+      "behavior": "4x2 TU smooth balloon neck collar and air-jet thruster mount",
+      "tags": [
+        "momentum",
+        "balloon",
+        "kitcard",
+        "jet"
+      ],
+      "build": {
+        "fn": "mom_jet_valve_body",
+        "grid": [
+          4,
+          2
+        ],
+        "base": "integrated",
+        "lock": true
+      }
+    },
+    {
+      "id": "mom_nozzle_set",
+      "name": "Momentum 3-Orifice Jet Nozzle Selector",
+      "line": "pro",
+      "family": "beam",
+      "size": "pro",
+      "wave": "W11",
+      "note": "44.0 x 18.0 x 12.5 mm 1-piece indexed convergent nozzle bar with 3.0 mm (endurance), 4.5 mm (cruise), and 6.0 mm (sprint) orifices.",
+      "stat": "Speed",
+      "type": "Jet nozzle",
+      "behavior": "1-piece indexed 3.0 / 4.5 / 6.0 mm convergent air-jet nozzle selector",
+      "tags": [
+        "momentum",
+        "balloon",
+        "kitcard",
+        "jet"
+      ],
+      "build": {
+        "fn": "mom_nozzle_set"
+      }
+    },
+    {
+      "id": "mom_bellows_base",
+      "name": "Momentum 10-Deg Pneumatic Bellows Base",
+      "line": "snap",
+      "family": "vehicle",
+      "size": "small",
+      "wave": "W11",
+      "note": "49.8 x 49.8 x 16.0 mm 4x4 TU pneumatic clamshell base with 10-deg pre-angled start stop and lateral balloon containment curtains.",
+      "stat": "Lift",
+      "type": "Pneumatic actuator",
+      "behavior": "4x4 TU low-pressure balloon bellows base with side containment curtains",
+      "tags": [
+        "momentum",
+        "balloon",
+        "kitcard",
+        "lift"
+      ],
+      "build": {
+        "fn": "mom_bellows_base",
+        "grid": [
+          4,
+          4
+        ]
+      }
+    },
+    {
+      "id": "mom_bellows_leaf",
+      "name": "Momentum Hinged Bellows Upper Leaf",
+      "line": "snap",
+      "family": "vehicle",
+      "size": "small",
+      "wave": "W11",
+      "note": "49.8 x 49.8 x 8.0 mm 4x4 TU upper bellows lift plate with top studs to raise the tipping dump tub under low-pressure air inflation.",
+      "stat": "Lift",
+      "type": "Pneumatic actuator",
+      "behavior": "4x4 TU hinged upper bellows lift plate supporting 100 g dump payloads",
+      "tags": [
+        "momentum",
+        "balloon",
+        "kitcard",
+        "lift"
+      ],
+      "build": {
+        "fn": "mom_bellows_leaf",
+        "grid": [
+          4,
+          4
+        ],
+        "base": "integrated",
+        "lock": true
+      }
+    },
+    {
+      "id": "mom_flywheel_tray",
+      "name": "Momentum Shrouded Turbine Core Tray",
+      "line": "snap",
+      "family": "vehicle",
+      "size": "small",
+      "wave": "W11",
+      "note": "49.8 x 49.8 x 35.1 mm 4x4x3 TU vertical-spindle turbine shroud with central spindle step bearing, rip-cord guide slot, and finger-safe < 2.6 mm acoustic siren vents.",
+      "stat": "Spin",
+      "type": "Turbine core",
+      "behavior": "Shrouded 4x4x3 TU vertical rip-cord turbine housing with acoustic vents",
+      "tags": [
+        "momentum",
+        "flywheel",
+        "kitcard",
+        "rotor"
+      ],
+      "build": {
+        "fn": "mom_flywheel_tray",
+        "grid": [
+          4,
+          4
+        ]
+      }
+    },
+    {
+      "id": "mom_flywheel_lid",
+      "name": "Momentum Turbine Core Upper Journal Lid",
+      "line": "snap",
+      "family": "vehicle",
+      "size": "small",
+      "wave": "W11",
+      "note": "49.8 x 49.8 x 8.0 mm 4x4 TU upper turbine shroud lid with central free spindle journal and 12 perimeter studs.",
+      "stat": "Spin",
+      "type": "Turbine core lid",
+      "behavior": "4x4 TU upper bearing lid enclosing the 42 mm inertial turbine rotor",
+      "tags": [
+        "momentum",
+        "flywheel",
+        "kitcard",
+        "rotor"
+      ],
+      "build": {
+        "fn": "mom_flywheel_lid",
+        "grid": [
+          4,
+          4
+        ],
+        "base": "integrated",
+        "lock": true
+      }
+    },
+    {
+      "id": "mom_flywheel_rotor",
+      "name": "Momentum 42 mm Inertial Turbine Rotor",
+      "line": "pro",
+      "family": "wheel",
+      "size": "pro",
+      "wave": "W11",
+      "note": "42.0 x 42.0 x 12.0 mm 1-piece solid PLA inertial flywheel rotor (S1 +32.3%, zero loose metal weights) with fixed Pro hub.",
+      "stat": "Spin",
+      "type": "Inertial rotor",
+      "behavior": "42 mm 1-piece solid PLA inertial rotor for rip-cord helicopter and turbine spin-up",
+      "tags": [
+        "momentum",
+        "flywheel",
+        "kitcard",
+        "rotor"
+      ],
+      "build": {
+        "fn": "mom_flywheel_rotor"
+      }
+    },
+    {
+      "id": "mom_ripcord_rack_150",
+      "name": "Momentum 150 mm Toothed Rip-Cord",
+      "line": "pro",
+      "family": "gear",
+      "size": "pro",
+      "wave": "W11",
+      "note": "150.0 x 12.0 x 6.2 mm LAY_FLAT module-2.5 toothed pull rack with finger/lanyard ring bore; meshes 1:1 with internal Z10 pinion and exits cleanly for coasting spin.",
+      "stat": "Launch",
+      "type": "Rip-cord rack",
+      "behavior": "150 mm module-2.5 toothed rip-cord spinning the vertical turbine up to 1,680 RPM",
+      "tags": [
+        "momentum",
+        "flywheel",
+        "kitcard",
+        "gear"
+      ],
+      "build": {
+        "fn": "mom_ripcord_rack_150"
+      }
+    },
+    {
+      "id": "mom_spindle_shaft",
+      "name": "Momentum 78 mm Vertical Turbine Spindle",
+      "line": "pro",
+      "family": "shaft",
+      "size": "pro",
+      "wave": "W11",
+      "note": "6.6 x 78.0 x 5.0 mm LAY_FLAT vertical spindle shaft coupling the enclosed 42 mm turbine rotor and Z10 pinion to overhead helicopter rotors.",
+      "stat": "Spin",
+      "type": "Spindle shaft",
+      "behavior": "78 mm vertical turbine spindle shaft with 4-way indexed top rotor tip",
+      "tags": [
+        "momentum",
+        "flywheel",
+        "kitcard",
+        "shaft"
+      ],
+      "build": {
+        "fn": "mom_spindle_shaft"
+      }
     }
   ],
   "families": {
@@ -3354,6 +5344,7 @@
     "_note": "A row without `build` is planned. Adding `build`, `type`, `behavior` and `tags` to a row registers it with the generator: one catalog row per new part.",
     "racer": "Racer set (Forge Club Month 1): car add-ons with integrated bases, plus a wheel set (axle block, wheel, axle). build: fn, grid, base, optional pad and lock.",
     "robot": "Snap robots: five slots that stack on studs (legs, torso, arms, head on the front row, back pack on the rear row). build: fn, grid, base integrated.",
+    "hair": "Wrap-around 2x1 clip-on character wigs with cheek curtains, ear arches, nape skirt, and optional top 2x1 crown studs; prints upright sitting on its skirt rim. build: fn, grid, lock.",
     "vehicle": "Modular 12.5 mm TU vehicles and decks: recessed stud cockpits, Wave 6 Racer add-on ports, Pro steering bores and horizontal teardrop axle bores. build: fn, grid, base integrated, optional lock."
   }
 }

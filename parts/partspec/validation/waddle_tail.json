@@ -4,7 +4,7 @@
   "file_sha256": "a016ca94a7cd1a11c82fdf56d36e5e212726923d8e5d5bffde188fadee621adb",
   "part_id": "waddle_tail",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-10-30T17:57:36Z",
+  "checked_at": "2026-10-31T11:18:47Z",
   "metrics": {
     "bbox_mm": [
       32.89,
@@ -171,7 +171,7 @@
     ],
     "engine": "PrusaSlicer-2.8.1",
     "slice_logic": "1",
-    "reused_from": "2026-10-30T17:10:52Z"
+    "reused_from": "2026-10-31T10:22:04Z"
   },
   "verdict": "pass",
   "summary": "Prints as is"
