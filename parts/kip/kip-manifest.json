@@ -81,6 +81,7 @@
       "char_head_kid",
       "char_head_chibi",
       "char_head_tall",
+      "char_head_jumbo",
       "classic",
       "robot_head_visor",
       "robot_head_scout",
@@ -92,7 +93,7 @@
       "char_head_imp"
     ],
     "headCategories": {
-      "human": ["char_head_kid", "char_head_chibi", "char_head_tall"],
+      "human": ["char_head_kid", "char_head_chibi", "char_head_tall", "char_head_jumbo"],
       "robot": ["classic", "robot_head_visor", "robot_head_scout"],
       "animal": ["char_head_fox", "char_head_bear", "char_head_cat"],
       "creature": ["char_head_dragon", "char_head_alien", "char_head_imp"]
@@ -199,7 +200,7 @@
     {
       "id": "char_head_jumbo",
       "category": "human",
-      "status": "in catalog.json and toyventor_parts.py, not yet in Kip-Demo.html (demo ships exactly 12 heads, 3 per category)"
+      "status": "in the demo (13 heads) but under review: the three kid/chibi/tall heads share one face zone, wig vault and hat cavity, and char_head_jumbo has its own skull, so it does not seat the face plate, wigs or hats (valid_kip_seated_jumbo fails with a 25 mm3 hat overlap). Keep or retire is undecided; the intended Human set is Soft Youth (neutral), Sweet Heart (feminine) and Heroic Jaw (masculine)."
     }
   ],
   "presets": [
@@ -220,7 +221,7 @@
       "edition": "snap (default pro)",
       "preset|loadout": "clean | boy | girl | kai | scout | cat | fox | dragon | imp | pro",
       "cat": "human | robot | animal | creature",
-      "head": "kid | chibi | tall | classic | robot | scout | fox | bear | cat | dragon | alien | imp",
+      "head": "kid | chibi | tall | jumbo | classic | robot | scout | fox | bear | cat | dragon | alien | imp",
       "insert": "sculpted | vinyl | flat",
       "face|expr": "spark | button | happy | wink | cool | starry | surprised | blank",
       "skin": "warm_peach | golden_tan | rich_cocoa | soft_ivory | vinyl_cream",

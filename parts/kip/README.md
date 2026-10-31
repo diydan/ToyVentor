@@ -52,7 +52,7 @@ The Wardrobe row is context-aware: each head type shows only the controls that f
 
 **Deep links:** `/kip/Kip-Demo.html?cat=animal&head=cat&hat=ears&tail=wag&vehicle=scooter`. Query params: `edition`, `preset`, `cat`, `head`, `insert`, `face`, `skin`, `hair`, `haircol`, `hat`, `hatcol`, `shirt`, `pants`, `back`, `ears`, `tail`, `prop`, `vehicle`, `covers`, `racer`, `view`, `cam`, `clip`. Accepted values are listed in `kip-manifest.json` under `urlParams`.
 
-> **Catalog vs demo:** `char_head_jumbo` (a 4th Human head) is in the PartSpec catalog but not yet in the demo, which ships exactly 12 heads. It is listed under `pending` in `kip-manifest.json`.
+> **Jumbo head (under review):** `char_head_jumbo` (a 4th Human head) is in the PartSpec catalog and in the demo, which therefore lists 13 heads (4 Human, 3 per other category). The three heads `Soft Youth`, `Sweet Heart` and `Heroic Jaw` share one face zone, wig vault and hat cavity, and the jumbo skull is not part of that fit: it does not seat the face plate, wigs or hats. Whether to keep or retire it is undecided, so treat the 3-head Human set as the intended one. It is listed under `pending` in `kip-manifest.json`.
 
 ## Rebuild & Print-Orientation Export Commands
 
