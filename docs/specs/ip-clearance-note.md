@@ -48,8 +48,8 @@ shipment in 2021, and LEGO sent cease-and-desist letters to small retailers
 and YouTubers in Germany in 2020 and 2021. The realistic threat to a small
 company is a cease-and-desist letter, not a trial.
 
-The minifigure is the right they enforce hardest. The Court of Justice
-upheld LEGO's figure shape mark in 2015 (C-529/14, BB Services v EUIPO), LEGO
+The minifigure is the right they enforce hardest. The General Court
+upheld LEGO's figure shape mark in 2015 (T-395/14 and T-396/14, Best-Lock v OHIM), LEGO
 holds US design patents for the figure, and in the United States the court
 entered summary judgment for LEGO against Zuru on infringement of that shape
 mark and on fraudulent infringement, affirmed by the Federal Circuit in 2021.
@@ -113,7 +113,9 @@ LEGO and DUPLO figures are from the measured geometry of the systems;
 ToyVentor's come from `parts/partspec/interfaces.json`. The pitch is what
 decides interoperability, and 12.5 mm is neither 8 mm nor 16 mm. A TU Small
 stud is 6.6 mm across against LEGO's 4.8 mm, so a TU part cannot enter a
-LEGO socket, and the reverse is equally impossible. Snap Large at 25 mm
+LEGO socket. The reverse is no fit either: a smaller LEGO stud may sit
+loose in a TU socket, but it cannot clutch, so there is still no
+functional connection. Snap Large at 25 mm
 pitch is not DUPLO either.
 
 The proportions are worth noting because they show the analysis was done
@@ -244,8 +246,9 @@ in parallel with it.
 
 - Court of Justice, Lego Juris v OHIM (C-48/09 P), 14 September 2010:
   https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=celex:62009CJ0048
-- Court of Justice, BB Services v EUIPO (C-529/14), 16 June 2015, and
-  General Court (T-297/22), 2022:
+- General Court, Best-Lock v OHIM (T-395/14 and T-396/14), 16 June 2015
+  (figure shape mark upheld), and BB Services v EUIPO (T-297/22):
+  https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:62014TJ0395
   https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:62022TJ0297
 - Opinion of the Advocate General in C-334/22 (referential use, non-original
   spare parts, duty of diligence and origin-disclosure):
