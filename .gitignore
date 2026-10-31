@@ -1,24 +1,84 @@
+# ---------------------------------------------------------------------------
+# Hidden directories at the repo root
+# ---------------------------------------------------------------------------
+# Ignore every root-level dot-directory (.wrangler/, .vscode/, …).
+# The leading "/" anchors this to the repo root, so nested dot-directories
+# (e.g. parts/partspec/.venv/) are unaffected and still need their own rules.
+#
+# ".agents/" is deliberately re-included: its memory/decision notes are
+# tracked source, so it must stay visible to git. The scratch lock file
+# inside it is still ignored by its own rule further down.
+/.*/
+!/.agents/
+# CI lives in .github/workflows/ and must stay visible for the same reason.
+!/.github/
+
+# ---------------------------------------------------------------------------
+# Dependencies
+# ---------------------------------------------------------------------------
 node_modules/
+
+# ---------------------------------------------------------------------------
+# Python
+# ---------------------------------------------------------------------------
 .venv/
 __pycache__/
+*.py[cod]
+
+# ---------------------------------------------------------------------------
+# Secrets and local environment
+# ---------------------------------------------------------------------------
+# Cloudflare Workers local secrets. The ".example" template is tracked on
+# purpose so contributors know which keys to fill in.
+.dev.vars
+.dev.vars.*
+!.dev.vars.example
+
+# Vite auto-loads .env* from the project root, so anything dropped there
+# reaches the build. Keep real secrets out of git.
+.env
+.env.*
+!.env.example
+
+# ---------------------------------------------------------------------------
+# Build output and scratch
+# ---------------------------------------------------------------------------
 generated_images/
 dist/
 generated/*
 !generated/.gitkeep
-.dev.vars
-.wrangler/
-.DS_Store
-*.local
-# Zip archives: handover packages and exports — regenerable, never tracked
-*.zip
-.agents/memory/.muse-memory.lock
+
 # Standalone HTML drafts
 drafts/
 
+# ---------------------------------------------------------------------------
+# Platform and tooling
+# ---------------------------------------------------------------------------
+.DS_Store
+*.local
+*.log
+.wrangler/
+
+# Zip archives: handover packages and exports — regenerable, never tracked
+*.zip
+
+# ---------------------------------------------------------------------------
+# Agent memory
+# ---------------------------------------------------------------------------
+# Only the lock file is scratch; the notes beside it are tracked.
+.agents/memory/.muse-memory.lock
+
+# ---------------------------------------------------------------------------
 # PartSpec v2 generator (parts/partspec/): track sources, manifests, and cached
 # validation JSONs; ignore regenerable meshes and scratch outputs
+# ---------------------------------------------------------------------------
 parts/partspec/out/
 parts/partspec/*.stl
 parts/partspec/*.png
 parts/partspec/calibration/
 parts/partspec/app_export/
+
+# NOTE: public/kip/stls/, public/kip/vendor/, public/kip/custom/,
+# public/parts-stl/ and public/parts-glb/ are build outputs, but they are
+# tracked on purpose — the app serves them directly, with no build step
+# required. Do not add them here.

@@ -1,0 +1,26 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+# Minimal trunk guard for a multi-session tree: typecheck, unit tests,
+# set validation, and the production build on every push and PR.
+# Deliberately excluded: npm run e2e (needs the machine's installed
+# Chrome over CDP with fixed ports — a local gate, run it by hand)
+# and npm run preflight (needs Dan's Cloudflare login and a human
+# for its remediation steps).
+jobs:
+  gates:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run validate
+      - run: npm run build
