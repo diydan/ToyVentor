@@ -23,6 +23,7 @@ import {
 } from "../../../lib/parentTime";
 import {
   applySolve,
+  familyStars,
   grandfatherToyIds,
   loadProgression,
   mergeProgression,
@@ -35,6 +36,7 @@ import {
   saveProgression,
   type MissionType,
   type ProgressionState,
+  type Tier,
 } from "../../../lib/progression";
 import { LivePlayPanel, type LivePlayStatus } from "../../liveplay/LivePlayPanel";
 import { CreatePanel } from "./CreatePanel";
@@ -208,7 +210,8 @@ export function GameCanvas({
             );
           }
           if (event.type === "missionSolved") {
-            const { key, attempts, error, stats } = event.detail;
+            const { key, attempts, error, stats, tier: solvedTier } =
+              event.detail;
             const type = missionTypeOf(key) as MissionType;
             const stat = MISSION_STAT[type];
             const totals = buildStats(placementsRef.current, partsById).statTotals;
@@ -219,7 +222,7 @@ export function GameCanvas({
             const timezone = getLocalParentSnapshot().settings.timezone;
             const result = applySolve(progressionRef.current, {
               missionId: key,
-              tier: 1,
+              tier: solvedTier === 2 || solvedTier === 3 ? solvedTier : 1,
               attempts,
               clean: error === 0,
               partMatch,
@@ -801,20 +804,32 @@ export function GameCanvas({
         {!sleepActive &&
           (demoMode ? (
             <div className="tv-worlds" role="tablist" aria-label="Worlds">
-              {WORLDS.map((w) => (
-                <button
-                  key={w.id}
-                  type="button"
-                  role="tab"
-                  aria-selected={state.world === w.id}
-                  className={
-                    state.world === w.id ? "tv-world tv-world-on" : "tv-world"
-                  }
-                  onClick={() => engine()?.goWorld(w.id)}
-                >
-                  {w.label}
-                </button>
-              ))}
+              {WORLDS.map((w) => {
+                const labStars = w.lab ? familyStars(progression, w.id) : 0;
+                return (
+                  <button
+                    key={w.id}
+                    type="button"
+                    role="tab"
+                    aria-selected={state.world === w.id}
+                    className={
+                      state.world === w.id ? "tv-world tv-world-on" : "tv-world"
+                    }
+                    onClick={() => engine()?.goWorld(w.id)}
+                  >
+                    {w.label}
+                    {labStars > 0 && (
+                      <span
+                        className="tv-world-stars"
+                        aria-label={`${labStars} mastery stars earned`}
+                      >
+                        {" "}
+                        ★{labStars}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
             </div>
           ) : (
             <div ref={worldsWrapRef} className="tv-worlds-compact">
@@ -861,24 +876,36 @@ export function GameCanvas({
                   </div>
                   <span className="tv-worlds-group-k">STEM Labs</span>
                   <div className="tv-worlds-grid">
-                    {WORLDS.filter((w) => w.lab).map((w) => (
-                      <button
-                        key={w.id}
-                        type="button"
-                        className={
-                          state.world === w.id
-                            ? "tv-world tv-world-on"
-                            : "tv-world"
-                        }
-                        aria-pressed={state.world === w.id}
-                        onClick={() => {
-                          engine()?.goWorld(w.id);
-                          setWorldsOpen(false);
-                        }}
-                      >
-                        {w.label}
-                      </button>
-                    ))}
+                    {WORLDS.filter((w) => w.lab).map((w) => {
+                      const labStars = familyStars(progression, w.id);
+                      return (
+                        <button
+                          key={w.id}
+                          type="button"
+                          className={
+                            state.world === w.id
+                              ? "tv-world tv-world-on"
+                              : "tv-world"
+                          }
+                          aria-pressed={state.world === w.id}
+                          onClick={() => {
+                            engine()?.goWorld(w.id);
+                            setWorldsOpen(false);
+                          }}
+                        >
+                          {w.label}
+                          {labStars > 0 && (
+                            <span
+                              className="tv-world-stars"
+                              aria-label={`${labStars} mastery stars earned`}
+                            >
+                              {" "}
+                              ★{labStars}
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               )}
@@ -922,9 +949,13 @@ export function GameCanvas({
 
         {missionPanel.open && (
           <MissionPanel
+            key={missionPanel.missionId ?? "mission"}
             snapshot={missionPanel}
+            missionId={missionPanel.missionId}
+            progression={progression}
             onAction={(action) => engine()?.missionAction(action)}
             onControl={(index) => engine()?.missionControl(index)}
+            onSelectTier={(tier: Tier) => engine()?.setMissionTier(tier)}
           />
         )}
 
@@ -965,6 +996,7 @@ export function GameCanvas({
               setRevealState({ first: false });
             }}
             snapshot={customizer}
+            progression={progression}
             onClose={handleCloseBuild}
             onSetToyType={(toyType) => engine()?.setToyType(toyType)}
             onSelectSlot={(slot) => engine()?.selectSlot(slot)}

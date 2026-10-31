@@ -55,6 +55,10 @@ export interface MissionPanelChip {
 /** Data-only view of one legacy mission panel for React to render. */
 export interface MissionPanelSnapshot {
   open: boolean;
+  /** Engine mission id, e.g. "lab1.measure"; null when unknown. */
+  missionId: string | null;
+  /** Active difficulty tier stored on the mission state (1-3). */
+  tier: 1 | 2 | 3;
   title: string;
   goal: string;
   lines: string[];
@@ -67,6 +71,8 @@ export interface MissionPanelSnapshot {
 
 export interface RawMissionPanelSnapshot {
   open?: boolean;
+  missionId?: string | null;
+  tier?: number;
   title?: string;
   goal?: string;
   lines?: string[];
@@ -79,6 +85,8 @@ export interface RawMissionPanelSnapshot {
 
 export const closedMissionPanelSnapshot: MissionPanelSnapshot = {
   open: false,
+  missionId: null,
+  tier: 1,
   title: "",
   goal: "",
   lines: [],
@@ -99,6 +107,8 @@ export function normalizeMissionPanelSnapshot(
   if (!raw.open) return { ...closedMissionPanelSnapshot, lines: [], chips: [], controls: [] };
   return {
     open: true,
+    missionId: typeof raw.missionId === "string" ? raw.missionId : null,
+    tier: raw.tier === 2 || raw.tier === 3 ? raw.tier : 1,
     title: cleanText(raw.title) || "Mission",
     goal: cleanText(raw.goal),
     lines: (raw.lines ?? []).map(cleanText).filter(Boolean),
@@ -588,6 +598,8 @@ export function sameCustomizerSnapshot(
 
 export interface MissionSolveDetail {
   key: string;
+  /** Active difficulty tier; 1 when the runtime predates tiers. */
+  tier: number;
   attempts: number;
   error: number;
   stats?: string[];
@@ -742,6 +754,8 @@ export interface EngineHandle {
   missionAction: (action: MissionAction) => void;
   /** Press one control from the current mission panel snapshot. */
   missionControl: (index: number) => void;
+  /** Set the open mission's difficulty tier (1-3); persists per mission. */
+  setMissionTier: (tier: number) => void;
   /** Open the Factory stage and let React replace the legacy sheet. */
   openCustomizer: (mode?: "build" | "forge") => void;
   /** Close the Factory/customizer and restore the standalone sheet. */
@@ -821,6 +835,7 @@ interface LegacySave {
   me?: Record<string, number>;
   lastWin?: {
     key: string;
+    tier?: number;
     attempts: number;
     error: number;
     stats?: string[];
@@ -843,6 +858,7 @@ interface LegacyHooks {
   open?: () => void;
   close?: () => void;
   seedDemo?: () => void;
+  setTier?: (tier: number) => void;
   cr?: {
     enter?: () => void;
     make?: (text: string) => void;
@@ -1006,9 +1022,12 @@ export function createEngine(
       borderColor: button.style.borderColor || undefined,
     }));
     const forgeButton = frameDoc.querySelector<HTMLElement>("#mp-forge");
+    const rawTier = Number(panel.dataset.tier);
 
     return normalizeMissionPanelSnapshot({
       open: true,
+      missionId: panel.dataset.mid ?? null,
+      tier: rawTier === 2 || rawTier === 3 ? rawTier : 1,
       title: textOf(frameDoc.querySelector("#mp-t")),
       goal: textOf(frameDoc.querySelector("#mp-g")),
       lines,
@@ -1395,6 +1414,7 @@ export function createEngine(
           type: "missionSolved",
           detail: {
             key: win.key,
+            tier: win.tier === 2 || win.tier === 3 ? win.tier : 1,
             attempts: Math.max(1, Math.floor(win.attempts) || 1),
             error: typeof win.error === "number" ? win.error : 0,
             ...(Array.isArray(win.stats)
@@ -1475,6 +1495,10 @@ export function createEngine(
       const button = buttonList(doc(), "#mp-slots button")[index];
       if (!button || button.disabled) return;
       button.click();
+      poll();
+    },
+    setMissionTier: (tier) => {
+      hooks()?.setTier?.(tier);
       poll();
     },
     openCustomizer: (mode = "build") => {

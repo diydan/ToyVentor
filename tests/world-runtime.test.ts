@@ -76,9 +76,37 @@ describe("native world runtime (Phase 0A)", () => {
     );
     expect(text).not.toContain("mTry(");
     expect(text).toContain("function mFailNote(m)");
-    expect(text).toContain("attempts:(S.ma[k]||0)+1");
+    expect(text).toContain("attempts:(S.ma[akk]||0)+1");
     expect(text).toContain("stats:Object.keys(st).filter");
     expect(text).toContain("function mStartReplay(m)");
     expect(text).toContain("function mCancelReplay(m)");
+  });
+
+  it("tracks tiered mission errors per tier, stamps #mp dataset.tier, and resyncs 3D state on setTier", async () => {
+    const text = await (await import("node:fs/promises")).readFile(
+      new URL("../src/features/game/world/runtime/world.ts", import.meta.url),
+      "utf8",
+    );
+    // Bug 1: no untiered S.me[mid(m)] writes; measure, balance, and lever all write S.me[mkk(m)].
+    expect(text).not.toContain("S.me[mid(m)]");
+    expect(text.match(/S\.me\[mkk\(m\)\]/g)?.length).toBeGreaterThanOrEqual(6);
+
+    // Bug 2 & 4: #mp stamps dataset.tier across mReplayPrompt, mPanel, and mtPanel.
+    expect(text.match(/\$\("#mp"\)\.dataset\.tier=String\(mTier\(m\)\)/g)?.length).toBe(3);
+
+    // Bug 2: measure scales unit width by 3/gap and rebuilds ruler posts; balance stacks L/2; logic initializes NOT gate with A=1.
+    expect(text).toContain("u:function(m){return 3/this.gap(m)}");
+    expect(text).toContain("if(m.rgG!==G){clearG(m.rg);m.rgG=G;");
+    expect(text).toContain("stack(-1.5,this.tq(m).L/2,lm)");
+    expect(text).toContain("s.A=this.ord(m)[0]===2?1:0");
+
+    // Bug 2: setTier refunds placed bin parts, resets step state to {tier:t}, and syncs 3D meshes.
+    expect(text).toContain('["deck","support","mid","drum"].forEach(function(sl){if(old[sl])S.bin[old[sl]]=(S.bin[old[sl]]||0)+1})');
+    expect(text).toContain("S.ms[k]={tier:t};if(MT[m.type]){MT[m.type].st&&MT[m.type].st(m);MT[m.type].sync(m)}else mSync(m)");
+
+    // Bug 3: logic failure toast branches on gate kind gk rather than door index s.g; raft distinguishes 0 <= net < need.
+    expect(text).toContain("gk=O[Math.min(s.g,O.length-1)]");
+    expect(text).toContain('gk===0?"Shut. OR needs at least one plate pressed."');
+    expect(text).toContain('Almost! Up beats down by "+n.n+", and this tier needs +"+need+". Try barrels and logs.');
   });
 });

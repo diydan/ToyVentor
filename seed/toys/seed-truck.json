@@ -1,0 +1,13 @@
+{
+  "id": "seed-truck",
+  "name": "Hauler Truck",
+  "kind": "car",
+  "sizeClass": "small",
+  "lengthMm": 120,
+  "widthMm": 58,
+  "attachPoints": [
+    { "id": "roof", "label": "Cab roof" },
+    { "id": "rear", "label": "Truck bed" }
+  ],
+  "source": "seed"
+}

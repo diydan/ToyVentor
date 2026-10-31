@@ -1,0 +1,13 @@
+{
+  "id": "seed-scooter",
+  "name": "Motor Scooter",
+  "kind": "car",
+  "sizeClass": "small",
+  "lengthMm": 105,
+  "widthMm": 38,
+  "attachPoints": [
+    { "id": "roof", "label": "Front fairing" },
+    { "id": "rear", "label": "Rear rack" }
+  ],
+  "source": "seed"
+}

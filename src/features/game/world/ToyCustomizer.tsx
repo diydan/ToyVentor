@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { Placement } from "../../../../shared/build";
 import type { Toy } from "../../../../shared/toy";
 import { toyTypeForKind, type ToyType } from "../../../../shared/toycontract";
+import type { ProgressionState } from "../../../lib/progression";
 import type {
   CustomizerChoice,
   CustomizerSnapshot,
@@ -15,6 +16,7 @@ export interface ToyCustomizerProps {
   placements: Placement[];
   onPlacementsChange: (next: Placement[]) => void;
   hasCharacterCard?: boolean;
+  progression?: ProgressionState;
   onOpenCharacterCard?: () => void;
   snapshot: CustomizerSnapshot;
   onClose: () => void;
@@ -80,6 +82,7 @@ export function ToyCustomizer({
   onFactoryAction,
   onForgeTool,
   onPrintTool,
+  progression,
 }: ToyCustomizerProps) {
   const [mockOrderNote, setMockOrderNote] = useState(false);
   const selectedSlot =
@@ -216,6 +219,7 @@ export function ToyCustomizer({
             toyType={resolvedToyType}
             placements={placements}
             onPlacementsChange={onPlacementsChange}
+            progression={progression}
           />
 
           {snapshot.moves && <p className="tv-moves">{snapshot.moves}</p>}

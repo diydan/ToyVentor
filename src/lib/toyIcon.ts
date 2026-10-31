@@ -2,10 +2,18 @@ import type { NormalizedBox, SamMaskSilhouette } from "../../shared/sam";
 import { isBuiltInToy, type Toy, type ToyKind } from "../../shared/toy";
 import { skinForToy } from "../state/skins";
 import { postSkin, type SkinResponse } from "./api";
+import {
+  findVehicleAuditByIdOrAlias,
+  type Phase4VehicleIconVariant,
+} from "./vehicleReadiness";
 
 export const MINI_ICON_STORAGE_KEY = "toyforge:mini-icons:v1";
 
-export type SeedIconVariant = "kip" | "car" | "figure";
+export type SeedIconVariant =
+  | "kip"
+  | "car"
+  | "figure"
+  | Phase4VehicleIconVariant;
 
 export type ToyMiniIconSource =
   | { kind: "svg"; variant: SeedIconVariant }
@@ -55,10 +63,16 @@ export function resetMiniIconUpgradeAttempts(): void {
   attemptedUpgrades.clear();
 }
 
-function seedVariantForToy(toy: Toy): SeedIconVariant {
+export function seedVariantForToy(toy: Toy): SeedIconVariant {
   if (toy.id === "seed-kip") return "kip";
-  if (toy.id === "seed-car" || toy.kind === "car") return "car";
-  if (toy.id === "seed-figure" || toy.kind === "figure") return "figure";
+  if (toy.id === "seed-car") return "car";
+  if (toy.id === "seed-figure") return "figure";
+  const audited =
+    findVehicleAuditByIdOrAlias(toy.id) ??
+    findVehicleAuditByIdOrAlias(toy.name);
+  if (audited) return audited.iconVariant;
+  if (toy.kind === "car") return "car";
+  if (toy.kind === "figure") return "figure";
   return "kip";
 }
 

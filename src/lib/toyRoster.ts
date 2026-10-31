@@ -16,13 +16,26 @@ import {
 import { revealsForToy } from "../state/reveals";
 import { skinForToy } from "../state/skins";
 import { BUILD_STORAGE_PREFIX } from "./builds";
+import type { ProgressionState } from "./progression";
+import {
+  findVehicleAuditByIdOrAlias,
+  resolvePhase4VehicleRoster,
+  type LockedVehicleCard,
+  type VehicleGrandfatherSignals,
+} from "./vehicleReadiness";
 
 export const ACTIVE_TOY_STORAGE_KEY = "toyforge:active-toy:v1";
 export const FIT_CHOICE_STORAGE_KEY = "toyforge:fit-choice:v1";
 
 /** Retired starter aliases collapse onto canonical starter ids, never creating new toys. */
-const RETIRED_CAR_NAMES = new Set(["roadster racer", "race car", "red racer"]);
+const RETIRED_CAR_NAMES = new Set([
+  "roadster racer",
+  "race car",
+  "red racer",
+  "formula / gt race car",
+]);
 const RETIRED_KIP_NAMES = new Set(["kip (modular hero)", "kip"]);
+const RETIRED_FIGURE_NAMES = new Set(["star scout", "space scout"]);
 
 export type KipWardrobeSlot =
   | "base"
@@ -77,18 +90,25 @@ export const ROBOT_WARDROBE_ALIASES: Readonly<Record<string, KipWardrobeAlias>> 
   "robot.legs.hover": { robotKey: "robot.legs.hover", slot: "boots" },
 };
 
-/** Canonical display title for built-in and scanned toys. */
+/** Canonical display title for built-in and scanned toys (§5.2 name alignment). */
 export function canonicalToyName(toy: Toy): string {
   if (toy.id === "seed-kip") return "Kip";
   if (toy.id === "seed-car") return "Red Racer";
   if (toy.id === "seed-figure") return "Star Scout";
+  const byId = findVehicleAuditByIdOrAlias(toy.id);
+  if (byId) return byId.name;
   const lower = toy.name.trim().toLowerCase();
-  if (isBuiltInToy(toy) && RETIRED_CAR_NAMES.has(lower)) return "Red Racer";
-  if (isBuiltInToy(toy) && RETIRED_KIP_NAMES.has(lower)) return "Kip";
+  if (isBuiltInToy(toy)) {
+    if (RETIRED_CAR_NAMES.has(lower)) return "Red Racer";
+    if (RETIRED_KIP_NAMES.has(lower)) return "Kip";
+    if (RETIRED_FIGURE_NAMES.has(lower)) return "Star Scout";
+    const byAlias = findVehicleAuditByIdOrAlias(lower);
+    if (byAlias) return byAlias.name;
+  }
   return toy.name;
 }
 
-/** Normalize a saved seed/alias toy onto its canonical starter identity. */
+/** Normalize a saved seed/alias toy onto its canonical starter or Maker Rank identity. */
 export function normalizeSavedToyIdentity(toy: Toy): Toy {
   const lower = toy.name.trim().toLowerCase();
   if (toy.id === "seed-kip" || (isBuiltInToy(toy) && RETIRED_KIP_NAMES.has(lower))) {
@@ -97,8 +117,18 @@ export function normalizeSavedToyIdentity(toy: Toy): Toy {
   if (toy.id === "seed-car" || (isBuiltInToy(toy) && RETIRED_CAR_NAMES.has(lower))) {
     return { ...seedCar };
   }
-  if (toy.id === "seed-figure") {
+  if (
+    toy.id === "seed-figure" ||
+    (isBuiltInToy(toy) && RETIRED_FIGURE_NAMES.has(lower))
+  ) {
     return { ...seedFigure };
+  }
+  const byVehicle =
+    findVehicleAuditByIdOrAlias(toy.id) ??
+    (isBuiltInToy(toy) ? findVehicleAuditByIdOrAlias(lower) : undefined);
+  if (byVehicle) {
+    if (byVehicle.seedToy) return { ...byVehicle.seedToy };
+    return { ...toy, id: byVehicle.id, name: byVehicle.name };
   }
   return toy;
 }
@@ -191,6 +221,79 @@ export function mergePhase2Roster(
   // Starters lead with Kip (#1) + Red Racer (#2) on fresh boot; family uploads
   // stay addressable alongside them with zero duplicates.
   return [...builtIns, ...uploadsById.values()];
+}
+
+export interface Phase4RosterResult {
+  enabledToys: Toy[];
+  lockedVehicles: LockedVehicleCard[];
+}
+
+export interface Phase4RosterSignals extends StarScoutGrandfatherSignals {
+  hasSavedBuildForToy?: (toyId: string) => boolean;
+  hasSkinForToy?: (toyId: string) => boolean;
+  hasRevealForToy?: (toyId: string) => boolean;
+}
+
+/**
+ * Phase 4 XP-wired roster resolver (ready to flip into `MyToySheet.tsx` once
+ * Phase 3 lands per `app-continuation-spec.md` §4.4 & §5.1–§5.3):
+ * - Keeps `Kip` (`seed-kip`) and `Red Racer` (`seed-car`) enabled at Rank 1.
+ * - Preserves `Star Scout` (`seed-figure`) strictly via grandfathering
+ *   (including permanent `progression.unlockedIds`), never as a rank unlock.
+ * - Exposes only `ready: true` Maker Rank vehicles (`unlockedVehicles` when
+ *   rank-unlocked, sandbox-unlocked, or grandfathered; `lockedVehicles` with
+ *   one-line §5.3 guidance otherwise).
+ * - Deduplicates family-saved scan/manual uploads and collapses all §5.2
+ *   built-in content aliases onto canonical IDs.
+ */
+export function mergePhase4Roster(
+  savedToys: readonly Toy[],
+  progression: ProgressionState,
+  signals: Phase4RosterSignals = {},
+): Phase4RosterResult {
+  const starScoutEnabled =
+    progression.unlockedIds.includes("seed-figure") ||
+    isStarScoutGrandfathered({ ...signals, savedToys });
+  const starters = starScoutEnabled
+    ? [...enabledStarterToys, seedFigure]
+    : [...enabledStarterToys];
+
+  const vehicleSignals: VehicleGrandfatherSignals = {
+    activeToyId: signals.activeToyId,
+    savedToys,
+    ...(signals.hasSavedBuildForToy
+      ? { hasSavedBuild: signals.hasSavedBuildForToy }
+      : {}),
+    ...(signals.hasSkinForToy ? { hasSkin: signals.hasSkinForToy } : {}),
+    ...(signals.hasRevealForToy ? { hasReveal: signals.hasRevealForToy } : {}),
+  };
+
+  const { unlockedVehicles, lockedVehicles } = resolvePhase4VehicleRoster(
+    progression,
+    vehicleSignals,
+  );
+
+  const byId = new Map<string, Toy>();
+  for (const starter of starters) {
+    byId.set(starter.id, starter);
+  }
+  for (const vehicle of unlockedVehicles) {
+    if (!byId.has(vehicle.id)) {
+      byId.set(vehicle.id, vehicle);
+    }
+  }
+  for (const raw of savedToys) {
+    const normalized = normalizeSavedToyIdentity(raw);
+    if (isBuiltInToy(normalized)) continue;
+    if (!byId.has(normalized.id)) {
+      byId.set(normalized.id, normalized);
+    }
+  }
+
+  return {
+    enabledToys: [...byId.values()],
+    lockedVehicles,
+  };
 }
 
 export function loadActiveToyId(): string | undefined {

@@ -1,0 +1,13 @@
+{
+  "id": "seed-motorbike",
+  "name": "Sport Motorbike",
+  "kind": "car",
+  "sizeClass": "small",
+  "lengthMm": 112,
+  "widthMm": 40,
+  "attachPoints": [
+    { "id": "roof", "label": "Tank cowling" },
+    { "id": "rear", "label": "Tail deck" }
+  ],
+  "source": "seed"
+}

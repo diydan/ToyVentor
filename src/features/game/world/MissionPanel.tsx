@@ -1,16 +1,70 @@
+import { useEffect } from "react";
+import {
+  canAccessTier,
+  type ProgressionState,
+  type Tier,
+} from "../../../lib/progression";
 import type { MissionAction, MissionPanelSnapshot } from "./engine";
 
 export interface MissionPanelProps {
   snapshot: MissionPanelSnapshot;
+  missionId?: string | null;
+  progression?: ProgressionState;
   onAction: (action: MissionAction) => void;
   onControl: (index: number) => void;
+  onSelectTier?: (tier: Tier) => void;
+}
+
+const TIERS: Tier[] = [1, 2, 3];
+const TIER_LABEL: Record<Tier, string> = {
+  1: "Starter",
+  2: "Tinker",
+  3: "Engineer",
+};
+
+/** Resolve the highest accessible tier <= the engine's stored tier. */
+export function resolveEffectiveMissionTier(
+  engineTier: Tier,
+  missionId?: string | null,
+  progression?: ProgressionState,
+): Tier {
+  if (!missionId || !progression) return engineTier;
+  if (progression.sandboxUnlockAll || canAccessTier(progression, missionId, engineTier)) {
+    return engineTier;
+  }
+  if (canAccessTier(progression, missionId, 2)) return 2;
+  return 1;
 }
 
 /**
  * Frosted-glass bottom sheet for bridge, lift, and STEM Playground missions.
  * Keeps the 3D scene visible above the sheet while placing parts or solving puzzles.
  */
-export function MissionPanel({ snapshot, onAction, onControl }: MissionPanelProps) {
+export function MissionPanel({
+  snapshot,
+  missionId,
+  progression,
+  onAction,
+  onControl,
+  onSelectTier,
+}: MissionPanelProps) {
+  const showTiers = Boolean(missionId && progression && onSelectTier);
+  const engineTier: Tier = snapshot.tier;
+  const effectiveTier = resolveEffectiveMissionTier(
+    engineTier,
+    missionId,
+    progression,
+  );
+  const isReplayPrompt = snapshot.actionLabel === "Play again";
+
+  // If XP was reset or Sandbox was turned off while a higher tier was saved in
+  // engine state, clamp the active mission back down to an unlocked tier.
+  useEffect(() => {
+    if (showTiers && !isReplayPrompt && effectiveTier !== engineTier) {
+      onSelectTier?.(effectiveTier);
+    }
+  }, [showTiers, isReplayPrompt, effectiveTier, engineTier, onSelectTier]);
+
   const groups: Array<{ name: string | undefined; controls: typeof snapshot.controls }> = [];
   for (const control of snapshot.controls) {
     const group = groups.find((entry) => entry.name === control.group);
@@ -44,6 +98,41 @@ export function MissionPanel({ snapshot, onAction, onControl }: MissionPanelProp
         <p className="tv-moves" style={{ fontSize: 13 }}>
           {snapshot.goal}
         </p>
+      )}
+
+      {showTiers && (
+        <div className="tv-mp-sb" role="group" aria-label="Difficulty tier">
+          {TIERS.map((t) => {
+            const open =
+              progression!.sandboxUnlockAll ||
+              canAccessTier(progression!, missionId!, t);
+            const stars =
+              progression!.missionStars[`${missionId}:t${t}`] ?? 0;
+            return (
+              <button
+                key={t}
+                type="button"
+                disabled={!open}
+                aria-pressed={effectiveTier === t}
+                title={
+                  open
+                    ? `${TIER_LABEL[t]} tier`
+                    : `Earn 2 stars on Tier ${t - 1} to open ${TIER_LABEL[t]}`
+                }
+                className={
+                  effectiveTier === t ? "tv-ctl tv-ctl-gold-ring" : "tv-ctl"
+                }
+                onClick={() => {
+                  onSelectTier?.(t);
+                }}
+              >
+                {"★".repeat(t)}
+                {"☆".repeat(3 - t)} {TIER_LABEL[t]}
+                {stars > 0 && ` · ${stars}★`}
+              </button>
+            );
+          })}
+        </div>
       )}
 
       {snapshot.lines.map((line, index) => (

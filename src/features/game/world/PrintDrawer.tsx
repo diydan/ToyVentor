@@ -11,6 +11,11 @@ import type { Line, Part } from "../../../../shared/part";
 import type { Toy } from "../../../../shared/toy";
 import type { ToyType } from "../../../../shared/toycontract";
 import {
+  hasProStatUnlock,
+  PRO_STAT_LABS,
+  type ProgressionState,
+} from "../../../lib/progression";
+import {
   equipPartOnBuild,
   printablePartsForWorld,
   unequipPartFromBuild,
@@ -27,12 +32,14 @@ export function PrintDrawer({
   toyType,
   placements,
   onPlacementsChange,
+  progression,
 }: {
   toy: Toy;
   slot?: string;
   toyType?: ToyType;
   placements: Placement[];
   onPlacementsChange: (next: Placement[]) => void;
+  progression?: ProgressionState;
 }) {
   const [lineFilter, setLineFilter] = useState<Line | "all">("all");
   const [viewMode, setViewMode] = useState<"ar" | "grid">("ar");
@@ -43,15 +50,36 @@ export function PrintDrawer({
   const [history, setHistory] = useState<Placement[][]>([]);
   const [notice, setNotice] = useState<string | null>(null);
 
-  const fitting = useMemo(
-    () =>
-      printablePartsForWorld(toy, allParts, {
-        slot,
-        toyType,
-        line: lineFilter,
-      }),
-    [toy, slot, toyType, lineFilter],
-  );
+  const fitting = useMemo(() => {
+    const list = printablePartsForWorld(toy, allParts, {
+      slot,
+      toyType,
+      line: lineFilter,
+    });
+    if (!progression || progression.sandboxUnlockAll) return list;
+    return list.filter(
+      (p) => p.line !== "pro" || hasProStatUnlock(progression, p.stat.name),
+    );
+  }, [toy, slot, toyType, lineFilter, progression]);
+
+  const proLock = useMemo(() => {
+    if (!progression || progression.sandboxUnlockAll) {
+      return { count: 0, labs: [] as string[] };
+    }
+    const locked = printablePartsForWorld(toy, allParts, {
+      slot,
+      toyType,
+      line: "pro",
+    }).filter((p) => !hasProStatUnlock(progression, p.stat.name));
+    const labs = [
+      ...new Set(
+        locked.flatMap((p) => PRO_STAT_LABS[p.stat.name] ?? []),
+      ),
+    ]
+      .map((lab) => lab.replace(/^lab/, "Lab "))
+      .sort();
+    return { count: locked.length, labs };
+  }, [toy, slot, toyType, progression]);
 
   // Keep selectedPartId valid when toy, slot, or filter changes.
   useEffect(() => {
@@ -249,6 +277,15 @@ export function PrintDrawer({
             </button>
           </div>
         </div>
+
+        {proLock.count > 0 && (
+          <p className="tv-moves" role="status">
+            {proLock.count} Pro {proLock.count === 1 ? "part" : "parts"}{" "}
+            unlock{proLock.count === 1 ? "s" : ""} with 3 stars
+            {proLock.labs.length > 0 && ` in ${proLock.labs.join(", ")}`}.
+            Finish STEM Lab missions with clean engineering to earn stars.
+          </p>
+        )}
 
         {fitting.length === 0 ? (
           <p className="tv-moves">
