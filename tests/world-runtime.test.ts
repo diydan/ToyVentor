@@ -70,10 +70,18 @@ describe("native world runtime (Phase 0A)", () => {
   });
 
   it("scores failed evaluated tries without penalizing multi-stage steps and supports clean mission replay", async () => {
-    const text = await (await import("node:fs/promises")).readFile(
-      new URL("../src/features/game/world/runtime/world.ts", import.meta.url),
-      "utf8",
-    );
+    // Unit 2d: mission logic lives in missions.ts; the shipped runtime is both files.
+    const fs = await import("node:fs/promises");
+    const text = (
+      await Promise.all(
+        ["world.ts", "missions.ts"].map((f) =>
+          fs.readFile(
+            new URL(`../src/features/game/world/runtime/${f}`, import.meta.url),
+            "utf8",
+          ),
+        ),
+      )
+    ).join("\n");
     expect(text).not.toContain("mTry(");
     expect(text).toContain("function mFailNote(m)");
     expect(text).toContain("attempts:(S.ma[akk]||0)+1");
@@ -83,10 +91,18 @@ describe("native world runtime (Phase 0A)", () => {
   });
 
   it("tracks tiered mission errors per tier, stamps #mp dataset.tier, and resyncs 3D state on setTier", async () => {
-    const text = await (await import("node:fs/promises")).readFile(
-      new URL("../src/features/game/world/runtime/world.ts", import.meta.url),
-      "utf8",
-    );
+    // Unit 2d: mission logic lives in missions.ts; the shipped runtime is both files.
+    const fs2 = await import("node:fs/promises");
+    const text = (
+      await Promise.all(
+        ["world.ts", "missions.ts"].map((f) =>
+          fs2.readFile(
+            new URL(`../src/features/game/world/runtime/${f}`, import.meta.url),
+            "utf8",
+          ),
+        ),
+      )
+    ).join("\n");
     // Bug 1: no untiered S.me[mid(m)] writes; measure, balance, and lever all write S.me[mkk(m)].
     expect(text).not.toContain("S.me[mid(m)]");
     expect(text.match(/S\.me\[mkk\(m\)\]/g)?.length).toBeGreaterThanOrEqual(6);
