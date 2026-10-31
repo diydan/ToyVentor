@@ -13,7 +13,7 @@ on geometry conflicts, [parts-tu-spec.md](parts/parts-tu-spec.md) and
 - `specs/`: `app-continuation-spec.md`, `native-world-port-spec.md`
   (Phase 0), `toyventor-town-vision.md`, `stage-simplification-and-kip-spec.md`,
   `xp-system-spec.md` (Phase 3 gate), parent time gate, flat-pack craft,
-  progressive power, and scan-to-3D.
+  progressive power, IP clearance note, and scan-to-3D.
 - `parts/`: Snap and Pro summaries, creating-parts runbook, TU spec, and the
   generated PartSpec snapshot.
 - `decisions/`: dated records `0001`–`0006`.
@@ -44,6 +44,7 @@ on geometry conflicts, [parts-tu-spec.md](parts/parts-tu-spec.md) and
 | [parent-time-gate.md](specs/parent-time-gate.md) | Implemented parent caps and earned STEM time. |
 | [flatpack-modular-craft-spec.md](specs/flatpack-modular-craft-spec.md) | Proposed flat-pack vehicle/craft grammar. |
 | [progressive-power-system-spec.md](specs/progressive-power-system-spec.md) | Proposed momentum-to-robotics stages. |
+| [ip-clearance-note.md](specs/ip-clearance-note.md) | **IP note:** LEGO and DUPLO rights, why the TU lattice sits outside them, and the naming and compatibility rules. |
 | [scan-to-3d.md](specs/scan-to-3d.md) | Recommended scan-body route and acceptance tests. |
 
 ## ToyVentor World (the 2.5D game)
