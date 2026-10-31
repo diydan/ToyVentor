@@ -227,3 +227,29 @@ existing placement/paint/stats/mood/camera save shape and auditable ledger
 pattern; no parallel payload path is permitted. Flattened saves stay
 authoritative; `last_*` aliases resolve to canonical toys before roster
 writes.
+
+
+## 8. Town Layer Linkage (Vision: [`toyventor-town-vision.md`](toyventor-town-vision.md))
+
+The Town vision's Phases A–E extend this roadmap past Phase 5; nothing there
+is committed until it lands here as a numbered phase with entry gates:
+
+- **Phase A (come-back loop)** overlaps Phases 3–5 + parent-time: daily quest
+  board with real routines, concept badges, weekly parent summary, Workshop
+  Day stamps, personal-best hints, "Kip is recharging." Done when testing
+  families return 4+ days a week.
+- **Phase B (adventure):** quest givers and chains, mystery quests, Mess
+  meter, "Fix Kip's workshop" arc. Done when kids pick a second quest
+  without being asked.
+- **Phase C (connected town):** three-district slice first (Plaza, Home
+  Street, Garden), then all districts, with vehicle gates. Done when a child
+  plays 20 minutes across three places without help.
+- **Phase D (toy as solution):** deliver-it and build-to-spec quests, Music
+  Hall. Done when a build-to-spec solve prints the part used.
+- **Phase E (families and seasons):** shared worlds with missions, co-op
+  quests, weekly events inside monthly packs. Done when two families complete
+  a shared quest through grown-up-approved codes.
+
+Prerequisites before any Town phase: STEM ladders playtests (8+ kids across
+age bands) folded in; `toyventor.quest/1` field-final; transcription running
+through the Worker with audio deleted after use.

@@ -317,6 +317,14 @@ per [app-continuation-spec.md](../specs/app-continuation-spec.md). Later:
 profiles, AR, ordering, creator tools, licensed IP, mystery drops, education
 tracks, original characters, personal play loops, merge forge, recycle,
 color tooling, real electronics, delivery integration, and classroom tools.
+Beyond them: Max, the real-robots phase (Snap → Pro → Max), opening with
+kid-safe battle bots and missions — play as the accelerant for robotics, the
+way games were for AI. Lived, not borrowed: hours in Fusion 360 and Blender
+on a 4-foot household robot, and a son who could help train it by playing. Feeding Max: an image-to-asset suggester (every scan or
+upload proposes character, vehicle, or prop; the kid confirms or corrects;
+Muse drafts the build plan from catalog parts, code validates, studs get
+stamped on the flattest face) and a ScanDex collection game whose confirmations
+and measurements sharpen the suggester. Full write-up deferred.
 The React port has reached step 5 locally including the three.js 0.160
 upgrade; the standalone page remains the demo path and still needs its manual
 republish before recording.

@@ -181,3 +181,36 @@ Goal: full demo run on phone, in demo time. No new features after today. Start: 
 ## Day 10 — Wed Nov 4: Submit by 9 PM ET
 
 Goal: submission in. No code after 6 PM ET (buffer for form, video, screenshots). Start: video/screenshots/description done, track + theme on entry, Cloudflare rate-limit rule on `/api/muse/spark` confirmed (10/min/IP — the in-isolate backstop in `worker/muse.ts` is best-effort; the dashboard rule is the real cost bound; do before any public URL), hard stop time. End: submitted + time, entry URL, one-more-day wishes. See you at finals Nov 9. *(Unfilled.)*
+
+---
+
+## Later — Max phase (noted Sat Oct 31)
+
+Future arc: Snap → Pro → Max, Max being real robots — opening with kid-safe
+battle bots (sumo/push, obstacle courses, no destructive weapons) plus
+missions. Thesis: video games accelerated AI development; play does the same
+for robotics. ScanDex exhaust and the asset pipeline are the training-data
+path in. Power-system Momentum/Mech stages sit inside Max. Spec holds the
+detail in [scan-to-3d.md](../specs/scan-to-3d.md); roadmap pointer in
+[spec.md](spec.md).
+- Why Max is real: I'm building a 4-foot household robot — hours in Fusion
+  360 and Blender making parts, printing, testing, training — and the work
+  looks exactly like the game loop above: model it, fit it, check it, try it.
+  The difference is my son watches me do it instead of helping. Max is the
+  phase where he stops watching: every scan, label, measurement, and battle
+  bot mission becomes training data for the real thing standing in our house.
+
+---
+
+## Later — asset suggester + ScanDex (noted Sat Oct 31)
+
+Every scan or upload proposes character, vehicle, or prop — kid confirms or
+corrects, never auto-locked. Muse drafts the build plan from catalog parts
+(preset, paint zones, one stat, connector placements); deterministic code
+builds and validates; studs stamp on the flattest face; fail-closed bridge
+decides what ships. New connections arrive with block-level checks (flat
+face, full-form studs, grid registration, preset envelope). ScanDex is the
+collection game around it: confirm-what-it-is, set-the-size, earn XP —
+confirm-not-annotate, parent-gated, on-device-first. Its exhaust sharpens the
+suggester and, later, feeds Max. Robot-training data stays exhaust, never the
+pitch. Full write-up deferred to the letter.

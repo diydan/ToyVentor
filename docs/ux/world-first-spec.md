@@ -143,7 +143,8 @@ parent-started voice.
 Opening Build, Create, Pack, Moods, Reveal, editor, or the customizer closes
 the engine sheets and other React overlays first. Sleep mode disables build,
 pack, moods, editor, and pack-related entry points without removing the
-parent path. Overlays never leave placed work, saved builds, or packs in an
+parent path; the curtain reads as story ("Kip is recharging"), never as
+lockout. Overlays never leave placed work, saved builds, or packs in an
 ambiguous state. Backdrop tap, Done, and Play all return to the live stage;
 Reveal returns automatically after its entrance theme unless replayed.
 
@@ -174,7 +175,11 @@ Reveal returns automatically after its entrance theme unless replayed.
 Worker APIs, and the Kip demo URL remain unchanged. Existing builds load
 without migration. `?tab=` deep links open Pack, My Toys, scan, Build, or
 Reveal in the single-stage shell. The Kip 3D Rig stays reachable from `⋯`
-whenever a figure/Kip toy is active.
+whenever a figure/Kip toy is active. Reserved for the Town layer, not yet
+implemented: `toyventor.quest/1` (quests with giver, age bands, steps,
+concept tag, reward, unlocks) and `toyventor.town/1` (districts, edges,
+buildings, vehicle gates). Future quest and town-board surfaces ride the same
+overlay rules: one sheet at a time over the live stage.
 
 
 ## Parallel Lane Ownership & Read-Only Parts Contract
