@@ -160,6 +160,13 @@ test("catalog ids are unique", len(ids) == len(set(ids)))
 test("catalog has the target count per line", all(sum(p["line"] == ln for p in cat["parts"]) == n for ln, n in cat["targets"].items()))
 test("catalog waves exist and only depend on earlier waves", all(p["wave"] in wave_ids + [None] for p in cat["parts"]) and
      all(all(r in wave_ids[:i] for r in w["requires"]) for i, w in enumerate(cat["waves"])))
+def _scope_counts(w):
+    m = re.match(r"^(\d+) parts \((\d+) Snap Small, (\d+) Pro\)", w.get("scope", ""))
+    return tuple(int(g) for g in m.groups()) if m else None
+test("wave scope leading counts match counted membership", all(
+    _scope_counts(w) is None or _scope_counts(w) == (sum(1 for p in cat["parts"] if p.get("wave") == w["id"]),
+    sum(1 for p in cat["parts"] if p.get("wave") == w["id"] and p["line"] == "snap"),
+    sum(1 for p in cat["parts"] if p.get("wave") == w["id"] and p["line"] == "pro")) for w in cat["waves"]))
 test("every generated part is in the catalog", all(p["id"] in ids for p in parts))
 test("catalog sizes follow the line (Snap small/large, Pro pro)", all(p["size"] in (("small", "large") if p["line"] == "snap" else ("pro",)) for p in cat["parts"] if p["family"] != "forge_mount") )
 test("Snap grids in ids are at least 2x2", all(min(int(d) for d in p["id"].split("_")[-1].split("x")) >= 2 for p in cat["parts"] if p["line"] == "snap" and p["family"] in ("block", "tile", "slope", "round") and p["id"].split("_")[-1][0].isdigit()))
