@@ -214,3 +214,19 @@ collection game around it: confirm-what-it-is, set-the-size, earn XP —
 confirm-not-annotate, parent-gated, on-device-first. Its exhaust sharpens the
 suggester and, later, feeds Max. Robot-training data stays exhaust, never the
 pitch. Full write-up deferred to the letter.
+
+---
+
+## Later — the time-aware day (noted Sat Oct 31)
+
+The game learns what time it is. Parents set sleep time and eating times, and
+the day runs on the real clock instead of a countdown into a lockout: sleep,
+bedtime routine, eating, play. At eating time the game steps aside — the
+sitting pauses, the family meal routine is offered, the allowance stops
+counting, and the child returns to the same spot afterwards. No lock, no
+penalty. Only the play phase spends play minutes, and the cap no longer
+winds down before it ends: the dusk cue follows bedtime on the clock instead
+of the allowance running out. Phase model and settings shape in
+[parent-time-gate.md](../specs/parent-time-gate.md); canonical behavior in
+[spec.md](spec.md).
+

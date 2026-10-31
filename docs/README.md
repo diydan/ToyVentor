@@ -10,10 +10,10 @@ on geometry conflicts, [parts-tu-spec.md](parts/parts-tu-spec.md) and
 - `product/`: vision, submission story, canonical spec and review copy, plan,
   journal, demo script.
 - `ux/`: one-stage World spec, interactive mockups, and design guide.
-- `specs/`: `app-continuation-spec.md`, `native-world-port-spec.md`, `toyventor-town-vision.md`
-  (Phase 0), `stage-simplification-and-kip-spec.md`, `xp-system-spec.md`
-  (Phase 3 gate), parent time gate, flat-pack craft, progressive power, and
-  scan-to-3D.
+- `specs/`: `app-continuation-spec.md`, `native-world-port-spec.md`
+  (Phase 0), `toyventor-town-vision.md`, `stage-simplification-and-kip-spec.md`,
+  `xp-system-spec.md` (Phase 3 gate), parent time gate, flat-pack craft,
+  progressive power, and scan-to-3D.
 - `parts/`: Snap and Pro summaries, creating-parts runbook, TU spec, and the
   generated PartSpec snapshot.
 - `decisions/`: dated records `0001`–`0006`.

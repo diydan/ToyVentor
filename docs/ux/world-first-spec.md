@@ -148,6 +148,14 @@ lockout. Overlays never leave placed work, saved builds, or packs in an
 ambiguous state. Backdrop tap, Done, and Play all return to the live stage;
 Reveal returns automatically after its entrance theme unless replayed.
 
+The time-aware day adds three surfaces, and none of them is a lockout or a
+countdown. Eating time shows a warm table card, offers the family meal
+routine, and returns the child to the same spot when the meal is done.
+Bedtime runs the parent-set steps with the screen dark and a calm voice.
+Dusk lights the town as bedtime approaches, on the clock. The parent path
+stays reachable from every one of them, and no surface shows a clock, a
+remaining-time number, or a reason that reads as a punishment.
+
 ## Safety, Privacy & Prototype-Truth Guardrails (`docs/product/spec.md` & `docs/product/demo-script.md`)
 
 1. Mic and camera never start automatically; listening has its own indicator.

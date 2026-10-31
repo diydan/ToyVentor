@@ -21,6 +21,22 @@ Each phase must keep roster identity, save compatibility, and ledger
 auditability intact. Nothing here overrides the canonical spec, the one-stage
 UX rules, or the TU geometry canon.
 
+## Build status (Oct 31, 2026 — code-verified)
+
+- Phase 0 (port + typed runtime + cog mesh + `#fix` removal): landed.
+- Phase 1 (Toy Box pill, PIN pad with dual-path lockout, Demo v1): landed.
+- Phase 2 (enabled roster, Star Scout grandfathering, Kip unification): landed.
+- Phase 3 (XP math, Tier 2/3 presets, badges, Pro-part gating): landed.
+- Phase 4A (locked cards for the 3 ready vehicles): landed.
+- Phase 4B (Ranks 3–6 flips): open — the rank 3 tractor awaits the
+  chin-strap part verdict and the Wave 10 Cards A-B flat-pack modules (Pass 5
+  CAD, `preprint_check` slicer validation, Gate G4 static tip-over proof);
+  ranks 4–6 await their own Wave 10 proofs. The truck, scooter, and motorbike
+  are already live.
+- Phase 5 (weekly packs): parked by decision — no owner; weekly drops ship
+  post-freeze, locked-card probe procedure adopted for the 4A verify.
+- Open verification: live Toy Box probe of locked-card promote-at-threshold.
+
 
 ## 2. Phase 1 — Top Bar & Grown-Up Unlock
 
@@ -235,20 +251,24 @@ The Town vision's Phases A–E extend this roadmap past Phase 5; nothing there
 is committed until it lands here as a numbered phase with entry gates:
 
 - **Phase A (come-back loop)** overlaps Phases 3–5 + parent-time: daily quest
-  board with real routines, concept badges, weekly parent summary, Workshop
-  Day stamps, personal-best hints, "Kip is recharging." Done when testing
-  families return 4+ days a week.
+  board with real routines, the parent-set day schedule (sleep time and eating
+  times, with the eating-time pause), concept badges, weekly parent summary,
+  Workshop Day stamps, personal-best hints, "Kip is recharging." Done when
+  testing families return 4+ days a week.
 - **Phase B (adventure):** quest givers and chains, mystery quests, Mess
   meter, "Fix Kip's workshop" arc. Done when kids pick a second quest
   without being asked.
 - **Phase C (connected town):** three-district slice first (Plaza, Home
-  Street, Garden), then all districts, with vehicle gates. Done when a child
-  plays 20 minutes across three places without help.
+  Street, Garden), then all districts, with vehicle gates. The first slice
+  uses the ready rank 2 and 3 vehicles; the island and sky gates join when
+  the Catamaran and Helicopter land. Done when a child plays 20 minutes
+  across three places without help.
 - **Phase D (toy as solution):** deliver-it and build-to-spec quests, Music
   Hall. Done when a build-to-spec solve prints the part used.
-- **Phase E (families and seasons):** shared worlds with missions, co-op
-  quests, weekly events inside monthly packs. Done when two families complete
-  a shared quest through grown-up-approved codes.
+- **Phase E (families and seasons):** family play for learning to share
+  (pass-and-play first, then a device each), the family meal quest, shared
+  worlds with missions, and weekly events inside monthly packs. Done when
+  two families complete a shared quest through grown-up-approved codes.
 
 Prerequisites before any Town phase: STEM ladders playtests (8+ kids across
 age bands) folded in; `toyventor.quest/1` field-final; transcription running

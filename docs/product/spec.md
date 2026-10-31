@@ -24,11 +24,10 @@ Package contents:
 - Seed content (`seed/`, `sets/`): starters, worlds, levels, packs, and the
   three bridged app sets.
 
-Verification snapshot: 165 tests across 24 Vitest files (163 passing; 2 known
-Kip failures from 3 un-generated `char_head_*` parts); 105 verified
-catalog targets; 30 printable app-set parts plus one demo skin; 399 served STL
-files and 75 served GLB files; six explore worlds, six lesson labs, and 44
-missions.
+Verification snapshot (Oct 31, 2026): 232 tests across 31 Vitest files, all
+passing; 180 verified catalog targets; 30 printable app-set parts plus one
+demo skin; 190 served STL files and 32 served GLB files; six explore worlds,
+six lesson labs, and 44 missions.
 
 
 
@@ -119,6 +118,55 @@ Learn missions count for this demo.
   enlarged controls stay legible without losing engineering precision.
 
 
+
+
+## The time-aware day
+
+The game knows what time it is. A parent sets the shape of the day once:
+sleep time, and when eating happens. The game follows that schedule, so the
+day has a rhythm instead of a countdown that ends in a lockout.
+
+The parent area holds the schedule:
+
+| Setting | What it is | Default |
+| --- | --- | --- |
+| Sleep time | Bedtime and morning: the hours the town is asleep | 19:30 to 07:00 |
+| Bedtime routine | When the wind-down starts, and which steps it runs | 30 minutes before bedtime |
+| Eating time | Up to three meal windows, each a start and a length | Breakfast, lunch, dinner |
+| Play allowance | Daily minutes, plus the STEM minutes earned inside the cap | Weeknight preset |
+
+The real clock in the family's timezone picks the phase:
+
+- **Sleep.** The town is asleep. Play is closed until morning.
+- **Bedtime routine.** The parent picked tonight's steps (bath, pajamas,
+  teeth, potty, story, lights out); the screen darkens, a calm voice guides
+  each step, and the town falls asleep. No play, and no play minutes spent.
+- **Eating.** The game steps aside. The sitting pauses, the family meal
+  routine is offered, and the child comes back to the same spot when the meal
+  is done. No lock, no penalty, nothing lost.
+- **Play.** The town is open and the allowance counts down.
+
+Only the play phase spends the allowance, so a family that eats and does
+bedtime never loses play minutes to it. The day ends when the parent says it
+ends, not when a counter runs out.
+
+Two endings, both told as story, never as a countdown or an error:
+
+- A play window closes. The curtain shows the table or the sleeping town, and
+  play resumes in a later window the same day when allowance remains.
+- The day's allowance is used. The curtain says "Kip is recharging" with a
+  real-world idea, and the day's play is done until the parent grants time or
+  tomorrow comes.
+
+The cap no longer winds down before it ends. The old final-minute twilight
+cue becomes a dusk cue that follows the clock: the town lights up as bedtime
+approaches, not as the allowance runs out. The child never sees a clock, a
+countdown, a remaining-time number, or a reason that reads as a punishment,
+and the parent path stays reachable from the curtain as it is today.
+
+The phase model, settings shape, and validation live in
+[parent-time-gate.md](../specs/parent-time-gate.md). It is proposed, not
+shipped.
 
 
 ## Create mode

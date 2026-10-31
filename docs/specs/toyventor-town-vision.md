@@ -8,8 +8,8 @@ committed to code until it appears there.
 Editor's verification notes (Oct 31): Muse Voice Transcribe is real and live
 on the Meta Model API (`muse-voice-transcribe-1.0`, streaming ASR +
 diarization, ~$0.18/hr) — the voice story below is buildable on the approved
-Worker path. "30 hidden parts" has no code behind it yet and is marked
-planned below. World counts read "six worlds and six labs" everywhere; the
+Worker path. The 30 hidden parts are in code: five per world across all six
+worlds. World counts read "six worlds and six labs" everywhere; the
 draft's "12 worlds" meant the two together.
 
 ---
@@ -31,7 +31,7 @@ physics is the tool.
 
 | Pillar | What already exists |
 | --- | --- |
-| Explore | Six worlds and six labs, hidden-part hooks (30 hidden parts planned, not yet in code), Kip walking in 2.5D |
+| Explore | Six worlds and six labs, 30 hidden parts (five per world, in code), Kip walking in 2.5D |
 | Missions | 11 mission types across Labs 1 to 6, each with Tiers 1 to 3 |
 | Progress | XP, Maker Ranks, mastery stars, vehicle unlocks |
 | Build | Toy Box, vehicles, Create mode for kid-made worlds |
@@ -78,7 +78,12 @@ kids can also use a bus stop map that shows every district as a picture.
 
 Vehicles open new ground. The Motor Scooter crosses gaps, the Catamaran
 reaches islands, and the Helicopter reaches sky ledges. Maker Rank unlocks
-become exploration unlocks, so "I want the boat" is a real goal.
+become exploration unlocks, so "I want the boat" is a real goal. Only the
+rank 2 and 3 vehicles are built and ready today: the Hauler Truck, Motor
+Scooter, and Sport Motorbike. The Catamaran and Helicopter are still pre-CAD,
+so the island and sky-ledge gates wait on the Wave 10 parts and their float
+and rotor-clearance proofs. Plan the connected map around the gates that
+exist, and add the water and sky gates when their vehicles land.
 
 Collect and build. Hidden parts and scrap found while exploring feed the
 Forge and the Factory. Kids find a part, then decide where to use it.
@@ -166,7 +171,7 @@ into a town building, and Music with props is the one still to build.
 | Circuits | Power Station | 3 to 13+ | Built: tap to light, metal or not, close the loop, series or parallel, sensor logic |
 | Code | Code Lab | 3 to 13+ | Built: block coding with tap and drag, loops, if-then rules, text code |
 | Early learning | School | 3 to 4 | Built: colors, numbers, words, phrases, with voice-only play |
-| Daily life | Your house | 3 to 6 | Built: wash hands, brush teeth, get dressed, clean up toys, tidy the room |
+| Daily life | Your house | 3 to 6 | Built: wash hands, brush teeth, get dressed, clean up toys, tidy the room, help cook, family meal, clean up after meals |
 | Music with props | Music Hall | 3 to 13+ | To build (plan below) |
 
 Music with props, by age:
@@ -206,9 +211,9 @@ XP, a helper star, and a small town upgrade.
 | Make the bed | 4+ | Finishing a job |
 | Feed the pet, water the plants | 4+ | Caring for living things |
 | Set and clear the table | 5+ | Counting places, helping the family |
-| Help cook a simple meal | 4+ | Measuring, counting, following steps in order |
-| Eat together at the table | 3+ | Manners, trying foods, talking together |
-| Clear and wipe up after eating | 3+ | Responsibility: your mess, your clean-up |
+| Help cook, with a grown-up | 4+ | Washing, measuring, and kitchen safety: knives and stoves are grown-up jobs |
+| Family meal | 3+ | Food groups on a healthy plate, sharing food, trying one new bite |
+| Clean up after meals | 3+ | Scrape, stack, and wipe; sorting food scraps, trash, and recycling |
 | Sort laundry by color | 5+ | Sorting by a rule |
 | Recycling | 5+ | Materials: paper, plastic, metal |
 | Pack the school bag | 5+ | Planning ahead |
@@ -216,14 +221,24 @@ XP, a helper star, and a small town upgrade.
 | Calm-down breathing | 3+ | Naming and calming big feelings |
 | Manners missions | 4+ | Please, thank you, taking turns |
 
+The parent's day. Grown-ups set the shape of the day: bedtime and morning,
+and when eating happens. The game follows the real clock, so the town has a
+day — play, eat, play, bedtime — instead of a countdown to a lockout. At
+eating time the game steps aside: the sitting pauses, the family meal routine
+is offered, and the child comes back to the same spot afterwards. No lock, no
+penalty, and no play minutes spent at the table.
+
 Streaks without guilt. A Workshop Day stamp for every day played. It never
 resets: a missed day just pauses the count.
 
 Time cap as story. When the parent-time limit is reached, the existing sleep
 curtain becomes "Kip is recharging," part of the world instead of a lockout.
+The cap no longer winds down before it ends; the town lights up at dusk
+because bedtime is near, on the clock.
 
 Bedtime mode. A grown-up picks tonight's steps (bath, pajamas, teeth, potty,
-story, lights out) and a time goal. The screen goes dark, a calm voice guides
+story, lights out) and a time goal, and the routine opens the wind-down
+before the chosen bedtime. The screen goes dark, a calm voice guides
 each step, and the town falls asleep. An on-time finish leaves a dream
 surprise waiting the next morning and adds a night to the streak; a late
 finish gets only an encouraging word.
@@ -255,14 +270,41 @@ nothing is bought, and nothing is ever lost.
 - Everything stays open. No district is locked by age; quests adapt to the
   age band instead. Vehicles are the only gates, and every one is reachable by
   playing.
-- Family play teaches sharing first. Co-op quests take parents and kids
-  through turns, split tasks, and shared tools — the swing, the parts bin,
-  the kitchen. Cooperation comes before competition.
 - Fair by design. No paid random items, nothing expires, and streaks only
   pause. Missing a day never removes XP, stars, parts, or upgrades.
 - Money stays with grown-ups. The monthly seasonal pack adds new quest
   lines, weekly events, and parts, and is managed in the parent area, never
   inside play.
+
+## Family play: learning to share
+
+Family play is where kids learn to share: dad, mom, and kids play the same
+town together, and every family feature practices taking turns, splitting
+jobs, lending, and sharing rewards.
+
+- Pass-and-play first. One device is passed around, and the game names whose
+  turn it is with each player's toy and a turn token, so taking turns is
+  built in. A device each comes later, joined by a family code, never
+  strangers.
+- Everyone has a job. Two-player quests split roles: one cranks the gate
+  while the other drives through, one reads the map while the other steers,
+  one measures while the other builds. Roles swap next time.
+- Lend it and get it back. A player can lend a part to someone else's toy
+  for a quest, and it comes back with a thank-you. Kids practice offering and
+  asking.
+- Fair shares. Family quest rewards are split between players, and sharing
+  puzzles are part of the quests: share the cookies fairly, split a pile of
+  scrap, take turns on the one boat.
+- The family meal quest. Cook together, eat together with devices away, and
+  clean up together, with a job for everyone. The whole family earns the
+  reward.
+- Grown-ups model it. Parents play as their own toy, and the game suggests
+  sharing words to say out loud, like "Your turn! I'll hold the gate."
+- The weekly summary counts it: "We took 12 turns, lent 3 parts, and cooked
+  together twice."
+
+Family play stays inside the family: codes a grown-up approves, no chat with
+anyone else, and the same voice rules as solo play.
 
 ## Parents, safety, and privacy
 
@@ -275,16 +317,20 @@ and no ads.
   instead of raw XP.
 - Parent area. Opened with a hold-to-open button plus a question a young
   child can't answer. It holds the age band, voice-only play, the daily
-  routines, bedtime steps and time goal, the parent-time ledger, sound,
-  sharing, and the seasonal pack.
+  routines, the day's schedule (sleep time and eating times), bedtime steps
+  and time goal, the parent-time ledger, sound, sharing, and the seasonal pack.
 - Healthy limits. The existing parent-time gate ends play with "Kip is
-  recharging" and a real-world idea. Once bedtime mode starts, play stays
-  closed until morning.
+  recharging" and a real-world idea. At eating time the game steps aside and
+  the sitting pauses. Once bedtime mode starts, play stays closed until
+  morning.
 - COPPA. There are no child accounts: a grown-up's account holds the saves.
   A child's voice is personal information, so voice is off by default. It is
   transcribed through the ToyVentor Worker (Muse Voice Transcribe, verified
   live on the Meta Model API), used only to understand the answer, and the
-  audio is deleted immediately.
+  audio is deleted immediately. Transcription runs in the provider's
+  zero-data-retention mode, which is priced at parity and never contributes
+  audio to model training, so a recording leaves the Worker as audio and
+  comes back as text only.
 - Sharing. Builds and worlds move between families only through codes a
   grown-up approves. Nothing a child makes is public.
 - AI safety. Muse Spark only arranges catalog pieces, and every reply is
@@ -318,7 +364,13 @@ worlds and quests as data files, and a few Worker routes.
 - Worker routes. `/api/muse/spark` is built and tested. Still to add:
   `/api/voice/transcribe` (Muse Voice Transcribe, audio deleted after use)
   and `/api/save` (saves under the grown-up's account in D1, cached on the
-  device for offline play).
+  device for offline play). The transcribe route posts the recording to the
+  file endpoint (`POST /v1/asr/transcribe`) rather than the realtime socket,
+  which is the shape a Worker proxies directly. `/api/save` builds on
+  `/api/ownership`, the D1 store that already keeps toys, parts, skins, and
+  characters; today it keys on an anonymous device id and real accounts map
+  onto the same player column later, so the grown-up's account is an account
+  layer over that table, not a new store.
 - Layout. Portrait and landscape both work: the camera keeps the toy clear of
   panels, and on landscape phones panels become side sheets.
 - Testing. The headless playthrough tests carry over: every quest, mission,
@@ -350,12 +402,15 @@ proven.
    meter, and the "Fix Kip's workshop" arc. Done when kids pick a second quest
    without being asked.
 4. Phase C, the connected town: a three-district slice first (Plaza, Home
-   Street, Garden), then all districts, with vehicle gates. Done when a child
-   plays 20 minutes moving between three places without help.
+   Street, Garden), then all districts, with vehicle gates. The first slice
+   uses the ready rank 2 and 3 vehicles; the island and sky gates join when
+   the Catamaran and Helicopter land. Done when a child plays 20 minutes
+   moving between three places without help.
 5. Phase D, your toy as the solution: deliver-it and build-to-spec quests,
    and the Music Hall.
-6. Phase E, families and seasons: shared worlds with missions, co-op quests,
-   and weekly events inside the monthly packs.
+6. Phase E, families and seasons: family play for learning to share
+   (pass-and-play first, then a device each), the family meal quest, shared
+   worlds with missions, and weekly events inside the monthly packs.
 
 What success looks like:
 
@@ -372,8 +427,9 @@ Open questions, with a recommendation for each:
   choice. Should it also adjust to how a child actually plays?
 - Story or sandbox. Recommend one light arc ("Fix Kip's workshop") as the
   spine, with standalone side quests for wandering.
-- Multiplayer or family. Recommend family first: share worlds and complete
-  quests together through codes a grown-up approves, with live co-op later.
+- Multiplayer or family. Decided: family play first, built as an education in
+  sharing (see Family play above). Pass-and-play on one device comes first,
+  then a device each through a family code.
 - Side streets in 2.5D, or full 3D roaming for older kids?
 - How do routine rewards stay encouraging and never become pressure?
 - Which speech approach works per platform without sending a child's audio
