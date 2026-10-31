@@ -29,19 +29,47 @@ export type ToyMiniIconSource =
 
 type IconCacheMap = Record<string, string>;
 
+/**
+ * Caps so scanned-icon data URLs can never grow localStorage without bound:
+ * entry count plus serialized bytes (base64 is ASCII, so length ≈ bytes).
+ * The byte budget stays well under the smallest common per-origin quota
+ * with headroom left for the rest of the app.
+ */
+export const MAX_CACHED_MINI_ICONS = 24;
+export const MAX_CACHED_MINI_ICON_BYTES = 2_000_000;
+
 const attemptedUpgrades = new Set<string>();
 
-function loadCachedIcons(): IconCacheMap {
+let memoRaw: string | null | undefined;
+let memoMap: IconCacheMap = {};
+
+function parseCachedIcons(raw: string | null): IconCacheMap {
+  if (!raw) return {};
   try {
-    const raw = localStorage.getItem(MINI_ICON_STORAGE_KEY);
-    if (!raw) return {};
     const parsed: unknown = JSON.parse(raw);
-    return typeof parsed === "object" && parsed !== null
-      ? (parsed as IconCacheMap)
-      : {};
+    if (typeof parsed !== "object" || parsed === null) return {};
+    return Object.fromEntries(
+      Object.entries(parsed as Record<string, unknown>).filter(
+        (entry): entry is [string, string] =>
+          typeof entry[1] === "string" && entry[1].length > 0,
+      ),
+    );
   } catch {
     return {};
   }
+}
+
+function loadCachedIcons(): IconCacheMap {
+  let raw: string | null = null;
+  try {
+    raw = localStorage.getItem(MINI_ICON_STORAGE_KEY);
+  } catch {
+    return memoMap;
+  }
+  if (memoRaw !== undefined && memoRaw === raw) return memoMap;
+  memoRaw = raw;
+  memoMap = parseCachedIcons(raw);
+  return memoMap;
 }
 
 export function cachedMuseMiniIcon(toyId: string): string | undefined {
@@ -49,18 +77,58 @@ export function cachedMuseMiniIcon(toyId: string): string | undefined {
   return typeof val === "string" && val.length > 0 ? val : undefined;
 }
 
-export function saveCachedMuseMiniIcon(toyId: string, dataUrl: string): void {
+function writeCachedIcons(next: IconCacheMap): boolean {
   try {
-    const next = { ...loadCachedIcons(), [toyId]: dataUrl };
     localStorage.setItem(MINI_ICON_STORAGE_KEY, JSON.stringify(next));
   } catch {
-    /* quota full: keep in-memory render only */
+    return false;
   }
+  memoRaw = undefined;
+  memoMap = next;
+  return true;
+}
+
+function oldestKeyExcept(map: IconCacheMap, toyId: string): string | undefined {
+  // Integer-like ids iterate numerically first, so the head of the key
+  // list is not always the insertion-oldest: skip the just-saved id.
+  return Object.keys(map).find((key) => key !== toyId);
+}
+
+function overBudget(next: IconCacheMap): boolean {
+  return (
+    Object.keys(next).length > MAX_CACHED_MINI_ICONS ||
+    JSON.stringify(next).length > MAX_CACHED_MINI_ICON_BYTES
+  );
+}
+
+export function saveCachedMuseMiniIcon(toyId: string, dataUrl: string): void {
+  if (!toyId || !dataUrl) return;
+  const next = { ...loadCachedIcons() };
+  delete next[toyId];
+  next[toyId] = dataUrl;
+  let oldest = oldestKeyExcept(next, toyId);
+  while (overBudget(next) && oldest !== undefined) {
+    delete next[oldest];
+    oldest = oldestKeyExcept(next, toyId);
+  }
+  if (writeCachedIcons(next)) return;
+  // Quota hit: evict the oldest half once, retry, then give up silently.
+  const keys = Object.keys(next);
+  for (const key of keys.slice(0, Math.max(1, Math.floor(keys.length / 2)))) {
+    if (key !== toyId) delete next[key];
+  }
+  writeCachedIcons(next);
 }
 
 /** Reset session-attempted tracking (for tests). */
 export function resetMiniIconUpgradeAttempts(): void {
   attemptedUpgrades.clear();
+}
+
+/** Drop the parsed-cache memo (for tests). */
+export function resetMiniIconCache(): void {
+  memoRaw = undefined;
+  memoMap = {};
 }
 
 export function seedVariantForToy(toy: Toy): SeedIconVariant {
