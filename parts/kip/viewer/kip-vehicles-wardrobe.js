@@ -1,26 +1,56 @@
-// ToyVentor Kip — Phase 1 Wardrobe (4 Human Head Variants, Rounded Bolt, Swappable Face Plate, Wrap-Around Hairs, Full-Body Skin & Clothing Decals)
+// ToyVentor Kip — Phase 1 Wardrobe (12 Heads in 4 Categories: Human · Robot · Animal · Creature, 3 Universal Swappable Human Face Plates, 14 Sculpted Wigs, 7 Wearable Hats, Full-Body Skin & Clothing Decals)
 // + Phase 2 V2 Modular Vehicles (Stylized Multi-Spoke Wheels & Snap-On Body Covers)
 import {
   createDecalExpressionCanvas,
   createTorsoOutfitDecalCanvas,
   createLegOutfitDecalCanvas,
-} from './kip-forge-sdk.js?v=8.0';
+} from './kip-forge-sdk.js?v=10.0';
 
-export const KIP_BUILD_VERSION = 'v8.0';
+export const KIP_BUILD_VERSION = 'v10.0';
 export const HAIR_WRAP_MM = 16.5;
+export const HAT_WRAP_MM = 6.0;
 
-export const HUMAN_HEAD_IDS = new Set(['kid', 'chibi', 'chin', 'tall']);
+export const HUMAN_HEAD_IDS = new Set(['kid', 'chibi', 'tall']);
+
+// Four head categories, three heads each (12 total). The `Type` button cycles categories; the `Head` button cycles within one.
+export const HEAD_CATEGORIES = [
+  { id: 'human',    label: 'Human' },
+  { id: 'robot',    label: 'Robot' },
+  { id: 'animal',   label: 'Animal' },
+  { id: 'creature', label: 'Creature' },
+];
+
+export const FACE_INSERT_MODES = [
+  { id: 'sculpted', label: '3D Nose & Orbitals' },
+  { id: 'vinyl',    label: '3D Button Eyes & Nose' },
+  { id: 'flat',     label: 'Flat Decal Insert' },
+];
 
 export const WARDROBE_HEADS = [
-  { id: 'classic', label: 'Kip Classic',              crownY: 42.2, faceY: 19.8 },
-  { id: 'kid',     label: 'Human 1 · Hero Poly',      crownY: 36.8, faceY: 18.75 },
-  { id: 'chibi',   label: 'Human 2 · Slender Poly',   crownY: 36.0, faceY: 18.75 },
-  { id: 'chin',    label: 'Human 3 · Youth Poly',     crownY: 35.6, faceY: 18.75 },
-  { id: 'tall',    label: 'Human 4 · Vanguard Poly',  crownY: 39.2, faceY: 20.3125 },
-  { id: 'fox',     label: 'Fox',                      crownY: 26.2, faceY: 15.0 },
-  { id: 'bear',    label: 'Bear',                     crownY: 27.2, faceY: 14.8 },
-  { id: 'robot',   label: 'Bolt Robot',               crownY: 31.6, faceY: 17.8 },
+  // Humans share one universal face-insert slot, so every insert fits every human head.
+  // crownY = the head's `top_studs` plane (z_stud) and faceY = its `face_slot` bore (z_bore), both straight from toyventor_parts.py.
+  { id: 'kid',     category: 'human',    label: 'Soft Youth',     crownY: 31.4, faceY: 12.5 },
+  { id: 'chibi',   category: 'human',    label: 'Vinyl Squircle', crownY: 31.4, faceY: 12.5 },
+  { id: 'tall',    category: 'human',    label: 'Heroic Jaw',     crownY: 33.4, faceY: 14.0625 },
+  { id: 'classic', category: 'robot',    label: 'Kip Classic',    crownY: 42.2, faceY: 19.8 },
+  { id: 'robot',   category: 'robot',    label: 'Bolt Robot',     crownY: 31.6, faceY: 17.8 },
+  { id: 'scout',   category: 'robot',    label: 'Mecha Scout',    crownY: 32.8, faceY: 17.6 },
+  { id: 'fox',     category: 'animal',   label: 'Fox',            crownY: 26.2, faceY: 15.0 },
+  { id: 'bear',    category: 'animal',   label: 'Bear',           crownY: 27.2, faceY: 14.8 },
+  { id: 'cat',     category: 'animal',   label: 'Whisker Cat',    crownY: 26.8, faceY: 15.2 },
+  { id: 'dragon',  category: 'creature', label: 'Drake Dragon',   crownY: 27.6, faceY: 17.2 },
+  { id: 'alien',   category: 'creature', label: 'Starling Alien', crownY: 35.6, faceY: 18.2 },
+  { id: 'imp',     category: 'creature', label: 'Yeti Imp',       crownY: 28.4, faceY: 16.4 },
 ];
+
+export function headsInCategory(categoryId) {
+  return WARDROBE_HEADS.filter(h => h.category === categoryId);
+}
+
+export function categoryOfHead(headId) {
+  const h = WARDROBE_HEADS.find(x => x.id === headId);
+  return h ? h.category : 'robot';
+}
 
 export const SHIRT_OPTIONS = [
   { id: 'off',        label: 'Off',              chestHex: null,      sleeveHex: null,      cuffHex: null,      longSleeve: false, shoeHex: null },
@@ -54,28 +84,57 @@ export const HAIR_COLORS = [
   { id: 'espresso',      label: 'Espresso',      hex: '#2A211E' },
   { id: 'golden_blonde', label: 'Golden Blonde', hex: '#F2B83B' },
   { id: 'auburn_ginger', label: 'Auburn Ginger', hex: '#D85A2B' },
-  { id: 'berry_pop',     label: 'Berry Pop',     hex: '#D9468F' },
+  { id: 'berry_spark',   label: 'Berry Spark',   hex: '#D9468F' },
   { id: 'cobalt',        label: 'Cobalt Blue',   hex: '#2E6FDB' },
 ];
 
-export const HAIR_OPTIONS = [
-  { id: 'off',         label: 'None',               hatReady: true,  topH: 0.0 },
-  { id: 'short_swept', label: 'Swept (Hat-Ready)',  hatReady: true,  topH: 10.6 },
-  { id: 'bob',         label: 'Bob (Hat-Ready)',    hatReady: true,  topH: 10.8 },
-  { id: 'swoosh',      label: 'Swoosh (Hat-Ready)', hatReady: true,  topH: 10.8 },
-  { id: 'spiky',       label: 'Spiky',              hatReady: false, topH: 0.0 },
-  { id: 'pigtails',    label: 'Twin Pigtails',      hatReady: false, topH: 0.0 },
-  { id: 'ponytail',    label: 'Sleek Ponytail',     hatReady: false, topH: 0.0 },
-  { id: 'curly',       label: 'Cloud Curls',        hatReady: false, topH: 0.0 },
-  { id: 'mohawk',      label: 'Crest Mohawk',       hatReady: false, topH: 0.0 },
+export const HAT_COLORS = [
+  { id: 'cobalt_cap',    label: 'Sport Cobalt',  hex: '#2E6FDB' },
+  { id: 'crimson_red',   label: 'Crimson Red',   hex: '#D63A34' },
+  { id: 'adventure_tan', label: 'Adventure Tan', hex: '#C68B59' },
+  { id: 'safety_gold',   label: 'Safety Yellow', hex: '#F5C518' },
+  { id: 'ranger_olive',  label: 'Ranger Olive',  hex: '#5B6E46' },
+  { id: 'charcoal_ink',  label: 'Charcoal Ink',  hex: '#262932' },
+  { id: 'coral_spark',   label: 'Coral Spark',   hex: '#FF6B4A' },
+  { id: 'cream_felt',    label: 'Cream Felt',    hex: '#EFE9DC' },
 ];
 
+export const HAIR_OPTIONS = [
+  { id: 'off',          label: 'None',                    hatReady: true,  topH: 0.0,  seatY: 0.0 },
+  // topH = WIG_TOP_Z (8.0 mm): where a hat-ready wig's 2x1 studs sit above the head's stud plane. seatY = the wig's hem, i.e. its lowest point.
+  { id: 'short_swept',  label: 'Swept (Hat-Ready)',       hatReady: true,  topH: 8.0, seatY: -16.5 },
+  { id: 'bob',          label: 'Bob (Hat-Ready)',         hatReady: true,  topH: 8.0, seatY: -19.0 },
+  { id: 'swoosh',       label: 'Swoosh (Hat-Ready)',      hatReady: true,  topH: 8.0, seatY: -16.5 },
+  { id: 'long_layered', label: 'Long Flow (Hat-Ready)',   hatReady: true,  topH: 8.0, seatY: -22.5 },
+  { id: 'twin_braids',  label: 'Twin Braids (Hat-Ready)', hatReady: true,  topH: 8.0, seatY: -22.5 },
+  { id: 'shag',         label: 'Shag (Hat-Ready)',        hatReady: true,  topH: 8.0, seatY: -17.0 },
+  { id: 'pompadour',    label: 'Pompadour',               hatReady: false, topH: 0.0,  seatY: -16.5 },
+  { id: 'top_bun',      label: 'Top Bun',                 hatReady: false, topH: 0.0,  seatY: -16.5 },
+  { id: 'side_sweep',   label: 'Side Sweep',              hatReady: false, topH: 0.0,  seatY: -19.0 },
+  { id: 'spiky',        label: 'Spiky Tufts',             hatReady: false, topH: 0.0,  seatY: -16.5 },
+  { id: 'pigtails',     label: 'Twin Pigtails',           hatReady: false, topH: 0.0,  seatY: -17.0 },
+  { id: 'ponytail',     label: 'High Ponytail',           hatReady: false, topH: 0.0,  seatY: -16.5 },
+  { id: 'curly',        label: 'Cloud Curls',             hatReady: false, topH: 0.0,  seatY: -17.0 },
+  { id: 'mohawk',       label: 'Action Mohawk',           hatReady: false, topH: 0.0,  seatY: -16.5 },
+];
+
+export const WEARABLE_HAT_IDS = new Set([
+  'ballcap', 'beanie', 'cowboy', 'hardhat', 'ranger', 'tophat', 'pirate',
+]);
+
 export const HAT_OPTIONS = [
-  { id: 'buds',  label: 'Spark Buds' },
-  { id: 'hat',   label: 'Wobble Hat' },
-  { id: 'ears',  label: 'Pointy Ears' },
-  { id: 'horns', label: 'Bumper Horns' },
-  { id: 'blank', label: 'Blank Cap' },
+  { id: 'buds',    label: 'Spark Buds' },
+  { id: 'ballcap', label: 'Sport Ballcap',   defaultCol: 'cobalt_cap' },
+  { id: 'beanie',  label: 'Ribbed Beanie',   defaultCol: 'crimson_red' },
+  { id: 'cowboy',  label: 'Cowboy Hat',      defaultCol: 'adventure_tan' },
+  { id: 'hardhat', label: 'Builder Hardhat', defaultCol: 'safety_gold' },
+  { id: 'ranger',  label: 'Explorer Hat',    defaultCol: 'ranger_olive' },
+  { id: 'tophat',  label: 'Dapper Top Hat',  defaultCol: 'charcoal_ink' },
+  { id: 'pirate',  label: 'Tricorne Hat',    defaultCol: 'charcoal_ink' },
+  { id: 'hat',     label: 'Wobble Hat' },
+  { id: 'ears',    label: 'Pointy Ears' },
+  { id: 'horns',   label: 'Bumper Horns' },
+  { id: 'blank',   label: 'Blank Cap' },
 ];
 
 // Keep CROWN_OPTIONS alias pointing to HAT_OPTIONS for external callers
@@ -89,12 +148,37 @@ export const BACK_OPTIONS = [
   { id: 'gears',    label: 'Pro 2:1 Gears' },
 ];
 
+export const PROP_CATEGORIES = [
+  { id: 'all',         label: 'All' },
+  { id: 'tools',       label: 'Tools' },
+  { id: 'cleaning',    label: 'Cleaning' },
+  { id: 'instruments', label: 'Instruments' },
+  { id: 'play',        label: 'Play & Gear' },
+];
+
+// W12 categorised hand props: every one is a flat-printed head on the same 6.6 mm flat-sided Pro grip shaft as prop_wrench.
+export const WORKSHOP_PROPS = [
+  { id: 'hammer',       part: 'prop_hammer',       geo: 'propHammer',      cat: 'tools',       label: 'Claw Hammer',       mat: 'cobalt' },
+  { id: 'screwdriver',  part: 'prop_screwdriver',  geo: 'propScrewdriver', cat: 'tools',       label: 'Screwdriver',       mat: 'spark' },
+  { id: 'paint_roller', part: 'prop_paint_roller', geo: 'propPaintRoller', cat: 'tools',       label: 'Paint Roller',      mat: 'teal' },
+  { id: 'mop',          part: 'prop_mop',          geo: 'propMop',         cat: 'cleaning',    label: 'String Mop',        mat: 'sun' },
+  { id: 'broom',        part: 'prop_broom',        geo: 'propBroom',       cat: 'cleaning',    label: 'Bristle Broom',     mat: 'teal' },
+  { id: 'scrub_brush',  part: 'prop_scrub_brush',  geo: 'propScrubBrush',  cat: 'cleaning',    label: 'Scrub Brush',       mat: 'plum' },
+  { id: 'vacuum',       part: 'prop_vacuum',       geo: 'propVacuum',      cat: 'cleaning',    label: 'Handheld Vacuum',   mat: 'cobalt' },
+  { id: 'guitar',       part: 'prop_guitar',       geo: 'propGuitar',      cat: 'instruments', label: 'Acoustic Guitar',   mat: 'sun' },
+  { id: 'trumpet',      part: 'prop_trumpet',      geo: 'propTrumpet',     cat: 'instruments', label: 'Brass Trumpet',     mat: 'sun' },
+  { id: 'maracas',      part: 'prop_maracas',      geo: 'propMaracas',     cat: 'instruments', label: 'Rattle Maraca',     mat: 'spark' },
+  { id: 'flag',         part: 'prop_flag',         geo: 'propFlag',        cat: 'play',        label: 'Swallow-Tail Flag', mat: 'plum' },
+  { id: 'magnifier',    part: 'prop_magnifier',    geo: 'propMagnifier',   cat: 'play',        label: 'Magnifying Glass',  mat: 'teal' },
+];
+
 export const PROP_OPTIONS = [
-  { id: 'off',        label: 'Off' },
-  { id: 'wrench',     label: 'Pro Wrench' },
-  { id: 'shield',     label: 'Star Shield' },
-  { id: 'shaft',      label: 'Pro Spinner' },
-  { id: 'skateboard', label: 'Skateboard' },
+  { id: 'off',        label: 'Off',         cat: 'all' },
+  { id: 'wrench',     label: 'Pro Wrench',  cat: 'tools' },
+  { id: 'shield',     label: 'Star Shield', cat: 'play' },
+  { id: 'shaft',      label: 'Pro Spinner', cat: 'tools' },
+  { id: 'skateboard', label: 'Skateboard',  cat: 'play' },
+  ...WORKSHOP_PROPS.map(({ id, label, cat }) => ({ id, label, cat })),
 ];
 
 export const VEHICLE_OPTIONS = [
@@ -106,34 +190,56 @@ export const VEHICLE_OPTIONS = [
 ];
 
 export async function loadExpansionGeos(loadSTL) {
+  const vq = `?v=${KIP_BUILD_VERSION}`;
   const entries = await Promise.all([
     // Compact low-profile neck collar (`kip.scad`)
-    ['neckTurret2x1',     loadSTL('/kip/stls/neck_turret_2x1.stl', 36)],
-    // Phase 1 Asaro Low-Poly Humanoid Heads (creaseAngle=12 preserves crisp sculpted planes!) + Critters + Bolt
-    ['crownBuds2x1',      loadSTL('/kip/partspec/toyventor_crown_buds_2x1.stl', 34)],
-    ['charHeadKid',       loadSTL('/kip/partspec/toyventor_char_head_kid_S.stl', 12)],
-    ['charHeadChibi',     loadSTL('/kip/partspec/toyventor_char_head_chibi_S.stl', 12)],
-    ['charHeadChin',      loadSTL('/kip/partspec/toyventor_char_head_chin_S.stl', 12)],
-    ['charHeadTall',      loadSTL('/kip/partspec/toyventor_char_head_tall_S.stl', 12)],
-    ['charFaceplate',     loadSTL('/kip/partspec/toyventor_char_faceplate_P.stl', 12)],
-    ['charHeadFox',       loadSTL('/kip/partspec/toyventor_char_head_fox_S.stl', 62)],
-    ['charHeadBear',      loadSTL('/kip/partspec/toyventor_char_head_bear_S.stl', 62)],
-    ['robotHeadVisor',    loadSTL('/kip/partspec/toyventor_robot_head_visor_S.stl', 28)],
-    // 8 Separate Clip-On 2x1 Hairstyles (3 Hat-Ready with top_studs + 5 Sculpted-Top) + Horns
-    ['hairShortSwept',    loadSTL('/kip/partspec/toyventor_hair_short_swept_S.stl', 62)],
-    ['hairBob',           loadSTL('/kip/partspec/toyventor_hair_bob_S.stl', 62)],
-    ['hairSwoosh',        loadSTL('/kip/partspec/toyventor_hair_swoosh_S.stl', 62)],
-    ['hairSpiky',         loadSTL('/kip/partspec/toyventor_hair_spiky_S.stl', 56)],
-    ['hairPigtails',      loadSTL('/kip/partspec/toyventor_hair_pigtails_S.stl', 62)],
-    ['hairPonytail',      loadSTL('/kip/partspec/toyventor_hair_ponytail_S.stl', 62)],
-    ['hairCurly',         loadSTL('/kip/partspec/toyventor_hair_curly_S.stl', 62)],
-    ['hairMohawk',        loadSTL('/kip/partspec/toyventor_hair_mohawk_S.stl', 54)],
-    ['bumperHorns',       loadSTL('/kip/partspec/toyventor_bumper_horns_S.stl', 34)],
+    ['neckTurret2x1',      loadSTL(`/kip/stls/neck_turret_2x1.stl${vq}`, 36)],
+    // Phase 1 Curved Low-Poly & Wide Vinyl Squircle Humanoid Heads + 3 Universal Face Inserts + Critters + Bolt
+    ['crownBuds2x1',       loadSTL(`/kip/partspec/toyventor_crown_buds_2x1.stl${vq}`, 34)],
+    ['charHeadKid',        loadSTL(`/kip/partspec/toyventor_char_head_kid_S.stl${vq}`, 16)],
+    ['charHeadChibi',      loadSTL(`/kip/partspec/toyventor_char_head_chibi_S.stl${vq}`, 38)],
+    ['charHeadTall',       loadSTL(`/kip/partspec/toyventor_char_head_tall_S.stl${vq}`, 16)],
+    ['charFaceplate',      loadSTL(`/kip/partspec/toyventor_char_faceplate_P.stl${vq}`, 16)],
+    ['charFaceplateVinyl', loadSTL(`/kip/partspec/toyventor_char_faceplate_vinyl_P.stl${vq}`, 28)],
+    ['charFaceplateFlat',  loadSTL(`/kip/partspec/toyventor_char_faceplate_flat_P.stl${vq}`, 22)],
+    ['charHeadFox',        loadSTL(`/kip/partspec/toyventor_char_head_fox_S.stl${vq}`, 62)],
+    ['charHeadBear',       loadSTL(`/kip/partspec/toyventor_char_head_bear_S.stl${vq}`, 62)],
+    ['robotHeadVisor',     loadSTL(`/kip/partspec/toyventor_robot_head_visor_S.stl${vq}`, 28)],
+    ['robotHeadScout',     loadSTL(`/kip/partspec/toyventor_robot_head_scout_S.stl${vq}`, 32)],
+    ['charHeadCat',        loadSTL(`/kip/partspec/toyventor_char_head_cat_S.stl${vq}`, 56)],
+    ['charHeadDragon',     loadSTL(`/kip/partspec/toyventor_char_head_dragon_S.stl${vq}`, 40)],
+    ['charHeadAlien',      loadSTL(`/kip/partspec/toyventor_char_head_alien_S.stl${vq}`, 48)],
+    ['charHeadImp',        loadSTL(`/kip/partspec/toyventor_char_head_imp_S.stl${vq}`, 40)],
+    // 14 Sculpted Multi-Strand 2x1 Hairstyles (6 Hat-Ready with top_studs + 8 Sculpted-Top)
+    ['hairShortSwept',     loadSTL(`/kip/partspec/toyventor_hair_short_swept_S.stl${vq}`, 36)],
+    ['hairBob',            loadSTL(`/kip/partspec/toyventor_hair_bob_S.stl${vq}`, 36)],
+    ['hairSwoosh',         loadSTL(`/kip/partspec/toyventor_hair_swoosh_S.stl${vq}`, 36)],
+    ['hairLongLayered',    loadSTL(`/kip/partspec/toyventor_hair_long_layered_S.stl${vq}`, 36)],
+    ['hairTwinBraids',     loadSTL(`/kip/partspec/toyventor_hair_twin_braids_S.stl${vq}`, 34)],
+    ['hairShag',           loadSTL(`/kip/partspec/toyventor_hair_shag_S.stl${vq}`, 36)],
+    ['hairPompadour',      loadSTL(`/kip/partspec/toyventor_hair_pompadour_S.stl${vq}`, 36)],
+    ['hairTopBun',         loadSTL(`/kip/partspec/toyventor_hair_top_bun_S.stl${vq}`, 36)],
+    ['hairSideSweep',      loadSTL(`/kip/partspec/toyventor_hair_side_sweep_S.stl${vq}`, 36)],
+    ['hairSpiky',          loadSTL(`/kip/partspec/toyventor_hair_spiky_S.stl${vq}`, 34)],
+    ['hairPigtails',       loadSTL(`/kip/partspec/toyventor_hair_pigtails_S.stl${vq}`, 36)],
+    ['hairPonytail',       loadSTL(`/kip/partspec/toyventor_hair_ponytail_S.stl${vq}`, 36)],
+    ['hairCurly',          loadSTL(`/kip/partspec/toyventor_hair_curly_S.stl${vq}`, 40)],
+    ['hairMohawk',         loadSTL(`/kip/partspec/toyventor_hair_mohawk_S.stl${vq}`, 34)],
+    // 7 Support-Free Wearable Hats + Horns
+    ['hatBallcap',         loadSTL(`/kip/partspec/toyventor_hat_ballcap_S.stl${vq}`, 34)],
+    ['hatBeanie',          loadSTL(`/kip/partspec/toyventor_hat_beanie_S.stl${vq}`, 34)],
+    ['hatCowboy',          loadSTL(`/kip/partspec/toyventor_hat_cowboy_S.stl${vq}`, 34)],
+    ['hatHardhat',         loadSTL(`/kip/partspec/toyventor_hat_hardhat_S.stl${vq}`, 32)],
+    ['hatRanger',          loadSTL(`/kip/partspec/toyventor_hat_ranger_S.stl${vq}`, 34)],
+    ['hatTophat',          loadSTL(`/kip/partspec/toyventor_hat_tophat_S.stl${vq}`, 34)],
+    ['hatPirate',          loadSTL(`/kip/partspec/toyventor_hat_pirate_S.stl${vq}`, 32)],
+    ['bumperHorns',        loadSTL(`/kip/partspec/toyventor_bumper_horns_S.stl${vq}`, 34)],
     // Backpacks & Props
     ['packExplorer',      loadSTL('/kip/partspec/toyventor_pack_explorer_S.stl', 35)],
     ['robotJetpack',      loadSTL('/kip/partspec/toyventor_robot_back_jetpack_S.stl', 35)],
     ['propWrench',        loadSTL('/kip/partspec/toyventor_prop_wrench_P.stl', 35)],
     ['propStarShield',    loadSTL('/kip/partspec/toyventor_prop_star_shield_P.stl', 35)],
+    ...WORKSHOP_PROPS.map((p) => [p.geo, loadSTL(`/kip/partspec/toyventor_${p.part}_P.stl`, 35)]),
     ['skateboardDeck',    loadSTL('/kip/partspec/toyventor_prop_skateboard_deck_S.stl', 35)],
     ['racerAxle',         loadSTL('/kip/partspec/toyventor_racer_axle_S.stl', 35)],
     ['racerWheel',        loadSTL('/kip/partspec/toyventor_racer_wheel_S.stl', 30)],
@@ -178,6 +284,7 @@ export function attachExpansionToKipRig(THREE, kip, expGeos, baseParts, mats, sc
   const expMats = {
     skin:     new THREE.MeshPhysicalMaterial({ color: SKIN_TONES[0].hex, roughness: 0.60, clearcoat: 0.03, envMapIntensity: 0.44 }),
     hair:     new THREE.MeshPhysicalMaterial({ color: HAIR_COLORS[0].hex, roughness: 0.42, clearcoat: 0.22, envMapIntensity: 0.70 }),
+    hat:      new THREE.MeshPhysicalMaterial({ color: HAT_COLORS[0].hex, roughness: 0.44, clearcoat: 0.22, envMapIntensity: 0.68 }),
     cobalt:   new THREE.MeshPhysicalMaterial({ color: '#2E6FDB', roughness: 0.34, clearcoat: 0.45, envMapIntensity: 0.76 }),
     teal:     new THREE.MeshPhysicalMaterial({ color: '#1FA6A0', roughness: 0.35, clearcoat: 0.44, envMapIntensity: 0.76 }),
     plum:     new THREE.MeshPhysicalMaterial({ color: '#7C4DFF', roughness: 0.34, clearcoat: 0.45, envMapIntensity: 0.76 }),
@@ -185,6 +292,11 @@ export function attachExpansionToKipRig(THREE, kip, expGeos, baseParts, mats, sc
     fox:      new THREE.MeshPhysicalMaterial({ color: '#E86F38', roughness: 0.44, clearcoat: 0.24, envMapIntensity: 0.70 }),
     bear:     new THREE.MeshPhysicalMaterial({ color: '#B58052', roughness: 0.48, clearcoat: 0.18, envMapIntensity: 0.66 }),
     botSilv:  new THREE.MeshPhysicalMaterial({ color: '#DCE3EE', roughness: 0.32, metalness: 0.12, clearcoat: 0.48, envMapIntensity: 0.80 }),
+    botScout: new THREE.MeshPhysicalMaterial({ color: '#4E73A8', roughness: 0.30, metalness: 0.14, clearcoat: 0.50, envMapIntensity: 0.80 }),
+    cat:      new THREE.MeshStandardMaterial({ color: '#E5C193', roughness: 0.62, metalness: 0.0 }),
+    dragon:   new THREE.MeshStandardMaterial({ color: '#2EB872', roughness: 0.52, metalness: 0.0 }),
+    alien:    new THREE.MeshStandardMaterial({ color: '#5CD6A9', roughness: 0.42, metalness: 0.0 }),
+    imp:      new THREE.MeshStandardMaterial({ color: '#6E85E6', roughness: 0.64, metalness: 0.0 }),
     tire:     new THREE.MeshPhysicalMaterial({ color: '#20232A', roughness: 0.56, clearcoat: 0.15, envMapIntensity: 0.55 }),
     rimAlloy: new THREE.MeshPhysicalMaterial({ color: '#EDF2F8', roughness: 0.26, metalness: 0.22, clearcoat: 0.55, envMapIntensity: 0.88 }),
     rimGold:  new THREE.MeshPhysicalMaterial({ color: '#FFD25A', roughness: 0.28, metalness: 0.18, clearcoat: 0.52, envMapIntensity: 0.86 }),
@@ -267,11 +379,15 @@ export function attachExpansionToKipRig(THREE, kip, expGeos, baseParts, mats, sc
   const headMeshes = {
     kid:   scadMesh(expGeos.charHeadKid,   expMats.skin),
     chibi: scadMesh(expGeos.charHeadChibi, expMats.skin),
-    chin:  scadMesh(expGeos.charHeadChin,  expMats.skin),
     tall:  scadMesh(expGeos.charHeadTall,  expMats.skin),
     fox:   scadMesh(expGeos.charHeadFox,   expMats.fox),
     bear:  scadMesh(expGeos.charHeadBear,  expMats.bear),
     robot: scadMesh(expGeos.robotHeadVisor, expMats.botSilv),
+    scout: scadMesh(expGeos.robotHeadScout, expMats.botScout),
+    cat:   scadMesh(expGeos.charHeadCat,    expMats.cat),
+    dragon: scadMesh(expGeos.charHeadDragon, expMats.dragon),
+    alien: scadMesh(expGeos.charHeadAlien,  expMats.alien),
+    imp:   scadMesh(expGeos.charHeadImp,    expMats.imp),
   };
   for (const hm of Object.values(headMeshes)) {
     hm.position.y = 0.0;
@@ -284,65 +400,72 @@ export function attachExpansionToKipRig(THREE, kip, expGeos, baseParts, mats, sc
   altCrownBuds.scale.set(1.006, 1.01, 1.006);
   altHeadSlot.add(altCrownBuds);
 
-  // 1b. Flush Asaro Low-Poly Human Face Plate (`char_faceplate` -> mates at `z = +12.50` (`-1.0 TU`) & pops forward +Z in Explode/Build!)
+  // 1b. Universal Swappable Human Face Inserts (`char_faceplate` 3D Nose & Orbitals, `char_faceplate_vinyl` 3D Button Eyes & Nose, `char_faceplate_flat` Smooth Decal Insert!)
   const faceplateGroup = new THREE.Group();
   faceplateGroup.visible = false;
   kip.headLocal.add(faceplateGroup);
   const faceplateSlot = createSlot('char_faceplate', faceplateGroup, [0, 8, 56], 4.35, 'both', 'alt_head');
   const faceplateHolder = new THREE.Group();
-  faceplateHolder.position.set(0, 18.75 - 2.50, 12.50);
+  faceplateHolder.position.set(0, 17.1875 - 2.90, 12.50);
   faceplateSlot.add(faceplateHolder);
 
   const fpOrient = new THREE.Group();
   fpOrient.rotation.y = Math.PI;
   const faceplateMesh = scadMesh(expGeos.charFaceplate, expMats.skin);
-  fpOrient.add(faceplateMesh);
+  const faceplateVinylMesh = scadMesh(expGeos.charFaceplateVinyl, expMats.skin);
+  faceplateVinylMesh.visible = false;
+  const faceplateFlatMesh = scadMesh(expGeos.charFaceplateFlat, expMats.skin);
+  faceplateFlatMesh.visible = false;
+  fpOrient.add(faceplateMesh, faceplateVinylMesh, faceplateFlatMesh);
   faceplateHolder.add(fpOrient);
 
-  // Conformal 2D Vinyl/Stencil Decal Expression Meshes (`BRAND_STYLE.md` rule 3: zero moulded 3D eyes/mouths!)
+  // Conformal 2D Vinyl/Stencil Decal Expression Meshes (100% of human eyes/noses/decals live strictly on the universal faceplates!)
   const raycaster = new THREE.Raycaster();
   const rayOrigin = new THREE.Vector3();
   const rayDir = new THREE.Vector3(0, 0, -1);
 
-  function buildConformalFaceplateDecalGeo(width = 16.6, height = 10.6, centerY = 1.90) {
+  function buildConformalFaceplateDecalGeo(insertGeo, width = 23.6, height = 10.1, centerY = 5.25) {
     const probeHolder = new THREE.Group();
     probeHolder.rotation.y = Math.PI;
-    const probe = scadMesh(expGeos.charFaceplate, mats.shell);
+    const probe = scadMesh(insertGeo, mats.shell);
     probeHolder.add(probe);
     probeHolder.updateMatrixWorld(true);
 
-    const g = new THREE.PlaneGeometry(width, height, 28, 18);
+    const g = new THREE.PlaneGeometry(width, height, 56, 28);
     g.translate(0, centerY, 0);
     const pos = g.attributes.position;
     for (let i = 0; i < pos.count; i++) {
       const vx = pos.getX(i);
       const vy = pos.getY(i);
       let hitZ = null;
-      if (vy >= 0.05) {
-        rayOrigin.set(vx, vy, 28);
-        raycaster.set(rayOrigin, rayDir);
-        const hits = raycaster.intersectObject(probeHolder, true);
-        if (hits.length > 0 && hits[0].point.z > 0.2) {
-          hitZ = hits[0].point.z;
-        }
+      rayOrigin.set(vx, vy, 28);
+      raycaster.set(rayOrigin, rayDir);
+      const hits = raycaster.intersectObject(probeHolder, true);
+      if (hits.length > 0 && hits[0].point.z > 0.2) {
+        hitZ = hits[0].point.z;
       }
-      // Below `vy = 0` (`z_b = 0` sub-nasal crease), conform smoothly onto the unbroken upper-lip/chin plane (`z_head ~ 15.15 mm` => `z_local ~ 2.65 mm`)!
       if (hitZ === null) {
-        hitZ = 2.68 - (vx * vx) * 0.005 + Math.min(0, vy) * 0.06;
+        hitZ = 2.65 - (vx * vx) * 0.002;
       }
-      pos.setZ(i, hitZ + 0.28);
+      pos.setZ(i, hitZ + 0.22);
     }
     g.computeVertexNormals();
     return g;
   }
 
-  function buildConformalDecalGeo(headGeo, centerY, width, height) {
+  const faceplateDecalGeos = {
+    sculpted: buildConformalFaceplateDecalGeo(expGeos.charFaceplate),
+    vinyl:    buildConformalFaceplateDecalGeo(expGeos.charFaceplateVinyl),
+    flat:     buildConformalFaceplateDecalGeo(expGeos.charFaceplateFlat),
+  };
+
+  function buildConformalDecalGeo(headGeo, centerY, width, height, segX = 20, segY = 12) {
     const probe = new THREE.Mesh(headGeo, mats.shell);
     probe.rotation.x = -Math.PI / 2;
     probe.position.y = 0.0;
     probe.updateMatrixWorld(true);
 
-    const g = new THREE.PlaneGeometry(width, height, 20, 12);
+    const g = new THREE.PlaneGeometry(width, height, segX, segY);
     g.translate(0, centerY, 0);
     const pos = g.attributes.position;
     for (let i = 0; i < pos.count; i++) {
@@ -362,6 +485,11 @@ export function attachExpansionToKipRig(THREE, kip, expGeos, baseParts, mats, sc
     fox:   buildConformalDecalGeo(expGeos.charHeadFox,    15.0, 28.4, 14.2),
     bear:  buildConformalDecalGeo(expGeos.charHeadBear,   14.8, 28.0, 14.0),
     robot: buildConformalDecalGeo(expGeos.robotHeadVisor, 17.8, 24.0, 10.6),
+    scout: buildConformalDecalGeo(expGeos.robotHeadScout, 17.6, 25.0, 9.6),
+    cat:   buildConformalDecalGeo(expGeos.charHeadCat,    15.2, 28.0, 14.0),
+    dragon: buildConformalDecalGeo(expGeos.charHeadDragon, 17.2, 26.0, 13.0),
+    alien: buildConformalDecalGeo(expGeos.charHeadAlien,  18.2, 24.0, 13.0),
+    imp:   buildConformalDecalGeo(expGeos.charHeadImp,    16.4, 28.0, 13.6),
   };
 
   const classicWrapGeo = new THREE.PlaneGeometry(25.5, 12.8, 16, 1);
@@ -372,20 +500,22 @@ export function attachExpansionToKipRig(THREE, kip, expGeos, baseParts, mats, sc
   }
   classicWrapGeo.computeVertexNormals();
 
-  const decalTex = new THREE.CanvasTexture(createDecalExpressionCanvas('spark', 'kid'));
+  const decalTex = new THREE.CanvasTexture(createDecalExpressionCanvas('spark', 'kid', 'sculpted'));
   decalTex.colorSpace = THREE.SRGBColorSpace;
   const decalMat = new THREE.MeshStandardMaterial({
     map: decalTex,
     transparent: true,
-    roughness: 0.28,
-    metalness: 0.02,
+    alphaTest: 0.02,
+    roughness: 0.44,
+    metalness: 0.0,
+    envMapIntensity: 0.18,
     depthWrite: false,
     polygonOffset: true,
     polygonOffsetFactor: -2,
   });
 
-  // Conformal 2D human face expression wrapped directly across the 3D curved cheeks of `char_faceplate`!
-  const faceplateDecalPlane = new THREE.Mesh(buildConformalFaceplateDecalGeo(), decalMat);
+  // Conformal 2D human face expression wrapped directly onto the active universal face insert (`sculpted`, `vinyl`, or `flat`)!
+  const faceplateDecalPlane = new THREE.Mesh(faceplateDecalGeos.sculpted, decalMat);
   faceplateDecalPlane.renderOrder = 2;
   faceplateHolder.add(faceplateDecalPlane);
 
@@ -401,7 +531,7 @@ export function attachExpansionToKipRig(THREE, kip, expGeos, baseParts, mats, sc
   classicDecalPlane.renderOrder = 2;
   kip.visorSlot.add(classicDecalPlane);
 
-  // 2a. Separate Clip-On 2x1 Hair Slot (`hairSlot`: clips onto head crown; Hat-Ready hairs expose `#FF6B4A` 2x1 studs on top!)
+  // 2a. Separate Clip-On 2x1 Hair Slot (`hairSlot`: 14 sculpted multi-strand wigs; 6 Hat-Ready wigs expose `#FF6B4A` 2x1 studs on top!)
   const hairGroup = new THREE.Group();
   hairGroup.visible = false;
   kip.headLocal.add(hairGroup);
@@ -411,19 +541,24 @@ export function attachExpansionToKipRig(THREE, kip, expGeos, baseParts, mats, sc
   hairSlot.add(hairAnchor);
 
   const hairMeshes = {
-    short_swept: scadMesh(expGeos.hairShortSwept, expMats.hair),
-    bob:         scadMesh(expGeos.hairBob,        expMats.hair),
-    swoosh:      scadMesh(expGeos.hairSwoosh,     expMats.hair),
-    spiky:       scadMesh(expGeos.hairSpiky,      expMats.hair),
-    pigtails:    scadMesh(expGeos.hairPigtails,   expMats.hair),
-    ponytail:    scadMesh(expGeos.hairPonytail,   expMats.hair),
-    curly:       scadMesh(expGeos.hairCurly,      expMats.hair),
-    mohawk:      scadMesh(expGeos.hairMohawk,     expMats.hair),
+    short_swept:  scadMesh(expGeos.hairShortSwept,  expMats.hair),
+    bob:          scadMesh(expGeos.hairBob,         expMats.hair),
+    swoosh:       scadMesh(expGeos.hairSwoosh,      expMats.hair),
+    long_layered: scadMesh(expGeos.hairLongLayered, expMats.hair),
+    twin_braids:  scadMesh(expGeos.hairTwinBraids,  expMats.hair),
+    shag:         scadMesh(expGeos.hairShag,        expMats.hair),
+    pompadour:    scadMesh(expGeos.hairPompadour,   expMats.hair),
+    top_bun:      scadMesh(expGeos.hairTopBun,      expMats.hair),
+    side_sweep:   scadMesh(expGeos.hairSideSweep,   expMats.hair),
+    spiky:        scadMesh(expGeos.hairSpiky,       expMats.hair),
+    pigtails:     scadMesh(expGeos.hairPigtails,    expMats.hair),
+    ponytail:     scadMesh(expGeos.hairPonytail,    expMats.hair),
+    curly:        scadMesh(expGeos.hairCurly,       expMats.hair),
+    mohawk:       scadMesh(expGeos.hairMohawk,      expMats.hair),
   };
-  for (const m of Object.values(hairMeshes)) {
-    // Wrap-around wig STLs sit on the print bed at z_stl = 0 (nape skirt) with 2x1 crown sockets at z_stl = +HAIR_WRAP_MM (16.5 mm);
-    // shifting -HAIR_WRAP_MM along Y seats the 2x1 sockets onto hairAnchor (`headCrownY`) while wrapping 16.5 mm down around the skull!
-    m.position.y = -HAIR_WRAP_MM;
+  for (const [k, m] of Object.entries(hairMeshes)) {
+    const opt = HAIR_OPTIONS.find(h => h.id === k);
+    m.position.y = opt ? opt.seatY : -HAIR_WRAP_MM;
     m.visible = false;
     hairAnchor.add(m);
   }
@@ -432,7 +567,7 @@ export function attachExpansionToKipRig(THREE, kip, expGeos, baseParts, mats, sc
   hairCrownBuds.visible = false;
   hairAnchor.add(hairCrownBuds);
 
-  // 2b. Stackable Hat / Top Accessory Anchor (`kip.crownAccSlot`: sits on head crown OR stacks on top of Hat-Ready hair!)
+  // 2b. Stackable Hat / Top Accessory Anchor (`kip.crownAccSlot`: sits on bald head crown OR stacks on top of Hat-Ready hair!)
   const crownAnchor = new THREE.Group();
   crownAnchor.position.set(0, 42.2, 0);
   kip.crownAccSlot.add(crownAnchor);
@@ -442,11 +577,20 @@ export function attachExpansionToKipRig(THREE, kip, expGeos, baseParts, mats, sc
   crownAnchor.add(kip.pointyEars, kip.wobbleHat);
 
   const hatMeshes = {
+    ballcap:   scadMesh(expGeos.hatBallcap,      expMats.hat),
+    beanie:    scadMesh(expGeos.hatBeanie,       expMats.hat),
+    cowboy:    scadMesh(expGeos.hatCowboy,       expMats.hat),
+    hardhat:   scadMesh(expGeos.hatHardhat,      expMats.hat),
+    ranger:    scadMesh(expGeos.hatRanger,       expMats.hat),
+    tophat:    scadMesh(expGeos.hatTophat,       expMats.hat),
+    pirate:    scadMesh(expGeos.hatPirate,       expMats.hat),
     horns:     scadMesh(expGeos.bumperHorns,     expMats.sun),
     ponytail:  scadMesh(expGeos.hairPonytail,    expMats.hair),
     wizardHat: scadMesh(expGeos.customWizardHat, expMats.plum),
   };
-  for (const m of Object.values(hatMeshes)) {
+  for (const [k, m] of Object.entries(hatMeshes)) {
+    // Support-free wearable hats sit on the bed at z_stl = 0 (rim) with 2x1 socket roof at z_stl = +6.0 mm (`HAT_WRAP_MM`)
+    m.position.y = WEARABLE_HAT_IDS.has(k) ? -HAT_WRAP_MM : (k === 'ponytail' ? -HAIR_WRAP_MM : 0);
     m.visible = false;
     crownAnchor.add(m);
   }
@@ -501,6 +645,17 @@ export function attachExpansionToKipRig(THREE, kip, expGeos, baseParts, mats, sc
   kip.joints.rightHandCgripParent.add(shieldGroup);
   const shieldSlot = createSlot('prop_shield', shieldGroup, [-98, -44, 24], 5.4, 'both', 'hand_r');
   shieldSlot.add(makeHandheldProp(expGeos.propStarShield, expMats.sun, 13.5, 3.5));
+
+  // W12 categorised workshop props (tools / cleaning / instruments / play): one hidden group per prop in the right hand.
+  const workshopGroups = {};
+  for (const wp of WORKSHOP_PROPS) {
+    const grp = new THREE.Group();
+    grp.visible = false;
+    kip.joints.rightHandCgripParent.add(grp);
+    const slot = createSlot(wp.part, grp, [-98, -44, 22], 5.4, 'both', 'hand_r');
+    slot.add(makeHandheldProp(expGeos[wp.geo], expMats[wp.mat], 18.75, 2.5));
+    workshopGroups[wp.id] = grp;
+  }
 
   const customWandGroup = new THREE.Group();
   customWandGroup.visible = false;
@@ -990,6 +1145,11 @@ export function attachExpansionToKipRig(THREE, kip, expGeos, baseParts, mats, sc
       if (head === 'fox') bodySkinHex = '#E86F38';
       else if (head === 'bear') bodySkinHex = '#B58052';
       else if (head === 'robot') bodySkinHex = '#DCE3EE';
+      else if (head === 'scout') bodySkinHex = '#4E73A8';
+      else if (head === 'cat') bodySkinHex = '#E5C193';
+      else if (head === 'dragon') bodySkinHex = '#2EB872';
+      else if (head === 'alien') bodySkinHex = '#5CD6A9';
+      else if (head === 'imp') bodySkinHex = '#6E85E6';
     }
 
     const isDefaultCleanKip = (
@@ -1007,6 +1167,16 @@ export function attachExpansionToKipRig(THREE, kip, expGeos, baseParts, mats, sc
       neckMat.color.set('#B58052');
     } else if (head === 'robot') {
       neckMat.color.set('#36405C');
+    } else if (head === 'scout') {
+      neckMat.color.set('#2A3F66');
+    } else if (head === 'cat') {
+      neckMat.color.set('#E5C193');
+    } else if (head === 'dragon') {
+      neckMat.color.set('#2EB872');
+    } else if (head === 'alien') {
+      neckMat.color.set('#5CD6A9');
+    } else if (head === 'imp') {
+      neckMat.color.set('#6E85E6');
     } else {
       neckMat.color.set('#FF6B4A');
     }
@@ -1039,12 +1209,11 @@ export function attachExpansionToKipRig(THREE, kip, expGeos, baseParts, mats, sc
       paintMeshByCoord(fa, fa.userData.restZ, () => tmpColA);
     }
 
-    // 3. Snap 1-Piece Arms (`snap_arm_l/r`: clean elbow split at `ry = -15.6` for short-sleeve, zero cuff stripes)
-    tmpColA.set(sleeveHex);
-    tmpColB.set(forearmHex);
+    // 3. Snap 1-Piece Arms (`snap_arm_l/r`: 100% solid single-filament part — bare skin for short-sleeve, sleeve color for long-sleeve)
+    tmpColA.set(forearmHex);
     for (const sa of [bodyMeshes.snapArmL, bodyMeshes.snapArmR]) {
       if (!sa) continue;
-      paintMeshByCoord(sa, sa.userData.restY, ry => (ry >= -15.6 ? tmpColA : tmpColB));
+      paintMeshByCoord(sa, sa.userData.restY, () => tmpColA);
     }
 
     // 4. Shared 3-Finger Hands (`hand_l` / `hand_r`): always solid skin tone matching the face!
@@ -1067,12 +1236,11 @@ export function attachExpansionToKipRig(THREE, kip, expGeos, baseParts, mats, sc
       paintMeshByCoord(sh, sh.userData.restZ, () => tmpColA);
     }
 
-    // 6. Snap 1-Piece Legs (`snap_leg_l/r`: clean knee split at `ry = -19.6` for shorts, zero cuff stripes)
+    // 6. Snap 1-Piece Legs (`snap_leg_l/r`: 100% solid single-filament part in shorts/pants color)
     tmpColA.set(thighHex);
-    tmpColB.set(shinHex);
     for (const sl of [bodyMeshes.snapLegL, bodyMeshes.snapLegR]) {
       if (!sl) continue;
-      paintMeshByCoord(sl, sl.userData.restY, ry => (ry >= -19.6 ? tmpColA : tmpColB));
+      paintMeshByCoord(sl, sl.userData.restY, () => tmpColA);
     }
     seatedLegsMesh.material.color.set(thighHex);
 
@@ -1121,6 +1289,9 @@ export function attachExpansionToKipRig(THREE, kip, expGeos, baseParts, mats, sc
     faceplateSlot,
     faceplateHolder,
     faceplateMesh,
+    faceplateVinylMesh,
+    faceplateFlatMesh,
+    faceplateDecalGeos,
     faceplateDecalPlane,
     decalPlane,
     classicDecalPlane,
@@ -1137,6 +1308,7 @@ export function attachExpansionToKipRig(THREE, kip, expGeos, baseParts, mats, sc
     jetpackGroup,
     wrenchGroup,
     shieldGroup,
+    workshopGroups,
     customWandGroup,
     skateboardGroup,
     skateWheels,

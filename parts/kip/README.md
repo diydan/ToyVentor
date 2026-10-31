@@ -13,11 +13,11 @@
 
 ## 5 Modular `12.5 mm` TU Accessory Zones + Foot Sole Sockets
 
-1. **`1×2` Crown Dock (`head` / `glow`):** Mortise-locked `#FF6B4A` Crown Buds (`Pointy Ears`, `Wobble Hat`, or flush `Blank Cap`).
+1. **`1×2` Crown Dock (`head` / `glow`):** Mortise-locked `#FF6B4A` Crown Buds, or a hat or topper: the 7 wearable hats (`Sport Ballcap`, `Ribbed Beanie`, `Cowboy Hat`, `Builder Hardhat`, `Explorer Hat`, `Dapper Top Hat`, `Tricorne`), `Wobble Hat`, `Pointy Ears`, `Bumper Horns`, or flush `Blank Cap`. Human heads also take one of 14 clip-on wigs on the same dock; only the 6 Hat-Ready wigs carry top studs that seat a hat.
 2. **`±X` Ear-Pod `Ø 6.6 mm` Bosses (`ears` / `glow`):** Snap `Comm-Pods` (`ear_acc_l/r.stl`) or `Pro Ear Scanner` (`beam_str_tu03` + `shaft_tu03` + `gear_spur_z10` + `bushing_half`).
 3. **`2×2` Back Dock (`back` / `speed`):** Mortise-locked `2×2` Snap Small studs for `Cloud Wings`, or removable to expose the central `1 TU`-deep `Ø 7.0 mm` 50°-teardrop Pro bore (`pin_friction` + `beam_str_tu05` + `2:1` `Z20`/`Z10` spur drivetrain on `shaft_tu03` + `bushing_half`).
 4. **`1×1` Lower-Back Tail Port (`tail` / `spin`, exact `2.0 TU = 25.0 mm` below Back Dock):** `1 TU`-deep `Ø 7.0 mm` 50°-teardrop port accepting reactive `Wag-Tail` (`tail_acc.stl`) or `Pro Wheelie-Bar` (`pin_friction` + `beam_str_tu03` + `shaft_tu03` + `bushing_half` + `wheel_tu04`).
-5. **Right Hand `Ø 6.6 mm` C-Grip Cradle (`hand` / `torque`):** Reinforced `Genus: 0` 3-finger + full-palm thenar-buttress thumb with 50°-teardrop palm bore cradling `shaft_tu05` + `gear_spur_z10` + `bushing_half`.
+5. **Right Hand `Ø 6.6 mm` C-Grip Cradle (`hand` / `torque`):** Reinforced `Genus: 0` 3-finger + full-palm thenar-buttress thumb with 50°-teardrop palm bore cradling `shaft_tu05` + `gear_spur_z10` + `bushing_half`. The same flat-sided `6.6 mm` Pro grip shaft carries 17 hand props in 4 categories (see **Wardrobe** below).
 6. **Sneaker Boot Soles (`1×2` `socket_grid`):** Dual `Ø 6.7 mm` Snap Small sockets (`12.5 mm` pitch) with scalloped outsole stud-relief treads so Kip stands flat and collision-free anywhere on `plate_s_2x2` / `plate_s_4x4`.
 
 ## 3D Demo Viewer & Game Contract Integration
@@ -28,7 +28,31 @@
   - `WASD` / `Arrows` (+ `Shift` to run, `Space` to hop): Stance-pinned zero-slip locomotion across the `100 mm` TU floor grid
   - `E`: Pulled-apart **Exploded View** + `0–100%` `Pull` scrub slider with `#FF6B4A` assembly guide lines
   - `B`: **Tabletop Part Pile → Character Build** wave-by-wave snap-together animation
-  - Drag & drop any `.fbx` or `.glb` Mixamo animation onto the viewport for live rigid-joint retargeting
+  - `H`: Toggle the clean (UI-free) view
+  - Drag & drop any `.fbx` or `.glb` Mixamo animation onto the viewport for live rigid-joint retargeting, or a custom PartSpec `.stl` to try it on Kip
+
+### Wardrobe (demo `v10.0`)
+
+The machine-readable version of this section is [`kip-manifest.json`](kip-manifest.json) (`wardrobe`, `presets`, `urlParams`, `categoryControls`). Every item is a catalog part in [`parts/partspec/catalog.json`](../partspec/catalog.json) (waves `W9` and `W12`).
+
+| Row | Options |
+| --- | --- |
+| **Type** (head category) | `Human`, `Robot`, `Animal`, `Creature`: 3 heads each, 12 in all. The `Head` button cycles within the chosen type. |
+| **Heads** | Human: `Soft Youth`, `Vinyl Squircle`, `Heroic Jaw` · Robot: `Kip Classic`, `Bolt Robot`, `Mecha Scout` · Animal: `Fox`, `Bear`, `Whisker Cat` · Creature: `Drake Dragon`, `Starling Alien`, `Yeti Imp` |
+| **Face inserts** (Human only) | `3D Nose & Orbitals` (`char_faceplate`), `3D Button Eyes & Nose` (`char_faceplate_vinyl`), `Flat Decal Insert` (`char_faceplate_flat`). One universal `face_slot`, so every insert fits every human head. Robot, animal and creature heads take a 2D decal face instead. |
+| **Hair** (Human only) | 14 clip-on wigs: 6 Hat-Ready (`Swept`, `Bob`, `Swoosh`, `Long Flow`, `Twin Braids`, `Shag`) and 8 Sculpted-Top (`Pompadour`, `Top Bun`, `Side Sweep`, `Spiky Tufts`, `Twin Pigtails`, `High Ponytail`, `Cloud Curls`, `Action Mohawk`), 6 hair tones |
+| **Hats** | 7 wearable hats with 8 `Hat Tone` filament colours, plus `Spark Buds`, `Wobble Hat`, `Pointy Ears`, `Bumper Horns`, `Blank Cap` |
+| **Outfit** | 5 skin tones (Human), 6 shirts and 5 pants as solid-filament colour zones with front chest stencil stickers |
+| **Back / Ears / Tail** | `Explorer Pack`, `Bolt Jetpack`, `Cloud Wings`, `Pro 2:1 Gears` · `Comm-Pods`, `Pro Scanner` (Kip Classic only) · `Wag-Tail`, `Pro Wheelie` (not on Human) |
+| **Props** | `Prop Type` filters 17 props in 4 categories. Tools: `Pro Wrench`, `Pro Spinner`, `Claw Hammer`, `Screwdriver`, `Paint Roller` · Cleaning: `String Mop`, `Bristle Broom`, `Scrub Brush`, `Handheld Vacuum` · Instruments: `Acoustic Guitar`, `Brass Trumpet`, `Rattle Maraca` · Play & Gear: `Star Shield`, `Skateboard`, `Swallow-Tail Flag`, `Magnifying Glass` |
+| **Vehicles** | `Roadster Car`, `Hauler Truck`, `Motor Scooter`, `Sport Motorbike` with snap-on body covers and the Wave 6 Racer Kit |
+| **Presets** | `Clean`, `Leo Explorer`, `Maya Skater`, `Kai Moto`, `Mecha Scout`, `Whisker Cat Scooter`, `Fox Scooter`, `Drake Dragon`, `Yeti Imp`, `Bolt Pro 8+` |
+
+The Wardrobe row is context-aware: each head type shows only the controls that fit it (for example Face Insert, Hair and Skin appear only for Human, and Ear-Pods only for Kip Classic).
+
+**Deep links:** `/kip/Kip-Demo.html?cat=animal&head=cat&hat=ears&tail=wag&vehicle=scooter`. Query params: `edition`, `preset`, `cat`, `head`, `insert`, `face`, `skin`, `hair`, `haircol`, `hat`, `hatcol`, `shirt`, `pants`, `back`, `ears`, `tail`, `prop`, `vehicle`, `covers`, `racer`, `view`, `cam`, `clip`. Accepted values are listed in `kip-manifest.json` under `urlParams`.
+
+> **Catalog vs demo:** `char_head_jumbo` (a 4th Human head) is in the PartSpec catalog but not yet in the demo, which ships exactly 12 heads. It is listed under `pending` in `kip-manifest.json`.
 
 ## Rebuild & Print-Orientation Export Commands
 
@@ -36,7 +60,7 @@
 # Bundle viewer Three.js runtime and sync Kip viewer + manifest into public/kip/
 npm run build:kip
 
-# Also recompile all 29 binary STLs from parts/kip/kip.scad (requires OpenSCAD)
+# Also recompile all 30 binary STLs from parts/kip/kip.scad (requires OpenSCAD)
 npx tsx scripts/build-kip.ts --scad
 
 # Export any individual part in flat-on-bed support-free 3D print orientation (z_min = 0)

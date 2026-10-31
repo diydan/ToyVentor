@@ -5,6 +5,7 @@
 
 export const DECAL_EXPRESSIONS = [
   { id: 'spark',     label: 'Spark' },
+  { id: 'button',    label: 'Button Eyes' },
   { id: 'happy',     label: 'Happy' },
   { id: 'wink',      label: 'Wink' },
   { id: 'cool',      label: 'Cool Shades' },
@@ -13,7 +14,7 @@ export const DECAL_EXPRESSIONS = [
   { id: 'blank',     label: 'Blank Plate' },
 ];
 
-export function createDecalExpressionCanvas(expression = 'spark', headType = 'kid') {
+export function createDecalExpressionCanvas(expression = 'spark', headType = 'kid', insertMode = 'sculpted') {
   const c = document.createElement('canvas');
   c.width = 512;
   c.height = 256;
@@ -21,9 +22,14 @@ export function createDecalExpressionCanvas(expression = 'spark', headType = 'ki
   ctx.clearRect(0, 0, c.width, c.height);
   if (expression === 'blank') return c;
 
-  const isRobot = headType === 'robot';
-  const isAnimal = headType === 'fox' || headType === 'bear';
+  const isRobot = headType === 'robot' || headType === 'scout';
+  const isMuzzled = headType === 'fox' || headType === 'bear' || headType === 'cat';
+  const isCreature = headType === 'dragon' || headType === 'alien' || headType === 'imp';
+  const isAnimal = isMuzzled || isCreature;
   const isHuman = !isRobot && !isAnimal;
+  const isVinylInsert = isHuman && insertMode === 'vinyl';
+  const isFlatHuman = isHuman && insertMode === 'flat';
+  const useButtonEyes = isHuman && (isVinylInsert || expression === 'button');
 
   // Dark LED visor screen ONLY for Robot head; Human & Critter heads use visor-free transparent decal skin!
   if (isRobot) {
@@ -33,50 +39,132 @@ export function createDecalExpressionCanvas(expression = 'spark', headType = 'ki
     ctx.lineWidth = 6;
     ctx.strokeStyle = 'rgba(184, 232, 255, 0.38)';
     ctx.stroke();
+    if (headType === 'scout') {
+      // Mecha Scout panoramic HUD: amber range ticks along the lower edge and faint scan lines
+      ctx.strokeStyle = 'rgba(255, 184, 48, 0.55)';
+      ctx.lineWidth = 5;
+      for (let tx = 96; tx <= 416; tx += 32) {
+        ctx.beginPath();
+        ctx.moveTo(tx, 196);
+        ctx.lineTo(tx, tx % 64 === 0 ? 178 : 186);
+        ctx.stroke();
+      }
+      ctx.strokeStyle = 'rgba(184, 232, 255, 0.10)';
+      ctx.lineWidth = 3;
+      for (let ty = 62; ty < 170; ty += 18) {
+        ctx.beginPath();
+        ctx.moveTo(70, ty);
+        ctx.lineTo(442, ty);
+        ctx.stroke();
+      }
+    }
   }
 
   // Soft cream muzzle mask + button nose + critter mouth for Fox & Bear
-  if (isAnimal) {
+  if (isMuzzled) {
     ctx.fillStyle = 'rgba(252, 246, 236, 0.94)';
     ctx.beginPath();
-    ctx.ellipse(256, 178, headType === 'bear' ? 92 : 82, 56, 0, 0, Math.PI * 2);
+    ctx.ellipse(256, 178, headType === 'bear' ? 92 : (headType === 'cat' ? 88 : 82), 56, 0, 0, Math.PI * 2);
     ctx.fill();
   }
 
-  const eyeCol = isRobot ? '#b8e8ff' : '#231A16';
-  const mouthCol = isRobot ? '#b8e8ff' : '#3A231C';
+  const creatureEye = { dragon: '#E8A317', alien: '#0E1230', imp: '#2A1608' }[headType];
+  const eyeCol = isRobot ? '#b8e8ff' : (creatureEye || (useButtonEyes ? '#151211' : '#241814'));
+  const mouthCol = isRobot ? '#b8e8ff' : '#3B221B';
   const glintCol = '#ffffff';
   const cheekCol = '#ff6b4a';
 
-  // Signature Coral Spark cheek blushes
-  ctx.fillStyle = cheekCol;
-  ctx.globalAlpha = isHuman ? 0.62 : (isAnimal ? 0.74 : 0.90);
-  drawCapsule(ctx, 84, 176, 52, 24);
-  drawCapsule(ctx, 428, 176, 52, 24);
-  ctx.globalAlpha = 1.0;
-
-  // Expressive human eyebrows + warm stylized button nose hint
-  if (isHuman && expression !== 'cool') {
-    ctx.strokeStyle = 'rgba(62, 38, 25, 0.82)';
-    ctx.lineWidth = 11.5;
+  // Universal 24.2 x 10.5 mm faceplate mapping (`23.6 x 10.1 mm` conformal plane centered at `zb = 5.25 mm`):
+  //   - `vinyl` (`char_faceplate_vinyl`): physical 3D button-eye domes sit at `x = ±7.30 mm, zb = 5.45 mm` -> `px = [98, 414], py = 123`!
+  //   - `sculpted` (`char_faceplate`): wide orbital eye planes sit at `x = ±7.00 mm, zb = 5.96 mm` -> `px = [104, 408], py = 110`!
+  //   - `flat` (`char_faceplate_flat`): smooth flush printed-decal figure layout -> `px = [122, 390], py = 114`!
+  const humanEyeX = isVinylInsert
+    ? [98, 414]
+    : (isFlatHuman ? (expression === 'button' ? [102, 410] : [122, 390]) : [104, 408]);
+  const humanEyeY = isVinylInsert ? 123 : (isFlatHuman ? 114 : 110);
+  const humanBrowY = isVinylInsert ? 36 : (isFlatHuman ? 48 : 44);
+  // All three human inserts carry the same moulded resting-smile ridge (`FACE_MOUTH` in toyventor_parts.py: +-2.5 mm wide, vertex zb 1.25 mm,
+  // corners 0.5 mm higher). Decal row = (10.3 - zb) * 25.35, column = 256 + x * 21.69, so the dark smile line lands exactly on the ridge crest.
+  const humanMouthY = 224;
+  const drawRidgeSmile = (lineWidth = 12) => {
+    ctx.strokeStyle = mouthCol;
+    ctx.lineWidth = lineWidth;
     ctx.lineCap = 'round';
-    for (const [bx, dir] of [[152, -1], [360, 1]]) {
+    ctx.beginPath();
+    ctx.moveTo(201.8, 216.7);
+    ctx.quadraticCurveTo(256, 242.1, 310.2, 216.7);
+    ctx.stroke();
+  };
+
+  // Signature Coral Spark cheek blushes (strictly on the universal faceplate, never on the head!)
+  ctx.fillStyle = cheekCol;
+  if (isVinylInsert) {
+    ctx.globalAlpha = 0.54;
+    drawCapsule(ctx, 36, 204, 42, 18);
+    drawCapsule(ctx, 476, 204, 42, 18);
+    ctx.globalAlpha = 1.0;
+  } else if (isFlatHuman) {
+    ctx.globalAlpha = 0.66;
+    drawCapsule(ctx, 64, 168, 46, 22);
+    drawCapsule(ctx, 448, 168, 46, 22);
+    ctx.globalAlpha = 1.0;
+  } else if (isHuman) {
+    for (const bx of [46, 466]) {
+      const rg = ctx.createRadialGradient(bx, 174, 4, bx, 174, 30);
+      rg.addColorStop(0, 'rgba(255, 107, 74, 0.55)');
+      rg.addColorStop(0.65, 'rgba(255, 118, 92, 0.24)');
+      rg.addColorStop(1, 'rgba(255, 118, 92, 0.0)');
+      ctx.fillStyle = rg;
       ctx.beginPath();
-      const lift = expression === 'surprised' ? -10 : (expression === 'wink' && dir === 1 ? 7 : 0);
-      ctx.arc(bx, 84 + lift, 39, Math.PI * 1.22, Math.PI * 1.78);
+      ctx.ellipse(bx, 174, 30, 17, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  } else {
+    ctx.globalAlpha = isAnimal ? 0.74 : 0.90;
+    drawCapsule(ctx, 84, 176, 52, 24);
+    drawCapsule(ctx, 428, 176, 52, 24);
+    ctx.globalAlpha = 1.0;
+  }
+
+  // Expressive human eyebrows on the faceplate
+  if (isHuman) {
+    ctx.strokeStyle = 'rgba(54, 32, 22, 0.90)';
+    ctx.lineWidth = isVinylInsert ? 9.5 : (isFlatHuman ? 10.5 : 9.5);
+    ctx.lineCap = 'round';
+    for (const [bx, dir] of [[humanEyeX[0], -1], [humanEyeX[1], 1]]) {
+      ctx.beginPath();
+      const lift = expression === 'surprised'
+        ? -10
+        : (expression === 'cool' ? -6 : (expression === 'wink' && dir === 1 ? 8 : 0));
+      ctx.arc(bx, humanBrowY + lift, isVinylInsert ? 40 : 38, Math.PI * 1.22, Math.PI * 1.78);
       ctx.stroke();
     }
-    ctx.fillStyle = 'rgba(196, 102, 80, 0.50)';
+  }
+
+  // Subtle 2D printed triangle nose shading ONLY when `flat` insert uses `button` expression
+  // (on `vinyl` and `sculpted` inserts, the physical 3D nose prism is left 100% unpainted skin-tone!)
+  if (isFlatHuman && expression === 'button') {
+    ctx.fillStyle = 'rgba(92, 48, 28, 0.22)';
     ctx.beginPath();
-    ctx.ellipse(256, 152, 11, 6.5, 0, 0, Math.PI * 2);
+    ctx.moveTo(256, 134);
+    ctx.lineTo(292, 162);
+    ctx.lineTo(220, 162);
+    ctx.closePath();
     ctx.fill();
   }
 
   // Cute stylized button nose tip for Fox / Bear (2D decal only — zero 3D nostril holes!)
-  if (isAnimal) {
-    ctx.fillStyle = '#20232A';
+  if (isMuzzled) {
+    ctx.fillStyle = headType === 'cat' ? '#F28AA0' : '#20232A';
     ctx.beginPath();
-    ctx.ellipse(256, 154, headType === 'bear' ? 26 : 21, 15, 0, 0, Math.PI * 2);
+    if (headType === 'cat') {
+      ctx.moveTo(232, 144);
+      ctx.lineTo(280, 144);
+      ctx.lineTo(256, 168);
+      ctx.closePath();
+    } else {
+      ctx.ellipse(256, 154, headType === 'bear' ? 26 : 21, 15, 0, 0, Math.PI * 2);
+    }
     ctx.fill();
     ctx.fillStyle = 'rgba(255,255,255,0.65)';
     ctx.beginPath();
@@ -84,17 +172,99 @@ export function createDecalExpressionCanvas(expression = 'spark', headType = 'ki
     ctx.fill();
   }
 
-  const drawHumanOrCritterEye = (cx, cy = 122) => {
+  const eyeCenters = isHuman ? humanEyeX : [152, 360];
+
+  const drawHumanOrCritterEye = (cx, cy = humanEyeY, side = 0) => {
+    if (useButtonEyes) {
+      // Wide-set glossy dark circular button eyes (`rx = 56, ry = 65` -> true Ø 5.16 mm 3D circle over `char_faceplate_vinyl` domes!)
+      const rx = isVinylInsert ? 56 : 50;
+      const ry = isVinylInsert ? 65 : 58;
+      ctx.fillStyle = eyeCol;
+      ctx.beginPath();
+      ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
+      ctx.fill();
+      // Glossy vinyl button rim sheen
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.20)';
+      ctx.lineWidth = 4.8;
+      ctx.beginPath();
+      ctx.ellipse(cx, cy, rx - 6, ry - 7, 0, Math.PI * 1.12, Math.PI * 1.78);
+      ctx.stroke();
+      // Crisp specular button catchlights
+      ctx.fillStyle = glintCol;
+      ctx.beginPath();
+      ctx.ellipse(cx - 16, cy - 18, 13.5, 15.5, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.ellipse(cx + 15, cy + 17, 6.0, 7.0, 0, 0, Math.PI * 2);
+      ctx.fill();
+      return;
+    }
+    if (isFlatHuman) {
+      // Classic bold printed-decal figure eyes (crisp dark oval + dual white catchlights)
+      ctx.fillStyle = eyeCol;
+      ctx.beginPath();
+      ctx.ellipse(cx, cy, 34, 42, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = glintCol;
+      ctx.beginPath();
+      ctx.ellipse(cx - 11, cy - 14, 11.5, 13.0, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.ellipse(cx + 11, cy + 13, 5.2, 6.0, 0, 0, Math.PI * 2);
+      ctx.fill();
+      return;
+    }
+    if (isHuman) {
+      // Crisp expressive human eye oval + warm iris + curved upper eyelash line
+      ctx.fillStyle = eyeCol;
+      ctx.beginPath();
+      ctx.ellipse(cx, cy, 36, 43, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Warm chestnut-amber iris crescent
+      ctx.fillStyle = '#8B5437';
+      ctx.beginPath();
+      ctx.ellipse(cx, cy + 17, 24, 15, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#BA7D56';
+      ctx.beginPath();
+      ctx.ellipse(cx + 3, cy + 20, 15, 7.5, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Re-deepen pupil center
+      ctx.fillStyle = eyeCol;
+      ctx.beginPath();
+      ctx.ellipse(cx, cy - 2, 18.5, 21.0, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Soft upper eyelash sweep
+      ctx.strokeStyle = eyeCol;
+      ctx.lineWidth = 8.0;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.arc(cx, cy + 4, 38, Math.PI * 1.08, Math.PI * 1.92);
+      ctx.stroke();
+      if (side !== 0) {
+        ctx.beginPath();
+        ctx.moveTo(cx + side * 33, cy - 12);
+        ctx.lineTo(cx + side * 42, cy - 20);
+        ctx.stroke();
+      }
+
+      // Twin lively catchlights
+      ctx.fillStyle = glintCol;
+      ctx.beginPath();
+      ctx.ellipse(cx - 12, cy - 14, 11.8, 13.5, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.ellipse(cx + 12, cy + 13, 5.4, 6.2, 0, 0, Math.PI * 2);
+      ctx.fill();
+      return;
+    }
+
     ctx.fillStyle = eyeCol;
     roundRect(ctx, cx - 33, cy - 39, 66, 78, 31);
     ctx.fill();
-    if (isHuman) {
-      // Warm iris crescent at bottom of eye
-      ctx.fillStyle = '#734830';
-      ctx.beginPath();
-      ctx.ellipse(cx, cy + 18, 21, 12, 0, 0, Math.PI * 2);
-      ctx.fill();
-    }
     ctx.fillStyle = glintCol;
     ctx.beginPath();
     ctx.arc(cx - 11, cy - 15, 13, 0, Math.PI * 2);
@@ -104,17 +274,24 @@ export function createDecalExpressionCanvas(expression = 'spark', headType = 'ki
     ctx.fill();
   };
 
-  if (expression === 'spark') {
-    for (const cx of [152, 360]) {
-      drawHumanOrCritterEye(cx, 122);
-    }
-    if (isHuman) {
+  if (expression === 'button') {
+    const eY = isHuman ? humanEyeY : 124;
+    drawHumanOrCritterEye(eyeCenters[0], eY, -1);
+    drawHumanOrCritterEye(eyeCenters[1], eY, 1);
+    if (!isHuman) {
       ctx.strokeStyle = mouthCol;
-      ctx.lineWidth = 11;
+      ctx.lineWidth = 8.5;
       ctx.lineCap = 'round';
       ctx.beginPath();
-      ctx.arc(256, 168, 31, 0.16 * Math.PI, 0.84 * Math.PI);
+      ctx.arc(256, 174, 24, 0.16 * Math.PI, 0.84 * Math.PI);
       ctx.stroke();
+    }
+  } else if (expression === 'spark') {
+    const eY = isHuman ? humanEyeY : 124;
+    drawHumanOrCritterEye(eyeCenters[0], eY, -1);
+    drawHumanOrCritterEye(eyeCenters[1], eY, 1);
+    if (isHuman) {
+      drawRidgeSmile(12);
     } else if (isAnimal) {
       ctx.strokeStyle = mouthCol;
       ctx.lineWidth = 8.5;
@@ -128,24 +305,30 @@ export function createDecalExpressionCanvas(expression = 'spark', headType = 'ki
     }
   } else if (expression === 'happy') {
     ctx.strokeStyle = eyeCol;
-    ctx.lineWidth = 16;
+    ctx.lineWidth = isHuman ? 13 : 15;
     ctx.lineCap = 'round';
-    for (const cx of [152, 360]) {
+    for (const cx of eyeCenters) {
       ctx.beginPath();
-      ctx.arc(cx, 140, 35, Math.PI * 1.12, Math.PI * 1.88);
+      ctx.arc(cx, isHuman ? humanEyeY + 14 : 138, isHuman ? (isVinylInsert ? 42 : 34) : 37, Math.PI * 1.12, Math.PI * 1.88);
       ctx.stroke();
     }
     if (isHuman) {
-      // Cheerful open D-smile with rosy tongue accent!
-      ctx.fillStyle = mouthCol;
+      const mTop = humanMouthY - (isVinylInsert ? 8 : 12);
+      const mRad = isVinylInsert ? 22 : 28;
+      ctx.save();
       ctx.beginPath();
-      ctx.arc(256, 170, 35, 0, Math.PI, false);
+      ctx.arc(256, mTop, mRad, 0, Math.PI, false);
       ctx.closePath();
+      ctx.fillStyle = mouthCol;
       ctx.fill();
+      ctx.clip();
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(222, mTop - 2, 68, 8);
       ctx.fillStyle = '#FF7E6B';
       ctx.beginPath();
-      ctx.ellipse(256, 192, 19, 10, 0, 0, Math.PI * 2);
+      ctx.ellipse(256, mTop + mRad * 0.82, 16, 9, 0, 0, Math.PI * 2);
       ctx.fill();
+      ctx.restore();
     } else {
       ctx.strokeStyle = mouthCol;
       ctx.lineWidth = 11;
@@ -154,94 +337,204 @@ export function createDecalExpressionCanvas(expression = 'spark', headType = 'ki
       ctx.stroke();
     }
   } else if (expression === 'wink') {
-    drawHumanOrCritterEye(152, 122);
+    drawHumanOrCritterEye(eyeCenters[0], isHuman ? humanEyeY : 124, -1);
 
     ctx.strokeStyle = eyeCol;
-    ctx.lineWidth = 15;
+    ctx.lineWidth = isHuman ? 13.0 : 14;
     ctx.lineCap = 'round';
+    const wx = eyeCenters[1];
     ctx.beginPath();
-    ctx.moveTo(324, 112);
-    ctx.lineTo(384, 126);
-    ctx.lineTo(326, 144);
+    ctx.arc(wx, isHuman ? humanEyeY + 12 : 136, isHuman ? (isVinylInsert ? 40 : 32) : 35, Math.PI * 1.12, Math.PI * 1.88);
     ctx.stroke();
-
-    ctx.strokeStyle = mouthCol;
-    ctx.lineWidth = 11;
-    ctx.beginPath();
-    ctx.arc(262, 168, 30, 0.15 * Math.PI, 0.80 * Math.PI);
-    ctx.stroke();
-  } else if (expression === 'cool') {
-    // Bold ToyVentor Geometric Aviator Shades
-    ctx.fillStyle = '#20232A';
-    ctx.strokeStyle = '#FFB830';
-    ctx.lineWidth = 9;
-    roundRect(ctx, 74, 78, 162, 80, 22);
-    ctx.fill();
-    ctx.stroke();
-    roundRect(ctx, 276, 78, 162, 80, 22);
-    ctx.fill();
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(236, 102);
-    ctx.lineTo(276, 102);
-    ctx.stroke();
-    // Diagonal white lens sheen
-    ctx.strokeStyle = 'rgba(255,255,255,0.68)';
-    ctx.lineWidth = 10;
-    ctx.lineCap = 'round';
-    for (const ox of [104, 306]) {
+    if (isHuman && !isFlatHuman && !useButtonEyes) {
+      ctx.lineWidth = 7.5;
       ctx.beginPath();
-      ctx.moveTo(ox, 140);
-      ctx.lineTo(ox + 34, 94);
+      ctx.moveTo(wx + 29, humanEyeY);
+      ctx.lineTo(wx + 39, humanEyeY - 8);
       ctx.stroke();
     }
-    // Confident smirk
-    ctx.strokeStyle = isRobot ? '#FFB830' : mouthCol;
-    ctx.lineWidth = 10;
-    ctx.beginPath();
-    ctx.arc(266, 174, 28, 0.18 * Math.PI, 0.74 * Math.PI);
-    ctx.stroke();
+
+    if (isHuman) {
+      drawRidgeSmile(12);
+    } else {
+      ctx.strokeStyle = mouthCol;
+      ctx.lineWidth = isFlatHuman ? 11.0 : 9.0;
+      ctx.beginPath();
+      ctx.arc(262, 169, 32, 0.16 * Math.PI, 0.82 * Math.PI);
+      ctx.stroke();
+    }
+  } else if (expression === 'cool') {
+    if (isHuman) {
+      const shadeX = isVinylInsert ? [98, 414] : (isFlatHuman ? [136, 376] : [112, 400]);
+      const shadeRx = isVinylInsert ? 58 : 66;
+      const shadeRy = isVinylInsert ? 62 : 40;
+      for (const lx of shadeX) {
+        const lg = ctx.createLinearGradient(lx, humanEyeY - shadeRy, lx, humanEyeY + shadeRy);
+        lg.addColorStop(0, 'rgba(34, 39, 54, 0.94)');
+        lg.addColorStop(1, 'rgba(72, 48, 62, 0.88)');
+        ctx.fillStyle = lg;
+        ctx.strokeStyle = '#241B18';
+        ctx.lineWidth = 9;
+        ctx.beginPath();
+        ctx.ellipse(lx, humanEyeY, shadeRx, shadeRy, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.strokeStyle = 'rgba(255,255,255,0.68)';
+        ctx.lineWidth = 8;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(lx - 26, humanEyeY + 20);
+        ctx.lineTo(lx - 2, humanEyeY - 22);
+        ctx.stroke();
+      }
+      ctx.strokeStyle = '#241B18';
+      ctx.lineWidth = 9;
+      ctx.beginPath();
+      ctx.arc(256, humanEyeY - 6, isVinylInsert ? 62 : 44, Math.PI * 1.15, Math.PI * 1.85);
+      ctx.stroke();
+    } else {
+      ctx.fillStyle = '#20232A';
+      ctx.strokeStyle = '#FFB830';
+      ctx.lineWidth = 9;
+      roundRect(ctx, 74, 78, 162, 80, 22);
+      ctx.fill();
+      ctx.stroke();
+      roundRect(ctx, 276, 78, 162, 80, 22);
+      ctx.fill();
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(236, 102);
+      ctx.lineTo(276, 102);
+      ctx.stroke();
+    }
+    // Confident smirk (humans: the moulded smile ridge, drawn from the vertex to the right corner for a one-sided grin)
+    if (isHuman) {
+      ctx.strokeStyle = mouthCol;
+      ctx.lineWidth = 12;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(256, 229.4);
+      ctx.quadraticCurveTo(283, 229.4, 310.2, 216.7);
+      ctx.stroke();
+    } else {
+      ctx.strokeStyle = isRobot ? '#FFB830' : mouthCol;
+      ctx.lineWidth = 9.0;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.arc(262, 174, 30, 0.16 * Math.PI, 0.76 * Math.PI);
+      ctx.stroke();
+    }
   } else if (expression === 'starry') {
     if (isHuman) {
-      for (const cx of [152, 360]) {
+      const rx = isVinylInsert ? 56 : 36;
+      const ry = isVinylInsert ? 65 : 42;
+      for (const cx of eyeCenters) {
         ctx.fillStyle = eyeCol;
-        roundRect(ctx, cx - 34, 82, 68, 80, 32);
+        ctx.beginPath();
+        ctx.ellipse(cx, humanEyeY, rx, ry, 0, 0, Math.PI * 2);
         ctx.fill();
-        drawStar(ctx, cx, 121, 5, 26, 11.5, '#FFB830');
-        drawStar(ctx, cx - 12, 101, 4, 9.5, 3.5, '#ffffff');
+        drawStar(ctx, cx, humanEyeY, 5, isVinylInsert ? 30 : 24, isVinylInsert ? 13 : 11, '#FFB830');
+        drawStar(ctx, cx - 13, humanEyeY - 20, 4, 9.0, 3.5, '#ffffff');
       }
     } else {
-      for (const cx of [152, 360]) {
+      for (const cx of eyeCenters) {
         drawStar(ctx, cx, 120, 5, 40, 18, '#FFB830');
         drawStar(ctx, cx, 120, 4, 16, 6, '#ffffff');
       }
     }
     ctx.fillStyle = mouthCol;
     ctx.beginPath();
-    ctx.ellipse(256, 178, 18, 13, 0, 0, Math.PI * 2);
+    ctx.ellipse(256, isHuman ? humanMouthY : 180, isHuman ? 13 : 18, isHuman ? 10 : 13, 0, 0, Math.PI * 2);
     ctx.fill();
   } else if (expression === 'surprised') {
-    for (const cx of [152, 360]) {
-      ctx.fillStyle = eyeCol;
-      ctx.beginPath();
-      ctx.arc(cx, 120, 36, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = glintCol;
-      ctx.beginPath();
-      ctx.arc(cx - 11, 108, 12, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.beginPath();
-      ctx.arc(cx + 12, 132, 5.5, 0, Math.PI * 2);
-      ctx.fill();
+    const eY = isHuman ? humanEyeY : 122;
+    for (const cx of eyeCenters) {
+      if (isHuman) {
+        drawHumanOrCritterEye(cx, eY, 0);
+      } else {
+        ctx.fillStyle = eyeCol;
+        ctx.beginPath();
+        ctx.arc(cx, eY, 37, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = glintCol;
+        ctx.beginPath();
+        ctx.arc(cx - 10, eY - 11, 10.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(cx + 10, eY + 10, 4.8, 0, Math.PI * 2);
+        ctx.fill();
+      }
     }
+    const mY = isHuman ? humanMouthY : 181;
     ctx.fillStyle = mouthCol;
     ctx.beginPath();
-    ctx.ellipse(256, 180, 18, 22, 0, 0, Math.PI * 2);
+    ctx.ellipse(256, mY, isHuman ? 13 : 18, isHuman ? 14 : 22, 0, 0, Math.PI * 2);
     ctx.fill();
     ctx.fillStyle = '#FF7E6B';
     ctx.beginPath();
-    ctx.ellipse(256, 191, 11, 8, 0, 0, Math.PI * 2);
+    ctx.ellipse(256, mY + 6, 8.5, 5.5, 0, 0, Math.PI * 2);
     ctx.fill();
+  }
+
+  // Head-specific printed details (all 2D decal only, so the 3D heads stay clean and support-free)
+  const eyesVisible = expression !== 'happy' && expression !== 'cool';
+  if (headType === 'cat') {
+    // Three crisp whiskers per cheek
+    ctx.strokeStyle = 'rgba(70, 48, 36, 0.82)';
+    ctx.lineWidth = 5;
+    ctx.lineCap = 'round';
+    for (const side of [-1, 1]) {
+      for (const [dy, dx] of [[-10, 74], [4, 80], [18, 70]]) {
+        ctx.beginPath();
+        ctx.moveTo(256 + side * 78, 176 + dy * 0.4);
+        ctx.lineTo(256 + side * (78 + dx), 176 + dy);
+        ctx.stroke();
+      }
+    }
+  } else if (headType === 'dragon') {
+    ctx.fillStyle = '#16382A';
+    if (eyesVisible) {
+      for (const cx of eyeCenters) {
+        roundRect(ctx, cx - 7, 90, 14, 68, 7);
+        ctx.fill();
+      }
+    }
+    // Twin snout nostrils + a playful little fang
+    ctx.fillStyle = '#16382A';
+    for (const nx of [236, 276]) {
+      ctx.beginPath();
+      ctx.ellipse(nx, 150, 9, 6, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.fillStyle = '#FFFFFF';
+    for (const fx of [226, 286]) {
+      ctx.beginPath();
+      ctx.moveTo(fx - 8, 192);
+      ctx.lineTo(fx + 8, 192);
+      ctx.lineTo(fx, 212);
+      ctx.closePath();
+      ctx.fill();
+    }
+  } else if (headType === 'alien') {
+    if (eyesVisible) {
+      // Starry cosmic highlights inside the large midnight eyes
+      for (const cx of eyeCenters) {
+        drawStar(ctx, cx + 14, 104, 4, 12, 5, '#9FE8FF');
+        drawStar(ctx, cx - 16, 140, 4, 7, 3, '#FFFFFF');
+      }
+    }
+  } else if (headType === 'imp') {
+    // Two upward underbite fangs
+    ctx.fillStyle = '#FFFFFF';
+    for (const fx of [218, 294]) {
+      ctx.beginPath();
+      ctx.moveTo(fx - 12, 214);
+      ctx.lineTo(fx + 12, 214);
+      ctx.lineTo(fx, 180);
+      ctx.closePath();
+      ctx.fill();
+    }
   }
   return c;
 }
@@ -277,272 +570,216 @@ function drawStar(ctx, cx, cy, pts, rOut, rIn, color) {
 }
 
 // ===========================================================================
-// 2D CLOTHING DECALS FOR SHIRTS, JACKETS, OVERALLS, PANTS & SHORTS
-// (`BRAND_STYLE.md`: surface graphics as crisp 2D decals/game skins, zero 3D spaghetti)
-// Torso plane covers y_torso = 62.0..101.0 mm (py = 0..398 is Shirt chest; py = 398..512 is Pelvis waistband!)
+// FRONT-ONLY CHEST STENCIL STICKERS FOR SHIRTS, JACKETS & OVERALLS
+// (`BRAND_STYLE.md`: solid single-filament 3D parts + crisp front-only chest stencil sticker!)
+// Mapped cleanly onto the flat front chest of `torso` (`width = 18.8 mm, height = 21.5 mm`).
 // ===========================================================================
-export function createTorsoOutfitDecalCanvas(shirtId = 'off', pantsId = 'off', skinHex = '#F6C8A6') {
+export function createTorsoOutfitDecalCanvas(shirtId = 'off', _pantsId = 'off', skinHex = '#F3BA95') {
   const c = document.createElement('canvas');
   c.width = 512;
   c.height = 512;
   const ctx = c.getContext('2d');
   ctx.clearRect(0, 0, 512, 512);
+  if (!shirtId || shirtId === 'off') return c;
 
-  const beltY = 398;
-
-  // --- 1. SHIRT / JACKET / OVERALLS CHEST ZONE (py = 0 .. 398) ---
-  ctx.save();
-  ctx.beginPath();
-  ctx.rect(0, 0, 512, beltY + 2);
-  ctx.clip();
+  const botY = 486;
 
   if (shirtId === 'spark_tee') {
-    // Crew-neck skin cutout + crisp white ribbed collar + ToyVentor Spark Bolt emblem!
+    // Classic crew-neck collar + crisp front Spark Bolt die-cut sticker badge!
     ctx.fillStyle = skinHex;
     ctx.beginPath();
-    ctx.ellipse(256, 8, 92, 54, 0, 0, Math.PI * 2);
+    ctx.ellipse(256, 10, 96, 56, 0, 0, Math.PI * 2);
     ctx.fill();
     ctx.strokeStyle = '#FFFFFF';
-    ctx.lineWidth = 18;
+    ctx.lineWidth = 20;
     ctx.beginPath();
-    ctx.ellipse(256, 8, 98, 58, 0, 0.08 * Math.PI, 0.92 * Math.PI);
+    ctx.ellipse(256, 10, 104, 62, 0, 0.08 * Math.PI, 0.92 * Math.PI);
     ctx.stroke();
 
-    // Chest badge circle + golden lightning spark
+    // Die-cut white sticker circle + golden ring + Coral Spark lightning bolt
     ctx.fillStyle = '#FFFFFF';
     ctx.beginPath();
-    ctx.arc(256, 206, 78, 0, Math.PI * 2);
+    ctx.arc(256, 256, 104, 0, Math.PI * 2);
     ctx.fill();
     ctx.strokeStyle = '#FFB830';
-    ctx.lineWidth = 10;
+    ctx.lineWidth = 14;
     ctx.stroke();
 
     ctx.fillStyle = '#FF6B4A';
     ctx.beginPath();
-    ctx.moveTo(272, 144);
-    ctx.lineTo(216, 212);
-    ctx.lineTo(254, 212);
-    ctx.lineTo(236, 270);
-    ctx.lineTo(298, 198);
-    ctx.lineTo(258, 198);
+    ctx.moveTo(276, 172);
+    ctx.lineTo(204, 264);
+    ctx.lineTo(252, 264);
+    ctx.lineTo(230, 342);
+    ctx.lineTo(310, 246);
+    ctx.lineTo(260, 246);
     ctx.closePath();
     ctx.fill();
   } else if (shirtId === 'hoodie') {
-    // Center metallic zip seam + white hoodie drawstrings + kangaroo pocket + chest patch
-    ctx.strokeStyle = 'rgba(18, 28, 52, 0.55)';
-    ctx.lineWidth = 10;
+    // Front hoodie stencil: center zipper + drawstrings + kangaroo pocket + chest star patch
+    ctx.strokeStyle = 'rgba(18, 28, 52, 0.58)';
+    ctx.lineWidth = 12;
     ctx.beginPath();
-    ctx.moveTo(256, 28);
-    ctx.lineTo(256, beltY);
+    ctx.moveTo(256, 30);
+    ctx.lineTo(256, botY);
     ctx.stroke();
     ctx.strokeStyle = '#DCE4F2';
-    ctx.lineWidth = 4;
-    ctx.setLineDash([8, 6]);
+    ctx.lineWidth = 5;
+    ctx.setLineDash([10, 7]);
     ctx.beginPath();
-    ctx.moveTo(256, 34);
-    ctx.lineTo(256, beltY);
+    ctx.moveTo(256, 36);
+    ctx.lineTo(256, botY);
     ctx.stroke();
     ctx.setLineDash([]);
 
-    // Kangaroo pocket
-    ctx.fillStyle = 'rgba(16, 36, 84, 0.28)';
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.55)';
-    ctx.lineWidth = 6;
-    roundRect(ctx, 108, 256, 296, 118, 34);
+    // Kangaroo front pouch
+    ctx.fillStyle = 'rgba(16, 36, 84, 0.30)';
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.65)';
+    ctx.lineWidth = 7;
+    roundRect(ctx, 92, 304, 328, 148, 38);
     ctx.fill();
     ctx.stroke();
 
-    // Drawstrings + aglets
+    // Hoodie drawstrings + aglets
     ctx.strokeStyle = '#FFFFFF';
-    ctx.lineWidth = 11;
+    ctx.lineWidth = 13;
     ctx.lineCap = 'round';
-    for (const [sx, ex] of [[204, 194], [308, 318]]) {
+    for (const [sx, ex] of [[198, 186], [314, 326]]) {
       ctx.beginPath();
       ctx.moveTo(sx, 36);
-      ctx.quadraticCurveTo(sx, 110, ex, 162);
+      ctx.quadraticCurveTo(sx, 128, ex, 196);
       ctx.stroke();
       ctx.fillStyle = '#FF6B4A';
-      roundRect(ctx, ex - 8, 156, 16, 22, 6);
+      roundRect(ctx, ex - 9, 190, 18, 26, 7);
       ctx.fill();
     }
 
     // Mini Spark patch on left chest
     ctx.fillStyle = '#FF6B4A';
-    roundRect(ctx, 316, 116, 76, 52, 14);
+    ctx.strokeStyle = '#FFFFFF';
+    ctx.lineWidth = 6;
+    roundRect(ctx, 314, 126, 92, 64, 16);
     ctx.fill();
-    drawStar(ctx, 354, 142, 5, 17, 7.5, '#FFB830');
+    ctx.stroke();
+    drawStar(ctx, 360, 158, 5, 20, 9, '#FFB830');
   } else if (shirtId === 'varsity') {
-    // V-neck striped rib collar + center cream placket & snap buttons + bold "K" chenille patch + striped waist rib!
+    // Front varsity stencil: cream snap-button placket + bold "K" chenille patch + angled welt pockets
     ctx.fillStyle = '#F4EFE6';
-    ctx.fillRect(236, 24, 40, beltY - 24);
-    for (const by of [88, 162, 236, 310]) {
+    roundRect(ctx, 232, 22, 48, botY - 30, 16);
+    ctx.fill();
+    for (const by of [92, 188, 284, 380, 452]) {
       ctx.fillStyle = '#20232A';
       ctx.beginPath();
-      ctx.arc(256, by, 10, 0, Math.PI * 2);
+      ctx.arc(256, by, 11, 0, Math.PI * 2);
       ctx.fill();
       ctx.fillStyle = '#FFFFFF';
       ctx.beginPath();
-      ctx.arc(253, by - 3, 3.5, 0, Math.PI * 2);
+      ctx.arc(252, by - 3, 4, 0, Math.PI * 2);
       ctx.fill();
     }
-    // Striped bottom rib band
-    ctx.fillStyle = '#F4EFE6';
-    ctx.fillRect(24, beltY - 38, 464, 38);
-    ctx.fillStyle = '#FF6B4A';
-    ctx.fillRect(24, beltY - 24, 464, 12);
 
     // Angled side welt pockets
     ctx.strokeStyle = '#F4EFE6';
-    ctx.lineWidth = 12;
+    ctx.lineWidth = 14;
     ctx.lineCap = 'round';
-    ctx.beginPath(); ctx.moveTo(118, 250); ctx.lineTo(152, 326); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(394, 250); ctx.lineTo(360, 326); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(106, 308); ctx.lineTo(146, 404); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(406, 308); ctx.lineTo(366, 404); ctx.stroke();
 
     // Bold "K" Varsity Letter Patch
     ctx.fillStyle = '#FF6B4A';
     ctx.strokeStyle = '#F4EFE6';
-    ctx.lineWidth = 9;
-    roundRect(ctx, 306, 104, 96, 106, 22);
+    ctx.lineWidth = 11;
+    roundRect(ctx, 302, 114, 114, 128, 24);
     ctx.fill();
     ctx.stroke();
     ctx.fillStyle = '#FFFFFF';
-    ctx.font = '900 72px system-ui, -apple-system, sans-serif';
+    ctx.font = '900 84px system-ui, -apple-system, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('K', 354, 160);
+    ctx.fillText('K', 359, 182);
   } else if (shirtId === 'overalls') {
-    // Indigo Denim Bib + Shoulder Straps + Brass Buttons + Amber Top-Stitching over Sunny Tee!
+    // Front denim overall bib stencil over solid sunny-yellow shirt torso!
     ctx.fillStyle = '#2F5596';
-    // Straps
-    roundRect(ctx, 106, -10, 62, 170, 14);
+    roundRect(ctx, 96, 8, 68, 190, 16);
     ctx.fill();
-    roundRect(ctx, 344, -10, 62, 170, 14);
+    roundRect(ctx, 348, 8, 68, 190, 16);
     ctx.fill();
-    // Main Bib
-    roundRect(ctx, 96, 134, 320, beltY - 128, 24);
+    roundRect(ctx, 84, 158, 344, botY - 158, 28);
     ctx.fill();
 
-    // Amber contrast stitching
+    // Amber top-stitching + center bib pocket
     ctx.strokeStyle = '#F2B83B';
-    ctx.lineWidth = 5;
-    ctx.setLineDash([10, 7]);
-    roundRect(ctx, 108, 146, 296, beltY - 150, 18);
+    ctx.lineWidth = 6;
+    ctx.setLineDash([11, 8]);
+    roundRect(ctx, 98, 172, 316, botY - 186, 20);
     ctx.stroke();
-    // Center bib pocket
-    roundRect(ctx, 182, 206, 148, 118, 20);
+    roundRect(ctx, 174, 246, 164, 146, 22);
     ctx.stroke();
     ctx.setLineDash([]);
 
     // Brass overall buttons
-    for (const bx of [137, 375]) {
+    for (const bx of [130, 382]) {
       ctx.fillStyle = '#FFB830';
       ctx.strokeStyle = '#8C5319';
-      ctx.lineWidth = 4;
+      ctx.lineWidth = 5;
       ctx.beginPath();
-      ctx.arc(bx, 164, 15, 0, Math.PI * 2);
+      ctx.arc(bx, 194, 17, 0, Math.PI * 2);
       ctx.fill();
       ctx.stroke();
     }
-    // Red woven tab on pocket
     ctx.fillStyle = '#FF6B4A';
-    roundRect(ctx, 318, 226, 22, 34, 5);
+    roundRect(ctx, 326, 270, 24, 38, 6);
     ctx.fill();
   } else if (shirtId === 'stripe_tee') {
-    // Crisp Breton Cream horizontal stripes + Coral chest pocket!
+    // Front Breton stripe chest sticker panel + coral star pocket!
     ctx.fillStyle = '#F4EFE6';
-    for (let sy = 56; sy < beltY - 16; sy += 52) {
-      ctx.fillRect(16, sy, 480, 24);
+    for (let sy = 84; sy < botY - 24; sy += 66) {
+      roundRect(ctx, 44, sy, 424, 30, 14);
+      ctx.fill();
     }
     ctx.fillStyle = skinHex;
     ctx.beginPath();
-    ctx.ellipse(256, 8, 92, 52, 0, 0, Math.PI * 2);
+    ctx.ellipse(256, 10, 96, 54, 0, 0, Math.PI * 2);
     ctx.fill();
     ctx.strokeStyle = '#FF6B4A';
-    ctx.lineWidth = 16;
+    ctx.lineWidth = 18;
     ctx.beginPath();
-    ctx.ellipse(256, 8, 96, 56, 0, 0.08 * Math.PI, 0.92 * Math.PI);
+    ctx.ellipse(256, 10, 102, 60, 0, 0.08 * Math.PI, 0.92 * Math.PI);
     ctx.stroke();
 
-    // Coral patch pocket on chest
     ctx.fillStyle = '#FF6B4A';
-    roundRect(ctx, 312, 138, 84, 92, 18);
+    ctx.strokeStyle = '#FFFFFF';
+    ctx.lineWidth = 7;
+    roundRect(ctx, 304, 168, 98, 108, 20);
     ctx.fill();
-    drawStar(ctx, 354, 184, 5, 20, 9, '#FFFFFF');
+    ctx.stroke();
+    drawStar(ctx, 353, 222, 5, 24, 11, '#FFFFFF');
   } else if (shirtId === 'track_top') {
-    // Asymmetric twin vertical racing stripes + zipper + checkered flag badge!
+    // Front racing stripe + center zip + checkered badge stencil!
     ctx.fillStyle = '#FFFFFF';
-    ctx.fillRect(142, 10, 26, beltY);
+    roundRect(ctx, 128, 18, 30, botY - 26, 12);
+    ctx.fill();
     ctx.fillStyle = '#FF6B4A';
-    ctx.fillRect(176, 10, 26, beltY);
+    roundRect(ctx, 168, 18, 30, botY - 26, 12);
+    ctx.fill();
 
     ctx.strokeStyle = '#20232A';
-    ctx.lineWidth = 9;
+    ctx.lineWidth = 11;
+    ctx.lineCap = 'round';
     ctx.beginPath();
-    ctx.moveTo(256, 12);
-    ctx.lineTo(256, beltY);
+    ctx.moveTo(256, 20);
+    ctx.lineTo(256, botY - 12);
     ctx.stroke();
 
-    // Checkered racing badge
     ctx.fillStyle = '#FFFFFF';
-    roundRect(ctx, 306, 122, 92, 68, 14);
+    roundRect(ctx, 298, 144, 110, 82, 16);
     ctx.fill();
     ctx.fillStyle = '#20232A';
     for (let r = 0; r < 3; r++) {
       for (let col = 0; col < 4; col++) {
-        if ((r + col) % 2 === 0) ctx.fillRect(314 + col * 19, 130 + r * 18, 19, 18);
+        if ((r + col) % 2 === 0) ctx.fillRect(308 + col * 22.5, 154 + r * 21, 22.5, 21);
       }
     }
-  }
-  ctx.restore();
-
-  // --- 2. PELVIS WAISTBAND, BELT & POCKET TOP ZONE (py = 398 .. 512) ---
-  if (pantsId === 'jeans' || pantsId === 'overalls_jeans') {
-    if (pantsId === 'jeans') {
-      // Warm leather belt + brass buckle!
-      ctx.fillStyle = '#6E412A';
-      ctx.fillRect(20, beltY, 472, 34);
-      ctx.strokeStyle = '#FFB830';
-      ctx.lineWidth = 9;
-      roundRect(ctx, 224, beltY - 2, 64, 38, 9);
-      ctx.stroke();
-    }
-    // Amber denim fly + scoop pockets
-    ctx.strokeStyle = '#F2B83B';
-    ctx.lineWidth = 5;
-    ctx.setLineDash([9, 6]);
-    ctx.beginPath();
-    ctx.moveTo(256, beltY + 36);
-    ctx.lineTo(256, 504);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.arc(110, beltY + 34, 68, 0, 0.48 * Math.PI);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.arc(402, beltY + 34, 68, 0.52 * Math.PI, Math.PI);
-    ctx.stroke();
-    ctx.setLineDash([]);
-  } else if (pantsId === 'cargo_shorts') {
-    // Woven utility belt + matte buckle + button fly
-    ctx.fillStyle = '#4A3F32';
-    ctx.fillRect(20, beltY, 472, 30);
-    ctx.fillStyle = '#FFB830';
-    roundRect(ctx, 230, beltY - 2, 52, 34, 7);
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(74, 63, 50, 0.55)';
-    ctx.lineWidth = 5;
-    ctx.beginPath();
-    ctx.moveTo(256, beltY + 34);
-    ctx.lineTo(256, 504);
-    ctx.stroke();
-  } else if (pantsId === 'sport_shorts' || pantsId === 'joggers') {
-    // Ribbed elastic waistband + white athletic drawstrings
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.22)';
-    ctx.fillRect(20, beltY, 472, 28);
-    ctx.strokeStyle = '#FFFFFF';
-    ctx.lineWidth = 8;
-    ctx.lineCap = 'round';
-    ctx.beginPath(); ctx.moveTo(242, beltY + 14); ctx.quadraticCurveTo(226, beltY + 56, 232, beltY + 78); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(270, beltY + 14); ctx.quadraticCurveTo(286, beltY + 56, 280, beltY + 78); ctx.stroke();
   }
 
   return c;

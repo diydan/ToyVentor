@@ -69,13 +69,13 @@ describe("Kip modular character rig & 3D demo viewer integration", () => {
     }
   });
 
-  it("verifies all 33 Phase 1 & 2 V2 PartSpec v2 parts and 17 multi-part assemblies as Conforming", () => {
+  it("verifies all 53 Phase 1 & 2 V2 PartSpec v2 parts and 41 multi-part assemblies as Conforming", () => {
     const manifestPath = join(root, "public/kip/kip-partspec-manifest.json");
     expect(existsSync(manifestPath)).toBe(true);
     const psManifest = JSON.parse(readFileSync(manifestPath, "utf8"));
     expect(psManifest.status).toBe("verified");
-    expect(psManifest.parts).toHaveLength(33);
-    expect(psManifest.assemblies).toHaveLength(17);
+    expect(psManifest.parts).toHaveLength(53);
+    expect(psManifest.assemblies).toHaveLength(41);
 
     const validStats = new Set(["Speed", "Spin", "Torque", "Glow"]);
     for (const part of psManifest.parts) {
@@ -131,13 +131,15 @@ describe("Kip modular character rig & 3D demo viewer integration", () => {
     expect(kipManifest.photoForge.prints).toBe(false);
     expect(kipManifest.photoForge.digitalOnly).toBe(true);
 
-    const forbidden = /\b(lego|duplo|technic|bionicle|playmobil|meccano|k'nex|knex)\b/i;
+    const forbidden = /\b(lego|duplo|technic|bionicle|playmobil|meccano|k'nex|knex|funko|nendoroid|verstappen|sasuke|uchiha|naruto|jackson|tripo|zelda|signalis)\b/i;
     const filesToScan = [
       "parts/kip/kip-manifest.json",
       "public/kip/kip-partspec-manifest.json",
       "parts/kip/sdk/LLM_PART_PROMPT.md",
       "parts/kip/viewer/kip-forge-sdk.js",
       "parts/kip/viewer/kip-vehicles-wardrobe.js",
+      "parts/kip/viewer/Kip-Demo.html",
+      "parts/kip/kip_partspec.py",
     ];
     for (const rel of filesToScan) {
       const text = readFileSync(join(root, rel), "utf8");
@@ -145,7 +147,7 @@ describe("Kip modular character rig & 3D demo viewer integration", () => {
     }
   });
 
-  it("promotes all 33 Kip wardrobe and V2 vehicle parts into parts/partspec as verified Wave 9 (W9)", () => {
+  it("promotes all 53 Kip wardrobe and V2 vehicle parts into parts/partspec as verified Wave 9 (W9)", () => {
     const catalog = JSON.parse(readFileSync(join(root, "parts/partspec/catalog.json"), "utf8"));
     const mainManifest = JSON.parse(
       readFileSync(join(root, "parts/partspec/toyventor_parts.json"), "utf8"),
@@ -154,9 +156,9 @@ describe("Kip modular character rig & 3D demo viewer integration", () => {
     expect(wave9Wave).toBeDefined();
 
     const w9Rows = catalog.parts.filter((p: { wave?: string }) => p.wave === "W9");
-    expect(w9Rows).toHaveLength(33);
-    expect(w9Rows.filter((p: { line: string }) => p.line === "snap")).toHaveLength(25);
-    expect(w9Rows.filter((p: { line: string }) => p.line === "pro")).toHaveLength(8);
+    expect(w9Rows).toHaveLength(53);
+    expect(w9Rows.filter((p: { line: string }) => p.line === "snap")).toHaveLength(43);
+    expect(w9Rows.filter((p: { line: string }) => p.line === "pro")).toHaveLength(10);
 
     const byId = new Map<string, Record<string, unknown>>(
       mainManifest.parts.map((p: { id: string }) => [p.id, p]),

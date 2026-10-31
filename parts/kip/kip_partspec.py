@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: Apache-2.0
-"""Conforming PartSpec v2 exporter + assembly validator for Kip's Wardrobe & V2 Modular Vehicles.
+"""Conforming PartSpec v2 exporter + assembly validator for Kip's Wardrobe, Workshop Props & V2 Modular Vehicles.
 
-All 30 Wave 9 (`W9`) Kip wardrobe, stylized wheel & V2 modular TU vehicle parts are canonically
+All Wave 9 (`W9`) Kip wardrobe, stylized wheel & V2 modular TU vehicle parts, plus the Wave 12 (`W12`)
+categorised workshop hand props, are canonically
 defined in `parts/partspec/catalog.json` and `parts/partspec/toyventor_parts.py` (never duplicating
 `interfaces.json` constants or CAD geometry). This module re-exports the drift-proof helpers for
 `parts/kip/sdk/kip_partspec_sdk.py` and generates Kip's viewer STLs, two-tone visual companion
@@ -44,22 +45,41 @@ add_studs_at = tp.add_studs_at
 cut_vertical_bore = tp.cut_vertical_bore
 cut_x_axle_bore = tp.cut_x_axle_bore
 
-# Re-export all 33 Wave 9 (`W9`) builders from `toyventor_parts.py`
+# Re-export all Wave 9 (`W9`) builders from `toyventor_parts.py`
 char_head_kid = tp.char_head_kid
 char_head_chibi = tp.char_head_chibi
-char_head_chin = tp.char_head_chin
 char_head_tall = tp.char_head_tall
 char_faceplate = tp.char_faceplate
+char_faceplate_vinyl = tp.char_faceplate_vinyl
+char_faceplate_flat = tp.char_faceplate_flat
 char_head_fox = tp.char_head_fox
 char_head_bear = tp.char_head_bear
+robot_head_scout = tp.robot_head_scout
+char_head_cat = tp.char_head_cat
+char_head_dragon = tp.char_head_dragon
+char_head_alien = tp.char_head_alien
+char_head_imp = tp.char_head_imp
 hair_short_swept = tp.hair_short_swept
 hair_bob = tp.hair_bob
 hair_swoosh = tp.hair_swoosh
+hair_long_layered = tp.hair_long_layered
+hair_twin_braids = tp.hair_twin_braids
+hair_shag = tp.hair_shag
+hair_pompadour = tp.hair_pompadour
+hair_top_bun = tp.hair_top_bun
+hair_side_sweep = tp.hair_side_sweep
 hair_spiky = tp.hair_spiky
 hair_pigtails = tp.hair_pigtails
 hair_ponytail = tp.hair_ponytail
 hair_curly = tp.hair_curly
 hair_mohawk = tp.hair_mohawk
+hat_ballcap = tp.hat_ballcap
+hat_beanie = tp.hat_beanie
+hat_cowboy = tp.hat_cowboy
+hat_hardhat = tp.hat_hardhat
+hat_ranger = tp.hat_ranger
+hat_tophat = tp.hat_tophat
+hat_pirate = tp.hat_pirate
 pack_explorer = tp.pack_explorer
 prop_wrench = tp.prop_wrench
 prop_star_shield = tp.prop_star_shield
@@ -79,8 +99,13 @@ veh_scooter_fairing = tp.veh_scooter_fairing
 veh_handlebar_fork = tp.veh_handlebar_fork
 veh_moto_cowling = tp.veh_moto_cowling
 
-W9_ROWS = [r for r in tp.CATALOG["parts"] if r.get("wave") == "W9"]
-KIP_PARTS = [tp.BY_ID[r["id"]] for r in W9_ROWS]
+# Kip's catalog waves: W9 (wardrobe, heads, wigs, hats, vehicles) and W12 (12 categorised workshop hand props:
+# Tools / Cleaning / Instruments / Play). Builders resolve through `tp.BY_ID`, which looks them up in
+# toyventor_parts, toyventor_pro and toyventor_kitcard, so no per-part re-export is needed here.
+KIP_WAVES = ("W9", "W12")
+KIP_ROWS = [r for r in tp.CATALOG["parts"] if r.get("wave") in KIP_WAVES]
+W9_ROWS = [r for r in KIP_ROWS if r.get("wave") == "W9"]  # kept for older callers
+KIP_PARTS = [tp.BY_ID[r["id"]] for r in KIP_ROWS]
 KIP_BY_ID = {p["id"]: p for p in KIP_PARTS}
 
 SHARED_VIEWER_IDS = [
@@ -105,6 +130,8 @@ def _export_visual_overlays(stl_out_dir: Path) -> None:
         "toyventor_char_head_bob_hair.stl",
         "toyventor_char_head_curls_skin.stl",
         "toyventor_char_head_curls_hair.stl",
+        "toyventor_char_head_chin_S.stl",
+        "toyventor_char_head_round_S.stl",
     ):
         (stl_out_dir / stale).unlink(missing_ok=True)
 
@@ -163,23 +190,48 @@ def verify_assemblies(kip_entries: list[dict]) -> list[tuple[str, dict]]:
     b_seated.append(asm.attach(lib, b_seated[5], "top_studs", "wobble_hat", "under_sockets", pid="hat"))
     results.append(("seated_human_faceplate_hat_ready_hair_and_hat", asm.validate(lib, b_seated)))
 
-    # 2. All character heads, swappable faceplate, Hat-Ready hair + hat stacks, and Sculpted-Top hairs
-    for asm_name, head_id, with_face, crown_id, hat_id in [
-        ("kid_faceplate_bob_with_ears", "char_head_kid", True, "hair_bob", "pointy_ears"),
-        ("kid_faceplate_swoosh_with_horns", "char_head_kid", True, "hair_swoosh", "bumper_horns"),
-        ("chibi_faceplate_bob_with_ears", "char_head_chibi", True, "hair_bob", "pointy_ears"),
-        ("chin_faceplate_with_hair_ponytail", "char_head_chin", True, "hair_ponytail", None),
-        ("tall_faceplate_with_hair_spiky", "char_head_tall", True, "hair_spiky", None),
-        ("kid_faceplate_with_hair_mohawk", "char_head_kid", True, "hair_mohawk", None),
-        ("kid_faceplate_with_hair_pigtails", "char_head_kid", True, "hair_pigtails", None),
-        ("kid_faceplate_with_hair_ponytail", "char_head_kid", True, "hair_ponytail", None),
-        ("kid_faceplate_with_hair_curly", "char_head_kid", True, "hair_curly", None),
-        ("char_head_fox_with_wobble_hat", "char_head_fox", False, "wobble_hat", None),
-        ("char_head_bear_with_bumper_horns", "char_head_bear", False, "bumper_horns", None),
+    # 2. All character heads, all 3 universal swappable face inserts (`char_faceplate`, `char_faceplate_vinyl`, `char_faceplate_flat`),
+    #    all 14 hairstyles (6 Hat-Ready + 8 Sculpted-Top), and all 7 wearable hats (both on bald heads and stacked on Hat-Ready wigs)
+    for asm_name, head_id, fp_id, crown_id, hat_id in [
+        ("kid_sculpted_bob_with_beanie", "char_head_kid", "char_faceplate", "hair_bob", "hat_beanie"),
+        ("kid_vinyl_swept_with_ballcap", "char_head_kid", "char_faceplate_vinyl", "hair_short_swept", "hat_ballcap"),
+        ("kid_flat_swoosh_with_cowboy", "char_head_kid", "char_faceplate_flat", "hair_swoosh", "hat_cowboy"),
+        ("kid_sculpted_layered_with_hardhat", "char_head_kid", "char_faceplate", "hair_long_layered", "hat_hardhat"),
+        ("kid_sculpted_braids_with_ranger", "char_head_kid", "char_faceplate", "hair_twin_braids", "hat_ranger"),
+        ("kid_sculpted_shag_with_tophat", "char_head_kid", "char_faceplate", "hair_shag", "hat_tophat"),
+        ("chibi_vinyl_bob_with_ears", "char_head_chibi", "char_faceplate_vinyl", "hair_bob", "pointy_ears"),
+        ("chibi_sculpted_swept_with_pirate", "char_head_chibi", "char_faceplate", "hair_short_swept", "hat_pirate"),
+        ("chibi_flat_layered_with_ballcap", "char_head_chibi", "char_faceplate_flat", "hair_long_layered", "hat_ballcap"),
+        ("chibi_vinyl_bald_with_cowboy", "char_head_chibi", "char_faceplate_vinyl", "hat_cowboy", None),
+        ("chibi_vinyl_bald_with_pirate", "char_head_chibi", "char_faceplate_vinyl", "hat_pirate", None),
+        ("chibi_vinyl_with_pompadour", "char_head_chibi", "char_faceplate_vinyl", "hair_pompadour", None),
+        ("chibi_vinyl_with_top_bun", "char_head_chibi", "char_faceplate_vinyl", "hair_top_bun", None),
+        ("chibi_vinyl_with_side_sweep", "char_head_chibi", "char_faceplate_vinyl", "hair_side_sweep", None),
+        ("chibi_vinyl_with_hair_spiky", "char_head_chibi", "char_faceplate_vinyl", "hair_spiky", None),
+        ("chibi_vinyl_with_hair_pigtails", "char_head_chibi", "char_faceplate_vinyl", "hair_pigtails", None),
+        ("chibi_vinyl_with_hair_ponytail", "char_head_chibi", "char_faceplate_vinyl", "hair_ponytail", None),
+        ("chibi_vinyl_with_hair_curly", "char_head_chibi", "char_faceplate_vinyl", "hair_curly", None),
+        ("chibi_vinyl_with_hair_mohawk", "char_head_chibi", "char_faceplate_vinyl", "hair_mohawk", None),
+        ("kid_sculpted_braids_with_beanie", "char_head_kid", "char_faceplate", "hair_twin_braids", "hat_beanie"),
+        ("kid_vinyl_with_top_bun", "char_head_kid", "char_faceplate_vinyl", "hair_top_bun", None),
+        ("kid_flat_with_side_sweep", "char_head_kid", "char_faceplate_flat", "hair_side_sweep", None),
+        ("tall_vinyl_with_hair_curly", "char_head_tall", "char_faceplate_vinyl", "hair_curly", None),
+        ("tall_flat_with_hair_ponytail", "char_head_tall", "char_faceplate_flat", "hair_ponytail", None),
+        ("tall_sculpted_bald_with_hardhat", "char_head_tall", "char_faceplate", "hat_hardhat", None),
+        ("tall_vinyl_bald_with_ranger", "char_head_tall", "char_faceplate_vinyl", "hat_ranger", None),
+        ("tall_flat_bald_with_tophat", "char_head_tall", "char_faceplate_flat", "hat_tophat", None),
+        ("tall_sculpted_with_pompadour", "char_head_tall", "char_faceplate", "hair_pompadour", None),
+        ("char_head_fox_with_wobble_hat", "char_head_fox", None, "wobble_hat", None),
+        ("char_head_bear_with_bumper_horns", "char_head_bear", None, "bumper_horns", None),
+        ("robot_head_scout_with_wobble_hat", "robot_head_scout", None, "wobble_hat", None),
+        ("char_head_cat_with_pointy_ears", "char_head_cat", None, "pointy_ears", None),
+        ("char_head_dragon_with_wobble_hat", "char_head_dragon", None, "wobble_hat", None),
+        ("char_head_alien_with_wobble_hat", "char_head_alien", None, "wobble_hat", None),
+        ("char_head_imp_with_bumper_horns", "char_head_imp", None, "bumper_horns", None),
     ]:
         h_build = [asm.place(head_id, pid="head")]
-        if with_face:
-            h_build.append(asm.place_on_axis(lib, h_build[0], "face_slot", "char_faceplate", "axis", along=0.0, pid="faceplate"))
+        if fp_id:
+            h_build.append(asm.place_on_axis(lib, h_build[0], "face_slot", fp_id, "axis", along=0.0, pid="faceplate"))
         hair_item = asm.attach(lib, h_build[0], "top_studs", crown_id, "under_sockets", pid="crown")
         h_build.append(hair_item)
         if hat_id:
@@ -276,7 +328,7 @@ def main() -> int:
     entries = []
     all_ok = True
 
-    print(f"=== Evaluating {len(KIP_PARTS)} Wave 9 Kip Wardrobe, Wheel & V2 Vehicle Parts through PartSpec v2 Gate ===")
+    print(f"=== Evaluating {len(KIP_PARTS)} Kip parts (W9 wardrobe, wheels & V2 vehicles + W12 workshop props) through PartSpec v2 Gate ===")
     for part in KIP_PARTS:
         entry, tm, blocking_fail, small = tp.evaluate(part, validator)
         verified = entry["design_status"] == "verified"
@@ -332,7 +384,7 @@ def main() -> int:
     }
     manifest_out.write_text(json.dumps(out_doc, indent=2))
     (HERE / "kip-partspec-manifest.json").write_text(json.dumps(out_doc, indent=2))
-    print(f"\nExported {len(entries)} W9 STLs + two-tone visual overlays -> {stl_out_dir} and manifest -> {manifest_out}")
+    print(f"\nExported {len(entries)} W9 + W12 STLs + two-tone visual overlays -> {stl_out_dir} and manifest -> {manifest_out}")
     return 0 if all_ok else 1
 
 
