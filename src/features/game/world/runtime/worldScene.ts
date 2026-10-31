@@ -103,6 +103,7 @@ function setupPost(w: number, h: number): void {if(QP==="low"||!T.EffectComposer
 function stepDown(onResize: () => void): void {if(bloom&&bloom.enabled){bloom.enabled=false;renderer.setPixelRatio(Math.min(1.25,window.devicePixelRatio||1));onResize();return}if(composer){composer=null;renderer.setPixelRatio(1);sun.shadow.mapSize.set(512,512);if(sun.shadow.map){sun.shadow.map.dispose();sun.shadow.map=null}onResize()}}
 
 export {
+  T,
   renderer, scene, camera, hemi, sun, blob, perf,
   composer, bloom, grade, fxaa,
   MC, GT, GLASS, BUBBLE, STARGEO, GRADE, TINT,
