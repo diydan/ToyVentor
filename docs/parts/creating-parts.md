@@ -86,8 +86,8 @@ the target stage or catalog slot implicit.
 
 ### Resolve the catalog slot before writing geometry
 
-The selftest enforces the catalog targets in `catalog.json`: **67 Snap rows
-and 38 Pro rows**. A new row added casually will fail that test. Choose one
+The selftest enforces the catalog targets in `catalog.json` — read the current
+Snap/Pro targets there, not here. A new row added casually will fail that test. Choose one
 route explicitly:
 
 | Route | Use when | Required product action |
@@ -314,17 +314,8 @@ connection is unverified.
 ## 6. Iterate against the digital gate
 
 Stay in the scratch `out/` directory until the part is digitally clean:
-
-```bash
-python toyventor_parts.py out
-python toyventor_assembly.py out
-python make_standard.py out/INTERFACE_STANDARD.md
-python make_agents.py out
-python make_catalog.py out
-python selftest.py out
-```
-
-Inspect the manifest entry, fit pairs, and STL from all sides. A part is
+rerun the section 3 sequence above. Then
+inspect the manifest entry, fit pairs, and STL from all sides. A part is
 digitally conforming only when its generator status is `verified`, no blocking
 check fails, small-parts is not marginal, Large clears the cylinder, every
 mating feature is measured, and assembly plus selftest pass. Physical `F1`/`F2`

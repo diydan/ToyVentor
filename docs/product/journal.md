@@ -155,6 +155,10 @@ Goal (plan.md Days 5–7): fit/print behavior across bridged sets, exact prototy
   - Remote D1 has only `ownership`; parent-time migration not applied remotely, so `/api/parent/*` fails live even after deploy.
 - Tomorrow's first task: print Plate 1 (`01_big_blue_brick_L_2x2.stl` + `17_forge_mount_first_print_selector.stl`), apply parent-time migration to remote D1, publish.
 
+### Addendum — recorded Oct 31 (counts, not a rewrite)
+- Wave 9 is 53 parts (43 Snap + 10 Pro) with 41 assemblies per the Kip manifest and tests — the "33 parts, 17 assemblies" logged above was an early count.
+- The spec's "2 known Kip failures" note is retired (see End of Day above); `docs/product/spec.md` now points at live counts instead of naming a number.
+
 ### Decision recorded — Fri Oct 30
 - No rollover on earned time ([parent-time-gate.md](../specs/parent-time-gate.md)): day resets at local midnight in the family timezone, daily limit stays put, yesterday's surplus gone. Ledger keyed by day — rollover not representable; enforced by data shape, not a check someone must remember.
 - Parametric route locked, closing the Day 4 blocker: one frozen 12.5/25 mm TU lattice, one shared connector/metadata contract (`parts/partspec/interfaces.json` + PartSpec schema), one export path (`scripts/bridge-partspec.ts` into `sets/`). Hand-written OpenSCAD frozen as legacy lane, not extended. Broad print testing unblocked, subject only to calibration.

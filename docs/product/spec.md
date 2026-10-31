@@ -24,11 +24,10 @@ Package contents:
 - Seed content (`seed/`, `sets/`): starters, worlds, levels, packs, and the
   three bridged app sets.
 
-Verification snapshot: 165 tests across 24 Vitest files (163 passing; 2 known
-Kip failures from 3 un-generated `char_head_*` parts); 105 verified
-catalog targets; 30 printable app-set parts plus one demo skin; 399 served STL
-files and 75 served GLB files; six explore worlds, six lesson labs, and 44
-missions.
+Verification snapshot: live counts come from `npm test`, the PartSpec
+selftest, and the bridge — not this paragraph. Catalog targets live in
+`parts/partspec/catalog.json`. The demo surface is the three bridged app
+sets, six explore worlds, six lesson labs, and 44 missions.
 
 
 
@@ -36,7 +35,7 @@ missions.
 - **Direction:** [vision.md](vision.md).
 - **Submission story:** [submission-vision.md](submission-vision.md).
 - **Run:** [demo-script.md](demo-script.md).
-- **Status:** November 4, 2026; 163 of 165 tests passing (2 known Kip gaps).
+- **Status:** November 4, 2026; `npm test` and `parts/partspec/catalog.json` carry the live counts.
 - **Geometry:** the 12.5/25 mm TU lattice in
   [parts-tu-spec.md](../parts/parts-tu-spec.md); legacy 16/32 mm rows are frozen.
 
@@ -80,7 +79,7 @@ into a rebuildable, playable, printable companion in under a minute.
 - **Pro:** mechanical beams, pins, shafts, gears, and joints for ages 8 and up
   on the same 12.5 mm hole grid. Small gears, pins, shafts, and bushings carry
   choking-hazard warnings.
-- Committed catalog targets are 67 Snap + 38 Pro verified parts; the generator
+- Committed catalog targets live in `parts/partspec/catalog.json`; the generator
   marks verification. Pro fit windows sit inside Snap’s calibration coverage.
 
 
@@ -318,13 +317,9 @@ profiles, AR, ordering, creator tools, licensed IP, mystery drops, education
 tracks, original characters, personal play loops, merge forge, recycle,
 color tooling, real electronics, delivery integration, and classroom tools.
 Beyond them: Max, the real-robots phase (Snap → Pro → Max), opening with
-kid-safe battle bots and missions — play as the accelerant for robotics, the
-way games were for AI. Lived, not borrowed: hours in Fusion 360 and Blender
-on a 4-foot household robot, and a son who could help train it by playing. Feeding Max: an image-to-asset suggester (every scan or
-upload proposes character, vehicle, or prop; the kid confirms or corrects;
-Muse drafts the build plan from catalog parts, code validates, studs get
-stamped on the flattest face) and a ScanDex collection game whose confirmations
-and measurements sharpen the suggester. Full write-up deferred.
+kid-safe battle bots and missions — play as the accelerant for robotics.
+Detail lives in the journal's Later entries (Max phase; asset suggester +
+ScanDex).
 The React port has reached step 5 locally including the three.js 0.160
 upgrade; the standalone page remains the demo path and still needs its manual
 republish before recording.

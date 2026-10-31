@@ -45,6 +45,7 @@ on geometry conflicts, [parts-tu-spec.md](parts/parts-tu-spec.md) and
 | [flatpack-modular-craft-spec.md](specs/flatpack-modular-craft-spec.md) | Proposed flat-pack vehicle/craft grammar. |
 | [progressive-power-system-spec.md](specs/progressive-power-system-spec.md) | Proposed momentum-to-robotics stages. |
 | [scan-to-3d.md](specs/scan-to-3d.md) | Recommended scan-body route and acceptance tests. |
+| [play-design-spec.md](specs/play-design-spec.md) | Play design: level primitives, recipe format, generation pipeline, and playtest bar. |
 
 ## ToyVentor World (the 2.5D game)
 

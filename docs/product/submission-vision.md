@@ -6,7 +6,7 @@ longer internal direction; [spec.md](spec.md) governs the demo.
 ## Why it exists
 
 Toy scanners capture a shape and abandon the child. ToyVentor closes the loop:
-scan a real toy, rebuild it from 105 verified printable parts, improve it with
+scan a real toy, rebuild it from the verified printable catalog, improve it with
 snap-on upgrades, play it across worlds and labs, then design, publish, play,
 and print the result.
 
