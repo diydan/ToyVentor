@@ -4,7 +4,7 @@
   "file_sha256": "ba85521334b577f8af135aeeff10d89a07162bfa55f3bea807e563bd9948cc5c",
   "part_id": "racer_axle_block",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-10-31T11:23:46Z",
+  "checked_at": "2026-10-31T14:35:44Z",
   "metrics": {
     "bbox_mm": [
       24.8,
@@ -155,7 +155,7 @@
     ],
     "engine": "PrusaSlicer-2.8.1",
     "slice_logic": "1",
-    "reused_from": "2026-10-31T10:26:11Z"
+    "reused_from": "2026-10-31T11:23:46Z"
   },
   "verdict": "pass",
   "summary": "Prints as is"

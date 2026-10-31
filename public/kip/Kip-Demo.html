@@ -345,7 +345,7 @@
   <div class="row">
     <span class="row-label">Wardrobe</span>
     <button id="btn-category" class="mint-active" title="Cycle the head type: Human / Robot / Animal / Creature. The Wardrobe row shows only the options that fit the chosen type.">Type: Robot</button>
-    <button id="btn-head" class="spark-active" title="Cycle the 3 heads of the chosen type">Head: Kip Classic</button>
+    <button id="btn-head" class="spark-active" title="Cycle the heads of the chosen type">Head: Kip Classic</button>
     <button id="btn-face" title="Cycle swappable emotion Face Inserts &amp; 2D expressions">Face: Spark</button>
     <button id="btn-face-insert" class="mint-active" style="display:none;" title="Cycle Universal Human Face Inserts across all 3 human heads: 3D Nose &amp; Orbitals / 3D Button Eyes &amp; Nose / Flat Decal Insert">Insert: 3D Nose &amp; Orbitals</button>
     <button id="btn-hair" title="Cycle 14 sculpted multi-strand 2x1 hairstyles: 6 Hat-Ready styles (with top studs) + 8 Sculpted-Top styles">Hair: None</button>
@@ -538,6 +538,7 @@ import {
   HAIR_OPTIONS,
   WEARABLE_HAT_IDS,
   HAT_OPTIONS,
+  FACE_STEM_MM,
   CROWN_OPTIONS,
   BACK_OPTIONS,
   PROP_OPTIONS,
@@ -1922,7 +1923,7 @@ const keys = new Set();
 const loco = {
   edition: 'pro',      // 'pro' (8+) | 'snap' (3+)
   category: 'robot',   // 'human' | 'robot' | 'animal' | 'creature'
-  head: 'classic',     // human: 'kid' | 'chibi' | 'tall' · robot: 'classic' | 'robot' | 'scout' · animal: 'fox' | 'bear' | 'cat' · creature: 'dragon' | 'alien' | 'imp' · 'custom'
+  head: 'classic',     // human: 'kid' | 'chibi' | 'tall' | 'jumbo' · robot: 'classic' | 'robot' | 'scout' · animal: 'fox' | 'bear' | 'cat' · creature: 'dragon' | 'alien' | 'imp' · 'custom'
   skin: 'vinyl_cream',
   hairColor: 'chestnut',
   hatColor: 'cobalt_cap',
@@ -2608,7 +2609,7 @@ function syncHeadHairHatLayout() {
   // 2. Universal Swappable Human Face Inserts (`sculpted`, `vinyl`, `flat` — 100% interchangeable across ALL 4 human heads!)
   refreshDecalTexture();
   kip.exp.faceplateGroup.visible = isHuman;
-  kip.exp.faceplateHolder.position.set(0, dt.faceY - 2.90, 12.50);
+  kip.exp.faceplateHolder.position.set(0, dt.faceY - 2.90, FACE_STEM_MM);
   kip.exp.faceplateMesh.visible      = isHuman && (loco.faceInsert === 'sculpted');
   kip.exp.faceplateVinylMesh.visible = isHuman && (loco.faceInsert === 'vinyl');
   kip.exp.faceplateFlatMesh.visible  = isHuman && (loco.faceInsert === 'flat');
@@ -2794,7 +2795,7 @@ function setHeadMode(headId) {
   if (loco.head === 'chibi' && prevHead !== 'chibi') {
     loco.faceInsert = 'vinyl';
   }
-  // Wrap-around human wigs hug the 3 human skulls; clear hair when switching to a robot, animal or creature head!
+  // Wrap-around human wigs hug the 4 human skulls; clear hair when switching to a robot, animal or creature head!
   if (!HUMAN_HEAD_IDS.has(loco.head) && loco.hair !== 'off') {
     loco.hair = 'off';
   }
@@ -2804,7 +2805,7 @@ function setHeadMode(headId) {
 }
 
 document.getElementById('btn-head').addEventListener('click', () => {
-  // Cycle strictly through the 3 heads of the active category
+  // Cycle strictly through the heads of the active category
   const list = headsInCategory(loco.category);
   const curIdx = list.findIndex(h => h.id === loco.head);
   const next = list[(curIdx + 1) % list.length];

@@ -1,33 +1,43 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_char_head_kid_S.stl",
-  "file_sha256": "715ddb6f9a493676ef6fd62fa079bad151eda857e314a97215e7e0544d30e30f",
+  "file_sha256": "db192bcb504b1b27b5db7543085d9b608ad349abaddef1cb7e89eb4113df8d97",
   "part_id": "char_head_kid",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-10-31T11:24:25Z",
+  "checked_at": "2026-10-31T14:36:05Z",
   "metrics": {
     "bbox_mm": [
       38.18,
-      27.55,
+      27.32,
       34.2
     ],
-    "volume_cm3": 19.81,
-    "surface_cm2": 44.42,
-    "triangles": 10886,
+    "volume_cm3": 19.4,
+    "surface_cm2": 45.57,
+    "triangles": 11000,
     "ledges": [],
     "layers": 171,
     "bed_contact_mm2": 207.5,
     "height_mm": 34.2,
     "slenderness": 2.37,
     "centre_of_mass_over_contact": true,
-    "min_wall_mm": null,
-    "thin_wall_regions": []
+    "min_wall_mm": 0.249,
+    "thin_wall_regions": [
+      {
+        "area_mm2": 4.35,
+        "min_mm": 0.249,
+        "at_mm": [
+          -0.74,
+          -10.77,
+          14.41
+        ]
+      }
+    ]
   },
   "bridges": [
     {
       "z_mm": 15.05,
       "span_mm": 4.86,
-      "area_mm2": 62.7
+      "area_mm2": 65.6
     },
     {
       "z_mm": 3.2,
@@ -63,7 +73,7 @@
       "result": "pass",
       "value": [
         38.2,
-        27.6,
+        27.3,
         34.2
       ],
       "limit": [
@@ -124,14 +134,14 @@
     {
       "id": "V8_wall_thickness",
       "level": "warn",
-      "result": "pass",
-      "value": 0,
+      "result": "warn",
+      "value": 1,
       "limit": 0,
-      "detail": "regions where the wall is under 0.8 mm (two nozzle widths) over 2.0 mm2, or under 0.4 mm (one nozzle width) over 0.25 mm2; sharp edges and slivers are ignored"
+      "detail": "regions where the wall is under 0.8 mm (two nozzle widths) over 2.0 mm2, or under 0.4 mm (one nozzle width) over 0.25 mm2; worst 0.249 mm at [-0.74, -10.77, 14.41]"
     }
   ],
   "print_settings": {},
   "slicer": null,
-  "verdict": "pass",
-  "summary": "Prints as is"
+  "verdict": "pass_with_warnings",
+  "summary": "Warnings: V8_wall_thickness"
 }

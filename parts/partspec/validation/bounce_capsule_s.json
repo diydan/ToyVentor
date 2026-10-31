@@ -4,7 +4,7 @@
   "file_sha256": "e5e4f787fcec063bfa500b282076d20a8e58de9d08556806d8bab24d0397eec1",
   "part_id": "bounce_capsule_s",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-10-31T11:19:54Z",
+  "checked_at": "2026-10-31T14:29:01Z",
   "metrics": {
     "bbox_mm": [
       17.0,
@@ -160,7 +160,7 @@
       0
     ],
     "engine": "PrusaSlicer-2.8.1",
-    "reused_from": "2026-10-31T10:23:41Z"
+    "reused_from": "2026-10-31T11:19:54Z"
   },
   "verdict": "pass",
   "summary": "Prints as is"

@@ -38,7 +38,7 @@ export const WARDROBE_HEADS = [
   { id: 'kid',     category: 'human',    label: 'Soft Youth',     crownY: 31.4, faceY: 12.5 },
   { id: 'chibi',   category: 'human',    label: 'Sweet Heart',    crownY: 31.4, faceY: 12.5 },
   { id: 'tall',    category: 'human',    label: 'Heroic Jaw',     crownY: 33.4, faceY: 14.0625 },
-  { id: 'jumbo',   category: 'human',    label: 'Jumbo Vinyl',    crownY: 32.0, faceY: 14.0625 },
+  { id: 'jumbo',   category: 'human',    label: 'Jumbo Vinyl',    crownY: 31.4, faceY: 12.5 },
   { id: 'classic', category: 'robot',    label: 'Kip Classic',    crownY: 42.2, faceY: 19.8 },
   { id: 'robot',   category: 'robot',    label: 'Bolt Robot',     crownY: 31.6, faceY: 17.8 },
   { id: 'scout',   category: 'robot',    label: 'Mecha Scout',    crownY: 32.8, faceY: 17.6 },

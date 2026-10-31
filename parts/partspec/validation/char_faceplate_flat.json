@@ -1,25 +1,25 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_char_faceplate_flat_P.stl",
-  "file_sha256": "1fa1c26a7ed6012d47a102dcea3744d13eff2e05d3d8d3e83f483b4492fa262c",
+  "file_sha256": "a68c74de76979be06e8a7285c5a82240300b03d63948b845c4e09b428acc81e8",
   "part_id": "char_faceplate_flat",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-10-31T11:24:55Z",
+  "checked_at": "2026-10-31T14:36:19Z",
   "metrics": {
     "bbox_mm": [
-      24.24,
-      15.62,
-      10.5
+      24.2,
+      17.67,
+      13.15
     ],
-    "volume_cm3": 0.98,
-    "surface_cm2": 10.27,
-    "triangles": 804,
+    "volume_cm3": 1.14,
+    "surface_cm2": 11.04,
+    "triangles": 1620,
     "ledges": [],
-    "layers": 52,
-    "bed_contact_mm2": 58.4,
-    "height_mm": 10.5,
-    "slenderness": 1.37,
-    "centre_of_mass_over_contact": false,
+    "layers": 66,
+    "bed_contact_mm2": 51.5,
+    "height_mm": 13.15,
+    "slenderness": 1.83,
+    "centre_of_mass_over_contact": true,
     "min_wall_mm": null,
     "thin_wall_regions": []
   },
@@ -47,8 +47,8 @@
       "result": "pass",
       "value": [
         24.2,
-        15.6,
-        10.5
+        17.7,
+        13.1
       ],
       "limit": [
         180,
@@ -92,18 +92,18 @@
     {
       "id": "V7_min_feature",
       "level": "warn",
-      "result": "pass",
-      "value": 0,
+      "result": "warn",
+      "value": 1,
       "limit": 0,
-      "detail": "layer pieces narrower than 0.4 mm"
+      "detail": "layer pieces narrower than 0.4 mm; first at z 0.1 mm"
     },
     {
       "id": "V9_bed_contact",
       "level": "info",
-      "result": "warn",
-      "value": 58.4,
+      "result": "pass",
+      "value": 51.5,
       "limit": null,
-      "detail": "height / sqrt(contact) = 1.37; above about 3 the slicer often asks for a brim"
+      "detail": "height / sqrt(contact) = 1.83; above about 3 the slicer often asks for a brim"
     },
     {
       "id": "V8_wall_thickness",
@@ -117,5 +117,5 @@
   "print_settings": {},
   "slicer": null,
   "verdict": "pass_with_warnings",
-  "summary": "Warnings: V9_bed_contact"
+  "summary": "Warnings: V7_min_feature"
 }

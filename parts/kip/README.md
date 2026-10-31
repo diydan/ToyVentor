@@ -37,11 +37,11 @@ The machine-readable version of this section is [`kip-manifest.json`](kip-manife
 
 | Row | Options |
 | --- | --- |
-| **Type** (head category) | `Human`, `Robot`, `Animal`, `Creature`: 3 heads each, 12 in all. The `Head` button cycles within the chosen type. |
-| **Heads** | Human: `Soft Youth`, `Vinyl Squircle`, `Heroic Jaw` · Robot: `Kip Classic`, `Bolt Robot`, `Mecha Scout` · Animal: `Fox`, `Bear`, `Whisker Cat` · Creature: `Drake Dragon`, `Starling Alien`, `Yeti Imp` |
-| **Face inserts** (Human only) | `3D Nose & Orbitals` (`char_faceplate`), `3D Button Eyes & Nose` (`char_faceplate_vinyl`), `Flat Decal Insert` (`char_faceplate_flat`). One universal `face_slot`, so every insert fits every human head. Robot, animal and creature heads take a 2D decal face instead. |
+| **Type** (head category) | `Human`, `Robot`, `Animal`, `Creature`: 3 heads each (12), plus the `Jumbo Vinyl` Human head (13 in the demo). The `Head` button cycles within the chosen type. |
+| **Heads** | Human: `Soft Youth` (neutral), `Sweet Heart` (feminine), `Heroic Jaw` (masculine), plus `Jumbo Vinyl` · Robot: `Kip Classic`, `Bolt Robot`, `Mecha Scout` · Animal: `Fox`, `Bear`, `Whisker Cat` · Creature: `Drake Dragon`, `Starling Alien`, `Yeti Imp` |
+| **Face inserts** (Human only) | `3D Nose & Smile` (`char_faceplate`), `3D Button Eyes & Nose` (`char_faceplate_vinyl`), `Flat Decal Insert` (`char_faceplate_flat`). Each is a face-shaped plate inset `0.3 mm` below the skull. One universal `face_slot`, so every insert fits `Soft Youth`, `Sweet Heart` and `Heroic Jaw`. Robot, animal and creature heads take a 2D decal face instead. |
 | **Hair** (Human only) | 14 clip-on wigs: 6 Hat-Ready (`Swept`, `Bob`, `Swoosh`, `Long Flow`, `Twin Braids`, `Shag`) and 8 Sculpted-Top (`Pompadour`, `Top Bun`, `Side Sweep`, `Spiky Tufts`, `Twin Pigtails`, `High Ponytail`, `Cloud Curls`, `Action Mohawk`), 6 hair tones |
-| **Hats** | 7 wearable hats with 8 `Hat Tone` filament colours, plus `Spark Buds`, `Wobble Hat`, `Pointy Ears`, `Bumper Horns`, `Blank Cap` |
+| **Hats** | 7 wearable hats that wrap down over the head (each rim hangs about `10 mm` below its sockets) with 8 `Hat Tone` filament colours, plus `Spark Buds`, `Wobble Hat`, `Pointy Ears`, `Bumper Horns`, `Blank Cap` |
 | **Outfit** | 5 skin tones (Human), 6 shirts and 5 pants as solid-filament colour zones with front chest stencil stickers |
 | **Back / Ears / Tail** | `Explorer Pack`, `Bolt Jetpack`, `Cloud Wings`, `Pro 2:1 Gears` · `Comm-Pods`, `Pro Scanner` (Kip Classic only) · `Wag-Tail`, `Pro Wheelie` (not on Human) |
 | **Props** | `Prop Type` filters 17 props in 4 categories. Tools: `Pro Wrench`, `Pro Spinner`, `Claw Hammer`, `Screwdriver`, `Paint Roller` · Cleaning: `String Mop`, `Bristle Broom`, `Scrub Brush`, `Handheld Vacuum` · Instruments: `Acoustic Guitar`, `Brass Trumpet`, `Rattle Maraca` · Play & Gear: `Star Shield`, `Skateboard`, `Swallow-Tail Flag`, `Magnifying Glass` |
@@ -52,7 +52,7 @@ The Wardrobe row is context-aware: each head type shows only the controls that f
 
 **Deep links:** `/kip/Kip-Demo.html?cat=animal&head=cat&hat=ears&tail=wag&vehicle=scooter`. Query params: `edition`, `preset`, `cat`, `head`, `insert`, `face`, `skin`, `hair`, `haircol`, `hat`, `hatcol`, `shirt`, `pants`, `back`, `ears`, `tail`, `prop`, `vehicle`, `covers`, `racer`, `view`, `cam`, `clip`. Accepted values are listed in `kip-manifest.json` under `urlParams`.
 
-> **Jumbo head (under review):** `char_head_jumbo` (a 4th Human head) is in the PartSpec catalog and in the demo, which therefore lists 13 heads (4 Human, 3 per other category). The three heads `Soft Youth`, `Sweet Heart` and `Heroic Jaw` share one face zone, wig vault and hat cavity, and the jumbo skull is not part of that fit: it does not seat the face plate, wigs or hats. Whether to keep or retire it is undecided, so treat the 3-head Human set as the intended one. It is listed under `pending` in `kip-manifest.json`.
+> **Jumbo head:** `char_head_jumbo` (a 4th Human head, kept by decision on 2026-10-31) is in the PartSpec catalog and the demo, which therefore lists 13 heads (4 Human, 3 per other category). It was reshaped to the same universal face zone as `Soft Youth`, `Sweet Heart` and `Heroic Jaw` (`z_stud 31.4`, `z_bore 12.5`), so it seats the shared wig vault, hat cavity and face plates (`valid_kip_seated_jumbo` passes).
 
 ## Rebuild & Print-Orientation Export Commands
 

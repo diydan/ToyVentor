@@ -1,4 +1,4 @@
-// ToyVentor Kip — Phase 1 Wardrobe (12 Heads in 4 Categories: Human · Robot · Animal · Creature, 3 Universal Swappable Human Face Plates, 14 Sculpted Wigs, 7 Wearable Hats, Full-Body Skin & Clothing Decals)
+// ToyVentor Kip — Phase 1 Wardrobe (13 Heads in 4 Categories: Human · Robot · Animal · Creature, 3 Universal Swappable Human Face Plates, 14 Sculpted Wigs, 7 Wearable Hats, Full-Body Skin & Clothing Decals)
 // + Phase 2 V2 Modular Vehicles (Stylized Multi-Spoke Wheels & Snap-On Body Covers)
 import {
   createDecalExpressionCanvas,
@@ -8,11 +8,16 @@ import {
 
 export const KIP_BUILD_VERSION = 'v10.0';
 export const HAIR_WRAP_MM = 16.5;
-export const HAT_WRAP_MM = 6.0;
+// Wearable hats WRAP the head: each STL has its rim on the bed (z_stl = 0) and its 2x1 sockets HAT_RIM_MM[id] above it, so the mesh is shifted down by that much
+// and its rim lands at the hairline over a Hat-Ready wig (just above the brow on a bare head). Straight from HAT_RIM in toyventor_parts.py.
+export const HAT_RIM_MM = { ballcap: 10.8, beanie: 10.8, cowboy: 10.0, hardhat: 10.8, ranger: 10.0, tophat: 9.6, pirate: 10.4 };
+export const HAT_WRAP_MM = 10.8;
+// Depth (mm in front of the head's y = 0 plane) where the universal face plate's stem starts, i.e. the pocket floor on the bore axis (FACE_BACK_REF in toyventor_parts.py).
+export const FACE_STEM_MM = 10.167;
 
-export const HUMAN_HEAD_IDS = new Set(['kid', 'chibi', 'tall']);
+export const HUMAN_HEAD_IDS = new Set(['kid', 'chibi', 'tall', 'jumbo']);
 
-// Four head categories, three heads each (12 total). The `Type` button cycles categories; the `Head` button cycles within one.
+// Four head categories, three heads each except Human, which has four (13 total). The `Type` button cycles categories; the `Head` button cycles within one.
 export const HEAD_CATEGORIES = [
   { id: 'human',    label: 'Human' },
   { id: 'robot',    label: 'Robot' },
@@ -21,7 +26,7 @@ export const HEAD_CATEGORIES = [
 ];
 
 export const FACE_INSERT_MODES = [
-  { id: 'sculpted', label: '3D Nose & Orbitals' },
+  { id: 'sculpted', label: '3D Nose & Smile' },
   { id: 'vinyl',    label: '3D Button Eyes & Nose' },
   { id: 'flat',     label: 'Flat Decal Insert' },
 ];
@@ -29,9 +34,11 @@ export const FACE_INSERT_MODES = [
 export const WARDROBE_HEADS = [
   // Humans share one universal face-insert slot, so every insert fits every human head.
   // crownY = the head's `top_studs` plane (z_stud) and faceY = its `face_slot` bore (z_bore), both straight from toyventor_parts.py.
+  // kid = gender-neutral, chibi = feminine, tall = masculine.
   { id: 'kid',     category: 'human',    label: 'Soft Youth',     crownY: 31.4, faceY: 12.5 },
-  { id: 'chibi',   category: 'human',    label: 'Vinyl Squircle', crownY: 31.4, faceY: 12.5 },
+  { id: 'chibi',   category: 'human',    label: 'Sweet Heart',    crownY: 31.4, faceY: 12.5 },
   { id: 'tall',    category: 'human',    label: 'Heroic Jaw',     crownY: 33.4, faceY: 14.0625 },
+  { id: 'jumbo',   category: 'human',    label: 'Jumbo Vinyl',    crownY: 31.4, faceY: 12.5 },
   { id: 'classic', category: 'robot',    label: 'Kip Classic',    crownY: 42.2, faceY: 19.8 },
   { id: 'robot',   category: 'robot',    label: 'Bolt Robot',     crownY: 31.6, faceY: 17.8 },
   { id: 'scout',   category: 'robot',    label: 'Mecha Scout',    crownY: 32.8, faceY: 17.6 },
@@ -101,13 +108,13 @@ export const HAT_COLORS = [
 
 export const HAIR_OPTIONS = [
   { id: 'off',          label: 'None',                    hatReady: true,  topH: 0.0,  seatY: 0.0 },
-  // topH = WIG_TOP_Z (8.0 mm): where a hat-ready wig's 2x1 studs sit above the head's stud plane. seatY = the wig's hem, i.e. its lowest point.
-  { id: 'short_swept',  label: 'Swept (Hat-Ready)',       hatReady: true,  topH: 8.0, seatY: -16.5 },
-  { id: 'bob',          label: 'Bob (Hat-Ready)',         hatReady: true,  topH: 8.0, seatY: -19.0 },
-  { id: 'swoosh',       label: 'Swoosh (Hat-Ready)',      hatReady: true,  topH: 8.0, seatY: -16.5 },
-  { id: 'long_layered', label: 'Long Flow (Hat-Ready)',   hatReady: true,  topH: 8.0, seatY: -22.5 },
-  { id: 'twin_braids',  label: 'Twin Braids (Hat-Ready)', hatReady: true,  topH: 8.0, seatY: -22.5 },
-  { id: 'shag',         label: 'Shag (Hat-Ready)',        hatReady: true,  topH: 8.0, seatY: -17.0 },
+  // topH = WIG_TOP_Z (4.8 mm): where a hat-ready wig's 2x1 studs sit above the head's stud plane. seatY = the wig's hem, i.e. its lowest point.
+  { id: 'short_swept',  label: 'Swept (Hat-Ready)',       hatReady: true,  topH: 4.8, seatY: -16.5 },
+  { id: 'bob',          label: 'Bob (Hat-Ready)',         hatReady: true,  topH: 4.8, seatY: -19.0 },
+  { id: 'swoosh',       label: 'Swoosh (Hat-Ready)',      hatReady: true,  topH: 4.8, seatY: -16.5 },
+  { id: 'long_layered', label: 'Long Flow (Hat-Ready)',   hatReady: true,  topH: 4.8, seatY: -22.5 },
+  { id: 'twin_braids',  label: 'Twin Braids (Hat-Ready)', hatReady: true,  topH: 4.8, seatY: -22.5 },
+  { id: 'shag',         label: 'Shag (Hat-Ready)',        hatReady: true,  topH: 4.8, seatY: -17.0 },
   { id: 'pompadour',    label: 'Pompadour',               hatReady: false, topH: 0.0,  seatY: -16.5 },
   { id: 'top_bun',      label: 'Top Bun',                 hatReady: false, topH: 0.0,  seatY: -16.5 },
   { id: 'side_sweep',   label: 'Side Sweep',              hatReady: false, topH: 0.0,  seatY: -19.0 },
@@ -199,6 +206,7 @@ export async function loadExpansionGeos(loadSTL) {
     ['charHeadKid',        loadSTL(`/kip/partspec/toyventor_char_head_kid_S.stl${vq}`, 16)],
     ['charHeadChibi',      loadSTL(`/kip/partspec/toyventor_char_head_chibi_S.stl${vq}`, 38)],
     ['charHeadTall',       loadSTL(`/kip/partspec/toyventor_char_head_tall_S.stl${vq}`, 16)],
+    ['charHeadJumbo',      loadSTL(`/kip/partspec/toyventor_char_head_jumbo_S.stl${vq}`, 16)],
     ['charFaceplate',      loadSTL(`/kip/partspec/toyventor_char_faceplate_P.stl${vq}`, 16)],
     ['charFaceplateVinyl', loadSTL(`/kip/partspec/toyventor_char_faceplate_vinyl_P.stl${vq}`, 28)],
     ['charFaceplateFlat',  loadSTL(`/kip/partspec/toyventor_char_faceplate_flat_P.stl${vq}`, 22)],
@@ -380,6 +388,7 @@ export function attachExpansionToKipRig(THREE, kip, expGeos, baseParts, mats, sc
     kid:   scadMesh(expGeos.charHeadKid,   expMats.skin),
     chibi: scadMesh(expGeos.charHeadChibi, expMats.skin),
     tall:  scadMesh(expGeos.charHeadTall,  expMats.skin),
+    jumbo: scadMesh(expGeos.charHeadJumbo, expMats.skin),
     fox:   scadMesh(expGeos.charHeadFox,   expMats.fox),
     bear:  scadMesh(expGeos.charHeadBear,  expMats.bear),
     robot: scadMesh(expGeos.robotHeadVisor, expMats.botSilv),
@@ -406,7 +415,7 @@ export function attachExpansionToKipRig(THREE, kip, expGeos, baseParts, mats, sc
   kip.headLocal.add(faceplateGroup);
   const faceplateSlot = createSlot('char_faceplate', faceplateGroup, [0, 8, 56], 4.35, 'both', 'alt_head');
   const faceplateHolder = new THREE.Group();
-  faceplateHolder.position.set(0, 17.1875 - 2.90, 12.50);
+  faceplateHolder.position.set(0, 17.1875 - 2.90, FACE_STEM_MM);
   faceplateSlot.add(faceplateHolder);
 
   const fpOrient = new THREE.Group();
@@ -589,8 +598,8 @@ export function attachExpansionToKipRig(THREE, kip, expGeos, baseParts, mats, sc
     wizardHat: scadMesh(expGeos.customWizardHat, expMats.plum),
   };
   for (const [k, m] of Object.entries(hatMeshes)) {
-    // Support-free wearable hats sit on the bed at z_stl = 0 (rim) with 2x1 socket roof at z_stl = +6.0 mm (`HAT_WRAP_MM`)
-    m.position.y = WEARABLE_HAT_IDS.has(k) ? -HAT_WRAP_MM : (k === 'ponytail' ? -HAIR_WRAP_MM : 0);
+    // Support-free wearable hats sit on the bed at z_stl = 0 (rim) with the 2x1 sockets at z_stl = HAT_RIM_MM[id]: the rim wraps down over the head
+    m.position.y = WEARABLE_HAT_IDS.has(k) ? -(HAT_RIM_MM[k] ?? HAT_WRAP_MM) : (k === 'ponytail' ? -HAIR_WRAP_MM : 0);
     m.visible = false;
     crownAnchor.add(m);
   }

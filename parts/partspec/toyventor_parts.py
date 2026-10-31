@@ -1172,6 +1172,54 @@ def _asym_squircle_section(rx, ry_front, ry_back, p_front=3.6, p_back=4.0, n=72)
     return CrossSection([pts]).hull()
 
 
+# Universal face zone. Every human head shares this centre-line front depth and edge squareness across the plate zone
+# (zb = chin edge of the plate .. brow), so ONE universal face plate follows all of them; gender lives in width, jaw, brow, crown and ears.
+FACE_ZONE_PROFILE = [(-4.0, 9.635, 2.367), (-2.5, 10.990, 2.336), (-1.0, 12.323, 2.310), (0.0, 12.841, 2.301), (1.5, 13.379, 2.465), (3.0, 14.031, 2.690), (4.5, 14.699, 2.915), (6.0, 15.408, 3.140), (7.5, 15.692, 3.294), (9.0, 15.624, 3.300), (10.5, 15.558, 3.297), (12.0, 15.343, 3.285), (13.5, 14.937, 3.263), (15.0, 14.313, 3.229)]   # (zb, ryf, pf) sampled from the neutral head
+FACE_ZONE_CORE = (-0.5, 10.8)       # blend weight 1 inside (plate chin edge .. brow)
+FACE_ZONE_RAMP = (3.0, 3.2)         # smooth hand-over below / above the core
+
+
+def _smoothstep(t):
+    t = max(0.0, min(1.0, t))
+    return t * t * (3.0 - 2.0 * t)
+
+
+def _face_zone_weight(zb):
+    lo0, hi0 = FACE_ZONE_CORE
+    if zb < lo0:
+        return _smoothstep(1.0 - (lo0 - zb) / FACE_ZONE_RAMP[0])
+    if zb > hi0:
+        return _smoothstep(1.0 - (zb - hi0) / FACE_ZONE_RAMP[1])
+    return 1.0
+
+
+def _face_zone_lookup(zb):
+    pts = FACE_ZONE_PROFILE
+    if zb <= pts[0][0]:
+        return pts[0][1], pts[0][2]
+    if zb >= pts[-1][0]:
+        return pts[-1][1], pts[-1][2]
+    for (z0, r0, p0), (z1, r1, p1) in zip(pts, pts[1:]):
+        if z0 <= zb <= z1:
+            u = (zb - z0) / (z1 - z0)
+            return r0 + (r1 - r0) * u, p0 + (p1 - p0) * u
+    return pts[-1][1], pts[-1][2]
+
+
+def _apply_face_zone(stations, z_bore):
+    """Blend each skull station's centre front depth (`ryf`) and front squareness (`pf`) toward the universal face-zone profile."""
+    out = []
+    for (z, rx, ryf, ryb, pf, pb) in stations:
+        zb = z - (z_bore - 2.9)
+        w = _face_zone_weight(zb)
+        if w > 0.0 and FACE_ZONE_PROFILE:
+            r_u, p_u = _face_zone_lookup(zb)
+            ryf = ryf + (r_u - ryf) * w
+            pf = pf + (p_u - pf) * w
+        out.append((z, rx, ryf, ryb, pf, pb))
+    return out
+
+
 def _organic_human_skull(
     z_stud,
     z_jaw,
@@ -1186,6 +1234,8 @@ def _organic_human_skull(
     pf_cheek=3.85,
     pb_cheek=3.40,
     brow_push=0.0,
+    z_bore=None,
+    return_stations=False,
 ):
     """Smooth crease-free humanoid skull with a compact 2x1 neck collar (`z = 0..2.85 mm`),
     support-free C1 submental jaw curve (`<= 42 deg`), plush rounded cheeks, flatter occiput, and cosine crown dome."""
@@ -1243,6 +1293,11 @@ def _organic_human_skull(
         pf = 2.65 + (pf_cheek - 2.65) * e
         pb = 2.70 + (pb_cheek - 2.70) * e
         stations.append((z, rx, ryf, ryb, pf, pb))
+
+    if return_stations:
+        return stations
+    if z_bore is not None:
+        stations = _apply_face_zone(stations, z_bore)
 
     for i, (z, rx, ryf, ryb, pf, pb) in enumerate(stations):
         cs = _asym_squircle_section(rx, ryf, ryb, pf, pb, n=72)
@@ -1314,276 +1369,398 @@ def _loft_xy_sections(z_and_polys):
     return union(segs)
 
 
-def _human_face_pocket_cutter(z_bore):
-    """Universal `24.4 x 10.6 mm` front facial insert pocket (`|x| <= 12.20 mm`) shared identically by all 3 human heads,
-    with a 40.3-deg support-free supraorbital brow chamfer so all noses, eyes (including wide-set 3D button eyes),
-    brows, and mouths live strictly on the swappable faceplates — never on the head."""
-    y_back = -12.50  # exact -1.0 TU
+# ---------------------------------------------------------------------------------------------------------------------------
+# Universal face plate surface.
+# FACE_DEPTH is the MINIMUM front-surface depth (mm in front of the head's y = 0 plane) over the three human heads, sampled across
+# the plate (x) and up it (zb: 0 = chin edge of the plate, 10.5 = brow edge; the head z is z_bore - 2.9 + zb). All three heads share one
+# centre-line face profile (FACE_ZONE_PROFILE), so the plate's front, its back and the pocket floor follow the face instead of standing
+# flat and vertical in front of it. Regenerate this table from the heads (scratch tool `face_tables.py`) whenever a head changes.
+FACE_XS = (0.0, 3.0, 6.0, 9.0, 11.0, 12.2)
+FACE_ZBS = (0.0, 1.0, 2.0, 3.0, 4.5, 6.0, 7.5, 9.0, 10.5, 12.0, 13.5)
+FACE_DEPTH = (
+    (12.82, 12.68, 12.08, 10.80, 9.32, 8.02),
+    (13.20, 13.08, 12.58, 11.45, 10.14, 9.00),
+    (13.60, 13.51, 13.12, 12.21, 11.13, 10.20),
+    (14.03, 13.97, 13.68, 12.93, 12.05, 11.28),
+    (14.70, 14.67, 14.45, 13.87, 13.14, 12.50),
+    (15.36, 15.33, 15.18, 14.69, 14.06, 13.49),
+    (15.64, 15.61, 15.50, 15.10, 14.51, 13.99),
+    (15.63, 15.60, 15.48, 15.06, 14.48, 13.96),
+    (15.54, 15.51, 15.39, 14.97, 14.39, 13.87),
+    (15.29, 15.26, 15.14, 14.75, 14.18, 13.65),
+    (14.80, 14.76, 14.59, 14.13, 13.54, 13.04),
+)
+FACE_RECESS = 0.30     # the plate's front sits this far below the skull surface all round (a visible bezel lip)
+FACE_T0 = 3.4          # plate thickness on the centre line
+FACE_TMIN = 1.3        # thinnest edge of the plate body
+FACE_ROOF_SLOPE = 1.18  # the head's support-free brow roof: rises this much per mm of depth
+FACE_STEM_ZB = 2.9     # plate height of the stem / bore axis
+FACE_HW_MAX = 12.1
+FACE_CEIL_SLOPE = 0.9   # outline narrows at most this much per mm of height above the brow (<= 1.0 keeps the pocket ceiling at >= 45 deg)
+
+
+def _lerp_idx(vals, v):
+    if v <= vals[0]:
+        return 0, 0, 0.0
+    if v >= vals[-1]:
+        return len(vals) - 1, len(vals) - 1, 0.0
+    for i in range(len(vals) - 1):
+        if vals[i] <= v <= vals[i + 1]:
+            return i, i + 1, (v - vals[i]) / (vals[i + 1] - vals[i])
+    return len(vals) - 1, len(vals) - 1, 0.0
+
+
+def _face_skull_depth(x, zb):
+    """Bilinear skull front depth (minimum over the three heads) at plate coordinates (x, zb)."""
+    x = abs(x)
+    i0, i1, tz = _lerp_idx(FACE_ZBS, zb)
+    j0, j1, tx = _lerp_idx(FACE_XS, x)
+    top = FACE_DEPTH[i0][j0] + (FACE_DEPTH[i0][j1] - FACE_DEPTH[i0][j0]) * tx
+    bot = FACE_DEPTH[i1][j0] + (FACE_DEPTH[i1][j1] - FACE_DEPTH[i1][j0]) * tx
+    return top + (bot - top) * tz
+
+
+def face_front(x, zb):
+    """Depth of the plate's front surface (mm in front of y = 0)."""
+    return _face_skull_depth(x, zb) - FACE_RECESS
+
+
+def face_back(zb):
+    """Depth of the plate's back surface (and, 0.12 mm behind it, the pocket floor). Below the brow it follows the face centre line;
+    above it, it is the brow roof plane, so the plate fills the wedge under the roof instead of leaving a dark slot."""
+    if zb <= 10.5:
+        return face_front(0.0, zb) - FACE_T0
+    return face_front(0.0, 10.5) - FACE_T0 + (zb - 10.5) / FACE_ROOF_SLOPE
+
+
+FACE_BACK_REF = face_back(FACE_STEM_ZB) - 0.12      # depth of the stem start (pocket floor at the bore axis)
+
+
+def face_u(depth):
+    """Plate-local depth u (u = 0.12 is the plate back at the stem)."""
+    return depth - FACE_BACK_REF
+
+
+def face_top_zb(zb_hint=0.0):
+    """Highest plate station: where the front surface meets the roof plane at the centre line."""
+    zb = 10.5
+    while zb < 14.0:
+        if face_front(0.0, zb) - face_back(zb) < 0.5:
+            return zb
+        zb += 0.05
+    return 14.0
+
+
+def face_outline_hw(zb):
+    """Half-width of the plate at plate height `zb`: the widest the plate can be (<= 12.1) while the face curving away from the centre
+    still leaves at least FACE_TMIN (0.5 at the brow wedge) of plate between the back and the front."""
+    tmin = FACE_TMIN if zb <= 10.5 else max(0.5, FACE_TMIN - (zb - 10.5) * 0.4)
+    hw = 0.0
+    x = 0.0
+    while x <= FACE_HW_MAX + 1e-9:
+        if face_front(x, zb) - face_back(zb) >= tmin:
+            hw = x
+        else:
+            break
+        x += 0.05
+    if zb > 10.5:                                   # the pocket ceiling corners must slope >= 45 deg to print without supports
+        hw = min(hw, FACE_HW_MAX - FACE_CEIL_SLOPE * (zb - 10.5))
+    return hw
+
+
+FACE_STATIONS = (0.0, 0.5, 1.1, 1.8, 2.6, 3.6, 4.8, 6.0, 7.2, 8.4, 9.6, 10.5, 11.2, 11.9, 12.5, 13.0)
+
+
+def _face_plate_base():
+    """The meniscus plate body: back follows the face, front follows the face 0.3 mm below it, outline is face-shaped."""
+    zt = face_top_zb()
+    sections = []
+    for zb in list(FACE_STATIONS) + [zt - 0.05]:
+        if zb > zt - 0.04:
+            if zb != zt - 0.05:
+                continue
+        hw = face_outline_hw(zb)
+        if hw < 0.4:
+            continue
+        ub = face_u(face_back(zb))
+        xs = sorted({0.0, hw} | {x for x in FACE_XS if 0.0 < x < hw})
+        front = [(x, face_u(face_front(x, zb))) for x in xs]
+        pts = [(-hw, ub), (hw, ub)] + [(x, u) for x, u in reversed(front)] + [(-x, u) for x, u in front[1:]]
+        sections.append((zb, pts))
+    return _loft_xy_sections(sections)
+
+
+def _face_pocket_polygon_yz(z_bore):
+    """(y, z) outline of the head's plate pocket: floor follows the plate back, bottom edge a hair under the plate, roof parallel to the plate top."""
+    z0 = z_bore - 2.9
     y_front = -22.0
-    z_bot = z_bore - 2.96
-    z_scarf0 = z_bore + 7.68
-    z_top = z_scarf0 + 1.18 * (y_back - y_front)
-    pts_yz = [
-        (y_front, z_bot),
-        (y_back,  z_bot),
-        (y_back,  z_scarf0),
-        (y_front, z_top),
-    ]
-    w_pocket = 24.40
-    return Manifold.extrude(CrossSection([pts_yz], FillRule.NonZero), w_pocket).translate((0.0, 0.0, -0.5 * w_pocket)).rotate((90.0, 0.0, 90.0))
+    zt = face_top_zb()
+    pts = [(y_front, z0 - 0.06), (-(face_back(0.0) - 0.12), z0 - 0.06)]
+    for zb in (0.0, 1.1, 2.6, 3.6, 4.8, 6.0, 7.2, 8.4, 9.6, 10.5):
+        pts.append((-(face_back(zb) - 0.12), z0 + zb))
+    roof_d0 = face_back(10.5) - 0.12
+    pts.append((y_front, z0 + 10.5 + 0.1 + FACE_ROOF_SLOPE * (-y_front - roof_d0)))
+    return pts
+
+
+def _face_outline_polygon_xz(z_bore, grow=0.1):
+    """Pocket outline in the front view: the plate outline + `grow`, then continuing upward with 42-deg corners (no flat ceiling); the roof plane trims it."""
+    z0 = z_bore - 2.9
+    right = []
+    for zb in list(FACE_STATIONS):
+        if zb > 10.5:
+            continue
+        right.append((max(face_outline_hw(zb), 0.3) + grow, z0 + zb))
+    top_zb = 10.5
+    while top_zb < 17.0:
+        top_zb += 0.5
+        right.append((FACE_HW_MAX + grow - FACE_CEIL_SLOPE * (top_zb - 10.5), z0 + top_zb))
+    left = [(-x, z) for x, z in right]
+    return [(right[0][0], z0 - 0.06)] + right + list(reversed(left)) + [(left[0][0], z0 - 0.06)]
+
+
+def _human_face_pocket_cutter(z_bore):
+    """Plate pocket shared identically by all human heads: the floor follows the plate back (and so the face), the roof is parallel to the plate top
+    (the 40-deg support-free brow), and the outline is the plate's face-shaped outline plus 0.1 mm; everything in front of the floor inside it is open,
+    so the skull surface forms a lip all round and the plate sits 0.3 mm below it."""
+    w = 2 * FACE_HW_MAX + 2.0
+    yz = Manifold.extrude(CrossSection([_face_pocket_polygon_yz(z_bore)], FillRule.NonZero), w).translate((0.0, 0.0, -0.5 * w)).rotate((90.0, 0.0, 90.0))
+    outline = Manifold.extrude(CrossSection([_face_outline_polygon_xz(z_bore)], FillRule.NonZero), 26.0).rotate((90.0, 0.0, 0.0))
+    return yz ^ outline
 
 
 def _finish_human_head(skull, ears, size, lock, z_stud, z_bore):
-    """Subtract universal 24.4 mm facial pocket + fixed axis8 bore, cut 2x1 neck sockets, and add 2x1 crown buds."""
+    """Subtract the universal face-plate pocket + fixed axis8 bore (starting at the pocket floor on the stem axis), cut 2x1 neck sockets, add 2x1 crown buds."""
     body = (skull + ears) - _human_face_pocket_cutter(z_bore)
-    body = body - pro.bore_cutter_axis("fixed", 12.9, (0.0, -6.15, z_bore), "y")
-    c_face = pro._axis_bore_conn("face_slot", "fixed", (0.0, -6.25, z_bore), "y", 12.5, lattice="axis8")
+    y_start = -FACE_BACK_REF
+    body = body - pro.bore_cutter_axis("fixed", 13.3, (0.0, y_start + 6.15, z_bore), "y")   # opens 0.5 mm toward the plate so the stem overshoot clears the tilted floor
+    c_face = pro._axis_bore_conn("face_slot", "fixed", (0.0, y_start + 6.25, z_bore), "y", 12.5, lattice="axis8")
     m, conns, ex = integrated_sockets(body, size, lock)
     m, c_top = add_studs_at(m, size, 2, 1, 0.0, 0.0, z_stud, "top_studs")
     return m, conns + [c_top, c_face], ex
 
 
-def char_head_kid(size="small", grid=(2, 1), lock=True, **_):
-    """Human Head 1 (Soft Youth): Cute baby-schema humanoid head (`W_cranium=34.8`, `D=28.2`, `H=31.4`) with a low-set universal
-    `face_slot`, big forehead, chubby cheeks, short soft chin, compact 2x1 neck collar, and small rounded ears."""
-    z_stud, z_bore = 31.4, 12.5
-    skull = _organic_human_skull(
-        z_stud=z_stud,
-        z_jaw=10.0,
-        z_cheek_top=19.0,
-        rx_jaw=16.0,
-        rx_cheek=17.4,
-        rx_crown=14.0,
-        ryf_jaw=12.9,
-        ryf_cheek=15.6,
-        ryb_cheek=12.6,
-        pf_jaw=2.30,
-        pf_cheek=3.30,
-        pb_cheek=3.10,
-        brow_push=0.10,
-    )
-    ears = _smooth_human_ears(z_bot=9.6, z_mid=13.6, z_top=17.0, x_skull=17.4, protrude=1.7, y_front=-0.8, y_back=4.2)
+# The three human heads: gender-neutral (kid), feminine (chibi) and masculine (tall). They share one face zone (FACE_ZONE_PROFILE), so every field here
+# that touches the plate zone (z_bore, the skull's ryf/pf stations) is blended toward it; the differences are width, jaw squareness, dome, brow and ears.
+# `face_depth_table_from_heads()` rebuilds FACE_DEPTH from these specs, and selftest fails if the checked-in table has drifted.
+HUMAN_HEAD_SPECS = {
+    "char_head_kid": dict(   # neutral
+        z_stud=31.4, z_bore=12.5,
+        skull=dict(
+            z_jaw=10.0,
+            z_cheek_top=19.0,
+            rx_jaw=16.0,
+            rx_cheek=17.4,
+            rx_crown=14.0,
+            ryf_jaw=12.9,
+            ryf_cheek=15.6,
+            ryb_cheek=12.6,
+            pf_jaw=2.3,
+            pf_cheek=3.3,
+            pb_cheek=3.1,
+            brow_push=0.1,
+        ),
+        ears=dict(z_bot=9.6, z_mid=13.6, z_top=17.0, x_skull=17.4, protrude=1.7, y_front=-0.8, y_back=4.2),
+    ),
+    "char_head_chibi": dict(   # feminine
+        z_stud=31.4, z_bore=12.5,
+        skull=dict(
+            z_jaw=10.0,
+            z_cheek_top=18.4,
+            rx_jaw=14.6,
+            rx_cheek=18.4,
+            rx_crown=15.8,
+            ryf_jaw=12.9,
+            ryf_cheek=15.6,
+            ryb_cheek=13.4,
+            pf_jaw=2.0,
+            pf_cheek=2.9,
+            pb_cheek=2.8,
+            brow_push=0.0,
+        ),
+        ears=dict(z_bot=12.0, z_mid=14.6, z_top=17.0, x_skull=17.4, protrude=0.9, y_front=0.0, y_back=3.4),
+    ),
+    "char_head_tall": dict(   # masculine
+        z_stud=33.4, z_bore=14.0625,
+        skull=dict(
+            z_jaw=11.0,
+            z_cheek_top=21.0,
+            rx_jaw=17.4,
+            rx_cheek=17.8,
+            rx_crown=12.8,
+            ryf_jaw=12.9,
+            ryf_cheek=15.8,
+            ryb_cheek=12.6,
+            pf_jaw=3.0,
+            pf_cheek=3.9,
+            pb_cheek=3.6,
+            brow_push=0.8,
+        ),
+        ears=dict(z_bot=12.2, z_mid=17.0, z_top=21.6, x_skull=17.8, protrude=1.9, y_front=-1.2, y_back=5.0),
+    ),
+}
+
+
+def _human_head_parts(name):
+    sp = HUMAN_HEAD_SPECS[name]
+    skull = _organic_human_skull(z_stud=sp["z_stud"], z_bore=sp["z_bore"], **sp["skull"])
+    return skull, _smooth_human_ears(**sp["ears"]), sp["z_stud"], sp["z_bore"]
+
+
+def _human_head(name, size, lock):
+    skull, ears, z_stud, z_bore = _human_head_parts(name)
     return _finish_human_head(skull, ears, size, lock, z_stud, z_bore)
+
+
+def _skull_front_depth(skull, z, x):
+    """Depth (mm in front of y = 0) of the skull's front surface at height z along the vertical line at x; None where the skull is not."""
+    best = None
+    for P in skull.slice(z).to_polygons():
+        n = len(P)
+        for i in range(n):
+            (x0, y0), (x1, y1) = P[i], P[(i + 1) % n]
+            if (x0 - x) * (x1 - x) <= 0 and x0 != x1:
+                y = y0 + (x - x0) / (x1 - x0) * (y1 - y0)
+                best = y if best is None else min(best, y)
+    return None if best is None else -best
+
+
+def face_depth_table_from_heads():
+    """FACE_DEPTH recomputed from the three human heads: the minimum skull front depth at each (zb, x) of the plate grid."""
+    rows = None
+    for name in HUMAN_HEAD_SPECS:
+        skull, _, _, z_bore = _human_head_parts(name)
+        z0 = z_bore - 2.9
+        t = [[_skull_front_depth(skull, z0 + zb, x) for x in FACE_XS] for zb in FACE_ZBS]
+        rows = t if rows is None else [[min(a, b) for a, b in zip(ra, rb)] for ra, rb in zip(rows, t)]
+    return rows
+
+
+def char_head_kid(size="small", grid=(2, 1), lock=True, **_):
+    """Human Head 1 (Soft Youth, gender-neutral): rounded baby-schema head with soft cheeks, a gentle jaw and small round ears. Shares the universal face zone (one face plate fits all three heads)."""
+    return _human_head("char_head_kid", size, lock)
 
 
 def char_head_chibi(size="small", grid=(2, 1), lock=True, **_):
-    """Human Head 2 (Vinyl Squircle): Cutest wide collector-vinyl squircle head (`W_cranium=37.2`, `D=28.4`, `H=31.4`) with a low-set
-    universal `face_slot`, huge forehead, pillow cheeks, tiny chin, compact 2x1 neck collar, and small low ears."""
-    z_stud, z_bore = 31.4, 12.5
-    skull = _organic_human_skull(
-        z_stud=z_stud,
-        z_jaw=11.1,
-        z_cheek_top=18.6,
-        rx_jaw=17.5,
-        rx_cheek=18.5,
-        rx_crown=14.8,
-        ryf_jaw=13.2,
-        ryf_cheek=15.4,
-        ryb_cheek=13.0,
-        pf_jaw=3.00,
-        pf_cheek=3.90,
-        pb_cheek=3.50,
-        brow_push=0.05,
-    )
-    ears = _smooth_human_ears(z_bot=10.2, z_mid=13.8, z_top=17.0, x_skull=18.5, protrude=1.6, y_front=-0.6, y_back=4.0)
-    return _finish_human_head(skull, ears, size, lock, z_stud, z_bore)
+    """Human Head 2 (Sweet Heart, feminine): tall rounded dome, full high cheeks, a narrower softly rounded jaw and small ears. Shares the universal face zone."""
+    return _human_head("char_head_chibi", size, lock)
 
 
 def char_head_jumbo(size="small", grid=(2, 1), lock=True, **_):
-    """Human Head (Jumbo Vinyl): Big square collector-vinyl display head (`W_cranium=38.2`, `W_ears=40.0`, `D=28.1`, `H=32.0`)
-    with a low-set universal `face_slot`, huge flat-ish forehead dome, full square cheeks, tiny chin, compact 2x1 neck collar,
-    centered 2x1 crown buds, and small nub ears."""
-    z_stud, z_bore = 32.0, 14.0625
+    """Human Head (Jumbo Vinyl): the widest human head, a rounded-square collector-vinyl head with full cheeks, a broad flat-ish crown and small ears,
+    sized to stay inside the shared wig vault and hat cavity (so every wig and hat fits it) and sharing the universal face zone (every face plate fits it)."""
+    z_stud, z_bore = 31.4, 12.5
     skull = _organic_human_skull(
         z_stud=z_stud,
-        z_jaw=14.0,
-        z_cheek_top=22.0,
-        rx_jaw=17.50,
-        rx_cheek=19.10,
-        rx_crown=12.50,
-        ryf_jaw=14.80,
-        ryf_cheek=15.60,
-        ryb_cheek=13.00,
-        pf_jaw=2.30,
-        pf_cheek=3.80,
-        pb_cheek=3.50,
-        brow_push=0.00,
+        z_bore=z_bore,
+        z_jaw=10.0,
+        z_cheek_top=18.7,
+        rx_jaw=17.2,
+        rx_cheek=18.0,
+        rx_crown=14.8,
+        ryf_jaw=12.9,
+        ryf_cheek=15.6,
+        ryb_cheek=12.8,
+        pf_jaw=2.5,
+        pf_cheek=3.4,
+        pb_cheek=3.2,
     )
-    ears = _smooth_human_ears(z_bot=12.0, z_mid=16.0, z_top=19.0, x_skull=19.20, protrude=0.80, y_front=0.2, y_back=3.2)
+    ears = _smooth_human_ears(z_bot=10.5, z_mid=14.5, z_top=17.5, x_skull=17.4, protrude=1.2, y_front=0.0, y_back=3.5)
     return _finish_human_head(skull, ears, size, lock, z_stud, z_bore)
 
 
 def char_head_tall(size="small", grid=(2, 1), lock=True, **_):
-    """Human Head 3 (Heroic Jaw): Friendly sculpted hero head (`W_cranium=35.6`, `D=28.8`, `H=33.4`) with a low-set universal `face_slot`,
-    rounded squared jaw, athletic brow, compact 2x1 neck collar, and small rounded ears."""
-    z_stud, z_bore = 33.4, 14.0625
-    skull = _organic_human_skull(
-        z_stud=z_stud,
-        z_jaw=11.6,
-        z_cheek_top=21.6,
-        rx_jaw=16.4,
-        rx_cheek=17.8,
-        rx_crown=13.9,
-        ryf_jaw=14.0,
-        ryf_cheek=15.9,
-        ryb_cheek=12.8,
-        pf_jaw=3.00,
-        pf_cheek=3.60,
-        pb_cheek=3.30,
-        brow_push=0.30,
-    )
-    ears = _smooth_human_ears(z_bot=12.0, z_mid=16.4, z_top=20.4, x_skull=17.8, protrude=1.7, y_front=-1.0, y_back=4.6)
-    return _finish_human_head(skull, ears, size, lock, z_stud, z_bore)
+    """Human Head 3 (Heroic Jaw, masculine): flat-topped block head with a wide square jaw, a strong brow and larger ears. Shares the universal face zone."""
+    return _human_head("char_head_tall", size, lock)
 
 
-# Soft moulded resting mouth carried by all three universal faceplates (bed frame: x across, y = depth out of the face, z = chin-to-brow).
+# Soft moulded resting mouth carried by all three universal faceplates (plate frame: x across, u = depth out of the face, zb = chin-to-brow).
 # Brand rule 3 keeps *expressions* as decals, so this is a neutral gently-upturned lip ridge the decals paint over, never a fixed grin.
 FACE_MOUTH = {
     "x_half": 2.5,      # half chord of the lip line (5.0 mm wide)
     "z_vertex": 1.25,   # lowest point of the lip centreline, above the plate's chin edge (zb = 0)
     "sag": 0.50,        # corners sit this much higher than the vertex (parabolic, gently upturned)
-    "y_surf": 2.57,     # nominal front surface of all three plates at the mouth
     "h": 0.55,          # proud of the surface
     "r_top": 0.35,      # half width of the ridge crest
 }
 
 
 def _faceplate_mouth(n_seg=14):
-    """Raised lip ridge: hull of circular frusta along a parabola. The plate prints standing up, so a flank is an overhang
-    unless the ridge narrows by at least 1 mm per mm of height (no surface leans more than 45 deg from vertical): `slope` >= 1."""
+    """Raised lip ridge: hull of circular frusta along a parabola, riding on the face surface. The plate prints standing up, so a flank is an
+    overhang unless the ridge narrows by at least 1 mm per mm of height (no surface leans more than 45 deg from vertical): `slope` >= 1."""
     mo = FACE_MOUTH
     slope = 1.2
-    y_top = mo["y_surf"] + mo["h"]
-    y_base = mo["y_surf"] - 0.35                       # buried in the plate so the union is watertight
-    r_base = mo["r_top"] + slope * (y_top - y_base)
+    r_base = mo["r_top"] + slope * (mo["h"] + 0.35)
     k = mo["r_top"] / r_base
 
     def frustum(x, z):
-        f = Manifold.extrude(CrossSection.circle(r_base, 24), y_top - y_base, 0, 0.0, (k, k))
-        return f.rotate((-90.0, 0.0, 0.0)).translate((x, y_base, z))
+        y_surf = face_u(face_front(x, z))
+        f = Manifold.extrude(CrossSection.circle(r_base, 24), mo["h"] + 0.35, 0, 0.0, (k, k))
+        return f.rotate((-90.0, 0.0, 0.0)).translate((x, y_surf - 0.35, z))
 
     xs = [-mo["x_half"] + 2.0 * mo["x_half"] * i / n_seg for i in range(n_seg + 1)]
     fr = [frustum(x, mo["z_vertex"] + mo["sag"] * (x / mo["x_half"]) ** 2) for x in xs]
     ridge = union([Manifold.batch_hull([fr[i], fr[i + 1]]) for i in range(n_seg)])
-    return ridge ^ Manifold.cube((30.0, 10.0, 10.5), center=False).translate((-15.0, 0.0, 0.0))   # never outside the plate's chin-to-brow envelope
+    return ridge ^ Manifold.cube((30.0, 40.0, 10.5), center=False).translate((-15.0, -5.0, 0.0))   # never outside the plate's chin edge
 
+
+def _face_plate_finish(mask_bed, stem_tu):
+    mask_part = mask_bed.translate((0.0, 0.0, -FACE_STEM_ZB)).rotate((-90.0, 0.0, 0.0))
+    stem_len = stem_tu * pro.TU
+    stem = pro.pin_solid("flats", stem_len + 0.35, z0=-0.35)
+    m = mask_part + stem
+    conn = pro._pin_conn("shaft_drive", "flats", stem_len, z0=0.0)
+    return m, [conn], {"print_rotation_deg": [90, 0, 0]}
+
+
+def _face_nose(stations):
+    """Nose prism lofted over `(zb, half width at the base, half width at the crest, height above the face)` stations, riding on the face."""
+    sections = []
+    for zb, wb, wt, hn in stations:
+        us = face_u(face_front(0.0, zb))
+        um = face_u(face_front(wb, zb)) - 0.15          # flanks start just under the face so the union has no coincident faces
+        ub = us - 0.6
+        sections.append((zb, [(-wb, ub), (wb, ub), (wb, um), (wt, us + hn), (-wt, us + hn), (-wb, um)]))
+    return _loft_xy_sections(sections)
 
 
 def char_faceplate(stem_tu=1, **_):
-    """Universal Sculpted 3D Nose & Orbital Face Insert (`24.2 x 10.5 mm` front + `1 TU` flat-sided stem):
-    proud 3D nose prism + wide recessed orbital eye-socket planes + a soft raised resting-smile mouth ridge.
+    """Universal Sculpted Nose Face Insert (face-shaped meniscus plate, `1 TU` flat-sided stem): the plate's back and front follow the face, 0.3 mm below
+    the skull surface, so it sits inset in the head instead of standing proud of it; a gentle 3D nose prism and a soft raised resting-smile mouth ridge.
     Interchangeable across all 3 Human Head `face_slot` bores; prints upright on `LAY_FLAT` (`[90, 0, 0]`)."""
-    yb0 = 0.12
-    stations_b = [
-        # zb,    wn,   yn,   wm,   ym,   we,   ye,    wc,    yc
-        ( 0.00, 1.25, 2.56, 2.65, 2.54, 6.80, 2.50, 12.10, 2.48),
-        ( 2.20, 1.25, 2.62, 2.65, 2.58, 6.80, 2.53, 12.10, 2.52),
-        ( 5.25, 1.10, 4.88, 2.70, 2.60, 6.80, 2.44, 12.12, 2.58),
-        ( 8.20, 1.05, 3.88, 2.45, 2.58, 6.75, 2.52, 12.10, 2.68),
-        (10.50, 1.45, 3.40, 2.75, 2.70, 6.70, 2.64, 12.08, 2.78),
-    ]
-    seg_solids = []
-    for i in range(len(stations_b) - 1):
-        zb0, wn0, yn0, wm0, ym0, we0, ye0, wc0, yc0 = stations_b[i]
-        zb1, wn1, yn1, wm1, ym1, we1, ye1, wc1, yc1 = stations_b[i + 1]
+    nose = _face_nose([(1.8, 1.25, 1.25, 0.12), (3.2, 1.25, 1.20, 0.65), (5.2, 1.15, 1.00, 1.30), (7.0, 1.10, 0.95, 1.05), (8.6, 1.20, 1.00, 0.60), (9.8, 1.40, 1.30, 0.15)])
+    return _face_plate_finish(_face_plate_base() + nose + _faceplate_mouth(), stem_tu)
 
-        def _prism_pair(pts0, pts1):
-            z0_eff = zb0 if i == 0 else zb0 - 0.03
-            w0 = Manifold.extrude(CrossSection([pts0], FillRule.NonZero).hull(), 0.04).translate((0.0, 0.0, z0_eff))
-            w1 = Manifold.extrude(CrossSection([pts1], FillRule.NonZero).hull(), 0.04).translate((0.0, 0.0, zb1 - 0.04))
-            return Manifold.batch_hull([w0, w1])
 
-        nose_p = _prism_pair(
-            [(-wm0, yb0), (wm0, yb0), (wm0, ym0), (wn0, yn0), (-wn0, yn0), (-wm0, ym0)],
-            [(-wm1, yb0), (wm1, yb0), (wm1, ym1), (wn1, yn1), (-wn1, yn1), (-wm1, ym1)],
-        )
-        orb_in_r = _prism_pair(
-            [(wm0 - 0.15, yb0), (we0 + 0.10, yb0), (we0 + 0.10, ye0), (wm0 - 0.15, ym0)],
-            [(wm1 - 0.15, yb0), (we1 + 0.10, yb0), (we1 + 0.10, ye1), (wm1 - 0.15, ym1)],
-        )
-        orb_out_r = _prism_pair(
-            [(we0 - 0.10, yb0), (wc0, yb0), (wc0, yc0), (we0 - 0.10, ye0)],
-            [(we1 - 0.10, yb0), (wc1, yb0), (wc1, yc1), (we1 - 0.10, ye1)],
-        )
-        side_r = orb_in_r + orb_out_r
-        seg_solids.append(nose_p + side_r + side_r.mirror((1.0, 0.0, 0.0)))
-
-    mask_bed = union(seg_solids) + _faceplate_mouth()
-    mask_part = mask_bed.translate((0.0, 0.0, -2.90)).rotate((-90.0, 0.0, 0.0))
-    stem_len = stem_tu * pro.TU
-    stem = pro.pin_solid("flats", stem_len + 0.35, z0=-0.35)
-    m = mask_part + stem
-    conn = pro._pin_conn("shaft_drive", "flats", stem_len, z0=0.0)
-    return m, [conn], {"print_rotation_deg": [90, 0, 0]}
+def _face_eye_lens(cx, cz, a=2.75, h=0.50, tilt_scale=1.0, sink=0.20):
+    """Shallow raised vinyl eye lens (spherical cap, base radius `a`, `h` proud), tilted to sit flush on the leaning face. A cap this flat keeps every
+    flank under 45 deg from vertical even with the face's own ~20 deg lean added; the decal paints the iris and glints over it."""
+    R = (a * a + h * h) / (2.0 * h)
+    secs = [(-0.9, [(a * math.cos(2 * math.pi * k / 24), a * math.sin(2 * math.pi * k / 24)) for k in range(24)]),
+            (0.0, [(a * math.cos(2 * math.pi * k / 24), a * math.sin(2 * math.pi * k / 24)) for k in range(24)])]
+    for y in (0.12, 0.24, 0.34, 0.42, 0.48):
+        r = max(math.sqrt(max(R * R - (R - h + y) ** 2, 0.0)), 0.3)
+        secs.append((y, [(r * math.cos(2 * math.pi * k / 24), r * math.sin(2 * math.pi * k / 24)) for k in range(24)]))
+    lens = _loft_xy_sections(secs).rotate((-90.0, 0.0, 0.0))
+    theta = math.degrees(math.atan2(face_front(abs(cx), cz + 0.5) - face_front(abs(cx), cz - 0.5), 1.0))
+    lens = lens.rotate((-theta * tilt_scale, 0.0, 0.0))
+    return lens.translate((cx, face_u(face_front(abs(cx), cz)) - sink, cz))
 
 
 def char_faceplate_vinyl(stem_tu=1, **_):
-    """Universal 3D Collector-Vinyl Button-Eye & Triangle-Nose Face Insert (`24.2 x 10.5 mm` front + `1 TU` flat-sided stem):
-    sculpted raised circular button-eye domes (`dia 5.5 mm` at `x = +-7.3 mm`) + horizontal collector-vinyl triangle nose wedge.
-    Interchangeable across all 4 Human Head `face_slot` bores; prints support-free on `LAY_FLAT` (`[90, 0, 0]`)."""
-    yb0 = 0.12
-    stations_flat = [
-        ( 0.00, 5.20, 2.55, 8.80, 2.52, 12.10, 2.48),
-        ( 5.25, 5.20, 2.60, 8.80, 2.58, 12.12, 2.56),
-        (10.50, 5.20, 2.78, 8.80, 2.76, 12.08, 2.74),
-    ]
-    base_polys = []
-    for zb, wf, yf, wm, ym, wc, yc in stations_flat:
-        base_polys.append((zb, [(-wc, yb0), (wc, yb0), (wc, yc), (wm, ym), (wf, yf), (-wf, yf), (-wm, ym), (-wc, yc)]))
-    base_bed = _loft_xy_sections(base_polys)
-
-    nose_bed = _loft_xy_sections([
-        (2.20, [(-1.9, 1.8), (1.9, 1.8), (1.4, 2.55), (-1.4, 2.55)]),
-        (3.85, [(-1.7, 1.8), (1.7, 1.8), (0.85, 4.02), (-0.85, 4.02)]),
-        (5.35, [(-1.1, 1.8), (1.1, 1.8), (0.45, 2.62), (-0.45, 2.62)]),
-    ])
-
-    eyes_bed = []
-    for sx in (-1, 1):
-        cx_e = sx * 7.30
-        cz_e = 5.45
-        d0 = [(cx_e + 2.75 * math.cos(2 * math.pi * k / 24), cz_e + 2.75 * math.sin(2 * math.pi * k / 24)) for k in range(24)]
-        d1 = [(cx_e + 1.95 * math.cos(2 * math.pi * k / 24), cz_e + 1.95 * math.sin(2 * math.pi * k / 24)) for k in range(24)]
-        d2 = [(cx_e + 1.25 * math.cos(2 * math.pi * k / 24), cz_e + 1.25 * math.sin(2 * math.pi * k / 24)) for k in range(24)]
-        eye_y = _loft_xy_sections([(-3.65, d2), (-3.16, d1), (-2.48, d0), (-1.80, d0)]).rotate((90.0, 0.0, 0.0))
-        eyes_bed.append(eye_y)
-
-    mask_bed = base_bed + nose_bed + union(eyes_bed) + _faceplate_mouth()
-    mask_part = mask_bed.translate((0.0, 0.0, -2.90)).rotate((-90.0, 0.0, 0.0))
-    stem_len = stem_tu * pro.TU
-    stem = pro.pin_solid("flats", stem_len + 0.35, z0=-0.35)
-    m = mask_part + stem
-    conn = pro._pin_conn("shaft_drive", "flats", stem_len, z0=0.0)
-    return m, [conn], {"print_rotation_deg": [90, 0, 0]}
+    """Universal Collector-Vinyl Button-Eye & Button-Nose Face Insert (face-shaped meniscus plate, `1 TU` flat-sided stem): raised circular button-eye domes
+    (`dia 5.5 mm` at `x = +-7.3 mm`) and a small button nose on a plate that follows the face and sits inset 0.3 mm below the skull surface, plus the soft
+    resting-smile mouth ridge. Interchangeable across all 3 Human Head `face_slot` bores; prints support-free on `LAY_FLAT` (`[90, 0, 0]`)."""
+    nose = _face_nose([(2.3, 1.9, 1.5, 0.12), (3.5, 1.7, 1.1, 0.55), (4.5, 1.3, 0.7, 1.00), (5.4, 0.9, 0.4, 0.30)])
+    eyes = [_face_eye_lens(sx * 7.30, 5.45) for sx in (-1, 1)]
+    return _face_plate_finish(_face_plate_base() + nose + union(eyes) + _faceplate_mouth(), stem_tu)
 
 
 def char_faceplate_flat(stem_tu=1, **_):
-    """Universal Smooth Flush Decal Face Insert (`24.2 x 10.5 mm` front + `1 TU` flat-sided stem):
-    smooth gently-cambered decal canvas with zero 3D nose protrusion or recessed eye sockets,
-    relying purely on printed 2D face decals. Interchangeable across all 4 Human Head `face_slot` bores."""
-    yb0 = 0.12
-    stations_flat = [
-        # zb,    wf,   yf,   wm,   ym,    wc,   yc
-        ( 0.00, 5.20, 2.55, 8.80, 2.52, 12.10, 2.48),
-        ( 5.25, 5.20, 2.64, 8.80, 2.61, 12.12, 2.58),
-        (10.50, 5.20, 2.84, 8.80, 2.81, 12.08, 2.78),
-    ]
-    polys = []
-    for zb, wf, yf, wm, ym, wc, yc in stations_flat:
-        pts = [
-            (-wc, yb0), (wc, yb0),
-            (wc, yc), (wm, ym), (wf, yf),
-            (-wf, yf), (-wm, ym), (-wc, yc),
-        ]
-        polys.append((zb, pts))
-    mask_bed = _loft_xy_sections(polys) + _faceplate_mouth()
-    mask_part = mask_bed.translate((0.0, 0.0, -2.90)).rotate((-90.0, 0.0, 0.0))
-
-    stem_len = stem_tu * pro.TU
-    stem = pro.pin_solid("flats", stem_len + 0.35, z0=-0.35)
-    m = mask_part + stem
-    conn = pro._pin_conn("shaft_drive", "flats", stem_len, z0=0.0)
-    return m, [conn], {"print_rotation_deg": [90, 0, 0]}
+    """Universal Smooth Decal Face Insert (face-shaped meniscus plate, `1 TU` flat-sided stem): a smooth plate that follows the face and sits inset 0.3 mm below
+    the skull surface, with no nose or eye relief, relying on printed 2D face decals plus the soft resting-smile mouth ridge.
+    Interchangeable across all 3 Human Head `face_slot` bores."""
+    return _face_plate_finish(_face_plate_base() + _faceplate_mouth(), stem_tu)
 
 
 def char_head_fox(size="small", grid=(2, 1), lock=True, **_):
@@ -1869,7 +2046,6 @@ def char_head_imp(size="small", grid=(2, 1), lock=True, **_):
 
 
 HAIR_WRAP_MM = 16.5
-HAT_WRAP_MM = 6.0
 
 
 def _ring_stack_manifold(z_and_polys):
@@ -1960,10 +2136,10 @@ def _strand_ring_pts(w, d, p_exp=2.75, cx=0.0, cy=-0.6, n_pts=72, n_locks=11, lo
     return pts
 
 
-WIG_TOP_Z = 8.0     # Hat-Ready wigs seat hats on 2x1 studs this high above the head's stud base (was 12.4: a chunky helmet)
+WIG_TOP_Z = 4.8     # Hat-Ready wigs seat hats on 2x1 studs this high above the head's stud base: socket depth 3.2 + 1.6 roof, the thinnest crown that holds the studs (was 12.4, then 8.0)
 WIG_WALL_MM = 1.7   # Hair is a thin cap: every wig shell is the head vault plus this wall
-WIG_FRINGE_TOP_Z = 3.0      # Bang/fringe masses stop this high above the stud plane: higher, they poke past the thin crown wall and leave a >45 deg underside
-WIG_CASCADE_TOP_Z = -3.5    # The side-sweep cascade tops out here: its crest would otherwise form a small beak proud of the shell
+WIG_FRINGE_TOP_Z = 2.2      # Bang/fringe masses stop this high above the stud plane: higher, they poke past the thin crown wall and leave a >45 deg underside
+WIG_CASCADE_TOP_Z = -4.5    # The side-sweep cascade tops out here: its crest would otherwise form a small beak proud of the shell
 
 
 def _keep_below(m, z_cap):
@@ -1972,20 +2148,29 @@ def _keep_below(m, z_cap):
 
 
 def _wig_cavity_slices(ear_cover=False):
-    """Universal 45-deg-or-steeper skull vault shared by all wigs, as `(z, w, d, p, cx, cy)` superellipse slices (z = 0 is the head's stud base)."""
-    z_bot = -17.5
+    """Universal skull vault shared by all wigs, as `(z, w, d, p, cx, cy)` superellipse slices (z = 0 is the head's stud base). Measured from the union of the
+    three human heads (skull + ears) at each height plus 0.4 mm clearance, then relaxed so the vault never closes in toward the crown faster than 0.70 mm per mm
+    of height: the squircle corners shrink ~1.4x faster than its axes, so this keeps every ceiling >= 45 deg and a wig prints hem-down without supports."""
     if ear_cover:
         return [
-            (z_bot, 42.4, 35.8, 3.20, 0.0, -0.9),
-            (-11.2, 41.8, 34.4, 3.20, 0.0, -0.7),
-            ( -4.1, 36.8, 25.9, 3.30, 0.0, -0.93),
-            (  0.0, 33.0, 19.0, 3.00, 0.0, -0.6),
+            ( -17.5, 40.86, 28.74, 3.20, 0.0, -0.84),
+            ( -14.0, 40.67, 29.86, 3.20, 0.0, -1.15),
+            ( -11.0, 38.73, 29.59, 3.20, 0.0, -1.12),
+            (  -8.0, 38.30, 28.64, 3.20, 0.0, -1.25),
+            (  -5.0, 37.01, 25.86, 3.30, 0.0, -1.05),
+            (  -2.5, 35.48, 22.52, 3.30, 0.0, -0.97),
+            (  -1.0, 34.42, 20.42, 3.10, 0.0, -0.97),
+            (   0.0, 33.02, 19.02, 3.00, 0.0, -0.97),
         ]
     return [
-        (z_bot, 40.4, 35.6, 3.20, 0.0, -0.9),
-        (-11.0, 39.8, 34.4, 3.20, 0.0, -0.7),
-        ( -4.1, 36.8, 25.9, 3.30, 0.0, -0.93),
-        (  0.0, 33.0, 19.0, 3.00, 0.0, -0.6),
+            ( -17.5, 39.66, 28.74, 3.20, 0.0, -0.84),
+            ( -14.0, 39.47, 29.86, 3.20, 0.0, -1.15),
+            ( -11.0, 37.53, 29.59, 3.20, 0.0, -1.12),
+            (  -8.0, 37.20, 28.64, 3.20, 0.0, -1.25),
+            (  -5.0, 36.51, 25.86, 3.30, 0.0, -1.05),
+            (  -2.5, 35.48, 22.52, 3.30, 0.0, -0.97),
+            (  -1.0, 34.42, 20.42, 3.10, 0.0, -0.97),
+            (   0.0, 33.02, 19.02, 3.00, 0.0, -0.97),
     ]
 
 
@@ -2003,7 +2188,7 @@ def _cavity_dims(z, ear_cover=False):
     return sl[-1][1], sl[-1][2], sl[-1][3], sl[-1][5]
 
 
-def _hug(m, t=3.0, ear_cover=False, z_low=-26.0, z_high=WIG_TOP_Z + 1.0):
+def _hug(m, t=3.0, ear_cover=False, z_low=-26.0, z_high=2.2):
     """Clip a hair feature (bangs, side locks, cascades) to a thin envelope `t` mm outside the head vault, so it wraps the head instead of piling on."""
     sl = [(z_low, *_cavity_dims(-17.5, ear_cover)[:3], 0.0, _cavity_dims(-17.5, ear_cover)[3])] + [
         (z, w, d, p, cx, cy) for (z, w, d, p, cx, cy) in sorted(_wig_cavity_slices(ear_cover), key=lambda q: q[0])
@@ -2036,7 +2221,7 @@ def _sculpted_strand_wig_shell(
     t = WIG_WALL_MM
     flare_w = max(0.0, (w_base - 44.0) * 0.5)
     flare_d = max(0.0, (d_base - 40.6) * 0.5)
-    z_top = WIG_TOP_Z if flat_crown else min(h_top, 5.6)
+    z_top = WIG_TOP_Z if flat_crown else min(h_top, WIG_TOP_Z)
     amp = lock_amp * 0.55
 
     zs = [z_hem - 0.4, z_hem + 0.55, -14.0, -11.0, -8.0, -4.1, -2.0, 0.0]
@@ -2129,7 +2314,7 @@ def _sculpted_hairline_cutter(z_hem=-16.5, ear_cover=False, bang_style="parted_l
     elif bang_style == "curtain_center":
         cutter = front_base + _multi_v_notch_cutter_y([(0.03, 7.2, 0.8)], z_bang, slope=s, y0=-36.0, y1=-10.2)
     elif bang_style == "side_cascade":
-        cutter = front_base.rotate((0.0, -4.0, 0.0)) + _multi_v_notch_cutter_y([(-7.5, 3.8, 1.0)], z_bang, slope=s, y0=-36.0, y1=-10.8)
+        cutter = front_base.rotate((0.0, -4.0, 0.0)) + _multi_v_notch_cutter_y([(-7.5, 3.8, 0.0)], z_bang, slope=s, y0=-36.0, y1=-10.8)   # apex at the cut line: a higher apex leaves a tooth whose tip hangs in mid-air on the tighter shell
     else:  # "high_arch"
         pts_hi = [
             (y_front, z_hem - 8.0),
@@ -2238,7 +2423,7 @@ def hair_long_layered(size="small", grid=(2, 1), lock=True, **_):
             ( -3.5, 13.6, 12.0, sx * 14.8, -14.8, sx * 22.0),
             (  2.8, 10.4,  8.8, sx *  8.8, -13.0, sx * 14.0),
             (  6.2,  6.8,  5.4, sx *  4.5,  -8.6, sx *  8.0),
-        ]), t=3.4, ear_cover=True))
+        ]), t=2.6, ear_cover=True))
     back_v = _multi_v_notch_cutter_y([(-8.0, 4.2, 0.0), (8.0, 4.2, 0.0)], -22.5, slope=1.18, y0=9.0, y1=35.0)
     return _finish_sculpted_wig(union(curtains) - back_v, size=size, z_hem=-22.5, ear_cover=True, bang_style="curtain_center", nape_notches=False, top_studs_z=WIG_TOP_Z)
 
@@ -2255,9 +2440,8 @@ def hair_twin_braids(size="small", grid=(2, 1), lock=True, **_):
             (-23.0,  7.6,  7.6, sx * 19.6, -3.4,  12.0 * sx),
             (-17.4,  8.8,  8.6, sx * 20.8, -2.8, -12.0 * sx),
             (-11.8,  9.4,  9.0, sx * 21.4, -2.0,  12.0 * sx),
-            ( -6.2,  9.2,  8.8, sx * 20.8, -1.2, -12.0 * sx),
-            ( -0.8,  8.4,  8.2, sx * 18.8, -0.6,   8.0 * sx),
-            (  3.8,  6.4,  6.4, sx * 15.0,  0.0,   0.0),
+            ( -8.0,  7.4,  7.2, sx * 20.2, -1.6,  -8.0 * sx),   # the braids hang from the hairline, below where a hat rim sits
+            ( -7.2,  4.6,  4.6, sx * 19.2, -1.2,   0.0),        # narrow tapered top: a hat wraps over the hair and the braids emerge beneath it
         ]
         parts.append(_faceted_lock_chain(segs))
     rear_trim = _multi_v_notch_cutter_y([(0.0, 13.8, 0.0)], -22.5, slope=1.18, y0=5.5, y1=35.0)
@@ -2385,6 +2569,7 @@ def hair_ponytail(size="small", grid=(2, 1), lock=True, **_):
         h_top=11.6, flat_crown=False, n_locks=12, lock_amp=0.95, twist_rate=0.18, back_shift=-0.4,
     )
     tail = _faceted_lock_chain([
+        (-19.5,  9.0,  7.0, 0.0, 10.6,  0.0),   # tapered start buried in the shell: the tail base is a <=45 deg slope, not a ledge
         (-13.5, 12.2, 10.2, 0.0, 14.8,  0.0),
         ( -4.5, 16.8, 14.8, 0.0, 19.6, 15.0),
         (  4.8, 18.4, 17.2, 0.0, 23.6,  0.0),
@@ -2448,132 +2633,198 @@ def hair_mohawk(size="small", grid=(2, 1), lock=True, **_):
     return _finish_sculpted_wig(union(fins), size=size, z_hem=-16.5, ear_cover=False, bang_style="high_arch", nape_notches=True, top_studs_z=None)
 
 
+# ---------------------------------------------------------------------------------------------------------------------------
+# Wearable hats WRAP the head instead of perching on it. The hat frame has z = 0 at the socket plane (cavity ceiling): on a bare head that is the
+# head's stud plane, over a hat-ready wig it is the wig's studs (WIG_TOP_Z above the head's). The cavity is the measured envelope of the six hat-ready wigs
+# (+0.45 mm clearance, ceiling relaxed to print without supports), so one cavity wraps both the bare head and any hat-ready wig, and each hat's rim hangs
+# ~10 mm below the sockets: at the hairline over a wig, just above the brow on a bare head (any lower and a bare-head hat would cover the face plate).
+HAT_RIM = {"ballcap": 10.8, "beanie": 10.8, "cowboy": 10.0, "hardhat": 10.8, "ranger": 10.0, "tophat": 9.6, "pirate": 10.4}   # rim depth below the sockets
+HAT_WRAP_MM = max(HAT_RIM.values())
+HAT_WALL = 1.9
+HAT_CAVITY_SLICES = [      # (z, w, d, p, cx, cy), z from the socket plane: the hat-ready wig envelope + 0.45 mm clearance, ceiling relaxed to print without supports
+    ( -11.8, 44.10, 34.40, 3.0, 0.0, -1.65),
+    ( -10.8, 43.49, 33.29, 3.0, 0.0, -1.64),
+    (  -8.8, 41.45, 31.10, 3.0, 0.0, -1.51),
+    (  -6.8, 40.31, 28.40, 3.0, 0.0, -1.46),
+    (  -5.8, 39.25, 27.00, 3.0, 0.0, -1.46),
+    (  -4.8, 38.18, 25.60, 3.0, 0.0, -1.46),
+    (  -3.8, 37.88, 24.75, 3.0, 0.0, -1.18),
+    (  -2.8, 37.20, 23.76, 3.0, 0.0, -0.98),
+    (  -1.8, 35.97, 22.56, 3.0, 0.0, -0.88),
+    (  -0.8, 34.57, 21.16, 3.0, 0.0, -0.88),
+    (   0.0, 33.45, 20.04, 3.0, 0.0, -0.88),
+]
+
+
+def _hat_dims(z):
+    """Cavity (w, d, p, cy) at hat height z, interpolated and clamped to the table."""
+    sl = HAT_CAVITY_SLICES
+    if z <= sl[0][0]:
+        return sl[0][1], sl[0][2], sl[0][3], sl[0][5]
+    if z >= sl[-1][0]:
+        return sl[-1][1], sl[-1][2], sl[-1][3], sl[-1][5]
+    for lo, hi in zip(sl, sl[1:]):
+        if lo[0] <= z <= hi[0]:
+            u = (z - lo[0]) / (hi[0] - lo[0])
+            return tuple(lo[i] + (hi[i] - lo[i]) * u for i in (1, 2, 3, 5))
+    return sl[-1][1], sl[-1][2], sl[-1][3], sl[-1][5]
+
+
 def _hat_crown_cavity():
-    """Universal `-6.0 mm` wearable hat-seat cavity (`39.2 x 28.4 mm` rim -> `32.4 x 17.8 mm` ceiling at `z = 0.0`),
-    fitting both directly on all 4 bald human heads AND stacked on all 6 hat-ready wigs with 0.000 mm3 collision!"""
-    slices = [
-        (-HAT_WRAP_MM - 0.6, 39.6, 29.2, 3.40, 0.0, -0.9),
-        (-HAT_WRAP_MM,       39.2, 28.8, 3.40, 0.0, -0.9),
-        ( 0.0,               33.4, 18.4, 2.60, 0.0, -0.9),
-    ]
-    return _superellipse_chain(slices)
+    """The hat's inner vault: the wig envelope above, extended 0.8 mm under the rim so the cut is clean."""
+    sl = list(HAT_CAVITY_SLICES)
+    return _superellipse_chain([(sl[0][0] - 0.8,) + sl[0][1:]] + sl)
 
 
-def _finish_wearable_hat(outer_body, size="small"):
-    """Seat wearable headgear rim cleanly on `z = -6.0 mm` for zero-support flat-rim FDM printing and cut `2x1` crown sockets at `z = 0.0`."""
+def _hat_rings_lower(rim, wall=HAT_WALL, n_locks=0, lock_amp=0.0, twist=0.0, grow=None):
+    """Shell rings from the rim up to the sockets: the cavity plus `wall` (plus `grow(z)` for cuffs and bands), optionally rippled."""
+    rings = []
+    zs = [-rim - 0.4, -rim + 0.6] + [z for z, *_ in HAT_CAVITY_SLICES if -rim + 0.6 < z < 0.0] + [0.0]
+    for z in zs:
+        w, d, p, cy = _hat_dims(z)
+        g = grow(z) if grow else 0.0
+        rings.append((z, _strand_ring_pts(w + 2 * (wall + g), d + 2 * (wall + g), p_exp=p, cy=cy, n_pts=72, n_locks=n_locks, lock_amp=lock_amp, twist=twist)))
+    return rings
+
+
+def _hat_rings_crown(crown_h, top_w, top_d, wall=HAT_WALL, p_top=2.3, n_locks=0, lock_amp=0.0, twist=0.0):
+    """Rounded crown rings above the sockets: a cosine dome from the shell down to a `top_w x top_d` cap `crown_h` high."""
+    w0, d0, p0, cy0 = _hat_dims(0.0)
+    w0 += 2 * wall
+    d0 += 2 * wall
+    rings = []
+    for k in range(1, 8):
+        t = k / 7.0
+        e = math.cos(t * math.pi * 0.5)
+        z = crown_h * math.sin(t * math.pi * 0.5) if k < 7 else crown_h - 0.01
+        rings.append((z, _strand_ring_pts(top_w + (w0 - top_w) * e, top_d + (d0 - top_d) * e, p_exp=p_top + (p0 - p_top) * e, cy=cy0 * e,
+                                          n_pts=72, n_locks=n_locks, lock_amp=lock_amp * (0.4 + 0.6 * e), twist=twist)))
+    return rings
+
+
+def _hat_body(rim, crown_h, top_w, top_d, wall=HAT_WALL, p_top=2.3, n_locks=0, lock_amp=0.0, twist=0.0, grow=None):
+    """Hat shell: the wig-envelope cavity plus `wall` from the rim to the sockets, then a rounded crown `crown_h` high."""
+    return _ring_stack_manifold(_hat_rings_lower(rim, wall, n_locks, lock_amp, twist, grow) + _hat_rings_crown(crown_h, top_w, top_d, wall, p_top, n_locks, lock_amp, twist))
+
+
+def _hat_band(rim, z_lo, z_hi, grow, n_locks=0, lock_amp=0.0):
+    """A cuff or hat band: the shell thickened by `grow` between two heights (its top is an upward-facing step, so it prints without supports)."""
+    rings = []
+    for i in range(5):
+        z = z_lo + (z_hi - z_lo) * i / 4.0
+        w, d, p, cy = _hat_dims(z)
+        rings.append((z, _strand_ring_pts(w + 2 * (HAT_WALL + grow), d + 2 * (HAT_WALL + grow), p_exp=p, cy=cy, n_pts=72, n_locks=n_locks, lock_amp=lock_amp)))
+    return _ring_stack_manifold(rings)
+
+
+def _finish_wearable_hat(outer_body, size="small", rim=HAT_WRAP_MM):
+    """Seat the rim cleanly on the bed at `z = -rim` for zero-support printing, cut the wig-envelope vault and the `2x1` crown sockets at `z = 0.0`."""
     p = STUD[size]
     hole_r = (p["stud_d"] + p["fit"]) / 2
     depth = p["stud_h"] + 0.4
-    body = keep_above(outer_body, -HAT_WRAP_MM)
+    body = keep_above(outer_body, -rim)
     body = body - _hat_crown_cavity()
     for sx in (-0.5, 0.5):
         body = body - cyl(depth + 0.02, hole_r, -0.02, sx * p["pitch"], 0.0, FIT_SEG)
     return (
         body,
         [socket_conn(size, 2, 1)],
-        {"print_rotation_deg": [0, 0, 0], "sockets": {"holes": 2, "reliefs": 0, "locked": True}},
+        {"print_rotation_deg": [0, 0, 0], "sockets": {"holes": 2, "reliefs": 0, "locked": True}, "seat_z_mm": rim},
     )
 
 
 def hat_ballcap(size="small", grid=(2, 1), lock=True, **_):
-    """Support-free 6-panel baseball cap with curved forward visor bill and top crown button (`-6.0 mm` wearable crown seat)."""
-    dome_polys = []
-    for z, w, d, amp in [
-        (-HAT_WRAP_MM - 0.4, 43.4, 34.4, 0.25),
-        (-HAT_WRAP_MM + 0.5, 44.2, 35.2, 0.35),
-        ( 0.0,               44.0, 35.0, 0.40),
-        ( 5.5,               41.8, 33.2, 0.45),
-        (10.5,               36.0, 28.6, 0.40),
-        (14.2,               25.6, 20.6, 0.25),
-        (16.2,               11.0,  9.6, 0.10),
-    ]:
-        dome_polys.append((z, _strand_ring_pts(w, d, p_exp=2.45, cy=-0.5, n_pts=60, n_locks=6, lock_amp=-amp)))
-    dome = _ring_stack_manifold(dome_polys)
-    button = _superellipse_chain([(15.0, 7.8, 7.8, 2.0, 0.0, -0.4), (17.4, 6.4, 6.4, 2.0, 0.0, -0.4), (18.2, 3.6, 3.6, 2.0, 0.0, -0.4)])
+    """6-panel baseball cap that wraps the head: low rounded crown with panel grooves and a top button, the rim and curved forward visor at the hairline."""
+    rim, ch = HAT_RIM["ballcap"], 6.2
+    dome = _hat_body(rim, ch, 18.0, 14.0, p_top=2.4, n_locks=6, lock_amp=-0.35)
+    button = _superellipse_chain([(ch - 0.8, 7.8, 7.8, 2.0, 0.0, -0.4), (ch + 1.0, 6.4, 6.4, 2.0, 0.0, -0.4), (ch + 1.7, 3.6, 3.6, 2.0, 0.0, -0.4)])
     bill_base = _loft_xy_sections([
-        (-HAT_WRAP_MM - 0.3, [(-18.2, -10.0), (18.2, -10.0), (17.0, -24.5), (12.0, -31.8), (0.0, -34.2), (-12.0, -31.8), (-17.0, -24.5)]),
-        (-HAT_WRAP_MM + 3.0, [(-18.6, -10.0), (18.6, -10.0), (17.2, -24.2), (11.8, -31.4), (0.0, -33.8), (-11.8, -31.4), (-17.2, -24.2)]),
+        (-rim - 0.3, [(-18.2, -10.0), (18.2, -10.0), (17.0, -25.0), (12.0, -32.4), (0.0, -34.8), (-12.0, -32.4), (-17.0, -25.0)]),
+        (-rim + 3.0, [(-18.6, -10.0), (18.6, -10.0), (17.2, -24.7), (11.8, -32.0), (0.0, -34.4), (-11.8, -32.0), (-17.2, -24.7)]),
     ])
     side_curls = [_loft_xy_sections([
-        (-HAT_WRAP_MM - 0.2, [(sx * 13.5, -11.5), (sx * 18.2, -11.5), (sx * 17.0, -25.0), (sx * 12.2, -31.5)]),
-        (-HAT_WRAP_MM + 4.8, [(sx * 15.2, -12.0), (sx * 18.6, -12.0), (sx * 17.2, -24.0), (sx * 14.0, -29.0)]),
+        (-rim - 0.2, [(sx * 13.5, -11.5), (sx * 18.2, -11.5), (sx * 17.0, -25.5), (sx * 12.2, -32.0)]),
+        (-rim + 4.8, [(sx * 15.2, -12.0), (sx * 18.6, -12.0), (sx * 17.2, -24.5), (sx * 14.0, -29.5)]),
     ]) for sx in (-1, 1)]
-    return _finish_wearable_hat(dome + button + bill_base + union(side_curls), size=size)
+    return _finish_wearable_hat(dome + button + bill_base + union(side_curls), size=size, rim=rim)
 
 
 def hat_beanie(size="small", grid=(2, 1), lock=True, **_):
-    """Support-free cuffed ribbed knit winter beanie with fluffy top pom-pom (`-6.0 mm` wearable crown seat)."""
-    cuff = _ring_stack_manifold([(z, _strand_ring_pts(w, d, p_exp=2.55, cy=-0.5, n_pts=72, n_locks=24, lock_amp=amp)) for z, w, d, amp in [
-        (-HAT_WRAP_MM - 0.4, 45.2, 36.2, 0.95), (-HAT_WRAP_MM + 0.5, 46.2, 37.2, 1.15), (1.6, 46.4, 37.4, 1.15), (3.2, 43.4, 34.8, 0.30),
-    ]])
-    dome = _ring_stack_manifold([(z, _strand_ring_pts(w, d, p_exp=2.25, cy=-0.4, n_pts=60, n_locks=12, lock_amp=amp, twist=0.15)) for z, w, d, amp in [
-        (2.2, 43.2, 34.6, 0.45), (7.5, 40.4, 32.2, 0.55), (12.2, 34.2, 27.4, 0.50), (15.6, 23.4, 19.0, 0.35), (17.4, 12.6, 11.2, 0.20),
-    ]])
+    """Cuffed ribbed knit beanie that wraps the head to the hairline: a thick knit cuff, a soft low dome and a fluffy top pom-pom."""
+    rim, ch = HAT_RIM["beanie"], 8.0
+    body = _hat_body(rim, ch, 15.0, 11.5, p_top=2.2, n_locks=12, lock_amp=0.45, twist=0.15)
+    cuff = _hat_band(rim, -rim - 0.4, -rim + 5.2, 1.0, n_locks=24, lock_amp=0.9)
     pom = _ring_stack_manifold([(z, _strand_ring_pts(w, w, p_exp=2.0, cy=-0.2, n_pts=48, n_locks=10, lock_amp=amp, twist=z * 0.08)) for z, w, amp in [
-        (16.0, 10.8, 0.35), (19.0, 15.2, 0.80), (21.6, 14.4, 0.80), (23.8, 8.0, 0.35),
+        (ch - 1.4, 10.0, 0.35), (ch + 1.4, 15.0, 0.80), (ch + 4.2, 14.2, 0.80), (ch + 6.2, 8.0, 0.35),
     ]])
-    return _finish_wearable_hat(cuff + dome + pom, size=size)
+    return _finish_wearable_hat(body + cuff + pom, size=size, rim=rim)
 
 
 def hat_cowboy(size="small", grid=(2, 1), lock=True, **_):
-    """Support-free western cowboy hat with curled side brim wings and pinched cattleman crown (`-6.0 mm` wearable crown seat)."""
-    brim_center = _superellipse_chain([(-HAT_WRAP_MM - 0.3, 46.0, 56.0, 2.25, 0.0, -0.8), (-HAT_WRAP_MM + 3.0, 48.0, 57.6, 2.25, 0.0, -0.8)])
+    """Western cowboy hat wrapped low on the head: curled side brim wings and a pinched cattleman crown."""
+    rim, ch = HAT_RIM["cowboy"], 8.0
+    brim_center = _superellipse_chain([(-rim - 0.3, 56.0, 64.0, 2.25, 0.0, -0.8), (-rim + 3.0, 58.0, 65.6, 2.25, 0.0, -0.8)])
     wings = [brim_center] + [_loft_xy_sections([
-        (-HAT_WRAP_MM - 0.3, [(sx * 15.0, -23.5), (sx * 22.8, -17.5), (sx * 23.6, 0.0), (sx * 22.2, 17.0), (sx * 15.0, 22.5)]),
-        (-HAT_WRAP_MM + 4.8, [(sx * 17.5, -24.5), (sx * 26.8, -17.0), (sx * 28.0, 0.0), (sx * 26.4, 16.5), (sx * 17.5, 23.5)]),
-        (2.8, [(sx * 21.5, -19.0), (sx * 29.8, -11.5), (sx * 31.0, 0.0), (sx * 29.4, 11.0), (sx * 21.5, 18.0)]),
-        (5.4, [(sx * 24.5, -14.0), (sx * 29.2, -7.5), (sx * 30.2, 0.0), (sx * 28.8, 7.0), (sx * 24.5, 13.5)]),
+        (-rim - 0.3, [(sx * 15.0, -26.0), (sx * 22.8, -20.0), (sx * 24.6, 0.0), (sx * 22.2, 19.0), (sx * 15.0, 25.0)]),
+        (-rim + 4.8, [(sx * 17.5, -27.0), (sx * 26.8, -19.5), (sx * 29.0, 0.0), (sx * 26.4, 18.5), (sx * 17.5, 26.0)]),
+        (-rim + 9.0, [(sx * 21.5, -21.5), (sx * 29.8, -13.5), (sx * 31.6, 0.0), (sx * 29.4, 13.0), (sx * 21.5, 20.5)]),
+        (-rim + 11.6, [(sx * 24.5, -16.0), (sx * 29.2, -9.0), (sx * 30.8, 0.0), (sx * 28.8, 8.5), (sx * 24.5, 15.5)]),
     ]) for sx in (-1, 1)]
-    band = _superellipse_chain([(-HAT_WRAP_MM + 2.4, 43.2, 35.0, 2.55, 0.0, -0.6), (1.2, 42.2, 34.2, 2.50, 0.0, -0.5)])
-    crown = _superellipse_chain([(0.6, 40.8, 33.4, 2.45, 0.0, -0.5), (8.0, 37.8, 31.8, 2.35, 0.0, -0.4), (15.2, 33.4, 29.8, 2.25, 0.0, -0.3), (19.2, 27.6, 26.4, 2.15, 0.0, -0.3)])
-    crease = _ellipse_chain([(15.6, 8.6, 23.0, 0.0, -0.3), (21.5, 12.0, 26.0, 0.0, -0.3)])
-    dents = [_ellipse_chain([(10.5, 8.0, 13.0, sx * 16.8, -5.0), (21.5, 11.5, 16.5, sx * 14.5, -5.0)]) for sx in (-1, 1)]
-    return _finish_wearable_hat(union(wings) + band + (crown - crease - union(dents)), size=size)
+    crown = _hat_body(rim, ch, 27.0, 21.0, p_top=2.3)
+    crease = _ellipse_chain([(ch - 1.8, 6.5, 20.0, 0.0, -0.3), (ch + 1.4, 10.5, 24.0, 0.0, -0.3)])
+    dents = [_ellipse_chain([(ch - 4.5, 6.5, 11.0, sx * 15.5, -4.5), (ch + 1.4, 9.5, 14.0, sx * 13.0, -4.5)]) for sx in (-1, 1)]
+    return _finish_wearable_hat(union(wings) + (crown - crease - union(dents)), size=size, rim=rim)
 
 
 def hat_hardhat(size="small", grid=(2, 1), lock=True, **_):
-    """Support-free builder safety hard hat with central reinforcing spine ridge, side ribs, and front visor peak (`-6.0 mm` wearable crown seat)."""
+    """Builder safety hard hat wrapped low on the head: central reinforcing spine ridge, side ribs, and a front visor peak at the brow."""
+    rim, ch = HAT_RIM["hardhat"], 7.0
     brim = _loft_xy_sections([
-        (-HAT_WRAP_MM - 0.3, [(-23.2, 14.5), (-24.2, 0.0), (-22.6, -15.0), (-15.0, -25.8), (0.0, -28.6), (15.0, -25.8), (22.6, -15.0), (24.2, 0.0), (23.2, 14.5), (15.5, 19.2), (-15.5, 19.2)]),
-        (-HAT_WRAP_MM + 2.8, [(-23.6, 14.8), (-24.6, 0.0), (-23.0, -15.2), (-14.8, -25.4), (0.0, -28.2), (14.8, -25.4), (23.0, -15.2), (24.6, 0.0), (23.6, 14.8), (15.8, 19.5), (-15.8, 19.5)]),
+        (-rim - 0.3, [(-24.0, 14.5), (-25.0, 0.0), (-23.4, -15.0), (-15.5, -26.6), (0.0, -29.4), (15.5, -26.6), (23.4, -15.0), (25.0, 0.0), (24.0, 14.5), (16.0, 20.0), (-16.0, 20.0)]),
+        (-rim + 2.8, [(-24.4, 14.8), (-25.4, 0.0), (-23.8, -15.2), (-15.3, -26.2), (0.0, -29.0), (15.3, -26.2), (23.8, -15.2), (25.4, 0.0), (24.4, 14.8), (16.3, 20.3), (-16.3, 20.3)]),
     ])
-    shell = _superellipse_chain([(-HAT_WRAP_MM + 2.0, 43.8, 35.0, 2.55, 0.0, -0.5), (4.0, 42.2, 34.0, 2.40, 0.0, -0.4), (10.2, 37.2, 29.8, 2.20, 0.0, -0.3), (14.8, 26.8, 22.0, 2.05, 0.0, -0.2), (16.8, 13.5, 12.0, 2.00, 0.0, 0.0)])
-    spine = _faceted_lock_chain([(1.5, 7.6, 34.6, 0.0, -0.4, 0.0), (10.8, 6.8, 30.4, 0.0, -0.3, 0.0), (17.4, 5.6, 20.8, 0.0, -0.2, 0.0), (18.8, 4.2, 12.5, 0.0, 0.0, 0.0)])
-    ribs = [spine] + [_faceted_lock_chain([(1.0, 4.8, 24.6, sx * 13.5, -0.4, 0.0), (9.8, 4.4, 21.6, sx * 11.8, -0.3, 0.0), (15.4, 3.6, 14.8, sx * 8.2, -0.2, 0.0)]) for sx in (-1, 1)]
-    return _finish_wearable_hat(brim + shell + union(ribs), size=size)
+    shell = _hat_body(rim, ch, 22.0, 16.0, p_top=2.2)
+    spine = _faceted_lock_chain([(-3.0, 7.0, 18.0, 0.0, -0.8, 0.0), (ch - 1.5, 6.6, 22.0, 0.0, -0.8, 0.0), (ch + 0.6, 4.6, 12.0, 0.0, -0.6, 0.0), (ch + 1.4, 3.0, 7.0, 0.0, -0.5, 0.0)])
+    ribs = [spine] + [_faceted_lock_chain([(-3.0, 4.6, 16.0, sx * 12.5, -0.8, 0.0), (ch - 2.0, 4.4, 14.0, sx * 11.0, -0.8, 0.0), (ch + 0.2, 3.6, 9.0, sx * 8.5, -0.6, 0.0)]) for sx in (-1, 1)]
+    return _finish_wearable_hat(brim + shell + union(ribs), size=size, rim=rim)
 
 
 def hat_ranger(size="small", grid=(2, 1), lock=True, **_):
-    """Support-free park ranger explorer hat with wide flat brim and 4-pinch campaign peak (`-6.0 mm` wearable crown seat)."""
-    brim = _superellipse_chain([(-HAT_WRAP_MM - 0.3, 58.0, 56.0, 2.10, 0.0, -0.6), (-HAT_WRAP_MM + 2.8, 58.6, 56.6, 2.10, 0.0, -0.6), (-HAT_WRAP_MM + 3.6, 55.4, 53.4, 2.10, 0.0, -0.6)])
-    band = _superellipse_chain([(-HAT_WRAP_MM + 2.6, 43.2, 34.8, 2.50, 0.0, -0.5), (1.2, 42.0, 34.0, 2.45, 0.0, -0.5)])
-    crown = _superellipse_chain([(0.6, 40.6, 33.0, 2.35, 0.0, -0.5), (7.5, 36.2, 29.8, 2.20, 0.0, -0.4), (14.5, 27.6, 24.2, 2.10, 0.0, -0.3), (19.2, 12.0, 12.0, 2.00, 0.0, -0.2)])
-    pinches = [_ellipse_chain([(9.5, 10.5, 10.5, sx * 12.4, sy * 10.2 - 0.3), (21.5, 13.0, 13.0, sx * 8.6, sy * 7.4 - 0.2)]) for sx in (-1, 1) for sy in (-1, 1)]
-    return _finish_wearable_hat(brim + band + (crown - union(pinches)), size=size)
+    """Park ranger explorer hat wrapped low on the head: wide flat brim, band and a 4-pinch campaign crown."""
+    rim, ch = HAT_RIM["ranger"], 8.5
+    brim = _superellipse_chain([(-rim - 0.3, 60.0, 58.0, 2.10, 0.0, -0.6), (-rim + 2.8, 60.6, 58.6, 2.10, 0.0, -0.6), (-rim + 3.6, 57.4, 55.4, 2.10, 0.0, -0.6)])
+    crown = _hat_body(rim, ch, 24.0, 19.0, p_top=2.2) + _hat_band(rim, -rim + 2.4, -rim + 4.6, 0.7)
+    pinches = [_ellipse_chain([(ch - 4.0, 10.5, 10.5, sx * 13.4, sy * 9.4 - 0.3), (ch + 1.4, 13.0, 13.0, sx * 9.6, sy * 6.6 - 0.2)]) for sx in (-1, 1) for sy in (-1, 1)]
+    return _finish_wearable_hat(brim + (crown - union(pinches)), size=size, rim=rim)
 
 
 def hat_tophat(size="small", grid=(2, 1), lock=True, **_):
-    """Support-free formal stovepipe top hat with rolled brim and ribbon band (`-6.0 mm` wearable crown seat)."""
-    brim = _superellipse_chain([(-HAT_WRAP_MM - 0.3, 51.0, 48.0, 2.15, 0.0, -0.6), (-HAT_WRAP_MM + 2.4, 52.4, 49.4, 2.15, 0.0, -0.6), (-HAT_WRAP_MM + 4.0, 50.6, 47.6, 2.15, 0.0, -0.6)])
-    band = _superellipse_chain([(-HAT_WRAP_MM + 3.0, 42.6, 34.4, 2.45, 0.0, -0.5), (1.8, 41.6, 33.6, 2.40, 0.0, -0.4)])
-    stovepipe = _superellipse_chain([(1.2, 39.4, 32.0, 2.30, 0.0, -0.4), (11.0, 38.6, 31.6, 2.25, 0.0, -0.3), (21.5, 41.2, 33.8, 2.25, 0.0, -0.3), (23.5, 39.6, 32.4, 2.25, 0.0, -0.3)])
-    return _finish_wearable_hat(brim + band + stovepipe, size=size)
+    """Formal stovepipe top hat wrapped low on the head: rolled brim, ribbon band and a tall straight crown (the one hat that is meant to stand tall)."""
+    rim, ch = HAT_RIM["tophat"], 15.0
+    brim = _superellipse_chain([(-rim - 0.3, 54.0, 51.0, 2.15, 0.0, -0.6), (-rim + 2.4, 55.4, 52.4, 2.15, 0.0, -0.6), (-rim + 4.0, 53.6, 50.6, 2.15, 0.0, -0.6)])
+    w0, d0, p0, cy0 = _hat_dims(0.0)
+    ww, dd = w0 + 2 * HAT_WALL, d0 + 2 * HAT_WALL
+    tube_rings = [(0.6, ww, dd, 3.0), (ch * 0.4, ww - 0.2, dd - 0.2, 2.85), (ch - 1.8, ww - 0.4, dd - 0.4, 2.7), (ch, ww + 1.2, dd + 1.2, 2.55), (ch + 1.0, ww + 0.2, dd + 0.2, 2.5)]
+    stack = _ring_stack_manifold(_hat_rings_lower(rim) + [(z, _strand_ring_pts(w, d, p_exp=p, cy=cy0, n_pts=72, n_locks=0, lock_amp=0.0)) for z, w, d, p in tube_rings])
+    band = _hat_band(rim, -rim + 2.6, -rim + 5.4, 0.8)
+    return _finish_wearable_hat(brim + stack + band, size=size, rim=rim)
 
 
 def hat_pirate(size="small", grid=(2, 1), lock=True, **_):
-    """Support-free 3-cornered captain tricorne hat with upturned triangular brim walls (`-6.0 mm` wearable crown seat)."""
-    dome = _superellipse_chain([(-HAT_WRAP_MM - 0.3, 43.0, 34.4, 2.55, 0.0, -0.5), (2.0, 41.8, 33.6, 2.40, 0.0, -0.4), (8.8, 37.2, 30.0, 2.20, 0.0, -0.3), (13.8, 26.8, 21.8, 2.05, 0.0, -0.2), (15.8, 12.5, 11.0, 2.00, 0.0, 0.0)])
+    """3-cornered captain's tricorne wrapped low on the head: a low dome and upturned triangular brim walls."""
+    rim, ch = HAT_RIM["pirate"], 6.0
+    dome = _hat_body(rim, ch, 20.0, 15.0, p_top=2.2)
     tricorne = _ring_stack_manifold([
-        (-HAT_WRAP_MM - 0.3, [(0.0, -25.0), (18.0, -16.5), (24.5, 2.0), (20.5, 18.5), (0.0, 20.5), (-20.5, 18.5), (-24.5, 2.0), (-18.0, -16.5)]),
-        (-HAT_WRAP_MM + 4.8, [(0.0, -28.6), (20.8, -18.0), (28.2, 3.2), (23.8, 21.4), (0.0, 23.0), (-23.8, 21.4), (-28.2, 3.2), (-20.8, -18.0)]),
-        (3.6, [(0.0, -31.0), (22.2, -17.6), (30.8, 4.8), (25.8, 23.4), (0.0, 24.0), (-25.8, 23.4), (-30.8, 4.8), (-22.2, -17.6)]),
-        (8.8, [(0.0, -29.6), (20.6, -15.2), (29.5, 5.8), (24.4, 22.0), (0.0, 21.8), (-24.4, 22.0), (-29.5, 5.8), (-20.6, -15.2)]),
+        (-rim - 0.3, [(0.0, -27.0), (19.5, -18.0), (26.5, 2.0), (22.0, 20.0), (0.0, 22.0), (-22.0, 20.0), (-26.5, 2.0), (-19.5, -18.0)]),
+        (-rim + 4.8, [(0.0, -30.6), (22.3, -19.5), (30.2, 3.2), (25.3, 22.9), (0.0, 24.5), (-25.3, 22.9), (-30.2, 3.2), (-22.3, -19.5)]),
+        (-rim + 9.6, [(0.0, -33.0), (23.7, -19.1), (32.8, 4.8), (27.3, 24.9), (0.0, 25.5), (-27.3, 24.9), (-32.8, 4.8), (-23.7, -19.1)]),
+        (-rim + 14.6, [(0.0, -31.6), (22.1, -16.7), (31.5, 5.8), (25.9, 23.5), (0.0, 23.3), (-25.9, 23.5), (-31.5, 5.8), (-22.1, -16.7)]),
     ])
     dish_cut = _ring_stack_manifold([
-        (2.0, [(0.0, -22.5), (16.5, -12.5), (23.2, 4.5), (19.2, 17.2), (0.0, 17.5), (-19.2, 17.2), (-23.2, 4.5), (-16.5, -12.5)]),
-        (11.0, [(0.0, -26.8), (18.8, -13.8), (27.0, 5.8), (22.2, 20.0), (0.0, 19.8), (-22.2, 20.0), (-27.0, 5.8), (-18.8, -13.8)]),
-    ]) - _superellipse_chain([(1.5, 42.6, 34.4, 2.40, 0.0, -0.5), (11.5, 38.6, 31.2, 2.20, 0.0, -0.3)])
-    return _finish_wearable_hat(dome + (tricorne - dish_cut), size=size)
+        (-rim + 8.0, [(0.0, -24.5), (17.5, -14.0), (24.8, 4.5), (20.5, 18.5), (0.0, 19.0), (-20.5, 18.5), (-24.8, 4.5), (-17.5, -14.0)]),
+        (-rim + 17.0, [(0.0, -28.8), (19.8, -15.3), (28.6, 5.8), (23.5, 21.3), (0.0, 21.2), (-23.5, 21.3), (-28.6, 5.8), (-19.8, -15.3)]),
+    ]) - _hat_body(rim, ch, 20.0, 15.0)
+    return _finish_wearable_hat(dome + (tricorne - dish_cut), size=size, rim=rim)
 
 
 def pack_explorer(size="small", grid=(2, 2), lock=True, **_):

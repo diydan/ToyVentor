@@ -4,7 +4,7 @@
   "file_sha256": "7b65fffc2168a9ae1278ee26e9ca2322fcd6bcc4947f81972be6a073ec7da36a",
   "part_id": "gear_rack_tu05",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-10-31T11:21:35Z",
+  "checked_at": "2026-10-31T14:33:58Z",
   "metrics": {
     "bbox_mm": [
       62.5,
@@ -154,7 +154,7 @@
       0
     ],
     "engine": "PrusaSlicer-2.8.1",
-    "reused_from": "2026-10-31T10:25:11Z"
+    "reused_from": "2026-10-31T11:21:35Z"
   },
   "verdict": "pass",
   "summary": "Prints as is"

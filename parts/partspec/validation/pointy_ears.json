@@ -4,7 +4,7 @@
   "file_sha256": "a5bf80facada5e549ce725201696228b0082d8c569bda28a6f7f770355ebf798",
   "part_id": "pointy_ears",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-10-31T11:19:53Z",
+  "checked_at": "2026-10-31T14:28:56Z",
   "metrics": {
     "bbox_mm": [
       24.4,
@@ -165,7 +165,7 @@
       0
     ],
     "engine": "PrusaSlicer-2.8.1",
-    "reused_from": "2026-10-31T10:23:37Z"
+    "reused_from": "2026-10-31T11:19:53Z"
   },
   "verdict": "pass",
   "summary": "Prints as is"

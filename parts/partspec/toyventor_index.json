@@ -34422,6 +34422,12 @@
         "mom_jet_valve_body": "fail",
         "mom_nozzle_set": "fail"
       }
+    },
+    "I1_lattice": {
+      "level": "warn",
+      "parts": {
+        "pro_steer_rack": "fail"
+      }
     }
   }
 }

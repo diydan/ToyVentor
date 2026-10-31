@@ -556,6 +556,12 @@ test("W9 Kip wardrobe and modular TU vehicles: all W9 parts are verified with ze
 test("W9 modular vehicles mate cleanly with stylized wheels, snap-on covers, Wave 6 Racer add-ons and Wave 8 Snap characters",
      all(res[k]["ok"] and not res[k]["warnings"] for k in ("valid_kip_seated_wardrobe", "valid_kip_roadster_car", "valid_kip_hauler_truck", "valid_kip_motor_scooter", "valid_kip_sport_moto", "valid_kip_skateboard")))
 
+# 7v. Universal face plate: FACE_DEPTH (the plate's front, back and the pocket floor are derived from it) must still match the three human heads,
+# otherwise a head changed without the plate following and the plate could end up proud of the face.
+_tab = tp.face_depth_table_from_heads()
+_drift = max(abs(a - b) for ra, rb in zip(_tab, tp.FACE_DEPTH) for a, b in zip(ra, rb))
+test("universal face plate: FACE_DEPTH matches the three human heads within 0.06 mm (the plate is never proud of a head)", _drift <= 0.06, f"max drift {_drift:.3f} mm; regenerate the table with tp.face_depth_table_from_heads()")
+
 # 7u. W10 & W11: Flat-pack modular craft kit-cards, Gate G1 9-craft pose sweeps, Pro rack steering & Momentum cores
 import toyventor_kitcard as _kc
 w10_ids = [r["id"] for r in tp.CATALOG["parts"] if r.get("wave") == "W10"]

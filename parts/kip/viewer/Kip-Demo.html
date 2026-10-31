@@ -538,6 +538,7 @@ import {
   HAIR_OPTIONS,
   WEARABLE_HAT_IDS,
   HAT_OPTIONS,
+  FACE_STEM_MM,
   CROWN_OPTIONS,
   BACK_OPTIONS,
   PROP_OPTIONS,
@@ -2608,7 +2609,7 @@ function syncHeadHairHatLayout() {
   // 2. Universal Swappable Human Face Inserts (`sculpted`, `vinyl`, `flat` — 100% interchangeable across ALL 4 human heads!)
   refreshDecalTexture();
   kip.exp.faceplateGroup.visible = isHuman;
-  kip.exp.faceplateHolder.position.set(0, dt.faceY - 2.90, 12.50);
+  kip.exp.faceplateHolder.position.set(0, dt.faceY - 2.90, FACE_STEM_MM);
   kip.exp.faceplateMesh.visible      = isHuman && (loco.faceInsert === 'sculpted');
   kip.exp.faceplateVinylMesh.visible = isHuman && (loco.faceInsert === 'vinyl');
   kip.exp.faceplateFlatMesh.visible  = isHuman && (loco.faceInsert === 'flat');
@@ -2804,7 +2805,7 @@ function setHeadMode(headId) {
 }
 
 document.getElementById('btn-head').addEventListener('click', () => {
-  // Cycle strictly through the 3 heads of the active category
+  // Cycle strictly through the heads of the active category
   const list = headsInCategory(loco.category);
   const curIdx = list.findIndex(h => h.id === loco.head);
   const next = list[(curIdx + 1) % list.length];

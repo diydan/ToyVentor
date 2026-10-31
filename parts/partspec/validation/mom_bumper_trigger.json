@@ -1,24 +1,24 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_mom_bumper_trigger_P.stl",
-  "file_sha256": "52642931101c3f0d7800fbbd6e79368af9217635c60af60c565ac9701e9e4600",
+  "file_sha256": "fd51cab73ae24282ed6943e2ade1a19cec31eadb8468714827ad1b49ec7547e5",
   "part_id": "mom_bumper_trigger",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-10-31T10:32:58Z",
+  "checked_at": "2026-10-31T16:27:29Z",
   "metrics": {
     "bbox_mm": [
-      62.3,
-      24.8,
+      48.0,
+      32.8,
       12.5
     ],
-    "volume_cm3": 11.36,
-    "surface_cm2": 44.52,
+    "volume_cm3": 12.07,
+    "surface_cm2": 44.08,
     "triangles": 1716,
     "ledges": [],
     "layers": 62,
-    "bed_contact_mm2": 895.4,
+    "bed_contact_mm2": 952.4,
     "height_mm": 12.5,
-    "slenderness": 0.42,
+    "slenderness": 0.41,
     "centre_of_mass_over_contact": true,
     "min_wall_mm": null,
     "thin_wall_regions": []
@@ -46,8 +46,8 @@
       "level": "block",
       "result": "pass",
       "value": [
-        62.3,
-        24.8,
+        48.0,
+        32.8,
         12.5
       ],
       "limit": [
@@ -101,9 +101,9 @@
       "id": "V9_bed_contact",
       "level": "info",
       "result": "pass",
-      "value": 895.4,
+      "value": 952.4,
       "limit": null,
-      "detail": "height / sqrt(contact) = 0.42; above about 3 the slicer often asks for a brim"
+      "detail": "height / sqrt(contact) = 0.41; above about 3 the slicer often asks for a brim"
     },
     {
       "id": "V8_wall_thickness",

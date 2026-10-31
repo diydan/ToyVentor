@@ -108,7 +108,7 @@
         "W8"
       ],
       "effort": "M",
-      "scope": "52 parts (42 Snap Small, 10 Pro): ten Wave 9 character and robot heads across 4 categories (3 smooth organic humanoid heads: Soft Youth, Vinyl Squircle, Heroic Jaw; 1 Mecha Scout robot head pairing with Kip Classic & Bolt Robot; 3 animal critter heads: Fox, Bear, Whisker Cat; 3 creature heads: Drake Dragon, Starling Alien, Yeti Imp) with 2x1 crown buds, three universal interchangeable 1 TU facial inserts (3D Nose & Orbital Face Insert, 3D Button Eyes & Nose Face Insert, and Smooth Flush Decal Face Insert), fourteen sculpted multi-strand wrap-around 2x1 crown wigs (6 Hat-Ready with top 2x1 crown studs + 8 Sculpted-Top), seven wearable 2x1 crown hats, Explorer Rucksack, Builder Spanner, Star Emblem Wand, Street Skateboard Deck, Seated Snap Legs, three stylized Pro vehicle wheels, and V2 modular rolling vehicle chassis with interchangeable snap-on body covers."
+      "scope": "53 parts (43 Snap Small, 10 Pro): eleven Wave 9 character and robot heads across 4 categories (4 smooth organic humanoid heads that share one universal face zone, wig vault and hat cavity: Soft Youth (neutral), Sweet Heart (feminine), Heroic Jaw (masculine) and Jumbo Vinyl, all listed in Kip-Demo.html; 1 Mecha Scout robot head pairing with Kip Classic & Bolt Robot; 3 animal critter heads: Fox, Bear, Whisker Cat; 3 creature heads: Drake Dragon, Starling Alien, Yeti Imp) with 2x1 crown buds, three universal interchangeable 1 TU facial inserts (3D Nose & Smile Face Insert, 3D Button Eyes & Nose Face Insert, and Smooth Flush Decal Face Insert), fourteen sculpted multi-strand wrap-around 2x1 crown wigs (6 Hat-Ready with top 2x1 crown studs + 8 Sculpted-Top), seven wearable 2x1 crown hats, Explorer Rucksack, Builder Spanner, Star Emblem Wand, Street Skateboard Deck, Seated Snap Legs, three stylized Pro vehicle wheels, and V2 modular rolling vehicle chassis with interchangeable snap-on body covers."
     },
     {
       "id": "W10",
@@ -120,7 +120,7 @@
         "W9"
       ],
       "effort": "L",
-      "scope": "19 parts (14 Snap Small, 5 Pro): 16 rigid flat-pack modular craft modules plus 3 smooth 0.80 mm PETG/TPU flex skins across Cards A-D (<= 170 x 170 mm), unlocking 9 canonical craft (Race Car, Dump Truck, Tractor, Trailer, Motorbike/Trike, Aeroplane, Catamaran, Helicopter, Space Shuttle) with 100% intact parts clearing the S1 small-parts cylinder."
+      "scope": "19 parts (13 Snap Small, 6 Pro): 16 rigid flat-pack modular craft modules plus 3 smooth 0.80 mm PETG/TPU flex skins across Cards A-D (<= 170 x 170 mm), unlocking 9 canonical craft (Race Car, Dump Truck, Tractor, Trailer, Motorbike/Trike, Aeroplane, Catamaran, Helicopter, Space Shuttle) with 100% intact parts clearing the S1 small-parts cylinder."
     },
     {
       "id": "W11",
@@ -131,14 +131,14 @@
         "W10"
       ],
       "effort": "L",
-      "scope": "21 parts (7 Snap Small, 14 Pro): Stage-2 Pro row-0 Ackermann rack steering linkage, axle keepers, and positive-trail bike fork adapter, plus Stage-3 Momentum stored-energy propulsion and actuator modules (enclosed #64 band core, bumper trigger, captive slam launcher, balloon jet valve + 3-orifice nozzle selector, 10-deg bellows clamshell, and shrouded 42 mm vertical rip-cord turbine core) across Cards E1-E2 (<= 164 x 164 mm)."
+      "scope": "21 parts (8 Snap Small, 13 Pro): Stage-2 Pro row-0 Ackermann rack steering linkage, axle keepers, and positive-trail bike fork adapter, plus Stage-3 Momentum stored-energy propulsion and actuator modules (enclosed #64 band core, bumper trigger, captive slam launcher, balloon jet valve + 3-orifice nozzle selector, 10-deg bellows clamshell, and shrouded 42 mm vertical rip-cord turbine core) across Cards E1-E2 (<= 164 x 164 mm)."
     },
     {
       "id": "W12",
       "name": "Workshop Props",
       "requires": [],
       "effort": "M",
-      "scope": "12 parts (12 Pro): handheld workshop and play props on the Pro grip shaft."
+      "scope": "12 parts (12 Pro): handheld workshop and play props that clip onto Kip's Pro grip shaft in the hand port, in 4 Kip-Demo.html prop categories (with the 5 earlier props, 17 in all): Tools (Claw Hammer, Flat Screwdriver, Paint Roller), Cleaning (String Mop, Bristle Broom, Scrub Brush, Handheld Vacuum), Instruments (Acoustic Guitar, Brass Trumpet, Rattle Maraca) and Play (Swallow-Tail Flag, Magnifying Glass)."
     }
   ],
   "parts": [
@@ -2368,10 +2368,10 @@
       "family": "addon",
       "size": "small",
       "wave": "W9",
-      "note": "Smooth organic youth humanoid head on a compact 2x1 neck collar with gentle heart-oval chin, rounded cheek contours, flatter upright occipital back, smooth rounded ears, universal 24.4x10.6 mm flush face_slot at z=15.625 mm, and 2x1 crown buds at z=34.2 mm.",
+      "note": "Gender-neutral rounded youth head on a compact 2x1 neck collar: soft round cheeks, a gentle jaw and small round ears; shares the universal face zone (one meniscus face plate, inset 0.3 mm below the skull surface, fits all three human heads) and 2x1 crown buds on the stud plane at z=31.4 mm.",
       "stat": "Glow",
       "type": "Character head",
-      "behavior": "Smooth organic youth human head with rounded cheeks, soft heart-oval chin, universal facial dock and 2x1 Spark Crown Buds",
+      "behavior": "Gender-neutral rounded human head with soft cheeks, universal inset face plate dock and 2x1 Spark Crown Buds",
       "tags": [
         "character",
         "head",
@@ -2397,15 +2397,15 @@
     },
     {
       "id": "char_head_chibi",
-      "name": "Human Head 2 (Vinyl Squircle)",
+      "name": "Human Head 2 (Sweet Heart)",
       "line": "snap",
       "family": "addon",
       "size": "small",
       "wave": "W9",
-      "note": "Smooth collector-vinyl squircle humanoid head (40.0 mm wide) on a compact 2x1 neck collar with broad rounded jawline, smooth curved squircle side walls, flatter squircle back, broad forehead above universal 24.4x10.6 mm face_slot at z=14.0625 mm, mid-cheek smooth ears, and 2x1 crown buds at z=31.4 mm.",
+      "note": "Feminine head on a compact 2x1 neck collar: tall rounded dome, full high cheeks, a narrower softly rounded jaw and small ears; shares the universal face zone (one meniscus face plate, inset 0.3 mm below the skull surface, fits all three human heads) and 2x1 crown buds on the stud plane at z=31.4 mm.",
       "stat": "Glow",
       "type": "Character head",
-      "behavior": "Smooth collector-vinyl squircle human head with curved sides, flatter back, universal low-set facial dock and 2x1 Spark Crown Buds",
+      "behavior": "Feminine rounded human head with full cheeks, narrower jaw, universal inset face plate dock and 2x1 Spark Crown Buds",
       "tags": [
         "character",
         "head",
@@ -2437,7 +2437,7 @@
       "family": "addon",
       "size": "small",
       "wave": "W9",
-      "note": "Big square collector-vinyl display head on a 2x1 neck with huge flat-ish forehead dome, full square cheeks, tiny chin, flatter back, universal 24.4x10.6 mm flush face_slot at z=14.0625 mm, small nub ears, and 2x1 crown buds at z=32.0 mm.",
+      "note": "Wide rounded-square collector-vinyl head on a 2x1 neck with full cheeks, a broad crown and small ears, sized to stay inside the shared wig vault and hat cavity (every wig and hat fits it) and sharing the universal face zone (every face plate fits it), with the universal 24.4x10.6 mm face_slot at z=12.5 mm and 2x1 crown buds at z=31.4 mm.",
       "stat": "Glow",
       "type": "Character head",
       "behavior": "Big square vinyl display head with flat-ish forehead dome, square cheeks, universal facial dock and 2x1 Spark Crown Buds",
@@ -2472,10 +2472,10 @@
       "family": "addon",
       "size": "small",
       "wave": "W9",
-      "note": "Smooth sculpted heroic humanoid head on a compact 2x1 neck collar with confident squared jaw, smooth sculpted cheekbones, athletic brow contour, flatter upright back, smooth ears, universal 24.4x10.6 mm flush face_slot at z=17.1875 mm, and 2x1 crown buds at z=37.2 mm.",
+      "note": "Masculine head on a compact 2x1 neck collar: flat-topped block head with a wide square jaw, a strong brow and larger ears; shares the universal face zone (one meniscus face plate, inset 0.3 mm below the skull surface, fits all three human heads) and 2x1 crown buds on the stud plane at z=33.4 mm.",
       "stat": "Spin",
       "type": "Character head",
-      "behavior": "Smooth sculpted heroic human head with squared jaw, athletic brow, universal facial dock and 2x1 Spark Crown Buds",
+      "behavior": "Masculine block human head with wide square jaw, strong brow, universal inset face plate dock and 2x1 Spark Crown Buds",
       "tags": [
         "character",
         "head",
@@ -2501,12 +2501,12 @@
     },
     {
       "id": "char_faceplate",
-      "name": "3D Nose & Orbital Face Insert",
+      "name": "3D Nose & Smile Face Insert",
       "line": "pro",
       "family": "pin",
       "size": "pro",
       "wave": "W9",
-      "note": "Universal 24.2x10.5 mm planar low-poly facial insert with sculpted 3D nose prism, wide orbital eye-socket planes, and flush mouth base on a 1 TU flat-keyed rear stem via LAY_FLAT ([90,0,0]), compatible with all 3 Human Heads.",
+      "note": "Universal face-shaped meniscus insert on a 1 TU flat-keyed rear stem via LAY_FLAT ([90,0,0]): the back and front follow the face (3.4 mm thick on the centre line, outline narrowing toward the chin) and sit inset 0.3 mm below the skull surface, with a gentle 3D nose prism and a soft raised resting-smile mouth ridge; compatible with all three Human Head face_slot bores.",
       "stat": "Glow",
       "type": "Face plate",
       "behavior": "Quick-swap universal 3D nose and orbital facial insert mating flush into any Human Head face_slot",
@@ -2528,7 +2528,7 @@
       "family": "pin",
       "size": "pro",
       "wave": "W9",
-      "note": "Universal 24.2x10.5 mm collector-vinyl style facial insert with physical 3D raised circular button-eye domes at x=+-7.3 mm and central 3D horizontal triangle nose wedge on a 1 TU flat-keyed rear stem via LAY_FLAT ([90,0,0]), compatible with all 3 Human Heads.",
+      "note": "Universal face-shaped meniscus insert on a 1 TU flat-keyed rear stem via LAY_FLAT ([90,0,0]): the back and front follow the face (3.4 mm thick on the centre line, outline narrowing toward the chin) and sit inset 0.3 mm below the skull surface, with shallow raised vinyl eye lenses at x=+-7.3 mm, a small button nose and a soft raised resting-smile mouth ridge; compatible with all three Human Head face_slot bores.",
       "stat": "Glow",
       "type": "Face plate",
       "behavior": "Quick-swap universal 3D button-eye and triangle-nose facial insert mating flush into any Human Head face_slot",
@@ -2551,7 +2551,7 @@
       "family": "pin",
       "size": "pro",
       "wave": "W9",
-      "note": "Universal smooth flush 24.2x10.5 mm planar facial decal insert (zero 3D nose or socket relief, relying purely on printed 2D expression decals) on a 1 TU flat-keyed rear stem via LAY_FLAT ([90,0,0]), compatible with all 3 Human Heads.",
+      "note": "Universal face-shaped meniscus insert on a 1 TU flat-keyed rear stem via LAY_FLAT ([90,0,0]): the back and front follow the face (3.4 mm thick on the centre line, outline narrowing toward the chin) and sit inset 0.3 mm below the skull surface, with no nose or eye relief (printed 2D decals) and a soft raised resting-smile mouth ridge; compatible with all three Human Head face_slot bores.",
       "stat": "Glow",
       "type": "Face plate",
       "behavior": "Quick-swap universal smooth flush printed-decal facial insert mating into any Human Head face_slot",
@@ -3278,10 +3278,10 @@
       "family": "hair",
       "size": "small",
       "wave": "W9",
-      "note": "Support-free 6-panel sport baseball cap with forward curved visor bill, seam ridges, top button, and -6.0 mm wearable crown rim that seats cleanly on bald heads or Hat-Ready wigs.",
+      "note": "Support-free 6-panel sport baseball cap with forward curved visor bill, seam ridges, top button, and wrap-down rim that sits at the hairline over a Hat-Ready wig or just above the brow on a bare head.",
       "stat": "Speed",
       "type": "Crown headgear",
-      "behavior": "Wearable 2x1 sport ballcap that fits bald character heads and stacks onto Hat-Ready hairstyles",
+      "behavior": "Wearable 2x1 sport ballcap that wraps bald character heads and Hat-Ready hairstyles",
       "tags": [
         "character",
         "hat",
@@ -3311,7 +3311,7 @@
       "family": "hair",
       "size": "small",
       "wave": "W9",
-      "note": "Support-free ribbed knit watch-cap beanie with thick folded cuff, vertical knit ribs, and top pom-pom on a -6.0 mm wearable 2x1 crown rim.",
+      "note": "Support-free ribbed knit watch-cap beanie with thick folded cuff, vertical knit ribs, and top pom-pom with a wrap-down rim (about 10 mm below the sockets: at the hairline over a Hat-Ready wig, just above the brow on a bare head).",
       "stat": "Glow",
       "type": "Crown headgear",
       "behavior": "Wearable 2x1 ribbed cuff beanie with pom-pom for bald heads and Hat-Ready hairstyles",
@@ -3344,7 +3344,7 @@
       "family": "hair",
       "size": "small",
       "wave": "W9",
-      "note": "Support-free western cowboy hat with upturned curled side brims, hatband, and pinched cattleman crown crease on a -6.0 mm wearable 2x1 crown rim.",
+      "note": "Support-free western cowboy hat with upturned curled side brims, hatband, and pinched cattleman crown crease with a wrap-down rim (about 10 mm below the sockets: at the hairline over a Hat-Ready wig, just above the brow on a bare head).",
       "stat": "Torque",
       "type": "Crown headgear",
       "behavior": "Wearable 2x1 western cowboy hat with curled side brims and cattleman crease",
@@ -3377,7 +3377,7 @@
       "family": "hair",
       "size": "small",
       "wave": "W9",
-      "note": "Support-free construction safety hardhat with front visor peak, wrap safety rim, center reinforcement spine ridge, and front badge plate on a -6.0 mm wearable 2x1 crown rim.",
+      "note": "Support-free construction safety hardhat with front visor peak, wrap safety rim, center reinforcement spine ridge, and front badge plate with a wrap-down rim (about 10 mm below the sockets: at the hairline over a Hat-Ready wig, just above the brow on a bare head).",
       "stat": "Torque",
       "type": "Crown headgear",
       "behavior": "Wearable 2x1 construction builder hardhat for bald heads and Hat-Ready hairstyles",
@@ -3410,7 +3410,7 @@
       "family": "hair",
       "size": "small",
       "wave": "W9",
-      "note": "Support-free wide-brim explorer ranger hat with hatband and four-pinch campaign peak crown on a -6.0 mm wearable 2x1 crown rim.",
+      "note": "Support-free wide-brim explorer ranger hat with hatband and four-pinch campaign peak crown with a wrap-down rim (about 10 mm below the sockets: at the hairline over a Hat-Ready wig, just above the brow on a bare head).",
       "stat": "Speed",
       "type": "Crown headgear",
       "behavior": "Wearable 2x1 wide-brim explorer safari hat for bald heads and Hat-Ready hairstyles",
@@ -3443,7 +3443,7 @@
       "family": "hair",
       "size": "small",
       "wave": "W9",
-      "note": "Support-free dapper stovepipe top hat with curled dress brim, ribbon band, and flared top cylinder on a -6.0 mm wearable 2x1 crown rim.",
+      "note": "Support-free dapper stovepipe top hat with curled dress brim, ribbon band, and flared top cylinder with a wrap-down rim (about 10 mm below the sockets: at the hairline over a Hat-Ready wig, just above the brow on a bare head).",
       "stat": "Glow",
       "type": "Crown headgear",
       "behavior": "Wearable 2x1 dapper stovepipe top hat for bald heads and Hat-Ready hairstyles",
@@ -3476,7 +3476,7 @@
       "family": "hair",
       "size": "small",
       "wave": "W9",
-      "note": "Support-free buccaneer tricorne hat with upturned three-point folded brim walls and domed inner crown on a -6.0 mm wearable 2x1 crown rim.",
+      "note": "Support-free buccaneer tricorne hat with upturned three-point folded brim walls and domed inner crown with a wrap-down rim (about 10 mm below the sockets: at the hairline over a Hat-Ready wig, just above the brow on a bare head).",
       "stat": "Spin",
       "type": "Crown headgear",
       "behavior": "Wearable 2x1 buccaneer tricorne hat for bald heads and Hat-Ready hairstyles",
@@ -5061,7 +5061,7 @@
       "family": "beam",
       "size": "pro",
       "wave": "W11",
-      "note": "62.3 x 24.8 x 12.5 mm mechanical IF-contact-THEN-release front bumper bar tripping stored band actuators on obstacle touch.",
+      "note": "48.0 x 32.8 x 12.5 mm mechanical IF-contact-THEN-release front bumper bar (fits between the front tires and leads the 36 mm tire front) tripping stored band actuators on obstacle touch.",
       "stat": "Awareness",
       "type": "Mechanical trigger",
       "behavior": "Mechanical IF-bump-THEN-release front contact bar for auto-dump and scoop action",

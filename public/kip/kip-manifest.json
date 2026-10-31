@@ -81,6 +81,7 @@
       "char_head_kid",
       "char_head_chibi",
       "char_head_tall",
+      "char_head_jumbo",
       "classic",
       "robot_head_visor",
       "robot_head_scout",
@@ -92,7 +93,7 @@
       "char_head_imp"
     ],
     "headCategories": {
-      "human": ["char_head_kid", "char_head_chibi", "char_head_tall"],
+      "human": ["char_head_kid", "char_head_chibi", "char_head_tall", "char_head_jumbo"],
       "robot": ["classic", "robot_head_visor", "robot_head_scout"],
       "animal": ["char_head_fox", "char_head_bear", "char_head_cat"],
       "creature": ["char_head_dragon", "char_head_alien", "char_head_imp"]
@@ -166,7 +167,7 @@
       "play": ["prop_star_shield", "prop_skateboard_deck", "prop_flag", "prop_magnifier"]
     },
     "faceInserts": [
-      { "id": "sculpted", "label": "3D Nose & Orbitals",     "part": "char_faceplate" },
+      { "id": "sculpted", "label": "3D Nose & Smile",        "part": "char_faceplate" },
       { "id": "vinyl",    "label": "3D Button Eyes & Nose",  "part": "char_faceplate_vinyl" },
       { "id": "flat",     "label": "Flat Decal Insert",      "part": "char_faceplate_flat" }
     ],
@@ -195,13 +196,7 @@
     "creature": ["face", "crown", "hatColor", "shirt", "pants", "tail", "back", "prop"],
     "note": "Mirrors syncWardrobeCategoryUi() in Kip-Demo.html: the Wardrobe row shows only the controls that fit the chosen head type. hatColor appears only while a wearable hat is on."
   },
-  "pending": [
-    {
-      "id": "char_head_jumbo",
-      "category": "human",
-      "status": "in catalog.json and toyventor_parts.py, not yet in Kip-Demo.html (demo ships exactly 12 heads, 3 per category)"
-    }
-  ],
+  "pending": [],
   "presets": [
     { "id": "clean",  "label": "Clean",               "head": "classic" },
     { "id": "boy",    "label": "Leo Explorer",        "head": "kid" },
@@ -220,7 +215,7 @@
       "edition": "snap (default pro)",
       "preset|loadout": "clean | boy | girl | kai | scout | cat | fox | dragon | imp | pro",
       "cat": "human | robot | animal | creature",
-      "head": "kid | chibi | tall | classic | robot | scout | fox | bear | cat | dragon | alien | imp",
+      "head": "kid | chibi | tall | jumbo | classic | robot | scout | fox | bear | cat | dragon | alien | imp",
       "insert": "sculpted | vinyl | flat",
       "face|expr": "spark | button | happy | wink | cool | starry | surprised | blank",
       "skin": "warm_peach | golden_tan | rich_cocoa | soft_ivory | vinyl_cream",

@@ -1,33 +1,53 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_char_head_chibi_S.stl",
-  "file_sha256": "6a7466855960fd54bfff23773b0020d8ea06127325b28e04cb645852b60bb406",
+  "file_sha256": "1c2d9e7183c1311513b2cd506b905281c39711da36564433115ad65759596638",
   "part_id": "char_head_chibi",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-10-31T11:24:38Z",
+  "checked_at": "2026-10-31T14:36:09Z",
   "metrics": {
     "bbox_mm": [
-      40.18,
-      27.75,
+      36.82,
+      28.02,
       34.2
     ],
-    "volume_cm3": 21.49,
-    "surface_cm2": 46.71,
-    "triangles": 10910,
+    "volume_cm3": 20.01,
+    "surface_cm2": 46.42,
+    "triangles": 10748,
     "ledges": [],
     "layers": 171,
     "bed_contact_mm2": 207.5,
     "height_mm": 34.2,
     "slenderness": 2.37,
     "centre_of_mass_over_contact": true,
-    "min_wall_mm": null,
-    "thin_wall_regions": []
+    "min_wall_mm": 0.249,
+    "thin_wall_regions": [
+      {
+        "area_mm2": 4.35,
+        "min_mm": 0.249,
+        "at_mm": [
+          -0.74,
+          -10.77,
+          14.41
+        ]
+      }
+    ]
   },
   "bridges": [
     {
+      "z_mm": 9.6,
+      "span_mm": 0.35,
+      "area_mm2": 0.5
+    },
+    {
+      "z_mm": 9.6,
+      "span_mm": 0.35,
+      "area_mm2": 0.5
+    },
+    {
       "z_mm": 15.05,
       "span_mm": 4.86,
-      "area_mm2": 62.7
+      "area_mm2": 65.6
     },
     {
       "z_mm": 3.2,
@@ -62,8 +82,8 @@
       "level": "block",
       "result": "pass",
       "value": [
-        40.2,
-        27.8,
+        36.8,
+        28.0,
         34.2
       ],
       "limit": [
@@ -95,7 +115,7 @@
       "result": "pass",
       "value": 6.7,
       "limit": 20,
-      "detail": "3 bridge(s); widest unsupported span in mm"
+      "detail": "5 bridge(s); widest unsupported span in mm"
     },
     {
       "id": "V5_no_floating_islands",
@@ -124,14 +144,14 @@
     {
       "id": "V8_wall_thickness",
       "level": "warn",
-      "result": "pass",
-      "value": 0,
+      "result": "warn",
+      "value": 1,
       "limit": 0,
-      "detail": "regions where the wall is under 0.8 mm (two nozzle widths) over 2.0 mm2, or under 0.4 mm (one nozzle width) over 0.25 mm2; sharp edges and slivers are ignored"
+      "detail": "regions where the wall is under 0.8 mm (two nozzle widths) over 2.0 mm2, or under 0.4 mm (one nozzle width) over 0.25 mm2; worst 0.249 mm at [-0.74, -10.77, 14.41]"
     }
   ],
   "print_settings": {},
   "slicer": null,
-  "verdict": "pass",
-  "summary": "Prints as is"
+  "verdict": "pass_with_warnings",
+  "summary": "Warnings: V8_wall_thickness"
 }

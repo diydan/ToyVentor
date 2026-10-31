@@ -791,8 +791,20 @@ def pro_steer_bridge(size="small", grid=(2, 2), lock=True, **_):
     return m, [c_sock, c_top, c_kp], {"sockets": {"holes": 4, "reliefs": 0, "locked": bool(lock)}}
 
 
+KNUCKLE_FACE_RELIEF = 0.0  # mm to shave off the inboard (print-bed) cheek face. WANTED 0.4, BLOCKED: that face sits 0.10 mm from the keel
+                           # nose side wall (|x| 12.5 vs 12.4) and closes to 0.010 mm while steering (outer knuckle near 14.8 deg), so it
+                           # will rub or bind; 0.4 mm gives >= 0.355 mm over the whole +-5.2 mm rack sweep (measured, G1 9/9). Why it is 0:
+                           # G4_on_bed needs z_min = 0, so the shaved body must be re-based, which moves the two bores to z = 6.25 - relief.
+                           # The I4_bore_on_grid lattice check wants an axis8 bore at a multiple of 1.5625 mm (6.25 or 4.6875), and 5.85 is
+                           # neither. Needs a decision: exempt these two pivot bores from the lattice, or accept a 1.5625 mm relief, or
+                           # drop the relief. The machinery below already supports any value: the body is re-based, the bore and stub
+                           # connector frames follow, and verify_gate_g1 plus Truck-Mockup.html add the relief back when they place the
+                           # part. A whole-face shave, not a pocket: a pocket's ceiling is a downward-facing roof (fails V4/V10).
+                           # The strap-under-keel vertical clearance (0.15 mm) is a separate fit.
+
+
 def _steer_knuckle(side):
-    """Bellcrank steering knuckle (25.6 x 16.0 x 27.5 mm printed stub-up on flat cheek, side = -1 for L, +1 for R).
+    """Bellcrank steering knuckle (25.6 x 16.0 x 27.1 mm printed stub-up on flat cheek, side = -1 for L, +1 for R).
     - Stepped crank strap (y in [+6.40, +10.05] -> Z_world < 0 below keel nose) + 42-deg beveled kingpin & tie-rod bosses
       (y in [-5.95, +10.05] -> Z_world_top = 12.20 mm, 0.30 mm clear under pro_steer_bridge at all ±26 deg steering angles!);
     - Tapered hub riser up to z = 15.00 mm (8.75 mm from z = 6.25 kingpin -> 0.10 mm clear of inner wheel hub at 8.85 mm!)
@@ -824,8 +836,12 @@ def _steer_knuckle(side):
         - pro.bore_cutter_axis("free", 22.0, (xk, yc, 6.25), "y")
         - pro.bore_cutter_axis("free", 22.0, (xt, yc, 6.25), "y")
     )
-    c_kp = pro._axis_bore_conn("kingpin_bore", "free", (xk, 0.0, 6.25), "y", 11.4, lattice="axis8")
-    c_tr = pro._axis_bore_conn("tierod_bore", "free", (xt, 0.0, 6.25), "y", 11.4, lattice="axis8")
+    if KNUCKLE_FACE_RELIEF > 0.0:
+        m = m ^ Manifold.cube((100.0, 100.0, 100.0)).translate((-50.0, -50.0, KNUCKLE_FACE_RELIEF))  # inboard-face relief (see above)
+        m = m.translate((0.0, 0.0, -KNUCKLE_FACE_RELIEF))  # re-base: the relieved face is the new bed face (z_min = 0)
+    z_bore = 6.25 - KNUCKLE_FACE_RELIEF
+    c_kp = pro._axis_bore_conn("kingpin_bore", "free", (xk, 0.0, z_bore), "y", 11.4, lattice="axis8")
+    c_tr = pro._axis_bore_conn("tierod_bore", "free", (xt, 0.0, z_bore), "y", 11.4, lattice="axis8")
     c_ax = {
         "id": "wheel_stub",
         "kind": "pin",
@@ -835,25 +851,68 @@ def _steer_knuckle(side):
         "fit_class": tp.IF["interfaces"]["shaft_drive"]["fit_class"],
         "profile": "flats",
         "length_mm": 12.5,
-        "frame": {"origin": [xk, 0.0, 15.00], "normal": [0, 0, 1]},
+        "frame": {"origin": [xk, 0.0, round(15.00 - KNUCKLE_FACE_RELIEF, 4)], "normal": [0, 0, 1]},
         "grid": {"nx": 1, "ny": 1, "pitch": TU, "anchor": "corner"},
     }
     return m, [c_kp, c_tr, c_ax], {}
 
 
 def pro_steer_knuckle_l(**_):
-    """Left Stage-2 Pro 15 mm-Scrub Bellcrank Steering Knuckle (25.6 x 16.0 x 27.5 mm)."""
+    """Left Stage-2 Pro 15 mm-Scrub Bellcrank Steering Knuckle (25.6 x 16.0 x 27.1 mm)."""
     return _steer_knuckle(-1)
 
 
 def pro_steer_knuckle_r(**_):
-    """Right Stage-2 Pro 15 mm-Scrub Bellcrank Steering Knuckle (25.6 x 16.0 x 27.5 mm)."""
+    """Right Stage-2 Pro 15 mm-Scrub Bellcrank Steering Knuckle (25.6 x 16.0 x 27.1 mm)."""
     return _steer_knuckle(1)
+
+
+RACK_TIEROD_X = 7.8125  # 5 axis8 steps. Solved with the rigid tie-rod closure (_tierod_angles): 26.0 deg inner at 4.35 mm of rack
+                        # travel with the outer wheel at 17.7 deg (Ackermann ideal 22.4; worst-case error 4.8 deg). The old +-12.50 gave
+                        # 26.2 / 14.1 (error 8.4 deg) and needed only 3.68 mm; its circle was 86 cm at 26 deg lock (Gate G2 <= 62.0 cm).
+RACK_STOP = 5.20        # mm of rack travel each way. With the +-7.8125 bores that is 33.9 deg inner / 20.8 outer: wall-to-wall turning
+                        # circle 60.6 cm (G2 <= 62.0). Ø36 tires keep >= 3.12 mm clearance to keel/bridge/rack there; first contact is at
+                        # ~6.4 mm. (At the old 4.40 mm stop the circle would be 69.6 cm and fail G2.) Nothing in the part geometry limits
+                        # rack travel: this number must be enforced by a stop feature.
+GIANT_LOCK_DEG = 25.0   # Ø50 tires: keel clearance is 1.81 mm at 26 deg inner (gate >= 1.80), and G2 (<= 75 cm) needs >= ~24 deg.
+
+
+def _tierod_angles(dx):
+    """Rigid tie-rod closure for rack travel `dx` mm (+ = toward +X). Returns knuckle angles in degrees (+ = toward +X) for
+    (the -X knuckle, the +X knuckle). Each knuckle's tie-rod bore orbits its vertical kingpin at 12.5 mm; the tie-rod keeps the
+    planar bore-to-bore length it has at dx = 0. Same closed form as STEER in viewer/Truck-Mockup.html."""
+    kp_x, kp_y, arm = 18.75, -56.25, 12.5
+    rack_y = -56.25 - 1.5625
+    link = math.hypot(kp_x - RACK_TIEROD_X, (kp_y - arm) - rack_y)
+    wrap = lambda v: math.atan2(math.sin(v), math.cos(v))
+    out = []
+    for side in (-1, 1):
+        ex, ey = side * RACK_TIEROD_X + dx - side * kp_x, rack_y - kp_y
+        r = math.hypot(ex, ey)
+        q = max(-1.0, min(1.0, (arm * arm + r * r - link * link) / (2 * arm * r)))
+        phi, a = math.atan2(ey, ex), math.asin(q)
+        r1, r2 = wrap(phi + a), wrap(phi + math.pi - a)
+        out.append(math.degrees(r1 if abs(r1) < abs(r2) else r2))
+    return out[0], out[1]
+
+
+def _dx_for_inner(inner_deg, stop=RACK_STOP):
+    """Rack travel at which the inner knuckle reaches `inner_deg` (bisection), capped at the rack stop."""
+    lo, hi = 0.0, stop
+    if max(abs(a) for a in _tierod_angles(hi)) <= inner_deg:
+        return hi
+    for _ in range(50):
+        mid = (lo + hi) / 2
+        if max(abs(a) for a in _tierod_angles(mid)) < inner_deg:
+            lo = mid
+        else:
+            hi = mid
+    return (lo + hi) / 2
 
 
 def pro_steer_rack(**_):
     """Stage-2 Pro Module-2.5 Toothed Steering Rack (36.0 x 15.1 x 6.2 mm).
-    Full-length conjugate teeth at y_pitch = +6.25 mm (0.5 TU), tip line at y = +8.75 mm, tie-rod free bores at (+-12.50, -1.5625).
+    Full-length conjugate teeth at y_pitch = +6.25 mm (0.5 TU), tip line at y = +8.75 mm, tie-rod free bores at (+-7.8125, -1.5625).
     """
     mod, a = pro.GEAR["module_mm"], math.radians(pro.GEAR["pressure_angle_deg"])
     T, L, yp = pro.GEAR["thickness_tu"] * TU, 36.0, TU / 2  # T = 6.25, yp = 6.25
@@ -867,7 +926,7 @@ def pro_steer_rack(**_):
         xc = k * p
         sec = sec + _ccw_poly([(xc - w_root, y_root - 0.2), (xc + w_root, y_root - 0.2), (xc + w_tip, y_tip), (xc - w_tip, y_tip)])
     sec = sec ^ CrossSection.square((L, y_tip + 6.35)).translate((-L / 2, -6.35))
-    m = Manifold.extrude(sec, T) - pro.bore_cutter("free", T, -12.50, -1.5625, 0.0) - pro.bore_cutter("free", T, 12.50, -1.5625, 0.0)
+    m = Manifold.extrude(sec, T) - pro.bore_cutter("free", T, -RACK_TIEROD_X, -1.5625, 0.0) - pro.bore_cutter("free", T, RACK_TIEROD_X, -1.5625, 0.0)
     conn = {
         "id": "tierod_bores",
         "kind": "bore_grid",
@@ -878,8 +937,8 @@ def pro_steer_rack(**_):
         "bore_class": "free",
         "depth_mm": T,
         "lattice": "axis8",
-        "frame": {"origin": [-12.50, -1.5625, 0.0], "normal": [0, 0, 1]},
-        "grid": {"nx": 2, "ny": 1, "pitch": 25.0, "anchor": "corner"},
+        "frame": {"origin": [-RACK_TIEROD_X, -1.5625, 0.0], "normal": [0, 0, 1]},
+        "grid": {"nx": 2, "ny": 1, "pitch": 2 * RACK_TIEROD_X, "anchor": "corner"},
     }
     return m, [conn], {"gear": {"kind": "rack", "module_mm": mod, "pitch_line_mm": yp, "length_mm": L, "thickness_mm": T,
                                 "pressure_angle_deg": pro.GEAR["pressure_angle_deg"]}}
@@ -995,9 +1054,13 @@ def mom_band_spool_pawl(**_):
 
 
 def mom_bumper_trigger(**_):
-    """Stage-3 Momentum IF-Contact-THEN-Release Front Bumper Trigger (62.3 x 24.8 x 12.5 mm)."""
+    """Stage-3 Momentum IF-Contact-THEN-Release Front Bumper Trigger (48.0 x 32.8 x 12.5 mm).
+    The 48.0 mm bar fits between the front tires (inner faces 53.4 mm apart) and its face (y = -20.4) leads the 17.98 mm
+    tire front by 2.4 mm when mounted on the front-axle line (y = -56.25); the old 62.3 mm bar at y = -12.4 overlapped both
+    tires (394 mm3) and sat 5.6 mm behind them. Not valid with the 24.97 mm giant tire (its front is 12.6 mm further out).
+    """
     H = 12.5
-    plan = rrect(62.3, 10.0, 2.4).translate((0.0, -7.4)) + rrect(25.0, 24.8, 2.0)
+    plan = rrect(48.0, 10.0, 2.4).translate((0.0, -15.4)) + rrect(25.0, 32.8, 2.0).translate((0.0, -4.0))
     m = Manifold.extrude(plan, H) - pro.bore_cutter("free", H, -6.25, 6.25, 0.0) - pro.bore_cutter("free", H, 6.25, 6.25, 0.0)
     conn = {
         "id": "mount_bores",
@@ -1272,20 +1335,20 @@ CARD_LAYOUTS = {
         "limit_mm": 164.0,
         "material": "PLA/PETG",
         "items": [
-            ("band_tray", "mom_band_core_tray", 3.0, 100.6, 49.8, 49.8),
-            ("band_lid", "mom_band_core_lid", 102.6, 44.0, 49.8, 49.8),
-            ("band_spool", "mom_band_spool_pawl", 35.8, 69.5, 26.0, 26.0),
-            ("slam_base", "mom_slam_base", 79.0, 3.0, 62.3, 36.0),
-            ("slam_plunger", "mom_slam_plunger", 57.8, 100.6, 76.0, 18.0),
-            ("bumper_trig", "mom_bumper_trigger", 3.0, 39.5, 62.3, 24.8),
-            ("steer_bridge", "pro_steer_bridge", 57.8, 123.6, 48.1, 24.8),
-            ("steer_rack", "pro_steer_rack", 38.0, 19.2, 36.0, 15.1),
-            ("knuckle_l", "pro_steer_knuckle_l", 70.3, 44.0, 25.6, 16.0),
-            ("knuckle_r", "pro_steer_knuckle_r", 70.3, 67.0, 25.6, 16.0),
-            ("fork_rake", "pro_fork_rake_adpt", 3.0, 69.5, 27.8, 24.8),
-            ("axle_keep", "pro_axle_keeper", 38.0, 3.0, 36.0, 11.0),
-            ("z10_a", "gear_spur_z10", 3.0, 3.0, 30.0, 30.0),
-            ("z10_b", "gear_spur_z10", 110.9, 123.6, 30.0, 30.0),
+            ("band_tray", "mom_band_core_tray", 34.0, 3.0, 49.8, 49.8),
+            ("band_lid", "mom_band_core_lid", 91.1, 102.0, 49.8, 49.8),
+            ("band_spool", "mom_band_spool_pawl", 3.0, 3.0, 26.0, 26.0),
+            ("slam_base", "mom_slam_base", 88.8, 3.0, 62.3, 36.0),
+            ("slam_plunger", "mom_slam_plunger", 56.1, 79.0, 76.0, 18.0),
+            ("bumper_trig", "mom_bumper_trigger", 3.0, 73.8, 32.8, 48.0),  # 48.0 x 32.8 part, rotated 90 deg on the plate
+            ("steer_bridge", "pro_steer_bridge", 3.0, 126.8, 48.1, 24.8),
+            ("steer_rack", "pro_steer_rack", 44.0, 57.8, 36.0, 15.1),
+            ("knuckle_l", "pro_steer_knuckle_l", 3.0, 34.0, 25.6, 16.0),
+            ("knuckle_r", "pro_steer_knuckle_r", 56.1, 137.0, 25.6, 16.0),
+            ("fork_rake", "pro_fork_rake_adpt", 88.8, 44.0, 27.8, 24.8),
+            ("axle_keep", "pro_axle_keeper", 3.0, 57.8, 36.0, 11.0),
+            ("z10_a", "gear_spur_z10", 121.6, 44.0, 30.0, 30.0),
+            ("z10_b", "gear_spur_z10", 56.1, 102.0, 30.0, 30.0),
         ],
     },
     "card_e2": {
@@ -1508,19 +1571,25 @@ def verify_gate_g1():
     bridge = _raw_geo("pro_steer_bridge", cache).translate((0.0, -50.0, 12.5))
     rack = _raw_geo("pro_steer_rack", cache).translate((0.0, -56.25, 25.05))
     ghost_servo = rbox(24.8, 37.3, 30.5, 2.0, 0.0).translate((0.0, -50.0, 32.0))
-    kn_l_base = _raw_geo("pro_steer_knuckle_l", cache).translate((-6.25, 0.0, -6.25)).rotate((-90, 0, 0)).rotate((0, 0, 90))
-    kn_r_base = _raw_geo("pro_steer_knuckle_r", cache).translate((6.25, 0.0, -6.25)).rotate((-90, 0, 0)).rotate((0, 0, -90))
-    kn_l_26 = kn_l_base.rotate((0, 0, 26.0)).translate((-18.75, -56.25, 6.25))
-    kn_r_22 = kn_r_base.rotate((0, 0, 22.4)).translate((18.75, -56.25, 6.25))
-    # Steered #4 wheels (clocked 90 deg on Z so Double-D hub flats align with wheel_stub flats!) at +26 / +22.4 deg lock:
-    w_st_l = w_med.rotate((0, 0, 90)).rotate((0, -90, 0)).translate((-8.85, 0.0, 0.0)).rotate((0, 0, 26.0)).translate((-18.75, -56.25, 6.25))
-    w_st_r = w_med.rotate((0, 0, 90)).rotate((0, 90, 0)).translate((8.85, 0.0, 0.0)).rotate((0, 0, 22.4)).translate((18.75, -56.25, 6.25))
-    results["1_race_car_steer_mech"] = _check_non_overlapping([
-        ("keel", keel), ("bridge", bridge), ("rack", rack.translate((4.4, 0.0, 0.0))),
-        ("kn_l_26", kn_l_26), ("kn_r_22", kn_r_22),
-        ("ghost_servo", ghost_servo), ("windscreen", wind.translate((0.0, -6.25, 12.5))), ("kip", kip),
-        ("w_front_l_26deg", w_st_l), ("w_front_r_22deg", w_st_r), *outboard_wheels(w_med, 43.75),
-    ])
+    kn_l_base = _raw_geo("pro_steer_knuckle_l", cache).translate((-6.25, 0.0, -6.25 + KNUCKLE_FACE_RELIEF)).rotate((-90, 0, 0)).rotate((0, 0, 90))
+    kn_r_base = _raw_geo("pro_steer_knuckle_r", cache).translate((6.25, 0.0, -6.25 + KNUCKLE_FACE_RELIEF)).rotate((-90, 0, 0)).rotate((0, 0, -90))
+    # Steered #4 wheels are clocked 90 deg on Z so Double-D hub flats align with wheel_stub flats. Poses come from the rigid
+    # tie-rod closure (_tierod_angles) at the +-RACK_STOP rack stop, not from assumed Ackermann angles: at the stop the knuckles
+    # sit at (20.8, 33.9) deg, the inner one on the side the rack moves toward.
+    res1 = []
+    for sgn in (1.0, -1.0):
+        a_l, a_r = _tierod_angles(sgn * RACK_STOP)
+        kn_l_t = kn_l_base.rotate((0, 0, a_l)).translate((-18.75, -56.25, 6.25))
+        kn_r_t = kn_r_base.rotate((0, 0, a_r)).translate((18.75, -56.25, 6.25))
+        w_st_l = w_med.rotate((0, 0, 90)).rotate((0, -90, 0)).translate((-8.85, 0.0, 0.0)).rotate((0, 0, a_l)).translate((-18.75, -56.25, 6.25))
+        w_st_r = w_med.rotate((0, 0, 90)).rotate((0, 90, 0)).translate((8.85, 0.0, 0.0)).rotate((0, 0, a_r)).translate((18.75, -56.25, 6.25))
+        res1 += _check_non_overlapping([
+            ("keel", keel), ("bridge", bridge), ("rack", rack.translate((sgn * RACK_STOP, 0.0, 0.0))),
+            (f"kn_l_{a_l:+.1f}", kn_l_t), (f"kn_r_{a_r:+.1f}", kn_r_t),
+            ("ghost_servo", ghost_servo), ("windscreen", wind.translate((0.0, -6.25, 12.5))), ("kip", kip),
+            (f"w_front_l_{a_l:+.1f}deg", w_st_l), (f"w_front_r_{a_r:+.1f}deg", w_st_r), *outboard_wheels(w_med, 43.75),
+        ])
+    results["1_race_car_steer_mech"] = res1
 
     # 2. Dump / Tow Truck: stowed + 55-deg dump tip on #1 AND on 3-TU Power Core:
     core_tray = _raw_geo("mom_band_core_tray", cache).translate((0.0, 37.5, 12.5))
@@ -1533,13 +1602,18 @@ def verify_gate_g1():
     )
 
     # 3. Farm / Loader Tractor: Giant Ø50 rear + Pro ±21 deg steered Ø50 front lock check:
-    w50_l = w_gnt.rotate((0, 90, 0)).translate((-15.0 - 6.15, 0.0, 0.0)).rotate((0, 0, 21.0)).translate((-18.75, -56.25, 6.25))
-    w50_r = w_gnt.rotate((0, 90, 0)).translate((15.0 - 6.15, 0.0, 0.0)).rotate((0, 0, 18.5)).translate((18.75, -56.25, 6.25))
-    results["3_tractor_giant_steer"] = _check_non_overlapping([
-        ("keel", keel), ("bridge", bridge), ("rack", rack.translate((3.6, 0.0, 0.0))),
-        ("wind", wind.translate((0.0, -6.25, 12.5))), ("kip", kip),
-        ("w50_fl_21deg", w50_l), ("w50_fr_18deg", w50_r), *outboard_wheels(w_gnt, 43.75),
-    ])
+    dx21 = _dx_for_inner(GIANT_LOCK_DEG)
+    res3 = []
+    for sgn in (1.0, -1.0):
+        a_l, a_r = _tierod_angles(sgn * dx21)
+        w50_l = w_gnt.rotate((0, 90, 0)).translate((-15.0 - 6.15, 0.0, 0.0)).rotate((0, 0, a_l)).translate((-18.75, -56.25, 6.25))
+        w50_r = w_gnt.rotate((0, 90, 0)).translate((15.0 - 6.15, 0.0, 0.0)).rotate((0, 0, a_r)).translate((18.75, -56.25, 6.25))
+        res3 += _check_non_overlapping([
+            ("keel", keel), ("bridge", bridge), ("rack", rack.translate((sgn * dx21, 0.0, 0.0))),
+            ("wind", wind.translate((0.0, -6.25, 12.5))), ("kip", kip),
+            (f"w50_fl_{a_l:+.1f}deg", w50_l), (f"w50_fr_{a_r:+.1f}deg", w50_r), *outboard_wheels(w_gnt, 43.75),
+        ])
+    results["3_tractor_giant_steer"] = res3
 
     # 4. Modular Fifth-Wheel / Dolly Trailer (#14 turntable + front dolly row 0 + rear row 8 axles):
     results["4_modular_trailer"] = _check_non_overlapping([

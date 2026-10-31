@@ -1,41 +1,41 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_hat_ballcap_S.stl",
-  "file_sha256": "3d3211522d78fb8741e72f171ab0a0be1beecb080cd906ec0c2fa642d6b56b67",
+  "file_sha256": "d1ccf83d4e739eb825a4eb05ed7911fb19da46fe4fa4d6ec578b0af3dd58472c",
   "part_id": "hat_ballcap",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-10-31T11:33:56Z",
+  "checked_at": "2026-10-31T14:42:58Z",
   "metrics": {
     "bbox_mm": [
-      44.4,
-      51.42,
-      24.2
+      47.48,
+      51.95,
+      18.7
     ],
-    "volume_cm3": 19.32,
-    "surface_cm2": 60.72,
-    "triangles": 3354,
+    "volume_cm3": 7.73,
+    "surface_cm2": 61.5,
+    "triangles": 6662,
     "ledges": [],
-    "layers": 121,
-    "bed_contact_mm2": 788.5,
-    "height_mm": 24.2,
-    "slenderness": 0.86,
+    "layers": 94,
+    "bed_contact_mm2": 701.4,
+    "height_mm": 18.7,
+    "slenderness": 0.71,
     "centre_of_mass_over_contact": true,
     "min_wall_mm": null,
     "thin_wall_regions": []
   },
   "bridges": [
     {
-      "z_mm": 6.1,
-      "span_mm": 9.65,
-      "area_mm2": 454.1
+      "z_mm": 10.9,
+      "span_mm": 10.29,
+      "area_mm2": 521.3
     },
     {
-      "z_mm": 9.2,
+      "z_mm": 14.0,
       "span_mm": 6.7,
       "area_mm2": 35.2
     },
     {
-      "z_mm": 9.2,
+      "z_mm": 14.0,
       "span_mm": 6.7,
       "area_mm2": 35.2
     }
@@ -62,9 +62,9 @@
       "level": "block",
       "result": "pass",
       "value": [
-        44.4,
-        51.4,
-        24.2
+        47.5,
+        51.9,
+        18.7
       ],
       "limit": [
         180,
@@ -93,7 +93,7 @@
       "id": "V6_bridge_span",
       "level": "block",
       "result": "pass",
-      "value": 9.65,
+      "value": 10.29,
       "limit": 20,
       "detail": "3 bridge(s); widest unsupported span in mm"
     },
@@ -117,9 +117,9 @@
       "id": "V9_bed_contact",
       "level": "info",
       "result": "pass",
-      "value": 788.5,
+      "value": 701.4,
       "limit": null,
-      "detail": "height / sqrt(contact) = 0.86; above about 3 the slicer often asks for a brim"
+      "detail": "height / sqrt(contact) = 0.71; above about 3 the slicer often asks for a brim"
     },
     {
       "id": "V8_wall_thickness",

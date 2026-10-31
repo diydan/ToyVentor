@@ -4,7 +4,7 @@
   "file_sha256": "de5861d4cd313d495deb2c87575312b519918b48c28ad2307215f608d5bb3ae8",
   "part_id": "racer_axle",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-10-31T11:23:46Z",
+  "checked_at": "2026-10-31T14:35:44Z",
   "metrics": {
     "bbox_mm": [
       6.6,
@@ -160,7 +160,7 @@
     ],
     "engine": "PrusaSlicer-2.8.1",
     "slice_logic": "1",
-    "reused_from": "2026-10-31T10:26:11Z"
+    "reused_from": "2026-10-31T11:23:46Z"
   },
   "verdict": "pass_with_settings",
   "summary": "Prints with brim_width_mm = 3"

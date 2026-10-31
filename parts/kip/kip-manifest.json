@@ -167,7 +167,7 @@
       "play": ["prop_star_shield", "prop_skateboard_deck", "prop_flag", "prop_magnifier"]
     },
     "faceInserts": [
-      { "id": "sculpted", "label": "3D Nose & Orbitals",     "part": "char_faceplate" },
+      { "id": "sculpted", "label": "3D Nose & Smile",        "part": "char_faceplate" },
       { "id": "vinyl",    "label": "3D Button Eyes & Nose",  "part": "char_faceplate_vinyl" },
       { "id": "flat",     "label": "Flat Decal Insert",      "part": "char_faceplate_flat" }
     ],
@@ -196,13 +196,7 @@
     "creature": ["face", "crown", "hatColor", "shirt", "pants", "tail", "back", "prop"],
     "note": "Mirrors syncWardrobeCategoryUi() in Kip-Demo.html: the Wardrobe row shows only the controls that fit the chosen head type. hatColor appears only while a wearable hat is on."
   },
-  "pending": [
-    {
-      "id": "char_head_jumbo",
-      "category": "human",
-      "status": "in the demo (13 heads) but under review: the three kid/chibi/tall heads share one face zone, wig vault and hat cavity, and char_head_jumbo has its own skull, so it does not seat the face plate, wigs or hats (valid_kip_seated_jumbo fails with a 25 mm3 hat overlap). Keep or retire is undecided; the intended Human set is Soft Youth (neutral), Sweet Heart (feminine) and Heroic Jaw (masculine)."
-    }
-  ],
+  "pending": [],
   "presets": [
     { "id": "clean",  "label": "Clean",               "head": "classic" },
     { "id": "boy",    "label": "Leo Explorer",        "head": "kid" },

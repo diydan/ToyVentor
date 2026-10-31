@@ -4,7 +4,7 @@
   "file_sha256": "a205c94cc9392f18535d11589734e463bea4fca00a886f85989fa53063f59232",
   "part_id": "racer_bull_bar",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-10-31T11:23:34Z",
+  "checked_at": "2026-10-31T14:35:37Z",
   "metrics": {
     "bbox_mm": [
       24.4,
@@ -181,7 +181,7 @@
     ],
     "engine": "PrusaSlicer-2.8.1",
     "slice_logic": "1",
-    "reused_from": "2026-10-31T10:26:02Z"
+    "reused_from": "2026-10-31T11:23:34Z"
   },
   "verdict": "pass_with_settings",
   "summary": "Prints with brim_width_mm = 3"

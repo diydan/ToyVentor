@@ -69,20 +69,28 @@ describe("Kip modular character rig & 3D demo viewer integration", () => {
     }
   });
 
-  it("verifies all 53 Phase 1 & 2 V2 PartSpec v2 parts and 41 multi-part assemblies as Conforming", () => {
+  it("verifies all 65 Kip PartSpec v2 parts (53 Wave 9 + 12 Wave 12 props) and 41 multi-part assemblies as Conforming", () => {
     const manifestPath = join(root, "public/kip/kip-partspec-manifest.json");
     expect(existsSync(manifestPath)).toBe(true);
     const psManifest = JSON.parse(readFileSync(manifestPath, "utf8"));
     expect(psManifest.status).toBe("verified");
-    expect(psManifest.parts).toHaveLength(53);
+    expect(psManifest.parts).toHaveLength(65);
     expect(psManifest.assemblies).toHaveLength(41);
 
+    // `kip_partspec.py` exports Waves W9 and W12; the Kip wardrobe stat rule applies to Wave 9, the workshop props carry their own stats.
+    const catalog = JSON.parse(readFileSync(join(root, "parts/partspec/catalog.json"), "utf8"));
+    const waveById = new Map<string, string>(catalog.parts.map((p: { id: string; wave?: string }) => [p.id, p.wave ?? ""]));
     const validStats = new Set(["Speed", "Spin", "Torque", "Glow"]);
     for (const part of psManifest.parts) {
       expect(part.design_status, `${part.id} must be verified`).toBe("verified");
       expect(part.prints, `${part.id} must be printable`).toBe(true);
       expect(part.print.supports, `${part.id} must be support-free`).toBe(false);
-      expect(validStats.has(part.stat), `${part.id} stat ${part.stat}`).toBe(true);
+      if (waveById.get(part.id) === "W9") {
+        expect(validStats.has(part.stat), `${part.id} stat ${part.stat}`).toBe(true);
+      } else {
+        expect(waveById.get(part.id), `${part.id} must be Wave 12`).toBe("W12");
+        expect(typeof part.stat === "string" && part.stat.length > 0, `${part.id} stat`).toBe(true);
+      }
       expect(
         existsSync(join(root, "public/kip/partspec", part.file)),
         `missing public/kip/partspec/${part.file}`,

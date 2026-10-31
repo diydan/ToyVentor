@@ -30,6 +30,9 @@ export function createDecalExpressionCanvas(expression = 'spark', headType = 'ki
   const isVinylInsert = isHuman && insertMode === 'vinyl';
   const isFlatHuman = isHuman && insertMode === 'flat';
   const useButtonEyes = isHuman && (isVinylInsert || expression === 'button');
+  // Face cues that carry the gender read on top of the head shapes (kid = neutral, chibi = feminine, tall = masculine): brows and lashes.
+  const isFemaleHead = isHuman && headType === 'chibi';
+  const isMaleHead = isHuman && headType === 'tall';
 
   // Dark LED visor screen ONLY for Robot head; Human & Critter heads use visor-free transparent decal skin!
   if (isRobot) {
@@ -129,14 +132,19 @@ export function createDecalExpressionCanvas(expression = 'spark', headType = 'ki
   // Expressive human eyebrows on the faceplate
   if (isHuman) {
     ctx.strokeStyle = 'rgba(54, 32, 22, 0.90)';
-    ctx.lineWidth = isVinylInsert ? 9.5 : (isFlatHuman ? 10.5 : 9.5);
+    // Masculine: heavier, flatter, slightly lower brows. Feminine: finer, higher, more arched brows. Neutral: unchanged.
+    ctx.lineWidth = (isVinylInsert ? 9.5 : (isFlatHuman ? 10.5 : 9.5)) + (isMaleHead ? 4.0 : (isFemaleHead ? -2.5 : 0));
     ctx.lineCap = 'round';
+    const browR = isMaleHead ? 54 : (isFemaleHead ? 33 : (isVinylInsert ? 40 : 38));
+    const browA0 = Math.PI * (isMaleHead ? 1.30 : (isFemaleHead ? 1.17 : 1.22));
+    const browA1 = Math.PI * (isMaleHead ? 1.70 : (isFemaleHead ? 1.83 : 1.78));
+    const browDy = isMaleHead ? 5 : (isFemaleHead ? -5 : 0);
     for (const [bx, dir] of [[humanEyeX[0], -1], [humanEyeX[1], 1]]) {
       ctx.beginPath();
       const lift = expression === 'surprised'
         ? -10
         : (expression === 'cool' ? -6 : (expression === 'wink' && dir === 1 ? 8 : 0));
-      ctx.arc(bx, humanBrowY + lift, isVinylInsert ? 40 : 38, Math.PI * 1.22, Math.PI * 1.78);
+      ctx.arc(bx, humanBrowY + lift + browDy + (isMaleHead ? 14 : 0), browR, browA0, browA1);
       ctx.stroke();
     }
   }
@@ -239,15 +247,15 @@ export function createDecalExpressionCanvas(expression = 'spark', headType = 'ki
 
       // Soft upper eyelash sweep
       ctx.strokeStyle = eyeCol;
-      ctx.lineWidth = 8.0;
+      ctx.lineWidth = isFemaleHead ? 10.5 : (isMaleHead ? 5.0 : 8.0);   // bolder lashes on the feminine head, a plain lid line on the masculine one
       ctx.lineCap = 'round';
       ctx.beginPath();
       ctx.arc(cx, cy + 4, 38, Math.PI * 1.08, Math.PI * 1.92);
       ctx.stroke();
-      if (side !== 0) {
+      if (side !== 0 && !isMaleHead) {
         ctx.beginPath();
         ctx.moveTo(cx + side * 33, cy - 12);
-        ctx.lineTo(cx + side * 42, cy - 20);
+        ctx.lineTo(cx + side * (isFemaleHead ? 50 : 42), cy - (isFemaleHead ? 29 : 20));
         ctx.stroke();
       }
 
