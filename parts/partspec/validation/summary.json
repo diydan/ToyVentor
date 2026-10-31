@@ -2,11 +2,11 @@
   "validator": "preprint_check 1.2.0",
   "profile": "fdm_pla_0.4",
   "slicer": "PrusaSlicer-2.8.1",
-  "generated_at": "2026-10-31T16:27:29Z",
+  "generated_at": "2026-10-31T20:35:59Z",
   "counts": {
-    "pass": 151,
+    "pass": 153,
     "pass_with_settings": 10,
-    "pass_with_warnings": 19,
+    "pass_with_warnings": 22,
     "fail": 0
   },
   "parts": [
@@ -683,6 +683,20 @@
       "min_wall_mm": 0.635
     },
     {
+      "part_id": "hair_bowl",
+      "file": "toyventor_hair_bowl_S.stl",
+      "verdict": "pass_with_warnings",
+      "summary": "Warnings: V8_wall_thickness",
+      "filament_g": null,
+      "print_time_min": null,
+      "filament_cost_usd": null,
+      "brim_mm": 0,
+      "height_mm": 23.6,
+      "bed_contact_mm2": 172.5,
+      "slenderness": 1.8,
+      "min_wall_mm": 0.628
+    },
+    {
       "part_id": "hair_curly",
       "file": "toyventor_hair_curly_S.stl",
       "verdict": "pass",
@@ -711,6 +725,20 @@
       "min_wall_mm": 0.351
     },
     {
+      "part_id": "hair_low_bun",
+      "file": "toyventor_hair_low_bun_S.stl",
+      "verdict": "pass_with_warnings",
+      "summary": "Warnings: V7_min_feature, V8_wall_thickness",
+      "filament_g": null,
+      "print_time_min": null,
+      "filament_cost_usd": null,
+      "brim_mm": 0,
+      "height_mm": 24.0,
+      "bed_contact_mm2": 111.8,
+      "slenderness": 2.27,
+      "min_wall_mm": 0.449
+    },
+    {
       "part_id": "hair_mohawk",
       "file": "toyventor_hair_mohawk_S.stl",
       "verdict": "pass",
@@ -737,6 +765,20 @@
       "bed_contact_mm2": 173.3,
       "slenderness": 2.34,
       "min_wall_mm": 0.633
+    },
+    {
+      "part_id": "hair_pixie",
+      "file": "toyventor_hair_pixie_S.stl",
+      "verdict": "pass",
+      "summary": "Prints as is",
+      "filament_g": null,
+      "print_time_min": null,
+      "filament_cost_usd": null,
+      "brim_mm": 0,
+      "height_mm": 29.6,
+      "bed_contact_mm2": 94.3,
+      "slenderness": 3.05,
+      "min_wall_mm": 0.689
     },
     {
       "part_id": "hair_pompadour",
@@ -795,6 +837,20 @@
       "min_wall_mm": 0.618
     },
     {
+      "part_id": "hair_side_pony",
+      "file": "toyventor_hair_side_pony_S.stl",
+      "verdict": "pass",
+      "summary": "Prints as is",
+      "filament_g": null,
+      "print_time_min": null,
+      "filament_cost_usd": null,
+      "brim_mm": 0,
+      "height_mm": 31.1,
+      "bed_contact_mm2": 89.3,
+      "slenderness": 3.29,
+      "min_wall_mm": 0.559
+    },
+    {
       "part_id": "hair_side_sweep",
       "file": "toyventor_hair_side_sweep_S.stl",
       "verdict": "pass_with_warnings",
@@ -807,6 +863,20 @@
       "bed_contact_mm2": 137.4,
       "slenderness": 2.03,
       "min_wall_mm": 0.282
+    },
+    {
+      "part_id": "hair_slick",
+      "file": "toyventor_hair_slick_S.stl",
+      "verdict": "pass_with_warnings",
+      "summary": "Warnings: V8_wall_thickness",
+      "filament_g": null,
+      "print_time_min": null,
+      "filament_cost_usd": null,
+      "brim_mm": 0,
+      "height_mm": 23.6,
+      "bed_contact_mm2": 100.0,
+      "slenderness": 2.36,
+      "min_wall_mm": 0.568
     },
     {
       "part_id": "hair_spiky",
@@ -1629,9 +1699,9 @@
       "print_time_min": null,
       "filament_cost_usd": null,
       "brim_mm": 0,
-      "height_mm": 27.5,
-      "bed_contact_mm2": 135.8,
-      "slenderness": 2.36,
+      "height_mm": 27.1,
+      "bed_contact_mm2": 162.0,
+      "slenderness": 2.13,
       "min_wall_mm": null
     },
     {
@@ -1643,9 +1713,9 @@
       "print_time_min": null,
       "filament_cost_usd": null,
       "brim_mm": 0,
-      "height_mm": 27.5,
-      "bed_contact_mm2": 135.8,
-      "slenderness": 2.36,
+      "height_mm": 27.1,
+      "bed_contact_mm2": 162.0,
+      "slenderness": 2.13,
       "min_wall_mm": null
     },
     {

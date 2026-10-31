@@ -1308,50 +1308,59 @@ def _organic_human_skull(
     return union([Manifold.batch_hull([wafers[i], wafers[i + 1]]) for i in range(len(wafers) - 1)])
 
 
-def _smooth_human_ears(z_bot, z_mid, z_top, x_skull, protrude=1.95, y_front=-1.0, y_back=4.8, tilt_back=0.7):
-    """Smooth organic rounded C-ears tucked naturally at eye-to-nose height behind the jaw, 100% support-free (<=37 deg ramp)."""
-    x_tip = x_skull + protrude
-    x_root = x_skull - 2.8
-    min_dz = (x_tip - x_root) / 0.74
-    z0 = max(2.9, min(z_bot, z_mid - min_dz))
-    wafers = []
-    n_slices = 14
-    for k in range(n_slices + 1):
-        u = k / n_slices
-        if u <= 0.62:
-            t = u / 0.62
-            s = _c1_ramp(t, f=0.30)
-            z = z0 + (z_mid - z0) * t
-            xr_out = (x_root + 0.35) + (x_tip - (x_root + 0.35)) * s
-            yf = (y_front + 1.15) - 1.15 * s
-            yb = (y_back - 1.15) + 1.15 * s
-            t_tilt = 0.25 * s
-        else:
-            t = (u - 0.62) / 0.38
-            e = math.cos(t * math.pi * 0.5)
-            z = z_mid + (z_top - z_mid) * math.sin(t * math.pi * 0.5)
-            xr_out = (x_skull - 0.45) + (x_tip - (x_skull - 0.45)) * e
-            yf = y_front + (1.0 - e) * 0.85
-            yb = y_back - (1.0 - e) * 0.75
-            t_tilt = 0.25 + 0.75 * (1.0 - e)
+# Shared human ear placement. Heights are measured up from the eye line (the head's `z_bore`), so on every human head the ear sits in the same spot
+# relative to the face, and the wigs' ear grooves (`EAR_GROOVE`) are cut to one fixed place. Heads differ only in how far the ear stands out and how deep it is.
+EAR_Z_PEAK = 1.2    # the widest, most protruding point of the ear, above the eye line
+EAR_Z_TOP = 4.4     # rounded top of the ear, above the eye line
+EAR_Z_LOW = -4.2    # the lobe blends into the cheek here; the lower flank is a gentle ramp (the head prints neck-down, so it must not overhang past 45 deg)
+EAR_Y_MID = 1.8     # ear centre behind the head origin (mm)
+EAR_GROOVE_Y = EAR_Y_MID + 0.1     # the wigs' ear groove is centred here ...
+EAR_GROOVE_HW = 3.5               # ... and is this wide (half-width at the hem): the ear's half depth (2.9 at most) plus clearance
+EAR_FLANK_SLOPE = 0.92   # max outward lean of the ear's underside, mm per mm of height (45 deg is 1.0)
 
-        yf_s = yf + tilt_back * t_tilt * 0.55
-        yb_s = yb + tilt_back * t_tilt * 0.70
-        ym = 0.5 * (yf_s + yb_s)
-        hd = max(0.85, 0.5 * (yb_s - yf_s))
-        # Smooth 32-pt rounded D-ear contour
-        pts = [(x_root, ym - hd * 0.88), (x_root, ym + hd * 0.88)]
+
+def _skull_half_width(skull, z):
+    """Widest |x| of the skull at height z (0 when the skull is not there)."""
+    xs = [abs(p[0]) for P in skull.slice(z).to_polygons() for p in P]
+    return max(xs) if xs else 0.0
+
+
+def _human_ears(skull, z_bore, protrude=2.0, hd=2.9, lobe=0.58):
+    """Rounded ears at the shared spot: a teardrop that stands `protrude` mm proud of the skull at its peak, narrows to a soft lobe below
+    and rounds off above. The outer edge follows the skull's own width, so the ear sits on the head whatever its cheek shape (the old
+    ears were placed in absolute mm and nearly vanished on the wide feminine head)."""
+    z_lo, z_pk, z_tp = z_bore + EAR_Z_LOW, z_bore + EAR_Z_PEAK, z_bore + EAR_Z_TOP
+    zs = [z_lo + (z_pk - z_lo) * k / 9.0 for k in range(10)] + [z_pk + (z_tp - z_pk) * math.sin(0.5 * math.pi * k / 8.0) for k in range(1, 9)]
+    rows = []
+    x_prev, z_prev = None, None
+    for i, z in enumerate(zs):
+        if z <= z_pk:
+            t = (z - z_lo) / (z_pk - z_lo)
+            b = _c1_ramp(t, f=0.30)
+            hdz = hd * (lobe + (1.0 - lobe) * b)
+        else:
+            t = (z - z_pk) / (z_tp - z_pk)
+            b = math.sqrt(max(0.0, 1.0 - t * t))
+            hdz = hd * (1.0 - 0.45 * t * t)
+        hw = _skull_half_width(skull, z - 0.02 if i == len(zs) - 1 else z)
+        x_out = hw + protrude * b
+        if x_prev is not None:
+            x_out = min(x_out, x_prev + EAR_FLANK_SLOPE * (z - z_prev))   # the ear's own underside never leans out past ~43 deg, even where the cheek is already steep
+        x_prev, z_prev = x_out, z
+        rows.append((z, hw, x_out, hdz))
+    wafers = []
+    for i, (z, hw, x_out, hdz) in enumerate(rows):
+        x_root = hw - 2.6
+        ym = EAR_Y_MID + 0.5 * (z - z_pk) / (z_tp - z_lo)
+        hdz = max(hdz, 0.9)
+        pts = [(x_root, ym - hdz * 0.88), (x_root, ym + hdz * 0.88)]
         for j in range(17):
             ang = -0.5 * math.pi + math.pi * (j / 16.0)
-            ca, sa = math.cos(ang), math.sin(ang)
-            px = x_root + (xr_out - x_root) * (ca ** 0.78)
-            py = ym + hd * sa
-            pts.append((px, py))
+            pts.append((x_root + (x_out - x_root) * (math.cos(ang) ** 0.78), ym + hdz * math.sin(ang)))
         cs = CrossSection([pts], FillRule.NonZero).hull()
-        h = 0.04 if k < n_slices else 0.06
-        zz = z - h if k == n_slices else z
+        h = 0.04 if i < len(zs) - 1 else 0.06
+        zz = z - h if i == len(zs) - 1 else z
         wafers.append(Manifold.extrude(cs, h).translate((0.0, 0.0, zz)))
-
     ear_r = union([Manifold.batch_hull([wafers[i], wafers[i + 1]]) for i in range(len(wafers) - 1)])
     return ear_r + ear_r.mirror((1.0, 0.0, 0.0))
 
@@ -1560,7 +1569,7 @@ HUMAN_HEAD_SPECS = {
             pb_cheek=3.1,
             brow_push=0.1,
         ),
-        ears=dict(z_bot=9.6, z_mid=13.6, z_top=17.0, x_skull=17.4, protrude=1.7, y_front=-0.8, y_back=4.2),
+        ear=dict(protrude=2.0, hd=2.9),
     ),
     "char_head_chibi": dict(   # feminine
         z_stud=31.4, z_bore=12.5,
@@ -1578,7 +1587,7 @@ HUMAN_HEAD_SPECS = {
             pb_cheek=2.8,
             brow_push=0.0,
         ),
-        ears=dict(z_bot=12.0, z_mid=14.6, z_top=17.0, x_skull=17.4, protrude=0.9, y_front=0.0, y_back=3.4),
+        ear=dict(protrude=2.1, hd=2.9, lobe=0.62),
     ),
     "char_head_tall": dict(   # masculine
         z_stud=33.4, z_bore=14.0625,
@@ -1596,15 +1605,15 @@ HUMAN_HEAD_SPECS = {
             pb_cheek=3.6,
             brow_push=0.8,
         ),
-        ears=dict(z_bot=12.2, z_mid=17.0, z_top=21.6, x_skull=17.8, protrude=1.9, y_front=-1.2, y_back=5.0),
+        ear=dict(protrude=2.2, hd=3.0),
     ),
 }
 
 
 def _human_head_parts(name):
-    sp = HUMAN_HEAD_SPECS[name]
+    sp = HUMAN_HEADS_WITH_JUMBO[name]
     skull = _organic_human_skull(z_stud=sp["z_stud"], z_bore=sp["z_bore"], **sp["skull"])
-    return skull, _smooth_human_ears(**sp["ears"]), sp["z_stud"], sp["z_bore"]
+    return skull, _human_ears(skull, sp["z_bore"], **sp["ear"]), sp["z_stud"], sp["z_bore"]
 
 
 def _human_head(name, size, lock):
@@ -1646,27 +1655,19 @@ def char_head_chibi(size="small", grid=(2, 1), lock=True, **_):
     return _human_head("char_head_chibi", size, lock)
 
 
+# Jumbo Vinyl: the widest human head, sized to stay inside the shared wig vault and hat cavity and to share the universal face zone.
+JUMBO_SPEC = dict(
+    z_stud=31.4, z_bore=12.5,
+    skull=dict(z_jaw=10.0, z_cheek_top=18.7, rx_jaw=17.2, rx_cheek=18.0, rx_crown=14.8, ryf_jaw=12.9, ryf_cheek=15.6, ryb_cheek=12.8, pf_jaw=2.5, pf_cheek=3.4, pb_cheek=3.2),
+    ear=dict(protrude=1.9, hd=2.9),
+)
+HUMAN_HEADS_WITH_JUMBO = {**HUMAN_HEAD_SPECS, "char_head_jumbo": JUMBO_SPEC}   # every human head: the wig vault and hat cavity are measured over all four
+
+
 def char_head_jumbo(size="small", grid=(2, 1), lock=True, **_):
     """Human Head (Jumbo Vinyl): the widest human head, a rounded-square collector-vinyl head with full cheeks, a broad flat-ish crown and small ears,
     sized to stay inside the shared wig vault and hat cavity (so every wig and hat fits it) and sharing the universal face zone (every face plate fits it)."""
-    z_stud, z_bore = 31.4, 12.5
-    skull = _organic_human_skull(
-        z_stud=z_stud,
-        z_bore=z_bore,
-        z_jaw=10.0,
-        z_cheek_top=18.7,
-        rx_jaw=17.2,
-        rx_cheek=18.0,
-        rx_crown=14.8,
-        ryf_jaw=12.9,
-        ryf_cheek=15.6,
-        ryb_cheek=12.8,
-        pf_jaw=2.5,
-        pf_cheek=3.4,
-        pb_cheek=3.2,
-    )
-    ears = _smooth_human_ears(z_bot=10.5, z_mid=14.5, z_top=17.5, x_skull=17.4, protrude=1.2, y_front=0.0, y_back=3.5)
-    return _finish_human_head(skull, ears, size, lock, z_stud, z_bore)
+    return _human_head("char_head_jumbo", size, lock)
 
 
 def char_head_tall(size="small", grid=(2, 1), lock=True, **_):
@@ -2153,7 +2154,10 @@ def _wig_cavity_slices(ear_cover=False):
     of height: the squircle corners shrink ~1.4x faster than its axes, so this keeps every ceiling >= 45 deg and a wig prints hem-down without supports."""
     if ear_cover:
         return [
-            ( -17.5, 40.86, 28.74, 3.20, 0.0, -0.84),
+            ( -17.5, 42.15, 28.74, 3.20, 0.0, -0.84),
+            ( -16.0, 41.65, 29.22, 3.20, 0.0, -1.00),
+            ( -15.5, 41.45, 29.38, 3.20, 0.0, -1.03),
+            ( -15.0, 41.00, 29.54, 3.20, 0.0, -1.06),
             ( -14.0, 40.67, 29.86, 3.20, 0.0, -1.15),
             ( -11.0, 38.73, 29.59, 3.20, 0.0, -1.12),
             (  -8.0, 38.30, 28.64, 3.20, 0.0, -1.25),
@@ -2163,7 +2167,10 @@ def _wig_cavity_slices(ear_cover=False):
             (   0.0, 33.02, 19.02, 3.00, 0.0, -0.97),
         ]
     return [
-            ( -17.5, 39.66, 28.74, 3.20, 0.0, -0.84),
+            ( -17.5, 40.95, 28.74, 3.20, 0.0, -0.84),
+            ( -16.0, 40.45, 29.22, 3.20, 0.0, -1.00),
+            ( -15.5, 40.25, 29.38, 3.20, 0.0, -1.03),
+            ( -15.0, 39.80, 29.54, 3.20, 0.0, -1.06),
             ( -14.0, 39.47, 29.86, 3.20, 0.0, -1.15),
             ( -11.0, 37.53, 29.59, 3.20, 0.0, -1.12),
             (  -8.0, 37.20, 28.64, 3.20, 0.0, -1.25),
@@ -2224,8 +2231,9 @@ def _sculpted_strand_wig_shell(
     z_top = WIG_TOP_Z if flat_crown else min(h_top, WIG_TOP_Z)
     amp = lock_amp * 0.55
 
-    zs = [z_hem - 0.4, z_hem + 0.55, -14.0, -11.0, -8.0, -4.1, -2.0, 0.0]
+    zs = [z_hem - 0.4, z_hem + 0.55, -17.5, -16.0, -15.5, -15.0, -14.0, -11.0, -8.0, -4.1, -2.0, 0.0]     # rings through the ear zone follow the vault's ear bulge
     zs = sorted({round(z, 3) for z in zs if z >= z_hem - 0.41})
+    zs = [z for i, z in enumerate(zs) if i == 0 or z - zs[i - 1] >= 0.2]
     polys = []
     for z in zs:
         w, d, p, cy = _cavity_dims(z, ear_cover)
@@ -2326,12 +2334,13 @@ def _sculpted_hairline_cutter(z_hem=-16.5, ear_cover=False, bang_style="parted_l
 
     if not ear_cover:
         ear_base = max(z_hem, -16.5)
+        yc, hw = EAR_GROOVE_Y, EAR_GROOVE_HW          # one groove per ear, centred on the shared ear spot and just wider than the ear
         pts_ear = [
-            (-5.2, z_hem - 8.0),
-            ( 8.8, z_hem - 8.0),
-            ( 8.8, ear_base),
-            ( 1.8, ear_base + s * 7.0),
-            (-5.2, ear_base),
+            (yc - hw, z_hem - 8.0),
+            (yc + hw, z_hem - 8.0),
+            (yc + hw, ear_base),
+            (yc,      ear_base + s * hw),
+            (yc - hw, ear_base),
         ]
         ear_cut = Manifold.extrude(CrossSection([pts_ear], FillRule.NonZero), 96.0).translate((0.0, 0.0, -48.0)).rotate((90.0, 0.0, 90.0))
         cutter = cutter + ear_cut
@@ -2514,7 +2523,8 @@ def hair_side_sweep(size="small", grid=(2, 1), lock=True, **_):
         ( 12.4, 12.8,  9.0, -1.4,  -9.2,  -5.0),
     ]), t=3.8, ear_cover=True)
     cascade = _keep_below(cascade, WIG_CASCADE_TOP_Z)
-    pts_lt = [(-5.2, -26.0), (8.8, -26.0), (8.8, -16.5), (1.8, -16.5 + 1.18 * 7.0), (-5.2, -16.5)]
+    pts_lt = [(EAR_GROOVE_Y - EAR_GROOVE_HW, -26.0), (EAR_GROOVE_Y + EAR_GROOVE_HW, -26.0), (EAR_GROOVE_Y + EAR_GROOVE_HW, -16.5),
+              (EAR_GROOVE_Y, -16.5 + 1.18 * EAR_GROOVE_HW), (EAR_GROOVE_Y - EAR_GROOVE_HW, -16.5)]   # the tucked ear's groove: same spot as every other wig's
     left_ear_cut = Manifold.extrude(CrossSection([pts_lt], FillRule.NonZero), 42.0).translate((0.0, 0.0, -44.0)).rotate((90.0, 0.0, 90.0))
     return _finish_sculpted_wig(outer + cascade - left_ear_cut, size=size, z_hem=-19.0, ear_cover=True, bang_style="side_cascade", nape_notches=True, top_studs_z=None)
 
@@ -2631,6 +2641,104 @@ def hair_mohawk(size="small", grid=(2, 1), lock=True, **_):
             (zt,         4.2, dy * 0.60, 0.0, yf_tip, 0.0),
         ]))
     return _finish_sculpted_wig(union(fins), size=size, z_hem=-16.5, ear_cover=False, bang_style="high_arch", nape_notches=True, top_studs_z=None)
+
+
+def hair_bowl(size="small", grid=(2, 1), lock=True, **_):
+    """Hat-ready bowl cut: a clean round cap with a straight blunt fringe and an even hem that stops just over the ear grooves, 2x1 top_studs."""
+    z_hem = -16.0
+    outer = _sculpted_strand_wig_shell(
+        z_hem=z_hem, w_base=44.6, d_base=42.4, w_mid=45.4, d_mid=42.6,
+        h_top=12.4, flat_crown=True, n_locks=18, lock_amp=0.50, twist_rate=0.05,
+    )
+    fringe = _hug(_faceted_lock_chain([
+        (-10.5, 26.0,  6.6, 0.0, -17.0, 0.0),
+        ( -3.0, 29.6,  9.6, 0.0, -18.8, 0.0),
+        (  2.5, 24.6,  8.4, 0.0, -14.8, 0.0),
+        (  6.2, 13.4,  5.4, 0.0,  -8.8, 0.0),
+    ]), t=3.0, z_high=WIG_FRINGE_TOP_Z)
+    return _finish_sculpted_wig(outer + fringe, size=size, z_hem=z_hem, ear_cover=False, bang_style="high_arch", nape_notches=False, top_studs_z=WIG_TOP_Z)
+
+
+def hair_slick(size="small", grid=(2, 1), lock=True, **_):
+    """Hat-ready sleek side-part: smooth combed crown, a deep part groove and a rolled front wave swept to one side, exposed-ear grooves, 2x1 top_studs."""
+    z_hem = -16.0
+    outer = _sculpted_strand_wig_shell(
+        z_hem=z_hem, w_base=43.6, d_base=40.2, w_mid=45.0, d_mid=41.2,
+        h_top=12.4, flat_crown=True, n_locks=22, lock_amp=0.30, twist_rate=0.16, part_x=-6.4, part_depth=2.0,
+    )
+    roll = _hug(_faceted_lock_chain([
+        (-10.0, 18.0,  6.2, 3.0, -16.8, -20.0),
+        ( -3.0, 26.0,  9.6, 3.6, -18.8, -22.0),
+        (  2.5, 21.0,  8.4, 2.4, -14.8, -16.0),
+        (  6.2, 11.0,  5.2, 1.0,  -8.8,  -8.0),
+    ]), t=3.1, z_high=WIG_FRINGE_TOP_Z)
+    return _finish_sculpted_wig(outer + roll, size=size, z_hem=z_hem, ear_cover=False, bang_style="parted_left", nape_notches=True, top_studs_z=WIG_TOP_Z)
+
+
+def hair_pixie(size="small", grid=(2, 1), lock=True, **_):
+    """Sculpted-top pixie crop (no top studs): short feathered sides, ears out, and six soft rounded tufts flicked forward and out across the crown."""
+    z_hem = -15.0
+    outer = _sculpted_strand_wig_shell(
+        z_hem=z_hem, w_base=43.4, d_base=40.0, w_mid=44.8, d_mid=41.0,
+        h_top=11.0, flat_crown=False, n_locks=13, lock_amp=1.10, twist_rate=0.30, part_x=-5.0, part_depth=1.2,
+    )
+    tufts = [
+        # x0,   y0,   x1,    y1,   z_tip, w,    d,    rot
+        (-5.0, -9.0, -10.4, -15.4, 14.6, 10.4,  9.0, -38.0),   # forward sweep over the brow
+        ( 4.0, -8.0,   9.6, -13.6, 13.8,  9.6,  8.6,  34.0),
+        (-9.0,  1.0, -17.0,   3.0, 13.2,  9.6,  9.0, -62.0),   # side flicks
+        ( 9.0,  1.0,  17.0,   3.0, 13.2,  9.6,  9.0,  62.0),
+        (-3.0,  9.4,  -6.6,  15.6, 13.0,  9.2,  8.6, -28.0),   # back tufts
+        ( 3.0,  9.4,   6.6,  15.6, 13.0,  9.2,  8.6,  28.0),
+    ]
+    parts = [outer]
+    for x0, y0, x1, y1, zt, bw, bd, rot in tufts:
+        parts.append(_faceted_lock_chain([
+            (-2.5,      bw,        bd,        x0 * 0.62,            y0 * 0.62,            rot),
+            (zt * 0.50, bw * 0.78, bd * 0.78, (x0 + x1) * 0.48,     (y0 + y1) * 0.48,     rot),
+            (zt,        5.4,       5.0,       x1,                   y1,                   rot),
+        ]))
+    return _finish_sculpted_wig(union(parts), size=size, z_hem=z_hem, ear_cover=False, bang_style="jagged", nape_notches=True, top_studs_z=None)
+
+
+def hair_side_pony(size="small", grid=(2, 1), lock=True, **_):
+    """Sculpted-top side ponytail (no top studs): a tidy swept crown with one high-set tail on the right swinging out and curling up, and a left ear groove."""
+    z_hem = -16.5
+    outer = _sculpted_strand_wig_shell(
+        z_hem=z_hem, w_base=43.8, d_base=40.4, w_mid=45.2, d_mid=41.4,
+        h_top=11.6, flat_crown=False, n_locks=12, lock_amp=0.90, twist_rate=0.22, part_x=-6.0, part_depth=1.3,
+    )
+    tail = _faceted_lock_chain([
+        ( -8.0,  9.0,  8.0, 14.0, 2.5, 14.0),    # buried base on the right side, above the ear groove: the outer edge leans out <= 0.9 mm per mm, so no ledge
+        ( -2.0, 11.6, 10.4, 18.0, 3.4, 22.0),
+        (  4.0, 13.4, 12.4, 21.8, 4.8, 32.0),
+        ( 10.0, 12.4, 11.8, 24.0, 7.0, 44.0),
+        ( 14.6,  7.0,  6.6, 23.6, 9.4, 60.0),
+    ])
+    return _finish_sculpted_wig(outer + tail, size=size, z_hem=-16.5, ear_cover=False, bang_style="parted_left", nape_notches=True, top_studs_z=None)
+
+
+def hair_low_bun(size="small", grid=(2, 1), lock=True, **_):
+    """Sculpted-top low nape bun (no top studs): a smooth centre-parted crown, ears out, and a plump coiled bun sitting low at the back."""
+    z_hem = -16.5
+    outer = _sculpted_strand_wig_shell(
+        z_hem=z_hem, w_base=43.8, d_base=40.4, w_mid=45.2, d_mid=41.4,
+        h_top=11.4, flat_crown=False, n_locks=14, lock_amp=0.70, twist_rate=0.20, part_x=0.0, part_depth=1.4,
+    )
+    bun = _ellipse_chain([
+        (-16.0,  9.0,  8.0, 0.0, 12.0),     # base buried in the shell: the back edge leans out <= 0.85 mm per mm, so the underside is never a ledge
+        (-11.0, 13.2, 12.0, 0.0, 14.2),
+        ( -5.0, 17.8, 16.4, 0.0, 17.0),
+        (  0.0, 19.0, 17.6, 0.0, 18.4),
+        (  4.5, 14.6, 13.6, 0.0, 17.2),
+        (  7.5,  6.6,  6.4, 0.0, 15.6),
+    ])
+    wisps = _hug(_faceted_lock_chain([
+        (-10.5, 20.6,  6.4, 0.0, -16.6, 0.0),
+        ( -2.5, 24.8,  9.0, 0.0, -18.2, 0.0),
+        (  4.5, 20.6,  8.4, 0.0, -14.8, 0.0),
+    ]), t=3.0)
+    return _finish_sculpted_wig(outer + bun + wisps, size=size, z_hem=z_hem, ear_cover=False, bang_style="curtain_center", nape_notches=False, top_studs_z=None)
 
 
 # ---------------------------------------------------------------------------------------------------------------------------

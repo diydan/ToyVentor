@@ -15,7 +15,7 @@
     "Attach slots: character add-ons and vehicle parts carry attach.kind (character or vehicle), attach.slots, and attach.front: the part's local -y or +y faces the toy's front, or the part is symmetric. Slot names: character head, back, body, top, tail; vehicle front, rear, hood, roof, wheels; robot legs, torso, arms, head, back."
   ],
   "targets": {
-    "snap": 109,
+    "snap": 114,
     "pro": 71
   },
   "waves": [
@@ -108,7 +108,7 @@
         "W8"
       ],
       "effort": "M",
-      "scope": "53 parts (43 Snap Small, 10 Pro): eleven Wave 9 character and robot heads across 4 categories (4 smooth organic humanoid heads that share one universal face zone, wig vault and hat cavity: Soft Youth (neutral), Sweet Heart (feminine), Heroic Jaw (masculine) and Jumbo Vinyl, all listed in Kip-Demo.html; 1 Mecha Scout robot head pairing with Kip Classic & Bolt Robot; 3 animal critter heads: Fox, Bear, Whisker Cat; 3 creature heads: Drake Dragon, Starling Alien, Yeti Imp) with 2x1 crown buds, three universal interchangeable 1 TU facial inserts (3D Nose & Smile Face Insert, 3D Button Eyes & Nose Face Insert, and Smooth Flush Decal Face Insert), fourteen sculpted multi-strand wrap-around 2x1 crown wigs (6 Hat-Ready with top 2x1 crown studs + 8 Sculpted-Top), seven wearable 2x1 crown hats, Explorer Rucksack, Builder Spanner, Star Emblem Wand, Street Skateboard Deck, Seated Snap Legs, three stylized Pro vehicle wheels, and V2 modular rolling vehicle chassis with interchangeable snap-on body covers."
+      "scope": "58 parts (48 Snap Small, 10 Pro): eleven Wave 9 character and robot heads across 4 categories (4 smooth organic humanoid heads that share one universal face zone, wig vault and hat cavity: Soft Youth (neutral), Sweet Heart (feminine), Heroic Jaw (masculine) and Jumbo Vinyl, all listed in Kip-Demo.html; 1 Mecha Scout robot head pairing with Kip Classic & Bolt Robot; 3 animal critter heads: Fox, Bear, Whisker Cat; 3 creature heads: Drake Dragon, Starling Alien, Yeti Imp) with 2x1 crown buds, three universal interchangeable 1 TU facial inserts (3D Nose & Smile Face Insert, 3D Button Eyes & Nose Face Insert, and Smooth Flush Decal Face Insert), nineteen sculpted multi-strand wrap-around 2x1 crown wigs (8 Hat-Ready with top 2x1 crown studs + 11 Sculpted-Top; every wig leaves a groove for the shared ear spot), seven wearable 2x1 crown hats, Explorer Rucksack, Builder Spanner, Star Emblem Wand, Street Skateboard Deck, Seated Snap Legs, three stylized Pro vehicle wheels, and V2 modular rolling vehicle chassis with interchangeable snap-on body covers."
     },
     {
       "id": "W10",
@@ -3257,6 +3257,171 @@
       ],
       "build": {
         "fn": "hair_mohawk",
+        "grid": [
+          2,
+          1
+        ],
+        "lock": true
+      },
+      "attach": {
+        "kind": "character",
+        "slots": [
+          "head"
+        ],
+        "front": "-y"
+      }
+    },
+    {
+      "id": "hair_bowl",
+      "name": "Bowl Cut (Hat-Ready)",
+      "line": "snap",
+      "family": "hair",
+      "size": "small",
+      "wave": "W9",
+      "note": "Wrap-around 2x1 clip-on bowl cut: a clean round cap, a straight blunt fringe, an even hem that stops just over the ear grooves, recessed hat-seat crown, and top 2x1 crown studs at z=4.8 mm for stacking hats.",
+      "stat": "Speed",
+      "type": "Crown hair",
+      "behavior": "Clean bowl-cut wig with top 2x1 studs for stacking hats or ears",
+      "tags": [
+        "character",
+        "hair",
+        "crown",
+        "kip"
+      ],
+      "build": {
+        "fn": "hair_bowl",
+        "grid": [
+          2,
+          1
+        ],
+        "lock": true
+      },
+      "attach": {
+        "kind": "character",
+        "slots": [
+          "head"
+        ],
+        "front": "-y"
+      }
+    },
+    {
+      "id": "hair_slick",
+      "name": "Sleek Side-Part (Hat-Ready)",
+      "line": "snap",
+      "family": "hair",
+      "size": "small",
+      "wave": "W9",
+      "note": "Wrap-around 2x1 clip-on sleek side-part: smooth combed crown, deep part groove, a rolled front wave swept to one side, ear grooves, recessed hat-seat crown, and top 2x1 crown studs at z=4.8 mm for stacking hats.",
+      "stat": "Speed",
+      "type": "Crown hair",
+      "behavior": "Sleek side-parted wig with top 2x1 studs for stacking hats or ears",
+      "tags": [
+        "character",
+        "hair",
+        "crown",
+        "kip"
+      ],
+      "build": {
+        "fn": "hair_slick",
+        "grid": [
+          2,
+          1
+        ],
+        "lock": true
+      },
+      "attach": {
+        "kind": "character",
+        "slots": [
+          "head"
+        ],
+        "front": "-y"
+      }
+    },
+    {
+      "id": "hair_pixie",
+      "name": "Pixie Tufts",
+      "line": "snap",
+      "family": "hair",
+      "size": "small",
+      "wave": "W9",
+      "note": "Wrap-around 2x1 clip-on pixie crop: short feathered sides, ears out, and six soft rounded tufts flicked forward and out across the crown.",
+      "stat": "Spin",
+      "type": "Crown hair",
+      "behavior": "Short pixie wig with soft crown tufts for any 2x1 human head",
+      "tags": [
+        "character",
+        "hair",
+        "crown",
+        "kip"
+      ],
+      "build": {
+        "fn": "hair_pixie",
+        "grid": [
+          2,
+          1
+        ],
+        "lock": true
+      },
+      "attach": {
+        "kind": "character",
+        "slots": [
+          "head"
+        ],
+        "front": "-y"
+      }
+    },
+    {
+      "id": "hair_side_pony",
+      "name": "Side Ponytail",
+      "line": "snap",
+      "family": "hair",
+      "size": "small",
+      "wave": "W9",
+      "note": "Wrap-around 2x1 clip-on swept crown with one high-set ponytail on the right that swings out and curls up, and an ear groove on each side.",
+      "stat": "Spin",
+      "type": "Crown hair",
+      "behavior": "Side-ponytail wig with a swinging tail for any 2x1 human head",
+      "tags": [
+        "character",
+        "hair",
+        "crown",
+        "kip"
+      ],
+      "build": {
+        "fn": "hair_side_pony",
+        "grid": [
+          2,
+          1
+        ],
+        "lock": true
+      },
+      "attach": {
+        "kind": "character",
+        "slots": [
+          "head"
+        ],
+        "front": "-y"
+      }
+    },
+    {
+      "id": "hair_low_bun",
+      "name": "Low Nape Bun",
+      "line": "snap",
+      "family": "hair",
+      "size": "small",
+      "wave": "W9",
+      "note": "Wrap-around 2x1 clip-on centre-parted crown with curtain wisps, ear grooves, and a plump coiled bun sitting low at the back.",
+      "stat": "Spin",
+      "type": "Crown hair",
+      "behavior": "Centre-parted wig with a low coiled bun for any 2x1 human head",
+      "tags": [
+        "character",
+        "hair",
+        "crown",
+        "kip"
+      ],
+      "build": {
+        "fn": "hair_low_bun",
         "grid": [
           2,
           1

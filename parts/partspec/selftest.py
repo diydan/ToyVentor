@@ -570,6 +570,12 @@ test("W10 flat-pack modular craft: all 19 parts are verified and 100% clear the 
      len(w10_ids) == 19 and all(by_id[i]["design_status"] == "verified" and by_id[i]["safety"]["small_part_status"] == "above_cylinder" for i in w10_ids))
 test("W11 Pro steering & Momentum stored-energy cores: all 21 parts are verified with zero blocking failures",
      len(w11_ids) == 21 and all(by_id[i]["design_status"] == "verified" for i in w11_ids))
+_kn_l, _kn_l_conns, _ = _kc.pro_steer_knuckle_l()
+_kn_pivots = [c for c in _kn_l_conns if c["id"] in ("kingpin_bore", "tierod_bore")]
+test("knuckle cheek relief: 0.4 mm shave with pivot bores off-lattice but re-based with the body",
+     abs(_kc.KNUCKLE_FACE_RELIEF - 0.4) < 1e-9 and len(_kn_pivots) == 2
+     and all(c.get("lattice") == "pivot" for c in _kn_pivots)
+     and all(abs(c["frame"]["origin"][2] - (6.25 - _kc.KNUCKLE_FACE_RELIEF)) < 1e-3 for c in _kn_pivots))
 _g1 = _kc.verify_gate_g1()
 test("Gate G1: all 9 canonical craft, steering lock sweeps, 55-deg dump tip, Kip mohawk rotor clearance, and Mech keep-outs have 0.000 mm3 overlap",
      _g1["ok"] and len(_g1["crafts"]) == 9)

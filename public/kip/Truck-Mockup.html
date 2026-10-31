@@ -249,6 +249,9 @@
     <button id="btn-hood">Nose: Open Yoke</button>
     <button id="btn-plow">Front Plow (#12): Off</button>
     <button id="btn-kip" class="mint-on">Kip Driver: On</button>
+    <button id="btn-head" title="Cycle the human head (same PartSpec heads as Kip-Demo)">Head: kid</button>
+    <button id="btn-hair" title="Cycle the wig (hat-ready wigs accept a hat)">Hair: short swept</button>
+    <button id="btn-hat" title="Cycle the hat">Hat: hardhat</button>
     <button id="btn-xray">X-Ray Shells: Auto</button>
     <button id="btn-sweep">Auto Steer: Off</button>
     <span class="sep"></span>
@@ -342,8 +345,13 @@ const PART_FILES = [
   'mom_band_core_lid', 'mom_band_spool_pawl', 'mom_bumper_trigger',
   'mom_bellows_base', 'mom_bellows_leaf', 'mech_core_shell',
   'char_legs_seated', 'robot_torso_core', 'robot_arms_grabber',
-  'char_head_kid', 'char_faceplate', 'hat_hardhat'
+  'char_faceplate'
 ];
+// Wardrobe (head / hair / hat) is loaded on demand from the same PartSpec output the Kip viewer uses. Poses come from
+// partspec/mockup/kip_stack.json (attach offsets), written by parts/kip/sync_truck_kip.py, never hard-coded here.
+const KIP_STACK = { table: null, head: 'char_head_kid', hair: 'hair_short_swept', hat: 'hat_hardhat' };
+const KIP_HEADS = ['char_head_kid', 'char_head_chibi', 'char_head_tall', 'char_head_jumbo'];
+const kipLabel = (id) => id.replace(/^(char_head_|hair_|hat_)/, '').replace(/_/g, ' ');
 
 function makeMat(hex, opacity = 1.0, rough = 0.38) {
   return new THREE.MeshStandardMaterial({
@@ -369,6 +377,7 @@ const MATS = {
   knuckle: makeMat('#495266', 1, 0.38),
   denim: makeMat('#2B4C85', 1, 0.44),
   skin: makeMat('#F3BA95', 1, 0.42),
+  hair: makeMat('#7A4B2A', 1, 0.5),
   cyanGlass: makeMat('#00A8E8', 0.34, 0.22),
   lipo: makeMat('#3A86FF', 0.94, 0.30),
   pcb: makeMat('#1FA97C', 0.95, 0.32),
@@ -402,7 +411,7 @@ const state = {
 // that bore to the rack's tie-rod bore, so each knuckle angle is DETERMINED by rack travel -- nothing is hard-coded.
 // The vehicle faces +Z in three.js (cadRoot.rotation.x = -PI/2), so CAD +X is the vehicle's LEFT.
 // ---------------------------------------------------------------------------
-const KNUCKLE_FACE_RELIEF = 0.0; // mm; = KNUCKLE_FACE_RELIEF in toyventor_kitcard.py (0.4 wanted, blocked by the axis8 bore lattice, see that file)
+const KNUCKLE_FACE_RELIEF = 0.4; // mm; = KNUCKLE_FACE_RELIEF in toyventor_kitcard.py (pivot bores exempt from the axis8 lattice, see that file)
 const STEER = {
   kpX: 18.75, kpY: -56.25,       // kingpin axes (pro_steer_bridge bosses)
   arm: 12.5,                     // knuckle kingpin bore -> tierod bore (pro_steer_knuckle_l/r)
@@ -702,13 +711,32 @@ function rebuildScene() {
     const legs = meshOf('char_legs_seated', MATS.denim); legs.position.set(0, 0, 12.5);
     const torso = meshOf('robot_torso_core', MATS.spark); torso.position.set(0, 0, 28.5);
     const arms = meshOf('robot_arms_grabber', MATS.skin); arms.position.set(0, 0, 48.5);
-    const head = meshOf('char_head_kid', MATS.skin); head.position.set(0, -6.25, 53.5);
-    const face = meshOf('char_faceplate', MATS.skin);
-    face.rotation.order = 'ZYX';
-    face.rotation.set(Math.PI / 2, 0, Math.PI);
-    face.position.set(0, -18.75, 70.6875);
-    const hat = meshOf('hat_hardhat', MATS.tub); hat.position.set(0, -6.25, 89.7);
-    kipGroup.add(legs, torso, arms, head, face, hat);
+    kipGroup.add(legs, torso, arms);
+    // Head stack seated like toyventor_assembly.attach(): head on the arms' studs, face plate on the head's face_slot axis,
+    // hair on the head's top studs, hat on the hair's top studs (or on the head's when bare). Truck legs sit at z = 12.5.
+    const T = KIP_STACK.table;
+    const hd = T && T.heads[KIP_STACK.head];
+    if (hd && GEOS[KIP_STACK.head] && GEOS.char_faceplate) {
+      const HEAD_Y = -6.25, HEAD_Z = 53.5;
+      const head = meshOf(KIP_STACK.head, MATS.skin); head.position.set(0, HEAD_Y, HEAD_Z);
+      const face = meshOf('char_faceplate', MATS.skin);
+      face.rotation.order = 'ZYX';
+      face.rotation.set(Math.PI / 2, 0, Math.PI);
+      face.position.set(0, HEAD_Y + hd.boreY, HEAD_Z + hd.boreZ);
+      kipGroup.add(head, face);
+      let topZ = HEAD_Z + hd.top;
+      const hr = KIP_STACK.hair && T.hairs[KIP_STACK.hair];
+      if (hr && GEOS[KIP_STACK.hair]) {
+        const hair = meshOf(KIP_STACK.hair, MATS.hair); hair.position.set(0, HEAD_Y, topZ);
+        kipGroup.add(hair);
+        topZ = hr.top === null ? null : topZ + hr.top;   // sculpted-top wigs have no hat studs
+      }
+      if (KIP_STACK.hat && topZ !== null && GEOS[KIP_STACK.hat]) {
+        const hat = meshOf(KIP_STACK.hat, KIP_STACK.hat === 'hat_hardhat' ? MATS.tub : MATS.spark);
+        hat.position.set(KIP_STACK.hat === 'wobble_hat' ? -6.25 : 0, HEAD_Y, topZ);
+        kipGroup.add(hat);
+      }
+    }
     cadRoot.add(kipGroup);
   }
 
@@ -1092,6 +1120,33 @@ document.getElementById('btn-kip').addEventListener('click', (e) => {
   rebuildScene();
 });
 
+async function ensureKipGeo(pid) {
+  if (!pid || GEOS[pid]) return;
+  const raw = await loader.loadAsync(`./partspec/mockup/${pid}.stl`);
+  GEOS[pid] = toCreasedNormals(mergeVertices(raw, 1e-4), THREE.MathUtils.degToRad(32));
+}
+function syncKipButtons() {
+  document.getElementById('btn-head').textContent = `Head: ${kipLabel(KIP_STACK.head)}`;
+  document.getElementById('btn-hair').textContent = `Hair: ${KIP_STACK.hair ? kipLabel(KIP_STACK.hair) : 'off'}`;
+  const hatBtn = document.getElementById('btn-hat');
+  const T = KIP_STACK.table, hr = KIP_STACK.hair && T && T.hairs[KIP_STACK.hair];
+  const blocked = hr && hr.top === null;   // sculpted-top wig: no studs for a hat
+  hatBtn.textContent = blocked ? 'Hat: n/a (sculpted wig)' : `Hat: ${KIP_STACK.hat ? kipLabel(KIP_STACK.hat) : 'off'}`;
+  hatBtn.disabled = !!blocked;
+}
+async function cycleKip(kind) {
+  const T = KIP_STACK.table; if (!T) return;
+  const list = { head: KIP_HEADS, hair: [null, ...Object.keys(T.hairs)], hat: [null, ...T.hats] }[kind];
+  const cur = list.indexOf(KIP_STACK[kind]);
+  KIP_STACK[kind] = list[(cur + 1) % list.length];
+  await ensureKipGeo(KIP_STACK[kind]);
+  syncKipButtons();
+  rebuildScene();
+}
+document.getElementById('btn-head').addEventListener('click', () => cycleKip('head'));
+document.getElementById('btn-hair').addEventListener('click', () => cycleKip('hair'));
+document.getElementById('btn-hat').addEventListener('click', () => cycleKip('hat'));
+
 document.getElementById('btn-xray').addEventListener('click', (e) => {
   const order = ['auto', 'on', 'off'];
   state.xrayMode = order[(order.indexOf(state.xrayMode) + 1) % order.length];
@@ -1139,7 +1194,18 @@ async function init() {
     loaded++;
     document.getElementById('status-text').innerHTML = `Loaded <b>${loaded}/${PART_FILES.length}</b> CAD solids`;
   }));
-  document.getElementById('status-text').innerHTML = `<b>28/28</b> verified CAD solids · Drag to orbit · Scroll to zoom`;
+  document.getElementById('status-text').innerHTML = `<b>${PART_FILES.length}</b> verified CAD solids + Kip wardrobe · Drag to orbit · Scroll to zoom`;
+  KIP_STACK.table = await (await fetch('./partspec/mockup/kip_stack.json', { cache: 'no-cache' })).json();
+  {
+    const q0 = new URLSearchParams(location.search);   // ?head=tall&hair=bob&hat=ballcap  (hair=off / hat=off allowed)
+    const pick = (v, pre, ok) => { if (v === null) return undefined; if (v === 'off') return null; const id = v.startsWith(pre) ? v : pre + v; return ok(id) ? id : undefined; };
+    const h = pick(q0.get('head'), 'char_head_', (i) => KIP_HEADS.includes(i)); if (h) KIP_STACK.head = h;
+    const w = pick(q0.get('hair'), 'hair_', (i) => i in KIP_STACK.table.hairs); if (w !== undefined) KIP_STACK.hair = w;
+    const t = pick(q0.get('hat'), 'hat_', (i) => KIP_STACK.table.hats.includes(i) || i === 'hat_wobble_hat'); if (t !== undefined) KIP_STACK.hat = t;
+    if (q0.get('hat') === 'wobble_hat') KIP_STACK.hat = 'wobble_hat';
+    await Promise.all([KIP_STACK.head, KIP_STACK.hair, KIP_STACK.hat].map(ensureKipGeo));
+    syncKipButtons();
+  }
   rebuildScene();
   // Deep-link / debug params: ?stage=pro&steer=22&tip=10&cam=top&explode=40&wheels=giant
   const q = new URLSearchParams(location.search);

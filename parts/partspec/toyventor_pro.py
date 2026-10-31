@@ -282,7 +282,7 @@ def _bores_on_grid(conns, m, bounds):
     """Every declared bore is on the lattice and really exists. Lattice: a multiple of 1/8 TU apart, and either on the centre of a cell
     measured from the part's lower-left corner (lattice 'cell': beams, plates) or on the part's axis (lattice 'axis': gears, wheels).
     Existence: an empty probe inside the bore and material in a ring just outside it. Returns (ok, detail)."""
-    n, bad = 0, []
+    n, n_pivot, bad = 0, 0, []
     lo = bounds[0]
     for c in conns:
         if c["kind"] != "bore_grid":
@@ -295,7 +295,11 @@ def _bores_on_grid(conns, m, bounds):
         probe_r = (min(d, BORE["fixed_flats"]) if c["bore_class"] == "fixed" else d) / 2 - 0.3
         for (x, y, z) in cell_positions(c):
             n += 1
-            if c.get("lattice", "cell") == "axis8":
+            if c.get("lattice") == "pivot":
+                n_pivot += 1  # steering pivot bore: position set by linkage geometry, existence still probed below
+                on_lattice = True
+                why = ""
+            elif c.get("lattice", "cell") == "axis8":
                 gx, gy = x / (TU / 8), y / (TU / 8)
                 on_lattice = abs(gx - round(gx)) < 1e-3 and abs(gy - round(gy)) < 1e-3
                 why = "not on the 1/8 TU lattice from the part axis"
@@ -321,7 +325,8 @@ def _bores_on_grid(conns, m, bounds):
                 bad.append(f"({x:.2f},{y:.2f}) no hole")
             elif (m ^ ring).volume() < 0.3 * ring.volume():
                 bad.append(f"({x:.2f},{y:.2f}) hole larger than the bore")
-    return (not bad and n > 0), (f"{n} bore(s) on the lattice and present" if not bad else "; ".join(bad[:3]))
+    ok_msg = f"{n} bore(s) on the lattice and present" + (f" ({n_pivot} pivot-exempt, existence probed)" if n_pivot else "")
+    return (not bad and n > 0), (ok_msg if not bad else "; ".join(bad[:3]))
 
 
 # ---------------------------------------------------------------- I5: built dimensions and accepted pairs

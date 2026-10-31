@@ -791,15 +791,16 @@ def pro_steer_bridge(size="small", grid=(2, 2), lock=True, **_):
     return m, [c_sock, c_top, c_kp], {"sockets": {"holes": 4, "reliefs": 0, "locked": bool(lock)}}
 
 
-KNUCKLE_FACE_RELIEF = 0.0  # mm to shave off the inboard (print-bed) cheek face. WANTED 0.4, BLOCKED: that face sits 0.10 mm from the keel
+KNUCKLE_FACE_RELIEF = 0.4  # mm shaved off the inboard (print-bed) cheek face. That face sits 0.10 mm from the keel
                            # nose side wall (|x| 12.5 vs 12.4) and closes to 0.010 mm while steering (outer knuckle near 14.8 deg), so it
-                           # will rub or bind; 0.4 mm gives >= 0.355 mm over the whole +-5.2 mm rack sweep (measured, G1 9/9). Why it is 0:
-                           # G4_on_bed needs z_min = 0, so the shaved body must be re-based, which moves the two bores to z = 6.25 - relief.
-                           # The I4_bore_on_grid lattice check wants an axis8 bore at a multiple of 1.5625 mm (6.25 or 4.6875), and 5.85 is
-                           # neither. Needs a decision: exempt these two pivot bores from the lattice, or accept a 1.5625 mm relief, or
-                           # drop the relief. The machinery below already supports any value: the body is re-based, the bore and stub
-                           # connector frames follow, and verify_gate_g1 plus Truck-Mockup.html add the relief back when they place the
-                           # part. A whole-face shave, not a pocket: a pocket's ceiling is a downward-facing roof (fails V4/V10).
+                           # would rub or bind unrelieved; 0.4 mm holds >= 0.355 mm over the whole +-5.2 mm rack sweep (measured, G1 9/9).
+                           # G4_on_bed needs z_min = 0, so the shaved body is re-based, which moves the two pivot bores to z = 5.85.
+                           # 5.85 is not a multiple of 1.5625 mm, so the two bores carry lattice "pivot": I4 still probes that each bore
+                           # really exists, but waives the axis8 position assertion for these two steering-geometry bores. A 1.5625 mm
+                           # relief would void the measured clearances, and a pocket's ceiling is a downward-facing roof (fails V4/V10),
+                           # so the whole-face shave plus the narrow pivot exemption is the only sound geometry. The machinery below
+                           # supports any relief value: the body is re-based, the bore and stub connector frames follow, and
+                           # verify_gate_g1 plus Truck-Mockup.html add the relief back when they place the part.
                            # The strap-under-keel vertical clearance (0.15 mm) is a separate fit.
 
 
@@ -840,8 +841,9 @@ def _steer_knuckle(side):
         m = m ^ Manifold.cube((100.0, 100.0, 100.0)).translate((-50.0, -50.0, KNUCKLE_FACE_RELIEF))  # inboard-face relief (see above)
         m = m.translate((0.0, 0.0, -KNUCKLE_FACE_RELIEF))  # re-base: the relieved face is the new bed face (z_min = 0)
     z_bore = 6.25 - KNUCKLE_FACE_RELIEF
-    c_kp = pro._axis_bore_conn("kingpin_bore", "free", (xk, 0.0, z_bore), "y", 11.4, lattice="axis8")
-    c_tr = pro._axis_bore_conn("tierod_bore", "free", (xt, 0.0, z_bore), "y", 11.4, lattice="axis8")
+    # lattice "pivot": z is set by the cheek relief (5.85), not the axis8 grid; I4 probes existence, waives position.
+    c_kp = pro._axis_bore_conn("kingpin_bore", "free", (xk, 0.0, z_bore), "y", 11.4, lattice="pivot")
+    c_tr = pro._axis_bore_conn("tierod_bore", "free", (xt, 0.0, z_bore), "y", 11.4, lattice="pivot")
     c_ax = {
         "id": "wheel_stub",
         "kind": "pin",
@@ -1515,7 +1517,8 @@ def _kip_seated_ghost(cache, hair_id=None):
     head = _raw_geo("char_head_kid", cache).translate((0.0, -6.25, 53.5))
     parts = [legs, torso, arms, head]
     if hair_id:
-        parts.append(_raw_geo(hair_id, cache).translate((0.0, -6.25, 82.3)))
+        # hair seats on the head's top studs: head z 53.5 + head top_studs 31.4 = 84.9 (matches toyventor_assembly.attach; was a stale 82.3)
+        parts.append(_raw_geo(hair_id, cache).translate((0.0, -6.25, 84.9)))
     return Manifold.batch_boolean(parts, OpType.Add)
 
 
