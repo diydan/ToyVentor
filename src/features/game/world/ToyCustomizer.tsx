@@ -238,15 +238,6 @@ export function ToyCustomizer({
                   {snapshot.checkText}
                 </p>
               )}
-              {snapshot.checkOk === false && (
-                <button
-                  type="button"
-                  className="tv-ctl tv-ctl-primary"
-                  onClick={() => onFactoryAction("fix")}
-                >
-                  Fix it for me
-                </button>
-              )}
               {snapshot.checkOk === true && (
                 <button
                   type="button"

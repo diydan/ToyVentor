@@ -469,7 +469,7 @@ export function sameEditorSnapshot(a: EditorSnapshot, b: EditorSnapshot): boolea
 }
 
 export type PaintZone = "c1" | "c2" | "skin";
-export type FactoryAction = "done" | "fix" | "order" | "reset" | "forge";
+export type FactoryAction = "done" | "order" | "reset" | "forge";
 
 export interface CustomizerChoice {
   id: string;

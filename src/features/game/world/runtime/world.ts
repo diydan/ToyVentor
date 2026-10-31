@@ -65,7 +65,7 @@ function M(geo,mat,x,y,z){var m=new T.Mesh(geo,mat);m.position.set(x||0,y||0,z||
 function G(){var g=new T.Group();for(var i=0;i<arguments.length;i++)g.add(arguments[i]);return g}
 function at(o,x,y,z){o.position.set(x,y,z);return o}
 function capsule(r,len,mat){return G(M(new T.CylinderGeometry(r,r,len,16),mat),M(new T.SphereGeometry(r,16,12),mat,0,len/2,0),M(new T.SphereGeometry(r,16,12),mat,0,-len/2,0))}
-function gear(r,th,mat){var g=new T.Group();g.add(M(new T.CylinderGeometry(r,r,th,20),mat));for(var i=0;i<8;i++){var t=M(new T.BoxGeometry(r*.4,th,r*.5),mat),a=i/8*Math.PI*2;t.position.set(Math.cos(a)*r,0,Math.sin(a)*r);t.rotation.y=-a;g.add(t)}g.add(M(new T.CylinderGeometry(r*.35,r*.35,th*1.1,12),plastic("#1c2550")));return g}
+function gear(r,th,mat,teeth){var Z=teeth||8,m=2*r/Z,g=new T.Group();g.add(M(new T.CylinderGeometry(r,r,th,20),mat));for(var i=0;i<Z;i++){var t=M(new T.BoxGeometry(Math.PI*r/Z,th,2*m),mat),a=i/Z*Math.PI*2;t.position.set(Math.cos(a)*r,0,Math.sin(a)*r);t.rotation.y=-a;g.add(t)}g.add(M(new T.CylinderGeometry(r*.35,r*.35,th*1.1,12),plastic("#1c2550")));return g}
 function hemiSphere(r,mat){return M(new T.SphereGeometry(r,28,16,0,Math.PI*2,0,Math.PI/2),mat)}
 function starGeo(){var s=new T.Shape();for(var i=0;i<8;i++){var a=i/8*Math.PI*2-Math.PI/2,r=i%2?.12:.36,x=Math.cos(a)*r,y=Math.sin(a)*r;if(i)s.lineTo(x,y);else s.moveTo(x,y)}return new T.ExtrudeGeometry(s,{depth:.06,bevelEnabled:true,bevelThickness:.03,bevelSize:.03,bevelSegments:2})}
 var STARGEO=starGeo();
@@ -368,7 +368,6 @@ function hint(sp,closer){P.notice=1;var b=$("#bub"),st=sp.d.t;if(st==="junk"){b.
 function placeHint(){if(!hintSpot)return;var y=hintSpot.d.t==="junk"?3.6:(hintSpot.d.y||1)+1.5;v3.set(hintSpot.d.x,y,hintSpot.d.z).project(camera);var r=canvas.getBoundingClientRect(),b=$("#bub");b.style.left=(r.left+(v3.x+1)/2*r.width)+"px";b.style.top=(r.top+(1-v3.y)/2*r.height)+"px"}
 /* ---------- builder sheet ---------- */
 var B={slot:null,z:"c1"},FX=-80,FAC=null,facA=0;
-var FLAG={"character.back.wings":1,"character.ears.bunny":1,"robot.arms.claws":1,"vehicle.rear.spoiler":1};
 function buildFactory(){var g=new T.Group();g.position.set(FX,0,0);
  g.add(M(new T.BoxGeometry(18,.4,12),matte("#1a2460"),0,-.2,0));g.add(M(new T.BoxGeometry(20,11,.4),matte("#14206a"),0,5.3,-4.2));
  [-4.2,4.2].forEach(function(x){g.add(M(new T.BoxGeometry(4.4,2.8,.1),glowMat("#23307e",.6),x,5.4,-3.95));g.add(M(new T.BoxGeometry(4.6,.18,.2),plastic("#4a66c8"),x,6.85,-3.9));g.add(M(new T.BoxGeometry(4.6,.18,.2),plastic("#4a66c8"),x,3.95,-3.9));g.add(M(new T.BoxGeometry(.14,2.8,.2),plastic("#4a66c8"),x,5.4,-3.9));for(var i=0;i<7;i++)g.add(M(new T.SphereGeometry(.04,6,4),glowMat("#ffffff",2),x-1.9+Math.random()*3.8,4.3+Math.random()*2,-3.88))});
@@ -376,13 +375,12 @@ function buildFactory(){var g=new T.Group();g.position.set(FX,0,0);
  var tt=new T.Group();tt.add(M(new T.CylinderGeometry(2.1,2.25,.32,40),plastic("#22337e"),0,.16,0));tt.add(M(new T.CylinderGeometry(1.95,1.95,.04,40),plastic("#3350b8"),0,.34,0));for(var j=0;j<16;j++){var a=j/16*Math.PI*2;tt.add(M(new T.SphereGeometry(.05,8,6),glowMat("#9bd4ff",2.2),Math.cos(a)*2.05,.3,Math.sin(a)*2.05))}g.add(tt);g.userData.tt=tt;
  var gw=glowSprite("rgba(82,183,255,0.35)",6);gw.position.set(0,.3,0);g.add(gw);
  [-3.2,0,3.2].forEach(function(x,i){var lp=new T.Group();lp.position.set(x,6.4,-1);lp.add(M(new T.CylinderGeometry(.02,.02,2,6),metal("#4a66c8"),0,1,0));lp.add(M(new T.ConeGeometry(.45,.4,16,1,true),new T.MeshStandardMaterial({color:"#3c55b8",side:T.DoubleSide}),0,-.1,0));lp.add(M(new T.SphereGeometry(.14,10,8),glowMat("#fff5c2",2.5),0,-.25,0));var pl=new T.PointLight(i===1?0xfff0d0:0xc9d6ff,i===1?1.7:.8,15,2);pl.position.set(0,-.4,0);lp.add(pl);g.add(lp)});
- var g1=gear(.9,.2,plastic("#2c3f94"));g1.position.set(-6.4,2.3,-3.6);g1.rotation.x=Math.PI/2;g.add(g1);var g2=gear(.55,.2,plastic("#3c55b8"));g2.position.set(-5.15,3.0,-3.6);g2.rotation.x=Math.PI/2;g.add(g2);g.userData.gears=[g1,g2];
+ var g1=gear(.9,.2,plastic("#2c3f94"),12);g1.position.set(-6.4,2.3,-3.6);g1.rotation.x=Math.PI/2;g.add(g1);var g2=gear(.6,.2,plastic("#3c55b8"),8);g2.position.set(-5.09,3.03,-3.6);g2.rotation.x=Math.PI/2;g2.rotation.y=Math.PI/8;g.add(g2);g.userData.gears=[g1,g2];
  g.add(M(new T.BoxGeometry(18,.3,1.2),plastic("#0f1a4a"),0,.15,-2.5));for(var r=-8;r<=8;r++){var rl=M(new T.CylinderGeometry(.16,.16,1.3,10),metal("#9bb0ff"),r,.32,-2.5);rl.rotation.x=Math.PI/2;g.add(rl)}
  linearize(g);scene.add(g);FAC=g}
 function flash(){var f=$("#fade");f.classList.remove("on");void f.offsetWidth;f.classList.add("on")}
 function openSheet(){if(P.busy||P.showcase||P.mDrive)return;if(B.forge)setForge(false);hostEl.classList.add("building");$("#pcard").hidden=true;P.saveX=P.pos.x;P.pos.set(FX,0,0);P.target=null;cam.x=FX;facA=-.55;P.showcase=true;$("#sheet").hidden=false;$("#tray").hidden=true;flash();renderSheet()}
 function closeSheet(){if(B.forge)setForge(false);mUpdate.cur=null;hostEl.classList.remove("building");camera.clearViewOffset();P.showcase=false;P.pos.set(P.saveX==null?2:P.saveX,0,0);cam.x=P.pos.x;P.face=P.tface=0;$("#sheet").hidden=true;$("#tray").hidden=false;flash();moves();notify()}
-function checkBad(){return TYPES[S.type].slots.map(function(s){return slotPartKey(S.type,s,cur()[s])}).filter(function(k){return FLAG[k]&&!(S.fixed||{})[k]})}
 function renderSheet(){migrateRobotToKip();var T0=TYPES[S.type];if(!B.slot||T0.slots.indexOf(B.slot)<0)B.slot=T0.slots[0];
  $("#types").innerHTML=UI_TYPES.map(function(t){return '<button class="sc" type="button" data-t="'+t+'" aria-pressed="'+(S.type===t)+'">'+TYPES[t].n+"</button>"}).join("");
  $("#slots").innerHTML=T0.slots.map(function(s){return '<button class="sc" type="button" data-s="'+s+'" aria-pressed="'+(B.slot===s)+'">'+T0.sn[s]+"</button>"}).join("");
@@ -390,12 +388,11 @@ function renderSheet(){migrateRobotToKip();var T0=TYPES[S.type];if(!B.slot||T0.s
  var skinOK=S.type==="character"&&cur().base==="block";if(!skinOK&&B.z==="skin")B.z="c1";$("#seg").innerHTML='<button type="button" data-z="c1" aria-pressed="'+(B.z==="c1")+'">Main</button><button type="button" data-z="c2" aria-pressed="'+(B.z==="c2")+'">Accent</button>'+(skinOK?'<button type="button" data-z="skin" aria-pressed="'+(B.z==="skin")+'">Skin</button>':'');
  $("#sw").innerHTML=(B.z==="skin"?SKINS:PAINTS).map(function(c){return '<button class="swt" type="button" data-c="'+c+'" style="background:'+c+'" aria-label="Paint '+c+'" aria-pressed="'+(S.col[B.z]===c)+'"></button>'}).join("");
  var st=creStats();$("#moves").innerHTML="Moves: "+(Object.keys(STATS).filter(function(k){return st[k]}).map(function(k){return STATS[k].m}).join(", ")||"none");
- var bad=checkBad();$("#check").innerHTML=bad.length?'<span class="ck bad">'+PART[bad[0]].n+" sticks out, so it would need support when it is 3D printed.</span>"+'<button class="ctl" type="button" id="fix">Fix it for me</button>':'<span class="ck ok">Ready to 3D print</span><button class="ctl primary" type="button" id="order">Order</button>';notify()}
+ $("#check").innerHTML='<span class="ck ok">Ready to 3D print</span><button class="ctl primary" type="button" id="order">Order</button>';notify()}
 $("#sheet").addEventListener("click",function(e){var b=e.target.closest("button");if(!b)return;ctx();
  if(b.id==="done"){closeSheet();return}
- if(b.id==="fix"){S.fixed=S.fixed||{};checkBad().forEach(function(k){S.fixed[k]=true});save();sfx.snap();toast("Laid flat, so no supports are needed.");renderSheet();return}
  if(b.id==="order"){sfx.found();toast("Order is mocked here. In the app a grown-up approves it.");return}
- if(b.id==="reset"){S.found={};S.fixed={};save();buildWorld(S.world);updHud();renderSheet();toast("Progress reset. Every hidden part is back in its world.");return}
+ if(b.id==="reset"){S.found={};save();buildWorld(S.world);updHud();renderSheet();toast("Progress reset. Every hidden part is back in its world.");return}
  if(b.dataset.t){var nt=b.dataset.t==="robot"?"character":b.dataset.t;if(S.type!==nt){S.type=nt;save();buildPlayer(null);sfx.snap();burst(new T.Vector3(P.pos.x,1.2,P.pos.z),"rgba(155,212,255,1)",10)}renderSheet();return}
  if(b.dataset.s){B.slot=b.dataset.s;sfx.pop();renderSheet();return}
  if(b.dataset.id){var k=slotPartKey(S.type,B.slot,b.dataset.id);if(!isOpen(k)){toast("Find it in "+WN[PART[k].w]+".");sfx.bump();return}cur()[B.slot]=b.dataset.id;save();buildPlayer(B.slot);partSound(k);renderSheet();return}
@@ -438,7 +435,7 @@ var FR=0;function frame(){if(disposed)return;FR++;timer.update();var dt=Math.min
  var df=((P.tface-P.face+Math.PI*3)%(Math.PI*2))-Math.PI;P.face+=df*Math.min(1,dt*10);
  P.phase+=P.speed*dt*3.2;
  var rig=P.rig,mv=Math.min(1,P.speed/2.5);
- P.root.position.set(P.pos.x,0,P.pos.z);if(P.showcase&&FAC){facA+=dt*.45;FAC.userData.tt.rotation.y=facA;FAC.userData.gears[0].rotation.y+=dt*.6;FAC.userData.gears[1].rotation.y-=dt*1.0}P.root.position.y=P.showcase?.36:(P.elev||0);P.root.rotation.y=P.showcase?facA:P.face;
+ P.root.position.set(P.pos.x,0,P.pos.z);if(P.showcase&&FAC){facA+=dt*.45;FAC.userData.tt.rotation.y=facA;FAC.userData.gears[0].rotation.y+=dt*.6;FAC.userData.gears[1].rotation.y-=dt*.9}P.root.position.y=P.showcase?.36:(P.elev||0);P.root.rotation.y=P.showcase?facA:P.face;
  P.model.position.set(P.lunge,P.hop,0);P.model.rotation.set(0,P.spin,0);
  if(P.dropSlot&&P.dropT<1){P.dropT=Math.min(1,P.dropT+dt*2.4);var e2=P.dropT>=1?1:1-Math.pow(1-P.dropT,3)*Math.cos(P.dropT*6);P.dropSlot.position.y=P.dropSlot.userData.y0+1.2*(1-Math.min(1,e2))}
  rig.wheels.forEach(function(w){w.rotation.z-=P.speed*dt/(w.userData.r||.3)});

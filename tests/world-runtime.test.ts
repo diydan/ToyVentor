@@ -109,4 +109,20 @@ describe("native world runtime (Phase 0A)", () => {
     expect(text).toContain('gk===0?"Shut. OR needs at least one plate pressed."');
     expect(text).toContain('Almost! Up beats down by "+n.n+", and this tier needs +"+need+". Try barrels and logs.');
   });
+
+  it("retires the theatrical fix warning and meshes background gears", async () => {
+    const text = await (await import("node:fs/promises")).readFile(
+      new URL("../src/features/game/world/runtime/world.ts", import.meta.url),
+      "utf8",
+    );
+    expect(text).not.toContain("Fix it for me");
+    expect(text).not.toContain("function checkBad(");
+    expect(text).not.toContain("FLAG={");
+    expect(text).not.toContain("S.fixed");
+    expect(text).toContain("Ready to 3D print");
+    expect(text).toContain("function gear(r,th,mat,teeth)");
+    expect(text).toContain("gear(.9,.2,plastic(\"#2c3f94\"),12)");
+    expect(text).toContain("gear(.6,.2,plastic(\"#3c55b8\"),8)");
+    expect(text).toContain("gears[1].rotation.y-=dt*.9");
+  });
 });
