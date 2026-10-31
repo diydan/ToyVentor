@@ -146,6 +146,10 @@ describe("Kip modular character rig & 3D demo viewer integration", () => {
       "parts/kip/sdk/LLM_PART_PROMPT.md",
       "parts/kip/viewer/kip-forge-sdk.js",
       "parts/kip/viewer/kip-vehicles-wardrobe.js",
+      "parts/kip/viewer/kip-menu.js",
+      "parts/kip/viewer/kip-print.js",
+      "parts/kip/viewer/kip-print-view.js",
+      "parts/kip/viewer/kip-selfie.js",
       "parts/kip/viewer/Kip-Demo.html",
       "parts/kip/kip_partspec.py",
     ];

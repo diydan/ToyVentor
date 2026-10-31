@@ -51,6 +51,22 @@ copyFileSync(
   join(kipOutDir, "kip-vehicles-wardrobe.js"),
 );
 copyFileSync(
+  join(kipSrcDir, "viewer/kip-menu.js"),
+  join(kipOutDir, "kip-menu.js"),
+);
+copyFileSync(
+  join(kipSrcDir, "viewer/kip-print.js"),
+  join(kipOutDir, "kip-print.js"),
+);
+copyFileSync(
+  join(kipSrcDir, "viewer/kip-print-view.js"),
+  join(kipOutDir, "kip-print-view.js"),
+);
+copyFileSync(
+  join(kipSrcDir, "viewer/kip-selfie.js"),
+  join(kipOutDir, "kip-selfie.js"),
+);
+copyFileSync(
   join(kipSrcDir, "kip-manifest.json"),
   join(kipOutDir, "kip-manifest.json"),
 );

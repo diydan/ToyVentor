@@ -14,7 +14,14 @@ export const DECAL_EXPRESSIONS = [
   { id: 'blank',     label: 'Blank Plate' },
 ];
 
+// Selfie face (kip-selfie.js): the single canvas lives here, in memory only, and `expr: 'selfie'` returns it.
+// It is never serialised, stored, or sent anywhere; clearing it (setSelfieCanvas(null)) drops the pixels.
+let selfieCanvas = null;
+export function setSelfieCanvas(canvas) { selfieCanvas = canvas ?? null; }
+export function hasSelfieCanvas() { return selfieCanvas !== null; }
+
 export function createDecalExpressionCanvas(expression = 'spark', headType = 'kid', insertMode = 'sculpted') {
+  if (expression === 'selfie' && selfieCanvas) return selfieCanvas;
   const c = document.createElement('canvas');
   c.width = 512;
   c.height = 256;

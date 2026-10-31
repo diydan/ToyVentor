@@ -521,6 +521,7 @@ import {
   trySamScanEndpoint,
   buildPhotoAccessoryMesh,
   encodeToyContractHash,
+  setSelfieCanvas,
 } from '/kip/kip-forge-sdk.js?v=10.0';
 import {
   KIP_BUILD_VERSION,
@@ -551,6 +552,9 @@ import {
   makeMotoStraddleClip,
   makeSkateboardClip,
 } from '/kip/kip-vehicles-wardrobe.js?v=10.0';
+import { mountKipMenu } from '/kip/kip-menu.js?v=10.0';
+import { mountPrintView } from '/kip/kip-print-view.js?v=10.0';
+import { mountSelfie } from '/kip/kip-selfie.js?v=10.0';
 
 if (window.self !== window.top) document.body.classList.add('in-iframe');
 
@@ -2031,17 +2035,21 @@ function updateStatusText() {
   }
 }
 
+// One entry per clip that has a button; the side menu's Clip select lists the same entries.
+const clipButtons = [];
+function triggerClip(name) {
+  if (loco.buildMode !== 'assembled') exitPileMode();
+  loco.manualOverride = (name !== 'idle');
+  playClip(name);
+}
 function addClipButton(name, label) {
   const row = document.getElementById('row-clips');
   const btn = document.createElement('button');
   btn.dataset.clip = name;
   btn.textContent = label;
-  btn.addEventListener('click', () => {
-    if (loco.buildMode !== 'assembled') exitPileMode();
-    loco.manualOverride = (name !== 'idle');
-    playClip(name);
-  });
+  btn.addEventListener('click', () => triggerClip(name));
   row.appendChild(btn);
+  clipButtons.push({ id: name, label });
 }
 
 // Camera helper for deterministic framing (shifts target slightly lower when bottom UI dock is visible so subject stays clear!)
@@ -2407,7 +2415,7 @@ function setExplodeAmount(val, instant = false) {
   updateStatusText();
 }
 
-btnExplode.addEventListener('click', () => {
+function toggleExplode() {
   const turningOn = loco.explodeTarget < 0.5;
   setExplodeAmount(turningOn ? 1.0 : 0.0, false);
   if (turningOn) applyCameraPreset('exploded');
@@ -2417,7 +2425,8 @@ btnExplode.addEventListener('click', () => {
     camera.position.set(cx + 175, 162, cz + 415);
     controls.target.set(cx, 68, cz);
   }
-});
+}
+btnExplode.addEventListener('click', toggleExplode);
 rngExplode.addEventListener('input', e => {
   setExplodeAmount(parseFloat(e.target.value) / 100, true);
 });
@@ -2470,10 +2479,11 @@ function startPileToBuild(autoFrame = false) {
   updateStatusText();
 }
 
-btnPile.addEventListener('click', () => {
+function togglePartPile() {
   if (loco.buildMode === 'pile') exitPileMode();
   else enterPartPile(true);
-});
+}
+btnPile.addEventListener('click', togglePartPile);
 btnBuild.addEventListener('click', () => startPileToBuild(true));
 
 function refreshPileIfActive() {
@@ -3187,8 +3197,8 @@ document.getElementById('btn-Skeleton').addEventListener('click', toggleRefSkele
 
 const speeds = [1.0, 0.5, 0.25, 1.5];
 let speedIdx = 0;
-document.getElementById('btn-speed').addEventListener('click', () => {
-  speedIdx = (speedIdx + 1) % speeds.length;
+function setSpeedScale(scale) {
+  speedIdx = Math.max(0, speeds.indexOf(scale));
   loco.speedScale = speeds[speedIdx];
   document.getElementById('btn-speed').textContent = `${loco.speedScale}×`;
   if (activeClipName && actions.has(activeClipName)) {
@@ -3197,6 +3207,9 @@ document.getElementById('btn-speed').addEventListener('click', () => {
   if (activeClipName && refActions.has(activeClipName)) {
     refActions.get(activeClipName).setEffectiveTimeScale(loco.speedScale);
   }
+}
+document.getElementById('btn-speed').addEventListener('click', () => {
+  setSpeedScale(speeds[(speedIdx + 1) % speeds.length]);
 });
 
 // --- PHASE 3: CONFORMING LLM PART-MAKER SDK MODAL & CUSTOM .STL MOUNTING ---
@@ -4050,6 +4063,88 @@ window.addEventListener('resize', () => {
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
+
+// --- SIDE MENU (shipped behind ?menu=side until it matches the dock control for control) ---
+// The panel owns no state: it re-reads `loco` (and the few readers below) every tick and calls the same
+// setters the dock buttons call. The adapter below is the only place it touches this script's scope.
+if (params.get('menu') === 'side') {
+  // Plate view: the character's parts packed flat for printing (kip-print.js does the maths, this just feeds it).
+  const printView = mountPrintView({
+    THREE, scene, camera, controls,
+    getState: () => ({
+      edition: loco.edition, category: loco.category, head: loco.head, faceInsert: loco.faceInsert, expr: loco.expr,
+      hair: loco.hair, hat: loco.hat, back: loco.back, prop: loco.prop, vehicle: loco.vehicle,
+      ears: earModes[earIdx], tail: tailModes[tailIdx],
+    }),
+    setCharacterVisible: on => { kip.mover.visible = on; originRing.visible = on; },
+  });
+  window.kipPrint = printView;
+  // Selfie face (memory only, never in the URL or storage): wears a photo on the flat face insert and puts the
+  // previous face back on Remove. Anything that would leave a human head first removes it, so a photo never lingers.
+  let selfieBefore = null;
+  const selfie = mountSelfie({
+    apply: canvas => {
+      if (loco.expr !== 'selfie') selfieBefore = { expr: loco.expr, insert: loco.faceInsert };
+      setSelfieCanvas(canvas);
+      loco.expr = 'selfie';
+      setFaceInsertMode('flat');
+    },
+    restore: () => {
+      setSelfieCanvas(null);
+      if (loco.expr === 'selfie') loco.expr = selfieBefore?.expr ?? 'spark';
+      setFaceInsertMode(selfieBefore?.insert ?? 'sculpted');
+      selfieBefore = null;
+    },
+  });
+  window.kipSelfie = selfie;
+  const leaveSelfie = () => { if (loco.expr === 'selfie') selfie.remove(); };
+  window.kipMenu = mountKipMenu({
+    loco,
+    camera,
+    selfie: { open: selfie.open, remove: selfie.remove },
+    print: {
+      isOn: printView.isOn, busy: printView.isBusy, summary: printView.summary,
+      setOn: on => (on ? printView.enter() : printView.exit()),
+      plateCount: printView.plateCount, plateIndex: printView.plateIndex, setPlate: printView.setPlate,
+      download: printView.download,
+    },
+    ready: () => window.__KIP_READY__ === true,
+    speeds,
+    presets: presets.map(id => ({ id, label: presetLabels[id] })),
+    clips: () => clipButtons,
+    read: {
+      ears: () => earModes[earIdx],
+      tail: () => tailModes[tailIdx],
+      preset: () => presets[presetIdx],
+      speed: () => loco.speedScale,
+      clip: () => activeClipName,
+      refOn: () => refSkeletonGroup?.visible === true,
+      explodeOn: () => loco.explodeTarget >= 0.5,
+      pileOn: () => loco.buildMode === 'pile',
+    },
+    act: {
+      setCategory: id => { if (id !== 'human') leaveSelfie(); setCategoryMode(id); },
+      setHead: id => {
+        if (!HUMAN_HEAD_IDS.has(id)) leaveSelfie();
+        setHeadMode(id);
+        // Stepping onto the chibi head switches to the vinyl insert; a photo must stay on the flat one.
+        if (loco.expr === 'selfie' && loco.faceInsert !== 'flat') setFaceInsertMode('flat');
+      },
+      setFace: id => { leaveSelfie(); setFaceMode(id); },
+      setFaceInsert: id => { if (id !== 'flat') leaveSelfie(); setFaceInsertMode(id); }, setSkin: setSkinTone, setHair: setHairMode,
+      setHairColor, setHat: setCrownMode, setHatColor, setShirt: setShirtMode,
+      setPants: setPantsMode, setBack: setBackMode, setEars: setEarMode, setTail: setTailMode,
+      setProp: setPropMode, setVehicle: id => setVehicleMode(id, true),
+      setCovers: setVehicleCovers, setRacerKit, setEdition, applyPreset: name => { leaveSelfie(); applyPreset(name); },
+      playClip: triggerClip, setSpeed: setSpeedScale,
+      toggleExplode, setExplode: v => setExplodeAmount(v, true), togglePile: togglePartPile,
+      startBuild: () => startPileToBuild(true), toggleRef: toggleRefSkeleton,
+      openLlm: () => modalLlm.classList.add('open'),
+      openPhoto: () => modalPhoto.classList.add('open'),
+      loadFile: loadCustomMixamoOrStlFile,
+    },
+  });
+}
 
 init().catch(err => {
   console.error(err);

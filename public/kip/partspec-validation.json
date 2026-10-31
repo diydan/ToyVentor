@@ -1,0 +1,475 @@
+{
+ "format": "toyventor.kip-validation-index/1",
+ "files": {
+  "toyventor_beam_str_tu03_P.stl": {
+   "part": "beam_str_tu03",
+   "sha256": "0584faa18705ea7b179ea45fdef6bf7520367911e8ad423f87ebc190d89c0d7c",
+   "verdict": "pass"
+  },
+  "toyventor_beam_str_tu05_P.stl": {
+   "part": "beam_str_tu05",
+   "sha256": "d67ff10c902a3dd173067c048d7aa0a3bff6982d907ad6a1a08f622bad172ffd",
+   "verdict": "pass"
+  },
+  "toyventor_bumper_horns_S.stl": {
+   "part": "bumper_horns",
+   "sha256": "22deda1dff2cbf2b0f462f3dd6fc6c5c1dc8795238179d4f7097d19e48300481",
+   "verdict": "pass_with_settings"
+  },
+  "toyventor_bushing_half_P.stl": {
+   "part": "bushing_half",
+   "sha256": "8f0d5f3923fec4614280b3ba4b5853d0da7b1d1166f5ec44a4aef2bd67b661fd",
+   "verdict": "pass"
+  },
+  "toyventor_char_faceplate_P.stl": {
+   "part": "char_faceplate",
+   "sha256": "26bc231847624f9b2e03ce0310be6a428bdefc2c3fdb77703793b96da58d63ec",
+   "verdict": "pass_with_warnings"
+  },
+  "toyventor_char_faceplate_flat_P.stl": {
+   "part": "char_faceplate_flat",
+   "sha256": "a68c74de76979be06e8a7285c5a82240300b03d63948b845c4e09b428acc81e8",
+   "verdict": "pass_with_warnings"
+  },
+  "toyventor_char_faceplate_vinyl_P.stl": {
+   "part": "char_faceplate_vinyl",
+   "sha256": "8def441ee3fc3a602cb6b3e821f7bb62365507ca3fa182fc37b4b3b6d7c184d5",
+   "verdict": "pass_with_warnings"
+  },
+  "toyventor_char_head_alien_S.stl": {
+   "part": "char_head_alien",
+   "sha256": "d78e586ff3a4c507f458d2d144498d26133bc4a5ee2e87c94fb472ad0d770700",
+   "verdict": "pass"
+  },
+  "toyventor_char_head_bear_S.stl": {
+   "part": "char_head_bear",
+   "sha256": "9d81e2a07ac6be7eba473baf44d7adad49b933aa433d1c07eb849139ea462863",
+   "verdict": "pass"
+  },
+  "toyventor_char_head_cat_S.stl": {
+   "part": "char_head_cat",
+   "sha256": "1d157d2ffd63ec1f40a9973aeea5a89681f9e0264cfba80138854d8e5b203dca",
+   "verdict": "pass"
+  },
+  "toyventor_char_head_chibi_S.stl": {
+   "part": "char_head_chibi",
+   "sha256": "1c2d9e7183c1311513b2cd506b905281c39711da36564433115ad65759596638",
+   "verdict": "pass_with_warnings"
+  },
+  "toyventor_char_head_dragon_S.stl": {
+   "part": "char_head_dragon",
+   "sha256": "1089c3dd79f5a4882bd07d0ddadd38303ff60c589fe037c8e3aa9e06cfdf6e43",
+   "verdict": "pass"
+  },
+  "toyventor_char_head_fox_S.stl": {
+   "part": "char_head_fox",
+   "sha256": "cf96e58832083ab7379b9729c3e8f4ed142fe802f027611047578c16fbb1d772",
+   "verdict": "pass"
+  },
+  "toyventor_char_head_imp_S.stl": {
+   "part": "char_head_imp",
+   "sha256": "84b0ed7de146ef40ade8469b5f18e66095b5e0f2572a8d43c9f9071f4b623db4",
+   "verdict": "pass"
+  },
+  "toyventor_char_head_jumbo_S.stl": {
+   "part": "char_head_jumbo",
+   "sha256": "7898d00da43f7ed1156bf0ab1ee95dfeca77c702791d1f0b054dbe6b8ceb46e5",
+   "verdict": "pass_with_warnings"
+  },
+  "toyventor_char_head_kid_S.stl": {
+   "part": "char_head_kid",
+   "sha256": "db192bcb504b1b27b5db7543085d9b608ad349abaddef1cb7e89eb4113df8d97",
+   "verdict": "pass_with_warnings"
+  },
+  "toyventor_char_head_tall_S.stl": {
+   "part": "char_head_tall",
+   "sha256": "2cc87d1d09d4cfb4dae5b3ec622c1340c5704fb906fb6d17408c630d272a6535",
+   "verdict": "pass_with_warnings"
+  },
+  "toyventor_char_legs_seated_S.stl": {
+   "part": "char_legs_seated",
+   "sha256": "874b38776b3273a2d4a9ad5c6e6b81a2e8c8928a895eeaa87d38b477d140e53b",
+   "verdict": "pass"
+  },
+  "toyventor_cloud_wings_S.stl": {
+   "part": "cloud_wings",
+   "sha256": "6f01e0cb70ca0502e81a614974da69b8f8fa61ed115844cec15194c12c57944e",
+   "verdict": "pass"
+  },
+  "toyventor_cross_connector_tu01_P.stl": {
+   "part": "cross_connector_tu01",
+   "sha256": "88736ca441e137652193eb8f064cc84fc9ea6951ea1b3480e3930909a85435c2",
+   "verdict": "pass"
+  },
+  "toyventor_gear_spur_z10_P.stl": {
+   "part": "gear_spur_z10",
+   "sha256": "8d22fe3fa35c1309530bd676116348af45d3b67545c5a618cf80d5333901d8c8",
+   "verdict": "pass"
+  },
+  "toyventor_gear_spur_z20_P.stl": {
+   "part": "gear_spur_z20",
+   "sha256": "21302f518feafb377621fcdf096b44672347fd5c4ade03f75f070e2ac0262cb4",
+   "verdict": "pass"
+  },
+  "toyventor_glow_capsule_S.stl": {
+   "part": "glow_capsule",
+   "sha256": "1c7f8994b1efff73e30f8d51aafbdaa7e4c2fe85e4e73e75995edcaae30e6295",
+   "verdict": "pass_with_settings"
+  },
+  "toyventor_hair_bob_S.stl": {
+   "part": "hair_bob",
+   "sha256": "03d7c97346cabac3d0081c00410fbe3292a1cc8168e8b9af14494fd452cd8f03",
+   "verdict": "pass_with_warnings"
+  },
+  "toyventor_hair_curly_S.stl": {
+   "part": "hair_curly",
+   "sha256": "890d230a1fadcd6cabd751f9e003be0dc44ccb9e2deb5427efef2b9a9369073f",
+   "verdict": "pass"
+  },
+  "toyventor_hair_long_layered_S.stl": {
+   "part": "hair_long_layered",
+   "sha256": "c142a83a9ee730db7eb9531110478060da6281c647b74e7a3a6f65977d6633e0",
+   "verdict": "pass_with_warnings"
+  },
+  "toyventor_hair_mohawk_S.stl": {
+   "part": "hair_mohawk",
+   "sha256": "94b64d3f431507e49ded1a8f68d9d617b86a7752042ca7f3f4ead952b2e3ba8c",
+   "verdict": "pass"
+  },
+  "toyventor_hair_pigtails_S.stl": {
+   "part": "hair_pigtails",
+   "sha256": "7aedd124d6f5d151f1b17ca9cf1fa361002d0393abc5f004b69de333bb06fd79",
+   "verdict": "pass_with_warnings"
+  },
+  "toyventor_hair_pompadour_S.stl": {
+   "part": "hair_pompadour",
+   "sha256": "376cb8c211dd854789be77bdd9e8583269a7d3cafb7b805a90aa1eb0e9cbd952",
+   "verdict": "pass"
+  },
+  "toyventor_hair_ponytail_S.stl": {
+   "part": "hair_ponytail",
+   "sha256": "10bc75b22a11fd931ace20f6711683394eb2c2f05b92a12440d9db0de50e4d9e",
+   "verdict": "pass"
+  },
+  "toyventor_hair_shag_S.stl": {
+   "part": "hair_shag",
+   "sha256": "8e183b35d34d2fd092ff778564d35e571ef99a3b93799f08b7036481df44f107",
+   "verdict": "pass_with_warnings"
+  },
+  "toyventor_hair_short_swept_S.stl": {
+   "part": "hair_short_swept",
+   "sha256": "9ee69d927a5acf77d55d473889c1a3b92e48833712c21042ec6de59ff99475f7",
+   "verdict": "pass"
+  },
+  "toyventor_hair_side_sweep_S.stl": {
+   "part": "hair_side_sweep",
+   "sha256": "4cef17581680f41952555eff2b1fec372de114f0a8cb2368d82857fe60f8024a",
+   "verdict": "pass_with_warnings"
+  },
+  "toyventor_hair_spiky_S.stl": {
+   "part": "hair_spiky",
+   "sha256": "519b2cd75838c76f7c95b6ffeaccb47979eb83413c3025b1fbe7d8a8cf73e1ba",
+   "verdict": "pass_with_warnings"
+  },
+  "toyventor_hair_swoosh_S.stl": {
+   "part": "hair_swoosh",
+   "sha256": "b4751ccc41c026bf59e018ad0f1116ca3a02527af3da445d14bf448fd1c775b0",
+   "verdict": "pass_with_warnings"
+  },
+  "toyventor_hair_top_bun_S.stl": {
+   "part": "hair_top_bun",
+   "sha256": "4c2bfca27805f9f33ce19df317e4fbf9501c4cd411762760748cfe08cfcb79c7",
+   "verdict": "pass_with_warnings"
+  },
+  "toyventor_hair_twin_braids_S.stl": {
+   "part": "hair_twin_braids",
+   "sha256": "b43b8b4774171f238e884138bb4c92ef4ae3a534a911384bb45649450914a064",
+   "verdict": "pass_with_warnings"
+  },
+  "toyventor_hat_ballcap_S.stl": {
+   "part": "hat_ballcap",
+   "sha256": "d1ccf83d4e739eb825a4eb05ed7911fb19da46fe4fa4d6ec578b0af3dd58472c",
+   "verdict": "pass"
+  },
+  "toyventor_hat_beanie_S.stl": {
+   "part": "hat_beanie",
+   "sha256": "58e3495a45a012af8154fc6b2c44cd542b7e4014e0933905feba53de739b7265",
+   "verdict": "pass"
+  },
+  "toyventor_hat_cowboy_S.stl": {
+   "part": "hat_cowboy",
+   "sha256": "68270208ac9f1ce75c899b0ced442987b95e0acecaa908f92734f6e3c01ba7c8",
+   "verdict": "pass"
+  },
+  "toyventor_hat_hardhat_S.stl": {
+   "part": "hat_hardhat",
+   "sha256": "e0af065c37e7cf86ee9b9b9bb18bd72c4deb86f400df8ed4dbe012d46bbae373",
+   "verdict": "pass"
+  },
+  "toyventor_hat_pirate_S.stl": {
+   "part": "hat_pirate",
+   "sha256": "eb9ac05903790a079e6e190d532468a5f89a5ad13fe81b252870b6d742ad3ae2",
+   "verdict": "pass"
+  },
+  "toyventor_hat_ranger_S.stl": {
+   "part": "hat_ranger",
+   "sha256": "bb1d5bf4d693c549bbcecdfdc99e5c9ea42bc36a1d9518affff574a8e634fd19",
+   "verdict": "pass"
+  },
+  "toyventor_hat_tophat_S.stl": {
+   "part": "hat_tophat",
+   "sha256": "290acbfe1f8efbc6066686e4476d8708c6043c2fac187cd181f421058548efc6",
+   "verdict": "pass"
+  },
+  "toyventor_pack_explorer_S.stl": {
+   "part": "pack_explorer",
+   "sha256": "3586bb7b589c3c09c099cbfdd2065a429d006ed4f3f0a563f2f7736e07ccc912",
+   "verdict": "pass"
+  },
+  "toyventor_pin_friction_P.stl": {
+   "part": "pin_friction",
+   "sha256": "48d586fadf8b137cacdf82515adae65156cdf6e8a8aa2569d4808d84a0fa5cf0",
+   "verdict": "pass"
+  },
+  "toyventor_pointy_ears_S.stl": {
+   "part": "pointy_ears",
+   "sha256": "a5bf80facada5e549ce725201696228b0082d8c569bda28a6f7f770355ebf798",
+   "verdict": "pass"
+  },
+  "toyventor_prop_broom_P.stl": {
+   "part": "prop_broom",
+   "sha256": "887ea34e2f96e6f348bfae1eb23100665c03aa89deb5c43c1ed4e7c945b6c6ff",
+   "verdict": "pass"
+  },
+  "toyventor_prop_flag_P.stl": {
+   "part": "prop_flag",
+   "sha256": "7b8bb61be5a8d43c33722d1fbeaf314bcfc8439df2eb8ac969fb511a3901f8f0",
+   "verdict": "pass"
+  },
+  "toyventor_prop_guitar_P.stl": {
+   "part": "prop_guitar",
+   "sha256": "48bd76259f69b0d77ba6f67fa8481c135d4f8567fc0c23afe0081745101f3bc0",
+   "verdict": "pass"
+  },
+  "toyventor_prop_hammer_P.stl": {
+   "part": "prop_hammer",
+   "sha256": "f5794dbc6c460e5dbd3ee4272ec791c450c9ad557fa5e63bca0e661c827dd463",
+   "verdict": "pass"
+  },
+  "toyventor_prop_magnifier_P.stl": {
+   "part": "prop_magnifier",
+   "sha256": "afae07d1d6eba768858303df76bfa2402ac31648328215683b397be1e4f6eb76",
+   "verdict": "pass"
+  },
+  "toyventor_prop_maracas_P.stl": {
+   "part": "prop_maracas",
+   "sha256": "e0dd8f4c2df9f21685ba11007284af371586734d77ae41e475f6c85d9d48ca8f",
+   "verdict": "pass"
+  },
+  "toyventor_prop_mop_P.stl": {
+   "part": "prop_mop",
+   "sha256": "dafe6f8aa113fbc1dc895192f528b19c248b65f2ba477c08c40ce3a88738f647",
+   "verdict": "pass"
+  },
+  "toyventor_prop_paint_roller_P.stl": {
+   "part": "prop_paint_roller",
+   "sha256": "9dc49d2af1c7bfda94412b8cb3f799742a6f4411304bc707cb637e3ebd6b0561",
+   "verdict": "pass"
+  },
+  "toyventor_prop_screwdriver_P.stl": {
+   "part": "prop_screwdriver",
+   "sha256": "1709f4ac51302a3cd9f66b8ac0221baa057638e58e3698c5fe9e7d6e61564ac7",
+   "verdict": "pass"
+  },
+  "toyventor_prop_scrub_brush_P.stl": {
+   "part": "prop_scrub_brush",
+   "sha256": "526346902cabb272abcaead076be2495f012cd7efaeaac1ebffc0d83009801f3",
+   "verdict": "pass"
+  },
+  "toyventor_prop_skateboard_deck_S.stl": {
+   "part": "prop_skateboard_deck",
+   "sha256": "005c92822c089ae4122d693e495f91631fcb2eb4f8614a90077e2c6bc52e4567",
+   "verdict": "pass"
+  },
+  "toyventor_prop_star_shield_P.stl": {
+   "part": "prop_star_shield",
+   "sha256": "d3fc96fa3901f01e49e061e4bbda2e7ed09dc5c517d3797b4f0f662dc000fa16",
+   "verdict": "pass"
+  },
+  "toyventor_prop_trumpet_P.stl": {
+   "part": "prop_trumpet",
+   "sha256": "3e09bf7388f2cadd93197877252940be9c8ac0c78c9d04012e00b51f205be943",
+   "verdict": "pass"
+  },
+  "toyventor_prop_vacuum_P.stl": {
+   "part": "prop_vacuum",
+   "sha256": "cf310f246759b66524592b0cb1385e4485f3b900e3d0a32b5835cf66c7e50754",
+   "verdict": "pass"
+  },
+  "toyventor_prop_wrench_P.stl": {
+   "part": "prop_wrench",
+   "sha256": "cb5bad7994c53879448decf9b6c17e15073cec9b3c322b833b8ad5620a0126c3",
+   "verdict": "pass"
+  },
+  "toyventor_racer_axle_S.stl": {
+   "part": "racer_axle",
+   "sha256": "de5861d4cd313d495deb2c87575312b519918b48c28ad2307215f608d5bb3ae8",
+   "verdict": "pass_with_settings"
+  },
+  "toyventor_racer_axle_block_S.stl": {
+   "part": "racer_axle_block",
+   "sha256": "ba85521334b577f8af135aeeff10d89a07162bfa55f3bea807e563bd9948cc5c",
+   "verdict": "pass"
+  },
+  "toyventor_racer_bull_bar_S.stl": {
+   "part": "racer_bull_bar",
+   "sha256": "a205c94cc9392f18535d11589734e463bea4fca00a886f85989fa53063f59232",
+   "verdict": "pass_with_settings"
+  },
+  "toyventor_racer_hood_scoop_S.stl": {
+   "part": "racer_hood_scoop",
+   "sha256": "10608cdcdba720b3926a9af29a891594cdb0b143aec8dd882194aa893c273b7b",
+   "verdict": "pass"
+  },
+  "toyventor_racer_light_bar_S.stl": {
+   "part": "racer_light_bar",
+   "sha256": "a4b8db6adf97ef2e3c926c69afcd34579bf3ebdac20f0da83a7a2bb6aeb57457",
+   "verdict": "pass"
+  },
+  "toyventor_racer_roof_rack_S.stl": {
+   "part": "racer_roof_rack",
+   "sha256": "c95522567ea1e9d2c91949d5bba89cd9e4482b629786238597a241f71211a730",
+   "verdict": "pass"
+  },
+  "toyventor_racer_spoiler_S.stl": {
+   "part": "racer_spoiler",
+   "sha256": "5c421da0e94be18c5a3d3307df81fe5c0ec56c9026a7a8b937a7c33665260c20",
+   "verdict": "pass"
+  },
+  "toyventor_racer_twin_exhaust_S.stl": {
+   "part": "racer_twin_exhaust",
+   "sha256": "73616e229a97680ca1080a64619d890518515322af7bb957b7fcb0bdd75257e0",
+   "verdict": "pass"
+  },
+  "toyventor_racer_wheel_S.stl": {
+   "part": "racer_wheel",
+   "sha256": "05bf0f664b21d96126c3ff7be52219837d11232ea8270b46b70b04089e7d6fbf",
+   "verdict": "pass"
+  },
+  "toyventor_robot_back_jetpack_S.stl": {
+   "part": "robot_back_jetpack",
+   "sha256": "d5cad36fe4e6d9eb889fe7f26c1892b32959de44575fcc47aee605af90b47d74",
+   "verdict": "pass"
+  },
+  "toyventor_robot_head_scout_S.stl": {
+   "part": "robot_head_scout",
+   "sha256": "4303b9a3cfb978a405f1364e64a0160522a437520b9ba12f31c0a7472131c597",
+   "verdict": "pass"
+  },
+  "toyventor_robot_head_visor_S.stl": {
+   "part": "robot_head_visor",
+   "sha256": "02a43cefea12829fc7276454c528a38dae8c438b825f7878b9f19e3f99b4b441",
+   "verdict": "pass"
+  },
+  "toyventor_shaft_tu03_P.stl": {
+   "part": "shaft_tu03",
+   "sha256": "de5861d4cd313d495deb2c87575312b519918b48c28ad2307215f608d5bb3ae8",
+   "verdict": "pass_with_settings"
+  },
+  "toyventor_shaft_tu05_P.stl": {
+   "part": "shaft_tu05",
+   "sha256": "3d586dab8bd64184199f3798134fa478d0b81c84938d43c10b96f368bdf372e7",
+   "verdict": "pass_with_settings"
+  },
+  "toyventor_shaft_tu07_P.stl": {
+   "part": "shaft_tu07",
+   "sha256": "7bfbc122cff37f38d4669f13313dfc242f38c62086f7e7067bf38dddc9568d92",
+   "verdict": "pass_with_settings"
+  },
+  "toyventor_veh_cab_roof_cover_S.stl": {
+   "part": "veh_cab_roof_cover",
+   "sha256": "c6823c00a08f645863368714778eb7c438184d75636b1b0b6bee4f3cb12f065c",
+   "verdict": "pass"
+  },
+  "toyventor_veh_car_chassis_S.stl": {
+   "part": "veh_car_chassis",
+   "sha256": "7643307869059f255f06b3ca79039bb849f4a4662bd3dcf203177e5a7330ff23",
+   "verdict": "pass"
+  },
+  "toyventor_veh_car_hood_cover_S.stl": {
+   "part": "veh_car_hood_cover",
+   "sha256": "5554cb8b44419cbd4a88e88b48000fa59fece12c2f557e2c5e18e9363c490bc8",
+   "verdict": "pass"
+  },
+  "toyventor_veh_handlebar_fork_P.stl": {
+   "part": "veh_handlebar_fork",
+   "sha256": "c28bc1b501b21d766ea46740ab2e72b70ba3920f95096581bb01eb942a01d791",
+   "verdict": "pass"
+  },
+  "toyventor_veh_moto_cowling_S.stl": {
+   "part": "veh_moto_cowling",
+   "sha256": "991c62080a6d7c2ec09ba99e0b1e9c30ba316a25ae145426533eff9a1ee28c6c",
+   "verdict": "pass"
+  },
+  "toyventor_veh_scooter_fairing_S.stl": {
+   "part": "veh_scooter_fairing",
+   "sha256": "24ae32563d14a1d5c472b06ae297133a105f343f66da36d575c2f1af14c2accb",
+   "verdict": "pass"
+  },
+  "toyventor_veh_scooter_frame_S.stl": {
+   "part": "veh_scooter_frame",
+   "sha256": "56e0b0395e0d82851d82e5a41b84c1b14691c3ab15b53aa667db5b25e0f837c7",
+   "verdict": "pass"
+  },
+  "toyventor_veh_steering_wheel_P.stl": {
+   "part": "veh_steering_wheel",
+   "sha256": "4a06798bcfbf4a548e76902e0d8d0d3939824d8d0fe4c60714558785d4bcfae8",
+   "verdict": "pass"
+  },
+  "toyventor_veh_truck_bed_cover_S.stl": {
+   "part": "veh_truck_bed_cover",
+   "sha256": "d9b602b4562700137026abc2179770a4ace6a372ab306472644135c76e2e271b",
+   "verdict": "pass"
+  },
+  "toyventor_veh_truck_chassis_S.stl": {
+   "part": "veh_truck_chassis",
+   "sha256": "e87cc5543b54a7275b155646cc92d2dee2691f1f9b0bcf655fbf9f2e01d49093",
+   "verdict": "pass"
+  },
+  "toyventor_veh_wheel_moto_P.stl": {
+   "part": "veh_wheel_moto",
+   "sha256": "dcd21119d1db09ee046973335ec9ffd9429371fd9787b7ae844dd9f527d90420",
+   "verdict": "pass"
+  },
+  "toyventor_veh_wheel_offroad_P.stl": {
+   "part": "veh_wheel_offroad",
+   "sha256": "008eeeab9e417f507c737cfeda1fe0d78a3d51d792fca265f3485c0368f5efec",
+   "verdict": "pass"
+  },
+  "toyventor_veh_wheel_sport_P.stl": {
+   "part": "veh_wheel_sport",
+   "sha256": "5af4c4c5b31d20d66fde63a1745f0d158a551db6dd216183d783d4890b9556ef",
+   "verdict": "pass"
+  },
+  "toyventor_waddle_tail_s_S.stl": {
+   "part": "waddle_tail_s",
+   "sha256": "c02d05029e3f1b41d0606833666c21c512dcf864d7765ea3ef3ed0ad7d769f9b",
+   "verdict": "pass_with_settings"
+  },
+  "toyventor_wheel_tu04_P.stl": {
+   "part": "wheel_tu04",
+   "sha256": "d469ca362cb9bce4e0ba7cf91799428966099333bbb38c9dfa8a439c76628fa2",
+   "verdict": "pass"
+  },
+  "toyventor_wheel_tu06_P.stl": {
+   "part": "wheel_tu06",
+   "sha256": "8b04b183920d8b50a1ed869abd127e794ebc0d88ee179711c2525a54311cc763",
+   "verdict": "pass"
+  },
+  "toyventor_wobble_hat_S.stl": {
+   "part": "wobble_hat",
+   "sha256": "a18448514d546ea681c5c028dcf11cf66514ef3a6b89b080cb56b6fe7f571665",
+   "verdict": "pass"
+  }
+ }
+}
