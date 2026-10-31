@@ -2,14 +2,16 @@
 // 390x844 headless-Chrome E2E for the landed phases. Uses the machine's
 // installed Google Chrome over CDP (global WebSocket, no new dependencies).
 // Run: npm run e2e. Exits nonzero on any failing check.
+// Overrides: E2E_CHROME (binary), E2E_PORT, E2E_DEBUG_PORT, E2E_PROFILE.
 import { spawn } from "node:child_process";
 import { rmSync } from "node:fs";
 
 const CHROME =
+  process.env.E2E_CHROME ??
   "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
 const DEV_PORT = Number(process.env.E2E_PORT ?? 5198);
 const DEBUG_PORT = Number(process.env.E2E_DEBUG_PORT ?? 9333);
-const PROFILE = "/tmp/toyforge-e2e-profile";
+const PROFILE = process.env.E2E_PROFILE ?? "/tmp/toyforge-e2e-profile";
 const APP_URL = `http://localhost:${DEV_PORT}/`;
 const VIEWPORT = { width: 390, height: 844, deviceScaleFactor: 2, mobile: true };
 
@@ -113,6 +115,9 @@ async function chromeTargets() {
 }
 
 async function openPage() {
+  // The debug port may not be bound yet on a slow start; every other CDP
+  // interaction retries via waitFor, so gate the one-shot tab creation too.
+  await waitHttpOk(`http://localhost:${DEBUG_PORT}/json/version`, 60000);
   await fetch(`http://localhost:${DEBUG_PORT}/json/new?about:blank`, {
     method: "PUT",
   });
@@ -145,18 +150,35 @@ async function pastTitle(cdp) {
 }
 
 async function gotoApp(cdp, seedProgression) {
-  await cdp.send("Page.navigate", { url: APP_URL });
-  await waitFor(
-    () => cdp.evaluate(`!!document.querySelector("canvas")`),
-    { timeoutMs: 60000, label: "stage canvas" },
-  );
   if (seedProgression !== undefined) {
-    await cdp.evaluate(
-      `localStorage.setItem("toyforge:progression:v1", ${JSON.stringify(JSON.stringify(seedProgression))}); location.reload();`,
+    // Seed before any app code runs in the new document. The old
+    // write-then-reload order left the outgoing page live between the seed
+    // write and the reload commit, and its boot effects (grandfather +
+    // progression pull in GameCanvas) saved stale totalXp: 0 straight over
+    // the seed ~1 run in 3.
+    const seeded = JSON.stringify(JSON.stringify(seedProgression));
+    const { identifier } = await cdp.send(
+      "Page.addScriptToEvaluateOnNewDocument",
+      {
+        source: `try { localStorage.setItem("toyforge:progression:v1", ${seeded}); } catch (e) {}`,
+      },
     );
+    try {
+      await cdp.send("Page.navigate", { url: APP_URL });
+      await waitFor(
+        () => cdp.evaluate(`!!document.querySelector("canvas")`),
+        { timeoutMs: 60000, label: "stage canvas after reseed" },
+      );
+    } finally {
+      await cdp.send("Page.removeScriptToEvaluateOnNewDocument", {
+        identifier,
+      });
+    }
+  } else {
+    await cdp.send("Page.navigate", { url: APP_URL });
     await waitFor(
       () => cdp.evaluate(`!!document.querySelector("canvas")`),
-      { timeoutMs: 60000, label: "stage canvas after reseed" },
+      { timeoutMs: 60000, label: "stage canvas" },
     );
   }
   await pastTitle(cdp);
@@ -209,7 +231,10 @@ async function scenarioFresh(cdp) {
   const locked = await cdp.evaluate(
     `[...document.querySelectorAll(".tv-roster-card-lock")].map((el) => el.getAttribute("aria-label") || "")`,
   );
-  check("locked-count-3", locked.length === 3, `locked=${locked.length}`);
+  // Deliberately >= rather than ===: the count mirrors however many audit
+  // entries are ready with a seed toy, which the CAD session edits. The
+  // name checks below pin these three without pinning the total.
+  check("locked-at-least-3", locked.length >= 3, `locked=${locked.length}`);
   for (const name of ["Hauler Truck", "Motor Scooter", "Sport Motorbike"]) {
     check(
       `locked-has-${name}`,
@@ -222,7 +247,8 @@ async function scenarioFresh(cdp) {
   );
   check(
     "locked-ctas",
-    ctas.length === 3 && ctas.every((t) => t.includes("Play a STEM Lab")),
+    ctas.length === locked.length &&
+      ctas.every((t) => t.includes("Play a STEM Lab")),
     ctas.join("|"),
   );
   const noScout = await cdp.evaluate(
@@ -286,8 +312,11 @@ async function main() {
     const page = await openPage();
     try {
       await fn(page);
+      // Named honestly: this subscribes only to Runtime.exceptionThrown, so
+      // it sees uncaught exceptions — not console.error output, swallowed
+      // error-boundary catches, or failed network requests.
       check(
-        `console-clean-${name}`,
+        `no-uncaught-exception-${name}`,
         page.exceptions.length === 0,
         page.exceptions.slice(0, 3).join(" | "),
       );
