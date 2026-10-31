@@ -74,12 +74,11 @@ const TYPES: ToyType[] = ["character", "robot", "vehicle"];
 const STATS: StatName[] = ["speed", "spin", "torque", "glow"];
 const HEX = /^#[0-9a-f]{6}$/i;
 
-/** A scanned car becomes a vehicle, a figure a character, anything else a
- *  robot. The game has no other toy kinds. */
+/** A scanned car becomes a vehicle; figures and everyday objects resolve onto
+ *  the unified Kip Character rig (`robot` remains valid on the wire). */
 export function toyTypeForKind(kind: ToyKind): ToyType {
   if (kind === "car") return "vehicle";
-  if (kind === "figure") return "character";
-  return "robot";
+  return "character";
 }
 
 /** Game part key for one stat on one toy type. */

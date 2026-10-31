@@ -5,10 +5,13 @@ import type { Toy } from "../../../shared/toy";
 import { fetchScanToy, postScanToy, type ScanPostResult } from "../../lib/api";
 
 // Single source of truth for the backup toys: the same JSON the Worker serves.
+// Phase 2 canonical starter order: Kip (#1) + Red Racer (#2); Star Scout is
+// grandfathered only when already active or customized on the device.
 export const seedCar = seedCarJson as Toy;
 export const seedFigure = seedFigureJson as Toy;
 export const seedKip = seedKipJson as Toy;
-export const backupToys: Toy[] = [seedCar, seedFigure, seedKip];
+export const enabledStarterToys: Toy[] = [seedKip, seedCar];
+export const backupToys: Toy[] = [seedKip, seedCar, seedFigure];
 
 /** Backup path: try the scan route first (it serves the seed car today),
  *  fall back to the bundled copy so the demo works with the API down. */

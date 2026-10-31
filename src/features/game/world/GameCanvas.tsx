@@ -905,10 +905,18 @@ export function GameCanvas({
           open={toySheetOpen}
           initialStep={toySheetStep}
           progression={progression}
+          missionsDoneCount={state.missionsDoneTotal}
+          skinVersion={skinTick}
           onClose={() => setToySheetOpen(false)}
           onSkinChange={() => {
             setSkinTick((n) => n + 1);
             onSkinChange?.();
+          }}
+          onOpenBuild={openBuildSheet}
+          onOpenCharacterCard={() => {
+            closeEngineSheets();
+            closeReactOverlays();
+            setRevealState({ first: false });
           }}
         />
 

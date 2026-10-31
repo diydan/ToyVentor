@@ -1,22 +1,34 @@
 import { useEffect, useState, type ChangeEvent } from "react";
 import {
+  FIT_QUESTION,
+  FIT_VARIANTS,
+  type FitChoice,
+} from "../../../../shared/calibration";
+import {
   sizeClassForLength,
   toyFromScanInput,
   type Toy,
   type ToyKind,
 } from "../../../../shared/toy";
+import { postSamScan } from "../../../lib/api";
 import { loadBuild } from "../../../lib/builds";
 import { partsById } from "../../../lib/catalog";
 import {
   nextRankProgress,
   type ProgressionState,
 } from "../../../lib/progression";
-import { postSamScan } from "../../../lib/api";
 import { pushOwnership } from "../../../lib/sync";
-import { skinForToy } from "../../../state/skins";
+import {
+  canonicalToyName,
+  loadFitChoice,
+  saveFitChoice,
+} from "../../../lib/toyRoster";
+import { revealsForToy } from "../../../state/reveals";
 import { useToybox } from "../../../state/toybox";
-import { backupToys, downscalePhoto, submitScan } from "../../scan/scan";
+import { colorOf } from "../../builder/engine/render";
+import { downscalePhoto, submitScan } from "../../scan/scan";
 import { SkinPanel } from "../../skin/SkinPanel";
+import { ToyMiniIcon } from "./ToyMiniIcon";
 
 type ObjectChipId = "car" | "figure" | "cup" | "bottle" | "other";
 
@@ -44,31 +56,112 @@ const SIZE_PRESETS: ReadonlyArray<{
   { id: "L", label: "L", lengthMm: 180, widthMm: 90 },
 ];
 
-function glyphForToy(toy: Toy): string {
-  if (toy.kind === "car") return "🚗";
-  if (toy.id === "seed-kip") return "🤖";
-  if (toy.kind === "figure") return "🚀";
-  return "🧸";
+function accentForRosterToy(toy: Toy, firstPartColor?: string): string {
+  if (firstPartColor) return firstPartColor;
+  if (toy.id === "seed-kip") return "#ffd24d";
+  if (toy.id === "seed-car" || toy.kind === "car") return "#ff5a4d";
+  if (toy.source === "scan") return "#5af0b0";
+  return "#52b7ff";
+}
+
+function loadoutCaptionForToy(toy: Toy, partNames: readonly string[]): string {
+  if (partNames.length === 1) return partNames[0]!;
+  if (partNames.length === 2) return `${partNames[0]} + ${partNames[1]}`;
+  if (partNames.length > 2) {
+    return `${partNames[0]} + ${partNames.length - 1} more`;
+  }
+  if (toy.id === "seed-kip") return "Full 8-slot wardrobe";
+  if (toy.id === "seed-car") return "Racer Garage roadster";
+  if (toy.id === "seed-figure") return "Saved starter figure";
+  return `${toy.lengthMm} mm (${toy.sizeClass}) · Ready to build`;
+}
+
+function LabBotAvatarSvg() {
+  return (
+    <svg viewBox="0 0 36 36" width="34" height="34" aria-hidden="true">
+      <rect
+        x="7"
+        y="9"
+        width="22"
+        height="18"
+        rx="6"
+        fill="#1b2b6b"
+        stroke="#5af0b0"
+        strokeWidth="2"
+      />
+      <line
+        x1="18"
+        y1="4"
+        x2="18"
+        y2="9"
+        stroke="#5af0b0"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+      />
+      <circle cx="18" cy="3.8" r="2.2" fill="#ffd24d" />
+      <circle cx="13.5" cy="17.5" r="2.3" fill="#5af0b0" />
+      <circle cx="22.5" cy="17.5" r="2.3" fill="#5af0b0" />
+      <path
+        d="M14 22.2 H22"
+        stroke="#bfe3ff"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function LabPrinterAvatarSvg() {
+  return (
+    <svg viewBox="0 0 36 36" width="34" height="34" aria-hidden="true">
+      <rect
+        x="6"
+        y="6"
+        width="24"
+        height="24"
+        rx="5"
+        fill="#1b2b6b"
+        stroke="#52b7ff"
+        strokeWidth="2"
+      />
+      <line x1="10" y1="12" x2="26" y2="12" stroke="#8fa8ff" strokeWidth="1.8" />
+      <polygon points="16,12 20,12 18,16.5" fill="#ffd24d" />
+      <rect x="12.5" y="18.5" width="11" height="5.5" rx="1.6" fill="#ff5a4d" />
+      <line x1="9.5" y1="25.5" x2="26.5" y2="25.5" stroke="#5af0b0" strokeWidth="2.2" strokeLinecap="round" />
+    </svg>
+  );
 }
 
 export function MyToySheet({
   open,
   initialStep = "shelf",
   progression,
+  missionsDoneCount = 0,
+  skinVersion = 0,
   onClose,
   onSkinChange,
+  onOpenBuild,
+  onOpenCharacterCard,
 }: {
   open: boolean;
   initialStep?: "shelf" | "scan";
   progression?: ProgressionState;
+  missionsDoneCount?: number;
+  skinVersion?: number;
   onClose: () => void;
   onSkinChange?: () => void;
+  onOpenBuild?: () => void;
+  onOpenCharacterCard?: () => void;
 }) {
   const { uploadedToys, builtInToys, selected, addToy, selectToy } = useToybox();
   const [step, setStep] = useState<"shelf" | "scan">(initialStep);
+  const [fitChoice, setFitChoice] = useState<FitChoice>(() => loadFitChoice());
 
   useEffect(() => {
-    if (open) setStep(initialStep);
+    if (open) {
+      setStep(initialStep);
+      setFitChoice(loadFitChoice());
+    }
   }, [open, initialStep]);
 
   const [chipId, setChipId] = useState<ObjectChipId>("car");
@@ -88,7 +181,27 @@ export function MyToySheet({
   const prompt = (chipId === "other" ? customNoun : activeChip.prompt).trim() || "toy";
   const sizeClass = sizeClassForLength(lengthMm);
 
-  const orderedToys = [...uploadedToys, ...builtInToys];
+  const starterCharacters = builtInToys.filter((t) => t.kind !== "car");
+  const starterVehicles = builtInToys.filter((t) => t.kind === "car");
+  const allEnabledToys = [...starterCharacters, ...starterVehicles, ...uploadedToys];
+
+  let totalSavedParts = 0;
+  let savedBuildsCount = 0;
+  for (const t of allEnabledToys) {
+    const count = loadBuild(t.id, partsById).length;
+    if (count > 0) {
+      totalSavedParts += count;
+      savedBuildsCount += 1;
+    }
+  }
+
+  const activeFitVariant =
+    FIT_VARIANTS.find((v) => v.id === fitChoice) ?? FIT_VARIANTS[1];
+
+  const handleChooseFit = (choice: FitChoice) => {
+    setFitChoice(choice);
+    saveFitChoice(choice);
+  };
 
   const saveScannedToy = (toy: Toy) => {
     addToy(toy);
@@ -157,12 +270,91 @@ export function MyToySheet({
   };
 
   const pickStarterBackup = (toyId: string) => {
-    const found = backupToys.find((t) => t.id === toyId);
+    const found = builtInToys.find((t) => t.id === toyId);
     if (found) {
-      addToy(found);
       selectToy(found.id);
       onClose();
     }
+  };
+
+  const renderToyCard = (toy: Toy, sectionKind: "character" | "vehicle" | "my-toy") => {
+    const isSelected = toy.id === selected?.id;
+    const placements = loadBuild(toy.id, partsById);
+    const partNames = placements
+      .map((pl) => partsById.get(pl.partId)?.name)
+      .filter((n): n is string => Boolean(n));
+    const firstPart = placements[0]
+      ? partsById.get(placements[0].partId)
+      : undefined;
+    const firstPartColor = firstPart ? colorOf(firstPart) : undefined;
+    const accent = accentForRosterToy(toy, firstPartColor);
+    const earnedCards = sectionKind === "character" ? revealsForToy(toy.id) : [];
+    const ownerTag =
+      sectionKind === "my-toy"
+        ? toy.source === "scan"
+          ? "SAM Scan"
+          : "My Toy"
+        : earnedCards.length > 0
+          ? "Card Earned"
+          : null;
+    const displayName = canonicalToyName(toy);
+
+    return (
+      <div
+        key={toy.id}
+        className={
+          isSelected
+            ? "tv-roster-card tv-roster-card-on"
+            : "tv-roster-card"
+        }
+      >
+        <button
+          type="button"
+          role="option"
+          aria-selected={isSelected}
+          className="tv-roster-card-main"
+          onClick={() => selectToy(toy.id)}
+        >
+          <ToyMiniIcon
+            toy={toy}
+            accentColor={accent}
+            skinVersion={skinVersion}
+            size="tile"
+          />
+          <span className="tv-roster-card-copy">
+            <span className="tv-roster-card-head">
+              <span className="tv-toy-tile-name">{displayName}</span>
+              {isSelected && (
+                <span className="tv-toy-tag tv-toy-tag-gold tv-roster-inline-tag">
+                  Active
+                </span>
+              )}
+              {!isSelected && ownerTag && (
+                <span className="tv-toy-tag tv-roster-inline-tag">
+                  {ownerTag}
+                </span>
+              )}
+            </span>
+            <span className="tv-toy-tile-sub">
+              {loadoutCaptionForToy(toy, partNames)}
+            </span>
+          </span>
+        </button>
+        {earnedCards.length > 0 && onOpenCharacterCard && (
+          <button
+            type="button"
+            className="tv-ctl tv-roster-card-act"
+            onClick={() => {
+              selectToy(toy.id);
+              onClose();
+              onOpenCharacterCard();
+            }}
+          >
+            Card
+          </button>
+        )}
+      </div>
+    );
   };
 
   return (
@@ -205,59 +397,51 @@ export function MyToySheet({
               );
             })()}
 
-          <div className="tv-toy-shelf" role="listbox" aria-label="Owned toys">
-            {orderedToys.map((toy) => {
-              const isSelected = toy.id === selected?.id;
-              const equippedCount = loadBuild(toy.id, partsById).length;
-              const thumb = skinForToy(toy.id) ?? toy.imageDataUrl;
-              const badge =
-                toy.source === "scan"
-                  ? "SAM"
-                  : toy.imageDataUrl
-                    ? "Photo"
-                    : isSelected
-                      ? "Active"
-                      : null;
-              return (
-                <button
-                  key={toy.id}
-                  type="button"
-                  role="option"
-                  aria-selected={isSelected}
-                  className={isSelected ? "tv-toy-tile tv-toy-tile-on" : "tv-toy-tile"}
-                  onClick={() => selectToy(toy.id)}
-                >
-                  {badge && (
-                    <span
-                      className={
-                        badge === "Active"
-                          ? "tv-toy-tag tv-toy-tag-gold"
-                          : "tv-toy-tag"
-                      }
-                    >
-                      {badge}
-                    </span>
-                  )}
-                  <div className="tv-toy-thumb-box">
-                    {thumb ? (
-                      <img src={thumb} alt={toy.name} />
-                    ) : (
-                      <span aria-hidden="true" style={{ fontSize: 26 }}>
-                        {glyphForToy(toy)}
-                      </span>
-                    )}
-                  </div>
-                  <span className="tv-toy-tile-name">{toy.name}</span>
-                  <span className="tv-toy-tile-sub">
-                    {equippedCount > 0
-                      ? `${equippedCount} part${equippedCount === 1 ? "" : "s"} on`
-                      : toy.source === "seed"
-                        ? "Starter toy"
-                        : `${toy.lengthMm} mm`}
-                  </span>
-                </button>
-              );
-            })}
+          <div
+            className="tv-roster-sections"
+            role="listbox"
+            aria-label="Owned toys"
+          >
+            <div className="tv-roster-group">
+              <span className="tv-roster-group-k">Characters</span>
+              <div className="tv-roster-grid">
+                {starterCharacters.map((toy) => renderToyCard(toy, "character"))}
+              </div>
+            </div>
+
+            <div className="tv-roster-group">
+              <span className="tv-roster-group-k">Vehicles</span>
+              <div className="tv-roster-grid">
+                {starterVehicles.map((toy) => renderToyCard(toy, "vehicle"))}
+              </div>
+            </div>
+
+            <div className="tv-roster-group">
+              <div className="tv-roster-group-head">
+                <span className="tv-roster-group-k">My Toys</span>
+                <span className="tv-roster-group-meta">
+                  {uploadedToys.length > 0
+                    ? `${uploadedToys.length} scanned`
+                    : "Bring a real toy in"}
+                </span>
+              </div>
+              {uploadedToys.length > 0 && (
+                <div className="tv-roster-grid">
+                  {uploadedToys.map((toy) => renderToyCard(toy, "my-toy"))}
+                </div>
+              )}
+              <button
+                type="button"
+                className="cta"
+                style={{ margin: 0, minHeight: 46, fontSize: 15 }}
+                onClick={() => {
+                  setError(null);
+                  setStep("scan");
+                }}
+              >
+                Scan a Real Toy (Meta SAM 3.1)
+              </button>
+            </div>
           </div>
 
           {selected?.imageDataUrl && (
@@ -274,17 +458,90 @@ export function MyToySheet({
             </details>
           )}
 
-          <button
-            type="button"
-            className="cta"
-            style={{ margin: 0, minHeight: 50, fontSize: 16 }}
-            onClick={() => {
-              setError(null);
-              setStep("scan");
-            }}
-          >
-            Scan a Real Toy (Meta SAM 3.1)
-          </button>
+          <div className="tv-companion-grid" aria-label="Workshop status">
+            <div className="tv-companion-card">
+              <span className="tv-companion-avatar">
+                <LabBotAvatarSvg />
+              </span>
+              <div className="tv-companion-copy">
+                <b className="tv-toy-tile-name">Lab Bots</b>
+                <span className="tv-toy-tile-sub">
+                  {missionsDoneCount > 0
+                    ? `${missionsDoneCount} lab${missionsDoneCount === 1 ? "" : "s"} solved`
+                    : "6 STEM labs ready"}
+                </span>
+              </div>
+            </div>
+
+            {onOpenBuild ? (
+              <button
+                type="button"
+                className="tv-companion-card"
+                onClick={() => {
+                  onClose();
+                  onOpenBuild();
+                }}
+              >
+                <span className="tv-companion-avatar">
+                  <LabPrinterAvatarSvg />
+                </span>
+                <span className="tv-companion-copy">
+                  <b className="tv-toy-tile-name">Lab Kit Printer</b>
+                  <span className="tv-toy-tile-sub">
+                    {totalSavedParts > 0
+                      ? `${totalSavedParts} part${totalSavedParts === 1 ? "" : "s"} in ${savedBuildsCount} build${savedBuildsCount === 1 ? "" : "s"}`
+                      : "Snap-fit STL kit · Build"}
+                  </span>
+                </span>
+              </button>
+            ) : (
+              <div className="tv-companion-card">
+                <span className="tv-companion-avatar">
+                  <LabPrinterAvatarSvg />
+                </span>
+                <div className="tv-companion-copy">
+                  <b className="tv-toy-tile-name">Lab Kit Printer</b>
+                  <span className="tv-toy-tile-sub">
+                    {totalSavedParts > 0
+                      ? `${totalSavedParts} part${totalSavedParts === 1 ? "" : "s"} in ${savedBuildsCount} build${savedBuildsCount === 1 ? "" : "s"}`
+                      : "Snap-fit STL kit ready"}
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <details className="tv-disclosure tv-forge-mount-row">
+            <summary>
+              <span>Forge Mount fit</span>
+              <span className="tv-disclosure-meta">
+                {activeFitVariant.label} · {"•".repeat(activeFitVariant.dots)}
+              </span>
+            </summary>
+            <div className="tv-forge-mount-body">
+              <p className="tv-moves">{FIT_QUESTION}</p>
+              <div className="tv-chips" role="group" aria-label="Forge Mount fit">
+                {FIT_VARIANTS.map((variant) => (
+                  <button
+                    key={variant.id}
+                    type="button"
+                    className="tv-sc"
+                    aria-pressed={fitChoice === variant.id}
+                    onClick={() => handleChooseFit(variant.id)}
+                  >
+                    {"•".repeat(variant.dots)} {variant.label}
+                  </button>
+                ))}
+              </div>
+              <a
+                className="tv-link"
+                href="/parts-stl/forge-mount-first-print.stl"
+                download="forge-mount-first-print.stl"
+              >
+                Download Forge Mount test strip (.stl)
+              </a>
+            </div>
+          </details>
         </>
       ) : (
         <>
@@ -458,7 +715,7 @@ export function MyToySheet({
           <div className="tv-backup-strip">
             <span>No camera handy?</span>
             <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-              {backupToys.map((starter) => (
+              {builtInToys.map((starter) => (
                 <button
                   key={starter.id}
                   type="button"
@@ -466,7 +723,7 @@ export function MyToySheet({
                   style={{ minHeight: 32, padding: "0 9px", fontSize: 12 }}
                   onClick={() => pickStarterBackup(starter.id)}
                 >
-                  {starter.name}
+                  {canonicalToyName(starter)}
                 </button>
               ))}
             </div>

@@ -49,10 +49,30 @@ export function slotStatForWorldSlot(
     if (s === "front" || s === "bumper" || s === "light" || s === "lights") return "glow";
     if (s === "chassis" || s === "body" || s === "roof" || s === "top") return "torque";
   } else if (toyType === "character") {
-    if (s === "back" || s === "pack" || s === "wings") return "speed";
-    if (s === "tail" || s === "hat" || s === "hair" || s === "head") return "spin";
+    if (s === "back" || s === "pack" || s === "wings" || s === "torso") return "speed";
+    if (
+      s === "tail" ||
+      s === "hat" ||
+      s === "crown" ||
+      s === "top" ||
+      s === "hair" ||
+      s === "head" ||
+      s === "prop" ||
+      s === "hand" ||
+      s === "arms" ||
+      s === "ears"
+    )
+      return "spin";
     if (s === "eyes" || s === "face" || s === "visor") return "glow";
-    if (s === "base" || s === "feet" || s === "legs" || s === "body") return "torque";
+    if (
+      s === "base" ||
+      s === "feet" ||
+      s === "legs" ||
+      s === "boots" ||
+      s === "stance" ||
+      s === "body"
+    )
+      return "torque";
   } else {
     if (s === "legs" || s === "feet" || s === "thrusters") return "speed";
     if (s === "head" || s === "arms") return "spin";

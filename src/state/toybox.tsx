@@ -8,11 +8,19 @@ import {
 } from "react";
 import {
   isBuiltInToy,
-  mergeToyboxToys,
   toyboxUploads,
   type Toy,
 } from "../../shared/toy";
-import { backupToys } from "../features/scan/scan";
+import { decodeToyContractFromHash } from "../../shared/toycontract";
+import { seedFigure, seedKip } from "../features/scan/scan";
+import {
+  canonicalToyName,
+  checkStarScoutGrandfatheredFromStorage,
+  loadActiveToyId,
+  mergePhase2Roster,
+  normalizeSavedToyIdentity,
+  saveActiveToyId,
+} from "../lib/toyRoster";
 
 const STORAGE_KEY = "toyforge:toybox:v1";
 
@@ -27,7 +35,7 @@ interface ToyboxState {
 
 const ToyboxContext = createContext<ToyboxState | null>(null);
 
-function loadToys(): Toy[] {
+function loadSavedToys(): Toy[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return [];
@@ -38,12 +46,39 @@ function loadToys(): Toy[] {
   }
 }
 
+function initialActiveToyId(savedToys: readonly Toy[]): string {
+  try {
+    const hashContract = decodeToyContractFromHash(window.location.hash);
+    if (hashContract?.id) return hashContract.id;
+  } catch {
+    /* ignore */
+  }
+  const stored = loadActiveToyId();
+  if (stored) return stored;
+  // Legacy devices that scanned/saved a toy before active-toy persistence keep
+  // their first upload active; fresh devices start on Kip (`seed-kip`).
+  const firstUpload = savedToys.find((t) => !isBuiltInToy(t));
+  return firstUpload?.id ?? seedKip.id;
+}
+
 export function ToyboxProvider({ children }: { children: ReactNode }) {
-  const [toys, setToys] = useState<Toy[]>(() =>
-    mergeToyboxToys(loadToys(), backupToys),
-  );
+  const [initialBoot] = useState(() => {
+    const saved = loadSavedToys();
+    const activeId = initialActiveToyId(saved);
+    const grandfathered = checkStarScoutGrandfatheredFromStorage(activeId, saved);
+    const merged = mergePhase2Roster(saved, {
+      activeToyId: activeId,
+      savedToys: saved,
+      hasSavedBuild: grandfathered,
+    });
+    const resolvedSelectedId =
+      merged.find((t) => t.id === activeId)?.id ?? merged[0]?.id ?? seedKip.id;
+    return { merged, resolvedSelectedId };
+  });
+
+  const [toys, setToys] = useState<Toy[]>(initialBoot.merged);
   const [selectedId, setSelectedId] = useState<string | undefined>(
-    () => toys[0]?.id,
+    initialBoot.resolvedSelectedId,
   );
 
   useEffect(() => {
@@ -54,19 +89,35 @@ export function ToyboxProvider({ children }: { children: ReactNode }) {
     }
   }, [toys]);
 
+  useEffect(() => {
+    if (selectedId) {
+      saveActiveToyId(selectedId);
+    }
+  }, [selectedId]);
+
   const value = useMemo<ToyboxState>(
     () => ({
       toys,
       uploadedToys: toyboxUploads(toys),
-      builtInToys: toys.filter(isBuiltInToy),
+      builtInToys: toys
+        .filter(isBuiltInToy)
+        .map((toy) => ({ ...toy, name: canonicalToyName(toy) })),
       selected: toys.find((t) => t.id === selectedId) ?? toys[0],
-      addToy: (toy) => {
+      addToy: (rawToy) => {
+        const toy = normalizeSavedToyIdentity(rawToy);
         setToys((prev) =>
           prev.some((t) => t.id === toy.id) ? prev : [...prev, toy],
         );
         setSelectedId(toy.id);
       },
-      selectToy: setSelectedId,
+      selectToy: (id) => {
+        if (id === seedFigure.id) {
+          setToys((prev) =>
+            prev.some((t) => t.id === seedFigure.id) ? prev : [...prev, seedFigure],
+          );
+        }
+        setSelectedId(id);
+      },
     }),
     [toys, selectedId],
   );

@@ -13,6 +13,7 @@ import {
   toyTypeForKind,
   toyWorldUrl,
   validateToyContract,
+  type ToyContract,
 } from "../shared/toycontract";
 
 const parts = (baseSetJson as ToySet).parts;
@@ -46,10 +47,24 @@ const at = (partId: string, xMm: number, yMm: number): Placement => ({
 });
 
 describe("toy contract", () => {
-  it("maps a scanned toy to a game toy type", () => {
+  it("maps a scanned toy to a game toy type (collapsing other onto Kip character)", () => {
     expect(toyTypeForKind("car")).toBe("vehicle");
     expect(toyTypeForKind("figure")).toBe("character");
-    expect(toyTypeForKind("other")).toBe("robot");
+    expect(toyTypeForKind("other")).toBe("character");
+  });
+
+  it("keeps legacy type: robot and robot.* keys valid on the wire", () => {
+    const legacyRobot: ToyContract = {
+      format: TOY_CONTRACT_FORMAT,
+      id: "seed-kip",
+      name: "Kip",
+      type: "robot",
+      col: { c1: "#ffd24d", c2: "#52b7ff", skin: "" },
+      parts: ["robot.head.visor", "robot.torso.core", "robot.arms.tools", "robot.legs.hover", "robot.top.radar"],
+      stats: { speed: 3, spin: 3, glow: 3, torque: 0 },
+    };
+    expect(validateToyContract(legacyRobot)).toEqual([]);
+    expect(decodeToyContract(encodeToyContract(legacyRobot))).toEqual(legacyRobot);
   });
 
   it("keeps every stat on its own game slot", () => {

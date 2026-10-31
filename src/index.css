@@ -2181,6 +2181,173 @@ a.cta {
   color: var(--ink-muted);
 }
 
+.tv-toy-roster-thumb {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: rgba(8, 15, 43, 0.78);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  overflow: hidden;
+}
+
+.tv-roster-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tv-roster-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.tv-roster-group-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.tv-roster-group-k {
+  font-size: 10.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--ink-muted);
+}
+
+.tv-roster-group-meta {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--sky-300);
+}
+
+.tv-roster-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.tv-roster-card {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 14px;
+  border: 2px solid var(--line-soft);
+  background: var(--surface);
+  transition: border-color 120ms ease, background-color 120ms ease, box-shadow 120ms ease;
+}
+
+.tv-roster-card-on {
+  border-color: var(--sky-500);
+  background: var(--surface-3);
+  box-shadow: var(--shadow-glass-selected);
+}
+
+.tv-roster-card-main {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  padding: 2px;
+  background: transparent;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.tv-roster-card-copy {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.tv-roster-card-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.tv-roster-inline-tag {
+  position: static;
+}
+
+.tv-roster-card-act {
+  min-height: 32px;
+  padding: 0 10px;
+  font-size: 12px;
+}
+
+.tv-companion-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.tv-companion-card {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 14px;
+  border: 1.5px solid var(--line-soft);
+  background: rgba(8, 15, 43, 0.72);
+  color: var(--ink);
+  text-align: left;
+  min-width: 0;
+}
+
+button.tv-companion-card {
+  cursor: pointer;
+  transition: border-color 120ms ease, background-color 120ms ease;
+}
+
+button.tv-companion-card:hover {
+  border-color: var(--sky-500);
+  background: var(--surface-3);
+}
+
+.tv-companion-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: rgba(16, 26, 68, 0.9);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+
+.tv-companion-copy {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.tv-forge-mount-row {
+  border-color: var(--line-soft);
+}
+
+.tv-forge-mount-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
 .tv-disclosure {
   border-radius: 14px;
   border: 1.5px solid rgba(82, 183, 255, 0.38);
@@ -2469,6 +2636,7 @@ a.cta {
 }
 
 .tv-chips {
+  flex: none;
   display: flex;
   gap: 6px;
   flex-wrap: wrap;
@@ -2495,6 +2663,7 @@ a.cta {
 }
 
 .tv-opts {
+  flex: none;
   display: flex;
   gap: 8px;
   overflow-x: auto;

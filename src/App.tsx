@@ -13,10 +13,11 @@ import {
   GameCanvas,
   type InitialOverlay,
 } from "./features/game/world/GameCanvas";
-import { seedCar } from "./features/scan/scan";
+import { seedKip } from "./features/scan/scan";
 import { loadBuild } from "./lib/builds";
 import { partsById } from "./lib/catalog";
 import { pullOwnership, pushOwnership } from "./lib/sync";
+import { canonicalToyName } from "./lib/toyRoster";
 import { useToybox } from "./state/toybox";
 
 function parseInitialOverlay(): InitialOverlay {
@@ -41,7 +42,7 @@ function parseHashToyContract(): ToyContract | null {
 export default function App() {
   const { toys, selected, addToy } = useToybox();
   const syncedRef = useRef(false);
-  const toy = selected ?? toys[0] ?? seedCar;
+  const toy = selected ?? toys[0] ?? seedKip;
 
   const [initialOverlay] = useState<InitialOverlay>(parseInitialOverlay);
   const [sharedContract, setSharedContract] = useState<ToyContract | null>(
@@ -112,7 +113,13 @@ export default function App() {
     : undefined;
   const toyColor =
     sharedContract?.col.c1 ||
-    (leadPart ? colorOf(leadPart) : toy.id === "seed-kip" ? "#ffd24d" : "#52b7ff");
+    (leadPart
+      ? colorOf(leadPart)
+      : toy.id === "seed-kip"
+        ? "#ffd24d"
+        : toy.id === "seed-car"
+          ? "#ff5a4d"
+          : "#52b7ff");
 
   const statEntries = Object.entries(totals).filter(([, v]) => (v ?? 0) > 0);
   const statSummary =
@@ -130,14 +137,14 @@ export default function App() {
           onPlacementsChange={handlePlacementsChange}
           onSkinChange={() => setSkinVersion((n) => n + 1)}
           contract={contract}
-          toyName={sharedContract ? sharedContract.name : toy.name}
+          toyName={sharedContract ? sharedContract.name : canonicalToyName(toy)}
           toyColor={toyColor}
           statSummary={statSummary}
           themeSignature={
             placements.length > 0 ? buildSignature(placements) : undefined
           }
           kipUrl={
-            (sharedContract ? sharedContract.type === "character" : toy.kind === "figure")
+            (sharedContract ? sharedContract.type !== "vehicle" : toy.kind !== "car")
               ? kipDemoUrl(contract)
               : undefined
           }

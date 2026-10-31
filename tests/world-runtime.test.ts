@@ -41,7 +41,7 @@ describe("native world runtime (Phase 0A)", () => {
     expect(text).toContain("clearTimers()");
     expect(text).toContain('hostEl.innerHTML=""');
     expect(text).toContain("renderer.dispose()");
-    expect(text).toContain('if(!contract){ S.type="vehicle"; S.sel=stockSel(); S.col=stockCol();');
+    expect(text).toContain('if(!contract){ S.type="character"; S.sel=stockSel(); S.col=stockCol();');
     expect(engineText).toContain("hostCtrl.abort()");
     // Exactly one canvas is created from stage markup per mount.
     expect(STAGE_HTML.match(/<canvas/g)?.length).toBe(1);
