@@ -1,0 +1,1334 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Dump Truck Progressive Mockup — Snap (3+) → Pro (8+) → Momentum (8+) → Mech (10+)</title>
+<style>
+  :root {
+    --ink: #1b2238;
+    --muted: #5d657c;
+    --spark: #ff6b4a;
+    --mint: #1fa97c;
+    --cobalt: #2e6fdb;
+    --amber: #f5c518;
+    --cyan: #0096d6;
+    --glass: rgba(255, 255, 255, 0.88);
+    --line: rgba(27, 34, 56, 0.12);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+  html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: radial-gradient(circle at 50% 38%, #f6f1e7 0%, #e5ddce 68%, #d2c7b5 100%);
+    color: var(--ink);
+  }
+  #viewport { position: fixed; inset: 0; }
+  canvas { display: block; width: 100%; height: 100%; outline: none; }
+
+  .topbar {
+    position: fixed;
+    top: 14px;
+    left: 16px;
+    right: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    pointer-events: none;
+    z-index: 10;
+  }
+  .pill {
+    pointer-events: auto;
+    background: var(--glass);
+    backdrop-filter: blur(14px);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 9px 14px;
+    box-shadow: 0 8px 24px rgba(27, 34, 56, 0.08);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .badge {
+    background: var(--spark);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 999px;
+  }
+  .title { font-size: 14px; font-weight: 800; letter-spacing: -0.01em; }
+  .sub { font-size: 12px; color: var(--muted); font-weight: 600; }
+  .sub b { color: var(--ink); }
+
+  .hud-card {
+    pointer-events: auto;
+    background: var(--glass);
+    backdrop-filter: blur(14px);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 10px 14px;
+    box-shadow: 0 8px 24px rgba(27, 34, 56, 0.08);
+    font-size: 11.5px;
+    line-height: 1.5;
+    max-width: 340px;
+  }
+  .hud-card h3 {
+    font-size: 12px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--cobalt);
+    margin-bottom: 3px;
+  }
+  .hud-grid {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 2px 10px;
+    color: var(--muted);
+    font-weight: 600;
+  }
+  .hud-grid span:nth-child(even) { color: var(--ink); font-weight: 700; text-align: right; }
+
+  .dock {
+    position: fixed;
+    left: 50%;
+    bottom: 18px;
+    transform: translateX(-50%);
+    background: var(--glass);
+    backdrop-filter: blur(16px);
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    padding: 10px 14px;
+    box-shadow: 0 14px 36px rgba(27, 34, 56, 0.12);
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    max-width: calc(100vw - 24px);
+    z-index: 10;
+  }
+  .row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .row-label {
+    font-size: 10.5px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+    min-width: 58px;
+  }
+  button {
+    border: 1px solid var(--line);
+    background: rgba(255, 255, 255, 0.78);
+    color: var(--ink);
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 6px 11px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.14s ease;
+  }
+  button:hover { background: #fff; transform: translateY(-1px); }
+  button.active {
+    background: var(--ink);
+    color: #fff;
+    border-color: var(--ink);
+  }
+  button.mint-on {
+    background: var(--mint);
+    color: #fff;
+    border-color: var(--mint);
+  }
+  button.spark-on {
+    background: var(--spark);
+    color: #fff;
+    border-color: var(--spark);
+  }
+  .sep {
+    width: 1px;
+    height: 18px;
+    background: var(--line);
+    margin: 0 3px;
+  }
+  .slider-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    background: rgba(255, 255, 255, 0.72);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 4px 10px;
+    font-size: 11.5px;
+    font-weight: 700;
+  }
+  .slider-pill input[type="range"] {
+    width: 105px;
+    accent-color: var(--spark);
+    cursor: pointer;
+  }
+  .val {
+    font-variant-numeric: tabular-nums;
+    min-width: 34px;
+    text-align: right;
+    color: var(--spark);
+  }
+</style>
+</head>
+<body>
+<div id="viewport"></div>
+
+<div class="topbar">
+  <div class="pill">
+    <a href="./Kip-Demo.html" style="text-decoration:none;color:var(--ink);font-size:12px;font-weight:750;padding:4px 9px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,0.8);">← Kip Viewer</a>
+    <span class="badge" id="stage-badge">Stage 1 · Snap 3+</span>
+    <span class="title">Modular Dump Truck Progression Mockup</span>
+    <span class="sub" id="status-text">Loading 28 verified CAD solids…</span>
+  </div>
+
+  <div class="hud-card">
+    <h3 id="hud-title">1 · Snap (3+) Utility Dump Truck</h3>
+    <div class="hud-grid">
+      <span>Cards Used</span><span id="hud-cards">Card A + Card B</span>
+      <span>Hull / Wheelbase</span><span>49.8×124.8 mm · 100.0 mm (8 TU)</span>
+      <span>Steering</span><span id="hud-steer">Fixed Bottom-Click Barbell (0° Play)</span>
+      <span>Power / PTO</span><span id="hud-power">Push-Along · Z_axle = 6.25 mm</span>
+      <span>Dump Bed</span><span id="hud-bed">Sculpted 4×4 Scow · Z = 12.5 mm</span>
+      <span>Ackermann Angles</span><span id="hud-ackermann">L 0.0° · R 0.0°</span>
+      <span>Rack Travel</span><span id="hud-rack">dx: 0.00 mm (max ±5.20)</span>
+      <span>Viewer-only</span><span id="hud-illus">—</span>
+      <span>Gate G1 Overlap</span><span style="color:#d97706;" title="Static label. Run a boolean check on the assembled meshes; the viewer does not measure it.">not measured in viewer</span>
+    </div>
+  </div>
+</div>
+
+<div class="dock">
+  <div class="row">
+    <span class="row-label">Stage</span>
+    <button data-stage="snap" class="active">1 · Snap (3+)</button>
+    <button data-stage="pro">2 · Pro (8+) Rack Steer</button>
+    <button data-stage="band">3A · Momentum Band + Bumper</button>
+    <button data-stage="bellows">3B · Momentum Balloon Bellows</button>
+    <button data-stage="mech">4 · Mech (10+) Smart RC X-Ray</button>
+    <span class="sep"></span>
+    <button id="btn-demo" class="spark-on">▶ Action Demo</button>
+  </div>
+
+  <div class="row">
+    <span class="row-label">Motion</span>
+    <span class="slider-pill">
+      <span>Dump Tip</span>
+      <input type="range" id="rng-tip" min="0" max="55" value="22" />
+      <span class="val" id="val-tip">22°</span>
+    </span>
+    <span class="slider-pill">
+      <span>Steer Lock</span>
+      <input type="range" id="rng-steer" min="-34" max="34" value="0" />
+      <span class="val" id="val-steer">0°</span>
+    </span>
+    <span class="slider-pill">
+      <span>Explode</span>
+      <input type="range" id="rng-explode" min="0" max="100" value="0" />
+      <span class="val" id="val-explode">0%</span>
+    </span>
+  </div>
+
+  <div class="row">
+    <span class="row-label">Options</span>
+    <button id="btn-wheels">Tires: Ø36 Med (#4)</button>
+    <button id="btn-hood">Nose: Open Yoke</button>
+    <button id="btn-plow">Front Plow (#12): Off</button>
+    <button id="btn-kip" class="mint-on">Kip Driver: On</button>
+    <button id="btn-xray">X-Ray Shells: Auto</button>
+    <button id="btn-sweep">Auto Steer: Off</button>
+    <span class="sep"></span>
+    <span class="row-label" style="min-width:auto;">Cam:</span>
+    <button data-cam="hero">3/4 Hero</button>
+    <button data-cam="side">Side Datum</button>
+    <button data-cam="top">Top Steer</button>
+    <button data-cam="cab">Cockpit</button>
+  </div>
+</div>
+
+<script type="module">
+import {
+  THREE,
+  OrbitControls,
+  STLLoader,
+  RoomEnvironment,
+  mergeVertices,
+  toCreasedNormals,
+} from './vendor/three-kip.js';
+
+const viewport = document.getElementById('viewport');
+const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.04;
+viewport.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+scene.environmentIntensity = 0.55;
+
+const camera = new THREE.PerspectiveCamera(36, window.innerWidth / window.innerHeight, 1, 2000);
+camera.position.set(-165, 118, 178);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.07;
+controls.target.set(0, 36, 0);
+
+const hemi = new THREE.HemisphereLight(0xfffaf0, 0xc8bfa8, 0.72);
+scene.add(hemi);
+
+const sun = new THREE.DirectionalLight(0xffffff, 1.45);
+sun.position.set(-140, 240, 160);
+sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048);
+sun.shadow.camera.near = 40;
+sun.shadow.camera.far = 650;
+const d = 140;
+sun.shadow.camera.left = -d;
+sun.shadow.camera.right = d;
+sun.shadow.camera.top = d;
+sun.shadow.camera.bottom = -d;
+sun.shadow.bias = -0.0004;
+scene.add(sun);
+
+const groundGeo = new THREE.PlaneGeometry(900, 900);
+const groundMat = new THREE.ShadowMaterial({ opacity: 0.16 });
+const ground = new THREE.Mesh(groundGeo, groundMat);
+ground.rotation.x = -Math.PI / 2;
+ground.receiveShadow = true;
+scene.add(ground);
+
+// 12.5 mm TU Grid on tabletop!
+const grid = new THREE.GridHelper(300, 24, 0x8f96a6, 0xc7bfb0);
+grid.position.y = 0.05;
+grid.material.opacity = 0.45;
+grid.material.transparent = true;
+scene.add(grid);
+
+// Root container converting PartSpec CAD frame (X right, -Y front, +Z up) -> Three.js (X right, +Z front, +Y up):
+const vehicleWrap = new THREE.Group();
+scene.add(vehicleWrap);
+const cadRoot = new THREE.Group();
+cadRoot.rotation.x = -Math.PI / 2;
+vehicleWrap.add(cadRoot);
+
+const loader = new STLLoader();
+const GEOS = {};
+
+const PART_FILES = [
+  'kit_keel_base', 'kit_barbell_shaft', 'kit_wheel_med', 'kit_wheel_giant',
+  'kit_aero_wedge', 'kit_windscreen', 'kit_tilting_tub', 'kit_scoop_blade',
+  'kit_yoke_hbar', 'pro_steer_bridge', 'pro_steer_knuckle_l', 'pro_steer_knuckle_r',
+  'pro_steer_rack', 'pro_axle_keeper', 'gear_spur_z10', 'mom_band_core_tray',
+  'mom_band_core_lid', 'mom_band_spool_pawl', 'mom_bumper_trigger',
+  'mom_bellows_base', 'mom_bellows_leaf', 'mech_core_shell',
+  'char_legs_seated', 'robot_torso_core', 'robot_arms_grabber',
+  'char_head_kid', 'char_faceplate', 'hat_hardhat'
+];
+
+function makeMat(hex, opacity = 1.0, rough = 0.38) {
+  return new THREE.MeshStandardMaterial({
+    color: new THREE.Color(hex),
+    roughness: rough,
+    metalness: 0.06,
+    transparent: opacity < 0.999,
+    opacity,
+    depthWrite: opacity >= 0.95,
+  });
+}
+
+const MATS = {
+  keel: makeMat('#2E6FDB', 1, 0.36),
+  tub: makeMat('#F5C518', 1, 0.34),
+  wind: makeMat('#F4EFE6', 1, 0.35),
+  spark: makeMat('#FF6B4A', 1, 0.36),
+  mint: makeMat('#1FA97C', 1, 0.36),
+  mintGlass: makeMat('#1FA97C', 0.48, 0.25),
+  violet: makeMat('#7C4DFF', 1, 0.38),
+  tire: makeMat('#262D40', 1, 0.55),
+  steel: makeMat('#7A8291', 1, 0.32),
+  knuckle: makeMat('#495266', 1, 0.38),
+  denim: makeMat('#2B4C85', 1, 0.44),
+  skin: makeMat('#F3BA95', 1, 0.42),
+  cyanGlass: makeMat('#00A8E8', 0.34, 0.22),
+  lipo: makeMat('#3A86FF', 0.94, 0.30),
+  pcb: makeMat('#1FA97C', 0.95, 0.32),
+  brass: makeMat('#D97706', 0.95, 0.28),
+  balloon: makeMat('#FF5252', 0.68, 0.25),
+  rubberBand: makeMat('#FF6600', 1, 0.35),
+  ghost: makeMat('#FFD166', 0.5, 0.4), // viewer-only illustration: no catalog part exists for this yet
+  pneumaticTube: makeMat('#50C8FF', 0.75, 0.25),
+  exhaustRing: new THREE.MeshBasicMaterial({ color: 0xFFFFFF, transparent: true, opacity: 0.65 }),
+};
+
+const state = {
+  stage: 'snap',
+  tipDeg: 22,
+  steerDeg: 0,
+  explode: 0,
+  giantWheels: false,
+  bulldogHood: false,
+  frontPlow: false,
+  showKip: true,
+  xrayMode: 'auto', // auto | on | off
+  demoRunning: false,
+  demoT: 0,
+  wheelSpin: 0,
+  sweepRunning: false,
+};
+
+// ---------------------------------------------------------------------------
+// Rigid tie-rod rack steering, solved from the REAL PartSpec hardpoints (CAD frame: X right, -Y front, +Z up).
+// A knuckle's tie-rod bore orbits its vertical kingpin at radius ARM. A rigid tie-rod of fixed planar length LINK joins
+// that bore to the rack's tie-rod bore, so each knuckle angle is DETERMINED by rack travel -- nothing is hard-coded.
+// The vehicle faces +Z in three.js (cadRoot.rotation.x = -PI/2), so CAD +X is the vehicle's LEFT.
+// ---------------------------------------------------------------------------
+const KNUCKLE_FACE_RELIEF = 0.0; // mm; = KNUCKLE_FACE_RELIEF in toyventor_kitcard.py (0.4 wanted, blocked by the axis8 bore lattice, see that file)
+const STEER = {
+  kpX: 18.75, kpY: -56.25,       // kingpin axes (pro_steer_bridge bosses)
+  arm: 12.5,                     // knuckle kingpin bore -> tierod bore (pro_steer_knuckle_l/r)
+  rackX: 7.8125, rackY: -57.8125, // pro_steer_rack tierod bores: rack origin y=-56.25, bore at local (+-7.8125, -1.5625) (RACK_TIEROD_X)
+  pinionR: 12.5,                 // gear_spur_z10 pitch radius
+  rackStop: 5.20,                // RACK_STOP in toyventor_kitcard.py: 33.9 deg inner / 20.8 outer, circle 60.6 cm (G2 <= 62.0)
+  wheelbase: 100.0,              // kingpin line -> rear axle
+  kpSpan: 37.5,                  // kingpin-to-kingpin
+};
+STEER.link = Math.hypot(STEER.kpX - STEER.rackX, (STEER.kpY - STEER.arm) - STEER.rackY); // 15.468 mm planar, fixed
+let lastRackDx = 0;
+
+function knuckleAngle(side, dx) {
+  // Closed-form circle/circle intersection for the knuckle at CAD x = side*kpX with the rack displaced by dx.
+  const Dx = side * STEER.rackX + dx - side * STEER.kpX;
+  const Dy = STEER.rackY - STEER.kpY;
+  const R = Math.hypot(Dx, Dy);
+  const q = Math.max(-1, Math.min(1, (STEER.arm * STEER.arm + R * R - STEER.link * STEER.link) / (2 * STEER.arm * R)));
+  const phi = Math.atan2(Dy, Dx), a = Math.asin(q);
+  const wrap = (v) => Math.atan2(Math.sin(v), Math.cos(v));
+  const r1 = wrap(phi + a), r2 = wrap(phi + Math.PI - a);
+  return Math.abs(r1) < Math.abs(r2) ? r1 : r2; // branch continuous with the straight-ahead rest pose
+}
+
+function steerSolution(steerDeg) {
+  // steerDeg = signed inner-knuckle angle the user asks for (+ = wheels toward CAD +X = vehicle LEFT).
+  const target = Math.abs(steerDeg) * Math.PI / 180;
+  let dx = 0;
+  if (target > 0) {
+    let lo = 0, hi = STEER.rackStop;
+    if (Math.abs(knuckleAngle(1, hi)) <= target) dx = hi;
+    else {
+      for (let i = 0; i < 40; i++) {
+        const m = (lo + hi) / 2;
+        if (Math.abs(knuckleAngle(1, m)) < target) lo = m; else hi = m;
+      }
+      dx = (lo + hi) / 2;
+    }
+  }
+  dx *= Math.sign(steerDeg);
+  const aPlus = knuckleAngle(1, dx), aMinus = knuckleAngle(-1, dx); // signed rad, + = toward CAD +X
+  const inner = Math.max(Math.abs(aPlus), Math.abs(aMinus));
+  const outer = Math.min(Math.abs(aPlus), Math.abs(aMinus));
+  // Ackermann ideal outer angle for this inner angle: cot(outer) - cot(inner) = kingpin span / wheelbase
+  const ideal = inner > 1e-6 ? Math.atan(1 / (1 / Math.tan(inner) + STEER.kpSpan / STEER.wheelbase)) : 0;
+  return { dx, aPlus, aMinus, inner, outer, ideal };
+}
+
+function meshOf(pid, mat) {
+  const m = new THREE.Mesh(GEOS[pid], mat);
+  m.castShadow = mat.opacity >= 0.85;
+  m.receiveShadow = true;
+  return m;
+}
+
+function rboxMesh(w, d, h, mat) {
+  const g = new THREE.BoxGeometry(w, d, h);
+  const m = new THREE.Mesh(g, mat);
+  m.castShadow = mat.opacity >= 0.85;
+  m.receiveShadow = true;
+  return m;
+}
+
+function addExplodeTag(obj, dx, dy, dz) {
+  obj.userData.basePos = obj.position.clone();
+  obj.userData.expVec = new THREE.Vector3(dx, dy, dz);
+  return obj;
+}
+
+let dynamicRefs = {};
+
+function rebuildScene() {
+  while (cadRoot.children.length) cadRoot.remove(cadRoot.children[0]);
+  dynamicRefs = {};
+
+  const wheelPid = state.giantWheels ? 'kit_wheel_giant' : 'kit_wheel_med';
+  const wheelR = state.giantWheels ? 25.0 : 18.0;
+  cadRoot.position.y = wheelR - 6.25;
+
+  const isSteered = (state.stage === 'pro' || state.stage === 'mech');
+  const hasCore3TU = (state.stage === 'band' || state.stage === 'mech');
+  const isBellows = (state.stage === 'bellows');
+  const useXray = state.xrayMode === 'on' || (state.xrayMode === 'auto' && (state.stage === 'mech' || state.stage === 'band'));
+
+  // 1. #1 Universal Keel Base
+  const keel = meshOf('kit_keel_base', useXray && state.xrayMode === 'on' ? makeMat('#2E6FDB', 0.45, 0.3) : MATS.keel);
+  addExplodeTag(keel, 0, 0, 0);
+  cadRoot.add(keel);
+
+  // 2. Rear Solid Axle (row 8, y = +43.75, z = 6.25)
+  const rearAxle = new THREE.Group();
+  rearAxle.position.set(0, 43.75, 6.25);
+  addExplodeTag(rearAxle, 0, 12, -16);
+  const rShaft = meshOf('kit_barbell_shaft', MATS.steel);
+  rShaft.rotation.y = Math.PI / 2;
+  rShaft.position.set(-39.0, 0, 0);
+  rearAxle.add(rShaft);
+
+  const rWL = meshOf(wheelPid, MATS.tire);
+  rWL.rotation.y = -Math.PI / 2;
+  rWL.position.set(-26.7, 0, 0);
+  addExplodeTag(rWL, -18, 0, 0);
+  rearAxle.add(rWL);
+
+  const rWR = meshOf(wheelPid, MATS.tire);
+  rWR.rotation.y = Math.PI / 2;
+  rWR.position.set(26.7, 0, 0);
+  addExplodeTag(rWR, 18, 0, 0);
+  rearAxle.add(rWR);
+
+  if (state.stage !== 'snap' && state.stage !== 'bellows') {
+    const ptoGear = meshOf('gear_spur_z10', MATS.spark);
+    ptoGear.rotation.y = Math.PI / 2;
+    ptoGear.position.set(-3.125, 0, 0);
+    rearAxle.add(ptoGear);
+
+    const keeper = meshOf('pro_axle_keeper', MATS.mint);
+    keeper.position.set(0, 43.75, -3.5);
+    addExplodeTag(keeper, 0, 8, -24);
+    cadRoot.add(keeper);
+  }
+  cadRoot.add(rearAxle);
+  dynamicRefs.rearAxle = rearAxle;
+
+  // 3. Front Nose & Steering
+  if (!isSteered) {
+    const frontAxle = new THREE.Group();
+    frontAxle.position.set(0, -56.25, 6.25);
+    addExplodeTag(frontAxle, 0, -12, -16);
+    const fShaft = meshOf('kit_barbell_shaft', MATS.steel);
+    fShaft.rotation.y = Math.PI / 2;
+    fShaft.position.set(-39.0, 0, 0);
+    frontAxle.add(fShaft);
+
+    const fWL = meshOf(wheelPid, MATS.tire);
+    fWL.rotation.y = -Math.PI / 2;
+    fWL.position.set(-26.7, 0, 0);
+    addExplodeTag(fWL, -18, 0, 0);
+    frontAxle.add(fWL);
+
+    const fWR = meshOf(wheelPid, MATS.tire);
+    fWR.rotation.y = Math.PI / 2;
+    fWR.position.set(26.7, 0, 0);
+    addExplodeTag(fWR, 18, 0, 0);
+    frontAxle.add(fWR);
+    cadRoot.add(frontAxle);
+    dynamicRefs.frontAxle = frontAxle;
+
+    if (state.stage === 'band') {
+      const trig = meshOf('mom_bumper_trigger', MATS.spark);
+      trig.position.set(0, -56.25, 12.5);
+      addExplodeTag(trig, 0, -24, 10);
+      cadRoot.add(trig);
+      dynamicRefs.bumper = trig;
+    }
+
+    if (state.bulldogHood && state.stage !== 'band') {
+      const wedge = meshOf('kit_aero_wedge', MATS.spark);
+      wedge.position.set(0, -43.75, 12.5);
+      addExplodeTag(wedge, 0, -18, 18);
+      cadRoot.add(wedge);
+
+      const yoke = meshOf('kit_yoke_hbar', MATS.tire);
+      yoke.position.set(0, -31.25, 20.5);
+      addExplodeTag(yoke, 0, -14, 34);
+      cadRoot.add(yoke);
+      dynamicRefs.yoke = yoke;
+    } else {
+      const yoke = meshOf('kit_yoke_hbar', MATS.spark);
+      yoke.position.set(0, -37.5, 6.0);
+      addExplodeTag(yoke, 0, -10, 26);
+      cadRoot.add(yoke);
+      dynamicRefs.yoke = yoke;
+    }
+  } else {
+    // Stage 2 Pro & Stage 4 Mech Ackermann Row-0 Steering Linkage!
+    const bridge = meshOf('pro_steer_bridge', MATS.mint);
+    bridge.position.set(0, -50.0, 12.5);
+    addExplodeTag(bridge, 0, -14, 14);
+    cadRoot.add(bridge);
+
+    const pinion = meshOf('gear_spur_z10', MATS.spark);
+    pinion.position.set(0, -37.5, 25.05);
+    addExplodeTag(pinion, 0, -10, 26);
+    cadRoot.add(pinion);
+    dynamicRefs.pinion = pinion;
+
+    const rack = meshOf('pro_steer_rack', MATS.tub);
+    rack.position.set(0, -56.25, 25.05);
+    addExplodeTag(rack, 0, -22, 26);
+    cadRoot.add(rack);
+    dynamicRefs.rack = rack;
+
+    if (state.stage === 'pro') {
+      const yoke = meshOf('kit_yoke_hbar', MATS.spark);
+      yoke.position.set(0, -37.5, 6.0);
+      addExplodeTag(yoke, 0, -10, 38);
+      cadRoot.add(yoke);
+      dynamicRefs.yoke = yoke;
+    } else {
+      // Stage 4 Mech Coaxial 9g Servo Core on pro_steer_bridge rear studs
+      const servoGroup = new THREE.Group();
+      servoGroup.position.set(0, -43.5, 28.0);
+      addExplodeTag(servoGroup, 0, -16, 40);
+      const sShell = rboxMesh(24.8, 30.0, 26.5, MATS.cyanGlass);
+      sShell.position.set(0, 0, 13.25);
+      const sBody = rboxMesh(12.2, 22.8, 22.0, MATS.tire);
+      sBody.position.set(0, 2.0, 12.0);
+      servoGroup.add(sShell, sBody);
+      cadRoot.add(servoGroup);
+    }
+
+    // Left & Right Steered Knuckles + Wheels
+    for (const side of [-1, 1]) {
+      const kpPivot = new THREE.Group();
+      kpPivot.position.set(side * 18.75, -56.25, 6.25);
+      addExplodeTag(kpPivot, side * 16, -14, -8);
+
+      const orientZ = new THREE.Group();
+      orientZ.rotation.z = side < 0 ? Math.PI / 2 : -Math.PI / 2;
+      const tiltX = new THREE.Group();
+      tiltX.rotation.x = -Math.PI / 2;
+      const knMesh = meshOf(side < 0 ? 'pro_steer_knuckle_l' : 'pro_steer_knuckle_r', MATS.knuckle);
+      knMesh.position.set(side < 0 ? -6.25 : 6.25, 0, -6.25 + KNUCKLE_FACE_RELIEF); // the knuckle STL is re-based to z=0 after any inboard shave, so its bores sit at 6.25 - relief
+      tiltX.add(knMesh);
+      orientZ.add(tiltX);
+      kpPivot.add(orientZ);
+
+      // Hub axis is the knuckle's X axis (stub points outward along +-X). Matrix = Ry * Rz: clock the wheel 90 deg about its
+      // OWN axle first (so its Double-D hub flats mate with the knuckle stub flats, as in Gate G1), then lay the axle on X.
+      // (The old 'ZYX' order applied the Z turn last and sent the axle along Y; unclocked leaves 53 mm3 of hub overlap.)
+      const stW = meshOf(wheelPid, MATS.tire);
+      stW.rotation.order = 'YZX';
+      stW.rotation.y = side < 0 ? -Math.PI / 2 : Math.PI / 2;
+      stW.rotation.z = Math.PI / 2;
+      // Spin group so the steered tires roll about the hub axis while the truck drives.
+      const spinG = new THREE.Group();
+      spinG.position.set(side * 8.85, 0, 0);
+      addExplodeTag(spinG, side * 18, 0, 0);
+      spinG.add(stW);
+      kpPivot.add(spinG);
+      if (side < 0) dynamicRefs.spinMinus = spinG;
+      else dynamicRefs.spinPlus = spinG;
+
+      // Vertical kingpin shaft
+      const pinGeo = new THREE.CylinderGeometry(3.2, 3.2, 25.0, 24);
+      const pinM = new THREE.Mesh(pinGeo, MATS.steel);
+      pinM.rotation.x = Math.PI / 2;
+      pinM.position.set(side * 18.75, -56.25, 12.5);
+      addExplodeTag(pinM, side * 16, -14, 18);
+      cadRoot.add(pinM);
+
+      cadRoot.add(kpPivot);
+      if (side < 0) dynamicRefs.kpL = kpPivot;
+      else dynamicRefs.kpR = kpPivot;
+    }
+
+    // Dynamic Ackermann mechanical tie-rod assemblies (spherical rod ends + tie bar)
+    function makeTieRod() {
+      const g = new THREE.Group();
+      const ballGeo = new THREE.SphereGeometry(2.4, 16, 12);
+      const b0 = new THREE.Mesh(ballGeo, MATS.ghost);
+      const b1 = new THREE.Mesh(ballGeo, MATS.ghost);
+      const rodGeo = new THREE.CylinderGeometry(1.6, 1.6, 1, 16);
+      rodGeo.rotateZ(Math.PI / 2);
+      const rod = new THREE.Mesh(rodGeo, MATS.ghost);
+      g.add(b0, b1, rod);
+      g.userData = { b0, b1, rod };
+      return g;
+    }
+    const trL = makeTieRod();
+    const trR = makeTieRod();
+    cadRoot.add(trL, trR);
+    dynamicRefs.trL = trL;
+    dynamicRefs.trR = trR;
+  }
+
+  // Optional #12 Front Snowplow / Dozer Blade in front C-jaw!
+  if (state.frontPlow) {
+    const plow = meshOf('kit_scoop_blade', MATS.tub);
+    plow.rotation.x = Math.PI / 2;
+    plow.rotation.z = Math.PI;
+    plow.position.set(0, -68.0, 12.0);
+    addExplodeTag(plow, 0, -32, 0);
+    cadRoot.add(plow);
+  }
+
+  // 4. Cockpit (#8 Windscreen + Seated Kip Driver on rows 3..5)
+  const wind = meshOf('kit_windscreen', MATS.wind);
+  wind.position.set(0, -6.25, 12.5);
+  addExplodeTag(wind, 0, -4, 18);
+  cadRoot.add(wind);
+
+  if (state.showKip) {
+    const kipGroup = new THREE.Group();
+    addExplodeTag(kipGroup, 0, 0, 32);
+    const legs = meshOf('char_legs_seated', MATS.denim); legs.position.set(0, 0, 12.5);
+    const torso = meshOf('robot_torso_core', MATS.spark); torso.position.set(0, 0, 28.5);
+    const arms = meshOf('robot_arms_grabber', MATS.skin); arms.position.set(0, 0, 48.5);
+    const head = meshOf('char_head_kid', MATS.skin); head.position.set(0, -6.25, 53.5);
+    const face = meshOf('char_faceplate', MATS.skin);
+    face.rotation.order = 'ZYX';
+    face.rotation.set(Math.PI / 2, 0, Math.PI);
+    face.position.set(0, -18.75, 70.6875);
+    const hat = meshOf('hat_hardhat', MATS.tub); hat.position.set(0, -6.25, 89.7);
+    kipGroup.add(legs, torso, arms, head, face, hat);
+    cadRoot.add(kipGroup);
+  }
+
+  // 5. Rear Power Core (rows 6..9) + Sculpted #11 Tipping Dump Tub
+  let zTubDeck = 12.5;
+  if (state.stage === 'band') {
+    const tray = meshOf('mom_band_core_tray', useXray ? MATS.mintGlass : MATS.mint);
+    tray.position.set(0, 37.5, 12.5);
+    addExplodeTag(tray, 0, 14, 16);
+    cadRoot.add(tray);
+
+    const spool = meshOf('mom_band_spool_pawl', MATS.tub);
+    spool.rotation.y = Math.PI / 2;
+    spool.position.set(-6.25, 43.75, 31.25);
+    addExplodeTag(spool, -10, 14, 24);
+    cadRoot.add(spool);
+    dynamicRefs.coreSpool = spool;
+
+    const coreZ10 = meshOf('gear_spur_z10', MATS.spark);
+    coreZ10.rotation.y = Math.PI / 2;
+    coreZ10.position.set(-3.125, 43.75, 31.25);
+    addExplodeTag(coreZ10, 10, 14, 24);
+    cadRoot.add(coreZ10);
+    dynamicRefs.coreGear = coreZ10;
+
+    // Tensioned rubber band loop wrapped between spool post and front core anchor
+    const bandCurve = new THREE.CatmullRomCurve3([
+      new THREE.Vector3(-6.25, 43.75, 31.25),
+      new THREE.Vector3(-14.0, 32.0, 31.25),
+      new THREE.Vector3(0.0, 20.0, 31.25),
+      new THREE.Vector3(14.0, 32.0, 31.25),
+      new THREE.Vector3(0.0, 43.75, 31.25),
+    ], true);
+    const bandGeo = new THREE.TubeGeometry(bandCurve, 32, 1.4, 8, true);
+    const bandMesh = new THREE.Mesh(bandGeo, MATS.rubberBand);
+    addExplodeTag(bandMesh, 0, 14, 26);
+    cadRoot.add(bandMesh);
+    dynamicRefs.bandLoop = bandMesh;
+
+    const lid = meshOf('mom_band_core_lid', useXray ? MATS.mintGlass : MATS.mint);
+    lid.position.set(0, 37.5, 44.8);
+    addExplodeTag(lid, 0, 14, 34);
+    cadRoot.add(lid);
+    zTubDeck = 50.0;
+  } else if (state.stage === 'bellows') {
+    const bBase = meshOf('mom_bellows_base', MATS.violet);
+    bBase.position.set(0, 37.5, 12.5);
+    addExplodeTag(bBase, 0, 14, 14);
+    cadRoot.add(bBase);
+
+    const balGeo = new THREE.SphereGeometry(15.5, 32, 24);
+    const bal = new THREE.Mesh(balGeo, MATS.balloon);
+    bal.scale.set(1.15, 1.15, 0.52);
+    bal.position.set(0, 35.0, 26.0);
+    addExplodeTag(bal, 0, 14, 22);
+    cadRoot.add(bal);
+    dynamicRefs.balloon = bal;
+
+    const leafHinge = new THREE.Group();
+    leafHinge.position.set(0, 62.4, 28.5);
+    addExplodeTag(leafHinge, 0, 18, 28);
+    const bLeaf = meshOf('mom_bellows_leaf', MATS.violet);
+    bLeaf.position.set(0, -24.9, 0);
+    leafHinge.add(bLeaf);
+    cadRoot.add(leafHinge);
+    dynamicRefs.leafHinge = leafHinge;
+
+    // Flexible silicone pneumatic hose connecting chassis deck port to jet nozzle
+    const hoseCurve = new THREE.CatmullRomCurve3([
+      new THREE.Vector3(0.0, 46.0, 25.0),
+      new THREE.Vector3(0.0, 56.0, 30.0),
+      new THREE.Vector3(0.0, 62.0, 24.0),
+      new THREE.Vector3(0.0, 68.0, 20.0),
+    ]);
+    const hoseGeo = new THREE.TubeGeometry(hoseCurve, 24, 1.8, 12, false);
+    const hoseMesh = new THREE.Mesh(hoseGeo, MATS.ghost);
+    cadRoot.add(hoseMesh);
+    dynamicRefs.hose = hoseMesh;
+
+    // Jet impulse exhaust puff rings
+    const exGroup = new THREE.Group();
+    exGroup.position.set(0, 72.0, 20.0);
+    const ringGeo = new THREE.TorusGeometry(3.2, 0.7, 8, 24);
+    for (let k = 0; k < 3; k++) {
+      const r = new THREE.Mesh(ringGeo, MATS.exhaustRing.clone()); // puff animation (effect, not a part)
+      r.position.set(0, k * 6.0, 0);
+      r.rotation.x = Math.PI / 2;
+      exGroup.add(r);
+    }
+    exGroup.visible = false;
+    cadRoot.add(exGroup);
+    dynamicRefs.exhaust = exGroup;
+
+    zTubDeck = 33.7;
+  } else if (state.stage === 'mech') {
+    const mShell = meshOf('mech_core_shell', useXray ? MATS.cyanGlass : MATS.mint);
+    mShell.position.set(0, 37.5, 12.5);
+    addExplodeTag(mShell, 0, 14, 16);
+    cadRoot.add(mShell);
+
+    // Datasheet internal keep-outs: 602535 LiPo + 38x38 PCBA + MCU + 12x24 Gearmotor + Z10 PTO
+    const elecGroup = new THREE.Group();
+    addExplodeTag(elecGroup, 0, 22, 26);
+    const lipo = rboxMesh(35.0, 25.0, 6.5, MATS.lipo); lipo.position.set(0, 32.0, 21.2);
+    const pcb = rboxMesh(38.0, 38.0, 1.6, MATS.pcb); pcb.position.set(0, 37.5, 39.8);
+    const mcu = rboxMesh(21.0, 18.0, 4.5, MATS.tire); mcu.position.set(0, 37.5, 42.8);
+    const motGeo = new THREE.CylinderGeometry(6.0, 6.0, 24.0, 32);
+    const mot = new THREE.Mesh(motGeo, MATS.brass);
+    mot.rotation.z = Math.PI / 2;
+    mot.position.set(-2.0, 43.75, 31.25);
+    const mGear = meshOf('gear_spur_z10', MATS.spark);
+    mGear.rotation.y = Math.PI / 2;
+    mGear.position.set(-3.125, 43.75, 31.25);
+    elecGroup.add(lipo, pcb, mcu, mot, mGear);
+    cadRoot.add(elecGroup);
+
+    const lid = meshOf('mom_band_core_lid', useXray ? MATS.cyanGlass : MATS.mint);
+    lid.position.set(0, 37.5, 44.8);
+    addExplodeTag(lid, 0, 14, 40);
+    cadRoot.add(lid);
+    zTubDeck = 50.0;
+  }
+
+  const tubHinge = new THREE.Group();
+  tubHinge.position.set(0, 62.4, zTubDeck);
+  addExplodeTag(tubHinge, 0, 22, hasCore3TU ? 54 : 28);
+  const tub = meshOf('kit_tilting_tub', MATS.tub);
+  tub.position.set(0, -24.9, 0);
+  tubHinge.add(tub);
+  cadRoot.add(tubHinge);
+  dynamicRefs.tubHinge = tubHinge;
+
+  updateKinematics();
+  updateHUD();
+}
+
+function updateTieRod(group, x0, y0, z0, x1, y1, z1) {
+  if (!group || !group.userData.rod) return;
+  const p0 = new THREE.Vector3(x0, y0, z0);
+  const p1 = new THREE.Vector3(x1, y1, z1);
+  const dir = p1.clone().sub(p0);
+  const len = dir.length();
+  group.userData.b0.position.copy(p0);
+  group.userData.b1.position.copy(p1);
+  group.userData.rod.position.copy(p0).addScaledVector(dir, 0.5);
+  group.userData.rod.scale.set(len, 1, 1);
+  const q = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(1, 0, 0), dir.clone().normalize());
+  group.userData.rod.quaternion.copy(q);
+}
+
+function updateKinematics() {
+  const tipRad = THREE.MathUtils.degToRad(state.tipDeg);
+  const steerRad = THREE.MathUtils.degToRad(state.steerDeg);
+
+  if (dynamicRefs.tubHinge) {
+    dynamicRefs.tubHinge.rotation.x = -tipRad;
+  }
+  if (dynamicRefs.leafHinge) {
+    dynamicRefs.leafHinge.rotation.x = -tipRad;
+  }
+  if (dynamicRefs.balloon) {
+    const lift = 0.35 + (state.tipDeg / 55) * 0.65;
+    dynamicRefs.balloon.scale.set(1.15, 1.15, lift);
+    dynamicRefs.balloon.position.z = 22.0 + lift * 8.0;
+  }
+
+  if (dynamicRefs.kpL && dynamicRefs.kpR) {
+    // Rigid tie-rod linkage solved from the real hardpoints (see STEER): rack travel -> both knuckle angles.
+    // Nothing here is hard-coded: the angles, their ratio and the Ackermann error all fall out of the geometry.
+    const sol = steerSolution(state.steerDeg);
+    const rL = sol.aMinus; // knuckle at CAD x = -18.75 (the vehicle's RIGHT wheel: the vehicle faces +Z, so +X is its left)
+    const rR = sol.aPlus;  // knuckle at CAD x = +18.75 (the vehicle's LEFT wheel)
+    dynamicRefs.kpL.rotation.z = rL;
+    dynamicRefs.kpR.rotation.z = rR;
+
+    // Rack & pinion: gear_spur_z10 pitch radius 12.5 mm, CCW (+) drives the rack +X: dx = r * theta.
+    const dx = sol.dx;
+    lastRackDx = dx;
+    const pinionRad = dx / STEER.pinionR;
+    if (dynamicRefs.rack) dynamicRefs.rack.position.x = dx;
+    if (dynamicRefs.pinion) dynamicRefs.pinion.rotation.z = pinionRad;
+    if (dynamicRefs.yoke) dynamicRefs.yoke.rotation.z = pinionRad;
+
+    // Knuckle tie-rod bore world coordinates (bore orbits the kingpin at STEER.arm, leading the kingpin at rest)
+    const txL = -STEER.kpX + STEER.arm * Math.sin(rL);
+    const tyL = STEER.kpY - STEER.arm * Math.cos(rL);
+    const txR = STEER.kpX + STEER.arm * Math.sin(rR);
+    const tyR = STEER.kpY - STEER.arm * Math.cos(rR);
+    const ex = state.explode / 100;
+    const vis = ex < 0.05;
+    const ZK = 6.25, ZR = 28.18; // tie-rod bore heights: knuckle bore / rack bore
+    const rest3d = Math.hypot(STEER.link, ZR - ZK);
+    const len3d = (x0, y0, x1, y1) => Math.hypot(x1 - x0, y1 - y0, ZR - ZK);
+    const rkL = -STEER.rackX + dx, rkR = STEER.rackX + dx;
+    const linkErr = Math.max(
+      Math.abs(len3d(txL, tyL, rkL, STEER.rackY) - rest3d),
+      Math.abs(len3d(txR, tyR, rkR, STEER.rackY) - rest3d),
+    );
+    if (dynamicRefs.trL) {
+      dynamicRefs.trL.visible = vis;
+      dynamicRefs.trR.visible = vis;
+      if (vis) {
+        updateTieRod(dynamicRefs.trL, txL, tyL, ZK, rkL, STEER.rackY, ZR);
+        updateTieRod(dynamicRefs.trR, txR, tyR, ZK, rkR, STEER.rackY, ZR);
+      }
+    }
+
+    const deg = (r) => (Math.abs(r) * 180 / Math.PI).toFixed(1);
+    const dir = Math.abs(dx) < 0.005 ? 'Straight' : (dx > 0 ? 'Turn LEFT' : 'Turn RIGHT');
+    const elAck = document.getElementById('hud-ackermann');
+    if (elAck) elAck.textContent = `${dir} · L ${deg(rR)}° R ${deg(rL)}° · ideal outer ${deg(sol.ideal)}°`;
+    const elRack = document.getElementById('hud-rack');
+    if (elRack) elRack.textContent = `dx ${dx.toFixed(2)} mm (stop ±${STEER.rackStop.toFixed(2)}) · link Δ ${linkErr.toFixed(3)} mm`;
+  } else if (dynamicRefs.yoke) {
+    dynamicRefs.yoke.rotation.z = steerRad * 0.4;
+  }
+
+  // Apply explosion offsets
+  const t = state.explode / 100;
+  cadRoot.traverse((obj) => {
+    if (obj.userData.basePos && obj.userData.expVec) {
+      obj.position.copy(obj.userData.basePos).addScaledVector(obj.userData.expVec, t);
+      if (obj === dynamicRefs.rack) {
+        obj.position.x += lastRackDx;
+      }
+    }
+  });
+}
+
+function updateHUD() {
+  const META = {
+    snap: {
+      badge: 'Stage 1 · Snap 3+',
+      title: '1 · Snap (3+) Utility Dump Truck',
+      cards: state.bulldogHood ? 'Card A + Card B (+ #7 Cowl)' : 'Card A + Card B',
+      steer: 'Fixed Bottom-Click Barbell (Zero Play)',
+      power: 'Push-Along · Z_axle = 6.25 mm',
+      bed: `Sculpted 4×4 Scow · Tip ${Math.round(state.tipDeg)}° (Z=12.5 mm)`,
+    },
+    pro: {
+      badge: 'Stage 2 · Pro 8+',
+      title: '2 · Pro (8+) Row-0 Rack-Steered Hauler',
+      cards: 'Card A + Card B + Card E1',
+      steer: `Ackermann Knuckles + Z10 Rack (${Math.round(state.steerDeg)}° Lock)`,
+      power: 'Rear Z10 PTO Ready + Under-Keel Keeper',
+      bed: `Sculpted 4×4 Scow · Tip ${Math.round(state.tipDeg)}° (Z=12.5 mm)`,
+    },
+    band: {
+      badge: 'Stage 3A · Momentum 8+',
+      title: '3A · Momentum Enclosed #64 Band + Bumper Trigger',
+      cards: 'Card A + Card B + Card E1',
+      steer: 'IF-Contact-THEN-Release Front Bumper',
+      power: '3-TU Enclosed Band Core (25.00 mm Z10:Z10 PTO)',
+      bed: `Auto-Dump on 3-TU Core · Tip ${Math.round(state.tipDeg)}° (Z=50.0 mm)`,
+    },
+    bellows: {
+      badge: 'Stage 3B · Momentum 8+',
+      title: '3B · Momentum Pneumatic Balloon Bellows Tipper',
+      cards: 'Card A + Card B + Card E2',
+      steer: 'Fixed Bottom-Click Barbell',
+      power: '10° Pre-Angled Balloon Clamshell (190–380 gf)',
+      bed: `Pneumatic Lift · Tip ${Math.round(state.tipDeg)}° (Rated 120 g)`,
+    },
+    mech: {
+      badge: 'Stage 4 · Mech 10+',
+      title: '4 · Mech (10+) Smart RC Servo + Core X-Ray',
+      cards: 'Cards A + B + E1 + Card F (Keep-Out Verified)',
+      steer: `Coaxial 9g Nose Servo → Rack (${Math.round(state.steerDeg)}° Lock)`,
+      power: '602535 LiPo + 38×38 PCBA + Gearmotor → 25 mm PTO',
+      bed: `Stacked on 3-TU Mech Core · Tip ${Math.round(state.tipDeg)}° (Z=50.0 mm)`,
+    },
+  }[state.stage];
+
+  document.getElementById('stage-badge').textContent = META.badge;
+  document.getElementById('hud-title').textContent = META.title;
+  document.getElementById('hud-cards').textContent = META.cards;
+  document.getElementById('hud-steer').textContent = META.steer;
+  document.getElementById('hud-power').textContent = META.power;
+  document.getElementById('hud-bed').textContent = META.bed;
+  // Ghosted geometry that has no catalog part yet (do not read it as a verified part):
+  document.getElementById('hud-illus').textContent = (state.stage === 'pro' || state.stage === 'mech')
+    ? 'Tie-rods (ghosted): no catalog part yet'
+    : (state.stage === 'bellows' ? 'Hose + nozzle (ghosted): no catalog part yet' : '—');
+}
+
+// UI Bindings
+document.querySelectorAll('[data-stage]').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-stage]').forEach((b) => b.classList.remove('active'));
+    btn.classList.add('active');
+    state.stage = btn.dataset.stage;
+    state.demoRunning = false;
+    resetVehiclePose();
+    if (state.stage === 'band' && state.giantWheels) { // giant tires lead the trigger face by 12.6 mm: it could never be touched
+      state.giantWheels = false;
+      const bw = document.getElementById('btn-wheels');
+      bw.textContent = 'Tires: Ø36 Med (#4)';
+      bw.classList.remove('mint-on');
+    }
+    if (state.stage === 'pro' || state.stage === 'mech') {
+      state.steerDeg = 22;
+      state.tipDeg = state.stage === 'mech' ? 18 : 0;
+    } else if (state.stage === 'band') {
+      state.steerDeg = 0;
+      state.tipDeg = 42;
+    } else if (state.stage === 'bellows') {
+      state.steerDeg = 0;
+      state.tipDeg = 28;
+    } else {
+      state.steerDeg = 0;
+      state.tipDeg = 22;
+    }
+    syncSliders();
+    rebuildScene();
+  });
+});
+
+function syncSliders() {
+  document.getElementById('rng-tip').value = state.tipDeg;
+  document.getElementById('val-tip').textContent = `${Math.round(state.tipDeg)}°`;
+  document.getElementById('rng-steer').value = state.steerDeg;
+  document.getElementById('val-steer').textContent = `${Math.round(state.steerDeg)}°`;
+  document.getElementById('rng-explode').value = state.explode;
+  document.getElementById('val-explode').textContent = `${Math.round(state.explode)}%`;
+}
+
+document.getElementById('rng-tip').addEventListener('input', (e) => {
+  state.demoRunning = false;
+  state.tipDeg = Number(e.target.value);
+  document.getElementById('val-tip').textContent = `${Math.round(state.tipDeg)}°`;
+  updateKinematics();
+  updateHUD();
+});
+
+document.getElementById('rng-steer').addEventListener('input', (e) => {
+  state.demoRunning = false;
+  const lim = state.giantWheels ? 25 : 34;
+  state.steerDeg = Math.max(-lim, Math.min(lim, Number(e.target.value)));
+  document.getElementById('val-steer').textContent = `${Math.round(state.steerDeg)}°`;
+  updateKinematics();
+  updateHUD();
+});
+
+document.getElementById('rng-explode').addEventListener('input', (e) => {
+  state.explode = Number(e.target.value);
+  document.getElementById('val-explode').textContent = `${Math.round(state.explode)}%`;
+  updateKinematics();
+});
+
+document.getElementById('btn-wheels').addEventListener('click', (e) => {
+  if (state.stage === 'band' && !state.giantWheels) {
+    document.getElementById('status-text').textContent = 'Ø50 giant tires are not supported in Stage 3A: they extend 12.6 mm past the bumper trigger face.';
+    return;
+  }
+  state.giantWheels = !state.giantWheels;
+  if (state.giantWheels && Math.abs(state.steerDeg) > 25) state.steerDeg = Math.sign(state.steerDeg) * 25;
+  e.target.textContent = state.giantWheels ? 'Tires: Ø50 Giant (#5)' : 'Tires: Ø36 Med (#4)';
+  e.target.classList.toggle('mint-on', state.giantWheels);
+  syncSliders();
+  rebuildScene();
+});
+
+document.getElementById('btn-hood').addEventListener('click', (e) => {
+  state.bulldogHood = !state.bulldogHood;
+  e.target.textContent = state.bulldogHood ? 'Nose: Bulldog Wedge (#7)' : 'Nose: Open Yoke';
+  e.target.classList.toggle('mint-on', state.bulldogHood);
+  rebuildScene();
+});
+
+document.getElementById('btn-plow').addEventListener('click', (e) => {
+  state.frontPlow = !state.frontPlow;
+  e.target.textContent = state.frontPlow ? 'Front Plow (#12): On' : 'Front Plow (#12): Off';
+  e.target.classList.toggle('mint-on', state.frontPlow);
+  rebuildScene();
+});
+
+document.getElementById('btn-kip').addEventListener('click', (e) => {
+  state.showKip = !state.showKip;
+  e.target.textContent = state.showKip ? 'Kip Driver: On' : 'Kip Driver: Off';
+  e.target.classList.toggle('mint-on', state.showKip);
+  rebuildScene();
+});
+
+document.getElementById('btn-xray').addEventListener('click', (e) => {
+  const order = ['auto', 'on', 'off'];
+  state.xrayMode = order[(order.indexOf(state.xrayMode) + 1) % order.length];
+  e.target.textContent = `X-Ray Shells: ${state.xrayMode.toUpperCase()}`;
+  e.target.classList.toggle('mint-on', state.xrayMode === 'on');
+  rebuildScene();
+});
+
+document.getElementById('btn-sweep').addEventListener('click', (e) => {
+  state.sweepRunning = !state.sweepRunning;
+  e.target.textContent = `Auto Steer: ${state.sweepRunning ? 'On' : 'Off'}`;
+  e.target.classList.toggle('mint-on', state.sweepRunning);
+});
+
+document.getElementById('btn-demo').addEventListener('click', () => {
+  state.demoRunning = !state.demoRunning;
+  state.demoT = 0;
+  resetVehiclePose();
+});
+
+document.querySelectorAll('[data-cam]').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    const mode = btn.dataset.cam;
+    if (mode === 'hero') { camera.position.set(-165, 118, 178); controls.target.set(0, 36, 0); }
+    if (mode === 'side') { camera.position.set(-240, 42, 0); controls.target.set(0, 36, 0); }
+    if (mode === 'top') { camera.position.set(0, 230, -15); controls.target.set(0, -45, 12); }
+    if (mode === 'cab') { camera.position.set(-95, 92, 115); controls.target.set(0, 48, 22); }
+    controls.update();
+  });
+});
+
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+// Load all 28 verified CAD solids in parallel
+async function init() {
+  let loaded = 0;
+  await Promise.all(PART_FILES.map(async (pid) => {
+    const raw = await loader.loadAsync(`./partspec/mockup/${pid}.stl`);
+    const merged = mergeVertices(raw, 1e-4);
+    GEOS[pid] = toCreasedNormals(merged, THREE.MathUtils.degToRad(32));
+    loaded++;
+    document.getElementById('status-text').innerHTML = `Loaded <b>${loaded}/${PART_FILES.length}</b> CAD solids`;
+  }));
+  document.getElementById('status-text').innerHTML = `<b>28/28</b> verified CAD solids · Drag to orbit · Scroll to zoom`;
+  rebuildScene();
+  // Deep-link / debug params: ?stage=pro&steer=22&tip=10&cam=top&explode=40&wheels=giant
+  const q = new URLSearchParams(location.search);
+  if (q.get('wheels') === 'giant') document.getElementById('btn-wheels').click();
+  if (q.get('stage')) document.querySelector(`[data-stage="${q.get('stage')}"]`)?.click();
+  if (q.has('steer')) { state.steerDeg = Number(q.get('steer')); }
+  if (q.has('tip')) { state.tipDeg = Number(q.get('tip')); }
+  if (q.has('demoT')) { state.demoRunning = true; state.demoT = Number(q.get('demoT')); state.demoHold = q.get('hold') === '1'; } // ?demoT=1.9&hold=1
+  if (q.has('explode')) { state.explode = Number(q.get('explode')); }
+  syncSliders(); updateKinematics(); updateHUD();
+  if (q.get('cam')) document.querySelector(`[data-cam="${q.get('cam')}"]`)?.click();
+  if (q.get('cp')) { const [a, b, c, d2, e, f] = q.get('cp').split(',').map(Number); camera.position.set(a, b, c); controls.target.set(d2, e, f); controls.update(); }
+  if (q.get('ui') === '0') document.querySelectorAll('.dock,.topbar').forEach((el) => { el.style.display = 'none'; });
+}
+
+// ---------------------------------------------------------------------------
+// Driving: the vehicle faces +Z. Rolling is derived from actual displacement, so tires never slip or skate.
+// ---------------------------------------------------------------------------
+const REAR_AXLE_Z = -43.75; // rear axle center in the vehicle frame (CAD y = +43.75 -> three z = -43.75)
+const pose = { px: 0, pz: -90, psi: 0, spinPlus: 0, spinMinus: 0, prevPlus: null, prevMinus: null }; // rear-axle-center pose, steered hub spin angles, last knuckle angles
+// Obstacle for the Stage 3A demo: a 48 mm bollard that fits BETWEEN the front tires (inner faces are 53.4 mm apart), so
+// only the bumper trigger can touch it. (A full-width wall would hit the tires first: they reach 5.6 mm past the trigger face.)
+const wall = new THREE.Mesh(
+  new THREE.BoxGeometry(48, 34, 6),
+  new THREE.MeshStandardMaterial({ color: 0xb9c2d0, roughness: 0.7, transparent: true, opacity: 0.85 }),
+);
+wall.visible = false;
+wall.castShadow = true;
+wall.receiveShadow = true;
+scene.add(wall);
+
+function resetVehiclePose() {
+  pose.px = 0; pose.pz = -90; pose.psi = 0; pose.prevPlus = null; pose.prevMinus = null;
+  vehicleWrap.position.set(0, 0, 0);
+  vehicleWrap.rotation.y = 0;
+  wall.visible = false;
+}
+
+function applyPose() { // place the wrap so the REAR AXLE CENTER sits at (pose.px, pose.pz) with heading pose.psi
+  vehicleWrap.rotation.y = pose.psi;
+  vehicleWrap.position.set(
+    pose.px - REAR_AXLE_Z * Math.sin(pose.psi), 0, pose.pz - REAR_AXLE_Z * Math.cos(pose.psi));
+}
+
+function driveStraight(z, wRad) { // straight-line drive along the vehicle's +Z (forward)
+  const dz = z - vehicleWrap.position.z;
+  if (Math.abs(dz) < 20) state.wheelSpin += dz / wRad; // rolling without slip; bigger jumps are loop resets (teleports)
+  vehicleWrap.position.set(0, 0, z);
+}
+
+function applyWheelSpin() { // +X rotation = rolling toward +Z (forward)
+  if (dynamicRefs.rearAxle) dynamicRefs.rearAxle.rotation.x = state.wheelSpin;
+  if (dynamicRefs.frontAxle) dynamicRefs.frontAxle.rotation.x = state.wheelSpin;
+  if (dynamicRefs.spinPlus) dynamicRefs.spinPlus.rotation.x = pose.spinPlus;
+  if (dynamicRefs.spinMinus) dynamicRefs.spinMinus.rotation.x = pose.spinMinus;
+  // 1:1 Z10 PTO: the core gear meshes the axle gear (opposite sense) and the spool is coaxial with the core gear
+  if (dynamicRefs.coreGear) dynamicRefs.coreGear.rotation.x = -state.wheelSpin;
+  if (dynamicRefs.coreSpool) dynamicRefs.coreSpool.rotation.x = -state.wheelSpin;
+}
+
+// Distance a steered hub rolls in one step. Two parts: (1) rigid-body velocity of the hub projected on the wheel heading;
+// (2) steering swings the hub 15 mm around the kingpin (the scrub offset), which moves it along its rolling direction.
+function hubRoll(side, a, aPrev, v, psiDot, dt) {
+  const xh = side * (STEER.kpX + 15.0 * Math.cos(a));            // hub centre, CAD x
+  const zh = -(STEER.kpY + side * 15.0 * Math.sin(a) - 43.75);   // forward distance ahead of the rear axle
+  const body = psiDot * zh * Math.sin(a) + (v - psiDot * xh) * Math.cos(a);
+  return body * dt - side * 15.0 * (a - aPrev);
+}
+
+const clock = new THREE.Clock();
+function animate() {
+  requestAnimationFrame(animate);
+  const rawDt = Math.min(clock.getDelta(), 0.05);
+  const dt = state.demoHold ? 0 : rawDt; // ?hold=1 freezes the demo clock for deterministic screenshots
+  if (state.sweepRunning) {
+    state.steerDeg = Math.sin(clock.getElapsedTime() * 2.2) * (state.giantWheels ? 25 : 34);
+    syncSliders();
+    updateKinematics();
+  }
+
+  if (state.demoRunning && GEOS.kit_keel_base) {
+    state.demoT += dt;
+    const lim = state.giantWheels ? 25 : 34;
+    const wRad = state.giantWheels ? 25.0 : 18.0; // matches kit_wheel_giant R = 24.97 / kit_wheel_med R = 17.98
+    const smooth = (u) => { const c = Math.max(0, Math.min(1, u)); return c * c * (3 - 2 * c); };
+    wall.visible = state.stage === 'band';
+
+    if (state.stage === 'pro' || state.stage === 'mech') {
+      // Slalom: kinematic bicycle at the rear axle. The yaw rate comes from the two REAL solved wheel angles
+      // (cot(dc) = mean of the wheel cotangents), so the truck actually turns where its wheels point.
+      const v = 34.0; // mm/s
+      state.steerDeg = Math.sin(state.demoT * 0.9) * lim;
+      const sol = steerSolution(state.steerDeg);
+      const cotAvg = 0.5 * (1 / Math.tan(sol.aPlus) + 1 / Math.tan(sol.aMinus));
+      const tanC = Number.isFinite(cotAvg) && cotAvg !== 0 ? 1 / cotAvg : 0;
+      const psiDot = (v * tanC) / STEER.wheelbase;
+      pose.psi += psiDot * dt;
+      pose.px += v * Math.sin(pose.psi) * dt;
+      pose.pz += v * Math.cos(pose.psi) * dt;
+      if (pose.pz > 90 || Math.abs(pose.px) > 70) { pose.px = 0; pose.pz = -90; pose.psi = 0; } // loop the course
+      applyPose();
+      // Solid rear axle rolls at the axle-centre speed (a real solid axle scrubs the inner wheel in a turn);
+      // each steered front hub rolls at its own ground speed.
+      state.wheelSpin += (v * dt) / wRad;
+      if (pose.prevPlus === null) { pose.prevPlus = sol.aPlus; pose.prevMinus = sol.aMinus; }
+      pose.spinPlus += hubRoll(1, sol.aPlus, pose.prevPlus, v, psiDot, dt) / wRad;
+      pose.spinMinus += hubRoll(-1, sol.aMinus, pose.prevMinus, v, psiDot, dt) / wRad;
+      pose.prevPlus = sol.aPlus;
+      pose.prevMinus = sol.aMinus;
+      applyWheelSpin();
+      if (state.stage === 'mech') {
+        state.tipDeg = 15.0 + Math.sin(state.demoT * 1.5) * 15.0;
+      }
+    } else if (state.stage === 'band') {
+      // 4.0 s band-core loop (vehicle faces +Z; the wall is a real mesh):
+      // 0.0..1.8s: drive forward on spring power (wheels, core gear and spool locked 1:1 by the Z10 PTO)
+      // 1.8..2.2s: bumper face meets the wall, the trigger is pushed in 3.75 mm, THEN the latch trips and the bed dumps
+      // 2.2..3.2s: hold at 55 deg, trigger still depressed against the wall
+      // 3.2..4.0s: back away (trigger springs out as soon as the truck leaves the wall), bed returns
+      const Z0 = -50.0, ZC = 40.0, PRESS = 3.75, FACE = 76.65; // start, contact, trigger travel, bumper face (CAD y -76.65: bar face -20.4 from the part origin)
+      wall.position.set(0, 17, ZC + FACE + 3.0); // near face of the 6 mm wall sits exactly at the bumper face at contact
+      const cyc = state.demoT % 4.0;
+      let depress = 0;
+      if (cyc < 1.8) {
+        driveStraight(Z0 + ((ZC - Z0) * cyc) / 1.8, wRad);
+        state.tipDeg = 0;
+      } else if (cyc < 2.2) {
+        const u = (cyc - 1.8) / 0.4;
+        depress = PRESS * smooth(u / 0.4);
+        driveStraight(ZC + depress, wRad); // body keeps rolling while the bumper face stays on the wall
+        state.tipDeg = 55 * smooth((u - 0.4) / 0.6);
+      } else if (cyc < 3.2) {
+        depress = PRESS;
+        driveStraight(ZC + PRESS, wRad);
+        state.tipDeg = 55;
+      } else {
+        const uRet = (cyc - 3.2) / 0.8;
+        const back = (ZC + PRESS - Z0) * uRet;
+        depress = Math.max(0, PRESS - back);
+        driveStraight(ZC + PRESS - back, wRad);
+        state.tipDeg = 55 * (1 - uRet);
+      }
+      if (dynamicRefs.bumper) dynamicRefs.bumper.position.y = -56.25 + depress; // CAD +y = rearward = pushed in
+      applyWheelSpin();
+    } else if (state.stage === 'bellows') {
+      // 3.6 s pneumatic loop (vehicle faces +Z; the jet vents out the REAR, so the reaction pushes the truck forward):
+      // 0.0..1.2s: charge bladder (tub lifts to 42 deg)
+      // 1.2..1.5s: slam down, bladder squashes, jet puffs out the rear, truck lurches forward
+      // 1.5..3.0s: coast forward, decelerating
+      // 3.0..3.6s: reset
+      const cyc = state.demoT % 3.6;
+      const Z0 = -40.0;
+      if (dynamicRefs.exhaust) dynamicRefs.exhaust.visible = false;
+      if (cyc < 1.2) {
+        driveStraight(Z0, wRad);
+        state.tipDeg = ((cyc / 1.2) * 42.0);
+      } else if (cyc < 1.5) {
+        const uSlam = (cyc - 1.2) / 0.3;
+        state.tipDeg = 42.0 * (1 - uSlam);
+        driveStraight(Z0 + uSlam * 15.0, wRad);
+        if (dynamicRefs.exhaust) {
+          dynamicRefs.exhaust.visible = true;
+          const sc = 1.0 + uSlam * 2.5;
+          dynamicRefs.exhaust.scale.set(sc, sc, sc);
+          dynamicRefs.exhaust.children.forEach((r) => { r.material.opacity = 0.85 * (1 - uSlam); });
+        }
+      } else if (cyc < 3.0) {
+        const uCoast = (cyc - 1.5) / 1.5;
+        driveStraight(Z0 + 15.0 + (1 - Math.pow(1 - uCoast, 2)) * 75.0, wRad);
+        state.tipDeg = 0;
+      } else {
+        const uRet = (cyc - 3.0) / 0.6;
+        driveStraight(Z0 + 90.0 - uRet * 90.0, wRad);
+        state.tipDeg = 0;
+      }
+      applyWheelSpin();
+    } else {
+      state.tipDeg = 27.5 - Math.cos(state.demoT * 1.8) * 27.5;
+    }
+    syncSliders();
+    updateKinematics();
+    updateHUD();
+  }
+  controls.update();
+  renderer.render(scene, camera);
+}
+
+init();
+animate();
+</script>
+</body>
+</html>

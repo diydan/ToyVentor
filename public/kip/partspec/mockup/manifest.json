@@ -1,0 +1,114 @@
+{
+  "kit_keel_base": {
+    "file": "kit_keel_base.stl",
+    "faces": 45690
+  },
+  "kit_barbell_shaft": {
+    "file": "kit_barbell_shaft.stl",
+    "faces": 400
+  },
+  "kit_wheel_med": {
+    "file": "kit_wheel_med.stl",
+    "faces": 3708
+  },
+  "kit_wheel_giant": {
+    "file": "kit_wheel_giant.stl",
+    "faces": 4520
+  },
+  "kit_aero_wedge": {
+    "file": "kit_aero_wedge.stl",
+    "faces": 3756
+  },
+  "kit_windscreen": {
+    "file": "kit_windscreen.stl",
+    "faces": 10084
+  },
+  "kit_tilting_tub": {
+    "file": "kit_tilting_tub.stl",
+    "faces": 8720
+  },
+  "kit_scoop_blade": {
+    "file": "kit_scoop_blade.stl",
+    "faces": 4980
+  },
+  "kit_yoke_hbar": {
+    "file": "kit_yoke_hbar.stl",
+    "faces": 716
+  },
+  "pro_steer_bridge": {
+    "file": "pro_steer_bridge.stl",
+    "faces": 6620
+  },
+  "pro_steer_knuckle_l": {
+    "file": "pro_steer_knuckle_l.stl",
+    "faces": 1912
+  },
+  "pro_steer_knuckle_r": {
+    "file": "pro_steer_knuckle_r.stl",
+    "faces": 1914
+  },
+  "pro_steer_rack": {
+    "file": "pro_steer_rack.stl",
+    "faces": 1628
+  },
+  "pro_axle_keeper": {
+    "file": "pro_axle_keeper.stl",
+    "faces": 2148
+  },
+  "gear_spur_z10": {
+    "file": "gear_spur_z10.stl",
+    "faces": 8496
+  },
+  "mom_band_core_tray": {
+    "file": "mom_band_core_tray.stl",
+    "faces": 14446
+  },
+  "mom_band_core_lid": {
+    "file": "mom_band_core_lid.stl",
+    "faces": 30916
+  },
+  "mom_band_spool_pawl": {
+    "file": "mom_band_spool_pawl.stl",
+    "faces": 1272
+  },
+  "mom_bumper_trigger": {
+    "file": "mom_bumper_trigger.stl",
+    "faces": 1716
+  },
+  "mom_bellows_base": {
+    "file": "mom_bellows_base.stl",
+    "faces": 7660
+  },
+  "mom_bellows_leaf": {
+    "file": "mom_bellows_leaf.stl",
+    "faces": 30916
+  },
+  "char_legs_seated": {
+    "file": "char_legs_seated.stl",
+    "faces": 8344
+  },
+  "robot_torso_core": {
+    "file": "robot_torso_core.stl",
+    "faces": 7884
+  },
+  "robot_arms_grabber": {
+    "file": "robot_arms_grabber.stl",
+    "faces": 10752
+  },
+  "char_head_kid": {
+    "file": "char_head_kid.stl",
+    "faces": 10796
+  },
+  "char_faceplate": {
+    "file": "char_faceplate.stl",
+    "faces": 910
+  },
+  "hat_hardhat": {
+    "file": "hat_hardhat.stl",
+    "faces": 3036
+  },
+  "mech_core_shell": {
+    "file": "mech_core_shell.stl",
+    "faces": 14780
+  }
+}
