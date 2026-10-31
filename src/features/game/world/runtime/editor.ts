@@ -132,49 +132,31 @@ function edMarkers(){if(ED.g)scene.remove(ED.g);ED.g=new T.Group();ED.pins=[];sc
  linearize(ED.g)}
 function edFit(units){return Math.max(12,Math.min(120,units/(2*Math.tan(camera.fov*Math.PI/360)*camera.aspect)))}function edZoom(f){ED.d=Math.max(12,Math.min(120,ED.d*f));edMarkers()}function edView(){var W0=hostEl.clientWidth,H0=hostEl.clientHeight;camera.setViewOffset(W0,H0,0,H0*.22,W0,H0)}
 function edEnter(){if(!ED.R){try{ED.R=JSON.parse(localStorage.getItem("tvLevel")||"null")}catch(e){}if(!edValid(ED.R))ED.R=edCopy("garden")}
- if(P.busy)return;if(!ED.testing)ED.prev=S.world;ED.on=true;P.title=false;S.started=true;save();hostEl.classList.remove("titled","building","testing");$("#title").hidden=true;$("#sheet").hidden=true;$("#pcard").hidden=true;$("#ed-back").hidden=true;
- P.showcase=false;P.target=null;P.root.visible=false;P.pos.set(-40,0,0);if(!ED.dSet){ED.d=edFit(17);ED.dSet=true}hostEl.classList.add("editing");$("#ed").hidden=false;syncEdInputs();
+ if(P.busy)return;if(!ED.testing)ED.prev=S.world;ED.on=true;P.title=false;S.started=true;save();hostEl.classList.remove("titled","building","testing");$("#pcard").hidden=true;
+ P.showcase=false;P.target=null;P.root.visible=false;P.pos.set(-40,0,0);if(!ED.dSet){ED.d=edFit(17);ED.dSet=true}hostEl.classList.add("editing");syncEdInputs();
  edView();WORLDS.custom=edEngine(ED.R);buildWorld("custom");edMarkers();edPanel();flash();if(ED.kid)crUI(true)}
-function edExit(){ED.on=false;ED.sel=null;ED.arm=null;if(ED.g){scene.remove(ED.g);ED.g=null}hostEl.classList.remove("editing");$("#ed").hidden=true;camera.clearViewOffset();
+function edExit(){ED.on=false;ED.sel=null;ED.arm=null;if(ED.g){scene.remove(ED.g);ED.g=null}hostEl.classList.remove("editing");camera.clearViewOffset();
  S.world=WORLDS[ED.prev]&&ED.prev!=="custom"?ED.prev:"garden";buildWorld(S.world);P.root.visible=true;P.pos.set(2,0,0);P.face=P.tface=0;cam.x=3;updHud();ctx();musInit();MUS.on=true;musGain(sound?.7:0,1.2);flash();showIntro(S.world);notify()}
 function edPlay(){if(!ED.R.spots.length){toast("Place at least one hiding spot first.");return}ED.on=false;ED.testing=true;ED.found=S.found;S.found={};ED.prevW=S.world;S.world="custom";ED.sel=null;ED.arm=null;if(ED.g){scene.remove(ED.g);ED.g=null}
- hostEl.classList.remove("editing");hostEl.classList.add("testing");$("#ed").hidden=true;$("#ed-back").hidden=false;camera.clearViewOffset();WORLDS.custom=edEngine(ED.R);buildWorld("custom");
+ hostEl.classList.remove("editing");hostEl.classList.add("testing");camera.clearViewOffset();WORLDS.custom=edEngine(ED.R);buildWorld("custom");
  P.root.visible=true;P.pos.set(2,0,0);P.target=null;P.face=P.tface=0;cam.x=3;P.showcase=false;updHud();ctx();musInit();MUS.on=true;musGain(sound?.7:0,1.2);flash();notify();setTimeout(function(){showIntro("custom")},250)}
-function edBack(){if(P.busy){toast("One moment, the move is still going.");return}S.found=ED.found;S.world=ED.prevW;ED.testing=false;$("#ed-back").hidden=true;edEnter();notify()}
+function edBack(){if(P.busy){toast("One moment, the move is still going.");return}S.found=ED.found;S.world=ED.prevW;ED.testing=false;edEnter();notify()}
 function edFreePart(){var used={};ED.R.spots.forEach(function(s){used[s.part]=1});var pool=Object.keys(PART).filter(function(k){return PART[k].w&&!used[k]});if(!pool.length)pool=Object.keys(PART).filter(function(k){return PART[k].st!=="none"&&!used[k]});return pool[0]||Object.keys(PART)[0]}
 function edPlace(x){var a=ED.arm;edPush();if(a.kind==="spot"){var hk=HKIND.filter(function(k){return k[0]===a.t})[0];ED.R.spots.push({part:edFreePart(),hide:hk[3][THEMES[ED.R.theme]||0],x:x});ED.sel={kind:"spot",i:ED.R.spots.length-1}}else{ED.R.props.push({type:a.type,x:x});ED.sel={kind:"prop",i:ED.R.props.length-1}}ED.arm=null;edApply();sfx.snap()}
 function edPick(cx,cy){var r=canvas.getBoundingClientRect(),best=null,bd=34;ED.pins.forEach(function(p){var v=p.s.position.clone().project(camera),sx=(v.x+1)/2*r.width+r.left,sy=(1-v.y)/2*r.height+r.top,dd=Math.hypot(sx-cx,sy-cy);if(dd<bd){bd=dd;best=p}});return best}
 function edX(e){rayAt(e.clientX,e.clientY);return laneX()}
 function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
-function edPanel(){var R=ED.R,ck=edChecks(R),pass=ck.filter(function(c){return c.ok}).length,b=$("#ed-body"),h="";
- $$("#ed-tabs button").forEach(function(t){t.setAttribute("aria-pressed",t.dataset.tab===ED.tab);if(t.dataset.tab==="checks")t.textContent="Checks "+pass+"/"+ck.length});
- $("#ed-undo").disabled=!ED.undo.length;$("#ed-redo").disabled=!ED.redo.length;
- if(ED.sel){var it=edItem(ED.sel.kind,ED.sel.i);if(!it){ED.sel=null;return edPanel()}
-  if(ED.sel.kind==="spot"){var hk=HIDE[it.hide];h+='<div class="ed-insp"><b>Hiding spot</b><span class="ed-mut">'+HKIND.filter(function(k){return k[0]===hk.t})[0][1]+', revealed by '+(hk.t==="junk"?"unscrewing":STATS[hk.t].m)+'</span>';
-   h+='<label>Hidden in<select id="ed-hide">'+HKIND.map(function(k){return '<optgroup label="'+k[1]+' ('+k[2]+')">'+k[3].map(function(v){return '<option value="'+v+'"'+(v===it.hide?" selected":"")+'>'+HIDE[v].n+'</option>'}).join("")+'</optgroup>'}).join("")+'</select></label>';
-   h+='<label>Part<select id="ed-part">'+Object.keys(TYPES).map(function(t){return '<optgroup label="'+TYPES[t].n+'">'+Object.keys(PART).filter(function(k){return PART[k].t===t&&PART[k].st!=="none"}).map(function(k){var p=PART[k];return '<option value="'+k+'"'+(k===it.part?" selected":"")+'>'+esc(p.n)+' ('+TYPES[t].sn[p.s]+', '+STATS[p.st].n+')</option>'}).join("")+'</optgroup>'}).join("")+'</select></label>'}
-  else h+='<div class="ed-insp"><b>'+PROPS[it.type].n+'</b><span class="ed-mut">Scenery, no part hidden</span>';
-  h+='<div class="ed-row"><button class="ctl" type="button" data-nx="-1">Move left</button><span class="chip">At '+it.x+'</span><button class="ctl" type="button" data-nx="1">Move right</button></div><div class="ed-row"><button class="ctl" type="button" id="ed-del">Delete</button><button class="ctl primary" type="button" id="ed-ok">Done</button></div></div>'}
- else if(ED.tab==="spots")h='<p class="ed-mut">Tap a hiding spot, then tap the path to place it. Tap a pin to edit it, or drag it to move it.</p><div class="ed-pal">'+HKIND.map(function(k){return '<button type="button" data-arm="spot" data-t="'+k[0]+'" aria-pressed="'+!!(ED.arm&&ED.arm.t===k[0])+'"><i style="background:'+KCOL[k[0]]+'"></i><b>'+k[1]+'</b><span>'+k[2]+'</span></button>'}).join("")+'</div>';
- else if(ED.tab==="props")h='<p class="ed-mut">Scenery sets the mood and never hides a part. Tap one, then tap the path.</p><div class="ed-pal">'+Object.keys(PROPS).map(function(k){return '<button type="button" data-arm="prop" data-type="'+k+'" aria-pressed="'+!!(ED.arm&&ED.arm.type===k)+'"><i style="background:#8a96c8"></i><b>'+PROPS[k].n+'</b></button>'}).join("")+'</div>';
- else h='<ul class="ed-chk">'+ck.map(function(c){return '<li class="'+(c.ok?"ok":"no")+'"><span class="dot" aria-hidden="true">'+(c.ok?"✓":"!")+'</span><span><b>'+c.n+'</b><span class="ed-mut">'+(c.ok?"Passing":c.why)+'</span></span></li>'}).join("")+'</ul>';
- b.innerHTML=h;
- $$("#ed-body [data-arm]").forEach(function(x){x.onclick=function(){edArmDs(x.dataset.arm,x.dataset.t,x.dataset.type)}});
- $$("#ed-body [data-nx]").forEach(function(x){x.onclick=function(){edNudge(+x.dataset.nx)}});
- var hs=$("#ed-hide");if(hs)hs.onchange=function(){edSetHide(hs.value)};
- var ps=$("#ed-part");if(ps)ps.onchange=function(){edSetPart(ps.value)};
- var dl=$("#ed-del");if(dl)dl.onclick=function(){edDelete()};
- var ok=$("#ed-ok");if(ok)ok.onclick=function(){edDoneSel()};notify()}
+function edPanel(){notify()}
 function edUp(e){if(!ED.on||!ED.drag)return;e.stopImmediatePropagation();var d=ED.drag;ED.drag=null;
  if(d.pin&&d.moved&&d.nx!=null){edPush();edItem(d.pin.kind,d.pin.i).x=d.nx;edApply();return}
  if(!d.moved&&!d.pin){var x=edX(e);if(ED.arm&&x!=null)edPlace(edSnapX(x));else if(ED.sel){ED.sel=null;edMarkers();edPanel()}}}
 var edBackLabel="Back to editor",edName="",edTheme="";
 var edIo={open:false,title:"Level file",text:"",readOnly:true,canCopy:false,canLoad:false};
 var edIoTxt="";
-function syncEdInputs(){edName=ED.R?ED.R.name:"";edTheme=ED.R?ED.R.theme:"";var n=$("#ed-name"),t=$("#ed-theme");if(n)n.value=edName;if(t)t.value=edTheme}
+function syncEdInputs(){edName=ED.R?ED.R.name:"";edTheme=ED.R?ED.R.theme:""}
 function edSnap(){
-  var ed=$("#ed"),testing=!!ED.testing,mode=ED.kid?"create":"editor";
-  if(!ed||ed.hidden||!ED.on||ED.kid)return {open:false,testing:testing,mode:mode,backLabel:edBackLabel};
+  var testing=!!ED.testing,mode=ED.kid?"create":"editor";
+  if(!ED.on||ED.kid)return {open:false,testing:testing,mode:mode,backLabel:edBackLabel};
   var R=ED.R,ck=edChecks(R),pass=ck.filter(function(c){return c.ok}).length;
   var sel=null;
   if(ED.sel){
@@ -212,8 +194,8 @@ function edZoomBy(f){edZoom(f)}
 function edExport(){edIo={open:true,title:"Export this level",text:JSON.stringify(ED.R,null,2),readOnly:true,canCopy:true,canLoad:false};notify()}
 function edImport(){edIo={open:true,title:"Paste a level to import",text:"",readOnly:false,canCopy:false,canLoad:true};notify()}
 function edIoClose(){edIo.open=false;notify()}
-function edIoCopy(){var ta=$("#ed-txt");if(ta){ta.value=edIoTxt;try{ta.select()}catch(e){}}var done=function(){toast("Copied. Paste it into the level file or a message.")};if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(edIoTxt).then(done,function(){try{document.execCommand("copy");done()}catch(e){toast("Select the text and copy it by hand.")}});else{try{document.execCommand("copy");done()}catch(e){toast("Select the text and copy it by hand.")}}}
-function edIoLoad(){var R=null;try{R=JSON.parse(edIoTxt)}catch(e){}if(!edValid(R)){toast("That isn't a ToyVentor level. Check the format line and the part names.");return}edPush();ED.R=R;ED.sel=null;edIo.open=false;edName=R.name||"My world";edTheme=R.theme;var n=$("#ed-name"),t=$("#ed-theme");if(n)n.value=edName;if(t)t.value=edTheme;edApply();toast("Level imported.")}
+function edIoCopy(){var done=function(){toast("Copied. Paste it into the level file or a message.")};if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(edIoTxt).then(done,function(){try{document.execCommand("copy");done()}catch(e){toast("Select the text and copy it by hand.")}});else{try{document.execCommand("copy");done()}catch(e){toast("Select the text and copy it by hand.")}}}
+function edIoLoad(){var R=null;try{R=JSON.parse(edIoTxt)}catch(e){}if(!edValid(R)){toast("That isn't a ToyVentor level. Check the format line and the part names.");return}edPush();ED.R=R;ED.sel=null;edIo.open=false;edName=R.name||"My world";edTheme=R.theme;edApply();toast("Level imported.")}
 function edSetIoText(t){edIoTxt=t}
 function edControl(i){if(i===0||i===1)edNudge(i===0?-1:1);else if(i===2)edDelete();else if(i===3)edDoneSel()}
 function edFromTitle(){ctx();ED.kid=false;ED.R=null;edEnter()}

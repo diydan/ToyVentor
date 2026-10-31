@@ -25,6 +25,7 @@ function stubDeps() {
     soapWin: () => [3, 3],
     joy: () => {},
     mpPress: () => {},
+    mpHide: () => {},
     add: (o: any) => o,
     darkSprite: () => ({ position: { set() {} }, scale: { set() {} } }),
     rockMesh: () => ({
@@ -140,23 +141,16 @@ describe("Unit 2d missions factory (deps-injected MT table)", () => {
     }
   });
 
-  it("panel() opens for all 9 entries (what mtPanel calls on proximity)", () => {
-    withCanvasDocument();
-    try {
-      const MS = createMissions(stubDeps() as any);
-      const xs: Record<string, number> = {
-        measure: 23, balance: 36, logic: 10, raft: 16, lever: 12,
-        circuit: 14, code: 18, pattern: 20, clean: 8,
-      };
-      for (const t of Object.keys(xs)) {
-        const m = { type: t, x: xs[t] } as any;
-        MS.MT[t].build(m);
-        // Must return html, not throw: circuit reads CGL, code reads CNM,
-        // clean reads CTN — all must be wired deps/imports.
-        expect(typeof MS.MT[t].panel(m), t).toBe("string");
-      }
-    } finally {
-      delete (globalThis as any).document;
+  it("entries carry no hidden-DOM builders (Unit 3: stamps live in mpData)", () => {
+    const MS = createMissions(stubDeps() as any);
+    for (const t of [
+      "measure", "balance", "logic", "raft", "lever",
+      "circuit", "code", "pattern", "clean",
+    ]) {
+      expect(MS.MT[t].panel, t).toBeUndefined();
+      expect(MS.MT[t].bind, t).toBeUndefined();
+      expect(typeof MS.MT[t].build).toBe("function");
+      expect(typeof MS.MT[t].sync).toBe("function");
     }
   });
 

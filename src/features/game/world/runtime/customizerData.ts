@@ -4,7 +4,7 @@
 // returns the same ids, labels, selected/locked flags, and forge rows that
 // engine.ts scraped from the hidden sheet DOM. Pure functions of explicit
 // state, unit testable; world.ts stamps the result at render time. TEMP
-// MIRROR: the legacy HTML templates stay byte-identical until Unit 3
+// MIRROR: Unit 3 deleted the legacy HTML; these builders are the source
 // deletes them, then these builders become the only source.
 
 export type PaintZoneId = "c1" | "c2" | "skin";

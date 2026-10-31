@@ -3,7 +3,7 @@
 // Mirrors the legacy #cr template in runtime/world.ts: card rows, undo and
 // mic availability, and the transient say/input state. world.ts holds the
 // say/input strings in closure vars set at the same sites that wrote the
-// hidden DOM. TEMP MIRROR: hidden #cr DOM stays until Unit 3 deletes it.
+// hidden DOM. Unit 3 deleted the hidden #cr DOM; this is the only source.
 
 export interface CrCard {
   title: string;

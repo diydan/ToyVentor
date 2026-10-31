@@ -6,7 +6,7 @@
 // The builders are pure functions of explicit state so they are unit
 // testable; world.ts calls them at render time and stamps the result for
 // engine.ts. TEMP MIRROR: the legacy HTML templates stay byte-identical
-// until Unit 3 deletes them, then these builders become the only source.
+// Unit 3 deleted them; these builders are the only source.
 
 export interface MpCtrl {
   label: string;

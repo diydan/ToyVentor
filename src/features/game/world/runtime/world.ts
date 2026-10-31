@@ -302,9 +302,9 @@ function fwd(){return new T.Vector3(Math.cos(P.face),0,-Math.sin(P.face))}
 function icon(st,s){s=s||30;var c=(STATS[st]||LOOK).c,o='<svg width="'+s+'" height="'+s+'" viewBox="0 0 24 24" aria-hidden="true">';if(st==="speed")o+='<path d="M13 2 L5 14 H11 L10 22 L19 9 H13Z" fill="'+c+'"/>';if(st==="spin")o+='<path d="M20 12a8 8 0 1 1-3-6.2" fill="none" stroke="'+c+'" stroke-width="3" stroke-linecap="round"/><path d="M20 3v6h-6" fill="none" stroke="'+c+'" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>';if(st==="glow")o+='<circle cx="12" cy="10" r="6" fill="'+c+'"/><rect x="10" y="16" width="4" height="6" rx="1" fill="'+c+'"/>';if(st==="torque"){for(var i=0;i<8;i++)o+='<rect x="10.3" y="1.5" width="3.4" height="5" rx="1" fill="'+c+'" transform="rotate('+(i*45)+' 12 12)"/>';o+='<circle cx="12" cy="12" r="6.5" fill="'+c+'"/><circle cx="12" cy="12" r="2.4" fill="#10062b"/>'}return o+"</svg>"}
 var BOLTI='<svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="#d8def5" stroke="#5a6aa0" stroke-width="2"/><path d="M7.5 12 H16.5" stroke="#5a6aa0" stroke-width="2.6" stroke-linecap="round"/></svg>';
 function toast(t){notify();var e=$("#toast");e.textContent=t;e.classList.add("on");clearTimeout(toast.h);toast.h=setTimeout(function(){e.classList.remove("on")},2800)}
-function foundN(){var n=0;for(var k in S.found)if(PART[k]&&PART[k].w)n++;return n}
 function moves(){var st=creStats();$$(".mv").forEach(function(b){b.classList.toggle("off",!st[b.getAttribute("data-k")])})}
-function updHud(){$("#found").textContent=foundN()+"/"+HIDDEN+" found  ·  "+(S.scrap||0)+" scrap";$$(".wt").forEach(function(b){var w=b.getAttribute("data-w"),W0=WORLDS[w],ms=W0.missions||[],lab=!W0.spots.length&&ms.length,tot=lab?ms.length:5,n=lab?ms.filter(function(q){return S.mdone[w+"."+q.type]}).length:W0.spots.filter(function(d){return S.found[d.k]}).length,dots="";for(var i=0;i<tot;i++)dots+='<i class="'+(i<n?"on":"")+'"></i>';b.innerHTML=W0.n+'<span class="dots" aria-label="'+n+" of "+tot+(lab?" done":" found")+'">'+dots+"</span>";b.setAttribute("aria-selected",w===S.world)});var aw=$('.wt[aria-selected="true"]');if(aw&&aw.scrollIntoView)try{aw.scrollIntoView({block:"nearest",inline:"center"})}catch(e){}}
+function updHud(){}
+
 /* ---------- abilities ---------- */
 async function ability(st){if(P.busy||P.showcase)return;if(!creStats()[st]){toast("Build with a part that has "+STATS[st].n+" to use "+STATS[st].m+".");sfx.bump();return}
  var best=null,bd=1e9;spots.forEach(function(s){if(s.got||s.d.t!==st)return;if(s.d.t!=="speed"&&!s.hidden)return;var d=Math.abs(s.d.x-P.pos.x);if(d<bd){bd=d;best=s}});
@@ -324,7 +324,7 @@ function reveal(sp){if(!sp.hidden||sp.got)return;sp.hidden=false;if(sp.glint){W.
  P.shake=Math.max(P.shake||0,.08);sp.spark.visible=true;sp.spark.scale.setScalar(.1);fx.push({t:0,d:.5,f:function(k){sp.spark.scale.setScalar(.1+.9*k)}});
  setTimeout(function(){collect(sp)},950)}
 function collect(sp){if(sp.got)return;sp.got=true;S.found[sp.d.k]=true;S.scrap=(S.scrap||0)+1;save();sfx.found();if(sp.glint){W.root.remove(sp.glint);sp.glint=null}burst(sp.spark.position.clone(),"rgba(255,214,90,1)",16);var s=sp.spark,y0=s.position.y;fx.push({t:0,d:.7,f:function(k){s.position.y=y0+k*1.5;s.scale.setScalar(1+k);s.rotation.y+=.3},end:function(){s.visible=false}});
- showCard(sp.d.k,sp.d.t==="junk");updHud();P.joyPending=true;
+ showCard(sp.d.k,sp.d.t==="junk");P.joyPending=true;
  var wn=WN[S.world]||WORLDS[S.world].n;if(spots.every(function(x){return x.got}))setTimeout(function(){if((WN[S.world]||WORLDS[S.world].n)===wn){confetti();sfx.found();toast("You found every part in "+wn+"!")}},2600)}
 function showCard(k,junk){var p=PART[k],c=$("#pcard"),tLabel=p.t==="robot"?"Kip Wardrobe":TYPES[p.t].n;$("#pc-ic").innerHTML=icon(p.st,30);$("#pc-n").textContent=(junk?"Took it apart: ":"New part: ")+p.n;$("#pc-m").textContent=tLabel+" part · "+p.l+" · "+(STATS[p.st]||LOOK).n+" gives "+(STATS[p.st]||LOOK).m;c.dataset.k=k;c.hidden=false;c.classList.remove("on");void c.offsetWidth;c.classList.add("on");clearTimeout(showCard.h);showCard.h=setTimeout(function(){c.hidden=true},6500)}
 function confetti(){if(reduce)return;var cols=["rgba(255,90,77,1)","rgba(255,210,77,1)","rgba(90,240,176,1)","rgba(82,183,255,1)","rgba(167,139,255,1)"];for(var i=0;i<46;i++){(function(i){var s=glowSprite(cols[i%5],.45);s.position.set(P.pos.x,2,P.pos.z);scene.add(s);var v=new T.Vector3((Math.random()-.5)*8,4+Math.random()*5,(Math.random()-.5)*3);fx.push({t:0,d:1.8,f:function(k,dt){s.position.addScaledVector(v,dt);v.y-=7*dt;s.material.opacity=1-k*k},end:function(){scene.remove(s)}})})(i)}}
@@ -369,25 +369,9 @@ function buildFactory(){var g=new T.Group();g.position.set(FX,0,0);
  g.add(M(new T.BoxGeometry(18,.3,1.2),plastic("#0f1a4a"),0,.15,-2.5));for(var r=-8;r<=8;r++){var rl=M(new T.CylinderGeometry(.16,.16,1.3,10),metal("#9bb0ff"),r,.32,-2.5);rl.rotation.x=Math.PI/2;g.add(rl)}
  linearize(g);scene.add(g);FAC=g}
 function flash(){var f=$("#fade");f.classList.remove("on");void f.offsetWidth;f.classList.add("on")}
-function openSheet(){if(P.busy||P.showcase||P.mDrive)return;if(B.forge)setForge(false);hostEl.classList.add("building");$("#pcard").hidden=true;P.saveX=P.pos.x;P.pos.set(FX,0,0);P.target=null;cam.x=FX;facA=-.55;P.showcase=true;$("#sheet").hidden=false;$("#tray").hidden=true;flash();renderSheet()}
-function closeSheet(){if(B.forge)setForge(false);mUpdate.cur=null;hostEl.classList.remove("building");camera.clearViewOffset();P.showcase=false;P.pos.set(P.saveX==null?2:P.saveX,0,0);cam.x=P.pos.x;P.face=P.tface=0;$("#sheet").hidden=true;$("#tray").hidden=false;flash();moves();notify()}
-function renderSheet(){migrateRobotToKip();var T0=TYPES[S.type];if(!B.slot||T0.slots.indexOf(B.slot)<0)B.slot=T0.slots[0];
- $("#types").innerHTML=UI_TYPES.map(function(t){return '<button class="sc" type="button" data-t="'+t+'" aria-pressed="'+(S.type===t)+'">'+TYPES[t].n+"</button>"}).join("");
- $("#slots").innerHTML=T0.slots.map(function(s){return '<button class="sc" type="button" data-s="'+s+'" aria-pressed="'+(B.slot===s)+'">'+T0.sn[s]+"</button>"}).join("");
- $("#opts").innerHTML=slotOptionList(S.type,B.slot).map(function(o){var on=cur()[B.slot]===o.optId,lock=!isOpen(o.k);return '<button class="opt'+(on?" on":"")+(lock?" lock":"")+'" type="button" data-id="'+o.optId+'" aria-pressed="'+on+'"><b>'+o.n+'</b><span class="meta"><i style="background:'+(STATS[o.st]||LOOK).c+'"></i>'+o.l+" · "+(STATS[o.st]||LOOK).n+"</span>"+(lock?'<span class="lk">Find in '+WN[o.w]+"</span>":"")+"</button>"}).join("");
- var skinOK=S.type==="character"&&cur().base==="block";if(!skinOK&&B.z==="skin")B.z="c1";$("#seg").innerHTML='<button type="button" data-z="c1" aria-pressed="'+(B.z==="c1")+'">Main</button><button type="button" data-z="c2" aria-pressed="'+(B.z==="c2")+'">Accent</button>'+(skinOK?'<button type="button" data-z="skin" aria-pressed="'+(B.z==="skin")+'">Skin</button>':'');
- $("#sw").innerHTML=(B.z==="skin"?SKINS:PAINTS).map(function(c){return '<button class="swt" type="button" data-c="'+c+'" style="background:'+c+'" aria-label="Paint '+c+'" aria-pressed="'+(S.col[B.z]===c)+'"></button>'}).join("");
- var st=creStats();$("#moves").innerHTML="Moves: "+(Object.keys(STATS).filter(function(k){return st[k]}).map(function(k){return STATS[k].m}).join(", ")||"none");
- $("#check").innerHTML='<span class="ck ok">Ready to 3D print</span><button class="ctl primary" type="button" id="order">Order</button>';notify()}
-$("#sheet").addEventListener("click",function(e){var b=e.target.closest("button");if(!b)return;ctx();
- if(b.id==="done"){cuAct("done");return}
- if(b.id==="order"){cuAct("order");return}
- if(b.id==="reset"){cuAct("reset");return}
- if(b.dataset.t){cuType(b.dataset.t);return}
- if(b.dataset.s){cuSlot(b.dataset.s);return}
- if(b.dataset.id){cuPart(b.dataset.id);return}
- if(b.dataset.z){cuZone(b.dataset.z);return}
- if(b.dataset.c){cuPaint(b.dataset.c);return}});
+function openSheet(){if(P.busy||P.showcase||P.mDrive)return;if(B.forge)setForge(false);hostEl.classList.add("building");$("#pcard").hidden=true;P.saveX=P.pos.x;P.pos.set(FX,0,0);P.target=null;cam.x=FX;facA=-.55;P.showcase=true;$("#tray").hidden=true;flash();renderSheet()}
+function closeSheet(){if(B.forge)setForge(false);mUpdate.cur=null;hostEl.classList.remove("building");camera.clearViewOffset();P.showcase=false;P.pos.set(P.saveX==null?2:P.saveX,0,0);cam.x=P.pos.x;P.face=P.tface=0;$("#tray").hidden=false;flash();moves();notify()}
+function renderSheet(){migrateRobotToKip();moves();notify()}
 $("#pc-try").addEventListener("click",function(){var k=$("#pcard").dataset.k,p=PART[k];$("#pcard").hidden=true;if(!p||P.busy)return;if(ROBOT_TO_KIP[k]){S.type="character";migrateRobotToKip();var al=ROBOT_TO_KIP[k];S.sel.character[al.slot]=k;B.slot=al.slot;save();buildPlayer(al.slot);moves();openSheet();return}S.type=p.t;cur()[p.s]=p.id;B.slot=p.s;save();buildPlayer(p.s);moves();openSheet()});
 $("#pc-x").addEventListener("click",function(){$("#pcard").hidden=true});
 function showIntro(w){var n=WORLDS[w].spots.filter(function(d){return !S.found[d.k]}).length,e=$("#intro");$("#in-n").textContent=WORLDS[w].n;$("#in-s").textContent=n?n+(n===1?" part is":" parts are")+" hidden here":"You found every part here";e.classList.remove("on");void e.offsetWidth;e.classList.add("on")}
@@ -395,9 +379,7 @@ function showIntro(w){var n=WORLDS[w].spots.filter(function(d){return !S.found[d
 $("#tray").innerHTML=["speed","spin","glow","torque"].map(function(k){return '<button class="mv" data-k="'+k+'" type="button"><span class="pic">'+icon(k)+"</span>"+STATS[k].m+"</button>"}).join("")+'<button class="mv act" id="act" type="button" hidden><span class="pic">'+BOLTI.replace(/20/g,"32")+"</span>Unscrew</button>";
 $$(".mv[data-k]").forEach(function(b){b.addEventListener("click",function(){ctx();ability(b.getAttribute("data-k"))})});
 $("#act").addEventListener("click",function(){ctx();if(P.nearJunk)unboltNext(P.nearJunk)});
-$$(".wt").forEach(function(b){b.addEventListener("click",function(){ctx();if(P.busy)return;var w=b.getAttribute("data-w");if(w===S.world)return;S.world=w;save();flash();buildWorld(w);P.pos.set(2,0,0);P.target=null;P.face=P.tface=0;cam.x=3;updHud();sfx.pop();showIntro(w)})});
-$("#build").addEventListener("click",function(){ctx();openSheet()});
-$("#snd").addEventListener("click",function(){var on=toggleSound();this.setAttribute("aria-pressed",on);this.setAttribute("aria-label",on?"Sound on":"Sound off");this.classList.toggle("off",!on);musGain(sound&&MUS.on?.7:0,.2)});
+function switchWorld(w){if(P.busy)return;if(w===S.world)return;S.world=w;save();flash();buildWorld(w);P.pos.set(2,0,0);P.target=null;P.face=P.tface=0;cam.x=3;sfx.pop();showIntro(w)}
 var ray=new T.Raycaster(),ndc=new T.Vector2(),cam={x:2},lane=new T.Plane(new T.Vector3(0,0,1),0),hitP=new T.Vector3(),hold=null,keys={};
 function rayAt(cx,cy){var r=canvas.getBoundingClientRect();ndc.set((cx-r.left)/r.width*2-1,-(cy-r.top)/r.height*2+1);ray.setFromCamera(ndc,camera)}
 function laneX(){return ray.ray.intersectPlane(lane,hitP)?hitP.x:null}
@@ -523,19 +505,6 @@ canvas.addEventListener("pointermove",function(e){if(!ED.on||!ED.drag)return;e.s
  else{var r=canvas.getBoundingClientRect(),upp=2*ED.d*Math.tan(camera.fov*Math.PI/360)/r.height;ED.cx=Math.max(-4,Math.min(50,d.cx0-(e.clientX-d.x0)*upp))}},true);
 canvas.addEventListener("pointerup",edUp,true);canvas.addEventListener("pointercancel",function(e){if(ED.on){e.stopImmediatePropagation();ED.drag=null}},true);
 canvas.addEventListener("wheel",function(e){if(!ED.on)return;e.preventDefault();edZoom(e.deltaY>0?1.1:.9)},{passive:false});
-$("#tedit").addEventListener("click",function(){edFromTitle()});
-$("#ed-exit").addEventListener("click",edExit);$("#ed-play").addEventListener("click",edPlay);$("#ed-back").addEventListener("click",edBack);
-$("#ed-undo").addEventListener("click",edUndo);$("#ed-redo").addEventListener("click",edRedo);
-$("#ed-zi").addEventListener("click",function(){edZoom(.8)});$("#ed-zo").addEventListener("click",function(){edZoom(1.25)});
-$$("#ed-tabs button").forEach(function(t){t.addEventListener("click",function(){edSetTab(t.dataset.tab)})});
-$("#ed-name").addEventListener("change",function(){edSetName($("#ed-name").value)});
-$("#ed-theme").addEventListener("change",function(){edSetTheme($("#ed-theme").value)});
-$("#ed-new").addEventListener("change",function(){var v=$("#ed-new").value;$("#ed-new").value="";edNew(v)});
-$("#ed-export").addEventListener("click",function(){edExport()});
-$("#ed-import").addEventListener("click",function(){edImport()});
-$("#ed-close").addEventListener("click",function(){edIoClose()});
-$("#ed-copy").addEventListener("click",function(){edIoCopy()});
-$("#ed-load").addEventListener("click",function(){edSetIoText($("#ed-txt").value);edIoLoad()});
 winOn("resize",function(){if(ED.on)edView()});
 
 winOn("keydown",function(e){if(!ED.on)return;e.stopImmediatePropagation();var tg=e.target&&e.target.tagName;if(tg==="INPUT"||tg==="TEXTAREA"||tg==="SELECT")return;var k=e.key,mod=e.ctrlKey||e.metaKey;
@@ -593,7 +562,7 @@ var COVER2={
 function mInit(){S.scrap=S.scrap||0;S.bin=S.bin||{};S.bp=S.bp||{beam:1,sgear:1};S.mdone=S.mdone||{};S.ms=S.ms||{};S.prints=S.prints||{};S.ma=S.ma||{};S.me=S.me||{}}
 
 
-function mReplayPrompt(m,title){$("#mp-t").textContent=title;$("#mp-g").textContent="Solved! Play again to aim for 3 stars or practice.";$("#mp-slots").innerHTML="";$("#mp-bin").textContent="";$("#mp-forge").hidden=true;$("#mp-go").textContent="Play again";$("#mp").hidden=false;$("#mp").dataset.m=W.missions.indexOf(m);$("#mp").dataset.mid=mid(m);$("#mp").dataset.tier=String(mTier(m));mpStamp=mpData(m);notify()}
+function mReplayPrompt(m,title){curMission=m;mpOpen=true;mpStamp=mpData(m);notify()}
 
 
 
@@ -606,7 +575,7 @@ function mReplayPrompt(m,title){$("#mp-t").textContent=title;$("#mp-g").textCont
    mReplayPrompt) from the same state the HTML templates use, so the
    stamped data always matches the rendered panel. mpSnap() serves it
    without touching the DOM beyond one hidden-flag read. */
-var mpStamp=null;
+var mpStamp=null,mpOpen=false,curMission=null;
 function mpChrome(title,goal,actL,binText,forgeAvailable){return {title:title,goal:goal,actionLabel:actL,binText:binText,forgeAvailable:forgeAvailable}}
 function mpData(m){
   var tier=mTier(m),midV=mid(m);
@@ -634,13 +603,12 @@ function mpData(m){
 function mpSnap(){
   var m=(typeof mUpdate!=="undefined"&&mUpdate.cur)||null;
   if(!m||m.dismissed||!mpStamp)return {open:false};
-  var mp=$("#mp");
-  if(!mp||mp.hidden)return {open:false};
+  if(!mpOpen)return {open:false};
   return {open:true,missionId:mpStamp.mid,tier:mpStamp.tier,title:mpStamp.title,goal:mpStamp.goal,lines:mpStamp.lines,chips:mpStamp.chips,controls:mpStamp.ctrls,actionLabel:mpStamp.actionLabel,forgeAvailable:mpStamp.forgeAvailable,binText:mpStamp.binText};
 }
 /* Native mission actions (5A-U1): the same bodies the hidden #mp buttons
    ran, callable without the DOM. bind() below delegates to mpPress so both
-   paths share one implementation until Unit 3 deletes the hidden sheet. */
+   paths share one implementation; the hidden sheet is gone as of Unit 3. */
 function mpPress(m,ds){
   var T0=MT[m.type],st=null;
   function classicSt(){return mst(m)}
@@ -671,10 +639,9 @@ function mpGo(m){if(!m||P.busy||P.mDrive)return;ctx();if(m.done&&!m.replaying){m
    Unlike missions, every customizer field derives from live S/B state, so
    cuSnap() reads it directly instead of stamping at render time. The
    #sheet handler delegates to these functions, engine.ts calls them
-   directly. Hidden #sheet DOM stays until Unit 3. */
+   directly. Hidden #sheet DOM was deleted in Unit 3. */
 function cuSnap(){
-  var sheet=$("#sheet");
-  if(!sheet||sheet.hidden)return {open:false,scrap:(S.scrap||0)};
+  if(!hostEl.classList.contains("building"))return {open:false,scrap:(S.scrap||0)};
   migrateRobotToKip();
   var T0=TYPES[S.type];
   if(!B.slot||T0.slots.indexOf(B.slot)<0)B.slot=T0.slots[0];
@@ -698,7 +665,7 @@ function cuSnap(){
 function cuAct(a){
   if(a==="done"){closeSheet();return}
   if(a==="order"){sfx.found();toast("Order is mocked here. In the app a grown-up approves it.");return}
-  if(a==="reset"){S.found={};save();buildWorld(S.world);updHud();renderSheet();toast("Progress reset. Every hidden part is back in its world.");return}
+  if(a==="reset"){S.found={};save();buildWorld(S.world);moves();toast("Progress reset. Every hidden part is back in its world.");return}
   setForge(!B.forge);
 }
 function cuType(t){var nt=t==="robot"?"character":t;if(S.type!==nt){S.type=nt;save();buildPlayer(null);sfx.snap();burst(new T.Vector3(P.pos.x,1.2,P.pos.z),"rgba(155,212,255,1)",10)}renderSheet()}
@@ -706,17 +673,16 @@ function cuSlot(s){B.slot=s;sfx.pop();renderSheet()}
 function cuPart(id){var k=slotPartKey(S.type,B.slot,id),p=PART[k];if(!p)return;if(!isOpen(k)){toast("Find it in "+WN[p.w]+".");sfx.bump();return}cur()[B.slot]=id;save();buildPlayer(B.slot);partSound(k);renderSheet()}
 function cuZone(z){B.z=z;renderSheet()}
 function cuPaint(c){S.col[B.z]=c;save();buildPlayer(null);sfx.pop();burst(new T.Vector3(P.pos.x,1.4,P.pos.z),"rgba(255,255,255,1)",8);renderSheet()}
-function cuForgeTool(id){var Tt=TOOLS[id];if(!Tt)return;if(!S.bp[id]||(S.scrap||0)<Tt.cost)return;S.scrap-=Tt.cost;S.bin[id]=(S.bin[id]||0)+1;save();updHud();sfx.found();toast("Forged: "+Tt.n+".");renderForge()}
-function cuPrintTool(id){var Tt=TOOLS[id];if(!Tt||!S.bp[id])return;S.prints[id]=1;save();toast("Added "+Tt.n+" to the print list. A grown-up can order it.");renderForge()}
+function cuForgeTool(id){var Tt=TOOLS[id];if(!Tt)return;if(!S.bp[id]||(S.scrap||0)<Tt.cost)return;S.scrap-=Tt.cost;S.bin[id]=(S.bin[id]||0)+1;save();sfx.found();toast("Forged: "+Tt.n+".");notify()}
+function cuPrintTool(id){var Tt=TOOLS[id];if(!Tt||!S.bp[id])return;S.prints[id]=1;save();toast("Added "+Tt.n+" to the print list. A grown-up can order it.");notify()}
 /* Native create bridge (5A-U1 slice R): say/input state + snapshot + actions.
    crSay/crInput mirror the hidden #cr-say/#cr-in elements at the same write
    sites; crSnap() serves the snapshot without reading the DOM. Hidden #cr
-   handlers delegate to these functions. DOM stays until Unit 3. */
+   handlers delegated to these functions. Hidden DOM was deleted in Unit 3. */
 var crSay="",crInput="";
 var crMicAvail=(typeof window!=="undefined")&&!!(window.SpeechRecognition||window.webkitSpeechRecognition);
 function crSnap(){
-  var cr=$("#cr");
-  if(!cr||cr.hidden)return {open:false};
+  if(!hostEl.classList.contains("creating"))return {open:false};
   if(ED.testing||hostEl.classList.contains("testing"))return {open:false};
   var R=ED.R,themeName=null,spots=[],scenery=[],tip=false;
   if(R){
@@ -731,20 +697,20 @@ function crSnap(){
 }
 function crSubmit(text){crInput=text;crMake(text)}
 function crSetInput(t){crInput=t}
-function crUndo(){edUndo();crCards();crSay="Went back one step.";notify()}
+function crUndo(){edUndo();crSay="Went back one step.";notify()}
 function crKeep(){var L0=[];try{L0=JSON.parse(localStorage.getItem("tvMyWorlds")||"[]")}catch(e){}L0.unshift(ED.R);try{localStorage.setItem("tvMyWorlds",JSON.stringify(L0.slice(0,8)))}catch(e){}toast("Kept! Your world is saved on this device.")}
 function crPlayM(){edPlay()}
-function crCodeToggle(){CR.code=!CR.code;$("#cr-code").hidden=!CR.code;$("#cr-code-t").textContent=CR.code?"Hide the code":"Show the code";notify()}
-function crMicStart(){var SR=window.SpeechRecognition||window.webkitSpeechRecognition,mb=$("#cr-mic");if(!SR){if(mb)mb.hidden=true;return}try{var r=new SR();r.lang="en-US";r.interimResults=false;r.maxAlternatives=1;if(mb)mb.classList.add("on");r.onresult=function(e){var t=e.results[0][0].transcript;crInput=t;var inp=$("#cr-in");if(inp)inp.value=t};r.onend=function(){if(mb)mb.classList.remove("on")};r.onerror=function(){if(mb)mb.classList.remove("on")};r.start()}catch(e){if(mb)mb.hidden=true}}
+function crCodeToggle(){CR.code=!CR.code;notify()}
+function crMicStart(){var SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){toast("Voice input needs a browser with speech recognition.");return}try{var r=new SR();r.lang="en-US";r.interimResults=false;r.maxAlternatives=1;r.onresult=function(e){var t=e.results[0][0].transcript;crInput=t;notify()};r.start()}catch(e){toast("Voice input did not start.")}}
 function crFromTitle(){ctx();P.title=false;S.started=true;save();crEnter()}
 /* Native editor bridge (5A-U1 slice E): input mirrors + snapshot + actions.
    edName/edTheme/edIo/edBackLabel mirror the hidden #ed inputs and dialog
    at the same write sites; edSnap() serves the snapshot without reading the
    DOM. Hidden #ed handlers delegate to these functions. DOM stays until
    Unit 3. */
-function mpForge(){$("#mp").hidden=true;notify();openSheet();setForge(true)}
-function mpLater(m){if(m){if(m.replaying)mCancelReplay(m);m.dismissed=true}$("#mp").hidden=true;notify()}
-function scrapGain(n,why){S.scrap=(S.scrap||0)+n;save();updHud();if(why)toast("+"+n+" scrap ("+why+"). You have "+S.scrap+".")}
+function mpForge(){mpOpen=false;notify();openSheet();setForge(true)}
+function mpLater(m){if(m){if(m.replaying)mCancelReplay(m);m.dismissed=true}mpOpen=false;notify()}
+function scrapGain(n,why){S.scrap=(S.scrap||0)+n;save();if(why)toast("+"+n+" scrap ("+why+"). You have "+S.scrap+".")}
 function cylBetween(a,b,r,mat){var d=new T.Vector3().subVectors(b,a),len=d.length(),c=M(new T.CylinderGeometry(r,r,len,10),mat);c.position.copy(a).add(b).multiplyScalar(.5);c.quaternion.setFromUnitVectors(new T.Vector3(0,1,0),d.clone().normalize());return c}
 function chestMesh(){var g=new T.Group(),wd=plastic("#a8744a",{roughness:.55}),gd=metal("#ffd24d");g.add(M(rbox(1.1,.6,.75,.08),wd,0,.3,0));[-.4,.4].forEach(function(x){g.add(M(new T.BoxGeometry(.08,.62,.78),gd,x,.3,0))});var lid=new T.Group();lid.position.set(0,.6,-.37);g.add(lid);lid.add(M(rbox(1.12,.26,.77,.1),wd,0,.12,.37));[-.4,.4].forEach(function(x){lid.add(M(new T.BoxGeometry(.08,.28,.8),gd,x,.12,.37))});g.add(M(rbox(.18,.18,.06,.03),gd,0,.52,.39));g.userData.lid=lid;var gl=glowSprite("rgba(255,214,90,0.7)",1.8);gl.position.set(0,.9,.2);g.add(gl);g.userData.glow=gl;return g}
 function mBridge(m){var x=m.x,w=2.6,wm=new T.MeshPhysicalMaterial({color:"#2b9be0",roughness:.08,clearcoat:1,transparent:true,opacity:.9});var wp=new T.Mesh(new T.PlaneGeometry(w,9),wm);wp.rotation.x=-Math.PI/2;wp.position.set(x,.04,0);wp.receiveShadow=true;add(wp);
@@ -772,39 +738,26 @@ function mUpdate(dt){if(!P.showcase&&!P.mDrive)P.elev=0;if(!W.missions)return;va
  if(m.chest&&!m.opened&&m.done&&P.pos.x>m.chest.position.x-.8&&(m.type!=="lift"||P.elev>2.5)){m.opened=true;mReward(m)}
  if(m.chest){var lid=m.chest.userData.lid;if(m.opened&&lid.rotation.x>-1.9)lid.rotation.x=Math.max(-1.9,lid.rotation.x-dt*4);m.chest.userData.glow.material.opacity=.5+.3*Math.sin(t*3)}
  if(MT[m.type]&&MT[m.type].upd)MT[m.type].upd(m,dt);var z0=m.type==="lift"?3.2:(m.type==="logic"||m.type==="clean")?4.4:3.4,z1=m.type==="lift"?1.6:m.type==="raft"?1.2:.5;if(!P.showcase&&!P.busy&&!P.mDrive&&P.pos.x>m.x-z0&&P.pos.x<m.x+z1)near=m});
- if(near!==mUpdate.cur){mUpdate.cur=near;if(near&&!near.dismissed)mPanel(near);else{$("#mp").hidden=true;notify()}}
+ if(near!==mUpdate.cur){mUpdate.cur=near;if(near&&!near.dismissed)mPanel(near);else{mpOpen=false;notify()}}
  if(!near)W.missions.forEach(function(m){if(Math.abs(P.pos.x-m.x)>5)m.dismissed=false})}
 function binLine(){var parts=["Scrap "+(S.scrap||0)];Object.keys(TOOLS).forEach(function(k){if(S.bin[k])parts.push(TOOLS[k].n+" "+S.bin[k])});return parts.join("  ·  ")}
-function mPanel(m){if(MT[m.type]){mtPanel(m);return}var D=MDEF[m.type];if(m.done&&!m.replaying){mReplayPrompt(m,D.t);return}var free=m.free||m.replaying;$("#mp-forge").hidden=!!free;var st=mst(m),h="";$("#mp-t").textContent=D.t;$("#mp-g").textContent=D.goal;
- D.slots.forEach(function(sl){var cur=st[sl.id];h+='<div class="mp-slot"><div class="mp-sn"><b>'+sl.n+'</b><span>'+(cur?TOOLS[cur].n:"empty")+'</span></div><div class="mp-sb">';
-  if(cur)h+='<button class="ctl sm" type="button" data-out="'+sl.id+'">Take out</button>';else sl.acc.forEach(function(k){var n=free?9:(S.bin[k]||0);h+='<button class="ctl sm'+(n?" primary":"")+'" type="button" data-use="'+sl.id+':'+k+'"'+(n?"":" disabled")+'>'+TOOLS[k].n+(free?'':' ('+n+')')+'</button>'});h+='</div></div>'});
- $("#mp-slots").innerHTML=h;$("#mp-go").textContent=D.act;$("#mp-bin").textContent=free?"":binLine();$("#mp").hidden=false;$("#mp").dataset.m=W.missions.indexOf(m);$("#mp").dataset.mid=mid(m);$("#mp").dataset.tier=String(mTier(m));mpStamp=mpData(m);
- $$("#mp-slots [data-use]").forEach(function(b){b.onclick=function(){mpPress(m,{use:b.dataset.use})}});
- $$("#mp-slots [data-out]").forEach(function(b){b.onclick=function(){mpPress(m,{out:b.dataset.out})}});notify()}
-function curM(){return W.missions&&W.missions[+$("#mp").dataset.m]}
-async function bridgeTest(m){var st=mst(m),D=MDEF.bridge;P.mDrive=true;$("#mp").hidden=true;notify();
+function mPanel(m){if(MT[m.type]){mtPanel(m);return}var D=MDEF[m.type];if(m.done&&!m.replaying){mReplayPrompt(m,D.t);return}curMission=m;mpOpen=true;mpStamp=mpData(m);notify();return}
+function curM(){return curMission}
+async function bridgeTest(m){var st=mst(m),D=MDEF.bridge;P.mDrive=true;mpOpen=false;notify();
  if(!st.deck){mFailNote(m);await walkTo(m.x-1.75);await mWait(.4);toast("There is nothing to drive on yet. Put a beam across the river.");P.mDrive=false;mUpdate.cur=null;return}
  await walkTo(m.x-.1);if(!st.support){mFailNote(m);var pk=m.plank,T=mTier(m);fx.push({t:0,d:.6,f:function(k){pk.position.y=.14-.4*k;pk.rotation.z=Math.sin(k*Math.PI*3)*.05;P.elev=-.3*k}});await mWait(.9);toast(T<2?"It sags in the middle! Something stiff underneath would help.":T<3?"It sags in the middle. It didn't hold.":"It sagged.");
   if(!S.bp.brace&&T<2){S.bp.brace=1;save();await mWait(1.6);toast("New blueprint: Triangle brace. Triangles keep their shape. Forge one in the Factory.")}
   await walkTo(m.x-1.9);fx.push({t:0,d:.4,f:function(k){pk.position.y=-.26+.4*k;pk.rotation.z=0}});P.elev=0;P.mDrive=false;mUpdate.cur=null;return}
- m.done=true;S.mdone[mid(m)]=1;mWinNote(m);save();updHud();sfx.found();toast("The triangle holds it straight. The bridge works!");await walkTo(m.x+1.9);P.mDrive=false;await walkTo(m.x+2.5)}
-async function liftTurn(m){var st=mst(m),T=mTier(m);P.mDrive=true;$("#mp").hidden=true;notify();if(Math.abs(P.pos.x-m.px)>.2)await walkTo(m.px);P.spin=0;
+ m.done=true;S.mdone[mid(m)]=1;mWinNote(m);save();sfx.found();toast("The triangle holds it straight. The bridge works!");await walkTo(m.x+1.9);P.mDrive=false;await walkTo(m.x+2.5)}
+async function liftTurn(m){var st=mst(m),T=mTier(m);P.mDrive=true;mpOpen=false;notify();if(Math.abs(P.pos.x-m.px)>.2)await walkTo(m.px);P.spin=0;
  m.crankW=4;var msg="";if(!st.drum){await mWait(1.3);msg=T<2?"The crank turns, but nothing turns the rope drum. Put a gear in the drum slot.":T<3?"The crank turns, but nothing moves.":"Nothing moved."}
  else if(st.mid){m.slack=true;await mWait(1.5);m.slack=false;msg=T<2?"The drum turns the wrong way, so the rope unwinds. Every gear flips the direction. Take the middle gear out.":T<3?"Wrong direction. Check your gears.":"Wrong direction."}
  else if(st.drum==="sgear"){await new Promise(function(res){fx.push({t:0,d:1.4,f:function(k){m.py=.4*Math.sin(Math.PI*Math.min(1,k*1.6))},end:res})});m.py=0;msg=T<2?"Too heavy! A small gear is fast but weak. A big gear on the drum is slower but stronger.":T<3?"Too heavy for that gear.":"Still too heavy."}
- else{await new Promise(function(res){fx.push({t:0,d:2.6,f:function(k){m.py=2.6*k},end:res})});m.crankW=0;m.done=true;S.mdone[mid(m)]=1;mWinNote(m);save();updHud();sfx.found();toast("Slow and strong: the big gear lifted you!");P.mDrive=false;await walkTo(44.4);return}
+ else{await new Promise(function(res){fx.push({t:0,d:2.6,f:function(k){m.py=2.6*k},end:res})});m.crankW=0;m.done=true;S.mdone[mid(m)]=1;mWinNote(m);save();sfx.found();toast("Slow and strong: the big gear lifted you!");P.mDrive=false;await walkTo(44.4);return}
  mFailNote(m);m.crankW=0;if(msg)toast(msg);P.mDrive=false;mUpdate.cur=null}
 function mReward(m){var R=(MT[m.type]||MDEF[m.type]).rew;R.bp.forEach(function(k){S.bp[k]=1});scrapGain(R.scrap);save();joy();confetti();$("#mr-l").textContent=R.txt+" Plus "+R.scrap+" scrap.";var c=$("#mr");c.hidden=false;c.classList.remove("on");void c.offsetWidth;c.classList.add("on")}
-function forgeHTML(){var h='<p class="fg-s">Scrap: <b>'+(S.scrap||0)+'</b>. Unscrew junk machines and find parts to collect more.</p><div class="fg-list">';
- Object.keys(TOOLS).forEach(function(k){var T0=TOOLS[k],bp=!!S.bp[k],n=S.bin[k]||0,can=bp&&(S.scrap||0)>=T0.cost;h+='<div class="fg-it'+(bp?"":" lock")+'"><div class="fg-t"><b>'+(bp?T0.n:"Blueprint not found yet")+'</b><span>'+(bp?T0.d:"Solve missions to find more blueprints.")+'</span>'+(bp?'<span class="fg-n">You have '+n+'</span>':"")+'</div>';
-  if(bp)h+='<div class="fg-b"><button class="ctl sm'+(can?" primary":"")+'" type="button" data-forge="'+k+'"'+(can?"":" disabled")+'>Forge ('+T0.cost+' scrap)</button><button class="ctl sm" type="button" data-print="'+k+'">'+(S.prints[k]?"On print list":"Print it for real")+'</button></div>';h+='</div>'});return h+'</div>'}
-function renderForge(){$("#forge").innerHTML=forgeHTML();$$("#forge [data-forge]").forEach(function(b){b.onclick=function(){cuForgeTool(b.dataset.forge)}});
- $$("#forge [data-print]").forEach(function(b){b.onclick=function(){cuPrintTool(b.dataset.print)}});notify()}
-function setForge(on){B.forge=on;hostEl.classList.toggle("forging",on);$("#forgeb").setAttribute("aria-pressed",String(on));$("#forgeb").textContent=on?"Build":"Forge";$("#sh-ti").textContent=on?"Forge parts":"Build your toy";$("#forge").hidden=!on;if(on)renderForge();notify()}
-$("#forgeb").addEventListener("click",function(){cuAct("forge")});
-$("#mp-go").addEventListener("click",function(){mpGo(curM())});
-$("#mp-forge").addEventListener("click",function(){mpForge()});
-$("#mp-x").addEventListener("click",function(){mpLater(curM())});
+function setForge(on){B.forge=on;hostEl.classList.toggle("forging",on);notify()}
+
 $("#mr-f").addEventListener("click",function(){$("#mr").hidden=true;openSheet();setForge(true)});
 $("#mr-x").addEventListener("click",function(){$("#mr").hidden=true});
 var TWHY={"spanner>screw":"That’s a screw with a slot. The screwdriver fits it.","hammer>screw":"Hammers pull nails. This is a screw, so turn it with the screwdriver.",
@@ -827,12 +780,11 @@ function beltIcon(){$("#belt-ic").innerHTML=TSVG[S.tool||"box"];$("#beltb").setA
 function beltOpen(on){$("#belt").hidden=!on;$("#beltb").setAttribute("aria-expanded",String(on));if(on)$$("#belt [data-tool]").forEach(function(b){b.setAttribute("aria-pressed",String(b.dataset.tool===S.tool))})}
 $("#belt").innerHTML=Object.keys(TK).map(function(k){return '<button type="button" data-tool="'+k+'" aria-pressed="false">'+TSVG[k]+'<span>'+TK[k].n+'</span></button>'}).join("");
 $("#beltb").addEventListener("click",function(){ctx();beltOpen($("#belt").hidden)});
-$$("#belt [data-tool]").forEach(function(b){b.addEventListener("click",function(){S.tool=b.dataset.tool;save();beltIcon();beltOpen(false);sfx.pop();toast(TK[S.tool].n+" ready. "+TK[S.tool].say)})});function zoomUI(){var z=S.zoom||0;$("#zoom").setAttribute("aria-label","Zoom: "+ZN[z]);$$("#zoom i").forEach(function(d,i){d.classList.toggle("on",i<=z)})}
-function setZoom(z){S.zoom=Math.max(0,Math.min(2,z));save();zoomUI();sfx.pop()}
-$("#zoom").addEventListener("click",function(){ctx();setZoom(((S.zoom||0)+1)%3);toast("Zoom: "+ZN[S.zoom])});
+$$("#belt [data-tool]").forEach(function(b){b.addEventListener("click",function(){S.tool=b.dataset.tool;save();beltIcon();beltOpen(false);sfx.pop();toast(TK[S.tool].n+" ready. "+TK[S.tool].say)})});
+function setZoom(z){S.zoom=Math.max(0,Math.min(2,z));save();sfx.pop()}
 var zwT=0;canvas.addEventListener("wheel",function(e){if(ED.on||P.showcase)return;e.preventDefault();var n=performance.now();if(n-zwT<280)return;zwT=n;setZoom((S.zoom||0)+(e.deltaY>0?1:-1))},{passive:false});
 winOn("keydown",function(e){if(ED.on||P.showcase)return;var tg=e.target&&e.target.tagName;if(tg==="INPUT"||tg==="TEXTAREA"||tg==="SELECT")return;if((e.key||"").toLowerCase()==="z"){setZoom(((S.zoom||0)+1)%3);toast("Zoom: "+ZN[S.zoom])}});
-if(!S.tool)S.tool="screwdriver";if(S.zoom==null)S.zoom=0;beltIcon();zoomUI();
+if(!S.tool)S.tool="screwdriver";if(S.zoom==null)S.zoom=0;beltIcon();
 
 /* ===== Create mode: kids describe a world, Muse (or a word parser) builds it, they test and tweak ===== */
 var CR={busy:false,code:false};
@@ -862,36 +814,21 @@ function crClean(R,prev){if(!R||typeof R!=="object")return null;var out={format:
  out.spots.sort(function(a,b){return a.x-b.x});for(var i=1;i<out.spots.length;i++)if(out.spots[i].x-out.spots[i-1].x<4)out.spots[i].x=out.spots[i-1].x+4;out.spots=out.spots.filter(function(s){return s.x<=42});out.spots.forEach(function(s){s.x=Math.round(s.x*2)/2});
  if(out.spots.length&&!out.spots.some(function(s){return HIDE[s.hide].t==="junk"&&s.x<=10})){var jh=HKIND[0][3][THEMES[out.theme]||0];if(out.spots[0].x<=10)out.spots[0].hide=jh;else if(out.spots[0].x>=10)out.spots.unshift({part:edFreePart(),hide:jh,x:6})}
  return out}
-function crCards(){var R=ED.R,h="",cnt={};R.props.forEach(function(p){cnt[p.type]=(cnt[p.type]||0)+1});h+='<li><b>Place</b> '+esc(TNAME[R.theme])+'</li>';
- R.spots.slice().sort(function(a,b){return a.x-b.x}).forEach(function(s,i){h+='<li><b>Hidden part '+(i+1)+'</b> '+esc(PART[s.part].n)+' in the '+esc(HIDE[s.hide].n.toLowerCase())+' at step '+s.x+'</li>'});
- var ps=Object.keys(cnt).map(function(k){return cnt[k]+" "+crPl(PROPS[k].n.toLowerCase(),cnt[k])});if(ps.length)h+='<li><b>Scenery</b> '+esc(ps.join(", "))+'</li>';if(!R.spots.length)h+='<li><b>Tip</b> Ask for a cave, a tower, or a junk machine to hide parts in.</li>';
- $("#cr-cards").innerHTML=h;$("#cr-code").textContent=JSON.stringify(R,null,1);$("#cr-undo").disabled=!ED.undo.length;notify()}
 var CR_INSTR=function(R,said){var props=Object.keys(PROPS).map(function(k){return k+" ("+PROPS[k].n+")"}).join(", "),hides=HKIND.map(function(h){return h[1]+": "+h[3].join(", ")}).join("; "),parts=Object.keys(PART).filter(function(k){return PART[k].st!=="none"}).join(", ");
  return "You help a young child build a world in the ToyVentor game by turning their words into a level recipe. Reply with JSON only, no other text: {\"say\": a short, warm sentence for a child (at most 20 words) saying what you changed, \"recipe\": the full updated recipe}.\nRecipe format: {\"format\":\"toyventor.level/1\",\"id\":\"kid-world\",\"name\":short world name,\"theme\":one of garden, sky, junk, beach, snow, room,\"props\":[{\"type\":prop type,\"x\":number}],\"spots\":[{\"part\":part key,\"hide\":hiding spot,\"x\":number}]}.\nThe path runs from x 0 to x 45. Prop types: "+props+".\nHiding spots by kind: "+hides+". A junk machine is unscrewed; the others are revealed with moves.\nPart keys: "+parts+".\nRules: use only the listed types and keys; keep spots between x 4 and 42 and at least 4 apart; use 3 to 6 spots with different parts; put one junk machine before x 10; use at most 16 props; keep everything the child did not ask to change; if the request is unclear or not about the world, keep the recipe and say so kindly.\nCurrent recipe: "+JSON.stringify(R)+"\nThe child said: \""+String(said).slice(0,160).replace(/"/g,"'")+"\""};
-async function crMake(text){text=(text||"").trim();if(!text||CR.busy)return;CR.busy=true;$("#cr-make").disabled=true;$("#cr-say").textContent="Building your world…";crSay="Building your world…";notify();var res=null,prev=ED.R;
+async function crMake(text){text=(text||"").trim();if(!text||CR.busy)return;CR.busy=true;crSay="Building your world…";notify();var res=null,prev=ED.R;
  if(MUSE.url){var v=await museJSON(CR_INSTR(prev,text));if(v&&v.recipe){var c=crClean(v.recipe,prev);if(c)res={recipe:c,say:String(v.say||"Here is your world!").slice(0,160)}}}
  if(!res){var pr=crParse(text,prev);res={recipe:crClean(pr.recipe,prev)||prev,say:pr.say}}
- edPush();ED.R=res.recipe;ED.sel=null;syncEdInputs();edApply();crCards();$("#cr-say").textContent=res.say;crSay=res.say;$("#cr-in").value="";crInput="";sfx.found();CR.busy=false;$("#cr-make").disabled=false;notify()}
-function crUI(on){$("#cr").hidden=!on;hostEl.classList.toggle("creating",on);if(on){$("#ed").hidden=true;$("#ed-back").textContent="Back to making";EDX.setBackLabel("Back to making");crCards()}notify()}
-function crEnter(){ED.kid=true;var R=null;try{R=JSON.parse(localStorage.getItem("tvCreate")||"null")}catch(e){}if(!edValid(R))R={format:"toyventor.level/1",id:"kid-world",name:"My world",theme:"garden",props:[{type:"tree",x:3},{type:"lantern",x:12}],spots:[{part:"character.hat.flower",hide:"scarecrow",x:6}]};ED.R=R;ED.undo=[];ED.redo=[];edEnter();crUI(true);$("#cr-say").textContent="Tell me your world! Type, talk, or tap the picture words, then press Make it.";crSay="Tell me your world! Type, talk, or tap the picture words, then press Make it.";notify()}
-function crExit(){crUI(false);ED.kid=false;edExit();ED.R=null;$("#ed-back").textContent="Back to editor";EDX.setBackLabel("Back to editor");notify()}
-$("#cr-chips").innerHTML=CHIPS.map(function(c){return '<button type="button" class="crc">'+esc(c)+'</button>'}).join("");
-$$("#cr-chips .crc").forEach(function(b){b.addEventListener("click",function(){var w=b.textContent.replace(/^[^a-z]+/i,"").trim(),inp=$("#cr-in");inp.value=(inp.value?inp.value+" ":"")+w;sfx.pop();notify()})});
-$("#cr-make").addEventListener("click",function(){ctx();crSubmit($("#cr-in").value)});
-$("#cr-in").addEventListener("keydown",function(e){if(e.key==="Enter"){e.preventDefault();crSubmit(this.value)}});
-$("#cr-undo").addEventListener("click",function(){crUndo()});
-$("#cr-keep").addEventListener("click",function(){crKeep()});
-$("#cr-play").addEventListener("click",function(){edPlay()});$("#cr-exit").addEventListener("click",crExit);
-$("#cr-code-t").addEventListener("click",function(){crCodeToggle()});
-(function(){var SR=window.SpeechRecognition||window.webkitSpeechRecognition,mb=$("#cr-mic");if(!SR){mb.hidden=true;return}mb.addEventListener("click",function(){crMicStart()})})();
-$("#tcreate").addEventListener("click",function(){crFromTitle()});
-
+ edPush();ED.R=res.recipe;ED.sel=null;syncEdInputs();edApply();crSay=res.say;crInput="";sfx.found();CR.busy=false;notify()}
+function crUI(on){hostEl.classList.toggle("creating",on);if(on){EDX.setBackLabel("Back to making")}notify()}
+function crEnter(){ED.kid=true;var R=null;try{R=JSON.parse(localStorage.getItem("tvCreate")||"null")}catch(e){}if(!edValid(R))R={format:"toyventor.level/1",id:"kid-world",name:"My world",theme:"garden",props:[{type:"tree",x:3},{type:"lantern",x:12}],spots:[{part:"character.hat.flower",hide:"scarecrow",x:6}]};ED.R=R;ED.undo=[];ED.redo=[];edEnter();crUI(true);crSay="Tell me your world! Type, talk, or tap the picture words, then press Make it.";notify()}
+function crExit(){crUI(false);ED.kid=false;edExit();ED.R=null;EDX.setBackLabel("Back to editor");notify()}
 /* ===== STEM playground missions in 2.5D: measure, balance, logic door, raft ===== */
-var MS=createMissions({S:S,P:P,get W(){return W},fx:fx,$:$,$$:$$,toast:toast,save:save,notify:notify,updHud:updHud,creStats:creStats,mPanel:mPanel,mtPanel:mtPanel,mReplayPrompt:mReplayPrompt,mtFail:mtFail,walkTo:walkTo,hop:hop,soapWin:soapWin,joy:joy,mpPress:mpPress,add:add,resetNear:function(){mUpdate.cur=null},darkSprite:darkSprite,rockMesh:rockMesh,chestMesh:chestMesh,setTimeout:setTimeout});var MT=MS.MT,mid=MS.mid,mTier=MS.mTier,tq=MS.tq,mkk=MS.mkk,mst=MS.mst,mFailNote=MS.mFailNote,mWinNote=MS.mWinNote,mStartReplay=MS.mStartReplay,mCancelReplay=MS.mCancelReplay,clearG=MS.clearG,mtWin=MS.mtWin,mSync=MS.mSync,mWait=MS.mWait,prRounds=MS.prRounds,faceGear=MS.faceGear,textSprite=MS.textSprite,riverAt=MS.riverAt,flyAway=MS.flyAway;
+var MS=createMissions({S:S,P:P,get W(){return W},fx:fx,$:$,$$:$$,toast:toast,save:save,notify:notify,updHud:updHud,creStats:creStats,mPanel:mPanel,mtPanel:mtPanel,mReplayPrompt:mReplayPrompt,mtFail:mtFail,walkTo:walkTo,hop:hop,soapWin:soapWin,joy:joy,mpPress:mpPress,mpHide:function(){mpOpen=false},add:add,resetNear:function(){mUpdate.cur=null},darkSprite:darkSprite,rockMesh:rockMesh,chestMesh:chestMesh,setTimeout:setTimeout});var MT=MS.MT,mid=MS.mid,mTier=MS.mTier,tq=MS.tq,mkk=MS.mkk,mst=MS.mst,mFailNote=MS.mFailNote,mWinNote=MS.mWinNote,mStartReplay=MS.mStartReplay,mCancelReplay=MS.mCancelReplay,clearG=MS.clearG,mtWin=MS.mtWin,mSync=MS.mSync,mWait=MS.mWait,prRounds=MS.prRounds,faceGear=MS.faceGear,textSprite=MS.textSprite,riverAt=MS.riverAt,flyAway=MS.flyAway;
 
 
 
-function mtPanel(m){var T0=MT[m.type];if(m.done&&!m.replaying){mReplayPrompt(m,T0.t);return}$("#mp-t").textContent=T0.t;$("#mp-g").textContent=T0.goal;$("#mp-slots").innerHTML=T0.panel(m);$("#mp-go").textContent=typeof T0.actL==="function"?T0.actL(m):T0.actL;$("#mp-bin").textContent="";$("#mp-forge").hidden=true;$("#mp").hidden=false;$("#mp").dataset.m=W.missions.indexOf(m);$("#mp").dataset.mid=mid(m);$("#mp").dataset.tier=String(mTier(m));mpStamp=mpData(m);T0.bind(m);notify()}
+function mtPanel(m){var T0=MT[m.type];if(m.done&&!m.replaying){mReplayPrompt(m,T0.t);return}curMission=m;mpOpen=true;mpStamp=mpData(m);notify()}
 function mtFail(m){P.mDrive=false;mUpdate.cur=null}
 
 ;
@@ -911,7 +848,6 @@ function hop(x0,x1,h,d){return new Promise(function(res){fx.push({t:0,d:d||.5,f:
 function soapWin(m){var t=mTier(m);return t===3?[3,3]:t===2?[2,2]:[2,3]}
 ;
 
-$("#tlab").addEventListener("click",function(){ctx();startPlay(false);setTimeout(function(){var t=$('.wt[data-w="lab1"]');if(t)t.click()},60)});
 /* ---------- toy contract: the app hands over the kid's own build ---------- */
 /* Wire format toyventor.toy/1, base64url in the page hash (#toy=...). The
    app sends the toy type, the game part keys for the slots the kid filled,
@@ -925,24 +861,23 @@ function toyApply(c){if(!c||c.format!=="toyventor.toy/1")return null;if(c.type!=
  if(!sameToy)S.col=c.id==="seed-kip"?{c1:"#ffd24d",c2:"#52b7ff",skin:"#f2b98c"}:stockCol();
  c.parts.forEach(function(k){var p=PART[k];if(!p)return;if(targetType==="character"&&ROBOT_TO_KIP[k]){sl[ROBOT_TO_KIP[k].slot]=k;S.found[k]=true;return}if(p.t!==targetType)return;sl[p.s]=p.id;S.found[k]=true});
  S.type=targetType;S.toyId=c.id||S.toyId;S.sel[targetType]=sl;["c1","c2","skin"].forEach(function(z){if(/^#[0-9a-f]{6}$/i.test(col[z]||""))S.col[z]=col[z]});return c}
-function toyFromURL(){var c=options.contract?toyApply(JSON.parse(JSON.stringify(options.contract))):null;if(!c)return null;save();var tag=$("#toy-tag");if(tag&&c.name){tag.textContent="Your toy: "+String(c.name).slice(0,40);tag.hidden=false}return c}
+function toyFromURL(){var c=options.contract?toyApply(JSON.parse(JSON.stringify(options.contract))):null;if(!c)return null;save();return c}
 /* ---------- boot ---------- */
 ["character","robot","vehicle"].forEach(function(t){var sl=S.sel[t];if(!sl)return;for(var q in sl){var kk=slotPartKey(t,q,sl[q]);if(PART[kk]&&PART[kk].w&&!S.found[kk])S.found[kk]=true}});
 toyFromURL();
 mInit();
 if(!WORLDS[S.world])S.world="garden";
-setupPost(hostEl.clientWidth,hostEl.clientHeight);buildFactory();buildWorld(S.world);buildPlayer(null);moves();updHud();resize();
+setupPost(hostEl.clientWidth,hostEl.clientHeight);buildFactory();buildWorld(S.world);buildPlayer(null);moves();resize();
 P.title=true;P.showcase=true;P.pos.set(FX,0,0);cam.x=FX;facA=-.55;hostEl.classList.add("titled");S.started=true;startPlay(false);var loadEl=$("#load");if(loadEl)loadEl.hidden=true;notify();
-function startPlay(build){if(!P.title)return;P.title=false;S.started=true;save();hostEl.classList.remove("titled");$("#title").hidden=true;ctx();musInit();MUS.on=true;musGain(sound?.7:0,1.2);
+function startPlay(build){if(!P.title)return;P.title=false;S.started=true;save();hostEl.classList.remove("titled");ctx();musInit();MUS.on=true;musGain(sound?.7:0,1.2);
  if(build){P.pos.set(2,0,0);P.showcase=false;openSheet();return}
- camera.clearViewOffset();P.showcase=false;P.pos.set(2,0,0);P.face=P.tface=0;cam.x=3;flash();setTimeout(function(){showIntro(S.world)},250);setTimeout(function(){var h=$(".how");if(h)h.classList.add("gone")},9000)}
-$("#play").addEventListener("click",function(){startPlay(false)});function goHome(){if(P.title||P.busy||ED.on||ED.testing)return;if(hostEl.classList.contains("building")){hostEl.classList.remove("building");$("#sheet").hidden=true;$("#tray").hidden=false}$("#pcard").hidden=true;var tp=$(".tip");if(tp)tp.hidden=true;P.target=null;S.started=false;save();P.title=true;P.showcase=true;P.pos.set(FX,0,0);cam.x=FX;facA=-.55;hostEl.classList.add("titled");$("#title").hidden=false;musGain(sound?.3:0,1);flash();sfx.pop()}$("#home").addEventListener("click",goHome);$("#tbuild").addEventListener("click",function(){startPlay(true)});
+ camera.clearViewOffset();P.showcase=false;P.pos.set(2,0,0);P.face=P.tface=0;cam.x=3;flash();setTimeout(function(){showIntro(S.world)},250)}
 setTimeout(function(){var ld=$("#load");if(ld)ld.classList.add("gone")},150);
 rafId=requestAnimationFrame(frame);
 
-const handle = { MT:MT,Wm:function(){return W.missions},cr:{enter:crEnter,make:crMake,exit:crExit,R:function(){return ED.R},CR:CR},ed:{ED:ED,enter:edEnter,play:edPlay,back:edBack,exit:edExit,checks:function(){return edChecks(ED.R)},scr:function(x,y){var v=new T.Vector3(x,y,0).project(camera),r=canvas.getBoundingClientRect();return [(v.x+1)/2*r.width+r.left,(1-v.y)/2*r.height+r.top]}},face:function(a){facA=a},start:startPlay,composer:function(){return !!composer},P:P,spots:spots,bolts:bolts,ability:ability,S:S,unbolt:unbolt,go:function(w){var b=hostEl.querySelector('.wt[data-w="'+w+'"]');if(b)b.click()},open:openSheet,close:closeSheet,
-setToy:function(contract){ if(!contract){ S.type="character"; S.sel=stockSel(); S.col=stockCol(); buildPlayer(null); if(!$("#sheet").hidden)renderSheet(); moves(); updHud(); notify(); return; } var c=toyApply(JSON.parse(JSON.stringify(contract))); if(c){ buildPlayer(null); if(!$("#sheet").hidden)renderSheet(); moves(); updHud(); notify(); } },
-seedDemo:function(){ mInit(); S.scrap=Math.max(S.scrap||0,12); S.bp.beam=1; S.bp.brace=1; S.bp.sgear=1; S.bp.bgear=1; S.bp.gearpair=1; S.bin.beam=Math.max(S.bin.beam||0,2); S.bin.brace=Math.max(S.bin.brace||0,2); S.bin.sgear=Math.max(S.bin.sgear||0,2); S.bin.bgear=Math.max(S.bin.bgear||0,2); delete S.mdone["garden.bridge"]; delete S.ms["garden.bridge"]; $("#mp").hidden=true; S.world="garden"; buildWorld("garden"); P.pos.set(6.5,0,0); P.target=null; P.elev=0; cam.x=7.5; updHud(); save(); toast("Demo save ready in Garden."); notify(); },
+const handle = { MT:MT,Wm:function(){return W.missions},cr:{enter:crEnter,make:crMake,exit:crExit,R:function(){return ED.R},CR:CR},ed:{ED:ED,enter:edEnter,play:edPlay,back:edBack,exit:edExit,checks:function(){return edChecks(ED.R)},scr:function(x,y){var v=new T.Vector3(x,y,0).project(camera),r=canvas.getBoundingClientRect();return [(v.x+1)/2*r.width+r.left,(1-v.y)/2*r.height+r.top]}},face:function(a){facA=a},start:startPlay,composer:function(){return !!composer},P:P,spots:spots,bolts:bolts,ability:ability,S:S,unbolt:unbolt,go:function(w){switchWorld(w)},open:openSheet,close:closeSheet,
+setToy:function(contract){ if(!contract){ S.type="character"; S.sel=stockSel(); S.col=stockCol(); buildPlayer(null); moves(); notify(); return; } var c=toyApply(JSON.parse(JSON.stringify(contract))); if(c){ buildPlayer(null); moves(); notify(); } },
+seedDemo:function(){ mInit(); S.scrap=Math.max(S.scrap||0,12); S.bp.beam=1; S.bp.brace=1; S.bp.sgear=1; S.bp.bgear=1; S.bp.gearpair=1; S.bin.beam=Math.max(S.bin.beam||0,2); S.bin.brace=Math.max(S.bin.brace||0,2); S.bin.sgear=Math.max(S.bin.sgear||0,2); S.bin.bgear=Math.max(S.bin.bgear||0,2); delete S.mdone["garden.bridge"]; delete S.ms["garden.bridge"]; mpOpen=false; S.world="garden"; buildWorld("garden"); P.pos.set(6.5,0,0); P.target=null; P.elev=0; cam.x=7.5; save(); toast("Demo save ready in Garden."); notify(); },
 getWorld:function(){return S.world},
 setTier:function(t){t=t===2||t===3?t:1;var m=curM();if(!m||W.missions.indexOf(m)<0||P.busy||P.mDrive)return;var k=mid(m),cur=mTier(m);if(m.done&&!m.replaying){mStartReplay(m);S.ms[k]={tier:t};if(MT[m.type]){MT[m.type].st&&MT[m.type].st(m);MT[m.type].sync(m)}else mSync(m);save();mPanel(m);return}if(cur===t){mPanel(m);return}var old=S.ms[k]||{};if(!m.free&&!m.replaying){["deck","support","mid","drum"].forEach(function(sl){if(old[sl])S.bin[old[sl]]=(S.bin[old[sl]]||0)+1})}S.ms[k]={tier:t};if(MT[m.type]){MT[m.type].st&&MT[m.type].st(m);MT[m.type].sync(m)}else mSync(m);save();mPanel(m);},
 mpSnap:function(){try{return mpSnap()}catch(e){return {open:false}}},

@@ -4,7 +4,7 @@
 // live Checks pass/total), inspector selects, palette rows, check rows, and
 // the import/export dialog state. world.ts holds the input-mirror strings
 // (name/theme/io/back-label) in closure vars set at the same sites that
-// wrote the hidden DOM. TEMP MIRROR: hidden #ed DOM stays until Unit 3.
+// wrote the hidden DOM. Unit 3 deleted the hidden #ed DOM; this is the source.
 
 export interface EdTab {
   id: string;

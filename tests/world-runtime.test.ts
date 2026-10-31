@@ -10,14 +10,18 @@ describe("native world runtime (Phase 0A)", () => {
     }
   });
 
-  it("stage CSS hides React-owned backing sheets and has valid scoped keyframes/braces", () => {
+  it("stage CSS ships only the diegetic layer and has valid scoped keyframes/braces", () => {
     const opens = (STAGE_CSS.match(/\{/g) ?? []).length;
     const closes = (STAGE_CSS.match(/\}/g) ?? []).length;
     expect(opens).toBe(closes);
     expect(STAGE_CSS).not.toContain(":root");
     expect(STAGE_CSS).not.toMatch(/\.tv-stage-canvas-host\s+\d+%/);
-    for (const hiddenId of ["#sheet", "#mp", "#cr", "#ed", "#ed-io", "#ed-back"]) {
-      expect(STAGE_CSS).toContain(`.tv-stage-canvas-host ${hiddenId}`);
+    // Unit 3: backing sheets/bars are deleted, not hidden — no rules remain.
+    for (const gone of ["#sheet", "#mp", "#cr", "#ed", "#ed-io", "#ed-back", ".bar1", ".wt", ".mp-", ".ed-", ".sheet"]) {
+      expect(STAGE_CSS).not.toContain(gone);
+    }
+    for (const kept of [".tray", ".belt", ".pcard", ".toast", ".bubble", ".intro"]) {
+      expect(STAGE_CSS).toContain(kept);
     }
   });
 
@@ -107,8 +111,11 @@ describe("native world runtime (Phase 0A)", () => {
     expect(text).not.toContain("S.me[mid(m)]");
     expect(text.match(/S\.me\[mkk\(m\)\]/g)?.length).toBeGreaterThanOrEqual(6);
 
-    // Bug 2 & 4: #mp stamps dataset.tier across mReplayPrompt, mPanel, and mtPanel.
-    expect(text.match(/\$\("#mp"\)\.dataset\.tier=String\(mTier\(m\)\)/g)?.length).toBe(3);
+    // Bug 2 & 4 (Unit 3): no #mp DOM; the live mission rides curMission/mpOpen
+    // across mReplayPrompt, mPanel, and mtPanel (mpSnap serves the snapshot).
+    expect(text).not.toContain('$("#mp")');
+    expect(text.match(/curMission=m/g)?.length).toBe(3);
+    expect(text).toContain("if(!mpOpen)return {open:false}");
 
     // Bug 2: measure scales unit width by 3/gap and rebuilds ruler posts; balance stacks L/2; logic initializes NOT gate with A=1.
     expect(text).toContain("u:function(m){return 3/this.gap(m)}");
@@ -197,7 +204,8 @@ describe("native world runtime (Phase 0A)", () => {
     expect(text).not.toContain("function checkBad(");
     expect(text).not.toContain("FLAG={");
     expect(text).not.toContain("S.fixed");
-    expect(text).toContain("Ready to 3D print");
+    // Unit 3: the print-ready copy lives in the customizer snapshot, not hidden DOM.
+    expect(text).not.toContain("Ready to 3D print");
     expect(sceneText).toContain("function gear(r: number, th: number, mat: THREE.Material, teeth?: number)");
     expect(text).toContain("gear(.9,.2,plastic(\"#2c3f94\"),12)");
     expect(text).toContain("gear(.6,.2,plastic(\"#3c55b8\"),8)");
