@@ -859,6 +859,23 @@ interface LegacyHooks {
   close?: () => void;
   seedDemo?: () => void;
   setTier?: (tier: number) => void;
+  /** Stamped mission-panel snapshot, served without touching the DOM. */
+  mpSnap?: () => RawMissionPanelSnapshot;
+  /** Press stamped mission control i (honors its disabled flag). */
+  mpPress?: (index: number) => void;
+  /** Mission primary action without synthetic clicks. */
+  mpAct?: (action: MissionAction) => void;
+  /** Live customizer snapshot, served without touching the DOM. */
+  cuSnap?: () => RawCustomizerSnapshot;
+  /** Customizer actions without synthetic clicks. */
+  cuAct?: (action: FactoryAction) => void;
+  cuType?: (toyType: string) => void;
+  cuSlot?: (slot: string) => void;
+  cuPart?: (partId: string) => void;
+  cuZone?: (zone: PaintZone) => void;
+  cuPaint?: (color: string) => void;
+  cuForgeTool?: (toolId: string) => void;
+  cuPrintTool?: (toolId: string) => void;
   cr?: {
     enter?: () => void;
     make?: (text: string) => void;
@@ -866,6 +883,41 @@ interface LegacyHooks {
     R?: () => unknown;
     CR?: { busy?: boolean; code?: boolean };
   };
+  /** Live editor snapshot, served without touching the DOM. */
+  edSnap?: () => RawEditorSnapshot;
+  /** Editor actions without synthetic clicks. */
+  edUndo?: () => void;
+  edRedo?: () => void;
+  edZoomBy?: (factor: number) => void;
+  edExport?: () => void;
+  edImport?: () => void;
+  edSetName?: (name: string) => void;
+  edSetTheme?: (theme: string) => void;
+  edNew?: (value: string) => void;
+  edSetTab?: (tab: string) => void;
+  edArm?: (index: number) => void;
+  edControl?: (index: number) => void;
+  edNudge?: (direction: number) => void;
+  edDelete?: () => void;
+  edDoneSel?: () => void;
+  edSetHide?: (value: string) => void;
+  edSetPart?: (value: string) => void;
+  edSetIoText?: (text: string) => void;
+  edIoCopy?: () => void;
+  edIoLoad?: () => void;
+  edIoClose?: () => void;
+  edFromTitle?: () => void;
+  /** Live create snapshot, served without touching the DOM. */
+  crSnap?: () => RawCreateSnapshot;
+  /** Create actions without synthetic clicks. */
+  crSubmit?: (text: string) => void;
+  crSetInput?: (text: string) => void;
+  crUndo?: () => void;
+  crKeep?: () => void;
+  crPlay?: () => void;
+  crCodeToggle?: () => void;
+  crMicStart?: () => void;
+  crFromTitle?: () => void;
   ed?: {
     ED?: {
       on?: boolean;
@@ -991,58 +1043,11 @@ export function createEngine(
     return lines.map(cleanText).filter(Boolean);
   };
 
+  // Native mission read (5A-U1): the runtime stamps snapshot data at render
+  // time, so there is nothing to scrape from the hidden #mp sheet.
   const readMissionPanel = (): MissionPanelSnapshot => {
-    const frameDoc = doc();
-    const panel = frameDoc?.querySelector<HTMLElement>("#mp");
-    if (!frameDoc || !panel || panel.hidden) return normalizeMissionPanelSnapshot();
-
-    const lines = [...frameDoc.querySelectorAll<HTMLElement>("#mp-slots .mp-stat")].flatMap(
-      textLines,
-    );
-    const groupOf = (button: HTMLButtonElement): string | undefined => {
-      const header = button.closest(".mp-slot")?.querySelector(".mp-sn");
-      if (!header) return undefined;
-      const name = textOf(header.querySelector("b"));
-      const status = textOf(header.querySelector("span"));
-      return [name, status].filter(Boolean).join(" · ") || textOf(header) || undefined;
-    };
-    const controls = buttonList(frameDoc, "#mp-slots button").map((button, index) => ({
-      index,
-      label: textOf(button),
-      disabled: button.disabled,
-      primary: button.classList.contains("primary"),
-      active: pressed(button),
-      danger: button.classList.contains("bad"),
-      dataset: Object.fromEntries(
-        Object.entries(button.dataset).filter(
-          (entry): entry is [string, string] => typeof entry[1] === "string",
-        ),
-      ),
-      group: groupOf(button),
-      borderColor: button.style.borderColor || undefined,
-    }));
-    const forgeButton = frameDoc.querySelector<HTMLElement>("#mp-forge");
-    const rawTier = Number(panel.dataset.tier);
-
-    return normalizeMissionPanelSnapshot({
-      open: true,
-      missionId: panel.dataset.mid ?? null,
-      tier: rawTier === 2 || rawTier === 3 ? rawTier : 1,
-      title: textOf(frameDoc.querySelector("#mp-t")),
-      goal: textOf(frameDoc.querySelector("#mp-g")),
-      lines,
-      chips: [...frameDoc.querySelectorAll<HTMLElement>("#mp-slots .pseq span")].map(
-        (chip) => ({
-          text: textOf(chip),
-          question: chip.classList.contains("q"),
-          background: chip.style.background || undefined,
-        }),
-      ),
-      controls,
-      actionLabel: textOf(frameDoc.querySelector("#mp-go")),
-      forgeAvailable: Boolean(forgeButton && !forgeButton.hidden),
-      binText: textOf(frameDoc.querySelector("#mp-bin")),
-    });
+    const snap = hooks()?.mpSnap?.();
+    return normalizeMissionPanelSnapshot(snap ?? undefined);
   };
 
   const cloneValue = (value: unknown): unknown => {
@@ -1053,39 +1058,11 @@ export function createEngine(
     }
   };
 
+  // Native create read (5A-U1 slice R): the runtime serves the same
+  // snapshot from live state, so there is nothing left to scrape.
   const readCreate = (): CreateSnapshot => {
-    const frameDoc = doc();
-    const panel = frameDoc?.querySelector<HTMLElement>("#cr");
-    const api = hooks();
-    if (
-      !frameDoc ||
-      !panel ||
-      panel.hidden ||
-      api?.ed?.ED?.testing ||
-      frameDoc.classList.contains("testing")
-    ) {
-      return normalizeCreateSnapshot();
-    }
-    const make = frameDoc.querySelector<HTMLButtonElement>("#cr-make");
-    const mic = frameDoc.querySelector<HTMLButtonElement>("#cr-mic");
-    return normalizeCreateSnapshot({
-      open: true,
-      busy: Boolean(api?.cr?.CR?.busy ?? make?.disabled),
-      say: textOf(frameDoc.querySelector("#cr-say")),
-      inputValue: frameDoc.querySelector<HTMLInputElement>("#cr-in")?.value ?? "",
-      chips: buttonList(frameDoc, "#cr-chips button").map((button) => textOf(button)),
-      cards: [...frameDoc.querySelectorAll<HTMLElement>("#cr-cards li")].map((item) => {
-        const title = textOf(item.querySelector("b"));
-        const whole = textOf(item);
-        return { title, text: title && whole.startsWith(title) ? whole.slice(title.length).trim() : whole };
-      }),
-      canUndo: !frameDoc.querySelector<HTMLButtonElement>("#cr-undo")?.disabled,
-      codeVisible: Boolean(
-        api?.cr?.CR?.code ?? !frameDoc.querySelector<HTMLElement>("#cr-code")?.hidden,
-      ),
-      micAvailable: Boolean(mic && !mic.hidden),
-      recipe: cloneValue(api?.cr?.R?.()),
-    });
+    const snap = hooks()?.crSnap?.();
+    return normalizeCreateSnapshot(snap ?? undefined);
   };
 
   const newFrameEvent = (_frameWindow: unknown, name: string): Event =>
@@ -1116,8 +1093,8 @@ export function createEngine(
       return;
     }
     if (api.ed?.ED?.on && !api.ed.ED.kid) api.ed.exit?.();
-    if (api.P?.title) click("#tcreate");
-    else if (!doc()?.classList.contains("creating")) api.cr.enter?.();
+    if (api.P?.title) api.crFromTitle?.();
+    else if (!api.crSnap?.()?.open) api.cr.enter?.();
     poll();
   }
 
@@ -1129,7 +1106,7 @@ export function createEngine(
       return;
     }
     if (api.ed.ED?.kid) api.cr?.exit?.();
-    if (api.P?.title) click("#tedit");
+    if (api.P?.title) api.edFromTitle?.();
     else if (!api.ed.ED?.on) {
       if (api.ed.ED) api.ed.ED.kid = false;
       api.ed.enter?.();
@@ -1137,177 +1114,18 @@ export function createEngine(
     poll();
   }
 
+  // Native editor read (5A-U1 slice E): the runtime serves the same
+  // snapshot from live state, so there is nothing left to scrape.
   const readEditor = (): EditorSnapshot => {
-    const frameDoc = doc();
-    const api = hooks();
-    const edState = api?.ed?.ED;
-    const testing = Boolean(edState?.testing);
-    const mode: EditorMode = edState?.kid ? "create" : "editor";
-    const backLabel = textOf(frameDoc?.querySelector("#ed-back")) || "Back to editor";
-    const panel = frameDoc?.querySelector<HTMLElement>("#ed");
-    if (!frameDoc || !panel || panel.hidden || !edState?.on || edState.kid) {
-      return normalizeEditorSnapshot({ open: false, testing, mode, backLabel });
-    }
-
-    const bodyButtons = buttonList(frameDoc, "#ed-body button");
-    const paletteButtons = buttonList(frameDoc, "#ed-body .ed-pal button");
-    const paletteSet = new Set<Element>(paletteButtons);
-    const ioPanel = frameDoc.querySelector<HTMLElement>("#ed-io");
-    const ioText = frameDoc.querySelector<HTMLTextAreaElement>("#ed-txt");
-
-    return normalizeEditorSnapshot({
-      open: true,
-      testing,
-      mode,
-      backLabel,
-      name: frameDoc.querySelector<HTMLInputElement>("#ed-name")?.value ?? "",
-      theme: frameDoc.querySelector<HTMLSelectElement>("#ed-theme")?.value ?? "garden",
-      tab: edState.tab,
-      tabs: buttonList(frameDoc, "#ed-tabs button").map((button) => ({
-        id: button.dataset.tab ?? "",
-        label: textOf(button),
-        selected: pressed(button),
-      })),
-      canUndo: !frameDoc.querySelector<HTMLButtonElement>("#ed-undo")?.disabled,
-      canRedo: !frameDoc.querySelector<HTMLButtonElement>("#ed-redo")?.disabled,
-      selectedTitle: textOf(frameDoc.querySelector("#ed-body .ed-insp > b")),
-      lines: [...frameDoc.querySelectorAll<HTMLElement>("#ed-body .ed-mut")]
-        .filter((element) => !element.closest(".ed-chk"))
-        .map((element) => textOf(element)),
-      palette: paletteButtons.map((button, index) => {
-        const label = textOf(button.querySelector("b")) || textOf(button);
-        const detail = [...button.querySelectorAll("span")]
-          .map((span) => textOf(span))
-          .find(Boolean) ?? "";
-        return {
-          index,
-          label,
-          detail,
-          selected: pressed(button),
-          color: button.querySelector<HTMLElement>("i")?.style.background || undefined,
-        };
-      }),
-      controls: bodyButtons
-        .filter((button) => !paletteSet.has(button))
-        .map((button, index) => ({
-          index,
-          label: textOf(button),
-          disabled: button.disabled,
-          primary: button.classList.contains("primary"),
-        })),
-      selects: [...frameDoc.querySelectorAll<HTMLSelectElement>("#ed-body select")].map(
-        (select, index) => ({
-          index,
-          label: textOf(select.closest("label")?.childNodes[0] as ChildNode | undefined),
-          value: select.value,
-          options: [...select.options].map((option) => ({
-            value: option.value,
-            label: textOf(option),
-            selected: option.selected,
-            group:
-              option.parentElement instanceof HTMLOptGroupElement
-                ? option.parentElement.label
-                : option.parentElement?.tagName === "OPTGROUP"
-                  ? (option.parentElement as HTMLOptGroupElement).label
-                  : undefined,
-          })),
-        }),
-      ),
-      checks: [...frameDoc.querySelectorAll<HTMLElement>("#ed-body .ed-chk li")].map(
-        (item) => ({
-          title: textOf(item.querySelector("b")),
-          detail: textOf(item.querySelector(".ed-mut")),
-          ok: item.classList.contains("ok"),
-        }),
-      ),
-      io: {
-        open: Boolean(ioPanel && !ioPanel.hidden),
-        title: textOf(frameDoc.querySelector("#ed-io-t")) || "Level file",
-        text: ioText?.value ?? "",
-        readOnly: Boolean(ioText?.readOnly),
-        canCopy: !frameDoc.querySelector<HTMLButtonElement>("#ed-copy")?.hidden,
-        canLoad: !frameDoc.querySelector<HTMLButtonElement>("#ed-load")?.hidden,
-      },
-      recipe: cloneValue(edState.R),
-    });
+    const snap = hooks()?.edSnap?.();
+    return normalizeEditorSnapshot(snap ?? undefined);
   };
 
+  // Native customizer read (5A-U1 slice C): the runtime serves the same
+  // snapshot from live state, so there is nothing left to scrape.
   const readCustomizer = (save: LegacySave): CustomizerSnapshot => {
-    const frameDoc = doc();
-    const sheet = frameDoc?.querySelector<HTMLElement>("#sheet");
-    if (!frameDoc || !sheet || sheet.hidden) {
-      return normalizeCustomizerSnapshot({ open: false, scrap: save.scrap });
-    }
-
-    const forge = frameDoc.classList.contains("forging");
-    const options = buttonList(frameDoc, "#opts button").map((button) => ({
-      id: button.dataset.id ?? "",
-      label: textOf(button.querySelector("b")) || textOf(button),
-      detail: textOf(button.querySelector(".meta")),
-      selected: pressed(button),
-      locked: button.classList.contains("lock"),
-      lockLabel: textOf(button.querySelector(".lk")),
-      statColor: button.querySelector<HTMLElement>(".meta i")?.style.background,
-    }));
-    const check = frameDoc.querySelector<HTMLElement>("#check .ck");
-    const forgeItems: ForgeItem[] = forge
-      ? [...frameDoc.querySelectorAll<HTMLElement>("#forge .fg-it")].map((item) => {
-          const forgeButton = item.querySelector<HTMLButtonElement>("[data-forge]");
-          const printButton = item.querySelector<HTMLButtonElement>("[data-print]");
-          const countText = textOf(item.querySelector(".fg-n"));
-          const count = /(\d+)/.exec(countText)?.[1];
-          const description =
-            [...item.querySelectorAll<HTMLElement>(".fg-t span")]
-              .map((span) => textOf(span))
-              .find((text) => text && !text.startsWith("You have")) ?? "";
-          return {
-            id: forgeButton?.dataset.forge ?? printButton?.dataset.print ?? null,
-            label: textOf(item.querySelector(".fg-t b")) || "Forge item",
-            description,
-            owned: count ? Number(count) : null,
-            locked: item.classList.contains("lock"),
-            canForge: Boolean(forgeButton && !forgeButton.disabled),
-            forgeLabel: textOf(forgeButton),
-            printLabel: textOf(printButton),
-            onPrintList: textOf(printButton).startsWith("On print list"),
-          };
-        })
-      : [];
-
-    return normalizeCustomizerSnapshot({
-      open: true,
-      forge,
-      toyType: save.type,
-      types: buttonList(frameDoc, "#types button").map((button) => ({
-        id: button.dataset.t ?? "",
-        label: textOf(button),
-        selected: pressed(button),
-      })),
-      slots: buttonList(frameDoc, "#slots button").map((button) => ({
-        id: button.dataset.s ?? "",
-        label: textOf(button),
-        selected: pressed(button),
-      })),
-      options,
-      paintZones: buttonList(frameDoc, "#seg button").map((button) => ({
-        id: (button.dataset.z ?? "c1") as PaintZone,
-        label: textOf(button),
-        selected: pressed(button),
-      })),
-      paints: buttonList(frameDoc, "#sw button").map((button) => ({
-        color: button.dataset.c ?? "",
-        selected: pressed(button),
-      })),
-      moves: textOf(frameDoc.querySelector("#moves")),
-      checkText: textOf(check),
-      checkOk: check?.classList.contains("ok")
-        ? true
-        : check?.classList.contains("bad")
-          ? false
-          : null,
-      scrap: save.scrap,
-      forgeItems,
-    });
+    const snap = hooks()?.cuSnap?.();
+    return normalizeCustomizerSnapshot({ ...snap, scrap: save.scrap });
   };
 
   function openCustomizerNow(mode: "build" | "forge" = "build") {
@@ -1319,8 +1137,8 @@ export function createEngine(
     }
     suppressLegacyPanels();
     if (api.P?.title) api.start?.(true);
-    else if (!doc()?.querySelector("#sheet:not([hidden])")) api.open?.();
-    if (mode === "forge" && !doc()?.classList.contains("forging")) click("#forgeb");
+    else if (!api.cuSnap?.()?.open) api.open?.();
+    if (mode === "forge" && !api.cuSnap?.()?.forge) api.cuAct?.("forge");
     poll();
   }
 
@@ -1488,13 +1306,11 @@ export function createEngine(
     },
     missionAction: (action) => {
       suppressLegacyPanels();
-      click(action === "test" ? "#mp-go" : action === "forge" ? "#mp-forge" : "#mp-x");
+      hooks()?.mpAct?.(action);
       poll();
     },
     missionControl: (index) => {
-      const button = buttonList(doc(), "#mp-slots button")[index];
-      if (!button || button.disabled) return;
-      button.click();
+      hooks()?.mpPress?.(index);
       poll();
     },
     setMissionTier: (tier) => {
@@ -1508,33 +1324,40 @@ export function createEngine(
       closeCustomizerNow();
     },
     setToyType: (toyType) => {
-      if (clickWhere("#types button", (button) => button.dataset.t === toyType)) poll();
+      hooks()?.cuType?.(toyType);
+      poll();
     },
     selectSlot: (slot) => {
-      if (clickWhere("#slots button", (button) => button.dataset.s === slot)) poll();
+      hooks()?.cuSlot?.(slot);
+      poll();
     },
     selectPart: (partId) => {
-      if (clickWhere("#opts button", (button) => button.dataset.id === partId)) poll();
+      hooks()?.cuPart?.(partId);
+      poll();
     },
     setPaintZone: (zone) => {
-      if (clickWhere("#seg button", (button) => button.dataset.z === zone)) poll();
+      hooks()?.cuZone?.(zone);
+      poll();
     },
     setPaint: (color) => {
-      if (clickWhere("#sw button", (button) => button.dataset.c === color)) poll();
+      hooks()?.cuPaint?.(color);
+      poll();
     },
     factoryAction: (action) => {
       if (action === "done") {
         closeCustomizerNow();
         return;
       }
-      click(action === "forge" ? "#forgeb" : `#${action}`);
+      hooks()?.cuAct?.(action);
       poll();
     },
     forgeTool: (toolId) => {
-      if (clickWhere("#forge button", (button) => button.dataset.forge === toolId)) poll();
+      hooks()?.cuForgeTool?.(toolId);
+      poll();
     },
     printTool: (toolId) => {
-      if (clickWhere("#forge button", (button) => button.dataset.print === toolId)) poll();
+      hooks()?.cuPrintTool?.(toolId);
+      poll();
     },
     openCreate: () => {
       openCreateNow();
@@ -1546,26 +1369,20 @@ export function createEngine(
       poll();
     },
     setCreateInput: (text) => {
-      setFrameValue("#cr-in", text);
+      hooks()?.crSetInput?.(text);
     },
     createMake: (text) => {
       if (disposed || !text.trim()) return;
-      setFrameValue("#cr-in", text);
-      hooks()?.cr?.make?.(text);
+      hooks()?.crSubmit?.(text);
       poll();
     },
     createAction: (action) => {
-      click(
-        action === "undo"
-          ? "#cr-undo"
-          : action === "keep"
-            ? "#cr-keep"
-            : action === "play"
-              ? "#cr-play"
-              : action === "code"
-                ? "#cr-code-t"
-                : "#cr-mic",
-      );
+      const api = hooks();
+      if (action === "undo") api?.crUndo?.();
+      else if (action === "keep") api?.crKeep?.();
+      else if (action === "play") api?.crPlay?.();
+      else if (action === "code") api?.crCodeToggle?.();
+      else api?.crMicStart?.();
       poll();
     },
     openEditor: () => {
@@ -1578,65 +1395,56 @@ export function createEngine(
       poll();
     },
     editorAction: (action) => {
-      if (action === "play") hooks()?.ed?.play?.();
-      else if (action === "back") hooks()?.ed?.back?.();
-      else {
-        click(
-          action === "undo"
-            ? "#ed-undo"
-            : action === "redo"
-              ? "#ed-redo"
-              : action === "zoomIn"
-                ? "#ed-zi"
-                : action === "zoomOut"
-                  ? "#ed-zo"
-                  : action === "export"
-                    ? "#ed-export"
-                    : "#ed-import",
-        );
-      }
+      const api = hooks();
+      if (action === "play") api?.ed?.play?.();
+      else if (action === "back") api?.ed?.back?.();
+      else if (action === "undo") api?.edUndo?.();
+      else if (action === "redo") api?.edRedo?.();
+      else if (action === "zoomIn") api?.edZoomBy?.(0.8);
+      else if (action === "zoomOut") api?.edZoomBy?.(1.25);
+      else if (action === "export") api?.edExport?.();
+      else api?.edImport?.();
       poll();
     },
     setEditorName: (name) => {
-      if (setFrameValue("#ed-name", name, "change")) poll();
+      hooks()?.edSetName?.(name);
+      poll();
     },
     setEditorTheme: (theme) => {
-      if (setFrameValue("#ed-theme", theme, "change")) poll();
+      hooks()?.edSetTheme?.(theme);
+      poll();
     },
     editorNew: (value) => {
-      if (value && setFrameValue("#ed-new", value, "change")) poll();
+      if (value) {
+        hooks()?.edNew?.(value);
+        poll();
+      }
     },
     setEditorTab: (tab) => {
-      if (clickWhere("#ed-tabs button", (button) => button.dataset.tab === tab)) poll();
+      hooks()?.edSetTab?.(tab);
+      poll();
     },
     editorPalette: (index) => {
-      const button = buttonList(doc(), "#ed-body .ed-pal button")[index];
-      if (!button) return;
-      button.click();
+      hooks()?.edArm?.(index);
       poll();
     },
     editorControl: (index) => {
-      const palette = new Set(buttonList(doc(), "#ed-body .ed-pal button"));
-      const button = buttonList(doc(), "#ed-body button").filter(
-        (candidate) => !palette.has(candidate),
-      )[index];
-      if (!button || button.disabled) return;
-      button.click();
+      hooks()?.edControl?.(index);
       poll();
     },
     setEditorSelect: (index, value) => {
-      const select = doc()?.querySelectorAll<HTMLSelectElement>("#ed-body select")[index];
-      const frameWindow = window;
-      if (!select) return;
-      select.value = value;
-      select.dispatchEvent(newFrameEvent(frameWindow, "change"));
+      if (index === 0) hooks()?.edSetHide?.(value);
+      else hooks()?.edSetPart?.(value);
       poll();
     },
     setEditorIoText: (text) => {
-      setFrameValue("#ed-txt", text);
+      hooks()?.edSetIoText?.(text);
     },
     editorIoAction: (action) => {
-      click(action === "copy" ? "#ed-copy" : action === "load" ? "#ed-load" : "#ed-close");
+      const api = hooks();
+      if (action === "copy") api?.edIoCopy?.();
+      else if (action === "load") api?.edIoLoad?.();
+      else api?.edIoClose?.();
       poll();
     },
     start: () => {

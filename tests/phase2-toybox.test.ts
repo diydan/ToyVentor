@@ -166,10 +166,15 @@ describe("Phase 2 — Enabled-Only Toy Box Roster & Kip Wardrobe", () => {
   });
 
   it("maps all 25 robot.* parts (including all 11 world spots) onto Kip Character slots", () => {
-    const worldRuntimeSrc = readFileSync(
-      resolve(process.cwd(), "src/features/game/world/runtime/world.ts"),
-      "utf8",
-    );
+    // Unit 2 (5A) split the runtime: ROWS now lives in catalog.ts.
+    const worldRuntimeSrc = ["world.ts", "catalog.ts"]
+      .map((f) =>
+        readFileSync(
+          resolve(process.cwd(), `src/features/game/world/runtime/${f}`),
+          "utf8",
+        ),
+      )
+      .join("\n");
     // Extract every `["robot",...]` row from `ROWS` in the runtime
     const robotRowMatches = Array.from(
       worldRuntimeSrc.matchAll(

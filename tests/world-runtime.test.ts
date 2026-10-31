@@ -110,9 +110,71 @@ describe("native world runtime (Phase 0A)", () => {
     expect(text).toContain('Almost! Up beats down by "+n.n+", and this tier needs +"+need+". Try barrels and logs.');
   });
 
-  it("retires the theatrical fix warning and meshes background gears", async () => {
-    const text = await (await import("node:fs/promises")).readFile(
+  it("Unit 2 keeps shared static content init-once in modules (StrictMode remount safe)", async () => {
+    const fs = await import("node:fs/promises");
+    const text = await fs.readFile(
       new URL("../src/features/game/world/runtime/world.ts", import.meta.url),
+      "utf8",
+    );
+    // Static table fills must not run per factory call: a second
+    // createWorldRuntime (StrictMode remount) would duplicate LEVELS and
+    // double-wrap sfx. They live at module import time instead.
+    expect(text).not.toContain("LEVELS.push(");
+    expect(text).not.toContain("WORLDS=");
+    expect(text).not.toContain("sfx[k]=");
+
+    const { LEVELS, WORLDS } = await import(
+      "../src/features/game/world/runtime/catalog"
+    );
+    const ids = LEVELS.map((l) => l.id);
+    expect(new Set(ids).size).toBe(ids.length);
+    for (const lab of ["lab1", "lab2", "lab3", "lab4", "lab5", "lab6"]) {
+      expect(ids).toContain(lab);
+    }
+    for (const id of ids) {
+      expect(WORLDS[id]).toBeDefined();
+    }
+    for (const biome of ["garden", "sky", "junk"]) {
+      expect(WORLDS[biome]).toBeDefined();
+    }
+  });
+
+  it("Unit 2 audio primitives no-op cleanly without an AudioContext", async () => {
+    const audio = await import("../src/features/game/world/runtime/audio");
+    expect(Object.keys(audio.sfx).sort()).toEqual([
+      "bolt", "bump", "crash", "found", "glow",
+      "pop", "shove", "snap", "whirl", "zoom",
+    ]);
+    expect(() => {
+      const keys = Object.keys(audio.sfx) as (keyof typeof audio.sfx)[];
+      for (const k of keys) audio.sfx[k]();
+      audio.partSound("character.base.creature");
+      audio.partSound("nope.missing.part");
+      audio.toolSound("screwdriver");
+      audio.toolSound("spanner");
+      audio.toolSound("wrench");
+      audio.bellTone("red");
+      audio.motor(0.5);
+      audio.mnote(69, 0, 0.3, "triangle", 0.05);
+      audio.kick(0);
+      audio.hit(0, 1800, 0.12, 0.07);
+      audio.musInit();
+      audio.musGain(0.5, 1);
+      audio.noteGesture();
+    }).not.toThrow();
+    expect(audio.toggleSound()).toBe(false);
+    expect(audio.toggleSound()).toBe(true);
+  });
+
+  it("retires the theatrical fix warning and meshes background gears", async () => {
+    const fs = await import("node:fs/promises");
+    const text = await fs.readFile(
+      new URL("../src/features/game/world/runtime/world.ts", import.meta.url),
+      "utf8",
+    );
+    // Unit 2b: gear builder lives in worldScene.ts; mesh calls stay in world.
+    const sceneText = await fs.readFile(
+      new URL("../src/features/game/world/runtime/worldScene.ts", import.meta.url),
       "utf8",
     );
     expect(text).not.toContain("Fix it for me");
@@ -120,7 +182,7 @@ describe("native world runtime (Phase 0A)", () => {
     expect(text).not.toContain("FLAG={");
     expect(text).not.toContain("S.fixed");
     expect(text).toContain("Ready to 3D print");
-    expect(text).toContain("function gear(r,th,mat,teeth)");
+    expect(sceneText).toContain("function gear(r: number, th: number, mat: THREE.Material, teeth?: number)");
     expect(text).toContain("gear(.9,.2,plastic(\"#2c3f94\"),12)");
     expect(text).toContain("gear(.6,.2,plastic(\"#3c55b8\"),8)");
     expect(text).toContain("gears[1].rotation.y-=dt*.9");

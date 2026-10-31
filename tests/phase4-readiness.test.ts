@@ -116,10 +116,12 @@ describe("Phase 4 per-vehicle readiness audit (§5.1)", () => {
       kipManifest.assemblies.map((a) => [a.id ?? a.name ?? "", a]),
     );
 
-    const worldSrc = readFileSync(
-      resolve(ROOT, "src/features/game/world/runtime/world.ts"),
-      "utf8",
-    );
+    // Unit 2 (5A) split the runtime: world levels span world.ts + catalog.ts.
+    const worldSrc = ["world.ts", "catalog.ts"]
+      .map((f) =>
+        readFileSync(resolve(ROOT, `src/features/game/world/runtime/${f}`), "utf8"),
+      )
+      .join("\n");
 
     const allAppParts = [
       ...(baseSet.parts as unknown as Part[]),
