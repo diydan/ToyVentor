@@ -170,6 +170,12 @@ Goal (plan.md Days 5–7): fit/print behavior across bridged sets, exact prototy
 
 Goal: fit-filtered market + support-free STL export (wireframe p.7–9). Start: must-work item, fit filter check, first real STL export + test print. End: shipped, demo-able, top results fit, blockers, tomorrow's task. *(Unfilled.)*
 
+### Status — Sat Oct 31 midday (catch-up, Days 1–5 current through Oct 30 eve)
+- Landed since last entry, unjournaled until now: native canvas port ([89419ff](https://github.com/org/repo/commit/89419ff)) retired `game/` + `public/world/` (empty `game/` dir remains); React runtime on three 0.183.2; 5A world splits (`a35e342`, `7f92da5`); phase 1–4 Toy Box/XP (`5dce199`, `233e763`, `7479874`, `8e70b3b`); stage gears (`4d2c1e3`); e2e headless-Chrome suites (`5dfead8`, `3509493`); Jumbo Vinyl head committed (`9aa3627`), wired (`715197f`), reshaped (`7313021`); gendered heads/faceplates/hats; truck steering demo (`b28ebc3`); knuckle fix (`8600b09`); Wave 9 at 53 parts / 41 assemblies (`8195d3c`, `e169984`); CI trunk guard; vendor chunk split (`277aa1d`).
+- Spec debt: `spec-for-review.md` still describes the deleted `game/` lane and three 0.160 — `spec.md` body needs the native-port update, then `npm run spec:review`.
+- Still behind: ZERO physical prints (F1/F2 pending, Day 5–6 blocker); Day 6 Market+Print due today; submission items (video, write-up, dashboard rate limit on `/api/muse/spark`); republish blockers (remote D1 parent-time migration); Kip enlarged-controls legibility unconfirmed in-app; prototype disclaimer/packaging wording; theme-song caching/fallback; phone/AR passes.
+- Process: `parts/` freeze in effect with lanes assigned — lime-ionosphere owns the jumbo+ballcap stack (uncommitted `_hat_body` rework has since landed; re-verify `valid_kip_seated_jumbo` on next run); Truck-Mockup Commit 2 held for author confirmation.
+
 ## Day 7 — Sun Nov 1: Color + Play
 
 Goal: AR color preview + mini-game equip (wireframe p.10–11, stretch: color). Start: must-work item, full masks vs AR-preview cut, toy loads + add-on boost. End: shipped, demo-able, scan-to-game loop on phone, blockers, tomorrow's task. *(Unfilled.)*

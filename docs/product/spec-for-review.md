@@ -72,8 +72,9 @@ Package contents:
   parent-time, and SAM boundaries.
 - Parts (`parts/partspec/`): generators, catalog, fit matrix, calibration,
   and the app bridge.
-- Game lane (`game/`, `public/world/`): the 2.5D engine and built page served
-  same-origin.
+- World runtime (`src/features/game/world/runtime/`): the native canvas
+  engine (three.js 0.183), in-process — the old `game/` + `public/world/`
+  standalone page was retired by the native port.
 - Seed content (`seed/`, `sets/`): starters, worlds, levels, packs, and the
   three bridged app sets.
 
@@ -373,8 +374,8 @@ Beyond them: Max, the real-robots phase (Snap → Pro → Max), opening with
 kid-safe battle bots and missions — play as the accelerant for robotics.
 Detail lives in the journal's Later entries (Max phase; asset suggester +
 ScanDex).
-The React port has reached step 5 locally including the three.js 0.160
-upgrade; the standalone page remains the demo path and still needs its manual
-republish before recording.
+The native canvas port has landed including the three.js 0.183
+upgrade; the world renders in-process and the standalone page is gone, so
+there is nothing left to republish before recording.
 
 
