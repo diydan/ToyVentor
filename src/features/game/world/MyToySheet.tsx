@@ -217,16 +217,9 @@ export function MyToySheet({
     </div>
   );
 
-  if (!open) return null;
-
-  const activeChip =
-    OBJECT_CHIPS.find((c) => c.id === chipId) ?? OBJECT_CHIPS[0]!;
-  const kind: ToyKind = activeChip.kind;
-  const prompt = (chipId === "other" ? customNoun : activeChip.prompt).trim() || "toy";
-  const sizeClass = sizeClassForLength(lengthMm);
-
-  const starterCharacters = builtInToys.filter((t) => t.kind !== "car");
-  const starterVehicles = builtInToys.filter((t) => t.kind === "car");
+  // Hooks must all sit above the early return: any hook placed below
+  // `if (!open) return null` runs only when the sheet opens, which
+  // changes the hook count between renders and unmounts the app.
   const phase4 = useMemo<{
     unlockedVehicles: Toy[];
     lockedVehicles: LockedVehicleCard[];
@@ -248,6 +241,17 @@ export function MyToySheet({
       ),
     [phase4, builtInToys],
   );
+
+  if (!open) return null;
+
+  const activeChip =
+    OBJECT_CHIPS.find((c) => c.id === chipId) ?? OBJECT_CHIPS[0]!;
+  const kind: ToyKind = activeChip.kind;
+  const prompt = (chipId === "other" ? customNoun : activeChip.prompt).trim() || "toy";
+  const sizeClass = sizeClassForLength(lengthMm);
+
+  const starterCharacters = builtInToys.filter((t) => t.kind !== "car");
+  const starterVehicles = builtInToys.filter((t) => t.kind === "car");
   const allEnabledToys = [...starterCharacters, ...starterVehicles, ...uploadedToys];
 
   let totalSavedParts = 0;

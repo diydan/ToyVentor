@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "e2e": "node scripts/e2e-chrome.mjs",
     "build": "tsc --noEmit && vite build && rm -f dist/toyventor/.dev.vars",
     "build:kip": "tsx scripts/build-kip.ts",
     "kip:validate-part": "tsx scripts/validate-llm-part.ts",
