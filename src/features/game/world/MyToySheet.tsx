@@ -14,6 +14,12 @@ import { postSamScan } from "../../../lib/api";
 import { loadBuild } from "../../../lib/builds";
 import { partsById } from "../../../lib/catalog";
 import {
+  conceptBadgesFor,
+  dailyQuestsForDay,
+  workshopDaysCount,
+  type DailyQuest,
+} from "../../../lib/dailyQuests";
+import {
   nextRankProgress,
   type ProgressionState,
 } from "../../../lib/progression";
@@ -140,23 +146,27 @@ export function MyToySheet({
   open,
   initialStep = "shelf",
   progression,
+  localDayKey,
   missionsDoneCount = 0,
   skinVersion = 0,
   onClose,
   onSkinChange,
   onOpenBuild,
   onPlayLab,
+  onJumpToWorld,
   onOpenCharacterCard,
 }: {
   open: boolean;
   initialStep?: "shelf" | "scan";
   progression?: ProgressionState;
+  localDayKey?: string;
   missionsDoneCount?: number;
   skinVersion?: number;
   onClose: () => void;
   onSkinChange?: () => void;
   onOpenBuild?: () => void;
   onPlayLab?: (card: LockedVehicleCard) => void;
+  onJumpToWorld?: (worldId: string) => void;
   onOpenCharacterCard?: () => void;
 }) {
   const { uploadedToys, builtInToys, selected, addToy, selectToy } = useToybox();
@@ -240,6 +250,17 @@ export function MyToySheet({
         (v) => !builtInToys.some((t) => t.id === v.id),
       ),
     [phase4, builtInToys],
+  );
+  const dailyQuests = useMemo<DailyQuest[]>(
+    () =>
+      progression && localDayKey
+        ? dailyQuestsForDay(localDayKey, progression)
+        : [],
+    [progression, localDayKey],
+  );
+  const conceptBadges = useMemo(
+    () => (progression ? conceptBadgesFor(progression) : []),
+    [progression],
   );
 
   if (!open) return null;
@@ -466,6 +487,57 @@ export function MyToySheet({
               );
             })()}
 
+          {progression && dailyQuests.length > 0 && (
+            <div className="tv-roster-group" aria-label="Daily Quest Board">
+              <div className="tv-roster-group-head">
+                <span className="tv-roster-group-k">Today&apos;s Jobs</span>
+                <span className="tv-roster-group-meta">
+                  {dailyQuests.filter((q) => q.completed).length}/
+                  {dailyQuests.length} done
+                  {workshopDaysCount(progression) > 0
+                    ? ` · Workshop Day ${workshopDaysCount(progression)}`
+                    : ""}
+                </span>
+              </div>
+              <div className="tv-quest-board">
+                {dailyQuests.map((quest) => (
+                  <div
+                    key={quest.id}
+                    className={
+                      quest.completed
+                        ? "tv-quest-card tv-quest-card-done"
+                        : "tv-quest-card"
+                    }
+                  >
+                    <span className="tv-quest-check" aria-hidden="true">
+                      {quest.completed ? "✓" : "•"}
+                    </span>
+                    <span className="tv-quest-copy">
+                      <span className="tv-roster-card-head">
+                        <span className="tv-toy-tile-name">{quest.title}</span>
+                        <span className="tv-toy-tag tv-roster-inline-tag">
+                          {quest.completed
+                            ? `+${quest.xpBonus} XP earned`
+                            : `+${quest.xpBonus} XP`}
+                        </span>
+                      </span>
+                      <span className="tv-toy-tile-sub">{quest.goal}</span>
+                    </span>
+                    {!quest.completed && onJumpToWorld && (
+                      <button
+                        type="button"
+                        className="tv-ctl tv-roster-card-act"
+                        onClick={() => onJumpToWorld(quest.worldId)}
+                      >
+                        Go · {quest.worldLabel}
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div
             className="tv-roster-sections"
             role="listbox"
@@ -589,6 +661,58 @@ export function MyToySheet({
               </div>
             )}
           </div>
+
+          {progression && conceptBadges.length > 0 && (
+            <details
+              className="tv-disclosure"
+              open={conceptBadges.some((b) => b.earned)}
+            >
+              <summary>
+                <span>STEM Concept Badges</span>
+                <span className="tv-disclosure-meta">
+                  {conceptBadges.filter((b) => b.earned).length}/
+                  {conceptBadges.length} earned
+                </span>
+              </summary>
+              <div
+                className="tv-badge-strip"
+                style={{ marginTop: 8 }}
+                aria-label="STEM Concept Badges"
+              >
+                {conceptBadges.map((badge) => {
+                  const cls = !badge.earned
+                    ? "tv-badge-pill tv-badge-pill-locked"
+                    : badge.bestStars >= 3
+                      ? "tv-badge-pill tv-badge-pill-master"
+                      : "tv-badge-pill";
+                  const starsLabel = badge.earned
+                    ? "★".repeat(badge.bestStars)
+                    : "☆";
+                  return onJumpToWorld ? (
+                    <button
+                      key={badge.id}
+                      type="button"
+                      className={cls}
+                      title={`${badge.title} (${badge.tierLabel})`}
+                      onClick={() => onJumpToWorld(badge.worldId)}
+                    >
+                      <span>{badge.shortLabel}</span>
+                      <span className="tv-badge-stars">{starsLabel}</span>
+                    </button>
+                  ) : (
+                    <span
+                      key={badge.id}
+                      className={cls}
+                      title={`${badge.title} (${badge.tierLabel})`}
+                    >
+                      <span>{badge.shortLabel}</span>
+                      <span className="tv-badge-stars">{starsLabel}</span>
+                    </span>
+                  );
+                })}
+              </div>
+            </details>
+          )}
 
           <details className="tv-disclosure tv-forge-mount-row">
             <summary>

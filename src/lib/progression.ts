@@ -120,6 +120,10 @@ export interface ProgressionState {
   sandboxUnlockAll: boolean;
   /** Epoch ms of most recent parent XP reset, so offline resets beat stale remote totals. */
   resetAt?: number;
+  /** Per local day (YYYY-MM-DD), daily quest IDs already completed and paid out. */
+  completedQuestsByDay?: Record<string, string[]>;
+  /** Non-resetting YYYY-MM-DD stamps for days with >=1 completed daily quest. */
+  workshopDays?: string[];
 }
 
 export function emptyProgression(): ProgressionState {
@@ -348,6 +352,7 @@ export function applySolve(
 }
 
 const KEY_PATTERN = /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+:t[123]$/;
+const DAY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
 export function normalizeProgression(raw: unknown): ProgressionState {
   const base = emptyProgression();
@@ -411,6 +416,33 @@ export function normalizeProgression(raw: unknown): ProgressionState {
     typeof v.resetAt === "number" && Number.isFinite(v.resetAt) && v.resetAt > 0
       ? Math.floor(v.resetAt)
       : undefined;
+  const completedQuestsByDay: Record<string, string[]> = {};
+  if (
+    typeof v.completedQuestsByDay === "object" &&
+    v.completedQuestsByDay !== null &&
+    !Array.isArray(v.completedQuestsByDay)
+  ) {
+    for (const [day, ids] of Object.entries(
+      v.completedQuestsByDay as Record<string, unknown>,
+    )) {
+      if (!DAY_PATTERN.test(day) || !Array.isArray(ids)) continue;
+      const cleanIds = [
+        ...new Set(
+          ids.filter((id): id is string => typeof id === "string" && id.length > 0),
+        ),
+      ];
+      if (cleanIds.length > 0) completedQuestsByDay[day] = cleanIds;
+    }
+  }
+  const workshopDays = Array.isArray(v.workshopDays)
+    ? [
+        ...new Set(
+          v.workshopDays.filter(
+            (d): d is string => typeof d === "string" && DAY_PATTERN.test(d),
+          ),
+        ),
+      ].sort()
+    : [];
   return {
     version: 1,
     totalXp:
@@ -424,6 +456,10 @@ export function normalizeProgression(raw: unknown): ProgressionState {
       : [],
     sandboxUnlockAll: v.sandboxUnlockAll === true,
     ...(resetAt !== undefined ? { resetAt } : {}),
+    ...(Object.keys(completedQuestsByDay).length > 0
+      ? { completedQuestsByDay }
+      : {}),
+    ...(workshopDays.length > 0 ? { workshopDays } : {}),
   };
 }
 
@@ -469,6 +505,25 @@ export function mergeProgression(
     }
     daily[day] = perKey;
   }
+  const completedQuestsByDay: Record<string, string[]> = {};
+  for (const day of new Set([
+    ...Object.keys(remote.completedQuestsByDay ?? {}),
+    ...Object.keys(local.completedQuestsByDay ?? {}),
+  ])) {
+    const mergedIds = [
+      ...new Set([
+        ...(remote.completedQuestsByDay?.[day] ?? []),
+        ...(local.completedQuestsByDay?.[day] ?? []),
+      ]),
+    ];
+    if (mergedIds.length > 0) completedQuestsByDay[day] = mergedIds;
+  }
+  const workshopDays = [
+    ...new Set([
+      ...(remote.workshopDays ?? []),
+      ...(local.workshopDays ?? []),
+    ]),
+  ].sort();
   return {
     version: 1,
     totalXp: Math.max(local.totalXp, remote.totalXp),
@@ -477,6 +532,10 @@ export function mergeProgression(
     unlockedIds,
     sandboxUnlockAll,
     ...(localReset > 0 ? { resetAt: localReset } : {}),
+    ...(Object.keys(completedQuestsByDay).length > 0
+      ? { completedQuestsByDay }
+      : {}),
+    ...(workshopDays.length > 0 ? { workshopDays } : {}),
   };
 }
 

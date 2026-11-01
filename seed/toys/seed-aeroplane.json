@@ -1,0 +1,13 @@
+{
+  "id": "seed-aeroplane",
+  "name": "Prop Aeroplane",
+  "kind": "car",
+  "sizeClass": "small",
+  "lengthMm": 128,
+  "widthMm": 64,
+  "attachPoints": [
+    { "id": "roof", "label": "Wing spine" },
+    { "id": "rear", "label": "Tail fin" }
+  ],
+  "source": "seed"
+}

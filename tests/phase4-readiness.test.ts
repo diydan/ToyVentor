@@ -8,15 +8,21 @@ import type { Part } from "../shared/part";
 import { toyFromScanInput, validateToy, type Toy } from "../shared/toy";
 import { toyContractFromBuild, validateToyContract } from "../shared/toycontract";
 import baseSet from "../sets/base.json";
+import modularCraftSet from "../sets/modular-craft.json";
 import racerSet from "../sets/racer-garage.json";
 import { colorOf } from "../src/features/builder/engine/render";
 import { ToyMiniIcon } from "../src/features/game/world/ToyMiniIcon";
 import {
+  seedAeroplane,
   seedCar,
+  seedCatamaran,
   seedFigure,
+  seedHelicopter,
   seedKip,
   seedMotorbike,
   seedScooter,
+  seedShuttle,
+  seedTractor,
   seedTruck,
 } from "../src/features/scan/scan";
 import {
@@ -111,7 +117,19 @@ describe("Phase 4 per-vehicle readiness audit (§5.1)", () => {
       parts: Array<{ id: string; design_status: string; file: string }>;
       assemblies: Array<{ id?: string; name?: string; ok: boolean }>;
     };
-    const manifestParts = new Map(kipManifest.parts.map((p) => [p.id, p]));
+    const fullPartSpec = JSON.parse(
+      readFileSync(resolve(ROOT, "parts/partspec/toyventor_parts.json"), "utf8"),
+    ) as {
+      parts: Array<{ id: string; design_status: string; file: string }>;
+    };
+    const kitcardSrc = readFileSync(
+      resolve(ROOT, "parts/partspec/toyventor_kitcard.py"),
+      "utf8",
+    );
+    const manifestParts = new Map(fullPartSpec.parts.map((p) => [p.id, p]));
+    for (const p of kipManifest.parts) {
+      manifestParts.set(p.id, p);
+    }
     const manifestAssemblies = new Map(
       kipManifest.assemblies.map((a) => [a.id ?? a.name ?? "", a]),
     );
@@ -126,6 +144,7 @@ describe("Phase 4 per-vehicle readiness audit (§5.1)", () => {
     const allAppParts = [
       ...(baseSet.parts as unknown as Part[]),
       ...(racerSet.parts as unknown as Part[]),
+      ...(modularCraftSet.parts as unknown as Part[]),
     ];
     const appPartsById = new Map(allAppParts.map((p) => [p.id, p]));
 
@@ -134,6 +153,11 @@ describe("Phase 4 per-vehicle readiness audit (§5.1)", () => {
       "seed-truck",
       "seed-scooter",
       "seed-motorbike",
+      "seed-tractor",
+      "seed-aeroplane",
+      "seed-catamaran",
+      "seed-helicopter",
+      "seed-shuttle",
     ]);
 
     for (const entry of ready) {
@@ -148,7 +172,7 @@ describe("Phase 4 per-vehicle readiness audit (§5.1)", () => {
       expect(entry.partSpecIds.length).toBeGreaterThan(0);
       for (const psId of entry.partSpecIds) {
         const meta = manifestParts.get(psId);
-        expect(meta, `missing ${psId} in kip-partspec-manifest`).toBeDefined();
+        expect(meta, `missing ${psId} in PartSpec manifest`).toBeDefined();
         expect(meta!.design_status).toBe("verified");
         expect(
           existsSync(resolve(ROOT, "public/kip/partspec", meta!.file)),
@@ -156,9 +180,17 @@ describe("Phase 4 per-vehicle readiness audit (§5.1)", () => {
         ).toBe(true);
       }
 
-      // Conforming assembly is verified ok
+      // Conforming assembly is verified ok in kip-partspec-manifest or Gate G1 kitcard sweep
       expect(entry.verifiedAssemblyId).toBeTruthy();
-      expect(manifestAssemblies.get(entry.verifiedAssemblyId!)?.ok).toBe(true);
+      const inKipManifest =
+        manifestAssemblies.get(entry.verifiedAssemblyId!)?.ok === true;
+      const inKitcardSweep = kitcardSrc.includes(
+        `results["${entry.verifiedAssemblyId}"]`,
+      );
+      expect(
+        inKipManifest || inKitcardSweep,
+        `unverified assembly ${entry.verifiedAssemblyId}`,
+      ).toBe(true);
 
       // Every cited app catalog part exists and passes all 4 builder checks on the vehicle
       expect(entry.appCatalogPartIds.length).toBeGreaterThan(0);
@@ -192,16 +224,9 @@ describe("Phase 4 per-vehicle readiness audit (§5.1)", () => {
     }
   });
 
-  it("holds back unverified Wave 10 and Stage 4 vehicles with explicit blockers so no card wires to a placeholder", () => {
+  it("holds back unverified Stage 4 robotics vehicle with explicit blocker so no card wires to a placeholder", () => {
     const heldBack = VEHICLE_READINESS_AUDIT.filter((e) => !e.ready);
-    expect(heldBack.map((e) => e.id)).toEqual([
-      "seed-tractor",
-      "seed-aeroplane",
-      "seed-catamaran",
-      "seed-helicopter",
-      "seed-shuttle",
-      "seed-mech",
-    ]);
+    expect(heldBack.map((e) => e.id)).toEqual(["seed-mech"]);
 
     for (const entry of heldBack) {
       expect(entry.gates.partVerified).toBe(false);
@@ -220,6 +245,11 @@ describe("Phase 4 per-vehicle readiness audit (§5.1)", () => {
       "seed-truck",
       "seed-scooter",
       "seed-motorbike",
+      "seed-tractor",
+      "seed-aeroplane",
+      "seed-catamaran",
+      "seed-helicopter",
+      "seed-shuttle",
     ]);
     expect(split.lockedVehicles).toEqual([]);
   });
@@ -287,11 +317,11 @@ describe("Phase 4 name alignment (§5.2) & crisp SVG thumbnails", () => {
       ["truck", seedTruck],
       ["scooter", seedScooter],
       ["motorbike", seedMotorbike],
-      ["tractor", { ...seedCar, id: "seed-tractor", name: "Loader Tractor & Trailer" }],
-      ["aeroplane", { ...seedCar, id: "seed-aeroplane", name: "Prop Aeroplane" }],
-      ["catamaran", { ...seedCar, id: "seed-catamaran", name: "Catamaran Boat" }],
-      ["helicopter", { ...seedCar, id: "seed-helicopter", name: "Rescue Helicopter" }],
-      ["shuttle", { ...seedCar, id: "seed-shuttle", name: "Space Shuttle" }],
+      ["tractor", seedTractor],
+      ["aeroplane", seedAeroplane],
+      ["catamaran", seedCatamaran],
+      ["helicopter", seedHelicopter],
+      ["shuttle", seedShuttle],
       ["mech", { ...seedCar, id: "seed-mech", name: "Bolt Power Mech" }],
     ];
 
@@ -348,16 +378,21 @@ describe("Phase 4 locked-card guidance & grandfathering (§5.3)", () => {
   });
 
   it("unlocks ready vehicles by Maker Rank XP and preserves grandfathered access across Reset XP", () => {
-    // Fresh 0 XP: Kip + Red Racer enabled; 3 verified V2 vehicles locked
+    // Fresh 0 XP: Kip + Red Racer enabled; all 8 verified Rank 2-5 vehicles locked
     const fresh = mergePhase4Roster([], emptyProgression());
     expect(fresh.enabledToys.map((t) => t.id)).toEqual(["seed-kip", "seed-car"]);
     expect(fresh.lockedVehicles.map((l) => l.entry.id)).toEqual([
       "seed-truck",
       "seed-scooter",
       "seed-motorbike",
+      "seed-tractor",
+      "seed-aeroplane",
+      "seed-catamaran",
+      "seed-helicopter",
+      "seed-shuttle",
     ]);
 
-    // Rank 2 (250 XP): Hauler Truck + Motor Scooter unlock; Sport Motorbike stays locked with 350 more XP copy
+    // Rank 2 (250 XP): Hauler Truck + Motor Scooter unlock; 6 Rank 3-5 vehicles stay locked
     const rank2 = mergePhase4Roster([], { ...emptyProgression(), totalXp: 250 });
     expect(rank2.enabledToys.map((t) => t.id)).toEqual([
       "seed-kip",
@@ -365,13 +400,35 @@ describe("Phase 4 locked-card guidance & grandfathering (§5.3)", () => {
       "seed-truck",
       "seed-scooter",
     ]);
-    expect(rank2.lockedVehicles).toHaveLength(1);
+    expect(rank2.lockedVehicles).toHaveLength(6);
     expect(rank2.lockedVehicles[0]!.entry.id).toBe("seed-motorbike");
     expect(rank2.lockedVehicles[0]!.guidance).toBe(
       "Earn 350 more XP (600 XP, Rank 3) in Lab 2: Machines to unlock Sport Motorbike.",
     );
 
-    // Grandfathering + Reset XP survival: existing build on seed-motorbike and unlockedIds on seed-figure
+    // Rank 3 (600 XP): Sport Motorbike + Loader Tractor & Trailer unlock; 4 Rank 4-5 stay locked
+    const rank3 = mergePhase4Roster([], { ...emptyProgression(), totalXp: 600 });
+    expect(rank3.enabledToys.map((t) => t.id)).toEqual([
+      "seed-kip",
+      "seed-car",
+      "seed-truck",
+      "seed-scooter",
+      "seed-motorbike",
+      "seed-tractor",
+    ]);
+    expect(rank3.lockedVehicles.map((l) => l.entry.id)).toEqual([
+      "seed-aeroplane",
+      "seed-catamaran",
+      "seed-helicopter",
+      "seed-shuttle",
+    ]);
+
+    // Rank 5 (1800 XP): all 8 verified Rank 2-5 vehicles unlocked; 0 locked
+    const rank5 = mergePhase4Roster([], { ...emptyProgression(), totalXp: 1800 });
+    expect(rank5.lockedVehicles).toHaveLength(0);
+    expect(rank5.enabledToys).toHaveLength(10);
+
+    // Grandfathering + Reset XP survival: existing build on seed-motorbike/seed-shuttle and unlockedIds on seed-figure
     const withGrandfathered = grandfatherToyIds(
       { ...emptyProgression(), totalXp: 700 },
       ["seed-figure", "seed-truck"],
@@ -380,7 +437,8 @@ describe("Phase 4 locked-card guidance & grandfathering (§5.3)", () => {
     expect(afterReset.totalXp).toBe(0);
 
     const postResetRoster = mergePhase4Roster([], afterReset, {
-      hasSavedBuildForToy: (id) => id === "seed-motorbike",
+      hasSavedBuildForToy: (id) =>
+        id === "seed-motorbike" || id === "seed-shuttle",
     });
     expect(postResetRoster.enabledToys.map((t) => t.id)).toEqual([
       "seed-kip",
@@ -388,20 +446,30 @@ describe("Phase 4 locked-card guidance & grandfathering (§5.3)", () => {
       "seed-figure",
       "seed-truck",
       "seed-motorbike",
+      "seed-shuttle",
     ]);
     expect(postResetRoster.lockedVehicles.map((l) => l.entry.id)).toEqual([
       "seed-scooter",
+      "seed-tractor",
+      "seed-aeroplane",
+      "seed-catamaran",
+      "seed-helicopter",
     ]);
   });
 });
 
-describe("Phase 4A CTA lab worlds", () => {
+describe("Phase 4A/4B CTA lab worlds", () => {
   it("derives the lab world from the first recommended mission", () => {
     const byId = (id: string) =>
       VEHICLE_READINESS_AUDIT.find((e) => e.id === id)!;
     expect(labWorldForEntry(byId("seed-truck"))).toBe("lab1");
     expect(labWorldForEntry(byId("seed-scooter"))).toBe("lab1");
     expect(labWorldForEntry(byId("seed-motorbike"))).toBe("lab2");
+    expect(labWorldForEntry(byId("seed-tractor"))).toBe("lab2");
+    expect(labWorldForEntry(byId("seed-aeroplane"))).toBe("lab4");
+    expect(labWorldForEntry(byId("seed-catamaran"))).toBe("lab3");
+    expect(labWorldForEntry(byId("seed-helicopter"))).toBe("lab5");
+    expect(labWorldForEntry(byId("seed-shuttle"))).toBe("lab4");
   });
 
   it("falls back to lab1 when the row has no parseable mission", () => {

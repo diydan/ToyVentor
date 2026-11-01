@@ -1,6 +1,6 @@
-// Auto-discovers every sets/*.json file at build/test time so dropping a new
-// expansion set JSON into sets/ loads across Build, Market, Packs, Toybox,
-// Play, and Reveal with zero code changes.
+// Auto-discovers every sets/*.json file (base, racer-garage, kip-wardrobe,
+// modular-craft, ...) at build/test time so dropping a new expansion set JSON
+// into sets/ loads across Build, Market, Packs, Toybox, Play, and Reveal.
 import { validateSet, type Part, type ToySet } from "../../shared/part";
 
 const rawModules = import.meta.glob<ToySet>("../../sets/*.json", {

@@ -14,6 +14,10 @@ import { revealForBuild } from "../../../state/reveals";
 import { buildStats } from "../../../../shared/build";
 import { localDay } from "../../../../shared/parent-time";
 import { partsById } from "../../../lib/catalog";
+import {
+  applyDailyQuestProgress,
+  dailyQuestsForDay,
+} from "../../../lib/dailyQuests";
 import { loadDemoMode, saveDemoMode } from "../../../lib/demoMode";
 import {
   getLocalParentSnapshot,
@@ -224,23 +228,45 @@ export function GameCanvas({
               ? (totals[stat] ?? 0) > 0 || stageHasStat
               : false;
             const timezone = getLocalParentSnapshot().settings.timezone;
-            const result = applySolve(progressionRef.current, {
+            const solveInput = {
               missionId: key,
-              tier: solvedTier === 2 || solvedTier === 3 ? solvedTier : 1,
+              tier: (solvedTier === 2 || solvedTier === 3 ? solvedTier : 1) as Tier,
               attempts,
               clean: error === 0,
               partMatch,
               day: localDay(Date.now(), timezone),
-            });
-            saveProgression(result.next);
-            setProgression(result.next);
-            void pushProgression(result.next);
-            if (result.awarded > 0) {
-              showXpToast(
-                `+${result.awarded} XP · ${"★".repeat(result.stars)}${"☆".repeat(3 - result.stars)}`,
+            };
+            const prevProg = progressionRef.current;
+            const result = applySolve(prevProg, solveInput);
+            const questEval = applyDailyQuestProgress(
+              prevProg,
+              result.next,
+              solveInput,
+              result.stars,
+            );
+            saveProgression(questEval.next);
+            setProgression(questEval.next);
+            void pushProgression(questEval.next);
+            const totalGain = result.awarded + questEval.questXpAwarded;
+            const starsStr = `${"★".repeat(result.stars)}${"☆".repeat(3 - result.stars)}`;
+            const notes: string[] = [];
+            if (questEval.completedQuests.length > 0) {
+              notes.push(
+                questEval.completedQuests.length === 1
+                  ? "Daily Job"
+                  : `${questEval.completedQuests.length} Daily Jobs`,
               );
+            }
+            if (questEval.upgradedBadges[0]) {
+              notes.push(
+                `${questEval.upgradedBadges[0].shortLabel} ${questEval.upgradedBadges[0].tierLabel}`,
+              );
+            }
+            const suffix = notes.length > 0 ? ` · ${notes.join(" · ")}` : "";
+            if (totalGain > 0) {
+              showXpToast(`+${totalGain} XP · ${starsStr}${suffix}`);
             } else if (result.stars > 0) {
-              showXpToast(`${"★".repeat(result.stars)}${"☆".repeat(3 - result.stars)}`);
+              showXpToast(`${starsStr}${suffix}`);
             }
           }
         },
@@ -857,6 +883,48 @@ export function GameCanvas({
                   role="dialog"
                   aria-label="Worlds"
                 >
+                  {(() => {
+                    const dayKey = localDay(
+                      Date.now(),
+                      parentSnapshot.settings.timezone,
+                    );
+                    const jobs = dailyQuestsForDay(dayKey, progression);
+                    return (
+                      <>
+                        <span className="tv-worlds-group-k">
+                          Today&apos;s Jobs (
+                          {jobs.filter((q) => q.completed).length}/{jobs.length})
+                        </span>
+                        <div className="tv-worlds-grid">
+                          {jobs.map((job) => {
+                            const target = WORLDS.find(
+                              (w) => w.id === job.worldId,
+                            );
+                            if (!target) return null;
+                            return (
+                              <button
+                                key={job.id}
+                                type="button"
+                                className={
+                                  job.completed
+                                    ? "tv-world tv-world-on"
+                                    : "tv-world"
+                                }
+                                title={`${job.title}: ${job.goal}`}
+                                onClick={() => {
+                                  engine()?.goWorld(target.id);
+                                  setWorldsOpen(false);
+                                }}
+                              >
+                                {job.completed ? "✓ " : ""}
+                                {job.title}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </>
+                    );
+                  })()}
                   <span className="tv-worlds-group-k">Worlds</span>
                   <div className="tv-worlds-grid">
                     {WORLDS.filter((w) => !w.lab).map((w) => (
@@ -936,6 +1004,7 @@ export function GameCanvas({
           open={toySheetOpen}
           initialStep={toySheetStep}
           progression={progression}
+          localDayKey={localDay(Date.now(), parentSnapshot.settings.timezone)}
           missionsDoneCount={state.missionsDoneTotal}
           skinVersion={skinTick}
           onClose={() => setToySheetOpen(false)}
@@ -948,6 +1017,11 @@ export function GameCanvas({
             const target = WORLDS.find(
               (w) => w.id === labWorldForEntry(card.entry),
             );
+            setToySheetOpen(false);
+            if (target) engine()?.goWorld(target.id);
+          }}
+          onJumpToWorld={(worldId: string) => {
+            const target = WORLDS.find((w) => w.id === worldId);
             setToySheetOpen(false);
             if (target) engine()?.goWorld(target.id);
           }}

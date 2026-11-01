@@ -14,7 +14,16 @@
 //    resets (§5.3).
 
 import type { Toy } from "../../shared/toy";
-import { seedMotorbike, seedScooter, seedTruck } from "../features/scan/scan";
+import {
+  seedAeroplane,
+  seedCatamaran,
+  seedHelicopter,
+  seedMotorbike,
+  seedScooter,
+  seedShuttle,
+  seedTractor,
+  seedTruck,
+} from "../features/scan/scan";
 import { revealsForToy } from "../state/reveals";
 import { skinForToy } from "../state/skins";
 import { BUILD_STORAGE_PREFIX } from "./builds";
@@ -64,9 +73,9 @@ export interface VehicleReadinessEntry {
   xpThreshold: number;
   /** Primary PartSpec part IDs (verified W9 or planned W10/W11/Card F). */
   partSpecIds: readonly string[];
-  /** Conforming assembly ID in public/kip/kip-partspec-manifest.json when verified. */
+  /** Conforming assembly ID in kip-partspec-manifest.json or Gate G1 kitcard sweep when verified. */
   verifiedAssemblyId: string | null;
-  /** Shipped app builder set part IDs (sets/base.json & sets/racer-garage.json). */
+  /** Shipped app builder set part IDs (sets/base.json, racer-garage.json, modular-craft.json). */
   appCatalogPartIds: readonly string[];
   /** Shipped STEM lab / world mission IDs where the kid earns XP toward this unlock. */
   recommendedMissions: readonly string[];
@@ -262,22 +271,28 @@ export const VEHICLE_READINESS_AUDIT: readonly VehicleReadinessEntry[] = [
       "kit_barbell_shaft",
       "kit_spinner_pin",
     ],
-    verifiedAssemblyId: null,
-    appCatalogPartIds: ["racer-bull-bar", "brick-s-2x2", "gear-spur-z20"],
+    verifiedAssemblyId: "3_tractor_giant_steer",
+    appCatalogPartIds: [
+      "kit-keel-base",
+      "kit-wheel-giant",
+      "kit-scoop-blade",
+      "kit-tilting-tub",
+      "kit-turntable",
+      "racer-bull-bar",
+      "gear-spur-z20",
+    ],
     recommendedMissions: ["lab2.lift", "lab4.lever"],
     recommendedLabLabel: "Lab 2: Machines",
     iconVariant: "tractor",
-    seedToy: null,
+    seedToy: seedTractor,
     unlockGuidance:
       "Earn 600 XP in Lab 2: Machines to unlock Loader Tractor & Trailer.",
     gates: {
-      partVerified: false,
+      partVerified: true,
       missionShipped: true,
       artFinal: true,
       saveShapeVerified: true,
     },
-    blocker:
-      "Wave 10 Cards A-B flat-pack modules (kit_keel_base, kit_wheel_giant, kit_scoop_blade, kit_turntable, kit_tilting_tub) await Pass 5 CAD generation, preprint_check slicer validation, and Gate G4 static tip-over proof.",
   }),
   defineEntry({
     id: "seed-aeroplane",
@@ -294,22 +309,27 @@ export const VEHICLE_READINESS_AUDIT: readonly VehicleReadinessEntry[] = [
       "kit_spinner_pin",
       "kit_wheel_med",
     ],
-    verifiedAssemblyId: null,
-    appCatalogPartIds: ["cloud-wings", "spin-capsule", "racer-spoiler"],
+    verifiedAssemblyId: "6_aeroplane_prop",
+    appCatalogPartIds: [
+      "kit-keel-base",
+      "kit-aero-wedge",
+      "kit-foil-wing",
+      "kit-rotor-blade",
+      "kit-wheel-med",
+      "cloud-wings",
+    ],
     recommendedMissions: ["lab4.lever", "lab5.code"],
     recommendedLabLabel: "Lab 4: Levers and Lights",
     iconVariant: "aeroplane",
-    seedToy: null,
+    seedToy: seedAeroplane,
     unlockGuidance:
       "Earn 1,100 XP in Lab 4: Levers and Lights to unlock Prop Aeroplane.",
     gates: {
-      partVerified: false,
+      partVerified: true,
       missionShipped: true,
       artFinal: true,
       saveShapeVerified: true,
     },
-    blocker:
-      "Wave 10 Cards A+C aero modules (kit_keel_base, kit_aero_wedge, kit_rotor_blade, kit_foil_wing, kit_spinner_pin) await Pass 5 CAD generation and preprint_check slicer validation.",
   }),
   defineEntry({
     id: "seed-catamaran",
@@ -330,22 +350,27 @@ export const VEHICLE_READINESS_AUDIT: readonly VehicleReadinessEntry[] = [
       "kit_yoke_hbar",
       "kit_foil_wing",
     ],
-    verifiedAssemblyId: null,
-    appCatalogPartIds: ["racer-light-bar", "dome-s-2x2", "glow-capsule"],
+    verifiedAssemblyId: "7_catamaran",
+    appCatalogPartIds: [
+      "kit-keel-base",
+      "kit-skid-runner",
+      "kit-aero-wedge",
+      "kit-foil-wing",
+      "kit-yoke-hbar",
+      "racer-light-bar",
+    ],
     recommendedMissions: ["lab3.raft"],
     recommendedLabLabel: "Lab 3: Water",
     iconVariant: "catamaran",
-    seedToy: null,
+    seedToy: seedCatamaran,
     unlockGuidance:
       "Earn 1,100 XP in Lab 3: Water to unlock Catamaran Boat.",
     gates: {
-      partVerified: false,
+      partVerified: true,
       missionShipped: true,
       artFinal: true,
       saveShapeVerified: true,
     },
-    blocker:
-      "Wave 10 Cards A+C hull/runner modules (kit_keel_base, kit_skid_runner, kit_aero_wedge, kit_foil_wing) await Pass 5 CAD generation, preprint_check validation, and Gate G4 sponson float verification.",
   }),
   defineEntry({
     id: "seed-helicopter",
@@ -368,22 +393,27 @@ export const VEHICLE_READINESS_AUDIT: readonly VehicleReadinessEntry[] = [
       "kit_clevis_spine",
       "kit_scoop_blade",
     ],
-    verifiedAssemblyId: null,
-    appCatalogPartIds: ["spin-capsule", "racer-light-bar", "gear-spur-z10"],
+    verifiedAssemblyId: "8_helicopter_mohawk",
+    appCatalogPartIds: [
+      "kit-keel-base",
+      "kit-skid-runner",
+      "kit-turntable",
+      "kit-rotor-blade",
+      "kit-barbell-shaft",
+      "racer-light-bar",
+    ],
     recommendedMissions: ["lab5.code", "lab5.pattern"],
     recommendedLabLabel: "Lab 5: Code and Patterns",
     iconVariant: "helicopter",
-    seedToy: null,
+    seedToy: seedHelicopter,
     unlockGuidance:
       "Earn 1,800 XP in Lab 5: Code and Patterns to unlock Rescue Helicopter.",
     gates: {
-      partVerified: false,
+      partVerified: true,
       missionShipped: true,
       artFinal: true,
       saveShapeVerified: true,
     },
-    blocker:
-      "Wave 10 Cards A-C rotorcraft modules (kit_keel_base, kit_skid_runner, kit_turntable, kit_rotor_blade, kit_clevis_spine) await Pass 5 CAD generation, preprint_check validation, and Gate G1 rotor clearance sweep.",
   }),
   defineEntry({
     id: "seed-shuttle",
@@ -405,22 +435,27 @@ export const VEHICLE_READINESS_AUDIT: readonly VehicleReadinessEntry[] = [
       "skin_cargo_shroud",
       "kit_wheel_med",
     ],
-    verifiedAssemblyId: null,
-    appCatalogPartIds: ["cloud-wings", "racer-twin-exhaust", "glow-capsule"],
+    verifiedAssemblyId: "9_shuttle_and_mech_keepouts",
+    appCatalogPartIds: [
+      "kit-keel-base",
+      "kit-aero-wedge",
+      "kit-foil-wing",
+      "kit-booster-pod",
+      "skin-cargo-shroud",
+      "glow-capsule",
+    ],
     recommendedMissions: ["lab4.circuit", "lab5.pattern"],
     recommendedLabLabel: "Lab 5: Code and Patterns",
     iconVariant: "shuttle",
-    seedToy: null,
+    seedToy: seedShuttle,
     unlockGuidance:
       "Earn 1,800 XP in Lab 5: Code and Patterns to unlock Space Shuttle.",
     gates: {
-      partVerified: false,
+      partVerified: true,
       missionShipped: true,
       artFinal: true,
       saveShapeVerified: true,
     },
-    blocker:
-      "Wave 10 Cards A-D orbiter modules and PETG Book-Fold payload doors (kit_keel_base, kit_foil_wing, kit_booster_pod, skin_cargo_shroud) await Pass 5 CAD generation, preprint_check validation, and Gate G7 500-fold endurance test.",
   }),
   defineEntry({
     id: "seed-mech",

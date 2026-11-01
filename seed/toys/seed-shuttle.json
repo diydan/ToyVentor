@@ -1,0 +1,13 @@
+{
+  "id": "seed-shuttle",
+  "name": "Space Shuttle",
+  "kind": "car",
+  "sizeClass": "small",
+  "lengthMm": 132,
+  "widthMm": 68,
+  "attachPoints": [
+    { "id": "roof", "label": "Payload bay" },
+    { "id": "rear", "label": "Booster mount" }
+  ],
+  "source": "seed"
+}

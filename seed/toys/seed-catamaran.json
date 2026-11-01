@@ -1,0 +1,13 @@
+{
+  "id": "seed-catamaran",
+  "name": "Catamaran Boat",
+  "kind": "car",
+  "sizeClass": "small",
+  "lengthMm": 128,
+  "widthMm": 64,
+  "attachPoints": [
+    { "id": "roof", "label": "Bridge deck" },
+    { "id": "rear", "label": "Stern pylon" }
+  ],
+  "source": "seed"
+}

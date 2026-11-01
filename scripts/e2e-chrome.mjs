@@ -255,6 +255,14 @@ async function scenarioFresh(cdp) {
     `!document.body.textContent?.includes("Star Scout") || undefined`,
   );
   check("no-star-scout-fresh", noScout !== false, "seed figure stays out");
+  const questCards = await cdp.evaluate(
+    `document.querySelectorAll(".tv-quest-card").length`,
+  );
+  check(
+    "daily-quest-board-3",
+    questCards === 3,
+    `questCards=${questCards}`,
+  );
 }
 
 async function scenarioXp600(cdp) {
@@ -263,12 +271,29 @@ async function scenarioXp600(cdp) {
   const locked = await cdp.evaluate(
     `[...document.querySelectorAll(".tv-roster-card-lock")].length`,
   );
-  check("promote-at-600", locked === 0, `locked=${locked}`);
+  check("promote-at-600", locked === 4, `locked=${locked}`);
   const body = await cdp.evaluate(`document.body.textContent || ""`);
   check(
     "motorbike-selectable",
-    body.includes("Sport Motorbike"),
-    "motorbike card present",
+    body.includes("Sport Motorbike") && body.includes("Loader Tractor & Trailer"),
+    "Rank 3 vehicles present",
+  );
+}
+
+async function scenarioXp1800(cdp) {
+  await gotoApp(cdp, { totalXp: 1800 });
+  await openToyBox(cdp);
+  const locked = await cdp.evaluate(
+    `[...document.querySelectorAll(".tv-roster-card-lock")].length`,
+  );
+  check("promote-at-1800", locked === 0, `locked=${locked}`);
+  const body = await cdp.evaluate(`document.body.textContent || ""`);
+  check(
+    "rank5-craft-selectable",
+    body.includes("Rescue Helicopter") &&
+      body.includes("Space Shuttle") &&
+      !body.includes("Bolt Power Mech"),
+    "Rank 5 craft unlocked, unverified Rank 6 mech held back",
   );
 }
 
@@ -330,6 +355,7 @@ async function main() {
     await waitHttpOk(APP_URL);
     await runScenario("fresh", scenarioFresh);
     await runScenario("xp600", scenarioXp600);
+    await runScenario("xp1800", scenarioXp1800);
   } finally {
     killAll();
   }

@@ -1,0 +1,614 @@
+{
+  "id": "modular-craft",
+  "name": "Forge Club · Modular Craft Kit",
+  "parts": [
+    {
+      "id": "kit-keel-base",
+      "name": "Universal 4x10 Craft Keel Base",
+      "line": "snap",
+      "mount": "stud",
+      "sizeClass": "small",
+      "grid": {
+        "units": [
+          4,
+          10
+        ],
+        "profile": "tu_stud_small"
+      },
+      "footprintMm": [
+        50,
+        125
+      ],
+      "stat": {
+        "name": "torque",
+        "value": 3
+      },
+      "printable": true,
+      "orientation": "bed = z0; flat, studs up",
+      "supportFree": true,
+      "stlFile": "kit-keel-base.stl",
+      "glbFile": "kit-keel-base.glb",
+      "bboxMm": [
+        49.8,
+        124.8,
+        15.3
+      ]
+    },
+    {
+      "id": "kit-clevis-spine",
+      "name": "Universal 2x8 Clevis Spine & Boom",
+      "line": "snap",
+      "mount": "stud",
+      "sizeClass": "small",
+      "grid": {
+        "units": [
+          2,
+          2
+        ],
+        "profile": "tu_stud_small"
+      },
+      "footprintMm": [
+        25,
+        25
+      ],
+      "stat": {
+        "name": "torque",
+        "value": 1
+      },
+      "printable": true,
+      "orientation": "bed = z0; flat, studs up",
+      "supportFree": true,
+      "stlFile": "kit-clevis-spine.stl",
+      "glbFile": "kit-clevis-spine.glb",
+      "bboxMm": [
+        27.8,
+        99.8,
+        15.3
+      ]
+    },
+    {
+      "id": "kit-barbell-shaft",
+      "name": "Outboard Barbell Axle & Rotor Mast",
+      "line": "pro",
+      "mount": "hole",
+      "sizeClass": "small",
+      "grid": {
+        "units": [
+          1,
+          1
+        ],
+        "profile": "tu_12.5"
+      },
+      "footprintMm": [
+        12.5,
+        12.5
+      ],
+      "stat": {
+        "name": "spin",
+        "value": 2
+      },
+      "printable": true,
+      "orientation": "bed = z0; lying on a flat, axis horizontal",
+      "supportFree": true,
+      "stlFile": "kit-barbell-shaft.stl",
+      "glbFile": "kit-barbell-shaft.glb",
+      "bboxMm": [
+        6.6,
+        78,
+        5
+      ]
+    },
+    {
+      "id": "kit-spinner-pin",
+      "name": "Pull-Ring Clevis & Prop Spinner Pin",
+      "line": "pro",
+      "mount": "hole",
+      "sizeClass": "small",
+      "grid": {
+        "units": [
+          1,
+          1
+        ],
+        "profile": "tu_12.5"
+      },
+      "footprintMm": [
+        12.5,
+        12.5
+      ],
+      "stat": {
+        "name": "spin",
+        "value": 1
+      },
+      "printable": true,
+      "orientation": "bed = z0; lying on a flat, axis horizontal",
+      "supportFree": true,
+      "stlFile": "kit-spinner-pin.stl",
+      "glbFile": "kit-spinner-pin.glb",
+      "bboxMm": [
+        36,
+        65,
+        5
+      ]
+    },
+    {
+      "id": "kit-wheel-med",
+      "name": "Medium 1-TU Modular Craft Wheel",
+      "line": "pro",
+      "mount": "hole",
+      "sizeClass": "small",
+      "grid": {
+        "units": [
+          1,
+          1
+        ],
+        "profile": "tu_12.5"
+      },
+      "footprintMm": [
+        12.5,
+        12.5
+      ],
+      "stat": {
+        "name": "spin",
+        "value": 2
+      },
+      "printable": true,
+      "orientation": "bed = z0; lying flat, bores and pins along z",
+      "supportFree": true,
+      "stlFile": "kit-wheel-med.stl",
+      "glbFile": "kit-wheel-med.glb",
+      "bboxMm": [
+        36,
+        36,
+        12.3
+      ]
+    },
+    {
+      "id": "kit-wheel-giant",
+      "name": "Giant 1-TU Tractor & Paddle Wheel",
+      "line": "pro",
+      "mount": "hole",
+      "sizeClass": "small",
+      "grid": {
+        "units": [
+          1,
+          1
+        ],
+        "profile": "tu_12.5"
+      },
+      "footprintMm": [
+        12.5,
+        12.5
+      ],
+      "stat": {
+        "name": "torque",
+        "value": 2
+      },
+      "printable": true,
+      "orientation": "bed = z0; lying flat, bores and pins along z",
+      "supportFree": true,
+      "stlFile": "kit-wheel-giant.stl",
+      "glbFile": "kit-wheel-giant.glb",
+      "bboxMm": [
+        49.9,
+        49.9,
+        12.3
+      ]
+    },
+    {
+      "id": "kit-rotor-blade",
+      "name": "Airfoil Prop & Crossed Rotor Blade",
+      "line": "pro",
+      "mount": "hole",
+      "sizeClass": "small",
+      "grid": {
+        "units": [
+          1,
+          1
+        ],
+        "profile": "tu_12.5"
+      },
+      "footprintMm": [
+        12.5,
+        12.5
+      ],
+      "stat": {
+        "name": "speed",
+        "value": 3
+      },
+      "printable": true,
+      "orientation": "bed = z0; lying flat, bores and pins along z",
+      "supportFree": true,
+      "stlFile": "kit-rotor-blade.stl",
+      "glbFile": "kit-rotor-blade.glb",
+      "bboxMm": [
+        68,
+        20,
+        6
+      ]
+    },
+    {
+      "id": "kit-aero-wedge",
+      "name": "Aero Nose Cone & Heli Mast House",
+      "line": "snap",
+      "mount": "stud",
+      "sizeClass": "small",
+      "grid": {
+        "units": [
+          2,
+          3
+        ],
+        "profile": "tu_stud_small"
+      },
+      "footprintMm": [
+        25,
+        37.5
+      ],
+      "stat": {
+        "name": "speed",
+        "value": 2
+      },
+      "printable": true,
+      "orientation": "bed = z0; studs/body up; underside cavity down",
+      "supportFree": true,
+      "stlFile": "kit-aero-wedge.stl",
+      "glbFile": "kit-aero-wedge.glb",
+      "bboxMm": [
+        24.8,
+        37.3,
+        33.2
+      ]
+    },
+    {
+      "id": "kit-windscreen",
+      "name": "Open-Top Cockpit Windscreen & Wire Sill",
+      "line": "snap",
+      "mount": "stud",
+      "sizeClass": "small",
+      "grid": {
+        "units": [
+          4,
+          3
+        ],
+        "profile": "tu_stud_small"
+      },
+      "footprintMm": [
+        50,
+        37.5
+      ],
+      "stat": {
+        "name": "spin",
+        "value": 1
+      },
+      "printable": true,
+      "orientation": "bed = z0; flat, studs up",
+      "supportFree": true,
+      "stlFile": "kit-windscreen.stl",
+      "glbFile": "kit-windscreen.glb",
+      "bboxMm": [
+        49.8,
+        37.3,
+        23.5
+      ]
+    },
+    {
+      "id": "kit-foil-wing",
+      "name": "Swept Foil Wing, GT Spoiler & Ramp",
+      "line": "snap",
+      "mount": "stud",
+      "sizeClass": "small",
+      "grid": {
+        "units": [
+          5,
+          4
+        ],
+        "profile": "tu_stud_small"
+      },
+      "footprintMm": [
+        62.5,
+        50
+      ],
+      "stat": {
+        "name": "speed",
+        "value": 2
+      },
+      "printable": true,
+      "orientation": "bed = z0; flat, studs up",
+      "supportFree": true,
+      "stlFile": "kit-foil-wing.stl",
+      "glbFile": "kit-foil-wing.glb",
+      "bboxMm": [
+        74.8,
+        49.8,
+        5
+      ]
+    },
+    {
+      "id": "kit-skid-runner",
+      "name": "Landing Skid, Snow Ski & Hull Runner",
+      "line": "snap",
+      "mount": "stud",
+      "sizeClass": "small",
+      "grid": {
+        "units": [
+          1,
+          9
+        ],
+        "profile": "tu_stud_small"
+      },
+      "footprintMm": [
+        12.5,
+        112.5
+      ],
+      "stat": {
+        "name": "speed",
+        "value": 1
+      },
+      "printable": true,
+      "orientation": "bed = z0; flat, studs up",
+      "supportFree": true,
+      "stlFile": "kit-skid-runner.stl",
+      "glbFile": "kit-skid-runner.glb",
+      "bboxMm": [
+        17.6,
+        112.3,
+        20
+      ]
+    },
+    {
+      "id": "kit-tilting-tub",
+      "name": "4x4 Tipping Dump Tub & Payload Bay",
+      "line": "snap",
+      "mount": "stud",
+      "sizeClass": "small",
+      "grid": {
+        "units": [
+          4,
+          4
+        ],
+        "profile": "tu_stud_small"
+      },
+      "footprintMm": [
+        50,
+        50
+      ],
+      "stat": {
+        "name": "torque",
+        "value": 2
+      },
+      "printable": true,
+      "orientation": "bed = z0; studs/body up; underside cavity down",
+      "supportFree": true,
+      "stlFile": "kit-tilting-tub.stl",
+      "glbFile": "kit-tilting-tub.glb",
+      "bboxMm": [
+        49.8,
+        49.8,
+        18
+      ]
+    },
+    {
+      "id": "kit-scoop-blade",
+      "name": "Front Loader Bucket & Snowplow Blade",
+      "line": "snap",
+      "mount": "stud",
+      "sizeClass": "small",
+      "grid": {
+        "units": [
+          4,
+          3
+        ],
+        "profile": "tu_stud_small"
+      },
+      "footprintMm": [
+        50,
+        37.5
+      ],
+      "stat": {
+        "name": "torque",
+        "value": 2
+      },
+      "printable": true,
+      "orientation": "bed = z0; flat, studs up",
+      "supportFree": true,
+      "stlFile": "kit-scoop-blade.stl",
+      "glbFile": "kit-scoop-blade.glb",
+      "bboxMm": [
+        49.8,
+        37.3,
+        20
+      ]
+    },
+    {
+      "id": "kit-booster-pod",
+      "name": "Twin-Bell Sidepod & Jet Nacelle",
+      "line": "snap",
+      "mount": "stud",
+      "sizeClass": "small",
+      "grid": {
+        "units": [
+          2,
+          5
+        ],
+        "profile": "tu_stud_small"
+      },
+      "footprintMm": [
+        25,
+        62.5
+      ],
+      "stat": {
+        "name": "speed",
+        "value": 3
+      },
+      "printable": true,
+      "orientation": "bed = z0; flat, studs up",
+      "supportFree": true,
+      "stlFile": "kit-booster-pod.stl",
+      "glbFile": "kit-booster-pod.glb",
+      "bboxMm": [
+        24.8,
+        65,
+        28
+      ]
+    },
+    {
+      "id": "kit-turntable",
+      "name": "Rotary Slew Deck, Hitch & Mast Plate",
+      "line": "snap",
+      "mount": "stud",
+      "sizeClass": "small",
+      "grid": {
+        "units": [
+          4,
+          4
+        ],
+        "profile": "tu_stud_small"
+      },
+      "footprintMm": [
+        50,
+        50
+      ],
+      "stat": {
+        "name": "spin",
+        "value": 2
+      },
+      "printable": true,
+      "orientation": "bed = z0; studs/body up; underside cavity down",
+      "supportFree": true,
+      "stlFile": "kit-turntable.stl",
+      "glbFile": "kit-turntable.glb",
+      "bboxMm": [
+        49.8,
+        49.8,
+        8
+      ]
+    },
+    {
+      "id": "kit-yoke-hbar",
+      "name": "Universal Flight Yoke, Helm & Handlebar",
+      "line": "pro",
+      "mount": "hole",
+      "sizeClass": "small",
+      "grid": {
+        "units": [
+          1,
+          1
+        ],
+        "profile": "tu_12.5"
+      },
+      "footprintMm": [
+        12.5,
+        12.5
+      ],
+      "stat": {
+        "name": "spin",
+        "value": 1
+      },
+      "printable": true,
+      "orientation": "bed = z0; lying on a flat, axis horizontal",
+      "supportFree": true,
+      "stlFile": "kit-yoke-hbar.stl",
+      "glbFile": "kit-yoke-hbar.glb",
+      "bboxMm": [
+        46,
+        38,
+        5.6
+      ]
+    },
+    {
+      "id": "skin-aero-cowl",
+      "name": "Flex Skin: Wrap-Around Aero Nose Cowl",
+      "line": "snap",
+      "mount": "stud",
+      "sizeClass": "small",
+      "grid": {
+        "units": [
+          7,
+          3
+        ],
+        "profile": "tu_stud_small"
+      },
+      "footprintMm": [
+        87.5,
+        37.5
+      ],
+      "stat": {
+        "name": "glow",
+        "value": 1
+      },
+      "printable": true,
+      "orientation": "bed = z0; flat, studs up",
+      "supportFree": true,
+      "stlFile": "skin-aero-cowl.stl",
+      "glbFile": "skin-aero-cowl.glb",
+      "bboxMm": [
+        96,
+        37.3,
+        4.4
+      ]
+    },
+    {
+      "id": "skin-windscreen",
+      "name": "Flex Skin: Wrap-Around Cockpit Visor",
+      "line": "snap",
+      "mount": "stud",
+      "sizeClass": "small",
+      "grid": {
+        "units": [
+          7,
+          3
+        ],
+        "profile": "tu_stud_small"
+      },
+      "footprintMm": [
+        87.5,
+        37.5
+      ],
+      "stat": {
+        "name": "glow",
+        "value": 1
+      },
+      "printable": true,
+      "orientation": "bed = z0; flat, studs up",
+      "supportFree": true,
+      "stlFile": "skin-windscreen.stl",
+      "glbFile": "skin-windscreen.glb",
+      "bboxMm": [
+        96,
+        36,
+        4.4
+      ]
+    },
+    {
+      "id": "skin-cargo-shroud",
+      "name": "Flex Skin: Book-Fold Payload Bay Doors",
+      "line": "snap",
+      "mount": "stud",
+      "sizeClass": "small",
+      "grid": {
+        "units": [
+          9,
+          4
+        ],
+        "profile": "tu_stud_small"
+      },
+      "footprintMm": [
+        112.5,
+        50
+      ],
+      "stat": {
+        "name": "glow",
+        "value": 2
+      },
+      "printable": true,
+      "orientation": "bed = z0; flat, studs up",
+      "supportFree": true,
+      "stlFile": "skin-cargo-shroud.stl",
+      "glbFile": "skin-cargo-shroud.glb",
+      "bboxMm": [
+        112,
+        49.8,
+        4.4
+      ]
+    }
+  ]
+}

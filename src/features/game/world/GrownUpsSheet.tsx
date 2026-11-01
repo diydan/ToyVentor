@@ -22,6 +22,10 @@ import {
   unlockedVehiclesFor,
   type ProgressionState,
 } from "../../../lib/progression";
+import {
+  practicedSkillsSummary,
+  workshopDaysCount,
+} from "../../../lib/dailyQuests";
 import { resolvePhase4VehicleRoster } from "../../../lib/vehicleReadiness";
 import { WORLDS, type WorldId } from "./engine";
 
@@ -950,6 +954,12 @@ export function GrownUpsSheet({
                     {rankFor(progression.totalXp).title}
                   </strong>
                 </div>
+                <div>
+                  <span className="tv-parent-stat-k">Workshop days</span>
+                  <strong className="tv-parent-stat-v">
+                    {workshopDaysCount(progression)}
+                  </strong>
+                </div>
               </div>
               <p className="tv-moves" style={{ margin: 0, fontSize: 12 }}>
                 {["lab1", "lab2", "lab3", "lab4", "lab5", "lab6"]
@@ -958,6 +968,9 @@ export function GrownUpsSheet({
                       `${lab.replace("lab", "Lab ")} ★${familyStars(progression, lab)}`,
                   )
                   .join(" · ")}
+              </p>
+              <p className="tv-moves" style={{ margin: 0, fontSize: 12 }}>
+                Skills practiced: {practicedSkillsSummary(progression)}
               </p>
               {unlockedVehiclesFor(progression.totalXp).length > 0 && (
                 <p className="tv-moves" style={{ margin: 0, fontSize: 12 }}>

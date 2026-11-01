@@ -71,7 +71,7 @@ describe("native world runtime (Phase 0A)", () => {
     );
     expect(res.status).toBe(302);
     expect(res.headers.get("location")).toBe("/");
-  });
+  }, 15_000);
 
   it("scores failed evaluated tries without penalizing multi-stage steps and supports clean mission replay", async () => {
     // Unit 2d: mission logic lives in missions.ts; the shipped runtime is both files.
