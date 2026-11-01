@@ -383,6 +383,27 @@ async function requireParentProof(
   );
 }
 
+/**
+ * For other Worker routes that must only run for a grown-up (the selfie cloud): does this request carry a live parent-gate proof
+ * for its own `x-device-id`? Same key, same `proof` kind and same device binding as the parent routes. Fails closed: no D1 binding,
+ * a missing or malformed device id, a key that cannot be resolved, or any error all answer false.
+ */
+export async function verifyParentProofFromRequest(
+  request: Request,
+  env: ParentEnv,
+  nowMs = Date.now(),
+): Promise<boolean> {
+  try {
+    if (!env.DB) return false;
+    const playerId = request.headers.get("x-device-id");
+    if (!isPlayerId(playerId)) return false;
+    const key = await resolveHmacKey(env, env.DB);
+    return await requireParentProof(request, key, playerId, nowMs);
+  } catch {
+    return false;
+  }
+}
+
 export async function handleParent(
   request: Request,
   env: ParentEnv,

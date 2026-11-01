@@ -89,23 +89,6 @@
     color: var(--ink);
   }
 
-  .dock {
-    position: fixed;
-    left: 50%;
-    bottom: 36px;
-    transform: translateX(-50%);
-    background: var(--glass);
-    backdrop-filter: blur(14px);
-    border: 1px solid var(--line);
-    border-radius: 18px;
-    padding: 9px 12px;
-    box-shadow: 0 12px 32px rgba(27, 34, 56, 0.10);
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    max-width: calc(100vw - 24px);
-    z-index: 10;
-  }
   #version-pill {
     position: fixed;
     left: 14px;
@@ -182,29 +165,6 @@
     color: #fff;
     border-color: var(--mint);
   }
-  .slider-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    background: rgba(255, 255, 255, 0.65);
-    border: 1px solid var(--line);
-    border-radius: 9px;
-    padding: 3px 8px;
-    font-size: 11px;
-    font-weight: 700;
-    color: var(--muted);
-  }
-  .slider-pill input[type="range"] {
-    width: 78px;
-    accent-color: var(--spark);
-    cursor: pointer;
-  }
-  .sep {
-    width: 1px;
-    height: 18px;
-    background: var(--line);
-    margin: 0 2px;
-  }
   #drop-overlay {
     position: fixed;
     inset: 16px;
@@ -222,7 +182,7 @@
     pointer-events: none;
   }
   body.dragging #drop-overlay { display: flex; }
-  body.clean-ui .topbar, body.clean-ui .dock, body.clean-ui .modal-backdrop, body.clean-ui #version-pill { display: none !important; }
+  body.clean-ui .topbar, body.clean-ui .modal-backdrop, body.clean-ui #version-pill { display: none !important; }
 
   .modal-backdrop {
     position: fixed;
@@ -318,7 +278,7 @@
 </head>
 <body>
 <div id="viewport"></div>
-<div id="version-pill"><span class="ver-dot"></span><span id="version-label">Kip v10.0 · 4 Head Categories (Human · Robot · Animal · Creature) · 3 Universal Inserts · 14 Wigs · 7 Hats</span></div>
+<div id="version-pill"><span class="ver-dot"></span><span id="version-label">Kip v10.1 · 4 Head Categories (Human · Robot · Animal · Creature) · 3 Universal Inserts · 19 Wigs · 7 Hats</span></div>
 <div id="drop-overlay">Drop Custom PartSpec .stl or Mixamo .fbx/.glb onto Kip</div>
 
 <div class="topbar">
@@ -335,63 +295,6 @@
     <span><kbd>E</kbd> Explode</span>
     <span><kbd>B</kbd> Pile→Build</span>
     <span><kbd>H</kbd> Hide UI</span>
-  </div>
-</div>
-
-<div class="dock">
-  <div class="row" id="row-clips">
-    <span class="row-label">Animations</span>
-  </div>
-  <div class="row">
-    <span class="row-label">Wardrobe</span>
-    <button id="btn-category" class="mint-active" title="Cycle the head type: Human / Robot / Animal / Creature. The Wardrobe row shows only the options that fit the chosen type.">Type: Robot</button>
-    <button id="btn-head" class="spark-active" title="Cycle the heads of the chosen type">Head: Kip Classic</button>
-    <button id="btn-face" title="Cycle swappable emotion Face Inserts &amp; 2D expressions">Face: Spark</button>
-    <button id="btn-face-insert" class="mint-active" style="display:none;" title="Cycle Universal Human Face Inserts across all 3 human heads: 3D Nose &amp; Orbitals / 3D Button Eyes &amp; Nose / Flat Decal Insert">Insert: 3D Nose &amp; Orbitals</button>
-    <button id="btn-hair" title="Cycle 14 sculpted multi-strand 2x1 hairstyles: 6 Hat-Ready styles (with top studs) + 8 Sculpted-Top styles">Hair: None</button>
-    <button id="btn-crown" class="spark-active" title="Cycle 7 wearable hats &amp; crown toppers (stacks on bald heads &amp; all 6 Hat-Ready hairstyles!)">Hat: Spark Buds</button>
-    <button id="btn-hat-col" style="display:none;" title="Cycle wearable hat filament colors">Hat Tone: Sport Cobalt</button>
-    <button id="btn-skin" title="Cycle full-body exposed skin tones (head, face plate, neck, hands, bare forearms &amp; shins): Warm Peach / Golden Tan / Rich Cocoa / Rosy Ivory / Vinyl Cream">Skin: Vinyl Cream</button>
-    <button id="btn-hair-col" title="Cycle clip-on hair colors: Chestnut / Espresso / Golden Blonde / Auburn Ginger / Berry Spark / Cobalt Blue">Hair Tone: Chestnut</button>
-    <button id="btn-shirt" title="Cycle solid filament shirts, hoodies, jackets &amp; overalls with front chest stencil stickers">Shirt: Off</button>
-    <button id="btn-pants" title="Cycle solid filament pants &amp; shorts">Pants: Off</button>
-    <button id="btn-back" title="Cycle 2x2 Back Dock: Off / Explorer Pack / Bolt Jetpack / Cloud Wings / Pro 2:1 Gears">Back: Off</button>
-    <button id="btn-prop-cat" title="Prop category: All / Tools / Cleaning / Instruments / Play &amp; Gear (click, then use the Prop button to cycle items in that category)">Prop Type: All</button>
-    <button id="btn-hand" title="Cycle props in the chosen category (Tools: wrench, hammer, screwdriver, paint roller; Cleaning: mop, broom, scrub brush, vacuum; Instruments: guitar, trumpet, maracas; Play: shield, skateboard, flag, magnifier)">Prop: Off</button>
-    <button id="btn-ears" title="Cycle ±X Ear-Pod Ø6.6 Bosses: Off / Comm-Pods / Pro Scanner">Ears: Off</button>
-    <button id="btn-tail" title="Cycle 1x1 Lower-Back Tail Port: Off / Wag-Tail / Pro Wheelie">Tail: Off</button>
-  </div>
-  <div class="row">
-    <span class="row-label">Vehicles</span>
-    <button id="btn-veh-none" class="active" data-veh="none">On Foot</button>
-    <button id="btn-veh-car" data-veh="car">🏎️ Roadster Car</button>
-    <button id="btn-veh-truck" data-veh="truck">🛻 Hauler Truck</button>
-    <button id="btn-veh-scooter" data-veh="scooter">🛵 Motor Scooter</button>
-    <button id="btn-veh-moto" data-veh="moto">🏍️ Sport Motorbike</button>
-    <span class="sep"></span>
-    <button id="btn-veh-covers" class="spark-active" title="Toggle interchangeable snap-on vehicle body covers (Car/Truck Hood &amp; Cab Roof, Pickup Bed Cover, Scooter Fairing, Moto Tank Cowling)">Covers: On</button>
-    <button id="btn-racer-kit" class="spark-active" title="Toggle Wave 6 Racer Add-Ons (Bull Bar, Hood Scoop, Light Bar / Roof Rack, Spoiler, Twin Exhaust)">Racer Kit: On</button>
-    <button id="btn-preset" title="Cycle Clean / Leo Explorer / Maya Skater / Kai Moto / Mecha Scout / Whisker Cat Scooter / Fox Scooter / Drake Dragon / Yeti Imp / Bolt Pro 8+">Preset: Clean</button>
-  </div>
-  <div class="row">
-    <span class="row-label">Build &amp; AI</span>
-    <button id="btn-edition" class="spark-active" title="Switch between Pro (8+) 14-joint rig and simplified Snap (3+) rig (auto-uses 90° char_legs_seated in vehicles!)">Edition: Pro (8+)</button>
-    <button id="btn-explode" title="Pull Kip &amp; active vehicle apart along physical assembly axes (Shortcut: E)">Exploded View</button>
-    <span class="slider-pill" title="Scrub pulled-apart explosion distance">
-      <span>Pull</span>
-      <input type="range" id="rng-explode" min="0" max="100" value="0" />
-    </span>
-    <button id="btn-pile" title="Scatter Kip &amp; vehicle parts flat onto the tabletop build grid">Part Pile</button>
-    <button id="btn-build" title="Animate Kip &amp; vehicle snapping together piece-by-piece! (Shortcut: B)">▶ Pile → Build</button>
-    <span class="sep"></span>
-    <button id="btn-open-llm" class="mint-active" title="Open Conforming LLM Part-Maker SDK prompt &amp; custom .stl loader">🤖 LLM Part SDK</button>
-    <button id="btn-open-photo" class="spark-active" title="Turn a webcam snapshot, uploaded drawing, or kid sketch into a 3D in-game accessory!">📸 Photo → Toy</button>
-    <button id="btn-Skeleton" title="Show live Mixamo X-Bot reference skeleton">Ref: Off</button>
-    <button id="btn-speed" title="Cycle animation playback speed">1×</button>
-    <label class="file-btn" title="Load Custom .stl part or Mixamo .fbx/.glb animation">
-      + .stl/.glb
-      <input type="file" id="file-input" accept=".stl,.fbx,.glb,.gltf" hidden />
-    </label>
   </div>
 </div>
 
@@ -538,13 +441,10 @@ import {
   HAIR_COLORS,
   HAT_COLORS,
   HAIR_OPTIONS,
-  WEARABLE_HAT_IDS,
   HAT_OPTIONS,
   FACE_STEM_MM,
-  CROWN_OPTIONS,
   BACK_OPTIONS,
   PROP_OPTIONS,
-  PROP_CATEGORIES,
   VEHICLE_OPTIONS,
   loadExpansionGeos,
   attachExpansionToKipRig,
@@ -1934,7 +1834,7 @@ const loco = {
   hatColor: 'cobalt_cap',
   shirt: 'off',
   pants: 'off',
-  hair: 'off',         // 'off' | 6 Hat-Ready wigs + 8 Sculpted-Top wigs
+  hair: 'off',         // 'off' | 8 Hat-Ready wigs + 11 Sculpted-Top wigs
   faceInsert: 'sculpted', // 'sculpted' (3D Nose & Orbitals) | 'vinyl' (3D Button Eyes & Nose) | 'flat' (Smooth Printed Decal)
   expr: 'spark',       // 'spark' | 'button' | 'happy' | 'wink' | 'cool' | 'starry' | 'surprised' | 'blank'
   hat: 'buds',         // 'buds' | 7 wearable hats ('ballcap'..'pirate') | 'hat' | 'ears' | 'horns' | 'blank' | 'wizardHat' | 'custom'
@@ -2013,9 +1913,6 @@ function playClip(rawName, fadeSec = 0.22) {
   }
   activeClipName = name;
   loco.hasPrevStance = false; // re-anchor stance foot cleanly on clip change
-  document.querySelectorAll('#row-clips button[data-clip]').forEach(b => {
-    b.classList.toggle('active', b.dataset.clip === name);
-  });
   updateStatusText();
 }
 
@@ -2036,40 +1933,33 @@ function updateStatusText() {
   }
 }
 
-// One entry per clip that has a button; the side menu's Clip select lists the same entries.
-const clipButtons = [];
+// One entry per playable clip; the side menu's Clip select lists these.
+const clipChoices = [];
 function triggerClip(name) {
   if (loco.buildMode !== 'assembled') exitPileMode();
   loco.manualOverride = (name !== 'idle');
   playClip(name);
 }
-function addClipButton(name, label) {
-  const row = document.getElementById('row-clips');
-  const btn = document.createElement('button');
-  btn.dataset.clip = name;
-  btn.textContent = label;
-  btn.addEventListener('click', () => triggerClip(name));
-  row.appendChild(btn);
-  clipButtons.push({ id: name, label });
+function registerClip(name, label) {
+  clipChoices.push({ id: name, label });
 }
 
-// Camera helper for deterministic framing (shifts target slightly lower when bottom UI dock is visible so subject stays clear!)
+// Camera helper for deterministic framing.
 function applyCameraPreset(presetName) {
   const cx = kip ? kip.mover.position.x : 0;
   const cz = kip ? kip.mover.position.z : 0;
-  const uiShift = document.body.classList.contains('clean-ui') ? 0 : 20;
   if (presetName === 'front') {
-    camera.position.set(cx, 134, cz + 410 + uiShift * 1.5); controls.target.set(cx, 88 - uiShift, cz);
+    camera.position.set(cx, 134, cz + 410); controls.target.set(cx, 88, cz);
   } else if (presetName === 'wave') {
-    camera.position.set(cx - 42, 126, cz + 305 + uiShift); controls.target.set(cx - 8, 90 - uiShift, cz);
+    camera.position.set(cx - 42, 126, cz + 305); controls.target.set(cx - 8, 90, cz);
   } else if (presetName === 'back34') {
-    camera.position.set(cx - 225, 162, cz - 265 - uiShift); controls.target.set(cx, 80 - uiShift, cz - 10);
+    camera.position.set(cx - 225, 162, cz - 265); controls.target.set(cx, 80, cz - 10);
   } else if (presetName === 'side34') {
-    camera.position.set(cx - 245, 145, cz + 205 + uiShift); controls.target.set(cx, 76 - uiShift * 0.8, cz - 4);
+    camera.position.set(cx - 245, 145, cz + 205); controls.target.set(cx, 76, cz - 4);
   } else if (presetName === 'vehicle') {
-    camera.position.set(cx + 255, 165, cz + 320 + uiShift * 1.2); controls.target.set(cx, 54 - uiShift, cz - 6);
+    camera.position.set(cx + 255, 165, cz + 320); controls.target.set(cx, 54, cz - 6);
   } else if (presetName === 'exploded') {
-    camera.position.set(cx + 245, 240, cz + 655); controls.target.set(cx, 108 - uiShift * 0.6, cz);
+    camera.position.set(cx + 245, 240, cz + 655); controls.target.set(cx, 108, cz);
   } else if (presetName === 'head_exploded') {
     camera.position.set(cx - 175, 248, cz + 445); controls.target.set(cx, 184, cz + 6);
   } else if (presetName === 'head_front') {
@@ -2162,17 +2052,17 @@ async function init() {
   for (const [rawName, label] of clipLabels) {
     if (rawName === 'HeroWave') {
       actions.set('HeroWave', kipMixer.clipAction(makeHeroWaveClip()));
-      addClipButton('HeroWave', label);
+      registerClip('HeroWave', label);
       continue;
     }
     if (rawName === 'sad_pose') {
       actions.set('sad_pose', kipMixer.clipAction(makeSadClip()));
-      addClipButton('sad_pose', label);
+      registerClip('sad_pose', label);
       continue;
     }
     if (rawName === 'sneak_pose') {
       actions.set('sneak_pose', kipMixer.clipAction(makeSneakClip()));
-      addClipButton('sneak_pose', label);
+      registerClip('sneak_pose', label);
       continue;
     }
     const rawClip = xbotGltf.animations.find(a => a.name === rawName);
@@ -2180,19 +2070,19 @@ async function init() {
     const baked = retargetMixamoClipToKip(rawClip, xbotVis, { name: rawName, inPlace: true });
     if (baked) {
       actions.set(rawName, kipMixer.clipAction(baked));
-      addClipButton(rawName, label);
+      registerClip(rawName, label);
     }
   }
 
   // Register Phase 2 dedicated Vehicle & Skateboard clips!
   actions.set('drive_sit', kipMixer.clipAction(makeDriveSitClip(THREE)));
-  addClipButton('drive_sit', 'Sit & Drive');
+  registerClip('drive_sit', 'Sit & Drive');
   actions.set('scooter_ride', kipMixer.clipAction(makeScooterRideClip(THREE)));
-  addClipButton('scooter_ride', 'Scooter');
+  registerClip('scooter_ride', 'Scooter');
   actions.set('moto_straddle', kipMixer.clipAction(makeMotoStraddleClip(THREE)));
-  addClipButton('moto_straddle', 'Moto');
+  registerClip('moto_straddle', 'Moto');
   actions.set('skate_cruise', kipMixer.clipAction(makeSkateboardClip(THREE)));
-  addClipButton('skate_cruise', 'Skate');
+  registerClip('skate_cruise', 'Skate');
 
   xbotVis.scale.multiplyScalar(83.5);
   refMixer = new THREE.AnimationMixer(xbotVis);
@@ -2209,7 +2099,7 @@ async function init() {
     });
     if (bakedSamba) {
       actions.set('SambaDance', kipMixer.clipAction(bakedSamba));
-      addClipButton('SambaDance', 'Samba');
+      registerClip('SambaDance', 'Samba');
     }
   }
   if (tposeClip) {
@@ -2218,7 +2108,7 @@ async function init() {
     });
     if (bakedTPose) {
       actions.set('TPose', kipMixer.clipAction(bakedTPose));
-      addClipButton('TPose', 'T-Pose');
+      registerClip('TPose', 'T-Pose');
     }
   }
 
@@ -2381,11 +2271,7 @@ function setEdition(ed) {
   }
   syncNeckAndSeatedVisibility();
 
-  const btn = document.getElementById('btn-edition');
   const badge = document.getElementById('badge-edition');
-  btn.textContent = isPro ? 'Edition: Pro (8+)' : 'Edition: Snap (3+)';
-  btn.classList.toggle('spark-active', isPro);
-  btn.classList.toggle('mint-active', !isPro);
   badge.textContent = isPro ? 'Pro 8+ Rig' : 'Snap 3+ Rig';
   badge.classList.toggle('snap-mode', !isPro);
 
@@ -2396,23 +2282,16 @@ function setEdition(ed) {
   updateStatusText();
 }
 
-document.getElementById('btn-edition').addEventListener('click', () => {
-  setEdition(loco.edition === 'pro' ? 'snap' : 'pro');
-});
 document.getElementById('badge-edition').addEventListener('click', () => {
   setEdition(loco.edition === 'pro' ? 'snap' : 'pro');
 });
 
 // Exploded View controls
-const rngExplode = document.getElementById('rng-explode');
-const btnExplode = document.getElementById('btn-explode');
 
 function setExplodeAmount(val, instant = false) {
   if (val > 0.01 && loco.buildMode !== 'assembled') exitPileMode();
   loco.explodeTarget = THREE.MathUtils.clamp(val, 0, 1);
   if (instant) loco.explodeAmount = loco.explodeTarget;
-  rngExplode.value = String(Math.round(loco.explodeTarget * 100));
-  btnExplode.classList.toggle('spark-active', loco.explodeTarget > 0.02);
   updateStatusText();
 }
 
@@ -2427,15 +2306,8 @@ function toggleExplode() {
     controls.target.set(cx, 68, cz);
   }
 }
-btnExplode.addEventListener('click', toggleExplode);
-rngExplode.addEventListener('input', e => {
-  setExplodeAmount(parseFloat(e.target.value) / 100, true);
-});
 
 // Tabletop Part Pile & Pile -> Build controls
-const btnPile  = document.getElementById('btn-pile');
-const btnBuild = document.getElementById('btn-build');
-
 function resetSlotsToIdentity() {
   for (const s of kip.partSlots) {
     s.grp.position.set(0, 0, 0);
@@ -2446,8 +2318,6 @@ function resetSlotsToIdentity() {
 
 function exitPileMode() {
   loco.buildMode = 'assembled';
-  btnPile.classList.remove('active');
-  btnBuild.classList.remove('spark-active');
   resetSlotsToIdentity();
   updateStatusText();
 }
@@ -2460,8 +2330,6 @@ function enterPartPile(autoFrame = false) {
   kipMixer.setTime(0);
   applySnapJointOverrides();
   layoutPartPile(kip, loco.edition);
-  btnPile.classList.add('active');
-  btnBuild.classList.remove('spark-active');
   if (autoFrame) applyCameraPreset('pile');
   updateStatusText();
 }
@@ -2474,8 +2342,6 @@ function startPileToBuild(autoFrame = false) {
   kipMixer.setTime(0);
   applySnapJointOverrides();
   layoutPartPile(kip, loco.edition);
-  btnPile.classList.remove('active');
-  btnBuild.classList.add('spark-active');
   if (autoFrame) applyCameraPreset('pile');
   updateStatusText();
 }
@@ -2484,8 +2350,6 @@ function togglePartPile() {
   if (loco.buildMode === 'pile') exitPileMode();
   else enterPartPile(true);
 }
-btnPile.addEventListener('click', togglePartPile);
-btnBuild.addEventListener('click', () => startPileToBuild(true));
 
 function refreshPileIfActive() {
   if (kip && loco.buildMode !== 'assembled') layoutPartPile(kip, loco.edition);
@@ -2510,11 +2374,6 @@ function setSkinTone(skinId) {
   loco.skin = found.id;
   syncHeadHairHatLayout();
 }
-document.getElementById('btn-skin').addEventListener('click', () => {
-  const curIdx = SKIN_TONES.findIndex(s => s.id === loco.skin);
-  const next = SKIN_TONES[(curIdx + 1) % SKIN_TONES.length];
-  setSkinTone(next.id);
-});
 
 function setShirtMode(shirtId) {
   const found = SHIRT_OPTIONS.find(s => s.id === shirtId) || SHIRT_OPTIONS[0];
@@ -2525,52 +2384,24 @@ function setShirtMode(shirtId) {
   }
   syncHeadHairHatLayout();
 }
-document.getElementById('btn-shirt').addEventListener('click', () => {
-  const curIdx = SHIRT_OPTIONS.findIndex(s => s.id === loco.shirt);
-  const next = SHIRT_OPTIONS[(curIdx + 1) % SHIRT_OPTIONS.length];
-  setShirtMode(next.id);
-});
 
 function setPantsMode(pantsId) {
   const found = PANTS_OPTIONS.find(p => p.id === pantsId) || PANTS_OPTIONS[0];
   loco.pants = found.id;
   syncHeadHairHatLayout();
 }
-document.getElementById('btn-pants').addEventListener('click', () => {
-  const curIdx = PANTS_OPTIONS.findIndex(p => p.id === loco.pants);
-  const next = PANTS_OPTIONS[(curIdx + 1) % PANTS_OPTIONS.length];
-  setPantsMode(next.id);
-});
 
 function setHairColor(colId) {
   const found = HAIR_COLORS.find(c => c.id === colId) || HAIR_COLORS[0];
   loco.hairColor = found.id;
   if (kip && kip.exp) kip.exp.expMats.hair.color.set(found.hex);
-  const btn = document.getElementById('btn-hair-col');
-  btn.textContent = `Hair Tone: ${found.label}`;
-  btn.classList.toggle('spark-active', loco.hairColor !== HAIR_COLORS[0].id);
 }
-document.getElementById('btn-hair-col').addEventListener('click', () => {
-  const curIdx = HAIR_COLORS.findIndex(c => c.id === loco.hairColor);
-  const next = HAIR_COLORS[(curIdx + 1) % HAIR_COLORS.length];
-  setHairColor(next.id);
-});
 
 function setHatColor(colId) {
   const found = HAT_COLORS.find(c => c.id === colId) || HAT_COLORS[0];
   loco.hatColor = found.id;
   if (kip && kip.exp && kip.exp.expMats.hat) kip.exp.expMats.hat.color.set(found.hex);
-  const btn = document.getElementById('btn-hat-col');
-  if (btn) {
-    btn.textContent = `Hat Tone: ${found.label}`;
-    btn.classList.toggle('spark-active', true);
-  }
 }
-document.getElementById('btn-hat-col').addEventListener('click', () => {
-  const curIdx = HAT_COLORS.findIndex(c => c.id === loco.hatColor);
-  const next = HAT_COLORS[(curIdx + 1) % HAT_COLORS.length];
-  setHatColor(next.id);
-});
 
 function setFaceInsertMode(modeId) {
   const found = FACE_INSERT_MODES.find(m => m.id === modeId);
@@ -2579,20 +2410,19 @@ function setFaceInsertMode(modeId) {
   refreshPileIfActive();
   updateStatusText();
 }
-document.getElementById('btn-face-insert').addEventListener('click', () => {
-  const curIdx = FACE_INSERT_MODES.findIndex(m => m.id === loco.faceInsert);
-  const next = FACE_INSERT_MODES[(curIdx + 1) % FACE_INSERT_MODES.length];
-  setFaceInsertMode(next.id);
-});
 
 function refreshDecalTexture() {
   if (!kip || !kip.exp) return;
   const hType = (loco.head === 'classic' || loco.head === 'custom')
     ? 'kid'
     : loco.head;
-  const newCanvas = createDecalExpressionCanvas(loco.expr, hType, loco.faceInsert);
-  kip.exp.decalTex.image = newCanvas;
-  kip.exp.decalTex.needsUpdate = true;
+  const newCanvas = createDecalExpressionCanvas(loco.expr, hType, loco.faceInsert, { onPlate: HUMAN_HEAD_IDS.has(loco.head) });
+  const tex = kip.exp.decalTex;
+  const prev = tex.image;
+  tex.image = newCanvas;
+  // The GPU copy has a fixed size: a canvas of another size (the selfie is 510x268, the 2D art 512x256) needs a fresh texture, or the upload silently fails and the old art stays on the plate.
+  if (!prev || prev.width !== newCanvas.width || prev.height !== newCanvas.height) tex.dispose();
+  tex.needsUpdate = true;
 }
 
 function syncHeadHairHatLayout() {
@@ -2624,7 +2454,7 @@ function syncHeadHairHatLayout() {
   kip.exp.faceplateMesh.visible      = isHuman && (loco.faceInsert === 'sculpted');
   kip.exp.faceplateVinylMesh.visible = isHuman && (loco.faceInsert === 'vinyl');
   kip.exp.faceplateFlatMesh.visible  = isHuman && (loco.faceInsert === 'flat');
-  kip.exp.faceplateDecalPlane.geometry = kip.exp.faceplateDecalGeos[loco.faceInsert] || kip.exp.faceplateDecalGeos.sculpted;
+  kip.exp.faceplateDecalPlane.geometry = kip.exp.faceplateDecalGeos[loco.expr === 'selfie' ? 'selfie' : loco.faceInsert] || kip.exp.faceplateDecalGeos.sculpted;
   kip.exp.faceplateDecalPlane.visible = isHuman && (loco.expr !== 'blank');
 
   kip.faceDetailGrp.visible = isClassic && loco.expr === 'spark';
@@ -2639,7 +2469,7 @@ function syncHeadHairHatLayout() {
   }
   kip.exp.decalPlane.visible = usesConformalDecal && (loco.expr !== 'blank');
 
-  // 3. Separate Clip-On 2x1 Hair (`6 Hat-Ready` with top_studs + `8 Sculpted-Top` studless)
+  // 3. Separate Clip-On 2x1 Hair (`8 Hat-Ready` with top_studs + `11 Sculpted-Top` studless)
   const hairOpt = HAIR_OPTIONS.find(h => h.id === loco.hair) || HAIR_OPTIONS[0];
   const hasHair = (hairOpt.id !== 'off');
   kip.exp.hairGroup.visible = hasHair;
@@ -2690,95 +2520,11 @@ function syncHeadHairHatLayout() {
 
   syncNeckAndSeatedVisibility();
 
-  // 6. Update Wardrobe Dock button labels
-  const hObj = WARDROBE_HEADS.find(h => h.id === loco.head);
-  const btnHead = document.getElementById('btn-head');
-  btnHead.textContent = `Head: ${hObj ? hObj.label : 'Custom Head'}`;
-  btnHead.classList.toggle('spark-active', true);
-
-  const fObj = DECAL_EXPRESSIONS.find(e => e.id === loco.expr) || DECAL_EXPRESSIONS[0];
-  const btnFace = document.getElementById('btn-face');
-  btnFace.textContent = `${isHuman ? 'Face Plate' : 'Face'}: ${fObj.label}`;
-  btnFace.classList.toggle('spark-active', loco.expr !== 'blank');
-
-  const btnInsert = document.getElementById('btn-face-insert');
-  btnInsert.style.display = isHuman ? '' : 'none';
-  const insObj = FACE_INSERT_MODES.find(m => m.id === loco.faceInsert) || FACE_INSERT_MODES[0];
-  btnInsert.textContent = `Insert: ${insObj.label}`;
-  btnInsert.classList.toggle('mint-active', insObj.id === 'sculpted');
-  btnInsert.classList.toggle('spark-active', insObj.id !== 'sculpted');
-
-  const btnHair = document.getElementById('btn-hair');
-  btnHair.textContent = `Hair: ${hairOpt.label}`;
-  btnHair.classList.toggle('spark-active', hasHair);
-
-  const hatObj = HAT_OPTIONS.find(c => c.id === loco.hat);
-  const hatLbl = hatObj ? hatObj.label : (loco.hat === 'wizardHat' ? 'Wizard Hat (SDK)' : 'Custom Hat');
-  const btnHat = document.getElementById('btn-crown');
-  btnHat.textContent = canWearHat ? `Hat: ${hatLbl}` : 'Hat: N/A (Sculpted)';
-  btnHat.classList.toggle('spark-active', canWearHat && loco.hat !== 'blank');
-
-  const btnHatCol = document.getElementById('btn-hat-col');
-  if (btnHatCol) {
-    const isWearableHat = canWearHat && WEARABLE_HAT_IDS.has(loco.hat);
-    btnHatCol.style.display = isWearableHat ? '' : 'none';
-    const hcObj = HAT_COLORS.find(c => c.id === loco.hatColor) || HAT_COLORS[0];
-    btnHatCol.textContent = `Hat Tone: ${hcObj.label}`;
-    btnHatCol.classList.toggle('spark-active', isWearableHat);
-  }
-
-  const skinObj = SKIN_TONES.find(s => s.id === loco.skin) || SKIN_TONES[0];
-  const btnSkin = document.getElementById('btn-skin');
-  btnSkin.textContent = `Skin: ${skinObj.label}`;
-  btnSkin.classList.toggle('spark-active', loco.skin !== 'vinyl_cream');
-
-  const shirtObj = SHIRT_OPTIONS.find(s => s.id === loco.shirt) || SHIRT_OPTIONS[0];
-  const btnShirt = document.getElementById('btn-shirt');
-  btnShirt.textContent = `Shirt: ${shirtObj.label}`;
-  btnShirt.classList.toggle('spark-active', loco.shirt !== 'off');
-
-  const pantsObj = PANTS_OPTIONS.find(p => p.id === loco.pants) || PANTS_OPTIONS[0];
-  const btnPants = document.getElementById('btn-pants');
-  btnPants.textContent = `Pants: ${pantsObj.label}`;
-  btnPants.classList.toggle('spark-active', loco.pants !== 'off');
-
-  syncWardrobeCategoryUi({ isHuman, canWearHat, hasHair });
+  dropEarPodsOffClassic();
 }
 
-// Context-aware Wardrobe row: each head type shows only the controls that make sense for it.
-function syncWardrobeCategoryUi({ isHuman, canWearHat, hasHair }) {
-  const cat = loco.category;
-  const catObj = HEAD_CATEGORIES.find(c => c.id === cat) || HEAD_CATEGORIES[0];
-  const btnCat = document.getElementById('btn-category');
-  btnCat.textContent = `Type: ${catObj.label}`;
-  btnCat.classList.add('mint-active');
-
-  const isWearableHat = canWearHat && WEARABLE_HAT_IDS.has(loco.hat);
-  const show = (id, on) => {
-    const el = document.getElementById(id);
-    if (el) el.style.display = on ? '' : 'none';
-  };
-  show('btn-face-insert', cat === 'human');
-  show('btn-hair',        cat === 'human');
-  show('btn-hair-col',    cat === 'human' && hasHair);
-  show('btn-hat-col',     isWearableHat);
-  show('btn-skin',        cat === 'human');
-  show('btn-shirt',       cat === 'human' || cat === 'animal' || cat === 'creature');
-  show('btn-pants',       cat === 'human' || cat === 'animal' || cat === 'creature');
-  show('btn-ears',        cat === 'robot' && loco.head === 'classic');
-  show('btn-tail',        cat !== 'human');
-
-  // Robots drive a visor, animals and creatures wear a topper or crown; humans keep Face Plate + Hat.
-  const btnFace = document.getElementById('btn-face');
-  const fObj = DECAL_EXPRESSIONS.find(e => e.id === loco.expr) || DECAL_EXPRESSIONS[0];
-  btnFace.textContent = `${isHuman ? 'Face Plate' : (cat === 'robot' ? 'Visor' : 'Face')}: ${fObj.label}`;
-  const btnHat = document.getElementById('btn-crown');
-  const hatObj = HAT_OPTIONS.find(c => c.id === loco.hat);
-  const hatLbl = hatObj ? hatObj.label : (loco.hat === 'wizardHat' ? 'Wizard Hat (SDK)' : 'Custom Hat');
-  const hatWord = cat === 'animal' ? 'Topper' : (cat === 'human' ? 'Hat' : 'Crown');
-  btnHat.textContent = canWearHat ? `${hatWord}: ${hatLbl}` : `${hatWord}: N/A (Sculpted)`;
-
-  // Leaving the classic head hides the ear pods; keep the model in sync with the hidden button.
+// The ear-pod options only exist on the classic head: leaving it puts any ear pods away so the model never shows ones the menu hides.
+function dropEarPodsOffClassic() {
   if (loco.head !== 'classic' && (kip.snapEarPods.visible || kip.proEarScanner.visible)) setEarMode('off');
 }
 
@@ -2802,7 +2548,7 @@ function setHeadMode(headId) {
     loco.skin = 'warm_peach';
   }
   // When stepping onto `chibi` (`Human 2 · Vinyl Squircle`), showcase the collector-vinyl `3D Button Eyes & Nose` insert by default
-  // (while remaining 100% swappable to `sculpted` or `flat` via `#btn-face-insert` or `?insert=...`!).
+  // (while remaining 100% swappable to `sculpted` or `flat` from the menu or `?insert=...`!).
   if (loco.head === 'chibi' && prevHead !== 'chibi') {
     loco.faceInsert = 'vinyl';
   }
@@ -2815,14 +2561,6 @@ function setHeadMode(headId) {
   updateStatusText();
 }
 
-document.getElementById('btn-head').addEventListener('click', () => {
-  // Cycle strictly through the heads of the active category
-  const list = headsInCategory(loco.category);
-  const curIdx = list.findIndex(h => h.id === loco.head);
-  const next = list[(curIdx + 1) % list.length];
-  setHeadMode(next.id);
-});
-
 function setCategoryMode(catId) {
   const found = HEAD_CATEGORIES.find(c => c.id === catId) || HEAD_CATEGORIES[0];
   loco.category = found.id;
@@ -2830,10 +2568,6 @@ function setCategoryMode(catId) {
   if (!list.some(h => h.id === loco.head)) setHeadMode(list[0].id);
   else syncHeadHairHatLayout();
 }
-document.getElementById('btn-category').addEventListener('click', () => {
-  const curIdx = HEAD_CATEGORIES.findIndex(c => c.id === loco.category);
-  setCategoryMode(HEAD_CATEGORIES[(curIdx + 1) % HEAD_CATEGORIES.length].id);
-});
 
 function setFaceMode(exprId) {
   const found = DECAL_EXPRESSIONS.find(e => e.id === exprId) || DECAL_EXPRESSIONS[0];
@@ -2841,12 +2575,6 @@ function setFaceMode(exprId) {
   syncHeadHairHatLayout();
   refreshPileIfActive();
 }
-
-document.getElementById('btn-face').addEventListener('click', () => {
-  const curIdx = DECAL_EXPRESSIONS.findIndex(e => e.id === loco.expr);
-  const next = DECAL_EXPRESSIONS[(curIdx + 1) % DECAL_EXPRESSIONS.length];
-  setFaceMode(next.id);
-});
 
 function setHairMode(hairId) {
   const found = HAIR_OPTIONS.find(h => h.id === hairId) || HAIR_OPTIONS[0];
@@ -2859,16 +2587,6 @@ function setHairMode(hairId) {
   refreshPileIfActive();
   updateStatusText();
 }
-
-document.getElementById('btn-hair').addEventListener('click', () => {
-  if (!HUMAN_HEAD_IDS.has(loco.head)) {
-    loco.head = 'kid';
-    if (loco.skin === 'vinyl_cream') loco.skin = 'warm_peach';
-  }
-  const curIdx = HAIR_OPTIONS.findIndex(h => h.id === loco.hair);
-  const next = HAIR_OPTIONS[(curIdx + 1) % HAIR_OPTIONS.length];
-  setHairMode(next.id);
-});
 
 function setCrownMode(mode) {
   // Support legacy `?crown=spiky` / `curly` / `swoosh` / `ponytail` URL params by routing hair IDs to `setHairMode`!
@@ -2896,20 +2614,7 @@ function setCrownMode(mode) {
   updateStatusText();
 }
 
-document.getElementById('btn-crown').addEventListener('click', () => {
-  const curHair = HAIR_OPTIONS.find(h => h.id === loco.hair) || HAIR_OPTIONS[0];
-  if (!curHair.hatReady) {
-    loco.hair = HUMAN_HEAD_IDS.has(loco.head) ? 'short_swept' : 'off';
-    setCrownMode('ballcap');
-    return;
-  }
-  const curIdx = HAT_OPTIONS.findIndex(c => c.id === loco.hat);
-  const next = HAT_OPTIONS[(curIdx + 1) % HAT_OPTIONS.length];
-  setCrownMode(next.id);
-});
-
 const earModes = ['off', 'comm', 'pro'];
-const earLabels = { off: 'Off', comm: 'Comm-Pods', pro: 'Pro Scanner' };
 let earIdx = 0;
 
 function setEarMode(mode) {
@@ -2917,14 +2622,8 @@ function setEarMode(mode) {
   const m = earModes[earIdx];
   kip.snapEarPods.visible   = (m === 'comm');
   kip.proEarScanner.visible = (m === 'pro');
-  const btn = document.getElementById('btn-ears');
-  btn.textContent = `Ears: ${earLabels[m]}`;
-  btn.classList.toggle('spark-active', m !== 'off');
   refreshPileIfActive();
 }
-document.getElementById('btn-ears').addEventListener('click', () => {
-  setEarMode(earModes[(earIdx + 1) % earModes.length]);
-});
 
 function setBackMode(mode) {
   const found = BACK_OPTIONS.find(b => b.id === mode);
@@ -2938,21 +2637,10 @@ function setBackMode(mode) {
   kip.proBackGroup.visible       = (loco.back === 'gears');
   kip.exp.customBackGroup.visible = (loco.back === 'custom');
 
-  const lbl = found ? found.label : 'Custom / Photo Wings';
-  const btn = document.getElementById('btn-back');
-  btn.textContent = `Back: ${lbl}`;
-  btn.classList.toggle('spark-active', loco.back !== 'off');
   refreshPileIfActive();
 }
 
-document.getElementById('btn-back').addEventListener('click', () => {
-  const curIdx = BACK_OPTIONS.findIndex(b => b.id === loco.back);
-  const next = BACK_OPTIONS[(curIdx + 1) % BACK_OPTIONS.length];
-  setBackMode(next.id);
-});
-
 const tailModes = ['off', 'wag', 'pro'];
-const tailLabels = { off: 'Off', wag: 'Wag-Tail', pro: 'Pro Wheelie' };
 let tailIdx = 0;
 
 function setTailMode(mode) {
@@ -2960,14 +2648,8 @@ function setTailMode(mode) {
   const m = tailModes[tailIdx];
   kip.snapTailGroup.visible = (m === 'wag');
   kip.proTailGroup.visible  = (m === 'pro');
-  const btn = document.getElementById('btn-tail');
-  btn.textContent = `Tail: ${tailLabels[m]}`;
-  btn.classList.toggle('spark-active', m !== 'off');
   refreshPileIfActive();
 }
-document.getElementById('btn-tail').addEventListener('click', () => {
-  setTailMode(tailModes[(tailIdx + 1) % tailModes.length]);
-});
 
 function setPropMode(mode) {
   const extraValid = mode === 'wand' || mode === 'custom';
@@ -2994,45 +2676,16 @@ function setPropMode(mode) {
     playClip(getDefaultRestClip(), 0.18);
   }
 
-  const lbl = found ? found.label : (loco.prop === 'wand' ? 'Star Wand (SDK)' : 'Custom Prop');
-  const btn = document.getElementById('btn-hand');
-  btn.textContent = `Prop: ${lbl}`;
-  btn.classList.toggle('spark-active', loco.prop !== 'off');
   refreshPileIfActive();
   updateStatusText();
 }
-
-let propCatIdx = 0;
-function propsInCategory() {
-  const cat = PROP_CATEGORIES[propCatIdx].id;
-  return PROP_OPTIONS.filter(p => p.id !== 'off' && (cat === 'all' || p.cat === cat));
-}
-function refreshPropCatButton() {
-  const cb = document.getElementById('btn-prop-cat');
-  if (cb) cb.textContent = `Prop Type: ${PROP_CATEGORIES[propCatIdx].label}`;
-}
-document.getElementById('btn-prop-cat').addEventListener('click', () => {
-  propCatIdx = (propCatIdx + 1) % PROP_CATEGORIES.length;
-  refreshPropCatButton();
-  setPropMode('off');
-});
-document.getElementById('btn-hand').addEventListener('click', () => {
-  const list = [{ id: 'off' }, ...propsInCategory()];
-  const curIdx = list.findIndex(p => p.id === loco.prop);
-  const next = list[(curIdx + 1) % list.length];
-  setPropMode(next.id);
-});
 
 // --- PHASE 2 V2: MODULAR 12.5 mm TU VEHICLES + SNAP-ON BODY COVERS + STYLIZED WHEELS ---
 function setVehicleCovers(on) {
   loco.vehCovers = Boolean(on);
   if (kip && kip.exp) kip.exp.setCoversVisible(loco.vehCovers, loco.vehicle);
-  const btn = document.getElementById('btn-veh-covers');
-  btn.textContent = loco.vehCovers ? 'Covers: On' : 'Covers: Off';
-  btn.classList.toggle('spark-active', loco.vehCovers);
   refreshPileIfActive();
 }
-document.getElementById('btn-veh-covers').addEventListener('click', () => setVehicleCovers(!loco.vehCovers));
 
 function setRacerKit(on) {
   loco.racerKit = Boolean(on);
@@ -3042,12 +2695,8 @@ function setRacerKit(on) {
   // Hide hood scoop when a custom/photo hood ornament occupies the 2x2 Roadster hood!
   kip.exp.carHoodScoopAddon.slot.visible = loco.racerKit && !kip.exp.customHoodGroup.visible;
 
-  const btn = document.getElementById('btn-racer-kit');
-  btn.textContent = loco.racerKit ? 'Racer Kit: On' : 'Racer Kit: Off';
-  btn.classList.toggle('spark-active', loco.racerKit);
   refreshPileIfActive();
 }
-document.getElementById('btn-racer-kit').addEventListener('click', () => setRacerKit(!loco.racerKit));
 
 function setVehicleMode(vehId, autoFrame = true) {
   const found = VEHICLE_OPTIONS.find(v => v.id === vehId) || VEHICLE_OPTIONS[0];
@@ -3056,9 +2705,6 @@ function setVehicleMode(vehId, autoFrame = true) {
   if (loco.vehicle !== 'none' && loco.prop === 'skateboard') {
     kip.exp.skateboardGroup.visible = false;
     loco.prop = 'off';
-    const hb = document.getElementById('btn-hand');
-    hb.textContent = 'Prop: Off';
-    hb.classList.remove('spark-active');
   }
 
   kip.exp.carGroup.visible   = (loco.vehicle === 'car');
@@ -3066,12 +2712,6 @@ function setVehicleMode(vehId, autoFrame = true) {
   kip.exp.bikeGroup.visible  = (loco.vehicle === 'scooter' || loco.vehicle === 'moto');
   kip.exp.setCoversVisible(loco.vehCovers, loco.vehicle);
   kip.exp.bikeLeanGroup.rotation.z = 0;
-
-  document.querySelectorAll('button[data-veh]').forEach(b => {
-    const match = b.dataset.veh === loco.vehicle;
-    b.classList.toggle('active', match && loco.vehicle === 'none');
-    b.classList.toggle('spark-active', match && loco.vehicle !== 'none');
-  });
 
   syncNeckAndSeatedVisibility();
   loco.manualOverride = false;
@@ -3087,10 +2727,6 @@ function setVehicleMode(vehId, autoFrame = true) {
   refreshPileIfActive();
   updateStatusText();
 }
-
-document.querySelectorAll('button[data-veh]').forEach(btn => {
-  btn.addEventListener('click', () => setVehicleMode(btn.dataset.veh, true));
-});
 
 const presets = ['clean', 'boy', 'girl', 'kai', 'scout', 'cat', 'fox', 'dragon', 'imp', 'pro'];
 const presetLabels = {
@@ -3178,30 +2814,19 @@ function applyPreset(name) {
     setFaceMode('spark'); setCrownMode('horns');
     setEarMode('pro'); setBackMode('jetpack'); setTailMode('pro'); setPropMode('shaft');
   }
-  const btn = document.getElementById('btn-preset');
-  btn.textContent = `Preset: ${presetLabels[p]}`;
-  btn.classList.toggle('spark-active', p !== 'clean');
 }
-document.getElementById('btn-preset').addEventListener('click', () => {
-  applyPreset(presets[(presetIdx + 1) % presets.length]);
-});
 
 function toggleRefSkeleton() {
   const on = !refSkeletonGroup.visible;
   refSkeletonGroup.visible = on;
   kip.skelHelper.visible = on;
-  const btn = document.getElementById('btn-Skeleton');
-  btn.textContent = on ? 'Ref: On' : 'Ref: Off';
-  btn.classList.toggle('active', on);
 }
-document.getElementById('btn-Skeleton').addEventListener('click', toggleRefSkeleton);
 
 const speeds = [1.0, 0.5, 0.25, 1.5];
 let speedIdx = 0;
 function setSpeedScale(scale) {
   speedIdx = Math.max(0, speeds.indexOf(scale));
   loco.speedScale = speeds[speedIdx];
-  document.getElementById('btn-speed').textContent = `${loco.speedScale}×`;
   if (activeClipName && actions.has(activeClipName)) {
     actions.get(activeClipName).setEffectiveTimeScale(loco.speedScale);
   }
@@ -3209,13 +2834,9 @@ function setSpeedScale(scale) {
     refActions.get(activeClipName).setEffectiveTimeScale(loco.speedScale);
   }
 }
-document.getElementById('btn-speed').addEventListener('click', () => {
-  setSpeedScale(speeds[(speedIdx + 1) % speeds.length]);
-});
 
 // --- PHASE 3: CONFORMING LLM PART-MAKER SDK MODAL & CUSTOM .STL MOUNTING ---
 const modalLlm = document.getElementById('modal-llm');
-document.getElementById('btn-open-llm').addEventListener('click', () => modalLlm.classList.add('open'));
 document.getElementById('btn-close-llm').addEventListener('click', () => modalLlm.classList.remove('open'));
 modalLlm.addEventListener('click', e => { if (e.target === modalLlm) modalLlm.classList.remove('open'); });
 
@@ -3350,10 +2971,10 @@ function stopWebcamIfActive() {
   document.getElementById('btn-cam-snap').style.display = 'none';
 }
 
-document.getElementById('btn-open-photo').addEventListener('click', () => {
+function openPhotoModal() {
   modalPhoto.classList.add('open');
   refreshPhotoSegmentation();
-});
+}
 document.getElementById('btn-close-photo').addEventListener('click', () => {
   stopWebcamIfActive();
   modalPhoto.classList.remove('open');
@@ -3557,7 +3178,7 @@ async function loadCustomMixamoOrStlFile(file) {
       const baked = retargetMixamoClipToKip(rawClip, root, { name: clipKey, inPlace: false });
       if (baked) {
         actions.set(clipKey, kipMixer.clipAction(baked));
-        addClipButton(clipKey, clipKey);
+        registerClip(clipKey, clipKey);
         if (!firstAdded) firstAdded = clipKey;
       }
     });
@@ -3573,9 +3194,6 @@ async function loadCustomMixamoOrStlFile(file) {
   }
 }
 
-document.getElementById('file-input').addEventListener('change', e => {
-  if (e.target.files[0]) loadCustomMixamoOrStlFile(e.target.files[0]);
-});
 window.addEventListener('dragover', e => { e.preventDefault(); document.body.classList.add('dragging'); });
 window.addEventListener('dragleave', e => { if (e.relatedTarget === null) document.body.classList.remove('dragging'); });
 window.addEventListener('drop', e => {
@@ -4065,7 +3683,7 @@ window.addEventListener('resize', () => {
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
 
-// --- SIDE MENU (shipped behind ?menu=side until it matches the dock control for control) ---
+// --- SIDE MENU: the page's only control surface (it replaced the bottom dock; kip-menu.js DOCK_PARITY maps every old control) ---
 // The panel owns no state: it re-reads `loco` (and the few readers below) every tick and calls the same
 // setters the dock buttons call. The adapter below is the only place it touches this script's scope.
 // Plate view: the character's parts packed flat for printing (kip-print.js does the maths, this just feeds it).
@@ -4147,6 +3765,72 @@ const printView = mountPrintView({
   setCharacterVisible: on => { kip.mover.visible = on; originRing.visible = on; },
 });
 window.kipPrint = printView;
+// Selfie face (memory only, never in the URL or storage): wears a photo on the flat face insert and puts the
+// previous face back on Remove. Anything that would leave a human head first removes it, so a photo never lingers.
+let selfieBefore = null;
+const selfie = mountSelfie({
+  plateColor: () => (SKIN_TONES.find(s => s.id === loco.skin) || SKIN_TONES[0]).hex,
+  apply: canvas => {
+    if (loco.expr !== 'selfie') selfieBefore = { expr: loco.expr, insert: loco.faceInsert };
+    setSelfieCanvas(canvas);
+    loco.expr = 'selfie';
+    setFaceInsertMode('flat');
+  },
+  restore: () => {
+    setSelfieCanvas(null);
+    if (loco.expr === 'selfie') loco.expr = selfieBefore?.expr ?? 'spark';
+    setFaceInsertMode(selfieBefore?.insert ?? 'sculpted');
+    selfieBefore = null;
+  },
+});
+window.kipSelfie = selfie;
+const leaveSelfie = () => { if (loco.expr === 'selfie') selfie.remove(); };
+window.kipMenu = mountKipMenu({
+  loco,
+  camera,
+  selfie: { open: selfie.open, remove: selfie.remove },
+  print: {
+    isOn: printView.isOn, busy: printView.isBusy, summary: printView.summary,
+    setOn: on => (on ? printView.enter() : printView.exit()),
+    plateCount: printView.plateCount, plateIndex: printView.plateIndex,
+    plateLabel: printView.plateLabel, setPlate: printView.setPlate,
+    profile: printView.profile, setPreset: printView.setPreset, updateProfile: printView.updateProfile,
+    supportCheck: printView.supportCheck, setSupportCheck: printView.setSupportCheck,
+    download: printView.download,
+  },
+  ready: () => window.__KIP_READY__ === true,
+  speeds,
+  presets: presets.map(id => ({ id, label: presetLabels[id] })),
+  clips: () => clipChoices,
+  read: {
+    ears: () => earModes[earIdx],
+    tail: () => tailModes[tailIdx],
+    preset: () => presets[presetIdx],
+    speed: () => loco.speedScale,
+    clip: () => activeClipName,
+    refOn: () => refSkeletonGroup?.visible === true,
+    explodeOn: () => loco.explodeTarget >= 0.5,
+    pileOn: () => loco.buildMode === 'pile',
+  },
+  act: {
+    setCategory: id => { if (id !== 'human') leaveSelfie(); setCategoryMode(id); },
+    setHead: id => {
+      if (!HUMAN_HEAD_IDS.has(id)) leaveSelfie();
+      setHeadMode(id);
+      // Stepping onto the chibi head switches to the vinyl insert; a photo must stay on the flat one.
+      if (loco.expr === 'selfie' && loco.faceInsert !== 'flat') setFaceInsertMode('flat');
+    },
+    setFace: id => { leaveSelfie(); setFaceMode(id); },
+    setFaceInsert: id => { if (id !== 'flat') leaveSelfie(); setFaceInsertMode(id); }, setSkin: setSkinTone, setHair: setHairMode,
+    setHairColor, setHat: setCrownMode, setHatColor, setShirt: setShirtMode,
+    setPants: setPantsMode, setBack: setBackMode, setEars: setEarMode, setTail: setTailMode,
+    setProp: setPropMode, setVehicle: id => setVehicleMode(id, true),
+    setCovers: setVehicleCovers, setRacerKit, setEdition, applyPreset: name => { leaveSelfie(); applyPreset(name); },
+    playClip: triggerClip, setSpeed: setSpeedScale,
+    toggleExplode, setExplode: v => setExplodeAmount(v, true), togglePile: togglePartPile,
+    startBuild: () => startPileToBuild(true), toggleRef: toggleRefSkeleton,
+  },
+});
 
 init().catch(err => {
   console.error(err);

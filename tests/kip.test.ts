@@ -154,6 +154,9 @@ describe("Kip modular character rig & 3D demo viewer integration", () => {
       "parts/kip/viewer/kip-print-stickers.js",
       "parts/kip/viewer/kip-print-view.js",
       "parts/kip/viewer/kip-selfie.js",
+      "parts/kip/viewer/kip-selfie-image.js",
+      "parts/kip/viewer/kip-selfie-cloud.js",
+      "parts/kip/viewer/kip-faceplate-shape.js",
       "parts/kip/viewer/kip-classic-rig.js",
       "parts/kip/viewer/kip-describe.js",
       "parts/kip/viewer/kip-describe-validate.js",
@@ -171,7 +174,7 @@ describe("Kip modular character rig & 3D demo viewer integration", () => {
     }
   });
 
-  it("promotes all 53 Kip wardrobe and V2 vehicle parts into parts/partspec as verified Wave 9 (W9)", () => {
+  it("promotes all 58 Kip wardrobe and V2 vehicle parts into parts/partspec as verified Wave 9 (W9)", () => {
     const catalog = JSON.parse(readFileSync(join(root, "parts/partspec/catalog.json"), "utf8"));
     const mainManifest = JSON.parse(
       readFileSync(join(root, "parts/partspec/toyventor_parts.json"), "utf8"),
@@ -180,8 +183,8 @@ describe("Kip modular character rig & 3D demo viewer integration", () => {
     expect(wave9Wave).toBeDefined();
 
     const w9Rows = catalog.parts.filter((p: { wave?: string }) => p.wave === "W9");
-    expect(w9Rows).toHaveLength(53);
-    expect(w9Rows.filter((p: { line: string }) => p.line === "snap")).toHaveLength(43);
+    expect(w9Rows).toHaveLength(58);
+    expect(w9Rows.filter((p: { line: string }) => p.line === "snap")).toHaveLength(48);
     expect(w9Rows.filter((p: { line: string }) => p.line === "pro")).toHaveLength(10);
 
     const byId = new Map<string, Record<string, unknown>>(

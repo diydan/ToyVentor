@@ -8,10 +8,10 @@
 //
 //   ctx.loco                  live state object
 //   ctx.read.*                ears() tail() preset() speed() clip() refOn() explodeOn() pileOn()
-//   ctx.act.*                 the same functions the old dock buttons called
-//   ctx.clips()               [{ id, label }] animation clips that have a button
+//   ctx.act.*                 the page's own setters (the same functions the retired dock buttons called)
+//   ctx.clips()               [{ id, label }] animation clips the page can play
 //   ctx.presets               [{ id, label }]
-//   ctx.speeds                playback speeds, in dock order
+//   ctx.speeds                playback speeds, in cycle order
 //   ctx.ready()               true once the scene is built
 //   ctx.camera                three PerspectiveCamera (recentred with setViewOffset)
 //   ctx.selfie                optional { open(), remove() }; without it there are no selfie controls
@@ -136,19 +136,19 @@ export function buildMenu(ctx) {
         title: 'Swappable emotion face inserts and 2D expressions',
         inPreset: true,
         options: () => pick(DECAL_EXPRESSIONS),
-        extra: (v) => (v === 'selfie' ? 'Selfie (this device only)' : 'Custom (active)'),
+        extra: (v) => (v === 'selfie' ? 'Selfie (not saved)' : 'Custom (active)'),
         get: () => loco.expr,
         set: (v) => act.setFace(v),
       }),
       ...(ctx.selfie ? [
         { kind: 'action', id: 'selfie', label: '📸 Selfie face…',
-          title: 'Take or upload a photo and wear it as the face plate. It stays on this device.',
+          title: 'Take or upload a photo and wear it as the face plate. It stays on this device unless a grown-up chooses the online helper.',
           visibleWhen: () => HUMAN_HEAD_IDS.has(loco.head), run: () => ctx.selfie.open() },
         { kind: 'action', id: 'selfieRemove', label: 'Remove selfie',
           title: 'Put the previous face back and delete the photo from memory',
           visibleWhen: () => loco.expr === 'selfie', run: () => ctx.selfie.remove() },
         { kind: 'info', id: 'selfieNote', title: 'Selfie privacy', visibleWhen: () => loco.expr === 'selfie',
-          text: () => 'Selfie face: on this device only. Not saved, uploaded or shared, and gone when you close or reload.' },
+          text: () => 'Selfie face: not saved or shared, and gone when you close or reload. It stays on this device unless a grown-up chose the online helper.' },
       ] : []),
       sel('faceInsert', 'Insert', {
         title: 'Universal human face insert, shared by all four human heads: 3D nose and smile, 3D button eyes and nose, or flat decal',
@@ -291,7 +291,7 @@ export function buildMenu(ctx) {
         title: 'Wave 6 racer add-ons: bull bar, hood scoop, light bar and roof rack, spoiler, twin exhaust',
         get: () => loco.racerKit, set: (v) => act.setRacerKit(v) },
       sel('edition', 'Edition', {
-        title: 'Pro (8+) 14-joint rig or simplified Snap (3+) rig. Snap uses the seated 90 degree legs in vehicles.',
+        title: 'Pro (8+) 14-joint rig or simplified Snap (3+) rig with quick-click turret joints.',
         options: () => [
           { value: 'pro', label: 'Pro (8+) · 14-joint rig' },
           { value: 'snap', label: 'Snap (3+) · simplified rig' },
@@ -516,8 +516,8 @@ export function buildMenu(ctx) {
 }
 
 /**
- * Every control of the old bottom dock and the menu control that replaced it. A test fails if the
- * dock gains a control that is not listed here, or if a listed menu control does not exist.
+ * Every control of the retired bottom dock and the menu control that replaced it. The dock is gone from the page; this
+ * table stays as the feature-parity record, and a test fails if a listed menu control stops existing.
  */
 export const DOCK_PARITY = {
   'row-clips': 'clip',
@@ -629,7 +629,6 @@ const CSS = `
 }
 .km-fab { display: none; position: fixed; left: 12px; bottom: 40px; z-index: 13; padding: 9px 14px; font-size: 13px; border-radius: 999px; box-shadow: 0 8px 20px rgba(27, 34, 56, 0.16); background: var(--glass); backdrop-filter: blur(12px); }
 .km-backdrop { display: none; position: fixed; inset: 0; z-index: 11; background: rgba(27, 34, 56, 0.28); }
-body.menu-side .dock { display: none !important; }
 body.clean-ui .km, body.clean-ui .km-fab, body.clean-ui .km-backdrop { display: none !important; }
 @media (max-width: ${DRAWER_BELOW_PX - 0.02}px) {
   .km { top: 0; bottom: 0; left: 0; width: min(86vw, 330px); border-radius: 0 18px 18px 0; transform: translateX(-105%); visibility: hidden; transition: transform 0.2s ease, visibility 0s linear 0.2s; }
@@ -669,7 +668,7 @@ export function mountKipMenu(ctx, { root = document.body } = {}) {
   const loco = ctx.loco;
 
   // Preset tracking: "Custom" once anything a preset sets has changed since the last apply. The active
-  // preset id changing (from any route: this menu, a dock click, a URL param) marks the moment its result
+  // preset id changing (from any route: this menu, a URL param, a programmatic setter) marks the moment its result
   // was applied. Re-applying the same preset after edits goes through applyPresetTracked below.
   let presetSig = null;
   let lastPreset = null;

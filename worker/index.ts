@@ -18,8 +18,9 @@ import { makeSkin, samConfigured, segmentToy, type MetaEnv } from "./meta";
 import { handleMuseSpark, museConfigured, type MuseEnv } from "./muse";
 import { handleOwnership, type OwnershipEnv } from "./ownership";
 import { handleParent, type ParentEnv } from "./parent";
+import { handleSelfieCartoon, handleSelfieFaceParts, selfieCloudEnabled, type SelfieEnv } from "./selfie";
 
-export interface Env extends MetaEnv, MuseEnv, OwnershipEnv, ParentEnv {
+export interface Env extends MetaEnv, MuseEnv, OwnershipEnv, ParentEnv, SelfieEnv {
   MUREKA_API_KEY?: string;
   ASSETS?: { fetch: (request: Request) => Promise<Response> };
 }
@@ -182,6 +183,7 @@ export default {
         service: "toyventor",
         samConfigured: samConfigured(env),
         museConfigured: museConfigured(env),
+        selfieCloud: selfieCloudEnabled(env),
       });
     }
 
@@ -203,6 +205,10 @@ export default {
       // and gets {say, recipe} back.
       return handleMuseSpark(request, env);
     }
+
+    // Opt-in selfie cloud: SAM eyes and mouth, Muse cartoon. Off unless SELFIE_CLOUD=on; needs the parent gate and consent.
+    if (url.pathname === "/api/selfie/face-parts") return handleSelfieFaceParts(request, env);
+    if (url.pathname === "/api/selfie/cartoon") return handleSelfieCartoon(request, env);
 
     if (url.pathname === "/api/ownership" || url.pathname.startsWith("/api/ownership/")) {
       return handleOwnership(request, env, url.pathname.slice("/api/ownership".length));

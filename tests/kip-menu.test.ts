@@ -157,7 +157,7 @@ describe("kip menu optional groups", () => {
     const worn = withSelfie({ category: "human", head: "tall", expr: "selfie" });
     expect(visible(worn, "selfieRemove")).toBe(true);
     expect(visible(worn, "selfieNote")).toBe(true);
-    expect(resolveOptions(byId(worn, "face")).at(-1)).toMatchObject({ value: "selfie", label: "Selfie (this device only)", disabled: true });
+    expect(resolveOptions(byId(worn, "face")).at(-1)).toMatchObject({ value: "selfie", label: "Selfie (not saved)", disabled: true });
   });
 
   it("the Print group only shows its details while the plate is up and disables exports when it is incomplete", () => {
@@ -218,27 +218,41 @@ describe("kip menu visibility vs kip-manifest.json categoryControls", () => {
   });
 });
 
-describe("kip menu dock parity table", () => {
+describe("retired bottom dock", () => {
+  // Parity was proven (aa60423: 165 one-step comparisons of a dock click against the same menu choice, all equal, every
+  // dock option reachable, nothing extra) and then the dock was removed. These guard that result.
   const html = read("parts/kip/viewer/Kip-Demo.html");
-  const dockStart = html.indexOf('<div class="dock">');
-  const dockEnd = html.indexOf("<!-- PHASE 3 MODAL");
 
-  it("the page still has a dock region to compare against", () => {
-    expect(dockStart).toBeGreaterThan(0);
-    expect(dockEnd).toBeGreaterThan(dockStart);
+  it("the page has no dock, no dock buttons, and no ?menu= gate", () => {
+    expect(html).not.toContain('class="dock"');
+    expect(html).not.toContain('id="row-clips"');
+    expect(html).not.toMatch(/id="btn-(category|head|face|face-insert|hair|crown|hat-col|skin|hair-col|shirt|pants|back|prop-cat|hand|ears|tail|veh-[a-z]+|racer-kit|preset|edition|explode|pile|build|open-llm|open-photo|Skeleton|speed)"/);
+    expect(html).not.toMatch(/params\.get\(['"]menu['"]\)/);
+    expect(html).toMatch(/window\.kipMenu = mountKipMenu\(/);
   });
 
-  it("every control in the dock has a menu replacement, and the table has no stale rows", () => {
-    const dockIds = [...html.slice(dockStart, dockEnd).matchAll(/\bid="([^"]+)"/g)].map((m) => m[1] as string);
-    expect(dockIds.length).toBeGreaterThan(30);
-    const table = Object.keys(DOCK_PARITY);
-    expect(dockIds.filter((id) => !table.includes(id))).toEqual([]);
-    expect(table.filter((id) => !dockIds.includes(id))).toEqual([]);
+  it("the page code no longer reaches for any retired dock element", () => {
+    const script = html.slice(html.indexOf('<script type="module">'));
+    expect(script).not.toMatch(/getElementById\(['"](btn-(?!close-|copy-|ex-|clear-|kid-|cam-|sam-|equip-|sync-)[\w-]+|rng-explode|file-input)['"]\)/);
+    expect(script).not.toContain("row-clips");
+    expect(script).not.toContain("data-veh");
   });
 
-  it("every parity row points at a control that exists in the menu", () => {
+  it("every retired dock element still maps to a control that exists in the menu", () => {
     const ids = new Set(flat(fakeCtx()).map((c) => c.id));
+    expect(Object.keys(DOCK_PARITY).length).toBeGreaterThan(30);
     for (const [dock, ctl] of Object.entries(DOCK_PARITY)) expect(ids.has(ctl as string), `${dock} -> ${ctl}`).toBe(true);
+  });
+
+  it("keeps the option sets the dock cycled through that do not come from the wardrobe data", () => {
+    const opts = (id: string, patch: Record<string, any> = {}) => resolveOptions(byId(fakeCtx(patch), id)).filter((o: any) => !o.disabled).map((o: any) => String(o.value));
+    expect(opts("type")).toEqual(["human", "robot", "animal", "creature"]);
+    expect(opts("faceInsert", { category: "human", head: "kid" })).toEqual(["sculpted", "vinyl", "flat"]);
+    expect(opts("ears")).toEqual(["off", "comm", "pro"]);
+    expect(opts("tail")).toEqual(["off", "wag", "pro"]);
+    expect(opts("edition")).toEqual(["pro", "snap"]);
+    expect(opts("vehicle")).toEqual(["none", "car", "truck", "scooter", "moto"]);
+    expect(opts("speed")).toEqual(["1", "0.5", "0.25", "1.5"]);
   });
 });
 
@@ -248,6 +262,16 @@ describe("kip viewer build wiring", () => {
     for (const rel of ["parts/kip/viewer/Kip-Demo.html", "parts/kip/viewer/kip-menu.js"]) {
       const src = read(rel);
       for (const m of src.matchAll(/from\s+['"]\/kip\/([\w.-]+\.js)(?:\?[^'"]*)?['"]/g)) {
+        expect(build, `${m[1]} imported by ${rel} but missing from scripts/build-kip.ts`).toContain(`viewer/${m[1]}`);
+      }
+    }
+  });
+
+  it("copies every sibling module the viewer modules import by relative path", () => {
+    const build = read("scripts/build-kip.ts");
+    for (const rel of ["kip-menu.js", "kip-print-view.js", "kip-selfie.js", "kip-selfie-image.js", "kip-forge-sdk.js", "kip-vehicles-wardrobe.js"]) {
+      const src = read(`parts/kip/viewer/${rel}`);
+      for (const m of src.matchAll(/from\s+['"]\.\/([\w.-]+\.js)(?:\?[^'"]*)?['"]/g)) {
         expect(build, `${m[1]} imported by ${rel} but missing from scripts/build-kip.ts`).toContain(`viewer/${m[1]}`);
       }
     }

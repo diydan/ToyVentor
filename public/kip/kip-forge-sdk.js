@@ -1,3 +1,5 @@
+import { plateHalfWidth } from './kip-faceplate-shape.js?v=10.0';
+
 // ToyVentor Kip Expansion Helpers:
 //   1) 2D Decal Expression Skins (`BRAND_STYLE.md` rule 5: zero moulded 3D faces)
 //   2) Phase 4 Photo-to-Accessory Forge (`prints: false` digital-only game accessories)
@@ -14,7 +16,30 @@ export const DECAL_EXPRESSIONS = [
   { id: 'blank',     label: 'Blank Plate' },
 ];
 
-export function createDecalExpressionCanvas(expression = 'spark', headType = 'kid', insertMode = 'sculpted') {
+// Selfie face (kip-selfie.js): the single canvas lives here, in memory only, and `expr: 'selfie'` returns it.
+// It is never serialised, stored, or sent anywhere; clearing it (setSelfieCanvas(null)) drops the pixels.
+let selfieCanvas = null;
+export function setSelfieCanvas(canvas) { selfieCanvas = canvas ?? null; }
+export function hasSelfieCanvas() { return selfieCanvas !== null; }
+
+/** `onPlate`: the art goes on the rounded human face plate (not the classic head's visor), so it is kept inside the plate outline. */
+/**
+ * Eye positions on the human face plate, mm either side of the centre line (the plate is 24.2 mm wide, so a human-proportioned pair is
+ * about 45-50% of that apart, centre to centre). The vinyl value is the physical dome position (FACE_VINYL_EYE_X in
+ * parts/partspec/toyventor_parts.py, checked by tests/kip-faceplate-shape.test.ts); the others are printed art. Before 2026-11-01 they were
+ * vinyl 7.3, sculpted 7.0, flat button 7.1 and flat 6.2: 54-60% of the plate width, which read as wide-set.
+ * The vinyl domes are moulded (FACE_VINYL_EYE_X in the CAD, now 6.0 mm, moved from 7.3 with the 2026-11-01 regeneration): set both together,
+ * a test fails if the painted irises and the domes disagree.
+ */
+export const FACEPLATE_EYE_MM = { vinyl: 6.0, flatButton: 5.8, flat: 5.3, sculpted: 5.8 };
+const MM_PX = 21.69; // art px per mm across the plate: x = 256 +- mm * 21.69
+const eyePair = (mm) => [Math.round(256 - mm * MM_PX), Math.round(256 + mm * MM_PX)];
+const FACEPLATE_EYE_PX = Object.fromEntries(Object.entries(FACEPLATE_EYE_MM).map(([k, v]) => [k, eyePair(v)]));
+/** The classic head's visor plane has its own scale, so its art keeps the original positions. */
+const LEGACY_EYE_PX = { vinyl: [98, 414], flatButton: [102, 410], flat: [122, 390], sculpted: [104, 408] };
+
+export function createDecalExpressionCanvas(expression = 'spark', headType = 'kid', insertMode = 'sculpted', { onPlate = false } = {}) {
+  if (expression === 'selfie' && selfieCanvas) return selfieCanvas;
   const c = document.createElement('canvas');
   c.width = 512;
   c.height = 256;
@@ -78,12 +103,15 @@ export function createDecalExpressionCanvas(expression = 'spark', headType = 'ki
   const cheekCol = '#ff6b4a';
 
   // Universal 24.2 x 10.5 mm faceplate mapping (`23.6 x 10.1 mm` conformal plane centered at `zb = 5.25 mm`):
-  //   - `vinyl` (`char_faceplate_vinyl`): physical 3D button-eye domes sit at `x = ±7.30 mm, zb = 5.45 mm` -> `px = [98, 414], py = 123`!
-  //   - `sculpted` (`char_faceplate`): wide orbital eye planes sit at `x = ±7.00 mm, zb = 5.96 mm` -> `px = [104, 408], py = 110`!
-  //   - `flat` (`char_faceplate_flat`): smooth flush printed-decal figure layout -> `px = [122, 390], py = 114`!
+  //   - `vinyl` (`char_faceplate_vinyl`): physical 3D button-eye domes sit at `x = ±6.00 mm (FACE_VINYL_EYE_X), zb = 5.45 mm` -> `px = [126, 386], py = 123`!
+  //   - `sculpted` (`char_faceplate`): eye planes sit at `x = ±5.80 mm, zb = 5.96 mm` -> `px = [130, 382], py = 110`!
+  //   - `flat` (`char_faceplate_flat`): smooth flush printed-decal figure layout -> `px = [141, 371], py = 114`!
+  // On the human face plate the eyes are brought in (FACEPLATE_EYE_MM) so they sit about half a face width apart, like a human face;
+  // the classic head shares this art but has its own visor plane, so it keeps its original spacing.
+  const eyeTable = onPlate ? FACEPLATE_EYE_PX : LEGACY_EYE_PX;
   const humanEyeX = isVinylInsert
-    ? [98, 414]
-    : (isFlatHuman ? (expression === 'button' ? [102, 410] : [122, 390]) : [104, 408]);
+    ? eyeTable.vinyl
+    : (isFlatHuman ? (expression === 'button' ? eyeTable.flatButton : eyeTable.flat) : eyeTable.sculpted);
   const humanEyeY = isVinylInsert ? 123 : (isFlatHuman ? 114 : 110);
   const humanBrowY = isVinylInsert ? 36 : (isFlatHuman ? 48 : 44);
   // All three human inserts carry the same moulded resting-smile ridge (`FACE_MOUTH` in toyventor_parts.py: +-2.5 mm wide, vertex zb 1.25 mm,
@@ -103,16 +131,16 @@ export function createDecalExpressionCanvas(expression = 'spark', headType = 'ki
   ctx.fillStyle = cheekCol;
   if (isVinylInsert) {
     ctx.globalAlpha = 0.54;
-    drawCapsule(ctx, 36, 204, 42, 18);
-    drawCapsule(ctx, 476, 204, 42, 18);
+    drawCapsule(ctx, onPlate ? 86 : 36, 204, 42, 18);
+    drawCapsule(ctx, onPlate ? 426 : 476, 204, 42, 18);
     ctx.globalAlpha = 1.0;
   } else if (isFlatHuman) {
     ctx.globalAlpha = 0.66;
-    drawCapsule(ctx, 64, 168, 46, 22);
-    drawCapsule(ctx, 448, 168, 46, 22);
+    drawCapsule(ctx, onPlate ? 62 : 64, 168, 46, 22);
+    drawCapsule(ctx, onPlate ? 450 : 448, 168, 46, 22);
     ctx.globalAlpha = 1.0;
   } else if (isHuman) {
-    for (const bx of [46, 466]) {
+    for (const bx of onPlate ? [78, 434] : [46, 466]) {
       const rg = ctx.createRadialGradient(bx, 174, 4, bx, 174, 30);
       rg.addColorStop(0, 'rgba(255, 107, 74, 0.55)');
       rg.addColorStop(0.65, 'rgba(255, 118, 92, 0.24)');
@@ -373,7 +401,10 @@ export function createDecalExpressionCanvas(expression = 'spark', headType = 'ki
     }
   } else if (expression === 'cool') {
     if (isHuman) {
-      const shadeX = isVinylInsert ? [98, 414] : (isFlatHuman ? [136, 376] : [112, 400]);
+      // the lenses sit a little inside the eyes (none on the vinyl domes, 14 px on flat, 8 px on sculpted), whatever the eye spacing
+      const shadeBase = isVinylInsert ? eyeTable.vinyl : (isFlatHuman ? eyeTable.flat : eyeTable.sculpted);
+      const shadeIn = isVinylInsert ? 0 : (isFlatHuman ? 14 : 8);
+      const shadeX = [shadeBase[0] + shadeIn, shadeBase[1] - shadeIn];
       const shadeRx = isVinylInsert ? 58 : 66;
       const shadeRy = isVinylInsert ? 62 : 40;
       for (const lx of shadeX) {
@@ -544,7 +575,31 @@ export function createDecalExpressionCanvas(expression = 'spark', headType = 'ki
       ctx.fill();
     }
   }
+  if (isHuman && onPlate) clipToFaceplate(ctx, c);
   return c;
+}
+
+/**
+ * The human face plate is rounded, not a rectangle: clip the 2D art to the plate outline (pulled in 0.4 mm) so nothing hangs past
+ * the edge onto the skull lip. Canvas px map to the decal plane as x = (px - 256) / 21.69 mm, zb = 10.3 - py / 25.35 mm.
+ */
+function clipToFaceplate(ctx, c) {
+  const right = [], left = [];
+  for (let row = 0; row <= c.height; row += 4) {
+    const zb = 10.3 - row / 25.35;
+    const hw = Math.max(0, plateHalfWidth(zb) - 0.4);
+    right.push([256 + hw * 21.69, row]);
+    left.push([256 - hw * 21.69, row]);
+  }
+  ctx.save();
+  ctx.globalCompositeOperation = 'destination-in';
+  ctx.fillStyle = '#000';
+  ctx.beginPath();
+  right.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)));
+  for (let i = left.length - 1; i >= 0; i--) ctx.lineTo(left[i][0], left[i][1]);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
 }
 
 function roundRect(ctx, x, y, w, h, r) {

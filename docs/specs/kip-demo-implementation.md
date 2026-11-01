@@ -6,9 +6,12 @@ what order, in which files, and what proves each phase done. Design decisions
 from the old spec are condensed into the constraints of each phase, not
 repeated.
 
-Status: implemented 2026-10-31 behind `?menu=side` (Phases 1, 2, and 3 L1 + L2
-sticker). Not done, and why, is in "Implementation status" at the end, together
-with the corrections the review found in this plan. Line numbers below are as
+Status: implemented 2026-10-31 (Phases 1, 2, and 3 L1 + L2 sticker). On 2026-11-01
+the side menu became the only UI (dock and `?menu=side` flag removed), the face
+plate was redesigned round, and the selfie got a second pass (background
+removal, new Toon, a window that matches the new plate). Not done, and why, is in
+"Implementation status" at the end, together with the corrections the review
+found in this plan. Line numbers below are as
 written and have drifted — `Kip-Demo.html`, `kip-vehicles-wardrobe.js`,
 `toyventor_kitcard.py` have uncommitted changes.
 
@@ -21,11 +24,12 @@ written and have drifted — `Kip-Demo.html`, `kip-vehicles-wardrobe.js`,
   `tests/kip.test.ts:143-151`.
 - No test references `btn-*` ids (0 matches, checked 2026-10-31); old ids can
   be dropped when the dock is removed.
-- Rollout: the new panel ships behind `?menu=side` (default off, old dock
-  untouched) until parity is proven; removing the dock + flag is the last step
-  of Phase 1.
+- Rollout (done): the panel shipped behind `?menu=side` until parity was proven
+  (commit aa60423: 165 one-step dock-vs-menu comparisons, all equal), then the
+  dock and the flag were removed (2026-11-01). An old `?menu=side` link still loads.
 - No geometry changes in these phases: do not touch
   `parts/partspec/toyventor_parts.py`, `catalog.json`, or regenerate `out/`.
+  (Superseded on 2026-11-01 for the face plate only: see "Face plate redesign".)
 - Do not regenerate or re-export hair STLs: another change is mid-flight on
   `catalog.json` / `kip_partspec.py` (manifest written 17:33, catalog edited
   20:38). Five hairstyles (bowl, slick, pixie, side_pony, low_bun) 404 today.
@@ -185,17 +189,22 @@ Each of these changed what was built. None is a judgement call: all were verifie
 
 ## Implementation status
 
-**Phase 1, side menu: done behind `?menu=side`. The dock and the flag are NOT removed.**
-`kip-menu.js` (schema + panel + sync), mount in `Kip-Demo.html`. Four handlers were split out of inline click listeners so the
-dock and the menu share one code path (`triggerClip`, `toggleExplode`, `togglePartPile`, `setSpeedScale`). Evidence:
-`npm run e2e:kip-menu` runs 165 single-step comparisons (click the dock button once vs choose the option in the menu, from
-the same start state) and requires identical state, status text and every legacy dock label and class; it also checks every
-dock option is reachable from the menu and the reverse, two-way sync from the dock, programmatic setters, URL params,
-`#toy=` and SDK loads, shortcuts, `?clean=1`, and layout at 1440 / 1024 / 390. Unit tests: `tests/kip-menu.test.ts`.
+**Phase 1, side menu: done, and it is now the only UI (dock and `?menu=side` removed 2026-11-01).**
+`kip-menu.js` (schema + panel + sync), mounted by default in `Kip-Demo.html`. Handlers that the dock and the menu shared
+(`triggerClip`, `toggleExplode`, `togglePartPile`, `setSpeedScale`, `openPhotoModal`) stay as plain functions; every dock
+click handler, label writer, `#row-clips`, the `.dock` CSS and the bottom-dock camera shift are gone. One side effect that lived
+inside the old label code is kept as `dropEarPodsOffClassic()` (leaving the classic head puts the ear pods away), and the Photo
+modal's `refreshPhotoSegmentation()` now also runs when the menu opens it (the pre-removal menu skipped it; the parity run could
+not see that).
+Evidence: before removal, `npm run e2e:kip-menu` on commit aa60423 gave 112/112 including 165 single-step comparisons (click the
+dock button once vs choose the option in the menu, same start state, identical state, status text and every dock label and
+class) and every dock option reachable both ways. After removal the suite is menu-only (42 checks): 164 real choices through the
+`<select>`s, toggles, pull slider and buttons each change the live state and the menu shows it; two-way sync; shortcuts;
+`?clean=1`; URL params, `#toy=` and SDK loads; layout at 1440 / 1024 / 390. The option sets cannot silently shrink:
+`tests/kip-menu.test.ts` ("retired bottom dock") fails if the page regains a dock, a `?menu=` gate or any retired `btn-*` id, if a
+`DOCK_PARITY` row stops pointing at a real menu control, or if the fixed option lists change.
 Deviation: accessible names come from the visible `<label>`, with the old tooltip as `title`, not `aria-label` (a mismatching
-`aria-label` overrides the visible name). Why the removal waits: it is a one-way change to the default UI of a file other
-sessions are editing, and it deletes the only harness that can compare old and new. Remove the dock after this is reviewed:
-about 25 setter sites write dock labels, and the parity table in `DOCK_PARITY` lists every element to drop.
+`aria-label` overrides the visible name). Camera presets no longer shift the target 20 units down for a bottom dock.
 
 **Phase 2, print view: done for the character; four pieces are not.**
 `kip-print.js` (pure: inventory, STL, support scoring, deterministic MaxRects packer, 3MF, zip), `kip-print-view.js`
@@ -211,23 +220,82 @@ Not done: (a) `Pile → Build` starting from the plate: it needs a slot-to-part 
 inventory table does not give; (b) sprue mode, blocked on open question 5; (c) vehicles; (d) "trapped overhang gets a
 verified alternative". Printing the sheet is a PNG, not a PDF.
 
-**Phase 3, selfie face: L1 and L2 done; L3 not started (a spike by the spec).**
-`kip-selfie.js`, hook in `kip-forge-sdk.js` (`setSelfieCanvas`). Camera starts only from a tap on a labelled button, is
-released on snap, close, Escape and page hide, and the denied, no-camera and upload paths all reach Adjust. Privacy is
-tested: zero http(s) requests during the flow, nothing in web storage, IndexedDB, caches, cookies or the URL, nothing
-after a reload, and a source scan that the module never mentions fetch, storage, workers or the scan endpoint. A selfie
-is taken off when you leave a human head, pick another face or insert, or apply a preset, and the flat insert is kept
-while it is worn. The sticker is a 600 dpi PNG with its density set plus an SVG in millimetres with a cut line, exported
-(8) **Prompt-a-face gallery.** Eight ready-made cartoon faces (`parts/kip/viewer/selfie-faces/`, composed for the short
-wide window) with a prompt box on the intro step: typed words are matched locally against keyword tags (exact hits count
-double, prefix hits single, ties go to gallery order) and the winner loads straight into Adjust. The pictures preload
-with the page, so prompting makes zero network requests; the privacy gates (zero http(s) in-flow, source scan) are
-unchanged and extended with a prompt-flow section in `npm run e2e:kip-selfie`.
-directly from the Adjust step (the plan routed it through the Phase 2 sheet; it does not need to). A real print has not been
-measured; the files measure 23.58 × 10.12 mm at 100%. Not done: the grown-up gate that controls `allow="camera"` when
-embedded (host app), and the COPPA review (compliance owner). Tests: `tests/kip-selfie.test.ts`, `npm run e2e:kip-selfie`.
+**Phase 3, selfie face: L1 and L2 done, second pass 2026-11-01; L3 not started (a spike by the spec).**
+`kip-selfie.js` (modal, framing, export), `kip-selfie-image.js` (pure: cut-out and Toon), `kip-faceplate-shape.js` (plate outline
+and window), hook in `kip-forge-sdk.js` (`setSelfieCanvas`). Camera starts only from a tap on a labelled button, is released on
+snap, close, Escape and page hide, and the denied, no-camera and upload paths all reach Adjust. Privacy is tested: zero http(s)
+requests during the flow, nothing in web storage, IndexedDB, caches, cookies or the URL, nothing after a reload, and a source scan
+that neither selfie module mentions fetch, storage, workers, the scan endpoint or face detection.
+Second pass: (1) **Window = the plate's own shape.** The picture covers the plate outline pulled in by a 0.5 mm bezel (an earlier
+squircle cut did not match the plate, and the dashed oval guide did not either): 23.2 x 12.4 mm, 252 mm2, with the plate's flat
+dome top and chamfered lower corners, instead of the old 23.6 x 10.1 rectangle whose lower corners hung off the plate. The live
+camera and Adjust both draw that outline, dim everything outside it, and mark the printed smile ridge and the 2D art's eye positions.
+(2) **Isotropic canvas.** 510 x 273 px at 22 px/mm both ways; the old 512 x 256 canvas was stretched 17% sideways on the plate and
+not on the sticker. (3) **Framing.** Zoom goes below "cover" (down to the photo's full height, up to 8x) and starts at about three
+quarters of the photo height, so a tall phone photo fits a head in the short window. (4) **Line up eyes & mouth.** Two taps (the
+point between the eyes, then the mouth) give an exact zoom, turn and shift (`alignFrame`: two points fix all three, no stretch) that
+put the eye midpoint on the plate's eye line and the mouth on the moulded smile ridge; the face then fills the plate, the chin falls
+below it. Nothing is detected: the person taps. (5) **Background removal**, on by default with an Edge slider, made on the photo
+itself once per picture and carried through the same frame (so the frame's edge never feeds it). Two paths: a flat backdrop (the
+four frame corners one colour, as in the gallery faces) is cut exactly by flood fill from the edges, which keeps a white helmet
+inside a dark outline; any other backdrop goes to a centre-weighted colour model (k-means in Lab for subject and backdrop, edge-aware
+smoothing, one blob, holes filled). No face detection, no network. On synthetic cartoon heads the model scores IoU 0.93-0.99 over
+plain, gradient, patterned, dark and skin-coloured walls; neither path has been tried on real photos. Removed background shows the
+plate's skin colour on the model and is filled with it on the sticker. (6) **Toon**: edge-preserving smoothing, a six-colour palette
+fitted to the subject, speckle removal, ink at a printable 0.2 mm; camera and uploads start on Toon, gallery faces keep their own look
+(they are already cartoon art, Toon would ink over their outlines). (7) The 2D face art (cheeks, brows) is clipped to the plate outline
+and the three cheek decals the CAD review flagged were moved in. (8) The sticker's cut line is the window outline as an SVG path in mm.
+(9) **Gallery faces made with Muse Image.** The 8 sample faces were redrawn with Muse Image (`muse-image-1.0`, `images/edits`) on a
+plate-shaped guide template, and SAM 3.1 (text prompts "eye" and "mouth") measured where each face's eyes and mouth are, once, at
+build time: `scripts/kip-gen-faces.ts` writes `parts/kip/viewer/selfie-faces/faces.json`, copied as `marks` into `SAMPLE_FACES`, so
+choosing a face lines it up automatically (zoom 0.6-1.8x, under 6 degrees of turn, mouth on the ridge). SAM found both eyes and the
+mouth on all 8 old and all 8 new cartoon faces. Muse follows eye and mouth height roughly but not eye spacing (eyes 0.24-0.39 of the
+width apart against 0.534 at the plate's 2D eye marks), which is why the line-up fixes the eye midpoint and the mouth, not the eye
+spacing. Only prompts and a plain guide template went to those models, never a photo of a person. **SAM is not used on live photos**:
+that would send a child's picture to a server, which the privacy requirements (and the pending COPPA review) rule out; it needs a
+decision, a grown-up gate and consent first.
+(10) **Smart face (opt-in, online), built 2026-11-01.** After a grown-up says yes on a consent screen and passes the app's own parent gate
+(`POST /api/parent/gate`: the math question, or the PIN a parent set; the signed proof lasts 2-5 minutes and lives in memory only), one picture
+(resized to at most 768 px, JPEG) can be sent per tap through ToyVentor's Worker to Meta's services: SAM 3.1 finds the eyes and mouth so the face
+lines up by itself, or Muse Image redraws the picture as a cartoon (then SAM lines the cartoon up). The consent screen says plainly where the
+picture goes, that ToyVentor does not save it, that Meta's service handles it under Meta's own rules, and that nothing leaves the device if
+nobody says yes; it is asked again for every use, and closing the modal ends the proof. Client: `kip-selfie-cloud.js` is the ONLY selfie module
+with a network call (one `fetch`, three relative `/api` URLs, no cookies or storage writes; it only reads the app's device id); `kip-selfie.js`
+and `kip-selfie-image.js` stay network-free and a test scans them. Server: `worker/selfie.ts` with `/api/selfie/face-parts` and
+`/api/selfie/cartoon`, OFF unless `SELFIE_CLOUD=on` (503 otherwise; documented in `.dev.vars.example`; keep it off in production until the COPPA
+review is done), needs a valid `x-parent-proof` for the caller's `x-device-id`, the `x-selfie-consent: v1` header, a JPEG data URL under 900 KB,
+a per-device and per-IP rate limit, never logs or stores the picture, and never forwards upstream text. Checked end to end against a local Worker
+(real gate, real SAM, real Muse) on a cartoon face only: SAM lined it up (2 s on an idle machine, 41 s under this machine's load) and Muse redrew
+it (12 s idle); when the 2-minute proof runs out before the follow-up line-up the screen says so and the manual line-up stays. No photo of a real
+person was ever sent anywhere during development or tests (the test server stubs the routes). Menu wording was changed to stay true:
+"Selfie (not saved)" and "stays on this device unless a grown-up chooses the online helper". (11) Camera, upload and gallery pictures all start
+as **Photo** (Toon and Sketch one tap away). (12) The Adjust screen has real spacing (a divider and 20 px above the controls, wide stacked
+Zoom/Turn sliders, 10-12 px between rows), scrolls inside the card, keeps the title/Close row at the top and the Use/Save/Retake row at the
+bottom, and no longer scrolls the picture away when it opens. (13) **Eyes closer together**: the printed eyes on the flat, sculpted and button
+art moved in (flat 6.2 -> 5.3 mm, sculpted 7.0 -> 5.8, button 7.1 -> 5.8 mm either side of centre; 48-52% of the plate width instead of 54-60%);
+the classic head keeps its own spacing. The moulded vinyl domes moved from 7.3 to 6.0 mm in the CAD (`FACE_VINYL_EYE_X`, domes 12.0 mm apart, 2.16 mm
+from the plate edge) and `FACEPLATE_EYE_MM.vinyl` in `kip-forge-sdk.js` moved with them (a test fails if the painted irises and the domes disagree).
+(14) **Forehead 5% lower on all four human heads** (`FOREHEAD_SCALE = 0.95` in `toyventor_parts.py`): the brow-to-crown height drops 8.60 -> 8.17 mm
+(kid, chibi, jumbo; crown 31.4 -> 30.97) and 9.04 -> 8.59 mm (tall; 33.4 -> 32.948), anchored at the brow so the face zone, plate, pocket, ears and jaw
+are untouched. 5% is the most that fits: the small-parts screen needs a head at least 34.93 mm across and kid, chibi and jumbo are 35.08 mm now (6.4%
+would be 34.96, 8% fails at 34.83); 8-10% would need the whole face zone lifted one 1.5625 mm lattice step, which changes the face proportions on every
+head. The wig vault grew by at most 0.25 mm (top row capped at +0.18 mm: past it the shag wig traps an internal void), the hat cavity followed the
+hat-ready wig envelope, and every `HAT_RIM` is 0.4 mm shorter so the three tallest hats stay 0.67 mm clear of the brows; wig fringes now sit 0.43 mm
+closer to the brows (curly, shag and side_sweep touch them). Viewer anchors updated (`crownY`, `HAT_RIM_MM`, `HAT_WRAP_MM`), tied to the export by
+`tests/kip-head-anchors.test.ts`. Gates seen passing: generator 206 verified, assembly 31 ok / 9 invalid rejected, fit matrix 0 out of tolerance,
+pre-print on the 31 changed parts 0 fails (geometry only, no slicer), selftest all passed; the other two face plates are bit-identical.
+A real print has not been measured. Not done: the grown-up gate that controls `allow="camera"` when embedded (host app), and the
+COPPA review (compliance owner). Tests: `tests/kip-selfie.test.ts`, `tests/kip-selfie-image.test.ts`,
+`tests/kip-faceplate-shape.test.ts` (checks the outline table against the exported plate STL), `npm run e2e:kip-selfie`.
 
-**Gates.** `npx tsc --noEmit` clean. `tests/kip.test.ts` has one failure that predates this work: the W9 catalog now has 58
+**Face plate redesign (2026-11-01).** The universal human face plate was a 24.2 mm wide rectangle with a 6 mm run of vertical
+sides and an 18.2 mm flat chin. It is now rounded: curved sides that are widest (24.2 mm) only at zb 6.75, softened shoulders and
+a 13.8 mm chin (`FACE_ROUND_*` in `toyventor_parts.py`). The plate prints standing on its chin edge, so the lower outline may
+widen at most 0.9 mm per mm of height (the 45 degree support-free rule): that caps how narrow the chin can be, and a true oval
+would need supports. The pocket in all four human heads follows the plate outline, so they changed with it. See
+`parts/partspec/DESIGN_LOG.md` for the gate results and the exact constants.
+
+**Gates.** `npx tsc --noEmit` clean (checked 2026-10-31; rerun after the 2026-11-01 changes). `tests/kip.test.ts` has one failure that predates this work: the W9 catalog now has 58
 rows against the test's 53 (the five in-flight hair parts). Run the e2e suites with `npm run e2e:kip-menu`,
 `e2e:kip-print`, `e2e:kip-selfie` (local Chrome; CI excludes browser runs).
 

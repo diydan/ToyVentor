@@ -5,13 +5,14 @@ import {
   createTorsoOutfitDecalCanvas,
   createLegOutfitDecalCanvas,
 } from './kip-forge-sdk.js?v=10.0';
+import { FACEPLATE_DECAL } from './kip-faceplate-shape.js?v=10.0';
 
-export const KIP_BUILD_VERSION = 'v10.0';
+export const KIP_BUILD_VERSION = 'v10.1';
 export const HAIR_WRAP_MM = 16.5;
 // Wearable hats WRAP the head: each STL has its rim on the bed (z_stl = 0) and its 2x1 sockets HAT_RIM_MM[id] above it, so the mesh is shifted down by that much
 // and its rim lands at the hairline over a Hat-Ready wig (just above the brow on a bare head). Straight from HAT_RIM in toyventor_parts.py.
-export const HAT_RIM_MM = { ballcap: 10.8, beanie: 10.8, cowboy: 10.0, hardhat: 10.8, ranger: 10.0, tophat: 9.6, pirate: 10.4 };
-export const HAT_WRAP_MM = 10.8;
+export const HAT_RIM_MM = { ballcap: 10.4, beanie: 10.4, cowboy: 9.6, hardhat: 10.4, ranger: 9.6, tophat: 9.2, pirate: 10.0 };
+export const HAT_WRAP_MM = 10.4;
 // Depth (mm in front of the head's y = 0 plane) where the universal face plate's stem starts, i.e. the pocket floor on the bore axis (FACE_BACK_REF in toyventor_parts.py).
 export const FACE_STEM_MM = 10.167;
 
@@ -35,10 +36,10 @@ export const WARDROBE_HEADS = [
   // Humans share one universal face-insert slot, so every insert fits every human head.
   // crownY = the head's `top_studs` plane (z_stud) and faceY = its `face_slot` bore (z_bore), both straight from toyventor_parts.py.
   // kid = gender-neutral, chibi = feminine, tall = masculine.
-  { id: 'kid',     category: 'human',    label: 'Soft Youth',     crownY: 31.4, faceY: 12.5 },
-  { id: 'chibi',   category: 'human',    label: 'Sweet Heart',    crownY: 31.4, faceY: 12.5 },
-  { id: 'tall',    category: 'human',    label: 'Heroic Jaw',     crownY: 33.4, faceY: 14.0625 },
-  { id: 'jumbo',   category: 'human',    label: 'Jumbo Vinyl',    crownY: 31.4, faceY: 12.5 },
+  { id: 'kid',     category: 'human',    label: 'Soft Youth',     crownY: 30.97, faceY: 12.5 },
+  { id: 'chibi',   category: 'human',    label: 'Sweet Heart',    crownY: 30.97, faceY: 12.5 },
+  { id: 'tall',    category: 'human',    label: 'Heroic Jaw',     crownY: 32.948, faceY: 14.0625 },
+  { id: 'jumbo',   category: 'human',    label: 'Jumbo Vinyl',    crownY: 30.97, faceY: 12.5 },
   { id: 'classic', category: 'robot',    label: 'Kip Classic',    crownY: 42.2, faceY: 19.8 },
   { id: 'robot',   category: 'robot',    label: 'Bolt Robot',     crownY: 31.6, faceY: 17.8 },
   { id: 'scout',   category: 'robot',    label: 'Mecha Scout',    crownY: 32.8, faceY: 17.6 },
@@ -115,6 +116,8 @@ export const HAIR_OPTIONS = [
   { id: 'long_layered', label: 'Long Flow (Hat-Ready)',   hatReady: true,  topH: 4.8, seatY: -22.5 },
   { id: 'twin_braids',  label: 'Twin Braids (Hat-Ready)', hatReady: true,  topH: 4.8, seatY: -22.5 },
   { id: 'shag',         label: 'Shag (Hat-Ready)',        hatReady: true,  topH: 4.8, seatY: -17.0 },
+  { id: 'bowl',         label: 'Bowl Cut (Hat-Ready)',    hatReady: true,  topH: 4.8, seatY: -16.0 },
+  { id: 'slick',        label: 'Sleek Part (Hat-Ready)',  hatReady: true,  topH: 4.8, seatY: -16.0 },
   { id: 'pompadour',    label: 'Pompadour',               hatReady: false, topH: 0.0,  seatY: -16.5 },
   { id: 'top_bun',      label: 'Top Bun',                 hatReady: false, topH: 0.0,  seatY: -16.5 },
   { id: 'side_sweep',   label: 'Side Sweep',              hatReady: false, topH: 0.0,  seatY: -19.0 },
@@ -123,6 +126,9 @@ export const HAIR_OPTIONS = [
   { id: 'ponytail',     label: 'High Ponytail',           hatReady: false, topH: 0.0,  seatY: -16.5 },
   { id: 'curly',        label: 'Cloud Curls',             hatReady: false, topH: 0.0,  seatY: -17.0 },
   { id: 'mohawk',       label: 'Action Mohawk',           hatReady: false, topH: 0.0,  seatY: -16.5 },
+  { id: 'pixie',        label: 'Pixie Tufts',             hatReady: false, topH: 0.0,  seatY: -15.0 },
+  { id: 'side_pony',    label: 'Side Ponytail',           hatReady: false, topH: 0.0,  seatY: -16.5 },
+  { id: 'low_bun',      label: 'Low Nape Bun',            hatReady: false, topH: 0.0,  seatY: -16.5 },
 ];
 
 export const WEARABLE_HAT_IDS = new Set([
@@ -218,13 +224,15 @@ export async function loadExpansionGeos(loadSTL) {
     ['charHeadDragon',     loadSTL(`/kip/partspec/toyventor_char_head_dragon_S.stl${vq}`, 40)],
     ['charHeadAlien',      loadSTL(`/kip/partspec/toyventor_char_head_alien_S.stl${vq}`, 48)],
     ['charHeadImp',        loadSTL(`/kip/partspec/toyventor_char_head_imp_S.stl${vq}`, 40)],
-    // 14 Sculpted Multi-Strand 2x1 Hairstyles (6 Hat-Ready with top_studs + 8 Sculpted-Top)
+    // 19 Sculpted Multi-Strand 2x1 Hairstyles (8 Hat-Ready with top_studs + 11 Sculpted-Top)
     ['hairShortSwept',     loadSTL(`/kip/partspec/toyventor_hair_short_swept_S.stl${vq}`, 36)],
     ['hairBob',            loadSTL(`/kip/partspec/toyventor_hair_bob_S.stl${vq}`, 36)],
     ['hairSwoosh',         loadSTL(`/kip/partspec/toyventor_hair_swoosh_S.stl${vq}`, 36)],
     ['hairLongLayered',    loadSTL(`/kip/partspec/toyventor_hair_long_layered_S.stl${vq}`, 36)],
     ['hairTwinBraids',     loadSTL(`/kip/partspec/toyventor_hair_twin_braids_S.stl${vq}`, 34)],
     ['hairShag',           loadSTL(`/kip/partspec/toyventor_hair_shag_S.stl${vq}`, 36)],
+    ['hairBowl',           loadSTL(`/kip/partspec/toyventor_hair_bowl_S.stl${vq}`, 36)],
+    ['hairSlick',          loadSTL(`/kip/partspec/toyventor_hair_slick_S.stl${vq}`, 36)],
     ['hairPompadour',      loadSTL(`/kip/partspec/toyventor_hair_pompadour_S.stl${vq}`, 36)],
     ['hairTopBun',         loadSTL(`/kip/partspec/toyventor_hair_top_bun_S.stl${vq}`, 36)],
     ['hairSideSweep',      loadSTL(`/kip/partspec/toyventor_hair_side_sweep_S.stl${vq}`, 36)],
@@ -233,6 +241,9 @@ export async function loadExpansionGeos(loadSTL) {
     ['hairPonytail',       loadSTL(`/kip/partspec/toyventor_hair_ponytail_S.stl${vq}`, 36)],
     ['hairCurly',          loadSTL(`/kip/partspec/toyventor_hair_curly_S.stl${vq}`, 40)],
     ['hairMohawk',         loadSTL(`/kip/partspec/toyventor_hair_mohawk_S.stl${vq}`, 34)],
+    ['hairPixie',          loadSTL(`/kip/partspec/toyventor_hair_pixie_S.stl${vq}`, 36)],
+    ['hairSidePony',       loadSTL(`/kip/partspec/toyventor_hair_side_pony_S.stl${vq}`, 36)],
+    ['hairLowBun',         loadSTL(`/kip/partspec/toyventor_hair_low_bun_S.stl${vq}`, 36)],
     // 7 Support-Free Wearable Hats + Horns
     ['hatBallcap',         loadSTL(`/kip/partspec/toyventor_hat_ballcap_S.stl${vq}`, 34)],
     ['hatBeanie',          loadSTL(`/kip/partspec/toyventor_hat_beanie_S.stl${vq}`, 34)],
@@ -571,6 +582,8 @@ export function attachExpansionToKipRig(THREE, kip, expGeos, baseParts, mats, sc
     sculpted: buildConformalFaceplateDecalGeo(expGeos.charFaceplate),
     vinyl:    buildConformalFaceplateDecalGeo(expGeos.charFaceplateVinyl),
     flat:     buildConformalFaceplateDecalGeo(expGeos.charFaceplateFlat),
+    // The selfie rides the flat insert on its own, taller plane: the visible plate runs up under the brow, past the 10.1 mm the 2D art uses.
+    selfie:   buildConformalFaceplateDecalGeo(expGeos.charFaceplateFlat, FACEPLATE_DECAL.width, FACEPLATE_DECAL.height, FACEPLATE_DECAL.centerY),
   };
 
   function buildConformalDecalGeo(headGeo, centerY, width, height, segX = 20, segY = 12) {
@@ -645,7 +658,7 @@ export function attachExpansionToKipRig(THREE, kip, expGeos, baseParts, mats, sc
   classicDecalPlane.renderOrder = 2;
   kip.visorSlot.add(classicDecalPlane);
 
-  // 2a. Separate Clip-On 2x1 Hair Slot (`hairSlot`: 14 sculpted multi-strand wigs; 6 Hat-Ready wigs expose `#FF6B4A` 2x1 studs on top!)
+  // 2a. Separate Clip-On 2x1 Hair Slot (`hairSlot`: 19 sculpted multi-strand wigs; 8 Hat-Ready wigs expose `#FF6B4A` 2x1 studs on top!)
   const hairGroup = new THREE.Group();
   hairGroup.visible = false;
   kip.headLocal.add(hairGroup);
@@ -661,6 +674,8 @@ export function attachExpansionToKipRig(THREE, kip, expGeos, baseParts, mats, sc
     long_layered: scadMesh(expGeos.hairLongLayered, expMats.hair),
     twin_braids:  scadMesh(expGeos.hairTwinBraids,  expMats.hair),
     shag:         scadMesh(expGeos.hairShag,        expMats.hair),
+    bowl:         scadMesh(expGeos.hairBowl,        expMats.hair),
+    slick:        scadMesh(expGeos.hairSlick,       expMats.hair),
     pompadour:    scadMesh(expGeos.hairPompadour,   expMats.hair),
     top_bun:      scadMesh(expGeos.hairTopBun,      expMats.hair),
     side_sweep:   scadMesh(expGeos.hairSideSweep,   expMats.hair),
@@ -669,6 +684,9 @@ export function attachExpansionToKipRig(THREE, kip, expGeos, baseParts, mats, sc
     ponytail:     scadMesh(expGeos.hairPonytail,    expMats.hair),
     curly:        scadMesh(expGeos.hairCurly,       expMats.hair),
     mohawk:       scadMesh(expGeos.hairMohawk,      expMats.hair),
+    pixie:        scadMesh(expGeos.hairPixie,       expMats.hair),
+    side_pony:    scadMesh(expGeos.hairSidePony,    expMats.hair),
+    low_bun:      scadMesh(expGeos.hairLowBun,      expMats.hair),
   };
   for (const [k, m] of Object.entries(hairMeshes)) {
     const opt = HAIR_OPTIONS.find(h => h.id === k);

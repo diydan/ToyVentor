@@ -3,7 +3,8 @@
 //  - startServer(): static server over public/ with parts/kip/viewer/* overlaid at /kip/, so the
 //    SOURCE viewer files are tested without running `npm run build:kip` (which would also copy any
 //    in-flight edits into public/kip). Missing STLs: stubbed with a stand-in unless E2E_STRICT_STL=1;
-//    `server.blocked.add('/kip/...')` forces a 404 to test missing-file handling.
+//    `server.blocked.add('/kip/...')` forces a 404 to test missing-file handling. `server.mock(method, path, handler)` stubs an
+//    /api/* route and `server.apiCalls` records every /api request (used by the Smart face tests: no real photo is ever sent).
 //  - launchChrome(): the machine's Google Chrome over CDP using Node's global WebSocket, as
 //    scripts/e2e-chrome.mjs does. No new dependencies.
 //  - createChecks(): collects pass/fail lines and sets the exit code.
@@ -25,12 +26,15 @@ const TYPES = {
 };
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-/** Every file directly in parts/kip/viewer is served at /kip/<name> in place of public/kip/<name>. */
+/**
+ * Every file directly in parts/kip/viewer is served at /kip/<name> in place of public/kip/<name>, and so is the selfie sample
+ * gallery (/kip/selfie-faces/*). Other subfolders are NOT overlaid: parts/kip/viewer/partspec would shadow the real STLs.
+ */
 function overlayFor(p) {
-  const m = /^\/kip\/([^/]+)$/.exec(p);
+  const m = /^\/kip\/(?:selfie-faces\/)?([^/]+)$/.exec(p);
   if (!m) return null;
-  const f = path.join(VIEWER, m[1]);
-  return fs.existsSync(f) && fs.statSync(f).isFile() ? f : null;
+  const f = path.join(VIEWER, p.slice("/kip/".length));
+  return fs.existsSync(f) && fs.statSync(f).isFile() && f.startsWith(VIEWER + path.sep) ? f : null;
 }
 
 export async function startServer({ port = 0 } = {}) {
@@ -38,9 +42,35 @@ export async function startServer({ port = 0 } = {}) {
   const missing = new Set();
   const blocked = new Set(); // paths forced to 404, to test the missing-file path
   const standIn = path.join(PUB, "kip/partspec/toyventor_hair_bob_S.stl");
+  // /api/* stubs for tests: `mock("POST", "/api/x", ({ json, headers }) => ({ status, json }))`; every /api request is recorded in
+  // `apiCalls` ({ method, path, headers, body }). An /api path with no stub answers 404, as the static server always did.
+  const mocks = new Map();
+  const apiCalls = [];
   const server = http.createServer((req, res) => {
     const p = decodeURIComponent(new URL(req.url, "http://x").pathname);
     if (p === "/favicon.ico") { res.writeHead(204); res.end(); return; }
+    if (p.startsWith("/api/")) {
+      const chunks = [];
+      req.on("data", (c) => chunks.push(c));
+      req.on("end", () => {
+        const body = Buffer.concat(chunks).toString("utf8");
+        let json = null;
+        try { json = body ? JSON.parse(body) : null; } catch { /* not JSON */ }
+        apiCalls.push({ method: req.method, path: p, headers: { ...req.headers }, body });
+        const h = mocks.get(`${req.method} ${p}`);
+        if (!h && process.env.E2E_API_PROXY) { // a real local Worker (wrangler dev) answers instead: used for the end-to-end Smart face check
+          fetch(new URL(req.url, process.env.E2E_API_PROXY), { method: req.method, headers: { "content-type": req.headers["content-type"] ?? "application/json", ...Object.fromEntries(["x-device-id", "x-parent-proof", "x-selfie-consent"].filter((k) => req.headers[k]).map((k) => [k, req.headers[k]])) }, body: req.method === "GET" ? undefined : body })
+            .then(async (r) => { res.writeHead(r.status, { "content-type": r.headers.get("content-type") ?? "application/json", "cache-control": "no-store" }); res.end(Buffer.from(await r.arrayBuffer())); })
+            .catch(() => { res.writeHead(502); res.end('{"error":"proxy"}'); });
+          return;
+        }
+        if (!h) { res.writeHead(404, { "content-type": "application/json" }); res.end('{"error":"not found"}'); return; }
+        const r = h({ json, body, headers: req.headers }) ?? {};
+        res.writeHead(r.status ?? 200, { "content-type": "application/json", "cache-control": "no-store" });
+        res.end(JSON.stringify(r.json ?? {}));
+      });
+      return;
+    }
     if (blocked.has(p)) { missing.add(p); res.writeHead(404); res.end("blocked"); return; }
     let file = overlayFor(p) ?? path.join(PUB, p);
     if (!file.startsWith(PUB) && !file.startsWith(VIEWER)) { res.writeHead(403); res.end(); return; }
@@ -57,7 +87,7 @@ export async function startServer({ port = 0 } = {}) {
   });
   await new Promise((r) => server.listen(port, "127.0.0.1", r));
   const base = `http://127.0.0.1:${server.address().port}`;
-  return { base, missing, blocked, close: () => server.close() };
+  return { base, missing, blocked, apiCalls, mock: (method, pathname, handler) => mocks.set(`${method} ${pathname}`, handler), close: () => server.close() };
 }
 
 export async function launchChrome({ width = 1440, height = 900 } = {}) {
@@ -137,7 +167,14 @@ export async function launchChrome({ width = 1440, height = 900 } = {}) {
       send("Emulation.setDeviceMetricsOverride", { width: w2, height: h2, deviceScaleFactor: 1, mobile: mobile2 });
     return { send, evaluate, waitFor, shot, key, click, resize, exceptions, requests, close: () => ws.close() };
   }
-  return { open, close() { try { proc.kill("SIGKILL"); } catch { /* gone */ } fs.rmSync(dir, { recursive: true, force: true }); } };
+  return {
+    open,
+    close() {
+      try { proc.kill("SIGKILL"); } catch { /* gone */ }
+      // Chrome may still be writing its profile for a moment after the kill: retry, and never let cleanup crash a finished run.
+      try { fs.rmSync(dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 }); } catch { /* a temp folder left behind is harmless */ }
+    },
+  };
 }
 
 export function createChecks(title) {

@@ -296,3 +296,115 @@ export async function segmentToy(
     ...(mask ? { mask } : {}),
   };
 }
+
+export type BoxesResult =
+  | { status: "ok"; boxes: SamBox[] }
+  | { status: "no-match" }
+  | { status: "not-configured" }
+  | { status: "error"; message: string };
+
+/**
+ * SAM 3.1 for one short noun prompt, keeping EVERY match (segmentToy keeps only the largest). A streaming run repeats an object
+ * on every frame, so the last box per objectId wins. The error message is generic on purpose: callers never forward it.
+ */
+export async function segmentBoxes(
+  env: MetaEnv,
+  imageDataUrl: string,
+  prompt: string,
+  timeoutMs = SAM_TIMEOUT_MS,
+): Promise<BoxesResult> {
+  const key = apiKey(env);
+  if (!key) return { status: "not-configured" };
+  if (!imageDataUrl.startsWith("data:image/"))
+    return { status: "error", message: "image must be a data:image URL" };
+
+  let res: Response;
+  try {
+    res = await fetch(responsesUrl(env), {
+      method: "POST",
+      headers: {
+        authorization: `Bearer ${key}`,
+        "content-type": "application/json",
+        accept: "text/event-stream",
+      },
+      body: JSON.stringify({
+        model: "sam-3.1",
+        input: [
+          {
+            type: "message",
+            role: "user",
+            content: [
+              { type: "input_text", text: prompt },
+              { type: "input_image", image_url: imageDataUrl },
+            ],
+          },
+        ],
+        stream: true,
+        metadata: { mask_encoding: "one_bit" },
+      }),
+      signal: AbortSignal.timeout(timeoutMs),
+    });
+  } catch {
+    return { status: "error", message: "SAM request failed" };
+  }
+  if (!res.ok || !res.body) {
+    console.log(JSON.stringify({ event: "sam-boxes-upstream", status: res.status }));
+    return { status: "error", message: "SAM request failed" };
+  }
+  let collected: Awaited<ReturnType<typeof collectStream>>;
+  try {
+    collected = await collectStream(res.body);
+  } catch {
+    return { status: "error", message: "SAM request failed" };
+  }
+  const byObject = new Map<number, SamBox>();
+  for (const b of parseSegmentationBoxes(collected.text)) byObject.set(b.objectId, b);
+  const boxes = [...byObject.values()];
+  return boxes.length ? { status: "ok", boxes } : { status: "no-match" };
+}
+
+/** The selfie cartoon redraw: Muse Image edits the photo into a flat, outlined, plain-backdrop cartoon portrait. */
+export const SELFIE_CARTOON_PROMPT =
+  "Redraw this photo as a friendly flat cartoon portrait for a children's toy. Keep the same head position, hair colour, skin tone and expression, and keep the face large and centred. Bold dark outlines, flat colours, one solid plain pale background colour, no text, no letters, no watermark. Family friendly.";
+
+export async function cartoonizeFace(
+  env: MetaEnv,
+  imageDataUrl: string,
+  timeoutMs = SKIN_TIMEOUT_MS,
+): Promise<SkinResult> {
+  const key = apiKey(env);
+  if (!key) return { status: "not-configured" };
+  if (!imageDataUrl.startsWith("data:image/"))
+    return { status: "error", message: "image must be a data:image URL" };
+  let res: Response;
+  try {
+    res = await fetch(apiUrl(env, "/images/edits"), {
+      method: "POST",
+      headers: { authorization: `Bearer ${key}`, "content-type": "application/json" },
+      body: JSON.stringify({
+        model: "muse-image-1.0",
+        prompt: SELFIE_CARTOON_PROMPT,
+        images: [{ image_url: imageDataUrl }],
+        n: 1,
+      }),
+      signal: AbortSignal.timeout(timeoutMs),
+    });
+  } catch {
+    return { status: "error", message: "cartoon request failed" };
+  }
+  if (!res.ok) {
+    // Upstream detail never reaches the logs or the client: the status code is enough.
+    console.log(JSON.stringify({ event: "cartoon-upstream", status: res.status }));
+    return { status: "error", message: "cartoon request failed" };
+  }
+  let body: { data?: { b64_json?: string }[]; output_format?: string };
+  try {
+    body = (await res.json()) as typeof body;
+  } catch {
+    return { status: "error", message: "cartoon request failed" };
+  }
+  const b64 = body.data?.[0]?.b64_json;
+  if (!b64) return { status: "error", message: "cartoon response had no image" };
+  const format = body.output_format === "png" ? "png" : "webp";
+  return { status: "ok", imageDataUrl: `data:image/${format};base64,${b64}` };
+}

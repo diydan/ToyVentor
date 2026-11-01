@@ -82,6 +82,18 @@ copyFileSync(
   join(kipSrcDir, "viewer/kip-selfie.js"),
   join(kipOutDir, "kip-selfie.js"),
 );
+copyFileSync(
+  join(kipSrcDir, "viewer/kip-selfie-image.js"),
+  join(kipOutDir, "kip-selfie-image.js"),
+);
+copyFileSync(
+  join(kipSrcDir, "viewer/kip-selfie-cloud.js"),
+  join(kipOutDir, "kip-selfie-cloud.js"),
+);
+copyFileSync(
+  join(kipSrcDir, "viewer/kip-faceplate-shape.js"),
+  join(kipOutDir, "kip-faceplate-shape.js"),
+);
 // Truck-Mockup.html shows the demo's own Kip head: kip-classic-rig.js is generated from Kip-Demo.html (parts/kip/sync_classic_rig.py --check).
 copyFileSync(
   join(kipSrcDir, "viewer/kip-classic-rig.js"),

@@ -5,6 +5,8 @@ import { describe, expect, it } from "vitest";
 // The viewer modules are plain browser JS with no declaration files.
 // @ts-expect-error untyped JS module
 import * as selfieMod from "../parts/kip/viewer/kip-selfie.js";
+// @ts-expect-error untyped JS module
+import * as shapeMod from "../parts/kip/viewer/kip-faceplate-shape.js";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 const S = selfieMod as any;
@@ -18,14 +20,16 @@ const rgba = (w: number, h: number, f: (x: number, y: number) => [number, number
 };
 
 describe("face plate geometry", () => {
-  it("the window matches what the viewer's conformal face decal uses, and the plate is the catalog part", () => {
-    expect(S.WINDOW_MM).toEqual({ w: 23.6, h: 10.1 });
+  it("the picture covers the rounded window the viewer's selfie decal plane uses, at one scale both ways", () => {
     const wardrobe = readFileSync(join(root, "parts/kip/viewer/kip-vehicles-wardrobe.js"), "utf8");
-    expect(wardrobe).toMatch(/buildConformalFaceplateDecalGeo\(insertGeo, width = 23\.6, height = 10\.1/);
+    expect(wardrobe).toMatch(/FACEPLATE_DECAL\.width, FACEPLATE_DECAL\.height, FACEPLATE_DECAL\.centerY/);
     const manifest = JSON.parse(readFileSync(join(root, "public/kip/kip-partspec-manifest.json"), "utf8"));
     const flat = manifest.parts.find((p: any) => p.id === "char_faceplate_flat");
-    expect(flat.bbox_mm.slice(0, 2)).toEqual([S.PLATE_MM.w, S.PLATE_MM.h]);
-    expect(S.CANVAS_PX).toEqual({ w: 512, h: 256 });
+    expect(flat.bbox_mm[0]).toBeCloseTo(S.PLATE_MM.w, 1);
+    // pixels per millimetre are the same across and down (the old 512x256 canvas was stretched 17% sideways on the plate)
+    expect(S.CANVAS_PX.w / S.WINDOW_MM.w).toBeCloseTo(S.CANVAS_PX.h / S.WINDOW_MM.h, 1);
+    expect(S.CANVAS_PX.w / S.WINDOW_MM.w).toBeCloseTo(S.PX_PER_MM, 1);
+    expect(S.WINDOW_MM.h).toBeGreaterThan(10.1);
   });
 });
 
@@ -62,6 +66,206 @@ describe("framing", () => {
     expect(S.clampPan({ srcW: 400, srcH: 400, panY: -2 }, 512, 256).panY).toBeCloseTo(-0.5, 9);
     // zooming in opens slack on both axes
     expect(S.clampPan({ srcW: 400, srcH: 400, zoom: 2, panX: 9 }, 512, 256).panX).toBeGreaterThan(0.9);
+  });
+});
+
+describe("zoom range", () => {
+  it("lets a tall portrait photo zoom out to its full height and starts at about three quarters of it", () => {
+    const z = S.zoomRange(720, 1280);
+    expect(z.min).toBeLessThan(0.4);
+    const cover = Math.max(S.CANVAS_PX.w / 720, S.CANVAS_PX.h / 1280);
+    const shown = (zoom: number) => S.CANVAS_PX.h / (cover * zoom * 1280);
+    expect(shown(z.min)).toBeCloseTo(1, 1);
+    expect(shown(z.initial)).toBeCloseTo(0.75, 1);
+  });
+  it("starts a landscape webcam frame close to cover and never below its minimum", () => {
+    const z = S.zoomRange(1280, 720);
+    expect(z.min).toBeGreaterThan(0.85);
+    expect(z.initial).toBeGreaterThanOrEqual(z.min);
+    expect(z.initial).toBeLessThanOrEqual(3);
+    for (const [w, h] of [[64, 64], [4000, 3000], [300, 1200]]) {
+      const r = S.zoomRange(w, h);
+      expect(r.min).toBeLessThanOrEqual(r.initial);
+      expect(r.initial).toBeLessThanOrEqual(r.max);
+    }
+  });
+  it("a photo smaller than the window stays centred when zoomed out", () => {
+    const c = S.clampPan({ srcW: 720, srcH: 1280, zoom: 0.4, panX: 0.7, panY: 0.7 }, S.CANVAS_PX.w, S.CANVAS_PX.h);
+    expect(c.panX).toBe(0);
+  });
+});
+
+describe("line up eyes and mouth", () => {
+  const T = shapeMod.faceTargetFractions();
+  const Et = { x: S.CANVAS_PX.w * 0.5, y: S.CANVAS_PX.h * T.leftEye.y };
+  const Mt = { x: S.CANVAS_PX.w * T.mouth.x, y: S.CANVAS_PX.h * T.mouth.y };
+  const mapped = (srcW: number, srcH: number, f: any, p: { x: number; y: number }) => at(S.frameTransform({ srcW, srcH, ...f }, S.CANVAS_PX.w, S.CANVAS_PX.h), p.x, p.y);
+
+  it("puts the eye midpoint and the mouth exactly on the plate's marks (a zoom, a turn and a shift: two points fix all three)", () => {
+    for (const [w, h, eye, mouth] of [
+      [720, 1280, { x: 360, y: 500 }, { x: 362, y: 640 }],
+      [1280, 720, { x: 600, y: 300 }, { x: 612, y: 380 }],
+      [800, 800, { x: 380, y: 360 }, { x: 410, y: 470 }], // a head tilted to one side
+      [4000, 3000, { x: 2000, y: 1400 }, { x: 2010, y: 1560 }], // small face in a big photo (needs about 4.6x cover, inside the 8x cap)
+    ] as const) {
+      const f = S.alignFrame({ srcW: w, srcH: h, eye, mouth });
+      const e = mapped(w, h, f, eye), m = mapped(w, h, f, mouth);
+      expect(Math.hypot(e[0] - Et.x, e[1] - Et.y), `eye ${w}x${h}`).toBeLessThan(0.01);
+      expect(Math.hypot(m[0] - Mt.x, m[1] - Mt.y), `mouth ${w}x${h}`).toBeLessThan(0.01);
+    }
+  });
+
+  it("does not stretch: the face keeps its proportions (zoom is one number)", () => {
+    const f = S.alignFrame({ srcW: 1000, srcH: 1000, eye: { x: 500, y: 400 }, mouth: { x: 500, y: 520 } });
+    expect(Object.keys(f).sort()).toEqual(["panX", "panY", "rotateDeg", "zoom"]);
+    expect(Math.abs(f.rotateDeg)).toBeLessThan(1e-9);
+  });
+
+  it("tilts the photo back to upright and limits the turn to the slider range", () => {
+    const tilted = S.alignFrame({ srcW: 800, srcH: 800, eye: { x: 380, y: 360 }, mouth: { x: 410, y: 470 } });
+    expect(tilted.rotateDeg).toBeGreaterThan(5);
+    expect(tilted.rotateDeg).toBeLessThan(45);
+    const upsideDown = S.alignFrame({ srcW: 800, srcH: 800, eye: { x: 400, y: 500 }, mouth: { x: 400, y: 400 } });
+    expect(Math.abs(upsideDown.rotateDeg)).toBeCloseTo(45, 6);
+  });
+
+  it("caps the zoom at 8x cover and refuses two taps on the same spot", () => {
+    const f = S.alignFrame({ srcW: 4000, srcH: 3000, eye: { x: 2000, y: 1500 }, mouth: { x: 2000, y: 1501 } });
+    expect(f.zoom).toBeLessThanOrEqual(8 + 1e-9);
+    expect(S.alignFrame({ srcW: 100, srcH: 100, eye: { x: 50, y: 50 }, mouth: { x: 50, y: 50 } })).toBeNull();
+    expect(S.zoomRange(1000, 1000).max).toBe(8);
+  });
+
+  it("turns a sample face's fractional marks into source pixels", () => {
+    const m = S.marksToPixels({ eyes: [{ x: 0.3, y: 0.4 }, { x: 0.5, y: 0.4 }], mouth: { x: 0.4, y: 0.7 } }, 1000, 500);
+    expect(m.eye).toEqual({ x: 400, y: 200 });
+    expect(m.mouth).toEqual({ x: 400, y: 350 });
+  });
+
+  it("the target marks sit on the plate: eyes above the mouth ridge, inside the window, symmetric", () => {
+    expect(T.leftEye.y).toBeLessThan(T.mouth.y);
+    expect(T.leftEye.x + T.rightEye.x).toBeCloseTo(1, 9);
+    expect(T.mouth.y).toBeLessThan(1);
+    expect(T.mouth.y).toBeGreaterThan(0.85); // the smile ridge is near the bottom of the plate
+  });
+});
+
+describe("plate-shaped guide", () => {
+  const parse = (svg: string) => {
+    const paths = [...svg.matchAll(/<path class="(\w+)"[^>]* d="([^"]+)"/g)].map((m) => ({ cls: m[1]!, d: m[2]! }));
+    return { paths, nums: (d: string) => [...d.matchAll(/-?\d+(?:\.\d+)?/g)].map((m) => Number(m[0])) };
+  };
+
+  it("draws the window outline, dims the rest, marks the printed smile and the 2D art's eyes, all inside the stage", () => {
+    const svg: string = S.guideMarkup();
+    expect(svg).toContain('viewBox="0 0 1 1"');
+    const { paths, nums } = parse(svg);
+    expect(paths.map((p) => p.cls)).toEqual(["dim", "edge", "mark"]);
+    for (const p of paths.filter((x) => x.cls !== "dim")) for (const n of nums(p.d)) { expect(n).toBeGreaterThanOrEqual(0); expect(n).toBeLessThanOrEqual(1); }
+    expect((svg.match(/<circle class="mark"/g) ?? []).length).toBe(2);
+    expect(svg).toMatch(/fill-rule="evenodd"/);
+    // the dim layer is a frame with the plate cut out of it: two closed subpaths, each starting with its own M (an invalid path draws no hole)
+    const dim = paths.find((p) => p.cls === "dim")!.d;
+    expect((dim.match(/M/g) ?? []).length).toBe(2);
+    expect((dim.match(/Z/g) ?? []).length).toBe(2);
+    expect(dim).toMatch(/^M0 0H1V1H0Z M[\d.]+ [\d.]+ L/);
+  });
+
+  it("is the plate outline, not an oval: a 50% inset box scales it, and the outline has the plate's flat top and chamfered corners", () => {
+    const half: string = S.guideMarkup({ left: 0.25, top: 0.25, w: 0.5, h: 0.5 });
+    const edge = parse(half).paths.find((p) => p.cls === "edge")!;
+    const n = parse(half).nums(edge.d);
+    const xs = n.filter((_, i) => i % 2 === 0), ys = n.filter((_, i) => i % 2 === 1);
+    expect(Math.min(...xs)).toBeCloseTo(0.25, 2); expect(Math.max(...xs)).toBeCloseTo(0.75, 2);
+    expect(Math.min(...ys)).toBeCloseTo(0.25, 2); expect(Math.max(...ys)).toBeCloseTo(0.75, 2);
+    // a flat top: two vertices share the topmost y, and they are far apart (an oval has a single topmost point)
+    const top = Math.min(...ys);
+    const topX = xs.filter((_, i) => Math.abs(ys[i]! - top) < 1e-3);
+    expect(topX.length).toBe(2);
+    expect(Math.abs(topX[0]! - topX[1]!)).toBeGreaterThan(0.2);
+    // corners are cut: no point sits at both extremes of x and y
+    expect(xs.some((x, i) => Math.abs(x - 0.25) < 0.005 && Math.abs(ys[i]! - 0.25) < 0.02)).toBe(false);
+  });
+
+  it("the Adjust screen is spaced and scrolls inside the card: a gap above the controls, a sticky header and a sticky action row", () => {
+    const src = readFileSync(join(root, "parts/kip/viewer/kip-selfie.js"), "utf8");
+    expect(src).toMatch(/\.sf-controls \{[^}]*margin-top:2\d?px[^}]*padding-top:\d+px[^}]*border-top/);
+    expect(src).toMatch(/\.sf-sliders \{[^}]*grid-template-columns:1fr 1fr/);
+    expect(src).toMatch(/\.modal-head \{ position:sticky/);
+    expect(src).toMatch(/\.sf-actions \{ position:sticky; bottom:-18px/);
+    expect(src).toMatch(/id="sf-use"/);
+    expect(src).toMatch(/focus\(\{ preventScroll: true \}\)/); // focusing the main button must not scroll the picture out of view
+  });
+
+  it("the modal no longer draws any oval guide", () => {
+    const src = readFileSync(join(root, "parts/kip/viewer/kip-selfie.js"), "utf8");
+    expect(src).not.toMatch(/border-radius:\s*50%/);
+    expect(src).not.toContain("sf-faceguide");
+    expect(src).not.toMatch(/dashed oval/);
+    expect(src).toMatch(/guideMarkup\(/);
+  });
+});
+
+describe("sample faces", () => {
+  const dir = join(root, "parts/kip/viewer/selfie-faces");
+  const json = JSON.parse(readFileSync(join(dir, "faces.json"), "utf8"));
+  const jpegSize = (file: string) => {
+    const b = readFileSync(join(dir, file));
+    for (let o = 2; o < b.length;) {
+      if (b[o] !== 0xff) { o++; continue; }
+      const m = b[o + 1]!;
+      if (m >= 0xc0 && m <= 0xc3) return { h: b.readUInt16BE(o + 5), w: b.readUInt16BE(o + 7) };
+      o += 2 + b.readUInt16BE(o + 2);
+    }
+    throw new Error(`no JPEG frame in ${file}`);
+  };
+
+  it("every gallery face has a picture at the window's aspect and marks that match faces.json (the build-time SAM measurement)", () => {
+    expect(S.SAMPLE_FACES.length).toBe(8);
+    expect(json.generator).toBe("muse-image-1.0");
+    const aspect = S.WINDOW_MM.w / S.WINDOW_MM.h;
+    for (const f of S.SAMPLE_FACES) {
+      const meta = json.faces.find((x: any) => x.id === f.id);
+      expect(meta, `faces.json has ${f.id}`).toBeTruthy();
+      const { w, h } = jpegSize(f.file);
+      expect(Math.abs(w / h - aspect), `${f.id} ${w}x${h} vs window aspect ${aspect.toFixed(3)}`).toBeLessThan(0.03);
+      expect(f.marks.eyes[0].x).toBeCloseTo(meta.eyes[0].x, 4);
+      expect(f.marks.eyes[1].y).toBeCloseTo(meta.eyes[1].y, 4);
+      expect(f.marks.mouth.y).toBeCloseTo(meta.mouth.y, 4);
+    }
+  });
+
+  it("the marks describe a face: left eye left of right eye, eyes above the mouth, everything inside the picture", () => {
+    for (const f of S.SAMPLE_FACES) {
+      const [l, r] = f.marks.eyes, m = f.marks.mouth;
+      expect(l.x, f.id).toBeLessThan(r.x);
+      expect(Math.abs(l.y - r.y), f.id).toBeLessThan(0.05);
+      expect((l.y + r.y) / 2, f.id).toBeLessThan(m.y);
+      for (const v of [l.x, l.y, r.x, r.y, m.x, m.y]) { expect(v).toBeGreaterThan(0.02); expect(v).toBeLessThan(0.98); }
+    }
+  });
+
+  it("lining a sample face up puts its eye midpoint and mouth on the plate's marks, with a gentle zoom (the pictures are made for the window)", () => {
+    const T = shapeMod.faceTargetFractions();
+    for (const f of S.SAMPLE_FACES) {
+      const w = 1120, h = 599;
+      const px = S.marksToPixels(f.marks, w, h);
+      const fr = S.alignFrame({ srcW: w, srcH: h, ...px });
+      const tr = S.frameTransform({ srcW: w, srcH: h, ...fr }, S.CANVAS_PX.w, S.CANVAS_PX.h);
+      const mouth = at(tr, px.mouth.x, px.mouth.y);
+      expect(Math.abs(mouth[0] - S.CANVAS_PX.w * T.mouth.x), f.id).toBeLessThan(0.05);
+      expect(Math.abs(mouth[1] - S.CANVAS_PX.h * T.mouth.y), f.id).toBeLessThan(0.05);
+      expect(fr.zoom, `${f.id} zoom`).toBeGreaterThan(0.6);
+      expect(fr.zoom, `${f.id} zoom`).toBeLessThan(1.8);
+      expect(Math.abs(fr.rotateDeg), `${f.id} turn`).toBeLessThan(6);
+    }
+  });
+
+  it("the generator script never writes or prints the API key", () => {
+    const script = readFileSync(join(root, "scripts/kip-gen-faces.ts"), "utf8");
+    expect(script).toMatch(/never printed or written/);
+    expect(script).not.toMatch(/console\.(log|error)\([^)]*\bKEY\b/);
+    expect(readFileSync(join(dir, "faces.json"), "utf8")).not.toMatch(/Bearer|MODEL_API_KEY|api_key/i);
   });
 });
 
@@ -104,9 +308,20 @@ describe("styles", () => {
     expect(hi[0]).toBeGreaterThan(200);
   });
 
-  it("toon is the default style", () => {
-    expect(S.STYLES[0].id).toBe("toon");
-    expect(Array.from(S.applyStyle("nope", edgeImg, 40, 20))).toEqual(Array.from(S.styleToon(edgeImg, 40, 20)));
+  it("toon and the other styles keep a cut-out's transparency where it is given", () => {
+    const alpha = new Uint8ClampedArray(40 * 20).map((_, i) => ((i % 40) < 20 ? 255 : 0));
+    const out = S.applyStyle("toon", edgeImg, 40, 20, { alpha });
+    for (let i = 0; i < 40 * 20; i++) expect(out[i * 4 + 3]).toBe(alpha[i]);
+  });
+
+  it("photo is the default style (first in the list, and what an unknown style means); toon and sketch are one choice away", () => {
+    expect(S.STYLES.map((x: any) => x.id)).toEqual(["photo", "toon", "sketch"]);
+    expect(Array.from(S.applyStyle("nope", edgeImg, 40, 20))).toEqual(Array.from(S.stylePhoto(edgeImg, 40, 20)));
+    expect(Array.from(S.applyStyle("toon", edgeImg, 40, 20))).toEqual(Array.from(S.styleToon(edgeImg, 40, 20)));
+    const src = readFileSync(join(root, "parts/kip/viewer/kip-selfie.js"), "utf8");
+    expect(src).toMatch(/let style = 'photo'/);
+    expect(src).toMatch(/\$\{s\.id === 'photo' \? ' checked' : ''\}/);
+    expect((src.match(/style = 'toon'/g) ?? []).length).toBe(0); // no path resets to Toon any more
   });
 });
 
@@ -150,25 +365,28 @@ describe("sticker export is 1:1 in millimetres", () => {
     expect(Math.abs((h / dpi) * 25.4 - S.WINDOW_MM.h)).toBeLessThan(0.05);
   });
 
-  it("the SVG is in mm at the window size with a cut line", () => {
+  it("the SVG is in mm at the window size with a cut line that follows the rounded window", () => {
     const svg: string = S.stickerSvg({ pngDataUri: "data:image/png;base64,AAAA" });
-    expect(svg).toContain('width="23.6mm"');
-    expect(svg).toContain('height="10.1mm"');
-    expect(svg).toContain('viewBox="0 0 23.6 10.1"');
-    expect(svg).toContain('id="cut-line"');
+    expect(svg).toContain(`width="${S.WINDOW_MM.w}mm"`);
+    expect(svg).toContain(`height="${S.WINDOW_MM.h}mm"`);
+    expect(svg).toContain(`viewBox="0 0 ${S.WINDOW_MM.w} ${S.WINDOW_MM.h}"`);
+    expect(svg).toMatch(/<path id="cut-line" d="M[\d. -]+( L[\d. -]+)+ Z" fill="none"/);
+    expect(svg).not.toContain("<rect");
     expect(svg).toContain("data:image/png;base64,AAAA");
   });
 });
 
 describe("privacy by construction", () => {
-  it("the sticker generator module is pure: no network, storage, workers, DOM or detection", () => {
-    for (const rel of ["parts/kip/viewer/kip-print-stickers.js"]) {
+  it("the image maths and sticker generator modules are pure: no network, storage, workers, DOM or detection", () => {
+    for (const rel of ["parts/kip/viewer/kip-selfie-image.js", "parts/kip/viewer/kip-print-stickers.js"]) {
       const modSrc = readFileSync(join(root, rel), "utf8");
       const modCode = modSrc.split("\n").filter((l) => !/^\s*\/\//.test(l)).join("\n");
       for (const banned of [/\bfetch\s*\(/, /XMLHttpRequest/, /sendBeacon/, /WebSocket/, /localStorage/, /sessionStorage/, /indexedDB/, /caches\./, /document\./, /window\./, /new Worker/, /FaceDetector/, /\bimport\(/, /navigator\./]) {
         expect(modCode, `${rel}: ${String(banned)}`).not.toMatch(banned);
       }
     }
+    const imgOnly = readFileSync(join(root, "parts/kip/viewer/kip-selfie-image.js"), "utf8").split("\n").filter((l) => !/^\s*\/\//.test(l)).join("\n");
+    expect(imgOnly).not.toMatch(/\bimport\b/);
   });
 
   const src = readFileSync(join(root, "parts/kip/viewer/kip-selfie.js"), "utf8");

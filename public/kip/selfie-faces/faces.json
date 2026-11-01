@@ -1,0 +1,204 @@
+{
+  "generator": "muse-image-1.0",
+  "samModel": "sam-3.1",
+  "targets": {
+    "leftEye": {
+      "x": 0.23275862,
+      "y": 0.57258065
+    },
+    "rightEye": {
+      "x": 0.76724138,
+      "y": 0.57258065
+    },
+    "mouth": {
+      "x": 0.5,
+      "y": 0.91935484
+    }
+  },
+  "faces": [
+    {
+      "id": "pirate",
+      "file": "face-pirate.jpg",
+      "width": 1120,
+      "height": 599,
+      "eyes": [
+        {
+          "x": 0.3549,
+          "y": 0.4608
+        },
+        {
+          "x": 0.654,
+          "y": 0.4616
+        }
+      ],
+      "mouth": {
+        "x": 0.5054,
+        "y": 0.8047
+      },
+      "placementError": 0.2543,
+      "alignError": 0.1151,
+      "eyeSpan": 0.2991
+    },
+    {
+      "id": "astronaut",
+      "file": "face-astronaut.jpg",
+      "width": 1120,
+      "height": 599,
+      "eyes": [
+        {
+          "x": 0.3384,
+          "y": 0.4975
+        },
+        {
+          "x": 0.6661,
+          "y": 0.4975
+        }
+      ],
+      "mouth": {
+        "x": 0.5022,
+        "y": 0.9065
+      },
+      "placementError": 0.2113,
+      "alignError": 0.0752,
+      "eyeSpan": 0.3277
+    },
+    {
+      "id": "robot",
+      "file": "face-robot.jpg",
+      "width": 1120,
+      "height": 599,
+      "eyes": [
+        {
+          "x": 0.3491,
+          "y": 0.5476
+        },
+        {
+          "x": 0.6545,
+          "y": 0.5484
+        }
+      ],
+      "mouth": {
+        "x": 0.5036,
+        "y": 0.8948
+      },
+      "placementError": 0.219,
+      "alignError": 0.0254,
+      "eyeSpan": 0.3054
+    },
+    {
+      "id": "cat",
+      "file": "face-cat.jpg",
+      "width": 1120,
+      "height": 599,
+      "eyes": [
+        {
+          "x": 0.371,
+          "y": 0.5217
+        },
+        {
+          "x": 0.6308,
+          "y": 0.5217
+        }
+      ],
+      "mouth": {
+        "x": 0.5004,
+        "y": 0.828
+      },
+      "placementError": 0.2634,
+      "alignError": 0.0913,
+      "eyeSpan": 0.2598
+    },
+    {
+      "id": "clown",
+      "file": "face-clown.jpg",
+      "width": 1120,
+      "height": 599,
+      "eyes": [
+        {
+          "x": 0.3656,
+          "y": 0.4466
+        },
+        {
+          "x": 0.6384,
+          "y": 0.4457
+        }
+      ],
+      "mouth": {
+        "x": 0.5022,
+        "y": 0.8155
+      },
+      "placementError": 0.2786,
+      "alignError": 0.1265,
+      "eyeSpan": 0.2728
+    },
+    {
+      "id": "knight",
+      "file": "face-knight.jpg",
+      "width": 1120,
+      "height": 599,
+      "eyes": [
+        {
+          "x": 0.3768,
+          "y": 0.5751
+        },
+        {
+          "x": 0.6223,
+          "y": 0.5743
+        }
+      ],
+      "mouth": {
+        "x": 0.5076,
+        "y": 0.899
+      },
+      "placementError": 0.271,
+      "alignError": 0.0248,
+      "eyeSpan": 0.2455
+    },
+    {
+      "id": "monster",
+      "file": "face-monster.jpg",
+      "width": 1120,
+      "height": 599,
+      "eyes": [
+        {
+          "x": 0.3795,
+          "y": 0.4508
+        },
+        {
+          "x": 0.6223,
+          "y": 0.4624
+        }
+      ],
+      "mouth": {
+        "x": 0.5049,
+        "y": 0.823
+      },
+      "placementError": 0.3001,
+      "alignError": 0.116,
+      "eyeSpan": 0.2429
+    },
+    {
+      "id": "superhero",
+      "file": "face-superhero.jpg",
+      "width": 1120,
+      "height": 599,
+      "eyes": [
+        {
+          "x": 0.308,
+          "y": 0.4566
+        },
+        {
+          "x": 0.6969,
+          "y": 0.4583
+        }
+      ],
+      "mouth": {
+        "x": 0.4996,
+        "y": 0.8464
+      },
+      "placementError": 0.1824,
+      "alignError": 0.1152,
+      "eyeSpan": 0.3888
+    }
+  ]
+}
