@@ -1,0 +1,424 @@
+{
+  "id": "mech-robotics",
+  "name": "Forge Club · Functional Mechanics & Mech Robotics",
+  "parts": [
+    {
+      "id": "pro-steer-bridge",
+      "name": "Pro Row-0 Ackermann Steering Bridge",
+      "line": "snap",
+      "mount": "stud",
+      "sizeClass": "small",
+      "grid": {
+        "units": [
+          2,
+          2
+        ],
+        "profile": "tu_stud_small"
+      },
+      "footprintMm": [
+        25,
+        25
+      ],
+      "stat": {
+        "name": "spin",
+        "value": 2
+      },
+      "printable": true,
+      "orientation": "bed = z0; flat, studs up",
+      "supportFree": true,
+      "stlFile": "pro-steer-bridge.stl",
+      "glbFile": "pro-steer-bridge.glb",
+      "bboxMm": [
+        48.4,
+        31.8,
+        23.1
+      ]
+    },
+    {
+      "id": "mom-band-core-tray",
+      "name": "Momentum Enclosed Band Core Tray",
+      "line": "snap",
+      "mount": "stud",
+      "sizeClass": "small",
+      "grid": {
+        "units": [
+          4,
+          4
+        ],
+        "profile": "tu_stud_small"
+      },
+      "footprintMm": [
+        50,
+        50
+      ],
+      "stat": {
+        "name": "torque",
+        "value": 3
+      },
+      "printable": true,
+      "orientation": "bed = z0; studs/body up; underside cavity down",
+      "supportFree": true,
+      "stlFile": "mom-band-core-tray.stl",
+      "glbFile": "mom-band-core-tray.glb",
+      "bboxMm": [
+        49.8,
+        49.8,
+        35.1
+      ]
+    },
+    {
+      "id": "mom-band-core-lid",
+      "name": "Momentum Band Core Safety Lid",
+      "line": "snap",
+      "mount": "stud",
+      "sizeClass": "small",
+      "grid": {
+        "units": [
+          4,
+          4
+        ],
+        "profile": "tu_stud_small"
+      },
+      "footprintMm": [
+        50,
+        50
+      ],
+      "stat": {
+        "name": "torque",
+        "value": 1
+      },
+      "printable": true,
+      "orientation": "bed = z0; flat, studs up",
+      "supportFree": true,
+      "stlFile": "mom-band-core-lid.stl",
+      "glbFile": "mom-band-core-lid.glb",
+      "bboxMm": [
+        49.8,
+        60.9,
+        9.7
+      ]
+    },
+    {
+      "id": "mom-flywheel-tray",
+      "name": "Momentum Shrouded Turbine Core Tray",
+      "line": "snap",
+      "mount": "stud",
+      "sizeClass": "small",
+      "grid": {
+        "units": [
+          4,
+          4
+        ],
+        "profile": "tu_stud_small"
+      },
+      "footprintMm": [
+        50,
+        50
+      ],
+      "stat": {
+        "name": "spin",
+        "value": 3
+      },
+      "printable": true,
+      "orientation": "bed = z0; studs/body up; underside cavity down",
+      "supportFree": true,
+      "stlFile": "mom-flywheel-tray.stl",
+      "glbFile": "mom-flywheel-tray.glb",
+      "bboxMm": [
+        49.8,
+        49.8,
+        35.1
+      ]
+    },
+    {
+      "id": "mom-jet-valve-body",
+      "name": "Momentum Balloon Collar & Jet Valve",
+      "line": "snap",
+      "mount": "stud",
+      "sizeClass": "small",
+      "grid": {
+        "units": [
+          4,
+          2
+        ],
+        "profile": "tu_stud_small"
+      },
+      "footprintMm": [
+        50,
+        25
+      ],
+      "stat": {
+        "name": "speed",
+        "value": 2
+      },
+      "printable": true,
+      "orientation": "bed = z0; flat, studs up",
+      "supportFree": true,
+      "stlFile": "mom-jet-valve-body.stl",
+      "glbFile": "mom-jet-valve-body.glb",
+      "bboxMm": [
+        49.8,
+        27.8,
+        28
+      ]
+    },
+    {
+      "id": "mech-drive-tray",
+      "name": "Mech N20 Double-Shear Drive Core Tray",
+      "line": "snap",
+      "mount": "stud",
+      "sizeClass": "small",
+      "grid": {
+        "units": [
+          4,
+          4
+        ],
+        "profile": "tu_stud_small"
+      },
+      "footprintMm": [
+        50,
+        50
+      ],
+      "stat": {
+        "name": "torque",
+        "value": 3
+      },
+      "printable": true,
+      "orientation": "bed = z0; studs/body up; underside cavity down",
+      "supportFree": true,
+      "stlFile": "mech-drive-tray.stl",
+      "glbFile": "mech-drive-tray.glb",
+      "bboxMm": [
+        49.8,
+        49.8,
+        35.1
+      ]
+    },
+    {
+      "id": "mech-drive-lid",
+      "name": "Mech Drive Core Clamp & Hinge Lid",
+      "line": "snap",
+      "mount": "stud",
+      "sizeClass": "small",
+      "grid": {
+        "units": [
+          4,
+          4
+        ],
+        "profile": "tu_stud_small"
+      },
+      "footprintMm": [
+        50,
+        50
+      ],
+      "stat": {
+        "name": "torque",
+        "value": 2
+      },
+      "printable": true,
+      "orientation": "bed = z0; flat, studs up",
+      "supportFree": true,
+      "stlFile": "mech-drive-lid.stl",
+      "glbFile": "mech-drive-lid.glb",
+      "bboxMm": [
+        49.8,
+        60.9,
+        9.7
+      ]
+    },
+    {
+      "id": "mech-brain-tray",
+      "name": "Mech Low-CG Brain & LiPo Core Tray",
+      "line": "snap",
+      "mount": "stud",
+      "sizeClass": "small",
+      "grid": {
+        "units": [
+          4,
+          4
+        ],
+        "profile": "tu_stud_small"
+      },
+      "footprintMm": [
+        50,
+        50
+      ],
+      "stat": {
+        "name": "spin",
+        "value": 3
+      },
+      "printable": true,
+      "orientation": "bed = z0; studs/body up; underside cavity down",
+      "supportFree": true,
+      "stlFile": "mech-brain-tray.stl",
+      "glbFile": "mech-brain-tray.glb",
+      "bboxMm": [
+        49.8,
+        49.8,
+        22.6
+      ]
+    },
+    {
+      "id": "mech-brain-lid",
+      "name": "Mech Vented RF-Clear Brain Lid",
+      "line": "snap",
+      "mount": "stud",
+      "sizeClass": "small",
+      "grid": {
+        "units": [
+          4,
+          4
+        ],
+        "profile": "tu_stud_small"
+      },
+      "footprintMm": [
+        50,
+        50
+      ],
+      "stat": {
+        "name": "spin",
+        "value": 2
+      },
+      "printable": true,
+      "orientation": "bed = z0; flat, studs up",
+      "supportFree": true,
+      "stlFile": "mech-brain-lid.stl",
+      "glbFile": "mech-brain-lid.glb",
+      "bboxMm": [
+        49.8,
+        60.9,
+        9.7
+      ]
+    },
+    {
+      "id": "mech-bat-door-screw",
+      "name": "Mech Tool-Locked LiPo Battery Door",
+      "line": "pro",
+      "mount": "hole",
+      "sizeClass": "small",
+      "grid": {
+        "units": [
+          1,
+          1
+        ],
+        "profile": "tu_12.5"
+      },
+      "footprintMm": [
+        12.5,
+        12.5
+      ],
+      "stat": {
+        "name": "torque",
+        "value": 2
+      },
+      "printable": true,
+      "orientation": "bed = z0; lying flat, bores and pins along z",
+      "supportFree": true,
+      "stlFile": "mech-bat-door-screw.stl",
+      "glbFile": "mech-bat-door-screw.glb",
+      "bboxMm": [
+        33.6,
+        10.6,
+        5.8
+      ],
+      "smallPartWarning": true
+    },
+    {
+      "id": "mech-servo-mount",
+      "name": "Mech Row-2 Coaxial 9g Servo Bridge",
+      "line": "snap",
+      "mount": "stud",
+      "sizeClass": "small",
+      "grid": {
+        "units": [
+          2,
+          2
+        ],
+        "profile": "tu_stud_small"
+      },
+      "footprintMm": [
+        25,
+        25
+      ],
+      "stat": {
+        "name": "spin",
+        "value": 2
+      },
+      "printable": true,
+      "orientation": "bed = z0; flat, studs up",
+      "supportFree": true,
+      "stlFile": "mech-servo-mount.stl",
+      "glbFile": "mech-servo-mount.glb",
+      "bboxMm": [
+        48,
+        19,
+        32.8
+      ]
+    },
+    {
+      "id": "mech-servo-pinion-z10",
+      "name": "Mech Horn-Pocket Z10 Servo Pinion",
+      "line": "pro",
+      "mount": "hole",
+      "sizeClass": "small",
+      "grid": {
+        "units": [
+          1,
+          1
+        ],
+        "profile": "tu_12.5"
+      },
+      "footprintMm": [
+        12.5,
+        12.5
+      ],
+      "stat": {
+        "name": "spin",
+        "value": 2
+      },
+      "printable": true,
+      "orientation": "bed = z0; lying flat, bores and pins along z",
+      "supportFree": true,
+      "stlFile": "mech-servo-pinion-z10.stl",
+      "glbFile": "mech-servo-pinion-z10.glb",
+      "bboxMm": [
+        30,
+        28.9,
+        8.8
+      ],
+      "smallPartWarning": true
+    },
+    {
+      "id": "mech-sill-duct",
+      "name": "Mech Cockpit Wire-Trough Sill Frame",
+      "line": "snap",
+      "mount": "stud",
+      "sizeClass": "small",
+      "grid": {
+        "units": [
+          4,
+          3
+        ],
+        "profile": "tu_stud_small"
+      },
+      "footprintMm": [
+        50,
+        37.5
+      ],
+      "stat": {
+        "name": "torque",
+        "value": 2
+      },
+      "printable": true,
+      "orientation": "bed = z0; flat, studs up",
+      "supportFree": true,
+      "stlFile": "mech-sill-duct.stl",
+      "glbFile": "mech-sill-duct.glb",
+      "bboxMm": [
+        49.8,
+        37.3,
+        11
+      ]
+    }
+  ]
+}

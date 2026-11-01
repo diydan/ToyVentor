@@ -136,29 +136,90 @@ def star_2d(
     return polygon_2d(verts, fillet_r=fillet_r)
 
 
-def flare_from_pad(body: Manifold, base_manifold: Manifold, z_cut: float = 1.0) -> Manifold:
-    """Trim `body` to a support-free 41 deg upward flare starting from `base_manifold` at `z_cut`."""
-    return base_manifold + tp.flare_clip(body, base_manifold.slice(z_cut), z_cut)
+def flare_from_pad(
+    body: Manifold,
+    base_manifold: Manifold,
+    z_cut: float = 1.0,
+    *,
+    support_policy: str = "none",
+    min_overhang_z: float = 3.8,
+) -> Manifold:
+    """Trim `body` to a support-free 41 deg flare (`none`) or protect only `< min_overhang_z` (`minimal`)."""
+    flared = tp.flare_clip(body, base_manifold.slice(z_cut), z_cut)
+    if support_policy != "minimal":
+        return base_manifold + flared
+    low_box = Manifold.cube((240.0, 240.0, min_overhang_z + 10.0)).translate((-120.0, -120.0, -10.0))
+    high_box = Manifold.cube((240.0, 240.0, 240.0)).translate((-120.0, -120.0, min_overhang_z))
+    return base_manifold + (flared ^ low_box) + (body ^ high_box)
+
+
+def wide_brim(
+    width_mm: float = 36.0,
+    depth_mm: float = 25.0,
+    *,
+    thickness_mm: float = 2.2,
+    z: float = 0.0,
+) -> Manifold:
+    """Minimal-support hat brim: 45 deg self-supporting inner collar clearing the `2x1` pad edge,
+    then a flat `-Z` build-plate-reachable underside shelf and domed `+Z` show top.
+    """
+    w = max(26.4, min(42.0, float(width_mm)))
+    d = max(14.8, min(32.0, float(depth_mm)))
+    t = max(1.6, min(4.0, float(thickness_mm)))
+    # Inner 45 deg bevel starts buried in the 2x1 crown pad (`z - 1.1`) and flares past `(24.6, 12.1)`
+    # to `(26.0, 13.6)` at `z + 0.2`, so 100% of the flat `-Z` brim ring sits over open build plate!
+    collar = Manifold.batch_hull(
+        [
+            rounded_slab(23.4, 11.0, 0.2, r=5.2, z=z - 1.1),
+            rounded_slab(min(w, 26.0), min(d, 13.8), 0.2, r=6.2, z=z + 0.2),
+        ]
+    )
+    r_outer = min(w, d) * 0.42
+    r_top = min(w - 3.0, d - 3.0) * 0.42
+    brim = Manifold.batch_hull(
+        [
+            rounded_slab(w, d, max(0.8, t * 0.45), r=r_outer, z=z + 0.2),
+            rounded_slab(w - 3.2, d - 3.2, 0.6, r=r_top, z=z + 0.2 + t - 0.6),
+        ]
+    )
+    return collar + brim
 
 
 # ---------------------------------------------------------------------------
 # The 6 Drift-Proof Conforming Builders
 # ---------------------------------------------------------------------------
-def crown_addon(body_above_pad: Manifold, *, lock: bool = True) -> tuple[Manifold, list[dict], dict]:
+def crown_addon(
+    body_above_pad: Manifold,
+    *,
+    lock: bool = True,
+    support_policy: str = "none",
+) -> tuple[Manifold, list[dict], dict]:
     """Build a `2x1` Small-stud Crown add-on (hairs, hats, horns, helmets, crests).
 
     `body_above_pad` is authored with `z = 0` at the top of the `2x1` crown pad (`fh` offset is applied
-    automatically!) and trimmed with `tp.flare_clip` so `P1`, `P4`, `I3`, and `I7` pass by construction.
+    automatically!). With `support_policy='none'`, trimmed with `tp.flare_clip`; with `support_policy='minimal'`,
+    keeps the `< 3.2 mm` socket seat protected while allowing wide brims/visors/ears above `z = 3.2 mm`.
     """
     size = "small"
     _, fh, foot = kp._crown_pad_2x1(size)
     z0 = fh - 0.5
     shifted = body_above_pad.translate((0.0, 0.0, z0))
-    clipped = tp.flare_clip(shifted, foot.slice(z0), z0)
+    flared = tp.flare_clip(shifted, foot.slice(z0), z0)
+    if support_policy == "minimal":
+        low_box = Manifold.cube((240.0, 240.0, 13.2)).translate((-120.0, -120.0, -10.0))
+        high_box = Manifold.cube((240.0, 240.0, 240.0)).translate((-120.0, -120.0, 3.2))
+        clipped = (flared ^ low_box) + (shifted ^ high_box)
+    else:
+        clipped = flared
     return tp._finish(size, (2, 1), foot, lock, clipped, fh, "integrated")
 
 
-def character_head(body: Manifold, *, height_mm: float = 30.5) -> tuple[Manifold, list[dict], dict]:
+def character_head(
+    body: Manifold,
+    *,
+    height_mm: float = 30.5,
+    support_policy: str = "none",
+) -> tuple[Manifold, list[dict], dict]:
     """Build a Universal Swappable Head (`2x1` neck sockets + mandatory `#FF6B4A` `2x1` Crown Buds).
 
     Conforms to `BRAND_STYLE.md`:
@@ -171,20 +232,24 @@ def character_head(body: Manifold, *, height_mm: float = 30.5) -> tuple[Manifold
     collar = rounded_slab(2 * hx, 2 * hy, 1.2, r=3.2, z=0.0)
     # Keep rear clear of backpack row (y <= hy) and trim z <= height_mm flat crown seat
     keep_box = Manifold.cube((120.0, 80.0 + hy, height_mm)).translate((-60.0, -80.0, 0.0))
-    shaped = flare_from_pad(body ^ keep_box, collar, z_cut=1.0)
+    shaped = flare_from_pad(body ^ keep_box, collar, z_cut=1.0, support_policy=support_policy)
     m, conns, ex = tp.integrated_sockets(shaped, size, True)
     m, c_top = kp.add_studs_at(m, size, 2, 1, 0.0, 0.0, height_mm, "top_studs")
     return m, conns + [c_top], ex
 
 
 def backpack_addon(
-    body_above_pad: Manifold, *, grid: tuple[int, int] = (2, 2), top_studs_z: float | None = None
+    body_above_pad: Manifold,
+    *,
+    grid: tuple[int, int] = (2, 2),
+    top_studs_z: float | None = None,
+    support_policy: str = "none",
 ) -> tuple[Manifold, list[dict], dict]:
     """Build a `2x2` (or `2x1`) Snap Backpack add-on with optional top `2x1` accessory studs."""
     size = "small"
     hx, hy = kp._half(size, grid[0]), kp._half(size, grid[1])
     base = rounded_slab(2 * hx, 2 * hy, 2.0, r=4.8, z=0.0)
-    shaped = flare_from_pad(body_above_pad, base, z_cut=1.0)
+    shaped = flare_from_pad(body_above_pad, base, z_cut=1.0, support_policy=support_policy)
     m, conns, ex = tp.integrated_sockets(shaped, size, True)
     if top_studs_z is not None:
         m, c_top = kp.add_studs_at(m, size, 2, 1, 0.0, 0.0, top_studs_z, "pack_top_studs")
@@ -262,9 +327,11 @@ def part_spec(
     slot: str,
     fn: Callable[[], tuple[Manifold, list[dict], dict]],
     tags: list[str] | None = None,
+    support_policy: str = "none",
 ) -> dict:
     """Create a normalized PartSpec dictionary ready for `validate_and_export()`."""
     is_pro = slot == "hand"
+    norm_policy = "minimal" if (support_policy == "minimal" and slot in ("crown", "head", "back")) else "none"
     return {
         "id": id,
         "name": name,
@@ -275,6 +342,7 @@ def part_spec(
         "stat": stat,
         "behavior": behavior,
         "slot": slot,
+        "support_policy": norm_policy,
         "tags": tags or ["custom", "llm", slot, "kip"],
         "fn": fn,
         "cavity": None,
@@ -283,7 +351,13 @@ def part_spec(
     }
 
 
-def validate_and_export(spec: dict, out_dir: str | Path | None = None) -> dict:
+def validate_and_export(
+    spec: dict,
+    out_dir: str | Path | None = None,
+    *,
+    optimize: bool = True,
+    export_web_on_fail: bool = False,
+) -> dict:
     """Run the full PartSpec v2 gate + brand rules + real reference assembly test on `spec`."""
     brand_errors: list[str] = []
     for field in ("id", "name", "behavior"):
@@ -356,6 +430,52 @@ def validate_and_export(spec: dict, out_dir: str | Path | None = None) -> dict:
         finally:
             tmp_path.unlink(missing_ok=True)
 
+    slot_name = str(spec.get("slot") or "")
+    support_policy = (
+        "minimal"
+        if spec.get("support_policy") == "minimal" and slot_name in ("crown", "head", "back")
+        else "none"
+    )
+    non_overhang_fail = [
+        c for c in blocking_fail if c["id"] not in ("P1_no_supports", "P4_no_ledges")
+    ]
+    scripts_dir = str(KIP_DIR.parent.parent / "scripts")
+
+    if (
+        support_policy == "minimal"
+        and blocking_fail
+        and not non_overhang_fail
+        and small["status"] != "marginal"
+        and not brand_errors
+        and asm_report["ok"]
+    ):
+        # Verify minimal-support eligibility (`M1` socket keep-out, `M2` underside cap, `M3` build-plate LOS)
+        if scripts_dir not in sys.path:
+            sys.path.insert(0, scripts_dir)
+        import io
+        import optimize_assets  # type: ignore
+
+        chk_buf = io.BytesIO()
+        tm.export(chk_buf, file_type="stl")
+        m_chk, v_chk, f_chk, _ = optimize_assets._resolve_source_manifold(
+            part_id=spec["id"],
+            stl_bytes=chk_buf.getvalue(),
+        )
+        m_chk = optimize_assets.snap_manifold_to_bed(m_chk)
+        v_chk, f_chk = optimize_assets.manifold_to_arrays(m_chk)
+        min_errs = optimize_assets._check_minimal_support_eligibility(
+            v_chk, f_chk, m_chk, slot=slot_name
+        )
+        if not min_errs:
+            blocking_fail = []
+            entry["print"]["supports"] = True
+            entry["design_status"] = "verified"
+        else:
+            for me in min_errs:
+                blocking_fail.append(
+                    {"id": "M_minimal_support", "level": "block", "result": "fail", "detail": me}
+                )
+
     ok = (
         entry["design_status"] == "verified"
         and not blocking_fail
@@ -364,14 +484,96 @@ def validate_and_export(spec: dict, out_dir: str | Path | None = None) -> dict:
     )
 
     stl_path = None
+    glb_path = None
     manifest_path = None
+    opt_summary = None
+
     if out_dir is not None and ok:
         out_p = Path(out_dir)
         out_p.mkdir(parents=True, exist_ok=True)
         stl_path = out_p / entry["file"]
         manifest_path = out_p / f"{spec['id']}.partspec.json"
-        tm.export(stl_path)
-        manifest_path.write_text(json.dumps(entry, indent=2))
+        if optimize:
+            import io
+
+            if scripts_dir not in sys.path:
+                sys.path.insert(0, scripts_dir)
+            import optimize_assets  # type: ignore
+
+            raw_buf = io.BytesIO()
+            tm.export(raw_buf, file_type="stl")
+            glb_path = out_p / f"{spec['id']}.glb"
+            opt = optimize_assets.optimize_single_part(
+                spec["id"],
+                stl_bytes=raw_buf.getvalue(),
+                out_stl_path=stl_path,
+                out_glb_path=glb_path,
+                slot=spec.get("slot"),
+                support_policy=support_policy,
+                validation_dir=PARTSPEC_DIR / "validation",
+                verify_preprint=True,
+                partspec_dir=PARTSPEC_DIR,
+            )
+            if not opt["print_ok"]:
+                ok = False
+                stl_path = None
+                for pf in opt["preprint_failures"]:
+                    blocking_fail.append(
+                        {
+                            "id": "V_post_simplify_preprint",
+                            "level": "block",
+                            "result": "fail",
+                            "detail": pf,
+                        }
+                    )
+                if not export_web_on_fail and glb_path.exists():
+                    glb_path.unlink(missing_ok=True)
+                    glb_path = None
+            else:
+                opt_summary = {
+                    "content_hash": opt["content_hash"],
+                    "finish_class": opt["finish_class"],
+                    "print_simplify_mm": opt["print_simplify_mm"],
+                    "web_simplify_mm": opt["web_simplify_mm"],
+                    "web_crease_deg": opt["web_crease_deg"],
+                    "metrics": opt["metrics"],
+                }
+                entry["glb_file"] = glb_path.name
+                entry["print"]["slicer_recipe"] = opt["slicer_recipe"]
+                entry["asset_optimization"] = opt_summary
+                manifest_path.write_text(json.dumps(entry, indent=2) + "\n")
+        else:
+            tm.export(stl_path)
+            manifest_path.write_text(json.dumps(entry, indent=2) + "\n")
+    elif out_dir is not None and not ok and export_web_on_fail:
+        # Digital-only graceful degradation: emit quantized Web GLB preview without unlocking print STL.
+        out_p = Path(out_dir)
+        out_p.mkdir(parents=True, exist_ok=True)
+        if scripts_dir not in sys.path:
+            sys.path.insert(0, scripts_dir)
+        import io
+        import optimize_assets  # type: ignore
+
+        buf = io.BytesIO()
+        tm.export(buf, file_type="stl")
+        glb_path = out_p / f"{spec['id']}.glb"
+        fast = optimize_assets.build_fast_preview_glb(
+            spec["id"],
+            stl_bytes=buf.getvalue(),
+            slot=spec.get("slot"),
+            out_glb_path=glb_path,
+        )
+        opt_summary = {
+            "finish_class": fast["finish_class"],
+            "web_simplify_mm": fast["web_simplify_mm"],
+            "web_crease_deg": fast["web_crease_deg"],
+            "metrics": {
+                "orig_tris": fast["orig_tris"],
+                "web_verts": fast["web_verts"],
+                "web_tris": fast["web_tris"],
+                "glb_bytes": fast["glb_size"],
+            },
+        }
 
     return {
         "ok": ok,
@@ -385,18 +587,22 @@ def validate_and_export(spec: dict, out_dir: str | Path | None = None) -> dict:
         "brand_errors": brand_errors,
         "assembly": asm_report,
         "stl_file": str(stl_path) if stl_path else entry["file"],
+        "glb_file": str(glb_path) if glb_path else None,
         "manifest_file": str(manifest_path) if manifest_path else None,
+        "slicer_recipe": entry.get("print", {}).get("slicer_recipe"),
+        "optimization": opt_summary,
         "entry": entry,
     }
 
 
 def run_cli(spec: dict) -> None:
     parser = argparse.ArgumentParser(description="Validate and export a conforming ToyVentor LLM part.")
-    parser.add_argument("--out", default=str(KIP_DIR.parent.parent / "public" / "kip" / "custom"), help="Output directory for verified STL & manifest")
+    parser.add_argument("--out", default=str(KIP_DIR.parent.parent / "public" / "kip" / "custom"), help="Output directory for verified STL, GLB & manifest")
     parser.add_argument("--json", action="store_true", help="Emit machine-readable JSON summary")
+    parser.add_argument("--no-optimize", action="store_true", help="Skip print STL + quantized Web GLB optimization")
     args = parser.parse_args()
 
-    res = validate_and_export(spec, out_dir=args.out)
+    res = validate_and_export(spec, out_dir=args.out, optimize=not args.no_optimize)
     if args.json:
         slim = {k: v for k, v in res.items() if k != "entry"}
         print(json.dumps(slim, indent=2))
@@ -416,4 +622,13 @@ def run_cli(spec: dict) -> None:
         if res["ok"]:
             print(f"  ASM OK:     Mated cleanly with {res['assembly']['parent']} ({res['assembly']['edges']} edge(s), 0 collisions)")
             print(f"  EXPORTED:   {res['stl_file']}")
+            if res.get("glb_file") and res.get("optimization"):
+                m = res["optimization"]["metrics"]
+                sr = res.get("slicer_recipe") or {}
+                print(
+                    f"  OPTIMIZED:  STL {m['orig_bytes'] / 1024:.1f} -> {m['print_bytes'] / 1024:.1f} KB "
+                    f"({m['orig_tris']} -> {m['print_tris']} tris) | "
+                    f"GLB {m['glb_bytes'] / 1024:.1f} KB ({m['web_tris']} tris) | "
+                    f"recipe {sr.get('layer_height_mm')}mm {sr.get('wall_order')} iron={sr.get('ironing')}"
+                )
     sys.exit(0 if res["ok"] else 1)

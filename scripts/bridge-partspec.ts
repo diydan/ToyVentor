@@ -1,8 +1,9 @@
 // Bridges the canonical 12.5 mm / 25 mm TU PartSpec catalog into live app
-// set files (sets/base.json + Forge Club expansion sets) and syncs real binary
-// STLs into public/parts-stl/ + GLBs into public/parts-glb/.
+// set files (sets/base.json + Forge Club expansion sets) and syncs optimized
+// print-tier binary STLs into public/parts-stl/ + quantized Web-LOD GLBs into
+// public/parts-glb/.
 //
-// Run: npm run bridge [-- --no-assets]
+// Run: npm run bridge [-- --no-assets] [-- --verify-preprint]
 import { execFileSync } from "node:child_process";
 import {
   copyFileSync,
@@ -10,12 +11,14 @@ import {
   mkdirSync,
   mkdtempSync,
   readFileSync,
+  readdirSync,
   rmSync,
+  statSync,
   unlinkSync,
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { validateSet, type Part, type ToySet } from "../shared/part";
 import {
   BASE_SET_PARTSPEC_IDS,
@@ -32,6 +35,7 @@ import {
 const root = process.cwd();
 const pkgDir = join(root, "parts/partspec");
 const syncAssets = !process.argv.includes("--no-assets");
+const verifyPreprint = process.argv.includes("--verify-preprint");
 
 for (const f of ["catalog.json", "toyventor_parts.json"]) {
   if (!existsSync(join(pkgDir, f))) {
@@ -57,24 +61,47 @@ const BRIDGE_OPTS: BridgeOptions = {
   includeAssets: true,
 };
 
-function resolveSourceStl(file: string): string {
+function resolvePartSpecPython(): string | null {
+  const candidates: string[] = [];
+  if (process.env.PARTSPEC_PYTHON) candidates.push(process.env.PARTSPEC_PYTHON);
+  candidates.push(join(pkgDir, ".venv/bin/python3"));
+  try {
+    const gitCommon = execFileSync("git", ["rev-parse", "--git-common-dir"], {
+      cwd: root,
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "ignore"],
+    }).trim();
+    if (gitCommon) {
+      const commonRoot = dirname(resolve(root, gitCommon));
+      candidates.push(join(commonRoot, "parts/partspec/.venv/bin/python3"));
+    }
+  } catch {
+    // Non-git checkout; ignore
+  }
+  return candidates.find((p) => existsSync(p)) ?? null;
+}
+
+function findExistingSourceStl(file: string): string | null {
   const candidates = [
     join(pkgDir, "out", file),
     join(root, "public/kip/partspec", file),
+    join(root, "public/kip/partspec/mockup", file),
     join(pkgDir, file),
   ];
-  const hit = candidates.find((p) => existsSync(p));
-  if (!hit) {
-    throw new Error(`STL file "${file}" not found in parts/partspec/out/ or public/kip/partspec/`);
-  }
-  return hit;
+  return candidates.find((p) => existsSync(p)) ?? null;
 }
+
+type AssetSyncItem = {
+  part: Part;
+  partspecId: string;
+  sourceStl: string | null;
+};
 
 function buildParts(
   ids: readonly string[],
   overrides: Record<string, Partial<Part>> = {},
-): Array<{ part: Part; sourceStl: string }> {
-  const out: Array<{ part: Part; sourceStl: string }> = [];
+): AssetSyncItem[] {
+  const out: AssetSyncItem[] = [];
   for (const id of ids) {
     const row = catalogById.get(id);
     if (!row) {
@@ -88,7 +115,11 @@ function buildParts(
       process.exit(1);
     }
     const merged: Part = { ...r.part, ...(overrides[id] ?? {}) };
-    out.push({ part: merged, sourceStl: resolveSourceStl(man!.file!) });
+    out.push({
+      part: merged,
+      partspecId: id,
+      sourceStl: findExistingSourceStl(man!.file!),
+    });
   }
   return out;
 }
@@ -176,34 +207,116 @@ if (existsSync(legacyDemo)) {
   console.log("bridge: removed superseded sets/partspec-demo.json");
 }
 
+function collectExpansionSyncItems(existingItems: AssetSyncItem[]): AssetSyncItem[] {
+  const seenStl = new Set(existingItems.map((x) => x.part.stlFile).filter(Boolean));
+  const extra: AssetSyncItem[] = [];
+  for (const file of readdirSync(join(root, "sets")).filter((f) => f.endsWith(".json")).sort()) {
+    const doc = JSON.parse(readFileSync(join(root, "sets", file), "utf8")) as ToySet;
+    for (const part of doc.parts ?? []) {
+      if (!part.printable || !part.stlFile || seenStl.has(part.stlFile)) continue;
+      seenStl.add(part.stlFile);
+      const partspecId = part.id.replace(/-/g, "_");
+      const man = manifestById.get(partspecId);
+      const sourceStl = man?.file
+        ? findExistingSourceStl(man.file)
+        : findExistingSourceStl(part.stlFile);
+      extra.push({ part, partspecId, sourceStl });
+    }
+  }
+  return extra;
+}
+
+function dirBytes(dir: string, ext: string): number {
+  if (!existsSync(dir)) return 0;
+  return readdirSync(dir)
+    .filter((f) => f.endsWith(ext))
+    .reduce((sum, f) => sum + statSync(join(dir, f)).size, 0);
+}
+
 if (syncAssets) {
   const stlOutDir = join(root, "public/parts-stl");
   const glbOutDir = join(root, "public/parts-glb");
+  const optManifest = join(pkgDir, "asset_optimization_manifest.json");
   mkdirSync(stlOutDir, { recursive: true });
   mkdirSync(glbOutDir, { recursive: true });
 
-  const stageDir = mkdtempSync(join(tmpdir(), "toyventor-bridge-stl-"));
+  const venvPython = resolvePartSpecPython();
+  const stageRoot = mkdtempSync(join(tmpdir(), "toyventor-bridge-stl-"));
+  const rawStageDir = join(stageRoot, "raw");
+  const webStageDir = join(stageRoot, "web");
+  mkdirSync(rawStageDir, { recursive: true });
+  mkdirSync(webStageDir, { recursive: true });
+
   try {
-    const allBuilt = [
-      ...baseBuilt,
-      ...racerBuilt,
-      ...wardrobeBuilt,
-      ...modularCraftBuilt,
-      ...mechRoboticsBuilt,
-    ];
-    for (const { part, sourceStl } of allBuilt) {
+    const coreItems = [...baseBuilt, ...racerBuilt, ...wardrobeBuilt];
+    const allItems = [...coreItems, ...collectExpansionSyncItems(coreItems)];
+    const coreItems = [...baseBuilt, ...racerBuilt, ...wardrobeBuilt];
+    const allItems = [...coreItems, ...collectExpansionSyncItems(coreItems)];
+    const buildMissingArgs: string[] = [];
+
+    for (const { part, partspecId, sourceStl } of allItems) {
       if (!part.stlFile) continue;
-      copyFileSync(sourceStl, join(stlOutDir, part.stlFile));
-      copyFileSync(sourceStl, join(stageDir, part.stlFile));
+      const stagedPath = join(rawStageDir, part.stlFile);
+      if (sourceStl) {
+        copyFileSync(sourceStl, stagedPath);
+      } else if (venvPython && manifestById.has(partspecId)) {
+        buildMissingArgs.push("--build-missing", `${partspecId}=${stagedPath}`);
+      } else if (existsSync(join(stlOutDir, part.stlFile))) {
+        copyFileSync(join(stlOutDir, part.stlFile), stagedPath);
+      } else {
+        throw new Error(
+          `STL for "${part.id}" (${part.stlFile}) not found on disk and PartSpec .venv unavailable to synthesize it`,
+        );
+      }
     }
-    execFileSync("python3", [join(root, "scripts/stl_to_glb.py"), stageDir, glbOutDir], {
-      stdio: "inherit",
-    });
+
+    if (venvPython) {
+      const optArgs = [
+        join(root, "scripts/optimize_assets.py"),
+        "--in",
+        rawStageDir,
+        "--stl-out",
+        stlOutDir,
+        "--web-stage",
+        webStageDir,
+        "--partspec-dir",
+        pkgDir,
+        "--manifest",
+        optManifest,
+        "--update-manifest",
+        ...buildMissingArgs,
+      ];
+      const firstPrint = join(stlOutDir, "forge-mount-first-print.stl");
+      if (existsSync(firstPrint)) {
+        optArgs.push("--standalone", firstPrint);
+      }
+      if (verifyPreprint) {
+        optArgs.push("--verify-preprint");
+      }
+      execFileSync(venvPython, optArgs, { stdio: "inherit" });
+      execFileSync(
+        venvPython,
+        [join(root, "scripts/stl_to_glb.py"), webStageDir, glbOutDir, "--manifest", optManifest],
+        { stdio: "inherit" },
+      );
+    } else {
+      for (const f of readdirSync(rawStageDir).filter((n) => n.endsWith(".stl"))) {
+        copyFileSync(join(rawStageDir, f), join(stlOutDir, f));
+      }
+      execFileSync(
+        "python3",
+        [join(root, "scripts/stl_to_glb.py"), rawStageDir, glbOutDir, "--manifest", optManifest],
+        { stdio: "inherit" },
+      );
+    }
+
+    const totalStlMb = (dirBytes(stlOutDir, ".stl") / (1024 * 1024)).toFixed(2);
+    const totalGlbMb = (dirBytes(glbOutDir, ".glb") / (1024 * 1024)).toFixed(2);
     console.log(
-      `bridge: synced ${allBuilt.length} binary STLs -> public/parts-stl/ and GLBs -> public/parts-glb/`,
+      `bridge: synced ${allItems.length} catalog parts -> public/parts-stl/ (${totalStlMb} MB) & public/parts-glb/ (${totalGlbMb} MB)`,
     );
   } finally {
-    rmSync(stageDir, { recursive: true, force: true });
+    rmSync(stageRoot, { recursive: true, force: true });
   }
 }
 

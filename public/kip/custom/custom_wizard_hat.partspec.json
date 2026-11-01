@@ -20,7 +20,7 @@
     17.2,
     32.9
   ],
-  "volume_cm3": 7.12,
+  "volume_cm3": 7.14,
   "connectors": [
     {
       "id": "under_sockets",
@@ -51,7 +51,7 @@
   ],
   "safety": {
     "small_part_status": "small_part",
-    "min_enclosing_diameter_mm": 28.31,
+    "min_enclosing_diameter_mm": 28.32,
     "margin_pct": -10.8,
     "print_page_warning": [
       "Printed at home or by a print service. Not tested to toy-safety standards. Adult supervision required. Check for cracks, sharp edges and loose pieces before each use, and stop using anything that has broken.",
@@ -60,7 +60,18 @@
   },
   "print": {
     "orientation": "bed = z0; flat, studs up",
-    "supports": false
+    "supports": false,
+    "slicer_recipe": {
+      "layer_height_mm": 0.12,
+      "wall_loops": 3,
+      "outer_wall_speed_mms": 30,
+      "wall_order": "inner_first",
+      "seam_position": "aligned",
+      "ironing": "none",
+      "ironing_inset_mm": 0.0,
+      "brim_width_mm": 0,
+      "support_mode": "none"
+    }
   },
   "design_status": "verified",
   "fit": {
@@ -157,7 +168,7 @@
       "id": "S1_small_part_screen",
       "level": "warn",
       "result": "fail",
-      "detail": "small_part: best-fit diameter 28.31 mm vs 31.75 mm cylinder"
+      "detail": "small_part: best-fit diameter 28.32 mm vs 31.75 mm cylinder"
     },
     {
       "id": "T1_fit_as_designed",
@@ -194,5 +205,29 @@
     "holes": 2,
     "reliefs": 0,
     "locked": true
+  },
+  "glb_file": "custom_wizard_hat.glb",
+  "asset_optimization": {
+    "content_hash": "d6f27325d52c",
+    "finish_class": "show_curved",
+    "print_simplify_mm": 0.006,
+    "web_simplify_mm": 0.075,
+    "web_crease_deg": 36,
+    "metrics": {
+      "orig_bytes": 132884,
+      "print_bytes": 124084,
+      "glb_bytes": 19328,
+      "orig_tris": 2656,
+      "print_tris": 2480,
+      "web_verts": 860,
+      "web_tris": 1294,
+      "max_bbox_delta_mm": 0.0,
+      "rel_vol_delta_pct": 0.00206,
+      "overhang_22_mm2": 233.94,
+      "flat_top_mm2": 2.78,
+      "bed_area_mm2": 189.33,
+      "v11_show_face_overhang_30_mm2": 183.66,
+      "v11_status": "advisory"
+    }
   }
 }

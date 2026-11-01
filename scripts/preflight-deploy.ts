@@ -86,11 +86,16 @@ try {
   console.log("preflight note: no git repository — untracked-file check skipped");
 }
 
-// 7. Every printable part resolves to a real, valid STL and GLB. Filenames
-// come from set data via the same rule as src/lib/catalog.ts (stlFile field,
-// .stl -> .glb); the hand-maintained UI maps are gone, so there is nothing
-// left to drift — this checks the catalogue against the payloads instead.
+// 7. Every printable part resolves to a real, valid STL and GLB within size
+// budgets. Filenames come from set data via the same rule as src/lib/catalog.ts
+// (stlFile field, .stl -> .glb); the hand-maintained UI maps are gone, so there
+// is nothing left to drift — this checks the catalogue against the payloads.
 {
+  const MAX_SINGLE_GLB_BYTES = 250 * 1024;
+  const MAX_TOTAL_GLB_BYTES = 5 * 1024 * 1024;
+  const MAX_SINGLE_STL_BYTES = Math.round(1.6 * 1024 * 1024);
+  const MAX_TOTAL_STL_BYTES = 21 * 1024 * 1024;
+
   const problems: string[] = [];
   const isValidStl = (path: string): boolean => {
     const buf = readFileSync(path);
@@ -102,6 +107,23 @@ try {
     if (buf.length < 84) return false;
     const triangles = buf.readUInt32LE(80);
     return buf.length === 84 + triangles * 50;
+  };
+  const isValidGlb = (path: string): boolean => {
+    const buf = readFileSync(path);
+    if (buf.length < 28) return false;
+    const magic = buf.readUInt32LE(0);
+    const version = buf.readUInt32LE(4);
+    const totalLength = buf.readUInt32LE(8);
+    const jsonLength = buf.readUInt32LE(12);
+    const jsonChunkType = buf.readUInt32LE(16);
+    return (
+      magic === 0x46546c67 &&
+      version === 2 &&
+      totalLength === buf.length &&
+      jsonLength > 0 &&
+      20 + jsonLength <= buf.length &&
+      jsonChunkType === 0x4e4f534a
+    );
   };
   const setFiles = readdirSync(join(root, "sets")).filter((f) => f.endsWith(".json"));
   for (const file of setFiles) {
@@ -117,15 +139,42 @@ try {
       const stl = join(root, "public/parts-stl", part.stlFile);
       if (!existsSync(stl) || statSync(stl).size === 0)
         problems.push(`${file}:${part.id} missing or empty public/parts-stl/${part.stlFile}`);
-      else if (!isValidStl(stl)) problems.push(`${file}:${part.id} invalid STL header in ${part.stlFile}`);
+      else {
+        const stlBytes = statSync(stl).size;
+        if (!isValidStl(stl)) problems.push(`${file}:${part.id} invalid STL header in ${part.stlFile}`);
+        if (stlBytes > MAX_SINGLE_STL_BYTES)
+          problems.push(`${file}:${part.id} ${part.stlFile} exceeds 1.6 MB cap (${(stlBytes / 1024).toFixed(0)} KB)`);
+      }
       const glbName = part.glbFile ?? part.stlFile.replace(/\.stl$/i, ".glb");
       const glb = join(root, "public/parts-glb", glbName);
       if (!existsSync(glb) || statSync(glb).size === 0)
         problems.push(`${file}:${part.id} missing or empty public/parts-glb/${glbName}`);
+      else {
+        const glbBytes = statSync(glb).size;
+        if (!isValidGlb(glb)) problems.push(`${file}:${part.id} invalid GLB v2 binary in ${glbName}`);
+        if (glbBytes > MAX_SINGLE_GLB_BYTES)
+          problems.push(`${file}:${part.id} ${glbName} exceeds 250 KB Web-LOD cap (${(glbBytes / 1024).toFixed(0)} KB)`);
+      }
     }
   }
+
+  const totalStlBytes = readdirSync(join(root, "public/parts-stl"))
+    .filter((f) => f.endsWith(".stl"))
+    .reduce((sum, f) => sum + statSync(join(root, "public/parts-stl", f)).size, 0);
+  const totalGlbBytes = readdirSync(join(root, "public/parts-glb"))
+    .filter((f) => f.endsWith(".glb"))
+    .reduce((sum, f) => sum + statSync(join(root, "public/parts-glb", f)).size, 0);
+
+  if (totalStlBytes > MAX_TOTAL_STL_BYTES)
+    problems.push(`public/parts-stl total ${(totalStlBytes / (1024 * 1024)).toFixed(2)} MB exceeds 21.0 MB budget`);
+  if (totalGlbBytes > MAX_TOTAL_GLB_BYTES)
+    problems.push(`public/parts-glb total ${(totalGlbBytes / (1024 * 1024)).toFixed(2)} MB exceeds 5.0 MB budget`);
+
   if (problems.length > 0) fail(`print payload gaps: ${problems.join("; ")}`);
-  else ok(`print payloads present and valid (${setFiles.join(", ")})`);
+  else
+    ok(
+      `print & web payloads valid (${setFiles.join(", ")}; STL ${(totalStlBytes / (1024 * 1024)).toFixed(2)} MB, GLB ${(totalGlbBytes / (1024 * 1024)).toFixed(2)} MB)`,
+    );
 }
 
 // 8. The review copy of the spec has not drifted: rebuild it with the date

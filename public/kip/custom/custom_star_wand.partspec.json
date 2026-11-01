@@ -67,7 +67,18 @@
       90,
       0,
       0
-    ]
+    ],
+    "slicer_recipe": {
+      "layer_height_mm": 0.16,
+      "wall_loops": 3,
+      "outer_wall_speed_mms": 30,
+      "wall_order": "inner_first",
+      "seam_position": "aligned",
+      "ironing": "all_top",
+      "ironing_inset_mm": 0.21,
+      "brim_width_mm": 0,
+      "support_mode": "none"
+    }
   },
   "design_status": "verified",
   "fit": {
@@ -206,5 +217,29 @@
       "result": "pass",
       "detail": ""
     }
-  ]
+  ],
+  "glb_file": "custom_star_wand.glb",
+  "asset_optimization": {
+    "content_hash": "679ffed2042a",
+    "finish_class": "precision_gear_pin",
+    "print_simplify_mm": 0.005,
+    "web_simplify_mm": 0.055,
+    "web_crease_deg": 28,
+    "metrics": {
+      "orig_bytes": 45484,
+      "print_bytes": 41684,
+      "glb_bytes": 9508,
+      "orig_tris": 908,
+      "print_tris": 832,
+      "web_verts": 476,
+      "web_tris": 428,
+      "max_bbox_delta_mm": 0.0,
+      "rel_vol_delta_pct": 0.00111,
+      "overhang_22_mm2": 87.9,
+      "flat_top_mm2": 724.19,
+      "bed_area_mm2": 717.52,
+      "v11_show_face_overhang_30_mm2": 0.0,
+      "v11_status": "pass"
+    }
+  }
 }

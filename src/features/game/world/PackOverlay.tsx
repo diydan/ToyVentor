@@ -21,6 +21,7 @@ import { equipPartOnBuild } from "../../../../shared/world-parts";
 import { CheckList } from "../../../components/CheckList";
 import { loadBuild, saveBuild } from "../../../lib/builds";
 import { allParts, partsById, stlFileFor } from "../../../lib/catalog";
+import { formatShortPrintTag } from "../../../lib/printRecipe";
 import {
   CardBackStarSvg,
   FoilPackSvg,
@@ -782,7 +783,7 @@ function PackOverlayInner({
               href={`/parts-stl/${stlFile}`}
               download={stlFile}
             >
-              Download {activePart.name}.stl (0.2 mm PLA · Prototype)
+              Download {activePart.name}.stl ({formatShortPrintTag(activePart)} · Prototype)
             </a>
           )}
 
@@ -790,7 +791,7 @@ function PackOverlayInner({
             <summary>
               <span>Fit &amp; print check</span>
               <span className="tv-disclosure-meta">
-                {activePart.printable ? "0.2 mm PLA · flat" : "Digital skin"}
+                {activePart.printable ? formatShortPrintTag(activePart) : "Digital skin"}
               </span>
             </summary>
             <div style={{ marginTop: 8 }}>

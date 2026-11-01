@@ -6,7 +6,10 @@ export type CappedJson =
   | { ok: true; value: unknown }
   | { ok: false; over: boolean };
 
-export async function readCappedJson(request: Request, maxBytes: number): Promise<CappedJson> {
+export async function readCappedJson(
+  request: Request | Response,
+  maxBytes: number,
+): Promise<CappedJson> {
   const declared = Number(request.headers.get("content-length") ?? "0");
   if (declared > maxBytes) return { ok: false, over: true };
   if (!request.body) {

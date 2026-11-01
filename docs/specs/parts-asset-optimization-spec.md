@@ -109,10 +109,10 @@ flowchart LR
 2. Apply `Manifold.simplify(epsilon_print_mm)` using **three finish-safe classes** (`[measured]` across all 63 STLs):
    - **`show_curved` (15 parts — `dome-*`, `skin-*`, `kit-windscreen`, `glow-capsule`, `cloud-wings`, `robot-head-*`, `bumper-horns`, `kit-aero-wedge`, `kit-booster-pod`, `kit-foil-wing`, `kit-scoop-blade`):**
      `epsilon_print_mm = 0.006 mm` (`6 µm` — **half** of the `0.012 mm` slicer `G2/G3` arc-fit window). Collapses `0.000 mm` coplanar boolean slivers while preserving `100%` true smooth arc toolpaths at `0.12 mm` layer height.
-   - **`precision_gear_pin` (11 parts — `gear-*`, `pin-*`, `shaft-*`, `mech-servo-pinion-*`, `mech-bat-door-screw`, `forge-mount-*`):**
-     `epsilon_print_mm = 0.008–0.010 mm` (`8–10 µm`). Collapses flat gear-web boolean seams (`gear-spur-z20.stl`: `23,016 → ~7,800` tris, `Δvol = 0.02%`) while keeping involute tooth flanks inside the `0.012 mm` arc tolerance.
-   - **`prismatic_structural` (37 parts — `kit-keel-base`, `mech-*-lid`, `mech-*-tray`, `mom-*`, `brick-*`, `beam-*`, `adapter-*`, `kit-turntable`, `kit-tilting-tub`):**
-     `epsilon_print_mm = 0.016–0.018 mm`. Flat show walls/decks suffer `0.000 mm` geometric change while `96`-gon micro-studs and `r = 1.5 mm` corner spheres (`c ≤ 0.56 mm`) halve cleanly (`brick-s-2x2.stl`: `−42.6%` tris, `V1–V10` **`pass`**).
+   - **`precision_gear_pin` (`gear-*`, `pin-*`, `shaft-*`, `beam-*`, `adapter-*`, `clevis-*`, `yoke-*`, `mech-servo-pinion-*`, `mech-bat-door-screw`, `forge-mount-*`):**
+     `epsilon_print_mm = 0.005 mm` (`5 µm`). Collapses flat gear-web boolean seams (`gear-spur-z20.stl`: `23,016 → 6,544` tris, `|Δgap| = 0.00000 mm`) and preserves Pro bore-grid clearance (`beam-str-tu05.stl`: `|Δgap| = 0.00000 mm`) while keeping involute tooth flanks inside the `0.012 mm` arc tolerance.
+   - **`prismatic_structural` (`kit-keel-base`, `mech-*-lid`, `mech-*-tray`, `mom-*`, `brick-*`, `tile-*`, `kit-turntable`, `kit-tilting-tub`):**
+     `epsilon_print_mm = 0.016 mm`. Flat show walls/decks suffer `0.000 mm` geometric change while `96`-gon micro-studs and `r = 1.5 mm` corner spheres (`c ≤ 0.56 mm`) halve cleanly (`brick-s-2x2.stl`: `−36.4%` tris, `|Δgap| = 0.00311 mm`, `V1–V10` **`pass`**).
 3. **Exact Bed-Plane & Z-Seam Corner Preservation:**
    - Snap any vertex with `|z| < 0.02 mm` back to `z = 0.0` so smooth-PEI first-layer contact (`V2_on_bed`) remains exact.
    - Verify sharp vertical reflex/convex corners (`> 45°` XY dihedral) retain crisp edges so slicer `Aligned` Z-seam hiding snaps cleanly into corners, and canonical `-Y = Front` / `+Y = Rear` yaw keeps `Back` fallback seams off show faces.
@@ -281,8 +281,8 @@ Tracked in Git (`< 30 KB` for 63 parts). Missing entries fall back cleanly to `d
   "defaults": {
     "print_simplify_mm": {
       "show_curved": 0.006,
-      "precision_gear_pin": 0.010,
-      "prismatic_structural": 0.018
+      "precision_gear_pin": 0.005,
+      "prismatic_structural": 0.016
     },
     "web_simplify_mm": 0.080,
     "web_crease_deg": 34,
@@ -372,3 +372,35 @@ Tracked in Git (`< 30 KB` for 63 parts). Missing entries fall back cleanly to `d
 3. **Web Visual & Load-Time Proof (`390×844` Mobile Viewport):**
    - Headless Chrome render comparison across the 5 largest (`kit-keel-base`, `mech-brain-lid`, `kit-turntable`, `forge-mount-ring-s`, `gear-spur-z20`), 5 highest-curvature (`dome-s-2x2`, `cloud-wings`, `glow-capsule`, `robot-head-visor`, `kit-windscreen`), and 5 smallest (`kit-barbell-shaft`, `kit-yoke-hbar`, `kit-rotor-blade`, `kit-spinner-pin`, `dome-s-2x2`) GLBs in `<model-viewer>`: smooth cylindrical shading improved over flat-shaded baseline, silhouette IoU `>= 0.995`.
    - Measure median of 5 cold-cache `PartPreview` first-frame paints on throttled Fast 4G (`390×844`): verify byte transfer drops by `> 85%` and time-to-interactive preview improves measurably on heavy parts (`kit-keel-base`: `3.21 MB` → `< 90 KB`).
+
+---
+
+## 8. Dynamic & AI-Generated Parts (`Forge AI` Fast Preview + Background Optimization)
+
+Static catalog builds (`npm run bridge`) can afford a multi-second batch pass; live AI-authored parts (`docs/specs/forge-ai-spec.md` `F1 Describe it`, `F2 Scan it, wear it`, and `npm run kip:validate-part`) cannot block a child's screen for `12–25 s` while CPSC `nsphere` cylinder checks, `V1–V10` preprint slice audits, reference host attach checks, and `F3` repair retries run.
+
+### 8.1 Measured Latency Split (`custom_wizard_hat`) `[measured]`
+
+| Pipeline Stage | Warm Latency | Output Size | Execution Path |
+| :--- | ---: | ---: | :--- |
+| **Stage 0 — Browser Parametric Loft** (`Recipe v1` JSON → Three.js) | `< 15 ms` | `~0.3 KB` JSON | Client hot path (`preview_ready`) |
+| **Stage 1 — Fast Server Draft GLB** (`build_fast_preview_glb`: CAD + `simplify(0.08)` + in-memory `KHR_mesh_quantization`) | **`~20–40 ms`** | **`~15–28 KB` `.glb`** | Synchronous `/api/forge/preview` → `/v1/fast-preview` |
+| **Stage 2a — Full Safety & Print Gate** (`validate_and_export`: `V1–V10` + `S1` small-part + `toyventor_assembly` attach + optional `F3` repair) | `~8–12 s` *(up to `25 s` w/ retries)* | Gate report | Background job (`validating`) |
+| **Stage 2b — Dual-Tier Print + Web Optimization** (`optimize_single_part`: finish-class `Manifold.simplify` + `z=0` snap + `preprint_check` re-verify + final `.glb` + `slicer_recipe`) | **`~200–650 ms`** | **`~30–95 KB` `.stl`** + **`~15–28 KB` `.glb`** | Background job (`optimizing` → `print_ready` \| `digital_only`) |
+
+### 8.2 Shipped Interfaces, Security Invariants & Runtime Topology
+
+1. **Authoring / SDK CLI (`npm run kip:validate-part` / [`kip_partspec_sdk.py`](../../parts/kip/sdk/kip_partspec_sdk.py)):**
+   - `validate_and_export(..., optimize=True)` invokes [`optimize_single_part()`](../../scripts/optimize_assets.py) (`verify_preprint=True` by default) from in-memory STL bytes, re-verifies `V1–V10` after simplification (falling back to the bed-snapped unsimplified Manifold if simplification ever tripped a borderline check), and writes `<id>.glb`, the print `.stl`, and `print.slicer_recipe` + `asset_optimization` into `<id>.partspec.json`.
+2. **Warm Persistent Daemon ([`scripts/forge_optimizer_daemon.py`](../../scripts/forge_optimizer_daemon.py), launched via `npm run forge:optimizer`):**
+   - Pre-imports `manifold3d`, `trimesh`, `numpy`, `kip_partspec_sdk`, `optimize_assets`, and `stl_to_glb` once at startup (`0 ms` cold start) and writes exclusively into an isolated cache directory (default `.forge-cache/`, explicitly refusing tracked `public/kip/custom/`).
+   - **Fail-closed & path-safe:** Rejects `stl_path` over HTTP, ignores any `verify_preprint` or `legalize` overrides (enforcing `verify_preprint=True` and mandatory `[2..16]` slice + `0.78 * dz` slope clamps unconditionally), strips all server filesystem paths from responses (`stl_artifact` / `glb_artifact` opaque keys served via `GET /v1/artifacts/<name>`), enforces timing-safe Bearer auth (`hmac.compare_digest`, mandatory on non-loopback `--host`), and caps both active background jobs (`--max-queue 8` → `429 queue_full`) and concurrent HTTP threads (`--max-connections 16` → `503 busy`).
+3. **Cloudflare Worker Proxy & Production Upgrade Path ([`worker/forgeOptimizer.ts`](../../worker/forgeOptimizer.ts), [`shared/forgeOptimizer.ts`](../../shared/forgeOptimizer.ts)):**
+   - Worker routes `POST /api/forge/preview`, `GET /api/forge/jobs/:id`, and `GET /api/forge/artifacts/:name` require `x-device-id` + live `x-parent-proof` (`verifyParentProofFromRequest`), enforce per-device and per-IP sliding-window rate limits (`3/min/device`, `6/min/IP` on `preview`), require `FORGE_OPTIMIZER_TOKEN` for non-loopback `FORGE_OPTIMIZER_URL`, rebuild upstream payloads from an explicit field allowlist, and apply `AbortSignal.timeout` (`8 s` / `4 s`) with clean timeout (`504`) vs non-JSON/5xx (`502 unavailable`) mapping.
+
+### 8.3 Opt-In Minimal-Support Tier for Cosmetic Slots (`support_policy: "minimal"` → `tree_slim`)
+
+Structural bricks, Pro gears/shafts, and vehicle mechanical mounts remain strictly `support_policy: "none"`. Expressive character/cosmetic slots (`crown`, `head`, `back`—e.g. `wide_brim` wizard hats, forward cap visors, drooping ears, flared capes) may opt into `support_policy: "minimal"`, promoting `V4`/`V5`/`V10`-only overhang parts to `print_ready` (`slicer_recipe.support_mode = "tree_slim"`) **iff** all three geometric invariants hold (`_check_minimal_support_eligibility` in [`optimize_assets.py`](../../scripts/optimize_assets.py), `< 15 ms`):
+1. **`M1_socket_keepout` (`0 mm²` inside Snap sockets):** Zero steep sloped overhangs inside the `2×1` (`crown`/`head`) or `2×2` (`back`) `under_sockets` XY pad, zero flat overhangs above the `z = 4.0 mm` internal stud-socket bridge ceiling (`z = 3.6 mm`, already validated by `V6`/`V10`) inside the pad, and all outer overhangs sit at `z ≥ 3.2 mm`.
+2. **`M2_underside_budget` (`≤ 750 mm²` flat `-Z` shelf, `≤ 80 mm²` sloped scar):** Caps support contact to a hidden flat `-Z` rim while rejecting curved belly/front-face overhangs (such as un-oriented `torso.stl` at `425 mm²` sloped scar) to `digital_only`.
+3. **`M3_buildplate_los` (`≤ 1.0 mm²` part-on-part occlusion):** Every outer overhang band has unobstructed `-Z` line-of-sight straight down to `z = 0` (`CrossSection` intersection against lower `Manifold.slice(z)` layers), guaranteeing *"Tree (Slim) — On build plate only"* reaches cleanly without resting on another part of the toy.
