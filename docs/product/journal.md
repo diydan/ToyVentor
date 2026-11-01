@@ -182,7 +182,7 @@ Goal: fit-filtered market + support-free STL export (wireframe p.7–9). Start: 
 Goal: AR color preview + mini-game equip (wireframe p.10–11, stretch: color). Start: must-work item, full masks vs AR-preview cut, toy loads + add-on boost. End: shipped, demo-able, scan-to-game loop on phone, blockers, tomorrow's task. *(Unfilled.)*
 
 ### Status — Sun Nov 1: tier rename
-- The product arc is now **Snap → Motion → Pro**. The old `Pro` line (8+, mechanical: beams, pins, shafts, gears, joints) is the **Motion** line; the old **Max** phase (real robots) is the **Pro** tier. The four power stages sit in three tiers by age: `Snap` (3+), `Motion` (8+: steering plus `Momentum` stored-energy propulsion) and `Pro` (10+: `Mech` robotics).
+- The product arc is now **Snap → Motion → Pro**: the 8+ line becomes **Motion** (it describes the play — steering plus `Momentum` propulsion), and the old **Max** phase takes the top-rung name **Pro**. Tiers by age: `Snap` (3+), `Motion` (8+), `Pro` (10+ `Mech`).
 - Swept code, data, docs and the Kip demo: the `Line` enum is now three-valued, the old `Pro` part ids are `motion_*`, `adapter_snap_pro` is `adapter-snap-motion`, `toyventor_pro.py` is `toyventor_motion.py`, and saved builds keep working because `src/lib/builds.ts` rewrites the old ids on read.
 - "Pro" as the bore_grid *lattice* is deliberately unchanged (`size: "pro"`, `Pro` bores, the `Pro` shaft, `forge_mount_pro`): the tier and the lattice are different axes.
 - Design-log entry added in `parts/partspec/DESIGN_LOG.md`; earlier entries keep the names as written at the time.

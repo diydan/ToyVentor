@@ -67,11 +67,9 @@ The geometry is our own throughout: our lattice, our stud and hole dimensions, o
 - **Jumbo Vinyl head kept (Dan, 2026-10-31).** Asked whether to keep or retire `char_head_jumbo` (a 4th Human head wired into Kip-Demo.html after the three-head rework), Dan said to keep it. It stays in the catalog, the demo and the Kip manifest (13 heads). It is still not compatible with the reworked fit: `Soft Youth`, `Sweet Heart` and `Heroic Jaw` share one face zone, wig vault and hat cavity, and the jumbo skull is wider than that envelope, so `valid_kip_seated_jumbo` fails (a `25 mm3` hat overlap) and it does not seat the universal face plate, wigs or hats. The failure stays in selftest until the head is reshaped or given its own envelope. The Kip manifest keeps it under `pending` with that reason, and the W9 scope text says it needs reshaping.
 - **Jumbo Vinyl head reshaped to the universal face zone (Wave 9, 2026-10-31).** The head kept on Dan's decision above now shares the face zone of `Soft Youth`, `Sweet Heart` and `Heroic Jaw` (`z_stud 31.4`, `z_bore 12.5`, `rx_cheek 18.0`; viewer anchors `crownY 31.4`, `faceY 12.5`), so it fits the shared wig vault, hat cavity and face plates. `valid_kip_seated_jumbo` passes, `char_head_jumbo` reads `verified`, and the Kip manifest no longer lists anything under `pending`. All four Human heads take the same 14 wigs, 7 hats and 3 face inserts.
 
-- **Tier rename: `Snap → Motion → Pro` (2026-11-01).** The product arc was `Snap → Pro → Max`, with `Max` the
-  real-robots phase; it is now `Snap → Motion → Pro`. The old `Pro` line (ages 8 and up: beams, pins, shafts,
-  gears, joints) becomes the `Motion` line, and the old `Max` phase becomes the `Pro` tier. The four power stages
-  now sit in three tiers: `Snap` (Stage 1, ages 3+), `Motion` (Stages 2 and 3 — `Motion` steering and `Momentum`
-  stored-energy propulsion — both ages 8+) and `Pro` (Stage 4 `Mech`, ages 10+). (1) `catalog.json` and the
+- **Tier rename: `Snap → Motion → Pro` (2026-11-01).** Was `Snap → Pro → Max`. The 8+ line becomes `Motion`
+  (steering plus `Momentum` propulsion is what those parts do); the old `Max` phase takes the top-rung name `Pro`.
+  Tiers by age: `Snap` (Stage 1, 3+), `Motion` (Stages 2–3, 8+), `Pro` (Stage 4 `Mech`, 10+). (1) `catalog.json` and the
   `Line` type in `shared/part.ts` go from two values (`snap`, `pro`) to three (`snap`, `motion`, `pro`);
   `interfaces.json` carries `snap_min_age = 3`, `motion_min_age = 8`, `pro_min_age = 10`. (2) The old `Pro` part
   ids are renamed to `Motion` (`pro_steer_bridge` → `motion_steer_bridge` and its eleven siblings,
