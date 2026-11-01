@@ -919,11 +919,16 @@ def pro_steer_bridge(size="small", grid=(2, 2), lock=True, **_):
     c_sock = tp.socket_conn(size, 2, 2)
     c_sock["style"] = "holes"
 
-    # Kingpin fixed bores (z = 3.90..9.00 mm) between bottom stud-relief cones and top Ø8.00 snap pockets (z >= 9.00):
-    m = m - pro.bore_cutter("fixed", H, -18.75, -6.25, 0.0) - pro.bore_cutter("fixed", H, 18.75, -6.25, 0.0)
+    # Kingpin fixed bores (z = 4.45..9.00 mm) between 42-deg bottom stud-relief cones (r_top=2.20 inside fixed flats) and top Ø8.00 snap pockets:
+    r_sock = (p["stud_d"] + p["fit"]) / 2
+    z_kp_cone = 2.95 + (r_sock - 2.20) / math.tan(math.radians(42.0))
+    cut_kp = Manifold.revolve(CrossSection([np.array([
+        (0.0, -0.02), (r_sock + 0.42, -0.02), (r_sock, 0.40), (r_sock, 2.95), (2.20, z_kp_cone + 0.2), (0.0, z_kp_cone + 0.2),
+    ])]), pro.SEGS)
     for sx in (-18.75, 18.75):
+        m = m - cut_kp.translate((sx, -6.25, 0.0))
+        m = m - pro.bore_cutter("fixed", 9.10 - 4.35, sx, -6.25, 4.35)
         m = m - Manifold.cylinder(H - 9.00 + 0.2, 4.00, 4.00, 64).translate((sx, -6.25, 9.00))
-        m = m - cut_s.translate((sx, -6.25, 0.0))
     c_kp = {
         "id": "kingpins",
         "kind": "bore_grid",
@@ -932,9 +937,9 @@ def pro_steer_bridge(size="small", grid=(2, 2), lock=True, **_):
         "size_class": "pro",
         "fit_class": "PIN",
         "bore_class": "fixed",
-        "depth_mm": 5.10,
+        "depth_mm": 4.55,
         "lattice": "axis8",
-        "frame": {"origin": [-18.75, -6.25, 3.90], "normal": [0, 0, 1]},
+        "frame": {"origin": [-18.75, -6.25, 4.45], "normal": [0, 0, 1]},
         "grid": {"nx": 2, "ny": 1, "pitch": 37.5, "anchor": "corner"},
     }
     # Front prow, rack guide wall and travel stop. Local frame: world = (0, BRIDGE_Y, BRIDGE_Z) + local.
@@ -1888,16 +1893,16 @@ def mech_brain_tray(size="small", grid=(4, 4), **_):
 
 
 def mech_brain_lid(size="small", grid=(4, 4), lock=True, **_):
-    """Stage-4 PETG 4x4 TU Vented RF-Clear Brain Lid With Dump Cradles (49.8 x 58.7 x 9.6 mm)."""
+    """Stage-4 PETG 4x4 TU Vented RF-Clear Brain Lid With Rear Barrel Hinges (49.8 x 61.5 x 16.6 mm)."""
     H = 5.2
     raw = tp._flat_box(49.8, 49.8, H, r=2.2, bed_ch=0.4)
+    raw, c_top = _add_stud_grid(raw, size, 4, 4, H, cid="top_studs")
     m, conns, ex = tp.integrated_sockets(raw, size, lock)
-    m, c_top = _add_stud_grid(m, size, 4, 4, H, cid="top_studs")
     for xc in (-12.5, 0.0, 12.5):
         v = Manifold.extrude(rrect(2.2, 18.0, 0.9), H + 0.6).translate((xc, 0.0, -0.3))
         m = m - v
-    m = m + _rear_lid_c_jaws()
-    return m, conns + [c_top], ex
+    m, c_h = _rear_lid_hinge_knuckles(m, h_bridge=H)
+    return m, conns + [c_top, c_h], ex
 
 
 def mech_bat_door_screw(**_):
@@ -1937,8 +1942,7 @@ def mech_servo_mount(size="small", grid=(2, 2), lock=True, **_):
     """
     H = 32.8
     p = tp.STUD[size]
-    hole_r = (p["stud_d"] + p["fit"]) / 2
-    depth = p["stud_h"] + 0.4
+    cut_s = tp._conical_socket_cutter(p)
     ped = rbox(24.4, 12.15, 20.8, 1.6, 0.4).translate((0.0, 6.325, 0.0))
     cradle = Manifold.batch_hull([
         Manifold.extrude(rrect(24.4, 11.40, 1.6).translate((0.0, 6.25)), 0.4).translate((0.0, 0.0, 24.6)),
@@ -1959,7 +1963,7 @@ def mech_servo_mount(size="small", grid=(2, 2), lock=True, **_):
     sg90_ears = Manifold.cube((12.6, 33.0, 3.5)).translate((-6.3, -21.7, 30.1))
     m = m - pilot_clear - gear_clear - sg90_well - sg90_ears
     for sx in (-6.25, 6.25):
-        m = m - tp.cyl(depth + 0.02, hole_r, -0.02, sx, 6.25, tp.FIT_SEG)
+        m = m - cut_s.translate((sx, 6.25, 0.0))
     c_sock = tp.socket_conn(size, 2, 2)
     c_sock["style"] = "holes"
     c_sock["grid"]["omit_cells"] = [[0, 0], [1, 0]]
@@ -2070,16 +2074,16 @@ def pro_pilot_pin(**_):
 
 
 def mech_sill_duct(size="small", grid=(4, 3), lock=True, **_):
-    """Stage-4 PETG Low-Profile Cockpit Wire-Trough Sill Frame (49.8 x 37.3 x 11.4 mm).
-    Replaces #8 kit_windscreen on open-cockpit RC builds while keeping 6.0 x 5.0 mm side cable troughs clear of Kip.
+    """Stage-4 PETG Low-Profile Cockpit Wire-Trough Sill Frame (49.8 x 37.3 x 11.6 mm).
+    Replaces #8 kit_windscreen on open-cockpit RC builds while keeping 6.0 x 4.0 mm side cable troughs clear of Kip.
     """
     u_plan = rrect(49.8, 37.3, 2.2) - rrect(25.2, 28.0, 1.6).translate((0.0, 7.65))
     base_u = Manifold.extrude(u_plan, 6.4)
     mid_plan = rrect(49.6, 37.1, 2.1) - rrect(25.4, 30.6, 1.6).translate((0.0, 6.45))
-    mid_u = Manifold.extrude(mid_plan, 5.0).translate((0.0, 0.0, 6.0))
+    mid_u = Manifold.extrude(mid_plan, 5.6).translate((0.0, 0.0, 6.0))
     m, conns, ex = tp.integrated_sockets(base_u + mid_u, size, lock)
     for sx in (-1, 1):
-        trough = Manifold.cube((6.0, 32.0, 6.4)).translate((sx * 18.75 - 3.0, -14.0, 5.2))
+        trough = Manifold.cube((6.0, 32.0, 5.0)).translate((sx * 18.75 - 3.0, -14.0, 7.55))
         m = m - trough
     return m, conns, ex
 
@@ -2182,7 +2186,7 @@ CARD_LAYOUTS = {
             ("pod_2", "kit_booster_pod", 3.0, 3.0, 24.8, 65.0),
             ("spin_3", "kit_spinner_pin", 3.0, 73.0, 36.0, 65.0),
             ("scoop_1", "kit_scoop_blade", 62.6, 3.0, 37.3, 49.8),
-            ("tub_1", "kit_tilting_tub", 104.9, 3.0, 59.0, 49.8),
+            ("tub_1", "kit_tilting_tub", 104.9, 3.0, 61.5, 49.8),
             ("turn_1", "kit_turntable", 62.6, 57.8, 49.8, 49.8),
             ("wind_1", "kit_windscreen", 117.4, 57.8, 37.3, 49.8),
             ("wheel_g1", "kit_wheel_giant", 99.0, 112.6, 50.0, 50.0),
@@ -2216,7 +2220,7 @@ CARD_LAYOUTS = {
         ],
     },
     "card_e1": {
-        "name": "Card E1 — Captive Pro Steering, Steering Wheel, Dump Hinge & Axle Keepers",
+        "name": "Card E1 — Captive Pro Steering, Steering Wheel & Enclosed Barrel Dump Hinge",
         "limit_mm": 164.0,
         "material": "PLA/PETG",
         "items": [
@@ -2227,17 +2231,16 @@ CARD_LAYOUTS = {
             ("knuckle_l", "pro_steer_knuckle_l", 3.0, 39.8, 25.6, 25.6),
             ("knuckle_r", "pro_steer_knuckle_r", 33.6, 39.8, 25.6, 25.6),
             ("fork_rake", "pro_fork_rake_adpt", 64.2, 39.8, 27.8, 24.8),
-            ("tub_hinge", "pro_tub_hinge", 97.0, 39.8, 32.0, 20.5),
+            ("tub_hinge", "pro_tub_hinge", 97.0, 39.8, 29.4, 19.5),
             ("steer_col", "pro_steer_column", 136.0, 39.8, 10.6, 46.6),
             ("steer_rack", "pro_steer_rack", 3.0, 70.4, 36.0, 15.1),
-            ("axle_keep_l", "pro_axle_keeper", 3.0, 108.0, 19.7, 11.0),    # two keepers per truck (one each side of the rear Z10 gear)
-            ("axle_keep_r", "pro_axle_keeper", 27.7, 108.0, 19.7, 11.0),
             ("link_a", "pro_tie_rod_link", 85.0, 70.4, 26.9, 11.4),
             ("link_b", "pro_tie_rod_link", 3.0, 91.4, 26.9, 11.4),
             ("cpin_1", "pro_captive_pin_28", 34.9, 91.4, 29.7, 9.6),
             ("cpin_2", "pro_captive_pin_28", 69.6, 91.4, 29.7, 9.6),
             ("cpin_3", "pro_captive_pin_28", 104.3, 91.4, 29.7, 9.6),
             ("cpin_4", "pro_captive_pin_28", 139.0, 91.4, 9.6, 29.7),
+            ("tub_pin", "shaft_tu03", 3.0, 108.5, 37.5, 6.6),
         ],
     },
     "card_e2": {
@@ -2246,19 +2249,19 @@ CARD_LAYOUTS = {
         "material": "PLA/PETG",
         "items": [
             ("band_tray", "mom_band_core_tray", 3.0, 3.0, 49.8, 49.8),
-            ("band_lid", "mom_band_core_lid", 57.8, 3.0, 49.8, 60.9),
+            ("band_lid", "mom_band_core_lid", 57.8, 3.0, 49.8, 61.5),
             ("pto_z10", "mom_pto_gear_z10", 112.6, 3.0, 30.0, 28.9),
             ("pto_shaft", "shaft_tu03", 147.6, 3.0, 6.6, 37.5),
-            ("slam_base", "mom_slam_base", 3.0, 69.0, 62.3, 38.0),
-            ("bumper_trig", "mom_bumper_trigger", 70.3, 69.0, 48.0, 42.0),
+            ("slam_base", "mom_slam_base", 3.0, 69.5, 62.3, 38.0),
+            ("bumper_trig", "mom_bumper_trigger", 70.3, 69.5, 48.0, 42.0),
             ("wind_key", "mom_wind_key", 123.3, 45.5, 28.0, 30.0),
             ("band_spool", "mom_band_spool_pawl", 123.3, 80.5, 21.6, 21.6),
-            ("slam_plunger", "mom_slam_plunger", 3.0, 116.0, 94.0, 18.0),
-            ("latch_pawl", "mom_latch_pawl", 102.0, 116.0, 25.7, 15.8),
-            ("cpin_e2_1", "pro_captive_pin_28", 3.0, 139.0, 29.7, 9.6),
-            ("cpin_e2_2", "pro_captive_pin_28", 37.7, 139.0, 29.7, 9.6),
-            ("cpin_e2_3", "pro_captive_pin_28", 72.4, 139.0, 29.7, 9.6),
-            ("cpin_e2_4", "pro_captive_pin_28", 107.1, 139.0, 29.7, 9.6),
+            ("slam_plunger", "mom_slam_plunger", 3.0, 116.5, 94.0, 18.0),
+            ("latch_pawl", "mom_latch_pawl", 102.0, 116.5, 25.7, 15.8),
+            ("cpin_e2_1", "pro_captive_pin_28", 3.0, 139.5, 29.7, 9.6),
+            ("cpin_e2_2", "pro_captive_pin_28", 37.7, 139.5, 29.7, 9.6),
+            ("cpin_e2_3", "pro_captive_pin_28", 72.4, 139.5, 29.7, 9.6),
+            ("cpin_e2_4", "pro_captive_pin_28", 107.1, 139.5, 29.7, 9.6),
         ],
     },
     "card_e3": {
@@ -2286,12 +2289,13 @@ CARD_LAYOUTS = {
         "material": "PETG",
         "items": [
             ("drive_tray", "mech_drive_tray", 3.0, 3.0, 49.8, 49.8),
-            ("drive_lid", "mech_drive_lid", 3.0, 57.8, 49.8, 60.9),
-            ("servo_lid", "mech_servo_lid", 3.0, 123.7, 48.0, 12.4),
-            ("bat_door", "mech_bat_door_screw", 3.0, 141.1, 33.6, 10.6),
+            ("drive_lid", "mech_drive_lid", 3.0, 57.8, 49.8, 49.8),
+            ("servo_lid", "mech_servo_lid", 3.0, 113.0, 48.0, 12.4),
+            ("bat_door", "mech_bat_door_screw", 3.0, 131.0, 33.6, 10.6),
             ("brain_tray", "mech_brain_tray", 57.8, 3.0, 49.8, 49.8),
-            ("brain_lid", "mech_brain_lid", 57.8, 57.8, 49.8, 60.9),
-            ("cpin_f_2", "pro_captive_pin_28", 57.8, 123.7, 29.7, 9.6),
+            ("brain_lid", "mech_brain_lid", 57.8, 57.8, 49.8, 61.5),
+            ("cpin_f_2", "pro_captive_pin_28", 57.8, 124.5, 29.7, 9.6),
+            ("tub_pin_f", "shaft_tu03", 57.8, 139.5, 37.5, 6.6),
             ("servo_mount", "mech_servo_mount", 112.6, 3.0, 48.0, 19.0),
             ("n20_pinion", "mech_n20_pinion_z10", 112.6, 30.3, 30.0, 28.9),
             ("pilot_pin", "pro_pilot_pin", 147.6, 30.3, 9.6, 31.5),

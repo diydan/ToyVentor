@@ -193,7 +193,7 @@
     <a href="./Kip-Demo.html" style="text-decoration:none;color:var(--ink);font-size:12px;font-weight:750;padding:4px 9px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,0.8);">← Kip Viewer</a>
     <span class="badge" id="stage-badge">Stage 1 · Snap 3+</span>
     <span class="title">Modular Dump Truck Progression Mockup</span>
-    <span class="sub" id="status-text">Loading 46 verified CAD solids…</span>
+    <span class="sub" id="status-text">Loading 43 verified CAD solids…</span>
   </div>
 
   <div class="hud-card">
@@ -249,9 +249,9 @@
     <button id="btn-hood">Nose: Open Yoke</button>
     <button id="btn-plow">Front Plow (#12): Off</button>
     <button id="btn-kip" class="mint-on">Kip Driver: On</button>
-    <button id="btn-driver" title="Kip = the white robot from Kip-Demo (default). Human = the kit figure with a PartSpec head, hair and hat.">Driver: Kip</button>
-    <button id="btn-head" title="Cycle the human head (same PartSpec heads as Kip-Demo)">Head: kid</button>
-    <button id="btn-hair" title="Cycle the wig (hat-ready wigs accept a hat)">Hair: short swept</button>
+    <button id="btn-driver" title="Pro 8+ = 14-joint ball-and-peg Kip rig (default). Snap 3+ = 1-piece limb & swivel-turret Kip rig.">Rig: Pro 8+</button>
+    <button id="btn-head" title="Cycle all 12 Kip PartSpec heads (Human · Robot · Animal · Creature)">Head: kid</button>
+    <button id="btn-hair" title="Cycle the wig on Human heads (hat-ready wigs accept a hat)">Hair: short swept</button>
     <button id="btn-hat" title="Cycle the hat">Hat: hardhat</button>
     <button id="btn-xray">X-Ray Shells: Auto</button>
     <button id="btn-sweep">Auto Steer: Off</button>
@@ -273,7 +273,7 @@ import {
   mergeVertices,
   toCreasedNormals,
 } from './vendor/three-kip.js';
-import { createClassicKip } from './kip-classic-rig.js'; // generated from Kip-Demo.html by parts/kip/sync_classic_rig.py
+import { createKipRig } from './kip-rig.js'; // generated from Kip-Demo.html by parts/kip/sync_kip_rig.py
 
 const viewport = document.getElementById('viewport');
 const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
@@ -346,7 +346,7 @@ const PART_FILES = [
   'pro_steer_bridge', 'pro_steer_knuckle_l', 'pro_steer_knuckle_r',
   'pro_steer_rack', 'pro_tie_rod_link',
   'pro_captive_pin_28', 'pro_steer_column', 'pro_steer_wheel',
-  'pro_axle_keeper', 'gear_spur_z10', 'shaft_tu03',
+  'gear_spur_z10', 'shaft_tu03',
   'mom_band_core_tray', 'mom_band_core_lid', 'mom_pto_gear_z10',
   'mom_band_spool_pawl', 'mom_latch_pawl', 'mom_wind_key', 'mom_bumper_trigger',
   'mom_bellows_base', 'mom_bellows_leaf',
@@ -354,28 +354,33 @@ const PART_FILES = [
   'mech_brain_tray', 'mech_brain_lid', 'mech_bat_door_screw',
   'mech_servo_mount', 'mech_servo_lid', 'mech_servo_pinion_z10',
   'pro_pilot_pin', 'mech_sill_duct',
-  'char_legs_seated', 'robot_torso_core', 'robot_arms_grabber',
   'char_faceplate'
 ];
 // The kit parts above are assembly-frame STLs written by parts/kip/sync_truck_parts.py (check: add --check).
 // Wardrobe (head / hair / hat) is loaded on demand from the same PartSpec output the Kip viewer uses. Poses come from
 // partspec/mockup/kip_stack.json (attach offsets), written by parts/kip/sync_truck_kip.py, never hard-coded here.
 const KIP_STACK = { table: null, head: 'char_head_kid', hair: 'hair_short_swept', hat: 'hat_hardhat' };
-// The default driver is the SAME Kip as Kip-Demo.html: its own head meshes and materials (head_shell, hood, visor, eyes, crown buds, ear pods),
-// taken from the classic rig the demo builds. The cockpit only has a 25.2 mm footwell and a 24.8 mm torso, so the demo's full-size body cannot
-// sit in it; the kit's seated body (already checked against the cockpit) wears the demo's cream shell instead, and the demo head is scaled to the
-// kit head's envelope (38.2 wide x 27.3 deep x 34.2 tall): 0.69 is the largest uniform scale that keeps shell, ear pods and crown inside it.
-// The classic head has no stud sockets, so it rests on the tips of the arm studs (z 56.3) instead of sinking onto them like the kit head (z 53.5).
-const CLASSIC = {
-  K: null, head: null, mats: null, geoNames: new Map(),
-  scale: 0.69,
-  y: -6.25 - 1.3,                    // kit head origin y, shifted so the face front and back line up with the kit head's
-  base: 56.35,                       // z of the shell base: arm stud tips 56.3 + 0.05 clearance
-  headLocalY: 1.2,                   // the rig lifts the head group by this much (headLocal.position.y in buildKipRig)
+// Seated Kip Pro (8+) & Snap (3+) body rig from Kip-Demo.html (kip-rig.js), wearing the 12 PartSpec 2x1 heads on
+// neck_turret_2x1. Scaled to S = 0.52 so Kip's side-by-side 1x2 TU sneaker boots (45.6 mm -> 23.7 mm) fit cleanly
+// inside #8 Windscreen's 25.2 mm 2-TU cockpit footwell with 0.000 mm³ overlap across all 5 truck stages.
+const KIP_DRIVER = {
+  K: null, geos: null, rig: null, headCadWrap: null, skinMat: null, geoNames: new Map(),
+  scale: 0.52,
 };
-CLASSIC.z = CLASSIC.base - CLASSIC.headLocalY * CLASSIC.scale;
-const KIP_HEADS = ['char_head_kid', 'char_head_chibi', 'char_head_tall', 'char_head_jumbo'];
-const kipLabel = (id) => id.replace(/^(char_head_|hair_|hat_)/, '').replace(/_/g, ' ');
+const KIP_HEADS = [
+  'char_head_kid', 'char_head_chibi', 'char_head_tall', 'char_head_jumbo',
+  'robot_head_visor', 'robot_head_scout',
+  'char_head_fox', 'char_head_bear', 'char_head_cat',
+  'char_head_dragon', 'char_head_alien', 'char_head_imp',
+];
+const KIP_HEAD_HEX = {
+  robot_head_visor: '#F4EFE6', robot_head_scout: '#F4EFE6',
+  char_head_fox: '#E8743B', char_head_bear: '#8C5A3C', char_head_cat: '#F4EFE6',
+  char_head_dragon: '#2EAD7B', char_head_alien: '#6EE7B7', char_head_imp: '#6C63FF',
+};
+const kipLabel = (id) => id === 'robot_head_visor'
+  ? 'robot'
+  : id.replace(/^(char_head_|robot_head_|hair_|hat_)/, '').replace(/_/g, ' ');
 
 function makeMat(hex, opacity = 1.0, rough = 0.38) {
   return new THREE.MeshStandardMaterial({
@@ -422,7 +427,7 @@ const state = {
   bulldogHood: false,
   frontPlow: false,
   showKip: true,
-  driver: 'kip',    // kip = the demo's robot (default) | human = kit figure with a PartSpec head
+  driver: 'pro',    // pro = Pro 8+ 14-joint ball-and-peg Kip rig (default) | snap = Snap 3+ 1-piece limb & turret Kip rig
   xrayMode: 'auto', // auto | on | off
   demoRunning: false,
   demoT: 0,
@@ -763,46 +768,89 @@ function rebuildScene() {
   addExplodeTag(wind, 0, -4, 18);
   cadRoot.add(wind);
 
-  if (state.showKip) {
+  if (state.showKip && KIP_DRIVER.rig) {
     const kipGroup = new THREE.Group();
     addExplodeTag(kipGroup, 0, 0, 32);
-    const classic = state.driver === 'kip' && CLASSIC.head;
-    const shell = classic ? CLASSIC.mats.shell : null;   // the demo's cream shell
-    const legs = meshOf('char_legs_seated', shell || MATS.denim); legs.position.set(0, 0, 12.5);
-    const torso = meshOf('robot_torso_core', shell || MATS.spark); torso.position.set(0, 0, 28.5);
-    const arms = meshOf('robot_arms_grabber', shell || MATS.skin); arms.position.set(0, 0, 48.5);
-    kipGroup.add(legs, torso, arms);
-    if (classic) {
-      const wrap = new THREE.Group();
-      wrap.rotation.x = Math.PI / 2;
-      wrap.scale.setScalar(CLASSIC.scale);
-      wrap.position.set(0, CLASSIC.y, CLASSIC.z);
-      wrap.add(CLASSIC.head);
-      kipGroup.add(wrap);
+    const rig = KIP_DRIVER.rig;
+    const isPro = state.driver !== 'snap';
+    for (const s of rig.editionParts.pro) s.visible = isPro;
+    for (const s of rig.editionParts.snap) s.visible = !isPro;
+
+    const d2r = THREE.MathUtils.degToRad;
+    rig.hips.rotation.set(0, 0, 0);
+    rig.joints.Head.rotation.set(0, 0, 0);
+    for (const side of [1, -1]) {
+      const tag = side === 1 ? 'Left' : 'Right';
+      const arm = rig.joints[`${tag}Arm`];
+      const fore = rig.joints[`${tag}ForeArm`];
+      const hand = rig.joints[`${tag}Hand`];
+      const upLeg = rig.joints[`${tag}UpLeg`];
+      const leg = rig.joints[`${tag}Leg`];
+      const foot = rig.joints[`${tag}Foot`];
+      if (isPro) {
+        const rc = state.stage === 'mech'; // Stage 4 replaces the manual wheel with the tall SG90 servo pod (z = 52.1 mm)
+        arm.rotation.set(d2r(rc ? -85 : -60), 0, d2r(side * (rc ? 15 : 30)));
+        fore.position.set(0, -23.8, 0);
+        fore.rotation.set(d2r(rc ? -42 : -18), 0, d2r(side * (rc ? -10 : -14)));
+        hand.position.set(0, -22.6, 0);
+        hand.rotation.set(0, 0, 0);
+        upLeg.rotation.set(d2r(-126), 0, d2r(side * 3.5));
+        leg.position.set(0, -25.6, 0);
+        leg.rotation.set(d2r(162), 0, 0);
+        foot.position.set(0, -26.0, -1.5);
+        foot.rotation.set(d2r(-34), 0, 0);
+      } else {
+        arm.rotation.set(d2r(-68), 0, d2r(side * 28));
+        fore.position.set(0, -35.0, 3.8);
+        fore.rotation.set(d2r(-11), 0, 0);
+        hand.position.set(0, -0.5, 0);
+        hand.rotation.set(0, 0, 0);
+        upLeg.rotation.set(d2r(-120), 0, d2r(side * 2.5));
+        leg.position.set(0, -39.2, 0);
+        leg.rotation.set(0, 0, 0);
+        foot.position.set(0, -0.4, -1.5);
+        foot.rotation.set(d2r(26), 0, 0);
+      }
     }
+
     const T = KIP_STACK.table;
     const hd = T && T.heads[KIP_STACK.head];
-    if (!classic && hd && GEOS[KIP_STACK.head] && GEOS.char_faceplate) {
-      const HEAD_Y = -6.25, HEAD_Z = 53.5;
-      const head = meshOf(KIP_STACK.head, MATS.skin); head.position.set(0, HEAD_Y, HEAD_Z);
-      const face = meshOf('char_faceplate', MATS.skin);
-      face.rotation.order = 'ZYX';
-      face.rotation.set(Math.PI / 2, 0, Math.PI);
-      face.position.set(0, HEAD_Y + hd.boreY, HEAD_Z + hd.boreZ);
-      kipGroup.add(head, face);
-      let topZ = HEAD_Z + hd.top;
-      const hr = KIP_STACK.hair && T.hairs[KIP_STACK.hair];
+    KIP_DRIVER.skinMat.color.set(KIP_HEAD_HEX[KIP_STACK.head] || '#F3BA95');
+    const headCad = KIP_DRIVER.headCadWrap;
+    headCad.clear();
+    if (hd && GEOS[KIP_STACK.head]) {
+      headCad.add(meshOf(KIP_STACK.head, KIP_DRIVER.skinMat));
+      let topZ = hd.top;
+      if (hd.human && GEOS.char_faceplate) {
+        const face = meshOf('char_faceplate', KIP_DRIVER.skinMat);
+        face.rotation.order = 'ZYX';
+        face.rotation.set(Math.PI / 2, 0, Math.PI);
+        face.position.set(0, hd.boreY, hd.boreZ);
+        headCad.add(face);
+      }
+      const hr = hd.human && KIP_STACK.hair && T.hairs[KIP_STACK.hair];
       if (hr && GEOS[KIP_STACK.hair]) {
-        const hair = meshOf(KIP_STACK.hair, MATS.hair); hair.position.set(0, HEAD_Y, topZ);
-        kipGroup.add(hair);
+        const hair = meshOf(KIP_STACK.hair, MATS.hair);
+        hair.position.set(0, 0, topZ);
+        headCad.add(hair);
         topZ = hr.top === null ? null : topZ + hr.top;
       }
       if (KIP_STACK.hat && topZ !== null && GEOS[KIP_STACK.hat]) {
         const hat = meshOf(KIP_STACK.hat, KIP_STACK.hat === 'hat_hardhat' ? MATS.tub : MATS.spark);
-        hat.position.set(KIP_STACK.hat === 'wobble_hat' ? -6.25 : 0, HEAD_Y, topZ);
-        kipGroup.add(hat);
+        hat.position.set(KIP_STACK.hat === 'wobble_hat' ? -6.25 : 0, 0, topZ);
+        headCad.add(hat);
       }
     }
+
+    const S = KIP_DRIVER.scale;
+    const hipCadY = isPro ? -0.5 : 1.2;
+    const hipCadZ = isPro ? 31.0 : 29.0;
+    const wrap = new THREE.Group();
+    wrap.rotation.x = Math.PI / 2;
+    wrap.scale.setScalar(S);
+    wrap.position.set(0, hipCadY, hipCadZ - 61.5 * S);
+    wrap.add(rig.mover);
+    kipGroup.add(wrap);
     cadRoot.add(kipGroup);
   }
 
@@ -1018,7 +1066,13 @@ function rebuildScene() {
   updateHUD();
 }
 
+// Pro fits the rear Z10 PTO gear under the bed: the tub's underside hits its teeth below 22.5 deg (237 mm3 at 0 deg). Found by the motion test
+// (every tip 20..26 deg x 12 gear phases, 0.00 mm3 from 22.5 up), so the Pro bed stops at 23 deg. Every other stage lowers the bed fully.
+const PRO_TIP_MIN = 23;
+const tipMinDeg = () => (state.stage === 'pro' ? PRO_TIP_MIN : 0);
+
 function updateKinematics() {
+  state.tipDeg = Math.max(tipMinDeg(), state.tipDeg);
   const tipRad = THREE.MathUtils.degToRad(state.tipDeg);
   const steerRad = THREE.MathUtils.degToRad(state.steerDeg);
 
@@ -1160,7 +1214,7 @@ function updateHUD() {
   if (state.stage === 'band') illus.push('#32 rubber band (COTS)');
   if (state.stage === 'bellows') illus.push('9" balloon + 4×6 silicone tube (COTS)');
   if (state.stage === 'mech') illus.push('N20 + SG90 + 602535 LiPo + PCBA/XIAO (COTS)');
-  if (state.showKip && state.driver === 'kip' && CLASSIC.head) illus.push("Kip head (demo's meshes at 0.69x)");
+  if (state.showKip && KIP_DRIVER.rig) illus.push(`Kip ${state.driver === 'snap' ? 'Snap 3+' : 'Pro 8+'} rig (${KIP_DRIVER.scale}× cab scale)`);
   document.getElementById('hud-illus').textContent = illus.length ? illus.join(' · ') : '—';
 }
 
@@ -1180,7 +1234,7 @@ document.querySelectorAll('[data-stage]').forEach((btn) => {
     }
     if (state.stage === 'pro' || state.stage === 'mech') {
       state.steerDeg = 22;
-      state.tipDeg = state.stage === 'mech' ? 18 : 0;
+      state.tipDeg = state.stage === 'mech' ? 18 : PRO_TIP_MIN;
     } else if (state.stage === 'band') {
       state.steerDeg = 0;
       state.tipDeg = 42;
@@ -1197,6 +1251,7 @@ document.querySelectorAll('[data-stage]').forEach((btn) => {
 });
 
 function syncSliders() {
+  document.getElementById('rng-tip').min = tipMinDeg();
   document.getElementById('rng-tip').value = state.tipDeg;
   document.getElementById('val-tip').textContent = `${Math.round(state.tipDeg)}°`;
   document.getElementById('rng-steer').value = state.steerDeg;
@@ -1262,29 +1317,64 @@ document.getElementById('btn-kip').addEventListener('click', (e) => {
   rebuildScene();
 });
 
-// Load the demo's head from its own rig (same STLs, creases and materials as Kip-Demo.html). Failure is not fatal: the human figure stays available.
-async function loadClassicDriver() {
+// Load the Kip Pro (8+) & Snap (3+) body rig from kip-rig.js (same STLs, creases and joints as Kip-Demo.html).
+async function loadKipDriver() {
   try {
-    const K = createClassicKip({ THREE, STLLoader, mergeVertices, toCreasedNormals, KIP_BUILD_VERSION: 'truck-1' });
+    const K = createKipRig({ THREE, STLLoader, mergeVertices, toCreasedNormals, KIP_BUILD_VERSION: 'truck-1' });
     const { geos, baseParts } = await K.loadGeos();
     const rig = K.buildKipRig(geos, baseParts);
-    const head = rig.joints.Head;
-    head.parent.remove(head);
-    head.position.set(0, 0, 0);   // the rig hangs it 45.3 mm up the body; the truck seats it on its own torso
-    for (const [n, g] of Object.entries(geos)) CLASSIC.geoNames.set(g, 'stls/' + n);
-    for (const [n, g] of Object.entries(baseParts)) CLASSIC.geoNames.set(g, 'partspec/' + n);
-    CLASSIC.K = K; CLASSIC.mats = K.mats; CLASSIC.head = head;
+    for (const [n, g] of Object.entries(geos)) KIP_DRIVER.geoNames.set(g, 'stls/' + n);
+    for (const [n, g] of Object.entries(baseParts)) KIP_DRIVER.geoNames.set(g, 'partspec/' + n);
+
+    const skinMat = makeMat('#F3BA95', 1, 0.42);
+    const slotById = Object.fromEntries(rig.partSlots.map((s) => [s.id, s.grp]));
+    const paintSlot = (id, mat) => slotById[id]?.traverse((o) => { if (o.isMesh) o.material = mat; });
+
+    // Use unmutated rigid Snap limb STLs in the seated cab so __truckProbe() maps o.geometry 1:1 to geos.snap_arm / geos.snap_leg.
+    for (const sTag of ['l', 'r']) {
+      if (slotById[`snap_arm_${sTag}`]) {
+        slotById[`snap_arm_${sTag}`].clear();
+        const sa = K.scadMesh(geos.snap_arm, skinMat);
+        sa.position.y = -34.6;
+        slotById[`snap_arm_${sTag}`].add(sa);
+      }
+      if (slotById[`snap_leg_${sTag}`]) {
+        slotById[`snap_leg_${sTag}`].clear();
+        const sl = K.scadMesh(geos.snap_leg, MATS.denim);
+        sl.position.y = -38.6;
+        slotById[`snap_leg_${sTag}`].add(sl);
+      }
+      paintSlot(`upper_arm_${sTag}`, MATS.spark);
+      paintSlot(`forearm_${sTag}`, skinMat);
+      paintSlot(`hand_${sTag}`, skinMat);
+      paintSlot(`thigh_${sTag}`, MATS.denim);
+      paintSlot(`shin_${sTag}`, MATS.denim);
+      paintSlot(`boot_${sTag}`, MATS.tire);
+    }
+    paintSlot('torso_pro', MATS.spark);
+    paintSlot('torso_snap', MATS.spark);
+    rig.backStudsSlot.visible = false;
+
+    const headCadWrap = new THREE.Group();
+    headCadWrap.rotation.x = -Math.PI / 2;
+    rig.headLocal.add(headCadWrap);
+
+    KIP_DRIVER.K = K;
+    KIP_DRIVER.geos = geos;
+    KIP_DRIVER.rig = rig;
+    KIP_DRIVER.headCadWrap = headCadWrap;
+    KIP_DRIVER.skinMat = skinMat;
   } catch (e) {
-    console.warn('Kip head unavailable, falling back to the human driver:', e);
-    state.driver = 'human';
+    console.warn('Kip rig unavailable:', e);
   }
 }
 
 document.getElementById('btn-driver').addEventListener('click', () => {
-  if (!CLASSIC.head) return;
-  state.driver = state.driver === 'kip' ? 'human' : 'kip';
+  if (!KIP_DRIVER.rig) return;
+  state.driver = state.driver === 'snap' ? 'pro' : 'snap';
   syncKipButtons();
   rebuildScene();
+  updateHUD();
 });
 
 async function ensureKipGeo(pid) {
@@ -1293,15 +1383,22 @@ async function ensureKipGeo(pid) {
   GEOS[pid] = toCreasedNormals(mergeVertices(raw, 1e-4), THREE.MathUtils.degToRad(32));
 }
 function syncKipButtons() {
-  const kipOn = state.driver === 'kip' && !!CLASSIC.head;
+  const isSnap = state.driver === 'snap';
   const dbtn = document.getElementById('btn-driver');
-  dbtn.textContent = kipOn ? 'Driver: Kip' : 'Driver: Human';
-  dbtn.disabled = !CLASSIC.head;   // no demo head loaded: only the human figure is available
-  for (const id of ['btn-head', 'btn-hair', 'btn-hat']) document.getElementById(id).style.display = kipOn ? 'none' : '';   // the wardrobe is the human figure's
+  dbtn.textContent = isSnap ? 'Rig: Snap 3+' : 'Rig: Pro 8+';
+  dbtn.classList.toggle('mint-on', isSnap);
+  dbtn.disabled = !KIP_DRIVER.rig;
   document.getElementById('btn-head').textContent = `Head: ${kipLabel(KIP_STACK.head)}`;
-  document.getElementById('btn-hair').textContent = `Hair: ${KIP_STACK.hair ? kipLabel(KIP_STACK.hair) : 'off'}`;
+  const T = KIP_STACK.table;
+  const hd = T && T.heads[KIP_STACK.head];
+  const isHuman = !hd || !!hd.human;
+  const hairBtn = document.getElementById('btn-hair');
+  hairBtn.textContent = isHuman
+    ? `Hair: ${KIP_STACK.hair ? kipLabel(KIP_STACK.hair) : 'off'}`
+    : 'Hair: n/a (non-human)';
+  hairBtn.disabled = !isHuman;
   const hatBtn = document.getElementById('btn-hat');
-  const T = KIP_STACK.table, hr = KIP_STACK.hair && T && T.hairs[KIP_STACK.hair];
+  const hr = isHuman && KIP_STACK.hair && T && T.hairs[KIP_STACK.hair];
   const blocked = hr && hr.top === null;   // sculpted-top wig: no studs for a hat
   hatBtn.textContent = blocked ? 'Hat: n/a (sculpted wig)' : `Hat: ${KIP_STACK.hat ? kipLabel(KIP_STACK.hat) : 'off'}`;
   hatBtn.disabled = !!blocked;
@@ -1311,8 +1408,8 @@ async function cycleKip(kind) {
   const list = { head: KIP_HEADS, hair: [null, ...Object.keys(T.hairs)], hat: [null, ...T.hats] }[kind];
   const cur = list.indexOf(KIP_STACK[kind]);
   KIP_STACK[kind] = list[(cur + 1) % list.length];
-  await ensureKipGeo(KIP_STACK[kind]);
   syncKipButtons();
+  await ensureKipGeo(KIP_STACK[kind]);
   rebuildScene();
 }
 document.getElementById('btn-head').addEventListener('click', () => cycleKip('head'));
@@ -1356,10 +1453,10 @@ window.addEventListener('resize', () => {
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
 
-// Load all 28 verified CAD solids in parallel
+// Load all 43 verified CAD solids in parallel
 async function init() {
   let loaded = 0;
-  const classicLoading = loadClassicDriver();
+  const kipLoading = loadKipDriver();
   await Promise.all(PART_FILES.map(async (pid) => {
     const raw = await loader.loadAsync(`./partspec/mockup/${pid}.stl`);
     const merged = mergeVertices(raw, 1e-4);
@@ -1367,14 +1464,25 @@ async function init() {
     loaded++;
     document.getElementById('status-text').innerHTML = `Loaded <b>${loaded}/${PART_FILES.length}</b> CAD solids`;
   }));
-  document.getElementById('status-text').innerHTML = `<b>${PART_FILES.length}</b> verified CAD solids + Kip wardrobe · Drag to orbit · Scroll to zoom`;
+  document.getElementById('status-text').innerHTML = `<b>${PART_FILES.length}</b> verified CAD solids + Kip rig · Drag to orbit · Scroll to zoom`;
   KIP_STACK.table = await (await fetch('./partspec/mockup/kip_stack.json', { cache: 'no-cache' })).json();
-  await classicLoading;
+  await kipLoading;
   {
-    const q0 = new URLSearchParams(location.search);   // ?driver=human&head=tall&hair=bob&hat=ballcap  (hair=off / hat=off allowed)
-    if (q0.get('driver') === 'human') state.driver = 'human';
+    const q0 = new URLSearchParams(location.search);   // ?driver=snap&head=fox&hair=bob&hat=ballcap  (hair=off / hat=off allowed)
+    const drv = q0.get('driver') || q0.get('edition');
+    if (drv === 'snap') state.driver = 'snap';
+    else if (drv === 'pro' || drv === 'kip' || drv === 'human') state.driver = 'pro';
+    const resolveHead = (v) => {
+      if (!v) return undefined;
+      if (v === 'robot' || v === 'visor') return 'robot_head_visor';
+      if (v === 'scout') return 'robot_head_scout';
+      for (const cand of [v, `char_head_${v}`, `robot_head_${v}`]) {
+        if (KIP_HEADS.includes(cand)) return cand;
+      }
+      return undefined;
+    };
     const pick = (v, pre, ok) => { if (v === null) return undefined; if (v === 'off') return null; const id = v.startsWith(pre) ? v : pre + v; return ok(id) ? id : undefined; };
-    const h = pick(q0.get('head'), 'char_head_', (i) => KIP_HEADS.includes(i)); if (h) KIP_STACK.head = h;
+    const h = resolveHead(q0.get('head')); if (h) KIP_STACK.head = h;
     const w = pick(q0.get('hair'), 'hair_', (i) => i in KIP_STACK.table.hairs); if (w !== undefined) KIP_STACK.hair = w;
     const t = pick(q0.get('hat'), 'hat_', (i) => KIP_STACK.table.hats.includes(i) || i === 'hat_wobble_hat'); if (t !== undefined) KIP_STACK.hat = t;
     if (q0.get('hat') === 'wobble_hat') KIP_STACK.hat = 'wobble_hat';
@@ -1403,16 +1511,18 @@ async function init() {
   }
 }
 
-// Poses for the numeric overlap check (scripts rebuild each as solids): straight, both rack stops, tipped bed, giant tires at their lock, every stage.
+// Poses for the numeric overlap check (scripts rebuild each as solids): straight, both rack stops, tipped bed, giant tires at their lock, every stage + both Pro & Snap Kip rigs.
 window.__truckProbeSweep = (cases = [
   { stage: 'pro', steerDeg: 0, tipDeg: 22 }, { stage: 'pro', steerDeg: 45, tipDeg: 22 }, { stage: 'pro', steerDeg: -45, tipDeg: 22 },
   { stage: 'pro', steerDeg: 20, tipDeg: 55 }, { stage: 'pro', giantWheels: true, steerDeg: 25 }, { stage: 'pro', giantWheels: true, steerDeg: -25 },
+  { stage: 'pro', driver: 'snap', steerDeg: 22, tipDeg: 22 },
   { stage: 'mech', steerDeg: 30, tipDeg: 22 }, { stage: 'mech', steerDeg: 0, tipDeg: 55 },
+  { stage: 'mech', driver: 'snap', steerDeg: 0, tipDeg: 18 },
   { stage: 'band', steerDeg: 0, tipDeg: 0 }, { stage: 'band', tipDeg: 55 },
   { stage: 'bellows', tipDeg: 10 }, { stage: 'bellows', tipDeg: 48 },
   { stage: 'snap', tipDeg: 0 }, { stage: 'snap', tipDeg: 55 },
 ]) => cases.map((c) => {
-  Object.assign(state, { giantWheels: false, steerDeg: 0, tipDeg: 22 }, c);
+  Object.assign(state, { driver: 'pro', giantWheels: false, steerDeg: 0, tipDeg: 22 }, c);
   rebuildScene();
   return { case: c, rows: window.__truckProbe() };
 });
@@ -1428,7 +1538,7 @@ window.__truckProbe = () => {
   cadRoot.traverse((o) => {
     if (!o.isMesh) return;
     for (let p = o; p; p = p.parent) if (p.visible === false) return;
-    const geo = names.get(o.geometry) || CLASSIC.geoNames.get(o.geometry);
+    const geo = names.get(o.geometry) || KIP_DRIVER.geoNames.get(o.geometry);
     if (geo) rows.push({ geo, m: inv.clone().multiply(o.matrixWorld).elements.slice() });
   });
   return rows;
