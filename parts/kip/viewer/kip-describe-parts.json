@@ -1,0 +1,976 @@
+{
+ "generatedBy": "tools/build_parts_data.py (do not edit by hand)",
+ "contract": 1,
+ "parts": {
+  "veh_car_chassis": {
+   "label": "Car chassis",
+   "category": "vehicle",
+   "connectors": {
+    "top_studs": {
+     "kind": "studs",
+     "gender": "M",
+     "grid": [
+      4,
+      2
+     ]
+    },
+    "front_studs": {
+     "kind": "studs",
+     "gender": "M",
+     "grid": [
+      2,
+      1
+     ]
+    },
+    "hood_studs": {
+     "kind": "studs",
+     "gender": "M",
+     "grid": [
+      2,
+      2
+     ]
+    },
+    "rollbar_studs": {
+     "kind": "studs",
+     "gender": "M",
+     "grid": [
+      2,
+      1
+     ]
+    },
+    "spoiler_studs": {
+     "kind": "studs",
+     "gender": "M",
+     "grid": [
+      2,
+      1
+     ]
+    },
+    "exhaust_studs": {
+     "kind": "studs",
+     "gender": "M",
+     "grid": [
+      1,
+      2
+     ]
+    },
+    "dash_bore": {
+     "kind": "bore",
+     "gender": "F",
+     "grid": [
+      1,
+      1
+     ],
+     "span": 20.5,
+     "axis": [
+      0,
+      0,
+      1
+     ]
+    },
+    "axle_front": {
+     "kind": "bore",
+     "gender": "F",
+     "grid": [
+      1,
+      1
+     ],
+     "span": 33.6,
+     "axis": [
+      1,
+      0,
+      0
+     ]
+    },
+    "axle_rear": {
+     "kind": "bore",
+     "gender": "F",
+     "grid": [
+      1,
+      1
+     ],
+     "span": 33.6,
+     "axis": [
+      1,
+      0,
+      0
+     ]
+    }
+   }
+  },
+  "veh_car_hood_cover": {
+   "label": "Hood cover",
+   "category": "vehicle",
+   "connectors": {
+    "under_sockets": {
+     "kind": "sockets",
+     "gender": "F",
+     "grid": [
+      2,
+      2
+     ]
+    },
+    "top_studs": {
+     "kind": "studs",
+     "gender": "M",
+     "grid": [
+      2,
+      2
+     ]
+    }
+   }
+  },
+  "veh_cab_roof_cover": {
+   "label": "Cab roof cover",
+   "category": "vehicle",
+   "connectors": {
+    "under_sockets": {
+     "kind": "sockets",
+     "gender": "F",
+     "grid": [
+      2,
+      1
+     ]
+    },
+    "top_studs": {
+     "kind": "studs",
+     "gender": "M",
+     "grid": [
+      2,
+      2
+     ]
+    }
+   }
+  },
+  "veh_truck_chassis": {
+   "label": "Truck chassis",
+   "category": "vehicle",
+   "connectors": {
+    "top_studs": {
+     "kind": "studs",
+     "gender": "M",
+     "grid": [
+      4,
+      2
+     ]
+    },
+    "front_studs": {
+     "kind": "studs",
+     "gender": "M",
+     "grid": [
+      2,
+      1
+     ]
+    },
+    "hood_studs": {
+     "kind": "studs",
+     "gender": "M",
+     "grid": [
+      2,
+      2
+     ]
+    },
+    "roof_studs": {
+     "kind": "studs",
+     "gender": "M",
+     "grid": [
+      2,
+      1
+     ]
+    },
+    "cargo_studs": {
+     "kind": "studs",
+     "gender": "M",
+     "grid": [
+      2,
+      3
+     ]
+    },
+    "dash_bore": {
+     "kind": "bore",
+     "gender": "F",
+     "grid": [
+      1,
+      1
+     ],
+     "span": 21.0,
+     "axis": [
+      0,
+      0,
+      1
+     ]
+    },
+    "axle_front": {
+     "kind": "bore",
+     "gender": "F",
+     "grid": [
+      1,
+      1
+     ],
+     "span": 33.6,
+     "axis": [
+      1,
+      0,
+      0
+     ]
+    },
+    "axle_rear": {
+     "kind": "bore",
+     "gender": "F",
+     "grid": [
+      1,
+      1
+     ],
+     "span": 33.6,
+     "axis": [
+      1,
+      0,
+      0
+     ]
+    }
+   }
+  },
+  "veh_truck_bed_cover": {
+   "label": "Truck bed cover",
+   "category": "vehicle",
+   "connectors": {
+    "under_sockets": {
+     "kind": "sockets",
+     "gender": "F",
+     "grid": [
+      2,
+      3
+     ]
+    },
+    "bed_studs": {
+     "kind": "studs",
+     "gender": "M",
+     "grid": [
+      2,
+      2
+     ]
+    }
+   }
+  },
+  "veh_scooter_frame": {
+   "label": "Scooter frame",
+   "category": "vehicle",
+   "connectors": {
+    "top_studs": {
+     "kind": "studs",
+     "gender": "M",
+     "grid": [
+      2,
+      2
+     ]
+    },
+    "fairing_studs": {
+     "kind": "studs",
+     "gender": "M",
+     "grid": [
+      2,
+      1
+     ]
+    },
+    "seat_studs": {
+     "kind": "studs",
+     "gender": "M",
+     "grid": [
+      2,
+      2
+     ]
+    },
+    "exhaust_studs": {
+     "kind": "studs",
+     "gender": "M",
+     "grid": [
+      1,
+      2
+     ]
+    },
+    "headtube": {
+     "kind": "bore",
+     "gender": "F",
+     "grid": [
+      1,
+      1
+     ],
+     "span": 25.0,
+     "axis": [
+      0,
+      0,
+      1
+     ]
+    },
+    "axle_front": {
+     "kind": "bore",
+     "gender": "F",
+     "grid": [
+      1,
+      1
+     ],
+     "span": 10.95,
+     "axis": [
+      1,
+      0,
+      0
+     ]
+    },
+    "axle_front_r": {
+     "kind": "bore",
+     "gender": "F",
+     "grid": [
+      1,
+      1
+     ],
+     "span": 10.95,
+     "axis": [
+      1,
+      0,
+      0
+     ]
+    },
+    "axle_rear": {
+     "kind": "bore",
+     "gender": "F",
+     "grid": [
+      1,
+      1
+     ],
+     "span": 10.95,
+     "axis": [
+      1,
+      0,
+      0
+     ]
+    },
+    "axle_rear_r": {
+     "kind": "bore",
+     "gender": "F",
+     "grid": [
+      1,
+      1
+     ],
+     "span": 10.95,
+     "axis": [
+      1,
+      0,
+      0
+     ]
+    }
+   }
+  },
+  "veh_handlebar_fork": {
+   "label": "Handlebar fork",
+   "category": "vehicle",
+   "connectors": {
+    "axis": {
+     "kind": "pin",
+     "gender": "M",
+     "grid": [
+      1,
+      1
+     ],
+     "span": 25.0,
+     "axis": [
+      0,
+      0,
+      1
+     ]
+    }
+   }
+  },
+  "prop_skateboard_deck": {
+   "label": "Skateboard deck",
+   "category": "vehicle",
+   "connectors": {
+    "top_studs": {
+     "kind": "studs",
+     "gender": "M",
+     "grid": [
+      2,
+      4
+     ]
+    },
+    "axle_front": {
+     "kind": "bore",
+     "gender": "F",
+     "grid": [
+      1,
+      1
+     ],
+     "span": 24.8,
+     "axis": [
+      1,
+      0,
+      0
+     ]
+    },
+    "axle_rear": {
+     "kind": "bore",
+     "gender": "F",
+     "grid": [
+      1,
+      1
+     ],
+     "span": 24.8,
+     "axis": [
+      1,
+      0,
+      0
+     ]
+    }
+   }
+  },
+  "shaft_tu05": {
+   "label": "Axle shaft (5 units)",
+   "category": "wheel",
+   "connectors": {
+    "axis": {
+     "kind": "pin",
+     "gender": "M",
+     "grid": [
+      1,
+      1
+     ],
+     "span": 62.5,
+     "axis": [
+      0,
+      0,
+      1
+     ]
+    }
+   }
+  },
+  "racer_axle": {
+   "label": "Racer axle",
+   "category": "wheel",
+   "connectors": {
+    "axis": {
+     "kind": "pin",
+     "gender": "M",
+     "grid": [
+      1,
+      1
+     ],
+     "span": 37.5,
+     "axis": [
+      0,
+      0,
+      1
+     ]
+    }
+   }
+  },
+  "veh_wheel_sport": {
+   "label": "Sport wheel",
+   "category": "wheel",
+   "connectors": {
+    "hub": {
+     "kind": "bore",
+     "gender": "F",
+     "grid": [
+      1,
+      1
+     ],
+     "span": 13.5,
+     "axis": [
+      0,
+      0,
+      1
+     ]
+    }
+   }
+  },
+  "veh_wheel_offroad": {
+   "label": "Off-road wheel",
+   "category": "wheel",
+   "connectors": {
+    "hub": {
+     "kind": "bore",
+     "gender": "F",
+     "grid": [
+      1,
+      1
+     ],
+     "span": 14.0,
+     "axis": [
+      0,
+      0,
+      1
+     ]
+    }
+   }
+  },
+  "veh_wheel_moto": {
+   "label": "Moto wheel",
+   "category": "wheel",
+   "connectors": {
+    "hub": {
+     "kind": "bore",
+     "gender": "F",
+     "grid": [
+      1,
+      1
+     ],
+     "span": 14.0,
+     "axis": [
+      0,
+      0,
+      1
+     ]
+    }
+   }
+  },
+  "racer_wheel": {
+   "label": "Racer wheel",
+   "category": "wheel",
+   "connectors": {
+    "hub": {
+     "kind": "bore",
+     "gender": "F",
+     "grid": [
+      1,
+      1
+     ],
+     "span": 6.0,
+     "axis": [
+      0,
+      0,
+      1
+     ]
+    }
+   }
+  },
+  "racer_spoiler": {
+   "label": "Spoiler",
+   "category": "addon",
+   "connectors": {
+    "under_sockets": {
+     "kind": "sockets",
+     "gender": "F",
+     "grid": [
+      2,
+      1
+     ]
+    }
+   }
+  },
+  "racer_roof_rack": {
+   "label": "Roof rack",
+   "category": "addon",
+   "connectors": {
+    "under_sockets": {
+     "kind": "sockets",
+     "gender": "F",
+     "grid": [
+      2,
+      2
+     ]
+    },
+    "top_studs": {
+     "kind": "studs",
+     "gender": "M",
+     "grid": [
+      2,
+      2
+     ]
+    }
+   }
+  },
+  "racer_bull_bar": {
+   "label": "Bull bar",
+   "category": "addon",
+   "connectors": {
+    "under_sockets": {
+     "kind": "sockets",
+     "gender": "F",
+     "grid": [
+      2,
+      1
+     ]
+    }
+   }
+  },
+  "char_legs_seated": {
+   "label": "Seated legs",
+   "category": "character",
+   "connectors": {
+    "under_sockets": {
+     "kind": "sockets",
+     "gender": "F",
+     "grid": [
+      2,
+      2
+     ]
+    },
+    "top_studs": {
+     "kind": "studs",
+     "gender": "M",
+     "grid": [
+      2,
+      2
+     ]
+    }
+   }
+  },
+  "robot_torso_core": {
+   "label": "Torso",
+   "category": "character",
+   "connectors": {
+    "under_sockets": {
+     "kind": "sockets",
+     "gender": "F",
+     "grid": [
+      2,
+      2
+     ]
+    },
+    "top_studs": {
+     "kind": "studs",
+     "gender": "M",
+     "grid": [
+      2,
+      2
+     ]
+    }
+   }
+  },
+  "robot_arms_grabber": {
+   "label": "Arms",
+   "category": "character",
+   "connectors": {
+    "under_sockets": {
+     "kind": "sockets",
+     "gender": "F",
+     "grid": [
+      2,
+      2
+     ]
+    },
+    "top_studs": {
+     "kind": "studs",
+     "gender": "M",
+     "grid": [
+      2,
+      2
+     ]
+    }
+   }
+  },
+  "char_head_kid": {
+   "label": "Kid head",
+   "category": "character",
+   "connectors": {
+    "under_sockets": {
+     "kind": "sockets",
+     "gender": "F",
+     "grid": [
+      2,
+      1
+     ]
+    },
+    "top_studs": {
+     "kind": "studs",
+     "gender": "M",
+     "grid": [
+      2,
+      1
+     ]
+    },
+    "face_slot": {
+     "kind": "bore",
+     "gender": "F",
+     "grid": [
+      1,
+      1
+     ],
+     "span": 12.5,
+     "axis": [
+      0,
+      1,
+      0
+     ]
+    }
+   }
+  },
+  "char_head_tall": {
+   "label": "Tall head",
+   "category": "character",
+   "connectors": {
+    "under_sockets": {
+     "kind": "sockets",
+     "gender": "F",
+     "grid": [
+      2,
+      1
+     ]
+    },
+    "top_studs": {
+     "kind": "studs",
+     "gender": "M",
+     "grid": [
+      2,
+      1
+     ]
+    },
+    "face_slot": {
+     "kind": "bore",
+     "gender": "F",
+     "grid": [
+      1,
+      1
+     ],
+     "span": 12.5,
+     "axis": [
+      0,
+      1,
+      0
+     ]
+    }
+   }
+  },
+  "char_faceplate": {
+   "label": "Face plate",
+   "category": "character",
+   "connectors": {
+    "axis": {
+     "kind": "pin",
+     "gender": "M",
+     "grid": [
+      1,
+      1
+     ],
+     "span": 12.5,
+     "axis": [
+      0,
+      0,
+      1
+     ]
+    }
+   }
+  },
+  "robot_legs_stomper": {
+   "label": "Stomper legs",
+   "category": "character",
+   "connectors": {
+    "under_sockets": {
+     "kind": "sockets",
+     "gender": "F",
+     "grid": [
+      2,
+      2
+     ]
+    },
+    "top_studs": {
+     "kind": "studs",
+     "gender": "M",
+     "grid": [
+      2,
+      2
+     ]
+    }
+   }
+  },
+  "robot_head_visor": {
+   "label": "Visor head",
+   "category": "character",
+   "connectors": {
+    "under_sockets": {
+     "kind": "sockets",
+     "gender": "F",
+     "grid": [
+      2,
+      1
+     ]
+    },
+    "top_studs": {
+     "kind": "studs",
+     "gender": "M",
+     "grid": [
+      2,
+      1
+     ]
+    }
+   }
+  },
+  "robot_back_jetpack": {
+   "label": "Jetpack",
+   "category": "character",
+   "connectors": {
+    "under_sockets": {
+     "kind": "sockets",
+     "gender": "F",
+     "grid": [
+      2,
+      1
+     ]
+    }
+   }
+  },
+  "hair_bob": {
+   "label": "Bob hair",
+   "category": "hair",
+   "connectors": {
+    "under_sockets": {
+     "kind": "sockets",
+     "gender": "F",
+     "grid": [
+      2,
+      1
+     ]
+    },
+    "top_studs": {
+     "kind": "studs",
+     "gender": "M",
+     "grid": [
+      2,
+      1
+     ]
+    }
+   }
+  },
+  "hat_cowboy": {
+   "label": "Cowboy hat",
+   "category": "hat",
+   "connectors": {
+    "under_sockets": {
+     "kind": "sockets",
+     "gender": "F",
+     "grid": [
+      2,
+      1
+     ]
+    }
+   }
+  },
+  "hat_tophat": {
+   "label": "Top hat",
+   "category": "hat",
+   "connectors": {
+    "under_sockets": {
+     "kind": "sockets",
+     "gender": "F",
+     "grid": [
+      2,
+      1
+     ]
+    }
+   }
+  },
+  "hat_ranger": {
+   "label": "Ranger hat",
+   "category": "hat",
+   "connectors": {
+    "under_sockets": {
+     "kind": "sockets",
+     "gender": "F",
+     "grid": [
+      2,
+      1
+     ]
+    }
+   }
+  }
+ },
+ "groups": {
+  "G1": {
+   "members": [
+    "char_faceplate.axis",
+    "racer_axle.axis",
+    "shaft_tu05.axis",
+    "veh_handlebar_fork.axis"
+   ],
+   "mates": [
+    "G2"
+   ]
+  },
+  "G2": {
+   "members": [
+    "char_head_kid.face_slot",
+    "char_head_tall.face_slot",
+    "prop_skateboard_deck.axle_front",
+    "prop_skateboard_deck.axle_rear",
+    "racer_wheel.hub",
+    "veh_car_chassis.axle_front",
+    "veh_car_chassis.axle_rear",
+    "veh_car_chassis.dash_bore",
+    "veh_scooter_frame.axle_front",
+    "veh_scooter_frame.axle_front_r",
+    "veh_scooter_frame.axle_rear",
+    "veh_scooter_frame.axle_rear_r",
+    "veh_scooter_frame.headtube",
+    "veh_truck_chassis.axle_front",
+    "veh_truck_chassis.axle_rear",
+    "veh_truck_chassis.dash_bore",
+    "veh_wheel_moto.hub",
+    "veh_wheel_offroad.hub",
+    "veh_wheel_sport.hub"
+   ],
+   "mates": [
+    "G1"
+   ]
+  },
+  "G3": {
+   "members": [
+    "char_head_kid.top_studs",
+    "char_head_tall.top_studs",
+    "char_legs_seated.top_studs",
+    "hair_bob.top_studs",
+    "prop_skateboard_deck.top_studs",
+    "racer_roof_rack.top_studs",
+    "robot_arms_grabber.top_studs",
+    "robot_head_visor.top_studs",
+    "robot_legs_stomper.top_studs",
+    "robot_torso_core.top_studs",
+    "veh_cab_roof_cover.top_studs",
+    "veh_car_chassis.exhaust_studs",
+    "veh_car_chassis.front_studs",
+    "veh_car_chassis.hood_studs",
+    "veh_car_chassis.rollbar_studs",
+    "veh_car_chassis.spoiler_studs",
+    "veh_car_chassis.top_studs",
+    "veh_car_hood_cover.top_studs",
+    "veh_scooter_frame.exhaust_studs",
+    "veh_scooter_frame.fairing_studs",
+    "veh_scooter_frame.seat_studs",
+    "veh_scooter_frame.top_studs",
+    "veh_truck_bed_cover.bed_studs",
+    "veh_truck_chassis.cargo_studs",
+    "veh_truck_chassis.front_studs",
+    "veh_truck_chassis.hood_studs",
+    "veh_truck_chassis.roof_studs",
+    "veh_truck_chassis.top_studs"
+   ],
+   "mates": [
+    "G4"
+   ]
+  },
+  "G4": {
+   "members": [
+    "char_head_kid.under_sockets",
+    "char_head_tall.under_sockets",
+    "char_legs_seated.under_sockets",
+    "hair_bob.under_sockets",
+    "hat_cowboy.under_sockets",
+    "hat_ranger.under_sockets",
+    "hat_tophat.under_sockets",
+    "racer_bull_bar.under_sockets",
+    "racer_roof_rack.under_sockets",
+    "racer_spoiler.under_sockets",
+    "robot_arms_grabber.under_sockets",
+    "robot_back_jetpack.under_sockets",
+    "robot_head_visor.under_sockets",
+    "robot_legs_stomper.under_sockets",
+    "robot_torso_core.under_sockets",
+    "veh_cab_roof_cover.under_sockets",
+    "veh_car_hood_cover.under_sockets",
+    "veh_truck_bed_cover.under_sockets"
+   ],
+   "mates": [
+    "G3"
+   ]
+  }
+ },
+ "ungrouped": []
+}

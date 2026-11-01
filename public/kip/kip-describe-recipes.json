@@ -1,0 +1,2600 @@
+{
+  "contract": 1,
+  "about": "Curated parts and the ten fixture recipes for the Describe & build tab. See kip-describe-contract.md for the field meanings. The `reference` block of each recipe is written by tools/check_recipes.py --write from the real validator; do not edit it by hand.",
+  "allowedParts": [
+    {
+      "id": "veh_car_chassis",
+      "category": "vehicle",
+      "label": "Car chassis"
+    },
+    {
+      "id": "veh_car_hood_cover",
+      "category": "vehicle",
+      "label": "Hood cover"
+    },
+    {
+      "id": "veh_cab_roof_cover",
+      "category": "vehicle",
+      "label": "Cab roof cover"
+    },
+    {
+      "id": "veh_truck_chassis",
+      "category": "vehicle",
+      "label": "Truck chassis"
+    },
+    {
+      "id": "veh_truck_bed_cover",
+      "category": "vehicle",
+      "label": "Truck bed cover"
+    },
+    {
+      "id": "veh_scooter_frame",
+      "category": "vehicle",
+      "label": "Scooter frame"
+    },
+    {
+      "id": "veh_handlebar_fork",
+      "category": "vehicle",
+      "label": "Handlebar fork"
+    },
+    {
+      "id": "prop_skateboard_deck",
+      "category": "vehicle",
+      "label": "Skateboard deck"
+    },
+    {
+      "id": "shaft_tu05",
+      "category": "wheel",
+      "label": "Axle shaft (5 units)"
+    },
+    {
+      "id": "racer_axle",
+      "category": "wheel",
+      "label": "Racer axle"
+    },
+    {
+      "id": "veh_wheel_sport",
+      "category": "wheel",
+      "label": "Sport wheel"
+    },
+    {
+      "id": "veh_wheel_offroad",
+      "category": "wheel",
+      "label": "Off-road wheel"
+    },
+    {
+      "id": "veh_wheel_moto",
+      "category": "wheel",
+      "label": "Moto wheel"
+    },
+    {
+      "id": "racer_wheel",
+      "category": "wheel",
+      "label": "Racer wheel"
+    },
+    {
+      "id": "racer_spoiler",
+      "category": "addon",
+      "label": "Spoiler"
+    },
+    {
+      "id": "racer_roof_rack",
+      "category": "addon",
+      "label": "Roof rack"
+    },
+    {
+      "id": "racer_bull_bar",
+      "category": "addon",
+      "label": "Bull bar"
+    },
+    {
+      "id": "char_legs_seated",
+      "category": "character",
+      "label": "Seated legs"
+    },
+    {
+      "id": "robot_torso_core",
+      "category": "character",
+      "label": "Torso"
+    },
+    {
+      "id": "robot_arms_grabber",
+      "category": "character",
+      "label": "Arms"
+    },
+    {
+      "id": "char_head_kid",
+      "category": "character",
+      "label": "Kid head"
+    },
+    {
+      "id": "char_head_tall",
+      "category": "character",
+      "label": "Tall head"
+    },
+    {
+      "id": "char_faceplate",
+      "category": "character",
+      "label": "Face plate"
+    },
+    {
+      "id": "robot_legs_stomper",
+      "category": "character",
+      "label": "Stomper legs"
+    },
+    {
+      "id": "robot_head_visor",
+      "category": "character",
+      "label": "Visor head"
+    },
+    {
+      "id": "robot_back_jetpack",
+      "category": "character",
+      "label": "Jetpack"
+    },
+    {
+      "id": "hair_bob",
+      "category": "hair",
+      "label": "Bob hair"
+    },
+    {
+      "id": "hat_cowboy",
+      "category": "hat",
+      "label": "Cowboy hat"
+    },
+    {
+      "id": "hat_tophat",
+      "category": "hat",
+      "label": "Top hat"
+    },
+    {
+      "id": "hat_ranger",
+      "category": "hat",
+      "label": "Ranger hat"
+    }
+  ],
+  "recipes": [
+    {
+      "id": "race-car",
+      "description": "a race car",
+      "title": "Roadster",
+      "keywords": [
+        "race car",
+        "racecar",
+        "roadster",
+        "sports car",
+        "fast car"
+      ],
+      "steps": [
+        {
+          "id": "car",
+          "part": "veh_car_chassis"
+        },
+        {
+          "id": "hood",
+          "part": "veh_car_hood_cover",
+          "mate": {
+            "conn": "under_sockets",
+            "host": "car",
+            "hostConn": "hood_studs"
+          }
+        },
+        {
+          "id": "cab",
+          "part": "veh_cab_roof_cover",
+          "mate": {
+            "conn": "under_sockets",
+            "host": "car",
+            "hostConn": "rollbar_studs"
+          }
+        },
+        {
+          "id": "spoiler",
+          "part": "racer_spoiler",
+          "mate": {
+            "conn": "under_sockets",
+            "host": "car",
+            "hostConn": "spoiler_studs"
+          }
+        },
+        {
+          "id": "ax_f",
+          "part": "shaft_tu05",
+          "mate": {
+            "conn": "axis",
+            "host": "car",
+            "hostConn": "axle_front",
+            "along": "center"
+          }
+        },
+        {
+          "id": "wl_f",
+          "part": "veh_wheel_sport",
+          "mate": {
+            "conn": "hub",
+            "host": "ax_f",
+            "hostConn": "axis",
+            "along": "start"
+          }
+        },
+        {
+          "id": "wr_f",
+          "part": "veh_wheel_sport",
+          "mate": {
+            "conn": "hub",
+            "host": "ax_f",
+            "hostConn": "axis",
+            "along": "end"
+          }
+        },
+        {
+          "id": "ax_r",
+          "part": "shaft_tu05",
+          "mate": {
+            "conn": "axis",
+            "host": "car",
+            "hostConn": "axle_rear",
+            "along": "center"
+          }
+        },
+        {
+          "id": "wl_r",
+          "part": "veh_wheel_sport",
+          "mate": {
+            "conn": "hub",
+            "host": "ax_r",
+            "hostConn": "axis",
+            "along": "start"
+          }
+        },
+        {
+          "id": "wr_r",
+          "part": "veh_wheel_sport",
+          "mate": {
+            "conn": "hub",
+            "host": "ax_r",
+            "hostConn": "axis",
+            "along": "end"
+          }
+        }
+      ],
+      "reference": {
+        "poses": {
+          "car": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0,
+            "rot": 0
+          },
+          "hood": {
+            "x": 0.0,
+            "y": -37.5,
+            "z": 17.5,
+            "rot": 0
+          },
+          "cab": {
+            "x": 0.0,
+            "y": 18.75,
+            "z": 22.5,
+            "rot": 0
+          },
+          "spoiler": {
+            "x": 0.0,
+            "y": 31.25,
+            "z": 18.5,
+            "rot": 0
+          },
+          "ax_f": {
+            "x": -31.25,
+            "y": -43.75,
+            "z": 6.25,
+            "rot": 0,
+            "tilt": [
+              0.0,
+              90.0
+            ]
+          },
+          "wl_f": {
+            "x": -31.25,
+            "y": -43.75,
+            "z": 6.25,
+            "rot": 0,
+            "tilt": [
+              0.0,
+              90.0
+            ]
+          },
+          "wr_f": {
+            "x": 17.75,
+            "y": -43.75,
+            "z": 6.25,
+            "rot": 0,
+            "tilt": [
+              0.0,
+              90.0
+            ]
+          },
+          "ax_r": {
+            "x": -31.25,
+            "y": 43.75,
+            "z": 6.25,
+            "rot": 0,
+            "tilt": [
+              0.0,
+              90.0
+            ]
+          },
+          "wl_r": {
+            "x": -31.25,
+            "y": 43.75,
+            "z": 6.25,
+            "rot": 0,
+            "tilt": [
+              0.0,
+              90.0
+            ]
+          },
+          "wr_r": {
+            "x": 17.75,
+            "y": 43.75,
+            "z": 6.25,
+            "rot": 0,
+            "tilt": [
+              0.0,
+              90.0
+            ]
+          }
+        },
+        "boxes": {
+          "car": [
+            -29.0,
+            -62.3,
+            0.0,
+            29.0,
+            62.4,
+            25.3
+          ],
+          "hood": [
+            -20.6,
+            -56.5,
+            17.5,
+            20.6,
+            -22.1,
+            34.8
+          ],
+          "cab": [
+            -19.8,
+            6.15,
+            22.5,
+            19.8,
+            31.15,
+            42.8
+          ],
+          "spoiler": [
+            -12.4,
+            25.3,
+            18.5,
+            12.4,
+            37.2,
+            32.3
+          ],
+          "ax_f": [
+            -31.25,
+            -46.25,
+            2.95,
+            31.25,
+            -41.25,
+            9.55
+          ],
+          "wl_f": [
+            -31.25,
+            -61.73,
+            -11.73,
+            -17.75,
+            -25.77,
+            24.23
+          ],
+          "wr_f": [
+            17.75,
+            -61.73,
+            -11.73,
+            31.25,
+            -25.77,
+            24.23
+          ],
+          "ax_r": [
+            -31.25,
+            41.25,
+            2.95,
+            31.25,
+            46.25,
+            9.55
+          ],
+          "wl_r": [
+            -31.25,
+            25.77,
+            -11.73,
+            -17.75,
+            61.73,
+            24.23
+          ],
+          "wr_r": [
+            17.75,
+            25.77,
+            -11.73,
+            31.25,
+            61.73,
+            24.23
+          ]
+        },
+        "validator": {
+          "ok": true,
+          "errors": 0,
+          "warnings": 0,
+          "edges": 9
+        }
+      }
+    },
+    {
+      "id": "pickup-roof-rack",
+      "description": "a pickup truck with a roof rack and a bull bar",
+      "title": "Pickup",
+      "keywords": [
+        "pickup",
+        "pick-up",
+        "truck",
+        "hauler",
+        "roof rack",
+        "bull bar"
+      ],
+      "steps": [
+        {
+          "id": "truck",
+          "part": "veh_truck_chassis"
+        },
+        {
+          "id": "hood",
+          "part": "veh_car_hood_cover",
+          "mate": {
+            "conn": "under_sockets",
+            "host": "truck",
+            "hostConn": "hood_studs"
+          }
+        },
+        {
+          "id": "cab",
+          "part": "veh_cab_roof_cover",
+          "mate": {
+            "conn": "under_sockets",
+            "host": "truck",
+            "hostConn": "roof_studs"
+          }
+        },
+        {
+          "id": "bed",
+          "part": "veh_truck_bed_cover",
+          "mate": {
+            "conn": "under_sockets",
+            "host": "truck",
+            "hostConn": "cargo_studs"
+          }
+        },
+        {
+          "id": "rack",
+          "part": "racer_roof_rack",
+          "mate": {
+            "conn": "under_sockets",
+            "host": "cab",
+            "hostConn": "top_studs"
+          }
+        },
+        {
+          "id": "bull_bar",
+          "part": "racer_bull_bar",
+          "mate": {
+            "conn": "under_sockets",
+            "host": "truck",
+            "hostConn": "front_studs"
+          }
+        },
+        {
+          "id": "ax_f",
+          "part": "shaft_tu05",
+          "mate": {
+            "conn": "axis",
+            "host": "truck",
+            "hostConn": "axle_front",
+            "along": "center"
+          }
+        },
+        {
+          "id": "wl_f",
+          "part": "veh_wheel_offroad",
+          "mate": {
+            "conn": "hub",
+            "host": "ax_f",
+            "hostConn": "axis",
+            "along": "start"
+          }
+        },
+        {
+          "id": "wr_f",
+          "part": "veh_wheel_offroad",
+          "mate": {
+            "conn": "hub",
+            "host": "ax_f",
+            "hostConn": "axis",
+            "along": "end"
+          }
+        },
+        {
+          "id": "ax_r",
+          "part": "shaft_tu05",
+          "mate": {
+            "conn": "axis",
+            "host": "truck",
+            "hostConn": "axle_rear",
+            "along": "center"
+          }
+        },
+        {
+          "id": "wl_r",
+          "part": "veh_wheel_offroad",
+          "mate": {
+            "conn": "hub",
+            "host": "ax_r",
+            "hostConn": "axis",
+            "along": "start"
+          }
+        },
+        {
+          "id": "wr_r",
+          "part": "veh_wheel_offroad",
+          "mate": {
+            "conn": "hub",
+            "host": "ax_r",
+            "hostConn": "axis",
+            "along": "end"
+          }
+        }
+      ],
+      "reference": {
+        "poses": {
+          "truck": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0,
+            "rot": 0
+          },
+          "hood": {
+            "x": 0.0,
+            "y": -37.5,
+            "z": 18.0,
+            "rot": 0
+          },
+          "cab": {
+            "x": 0.0,
+            "y": 18.75,
+            "z": 26.0,
+            "rot": 0
+          },
+          "bed": {
+            "x": 0.0,
+            "y": 56.25,
+            "z": 15.0,
+            "rot": 0
+          },
+          "rack": {
+            "x": 0.0,
+            "y": 18.75,
+            "z": 43.5,
+            "rot": 0
+          },
+          "bull_bar": {
+            "x": 0.0,
+            "y": -56.25,
+            "z": 16.0,
+            "rot": 0
+          },
+          "ax_f": {
+            "x": -31.25,
+            "y": -43.75,
+            "z": 6.25,
+            "rot": 0,
+            "tilt": [
+              0.0,
+              90.0
+            ]
+          },
+          "wl_f": {
+            "x": -31.25,
+            "y": -43.75,
+            "z": 6.25,
+            "rot": 0,
+            "tilt": [
+              0.0,
+              90.0
+            ]
+          },
+          "wr_f": {
+            "x": 17.25,
+            "y": -43.75,
+            "z": 6.25,
+            "rot": 0,
+            "tilt": [
+              0.0,
+              90.0
+            ]
+          },
+          "ax_r": {
+            "x": -31.25,
+            "y": 53.125,
+            "z": 6.25,
+            "rot": 0,
+            "tilt": [
+              0.0,
+              90.0
+            ]
+          },
+          "wl_r": {
+            "x": -31.25,
+            "y": 53.125,
+            "z": 6.25,
+            "rot": 0,
+            "tilt": [
+              0.0,
+              90.0
+            ]
+          },
+          "wr_r": {
+            "x": 17.25,
+            "y": 53.125,
+            "z": 6.25,
+            "rot": 0,
+            "tilt": [
+              0.0,
+              90.0
+            ]
+          }
+        },
+        "boxes": {
+          "truck": [
+            -29.0,
+            -62.3,
+            0.0,
+            29.0,
+            87.3,
+            28.8
+          ],
+          "hood": [
+            -20.6,
+            -56.5,
+            18.0,
+            20.6,
+            -22.1,
+            35.3
+          ],
+          "cab": [
+            -19.8,
+            6.15,
+            26.0,
+            19.8,
+            31.15,
+            46.3
+          ],
+          "bed": [
+            -21.45,
+            37.05,
+            15.0,
+            21.45,
+            75.45,
+            35.2
+          ],
+          "rack": [
+            -12.4,
+            6.35,
+            43.5,
+            12.4,
+            31.15,
+            57.2
+          ],
+          "bull_bar": [
+            -12.2,
+            -62.2,
+            16.0,
+            12.2,
+            -50.3,
+            31.3
+          ],
+          "ax_f": [
+            -31.25,
+            -46.25,
+            2.95,
+            31.25,
+            -41.25,
+            9.55
+          ],
+          "wl_f": [
+            -31.25,
+            -65.75,
+            -15.711,
+            -17.25,
+            -21.75,
+            28.211
+          ],
+          "wr_f": [
+            17.25,
+            -65.75,
+            -15.711,
+            31.25,
+            -21.75,
+            28.211
+          ],
+          "ax_r": [
+            -31.25,
+            50.625,
+            2.95,
+            31.25,
+            55.625,
+            9.55
+          ],
+          "wl_r": [
+            -31.25,
+            31.125,
+            -15.711,
+            -17.25,
+            75.125,
+            28.211
+          ],
+          "wr_r": [
+            17.25,
+            31.125,
+            -15.711,
+            31.25,
+            75.125,
+            28.211
+          ]
+        },
+        "validator": {
+          "ok": true,
+          "errors": 0,
+          "warnings": 0,
+          "edges": 11
+        }
+      }
+    },
+    {
+      "id": "scooter",
+      "description": "a motor scooter",
+      "title": "Scooter",
+      "keywords": [
+        "scooter",
+        "moped",
+        "motor scooter",
+        "motorbike",
+        "bike"
+      ],
+      "steps": [
+        {
+          "id": "scooter",
+          "part": "veh_scooter_frame"
+        },
+        {
+          "id": "handlebars",
+          "part": "veh_handlebar_fork",
+          "mate": {
+            "conn": "axis",
+            "host": "scooter",
+            "hostConn": "headtube",
+            "along": "start"
+          }
+        },
+        {
+          "id": "ax_f",
+          "part": "racer_axle",
+          "mate": {
+            "conn": "axis",
+            "host": "scooter",
+            "hostConn": "axle_front",
+            "along": "start"
+          }
+        },
+        {
+          "id": "wm_f",
+          "part": "veh_wheel_moto",
+          "mate": {
+            "conn": "hub",
+            "host": "ax_f",
+            "hostConn": "axis",
+            "along": "center"
+          }
+        },
+        {
+          "id": "ax_r",
+          "part": "racer_axle",
+          "mate": {
+            "conn": "axis",
+            "host": "scooter",
+            "hostConn": "axle_rear",
+            "along": "start"
+          }
+        },
+        {
+          "id": "wm_r",
+          "part": "veh_wheel_moto",
+          "mate": {
+            "conn": "hub",
+            "host": "ax_r",
+            "hostConn": "axis",
+            "along": "center"
+          }
+        }
+      ],
+      "reference": {
+        "poses": {
+          "scooter": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0,
+            "rot": 0
+          },
+          "handlebars": {
+            "x": 0.0,
+            "y": -18.75,
+            "z": 0.0,
+            "rot": 0
+          },
+          "ax_f": {
+            "x": -18.75,
+            "y": -43.75,
+            "z": 6.25,
+            "rot": 0,
+            "tilt": [
+              0.0,
+              90.0
+            ]
+          },
+          "wm_f": {
+            "x": -7.0,
+            "y": -43.75,
+            "z": 6.25,
+            "rot": 0,
+            "tilt": [
+              0.0,
+              90.0
+            ]
+          },
+          "ax_r": {
+            "x": -18.75,
+            "y": 50.0,
+            "z": 6.25,
+            "rot": 0,
+            "tilt": [
+              0.0,
+              90.0
+            ]
+          },
+          "wm_r": {
+            "x": -7.0,
+            "y": 50.0,
+            "z": 6.25,
+            "rot": 0,
+            "tilt": [
+              0.0,
+              90.0
+            ]
+          }
+        },
+        "boxes": {
+          "scooter": [
+            -18.75,
+            -64.0,
+            0.0,
+            18.75,
+            70.0,
+            31.8
+          ],
+          "handlebars": [
+            -26.0,
+            -21.25,
+            0.0,
+            26.0,
+            -14.65,
+            44.0
+          ],
+          "ax_f": [
+            -18.75,
+            -46.25,
+            2.95,
+            18.75,
+            -41.25,
+            9.55
+          ],
+          "wm_f": [
+            -7.0,
+            -61.734,
+            -11.734,
+            7.0,
+            -25.766,
+            24.234
+          ],
+          "ax_r": [
+            -18.75,
+            47.5,
+            2.95,
+            18.75,
+            52.5,
+            9.55
+          ],
+          "wm_r": [
+            -7.0,
+            32.016,
+            -11.734,
+            7.0,
+            67.984,
+            24.234
+          ]
+        },
+        "validator": {
+          "ok": true,
+          "errors": 0,
+          "warnings": 0,
+          "edges": 7
+        }
+      }
+    },
+    {
+      "id": "skateboard",
+      "description": "a skateboard",
+      "title": "Skateboard",
+      "keywords": [
+        "skateboard",
+        "skate board",
+        "skate",
+        "board"
+      ],
+      "steps": [
+        {
+          "id": "deck",
+          "part": "prop_skateboard_deck"
+        },
+        {
+          "id": "ax_f",
+          "part": "racer_axle",
+          "mate": {
+            "conn": "axis",
+            "host": "deck",
+            "hostConn": "axle_front",
+            "along": "center"
+          }
+        },
+        {
+          "id": "wl_f",
+          "part": "racer_wheel",
+          "mate": {
+            "conn": "hub",
+            "host": "ax_f",
+            "hostConn": "axis",
+            "along": "start"
+          }
+        },
+        {
+          "id": "wr_f",
+          "part": "racer_wheel",
+          "mate": {
+            "conn": "hub",
+            "host": "ax_f",
+            "hostConn": "axis",
+            "along": "end"
+          }
+        },
+        {
+          "id": "ax_r",
+          "part": "racer_axle",
+          "mate": {
+            "conn": "axis",
+            "host": "deck",
+            "hostConn": "axle_rear",
+            "along": "center"
+          }
+        },
+        {
+          "id": "wl_r",
+          "part": "racer_wheel",
+          "mate": {
+            "conn": "hub",
+            "host": "ax_r",
+            "hostConn": "axis",
+            "along": "start"
+          }
+        },
+        {
+          "id": "wr_r",
+          "part": "racer_wheel",
+          "mate": {
+            "conn": "hub",
+            "host": "ax_r",
+            "hostConn": "axis",
+            "along": "end"
+          }
+        }
+      ],
+      "reference": {
+        "poses": {
+          "deck": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0,
+            "rot": 0
+          },
+          "ax_f": {
+            "x": -18.75,
+            "y": -18.75,
+            "z": 6.25,
+            "rot": 0,
+            "tilt": [
+              0.0,
+              90.0
+            ]
+          },
+          "wl_f": {
+            "x": -18.75,
+            "y": -18.75,
+            "z": 6.25,
+            "rot": 0,
+            "tilt": [
+              0.0,
+              90.0
+            ]
+          },
+          "wr_f": {
+            "x": 12.75,
+            "y": -18.75,
+            "z": 6.25,
+            "rot": 0,
+            "tilt": [
+              0.0,
+              90.0
+            ]
+          },
+          "ax_r": {
+            "x": -18.75,
+            "y": 18.75,
+            "z": 6.25,
+            "rot": 0,
+            "tilt": [
+              0.0,
+              90.0
+            ]
+          },
+          "wl_r": {
+            "x": -18.75,
+            "y": 18.75,
+            "z": 6.25,
+            "rot": 0,
+            "tilt": [
+              0.0,
+              90.0
+            ]
+          },
+          "wr_r": {
+            "x": 12.75,
+            "y": 18.75,
+            "z": 6.25,
+            "rot": 0,
+            "tilt": [
+              0.0,
+              90.0
+            ]
+          }
+        },
+        "boxes": {
+          "deck": [
+            -12.4,
+            -31.9,
+            0.0,
+            12.4,
+            31.9,
+            16.3
+          ],
+          "ax_f": [
+            -18.75,
+            -21.25,
+            2.95,
+            18.75,
+            -16.25,
+            9.55
+          ],
+          "wl_f": [
+            -18.75,
+            -27.706,
+            -2.706,
+            -12.75,
+            -9.794,
+            15.206
+          ],
+          "wr_f": [
+            12.75,
+            -27.706,
+            -2.706,
+            18.75,
+            -9.794,
+            15.206
+          ],
+          "ax_r": [
+            -18.75,
+            16.25,
+            2.95,
+            18.75,
+            21.25,
+            9.55
+          ],
+          "wl_r": [
+            -18.75,
+            9.794,
+            -2.706,
+            -12.75,
+            27.706,
+            15.206
+          ],
+          "wr_r": [
+            12.75,
+            9.794,
+            -2.706,
+            18.75,
+            27.706,
+            15.206
+          ]
+        },
+        "validator": {
+          "ok": true,
+          "errors": 0,
+          "warnings": 0,
+          "edges": 6
+        }
+      }
+    },
+    {
+      "id": "kip-cowboy",
+      "description": "Kip with a cowboy hat",
+      "title": "Kip in a cowboy hat",
+      "keywords": [
+        "kip",
+        "cowboy",
+        "cowboy hat",
+        "western"
+      ],
+      "steps": [
+        {
+          "id": "legs",
+          "part": "char_legs_seated"
+        },
+        {
+          "id": "torso",
+          "part": "robot_torso_core",
+          "mate": {
+            "conn": "under_sockets",
+            "host": "legs",
+            "hostConn": "top_studs"
+          }
+        },
+        {
+          "id": "arms",
+          "part": "robot_arms_grabber",
+          "mate": {
+            "conn": "under_sockets",
+            "host": "torso",
+            "hostConn": "top_studs"
+          }
+        },
+        {
+          "id": "head",
+          "part": "char_head_kid",
+          "mate": {
+            "conn": "under_sockets",
+            "host": "arms",
+            "hostConn": "top_studs"
+          }
+        },
+        {
+          "id": "faceplate",
+          "part": "char_faceplate",
+          "mate": {
+            "conn": "axis",
+            "host": "head",
+            "hostConn": "face_slot",
+            "along": "start"
+          }
+        },
+        {
+          "id": "hat",
+          "part": "hat_cowboy",
+          "mate": {
+            "conn": "under_sockets",
+            "host": "head",
+            "hostConn": "top_studs"
+          }
+        }
+      ],
+      "reference": {
+        "poses": {
+          "legs": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0,
+            "rot": 0
+          },
+          "torso": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 16.0,
+            "rot": 0
+          },
+          "arms": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 36.0,
+            "rot": 0
+          },
+          "head": {
+            "x": 0.0,
+            "y": -6.25,
+            "z": 41.0,
+            "rot": 0
+          },
+          "faceplate": {
+            "x": 0.0,
+            "y": -16.417,
+            "z": 53.5,
+            "rot": 2,
+            "tilt": [
+              90.0,
+              0.0
+            ]
+          },
+          "hat": {
+            "x": 0.0,
+            "y": -6.25,
+            "z": 72.4,
+            "rot": 0
+          }
+        },
+        "boxes": {
+          "legs": [
+            -12.4,
+            -14.7,
+            0.0,
+            12.4,
+            12.4,
+            18.8
+          ],
+          "torso": [
+            -12.4,
+            -12.4,
+            16.0,
+            12.4,
+            12.4,
+            38.8
+          ],
+          "arms": [
+            -24.1,
+            -23.5,
+            36.0,
+            24.1,
+            12.4,
+            43.8
+          ],
+          "head": [
+            -19.097,
+            -20.974,
+            41.0,
+            19.097,
+            6.35,
+            75.2
+          ],
+          "faceplate": [
+            -12.1,
+            -22.547,
+            50.598,
+            12.1,
+            -3.917,
+            63.75
+          ],
+          "hat": [
+            -31.6,
+            -39.85,
+            62.4,
+            31.6,
+            25.75,
+            80.39
+          ]
+        },
+        "validator": {
+          "ok": true,
+          "errors": 0,
+          "warnings": 0,
+          "edges": 5
+        }
+      }
+    },
+    {
+      "id": "kip-bob-tophat",
+      "description": "a tall Kip with a bob haircut and a top hat",
+      "title": "Kip with a bob and a top hat",
+      "keywords": [
+        "bob",
+        "bob haircut",
+        "top hat",
+        "tophat",
+        "tall",
+        "fancy"
+      ],
+      "steps": [
+        {
+          "id": "legs",
+          "part": "char_legs_seated"
+        },
+        {
+          "id": "torso",
+          "part": "robot_torso_core",
+          "mate": {
+            "conn": "under_sockets",
+            "host": "legs",
+            "hostConn": "top_studs"
+          }
+        },
+        {
+          "id": "arms",
+          "part": "robot_arms_grabber",
+          "mate": {
+            "conn": "under_sockets",
+            "host": "torso",
+            "hostConn": "top_studs"
+          }
+        },
+        {
+          "id": "head",
+          "part": "char_head_tall",
+          "mate": {
+            "conn": "under_sockets",
+            "host": "arms",
+            "hostConn": "top_studs"
+          }
+        },
+        {
+          "id": "faceplate",
+          "part": "char_faceplate",
+          "mate": {
+            "conn": "axis",
+            "host": "head",
+            "hostConn": "face_slot",
+            "along": "start"
+          }
+        },
+        {
+          "id": "hair",
+          "part": "hair_bob",
+          "mate": {
+            "conn": "under_sockets",
+            "host": "head",
+            "hostConn": "top_studs"
+          }
+        },
+        {
+          "id": "hat",
+          "part": "hat_tophat",
+          "mate": {
+            "conn": "under_sockets",
+            "host": "hair",
+            "hostConn": "top_studs"
+          }
+        }
+      ],
+      "reference": {
+        "poses": {
+          "legs": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0,
+            "rot": 0
+          },
+          "torso": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 16.0,
+            "rot": 0
+          },
+          "arms": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 36.0,
+            "rot": 0
+          },
+          "head": {
+            "x": 0.0,
+            "y": -6.25,
+            "z": 41.0,
+            "rot": 0
+          },
+          "faceplate": {
+            "x": 0.0,
+            "y": -16.417,
+            "z": 55.062,
+            "rot": 2,
+            "tilt": [
+              90.0,
+              0.0
+            ]
+          },
+          "hair": {
+            "x": 0.0,
+            "y": -6.25,
+            "z": 74.4,
+            "rot": 0
+          },
+          "hat": {
+            "x": 0.0,
+            "y": -6.25,
+            "z": 79.2,
+            "rot": 0
+          }
+        },
+        "boxes": {
+          "legs": [
+            -12.4,
+            -14.7,
+            0.0,
+            12.4,
+            12.4,
+            18.8
+          ],
+          "torso": [
+            -12.4,
+            -12.4,
+            16.0,
+            12.4,
+            12.4,
+            38.8
+          ],
+          "arms": [
+            -24.1,
+            -23.5,
+            36.0,
+            24.1,
+            12.4,
+            43.8
+          ],
+          "head": [
+            -20.021,
+            -21.397,
+            41.0,
+            20.021,
+            6.35,
+            77.2
+          ],
+          "faceplate": [
+            -12.1,
+            -22.547,
+            52.16,
+            12.1,
+            -3.917,
+            65.313
+          ],
+          "hair": [
+            -24.305,
+            -24.357,
+            55.4,
+            24.319,
+            9.526,
+            82.0
+          ],
+          "hat": [
+            -27.7,
+            -33.05,
+            69.6,
+            27.7,
+            19.35,
+            95.2
+          ]
+        },
+        "validator": {
+          "ok": true,
+          "errors": 0,
+          "warnings": 0,
+          "edges": 6
+        }
+      }
+    },
+    {
+      "id": "kip-ranger",
+      "description": "Kip in a ranger hat with no hair",
+      "title": "Ranger Kip",
+      "keywords": [
+        "ranger",
+        "ranger hat",
+        "park ranger",
+        "scout",
+        "explorer"
+      ],
+      "steps": [
+        {
+          "id": "legs",
+          "part": "char_legs_seated"
+        },
+        {
+          "id": "torso",
+          "part": "robot_torso_core",
+          "mate": {
+            "conn": "under_sockets",
+            "host": "legs",
+            "hostConn": "top_studs"
+          }
+        },
+        {
+          "id": "arms",
+          "part": "robot_arms_grabber",
+          "mate": {
+            "conn": "under_sockets",
+            "host": "torso",
+            "hostConn": "top_studs"
+          }
+        },
+        {
+          "id": "head",
+          "part": "char_head_kid",
+          "mate": {
+            "conn": "under_sockets",
+            "host": "arms",
+            "hostConn": "top_studs"
+          }
+        },
+        {
+          "id": "faceplate",
+          "part": "char_faceplate",
+          "mate": {
+            "conn": "axis",
+            "host": "head",
+            "hostConn": "face_slot",
+            "along": "start"
+          }
+        },
+        {
+          "id": "hat",
+          "part": "hat_ranger",
+          "mate": {
+            "conn": "under_sockets",
+            "host": "head",
+            "hostConn": "top_studs"
+          }
+        }
+      ],
+      "reference": {
+        "poses": {
+          "legs": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0,
+            "rot": 0
+          },
+          "torso": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 16.0,
+            "rot": 0
+          },
+          "arms": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 36.0,
+            "rot": 0
+          },
+          "head": {
+            "x": 0.0,
+            "y": -6.25,
+            "z": 41.0,
+            "rot": 0
+          },
+          "faceplate": {
+            "x": 0.0,
+            "y": -16.417,
+            "z": 53.5,
+            "rot": 2,
+            "tilt": [
+              90.0,
+              0.0
+            ]
+          },
+          "hat": {
+            "x": 0.0,
+            "y": -6.25,
+            "z": 72.4,
+            "rot": 0
+          }
+        },
+        "boxes": {
+          "legs": [
+            -12.4,
+            -14.7,
+            0.0,
+            12.4,
+            12.4,
+            18.8
+          ],
+          "torso": [
+            -12.4,
+            -12.4,
+            16.0,
+            12.4,
+            12.4,
+            38.8
+          ],
+          "arms": [
+            -24.1,
+            -23.5,
+            36.0,
+            24.1,
+            12.4,
+            43.8
+          ],
+          "head": [
+            -19.097,
+            -20.974,
+            41.0,
+            19.097,
+            6.35,
+            75.2
+          ],
+          "faceplate": [
+            -12.1,
+            -22.547,
+            50.598,
+            12.1,
+            -3.917,
+            63.75
+          ],
+          "hat": [
+            -30.3,
+            -36.15,
+            62.4,
+            30.3,
+            22.45,
+            80.89
+          ]
+        },
+        "validator": {
+          "ok": true,
+          "errors": 0,
+          "warnings": 0,
+          "edges": 5
+        }
+      }
+    },
+    {
+      "id": "robot-jetpack",
+      "description": "a robot with a jetpack",
+      "title": "Jetpack robot",
+      "keywords": [
+        "robot",
+        "jetpack",
+        "jet pack",
+        "bot",
+        "stomper"
+      ],
+      "steps": [
+        {
+          "id": "legs",
+          "part": "robot_legs_stomper"
+        },
+        {
+          "id": "torso",
+          "part": "robot_torso_core",
+          "mate": {
+            "conn": "under_sockets",
+            "host": "legs",
+            "hostConn": "top_studs"
+          }
+        },
+        {
+          "id": "arms",
+          "part": "robot_arms_grabber",
+          "mate": {
+            "conn": "under_sockets",
+            "host": "torso",
+            "hostConn": "top_studs"
+          }
+        },
+        {
+          "id": "head",
+          "part": "robot_head_visor",
+          "mate": {
+            "conn": "under_sockets",
+            "host": "arms",
+            "hostConn": "top_studs"
+          }
+        },
+        {
+          "id": "pack",
+          "part": "robot_back_jetpack",
+          "mate": {
+            "conn": "under_sockets",
+            "host": "arms",
+            "hostConn": "top_studs",
+            "hostCell": [
+              0,
+              1
+            ]
+          }
+        }
+      ],
+      "reference": {
+        "poses": {
+          "legs": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0,
+            "rot": 0
+          },
+          "torso": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 18.0,
+            "rot": 0
+          },
+          "arms": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 38.0,
+            "rot": 0
+          },
+          "head": {
+            "x": 0.0,
+            "y": -6.25,
+            "z": 43.0,
+            "rot": 0
+          },
+          "pack": {
+            "x": 0.0,
+            "y": 6.25,
+            "z": 43.0,
+            "rot": 0
+          }
+        },
+        "boxes": {
+          "legs": [
+            -11.95,
+            -12.4,
+            0.0,
+            11.95,
+            12.4,
+            20.8
+          ],
+          "torso": [
+            -12.4,
+            -12.4,
+            18.0,
+            12.4,
+            12.4,
+            40.8
+          ],
+          "arms": [
+            -24.1,
+            -23.5,
+            38.0,
+            24.1,
+            12.4,
+            45.8
+          ],
+          "head": [
+            -22.7,
+            -23.192,
+            43.0,
+            22.7,
+            11.15,
+            77.4
+          ],
+          "pack": [
+            -12.4,
+            0.1,
+            43.0,
+            12.4,
+            19.75,
+            57.8
+          ]
+        },
+        "validator": {
+          "ok": true,
+          "errors": 0,
+          "warnings": 0,
+          "edges": 4
+        }
+      }
+    },
+    {
+      "id": "kip-driving-race-car",
+      "description": "Kip driving a race car",
+      "title": "Kip at the wheel",
+      "keywords": [
+        "kip driving",
+        "driver",
+        "driving a race car",
+        "kip in a car",
+        "racing"
+      ],
+      "steps": [
+        {
+          "id": "car",
+          "part": "veh_car_chassis"
+        },
+        {
+          "id": "hood",
+          "part": "veh_car_hood_cover",
+          "mate": {
+            "conn": "under_sockets",
+            "host": "car",
+            "hostConn": "hood_studs"
+          }
+        },
+        {
+          "id": "spoiler",
+          "part": "racer_spoiler",
+          "mate": {
+            "conn": "under_sockets",
+            "host": "car",
+            "hostConn": "spoiler_studs"
+          }
+        },
+        {
+          "id": "ax_f",
+          "part": "shaft_tu05",
+          "mate": {
+            "conn": "axis",
+            "host": "car",
+            "hostConn": "axle_front",
+            "along": "center"
+          }
+        },
+        {
+          "id": "wl_f",
+          "part": "veh_wheel_sport",
+          "mate": {
+            "conn": "hub",
+            "host": "ax_f",
+            "hostConn": "axis",
+            "along": "start"
+          }
+        },
+        {
+          "id": "wr_f",
+          "part": "veh_wheel_sport",
+          "mate": {
+            "conn": "hub",
+            "host": "ax_f",
+            "hostConn": "axis",
+            "along": "end"
+          }
+        },
+        {
+          "id": "ax_r",
+          "part": "shaft_tu05",
+          "mate": {
+            "conn": "axis",
+            "host": "car",
+            "hostConn": "axle_rear",
+            "along": "center"
+          }
+        },
+        {
+          "id": "wl_r",
+          "part": "veh_wheel_sport",
+          "mate": {
+            "conn": "hub",
+            "host": "ax_r",
+            "hostConn": "axis",
+            "along": "start"
+          }
+        },
+        {
+          "id": "wr_r",
+          "part": "veh_wheel_sport",
+          "mate": {
+            "conn": "hub",
+            "host": "ax_r",
+            "hostConn": "axis",
+            "along": "end"
+          }
+        },
+        {
+          "id": "legs",
+          "part": "char_legs_seated",
+          "mate": {
+            "conn": "under_sockets",
+            "host": "car",
+            "hostConn": "top_studs",
+            "hostCell": [
+              1,
+              0
+            ]
+          }
+        },
+        {
+          "id": "torso",
+          "part": "robot_torso_core",
+          "mate": {
+            "conn": "under_sockets",
+            "host": "legs",
+            "hostConn": "top_studs"
+          }
+        },
+        {
+          "id": "arms",
+          "part": "robot_arms_grabber",
+          "mate": {
+            "conn": "under_sockets",
+            "host": "torso",
+            "hostConn": "top_studs"
+          }
+        },
+        {
+          "id": "head",
+          "part": "char_head_kid",
+          "mate": {
+            "conn": "under_sockets",
+            "host": "arms",
+            "hostConn": "top_studs"
+          }
+        },
+        {
+          "id": "faceplate",
+          "part": "char_faceplate",
+          "mate": {
+            "conn": "axis",
+            "host": "head",
+            "hostConn": "face_slot",
+            "along": "start"
+          }
+        }
+      ],
+      "reference": {
+        "poses": {
+          "car": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0,
+            "rot": 0
+          },
+          "hood": {
+            "x": 0.0,
+            "y": -37.5,
+            "z": 17.5,
+            "rot": 0
+          },
+          "spoiler": {
+            "x": 0.0,
+            "y": 31.25,
+            "z": 18.5,
+            "rot": 0
+          },
+          "ax_f": {
+            "x": -31.25,
+            "y": -43.75,
+            "z": 6.25,
+            "rot": 0,
+            "tilt": [
+              0.0,
+              90.0
+            ]
+          },
+          "wl_f": {
+            "x": -31.25,
+            "y": -43.75,
+            "z": 6.25,
+            "rot": 0,
+            "tilt": [
+              0.0,
+              90.0
+            ]
+          },
+          "wr_f": {
+            "x": 17.75,
+            "y": -43.75,
+            "z": 6.25,
+            "rot": 0,
+            "tilt": [
+              0.0,
+              90.0
+            ]
+          },
+          "ax_r": {
+            "x": -31.25,
+            "y": 43.75,
+            "z": 6.25,
+            "rot": 0,
+            "tilt": [
+              0.0,
+              90.0
+            ]
+          },
+          "wl_r": {
+            "x": -31.25,
+            "y": 43.75,
+            "z": 6.25,
+            "rot": 0,
+            "tilt": [
+              0.0,
+              90.0
+            ]
+          },
+          "wr_r": {
+            "x": 17.75,
+            "y": 43.75,
+            "z": 6.25,
+            "rot": 0,
+            "tilt": [
+              0.0,
+              90.0
+            ]
+          },
+          "legs": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 13.5,
+            "rot": 0
+          },
+          "torso": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 29.5,
+            "rot": 0
+          },
+          "arms": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 49.5,
+            "rot": 0
+          },
+          "head": {
+            "x": 0.0,
+            "y": -6.25,
+            "z": 54.5,
+            "rot": 0
+          },
+          "faceplate": {
+            "x": 0.0,
+            "y": -16.417,
+            "z": 67.0,
+            "rot": 2,
+            "tilt": [
+              90.0,
+              0.0
+            ]
+          }
+        },
+        "boxes": {
+          "car": [
+            -29.0,
+            -62.3,
+            0.0,
+            29.0,
+            62.4,
+            25.3
+          ],
+          "hood": [
+            -20.6,
+            -56.5,
+            17.5,
+            20.6,
+            -22.1,
+            34.8
+          ],
+          "spoiler": [
+            -12.4,
+            25.3,
+            18.5,
+            12.4,
+            37.2,
+            32.3
+          ],
+          "ax_f": [
+            -31.25,
+            -46.25,
+            2.95,
+            31.25,
+            -41.25,
+            9.55
+          ],
+          "wl_f": [
+            -31.25,
+            -61.73,
+            -11.73,
+            -17.75,
+            -25.77,
+            24.23
+          ],
+          "wr_f": [
+            17.75,
+            -61.73,
+            -11.73,
+            31.25,
+            -25.77,
+            24.23
+          ],
+          "ax_r": [
+            -31.25,
+            41.25,
+            2.95,
+            31.25,
+            46.25,
+            9.55
+          ],
+          "wl_r": [
+            -31.25,
+            25.77,
+            -11.73,
+            -17.75,
+            61.73,
+            24.23
+          ],
+          "wr_r": [
+            17.75,
+            25.77,
+            -11.73,
+            31.25,
+            61.73,
+            24.23
+          ],
+          "legs": [
+            -12.4,
+            -14.7,
+            13.5,
+            12.4,
+            12.4,
+            32.3
+          ],
+          "torso": [
+            -12.4,
+            -12.4,
+            29.5,
+            12.4,
+            12.4,
+            52.3
+          ],
+          "arms": [
+            -24.1,
+            -23.5,
+            49.5,
+            24.1,
+            12.4,
+            57.3
+          ],
+          "head": [
+            -19.097,
+            -20.974,
+            54.5,
+            19.097,
+            6.35,
+            88.7
+          ],
+          "faceplate": [
+            -12.1,
+            -22.547,
+            64.098,
+            12.1,
+            -3.917,
+            77.25
+          ]
+        },
+        "validator": {
+          "ok": true,
+          "errors": 0,
+          "warnings": 0,
+          "edges": 13
+        }
+      }
+    },
+    {
+      "id": "kip-pickup-cowboy",
+      "description": "a cowboy Kip in an open pickup truck",
+      "title": "Cowboy in a pickup",
+      "keywords": [
+        "cowboy in a truck",
+        "open pickup",
+        "cowboy pickup",
+        "farm truck",
+        "ranch"
+      ],
+      "steps": [
+        {
+          "id": "truck",
+          "part": "veh_truck_chassis"
+        },
+        {
+          "id": "hood",
+          "part": "veh_car_hood_cover",
+          "mate": {
+            "conn": "under_sockets",
+            "host": "truck",
+            "hostConn": "hood_studs"
+          }
+        },
+        {
+          "id": "bed",
+          "part": "veh_truck_bed_cover",
+          "mate": {
+            "conn": "under_sockets",
+            "host": "truck",
+            "hostConn": "cargo_studs"
+          }
+        },
+        {
+          "id": "ax_f",
+          "part": "shaft_tu05",
+          "mate": {
+            "conn": "axis",
+            "host": "truck",
+            "hostConn": "axle_front",
+            "along": "center"
+          }
+        },
+        {
+          "id": "wl_f",
+          "part": "veh_wheel_offroad",
+          "mate": {
+            "conn": "hub",
+            "host": "ax_f",
+            "hostConn": "axis",
+            "along": "start"
+          }
+        },
+        {
+          "id": "wr_f",
+          "part": "veh_wheel_offroad",
+          "mate": {
+            "conn": "hub",
+            "host": "ax_f",
+            "hostConn": "axis",
+            "along": "end"
+          }
+        },
+        {
+          "id": "ax_r",
+          "part": "shaft_tu05",
+          "mate": {
+            "conn": "axis",
+            "host": "truck",
+            "hostConn": "axle_rear",
+            "along": "center"
+          }
+        },
+        {
+          "id": "wl_r",
+          "part": "veh_wheel_offroad",
+          "mate": {
+            "conn": "hub",
+            "host": "ax_r",
+            "hostConn": "axis",
+            "along": "start"
+          }
+        },
+        {
+          "id": "wr_r",
+          "part": "veh_wheel_offroad",
+          "mate": {
+            "conn": "hub",
+            "host": "ax_r",
+            "hostConn": "axis",
+            "along": "end"
+          }
+        },
+        {
+          "id": "legs",
+          "part": "char_legs_seated",
+          "mate": {
+            "conn": "under_sockets",
+            "host": "truck",
+            "hostConn": "top_studs",
+            "hostCell": [
+              1,
+              0
+            ]
+          }
+        },
+        {
+          "id": "torso",
+          "part": "robot_torso_core",
+          "mate": {
+            "conn": "under_sockets",
+            "host": "legs",
+            "hostConn": "top_studs"
+          }
+        },
+        {
+          "id": "arms",
+          "part": "robot_arms_grabber",
+          "mate": {
+            "conn": "under_sockets",
+            "host": "torso",
+            "hostConn": "top_studs"
+          }
+        },
+        {
+          "id": "head",
+          "part": "char_head_kid",
+          "mate": {
+            "conn": "under_sockets",
+            "host": "arms",
+            "hostConn": "top_studs"
+          }
+        },
+        {
+          "id": "faceplate",
+          "part": "char_faceplate",
+          "mate": {
+            "conn": "axis",
+            "host": "head",
+            "hostConn": "face_slot",
+            "along": "start"
+          }
+        },
+        {
+          "id": "hat",
+          "part": "hat_cowboy",
+          "mate": {
+            "conn": "under_sockets",
+            "host": "head",
+            "hostConn": "top_studs"
+          }
+        }
+      ],
+      "reference": {
+        "poses": {
+          "truck": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0,
+            "rot": 0
+          },
+          "hood": {
+            "x": 0.0,
+            "y": -37.5,
+            "z": 18.0,
+            "rot": 0
+          },
+          "bed": {
+            "x": 0.0,
+            "y": 56.25,
+            "z": 15.0,
+            "rot": 0
+          },
+          "ax_f": {
+            "x": -31.25,
+            "y": -43.75,
+            "z": 6.25,
+            "rot": 0,
+            "tilt": [
+              0.0,
+              90.0
+            ]
+          },
+          "wl_f": {
+            "x": -31.25,
+            "y": -43.75,
+            "z": 6.25,
+            "rot": 0,
+            "tilt": [
+              0.0,
+              90.0
+            ]
+          },
+          "wr_f": {
+            "x": 17.25,
+            "y": -43.75,
+            "z": 6.25,
+            "rot": 0,
+            "tilt": [
+              0.0,
+              90.0
+            ]
+          },
+          "ax_r": {
+            "x": -31.25,
+            "y": 53.125,
+            "z": 6.25,
+            "rot": 0,
+            "tilt": [
+              0.0,
+              90.0
+            ]
+          },
+          "wl_r": {
+            "x": -31.25,
+            "y": 53.125,
+            "z": 6.25,
+            "rot": 0,
+            "tilt": [
+              0.0,
+              90.0
+            ]
+          },
+          "wr_r": {
+            "x": 17.25,
+            "y": 53.125,
+            "z": 6.25,
+            "rot": 0,
+            "tilt": [
+              0.0,
+              90.0
+            ]
+          },
+          "legs": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 13.5,
+            "rot": 0
+          },
+          "torso": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 29.5,
+            "rot": 0
+          },
+          "arms": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 49.5,
+            "rot": 0
+          },
+          "head": {
+            "x": 0.0,
+            "y": -6.25,
+            "z": 54.5,
+            "rot": 0
+          },
+          "faceplate": {
+            "x": 0.0,
+            "y": -16.417,
+            "z": 67.0,
+            "rot": 2,
+            "tilt": [
+              90.0,
+              0.0
+            ]
+          },
+          "hat": {
+            "x": 0.0,
+            "y": -6.25,
+            "z": 85.9,
+            "rot": 0
+          }
+        },
+        "boxes": {
+          "truck": [
+            -29.0,
+            -62.3,
+            0.0,
+            29.0,
+            87.3,
+            28.8
+          ],
+          "hood": [
+            -20.6,
+            -56.5,
+            18.0,
+            20.6,
+            -22.1,
+            35.3
+          ],
+          "bed": [
+            -21.45,
+            37.05,
+            15.0,
+            21.45,
+            75.45,
+            35.2
+          ],
+          "ax_f": [
+            -31.25,
+            -46.25,
+            2.95,
+            31.25,
+            -41.25,
+            9.55
+          ],
+          "wl_f": [
+            -31.25,
+            -65.75,
+            -15.711,
+            -17.25,
+            -21.75,
+            28.211
+          ],
+          "wr_f": [
+            17.25,
+            -65.75,
+            -15.711,
+            31.25,
+            -21.75,
+            28.211
+          ],
+          "ax_r": [
+            -31.25,
+            50.625,
+            2.95,
+            31.25,
+            55.625,
+            9.55
+          ],
+          "wl_r": [
+            -31.25,
+            31.125,
+            -15.711,
+            -17.25,
+            75.125,
+            28.211
+          ],
+          "wr_r": [
+            17.25,
+            31.125,
+            -15.711,
+            31.25,
+            75.125,
+            28.211
+          ],
+          "legs": [
+            -12.4,
+            -14.7,
+            13.5,
+            12.4,
+            12.4,
+            32.3
+          ],
+          "torso": [
+            -12.4,
+            -12.4,
+            29.5,
+            12.4,
+            12.4,
+            52.3
+          ],
+          "arms": [
+            -24.1,
+            -23.5,
+            49.5,
+            24.1,
+            12.4,
+            57.3
+          ],
+          "head": [
+            -19.097,
+            -20.974,
+            54.5,
+            19.097,
+            6.35,
+            88.7
+          ],
+          "faceplate": [
+            -12.1,
+            -22.547,
+            64.098,
+            12.1,
+            -3.917,
+            77.25
+          ],
+          "hat": [
+            -31.6,
+            -39.85,
+            75.9,
+            31.6,
+            25.75,
+            93.89
+          ]
+        },
+        "validator": {
+          "ok": true,
+          "errors": 0,
+          "warnings": 0,
+          "edges": 14
+        }
+      }
+    }
+  ]
+}

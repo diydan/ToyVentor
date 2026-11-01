@@ -66,6 +66,31 @@ copyFileSync(
   join(kipSrcDir, "viewer/kip-selfie.js"),
   join(kipOutDir, "kip-selfie.js"),
 );
+// Describe & build tab (kip-describe-contract.md): the page modules and their data. The 30 part STLs it draws are written straight into
+copyFileSync(
+  join(kipSrcDir, "viewer/kip-describe-tab.js"),
+  join(kipOutDir, "kip-describe-tab.js"),
+);
+copyFileSync(
+  join(kipSrcDir, "viewer/kip-describe.js"),
+  join(kipOutDir, "kip-describe.js"),
+);
+copyFileSync(
+  join(kipSrcDir, "viewer/kip-describe-validate.js"),
+  join(kipOutDir, "kip-describe-validate.js"),
+);
+copyFileSync(
+  join(kipSrcDir, "viewer/kip-describe-view.js"),
+  join(kipOutDir, "kip-describe-view.js"),
+);
+copyFileSync(
+  join(kipSrcDir, "viewer/kip-describe-recipes.json"),
+  join(kipOutDir, "kip-describe-recipes.json"),
+);
+copyFileSync(
+  join(kipSrcDir, "viewer/kip-describe-parts.json"),
+  join(kipOutDir, "kip-describe-parts.json"),
+);
 // Prompt-a-face gallery: same-origin static pictures the selfie modal preloads with the page.
 cpSync(join(kipSrcDir, "viewer/selfie-faces"), join(kipOutDir, "selfie-faces"), { recursive: true });
 copyFileSync(

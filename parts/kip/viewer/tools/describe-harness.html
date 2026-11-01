@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Describe and build harness</title>
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #e9e3d6; }
+  canvas { display: block; width: 100%; height: 100%; }
+</style>
+</head>
+<body>
+<!--
+  Development harness for kip-describe-tab.js: a bare three.js scene with the tab mounted, no host page. NOT shipped (build:kip does not copy tools/).
+  Query: ?q=<description> builds it on load   &explode=0..1 sets the slider   &build=<0..steps> pauses the build part-way   &stepMs=<ms per step>
+         &endpoint=<url> uses a model endpoint   &probe=1 writes the drawn boxes into <pre id="describe-probe">
+  Served with the viewer files at /kip/ (the page itself at /kip/tools/describe-harness.html).
+-->
+<script type="module">
+import { THREE, OrbitControls, STLLoader, RoomEnvironment, mergeVertices, toCreasedNormals } from '/kip/vendor/three-kip.js';
+import { mountDescribe } from '/kip/kip-describe-tab.js';
+
+const q = new URLSearchParams(location.search);
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(1);
+renderer.setSize(innerWidth, innerHeight);
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+document.body.appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+scene.environmentIntensity = 0.7;
+scene.add(new THREE.HemisphereLight(0xfffaf0, 0xc8bfa8, 0.8));
+const sun = new THREE.DirectionalLight(0xffffff, 1.3);
+sun.position.set(-140, 240, 160);
+scene.add(sun);
+const grid = new THREE.GridHelper(400, 32, 0x8f96a6, 0xc7bfb0);
+scene.add(grid);
+const camera = new THREE.PerspectiveCamera(36, innerWidth / innerHeight, 1, 3000);
+camera.position.set(-160, 120, 180);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = false;
+controls.target.set(0, 30, 0);
+
+const tab = mountDescribe({
+  THREE, STLLoader, mergeVertices, toCreasedNormals, scene, camera, controls,
+  endpoint: q.get('endpoint') ?? '',
+  stepMs: Number(q.get('stepMs') ?? 1100),
+  setCharacterVisible: (on) => { (window.__characterCalls ??= []).push(on); },   // a host would show or hide its own character here
+});
+window.__describe = tab;
+
+addEventListener('resize', () => { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); });
+(function loop() { requestAnimationFrame(loop); controls.update(); renderer.render(scene, camera); })();
+
+/** Boxes of the drawn meshes in CAD coordinates (three world (x, y, z) -> CAD (x, -z, y)): what is on screen, not what the maths says. */
+function probe() {
+  const out = { explode: Number(q.get('explode') ?? 0), boxes: {}, plan: null, source: tab.last?.source, validated: tab.last?.validated };
+  const v = tab.view;
+  v.group.updateMatrixWorld(true);
+  v.steps.forEach((s, i) => {
+    const b = new THREE.Box3().setFromObject(v.meshes[i]);
+    out.boxes[s.id] = [b.min.x, -b.max.z, b.min.y, b.max.x, -b.min.z, b.max.y];
+  });
+  out.plan = { offsets: v.plan.offsets, assembled: v.plan.assembled };
+  return out;
+}
+
+(async () => {
+  tab.open();
+  if (q.get('q')) { tab.setText(q.get('q')); await tab.build(); }
+  if (q.has('explode')) tab.setExplode(Number(q.get('explode')));
+  if (q.has('build')) tab.setBuildProgress(Number(q.get('build')));   // e.g. ?q=a race car&build=2.5 : paused part-way through step 3
+  window.__describeReady = true;
+  if (q.get('probe')) {
+    const pre = document.createElement('pre');
+    pre.id = 'describe-probe';
+    pre.hidden = true;
+    pre.textContent = JSON.stringify(probe());
+    document.body.appendChild(pre);
+  }
+})();
+</script>
+</body>
+</html>
