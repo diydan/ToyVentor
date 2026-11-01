@@ -77,6 +77,7 @@ parts/partspec/*.stl
 parts/partspec/*.png
 parts/partspec/calibration/
 parts/partspec/app_export/
+parts/partspec/cards/
 
 # NOTE: public/kip/stls/, public/kip/vendor/, public/kip/custom/,
 # public/kip/partspec/, public/parts-stl/ and public/parts-glb/ are build
