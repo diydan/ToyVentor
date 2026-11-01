@@ -175,6 +175,7 @@ Goal: fit-filtered market + support-free STL export (wireframe p.7–9). Start: 
 - Spec debt: `spec-for-review.md` still describes the deleted `game/` lane and three 0.160 — `spec.md` body needs the native-port update, then `npm run spec:review`.
 - Still behind: ZERO physical prints (F1/F2 pending, Day 5–6 blocker); Day 6 Market+Print due today; submission items (video, write-up, dashboard rate limit on `/api/muse/spark`); republish blockers (remote D1 parent-time migration); Kip enlarged-controls legibility unconfirmed in-app; prototype disclaimer/packaging wording; theme-song caching/fallback; phone/AR passes.
 - Process: `parts/` freeze in effect with lanes assigned — lime-ionosphere owns the jumbo+ballcap stack (uncommitted `_hat_body` rework has since landed; re-verify `valid_kip_seated_jumbo` on next run); Truck-Mockup Commit 2 held for author confirmation.
+- Print, Day 5–6 blocker lifting: calibration print (F1) started Sat Oct 31, ~5 h run. First real plastic — fit loops unblock when it lands.
 
 ## Day 7 — Sun Nov 1: Color + Play
 
