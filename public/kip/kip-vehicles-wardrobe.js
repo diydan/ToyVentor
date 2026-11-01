@@ -1,4 +1,4 @@
-// ToyVentor Kip — Phase 1 Wardrobe (13 Heads in 4 Categories: Human · Robot · Animal · Creature, 3 Universal Swappable Human Face Plates, 14 Sculpted Wigs, 7 Wearable Hats, Full-Body Skin & Clothing Decals)
+// ToyVentor Kip — Phase 1 Wardrobe (12 Heads in 4 Categories: Human · Robot · Animal · Creature, 3 Universal Swappable Human Face Plates, 19 Sculpted Wigs, 7 Wearable Hats, Full-Body Skin & Clothing Decals)
 // + Phase 2 V2 Modular Vehicles (Stylized Multi-Spoke Wheels & Snap-On Body Covers)
 import {
   createDecalExpressionCanvas,
@@ -18,7 +18,7 @@ export const FACE_STEM_MM = 10.167;
 
 export const HUMAN_HEAD_IDS = new Set(['kid', 'chibi', 'tall', 'jumbo']);
 
-// Four head categories, three heads each except Human, which has four (13 total). The `Type` button cycles categories; the `Head` button cycles within one.
+// Four head categories (12 heads total: 4 Human, 2 Robot, 3 Animal, 3 Creature). The `Type` button cycles categories; the `Head` button cycles within one.
 export const HEAD_CATEGORIES = [
   { id: 'human',    label: 'Human' },
   { id: 'robot',    label: 'Robot' },
@@ -40,7 +40,6 @@ export const WARDROBE_HEADS = [
   { id: 'chibi',   category: 'human',    label: 'Sweet Heart',    crownY: 30.97, faceY: 12.5 },
   { id: 'tall',    category: 'human',    label: 'Heroic Jaw',     crownY: 32.948, faceY: 14.0625 },
   { id: 'jumbo',   category: 'human',    label: 'Jumbo Vinyl',    crownY: 30.97, faceY: 12.5 },
-  { id: 'classic', category: 'robot',    label: 'Kip Classic',    crownY: 42.2, faceY: 19.8 },
   { id: 'robot',   category: 'robot',    label: 'Bolt Robot',     crownY: 31.6, faceY: 17.8 },
   { id: 'scout',   category: 'robot',    label: 'Mecha Scout',    crownY: 32.8, faceY: 17.6 },
   { id: 'fox',     category: 'animal',   label: 'Fox',            crownY: 26.2, faceY: 15.0 },
@@ -57,7 +56,7 @@ export function headsInCategory(categoryId) {
 
 export function categoryOfHead(headId) {
   const h = WARDROBE_HEADS.find(x => x.id === headId);
-  return h ? h.category : 'robot';
+  return h ? h.category : 'human';
 }
 
 export const SHIRT_OPTIONS = [
@@ -205,8 +204,6 @@ export const VEHICLE_OPTIONS = [
 export async function loadExpansionGeos(loadSTL) {
   const vq = `?v=${KIP_BUILD_VERSION}`;
   const entries = await Promise.all([
-    // Compact low-profile neck collar (`kip.scad`)
-    ['neckTurret2x1',      loadSTL(`/kip/stls/neck_turret_2x1.stl${vq}`, 36)],
     // Phase 1 Curved Low-Poly & Wide Vinyl Squircle Humanoid Heads + 3 Universal Face Inserts + Critters + Bolt
     ['crownBuds2x1',       loadSTL(`/kip/partspec/toyventor_crown_buds_2x1.stl${vq}`, 34)],
     ['charHeadKid',        loadSTL(`/kip/partspec/toyventor_char_head_kid_S.stl${vq}`, 16)],
@@ -318,8 +315,8 @@ export const EXP_PALETTE = {
 };
 
 export function resolveBodyColors({
-  head = 'classic',
-  skinId = 'vinyl_cream',
+  head = 'kid',
+  skinId = 'warm_peach',
   shirtId = 'off',
   pantsId = 'off',
   sparkHex = '#FF6B4A',
@@ -330,23 +327,14 @@ export function resolveBodyColors({
 
   const headSkinHex = skinObj.hex.toUpperCase();
   let bodySkinHex = headSkinHex;
-  if (skinObj.id === 'vinyl_cream') {
-    if (head === 'fox') bodySkinHex = EXP_PALETTE.fox;
-    else if (head === 'bear') bodySkinHex = EXP_PALETTE.bear;
-    else if (head === 'robot') bodySkinHex = EXP_PALETTE.botSilv;
-    else if (head === 'scout') bodySkinHex = EXP_PALETTE.botScout;
-    else if (head === 'cat') bodySkinHex = EXP_PALETTE.cat;
-    else if (head === 'dragon') bodySkinHex = EXP_PALETTE.dragon;
-    else if (head === 'alien') bodySkinHex = EXP_PALETTE.alien;
-    else if (head === 'imp') bodySkinHex = EXP_PALETTE.imp;
-  }
-
-  const isDefaultCleanKip = (
-    head === 'classic' &&
-    skinObj.id === 'vinyl_cream' &&
-    shirt.id === 'off' &&
-    pants.id === 'off'
-  );
+  if (head === 'fox') bodySkinHex = EXP_PALETTE.fox;
+  else if (head === 'bear') bodySkinHex = EXP_PALETTE.bear;
+  else if (head === 'robot') bodySkinHex = EXP_PALETTE.botSilv;
+  else if (head === 'scout') bodySkinHex = EXP_PALETTE.botScout;
+  else if (head === 'cat') bodySkinHex = EXP_PALETTE.cat;
+  else if (head === 'dragon') bodySkinHex = EXP_PALETTE.dragon;
+  else if (head === 'alien') bodySkinHex = EXP_PALETTE.alien;
+  else if (head === 'imp') bodySkinHex = EXP_PALETTE.imp;
 
   let neckHex = sparkHex.toUpperCase();
   if (HUMAN_HEAD_IDS.has(head)) neckHex = bodySkinHex;
@@ -366,30 +354,19 @@ export function resolveBodyColors({
   const forearmHex = ((hasShirt && shirt.longSleeve) ? shirt.sleeveHex : bodySkinHex).toUpperCase();
   const thighHex   = (hasPants ? pants.legHex    : bodySkinHex).toUpperCase();
   const shinHex    = ((hasPants && !pants.isShorts) ? pants.legHex : bodySkinHex).toUpperCase();
-  const activeShoeHex = (pants.shoeHex || shirt.shoeHex || (isDefaultCleanKip ? '#F4EFE6' : '#283044')).toUpperCase();
-  const cleanJoint = sparkHex.toUpperCase();
-  const joints = isDefaultCleanKip
-    ? {
-        shoulder: cleanJoint,
-        elbow: cleanJoint,
-        wrist: cleanJoint,
-        hip: cleanJoint,
-        knee: cleanJoint,
-        ankle: cleanJoint,
-      }
-    : {
-        shoulder: sleeveHex,
-        elbow: forearmHex,
-        wrist: bodySkinHex,
-        hip: thighHex,
-        knee: shinHex,
-        ankle: activeShoeHex,
-      };
+  const activeShoeHex = (pants.shoeHex || shirt.shoeHex || '#283044').toUpperCase();
+  const joints = {
+    shoulder: sleeveHex,
+    elbow: forearmHex,
+    wrist: bodySkinHex,
+    hip: thighHex,
+    knee: shinHex,
+    ankle: activeShoeHex,
+  };
 
   return {
     headSkinHex,
     bodySkinHex: bodySkinHex.toUpperCase(),
-    isDefaultCleanKip,
     neckHex: neckHex.toUpperCase(),
     hasShirt,
     hasPants,
@@ -487,16 +464,14 @@ export function attachExpansionToKipRig(THREE, kip, expGeos, baseParts, mats, sc
     return g;
   }
 
-  // 1. Compact Low-Profile Neck Turret (`neck_turret_2x1`: seats deep inside neck socket so heads sit at world y = 108.0 mm!)
+  // 1. Compact Low-Profile Neck Turret (`neck_turret_2x1`: built on `kip.neckTurret2x1Slot`, recolored here per head/skin!)
   const neckMat = mats.spark.clone();
-  const neckTurret2x1Slot = createSlot('neck_turret_2x1', kip.neckAnchor, [0, 18, 0], 3.85, 'both');
-  const ntMesh = scadMesh(expGeos.neckTurret2x1, neckMat);
-  ntMesh.position.y = -7.4; // top 2x1 stud seat at 106.8 - 7.4 + 8.6 = 108.0 mm (`kip.headLocal` origin!)
-  neckTurret2x1Slot.add(ntMesh);
-  neckTurret2x1Slot.visible = false;
+  const neckTurret2x1Slot = kip.neckTurret2x1Slot;
+  if (neckTurret2x1Slot) {
+    neckTurret2x1Slot.traverse(o => { if (o.isMesh) o.material = neckMat; });
+  }
 
   const altHeadsGroup = new THREE.Group();
-  altHeadsGroup.visible = false;
   kip.headLocal.add(altHeadsGroup);
 
   const altHeadSlot = createSlot('alt_head', altHeadsGroup, [0, 40, 0], 4.05, 'both', 'neck_anchor');
@@ -531,7 +506,7 @@ export function attachExpansionToKipRig(THREE, kip, expGeos, baseParts, mats, sc
   kip.headLocal.add(faceplateGroup);
   const faceplateSlot = createSlot('char_faceplate', faceplateGroup, [0, 8, 56], 4.35, 'both', 'alt_head');
   const faceplateHolder = new THREE.Group();
-  faceplateHolder.position.set(0, 17.1875 - 2.90, FACE_STEM_MM);
+  faceplateHolder.position.set(0, 17.1875 - 2.50, FACE_STEM_MM); // stem axis is 2.5 mm above the trimmed chin edge (was 2.9 before 6b20bed)
   faceplateSlot.add(faceplateHolder);
 
   const fpOrient = new THREE.Group();
@@ -619,14 +594,6 @@ export function attachExpansionToKipRig(THREE, kip, expGeos, baseParts, mats, sc
     imp:   buildConformalDecalGeo(expGeos.charHeadImp,    16.4, 28.0, 13.6),
   };
 
-  const classicWrapGeo = new THREE.PlaneGeometry(25.5, 12.8, 16, 1);
-  const cPos = classicWrapGeo.attributes.position;
-  for (let i = 0; i < cPos.count; i++) {
-    const x = cPos.getX(i);
-    cPos.setZ(i, -(x * x) * 0.011);
-  }
-  classicWrapGeo.computeVertexNormals();
-
   const decalTex = new THREE.CanvasTexture(createDecalExpressionCanvas('spark', 'kid', 'sculpted'));
   decalTex.colorSpace = THREE.SRGBColorSpace;
   const decalMat = new THREE.MeshStandardMaterial({
@@ -651,12 +618,6 @@ export function attachExpansionToKipRig(THREE, kip, expGeos, baseParts, mats, sc
   decalPlane.visible = false;
   decalPlane.renderOrder = 2;
   altHeadSlot.add(decalPlane);
-
-  const classicDecalPlane = new THREE.Mesh(classicWrapGeo, decalMat);
-  classicDecalPlane.position.set(0, 19.8, 23.0);
-  classicDecalPlane.visible = false;
-  classicDecalPlane.renderOrder = 2;
-  kip.visorSlot.add(classicDecalPlane);
 
   // 2a. Separate Clip-On 2x1 Hair Slot (`hairSlot`: 19 sculpted multi-strand wigs; 8 Hat-Ready wigs expose `#FF6B4A` 2x1 studs on top!)
   const hairGroup = new THREE.Group();
@@ -1263,7 +1224,7 @@ export function attachExpansionToKipRig(THREE, kip, expGeos, baseParts, mats, sc
 
   let lastDecalKey = '';
 
-  function applyBodySkinAndClothing({ head = 'classic', skinId = 'vinyl_cream', shirtId = 'off', pantsId = 'off' } = {}) {
+  function applyBodySkinAndClothing({ head = 'kid', skinId = 'warm_peach', shirtId = 'off', pantsId = 'off' } = {}) {
     const resolved = resolveBodyColors({ head, skinId, shirtId, pantsId });
     const {
       headSkinHex,
@@ -1385,7 +1346,6 @@ export function attachExpansionToKipRig(THREE, kip, expGeos, baseParts, mats, sc
     faceplateDecalGeos,
     faceplateDecalPlane,
     decalPlane,
-    classicDecalPlane,
     decalTex,
     hairGroup,
     hairSlot,
