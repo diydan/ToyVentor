@@ -35,7 +35,7 @@ describe("face plate outline table", () => {
     expect(S.plateHalfWidth(-1)).toBe(0);
     expect(S.plateHalfWidth(S.PLATE_TOP_ZB + 0.1)).toBe(0);
     expect(S.plateHalfWidth(3.1)).toBeGreaterThan(S.plateHalfWidth(3.0));
-    expect(S.plateHalfWidth(0)).toBeCloseTo(6.905, 3);
+    expect(S.plateHalfWidth(0)).toBeCloseTo(8.037, 3);
   });
 
   it("matches the exported plate STL silhouette at every loft level (a CAD change must be copied here)", () => {
@@ -51,7 +51,7 @@ describe("face plate outline table", () => {
     // 2) the table is tight: many loft levels sit on it. Below zb 0.3 the chin corner arc is finer than the 0.25 mm table spacing.
     const onTable: number[] = [];
     for (const [z, { max, n }] of levels) {
-      if (n < 6 || z < 0.3 || z > 12.9) continue;
+      if (n < 6 || z < 0.3 || z > 12.5) continue;
       expect(max, `STL is wider than the table at zb ${z}: ${max.toFixed(3)} vs ${S.plateHalfWidth(z).toFixed(3)}`).toBeLessThanOrEqual(S.plateHalfWidth(z) + 0.12);
       if (max > 5 && Math.abs(max - S.plateHalfWidth(z)) <= 0.12) onTable.push(z);
     }

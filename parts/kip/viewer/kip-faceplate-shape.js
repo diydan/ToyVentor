@@ -1,21 +1,23 @@
 // Universal human face plate, front view: one source for the plate outline, the selfie window cut inside it, and the
 // sticker cut line. No imports, no DOM, so the viewer, the SDK's 2D art and the unit tests all read the same numbers.
 //
-// Frame: x across the plate (0 = centre line, mm), zb up from the chin edge (mm). The plate is symmetric.
-// PLATE_HALF_WIDTH mirrors `face_outline_hw(zb)` in parts/partspec/toyventor_parts.py (FACE_ROUND_* constants): the plate
-// is 24.2 mm at its widest (zb 6.75), 13.8 mm across the chin edge, and 13.2 mm tall. tests/kip-faceplate-shape.test.ts
-// checks this table against the exported plate STL, so a CAD change that is not copied here fails a test.
+// Frame: x across the plate (0 = centre line, mm), zb up from the printed chin edge on the bed (mm). The plate is symmetric.
+// PLATE_HALF_WIDTH mirrors `face_outline_hw(zb + 0.4)` in parts/partspec/toyventor_parts.py after the 0.4 mm chin trim
+// (`FACE_STEM_ZB - FACE_STEM_FLAT_HALF`, commit 6b20bed): the plate is 24.2 mm at its widest (zb 6.4), 16.07 mm across the
+// trimmed chin edge, and 12.8 mm tall (loft top 12.75 mm). tests/kip-faceplate-shape.test.ts checks this table against the
+// exported plate STL, so a CAD change that is not copied here fails a test.
 
-export const PLATE_TOP_ZB = 13.2;
-/** [zb, half width] every 0.25 mm. */
+export const PLATE_CHIN_TRIM_MM = 0.4;
+export const PLATE_TOP_ZB = 12.8;
+/** [zb, half width] every 0.25 mm up from the trimmed bed edge (plus peak 6.4 and shoulder 12.6). */
 export const PLATE_HALF_WIDTH = [
-  [0.0, 6.905], [0.25, 7.82], [0.5, 8.15], [0.75, 8.382], [1.0, 8.607], [1.25, 8.832], [1.5, 9.057], [1.75, 9.282], [2.0, 9.507],
-  [2.25, 9.732], [2.5, 9.957], [2.75, 10.182], [3.0, 10.407], [3.25, 10.632], [3.5, 10.856], [3.75, 11.062], [4.0, 11.242],
-  [4.25, 11.401], [4.5, 11.54], [4.75, 11.66], [5.0, 11.765], [5.25, 11.854], [5.5, 11.928], [5.75, 11.989], [6.0, 12.036],
-  [6.25, 12.07], [6.5, 12.091], [6.75, 12.1], [7.0, 12.096], [7.25, 12.08], [7.5, 12.051], [7.75, 12.009], [8.0, 11.954],
-  [8.25, 11.885], [8.5, 11.802], [8.75, 11.704], [9.0, 11.59], [9.25, 11.459], [9.5, 11.308], [9.75, 11.137], [10.0, 10.942],
-  [10.25, 10.722], [10.5, 10.497], [10.75, 10.259], [11.0, 10.039], [11.25, 9.817], [11.5, 9.591], [11.75, 9.364], [12.0, 9.138],
-  [12.25, 8.899], [12.5, 8.634], [12.75, 7.971], [13.0, 6.093],
+  [0.0, 8.037], [0.25, 8.292], [0.5, 8.517], [0.75, 8.742], [1.0, 8.967], [1.25, 9.192], [1.5, 9.417], [1.75, 9.642],
+  [2.0, 9.867], [2.25, 10.092], [2.5, 10.317], [2.75, 10.542], [3.0, 10.767], [3.25, 10.983], [3.5, 11.173], [3.75, 11.34],
+  [4.0, 11.486], [4.25, 11.614], [4.5, 11.725], [4.75, 11.82], [5.0, 11.9], [5.25, 11.966], [5.5, 12.018], [5.75, 12.058],
+  [6.0, 12.084], [6.25, 12.098], [6.4, 12.1], [6.5, 12.099], [6.75, 12.088], [7.0, 12.064], [7.25, 12.027], [7.5, 11.977],
+  [7.75, 11.914], [8.0, 11.837], [8.25, 11.745], [8.5, 11.638], [8.75, 11.513], [9.0, 11.371], [9.25, 11.208], [9.5, 11.023],
+  [9.75, 10.812], [10.0, 10.587], [10.25, 10.347], [10.5, 10.127], [10.75, 9.906], [11.0, 9.681], [11.25, 9.455], [11.5, 9.228],
+  [11.75, 8.997], [12.0, 8.744], [12.25, 8.402], [12.5, 6.873], [12.6, 6.093],
 ];
 
 /** Whole plate in mm (width x height as printed standing on its chin edge). */
@@ -41,8 +43,8 @@ export function plateHalfWidth(zb) {
 // cut line are one shape (an earlier squircle cut inside the plate did not match it: its top corners left plate showing).
 /** Bezel margin between the picture and the plate edge (the plate sits 0.3 mm below the skull lip all round). */
 export const WINDOW_INSET_MM = 0.5;
-/** Lowest and highest plate height the picture uses. The plate is visible up to its dome top at zb 13.2 (measured through the real head pockets). */
-export const WINDOW_ZB = { min: 0.5, max: 12.9 };
+/** Lowest and highest plate height the picture uses. The plate is visible up to its dome top at zb 12.8 (13.2 less 0.4 mm chin trim). */
+export const WINDOW_ZB = { min: 0.1, max: 12.5 };
 
 const winMid = (WINDOW_ZB.min + WINDOW_ZB.max) / 2;
 const widest = PLATE_HALF_WIDTH.reduce((m, [, h]) => Math.max(m, h), 0) - WINDOW_INSET_MM;
@@ -54,11 +56,11 @@ export function windowHalfWidth(zb) {
 }
 
 // ---- where a face's features sit on the plate --------------------------------------------------------------
-// The flat insert carries a moulded smile ridge (crest at zb 1.25, corners 1.75) and the 2D art puts its eyes at zb 5.8, x +-5.3.
+// The flat insert carries a moulded smile ridge (crest at zb 0.85, corners 1.35 above trimmed bed) and the 2D art puts its eyes at zb 5.4, x +-5.3.
 // A photo or sample face that has its eyes and mouth on these marks lines up with the printed smile and fills the plate with the
 // face (the chin falls below the plate, the forehead runs up under the brow).
 /** Eye-line height, half the eye spacing (mm), and mouth height on the plate. */
-export const FACE_TARGET_MM = { eyeZb: 5.8, eyeHalfSpan: 5.3, mouthZb: 1.5 };
+export const FACE_TARGET_MM = { eyeZb: 5.4, eyeHalfSpan: 5.3, mouthZb: 1.1 };
 
 /** Window size in mm: the bounding box of the outline (what the picture canvas covers). */
 export const WINDOW_MM = { w: +(2 * widest).toFixed(2), h: +(WINDOW_ZB.max - WINDOW_ZB.min).toFixed(2) };

@@ -1226,9 +1226,9 @@
       "bbox_mm": [
         24.2,
         18.6,
-        13.2
+        12.8
       ],
-      "volume_cm3": 1.12,
+      "volume_cm3": 1.1,
       "connectors": [
         {
           "id": "axis",
@@ -1334,7 +1334,7 @@
           "id": "G5_fits_bed",
           "level": "block",
           "result": "pass",
-          "detail": "[24.2, 18.6, 13.2] vs [180, 180, 180]"
+          "detail": "[24.2, 18.6, 12.8] vs [180, 180, 180]"
         },
         {
           "id": "P1_no_supports",
@@ -1437,9 +1437,9 @@
       "bbox_mm": [
         24.2,
         17.9,
-        13.2
+        12.8
       ],
-      "volume_cm3": 1.12,
+      "volume_cm3": 1.1,
       "connectors": [
         {
           "id": "axis",
@@ -1545,7 +1545,7 @@
           "id": "G5_fits_bed",
           "level": "block",
           "result": "pass",
-          "detail": "[24.2, 17.9, 13.2] vs [180, 180, 180]"
+          "detail": "[24.2, 17.9, 12.8] vs [180, 180, 180]"
         },
         {
           "id": "P1_no_supports",
@@ -1648,9 +1648,9 @@
       "bbox_mm": [
         24.2,
         17.7,
-        13.2
+        12.8
       ],
-      "volume_cm3": 1.11,
+      "volume_cm3": 1.09,
       "connectors": [
         {
           "id": "axis",
@@ -1756,7 +1756,7 @@
           "id": "G5_fits_bed",
           "level": "block",
           "result": "pass",
-          "detail": "[24.2, 17.7, 13.2] vs [180, 180, 180]"
+          "detail": "[24.2, 17.7, 12.8] vs [180, 180, 180]"
         },
         {
           "id": "P1_no_supports",
