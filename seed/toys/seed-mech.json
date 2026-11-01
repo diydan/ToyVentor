@@ -1,0 +1,14 @@
+{
+  "id": "seed-mech",
+  "name": "Bolt Power Mech",
+  "kind": "car",
+  "sizeClass": "small",
+  "lengthMm": 135,
+  "widthMm": 68,
+  "attachPoints": [
+    { "id": "roof", "label": "Brain core" },
+    { "id": "rear", "label": "Drive bay" },
+    { "id": "front", "label": "Servo bridge" }
+  ],
+  "source": "seed"
+}

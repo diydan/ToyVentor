@@ -4,12 +4,8 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { beforeEach, describe, expect, it } from "vitest";
 import { runChecks } from "../shared/checks";
-import type { Part } from "../shared/part";
 import { toyFromScanInput, validateToy, type Toy } from "../shared/toy";
 import { toyContractFromBuild, validateToyContract } from "../shared/toycontract";
-import baseSet from "../sets/base.json";
-import modularCraftSet from "../sets/modular-craft.json";
-import racerSet from "../sets/racer-garage.json";
 import { colorOf } from "../src/features/builder/engine/render";
 import { ToyMiniIcon } from "../src/features/game/world/ToyMiniIcon";
 import {
@@ -19,12 +15,14 @@ import {
   seedFigure,
   seedHelicopter,
   seedKip,
+  seedMech,
   seedMotorbike,
   seedScooter,
   seedShuttle,
   seedTractor,
   seedTruck,
 } from "../src/features/scan/scan";
+import { allParts } from "../src/lib/catalog";
 import {
   emptyProgression,
   grandfatherToyIds,
@@ -141,12 +139,7 @@ describe("Phase 4 per-vehicle readiness audit (§5.1)", () => {
       )
       .join("\n");
 
-    const allAppParts = [
-      ...(baseSet.parts as unknown as Part[]),
-      ...(racerSet.parts as unknown as Part[]),
-      ...(modularCraftSet.parts as unknown as Part[]),
-    ];
-    const appPartsById = new Map(allAppParts.map((p) => [p.id, p]));
+    const appPartsById = new Map(allParts.map((p) => [p.id, p]));
 
     const ready = readyPhase4Vehicles();
     expect(ready.map((e) => e.id)).toEqual([
@@ -158,6 +151,7 @@ describe("Phase 4 per-vehicle readiness audit (§5.1)", () => {
       "seed-catamaran",
       "seed-helicopter",
       "seed-shuttle",
+      "seed-mech",
     ]);
 
     for (const entry of ready) {
@@ -224,17 +218,18 @@ describe("Phase 4 per-vehicle readiness audit (§5.1)", () => {
     }
   });
 
-  it("holds back unverified Stage 4 robotics vehicle with explicit blocker so no card wires to a placeholder", () => {
+  it("promotes all 9 Rank 2-6 vehicles including Stage 4 Bolt Power Mech once Card F CAD + Gate G1 pass", () => {
     const heldBack = VEHICLE_READINESS_AUDIT.filter((e) => !e.ready);
-    expect(heldBack.map((e) => e.id)).toEqual(["seed-mech"]);
+    expect(heldBack).toEqual([]);
 
-    for (const entry of heldBack) {
-      expect(entry.gates.partVerified).toBe(false);
-      expect(entry.seedToy).toBeNull();
-      expect(entry.blocker && entry.blocker.length > 20).toBe(true);
-    }
+    // At Rank 5 (1800 XP) without Sandbox Unlock All, Rank 6 Bolt Power Mech remains locked until 2700 XP
+    const rank5Split = resolvePhase4VehicleRoster({
+      ...emptyProgression(),
+      totalXp: 1_800,
+    });
+    expect(rank5Split.lockedVehicles.map((l) => l.entry.id)).toEqual(["seed-mech"]);
 
-    // Even at max Rank 6 XP or Sandbox Unlock All, unverified geometry never leaks
+    // At Rank 6 (2700 XP) or Sandbox Unlock All, all 9 verified vehicles unlock cleanly
     const maxProg = {
       ...emptyProgression(),
       totalXp: 5_000,
@@ -250,6 +245,7 @@ describe("Phase 4 per-vehicle readiness audit (§5.1)", () => {
       "seed-catamaran",
       "seed-helicopter",
       "seed-shuttle",
+      "seed-mech",
     ]);
     expect(split.lockedVehicles).toEqual([]);
   });
@@ -322,7 +318,7 @@ describe("Phase 4 name alignment (§5.2) & crisp SVG thumbnails", () => {
       ["catamaran", seedCatamaran],
       ["helicopter", seedHelicopter],
       ["shuttle", seedShuttle],
-      ["mech", { ...seedCar, id: "seed-mech", name: "Bolt Power Mech" }],
+      ["mech", seedMech],
     ];
 
     const seenSvgMarkup = new Set<string>();
@@ -378,7 +374,7 @@ describe("Phase 4 locked-card guidance & grandfathering (§5.3)", () => {
   });
 
   it("unlocks ready vehicles by Maker Rank XP and preserves grandfathered access across Reset XP", () => {
-    // Fresh 0 XP: Kip + Red Racer enabled; all 8 verified Rank 2-5 vehicles locked
+    // Fresh 0 XP: Kip + Red Racer enabled; all 9 verified Rank 2-6 vehicles locked
     const fresh = mergePhase4Roster([], emptyProgression());
     expect(fresh.enabledToys.map((t) => t.id)).toEqual(["seed-kip", "seed-car"]);
     expect(fresh.lockedVehicles.map((l) => l.entry.id)).toEqual([
@@ -390,9 +386,10 @@ describe("Phase 4 locked-card guidance & grandfathering (§5.3)", () => {
       "seed-catamaran",
       "seed-helicopter",
       "seed-shuttle",
+      "seed-mech",
     ]);
 
-    // Rank 2 (250 XP): Hauler Truck + Motor Scooter unlock; 6 Rank 3-5 vehicles stay locked
+    // Rank 2 (250 XP): Hauler Truck + Motor Scooter unlock; 7 Rank 3-6 vehicles stay locked
     const rank2 = mergePhase4Roster([], { ...emptyProgression(), totalXp: 250 });
     expect(rank2.enabledToys.map((t) => t.id)).toEqual([
       "seed-kip",
@@ -400,13 +397,13 @@ describe("Phase 4 locked-card guidance & grandfathering (§5.3)", () => {
       "seed-truck",
       "seed-scooter",
     ]);
-    expect(rank2.lockedVehicles).toHaveLength(6);
+    expect(rank2.lockedVehicles).toHaveLength(7);
     expect(rank2.lockedVehicles[0]!.entry.id).toBe("seed-motorbike");
     expect(rank2.lockedVehicles[0]!.guidance).toBe(
       "Earn 350 more XP (600 XP, Rank 3) in Lab 2: Machines to unlock Sport Motorbike.",
     );
 
-    // Rank 3 (600 XP): Sport Motorbike + Loader Tractor & Trailer unlock; 4 Rank 4-5 stay locked
+    // Rank 3 (600 XP): Sport Motorbike + Loader Tractor & Trailer unlock; 5 Rank 4-6 stay locked
     const rank3 = mergePhase4Roster([], { ...emptyProgression(), totalXp: 600 });
     expect(rank3.enabledToys.map((t) => t.id)).toEqual([
       "seed-kip",
@@ -421,12 +418,19 @@ describe("Phase 4 locked-card guidance & grandfathering (§5.3)", () => {
       "seed-catamaran",
       "seed-helicopter",
       "seed-shuttle",
+      "seed-mech",
     ]);
 
-    // Rank 5 (1800 XP): all 8 verified Rank 2-5 vehicles unlocked; 0 locked
+    // Rank 5 (1800 XP): all 8 Rank 2-5 vehicles unlocked; Rank 6 Bolt Power Mech stays locked
     const rank5 = mergePhase4Roster([], { ...emptyProgression(), totalXp: 1800 });
-    expect(rank5.lockedVehicles).toHaveLength(0);
+    expect(rank5.lockedVehicles.map((l) => l.entry.id)).toEqual(["seed-mech"]);
     expect(rank5.enabledToys).toHaveLength(10);
+
+    // Rank 6 (2700 XP): all 9 Rank 2-6 vehicles including Bolt Power Mech unlocked; 0 locked
+    const rank6 = mergePhase4Roster([], { ...emptyProgression(), totalXp: 2700 });
+    expect(rank6.lockedVehicles).toHaveLength(0);
+    expect(rank6.enabledToys).toHaveLength(11);
+    expect(rank6.enabledToys.map((t) => t.id)).toContain("seed-mech");
 
     // Grandfathering + Reset XP survival: existing build on seed-motorbike/seed-shuttle and unlockedIds on seed-figure
     const withGrandfathered = grandfatherToyIds(
@@ -454,6 +458,7 @@ describe("Phase 4 locked-card guidance & grandfathering (§5.3)", () => {
       "seed-aeroplane",
       "seed-catamaran",
       "seed-helicopter",
+      "seed-mech",
     ]);
   });
 });
@@ -470,6 +475,7 @@ describe("Phase 4A/4B CTA lab worlds", () => {
     expect(labWorldForEntry(byId("seed-catamaran"))).toBe("lab3");
     expect(labWorldForEntry(byId("seed-helicopter"))).toBe("lab5");
     expect(labWorldForEntry(byId("seed-shuttle"))).toBe("lab4");
+    expect(labWorldForEntry(byId("seed-mech"))).toBe("lab5");
   });
 
   it("falls back to lab1 when the row has no parseable mission", () => {
