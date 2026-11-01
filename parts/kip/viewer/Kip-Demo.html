@@ -456,6 +456,7 @@ import {
 import { mountKipMenu } from '/kip/kip-menu.js?v=10.0';
 import { mountPrintView } from '/kip/kip-print-view.js?v=10.0';
 import { mountSelfie } from '/kip/kip-selfie.js?v=10.0';
+import { mountDescribe } from '/kip/kip-describe-tab.js?v=10.0';
 
 if (window.self !== window.top) document.body.classList.add('in-iframe');
 
@@ -3765,6 +3766,14 @@ const printView = mountPrintView({
   setCharacterVisible: on => { kip.mover.visible = on; originRing.visible = on; },
 });
 window.kipPrint = printView;
+window.kipRig = () => ({ THREE, kip, mats });
+// Describe & build (parts/kip/viewer/kip-describe-contract.md): type what to build, see it as an exploded view, watch it go together. It owns its panel
+// and toggle button and draws in its own group; while it is open the character is hidden. `kip` is only set once init() has run, hence the guard.
+const describeTab = mountDescribe({
+  THREE, STLLoader, mergeVertices, toCreasedNormals, scene, camera, controls,
+  setCharacterVisible: on => { if (kip) kip.mover.visible = on; originRing.visible = on; },
+});
+window.kipDescribe = describeTab;
 // Selfie face (memory only, never in the URL or storage): wears a photo on the flat face insert and puts the
 // previous face back on Remove. Anything that would leave a human head first removes it, so a photo never lingers.
 let selfieBefore = null;
