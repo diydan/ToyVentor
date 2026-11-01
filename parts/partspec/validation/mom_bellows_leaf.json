@@ -1,24 +1,24 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_mom_bellows_leaf_S.stl",
-  "file_sha256": "8988c1a9e8a34076d2cffd30791f70fca90a40ecaead1f7137785907097b69ae",
+  "file_sha256": "75510c66f78980f77abcfab25ff29911699796111c35a4cab9b0bfe656447948",
   "part_id": "mom_bellows_leaf",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-10-31T15:30:08Z",
+  "checked_at": "2026-11-01T05:04:09Z",
   "metrics": {
     "bbox_mm": [
       49.8,
-      49.8,
-      8.0
+      68.8,
+      11.4
     ],
-    "volume_cm3": 12.56,
-    "surface_cm2": 78.39,
-    "triangles": 30916,
+    "volume_cm3": 13.61,
+    "surface_cm2": 90.02,
+    "triangles": 33292,
     "ledges": [],
-    "layers": 40,
-    "bed_contact_mm2": 1853.7,
-    "height_mm": 8.0,
-    "slenderness": 0.19,
+    "layers": 57,
+    "bed_contact_mm2": 2013.0,
+    "height_mm": 11.4,
+    "slenderness": 0.25,
     "centre_of_mass_over_contact": true,
     "min_wall_mm": null,
     "thin_wall_regions": []
@@ -128,8 +128,8 @@
       "result": "pass",
       "value": [
         49.8,
-        49.8,
-        8.0
+        68.8,
+        11.4
       ],
       "limit": [
         180,
@@ -182,9 +182,9 @@
       "id": "V9_bed_contact",
       "level": "info",
       "result": "pass",
-      "value": 1853.7,
+      "value": 2013.0,
       "limit": null,
-      "detail": "height / sqrt(contact) = 0.19; above about 3 the slicer often asks for a brim"
+      "detail": "height / sqrt(contact) = 0.25; above about 3 the slicer often asks for a brim"
     },
     {
       "id": "V8_wall_thickness",

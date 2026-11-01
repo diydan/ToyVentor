@@ -4,7 +4,7 @@
   "file_sha256": "1bfe2f61acc89568333f72068d6f325d6799d2e1a8ed09837ec0a4769531bbd7",
   "part_id": "ridge_fin",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-10-31T14:28:57Z",
+  "checked_at": "2026-11-01T04:58:13Z",
   "metrics": {
     "bbox_mm": [
       11.9,
@@ -171,7 +171,7 @@
     ],
     "engine": "PrusaSlicer-2.8.1",
     "slice_logic": "1",
-    "reused_from": "2026-10-31T11:19:53Z"
+    "reused_from": "2026-11-01T04:50:26Z"
   },
   "verdict": "pass_with_settings",
   "summary": "Prints with brim_width_mm = 3"

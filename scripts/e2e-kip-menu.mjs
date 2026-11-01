@@ -69,7 +69,6 @@ async function optionsInPage() {
     { id: "shirt", get: () => loco.shirt, pre: human },
     { id: "pants", get: () => loco.pants, pre: human },
     { id: "back", get: () => loco.back, pre: () => {} },
-    { id: "ears", get: () => ctx.read.ears(), pre: () => {} },
     { id: "tail", get: () => ctx.read.tail(), pre: () => {} },
     { id: "prop", get: () => loco.prop, pre: () => {} },
     { id: "preset", get: () => ctx.read.preset(), pre: () => {} },
@@ -184,9 +183,6 @@ try {
   check("category change rebuilds Head options and hides human controls", await tab.waitFor(`(() => { const m = window.kipMenu; return [...m.fields.get('head').select.options].map(o => o.value).join() === 'fox,bear,cat' && m.fields.get('hair').root.hidden && m.fields.get('shirt').root.hidden === false && m.fields.get('tail').root.hidden === false; })()`, 15000));
   check("hat label follows the category (Topper)", await tab.evaluate(`window.kipMenu.fields.get('hat').label.textContent === 'Topper'`));
   check("selects match state after sync tests", (await tab.evaluate(INVARIANT)).length === 0);
-  await tab.evaluate(`window.kipMenu.ctx.act.setCategory('robot'); window.kipMenu.ctx.act.setHead('classic'); window.kipMenu.ctx.act.setEars('pro')`);
-  await tab.evaluate(`window.kipMenu.ctx.act.setHead('scout')`);
-  check("leaving the classic head puts the ear pods away (model and menu agree)", await tab.waitFor(`window.kipMenu.ctx.read.ears() === 'off'`, 15000));
 
   // ---- 4. shortcuts ----------------------------------------------------------------------
   console.log("\n[4] keyboard shortcuts");
@@ -253,7 +249,7 @@ try {
     const hash = toyHash({ format: "toyventor.toy/1", name: "Menu Test", col: { c1: "#ff6b4a", c2: "#2e6fdb" }, parts: ["veh_car_x", "pack_jetpack", "tool_wrench", "eyes_pair"], stats: { speed: 1, spin: 0 }, prints: true });
     const { tab: t, ready: r } = await loadPage(chrome, `${server.base}/kip/Kip-Demo.html${hash}`);
     check("#toy=: loads", r, t.exceptions[0]);
-    check("#toy=: vehicle, back, prop, hat, ears selects show the contract", await t.waitFor(`${val("vehicle")} === 'car' && ${val("back")} === 'jetpack' && ${val("prop")} === 'wrench' && ${val("hat")} === 'ears' && ${val("ears")} === 'comm'`, 20000));
+    check("#toy=: vehicle, back, prop, hat selects show the contract", await t.waitFor(`${val("vehicle")} === 'car' && ${val("back")} === 'jetpack' && ${val("prop")} === 'wrench' && ${val("hat")} === 'ears'`, 20000));
     check("#toy=: every select equals its state", (await t.evaluate(INVARIANT)).length === 0);
     t.close();
   }

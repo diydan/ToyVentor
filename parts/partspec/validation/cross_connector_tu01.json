@@ -4,7 +4,7 @@
   "file_sha256": "88736ca441e137652193eb8f064cc84fc9ea6951ea1b3480e3930909a85435c2",
   "part_id": "cross_connector_tu01",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-10-31T14:35:34Z",
+  "checked_at": "2026-11-01T04:59:24Z",
   "metrics": {
     "bbox_mm": [
       25.0,
@@ -160,7 +160,7 @@
       0
     ],
     "engine": "PrusaSlicer-2.8.1",
-    "reused_from": "2026-10-31T11:23:30Z"
+    "reused_from": "2026-11-01T04:51:30Z"
   },
   "verdict": "pass",
   "summary": "Prints as is"

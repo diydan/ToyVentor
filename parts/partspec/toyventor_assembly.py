@@ -670,16 +670,49 @@ def demo(manifest_path, out_dir):
 
             k_st = place("kit_keel_base", pid="keel")
             st_br = attach(lib, k_st, "top_studs", "pro_steer_bridge", "under_sockets", (1, 0), (0, 0), pid="steer_bridge")
-            st_stem = place_on_axis(lib, k_st, "steer_bore", "shaft_tu03", "axis", along=0.0, pid="steer_stem")
-            st_pin = place_on_axis(lib, st_stem, "axis", "gear_spur_z10", "hub", along=28.0, pid="steer_pinion")
-            st_rack = place("pro_steer_rack", 0.0, -56.25, 28.0, pid="steer_rack")
-            cases["valid_pro_steered_racer"] = [k_st, st_br, st_stem, st_pin, st_rack]
+            import toyventor_kitcard as kc
+            st_stem = place_on_axis(lib, k_st, "steer_bore", "pro_steer_column", "axis", along=0.275, pid="steer_column")
+            # Pinion and rack run 0.2 mm above the stud-free bridge deck (z = 25.2); Ø23.0 mm pro_steer_wheel skirt traps the rear rack teeth.
+            st_pin = place_on_axis(lib, st_stem, "axis", "gear_spur_z10", "hub", along=kc.RACK_Z - 0.275, pid="steer_pinion")
+            st_whl = place_on_axis(lib, st_stem, "axis", "pro_steer_wheel", "hub", along=(kc.RACK_Z + kc.RACK_T + 0.20) - 0.275, pid="steer_wheel")
+            st_rack = place("pro_steer_rack", 0.0, kc.RACK_Y, kc.RACK_Z, pid="steer_rack")
+            b_st = [k_st, st_br, st_stem, st_pin, st_whl, st_rack]
+            # Knuckles straight ahead, posed like Gate G1, each on a self-retaining pro_captive_pin_28 kingpin inserted from below.
+            for side, tag, cell in ((-1, "l", (0, 0)), (1, "r", (1, 0))):
+                rot = (-side) % 4
+                R = pro.rot_matrix(270.0, 0.0, 90.0 * rot)
+                t = np.array([side * kc.STEER_KP_X, kc.STEER_KP_Y, 6.25]) + R @ np.array([side * 6.25, 0.0, -6.25 + kc.KNUCKLE_FACE_RELIEF])
+                kn = place(f"pro_steer_knuckle_{tag}", float(t[0]), float(t[1]), float(t[2]), rot, f"knuckle_{tag}", (270.0, 0.0))
+                z_under = float(placed_geometry(lib, kn).bounding_box()[2])
+                kp_o = lib.conn("pro_steer_bridge", "kingpins")["frame"]["origin"][2]
+                pin_o = lib.conn("pro_captive_pin_28", "axis")["frame"]["origin"][2]
+                kp = place_on_axis(lib, st_br, "kingpins", "pro_captive_pin_28", "axis",
+                                   along=(z_under - 1.525) + pin_o - (st_br["pose"]["z"] + kp_o), pid=f"kingpin_{tag}", parent_cell=cell)
+                b_st += [kn, kp]
+            cases["valid_pro_steered_racer"] = b_st
+            # The tie-rod link rides at 45 deg to the rack (not a quarter turn), so Gate G1 sweeps it; here we prove its connectors mate
+            # with the rack bore and a downward self-retaining pro_captive_pin_28.
+            lk_rack = place("pro_steer_rack", 0.0, 0.0, 0.0, pid="rack")
+            lk_link = place("pro_tie_rod_link", kc.RACK_TIEROD_X, kc.RACK_BORE_DY, kc.RACK_T + kc.LINK_LIFT, pid="link")
+            lk_pin = place("pro_captive_pin_28", kc.RACK_TIEROD_X + kc.TIEROD_LINK_MM, kc.RACK_BORE_DY, kc.RACK_T + kc.LINK_LIFT + kc.LINK_T + 1.525, 0, "tie_pin", (180.0, 0.0))
+            cases["valid_pro_tie_rod_link_on_rack"] = [lk_rack, lk_link, lk_pin]
 
             k_mb = place("kit_keel_base", pid="keel")
             mb_tray = attach(lib, k_mb, "top_studs", "mom_band_core_tray", "under_sockets", (0, 6), (0, 0), pid="band_tray")
             mb_lid = attach(lib, mb_tray, "rim_studs", "mom_band_core_lid", "under_sockets", (0, 0), (0, 0), pid="band_lid")
             mb_tub = attach(lib, mb_lid, "top_studs", "kit_tilting_tub", "under_sockets", (0, 0), (0, 0), pid="dump_tub")
             cases["valid_mom_band_truck"] = [k_mb, mb_tray, mb_lid, mb_tub]
+
+            if "mech_drive_tray" in lib.parts:
+                k_mc = place("kit_keel_base", pid="keel")
+                mc_srv = attach(lib, k_mc, "top_studs", "mech_servo_mount", "under_sockets", (1, 2), (0, 1), pid="servo_mount")
+                mc_sill = attach(lib, k_mc, "top_studs", "mech_sill_duct", "under_sockets", (0, 3), (0, 0), pid="sill_duct")
+                mc_dtray = attach(lib, k_mc, "top_studs", "mech_drive_tray", "under_sockets", (0, 6), (0, 0), pid="drive_tray")
+                mc_dlid = attach(lib, mc_dtray, "rim_studs", "mech_drive_lid", "under_sockets", (0, 0), (0, 0), pid="drive_lid")
+                mc_btray = attach(lib, mc_dlid, "top_studs", "mech_brain_tray", "under_sockets", (0, 0), (0, 0), pid="brain_tray")
+                mc_blid = attach(lib, mc_btray, "rim_studs", "mech_brain_lid", "under_sockets", (0, 0), (0, 0), pid="brain_lid")
+                mc_tub = attach(lib, mc_blid, "top_studs", "kit_tilting_tub", "under_sockets", (0, 0), (0, 0), pid="dump_tub")
+                cases["valid_mech_rc_truck"] = [k_mc, mc_srv, mc_sill, mc_dtray, mc_dlid, mc_btray, mc_blid, mc_tub]
         bu = place("bushing_tu01", pid="bu")
         cases["INVALID_round_pin_in_bushing"] = [bu, place("pin_free", 0, 0, -lib.conn("pin_free", "axis")["frame"]["origin"][2], pid="pin")]   # attach() refuses it
 

@@ -57,11 +57,17 @@ describe("Kip modular character rig & 3D demo viewer integration", () => {
       ...kipManifest.sharedParts,
       ...kipManifest.testAccessories,
     ];
+    expect(allKipStls).toHaveLength(18);
+    expect(kipManifest.wardrobe.heads).toHaveLength(12);
+    expect(kipManifest.ports).toHaveLength(4);
     for (const part of allKipStls) {
       expect(
         existsSync(join(root, "public/kip/stls", `${part}.stl`)),
         `missing public/kip/stls/${part}.stl`,
       ).toBe(true);
+    }
+    for (const retired of ["head_shell", "head_hood", "visor", "ear_pod_l", "ear_pod_r"]) {
+      expect(existsSync(join(root, "public/kip/stls", `${retired}.stl`))).toBe(false);
     }
 
     for (const clipPath of kipManifest.assets.mixamoClips) {
@@ -157,7 +163,7 @@ describe("Kip modular character rig & 3D demo viewer integration", () => {
       "parts/kip/viewer/kip-selfie-image.js",
       "parts/kip/viewer/kip-selfie-cloud.js",
       "parts/kip/viewer/kip-faceplate-shape.js",
-      "parts/kip/viewer/kip-classic-rig.js",
+      "parts/kip/viewer/kip-rig.js",
       "parts/kip/viewer/kip-describe.js",
       "parts/kip/viewer/kip-describe-validate.js",
       "parts/kip/viewer/kip-describe-view.js",

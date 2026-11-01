@@ -4,7 +4,7 @@
   "file_sha256": "ef4f0c9361cf08f4c07d9faf1c08fd6e53c0ca597f8815fb9cd084bee21d9883",
   "part_id": "pebble_armor_shell_l",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-10-31T14:28:58Z",
+  "checked_at": "2026-11-01T04:58:15Z",
   "metrics": {
     "bbox_mm": [
       45.31,
@@ -166,7 +166,7 @@
     ],
     "engine": "PrusaSlicer-2.8.1",
     "slice_logic": "1",
-    "reused_from": "2026-10-31T11:19:54Z"
+    "reused_from": "2026-11-01T04:50:26Z"
   },
   "verdict": "pass",
   "summary": "Prints as is"

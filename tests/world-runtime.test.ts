@@ -87,11 +87,11 @@ describe("native world runtime (Phase 0A)", () => {
       )
     ).join("\n");
     expect(text).not.toContain("mTry(");
-    expect(text).toContain("function mFailNote(m)");
+    expect(text).toContain("function mFailNote(m: Mission)");
     expect(text).toContain("attempts:(S.ma[akk]||0)+1");
     expect(text).toContain("stats:Object.keys(st).filter");
-    expect(text).toContain("function mStartReplay(m)");
-    expect(text).toContain("function mCancelReplay(m)");
+    expect(text).toContain("function mStartReplay(m: Mission)");
+    expect(text).toContain("function mCancelReplay(m: Mission)");
   });
 
   it("tracks tiered mission errors per tier, stamps #mp dataset.tier, and resyncs 3D state on setTier", async () => {
@@ -125,7 +125,7 @@ describe("native world runtime (Phase 0A)", () => {
 
     // Bug 2: setTier refunds placed bin parts, resets step state to {tier:t}, and syncs 3D meshes.
     expect(text).toContain('["deck","support","mid","drum"].forEach(function(sl){if(old[sl])S.bin[old[sl]]=(S.bin[old[sl]]||0)+1})');
-    expect(text).toContain("S.ms[k]={tier:t};if(MT[m.type]){MT[m.type].st&&MT[m.type].st(m);MT[m.type].sync(m)}else mSync(m)");
+    expect(text).toContain("S.ms[k]={tier:t};if(MT[m.type]){MT[m.type]!.st&&MT[m.type]!.st(m);MT[m.type]!.sync(m)}else mSync(m)");
 
     // Bug 3: logic failure toast branches on gate kind gk rather than door index s.g; raft distinguishes 0 <= net < need.
     expect(text).toContain("gk=O[Math.min(s.g,O.length-1)]");

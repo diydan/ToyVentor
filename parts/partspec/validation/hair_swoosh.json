@@ -1,33 +1,33 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_hair_swoosh_S.stl",
-  "file_sha256": "b4751ccc41c026bf59e018ad0f1116ca3a02527af3da445d14bf448fd1c775b0",
+  "file_sha256": "b73da6a659b66ae4d1e4ee1e2257abaf7fe517abed4073ebbda693bb85f4f9a9",
   "part_id": "hair_swoosh",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-10-31T14:39:47Z",
+  "checked_at": "2026-11-01T05:05:57Z",
   "metrics": {
     "bbox_mm": [
-      42.67,
-      34.51,
+      43.85,
+      34.66,
       24.1
     ],
-    "volume_cm3": 5.84,
-    "surface_cm2": 56.21,
-    "triangles": 8066,
+    "volume_cm3": 6.03,
+    "surface_cm2": 58.18,
+    "triangles": 8908,
     "ledges": [],
     "layers": 121,
-    "bed_contact_mm2": 67.5,
+    "bed_contact_mm2": 90.3,
     "height_mm": 24.1,
-    "slenderness": 2.93,
+    "slenderness": 2.54,
     "centre_of_mass_over_contact": true,
-    "min_wall_mm": 0.462,
+    "min_wall_mm": 0.617,
     "thin_wall_regions": [
       {
-        "area_mm2": 4.41,
-        "min_mm": 0.757,
+        "area_mm2": 4.47,
+        "min_mm": 0.745,
         "at_mm": [
-          6.23,
-          -13.28,
+          6.27,
+          -13.39,
           12.37
         ]
       }
@@ -36,13 +36,13 @@
   "bridges": [
     {
       "z_mm": 6.5,
-      "span_mm": 0.54,
-      "area_mm2": 1.1
+      "span_mm": 0.47,
+      "area_mm2": 0.8
     },
     {
       "z_mm": 16.6,
-      "span_mm": 9.96,
-      "area_mm2": 483.9
+      "span_mm": 10.03,
+      "area_mm2": 490.0
     },
     {
       "z_mm": 19.7,
@@ -87,8 +87,8 @@
       "level": "block",
       "result": "pass",
       "value": [
-        42.7,
-        34.5,
+        43.8,
+        34.7,
         24.1
       ],
       "limit": [
@@ -118,7 +118,7 @@
       "id": "V6_bridge_span",
       "level": "block",
       "result": "pass",
-      "value": 9.96,
+      "value": 10.03,
       "limit": 20,
       "detail": "6 bridge(s); widest unsupported span in mm"
     },
@@ -142,9 +142,9 @@
       "id": "V9_bed_contact",
       "level": "info",
       "result": "pass",
-      "value": 67.5,
+      "value": 90.3,
       "limit": null,
-      "detail": "height / sqrt(contact) = 2.93; above about 3 the slicer often asks for a brim"
+      "detail": "height / sqrt(contact) = 2.54; above about 3 the slicer often asks for a brim"
     },
     {
       "id": "V8_wall_thickness",
@@ -152,7 +152,7 @@
       "result": "warn",
       "value": 1,
       "limit": 0,
-      "detail": "regions where the wall is under 0.8 mm (two nozzle widths) over 2.0 mm2, or under 0.4 mm (one nozzle width) over 0.25 mm2; worst 0.757 mm at [6.23, -13.28, 12.37]"
+      "detail": "regions where the wall is under 0.8 mm (two nozzle widths) over 2.0 mm2, or under 0.4 mm (one nozzle width) over 0.25 mm2; worst 0.745 mm at [6.27, -13.39, 12.37]"
     }
   ],
   "print_settings": {},

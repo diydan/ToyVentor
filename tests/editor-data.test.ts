@@ -103,12 +103,12 @@ describe("editor bridge shape", () => {
     ).join("\n");
     for (const token of [
       "function edSnap()",
-      "function edSetTab(t)",
-      "function edArm(i)",
-      "function edControl(i)",
+      "function edSetTab(t: string)",
+      "function edArm(i: number)",
+      "function edControl(i: number)",
       "function edDelete()",
-      "function edSetHide(v)",
-      "function edNew(v)",
+      "function edSetHide(v: string)",
+      "function edNew(v: string)",
       "function edIoLoad()",
       "function edFromTitle()",
       "edSnap:function()",

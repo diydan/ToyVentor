@@ -80,7 +80,7 @@ try {
       eq('hand_l', slotHex('hand_l'), findBomHex('hand_l'));
       eq('hand_r', slotHex('hand_r'), findBomHex('hand_r'));
       eq('boot', slotHex('boot_l'), findBomHex('boot'));
-      if (st.head !== 'classic' && st.head !== 'custom') {
+      if (st.head !== 'custom') {
         eq('neck_turret_2x1', slotHex('neck_turret_2x1'), findBomHex('neck_turret_2x1'));
         const headMesh = firstMesh(kip.exp.headMeshes[st.head]);
         const headBom = bom.items.find(x => x.id.endsWith('_head_' + st.head) || (st.head === 'robot' && x.id === 'robot_head_visor'));
@@ -129,7 +129,7 @@ try {
   check("plate view opens and packs colour-separated plates", await tab.waitFor(`window.kipPrint.isOn() && window.kipPrint.plannedPlates().length > 1 && !window.kipPrint.isBusy()`, 120000));
   const info = await tab.evaluate(`document.getElementById('km-printInfo').textContent`);
   console.log(info.split("\n").map((l) => `    ${l}`).join("\n"));
-  check("summary line names parts, plates, and spool budget grams", /\d+ parts across \d+ plates?/.test(info) && /Spool budget \(est\.\): ~\d+(\.\d+)? g/.test(info), info);
+  check("summary line names parts, plates, support-free status, and spool budget grams", /\d+ parts across \d+ plates?/.test(info) && /All parts print without supports/.test(info) && /Spool budget \(est\.\): ~\d+(\.\d+)? g/.test(info), info);
 
   const geo = await tab.evaluate(`(async () => {
     const K = await import('/kip/kip-print.js');
@@ -154,9 +154,56 @@ try {
     return out; })()`);
   check("every plate is legal: >= 5 mm (or 6 mm support) gaps, inside 170 mm bound, seated on bed", geo.violations.length === 0 && geo.outside === 0, JSON.stringify(geo.violations.slice(0, 3)));
   check("one mesh per part on the shown plate in true filament sRGB colour by default", geo.meshes === (await tab.evaluate(`window.kipPrint.plates()[window.kipPrint.plateIndex()].length`)) && geo.heatOff === 0 && geo.colorMismatches === 0);
-  check("catalog parts whose bytes match a validation report read as verified support-free", (geo.tiers["support-free"] ?? 0) > 0, JSON.stringify(geo.tiers));
+  check("built-in Leo Explorer has 0 needs-supports parts and verified support-free catalog parts", (geo.tiers["support-free"] ?? 0) > 0 && (geo.tiers["needs-supports"] ?? 0) === 0, JSON.stringify(geo.tiers));
 
-  // Toggle Support check ON on a support plate and verify overhang heatmap
+  // Switch Layout to 'Kit tray' ('sprue') and verify zero-support kit trays render cleanly
+  const trayCheck = await tab.evaluate(`(async () => {
+    const sel = document.getElementById('km-layout');
+    const sprueOpt = [...sel.options].find(o => o.value === 'sprue');
+    const optLabel = sprueOpt ? sprueOpt.textContent.trim() : '';
+    sel.value = 'sprue';
+    sel.dispatchEvent(new Event('change', { bubbles: true }));
+    return { optLabel };
+  })()`);
+  check("Layout option label is 'Kit tray' and repacks zero-support kit trays", trayCheck.optLabel === "Kit tray" && await tab.waitFor(`!window.kipPrint.isBusy() && window.kipPrint.profile().flatPackMode === 'sprue' && window.kipPrint.plannedPlates().some(pl => Boolean(pl.sprue)) && !/^Packing/.test(document.getElementById('km-printInfo').textContent) && /Kit trays:/.test(document.getElementById('km-printInfo').textContent)`, 60000));
+  const trayInfo = await tab.evaluate(`(() => {
+    const v = window.kipPrint;
+    const sprueIdx = v.plannedPlates().findIndex(pl => Boolean(pl.sprue));
+    if (sprueIdx >= 0) v.setPlate(sprueIdx);
+    const hasSprueMesh = Boolean(v.meshes()[0]?.parent?.getObjectByName('plate_kit_card_sprue'));
+    const supPlates = v.plannedPlates().filter(pl => pl.requiresSupports).length;
+    const text = document.getElementById('km-printInfo').textContent;
+    v.setPlate(0);
+    return { hasSprueMesh, supPlates, text };
+  })()`);
+  check("Kit tray renders sprue runner mesh with 0 support plates and 'All parts print without supports'", trayInfo.hasSprueMesh && trayInfo.supPlates === 0 && /Kit trays:/.test(trayInfo.text) && /All parts print without supports/.test(trayInfo.text), JSON.stringify(trayInfo));
+  console.log(`    tiers: ${JSON.stringify(geo.tiers)}`);
+  await tab.shot(path.join(SHOTS, "plate-1440.png"));
+
+  console.log("\n[3] exports & fallback support isolation: custom overhanging STL, Orca/Bambu 3MF, PrusaSlicer 3MF, STL zip, PNG, and kip-print-pack.zip");
+  // Equip an SO(3)-invariant overhanging UV-sphere custom STL so we also verify dedicated support-plate isolation, red heatmap, and 3MF support flags
+  await tab.evaluate(`(async () => {
+    const K = await import('/kip/kip-print.js');
+    const quad = (a, b, c, d) => [...a, ...b, ...c, ...a, ...c, ...d];
+    const rings = 14, segs = 20, r = 10;
+    const pt = (i, j) => {
+      const phi = (Math.PI * i) / rings, th = (2 * Math.PI * (j % segs)) / segs, sp = Math.sin(phi);
+      return [r * sp * Math.cos(th), r * sp * Math.sin(th), 10 + r * Math.cos(phi)];
+    };
+    const out = [];
+    for (let i = 0; i < rings; i++) {
+      for (let j = 0; j < segs; j++) {
+        if (i === 0) out.push(...pt(0, 0), ...pt(1, j), ...pt(1, j + 1));
+        else if (i === rings - 1) out.push(...pt(i, j), ...pt(rings, 0), ...pt(i, j + 1));
+        else out.push(...quad(pt(i, j), pt(i + 1, j), pt(i + 1, j + 1), pt(i, j + 1)));
+      }
+    }
+    const stlBytes = K.stlBytes(Float32Array.from(out), 'orb_hat');
+    const file = new File([stlBytes], 'orb_hat.stl', { type: 'model/stl' });
+    await window.kipMenu.ctx.act.loadFile(file);
+  })()`);
+  check("custom overhanging STL isolates off the tray onto a support plate and updates summary line", await tab.waitFor(`!window.kipPrint.isBusy() && window.kipPrint.plannedPlates().some(pl => pl.requiresSupports) && /1 part needs supports:/.test(document.getElementById('km-printInfo').textContent)`, 60000));
+
   const heatCheck = await tab.evaluate(`(() => {
     const v = window.kipPrint;
     const supIdx = v.plannedPlates().findIndex(pl => pl.requiresSupports);
@@ -168,23 +215,18 @@ try {
     const want = v.meshes().filter(m => m.userData.tier === 'needs-supports').length;
     el.checked = false;
     el.dispatchEvent(new Event('change', { bubbles: true }));
-    v.setPlate(0);
     return { supIdx, heat, want };
   })()`);
   check("Support check toggle reveals red overhang heatmap on dedicated support plates", heatCheck.supIdx >= 0 && heatCheck.want > 0 && heatCheck.heat === heatCheck.want, JSON.stringify(heatCheck));
-  console.log(`    tiers: ${JSON.stringify(geo.tiers)}`);
-  await tab.shot(path.join(SHOTS, "plate-1440.png"));
 
-  console.log("\n[3] exports: Orca/Bambu 3MF, PrusaSlicer 3MF, STL zip, print-sheet PNG, and full kip-print-pack.zip");
-  // Select the support plate so we verify per-object support flags in both slicer dialects
-  await tab.evaluate(`(() => { const v = window.kipPrint; const s = v.plannedPlates().findIndex(pl => pl.requiresSupports); if (s >= 0) v.setPlate(s); })()`);
+  // Keep the support plate selected so we verify per-object support flags in both slicer dialects
   const shown = await tab.evaluate(`window.kipPrint.plates()[window.kipPrint.plateIndex()].length`);
   const wantSupp = await tab.evaluate(`window.kipPrint.plates()[window.kipPrint.plateIndex()].filter(p => p.tier === 'needs-supports').length`);
 
   const orcaMf = toBuf(await tab.evaluate(b64(`window.kipPrint.exportBytes('3mf')`)));
-  const orcaOut = pyZip(orcaMf, "m=z.read('3D/3dmodel.model').decode()\nc=z.read('Metadata/model_settings.config').decode()\np=z.read('Metadata/project_settings.config').decode()\nprint(m.count('<object '), c.count('enable_support\" value=\"1\"'), 'millimeter' in m, 'PrusaSlicer' not in m, len(p) > 20)");
-  const [oObjs, oSupp, oMm, oNoPrusa, oHasProj] = orcaOut.trim().split(" ");
-  check(`Orca/Bambu 3MF has ${shown} objects, ${wantSupp} tree-support flags, and non-empty project_settings.config`, Number(oObjs) === shown && Number(oSupp) === wantSupp && oMm === "True" && oNoPrusa === "True" && oHasProj === "True", orcaOut);
+  const orcaOut = pyZip(orcaMf, "m=z.read('3D/3dmodel.model').decode()\nc=z.read('Metadata/model_settings.config').decode()\np=z.read('Metadata/project_settings.config').decode()\nprint(m.count('<item '), c.count('enable_support\" value=\"1\"'), 'millimeter' in m, 'PrusaSlicer' not in m, len(p) > 20)");
+  const [oItems, oSupp, oMm, oNoPrusa, oHasProj] = orcaOut.trim().split(" ");
+  check(`Orca/Bambu 3MF has ${shown} build items, ${wantSupp} tree-support flags, and non-empty project_settings.config`, Number(oItems) === shown && Number(oSupp) === wantSupp && oMm === "True" && oNoPrusa === "True" && oHasProj === "True", orcaOut);
 
   // Switch preset to prusa_mmu_5 and verify PrusaSlicer 3MF dialect
   await tab.evaluate(`window.kipPrint.setPreset('prusa_mmu_5')`);
@@ -197,9 +239,11 @@ try {
   const [pObjs, pSupp, pMm] = prusaOut.trim().split(" ");
   check(`PrusaSlicer 3MF has ${shownP} objects and ${wantSuppP} organic support flags`, Number(pObjs) === shownP && Number(pSupp) === wantSuppP && pMm === "True", prusaOut);
 
-  // Restore compact_180
+  // Restore clean Leo Explorer on compact_180 (Kit tray) before testing full zero-support print pack export
+  await tab.evaluate(STATE_BOY);
   await tab.evaluate(`window.kipPrint.setPreset('compact_180')`);
-  await tab.waitFor(`!window.kipPrint.isBusy() && window.kipPrint.profile().presetId === 'compact_180'`, 60000);
+  await tab.evaluate(`window.kipPrint.updateProfile({ flatPackMode: 'sprue' })`);
+  await tab.waitFor(`!window.kipPrint.isBusy() && window.kipPrint.profile().presetId === 'compact_180' && window.kipPrint.plannedPlates().every(pl => !pl.requiresSupports)`, 60000);
 
   const zip = toBuf(await tab.evaluate(b64(`window.kipPrint.exportBytes('stl-zip')`)));
   const zOut = pyZip(zip, "import json\nj=json.loads(z.read('layout.json'))\nprint(j['format'], len(j['plates']), any(n.endswith('.stl') for n in z.namelist()))");

@@ -90,11 +90,11 @@ describe("customizer bridge shape", () => {
     );
     for (const token of [
       "function cuSnap()",
-      "function cuAct(a)",
-      "function cuType(t)",
-      "function cuPart(id)",
-      "function cuForgeTool(id)",
-      "function cuPrintTool(id)",
+      "function cuAct(a: string)",
+      "function cuType(t: string)",
+      "function cuPart(id: string)",
+      "function cuForgeTool(id: string)",
+      "function cuPrintTool(id: string)",
       "cuSnap:function()",
       "cuAct:function(a)",
     ]) {

@@ -75,11 +75,11 @@ function glowTex(col: string): THREE.Texture {if(!GT[col])GT[col]=canv(128,128,f
 function glowSprite(col: string, size: number, op?: number, normal?: unknown): THREE.Sprite {var s=new T.Sprite(new T.SpriteMaterial({map:glowTex(col),transparent:true,depthWrite:false,blending:normal?T.NormalBlending:T.AdditiveBlending,opacity:op==null?1:op,fog:false}));s.scale.set(size,size,1);return s}
 
 /* ---------- materials ---------- */
-function plastic(c: string, o?: Record<string, unknown>): THREE.Material {var k="p"+c+JSON.stringify(o||{});if(!MC[k])MC[k]=new T.MeshPhysicalMaterial(Object.assign({color:c,roughness:.34,metalness:0,clearcoat:.85,clearcoatRoughness:.16,envMapIntensity:.75},o||{}));return MC[k] as THREE.Material}
-function matte(c: string, flat?: unknown): THREE.Material {var k="m"+c+flat;if(!MC[k])MC[k]=new T.MeshStandardMaterial({color:c,roughness:.85,metalness:0,flatShading:!!flat,envMapIntensity:.1});return MC[k] as THREE.Material}
-function metal(c: string): THREE.Material {var k="x"+c;if(!MC[k])MC[k]=new T.MeshStandardMaterial({color:c,roughness:.3,metalness:.65,envMapIntensity:1.3});return MC[k] as THREE.Material}
-function glowMat(c: string, i?: number): THREE.Material {var k="g"+c+i;if(!MC[k])MC[k]=new T.MeshStandardMaterial({color:c,emissive:c,emissiveIntensity:i||1.5,roughness:.4,envMapIntensity:.2});return MC[k] as THREE.Material}
-function paintMat(c: string): THREE.Material {var k="pm"+c;if(!MC[k])MC[k]=new T.MeshPhysicalMaterial({color:c,metalness:.28,roughness:.3,clearcoat:1,clearcoatRoughness:.08,envMapIntensity:1});return MC[k] as THREE.Material}
+function plastic(c: string, o?: Record<string, unknown>): THREE.MeshPhysicalMaterial {var k="p"+c+JSON.stringify(o||{});if(!MC[k])MC[k]=new T.MeshPhysicalMaterial(Object.assign({color:c,roughness:.34,metalness:0,clearcoat:.85,clearcoatRoughness:.16,envMapIntensity:.75},o||{}));return MC[k] as THREE.MeshPhysicalMaterial}
+function matte(c: string, flat?: unknown): THREE.MeshStandardMaterial {var k="m"+c+flat;if(!MC[k])MC[k]=new T.MeshStandardMaterial({color:c,roughness:.85,metalness:0,flatShading:!!flat,envMapIntensity:.1});return MC[k] as THREE.MeshStandardMaterial}
+function metal(c: string): THREE.MeshStandardMaterial {var k="x"+c;if(!MC[k])MC[k]=new T.MeshStandardMaterial({color:c,roughness:.3,metalness:.65,envMapIntensity:1.3});return MC[k] as THREE.MeshStandardMaterial}
+function glowMat(c: string, i?: number): THREE.MeshStandardMaterial {var k="g"+c+i;if(!MC[k])MC[k]=new T.MeshStandardMaterial({color:c,emissive:c,emissiveIntensity:i||1.5,roughness:.4,envMapIntensity:.2});return MC[k] as THREE.MeshStandardMaterial}
+function paintMat(c: string): THREE.MeshPhysicalMaterial {var k="pm"+c;if(!MC[k])MC[k]=new T.MeshPhysicalMaterial({color:c,metalness:.28,roughness:.3,clearcoat:1,clearcoatRoughness:.08,envMapIntensity:1});return MC[k] as THREE.MeshPhysicalMaterial}
 const GLASS = new T.MeshPhysicalMaterial({color:0x9fdcff,roughness:.05,clearcoat:1,transparent:true,opacity:.85});
 const BUBBLE = new T.MeshPhysicalMaterial({color:0xcfeaff,roughness:.05,clearcoat:1,transparent:true,opacity:.35,side:T.DoubleSide,depthWrite:false});
 

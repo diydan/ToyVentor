@@ -1,24 +1,24 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_mom_bellows_base_S.stl",
-  "file_sha256": "ded5a6d701569133793430db5e39ccf4fb97303d3e9ce7d1b00c23c8923a42e0",
+  "file_sha256": "e84549c4cb384be3c61159e706cbf4df30519f2e6a5d7089cd50b6bb958db7d9",
   "part_id": "mom_bellows_base",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-10-31T15:28:54Z",
+  "checked_at": "2026-11-01T05:03:56Z",
   "metrics": {
     "bbox_mm": [
       49.8,
-      49.8,
-      16.0
+      68.8,
+      19.15
     ],
-    "volume_cm3": 12.45,
-    "surface_cm2": 109.13,
-    "triangles": 7660,
+    "volume_cm3": 14.38,
+    "surface_cm2": 138.55,
+    "triangles": 11030,
     "ledges": [],
-    "layers": 80,
-    "bed_contact_mm2": 836.4,
-    "height_mm": 16.0,
-    "slenderness": 0.55,
+    "layers": 96,
+    "bed_contact_mm2": 1154.6,
+    "height_mm": 19.15,
+    "slenderness": 0.56,
     "centre_of_mass_over_contact": true,
     "min_wall_mm": null,
     "thin_wall_regions": []
@@ -108,8 +108,8 @@
       "result": "pass",
       "value": [
         49.8,
-        49.8,
-        16.0
+        68.8,
+        19.1
       ],
       "limit": [
         180,
@@ -162,9 +162,9 @@
       "id": "V9_bed_contact",
       "level": "info",
       "result": "pass",
-      "value": 836.4,
+      "value": 1154.6,
       "limit": null,
-      "detail": "height / sqrt(contact) = 0.55; above about 3 the slicer often asks for a brim"
+      "detail": "height / sqrt(contact) = 0.56; above about 3 the slicer often asks for a brim"
     },
     {
       "id": "V8_wall_thickness",

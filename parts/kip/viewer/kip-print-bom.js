@@ -301,18 +301,16 @@ export function resolveSceneBom(state = {}, opts = {}) {
   }
 
   const edition = state.edition === 'snap' ? 'snap' : 'pro';
-  const head = state.head || 'classic';
-  const isClassic = head === 'classic';
+  const head = (!state.head || state.head === 'classic') ? 'kid' : state.head;
   const isHuman = HUMAN_HEAD_IDS.has(head);
   const expr = state.expr || (state.selfie ? 'selfie' : 'spark');
   const isSelfie = Boolean(state.selfie) || expr === 'selfie';
   const faceInsert = (isHuman && isSelfie) ? 'flat' : (state.faceInsert || 'sculpted');
-  const skinId = state.skin || 'vinyl_cream';
+  const skinId = state.skin || 'warm_peach';
   const shirtId = state.shirt || 'off';
   const pantsId = state.pants || 'off';
   const hairId = state.hair || 'off';
   const hatId = state.hat ?? state.crown ?? 'buds';
-  const earsId = state.ears || 'off';
   const backId = state.back || 'off';
   const tailId = state.tail || 'off';
   const propId = state.prop || 'off';
@@ -396,9 +394,6 @@ export function resolveSceneBom(state = {}, opts = {}) {
     // Pro Joints: 4 big pegs (2 shoulder + 2 hip) + 8 small pegs (2 elbow + 2 wrist + 2 knee + 2 ankle)
     pushPart(rawChar, { id: 'spark_peg_big', file: scadFile('spark_peg_big'), qty: 2, hex: body.joints.shoulder, role: 'joint' });
     pushPart(rawChar, { id: 'spark_peg_big', file: scadFile('spark_peg_big'), qty: 2, hex: body.joints.hip,      role: 'joint' });
-    if (isClassic) {
-      pushPart(rawChar, { id: 'spark_peg_big', file: scadFile('spark_peg_big'), qty: 1, hex: base.spark, role: 'joint' });
-    }
     pushPart(rawChar, { id: 'spark_peg_sml', file: scadFile('spark_peg_sml'), qty: 2, hex: body.joints.elbow, role: 'joint' });
     pushPart(rawChar, { id: 'spark_peg_sml', file: scadFile('spark_peg_sml'), qty: 2, hex: body.joints.wrist, role: 'joint' });
     pushPart(rawChar, { id: 'spark_peg_sml', file: scadFile('spark_peg_sml'), qty: 2, hex: body.joints.knee,  role: 'joint' });
@@ -411,9 +406,6 @@ export function resolveSceneBom(state = {}, opts = {}) {
     // Snap Joints: 4 big turrets (2 shoulder + 2 hip) + 4 small turrets (2 wrist + 2 ankle)
     pushPart(rawChar, { id: 'snap_turret_big', file: scadFile('snap_turret_big'), qty: 2, hex: body.joints.shoulder, role: 'joint' });
     pushPart(rawChar, { id: 'snap_turret_big', file: scadFile('snap_turret_big'), qty: 2, hex: body.joints.hip,      role: 'joint' });
-    if (isClassic) {
-      pushPart(rawChar, { id: 'snap_turret_big', file: scadFile('snap_turret_big'), qty: 1, hex: base.spark, role: 'joint' });
-    }
     pushPart(rawChar, { id: 'snap_turret', file: scadFile('snap_turret'), qty: 2, hex: body.joints.wrist, role: 'joint' });
     pushPart(rawChar, { id: 'snap_turret', file: scadFile('snap_turret'), qty: 2, hex: body.joints.ankle, role: 'joint' });
   }
@@ -437,83 +429,61 @@ export function resolveSceneBom(state = {}, opts = {}) {
   const hairOpt = HAIR_OPTIONS.find(h => h.id === hairId) || HAIR_OPTIONS[0];
   const hasHair = hairOpt.id !== 'off';
   const canWearHat = Boolean(hairOpt.hatReady);
-  const exposedCrownBuds = !isClassic && canWearHat && hatId === 'buds';
+  const exposedCrownBuds = canWearHat && hatId === 'buds';
 
   let headEntry = null;
-  if (isClassic) {
-    pushPart(rawChar, { id: 'head_shell', file: scadFile('head_shell'), qty: 1, hex: base.shell, role: 'head' });
-    pushPart(rawChar, { id: 'head_hood',  file: scadFile('head_hood'),  qty: 1, hex: base.hood,  role: 'head' });
-    pushPart(rawChar, { id: 'visor',      file: scadFile('visor'),      qty: 1, hex: base.visor, role: 'face_feature' });
-    pushPart(rawChar, { id: 'ear_pod_l',  file: scadFile('ear_pod_l'),  qty: 1, hex: base.spark, role: 'accent' });
-    pushPart(rawChar, { id: 'ear_pod_r',  file: scadFile('ear_pod_r'),  qty: 1, hex: base.spark, role: 'accent' });
+  pushPart(rawChar, { id: 'neck_turret_2x1', file: scadFile('neck_turret_2x1'), qty: 1, hex: body.neckHex, role: 'skin' });
 
-    if (!hasHair && hatId === 'blank') {
-      pushPart(rawChar, { id: 'crown_cap_blank', file: scadFile('crown_cap_blank'), qty: 1, hex: base.hood, role: 'head' });
-    } else {
-      pushPart(rawChar, { id: 'crown_buds', file: scadFile('crown_buds'), qty: 1, hex: base.spark, role: 'accent' });
-    }
-
-    if (expr === 'spark') {
-      pushPart(rawChar, { id: 'face_eyes',   file: scadFile('face_eyes'),   qty: 1, hex: base.eyes,   role: 'face_feature' });
-      pushPart(rawChar, { id: 'face_glints', file: scadFile('face_glints'), qty: 1, hex: base.glints, role: 'face_feature' });
-      pushPart(rawChar, { id: 'face_cheeks', file: scadFile('face_cheeks'), qty: 1, hex: base.cheeks, role: 'face_feature' });
-    } else if (expr !== 'blank') {
-      decals.push({ kind: 'classic_visor_face', expr });
-    }
-  } else {
-    pushPart(rawChar, { id: 'neck_turret_2x1', file: scadFile('neck_turret_2x1'), qty: 1, hex: body.neckHex, role: 'skin' });
-
-    if (head === 'custom') {
-      const customHead = customSlots.head;
-      if (customHead && customHead.bytes) {
-        headEntry = pushPart(rawChar, {
-          id: 'custom_head_stl',
-          file: 'memory://custom_head.stl',
-          qty: 1,
-          hex: customHead.colorHex || EXP_PALETTE.custom,
-          role: 'head',
-          source: 'custom-stl',
-          bytes: customHead.bytes,
-          customName: customHead.name || 'Custom Head',
-        });
-      } else {
-        unmapped.push('Custom uploaded head STL (re-upload .stl file in Forge to include mesh bytes)');
-      }
-    } else if (HEAD_PART_ID[head]) {
-      const headPartId = HEAD_PART_ID[head];
-      const headHex = isHuman ? body.headSkinHex : (NON_HUMAN_HEAD_HEX[head] || base.shell);
+  if (head === 'custom') {
+    const customHead = customSlots.head;
+    if (customHead && customHead.bytes) {
       headEntry = pushPart(rawChar, {
-        id: headPartId,
-        file: catFile(headPartId),
+        id: 'custom_head_stl',
+        file: 'memory://custom_head.stl',
         qty: 1,
-        hex: headHex,
-        role: isHuman ? 'skin' : 'head',
-        source: 'partspec',
+        hex: customHead.colorHex || EXP_PALETTE.custom,
+        role: 'head',
+        source: 'custom-stl',
+        bytes: customHead.bytes,
+        customName: customHead.name || 'Custom Head',
       });
     } else {
-      unmapped.push(`Unknown head "${head}"`);
+      unmapped.push('Custom uploaded head STL (re-upload .stl file in Forge to include mesh bytes)');
     }
+  } else if (HEAD_PART_ID[head]) {
+    const headPartId = HEAD_PART_ID[head];
+    const headHex = isHuman ? body.headSkinHex : (NON_HUMAN_HEAD_HEX[head] || base.shell);
+    headEntry = pushPart(rawChar, {
+      id: headPartId,
+      file: catFile(headPartId),
+      qty: 1,
+      hex: headHex,
+      role: isHuman ? 'skin' : 'head',
+      source: 'partspec',
+    });
+  } else {
+    unmapped.push(`Unknown head "${head}"`);
+  }
 
-    if (isHuman) {
-      const fpPartId = FACE_PART_ID[faceInsert] || FACE_PART_ID.sculpted;
-      pushPart(rawChar, {
-        id: fpPartId,
-        file: catFile(fpPartId),
-        qty: 1,
-        hex: body.headSkinHex,
-        role: 'skin',
-        source: 'partspec',
+  if (isHuman) {
+    const fpPartId = FACE_PART_ID[faceInsert] || FACE_PART_ID.sculpted;
+    pushPart(rawChar, {
+      id: fpPartId,
+      file: catFile(fpPartId),
+      qty: 1,
+      hex: body.headSkinHex,
+      role: 'skin',
+      source: 'partspec',
+    });
+    if (expr !== 'blank') {
+      decals.push({
+        kind: isSelfie ? 'selfie_face' : 'human_face',
+        expr: isSelfie ? 'selfie' : expr,
+        faceInsert,
       });
-      if (expr !== 'blank') {
-        decals.push({
-          kind: isSelfie ? 'selfie_face' : 'human_face',
-          expr: isSelfie ? 'selfie' : expr,
-          faceInsert,
-        });
-      }
-    } else if (head !== 'custom' && expr !== 'blank') {
-      decals.push({ kind: 'creature_face', head, expr });
     }
+  } else if (head !== 'custom' && expr !== 'blank') {
+    decals.push({ kind: 'creature_face', head, expr });
   }
 
   // Hair / Wigs (19 sculpted styles)
@@ -532,7 +502,7 @@ export function resolveSceneBom(state = {}, opts = {}) {
   }
 
   // Crown Buds 2x1 accent overlay rule (§4.2 #7):
-  // Exposed ONLY when `!isClassic && canWearHat && hat === 'buds'`. Never a standalone part!
+  // Exposed ONLY when `canWearHat && hat === 'buds'`. Never a standalone part!
   if (exposedCrownBuds) {
     const hostEntry = hasHair ? hairEntry : headEntry;
     if (hostEntry) {
@@ -591,18 +561,8 @@ export function resolveSceneBom(state = {}, opts = {}) {
   }
 
   // -------------------------------------------------------------------------
-  // 3. Ear Pods / Pro Scanner, Backpacks / Pro 2:1 Gears, Tails, Props (§4.3)
+  // 3. Backpacks / Pro 2:1 Gears, Tails, Props (§4.3)
   // -------------------------------------------------------------------------
-  if (earsId === 'comm') {
-    pushPart(rawChar, { id: 'ear_acc_l', file: scadFile('ear_acc_l'), qty: 1, hex: base.snapMint, role: 'accent' });
-    pushPart(rawChar, { id: 'ear_acc_r', file: scadFile('ear_acc_r'), qty: 1, hex: base.snapMint, role: 'accent' });
-  } else if (earsId === 'pro') {
-    pushPart(rawChar, { id: 'beam_str_tu03', file: catFile('beam_str_tu03'), qty: 1, hex: base.proSlate, role: 'mechanism', source: 'partspec' });
-    pushPart(rawChar, { id: 'shaft_tu03',    file: catFile('shaft_tu03'),    qty: 1, hex: base.proSlate, role: 'mechanism', source: 'partspec' });
-    pushPart(rawChar, { id: 'gear_spur_z10', file: catFile('gear_spur_z10'), qty: 1, hex: base.spark,    role: 'accent',    source: 'partspec' });
-    pushPart(rawChar, { id: 'bushing_half',  file: catFile('bushing_half'),  qty: 2, hex: base.proGear,  role: 'mechanism', source: 'partspec' });
-  }
-
   if (backId === 'explorer') {
     pushPart(rawChar, { id: 'pack_explorer', file: catFile('pack_explorer'), qty: 1, hex: EXP_PALETTE.teal, role: 'accessory', source: 'partspec' });
   } else if (backId === 'jetpack') {

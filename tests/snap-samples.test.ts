@@ -60,9 +60,15 @@ describe("TU PartSpec sets and zero-code expansion loader", () => {
   it("loads base + Forge Club expansion sets with zero validation errors", () => {
     expect(validateSet(baseSetJson)).toEqual([]);
     expect(catalogErrors).toEqual([]);
-    expect(allSets.length).toBeGreaterThanOrEqual(3);
+    expect(allSets.length).toBeGreaterThanOrEqual(5);
     expect(allSets.map((s) => s.id)).toEqual(
-      expect.arrayContaining(["base", "racer-garage", "kip-wardrobe"]),
+      expect.arrayContaining([
+        "base",
+        "racer-garage",
+        "kip-wardrobe",
+        "modular-craft",
+        "mech-robotics",
+      ]),
     );
   });
 

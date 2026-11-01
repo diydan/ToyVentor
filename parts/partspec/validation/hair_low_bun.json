@@ -1,42 +1,42 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_hair_low_bun_S.stl",
-  "file_sha256": "c85de47387d0770ab4f5e4db9c597652ffc985cdfd77554edd6df1e7373303fd",
+  "file_sha256": "a44299304cb5baa477c86f9608943197de2ae7f7605fc404ff8ff5b34f9f6f3a",
   "part_id": "hair_low_bun",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-10-31T20:35:58Z",
+  "checked_at": "2026-11-01T05:06:13Z",
   "metrics": {
     "bbox_mm": [
       43.96,
-      45.77,
+      45.87,
       24.0
     ],
-    "volume_cm3": 8.75,
-    "surface_cm2": 63.76,
-    "triangles": 6738,
+    "volume_cm3": 8.77,
+    "surface_cm2": 64.0,
+    "triangles": 6784,
     "ledges": [],
     "layers": 120,
     "bed_contact_mm2": 111.8,
     "height_mm": 24.0,
     "slenderness": 2.27,
     "centre_of_mass_over_contact": true,
-    "min_wall_mm": 0.449,
+    "min_wall_mm": 0.41,
     "thin_wall_regions": [
       {
-        "area_mm2": 4.76,
+        "area_mm2": 4.51,
         "min_mm": 0.702,
         "at_mm": [
-          0.12,
-          -13.38,
-          13.61
+          0.15,
+          -13.42,
+          13.7
         ]
       },
       {
-        "area_mm2": 8.29,
-        "min_mm": 0.779,
+        "area_mm2": 8.38,
+        "min_mm": 0.778,
         "at_mm": [
-          1.13,
-          -12.81,
+          1.14,
+          -12.91,
           13.21
         ]
       }
@@ -45,8 +45,8 @@
   "bridges": [
     {
       "z_mm": 16.6,
-      "span_mm": 9.96,
-      "area_mm2": 483.9
+      "span_mm": 10.03,
+      "area_mm2": 490.0
     },
     {
       "z_mm": 19.7,
@@ -82,7 +82,7 @@
       "result": "pass",
       "value": [
         44.0,
-        45.8,
+        45.9,
         24.0
       ],
       "limit": [
@@ -112,7 +112,7 @@
       "id": "V6_bridge_span",
       "level": "block",
       "result": "pass",
-      "value": 9.96,
+      "value": 10.03,
       "limit": 20,
       "detail": "3 bridge(s); widest unsupported span in mm"
     },
@@ -127,10 +127,10 @@
     {
       "id": "V7_min_feature",
       "level": "warn",
-      "result": "warn",
-      "value": 1,
+      "result": "pass",
+      "value": 0,
       "limit": 0,
-      "detail": "layer pieces narrower than 0.4 mm; first at z 17.1 mm"
+      "detail": "layer pieces narrower than 0.4 mm"
     },
     {
       "id": "V9_bed_contact",
@@ -146,11 +146,11 @@
       "result": "warn",
       "value": 2,
       "limit": 0,
-      "detail": "regions where the wall is under 0.8 mm (two nozzle widths) over 2.0 mm2, or under 0.4 mm (one nozzle width) over 0.25 mm2; worst 0.702 mm at [0.12, -13.38, 13.61]"
+      "detail": "regions where the wall is under 0.8 mm (two nozzle widths) over 2.0 mm2, or under 0.4 mm (one nozzle width) over 0.25 mm2; worst 0.702 mm at [0.15, -13.42, 13.7]"
     }
   ],
   "print_settings": {},
   "slicer": null,
   "verdict": "pass_with_warnings",
-  "summary": "Warnings: V7_min_feature, V8_wall_thickness"
+  "summary": "Warnings: V8_wall_thickness"
 }

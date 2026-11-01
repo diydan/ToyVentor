@@ -4,7 +4,7 @@
   "file_sha256": "10608cdcdba720b3926a9af29a891594cdb0b143aec8dd882194aa893c273b7b",
   "part_id": "racer_hood_scoop",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-10-31T14:35:38Z",
+  "checked_at": "2026-11-01T04:59:25Z",
   "metrics": {
     "bbox_mm": [
       24.4,
@@ -201,7 +201,7 @@
     ],
     "engine": "PrusaSlicer-2.8.1",
     "slice_logic": "1",
-    "reused_from": "2026-10-31T11:23:35Z"
+    "reused_from": "2026-11-01T04:51:31Z"
   },
   "verdict": "pass",
   "summary": "Prints as is"

@@ -44,11 +44,6 @@ export const UNROLL_PROFILES = Object.freeze({
     rowScales: [1.0074, 1.01, 1.01, 1.0155, 1.0296, 1.0331, 1.0317, 1.044, 1.0592, 1.0555, 1.0298, 1.0197, 1.0367, 1.0414, 1.0323],
     colScales: [1.0684, 1.0808, 1.0801, 1.1223, 1.1396, 1.1247, 1.1002, 1.0755, 1.0685, 1.0632, 1.0625, 1.0823, 1.0624, 1.0858, 1.0918, 1.0858, 1.0624, 1.0823, 1.0625, 1.0632, 1.0685, 1.0755, 1.1002, 1.1247, 1.1396, 1.1223, 1.0801, 1.0808, 1.0684],
   },
-  classic_visor_face: {
-    planeW: 25.5, planeH: 12.8, centerY: 0.0, mode: 'visor',
-    rowScales: [1.0129, 1.0129, 1.0129, 1.0129, 1.0129],
-    colScales: [1.0, 1.0, 1.0, 1.0, 1.0],
-  },
   shirt_pro: {
     planeW: 18.8, planeH: 21.6, centerY: 86.8, mode: 'torso',
     rowScales: [1.0376, 1.0366, 1.0357, 1.0348, 1.0342, 1.0336, 1.033, 1.0333, 1.0338, 1.0343, 1.0349, 1.0354, 1.0362, 1.0369, 1.0377, 1.0384, 1.0392, 1.04, 1.0409, 1.0417, 1.0426, 1.0434, 1.0443, 1.0452, 1.0461],
@@ -560,20 +555,6 @@ export function planStickerSheet(bomDecals = [], state = {}, opts = {}) {
           makeUnrolledCropSticker({ id: `sculpted_cheek_r${tag}`, kind: 'human_face_sculpted', label: `Right Cheek${sfx}`, sourceKey: srcKey, profileKey: 'human_face_sculpted', cropUv: { u0: 0.75, u1: 0.94, v0: 0.58, v1: 0.80 }, cornerRadiusMm: 1.0, bgHex: headSkinHex }),
           makeUnrolledCropSticker({ id: `sculpted_mouth${tag}`, kind: 'human_face_sculpted', label: `Mouth Strip${sfx}`, sourceKey: srcKey, profileKey: 'human_face_sculpted', cropUv: { u0: 0.34, u1: 0.66, v0: 0.76, v1: 0.99 }, cornerRadiusMm: 1.0, bgHex: headSkinHex }),
         );
-      }
-    } else if (dec.kind === 'classic_visor_face') {
-      const srcKey = `classic_visor:${dec.expr || 'happy'}`;
-      for (const [id, label] of [['visor_primary', `Classic Visor (${dec.expr})`], ['visor_spare', `Classic Visor (${dec.expr} spare)`]]) {
-        items.push(makeUnrolledCropSticker({
-          id,
-          kind: 'classic_visor_face',
-          label,
-          sourceKey: srcKey,
-          profileKey: 'classic_visor_face',
-          cropUv: { u0: 0.03, u1: 0.97, v0: 0.06, v1: 0.94 },
-          cornerRadiusMm: 4.5,
-          bgHex: '#1C2338',
-        }));
       }
     } else if (dec.kind === 'creature_face') {
       const headId = dec.head || state.head || 'fox';

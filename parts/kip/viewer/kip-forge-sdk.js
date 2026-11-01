@@ -1406,7 +1406,7 @@ export function buildPhotoAccessoryMesh(THREE, sourceCanvas, seg, opts = {}) {
 export function encodeToyContractHash(state) {
   const payload = {
     format: 'toyventor.toy/1',
-    id: `kip-${state.head || 'classic'}`,
+    id: `kip-${state.head || 'kid'}`,
     name: state.name || 'Kip Custom Loadout',
     kind: state.vehicle && state.vehicle !== 'none' ? 'vehicle' : 'figure',
     prints: !state.hasPhotoAccessory,

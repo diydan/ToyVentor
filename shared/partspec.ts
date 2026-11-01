@@ -121,6 +121,27 @@ const CURATED_STAT_VALUES: Record<string, 1 | 2 | 3> = {
   waddle_tail_s: 2,
   pack_explorer: 2,
   veh_wheel_sport: 2,
+  kit_keel_base: 3,
+  kit_rotor_blade: 3,
+  kit_booster_pod: 3,
+  kit_wheel_giant: 2,
+  kit_aero_wedge: 2,
+  kit_foil_wing: 2,
+  kit_turntable: 2,
+  kit_tilting_tub: 2,
+  kit_scoop_blade: 2,
+  skin_cargo_shroud: 2,
+  mech_drive_tray: 3,
+  mech_brain_tray: 3,
+  mom_band_core_tray: 3,
+  mom_flywheel_tray: 3,
+  mech_drive_lid: 2,
+  mech_brain_lid: 2,
+  mech_servo_mount: 2,
+  mech_servo_pinion_z10: 2,
+  mech_sill_duct: 2,
+  pro_steer_bridge: 2,
+  mom_jet_valve_body: 2,
 };
 
 export function statValueForPart(id: string): 1 | 2 | 3 {
@@ -290,4 +311,44 @@ export const KIP_WARDROBE_PARTSPEC_IDS = [
   "pack_explorer",
   "prop_wrench",
   "prop_star_shield",
+] as const;
+
+/** Forge Club Expansion Set 3: Wave 10 Modular Craft Kit (Cards A-D, 12.5 mm TU). */
+export const MODULAR_CRAFT_PARTSPEC_IDS = [
+  "kit_keel_base",
+  "kit_clevis_spine",
+  "kit_barbell_shaft",
+  "kit_spinner_pin",
+  "kit_wheel_med",
+  "kit_wheel_giant",
+  "kit_rotor_blade",
+  "kit_aero_wedge",
+  "kit_windscreen",
+  "kit_foil_wing",
+  "kit_skid_runner",
+  "kit_tilting_tub",
+  "kit_scoop_blade",
+  "kit_booster_pod",
+  "kit_turntable",
+  "kit_yoke_hbar",
+  "skin_aero_cowl",
+  "skin_windscreen",
+  "skin_cargo_shroud",
+] as const;
+
+/** Forge Club Expansion Set 4: Functional Mechanics & Stage-4 Mech Robotics (Waves 11 & 13, 12.5 mm TU). */
+export const MECH_ROBOTICS_PARTSPEC_IDS = [
+  "pro_steer_bridge",
+  "mom_band_core_tray",
+  "mom_band_core_lid",
+  "mom_flywheel_tray",
+  "mom_jet_valve_body",
+  "mech_drive_tray",
+  "mech_drive_lid",
+  "mech_brain_tray",
+  "mech_brain_lid",
+  "mech_bat_door_screw",
+  "mech_servo_mount",
+  "mech_servo_pinion_z10",
+  "mech_sill_duct",
 ] as const;

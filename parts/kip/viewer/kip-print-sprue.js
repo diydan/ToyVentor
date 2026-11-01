@@ -24,10 +24,13 @@ export const SPRUE_SPEC = Object.freeze({
   holeKeepoutMm: 2.20,            // min distance from gate wall entry to internal bore/socket contours
   ballSocketKeepoutRadiusMm: 5.50,// reject spans within r <= 5.5 mm of ball-socket centres
   minOutwardRayClearMm: 3.60,     // reject concave pockets where outward normal ray hits same part within 3.6 mm
+  allowPegsAndTurrets: false,     // Decision 11: keep pegs & turrets loose by default until Gate 4 coupon is recorded
 });
 
-// Pegs, turrets, pins, gears, racks, pawls, face pins, and flex skins stay in the loose zone (spec 6.1 & 6.3).
-const INELIGIBLE_ID_RE = /^(?:toyventor_)?(spark_peg_|snap_turret|neck_turret|pin_|pro_captive_pin|pro_pilot_pin|kit_spinner_pin|mech_bat_door_screw|bushing_half|skin_|face_eyes|face_cheeks|face_glints)|(?:^|_)(gear_spur|gear_bevel|pto_gear|pinion_z|steer_rack|ripcord_rack|spool_pawl)/;
+// Pegs & turrets stay loose by default (Decision 11), gateable behind `spec.allowPegsAndTurrets`.
+const PEG_TURRET_ID_RE = /^(?:toyventor_)?(spark_peg_|snap_turret|neck_turret)/;
+// Pins, gears, racks, pawls, face pins, and flex skins always stay in the loose zone (spec 6.1 & 6.3).
+const ALWAYS_LOOSE_ID_RE = /^(?:toyventor_)?(pin_|pro_captive_pin|pro_pilot_pin|kit_spinner_pin|mech_bat_door_screw|bushing_half|skin_|face_eyes|face_cheeks|face_glints)|(?:^|_)(gear_spur|gear_bevel|pto_gear|pinion_z|steer_rack|ripcord_rack|spool_pawl)/;
 
 /** Usable interior span inside a card of outer limit `cardMaxMm` (`cardMaxMm - 2 * (frameWidth + frameGap)` = `cardMaxMm - 7.2`). */
 export function sprueMarginMm(spec = SPRUE_SPEC) {
@@ -39,8 +42,8 @@ export function sprueUsableBoundMm(cardMaxMm = 170, spec = SPRUE_SPEC) {
 }
 
 /**
- * Check static part eligibility before anchor sampling (spec 6.1):
- * excludes `needs-supports`, pegs/turrets/pins, gears, non-rigid materials, and brimmed parts.
+ * Check static part eligibility before anchor sampling (spec 6.1 & Decision 11):
+ * excludes `needs-supports`, pins/gears, pegs/turrets (unless `spec.allowPegsAndTurrets`), non-rigid materials, and brimmed parts.
  */
 export function isSprueEligiblePart(item, spec = SPRUE_SPEC) {
   if (!item) return { ok: false, reason: 'missing-item' };
@@ -50,7 +53,10 @@ export function isSprueEligiblePart(item, spec = SPRUE_SPEC) {
     return { ok: false, reason: 'non-rigid-material' };
   }
   if ((Number(item.brimWidthMm) || 0) > 0) return { ok: false, reason: 'requires-brim' };
-  if (INELIGIBLE_ID_RE.test(partId)) return { ok: false, reason: 'connector-or-gear' };
+  if (ALWAYS_LOOSE_ID_RE.test(partId)) return { ok: false, reason: 'connector-or-gear' };
+  if (!spec.allowPegsAndTurrets && PEG_TURRET_ID_RE.test(partId)) {
+    return { ok: false, reason: 'connector-or-gear' };
+  }
   const usable = sprueUsableBoundMm(item.cardMaxMm || 170, spec);
   if (Number.isFinite(item.w) && Number.isFinite(item.h)) {
     if (Math.max(item.w, item.h) > usable + 1e-6) return { ok: false, reason: 'exceeds-usable-card' };
@@ -328,7 +334,11 @@ function segToLoopsDist(ax, ay, bx, by, loops) {
 // Contact-Slice Anchor Sampler & Connector Keep-Out Filter (spec 6.3)
 // ---------------------------------------------------------------------------------------------
 
+const shellCountMemo = new WeakMap();
+
 function count3dShells(tri) {
+  const cached = shellCountMemo.get(tri);
+  if (cached !== undefined) return cached;
   const nTri = tri.length / 9;
   if (nTri <= 1) return nTri;
   const parent = new Int32Array(nTri);
@@ -342,7 +352,11 @@ function count3dShells(tri) {
   for (let t = 0; t < nTri; t++) {
     const o = t * 9;
     for (let k = 0; k < 9; k += 3) {
-      const key = `${Math.round(tri[o + k] * 200)},${Math.round(tri[o + k + 1] * 200)},${Math.round(tri[o + k + 2] * 200)}`;
+      // Pack 3 signed 17-bit grid coords (±327 mm at 0.005 mm) into one 51-bit safe integer (zero string allocation)
+      const ix = (Math.round(tri[o + k] * 200) + 65536) & 0x1ffff;
+      const iy = (Math.round(tri[o + k + 1] * 200) + 65536) & 0x1ffff;
+      const iz = (Math.round(tri[o + k + 2] * 200) + 65536) & 0x1ffff;
+      const key = ix + iy * 131072 + iz * 17179869184;
       const prev = vMap.get(key);
       if (prev === undefined) vMap.set(key, t);
       else {
@@ -351,8 +365,11 @@ function count3dShells(tri) {
       }
     }
   }
+  shellCountMemo.set(tri, comps);
   return comps;
 }
+
+const partAnchorsMemo = new WeakMap();
 
 /**
  * Sample connector-safe interior gate anchors on a seated part's `z = 0.30 mm` contact slice.
@@ -363,8 +380,12 @@ function count3dShells(tri) {
  *   - `(nx, ny)` is the unit outward normal at `(wx, wy)`,
  *   - `(ax, ay) = (wx - insetMm * nx, wy - insetMm * ny)` sits inside solid material.
  */
-export function samplePartAnchors(tri, { partId = '', spec = SPRUE_SPEC } = {}) {
-  const shellCount = count3dShells(tri);
+export function samplePartAnchors(tri, { partId = '', spec = SPRUE_SPEC, knownShellCount = null } = {}) {
+  const memoKey = `${partId}|${spec.sliceZMm}|${spec.anchorInsetMm}|${spec.anchorFallbackInsetMm}|${spec.ballSocketKeepoutRadiusMm}`;
+  let perTri = partAnchorsMemo.get(tri);
+  if (perTri && perTri.has(memoKey)) return perTri.get(memoKey);
+
+  const shellCount = knownShellCount ?? count3dShells(tri);
   const loops = sliceMeshAtZ(tri, spec.sliceZMm);
   const outerLoops = loops.filter(l => !l.isHole);
   const holeLoops = loops.filter(l => l.isHole);
@@ -474,7 +495,7 @@ export function samplePartAnchors(tri, { partId = '', spec = SPRUE_SPEC } = {}) 
     }
   }
 
-  return {
+  const result = {
     outerLoops,
     holeLoops,
     upperHoleLoops,
@@ -483,6 +504,12 @@ export function samplePartAnchors(tri, { partId = '', spec = SPRUE_SPEC } = {}) 
     insetUsedMm,
     shellCount,
   };
+  if (!perTri) {
+    perTri = new Map();
+    partAnchorsMemo.set(tri, perTri);
+  }
+  perTri.set(memoKey, result);
+  return result;
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -702,6 +729,45 @@ function buildFrameAnchors(fx, fy, outerW, outerH, spec = SPRUE_SPEC) {
   return out;
 }
 
+function transformSampledPart(base, localW, localH, turnIdx, px, py) {
+  const mapPt = (lx, ly) => {
+    if (turnIdx === 1) return [localH - ly + px, lx + py];
+    if (turnIdx === 2) return [localW - lx + px, localH - ly + py];
+    if (turnIdx === 3) return [ly + px, localW - lx + py];
+    return [lx + px, ly + py];
+  };
+  const mapNorm = (nx, ny) => {
+    if (turnIdx === 1) return [-ny, nx];
+    if (turnIdx === 2) return [-nx, -ny];
+    if (turnIdx === 3) return [ny, -nx];
+    return [nx, ny];
+  };
+  const mapLoop = (loop) => {
+    const pts = loop.pts.map(([x, y]) => mapPt(x, y));
+    return {
+      pts,
+      area: loop.area,
+      isHole: loop.isHole,
+      perimeter: loop.perimeter,
+      bounds: loopBounds(pts),
+    };
+  };
+  return {
+    outerLoops: base.outerLoops.map(mapLoop),
+    holeLoops: base.holeLoops.map(mapLoop),
+    upperHoleLoops: base.upperHoleLoops.map(mapLoop),
+    outerPerimeterMm: base.outerPerimeterMm,
+    insetUsedMm: base.insetUsedMm,
+    shellCount: base.shellCount,
+    anchors: base.anchors.map((a) => {
+      const [ax, ay] = mapPt(a.ax, a.ay);
+      const [wx, wy] = mapPt(a.wx, a.wy);
+      const [nx, ny] = mapNorm(a.nx, a.ny);
+      return { ax, ay, wx, wy, nx, ny, insetMm: a.insetMm };
+    }),
+  };
+}
+
 /**
  * Build a complete flat-pack sprue kit card around `placedParts` (already positioned in world XY so all card parts
  * have `>= frameWidth + frameGap` clearance inside `[frameX, frameX + frameW] x [frameY, frameY + frameH]`).
@@ -727,9 +793,18 @@ export function buildSprueCard(placedParts, {
   const fw = frameBox ? frameBox.w : (maxX - minX + 2 * margin);
   const fh = frameBox ? frameBox.h : (maxY - minY + 2 * margin);
 
-  // Sample world-space slice & anchors for every card part
+  // Sample world-space slice & anchors for every card part (card parts were already screened as single-shell)
   const partRecords = placedParts.map((p, idx) => {
-    const sampled = samplePartAnchors(p.tri, { partId: p.partId || p.id || '', spec });
+    const sampled = (p.localTri && Number.isFinite(p.localW) && Number.isFinite(p.localH))
+      ? transformSampledPart(
+          samplePartAnchors(p.localTri, { partId: p.partId || p.id || '', spec, knownShellCount: 1 }),
+          p.localW,
+          p.localH,
+          p.turnIdx || 0,
+          p.x,
+          p.y,
+        )
+      : samplePartAnchors(p.tri, { partId: p.partId || p.id || '', spec, knownShellCount: 1 });
     const targetGates = sampled.anchors.length <= 1
       ? Math.max(1, sampled.anchors.length)
       : (sampled.outerPerimeterMm > spec.extraGatePerimeterMm && sampled.anchors.length >= 3 ? 3 : 2);
@@ -1025,4 +1100,225 @@ export function checkSprueCard(sprue, cardPlacedParts, spec = SPRUE_SPEC) {
   }
 
   return problems;
+}
+
+// ---------------------------------------------------------------------------------------------
+// Printable Physical Calibration Coupons (Decision 7 & §12.7 Gate 4)
+// ---------------------------------------------------------------------------------------------
+
+function buildClosedBoxMesh(x0, y0, w, d, h) {
+  const x1 = x0 + w, y1 = y0 + d;
+  const tris = [];
+  // Bottom (z = 0, -Z) & Top (z = h, +Z)
+  pushQuad(tris, [x0, y0, 0], [x0, y1, 0], [x1, y1, 0], [x1, y0, 0]);
+  pushQuad(tris, [x0, y0, h], [x1, y0, h], [x1, y1, h], [x0, y1, h]);
+  // 4 vertical walls
+  pushQuad(tris, [x0, y0, 0], [x1, y0, 0], [x1, y0, h], [x0, y0, h]);
+  pushQuad(tris, [x1, y0, 0], [x1, y1, 0], [x1, y1, h], [x1, y0, h]);
+  pushQuad(tris, [x1, y1, 0], [x0, y1, 0], [x0, y1, h], [x1, y1, h]);
+  pushQuad(tris, [x0, y1, 0], [x0, y0, 0], [x0, y0, h], [x0, y1, h]);
+  return ensurePositiveVolume(Float32Array.from(tris));
+}
+
+/**
+ * Revolve a closed meridian profile `rings` (`[[r0, z0], [r1, z1], ...]`, all `r_k > 0`) around `(cx, cy)`,
+ * closing the bottom (`z0`) and top (`zLast`) axis caps cleanly with zero unmatched half-edges.
+ */
+function buildRevolvedSolidMesh(cx, cy, rings, segs = 48) {
+  const tris = [];
+  const [r0, z0] = rings[0];
+  const [rLast, zLast] = rings[rings.length - 1];
+  const pt = (r, z, s) => {
+    const a = (2 * Math.PI * (s % segs)) / segs;
+    return [cx + r * Math.cos(a), cy + r * Math.sin(a), z];
+  };
+
+  // Bottom cap fan around (cx, cy, z0)
+  for (let s = 0; s < segs; s++) {
+    const p0 = pt(r0, z0, s);
+    const p1 = pt(r0, z0, s + 1);
+    tris.push(cx, cy, z0, p1[0], p1[1], p1[2], p0[0], p0[1], p0[2]);
+  }
+  // Lateral strips
+  for (let k = 0; k < rings.length - 1; k++) {
+    const [ra, za] = rings[k];
+    const [rb, zb] = rings[k + 1];
+    for (let s = 0; s < segs; s++) {
+      pushQuad(tris, pt(ra, za, s), pt(ra, za, s + 1), pt(rb, zb, s + 1), pt(rb, zb, s));
+    }
+  }
+  // Top cap fan around (cx, cy, zLast)
+  for (let s = 0; s < segs; s++) {
+    const p0 = pt(rLast, zLast, s);
+    const p1 = pt(rLast, zLast, s + 1);
+    tris.push(cx, cy, zLast, p0[0], p0[1], p0[2], p1[0], p1[1], p1[2]);
+  }
+  return ensurePositiveVolume(Float32Array.from(tris));
+}
+
+function buildSocketCupMesh(cx, cy, d = 9.0, sockClr = 0.15) {
+  const rc = d * 0.5 + sockClr;
+  const ro = d * 0.43;
+  const rOut = rc + 2.6;
+  const cupH = 9.4;
+  const zCenter = cupH - 4.2;
+  const aLip = Math.acos(Math.min(0.98, ro / rc));
+  const rings = [
+    [rOut, 0.0],
+    [rOut, cupH],
+    [rc + 0.25, cupH],
+    [ro, cupH - 0.90],
+  ];
+  const arcSteps = 10;
+  for (let i = 0; i <= arcSteps; i++) {
+    const a = aLip - ((aLip + Math.PI * 0.42) * i) / arcSteps; // down to ~75 deg below equator, then flat floor
+    rings.push([Math.max(0.45, rc * Math.cos(a)), zCenter + rc * Math.sin(a)]);
+  }
+  return buildRevolvedSolidMesh(cx, cy, rings, 48);
+}
+
+function buildFallbackConnectorMesh(cx, cy, d = 9.0, isTurret = false) {
+  const r = d * 0.5;
+  if (!isTurret) {
+    const h = +(d * 0.92).toFixed(3);
+    const rings = [];
+    const steps = 10;
+    for (let i = 0; i <= steps; i++) {
+      const z = (h * i) / steps;
+      const u = (z - h * 0.5) / (r * 1.06);
+      const rad = r * Math.sqrt(Math.max(0.18, 1 - u * u));
+      rings.push([rad, z]);
+    }
+    return buildRevolvedSolidMesh(cx, cy, rings, 48);
+  }
+  const h = +(d * 1.15).toFixed(3);
+  const rBase = +(r * Math.sqrt(1 - 0.5 * 0.5)).toFixed(3);
+  const rShaft = +(r * 0.84).toFixed(3);
+  const rf = +(r + 1.15).toFixed(3);
+  const zm = h * 0.5;
+  const dzFlange = (rf - rShaft) / Math.tan((38 * Math.PI) / 180); // <= 38 deg overhang (< 45 deg)
+  return buildRevolvedSolidMesh(cx, cy, [
+    [rBase, 0.0],
+    [r, d * 0.25],
+    [rShaft, zm - dzFlange - 0.25],
+    [rf, zm - 0.25],
+    [rf, zm + 0.25],
+    [rShaft, zm + dzFlange + 0.25],
+    [r, h - d * 0.25],
+    [rBase, h],
+  ], 48);
+}
+
+function placeAndRotateSeatedMesh(srcTri, angleDeg, cx, cy) {
+  let minX = Infinity, minY = Infinity, minZ = Infinity;
+  let maxX = -Infinity, maxY = -Infinity;
+  for (let i = 0; i < srcTri.length; i += 3) {
+    const x = srcTri[i], y = srcTri[i + 1], z = srcTri[i + 2];
+    if (x < minX) minX = x;
+    if (x > maxX) maxX = x;
+    if (y < minY) minY = y;
+    if (y > maxY) maxY = y;
+    if (z < minZ) minZ = z;
+  }
+  const ox = 0.5 * (minX + maxX);
+  const oy = 0.5 * (minY + maxY);
+  const rad = (angleDeg * Math.PI) / 180;
+  const c = Math.cos(rad), s = Math.sin(rad);
+  const out = new Float32Array(srcTri.length);
+  for (let i = 0; i < srcTri.length; i += 3) {
+    const dx = srcTri[i] - ox;
+    const dy = srcTri[i + 1] - oy;
+    out[i]     = cx + dx * c - dy * s;
+    out[i + 1] = cy + dx * s + dy * c;
+    out[i + 2] = srcTri[i + 2] - minZ;
+  }
+  return out;
+}
+
+function concatMeshes(shells) {
+  let n = 0;
+  for (const s of shells) n += s.length;
+  const out = new Float32Array(n);
+  let off = 0;
+  for (const s of shells) {
+    out.set(s, off);
+    off += s.length;
+  }
+  return out;
+}
+
+/**
+ * Decision 7 physical break-off coupon (`56 x 38 x 3.0 mm`, zero supports):
+ * three test tabs gated at `0.30 mm`, `0.40 mm` (default), and `0.60 mm` V-nick neck heights in PLA/PETG.
+ */
+export function buildBreakoffCouponMesh(spec = SPRUE_SPEC) {
+  const outerW = 56, outerH = 38;
+  const necksMm = [0.30, 0.40, 0.60];
+  const ys = [6.5, 15.5, 24.5];
+  const tabX = 22.0, tabW = 12.0, tabD = 7.0, tabH = 3.0;
+  const fw = spec.frameWidthMm;
+  const shells = [buildFrameMesh(0, 0, outerW, outerH, spec)];
+
+  for (let i = 0; i < necksMm.length; i++) {
+    const y0 = ys[i];
+    const yc = y0 + tabD * 0.5;
+    const neckSpec = { ...spec, neckHeightMm: necksMm[i], grooveTopMm: Math.max(0.60, (spec.gateHeightMm - necksMm[i]) * 2) };
+    shells.push(buildClosedBoxMesh(tabX, y0, tabW, tabD, tabH));
+    shells.push(buildVNickGateMesh(fw - 1.2, yc, tabX + 1.6, yc, { wallAtEndMm: 1.6, spec: neckSpec }));
+    shells.push(buildVNickGateMesh(tabX + tabW - 1.6, yc, outerW - fw + 1.2, yc, { wallAtStartMm: 1.6, spec: neckSpec }));
+  }
+
+  return {
+    tri: concatMeshes(shells),
+    shells,
+    bounds: { w: outerW, h: outerH, z: tabH },
+    necksMm,
+  };
+}
+
+/**
+ * §12.7 Gate 4 peg & turret fit coupon (`78 x 52 x 9.4 mm`, zero supports):
+ * gates both a Ø9.0 mm ball-peg and a Ø8.0 mm snap-turret at three orientations (`0°`, `45°`, `90°`
+ * relative to their compliant flex slots) alongside printed Ø9.0 mm & Ø8.0 mm mating snap-socket cups.
+ */
+export function buildPegTurretFitCouponMesh({
+  pegTri = null,
+  turretTri = null,
+  spec = SPRUE_SPEC,
+} = {}) {
+  const frameW = 56, frameH = 52;
+  const fw = spec.frameWidthMm;
+  const anglesDeg = [0, 45, 90];
+  const rowYs = [12.0, 26.0, 40.0];
+  const pegX = 16.5, turX = 39.5;
+  const shells = [buildFrameMesh(0, 0, frameW, frameH, spec)];
+
+  for (let i = 0; i < anglesDeg.length; i++) {
+    const cy = rowYs[i];
+    const ang = anglesDeg[i];
+    const pMesh = pegTri && pegTri.length
+      ? placeAndRotateSeatedMesh(pegTri, ang, pegX, cy)
+      : buildFallbackConnectorMesh(pegX, cy, 9.0, false);
+    const tMesh = turretTri && turretTri.length
+      ? placeAndRotateSeatedMesh(turretTri, ang, turX, cy)
+      : buildFallbackConnectorMesh(turX, cy, 8.0, true);
+    shells.push(pMesh, tMesh);
+
+    // Opposed gates into left frame, inter-column runner, and right frame
+    shells.push(buildVNickGateMesh(fw - 1.2, cy, pegX - 2.2, cy, { wallAtEndMm: 1.1, spec }));
+    shells.push(buildVNickGateMesh(pegX + 2.2, cy, turX - 2.0, cy, { wallAtStartMm: 1.1, wallAtEndMm: 1.1, spec }));
+    shells.push(buildVNickGateMesh(turX + 2.0, cy, frameW - fw + 1.2, cy, { wallAtStartMm: 1.1, spec }));
+  }
+
+  // Mating Ø9.0 mm & Ø8.0 mm ToyVentor socket test cups in the adjacent loose strip
+  shells.push(buildSocketCupMesh(69.5, 15.0, 9.0, 0.15));
+  shells.push(buildSocketCupMesh(69.5, 37.0, 8.0, 0.15));
+
+  return {
+    tri: concatMeshes(shells),
+    shells,
+    bounds: { w: 78, h: frameH, z: 9.4 },
+    anglesDeg,
+    socketDiametersMm: [9.0, 8.0],
+  };
 }

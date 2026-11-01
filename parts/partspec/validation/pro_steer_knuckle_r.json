@@ -1,29 +1,63 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_pro_steer_knuckle_r_P.stl",
-  "file_sha256": "7a2c40123d7d5426513a885f47bd90b29241274cba097a302353d6a6f1692e94",
+  "file_sha256": "193ea1fed847ac3fdb27adb904a736f284465955f7dcedf0398adf2accac04b7",
   "part_id": "pro_steer_knuckle_r",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-10-31T20:20:48Z",
+  "checked_at": "2026-11-01T05:03:30Z",
   "metrics": {
     "bbox_mm": [
       25.6,
-      16.0,
+      25.6,
       27.1
     ],
-    "volume_cm3": 3.03,
-    "surface_cm2": 28.38,
-    "triangles": 1894,
+    "volume_cm3": 3.71,
+    "surface_cm2": 35.08,
+    "triangles": 1914,
     "ledges": [],
     "layers": 136,
-    "bed_contact_mm2": 162.0,
+    "bed_contact_mm2": 189.8,
     "height_mm": 27.1,
-    "slenderness": 2.13,
+    "slenderness": 1.97,
     "centre_of_mass_over_contact": true,
-    "min_wall_mm": null,
-    "thin_wall_regions": []
+    "min_wall_mm": 0.029,
+    "thin_wall_regions": [
+      {
+        "area_mm2": 0.4,
+        "min_mm": 0.029,
+        "at_mm": [
+          6.25,
+          0.58,
+          12.08
+        ]
+      },
+      {
+        "area_mm2": 5.68,
+        "min_mm": 0.053,
+        "at_mm": [
+          6.22,
+          9.14,
+          12.1
+        ]
+      },
+      {
+        "area_mm2": 53.45,
+        "min_mm": 0.523,
+        "at_mm": [
+          6.67,
+          0.55,
+          12.1
+        ]
+      }
+    ]
   },
-  "bridges": [],
+  "bridges": [
+    {
+      "z_mm": 8.4,
+      "span_mm": 4.86,
+      "area_mm2": 55.4
+    }
+  ],
   "checks": [
     {
       "id": "V1_mesh_sound",
@@ -47,7 +81,7 @@
       "result": "pass",
       "value": [
         25.6,
-        16.0,
+        25.6,
         27.1
       ],
       "limit": [
@@ -61,7 +95,7 @@
       "id": "V4_no_steep_overhang",
       "level": "block",
       "result": "pass",
-      "value": 0.91,
+      "value": 0.85,
       "limit": 1.0,
       "detail": "mm2 of downward surface steeper than 45 deg (flat bridges excluded)"
     },
@@ -77,9 +111,9 @@
       "id": "V6_bridge_span",
       "level": "block",
       "result": "pass",
-      "value": 0.0,
+      "value": 4.86,
       "limit": 20,
-      "detail": "0 bridge(s); widest unsupported span in mm"
+      "detail": "1 bridge(s); widest unsupported span in mm"
     },
     {
       "id": "V5_no_floating_islands",
@@ -101,21 +135,21 @@
       "id": "V9_bed_contact",
       "level": "info",
       "result": "pass",
-      "value": 162.0,
+      "value": 189.8,
       "limit": null,
-      "detail": "height / sqrt(contact) = 2.13; above about 3 the slicer often asks for a brim"
+      "detail": "height / sqrt(contact) = 1.97; above about 3 the slicer often asks for a brim"
     },
     {
       "id": "V8_wall_thickness",
       "level": "warn",
-      "result": "pass",
-      "value": 0,
+      "result": "warn",
+      "value": 3,
       "limit": 0,
-      "detail": "regions where the wall is under 0.8 mm (two nozzle widths) over 2.0 mm2, or under 0.4 mm (one nozzle width) over 0.25 mm2; sharp edges and slivers are ignored"
+      "detail": "regions where the wall is under 0.8 mm (two nozzle widths) over 2.0 mm2, or under 0.4 mm (one nozzle width) over 0.25 mm2; worst 0.029 mm at [6.25, 0.58, 12.08]"
     }
   ],
   "print_settings": {},
   "slicer": null,
-  "verdict": "pass",
-  "summary": "Prints as is"
+  "verdict": "pass_with_warnings",
+  "summary": "Warnings: V8_wall_thickness"
 }

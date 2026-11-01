@@ -4,7 +4,7 @@
   "file_sha256": "5bb7ef62cc19f1c9a3d46cd1be9335d3b55332c058b84170734136a9d5016137",
   "part_id": "gear_ring_z40",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-10-31T14:34:05Z",
+  "checked_at": "2026-11-01T04:59:00Z",
   "metrics": {
     "bbox_mm": [
       125.0,
@@ -154,7 +154,7 @@
       0
     ],
     "engine": "PrusaSlicer-2.8.1",
-    "reused_from": "2026-10-31T11:21:38Z"
+    "reused_from": "2026-11-01T04:51:07Z"
   },
   "verdict": "pass",
   "summary": "Prints as is"
