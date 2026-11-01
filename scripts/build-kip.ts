@@ -66,6 +66,15 @@ copyFileSync(
   join(kipSrcDir, "viewer/kip-selfie.js"),
   join(kipOutDir, "kip-selfie.js"),
 );
+// Truck-Mockup.html shows the demo's own Kip head: kip-classic-rig.js is generated from Kip-Demo.html (parts/kip/sync_classic_rig.py --check).
+copyFileSync(
+  join(kipSrcDir, "viewer/kip-classic-rig.js"),
+  join(kipOutDir, "kip-classic-rig.js"),
+);
+copyFileSync(
+  join(kipSrcDir, "viewer/Truck-Mockup.html"),
+  join(kipOutDir, "Truck-Mockup.html"),
+);
 // Describe & build tab (kip-describe-contract.md): the page modules and their data. The 30 part STLs it draws are written straight into
 copyFileSync(
   join(kipSrcDir, "viewer/kip-describe-tab.js"),

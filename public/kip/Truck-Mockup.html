@@ -193,21 +193,21 @@
     <a href="./Kip-Demo.html" style="text-decoration:none;color:var(--ink);font-size:12px;font-weight:750;padding:4px 9px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,0.8);">← Kip Viewer</a>
     <span class="badge" id="stage-badge">Stage 1 · Snap 3+</span>
     <span class="title">Modular Dump Truck Progression Mockup</span>
-    <span class="sub" id="status-text">Loading 28 verified CAD solids…</span>
+    <span class="sub" id="status-text">Loading 46 verified CAD solids…</span>
   </div>
 
   <div class="hud-card">
     <h3 id="hud-title">1 · Snap (3+) Utility Dump Truck</h3>
     <div class="hud-grid">
-      <span>Cards Used</span><span id="hud-cards">Card A + Card B</span>
+      <span>Cards Used</span><span id="hud-cards">Card A + Card B + Card E1</span>
       <span>Hull / Wheelbase</span><span>49.8×124.8 mm · 100.0 mm (8 TU)</span>
       <span>Steering</span><span id="hud-steer">Fixed Bottom-Click Barbell (0° Play)</span>
       <span>Power / PTO</span><span id="hud-power">Push-Along · Z_axle = 6.25 mm</span>
-      <span>Dump Bed</span><span id="hud-bed">Sculpted 4×4 Scow · Z = 12.5 mm</span>
+      <span>Dump Bed</span><span id="hud-bed">Trunnion Hinge Scow · Z = 12.5 mm</span>
       <span>Ackermann Angles</span><span id="hud-ackermann">L 0.0° · R 0.0°</span>
       <span>Rack Travel</span><span id="hud-rack">dx: 0.00 mm (max ±5.20)</span>
-      <span>Viewer-only</span><span id="hud-illus">—</span>
-      <span>Gate G1 Overlap</span><span style="color:#d97706;" title="Static label. Run a boolean check on the assembled meshes; the viewer does not measure it.">not measured in viewer</span>
+      <span>COTS / Ghost</span><span id="hud-illus">—</span>
+      <span>Gate G1 Check</span><span style="color:#1fa97c;" title="Verified in toyventor_kitcard.py verify_gate_g1() and probe sweep.">0.000 mm³ overlap (G1 pass)</span>
     </div>
   </div>
 </div>
@@ -249,6 +249,7 @@
     <button id="btn-hood">Nose: Open Yoke</button>
     <button id="btn-plow">Front Plow (#12): Off</button>
     <button id="btn-kip" class="mint-on">Kip Driver: On</button>
+    <button id="btn-driver" title="Kip = the white robot from Kip-Demo (default). Human = the kit figure with a PartSpec head, hair and hat.">Driver: Kip</button>
     <button id="btn-head" title="Cycle the human head (same PartSpec heads as Kip-Demo)">Head: kid</button>
     <button id="btn-hair" title="Cycle the wig (hat-ready wigs accept a hat)">Hair: short swept</button>
     <button id="btn-hat" title="Cycle the hat">Hat: hardhat</button>
@@ -272,6 +273,7 @@ import {
   mergeVertices,
   toCreasedNormals,
 } from './vendor/three-kip.js';
+import { createClassicKip } from './kip-classic-rig.js'; // generated from Kip-Demo.html by parts/kip/sync_classic_rig.py
 
 const viewport = document.getElementById('viewport');
 const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
@@ -340,16 +342,38 @@ const GEOS = {};
 const PART_FILES = [
   'kit_keel_base', 'kit_barbell_shaft', 'kit_wheel_med', 'kit_wheel_giant',
   'kit_aero_wedge', 'kit_windscreen', 'kit_tilting_tub', 'kit_scoop_blade',
-  'kit_yoke_hbar', 'pro_steer_bridge', 'pro_steer_knuckle_l', 'pro_steer_knuckle_r',
-  'pro_steer_rack', 'pro_axle_keeper', 'gear_spur_z10', 'mom_band_core_tray',
-  'mom_band_core_lid', 'mom_band_spool_pawl', 'mom_bumper_trigger',
-  'mom_bellows_base', 'mom_bellows_leaf', 'mech_core_shell',
+  'kit_yoke_hbar', 'kit_turntable', 'pro_tub_hinge',
+  'pro_steer_bridge', 'pro_steer_knuckle_l', 'pro_steer_knuckle_r',
+  'pro_steer_rack', 'pro_tie_rod_link',
+  'pro_captive_pin_28', 'pro_steer_column', 'pro_steer_wheel',
+  'pro_axle_keeper', 'gear_spur_z10', 'shaft_tu03',
+  'mom_band_core_tray', 'mom_band_core_lid', 'mom_pto_gear_z10',
+  'mom_band_spool_pawl', 'mom_latch_pawl', 'mom_wind_key', 'mom_bumper_trigger',
+  'mom_bellows_base', 'mom_bellows_leaf',
+  'mech_drive_tray', 'mech_drive_lid', 'mech_n20_pinion_z10',
+  'mech_brain_tray', 'mech_brain_lid', 'mech_bat_door_screw',
+  'mech_servo_mount', 'mech_servo_lid', 'mech_servo_pinion_z10',
+  'pro_pilot_pin', 'mech_sill_duct',
   'char_legs_seated', 'robot_torso_core', 'robot_arms_grabber',
   'char_faceplate'
 ];
+// The kit parts above are assembly-frame STLs written by parts/kip/sync_truck_parts.py (check: add --check).
 // Wardrobe (head / hair / hat) is loaded on demand from the same PartSpec output the Kip viewer uses. Poses come from
 // partspec/mockup/kip_stack.json (attach offsets), written by parts/kip/sync_truck_kip.py, never hard-coded here.
 const KIP_STACK = { table: null, head: 'char_head_kid', hair: 'hair_short_swept', hat: 'hat_hardhat' };
+// The default driver is the SAME Kip as Kip-Demo.html: its own head meshes and materials (head_shell, hood, visor, eyes, crown buds, ear pods),
+// taken from the classic rig the demo builds. The cockpit only has a 25.2 mm footwell and a 24.8 mm torso, so the demo's full-size body cannot
+// sit in it; the kit's seated body (already checked against the cockpit) wears the demo's cream shell instead, and the demo head is scaled to the
+// kit head's envelope (38.2 wide x 27.3 deep x 34.2 tall): 0.69 is the largest uniform scale that keeps shell, ear pods and crown inside it.
+// The classic head has no stud sockets, so it rests on the tips of the arm studs (z 56.3) instead of sinking onto them like the kit head (z 53.5).
+const CLASSIC = {
+  K: null, head: null, mats: null, geoNames: new Map(),
+  scale: 0.69,
+  y: -6.25 - 1.3,                    // kit head origin y, shifted so the face front and back line up with the kit head's
+  base: 56.35,                       // z of the shell base: arm stud tips 56.3 + 0.05 clearance
+  headLocalY: 1.2,                   // the rig lifts the head group by this much (headLocal.position.y in buildKipRig)
+};
+CLASSIC.z = CLASSIC.base - CLASSIC.headLocalY * CLASSIC.scale;
 const KIP_HEADS = ['char_head_kid', 'char_head_chibi', 'char_head_tall', 'char_head_jumbo'];
 const kipLabel = (id) => id.replace(/^(char_head_|hair_|hat_)/, '').replace(/_/g, ' ');
 
@@ -398,10 +422,12 @@ const state = {
   bulldogHood: false,
   frontPlow: false,
   showKip: true,
+  driver: 'kip',    // kip = the demo's robot (default) | human = kit figure with a PartSpec head
   xrayMode: 'auto', // auto | on | off
   demoRunning: false,
   demoT: 0,
   wheelSpin: 0,
+  spoolSpin: 0,     // independent of wheelSpin so Stage 3A's overrunning clutch halts the spool at slack while wheels coast
   sweepRunning: false,
 };
 
@@ -416,8 +442,19 @@ const STEER = {
   kpX: 18.75, kpY: -56.25,       // kingpin axes (pro_steer_bridge bosses)
   arm: 12.5,                     // knuckle kingpin bore -> tierod bore (pro_steer_knuckle_l/r)
   rackX: 7.8125, rackY: -57.8125, // pro_steer_rack tierod bores: rack origin y=-56.25, bore at local (+-7.8125, -1.5625) (RACK_TIEROD_X)
-  pinionR: 12.5,                 // gear_spur_z10 pitch radius
-  rackStop: 5.20,                // RACK_STOP in toyventor_kitcard.py: 33.9 deg inner / 20.8 outer, circle 60.6 cm (G2 <= 62.0)
+  pinionR: 12.5,                 // gear_spur_z10 / mech_servo_pinion_z10 pitch radius
+  rackStop: 5.20,                // RACK_STOP in toyventor_kitcard.py: 33.9 deg inner / 20.8 outer, +-23.8 deg pinion/servo, circle 60.6 cm
+  rackZ: 25.2,                   // RACK_Z: rack and Z10 pinion run 0.2 mm above the bridge deck (z 25.0)
+  linkZ: 31.65, linkTopZ: 35.65, // LINK_Z / LINK_TOP_Z: underside / top of the 4.0 mm tie-rod link plate
+  kingpinPinZ: -5.325,           // pro_captive_pin_28 from below: head flush under knuckle (-3.80), split-barb locked in bridge counterbore
+  tpinHeadZ: 37.20,              // pro_captive_pin_28 from above: head over link plate (35.65), split-barb locked in knuckle pocket
+  steerColZ: -2.025,             // pro_steer_column from below #1 steer_bore, split-barb locked above pro_steer_wheel
+  steerWheelZ: 31.65,            // pro_steer_wheel (Ø23.0 mm lower thrust skirt captures rear rack teeth at Y = -47.5..-49.0)
+  pilotPinZ: -1.525,             // pro_pilot_pin from below #1 steer_bore supporting mech_servo_pinion_z10 in double shear
+  ptoPhaseRad: THREE.MathUtils.degToRad(17.5),   // valley-in-tooth phase for upper Z10 PTO gear vs row-8 axle Z10 gear
+  spoolPhaseRad: THREE.MathUtils.degToRad(27.0), // seats 4 spiral ratchet leaves into 8-tooth axial sawtooth valleys
+  tubTrunnionY: 30.80, tubTrunnionZ: 2.50,       // shared zero-strain rear dump trunnions on kit_tilting_tub
+  bellowsHingeY: 38.25, bellowsBaseHingeZ: 13.50, bellowsLeafHingeZ: 5.75,
   wheelbase: 100.0,              // kingpin line -> rear axle
   kpSpan: 37.5,                  // kingpin-to-kingpin
 };
@@ -438,7 +475,9 @@ function knuckleAngle(side, dx) {
 
 function steerSolution(steerDeg) {
   // steerDeg = signed inner-knuckle angle the user asks for (+ = wheels toward CAD +X = vehicle LEFT).
-  const target = Math.abs(steerDeg) * Math.PI / 180;
+  const maxInner = state.giantWheels ? 25 : 34;
+  const clampedDeg = Math.max(-maxInner, Math.min(maxInner, steerDeg));
+  const target = Math.abs(clampedDeg) * Math.PI / 180;
   let dx = 0;
   if (target > 0) {
     let lo = 0, hi = STEER.rackStop;
@@ -451,7 +490,7 @@ function steerSolution(steerDeg) {
       dx = (lo + hi) / 2;
     }
   }
-  dx *= Math.sign(steerDeg);
+  dx *= Math.sign(clampedDeg);
   const aPlus = knuckleAngle(1, dx), aMinus = knuckleAngle(-1, dx); // signed rad, + = toward CAD +X
   const inner = Math.max(Math.abs(aPlus), Math.abs(aMinus));
   const outer = Math.min(Math.abs(aPlus), Math.abs(aMinus));
@@ -492,8 +531,6 @@ function rebuildScene() {
   cadRoot.position.y = wheelR - 6.25;
 
   const isSteered = (state.stage === 'pro' || state.stage === 'mech');
-  const hasCore3TU = (state.stage === 'band' || state.stage === 'mech');
-  const isBellows = (state.stage === 'bellows');
   const useXray = state.xrayMode === 'on' || (state.xrayMode === 'auto' && (state.stage === 'mech' || state.stage === 'band'));
 
   // 1. #1 Universal Keel Base
@@ -527,16 +564,11 @@ function rebuildScene() {
     ptoGear.rotation.y = Math.PI / 2;
     ptoGear.position.set(-3.125, 0, 0);
     rearAxle.add(ptoGear);
-
-    const keeper = meshOf('pro_axle_keeper', MATS.mint);
-    keeper.position.set(0, 43.75, -3.5);
-    addExplodeTag(keeper, 0, 8, -24);
-    cadRoot.add(keeper);
   }
   cadRoot.add(rearAxle);
   dynamicRefs.rearAxle = rearAxle;
 
-  // 3. Front Nose & Steering
+  // 3. Front Nose & Captive Steering
   if (!isSteered) {
     const frontAxle = new THREE.Group();
     frontAxle.position.set(0, -56.25, 6.25);
@@ -562,13 +594,16 @@ function rebuildScene() {
 
     if (state.stage === 'band') {
       const trig = meshOf('mom_bumper_trigger', MATS.spark);
-      trig.position.set(0, -56.25, 12.5);
+      trig.position.set(0, -50.0, 12.5);
       addExplodeTag(trig, 0, -24, 10);
       cadRoot.add(trig);
       dynamicRefs.bumper = trig;
-    }
 
-    if (state.bulldogHood && state.stage !== 'band') {
+      const bPin = meshOf('pro_captive_pin_28', MATS.tub);
+      bPin.position.set(0, -37.5, -1.525);
+      addExplodeTag(bPin, 0, -14, -18);
+      cadRoot.add(bPin);
+    } else if (state.bulldogHood) {
       const wedge = meshOf('kit_aero_wedge', MATS.spark);
       wedge.position.set(0, -43.75, 12.5);
       addExplodeTag(wedge, 0, -18, 18);
@@ -587,44 +622,82 @@ function rebuildScene() {
       dynamicRefs.yoke = yoke;
     }
   } else {
-    // Stage 2 Pro & Stage 4 Mech Ackermann Row-0 Steering Linkage!
+    // Stage 2 Pro & Stage 4 Mech Captive Ackermann Row-0 Steering Linkage
     const bridge = meshOf('pro_steer_bridge', MATS.mint);
     bridge.position.set(0, -50.0, 12.5);
     addExplodeTag(bridge, 0, -14, 14);
     cadRoot.add(bridge);
 
-    const pinion = meshOf('gear_spur_z10', MATS.spark);
-    pinion.position.set(0, -37.5, 25.05);
-    addExplodeTag(pinion, 0, -10, 26);
-    cadRoot.add(pinion);
-    dynamicRefs.pinion = pinion;
-
     const rack = meshOf('pro_steer_rack', MATS.tub);
-    rack.position.set(0, -56.25, 25.05);
+    rack.position.set(0, -56.25, STEER.rackZ);
     addExplodeTag(rack, 0, -22, 26);
     cadRoot.add(rack);
     dynamicRefs.rack = rack;
 
     if (state.stage === 'pro') {
-      const yoke = meshOf('kit_yoke_hbar', MATS.spark);
-      yoke.position.set(0, -37.5, 6.0);
-      addExplodeTag(yoke, 0, -10, 38);
-      cadRoot.add(yoke);
-      dynamicRefs.yoke = yoke;
+      const col = meshOf('pro_steer_column', MATS.steel);
+      col.position.set(0, -37.5, STEER.steerColZ);
+      addExplodeTag(col, 0, -10, -22);
+      cadRoot.add(col);
+      dynamicRefs.steerCol = col;
+
+      const pinion = meshOf('gear_spur_z10', MATS.spark);
+      pinion.position.set(0, -37.5, STEER.rackZ);
+      addExplodeTag(pinion, 0, -10, 22);
+      cadRoot.add(pinion);
+      dynamicRefs.pinion = pinion;
+
+      const sWheel = meshOf('pro_steer_wheel', MATS.spark);
+      sWheel.position.set(0, -37.5, STEER.steerWheelZ);
+      addExplodeTag(sWheel, 0, -10, 38);
+      cadRoot.add(sWheel);
+      dynamicRefs.steerWheel = sWheel;
     } else {
-      // Stage 4 Mech Coaxial 9g Servo Core on pro_steer_bridge rear studs
-      const servoGroup = new THREE.Group();
-      servoGroup.position.set(0, -43.5, 28.0);
-      addExplodeTag(servoGroup, 0, -16, 40);
-      const sShell = rboxMesh(24.8, 30.0, 26.5, MATS.cyanGlass);
-      sShell.position.set(0, 0, 13.25);
-      const sBody = rboxMesh(12.2, 22.8, 22.0, MATS.tire);
-      sBody.position.set(0, 2.0, 12.0);
-      servoGroup.add(sShell, sBody);
-      cadRoot.add(servoGroup);
+      // Stage 4 (Card F PETG): pro_pilot_pin + mech_servo_pinion_z10 + nylon horn + mech_servo_mount + SG90 + mech_servo_lid
+      const pilot = meshOf('pro_pilot_pin', MATS.steel);
+      pilot.position.set(0, -37.5, STEER.pilotPinZ);
+      addExplodeTag(pilot, 0, -10, -22);
+      cadRoot.add(pilot);
+
+      const sPinion = meshOf('mech_servo_pinion_z10', MATS.spark);
+      sPinion.position.set(0, -37.5, STEER.rackZ);
+      addExplodeTag(sPinion, 0, -10, 20);
+      cadRoot.add(sPinion);
+      dynamicRefs.pinion = sPinion;
+
+      const hornGroup = new THREE.Group();
+      hornGroup.position.set(0, -37.5, STEER.rackZ + 7.4);
+      addExplodeTag(hornGroup, 0, -10, 26);
+      hornGroup.add(rboxMesh(19.4, 4.6, 1.8, MATS.wind), rboxMesh(4.6, 19.4, 1.8, MATS.wind));
+      cadRoot.add(hornGroup);
+      dynamicRefs.servoHorn = hornGroup;
+
+      const sMount = meshOf('mech_servo_mount', useXray ? MATS.cyanGlass : MATS.mint);
+      sMount.position.set(0, -37.5, 12.5);
+      addExplodeTag(sMount, 0, -16, 28);
+      cadRoot.add(sMount);
+
+      const sg90 = new THREE.Group();
+      addExplodeTag(sg90, 0, -16, 38);
+      const sgBody = rboxMesh(12.2, 22.5, 19.5, MATS.lipo); sgBody.position.set(0, -42.85, 48.25);
+      const sgEars = rboxMesh(12.2, 32.2, 2.5, MATS.lipo); sgEars.position.set(0, -42.85, 44.05);
+      sg90.add(sgBody, sgEars);
+      cadRoot.add(sg90);
+
+      const sLid = meshOf('mech_servo_lid', useXray ? MATS.cyanGlass : MATS.mint);
+      sLid.position.set(0, -31.25, 45.3);
+      addExplodeTag(sLid, 0, -16, 46);
+      cadRoot.add(sLid);
+
+      for (const sx of [-18.75, 18.75]) {
+        const sp = meshOf('pro_captive_pin_28', MATS.tub);
+        sp.position.set(sx, -31.25, 22.425);
+        addExplodeTag(sp, sx * 0.6, -16, 52);
+        cadRoot.add(sp);
+      }
     }
 
-    // Left & Right Steered Knuckles + Wheels
+    // Left & Right Double-Shear Clevis Knuckles + Captive Kingpins + Wheels
     for (const side of [-1, 1]) {
       const kpPivot = new THREE.Group();
       kpPivot.position.set(side * 18.75, -56.25, 6.25);
@@ -635,19 +708,15 @@ function rebuildScene() {
       const tiltX = new THREE.Group();
       tiltX.rotation.x = -Math.PI / 2;
       const knMesh = meshOf(side < 0 ? 'pro_steer_knuckle_l' : 'pro_steer_knuckle_r', MATS.knuckle);
-      knMesh.position.set(side < 0 ? -6.25 : 6.25, 0, -6.25 + KNUCKLE_FACE_RELIEF); // the knuckle STL is re-based to z=0 after any inboard shave, so its bores sit at 6.25 - relief
+      knMesh.position.set(side < 0 ? -6.25 : 6.25, 0, -6.25 + KNUCKLE_FACE_RELIEF);
       tiltX.add(knMesh);
       orientZ.add(tiltX);
       kpPivot.add(orientZ);
 
-      // Hub axis is the knuckle's X axis (stub points outward along +-X). Matrix = Ry * Rz: clock the wheel 90 deg about its
-      // OWN axle first (so its Double-D hub flats mate with the knuckle stub flats, as in Gate G1), then lay the axle on X.
-      // (The old 'ZYX' order applied the Z turn last and sent the axle along Y; unclocked leaves 53 mm3 of hub overlap.)
       const stW = meshOf(wheelPid, MATS.tire);
       stW.rotation.order = 'YZX';
       stW.rotation.y = side < 0 ? -Math.PI / 2 : Math.PI / 2;
       stW.rotation.z = Math.PI / 2;
-      // Spin group so the steered tires roll about the hub axis while the truck drives.
       const spinG = new THREE.Group();
       spinG.position.set(side * 8.85, 0, 0);
       addExplodeTag(spinG, side * 18, 0, 0);
@@ -656,12 +725,10 @@ function rebuildScene() {
       if (side < 0) dynamicRefs.spinMinus = spinG;
       else dynamicRefs.spinPlus = spinG;
 
-      // Vertical kingpin shaft
-      const pinGeo = new THREE.CylinderGeometry(3.2, 3.2, 25.0, 24);
-      const pinM = new THREE.Mesh(pinGeo, MATS.steel);
-      pinM.rotation.x = Math.PI / 2;
-      pinM.position.set(side * 18.75, -56.25, 12.5);
-      addExplodeTag(pinM, side * 16, -14, 18);
+      // Captive split-cantilever kingpin from below (head flush under knuckle, snap-barb locked in bridge counterbore)
+      const pinM = meshOf('pro_captive_pin_28', MATS.tub);
+      pinM.position.set(side * STEER.kpX, STEER.kpY, STEER.kingpinPinZ);
+      addExplodeTag(pinM, side * 16, -14, -22);
       cadRoot.add(pinM);
 
       cadRoot.add(kpPivot);
@@ -669,24 +736,14 @@ function rebuildScene() {
       else dynamicRefs.kpR = kpPivot;
     }
 
-    // Dynamic Ackermann mechanical tie-rod assemblies (spherical rod ends + tie bar)
-    function makeTieRod() {
-      const g = new THREE.Group();
-      const ballGeo = new THREE.SphereGeometry(2.4, 16, 12);
-      const b0 = new THREE.Mesh(ballGeo, MATS.ghost);
-      const b1 = new THREE.Mesh(ballGeo, MATS.ghost);
-      const rodGeo = new THREE.CylinderGeometry(1.6, 1.6, 1, 16);
-      rodGeo.rotateZ(Math.PI / 2);
-      const rod = new THREE.Mesh(rodGeo, MATS.ghost);
-      g.add(b0, b1, rod);
-      g.userData = { b0, b1, rod };
-      return g;
+    // Tie-rod links + upward-locking captive tie-rod pins (posed every frame from the rigid closure in updateKinematics)
+    for (const side of [-1, 1]) {
+      const link = meshOf('pro_tie_rod_link', MATS.spark);
+      const tpin = meshOf('pro_captive_pin_28', MATS.tub);
+      tpin.rotation.order = 'ZYX';
+      cadRoot.add(link, tpin);
+      if (side < 0) { dynamicRefs.linkL = link; dynamicRefs.tpinL = tpin; } else { dynamicRefs.linkR = link; dynamicRefs.tpinR = tpin; }
     }
-    const trL = makeTieRod();
-    const trR = makeTieRod();
-    cadRoot.add(trL, trR);
-    dynamicRefs.trL = trL;
-    dynamicRefs.trR = trR;
   }
 
   // Optional #12 Front Snowplow / Dozer Blade in front C-jaw!
@@ -699,8 +756,9 @@ function rebuildScene() {
     cadRoot.add(plow);
   }
 
-  // 4. Cockpit (#8 Windscreen + Seated Kip Driver on rows 3..5)
-  const wind = meshOf('kit_windscreen', MATS.wind);
+  // 4. Cockpit (#8 Windscreen or Stage-4 mech_sill_duct + Seated Kip Driver on rows 3..5)
+  const cockpitPid = state.stage === 'mech' ? 'mech_sill_duct' : 'kit_windscreen';
+  const wind = meshOf(cockpitPid, state.stage === 'mech' ? MATS.mint : MATS.wind);
   wind.position.set(0, -6.25, 12.5);
   addExplodeTag(wind, 0, -4, 18);
   cadRoot.add(wind);
@@ -708,15 +766,23 @@ function rebuildScene() {
   if (state.showKip) {
     const kipGroup = new THREE.Group();
     addExplodeTag(kipGroup, 0, 0, 32);
-    const legs = meshOf('char_legs_seated', MATS.denim); legs.position.set(0, 0, 12.5);
-    const torso = meshOf('robot_torso_core', MATS.spark); torso.position.set(0, 0, 28.5);
-    const arms = meshOf('robot_arms_grabber', MATS.skin); arms.position.set(0, 0, 48.5);
+    const classic = state.driver === 'kip' && CLASSIC.head;
+    const shell = classic ? CLASSIC.mats.shell : null;   // the demo's cream shell
+    const legs = meshOf('char_legs_seated', shell || MATS.denim); legs.position.set(0, 0, 12.5);
+    const torso = meshOf('robot_torso_core', shell || MATS.spark); torso.position.set(0, 0, 28.5);
+    const arms = meshOf('robot_arms_grabber', shell || MATS.skin); arms.position.set(0, 0, 48.5);
     kipGroup.add(legs, torso, arms);
-    // Head stack seated like toyventor_assembly.attach(): head on the arms' studs, face plate on the head's face_slot axis,
-    // hair on the head's top studs, hat on the hair's top studs (or on the head's when bare). Truck legs sit at z = 12.5.
+    if (classic) {
+      const wrap = new THREE.Group();
+      wrap.rotation.x = Math.PI / 2;
+      wrap.scale.setScalar(CLASSIC.scale);
+      wrap.position.set(0, CLASSIC.y, CLASSIC.z);
+      wrap.add(CLASSIC.head);
+      kipGroup.add(wrap);
+    }
     const T = KIP_STACK.table;
     const hd = T && T.heads[KIP_STACK.head];
-    if (hd && GEOS[KIP_STACK.head] && GEOS.char_faceplate) {
+    if (!classic && hd && GEOS[KIP_STACK.head] && GEOS.char_faceplate) {
       const HEAD_Y = -6.25, HEAD_Z = 53.5;
       const head = meshOf(KIP_STACK.head, MATS.skin); head.position.set(0, HEAD_Y, HEAD_Z);
       const face = meshOf('char_faceplate', MATS.skin);
@@ -729,7 +795,7 @@ function rebuildScene() {
       if (hr && GEOS[KIP_STACK.hair]) {
         const hair = meshOf(KIP_STACK.hair, MATS.hair); hair.position.set(0, HEAD_Y, topZ);
         kipGroup.add(hair);
-        topZ = hr.top === null ? null : topZ + hr.top;   // sculpted-top wigs have no hat studs
+        topZ = hr.top === null ? null : topZ + hr.top;
       }
       if (KIP_STACK.hat && topZ !== null && GEOS[KIP_STACK.hat]) {
         const hat = meshOf(KIP_STACK.hat, KIP_STACK.hat === 'hat_hardhat' ? MATS.tub : MATS.spark);
@@ -740,37 +806,79 @@ function rebuildScene() {
     cadRoot.add(kipGroup);
   }
 
-  // 5. Rear Power Core (rows 6..9) + Sculpted #11 Tipping Dump Tub
-  let zTubDeck = 12.5;
-  if (state.stage === 'band') {
+  // 5. Rear Power Core (rows 6..9) + Zero-Strain Trunnion-Hinged #11 Tipping Dump Tub
+  if (state.stage === 'snap' || state.stage === 'pro') {
+    const tHinge = meshOf('pro_tub_hinge', MATS.mint);
+    tHinge.position.set(0, 56.25, -3.80);
+    addExplodeTag(tHinge, 0, 22, -10);
+    cadRoot.add(tHinge);
+
+    const tubHinge = new THREE.Group();
+    tubHinge.position.set(0, 37.5 + STEER.tubTrunnionY, 12.5 + STEER.tubTrunnionZ);
+    addExplodeTag(tubHinge, 0, 22, 28);
+    const tub = meshOf('kit_tilting_tub', MATS.tub);
+    tub.position.set(0, -STEER.tubTrunnionY, -STEER.tubTrunnionZ);
+    tubHinge.add(tub);
+    cadRoot.add(tubHinge);
+    dynamicRefs.tubHinge = tubHinge;
+  } else if (state.stage === 'band') {
     const tray = meshOf('mom_band_core_tray', useXray ? MATS.mintGlass : MATS.mint);
     tray.position.set(0, 37.5, 12.5);
     addExplodeTag(tray, 0, 14, 16);
     cadRoot.add(tray);
 
-    const spool = meshOf('mom_band_spool_pawl', MATS.tub);
-    spool.rotation.y = Math.PI / 2;
-    spool.position.set(-6.25, 43.75, 31.25);
-    addExplodeTag(spool, -10, 14, 24);
-    cadRoot.add(spool);
-    dynamicRefs.coreSpool = spool;
+    // Double-shear PTO shaft (shaft_tu03) + overrunning clutch gear (mom_pto_gear_z10) + spiral-leaf spool (mom_band_spool_pawl)
+    const shaftSpin = new THREE.Group();
+    shaftSpin.position.set(-15.20, 43.75, 31.25);
+    addExplodeTag(shaftSpin, -24, 14, 24);
+    const shaftOrient = new THREE.Group(); shaftOrient.rotation.y = Math.PI / 2;
+    const ptoShaft = meshOf('shaft_tu03', MATS.steel); ptoShaft.rotation.z = STEER.ptoPhaseRad;
+    shaftOrient.add(ptoShaft); shaftSpin.add(shaftOrient);
+    cadRoot.add(shaftSpin);
+    dynamicRefs.ptoShaft = shaftSpin;
 
-    const coreZ10 = meshOf('gear_spur_z10', MATS.spark);
-    coreZ10.rotation.y = Math.PI / 2;
-    coreZ10.position.set(-3.125, 43.75, 31.25);
-    addExplodeTag(coreZ10, 10, 14, 24);
-    cadRoot.add(coreZ10);
-    dynamicRefs.coreGear = coreZ10;
+    const gearSpin = new THREE.Group();
+    gearSpin.position.set(-3.125, 43.75, 31.25);
+    addExplodeTag(gearSpin, -8, 14, 24);
+    const gearOrient = new THREE.Group(); gearOrient.rotation.y = Math.PI / 2;
+    const coreZ10 = meshOf('mom_pto_gear_z10', MATS.spark); coreZ10.rotation.z = STEER.ptoPhaseRad;
+    gearOrient.add(coreZ10); gearSpin.add(gearOrient);
+    cadRoot.add(gearSpin);
+    dynamicRefs.coreGear = gearSpin;
 
-    // Tensioned rubber band loop wrapped between spool post and front core anchor
+    const spoolSpinG = new THREE.Group();
+    spoolSpinG.position.set(3.85, 43.75, 31.25);
+    addExplodeTag(spoolSpinG, 10, 14, 24);
+    const spoolOrient = new THREE.Group(); spoolOrient.rotation.y = Math.PI / 2;
+    const spool = meshOf('mom_band_spool_pawl', MATS.tub); spool.rotation.z = STEER.spoolPhaseRad;
+    spoolOrient.add(spool); spoolSpinG.add(spoolOrient);
+    cadRoot.add(spoolSpinG);
+    dynamicRefs.coreSpool = spoolSpinG;
+
+    // Captive sear pivot pin + removable winding key (key shown during stationary wind phase of Action Demo)
+    const lPin = meshOf('pro_captive_pin_28', MATS.tub);
+    lPin.rotation.y = -Math.PI / 2;
+    lPin.position.set(24.775, 22.25, 36.0);
+    addExplodeTag(lPin, 22, 10, 26);
+    cadRoot.add(lPin);
+
+    const wKeyWrap = new THREE.Group();
+    wKeyWrap.position.set(28.0, 43.75, 31.25);
+    wKeyWrap.visible = false;
+    const wKeyOrient = new THREE.Group(); wKeyOrient.rotation.y = -Math.PI / 2;
+    const wKey = meshOf('mom_wind_key', MATS.spark);
+    wKeyOrient.add(wKey); wKeyWrap.add(wKeyOrient);
+    cadRoot.add(wKeyWrap);
+    dynamicRefs.windKey = wKeyWrap;
+
+    // Doubled #32 elastomer band loop wrapped from spool drum around twin front posts
     const bandCurve = new THREE.CatmullRomCurve3([
-      new THREE.Vector3(-6.25, 43.75, 31.25),
-      new THREE.Vector3(-14.0, 32.0, 31.25),
-      new THREE.Vector3(0.0, 20.0, 31.25),
-      new THREE.Vector3(14.0, 32.0, 31.25),
-      new THREE.Vector3(0.0, 43.75, 31.25),
+      new THREE.Vector3(7.0, 43.75, 31.25),
+      new THREE.Vector3(16.0, 21.5, 29.0),
+      new THREE.Vector3(-16.0, 21.5, 29.0),
+      new THREE.Vector3(7.0, 43.75, 34.5),
     ], true);
-    const bandGeo = new THREE.TubeGeometry(bandCurve, 32, 1.4, 8, true);
+    const bandGeo = new THREE.TubeGeometry(bandCurve, 32, 1.3, 8, true);
     const bandMesh = new THREE.Mesh(bandGeo, MATS.rubberBand);
     addExplodeTag(bandMesh, 0, 14, 26);
     cadRoot.add(bandMesh);
@@ -780,48 +888,68 @@ function rebuildScene() {
     lid.position.set(0, 37.5, 44.8);
     addExplodeTag(lid, 0, 14, 34);
     cadRoot.add(lid);
-    zTubDeck = 50.0;
+
+    const tubHinge = new THREE.Group();
+    tubHinge.position.set(0, 37.5 + STEER.tubTrunnionY, 50.0 + STEER.tubTrunnionZ);
+    addExplodeTag(tubHinge, 0, 22, 54);
+    const tub = meshOf('kit_tilting_tub', MATS.tub);
+    tub.position.set(0, -STEER.tubTrunnionY, -STEER.tubTrunnionZ);
+    tubHinge.add(tub);
+    cadRoot.add(tubHinge);
+    dynamicRefs.tubHinge = tubHinge;
   } else if (state.stage === 'bellows') {
     const bBase = meshOf('mom_bellows_base', MATS.violet);
     bBase.position.set(0, 37.5, 12.5);
     addExplodeTag(bBase, 0, 14, 14);
     cadRoot.add(bBase);
 
+    const bPin = meshOf('shaft_tu03', MATS.steel);
+    bPin.rotation.y = Math.PI / 2;
+    bPin.position.set(-18.75, 37.5 + STEER.bellowsHingeY, 12.5 + STEER.bellowsBaseHingeZ);
+    addExplodeTag(bPin, -26, 18, 20);
+    cadRoot.add(bPin);
+
     const balGeo = new THREE.SphereGeometry(15.5, 32, 24);
     const bal = new THREE.Mesh(balGeo, MATS.balloon);
     bal.scale.set(1.15, 1.15, 0.52);
-    bal.position.set(0, 35.0, 26.0);
+    bal.position.set(0, 35.0, 24.0);
     addExplodeTag(bal, 0, 14, 22);
     cadRoot.add(bal);
     dynamicRefs.balloon = bal;
 
+    // Pin-hinged upper bellows leaf carrying #14 turntable + #11 dump tub snapped onto its 4x4 top studs (10..50 deg stroke)
     const leafHinge = new THREE.Group();
-    leafHinge.position.set(0, 62.4, 28.5);
+    leafHinge.position.set(0, 37.5 + STEER.bellowsHingeY, 12.5 + STEER.bellowsBaseHingeZ);
     addExplodeTag(leafHinge, 0, 18, 28);
     const bLeaf = meshOf('mom_bellows_leaf', MATS.violet);
-    bLeaf.position.set(0, -24.9, 0);
-    leafHinge.add(bLeaf);
+    bLeaf.position.set(0, -STEER.bellowsHingeY, -STEER.bellowsLeafHingeZ);
+    const bTurn = meshOf('kit_turntable', MATS.mint);
+    bTurn.position.set(0, -STEER.bellowsHingeY, -STEER.bellowsLeafHingeZ + 8.0);
+    addExplodeTag(bTurn, 0, 0, 10);
+    const tub = meshOf('kit_tilting_tub', MATS.tub);
+    tub.position.set(0, -STEER.bellowsHingeY, -STEER.bellowsLeafHingeZ + 16.0);
+    addExplodeTag(tub, 0, 0, 24);
+    leafHinge.add(bLeaf, bTurn, tub);
     cadRoot.add(leafHinge);
     dynamicRefs.leafHinge = leafHinge;
 
-    // Flexible silicone pneumatic hose connecting chassis deck port to jet nozzle
+    // Flexible silicone pneumatic hose (COTS 4x6 mm tube) + jet impulse exhaust puff rings
     const hoseCurve = new THREE.CatmullRomCurve3([
-      new THREE.Vector3(0.0, 46.0, 25.0),
-      new THREE.Vector3(0.0, 56.0, 30.0),
-      new THREE.Vector3(0.0, 62.0, 24.0),
-      new THREE.Vector3(0.0, 68.0, 20.0),
+      new THREE.Vector3(0.0, 46.0, 23.0),
+      new THREE.Vector3(0.0, 56.0, 27.0),
+      new THREE.Vector3(0.0, 66.0, 22.0),
+      new THREE.Vector3(0.0, 72.0, 19.0),
     ]);
     const hoseGeo = new THREE.TubeGeometry(hoseCurve, 24, 1.8, 12, false);
-    const hoseMesh = new THREE.Mesh(hoseGeo, MATS.ghost);
+    const hoseMesh = new THREE.Mesh(hoseGeo, MATS.pneumaticTube);
     cadRoot.add(hoseMesh);
     dynamicRefs.hose = hoseMesh;
 
-    // Jet impulse exhaust puff rings
     const exGroup = new THREE.Group();
-    exGroup.position.set(0, 72.0, 20.0);
+    exGroup.position.set(0, 76.0, 19.0);
     const ringGeo = new THREE.TorusGeometry(3.2, 0.7, 8, 24);
     for (let k = 0; k < 3; k++) {
-      const r = new THREE.Mesh(ringGeo, MATS.exhaustRing.clone()); // puff animation (effect, not a part)
+      const r = new THREE.Mesh(ringGeo, MATS.exhaustRing.clone());
       r.position.set(0, k * 6.0, 0);
       r.rotation.x = Math.PI / 2;
       exGroup.add(r);
@@ -829,62 +957,65 @@ function rebuildScene() {
     exGroup.visible = false;
     cadRoot.add(exGroup);
     dynamicRefs.exhaust = exGroup;
-
-    zTubDeck = 33.7;
   } else if (state.stage === 'mech') {
-    const mShell = meshOf('mech_core_shell', useXray ? MATS.cyanGlass : MATS.mint);
-    mShell.position.set(0, 37.5, 12.5);
-    addExplodeTag(mShell, 0, 14, 16);
-    cadRoot.add(mShell);
+    // Printable Card F PETG 3-TU Drive Core + 2-TU Low-CG Brain Core + COTS N20 / 602535 LiPo / 38x38 PCBA / XIAO
+    const dTray = meshOf('mech_drive_tray', useXray ? MATS.cyanGlass : MATS.mint);
+    dTray.position.set(0, 37.5, 12.5);
+    addExplodeTag(dTray, 0, 14, 14);
+    cadRoot.add(dTray);
 
-    // Datasheet internal keep-outs: 602535 LiPo + 38x38 PCBA + MCU + 12x24 Gearmotor + Z10 PTO
+    const n20Spin = new THREE.Group();
+    n20Spin.position.set(-3.125, 43.75, 31.25);
+    addExplodeTag(n20Spin, 8, 14, 22);
+    const n20Orient = new THREE.Group(); n20Orient.rotation.y = Math.PI / 2;
+    const mGear = meshOf('mech_n20_pinion_z10', MATS.spark); mGear.rotation.z = STEER.ptoPhaseRad;
+    n20Orient.add(mGear); n20Spin.add(n20Orient);
+    cadRoot.add(n20Spin);
+    dynamicRefs.coreGear = n20Spin;
+
+    const dLid = meshOf('mech_drive_lid', useXray ? MATS.cyanGlass : MATS.mint);
+    dLid.position.set(0, 37.5, 44.8);
+    addExplodeTag(dLid, 0, 14, 28);
+    cadRoot.add(dLid);
+
+    const bTray = meshOf('mech_brain_tray', useXray ? MATS.cyanGlass : MATS.mint);
+    bTray.position.set(0, 37.5, 50.0);
+    addExplodeTag(bTray, 0, 14, 38);
+    cadRoot.add(bTray);
+
+    const bDoor = meshOf('mech_bat_door_screw', MATS.spark);
+    bDoor.rotation.x = Math.PI / 2;
+    bDoor.position.set(0, 66.65, 60.8);
+    addExplodeTag(bDoor, 0, 30, 38);
+    cadRoot.add(bDoor);
+
+    const bLid = meshOf('mech_brain_lid', useXray ? MATS.cyanGlass : MATS.mint);
+    bLid.position.set(0, 37.5, 69.8);
+    addExplodeTag(bLid, 0, 14, 50);
+    cadRoot.add(bLid);
+
+    // Datasheet COTS components seated inside mech_drive_tray and mech_brain_tray
     const elecGroup = new THREE.Group();
-    addExplodeTag(elecGroup, 0, 22, 26);
-    const lipo = rboxMesh(35.0, 25.0, 6.5, MATS.lipo); lipo.position.set(0, 32.0, 21.2);
-    const pcb = rboxMesh(38.0, 38.0, 1.6, MATS.pcb); pcb.position.set(0, 37.5, 39.8);
-    const mcu = rboxMesh(21.0, 18.0, 4.5, MATS.tire); mcu.position.set(0, 37.5, 42.8);
-    const motGeo = new THREE.CylinderGeometry(6.0, 6.0, 24.0, 32);
-    const mot = new THREE.Mesh(motGeo, MATS.brass);
-    mot.rotation.z = Math.PI / 2;
-    mot.position.set(-2.0, 43.75, 31.25);
-    const mGear = meshOf('gear_spur_z10', MATS.spark);
-    mGear.rotation.y = Math.PI / 2;
-    mGear.position.set(-3.125, 43.75, 31.25);
-    elecGroup.add(lipo, pcb, mcu, mot, mGear);
+    addExplodeTag(elecGroup, 0, 22, 34);
+    const mot = rboxMesh(24.0, 12.0, 10.0, MATS.brass); mot.position.set(-11.5, 43.75, 31.25);
+    const lipo = rboxMesh(25.0, 35.0, 6.2, MATS.lipo); lipo.position.set(0, 40.5, 58.6);
+    const pcb = rboxMesh(38.0, 38.0, 1.6, MATS.pcb); pcb.position.set(0, 37.5, 63.6);
+    const mcu = rboxMesh(21.0, 17.8, 4.5, MATS.tire); mcu.position.set(0, 36.4, 66.75);
+    elecGroup.add(mot, lipo, pcb, mcu);
     cadRoot.add(elecGroup);
 
-    const lid = meshOf('mom_band_core_lid', useXray ? MATS.cyanGlass : MATS.mint);
-    lid.position.set(0, 37.5, 44.8);
-    addExplodeTag(lid, 0, 14, 40);
-    cadRoot.add(lid);
-    zTubDeck = 50.0;
+    const tubHinge = new THREE.Group();
+    tubHinge.position.set(0, 37.5 + STEER.tubTrunnionY, 75.0 + STEER.tubTrunnionZ);
+    addExplodeTag(tubHinge, 0, 22, 66);
+    const tub = meshOf('kit_tilting_tub', MATS.tub);
+    tub.position.set(0, -STEER.tubTrunnionY, -STEER.tubTrunnionZ);
+    tubHinge.add(tub);
+    cadRoot.add(tubHinge);
+    dynamicRefs.tubHinge = tubHinge;
   }
-
-  const tubHinge = new THREE.Group();
-  tubHinge.position.set(0, 62.4, zTubDeck);
-  addExplodeTag(tubHinge, 0, 22, hasCore3TU ? 54 : 28);
-  const tub = meshOf('kit_tilting_tub', MATS.tub);
-  tub.position.set(0, -24.9, 0);
-  tubHinge.add(tub);
-  cadRoot.add(tubHinge);
-  dynamicRefs.tubHinge = tubHinge;
 
   updateKinematics();
   updateHUD();
-}
-
-function updateTieRod(group, x0, y0, z0, x1, y1, z1) {
-  if (!group || !group.userData.rod) return;
-  const p0 = new THREE.Vector3(x0, y0, z0);
-  const p1 = new THREE.Vector3(x1, y1, z1);
-  const dir = p1.clone().sub(p0);
-  const len = dir.length();
-  group.userData.b0.position.copy(p0);
-  group.userData.b1.position.copy(p1);
-  group.userData.rod.position.copy(p0).addScaledVector(dir, 0.5);
-  group.userData.rod.scale.set(len, 1, 1);
-  const q = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(1, 0, 0), dir.clone().normalize());
-  group.userData.rod.quaternion.copy(q);
 }
 
 function updateKinematics() {
@@ -895,29 +1026,33 @@ function updateKinematics() {
     dynamicRefs.tubHinge.rotation.x = -tipRad;
   }
   if (dynamicRefs.leafHinge) {
-    dynamicRefs.leafHinge.rotation.x = -tipRad;
+    const belDeg = Math.max(10, Math.min(50, state.tipDeg));
+    dynamicRefs.leafHinge.rotation.x = -THREE.MathUtils.degToRad(belDeg);
   }
   if (dynamicRefs.balloon) {
-    const lift = 0.35 + (state.tipDeg / 55) * 0.65;
+    const belDeg = Math.max(10, Math.min(50, state.tipDeg));
+    const lift = 0.32 + ((belDeg - 10) / 40) * 0.68;
     dynamicRefs.balloon.scale.set(1.15, 1.15, lift);
-    dynamicRefs.balloon.position.z = 22.0 + lift * 8.0;
+    dynamicRefs.balloon.position.z = 20.5 + lift * 7.5;
   }
 
   if (dynamicRefs.kpL && dynamicRefs.kpR) {
     // Rigid tie-rod linkage solved from the real hardpoints (see STEER): rack travel -> both knuckle angles.
-    // Nothing here is hard-coded: the angles, their ratio and the Ackermann error all fall out of the geometry.
     const sol = steerSolution(state.steerDeg);
-    const rL = sol.aMinus; // knuckle at CAD x = -18.75 (the vehicle's RIGHT wheel: the vehicle faces +Z, so +X is its left)
+    const rL = sol.aMinus; // knuckle at CAD x = -18.75 (the vehicle's RIGHT wheel)
     const rR = sol.aPlus;  // knuckle at CAD x = +18.75 (the vehicle's LEFT wheel)
     dynamicRefs.kpL.rotation.z = rL;
     dynamicRefs.kpR.rotation.z = rR;
 
-    // Rack & pinion: gear_spur_z10 pitch radius 12.5 mm, CCW (+) drives the rack +X: dx = r * theta.
+    // Rack & pinion: pitch radius 12.5 mm, CCW (+) drives the rack +X: dx = r * theta (max +-5.20 mm = +-23.8 deg servo).
     const dx = sol.dx;
     lastRackDx = dx;
     const pinionRad = dx / STEER.pinionR;
     if (dynamicRefs.rack) dynamicRefs.rack.position.x = dx;
     if (dynamicRefs.pinion) dynamicRefs.pinion.rotation.z = pinionRad;
+    if (dynamicRefs.steerCol) dynamicRefs.steerCol.rotation.z = pinionRad;
+    if (dynamicRefs.steerWheel) dynamicRefs.steerWheel.rotation.z = pinionRad;
+    if (dynamicRefs.servoHorn) dynamicRefs.servoHorn.rotation.z = pinionRad;
     if (dynamicRefs.yoke) dynamicRefs.yoke.rotation.z = pinionRad;
 
     // Knuckle tie-rod bore world coordinates (bore orbits the kingpin at STEER.arm, leading the kingpin at rest)
@@ -927,29 +1062,31 @@ function updateKinematics() {
     const tyR = STEER.kpY - STEER.arm * Math.cos(rR);
     const ex = state.explode / 100;
     const vis = ex < 0.05;
-    const ZK = 6.25, ZR = 28.18; // tie-rod bore heights: knuckle bore / rack bore
-    const rest3d = Math.hypot(STEER.link, ZR - ZK);
-    const len3d = (x0, y0, x1, y1) => Math.hypot(x1 - x0, y1 - y0, ZR - ZK);
     const rkL = -STEER.rackX + dx, rkR = STEER.rackX + dx;
     const linkErr = Math.max(
-      Math.abs(len3d(txL, tyL, rkL, STEER.rackY) - rest3d),
-      Math.abs(len3d(txR, tyR, rkR, STEER.rackY) - rest3d),
+      Math.abs(Math.hypot(txL - rkL, tyL - STEER.rackY) - STEER.link),
+      Math.abs(Math.hypot(txR - rkR, tyR - STEER.rackY) - STEER.link),
     );
-    if (dynamicRefs.trL) {
-      dynamicRefs.trL.visible = vis;
-      dynamicRefs.trR.visible = vis;
-      if (vis) {
-        updateTieRod(dynamicRefs.trL, txL, tyL, ZK, rkL, STEER.rackY, ZR);
-        updateTieRod(dynamicRefs.trR, txR, tyR, ZK, rkR, STEER.rackY, ZR);
-      }
+    // Real link plates and upward-locking captive tie-rod pins (Double-D flats clocked 90 deg + rArm to match knuckle fixed bore)
+    for (const [link, tpin, rkx, tx, ty, rArm] of [
+      [dynamicRefs.linkL, dynamicRefs.tpinL, rkL, txL, tyL, rL],
+      [dynamicRefs.linkR, dynamicRefs.tpinR, rkR, txR, tyR, rR],
+    ]) {
+      if (!link) continue;
+      link.visible = tpin.visible = vis;
+      link.position.set(rkx, STEER.rackY, STEER.linkZ);
+      link.rotation.z = Math.atan2(ty - STEER.rackY, tx - rkx);
+      tpin.rotation.set(Math.PI, 0, Math.PI / 2 + rArm);
+      tpin.position.set(tx, ty, STEER.tpinHeadZ);
     }
 
     const deg = (r) => (Math.abs(r) * 180 / Math.PI).toFixed(1);
+    const srvDeg = (pinionRad * 180 / Math.PI).toFixed(1);
     const dir = Math.abs(dx) < 0.005 ? 'Straight' : (dx > 0 ? 'Turn LEFT' : 'Turn RIGHT');
     const elAck = document.getElementById('hud-ackermann');
     if (elAck) elAck.textContent = `${dir} · L ${deg(rR)}° R ${deg(rL)}° · ideal outer ${deg(sol.ideal)}°`;
     const elRack = document.getElementById('hud-rack');
-    if (elRack) elRack.textContent = `dx ${dx.toFixed(2)} mm (stop ±${STEER.rackStop.toFixed(2)}) · link Δ ${linkErr.toFixed(3)} mm`;
+    if (elRack) elRack.textContent = `dx ${dx.toFixed(2)} mm (pinion ${srvDeg}° / ±23.8°) · Δ ${linkErr.toFixed(3)} mm`;
   } else if (dynamicRefs.yoke) {
     dynamicRefs.yoke.rotation.z = steerRad * 0.4;
   }
@@ -967,46 +1104,49 @@ function updateKinematics() {
 }
 
 function updateHUD() {
+  const srvDeg = ((lastRackDx / STEER.pinionR) * 180 / Math.PI);
+  const srvUs = Math.round(1500 + (srvDeg / 23.8) * 132);
+  const belDeg = Math.round(Math.max(10, Math.min(50, state.tipDeg)));
   const META = {
     snap: {
       badge: 'Stage 1 · Snap 3+',
       title: '1 · Snap (3+) Utility Dump Truck',
-      cards: state.bulldogHood ? 'Card A + Card B (+ #7 Cowl)' : 'Card A + Card B',
+      cards: state.bulldogHood ? 'Card A + Card B + pro_tub_hinge (+ #7)' : 'Card A + Card B + pro_tub_hinge',
       steer: 'Fixed Bottom-Click Barbell (Zero Play)',
       power: 'Push-Along · Z_axle = 6.25 mm',
-      bed: `Sculpted 4×4 Scow · Tip ${Math.round(state.tipDeg)}° (Z=12.5 mm)`,
+      bed: `Zero-Strain Trunnion Hinge · Tip ${Math.round(state.tipDeg)}° (Z=12.5 mm)`,
     },
     pro: {
       badge: 'Stage 2 · Pro 8+',
-      title: '2 · Pro (8+) Row-0 Rack-Steered Hauler',
+      title: '2 · Pro (8+) Captive Row-0 Rack-Steered Hauler',
       cards: 'Card A + Card B + Card E1',
-      steer: `Ackermann Knuckles + Z10 Rack (${Math.round(state.steerDeg)}° Lock)`,
+      steer: `Double-Shear Clevis + Ø23 Wheel Skirt (${Math.round(state.steerDeg)}° Lock)`,
       power: 'Rear Z10 PTO Ready + Under-Keel Keeper',
-      bed: `Sculpted 4×4 Scow · Tip ${Math.round(state.tipDeg)}° (Z=12.5 mm)`,
+      bed: `Zero-Strain Trunnion Hinge · Tip ${Math.round(state.tipDeg)}° (Z=12.5 mm)`,
     },
     band: {
       badge: 'Stage 3A · Momentum 8+',
-      title: '3A · Momentum Enclosed #64 Band + Bumper Trigger',
-      cards: 'Card A + Card B + Card E1',
-      steer: 'IF-Contact-THEN-Release Front Bumper',
-      power: '3-TU Enclosed Band Core (25.00 mm Z10:Z10 PTO)',
-      bed: `Auto-Dump on 3-TU Core · Tip ${Math.round(state.tipDeg)}° (Z=50.0 mm)`,
+      title: '3A · Momentum Doubled-#32 Band + Overrunning Clutch',
+      cards: 'Card A + Card B + Card E1 (0.22 J Band Core)',
+      steer: 'Captive Bumper Trigger (IF-Contact-THEN-Dump)',
+      power: '4-Leaf Freewheel Spool + Double-Shear PTO (Z=31.25 mm)',
+      bed: `Lid Trunnion Cradles · Tip ${Math.round(state.tipDeg)}° (Z=50.0 mm)`,
     },
     bellows: {
       badge: 'Stage 3B · Momentum 8+',
-      title: '3B · Momentum Pneumatic Balloon Bellows Tipper',
+      title: '3B · Momentum Pin-Hinged Pneumatic Bellows Tipper',
       cards: 'Card A + Card B + Card E2',
       steer: 'Fixed Bottom-Click Barbell',
-      power: '10° Pre-Angled Balloon Clamshell (190–380 gf)',
-      bed: `Pneumatic Lift · Tip ${Math.round(state.tipDeg)}° (Rated 120 g)`,
+      power: 'shaft_tu03 Barrel Hinge + 9" Balloon Clamshell',
+      bed: `Pneumatic Lift · ${belDeg}° (10°..50° Stroke, Rated 100 g)`,
     },
     mech: {
       badge: 'Stage 4 · Mech 10+',
-      title: '4 · Mech (10+) Smart RC Servo + Core X-Ray',
-      cards: 'Cards A + B + E1 + Card F (Keep-Out Verified)',
-      steer: `Coaxial 9g Nose Servo → Rack (${Math.round(state.steerDeg)}° Lock)`,
-      power: '602535 LiPo + 38×38 PCBA + Gearmotor → 25 mm PTO',
-      bed: `Stacked on 3-TU Mech Core · Tip ${Math.round(state.tipDeg)}° (Z=50.0 mm)`,
+      title: '4 · Mech (10+) Printable PETG RC Servo + Drive/Brain',
+      cards: 'Cards A + B + E1 + Card F (PETG, 11 Parts)',
+      steer: `Row-2 9g Servo + Horn-Pocket Z10 (${srvDeg.toFixed(1)}° / ${srvUs} µs)`,
+      power: 'Double-Shear N20 + 602535 LiPo + XIAO → 25 mm PTO',
+      bed: `Brain-Lid Cradles · Tip ${Math.round(state.tipDeg)}° (Z=75.0 mm)`,
     },
   }[state.stage];
 
@@ -1016,10 +1156,12 @@ function updateHUD() {
   document.getElementById('hud-steer').textContent = META.steer;
   document.getElementById('hud-power').textContent = META.power;
   document.getElementById('hud-bed').textContent = META.bed;
-  // Ghosted geometry that has no catalog part yet (do not read it as a verified part):
-  document.getElementById('hud-illus').textContent = (state.stage === 'pro' || state.stage === 'mech')
-    ? 'Tie-rods (ghosted): no catalog part yet'
-    : (state.stage === 'bellows' ? 'Hose + nozzle (ghosted): no catalog part yet' : '—');
+  const illus = [];
+  if (state.stage === 'band') illus.push('#32 rubber band (COTS)');
+  if (state.stage === 'bellows') illus.push('9" balloon + 4×6 silicone tube (COTS)');
+  if (state.stage === 'mech') illus.push('N20 + SG90 + 602535 LiPo + PCBA/XIAO (COTS)');
+  if (state.showKip && state.driver === 'kip' && CLASSIC.head) illus.push("Kip head (demo's meshes at 0.69x)");
+  document.getElementById('hud-illus').textContent = illus.length ? illus.join(' · ') : '—';
 }
 
 // UI Bindings
@@ -1120,12 +1262,42 @@ document.getElementById('btn-kip').addEventListener('click', (e) => {
   rebuildScene();
 });
 
+// Load the demo's head from its own rig (same STLs, creases and materials as Kip-Demo.html). Failure is not fatal: the human figure stays available.
+async function loadClassicDriver() {
+  try {
+    const K = createClassicKip({ THREE, STLLoader, mergeVertices, toCreasedNormals, KIP_BUILD_VERSION: 'truck-1' });
+    const { geos, baseParts } = await K.loadGeos();
+    const rig = K.buildKipRig(geos, baseParts);
+    const head = rig.joints.Head;
+    head.parent.remove(head);
+    head.position.set(0, 0, 0);   // the rig hangs it 45.3 mm up the body; the truck seats it on its own torso
+    for (const [n, g] of Object.entries(geos)) CLASSIC.geoNames.set(g, 'stls/' + n);
+    for (const [n, g] of Object.entries(baseParts)) CLASSIC.geoNames.set(g, 'partspec/' + n);
+    CLASSIC.K = K; CLASSIC.mats = K.mats; CLASSIC.head = head;
+  } catch (e) {
+    console.warn('Kip head unavailable, falling back to the human driver:', e);
+    state.driver = 'human';
+  }
+}
+
+document.getElementById('btn-driver').addEventListener('click', () => {
+  if (!CLASSIC.head) return;
+  state.driver = state.driver === 'kip' ? 'human' : 'kip';
+  syncKipButtons();
+  rebuildScene();
+});
+
 async function ensureKipGeo(pid) {
   if (!pid || GEOS[pid]) return;
   const raw = await loader.loadAsync(`./partspec/mockup/${pid}.stl`);
   GEOS[pid] = toCreasedNormals(mergeVertices(raw, 1e-4), THREE.MathUtils.degToRad(32));
 }
 function syncKipButtons() {
+  const kipOn = state.driver === 'kip' && !!CLASSIC.head;
+  const dbtn = document.getElementById('btn-driver');
+  dbtn.textContent = kipOn ? 'Driver: Kip' : 'Driver: Human';
+  dbtn.disabled = !CLASSIC.head;   // no demo head loaded: only the human figure is available
+  for (const id of ['btn-head', 'btn-hair', 'btn-hat']) document.getElementById(id).style.display = kipOn ? 'none' : '';   // the wardrobe is the human figure's
   document.getElementById('btn-head').textContent = `Head: ${kipLabel(KIP_STACK.head)}`;
   document.getElementById('btn-hair').textContent = `Hair: ${KIP_STACK.hair ? kipLabel(KIP_STACK.hair) : 'off'}`;
   const hatBtn = document.getElementById('btn-hat');
@@ -1187,6 +1359,7 @@ window.addEventListener('resize', () => {
 // Load all 28 verified CAD solids in parallel
 async function init() {
   let loaded = 0;
+  const classicLoading = loadClassicDriver();
   await Promise.all(PART_FILES.map(async (pid) => {
     const raw = await loader.loadAsync(`./partspec/mockup/${pid}.stl`);
     const merged = mergeVertices(raw, 1e-4);
@@ -1196,8 +1369,10 @@ async function init() {
   }));
   document.getElementById('status-text').innerHTML = `<b>${PART_FILES.length}</b> verified CAD solids + Kip wardrobe · Drag to orbit · Scroll to zoom`;
   KIP_STACK.table = await (await fetch('./partspec/mockup/kip_stack.json', { cache: 'no-cache' })).json();
+  await classicLoading;
   {
-    const q0 = new URLSearchParams(location.search);   // ?head=tall&hair=bob&hat=ballcap  (hair=off / hat=off allowed)
+    const q0 = new URLSearchParams(location.search);   // ?driver=human&head=tall&hair=bob&hat=ballcap  (hair=off / hat=off allowed)
+    if (q0.get('driver') === 'human') state.driver = 'human';
     const pick = (v, pre, ok) => { if (v === null) return undefined; if (v === 'off') return null; const id = v.startsWith(pre) ? v : pre + v; return ok(id) ? id : undefined; };
     const h = pick(q0.get('head'), 'char_head_', (i) => KIP_HEADS.includes(i)); if (h) KIP_STACK.head = h;
     const w = pick(q0.get('hair'), 'hair_', (i) => i in KIP_STACK.table.hairs); if (w !== undefined) KIP_STACK.hair = w;
@@ -1219,7 +1394,45 @@ async function init() {
   if (q.get('cam')) document.querySelector(`[data-cam="${q.get('cam')}"]`)?.click();
   if (q.get('cp')) { const [a, b, c, d2, e, f] = q.get('cp').split(',').map(Number); camera.position.set(a, b, c); controls.target.set(d2, e, f); controls.update(); }
   if (q.get('ui') === '0') document.querySelectorAll('.dock,.topbar').forEach((el) => { el.style.display = 'none'; });
+  window.__TRUCK_READY__ = true;
+  if (q.get('probe')) {   // ?probe=1&stage=pro&steer=22 dumps this pose; ?probe=sweep dumps a list of poses (below). Both write JSON into the DOM for scripts.
+    const pre = document.createElement('pre');
+    pre.id = 'truck-probe';
+    pre.textContent = JSON.stringify(q.get('probe') === 'sweep' ? window.__truckProbeSweep() : window.__truckProbe());
+    document.body.appendChild(pre);
+  }
 }
+
+// Poses for the numeric overlap check (scripts rebuild each as solids): straight, both rack stops, tipped bed, giant tires at their lock, every stage.
+window.__truckProbeSweep = (cases = [
+  { stage: 'pro', steerDeg: 0, tipDeg: 22 }, { stage: 'pro', steerDeg: 45, tipDeg: 22 }, { stage: 'pro', steerDeg: -45, tipDeg: 22 },
+  { stage: 'pro', steerDeg: 20, tipDeg: 55 }, { stage: 'pro', giantWheels: true, steerDeg: 25 }, { stage: 'pro', giantWheels: true, steerDeg: -25 },
+  { stage: 'mech', steerDeg: 30, tipDeg: 22 }, { stage: 'mech', steerDeg: 0, tipDeg: 55 },
+  { stage: 'band', steerDeg: 0, tipDeg: 0 }, { stage: 'band', tipDeg: 55 },
+  { stage: 'bellows', tipDeg: 10 }, { stage: 'bellows', tipDeg: 48 },
+  { stage: 'snap', tipDeg: 0 }, { stage: 'snap', tipDeg: 55 },
+]) => cases.map((c) => {
+  Object.assign(state, { giantWheels: false, steerDeg: 0, tipDeg: 22 }, c);
+  rebuildScene();
+  return { case: c, rows: window.__truckProbe() };
+});
+
+// Test hook: every visible mesh's pose in the CAD frame plus its source geometry, so a script can rebuild the whole assembly as solids and
+// boolean-check it (viewer-only illustrations such as boxes, hoses and the balloon have no source geometry and are skipped).
+window.__truckProbe = () => {
+  updateKinematics();
+  cadRoot.updateMatrixWorld(true);
+  const inv = cadRoot.matrixWorld.clone().invert();
+  const names = new Map(Object.entries(GEOS).map(([pid, g]) => [g, pid]));
+  const rows = [];
+  cadRoot.traverse((o) => {
+    if (!o.isMesh) return;
+    for (let p = o; p; p = p.parent) if (p.visible === false) return;
+    const geo = names.get(o.geometry) || CLASSIC.geoNames.get(o.geometry);
+    if (geo) rows.push({ geo, m: inv.clone().multiply(o.matrixWorld).elements.slice() });
+  });
+  return rows;
+};
 
 // ---------------------------------------------------------------------------
 // Driving: the vehicle faces +Z. Rolling is derived from actual displacement, so tires never slip or skate.
@@ -1239,9 +1452,11 @@ scene.add(wall);
 
 function resetVehiclePose() {
   pose.px = 0; pose.pz = -90; pose.psi = 0; pose.prevPlus = null; pose.prevMinus = null;
+  state.spoolSpin = 0;
   vehicleWrap.position.set(0, 0, 0);
   vehicleWrap.rotation.y = 0;
   wall.visible = false;
+  if (dynamicRefs.windKey) dynamicRefs.windKey.visible = false;
 }
 
 function applyPose() { // place the wrap so the REAR AXLE CENTER sits at (pose.px, pose.pz) with heading pose.psi
@@ -1261,9 +1476,10 @@ function applyWheelSpin() { // +X rotation = rolling toward +Z (forward)
   if (dynamicRefs.frontAxle) dynamicRefs.frontAxle.rotation.x = state.wheelSpin;
   if (dynamicRefs.spinPlus) dynamicRefs.spinPlus.rotation.x = pose.spinPlus;
   if (dynamicRefs.spinMinus) dynamicRefs.spinMinus.rotation.x = pose.spinMinus;
-  // 1:1 Z10 PTO: the core gear meshes the axle gear (opposite sense) and the spool is coaxial with the core gear
+  // 1:1 Z10 PTO: coreGear and ptoShaft mesh the axle gear (-wheelSpin), while coreSpool uses spoolSpin (halting at slack during coast)
   if (dynamicRefs.coreGear) dynamicRefs.coreGear.rotation.x = -state.wheelSpin;
-  if (dynamicRefs.coreSpool) dynamicRefs.coreSpool.rotation.x = -state.wheelSpin;
+  if (dynamicRefs.ptoShaft) dynamicRefs.ptoShaft.rotation.x = -state.wheelSpin;
+  if (dynamicRefs.coreSpool) dynamicRefs.coreSpool.rotation.x = state.spoolSpin;
 }
 
 // Distance a steered hub rolls in one step. Two parts: (1) rigid-body velocity of the hub projected on the wheel heading;
@@ -1307,8 +1523,6 @@ function animate() {
       pose.pz += v * Math.cos(pose.psi) * dt;
       if (pose.pz > 90 || Math.abs(pose.px) > 70) { pose.px = 0; pose.pz = -90; pose.psi = 0; } // loop the course
       applyPose();
-      // Solid rear axle rolls at the axle-centre speed (a real solid axle scrubs the inner wheel in a turn);
-      // each steered front hub rolls at its own ground speed.
       state.wheelSpin += (v * dt) / wRad;
       if (pose.prevPlus === null) { pose.prevPlus = sol.aPlus; pose.prevMinus = sol.aMinus; }
       pose.spinPlus += hubRoll(1, sol.aPlus, pose.prevPlus, v, psiDot, dt) / wRad;
@@ -1320,51 +1534,81 @@ function animate() {
         state.tipDeg = 15.0 + Math.sin(state.demoT * 1.5) * 15.0;
       }
     } else if (state.stage === 'band') {
-      // 4.0 s band-core loop (vehicle faces +Z; the wall is a real mesh):
-      // 0.0..1.8s: drive forward on spring power (wheels, core gear and spool locked 1:1 by the Z10 PTO)
-      // 1.8..2.2s: bumper face meets the wall, the trigger is pushed in 3.75 mm, THEN the latch trips and the bed dumps
-      // 2.2..3.2s: hold at 55 deg, trigger still depressed against the wall
-      // 3.2..4.0s: back away (trigger springs out as soon as the truck leaves the wall), bed returns
-      const Z0 = -50.0, ZC = 40.0, PRESS = 3.75, FACE = 76.65; // start, contact, trigger travel, bumper face (CAD y -76.65: bar face -20.4 from the part origin)
-      wall.position.set(0, 17, ZC + FACE + 3.0); // near face of the 6 mm wall sits exactly at the bumper face at contact
-      const cyc = state.demoT % 4.0;
+      // 5.2 s 4-state Band Core + Overrunning Clutch + Bumper Auto-Dump loop:
+      // 0.0..1.0s: Key Wind (mom_wind_key winds spool 2.5 turns while PTO gear & wheels stand still)
+      // 1.0..1.3s: Key Withdraw & Sear Latch Hold
+      // 1.3..2.5s: Band Drive Burst (spool + PTO gear + rear axle spin locked 1:1 until band unwinds)
+      // 2.5..3.5s: Overrunning Freewheel Coast (spool halts at slack while PTO gear & wheels keep rolling!)
+      // 3.5..4.4s: Bumper Contact -> 3.75 mm depress -> Sear Trip -> 55 deg Auto-Dump
+      // 4.4..5.2s: Reset
+      const Z0 = -50.0, ZM = 5.0, ZC = 40.0, PRESS = 3.75, FACE = 77.5, WIND_RAD = (ZM - Z0) / wRad;
+      wall.position.set(0, 17, ZC + FACE + 3.0);
+      const cyc = state.demoT % 5.2;
       let depress = 0;
-      if (cyc < 1.8) {
-        driveStraight(Z0 + ((ZC - Z0) * cyc) / 1.8, wRad);
+      if (dynamicRefs.windKey) dynamicRefs.windKey.visible = false;
+      if (cyc < 1.0) {
+        const uW = smooth(cyc / 1.0);
+        driveStraight(Z0, wRad);
+        state.spoolSpin = uW * WIND_RAD;
         state.tipDeg = 0;
-      } else if (cyc < 2.2) {
-        const u = (cyc - 1.8) / 0.4;
+        if (dynamicRefs.windKey) {
+          dynamicRefs.windKey.visible = true;
+          dynamicRefs.windKey.position.x = 25.0;
+          dynamicRefs.windKey.rotation.x = state.spoolSpin;
+        }
+      } else if (cyc < 1.3) {
+        const uOut = smooth((cyc - 1.0) / 0.3);
+        driveStraight(Z0, wRad);
+        state.spoolSpin = WIND_RAD;
+        state.tipDeg = 0;
+        if (dynamicRefs.windKey) {
+          dynamicRefs.windKey.visible = uOut < 0.95;
+          dynamicRefs.windKey.position.x = 25.0 + uOut * 12.0;
+          dynamicRefs.windKey.rotation.x = WIND_RAD;
+        }
+      } else if (cyc < 2.5) {
+        const uDrv = (cyc - 1.3) / 1.2;
+        const zCur = Z0 + (ZM - Z0) * uDrv;
+        driveStraight(zCur, wRad);
+        state.spoolSpin = WIND_RAD * (1 - uDrv); // unwinds in -X sense (-wheelSpin delta) down to 0
+        state.tipDeg = 0;
+      } else if (cyc < 3.5) {
+        const uCst = (cyc - 2.5) / 1.0;
+        driveStraight(ZM + (ZC - ZM) * uCst, wRad);
+        state.spoolSpin = 0; // OVERRUNNING CLUTCH: spool halts at slack while coreGear + wheels coast!
+        state.tipDeg = 0;
+      } else if (cyc < 3.9) {
+        const u = (cyc - 3.5) / 0.4;
         depress = PRESS * smooth(u / 0.4);
-        driveStraight(ZC + depress, wRad); // body keeps rolling while the bumper face stays on the wall
-        state.tipDeg = 55 * smooth((u - 0.4) / 0.6);
-      } else if (cyc < 3.2) {
+        driveStraight(ZC + depress, wRad);
+        state.spoolSpin = 0;
+        state.tipDeg = 55 * smooth((u - 0.35) / 0.65);
+      } else if (cyc < 4.5) {
         depress = PRESS;
         driveStraight(ZC + PRESS, wRad);
+        state.spoolSpin = 0;
         state.tipDeg = 55;
       } else {
-        const uRet = (cyc - 3.2) / 0.8;
+        const uRet = (cyc - 4.5) / 0.7;
         const back = (ZC + PRESS - Z0) * uRet;
         depress = Math.max(0, PRESS - back);
         driveStraight(ZC + PRESS - back, wRad);
+        state.spoolSpin = 0;
         state.tipDeg = 55 * (1 - uRet);
       }
-      if (dynamicRefs.bumper) dynamicRefs.bumper.position.y = -56.25 + depress; // CAD +y = rearward = pushed in
+      if (dynamicRefs.bumper) dynamicRefs.bumper.position.y = -50.0 + depress;
       applyWheelSpin();
     } else if (state.stage === 'bellows') {
-      // 3.6 s pneumatic loop (vehicle faces +Z; the jet vents out the REAR, so the reaction pushes the truck forward):
-      // 0.0..1.2s: charge bladder (tub lifts to 42 deg)
-      // 1.2..1.5s: slam down, bladder squashes, jet puffs out the rear, truck lurches forward
-      // 1.5..3.0s: coast forward, decelerating
-      // 3.0..3.6s: reset
+      // 3.6 s pneumatic loop (10 deg pre-angled start stop -> 48 deg lift -> slam jet impulse):
       const cyc = state.demoT % 3.6;
       const Z0 = -40.0;
       if (dynamicRefs.exhaust) dynamicRefs.exhaust.visible = false;
       if (cyc < 1.2) {
         driveStraight(Z0, wRad);
-        state.tipDeg = ((cyc / 1.2) * 42.0);
+        state.tipDeg = 10.0 + (cyc / 1.2) * 38.0;
       } else if (cyc < 1.5) {
         const uSlam = (cyc - 1.2) / 0.3;
-        state.tipDeg = 42.0 * (1 - uSlam);
+        state.tipDeg = 48.0 - uSlam * 38.0;
         driveStraight(Z0 + uSlam * 15.0, wRad);
         if (dynamicRefs.exhaust) {
           dynamicRefs.exhaust.visible = true;
@@ -1375,11 +1619,11 @@ function animate() {
       } else if (cyc < 3.0) {
         const uCoast = (cyc - 1.5) / 1.5;
         driveStraight(Z0 + 15.0 + (1 - Math.pow(1 - uCoast, 2)) * 75.0, wRad);
-        state.tipDeg = 0;
+        state.tipDeg = 10.0;
       } else {
         const uRet = (cyc - 3.0) / 0.6;
         driveStraight(Z0 + 90.0 - uRet * 90.0, wRad);
-        state.tipDeg = 0;
+        state.tipDeg = 10.0;
       }
       applyWheelSpin();
     } else {
