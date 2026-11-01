@@ -4,10 +4,15 @@
 
 **Proposed.** Written 2026-10-31, extended the same day with four assist
 features (A1, A2, A4, A5), and on 2026-11-01 with a fifth (A6, failed-print
-triage) and a print-optimisation scope note. Nothing here is built except the pieces listed under
-"Already in the repo". No custom model is in scope for the Nov 4 build. After
-submission, two own-model tracks (a Forge recipe writer and a brick sculptor)
-are planned behind explicit gates; see "Custom model roadmap". The prompt
+triage), a print-optimisation scope note, and a Glimmer-first training plan
+(phases G0 to G6, plus a G7 stretch for Muse Spark Open). Nothing here is built
+except the pieces listed under "Already in the repo". No custom model is in
+scope for the Nov 4 build. The whole own-model track (Glimmer phases G1 to G7
+and the brick sculptor) is a stretch goal (Dan, 2026-11-01): nothing in it is
+required for the submission. If it goes ahead, two own-model tracks (a Forge
+recipe writer and a brick sculptor) run behind explicit gates, both starting
+from Muse Glimmer (Muse Spark Open is a stretch option); see "Custom model
+roadmap". The prompt
 workflows stay as the fallback throughout.
 
 ## One-paragraph version
@@ -512,17 +517,29 @@ widen it.
 
 ## Custom model roadmap (after submission)
 
+**Stretch goal (Dan, 2026-11-01).** The whole own-model track in this section
+and in "Glimmer Forge: workflow and phases" is a stretch goal. Only G0 is
+committed, because it is Phase 0 (the eval and the prompted baseline) and costs
+no GPU time. Everything else starts only if time and budget allow, and none of
+it blocks the Nov 4 submission or the prompted workflows.
+
 Two separate models, not one: different inputs, outputs, checks and retraining
 schedules. The prompted workflows stay as the fallback and the baseline to
 beat. Each stage proceeds only through its gate.
+
+**Base model constraint (Dan, 2026-11-01).** Every model we train starts from
+Muse Glimmer or Muse Spark Open. Glimmer is the default; Spark Open is an
+option, set as a stretch goal (phase G7; see "Base model" below). The prompted
+baseline runs on Glimmer. The Forge stages R3 to R5 are broken into phases G2 to
+G5 in "Glimmer Forge: workflow and phases".
 
 | Stage | Track | Work | Gate to proceed |
 | --- | --- | --- | --- |
 | R0 | Both | Prompted Forge workflow, attempt log, eval harness (Phases 0 and 1) | An eval report exists: per-gate failure counts, first-attempt and final pass rates, cost and latency per job |
 | R1 | Sculptor | Write the stability simulator; choose the brick vocabulary from Snap parts | Simulator agrees with hand-checked stable and unstable cases; the vocabulary seats cleanly in the assembly gate |
-| R2 | Sculptor | Spike: warm-start on the public brick-structure set, generate a lattice-native set from clean meshes, fine-tune a 1B model once, run with rollback | Structures stand, and people recognize what they are against a bar written down before the run |
+| R2 | Sculptor | Spike: warm-start on the public brick-structure set, generate a lattice-native set from clean meshes, fine-tune Glimmer once (QLoRA), run with rollback | Structures stand, and people recognize what they are against a bar written down before the run |
 | R3 | Forge | Recipe compiler and sampler; gate-filtered (caption, recipe) set; failure to fix pairs; exemplars | Humans spot-check style and diversity; sampler diversity is measured |
-| R4 | Forge | SFT on a small model (1B first, 8B only if 1B cannot hold the task), then preference tuning with gates as a filter and taste as the objective | Beats the prompted baseline on pass rate and rating together, at lower cost per job |
+| R4 | Forge | Glimmer QLoRA SFT, then rejection-sampling rounds with gates as a filter and taste as the objective (GRPO only if validity plateaus); detailed as phases G3 and G4 | Beats the prompted Glimmer baseline on pass rate and rating together, at lower cost per job |
 | R5 | Both | Serve behind the same Worker and Gatekeeper contract; prompted workflow stays as fallback; define retrain triggers for catalog waves | Fallback verified by switching models in the eval |
 
 Gate validity is a filter on training examples, not the thing maximized.
@@ -535,48 +552,181 @@ pass, so watch pass rate and human rating together.
 | --- | --- | --- | --- |
 | Sculptor: generate about 50k structures | About 5 CPU-hours | Tens of dollars | D, from 0.35 s per structure (M) |
 | Sculptor: captions | Unknown | $50 to $300 self-hosted | E |
-| Sculptor: fine-tune 1B, LoRA | 12 h on 8 GPUs, about 96 GPU-hours | $150 to $350 per run; $450 to $1,750 for 3 to 5 runs | M: paper used 8x RTX A6000 for 3 epochs. Cost at A100 rates; the A6000 was not priced. Run count is E. |
+| Sculptor: the paper's 1B baseline (reference only) | 12 h on 8 GPUs, about 96 GPU-hours | $150 to $350 per run at A100 rates | M: paper used 8x RTX A6000 for 3 epochs; the A6000 was not priced. Reference only, since the base model is now Glimmer. |
+| Sculptor: Glimmer QLoRA spike (10k structures, 1 epoch) | About 4 days on 1 A100-80GB, or about 13 to 16 h on 8 | $250 to $350 | D, crude: the baseline scaled by 30x parameters and 1/14 of the data, with an A100 assumed at 2x an A6000 |
+| Sculptor: Glimmer QLoRA full run | About 4 days on 8 H100 | $3k to $5k per run | D, crude, same basis |
 | Forge: gate 50k recipes | About 24 CPU-hours | Tens of dollars | D |
 | Forge: render and caption | Unknown | $50 to $300 | E |
-| Forge: SFT, 1B | Up to about 96 GPU-hours per run | $150 to $350 per run | the published 1B baseline as the ceiling; recipes are shorter than its 4096-token samples |
-| Forge: SFT, 8B | About 5 to 8x the 1B run | $750 to $2,800 per run | Crude scaling by parameter count (E) |
-| Forge: preference tuning | Unknown | Unknown; plan for at least the cost of SFT | No verified number |
-| Serving either model | Median 40.8 s per brick design with 2 rollbacks (M, paper hardware not stated) | $365 to $2,900 per month if one GPU runs always | E: 730 h at an assumed $0.5 to $4 per hour |
+| Forge: smoke test (30 to 100 steps) | Under 1 h | $3 to $5 | E |
+| Forge: Glimmer QLoRA SFT pilot, 3k to 5k pairs | 3 to 5 h on A100; 1 to 2 h on H100 | $8 to $12 (A100); $4 to $8 (H100) | E: about 6 x 28B parameters x tokens at 70 to 110 TFLOPS effective, 600-token recipes, 2 to 3 epochs |
+| Forge: Glimmer QLoRA SFT, 50k pairs, 3 epochs (about 90M tokens) | 2 to 3 days on A100; 15 to 22 h on H100 | $100 to $160 (A100); $60 to $90 (H100) | E, same basis. The linear bound from the paper (96 GPU-hours x 30) is $4k to $10k and assumes 4096-token samples. |
+| Forge: one rejection-sampling round (16k to 40k samples, gates, short SFT) | About 5 to 8 h | $15 to $25 | E |
+| Forge: GRPO (optional) | Unknown | Unknown; at least the SFT cost | No verified number. Only if validity plateaus. |
+| Serving Glimmer (adapter or merged) | A recipe call about 10 to 20 s and a brick design about 40 to 80 s on one A100-80GB | $0.01 to $0.03 per recipe call; an always-warm A100 is about $1,800 per month | E: BF16 weights are about 60 GB, so decode is about 25 to 30 tokens per second; Modal A100-80GB at $2.50 per hour |
 
-First working version of each model on the 1B path: about $0.5k to $2k of GPU
-spend, excluding people. Multiply per-run costs by 3 to 5 for iteration.
+Cheapest first tuned Forge model on Modal: about $15 to $40 (smoke test, a
+3k-pair pilot, one small rejection-sampling round), if 3k pairs are enough. With
+a full SFT run and two rounds: about $200 to $300. The sculptor spike is the
+largest line item. Multiply per-run costs by 3 to 5 for iteration.
 
 GPU rates used: A100 80GB about $1.49 to $3.43 per GPU-hour; H100 about $2 to
 $7 with a median near $3.37. Sources are vendor blogs from March to August 2026
 and conflict, so check live pricing.
 
-**Local GPU (RTX 4060, 8 GB; added 2026-11-01).** Nothing here is measured.
-Memory is the first limit: Unsloth's own post says Llama 3.1 8B QLoRA fits in
-8 GB at about 2K tokens of context, so a 1B model fits, and the short Forge
-recipes fit even at 8B, while the sculptor's 4096-token samples on 8B would not.
-Speed is the second: the card has roughly a third of an A6000's memory
-bandwidth (272 vs 768 GB/s) and FP32 throughput (15 vs 38.7 TFLOPS; card specs
-unverified here), so the baseline's 96 A6000-hours becomes about 270 hours, or
-11 days, per full sculptor run (D, crude). Forge 1B SFT on about 50k short
-recipes (assume 600 tokens each, 3 epochs, about 90M tokens) is roughly 6 to 20
-hours per run at an assumed 1.5k to 4k tokens per second (E); Forge 8B QLoRA is
-5 to 8x that, about 1 to 7 days. That is enough for the Forge 1B spike and for
-debugging both pipelines; rent a GPU for the sculptor and for 8B. A 100-step
-timing run gives the real tokens per second in minutes and replaces these
-figures. The 4060 Ti 16 GB variant relaxes the memory limit, not the speed.
+**Modal list prices (modal.com/pricing, read 2026-11-01).** A100-80GB $2.50 per
+hour, A100-40GB $2.10, H100 $3.95, L40S $1.95, A10 $1.10, L4 $0.80; CPU about
+$0.047 per physical core-hour. The Starter plan includes $30 per month in
+credits and 10 concurrent GPUs. GPU functions are always preemptible (the
+non-preemptible 3x price applies to CPU and memory only), so every training job
+checkpoints to a Volume and retries.
 
-**Base model.** Start with a small open model (1B to 8B class; the published baseline's 1B is
-the precedent). Use Muse Glimmer (about 30B) only if the small models cannot
-hold the task. Unsloth's docs say a 30B QLoRA run fits on a 24 GB GPU, but no
-training-time figures were found. A linear scaling of the baseline's 96 GPU-hours
-gives a crude upper bound of about $4k to $10k per full-data run (D), which is
-not worth it for these narrow tasks.
+**Local machines (updated 2026-11-01).** None can tune Glimmer. QLoRA of the 30B
+model needs about 24 GB of GPU memory (Unsloth), so an 8 GB card (RTX 4060 or
+3050) cannot, and a 32 GB Apple M5 would take weeks to months (E, scaled from a
+1B run). Local machines are for debugging the pipeline on a small stand-in model,
+CPU data generation (gating 50k recipes is about 4 to 8 hours on the M5, E), and
+Glimmer 4-bit inference spikes (about 18 GB; MLX and llama.cpp support was still
+rolling out). All Glimmer tuning runs on Modal. A 100-step timing run on Modal
+gives the real tokens per second and replaces every compute estimate here.
+
+**Base model (constraint, Dan, 2026-11-01).** Every model we train starts from
+Muse Glimmer or Muse Spark Open. Glimmer is the default and the whole plan
+below is costed on it. Spark Open is an option, not a constraint, and is set as
+a stretch goal (G7): it is not ruled out, it just is not the starting point.
+Glimmer: 30B dense (29.6B parameters, of which about 1.8B are a frozen vision
+encoder), Apache 2.0 plus a separate usage policy, text and image in, text out.
+Why Spark Open waits: about 816B total and 42B active parameters (inferred from
+its model name, not stated on its page), no license text on its page, and about
+410 GB of weights even at 4-bit (D); no tuning recipe for it was found, so it
+has no cost estimate here. Unsloth's
+Glimmer guide supports QLoRA (measured peak 22.57 GiB at sequence length 1024,
+batch 1, r=16; plan on 24 GB). NVIDIA NeMo AutoModel has Glimmer recipes for
+LoRA and full SFT but no QLoRA. Smaller open models (1B to 8B) are no longer the
+plan; the published 1B baseline stays as a reference for time and cost only. A
+linear scaling of its 96 GPU-hours by 30x gives a crude $4k to $10k per
+full-data run (D); the token-based estimates above are far lower because Forge
+recipes are short.
 
 **Not in these numbers:** people time (the stability simulator, the eval
 harness, exemplar recipes and the human taste ratings will likely cost more
 than the GPUs); Spark's API price, which blocks a break-even comparison with
 the prompted workflow; the share of rejected layouts in structure generation;
 and retraining after catalog waves or schema changes.
+
+## Glimmer Forge: workflow and phases
+
+**Stretch goal (Dan, 2026-11-01).** This whole section is a stretch goal. Only
+G0 is committed (it is Phase 0). G1 to G7 start if time and budget allow and
+never block the Nov 4 submission.
+
+**Constraint (Dan, 2026-11-01).** Every model we train starts from Muse Glimmer
+or Muse Spark Open. Glimmer is the default for G1 to G6; Spark Open is an
+option, set as a stretch goal (G7, see "Base model"). The prompted baseline runs
+on Glimmer too, so the bar a tuned adapter must clear is base Glimmer with good
+prompts, not a weaker model. Hosted Spark stays as the last model fallback.
+
+**End state.** A kid describes something, photographs an object, or picks a
+host (a head or a vehicle). A Glimmer adapter writes a Recipe v1. Legalizers
+clamp it, the Python gates verify it, and a repair loop patches failures. The
+result is a part that prints and seats on the toy, or a usable fallback: never a
+blank screen, and never an unverified part called printable.
+
+### Runtime workflow (every request)
+
+1. **Intake.** The client calls `POST /api/forge` with text, a photo or a host
+   id, then polls the job. The Worker applies the kid-safety prefix, the
+   brand-term filter and the per-IP limits. Printing stays behind the grown-up
+   gate.
+2. **Photo path (F2).** Glimmer looks at the photo and returns ranked nouns, a
+   role and a slot (A1). Hosted SAM 3.1 cuts the mask for `nouns[0]`. Code turns
+   the mask into a width profile or contour. Later, optionally, SAM 3D slices
+   add depth; adopt them only if the eval shows a lift.
+3. **Context.** Code adds the slot bounds, the host envelope numbers (F4) and
+   three to five nearest exemplar recipes. The base model needs the exemplars;
+   the tuned adapter needs fewer.
+4. **Write.** Glimmer, under one fixed system prompt (`Reasoning strength: low`),
+   emits Recipe v1 with JSON-schema constrained decoding. The decoder removes
+   syntax failures, so the adapter only has to learn what is valid and good.
+5. **Legalize.** L1 slope clamp, L2 small-parts size band, L3 clamp.
+   Deterministic and logged.
+6. **Compile and gate.** `forge_recipe.py` builds a `part_spec`;
+   `validate_and_export()` runs the gates: overhang, islands, bridges, ledges,
+   the small-parts screen, brand errors and the attach test on a reference
+   parent.
+7. **Repair.** On failure, code turns the report into `{gate, value, limit,
+   hint}` and Glimmer patches parameters. At most 4 model calls per job.
+8. **Return.** Pass: STL, preview, check results and an "AI-made" label. Still
+   failing: the fallback chain, which is the nearest passing exemplar, then the
+   closest catalog part, then "try this instead".
+9. **Log.** Every attempt: recipe, gate report, model and adapter version,
+   calls, latency and tokens. This is the next round's data.
+
+### Training workflow (what makes it better)
+
+1. **Data (G2).** Exemplars measured from the catalog, a sampler for random
+   recipes within slot bounds, gate-filtered pairs, failure-to-fix pairs from
+   deliberately broken recipes, and the attempt log. Eval prompts and slots are
+   held out of training.
+2. **Pilot SFT (G3).** Glimmer QLoRA on Modal with 3k to 5k pairs.
+3. **Eval.** Same prompts, four contenders: hosted Spark prompted, base Glimmer
+   prompted, base Glimmer with constrained decoding, and the adapter. Each runs
+   the harness's three modes (single shot, plus legalizers, plus repair). Report
+   first-attempt and final pass rate, mean calls, latency p50 and p95, tokens,
+   failures per gate id, and a manual 1 to 5 taste rating.
+4. **Refine (G4).** Rejection sampling: sample 8 recipes per prompt from the
+   current model, keep gate-passers that humans rate well, and run SFT on them.
+   Gates are a filter; taste is the objective.
+5. **Ship (G5).** Serve on Modal; the prompted chain stays as the fallback.
+6. **Retrain (G6).** On a catalog wave, a schema change, a new slot or pass-rate
+   drift. Ship only if the new model beats the live one on the full eval.
+
+### Modal setup
+
+- **Training.** One image with Unsloth (versions pinned after G1) and
+  `unsloth/Muse-Glimmer-30B-unsloth-bnb-4bit` (about 21 GB). Three Volumes:
+  weights, data, checkpoints. `gpu=["H100","A100-80GB"]` (Modal may upgrade H100
+  to H200 at no extra cost). GPU functions are always preemptible, so use
+  `modal.Retries(max_retries=10, initial_delay=0)`, `single_use_containers=True`,
+  a checkpoint every 50 to 100 steps, and resume from the last checkpoint.
+  Launch with `.spawn()` and `modal run --detach`: the timeout caps at 24 hours
+  per attempt and `.remote()` calls expire at 24 hours. One GPU per run; run 3 to
+  5 variants side by side (Starter allows 10 concurrent GPUs).
+- **Config start.** r=16 and alpha=16 (r=32 if the eval says the task is harder),
+  learning rate 2e-4, 1 to 3 epochs, packing, `train_on_responses_only`,
+  `adamw_8bit`, bf16, `finetune_vision_layers=False`, max sequence 1024 to 2048.
+  Training prompts are short: no few-shot exemplars.
+- **Serving.** vLLM or SGLang on Modal (OpenAI-compatible, per the model card),
+  JSON-schema constrained decoding, scale to zero, and a GPU memory snapshot to
+  cut cold start (not measured at 60 GB). If adapter serving fails, run
+  `merge_and_unload()` and serve the merged weights.
+- **Gates on CPU.** The Python gates run on Modal CPU or the local validator
+  server, fanned out for batch jobs (about 24 CPU-hours per 50k recipes).
+
+### Phases
+
+| Phase | Scope | Needs | Cost (E) | Gate or stop rule | Target |
+| --- | --- | --- | --- | --- | --- |
+| G0 | Baseline and eval: Recipe v1 schema, `forge_recipe.py`, legalizers L1 and L2, CLI loop, eval harness (about 60 prompts), pre-generated showcase; prompted baseline on hosted Spark | Local venv and Spark key | No GPU spend | An eval report exists: per-gate failure counts, first-attempt and final pass rates, cost and latency per job | Before Nov 4 (this is Phase 0) |
+| G1 | Glimmer baseline and smoke test: serve base Glimmer on Modal; run the eval prompted, with and without constrained decoding; 30 to 100 step QLoRA smoke test on about 50 recipes; record tokens per second, peak memory and cold start; test adapter serving | Modal account, G0 eval set | $5 to $20 | The smoke test saves an adapter; constrained output is valid JSON on at least 99% of calls (target); baseline numbers recorded; open question 15 answered. If Glimmer will not train or serve, stop and report. | Stretch goal; not needed for Nov 4 |
+| G2 | Data: 10 to 20 exemplar recipes measured from catalog STLs; sampler within slot bounds; gate-filtered pairs; failure-to-fix pairs; programmatic captions first, Glimmer captions for a subset; held-out eval split; license manifest | G0 compiler and legalizers; gates on Modal CPU or the local validator | $1 to $3 CPU per 50k gate runs; captions $0 to $300 | Humans spot-check style and diversity; sampler diversity measured; no eval prompt or slot appears in training | After G1 |
+| G3 | Pilot SFT: 3k to 5k pairs, QLoRA, 1 to 3 epochs, 2 to 3 variants in parallel; held-out eval against the G1 baselines. Starts only if the G1 baseline trips a Forge-model gate. | G1, G2 | $8 to $12 per run; about $30 for a three-way sweep | Beats the best prompted Glimmer baseline on first-attempt pass rate with no drop in rating. If not, stop spending: improve the data, try r=32, or stay prompted. | After G2 |
+| G4 | Scale and refine: full SFT at 20k to 50k pairs if the pilot curve says more data helps; 1 to 3 rejection-sampling rounds; GRPO only if validity plateaus and a gate reward is stable; about 1,000 human taste ratings for filtering | G3 passed | $60 to $160 per full SFT; $15 to $25 per round | Beats the prompted baseline on pass rate and human rating together, at lower cost per job | After G3 |
+| G5 | Serve and integrate: vLLM or SGLang on Modal behind `/api/forge` and the Gatekeeper contract; constrained decoding; adapter or merged weights; scale to zero; fallback chain tuned adapter, then base Glimmer prompted, then hosted Spark prompted, then catalog; "AI-made" label | G4 passed or G3 good enough | $0.01 to $0.03 per recipe call; avoid an always-warm GPU ($1,800 per month on an A100) | Fallback verified by switching models in the eval; p95 latency inside a budget set after measuring; cost per job measured | After G4 |
+| G6 | Operate: retrain on catalog waves, schema changes, new slots and pass-rate drift; attempt log feeds the next rounds; optional SAM 3D depth experiment for F2; A6 failure-photo data | G5 live | Per retrain, as G3 and G4 | Every retrain reruns the full eval and ships only if it beats the live model | Ongoing |
+| G7 (stretch) | Muse Spark Open as a base: repeat G1 on Spark Open (serve it, run the eval prompted, find a tuning path) and, only if that works, one pilot SFT as in G3 against the best Glimmer adapter | G5 live; Meta's license and terms for Spark Open stated; a tuning recipe and a serving stack that fit Modal; a reason to try it (the Glimmer adapter plateaus below the quality gate, or a larger model is wanted) | Not estimated: about 410 GB of weights at 4-bit means multi-GPU, and no recipe was found | Ship only if it beats the best Glimmer adapter on pass rate and rating together, at a cost per job the product can carry. If the license, tuning path or cost fails, stop; Glimmer stays. | Post-submission, after G5 |
+
+Every phase has a stop rule: when its gate fails, stop spending, record the
+numbers, and either fix the data or stay on the prompted chain.
+
+**How this maps to the other tables.** G0 is Phase 0 and R0. G2 is R3. G3 and G4
+are R4. G5 is R5 on the Forge side. Phases 0b to 2c (assists, F4, F5, A6) are
+unchanged. The brick sculptor stays parked at R1 and R2 until it has its own
+product spec; its Glimmer spike ($250 to $350) is the largest GPU line item.
+
+**Budget.** The cheapest path to a first tuned Forge model is G1, G3 and one
+small round of G4: about $15 to $40 (E), if 3k pairs are enough. With a full SFT
+run and two rounds: about $200 to $300. People time (compiler, sampler, taste
+ratings) is not included and will likely exceed the GPU bill.
 
 ## Phases
 
@@ -589,7 +739,7 @@ and retraining after catalog waves or schema changes.
 | 2 | F5 planner (plan and edit modes, which also delivers A4), F4 host argument, host-envelope export, A5 templates | Phase 1 validator | After submission |
 | 2b | F4 cavity-hat builder | Phase 2 | Later |
 | 2c | A6: print about 10 failure coupons, photograph and label them, run the eval, then build the triage flow and fix cards | Phase 0b vision spike | After submission |
-| 3 | Custom model roadmap stages R1 to R5, each behind its gate | Phase 1 attempt log and eval numbers | After submission; see "Custom model roadmap" |
+| 3 | Forge model track G0 to G6, G7 as a stretch (see "Glimmer Forge: workflow and phases"); sculptor stages R1 and R2 behind their own gate | Phase 1 attempt log and eval numbers | G0 is Phase 0 (before Nov 4); G1 to G7 and the sculptor are a stretch goal |
 
 Honest demo framing for Nov 4: Phase 0 outputs are pre-generated and
 verified; the live flow, if any, is one hero path. Say so in the demo script,
@@ -597,7 +747,7 @@ as `spec.md` already does with its "mocked or pre-made" column.
 
 ## Gates for the Forge model
 
-The Forge model (roadmap R3 and R4) is trained only if the eval shows one of
+The Forge model (roadmap R3 and R4, phases G2 to G5) is trained only if the eval shows one of
 these after legalizers and repair are in place:
 
 - Final pass rate stays below about 70% because the geometric intuition behind
@@ -607,12 +757,15 @@ these after legalizers and repair are in place:
 - Taste: ratings stay low on valid parts.
 
 If tuning is chosen, the training set is the gate-filtered sampler output plus
-the attempt log (see "Data plan"). The base model is a small open model first;
-Muse Glimmer only if the small ones fail (see "Custom model roadmap"). Spark
-Open is much larger. The license assumption in "Data plan" covers external
-datasets; Meta's terms on training from Spark outputs are not stated on the
-pages reviewed, so caption with a self-hosted open model (Glimmer is Apache
-2.0, with a separate usage policy) or confirm Spark's terms first.
+the attempt log (see "Data plan"). The base model is Muse Glimmer (Dan's
+constraint, 2026-11-01; see "Custom model roadmap"). These gates decide how much
+to spend on tuning, not whether Glimmer is used: the prompted baseline runs on
+Glimmer too. Spark Open is a stretch option (G7) and would face the same gates.
+The license assumption in "Data
+plan" covers external datasets; Meta's terms on training from Spark outputs are
+not stated on the pages reviewed, so caption with self-hosted Glimmer (Apache
+2.0; its separate usage policy does not mention fine-tuning, derivatives or
+training on outputs) or confirm Spark's terms first.
 
 The brick sculptor (roadmap R1 and R2) has its own gate: the spike must
 produce structures that stand and that people recognize. It is a separate
@@ -654,6 +807,11 @@ deterministic code verifies geometry, fit, and physics.
    `SAM 3.1` target-noun masks for `Real Life Counts` tidy/scavenger quests, and
    parent-approved `(mask, TU_grasp_anchor, mm_scale, torque)` priors feeding
    the `Max` real-robot track ([scan-to-3d.md](scan-to-3d.md)).
+9. **Own models (Glimmer Forge G1 to G6, Spark Open G7, brick sculptor):** The
+   whole track in "Glimmer Forge: workflow and phases" is a stretch goal; only
+   G0 (Phase 0) is committed. Spark Open (G7) is an option under Dan's
+   constraint, not a requirement; it needs Meta's license terms, a tuning path
+   and a serving stack first (open question 18).
 
 ## Not doing
 
@@ -667,6 +825,9 @@ deterministic code verifies geometry, fit, and physics.
 - Open-ended chat with kids, mood reading from faces, or live-generated audio.
 - Live print monitoring or printer control by a model (Obico and some printers
   already watch the camera), and any model-written slicer setting or G-code.
+- Training a model that starts from neither Muse Glimmer nor Muse Spark Open
+  (Dan's constraint, 2026-11-01). Spark Open is a stretch option (G7), not a
+  requirement.
 
 ## Open questions (resolve by measurement, not debate)
 
@@ -704,6 +865,23 @@ deterministic code verifies geometry, fit, and physics.
 14. Per-printer tolerance: how many printers it takes before a prior by
     printer, nozzle and material beats the single 1/2/3 choice, and whether the
     photo variant (stretch item 7) is worth building.
+15. Glimmer training: tokens per second, peak memory at 1024 and 2048 tokens,
+    whether text-only LoRA works with `finetune_vision_layers=False`, the LoRA
+    target-module names, and whether vLLM or SGLang serve a Glimmer LoRA
+    adapter. The G1 smoke test answers all four.
+16. Glimmer's usage policy says it is "not intended for individuals under the
+    age of 18", bars inferring private information about individuals, and bars
+    presenting outputs as human-made. Our users are children, though the model
+    is only called server-side. Does that need a policy review, and does Meta's
+    safety post-training survive fine-tuning (the model card does not say)?
+17. Which model runs the prompted baseline: hosted Spark or self-hosted base
+    Glimmer. Base Glimmer with good prompts and constrained decoding is the bar
+    a tuned adapter must clear; running the baseline on Glimmer also keeps it
+    comparable with the tuned adapter.
+18. Spark Open as a base (stretch G7): Meta's license and terms for it, whether
+    its parameter counts are as inferred (816B total, 42B active), whether any
+    tuning recipe exists, and what serving costs on Modal. G7 does not start
+    until these are answered.
 
 ## Docs impact when this ships
 
