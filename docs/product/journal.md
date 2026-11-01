@@ -175,11 +175,22 @@ Goal: fit-filtered market + support-free STL export (wireframe p.7–9). Start: 
 - Spec debt: `spec-for-review.md` still describes the deleted `game/` lane and three 0.160 — `spec.md` body needs the native-port update, then `npm run spec:review`.
 - Still behind: ZERO physical prints (F1/F2 pending, Day 5–6 blocker); Day 6 Market+Print due today; submission items (video, write-up, dashboard rate limit on `/api/muse/spark`); republish blockers (remote D1 parent-time migration); Kip enlarged-controls legibility unconfirmed in-app; prototype disclaimer/packaging wording; theme-song caching/fallback; phone/AR passes.
 - Process: `parts/` freeze in effect with lanes assigned — lime-ionosphere owns the jumbo+ballcap stack (uncommitted `_hat_body` rework has since landed; re-verify `valid_kip_seated_jumbo` on next run); Truck-Mockup Commit 2 held for author confirmation.
-- Print, Day 5–6 blocker lifting: calibration print (F1) started Sat Oct 31, ~5 h run. First real plastic — fit loops unblock when it lands.
+- Print, Day 5–6 blocker lifting: calibration print (F1) started Sat Oct 31, ~5 h run. First real plastic — fit loops unblock when it lands. Since: colour-grouped 3MF print workflow + 1:1 sticker sheet landed (`509e7c2`, M1+M2); F1 outcome still to record.
 
 ## Day 7 — Sun Nov 1: Color + Play
 
 Goal: AR color preview + mini-game equip (wireframe p.10–11, stretch: color). Start: must-work item, full masks vs AR-preview cut, toy loads + add-on boost. End: shipped, demo-able, scan-to-game loop on phone, blockers, tomorrow's task. *(Unfilled.)*
+
+### Status — Sun Nov 1 midday (last-24h catch-up)
+- Landed (29 commits): 5A Units 1–3 + 2d/2e splits (`a35e342`, `7f92da5`, `09617a7`, `9dbaced`, moss `b33e6fa` verified); quests board + Rank 5 roster + xp1800 e2e (`fb95052`); selfie prompt-a-face gallery (`24a75ca`); describe-and-build viewer tab (`fafe1be`); truck mockup + classic driver (`851999d`); rounded faceplate, vinyl eyes, five wigs (`2289794`); side menu/print/selfie demo (`aa60423`); trademark scrub (`cf4bb08`); docs `6597b15`, `2ed4855` (mine, committed).
+- Open: `check_worker.mjs` 4 pose-fixture failures (cowboy, bob-tophat, ranger, pickup-cowboy) — owner unclaimed; `tests/kip.test.ts` count hunks (65→70 etc.) still uncommitted, clean-checkout HEAD red on W9 — needs lane go-ahead; F1 calibration print (~5 h, started Oct 31) due — verify result before fit loops.
+- Freeze compliance slipping: uncommitted backlog grew 72 → 528 paths (288 M + 240 untracked), concentrated in frozen zones — `parts/partspec` 222, `public/kip` 149, `parts-stl`/`parts-glb` 68 new payloads, `parts/kip` 19. Lanes hold on paper; the tree says otherwise. Recommend: commit-or-revert sweep per lane before Day 7 work, or the next collision is a matter of time.
+
+### Evening addendum (Sun Nov 1)
+- Merge + optimize closed: `feat/parts-asset-optimization` merged (`f331ff2`, 44 conflicts resolved with rationale); `parts:optimize` wired (`75e1afd`) and green end-to-end after the two V4 overhang geometries were fixed; 85 optimized payloads committed (`a513452`), budgets green, asset suite 8/8, 4-file set 23/23.
+- Kip counts resolved the other way: the hunks had already landed, so `92dda71` committed only the newer roster assertions (7/7) — HEAD green, lime's red-HEAD worry closed.
+- Deploy blockers committed (`2732f3d` seeds/readiness, `b04b1d9` bridge dedup); phase4 back to 9/9; face plates printed flat on bed (`6b20bed`).
+- Still open at close of day: torso `digital_only` flake + `check_worker` poses (no owners left — all peer sessions except one gone); F1 outcome (Dan running); ~470 dirty paths, all other lanes' live work, deliberately untouched.
 
 ## Day 8 — Mon Nov 2: Reveal + Theme song
 
