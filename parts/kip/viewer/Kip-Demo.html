@@ -3829,6 +3829,8 @@ window.kipMenu = mountKipMenu({
     playClip: triggerClip, setSpeed: setSpeedScale,
     toggleExplode, setExplode: v => setExplodeAmount(v, true), togglePile: togglePartPile,
     startBuild: () => startPileToBuild(true), toggleRef: toggleRefSkeleton,
+    openLlm: () => modalLlm.classList.add('open'),
+    openPhoto: openPhotoModal,
   },
 });
 
