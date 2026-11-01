@@ -16,6 +16,13 @@ Security & reliability invariants:
 5. Bounded concurrency & queue backpressure: caps both active background jobs (`--max-queue`,
    returning `429 queue_full`) and concurrent HTTP handler threads (`--max-connections`,
    returning `503 busy`), dropping input buffers immediately once a job completes.
+6. Slow-client defence: every connection has a per-read idle timeout (`--idle-timeout`) and a
+   hard wall-clock deadline (`--request-deadline`), so idle or trickling sockets cannot hold
+   `--max-connections` slots open.
+7. Bounded cache: draft GLBs expire after `--draft-ttl` and are capped at `--max-drafts`; the
+   whole cache dir is capped at `--max-cache-mb` (oldest drafts first, then least recently
+   served content-addressed artifacts). Only files matching the artifact name pattern and
+   stale `tv-job-*` temp dirs are ever deleted.
 """
 from __future__ import annotations
 
@@ -30,6 +37,7 @@ import json
 import math
 import os
 import re
+import shutil
 import socket
 import sys
 import tempfile
@@ -74,6 +82,13 @@ ARTIFACT_NAME_RE = re.compile(
     r"^[a-z0-9_]{2,64}\.(?:[a-f0-9]{12}|[a-f0-9]{8}\.draft)\.(?:glb|stl)$"
 )
 JOB_ID_RE = re.compile(r"^fjob_[a-f0-9]{12}$")
+DEFAULT_IDLE_TIMEOUT_S = 10.0
+DEFAULT_REQUEST_DEADLINE_S = 60.0
+DEFAULT_DRAFT_TTL_S = 3600.0
+DEFAULT_MAX_DRAFTS = 128
+DEFAULT_MAX_CACHE_MB = 512
+PRUNE_MIN_INTERVAL_S = 10.0
+STALE_JOB_DIR_MIN_AGE_S = 900.0
 
 
 def _finite_float(val: Any, name: str) -> float:
@@ -279,13 +294,104 @@ def build_print_pose_manifold(spec: dict[str, Any]) -> manifold3d.Manifold:
 
 
 class OptimizerJobManager:
-    def __init__(self, out_dir: Path, workers: int = 2, max_queue: int = 8) -> None:
+    def __init__(
+        self,
+        out_dir: Path,
+        workers: int = 2,
+        max_queue: int = 8,
+        *,
+        draft_ttl_s: float = DEFAULT_DRAFT_TTL_S,
+        max_drafts: int = DEFAULT_MAX_DRAFTS,
+        max_cache_bytes: int = DEFAULT_MAX_CACHE_MB * 1024 * 1024,
+    ) -> None:
         self.out_dir = out_dir.resolve()
         self.out_dir.mkdir(parents=True, exist_ok=True)
         self.max_queue = max(1, max_queue)
+        self.draft_ttl_s = max(1.0, float(draft_ttl_s))
+        self.max_drafts = max(1, int(max_drafts))
+        self.max_cache_bytes = max(1, int(max_cache_bytes))
         self._pool = ThreadPoolExecutor(max_workers=max(1, workers), thread_name_prefix="forge-opt")
         self._lock = threading.Lock()
         self._jobs: OrderedDict[str, dict[str, Any]] = OrderedDict()
+        self._prune_lock = threading.Lock()
+        self._last_prune = 0.0
+        self.prune(force=True)
+
+    @staticmethod
+    def _unlink(path: str) -> bool:
+        try:
+            os.unlink(path)
+            return True
+        except OSError:
+            return False
+
+    def prune(self, force: bool = False) -> dict[str, int]:
+        """Bound the artifact cache. Rate-limited unless `force`; never raises.
+
+        Only regular files whose names match `ARTIFACT_NAME_RE` and stale `tv-job-*` temp dirs
+        are touched, so anything else an operator drops in the directory is left alone.
+        """
+        removed = {"drafts": 0, "artifacts": 0, "tmp_dirs": 0}
+        if not force and time.monotonic() - self._last_prune < PRUNE_MIN_INTERVAL_S:
+            return removed
+        if not self._prune_lock.acquire(blocking=False):
+            return removed
+        try:
+            self._last_prune = time.monotonic()
+            wall = time.time()
+            drafts: list[tuple[float, int, str]] = []
+            finals: list[tuple[float, int, str]] = []
+            try:
+                entries = list(os.scandir(self.out_dir))
+            except OSError:
+                return removed
+            for entry in entries:
+                try:
+                    if entry.is_symlink():
+                        continue
+                    st = entry.stat(follow_symlinks=False)
+                    if entry.is_dir(follow_symlinks=False):
+                        # A running job owns its temp dir; only reap ones left behind by a crash.
+                        if entry.name.startswith("tv-job-") and wall - st.st_mtime > max(
+                            self.draft_ttl_s, STALE_JOB_DIR_MIN_AGE_S
+                        ):
+                            shutil.rmtree(entry.path, ignore_errors=True)
+                            removed["tmp_dirs"] += 1
+                        continue
+                    if not entry.is_file(follow_symlinks=False) or not ARTIFACT_NAME_RE.match(entry.name):
+                        continue
+                    (drafts if ".draft." in entry.name else finals).append((st.st_mtime, st.st_size, entry.path))
+                except OSError:
+                    continue
+
+            drafts.sort()
+            finals.sort()
+            live_drafts: list[tuple[float, int, str]] = []
+            for item in drafts:
+                if wall - item[0] > self.draft_ttl_s and self._unlink(item[2]):
+                    removed["drafts"] += 1
+                else:
+                    live_drafts.append(item)
+            while len(live_drafts) > self.max_drafts:
+                if self._unlink(live_drafts.pop(0)[2]):
+                    removed["drafts"] += 1
+            total = sum(i[1] for i in live_drafts) + sum(i[1] for i in finals)
+            while total > self.max_cache_bytes and live_drafts:
+                item = live_drafts.pop(0)
+                if self._unlink(item[2]):
+                    removed["drafts"] += 1
+                total -= item[1]
+            while total > self.max_cache_bytes and finals:
+                item = finals.pop(0)
+                if self._unlink(item[2]):
+                    removed["artifacts"] += 1
+                total -= item[1]
+            return removed
+        except Exception as exc:  # noqa: BLE001
+            sys.stderr.write(f"[forge-optimizer] cache prune failed: {exc}\n")
+            return removed
+        finally:
+            self._prune_lock.release()
 
     def _active_unlocked(self) -> int:
         return sum(1 for j in self._jobs.values() if j["status"] in ("queued", "validating", "optimizing"))
@@ -462,15 +568,32 @@ class OptimizerJobManager:
                 error="optimization failed",
                 elapsed_ms=elapsed_ms,
             )
+        finally:
+            self.prune()
 
 
 class BoundedThreadingHTTPServer(ThreadingHTTPServer):
     daemon_threads = True
     request_queue_size = 16
 
-    def __init__(self, server_address: tuple[str, int], handler_cls: Any, max_connections: int = 16) -> None:
+    def __init__(
+        self,
+        server_address: tuple[str, int],
+        handler_cls: Any,
+        max_connections: int = 16,
+        request_deadline_s: float = DEFAULT_REQUEST_DEADLINE_S,
+    ) -> None:
         super().__init__(server_address, handler_cls)
         self._conn_sem = threading.BoundedSemaphore(max(2, max_connections))
+        self._request_deadline_s = max(1.0, float(request_deadline_s))
+
+    @staticmethod
+    def _abort_request(request: socket.socket) -> None:
+        # Wakes a handler blocked in recv/send; a no-op (OSError) if the socket is already closed.
+        try:
+            request.shutdown(socket.SHUT_RDWR)
+        except OSError:
+            pass
 
     def process_request(self, request: socket.socket, client_address: Any) -> None:
         if not self._conn_sem.acquire(blocking=False):
@@ -491,9 +614,15 @@ class BoundedThreadingHTTPServer(ThreadingHTTPServer):
         super().process_request(request, client_address)
 
     def process_request_thread(self, request: socket.socket, client_address: Any) -> None:
+        # The handler's per-read idle timeout stops silent sockets; this wall-clock deadline also
+        # stops a client that trickles one byte at a time from pinning a connection slot.
+        deadline = threading.Timer(self._request_deadline_s, self._abort_request, args=(request,))
+        deadline.daemon = True
+        deadline.start()
         try:
             super().process_request_thread(request, client_address)
         finally:
+            deadline.cancel()
             self._conn_sem.release()
 
 
@@ -510,8 +639,15 @@ def _authorized(auth_header: str | None, expected_token: str | None) -> bool:
     return hmac.compare_digest(provided.encode("utf-8"), expected_token.encode("utf-8"))
 
 
-def make_handler(manager: OptimizerJobManager, expected_token: str | None):
+def make_handler(
+    manager: OptimizerJobManager,
+    expected_token: str | None,
+    idle_timeout_s: float = DEFAULT_IDLE_TIMEOUT_S,
+):
     class ForgeOptimizerHandler(BaseHTTPRequestHandler):
+        # Applied by StreamRequestHandler.setup() as the socket timeout for every read and write.
+        timeout = max(0.1, float(idle_timeout_s))
+
         def log_message(self, fmt: str, *args: Any) -> None:
             sys.stderr.write(f"[forge-optimizer] {fmt % args}\n")
 
@@ -624,14 +760,20 @@ def make_handler(manager: OptimizerJobManager, expected_token: str | None):
                 if art_path is None:
                     self._send_json({"ok": False, "status": "not-found"}, 404)
                     return
-                data = art_path.read_bytes()
+                try:
+                    data = art_path.read_bytes()
+                    if ".draft." not in art_name:
+                        os.utime(art_path, None)  # recently served artifacts outlive idle ones when pruning
+                except OSError:  # pruned between resolve and read
+                    self._send_json({"ok": False, "status": "not-found"}, 404)
+                    return
                 ctype = "model/gltf-binary" if art_name.endswith(".glb") else "model/stl"
                 self.send_response(200)
                 self.send_header("content-type", ctype)
                 self.send_header("content-length", str(len(data)))
                 self.send_header(
                     "cache-control",
-                    "no-store" if ".draft." in art_name else "public, max-age=31536000, immutable",
+                    "no-store" if ".draft." in art_name else "private, max-age=31536000, immutable",
                 )
                 self.end_headers()
                 self.wfile.write(data)
@@ -714,6 +856,7 @@ def make_handler(manager: OptimizerJobManager, expected_token: str | None):
                 sys.stderr.write(f"[forge-optimizer] preview build failed: {exc}\n")
                 self._send_json({"ok": False, "status": "invalid", "error": "invalid payload"}, 422)
                 return
+            manager.prune()
 
             job_id: str | None = None
             if enqueue_bg:
@@ -771,7 +914,42 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--workers", type=int, default=2, help="Background worker threads (default: 2)")
     ap.add_argument("--max-queue", type=int, default=8, help="Max queued+running background jobs before 429 (default: 8)")
     ap.add_argument("--max-connections", type=int, default=16, help="Max concurrent HTTP threads before 503 (default: 16)")
+    ap.add_argument(
+        "--idle-timeout",
+        type=float,
+        default=DEFAULT_IDLE_TIMEOUT_S,
+        help=f"Seconds a connection may sit idle in one read/write (default: {DEFAULT_IDLE_TIMEOUT_S:g})",
+    )
+    ap.add_argument(
+        "--request-deadline",
+        type=float,
+        default=DEFAULT_REQUEST_DEADLINE_S,
+        help=f"Hard wall-clock seconds per connection (default: {DEFAULT_REQUEST_DEADLINE_S:g})",
+    )
+    ap.add_argument(
+        "--draft-ttl",
+        type=float,
+        default=DEFAULT_DRAFT_TTL_S,
+        help=f"Seconds before draft GLBs are deleted (default: {DEFAULT_DRAFT_TTL_S:g})",
+    )
+    ap.add_argument("--max-drafts", type=int, default=DEFAULT_MAX_DRAFTS, help=f"Max draft GLBs kept (default: {DEFAULT_MAX_DRAFTS})")
+    ap.add_argument(
+        "--max-cache-mb",
+        type=float,
+        default=DEFAULT_MAX_CACHE_MB,
+        help=f"Max total size of the artifact cache in MB (default: {DEFAULT_MAX_CACHE_MB})",
+    )
     args = ap.parse_args(argv)
+    for flag, value in (
+        ("--idle-timeout", args.idle_timeout),
+        ("--request-deadline", args.request_deadline),
+        ("--draft-ttl", args.draft_ttl),
+        ("--max-drafts", args.max_drafts),
+        ("--max-cache-mb", args.max_cache_mb),
+    ):
+        if not math.isfinite(value) or value <= 0:
+            sys.stderr.write(f"[forge-optimizer] ERROR: {flag} must be a positive number\n")
+            return 2
 
     token = args.token.strip() or None
     if args.host.strip().lower() not in LOOPBACK_HOSTS and not token:
@@ -789,11 +967,19 @@ def main(argv: list[str] | None = None) -> int:
         )
         return 2
 
-    manager = OptimizerJobManager(out_dir=resolved_out, workers=args.workers, max_queue=args.max_queue)
+    manager = OptimizerJobManager(
+        out_dir=resolved_out,
+        workers=args.workers,
+        max_queue=args.max_queue,
+        draft_ttl_s=args.draft_ttl,
+        max_drafts=args.max_drafts,
+        max_cache_bytes=int(args.max_cache_mb * 1024 * 1024),
+    )
     server = BoundedThreadingHTTPServer(
         (args.host, args.port),
-        make_handler(manager, expected_token=token),
+        make_handler(manager, expected_token=token, idle_timeout_s=args.idle_timeout),
         max_connections=args.max_connections,
+        request_deadline_s=args.request_deadline,
     )
     actual_host, actual_port = server.server_address[:2]
     print(

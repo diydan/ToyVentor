@@ -1,5 +1,6 @@
 import { execFileSync, spawn, spawnSync } from "node:child_process";
 import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync } from "node:fs";
+import net from "node:net";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import * as THREE from "three";
@@ -49,6 +50,25 @@ function resolvePythonVenv(): string | null {
 }
 
 const PYTHON_VENV = resolvePythonVenv();
+
+function waitForDaemonUrl(proc: ReturnType<typeof spawn>): Promise<string> {
+  return new Promise<string>((resolveUrl, rejectUrl) => {
+    let buf = "";
+    const timer = setTimeout(() => rejectUrl(new Error("daemon startup timeout")), 30_000);
+    proc.stdout!.on("data", (chunk: Buffer) => {
+      buf += chunk.toString("utf8");
+      const nl = buf.indexOf("\n");
+      if (nl !== -1) {
+        clearTimeout(timer);
+        resolveUrl((JSON.parse(buf.slice(0, nl)) as { url: string }).url);
+      }
+    });
+    proc.on("exit", (code) => {
+      clearTimeout(timer);
+      rejectUrl(new Error(`daemon exited early with code ${code}`));
+    });
+  });
+}
 
 function fakeDb(): D1Like {
   const settings = new Map<string, string>();
@@ -778,6 +798,7 @@ describe("Parts asset optimization (Print STL + Web GLB + Toy-Finish Recipes)", 
           completed!.stl_artifact!,
         );
         expect(artRes.status).toBe(200);
+        expect(artRes.headers.get("cache-control")).toBe("private, max-age=31536000, immutable");
         const stlBytes = new Uint8Array(await artRes.arrayBuffer());
         expect(stlBytes.byteLength).toBeGreaterThan(84);
       } finally {
@@ -786,5 +807,183 @@ describe("Parts asset optimization (Print STL + Web GLB + Toy-Finish Recipes)", 
       }
     },
     30_000,
+  );
+
+  it("serves finalized artifacts with a private cache header and drafts as no-store through the Worker", async () => {
+    const env: ForgeOptimizerEnv = {
+      DB: fakeDb(),
+      PARENT_GATE_SECRET: "gate-secret-for-tests",
+      FORGE_OPTIMIZER_URL: "http://127.0.0.1:8791",
+    };
+    const proof = await mintParentProof(env, DEVICE_A);
+    const headers = { "x-device-id": DEVICE_A, "x-parent-proof": proof };
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    try {
+      for (const [name, expected] of [
+        ["custom_dome.0123456789ab.stl", "private, max-age=31536000, immutable"],
+        ["custom_dome.0123456789ab.glb", "private, max-age=31536000, immutable"],
+        ["custom_dome.0123abcd.draft.glb", "no-store"],
+      ] as const) {
+        resetForgeRateLimit();
+        fetchSpy.mockResolvedValueOnce(new Response(new Uint8Array(128), { status: 200 }));
+        const res = await handleForgeArtifact(
+          new Request(`http://local/api/forge/artifacts/${name}`, { headers }),
+          env,
+          name,
+        );
+        expect(res.status, name).toBe(200);
+        expect(res.headers.get("cache-control"), name).toBe(expected);
+        expect(res.headers.get("cache-control"), name).not.toContain("public");
+      }
+    } finally {
+      fetchSpy.mockRestore();
+      resetForgeRateLimit();
+    }
+  });
+
+  it.skipIf(!PYTHON_VENV)(
+    "frees daemon connection slots held by idle and trickling clients",
+    async () => {
+      const py = PYTHON_VENV!;
+      const tmpOut = mkdtempSync(join(tmpdir(), "tv-forge-slow-"));
+      const proc = spawn(
+        py,
+        [
+          join(ROOT, "scripts/forge_optimizer_daemon.py"),
+          "--port",
+          "0",
+          "--out-dir",
+          tmpOut,
+          "--max-connections",
+          "2",
+          "--idle-timeout",
+          "1",
+          "--request-deadline",
+          "3",
+        ],
+        { stdio: ["ignore", "pipe", "pipe"] },
+      );
+      const sockets: net.Socket[] = [];
+      const drips: NodeJS.Timeout[] = [];
+      const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+      try {
+        const baseUrl = await waitForDaemonUrl(proc);
+        const port = Number(new URL(baseUrl).port);
+        const health = async () => (await fetch(`${baseUrl}/health`)).status;
+        const open = (n: number) =>
+          Promise.all(
+            Array.from(
+              { length: n },
+              () =>
+                new Promise<net.Socket>((res) => {
+                  const sk = net.connect(port, "127.0.0.1", () => res(sk));
+                  sk.on("error", () => undefined);
+                  sockets.push(sk);
+                }),
+            ),
+          );
+
+        // Idle sockets: both slots held, so health is 503 until the 1 s idle timeout closes them
+        const idle = await open(2);
+        await sleep(150);
+        expect(await health()).toBe(503);
+        await Promise.race([
+          Promise.all(idle.map((sk) => new Promise<void>((r) => sk.once("close", () => r())))),
+          sleep(8000).then(() => {
+            throw new Error("idle sockets were never closed by the daemon");
+          }),
+        ]);
+        expect(await health()).toBe(200);
+
+        // Trickling sockets: one byte every 300 ms defeats the idle timeout, not the 3 s deadline
+        const trickle = await open(2);
+        for (const sk of trickle) drips.push(setInterval(() => sk.write("G"), 300));
+        await sleep(150);
+        expect(await health()).toBe(503);
+        const started = Date.now();
+        let recovered = false;
+        while (Date.now() - started < 9000) {
+          await sleep(250);
+          if ((await health()) === 200) {
+            recovered = true;
+            break;
+          }
+        }
+        expect(recovered).toBe(true);
+        expect(Date.now() - started).toBeLessThan(8000);
+      } finally {
+        for (const t of drips) clearInterval(t);
+        for (const sk of sockets) sk.destroy();
+        proc.kill("SIGTERM");
+        rmSync(tmpOut, { recursive: true, force: true });
+      }
+    },
+    60_000,
+  );
+
+  it.skipIf(!PYTHON_VENV)("bounds the artifact cache without touching foreign files", () => {
+    const res = spawnSync(PYTHON_VENV!, [join(ROOT, "tests/fixtures/forge/cache_prune_check.py")], {
+      encoding: "utf8",
+      timeout: 60_000,
+    });
+    expect(res.status, res.stderr).toBe(0);
+    const out = JSON.parse(res.stdout) as Record<string, string[]>;
+    // newest three drafts survive the count cap
+    expect(out.count_cap).toEqual([
+      "part_a.00000002.draft.glb",
+      "part_a.00000003.draft.glb",
+      "part_a.00000004.draft.glb",
+    ]);
+    // expired drafts go, the fresh one stays
+    expect(out.ttl).toEqual(["part_a.00000003.draft.glb"]);
+    // drafts are evicted before finals, then the least recently served finals (final 0 was "served")
+    expect(out.size_cap).toEqual(["part_b.000000000000.stl", "part_b.000000000003.stl"]);
+    // operator files, other dirs, fresh job dirs and artifact-shaped symlinks are never removed or followed
+    expect(out.foreign).toEqual([
+      "README.txt",
+      "keep_me.stl",
+      "other_dir",
+      "part_b.000000000007.stl",
+      "tv-job-fresh",
+    ]);
+    expect(out.foreign_outside_intact).toEqual(["do not delete"]);
+    // non-forced pruning is rate limited; forced pruning reaps the expired draft
+    expect(out.rate_limited?.[0]).toBe("part_a.00000001.draft.glb");
+    expect(out.forced?.length).toBe(1);
+    expect(JSON.parse(out.forced?.[0] ?? "{}")).toMatchObject({ drafts: 1 });
+  }, 60_000);
+
+  it.skipIf(!PYTHON_VENV)(
+    "keeps the in-memory preprint gate identical to the full check_stl path",
+    () => {
+      // Small parts only (torso.stl alone costs ~25 s idle, ~55 s on a busy machine); a manual sweep of all
+      // 30 base STLs plus 14 catalog samples agreed on every file. Each id below is a distinct gate branch.
+      const files = [
+        "public/kip/stls/tail_acc.stl",
+        "public/kip/stls/boot.stl",
+        "public/parts-stl/dome-s-2x2.stl",
+        "public/kip/partspec/toyventor_veh_wheel_sport_rim.stl",
+      ].map((f) => join(ROOT, f));
+      const res = spawnSync(
+        PYTHON_VENV!,
+        [join(ROOT, "tests/fixtures/forge/gate_parity.py"), ...files],
+        { encoding: "utf8", timeout: 150_000 },
+      );
+      expect(res.status, res.stderr).toBe(0);
+      const rows = JSON.parse(res.stdout) as {
+        file: string;
+        in_memory: string[];
+        check_stl: string[];
+      }[];
+      expect(rows).toHaveLength(files.length);
+      for (const r of rows) expect(r.in_memory, r.file).toEqual(r.check_stl);
+      // the sample must actually exercise the gates, not agree on "everything passes"
+      const flagged = new Set(rows.flatMap((r) => r.in_memory));
+      for (const id of ["V2_on_bed", "V4_no_steep_overhang", "V10_no_ledges"]) {
+        expect(flagged.has(id), id).toBe(true);
+      }
+      expect(rows.some((r) => r.in_memory.length === 0)).toBe(true);
+    },
+    160_000,
   );
 });

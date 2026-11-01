@@ -573,9 +573,10 @@ export async function handleForgeArtifact(
   }
 
   const contentType = artifactName.endsWith(".glb") ? "model/gltf-binary" : "model/stl";
+  // The route is parent-gated, so shared caches (CDN, proxies) must not store or replay it.
   const cacheControl = artifactName.includes(".draft.")
     ? "no-store"
-    : "public, max-age=31536000, immutable";
+    : "private, max-age=31536000, immutable";
   return new Response(res.body, {
     status: 200,
     headers: {
