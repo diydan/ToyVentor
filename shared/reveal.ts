@@ -69,6 +69,24 @@ export function characterFromBuild(
  * features/reveal/theme.ts turns these into sound. Replaced by a Mureka
  * theme when that key lands; the seed idea (build -> theme) stays.
  */
+export const ENTRANCE_STEPS = 36;
+export const ENTRANCE_SECONDS = 36 * 0.42; // ~15.1 s at the player's step rate
+
+/**
+ * Day 8 entrance arrangement: the 16-step melody twice (second pass lifts
+ * every fourth step an octave for a finale feel) plus a 4-note outro phrase
+ * ending on the root. Deterministic per build; 36 steps ≈ 15 s.
+ */
+export function entranceNotes(signature: string): number[] {
+  const base = themeNotes(signature);
+  const out: number[] = [...base];
+  for (let i = 0; i < base.length; i++) {
+    out.push(i % 4 === 3 ? base[i]! * 2 : base[i]!);
+  }
+  out.push(base[0]!, base[2]!, base[4]!, base[0]!);
+  return out;
+}
+
 export function themeNotes(signature: string): number[] {
   const scale = [261.63, 293.66, 329.63, 392.0, 440.0, 523.25, 587.33]; // C D E G A C D
   const seed = hashSeed(signature);

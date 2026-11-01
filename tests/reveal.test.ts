@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import baseSetJson from "../sets/base.json";
 import type { Placement } from "../shared/build";
-import { buildSignature, characterFromBuild, themeNotes } from "../shared/reveal";
+import { buildSignature, characterFromBuild, ENTRANCE_SECONDS, ENTRANCE_STEPS, entranceNotes, themeNotes } from "../shared/reveal";
 import type { ToySet } from "../shared/part";
 import type { Toy } from "../shared/toy";
 
@@ -47,5 +47,20 @@ describe("themeNotes", () => {
     const scale = new Set([261.63, 293.66, 329.63, 392, 440, 523.25, 587.33]);
     expect(notes.every((n) => scale.has(n))).toBe(true);
     expect(themeNotes("another-build")).not.toEqual(notes);
+  });
+});
+
+describe("entranceNotes", () => {
+  it("arranges 36 deterministic steps ending on the root", () => {
+    const sig = buildSignature(build);
+    const base = themeNotes(sig);
+    const notes = entranceNotes(sig);
+    expect(notes).toHaveLength(ENTRANCE_STEPS);
+    expect(ENTRANCE_STEPS).toBe(36);
+    expect(ENTRANCE_SECONDS).toBeCloseTo(15.1, 1);
+    expect(entranceNotes(sig)).toEqual(notes);
+    expect(notes.slice(0, 16)).toEqual(base);
+    expect(notes.slice(-4)).toEqual([base[0], base[2], base[4], base[0]]);
+    expect(entranceNotes("another-build")).not.toEqual(notes);
   });
 });

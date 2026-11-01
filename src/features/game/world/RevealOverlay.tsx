@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import type { Placement } from "../../../../shared/build";
-import { characterFromBuild, themeNotes } from "../../../../shared/reveal";
+import { characterFromBuild, ENTRANCE_SECONDS, entranceNotes } from "../../../../shared/reveal";
 import type { Toy } from "../../../../shared/toy";
 import { toyWorldUrl, type ToyContract } from "../../../../shared/toycontract";
 import { partsById } from "../../../lib/catalog";
 import { saveReveal } from "../../../state/reveals";
 import { playTheme, type ThemeHandle } from "../../reveal/theme";
 
-const THEME_DURATION_MS = 16 * 420; // 16 steps * 0.42s = 6.72s
+const THEME_DURATION_MS = Math.round(ENTRANCE_SECONDS * 1000); // 36 steps ≈ 15.1 s
 
 function todayISO(): string {
   const d = new Date();
@@ -84,7 +84,7 @@ function RevealOverlayInner({
   const startTheme = () => {
     if (!card) return;
     stopTheme();
-    const handle = playTheme(themeNotes(card.signature));
+    const handle = playTheme(entranceNotes(card.signature), card.signature);
     handleRef.current = handle;
     void handle.started.then((ok) => {
       setAudioBlocked(!ok);
@@ -173,7 +173,7 @@ function RevealOverlayInner({
             {toy.name}
           </div>
           <p className="tv-moves" style={{ fontSize: 14 }}>
-            Equip a printable part in Build to unlock {toy.name}&apos;s Character Card and 16-step entrance theme.
+            Equip a printable part in Build to unlock {toy.name}&apos;s Character Card and 15-second entrance theme.
           </p>
           <button
             type="button"
@@ -197,7 +197,7 @@ function RevealOverlayInner({
               {card.title}
             </h2>
             <p className="tv-moves" style={{ fontSize: 13 }}>
-              {card.partNames.join(" + ")} · 16-step synth theme
+              {card.partNames.join(" + ")} · 15-second entrance theme
               {audioBlocked ? " (tap Replay theme for sound)" : ""}
             </p>
 
