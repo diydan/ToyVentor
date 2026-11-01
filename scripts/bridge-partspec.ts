@@ -250,8 +250,6 @@ if (syncAssets) {
   try {
     const coreItems = [...baseBuilt, ...racerBuilt, ...wardrobeBuilt];
     const allItems = [...coreItems, ...collectExpansionSyncItems(coreItems)];
-    const coreItems = [...baseBuilt, ...racerBuilt, ...wardrobeBuilt];
-    const allItems = [...coreItems, ...collectExpansionSyncItems(coreItems)];
     const buildMissingArgs: string[] = [];
 
     for (const { part, partspecId, sourceStl } of allItems) {
