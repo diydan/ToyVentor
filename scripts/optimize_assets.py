@@ -71,8 +71,15 @@ CREASE_DEFAULTS_DEG: dict[str, int] = {
 }
 
 
-def classify_finish_class(part_id: str) -> str:
-    pid = part_id.lower()
+def classify_finish_class(part_id: str, slot: str | None = None) -> str:
+    if slot:
+        slot_norm = slot.strip().lower()
+        if slot_norm == "hand":
+            return "precision_gear_pin"
+        if slot_norm in ("crown", "head", "hood", "roof", "front"):
+            return "show_curved"
+
+    pid = part_id.lower().replace("_", "-")
     curved_tokens = (
         "dome-",
         "skin-",
@@ -86,6 +93,8 @@ def classify_finish_class(part_id: str) -> str:
         "foil-wing",
         "scoop-blade",
         "wobble-hat",
+        "wizard-hat",
+        "hood-crest",
         "pointy-ears",
         "waddle-tail",
         "hood-scoop",
@@ -99,6 +108,7 @@ def classify_finish_class(part_id: str) -> str:
         "pin-",
         "-pin",
         "shaft",
+        "wand",
         "pinion",
         "screw",
         "forge-mount-",
@@ -159,7 +169,7 @@ def snap_manifold_to_bed(m: manifold3d.Manifold) -> manifold3d.Manifold:
     return m.translate((0.0, 0.0, -z_min)) if abs(z_min) > 0.0 else m
 
 
-def write_binary_stl(path: Path, verts: np.ndarray, faces: np.ndarray) -> int:
+def encode_binary_stl_bytes(verts: np.ndarray, faces: np.ndarray) -> bytes:
     tri_count = int(len(faces))
     v0 = verts[faces[:, 0]]
     v1 = verts[faces[:, 1]]
@@ -176,9 +186,31 @@ def write_binary_stl(path: Path, verts: np.ndarray, faces: np.ndarray) -> int:
     records["v2"] = v2.astype(np.float32)
     records["attr"] = 0
 
-    payload = BINARY_STL_HEADER + struct.pack("<I", tri_count) + records.tobytes()
+    return BINARY_STL_HEADER + struct.pack("<I", tri_count) + records.tobytes()
+
+
+def write_binary_stl(path: Path, verts: np.ndarray, faces: np.ndarray) -> int:
+    payload = encode_binary_stl_bytes(verts, faces)
+    path.parent.mkdir(parents=True, exist_ok=True)
     path.write_bytes(payload)
     return len(payload)
+
+
+def arrays_to_gltf_inputs(verts_mm: np.ndarray, faces: np.ndarray) -> tuple[list[float], list[float]]:
+    """Transform Z-up mm arrays (x, y, z) -> Y-up meters (x, z, -y) * 0.001 matching stl_to_glb.py."""
+    pts_m = np.empty_like(verts_mm, dtype=np.float64)
+    pts_m[:, 0] = verts_mm[:, 0] * 0.001
+    pts_m[:, 1] = verts_mm[:, 2] * 0.001
+    pts_m[:, 2] = -verts_mm[:, 1] * 0.001
+
+    tri_pts = pts_m[faces]  # (T, 3, 3)
+    cross = np.cross(tri_pts[:, 1] - tri_pts[:, 0], tri_pts[:, 2] - tri_pts[:, 0])
+    norms = np.linalg.norm(cross, axis=1, keepdims=True)
+    safe = np.where(norms > 1e-20, norms, 1.0)
+    unit_n = np.where(norms > 1e-20, cross / safe, np.array([0.0, 1.0, 0.0]))
+    tri_norms = np.repeat(unit_n[:, None, :], 3, axis=1)  # (T, 3, 3)
+
+    return tri_pts.reshape(-1).tolist(), tri_norms.reshape(-1).tolist()
 
 
 def _lookup_validation_brim(part_id: str, validation_dir: Path | None) -> int | None:
@@ -484,6 +516,255 @@ def optimize_one_stl(
         **telemetry,
     }
     return manifest_entry, report_row
+
+
+def _import_stl_to_glb() -> Any:
+    scripts_dir = str(Path(__file__).resolve().parent)
+    if scripts_dir not in sys.path:
+        sys.path.insert(0, scripts_dir)
+    import stl_to_glb  # type: ignore
+
+    return stl_to_glb
+
+
+def _resolve_source_manifold(
+    *,
+    part_id: str,
+    manifold_obj: manifold3d.Manifold | None = None,
+    stl_bytes: bytes | None = None,
+    stl_path: Path | None = None,
+) -> tuple[manifold3d.Manifold, np.ndarray, np.ndarray, bytes]:
+    if manifold_obj is not None:
+        m_orig = manifold_obj
+        verts, faces = manifold_to_arrays(m_orig)
+        raw_bytes = encode_binary_stl_bytes(verts, faces)
+        return m_orig, verts, faces, raw_bytes
+
+    if stl_bytes is None:
+        if stl_path is None or not stl_path.exists():
+            raise ValueError(f"{part_id}: expected manifold_obj, stl_bytes, or existing stl_path")
+        stl_bytes = stl_path.read_bytes()
+
+    import io
+
+    tm_orig = trimesh.load(io.BytesIO(stl_bytes), file_type="stl", force="mesh")
+    m_orig = trimesh_to_manifold(tm_orig)
+    if m_orig.status() != manifold3d.Error.NoError or m_orig.num_tri() == 0:
+        raise RuntimeError(f"{part_id}: input mesh is not a valid watertight Manifold ({m_orig.status()})")
+    verts, faces = manifold_to_arrays(m_orig)
+    return m_orig, verts, faces, stl_bytes
+
+
+def build_fast_preview_glb(
+    part_id: str,
+    *,
+    manifold_obj: manifold3d.Manifold | None = None,
+    stl_bytes: bytes | None = None,
+    stl_path: Path | None = None,
+    slot: str | None = None,
+    web_simplify_mm: float | None = None,
+    crease_deg: float | None = None,
+    out_glb_path: Path | None = None,
+) -> dict[str, Any]:
+    """Hot-path single-part Web LOD + KHR_mesh_quantization GLB builder (skips print gates)."""
+    stl_to_glb = _import_stl_to_glb()
+    finish_class = classify_finish_class(part_id, slot=slot)
+    eps_web = _clamp(
+        web_simplify_mm if web_simplify_mm is not None else WEB_DEFAULTS_MM[finish_class],
+        0.030,
+        0.250,
+    )
+    crease = float(
+        _clamp(crease_deg if crease_deg is not None else CREASE_DEFAULTS_DEG[finish_class], 18.0, 60.0)
+    )
+
+    m_orig, orig_verts, orig_faces, _ = _resolve_source_manifold(
+        part_id=part_id,
+        manifold_obj=manifold_obj,
+        stl_bytes=stl_bytes,
+        stl_path=stl_path,
+    )
+    orig_tris = int(len(orig_faces))
+    orig_extents = orig_verts.max(axis=0) - orig_verts.min(axis=0)
+
+    w_verts, w_faces = orig_verts, orig_faces
+    m_web = m_orig.simplify(eps_web)
+    if m_web.status() == manifold3d.Error.NoError and 0 < m_web.num_tri() < orig_tris:
+        cand_v, cand_f = manifold_to_arrays(m_web)
+        cand_extents = cand_v.max(axis=0) - cand_v.min(axis=0)
+        if float(np.max(np.abs(cand_extents - orig_extents))) <= max(0.35, eps_web * 3.0):
+            w_verts, w_faces = cand_v, cand_f
+
+    positions, normals = arrays_to_gltf_inputs(w_verts, w_faces)
+    glb_bytes, vert_count, tri_count = stl_to_glb.encode_quantized_glb_bytes(
+        part_id,
+        positions,
+        normals,
+        crease_deg=crease,
+    )
+    if out_glb_path is not None:
+        out_glb_path.parent.mkdir(parents=True, exist_ok=True)
+        out_glb_path.write_bytes(glb_bytes)
+
+    return {
+        "part_id": part_id,
+        "finish_class": finish_class,
+        "glb_bytes": glb_bytes,
+        "glb_size": len(glb_bytes),
+        "orig_tris": orig_tris,
+        "web_verts": vert_count,
+        "web_tris": tri_count,
+        "web_simplify_mm": round(eps_web, 4),
+        "web_crease_deg": round(crease, 1),
+    }
+
+
+def optimize_single_part(
+    part_id: str,
+    *,
+    manifold_obj: manifold3d.Manifold | None = None,
+    stl_bytes: bytes | None = None,
+    stl_path: Path | None = None,
+    out_stl_path: Path | None = None,
+    out_glb_path: Path | None = None,
+    slot: str | None = None,
+    manifest_doc: dict[str, Any] | None = None,
+    validation_dir: Path | None = None,
+    verify_preprint: bool = False,
+    partspec_dir: Path | None = None,
+) -> dict[str, Any]:
+    """Optimize a single dynamic/custom/AI part for both Print STL and Web GLB tiers."""
+    stl_to_glb = _import_stl_to_glb()
+    doc = manifest_doc or default_manifest_skeleton()
+    existing = (doc.get("parts") or {}).get(part_id) or {}
+
+    auto_class = classify_finish_class(part_id, slot=slot)
+    finish_class = existing.get("finish_class") if "llm_tuned_at" in existing else auto_class
+    if finish_class not in FINISH_DEFAULTS_MM:
+        finish_class = auto_class
+
+    defaults_print = (doc.get("defaults") or {}).get("print_simplify_mm") or FINISH_DEFAULTS_MM
+    raw_eps_print = (
+        existing["print_simplify_mm"]
+        if ("llm_tuned_at" in existing and "print_simplify_mm" in existing)
+        else defaults_print.get(finish_class, FINISH_DEFAULTS_MM[finish_class])
+    )
+    eps_print = _clamp(raw_eps_print, 0.004, 0.020)
+    eps_web = _clamp(existing.get("web_simplify_mm", WEB_DEFAULTS_MM[finish_class]), 0.030, 0.200)
+    crease_deg = int(round(_clamp(existing.get("web_crease_deg", CREASE_DEFAULTS_DEG[finish_class]), 18, 60)))
+
+    m_orig, orig_verts, orig_faces, raw_bytes = _resolve_source_manifold(
+        part_id=part_id,
+        manifold_obj=manifold_obj,
+        stl_bytes=stl_bytes,
+        stl_path=stl_path,
+    )
+    src_sha256 = hashlib.sha256(raw_bytes).hexdigest()[:16]
+    orig_tris = int(len(orig_faces))
+    orig_extents = orig_verts.max(axis=0) - orig_verts.min(axis=0)
+    orig_vol = float(m_orig.volume())
+
+    # --- Pass P1: Finish-safe Print STL ---
+    m_print = snap_manifold_to_bed(m_orig.simplify(eps_print))
+    if m_print.status() != manifold3d.Error.NoError or m_print.num_tri() == 0:
+        m_print = snap_manifold_to_bed(m_orig)
+
+    p_verts, p_faces = manifold_to_arrays(m_print)
+    p_bounds = np.vstack([p_verts.min(axis=0), p_verts.max(axis=0)])
+    p_extents = p_bounds[1] - p_bounds[0]
+    p_vol = float(m_print.volume())
+    max_bbox_delta = float(np.max(np.abs(p_extents - orig_extents)))
+    rel_vol_delta = abs(p_vol - orig_vol) / max(abs(orig_vol), 1e-6)
+    z_min_after = float(p_bounds[0, 2])
+
+    if (
+        abs(z_min_after) > 1e-4
+        or max_bbox_delta > 0.025
+        or rel_vol_delta > 0.0025
+        or len(p_faces) >= orig_tris
+    ):
+        m_print = snap_manifold_to_bed(m_orig)
+        p_verts, p_faces = manifold_to_arrays(m_print)
+        p_bounds = np.vstack([p_verts.min(axis=0), p_verts.max(axis=0)])
+        p_extents = p_bounds[1] - p_bounds[0]
+        p_vol = float(m_print.volume())
+        max_bbox_delta = float(np.max(np.abs(p_extents - orig_extents)))
+        rel_vol_delta = abs(p_vol - orig_vol) / max(abs(orig_vol), 1e-6)
+
+    print_stl_bytes = encode_binary_stl_bytes(p_verts, p_faces)
+    print_tris = int(len(p_faces))
+    content_hash = hashlib.sha256(print_stl_bytes).hexdigest()[:12]
+
+    # --- Pass W1: Sub-pixel Web GLB ---
+    w_verts, w_faces = p_verts, p_faces
+    m_web = m_orig.simplify(eps_web)
+    if m_web.status() == manifold3d.Error.NoError and 0 < m_web.num_tri() < print_tris:
+        cand_v, cand_f = manifold_to_arrays(m_web)
+        cand_extents = cand_v.max(axis=0) - cand_v.min(axis=0)
+        if float(np.max(np.abs(cand_extents - orig_extents))) <= max(0.30, eps_web * 3.0):
+            w_verts, w_faces = cand_v, cand_f
+
+    positions, normals = arrays_to_gltf_inputs(w_verts, w_faces)
+    glb_bytes, web_verts, web_tris = stl_to_glb.encode_quantized_glb_bytes(
+        part_id,
+        positions,
+        normals,
+        crease_deg=float(crease_deg),
+    )
+
+    recipe, telemetry = compute_slicer_recipe_and_telemetry(
+        part_id,
+        finish_class,
+        p_verts,
+        p_faces,
+        validation_dir,
+    )
+
+    preprint_failures: list[str] = []
+    if verify_preprint:
+        ps_dir = partspec_dir or (Path(__file__).resolve().parent.parent / "parts" / "partspec")
+        import tempfile
+
+        with tempfile.TemporaryDirectory(prefix="tv-opt-check-") as td:
+            tmp_stl = Path(td) / f"{part_id}.stl"
+            tmp_stl.write_bytes(print_stl_bytes)
+            preprint_failures = _verify_one_preprint_worker((str(tmp_stl), str(ps_dir)))
+
+    print_ok = len(preprint_failures) == 0
+
+    if out_stl_path is not None and print_ok:
+        out_stl_path.parent.mkdir(parents=True, exist_ok=True)
+        out_stl_path.write_bytes(print_stl_bytes)
+    if out_glb_path is not None:
+        out_glb_path.parent.mkdir(parents=True, exist_ok=True)
+        out_glb_path.write_bytes(glb_bytes)
+
+    return {
+        "part_id": part_id,
+        "content_hash": content_hash,
+        "source_sha256": src_sha256,
+        "finish_class": finish_class,
+        "print_ok": print_ok,
+        "preprint_failures": preprint_failures,
+        "print_simplify_mm": round(eps_print, 4),
+        "web_simplify_mm": round(eps_web, 4),
+        "web_crease_deg": crease_deg,
+        "slicer_recipe": recipe,
+        "stl_bytes": print_stl_bytes if print_ok else None,
+        "glb_bytes": glb_bytes,
+        "metrics": {
+            "orig_bytes": len(raw_bytes),
+            "print_bytes": len(print_stl_bytes),
+            "glb_bytes": len(glb_bytes),
+            "orig_tris": orig_tris,
+            "print_tris": print_tris,
+            "web_verts": web_verts,
+            "web_tris": web_tris,
+            "max_bbox_delta_mm": round(max_bbox_delta, 5),
+            "rel_vol_delta_pct": round(rel_vol_delta * 100.0, 5),
+            **telemetry,
+        },
+    }
 
 
 def _verify_one_preprint_worker(task: tuple[str, str]) -> list[str]:

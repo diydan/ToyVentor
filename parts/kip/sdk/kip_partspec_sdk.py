@@ -283,7 +283,13 @@ def part_spec(
     }
 
 
-def validate_and_export(spec: dict, out_dir: str | Path | None = None) -> dict:
+def validate_and_export(
+    spec: dict,
+    out_dir: str | Path | None = None,
+    *,
+    optimize: bool = True,
+    export_web_on_fail: bool = False,
+) -> dict:
     """Run the full PartSpec v2 gate + brand rules + real reference assembly test on `spec`."""
     brand_errors: list[str] = []
     for field in ("id", "name", "behavior"):
@@ -364,14 +370,72 @@ def validate_and_export(spec: dict, out_dir: str | Path | None = None) -> dict:
     )
 
     stl_path = None
+    glb_path = None
     manifest_path = None
+    opt_summary = None
+
+    scripts_dir = str(KIP_DIR.parent.parent / "scripts")
     if out_dir is not None and ok:
         out_p = Path(out_dir)
         out_p.mkdir(parents=True, exist_ok=True)
         stl_path = out_p / entry["file"]
         manifest_path = out_p / f"{spec['id']}.partspec.json"
         tm.export(stl_path)
-        manifest_path.write_text(json.dumps(entry, indent=2))
+        if optimize:
+            if scripts_dir not in sys.path:
+                sys.path.insert(0, scripts_dir)
+            import optimize_assets  # type: ignore
+
+            glb_path = out_p / f"{spec['id']}.glb"
+            opt = optimize_assets.optimize_single_part(
+                spec["id"],
+                stl_path=stl_path,
+                out_stl_path=stl_path,
+                out_glb_path=glb_path,
+                slot=spec.get("slot"),
+                validation_dir=PARTSPEC_DIR / "validation",
+            )
+            opt_summary = {
+                "content_hash": opt["content_hash"],
+                "finish_class": opt["finish_class"],
+                "print_simplify_mm": opt["print_simplify_mm"],
+                "web_simplify_mm": opt["web_simplify_mm"],
+                "web_crease_deg": opt["web_crease_deg"],
+                "metrics": opt["metrics"],
+            }
+            entry["glb_file"] = glb_path.name
+            entry["print"]["slicer_recipe"] = opt["slicer_recipe"]
+            entry["asset_optimization"] = opt_summary
+        manifest_path.write_text(json.dumps(entry, indent=2) + "\n")
+    elif out_dir is not None and not ok and export_web_on_fail:
+        # Digital-only graceful degradation: emit quantized Web GLB preview without unlocking print STL.
+        out_p = Path(out_dir)
+        out_p.mkdir(parents=True, exist_ok=True)
+        if scripts_dir not in sys.path:
+            sys.path.insert(0, scripts_dir)
+        import io
+        import optimize_assets  # type: ignore
+
+        buf = io.BytesIO()
+        tm.export(buf, file_type="stl")
+        glb_path = out_p / f"{spec['id']}.glb"
+        fast = optimize_assets.build_fast_preview_glb(
+            spec["id"],
+            stl_bytes=buf.getvalue(),
+            slot=spec.get("slot"),
+            out_glb_path=glb_path,
+        )
+        opt_summary = {
+            "finish_class": fast["finish_class"],
+            "web_simplify_mm": fast["web_simplify_mm"],
+            "web_crease_deg": fast["web_crease_deg"],
+            "metrics": {
+                "orig_tris": fast["orig_tris"],
+                "web_verts": fast["web_verts"],
+                "web_tris": fast["web_tris"],
+                "glb_bytes": fast["glb_size"],
+            },
+        }
 
     return {
         "ok": ok,
@@ -385,18 +449,22 @@ def validate_and_export(spec: dict, out_dir: str | Path | None = None) -> dict:
         "brand_errors": brand_errors,
         "assembly": asm_report,
         "stl_file": str(stl_path) if stl_path else entry["file"],
+        "glb_file": str(glb_path) if glb_path else None,
         "manifest_file": str(manifest_path) if manifest_path else None,
+        "slicer_recipe": entry.get("print", {}).get("slicer_recipe"),
+        "optimization": opt_summary,
         "entry": entry,
     }
 
 
 def run_cli(spec: dict) -> None:
     parser = argparse.ArgumentParser(description="Validate and export a conforming ToyVentor LLM part.")
-    parser.add_argument("--out", default=str(KIP_DIR.parent.parent / "public" / "kip" / "custom"), help="Output directory for verified STL & manifest")
+    parser.add_argument("--out", default=str(KIP_DIR.parent.parent / "public" / "kip" / "custom"), help="Output directory for verified STL, GLB & manifest")
     parser.add_argument("--json", action="store_true", help="Emit machine-readable JSON summary")
+    parser.add_argument("--no-optimize", action="store_true", help="Skip print STL + quantized Web GLB optimization")
     args = parser.parse_args()
 
-    res = validate_and_export(spec, out_dir=args.out)
+    res = validate_and_export(spec, out_dir=args.out, optimize=not args.no_optimize)
     if args.json:
         slim = {k: v for k, v in res.items() if k != "entry"}
         print(json.dumps(slim, indent=2))
@@ -416,4 +484,13 @@ def run_cli(spec: dict) -> None:
         if res["ok"]:
             print(f"  ASM OK:     Mated cleanly with {res['assembly']['parent']} ({res['assembly']['edges']} edge(s), 0 collisions)")
             print(f"  EXPORTED:   {res['stl_file']}")
+            if res.get("glb_file") and res.get("optimization"):
+                m = res["optimization"]["metrics"]
+                sr = res.get("slicer_recipe") or {}
+                print(
+                    f"  OPTIMIZED:  STL {m['orig_bytes'] / 1024:.1f} -> {m['print_bytes'] / 1024:.1f} KB "
+                    f"({m['orig_tris']} -> {m['print_tris']} tris) | "
+                    f"GLB {m['glb_bytes'] / 1024:.1f} KB ({m['web_tris']} tris) | "
+                    f"recipe {sr.get('layer_height_mm')}mm {sr.get('wall_order')} iron={sr.get('ironing')}"
+                )
     sys.exit(0 if res["ok"] else 1)

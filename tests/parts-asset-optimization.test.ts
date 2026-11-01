@@ -1,15 +1,19 @@
-import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
-import { join } from "node:path";
+import { execFileSync, spawn } from "node:child_process";
+import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join, resolve } from "node:path";
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { describe, expect, it } from "vitest";
 import { clampAdvisorProposal, type OptimizationManifest } from "../scripts/llm-lod-advisor";
+import type { ForgeFastPreviewResponse, ForgeOptimizationJob } from "../shared/forgeOptimizer";
 import { allParts, glbFileFor, stlFileFor } from "../src/lib/catalog";
 import {
   formatShortPrintTag,
   formatToyFinishRecipe,
   slicerRecipeForPart,
 } from "../src/lib/printRecipe";
+import { handleForgeJobStatus, handleForgePreview } from "../worker/forgeOptimizer";
 
 const ROOT = process.cwd();
 const STL_DIR = join(ROOT, "public/parts-stl");
@@ -171,4 +175,195 @@ describe("Parts asset optimization (Print STL + Web GLB + Toy-Finish Recipes)", 
     expect(clamped.parent_tip?.toLowerCase()).not.toContain("bambu");
     expect(clamped.rationale?.toLowerCase()).not.toContain("duplo");
   });
+
+  it("exports optimized print STLs, quantized Web GLBs, and slicer recipes for custom SDK parts", () => {
+    const customDir = join(ROOT, "public/kip/custom");
+    const ids = ["custom_wizard_hat", "custom_star_wand", "custom_hood_crest"] as const;
+    for (const id of ids) {
+      const glbPath = join(customDir, `${id}.glb`);
+      const metaPath = join(customDir, `${id}.partspec.json`);
+      expect(existsSync(glbPath), `missing ${id}.glb`).toBe(true);
+      expect(existsSync(metaPath), `missing ${id}.partspec.json`).toBe(true);
+
+      const glbBuf = readFileSync(glbPath);
+      expect(glbBuf.readUInt32LE(0)).toBe(0x46546c67);
+      expect(glbBuf.length).toBeLessThanOrEqual(60 * 1024);
+
+      const meta = JSON.parse(readFileSync(metaPath, "utf8")) as {
+        glb_file?: string;
+        print?: { slicer_recipe?: { layer_height_mm?: number; wall_loops?: number } };
+        asset_optimization?: { finish_class?: string; content_hash?: string };
+      };
+      expect(meta.glb_file).toBe(`${id}.glb`);
+      expect(meta.print?.slicer_recipe?.wall_loops).toBe(3);
+      expect(meta.asset_optimization?.content_hash).toBeTruthy();
+    }
+  });
+
+  it(
+    "serves instant fast-preview quantized GLB and completes background print+web optimization via Worker proxy",
+    async () => {
+      // 1. Unconfigured env returns 503 cleanly
+      const unconfRes = await handleForgePreview(
+        new Request("https://toyventor.test/api/forge/preview", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ part_id: "test" }),
+        }),
+        {},
+      );
+      expect(unconfRes.status).toBe(503);
+
+      // 2. Brand-term guard rejects forbidden names before hitting Python upstream
+      const brandRes = await handleForgePreview(
+        new Request("https://toyventor.test/api/forge/preview", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            recipe: {
+              name: "Lego Star Crown",
+              slot: "crown",
+              shape: { slices: [{ z: 0, w: 22, d: 11, r: 4 }, { z: 12, w: 14, d: 10, r: 3 }] },
+            },
+          }),
+        }),
+        { FORGE_OPTIMIZER_URL: "http://127.0.0.1:9" },
+      );
+      expect(brandRes.status).toBe(422);
+
+      // 3. Spawn warm forge_optimizer_daemon.py on ephemeral port
+      let py = resolve(ROOT, "parts/partspec/.venv/bin/python3");
+      if (!existsSync(py)) {
+        const commonGit = execFileSync("git", ["rev-parse", "--git-common-dir"], {
+          cwd: ROOT,
+          encoding: "utf8",
+        }).trim();
+        py = resolve(ROOT, commonGit, "..", "parts/partspec/.venv/bin/python3");
+      }
+      if (!existsSync(py)) return;
+
+      const tmpOut = mkdtempSync(join(tmpdir(), "tv-forge-daemon-"));
+      const proc = spawn(
+        py,
+        [
+          join(ROOT, "scripts/forge_optimizer_daemon.py"),
+          "--host",
+          "127.0.0.1",
+          "--port",
+          "0",
+          "--out-dir",
+          tmpOut,
+        ],
+        { stdio: ["ignore", "pipe", "pipe"] },
+      );
+
+      try {
+        const baseUrl = await new Promise<string>((resolveUrl, rejectUrl) => {
+          let buf = "";
+          const timer = setTimeout(() => rejectUrl(new Error("daemon startup timeout")), 8000);
+          proc.stdout.on("data", (chunk: Buffer) => {
+            buf += chunk.toString("utf8");
+            const nl = buf.indexOf("\n");
+            if (nl !== -1) {
+              clearTimeout(timer);
+              const info = JSON.parse(buf.slice(0, nl)) as { url: string };
+              resolveUrl(info.url);
+            }
+          });
+          proc.on("exit", (code) => {
+            clearTimeout(timer);
+            rejectUrl(new Error(`daemon exited early with code ${code}`));
+          });
+        });
+
+        const env = { FORGE_OPTIMIZER_URL: baseUrl };
+
+        // 3a. Recipe v1 fast-preview hot path (zero arbitrary code execution)
+        const recipeRes = await handleForgePreview(
+          new Request("https://toyventor.test/api/forge/preview", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({
+              enqueue_background: false,
+              recipe: {
+                id: "custom_comet_crown",
+                name: "Comet Crown",
+                stat: "Glow",
+                slot: "crown",
+                shape: {
+                  kind: "loft",
+                  slices: [
+                    { z: 0, w: 23.4, d: 11.4, r: 4.5 },
+                    { z: 8, w: 26.0, d: 15.0, r: 5.5 },
+                    { z: 20, w: 9.0, d: 9.0, r: 3.8 },
+                  ],
+                },
+                features: [{ op: "knob", radius_mm: 3.2 }],
+              },
+            }),
+          }),
+          env,
+        );
+        expect(recipeRes.status).toBe(200);
+        const recipePreview = (await recipeRes.json()) as ForgeFastPreviewResponse;
+        expect(recipePreview.ok).toBe(true);
+        expect(recipePreview.status).toBe("preview_ready");
+        expect(recipePreview.glb_size).toBeLessThan(40 * 1024);
+        expect(recipePreview.glb_base64).toBeTruthy();
+
+        const glbBuf = Buffer.from(recipePreview.glb_base64!, "base64");
+        const loader = new GLTFLoader();
+        const parsedGltf = await loader.parseAsync(new Uint8Array(glbBuf).buffer, "");
+        expect(parsedGltf.scene.children.length).toBeGreaterThan(0);
+
+        // 3b. Two-stage fast preview + background print & web optimization job
+        const domeStlB64 = readFileSync(join(STL_DIR, "dome-s-2x2.stl")).toString("base64");
+        const stage1Res = await handleForgePreview(
+          new Request("https://toyventor.test/api/forge/preview", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({
+              part_id: "custom_dome_ai",
+              slot: "crown",
+              stl_base64: domeStlB64,
+              enqueue_background: true,
+              include_glb_base64: false,
+            }),
+          }),
+          env,
+        );
+        expect(stage1Res.status).toBe(200);
+        const stage1 = (await stage1Res.json()) as ForgeFastPreviewResponse;
+        expect(stage1.status).toBe("preview_ready");
+        expect(stage1.job_id).toMatch(/^fjob_[a-f0-9]+$/);
+
+        let finalJob: ForgeOptimizationJob | null = null;
+        for (let attempt = 0; attempt < 40; attempt++) {
+          const pollRes = await handleForgeJobStatus(
+            new Request(`https://toyventor.test/api/forge/jobs/${stage1.job_id}`),
+            env,
+            stage1.job_id!,
+          );
+          expect(pollRes.status).toBe(200);
+          const job = (await pollRes.json()) as ForgeOptimizationJob;
+          if (job.status === "print_ready" || job.status === "digital_only" || job.status === "failed") {
+            finalJob = job;
+            break;
+          }
+          await new Promise((r) => setTimeout(r, 150));
+        }
+
+        expect(finalJob?.status).toBe("print_ready");
+        expect(finalJob?.content_hash).toBeTruthy();
+        expect(finalJob?.stl_file && existsSync(finalJob.stl_file)).toBe(true);
+        expect(finalJob?.glb_file && existsSync(finalJob.glb_file)).toBe(true);
+        expect(finalJob?.slicer_recipe?.layer_height_mm).toBe(0.12);
+        expect(finalJob?.gate_report?.ok).toBe(true);
+      } finally {
+        proc.kill("SIGTERM");
+        rmSync(tmpOut, { recursive: true, force: true });
+      }
+    },
+    20_000,
+  );
 });

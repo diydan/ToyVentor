@@ -15,12 +15,24 @@ import {
 } from "../shared/toy";
 import { readCappedJson } from "./body";
 import { makeSkin, samConfigured, segmentToy, type MetaEnv } from "./meta";
+import {
+  forgeOptimizerConfigured,
+  handleForgeJobStatus,
+  handleForgePreview,
+  type ForgeOptimizerEnv,
+} from "./forgeOptimizer";
 import { handleMuseSpark, museConfigured, type MuseEnv } from "./muse";
 import { handleOwnership, type OwnershipEnv } from "./ownership";
 import { handleParent, type ParentEnv } from "./parent";
 import { handleSelfieCartoon, handleSelfieFaceParts, selfieCloudEnabled, type SelfieEnv } from "./selfie";
 
-export interface Env extends MetaEnv, MuseEnv, OwnershipEnv, ParentEnv, SelfieEnv {
+export interface Env
+  extends MetaEnv,
+    MuseEnv,
+    OwnershipEnv,
+    ParentEnv,
+    SelfieEnv,
+    ForgeOptimizerEnv {
   MUREKA_API_KEY?: string;
   ASSETS?: { fetch: (request: Request) => Promise<Response> };
 }
@@ -184,7 +196,17 @@ export default {
         samConfigured: samConfigured(env),
         museConfigured: museConfigured(env),
         selfieCloud: selfieCloudEnabled(env),
+        forgeOptimizerConfigured: forgeOptimizerConfigured(env),
       });
+    }
+
+    if (url.pathname === "/api/forge/preview") {
+      return handleForgePreview(request, env);
+    }
+
+    if (url.pathname.startsWith("/api/forge/jobs/")) {
+      const jobId = url.pathname.slice("/api/forge/jobs/".length);
+      return handleForgeJobStatus(request, env, jobId);
     }
 
     if (url.pathname === "/api/scan") {

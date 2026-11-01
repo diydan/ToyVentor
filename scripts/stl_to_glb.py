@@ -247,16 +247,24 @@ def build_indexed_creased_mesh(
     return out_positions, out_normals, out_indices
 
 
-def _write_glb_chunks(path: Path, gltf: dict, buffer: bytes) -> None:
+def _encode_glb_chunks(gltf: dict, buffer: bytes) -> bytes:
     json_chunk = pad4(json.dumps(gltf, separators=(",", ":")).encode("utf-8"), b" ")
     bin_chunk = pad4(buffer)
     total = 12 + 8 + len(json_chunk) + 8 + len(bin_chunk)
-    with open(path, "wb") as f:
-        f.write(struct.pack("<III", 0x46546C67, 2, total))  # glTF magic
-        f.write(struct.pack("<II", len(json_chunk), 0x4E4F534A))  # JSON
-        f.write(json_chunk)
-        f.write(struct.pack("<II", len(bin_chunk), 0x004E4942))  # BIN\0
-        f.write(bin_chunk)
+    return b"".join(
+        (
+            struct.pack("<III", 0x46546C67, 2, total),  # glTF magic
+            struct.pack("<II", len(json_chunk), 0x4E4F534A),  # JSON
+            json_chunk,
+            struct.pack("<II", len(bin_chunk), 0x004E4942),  # BIN\0
+            bin_chunk,
+        )
+    )
+
+
+def _write_glb_chunks(path: Path, gltf: dict, buffer: bytes) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(_encode_glb_chunks(gltf, buffer))
 
 
 def write_glb_legacy_float32(path: Path, positions: list[float], normals: list[float]) -> None:
@@ -309,19 +317,15 @@ def write_glb_legacy_float32(path: Path, positions: list[float], normals: list[f
     _write_glb_chunks(path, gltf, buffer)
 
 
-def write_glb(
-    path: Path,
+def encode_quantized_glb_bytes(
+    name: str,
     positions: list[float],
     normals: list[float],
     crease_deg: float = 34.0,
-    legacy_float32: bool = False,
-) -> tuple[int, int]:
-    """Write binary GLB and return (vertex_count, triangle_count)."""
+) -> tuple[bytes, int, int]:
+    """Encode indexed KHR_mesh_quantization GLB in memory; returns (glb_bytes, vert_count, tri_count)."""
     if not positions:
         raise ValueError("no vertices parsed")
-    if legacy_float32:
-        write_glb_legacy_float32(path, positions, normals)
-        return len(positions) // 3, len(positions) // 9
 
     verts, norms, indices = build_indexed_creased_mesh(positions, normals, crease_deg=crease_deg)
     vert_count = len(verts)
@@ -390,14 +394,14 @@ def write_glb(
         "nodes": [
             {
                 "mesh": 0,
-                "name": path.stem,
+                "name": name,
                 "translation": [min_x, min_y, min_z],
                 "scale": [span, span, span],
             }
         ],
         "meshes": [
             {
-                "name": path.stem,
+                "name": name,
                 "primitives": [
                     {
                         "attributes": {"POSITION": 0, "NORMAL": 1},
@@ -467,7 +471,31 @@ def write_glb(
         ],
         "buffers": [{"byteLength": len(buffer)}],
     }
-    _write_glb_chunks(path, gltf, buffer)
+    return _encode_glb_chunks(gltf, buffer), vert_count, tri_count
+
+
+def write_glb(
+    path: Path,
+    positions: list[float],
+    normals: list[float],
+    crease_deg: float = 34.0,
+    legacy_float32: bool = False,
+) -> tuple[int, int]:
+    """Write binary GLB and return (vertex_count, triangle_count)."""
+    if not positions:
+        raise ValueError("no vertices parsed")
+    if legacy_float32:
+        write_glb_legacy_float32(path, positions, normals)
+        return len(positions) // 3, len(positions) // 9
+
+    glb_bytes, vert_count, tri_count = encode_quantized_glb_bytes(
+        path.stem,
+        positions,
+        normals,
+        crease_deg=crease_deg,
+    )
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(glb_bytes)
     return vert_count, tri_count
 
 

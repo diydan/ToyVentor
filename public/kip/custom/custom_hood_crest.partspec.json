@@ -20,7 +20,7 @@
     25.6,
     18.6
   ],
-  "volume_cm3": 6.84,
+  "volume_cm3": 6.85,
   "connectors": [
     {
       "id": "under_sockets",
@@ -60,7 +60,18 @@
   },
   "print": {
     "orientation": "bed = z0; flat, studs up",
-    "supports": false
+    "supports": false,
+    "slicer_recipe": {
+      "layer_height_mm": 0.12,
+      "wall_loops": 3,
+      "outer_wall_speed_mms": 30,
+      "wall_order": "inner_first",
+      "seam_position": "aligned",
+      "ironing": "none",
+      "ironing_inset_mm": 0.0,
+      "brim_width_mm": 0,
+      "support_mode": "none"
+    }
   },
   "design_status": "verified",
   "fit": {
@@ -194,5 +205,29 @@
     "holes": 4,
     "reliefs": 0,
     "locked": true
+  },
+  "glb_file": "custom_hood_crest.glb",
+  "asset_optimization": {
+    "content_hash": "53c6ee29d027",
+    "finish_class": "show_curved",
+    "print_simplify_mm": 0.006,
+    "web_simplify_mm": 0.075,
+    "web_crease_deg": 36,
+    "metrics": {
+      "orig_bytes": 125884,
+      "print_bytes": 123284,
+      "glb_bytes": 15968,
+      "orig_tris": 2516,
+      "print_tris": 2464,
+      "web_verts": 802,
+      "web_tris": 850,
+      "max_bbox_delta_mm": 0.0,
+      "rel_vol_delta_pct": 0.00044,
+      "overhang_22_mm2": 0.0,
+      "flat_top_mm2": 264.61,
+      "bed_area_mm2": 423.87,
+      "v11_show_face_overhang_30_mm2": 0.0,
+      "v11_status": "pass"
+    }
   }
 }
