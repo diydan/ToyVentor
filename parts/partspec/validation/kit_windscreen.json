@@ -1,18 +1,18 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_kit_windscreen_S.stl",
-  "file_sha256": "580f9687618b0b65625c0666dea5b7770cc3b68cc7078d67d8ab1c2281d2d984",
+  "file_sha256": "fb73bf6c92111d4388e7c0138cbd39f7e1b6f8f3c24a1618e20a47880067441f",
   "part_id": "kit_windscreen",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-10-31T15:14:49Z",
+  "checked_at": "2026-11-01T21:37:21Z",
   "metrics": {
     "bbox_mm": [
       49.8,
       37.3,
       23.5
     ],
-    "volume_cm3": 17.57,
-    "surface_cm2": 84.61,
+    "volume_cm3": 16.97,
+    "surface_cm2": 83.93,
     "triangles": 10084,
     "ledges": [],
     "layers": 117,

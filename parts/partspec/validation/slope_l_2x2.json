@@ -4,7 +4,7 @@
   "file_sha256": "555bfe79717bd797a5036264a164d41bd87c903d8a8c7f05c50731e51d9e102d",
   "part_id": "slope_l_2x2",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-10-31T14:27:22Z",
+  "checked_at": "2026-11-01T21:29:37Z",
   "metrics": {
     "bbox_mm": [
       49.7,
@@ -175,7 +175,7 @@
     ],
     "engine": "PrusaSlicer-2.8.1",
     "slice_logic": "1",
-    "reused_from": "2026-10-31T11:19:35Z"
+    "reused_from": "2026-10-31T14:27:22Z"
   },
   "verdict": "pass",
   "summary": "Prints as is"

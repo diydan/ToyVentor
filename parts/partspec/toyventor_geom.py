@@ -35,8 +35,9 @@ def seg_for_radius(
 
 
 def rrect(w, d, r):
-    n_arc = max(16, seg_for_radius(r, max_sagitta_mm=0.010, min_seg=16, max_seg=64))
-    return CrossSection.square((w - 2 * r, d - 2 * r), center=True).offset(r, 1, 2, n_arc)
+    # Fixed 24 arc segments, as before 5e31f0f. Sizing the arc with seg_for_radius here made beam_l_tu03x03, beam_l_tu05x03 and kit_tilting_tub
+    # non-watertight in trimesh (valid manifold, G1/G3 fail; bisected: rbox's finer corners are harmless, this line is the cause).
+    return CrossSection.square((w - 2 * r, d - 2 * r), center=True).offset(r, 1, 2, 24)
 
 
 def rbox(w, d, h, r, c):

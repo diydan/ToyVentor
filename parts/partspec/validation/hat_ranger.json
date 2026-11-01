@@ -1,41 +1,41 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_hat_ranger_S.stl",
-  "file_sha256": "bb1d5bf4d693c549bbcecdfdc99e5c9ea42bc36a1d9518affff574a8e634fd19",
+  "file_sha256": "6e2dd58245b01314649947de58007987d235a929a689e2000e428eb7cd506996",
   "part_id": "hat_ranger",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-10-31T14:43:58Z",
+  "checked_at": "2026-11-01T21:35:15Z",
   "metrics": {
     "bbox_mm": [
       60.6,
       58.6,
-      18.49
+      18.09
     ],
-    "volume_cm3": 12.43,
-    "surface_cm2": 80.28,
-    "triangles": 7226,
+    "volume_cm3": 12.4,
+    "surface_cm2": 79.62,
+    "triangles": 7230,
     "ledges": [],
-    "layers": 92,
-    "bed_contact_mm2": 1571.8,
-    "height_mm": 18.49,
-    "slenderness": 0.47,
+    "layers": 90,
+    "bed_contact_mm2": 1584.7,
+    "height_mm": 18.09,
+    "slenderness": 0.45,
     "centre_of_mass_over_contact": true,
     "min_wall_mm": null,
     "thin_wall_regions": []
   },
   "bridges": [
     {
-      "z_mm": 10.1,
+      "z_mm": 9.7,
       "span_mm": 10.29,
-      "area_mm2": 521.3
+      "area_mm2": 522.0
     },
     {
-      "z_mm": 13.2,
+      "z_mm": 12.8,
       "span_mm": 6.7,
       "area_mm2": 35.2
     },
     {
-      "z_mm": 13.2,
+      "z_mm": 12.8,
       "span_mm": 6.7,
       "area_mm2": 35.2
     }
@@ -64,7 +64,7 @@
       "value": [
         60.6,
         58.6,
-        18.5
+        18.1
       ],
       "limit": [
         180,
@@ -117,9 +117,9 @@
       "id": "V9_bed_contact",
       "level": "info",
       "result": "pass",
-      "value": 1571.8,
+      "value": 1584.7,
       "limit": null,
-      "detail": "height / sqrt(contact) = 0.47; above about 3 the slicer often asks for a brim"
+      "detail": "height / sqrt(contact) = 0.45; above about 3 the slicer often asks for a brim"
     },
     {
       "id": "V8_wall_thickness",

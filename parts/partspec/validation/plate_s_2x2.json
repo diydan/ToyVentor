@@ -4,7 +4,7 @@
   "file_sha256": "a4a804870cd68c371577262469929165dfffbe7661ac87ea30da69edebbf4525",
   "part_id": "plate_s_2x2",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-10-31T14:25:39Z",
+  "checked_at": "2026-11-01T21:29:03Z",
   "metrics": {
     "bbox_mm": [
       24.8,
@@ -169,7 +169,7 @@
       0
     ],
     "engine": "PrusaSlicer-2.8.1",
-    "reused_from": "2026-10-31T11:19:07Z"
+    "reused_from": "2026-10-31T14:25:39Z"
   },
   "verdict": "pass",
   "summary": "Prints as is"

@@ -1,10 +1,10 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_racer_bull_bar_S.stl",
-  "file_sha256": "a205c94cc9392f18535d11589734e463bea4fca00a886f85989fa53063f59232",
+  "file_sha256": "978a19e1aa68f9da873c80398b2d245603cdf69d7ce96d980f4526d4232d220c",
   "part_id": "racer_bull_bar",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-10-31T14:35:37Z",
+  "checked_at": "2026-11-01T21:31:53Z",
   "metrics": {
     "bbox_mm": [
       24.4,
@@ -13,7 +13,7 @@
     ],
     "volume_cm3": 1.37,
     "surface_cm2": 15.44,
-    "triangles": 5738,
+    "triangles": 3834,
     "ledges": [],
     "layers": 77,
     "bed_contact_mm2": 189.3,
@@ -133,56 +133,10 @@
       "value": 0,
       "limit": 0,
       "detail": "regions where the wall is under 0.8 mm (two nozzle widths) over 2.0 mm2, or under 0.4 mm (one nozzle width) over 0.25 mm2; sharp edges and slivers are ignored"
-    },
-    {
-      "id": "S1_slices",
-      "level": "block",
-      "result": "pass",
-      "value": null,
-      "limit": null,
-      "detail": "sliced without errors"
-    },
-    {
-      "id": "S2_slicer_stability",
-      "level": "warn",
-      "result": "pass",
-      "value": null,
-      "limit": null,
-      "detail": "low bed adhesion without a brim; a 3 mm brim clears it"
-    },
-    {
-      "id": "S3_slicer_blocking",
-      "level": "block",
-      "result": "pass",
-      "value": null,
-      "limit": null,
-      "detail": "nothing the slicer would print in mid-air"
     }
   ],
-  "print_settings": {
-    "brim_width_mm": 3
-  },
-  "slicer": {
-    "ok": true,
-    "brim_mm": 3,
-    "seconds_to_slice": 2.9,
-    "warnings": [],
-    "filament_g": 1.73,
-    "filament_m": 0.58,
-    "filament_cost_usd": 0.03,
-    "print_time_s": 888,
-    "layers": 77,
-    "warnings_without_brim": [
-      "Low bed adhesion"
-    ],
-    "brims_tried_mm": [
-      0,
-      3
-    ],
-    "engine": "PrusaSlicer-2.8.1",
-    "slice_logic": "1",
-    "reused_from": "2026-10-31T11:23:34Z"
-  },
-  "verdict": "pass_with_settings",
-  "summary": "Prints with brim_width_mm = 3"
+  "print_settings": {},
+  "slicer": null,
+  "verdict": "pass",
+  "summary": "Prints as is"
 }

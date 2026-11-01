@@ -126,22 +126,6 @@
       "shaft_center_hole": 2.0,
       "note": "Shaft with flats: turns in a free bore, drives in a fixed bore. Prints lying on a flat; the centre hole is a teardrop so it needs no support."
     },
-    "c_jaw_tu01": {
-      "kind": "c_jaw",
-      "size_class": "pro",
-      "fit_class": "SNAP_JAW",
-      "pitch_tu": 1.0,
-      "seat_d_mm": 7.0,
-      "shaft_d_mm": 6.6,
-      "throat_mm": 6.0,
-      "wrap_deg": 242.0,
-      "teardrop_roof_deg": 50.0,
-      "prong_thickness_mm": 1.6,
-      "bearing_land_mm": 3.0,
-      "relief_tunnel_d_mm": 8.2,
-      "min_snap_per_prong_mm": 0.3,
-      "note": "Pinless compliant C-jaw cradling a 6.6 mm Pro shaft in a 7.0 mm free seat across a 6.0 mm throat (0.30 mm/prong snap deflection, 50 deg teardrop roof + flat-bridged 8.2 mm central relief tunnel). TARGET until Gate G7 physical coupon print."
-    },
     "flank_rail_tu02": {
       "kind": "mortise",
       "size_class": "small",

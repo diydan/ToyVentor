@@ -1,10 +1,10 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_kit_wheel_med_P.stl",
-  "file_sha256": "d28c0c066d8a2adc479ed356231471a760b31a42cb96db9c6d666a7c3ac6c96e",
+  "file_sha256": "73ae3fae0251f8acc80e7d1d7f0f1039365943a6a63269b8b8d516e4442bd5d9",
   "part_id": "kit_wheel_med",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-10-31T15:14:30Z",
+  "checked_at": "2026-11-01T21:37:15Z",
   "metrics": {
     "bbox_mm": [
       35.96,
@@ -13,7 +13,7 @@
     ],
     "volume_cm3": 10.41,
     "surface_cm2": 43.7,
-    "triangles": 3708,
+    "triangles": 3128,
     "ledges": [],
     "layers": 62,
     "bed_contact_mm2": 842.0,

@@ -4,7 +4,7 @@
   "file_sha256": "7f75f2c475a37644f5f38e9c65575aa2a07d978d6c81e2f261b18e2e8711e84e",
   "part_id": "adapter_snap_pro",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-10-31T14:35:31Z",
+  "checked_at": "2026-11-01T21:31:51Z",
   "metrics": {
     "bbox_mm": [
       37.5,
@@ -154,7 +154,7 @@
       0
     ],
     "engine": "PrusaSlicer-2.8.1",
-    "reused_from": "2026-10-31T11:23:24Z"
+    "reused_from": "2026-10-31T14:35:31Z"
   },
   "verdict": "pass",
   "summary": "Prints as is"

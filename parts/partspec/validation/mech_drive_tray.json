@@ -1,0 +1,227 @@
+{
+  "validator": "preprint_check 1.2.0",
+  "file": "toyventor_mech_drive_tray_S.stl",
+  "file_sha256": "a0fb6d4d492b95b89550f271a855867b0fb1994cf5a29da89b674ae4d528963b",
+  "part_id": "mech_drive_tray",
+  "profile": "fdm_pla_0.4",
+  "checked_at": "2026-11-01T21:42:04Z",
+  "metrics": {
+    "bbox_mm": [
+      49.8,
+      49.8,
+      35.1
+    ],
+    "volume_cm3": 23.67,
+    "surface_cm2": 203.98,
+    "triangles": 15068,
+    "ledges": [],
+    "layers": 175,
+    "bed_contact_mm2": 720.9,
+    "height_mm": 35.1,
+    "slenderness": 1.31,
+    "centre_of_mass_over_contact": true,
+    "min_wall_mm": 0.422,
+    "thin_wall_regions": [
+      {
+        "area_mm2": 2.69,
+        "min_mm": 0.422,
+        "at_mm": [
+          13.68,
+          6.25,
+          24.2
+        ]
+      }
+    ]
+  },
+  "bridges": [
+    {
+      "z_mm": 3.2,
+      "span_mm": 7.64,
+      "area_mm2": 1154.7
+    },
+    {
+      "z_mm": 3.2,
+      "span_mm": 0.85,
+      "area_mm2": 15.7
+    },
+    {
+      "z_mm": 3.2,
+      "span_mm": 6.7,
+      "area_mm2": 35.2
+    },
+    {
+      "z_mm": 3.2,
+      "span_mm": 6.7,
+      "area_mm2": 35.2
+    },
+    {
+      "z_mm": 3.2,
+      "span_mm": 6.7,
+      "area_mm2": 35.2
+    },
+    {
+      "z_mm": 3.2,
+      "span_mm": 6.7,
+      "area_mm2": 35.2
+    },
+    {
+      "z_mm": 3.2,
+      "span_mm": 6.7,
+      "area_mm2": 35.2
+    },
+    {
+      "z_mm": 3.2,
+      "span_mm": 6.7,
+      "area_mm2": 35.2
+    },
+    {
+      "z_mm": 5.0,
+      "span_mm": 0.76,
+      "area_mm2": 146.3
+    },
+    {
+      "z_mm": 16.5,
+      "span_mm": 0.26,
+      "area_mm2": 0.5
+    },
+    {
+      "z_mm": 16.5,
+      "span_mm": 0.53,
+      "area_mm2": 0.6
+    },
+    {
+      "z_mm": 16.5,
+      "span_mm": 0.26,
+      "area_mm2": 0.5
+    },
+    {
+      "z_mm": 16.5,
+      "span_mm": 0.53,
+      "area_mm2": 0.6
+    },
+    {
+      "z_mm": 16.5,
+      "span_mm": 0.26,
+      "area_mm2": 0.5
+    },
+    {
+      "z_mm": 16.5,
+      "span_mm": 0.53,
+      "area_mm2": 0.6
+    },
+    {
+      "z_mm": 16.5,
+      "span_mm": 0.53,
+      "area_mm2": 0.6
+    },
+    {
+      "z_mm": 16.5,
+      "span_mm": 0.26,
+      "area_mm2": 0.5
+    },
+    {
+      "z_mm": 26.1,
+      "span_mm": 0.7,
+      "area_mm2": 8.6
+    },
+    {
+      "z_mm": 8.6,
+      "span_mm": 0.5,
+      "area_mm2": 8.2
+    }
+  ],
+  "checks": [
+    {
+      "id": "V1_mesh_sound",
+      "level": "block",
+      "result": "pass",
+      "value": null,
+      "limit": null,
+      "detail": "watertight True, consistent winding True, 1 body(ies)"
+    },
+    {
+      "id": "V2_on_bed",
+      "level": "block",
+      "result": "pass",
+      "value": 0.0,
+      "limit": 0.0,
+      "detail": "lowest point must be on the bed (z = 0)"
+    },
+    {
+      "id": "V3_fits_bed",
+      "level": "block",
+      "result": "pass",
+      "value": [
+        49.8,
+        49.8,
+        35.1
+      ],
+      "limit": [
+        180,
+        180,
+        180
+      ],
+      "detail": ""
+    },
+    {
+      "id": "V4_no_steep_overhang",
+      "level": "block",
+      "result": "pass",
+      "value": 0.14,
+      "limit": 1.0,
+      "detail": "mm2 of downward surface steeper than 45 deg (flat bridges excluded)"
+    },
+    {
+      "id": "V10_no_ledges",
+      "level": "block",
+      "result": "pass",
+      "value": 0.0,
+      "limit": 1.0,
+      "detail": "mm2 of flat underside held on one side only (a ledge over air, not a bridge)"
+    },
+    {
+      "id": "V6_bridge_span",
+      "level": "block",
+      "result": "pass",
+      "value": 7.64,
+      "limit": 20,
+      "detail": "19 bridge(s); widest unsupported span in mm"
+    },
+    {
+      "id": "V5_no_floating_islands",
+      "level": "block",
+      "result": "pass",
+      "value": 0,
+      "limit": 0,
+      "detail": "material not resting, layer by layer, on anything that reaches the bed"
+    },
+    {
+      "id": "V7_min_feature",
+      "level": "warn",
+      "result": "pass",
+      "value": 0,
+      "limit": 0,
+      "detail": "layer pieces narrower than 0.4 mm"
+    },
+    {
+      "id": "V9_bed_contact",
+      "level": "info",
+      "result": "pass",
+      "value": 720.9,
+      "limit": null,
+      "detail": "height / sqrt(contact) = 1.31; above about 3 the slicer often asks for a brim"
+    },
+    {
+      "id": "V8_wall_thickness",
+      "level": "warn",
+      "result": "warn",
+      "value": 1,
+      "limit": 0,
+      "detail": "regions where the wall is under 0.8 mm (two nozzle widths) over 2.0 mm2, or under 0.4 mm (one nozzle width) over 0.25 mm2; worst 0.422 mm at [13.68, 6.25, 24.2]"
+    }
+  ],
+  "print_settings": {},
+  "slicer": null,
+  "verdict": "pass_with_warnings",
+  "summary": "Warnings: V8_wall_thickness"
+}

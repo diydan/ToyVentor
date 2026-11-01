@@ -71,25 +71,65 @@ def tube_dims(p):
     return (p["stud_d"] + p["fit"]) / 2, (gap - p["fit"]) / 2
 
 
+def _conical_socket_cutter(p, z_cap=None):
+    """Self-roofing 42-deg-from-vertical conical female stud socket with mouth lead-in chamfer."""
+    r_sock = (p["stud_d"] + p["fit"]) / 2
+    lead = 0.40 if p["pitch"] < 20.0 else 0.50
+    z_cyl = p["stud_h"] - 0.35
+    tan_a = math.tan(math.radians(42.0))
+    z_apex = z_cyl + (r_sock - 0.08) / tan_a
+    if z_cap is not None and z_cap < z_apex:
+        r_top = max(0.08, r_sock - max(0.0, z_cap - z_cyl) * tan_a)
+        z_top = max(z_cyl + 0.05, z_cap)
+    else:
+        r_top, z_top = 0.08, z_apex
+    prof = [
+        (0.0, -0.02),
+        (r_sock + lead + 0.02, -0.02),
+        (r_sock, lead),
+        (r_sock, z_cyl),
+        (r_top, z_top),
+        (0.0, z_top),
+    ]
+    return Manifold.revolve(CrossSection([np.array(prof)]), FIT_SEG)
+
+
+def _blind_tile_socket_cutter(p):
+    """Blind cylindrical female stud socket for parts printed upside-down (show face on bed, sockets opening +Z)."""
+    r_sock = (p["stud_d"] + p["fit"]) / 2
+    lead = 0.40 if p["pitch"] < 20.0 else 0.50
+    depth = p["stud_h"] + 0.40
+    prof = [
+        (0.0, -0.02),
+        (r_sock + lead + 0.02, -0.02),
+        (r_sock, lead),
+        (r_sock, depth),
+        (0.0, depth),
+    ]
+    return Manifold.revolve(CrossSection([np.array(prof)]), FIT_SEG)
+
+
 def block(size, nx, ny, h, top, studs=True):
     p = STUD[size]
     W, D = nx * p["pitch"] - 2 * p["gap"], ny * p["pitch"] - 2 * p["gap"]
-    wall = p["wall"]
     body = rbox(W, D, h, p["edge_r"], p["bed_chamfer"])
-    cav = Manifold.cube((W - 2 * wall, D - 2 * wall, h - top + 0.1)).translate((-(W / 2 - wall), -(D / 2 - wall), -0.1))
-    body = body - cav
-    ri, ro = tube_dims(p)
-    if nx >= 2 and ny >= 2:
-        for i in range(1, nx):
-            for j in range(1, ny):
-                x, y = (i - nx / 2) * p["pitch"], (j - ny / 2) * p["pitch"]
-                body = body + (cyl(h - top + 0.2, ro, 0, x, y, FIT_SEG) - cyl(h - top + 0.1, ri, -0.1, x, y, FIT_SEG))
     if studs:
         s = stud(p)
-        for i in range(nx):
-            for j in range(ny):
-                body = body + s.translate(((i + 0.5 - nx / 2) * p["pitch"], (j + 0.5 - ny / 2) * p["pitch"], h))
-    return body
+        plug = cyl(0.40, p["stud_d"] / 2 - 0.05, h - 0.20, 0.0, 0.0, FIT_SEG)
+        unit = s.translate((0.0, 0.0, h)) + plug
+        body = body + union([
+            unit.translate(((i + 0.5 - nx / 2) * p["pitch"], (j + 0.5 - ny / 2) * p["pitch"], 0.0))
+            for i in range(nx) for j in range(ny)
+        ])
+    r_sock = (p["stud_d"] + p["fit"]) / 2
+    z_apex = (p["stud_h"] - 0.35) + (r_sock - 0.08) / math.tan(math.radians(42.0))
+    z_cap = None if (studs or h >= z_apex + LIM["min_roof_mm"]) else (h - LIM["min_roof_mm"])
+    cut = _conical_socket_cutter(p, z_cap=z_cap)
+    cuts = union([
+        cut.translate(((i + 0.5 - nx / 2) * p["pitch"], (j + 0.5 - ny / 2) * p["pitch"], 0.0))
+        for i in range(nx) for j in range(ny)
+    ])
+    return body - cuts
 
 
 # --------------------------------------------------------------------------
@@ -409,24 +449,34 @@ def _foot(size, grid, base="foot", pad=None):
         r, h = (p["stud_d"] + p["fit"]) / 2 + p["wall"] + 0.6, p["stud_h"] + 0.4 + 1.6
         disc = [CrossSection.circle(r, 64).translate((a * p["pitch"], b * p["pitch"])) for a, b in pad]
         return p, h, Manifold.extrude(CrossSection.batch_hull(disc), h)   # pad: hull of discs on the given lattice points, just deep enough for the holes
-    return p, p["plate_h"], block(size, *grid, p["plate_h"], p["plate_top"], studs=False)
+    nx, ny = grid
+    W, D = nx * p["pitch"] - 2 * p["gap"], ny * p["pitch"] - 2 * p["gap"]
+    return p, p["plate_h"], rbox(W, D, p["plate_h"], p["edge_r"], p["bed_chamfer"])
 
 
 def _finish(size, grid, foot, lock, body, fh, base):
     if base == "integrated":
         shape = keep_above(body, fh - 0.5) + foot if foot is not None else keep_above(body, 0.0)
         return integrated_sockets(shape, size, lock)
-    return foot + keep_above(body, fh - 0.5), [socket_conn(size, *grid)], {}
+    p = STUD[size]
+    nx, ny = grid
+    m = foot + keep_above(body, fh - 0.5)
+    cut = _conical_socket_cutter(p)
+    m = m - union([
+        cut.translate(((i + 0.5 - nx / 2) * p["pitch"], (j + 0.5 - ny / 2) * p["pitch"], 0.0))
+        for i in range(nx) for j in range(ny)
+    ])
+    return m, [socket_conn(size, *grid)], {}
 
 
 def integrated_sockets(body, size, lock=False):
-    """Base 'integrated': no plate around the part. Stud holes are cut into the underside of the part's own shape (or its small pad)
-    wherever it is wide enough to wrap a hole with a full wall; where a stud of a plate below would only clip the shape, a relief is cut so
-    the part sits flat on any plate. Holes are the stud diameter plus the fit, so the stud fit is the same 0.05 mm as in a tube cage.
+    """Base 'integrated': no plate around the part. Self-roofing 42-deg conical stud sockets are cut into the underside of the part's own shape
+    (or its small pad) wherever it is wide enough to wrap a hole with a full wall; where a stud of a plate below would only clip the shape, a
+    conical relief is cut so the part sits flat on any plate. Holes are the stud diameter plus the fit, so the stud fit is the same 0.05 mm.
     The hole grid may sit on or half a pitch off the part's axis, independently in x and y, whichever gives the most full holes.
     lock: the part's direction matters, so it needs two holes, or one hole plus a relief that keys it against a neighbouring stud."""
     p = STUD[size]
-    pitch, hole_r, wall, depth = p["pitch"], (p["stud_d"] + p["fit"]) / 2, p["wall"], p["stud_h"] + 0.4
+    pitch, hole_r, wall = p["pitch"], (p["stud_d"] + p["fit"]) / 2, p["wall"]
     fp = body.slice(0.05)
     if fp.is_empty():
         raise ValueError("integrated base: the part has no flat underside on the bed")
@@ -450,20 +500,31 @@ def integrated_sockets(body, size, lock=False):
         raise ValueError("integrated base: no room for a single stud hole with a full wall; the shape needs a small pad")
     if lock and len(full) < 2 and not relief:
         raise ValueError("integrated base: this part's direction matters but it would swivel on one stud; give it a pad for a second hole")
-    roof = LIM["min_roof_mm"]                                 # every hole gets a closed roof: where the shape is too thin above a hole, a boss
+    roof = LIM["min_roof_mm"]                                 # every hole gets a closed roof: where the shape is too thin above a hole, a 42-deg conical dome boss
     inner = fp.offset(-0.05, JoinType.Round)                  # clipped just inside the footprint, so it never grazes the outer surface
-    foot_prism = Manifold.extrude(inner, depth + roof)
+    z_cyl = p["stud_h"] - 0.35
+    tan_a = math.tan(math.radians(42.0))
+    z_apex = z_cyl + (hole_r - 0.08) / tan_a
+    cut_f = _conical_socket_cutter(p)
+    r_chk = max(0.5, hole_r - 0.15)
+    roof_shell = (cut_f.translate((0.0, 0.0, roof - 0.05)) - cut_f) ^ cyl(z_apex + roof + 1.0, r_chk, z_cyl, 0.0, 0.0, 48)
+    z_b0, z_b1 = z_cyl + roof, z_apex + roof
+    r_b0 = hole_r + wall
+    r_b1 = max(0.8, r_b0 - (z_b1 - z_b0) * tan_a)
+    boss_prof = [(0.0, 0.0), (r_b0, 0.0), (r_b0, z_b0), (r_b1, z_b1), (0.0, z_b1)]
+    boss_unit = Manifold.revolve(CrossSection([np.array(boss_prof)]), FIT_SEG)
+    foot_prism = Manifold.extrude(inner, z_b1 + 0.1)
     for x, y in full:                                         # full holes only: reliefs are edge clearance cuts, open at the side anyway
-        disk = CrossSection.circle(hole_r, 64).translate((x, y)) ^ inner
+        disk = CrossSection.circle(r_chk, 48).translate((x, y)) ^ inner
         if disk.is_empty():
             continue
-        if all((disk - body.slice(depth + dz)).area() < 0.01 * disk.area() for dz in (0.05, roof - 0.05)):
-            continue                                          # already roofed: leave the shape untouched
-        body = body + (cyl(depth + roof, hole_r + wall, 0.0, x, y, FIT_SEG) ^ foot_prism)
-    for x, y in full:
-        body = body - cyl(depth + 0.01, hole_r, -0.01, x, y, FIT_SEG)
-    for x, y in relief:                                       # a relief is open at the side: a flat ceiling there would be a ledge over air, so
-        body = body - cyl(depth + 0.01, hole_r, -0.01, x, y, FIT_SEG) - Manifold.cylinder(hole_r, hole_r, 0.01, FIT_SEG).translate((x, y, depth))   # it gets a 45 degree cone roof
+        req = roof_shell.translate((x, y, 0.0))
+        if req.volume() > 1e-6 and (req - body).volume() < 0.01 * req.volume():
+            continue                                          # already roofed (e.g., by an overlying stud or tall body): leave the shape untouched
+        body = body + (boss_unit.translate((x, y, 0.0)) ^ foot_prism)
+    cuts = [cut_f.translate((x, y, 0.0)) for x, y in full + relief]
+    if cuts:
+        body = body - union(cuts)
     nx = int(round(2 * max(abs(x) for x, _ in full) / pitch)) + 1
     ny = int(round(2 * max(abs(y) for _, y in full) / pitch)) + 1
     cells = {(int(round(x / pitch + nx / 2 - 0.5)), int(round(y / pitch + ny / 2 - 0.5))) for x, y in full}
@@ -842,8 +903,9 @@ def robot_arms_grabber(size="small", grid=(2, 2), **_):
     for sx in (-1, 1):
         body = (body + _rr(12.0, 7.0, 3.5, T, x=sx * (hx + 4.5)) + _rr(7.0, 22.0, 3.5, T, x=sx * (hx + 8.0), y=-8.5)
                 + _rr(2.8, 7.0, 1.4, T, x=sx * (hx + 8.0) - 2.3, y=-20.0) + _rr(2.8, 7.0, 1.4, T, x=sx * (hx + 8.0) + 2.3, y=-20.0))   # claws sink 3 mm into the forearm: a relief cut there must not part them
+    body = _robot_studs(body, size, 2, 2, T)
     m, conns, ex = integrated_sockets(body, size, False)
-    return _robot_studs(m, size, 2, 2, T), conns + [stud_conn(size, 2, 2, T)], ex
+    return m, conns + [stud_conn(size, 2, 2, T)], ex
 
 
 def _superellipse_cs(w, d, p=2.30, n=96):
@@ -2327,7 +2389,7 @@ def _sculpted_strand_wig_shell(
     t = WIG_WALL_MM
     flare_w = max(0.0, (w_base - 44.0) * 0.5)
     flare_d = max(0.0, (d_base - 40.6) * 0.5)
-    z_top = WIG_TOP_Z if flat_crown else min(h_top, WIG_TOP_Z)
+    z_top = WIG_TOP_Z if flat_crown else min(h_top, 7.6)
     amp = lock_amp * 0.55
 
     zs = [z_hem - 0.4, z_hem + 0.55, -17.5, -16.0, -15.5, -15.0, -14.0, -11.0, -8.0, -4.1, -2.0, 0.0]     # rings through the ear zone follow the vault's ear bulge
@@ -2348,7 +2410,7 @@ def _sculpted_strand_wig_shell(
 
     # Crown cap above the head: shell shrinks from the vault ceiling to a small flat top
     w0, d0, p0, cy0 = _cavity_dims(0.0, ear_cover)
-    w_top, d_top = (27.0, 15.4) if flat_crown else (24.0, 14.0)
+    w_top, d_top = (27.0, 15.4) if flat_crown else (25.0, 14.4)
     for k in range(1, 6):
         tt = k / 5.0
         u = max(0.0, 1.0 - tt ** 2.2) ** (1.0 / 2.2)
@@ -2451,23 +2513,22 @@ def _sculpted_hairline_cutter(z_hem=-16.5, ear_cover=False, bang_style="parted_l
 
 
 def _finish_sculpted_wig(outer_body, size="small", z_hem=-16.5, ear_cover=False, bang_style="parted_left", nape_notches=True, top_studs_z=None):
-    """Trim bottom skirt at `z_hem`, subtract universal skull vault + sculpted hairline + 2x1 stud sockets at `z = 0`."""
+    """Trim bottom skirt at `z_hem`, subtract universal skull vault + sculpted hairline + conical 2x1 stud sockets at `z = 0`."""
     p = STUD[size]
-    hole_r = (p["stud_d"] + p["fit"]) / 2
-    depth = p["stud_h"] + 0.4
 
     body = keep_above(outer_body, z_hem)
     body = body - _wrap_wig_cavity(z_hem=z_hem, ear_cover=ear_cover)
     body = body - _sculpted_hairline_cutter(z_hem=z_hem, ear_cover=ear_cover, bang_style=bang_style, nape_notches=nape_notches)
-    for sx in (-0.5, 0.5):
-        body = body - cyl(depth + 0.02, hole_r, -0.02, sx * p["pitch"], 0.0, FIT_SEG)
 
     conns = [socket_conn(size, 2, 1)]
     if top_studs_z is not None:
         for sx in (-0.5, 0.5):
-            body = body + Manifold.cylinder(0.25, p["stud_d"] / 2 - 0.35, p["stud_d"] / 2 - 0.35, 24).translate((sx * p["pitch"], 0.0, top_studs_z - 0.12))
+            body = body + Manifold.cylinder(0.35, p["stud_d"] / 2 - 0.15, p["stud_d"] / 2 - 0.15, FIT_SEG).translate((sx * p["pitch"], 0.0, top_studs_z - 0.20))
         body, c_top = add_studs_at(body, size, 2, 1, 0.0, 0.0, top_studs_z, "top_studs")
         conns.append(c_top)
+    cut = _conical_socket_cutter(p)
+    for sx in (-0.5, 0.5):
+        body = body - cut.translate((sx * p["pitch"], 0.0, 0.0))
     return body, conns, {"print_rotation_deg": [0, 0, 0], "sockets": {"holes": 2, "reliefs": 0, "locked": True}}
 
 
@@ -2927,14 +2988,13 @@ def _hat_band(rim, z_lo, z_hi, grow, n_locks=0, lock_amp=0.0):
 
 
 def _finish_wearable_hat(outer_body, size="small", rim=HAT_WRAP_MM):
-    """Seat the rim cleanly on the bed at `z = -rim` for zero-support printing, cut the wig-envelope vault and the `2x1` crown sockets at `z = 0.0`."""
+    """Seat the rim cleanly on the bed at `z = -rim` for zero-support printing, cut the wig-envelope vault and conical `2x1` crown sockets at `z = 0.0`."""
     p = STUD[size]
-    hole_r = (p["stud_d"] + p["fit"]) / 2
-    depth = p["stud_h"] + 0.4
+    cut = _conical_socket_cutter(p)
     body = keep_above(outer_body, -rim)
     body = body - _hat_crown_cavity()
     for sx in (-0.5, 0.5):
-        body = body - cyl(depth + 0.02, hole_r, -0.02, sx * p["pitch"], 0.0, FIT_SEG)
+        body = body - cut.translate((sx * p["pitch"], 0.0, 0.0))
     return (
         body,
         [socket_conn(size, 2, 1)],
@@ -2944,7 +3004,7 @@ def _finish_wearable_hat(outer_body, size="small", rim=HAT_WRAP_MM):
 
 def hat_ballcap(size="small", grid=(2, 1), lock=True, **_):
     """6-panel baseball cap that wraps the head: low rounded crown with panel grooves and a top button, the rim and curved forward visor at the hairline."""
-    rim, ch = HAT_RIM["ballcap"], 6.2
+    rim, ch = HAT_RIM["ballcap"], 7.5
     dome = _hat_body(rim, ch, 18.0, 14.0, p_top=2.4, n_locks=6, lock_amp=-0.35)
     button = _superellipse_chain([(ch - 0.8, 7.8, 7.8, 2.0, 0.0, -0.4), (ch + 1.0, 6.4, 6.4, 2.0, 0.0, -0.4), (ch + 1.7, 3.6, 3.6, 2.0, 0.0, -0.4)])
     bill_base = _loft_xy_sections([
@@ -2987,7 +3047,7 @@ def hat_cowboy(size="small", grid=(2, 1), lock=True, **_):
 
 def hat_hardhat(size="small", grid=(2, 1), lock=True, **_):
     """Builder safety hard hat wrapped low on the head: central reinforcing spine ridge, side ribs, and a front visor peak at the brow."""
-    rim, ch = HAT_RIM["hardhat"], 7.0
+    rim, ch = HAT_RIM["hardhat"], 7.5
     brim = _loft_xy_sections([
         (-rim - 0.3, [(-24.0, 14.5), (-25.0, 0.0), (-23.4, -15.0), (-15.5, -26.6), (0.0, -29.4), (15.5, -26.6), (23.4, -15.0), (25.0, 0.0), (24.0, 14.5), (16.0, 20.0), (-16.0, 20.0)]),
         (-rim + 2.8, [(-24.4, 14.8), (-25.4, 0.0), (-23.8, -15.2), (-15.3, -26.2), (0.0, -29.0), (15.3, -26.2), (23.8, -15.2), (25.4, 0.0), (24.4, 14.8), (16.3, 20.3), (-16.3, 20.3)]),
@@ -3021,7 +3081,7 @@ def hat_tophat(size="small", grid=(2, 1), lock=True, **_):
 
 def hat_pirate(size="small", grid=(2, 1), lock=True, **_):
     """3-cornered captain's tricorne wrapped low on the head: a low dome and upturned triangular brim walls."""
-    rim, ch = HAT_RIM["pirate"], 6.0
+    rim, ch = HAT_RIM["pirate"], 7.5
     dome = _hat_body(rim, ch, 20.0, 15.0, p_top=2.2)
     tricorne = _ring_stack_manifold([
         (-rim - 0.3, [(0.0, -27.0), (19.5, -18.0), (26.5, 2.0), (22.0, 20.0), (0.0, 22.0), (-22.0, 20.0), (-26.5, 2.0), (-19.5, -18.0)]),
@@ -3583,8 +3643,7 @@ def slope_body(size, nx, ny, angle_deg=45):
     prof = CrossSection([np.array([(-D / 2, fh - 0.5), (D / 2, fh - 0.5), (D / 2, fh + rise), (D / 2 - land, fh + rise), (-D / 2, fh + lip)])])
     wedge = Manifold.extrude(prof, W).rotate((90, 0, 90)).translate((-W / 2, 0, 0))
     wedge = wedge ^ Manifold.extrude(rrect(W, D, p["edge_r"]), fh + rise + 1)      # keep the foot's rounded corners
-    foot = block(size, nx, ny, fh, p["plate_top"], studs=False)
-    return flare_clip(wedge, foot.slice(fh - 0.5), fh - 0.5)                       # the foot's top edge is rounded: never overhang it
+    return flare_clip(wedge, rrect(W, D, p["edge_r"]), fh - 0.5)                   # the foot's top edge is rounded: never overhang it
 
 
 def dome_body(size, nx, ny):
@@ -3602,25 +3661,52 @@ def _fam_block(row):
     h_key, top_key = ("brick_h", "brick_top") if b["kind"] == "brick" else ("plate_h", "plate_top")
     h, top = p[h_key], p[top_key]
     return dict(fn=lambda: (block(size, nx, ny, h, top), [stud_conn(size, nx, ny, h), socket_conn(size, nx, ny)], {}),
-                cavity=(size, nx, ny, h_key, top_key), ref=None, type="Brick and plate", kind=b["kind"])
+                cavity=None, ref=None, type="Brick and plate", kind=b["kind"])
+
+
+def _fam_tile(row):
+    """Flat studless tile: prints show-face-down on the bed ([180, 0, 0]) so blind cylindrical female sockets open upward (+Z) with zero supports."""
+    size = row["size"]
+    nx, ny = row["build"]["grid"]
+    p = STUD[size]
+    h = p["plate_h"]
+    W, D = nx * p["pitch"] - 2 * p["gap"], ny * p["pitch"] - 2 * p["gap"]
+
+    def fn():
+        m = rbox(W, D, h, p["edge_r"], p["bed_chamfer"]).rotate((180, 0, 0)).translate((0, 0, h))
+        cut = _blind_tile_socket_cutter(p)
+        m = m - union([
+            cut.translate(((i + 0.5 - nx / 2) * p["pitch"], (j + 0.5 - ny / 2) * p["pitch"], 0.0))
+            for i in range(nx) for j in range(ny)
+        ])
+        return m, [socket_conn(size, nx, ny)], {"print_rotation_deg": [180, 0, 0]}
+
+    return dict(fn=fn, cavity=None, ref=(size, nx, ny, (0, 0)), type="Shape block")
 
 
 def _fam_foot(body):
-    """Female-only shape: the standard foot (socket underside) with a body drawn above it. body=None gives a flat tile."""
+    """Female-only shape: solid foot + upper body, with self-roofing 42-deg conical female sockets cut underneath."""
     def make(row):
         size = row["size"]
         nx, ny = row["build"]["grid"]
         params = {k: v for k, v in row["build"].items() if k != "grid"}   # family parameters, e.g. slope angle_deg
         p = STUD[size]
+        W, D = nx * p["pitch"] - 2 * p["gap"], ny * p["pitch"] - 2 * p["gap"]
 
         def fn():
-            foot = block(size, nx, ny, p["plate_h"], p["plate_top"], studs=False)
-            return (foot if body is None else foot + body(size, nx, ny, **params)), [socket_conn(size, nx, ny)], {}
-        return dict(fn=fn, cavity=(size, nx, ny, "plate_h", "plate_top"), ref=(size, nx, ny, (0, 0)), type="Shape block")
+            foot = rbox(W, D, p["plate_h"], p["edge_r"], p["bed_chamfer"])
+            m = foot if body is None else foot + body(size, nx, ny, **params)
+            cut = _conical_socket_cutter(p)
+            m = m - union([
+                cut.translate(((i + 0.5 - nx / 2) * p["pitch"], (j + 0.5 - ny / 2) * p["pitch"], 0.0))
+                for i in range(nx) for j in range(ny)
+            ])
+            return m, [socket_conn(size, nx, ny)], {}
+        return dict(fn=fn, cavity=None, ref=(size, nx, ny, (0, 0)), type="Shape block")
     return make
 
 
-FAMILIES = {"block": _fam_block, "tile": _fam_foot(None), "slope": _fam_foot(slope_body), "dome": _fam_foot(dome_body)}
+FAMILIES = {"block": _fam_block, "tile": _fam_tile, "slope": _fam_foot(slope_body), "dome": _fam_foot(dome_body)}
 CATALOG = json.loads((HERE / "catalog.json").read_text())
 
 
@@ -3657,7 +3743,7 @@ def part_from_row(row):
             import toyventor_kitcard as _kc
             builder = getattr(_kc, b["fn"])
         integ = params.get("base") == "integrated"
-        spec = dict(fn=lambda: builder(size=size, grid=(nx, ny), **params), cavity=None if integ else (size, nx, ny, "plate_h", "plate_top"),
+        spec = dict(fn=lambda: builder(size=size, grid=(nx, ny), **params), cavity=None,
                     ref=None if integ else (size, nx, ny, (0, 0)), type=row.get("type", "Part"))
     spec.setdefault("kind", None)
     return dict(id=row["id"], name=row["name"], type=row.get("type", spec.pop("type")), line="shared" if fam in ("forge_mount", "forge_shoe") else row["line"],
@@ -3894,17 +3980,23 @@ def blocking_failures(checks):
 
 
 def hole_roof(m, conns):
-    """Fraction of each integrated stud hole's ceiling covered by material, just above the ceiling and at the full roof height."""
+    """Fraction of each integrated stud hole's ceiling covered by at least min_roof_mm of vertical solid above it."""
     worst, n = 1.0, 0
+    dz = LIM["min_roof_mm"] - 0.05
     for c in conns:
         if c.get("style") != "holes":
             continue
         p = STUD[c["size_class"]]
-        depth, r = p["stud_h"] + 0.4, (p["stud_d"] + p["fit"]) / 2
+        hole_r = (p["stud_d"] + p["fit"]) / 2
+        r_chk = max(0.5, hole_r - 0.15)
+        area0 = CrossSection.circle(r_chk, 64).area()
+        z_lo = p["stud_h"] - 0.6
+        z_apex = (p["stud_h"] - 0.35) + (hole_r - 0.08) / math.tan(math.radians(42.0))
+        z_hi = z_apex + LIM["min_roof_mm"] + 1.5
         for x, y in hole_positions(c):
-            disk = CrossSection.circle(r, 64).translate((x, y))
-            for dz in (0.05, LIM["min_roof_mm"] - 0.05):
-                worst = min(worst, 1 - (disk - m.slice(depth + dz)).area() / disk.area())
+            col = m ^ cyl(z_hi - z_lo, r_chk, z_lo, x, y, 64)
+            covered = (col ^ col.translate((0, 0, -0.5 * dz)) ^ col.translate((0, 0, -dz))).project()
+            worst = min(worst, min(1.0, covered.area() / area0))
             n += 1
     return worst > 0.99, f"{n} hole(s); least-covered roof {worst * 100:.0f}% (needs {LIM['min_roof_mm']} mm closed above every ceiling)"
 
@@ -4045,7 +4137,7 @@ def evaluate(part, validator):
         "connectors": conns,
         "safety": {"small_part_status": small["status"], "min_enclosing_diameter_mm": small["min_enclosing_diameter_mm"],
                    "margin_pct": small["margin_pct"], "print_page_warning": warnings_for(small["status"])},
-        "print": {"orientation": ("bed = z0; lying on a flat, axis horizontal" if rot else "bed = z0; lying flat, bores and pins along z" if part["size"] == "pro" else "bed = z0; studs/body up; underside cavity down" if part["cavity"] else "bed = z0; flat, studs up"),
+        "print": {"orientation": ("bed = z0; show face down on bed, sockets up" if rot and part["size"] != "pro" and abs(rot[0] - 180) < 1e-3 else "bed = z0; lying on a flat, axis horizontal" if rot else "bed = z0; lying flat, bores and pins along z" if part["size"] == "pro" else "bed = z0; studs/body up; underside cavity down" if part["cavity"] else "bed = z0; flat, studs up"),
                   "supports": False, **({"rotation_deg": rot} if rot else {})},
         "design_status": "needs_reproportion",  # placeholder; derived below once every check has run
         "fit": fit_block(fit, part["size"]),

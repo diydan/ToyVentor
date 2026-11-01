@@ -1,10 +1,10 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_racer_light_bar_S.stl",
-  "file_sha256": "a4b8db6adf97ef2e3c926c69afcd34579bf3ebdac20f0da83a7a2bb6aeb57457",
+  "file_sha256": "e285de49b90852b64777688bb9ead9b21041ba78b26a6855697454c5fc43dbd3",
   "part_id": "racer_light_bar",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-10-31T14:35:40Z",
+  "checked_at": "2026-11-01T21:31:54Z",
   "metrics": {
     "bbox_mm": [
       24.4,
@@ -13,7 +13,7 @@
     ],
     "volume_cm3": 1.62,
     "surface_cm2": 11.65,
-    "triangles": 4052,
+    "triangles": 3836,
     "ledges": [],
     "layers": 51,
     "bed_contact_mm2": 189.3,
@@ -123,51 +123,10 @@
       "value": 0,
       "limit": 0,
       "detail": "regions where the wall is under 0.8 mm (two nozzle widths) over 2.0 mm2, or under 0.4 mm (one nozzle width) over 0.25 mm2; sharp edges and slivers are ignored"
-    },
-    {
-      "id": "S1_slices",
-      "level": "block",
-      "result": "pass",
-      "value": null,
-      "limit": null,
-      "detail": "sliced without errors"
-    },
-    {
-      "id": "S2_slicer_stability",
-      "level": "warn",
-      "result": "pass",
-      "value": null,
-      "limit": null,
-      "detail": "no stability warnings"
-    },
-    {
-      "id": "S3_slicer_blocking",
-      "level": "block",
-      "result": "pass",
-      "value": null,
-      "limit": null,
-      "detail": "nothing the slicer would print in mid-air"
     }
   ],
   "print_settings": {},
-  "slicer": {
-    "ok": true,
-    "brim_mm": 0,
-    "seconds_to_slice": 2.8,
-    "warnings": [],
-    "filament_g": 1.69,
-    "filament_m": 0.57,
-    "filament_cost_usd": 0.03,
-    "print_time_s": 732,
-    "layers": 51,
-    "warnings_without_brim": [],
-    "brims_tried_mm": [
-      0
-    ],
-    "engine": "PrusaSlicer-2.8.1",
-    "slice_logic": "1",
-    "reused_from": "2026-10-31T11:23:37Z"
-  },
+  "slicer": null,
   "verdict": "pass",
   "summary": "Prints as is"
 }

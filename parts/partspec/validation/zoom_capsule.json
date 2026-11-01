@@ -4,7 +4,7 @@
   "file_sha256": "e7f6da5c5a39e3bec8b9be4df008cadbce91500e3aa4a818325104a159ba6849",
   "part_id": "zoom_capsule",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-10-31T14:24:22Z",
+  "checked_at": "2026-11-01T21:28:42Z",
   "metrics": {
     "bbox_mm": [
       34.38,
@@ -161,7 +161,7 @@
     ],
     "engine": "PrusaSlicer-2.8.1",
     "slice_logic": "1",
-    "reused_from": "2026-10-31T11:18:53Z"
+    "reused_from": "2026-10-31T14:24:22Z"
   },
   "verdict": "pass",
   "summary": "Prints as is"

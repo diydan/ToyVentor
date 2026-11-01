@@ -4,7 +4,7 @@
   "file_sha256": "4d8be731ff38665c874785b12d92d70ab5bddc4d4aef3ad3c7f0904d8d3d9a78",
   "part_id": "dome_s_2x2",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-10-31T14:27:24Z",
+  "checked_at": "2026-11-01T21:29:37Z",
   "metrics": {
     "bbox_mm": [
       24.8,
@@ -169,7 +169,7 @@
       0
     ],
     "engine": "PrusaSlicer-2.8.1",
-    "reused_from": "2026-10-31T11:19:35Z"
+    "reused_from": "2026-10-31T14:27:24Z"
   },
   "verdict": "pass",
   "summary": "Prints as is"

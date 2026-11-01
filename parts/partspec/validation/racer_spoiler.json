@@ -4,7 +4,7 @@
   "file_sha256": "5c421da0e94be18c5a3d3307df81fe5c0ec56c9026a7a8b937a7c33665260c20",
   "part_id": "racer_spoiler",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-10-31T14:35:34Z",
+  "checked_at": "2026-11-01T21:31:53Z",
   "metrics": {
     "bbox_mm": [
       24.8,
@@ -180,7 +180,7 @@
     ],
     "engine": "PrusaSlicer-2.8.1",
     "slice_logic": "1",
-    "reused_from": "2026-10-31T11:23:31Z"
+    "reused_from": "2026-10-31T14:35:34Z"
   },
   "verdict": "pass",
   "summary": "Prints as is"

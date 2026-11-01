@@ -4,7 +4,7 @@
   "file_sha256": "c02d05029e3f1b41d0606833666c21c512dcf864d7765ea3ef3ed0ad7d769f9b",
   "part_id": "waddle_tail_s",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-10-31T14:35:44Z",
+  "checked_at": "2026-11-01T21:32:01Z",
   "metrics": {
     "bbox_mm": [
       16.79,
@@ -176,7 +176,7 @@
     ],
     "engine": "PrusaSlicer-2.8.1",
     "slice_logic": "1",
-    "reused_from": "2026-10-31T11:23:47Z"
+    "reused_from": "2026-10-31T14:35:44Z"
   },
   "verdict": "pass_with_settings",
   "summary": "Prints with brim_width_mm = 3"

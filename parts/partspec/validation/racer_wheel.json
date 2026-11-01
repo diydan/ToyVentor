@@ -4,7 +4,7 @@
   "file_sha256": "05bf0f664b21d96126c3ff7be52219837d11232ea8270b46b70b04089e7d6fbf",
   "part_id": "racer_wheel",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-10-31T14:35:44Z",
+  "checked_at": "2026-11-01T21:32:00Z",
   "metrics": {
     "bbox_mm": [
       17.91,
@@ -155,7 +155,7 @@
     ],
     "engine": "PrusaSlicer-2.8.1",
     "slice_logic": "1",
-    "reused_from": "2026-10-31T11:23:46Z"
+    "reused_from": "2026-10-31T14:35:44Z"
   },
   "verdict": "pass",
   "summary": "Prints as is"

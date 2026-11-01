@@ -1,24 +1,24 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_mom_slam_plunger_P.stl",
-  "file_sha256": "ede0b19f8e3d59ef9b44f4d7eec7a0ef785027076f76112ee28ad6aa9bd5013a",
+  "file_sha256": "8ef3cc9076164e93c2a4172473ca91d1857fd4f7a101256fb9a94da13f4d5315",
   "part_id": "mom_slam_plunger",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-10-31T15:28:10Z",
+  "checked_at": "2026-11-01T21:40:44Z",
   "metrics": {
     "bbox_mm": [
       18.0,
-      76.0,
+      94.0,
       5.0
     ],
-    "volume_cm3": 2.75,
-    "surface_cm2": 24.53,
-    "triangles": 396,
+    "volume_cm3": 4.17,
+    "surface_cm2": 33.21,
+    "triangles": 702,
     "ledges": [],
     "layers": 25,
-    "bed_contact_mm2": 505.6,
+    "bed_contact_mm2": 825.5,
     "height_mm": 5.0,
-    "slenderness": 0.22,
+    "slenderness": 0.17,
     "centre_of_mass_over_contact": true,
     "min_wall_mm": null,
     "thin_wall_regions": []
@@ -47,7 +47,7 @@
       "result": "pass",
       "value": [
         18.0,
-        76.0,
+        94.0,
         5.0
       ],
       "limit": [
@@ -101,9 +101,9 @@
       "id": "V9_bed_contact",
       "level": "info",
       "result": "pass",
-      "value": 505.6,
+      "value": 825.5,
       "limit": null,
-      "detail": "height / sqrt(contact) = 0.22; above about 3 the slicer often asks for a brim"
+      "detail": "height / sqrt(contact) = 0.17; above about 3 the slicer often asks for a brim"
     },
     {
       "id": "V8_wall_thickness",

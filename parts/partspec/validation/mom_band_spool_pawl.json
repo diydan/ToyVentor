@@ -1,29 +1,70 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_mom_band_spool_pawl_P.stl",
-  "file_sha256": "049019c659cb463245529f960c83e80fb0802c8d1b52cc46c8f1678bebaae062",
+  "file_sha256": "fc8fb9d44c2067d6a9bd61b16a2ea7913879c74b1fb670fe2f4daa43bd6a1e4c",
   "part_id": "mom_band_spool_pawl",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-10-31T15:28:08Z",
+  "checked_at": "2026-11-01T21:40:41Z",
   "metrics": {
     "bbox_mm": [
-      26.0,
-      26.0,
-      12.5
+      21.6,
+      21.6,
+      13.0
     ],
-    "volume_cm3": 2.07,
-    "surface_cm2": 17.42,
-    "triangles": 1272,
+    "volume_cm3": 2.0,
+    "surface_cm2": 16.6,
+    "triangles": 3278,
     "ledges": [],
-    "layers": 62,
-    "bed_contact_mm2": 416.0,
-    "height_mm": 12.5,
-    "slenderness": 0.61,
+    "layers": 65,
+    "bed_contact_mm2": 96.5,
+    "height_mm": 13.0,
+    "slenderness": 1.32,
     "centre_of_mass_over_contact": true,
-    "min_wall_mm": null,
+    "min_wall_mm": 0.733,
     "thin_wall_regions": []
   },
-  "bridges": [],
+  "bridges": [
+    {
+      "z_mm": 6.2,
+      "span_mm": 0.01,
+      "area_mm2": 0.2
+    },
+    {
+      "z_mm": 6.7,
+      "span_mm": 0.42,
+      "area_mm2": 0.4
+    },
+    {
+      "z_mm": 6.7,
+      "span_mm": 0.42,
+      "area_mm2": 0.4
+    },
+    {
+      "z_mm": 6.7,
+      "span_mm": 0.42,
+      "area_mm2": 0.4
+    },
+    {
+      "z_mm": 6.7,
+      "span_mm": 0.42,
+      "area_mm2": 0.4
+    },
+    {
+      "z_mm": 6.7,
+      "span_mm": 0.42,
+      "area_mm2": 0.4
+    },
+    {
+      "z_mm": 6.7,
+      "span_mm": 0.42,
+      "area_mm2": 0.4
+    },
+    {
+      "z_mm": 6.7,
+      "span_mm": 0.42,
+      "area_mm2": 0.4
+    }
+  ],
   "checks": [
     {
       "id": "V1_mesh_sound",
@@ -46,9 +87,9 @@
       "level": "block",
       "result": "pass",
       "value": [
-        26.0,
-        26.0,
-        12.5
+        21.6,
+        21.6,
+        13.0
       ],
       "limit": [
         180,
@@ -77,9 +118,9 @@
       "id": "V6_bridge_span",
       "level": "block",
       "result": "pass",
-      "value": 0.0,
+      "value": 0.42,
       "limit": 20,
-      "detail": "0 bridge(s); widest unsupported span in mm"
+      "detail": "8 bridge(s); widest unsupported span in mm"
     },
     {
       "id": "V5_no_floating_islands",
@@ -101,9 +142,9 @@
       "id": "V9_bed_contact",
       "level": "info",
       "result": "pass",
-      "value": 416.0,
+      "value": 96.5,
       "limit": null,
-      "detail": "height / sqrt(contact) = 0.61; above about 3 the slicer often asks for a brim"
+      "detail": "height / sqrt(contact) = 1.32; above about 3 the slicer often asks for a brim"
     },
     {
       "id": "V8_wall_thickness",
