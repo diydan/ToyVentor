@@ -21,6 +21,8 @@ import {
   BASE_SET_PARTSPEC_IDS,
   convertPartSpecPart,
   KIP_WARDROBE_PARTSPEC_IDS,
+  MECH_ROBOTICS_PARTSPEC_IDS,
+  MODULAR_CRAFT_PARTSPEC_IDS,
   RACER_GARAGE_PARTSPEC_IDS,
   type BridgeOptions,
   type PartSpecCatalogPart,
@@ -110,6 +112,8 @@ const baseBuilt = buildParts(BASE_SET_PARTSPEC_IDS, {
 });
 const racerBuilt = buildParts(RACER_GARAGE_PARTSPEC_IDS);
 const wardrobeBuilt = buildParts(KIP_WARDROBE_PARTSPEC_IDS);
+const modularCraftBuilt = buildParts(MODULAR_CRAFT_PARTSPEC_IDS);
+const mechRoboticsBuilt = buildParts(MECH_ROBOTICS_PARTSPEC_IDS);
 
 const setsToWrite: Array<{ filename: string; set: ToySet }> = [
   {
@@ -134,6 +138,22 @@ const setsToWrite: Array<{ filename: string; set: ToySet }> = [
       id: "kip-wardrobe",
       name: "Forge Club · Kip & Critter Wardrobe",
       parts: wardrobeBuilt.map((x) => x.part),
+    },
+  },
+  {
+    filename: "modular-craft.json",
+    set: {
+      id: "modular-craft",
+      name: "Forge Club · Modular Craft Kit",
+      parts: modularCraftBuilt.map((x) => x.part),
+    },
+  },
+  {
+    filename: "mech-robotics.json",
+    set: {
+      id: "mech-robotics",
+      name: "Forge Club · Functional Mechanics & Mech Robotics",
+      parts: mechRoboticsBuilt.map((x) => x.part),
     },
   },
 ];
@@ -164,7 +184,13 @@ if (syncAssets) {
 
   const stageDir = mkdtempSync(join(tmpdir(), "toyventor-bridge-stl-"));
   try {
-    const allBuilt = [...baseBuilt, ...racerBuilt, ...wardrobeBuilt];
+    const allBuilt = [
+      ...baseBuilt,
+      ...racerBuilt,
+      ...wardrobeBuilt,
+      ...modularCraftBuilt,
+      ...mechRoboticsBuilt,
+    ];
     for (const { part, sourceStl } of allBuilt) {
       if (!part.stlFile) continue;
       copyFileSync(sourceStl, join(stlOutDir, part.stlFile));

@@ -256,14 +256,15 @@ Because we drop support generation (Section 2), any newly authored part (via [`L
   `{"check": "V4_no_steep_overhang", "steep_area_mm2": 14.6, "z_range_mm": [8.2, 12.0], "hint": "Clamp slice outward growth <= 0.78 * dz (<= 38 deg) or add 45 deg underside chamfer"}`
 - The LLM adjusts the parametric recipe/code until `supportFree: true` and triangle budget (`≤ 15,000` print tris) both pass.
 
-### 4.4 Role 4 — Cached Parent Print-Drawer Slicer Tips
-At catalog build time, an offline LLM pass summarizes `parts/partspec/validation/<id>.json` (`filament_g`, `print_time_min`, `brim_width_mm`, `slenderness`) into validated, brand-clean 1-sentence parent guidance (stored statically alongside set metadata; template fallback when unset, e.g., *"Prints flat with no supports; add a 3 mm brim for tall-pin bed grip"*).
+### 4.4 Role 4 — Cached Toy-Finish Slicer Recipe & Parent Print-Drawer Tips
+At catalog build time, deterministic surface analysis (`max_exterior_overhang_deg`, flat-top deck area, `validation/<id>.json` brim/time/filament) + an offline LLM review pass populate each part's `finish_class`, `slicer_recipe`, and a validated 1-sentence parent tip (replacing hardcoded `"0.2 mm PLA"` in [`PrintDrawer.tsx`](../../src/features/game/world/PrintDrawer.tsx) and [`PackOverlay.tsx`](../../src/features/game/world/PackOverlay.tsx); e.g., *"0.12 mm PLA on smooth PEI · 3 walls @ 30 mm/s (inner-first) · rear seam · no supports"* or *"0.16 mm PLA on smooth PEI · 3 walls @ 30 mm/s (outer-first) · iron top deck · 3 mm brim"*).
 
-### Rejected LLM Patterns (Explicit Non-Goals)
+### Rejected LLM & Mesh Patterns (Explicit Non-Goals)
 | Pattern | Why Rejected |
 | :--- | :--- |
 | LLM generating/simplifying `.stl` or `.glb` vertex arrays directly | Hallucinates non-manifold edges, destroys `0.05 mm` TU connector fit, `1,000×` slower than `manifold3d`. |
-| Never-decimate print tier (clean-only STL) | Rejected on measured evidence: `Manifold.simplify(ε = 0.015 mm)` is `26×` finer than a `0.4 mm` nozzle with `Δvol ≤ 0.0212%` and zero `V1–V10` regressions, yielding `−42%` disk that weld-only cleaning cannot (`0.0%`, §1.2.2). |
+| Never-decimate print tier (clean-only STL) | Rejected on measured evidence: weld-only cleaning yields `0.0%` on binary STL (§1.2.2), whereas finish-class-aware `Manifold.simplify` (`0.006 mm` `G2/G3` arc-safe on curved show shells, `0.010 mm` gears, `0.018 mm` prismatic) cuts `38–50%` disk with zero `V1–V10` or `0.12 mm` surface-finish regressions. |
+| Uniform `ε ≥ 0.015 mm` simplification on curved cosmetic shells | Defeats slicer `0.012 mm` `G2/G3` arc fitting on `R > 15 mm` hoods/visors, leaving faint `~1.8 mm` specular facets on `0.12 mm` slow-wall prints (§3.1). |
 | Calling an LLM inside `npm run bridge`, `npm run build`, or browser runtime | Breaks offline determinism, slows CI, and leaks API dependency into builds. |
 | Accepting LLM LOD parameters without `Hausdorff` + `Manifold` + `preprint_check` gates | Visual or mechanical regressions could slip into downloadable print files. |
 
@@ -272,25 +273,46 @@ At catalog build time, an offline LLM pass summarizes `parts/partspec/validation
 ## 5. File, Schema & CLI Specifications
 
 ### 5.1 `parts/partspec/asset_optimization_manifest.json`
-Tracked in Git (`< 25 KB` for 63 parts). Missing entries fall back cleanly to `defaults`:
+Tracked in Git (`< 30 KB` for 63 parts). Missing entries fall back cleanly to `defaults` + deterministic geometry classification:
 
 ```json
 {
-  "version": 1,
+  "version": 2,
   "defaults": {
-    "print_simplify_mm": 0.015,
-    "print_tight_simplify_mm": 0.010,
+    "print_simplify_mm": {
+      "show_curved": 0.006,
+      "precision_gear_pin": 0.010,
+      "prismatic_structural": 0.018
+    },
     "web_simplify_mm": 0.080,
     "web_crease_deg": 34,
-    "quantize": true
+    "quantize": true,
+    "hygiene": {
+      "dry_filament": true,
+      "pla_flow_ratio_hint": "0.96-0.98",
+      "bed_surface": "smooth_pei",
+      "outer_wall_speed_mms": 30,
+      "wall_loops": 3
+    }
   },
   "parts": {
     "kit-keel-base": {
       "source_sha256": "...",
-      "print_simplify_mm": 0.015,
+      "finish_class": "prismatic_structural",
+      "print_simplify_mm": 0.018,
       "web_simplify_mm": 0.100,
       "web_crease_deg": 34,
-      "brim_width_mm": 0,
+      "slicer_recipe": {
+        "layer_height_mm": 0.16,
+        "wall_loops": 3,
+        "outer_wall_speed_mms": 30,
+        "wall_order": "inner_first",
+        "seam_position": "aligned",
+        "ironing": "all_top",
+        "ironing_inset_mm": 0.21,
+        "brim_width_mm": 0,
+        "support_mode": "none"
+      },
       "llm_tuned_at": "2026-11-01"
     }
   }
@@ -301,7 +323,7 @@ Tracked in Git (`< 25 KB` for 63 parts). Missing entries fall back cleanly to `d
 
 1. **`scripts/optimize_assets.py` *(new, uses `parts/partspec/.venv` `manifold3d` + `trimesh`)*:**
    - `python3 scripts/optimize_assets.py --in <stage-dir> --stl-out public/parts-stl --web-stage <web-stage-dir> --manifest parts/partspec/asset_optimization_manifest.json [--verify-preprint] [--report out.json]`
-   - Runs Pass P1 (`Manifold.simplify(ε_print)` + `z=0` bed snap + `V1`/bbox/volume assertions) → writes optimized binary STLs to `public/parts-stl/`.
+   - Classifies/reads `finish_class` (`show_curved` `0.006 mm`, `precision_gear_pin` `0.010 mm`, `prismatic_structural` `0.018 mm`), runs Pass P1 (`Manifold.simplify(ε_print)` + `z=0` bed snap + `V1`/bbox/volume/`V11_show_face_quality` assertions), and emits deterministic `slicer_recipe` telemetry → writes optimized binary STLs to `public/parts-stl/`.
    - Runs Web LOD (`Manifold.simplify(ε_web)`) → writes simplified intermediate STLs to `<web-stage-dir>` for `stl_to_glb.py`.
    - Also processes standalone printable payloads such as `public/parts-stl/forge-mount-first-print.stl`.
 2. **`scripts/stl_to_glb.py` *(upgraded, remains 100% Python stdlib)*:**
@@ -314,12 +336,12 @@ Tracked in Git (`< 25 KB` for 63 parts). Missing entries fall back cleanly to `d
    - When `.venv` is absent (lightweight CI): copies source STLs and runs stdlib `stl_to_glb.py` (still achieving the `−80%` indexed+quantized GLB win).
    - Preserves `--no-assets` flag unchanged.
 4. **`scripts/llm-lod-advisor.ts` *(new, opt-in `npm run parts:tune-llm`)*:**
-   - Renders multi-view contact sheets for new/changed parts (`source_sha256` mismatch), calls the configured vision/Responses model (`MODEL_API_KEY`), validates JSON bounds + Hausdorff error, and updates `parts/partspec/asset_optimization_manifest.json`.
+   - Renders multi-view contact sheets for new/changed parts (`source_sha256` mismatch), audits `-Y` show-face orientation / overhang finish / seam placement, calls the configured vision/Responses model (`MODEL_API_KEY`), validates JSON bounds + Hausdorff error, and updates `parts/partspec/asset_optimization_manifest.json`.
 5. **`scripts/preflight-deploy.ts` *(extended Check #7)*:**
    - Validates every `.glb` header (`magic === 0x46546C67`, `version === 2`, total length === file size, valid JSON chunk `0x4E4F534A`).
    - Enforces hard payload budgets so future parts cannot silently bloat the bundle:
      - `public/parts-glb/` total `<= 5.0 MB` (target `~2.1 MB`), single `.glb` `<= 250 KB`.
-     - `public/parts-stl/` total `<= 20.0 MB` (target `~16.5 MB`), single `.stl` `<= 1.6 MB`.
+     - `public/parts-stl/` total `<= 21.0 MB` (target `~14.5–18.5 MB` arc-fit-safe), single `.stl` `<= 1.6 MB`.
 
 ---
 
@@ -328,9 +350,9 @@ Tracked in Git (`< 25 KB` for 63 parts). Missing entries fall back cleanly to `d
 | Milestone | Scope | Expected Output |
 | :--- | :--- | :--- |
 | **M1 — Web GLB Quantization, Indexing & Fast-Load Path** | Upgrade `scripts/stl_to_glb.py` (`uint16` crease-indexed + `KHR_mesh_quantization`); parallelize `model-viewer` import + GLB preload in `PartPreview.tsx`/`PrintDrawer.tsx`; bump `public/sw.js` to `toyventor-v3`. | `public/parts-glb/` drops `41.91 MB → 8.24 MB` immediately (even before LOD); mobile preview waterfall eliminated. |
-| **M2 — `Manifold.simplify` Print + Web LOD Pipeline** | Add `scripts/optimize_assets.py` + `asset_optimization_manifest.json`; wire into `scripts/bridge-partspec.ts` (including `forge-mount-first-print.stl`); extend `scripts/preflight-deploy.ts` with GLB validity & byte budgets. | `public/parts-glb/` → **`~2.10 MB` (`−95%`)**; `public/parts-stl/` → **`~17.3 MB` (`−42%`)**; zero `V1–V10` regressions. |
-| **M3 — Offline LLM Advisor & CAD Root-Bloat Refactor** | Ship `scripts/llm-lod-advisor.ts` (`npm run parts:tune-llm`) for per-part LOD/crease tuning; add `seg_for_radius()` in `toyventor_geom.py` and LLM-refactor top 10 heavy builders gated by CSG symmetric volume diff. | `public/parts-glb/` → **`~1.75 MB`**; `public/parts-stl/` → **`~14–15 MB` (`−50%`)**; faster CAD rebuilds; zero silhouette faceting. |
-| **M4 — Slicer Brim Badge & Optional `.3mf` Export** | Surface cached `brim_width_mm` from `parts/partspec/validation/*.json` in `PrintDrawer.tsx`; optional client/build `.3mf` download (`~3.5 MB` total for all parts). | Clear parent adhesion guidance with zero support-mesh bloat. |
+| **M2 — Finish-Safe `Manifold.simplify` Print + Web LOD Pipeline** | Add `scripts/optimize_assets.py` + `asset_optimization_manifest.json` (`0.006 / 0.010 / 0.018 mm` finish classes + `slicer_recipe`); wire into `scripts/bridge-partspec.ts` (including `forge-mount-first-print.stl`); extend `scripts/preflight-deploy.ts` with GLB validity & byte budgets. | `public/parts-glb/` → **`~2.10 MB` (`−95%`)**; `public/parts-stl/` → **`~18.5 MB`** with `100%` `G2/G3` arc-safe `0.12 mm` curved surfaces & zero `V1–V10` regressions. |
+| **M3 — Offline LLM Advisor & CAD Root-Bloat Refactor** | Ship `scripts/llm-lod-advisor.ts` (`npm run parts:tune-llm`) for per-part LOD/crease/show-face tuning; add `seg_for_radius()` in `toyventor_geom.py` and LLM-refactor top 10 heavy builders gated by CSG symmetric volume diff. | `public/parts-glb/` → **`~1.75 MB`**; `public/parts-stl/` → **`~14–15 MB` (`−50%`)**; faster CAD rebuilds; zero silhouette or specular faceting. |
+| **M4 — Toy-Finish Print Card (`PrintDrawer` + `PackOverlay`) & `.3mf`** | Replace hardcoded `"0.2 mm PLA"` in `PrintDrawer.tsx` & `PackOverlay.tsx` with per-part `slicer_recipe` (`0.12–0.16 mm` layers, smooth PEI, `3` walls @ `30 mm/s`, `outer_first`/`inner_first`, corner/`+Y` rear seam, selective `0.21 mm`-inset ironing, dry-PLA/flow checklist, `brim_width_mm`); optional `.3mf` export carrying these settings natively. | Toy-grade surface finish out of the box with zero support-mesh bloat. |
 | **M5 *(Optional Follow-On)* — `public/kip/partspec/` Sync** | Apply `optimize_assets.py` to `public/kip/partspec/` (`101 MB` raw STLs loaded by `stlRigLoader.ts`). | Cuts repo/CDN static payload by another **`~45–60 MB`** and removes main-thread rig parse stalls. |
 
 ---
@@ -342,9 +364,11 @@ Tracked in Git (`< 25 KB` for 63 parts). Missing entries fall back cleanly to `d
    - `npm run preflight` exits `0` with all STL binary checks, GLB magic/chunk checks, Service Worker `v3` checks, and size budgets passing.
    - `npm test` (Vitest unit + schema + catalog suites) and `npm run e2e` pass without regression.
 2. **Geometric & Printability Proof (`parts/partspec/`):**
-   - `preprint_check.py --no-slice` passes on **all 63** optimized files in `public/parts-stl/` (`0` `fail`, zero new `warn` verdicts vs. baseline).
+   - `preprint_check.py --no-slice` passes on **all 63** optimized files in `public/parts-stl/` at both `0.20 mm` and `0.16 mm` layer profiles (`0` `fail`, zero new `warn` verdicts vs. baseline).
    - `toyventor_fit.py` mid-stud slice audit on Snap Small (`brick-s-2x2`), Snap Large (`big-blue-brick`), Pro bore/pin (`beam-str-tu05` + `gear-spur-z20`), and `forge-mount-ring-s` confirms `|Δgap_min| <= 0.005 mm`.
-   - Physical spot-check: slice and print `forge-mount-first-print.stl` + `brick-s-2x2.stl` + `gear-spur-z10.stl` on a `0.4 mm` PLA printer; verify bed seating and `1/2/3`-dot fit window.
+   - Physical finish & fit check on smooth PEI (`0.4 mm` nozzle, dry PLA, tuned flow, `3` walls @ `30 mm/s`):
+     - `brick-s-2x2.stl` at `0.16 mm`, `outer_first`, `all_top` ironing (`0.21 mm` inset): flat walls gloss-uniform, top deck smooth, stud rims crisp, `1/2/3`-dot fit window unchanged.
+     - `dome-s-2x2.stl` / `skin-aero-cowl.stl` at `0.12 mm`, `inner_first`, `ironing = none`, `+Y` rear seam: smooth `G2/G3` arcs with zero polygon faceting or seam blemish on `-Y` front show face.
 3. **Web Visual & Load-Time Proof (`390×844` Mobile Viewport):**
    - Headless Chrome render comparison across the 5 largest (`kit-keel-base`, `mech-brain-lid`, `kit-turntable`, `forge-mount-ring-s`, `gear-spur-z20`), 5 highest-curvature (`dome-s-2x2`, `cloud-wings`, `glow-capsule`, `robot-head-visor`, `kit-windscreen`), and 5 smallest (`kit-barbell-shaft`, `kit-yoke-hbar`, `kit-rotor-blade`, `kit-spinner-pin`, `dome-s-2x2`) GLBs in `<model-viewer>`: smooth cylindrical shading improved over flat-shaded baseline, silhouette IoU `>= 0.995`.
    - Measure median of 5 cold-cache `PartPreview` first-frame paints on throttled Fast 4G (`390×844`): verify byte transfer drops by `> 85%` and time-to-interactive preview improves measurably on heavy parts (`kit-keel-base`: `3.21 MB` → `< 90 KB`).
