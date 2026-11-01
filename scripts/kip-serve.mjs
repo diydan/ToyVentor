@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Serve the Kip demo from SOURCE for hand-testing the side menu, print view and selfie.
+// Serve the Kip demo from SOURCE for hand-testing the menu, print view and selfie.
 // Run: npm run kip:serve [-- --port 5180]
 //
 // Same overlay server the e2e suites use: public/ with parts/kip/viewer/* served at /kip/, so you see the
@@ -12,8 +12,7 @@ const i = args.indexOf("--port");
 const port = Number(i >= 0 ? args[i + 1] : process.env.PORT ?? 0) || 0;
 
 const server = await startServer({ port });
-console.log(`Kip demo (side menu): ${server.base}/kip/Kip-Demo.html?menu=side`);
-console.log(`Kip demo (old dock):  ${server.base}/kip/Kip-Demo.html`);
+console.log(`Kip demo: ${server.base}/kip/Kip-Demo.html`);
 console.log("Ctrl+C to stop.");
 
 let reported = 0;

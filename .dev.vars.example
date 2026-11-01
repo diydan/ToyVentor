@@ -6,3 +6,10 @@ MUREKA_API_KEY=
 # Optional: model id for Create mode (/api/muse/spark). Empty means the
 # default in worker/muse.ts.
 MUSE_SPARK_MODEL=
+# Optional: the opt-in "Smart face" for the Kip selfie (/api/selfie/face-parts finds eyes and mouth with SAM 3.1,
+# /api/selfie/cartoon redraws the photo with Muse Image). It sends ONE downscaled photo of the child to Meta's models, so:
+#   - it is OFF unless this is exactly "on" (and MODEL_API_KEY is set);
+#   - every request also needs the parent gate (x-parent-proof, needs the D1 binding and PARENT_GATE_SECRET or the seeded key)
+#     and the client's consent screen (x-selfie-consent: v1);
+#   - keep it OFF in production until the COPPA review is done.
+SELFIE_CLOUD=
