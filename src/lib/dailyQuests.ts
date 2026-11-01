@@ -26,6 +26,7 @@ import {
 } from "./progression";
 
 export const DAILY_QUEST_XP = 40;
+export const CHORE_QUEST_XP = 25;
 
 export type ConceptTierLabel = "Locked" | "Sprout" | "Tinker" | "Master";
 
@@ -536,5 +537,181 @@ export function applyDailyQuestProgress(
     upgradedBadges,
     rankAfter,
     newVehiclesFromQuests,
+  };
+}
+
+export interface RealLifeChoreSpec {
+  id: string;
+  title: string;
+  goal: string;
+  parentHint: string;
+}
+
+export interface RealLifeChoreStatus extends RealLifeChoreSpec {
+  enabled: boolean;
+  completed: boolean;
+  xpBonus: number;
+}
+
+export const REAL_LIFE_CHORES: readonly RealLifeChoreSpec[] = [
+  {
+    id: "brush-teeth",
+    title: "Brush Teeth",
+    goal: "Brush top, bottom, and back molars for 2 full minutes.",
+    parentHint: "Morning or bedtime tooth-brushing",
+  },
+  {
+    id: "tidy-bench",
+    title: "Tidy Room & Toys",
+    goal: "Put blocks, clothes, and workshop parts back in their bins.",
+    parentHint: "Quick tidy-up of bedroom or play table",
+  },
+  {
+    id: "read-10m",
+    title: "Read for 10 Minutes",
+    goal: "Read a book, comic, or picture story aloud or quietly.",
+    parentHint: "10 minutes of calm offline reading",
+  },
+  {
+    id: "pack-bag",
+    title: "Pack Tomorrow's Bag",
+    goal: "Check water bottle, folder, and shoes by the door.",
+    parentHint: "School or outing bag prep",
+  },
+  {
+    id: "help-table",
+    title: "Help at the Table",
+    goal: "Set napkins and spoons or clear your plate after a meal.",
+    parentHint: "Helping with family meal setup or cleanup",
+  },
+];
+
+const CHORE_DAY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
+/** Return all 5 parent-configurable routines with enabled + today's completion state. */
+export function allChoresWithState(
+  day: string,
+  prog: ProgressionState,
+): RealLifeChoreStatus[] {
+  const enabledSet = new Set(prog.enabledChoreIds ?? []);
+  const doneSet = new Set(prog.completedChoresByDay?.[day] ?? []);
+  return REAL_LIFE_CHORES.map((spec) => ({
+    ...spec,
+    enabled: enabledSet.has(spec.id),
+    completed: doneSet.has(spec.id),
+    xpBonus: CHORE_QUEST_XP,
+  }));
+}
+
+/** Return only parent-enabled routines for the kid-facing Toy Box board. */
+export function choresForDay(
+  day: string,
+  prog: ProgressionState,
+): RealLifeChoreStatus[] {
+  return allChoresWithState(day, prog).filter((c) => c.enabled);
+}
+
+/** Toggle a routine in `ProgressionState.enabledChoreIds` in canonical order. */
+export function toggleChoreEnabled(
+  prog: ProgressionState,
+  choreId: string,
+): ProgressionState {
+  if (!REAL_LIFE_CHORES.some((c) => c.id === choreId)) return prog;
+  const enabledSet = new Set(prog.enabledChoreIds ?? []);
+  if (enabledSet.has(choreId)) {
+    enabledSet.delete(choreId);
+  } else {
+    enabledSet.add(choreId);
+  }
+  const enabledChoreIds = REAL_LIFE_CHORES.map((c) => c.id).filter((id) =>
+    enabledSet.has(id),
+  );
+  return { ...prog, enabledChoreIds };
+}
+
+export interface ChoreCompleteResult {
+  next: ProgressionState;
+  awarded: number;
+  chore: RealLifeChoreStatus | null;
+  rankBefore: MakerRank;
+  rankAfter: MakerRank;
+  newVehicles: string[];
+}
+
+/**
+ * Mark an enabled real-life routine done for `day` (`YYYY-MM-DD`).
+ * Awards `+25 XP` at most once per day and stamps `workshopDays` without streak loss.
+ */
+export function completeRealLifeChore(
+  prog: ProgressionState,
+  choreId: string,
+  day: string,
+): ChoreCompleteResult {
+  const rankBefore = rankFor(prog.totalXp);
+  const spec = REAL_LIFE_CHORES.find((c) => c.id === choreId);
+  if (
+    !spec ||
+    !CHORE_DAY_PATTERN.test(day) ||
+    !(prog.enabledChoreIds ?? []).includes(choreId)
+  ) {
+    return {
+      next: prog,
+      awarded: 0,
+      chore: null,
+      rankBefore,
+      rankAfter: rankBefore,
+      newVehicles: [],
+    };
+  }
+
+  const existingDone = new Set(prog.completedChoresByDay?.[day] ?? []);
+  if (existingDone.has(choreId)) {
+    return {
+      next: prog,
+      awarded: 0,
+      chore: {
+        ...spec,
+        enabled: true,
+        completed: true,
+        xpBonus: CHORE_QUEST_XP,
+      },
+      rankBefore,
+      rankAfter: rankBefore,
+      newVehicles: [],
+    };
+  }
+
+  const updatedForDay = [...existingDone, choreId];
+  const completedChoresByDay: Record<string, string[]> = {
+    ...(prog.completedChoresByDay ?? {}),
+    [day]: updatedForDay,
+  };
+  const workshopDays = [
+    ...new Set([...(prog.workshopDays ?? []), day]),
+  ].sort();
+
+  const next: ProgressionState = {
+    ...prog,
+    totalXp: prog.totalXp + CHORE_QUEST_XP,
+    completedChoresByDay,
+    workshopDays,
+  };
+  const rankAfter = rankFor(next.totalXp);
+  const newVehicles = RANKS.filter(
+    (r) => r.rank > rankBefore.rank && r.rank <= rankAfter.rank,
+  ).flatMap((r) => r.vehicles);
+
+  return {
+    next,
+    awarded: CHORE_QUEST_XP,
+    chore: {
+      ...spec,
+      enabled: true,
+      completed: true,
+      xpBonus: CHORE_QUEST_XP,
+    },
+    rankBefore,
+    rankAfter,
+    newVehicles,
   };
 }

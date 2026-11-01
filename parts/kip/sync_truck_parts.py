@@ -9,7 +9,7 @@ after changing a kit part (it was found stale for the windscreen and the steer b
     parts/partspec/.venv/bin/python parts/kip/sync_truck_parts.py            # rewrite STLs that differ
     parts/partspec/.venv/bin/python parts/kip/sync_truck_parts.py --check    # exit 1 if any is stale (writes nothing)
 
-The wardrobe pieces (heads, hair, hats, torso, legs) come from sync_truck_kip.py instead. Builds read only the generator sources and
+The wardrobe pieces (heads, hair, hats, faceplate) come from sync_truck_kip.py instead. Builds read only the generator sources and
 the generator sources in parts/partspec, never the shared out/ directory.
 """
 import os

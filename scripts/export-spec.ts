@@ -30,6 +30,7 @@ const headerFor = (date: string) =>
 | ToyVentor Pro | "on ToyVentor's own 12.5 mm hole grid". The example part is renamed from SU05 to TU05 everywhere it appears, including the part id, the source file and the download files. | The part naming now matches the canonical interface standard, which uses TU. |
 | Opening line | "brick-building fanatic" instead of naming a construction toy brand. | Public copy carries no third-party brand names. |
 | Vision, snap and Pro cross-references | Kept as file names rather than links. | This copy is read outside the repo. |
+| Nov 1 sync & stretch goals | Synced shipped five-set bridge (\`modular-craft\`, \`mech-robotics\`), live STL hero rigs, connected 6-district Town Slice 1, STEM XP + Maker Ranks 1-6 + Daily Quests + Real-Life Routines, and Kip \`Describe & Build\` + \`.3mf\` Plate Print; added dedicated \`Stretch goals\` section for Town Phases B-E and \`SAM 3.1\` + \`Muse\` physical-to-digital loops. | Aligns canonical spec with shipped code while keeping post-freeze generative and Town items clearly separated as stretch goals. |
 
 ## How to review
 

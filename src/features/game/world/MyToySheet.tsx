@@ -14,10 +14,12 @@ import { postSamScan } from "../../../lib/api";
 import { loadBuild } from "../../../lib/builds";
 import { partsById } from "../../../lib/catalog";
 import {
+  choresForDay,
   conceptBadgesFor,
   dailyQuestsForDay,
   workshopDaysCount,
   type DailyQuest,
+  type RealLifeChoreStatus,
 } from "../../../lib/dailyQuests";
 import {
   nextRankProgress,
@@ -155,6 +157,7 @@ export function MyToySheet({
   onPlayLab,
   onJumpToWorld,
   onOpenCharacterCard,
+  onCompleteChore,
 }: {
   open: boolean;
   initialStep?: "shelf" | "scan";
@@ -168,6 +171,7 @@ export function MyToySheet({
   onPlayLab?: (card: LockedVehicleCard) => void;
   onJumpToWorld?: (worldId: string) => void;
   onOpenCharacterCard?: () => void;
+  onCompleteChore?: (choreId: string) => void;
 }) {
   const { uploadedToys, builtInToys, selected, addToy, selectToy } = useToybox();
   const [step, setStep] = useState<"shelf" | "scan">(initialStep);
@@ -255,6 +259,13 @@ export function MyToySheet({
     () =>
       progression && localDayKey
         ? dailyQuestsForDay(localDayKey, progression)
+        : [],
+    [progression, localDayKey],
+  );
+  const dailyChores = useMemo<RealLifeChoreStatus[]>(
+    () =>
+      progression && localDayKey
+        ? choresForDay(localDayKey, progression)
         : [],
     [progression, localDayKey],
   );
@@ -530,6 +541,54 @@ export function MyToySheet({
                         onClick={() => onJumpToWorld(quest.worldId)}
                       >
                         Go · {quest.worldLabel}
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {progression && dailyChores.length > 0 && (
+            <div className="tv-roster-group" aria-label="Real-Life Routines">
+              <div className="tv-roster-group-head">
+                <span className="tv-roster-group-k">Real-Life Routines</span>
+                <span className="tv-roster-group-meta">
+                  {dailyChores.filter((c) => c.completed).length}/
+                  {dailyChores.length} done
+                </span>
+              </div>
+              <div className="tv-quest-board">
+                {dailyChores.map((chore) => (
+                  <div
+                    key={chore.id}
+                    className={
+                      chore.completed
+                        ? "tv-quest-card tv-quest-card-done"
+                        : "tv-quest-card"
+                    }
+                  >
+                    <span className="tv-quest-check" aria-hidden="true">
+                      {chore.completed ? "✓" : "•"}
+                    </span>
+                    <span className="tv-quest-copy">
+                      <span className="tv-roster-card-head">
+                        <span className="tv-toy-tile-name">{chore.title}</span>
+                        <span className="tv-toy-tag tv-roster-inline-tag">
+                          {chore.completed
+                            ? `+${chore.xpBonus} XP earned`
+                            : `+${chore.xpBonus} XP`}
+                        </span>
+                      </span>
+                      <span className="tv-toy-tile-sub">{chore.goal}</span>
+                    </span>
+                    {!chore.completed && onCompleteChore && (
+                      <button
+                        type="button"
+                        className="tv-ctl tv-roster-card-act"
+                        onClick={() => onCompleteChore(chore.id)}
+                      >
+                        I did it!
                       </button>
                     )}
                   </div>

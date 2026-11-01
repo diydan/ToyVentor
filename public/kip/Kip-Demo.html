@@ -456,6 +456,7 @@ import {
 import { mountKipMenu } from '/kip/kip-menu.js?v=10.0';
 import { mountPrintView } from '/kip/kip-print-view.js?v=10.0';
 import { mountSelfie } from '/kip/kip-selfie.js?v=10.0';
+import { mountDescribe } from '/kip/kip-describe-tab.js?v=10.0';
 
 if (window.self !== window.top) document.body.classList.add('in-iframe');
 
@@ -716,19 +717,17 @@ function buildKipRig(geos, partspec) {
   const backStudsSlot = createSlot('back_studs', torsoOffset, [0, 8, -42], 2.3, 'both', 'torso_anchor');
   backStudsSlot.add(scadMesh(geos.back_dock_studs, mats.spark));
 
-  // Neck Connectors (Pro Peg vs Snap Turret)
+  // Universal 2x1 Neck Collar (`neck_turret_2x1`: shared across Pro 8+ and Snap 3+!)
   const neckAnchor = new THREE.Group();
   neckAnchor.position.set(0, 106.8 - 61.5, 0);
   hips.add(neckAnchor);
 
-  const proNeckPeg = createSlot('neck_peg', neckAnchor, [0, 20, 0], 3.8, 'pro');
-  addProPegMesh(proNeckPeg, true, 'y');
+  const neckTurret2x1Slot = createSlot('neck_turret_2x1', neckAnchor, [0, 18, 0], 3.85, 'both');
+  const ntMesh = scadMesh(geos.neck_turret_2x1, mats.spark);
+  ntMesh.position.y = -7.4; // top 2x1 stud seat at 106.8 - 7.4 + 8.6 = 108.0 mm (`headLocal` origin!)
+  neckTurret2x1Slot.add(ntMesh);
 
-  const snapNeckTurret = createSlot('neck_turret', neckAnchor, [0, 20, 0], 3.8, 'snap');
-  addSnapTurretMesh(snapNeckTurret, true, 'y');
-  snapNeckTurret.visible = false;
-
-  // --- SHARED HEAD ASSEMBLY (100% identical across Pro 8+ and Snap 3+!) ---
+  // --- SHARED HEAD PIVOT (100% identical across Pro 8+ and Snap 3+!) ---
   const head = new THREE.Group();
   head.name = 'kip_Head';
   head.position.set(0, 45.3, 0);
@@ -737,37 +736,6 @@ function buildKipRig(geos, partspec) {
   const headLocal = new THREE.Group();
   headLocal.position.y = 1.2;
   head.add(headLocal);
-
-  const headShellSlot = createSlot('head_shell', headLocal, [0, 42, 0], 4.0, 'both', 'neck_anchor');
-  headShellSlot.add(scadMesh(geos.head_shell, mats.shell));
-
-  const headHoodSlot = createSlot('head_hood', headLocal, [0, 46, -34], 4.25, 'both', 'head_shell');
-  headHoodSlot.add(scadMesh(geos.head_hood, mats.hood));
-
-  const crownSlot = createSlot('crown', headLocal, [0, 64, 0], 4.55, 'both', 'head_shell');
-  const crownBudsMesh = scadMesh(geos.crown_buds, mats.spark);
-  const crownBlankMesh = scadMesh(geos.crown_cap_blank, mats.hood);
-  crownBlankMesh.visible = false;
-  crownSlot.add(crownBudsMesh, crownBlankMesh);
-
-  const earPodLSlot = createSlot('ear_pod_l', headLocal, [30, 42, 0], 4.4, 'both', 'head_shell');
-  earPodLSlot.add(scadMesh(geos.ear_pod_l, mats.spark));
-
-  const earPodRSlot = createSlot('ear_pod_r', headLocal, [-30, 42, 0], 4.4, 'both', 'head_shell');
-  earPodRSlot.add(scadMesh(geos.ear_pod_r, mats.spark));
-
-  const visorSlot = createSlot('visor', headLocal, [0, 42, 32], 4.35, 'both', 'head_shell');
-  const visorMesh = scadMesh(geos.visor, mats.visor);
-  visorSlot.add(visorMesh);
-
-  const faceDetailSlot = createSlot('face_details', headLocal, [0, 42, 50], 4.5, 'both', 'visor');
-  const faceDetailGrp = new THREE.Group();
-  faceDetailGrp.add(
-    scadMesh(geos.face_eyes, mats.eyes),
-    scadMesh(geos.face_glints, mats.glints),
-    scadMesh(geos.face_cheeks, mats.cheeks)
-  );
-  faceDetailSlot.add(faceDetailGrp);
 
   // --- ARMS (Pro 2-segment + pegs vs Snap 1-piece curved sleeve + turrets; 100% SHARED 3-finger hands!) ---
   // Spherical Rodrigues Pivot Flex for Snap (`3+`) 1-piece limbs:
@@ -845,7 +813,7 @@ function buildKipRig(geos, partspec) {
   }
 
   const joints = { Hips: hips, Head: head };
-  const editionParts = { pro: [proTorsoSlot, proNeckPeg], snap: [snapTorsoSlot, snapNeckTurret] };
+  const editionParts = { pro: [proTorsoSlot], snap: [snapTorsoSlot] };
   const flexArms = {};
   const flexLegs = {};
   const snapWriAnchors = {};
@@ -1042,11 +1010,11 @@ function buildKipRig(geos, partspec) {
   }
 
   // =========================================================================
-  // 5 MODULAR TU ACCESSORY ZONES (100% Compatible with BOTH Pro 8+ & Snap 3+!)
+  // 4 MODULAR TU ACCESSORY ZONES (100% Compatible with BOTH Pro 8+ & Snap 3+!)
   // =========================================================================
 
   // ZONE 1: 1x2 CROWN DOCK
-  const crownAccSlot = createSlot('crown_acc', headLocal, [0, 84, 0], 5.0, 'both', 'crown');
+  const crownAccSlot = createSlot('crown_acc', headLocal, [0, 84, 0], 5.0, 'both', 'alt_head');
   const pointyEars = scadMesh(partspec.pointyEars, mats.snapGold);
   pointyEars.position.set(0, 42.2, 0);
   pointyEars.visible = false;
@@ -1055,63 +1023,7 @@ function buildKipRig(geos, partspec) {
   wobbleHat.visible = false;
   crownAccSlot.add(pointyEars, wobbleHat);
 
-  // ZONE 2: ±X EAR-POD Ø6.6 BOSSES
-  const snapEarPods = new THREE.Group();
-  snapEarPods.visible = false;
-  headLocal.add(snapEarPods);
-  for (const side of [1, -1]) {
-    const sTag = side === 1 ? 'l' : 'r';
-    const earAccSlot = createSlot(`ear_acc_${sTag}`, snapEarPods, [side * 58, 44, 0], 5.1, 'both', `ear_pod_${sTag}`);
-    const earGeo = side === 1 ? geos.ear_acc_l : geos.ear_acc_r;
-    const earMesh = new THREE.Mesh(earGeo, mats.snapMint);
-    earMesh.castShadow = true;
-    earMesh.receiveShadow = true;
-    const basis = new THREE.Matrix4().makeBasis(
-      new THREE.Vector3(0, -side, 0),
-      new THREE.Vector3(0, 0, -1),
-      new THREE.Vector3(side, 0, 0)
-    );
-    earMesh.quaternion.setFromRotationMatrix(basis);
-    earMesh.position.set(side * 23.8, 20.0, 0);
-    earAccSlot.add(earMesh);
-  }
-
-  const proEarScanner = new THREE.Group();
-  proEarScanner.visible = false;
-  headLocal.add(proEarScanner);
-  const proEarSlot = createSlot('pro_ear_scanner', proEarScanner, [-62, 46, 8], 5.1, 'both', 'ear_pod_r');
-  const proEarPivot = new THREE.Group();
-  proEarPivot.position.set(-23.8, 20.0, 0);
-  proEarPivot.rotation.x = THREE.MathUtils.degToRad(-28);
-  const earBeamWrap = new THREE.Group();
-  earBeamWrap.rotation.y = -Math.PI / 2;
-  const earBeamMesh = new THREE.Mesh(partspec.beamTu03, mats.proSlate);
-  earBeamMesh.castShadow = true;
-  earBeamMesh.position.set(12.5, 0, 0);
-  earBeamWrap.add(earBeamMesh);
-  // Real PartSpec shaft_tu03 + gear_spur_z10 + bushing_half collars keyed on double-D flats!
-  const earRadarGear = new THREE.Group();
-  earRadarGear.position.set(25.0, 0, 0);
-  const earShaft = makeShaftTu03Z(mats.proSlate);
-  earShaft.position.z = 9.375;
-  earRadarGear.add(earShaft);
-  const earBushBack = new THREE.Mesh(partspec.bushingHalf, mats.proGear);
-  earBushBack.castShadow = true;
-  earBushBack.position.z = -6.25;
-  earRadarGear.add(earBushBack);
-  const earGearMesh = new THREE.Mesh(partspec.gearZ10, mats.spark);
-  earGearMesh.castShadow = true;
-  earGearMesh.position.z = 12.5;
-  earRadarGear.add(earGearMesh);
-  const earBushFront = new THREE.Mesh(partspec.bushingHalf, mats.proGear);
-  earBushFront.castShadow = true;
-  earBushFront.position.z = 18.75;
-  earRadarGear.add(earBushFront);
-  earBeamWrap.add(earRadarGear);
-  proEarPivot.add(earBeamWrap);
-  proEarSlot.add(proEarPivot);
-
-  // ZONE 3: 2x2 BACK DOCK (4-hole Cloud Wings on 2x2 studs, OR flush Pro 2:1 Gears on central Ø7.0 bore!)
+  // ZONE 2: 2x2 BACK DOCK (4-hole Cloud Wings on 2x2 studs, OR flush Pro 2:1 Gears on central Ø7.0 bore!)
   const wingsGroup = new THREE.Group();
   wingsGroup.visible = false;
   hips.add(wingsGroup);
@@ -1273,13 +1185,11 @@ function buildKipRig(geos, partspec) {
   return {
     mover, grounder, hips, joints, partSlots, editionParts, createSlot,
     flexArms, flexLegs, snapWriAnchors, snapAnkAnchors,
-    neckAnchor, proNeckPeg, snapNeckTurret,
-    headLocal, headShellSlot, headHoodSlot, crownSlot, earPodLSlot, earPodRSlot, visorSlot, faceDetailSlot,
+    neckAnchor, neckTurret2x1Slot,
+    headLocal,
     crownAccSlot, snapStandingLegSlots, bootSlots,
     backStudsSlot,
-    crownBudsMesh, crownBlankMesh, visorMesh, faceDetailGrp,
     pointyEars, wobbleHat,
-    snapEarPods, proEarScanner, earRadarGear,
     wingsGroup, proBackGroup,
     snapTailGroup, snapTailPivot, proTailGroup, tailWheel,
     proStaffGroup, gearBig, gearSml, tipGear
@@ -1805,12 +1715,11 @@ function makeSneakClip() {
 
 // --- 4. BOOTSTRAP EVERYTHING ---
 const stlNames = [
-  'head_shell', 'head_hood', 'crown_buds', 'crown_cap_blank',
-  'ear_pod_l', 'ear_pod_r', 'visor', 'face_eyes', 'face_glints', 'face_cheeks',
   'torso', 'back_dock_studs', 'upper_arm', 'forearm', 'hand_l', 'hand_r',
   'thigh', 'shin', 'boot', 'spark_peg_big', 'spark_peg_sml',
-  'ear_acc_l', 'ear_acc_r', 'tail_acc',
-  'snap_torso', 'snap_arm', 'snap_leg', 'snap_turret_big', 'snap_turret'
+  'tail_acc',
+  'snap_torso', 'snap_arm', 'snap_leg', 'snap_turret_big', 'snap_turret',
+  'neck_turret_2x1'
 ];
 
 let kip = null;
@@ -1827,9 +1736,9 @@ const keys = new Set();
 
 const loco = {
   edition: 'pro',      // 'pro' (8+) | 'snap' (3+)
-  category: 'robot',   // 'human' | 'robot' | 'animal' | 'creature'
-  head: 'classic',     // human: 'kid' | 'chibi' | 'tall' | 'jumbo' · robot: 'classic' | 'robot' | 'scout' · animal: 'fox' | 'bear' | 'cat' · creature: 'dragon' | 'alien' | 'imp' · 'custom'
-  skin: 'vinyl_cream',
+  category: 'human',   // 'human' | 'robot' | 'animal' | 'creature'
+  head: 'kid',         // human: 'kid' | 'chibi' | 'tall' | 'jumbo' · robot: 'robot' | 'scout' · animal: 'fox' | 'bear' | 'cat' · creature: 'dragon' | 'alien' | 'imp' · 'custom'
+  skin: 'warm_peach',
   hairColor: 'chestnut',
   hatColor: 'cobalt_cap',
   shirt: 'off',
@@ -2140,7 +2049,6 @@ async function init() {
     }
     if (parts.some(p => p.includes('eyes') || p.includes('lightbar') || p.includes('bulb'))) {
       setCrownMode('ears');
-      setEarMode('comm');
     }
     if (parts.some(p => p.includes('wrench'))) setPropMode('wrench');
     else if (parts.some(p => p.includes('shield'))) setPropMode('shield');
@@ -2166,7 +2074,6 @@ async function init() {
   if (params.get('face') || params.get('expr')) setFaceMode(params.get('face') || params.get('expr'));
   if (params.get('hat') || params.get('crown')) setCrownMode(params.get('hat') || params.get('crown'));
   if (params.get('hatcol'))  setHatColor(params.get('hatcol'));
-  if (params.get('ears'))    setEarMode(params.get('ears'));
   if (params.get('back'))    setBackMode(params.get('back'));
   if (params.get('tail'))    setTailMode(params.get('tail'));
   if (params.get('prop'))    setPropMode(params.get('prop'));
@@ -2230,12 +2137,9 @@ function getDefaultRestClip() {
 function syncNeckAndSeatedVisibility() {
   if (!kip || !kip.exp) return;
   const isPro = loco.edition === 'pro';
-  const isClassicHead = loco.head === 'classic';
 
-  // Universal Neck Collar: Classic Kip uses Pro Peg / Snap Turret; PartSpec 2x1 heads snap onto `neck_turret_2x1`!
-  kip.proNeckPeg.visible     = isClassicHead && isPro;
-  kip.snapNeckTurret.visible = isClassicHead && !isPro;
-  kip.exp.neckTurret2x1Slot.visible = !isClassicHead;
+  // Universal Neck Collar: all 12 PartSpec 2x1 heads snap onto `neck_turret_2x1`!
+  if (kip.neckTurret2x1Slot) kip.neckTurret2x1Slot.visible = true;
 
   // Snap (`3+`) 1-piece legs now smoothly flex at hips & digital knees in animations (including all 4 vehicles!),
   // while straightening right back into rigid 1-piece printable parts in Exploded View & Part Pile!
@@ -2362,11 +2266,12 @@ const HEAD_DECAL_TRANSFORMS = Object.assign(
 );
 
 const LEGACY_HEAD_HAIR_MAP = {
-  chin:  { head: 'kid', hair: null },   // retired Human 3 (Slender Grace) merged into Soft Youth
-  boy:   { head: 'kid', hair: 'short_swept' },
-  bob:   { head: 'kid', hair: 'bob' },
-  curls: { head: 'kid', hair: 'curly' },
-  human: { head: 'kid', hair: null },
+  classic: { head: 'kid', hair: null },   // retired Classic Kip merged into Soft Youth
+  chin:    { head: 'kid', hair: null },   // retired Human 3 (Slender Grace) merged into Soft Youth
+  boy:     { head: 'kid', hair: 'short_swept' },
+  bob:     { head: 'kid', hair: 'bob' },
+  curls:   { head: 'kid', hair: 'curly' },
+  human:   { head: 'kid', hair: null },
 };
 
 function setSkinTone(skinId) {
@@ -2413,9 +2318,7 @@ function setFaceInsertMode(modeId) {
 
 function refreshDecalTexture() {
   if (!kip || !kip.exp) return;
-  const hType = (loco.head === 'classic' || loco.head === 'custom')
-    ? 'kid'
-    : loco.head;
+  const hType = (loco.head === 'custom') ? 'kid' : loco.head;
   const newCanvas = createDecalExpressionCanvas(loco.expr, hType, loco.faceInsert, { onPlate: HUMAN_HEAD_IDS.has(loco.head) });
   const tex = kip.exp.decalTex;
   const prev = tex.image;
@@ -2427,21 +2330,12 @@ function refreshDecalTexture() {
 
 function syncHeadHairHatLayout() {
   if (!kip || !kip.exp) return;
-  const isClassic = loco.head === 'classic';
   const isHuman = HUMAN_HEAD_IDS.has(loco.head);
   const dt = HEAD_DECAL_TRANSFORMS[loco.head] || HEAD_DECAL_TRANSFORMS.kid;
-  const headCrownY = isClassic ? 42.2 : dt.crownY;
+  const headCrownY = dt.crownY;
 
   // 1. Base Head shell visibility
-  kip.headShellSlot.visible  = isClassic;
-  kip.headHoodSlot.visible   = isClassic;
-  kip.crownSlot.visible      = isClassic;
-  kip.earPodLSlot.visible    = isClassic;
-  kip.earPodRSlot.visible    = isClassic;
-  kip.visorSlot.visible      = isClassic;
-  kip.faceDetailSlot.visible = isClassic;
-
-  kip.exp.altHeadsGroup.visible = !isClassic;
+  kip.exp.altHeadsGroup.visible = true;
   for (const [k, hm] of Object.entries(kip.exp.headMeshes)) {
     hm.visible = (k === loco.head);
   }
@@ -2457,10 +2351,7 @@ function syncHeadHairHatLayout() {
   kip.exp.faceplateDecalPlane.geometry = kip.exp.faceplateDecalGeos[loco.expr === 'selfie' ? 'selfie' : loco.faceInsert] || kip.exp.faceplateDecalGeos.sculpted;
   kip.exp.faceplateDecalPlane.visible = isHuman && (loco.expr !== 'blank');
 
-  kip.faceDetailGrp.visible = isClassic && loco.expr === 'spark';
-  kip.exp.classicDecalPlane.visible = isClassic && (loco.expr !== 'spark' && loco.expr !== 'blank');
-
-  const usesConformalDecal = !isClassic && !isHuman && loco.head !== 'custom';
+  const usesConformalDecal = !isHuman && loco.head !== 'custom';
   if (usesConformalDecal && kip.exp.headDecalGeos[loco.head]) {
     kip.exp.decalPlane.geometry = kip.exp.headDecalGeos[loco.head];
     kip.exp.decalPlane.position.set(0, 0, 0);
@@ -2481,10 +2372,8 @@ function syncHeadHairHatLayout() {
   kip.exp.hairCrownBuds.visible = hasHair && hairOpt.hatReady && (loco.hat !== 'blank');
 
   // Base head 2x1 Crown Buds
-  kip.crownBudsMesh.visible  = (loco.hat !== 'blank' || hasHair);
-  kip.crownBlankMesh.visible = (!hasHair && loco.hat === 'blank');
   kip.exp.altCrownBuds.position.y = headCrownY;
-  kip.exp.altCrownBuds.visible = !isClassic && (loco.hat !== 'blank' || hasHair);
+  kip.exp.altCrownBuds.visible = (loco.hat !== 'blank' || hasHair);
 
   // 4. Stackable 2x1 Hat / Topper (`crownAnchor` sits on bald head crown OR on top of Hat-Ready hair!)
   const canWearHat = hairOpt.hatReady;
@@ -2501,12 +2390,12 @@ function syncHeadHairHatLayout() {
   // Dynamic Explode guide lines & pull heights when Hat stacks on Hair!
   const hairSlotEntry = kip.partSlots.find(s => s.id === 'hair_clip');
   if (hairSlotEntry) {
-    hairSlotEntry.guideTo = isClassic ? 'crown' : 'alt_head';
+    hairSlotEntry.guideTo = 'alt_head';
     hairSlotEntry.explodeVec.set(0, 70, 0);
   }
   const crownSlotEntry = kip.partSlots.find(s => s.id === 'crown_acc');
   if (crownSlotEntry) {
-    crownSlotEntry.guideTo = hasHair ? 'hair_clip' : (isClassic ? 'crown' : 'alt_head');
+    crownSlotEntry.guideTo = hasHair ? 'hair_clip' : 'alt_head';
     crownSlotEntry.explodeVec.set(0, hasHair ? 114 : 84, 0);
   }
 
@@ -2519,13 +2408,6 @@ function syncHeadHairHatLayout() {
   });
 
   syncNeckAndSeatedVisibility();
-
-  dropEarPodsOffClassic();
-}
-
-// The ear-pod options only exist on the classic head: leaving it puts any ear pods away so the model never shows ones the menu hides.
-function dropEarPodsOffClassic() {
-  if (loco.head !== 'classic' && (kip.snapEarPods.visible || kip.proEarScanner.visible)) setEarMode('off');
 }
 
 function setHeadMode(headId) {
@@ -2540,7 +2422,7 @@ function setHeadMode(headId) {
     }
   } else {
     const valid = WARDROBE_HEADS.some(h => h.id === headId) || headId === 'custom';
-    loco.head = valid ? headId : 'classic';
+    loco.head = valid ? headId : 'kid';
   }
   if (loco.head !== 'custom') loco.category = categoryOfHead(loco.head);
   // When switching from default Clean Kip (`vinyl_cream`) to a Human head, auto-select Warm Peach skin!
@@ -2612,17 +2494,6 @@ function setCrownMode(mode) {
   syncHeadHairHatLayout();
   refreshPileIfActive();
   updateStatusText();
-}
-
-const earModes = ['off', 'comm', 'pro'];
-let earIdx = 0;
-
-function setEarMode(mode) {
-  earIdx = Math.max(0, earModes.indexOf(mode));
-  const m = earModes[earIdx];
-  kip.snapEarPods.visible   = (m === 'comm');
-  kip.proEarScanner.visible = (m === 'pro');
-  refreshPileIfActive();
 }
 
 function setBackMode(mode) {
@@ -2744,35 +2615,37 @@ const presetLabels = {
 let presetIdx = 0;
 
 function applyPreset(name) {
+  clearAllCustomMounts();
   const norm = (name === 'all' || name === 'snap') ? 'boy' : name;
   presetIdx = Math.max(0, presets.indexOf(norm));
   const p = presets[presetIdx];
   if (p === 'clean') {
     setVehicleMode('none', false);
-    setHeadMode('classic'); setSkinTone('vinyl_cream'); setHairColor('chestnut');
+    setHeadMode('kid'); setSkinTone('warm_peach'); setHairColor('chestnut');
     setShirtMode('off'); setPantsMode('off');
+    setFaceInsertMode('sculpted');
     setHairMode('off'); setFaceMode('spark'); setCrownMode('buds');
-    setEarMode('off'); setBackMode('off'); setTailMode('off'); setPropMode('off');
+    setBackMode('off'); setTailMode('off'); setPropMode('off');
   } else if (p === 'boy') {
     setVehicleMode('none', false);
     setHeadMode('kid'); setSkinTone('warm_peach'); setHairColor('chestnut');
     setShirtMode('spark_tee'); setPantsMode('cargo_shorts');
     setFaceInsertMode('sculpted');
     setHairMode('short_swept'); setCrownMode('ranger'); setFaceMode('spark');
-    setEarMode('off'); setBackMode('explorer'); setTailMode('off'); setPropMode('wrench');
+    setBackMode('explorer'); setTailMode('off'); setPropMode('wrench');
   } else if (p === 'girl') {
     setVehicleMode('none', false);
     setHeadMode('chibi'); setSkinTone('golden_tan'); setHairColor('berry_spark');
     setShirtMode('varsity'); setPantsMode('jeans');
     setFaceInsertMode('vinyl');
     setHairMode('twin_braids'); setCrownMode('beanie'); setFaceMode('button');
-    setEarMode('off'); setBackMode('wings'); setTailMode('off'); setPropMode('skateboard');
+    setBackMode('wings'); setTailMode('off'); setPropMode('skateboard');
   } else if (p === 'kai') {
     setHeadMode('tall'); setSkinTone('soft_ivory'); setHairColor('cobalt');
     setShirtMode('track_top'); setPantsMode('joggers');
     setFaceInsertMode('flat');
     setHairMode('pompadour'); setCrownMode('buds'); setFaceMode('cool');
-    setEarMode('off'); setBackMode('jetpack'); setTailMode('off'); setPropMode('off');
+    setBackMode('jetpack'); setTailMode('off'); setPropMode('off');
     setVehicleCovers(true);
     setVehicleMode('moto', false);
   } else if (p === 'scout') {
@@ -2780,12 +2653,12 @@ function applyPreset(name) {
     setHeadMode('scout'); setSkinTone('vinyl_cream'); setHairMode('off');
     setShirtMode('off'); setPantsMode('off');
     setFaceMode('spark'); setCrownMode('buds');
-    setEarMode('off'); setBackMode('jetpack'); setTailMode('off'); setPropMode('off');
+    setBackMode('jetpack'); setTailMode('off'); setPropMode('off');
   } else if (p === 'cat') {
     setHeadMode('cat'); setSkinTone('vinyl_cream'); setHairMode('off');
     setShirtMode('hoodie'); setPantsMode('joggers');
     setFaceMode('happy'); setCrownMode('ears');
-    setEarMode('off'); setBackMode('off'); setTailMode('wag'); setPropMode('off');
+    setBackMode('off'); setTailMode('wag'); setPropMode('off');
     setVehicleCovers(true);
     setVehicleMode('scooter', false);
   } else if (p === 'dragon') {
@@ -2793,18 +2666,18 @@ function applyPreset(name) {
     setHeadMode('dragon'); setSkinTone('vinyl_cream'); setHairMode('off');
     setShirtMode('track_top'); setPantsMode('cargo_shorts');
     setFaceMode('spark'); setCrownMode('buds');
-    setEarMode('off'); setBackMode('wings'); setTailMode('wag'); setPropMode('off');
+    setBackMode('wings'); setTailMode('wag'); setPropMode('off');
   } else if (p === 'imp') {
     setVehicleMode('none', false);
     setHeadMode('imp'); setSkinTone('vinyl_cream'); setHairMode('off');
     setShirtMode('stripe_tee'); setPantsMode('sport_shorts');
     setFaceMode('surprised'); setCrownMode('horns');
-    setEarMode('off'); setBackMode('explorer'); setTailMode('wag'); setPropMode('wrench');
+    setBackMode('explorer'); setTailMode('wag'); setPropMode('wrench');
   } else if (p === 'fox') {
     setHeadMode('fox'); setSkinTone('vinyl_cream'); setHairMode('off');
     setShirtMode('stripe_tee'); setPantsMode('sport_shorts');
     setFaceMode('happy'); setCrownMode('ears');
-    setEarMode('off'); setBackMode('explorer'); setTailMode('wag'); setPropMode('off');
+    setBackMode('explorer'); setTailMode('wag'); setPropMode('off');
     setVehicleCovers(true);
     setVehicleMode('scooter', false);
   } else if (p === 'pro') {
@@ -2812,7 +2685,7 @@ function applyPreset(name) {
     setHeadMode('robot'); setSkinTone('vinyl_cream'); setHairMode('off');
     setShirtMode('off'); setPantsMode('off');
     setFaceMode('spark'); setCrownMode('horns');
-    setEarMode('pro'); setBackMode('jetpack'); setTailMode('pro'); setPropMode('shaft');
+    setBackMode('jetpack'); setTailMode('pro'); setPropMode('shaft');
   }
 }
 
@@ -2852,6 +2725,11 @@ document.getElementById('btn-copy-prompt').addEventListener('click', async () =>
   }
 });
 
+// Memory-only custom STL bytes & Photo-Forge craft slot state for the print pack (never persisted or sent over network).
+const customStlSlots = { crown: null, hand: null, back: null, head: null, hood: null };
+const photoAccessorySlots = { crown: null, wings: null, hand: null, hood: null };
+let customHoodMode = 'none'; // 'none' | 'sdkCrest' | 'customStl' | 'photo'
+
 function clearAllCustomMounts() {
   kip.exp.customCrownContainer.clear();
   kip.exp.customHandContainer.clear();
@@ -2862,13 +2740,19 @@ function clearAllCustomMounts() {
   kip.exp.carHoodScoopAddon.slot.visible = loco.racerKit;
   loco.hasPhotoAccessory = false;
   loco.photoWingGroup = null;
+  for (const k of Object.keys(customStlSlots)) customStlSlots[k] = null;
+  for (const k of Object.keys(photoAccessorySlots)) photoAccessorySlots[k] = null;
+  customHoodMode = 'none';
 }
 
 function equipSdkDemo(which) {
   if (which === 'hat' || which === 'wizard') {
-    if (loco.head === 'classic') setHeadMode('kid');
+    customStlSlots.crown = null;
+    photoAccessorySlots.crown = null;
     setCrownMode('wizardHat');
   } else if (which === 'wand') {
+    customStlSlots.hand = null;
+    photoAccessorySlots.hand = null;
     setPropMode('wand');
   } else if (which === 'hood' || which === 'crest') {
     setVehicleMode('car', true);
@@ -2876,6 +2760,9 @@ function equipSdkDemo(which) {
     kip.exp.customHoodContainer.add(scadMesh(kip.exp.expGeos.customHoodCrest, kip.exp.expMats.sun));
     kip.exp.customHoodGroup.visible = true;
     kip.exp.carHoodScoopAddon.slot.visible = false;
+    customStlSlots.hood = null;
+    photoAccessorySlots.hood = null;
+    customHoodMode = 'sdkCrest';
   }
   modalLlm.classList.remove('open');
   updateStatusText();
@@ -2889,7 +2776,7 @@ document.getElementById('btn-clear-custom').addEventListener('click', () => {
   setCrownMode('buds');
   setPropMode('off');
   if (loco.back === 'custom') setBackMode('off');
-  if (loco.head === 'custom') setHeadMode('classic');
+  if (loco.head === 'custom') setHeadMode('kid');
   updateStatusText();
 });
 
@@ -2905,6 +2792,16 @@ async function loadCustomStlFile(file, slotOverride = null) {
   const mat = kip.exp.expMats.custom.clone();
   mat.color.set(colorHex);
   loco.hasPhotoAccessory = false;
+  if (slot in customStlSlots) {
+    customStlSlots[slot] = { bytes: new Uint8Array(buf.slice(0)), colorHex, name: file.name || slot };
+  }
+  if (slot === 'crown') photoAccessorySlots.crown = null;
+  else if (slot === 'hand') photoAccessorySlots.hand = null;
+  else if (slot === 'back') photoAccessorySlots.wings = null;
+  else if (slot === 'hood') {
+    photoAccessorySlots.hood = null;
+    customHoodMode = 'customStl';
+  }
 
   if (slot === 'crown') {
     kip.exp.customCrownContainer.clear();
@@ -3095,20 +2992,30 @@ function equipPhotoAccessoryFromForge(closeModal = true) {
   });
 
   loco.hasPhotoAccessory = true;
+  const photoEntry = { label: currentPhotoMeta?.name || slot };
   if (slot === 'hand') {
+    customStlSlots.hand = null;
+    photoAccessorySlots.hand = photoEntry;
     kip.exp.customHandContainer.clear();
     kip.exp.customHandContainer.add(meshGrp);
     setPropMode('custom');
   } else if (slot === 'wings') {
+    customStlSlots.back = null;
+    photoAccessorySlots.wings = photoEntry;
     kip.exp.customBackContainer.clear();
     kip.exp.customBackContainer.add(meshGrp);
     setBackMode('custom');
     loco.photoWingGroup = meshGrp;
   } else if (slot === 'crown') {
+    customStlSlots.crown = null;
+    photoAccessorySlots.crown = photoEntry;
     kip.exp.customCrownContainer.clear();
     kip.exp.customCrownContainer.add(meshGrp);
     setCrownMode('custom');
   } else if (slot === 'hood') {
+    customStlSlots.hood = null;
+    photoAccessorySlots.hood = photoEntry;
+    customHoodMode = 'photo';
     kip.exp.customHoodContainer.clear();
     kip.exp.customHoodContainer.add(meshGrp);
     kip.exp.customHoodGroup.visible = true;
@@ -3491,9 +3398,7 @@ function updateExplodeAndPileTransforms(dt) {
 
   // Update dashed Coral Spark assembly guide lines!
   const torsoId = loco.edition === 'pro' ? 'torso_pro' : 'torso_snap';
-  const neckId  = loco.head !== 'classic'
-    ? 'neck_turret_2x1'
-    : (loco.edition === 'pro' ? 'neck_peg' : 'neck_turret');
+  const neckId  = 'neck_turret_2x1';
   slotCenterMap.set('torso_anchor', slotCenterMap.get(torsoId) || kip.hips.getWorldPosition(new THREE.Vector3()));
   slotCenterMap.set('neck_anchor',  slotCenterMap.get(neckId)  || kip.hips.getWorldPosition(new THREE.Vector3()));
 
@@ -3653,7 +3558,6 @@ function animate() {
     kip.gearSml.rotation.z -= spinRate * 2.0;
   }
   if (kip.proStaffGroup.visible) kip.tipGear.rotation.z += spinRate * 2.5;
-  if (kip.proEarScanner.visible) kip.earRadarGear.rotation.z += spinRate * 2.2;
   if (kip.proTailGroup.visible)  kip.tailWheel.rotation.z += (isLocomoting ? 5.5 : 0.6) * dt * loco.speedScale;
   if (kip.snapTailGroup.visible) {
     const isSad = (activeClipName === 'sad_pose');
@@ -3706,9 +3610,11 @@ const getPrintState = () => ({
   vehicle: loco.vehicle,
   vehCovers: loco.vehCovers,
   racerKit: loco.racerKit,
-  ears: earModes[earIdx],
   tail: tailModes[tailIdx],
   hasPhotoAccessory: loco.hasPhotoAccessory,
+  customHoodMode,
+  customStlSlots: { ...customStlSlots },
+  photoAccessorySlots: { ...photoAccessorySlots },
   baseColors: Object.fromEntries(
     Object.entries(mats).map(([k, m]) => [k, `#${m.color.getHexString(THREE.SRGBColorSpace)}`])
   ),
@@ -3736,8 +3642,6 @@ const renderStickerSources = (state, bom, bonusExprs = []) => {
           out[`face:${bExpr}:flat`] = canvasToRgba(createDecalExpressionCanvas(bExpr, state.head, 'flat', { onPlate: true }));
         }
       }
-    } else if (dec.kind === 'classic_visor_face') {
-      out[`classic_visor:${dec.expr || 'happy'}`] = canvasToRgba(createDecalExpressionCanvas(dec.expr || 'happy', 'kid', 'sculpted', { onPlate: false }));
     } else if (dec.kind === 'creature_face') {
       const hd = dec.head || state.head || 'fox';
       out[`creature:${hd}:${dec.expr || 'spark'}`] = canvasToRgba(createDecalExpressionCanvas(dec.expr || 'spark', hd, 'sculpted', { onPlate: false }));
@@ -3765,6 +3669,14 @@ const printView = mountPrintView({
   setCharacterVisible: on => { kip.mover.visible = on; originRing.visible = on; },
 });
 window.kipPrint = printView;
+window.kipRig = () => ({ THREE, kip, mats });
+// Describe & build (parts/kip/viewer/kip-describe-contract.md): type what to build, see it as an exploded view, watch it go together. It owns its panel
+// and toggle button and draws in its own group; while it is open the character is hidden. `kip` is only set once init() has run, hence the guard.
+const describeTab = mountDescribe({
+  THREE, STLLoader, mergeVertices, toCreasedNormals, scene, camera, controls,
+  setCharacterVisible: on => { if (kip) kip.mover.visible = on; originRing.visible = on; },
+});
+window.kipDescribe = describeTab;
 // Selfie face (memory only, never in the URL or storage): wears a photo on the flat face insert and puts the
 // previous face back on Remove. Anything that would leave a human head first removes it, so a photo never lingers.
 let selfieBefore = null;
@@ -3803,7 +3715,6 @@ window.kipMenu = mountKipMenu({
   presets: presets.map(id => ({ id, label: presetLabels[id] })),
   clips: () => clipChoices,
   read: {
-    ears: () => earModes[earIdx],
     tail: () => tailModes[tailIdx],
     preset: () => presets[presetIdx],
     speed: () => loco.speedScale,
@@ -3823,7 +3734,7 @@ window.kipMenu = mountKipMenu({
     setFace: id => { leaveSelfie(); setFaceMode(id); },
     setFaceInsert: id => { if (id !== 'flat') leaveSelfie(); setFaceInsertMode(id); }, setSkin: setSkinTone, setHair: setHairMode,
     setHairColor, setHat: setCrownMode, setHatColor, setShirt: setShirtMode,
-    setPants: setPantsMode, setBack: setBackMode, setEars: setEarMode, setTail: setTailMode,
+    setPants: setPantsMode, setBack: setBackMode, setTail: setTailMode,
     setProp: setPropMode, setVehicle: id => setVehicleMode(id, true),
     setCovers: setVehicleCovers, setRacerKit, setEdition, applyPreset: name => { leaveSelfie(); applyPreset(name); },
     playClip: triggerClip, setSpeed: setSpeedScale,
@@ -3831,6 +3742,7 @@ window.kipMenu = mountKipMenu({
     startBuild: () => startPileToBuild(true), toggleRef: toggleRefSkeleton,
     openLlm: () => modalLlm.classList.add('open'),
     openPhoto: openPhotoModal,
+    loadFile: loadCustomMixamoOrStlFile,
   },
 });
 

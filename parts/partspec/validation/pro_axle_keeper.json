@@ -1,18 +1,18 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_pro_axle_keeper_P.stl",
-  "file_sha256": "6b7dbcd4f67141d292ed9be182c349c07ebee6e0d8fc8fac9bcb5a8972c8c933",
+  "file_sha256": "a0013269a1dfb0addd29d11cfeb5f2e2fbb3e13d15597a9c4464ed6916e7f1d5",
   "part_id": "pro_axle_keeper",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-10-31T15:26:12Z",
+  "checked_at": "2026-11-01T05:03:31Z",
   "metrics": {
     "bbox_mm": [
       36.0,
       11.0,
       11.0
     ],
-    "volume_cm3": 2.6,
-    "surface_cm2": 20.02,
+    "volume_cm3": 2.42,
+    "surface_cm2": 19.73,
     "triangles": 2148,
     "ledges": [],
     "layers": 55,

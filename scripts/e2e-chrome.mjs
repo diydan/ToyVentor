@@ -271,7 +271,7 @@ async function scenarioXp600(cdp) {
   const locked = await cdp.evaluate(
     `[...document.querySelectorAll(".tv-roster-card-lock")].length`,
   );
-  check("promote-at-600", locked === 4, `locked=${locked}`);
+  check("promote-at-600", locked === 5, `locked=${locked}`);
   const body = await cdp.evaluate(`document.body.textContent || ""`);
   check(
     "motorbike-selectable",
@@ -283,17 +283,165 @@ async function scenarioXp600(cdp) {
 async function scenarioXp1800(cdp) {
   await gotoApp(cdp, { totalXp: 1800 });
   await openToyBox(cdp);
-  const locked = await cdp.evaluate(
-    `[...document.querySelectorAll(".tv-roster-card-lock")].length`,
+  const lockedLabels = await cdp.evaluate(
+    `[...document.querySelectorAll(".tv-roster-card-lock")].map((el) => el.getAttribute("aria-label") || "")`,
   );
-  check("promote-at-1800", locked === 0, `locked=${locked}`);
+  check(
+    "promote-at-1800",
+    lockedLabels.length === 1 && lockedLabels[0].includes("Bolt Power Mech"),
+    `locked=${lockedLabels.join("|")}`,
+  );
   const body = await cdp.evaluate(`document.body.textContent || ""`);
   check(
     "rank5-craft-selectable",
-    body.includes("Rescue Helicopter") &&
-      body.includes("Space Shuttle") &&
-      !body.includes("Bolt Power Mech"),
-    "Rank 5 craft unlocked, unverified Rank 6 mech held back",
+    body.includes("Rescue Helicopter") && body.includes("Space Shuttle"),
+    "Rank 5 craft unlocked, Rank 6 Bolt Power Mech awaits 2,700 XP",
+  );
+}
+
+async function scenarioSwitchAndParity(cdp) {
+  await gotoApp(cdp, { totalXp: 2700 });
+  await cdp.evaluate(`window.__e2eBootMark = 1`);
+
+  const canvasCount = await cdp.evaluate(
+    `document.querySelectorAll("canvas").length`,
+  );
+  check("single-stage-canvas", canvasCount === 1, `canvases=${canvasCount}`);
+
+  // 1. Live in-place toy switching across Rank 1..6: Kip -> Red Racer -> Space Shuttle -> Bolt Power Mech -> Kip
+  await openToyBox(cdp);
+  const rank6Locked = await cdp.evaluate(
+    `[...document.querySelectorAll(".tv-roster-card-lock")].length`,
+  );
+  check("promote-at-2700", rank6Locked === 0, `locked=${rank6Locked}`);
+  for (const targetName of ["Red Racer", "Space Shuttle", "Bolt Power Mech", "Kip"]) {
+    const picked = await cdp.evaluate(
+      `(() => {
+        const btn = [...document.querySelectorAll(".tv-roster-card-main")].find(
+          (b) => (b.textContent || "").includes(${JSON.stringify(targetName)})
+        );
+        if (!btn) return false;
+        btn.click();
+        return true;
+      })()`,
+    );
+    await waitFor(
+      () =>
+        cdp.evaluate(
+          `(() => {
+            const pill = document.querySelector(".tv-toy-pill");
+            return pill && (pill.getAttribute("aria-label") || "").includes(${JSON.stringify(targetName)}) ? true : null;
+          })()`,
+        ),
+      { timeoutMs: 10000, label: `toy switch to ${targetName}` },
+    );
+    check(`switch-in-place-${targetName}`, Boolean(picked), targetName);
+  }
+  // Close Toy Box
+  await cdp.evaluate(
+    `(() => { const d = [...document.querySelectorAll(".tv-sheet button")].find((b) => b.textContent?.trim() === "Done"); d?.click(); })()`,
+  );
+  await sleep(300);
+
+  const bootMarkIntact = await cdp.evaluate(`window.__e2eBootMark === 1`);
+  check("switch-zero-reload", bootMarkIntact, "page was not reloaded");
+
+  // 2. Build (ToyCustomizer) parity: 2 canonical archetypes (Character + Vehicle), equip + close
+  await cdp.evaluate(
+    `(() => { const b = [...document.querySelectorAll(".tv-dock button")].find((x) => x.textContent?.trim() === "Build"); b?.click(); })()`,
+  );
+  const archetypes = await waitFor(
+    () =>
+      cdp.evaluate(
+        `(() => {
+          const grp = document.querySelector('[role="group"][aria-label="Toy type"]');
+          if (!grp) return null;
+          return [...grp.querySelectorAll("button")].map((b) => (b.textContent || "").trim());
+        })()`,
+      ),
+    { timeoutMs: 10000, label: "Build archetype chips" },
+  );
+  check(
+    "build-two-archetypes",
+    Array.isArray(archetypes) &&
+      archetypes.length === 2 &&
+      archetypes.includes("Character") &&
+      archetypes.includes("Vehicle"),
+    Array.isArray(archetypes) ? archetypes.join(",") : "missing",
+  );
+  await cdp.evaluate(
+    `(() => {
+      const opt = [...document.querySelectorAll(".tv-opts .tv-opt")].find((b) => !b.classList.contains("tv-opt-lock") && !b.classList.contains("tv-opt-on"));
+      opt?.click();
+      const done = [...document.querySelectorAll('[aria-label="Build your toy"] button')].find((b) => b.textContent?.trim() === "Done");
+      done?.click();
+    })()`,
+  );
+  await sleep(250);
+
+  // 3. Create overlay parity: open, append picture word, close
+  await cdp.evaluate(
+    `(() => { const b = [...document.querySelectorAll(".tv-dock button")].find((x) => x.textContent?.trim() === "Create"); b?.click(); })()`,
+  );
+  const createReady = await waitFor(
+    () =>
+      cdp.evaluate(
+        `(() => {
+          const dlg = document.querySelector('[aria-label="Create a world"]');
+          const chip = dlg?.querySelector(".tv-crc");
+          if (!dlg || !chip) return null;
+          chip.click();
+          const close = [...dlg.querySelectorAll("button")].find((b) => b.textContent?.trim() === "Close");
+          close?.click();
+          return true;
+        })()`,
+      ),
+    { timeoutMs: 10000, label: "Create panel parity" },
+  );
+  check("create-panel-parity", Boolean(createReady), "opened + closed cleanly");
+
+  // 4. STEM Lab MissionPanel parity: jump to Lab 1 via Worlds popover, walk to mission, verify panel + Later
+  await cdp.evaluate(
+    `(() => { document.querySelector(".tv-worlds-btn")?.click(); })()`,
+  );
+  await waitFor(
+    () =>
+      cdp.evaluate(
+        `(() => {
+          const btn = [...document.querySelectorAll(".tv-worlds-popover button")].find((b) => (b.textContent || "").includes("Lab 1"));
+          if (!btn) return null;
+          btn.click();
+          return true;
+        })()`,
+      ),
+    { timeoutMs: 10000, label: "Lab 1 jump" },
+  );
+  // Hold ArrowRight briefly so the player walks into Lab 1's Measure mission trigger zone
+  await cdp.evaluate(
+    `window.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true }))`,
+  );
+  const missionOpened = await waitFor(
+    () =>
+      cdp.evaluate(
+        `(() => {
+          const mp = document.querySelector('.tv-sheet-mission');
+          if (!mp) return null;
+          window.dispatchEvent(new KeyboardEvent("keyup", { key: "ArrowRight", bubbles: true }));
+          const title = mp.querySelector(".tv-sh-title")?.textContent?.trim() || "";
+          const later = [...mp.querySelectorAll("button")].find((b) => b.textContent?.trim() === "Later");
+          later?.click();
+          return title || true;
+        })()`,
+      ),
+    { timeoutMs: 15000, label: "Lab 1 MissionPanel open" },
+  );
+  await cdp.evaluate(
+    `window.dispatchEvent(new KeyboardEvent("keyup", { key: "ArrowRight", bubbles: true }))`,
+  );
+  check(
+    "mission-panel-parity",
+    Boolean(missionOpened),
+    String(missionOpened),
   );
 }
 
@@ -356,6 +504,7 @@ async function main() {
     await runScenario("fresh", scenarioFresh);
     await runScenario("xp600", scenarioXp600);
     await runScenario("xp1800", scenarioXp1800);
+    await runScenario("switch-parity", scenarioSwitchAndParity);
   } finally {
     killAll();
   }

@@ -7,7 +7,7 @@
 // announce itself. `ctx` is built by Kip-Demo.html and is the only way this module reaches the scene.
 //
 //   ctx.loco                  live state object
-//   ctx.read.*                ears() tail() preset() speed() clip() refOn() explodeOn() pileOn()
+//   ctx.read.*                tail() preset() speed() clip() refOn() explodeOn() pileOn()
 //   ctx.act.*                 the page's own setters (the same functions the retired dock buttons called)
 //   ctx.clips()               [{ id, label }] animation clips the page can play
 //   ctx.presets               [{ id, label }]
@@ -64,7 +64,6 @@ export function wardrobeVisibility(loco) {
     hatColor: canWearHat && WEARABLE_HAT_IDS.has(loco.hat),
     shirt: cat !== 'robot',
     pants: cat !== 'robot',
-    ears: cat === 'robot' && loco.head === 'classic',
     tail: cat !== 'human',
     canWearHat,
   };
@@ -230,18 +229,6 @@ export function buildMenu(ctx) {
         extra: () => 'Custom / photo wings',
         get: () => loco.back,
         set: (v) => act.setBack(v),
-      }),
-      sel('ears', 'Ears', {
-        title: 'Plus and minus X ear-pod bosses (classic head only)',
-        inPreset: true,
-        visibleWhen: () => vis().ears,
-        options: () => [
-          { value: 'off', label: 'Off' },
-          { value: 'comm', label: 'Comm-Pods' },
-          { value: 'pro', label: 'Pro Scanner' },
-        ],
-        get: () => read.ears(),
-        set: (v) => act.setEars(v),
       }),
       sel('tail', 'Tail', {
         title: '1x1 lower-back tail port',
@@ -427,11 +414,11 @@ export function buildMenu(ctx) {
         set: (v) => patchProf({ fitChoice: v }),
       }),
       sel('layout', 'Layout', {
-        title: 'Loose parts on the bed (default) or flat-pack sprue kit card with breakaway V-notches',
+        title: 'Loose parts on the bed (default) or flat-pack kit tray with breakaway V-notches',
         visibleWhen: () => pr.isOn(),
         options: () => [
           { value: 'loose', label: 'Loose parts' },
-          { value: 'sprue', label: 'Kit card (sprue)' },
+          { value: 'sprue', label: 'Kit tray' },
         ],
         get: () => readProf().flatPackMode || 'loose',
         set: (v) => patchProf({ flatPackMode: v }),
@@ -535,7 +522,6 @@ export const DOCK_PARITY = {
   'btn-back': 'back',
   'btn-prop-cat': 'prop',
   'btn-hand': 'prop',
-  'btn-ears': 'ears',
   'btn-tail': 'tail',
   'btn-veh-none': 'vehicle',
   'btn-veh-car': 'vehicle',

@@ -1,41 +1,41 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_hat_ballcap_S.stl",
-  "file_sha256": "d1ccf83d4e739eb825a4eb05ed7911fb19da46fe4fa4d6ec578b0af3dd58472c",
+  "file_sha256": "03a9cd4056e67a9f87c61c902921c2f35b8a2de2fdf16b4eb42bd3068d126d3f",
   "part_id": "hat_ballcap",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-10-31T14:42:58Z",
+  "checked_at": "2026-11-01T05:06:14Z",
   "metrics": {
     "bbox_mm": [
-      47.48,
-      51.95,
-      18.7
+      47.4,
+      51.86,
+      18.3
     ],
-    "volume_cm3": 7.73,
-    "surface_cm2": 61.5,
-    "triangles": 6662,
+    "volume_cm3": 7.65,
+    "surface_cm2": 60.64,
+    "triangles": 6470,
     "ledges": [],
-    "layers": 94,
-    "bed_contact_mm2": 701.4,
-    "height_mm": 18.7,
-    "slenderness": 0.71,
+    "layers": 91,
+    "bed_contact_mm2": 706.8,
+    "height_mm": 18.3,
+    "slenderness": 0.69,
     "centre_of_mass_over_contact": true,
     "min_wall_mm": null,
     "thin_wall_regions": []
   },
   "bridges": [
     {
-      "z_mm": 10.9,
+      "z_mm": 10.5,
       "span_mm": 10.29,
-      "area_mm2": 521.3
+      "area_mm2": 522.0
     },
     {
-      "z_mm": 14.0,
+      "z_mm": 13.6,
       "span_mm": 6.7,
       "area_mm2": 35.2
     },
     {
-      "z_mm": 14.0,
+      "z_mm": 13.6,
       "span_mm": 6.7,
       "area_mm2": 35.2
     }
@@ -62,9 +62,9 @@
       "level": "block",
       "result": "pass",
       "value": [
-        47.5,
+        47.4,
         51.9,
-        18.7
+        18.3
       ],
       "limit": [
         180,
@@ -117,9 +117,9 @@
       "id": "V9_bed_contact",
       "level": "info",
       "result": "pass",
-      "value": 701.4,
+      "value": 706.8,
       "limit": null,
-      "detail": "height / sqrt(contact) = 0.71; above about 3 the slicer often asks for a brim"
+      "detail": "height / sqrt(contact) = 0.69; above about 3 the slicer often asks for a brim"
     },
     {
       "id": "V8_wall_thickness",

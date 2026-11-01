@@ -1,24 +1,24 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_char_faceplate_flat_P.stl",
-  "file_sha256": "a68c74de76979be06e8a7285c5a82240300b03d63948b845c4e09b428acc81e8",
+  "file_sha256": "924859dc4a03ff5f1c1ee635b13c026145eed18363c791ed70e839f12de5a64d",
   "part_id": "char_faceplate_flat",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-10-31T14:36:19Z",
+  "checked_at": "2026-11-01T04:59:53Z",
   "metrics": {
     "bbox_mm": [
       24.2,
       17.67,
       13.15
     ],
-    "volume_cm3": 1.14,
-    "surface_cm2": 11.04,
-    "triangles": 1620,
+    "volume_cm3": 1.11,
+    "surface_cm2": 10.69,
+    "triangles": 2040,
     "ledges": [],
     "layers": 66,
-    "bed_contact_mm2": 51.5,
+    "bed_contact_mm2": 46.3,
     "height_mm": 13.15,
-    "slenderness": 1.83,
+    "slenderness": 1.93,
     "centre_of_mass_over_contact": true,
     "min_wall_mm": null,
     "thin_wall_regions": []
@@ -48,7 +48,7 @@
       "value": [
         24.2,
         17.7,
-        13.1
+        13.2
       ],
       "limit": [
         180,
@@ -101,9 +101,9 @@
       "id": "V9_bed_contact",
       "level": "info",
       "result": "pass",
-      "value": 51.5,
+      "value": 46.3,
       "limit": null,
-      "detail": "height / sqrt(contact) = 1.83; above about 3 the slicer often asks for a brim"
+      "detail": "height / sqrt(contact) = 1.93; above about 3 the slicer often asks for a brim"
     },
     {
       "id": "V8_wall_thickness",

@@ -6,19 +6,18 @@
 
 | Edition | Age | Height | Limb / Joint Architecture | Shared Components |
 | --- | --- | --- | --- | --- |
-| **Pro (8+)** | `8+` | `150.0 mm` (`12.0 TU`) | 14-DOF articulated ball-peg rig (`torso`, 2-segment arms & legs, `Ø 9 mm` / `Ø 8 mm` Coral Spark ball-pegs) | **100% identical** Head assembly, Spark Visor, Reinforced 3-Finger + Thumb Hands, `1×2` Sneaker Boots, and **all 5 TU Accessory Ports** |
-| **Snap (3+)** | `3+` | `137.5 mm` (`11.0 TU`) | Simplified 10-DOF 1-piece limb rig (`snap_torso`, 1-piece curved `snap_arm`, 1-piece `snap_leg`, reversible flanged `snap_turret_big` & `snap_turret` snap collars) | **100% identical** Head assembly, Spark Visor, Reinforced 3-Finger + Thumb Hands, `1×2` Sneaker Boots, and **all 5 TU Accessory Ports** |
+| **Pro (8+)** | `8+` | `150.0 mm` (`12.0 TU`) | 14-DOF articulated ball-peg rig (`torso`, 2-segment arms & legs, `Ø 9 mm` / `Ø 8 mm` Coral Spark ball-pegs) | **100% identical** Universal `2×1` Neck Collar (`neck_turret_2x1`), all 12 PartSpec `2×1` Heads, Reinforced 3-Finger + Thumb Hands, `1×2` Sneaker Boots, and **all 4 TU Accessory Ports** |
+| **Snap (3+)** | `3+` | `137.5 mm` (`11.0 TU`) | Simplified 10-DOF 1-piece limb rig (`snap_torso`, 1-piece curved `snap_arm`, 1-piece `snap_leg`, reversible flanged `snap_turret_big` & `snap_turret` snap collars) | **100% identical** Universal `2×1` Neck Collar (`neck_turret_2x1`), all 12 PartSpec `2×1` Heads, Reinforced 3-Finger + Thumb Hands, `1×2` Sneaker Boots, and **all 4 TU Accessory Ports** |
 
-> **Age Grading & Small-Parts Compliance (`16 CFR § 1500.19` / `EN 71-1`):** Both **Snap (3+)** and **Pro (8+)** include removable `12.5 mm` TU Small components (`ear_pod_l/r`, `crown_buds`, `visor`, `face_*`, `back_dock_studs`, joint pegs/turrets) that fit inside the 16 CFR 1500.41 small-parts test cylinder. **WARNING: CHOKING HAZARD — Small parts. Not for children under 3 years.**
+> **Age Grading & Small-Parts Compliance (`16 CFR § 1500.19` / `EN 71-1`):** Both **Snap (3+)** and **Pro (8+)** include removable `12.5 mm` TU Small components (`neck_turret_2x1`, `back_dock_studs`, `char_faceplate*`, joint pegs/turrets) that fit inside the 16 CFR 1500.41 small-parts test cylinder. **WARNING: CHOKING HAZARD — Small parts. Not for children under 3 years.**
 
-## 5 Modular `12.5 mm` TU Accessory Zones + Foot Sole Sockets
+## 4 Modular `12.5 mm` TU Accessory Zones + Foot Sole Sockets
 
-1. **`1×2` Crown Dock (`head` / `glow`):** Mortise-locked `#FF6B4A` Crown Buds, or a hat or topper: the 7 wearable hats (`Sport Ballcap`, `Ribbed Beanie`, `Cowboy Hat`, `Builder Hardhat`, `Explorer Hat`, `Dapper Top Hat`, `Tricorne`), `Wobble Hat`, `Pointy Ears`, `Bumper Horns`, or flush `Blank Cap`. Human heads also take one of 14 clip-on wigs on the same dock; only the 6 Hat-Ready wigs carry top studs that seat a hat.
-2. **`±X` Ear-Pod `Ø 6.6 mm` Bosses (`ears` / `glow`):** Snap `Comm-Pods` (`ear_acc_l/r.stl`) or `Pro Ear Scanner` (`beam_str_tu03` + `shaft_tu03` + `gear_spur_z10` + `bushing_half`).
-3. **`2×2` Back Dock (`back` / `speed`):** Mortise-locked `2×2` Snap Small studs for `Cloud Wings`, or removable to expose the central `1 TU`-deep `Ø 7.0 mm` 50°-teardrop Pro bore (`pin_friction` + `beam_str_tu05` + `2:1` `Z20`/`Z10` spur drivetrain on `shaft_tu03` + `bushing_half`).
-4. **`1×1` Lower-Back Tail Port (`tail` / `spin`, exact `2.0 TU = 25.0 mm` below Back Dock):** `1 TU`-deep `Ø 7.0 mm` 50°-teardrop port accepting reactive `Wag-Tail` (`tail_acc.stl`) or `Pro Wheelie-Bar` (`pin_friction` + `beam_str_tu03` + `shaft_tu03` + `bushing_half` + `wheel_tu04`).
-5. **Right Hand `Ø 6.6 mm` C-Grip Cradle (`hand` / `torque`):** Reinforced `Genus: 0` 3-finger + full-palm thenar-buttress thumb with 50°-teardrop palm bore cradling `shaft_tu05` + `gear_spur_z10` + `bushing_half`. The same flat-sided `6.6 mm` Pro grip shaft carries 17 hand props in 4 categories (see **Wardrobe** below).
-6. **Sneaker Boot Soles (`1×2` `socket_grid`):** Dual `Ø 6.7 mm` Snap Small sockets (`12.5 mm` pitch) with scalloped outsole stud-relief treads so Kip stands flat and collision-free anywhere on `plate_s_2x2` / `plate_s_4x4`.
+1. **`1×2` Crown Dock (`head` / `glow`):** `2×1` `#FF6B4A` Crown Studs on every PartSpec head, seating 7 wearable hats (`Sport Ballcap`, `Ribbed Beanie`, `Cowboy Hat`, `Builder Hardhat`, `Explorer Hat`, `Dapper Top Hat`, `Tricorne`), `Wobble Hat`, `Pointy Ears`, or `Bumper Horns`. Human heads also take one of 19 clip-on wigs on the same dock; the 8 Hat-Ready wigs carry top studs that seat a hat.
+2. **`2×2` Back Dock (`back` / `speed`):** Mortise-locked `2×2` Snap Small studs for `Cloud Wings`, or removable to expose the central `1 TU`-deep `Ø 7.0 mm` 50°-teardrop Pro bore (`pin_friction` + `beam_str_tu05` + `2:1` `Z20`/`Z10` spur drivetrain on `shaft_tu03` + `bushing_half`).
+3. **`1×1` Lower-Back Tail Port (`tail` / `spin`, exact `2.0 TU = 25.0 mm` below Back Dock):** `1 TU`-deep `Ø 7.0 mm` 50°-teardrop port accepting reactive `Wag-Tail` (`tail_acc.stl`) or `Pro Wheelie-Bar` (`pin_friction` + `beam_str_tu03` + `shaft_tu03` + `bushing_half` + `wheel_tu04`).
+4. **Right Hand `Ø 6.6 mm` C-Grip Cradle (`hand` / `torque`):** Reinforced `Genus: 0` 3-finger + full-palm thenar-buttress thumb with 50°-teardrop palm bore cradling `shaft_tu05` + `gear_spur_z10` + `bushing_half`. The same flat-sided `6.6 mm` Pro grip shaft carries 17 hand props in 4 categories (see **Wardrobe** below).
+5. **Sneaker Boot Soles (`1×2` `socket_grid`):** Dual `Ø 6.7 mm` Snap Small sockets (`12.5 mm` pitch) with scalloped outsole stud-relief treads so Kip stands flat and collision-free anywhere on `plate_s_2x2` / `plate_s_4x4`.
 
 ## 3D Demo Viewer & Game Contract Integration
 
@@ -37,22 +36,22 @@ The machine-readable version of this section is [`kip-manifest.json`](kip-manife
 
 | Row | Options |
 | --- | --- |
-| **Type** (head category) | `Human`, `Robot`, `Animal`, `Creature`: 3 heads each (12), plus the `Jumbo Vinyl` Human head (13 in the demo). The `Head` button cycles within the chosen type. |
-| **Heads** | Human: `Soft Youth` (neutral), `Sweet Heart` (feminine), `Heroic Jaw` (masculine), plus `Jumbo Vinyl` · Robot: `Kip Classic`, `Bolt Robot`, `Mecha Scout` · Animal: `Fox`, `Bear`, `Whisker Cat` · Creature: `Drake Dragon`, `Starling Alien`, `Yeti Imp` |
-| **Face inserts** (Human only) | `3D Nose & Smile` (`char_faceplate`), `3D Button Eyes & Nose` (`char_faceplate_vinyl`), `Flat Decal Insert` (`char_faceplate_flat`). Each is a face-shaped plate inset `0.3 mm` below the skull. One universal `face_slot`, so every insert fits `Soft Youth`, `Sweet Heart` and `Heroic Jaw`. Robot, animal and creature heads take a 2D decal face instead. |
-| **Hair** (Human only) | 14 clip-on wigs: 6 Hat-Ready (`Swept`, `Bob`, `Swoosh`, `Long Flow`, `Twin Braids`, `Shag`) and 8 Sculpted-Top (`Pompadour`, `Top Bun`, `Side Sweep`, `Spiky Tufts`, `Twin Pigtails`, `High Ponytail`, `Cloud Curls`, `Action Mohawk`), 6 hair tones |
+| **Type** (head category) | `Human`, `Robot`, `Animal`, `Creature`: 12 PartSpec `2×1` heads total (4 Human, 2 Robot, 3 Animal, 3 Creature). The `Head` selector cycles within the chosen type. |
+| **Heads** | Human: `Soft Youth` (neutral), `Sweet Heart` (feminine), `Heroic Jaw` (masculine), plus `Jumbo Vinyl` · Robot: `Bolt Robot`, `Mecha Scout` · Animal: `Fox`, `Bear`, `Whisker Cat` · Creature: `Drake Dragon`, `Starling Alien`, `Yeti Imp` |
+| **Face inserts** (Human only) | `3D Nose & Smile` (`char_faceplate`), `3D Button Eyes & Nose` (`char_faceplate_vinyl`), `Flat Decal Insert` (`char_faceplate_flat`). Each is a face-shaped plate inset `0.3 mm` below the skull. One universal `face_slot`, so every insert fits `Soft Youth`, `Sweet Heart`, `Heroic Jaw`, and `Jumbo Vinyl`. Robot, animal and creature heads take a 2D decal face instead. |
+| **Hair** (Human only) | 19 clip-on wigs: 8 Hat-Ready (`Swept`, `Bob`, `Swoosh`, `Long Flow`, `Twin Braids`, `Shag`, `Bowl Cut`, `Sleek Part`) and 11 Sculpted-Top (`Pompadour`, `Top Bun`, `Side Sweep`, `Spiky Tufts`, `Twin Pigtails`, `High Ponytail`, `Cloud Curls`, `Action Mohawk`, `Pixie Tufts`, `Side Ponytail`, `Low Nape Bun`), 6 hair tones |
 | **Hats** | 7 wearable hats that wrap down over the head (each rim hangs about `10 mm` below its sockets) with 8 `Hat Tone` filament colours, plus `Spark Buds`, `Wobble Hat`, `Pointy Ears`, `Bumper Horns`, `Blank Cap` |
 | **Outfit** | 5 skin tones (Human), 6 shirts and 5 pants as solid-filament colour zones with front chest stencil stickers |
-| **Back / Ears / Tail** | `Explorer Pack`, `Bolt Jetpack`, `Cloud Wings`, `Pro 2:1 Gears` · `Comm-Pods`, `Pro Scanner` (Kip Classic only) · `Wag-Tail`, `Pro Wheelie` (not on Human) |
+| **Back / Tail** | `Explorer Pack`, `Bolt Jetpack`, `Cloud Wings`, `Pro 2:1 Gears` · `Wag-Tail`, `Pro Wheelie` (not on Human) |
 | **Props** | `Prop Type` filters 17 props in 4 categories. Tools: `Pro Wrench`, `Pro Spinner`, `Claw Hammer`, `Screwdriver`, `Paint Roller` · Cleaning: `String Mop`, `Bristle Broom`, `Scrub Brush`, `Handheld Vacuum` · Instruments: `Acoustic Guitar`, `Brass Trumpet`, `Rattle Maraca` · Play & Gear: `Star Shield`, `Skateboard`, `Swallow-Tail Flag`, `Magnifying Glass` |
 | **Vehicles** | `Roadster Car`, `Hauler Truck`, `Motor Scooter`, `Sport Motorbike` with snap-on body covers and the Wave 6 Racer Kit |
 | **Presets** | `Clean`, `Leo Explorer`, `Maya Skater`, `Kai Moto`, `Mecha Scout`, `Whisker Cat Scooter`, `Fox Scooter`, `Drake Dragon`, `Yeti Imp`, `Bolt Pro 8+` |
 
-The Wardrobe row is context-aware: each head type shows only the controls that fit it (for example Face Insert, Hair and Skin appear only for Human, and Ear-Pods only for Kip Classic).
+The Wardrobe row is context-aware: each head type shows only the controls that fit it (for example Face Insert, Hair and Skin appear only for Human).
 
-**Deep links:** `/kip/Kip-Demo.html?cat=animal&head=cat&hat=ears&tail=wag&vehicle=scooter`. Query params: `edition`, `preset`, `cat`, `head`, `insert`, `face`, `skin`, `hair`, `haircol`, `hat`, `hatcol`, `shirt`, `pants`, `back`, `ears`, `tail`, `prop`, `vehicle`, `covers`, `racer`, `view`, `cam`, `clip`. Accepted values are listed in `kip-manifest.json` under `urlParams`.
+**Deep links:** `/kip/Kip-Demo.html?cat=animal&head=cat&hat=ears&tail=wag&vehicle=scooter`. Query params: `edition`, `preset`, `cat`, `head`, `insert`, `face`, `skin`, `hair`, `haircol`, `hat`, `hatcol`, `shirt`, `pants`, `back`, `tail`, `prop`, `vehicle`, `covers`, `racer`, `view`, `cam`, `clip`. Accepted values are listed in `kip-manifest.json` under `urlParams`.
 
-> **Jumbo head:** `char_head_jumbo` (a 4th Human head, kept by decision on 2026-10-31) is in the PartSpec catalog and the demo, which therefore lists 13 heads (4 Human, 3 per other category). It was reshaped to the same universal face zone as `Soft Youth`, `Sweet Heart` and `Heroic Jaw` (`z_stud 31.4`, `z_bore 12.5`), so it seats the shared wig vault, hat cavity and face plates (`valid_kip_seated_jumbo` passes).
+> **Jumbo head:** `char_head_jumbo` (a 4th Human head, kept by decision on 2026-10-31) is in the PartSpec catalog and the demo, which therefore lists 12 heads (4 Human, 2 Robot, 3 Animal, 3 Creature). It was reshaped to the same universal face zone as `Soft Youth`, `Sweet Heart` and `Heroic Jaw` (`z_stud 31.4`, `z_bore 12.5`), so it seats the shared wig vault, hat cavity and face plates (`valid_kip_seated_jumbo` passes).
 
 ## Rebuild & Print-Orientation Export Commands
 
@@ -60,9 +59,9 @@ The Wardrobe row is context-aware: each head type shows only the controls that f
 # Bundle viewer Three.js runtime and sync Kip viewer + manifest into public/kip/
 npm run build:kip
 
-# Also recompile all 30 binary STLs from parts/kip/kip.scad (requires OpenSCAD)
+# Also recompile all 18 binary STLs from parts/kip/kip.scad (requires OpenSCAD)
 npx tsx scripts/build-kip.ts --scad
 
 # Export any individual part in flat-on-bed support-free 3D print orientation (z_min = 0)
-openscad --backend=manifold --export-format=binstl -D 'PART="head_hood"' -D 'PRINT_ORIENT=true' -o head_hood_print.stl parts/kip/kip.scad
+openscad --backend=manifold --export-format=binstl -D 'PART="torso"' -D 'PRINT_ORIENT=true' -o torso_print.stl parts/kip/kip.scad
 ```

@@ -1,8 +1,14 @@
+import seedAeroplaneJson from "../../../seed/toys/seed-aeroplane.json";
 import seedCarJson from "../../../seed/toys/seed-car.json";
+import seedCatamaranJson from "../../../seed/toys/seed-catamaran.json";
 import seedFigureJson from "../../../seed/toys/seed-figure.json";
+import seedHelicopterJson from "../../../seed/toys/seed-helicopter.json";
 import seedKipJson from "../../../seed/toys/seed-kip.json";
+import seedMechJson from "../../../seed/toys/seed-mech.json";
 import seedMotorbikeJson from "../../../seed/toys/seed-motorbike.json";
 import seedScooterJson from "../../../seed/toys/seed-scooter.json";
+import seedShuttleJson from "../../../seed/toys/seed-shuttle.json";
+import seedTractorJson from "../../../seed/toys/seed-tractor.json";
 import seedTruckJson from "../../../seed/toys/seed-truck.json";
 import type { Toy } from "../../../shared/toy";
 import { fetchScanToy, postScanToy, type ScanPostResult } from "../../lib/api";
@@ -13,10 +19,16 @@ import { fetchScanToy, postScanToy, type ScanPostResult } from "../../lib/api";
 export const seedCar = seedCarJson as Toy;
 export const seedFigure = seedFigureJson as Toy;
 export const seedKip = seedKipJson as Toy;
-// Verified Wave 9 V2 Maker Rank vehicles (Phase 4 §5.1 ready: true).
+// Verified Wave 9 V2 + Wave 10 Modular Craft Maker Rank vehicles (Phase 4 §5.1 ready: true).
 export const seedTruck = seedTruckJson as Toy;
 export const seedScooter = seedScooterJson as Toy;
 export const seedMotorbike = seedMotorbikeJson as Toy;
+export const seedTractor = seedTractorJson as Toy;
+export const seedAeroplane = seedAeroplaneJson as Toy;
+export const seedCatamaran = seedCatamaranJson as Toy;
+export const seedHelicopter = seedHelicopterJson as Toy;
+export const seedShuttle = seedShuttleJson as Toy;
+export const seedMech = seedMechJson as Toy;
 export const enabledStarterToys: Toy[] = [seedKip, seedCar];
 export const backupToys: Toy[] = [seedKip, seedCar, seedFigure];
 

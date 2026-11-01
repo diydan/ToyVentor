@@ -16,7 +16,9 @@ import { localDay } from "../../../../shared/parent-time";
 import { partsById } from "../../../lib/catalog";
 import {
   applyDailyQuestProgress,
+  completeRealLifeChore,
   dailyQuestsForDay,
+  toggleChoreEnabled,
 } from "../../../lib/dailyQuests";
 import { loadDemoMode, saveDemoMode } from "../../../lib/demoMode";
 import {
@@ -1030,6 +1032,28 @@ export function GameCanvas({
             closeReactOverlays();
             setRevealState({ first: false });
           }}
+          onCompleteChore={(choreId: string) => {
+            const dayKey = localDay(
+              Date.now(),
+              parentSnapshot.settings.timezone,
+            );
+            const res = completeRealLifeChore(
+              progressionRef.current,
+              choreId,
+              dayKey,
+            );
+            if (res.awarded <= 0) return;
+            saveProgression(res.next);
+            setProgression(res.next);
+            void pushProgression(res.next);
+            const rankNote =
+              res.rankAfter.rank > res.rankBefore.rank
+                ? ` · Rank ${res.rankAfter.rank}: ${res.rankAfter.title}`
+                : "";
+            showXpToast(
+              `+${res.awarded} XP · ${res.chore?.title ?? "Routine"}${rankNote}`,
+            );
+          }}
         />
 
         {missionPanel.open && (
@@ -1139,6 +1163,7 @@ export function GameCanvas({
           holdSatisfied={grownUpsHoldSatisfied}
           snapshot={parentSnapshot}
           progression={progression}
+          localDayKey={localDay(Date.now(), parentSnapshot.settings.timezone)}
           demoMode={demoMode}
           onToggleDemoMode={handleToggleDemoMode}
           onSeedDemoSave={() => engine()?.seedDemoSave?.()}
@@ -1157,6 +1182,12 @@ export function GameCanvas({
               ...progressionRef.current,
               sandboxUnlockAll: !progressionRef.current.sandboxUnlockAll,
             };
+            saveProgression(next);
+            setProgression(next);
+            void pushProgression(next);
+          }}
+          onToggleChore={(choreId: string) => {
+            const next = toggleChoreEnabled(progressionRef.current, choreId);
             saveProgression(next);
             setProgression(next);
             void pushProgression(next);

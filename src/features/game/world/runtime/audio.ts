@@ -55,7 +55,7 @@ function mnote(m: number, t: number, dur: number, wave: OscillatorType, vol: num
 function kick(t: number): void {var a=AC;if(!a)return;var o=a.createOscillator(),g=a.createGain();o.type="sine";o.frequency.setValueAtTime(130,t);o.frequency.exponentialRampToValueAtTime(46,t+.13);g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.16,t+.005);g.gain.exponentialRampToValueAtTime(.0001,t+.26);o.connect(g);g.connect(MUS.bus!);o.start(t);o.stop(t+.3)}
 function hit(t: number, f: number, dur: number, vol: number): void {var a=AC;if(!a)return;if(!MUS.nb){var n=Math.floor(a.sampleRate*.3),b=a.createBuffer(1,n,a.sampleRate),d=b.getChannelData(0);for(var i=0;i<n;i++)d[i]=Math.random()*2-1;MUS.nb=b}var s2=a.createBufferSource();s2.buffer=MUS.nb;var fl=a.createBiquadFilter();fl.type="bandpass";fl.frequency.value=f;fl.Q.value=.8;var g=a.createGain();g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.0001,t+dur);s2.connect(fl);fl.connect(g);g.connect(MUS.bus!);s2.start(t,0,dur+.02)}
 function toolSound(k: string): void {if(k==="screwdriver"){for(var i=0;i<4;i++)tone(1700+i*60,i*.12,.05,"square",.03)}else if(k==="spanner"){for(var j=0;j<4;j++)noise(j*.13,.04,4200,3000,.12)}else{tone(320,0,.35,"sawtooth",.05,150);noise(.32,.06,1800,900,.14)}}
-function bellTone(k: keyof typeof PB): void {tone(PB[k].f,0,.7,"sine",.14);tone(PB[k].f*2,0,.4,"sine",.03)}
+function bellTone(k: string): void {var b=PB[k];if(!b)return;tone(b.f,0,.7,"sine",.14);tone(b.f*2,0,.4,"sine",.03)}
 
 export function toggleSound(): boolean {
   sound = !sound;

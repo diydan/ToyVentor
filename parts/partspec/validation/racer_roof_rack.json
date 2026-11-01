@@ -4,7 +4,7 @@
   "file_sha256": "c95522567ea1e9d2c91949d5bba89cd9e4482b629786238597a241f71211a730",
   "part_id": "racer_roof_rack",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-10-31T14:35:42Z",
+  "checked_at": "2026-11-01T04:59:27Z",
   "metrics": {
     "bbox_mm": [
       24.8,
@@ -256,7 +256,7 @@
     ],
     "engine": "PrusaSlicer-2.8.1",
     "slice_logic": "1",
-    "reused_from": "2026-10-31T11:23:44Z"
+    "reused_from": "2026-11-01T04:51:33Z"
   },
   "verdict": "pass",
   "summary": "Prints as is"

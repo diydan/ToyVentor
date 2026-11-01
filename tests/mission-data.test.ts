@@ -168,7 +168,7 @@ describe("mission bridge shape", () => {
       new URL("../src/features/game/world/runtime/world.ts", import.meta.url),
       "utf8",
     );
-    for (const token of ["mpStamp=mpData(m)", "function mpSnap()", "function mpPress(m,ds)", "function mpGo(m)", "mpSnap:function()", "mpPress:function(i)", "mpAct:function(a)"]) {
+    for (const token of ["mpStamp=mpData(m)", "function mpSnap()", "function mpPress(m: Mission,ds: any)", "function mpGo(m: Mission | null)", "mpSnap:function()", "mpPress:function(i)", "mpAct:function(a)"]) {
       expect(text).toContain(token);
     }
   });

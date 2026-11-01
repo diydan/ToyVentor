@@ -1520,7 +1520,7 @@
         "pose": {
           "x": 0.0,
           "y": -6.25,
-          "z": 72.4,
+          "z": 71.97,
           "rot": 0
         }
       },
@@ -1530,7 +1530,7 @@
         "pose": {
           "x": -6.25,
           "y": -6.25,
-          "z": 77.2,
+          "z": 76.77,
           "rot": 0
         }
       }
@@ -1646,7 +1646,7 @@
         "pose": {
           "x": 0.0,
           "y": -6.25,
-          "z": 72.4,
+          "z": 71.97,
           "rot": 0
         }
       }
@@ -1755,7 +1755,7 @@
         "pose": {
           "x": 0.0,
           "y": -6.25,
-          "z": 74.4,
+          "z": 73.94800000000001,
           "rot": 0
         }
       },
@@ -1765,7 +1765,7 @@
         "pose": {
           "x": 0.0,
           "y": -6.25,
-          "z": 79.2,
+          "z": 78.748,
           "rot": 0
         }
       }
@@ -3303,12 +3303,12 @@
         }
       },
       {
-        "id": "steer_stem",
-        "part": "shaft_tu03",
+        "id": "steer_column",
+        "part": "pro_steer_column",
         "pose": {
           "x": 0.0,
           "y": -37.5,
-          "z": 0.0,
+          "z": -2.025,
           "rot": 0
         }
       },
@@ -3318,7 +3318,17 @@
         "pose": {
           "x": 0.0,
           "y": -37.5,
-          "z": 28.0,
+          "z": 25.2,
+          "rot": 0
+        }
+      },
+      {
+        "id": "steer_wheel",
+        "part": "pro_steer_wheel",
+        "pose": {
+          "x": 0.0,
+          "y": -37.5,
+          "z": 31.65,
           "rot": 0
         }
       },
@@ -3328,7 +3338,55 @@
         "pose": {
           "x": 0.0,
           "y": -56.25,
-          "z": 28.0,
+          "z": 25.2,
+          "rot": 0
+        }
+      },
+      {
+        "id": "knuckle_l",
+        "part": "pro_steer_knuckle_l",
+        "pose": {
+          "x": -12.9,
+          "y": -62.5,
+          "z": 6.250000000000001,
+          "rot": 1,
+          "tilt": [
+            270.0,
+            0.0
+          ]
+        }
+      },
+      {
+        "id": "kingpin_l",
+        "part": "pro_captive_pin_28",
+        "pose": {
+          "x": -18.75,
+          "y": -56.25,
+          "z": -5.324999999999998,
+          "rot": 0
+        }
+      },
+      {
+        "id": "knuckle_r",
+        "part": "pro_steer_knuckle_r",
+        "pose": {
+          "x": 12.899999999999999,
+          "y": -62.5,
+          "z": 6.250000000000001,
+          "rot": 3,
+          "tilt": [
+            270.0,
+            0.0
+          ]
+        }
+      },
+      {
+        "id": "kingpin_r",
+        "part": "pro_captive_pin_28",
+        "pose": {
+          "x": 18.75,
+          "y": -56.25,
+          "z": -5.324999999999998,
           "rot": 0
         }
       }
@@ -3351,7 +3409,7 @@
         "gap_max_mm": 0.05
       },
       {
-        "male": "steer_stem.axis",
+        "male": "steer_column.axis",
         "female": "keel.steer_bore",
         "engaged_studs": 1,
         "fit": "free",
@@ -3359,12 +3417,111 @@
         "gap_max_mm": 0.2
       },
       {
-        "male": "steer_stem.axis",
+        "male": "kingpin_l.axis",
+        "female": "steer_bridge.kingpins",
+        "engaged_studs": 1,
+        "fit": "press",
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      },
+      {
+        "male": "kingpin_r.axis",
+        "female": "steer_bridge.kingpins",
+        "engaged_studs": 1,
+        "fit": "press",
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      },
+      {
+        "male": "steer_column.axis",
         "female": "steer_pinion.hub",
         "engaged_studs": 1,
         "fit": "press",
         "gap_min_mm": 0.05,
         "gap_max_mm": 0.05
+      },
+      {
+        "male": "steer_column.axis",
+        "female": "steer_wheel.hub",
+        "engaged_studs": 1,
+        "fit": "press",
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      },
+      {
+        "male": "kingpin_l.axis",
+        "female": "knuckle_l.kingpin_bore",
+        "engaged_studs": 1,
+        "fit": "free",
+        "gap_min_mm": 0.2,
+        "gap_max_mm": 0.2
+      },
+      {
+        "male": "kingpin_r.axis",
+        "female": "knuckle_r.kingpin_bore",
+        "engaged_studs": 1,
+        "fit": "free",
+        "gap_min_mm": 0.2,
+        "gap_max_mm": 0.2
+      }
+    ]
+  },
+  "valid_pro_tie_rod_link_on_rack": {
+    "build": [
+      {
+        "id": "rack",
+        "part": "pro_steer_rack",
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "rot": 0
+        }
+      },
+      {
+        "id": "link",
+        "part": "pro_tie_rod_link",
+        "pose": {
+          "x": 7.8125,
+          "y": -1.5625,
+          "z": 6.45,
+          "rot": 0
+        }
+      },
+      {
+        "id": "tie_pin",
+        "part": "pro_captive_pin_28",
+        "pose": {
+          "x": 23.280460838455728,
+          "y": -1.5625,
+          "z": 11.975,
+          "rot": 0,
+          "tilt": [
+            180.0,
+            0.0
+          ]
+        }
+      }
+    ],
+    "ok": true,
+    "errors": [],
+    "warnings": [],
+    "edges": [
+      {
+        "male": "link.rack_stub",
+        "female": "rack.tierod_bores",
+        "engaged_studs": 1,
+        "fit": "free",
+        "gap_min_mm": 0.2,
+        "gap_max_mm": 0.2
+      },
+      {
+        "male": "tie_pin.axis",
+        "female": "link.pivot_bore",
+        "engaged_studs": 1,
+        "fit": "free",
+        "gap_min_mm": 0.2,
+        "gap_max_mm": 0.2
       }
     ]
   },
@@ -3431,6 +3588,144 @@
       },
       {
         "male": "band_lid.top_studs",
+        "female": "dump_tub.under_sockets",
+        "engaged_studs": 16,
+        "gap_min_mm": 0.054,
+        "gap_max_mm": 0.058
+      }
+    ]
+  },
+  "valid_mech_rc_truck": {
+    "build": [
+      {
+        "id": "keel",
+        "part": "kit_keel_base",
+        "pose": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "rot": 0
+        }
+      },
+      {
+        "id": "servo_mount",
+        "part": "mech_servo_mount",
+        "pose": {
+          "x": 0.0,
+          "y": -37.5,
+          "z": 12.5,
+          "rot": 0
+        }
+      },
+      {
+        "id": "sill_duct",
+        "part": "mech_sill_duct",
+        "pose": {
+          "x": 0.0,
+          "y": -6.25,
+          "z": 12.5,
+          "rot": 0
+        }
+      },
+      {
+        "id": "drive_tray",
+        "part": "mech_drive_tray",
+        "pose": {
+          "x": 0.0,
+          "y": 37.5,
+          "z": 12.5,
+          "rot": 0
+        }
+      },
+      {
+        "id": "drive_lid",
+        "part": "mech_drive_lid",
+        "pose": {
+          "x": 0.0,
+          "y": 37.5,
+          "z": 44.8,
+          "rot": 0
+        }
+      },
+      {
+        "id": "brain_tray",
+        "part": "mech_brain_tray",
+        "pose": {
+          "x": 0.0,
+          "y": 37.5,
+          "z": 50.0,
+          "rot": 0
+        }
+      },
+      {
+        "id": "brain_lid",
+        "part": "mech_brain_lid",
+        "pose": {
+          "x": 0.0,
+          "y": 37.5,
+          "z": 69.8,
+          "rot": 0
+        }
+      },
+      {
+        "id": "dump_tub",
+        "part": "kit_tilting_tub",
+        "pose": {
+          "x": 0.0,
+          "y": 37.5,
+          "z": 75.0,
+          "rot": 0
+        }
+      }
+    ],
+    "ok": true,
+    "errors": [],
+    "warnings": [],
+    "edges": [
+      {
+        "male": "keel.top_studs",
+        "female": "servo_mount.under_sockets",
+        "engaged_studs": 2,
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      },
+      {
+        "male": "keel.top_studs",
+        "female": "sill_duct.under_sockets",
+        "engaged_studs": 8,
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      },
+      {
+        "male": "keel.top_studs",
+        "female": "drive_tray.under_sockets",
+        "engaged_studs": 10,
+        "gap_min_mm": 0.056,
+        "gap_max_mm": 0.058
+      },
+      {
+        "male": "drive_tray.rim_studs",
+        "female": "drive_lid.under_sockets",
+        "engaged_studs": 4,
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      },
+      {
+        "male": "drive_lid.top_studs",
+        "female": "brain_tray.under_sockets",
+        "engaged_studs": 16,
+        "gap_min_mm": 0.054,
+        "gap_max_mm": 0.058
+      },
+      {
+        "male": "brain_tray.rim_studs",
+        "female": "brain_lid.under_sockets",
+        "engaged_studs": 4,
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05
+      },
+      {
+        "male": "brain_lid.top_studs",
         "female": "dump_tub.under_sockets",
         "engaged_studs": 16,
         "gap_min_mm": 0.054,

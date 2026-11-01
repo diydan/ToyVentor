@@ -222,7 +222,7 @@ describe("Milestone M2: PDF 1:1 scale bar, Cutter SVG, Silhouette DXF, and Bleed
     const pathMatches = [...svg.matchAll(/<path\b[^>]*d="([^"]+)"[^>]*\/>/g)];
     expect(pathMatches).toHaveLength(sheetPlan.items.length);
     for (const pm of pathMatches) {
-      expect(pm[1].trim().endsWith("Z")).toBe(true);
+      expect(pm[1]!.trim().endsWith("Z")).toBe(true);
     }
   });
 

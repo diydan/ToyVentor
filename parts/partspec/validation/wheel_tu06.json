@@ -4,7 +4,7 @@
   "file_sha256": "8b04b183920d8b50a1ed869abd127e794ebc0d88ee179711c2525a54311cc763",
   "part_id": "wheel_tu06",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-10-31T14:35:34Z",
+  "checked_at": "2026-11-01T04:59:24Z",
   "metrics": {
     "bbox_mm": [
       74.98,
@@ -154,7 +154,7 @@
       0
     ],
     "engine": "PrusaSlicer-2.8.1",
-    "reused_from": "2026-10-31T11:23:28Z"
+    "reused_from": "2026-11-01T04:51:30Z"
   },
   "verdict": "pass",
   "summary": "Prints as is"

@@ -55,16 +55,6 @@
     }
   },
   "sharedParts": [
-    "head_shell",
-    "head_hood",
-    "crown_buds",
-    "crown_cap_blank",
-    "ear_pod_l",
-    "ear_pod_r",
-    "visor",
-    "face_eyes",
-    "face_glints",
-    "face_cheeks",
     "back_dock_studs",
     "hand_l",
     "hand_r",
@@ -72,8 +62,6 @@
     "neck_turret_2x1"
   ],
   "testAccessories": [
-    "ear_acc_l",
-    "ear_acc_r",
     "tail_acc"
   ],
   "wardrobe": {
@@ -82,7 +70,6 @@
       "char_head_chibi",
       "char_head_tall",
       "char_head_jumbo",
-      "classic",
       "robot_head_visor",
       "robot_head_scout",
       "char_head_fox",
@@ -94,7 +81,7 @@
     ],
     "headCategories": {
       "human": ["char_head_kid", "char_head_chibi", "char_head_tall", "char_head_jumbo"],
-      "robot": ["classic", "robot_head_visor", "robot_head_scout"],
+      "robot": ["robot_head_visor", "robot_head_scout"],
       "animal": ["char_head_fox", "char_head_bear", "char_head_cat"],
       "creature": ["char_head_dragon", "char_head_alien", "char_head_imp"]
     },
@@ -191,14 +178,14 @@
   },
   "categoryControls": {
     "human":    ["faceInsert", "hair", "hairColor", "hat", "hatColor", "skin", "shirt", "pants", "back", "prop"],
-    "robot":    ["visor", "crown", "hatColor", "ears (classic head only)", "tail", "back", "prop"],
+    "robot":    ["visor", "crown", "hatColor", "tail", "back", "prop"],
     "animal":   ["face", "topper", "hatColor", "shirt", "pants", "tail", "back", "prop"],
     "creature": ["face", "crown", "hatColor", "shirt", "pants", "tail", "back", "prop"],
-    "note": "Mirrors syncWardrobeCategoryUi() in Kip-Demo.html: the Wardrobe row shows only the controls that fit the chosen head type. hatColor appears only while a wearable hat is on."
+    "note": "Mirrors wardrobeVisibility() in kip-menu.js: the Wardrobe row shows only the controls that fit the chosen head type. hatColor appears only while a wearable hat is on."
   },
   "pending": [],
   "presets": [
-    { "id": "clean",  "label": "Clean",               "head": "classic" },
+    { "id": "clean",  "label": "Clean",               "head": "kid" },
     { "id": "boy",    "label": "Leo Explorer",        "head": "kid" },
     { "id": "girl",   "label": "Maya Skater",         "head": "chibi" },
     { "id": "kai",    "label": "Kai Moto",            "head": "tall",   "vehicle": "moto" },
@@ -215,18 +202,17 @@
       "edition": "snap (default pro)",
       "preset|loadout": "clean | boy | girl | kai | scout | cat | fox | dragon | imp | pro",
       "cat": "human | robot | animal | creature",
-      "head": "kid | chibi | tall | jumbo | classic | robot | scout | fox | bear | cat | dragon | alien | imp",
+      "head": "kid | chibi | tall | jumbo | robot | scout | fox | bear | cat | dragon | alien | imp",
       "insert": "sculpted | vinyl | flat",
       "face|expr": "spark | button | happy | wink | cool | starry | surprised | blank",
       "skin": "warm_peach | golden_tan | rich_cocoa | soft_ivory | vinyl_cream",
-      "hair": "off | 14 wig ids (wardrobe.hatReadyHairs + sculptedTopHairs, without the hair_ prefix)",
+      "hair": "off | 19 wig ids (wardrobe.hatReadyHairs + sculptedTopHairs, without the hair_ prefix)",
       "haircol": "wardrobe.hairColors",
       "hat|crown": "ports[crown].options",
       "hatcol": "wardrobe.hatColors",
       "shirt": "off | wardrobe.shirts",
       "pants": "off | wardrobe.pants",
       "back": "off | explorer | jetpack | wings | gears",
-      "ears": "off | comm | pro",
       "tail": "off | wag | pro",
       "prop|hand": "ports[hand].options (hand=1|shaft|pro selects the Pro spinner)",
       "vehicle": "none | car | truck | scooter | moto",
@@ -306,15 +292,6 @@
       "stat": "glow",
       "options": ["buds", "ballcap", "beanie", "cowboy", "hardhat", "ranger", "tophat", "pirate", "hat", "ears", "horns", "blank"],
       "note": "Hats and toppers only. Hair is a separate clip-on wardrobe row (see wardrobe.hatReadyHairs / sculptedTopHairs); a hat only seats on a bald head or a Hat-Ready wig."
-    },
-    {
-      "id": "ears",
-      "label": "±X Ear-Pod Ø6.6 Bosses",
-      "interface": "stud_small",
-      "grid": [1, 1],
-      "gameSlot": "character.eyes.big",
-      "stat": "glow",
-      "options": ["off", "comm", "pro"]
     },
     {
       "id": "back",

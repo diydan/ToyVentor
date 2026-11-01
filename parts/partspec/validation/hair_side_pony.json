@@ -1,33 +1,33 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_hair_side_pony_S.stl",
-  "file_sha256": "18a736ca8230a951d92ed38ee49907f2cf96e47cf763c4b44a8ac630b2071167",
+  "file_sha256": "6887926112589bcbc2314c0bff8dd63afb9357f08edd219ae41724fcba880ec2",
   "part_id": "hair_side_pony",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-10-31T20:35:53Z",
+  "checked_at": "2026-11-01T05:06:12Z",
   "metrics": {
     "bbox_mm": [
       51.55,
-      33.35,
+      33.48,
       31.1
     ],
-    "volume_cm3": 6.91,
-    "surface_cm2": 60.68,
-    "triangles": 5454,
+    "volume_cm3": 6.94,
+    "surface_cm2": 60.96,
+    "triangles": 5504,
     "ledges": [],
     "layers": 156,
     "bed_contact_mm2": 89.3,
     "height_mm": 31.1,
     "slenderness": 3.29,
     "centre_of_mass_over_contact": true,
-    "min_wall_mm": 0.559,
+    "min_wall_mm": 0.519,
     "thin_wall_regions": []
   },
   "bridges": [
     {
       "z_mm": 16.6,
-      "span_mm": 9.96,
-      "area_mm2": 483.9
+      "span_mm": 10.03,
+      "area_mm2": 490.0
     },
     {
       "z_mm": 19.7,
@@ -63,7 +63,7 @@
       "result": "pass",
       "value": [
         51.5,
-        33.4,
+        33.5,
         31.1
       ],
       "limit": [
@@ -93,7 +93,7 @@
       "id": "V6_bridge_span",
       "level": "block",
       "result": "pass",
-      "value": 9.96,
+      "value": 10.03,
       "limit": 20,
       "detail": "3 bridge(s); widest unsupported span in mm"
     },

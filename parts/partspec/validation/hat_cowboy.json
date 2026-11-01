@@ -1,41 +1,41 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_hat_cowboy_S.stl",
-  "file_sha256": "68270208ac9f1ce75c899b0ced442987b95e0acecaa908f92734f6e3c01ba7c8",
+  "file_sha256": "7c3ab1c7d5f5c756663c311559ad86f3c552f50f9ec477d0d79b0538b1a9c3b9",
   "part_id": "hat_cowboy",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-10-31T14:43:38Z",
+  "checked_at": "2026-11-01T05:06:16Z",
   "metrics": {
     "bbox_mm": [
       63.2,
       65.6,
-      17.99
+      17.59
     ],
-    "volume_cm3": 17.54,
-    "surface_cm2": 98.82,
-    "triangles": 7392,
+    "volume_cm3": 17.52,
+    "surface_cm2": 98.24,
+    "triangles": 7292,
     "ledges": [],
-    "layers": 90,
-    "bed_contact_mm2": 1737.7,
-    "height_mm": 17.99,
-    "slenderness": 0.43,
+    "layers": 88,
+    "bed_contact_mm2": 1750.5,
+    "height_mm": 17.59,
+    "slenderness": 0.42,
     "centre_of_mass_over_contact": true,
     "min_wall_mm": null,
     "thin_wall_regions": []
   },
   "bridges": [
     {
-      "z_mm": 10.1,
+      "z_mm": 9.7,
       "span_mm": 10.29,
-      "area_mm2": 521.3
+      "area_mm2": 522.0
     },
     {
-      "z_mm": 13.2,
+      "z_mm": 12.8,
       "span_mm": 6.7,
       "area_mm2": 35.2
     },
     {
-      "z_mm": 13.2,
+      "z_mm": 12.8,
       "span_mm": 6.7,
       "area_mm2": 35.2
     }
@@ -64,7 +64,7 @@
       "value": [
         63.2,
         65.6,
-        18.0
+        17.6
       ],
       "limit": [
         180,
@@ -117,9 +117,9 @@
       "id": "V9_bed_contact",
       "level": "info",
       "result": "pass",
-      "value": 1737.7,
+      "value": 1750.5,
       "limit": null,
-      "detail": "height / sqrt(contact) = 0.43; above about 3 the slicer often asks for a brim"
+      "detail": "height / sqrt(contact) = 0.42; above about 3 the slicer often asks for a brim"
     },
     {
       "id": "V8_wall_thickness",

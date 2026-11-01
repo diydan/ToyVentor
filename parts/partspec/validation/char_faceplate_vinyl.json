@@ -1,24 +1,24 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_char_faceplate_vinyl_P.stl",
-  "file_sha256": "8def441ee3fc3a602cb6b3e821f7bb62365507ca3fa182fc37b4b3b6d7c184d5",
+  "file_sha256": "c27aaba1d1e9593ccb73e75d34fd995ce00ae55f813e3ef2cbfce38858d14644",
   "part_id": "char_faceplate_vinyl",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-10-31T14:36:19Z",
+  "checked_at": "2026-11-01T05:05:53Z",
   "metrics": {
     "bbox_mm": [
       24.2,
-      17.77,
+      17.95,
       13.15
     ],
-    "volume_cm3": 1.15,
-    "surface_cm2": 11.14,
-    "triangles": 2452,
+    "volume_cm3": 1.12,
+    "surface_cm2": 10.79,
+    "triangles": 2976,
     "ledges": [],
     "layers": 66,
-    "bed_contact_mm2": 51.5,
+    "bed_contact_mm2": 46.3,
     "height_mm": 13.15,
-    "slenderness": 1.83,
+    "slenderness": 1.93,
     "centre_of_mass_over_contact": true,
     "min_wall_mm": null,
     "thin_wall_regions": []
@@ -53,8 +53,8 @@
       "result": "pass",
       "value": [
         24.2,
-        17.8,
-        13.1
+        17.9,
+        13.2
       ],
       "limit": [
         180,
@@ -67,7 +67,7 @@
       "id": "V4_no_steep_overhang",
       "level": "block",
       "result": "pass",
-      "value": 0.25,
+      "value": 0.41,
       "limit": 1.0,
       "detail": "mm2 of downward surface steeper than 45 deg (flat bridges excluded)"
     },
@@ -107,9 +107,9 @@
       "id": "V9_bed_contact",
       "level": "info",
       "result": "pass",
-      "value": 51.5,
+      "value": 46.3,
       "limit": null,
-      "detail": "height / sqrt(contact) = 1.83; above about 3 the slicer often asks for a brim"
+      "detail": "height / sqrt(contact) = 1.93; above about 3 the slicer often asks for a brim"
     },
     {
       "id": "V8_wall_thickness",

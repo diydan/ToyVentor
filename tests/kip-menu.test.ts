@@ -17,7 +17,7 @@ const read = (rel: string) => readFileSync(join(root, rel), "utf8");
 
 function baseLoco(): Record<string, any> {
   return {
-    edition: "pro", category: "robot", head: "classic", skin: "vinyl_cream", hairColor: "chestnut",
+    edition: "pro", category: "human", head: "kid", skin: "warm_peach", hairColor: "chestnut",
     hatColor: "cobalt_cap", shirt: "off", pants: "off", hair: "off", faceInsert: "sculpted", expr: "spark",
     hat: "buds", crown: "buds", back: "off", prop: "off", vehicle: "none", vehCovers: true, racerKit: true,
     speedScale: 1, explodeTarget: 0, buildMode: "assembled",
@@ -27,7 +27,7 @@ function baseLoco(): Record<string, any> {
 /** A scene-free ctx: setters write straight to plain state, so get() after set() is a pure round trip. */
 function fakeCtx(patch: Record<string, any> = {}) {
   const loco = { ...baseLoco(), ...patch };
-  const st = { ears: "off", tail: "off", preset: "clean", clip: "idle", ref: false, pile: false };
+  const st = { tail: "off", preset: "clean", clip: "idle", ref: false, pile: false };
   const clips = [{ id: "idle", label: "Idle" }, { id: "walk", label: "Walk" }, { id: "drive_sit", label: "Sit & Drive" }];
   const act = {
     setCategory: (v: string) => { loco.category = v; }, setHead: (v: string) => { loco.head = v; },
@@ -36,7 +36,7 @@ function fakeCtx(patch: Record<string, any> = {}) {
     setHairColor: (v: string) => { loco.hairColor = v; }, setHat: (v: string) => { loco.hat = v; loco.crown = v; },
     setHatColor: (v: string) => { loco.hatColor = v; }, setShirt: (v: string) => { loco.shirt = v; },
     setPants: (v: string) => { loco.pants = v; }, setBack: (v: string) => { loco.back = v; },
-    setEars: (v: string) => { st.ears = v; }, setTail: (v: string) => { st.tail = v; },
+    setTail: (v: string) => { st.tail = v; },
     setProp: (v: string) => { loco.prop = v; }, setVehicle: (v: string) => { loco.vehicle = v; },
     setCovers: (v: boolean) => { loco.vehCovers = v; }, setRacerKit: (v: boolean) => { loco.racerKit = v; },
     setEdition: (v: string) => { loco.edition = v; }, applyPreset: (v: string) => { st.preset = v; },
@@ -51,7 +51,7 @@ function fakeCtx(patch: Record<string, any> = {}) {
     presets: [{ id: "clean", label: "Clean" }, { id: "boy", label: "Leo Explorer" }],
     clips: () => clips,
     read: {
-      ears: () => st.ears, tail: () => st.tail, preset: () => st.preset, speed: () => loco.speedScale,
+      tail: () => st.tail, preset: () => st.preset, speed: () => loco.speedScale,
       clip: () => st.clip, refOn: () => st.ref, explodeOn: () => loco.explodeTarget >= 0.5, pileOn: () => st.pile,
     },
   };
@@ -131,7 +131,7 @@ describe("kip menu schema", () => {
 
   it("labels follow the head type", () => {
     expect(faceLabel({ head: "kid", category: "human" })).toBe("Face plate");
-    expect(faceLabel({ head: "classic", category: "robot" })).toBe("Visor");
+    expect(faceLabel({ head: "robot", category: "robot" })).toBe("Visor");
     expect(faceLabel({ head: "fox", category: "animal" })).toBe("Face");
     expect(hatLabel({ category: "human" })).toBe("Hat");
     expect(hatLabel({ category: "animal" })).toBe("Topper");
@@ -153,7 +153,7 @@ describe("kip menu optional groups", () => {
     const human = withSelfie({ category: "human", head: "kid" });
     expect(visible(human, "selfie")).toBe(true);
     expect(visible(human, "selfieRemove")).toBe(false);
-    expect(visible(withSelfie({ category: "robot", head: "classic" }), "selfie")).toBe(false);
+    expect(visible(withSelfie({ category: "robot", head: "robot" }), "selfie")).toBe(false);
     const worn = withSelfie({ category: "human", head: "tall", expr: "selfie" });
     expect(visible(worn, "selfieRemove")).toBe(true);
     expect(visible(worn, "selfieNote")).toBe(true);
@@ -174,6 +174,80 @@ describe("kip menu optional groups", () => {
     expect(byId(ctx, "printInfo").text()).toMatch(/hat_ranger.*Exports are disabled/);
     expect(byId(ctx, "plate").options().map((o: any) => o.label)).toEqual(["Plate 1 of 2", "Plate 2 of 2"]);
   });
+
+  it("M1 Print group exposes printer presets, custom bed/slots, fit, overflow, vehicle, stickers, stencils, support check, and pack download", () => {
+    let on = true;
+    let sup = false;
+    let prof: any = {
+      presetId: "compact_180", slicer: "orca_bambu", changerType: "single", maxSlots: 1,
+      multiColorStrategy: "split-plates", flatPackMode: "loose", bedXmm: 180, bedYmm: 180,
+      nozzleMm: 0.4, fitChoice: "standard", tooManyColours: "extra-plates",
+      includeVehicle: true, includeStickers: true, includeStencils: false,
+    };
+    const summary: any = { lines: ["60 parts"], errors: [], sceneColorCount: 6, hasVehicleInScene: true, hasDecals: true };
+    let downloadedKind = "";
+    const ctx: any = {
+      ...fakeCtx({ vehicle: "scooter" }),
+      print: {
+        isOn: () => on, setOn: (v: boolean) => { on = v; }, busy: () => false,
+        summary: () => summary, plateCount: () => 2, plateIndex: () => 0,
+        plateLabel: (i: number) => `Plate ${i + 1} of 2: Warm Peach (#F7C8A8)`,
+        setPlate() {},
+        profile: () => prof,
+        setPreset: (id: string) => {
+          prof = id === "changer_256_4"
+            ? { ...prof, presetId: id, changerType: "multiplexer", maxSlots: 4, multiColorStrategy: "auto", bedXmm: 256, bedYmm: 256 }
+            : id === "custom"
+              ? { ...prof, presetId: "custom", changerType: "multiplexer", maxSlots: 6, bedXmm: 220, bedYmm: 220 }
+              : { ...prof, presetId: id, changerType: "single", maxSlots: 1, multiColorStrategy: "split-plates", bedXmm: 180, bedYmm: 180 };
+        },
+        updateProfile: (patch: any) => { prof = { ...prof, ...patch }; },
+        supportCheck: () => sup,
+        setSupportCheck: (v: boolean) => { sup = v; },
+        download: (k: string) => { downloadedKind = k; },
+      },
+    };
+
+    for (const c of flat(ctx)) expect(c.title, `title for ${c.id}`).toBeTruthy();
+    expect(visible(ctx, "printer")).toBe(true);
+    expect(visible(ctx, "fit")).toBe(true);
+    expect(visible(ctx, "layout")).toBe(true);
+    expect(byId(ctx, "layout").options().find((o: any) => o.value === "sprue")).toMatchObject({ value: "sprue", label: "Kit tray" });
+    byId(ctx, "layout").set("sprue");
+    expect(byId(ctx, "layout").get()).toBe("sprue");
+    expect(visible(ctx, "includeVehicle")).toBe(true);
+    expect(visible(ctx, "stickers")).toBe(true);
+    expect(visible(ctx, "stencils")).toBe(true);
+    expect(visible(ctx, "supportCheck")).toBe(true);
+    expect(visible(ctx, "downloadPack")).toBe(true);
+    expect(visible(ctx, "exportProject3mf")).toBe(true);
+    byId(ctx, "exportProject3mf").run();
+    expect(downloadedKind).toBe("project-3mf");
+    // Single-colour preset hides multi-colour strategy & custom controls
+    expect(visible(ctx, "colours")).toBe(false);
+    expect(visible(ctx, "tooManyColours")).toBe(false);
+    expect(visible(ctx, "slicer")).toBe(false);
+
+    // Switch to 4-slot changer -> colours and tooManyColours appear (6 scene colours > 4 slots)
+    byId(ctx, "printer").set("changer_256_4");
+    expect(visible(ctx, "colours")).toBe(true);
+    expect(visible(ctx, "tooManyColours")).toBe(true);
+    byId(ctx, "tooManyColours").set("merge");
+    expect(byId(ctx, "tooManyColours").get()).toBe("merge");
+
+    // Switch to custom -> slicer, changerType, customBedMm, customNozzle, customSlots appear
+    byId(ctx, "printer").set("custom");
+    for (const id of ["slicer", "changerType", "customBedMm", "customNozzle", "customSlots"]) {
+      expect(visible(ctx, id), `custom ${id}`).toBe(true);
+    }
+    byId(ctx, "customBedMm").set(300);
+    expect(byId(ctx, "customBedMm").get()).toBe(300);
+
+    // Round-trip supportCheck & colour-named plate labels
+    byId(ctx, "supportCheck").set(true);
+    expect(byId(ctx, "supportCheck").get()).toBe(true);
+    expect(byId(ctx, "plate").options()[0].label).toMatch(/Warm Peach \(#F7C8A8\)/);
+  });
 });
 
 describe("kip menu visibility vs kip-manifest.json categoryControls", () => {
@@ -181,9 +255,9 @@ describe("kip menu visibility vs kip-manifest.json categoryControls", () => {
   const TOKEN_TO_MENU: Record<string, string> = {
     faceInsert: "faceInsert", hair: "hair", hairColor: "hairColor", hat: "hat", hatColor: "hatColor", skin: "skin",
     shirt: "shirt", pants: "pants", back: "back", prop: "prop", visor: "face", crown: "hat", topper: "hat",
-    face: "face", "ears (classic head only)": "ears", tail: "tail",
+    face: "face", tail: "tail",
   };
-  const CONDITIONAL = ["faceInsert", "hair", "hairColor", "hatColor", "skin", "shirt", "pants", "ears", "tail"];
+  const CONDITIONAL = ["faceInsert", "hair", "hairColor", "hatColor", "skin", "shirt", "pants", "tail"];
   const ALWAYS = ["type", "head", "face", "hat", "back", "prop"];
   const cc = kipManifest.categoryControls as Record<string, string[] | string>;
 
@@ -193,8 +267,8 @@ describe("kip menu visibility vs kip-manifest.json categoryControls", () => {
       expect(Array.isArray(tokens)).toBe(true);
       for (const t of tokens) expect(TOKEN_TO_MENU[t], `unmapped manifest token "${t}"`).toBeTruthy();
       const expected = new Set(tokens.map((t) => TOKEN_TO_MENU[t]));
-      // Hair on + a wearable hat on, and the classic robot head, so that every conditional control can show.
-      const head = cat.id === "robot" ? "classic" : headsInCategory(cat.id)[0].id;
+      // Hair on + a wearable hat on so that every conditional control can show.
+      const head = headsInCategory(cat.id)[0].id;
       const ctx = fakeCtx({ category: cat.id, head, hair: cat.id === "human" ? "short_swept" : "off", hat: "ballcap" });
       const visible = new Set(flat(ctx).filter((c) => !c.visibleWhen || c.visibleWhen()).map((c) => c.id));
       for (const id of CONDITIONAL) expect(visible.has(id), `${cat.id}: ${id}`).toBe(expected.has(id));
@@ -202,7 +276,7 @@ describe("kip menu visibility vs kip-manifest.json categoryControls", () => {
     });
   }
 
-  it("hair tone needs hair, hat tone needs a wearable hat on a hat-ready style, ears need the classic head", () => {
+  it("hair tone needs hair and hat tone needs a wearable hat on a hat-ready style", () => {
     const vis = (patch: Record<string, any>) => wardrobeVisibility({ ...baseLoco(), ...patch });
     expect(vis({ category: "human", head: "kid", hair: "off" }).hairColor).toBe(false);
     expect(vis({ category: "human", head: "kid", hair: "curly" }).hairColor).toBe(true);
@@ -213,8 +287,6 @@ describe("kip menu visibility vs kip-manifest.json categoryControls", () => {
     expect(sculpted.canWearHat).toBe(false);
     expect(sculpted.hatColor).toBe(false);
     expect(byId(fakeCtx({ category: "human", hair: "curly" }), "hat").note()).toMatch(/swaps to a hat-ready/);
-    expect(vis({ category: "robot", head: "classic" }).ears).toBe(true);
-    expect(vis({ category: "robot", head: "scout" }).ears).toBe(false);
   });
 });
 
@@ -248,7 +320,6 @@ describe("retired bottom dock", () => {
     const opts = (id: string, patch: Record<string, any> = {}) => resolveOptions(byId(fakeCtx(patch), id)).filter((o: any) => !o.disabled).map((o: any) => String(o.value));
     expect(opts("type")).toEqual(["human", "robot", "animal", "creature"]);
     expect(opts("faceInsert", { category: "human", head: "kid" })).toEqual(["sculpted", "vinyl", "flat"]);
-    expect(opts("ears")).toEqual(["off", "comm", "pro"]);
     expect(opts("tail")).toEqual(["off", "wag", "pro"]);
     expect(opts("edition")).toEqual(["pro", "snap"]);
     expect(opts("vehicle")).toEqual(["none", "car", "truck", "scooter", "moto"]);

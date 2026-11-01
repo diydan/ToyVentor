@@ -1,8 +1,8 @@
 // Build and sync Kip's 3D Modular Rig Demo Viewer + runtime assets into public/kip/.
 // Usage:
 //   npm run build:kip
-//   npx tsx scripts/build-kip.ts --scad       # also recompile all 30 binary STLs via OpenSCAD
-//   npx tsx scripts/build-kip.ts --partspec   # also run PartSpec v2 gate for 18 Kip parts + 3 SDK examples
+//   npx tsx scripts/build-kip.ts --scad       # also recompile all 18 binary STLs via OpenSCAD
+//   npx tsx scripts/build-kip.ts --partspec   # also run PartSpec v2 gate for Kip parts + 3 SDK examples
 import { execFileSync } from "node:child_process";
 import { copyFileSync, cpSync, existsSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
@@ -94,16 +94,17 @@ copyFileSync(
   join(kipSrcDir, "viewer/kip-faceplate-shape.js"),
   join(kipOutDir, "kip-faceplate-shape.js"),
 );
-// Truck-Mockup.html shows the demo's own Kip head: kip-classic-rig.js is generated from Kip-Demo.html (parts/kip/sync_classic_rig.py --check).
+// Truck-Mockup.html shows Kip Pro (8+) / Snap (3+) in the cab: kip-rig.js is generated from Kip-Demo.html (parts/kip/sync_kip_rig.py --check).
 copyFileSync(
-  join(kipSrcDir, "viewer/kip-classic-rig.js"),
-  join(kipOutDir, "kip-classic-rig.js"),
+  join(kipSrcDir, "viewer/kip-rig.js"),
+  join(kipOutDir, "kip-rig.js"),
 );
 copyFileSync(
   join(kipSrcDir, "viewer/Truck-Mockup.html"),
   join(kipOutDir, "Truck-Mockup.html"),
 );
 // Describe & build tab (kip-describe-contract.md): the page modules and their data. The 30 part STLs it draws are written straight into
+// public/kip/partspec/describe/ by viewer/tools/export_describe_stls.py, and viewer/tools/sync_public.mjs --check double-checks these copies.
 copyFileSync(
   join(kipSrcDir, "viewer/kip-describe-tab.js"),
   join(kipOutDir, "kip-describe-tab.js"),
@@ -169,11 +170,9 @@ if (process.argv.includes("--scad")) {
     process.exit(2);
   }
   const parts = [
-    "head_shell", "head_hood", "crown_buds", "crown_cap_blank",
-    "ear_pod_l", "ear_pod_r", "visor", "face_eyes", "face_glints", "face_cheeks",
     "torso", "back_dock_studs", "upper_arm", "forearm", "hand_l", "hand_r",
     "thigh", "shin", "boot", "spark_peg_big", "spark_peg_sml",
-    "ear_acc_l", "ear_acc_r", "tail_acc",
+    "tail_acc",
     "snap_torso", "snap_arm", "snap_leg", "snap_turret_big", "snap_turret", "neck_turret_2x1",
   ];
   const scadFile = join(kipSrcDir, "kip.scad");

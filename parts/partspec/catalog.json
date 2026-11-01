@@ -15,8 +15,8 @@
     "Attach slots: character add-ons and vehicle parts carry attach.kind (character or vehicle), attach.slots, and attach.front: the part's local -y or +y faces the toy's front, or the part is symmetric. Slot names: character head, back, body, top, tail; vehicle front, rear, hood, roof, wheels; robot legs, torso, arms, head, back."
   ],
   "targets": {
-    "snap": 114,
-    "pro": 71
+    "snap": 120,
+    "pro": 86
   },
   "waves": [
     {
@@ -131,7 +131,7 @@
         "W10"
       ],
       "effort": "L",
-      "scope": "21 parts (8 Snap Small, 13 Pro): Stage-2 Pro row-0 Ackermann rack steering linkage, axle keepers, and positive-trail bike fork adapter, plus Stage-3 Momentum stored-energy propulsion and actuator modules (enclosed #64 band core, bumper trigger, captive slam launcher, balloon jet valve + 3-orifice nozzle selector, 10-deg bellows clamshell, and shrouded 42 mm vertical rip-cord turbine core) across Cards E1-E2 (<= 164 x 164 mm)."
+      "scope": "31 parts (8 Snap Small, 23 Pro): captive Stage-2 Pro row-0 Ackermann rack steering linkage (bridge with fixed kingpins, rack guide and travel stop, rack, tall-tower knuckles, tie-rod link, headed captive drive pins, steering column and wheel), rear dump-tub hinge adapter, axle keepers, and positive-trail bike fork adapter, plus functional Stage-3 Momentum stored-energy propulsion and actuator modules (enclosed #64 band core with coaxial freewheel PTO gear, pawl spool, armed/pull-back latch and winding key, compliant bumper trigger, captive slam launcher, leak-free horizontal balloon jet + shutoff slide valve + 3-orifice nozzle selector, interleaved 10-deg hinged bellows clamshell, and un-jammed shrouded 42 mm vertical rip-cord turbine core) across Cards E1-E2 (<= 164 x 164 mm)."
     },
     {
       "id": "W12",
@@ -139,6 +139,15 @@
       "requires": [],
       "effort": "M",
       "scope": "12 parts (12 Pro): handheld workshop and play props that clip onto Kip's Pro grip shaft in the hand port, in 4 Kip-Demo.html prop categories (with the 5 earlier props, 17 in all): Tools (Claw Hammer, Flat Screwdriver, Paint Roller), Cleaning (String Mop, Bristle Broom, Scrub Brush, Handheld Vacuum), Instruments (Acoustic Guitar, Brass Trumpet, Rattle Maraca) and Play (Swallow-Tail Flag, Magnifying Glass)."
+    },
+    {
+      "id": "W13",
+      "name": "Stage-4 Mech Drop-In Printable Robotics (Card F)",
+      "requires": [
+        "W11"
+      ],
+      "effort": "L",
+      "scope": "11 parts (6 Snap Small, 5 Pro): PETG Stage-4 drop-in RC and robotics housings across Card F (<= 164 x 164 mm) coupling standard off-the-shelf N20 micro gearmotors, 9g micro servos (capturing the factory nylon horn with zero printed micro-splines), XIAO ESP32 / H-bridge electronics, and tool-locked 1S 602535 LiPo batteries onto the universal 12.5 mm craft keel with double-shear Pro pilot bearings."
     }
   ],
   "parts": [
@@ -2528,7 +2537,7 @@
       "family": "pin",
       "size": "pro",
       "wave": "W9",
-      "note": "Universal face-shaped meniscus insert on a 1 TU flat-keyed rear stem via LAY_FLAT ([90,0,0]): the back and front follow the face (3.4 mm thick on the centre line, outline narrowing toward the chin) and sit inset 0.3 mm below the skull surface, with shallow raised vinyl eye lenses at x=+-7.3 mm, a small button nose and a soft raised resting-smile mouth ridge; compatible with all three Human Head face_slot bores.",
+      "note": "Universal face-shaped meniscus insert on a 1 TU flat-keyed rear stem via LAY_FLAT ([90,0,0]): the back and front follow the face (3.4 mm thick on the centre line, outline narrowing toward the chin) and sit inset 0.3 mm below the skull surface, with shallow raised vinyl eye lenses at x=+-6.0 mm, a small button nose and a soft raised resting-smile mouth ridge; compatible with all three Human Head face_slot bores.",
       "stat": "Glow",
       "type": "Face plate",
       "behavior": "Quick-swap universal 3D button-eye and triangle-nose facial insert mating flush into any Human Head face_slot",
@@ -4779,7 +4788,7 @@
       "family": "vehicle",
       "size": "small",
       "wave": "W10",
-      "note": "49.8 x 49.8 x 18.0 mm 4x4 TU cargo tub that seats directly onto the rear keel bay or atop any 4x4x3 TU Power Core and tips to 55 deg.",
+      "note": "49.8 x 59.0 x 18.0 mm 4x4 TU cargo tub with zero-strain rear trunnions (Y = +30.80 mm) that seats onto pro_tub_hinge or any Power Core hinge lid and tips 0 to 55 deg.",
       "stat": "Toughness",
       "type": "Vehicle bed",
       "behavior": "4x4 TU tipping dump truck bed, trailer cargo box, and shuttle payload bay",
@@ -5021,10 +5030,10 @@
       "family": "vehicle",
       "size": "small",
       "wave": "W11",
-      "note": "48.1 x 24.8 x 15.3 mm T-planform steering bridge mounting onto #1 rows 0..1 with cylindrical kingpin bosses at X = +-18.75 mm, smooth front rack slideway, and rear 2x1 top servo studs.",
+      "note": "48.4 x 31.8 x 23.1 mm T-planform steering bridge mounting onto #1 rows 0..1 with cylindrical kingpin bosses at X = +-18.75 mm, a stud-free deck so the rack and Z10 pinion run 0.2 mm above it, a front L-keeper wall capturing the rack in +Z, and a wedge travel stop that the tie-rod links meet at +-5.2 mm of rack travel.",
       "stat": "Balance",
       "type": "Steering linkage",
-      "behavior": "Row-0 T-planform steering bridge with 37.5 mm kingpin span and top servo mount",
+      "behavior": "Row-0 T-planform steering bridge with 37.5 mm kingpin span, front L-keeper wall and +-5.2 mm travel stop",
       "tags": [
         "pro",
         "steering",
@@ -5048,10 +5057,10 @@
       "family": "joint",
       "size": "pro",
       "wave": "W11",
-      "note": "25.6 x 16.0 x 27.5 mm left bellcrank steering knuckle printed stub-up on flat cheek with 15.0 mm kingpin-to-wheel scrub offset and tie-rod bore.",
+      "note": "25.6 x 25.6 x 27.1 mm left double-shear clevis steering knuckle printed stub-up on flat cheek with 15.0 mm kingpin-to-wheel scrub offset and tie-rod bore.",
       "stat": "Balance",
       "type": "Steering knuckle",
-      "behavior": "Left bellcrank steering knuckle with 15 mm scrub offset and Pro wheel stub",
+      "behavior": "Left double-shear clevis steering knuckle with 15 mm scrub offset and Pro wheel stub",
       "tags": [
         "pro",
         "steering",
@@ -5069,10 +5078,10 @@
       "family": "joint",
       "size": "pro",
       "wave": "W11",
-      "note": "25.6 x 16.0 x 27.5 mm right bellcrank steering knuckle printed stub-up on flat cheek with 15.0 mm kingpin-to-wheel scrub offset and tie-rod bore.",
+      "note": "25.6 x 25.6 x 27.1 mm right double-shear clevis steering knuckle printed stub-up on flat cheek with 15.0 mm kingpin-to-wheel scrub offset and tie-rod bore.",
       "stat": "Balance",
       "type": "Steering knuckle",
-      "behavior": "Right bellcrank steering knuckle with 15 mm scrub offset and Pro wheel stub",
+      "behavior": "Right double-shear clevis steering knuckle with 15 mm scrub offset and Pro wheel stub",
       "tags": [
         "pro",
         "steering",
@@ -5090,7 +5099,7 @@
       "family": "gear",
       "size": "pro",
       "wave": "W11",
-      "note": "36.0 x 15.1 x 6.2 mm module-2.5 conjugate steering rack meshing at 12.50 mm center distance with a Z10 pinion at (0, 25.0 mm) and linking to both knuckles.",
+      "note": "36.0 x 15.1 x 6.2 mm module-2.5 conjugate steering rack meshing at 12.50 mm center distance with a Z10 pinion at (0, 25.0 mm); two pro_tie_rod_link parts join its +-7.8125 mm bores to the knuckles, and its stepped front keeper ledge rides captured under the bridge L-wall.",
       "stat": "Balance",
       "type": "Gear rack",
       "behavior": "36 mm module-2.5 steering rack driven by Z10 stem pinion or Stage-4 micro servo",
@@ -5102,6 +5111,49 @@
       ],
       "build": {
         "fn": "pro_steer_rack"
+      }
+    },
+    {
+      "id": "pro_tie_rod_link",
+      "name": "Pro Tie-Rod Link",
+      "line": "pro",
+      "family": "joint",
+      "size": "pro",
+      "wave": "W11",
+      "note": "26.9 x 11.4 x 10.1 mm tie-rod link: 4.0 mm plate, 15.468 mm bore to bore, with an integral 6.05 mm stub that drops into a rack tie-rod bore and a free bore receiving an upward-inserted pro_captive_pin_28 locked into the knuckle arm.",
+      "stat": "Balance",
+      "type": "Steering linkage",
+      "behavior": "Rigid rod from a rack bore to a steering knuckle arm",
+      "tags": [
+        "pro",
+        "steering",
+        "kitcard",
+        "joint"
+      ],
+      "build": {
+        "fn": "pro_tie_rod_link"
+      }
+    },
+    {
+      "id": "pin_free_tu03",
+      "name": "Free Pin Long",
+      "line": "pro",
+      "family": "pin",
+      "size": "pro",
+      "wave": "W11",
+      "note": "Round pin with a 9 mm head and a 37.5 mm shaft; turns in a free bore. Joins a tie-rod link to a steering knuckle (head on top of the link plate).",
+      "type": "Pin",
+      "stat": "Spin",
+      "behavior": "Long free pivot pin for the steering tie-rod link",
+      "tags": [
+        "pin",
+        "free",
+        "pivot",
+        "steering"
+      ],
+      "build": {
+        "fn": "free_pin",
+        "length_tu": 3
       }
     },
     {
@@ -5178,10 +5230,10 @@
       "family": "vehicle",
       "size": "small",
       "wave": "W11",
-      "note": "49.8 x 49.8 x 8.0 mm enclosed 4x4 TU top safety lid sealing the elastomer band cavity while exposing full 4x4 top studs for stacking Dump Tub or cargo.",
+      "note": "49.8 x 60.9 x 9.7 mm enclosed 4x4 TU top safety lid sealing the elastomer band cavity while exposing full 4x4 top studs and twin rear dump-tub hinge cradles.",
       "stat": "Sturdiness",
       "type": "Power core lid",
-      "behavior": "4x4 TU protective Power Core lid with full top stud grid",
+      "behavior": "4x4 TU protective Power Core lid with full top stud grid and rear dump-tub hinge cradles",
       "tags": [
         "momentum",
         "power",
@@ -5205,10 +5257,10 @@
       "family": "wheel",
       "size": "pro",
       "wave": "W11",
-      "note": "26.0 x 26.0 x 12.5 mm internal D-spool and 8-tooth freewheel ratchet hub winding doubled #64 bands with coasting overrun.",
+      "note": "21.6 x 21.6 x 13.0 mm free-bore elastomer wind-up drum with 4 spiral cantilever axial ratchet leaves (0.85 mm thick x 10.5 mm arc) driving mom_pto_gear_z10 with low-drag coasting overrun.",
       "stat": "Torque",
       "type": "Ratchet spool",
-      "behavior": "Internal elastomer wind-up drum with 8-tooth freewheel coasting ratchet",
+      "behavior": "Internal elastomer wind-up drum with 4-leaf axial freewheel coasting ratchet",
       "tags": [
         "momentum",
         "power",
@@ -5226,7 +5278,7 @@
       "family": "beam",
       "size": "pro",
       "wave": "W11",
-      "note": "48.0 x 32.8 x 12.5 mm mechanical IF-contact-THEN-release front bumper bar (fits between the front tires and leads the 36 mm tire front) tripping stored band actuators on obstacle touch.",
+      "note": "48.0 x 42.0 x 12.5 mm mechanical IF-contact-THEN-release front bumper bar (fits between the front tires and leads the 36 mm tire front) tripping stored band actuators on obstacle touch.",
       "stat": "Awareness",
       "type": "Mechanical trigger",
       "behavior": "Mechanical IF-bump-THEN-release front contact bar for auto-dump and scoop action",
@@ -5247,7 +5299,7 @@
       "family": "beam",
       "size": "pro",
       "wave": "W11",
-      "note": "62.3 x 36.0 x 18.0 mm stationary tabletop launcher block with captive plunger stop bore and enclosed band anchor posts.",
+      "note": "62.3 x 38.0 x 21.0 mm stationary tabletop launcher block with split-barb captive plunger retention bore and enclosed band anchor posts.",
       "stat": "Launch",
       "type": "Launcher base",
       "behavior": "Stationary tabletop slam-launcher base with non-detachable plunger retention",
@@ -5268,10 +5320,10 @@
       "family": "shaft",
       "size": "pro",
       "wave": "W11",
-      "note": "18.0 x 76.0 x 5.0 mm LAY_FLAT T-head push rod delivering a captive 35 mm impulse stroke against the craft keel.",
+      "note": "18.0 x 94.0 x 5.0 mm LAY_FLAT T-head push rod with captive split-cantilever tail barb delivering a 52 mm impulse stroke against the craft keel.",
       "stat": "Launch",
       "type": "Launcher plunger",
-      "behavior": "Captive 35 mm-stroke impulse push rod for tabletop craft launches",
+      "behavior": "Captive 52 mm-stroke impulse push rod for tabletop craft launches",
       "tags": [
         "momentum",
         "launcher",
@@ -5289,10 +5341,10 @@
       "family": "vehicle",
       "size": "small",
       "wave": "W11",
-      "note": "49.8 x 24.8 x 18.5 mm 4x2 TU upright-printed smooth balloon collar and nozzle mount block (hand-pump inflation, zero mouthpiece).",
+      "note": "49.8 x 27.8 x 28.0 mm 4x2 TU upright-printed smooth balloon collar with blind-socket floor, transverse 3.5-deg tapered plug-valve bore, and cylindrical O-ring nozzle socket.",
       "stat": "Speed",
       "type": "Jet thruster",
-      "behavior": "4x2 TU smooth balloon neck collar and air-jet thruster mount",
+      "behavior": "4x2 TU sealed balloon neck collar, tapered plug-valve housing, and jet nozzle mount",
       "tags": [
         "momentum",
         "balloon",
@@ -5316,10 +5368,10 @@
       "family": "beam",
       "size": "pro",
       "wave": "W11",
-      "note": "44.0 x 18.0 x 12.5 mm 1-piece indexed convergent nozzle bar with 3.0 mm (endurance), 4.5 mm (cruise), and 6.0 mm (sprint) orifices.",
+      "note": "42.0 x 14.0 x 13.5 mm 1-piece turret bar with three cylindrical O-ring nozzle spigots (3.0 mm endurance, 4.5 mm cruise, and 6.0 mm sprint convergent orifices).",
       "stat": "Speed",
       "type": "Jet nozzle",
-      "behavior": "1-piece indexed 3.0 / 4.5 / 6.0 mm convergent air-jet nozzle selector",
+      "behavior": "1-piece turret bar with 3.0 / 4.5 / 6.0 mm O-ring-sealed convergent air-jet nozzles",
       "tags": [
         "momentum",
         "balloon",
@@ -5337,10 +5389,10 @@
       "family": "vehicle",
       "size": "small",
       "wave": "W11",
-      "note": "49.8 x 49.8 x 16.0 mm 4x4 TU pneumatic clamshell base with 10-deg pre-angled start stop and lateral balloon containment curtains.",
+      "note": "49.8 x 68.8 x 19.1 mm 4x4 TU pneumatic clamshell base with rear 3-knuckle pin-in-bore barrel hinge, 10-deg pre-angled start stop, and lateral balloon containment curtains.",
       "stat": "Lift",
       "type": "Pneumatic actuator",
-      "behavior": "4x4 TU low-pressure balloon bellows base with side containment curtains",
+      "behavior": "4x4 TU low-pressure balloon bellows base with pin-hinged rear knuckles and side curtains",
       "tags": [
         "momentum",
         "balloon",
@@ -5362,10 +5414,10 @@
       "family": "vehicle",
       "size": "small",
       "wave": "W11",
-      "note": "49.8 x 49.8 x 8.0 mm 4x4 TU upper bellows lift plate with top studs to raise the tipping dump tub under low-pressure air inflation.",
+      "note": "49.8 x 68.8 x 11.4 mm 4x4 TU upper bellows lift plate with 2 interleaved rear hinge knuckles and top studs to raise the tipping dump tub under low-pressure air inflation.",
       "stat": "Lift",
       "type": "Pneumatic actuator",
-      "behavior": "4x4 TU hinged upper bellows lift plate supporting 100 g dump payloads",
+      "behavior": "4x4 TU pin-hinged upper bellows lift plate supporting 100 g dump payloads",
       "tags": [
         "momentum",
         "balloon",
@@ -5495,6 +5547,437 @@
       ],
       "build": {
         "fn": "mom_spindle_shaft"
+      }
+    },
+    {
+      "id": "pro_tub_hinge",
+      "name": "Pro Rear Dump-Tub Hinge Adapter",
+      "line": "pro",
+      "family": "joint",
+      "size": "pro",
+      "wave": "W11",
+      "note": "32.0 x 20.5 x 20.8 mm flat-printed rear trunnion hinge adapter snapping into #1 row-9 C-jaws and presenting twin upward dump-tub cradles.",
+      "stat": "Lift",
+      "type": "Hinge adapter",
+      "behavior": "Snaps into rear keel C-jaws so the tilting dump tub pivots 0 to 55 degrees without detaching",
+      "tags": [
+        "pro",
+        "hinge",
+        "kitcard",
+        "dump"
+      ],
+      "build": {
+        "fn": "pro_tub_hinge"
+      }
+    },
+    {
+      "id": "pro_captive_pin_28",
+      "name": "Pro Captive 28 mm Headed Drive Pin",
+      "line": "pro",
+      "family": "shaft",
+      "size": "pro",
+      "wave": "W11",
+      "note": "9.6 x 29.7 x 5.0 mm LAY_FLAT headed double-D drive pin that turns freely in a moving free bore while locking axially via a split-cantilever tail barb behind an anti-rotation fixed bore.",
+      "stat": "Sturdiness",
+      "type": "Captive pin",
+      "behavior": "Split-barb axial lock and anti-rotation pivot pin that stays captive in both directions",
+      "tags": [
+        "pro",
+        "steering",
+        "kitcard",
+        "pin"
+      ],
+      "build": {
+        "fn": "pro_captive_pin_28"
+      }
+    },
+    {
+      "id": "pro_steer_column",
+      "name": "Pro Captive Steering Column Stem",
+      "line": "pro",
+      "family": "shaft",
+      "size": "pro",
+      "wave": "W11",
+      "note": "10.6 x 46.5 x 5.0 mm LAY_FLAT headed steering column stem entering from beneath #1 steer_bore to drive the Z10 pinion and click-lock via its top split-cantilever barb above the upper steering wheel.",
+      "stat": "Balance",
+      "type": "Steering column",
+      "behavior": "Captive under-keel headed steering column coupling handwheel to rack pinion",
+      "tags": [
+        "pro",
+        "steering",
+        "kitcard",
+        "shaft"
+      ],
+      "build": {
+        "fn": "pro_steer_column"
+      }
+    },
+    {
+      "id": "pro_steer_wheel",
+      "name": "Pro Fluted Rack-Keeper Steering Wheel",
+      "line": "pro",
+      "family": "wheel",
+      "size": "pro",
+      "wave": "W11",
+      "note": "23.0 x 23.0 x 13.0 mm fluted Pro steering handwheel with anti-rotation fixed hub bore, top snap-barb seat, and 23.0 mm lower thrust skirt capturing the Z10 pinion and rear steering rack teeth.",
+      "stat": "Balance",
+      "type": "Steering wheel",
+      "behavior": "Ergonomic fluted handwheel capturing the steering column barb and rear rack teeth",
+      "tags": [
+        "pro",
+        "steering",
+        "kitcard",
+        "wheel"
+      ],
+      "build": {
+        "fn": "pro_steer_wheel"
+      }
+    },
+    {
+      "id": "mom_pto_gear_z10",
+      "name": "Momentum Z10 Freewheel PTO Ratchet Gear",
+      "line": "pro",
+      "family": "gear",
+      "size": "pro",
+      "wave": "W11",
+      "note": "30.0 x 28.9 x 9.6 mm module-2.5 10-tooth spur gear with integral 8-tooth axial sawtooth ratchet crown enabling floor pull-back winding, band drive, and low-drag freewheel coasting.",
+      "stat": "Speed",
+      "type": "Freewheel gear",
+      "behavior": "Module-2.5 Z10 PTO gear with axial overrunning clutch crown for coasting after band unwind",
+      "tags": [
+        "momentum",
+        "power",
+        "kitcard",
+        "gear"
+      ],
+      "build": {
+        "fn": "mom_pto_gear_z10"
+      }
+    },
+    {
+      "id": "mom_latch_pawl",
+      "name": "Momentum Armed/Pull-Back Sear Pawl",
+      "line": "pro",
+      "family": "beam",
+      "size": "pro",
+      "wave": "W11",
+      "note": "25.7 x 15.8 x 5.2 mm internal ratchet sear toggle switching the band core between floor pull-back mode and key-wound armed hold with bumper-trip release.",
+      "stat": "Awareness",
+      "type": "Ratchet sear",
+      "behavior": "Dual-mode ratchet hold pawl tripped by top thumb toggle or rear bumper contact",
+      "tags": [
+        "momentum",
+        "trigger",
+        "kitcard",
+        "band"
+      ],
+      "build": {
+        "fn": "mom_latch_pawl"
+      }
+    },
+    {
+      "id": "mom_wind_key",
+      "name": "Momentum Removable Band Winding Key",
+      "line": "pro",
+      "family": "shaft",
+      "size": "pro",
+      "wave": "W11",
+      "note": "28.0 x 30.0 x 5.0 mm LAY_FLAT removable wing-crank key engaging the band spool through the right tray port for stationary winding.",
+      "stat": "Torque",
+      "type": "Winding key",
+      "behavior": "Removable external crank key for winding the enclosed elastomer spool in mid-air",
+      "tags": [
+        "momentum",
+        "power",
+        "kitcard",
+        "band"
+      ],
+      "build": {
+        "fn": "mom_wind_key"
+      }
+    },
+    {
+      "id": "mom_jet_slide_valve",
+      "name": "Momentum Transverse Jet Shutoff Spool",
+      "line": "pro",
+      "family": "shaft",
+      "size": "pro",
+      "wave": "W11",
+      "note": "9.6 x 38.0 x 9.2 mm LAY_FLAT 3.5-deg tapered plug-valve spool sealing the inflated balloon collar until slid open for launch.",
+      "stat": "Speed",
+      "type": "Shutoff valve",
+      "behavior": "Slide-to-launch tapered air-jet shutoff spool holding balloon pressure before release",
+      "tags": [
+        "momentum",
+        "balloon",
+        "kitcard",
+        "jet"
+      ],
+      "build": {
+        "fn": "mom_jet_slide_valve"
+      }
+    },
+    {
+      "id": "mech_drive_tray",
+      "name": "Mech N20 Double-Shear Drive Core Tray",
+      "line": "snap",
+      "family": "vehicle",
+      "size": "small",
+      "wave": "W13",
+      "note": "49.8 x 49.8 x 35.1 mm PETG 4x4x3 TU Stage-4 drive core housing clamping an N20 micro metal gearmotor coaxially at Z_pto = 31.25 mm with an outboard pilot bearing and vertical wire chimney.",
+      "stat": "Power",
+      "type": "Mech drive core",
+      "behavior": "Screwless N20 micro gearmotor drive tray meshing 1:1 with the row-8 rear axle",
+      "tags": [
+        "mech",
+        "rc",
+        "kitcard",
+        "petg"
+      ],
+      "build": {
+        "fn": "mech_drive_tray",
+        "grid": [
+          4,
+          4
+        ]
+      }
+    },
+    {
+      "id": "mech_drive_lid",
+      "name": "Mech Drive Core Clamp & Hinge Lid",
+      "line": "snap",
+      "family": "vehicle",
+      "size": "small",
+      "wave": "W13",
+      "note": "49.8 x 60.9 x 9.7 mm PETG 4x4 TU top drive lid with wire pass-through chimney, 15 top stacking studs, and twin rear dump-tub hinge cradles.",
+      "stat": "Sturdiness",
+      "type": "Mech drive lid",
+      "behavior": "Protective top lid sealing the N20 drive core and supporting stacked brain bricks or dump tubs",
+      "tags": [
+        "mech",
+        "rc",
+        "kitcard",
+        "petg"
+      ],
+      "build": {
+        "fn": "mech_drive_lid",
+        "grid": [
+          4,
+          4
+        ],
+        "base": "integrated",
+        "lock": true
+      }
+    },
+    {
+      "id": "mech_n20_pinion_z10",
+      "name": "Mech N20 Double-Shear Z10 Motor Pinion",
+      "line": "pro",
+      "family": "gear",
+      "size": "pro",
+      "wave": "W13",
+      "note": "30.0 x 28.9 x 20.0 mm PETG module-2.5 10-tooth pinion with dogbone-relieved 3.0 mm N20 D-bore, M2.5 set-screw boss, and integral 6.6 mm outboard Pro pilot journal.",
+      "stat": "Torque",
+      "type": "Motor pinion",
+      "behavior": "Couples an N20 D-shaft to the module-2.5 PTO gear train in true double shear",
+      "tags": [
+        "mech",
+        "rc",
+        "kitcard",
+        "gear"
+      ],
+      "build": {
+        "fn": "mech_n20_pinion_z10"
+      }
+    },
+    {
+      "id": "mech_brain_tray",
+      "name": "Mech Low-CG Brain & LiPo Core Tray",
+      "line": "snap",
+      "family": "vehicle",
+      "size": "small",
+      "wave": "W13",
+      "note": "49.8 x 49.8 x 22.6 mm PETG 4x4x2 TU electronics housing with lengthwise 602535 1S LiPo pocket, M2.5 tool-locked door anchor, USB-C bezel, and dual-footprint XIAO ESP32 / 38x38 PCB ledges.",
+      "stat": "Awareness",
+      "type": "Mech brain core",
+      "behavior": "Houses Wi-Fi/BLE microcontroller, dual H-bridge, and protected 1S LiPo in a 2 TU brick",
+      "tags": [
+        "mech",
+        "rc",
+        "kitcard",
+        "petg"
+      ],
+      "build": {
+        "fn": "mech_brain_tray",
+        "grid": [
+          4,
+          4
+        ]
+      }
+    },
+    {
+      "id": "mech_brain_lid",
+      "name": "Mech Vented RF-Clear Brain Lid",
+      "line": "snap",
+      "family": "vehicle",
+      "size": "small",
+      "wave": "W13",
+      "note": "49.8 x 60.9 x 9.7 mm PETG 4x4 TU vented top brain cover with finger-safe cooling slots, full 4x4 top studs, and twin rear dump-tub hinge cradles.",
+      "stat": "Awareness",
+      "type": "Mech brain lid",
+      "behavior": "RF-transparent vented top lid completing the 2 TU electronics core",
+      "tags": [
+        "mech",
+        "rc",
+        "kitcard",
+        "petg"
+      ],
+      "build": {
+        "fn": "mech_brain_lid",
+        "grid": [
+          4,
+          4
+        ],
+        "base": "integrated",
+        "lock": true
+      }
+    },
+    {
+      "id": "mech_bat_door_screw",
+      "name": "Mech Tool-Locked LiPo Battery Door",
+      "line": "pro",
+      "family": "beam",
+      "size": "pro",
+      "wave": "W13",
+      "note": "33.6 x 10.6 x 5.8 mm PETG tool-locked rear battery compartment door with keyed hook tab, captive M2.5 screw recess (ASTM F963-23 battery accessibility; exact clause TBD), and central Pro accessory bore.",
+      "stat": "Sturdiness",
+      "type": "Battery door",
+      "behavior": "Tool-locked rear battery cover securing the 1S LiPo compartment inside mech_brain_tray",
+      "tags": [
+        "mech",
+        "rc",
+        "kitcard",
+        "safety"
+      ],
+      "build": {
+        "fn": "mech_bat_door_screw"
+      }
+    },
+    {
+      "id": "mech_servo_mount",
+      "name": "Mech Row-2 Coaxial 9g Servo Bridge",
+      "line": "snap",
+      "family": "vehicle",
+      "size": "small",
+      "wave": "W13",
+      "note": "48.0 x 19.0 x 32.8 mm PETG steering servo mount anchoring on #1 row-2 studs and corbeling forward over the Z10 rack pinion to hold a standard 9g micro servo coaxially at (0, -37.50).",
+      "stat": "Balance",
+      "type": "Servo mount",
+      "behavior": "Positions a 9g micro servo shaft-down directly over the Stage-2 steering rack pinion",
+      "tags": [
+        "mech",
+        "rc",
+        "steering",
+        "kitcard"
+      ],
+      "build": {
+        "fn": "mech_servo_mount",
+        "grid": [
+          2,
+          2
+        ],
+        "base": "integrated",
+        "lock": true
+      }
+    },
+    {
+      "id": "mech_servo_lid",
+      "name": "Mech Screwless 9g Servo Clamp Cap",
+      "line": "pro",
+      "family": "joint",
+      "size": "pro",
+      "wave": "W13",
+      "note": "48.0 x 12.4 x 6.2 mm PETG upper servo clamp strap pinning onto mech_servo_mount's 3-TU ears to lock the 9g micro servo tabs without tiny screws.",
+      "stat": "Sturdiness",
+      "type": "Servo clamp",
+      "behavior": "Pins across the 9g servo mounting ears for tool-free steering servo retention",
+      "tags": [
+        "mech",
+        "rc",
+        "steering",
+        "kitcard"
+      ],
+      "build": {
+        "fn": "mech_servo_lid"
+      }
+    },
+    {
+      "id": "mech_servo_pinion_z10",
+      "name": "Mech Horn-Pocket Z10 Servo Pinion",
+      "line": "pro",
+      "family": "gear",
+      "size": "pro",
+      "wave": "W13",
+      "note": "30.0 x 28.9 x 8.8 mm PETG module-2.5 10-tooth steering pinion with top pocket capturing the servo's factory nylon horn (zero printed micro-splines), 23.0 mm rack-keeper flange, and bottom Pro pilot bore.",
+      "stat": "Balance",
+      "type": "Servo pinion",
+      "behavior": "Couples a 9g servo's stock nylon horn to the steering rack in double shear",
+      "tags": [
+        "mech",
+        "rc",
+        "steering",
+        "gear"
+      ],
+      "build": {
+        "fn": "mech_servo_pinion_z10"
+      }
+    },
+    {
+      "id": "pro_pilot_pin",
+      "name": "Pro 30 mm Under-Keel Servo Pilot Pin",
+      "line": "pro",
+      "family": "pin",
+      "size": "pro",
+      "wave": "W13",
+      "note": "9.6 x 31.5 x 5.6 mm LAY_FLAT headed round pilot pin entering from beneath #1 steer_bore into mech_servo_pinion_z10 with a split-cantilever snap-barb tip to support the servo pinion in double shear.",
+      "stat": "Balance",
+      "type": "Pilot pin",
+      "behavior": "Supports the motorized Z10 steering pinion from below against rack separating forces",
+      "tags": [
+        "pro",
+        "mech",
+        "steering",
+        "pin"
+      ],
+      "build": {
+        "fn": "pro_pilot_pin"
+      }
+    },
+    {
+      "id": "mech_sill_duct",
+      "name": "Mech Cockpit Wire-Trough Sill Frame",
+      "line": "snap",
+      "family": "vehicle",
+      "size": "small",
+      "wave": "W13",
+      "note": "49.8 x 37.3 x 11.0 mm PETG low-profile 4x3 TU cockpit sill frame routing front servo leads cleanly past Kip's feet when #8 windscreen is omitted.",
+      "stat": "Sturdiness",
+      "type": "Wire sill",
+      "behavior": "Snap-on cockpit side-sill cable duct protecting servo wiring on open-cockpit RC builds",
+      "tags": [
+        "mech",
+        "rc",
+        "kitcard",
+        "petg"
+      ],
+      "build": {
+        "fn": "mech_sill_duct",
+        "grid": [
+          4,
+          3
+        ],
+        "base": "integrated",
+        "lock": true
       }
     }
   ],
