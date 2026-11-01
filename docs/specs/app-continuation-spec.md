@@ -21,18 +21,15 @@ Each phase must keep roster identity, save compatibility, and ledger
 auditability intact. Nothing here overrides the canonical spec, the one-stage
 UX rules, or the TU geometry canon.
 
-## Build status (Oct 31, 2026 — code-verified)
+## Build status (Nov 1, 2026 - code-verified)
 
-- Phase 0 (port + typed runtime + cog mesh + `#fix` removal): landed.
+- Phase 0 (in-process `three.js` 0.183 port, typed runtime with `0` `@ts-nocheck`, live STL hero rig loader + procedural fallback, two-archetype `Build`, cog mesh, `#fix` removal): landed.
 - Phase 1 (Toy Box pill, PIN pad with dual-path lockout, Demo v1): landed.
-- Phase 2 (enabled roster, Star Scout grandfathering, Kip unification): landed.
-- Phase 3 (XP math, Tier 2/3 presets, badges, Pro-part gating): landed.
-- Phase 4A (locked cards for the 3 ready vehicles): landed.
-- Phase 4B (Ranks 3–5 flips): open — tractor awaits chin-strap verdict,
-  ranks 4–6 await Wave-10 proofs; truck/scooter/motorbike already live.
-- Phase 5 (weekly packs): parked by decision — no owner; weekly drops ship
-  post-freeze, locked-card probe procedure adopted for the 4A verify.
-- Open verification: live Toy Box probe of locked-card promote-at-threshold.
+- Phase 2 (enabled roster, Star Scout grandfathering, Kip unification + `robot.*` wardrobe aliases): landed.
+- Phase 3 (XP math, Tier 2/3 presets, 11 STEM Concept Badges, Pro-part gating, 3 rotating Daily Quests, parent-enabled Real-Life Routines `+25 XP/day`, guilt-free Workshop Days): landed.
+- Phase 4A + 4B (all 9 Rank 2-6 vehicles promoted `ready: true` through Rank 6 `Bolt Power Mech`, backed by `modular-craft.json` + `mech-robotics.json`, E2E zero-reload switch verified): landed.
+- Town Slice 1 (connected 6-district `TOWN_RING` street crossings + signposts, `VEHICLE_PERKS`, 12 `TOWN_SPARKLE_SPOTS`): landed.
+- Phase 5 (weekly packs) + Town Phases B-E + `SAM 3.1` & `Muse` generative extensions: parked as **Stretch Goals** behind the Nov 4 core freeze (see §8 and [spec.md](../product/spec.md)).
 
 
 ## 2. Phase 1 — Top Bar & Grown-Up Unlock
@@ -242,27 +239,21 @@ authoritative; `last_*` aliases resolve to canonical toys before roster
 writes.
 
 
-## 8. Town Layer Linkage (Vision: [`toyventor-town-vision.md`](toyventor-town-vision.md))
+## 8. Town Layer Linkage & Stretch Goals (Vision: [`toyventor-town-vision.md`](toyventor-town-vision.md))
 
-The Town vision's Phases A–E extend this roadmap past Phase 5; nothing there
-is committed until it lands here as a numbered phase with entry gates:
+- **Landed now (Phase A + Connected Town Slice 1):** deterministic 3-slot Daily
+  Quest Board (`+40 XP`), 11 STEM Concept Badges + plain-English parent skill
+  summary, parent-enabled Real-Life Routines (`+25 XP/day` `"I did it!"`),
+  pause-never-reset Workshop Day stamps, connected 6-district `TOWN_RING`
+  street crossings + signposts, `VEHICLE_PERKS` across all 10 playable vehicles,
+  and 12 calm `TOWN_SPARKLE_SPOTS`.
+- **Stretch Goals (post-Nov 4 freeze, tracked in [spec.md](../product/spec.md) and [`forge-ai-spec.md`](forge-ai-spec.md)):**
+  - **Phase B (adventure):** in-world NPC quest givers and chains (`toyventor.quest/1`), mystery quests, `"Fix Kip's workshop"` arc, and adaptive `Muse Spark` quest commissions.
+  - **Phase C.2 (full town topology):** central `Plaza` hub, enterable Lab building doors (`toyventor.town/1`), and hard island/sky-ledge vehicle map gates.
+  - **Phase D (toy as solution):** physics-checked *Deliver-It* and *Build-to-Spec* quests, `Music Hall` prop loops, and `Forge AI` parametric `Recipe v1` + `F3` repair loop.
+  - **Phase E & `SAM 3.1` + `Muse` physical-to-digital loops:** persistent star landmark upgrades, parent-approved `Makers' Park` share codes, Kid Sketch/Clay -> Printable Snap Part, Physical Build -> Digital Twin Sync, Living-Room Course -> 2.5D Level, Upcycle Lab cardboard/bottle adapters, Photo Print-Fit Doctor, Privacy-Safe STEM Scavenger quests, and `Max` robotics training exhaust.
 
-- **Phase A (come-back loop)** overlaps Phases 3–5 + parent-time: daily quest
-  board with real routines, concept badges, weekly parent summary, Workshop
-  Day stamps, personal-best hints, "Kip is recharging." Done when testing
-  families return 4+ days a week.
-- **Phase B (adventure):** quest givers and chains, mystery quests, Mess
-  meter, "Fix Kip's workshop" arc. Done when kids pick a second quest
-  without being asked.
-- **Phase C (connected town):** three-district slice first (Plaza, Home
-  Street, Garden), then all districts, with vehicle gates. Done when a child
-  plays 20 minutes across three places without help.
-- **Phase D (toy as solution):** deliver-it and build-to-spec quests, Music
-  Hall. Done when a build-to-spec solve prints the part used.
-- **Phase E (families and seasons):** shared worlds with missions, co-op
-  quests, weekly events inside monthly packs. Done when two families complete
-  a shared quest through grown-up-approved codes.
-
-Prerequisites before any Town phase: STEM ladders playtests (8+ kids across
-age bands) folded in; `toyventor.quest/1` field-final; transcription running
-through the Worker with audio deleted after use.
+Prerequisites before shipping Town Phases B-E: core Nov 4 submission path and
+live deploy green; `toyventor.quest/1` and `toyventor.town/1` schemas frozen;
+voice transcription routed through the Worker (`muse-voice-transcribe-1.0`)
+with immediate audio deletion.

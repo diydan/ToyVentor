@@ -1,9 +1,26 @@
 # ToyVentor Town — vision (not a build spec)
 
-Oct 30, 2026 · @Dan O. This is the destination vision. The build plan lives
-in [app-continuation-spec.md](app-continuation-spec.md); the shell contract in
-[../ux/world-first-spec.md](../ux/world-first-spec.md). Nothing here is
-committed to code until it appears there.
+Oct 30, 2026 · @Dan O (updated Nov 1, 2026). This is the destination vision.
+The build plan lives in [app-continuation-spec.md](app-continuation-spec.md),
+the canonical contract and **Stretch goals** register in
+[../product/spec.md](../product/spec.md), and the shell contract in
+[../ux/world-first-spec.md](../ux/world-first-spec.md).
+
+**Implementation snapshot (Nov 1, 2026):**
+- **Landed in `main`:** Phase A come-back loop (Daily Quest Board, 11 STEM
+  Concept Badges + parent skills summary, parent-enabled Real-Life Routines
+  `+25 XP/day`, pause-never-reset Workshop Day stamps) and **Connected Town
+  Slice 1** (6-district `TOWN_RING` street crossings + signposts across
+  `room <-> garden <-> beach <-> junk <-> snow <-> sky`, zero-reload switching
+  across Kip and 10 vehicles through Rank 6 `Bolt Power Mech`, `VEHICLE_PERKS`,
+  and 12 calm `TOWN_SPARKLE_SPOTS`).
+- **Scoped as Stretch Goals (post-Nov 4 freeze):** Central `Plaza` + enterable
+  Lab building doors (`toyventor.town/1`), in-world NPC quest givers & story
+  chains (`toyventor.quest/1`), hard vehicle map gates + *Deliver-It /
+  Build-to-Spec* quests, persistent star landmark upgrades, `Makers' Park`
+  parent-approved family share codes, `Music Hall`, voice-only Bedtime mode,
+  and generative `SAM 3.1` + `Muse` physical-to-digital loops (see
+  [../product/spec.md](../product/spec.md) and [forge-ai-spec.md](forge-ai-spec.md)).
 
 Editor's verification notes (Oct 31): Muse Voice Transcribe is real and live
 on the Meta Model API (`muse-voice-transcribe-1.0`, streaming ASR +

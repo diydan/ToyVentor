@@ -3,7 +3,8 @@
 ## Status
 
 **Proposed.** Written 2026-10-31, extended the same day with four assist
-features (A1, A2, A4, A5). Nothing here is built except the pieces listed under
+features (A1, A2, A4, A5), and on 2026-11-01 with a fifth (A6, failed-print
+triage) and a print-optimisation scope note. Nothing here is built except the pieces listed under
 "Already in the repo". No custom model is in scope for the Nov 4 build. After
 submission, two own-model tracks (a Forge recipe writer and a brick sculptor)
 are planned behind explicit gates; see "Custom model roadmap". The prompt
@@ -18,8 +19,8 @@ structured gate failures back until it passes or falls back to something
 usable. Every attempt is logged, so the eval harness can say, with numbers,
 whether a custom model would ever be worth it.
 
-Four smaller assist features (scan assist, build coach, speech edits,
-kit-card text) follow one rule: the model supplies words or a choice
+Five smaller assist features (scan assist, build coach, speech edits,
+kit-card text, failed-print triage) follow one rule: the model supplies words or a choice
 among enumerated options, and code supplies every fact and every action. They
 need no Python validator, each has a no-model fallback, and the first two can
 ship from the Worker alone.
@@ -49,6 +50,7 @@ The assist features (detailed after the Forge sections):
 | A2 | Build coach | A kid-friendly sentence | Check results, the legal fix, the applied action | One template line per check id |
 | A4 | Speech or typed edits | Intent parsed into enumerated ops | Placement, legality, preview then apply, undo | Tap or typed catalog search |
 | A5 | Kit-card step text | Optional age-band rewrite | Step order, part names, fixed warning text | Template steps |
+| A6 | Failed-print triage | One cause id from a closed list | The fix card for that cause and slicer; no setting comes from the model | Manual symptom picker |
 
 ## Already in the repo (do not rebuild)
 
@@ -289,7 +291,7 @@ Shared wrapper (`worker/assist.ts`): one `callMuse()` helper reusing the
 `worker/muse.ts` pattern (Responses API, structured JSON output, low reasoning
 effort, a per-call timeout, the kid-safety prefix, a brand-term filter on
 returned text, the same per-IP limits). On a timeout, malformed JSON or a filter
-hit it returns `null` and the caller uses its fallback. A1, A2 and A4 run in
+hit it returns `null` and the caller uses its fallback. A1, A2, A4 and A6 run in
 the Worker alone, so they need no validator service.
 
 ### A1: Scan assist
@@ -360,6 +362,66 @@ the Worker alone, so they need no validator service.
 - **Acceptance (targets):** every step names a real part and connector; text
   fits its card slot; 0 changes to fixed warning text.
 
+### A6: Failed-print triage
+
+- **Problem:** a print fails (stringing, lifting, elephant foot, layer shift,
+  under-extrusion, spaghetti, a joint too tight or too loose) and the grown-up
+  does not know which setting to change. Live monitors (Obico, some printers)
+  already watch a camera during the print; this covers the after-the-fact case
+  on printers with no camera.
+- **Flow:** the grown-up uploads a photo of the failed print, optionally with the
+  part id and slicer. One Spark vision call returns
+  `{ cause: <enum id>, confidence: "high" | "low", also?: <enum id> }`. Code
+  then shows the hand-written fix card for that cause and slicer. Fix text is
+  authored once per cause and slicer, like the hint ladders. The model never
+  writes a setting, a number or a G-code line.
+- **Cause list:** a closed list of about 10 ids, written by hand and checked
+  against coupons printed wrong on purpose before it ships. `unsure` is a valid
+  answer and shows a generic checklist.
+- **Where:** Worker only (`worker/assist.ts`), in the grown-up area behind the
+  PIN gate, never offered to kids. The photo is processed and not stored.
+- **Fallback:** a manual symptom picker over the same cause list, no model.
+- **Dependency:** the A1 vision spike (does hosted Spark read images through
+  the Responses API). Open question 13 covers the people-in-frame screen.
+- **Acceptance (targets):** 30 photos, about 3 per cause, of coupons printed
+  wrong on purpose and labelled by whoever made the fault. At least 80%
+  top-1 on clear cases; at most 10% confident wrong answers, the rest `unsure`
+  or `low`; 100% of answers land on a fix card.
+- **Custom model:** none. A closed-set image classifier is the only fine-tune
+  candidate here, and only if the eval shows Spark missing the target and
+  hundreds of consented, labelled photos exist.
+
+## Level hint ladders (hand-authored)
+
+Three tiers per level, written by hand at authoring time and reviewed before
+the level ships. No model writes a hint.
+
+- **Position:** in the [play-design-spec.md](play-design-spec.md) pipeline,
+  alongside its review step.
+- **Tiers:** nudge, clue, show, drawn from the closed vocabulary. All three
+  are written by hand and reviewed by the same humans who approve the level.
+- **Storage:** an optional `hints` field proposed for `toyventor.level/2`;
+  coordinate with the play-design spec.
+- **No live generation:** hints are authored, not generated on the fly. The
+  kid gets the tier the level stores.
+
+## Print optimisation (what stays deterministic)
+
+Printability is already decided by code, and a model neither beats nor replaces
+those checks. Sources: [kip-print-workflow-spec.md](kip-print-workflow-spec.md)
+sections 5 to 7, `parts/partspec/preprint_check.py`,
+`parts/partspec/print_profiles/fdm_pla_0.4.json` and the limits in
+`parts/partspec/interfaces.json`.
+
+| Job | Model? | Basis |
+| --- | --- | --- |
+| Orientation, supports, bridges, brim | No | `preprint_check.py` gates overhang, floating islands, bridge span and ledges at the catalog bar (1.0 mm² steep overhang, 20 mm bridge). Orientation is a search over a few poses. The open work is browser parity with the gate and exporting each part's brim width (print workflow spec 7.1). |
+| Plate packing, kit-card and sprue layout, colour consolidation | No | Packing and clustering algorithms (print workflow spec 5 and 6). |
+| Printable generated parts | Already here | The L1 slope clamp is the 45° rule and the F3 loop reads gate failures. The eval already counts failures per gate id; support-free yield is read from those counts. |
+| Existing Kip parts that fail the overhang check (9 of 30 per print workflow spec 7.3) | Not a product feature | CAD work. A model could propose `.scad` edits with the gate as accept or reject, but a parameter sweep gets most of that value, so keep it a dev-time tool. |
+| Per-printer tolerance | Statistics, not an LLM | A prior by printer, nozzle and material, updated from the hidden 1/2/3 fit choice ([parts-tu-spec.md](../parts/parts-tu-spec.md) section 2). The photo variant is stretch item 7. Waits on `F1_printed_fit` data; the calibration print started 2026-10-31. |
+| Failed-print triage | Yes | A6 above. |
+
 ## Eval harness (built first; decides everything else)
 
 `scripts/forge-eval.ts` plus `tests/forge/prompts.json` (about 60 prompts
@@ -376,8 +438,9 @@ manual 1 to 5 "cute and on-brand" rating. The gates prove a part is valid and
 printable, not that it is appealing, and the design log shows taste has needed
 human correction before.
 
-The assist features add three small sets to the same harness: 20 scan photos
-(A1), 20 scripted failing builds (A2), and 40 utterances (A4). Each reports its
+The assist features add four small sets to the same harness: 20 scan photos
+(A1), 20 scripted failing builds (A2), 40 utterances (A4), and 30 photos of
+coupons printed wrong on purpose (A6). Each reports its
 own acceptance numbers above, plus model calls, latency p50 and p95, and tokens
 per request.
 
@@ -487,6 +550,21 @@ GPU rates used: A100 80GB about $1.49 to $3.43 per GPU-hour; H100 about $2 to
 $7 with a median near $3.37. Sources are vendor blogs from March to August 2026
 and conflict, so check live pricing.
 
+**Local GPU (RTX 4060, 8 GB; added 2026-11-01).** Nothing here is measured.
+Memory is the first limit: Unsloth's own post says Llama 3.1 8B QLoRA fits in
+8 GB at about 2K tokens of context, so a 1B model fits, and the short Forge
+recipes fit even at 8B, while the sculptor's 4096-token samples on 8B would not.
+Speed is the second: the card has roughly a third of an A6000's memory
+bandwidth (272 vs 768 GB/s) and FP32 throughput (15 vs 38.7 TFLOPS; card specs
+unverified here), so the baseline's 96 A6000-hours becomes about 270 hours, or
+11 days, per full sculptor run (D, crude). Forge 1B SFT on about 50k short
+recipes (assume 600 tokens each, 3 epochs, about 90M tokens) is roughly 6 to 20
+hours per run at an assumed 1.5k to 4k tokens per second (E); Forge 8B QLoRA is
+5 to 8x that, about 1 to 7 days. That is enough for the Forge 1B spike and for
+debugging both pipelines; rent a GPU for the sculptor and for 8B. A 100-step
+timing run gives the real tokens per second in minutes and replaces these
+figures. The 4060 Ti 16 GB variant relaxes the memory limit, not the speed.
+
 **Base model.** Start with a small open model (1B to 8B class; the published baseline's 1B is
 the precedent). Use Muse Glimmer (about 30B) only if the small models cannot
 hold the task. Unsloth's docs say a 30B QLoRA run fits on a 24 GB GPU, but no
@@ -510,6 +588,7 @@ and retraining after catalog waves or schema changes.
 | 1b | Validator in a Container or Sandbox | Phase 1 | After submission |
 | 2 | F5 planner (plan and edit modes, which also delivers A4), F4 host argument, host-envelope export, A5 templates | Phase 1 validator | After submission |
 | 2b | F4 cavity-hat builder | Phase 2 | Later |
+| 2c | A6: print about 10 failure coupons, photograph and label them, run the eval, then build the triage flow and fix cards | Phase 0b vision spike | After submission |
 | 3 | Custom model roadmap stages R1 to R5, each behind its gate | Phase 1 attempt log and eval numbers | After submission; see "Custom model roadmap" |
 
 Honest demo framing for Nov 4: Phase 0 outputs are pre-generated and
@@ -542,6 +621,40 @@ this document covers only its data and training plan. A published text-to-brick 
 a fine-tuned 1B model with a physics check and rollback, backed by an MIT
 dataset. Keep third-party brand names out of user-facing copy.
 
+## Stretch goals (post-freeze `SAM 3.1` + `Muse` extensions)
+
+All items below stay parked behind the Nov 4 core freeze and obey the same
+contract as `F1-F5` and `A1-A6`: `SAM 3.1` emits masks/silhouettes with zero
+room pixels persisted, `Muse` emits schema-validated JSON recipes, and
+deterministic code verifies geometry, fit, and physics.
+
+1. **Live `Muse Spark` behind `Describe & Build`:** Connect `/api/muse/spark`
+   to propose `kip-describe` part graphs validated by `fit_matrix` and the 8 mm
+   exploded-view timeline, with deterministic recipe-book fallback.
+2. **Adaptive Town Quests & Playable Create Lots (`Muse Spark` + `Muse Voice`):**
+   Generate `toyventor.quest/1` NPC commissions from unpracticed
+   `CONCEPT_BADGES` and age band, and let Create mode emit mission beacons and
+   vehicle terrain gates inside `toyventor.level/1`.
+3. **Kid Sketch / Clay -> Printable Snap Part:** `SAM 3.1` paper/clay contour
+   -> `Muse` slot & stat -> `Recipe v1` extrusion/loft + `12.5 mm` TU socket
+   verified through `kip_partspec_sdk.py`.
+4. **Physical Build -> Digital Twin Sync:** Multi-prompt `SAM 3.1` desk photo
+   across printed modules (`head`, `hat`, `wheels`, `chassis`) matched against
+   `ai_catalog.txt` into `toyventor.toy/1`, plus `Muse Image` sticker/marker lift.
+5. **Living-Room Course -> Playable 2.5D Level:** Side-view `SAM 3.1` floor
+   segmentation (`book`, `cup`, `pillow`, `box`) mapped by `Muse Spark` into a
+   playable `toyventor.level/1` obstacle and ramp course.
+6. **Upcycle Lab (Cardboard & Bottle Adapters):** `SAM 3.1` household box/bottle
+   scaled against a printed `1x1 TU` reference tile -> parametric clip/axle
+   collar `Recipe v1`.
+7. **Photo Print-Fit & Calibration Doctor:** `SAM 3.1` + `Muse` inspect a photo
+   of the printed `1/2/3-dot` calibration strip to set per-printer XY fit
+   compensation automatically.
+8. **Privacy-Safe STEM Scavenger & `Max` Robotics Exhaust:** Ephemeral
+   `SAM 3.1` target-noun masks for `Real Life Counts` tidy/scavenger quests, and
+   parent-approved `(mask, TU_grasp_anchor, mm_scale, torque)` priors feeding
+   the `Max` real-robot track ([scan-to-3d.md](scan-to-3d.md)).
+
 ## Not doing
 
 - Model-generated meshes, or any path where the model's geometry skips the gates.
@@ -551,8 +664,9 @@ dataset. Keep third-party brand names out of user-facing copy.
 - Fine-tuning Forge before the eval says to, or training any model before its
   roadmap gate.
 - A single combined model for Forge and the brick sculptor.
-- Live hint generation for kids, mood reading from faces, live-generated audio,
-  or anything outside the nine features above.
+- Open-ended chat with kids, mood reading from faces, or live-generated audio.
+- Live print monitoring or printer control by a model (Obico and some printers
+  already watch the camera), and any model-written slicer setting or G-code.
 
 ## Open questions (resolve by measurement, not debate)
 
@@ -582,6 +696,14 @@ dataset. Keep third-party brand names out of user-facing copy.
 12. Every cost figure tagged E in "Data plan" and "Compute time and cost" is an
     estimate; the first real numbers come from building the recipe compiler and
     timing the gates per recipe.
+13. A6: no public benchmark was found for photo of a failed print to cause to
+    settings change (the nearest work, LLM-3D Print, monitors live prints and
+    adjusts settings through the printer's API). Does Spark reach the accuracy
+    target on our coupons, and is a people-in-frame screen needed before a
+    grown-up's photo reaches a vision call?
+14. Per-printer tolerance: how many printers it takes before a prior by
+    printer, nozzle and material beats the single 1/2/3 choice, and whether the
+    photo variant (stretch item 7) is worth building.
 
 ## Docs impact when this ships
 
@@ -590,7 +712,8 @@ dataset. Keep third-party brand names out of user-facing copy.
   model-generated" line to "models propose parameters; gated deterministic code
   builds all geometry".
 - [spec.md](../product/spec.md) "Where we use Meta models": also add rows for
-  scan assist (Spark vision) and the build coach.
+  scan assist (Spark vision), the build coach and failed-print triage (Spark
+  vision).
 - [LLM_PART_PROMPT.md](../../parts/kip/sdk/LLM_PART_PROMPT.md): document
   Recipe v1 alongside the Python script format.
 - [README.md](../README.md): index this spec (done with this file).
