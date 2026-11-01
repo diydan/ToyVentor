@@ -19,9 +19,9 @@
   },
   "parts": {
     "adapter-snap-pro": {
-      "source_sha256": "555b0803fafb9412",
+      "source_sha256": "7f75f2c475a37644",
       "finish_class": "precision_gear_pin",
-      "print_simplify_mm": 0.01,
+      "print_simplify_mm": 0.005,
       "web_simplify_mm": 0.09,
       "web_crease_deg": 34,
       "slicer_recipe": {
@@ -39,7 +39,7 @@
     "beam-str-tu05": {
       "source_sha256": "d67ff10c902a3dd1",
       "finish_class": "precision_gear_pin",
-      "print_simplify_mm": 0.01,
+      "print_simplify_mm": 0.005,
       "web_simplify_mm": 0.09,
       "web_crease_deg": 34,
       "slicer_recipe": {
@@ -55,9 +55,9 @@
       }
     },
     "big-blue-brick": {
-      "source_sha256": "ab3e9cfcb6e5baa9",
+      "source_sha256": "df83c2f9eb1d0bfe",
       "finish_class": "prismatic_structural",
-      "print_simplify_mm": 0.018,
+      "print_simplify_mm": 0.016,
       "web_simplify_mm": 0.09,
       "web_crease_deg": 34,
       "slicer_recipe": {
@@ -73,9 +73,9 @@
       }
     },
     "brick-s-2x2": {
-      "source_sha256": "ab7aba51731857ee",
+      "source_sha256": "ebe49b00d2084e5c",
       "finish_class": "prismatic_structural",
-      "print_simplify_mm": 0.018,
+      "print_simplify_mm": 0.016,
       "web_simplify_mm": 0.09,
       "web_crease_deg": 34,
       "slicer_recipe": {
@@ -127,7 +127,7 @@
       }
     },
     "dome-s-2x2": {
-      "source_sha256": "8c4c44aca49b8972",
+      "source_sha256": "4d8be731ff38665c",
       "finish_class": "show_curved",
       "print_simplify_mm": 0.006,
       "web_simplify_mm": 0.075,
@@ -145,9 +145,9 @@
       }
     },
     "forge-mount-first-print": {
-      "source_sha256": "53dbd95509f03787",
+      "source_sha256": "16ef5a416f42a285",
       "finish_class": "precision_gear_pin",
-      "print_simplify_mm": 0.01,
+      "print_simplify_mm": 0.005,
       "web_simplify_mm": 0.055,
       "web_crease_deg": 28,
       "slicer_recipe": {
@@ -163,9 +163,9 @@
       }
     },
     "forge-mount-ring-s": {
-      "source_sha256": "cbcb25cf85eb8fad",
+      "source_sha256": "dc57d0efab2c6f47",
       "finish_class": "precision_gear_pin",
-      "print_simplify_mm": 0.01,
+      "print_simplify_mm": 0.005,
       "web_simplify_mm": 0.055,
       "web_crease_deg": 28,
       "slicer_recipe": {
@@ -183,7 +183,7 @@
     "gear-spur-z10": {
       "source_sha256": "8d22fe3fa35c1309",
       "finish_class": "precision_gear_pin",
-      "print_simplify_mm": 0.01,
+      "print_simplify_mm": 0.005,
       "web_simplify_mm": 0.055,
       "web_crease_deg": 28,
       "slicer_recipe": {
@@ -201,7 +201,7 @@
     "gear-spur-z20": {
       "source_sha256": "21302f518feafb37",
       "finish_class": "precision_gear_pin",
-      "print_simplify_mm": 0.01,
+      "print_simplify_mm": 0.005,
       "web_simplify_mm": 0.055,
       "web_crease_deg": 28,
       "slicer_recipe": {
@@ -235,7 +235,7 @@
       }
     },
     "kit-aero-wedge": {
-      "source_sha256": "2536192342b60dd7",
+      "source_sha256": "08df377e094a7bc5",
       "finish_class": "show_curved",
       "print_simplify_mm": 0.006,
       "web_simplify_mm": 0.075,
@@ -253,9 +253,9 @@
       }
     },
     "kit-barbell-shaft": {
-      "source_sha256": "7d258fc8a59bc0e4",
+      "source_sha256": "cca820829939d5ab",
       "finish_class": "precision_gear_pin",
-      "print_simplify_mm": 0.01,
+      "print_simplify_mm": 0.005,
       "web_simplify_mm": 0.055,
       "web_crease_deg": 28,
       "slicer_recipe": {
@@ -271,7 +271,7 @@
       }
     },
     "kit-booster-pod": {
-      "source_sha256": "969ebd6233952a1c",
+      "source_sha256": "356be76cebfdd20f",
       "finish_class": "show_curved",
       "print_simplify_mm": 0.006,
       "web_simplify_mm": 0.075,
@@ -289,9 +289,9 @@
       }
     },
     "kit-clevis-spine": {
-      "source_sha256": "4b2d810d6c53c8a1",
+      "source_sha256": "b2132c8a84a01f07",
       "finish_class": "precision_gear_pin",
-      "print_simplify_mm": 0.01,
+      "print_simplify_mm": 0.005,
       "web_simplify_mm": 0.09,
       "web_crease_deg": 34,
       "slicer_recipe": {
@@ -307,7 +307,7 @@
       }
     },
     "kit-foil-wing": {
-      "source_sha256": "0f368a7a82140a2b",
+      "source_sha256": "a27b9315655e16c4",
       "finish_class": "show_curved",
       "print_simplify_mm": 0.006,
       "web_simplify_mm": 0.075,
@@ -325,9 +325,9 @@
       }
     },
     "kit-keel-base": {
-      "source_sha256": "c4b64311ec4be046",
+      "source_sha256": "59d113014b3e2249",
       "finish_class": "prismatic_structural",
-      "print_simplify_mm": 0.018,
+      "print_simplify_mm": 0.016,
       "web_simplify_mm": 0.09,
       "web_crease_deg": 34,
       "slicer_recipe": {
@@ -343,9 +343,9 @@
       }
     },
     "kit-rotor-blade": {
-      "source_sha256": "2cb09aa5ff96efc2",
+      "source_sha256": "80cee62ee207e950",
       "finish_class": "precision_gear_pin",
-      "print_simplify_mm": 0.01,
+      "print_simplify_mm": 0.005,
       "web_simplify_mm": 0.055,
       "web_crease_deg": 28,
       "slicer_recipe": {
@@ -361,7 +361,7 @@
       }
     },
     "kit-scoop-blade": {
-      "source_sha256": "f7e81218af209d5a",
+      "source_sha256": "c651959649735ea1",
       "finish_class": "show_curved",
       "print_simplify_mm": 0.006,
       "web_simplify_mm": 0.075,
@@ -379,9 +379,9 @@
       }
     },
     "kit-skid-runner": {
-      "source_sha256": "dc0f4689fce1f285",
+      "source_sha256": "0c451f0c171878c6",
       "finish_class": "prismatic_structural",
-      "print_simplify_mm": 0.018,
+      "print_simplify_mm": 0.016,
       "web_simplify_mm": 0.09,
       "web_crease_deg": 34,
       "slicer_recipe": {
@@ -397,9 +397,9 @@
       }
     },
     "kit-spinner-pin": {
-      "source_sha256": "2fc5ce8e440bef59",
+      "source_sha256": "c8f08b3b3fa17309",
       "finish_class": "precision_gear_pin",
-      "print_simplify_mm": 0.01,
+      "print_simplify_mm": 0.005,
       "web_simplify_mm": 0.055,
       "web_crease_deg": 28,
       "slicer_recipe": {
@@ -415,9 +415,9 @@
       }
     },
     "kit-tilting-tub": {
-      "source_sha256": "82dac977b558d030",
+      "source_sha256": "7fea0bacca132c6b",
       "finish_class": "prismatic_structural",
-      "print_simplify_mm": 0.018,
+      "print_simplify_mm": 0.016,
       "web_simplify_mm": 0.09,
       "web_crease_deg": 34,
       "slicer_recipe": {
@@ -433,9 +433,9 @@
       }
     },
     "kit-turntable": {
-      "source_sha256": "44a446a5defb8446",
+      "source_sha256": "f60afd5efa095538",
       "finish_class": "precision_gear_pin",
-      "print_simplify_mm": 0.01,
+      "print_simplify_mm": 0.005,
       "web_simplify_mm": 0.055,
       "web_crease_deg": 28,
       "slicer_recipe": {
@@ -451,9 +451,9 @@
       }
     },
     "kit-wheel-giant": {
-      "source_sha256": "ee6ae3f972bac315",
+      "source_sha256": "f4d564685705b827",
       "finish_class": "precision_gear_pin",
-      "print_simplify_mm": 0.01,
+      "print_simplify_mm": 0.005,
       "web_simplify_mm": 0.055,
       "web_crease_deg": 28,
       "slicer_recipe": {
@@ -469,9 +469,9 @@
       }
     },
     "kit-wheel-med": {
-      "source_sha256": "6dad1517c84e55f8",
+      "source_sha256": "73ae3fae0251f8ac",
       "finish_class": "precision_gear_pin",
-      "print_simplify_mm": 0.01,
+      "print_simplify_mm": 0.005,
       "web_simplify_mm": 0.055,
       "web_crease_deg": 28,
       "slicer_recipe": {
@@ -487,7 +487,7 @@
       }
     },
     "kit-windscreen": {
-      "source_sha256": "6cb1947c8abb6022",
+      "source_sha256": "fb73bf6c92111d43",
       "finish_class": "show_curved",
       "print_simplify_mm": 0.006,
       "web_simplify_mm": 0.075,
@@ -505,9 +505,225 @@
       }
     },
     "kit-yoke-hbar": {
-      "source_sha256": "8129cc23dca0ba01",
+      "source_sha256": "bf0002a2088ef70d",
       "finish_class": "precision_gear_pin",
-      "print_simplify_mm": 0.01,
+      "print_simplify_mm": 0.005,
+      "web_simplify_mm": 0.09,
+      "web_crease_deg": 34,
+      "slicer_recipe": {
+        "layer_height_mm": 0.16,
+        "wall_loops": 3,
+        "outer_wall_speed_mms": 30,
+        "wall_order": "inner_first",
+        "seam_position": "aligned",
+        "ironing": "all_top",
+        "ironing_inset_mm": 0.21,
+        "brim_width_mm": 0,
+        "support_mode": "none"
+      }
+    },
+    "mech-bat-door-screw": {
+      "source_sha256": "b69732f6e01c0444",
+      "finish_class": "precision_gear_pin",
+      "print_simplify_mm": 0.005,
+      "web_simplify_mm": 0.055,
+      "web_crease_deg": 28,
+      "slicer_recipe": {
+        "layer_height_mm": 0.16,
+        "wall_loops": 3,
+        "outer_wall_speed_mms": 30,
+        "wall_order": "outer_first",
+        "seam_position": "aligned",
+        "ironing": "none",
+        "ironing_inset_mm": 0.0,
+        "brim_width_mm": 0,
+        "support_mode": "none"
+      }
+    },
+    "mech-brain-lid": {
+      "source_sha256": "99752a8640d38c6f",
+      "finish_class": "prismatic_structural",
+      "print_simplify_mm": 0.016,
+      "web_simplify_mm": 0.09,
+      "web_crease_deg": 34,
+      "slicer_recipe": {
+        "layer_height_mm": 0.16,
+        "wall_loops": 3,
+        "outer_wall_speed_mms": 30,
+        "wall_order": "inner_first",
+        "seam_position": "aligned",
+        "ironing": "all_top",
+        "ironing_inset_mm": 0.21,
+        "brim_width_mm": 0,
+        "support_mode": "none"
+      }
+    },
+    "mech-brain-tray": {
+      "source_sha256": "0b655f1113f3ff6d",
+      "finish_class": "prismatic_structural",
+      "print_simplify_mm": 0.016,
+      "web_simplify_mm": 0.09,
+      "web_crease_deg": 34,
+      "slicer_recipe": {
+        "layer_height_mm": 0.2,
+        "wall_loops": 3,
+        "outer_wall_speed_mms": 30,
+        "wall_order": "inner_first",
+        "seam_position": "aligned",
+        "ironing": "all_top",
+        "ironing_inset_mm": 0.21,
+        "brim_width_mm": 0,
+        "support_mode": "none"
+      }
+    },
+    "mech-drive-lid": {
+      "source_sha256": "34a4cc2a7bb4d828",
+      "finish_class": "prismatic_structural",
+      "print_simplify_mm": 0.016,
+      "web_simplify_mm": 0.09,
+      "web_crease_deg": 34,
+      "slicer_recipe": {
+        "layer_height_mm": 0.16,
+        "wall_loops": 3,
+        "outer_wall_speed_mms": 30,
+        "wall_order": "inner_first",
+        "seam_position": "aligned",
+        "ironing": "all_top",
+        "ironing_inset_mm": 0.21,
+        "brim_width_mm": 0,
+        "support_mode": "none"
+      }
+    },
+    "mech-drive-tray": {
+      "source_sha256": "6866bb226528ee6f",
+      "finish_class": "prismatic_structural",
+      "print_simplify_mm": 0.016,
+      "web_simplify_mm": 0.09,
+      "web_crease_deg": 34,
+      "slicer_recipe": {
+        "layer_height_mm": 0.2,
+        "wall_loops": 3,
+        "outer_wall_speed_mms": 30,
+        "wall_order": "inner_first",
+        "seam_position": "aligned",
+        "ironing": "all_top",
+        "ironing_inset_mm": 0.21,
+        "brim_width_mm": 0,
+        "support_mode": "none"
+      }
+    },
+    "mech-servo-mount": {
+      "source_sha256": "ee0a77b72ab55b25",
+      "finish_class": "prismatic_structural",
+      "print_simplify_mm": 0.016,
+      "web_simplify_mm": 0.09,
+      "web_crease_deg": 34,
+      "slicer_recipe": {
+        "layer_height_mm": 0.16,
+        "wall_loops": 3,
+        "outer_wall_speed_mms": 30,
+        "wall_order": "inner_first",
+        "seam_position": "aligned",
+        "ironing": "all_top",
+        "ironing_inset_mm": 0.21,
+        "brim_width_mm": 0,
+        "support_mode": "none"
+      }
+    },
+    "mech-servo-pinion-z10": {
+      "source_sha256": "30c4de382e4ba464",
+      "finish_class": "precision_gear_pin",
+      "print_simplify_mm": 0.005,
+      "web_simplify_mm": 0.055,
+      "web_crease_deg": 28,
+      "slicer_recipe": {
+        "layer_height_mm": 0.16,
+        "wall_loops": 3,
+        "outer_wall_speed_mms": 30,
+        "wall_order": "inner_first",
+        "seam_position": "back",
+        "ironing": "none",
+        "ironing_inset_mm": 0.0,
+        "brim_width_mm": 0,
+        "support_mode": "none"
+      }
+    },
+    "mech-sill-duct": {
+      "source_sha256": "1a4f383c672f57b1",
+      "finish_class": "prismatic_structural",
+      "print_simplify_mm": 0.016,
+      "web_simplify_mm": 0.09,
+      "web_crease_deg": 34,
+      "slicer_recipe": {
+        "layer_height_mm": 0.16,
+        "wall_loops": 3,
+        "outer_wall_speed_mms": 30,
+        "wall_order": "outer_first",
+        "seam_position": "aligned",
+        "ironing": "all_top",
+        "ironing_inset_mm": 0.21,
+        "brim_width_mm": 0,
+        "support_mode": "none"
+      }
+    },
+    "mom-band-core-lid": {
+      "source_sha256": "36f697b69fc52d6c",
+      "finish_class": "prismatic_structural",
+      "print_simplify_mm": 0.016,
+      "web_simplify_mm": 0.09,
+      "web_crease_deg": 34,
+      "slicer_recipe": {
+        "layer_height_mm": 0.16,
+        "wall_loops": 3,
+        "outer_wall_speed_mms": 30,
+        "wall_order": "inner_first",
+        "seam_position": "aligned",
+        "ironing": "all_top",
+        "ironing_inset_mm": 0.21,
+        "brim_width_mm": 0,
+        "support_mode": "none"
+      }
+    },
+    "mom-band-core-tray": {
+      "source_sha256": "b4efcfa5e5bcb3c4",
+      "finish_class": "prismatic_structural",
+      "print_simplify_mm": 0.016,
+      "web_simplify_mm": 0.09,
+      "web_crease_deg": 34,
+      "slicer_recipe": {
+        "layer_height_mm": 0.2,
+        "wall_loops": 3,
+        "outer_wall_speed_mms": 30,
+        "wall_order": "inner_first",
+        "seam_position": "aligned",
+        "ironing": "all_top",
+        "ironing_inset_mm": 0.21,
+        "brim_width_mm": 0,
+        "support_mode": "none"
+      }
+    },
+    "mom-flywheel-tray": {
+      "source_sha256": "6f2263a33eb9ed0e",
+      "finish_class": "precision_gear_pin",
+      "print_simplify_mm": 0.005,
+      "web_simplify_mm": 0.055,
+      "web_crease_deg": 28,
+      "slicer_recipe": {
+        "layer_height_mm": 0.2,
+        "wall_loops": 3,
+        "outer_wall_speed_mms": 30,
+        "wall_order": "inner_first",
+        "seam_position": "back",
+        "ironing": "none",
+        "ironing_inset_mm": 0.0,
+        "brim_width_mm": 0,
+        "support_mode": "none"
+      }
+    },
+    "mom-jet-valve-body": {
+      "source_sha256": "d206da6086306c82",
+      "finish_class": "prismatic_structural",
+      "print_simplify_mm": 0.016,
       "web_simplify_mm": 0.09,
       "web_crease_deg": 34,
       "slicer_recipe": {
@@ -525,7 +741,7 @@
     "pack-explorer": {
       "source_sha256": "3586bb7b589c3c09",
       "finish_class": "prismatic_structural",
-      "print_simplify_mm": 0.018,
+      "print_simplify_mm": 0.016,
       "web_simplify_mm": 0.09,
       "web_crease_deg": 34,
       "slicer_recipe": {
@@ -543,7 +759,7 @@
     "pin-friction": {
       "source_sha256": "48d586fadf8b137c",
       "finish_class": "precision_gear_pin",
-      "print_simplify_mm": 0.01,
+      "print_simplify_mm": 0.005,
       "web_simplify_mm": 0.055,
       "web_crease_deg": 28,
       "slicer_recipe": {
@@ -576,10 +792,28 @@
         "support_mode": "none"
       }
     },
+    "pro-steer-bridge": {
+      "source_sha256": "197060f9b838279d",
+      "finish_class": "prismatic_structural",
+      "print_simplify_mm": 0.016,
+      "web_simplify_mm": 0.09,
+      "web_crease_deg": 34,
+      "slicer_recipe": {
+        "layer_height_mm": 0.16,
+        "wall_loops": 3,
+        "outer_wall_speed_mms": 30,
+        "wall_order": "inner_first",
+        "seam_position": "aligned",
+        "ironing": "all_top",
+        "ironing_inset_mm": 0.21,
+        "brim_width_mm": 0,
+        "support_mode": "none"
+      }
+    },
     "prop-star-shield": {
       "source_sha256": "d3fc96fa3901f01e",
       "finish_class": "prismatic_structural",
-      "print_simplify_mm": 0.018,
+      "print_simplify_mm": 0.016,
       "web_simplify_mm": 0.09,
       "web_crease_deg": 34,
       "slicer_recipe": {
@@ -597,7 +831,7 @@
     "prop-wrench": {
       "source_sha256": "cb5bad7994c53879",
       "finish_class": "prismatic_structural",
-      "print_simplify_mm": 0.018,
+      "print_simplify_mm": 0.016,
       "web_simplify_mm": 0.09,
       "web_crease_deg": 34,
       "slicer_recipe": {
@@ -613,9 +847,9 @@
       }
     },
     "racer-bull-bar": {
-      "source_sha256": "a205c94cc9392f18",
+      "source_sha256": "978a19e1aa68f9da",
       "finish_class": "prismatic_structural",
-      "print_simplify_mm": 0.018,
+      "print_simplify_mm": 0.016,
       "web_simplify_mm": 0.09,
       "web_crease_deg": 34,
       "slicer_recipe": {
@@ -649,9 +883,9 @@
       }
     },
     "racer-light-bar": {
-      "source_sha256": "a4b8db6adf97ef2e",
+      "source_sha256": "e285de49b90852b6",
       "finish_class": "prismatic_structural",
-      "print_simplify_mm": 0.018,
+      "print_simplify_mm": 0.016,
       "web_simplify_mm": 0.09,
       "web_crease_deg": 34,
       "slicer_recipe": {
@@ -669,7 +903,7 @@
     "racer-roof-rack": {
       "source_sha256": "c95522567ea1e9d2",
       "finish_class": "prismatic_structural",
-      "print_simplify_mm": 0.018,
+      "print_simplify_mm": 0.016,
       "web_simplify_mm": 0.09,
       "web_crease_deg": 34,
       "slicer_recipe": {
@@ -687,7 +921,7 @@
     "racer-spoiler": {
       "source_sha256": "5c421da0e94be18c",
       "finish_class": "prismatic_structural",
-      "print_simplify_mm": 0.018,
+      "print_simplify_mm": 0.016,
       "web_simplify_mm": 0.09,
       "web_crease_deg": 34,
       "slicer_recipe": {
@@ -703,9 +937,9 @@
       }
     },
     "racer-twin-exhaust": {
-      "source_sha256": "73616e229a97680c",
+      "source_sha256": "fd0a600d8f7a0c61",
       "finish_class": "prismatic_structural",
-      "print_simplify_mm": 0.018,
+      "print_simplify_mm": 0.016,
       "web_simplify_mm": 0.09,
       "web_crease_deg": 34,
       "slicer_recipe": {
@@ -723,7 +957,7 @@
     "racer-wheel": {
       "source_sha256": "05bf0f664b21d961",
       "finish_class": "precision_gear_pin",
-      "print_simplify_mm": 0.01,
+      "print_simplify_mm": 0.005,
       "web_simplify_mm": 0.055,
       "web_crease_deg": 28,
       "slicer_recipe": {
@@ -741,7 +975,7 @@
     "robot-back-jetpack": {
       "source_sha256": "d5cad36fe4e6d9eb",
       "finish_class": "prismatic_structural",
-      "print_simplify_mm": 0.018,
+      "print_simplify_mm": 0.016,
       "web_simplify_mm": 0.09,
       "web_crease_deg": 34,
       "slicer_recipe": {
@@ -775,7 +1009,7 @@
       }
     },
     "skin-aero-cowl": {
-      "source_sha256": "f2f090bcda730653",
+      "source_sha256": "3bbdfdba1d6690b8",
       "finish_class": "show_curved",
       "print_simplify_mm": 0.006,
       "web_simplify_mm": 0.075,
@@ -793,7 +1027,7 @@
       }
     },
     "skin-cargo-shroud": {
-      "source_sha256": "8ed237dfb5b16272",
+      "source_sha256": "2e0f2803ff984467",
       "finish_class": "show_curved",
       "print_simplify_mm": 0.006,
       "web_simplify_mm": 0.075,
@@ -811,7 +1045,7 @@
       }
     },
     "skin-windscreen": {
-      "source_sha256": "1fe69a4fcfc43807",
+      "source_sha256": "572699be7ba694fb",
       "finish_class": "show_curved",
       "print_simplify_mm": 0.006,
       "web_simplify_mm": 0.075,
@@ -829,7 +1063,7 @@
       }
     },
     "spin-capsule": {
-      "source_sha256": "268d5fb2459743ee",
+      "source_sha256": "0cf1c56be4ac589e",
       "finish_class": "show_curved",
       "print_simplify_mm": 0.006,
       "web_simplify_mm": 0.075,
@@ -867,7 +1101,7 @@
     "veh-wheel-sport": {
       "source_sha256": "5af4c4c5b31d20d6",
       "finish_class": "precision_gear_pin",
-      "print_simplify_mm": 0.01,
+      "print_simplify_mm": 0.005,
       "web_simplify_mm": 0.055,
       "web_crease_deg": 28,
       "slicer_recipe": {
