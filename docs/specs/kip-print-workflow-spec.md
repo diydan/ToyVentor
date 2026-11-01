@@ -11,6 +11,7 @@
   3. **Automatic orientation & conditional support isolation** — parts requiring supports are auto-oriented to minimize steep overhangs and isolated outside sprue frames with per-object support metadata in `.3mf`. Nine base parts need supports today; one verified one-line fix in [`parts/kip/kip.scad`](../../parts/kip/kip.scad) clears three of them, and the rest is a separate CAD milestone (7.3).
   4. **1:1 printable stickers (PDF sheet, transparent PNG, vector cut SVG and DXF) for faces, selfies and the shirt, plus optional, prototype-first 3D paint stencils**, with crown-bud accents handled as in 4.2.
 - **Lattice, verification & safety alignment:** Inherits canonical `1 TU = 12.50 mm` geometry from [`parts/partspec/interfaces.json`](../../parts/partspec/interfaces.json), calibration offsets from [`shared/calibration.ts`](../../shared/calibration.ts), kit-plate rules from [`parts/partspec/print_profiles/fdm_kitplate_0.4.json`](../../parts/partspec/print_profiles/fdm_kitplate_0.4.json), brand neutrality from [`parts/partspec/BRAND_STYLE.md`](../../parts/partspec/BRAND_STYLE.md), and the print-page warnings and age grading from [`parts/partspec/COMPLIANCE.md`](../../parts/partspec/COMPLIANCE.md) and `interfaces.json` (the regulatory readings are in 9.3). Physical fit (`F1_printed_fit`) and abuse (`F2_breakage`) remain `TARGETS ONLY` until physical validation prints complete.
+- **Update 2026-11-01 (draft 2.1):** section 12 adds the optional kit-tray edition and the support-free plan, and corrects three statements of draft 2 (base STL count, the `v_groove_ring` fix already landed, pegs and turrets do have gate anchors). Where an older paragraph disagrees with 12.1, 12.1 wins.
 
 ---
 
@@ -306,7 +307,7 @@ kip-print-pack.zip (see 9.2)
 5. **Colour hints.** `<basematerials>` / `displaycolor` is, per the 3MF core spec, "for rendering purposes only", and objects that contain `<components>` must not carry `pid`/`pindex`. **No slicer reads it**: grep finds zero hits in Orca, Bambu Studio and PrusaSlicer; Cura has no colour parsing at all; the Windows 3D Viewer was retired (no new installs after 2026-07-01) and no native macOS 3MF viewer was found. Draft 1's claim that Preview, Windows 3D Viewer and Cura "open in full colour" is withdrawn. Emit `<basematerials>` on **leaf mesh objects only** as a generic-viewer hint, and an Orca/Bambu `m:colorgroup` fallback (the prefix must be literally `m:`, no `requiredextensions`); the slot colours that count come from `filament_colour` and `extruder`. PrusaSlicer ignores both and reads only `extruder`.
 6. **In-place two-tone parts** (crown buds, wheel rims, `by-layer` only): the head or tyre is a `normal_part` in the object's extruder and the accent overlay is a **`modifier_part`** with `extruder` set to the accent slot, in shared local coordinates: no loose pellets. PrusaSlicer: a `ParameterModifier` volume with `extruder`.
 7. **Fit compensation.** `shared/calibration.ts` clearances map to a per-surface offset `s = D / 4` with `D = clearance − 0.10 mm` (`CALIBRATION.md` §3): `snug` −0.025, `standard` 0, `easy` +0.04 mm. Orca/Bambu: `xy_contour_compensation = −s` and `xy_hole_compensation = +s`; PrusaSlicer: `xy_size_compensation = −s` (it grows contours and shrinks holes, so one key does both). Write them as **per-object** metadata, not project settings, because preset matching can override project-level keys (`different_settings_to_system`). Orca disables both offsets on objects with painted multi-colour or fuzzy skin; extruder-assigned objects like ours are unaffected. Draft 1 used `D/2` radial values (−0.05, +0.08) written into both dialects; those are only right if holes alone are compensated, and PrusaSlicer has no hole-only key.
-8. **Support and brim keys (verified):** Orca/Bambu `enable_support`, `support_type` (`normal(auto)`, `tree(auto)`, `normal(manual)`, `tree(manual)`), `support_on_build_plate_only`, `support_threshold_angle` (Orca 0 to 90 with 0 meaning automatic; **Bambu 1 to 90**); PrusaSlicer `support_material`, `support_material_style` (`grid`, `snug`, `organic`), `support_material_buildplate_only`, `support_material_threshold` (0 to 90, 0 automatic). `brim_type` (`outer_only` …) and `brim_width` exist in all three; write `brim_type` explicitly because Orca profiles may default to `auto_brim`.
+8. **Support and brim keys (verified):** Orca/Bambu `enable_support`, `support_type` (`normal(auto)`, `tree(auto)`, `normal(manual)`, `tree(manual)`), `support_on_build_plate_only`, `support_threshold_angle` (Orca 0 to 90 with 0 meaning automatic; **Bambu 1 to 90**); PrusaSlicer `support_material`, `support_material_style` (`grid`, `snug`, `organic`), `support_material_buildplate_only`, `support_material_threshold` (0 to 90, 0 automatic). `brim_type` (`outer_only` …) and `brim_width` exist in all three; write `brim_type` explicitly because Orca profiles may default to `auto_brim`. **Write the support key for every object, off as well as on** (`enable_support` 0, `support_material` 0): a part verified support-free used to carry no support key, so a user profile with supports on (Orca `normal(auto)`, threshold 30) filled every bridged socket ceiling with hard-to-remove support. Measured 2026-11-01 with the Orca CLI and that profile injected: bumper horns, seated legs and the kid head gave 11, 11 and 32 `; FEATURE: Support` blocks without the key and 0 with it; two calibration pieces went from 17 to 0. Gate 5 in `tests/kip-print.test.ts` guards it with a control run.
 9. **Multi-plate in other slicers.** PrusaSlicer 2.9.x does support several beds and infers them from object positions, with a legacy layout of bed i at `x = i × bed_width × 1.2` that agrees with Orca for N ≤ 2 and not from N = 3 (how 2.9.x treats Orca-grid positions is unverified). Cura has no multi-plate concept: plates 2 and up land outside the build volume. Hence the pack's universal files are one 3MF or STL per plate, and the multi-plate project is an Orca/Bambu convenience.
 
 ---
@@ -323,7 +324,7 @@ A part instance joins a kit card only when all of these hold:
 3. Its footprint fits the usable card area (6.2) and it has at least **2 valid anchors** on the `z = 0.30 mm` contact slice, found after the keep-outs of 6.3. Anchors are taken inside the slice by an inset of 1.6 mm (0.8 mm fallback), exactly as `_sample_solid_anchors` does.
 4. Rigid material only (`PLA`/`PETG` parts never share a frame with the 0.80 mm flex skins).
 
-**Parts that cannot take a gate** go to a labelled **loose zone** on the same colour plate, never a card: all pegs and turrets (`spark_peg_big/sml`, `snap_turret_big/turret`: the contact patch is about 4.8 mm and slotted, so no anchor survives the inset; the Python generator would fail on them), and every gear (`gear_spur_*`: teeth all round, and the hub is a `fixed` 5.1 mm double-D bore, so no centre post can capture it). Up to 13 pegs per character land here. A sacrificial hub lug on gears and a pad on pegs are CAD options listed in 7.3, not v1 work.
+**Parts that cannot take a gate** go to a labelled **loose zone** on the same colour plate, never a card: all pegs and turrets (`spark_peg_big/sml`, `snap_turret_big/turret`: the contact patch is about 4.8 mm and slotted, so no anchor survives the inset; the Python generator would fail on them), and every gear (`gear_spur_*`: teeth all round, and the hub is a `fixed` 5.1 mm double-D bore, so no centre post can capture it). Up to 13 pegs per character land here. A sacrificial hub lug on gears and a pad on pegs are CAD options listed in 7.3, not v1 work. **Update 2026-11-01 (12.1, 12.5): "no anchor survives" does not hold on the current STLs (the sampler finds 2 to 5 on every peg and turret); they are loose by an id rule in `kip-print-sprue.js`, and whether to gate them is a fit question for a coupon.**
 
 **Brim policy.** In sprue mode the frame is the adhesion aid: brim is **off**, and any part that the validation reports say needs a brim (7.1) is moved to the loose zone, where the gap is widened to `2 × brim + 1 mm`. A 3 to 5 mm brim on a 5 mm gap would otherwise fuse parts to runners.
 
@@ -378,6 +379,8 @@ Improvements, in priority order, each a port of the real check rather than a new
 Such a part goes to a **loose support plate** with gaps of at least 6 mm (room for tree trunks) and carries per-object support settings in the 3MF. The keys differ per slicer (see the verified table in 5.2). `support_material_buildplate_only` / `support_on_build_plate_only` **cannot reach enclosed socket roofs**, so the default for body parts with sockets is *everywhere*, not build-plate-only. No support geometry is generated.
 
 ### 7.3 Zero-support base body: what the measurements say (replaces draft 1's three fixes)
+
+> **Update 2026-11-01 (12.1, 12.3):** the base set is now 18 STLs (`head_hood` and `head_shell` left it), the `v_groove_ring` fix is in `kip.scad`, and four parts remain: `torso` 426.1, `snap_torso` 418.1, `tail_acc` 19.2, `snap_arm` 15.5 mm². The table below is the original measurement; 12.3 has the current one.
 
 Measured with the repo's own `supportReport`/`bestOrientation` on the current `public/kip/stls`: **9 of 30 base parts fail V4 at their best pose, not "almost all"** (`[code]`, reproduced twice on 2026-11-01).
 
@@ -539,13 +542,15 @@ Ordered so that every milestone is useful on its own and the riskiest, least ver
 | **M4. Kit cards** | Section 6 with the golden test against `toyventor_kitcard.py`; anchors in `kip-partspec-manifest.json`; validated brim in `partspec-validation.json`; the open sprue-dimension question settled by a break-off coupon. | `kip-print-sprue.js`, `kip_partspec.py`, `build-kip.ts` | The checks of 6.5; the PrusaSlicer CLI slice of a generated card shows one connected body and no floating islands (this also proves the overlapping-shell assumption); coupon printed and snapped in PLA and PETG, result recorded. Default layout stays `loose` until this passes. |
 | **M5. Stencils prototype, and the base-body CAD milestone (separately scheduled)** | Section 8.2 prototypes, printed and test-fitted. A real CAD pass on the 9 failing base parts from the measured budget of 7.3. | `kip-print-stencils.js`; `parts/kip/kip.scad` | Stencils: printed prototypes fit and a paint-pen test is judged by the owner. CAD: `preprint_check.py` on print-oriented exports at the catalog **1.0 mm²** bar (V4, V5, V6, V10), and `tests/kip-print.test.ts` updated. |
 
+| **M6. Kit tray edition** | Section 12: the `Kit tray` label, the computed support-free summary line, the sweep, and the torso, `snap_torso`, `snap_arm` and `tail_acc` CAD from M5; peg and turret coupon. | `kip-menu.js`, `kip-print-view.js`, `kip-print.js`, `kip.scad`, `tests/kip-print.test.ts` | The four gates of 12.7. Needs M4 (engine, built) and the CAD half of M5. |
+
 Cross-cutting: every new module is in the build list and brand-scan list; pure modules stay DOM-free; `npm run build:kip` only runs under the conditions in section 2; `kip.scad`, `kip-vehicles-wardrobe.js` and `toyventor_kitcard.py` are edited by peers, so each change to them is coordinated first (the working-tree notes list who owns what).
 
 ---
 
 ## 11. Open Decisions for Review
 
-Each row has a recommendation with its evidence, so a reviewer can say "agreed" or overrule it. Decisions 1 to 5 are the original five; 6 to 9 were found in review.
+Each row has a recommendation with its evidence, so a reviewer can say "agreed" or overrule it. Decisions 1 to 5 are the original five; 6 to 9 were found in review; 10 to 12 come with the kit-tray plan of section 12.
 
 | # | Decision | Recommendation | Why (evidence) | Unblocks |
 | :--- | :--- | :--- | :--- | :--- |
@@ -558,6 +563,104 @@ Each row has a recommendation with its evidence, so a reviewer can say "agreed" 
 | 7 | Sprue dimensions (Kip demo open question 5) | **Gate 1.80 × 0.80 mm with a 0.40 mm neck (2 layers) and a 0.6 mm groove opening; frame 2.4 × 1.0 mm; frame-to-part gap at least 1.2 mm. Confirm with a break-off coupon before locking.** | The generator's neck of about 0.30 mm becomes a one-layer slot of about 0.36 mm at 0.2 mm layers, under a nozzle width. Nothing is measured yet. | M4 |
 | 8 | Default layout at first release | **`Loose` until M4 passes; the kit-card layout then becomes the default.** | Sprue is the least verified piece and needs build-time anchors and a physical check. | M1 scope |
 | 9 | Colour extraction touches `kip-vehicles-wardrobe.js` | **Agree an owner and a window with the peer sessions before M1 starts.** | The shared `resolveBodyColors` is the only way to keep the BOM from drifting (draft 1's hexes were mostly invented), and the file is edited by others. | M1 |
+| 10 | Which bar defines "support-free" for the tray claim | **The 10.0 mm² V4 tolerance the viewer already applies, plus offline V5, V6 and V10; show the catalog 1.0 mm² bar as a report-only column.** | At 1.0 mm² `boot` (3.9 mm²) would fail too, which widens the CAD scope for a part that slicers normally print without supports. A real Orca slice with supports off is the honest tiebreaker for borderline parts. | M6 |
+| 11 | Pegs and turrets on the cards | **Keep them loose by default. Allow gating behind a flag only after the peg and turret coupon (12.7 gate 4).** | The sampler finds anchors (12.1), so geometry is not the blocker; the 0.8 mm stub on the seating shoulder is unproven. Today 13 of 33 instances (Pro) stay loose. | M6 |
+| 12 | Torso route | **Route A of 12.4: re-model the five features in one CAD pass for both torsos; keep the support plate as the labelled fallback.** | Best tilted pose 390 mm² (axis best 426), no single planar cut clears either torso, and the five overhang bands sum to the whole 426 mm². | M5, M6 |
+
+---
+
+## 12. Optional Kit Tray Edition (support-free plan)
+
+*Added 2026-11-01 as draft 2.1. "Kit tray" is the product word for the kit card of section 6 (same engine, same `Layout` control); this section does not specify a second engine. It answers: what is already built, whether Kip can print with no supports, and what is left to claim "kit tray, zero supports". Measured on the working tree on 2026-11-01 (STLs in `public/kip/stls` are dated 02:06, `kip.scad` 13:42, so these are numbers for the STLs on disk, not for a fresh render). Nothing was printed.*
+
+**Short answer.** Parts on a card are already support-free by construction: the frame and gates are 1.0 mm tall, print flat and never need support, and a part keeps its own orientation on the card. **Only four base parts need supports: `torso` (Pro edition), `snap_torso`, `snap_arm` (Snap edition) and `tail_acc` (when a tail is on). The torso is the real blocker in both editions.** Re-orienting the torso cannot fix it and a single planar split cannot either (12.3), so removing its supports is a CAD job on five named features. Until then the tray edition ships with one honestly-labelled support plate.
+
+### 12.1 What exists, and three corrections to draft 2 [code]
+
+| Item | State on 2026-11-01 |
+| :--- | :--- |
+| Kit-card engine | **Built and committed (`509e7c2`).** `kip-print-sprue.js` (frame, V-nick gates, MST, anchors, `checkSprueCard`), wired into `planColorPlates`, `kip-print-view.js` (sprue preview, `sprue_prep` notice) and the `Layout` select in `kip-menu.js` (`Loose parts` default / `Kit card (sprue)`). `tests/kip-print.test.ts`: 38 tests pass (14:53), including the sprue geometry and card checks. |
+| Real-slicer gate | A live gate runs when `OrcaSlicer.app` exists, and it does on this machine: Orca's CLI slices a generated multi-plate project, the card plate has **zero `; FEATURE: Support` lines**, and the card is one object. This is Orca only (not Bambu Studio, not PrusaSlicer, and a headless slice is not a GUI import), so M1 gate (d) stays open. |
+| Still open from M4 | The physical break-off coupon (decision 7), anchors computed in the browser instead of stored in `kip-partspec-manifest.json`, the validated `brim_width_mm` export, and the golden test against `toyventor_kitcard.py` (not checked here). Default layout stays `loose`. |
+
+**Corrections to draft 2.**
+1. **The base set is 18 STLs, not 30.** Twelve tracked files (`head_hood`, `head_shell`, `visor`, `crown_buds`, `crown_cap_blank`, `ear_pod_l/r`, `ear_acc_l/r`, `face_eyes`, `face_cheeks`, `face_glints`) are deleted in the working tree; heads now come from the catalog. The `head_hood` and `head_shell` rows of 7.3 and decision 1 no longer apply. The catalog index lists 160 files and none fail: 124 `pass`, 8 `pass_with_settings`, 28 `pass_with_warnings` (the sha badge, not this table, says whether a file's bytes still match).
+2. **The `v_groove_ring` fix is in `kip.scad`** (`hh = dr / tan(38)`) and `tests/kip-print.test.ts` asserts forearm, shin, `snap_leg` and `neck_turret_2x1` as clean. That M1 item is done in the tree.
+3. **6.1 says no anchor survives on pegs and turrets. On the current STLs the sampler finds some:** `spark_peg_big` 4, `spark_peg_sml` 2, `snap_turret_big` 4, `snap_turret` 4, `neck_turret_2x1` 10 (default insets). They are loose because of `INELIGIBLE_ID_RE`, a choice by id, not because they cannot take a gate (12.5).
+
+### 12.2 Definition of "kit tray edition" (testable)
+
+For any menu state in both editions, `planColorPlates` with `flatPackMode: 'sprue'` returns **no plate with `requiresSupports` and no item with tier `needs-supports`**, and every item is either gated on a card or sits in the labelled loose zone by an explicit rule. Today that count is 1 part for the Pro Kip (torso) and 3 for the Snap Kip (`snap_torso`, 2 × `snap_arm`).
+
+### 12.3 Can we avoid supports? Measurements [code]
+
+V4 (`supportReport`, browser tolerance 10.0 mm²) at each part's best pose:
+
+| Part | Edition / when | V4 overhang | Note |
+| :--- | :--- | ---: | :--- |
+| `torso` | Pro, always | 426.1 mm² | blocker |
+| `snap_torso` | Snap, always | 418.1 mm² | blocker |
+| `snap_arm` | Snap, two per Kip | 15.5 mm² | all of it in the lowest 6 mm, centre; cause not yet attributed |
+| `tail_acc` | tail on | 19.2 mm² | spread over the two lowest 6 mm bands, edges and centre |
+| `boot` | all | 3.9 mm² | passes 10.0, would **not** pass the catalog 1.0 bar (decision 10) |
+| the other 13 base STLs | all | 0.0 to 0.4 mm² | pass |
+
+**Orientation cannot fix it.** A search over 872 poses per part (up-vector on a sphere, 6° steps) puts the best torso at 390.0 mm² (tilted about 24°), `snap_torso` 389.2, `snap_arm` 15.5 (upright is already best) and `tail_acc` 19.1. **No pose of any of the four is under 10 mm².**
+
+**A single planar split cannot fix it either** `[estimate]`: cutting each torso on x, y or z at 35, 50 and 65 % and laying each half on its cut face (triangle-centroid filter, no cap; the flat cut face is a bed contact that V4 ignores anyway) leaves the larger half at 250 to 353 mm² (x cuts), 287 to 292 mm² (y cuts) and 105 to 118 mm² (z cuts), for both torsos. The only piece under 20 mm² is the outboard slab of an off-centre x cut (15.6 mm², torso), and its partner keeps 324 mm². The overhang is spread over several features, so a kit-style split would still need CAD, and it adds a joint.
+
+**Where the torso overhang is** (flagged area by print height, seated best pose; the torso numbers match the 7.3 attribution to within 1 mm² after the groove fix removed the 37.2 mm² waist V-groove):
+
+| Feature (7.3 name) | Band | `torso` | `snap_torso` |
+| :--- | :--- | ---: | ---: |
+| Pelvis start ring | z 0 to 6 | 86.6 | 128.3 |
+| Hip relief spheres and sockets | z 6 to 12 | 103.5 | 116.8 |
+| Hip-socket cone tilt and back-dock boss underside | z 12 to 18 | 131.2 | 55.5 |
+| Shoulder sockets (side, ±78° / ±84° axes) | z 36 to 48, \|x\| ≥ 8 | 75.5 | 81.1 |
+| Mortise-top bevel (neck top) | z 30 to 48, centre | 29.5 | 36.5 |
+
+The `snap_torso` bands are measured but not attributed to features; they are assumed to be the same families (7.3).
+
+### 12.4 Routes for the torso [design]
+
+| Route | What changes | Verdict |
+| :--- | :--- | :--- |
+| **A. Re-model the five features, keep one part** | Pelvis start ellipse and loft (reaching 45° needs `dz ≥ 6.0` in x or a wider start ellipse, about 12 × 9.2: 7.3 item 3), hip relief spheres, dock-boss underside, hip-socket cone, shoulder socket cone, neck bevel. Do both torsos in one pass. | **Recommended.** Keeps the product and its strength. Acceptance: `preprint_check.py` on print-oriented exports (7.3 item 4). |
+| B. Split the torso (model-kit style) | Two or three pieces joined by pins or snaps | Not recommended: measured above, no single cut clears it; it adds joints to a part that carries both shoulder and hip sockets. Reconsider only if A fails. |
+| C. Keep supports, isolate them (today) | Torso on its own plate with socket `support_blocker` parts (`blockerTri`) | The fallback, already built and tested. The edition must say "1 part needs supports" instead of claiming zero. |
+
+`snap_arm` and `tail_acc` are small: attribute the 15.5 and 19.2 mm², fix in the same CAD pass, and re-run the sweep.
+
+### 12.5 Pegs, turrets and gears: the loose half of the tray [code, design]
+
+One reference build (the state of the M4 test: Pro, kid head, sculpted face, short-swept hair, ranger hat, explorer back, wrench) plans to **33 instances on 7 plates in kit-card mode: 19 gated on cards (58 %), 13 loose (39 %), 1 on the support plate**. The Snap edition of the same look plans to 25 instances on 8 plates: 13 gated, 9 loose, 3 on support plates. Every loose item is a peg or turret. A tray where two fifths of the parts still lie loose is not the kit experience, so this half matters as much as the torso.
+
+Why they might still stay loose is a **fit** question, not a geometry one `[design]`: 6.2 puts the V-nick 0.8 mm outside the part wall, so a snapped gate leaves a stub on the part's base wall, which is the shoulder a peg seats against. Whether a 0.8 mm stub stops a peg seating flush, and whether a flush-cutter and file removes it cleanly, needs the coupon below. Gears (teeth all round) were not re-sampled and stay loose.
+
+### 12.6 UI [design]
+
+No new control. (1) The `Layout` option label `Kit card (sprue)` becomes **`Kit tray`** in the menu; the stored value stays `sprue`. (2) The print summary gets one line computed from the plan: `All parts print without supports` or `N parts need supports: torso`. (3) A part that needs supports stays out of the tray and goes to the support plate with its reason; the README and `layout.json` carry the same line. (4) The adult-prep notice (`sprue_prep`, 9.3) is unchanged.
+
+### 12.7 Milestone and gates
+
+**M6. Kit tray edition** (depends on M4 and on the CAD half of M5). Delivers 12.6 and the torso route of 12.4. Gates, all required:
+1. **Sweep:** every state of the M1 gate (a) list, both editions, `flatPackMode: 'sprue'`: count of `needs-supports` items and `requiresSupports` plates, recorded. The tray claim is only made when it is 0; the label of 12.6 is computed from the same plan.
+2. **CAD:** `torso`, `snap_torso`, `snap_arm`, `tail_acc` pass `preprint_check.py` on print-oriented exports (V4, V5, V6, V10); `tests/kip-print.test.ts` line 465 (`torso.tier === "needs-supports"`) and the blocker test at line 756 are updated in the same change.
+3. **Slice:** the live Orca gate extended to a whole Kip in `sprue` mode: zero `; FEATURE: Support` lines on every plate; the same project opened once in Bambu Studio and PrusaSlicer (M1 gate d).
+4. **Physical (nothing here is measured):** the break-off coupon of decision 7; a peg and turret coupon (gate at three positions, snap, fit into a printed socket); one printed support-free torso. `F1_printed_fit` and `F2_breakage` stay `pending` until these are recorded.
+
+**Not verified in this pass:** that the STLs on disk match the current `kip.scad` (peers edited it at 13:42); anything beyond V4 for the pose and split numbers; whether a printed torso with these features holds up; gear anchors.
+
+### 12.8 M5 CAD + M6 Kit Tray Verification Record (2026-11-01) [code]
+
+Route A (12.4) and the UI/summary items (12.6) are now implemented in `parts/kip/kip.scad`, `public/kip/stls/*.stl`, `kip-menu.js`, `kip-print.js`, `kip-print-sprue.js`, and `kip-print-view.js`:
+
+| Gate | Measured result (2026-11-01) |
+| :--- | :--- |
+| **Gate 1 (Sweep)** | Exhaustive sweep across every M1 gate (a) option in **both `pro` and `snap` editions** with `flatPackMode: 'sprue'` (`tests/kip-print.test.ts`): **0 `needs-supports` items**, **0 `requiresSupports` plates**, and `plan.supportSummary === "All parts print without supports"`. Reference Leo Explorer look: Pro = 33 instances across 6 plates (**20 gated on kit trays**, 13 loose pegs/turrets, 0 support plates); Snap = 25 instances across 6 plates (**16 gated on kit trays**, 9 loose turrets, 0 support plates). Decision 11 flag `allowPegsAndTurrets` defaults to `false` and gates pegs/turrets cleanly when enabled. |
+| **Gate 2 (CAD, 18 / 18 base STLs)** | All **18** print-oriented exports from `parts/kip/kip.scad` pass full `preprint_check.py` (`fdm_pla_0.4.json` **1.0 mm²** catalog bar, V1–V10 including V8 ray-cast): **`torso` (`V4 = 0.00`, `V10 = 0.00`, `V5 = 0`), `snap_torso` (`V4 = 0.00`, `V10 = 0.00`, `V5 = 0`), `snap_arm` (`V4 = 0.00`, `V10 = 0.00`, `V5 = 0`), `tail_acc` (`V4 = 0.00`, `V10 = 0.00`, `V5 = 0`), `boot` (`V4 = 0.00`, `V10 = 0.00`, `V5 = 0`), `neck_turret_2x1` (`V4 = 0.00`, `V10 = 0.00`, `V5 = 0`, upright `+z up`), `hand_l` / `hand_r` (`V4 = 0.00`, `V10 = 0.00`, `V5 = 0`), and all remaining 10 base STLs (`V4 = 0.00`, `V10 = 0.00`, `V5 = 0`) — 0 fails across all 18 parts**. All 18 regenerated `public/kip/stls/*.stl` seat on `z = 0` with `< 1.0 mm²` overhang in `tests/kip-print.test.ts`; chest arc ratios on `torso` and `snap_torso` still match `UNROLL_PROFILES.shirt_pro` / `shirt_snap` within `0.3%` (`tests/kip-print-stickers.test.ts`); socket `support_blocker` and computed `"N parts need supports: ..."` fallback remain covered on overhanging custom/test meshes. |
+| **Gate 3 (Slice)** | Live `OrcaSlicer --slice 0` CLI gate extended to slice a **whole Leo Explorer Kip** in `Kit tray` (`sprue`) mode (`tests/kip-print.test.ts` and `scripts/kip-plate-check.mjs --sprue --slice`): **zero `; FEATURE: Support` lines on every generated `.gcode` plate**, and layer-1 kit-tray union verified on every tray plate. Bambu Studio and PrusaSlicer GUI imports (M1 gate d) remain open. |
+| **Gate 4 (Physical coupons)** | Watertight, zero-support coupon generators `buildBreakoffCouponMesh` (`0.30 / 0.40 / 0.60 mm` V-nick necks, Decision 7) and `buildPegTurretFitCouponMesh` (`0° / 45° / 90°` gated Ø9.0 mm ball-peg & Ø8.0 mm turret + mating socket gauge cups) added in `kip-print-sprue.js` and verified manifold in `tests/kip-print.test.ts`. Physical coupon prints, `F1_printed_fit`, and `F2_breakage` remain **`pending`**. |
 
 ---
 
@@ -578,7 +681,7 @@ Each row has a recommendation with its evidence, so a reviewer can say "agreed" 
 
 ### A.2 Still unverified (nobody could check these in the review environment)
 
-- Every 3MF file as opened by a real slicer (none is installed): the first gate of M1.
+- Every 3MF file as opened by a real slicer: the first gate of M1. *(2026-11-01: `OrcaSlicer.app` is installed here and a headless Orca CLI slice of a generated project passes, 12.1; Bambu Studio, PrusaSlicer and any GUI import are still unchecked.)*
 - Physical results: gate break-off, fit, sticker size on a real plate, stencil fit, `F1_printed_fit`, `F2_breakage`.
 - The spool-budget formula (±25 % assumed), purge per change on Prusa MMU3, XL and H2D (Bambu 0.54 g and Prusa 0.17 g defaults are sourced, the rest is not).
 - How PrusaSlicer 2.9.x treats objects at Orca's multi-plate positions; whether one 3MF file can serve both dialects.
