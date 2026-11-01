@@ -21,7 +21,7 @@ export var UI_TYPES=["character","vehicle"];
 export var ROBOT_TO_KIP: Record<string, { slot: string }> = {"robot.head.box":{slot:"base"},"robot.head.dome":{slot:"base"},"robot.head.cams":{slot:"base"},"robot.head.tv":{slot:"base"},"robot.head.visor":{slot:"base"},"robot.top.antenna":{slot:"hat"},"robot.top.siren":{slot:"hat"},"robot.top.gearcrown":{slot:"hat"},"robot.top.radar":{slot:"hat"},"robot.top.bulb":{slot:"hat"},"robot.torso.box":{slot:"back"},"robot.torso.tank":{slot:"back"},"robot.torso.barrel":{slot:"back"},"robot.torso.core":{slot:"back"},"robot.torso.jet":{slot:"back"},"robot.arms.claws":{slot:"prop"},"robot.arms.hands":{slot:"prop"},"robot.arms.tools":{slot:"prop"},"robot.arms.magnets":{slot:"prop"},"robot.arms.propellers":{slot:"prop"},"robot.legs.walkers":{slot:"boots"},"robot.legs.treads":{slot:"boots"},"robot.legs.wheels":{slot:"boots"},"robot.legs.springs":{slot:"boots"},"robot.legs.hover":{slot:"boots"}};
 export var KIP_BASE_LABELS: Record<string, string> = {"character.base.creature":"Kip Classic","character.base.vinyl":"Critter Pal","character.base.block":"Explorer Kid"};
 export var WN={garden:"the Garden",sky:"Sky Meadow",junk:"the Junkyard",beach:"the Beach",snow:"Snow Peak",room:"the Toy Room"};
-export var ROWS: [string, string, string, string, string, string, string][] = [["character","base","creature","Creature Pal","Snap","spin",""],["character","base","vinyl","Vinyl Pal","Snap","glow",""],["character","base","block","Figure Pal","Pro","torque",""],
+export var ROWS: [string, string, string, string, string, string, string][] = [["character","base","creature","Creature Pal","Snap","spin",""],["character","base","vinyl","Vinyl Pal","Snap","glow",""],["character","base","block","Figure Pal","Motion","torque",""],
 ["character","eyes","big","Big eyes","Snap","glow",""],["character","eyes","sleepy","Sleepy eyes","Snap","torque","snow"],["character","eyes","happy","Happy eyes","Snap","speed",""],["character","eyes","cyclops","One big eye","Snap","spin",""],["character","eyes","sparkle","Sparkle eyes","Snap","glow","sky"],
 ["character","ears","horns","Horns","Snap","torque",""],["character","ears","bear","Bear ears","Snap","torque","snow"],["character","ears","cat","Cat ears","Snap","speed",""],["character","ears","bunny","Bunny ears","Snap","spin",""],["character","ears","antennae","Antennae","Snap","glow","garden"],["character","ears","none","No ears","Snap","none",""],
 ["character","hat","none","No hat","Snap","none",""],["character","hat","wizard","Wizard hat","Snap","glow",""],["character","hat","crown","Crown","Snap","glow","room"],["character","hat","propcap","Propeller cap","Snap","spin",""],["character","hat","cap","Cap","Snap","speed","beach"],["character","hat","flower","Flower crown","Snap","glow","garden"],
@@ -29,19 +29,19 @@ export var ROWS: [string, string, string, string, string, string, string][] = [[
 ["character","tail","curly","Curly tail","Snap","spin",""],["character","tail","fox","Fox tail","Snap","speed",""],["character","tail","dragon","Dragon tail","Snap","torque",""],["character","tail","puff","Puff tail","Snap","glow","beach"],["character","tail","none","No tail","Snap","none",""],
 
 ["robot","head","box","Box head","Snap","glow",""],["robot","head","dome","Dome head","Snap","glow",""],["robot","head","cams","Twin cams","Snap","spin","sky"],
-["robot","torso","box","Box torso","Snap","torque",""],["robot","torso","tank","Tank torso","Pro","torque",""],["robot","torso","barrel","Barrel torso","Snap","speed","junk"],
-["robot","arms","claws","Claws","Pro","torque",""],["robot","arms","hands","Hands","Snap","speed",""],["robot","arms","tools","Tools","Pro","spin","junk"],
-["robot","legs","walkers","Walkers","Pro","speed",""],["robot","legs","treads","Treads","Pro","torque",""],["robot","legs","wheels","Wheels","Snap","speed","junk"],
-["robot","top","antenna","Antenna","Snap","glow",""],["robot","top","siren","Siren","Snap","glow",""],["robot","top","gearcrown","Gear crown","Pro","spin","sky"],
+["robot","torso","box","Box torso","Snap","torque",""],["robot","torso","tank","Tank torso","Motion","torque",""],["robot","torso","barrel","Barrel torso","Snap","speed","junk"],
+["robot","arms","claws","Claws","Motion","torque",""],["robot","arms","hands","Hands","Snap","speed",""],["robot","arms","tools","Tools","Motion","spin","junk"],
+["robot","legs","walkers","Walkers","Motion","speed",""],["robot","legs","treads","Treads","Motion","torque",""],["robot","legs","wheels","Wheels","Snap","speed","junk"],
+["robot","top","antenna","Antenna","Snap","glow",""],["robot","top","siren","Siren","Snap","glow",""],["robot","top","gearcrown","Gear crown","Motion","spin","sky"],
 ["vehicle","chassis","car","Car chassis","Snap","speed",""],["vehicle","chassis","truck","Truck chassis","Snap","torque",""],["vehicle","chassis","buggy","Buggy chassis","Snap","speed","sky"],
-["vehicle","wheels","small","Small wheels","Snap","spin",""],["vehicle","wheels","big","Big wheels","Snap","torque",""],["vehicle","wheels","tread","Tread","Pro","torque","junk"],
+["vehicle","wheels","small","Small wheels","Snap","spin",""],["vehicle","wheels","big","Big wheels","Snap","torque",""],["vehicle","wheels","tread","Tread","Motion","torque","junk"],
 ["vehicle","shell","sedan","Sedan shell","Snap","glow",""],["vehicle","shell","open","Open cab","Snap","speed","room"],["vehicle","shell","bubble","Bubble shell","Snap","glow","garden"],
-["vehicle","front","bumper","Bumper","Snap","torque",""],["vehicle","front","plow","Plow","Pro","torque","snow"],["vehicle","front","lightbar","Light bar","Snap","glow","garden"],
-["vehicle","rear","spoiler","Spoiler","Snap","speed",""],["vehicle","rear","booster","Booster","Snap","speed","beach"],["vehicle","rear","hook","Hook","Pro","torque","junk"],
-["robot","head","tv","TV head","Snap","glow","room"],["robot","head","visor","Visor helmet","Pro","speed",""],
-["robot","torso","core","Core torso","Snap","glow","snow"],["robot","torso","jet","Jet torso","Pro","speed",""],
+["vehicle","front","bumper","Bumper","Snap","torque",""],["vehicle","front","plow","Plow","Motion","torque","snow"],["vehicle","front","lightbar","Light bar","Snap","glow","garden"],
+["vehicle","rear","spoiler","Spoiler","Snap","speed",""],["vehicle","rear","booster","Booster","Snap","speed","beach"],["vehicle","rear","hook","Hook","Motion","torque","junk"],
+["robot","head","tv","TV head","Snap","glow","room"],["robot","head","visor","Visor helmet","Motion","speed",""],
+["robot","torso","core","Core torso","Snap","glow","snow"],["robot","torso","jet","Jet torso","Motion","speed",""],
 ["robot","arms","magnets","Magnets","Snap","torque",""],["robot","arms","propellers","Propellers","Snap","spin","beach"],
-["robot","legs","springs","Spring legs","Snap","spin","snow"],["robot","legs","hover","Hover jets","Pro","speed",""],
+["robot","legs","springs","Spring legs","Snap","spin","snow"],["robot","legs","hover","Hover jets","Motion","speed",""],
 ["robot","top","radar","Radar dish","Snap","spin","beach"],["robot","top","bulb","Light bulb","Snap","glow","room"]];
 export interface PartDef {
   k: string;
@@ -205,10 +205,10 @@ export var LEVELS: LevelDef[] = [
  {"format":"toyventor.level/1","id":"room","name":"Toy Room","theme":"room","props":[{"type":"lamp","x":2},{"type":"blocks","x":9.5},{"type":"books","x":16.5},{"type":"lamp","x":24,"z":-5.5},{"type":"blocks","x":32.5,"z":-4.2},{"type":"books","x":40},{"type":"lamp","x":44}],
   "spots":[{"part":"robot.head.tv","hide":"jackbox","x":6},{"part":"character.back.jetpack","hide":"bed","x":13},{"part":"vehicle.shell.open","hide":"toyblocks","x":20},{"part":"robot.top.bulb","hide":"shelf","x":28.9},{"part":"character.hat.crown","hide":"laundry","x":36}]}
 ];
-/* ===== missions: collect scrap, forge Pro parts in the Factory, use them to solve STEM missions ===== */
-export var TOOLS={beam:{n:"Beam",cost:2,d:"A straight Pro beam that spans gaps."},brace:{n:"Triangle brace",cost:2,d:"Triangles keep their shape, so a bridge stops sagging."},sgear:{n:"Small gear",cost:1,d:"Fast but weak."},bgear:{n:"Big gear",cost:3,d:"Slow but strong."},gearpair:{n:"Pro gear pair",cost:4,d:"A real gear set for your Pro toys."}};
+/* ===== missions: collect scrap, forge Motion parts in the Factory, use them to solve STEM missions ===== */
+export var TOOLS={beam:{n:"Beam",cost:2,d:"A straight Motion beam that spans gaps."},brace:{n:"Triangle brace",cost:2,d:"Triangles keep their shape, so a bridge stops sagging."},sgear:{n:"Small gear",cost:1,d:"Fast but weak."},bgear:{n:"Big gear",cost:3,d:"Slow but strong."},gearpair:{n:"Motion gear pair",cost:4,d:"A real gear set for your Motion toys."}};
 export var MDEF={bridge:{t:"Bridge the river",goal:"Build a bridge over the river. Put parts in the slots, then press Test it.",act:"Test it",slots:[{id:"deck",n:"Deck",acc:["beam"]},{id:"support",n:"Support",acc:["brace"]}],rew:{bp:["bgear"],scrap:2,txt:"Blueprint: Big gear. You will need it in the Junkyard."}},
- lift:{t:"Gear lift",goal:"Lift the toy to the ledge. Put gears on the tower, then press Turn crank.",act:"Turn crank",slots:[{id:"mid",n:"Middle gear",acc:["sgear","bgear"]},{id:"drum",n:"Drum gear",acc:["sgear","bgear"]}],rew:{bp:["gearpair"],scrap:3,txt:"Blueprint: Pro gear pair, a real gear set you can 3D print."}}};
+ lift:{t:"Gear lift",goal:"Lift the toy to the ledge. Put gears on the tower, then press Turn crank.",act:"Turn crank",slots:[{id:"mid",n:"Middle gear",acc:["sgear","bgear"]},{id:"drum",n:"Drum gear",acc:["sgear","bgear"]}],rew:{bp:["gearpair"],scrap:3,txt:"Blueprint: Motion gear pair, a real gear set you can 3D print."}}};
 export var GR={sgear:.34,bgear:.66};
 /* ===== tool kit: a tool belt, and fasteners that each need the right tool ===== */
 export var TK={screwdriver:{n:"Screwdriver",fits:"screw",say:"It turns screws."},spanner:{n:"Spanner",fits:"bolt",say:"It turns bolts."},hammer:{n:"Claw hammer",fits:"nail",say:"Its claw pulls nails out."},drill:{n:"Drill",fits:null,say:"It makes holes for screws."}};

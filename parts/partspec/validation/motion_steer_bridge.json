@@ -1,8 +1,8 @@
 {
   "validator": "preprint_check 1.2.0",
-  "file": "toyventor_pro_steer_bridge_S.stl",
+  "file": "toyventor_motion_steer_bridge_S.stl",
   "file_sha256": "c404c3832679291a99e4e267d30a08672a3206f29d86cc2e5e05c1d92ca739ba",
-  "part_id": "pro_steer_bridge",
+  "part_id": "motion_steer_bridge",
   "profile": "fdm_pla_0.4",
   "checked_at": "2026-10-31T15:26:09Z",
   "metrics": {

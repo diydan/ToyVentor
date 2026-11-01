@@ -8,8 +8,8 @@ print payloads, and calibration. [Decision
 
 ## Goal
 
-Keep one lattice, one verification gate, and one app bridge for Snap and Pro.
-The committed catalog targets are **67 Snap + 38 Pro = 105 verified parts**;
+Keep one lattice, one verification gate, and one app bridge for Snap and Motion.
+The committed catalog targets are **106 Snap + 79 Motion = 185 verified parts**;
 the generator marks verification. `sparkle_skin` rides along as an unprintable
 demo skin, not a catalog target. Verification is generator-derived: a part
 counts only when no blocking check fails and its small-parts result is not

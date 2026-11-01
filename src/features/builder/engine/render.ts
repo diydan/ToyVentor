@@ -53,7 +53,7 @@ const PART_COLORS: Record<string, string> = {
   "dome-s-2x2": "#38c98e",
   "big-blue-brick": "#2a7fcc",
   "spin-capsule": "#4ecdc4",
-  "adapter-snap-pro": "#7f9bff",
+  "adapter-snap-motion": "#7f9bff",
   "forge-mount-ring-s": "#7f9bff",
   "cloud-wings": "#5af0b0",
   "glow-capsule": "#ffd24d",
@@ -69,7 +69,6 @@ const PART_COLORS: Record<string, string> = {
   "forge-mount-small": "#7f9bff",
   "snap-wing-01": "#5af0b0",
   "snap-glow-capsule-01": "#ffd24d",
-  "pro-beam-tu05": "#a78bff",
 };
 
 const STAT_FALLBACK_HEX: Record<Part["stat"]["name"], string> = {
@@ -87,7 +86,6 @@ const PART_HEIGHTS_MM: Record<string, number> = {
   "forge-mount-small": 6,
   "snap-wing-01": 28,
   "snap-glow-capsule-01": 18,
-  "pro-beam-tu05": 8,
 };
 
 export function heightOf(part: Part): number {
@@ -98,7 +96,9 @@ export function heightOf(part: Part): number {
 
 export function colorOf(part: Part): string {
   if (PART_COLORS[part.id]) return PART_COLORS[part.id]!;
-  if (part.line === "pro" && part.stat.name !== "glow") return "#a78bff";
+  if (part.line !== "snap" && part.stat.name !== "glow") {
+    return part.line === "pro" ? "#ffd24d" : "#a78bff";
+  }
   return STAT_FALLBACK_HEX[part.stat.name] ?? "#52b7ff";
 }
 

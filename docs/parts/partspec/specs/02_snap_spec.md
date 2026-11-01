@@ -6,7 +6,7 @@ This spec says what Snap parts are and the rules they follow. The numbers live i
 
 ## Lattice and sizes
 
-Snap sits on the shared lattice: 1 TU = 12.5 mm, the same unit as Pro.
+Snap sits on the shared lattice: 1 TU = 12.5 mm, the same unit as Motion.
 
 | | Small | Large |
 | --- | --- | --- |

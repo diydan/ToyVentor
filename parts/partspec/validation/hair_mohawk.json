@@ -1,24 +1,24 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_hair_mohawk_S.stl",
-  "file_sha256": "94b64d3f431507e49ded1a8f68d9d617b86a7752042ca7f3f4ead952b2e3ba8c",
+  "file_sha256": "f9154e62a38b2fd735e75f939497cfd2f730f10f4c3c5bdb6f6d2684fbda2377",
   "part_id": "hair_mohawk",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-10-31T14:42:51Z",
+  "checked_at": "2026-11-01T02:45:42Z",
   "metrics": {
     "bbox_mm": [
-      42.97,
+      43.94,
       37.64,
       35.9
     ],
-    "volume_cm3": 8.55,
-    "surface_cm2": 65.59,
-    "triangles": 4750,
+    "volume_cm3": 8.7,
+    "surface_cm2": 67.29,
+    "triangles": 5494,
     "ledges": [],
     "layers": 180,
-    "bed_contact_mm2": 62.3,
+    "bed_contact_mm2": 86.8,
     "height_mm": 35.9,
-    "slenderness": 4.55,
+    "slenderness": 3.85,
     "centre_of_mass_over_contact": true,
     "min_wall_mm": 0.759,
     "thin_wall_regions": []
@@ -62,7 +62,7 @@
       "level": "block",
       "result": "pass",
       "value": [
-        43.0,
+        43.9,
         37.6,
         35.9
       ],
@@ -117,9 +117,9 @@
       "id": "V9_bed_contact",
       "level": "info",
       "result": "pass",
-      "value": 62.3,
+      "value": 86.8,
       "limit": null,
-      "detail": "height / sqrt(contact) = 4.55; above about 3 the slicer often asks for a brim"
+      "detail": "height / sqrt(contact) = 3.85; above about 3 the slicer often asks for a brim"
     },
     {
       "id": "V8_wall_thickness",

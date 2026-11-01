@@ -1,26 +1,26 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_hair_shag_S.stl",
-  "file_sha256": "8e183b35d34d2fd092ff778564d35e571ef99a3b93799f08b7036481df44f107",
+  "file_sha256": "82d6ed3c89e9a705b508333a160bc9710a73cf16b683b9b7548ed96814c99332",
   "part_id": "hair_shag",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-10-31T14:41:16Z",
+  "checked_at": "2026-11-01T02:45:16Z",
   "metrics": {
     "bbox_mm": [
-      43.1,
+      44.55,
       34.8,
       24.6
     ],
-    "volume_cm3": 6.12,
-    "surface_cm2": 58.54,
-    "triangles": 8108,
+    "volume_cm3": 6.32,
+    "surface_cm2": 60.43,
+    "triangles": 9054,
     "ledges": [],
     "layers": 123,
-    "bed_contact_mm2": 73.3,
+    "bed_contact_mm2": 100.5,
     "height_mm": 24.6,
-    "slenderness": 2.87,
+    "slenderness": 2.45,
     "centre_of_mass_over_contact": true,
-    "min_wall_mm": 0.548,
+    "min_wall_mm": 0.582,
     "thin_wall_regions": [
       {
         "area_mm2": 12.52,
@@ -100,7 +100,7 @@
       "level": "block",
       "result": "pass",
       "value": [
-        43.1,
+        44.5,
         34.8,
         24.6
       ],
@@ -155,9 +155,9 @@
       "id": "V9_bed_contact",
       "level": "info",
       "result": "pass",
-      "value": 73.3,
+      "value": 100.5,
       "limit": null,
-      "detail": "height / sqrt(contact) = 2.87; above about 3 the slicer often asks for a brim"
+      "detail": "height / sqrt(contact) = 2.45; above about 3 the slicer often asks for a brim"
     },
     {
       "id": "V8_wall_thickness",

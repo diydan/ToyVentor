@@ -3,7 +3,7 @@
 """ToyVentor Kip LLM Part-Maker SDK (Full PartSpec v2 Conformance Edition).
 
 Gives any LLM (or human creator) 6 high-level, drift-proof Python builders on top of
-`parts/partspec/toyventor_parts.py` & `toyventor_pro.py` so custom heads, crown add-ons,
+`parts/partspec/toyventor_parts.py` & `toyventor_motion.py` so custom heads, crown add-ons,
 backpacks, handheld props, and vehicle add-ons pass `tp.evaluate()` (`design_status == "verified"`)
 and `toyventor_assembly.validate()` on the first try — without hardcoding `interfaces.json` numbers!
 
@@ -54,7 +54,7 @@ for _p in (str(PARTSPEC_DIR), str(KIP_DIR)):
 import kip_partspec as kp  # noqa: E402
 import toyventor_assembly as asm  # noqa: E402
 import toyventor_parts as tp  # noqa: E402
-import toyventor_pro as pro  # noqa: E402
+import toyventor_motion as motion  # noqa: E402
 
 VALID_STATS = ("Speed", "Spin", "Torque", "Glow")
 FORBIDDEN_BRAND_RE = re.compile(
@@ -200,9 +200,9 @@ def handheld_prop(
     Pass a 2D `CrossSection` in `(x, z)` drawn around `z >= 0` (it is automatically translated above
     the unobstructed `grip_tu * 12.5 mm` grip shaft and joined with a sturdy neck!).
     """
-    L = grip_tu * pro.TU
-    hy = pro.BORE["shaft_flats"] / 2  # 2.50 mm
-    grip = pro.pin_solid("flats", L + 5.0)
+    L = grip_tu * motion.TU
+    hy = motion.BORE["shaft_flats"] / 2  # 2.50 mm
+    grip = motion.pin_solid("flats", L + 5.0)
 
     if isinstance(head_2d_or_3d, CrossSection):
         bx0, bz0, bx1, bz1 = head_2d_or_3d.bounds()
@@ -226,8 +226,8 @@ def handheld_prop(
     else:
         m = grip + head_2d_or_3d.translate((0.0, 0.0, L + 1.0))
 
-    conn = pro._pin_conn("shaft_drive", "flats", L)
-    return m, [conn], {"print_rotation_deg": pro.LAY_FLAT}
+    conn = motion._pin_conn("shaft_drive", "flats", L)
+    return m, [conn], {"print_rotation_deg": motion.LAY_FLAT}
 
 
 def vehicle_addon(
@@ -264,14 +264,14 @@ def part_spec(
     tags: list[str] | None = None,
 ) -> dict:
     """Create a normalized PartSpec dictionary ready for `validate_and_export()`."""
-    is_pro = slot == "hand"
+    is_motion = slot == "hand"
     return {
         "id": id,
         "name": name,
         "type": f"Custom {slot} part",
-        "line": "pro" if is_pro else "snap",
-        "family": "shaft" if is_pro else "addon",
-        "size": "pro" if is_pro else "small",
+        "line": "motion" if is_motion else "snap",
+        "family": "shaft" if is_motion else "addon",
+        "size": "pro" if is_motion else "small",
         "stat": stat,
         "behavior": behavior,
         "slot": slot,

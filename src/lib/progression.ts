@@ -236,20 +236,20 @@ export function canAccessTier(
   return (prog.missionStars[progressionKey(missionId, 2)] ?? 0) >= 2;
 }
 
-/** Pro-part labs per stat (continuation §4.4): 3★ in a matching lab unlocks. */
-export const PRO_STAT_LABS: Record<StatName, string[]> = {
+/** Tier-part labs per stat (continuation §4.4): 3★ in a matching lab unlocks. */
+export const STAT_UNLOCK_LABS: Record<StatName, string[]> = {
   torque: ["lab1", "lab2"],
   speed: ["lab3", "lab4"],
   glow: ["lab2", "lab4"],
   spin: ["lab5", "lab6"],
 };
 
-export function hasProStatUnlock(
+export function hasStatUnlock(
   prog: ProgressionState,
   stat: StatName,
 ): boolean {
   if (prog.sandboxUnlockAll) return true;
-  const labs = PRO_STAT_LABS[stat];
+  const labs = STAT_UNLOCK_LABS[stat];
   for (const [key, stars] of Object.entries(prog.missionStars)) {
     if (stars < 3) continue;
     if (labs.includes(familyOf(key.split(":t")[0] ?? key))) return true;

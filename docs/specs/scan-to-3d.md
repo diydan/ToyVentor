@@ -132,15 +132,16 @@ emotes, and one active behavior in each current explore world and lesson lab.
 Route A additionally meets the spike’s wall-size, watertight, timing, bundle,
 and reproducibility criteria.
 
-## Future — Max: real robots
+## Future — Pro: real robots
 
-Snap → Pro → Max is the product arc, Max being real robots. Max starts with
+Snap → Motion → Pro is the product arc, Pro being real robots. Pro starts with
 kid-safe battle bots (sumo and push formats, obstacle courses — no destructive
 weapons) plus missions, and it is the phase where ScanDex exhaust and the
 asset pipeline pay off: every labeled household object and fitted body is
 training data for vision, dimensioning, and grasping. The thesis: video games
 accelerated AI development, and play will do the same for robotics. The power
-system's Momentum/Mech stages are the technical path inside the Max phase.
+system's Momentum stage sits inside the Motion tier and the Mech stage is the
+Pro tier itself.
 The thesis is lived, not borrowed: hours in Fusion 360 and Blender making
 parts for a 4-foot household robot — modeling, printing, testing, training —
 and a son who could help train it by playing instead of watching.

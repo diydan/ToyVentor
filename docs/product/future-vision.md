@@ -6,8 +6,8 @@ Pokémon Go, but the things kids catch train real robots.
 
 ## The arc
 
-Snap → Pro → Max. Snap is snap-fit play for young kids. Pro is real
-mechanical building for makers. Max is real robots — and the path there runs
+Snap → Motion → Pro. Snap is snap-fit play for young kids. Motion is real
+mechanical building for makers. Pro is real robots — and the path there runs
 through play, not through labs.
 
 ## Why play trains robots
@@ -36,7 +36,7 @@ on-device-first. Fun with zero robot story; the data is exhaust, and we are
 its first customer — our own scanner gets smarter with every family that
 plays.
 
-**3. Battle bots.** The on-ramp to Max: kid-safe sumo, push formats, and
+**3. Battle bots.** The on-ramp to Pro: kid-safe sumo, push formats, and
 obstacle courses (no destructive weapons), then missions that graduate from
 screen physics to tabletop robots. The kid who tuned gear ratios to lift a
 gate in the game already understands the robot that lifts it for real.
@@ -45,7 +45,7 @@ gate in the game already understands the robot that lifts it for real.
 
 More families playing → more labeled objects and fitted bodies → a smarter
 suggester and a richer parts catalog → a better game → more families playing.
-When the first Max tabletop robot ships, it stands on a dataset its players
+When the first Pro tabletop robot ships, it stands on a dataset its players
 built themselves — and every battle bot mission after that makes the next
 robot cheaper to train.
 
@@ -53,7 +53,7 @@ robot cheaper to train.
 
 Lived, not borrowed: hours in Fusion 360 and Blender making parts for a
 4-foot household robot — modeling, printing, testing, training — and a son
-who watches instead of helping. Max is the phase where he stops watching.
+who watches instead of helping. Pro is the phase where he stops watching.
 Every scan, label, measurement, and battle is training data for the real
 thing standing in our house.
 
@@ -61,6 +61,6 @@ thing standing in our house.
 
 Today: the one-stage Toybox — scan, build, play, print — submitted and
 shipped. Tomorrow, in order: connection checks, the suggester, ScanDex,
-battle bots, Max. Each step is a product on its own; together they are the
+battle bots, Pro. Each step is a product on its own; together they are the
 dataset and the on-ramp. The pitch is the vision above. The proof is the
 demo.

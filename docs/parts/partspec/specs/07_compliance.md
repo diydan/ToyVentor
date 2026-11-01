@@ -22,8 +22,8 @@
 | Sharp points and edges (16 CFR 1500.48 and 1500.49) | Printed edges, gear teeth, sprue gate nicks and thin fins must pass | Not tested |
 | Lead in substrate and coatings, phthalates (CPSIA; 16 CFR 1303, 1307) | Filament and any paint or coating must meet the limits | Need supplier certificates for every filament colour |
 | Batteries & radio in Stage 4 Mech (F963-23 §4.25, IEC 62133, FCC Part 15, COPPA) | Stage 4 (`Mech`, 10 and up) specifies a captive-screw rear battery door (`ASTM F963-23` §4.25), protected `3.7 V` `IEC 62133` cell, pre-certified Wi-Fi/BLE module with antenna keep-out (`FCC Part 15`), and local-LAN zero-PII control (`COPPA`). Toys meeting F963 battery rules are outside Reese's Law | Pre-CAD specification only; no Mech hardware built yet |
-| Removable join pins in hugging mounts | Pins are small parts. Allowed with the warning on Small (3 and up) and Pro (8 and up) mounts; never on Large (under 3), which joins permanently | Enforced by the generator |
-| Age grading | Snap Small (Stage 1): 3 and up; Pro & Momentum (Stages 2–3): 8 and up; Mech robotics (Stage 4): 10 and up. Snap Large (under 3) is parked | Set in `interfaces.json` and specs |
+| Removable join pins in hugging mounts | Pins are small parts. Allowed with the warning on Small (3 and up) and Motion (8 and up) mounts; never on Large (under 3), which joins permanently | Enforced by the generator |
+| Age grading | Snap Small (Stage 1): 3 and up; Motion (Stage 2) & Momentum (Stage 3): 8 and up; Mech robotics (Stage 4, the Pro tier): 10 and up. Snap Large (under 3) is parked | Set in `interfaces.json` and specs |
 
 ## How our design checks map to this
 

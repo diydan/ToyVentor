@@ -147,7 +147,7 @@ concept badges, not just XP.
 
 - Concept tags and badges. Measurement, ratio, logic, buoyancy, levers,
   circuits, sequencing, fractions, patterns, and sorting. Practicing a
-  concept earns its badge, like "Lever Pro."
+  concept earns its badge, like "Lever Motion."
 - Three dials of challenge. The age band picks the ladder level. Within it,
   today's Tiers 1 to 3 are named in the world: Starter, Tinker, and Engineer.
   Mastery stars (1 to 3) show how well it went.

@@ -49,7 +49,7 @@ const catalogById = new Map(catalog.parts.map((p) => [p.id, p]));
 
 const BRIDGE_OPTS: BridgeOptions = {
   mapAllStats: true,
-  includePro: true,
+  includeAdvanced: true,
   idPrefix: "",
   deriveStatValue: true,
   includeAssets: true,

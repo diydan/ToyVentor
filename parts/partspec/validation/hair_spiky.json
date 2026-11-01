@@ -1,26 +1,26 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_hair_spiky_S.stl",
-  "file_sha256": "519b2cd75838c76f7c95b6ffeaccb47979eb83413c3025b1fbe7d8a8cf73e1ba",
+  "file_sha256": "d3d15d0edc5c5bad4713814def7bb6312baee426a42b518defc5ac5a031c4a4b",
   "part_id": "hair_spiky",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-10-31T14:41:47Z",
+  "checked_at": "2026-11-01T02:45:26Z",
   "metrics": {
     "bbox_mm": [
       50.02,
       40.72,
       38.0
     ],
-    "volume_cm3": 10.94,
-    "surface_cm2": 81.63,
-    "triangles": 5124,
+    "volume_cm3": 11.09,
+    "surface_cm2": 83.33,
+    "triangles": 5942,
     "ledges": [],
     "layers": 190,
-    "bed_contact_mm2": 62.8,
+    "bed_contact_mm2": 87.3,
     "height_mm": 38.0,
-    "slenderness": 4.8,
+    "slenderness": 4.07,
     "centre_of_mass_over_contact": true,
-    "min_wall_mm": 0.449,
+    "min_wall_mm": 0.724,
     "thin_wall_regions": [
       {
         "area_mm2": 5.18,
@@ -132,9 +132,9 @@
       "id": "V9_bed_contact",
       "level": "info",
       "result": "pass",
-      "value": 62.8,
+      "value": 87.3,
       "limit": null,
-      "detail": "height / sqrt(contact) = 4.8; above about 3 the slicer often asks for a brim"
+      "detail": "height / sqrt(contact) = 4.07; above about 3 the slicer often asks for a brim"
     },
     {
       "id": "V8_wall_thickness",

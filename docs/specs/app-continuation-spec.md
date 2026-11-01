@@ -26,7 +26,7 @@ UX rules, or the TU geometry canon.
 - Phase 0 (port + typed runtime + cog mesh + `#fix` removal): landed.
 - Phase 1 (Toy Box pill, PIN pad with dual-path lockout, Demo v1): landed.
 - Phase 2 (enabled roster, Star Scout grandfathering, Kip unification): landed.
-- Phase 3 (XP math, Tier 2/3 presets, badges, Pro-part gating): landed.
+- Phase 3 (XP math, Tier 2/3 presets, badges, tier-part gating): landed.
 - Phase 4A (locked cards for the 3 ready vehicles): landed.
 - Phase 4B (Ranks 3–5 flips): open — tractor awaits chin-strap verdict,
   ranks 4–6 await Wave-10 proofs; truck/scooter/motorbike already live.
@@ -151,7 +151,7 @@ accuracy (`0` or `1` failed checks, plus within-tolerance calibration on
 
 ### 4.4 Unlockable STEM Level Difficulty Tiers (Track B: Lab Mastery)
 
-Difficulty tiers and Pro parts are gated by **Lab Mastery (`missionStars`)**,
+Difficulty tiers and Motion/Pro parts are gated by **Lab Mastery (`missionStars`)**,
 never by Maker Rank (`totalXp`), so vehicle progression and lab mastery cannot
 stall each other:
 
@@ -160,7 +160,7 @@ stall each other:
   `stars("{missionId}:t1") >= 2`.
 - **Tier 3 Engineer (`220` base XP):** unlocks per mission once
   `stars("{missionId}:t2") >= 2`.
-- **Pro parts by `(line === "Pro", stat)`:** unlock on earning `3★` in the
+- **Motion and Pro parts by `(line !== "snap", stat)`:** unlock on earning `3★` in the
   matching lab family (`torque` -> `Lab 1`/`Lab 2`; `speed` -> `Lab 3`/`Lab 4`;
   `glow` -> `Lab 2`/`Lab 4`; `spin` -> `Lab 5`/`Lab 6`).
 - Phase 3 must ship parameterized `Tier 2` and `Tier 3` presets across

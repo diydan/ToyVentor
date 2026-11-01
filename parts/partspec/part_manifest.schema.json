@@ -30,6 +30,7 @@
     "line": {
       "enum": [
         "snap",
+        "motion",
         "pro",
         "shared"
       ]

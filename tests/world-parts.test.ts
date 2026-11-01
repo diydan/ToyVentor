@@ -91,8 +91,8 @@ describe("world-parts fit bridge & slot-equip synthesis", () => {
       }
     }
 
-    const proOnly = printablePartsForWorld(seedKip, allParts, { line: "pro" });
-    expect(proOnly.every((p) => p.line === "pro")).toBe(true);
+    const motionOnly = printablePartsForWorld(seedKip, allParts, { line: "motion" });
+    expect(motionOnly.every((p) => p.line === "motion")).toBe(true);
   });
 
   it("synthesizes canonical board placements and replaces rather than duplicates on same-slot re-equip", () => {

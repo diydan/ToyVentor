@@ -3,9 +3,9 @@
 > Point-in-time review (2026-10-30). Links to files that are not in this repo (the standalone PartSpec v2 character systems) are shown as plain code, not links. Treat findings as history where [decision 0005](../decisions/0005-partspec-lattice-merge.md) or later work supersedes them.
 
 **Scope audited:**
-1. **App lane (`toyforge`)** — [snap.md](../parts/snap.md), [pro.md](../parts/pro.md), [snap-samples.md](snap-samples.md), [creating-parts.md](../parts/creating-parts.md), [0005-partspec-lattice-merge.md](../decisions/0005-partspec-lattice-merge.md), OpenSCAD library under `parts/`, [base.json](../../sets/base.json), `partspec-demo.json`, `shared/*.ts`, and character blockouts.
+1. **App lane (`toyforge`)** — [snap.md](../parts/snap.md), [motion.md](../parts/motion.md), [snap-samples.md](snap-samples.md), [creating-parts.md](../parts/creating-parts.md), [0005-partspec-lattice-merge.md](../decisions/0005-partspec-lattice-merge.md), OpenSCAD library under `parts/`, [base.json](../../sets/base.json), `partspec-demo.json`, `shared/*.ts`, and character blockouts.
 2. **In-repo PartSpec v1 snapshot** — `docs/parts/partspec/specs/01..11` and `parts/partspec/` (60 parts).
-3. **PartSpec v2 standalone package (`toyventor`)** — [interfaces.json](../../parts/partspec/interfaces.json), [catalog.json](../../parts/partspec/catalog.json) (75 printable parts + 1 skin), [toyventor_parts.py](../../parts/partspec/toyventor_parts.py), [toyventor_pro.py](../../parts/partspec/toyventor_pro.py), [toyventor_fit.py](../../parts/partspec/toyventor_fit.py), [toyventor_assembly.py](../../parts/partspec/toyventor_assembly.py), [preprint_check.py](../../parts/partspec/preprint_check.py), [make_calibration.py](../../parts/partspec/make_calibration.py), [make_app_export.py](../../parts/partspec/make_app_export.py), and character systems (`animal_system.py`, `pro_humanoid.py`, `pro_heads.py`, `customize_pro.py`).
+3. **PartSpec v2 standalone package (`toyventor`)** — [interfaces.json](../../parts/partspec/interfaces.json), [catalog.json](../../parts/partspec/catalog.json) (75 printable parts + 1 skin), [toyventor_parts.py](../../parts/partspec/toyventor_parts.py), [toyventor_motion.py](../../parts/partspec/toyventor_motion.py), [toyventor_fit.py](../../parts/partspec/toyventor_fit.py), [toyventor_assembly.py](../../parts/partspec/toyventor_assembly.py), [preprint_check.py](../../parts/partspec/preprint_check.py), [make_calibration.py](../../parts/partspec/make_calibration.py), [make_app_export.py](../../parts/partspec/make_app_export.py), and character systems (`animal_system.py`, `pro_humanoid.py`, `pro_heads.py`, `customize_pro.py`).
 
 ---
 
@@ -35,7 +35,7 @@ flowchart TD
     subgraph V2["3. PartSpec v2 Repo (/Users/dan/Code/toyventor)"]
         IF["interfaces.json (1 TU = 12.5 mm; Large parked)"]
         SnapV2["toyventor_parts.py (45 Snap: 32 Small + 13 Large, incl. Racer W6 & Bolt W8)"]
-        ProV2["toyventor_pro.py (30 Pro: beams, pins, shafts, gears, joints, adapter)"]
+        ProV2["toyventor_motion.py (30 Motion: beams, pins, shafts, gears, joints, adapter)"]
         AppExp["make_app_export.py -> app_export/ (62 parts; 38 fail shared/part.ts)"]
         Animals["animal_system.py (17 Snap parts; uncatalogued, off-lattice quad studs)"]
         ProBase["customize_pro.py + pro_heads.py (36-body 3MF + 4 display heads, no neck socket)"]
@@ -62,7 +62,7 @@ flowchart TD
 | **Snap socket architecture** | Compliant 4-slot cone-roof (in docs; rigid `socket()` in parts) | Rigid **tube cage** (`2×2+` blocks) or **integrated flat-roof blind hole** (`addons/capsules`) | Flat roofs bridge cleanly (`≤6.7–13.3 mm`), but rigid PLA cages have **zero elastic compliance** (`±0.075 mm` surface-offset window). |
 | **Snap vertical module (plate / brick)** | `4.0 mm` / `12.0 mm` (Small) | **`5.0 mm` / `15.0 mm`** (Small); **`10.0` / `30.0 mm`** (Large) | $3 \times \text{plate} = 1 \times \text{brick}$ works inside Snap, **but clashes with Pro `12.5 mm` Z-height** (see §3.2). |
 | **Pro beam cross-section & max length** | `12.5 × 6.0 mm` sharp cube ([beam-tu05.scad](../../parts/scad/pro/beam-tu05.scad#L4-L8)) | **`12.5 × 12.5 mm`** (`1.5 mm` fillet, `0.5 mm` bed chamfer), max `14 TU = 175 mm` | v2 respects `180 mm` bed limit (`TU14`). |
-| **Pro free bore / fixed bore** | `7.0 mm` round (`$fn=32`), no fixed bore | **`7.0 mm` round** (`0.4 mm` chamfer; teardrop sideways) / **`5.1 mm` double-D flats** | Sideways teardrop (`toyventor_pro.py:55-68`) is well-engineered for support-free FDM. |
+| **Pro free bore / fixed bore** | `7.0 mm` round (`$fn=32`), no fixed bore | **`7.0 mm` round** (`0.4 mm` chamfer; teardrop sideways) / **`5.1 mm` double-D flats** | Sideways teardrop (`toyventor_motion.py:55-68`) is well-engineered for support-free FDM. |
 | **Pro shaft / axle** | None | **`6.6 mm` round, `5.0 mm` flats**, `2.0 mm` teardrop centre hole | `0.20 mm` radial free clearance; `0.05 mm` radial press fit across flats (`LAY_FLAT` orientation). |
 | **Pro gear system** | None | **Module `2.5 mm`, `PA = 20°`**, `0.20 mm` backlash, `6.25 mm` (`0.5 TU`) thick | $Z_1 + Z_2 \equiv 0 \pmod 5$ puts pitch centres on `0.5 / 1.0 TU` grid — **but `Z10` & `Z15` undercut/interfere** (§4.1). |
 | **Circle tessellation (`FIT_SEG`)** | `$fn = 24..48` | **`96` segments** (`chord sagitta = 0.002 mm` on `6.6 mm` stud) | Eliminates polygon-inscribing error in catalog parts, though bypassed in `animal_system.py` / `pro_humanoid.py`. |
@@ -70,21 +70,21 @@ flowchart TD
 ### 2.2 Critical Mechanical & Parametric Defects in PartSpec v2
 
 #### M1. Pro Friction Pin (`pin_friction`, `pin_friction_long`) Exceeds PLA & PETG Fracture Strain by >10×
-- **Where:** [interfaces.json](../../parts/partspec/interfaces.json#L91-L105) and [`friction_pin()`](../../parts/partspec/toyventor_pro.py#L577-L596).
+- **Where:** [interfaces.json](../../parts/partspec/interfaces.json#L91-L105) and [`friction_pin()`](../../parts/partspec/toyventor_motion.py#L577-L596).
 - **The math:** `friction_pin` cuts a `1.6 mm` lengthwise slot starting at `slot_end_mm = 3.0 mm` from **both** ends (`z = 3.0..22.0 mm` on the `25.0 mm` pin), leaving **solid un-slotted bridges at both tips**. Each half is therefore a **doubly-clamped (`fixed-fixed`) `2.5 mm`-thick beam**, not an open cantilever. Worse, the retention fins (`fin_oversize_mm = 1.5 mm` diametral = **`0.75 mm` radial deflection per side**, consuming **93.8%** of the `0.80 mm` half-slot!) reach full height at `z = 5.20 mm` — just **`2.20 mm` away from the solid tip** (`zc = 6.25 mm` is `3.25 mm` from the solid tip).
 - **Result:** Compressing the fin into a `7.0 mm` bore requires an outer-fibre bending strain of **~29.7% at mid-fin (`a = 3.25 mm`)** and **>60% at the fin shoulder (`a = 2.20 mm`)**. PLA fractures at **~2.0–2.5% strain** and PETG yields at **~3.5%**. In physical print, this pin will either refuse to enter the `7.0 mm` bore or crush/delaminate permanently on first insertion.
 - **Fix:** Split the slot **open through the insertion ends** (cantilever split tips with a small `0.20–0.25 mm` radial retention ridge near the tip and a `0.15 mm` radial friction rib, or thin hollow cylindrical walls `t ≈ 1.1 mm`) so peak insertion strain stays `< 1.5%`.
 
 #### M2. Involute Tip-to-Flank Interference on `gear_spur_z10` and `gear_spur_z15`
-- **Where:** [`spur_section()`](../../parts/partspec/toyventor_pro.py#L451-L470), [`rack()`](../../parts/partspec/toyventor_pro.py#L525-L546), and [`validate()`](../../parts/partspec/toyventor_assembly.py#L249-L253).
-- **The math:** Standard full-depth $20^\circ$ involute teeth ($h_a = 1.0 m$) suffer involute undercut below $Z_{\min} = \lceil 2 / \sin^2(20^\circ) \rceil = \mathbf{18\text{ teeth}}$. Below the base circle ($r_b = 11.746\text{ mm}$ for `Z10`, $17.619\text{ mm}$ for `Z15`), [`spur_section()`](../../parts/partspec/toyventor_pro.py#L458-L460) draws **straight radial flanks** down to $r_f = r - 1.25 m$ with zero profile shift ($x = 0$) and zero tip relief.
+- **Where:** [`spur_section()`](../../parts/partspec/toyventor_motion.py#L451-L470), [`rack()`](../../parts/partspec/toyventor_motion.py#L525-L546), and [`validate()`](../../parts/partspec/toyventor_assembly.py#L249-L253).
+- **The math:** Standard full-depth $20^\circ$ involute teeth ($h_a = 1.0 m$) suffer involute undercut below $Z_{\min} = \lceil 2 / \sin^2(20^\circ) \rceil = \mathbf{18\text{ teeth}}$. Below the base circle ($r_b = 11.746\text{ mm}$ for `Z10`, $17.619\text{ mm}$ for `Z15`), [`spur_section()`](../../parts/partspec/toyventor_motion.py#L458-L460) draws **straight radial flanks** down to $r_f = r - 1.25 m$ with zero profile shift ($x = 0$) and zero tip relief.
   - **`gear_spur_z10` (`r_b = 11.746 mm`, `r_f = 9.375 mm`):** Interferes radially with **every mating gear in the catalog** at nominal centre distance: **`+0.471 mm`** vs `Z10`, **`+0.642 mm`** vs `Z15`, **`+0.735 mm`** vs `Z20`, **`+0.792 mm`** vs `Z25`, **`+0.831 mm`** vs `Z30`, and **`+1.038 mm`** vs `gear_rack_tu05`.
   - **`gear_spur_z15`:** Clears `Z10–Z30` (`0.15–0.88 mm` margin), **but interferes by `+0.307 mm` with `gear_rack_tu05`**.
 - **Why the gate missed it:** [`toyventor_assembly.py`](../../parts/partspec/toyventor_assembly.py#L251) marks meshing gears `exempt: True` from 3D mesh-overlap checks (because static teeth weren't phase-clocked), and `valid_pro_rack_drive` only tests `Z20` + rack!
 - **Fix:** Either apply standard profile shift / stub addendum ($h_a = 0.8 m$ across the `m = 2.5` family, or conjugate rack-cut root trochoids + tip chamfer), **and** replace `exempt: True` in `toyventor_assembly.py` with a multi-angle clocked Boolean intersection check `(g1.rotate(a1) ^ g2.rotate(a2)).volume() == 0`.
 
 #### M3. Pro Free Pin (`pin_free`) Prints Standing Upright (Weak Layer Orientation)
-- **Where:** [`free_pin()`](../../parts/partspec/toyventor_pro.py#L564-L569) and [interfaces.json](../../parts/partspec/interfaces.json#L113).
+- **Where:** [`free_pin()`](../../parts/partspec/toyventor_motion.py#L564-L569) and [interfaces.json](../../parts/partspec/interfaces.json#L113).
 - **Issue:** Unlike `shaft` and `friction_pin` (which rotate via `LAY_FLAT` so filament strands run along the pin axis), `pin_free` (`6.6 mm` Ø × `26.5 mm` tall, slenderness triggering a `3 mm` brim in PrusaSlicer) prints **vertically on its `9.0 mm` head**. Layer lines lie perpendicular to shear/bending loads across beam joints — the classic FDM pin-snap failure mode.
 - **Fix:** Give `pin_free` double-D flats on its `9.0 mm` head (or a `45°` head shoulder) and print it `LAY_FLAT` (`[90, 0, 0]`) so all Pro pins/shafts have axial filament continuity.
 
@@ -125,18 +125,18 @@ Even though [0005-partspec-lattice-merge.md](../decisions/0005-partspec-lattice-
 
 ### 3.2 Snap ↔ Pro Interoperability ("One Modular System" Gaps)
 
-1. **Unidirectional Adapter Only (`adapter_snap_pro`):**
-   - `adapter_snap_pro` (`3×3 TU` Pro free-bore plate with `2×2` Small studs shifted by `0.5 TU` onto inner corners) lets **Snap female add-ons mount onto a Pro build**.
+1. **Unidirectional Adapter Only (`adapter_snap_motion`):**
+   - `adapter_snap_motion` (`3×3 TU` Pro free-bore plate with `2×2` Small studs shifted by `0.5 TU` onto inner corners) lets **Snap female add-ons mount onto a Pro build**.
    - **Missing reverse adapter (`adapter_pro_on_snap`):** There is **no** part with Snap `socket_grid` underneath and Pro `bore_grid` or pins on top! A child who puts a `forge_mount_ring_s` (Snap Small stud face) onto their scanned toy **cannot** attach any Pro beam, gear, wheel, or hinge to that toy without printing an entirely new `forge_mount_pro` base.
 2. **Half-TU Phase Shift + Vertical Module Mismatch:**
-   - Because `adapter_snap_pro` puts Small studs at `(±6.25, ±6.25 mm)` while Pro bores sit at `(0, ±12.5 mm)`, Snap and Pro grids are **offset by `0.5 TU` (`6.25 mm`) laterally**.
+   - Because `adapter_snap_motion` puts Small studs at `(±6.25, ±6.25 mm)` while Pro bores sit at `(0, ±12.5 mm)`, Snap and Pro grids are **offset by `0.5 TU` (`6.25 mm`) laterally**.
    - Vertically, Pro beams are **`12.5 mm` (`1 TU`)** and gears are **`6.25 mm` (`0.5 TU`)**, whereas Snap Small plates are **`5.0 mm`** and bricks are **`15.0 mm`**. Because $\gcd(5.0, 6.25) = 1.25\text{ mm}$ ($5\text{ plates} = 2\text{ Pro beams} = 25\text{ mm}$), mixed Snap+Pro assemblies cannot bridge across two towers at standard 1-plate or 1-brick heights.
 3. **Racer Hybrid Parts Break the Line Boundary (`racer_axle_block`, `racer_axle`, `racer_wheel`):**
    - Catalogued as `line: "snap", size: "small"` (ages 3+/4+), yet `racer_axle` is a `6.6 × 37.5 mm` Pro `shaft_drive` (`small_part`) and `racer_wheel` (`17.9 mm` Ø × `6.0 mm`, `small_part`) uses a Pro `fixed` double-D hub bore. In `make_app_export.py`, both are mis-exported as `mount: "stud"` despite having zero stud/socket connectors.
 
 ### 3.3 Character & Humanoid Fragmentation (Four Unbridged Pipelines)
 
-Both [snap.md](../parts/snap.md#L44-L50) and [pro.md](../parts/pro.md#L40-L58) state that Snap and Pro characters share one module vocabulary backed by typed connectors and fit-checked adapters. Today, **four separate systems exist and none share a head/accessory interface**:
+Both [snap.md](../parts/snap.md#L44-L50) and [motion.md](../parts/motion.md#L40-L58) state that Snap and Pro characters share one module vocabulary backed by typed connectors and fit-checked adapters. Today, **four separate systems exist and none share a head/accessory interface**:
 
 | Pipeline | Location | Connector System | Spec & Parametric Issues |
 | --- | --- | --- | --- |

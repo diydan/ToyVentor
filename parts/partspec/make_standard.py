@@ -36,7 +36,7 @@ def main(out="INTERFACE_STANDARD.md"):
     w(f"Pitch {b['pitch_tu']} TU ({b['pitch_tu'] * lat['unit_mm']} mm), halving down to 1/8 TU. Free bore {b['free_d']} mm. "
       f"Fixed bore flats {b['fixed_flats']} mm. Shaft {b['shaft_d']} mm round, flats {b['shaft_flats']} mm, {b['shaft_center_hole']} mm centre hole. {b['note']}\n")
     pf, pro = IF["interfaces"]["pin_friction"], IF["pro"]
-    w("\n### Pro parts (pin, beam, gear)\n")
+    w("\n### Motion parts (pin, beam, gear)\n")
     w(f"**Friction pin:** shaft {pf['shaft_d']} mm round, flats {pf['shaft_flats']} mm, {pf['shaft_center_hole']} mm centre hole; fins {pf['fin_oversize_mm']} mm wider across than the bore (target). {pf['note']}\n")
     bm, gr = pro["beam"], pro["gear"]
     w(f"**Beam:** {bm['section_tu']} TU section, longest {bm['max_length_tu']} TU ({bm['max_length_tu'] * lat['unit_mm']} mm); outside fillet {bm['fillet_outer_mm']} mm ({bm['fillet_small_mm']} mm on small features); hole-mouth chamfer {bm['hole_mouth_chamfer_mm']} mm; bed-edge chamfer {bm['bed_chamfer_mm']} mm. {bm['bore_rule']}\n")
@@ -46,7 +46,7 @@ def main(out="INTERFACE_STANDARD.md"):
         w(f"- `{m['male']}` (M) with `{m['female']}` (F): {m['rule']}.")
     pb = IF["pin_bore"]
     w("\n### Pro connectors and pin-and-bore rules\n")
-    w("Pro parts print flat; most bores and pins run along z, and a connector may point along x or y (hinge knuckles, the cross connector). In a build, Pro parts may be tipped onto their side in quarter turns. A `bore_grid` connector (F) anchors its grid at the first bore centre (`anchor: corner`) with a `bore_class` (free or fixed) and a `depth_mm`; a `lattice` of `cell` means bores sit on cell centres measured from the part's corner, `axis` means on the part axis (gears, wheels). "
+    w("Motion parts print flat; most bores and pins run along z, and a connector may point along x or y (hinge knuckles, the cross connector). In a build, Pro parts may be tipped onto their side in quarter turns. A `bore_grid` connector (F) anchors its grid at the first bore centre (`anchor: corner`) with a `bore_class` (free or fixed) and a `depth_mm`; a `lattice` of `cell` means bores sit on cell centres measured from the part's corner, `axis` means on the part axis (gears, wheels). "
       "A `pin` connector (M) puts the pin axis at the frame origin, with a `profile` (round, flats, friction) and a `length_mm`. A pin and a bore mate when the axes coincide and their z ranges overlap, and the pair appears in this table:\n")
     w("| Pin interface | Bore class | Fit class |\n| --- | --- | --- |")
     for r in pb["rules"]:

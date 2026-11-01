@@ -231,13 +231,13 @@ describe("packer", () => {
 });
 
 describe("inventory", () => {
-  const base = { edition: "pro", category: "robot", head: "classic", faceInsert: "sculpted", expr: "spark", hair: "off", hat: "buds", back: "off", prop: "off", ears: "off", tail: "off", vehicle: "none" };
+  const base = { edition: "motion", category: "robot", head: "classic", faceInsert: "sculpted", expr: "spark", hair: "off", hat: "buds", back: "off", prop: "off", ears: "off", tail: "off", vehicle: "none" };
   const ids = (s: any) => K.inventoryFor(s).items.map((i: any) => `${i.id}x${i.qty}`);
 
-  it("counts the Pro and Snap joints from the rig builder", () => {
-    const pro = K.inventoryFor(base).items;
-    expect(pro.find((i: any) => i.id === "spark_peg_big").qty).toBe(5);
-    expect(pro.find((i: any) => i.id === "spark_peg_sml").qty).toBe(8);
+  it("counts the Motion and Snap joints from the rig builder", () => {
+    const motion = K.inventoryFor(base).items;
+    expect(motion.find((i: any) => i.id === "spark_peg_big").qty).toBe(5);
+    expect(motion.find((i: any) => i.id === "spark_peg_sml").qty).toBe(8);
     const snap = K.inventoryFor({ ...base, edition: "snap" }).items;
     expect(snap.find((i: any) => i.id === "snap_turret_big").qty).toBe(5);
     expect(snap.find((i: any) => i.id === "snap_turret").qty).toBe(4);
@@ -270,12 +270,11 @@ describe("inventory", () => {
   });
 
   it("reports what has no single STL yet instead of pretending to print it", () => {
-    const u = K.inventoryFor({ ...base, back: "gears", prop: "shaft", ears: "pro", tail: "pro", vehicle: "car" }).unmapped.join(" | ");
+    const u = K.inventoryFor({ ...base, back: "gears", prop: "shaft", ears: "motion", tail: "motion", vehicle: "car" }).unmapped.join(" | ");
     for (const t of ["gears", "Spinner", "Scanner", "Wheelie", "Vehicle \\(car\\)"]) expect(u).toMatch(new RegExp(t, "i"));
   });
 
-  it("every mapped file exists on disk, except the hairstyles whose export is still in flight", () => {
-    const IN_FLIGHT = new Set(["bowl", "slick", "pixie", "side_pony", "low_bun"].map((h) => `/kip/partspec/toyventor_hair_${h}_S.stl`));
+  it("every mapped file exists on disk", () => {
     const missing = new Set<string>();
     const states: any[] = [base, { ...base, edition: "snap", ears: "comm", tail: "wag", back: "wings" }];
     for (const hd of W.WARDROBE_HEADS) states.push({ ...base, category: hd.category, head: hd.id });
@@ -285,7 +284,7 @@ describe("inventory", () => {
     for (const p of W.PROP_OPTIONS) states.push({ ...base, prop: p.id });
     for (const f of W.FACE_INSERT_MODES) states.push({ ...base, category: "human", head: "kid", faceInsert: f.id });
     for (const s of states) for (const it of K.inventoryFor(s).items) if (!existsSync(pub(it.file))) missing.add(it.file);
-    expect([...missing].filter((f) => !IN_FLIGHT.has(f))).toEqual([]);
+    expect([...missing]).toEqual([]);
   });
 });
 
@@ -325,7 +324,7 @@ describe("real parts on disk", () => {
   });
 
   it("packs a character plate inside the bound with legal gaps, rigid transforms only", () => {
-    const inv = K.inventoryFor({ edition: "pro", category: "human", head: "kid", faceInsert: "sculpted", expr: "spark", hair: "short_swept", hat: "ranger", back: "explorer", prop: "wrench", ears: "off", tail: "off", vehicle: "none" });
+    const inv = K.inventoryFor({ edition: "motion", category: "human", head: "kid", faceInsert: "sculpted", expr: "spark", hair: "short_swept", hat: "ranger", back: "explorer", prop: "wrench", ears: "off", tail: "off", vehicle: "none" });
     const prepared = inv.items.map((e: any) => prep(e.source, e.id, e.file));
     const qty = Object.fromEntries(inv.items.map((e: any) => [e.id, e.qty]));
     const inst = K.expandInstances(prepared, qty);

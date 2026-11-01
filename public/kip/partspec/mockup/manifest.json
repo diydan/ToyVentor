@@ -35,24 +35,24 @@
     "file": "kit_yoke_hbar.stl",
     "faces": 716
   },
-  "pro_steer_bridge": {
-    "file": "pro_steer_bridge.stl",
+  "motion_steer_bridge": {
+    "file": "motion_steer_bridge.stl",
     "faces": 6620
   },
-  "pro_steer_knuckle_l": {
-    "file": "pro_steer_knuckle_l.stl",
+  "motion_steer_knuckle_l": {
+    "file": "motion_steer_knuckle_l.stl",
     "faces": 1892
   },
-  "pro_steer_knuckle_r": {
-    "file": "pro_steer_knuckle_r.stl",
+  "motion_steer_knuckle_r": {
+    "file": "motion_steer_knuckle_r.stl",
     "faces": 1894
   },
-  "pro_steer_rack": {
-    "file": "pro_steer_rack.stl",
+  "motion_steer_rack": {
+    "file": "motion_steer_rack.stl",
     "faces": 1628
   },
-  "pro_axle_keeper": {
-    "file": "pro_axle_keeper.stl",
+  "motion_axle_keeper": {
+    "file": "motion_axle_keeper.stl",
     "faces": 2148
   },
   "gear_spur_z10": {

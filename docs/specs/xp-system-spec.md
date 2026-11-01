@@ -124,7 +124,7 @@ on one grind. Split along data already planned:
 - **Maker Rank (total XP)** gates vehicles only (Phase 4 cards).
 - **Lab mastery (stars per mission family)** gates difficulty tiers and
   advanced parts: Tier 2 needs 2 stars on the Tier 1 of that family,
-  Tier 3 needs 4+ family stars; Pro parts need the matching family's
+  Tier 3 needs 4+ family stars; Motion and Pro parts need the matching family's
   3-star solves, not a global total.
 
 **Resolved details.**
@@ -132,7 +132,7 @@ on one grind. Split along data already planned:
 - Per continuation §4.4: Tier 2 unlocks per mission at
   `stars("{missionId}:t1") >= 2`; Tier 3 at
   `stars("{missionId}:t2") >= 2`. *Family* = lab (`lab1`…`lab6`);
-  family stars (sum per lab) drive the parent view and Pro-stat
+  family stars (sum per lab) drive the parent view and tier-stat
   unlocks (`torque` → Lab 1/2, `speed` → Lab 3/4, `glow` → Lab 2/4,
   `spin` → Lab 5/6, each on any 3★ in a matching lab). Maker Rank
   never gates tiers or parts.

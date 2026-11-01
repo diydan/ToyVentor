@@ -1,6 +1,6 @@
 # ToyVentor: Spec (toyventor.com)
 
-> Review copy, generated 2026-10-31 from `docs/product/spec.md`. Do not
+> Review copy, generated 2026-11-01 from `docs/product/spec.md`. Do not
 > edit this file by hand: run `npm run spec:review` after changing the spec.
 > The block below is for reviewers. Delete it before publishing.
 
@@ -8,15 +8,15 @@
 
 | Section | Change | Why |
 | --- | --- | --- |
-| Whole spec, Oct 29 review pass | Demo table, model table, contract, Create mode, Pro, STEM, and Forge Club claims corrected to match the code as built. Dates updated. | A code review against the running app found rows that overstated what is live (Mureka, voice model, pin and gear set, gear ratio challenge, KV). |
+| Whole spec, Oct 29 review pass | Demo table, model table, contract, Create mode, Motion, STEM, and Forge Club claims corrected to match the code as built. Dates updated. | A code review against the running app found rows that overstated what is live (Mureka, voice model, pin and gear set, gear ratio challenge, KV). |
 | Roadmap | Added the React port decision for ToyVentor World: wrap the engine behind a typed facade, do not rewrite it, three.js upgrade last. All five steps are in locally, ending with three.js 0.160 ES modules and a 12-level screenshot comparison; the standalone page remains the demo path. | The port had been reviewed separately. The decision belongs in the spec, recorded with its actual progress. |
 | ToyVentor World | New section. The app and the 2.5D world are now one toy: the Play button opens the world already wearing the kid's build, through the `toyventor.toy/1` contract in the page URL. | The hand-off between app and game was undefined. It is now a documented contract with a stated mapping rule and a stated failure behaviour. |
 | Create mode | New section. The model route, the kid-facing rules it holds, and the recipe check. | Create mode now runs on Meta Muse Spark through the Worker's `/api/muse/spark` route, with the game's word parser as the fallback. The spec should say so. |
 | Where we use Meta models | Added the Create mode row. | The model list was missing the one place a model writes game content. |
 | Demo (90 seconds) | Now points at the full run in demo-script.md, and the beat list covers opening the world with the kid's build. | The old beat list did not include the world or Create mode. |
-| ToyVentor Pro | "on ToyVentor's own 12.5 mm hole grid". The example part is renamed from SU05 to TU05 everywhere it appears, including the part id, the source file and the download files. | The part naming now matches the canonical interface standard, which uses TU. |
+| ToyVentor Motion | "on ToyVentor's own 12.5 mm hole grid". The example part is renamed from SU05 to TU05 everywhere it appears, including the part id, the source file and the download files. | The part naming now matches the canonical interface standard, which uses TU. |
 | Opening line | "brick-building fanatic" instead of naming a construction toy brand. | Public copy carries no third-party brand names. |
-| Vision, snap and Pro cross-references | Kept as file names rather than links. | This copy is read outside the repo. |
+| Vision, snap and Motion cross-references | Kept as file names rather than links. | This copy is read outside the repo. |
 
 ## How to review
 
@@ -130,11 +130,11 @@ into a rebuildable, playable, printable companion in under a minute.
   behavior. Geometry is labeled ages 3+ with small-parts warnings; the product
   positions Snap support from age 4 with a grown-up nearby (initial playtests
   target 4–9), while the broader builder framing stays 8–16.
-- **Pro:** mechanical beams, pins, shafts, gears, and joints for ages 8 and up
+- **Motion:** mechanical beams, pins, shafts, gears, and joints for ages 8 and up
   on the same 12.5 mm hole grid. Small gears, pins, shafts, and bushings carry
   choking-hazard warnings.
 - Committed catalog targets live in `parts/partspec/catalog.json`; the generator
-  marks verification. Pro fit windows sit inside Snap’s calibration coverage.
+  marks verification. Motion fit windows sit inside Snap’s calibration coverage.
 
 
 ## Virtual builder
@@ -144,7 +144,7 @@ hides STL files until the checks pass, and warns before unsupported or small
 parts. Completed builds can immediately play, create, reveal, print, or order.
 The four checks are on-grid placement, size fit, support-free geometry, and
 printer-bed fit. Calibration uses a fixed primer and hidden-dot first-print
-selector; resolved prints calibrate both Snap and Pro. Forge tracks scrap and
+selector; resolved prints calibrate both Snap and Motion. Forge tracks scrap and
 blocked tools without leaving the sheet.
 
 Build preview, ordering, and Continue have fixed acceptance behavior: Continue
@@ -209,7 +209,7 @@ so new audio never implies new mechanics.
 ## Forge Club
 
 The canonical bridge maps all 19 PartSpec stats onto speed, spin, glow, and
-torque, derives 1–3 rarity values, includes Snap and Pro, populates meshes and
+torque, derives 1–3 rarity values, includes Snap and Motion, populates meshes and
 warnings, and emits three tuned sets:
 
 - `base.json`: 13 printable parts plus one non-printable skin.
@@ -263,14 +263,14 @@ whiplash); only the Reveal theme is generated, ahead of time.
 | 3D print | Pre-generated STL downloads when checks pass | Delivery handoff |
 | Reveal | Entrance animation, card, synth theme | Mureka songs not wired |
 | Packs | Seeded daily pulls with equip flow | Billing |
-| Pro line | TU-lattice beams, pins, gears on the shared grid | Electronics later |
+| Motion line | TU-lattice beams, pins, gears on the shared grid | Electronics later |
 
 Every bridged set, part, and payload ships a real STL/GLB pair: 399 STL and 75
 GLB files are currently served. Geometry, placement, and fit are exact;
 slicer settings are illustrative. Print files stay hidden until four checks
 pass; calibration uses a fixed primer and hidden-dot first-print selector. The
 Reveal theme remains a synth placeholder until approved stems land. Glass is
-reserved for focus surfaces; child-facing copy uses brand tokens while Pro
+reserved for focus surfaces; child-facing copy uses brand tokens while Motion
 tools keep technical readouts and exact engineering wording.
 
 One stat per part, always: the moment a part is good at two things it becomes
@@ -311,9 +311,9 @@ Snap details live in snap.md (../parts/snap.md). Geometry is labeled ages 3+
 with small-parts warnings; only the Small size is offered while Large stays
 parked. Normative geometry lives in the generated PartSpec copy linked there.
 
-## ToyVentor Pro
+## ToyVentor Motion
 
-Pro details live in pro.md (../parts/pro.md). Pro is 8+ mechanical parts on
+Motion details live in motion.md (../parts/motion.md). Motion is 8+ mechanical parts on
 the shared hole grid, with choking-hazard warnings on small gears, pins,
 shafts, and bushings. Normative geometry lives in the generated PartSpec copy
 linked there.
@@ -351,7 +351,7 @@ Things this spec asserts but has not earned yet:
   profile, stated plainly.
 - Does the “printed part gives a game boost” loop motivate, or punish kids
   without a printer? A guess, not evidence.
-- Do Pro humanoid parts prove the one-system claim? They still need standard
+- Do Motion humanoid parts prove the one-system claim? They still need standard
   typed connection metadata and demonstrated Snap mates or fit-checked
   adapters.
 - When does validation stop living in three places? Worker, game, and app
@@ -370,9 +370,9 @@ per app-continuation-spec.md (../specs/app-continuation-spec.md). Later:
 profiles, AR, ordering, creator tools, licensed IP, mystery drops, education
 tracks, original characters, personal play loops, merge forge, recycle,
 color tooling, real electronics, delivery integration, and classroom tools.
-Beyond them: Max, the real-robots phase (Snap → Pro → Max), opening with
+Beyond them: Pro, the real-robots phase (Snap → Motion → Pro), opening with
 kid-safe battle bots and missions — play as the accelerant for robotics.
-Detail lives in the journal's Later entries (Max phase; asset suggester +
+Detail lives in the journal's Later entries (Pro phase; asset suggester +
 ScanDex).
 The native canvas port has landed including the three.js 0.183
 upgrade; the world renders in-process and the standalone page is gone, so

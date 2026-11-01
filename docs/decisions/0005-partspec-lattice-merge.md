@@ -22,7 +22,7 @@ a part from one lane does not snap to the other.
 ## Decision (proposed)
 
 PartSpec becomes the geometry canon once its records condition passes.
-It is ahead on measured fit, part count, Pro completeness and mount design.
+It is ahead on measured fit, part count, Motion completeness and mount design.
 Until then:
 
 1. Freeze new old-lattice (16/32 mm) geometry work in the app lane.

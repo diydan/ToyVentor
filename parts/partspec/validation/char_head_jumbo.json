@@ -1,19 +1,19 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_char_head_jumbo_S.stl",
-  "file_sha256": "7898d00da43f7ed1156bf0ab1ee95dfeca77c702791d1f0b054dbe6b8ceb46e5",
+  "file_sha256": "d4cbc3f7b4bf9b10a6b476afa93d7c3e1c6ad213690b7c4fea1d82f1e3409276",
   "part_id": "char_head_jumbo",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-10-31T16:27:28Z",
+  "checked_at": "2026-11-01T02:44:38Z",
   "metrics": {
     "bbox_mm": [
-      37.19,
+      39.61,
       27.46,
       34.2
     ],
-    "volume_cm3": 20.35,
-    "surface_cm2": 46.72,
-    "triangles": 10384,
+    "volume_cm3": 20.41,
+    "surface_cm2": 46.96,
+    "triangles": 11156,
     "ledges": [],
     "layers": 171,
     "bed_contact_mm2": 207.5,
@@ -72,7 +72,7 @@
       "level": "block",
       "result": "pass",
       "value": [
-        37.2,
+        39.6,
         27.5,
         34.2
       ],

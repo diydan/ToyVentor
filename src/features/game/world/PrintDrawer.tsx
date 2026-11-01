@@ -11,8 +11,8 @@ import type { Line, Part } from "../../../../shared/part";
 import type { Toy } from "../../../../shared/toy";
 import type { ToyType } from "../../../../shared/toycontract";
 import {
-  hasProStatUnlock,
-  PRO_STAT_LABS,
+  hasStatUnlock,
+  STAT_UNLOCK_LABS,
   type ProgressionState,
 } from "../../../lib/progression";
 import {
@@ -25,6 +25,14 @@ import { loadBuild, saveBuild } from "../../../lib/builds";
 import { allParts, glbFileFor, partsById, stlFileFor } from "../../../lib/catalog";
 import { TryOn } from "../../ar/TryOn";
 import { BuilderCanvas } from "../../builder/BuilderCanvas";
+
+/** Tier labels, in the order the product arc runs: Snap -> Motion -> Pro. */
+const LINE_LABELS: Record<Line | "all", string> = {
+  all: "All",
+  snap: "Snap",
+  motion: "Motion",
+  pro: "Pro",
+};
 
 export function PrintDrawer({
   toy,
@@ -42,6 +50,11 @@ export function PrintDrawer({
   progression?: ProgressionState;
 }) {
   const [lineFilter, setLineFilter] = useState<Line | "all">("all");
+  // Only offer a tier filter for a tier that actually has parts in the catalog.
+  const lineOptions = useMemo(() => {
+    const present = new Set(allParts.map((p) => p.line));
+    return (["snap", "motion", "pro"] as const).filter((ln) => present.has(ln));
+  }, []);
   const [viewMode, setViewMode] = useState<"ar" | "grid">("ar");
   const [selectedPartId, setSelectedPartId] = useState<string>("");
   const [selectedInstanceId, setSelectedInstanceId] = useState<string | undefined>(
@@ -58,27 +71,29 @@ export function PrintDrawer({
     });
     if (!progression || progression.sandboxUnlockAll) return list;
     return list.filter(
-      (p) => p.line !== "pro" || hasProStatUnlock(progression, p.stat.name),
+      (p) => p.line === "snap" || hasStatUnlock(progression, p.stat.name),
     );
   }, [toy, slot, toyType, lineFilter, progression]);
 
-  const proLock = useMemo(() => {
+  const tierLock = useMemo(() => {
     if (!progression || progression.sandboxUnlockAll) {
-      return { count: 0, labs: [] as string[] };
+      return { count: 0, labs: [] as string[], tiers: [] as string[] };
     }
     const locked = printablePartsForWorld(toy, allParts, {
       slot,
       toyType,
-      line: "pro",
-    }).filter((p) => !hasProStatUnlock(progression, p.stat.name));
+    }).filter((p) => p.line !== "snap" && !hasStatUnlock(progression, p.stat.name));
     const labs = [
       ...new Set(
-        locked.flatMap((p) => PRO_STAT_LABS[p.stat.name] ?? []),
+        locked.flatMap((p) => STAT_UNLOCK_LABS[p.stat.name] ?? []),
       ),
     ]
       .map((lab) => lab.replace(/^lab/, "Lab "))
       .sort();
-    return { count: locked.length, labs };
+    const tiers = [...new Set(locked.map((p) => p.line))].map(
+      (ln) => LINE_LABELS[ln],
+    );
+    return { count: locked.length, labs, tiers };
   }, [toy, slot, toyType, progression]);
 
   // Keep selectedPartId valid when toy, slot, or filter changes.
@@ -238,7 +253,7 @@ export function PrintDrawer({
           }}
         >
           <div className="tv-seg" role="group" aria-label="Part line filter">
-            {(["all", "snap", "pro"] as const).map((lf) => (
+            {(["all", ...lineOptions] as Array<Line | "all">).map((lf) => (
               <button
                 key={lf}
                 type="button"
@@ -247,7 +262,7 @@ export function PrintDrawer({
                 aria-pressed={lineFilter === lf}
                 onClick={() => setLineFilter(lf)}
               >
-                {lf === "all" ? "All" : lf === "snap" ? "Snap" : "Pro"}
+                {LINE_LABELS[lf]}
               </button>
             ))}
           </div>
@@ -278,11 +293,11 @@ export function PrintDrawer({
           </div>
         </div>
 
-        {proLock.count > 0 && (
+        {tierLock.count > 0 && (
           <p className="tv-moves" role="status">
-            {proLock.count} Pro {proLock.count === 1 ? "part" : "parts"}{" "}
-            unlock{proLock.count === 1 ? "s" : ""} with 3 stars
-            {proLock.labs.length > 0 && ` in ${proLock.labs.join(", ")}`}.
+            {tierLock.count} {tierLock.tiers.join("/")} {tierLock.count === 1 ? "part" : "parts"}{" "}
+            unlock{tierLock.count === 1 ? "s" : ""} with 3 stars
+            {tierLock.labs.length > 0 && ` in ${tierLock.labs.join(", ")}`}.
             Finish STEM Lab missions with clean engineering to earn stars.
           </p>
         )}

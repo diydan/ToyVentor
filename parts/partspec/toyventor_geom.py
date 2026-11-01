@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-"""Shared geometry primitives used by Snap and Pro parts."""
+"""Shared geometry primitives used by Snap and Motion parts."""
 from manifold3d import CrossSection, Manifold
 
 SEG = 32

@@ -8,7 +8,7 @@ import {
   familyOf,
   familyStars,
   grandfatherToyIds,
-  hasProStatUnlock,
+  hasStatUnlock,
   mergeProgression,
   normalizeProgression,
   rankFor,
@@ -167,13 +167,13 @@ describe("ranks and family gates", () => {
     ).toBe(true);
   });
 
-  it("unlocks Pro stats on a 3-star solve in a matching lab or world mission", () => {
+  it("unlocks Motion stats on a 3-star solve in a matching lab or world mission", () => {
     const prog = solved(emptyProgression(), {
       missionId: "lab1.bridge",
       attempts: 1,
     }).next;
-    expect(hasProStatUnlock(prog, "torque")).toBe(true);
-    expect(hasProStatUnlock(prog, "spin")).toBe(false);
+    expect(hasStatUnlock(prog, "torque")).toBe(true);
+    expect(hasStatUnlock(prog, "spin")).toBe(false);
 
     expect(familyOf("garden.bridge")).toBe("lab1");
     expect(familyOf("junk.lift")).toBe("lab2");
@@ -181,7 +181,7 @@ describe("ranks and family gates", () => {
       missionId: "garden.bridge",
       attempts: 1,
     }).next;
-    expect(hasProStatUnlock(gardenProg, "torque")).toBe(true);
+    expect(hasStatUnlock(gardenProg, "torque")).toBe(true);
   });
 
   it("checks vehicle access cumulatively across ranks and preserves starter/grandfathered vehicles", () => {

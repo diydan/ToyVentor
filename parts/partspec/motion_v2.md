@@ -1,8 +1,8 @@
-# Pro spec (v2.3, 2026-10-28)
+# Motion spec (v2.3, 2026-10-28)
 
-Pro is the mechanical line for ages 8 and up and makers: beams, pins, shafts, gears and joints on a hole grid. Everything prints on a 0.4 mm nozzle with no supports, and should look good on the shelf.
+Motion is the mechanical line for ages 8 and up and makers: beams, pins, shafts, gears and joints on a hole grid. Everything prints on a 0.4 mm nozzle with no supports, and should look good on the shelf.
 
-This spec says what Pro parts are and the rules they follow. The numbers live in `interfaces.json` and the full rule set is in the Interface Standard; where they differ, the data wins. Part status lives in the catalog.
+This spec says what Motion parts are and the rules they follow. The numbers live in `interfaces.json` and the full rule set is in the Interface Standard; where they differ, the data wins. Part status lives in the catalog.
 
 ## Base standard
 
@@ -26,7 +26,7 @@ Part names are component, sub-type, style tag, then size in TU (for example Beam
 | Shafts and bushings | Shafts TU03, TU05, TU07; bushings 1/2 TU and 1 TU (11.0 mm across, fixed bore) |
 | Gears | Spur Z10, Z15, Z20, Z25, Z30; rack TU05; ring gear Z40 in a 10 TU frame |
 | Forge Mount | Hole-grid face (see the Forge Mount spec) |
-| Snap-to-Pro adapter | 3x3 TU plate: Pro bores on the cell centres, Small studs on the inner corners |
+| Snap-to-Motion adapter | 3x3 TU plate: Pro bores on the cell centres, Small studs on the inner corners |
 | Wheels | TU04 (50 mm) and TU06 (75 mm): fixed-bore hub, crank bores on whole TU from the axis |
 | Joints | Hinge leaf TU02 (two leaves and a free pin make a hinge); cross connector TU01 (joins two shafts at 90 degrees) |
 | Later | Panels, fasteners, motion capsules with electronics |
@@ -60,7 +60,7 @@ Every connection is measured from the built geometry with the same slice-and-gap
 - **Fixed bore:** a flat shaft leaves 0.050 mm on the flats, a press fit that drives, within the press limits (0.1 mm interference, 0.2 mm play).
 - **Friction pins:** they hold by fins 1.5 mm wider across than the bore. The fins are built and measured to the interface; how well they hold needs a print.
 
-Pro's fit windows sit inside Snap's, so one calibration print covers both lines.
+Motion's fit windows sit inside Snap's, so one calibration print covers both lines.
 
 ## Gears
 
@@ -79,7 +79,7 @@ Pro's fit windows sit inside Snap's, so one calibration print covers both lines.
 
 ## Checks and status
 
-Pro uses the same checks and derived status as Snap, plus three Pro rules:
+Motion uses the same checks and derived status as Snap, plus three Motion rules:
 
 - **I4, bore on grid:** every bore is on the lattice and really exists (an empty probe inside it, material just outside it).
 - **I5, pin fits bore:** every pin and bore is an allowed pair and is built to the interface numbers.
@@ -92,7 +92,7 @@ Pro uses the same checks and derived status as Snap, plus three Pro rules:
 
 ## Safety
 
-Pro is for ages 8 and up. Every printed part carries the general notice and runs the same small-parts screen; small parts (pins, shafts, bushings, small gears) carry the choking-hazard warning.
+Motion is for ages 8 and up. Every printed part carries the general notice and runs the same small-parts screen; small parts (pins, shafts, bushings, small gears) carry the choking-hazard warning.
 
 ## Open items
 
@@ -103,4 +103,4 @@ Pro is for ages 8 and up. Every printed part carries the general notice and runs
 ## Done when
 
 - Every catalog part is `verified` (geometry and fit). Done for all 30 on 2026-10-28.
-- A Pro build (beam, pins, gears) mounts on a Forge Mount and equips in the game.
+- A Motion build (beam, pins, gears) mounts on a Forge Mount and equips in the game.

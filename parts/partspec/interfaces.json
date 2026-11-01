@@ -390,7 +390,7 @@
       "standard": "python3 make_standard.py out/INTERFACE_STANDARD.md",
       "agents": "python3 make_agents.py out",
       "selftest": "python3 selftest.py out",
-      "catalog": "python3 make_catalog.py out   (progress toward the top 30 Snap and top 30 Pro parts; writes CATALOG.md)",
+      "catalog": "python3 make_catalog.py out   (progress toward the top 30 Snap and top 30 Motion parts; writes CATALOG.md)",
       "specs": "python3 make_specs.py out   (assembles specs/: the numbered documents to build against)"
     }
   },
@@ -503,11 +503,10 @@
       "small"
     ],
     "snap_min_age": 3,
-    "pro_min_age": 8,
-    "momentum_min_age": 8,
-    "mech_min_age": 10,
+    "pro_min_age": 10,
     "parked": {
       "large": "Parked 2026-10-28 (Dan): Snap is ages 3 and up only. Large parts stay verified in the repo but are not exported, printed or extended until the line returns."
-    }
+    },
+    "motion_min_age": 8
   }
 }

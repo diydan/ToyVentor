@@ -77,11 +77,11 @@ into a rebuildable, playable, printable companion in under a minute.
   behavior. Geometry is labeled ages 3+ with small-parts warnings; the product
   positions Snap support from age 4 with a grown-up nearby (initial playtests
   target 4–9), while the broader builder framing stays 8–16.
-- **Pro:** mechanical beams, pins, shafts, gears, and joints for ages 8 and up
+- **Motion:** mechanical beams, pins, shafts, gears, and joints for ages 8 and up
   on the same 12.5 mm hole grid. Small gears, pins, shafts, and bushings carry
   choking-hazard warnings.
 - Committed catalog targets live in `parts/partspec/catalog.json`; the generator
-  marks verification. Pro fit windows sit inside Snap’s calibration coverage.
+  marks verification. Motion fit windows sit inside Snap’s calibration coverage.
 
 
 ## Virtual builder
@@ -91,7 +91,7 @@ hides STL files until the checks pass, and warns before unsupported or small
 parts. Completed builds can immediately play, create, reveal, print, or order.
 The four checks are on-grid placement, size fit, support-free geometry, and
 printer-bed fit. Calibration uses a fixed primer and hidden-dot first-print
-selector; resolved prints calibrate both Snap and Pro. Forge tracks scrap and
+selector; resolved prints calibrate both Snap and Motion. Forge tracks scrap and
 blocked tools without leaving the sheet.
 
 Build preview, ordering, and Continue have fixed acceptance behavior: Continue
@@ -156,7 +156,7 @@ so new audio never implies new mechanics.
 ## Forge Club
 
 The canonical bridge maps all 19 PartSpec stats onto speed, spin, glow, and
-torque, derives 1–3 rarity values, includes Snap and Pro, populates meshes and
+torque, derives 1–3 rarity values, includes Snap and Motion, populates meshes and
 warnings, and emits three tuned sets:
 
 - `base.json`: 13 printable parts plus one non-printable skin.
@@ -210,14 +210,14 @@ whiplash); only the Reveal theme is generated, ahead of time.
 | 3D print | Pre-generated STL downloads when checks pass | Delivery handoff |
 | Reveal | Entrance animation, card, synth theme | Mureka songs not wired |
 | Packs | Seeded daily pulls with equip flow | Billing |
-| Pro line | TU-lattice beams, pins, gears on the shared grid | Electronics later |
+| Motion line | TU-lattice beams, pins, gears on the shared grid | Electronics later |
 
 Every bridged set, part, and payload ships a real STL/GLB pair: 399 STL and 75
 GLB files are currently served. Geometry, placement, and fit are exact;
 slicer settings are illustrative. Print files stay hidden until four checks
 pass; calibration uses a fixed primer and hidden-dot first-print selector. The
 Reveal theme remains a synth placeholder until approved stems land. Glass is
-reserved for focus surfaces; child-facing copy uses brand tokens while Pro
+reserved for focus surfaces; child-facing copy uses brand tokens while Motion
 tools keep technical readouts and exact engineering wording.
 
 One stat per part, always: the moment a part is good at two things it becomes
@@ -258,9 +258,9 @@ Snap details live in [snap.md](../parts/snap.md). Geometry is labeled ages 3+
 with small-parts warnings; only the Small size is offered while Large stays
 parked. Normative geometry lives in the generated PartSpec copy linked there.
 
-## ToyVentor Pro
+## ToyVentor Motion
 
-Pro details live in [pro.md](../parts/pro.md). Pro is 8+ mechanical parts on
+Motion details live in [motion.md](../parts/motion.md). Motion is 8+ mechanical parts on
 the shared hole grid, with choking-hazard warnings on small gears, pins,
 shafts, and bushings. Normative geometry lives in the generated PartSpec copy
 linked there.
@@ -298,7 +298,7 @@ Things this spec asserts but has not earned yet:
   profile, stated plainly.
 - Does the “printed part gives a game boost” loop motivate, or punish kids
   without a printer? A guess, not evidence.
-- Do Pro humanoid parts prove the one-system claim? They still need standard
+- Do Motion humanoid parts prove the one-system claim? They still need standard
   typed connection metadata and demonstrated Snap mates or fit-checked
   adapters.
 - When does validation stop living in three places? Worker, game, and app
@@ -317,9 +317,9 @@ per [app-continuation-spec.md](../specs/app-continuation-spec.md). Later:
 profiles, AR, ordering, creator tools, licensed IP, mystery drops, education
 tracks, original characters, personal play loops, merge forge, recycle,
 color tooling, real electronics, delivery integration, and classroom tools.
-Beyond them: Max, the real-robots phase (Snap → Pro → Max), opening with
+Beyond them: Pro, the real-robots phase (Snap → Motion → Pro), opening with
 kid-safe battle bots and missions — play as the accelerant for robotics.
-Detail lives in the journal's Later entries (Max phase; asset suggester +
+Detail lives in the journal's Later entries (Pro phase; asset suggester +
 ScanDex).
 The native canvas port has landed including the three.js 0.183
 upgrade; the world renders in-process and the standalone page is gone, so

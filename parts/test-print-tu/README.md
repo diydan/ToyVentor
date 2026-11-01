@@ -18,8 +18,8 @@ All **17 binary STLs** in this folder are already rotated to their **support-fre
 | --- | --- | --- |
 | `01_big_blue_brick_L_2x2.stl` | `25.0 mm` Large (`2×2`, `50×50 mm`) | **Decision 0005 Gate:** Verify toddler hand feel (`≥ Ø31.7 mm` CPSC cylinder clear) and smooth chamfered edges. |
 | `02_forge_mount_ring_s_5x5.stl` | `12.5 mm` Small (`5×5`, `62.3×62.3 mm`) | Base `stud_small` Forge Mount plate. Check flat first layer and crisp `Ø6.6 mm` studs. |
-| `03_adapter_snap_pro_2x2.stl` | `12.5 mm` TU Bridge (`2×2`) | Snap-to-Pro bridge plate: `stud_small` studs on top + Pro `bore_grid` holes through body. |
-| `04_brick_s_2x2.stl` | `12.5 mm` Small (`2×2`, `24.8×24.8 mm`) | Press onto `02_forge_mount_ring_s` and `03_adapter_snap_pro`: firm clutch, lifts mount under own weight, child-removable. |
+| `03_adapter_snap_motion_2x2.stl` | `12.5 mm` TU Bridge (`2×2`) | Snap-to-Motion bridge plate: `stud_small` studs on top + Pro `bore_grid` holes through body. |
+| `04_brick_s_2x2.stl` | `12.5 mm` Small (`2×2`, `24.8×24.8 mm`) | Press onto `02_forge_mount_ring_s` and `03_adapter_snap_motion`: firm clutch, lifts mount under own weight, child-removable. |
 | `05_racer_spoiler_2x1.stl` | `12.5 mm` Small (`2×1`, `24.8×11.9 mm`) | Snap onto `04_brick_s_2x2`, `02_forge_mount_ring_s`, and Kip's `14_kip_neck_turret_2x1`. |
 | `17_forge_mount_first_print_selector.stl` | `12.5 mm` Small (`3×2` Mount + `1/2/3`-dot Strip + `2×1` Test Brick, `84.3×37.3 mm`) | **Hidden Calibration (Decision 0005 #3):** Snap the breakaway `2×1` test brick into sockets `1` (`0.00 mm`), `2` (`0.10 mm` standard), and `3` (`0.26 mm` easy); record which dot count clicks best (`[-0.100, +0.115] mm` surface-offset coverage), then twist off the breakaway tabs and keep the `3×2` Forge Mount. |
 
@@ -27,7 +27,7 @@ All **17 binary STLs** in this folder are already rotated to their **support-fre
 | File | Lattice | Purpose & Physical Pass Criteria |
 | --- | --- | --- |
 | `06_beam_str_tu05.stl` | `12.5 mm` Pro (`5×1` TU) | Reference 5-bore beam (`Ø7.0 mm` free bores at `12.5 mm` pitch). |
-| `07_pin_friction_2tu.stl` | `12.5 mm` Pro (`2` TU, `LAY_FLAT`) | Open-tip `< 1.8%` strain cantilever fins + center web. Clicks into `06_beam_str_tu05` and `03_adapter_snap_pro` **10× in a row** with zero cracking or stress whitening. |
+| `07_pin_friction_2tu.stl` | `12.5 mm` Pro (`2` TU, `LAY_FLAT`) | Open-tip `< 1.8%` strain cantilever fins + center web. Clicks into `06_beam_str_tu05` and `03_adapter_snap_motion` **10× in a row** with zero cracking or stress whitening. |
 | `08_pin_free_2tu.stl` | `12.5 mm` Pro (`2` TU, `LAY_FLAT`) | Axial-strand `5.6 mm` flats: spins freely inside `06_beam_str_tu05` (`Ø7.0 mm` bore) while physically blocked from entering `fixed` double-D hubs (`5.1 mm` flats). |
 | `09_shaft_tu03.stl` | `12.5 mm` Pro (`3` TU, `LAY_FLAT`) | Double-D drive shaft: slides freely through `06_beam_str_tu05` and locks rotationally into `10_gear_spur_z10` / `11_gear_spur_z20`. |
 | `10_gear_spur_z10.stl` | `m = 2.5 mm` (`Z = 10`, `pitch_d = 25 mm`) | Conjugate rack-hobbed 10T pinion (undercut-free). Mount on `09_shaft_tu03` in bore `0` of `06_beam_str_tu05`. |

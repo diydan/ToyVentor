@@ -53,7 +53,7 @@
   },
   "toyventor_char_head_chibi_S.stl": {
    "part": "char_head_chibi",
-   "sha256": "1c2d9e7183c1311513b2cd506b905281c39711da36564433115ad65759596638",
+   "sha256": "d24402a0531e05920da9da952c0614265210b7b88def786b035059ce5a795e93",
    "verdict": "pass_with_warnings"
   },
   "toyventor_char_head_dragon_S.stl": {
@@ -73,17 +73,17 @@
   },
   "toyventor_char_head_jumbo_S.stl": {
    "part": "char_head_jumbo",
-   "sha256": "7898d00da43f7ed1156bf0ab1ee95dfeca77c702791d1f0b054dbe6b8ceb46e5",
+   "sha256": "d4cbc3f7b4bf9b10a6b476afa93d7c3e1c6ad213690b7c4fea1d82f1e3409276",
    "verdict": "pass_with_warnings"
   },
   "toyventor_char_head_kid_S.stl": {
    "part": "char_head_kid",
-   "sha256": "db192bcb504b1b27b5db7543085d9b608ad349abaddef1cb7e89eb4113df8d97",
+   "sha256": "c7e932893f881d9e989cb73b9726004ce10d37a365a8242720fbdc8ec74cf5cf",
    "verdict": "pass_with_warnings"
   },
   "toyventor_char_head_tall_S.stl": {
    "part": "char_head_tall",
-   "sha256": "2cc87d1d09d4cfb4dae5b3ec622c1340c5704fb906fb6d17408c630d272a6535",
+   "sha256": "82376fc28b1ca180c08ac7692958ebd0508fdeba36393a2299607d25ed50ad75",
    "verdict": "pass_with_warnings"
   },
   "toyventor_char_legs_seated_S.stl": {
@@ -118,72 +118,97 @@
   },
   "toyventor_hair_bob_S.stl": {
    "part": "hair_bob",
-   "sha256": "03d7c97346cabac3d0081c00410fbe3292a1cc8168e8b9af14494fd452cd8f03",
+   "sha256": "468370bfdc28b3e15ee8fd8ad6ecca419f09fc7c4a12279f762d030ceaba7f76",
+   "verdict": "pass_with_warnings"
+  },
+  "toyventor_hair_bowl_S.stl": {
+   "part": "hair_bowl",
+   "sha256": "80c5322d17af2b8f35e6a173cd5630b487c95b2a06d06a9af41679ff2276095d",
    "verdict": "pass_with_warnings"
   },
   "toyventor_hair_curly_S.stl": {
    "part": "hair_curly",
-   "sha256": "890d230a1fadcd6cabd751f9e003be0dc44ccb9e2deb5427efef2b9a9369073f",
+   "sha256": "0c42739e81aed4231707a3e1eb76e015773c8a461cb62f602f61c218613b6726",
    "verdict": "pass"
   },
   "toyventor_hair_long_layered_S.stl": {
    "part": "hair_long_layered",
-   "sha256": "c142a83a9ee730db7eb9531110478060da6281c647b74e7a3a6f65977d6633e0",
+   "sha256": "23ddd89653cec1ae91b881f431d45d56639bee6c640b50b796b000ef91b39918",
+   "verdict": "pass_with_warnings"
+  },
+  "toyventor_hair_low_bun_S.stl": {
+   "part": "hair_low_bun",
+   "sha256": "c85de47387d0770ab4f5e4db9c597652ffc985cdfd77554edd6df1e7373303fd",
    "verdict": "pass_with_warnings"
   },
   "toyventor_hair_mohawk_S.stl": {
    "part": "hair_mohawk",
-   "sha256": "94b64d3f431507e49ded1a8f68d9d617b86a7752042ca7f3f4ead952b2e3ba8c",
+   "sha256": "f9154e62a38b2fd735e75f939497cfd2f730f10f4c3c5bdb6f6d2684fbda2377",
    "verdict": "pass"
   },
   "toyventor_hair_pigtails_S.stl": {
    "part": "hair_pigtails",
-   "sha256": "7aedd124d6f5d151f1b17ca9cf1fa361002d0393abc5f004b69de333bb06fd79",
+   "sha256": "25189aae35a0838ffef5515a1bd560d97a6d71d31ea70d3095262a20d3dd0a21",
    "verdict": "pass_with_warnings"
+  },
+  "toyventor_hair_pixie_S.stl": {
+   "part": "hair_pixie",
+   "sha256": "e9fec78d7210f953049e17be1447a33b43d87400f93fff12d2478cb6f0f87c4e",
+   "verdict": "pass"
   },
   "toyventor_hair_pompadour_S.stl": {
    "part": "hair_pompadour",
-   "sha256": "376cb8c211dd854789be77bdd9e8583269a7d3cafb7b805a90aa1eb0e9cbd952",
+   "sha256": "b36f4c56bc7a84af3b7eb9d1a8bf01ec5eef41220e6751900422c4af2e0345a5",
    "verdict": "pass"
   },
   "toyventor_hair_ponytail_S.stl": {
    "part": "hair_ponytail",
-   "sha256": "10bc75b22a11fd931ace20f6711683394eb2c2f05b92a12440d9db0de50e4d9e",
+   "sha256": "6f2870c4befedae36aa956944c957c34212a8166bd80fcc08c39a469740fdc32",
    "verdict": "pass"
   },
   "toyventor_hair_shag_S.stl": {
    "part": "hair_shag",
-   "sha256": "8e183b35d34d2fd092ff778564d35e571ef99a3b93799f08b7036481df44f107",
+   "sha256": "82d6ed3c89e9a705b508333a160bc9710a73cf16b683b9b7548ed96814c99332",
    "verdict": "pass_with_warnings"
   },
   "toyventor_hair_short_swept_S.stl": {
    "part": "hair_short_swept",
-   "sha256": "9ee69d927a5acf77d55d473889c1a3b92e48833712c21042ec6de59ff99475f7",
+   "sha256": "a551a7b8f45778510744c1829d76dfb05309a97c143b1781ff957cc7cebb8fb2",
+   "verdict": "pass"
+  },
+  "toyventor_hair_side_pony_S.stl": {
+   "part": "hair_side_pony",
+   "sha256": "18a736ca8230a951d92ed38ee49907f2cf96e47cf763c4b44a8ac630b2071167",
    "verdict": "pass"
   },
   "toyventor_hair_side_sweep_S.stl": {
    "part": "hair_side_sweep",
-   "sha256": "4cef17581680f41952555eff2b1fec372de114f0a8cb2368d82857fe60f8024a",
+   "sha256": "43b2e875a25ecbe666166a7b7359a177dbee49c988343b81b90d9604584e0352",
+   "verdict": "pass_with_warnings"
+  },
+  "toyventor_hair_slick_S.stl": {
+   "part": "hair_slick",
+   "sha256": "5b202caf2d476895c20ff7b8052e5a0625e59c6f17a76490d503de4f0341399b",
    "verdict": "pass_with_warnings"
   },
   "toyventor_hair_spiky_S.stl": {
    "part": "hair_spiky",
-   "sha256": "519b2cd75838c76f7c95b6ffeaccb47979eb83413c3025b1fbe7d8a8cf73e1ba",
+   "sha256": "d3d15d0edc5c5bad4713814def7bb6312baee426a42b518defc5ac5a031c4a4b",
    "verdict": "pass_with_warnings"
   },
   "toyventor_hair_swoosh_S.stl": {
    "part": "hair_swoosh",
-   "sha256": "b4751ccc41c026bf59e018ad0f1116ca3a02527af3da445d14bf448fd1c775b0",
+   "sha256": "5194a6b882aaa70e592d94893bc08c6bd18727ebd6ee9dc5ebdd55d5b6f4660f",
    "verdict": "pass_with_warnings"
   },
   "toyventor_hair_top_bun_S.stl": {
    "part": "hair_top_bun",
-   "sha256": "4c2bfca27805f9f33ce19df317e4fbf9501c4cd411762760748cfe08cfcb79c7",
+   "sha256": "a62d529da75fd388c4791dd3a90f488c2aeb2e06e48445ba98b625042e7ebe03",
    "verdict": "pass_with_warnings"
   },
   "toyventor_hair_twin_braids_S.stl": {
    "part": "hair_twin_braids",
-   "sha256": "b43b8b4774171f238e884138bb4c92ef4ae3a534a911384bb45649450914a064",
+   "sha256": "d8aa241b54504b1ed91b7e62c931b25425b142096f278e96a55cce517ba783f7",
    "verdict": "pass_with_warnings"
   },
   "toyventor_hat_ballcap_S.stl": {

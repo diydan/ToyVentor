@@ -219,7 +219,7 @@ export function buildMenu(ctx) {
         set: (v) => act.setPants(v),
       }),
       sel('back', 'Back', {
-        title: '2x2 back dock: explorer pack, jetpack, cloud wings or pro 2:1 gears',
+        title: '2x2 back dock: explorer pack, jetpack, cloud wings or motion 2:1 gears',
         inPreset: true,
         options: () => pick(BACK_OPTIONS),
         extra: () => 'Custom / photo wings',
@@ -233,7 +233,7 @@ export function buildMenu(ctx) {
         options: () => [
           { value: 'off', label: 'Off' },
           { value: 'comm', label: 'Comm-Pods' },
-          { value: 'pro', label: 'Pro Scanner' },
+          { value: 'motion', label: 'Motion Scanner' },
         ],
         get: () => read.ears(),
         set: (v) => act.setEars(v),
@@ -245,7 +245,7 @@ export function buildMenu(ctx) {
         options: () => [
           { value: 'off', label: 'Off' },
           { value: 'wag', label: 'Wag-Tail' },
-          { value: 'pro', label: 'Pro Wheelie' },
+          { value: 'motion', label: 'Motion Wheelie' },
         ],
         get: () => read.tail(),
         set: (v) => act.setTail(v),
@@ -286,9 +286,9 @@ export function buildMenu(ctx) {
         title: 'Wave 6 racer add-ons: bull bar, hood scoop, light bar and roof rack, spoiler, twin exhaust',
         get: () => loco.racerKit, set: (v) => act.setRacerKit(v) },
       sel('edition', 'Edition', {
-        title: 'Pro (8+) 14-joint rig or simplified Snap (3+) rig. Snap uses the seated 90 degree legs in vehicles.',
+        title: 'Motion (8+) 14-joint rig or simplified Snap (3+) rig. Snap uses the seated 90 degree legs in vehicles.',
         options: () => [
-          { value: 'pro', label: 'Pro (8+) · 14-joint rig' },
+          { value: 'motion', label: 'Motion (8+) · 14-joint rig' },
           { value: 'snap', label: 'Snap (3+) · simplified rig' },
         ],
         get: () => loco.edition,

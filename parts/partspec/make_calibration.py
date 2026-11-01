@@ -20,14 +20,14 @@ from manifold3d import Manifold
 
 import toyventor_fit as tf
 import toyventor_parts as tp
-import toyventor_pro as pro
+import toyventor_motion as motion
 from toyventor_geom import rbox
 
 HERE = Path(__file__).parent
 STEPS = [round(-0.1 + 0.1 * k, 2) for k in range(8)]        # extra clearance across, mm
 NOMINAL = STEPS.index(0.0)
 FIRST_PRINT_CLEARANCES = [0.00, 0.10, 0.26]                 # snug (1 dot), standard (2 dots), easy (3 dots), mm across
-TU = pro.TU
+TU = motion.TU
 SEGS = tp.FIT_SEG
 
 
@@ -157,17 +157,17 @@ def verify_first_print_selector():
 
 def pro_ladder():
     """Row y>0: fixed bores (test with a shaft). Row y<0: free bores (test with a free pin and a friction pin)."""
-    L, W, H = 8 * TU, 2 * TU, pro.BEAM["section_tu"] * TU
-    body = rbox(L, W, H, pro.BEAM["fillet_outer_mm"], pro.BEAM["bed_chamfer_mm"])
-    saved = dict(pro.BORE)
+    L, W, H = 8 * TU, 2 * TU, motion.BEAM["section_tu"] * TU
+    body = rbox(L, W, H, motion.BEAM["fillet_outer_mm"], motion.BEAM["bed_chamfer_mm"])
+    saved = dict(motion.BORE)
     try:
         for k, d in enumerate(STEPS):
             x = -L / 2 + TU / 2 + k * TU
-            pro.BORE["free_d"], pro.BORE["fixed_flats"] = saved["free_d"] + d, saved["fixed_flats"] + d
-            body = body - pro.bore_cutter("fixed", H, x, TU / 2) - pro.bore_cutter("free", H, x, -TU / 2)
+            motion.BORE["free_d"], motion.BORE["fixed_flats"] = saved["free_d"] + d, saved["fixed_flats"] + d
+            body = body - motion.bore_cutter("fixed", H, x, TU / 2) - motion.bore_cutter("free", H, x, -TU / 2)
     finally:
-        pro.BORE.clear()
-        pro.BORE.update(saved)
+        motion.BORE.clear()
+        motion.BORE.update(saved)
     return marks(body, L, W, H, 0.0)
 
 
@@ -178,10 +178,10 @@ RIB_W, RIB_BITE, CORE_GAP, PLUG_H, PLATE_T = 0.8, 0.25, 0.2, 4.0, 2.0
 def cube_cell():
     """A 12.5 mm cube with a free bore through every face (sideways bores print as teardrops), so any face joins any face with
     the existing friction pin. Prints flat, no supports. Print two."""
-    c = rbox(TU, TU, TU, 1.0, pro.BEAM["bed_chamfer_mm"])
-    c = c - pro.bore_cutter("free", TU, 0.0, 0.0)
+    c = rbox(TU, TU, TU, 1.0, motion.BEAM["bed_chamfer_mm"])
+    c = c - motion.bore_cutter("free", TU, 0.0, 0.0)
     for axis in ("x", "y"):
-        c = c - pro.bore_cutter_axis("free", TU, (0.0, 0.0, TU / 2), axis)
+        c = c - motion.bore_cutter_axis("free", TU, (0.0, 0.0, TU / 2), axis)
     return c
 
 
@@ -189,7 +189,7 @@ def face_plate():
     """A smooth 12.5 mm face plate. Its plug grips a free bore by three crush ribs (0.8 mm wide, biting 0.25 mm into the bore wall),
     so it fits across printer error without calibration. Prints smooth face down: the visible face is the bed side."""
     plate = rbox(TU, TU, PLATE_T, 1.0, 0.4)
-    R = pro.BORE["free_d"] / 2
+    R = motion.BORE["free_d"] / 2
     r0 = R - CORE_GAP
     core = Manifold.cylinder(PLUG_H - 0.8, r0, r0, SEGS) + Manifold.cylinder(0.8, r0, r0 - 0.6, SEGS).translate((0, 0, PLUG_H - 0.8))
     env = Manifold.cylinder(PLUG_H - 1.2, R + RIB_BITE, R + RIB_BITE, SEGS) + Manifold.cylinder(1.2, R + RIB_BITE, r0 - 0.6, SEGS).translate((0, 0, PLUG_H - 1.2))
@@ -211,7 +211,7 @@ def cjaw_coupon():
     for ix in (-0.5, 0.5):
         for iy in (-1.0, 0.0, 1.0):
             blk = blk + kc._anchored_stud(p, ix * TU, iy * TU, H)
-    sec_bore = pro.bore_section_print("free")
+    sec_bore = motion.bore_section_print("free")
     for k, d_throat in enumerate((-0.05, 0.00, 0.05)):
         yc = (k - 1) * TU
         hw = (6.00 + d_throat) / 2.0
@@ -219,7 +219,7 @@ def cjaw_coupon():
         sec_land = (sec_bore + throat).rotate(90)
         blk = blk - Manifold.extrude(sec_land, W + 0.8).rotate((0, 90, 0)).translate((-W / 2 - 0.4, yc, 6.25))
     # LAY_FLAT 6.6 x 5.0 mm shaft_drive test bar beside the block, joined by two 1.2 mm breakaway tabs
-    bar = pro.pin_solid("flats", L).rotate(pro.LAY_FLAT)
+    bar = motion.pin_solid("flats", L).rotate(motion.LAY_FLAT)
     bb = bar.bounding_box()
     cx_b, cy_b = (bb[0] + bb[3]) / 2, (bb[1] + bb[4]) / 2
     bridge_gap = 3.6

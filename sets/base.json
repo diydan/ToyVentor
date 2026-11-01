@@ -167,9 +167,9 @@
       ]
     },
     {
-      "id": "adapter-snap-pro",
-      "name": "Snap-to-Pro Adapter Plate",
-      "line": "pro",
+      "id": "adapter-snap-motion",
+      "name": "Snap-to-Motion Adapter Plate",
+      "line": "motion",
       "mount": "forge-mount",
       "sizeClass": "small",
       "grid": {
@@ -185,13 +185,13 @@
       ],
       "stat": {
         "name": "torque",
-        "value": 2
+        "value": 1
       },
       "printable": true,
       "orientation": "bed = z0; lying flat, bores and pins along z",
       "supportFree": true,
-      "stlFile": "adapter-snap-pro.stl",
-      "glbFile": "adapter-snap-pro.glb",
+      "stlFile": "adapter-snap-motion.stl",
+      "glbFile": "adapter-snap-motion.glb",
       "bboxMm": [
         37.5,
         37.5,
@@ -297,7 +297,7 @@
     {
       "id": "beam-str-tu05",
       "name": "Beam STR RND TU05x01x01",
-      "line": "pro",
+      "line": "motion",
       "mount": "hole",
       "sizeClass": "small",
       "grid": {
@@ -329,7 +329,7 @@
     {
       "id": "pin-friction",
       "name": "Friction Pin",
-      "line": "pro",
+      "line": "motion",
       "mount": "hole",
       "sizeClass": "small",
       "grid": {
@@ -362,7 +362,7 @@
     {
       "id": "gear-spur-z10",
       "name": "Gear Spur Z10",
-      "line": "pro",
+      "line": "motion",
       "mount": "hole",
       "sizeClass": "small",
       "grid": {
@@ -395,7 +395,7 @@
     {
       "id": "gear-spur-z20",
       "name": "Gear Spur Z20",
-      "line": "pro",
+      "line": "motion",
       "mount": "hole",
       "sizeClass": "small",
       "grid": {

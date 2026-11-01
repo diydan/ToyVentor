@@ -1,36 +1,27 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_hair_side_sweep_S.stl",
-  "file_sha256": "4cef17581680f41952555eff2b1fec372de114f0a8cb2368d82857fe60f8024a",
+  "file_sha256": "43b2e875a25ecbe666166a7b7359a177dbee49c988343b81b90d9604584e0352",
   "part_id": "hair_side_sweep",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-10-31T15:15:05Z",
+  "checked_at": "2026-11-01T02:45:22Z",
   "metrics": {
     "bbox_mm": [
-      48.2,
+      48.91,
       34.83,
       23.79
     ],
-    "volume_cm3": 8.12,
-    "surface_cm2": 62.56,
-    "triangles": 4844,
+    "volume_cm3": 8.32,
+    "surface_cm2": 63.83,
+    "triangles": 5826,
     "ledges": [],
     "layers": 119,
-    "bed_contact_mm2": 137.4,
+    "bed_contact_mm2": 160.7,
     "height_mm": 23.79,
-    "slenderness": 2.03,
+    "slenderness": 1.88,
     "centre_of_mass_over_contact": true,
-    "min_wall_mm": 0.282,
+    "min_wall_mm": 0.596,
     "thin_wall_regions": [
-      {
-        "area_mm2": 0.94,
-        "min_mm": 0.282,
-        "at_mm": [
-          11.84,
-          -14.94,
-          7.47
-        ]
-      },
       {
         "area_mm2": 6.26,
         "min_mm": 0.596,
@@ -90,7 +81,7 @@
       "level": "block",
       "result": "pass",
       "value": [
-        48.2,
+        48.9,
         34.8,
         23.8
       ],
@@ -145,17 +136,17 @@
       "id": "V9_bed_contact",
       "level": "info",
       "result": "pass",
-      "value": 137.4,
+      "value": 160.7,
       "limit": null,
-      "detail": "height / sqrt(contact) = 2.03; above about 3 the slicer often asks for a brim"
+      "detail": "height / sqrt(contact) = 1.88; above about 3 the slicer often asks for a brim"
     },
     {
       "id": "V8_wall_thickness",
       "level": "warn",
       "result": "warn",
-      "value": 3,
+      "value": 2,
       "limit": 0,
-      "detail": "regions where the wall is under 0.8 mm (two nozzle widths) over 2.0 mm2, or under 0.4 mm (one nozzle width) over 0.25 mm2; worst 0.282 mm at [11.84, -14.94, 7.47]"
+      "detail": "regions where the wall is under 0.8 mm (two nozzle widths) over 2.0 mm2, or under 0.4 mm (one nozzle width) over 0.25 mm2; worst 0.596 mm at [-7.22, -10.45, 18.75]"
     }
   ],
   "print_settings": {},

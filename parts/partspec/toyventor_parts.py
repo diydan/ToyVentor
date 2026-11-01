@@ -19,7 +19,7 @@ from manifold3d import CrossSection, FillRule, JoinType, Manifold, Mesh
 from scipy.spatial import ConvexHull
 from trimesh import nsphere
 
-import toyventor_pro as pro
+import toyventor_motion as motion
 from toyventor_fit import fit_report
 from toyventor_geom import SEG, rbox, rrect  # noqa: F401
 
@@ -133,9 +133,9 @@ def mount_layout(face, hole_d=None, n=3, outline="square", outer_d=None):
     Returns dict(size, pitch, n, c0, keep, omit, feat_r, rim, hole_d, R)."""
     fm = IF["forge_mount"]
     hole_d = fm["attach"]["hole_d_default_mm"] if hole_d is None else hole_d     # 0 = no scan hole (the face sits on a shoe)
-    pro_face = face == "bore_grid"
-    if pro_face:
-        size, pitch, feat_r, rim = "pro", IF["lattice"]["unit_mm"], pro.BORE["free_d"] / 2, 2.0
+    bore_face = face == "bore_grid"
+    if bore_face:
+        size, pitch, feat_r, rim = "pro", IF["lattice"]["unit_mm"], motion.BORE["free_d"] / 2, 2.0
     else:
         size = face.split("_")[1]
         p = STUD[size]
@@ -156,13 +156,13 @@ def mount_layout(face, hole_d=None, n=3, outline="square", outer_d=None):
             raise ValueError("a round Forge Mount needs outer_d (from the scan)")
         R = outer_d / 2
         reach = (R - rim - feat_r) / pitch
-        options = [grid(2 * int(reach) + 1, R)] + ([] if pro_face else [grid(2 * int(reach + 0.5), R)])   # studs may take either lattice phase; Pro bores stay whole TU from the axis
-        L = max(options, key=lambda g: (seat_count(g) if not pro_face else 0, len(g["keep"])))
+        options = [grid(2 * int(reach) + 1, R)] + ([] if bore_face else [grid(2 * int(reach + 0.5), R)])   # studs may take either lattice phase; Pro bores stay whole TU from the axis
+        L = max(options, key=lambda g: (seat_count(g) if not bore_face else 0, len(g["keep"])))
     else:
         L = grid(n, None)
     if len(L["keep"]) < 4:
-        raise ValueError(f"forge mount ({face}, {outline}): {'hole ' + str(hole_d) + ' mm leaves ' if hole_d else 'only '}fewer than 4 {'bores' if pro_face else 'studs'}; use a larger mount")
-    if not pro_face and seat_count(L) < 3:
+        raise ValueError(f"forge mount ({face}, {outline}): {'hole ' + str(hole_d) + ' mm leaves ' if hole_d else 'only '}fewer than 4 {'bores' if bore_face else 'studs'}; use a larger mount")
+    if not bore_face and seat_count(L) < 3:
         raise ValueError(f"forge mount ({face}, {outline}): a 2x2 part would sit on {seat_count(L)} stud(s); needs at least 3. Use a larger mount")
     return L
 
@@ -208,7 +208,7 @@ def mount_join_points(L):
         kept = {tuple(c) for c in L["keep"]}
         cands = [((i - L["c0"] + 0.5) * L["pitch"], (j - L["c0"] + 0.5) * L["pitch"]) for i in range(L["n"] - 1) for j in range(L["n"] - 1)
                  if all((i + a, j + b) in kept for a in (0, 1) for b in (0, 1))]
-        hole_r = pro.BORE["free_d"] / 2
+        hole_r = motion.BORE["free_d"] / 2
         cands = [c for c in cands if L["pitch"] / math.sqrt(2) >= p["stud_d"] / 2 + hole_r + sh["join_wall_mm"]]
         if L["R"] is not None:
             cands = [(x, y) for x, y in cands if math.hypot(x, y) + hole_r + sh["join_wall_mm"] + 0.5 <= L["R"]]
@@ -268,7 +268,7 @@ def forge_mount(face="stud_large", hole_d=None, n=3, outline="square", outer_d=N
         if len(pts) < 3:
             raise ValueError(f"forge mount ({face}, {outline}): room for only {len(pts)} join pin(s) between the studs; use a larger face")
         for x, y in pts:
-            body = body - pro.bore_cutter("free", h, x, y)
+            body = body - motion.bore_cutter("free", h, x, y)
         conns.append(_join_conn(pts, h, 0.0, "join"))
         extras["join_pins"] = len(pts)
     return body, conns, extras
@@ -277,10 +277,10 @@ def forge_mount(face="stud_large", hole_d=None, n=3, outline="square", outer_d=N
 def _forge_mount_pro(L, fm, attach, extras, join_pins=False):
     """Forge Mount with the Pro face: a 1 TU plate with free bores on the kept lattice positions. Square plates put bores on cell centres;
     round plates put them on whole-TU positions from the mount axis (lattice 'centre')."""
-    TU, T = IF["lattice"]["unit_mm"], pro.BEAM["section_tu"] * IF["lattice"]["unit_mm"]
-    body = _mount_body(L, T, pro.BEAM["fillet_outer_mm"], pro.BEAM["bed_chamfer_mm"])
+    TU, T = IF["lattice"]["unit_mm"], motion.BEAM["section_tu"] * IF["lattice"]["unit_mm"]
+    body = _mount_body(L, T, motion.BEAM["fillet_outer_mm"], motion.BEAM["bed_chamfer_mm"])
     for i, j in L["keep"]:
-        body = body - pro.bore_cutter("free", T, (i - L["c0"]) * TU, (j - L["c0"]) * TU)
+        body = body - motion.bore_cutter("free", T, (i - L["c0"]) * TU, (j - L["c0"]) * TU)
     if L["hole_d"]:
         body = _mount_hole_and_ribs(body, L, T, fm)
     conn = {"id": "bores", "kind": "bore_grid", "gender": "F", "interface": "bore_grid", "size_class": "pro", "fit_class": "PIN", "bore_class": "free", "depth_mm": T,
@@ -293,15 +293,15 @@ def _forge_mount_pro(L, fm, attach, extras, join_pins=False):
     return body, [conn] + ([attach] if L["hole_d"] else []), extras
 
 
-def snap_pro_adapter():
+def snap_motion_adapter():
     """Bridges the lines: a 3 x 3 TU plate, 1 TU thick, with Pro free bores on the 3 x 3 cell centres and a Small 2 x 2 stud grid on top,
     sitting on the inner cell corners so every stud stands on solid plate between four bores."""
-    TU, T = IF["lattice"]["unit_mm"], pro.BEAM["section_tu"] * IF["lattice"]["unit_mm"]
+    TU, T = IF["lattice"]["unit_mm"], motion.BEAM["section_tu"] * IF["lattice"]["unit_mm"]
     p = STUD["small"]
-    body = rbox(3 * TU, 3 * TU, T, pro.BEAM["fillet_outer_mm"], pro.BEAM["bed_chamfer_mm"])
+    body = rbox(3 * TU, 3 * TU, T, motion.BEAM["fillet_outer_mm"], motion.BEAM["bed_chamfer_mm"])
     for i in (-1, 0, 1):
         for j in (-1, 0, 1):
-            body = body - pro.bore_cutter("free", T, i * TU, j * TU)
+            body = body - motion.bore_cutter("free", T, i * TU, j * TU)
     st = stud(p)
     for i in (-0.5, 0.5):
         for j in (-0.5, 0.5):
@@ -346,7 +346,7 @@ def forge_shoe(face="stud_small", outline="round", outer_d=64.0, n=5, surface="c
     else:
         body = prism(T + sag, -sag) - toy                          # top exactly at T, where the face sits
     for x, y in pts:
-        body = body - pro.bore_cutter("free", depth, x, y, T - depth)
+        body = body - motion.bore_cutter("free", depth, x, y, T - depth)
     tm = to_trimesh(body)                                          # how much of the underside actually touches the toy
     c, a, nrm = tm.triangles_center, tm.area_faces, tm.face_normals
     d = (np.hypot(c[:, 1], c[:, 2] + R) if surface == "cylinder" else np.linalg.norm(c - np.array([0, 0, -R]), axis=1)) - (R + g)
@@ -757,12 +757,12 @@ def racer_axle_block(size="small", grid=(2, 2), **_):
     from toyventor_geom import rbox
     p = STUD[size]
     hx, hy, H = _half(size, grid[0]), _half(size, grid[1]), p["brick_h"]
-    zc = pro.TU / 2
-    body = rbox(2 * hx, 2 * hy, H, 1.0, 0.4) - pro.bore_cutter_axis("free", 2 * hx, (0.0, 0.0, zc), "x")
+    zc = motion.TU / 2
+    body = rbox(2 * hx, 2 * hy, H, 1.0, 0.4) - motion.bore_cutter_axis("free", 2 * hx, (0.0, 0.0, zc), "x")
     for i in range(grid[0]):
         for j in range(grid[1]):
             body = body + stud(p).translate(((i - (grid[0] - 1) / 2) * p["pitch"], (j - (grid[1] - 1) / 2) * p["pitch"], H))
-    return body, [stud_conn(size, grid[0], grid[1], H), pro._axis_bore_conn("axle", "free", (0.0, 0.0, zc), "x", 2 * hx, lattice="axis8")], {}
+    return body, [stud_conn(size, grid[0], grid[1], H), motion._axis_bore_conn("axle", "free", (0.0, 0.0, zc), "x", 2 * hx, lattice="axis8")], {}
 
 
 RACER_WHEEL = {"d_mm": 18.0, "w_mm": 6.0}
@@ -776,12 +776,12 @@ def racer_wheel(size="small", grid=(1, 1), **_):
     groove = Manifold.cube((1.6, 0.9, H + 2)).translate((R - 0.8, -0.45, -1))
     for k in range(20):
         body = body - groove.rotate((0, 0, 18.0 * k))
-    return body - pro.bore_cutter("fixed", H), [pro._hub_conn(H)], {}
+    return body - motion.bore_cutter("fixed", H), [motion._hub_conn(H)], {}
 
 
 def racer_axle(size="small", grid=(3, 1), **_):
     """The axle: a 3 TU flat shaft (prints lying on a flat). Turns in the axle block, drives a wheel on each end."""
-    return pro.shaft(3)
+    return motion.shaft(3)
 
 
 def flare_clip(body, base_outline, z_top):
@@ -993,7 +993,7 @@ def add_studs_at(m, size, nx, ny, cx, cy, z, cid="top_studs"):
 
 def cut_vertical_bore(m, cid, x, y, z0, depth, bore_class="free"):
     """Cut a vertical Pro bore at (x, y, z0..z0+depth) on the 1/8 TU lattice (axis8)."""
-    m = m - pro.bore_cutter(bore_class, depth, x, y, z0)
+    m = m - motion.bore_cutter(bore_class, depth, x, y, z0)
     conn = {
         "id": cid,
         "kind": "bore_grid",
@@ -1005,15 +1005,15 @@ def cut_vertical_bore(m, cid, x, y, z0, depth, bore_class="free"):
         "depth_mm": round(depth, 4),
         "lattice": "axis8",
         "frame": {"origin": [round(x, 4), round(y, 4), round(z0, 4)], "normal": [0, 0, 1]},
-        "grid": {"nx": 1, "ny": 1, "pitch": pro.TU, "anchor": "corner"},
+        "grid": {"nx": 1, "ny": 1, "pitch": motion.TU, "anchor": "corner"},
     }
     return m, conn
 
 
 def cut_x_axle_bore(m, cid, y, zc, width, bore_class="free"):
     """Cut a horizontal support-free teardrop X-axle bore across width at (0, y, zc)."""
-    m = m - pro.bore_cutter_axis(bore_class, width, (0.0, y, zc), "x")
-    conn = pro._axis_bore_conn(cid, bore_class, (0.0, y, zc), "x", round(width, 4), lattice="axis8")
+    m = m - motion.bore_cutter_axis(bore_class, width, (0.0, y, zc), "x")
+    conn = motion._axis_bore_conn(cid, bore_class, (0.0, y, zc), "x", round(width, 4), lattice="axis8")
     return m, conn
 
 
@@ -1041,8 +1041,8 @@ def _cut_clevis_x_bores(m, cid_l, cid_r, x_outer, x_inner, y, zc, bore_class="fr
     w = x_outer - x_inner
     conns = []
     for cid, xc in ((cid_l, -(x_outer + x_inner) / 2), (cid_r, (x_outer + x_inner) / 2)):
-        m = m - pro.bore_cutter_axis(bore_class, w, (xc, y, zc), "x")
-        conns.append(pro._axis_bore_conn(cid, bore_class, (round(xc, 4), y, zc), "x", round(w, 4), lattice="axis8"))
+        m = m - motion.bore_cutter_axis(bore_class, w, (xc, y, zc), "x")
+        conns.append(motion._axis_bore_conn(cid, bore_class, (round(xc, 4), y, zc), "x", round(w, 4), lattice="axis8"))
     return m, conns
 
 
@@ -1542,8 +1542,8 @@ def _finish_human_head(skull, ears, size, lock, z_stud, z_bore):
     """Subtract the universal face-plate pocket + fixed axis8 bore (starting at the pocket floor on the stem axis), cut 2x1 neck sockets, add 2x1 crown buds."""
     body = (skull + ears) - _human_face_pocket_cutter(z_bore)
     y_start = -FACE_BACK_REF
-    body = body - pro.bore_cutter_axis("fixed", 13.3, (0.0, y_start + 6.15, z_bore), "y")   # opens 0.5 mm toward the plate so the stem overshoot clears the tilted floor
-    c_face = pro._axis_bore_conn("face_slot", "fixed", (0.0, y_start + 6.25, z_bore), "y", 12.5, lattice="axis8")
+    body = body - motion.bore_cutter_axis("fixed", 13.3, (0.0, y_start + 6.15, z_bore), "y")   # opens 0.5 mm toward the plate so the stem overshoot clears the tilted floor
+    c_face = motion._axis_bore_conn("face_slot", "fixed", (0.0, y_start + 6.25, z_bore), "y", 12.5, lattice="axis8")
     m, conns, ex = integrated_sockets(body, size, lock)
     m, c_top = add_studs_at(m, size, 2, 1, 0.0, 0.0, z_stud, "top_studs")
     return m, conns + [c_top, c_face], ex
@@ -1707,10 +1707,10 @@ def _faceplate_mouth(n_seg=14):
 
 def _face_plate_finish(mask_bed, stem_tu):
     mask_part = mask_bed.translate((0.0, 0.0, -FACE_STEM_ZB)).rotate((-90.0, 0.0, 0.0))
-    stem_len = stem_tu * pro.TU
-    stem = pro.pin_solid("flats", stem_len + 0.35, z0=-0.35)
+    stem_len = stem_tu * motion.TU
+    stem = motion.pin_solid("flats", stem_len + 0.35, z0=-0.35)
     m = mask_part + stem
-    conn = pro._pin_conn("shaft_drive", "flats", stem_len, z0=0.0)
+    conn = motion._pin_conn("shaft_drive", "flats", stem_len, z0=0.0)
     return m, [conn], {"print_rotation_deg": [90, 0, 0]}
 
 
@@ -2957,24 +2957,24 @@ def pack_explorer(size="small", grid=(2, 2), lock=True, **_):
 
 def prop_wrench(grip_tu=3, **_):
     """Open-jaw ToyVentor spanner on a 6.60 mm flat-sided Pro shaft (LAY_FLAT, fits C-grip hand and Pro bores)."""
-    L = grip_tu * pro.TU
-    hy = pro.BORE["shaft_flats"] / 2
-    grip = pro.pin_solid("flats", L + 4.0)
+    L = grip_tu * motion.TU
+    hy = motion.BORE["shaft_flats"] / 2
+    grip = motion.pin_solid("flats", L + 4.0)
     ring_outer = CrossSection.circle(11.5, 64).translate((0.0, L + 12.5))
     neck = CrossSection.square((6.4, 8.0), center=True).translate((0.0, L + 2.5))
     jaw_slot = CrossSection.square((9.6, 13.0), center=True).translate((0.0, L + 17.5))
     head_cs = (CrossSection.batch_hull([neck, ring_outer]) - jaw_slot).offset(-0.8, JoinType.Round).offset(0.8, JoinType.Round)
     head = _xz_to_layflat(head_cs, hy)
     m = grip + head
-    conn = pro._pin_conn("shaft_drive", "flats", L)
-    return m, [conn], {"print_rotation_deg": pro.LAY_FLAT}
+    conn = motion._pin_conn("shaft_drive", "flats", L)
+    return m, [conn], {"print_rotation_deg": motion.LAY_FLAT}
 
 
 def prop_star_shield(grip_tu=2, **_):
     """Star-emblem shield/wand on a 2 TU (25 mm) 6.60 mm flat-sided Pro handle (LAY_FLAT)."""
-    L = grip_tu * pro.TU
-    hy = pro.BORE["shaft_flats"] / 2
-    grip = pro.pin_solid("flats", L + 6.0)
+    L = grip_tu * motion.TU
+    hy = motion.BORE["shaft_flats"] / 2
+    grip = motion.pin_solid("flats", L + 6.0)
     cz = L + 19.0
     pts = []
     for k in range(10):
@@ -2989,8 +2989,8 @@ def prop_star_shield(grip_tu=2, **_):
     crest_star = Manifold.extrude(inner_star_cs, 2.2).rotate((90, 0, 0)).translate((0.0, hy + 1.2, 0.0))
     crest_hub = Manifold.extrude(spark_hub_cs, 3.0).rotate((90, 0, 0)).translate((0.0, hy + 2.0, 0.0))
     m = grip + base_plate + crest_star + crest_hub
-    conn = pro._pin_conn("shaft_drive", "flats", L)
-    return m, [conn], {"print_rotation_deg": pro.LAY_FLAT}
+    conn = motion._pin_conn("shaft_drive", "flats", L)
+    return m, [conn], {"print_rotation_deg": motion.LAY_FLAT}
 
 
 def prop_skateboard_deck(size="small", grid=(2, 4), **_):
@@ -3046,7 +3046,7 @@ def wheel_rim_sport(H=13.5):
             _rr(2.7, 8.5, 1.0, 0.2, H - 0.64, y=7.3),
         ]).rotate((0, 0, 72.0 * k))
         spokes = sp if spokes is None else spokes + sp
-    return (hub + lip + spokes) - pro.bore_cutter("fixed", H + 1.0)
+    return (hub + lip + spokes) - motion.bore_cutter("fixed", H + 1.0)
 
 
 def veh_wheel_sport(**_):
@@ -3076,8 +3076,8 @@ def veh_wheel_sport(**_):
             _rr(2.6, 8.4, 1.0, 0.2, H - 0.7, y=7.3),
         ]).rotate((0, 0, 72.0 * k))
         spokes = sp if spokes is None else spokes + sp
-    body = (tire - dish + hub + spokes) - pro.bore_cutter("fixed", H)
-    return body, [pro._hub_conn(H)], {}
+    body = (tire - dish + hub + spokes) - motion.bore_cutter("fixed", H)
+    return body, [motion._hub_conn(H)], {}
 
 
 def wheel_rim_offroad(H=14.0):
@@ -3094,7 +3094,7 @@ def wheel_rim_offroad(H=14.0):
         ang = math.radians(60.0 * k)
         wx, wy = 8.4 * math.cos(ang), 8.4 * math.sin(ang)
         hub = hub - Manifold.cylinder(8.0, 2.05, 2.05, 36).translate((wx, wy, 7.8))
-    return (hub + lip) - pro.bore_cutter("fixed", H + 1.0)
+    return (hub + lip) - motion.bore_cutter("fixed", H + 1.0)
 
 
 def veh_wheel_offroad(**_):
@@ -3121,8 +3121,8 @@ def veh_wheel_offroad(**_):
         ang = math.radians(60.0 * k)
         wx, wy = 8.4 * math.cos(ang), 8.4 * math.sin(ang)
         hub = hub - Manifold.cylinder(8.0, 2.1, 2.1, 36).translate((wx, wy, 7.8))
-    body = (tire - dish + hub) - pro.bore_cutter("fixed", H)
-    return body, [pro._hub_conn(H)], {}
+    body = (tire - dish + hub) - motion.bore_cutter("fixed", H)
+    return body, [motion._hub_conn(H)], {}
 
 
 def wheel_rim_moto(H=14.0):
@@ -3145,7 +3145,7 @@ def wheel_rim_moto(H=14.0):
         sp_lo = _rr(3.4, 8.6, 1.2, 0.5, -0.06, y=7.0).rotate((0, 0, 120.0 * k))
         part_s = sp_hi + sp_lo
         spokes = part_s if spokes is None else spokes + part_s
-    return (hub + lip_hi + lip_lo + spokes) - pro.bore_cutter("fixed", H + 1.0).translate((0, 0, -0.5))
+    return (hub + lip_hi + lip_lo + spokes) - motion.bore_cutter("fixed", H + 1.0).translate((0, 0, -0.5))
 
 
 def veh_wheel_moto(**_):
@@ -3172,8 +3172,8 @@ def veh_wheel_moto(**_):
             _rr(3.0, 8.4, 1.2, 0.2, H - 0.6, y=7.0),
         ]).rotate((0, 0, 120.0 * k))
         spokes = sp if spokes is None else spokes + sp
-    body = (tire - dish_top + hub + spokes) - pro.bore_cutter("fixed", H)
-    return body, [pro._hub_conn(H)], {}
+    body = (tire - dish_top + hub + spokes) - motion.bore_cutter("fixed", H)
+    return body, [motion._hub_conn(H)], {}
 
 
 def veh_car_chassis(size="small", grid=(4, 10), **_):
@@ -3277,10 +3277,10 @@ def veh_steering_wheel(stem_tu=2, **_):
     for k in range(3):
         sp = _rr(4.2, R_out - 1.5, 1.2, h_rim, 0.0, y=(R_out - 1.5) / 2).rotate((0, 0, 120 * k))
         spokes = sp if spokes is None else spokes + sp
-    stem_len = stem_tu * pro.TU
-    stem = pro.pin_solid("round", stem_len + 1.0, z0=h_rim)
+    stem_len = stem_tu * motion.TU
+    stem = motion.pin_solid("round", stem_len + 1.0, z0=h_rim)
     m = rim + hub + spokes + stem
-    conn = pro._pin_conn("pin_free", "round", stem_len, z0=h_rim + 1.0)
+    conn = motion._pin_conn("pin_free", "round", stem_len, z0=h_rim + 1.0)
     return m, [conn], {}
 
 
@@ -3437,12 +3437,12 @@ def veh_scooter_fairing(size="small", grid=(2, 1), lock=True, **_):
 
 def veh_handlebar_fork(stem_tu=2, **_):
     """Scooter and Motorbike T-bar steering stem with twin 6.60 mm Pro-shaft handgrips (LAY_FLAT)."""
-    L_stem = stem_tu * pro.TU
-    hy = pro.BORE["shaft_flats"] / 2
-    stem = pro.pin_solid("flats", L_stem + 12.0)
+    L_stem = stem_tu * motion.TU
+    hy = motion.BORE["shaft_flats"] / 2
+    stem = motion.pin_solid("flats", L_stem + 12.0)
     riser_pts = [(-3.2, 27.0), (3.2, 27.0), (11.0, 41.8), (-11.0, 41.8)]
     riser = _xz_to_layflat(CrossSection([np.array(riser_pts)]), hy)
-    bar_sec = pro._double_d(pro.BORE["shaft_d"], pro.BORE["shaft_flats"])
+    bar_sec = motion._double_d(motion.BORE["shaft_d"], motion.BORE["shaft_flats"])
     hbar = Manifold.extrude(bar_sec, 52.0).rotate((0, 90, 0)).translate((-26.0, 0.0, 38.5))
     pod_cs = CrossSection.circle(5.5, 48).translate((0.0, 38.5))
     pod_base = _xz_to_layflat(pod_cs, hy)
@@ -3451,8 +3451,8 @@ def veh_handlebar_fork(stem_tu=2, **_):
         Manifold.extrude(pod_cs.offset(-1.8, JoinType.Round), 0.2).rotate((90, 0, 0)).translate((0.0, hy + 1.6, 0.0)),
     ])
     m = stem + riser + hbar + pod_base + pod_cap
-    conn = pro._pin_conn("shaft_drive", "flats", L_stem)
-    return m, [conn], {"print_rotation_deg": pro.LAY_FLAT}
+    conn = motion._pin_conn("shaft_drive", "flats", L_stem)
+    return m, [conn], {"print_rotation_deg": motion.LAY_FLAT}
 
 
 def veh_moto_cowling(size="small", grid=(2, 2), lock=True, **_):
@@ -3541,14 +3541,14 @@ def part_from_row(row):
     elif fam == "forge_shoe":
         args = {k: v for k, v in b.items() if k != "fn"}
         spec = dict(fn=lambda: forge_shoe(**args), cavity=None, ref=None, type="Forge Shoe")
-    elif row["line"] == "pro":               # Pro parts: build.fn names a builder (toyventor_pro, toyventor_kitcard, or here); the rest of build are its arguments
+    elif size == "pro":                     # bore_grid parts: build.fn names a builder (toyventor_motion, toyventor_kitcard, or here); the rest of build are its arguments
         args = {k: v for k, v in b.items() if k != "fn"}
-        builder = getattr(pro, b["fn"], None) or globals().get(b["fn"])
+        builder = getattr(motion, b["fn"], None) or globals().get(b["fn"])
         if builder is None:
             import toyventor_kitcard as _kc
             builder = getattr(_kc, b["fn"])
-        spec = dict(fn=lambda: builder(**args), cavity=None, ref=None, type=row.get("type", "Pro part"))
-    else:                                    # bespoke family (addon, capsule, kitcard): build.fn names a function in this file or toyventor_kitcard
+        spec = dict(fn=lambda: builder(**args), cavity=None, ref=None, type=row.get("type", "Tier part"))
+    else:                                    # stud-lattice parts: bespoke family (addon, capsule, kitcard): build.fn names a function in this file or toyventor_kitcard
         nx, ny = b["grid"]
         params = {k: v for k, v in b.items() if k not in ("fn", "grid")}
         builder = globals().get(b["fn"])
@@ -3675,7 +3675,7 @@ def seat_pair(part, m, conns=None):
         return block(holes["size_class"], g["nx"] + 4, g["ny"] + 4, p["plate_h"], p["plate_top"]).translate((cx, cy, 0)), m.translate((0, 0, p["plate_h"])), p["plate_h"] + p["stud_h"] / 2
     if part["family"] == "adapter":                    # a Small 2x2 brick seated on the adapter's studs
         p = STUD["small"]
-        T = pro.BEAM["section_tu"] * IF["lattice"]["unit_mm"]
+        T = motion.BEAM["section_tu"] * IF["lattice"]["unit_mm"]
         return m, block("small", 2, 2, p["brick_h"], p["brick_top"]).translate((0, 0, T)), T + p["stud_h"] / 2
     studs = next((c for c in (conns or []) if c["kind"] == "stud_grid"), None)
     if studs and part["ref"] is None and not any(c["kind"] == "socket_grid" for c in (conns or [])):
@@ -3708,12 +3708,12 @@ def fit_for(part, m, conns):
     if snap and pins:
         size = next(c["size_class"] for c in conns if c["kind"] in ("stud_grid", "socket_grid"))
         holes = next((c for c in conns if c.get("style") == "holes"), None)
-        return {"kind": "mixed", "rep": fit_report(*seat_pair(part, m, conns), only=hole_positions(holes) if holes else None), "size": size, "summary": pro.fit_summary(pro.pair_reports(conns, m))}
+        return {"kind": "mixed", "rep": fit_report(*seat_pair(part, m, conns), only=hole_positions(holes) if holes else None), "size": size, "summary": motion.fit_summary(motion.pair_reports(conns, m))}
     if snap:
         holes = next((c for c in conns if c.get("style") == "holes"), None)
         return {"kind": "snap", "rep": fit_report(*seat_pair(part, m, conns), only=hole_positions(holes) if holes else None)}
     if pins:
-        return {"kind": "pro", "summary": pro.fit_summary(pro.pair_reports(conns, m))}
+        return {"kind": "pro", "summary": motion.fit_summary(motion.pair_reports(conns, m))}
     return {"kind": "none"}
 
 
@@ -3852,7 +3852,7 @@ def run_checks(part, m, tm, conns, small, fit, extras, mp=None):
         ratio = p["pitch"] / unit
         add("I1_lattice", nest(ratio), f"pitch {p['pitch']} mm vs TU {unit} mm (ratio {ratio:.3f})")
     else:
-        wall = (pro.BEAM["section_tu"] * unit - pro.BORE["free_d"]) / 2 if any(c["kind"] == "bore_grid" for c in conns) else None
+        wall = (motion.BEAM["section_tu"] * unit - motion.BORE["free_d"]) / 2 if any(c["kind"] == "bore_grid" for c in conns) else None
         add("P3_wall_min", wall is None or wall >= LIM["min_wall_mm"], "no bores" if wall is None else f"wall {wall:.2f} mm vs minimum {LIM['min_wall_mm']}")
         pitches = sorted({c["grid"]["pitch"] for c in conns if c.get("grid")})
         add("I1_lattice", bool(pitches) and all(nest(x / unit) for x in pitches), f"pitch {pitches} mm vs TU {unit} mm")
@@ -3877,11 +3877,11 @@ def run_checks(part, m, tm, conns, small, fit, extras, mp=None):
         ov = reference_overlap(part, m, conns)
         add("I3_seats_on_reference", ov < LIM["seat_overlap_max_mm3"], f"overlap {ov:.3f} mm3 with matching reference part")
     if applies("I4_bore_on_grid"):
-        add("I4_bore_on_grid", *pro.bores_on_grid(conns, m, abb))
+        add("I4_bore_on_grid", *motion.bores_on_grid(conns, m, abb))
     if applies("I5_pin_fits_bore"):
-        add("I5_pin_fits_bore", *pro.pins_and_bores_built_right(conns, m))
+        add("I5_pin_fits_bore", *motion.pins_and_bores_built_right(conns, m))
     if applies("I6_gear_on_grid"):
-        add("I6_gear_on_grid", *pro.gear_on_grid(extras, abb, m))
+        add("I6_gear_on_grid", *motion.gear_on_grid(extras, abb, m))
     add("S1_small_part_screen", small["status"] == "above_cylinder",
         f"{small['status']}: best-fit diameter {small['min_enclosing_diameter_mm']} mm vs {IF['safety']['small_parts_cylinder']['diameter_mm']} mm cylinder")
     window = None

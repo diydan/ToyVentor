@@ -203,7 +203,7 @@
     {
       "id": "veh-wheel-sport",
       "name": "Sport 5-Spoke Wheel",
-      "line": "pro",
+      "line": "motion",
       "mount": "hole",
       "sizeClass": "small",
       "grid": {

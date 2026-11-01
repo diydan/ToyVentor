@@ -1,19 +1,19 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_char_head_kid_S.stl",
-  "file_sha256": "db192bcb504b1b27b5db7543085d9b608ad349abaddef1cb7e89eb4113df8d97",
+  "file_sha256": "c7e932893f881d9e989cb73b9726004ce10d37a365a8242720fbdc8ec74cf5cf",
   "part_id": "char_head_kid",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-10-31T14:36:05Z",
+  "checked_at": "2026-11-01T02:44:11Z",
   "metrics": {
     "bbox_mm": [
-      38.18,
+      38.19,
       27.32,
       34.2
     ],
     "volume_cm3": 19.4,
-    "surface_cm2": 45.57,
-    "triangles": 11000,
+    "surface_cm2": 45.56,
+    "triangles": 11172,
     "ledges": [],
     "layers": 171,
     "bed_contact_mm2": 207.5,

@@ -20,7 +20,7 @@ from pathlib import Path
 import numpy as np
 
 import toyventor_parts as tp
-import toyventor_pro as pro
+import toyventor_motion as motion
 from toyventor_fit import fit_report
 from toyventor_index import complementary   # one definition of 'can these mate'
 
@@ -102,7 +102,7 @@ def place(part, x=0.0, y=0.0, z=0.0, rot=0, pid=None, tilt=(0, 0)):
 
 def pose_R(pose):
     rx, ry = pose.get("tilt", [0, 0])
-    return pro.rot_matrix(rx, ry, 90 * pose["rot"])
+    return motion.rot_matrix(rx, ry, 90 * pose["rot"])
 
 
 def conn_axis(conn, pose, i=0, j=0):
@@ -121,12 +121,12 @@ def place_on_axis(lib, parent, parent_conn, child_part, child_conn, along=0.0, p
         raise ValueError(f"cannot mate {parent['part']}.{parent_conn} with {child_part}.{child_conn}")
     P, u = conn_axis(cp, parent["pose"], *parent_cell)
     nc = np.asarray(cc["frame"].get("normal", [0, 0, 1]), dtype=float)
-    fp, fc = pro.flats_normal(cp), pro.flats_normal(cc)
+    fp, fc = motion.flats_normal(cp), motion.flats_normal(cc)
     fp_w = pose_R(parent["pose"]) @ fp if fp is not None and fc is not None else None
     for rx in (0, 90, 180, 270):
         for ry in (0, 90, 180, 270):
             for rot in range(4):
-                R = pro.rot_matrix(rx, ry, 90 * rot)
+                R = motion.rot_matrix(rx, ry, 90 * rot)
                 if fp_w is not None and abs(abs(float((R @ fc) @ fp_w)) - 1) > 1e-6:
                     continue                                   # a flat-sided shaft only fits a fixed bore with the flats lined up
                 if np.allclose(R @ nc, u, atol=1e-6):
@@ -193,7 +193,7 @@ def pin_bore_edge(lib, ma, cm, fb, cf):
     lo, hi = max(p0, b0), min(p0 + cm["length_mm"], b1)
     if hi - lo < 0.5:
         return {}
-    rule = next((r for r in pro.RULES if r["pin"] == cm["interface"] and r["bore"] == cf["bore_class"]), None)
+    rule = next((r for r in motion.RULES if r["pin"] == cm["interface"] and r["bore"] == cf["bore_class"]), None)
     if rule is None:
         return {"error": {"code": "profile_mismatch", "detail": f"{ma['id']}.{cm['id']} ({cm['interface']}) cannot mate with {fb['id']}.{cf['id']} ({cf['bore_class']} bore)"}}
     out = {"edge": {"male": f"{ma['id']}.{cm['id']}", "female": f"{fb['id']}.{cf['id']}", "engaged_studs": 1, "fit": rule["fit"]}}
@@ -201,11 +201,11 @@ def pin_bore_edge(lib, ma, cm, fb, cf):
         out["exempt"] = True
         out["rule"], out["rep"] = rule, None
         return out
-    Ra = pro.align_to_z(u)                                   # measure in a frame where the shared axis points up
+    Ra = motion.align_to_z(u)                                   # measure in a frame where the shared axis points up
     T = np.c_[Ra, np.zeros(3)].tolist()
     mid = P + u * ((lo + hi) / 2 - p0)
     rep = fit_report(placed_geometry(lib, ma).transform(T), placed_geometry(lib, fb).transform(T), float((Ra @ mid)[2]))
-    v_ = pro.pair_verdict(rule, rep)
+    v_ = motion.pair_verdict(rule, rep)
     out["rule"], out["rep"] = rule, rep
     if rep["studs"]:
         out["edge"].update(gap_min_mm=round(rep["gap_min"], 3), gap_max_mm=round(rep["gap_max"], 3))
@@ -222,13 +222,13 @@ def gear_mesh(lib, a, b):
     ga, gb = lib.parts[a["part"]].get("gear"), lib.parts[b["part"]].get("gear")
     if not ga or not gb or a["pose"].get("tilt") or b["pose"].get("tilt"):
         return {}
-    ta, tb = ga.get("thickness_mm", pro.GEAR["thickness_tu"] * pro.TU), gb.get("thickness_mm", pro.GEAR["thickness_tu"] * pro.TU)
+    ta, tb = ga.get("thickness_mm", motion.GEAR["thickness_tu"] * motion.TU), gb.get("thickness_mm", motion.GEAR["thickness_tu"] * motion.TU)
     if min(a["pose"]["z"] + ta, b["pose"]["z"] + tb) - max(a["pose"]["z"], b["pose"]["z"]) < 0.5:
         return {}
     ka, kb = ga.get("kind", "spur"), gb.get("kind", "spur")
     if ka == kb and ka in ("rack", "ring") or {ka, kb} == {"rack", "ring"}:
         return {}
-    mod = pro.GEAR["module_mm"]
+    mod = motion.GEAR["module_mm"]
     if "rack" in (ka, kb):
         (rg, rp), (gg, gp) = ((ga, a), (gb, b)) if ka == "rack" else ((gb, b), (ga, a))
         ang = math.radians(90 * rp["pose"]["rot"])
@@ -418,14 +418,14 @@ def fit_matrix(lib):
                     for cf in b["connectors"]:
                         if cf["kind"] != "bore_grid" or not complementary(cm, cf):
                             continue
-                        rule = next((r for r in pro.RULES if r["pin"] == cm["interface"] and r["bore"] == cf["bore_class"]), None)
+                        rule = next((r for r in motion.RULES if r["pin"] == cm["interface"] and r["bore"] == cf["bore_class"]), None)
                         if rule is None:
                             continue
                         pb = place(b_id, pid="b")                      # seat the pin centred in the bore, on whatever axis the bore runs
                         pa = place_on_axis(lib, pb, cf["id"], a_id, cm["id"], along=(cf["depth_mm"] - cm["length_mm"]) / 2, pid="a", parent_cell=_first_cell(cf))
                         res = pin_bore_edge(lib, pa, cm, pb, cf)
                         rep = res.get("rep")
-                        v = pro.pair_verdict(rule, rep)
+                        v = motion.pair_verdict(rule, rep)
                         partnered |= {(a_id, cm["id"]), (b_id, cf["id"])}
                         pairs.append({"male": f"{a_id}.{cm['id']}", "female": f"{b_id}.{cf['id']}", "size_class": "pro", "fit": rule["fit"],
                                       "studs": 0 if rep is None else rep["studs"],
@@ -457,8 +457,8 @@ def fit_matrix(lib):
 
 
 # --------------------------------------------------------------------------
-def pro_gear_scene(lib):
-    """The demo's Pro moment: the Pro Forge Mount with a 5-hole beam pinned on top, two shafts from the mount's base up through the beam,
+def motion_gear_scene(lib):
+    """The demo's Motion moment: the Pro Forge Mount with a 5-hole beam pinned on top, two shafts from the mount's base up through the beam,
     and a 10- and a 20-tooth gear meshing above it (3 holes apart = their exact centre distance). Returns (items, readout)."""
     fmp = place("forge_mount_pro", pid="mount")
     beam = place("beam_str_tu05", 0, -25.0, 12.5, pid="beam")
@@ -506,7 +506,7 @@ def demo(manifest_path, out_dir):
     b2 = attach(lib, b1, "top_studs", "big_blue_brick", "under_sockets", (1, 0), (0, 0), pid="b2")
     cases["valid_offset_stack_2_studs"] = [b1, b2]
 
-    if "beam_str_tu05" in lib.parts:                         # Pro core (W2)
+    if "beam_str_tu05" in lib.parts:                         # Motion core (W2)
         b1, b2 = place("beam_str_tu05", pid="b1"), place("beam_str_tu05", 0, 0, 12.5, pid="b2")
         cases["valid_beams_friction_pin"] = [b1, b2, attach(lib, b1, "bores", "pin_friction", "axis", (0, 0), (0, 0), pid="fp")]
         bm = place("beam_str_tu03", pid="bm")
@@ -520,27 +520,27 @@ def demo(manifest_path, out_dir):
             cases["INVALID_gears_2tu_apart"] = [bm, s0, s2, g10, attach(lib, s2, "axis", "gear_spur_z20", "hub", (0, 0), (0, 0), pid="g20", dz=12.5)]
             cases["valid_rack_and_pinion"] = [place("gear_rack_tu05", pid="rack"), place("gear_spur_z10", 0, 25.0, 0, pid="g10")]
             cases["valid_ring_and_pinion"] = [place("gear_ring_z40", pid="ring"), place("gear_spur_z10", 37.5, 0, 0, pid="g10")]
-            bb, ad = place("beam_str_tu03", pid="beam"), place("adapter_snap_pro", 0, 0, 12.5, pid="adapter")
+            bb, ad = place("beam_str_tu03", pid="beam"), place("adapter_snap_motion", 0, 0, 12.5, pid="adapter")
             cases["valid_snap_on_pro_adapter"] = [bb, ad, attach(lib, bb, "bores", "pin_friction", "axis", (1, 0), (0, 0), pid="pin"),
                                                   attach(lib, ad, "top_studs", "brick_s_2x2", "under_sockets", pid="brick")]
             fmp = place("forge_mount_pro", pid="mount")
             cases["valid_beam_on_pro_mount"] = [fmp, place("beam_str_tu05", 0, -25.0, 12.5, pid="beam"), attach(lib, fmp, "bores", "pin_friction", "axis", (0, 0), (0, 0), pid="pin")]
-            cases["valid_pro_gear_scene"] = pro_gear_scene(lib)[0]
+            cases["valid_pro_gear_scene"] = motion_gear_scene(lib)[0]
         if "robot_torso_core" in lib.parts:
             cases["valid_robot_bolt"] = robot_bolt(lib)
         if "hinge_tu02" in lib.parts:                      # W5: parts on any axis
-            la, lb = place("hinge_tu02", pid="leafA"), place("hinge_tu02", 0, 2 * pro.TU, 0, rot=2, pid="leafB")
-            cases["valid_hinge"] = [la, lb, place_on_axis(lib, la, "knuckle0", "pin_free", "axis", along=-pro.HINGE_CLEAR / 2, pid="pin")]
+            la, lb = place("hinge_tu02", pid="leafA"), place("hinge_tu02", 0, 2 * motion.TU, 0, rot=2, pid="leafB")
+            cases["valid_hinge"] = [la, lb, place_on_axis(lib, la, "knuckle0", "pin_free", "axis", along=-motion.HINGE_CLEAR / 2, pid="pin")]
             bm5 = place("beam_str_tu05", pid="beam")
-            cc = place("cross_connector_tu01", -2 * pro.TU + pro.TU / 2, 0, pro.TU, pid="cross")
+            cc = place("cross_connector_tu01", -2 * motion.TU + motion.TU / 2, 0, motion.TU, pid="cross")
             post = attach(lib, bm5, "bores", "shaft_tu03", "axis", (0, 0), (0, 0), pid="post")
-            axle = place_on_axis(lib, cc, "axle_y", "shaft_tu05", "axis", along=(pro.TU - 5 * pro.TU) / 2, pid="axle")
+            axle = place_on_axis(lib, cc, "axle_y", "shaft_tu05", "axis", along=(motion.TU - 5 * motion.TU) / 2, pid="axle")
             wa = place_on_axis(lib, axle, "axis", "wheel_tu04", "hub", along=0.0, pid="wheelA")
-            wb = place_on_axis(lib, axle, "axis", "wheel_tu04", "hub", along=4 * pro.TU, pid="wheelB")
+            wb = place_on_axis(lib, axle, "axis", "wheel_tu04", "hub", along=4 * motion.TU, pid="wheelB")
             cases["valid_cart_axle"] = [bm5, cc, post, axle, wa, wb]
             off = dict(axle, pose=dict(axle["pose"], x=axle["pose"]["x"] + 2.0))
             cases["INVALID_axle_off_its_bore"] = [bm5, cc, post, off]
-            rolled = place_on_axis(lib, cc, "axle_y", "shaft_tu05", "axis", along=(pro.TU - 5 * pro.TU) / 2, pid="axle")
+            rolled = place_on_axis(lib, cc, "axle_y", "shaft_tu05", "axis", along=(motion.TU - 5 * motion.TU) / 2, pid="axle")
             rolled["pose"]["tilt"] = [rolled["pose"]["tilt"][0], 90.0 if not rolled["pose"]["tilt"][1] else 0.0]
             cases["INVALID_shaft_flats_crosswise"] = [bm5, cc, post, rolled]
             cases["INVALID_tipped_brick"] = [place("big_blue_brick", tilt=(90, 0), pid="brick")]
@@ -669,10 +669,10 @@ def demo(manifest_path, out_dir):
             cases["valid_kit_helicopter"] = [k_hl, hl_legs, hl_turn, hl_house, hl_mast, hl_rotor]
 
             k_st = place("kit_keel_base", pid="keel")
-            st_br = attach(lib, k_st, "top_studs", "pro_steer_bridge", "under_sockets", (1, 0), (0, 0), pid="steer_bridge")
+            st_br = attach(lib, k_st, "top_studs", "motion_steer_bridge", "under_sockets", (1, 0), (0, 0), pid="steer_bridge")
             st_stem = place_on_axis(lib, k_st, "steer_bore", "shaft_tu03", "axis", along=0.0, pid="steer_stem")
             st_pin = place_on_axis(lib, st_stem, "axis", "gear_spur_z10", "hub", along=28.0, pid="steer_pinion")
-            st_rack = place("pro_steer_rack", 0.0, -56.25, 28.0, pid="steer_rack")
+            st_rack = place("motion_steer_rack", 0.0, -56.25, 28.0, pid="steer_rack")
             cases["valid_pro_steered_racer"] = [k_st, st_br, st_stem, st_pin, st_rack]
 
             k_mb = place("kit_keel_base", pid="keel")

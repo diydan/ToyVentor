@@ -2,7 +2,7 @@
 // React. Imported by the app, the Worker, scripts, and tests — this file is
 // the contract every set in sets/ is validated against.
 
-export type Line = "snap" | "pro";
+export type Line = "snap" | "motion" | "pro";
 export type Mount = "stud" | "hole" | "forge-mount";
 export type SizeClass = "small" | "large";
 export type StatName = "speed" | "spin" | "torque" | "glow";
@@ -48,7 +48,7 @@ export interface ToySet {
   parts: Part[];
 }
 
-const LINES: Line[] = ["snap", "pro"];
+const LINES: Line[] = ["snap", "motion", "pro"];
 const MOUNTS: Mount[] = ["stud", "hole", "forge-mount"];
 const SIZES: SizeClass[] = ["small", "large"];
 const STATS: StatName[] = ["speed", "spin", "torque", "glow"];

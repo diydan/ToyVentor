@@ -1,24 +1,24 @@
 {
   "validator": "preprint_check 1.2.0",
-  "file": "toyventor_pro_steer_rack_P.stl",
-  "file_sha256": "99f03868feccbad6d49cfb1b90fdd7904aa85af91fa86ff89d2db9a521ae8723",
-  "part_id": "pro_steer_rack",
+  "file": "toyventor_adapter_snap_motion_P.stl",
+  "file_sha256": "7f75f2c475a37644f5f38e9c65575aa2a07d978d6c81e2f261b18e2e8711e84e",
+  "part_id": "adapter_snap_motion",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-10-31T16:27:29Z",
+  "checked_at": "2026-10-31T14:35:31Z",
   "metrics": {
     "bbox_mm": [
-      36.0,
-      15.1,
-      6.25
+      37.5,
+      37.5,
+      15.3
     ],
-    "volume_cm3": 2.34,
-    "surface_cm2": 18.3,
-    "triangles": 1628,
+    "volume_cm3": 13.48,
+    "surface_cm2": 64.13,
+    "triangles": 13600,
     "ledges": [],
-    "layers": 31,
-    "bed_contact_mm2": 361.1,
-    "height_mm": 6.25,
-    "slenderness": 0.33,
+    "layers": 77,
+    "bed_contact_mm2": 937.8,
+    "height_mm": 15.3,
+    "slenderness": 0.5,
     "centre_of_mass_over_contact": true,
     "min_wall_mm": null,
     "thin_wall_regions": []
@@ -46,9 +46,9 @@
       "level": "block",
       "result": "pass",
       "value": [
-        36.0,
-        15.1,
-        6.2
+        37.5,
+        37.5,
+        15.3
       ],
       "limit": [
         180,
@@ -101,9 +101,9 @@
       "id": "V9_bed_contact",
       "level": "info",
       "result": "pass",
-      "value": 361.1,
+      "value": 937.8,
       "limit": null,
-      "detail": "height / sqrt(contact) = 0.33; above about 3 the slicer often asks for a brim"
+      "detail": "height / sqrt(contact) = 0.5; above about 3 the slicer often asks for a brim"
     },
     {
       "id": "V8_wall_thickness",
@@ -112,10 +112,50 @@
       "value": 0,
       "limit": 0,
       "detail": "regions where the wall is under 0.8 mm (two nozzle widths) over 2.0 mm2, or under 0.4 mm (one nozzle width) over 0.25 mm2; sharp edges and slivers are ignored"
+    },
+    {
+      "id": "S1_slices",
+      "level": "block",
+      "result": "pass",
+      "value": null,
+      "limit": null,
+      "detail": "sliced without errors"
+    },
+    {
+      "id": "S2_slicer_stability",
+      "level": "warn",
+      "result": "pass",
+      "value": null,
+      "limit": null,
+      "detail": "no stability warnings"
+    },
+    {
+      "id": "S3_slicer_blocking",
+      "level": "block",
+      "result": "pass",
+      "value": null,
+      "limit": null,
+      "detail": "nothing the slicer would print in mid-air"
     }
   ],
   "print_settings": {},
-  "slicer": null,
+  "slicer": {
+    "ok": true,
+    "brim_mm": 0,
+    "seconds_to_slice": 7.4,
+    "warnings": [],
+    "filament_g": 10.66,
+    "filament_m": 3.57,
+    "filament_cost_usd": 0.21,
+    "print_time_s": 5398,
+    "layers": 77,
+    "warnings_without_brim": [],
+    "brims_tried_mm": [
+      0
+    ],
+    "engine": "PrusaSlicer-2.8.1",
+    "reused_from": "2026-10-31T11:23:24Z"
+  },
   "verdict": "pass",
   "summary": "Prints as is"
 }

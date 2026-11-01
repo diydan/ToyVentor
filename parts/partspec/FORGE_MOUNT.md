@@ -1,6 +1,6 @@
 # Forge Mount spec (v1, 2026-10-28)
 
-The Forge Mount joins add-ons and Pro parts to a scanned toy. It is one part family for both lines: the face picks the connector, the outline picks the shape, and the base picks how it holds the toy. Mounts are generated per toy at scan time; the catalog holds three default mounts.
+The Forge Mount joins add-ons and Motion parts to a scanned toy. It is one part family for both lines: the face picks the connector, the outline picks the shape, and the base picks how it holds the toy. Mounts are generated per toy at scan time; the catalog holds three default mounts.
 
 ## Faces
 
@@ -8,7 +8,7 @@ The Forge Mount joins add-ons and Pro parts to a scanned toy. It is one part fam
 | --- | --- | --- |
 | Small studs | Small stud grid on top | Snap Small add-ons (ages 3 and up) |
 | Large studs | Large stud grid on top | Snap Large add-ons (under 3) |
-| Pro bores | Free bores on the 1 TU grid | Pro beams and pins (ages 8 and up) |
+| Pro bores | Free bores on the 1 TU grid | Motion beams and pins (ages 8 and up) |
 
 ## Outlines
 

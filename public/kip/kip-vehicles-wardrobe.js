@@ -152,7 +152,7 @@ export const BACK_OPTIONS = [
   { id: 'explorer', label: 'Explorer Pack' },
   { id: 'jetpack',  label: 'Bolt Jetpack' },
   { id: 'wings',    label: 'Cloud Wings' },
-  { id: 'gears',    label: 'Pro 2:1 Gears' },
+  { id: 'gears',    label: 'Motion 2:1 Gears' },
 ];
 
 export const PROP_CATEGORIES = [
@@ -181,9 +181,9 @@ export const WORKSHOP_PROPS = [
 
 export const PROP_OPTIONS = [
   { id: 'off',        label: 'Off',         cat: 'all' },
-  { id: 'wrench',     label: 'Pro Wrench',  cat: 'tools' },
+  { id: 'wrench',     label: 'Motion Wrench',  cat: 'tools' },
   { id: 'shield',     label: 'Star Shield', cat: 'play' },
-  { id: 'shaft',      label: 'Pro Spinner', cat: 'tools' },
+  { id: 'shaft',      label: 'Motion Spinner', cat: 'tools' },
   { id: 'skateboard', label: 'Skateboard',  cat: 'play' },
   ...WORKSHOP_PROPS.map(({ id, label, cat }) => ({ id, label, cat })),
 ];
@@ -998,7 +998,7 @@ export function attachExpansionToKipRig(THREE, kip, expGeos, baseParts, mats, sc
   assignSlotMat(['kne_peg_l', 'kne_peg_r'], jointMats.knee);
   assignSlotMat(['ank_peg_l', 'ank_peg_r', 'snap_ank_l', 'snap_ank_r'], jointMats.ankle);
 
-  // Clone per-slot body geometries (for Pro scadMesh parts) or attach color buffer directly (for flex Snap limbs)
+  // Clone per-slot body geometries (for Motion scadMesh parts) or attach color buffer directly (for flex Snap limbs)
   // and cache rest coordinates so mid-animation skin/outfit changes never read deformed vertex positions!
   function prepVertColoredSlot(slotId, cloneGeo = true) {
     const m = findSlotPrimaryMesh(slotId);
@@ -1205,7 +1205,7 @@ export function attachExpansionToKipRig(THREE, kip, expGeos, baseParts, mats, sc
       paintMeshByCoord(tm, tm.userData.restZ, () => tmpColA);
     }
 
-    // 2. Pro Upper Arms (`upper_arm_l/r` = solid shirt/sleeve color!) + Pro Forearms (`forearm_l/r` = solid skin for short-sleeve, solid sleeve for long-sleeve!)
+    // 2. Motion Upper Arms (`upper_arm_l/r` = solid shirt/sleeve color!) + Motion Forearms (`forearm_l/r` = solid skin for short-sleeve, solid sleeve for long-sleeve!)
     tmpColA.set(sleeveHex);
     for (const ua of [bodyMeshes.upperArmL, bodyMeshes.upperArmR]) {
       if (!ua) continue;
@@ -1232,7 +1232,7 @@ export function attachExpansionToKipRig(THREE, kip, expGeos, baseParts, mats, sc
       paintMeshByCoord(hm, hm.userData.restZ, () => tmpColA);
     }
 
-    // 5. Pro Thighs (`thigh_l/r` = solid shorts/pants color) + Pro Shins (`shin_l/r` = solid skin tone for shorts, solid pants color for long pants!)
+    // 5. Motion Thighs (`thigh_l/r` = solid shorts/pants color) + Motion Shins (`shin_l/r` = solid skin tone for shorts, solid pants color for long pants!)
     tmpColA.set(thighHex);
     for (const th of [bodyMeshes.thighL, bodyMeshes.thighR]) {
       if (!th) continue;

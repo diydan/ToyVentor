@@ -76,7 +76,7 @@ only the top-level UI in `Build` to **Character (latest Kip V2)** and **Vehicle*
 | `head.*` | `head` -> Kip `Bolt Robot` / `Visor` heads |
 | `top.*` | `hat` (Crown 2x1 dock) -> `Spark Buds`, `Gear Crown`, radar/bulb toppers |
 | `torso.*` | `back` (Back 2x2 dock) -> `Bolt Jetpack`, `Explorer Pack`, `Core` / `Barrel` rigs |
-| `arms.*` | `prop` (Hand Ø6.6 mm shaft dock (5.0 mm flats)) -> `Pro Wrench`, `Pro Spinner`, magnet/claw tools |
+| `arms.*` | `prop` (Hand Ø6.6 mm shaft dock (5.0 mm flats)) -> `Motion Wrench`, `Motion Spinner`, magnet/claw tools |
 | `legs.*` | `stance` / `boots` -> Kip spring/hover/tread foot mounts |
 
 - `toyTypeForKind("other")` moves from `robot` to `character`; stored `robot`

@@ -6,7 +6,7 @@ import {
   canAccessTier,
   emptyProgression,
   familyStars,
-  hasProStatUnlock,
+  hasStatUnlock,
   MAX_PRACTICE_PER_DAY,
   progressionKey,
   starsFor,
@@ -108,11 +108,11 @@ describe("Phase 3 star scoring", () => {
   });
 });
 
-describe("Phase 3 Pro-part mastery", () => {
+describe("Phase 3 tier-part mastery", () => {
   it("3 stars in a matching lab unlocks that stat", () => {
     const prog = withStars({ "lab1.bridge:t1": 3 });
-    expect(hasProStatUnlock(prog, "torque")).toBe(true);
-    expect(hasProStatUnlock(prog, "speed")).toBe(false);
+    expect(hasStatUnlock(prog, "torque")).toBe(true);
+    expect(hasStatUnlock(prog, "speed")).toBe(false);
   });
 
   it("2 stars are not enough and other families do not count", () => {
@@ -120,16 +120,16 @@ describe("Phase 3 Pro-part mastery", () => {
       "lab1.bridge:t1": 2,
       "lab5.code:t1": 3,
     });
-    expect(hasProStatUnlock(prog, "torque")).toBe(false);
-    expect(hasProStatUnlock(prog, "spin")).toBe(true);
+    expect(hasStatUnlock(prog, "torque")).toBe(false);
+    expect(hasStatUnlock(prog, "spin")).toBe(true);
   });
 
-  it("sandbox unlock-all opens every Pro stat", () => {
+  it("sandbox unlock-all opens every stat", () => {
     const prog: ProgressionState = {
       ...emptyProgression(),
       sandboxUnlockAll: true,
     };
-    expect(hasProStatUnlock(prog, "glow")).toBe(true);
+    expect(hasStatUnlock(prog, "glow")).toBe(true);
   });
 });
 

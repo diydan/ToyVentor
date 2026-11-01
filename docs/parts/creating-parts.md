@@ -1,14 +1,14 @@
 # Creating new parts
 
 Use this guide for every recurring part task: robot parts, figurines and
-character add-ons, capsules, bricks, mounts, and Pro mechanisms. It takes an
+character add-ons, capsules, bricks, mounts, and Motion mechanisms. It takes an
 idea from brief to a compatible, conforming, testable part.
 
 It does **not** replace the standards. If anything conflicts, standards and
 data win:
 
 1. Product behaviour: [spec.md](../product/spec.md), then [snap.md](snap.md)
-   or [pro.md](pro.md).
+   or [motion.md](motion.md).
 2. Part numbers, checks, interfaces and warnings:
    [`interfaces.json`](../../parts/partspec/interfaces.json).
 3. PartSpec rules: the [Interface Standard](partspec/specs/01_interface_standard.md),
@@ -66,7 +66,7 @@ the target stage or catalog slot implicit.
 - Proposed catalog ID:
 - One-sentence job:
 - New part, variant, replacement, or assembly of existing parts:
-- Line and age group: Snap Small (3+) / Snap Large (youngest) / Pro (8+)
+- Line and age group: Snap Small (3+) / Snap Large (youngest) / Motion (8+) / Pro (10+)
 - User and toy context:
 - Existing parts considered, and why they are not enough:
 - Visual intent and originality notes (no copied character or franchise):
@@ -87,7 +87,7 @@ the target stage or catalog slot implicit.
 ### Resolve the catalog slot before writing geometry
 
 The selftest enforces the catalog targets in `catalog.json` — read the current
-Snap/Pro targets there, not here. A new row added casually will fail that test. Choose one
+Snap/Motion/Pro targets there, not here. A new row added casually will fail that test. Choose one
 route explicitly:
 
 | Route | Use when | Required product action |
@@ -106,10 +106,10 @@ compatibility contracts once anything references them.
 | --- | --- | --- |
 | Brick, plate, tile, slope or dome variant | Existing `block`, `tile`, `slope` or `dome` family | `catalog.json` row only |
 | Snap figurine shell, robot head/body, wing, tail, ears or capsule | Bespoke Snap builder, usually with an integrated base | `toyventor_parts.py` + `catalog.json` |
-| Posable or driven robot | Assembly of Pro beams, pins, shafts, hinges, gears and wheels | `toyventor_assembly.py`; add a new Pro part only if a real joint is missing |
-| New Pro beam, gear, wheel or joint | Existing Pro builder with parameters, or a new Pro builder | `toyventor_pro.py` + `catalog.json` |
+| Posable or driven robot | Assembly of Motion beams, pins, shafts, hinges, gears and wheels | `toyventor_assembly.py`; add a new Motion part only if a real joint is missing |
+| New Motion beam, gear, wheel or joint | Existing Motion builder with parameters, or a new Motion builder | `toyventor_motion.py` + `catalog.json` |
 | Scanned-toy attachment | Forge Mount family/spec, generated for the toy where applicable | `toyventor_parts.py`, Forge Mount spec; do not invent a drilled/custom interface |
-| Cross-line connection | Existing Snap-to-Pro adapter or Forge Mount | Assembly plus fit matrix |
+| Cross-line connection | Existing Snap-to-Motion adapter or Forge Mount | Assembly plus fit matrix |
 | New connector or interface | Standards change, not just a new part | `interfaces.json`, connector helper, fit measurement, validator, fixtures/selftests and a design-log decision |
 | Texture/skin only | Game/AR asset, never a printed part | App asset pipeline; do not add a printable catalog row |
 
@@ -131,7 +131,7 @@ compatibility contracts once anything references them.
 
 ### Shared character anatomy
 
-Snap fixed-pose figures and Pro articulated figures are two expressions of one
+Snap fixed-pose figures and Motion articulated figures are two expressions of one
 anatomy, not separate character systems. Use the same named roles for heads,
 torsos, limb segments, tails, accessories and end effectors across humans,
 animals and robots.
@@ -146,7 +146,7 @@ animals and robots.
   animation rig, and record non-obvious axis or facing conventions in the
   catalog note or assembly recipe.
 - A claimed shared module needs a validated assembly on each supported line;
-  a moving Pro figure needs the same travel and collision checks as any joint.
+  a moving Motion figure needs the same travel and collision checks as any joint.
 
 ## 3. Set up and establish a clean baseline
 
@@ -240,7 +240,7 @@ Field rules:
 
 Family variants need less: a new `block` row supplies `build.kind` and
 `build.grid`; `tile` and `dome` need a grid; `slope` may need `angle_deg`. A
-parameterized Pro row names an existing builder and arguments, such as
+parameterized Motion row names an existing builder and arguments, such as
 `{"fn": "beam", "length_tu": 5}` or `{"fn": "spur_gear", "teeth": 20}`.
 
 ## 5. Implement geometry and connectors together
@@ -249,7 +249,7 @@ Edit sources only:
 
 - `parts/partspec/catalog.json` — catalog row and approved targets/waves
 - `parts/partspec/toyventor_parts.py` — Snap builders and shared generator logic
-- `parts/partspec/toyventor_pro.py` — Pro builders and mechanical primitives
+- `parts/partspec/toyventor_motion.py` — Motion builders and mechanical primitives
 - `parts/partspec/interfaces.json` — only for an approved standards change
 - `parts/partspec/toyventor_fit.py`, `toyventor_assembly.py` or
   `toyventor_index.py` — only when a genuinely new mating feature must be
@@ -282,9 +282,9 @@ together.
 - For Small/Large pairs, reuse one builder where practical but gate both rows
   separately.
 
-### Pro builder pattern
+### Motion builder pattern
 
-Prefer an existing `toyventor_pro.py` builder: `beam`, `beam_cells`,
+Prefer an existing `toyventor_motion.py` builder: `beam`, `beam_cells`,
 `beam_path`, `free_pin`, `shaft`, `friction_pin`, `bushing`, `spur_gear`,
 `ring_gear`, `rack`, `wheel`, `hinge_leaf`, or `cross_connector`.
 
@@ -378,7 +378,7 @@ entry only for a real design decision.
 A verified PartSpec part is not automatically visible in the app. The bridge is
 fail-closed:
 
-- Snap and Pro parts convert through the canonical bridge; skips need accepted
+- Snap and Motion parts convert through the canonical bridge; skips need accepted
   reasons.
 - `design_status` must be `verified` and the manifest must point to a printable
   STL.
@@ -478,7 +478,7 @@ Finish every part task with evidence, not a status adjective:
 
 ```md
 Part: <id> — <name>
-Route: family variant / bespoke Snap / Pro builder / assembly / standards change
+Route: family variant / bespoke Snap / Motion builder / assembly / standards change
 Catalog action: replaced <id> / approved expansion / no new slot
 
 Changed sources:

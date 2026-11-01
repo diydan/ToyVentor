@@ -325,7 +325,7 @@ the Worker alone, so they need no validator service.
   build, no blame wording, no brand terms. Any miss falls back to the template.
 - **Template first:** a four-row table (one line per check id) ships before any
   model call and is the permanent fallback.
-- **Scope:** the TypeScript builder checks first. Pro-line assembly errors from
+- **Scope:** the TypeScript builder checks first. Motion-line assembly errors from
   the Python gate join later through the Gatekeeper, with the same contract.
 - **Acceptance (targets):** 20 scripted failing builds covering all four check
   ids; 100% get a template line; at least 95% of model lines pass the output

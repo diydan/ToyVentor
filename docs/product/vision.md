@@ -10,11 +10,12 @@ Kids lose interest when toys arrive finished and cannot change. ToyVentor keeps
 the toy alive: the child can rebuild it, take it into a shared digital world,
 and turn it into something new.
 
-## Two lines, one system
+## Three tiers, one system
 
-Snap gives younger children snap-fit parts; Pro gives older children and
-makers mechanical parts. Both share one TU lattice, one verification gate, and
-one app bridge. Committed catalog targets are 67 Snap + 38 Pro verified parts.
+Snap gives younger children snap-fit parts; Motion gives older children and
+makers mechanical parts; Pro is the real-robot tier for the oldest builders. All
+three share one TU lattice, one verification gate, and one app bridge. Committed
+catalog targets are 106 Snap + 79 Motion parts.
 
 
 ## The play experience

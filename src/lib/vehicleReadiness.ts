@@ -473,12 +473,12 @@ export const VEHICLE_READINESS_AUDIT: readonly VehicleReadinessEntry[] = [
       "mech_servo_tray",
       "mech_servo_lid",
       "mech_sill_duct",
-      "pro_steer_bridge",
-      "pro_steer_rack",
+      "motion_steer_bridge",
+      "motion_steer_rack",
     ],
     verifiedAssemblyId: null,
     appCatalogPartIds: [
-      "adapter-snap-pro",
+      "adapter-snap-motion",
       "beam-str-tu05",
       "gear-spur-z10",
       "gear-spur-z20",
@@ -496,7 +496,7 @@ export const VEHICLE_READINESS_AUDIT: readonly VehicleReadinessEntry[] = [
       saveShapeVerified: true,
     },
     blocker:
-      "Stage 4 Card F PETG robotics enclosures (mech_brain_*, mech_drive_*, mech_servo_*), Wave 11 pro_steer_* linkage, Gate G5 thermal soak, and ASTM F963-23 §4.25 battery-door hardware are pre-CAD (Pass 4g spec only).",
+      "Stage 4 Card F PETG robotics enclosures (mech_brain_*, mech_drive_*, mech_servo_*), Wave 11 motion_steer_* linkage, Gate G5 thermal soak, and ASTM F963-23 §4.25 battery-door hardware are pre-CAD (Pass 4g spec only).",
   }),
 ];
 

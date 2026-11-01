@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Kip (Pro 8+ &amp; Snap 3+) — Locomotion, Mixamo, Exploded &amp; Pile-to-Build</title>
+<title>Kip (Motion 8+ &amp; Snap 3+) — Locomotion, Mixamo, Exploded &amp; Pile-to-Build</title>
 <style>
   :root {
     --ink: #1b2238;
@@ -324,7 +324,7 @@
 <div class="topbar">
   <div class="brand-pill">
     <a class="back-link" href="/" title="Back to ToyVentor App">← ToyVentor</a>
-    <button class="badge" id="badge-edition" title="Click to toggle Pro (8+) vs Snap (3+)">Pro 8+ Rig</button>
+    <button class="badge" id="badge-edition" title="Click to toggle Motion (8+) vs Snap (3+)">Motion 8+ Rig</button>
     <span class="title" id="scene-title">Kip — Wardrobe, Modular TU Vehicles &amp; PartSpec SDK</span>
     <span class="status" id="status-text">Loading Kip, Wardrobe &amp; TU Vehicles…</span>
   </div>
@@ -355,11 +355,11 @@
     <button id="btn-hair-col" title="Cycle clip-on hair colors: Chestnut / Espresso / Golden Blonde / Auburn Ginger / Berry Spark / Cobalt Blue">Hair Tone: Chestnut</button>
     <button id="btn-shirt" title="Cycle solid filament shirts, hoodies, jackets &amp; overalls with front chest stencil stickers">Shirt: Off</button>
     <button id="btn-pants" title="Cycle solid filament pants &amp; shorts">Pants: Off</button>
-    <button id="btn-back" title="Cycle 2x2 Back Dock: Off / Explorer Pack / Bolt Jetpack / Cloud Wings / Pro 2:1 Gears">Back: Off</button>
+    <button id="btn-back" title="Cycle 2x2 Back Dock: Off / Explorer Pack / Bolt Jetpack / Cloud Wings / Motion 2:1 Gears">Back: Off</button>
     <button id="btn-prop-cat" title="Prop category: All / Tools / Cleaning / Instruments / Play &amp; Gear (click, then use the Prop button to cycle items in that category)">Prop Type: All</button>
     <button id="btn-hand" title="Cycle props in the chosen category (Tools: wrench, hammer, screwdriver, paint roller; Cleaning: mop, broom, scrub brush, vacuum; Instruments: guitar, trumpet, maracas; Play: shield, skateboard, flag, magnifier)">Prop: Off</button>
-    <button id="btn-ears" title="Cycle ±X Ear-Pod Ø6.6 Bosses: Off / Comm-Pods / Pro Scanner">Ears: Off</button>
-    <button id="btn-tail" title="Cycle 1x1 Lower-Back Tail Port: Off / Wag-Tail / Pro Wheelie">Tail: Off</button>
+    <button id="btn-ears" title="Cycle ±X Ear-Pod Ø6.6 Bosses: Off / Comm-Pods / Motion Scanner">Ears: Off</button>
+    <button id="btn-tail" title="Cycle 1x1 Lower-Back Tail Port: Off / Wag-Tail / Motion Wheelie">Tail: Off</button>
   </div>
   <div class="row">
     <span class="row-label">Vehicles</span>
@@ -371,11 +371,11 @@
     <span class="sep"></span>
     <button id="btn-veh-covers" class="spark-active" title="Toggle interchangeable snap-on vehicle body covers (Car/Truck Hood &amp; Cab Roof, Pickup Bed Cover, Scooter Fairing, Moto Tank Cowling)">Covers: On</button>
     <button id="btn-racer-kit" class="spark-active" title="Toggle Wave 6 Racer Add-Ons (Bull Bar, Hood Scoop, Light Bar / Roof Rack, Spoiler, Twin Exhaust)">Racer Kit: On</button>
-    <button id="btn-preset" title="Cycle Clean / Leo Explorer / Maya Skater / Kai Moto / Mecha Scout / Whisker Cat Scooter / Fox Scooter / Drake Dragon / Yeti Imp / Bolt Pro 8+">Preset: Clean</button>
+    <button id="btn-preset" title="Cycle Clean / Leo Explorer / Maya Skater / Kai Moto / Mecha Scout / Whisker Cat Scooter / Fox Scooter / Drake Dragon / Yeti Imp / Bolt Motion 8+">Preset: Clean</button>
   </div>
   <div class="row">
     <span class="row-label">Build &amp; AI</span>
-    <button id="btn-edition" class="spark-active" title="Switch between Pro (8+) 14-joint rig and simplified Snap (3+) rig (auto-uses 90° char_legs_seated in vehicles!)">Edition: Pro (8+)</button>
+    <button id="btn-edition" class="spark-active" title="Switch between Motion (8+) 14-joint rig and simplified Snap (3+) rig (auto-uses 90° char_legs_seated in vehicles!)">Edition: Motion (8+)</button>
     <button id="btn-explode" title="Pull Kip &amp; active vehicle apart along physical assembly axes (Shortcut: E)">Exploded View</button>
     <span class="slider-pill" title="Scrub pulled-apart explosion distance">
       <span>Pull</span>
@@ -521,6 +521,7 @@ import {
   trySamScanEndpoint,
   buildPhotoAccessoryMesh,
   encodeToyContractHash,
+  setSelfieCanvas,
 } from '/kip/kip-forge-sdk.js?v=10.0';
 import {
   KIP_BUILD_VERSION,
@@ -551,6 +552,9 @@ import {
   makeMotoStraddleClip,
   makeSkateboardClip,
 } from '/kip/kip-vehicles-wardrobe.js?v=10.0';
+import { mountKipMenu } from '/kip/kip-menu.js?v=10.0';
+import { mountPrintView } from '/kip/kip-print-view.js?v=10.0';
+import { mountSelfie } from '/kip/kip-selfie.js?v=10.0';
 
 if (window.self !== window.top) document.body.classList.add('in-iframe');
 
@@ -700,11 +704,11 @@ const mats = {
   snapSky:  new THREE.MeshPhysicalMaterial({ color: '#4eb3fc', roughness: 0.34, clearcoat: 0.50, envMapIntensity: 0.75 }),
   snapMint: new THREE.MeshPhysicalMaterial({ color: '#43d69c', roughness: 0.34, clearcoat: 0.50, envMapIntensity: 0.75 }),
   snapGold: new THREE.MeshPhysicalMaterial({ color: '#f8c232', roughness: 0.34, clearcoat: 0.50, envMapIntensity: 0.75 }),
-  proSlate: new THREE.MeshPhysicalMaterial({ color: '#36405c', roughness: 0.38, metalness: 0.18, clearcoat: 0.38, envMapIntensity: 0.80 }),
-  proGear:  new THREE.MeshPhysicalMaterial({ color: '#f0b238', roughness: 0.32, metalness: 0.14, clearcoat: 0.45, envMapIntensity: 0.82 }),
+  motionSlate: new THREE.MeshPhysicalMaterial({ color: '#36405c', roughness: 0.38, metalness: 0.18, clearcoat: 0.38, envMapIntensity: 0.80 }),
+  motionGear:  new THREE.MeshPhysicalMaterial({ color: '#f0b238', roughness: 0.32, metalness: 0.14, clearcoat: 0.45, envMapIntensity: 0.82 }),
 };
 
-// Build Kip with leaf partSlots so Pro (8+), Snap (4-8), Exploded View, and Tabletop Pile->Build all share one rig!
+// Build Kip with leaf partSlots so Motion (8+), Snap (4-8), Exploded View, and Tabletop Pile->Build all share one rig!
 function buildKipRig(geos, partspec) {
   const mover = new THREE.Group();
   mover.name = 'kip_Mover';
@@ -723,7 +727,7 @@ function buildKipRig(geos, partspec) {
       id, grp, parent,
       explodeVec: new THREE.Vector3(...explodeVec),
       waveOrder, // 0..5 assembly wave index
-      edition,   // 'both' | 'pro' | 'snap'
+      edition,   // 'both' | 'motion' | 'snap'
       guideTo,   // optional target slot id for dashed assembly line
       localCentroid: new THREE.Vector3(),
       pilePos: new THREE.Vector3(),
@@ -740,7 +744,7 @@ function buildKipRig(geos, partspec) {
     return grp;
   }
 
-  function addProPegMesh(slot, isBig, axis = 'y') {
+  function addMotionPegMesh(slot, isBig, axis = 'y') {
     const g = isBig ? geos.spark_peg_big : geos.spark_peg_sml;
     const h = (isBig ? 9.0 : 8.0) * 0.92;
     const m = scadMesh(g, mats.spark);
@@ -770,7 +774,7 @@ function buildKipRig(geos, partspec) {
     }
   }
 
-  // Real PartSpec Pro hardware helpers (convert print-oriented [-Y, Z=0..5] STL into centered Z-axis or X-axis part)
+  // Real PartSpec Motion hardware helpers (convert print-oriented [-Y, Z=0..5] STL into centered Z-axis or X-axis part)
   function makePinFrictionZ(mat = mats.spark) {
     const g = new THREE.Group();
     const m = new THREE.Mesh(partspec.pinFriction, mat);
@@ -781,7 +785,7 @@ function buildKipRig(geos, partspec) {
     return g;
   }
 
-  function makeShaftTu03Z(mat = mats.proSlate) {
+  function makeShaftTu03Z(mat = mats.motionSlate) {
     const g = new THREE.Group();
     const m = new THREE.Mesh(partspec.shaftTu03, mat);
     m.castShadow = true;
@@ -801,8 +805,8 @@ function buildKipRig(geos, partspec) {
   torsoOffset.position.y = -61.5;
   hips.add(torsoOffset);
 
-  const proTorsoSlot = createSlot('torso_pro', torsoOffset, [0, 0, 0], 2, 'pro');
-  proTorsoSlot.add(scadMesh(geos.torso, mats.shell));
+  const motionTorsoSlot = createSlot('torso_pro', torsoOffset, [0, 0, 0], 2, 'motion');
+  motionTorsoSlot.add(scadMesh(geos.torso, mats.shell));
 
   const snapTorsoSlot = createSlot('torso_snap', torsoOffset, [0, 0, 0], 2, 'snap');
   snapTorsoSlot.add(scadMesh(geos.snap_torso, mats.shell));
@@ -811,19 +815,19 @@ function buildKipRig(geos, partspec) {
   const backStudsSlot = createSlot('back_studs', torsoOffset, [0, 8, -42], 2.3, 'both', 'torso_anchor');
   backStudsSlot.add(scadMesh(geos.back_dock_studs, mats.spark));
 
-  // Neck Connectors (Pro Peg vs Snap Turret)
+  // Neck Connectors (Motion Peg vs Snap Turret)
   const neckAnchor = new THREE.Group();
   neckAnchor.position.set(0, 106.8 - 61.5, 0);
   hips.add(neckAnchor);
 
-  const proNeckPeg = createSlot('neck_peg', neckAnchor, [0, 20, 0], 3.8, 'pro');
-  addProPegMesh(proNeckPeg, true, 'y');
+  const motionNeckPeg = createSlot('neck_peg', neckAnchor, [0, 20, 0], 3.8, 'motion');
+  addMotionPegMesh(motionNeckPeg, true, 'y');
 
   const snapNeckTurret = createSlot('neck_turret', neckAnchor, [0, 20, 0], 3.8, 'snap');
   addSnapTurretMesh(snapNeckTurret, true, 'y');
   snapNeckTurret.visible = false;
 
-  // --- SHARED HEAD ASSEMBLY (100% identical across Pro 8+ and Snap 3+!) ---
+  // --- SHARED HEAD ASSEMBLY (100% identical across Motion 8+ and Snap 3+!) ---
   const head = new THREE.Group();
   head.name = 'kip_Head';
   head.position.set(0, 45.3, 0);
@@ -864,7 +868,7 @@ function buildKipRig(geos, partspec) {
   );
   faceDetailSlot.add(faceDetailGrp);
 
-  // --- ARMS (Pro 2-segment + pegs vs Snap 1-piece curved sleeve + turrets; 100% SHARED 3-finger hands!) ---
+  // --- ARMS (Motion 2-segment + pegs vs Snap 1-piece curved sleeve + turrets; 100% SHARED 3-finger hands!) ---
   // Spherical Rodrigues Pivot Flex for Snap (`3+`) 1-piece limbs:
   // Keeps physical `snap_arm.stl` / `snap_leg.stl` 100% 1-piece for 3D printing & Exploded/Pile views,
   // while smoothly flexing mid-limb elbows & knees during character animations!
@@ -940,7 +944,7 @@ function buildKipRig(geos, partspec) {
   }
 
   const joints = { Hips: hips, Head: head };
-  const editionParts = { pro: [proTorsoSlot, proNeckPeg], snap: [snapTorsoSlot, snapNeckTurret] };
+  const editionParts = { motion: [motionTorsoSlot, motionNeckPeg], snap: [snapTorsoSlot, snapNeckTurret] };
   const flexArms = {};
   const flexLegs = {};
   const snapWriAnchors = {};
@@ -954,9 +958,9 @@ function buildKipRig(geos, partspec) {
     shoAnchor.position.set(side * 17.2, 33.5, 0);
     hips.add(shoAnchor);
 
-    const proShoPeg = createSlot(`sho_peg_${sTag}`, shoAnchor, [side * 18, 4, 0], 2.8, 'pro');
-    addProPegMesh(proShoPeg, true, 'x');
-    editionParts.pro.push(proShoPeg);
+    const motionShoPeg = createSlot(`sho_peg_${sTag}`, shoAnchor, [side * 18, 4, 0], 2.8, 'motion');
+    addMotionPegMesh(motionShoPeg, true, 'x');
+    editionParts.motion.push(motionShoPeg);
 
     const snapShoTurret = createSlot(`sho_turret_${sTag}`, shoAnchor, [side * 18, 4, 0], 2.8, 'snap');
     addSnapTurretMesh(snapShoTurret, true, 'x');
@@ -968,19 +972,19 @@ function buildKipRig(geos, partspec) {
     arm.position.set(side * 18.2, 33.5, 0);
     hips.add(arm);
 
-    // Pro Upper Arm + Elbow Peg
-    const uaSlot = createSlot(`upper_arm_${sTag}`, arm, [side * 36, 0, 0], 3.0, 'pro', `sho_peg_${sTag}`);
+    // Motion Upper Arm + Elbow Peg
+    const uaSlot = createSlot(`upper_arm_${sTag}`, arm, [side * 36, 0, 0], 3.0, 'motion', `sho_peg_${sTag}`);
     const ua = scadMesh(geos.upper_arm, mats.shell);
     ua.position.y = -23.0;
     uaSlot.add(ua);
-    editionParts.pro.push(uaSlot);
+    editionParts.motion.push(uaSlot);
 
     const elbAnchor = new THREE.Group();
     elbAnchor.position.set(0, -23.8, 0);
     arm.add(elbAnchor);
-    const elbPegSlot = createSlot(`elb_peg_${sTag}`, elbAnchor, [side * 46, -10, 0], 3.15, 'pro', `upper_arm_${sTag}`);
-    addProPegMesh(elbPegSlot, false, 'y');
-    editionParts.pro.push(elbPegSlot);
+    const elbPegSlot = createSlot(`elb_peg_${sTag}`, elbAnchor, [side * 46, -10, 0], 3.15, 'motion', `upper_arm_${sTag}`);
+    addMotionPegMesh(elbPegSlot, false, 'y');
+    editionParts.motion.push(elbPegSlot);
 
     // Snap 1-Piece Curved Arm + Wrist Turret (digital "fake elbow" flex around (0, -17.5, 1.2) during animations!)
     const snapArmSlot = createSlot(`snap_arm_${sTag}`, arm, [side * 38, -6, 0], 3.05, 'snap', `sho_turret_${sTag}`);
@@ -1006,18 +1010,18 @@ function buildKipRig(geos, partspec) {
     foreArm.position.set(0, -23.8, 0);
     arm.add(foreArm);
 
-    const faSlot = createSlot(`forearm_${sTag}`, foreArm, [side * 56, -20, 0], 3.3, 'pro', `elb_peg_${sTag}`);
+    const faSlot = createSlot(`forearm_${sTag}`, foreArm, [side * 56, -20, 0], 3.3, 'motion', `elb_peg_${sTag}`);
     const fa = scadMesh(geos.forearm, mats.shell);
     fa.position.y = -21.8;
     faSlot.add(fa);
-    editionParts.pro.push(faSlot);
+    editionParts.motion.push(faSlot);
 
     const wriAnchor = new THREE.Group();
     wriAnchor.position.set(0, -22.6, 0);
     foreArm.add(wriAnchor);
-    const wriPegSlot = createSlot(`wri_peg_${sTag}`, wriAnchor, [side * 64, -32, 0], 3.45, 'pro', `forearm_${sTag}`);
-    addProPegMesh(wriPegSlot, false, 'y');
-    editionParts.pro.push(wriPegSlot);
+    const wriPegSlot = createSlot(`wri_peg_${sTag}`, wriAnchor, [side * 64, -32, 0], 3.45, 'motion', `forearm_${sTag}`);
+    addMotionPegMesh(wriPegSlot, false, 'y');
+    editionParts.motion.push(wriPegSlot);
 
     // 100% SHARED Sleek 3-Finger + Thumb Hand!
     const hand = new THREE.Group();
@@ -1054,9 +1058,9 @@ function buildKipRig(geos, partspec) {
     hipAnchor.position.set(side * 10.8, 0, 0);
     hips.add(hipAnchor);
 
-    const proHipPeg = createSlot(`hip_peg_${sTag}`, hipAnchor, [side * 8, -14, 0], 1.5, 'pro');
-    addProPegMesh(proHipPeg, true, 'y');
-    editionParts.pro.push(proHipPeg);
+    const motionHipPeg = createSlot(`hip_peg_${sTag}`, hipAnchor, [side * 8, -14, 0], 1.5, 'motion');
+    addMotionPegMesh(motionHipPeg, true, 'y');
+    editionParts.motion.push(motionHipPeg);
 
     const snapHipTurret = createSlot(`hip_turret_${sTag}`, hipAnchor, [side * 8, -14, 0], 1.5, 'snap');
     addSnapTurretMesh(snapHipTurret, true, 'y');
@@ -1068,19 +1072,19 @@ function buildKipRig(geos, partspec) {
     upLeg.position.set(side * 10.8, 0, 0);
     hips.add(upLeg);
 
-    // Pro Thigh + Knee Peg
-    const thSlot = createSlot(`thigh_${sTag}`, upLeg, [side * 14, -28, 0], 1.25, 'pro', `hip_peg_${sTag}`);
+    // Motion Thigh + Knee Peg
+    const thSlot = createSlot(`thigh_${sTag}`, upLeg, [side * 14, -28, 0], 1.25, 'motion', `hip_peg_${sTag}`);
     const th = scadMesh(geos.thigh, mats.shell);
     th.position.y = -24.8;
     thSlot.add(th);
-    editionParts.pro.push(thSlot);
+    editionParts.motion.push(thSlot);
 
     const kneAnchor = new THREE.Group();
     kneAnchor.position.set(0, -25.6, 0);
     upLeg.add(kneAnchor);
-    const knePegSlot = createSlot(`kne_peg_${sTag}`, kneAnchor, [side * 18, -42, 0], 1.0, 'pro', `thigh_${sTag}`);
-    addProPegMesh(knePegSlot, false, 'y');
-    editionParts.pro.push(knePegSlot);
+    const knePegSlot = createSlot(`kne_peg_${sTag}`, kneAnchor, [side * 18, -42, 0], 1.0, 'motion', `thigh_${sTag}`);
+    addMotionPegMesh(knePegSlot, false, 'y');
+    editionParts.motion.push(knePegSlot);
 
     // Snap 1-Piece Chunky Trouser-Leg + Ankle Turret (digital "fake knee" flex around (0, -19.6, 0) during animations!)
     const snapLegSlot = createSlot(`snap_leg_${sTag}`, upLeg, [side * 16, -34, 0], 1.1, 'snap', `hip_turret_${sTag}`);
@@ -1105,18 +1109,18 @@ function buildKipRig(geos, partspec) {
     leg.position.set(0, -25.6, 0);
     upLeg.add(leg);
 
-    const shSlot = createSlot(`shin_${sTag}`, leg, [side * 22, -56, 0], 0.75, 'pro', `kne_peg_${sTag}`);
+    const shSlot = createSlot(`shin_${sTag}`, leg, [side * 22, -56, 0], 0.75, 'motion', `kne_peg_${sTag}`);
     const sh = scadMesh(geos.shin, mats.shell);
     sh.position.y = -25.2;
     shSlot.add(sh);
-    editionParts.pro.push(shSlot);
+    editionParts.motion.push(shSlot);
 
     const ankAnchor = new THREE.Group();
     ankAnchor.position.set(0, -26.0, -1.2);
     leg.add(ankAnchor);
-    const ankPegSlot = createSlot(`ank_peg_${sTag}`, ankAnchor, [side * 25, -70, 0], 0.45, 'pro', `shin_${sTag}`);
-    addProPegMesh(ankPegSlot, false, 'y');
-    editionParts.pro.push(ankPegSlot);
+    const ankPegSlot = createSlot(`ank_peg_${sTag}`, ankAnchor, [side * 25, -70, 0], 0.45, 'motion', `shin_${sTag}`);
+    addMotionPegMesh(ankPegSlot, false, 'y');
+    editionParts.motion.push(ankPegSlot);
 
     // 100% SHARED 1x2 TU Sneaker Boot!
     const foot = new THREE.Group();
@@ -1137,7 +1141,7 @@ function buildKipRig(geos, partspec) {
   }
 
   // =========================================================================
-  // 5 MODULAR TU ACCESSORY ZONES (100% Compatible with BOTH Pro 8+ & Snap 3+!)
+  // 5 MODULAR TU ACCESSORY ZONES (100% Compatible with BOTH Motion 8+ & Snap 3+!)
   // =========================================================================
 
   // ZONE 1: 1x2 CROWN DOCK
@@ -1171,26 +1175,26 @@ function buildKipRig(geos, partspec) {
     earAccSlot.add(earMesh);
   }
 
-  const proEarScanner = new THREE.Group();
-  proEarScanner.visible = false;
-  headLocal.add(proEarScanner);
-  const proEarSlot = createSlot('pro_ear_scanner', proEarScanner, [-62, 46, 8], 5.1, 'both', 'ear_pod_r');
-  const proEarPivot = new THREE.Group();
-  proEarPivot.position.set(-23.8, 20.0, 0);
-  proEarPivot.rotation.x = THREE.MathUtils.degToRad(-28);
+  const motionEarScanner = new THREE.Group();
+  motionEarScanner.visible = false;
+  headLocal.add(motionEarScanner);
+  const motionEarSlot = createSlot('motion_ear_scanner', motionEarScanner, [-62, 46, 8], 5.1, 'both', 'ear_pod_r');
+  const motionEarPivot = new THREE.Group();
+  motionEarPivot.position.set(-23.8, 20.0, 0);
+  motionEarPivot.rotation.x = THREE.MathUtils.degToRad(-28);
   const earBeamWrap = new THREE.Group();
   earBeamWrap.rotation.y = -Math.PI / 2;
-  const earBeamMesh = new THREE.Mesh(partspec.beamTu03, mats.proSlate);
+  const earBeamMesh = new THREE.Mesh(partspec.beamTu03, mats.motionSlate);
   earBeamMesh.castShadow = true;
   earBeamMesh.position.set(12.5, 0, 0);
   earBeamWrap.add(earBeamMesh);
   // Real PartSpec shaft_tu03 + gear_spur_z10 + bushing_half collars keyed on double-D flats!
   const earRadarGear = new THREE.Group();
   earRadarGear.position.set(25.0, 0, 0);
-  const earShaft = makeShaftTu03Z(mats.proSlate);
+  const earShaft = makeShaftTu03Z(mats.motionSlate);
   earShaft.position.z = 9.375;
   earRadarGear.add(earShaft);
-  const earBushBack = new THREE.Mesh(partspec.bushingHalf, mats.proGear);
+  const earBushBack = new THREE.Mesh(partspec.bushingHalf, mats.motionGear);
   earBushBack.castShadow = true;
   earBushBack.position.z = -6.25;
   earRadarGear.add(earBushBack);
@@ -1198,15 +1202,15 @@ function buildKipRig(geos, partspec) {
   earGearMesh.castShadow = true;
   earGearMesh.position.z = 12.5;
   earRadarGear.add(earGearMesh);
-  const earBushFront = new THREE.Mesh(partspec.bushingHalf, mats.proGear);
+  const earBushFront = new THREE.Mesh(partspec.bushingHalf, mats.motionGear);
   earBushFront.castShadow = true;
   earBushFront.position.z = 18.75;
   earRadarGear.add(earBushFront);
   earBeamWrap.add(earRadarGear);
-  proEarPivot.add(earBeamWrap);
-  proEarSlot.add(proEarPivot);
+  motionEarPivot.add(earBeamWrap);
+  motionEarSlot.add(motionEarPivot);
 
-  // ZONE 3: 2x2 BACK DOCK (4-hole Cloud Wings on 2x2 studs, OR flush Pro 2:1 Gears on central Ø7.0 bore!)
+  // ZONE 3: 2x2 BACK DOCK (4-hole Cloud Wings on 2x2 studs, OR flush Motion 2:1 Gears on central Ø7.0 bore!)
   const wingsGroup = new THREE.Group();
   wingsGroup.visible = false;
   hips.add(wingsGroup);
@@ -1220,28 +1224,28 @@ function buildKipRig(geos, partspec) {
   wingsHolder.add(cloudWings);
   wingsSlot.add(wingsHolder);
 
-  const proBackGroup = new THREE.Group();
-  proBackGroup.visible = false;
-  hips.add(proBackGroup);
-  const proBackSlot = createSlot('pro_back_gears', proBackGroup, [0, 22, -96], 5.2, 'both', 'torso_anchor');
-  const proBackRig = new THREE.Group();
-  proBackRig.position.set(0, 87.5 - 61.5, -13.4);
-  proBackRig.rotation.z = THREE.MathUtils.degToRad(-28);
-  const beam = new THREE.Mesh(partspec.beamTu05, mats.proSlate);
+  const motionBackGroup = new THREE.Group();
+  motionBackGroup.visible = false;
+  hips.add(motionBackGroup);
+  const motionBackSlot = createSlot('motion_back_gears', motionBackGroup, [0, 22, -96], 5.2, 'both', 'torso_anchor');
+  const motionBackRig = new THREE.Group();
+  motionBackRig.position.set(0, 87.5 - 61.5, -13.4);
+  motionBackRig.rotation.z = THREE.MathUtils.degToRad(-28);
+  const beam = new THREE.Mesh(partspec.beamTu05, mats.motionSlate);
   beam.castShadow = true;
   beam.position.set(0, 0, -12.5);
-  proBackRig.add(beam);
+  motionBackRig.add(beam);
   // Real PartSpec pin_friction (2 TU = 25 mm) locking beam_str_tu05 center bore into Kip's central Ø7.0 back bore!
-  proBackRig.add(makePinFrictionZ(mats.spark));
+  motionBackRig.add(makePinFrictionZ(mats.spark));
 
   function buildBackGearAxle(gx, gearGeo, gearMat, phaseRad = 0) {
     const axleGrp = new THREE.Group();
     axleGrp.position.set(gx, 0, 0);
     axleGrp.rotation.z = phaseRad;
-    const sh = makeShaftTu03Z(mats.proSlate);
+    const sh = makeShaftTu03Z(mats.motionSlate);
     sh.position.z = -18.75; // z = -37.5 .. 0.0 (flush with beam front face!)
     axleGrp.add(sh);
-    const bInner = new THREE.Mesh(partspec.bushingHalf, mats.proSlate);
+    const bInner = new THREE.Mesh(partspec.bushingHalf, mats.motionSlate);
     bInner.castShadow = true;
     bInner.position.z = -18.75;
     axleGrp.add(bInner);
@@ -1249,16 +1253,16 @@ function buildKipRig(geos, partspec) {
     gMesh.castShadow = true;
     gMesh.position.z = -25.0;
     axleGrp.add(gMesh);
-    const bOuter = new THREE.Mesh(partspec.bushingHalf, mats.proGear);
+    const bOuter = new THREE.Mesh(partspec.bushingHalf, mats.motionGear);
     bOuter.castShadow = true;
     bOuter.position.z = -31.25;
     axleGrp.add(bOuter);
     return axleGrp;
   }
-  const gearBig = buildBackGearAxle(-12.5, partspec.gearZ20, mats.proGear, 0);
+  const gearBig = buildBackGearAxle(-12.5, partspec.gearZ20, mats.motionGear, 0);
   const gearSml = buildBackGearAxle( 25.0, partspec.gearZ10, mats.spark, Math.PI / 10);
-  proBackRig.add(gearBig, gearSml);
-  proBackSlot.add(proBackRig);
+  motionBackRig.add(gearBig, gearSml);
+  motionBackSlot.add(motionBackRig);
 
   // ZONE 4: 1x1 LOWER-BACK TAIL PORT (Exact 2.0 TU = 25.0 mm below Back Dock: z_scad = 62.5 -> y_hips = 1.0!)
   const snapTailGroup = new THREE.Group();
@@ -1274,16 +1278,16 @@ function buildKipRig(geos, partspec) {
   snapTailPivot.add(tailMesh);
   snapTailSlot.add(snapTailPivot);
 
-  const proTailGroup = new THREE.Group();
-  proTailGroup.visible = false;
-  hips.add(proTailGroup);
-  const proTailSlot = createSlot('tail_pro_wheelie', proTailGroup, [0, -22, -82], 5.3, 'both', 'torso_anchor');
-  const proTailRig = new THREE.Group();
-  proTailRig.position.set(0, 1.0, -13.1);
+  const motionTailGroup = new THREE.Group();
+  motionTailGroup.visible = false;
+  hips.add(motionTailGroup);
+  const motionTailSlot = createSlot('tail_motion_wheelie', motionTailGroup, [0, -22, -82], 5.3, 'both', 'torso_anchor');
+  const motionTailRig = new THREE.Group();
+  motionTailRig.position.set(0, 1.0, -13.1);
   const tailStrut = new THREE.Group();
   tailStrut.rotation.x = THREE.MathUtils.degToRad(26);
   // 1) Real shaft_tu03 + bushing_half pinning cross_connector_tu01 axle_z into Kip's z = 62.5 pelvis bore!
-  const tailMountShaft = makeShaftTu03Z(mats.proSlate);
+  const tailMountShaft = makeShaftTu03Z(mats.motionSlate);
   tailMountShaft.position.set(0, 0, -6.25);
   tailStrut.add(tailMountShaft);
   const tailMountBush = new THREE.Mesh(partspec.bushingHalf, mats.spark);
@@ -1296,7 +1300,7 @@ function buildKipRig(geos, partspec) {
   tailCross.position.set(0, -6.25, -12.5); // axle_z at (0, 0, -12.5..0), perpendicular axle_y along X at (0, -12.5, -6.25)!
   tailStrut.add(tailCross);
   // 2) Real beam_str_tu03 alongside cross_connector_tu01 (x = -18.75 .. -6.25) pinned by shaft_tu03 + bushings!
-  const tailBeam = new THREE.Mesh(partspec.beamTu03, mats.proSlate);
+  const tailBeam = new THREE.Mesh(partspec.beamTu03, mats.motionSlate);
   tailBeam.castShadow = true;
   tailBeam.rotation.y = Math.PI / 2;
   tailBeam.position.set(-18.75, -12.5, -18.75);
@@ -1304,9 +1308,9 @@ function buildKipRig(geos, partspec) {
   const crossAxleWrap = new THREE.Group();
   crossAxleWrap.position.set(-6.25, -12.5, -6.25);
   crossAxleWrap.rotation.y = Math.PI / 2; // Z -> +X (-18.75 .. +18.75 -> world x = -25.0 .. +12.5)
-  crossAxleWrap.add(makeShaftTu03Z(mats.proSlate));
+  crossAxleWrap.add(makeShaftTu03Z(mats.motionSlate));
   for (const bz of [-18.75, 12.5]) {
-    const b = new THREE.Mesh(partspec.bushingHalf, mats.proGear);
+    const b = new THREE.Mesh(partspec.bushingHalf, mats.motionGear);
     b.castShadow = true;
     b.position.z = bz;
     crossAxleWrap.add(b);
@@ -1317,10 +1321,10 @@ function buildKipRig(geos, partspec) {
   tailWheelWrap.position.set(0, -12.5, -31.25);
   tailWheelWrap.rotation.y = Math.PI / 2;
   const tailWheel = new THREE.Group(); // spins wheel + keyed shaft + outer collars together!
-  const tailWheelAxle = makeShaftTu03Z(mats.proSlate);
+  const tailWheelAxle = makeShaftTu03Z(mats.motionSlate);
   tailWheelAxle.position.z = -6.25;
   tailWheel.add(tailWheelAxle);
-  const tailWheelMesh = new THREE.Mesh(partspec.wheelTu04, mats.proGear);
+  const tailWheelMesh = new THREE.Mesh(partspec.wheelTu04, mats.motionGear);
   tailWheelMesh.castShadow = true;
   tailWheelMesh.position.z = -6.25; // world x = -6.25 .. +6.25 (exact midline x = 0!)
   tailWheel.add(tailWheelMesh);
@@ -1332,21 +1336,21 @@ function buildKipRig(geos, partspec) {
   }
   tailWheelWrap.add(tailWheel);
   tailStrut.add(tailWheelWrap);
-  proTailRig.add(tailStrut);
-  proTailSlot.add(proTailRig);
+  motionTailRig.add(tailStrut);
+  motionTailSlot.add(motionTailRig);
 
   // ZONE 5: RIGHT HAND Ø 6.6 mm SHAFT + Z10 SPINNER + BUSHING COLLAR
-  const proStaffGroup = new THREE.Group();
-  proStaffGroup.visible = false;
-  joints.rightHandCgripParent.add(proStaffGroup);
-  const proStaffSlot = createSlot('pro_staff', proStaffGroup, [-102, -48, 22], 5.4, 'both', 'hand_r');
-  const proStaff = new THREE.Group();
-  proStaff.position.set(0, -11.4, 2.3);
+  const motionStaffGroup = new THREE.Group();
+  motionStaffGroup.visible = false;
+  joints.rightHandCgripParent.add(motionStaffGroup);
+  const motionStaffSlot = createSlot('motion_staff', motionStaffGroup, [-102, -48, 22], 5.4, 'both', 'hand_r');
+  const motionStaff = new THREE.Group();
+  motionStaff.position.set(0, -11.4, 2.3);
   const tipWrap = new THREE.Group();
   tipWrap.rotation.y = Math.PI / 2; // local Z -> +X
   const tipGear = new THREE.Group(); // spins shaft_tu05 + gear_spur_z10 + bushing_half together!
   const shaftHolder = new THREE.Group();
-  const shaftMesh = new THREE.Mesh(partspec.shaftTu05, mats.proSlate);
+  const shaftMesh = new THREE.Mesh(partspec.shaftTu05, mats.motionSlate);
   shaftMesh.castShadow = true;
   shaftMesh.position.set(0, 31.25, -2.5);
   shaftHolder.add(shaftMesh);
@@ -1362,22 +1366,22 @@ function buildKipRig(geos, partspec) {
   tipBush.position.z = -25.0;
   tipGear.add(tipBush);
   tipWrap.add(tipGear);
-  proStaff.add(tipWrap);
-  proStaffSlot.add(proStaff);
+  motionStaff.add(tipWrap);
+  motionStaffSlot.add(motionStaff);
 
   return {
     mover, grounder, hips, joints, partSlots, editionParts, createSlot,
     flexArms, flexLegs, snapWriAnchors, snapAnkAnchors,
-    neckAnchor, proNeckPeg, snapNeckTurret,
+    neckAnchor, motionNeckPeg, snapNeckTurret,
     headLocal, headShellSlot, headHoodSlot, crownSlot, earPodLSlot, earPodRSlot, visorSlot, faceDetailSlot,
     crownAccSlot, snapStandingLegSlots, bootSlots,
     backStudsSlot,
     crownBudsMesh, crownBlankMesh, visorMesh, faceDetailGrp,
     pointyEars, wobbleHat,
-    snapEarPods, proEarScanner, earRadarGear,
-    wingsGroup, proBackGroup,
-    snapTailGroup, snapTailPivot, proTailGroup, tailWheel,
-    proStaffGroup, gearBig, gearSml, tipGear
+    snapEarPods, motionEarScanner, earRadarGear,
+    wingsGroup, motionBackGroup,
+    snapTailGroup, snapTailPivot, motionTailGroup, tailWheel,
+    motionStaffGroup, gearBig, gearSml, tipGear
   };
 }
 
@@ -1921,7 +1925,7 @@ const LOCO_CLIPS = new Set(['walk', 'run', 'sneak_pose']);
 const keys = new Set();
 
 const loco = {
-  edition: 'pro',      // 'pro' (8+) | 'snap' (3+)
+  edition: 'motion',      // 'motion' (8+) | 'snap' (3+)
   category: 'robot',   // 'human' | 'robot' | 'animal' | 'creature'
   head: 'classic',     // human: 'kid' | 'chibi' | 'tall' | 'jumbo' · robot: 'classic' | 'robot' | 'scout' · animal: 'fox' | 'bear' | 'cat' · creature: 'dragon' | 'alien' | 'imp' · 'custom'
   skin: 'vinyl_cream',
@@ -2015,7 +2019,7 @@ function playClip(rawName, fadeSec = 0.22) {
 }
 
 function updateStatusText() {
-  const edTag = loco.edition === 'pro' ? 'Pro 8+' : 'Snap 3+';
+  const edTag = loco.edition === 'motion' ? 'Motion 8+' : 'Snap 3+';
   const vehObj = VEHICLE_OPTIONS.find(v => v.id === loco.vehicle);
   const vehTag = loco.vehicle !== 'none' ? ` · ${vehObj ? vehObj.label : loco.vehicle}` : '';
   const digTag = loco.hasPhotoAccessory ? ' · <span style="color:#5b2ee8">prints:false</span>' : '';
@@ -2031,17 +2035,21 @@ function updateStatusText() {
   }
 }
 
+// One entry per clip that has a button; the side menu's Clip select lists the same entries.
+const clipButtons = [];
+function triggerClip(name) {
+  if (loco.buildMode !== 'assembled') exitPileMode();
+  loco.manualOverride = (name !== 'idle');
+  playClip(name);
+}
 function addClipButton(name, label) {
   const row = document.getElementById('row-clips');
   const btn = document.createElement('button');
   btn.dataset.clip = name;
   btn.textContent = label;
-  btn.addEventListener('click', () => {
-    if (loco.buildMode !== 'assembled') exitPileMode();
-    loco.manualOverride = (name !== 'idle');
-    playClip(name);
-  });
+  btn.addEventListener('click', () => triggerClip(name));
   row.appendChild(btn);
+  clipButtons.push({ id: name, label });
 }
 
 // Camera helper for deterministic framing (shifts target slightly lower when bottom UI dock is visible so subject stays clear!)
@@ -2237,7 +2245,7 @@ async function init() {
       setBackMode((stats.speed ?? 0) >= 3 ? 'gears' : 'wings');
     }
     if (parts.some(p => p.includes('tail') || p.includes('wheels') || p.includes('cams'))) {
-      setTailMode((stats.spin ?? 0) >= 3 ? 'pro' : 'wag');
+      setTailMode((stats.spin ?? 0) >= 3 ? 'motion' : 'wag');
     }
     if (parts.some(p => p.includes('eyes') || p.includes('lightbar') || p.includes('bulb'))) {
       setCrownMode('ears');
@@ -2271,7 +2279,7 @@ async function init() {
   if (params.get('back'))    setBackMode(params.get('back'));
   if (params.get('tail'))    setTailMode(params.get('tail'));
   if (params.get('prop'))    setPropMode(params.get('prop'));
-  else if (params.get('hand')) setPropMode(['1', 'shaft', 'pro'].includes(params.get('hand')) ? 'shaft' : params.get('hand'));
+  else if (params.get('hand')) setPropMode(['1', 'shaft', 'motion'].includes(params.get('hand')) ? 'shaft' : params.get('hand'));
   if (params.get('covers') !== null) setVehicleCovers(params.get('covers') !== '0');
   if (params.get('racer') !== null) setRacerKit(params.get('racer') !== '0');
   if (params.get('vehicle')) setVehicleMode(params.get('vehicle'), !params.get('cam'));
@@ -2330,30 +2338,30 @@ function getDefaultRestClip() {
 
 function syncNeckAndSeatedVisibility() {
   if (!kip || !kip.exp) return;
-  const isPro = loco.edition === 'pro';
+  const isMotion = loco.edition === 'motion';
   const isClassicHead = loco.head === 'classic';
 
-  // Universal Neck Collar: Classic Kip uses Pro Peg / Snap Turret; PartSpec 2x1 heads snap onto `neck_turret_2x1`!
-  kip.proNeckPeg.visible     = isClassicHead && isPro;
-  kip.snapNeckTurret.visible = isClassicHead && !isPro;
+  // Universal Neck Collar: Classic Kip uses Motion Peg / Snap Turret; PartSpec 2x1 heads snap onto `neck_turret_2x1`!
+  kip.motionNeckPeg.visible     = isClassicHead && isMotion;
+  kip.snapNeckTurret.visible = isClassicHead && !isMotion;
   kip.exp.neckTurret2x1Slot.visible = !isClassicHead;
 
   // Snap (`3+`) 1-piece legs now smoothly flex at hips & digital knees in animations (including all 4 vehicles!),
   // while straightening right back into rigid 1-piece printable parts in Exploded View & Part Pile!
-  for (const s of kip.snapStandingLegSlots) s.visible = !isPro;
+  for (const s of kip.snapStandingLegSlots) s.visible = !isMotion;
   for (const b of kip.bootSlots)            b.visible = true;
   kip.exp.snapSeatedLegsGroup.visible = false;
 }
 
 function setEdition(ed) {
-  loco.edition = (ed === 'snap') ? 'snap' : 'pro';
-  const isPro = loco.edition === 'pro';
-  for (const s of kip.editionParts.pro)  s.visible = isPro;
-  for (const s of kip.editionParts.snap) s.visible = !isPro;
+  loco.edition = (ed === 'snap') ? 'snap' : 'motion';
+  const isMotion = loco.edition === 'motion';
+  for (const s of kip.editionParts.motion)  s.visible = isMotion;
+  for (const s of kip.editionParts.snap) s.visible = !isMotion;
 
-  // Restore joint offsets & rest Snap limb meshes cleanly when switching back to Pro 8+
+  // Restore joint offsets & rest Snap limb meshes cleanly when switching back to Motion 8+
   for (const tag of ['Left', 'Right']) {
-    if (isPro) {
+    if (isMotion) {
       kip.joints[`${tag}ForeArm`].position.set(0, -23.8, 0);
       kip.joints[`${tag}Hand`].position.set(0, -22.6, 0);
       kip.joints[`${tag}Leg`].position.set(0, -25.6, 0);
@@ -2374,11 +2382,11 @@ function setEdition(ed) {
 
   const btn = document.getElementById('btn-edition');
   const badge = document.getElementById('badge-edition');
-  btn.textContent = isPro ? 'Edition: Pro (8+)' : 'Edition: Snap (3+)';
-  btn.classList.toggle('spark-active', isPro);
-  btn.classList.toggle('mint-active', !isPro);
-  badge.textContent = isPro ? 'Pro 8+ Rig' : 'Snap 3+ Rig';
-  badge.classList.toggle('snap-mode', !isPro);
+  btn.textContent = isMotion ? 'Edition: Motion (8+)' : 'Edition: Snap (3+)';
+  btn.classList.toggle('spark-active', isMotion);
+  btn.classList.toggle('mint-active', !isMotion);
+  badge.textContent = isMotion ? 'Motion 8+ Rig' : 'Snap 3+ Rig';
+  badge.classList.toggle('snap-mode', !isMotion);
 
   loco.hasPrevStance = false;
   if (loco.buildMode !== 'assembled') {
@@ -2388,10 +2396,10 @@ function setEdition(ed) {
 }
 
 document.getElementById('btn-edition').addEventListener('click', () => {
-  setEdition(loco.edition === 'pro' ? 'snap' : 'pro');
+  setEdition(loco.edition === 'motion' ? 'snap' : 'motion');
 });
 document.getElementById('badge-edition').addEventListener('click', () => {
-  setEdition(loco.edition === 'pro' ? 'snap' : 'pro');
+  setEdition(loco.edition === 'motion' ? 'snap' : 'motion');
 });
 
 // Exploded View controls
@@ -2407,7 +2415,7 @@ function setExplodeAmount(val, instant = false) {
   updateStatusText();
 }
 
-btnExplode.addEventListener('click', () => {
+function toggleExplode() {
   const turningOn = loco.explodeTarget < 0.5;
   setExplodeAmount(turningOn ? 1.0 : 0.0, false);
   if (turningOn) applyCameraPreset('exploded');
@@ -2417,7 +2425,8 @@ btnExplode.addEventListener('click', () => {
     camera.position.set(cx + 175, 162, cz + 415);
     controls.target.set(cx, 68, cz);
   }
-});
+}
+btnExplode.addEventListener('click', toggleExplode);
 rngExplode.addEventListener('input', e => {
   setExplodeAmount(parseFloat(e.target.value) / 100, true);
 });
@@ -2470,10 +2479,11 @@ function startPileToBuild(autoFrame = false) {
   updateStatusText();
 }
 
-btnPile.addEventListener('click', () => {
+function togglePartPile() {
   if (loco.buildMode === 'pile') exitPileMode();
   else enterPartPile(true);
-});
+}
+btnPile.addEventListener('click', togglePartPile);
 btnBuild.addEventListener('click', () => startPileToBuild(true));
 
 function refreshPileIfActive() {
@@ -2768,7 +2778,7 @@ function syncWardrobeCategoryUi({ isHuman, canWearHat, hasHair }) {
   btnHat.textContent = canWearHat ? `${hatWord}: ${hatLbl}` : `${hatWord}: N/A (Sculpted)`;
 
   // Leaving the classic head hides the ear pods; keep the model in sync with the hidden button.
-  if (loco.head !== 'classic' && (kip.snapEarPods.visible || kip.proEarScanner.visible)) setEarMode('off');
+  if (loco.head !== 'classic' && (kip.snapEarPods.visible || kip.motionEarScanner.visible)) setEarMode('off');
 }
 
 function setHeadMode(headId) {
@@ -2897,15 +2907,15 @@ document.getElementById('btn-crown').addEventListener('click', () => {
   setCrownMode(next.id);
 });
 
-const earModes = ['off', 'comm', 'pro'];
-const earLabels = { off: 'Off', comm: 'Comm-Pods', pro: 'Pro Scanner' };
+const earModes = ['off', 'comm', 'motion'];
+const earLabels = { off: 'Off', comm: 'Comm-Pods', pro: 'Motion Scanner' };
 let earIdx = 0;
 
 function setEarMode(mode) {
   earIdx = Math.max(0, earModes.indexOf(mode));
   const m = earModes[earIdx];
   kip.snapEarPods.visible   = (m === 'comm');
-  kip.proEarScanner.visible = (m === 'pro');
+  kip.motionEarScanner.visible = (m === 'motion');
   const btn = document.getElementById('btn-ears');
   btn.textContent = `Ears: ${earLabels[m]}`;
   btn.classList.toggle('spark-active', m !== 'off');
@@ -2924,7 +2934,7 @@ function setBackMode(mode) {
   kip.exp.explorerGroup.visible  = (loco.back === 'explorer');
   kip.exp.jetpackGroup.visible   = (loco.back === 'jetpack');
   kip.wingsGroup.visible         = (loco.back === 'wings');
-  kip.proBackGroup.visible       = (loco.back === 'gears');
+  kip.motionBackGroup.visible       = (loco.back === 'gears');
   kip.exp.customBackGroup.visible = (loco.back === 'custom');
 
   const lbl = found ? found.label : 'Custom / Photo Wings';
@@ -2940,15 +2950,15 @@ document.getElementById('btn-back').addEventListener('click', () => {
   setBackMode(next.id);
 });
 
-const tailModes = ['off', 'wag', 'pro'];
-const tailLabels = { off: 'Off', wag: 'Wag-Tail', pro: 'Pro Wheelie' };
+const tailModes = ['off', 'wag', 'motion'];
+const tailLabels = { off: 'Off', wag: 'Wag-Tail', pro: 'Motion Wheelie' };
 let tailIdx = 0;
 
 function setTailMode(mode) {
   tailIdx = Math.max(0, tailModes.indexOf(mode));
   const m = tailModes[tailIdx];
   kip.snapTailGroup.visible = (m === 'wag');
-  kip.proTailGroup.visible  = (m === 'pro');
+  kip.motionTailGroup.visible  = (m === 'motion');
   const btn = document.getElementById('btn-tail');
   btn.textContent = `Tail: ${tailLabels[m]}`;
   btn.classList.toggle('spark-active', m !== 'off');
@@ -2971,7 +2981,7 @@ function setPropMode(mode) {
   kip.exp.wrenchGroup.visible     = (loco.prop === 'wrench');
   kip.exp.shieldGroup.visible     = (loco.prop === 'shield');
   for (const [wid, wgrp] of Object.entries(kip.exp.workshopGroups || {})) wgrp.visible = (loco.prop === wid);
-  kip.proStaffGroup.visible       = (loco.prop === 'shaft');
+  kip.motionStaffGroup.visible       = (loco.prop === 'shaft');
   kip.exp.skateboardGroup.visible = (loco.prop === 'skateboard');
   kip.exp.customWandGroup.visible = (loco.prop === 'wand');
   kip.exp.customHandGroup.visible = (loco.prop === 'custom');
@@ -3081,7 +3091,7 @@ document.querySelectorAll('button[data-veh]').forEach(btn => {
   btn.addEventListener('click', () => setVehicleMode(btn.dataset.veh, true));
 });
 
-const presets = ['clean', 'boy', 'girl', 'kai', 'scout', 'cat', 'fox', 'dragon', 'imp', 'pro'];
+const presets = ['clean', 'boy', 'girl', 'kai', 'scout', 'cat', 'fox', 'dragon', 'imp', 'motion'];
 const presetLabels = {
   clean: 'Clean',
   boy:   'Leo Explorer',
@@ -3092,7 +3102,7 @@ const presetLabels = {
   fox:   'Fox Scooter',
   dragon: 'Drake Dragon',
   imp:   'Yeti Imp',
-  pro:   'Bolt Pro 8+',
+  pro:   'Bolt Motion 8+',
 };
 let presetIdx = 0;
 
@@ -3160,12 +3170,12 @@ function applyPreset(name) {
     setEarMode('off'); setBackMode('explorer'); setTailMode('wag'); setPropMode('off');
     setVehicleCovers(true);
     setVehicleMode('scooter', false);
-  } else if (p === 'pro') {
+  } else if (p === 'motion') {
     setVehicleMode('none', false);
     setHeadMode('robot'); setSkinTone('vinyl_cream'); setHairMode('off');
     setShirtMode('off'); setPantsMode('off');
     setFaceMode('spark'); setCrownMode('horns');
-    setEarMode('pro'); setBackMode('jetpack'); setTailMode('pro'); setPropMode('shaft');
+    setEarMode('motion'); setBackMode('jetpack'); setTailMode('motion'); setPropMode('shaft');
   }
   const btn = document.getElementById('btn-preset');
   btn.textContent = `Preset: ${presetLabels[p]}`;
@@ -3187,8 +3197,8 @@ document.getElementById('btn-Skeleton').addEventListener('click', toggleRefSkele
 
 const speeds = [1.0, 0.5, 0.25, 1.5];
 let speedIdx = 0;
-document.getElementById('btn-speed').addEventListener('click', () => {
-  speedIdx = (speedIdx + 1) % speeds.length;
+function setSpeedScale(scale) {
+  speedIdx = Math.max(0, speeds.indexOf(scale));
   loco.speedScale = speeds[speedIdx];
   document.getElementById('btn-speed').textContent = `${loco.speedScale}×`;
   if (activeClipName && actions.has(activeClipName)) {
@@ -3197,6 +3207,9 @@ document.getElementById('btn-speed').addEventListener('click', () => {
   if (activeClipName && refActions.has(activeClipName)) {
     refActions.get(activeClipName).setEffectiveTimeScale(loco.speedScale);
   }
+}
+document.getElementById('btn-speed').addEventListener('click', () => {
+  setSpeedScale(speeds[(speedIdx + 1) % speeds.length]);
 });
 
 // --- PHASE 3: CONFORMING LLM PART-MAKER SDK MODAL & CUSTOM .STL MOUNTING ---
@@ -3858,10 +3871,10 @@ function updateExplodeAndPileTransforms(dt) {
   }
 
   // Update dashed Coral Spark assembly guide lines!
-  const torsoId = loco.edition === 'pro' ? 'torso_pro' : 'torso_snap';
+  const torsoId = loco.edition === 'motion' ? 'torso_pro' : 'torso_snap';
   const neckId  = loco.head !== 'classic'
     ? 'neck_turret_2x1'
-    : (loco.edition === 'pro' ? 'neck_peg' : 'neck_turret');
+    : (loco.edition === 'motion' ? 'neck_peg' : 'neck_turret');
   slotCenterMap.set('torso_anchor', slotCenterMap.get(torsoId) || kip.hips.getWorldPosition(new THREE.Vector3()));
   slotCenterMap.set('neck_anchor',  slotCenterMap.get(neckId)  || kip.hips.getWorldPosition(new THREE.Vector3()));
 
@@ -4016,13 +4029,13 @@ function animate() {
 
   // Secondary accessory motion (Pro gears, tail wag, and Photo-to-Accessory flapping wings!)
   const spinRate = (isLocomoting ? (activeClipName === 'run' ? 4.5 : 2.4) : 0.9) * dt * loco.speedScale;
-  if (kip.proBackGroup.visible) {
+  if (kip.motionBackGroup.visible) {
     kip.gearBig.rotation.z += spinRate;
     kip.gearSml.rotation.z -= spinRate * 2.0;
   }
-  if (kip.proStaffGroup.visible) kip.tipGear.rotation.z += spinRate * 2.5;
-  if (kip.proEarScanner.visible) kip.earRadarGear.rotation.z += spinRate * 2.2;
-  if (kip.proTailGroup.visible)  kip.tailWheel.rotation.z += (isLocomoting ? 5.5 : 0.6) * dt * loco.speedScale;
+  if (kip.motionStaffGroup.visible) kip.tipGear.rotation.z += spinRate * 2.5;
+  if (kip.motionEarScanner.visible) kip.earRadarGear.rotation.z += spinRate * 2.2;
+  if (kip.motionTailGroup.visible)  kip.tailWheel.rotation.z += (isLocomoting ? 5.5 : 0.6) * dt * loco.speedScale;
   if (kip.snapTailGroup.visible) {
     const isSad = (activeClipName === 'sad_pose');
     const wagAmp = isSad ? 0.06 : (isLocomoting || activeClipName === 'HeroWave' || activeClipName === 'SambaDance' ? 0.28 : 0.14);
@@ -4050,6 +4063,88 @@ window.addEventListener('resize', () => {
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
+
+// --- SIDE MENU (shipped behind ?menu=side until it matches the dock control for control) ---
+// The panel owns no state: it re-reads `loco` (and the few readers below) every tick and calls the same
+// setters the dock buttons call. The adapter below is the only place it touches this script's scope.
+if (params.get('menu') === 'side') {
+  // Plate view: the character's parts packed flat for printing (kip-print.js does the maths, this just feeds it).
+  const printView = mountPrintView({
+    THREE, scene, camera, controls,
+    getState: () => ({
+      edition: loco.edition, category: loco.category, head: loco.head, faceInsert: loco.faceInsert, expr: loco.expr,
+      hair: loco.hair, hat: loco.hat, back: loco.back, prop: loco.prop, vehicle: loco.vehicle,
+      ears: earModes[earIdx], tail: tailModes[tailIdx],
+    }),
+    setCharacterVisible: on => { kip.mover.visible = on; originRing.visible = on; },
+  });
+  window.kipPrint = printView;
+  // Selfie face (memory only, never in the URL or storage): wears a photo on the flat face insert and puts the
+  // previous face back on Remove. Anything that would leave a human head first removes it, so a photo never lingers.
+  let selfieBefore = null;
+  const selfie = mountSelfie({
+    apply: canvas => {
+      if (loco.expr !== 'selfie') selfieBefore = { expr: loco.expr, insert: loco.faceInsert };
+      setSelfieCanvas(canvas);
+      loco.expr = 'selfie';
+      setFaceInsertMode('flat');
+    },
+    restore: () => {
+      setSelfieCanvas(null);
+      if (loco.expr === 'selfie') loco.expr = selfieBefore?.expr ?? 'spark';
+      setFaceInsertMode(selfieBefore?.insert ?? 'sculpted');
+      selfieBefore = null;
+    },
+  });
+  window.kipSelfie = selfie;
+  const leaveSelfie = () => { if (loco.expr === 'selfie') selfie.remove(); };
+  window.kipMenu = mountKipMenu({
+    loco,
+    camera,
+    selfie: { open: selfie.open, remove: selfie.remove },
+    print: {
+      isOn: printView.isOn, busy: printView.isBusy, summary: printView.summary,
+      setOn: on => (on ? printView.enter() : printView.exit()),
+      plateCount: printView.plateCount, plateIndex: printView.plateIndex, setPlate: printView.setPlate,
+      download: printView.download,
+    },
+    ready: () => window.__KIP_READY__ === true,
+    speeds,
+    presets: presets.map(id => ({ id, label: presetLabels[id] })),
+    clips: () => clipButtons,
+    read: {
+      ears: () => earModes[earIdx],
+      tail: () => tailModes[tailIdx],
+      preset: () => presets[presetIdx],
+      speed: () => loco.speedScale,
+      clip: () => activeClipName,
+      refOn: () => refSkeletonGroup?.visible === true,
+      explodeOn: () => loco.explodeTarget >= 0.5,
+      pileOn: () => loco.buildMode === 'pile',
+    },
+    act: {
+      setCategory: id => { if (id !== 'human') leaveSelfie(); setCategoryMode(id); },
+      setHead: id => {
+        if (!HUMAN_HEAD_IDS.has(id)) leaveSelfie();
+        setHeadMode(id);
+        // Stepping onto the chibi head switches to the vinyl insert; a photo must stay on the flat one.
+        if (loco.expr === 'selfie' && loco.faceInsert !== 'flat') setFaceInsertMode('flat');
+      },
+      setFace: id => { leaveSelfie(); setFaceMode(id); },
+      setFaceInsert: id => { if (id !== 'flat') leaveSelfie(); setFaceInsertMode(id); }, setSkin: setSkinTone, setHair: setHairMode,
+      setHairColor, setHat: setCrownMode, setHatColor, setShirt: setShirtMode,
+      setPants: setPantsMode, setBack: setBackMode, setEars: setEarMode, setTail: setTailMode,
+      setProp: setPropMode, setVehicle: id => setVehicleMode(id, true),
+      setCovers: setVehicleCovers, setRacerKit, setEdition, applyPreset: name => { leaveSelfie(); applyPreset(name); },
+      playClip: triggerClip, setSpeed: setSpeedScale,
+      toggleExplode, setExplode: v => setExplodeAmount(v, true), togglePile: togglePartPile,
+      startBuild: () => startPileToBuild(true), toggleRef: toggleRefSkeleton,
+      openLlm: () => modalLlm.classList.add('open'),
+      openPhoto: () => modalPhoto.classList.add('open'),
+      loadFile: loadCustomMixamoOrStlFile,
+    },
+  });
+}
 
 init().catch(err => {
   console.error(err);

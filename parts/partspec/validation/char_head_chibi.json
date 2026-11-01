@@ -1,19 +1,19 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_char_head_chibi_S.stl",
-  "file_sha256": "1c2d9e7183c1311513b2cd506b905281c39711da36564433115ad65759596638",
+  "file_sha256": "d24402a0531e05920da9da952c0614265210b7b88def786b035059ce5a795e93",
   "part_id": "char_head_chibi",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-10-31T14:36:09Z",
+  "checked_at": "2026-11-01T02:44:27Z",
   "metrics": {
     "bbox_mm": [
-      36.82,
+      39.48,
       28.02,
       34.2
     ],
-    "volume_cm3": 20.01,
-    "surface_cm2": 46.42,
-    "triangles": 10748,
+    "volume_cm3": 20.06,
+    "surface_cm2": 46.57,
+    "triangles": 11160,
     "ledges": [],
     "layers": 171,
     "bed_contact_mm2": 207.5,
@@ -34,16 +34,6 @@
     ]
   },
   "bridges": [
-    {
-      "z_mm": 9.6,
-      "span_mm": 0.35,
-      "area_mm2": 0.5
-    },
-    {
-      "z_mm": 9.6,
-      "span_mm": 0.35,
-      "area_mm2": 0.5
-    },
     {
       "z_mm": 15.05,
       "span_mm": 4.86,
@@ -82,7 +72,7 @@
       "level": "block",
       "result": "pass",
       "value": [
-        36.8,
+        39.5,
         28.0,
         34.2
       ],
@@ -115,7 +105,7 @@
       "result": "pass",
       "value": 6.7,
       "limit": 20,
-      "detail": "5 bridge(s); widest unsupported span in mm"
+      "detail": "3 bridge(s); widest unsupported span in mm"
     },
     {
       "id": "V5_no_floating_islands",

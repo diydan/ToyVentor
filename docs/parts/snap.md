@@ -26,7 +26,7 @@ small robots.
 ## Shared character modules
 
 Fixed-pose Snap figures share named head, torso, limb, tail, accessory, and
-end-effector roles with Pro’s articulated figures. Every claimed join needs
+end-effector roles with Motion’s articulated figures. Every claimed join needs
 typed connectors; visual resemblance alone is not compatibility.
 
 ## Design rules

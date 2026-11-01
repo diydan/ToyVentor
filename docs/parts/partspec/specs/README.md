@@ -8,7 +8,7 @@ Every number lives in `interfaces.json`, the single source of truth; where a doc
 | --- | --- |
 | [01_interface_standard.md](01_interface_standard.md) | The standard: lattice, interfaces, checks, fit and tolerance, conformance (generated from interfaces.json) |
 | [02_snap_spec.md](02_snap_spec.md) | Snap line: sizes, part types, how parts connect, design and safety rules |
-| [03_pro_spec.md](03_pro_spec.md) | Pro line: base standard, families, pin-and-bore and gear rules, fit, print rules |
+| [03_motion_spec.md](03_motion_spec.md) | Motion line: base standard, families, pin-and-bore and gear rules, fit, print rules |
 | [04_forge_mount_spec.md](04_forge_mount_spec.md) | Forge Mount: faces, outlines, peg hole, hugging and clip-on shoes, join pins |
 | [05_catalog.md](05_catalog.md) | The 30 + 30 part catalog and its live status (generated) |
 | [06_agent_instructions.md](06_agent_instructions.md) | Rules, commands and part list for AI agents (generated) |
@@ -22,8 +22,9 @@ Every number lives in `interfaces.json`, the single source of truth; where a doc
 
 | Line | Verified | Target |
 | --- | --- | --- |
-| Snap | 114 | 114 |
-| Pro | 71 | 71 |
+| Snap | 106 | 106 |
+| Motion | 79 | 79 |
+| Pro | 0 | 0 |
 
 Verified means every geometry and fit check passes. Nothing has been printed yet, so printed-fit and breakage checks are pending for every part.
 

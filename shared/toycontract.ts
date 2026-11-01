@@ -28,7 +28,7 @@ export const WORLD_PATH = "/";
 /** Legacy iframe world path; worker 302-redirects it to `/` (hash preserved). */
 export const LEGACY_WORLD_PATH = "/world/ToyVentor-World.html";
 
-/** Standalone 3D Modular Rig Demo for Kip (Pro 8+ & Snap 4–8, Mixamo locomotion,
+/** Standalone 3D Modular Rig Demo for Kip (Motion 8+ & Snap 4–8, Mixamo locomotion,
  *  Exploded View, and Tabletop Part-Pile-to-Build animation). */
 export const KIP_DEMO_PATH = "/kip/Kip-Demo.html";
 

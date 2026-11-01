@@ -1,10 +1,10 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_hair_pigtails_S.stl",
-  "file_sha256": "7aedd124d6f5d151f1b17ca9cf1fa361002d0393abc5f004b69de333bb06fd79",
+  "file_sha256": "25189aae35a0838ffef5515a1bd560d97a6d71d31ea70d3095262a20d3dd0a21",
   "part_id": "hair_pigtails",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-10-31T14:41:55Z",
+  "checked_at": "2026-11-01T02:45:28Z",
   "metrics": {
     "bbox_mm": [
       68.1,
@@ -12,8 +12,8 @@
       30.8
     ],
     "volume_cm3": 12.54,
-    "surface_cm2": 74.36,
-    "triangles": 4700,
+    "surface_cm2": 74.47,
+    "triangles": 5546,
     "ledges": [
       {
         "z_mm": 5.5,
@@ -25,9 +25,9 @@
       }
     ],
     "layers": 154,
-    "bed_contact_mm2": 173.3,
+    "bed_contact_mm2": 176.4,
     "height_mm": 30.8,
-    "slenderness": 2.34,
+    "slenderness": 2.32,
     "centre_of_mass_over_contact": true,
     "min_wall_mm": 0.633,
     "thin_wall_regions": [
@@ -164,9 +164,9 @@
       "id": "V9_bed_contact",
       "level": "info",
       "result": "pass",
-      "value": 173.3,
+      "value": 176.4,
       "limit": null,
-      "detail": "height / sqrt(contact) = 2.34; above about 3 the slicer often asks for a brim"
+      "detail": "height / sqrt(contact) = 2.32; above about 3 the slicer often asks for a brim"
     },
     {
       "id": "V8_wall_thickness",

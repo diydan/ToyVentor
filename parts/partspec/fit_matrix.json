@@ -1332,7 +1332,7 @@
     },
     {
       "male": "mini_plate.top_studs",
-      "female": "pro_steer_bridge.under_sockets",
+      "female": "motion_steer_bridge.under_sockets",
       "size_class": "small",
       "studs": 4,
       "gap_min_mm": 0.05,
@@ -3278,7 +3278,7 @@
     },
     {
       "male": "plate_s_2x2.top_studs",
-      "female": "pro_steer_bridge.under_sockets",
+      "female": "motion_steer_bridge.under_sockets",
       "size_class": "small",
       "studs": 4,
       "gap_min_mm": 0.05,
@@ -4552,7 +4552,7 @@
     },
     {
       "male": "plate_s_4x4.top_studs",
-      "female": "pro_steer_bridge.under_sockets",
+      "female": "motion_steer_bridge.under_sockets",
       "size_class": "small",
       "studs": 4,
       "gap_min_mm": 0.05,
@@ -5826,7 +5826,7 @@
     },
     {
       "male": "brick_s_2x2.top_studs",
-      "female": "pro_steer_bridge.under_sockets",
+      "female": "motion_steer_bridge.under_sockets",
       "size_class": "small",
       "studs": 4,
       "gap_min_mm": 0.05,
@@ -7100,7 +7100,7 @@
     },
     {
       "male": "forge_mount_ring_s.top_studs",
-      "female": "pro_steer_bridge.under_sockets",
+      "female": "motion_steer_bridge.under_sockets",
       "size_class": "small",
       "studs": 4,
       "gap_min_mm": 0.05,
@@ -7368,7 +7368,7 @@
     },
     {
       "male": "pin_friction.axis",
-      "female": "adapter_snap_pro.bores",
+      "female": "adapter_snap_motion.bores",
       "size_class": "pro",
       "fit": "friction",
       "studs": 0,
@@ -7758,7 +7758,7 @@
     },
     {
       "male": "pin_friction.axis",
-      "female": "pro_steer_bridge.kingpins",
+      "female": "motion_steer_bridge.kingpins",
       "size_class": "pro",
       "fit": "friction",
       "studs": 0,
@@ -7771,7 +7771,7 @@
     },
     {
       "male": "pin_friction.axis",
-      "female": "pro_steer_knuckle_l.kingpin_bore",
+      "female": "motion_steer_knuckle_l.kingpin_bore",
       "size_class": "pro",
       "fit": "friction",
       "studs": 0,
@@ -7784,7 +7784,7 @@
     },
     {
       "male": "pin_friction.axis",
-      "female": "pro_steer_knuckle_l.tierod_bore",
+      "female": "motion_steer_knuckle_l.tierod_bore",
       "size_class": "pro",
       "fit": "friction",
       "studs": 0,
@@ -7797,7 +7797,7 @@
     },
     {
       "male": "pin_friction.axis",
-      "female": "pro_steer_knuckle_r.kingpin_bore",
+      "female": "motion_steer_knuckle_r.kingpin_bore",
       "size_class": "pro",
       "fit": "friction",
       "studs": 0,
@@ -7810,7 +7810,7 @@
     },
     {
       "male": "pin_friction.axis",
-      "female": "pro_steer_knuckle_r.tierod_bore",
+      "female": "motion_steer_knuckle_r.tierod_bore",
       "size_class": "pro",
       "fit": "friction",
       "studs": 0,
@@ -7823,7 +7823,7 @@
     },
     {
       "male": "pin_friction.axis",
-      "female": "pro_steer_rack.tierod_bores",
+      "female": "motion_steer_rack.tierod_bores",
       "size_class": "pro",
       "fit": "friction",
       "studs": 0,
@@ -7836,7 +7836,7 @@
     },
     {
       "male": "pin_friction.axis",
-      "female": "pro_fork_rake_adpt.fork_bores",
+      "female": "motion_fork_rake_adpt.fork_bores",
       "size_class": "pro",
       "fit": "friction",
       "studs": 0,
@@ -7849,7 +7849,7 @@
     },
     {
       "male": "pin_friction.axis",
-      "female": "pro_axle_keeper.keeper_bores",
+      "female": "motion_axle_keeper.keeper_bores",
       "size_class": "pro",
       "fit": "friction",
       "studs": 0,
@@ -8135,7 +8135,7 @@
     },
     {
       "male": "pin_friction_long.axis",
-      "female": "adapter_snap_pro.bores",
+      "female": "adapter_snap_motion.bores",
       "size_class": "pro",
       "fit": "friction",
       "studs": 0,
@@ -8525,7 +8525,7 @@
     },
     {
       "male": "pin_friction_long.axis",
-      "female": "pro_steer_bridge.kingpins",
+      "female": "motion_steer_bridge.kingpins",
       "size_class": "pro",
       "fit": "friction",
       "studs": 0,
@@ -8538,7 +8538,7 @@
     },
     {
       "male": "pin_friction_long.axis",
-      "female": "pro_steer_knuckle_l.kingpin_bore",
+      "female": "motion_steer_knuckle_l.kingpin_bore",
       "size_class": "pro",
       "fit": "friction",
       "studs": 0,
@@ -8551,7 +8551,7 @@
     },
     {
       "male": "pin_friction_long.axis",
-      "female": "pro_steer_knuckle_l.tierod_bore",
+      "female": "motion_steer_knuckle_l.tierod_bore",
       "size_class": "pro",
       "fit": "friction",
       "studs": 0,
@@ -8564,7 +8564,7 @@
     },
     {
       "male": "pin_friction_long.axis",
-      "female": "pro_steer_knuckle_r.kingpin_bore",
+      "female": "motion_steer_knuckle_r.kingpin_bore",
       "size_class": "pro",
       "fit": "friction",
       "studs": 0,
@@ -8577,7 +8577,7 @@
     },
     {
       "male": "pin_friction_long.axis",
-      "female": "pro_steer_knuckle_r.tierod_bore",
+      "female": "motion_steer_knuckle_r.tierod_bore",
       "size_class": "pro",
       "fit": "friction",
       "studs": 0,
@@ -8590,7 +8590,7 @@
     },
     {
       "male": "pin_friction_long.axis",
-      "female": "pro_steer_rack.tierod_bores",
+      "female": "motion_steer_rack.tierod_bores",
       "size_class": "pro",
       "fit": "friction",
       "studs": 0,
@@ -8603,7 +8603,7 @@
     },
     {
       "male": "pin_friction_long.axis",
-      "female": "pro_fork_rake_adpt.fork_bores",
+      "female": "motion_fork_rake_adpt.fork_bores",
       "size_class": "pro",
       "fit": "friction",
       "studs": 0,
@@ -8616,7 +8616,7 @@
     },
     {
       "male": "pin_friction_long.axis",
-      "female": "pro_axle_keeper.keeper_bores",
+      "female": "motion_axle_keeper.keeper_bores",
       "size_class": "pro",
       "fit": "friction",
       "studs": 0,
@@ -8938,7 +8938,7 @@
     },
     {
       "male": "pin_free.axis",
-      "female": "adapter_snap_pro.bores",
+      "female": "adapter_snap_motion.bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -9418,7 +9418,7 @@
     },
     {
       "male": "pin_free.axis",
-      "female": "pro_steer_bridge.kingpins",
+      "female": "motion_steer_bridge.kingpins",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -9434,7 +9434,7 @@
     },
     {
       "male": "pin_free.axis",
-      "female": "pro_steer_knuckle_l.kingpin_bore",
+      "female": "motion_steer_knuckle_l.kingpin_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -9450,7 +9450,7 @@
     },
     {
       "male": "pin_free.axis",
-      "female": "pro_steer_knuckle_l.tierod_bore",
+      "female": "motion_steer_knuckle_l.tierod_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -9466,7 +9466,7 @@
     },
     {
       "male": "pin_free.axis",
-      "female": "pro_steer_knuckle_r.kingpin_bore",
+      "female": "motion_steer_knuckle_r.kingpin_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -9482,7 +9482,7 @@
     },
     {
       "male": "pin_free.axis",
-      "female": "pro_steer_knuckle_r.tierod_bore",
+      "female": "motion_steer_knuckle_r.tierod_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -9498,7 +9498,7 @@
     },
     {
       "male": "pin_free.axis",
-      "female": "pro_steer_rack.tierod_bores",
+      "female": "motion_steer_rack.tierod_bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -9514,7 +9514,7 @@
     },
     {
       "male": "pin_free.axis",
-      "female": "pro_fork_rake_adpt.fork_bores",
+      "female": "motion_fork_rake_adpt.fork_bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -9530,7 +9530,7 @@
     },
     {
       "male": "pin_free.axis",
-      "female": "pro_axle_keeper.keeper_bores",
+      "female": "motion_axle_keeper.keeper_bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -9994,7 +9994,7 @@
     },
     {
       "male": "shaft_tu03.axis",
-      "female": "adapter_snap_pro.bores",
+      "female": "adapter_snap_motion.bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -10714,7 +10714,7 @@
     },
     {
       "male": "shaft_tu03.axis",
-      "female": "pro_steer_bridge.kingpins",
+      "female": "motion_steer_bridge.kingpins",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -10730,7 +10730,7 @@
     },
     {
       "male": "shaft_tu03.axis",
-      "female": "pro_steer_knuckle_l.kingpin_bore",
+      "female": "motion_steer_knuckle_l.kingpin_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -10746,7 +10746,7 @@
     },
     {
       "male": "shaft_tu03.axis",
-      "female": "pro_steer_knuckle_l.tierod_bore",
+      "female": "motion_steer_knuckle_l.tierod_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -10762,7 +10762,7 @@
     },
     {
       "male": "shaft_tu03.axis",
-      "female": "pro_steer_knuckle_r.kingpin_bore",
+      "female": "motion_steer_knuckle_r.kingpin_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -10778,7 +10778,7 @@
     },
     {
       "male": "shaft_tu03.axis",
-      "female": "pro_steer_knuckle_r.tierod_bore",
+      "female": "motion_steer_knuckle_r.tierod_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -10794,7 +10794,7 @@
     },
     {
       "male": "shaft_tu03.axis",
-      "female": "pro_steer_rack.tierod_bores",
+      "female": "motion_steer_rack.tierod_bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -10810,7 +10810,7 @@
     },
     {
       "male": "shaft_tu03.axis",
-      "female": "pro_fork_rake_adpt.fork_bores",
+      "female": "motion_fork_rake_adpt.fork_bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -10826,7 +10826,7 @@
     },
     {
       "male": "shaft_tu03.axis",
-      "female": "pro_axle_keeper.keeper_bores",
+      "female": "motion_axle_keeper.keeper_bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -11322,7 +11322,7 @@
     },
     {
       "male": "shaft_tu05.axis",
-      "female": "adapter_snap_pro.bores",
+      "female": "adapter_snap_motion.bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -12042,7 +12042,7 @@
     },
     {
       "male": "shaft_tu05.axis",
-      "female": "pro_steer_bridge.kingpins",
+      "female": "motion_steer_bridge.kingpins",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -12058,7 +12058,7 @@
     },
     {
       "male": "shaft_tu05.axis",
-      "female": "pro_steer_knuckle_l.kingpin_bore",
+      "female": "motion_steer_knuckle_l.kingpin_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -12074,7 +12074,7 @@
     },
     {
       "male": "shaft_tu05.axis",
-      "female": "pro_steer_knuckle_l.tierod_bore",
+      "female": "motion_steer_knuckle_l.tierod_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -12090,7 +12090,7 @@
     },
     {
       "male": "shaft_tu05.axis",
-      "female": "pro_steer_knuckle_r.kingpin_bore",
+      "female": "motion_steer_knuckle_r.kingpin_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -12106,7 +12106,7 @@
     },
     {
       "male": "shaft_tu05.axis",
-      "female": "pro_steer_knuckle_r.tierod_bore",
+      "female": "motion_steer_knuckle_r.tierod_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -12122,7 +12122,7 @@
     },
     {
       "male": "shaft_tu05.axis",
-      "female": "pro_steer_rack.tierod_bores",
+      "female": "motion_steer_rack.tierod_bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -12138,7 +12138,7 @@
     },
     {
       "male": "shaft_tu05.axis",
-      "female": "pro_fork_rake_adpt.fork_bores",
+      "female": "motion_fork_rake_adpt.fork_bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -12154,7 +12154,7 @@
     },
     {
       "male": "shaft_tu05.axis",
-      "female": "pro_axle_keeper.keeper_bores",
+      "female": "motion_axle_keeper.keeper_bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -12650,7 +12650,7 @@
     },
     {
       "male": "shaft_tu07.axis",
-      "female": "adapter_snap_pro.bores",
+      "female": "adapter_snap_motion.bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -13370,7 +13370,7 @@
     },
     {
       "male": "shaft_tu07.axis",
-      "female": "pro_steer_bridge.kingpins",
+      "female": "motion_steer_bridge.kingpins",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -13386,7 +13386,7 @@
     },
     {
       "male": "shaft_tu07.axis",
-      "female": "pro_steer_knuckle_l.kingpin_bore",
+      "female": "motion_steer_knuckle_l.kingpin_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -13402,7 +13402,7 @@
     },
     {
       "male": "shaft_tu07.axis",
-      "female": "pro_steer_knuckle_l.tierod_bore",
+      "female": "motion_steer_knuckle_l.tierod_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -13418,7 +13418,7 @@
     },
     {
       "male": "shaft_tu07.axis",
-      "female": "pro_steer_knuckle_r.kingpin_bore",
+      "female": "motion_steer_knuckle_r.kingpin_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -13434,7 +13434,7 @@
     },
     {
       "male": "shaft_tu07.axis",
-      "female": "pro_steer_knuckle_r.tierod_bore",
+      "female": "motion_steer_knuckle_r.tierod_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -13450,7 +13450,7 @@
     },
     {
       "male": "shaft_tu07.axis",
-      "female": "pro_steer_rack.tierod_bores",
+      "female": "motion_steer_rack.tierod_bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -13466,7 +13466,7 @@
     },
     {
       "male": "shaft_tu07.axis",
-      "female": "pro_fork_rake_adpt.fork_bores",
+      "female": "motion_fork_rake_adpt.fork_bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -13482,7 +13482,7 @@
     },
     {
       "male": "shaft_tu07.axis",
-      "female": "pro_axle_keeper.keeper_bores",
+      "female": "motion_axle_keeper.keeper_bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -13673,7 +13673,7 @@
       "measured": true
     },
     {
-      "male": "adapter_snap_pro.top_studs",
+      "male": "adapter_snap_motion.top_studs",
       "female": "mini_plate.under_sockets",
       "size_class": "small",
       "studs": 4,
@@ -13687,7 +13687,7 @@
       ]
     },
     {
-      "male": "adapter_snap_pro.top_studs",
+      "male": "adapter_snap_motion.top_studs",
       "female": "cloud_wings.under_sockets",
       "size_class": "small",
       "studs": 4,
@@ -13701,7 +13701,7 @@
       ]
     },
     {
-      "male": "adapter_snap_pro.top_studs",
+      "male": "adapter_snap_motion.top_studs",
       "female": "pebble_armor_shell.under_sockets",
       "size_class": "small",
       "studs": 4,
@@ -13715,7 +13715,7 @@
       ]
     },
     {
-      "male": "adapter_snap_pro.top_studs",
+      "male": "adapter_snap_motion.top_studs",
       "female": "glow_capsule.under_sockets",
       "size_class": "small",
       "studs": 1,
@@ -13729,7 +13729,7 @@
       ]
     },
     {
-      "male": "adapter_snap_pro.top_studs",
+      "male": "adapter_snap_motion.top_studs",
       "female": "plate_s_2x2.under_sockets",
       "size_class": "small",
       "studs": 4,
@@ -13743,7 +13743,7 @@
       ]
     },
     {
-      "male": "adapter_snap_pro.top_studs",
+      "male": "adapter_snap_motion.top_studs",
       "female": "plate_s_4x4.under_sockets",
       "size_class": "small",
       "studs": 4,
@@ -13757,7 +13757,7 @@
       ]
     },
     {
-      "male": "adapter_snap_pro.top_studs",
+      "male": "adapter_snap_motion.top_studs",
       "female": "brick_s_2x2.under_sockets",
       "size_class": "small",
       "studs": 4,
@@ -13771,7 +13771,7 @@
       ]
     },
     {
-      "male": "adapter_snap_pro.top_studs",
+      "male": "adapter_snap_motion.top_studs",
       "female": "tile_s_2x2.under_sockets",
       "size_class": "small",
       "studs": 4,
@@ -13785,7 +13785,7 @@
       ]
     },
     {
-      "male": "adapter_snap_pro.top_studs",
+      "male": "adapter_snap_motion.top_studs",
       "female": "slope_s_2x2.under_sockets",
       "size_class": "small",
       "studs": 4,
@@ -13799,7 +13799,7 @@
       ]
     },
     {
-      "male": "adapter_snap_pro.top_studs",
+      "male": "adapter_snap_motion.top_studs",
       "female": "dome_s_2x2.under_sockets",
       "size_class": "small",
       "studs": 4,
@@ -13813,7 +13813,7 @@
       ]
     },
     {
-      "male": "adapter_snap_pro.top_studs",
+      "male": "adapter_snap_motion.top_studs",
       "female": "bumper_horns.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -13827,7 +13827,7 @@
       ]
     },
     {
-      "male": "adapter_snap_pro.top_studs",
+      "male": "adapter_snap_motion.top_studs",
       "female": "pointy_ears.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -13841,7 +13841,7 @@
       ]
     },
     {
-      "male": "adapter_snap_pro.top_studs",
+      "male": "adapter_snap_motion.top_studs",
       "female": "wobble_hat.under_sockets",
       "size_class": "small",
       "studs": 1,
@@ -13855,7 +13855,7 @@
       ]
     },
     {
-      "male": "adapter_snap_pro.top_studs",
+      "male": "adapter_snap_motion.top_studs",
       "female": "ridge_fin.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -13869,7 +13869,7 @@
       ]
     },
     {
-      "male": "adapter_snap_pro.top_studs",
+      "male": "adapter_snap_motion.top_studs",
       "female": "zoom_capsule_s.under_sockets",
       "size_class": "small",
       "studs": 1,
@@ -13883,7 +13883,7 @@
       ]
     },
     {
-      "male": "adapter_snap_pro.top_studs",
+      "male": "adapter_snap_motion.top_studs",
       "female": "bounce_capsule_s.under_sockets",
       "size_class": "small",
       "studs": 1,
@@ -13897,7 +13897,7 @@
       ]
     },
     {
-      "male": "adapter_snap_pro.top_studs",
+      "male": "adapter_snap_motion.top_studs",
       "female": "racer_spoiler.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -13911,7 +13911,7 @@
       ]
     },
     {
-      "male": "adapter_snap_pro.top_studs",
+      "male": "adapter_snap_motion.top_studs",
       "female": "racer_bull_bar.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -13925,7 +13925,7 @@
       ]
     },
     {
-      "male": "adapter_snap_pro.top_studs",
+      "male": "adapter_snap_motion.top_studs",
       "female": "racer_hood_scoop.under_sockets",
       "size_class": "small",
       "studs": 4,
@@ -13939,7 +13939,7 @@
       ]
     },
     {
-      "male": "adapter_snap_pro.top_studs",
+      "male": "adapter_snap_motion.top_studs",
       "female": "racer_twin_exhaust.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -13953,7 +13953,7 @@
       ]
     },
     {
-      "male": "adapter_snap_pro.top_studs",
+      "male": "adapter_snap_motion.top_studs",
       "female": "racer_light_bar.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -13967,7 +13967,7 @@
       ]
     },
     {
-      "male": "adapter_snap_pro.top_studs",
+      "male": "adapter_snap_motion.top_studs",
       "female": "racer_roof_rack.under_sockets",
       "size_class": "small",
       "studs": 4,
@@ -13981,7 +13981,7 @@
       ]
     },
     {
-      "male": "adapter_snap_pro.top_studs",
+      "male": "adapter_snap_motion.top_studs",
       "female": "waddle_tail_s.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -13995,7 +13995,7 @@
       ]
     },
     {
-      "male": "adapter_snap_pro.top_studs",
+      "male": "adapter_snap_motion.top_studs",
       "female": "robot_legs_stomper.under_sockets",
       "size_class": "small",
       "studs": 4,
@@ -14009,7 +14009,7 @@
       ]
     },
     {
-      "male": "adapter_snap_pro.top_studs",
+      "male": "adapter_snap_motion.top_studs",
       "female": "robot_torso_core.under_sockets",
       "size_class": "small",
       "studs": 4,
@@ -14023,7 +14023,7 @@
       ]
     },
     {
-      "male": "adapter_snap_pro.top_studs",
+      "male": "adapter_snap_motion.top_studs",
       "female": "robot_arms_grabber.under_sockets",
       "size_class": "small",
       "studs": 4,
@@ -14037,7 +14037,7 @@
       ]
     },
     {
-      "male": "adapter_snap_pro.top_studs",
+      "male": "adapter_snap_motion.top_studs",
       "female": "robot_head_visor.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -14051,7 +14051,7 @@
       ]
     },
     {
-      "male": "adapter_snap_pro.top_studs",
+      "male": "adapter_snap_motion.top_studs",
       "female": "robot_back_jetpack.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -14065,7 +14065,7 @@
       ]
     },
     {
-      "male": "adapter_snap_pro.top_studs",
+      "male": "adapter_snap_motion.top_studs",
       "female": "char_head_kid.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -14079,7 +14079,7 @@
       ]
     },
     {
-      "male": "adapter_snap_pro.top_studs",
+      "male": "adapter_snap_motion.top_studs",
       "female": "char_head_chibi.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -14093,7 +14093,7 @@
       ]
     },
     {
-      "male": "adapter_snap_pro.top_studs",
+      "male": "adapter_snap_motion.top_studs",
       "female": "char_head_jumbo.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -14107,7 +14107,7 @@
       ]
     },
     {
-      "male": "adapter_snap_pro.top_studs",
+      "male": "adapter_snap_motion.top_studs",
       "female": "char_head_tall.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -14121,7 +14121,7 @@
       ]
     },
     {
-      "male": "adapter_snap_pro.top_studs",
+      "male": "adapter_snap_motion.top_studs",
       "female": "hair_short_swept.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -14135,7 +14135,7 @@
       ]
     },
     {
-      "male": "adapter_snap_pro.top_studs",
+      "male": "adapter_snap_motion.top_studs",
       "female": "hair_bob.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -14149,7 +14149,7 @@
       ]
     },
     {
-      "male": "adapter_snap_pro.top_studs",
+      "male": "adapter_snap_motion.top_studs",
       "female": "char_head_fox.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -14163,7 +14163,7 @@
       ]
     },
     {
-      "male": "adapter_snap_pro.top_studs",
+      "male": "adapter_snap_motion.top_studs",
       "female": "char_head_bear.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -14177,7 +14177,7 @@
       ]
     },
     {
-      "male": "adapter_snap_pro.top_studs",
+      "male": "adapter_snap_motion.top_studs",
       "female": "robot_head_scout.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -14191,7 +14191,7 @@
       ]
     },
     {
-      "male": "adapter_snap_pro.top_studs",
+      "male": "adapter_snap_motion.top_studs",
       "female": "char_head_cat.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -14205,7 +14205,7 @@
       ]
     },
     {
-      "male": "adapter_snap_pro.top_studs",
+      "male": "adapter_snap_motion.top_studs",
       "female": "char_head_dragon.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -14219,7 +14219,7 @@
       ]
     },
     {
-      "male": "adapter_snap_pro.top_studs",
+      "male": "adapter_snap_motion.top_studs",
       "female": "char_head_alien.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -14233,7 +14233,7 @@
       ]
     },
     {
-      "male": "adapter_snap_pro.top_studs",
+      "male": "adapter_snap_motion.top_studs",
       "female": "char_head_imp.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -14247,7 +14247,7 @@
       ]
     },
     {
-      "male": "adapter_snap_pro.top_studs",
+      "male": "adapter_snap_motion.top_studs",
       "female": "hair_swoosh.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -14261,7 +14261,7 @@
       ]
     },
     {
-      "male": "adapter_snap_pro.top_studs",
+      "male": "adapter_snap_motion.top_studs",
       "female": "hair_long_layered.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -14275,7 +14275,7 @@
       ]
     },
     {
-      "male": "adapter_snap_pro.top_studs",
+      "male": "adapter_snap_motion.top_studs",
       "female": "hair_twin_braids.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -14289,7 +14289,7 @@
       ]
     },
     {
-      "male": "adapter_snap_pro.top_studs",
+      "male": "adapter_snap_motion.top_studs",
       "female": "hair_shag.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -14303,7 +14303,7 @@
       ]
     },
     {
-      "male": "adapter_snap_pro.top_studs",
+      "male": "adapter_snap_motion.top_studs",
       "female": "hair_pompadour.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -14317,7 +14317,7 @@
       ]
     },
     {
-      "male": "adapter_snap_pro.top_studs",
+      "male": "adapter_snap_motion.top_studs",
       "female": "hair_top_bun.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -14331,7 +14331,7 @@
       ]
     },
     {
-      "male": "adapter_snap_pro.top_studs",
+      "male": "adapter_snap_motion.top_studs",
       "female": "hair_side_sweep.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -14345,7 +14345,7 @@
       ]
     },
     {
-      "male": "adapter_snap_pro.top_studs",
+      "male": "adapter_snap_motion.top_studs",
       "female": "hair_spiky.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -14359,7 +14359,7 @@
       ]
     },
     {
-      "male": "adapter_snap_pro.top_studs",
+      "male": "adapter_snap_motion.top_studs",
       "female": "hair_pigtails.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -14373,7 +14373,7 @@
       ]
     },
     {
-      "male": "adapter_snap_pro.top_studs",
+      "male": "adapter_snap_motion.top_studs",
       "female": "hair_ponytail.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -14387,7 +14387,7 @@
       ]
     },
     {
-      "male": "adapter_snap_pro.top_studs",
+      "male": "adapter_snap_motion.top_studs",
       "female": "hair_curly.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -14401,7 +14401,7 @@
       ]
     },
     {
-      "male": "adapter_snap_pro.top_studs",
+      "male": "adapter_snap_motion.top_studs",
       "female": "hair_mohawk.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -14415,7 +14415,7 @@
       ]
     },
     {
-      "male": "adapter_snap_pro.top_studs",
+      "male": "adapter_snap_motion.top_studs",
       "female": "hair_bowl.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -14429,7 +14429,7 @@
       ]
     },
     {
-      "male": "adapter_snap_pro.top_studs",
+      "male": "adapter_snap_motion.top_studs",
       "female": "hair_slick.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -14443,7 +14443,7 @@
       ]
     },
     {
-      "male": "adapter_snap_pro.top_studs",
+      "male": "adapter_snap_motion.top_studs",
       "female": "hair_pixie.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -14457,7 +14457,7 @@
       ]
     },
     {
-      "male": "adapter_snap_pro.top_studs",
+      "male": "adapter_snap_motion.top_studs",
       "female": "hair_side_pony.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -14471,7 +14471,7 @@
       ]
     },
     {
-      "male": "adapter_snap_pro.top_studs",
+      "male": "adapter_snap_motion.top_studs",
       "female": "hair_low_bun.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -14485,7 +14485,7 @@
       ]
     },
     {
-      "male": "adapter_snap_pro.top_studs",
+      "male": "adapter_snap_motion.top_studs",
       "female": "hat_ballcap.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -14499,7 +14499,7 @@
       ]
     },
     {
-      "male": "adapter_snap_pro.top_studs",
+      "male": "adapter_snap_motion.top_studs",
       "female": "hat_beanie.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -14513,7 +14513,7 @@
       ]
     },
     {
-      "male": "adapter_snap_pro.top_studs",
+      "male": "adapter_snap_motion.top_studs",
       "female": "hat_cowboy.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -14527,7 +14527,7 @@
       ]
     },
     {
-      "male": "adapter_snap_pro.top_studs",
+      "male": "adapter_snap_motion.top_studs",
       "female": "hat_hardhat.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -14541,7 +14541,7 @@
       ]
     },
     {
-      "male": "adapter_snap_pro.top_studs",
+      "male": "adapter_snap_motion.top_studs",
       "female": "hat_ranger.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -14555,7 +14555,7 @@
       ]
     },
     {
-      "male": "adapter_snap_pro.top_studs",
+      "male": "adapter_snap_motion.top_studs",
       "female": "hat_tophat.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -14569,7 +14569,7 @@
       ]
     },
     {
-      "male": "adapter_snap_pro.top_studs",
+      "male": "adapter_snap_motion.top_studs",
       "female": "hat_pirate.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -14583,7 +14583,7 @@
       ]
     },
     {
-      "male": "adapter_snap_pro.top_studs",
+      "male": "adapter_snap_motion.top_studs",
       "female": "pack_explorer.under_sockets",
       "size_class": "small",
       "studs": 4,
@@ -14597,7 +14597,7 @@
       ]
     },
     {
-      "male": "adapter_snap_pro.top_studs",
+      "male": "adapter_snap_motion.top_studs",
       "female": "char_legs_seated.under_sockets",
       "size_class": "small",
       "studs": 4,
@@ -14611,7 +14611,7 @@
       ]
     },
     {
-      "male": "adapter_snap_pro.top_studs",
+      "male": "adapter_snap_motion.top_studs",
       "female": "veh_car_hood_cover.under_sockets",
       "size_class": "small",
       "studs": 4,
@@ -14625,7 +14625,7 @@
       ]
     },
     {
-      "male": "adapter_snap_pro.top_studs",
+      "male": "adapter_snap_motion.top_studs",
       "female": "veh_cab_roof_cover.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -14639,7 +14639,7 @@
       ]
     },
     {
-      "male": "adapter_snap_pro.top_studs",
+      "male": "adapter_snap_motion.top_studs",
       "female": "veh_truck_bed_cover.under_sockets",
       "size_class": "small",
       "studs": 4,
@@ -14653,7 +14653,7 @@
       ]
     },
     {
-      "male": "adapter_snap_pro.top_studs",
+      "male": "adapter_snap_motion.top_studs",
       "female": "veh_scooter_fairing.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -14667,7 +14667,7 @@
       ]
     },
     {
-      "male": "adapter_snap_pro.top_studs",
+      "male": "adapter_snap_motion.top_studs",
       "female": "veh_moto_cowling.under_sockets",
       "size_class": "small",
       "studs": 4,
@@ -14681,7 +14681,7 @@
       ]
     },
     {
-      "male": "adapter_snap_pro.top_studs",
+      "male": "adapter_snap_motion.top_studs",
       "female": "kit_aero_wedge.under_sockets",
       "size_class": "small",
       "studs": 4,
@@ -14695,7 +14695,7 @@
       ]
     },
     {
-      "male": "adapter_snap_pro.top_studs",
+      "male": "adapter_snap_motion.top_studs",
       "female": "kit_windscreen.under_sockets",
       "size_class": "small",
       "studs": 3,
@@ -14709,7 +14709,7 @@
       ]
     },
     {
-      "male": "adapter_snap_pro.top_studs",
+      "male": "adapter_snap_motion.top_studs",
       "female": "kit_foil_wing.under_sockets",
       "size_class": "small",
       "studs": 4,
@@ -14723,7 +14723,7 @@
       ]
     },
     {
-      "male": "adapter_snap_pro.top_studs",
+      "male": "adapter_snap_motion.top_studs",
       "female": "kit_skid_runner.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -14737,7 +14737,7 @@
       ]
     },
     {
-      "male": "adapter_snap_pro.top_studs",
+      "male": "adapter_snap_motion.top_studs",
       "female": "kit_tilting_tub.under_sockets",
       "size_class": "small",
       "studs": 4,
@@ -14751,7 +14751,7 @@
       ]
     },
     {
-      "male": "adapter_snap_pro.top_studs",
+      "male": "adapter_snap_motion.top_studs",
       "female": "kit_scoop_blade.under_sockets",
       "size_class": "small",
       "studs": 4,
@@ -14765,7 +14765,7 @@
       ]
     },
     {
-      "male": "adapter_snap_pro.top_studs",
+      "male": "adapter_snap_motion.top_studs",
       "female": "kit_booster_pod.under_sockets",
       "size_class": "small",
       "studs": 4,
@@ -14779,7 +14779,7 @@
       ]
     },
     {
-      "male": "adapter_snap_pro.top_studs",
+      "male": "adapter_snap_motion.top_studs",
       "female": "kit_turntable.under_sockets",
       "size_class": "small",
       "studs": 4,
@@ -14793,7 +14793,7 @@
       ]
     },
     {
-      "male": "adapter_snap_pro.top_studs",
+      "male": "adapter_snap_motion.top_studs",
       "female": "skin_aero_cowl.under_sockets",
       "size_class": "small",
       "studs": 4,
@@ -14807,7 +14807,7 @@
       ]
     },
     {
-      "male": "adapter_snap_pro.top_studs",
+      "male": "adapter_snap_motion.top_studs",
       "female": "skin_windscreen.under_sockets",
       "size_class": "small",
       "studs": 4,
@@ -14821,7 +14821,7 @@
       ]
     },
     {
-      "male": "adapter_snap_pro.top_studs",
+      "male": "adapter_snap_motion.top_studs",
       "female": "skin_cargo_shroud.under_sockets",
       "size_class": "small",
       "studs": 4,
@@ -14835,8 +14835,8 @@
       ]
     },
     {
-      "male": "adapter_snap_pro.top_studs",
-      "female": "pro_steer_bridge.under_sockets",
+      "male": "adapter_snap_motion.top_studs",
+      "female": "motion_steer_bridge.under_sockets",
       "size_class": "small",
       "studs": 4,
       "gap_min_mm": 0.05,
@@ -14849,7 +14849,7 @@
       ]
     },
     {
-      "male": "adapter_snap_pro.top_studs",
+      "male": "adapter_snap_motion.top_studs",
       "female": "mom_band_core_tray.under_sockets",
       "size_class": "small",
       "studs": 4,
@@ -14863,7 +14863,7 @@
       ]
     },
     {
-      "male": "adapter_snap_pro.top_studs",
+      "male": "adapter_snap_motion.top_studs",
       "female": "mom_band_core_lid.under_sockets",
       "size_class": "small",
       "studs": 4,
@@ -14877,7 +14877,7 @@
       ]
     },
     {
-      "male": "adapter_snap_pro.top_studs",
+      "male": "adapter_snap_motion.top_studs",
       "female": "mom_jet_valve_body.under_sockets",
       "size_class": "small",
       "studs": 4,
@@ -14891,7 +14891,7 @@
       ]
     },
     {
-      "male": "adapter_snap_pro.top_studs",
+      "male": "adapter_snap_motion.top_studs",
       "female": "mom_bellows_base.under_sockets",
       "size_class": "small",
       "studs": 4,
@@ -14905,7 +14905,7 @@
       ]
     },
     {
-      "male": "adapter_snap_pro.top_studs",
+      "male": "adapter_snap_motion.top_studs",
       "female": "mom_bellows_leaf.under_sockets",
       "size_class": "small",
       "studs": 4,
@@ -14919,7 +14919,7 @@
       ]
     },
     {
-      "male": "adapter_snap_pro.top_studs",
+      "male": "adapter_snap_motion.top_studs",
       "female": "mom_flywheel_tray.under_sockets",
       "size_class": "small",
       "studs": 4,
@@ -14933,7 +14933,7 @@
       ]
     },
     {
-      "male": "adapter_snap_pro.top_studs",
+      "male": "adapter_snap_motion.top_studs",
       "female": "mom_flywheel_lid.under_sockets",
       "size_class": "small",
       "studs": 4,
@@ -16110,7 +16110,7 @@
     },
     {
       "male": "racer_roof_rack.top_studs",
-      "female": "pro_steer_bridge.under_sockets",
+      "female": "motion_steer_bridge.under_sockets",
       "size_class": "small",
       "studs": 4,
       "gap_min_mm": 0.05,
@@ -17384,7 +17384,7 @@
     },
     {
       "male": "racer_axle_block.top_studs",
-      "female": "pro_steer_bridge.under_sockets",
+      "female": "motion_steer_bridge.under_sockets",
       "size_class": "small",
       "studs": 4,
       "gap_min_mm": 0.05,
@@ -17800,7 +17800,7 @@
     },
     {
       "male": "racer_axle.axis",
-      "female": "adapter_snap_pro.bores",
+      "female": "adapter_snap_motion.bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -18520,7 +18520,7 @@
     },
     {
       "male": "racer_axle.axis",
-      "female": "pro_steer_bridge.kingpins",
+      "female": "motion_steer_bridge.kingpins",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -18536,7 +18536,7 @@
     },
     {
       "male": "racer_axle.axis",
-      "female": "pro_steer_knuckle_l.kingpin_bore",
+      "female": "motion_steer_knuckle_l.kingpin_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -18552,7 +18552,7 @@
     },
     {
       "male": "racer_axle.axis",
-      "female": "pro_steer_knuckle_l.tierod_bore",
+      "female": "motion_steer_knuckle_l.tierod_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -18568,7 +18568,7 @@
     },
     {
       "male": "racer_axle.axis",
-      "female": "pro_steer_knuckle_r.kingpin_bore",
+      "female": "motion_steer_knuckle_r.kingpin_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -18584,7 +18584,7 @@
     },
     {
       "male": "racer_axle.axis",
-      "female": "pro_steer_knuckle_r.tierod_bore",
+      "female": "motion_steer_knuckle_r.tierod_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -18600,7 +18600,7 @@
     },
     {
       "male": "racer_axle.axis",
-      "female": "pro_steer_rack.tierod_bores",
+      "female": "motion_steer_rack.tierod_bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -18616,7 +18616,7 @@
     },
     {
       "male": "racer_axle.axis",
-      "female": "pro_fork_rake_adpt.fork_bores",
+      "female": "motion_fork_rake_adpt.fork_bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -18632,7 +18632,7 @@
     },
     {
       "male": "racer_axle.axis",
-      "female": "pro_axle_keeper.keeper_bores",
+      "female": "motion_axle_keeper.keeper_bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -19986,7 +19986,7 @@
     },
     {
       "male": "robot_legs_stomper.top_studs",
-      "female": "pro_steer_bridge.under_sockets",
+      "female": "motion_steer_bridge.under_sockets",
       "size_class": "small",
       "studs": 4,
       "gap_min_mm": 0.05,
@@ -21260,7 +21260,7 @@
     },
     {
       "male": "robot_torso_core.top_studs",
-      "female": "pro_steer_bridge.under_sockets",
+      "female": "motion_steer_bridge.under_sockets",
       "size_class": "small",
       "studs": 4,
       "gap_min_mm": 0.05,
@@ -22534,7 +22534,7 @@
     },
     {
       "male": "robot_arms_grabber.top_studs",
-      "female": "pro_steer_bridge.under_sockets",
+      "female": "motion_steer_bridge.under_sockets",
       "size_class": "small",
       "studs": 4,
       "gap_min_mm": 0.05,
@@ -23808,7 +23808,7 @@
     },
     {
       "male": "robot_head_visor.top_studs",
-      "female": "pro_steer_bridge.under_sockets",
+      "female": "motion_steer_bridge.under_sockets",
       "size_class": "small",
       "studs": 2,
       "gap_min_mm": 0.05,
@@ -25082,7 +25082,7 @@
     },
     {
       "male": "char_head_kid.top_studs",
-      "female": "pro_steer_bridge.under_sockets",
+      "female": "motion_steer_bridge.under_sockets",
       "size_class": "small",
       "studs": 2,
       "gap_min_mm": 0.05,
@@ -26356,7 +26356,7 @@
     },
     {
       "male": "char_head_chibi.top_studs",
-      "female": "pro_steer_bridge.under_sockets",
+      "female": "motion_steer_bridge.under_sockets",
       "size_class": "small",
       "studs": 2,
       "gap_min_mm": 0.05,
@@ -27630,7 +27630,7 @@
     },
     {
       "male": "char_head_jumbo.top_studs",
-      "female": "pro_steer_bridge.under_sockets",
+      "female": "motion_steer_bridge.under_sockets",
       "size_class": "small",
       "studs": 2,
       "gap_min_mm": 0.05,
@@ -28904,7 +28904,7 @@
     },
     {
       "male": "char_head_tall.top_studs",
-      "female": "pro_steer_bridge.under_sockets",
+      "female": "motion_steer_bridge.under_sockets",
       "size_class": "small",
       "studs": 2,
       "gap_min_mm": 0.05,
@@ -29320,7 +29320,7 @@
     },
     {
       "male": "char_faceplate.axis",
-      "female": "adapter_snap_pro.bores",
+      "female": "adapter_snap_motion.bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -30040,7 +30040,7 @@
     },
     {
       "male": "char_faceplate.axis",
-      "female": "pro_steer_bridge.kingpins",
+      "female": "motion_steer_bridge.kingpins",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -30056,7 +30056,7 @@
     },
     {
       "male": "char_faceplate.axis",
-      "female": "pro_steer_knuckle_l.kingpin_bore",
+      "female": "motion_steer_knuckle_l.kingpin_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -30072,7 +30072,7 @@
     },
     {
       "male": "char_faceplate.axis",
-      "female": "pro_steer_knuckle_l.tierod_bore",
+      "female": "motion_steer_knuckle_l.tierod_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -30088,7 +30088,7 @@
     },
     {
       "male": "char_faceplate.axis",
-      "female": "pro_steer_knuckle_r.kingpin_bore",
+      "female": "motion_steer_knuckle_r.kingpin_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -30104,7 +30104,7 @@
     },
     {
       "male": "char_faceplate.axis",
-      "female": "pro_steer_knuckle_r.tierod_bore",
+      "female": "motion_steer_knuckle_r.tierod_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -30120,7 +30120,7 @@
     },
     {
       "male": "char_faceplate.axis",
-      "female": "pro_steer_rack.tierod_bores",
+      "female": "motion_steer_rack.tierod_bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -30136,7 +30136,7 @@
     },
     {
       "male": "char_faceplate.axis",
-      "female": "pro_fork_rake_adpt.fork_bores",
+      "female": "motion_fork_rake_adpt.fork_bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -30152,7 +30152,7 @@
     },
     {
       "male": "char_faceplate.axis",
-      "female": "pro_axle_keeper.keeper_bores",
+      "female": "motion_axle_keeper.keeper_bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -30648,7 +30648,7 @@
     },
     {
       "male": "char_faceplate_vinyl.axis",
-      "female": "adapter_snap_pro.bores",
+      "female": "adapter_snap_motion.bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -31368,7 +31368,7 @@
     },
     {
       "male": "char_faceplate_vinyl.axis",
-      "female": "pro_steer_bridge.kingpins",
+      "female": "motion_steer_bridge.kingpins",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -31384,7 +31384,7 @@
     },
     {
       "male": "char_faceplate_vinyl.axis",
-      "female": "pro_steer_knuckle_l.kingpin_bore",
+      "female": "motion_steer_knuckle_l.kingpin_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -31400,7 +31400,7 @@
     },
     {
       "male": "char_faceplate_vinyl.axis",
-      "female": "pro_steer_knuckle_l.tierod_bore",
+      "female": "motion_steer_knuckle_l.tierod_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -31416,7 +31416,7 @@
     },
     {
       "male": "char_faceplate_vinyl.axis",
-      "female": "pro_steer_knuckle_r.kingpin_bore",
+      "female": "motion_steer_knuckle_r.kingpin_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -31432,7 +31432,7 @@
     },
     {
       "male": "char_faceplate_vinyl.axis",
-      "female": "pro_steer_knuckle_r.tierod_bore",
+      "female": "motion_steer_knuckle_r.tierod_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -31448,7 +31448,7 @@
     },
     {
       "male": "char_faceplate_vinyl.axis",
-      "female": "pro_steer_rack.tierod_bores",
+      "female": "motion_steer_rack.tierod_bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -31464,7 +31464,7 @@
     },
     {
       "male": "char_faceplate_vinyl.axis",
-      "female": "pro_fork_rake_adpt.fork_bores",
+      "female": "motion_fork_rake_adpt.fork_bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -31480,7 +31480,7 @@
     },
     {
       "male": "char_faceplate_vinyl.axis",
-      "female": "pro_axle_keeper.keeper_bores",
+      "female": "motion_axle_keeper.keeper_bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -31976,7 +31976,7 @@
     },
     {
       "male": "char_faceplate_flat.axis",
-      "female": "adapter_snap_pro.bores",
+      "female": "adapter_snap_motion.bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -32696,7 +32696,7 @@
     },
     {
       "male": "char_faceplate_flat.axis",
-      "female": "pro_steer_bridge.kingpins",
+      "female": "motion_steer_bridge.kingpins",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -32712,7 +32712,7 @@
     },
     {
       "male": "char_faceplate_flat.axis",
-      "female": "pro_steer_knuckle_l.kingpin_bore",
+      "female": "motion_steer_knuckle_l.kingpin_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -32728,7 +32728,7 @@
     },
     {
       "male": "char_faceplate_flat.axis",
-      "female": "pro_steer_knuckle_l.tierod_bore",
+      "female": "motion_steer_knuckle_l.tierod_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -32744,7 +32744,7 @@
     },
     {
       "male": "char_faceplate_flat.axis",
-      "female": "pro_steer_knuckle_r.kingpin_bore",
+      "female": "motion_steer_knuckle_r.kingpin_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -32760,7 +32760,7 @@
     },
     {
       "male": "char_faceplate_flat.axis",
-      "female": "pro_steer_knuckle_r.tierod_bore",
+      "female": "motion_steer_knuckle_r.tierod_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -32776,7 +32776,7 @@
     },
     {
       "male": "char_faceplate_flat.axis",
-      "female": "pro_steer_rack.tierod_bores",
+      "female": "motion_steer_rack.tierod_bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -32792,7 +32792,7 @@
     },
     {
       "male": "char_faceplate_flat.axis",
-      "female": "pro_fork_rake_adpt.fork_bores",
+      "female": "motion_fork_rake_adpt.fork_bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -32808,7 +32808,7 @@
     },
     {
       "male": "char_faceplate_flat.axis",
-      "female": "pro_axle_keeper.keeper_bores",
+      "female": "motion_axle_keeper.keeper_bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -34162,7 +34162,7 @@
     },
     {
       "male": "hair_short_swept.top_studs",
-      "female": "pro_steer_bridge.under_sockets",
+      "female": "motion_steer_bridge.under_sockets",
       "size_class": "small",
       "studs": 2,
       "gap_min_mm": 0.05,
@@ -35436,7 +35436,7 @@
     },
     {
       "male": "hair_bob.top_studs",
-      "female": "pro_steer_bridge.under_sockets",
+      "female": "motion_steer_bridge.under_sockets",
       "size_class": "small",
       "studs": 2,
       "gap_min_mm": 0.05,
@@ -36710,7 +36710,7 @@
     },
     {
       "male": "char_head_fox.top_studs",
-      "female": "pro_steer_bridge.under_sockets",
+      "female": "motion_steer_bridge.under_sockets",
       "size_class": "small",
       "studs": 2,
       "gap_min_mm": 0.05,
@@ -37984,7 +37984,7 @@
     },
     {
       "male": "char_head_bear.top_studs",
-      "female": "pro_steer_bridge.under_sockets",
+      "female": "motion_steer_bridge.under_sockets",
       "size_class": "small",
       "studs": 2,
       "gap_min_mm": 0.05,
@@ -39258,7 +39258,7 @@
     },
     {
       "male": "robot_head_scout.top_studs",
-      "female": "pro_steer_bridge.under_sockets",
+      "female": "motion_steer_bridge.under_sockets",
       "size_class": "small",
       "studs": 2,
       "gap_min_mm": 0.05,
@@ -40532,7 +40532,7 @@
     },
     {
       "male": "char_head_cat.top_studs",
-      "female": "pro_steer_bridge.under_sockets",
+      "female": "motion_steer_bridge.under_sockets",
       "size_class": "small",
       "studs": 2,
       "gap_min_mm": 0.05,
@@ -41806,7 +41806,7 @@
     },
     {
       "male": "char_head_dragon.top_studs",
-      "female": "pro_steer_bridge.under_sockets",
+      "female": "motion_steer_bridge.under_sockets",
       "size_class": "small",
       "studs": 2,
       "gap_min_mm": 0.05,
@@ -43080,7 +43080,7 @@
     },
     {
       "male": "char_head_alien.top_studs",
-      "female": "pro_steer_bridge.under_sockets",
+      "female": "motion_steer_bridge.under_sockets",
       "size_class": "small",
       "studs": 2,
       "gap_min_mm": 0.05,
@@ -44354,7 +44354,7 @@
     },
     {
       "male": "char_head_imp.top_studs",
-      "female": "pro_steer_bridge.under_sockets",
+      "female": "motion_steer_bridge.under_sockets",
       "size_class": "small",
       "studs": 2,
       "gap_min_mm": 0.05,
@@ -45628,7 +45628,7 @@
     },
     {
       "male": "hair_swoosh.top_studs",
-      "female": "pro_steer_bridge.under_sockets",
+      "female": "motion_steer_bridge.under_sockets",
       "size_class": "small",
       "studs": 2,
       "gap_min_mm": 0.05,
@@ -46902,7 +46902,7 @@
     },
     {
       "male": "hair_long_layered.top_studs",
-      "female": "pro_steer_bridge.under_sockets",
+      "female": "motion_steer_bridge.under_sockets",
       "size_class": "small",
       "studs": 2,
       "gap_min_mm": 0.05,
@@ -48176,7 +48176,7 @@
     },
     {
       "male": "hair_twin_braids.top_studs",
-      "female": "pro_steer_bridge.under_sockets",
+      "female": "motion_steer_bridge.under_sockets",
       "size_class": "small",
       "studs": 2,
       "gap_min_mm": 0.05,
@@ -49450,7 +49450,7 @@
     },
     {
       "male": "hair_shag.top_studs",
-      "female": "pro_steer_bridge.under_sockets",
+      "female": "motion_steer_bridge.under_sockets",
       "size_class": "small",
       "studs": 2,
       "gap_min_mm": 0.05,
@@ -50724,7 +50724,7 @@
     },
     {
       "male": "hair_bowl.top_studs",
-      "female": "pro_steer_bridge.under_sockets",
+      "female": "motion_steer_bridge.under_sockets",
       "size_class": "small",
       "studs": 2,
       "gap_min_mm": 0.05,
@@ -51998,7 +51998,7 @@
     },
     {
       "male": "hair_slick.top_studs",
-      "female": "pro_steer_bridge.under_sockets",
+      "female": "motion_steer_bridge.under_sockets",
       "size_class": "small",
       "studs": 2,
       "gap_min_mm": 0.05,
@@ -53272,7 +53272,7 @@
     },
     {
       "male": "pack_explorer.pack_top_studs",
-      "female": "pro_steer_bridge.under_sockets",
+      "female": "motion_steer_bridge.under_sockets",
       "size_class": "small",
       "studs": 2,
       "gap_min_mm": 0.05,
@@ -53688,7 +53688,7 @@
     },
     {
       "male": "prop_wrench.axis",
-      "female": "adapter_snap_pro.bores",
+      "female": "adapter_snap_motion.bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -54408,7 +54408,7 @@
     },
     {
       "male": "prop_wrench.axis",
-      "female": "pro_steer_bridge.kingpins",
+      "female": "motion_steer_bridge.kingpins",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -54424,7 +54424,7 @@
     },
     {
       "male": "prop_wrench.axis",
-      "female": "pro_steer_knuckle_l.kingpin_bore",
+      "female": "motion_steer_knuckle_l.kingpin_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -54440,7 +54440,7 @@
     },
     {
       "male": "prop_wrench.axis",
-      "female": "pro_steer_knuckle_l.tierod_bore",
+      "female": "motion_steer_knuckle_l.tierod_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -54456,7 +54456,7 @@
     },
     {
       "male": "prop_wrench.axis",
-      "female": "pro_steer_knuckle_r.kingpin_bore",
+      "female": "motion_steer_knuckle_r.kingpin_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -54472,7 +54472,7 @@
     },
     {
       "male": "prop_wrench.axis",
-      "female": "pro_steer_knuckle_r.tierod_bore",
+      "female": "motion_steer_knuckle_r.tierod_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -54488,7 +54488,7 @@
     },
     {
       "male": "prop_wrench.axis",
-      "female": "pro_steer_rack.tierod_bores",
+      "female": "motion_steer_rack.tierod_bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -54504,7 +54504,7 @@
     },
     {
       "male": "prop_wrench.axis",
-      "female": "pro_fork_rake_adpt.fork_bores",
+      "female": "motion_fork_rake_adpt.fork_bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -54520,7 +54520,7 @@
     },
     {
       "male": "prop_wrench.axis",
-      "female": "pro_axle_keeper.keeper_bores",
+      "female": "motion_axle_keeper.keeper_bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -55016,7 +55016,7 @@
     },
     {
       "male": "prop_star_shield.axis",
-      "female": "adapter_snap_pro.bores",
+      "female": "adapter_snap_motion.bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -55736,7 +55736,7 @@
     },
     {
       "male": "prop_star_shield.axis",
-      "female": "pro_steer_bridge.kingpins",
+      "female": "motion_steer_bridge.kingpins",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -55752,7 +55752,7 @@
     },
     {
       "male": "prop_star_shield.axis",
-      "female": "pro_steer_knuckle_l.kingpin_bore",
+      "female": "motion_steer_knuckle_l.kingpin_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -55768,7 +55768,7 @@
     },
     {
       "male": "prop_star_shield.axis",
-      "female": "pro_steer_knuckle_l.tierod_bore",
+      "female": "motion_steer_knuckle_l.tierod_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -55784,7 +55784,7 @@
     },
     {
       "male": "prop_star_shield.axis",
-      "female": "pro_steer_knuckle_r.kingpin_bore",
+      "female": "motion_steer_knuckle_r.kingpin_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -55800,7 +55800,7 @@
     },
     {
       "male": "prop_star_shield.axis",
-      "female": "pro_steer_knuckle_r.tierod_bore",
+      "female": "motion_steer_knuckle_r.tierod_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -55816,7 +55816,7 @@
     },
     {
       "male": "prop_star_shield.axis",
-      "female": "pro_steer_rack.tierod_bores",
+      "female": "motion_steer_rack.tierod_bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -55832,7 +55832,7 @@
     },
     {
       "male": "prop_star_shield.axis",
-      "female": "pro_fork_rake_adpt.fork_bores",
+      "female": "motion_fork_rake_adpt.fork_bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -55848,7 +55848,7 @@
     },
     {
       "male": "prop_star_shield.axis",
-      "female": "pro_axle_keeper.keeper_bores",
+      "female": "motion_axle_keeper.keeper_bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -56344,7 +56344,7 @@
     },
     {
       "male": "prop_hammer.axis",
-      "female": "adapter_snap_pro.bores",
+      "female": "adapter_snap_motion.bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -57064,7 +57064,7 @@
     },
     {
       "male": "prop_hammer.axis",
-      "female": "pro_steer_bridge.kingpins",
+      "female": "motion_steer_bridge.kingpins",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -57080,7 +57080,7 @@
     },
     {
       "male": "prop_hammer.axis",
-      "female": "pro_steer_knuckle_l.kingpin_bore",
+      "female": "motion_steer_knuckle_l.kingpin_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -57096,7 +57096,7 @@
     },
     {
       "male": "prop_hammer.axis",
-      "female": "pro_steer_knuckle_l.tierod_bore",
+      "female": "motion_steer_knuckle_l.tierod_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -57112,7 +57112,7 @@
     },
     {
       "male": "prop_hammer.axis",
-      "female": "pro_steer_knuckle_r.kingpin_bore",
+      "female": "motion_steer_knuckle_r.kingpin_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -57128,7 +57128,7 @@
     },
     {
       "male": "prop_hammer.axis",
-      "female": "pro_steer_knuckle_r.tierod_bore",
+      "female": "motion_steer_knuckle_r.tierod_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -57144,7 +57144,7 @@
     },
     {
       "male": "prop_hammer.axis",
-      "female": "pro_steer_rack.tierod_bores",
+      "female": "motion_steer_rack.tierod_bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -57160,7 +57160,7 @@
     },
     {
       "male": "prop_hammer.axis",
-      "female": "pro_fork_rake_adpt.fork_bores",
+      "female": "motion_fork_rake_adpt.fork_bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -57176,7 +57176,7 @@
     },
     {
       "male": "prop_hammer.axis",
-      "female": "pro_axle_keeper.keeper_bores",
+      "female": "motion_axle_keeper.keeper_bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -57672,7 +57672,7 @@
     },
     {
       "male": "prop_mop.axis",
-      "female": "adapter_snap_pro.bores",
+      "female": "adapter_snap_motion.bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -58392,7 +58392,7 @@
     },
     {
       "male": "prop_mop.axis",
-      "female": "pro_steer_bridge.kingpins",
+      "female": "motion_steer_bridge.kingpins",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -58408,7 +58408,7 @@
     },
     {
       "male": "prop_mop.axis",
-      "female": "pro_steer_knuckle_l.kingpin_bore",
+      "female": "motion_steer_knuckle_l.kingpin_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -58424,7 +58424,7 @@
     },
     {
       "male": "prop_mop.axis",
-      "female": "pro_steer_knuckle_l.tierod_bore",
+      "female": "motion_steer_knuckle_l.tierod_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -58440,7 +58440,7 @@
     },
     {
       "male": "prop_mop.axis",
-      "female": "pro_steer_knuckle_r.kingpin_bore",
+      "female": "motion_steer_knuckle_r.kingpin_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -58456,7 +58456,7 @@
     },
     {
       "male": "prop_mop.axis",
-      "female": "pro_steer_knuckle_r.tierod_bore",
+      "female": "motion_steer_knuckle_r.tierod_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -58472,7 +58472,7 @@
     },
     {
       "male": "prop_mop.axis",
-      "female": "pro_steer_rack.tierod_bores",
+      "female": "motion_steer_rack.tierod_bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -58488,7 +58488,7 @@
     },
     {
       "male": "prop_mop.axis",
-      "female": "pro_fork_rake_adpt.fork_bores",
+      "female": "motion_fork_rake_adpt.fork_bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -58504,7 +58504,7 @@
     },
     {
       "male": "prop_mop.axis",
-      "female": "pro_axle_keeper.keeper_bores",
+      "female": "motion_axle_keeper.keeper_bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -59000,7 +59000,7 @@
     },
     {
       "male": "prop_guitar.axis",
-      "female": "adapter_snap_pro.bores",
+      "female": "adapter_snap_motion.bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -59720,7 +59720,7 @@
     },
     {
       "male": "prop_guitar.axis",
-      "female": "pro_steer_bridge.kingpins",
+      "female": "motion_steer_bridge.kingpins",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -59736,7 +59736,7 @@
     },
     {
       "male": "prop_guitar.axis",
-      "female": "pro_steer_knuckle_l.kingpin_bore",
+      "female": "motion_steer_knuckle_l.kingpin_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -59752,7 +59752,7 @@
     },
     {
       "male": "prop_guitar.axis",
-      "female": "pro_steer_knuckle_l.tierod_bore",
+      "female": "motion_steer_knuckle_l.tierod_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -59768,7 +59768,7 @@
     },
     {
       "male": "prop_guitar.axis",
-      "female": "pro_steer_knuckle_r.kingpin_bore",
+      "female": "motion_steer_knuckle_r.kingpin_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -59784,7 +59784,7 @@
     },
     {
       "male": "prop_guitar.axis",
-      "female": "pro_steer_knuckle_r.tierod_bore",
+      "female": "motion_steer_knuckle_r.tierod_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -59800,7 +59800,7 @@
     },
     {
       "male": "prop_guitar.axis",
-      "female": "pro_steer_rack.tierod_bores",
+      "female": "motion_steer_rack.tierod_bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -59816,7 +59816,7 @@
     },
     {
       "male": "prop_guitar.axis",
-      "female": "pro_fork_rake_adpt.fork_bores",
+      "female": "motion_fork_rake_adpt.fork_bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -59832,7 +59832,7 @@
     },
     {
       "male": "prop_guitar.axis",
-      "female": "pro_axle_keeper.keeper_bores",
+      "female": "motion_axle_keeper.keeper_bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -60328,7 +60328,7 @@
     },
     {
       "male": "prop_screwdriver.axis",
-      "female": "adapter_snap_pro.bores",
+      "female": "adapter_snap_motion.bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -61048,7 +61048,7 @@
     },
     {
       "male": "prop_screwdriver.axis",
-      "female": "pro_steer_bridge.kingpins",
+      "female": "motion_steer_bridge.kingpins",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -61064,7 +61064,7 @@
     },
     {
       "male": "prop_screwdriver.axis",
-      "female": "pro_steer_knuckle_l.kingpin_bore",
+      "female": "motion_steer_knuckle_l.kingpin_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -61080,7 +61080,7 @@
     },
     {
       "male": "prop_screwdriver.axis",
-      "female": "pro_steer_knuckle_l.tierod_bore",
+      "female": "motion_steer_knuckle_l.tierod_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -61096,7 +61096,7 @@
     },
     {
       "male": "prop_screwdriver.axis",
-      "female": "pro_steer_knuckle_r.kingpin_bore",
+      "female": "motion_steer_knuckle_r.kingpin_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -61112,7 +61112,7 @@
     },
     {
       "male": "prop_screwdriver.axis",
-      "female": "pro_steer_knuckle_r.tierod_bore",
+      "female": "motion_steer_knuckle_r.tierod_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -61128,7 +61128,7 @@
     },
     {
       "male": "prop_screwdriver.axis",
-      "female": "pro_steer_rack.tierod_bores",
+      "female": "motion_steer_rack.tierod_bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -61144,7 +61144,7 @@
     },
     {
       "male": "prop_screwdriver.axis",
-      "female": "pro_fork_rake_adpt.fork_bores",
+      "female": "motion_fork_rake_adpt.fork_bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -61160,7 +61160,7 @@
     },
     {
       "male": "prop_screwdriver.axis",
-      "female": "pro_axle_keeper.keeper_bores",
+      "female": "motion_axle_keeper.keeper_bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -61656,7 +61656,7 @@
     },
     {
       "male": "prop_paint_roller.axis",
-      "female": "adapter_snap_pro.bores",
+      "female": "adapter_snap_motion.bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -62376,7 +62376,7 @@
     },
     {
       "male": "prop_paint_roller.axis",
-      "female": "pro_steer_bridge.kingpins",
+      "female": "motion_steer_bridge.kingpins",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -62392,7 +62392,7 @@
     },
     {
       "male": "prop_paint_roller.axis",
-      "female": "pro_steer_knuckle_l.kingpin_bore",
+      "female": "motion_steer_knuckle_l.kingpin_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -62408,7 +62408,7 @@
     },
     {
       "male": "prop_paint_roller.axis",
-      "female": "pro_steer_knuckle_l.tierod_bore",
+      "female": "motion_steer_knuckle_l.tierod_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -62424,7 +62424,7 @@
     },
     {
       "male": "prop_paint_roller.axis",
-      "female": "pro_steer_knuckle_r.kingpin_bore",
+      "female": "motion_steer_knuckle_r.kingpin_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -62440,7 +62440,7 @@
     },
     {
       "male": "prop_paint_roller.axis",
-      "female": "pro_steer_knuckle_r.tierod_bore",
+      "female": "motion_steer_knuckle_r.tierod_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -62456,7 +62456,7 @@
     },
     {
       "male": "prop_paint_roller.axis",
-      "female": "pro_steer_rack.tierod_bores",
+      "female": "motion_steer_rack.tierod_bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -62472,7 +62472,7 @@
     },
     {
       "male": "prop_paint_roller.axis",
-      "female": "pro_fork_rake_adpt.fork_bores",
+      "female": "motion_fork_rake_adpt.fork_bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -62488,7 +62488,7 @@
     },
     {
       "male": "prop_paint_roller.axis",
-      "female": "pro_axle_keeper.keeper_bores",
+      "female": "motion_axle_keeper.keeper_bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -62984,7 +62984,7 @@
     },
     {
       "male": "prop_broom.axis",
-      "female": "adapter_snap_pro.bores",
+      "female": "adapter_snap_motion.bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -63704,7 +63704,7 @@
     },
     {
       "male": "prop_broom.axis",
-      "female": "pro_steer_bridge.kingpins",
+      "female": "motion_steer_bridge.kingpins",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -63720,7 +63720,7 @@
     },
     {
       "male": "prop_broom.axis",
-      "female": "pro_steer_knuckle_l.kingpin_bore",
+      "female": "motion_steer_knuckle_l.kingpin_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -63736,7 +63736,7 @@
     },
     {
       "male": "prop_broom.axis",
-      "female": "pro_steer_knuckle_l.tierod_bore",
+      "female": "motion_steer_knuckle_l.tierod_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -63752,7 +63752,7 @@
     },
     {
       "male": "prop_broom.axis",
-      "female": "pro_steer_knuckle_r.kingpin_bore",
+      "female": "motion_steer_knuckle_r.kingpin_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -63768,7 +63768,7 @@
     },
     {
       "male": "prop_broom.axis",
-      "female": "pro_steer_knuckle_r.tierod_bore",
+      "female": "motion_steer_knuckle_r.tierod_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -63784,7 +63784,7 @@
     },
     {
       "male": "prop_broom.axis",
-      "female": "pro_steer_rack.tierod_bores",
+      "female": "motion_steer_rack.tierod_bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -63800,7 +63800,7 @@
     },
     {
       "male": "prop_broom.axis",
-      "female": "pro_fork_rake_adpt.fork_bores",
+      "female": "motion_fork_rake_adpt.fork_bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -63816,7 +63816,7 @@
     },
     {
       "male": "prop_broom.axis",
-      "female": "pro_axle_keeper.keeper_bores",
+      "female": "motion_axle_keeper.keeper_bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -64312,7 +64312,7 @@
     },
     {
       "male": "prop_scrub_brush.axis",
-      "female": "adapter_snap_pro.bores",
+      "female": "adapter_snap_motion.bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -65032,7 +65032,7 @@
     },
     {
       "male": "prop_scrub_brush.axis",
-      "female": "pro_steer_bridge.kingpins",
+      "female": "motion_steer_bridge.kingpins",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -65048,7 +65048,7 @@
     },
     {
       "male": "prop_scrub_brush.axis",
-      "female": "pro_steer_knuckle_l.kingpin_bore",
+      "female": "motion_steer_knuckle_l.kingpin_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -65064,7 +65064,7 @@
     },
     {
       "male": "prop_scrub_brush.axis",
-      "female": "pro_steer_knuckle_l.tierod_bore",
+      "female": "motion_steer_knuckle_l.tierod_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -65080,7 +65080,7 @@
     },
     {
       "male": "prop_scrub_brush.axis",
-      "female": "pro_steer_knuckle_r.kingpin_bore",
+      "female": "motion_steer_knuckle_r.kingpin_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -65096,7 +65096,7 @@
     },
     {
       "male": "prop_scrub_brush.axis",
-      "female": "pro_steer_knuckle_r.tierod_bore",
+      "female": "motion_steer_knuckle_r.tierod_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -65112,7 +65112,7 @@
     },
     {
       "male": "prop_scrub_brush.axis",
-      "female": "pro_steer_rack.tierod_bores",
+      "female": "motion_steer_rack.tierod_bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -65128,7 +65128,7 @@
     },
     {
       "male": "prop_scrub_brush.axis",
-      "female": "pro_fork_rake_adpt.fork_bores",
+      "female": "motion_fork_rake_adpt.fork_bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -65144,7 +65144,7 @@
     },
     {
       "male": "prop_scrub_brush.axis",
-      "female": "pro_axle_keeper.keeper_bores",
+      "female": "motion_axle_keeper.keeper_bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -65640,7 +65640,7 @@
     },
     {
       "male": "prop_vacuum.axis",
-      "female": "adapter_snap_pro.bores",
+      "female": "adapter_snap_motion.bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -66360,7 +66360,7 @@
     },
     {
       "male": "prop_vacuum.axis",
-      "female": "pro_steer_bridge.kingpins",
+      "female": "motion_steer_bridge.kingpins",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -66376,7 +66376,7 @@
     },
     {
       "male": "prop_vacuum.axis",
-      "female": "pro_steer_knuckle_l.kingpin_bore",
+      "female": "motion_steer_knuckle_l.kingpin_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -66392,7 +66392,7 @@
     },
     {
       "male": "prop_vacuum.axis",
-      "female": "pro_steer_knuckle_l.tierod_bore",
+      "female": "motion_steer_knuckle_l.tierod_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -66408,7 +66408,7 @@
     },
     {
       "male": "prop_vacuum.axis",
-      "female": "pro_steer_knuckle_r.kingpin_bore",
+      "female": "motion_steer_knuckle_r.kingpin_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -66424,7 +66424,7 @@
     },
     {
       "male": "prop_vacuum.axis",
-      "female": "pro_steer_knuckle_r.tierod_bore",
+      "female": "motion_steer_knuckle_r.tierod_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -66440,7 +66440,7 @@
     },
     {
       "male": "prop_vacuum.axis",
-      "female": "pro_steer_rack.tierod_bores",
+      "female": "motion_steer_rack.tierod_bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -66456,7 +66456,7 @@
     },
     {
       "male": "prop_vacuum.axis",
-      "female": "pro_fork_rake_adpt.fork_bores",
+      "female": "motion_fork_rake_adpt.fork_bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -66472,7 +66472,7 @@
     },
     {
       "male": "prop_vacuum.axis",
-      "female": "pro_axle_keeper.keeper_bores",
+      "female": "motion_axle_keeper.keeper_bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -66968,7 +66968,7 @@
     },
     {
       "male": "prop_trumpet.axis",
-      "female": "adapter_snap_pro.bores",
+      "female": "adapter_snap_motion.bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -67688,7 +67688,7 @@
     },
     {
       "male": "prop_trumpet.axis",
-      "female": "pro_steer_bridge.kingpins",
+      "female": "motion_steer_bridge.kingpins",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -67704,7 +67704,7 @@
     },
     {
       "male": "prop_trumpet.axis",
-      "female": "pro_steer_knuckle_l.kingpin_bore",
+      "female": "motion_steer_knuckle_l.kingpin_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -67720,7 +67720,7 @@
     },
     {
       "male": "prop_trumpet.axis",
-      "female": "pro_steer_knuckle_l.tierod_bore",
+      "female": "motion_steer_knuckle_l.tierod_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -67736,7 +67736,7 @@
     },
     {
       "male": "prop_trumpet.axis",
-      "female": "pro_steer_knuckle_r.kingpin_bore",
+      "female": "motion_steer_knuckle_r.kingpin_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -67752,7 +67752,7 @@
     },
     {
       "male": "prop_trumpet.axis",
-      "female": "pro_steer_knuckle_r.tierod_bore",
+      "female": "motion_steer_knuckle_r.tierod_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -67768,7 +67768,7 @@
     },
     {
       "male": "prop_trumpet.axis",
-      "female": "pro_steer_rack.tierod_bores",
+      "female": "motion_steer_rack.tierod_bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -67784,7 +67784,7 @@
     },
     {
       "male": "prop_trumpet.axis",
-      "female": "pro_fork_rake_adpt.fork_bores",
+      "female": "motion_fork_rake_adpt.fork_bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -67800,7 +67800,7 @@
     },
     {
       "male": "prop_trumpet.axis",
-      "female": "pro_axle_keeper.keeper_bores",
+      "female": "motion_axle_keeper.keeper_bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -68296,7 +68296,7 @@
     },
     {
       "male": "prop_maracas.axis",
-      "female": "adapter_snap_pro.bores",
+      "female": "adapter_snap_motion.bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -69016,7 +69016,7 @@
     },
     {
       "male": "prop_maracas.axis",
-      "female": "pro_steer_bridge.kingpins",
+      "female": "motion_steer_bridge.kingpins",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -69032,7 +69032,7 @@
     },
     {
       "male": "prop_maracas.axis",
-      "female": "pro_steer_knuckle_l.kingpin_bore",
+      "female": "motion_steer_knuckle_l.kingpin_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -69048,7 +69048,7 @@
     },
     {
       "male": "prop_maracas.axis",
-      "female": "pro_steer_knuckle_l.tierod_bore",
+      "female": "motion_steer_knuckle_l.tierod_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -69064,7 +69064,7 @@
     },
     {
       "male": "prop_maracas.axis",
-      "female": "pro_steer_knuckle_r.kingpin_bore",
+      "female": "motion_steer_knuckle_r.kingpin_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -69080,7 +69080,7 @@
     },
     {
       "male": "prop_maracas.axis",
-      "female": "pro_steer_knuckle_r.tierod_bore",
+      "female": "motion_steer_knuckle_r.tierod_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -69096,7 +69096,7 @@
     },
     {
       "male": "prop_maracas.axis",
-      "female": "pro_steer_rack.tierod_bores",
+      "female": "motion_steer_rack.tierod_bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -69112,7 +69112,7 @@
     },
     {
       "male": "prop_maracas.axis",
-      "female": "pro_fork_rake_adpt.fork_bores",
+      "female": "motion_fork_rake_adpt.fork_bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -69128,7 +69128,7 @@
     },
     {
       "male": "prop_maracas.axis",
-      "female": "pro_axle_keeper.keeper_bores",
+      "female": "motion_axle_keeper.keeper_bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -69624,7 +69624,7 @@
     },
     {
       "male": "prop_flag.axis",
-      "female": "adapter_snap_pro.bores",
+      "female": "adapter_snap_motion.bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -70344,7 +70344,7 @@
     },
     {
       "male": "prop_flag.axis",
-      "female": "pro_steer_bridge.kingpins",
+      "female": "motion_steer_bridge.kingpins",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -70360,7 +70360,7 @@
     },
     {
       "male": "prop_flag.axis",
-      "female": "pro_steer_knuckle_l.kingpin_bore",
+      "female": "motion_steer_knuckle_l.kingpin_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -70376,7 +70376,7 @@
     },
     {
       "male": "prop_flag.axis",
-      "female": "pro_steer_knuckle_l.tierod_bore",
+      "female": "motion_steer_knuckle_l.tierod_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -70392,7 +70392,7 @@
     },
     {
       "male": "prop_flag.axis",
-      "female": "pro_steer_knuckle_r.kingpin_bore",
+      "female": "motion_steer_knuckle_r.kingpin_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -70408,7 +70408,7 @@
     },
     {
       "male": "prop_flag.axis",
-      "female": "pro_steer_knuckle_r.tierod_bore",
+      "female": "motion_steer_knuckle_r.tierod_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -70424,7 +70424,7 @@
     },
     {
       "male": "prop_flag.axis",
-      "female": "pro_steer_rack.tierod_bores",
+      "female": "motion_steer_rack.tierod_bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -70440,7 +70440,7 @@
     },
     {
       "male": "prop_flag.axis",
-      "female": "pro_fork_rake_adpt.fork_bores",
+      "female": "motion_fork_rake_adpt.fork_bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -70456,7 +70456,7 @@
     },
     {
       "male": "prop_flag.axis",
-      "female": "pro_axle_keeper.keeper_bores",
+      "female": "motion_axle_keeper.keeper_bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -70952,7 +70952,7 @@
     },
     {
       "male": "prop_magnifier.axis",
-      "female": "adapter_snap_pro.bores",
+      "female": "adapter_snap_motion.bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -71672,7 +71672,7 @@
     },
     {
       "male": "prop_magnifier.axis",
-      "female": "pro_steer_bridge.kingpins",
+      "female": "motion_steer_bridge.kingpins",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -71688,7 +71688,7 @@
     },
     {
       "male": "prop_magnifier.axis",
-      "female": "pro_steer_knuckle_l.kingpin_bore",
+      "female": "motion_steer_knuckle_l.kingpin_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -71704,7 +71704,7 @@
     },
     {
       "male": "prop_magnifier.axis",
-      "female": "pro_steer_knuckle_l.tierod_bore",
+      "female": "motion_steer_knuckle_l.tierod_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -71720,7 +71720,7 @@
     },
     {
       "male": "prop_magnifier.axis",
-      "female": "pro_steer_knuckle_r.kingpin_bore",
+      "female": "motion_steer_knuckle_r.kingpin_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -71736,7 +71736,7 @@
     },
     {
       "male": "prop_magnifier.axis",
-      "female": "pro_steer_knuckle_r.tierod_bore",
+      "female": "motion_steer_knuckle_r.tierod_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -71752,7 +71752,7 @@
     },
     {
       "male": "prop_magnifier.axis",
-      "female": "pro_steer_rack.tierod_bores",
+      "female": "motion_steer_rack.tierod_bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -71768,7 +71768,7 @@
     },
     {
       "male": "prop_magnifier.axis",
-      "female": "pro_fork_rake_adpt.fork_bores",
+      "female": "motion_fork_rake_adpt.fork_bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -71784,7 +71784,7 @@
     },
     {
       "male": "prop_magnifier.axis",
-      "female": "pro_axle_keeper.keeper_bores",
+      "female": "motion_axle_keeper.keeper_bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -73138,7 +73138,7 @@
     },
     {
       "male": "prop_skateboard_deck.top_studs",
-      "female": "pro_steer_bridge.under_sockets",
+      "female": "motion_steer_bridge.under_sockets",
       "size_class": "small",
       "studs": 4,
       "gap_min_mm": 0.05,
@@ -74412,7 +74412,7 @@
     },
     {
       "male": "char_legs_seated.top_studs",
-      "female": "pro_steer_bridge.under_sockets",
+      "female": "motion_steer_bridge.under_sockets",
       "size_class": "small",
       "studs": 4,
       "gap_min_mm": 0.05,
@@ -75686,7 +75686,7 @@
     },
     {
       "male": "veh_car_chassis.top_studs",
-      "female": "pro_steer_bridge.under_sockets",
+      "female": "motion_steer_bridge.under_sockets",
       "size_class": "small",
       "studs": 4,
       "gap_min_mm": 0.05,
@@ -76960,7 +76960,7 @@
     },
     {
       "male": "veh_car_chassis.front_studs",
-      "female": "pro_steer_bridge.under_sockets",
+      "female": "motion_steer_bridge.under_sockets",
       "size_class": "small",
       "studs": 2,
       "gap_min_mm": 0.05,
@@ -78234,7 +78234,7 @@
     },
     {
       "male": "veh_car_chassis.hood_studs",
-      "female": "pro_steer_bridge.under_sockets",
+      "female": "motion_steer_bridge.under_sockets",
       "size_class": "small",
       "studs": 4,
       "gap_min_mm": 0.05,
@@ -79508,7 +79508,7 @@
     },
     {
       "male": "veh_car_chassis.rollbar_studs",
-      "female": "pro_steer_bridge.under_sockets",
+      "female": "motion_steer_bridge.under_sockets",
       "size_class": "small",
       "studs": 2,
       "gap_min_mm": 0.05,
@@ -80782,7 +80782,7 @@
     },
     {
       "male": "veh_car_chassis.spoiler_studs",
-      "female": "pro_steer_bridge.under_sockets",
+      "female": "motion_steer_bridge.under_sockets",
       "size_class": "small",
       "studs": 2,
       "gap_min_mm": 0.05,
@@ -82056,7 +82056,7 @@
     },
     {
       "male": "veh_car_chassis.exhaust_studs",
-      "female": "pro_steer_bridge.under_sockets",
+      "female": "motion_steer_bridge.under_sockets",
       "size_class": "small",
       "studs": 2,
       "gap_min_mm": 0.05,
@@ -83330,7 +83330,7 @@
     },
     {
       "male": "veh_car_hood_cover.top_studs",
-      "female": "pro_steer_bridge.under_sockets",
+      "female": "motion_steer_bridge.under_sockets",
       "size_class": "small",
       "studs": 4,
       "gap_min_mm": 0.05,
@@ -84604,7 +84604,7 @@
     },
     {
       "male": "veh_cab_roof_cover.top_studs",
-      "female": "pro_steer_bridge.under_sockets",
+      "female": "motion_steer_bridge.under_sockets",
       "size_class": "small",
       "studs": 4,
       "gap_min_mm": 0.05,
@@ -84908,7 +84908,7 @@
     },
     {
       "male": "veh_steering_wheel.axis",
-      "female": "adapter_snap_pro.bores",
+      "female": "adapter_snap_motion.bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -85388,7 +85388,7 @@
     },
     {
       "male": "veh_steering_wheel.axis",
-      "female": "pro_steer_bridge.kingpins",
+      "female": "motion_steer_bridge.kingpins",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -85404,7 +85404,7 @@
     },
     {
       "male": "veh_steering_wheel.axis",
-      "female": "pro_steer_knuckle_l.kingpin_bore",
+      "female": "motion_steer_knuckle_l.kingpin_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -85420,7 +85420,7 @@
     },
     {
       "male": "veh_steering_wheel.axis",
-      "female": "pro_steer_knuckle_l.tierod_bore",
+      "female": "motion_steer_knuckle_l.tierod_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -85436,7 +85436,7 @@
     },
     {
       "male": "veh_steering_wheel.axis",
-      "female": "pro_steer_knuckle_r.kingpin_bore",
+      "female": "motion_steer_knuckle_r.kingpin_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -85452,7 +85452,7 @@
     },
     {
       "male": "veh_steering_wheel.axis",
-      "female": "pro_steer_knuckle_r.tierod_bore",
+      "female": "motion_steer_knuckle_r.tierod_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -85468,7 +85468,7 @@
     },
     {
       "male": "veh_steering_wheel.axis",
-      "female": "pro_steer_rack.tierod_bores",
+      "female": "motion_steer_rack.tierod_bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -85484,7 +85484,7 @@
     },
     {
       "male": "veh_steering_wheel.axis",
-      "female": "pro_fork_rake_adpt.fork_bores",
+      "female": "motion_fork_rake_adpt.fork_bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -85500,7 +85500,7 @@
     },
     {
       "male": "veh_steering_wheel.axis",
-      "female": "pro_axle_keeper.keeper_bores",
+      "female": "motion_axle_keeper.keeper_bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -86822,7 +86822,7 @@
     },
     {
       "male": "veh_truck_chassis.top_studs",
-      "female": "pro_steer_bridge.under_sockets",
+      "female": "motion_steer_bridge.under_sockets",
       "size_class": "small",
       "studs": 4,
       "gap_min_mm": 0.05,
@@ -88096,7 +88096,7 @@
     },
     {
       "male": "veh_truck_chassis.front_studs",
-      "female": "pro_steer_bridge.under_sockets",
+      "female": "motion_steer_bridge.under_sockets",
       "size_class": "small",
       "studs": 2,
       "gap_min_mm": 0.05,
@@ -89370,7 +89370,7 @@
     },
     {
       "male": "veh_truck_chassis.hood_studs",
-      "female": "pro_steer_bridge.under_sockets",
+      "female": "motion_steer_bridge.under_sockets",
       "size_class": "small",
       "studs": 4,
       "gap_min_mm": 0.05,
@@ -90644,7 +90644,7 @@
     },
     {
       "male": "veh_truck_chassis.roof_studs",
-      "female": "pro_steer_bridge.under_sockets",
+      "female": "motion_steer_bridge.under_sockets",
       "size_class": "small",
       "studs": 2,
       "gap_min_mm": 0.05,
@@ -91918,7 +91918,7 @@
     },
     {
       "male": "veh_truck_chassis.cargo_studs",
-      "female": "pro_steer_bridge.under_sockets",
+      "female": "motion_steer_bridge.under_sockets",
       "size_class": "small",
       "studs": 4,
       "gap_min_mm": 0.05,
@@ -93192,7 +93192,7 @@
     },
     {
       "male": "veh_truck_bed_cover.bed_studs",
-      "female": "pro_steer_bridge.under_sockets",
+      "female": "motion_steer_bridge.under_sockets",
       "size_class": "small",
       "studs": 4,
       "gap_min_mm": 0.05,
@@ -94466,7 +94466,7 @@
     },
     {
       "male": "veh_scooter_frame.top_studs",
-      "female": "pro_steer_bridge.under_sockets",
+      "female": "motion_steer_bridge.under_sockets",
       "size_class": "small",
       "studs": 4,
       "gap_min_mm": 0.05,
@@ -95740,7 +95740,7 @@
     },
     {
       "male": "veh_scooter_frame.fairing_studs",
-      "female": "pro_steer_bridge.under_sockets",
+      "female": "motion_steer_bridge.under_sockets",
       "size_class": "small",
       "studs": 2,
       "gap_min_mm": 0.05,
@@ -97014,7 +97014,7 @@
     },
     {
       "male": "veh_scooter_frame.seat_studs",
-      "female": "pro_steer_bridge.under_sockets",
+      "female": "motion_steer_bridge.under_sockets",
       "size_class": "small",
       "studs": 4,
       "gap_min_mm": 0.05,
@@ -98288,7 +98288,7 @@
     },
     {
       "male": "veh_scooter_frame.exhaust_studs",
-      "female": "pro_steer_bridge.under_sockets",
+      "female": "motion_steer_bridge.under_sockets",
       "size_class": "small",
       "studs": 2,
       "gap_min_mm": 0.05,
@@ -98704,7 +98704,7 @@
     },
     {
       "male": "veh_handlebar_fork.axis",
-      "female": "adapter_snap_pro.bores",
+      "female": "adapter_snap_motion.bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -99424,7 +99424,7 @@
     },
     {
       "male": "veh_handlebar_fork.axis",
-      "female": "pro_steer_bridge.kingpins",
+      "female": "motion_steer_bridge.kingpins",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -99440,7 +99440,7 @@
     },
     {
       "male": "veh_handlebar_fork.axis",
-      "female": "pro_steer_knuckle_l.kingpin_bore",
+      "female": "motion_steer_knuckle_l.kingpin_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -99456,7 +99456,7 @@
     },
     {
       "male": "veh_handlebar_fork.axis",
-      "female": "pro_steer_knuckle_l.tierod_bore",
+      "female": "motion_steer_knuckle_l.tierod_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -99472,7 +99472,7 @@
     },
     {
       "male": "veh_handlebar_fork.axis",
-      "female": "pro_steer_knuckle_r.kingpin_bore",
+      "female": "motion_steer_knuckle_r.kingpin_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -99488,7 +99488,7 @@
     },
     {
       "male": "veh_handlebar_fork.axis",
-      "female": "pro_steer_knuckle_r.tierod_bore",
+      "female": "motion_steer_knuckle_r.tierod_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -99504,7 +99504,7 @@
     },
     {
       "male": "veh_handlebar_fork.axis",
-      "female": "pro_steer_rack.tierod_bores",
+      "female": "motion_steer_rack.tierod_bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -99520,7 +99520,7 @@
     },
     {
       "male": "veh_handlebar_fork.axis",
-      "female": "pro_fork_rake_adpt.fork_bores",
+      "female": "motion_fork_rake_adpt.fork_bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -99536,7 +99536,7 @@
     },
     {
       "male": "veh_handlebar_fork.axis",
-      "female": "pro_axle_keeper.keeper_bores",
+      "female": "motion_axle_keeper.keeper_bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -100890,7 +100890,7 @@
     },
     {
       "male": "veh_moto_cowling.tank_studs",
-      "female": "pro_steer_bridge.under_sockets",
+      "female": "motion_steer_bridge.under_sockets",
       "size_class": "small",
       "studs": 2,
       "gap_min_mm": 0.05,
@@ -102164,7 +102164,7 @@
     },
     {
       "male": "kit_keel_base.top_studs",
-      "female": "pro_steer_bridge.under_sockets",
+      "female": "motion_steer_bridge.under_sockets",
       "size_class": "small",
       "studs": 4,
       "gap_min_mm": 0.05,
@@ -103438,7 +103438,7 @@
     },
     {
       "male": "kit_clevis_spine.top_studs",
-      "female": "pro_steer_bridge.under_sockets",
+      "female": "motion_steer_bridge.under_sockets",
       "size_class": "small",
       "studs": 4,
       "gap_min_mm": 0.05,
@@ -103854,7 +103854,7 @@
     },
     {
       "male": "kit_barbell_shaft.axis",
-      "female": "adapter_snap_pro.bores",
+      "female": "adapter_snap_motion.bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -104574,7 +104574,7 @@
     },
     {
       "male": "kit_barbell_shaft.axis",
-      "female": "pro_steer_bridge.kingpins",
+      "female": "motion_steer_bridge.kingpins",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -104590,7 +104590,7 @@
     },
     {
       "male": "kit_barbell_shaft.axis",
-      "female": "pro_steer_knuckle_l.kingpin_bore",
+      "female": "motion_steer_knuckle_l.kingpin_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -104606,7 +104606,7 @@
     },
     {
       "male": "kit_barbell_shaft.axis",
-      "female": "pro_steer_knuckle_l.tierod_bore",
+      "female": "motion_steer_knuckle_l.tierod_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -104622,7 +104622,7 @@
     },
     {
       "male": "kit_barbell_shaft.axis",
-      "female": "pro_steer_knuckle_r.kingpin_bore",
+      "female": "motion_steer_knuckle_r.kingpin_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -104638,7 +104638,7 @@
     },
     {
       "male": "kit_barbell_shaft.axis",
-      "female": "pro_steer_knuckle_r.tierod_bore",
+      "female": "motion_steer_knuckle_r.tierod_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -104654,7 +104654,7 @@
     },
     {
       "male": "kit_barbell_shaft.axis",
-      "female": "pro_steer_rack.tierod_bores",
+      "female": "motion_steer_rack.tierod_bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -104670,7 +104670,7 @@
     },
     {
       "male": "kit_barbell_shaft.axis",
-      "female": "pro_fork_rake_adpt.fork_bores",
+      "female": "motion_fork_rake_adpt.fork_bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -104686,7 +104686,7 @@
     },
     {
       "male": "kit_barbell_shaft.axis",
-      "female": "pro_axle_keeper.keeper_bores",
+      "female": "motion_axle_keeper.keeper_bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -105182,7 +105182,7 @@
     },
     {
       "male": "kit_spinner_pin.axis",
-      "female": "adapter_snap_pro.bores",
+      "female": "adapter_snap_motion.bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -105902,7 +105902,7 @@
     },
     {
       "male": "kit_spinner_pin.axis",
-      "female": "pro_steer_bridge.kingpins",
+      "female": "motion_steer_bridge.kingpins",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -105918,7 +105918,7 @@
     },
     {
       "male": "kit_spinner_pin.axis",
-      "female": "pro_steer_knuckle_l.kingpin_bore",
+      "female": "motion_steer_knuckle_l.kingpin_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -105934,7 +105934,7 @@
     },
     {
       "male": "kit_spinner_pin.axis",
-      "female": "pro_steer_knuckle_l.tierod_bore",
+      "female": "motion_steer_knuckle_l.tierod_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -105950,7 +105950,7 @@
     },
     {
       "male": "kit_spinner_pin.axis",
-      "female": "pro_steer_knuckle_r.kingpin_bore",
+      "female": "motion_steer_knuckle_r.kingpin_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -105966,7 +105966,7 @@
     },
     {
       "male": "kit_spinner_pin.axis",
-      "female": "pro_steer_knuckle_r.tierod_bore",
+      "female": "motion_steer_knuckle_r.tierod_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -105982,7 +105982,7 @@
     },
     {
       "male": "kit_spinner_pin.axis",
-      "female": "pro_steer_rack.tierod_bores",
+      "female": "motion_steer_rack.tierod_bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -105998,7 +105998,7 @@
     },
     {
       "male": "kit_spinner_pin.axis",
-      "female": "pro_fork_rake_adpt.fork_bores",
+      "female": "motion_fork_rake_adpt.fork_bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -106014,7 +106014,7 @@
     },
     {
       "male": "kit_spinner_pin.axis",
-      "female": "pro_axle_keeper.keeper_bores",
+      "female": "motion_axle_keeper.keeper_bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -107368,7 +107368,7 @@
     },
     {
       "male": "kit_windscreen.top_studs",
-      "female": "pro_steer_bridge.under_sockets",
+      "female": "motion_steer_bridge.under_sockets",
       "size_class": "small",
       "studs": 1,
       "gap_min_mm": 0.05,
@@ -108642,7 +108642,7 @@
     },
     {
       "male": "kit_turntable.top_studs",
-      "female": "pro_steer_bridge.under_sockets",
+      "female": "motion_steer_bridge.under_sockets",
       "size_class": "small",
       "studs": 4,
       "gap_min_mm": 0.05,
@@ -109058,7 +109058,7 @@
     },
     {
       "male": "kit_yoke_hbar.axis",
-      "female": "adapter_snap_pro.bores",
+      "female": "adapter_snap_motion.bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -109778,7 +109778,7 @@
     },
     {
       "male": "kit_yoke_hbar.axis",
-      "female": "pro_steer_bridge.kingpins",
+      "female": "motion_steer_bridge.kingpins",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -109794,7 +109794,7 @@
     },
     {
       "male": "kit_yoke_hbar.axis",
-      "female": "pro_steer_knuckle_l.kingpin_bore",
+      "female": "motion_steer_knuckle_l.kingpin_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -109810,7 +109810,7 @@
     },
     {
       "male": "kit_yoke_hbar.axis",
-      "female": "pro_steer_knuckle_l.tierod_bore",
+      "female": "motion_steer_knuckle_l.tierod_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -109826,7 +109826,7 @@
     },
     {
       "male": "kit_yoke_hbar.axis",
-      "female": "pro_steer_knuckle_r.kingpin_bore",
+      "female": "motion_steer_knuckle_r.kingpin_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -109842,7 +109842,7 @@
     },
     {
       "male": "kit_yoke_hbar.axis",
-      "female": "pro_steer_knuckle_r.tierod_bore",
+      "female": "motion_steer_knuckle_r.tierod_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -109858,7 +109858,7 @@
     },
     {
       "male": "kit_yoke_hbar.axis",
-      "female": "pro_steer_rack.tierod_bores",
+      "female": "motion_steer_rack.tierod_bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -109874,7 +109874,7 @@
     },
     {
       "male": "kit_yoke_hbar.axis",
-      "female": "pro_fork_rake_adpt.fork_bores",
+      "female": "motion_fork_rake_adpt.fork_bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -109890,7 +109890,7 @@
     },
     {
       "male": "kit_yoke_hbar.axis",
-      "female": "pro_axle_keeper.keeper_bores",
+      "female": "motion_axle_keeper.keeper_bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -110081,7 +110081,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_bridge.top_studs",
+      "male": "motion_steer_bridge.top_studs",
       "female": "mini_plate.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -110095,7 +110095,7 @@
       ]
     },
     {
-      "male": "pro_steer_bridge.top_studs",
+      "male": "motion_steer_bridge.top_studs",
       "female": "cloud_wings.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -110109,7 +110109,7 @@
       ]
     },
     {
-      "male": "pro_steer_bridge.top_studs",
+      "male": "motion_steer_bridge.top_studs",
       "female": "pebble_armor_shell.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -110123,7 +110123,7 @@
       ]
     },
     {
-      "male": "pro_steer_bridge.top_studs",
+      "male": "motion_steer_bridge.top_studs",
       "female": "glow_capsule.under_sockets",
       "size_class": "small",
       "studs": 1,
@@ -110137,7 +110137,7 @@
       ]
     },
     {
-      "male": "pro_steer_bridge.top_studs",
+      "male": "motion_steer_bridge.top_studs",
       "female": "plate_s_2x2.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -110151,7 +110151,7 @@
       ]
     },
     {
-      "male": "pro_steer_bridge.top_studs",
+      "male": "motion_steer_bridge.top_studs",
       "female": "plate_s_4x4.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -110165,7 +110165,7 @@
       ]
     },
     {
-      "male": "pro_steer_bridge.top_studs",
+      "male": "motion_steer_bridge.top_studs",
       "female": "brick_s_2x2.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -110179,7 +110179,7 @@
       ]
     },
     {
-      "male": "pro_steer_bridge.top_studs",
+      "male": "motion_steer_bridge.top_studs",
       "female": "tile_s_2x2.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -110193,7 +110193,7 @@
       ]
     },
     {
-      "male": "pro_steer_bridge.top_studs",
+      "male": "motion_steer_bridge.top_studs",
       "female": "slope_s_2x2.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -110207,7 +110207,7 @@
       ]
     },
     {
-      "male": "pro_steer_bridge.top_studs",
+      "male": "motion_steer_bridge.top_studs",
       "female": "dome_s_2x2.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -110221,7 +110221,7 @@
       ]
     },
     {
-      "male": "pro_steer_bridge.top_studs",
+      "male": "motion_steer_bridge.top_studs",
       "female": "bumper_horns.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -110235,7 +110235,7 @@
       ]
     },
     {
-      "male": "pro_steer_bridge.top_studs",
+      "male": "motion_steer_bridge.top_studs",
       "female": "pointy_ears.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -110249,7 +110249,7 @@
       ]
     },
     {
-      "male": "pro_steer_bridge.top_studs",
+      "male": "motion_steer_bridge.top_studs",
       "female": "wobble_hat.under_sockets",
       "size_class": "small",
       "studs": 1,
@@ -110263,7 +110263,7 @@
       ]
     },
     {
-      "male": "pro_steer_bridge.top_studs",
+      "male": "motion_steer_bridge.top_studs",
       "female": "ridge_fin.under_sockets",
       "size_class": "small",
       "studs": 1,
@@ -110277,7 +110277,7 @@
       ]
     },
     {
-      "male": "pro_steer_bridge.top_studs",
+      "male": "motion_steer_bridge.top_studs",
       "female": "zoom_capsule_s.under_sockets",
       "size_class": "small",
       "studs": 1,
@@ -110291,7 +110291,7 @@
       ]
     },
     {
-      "male": "pro_steer_bridge.top_studs",
+      "male": "motion_steer_bridge.top_studs",
       "female": "bounce_capsule_s.under_sockets",
       "size_class": "small",
       "studs": 1,
@@ -110305,7 +110305,7 @@
       ]
     },
     {
-      "male": "pro_steer_bridge.top_studs",
+      "male": "motion_steer_bridge.top_studs",
       "female": "racer_spoiler.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -110319,7 +110319,7 @@
       ]
     },
     {
-      "male": "pro_steer_bridge.top_studs",
+      "male": "motion_steer_bridge.top_studs",
       "female": "racer_bull_bar.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -110333,7 +110333,7 @@
       ]
     },
     {
-      "male": "pro_steer_bridge.top_studs",
+      "male": "motion_steer_bridge.top_studs",
       "female": "racer_hood_scoop.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -110347,7 +110347,7 @@
       ]
     },
     {
-      "male": "pro_steer_bridge.top_studs",
+      "male": "motion_steer_bridge.top_studs",
       "female": "racer_twin_exhaust.under_sockets",
       "size_class": "small",
       "studs": 1,
@@ -110361,7 +110361,7 @@
       ]
     },
     {
-      "male": "pro_steer_bridge.top_studs",
+      "male": "motion_steer_bridge.top_studs",
       "female": "racer_light_bar.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -110375,7 +110375,7 @@
       ]
     },
     {
-      "male": "pro_steer_bridge.top_studs",
+      "male": "motion_steer_bridge.top_studs",
       "female": "racer_roof_rack.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -110389,7 +110389,7 @@
       ]
     },
     {
-      "male": "pro_steer_bridge.top_studs",
+      "male": "motion_steer_bridge.top_studs",
       "female": "waddle_tail_s.under_sockets",
       "size_class": "small",
       "studs": 1,
@@ -110403,7 +110403,7 @@
       ]
     },
     {
-      "male": "pro_steer_bridge.top_studs",
+      "male": "motion_steer_bridge.top_studs",
       "female": "robot_legs_stomper.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -110417,7 +110417,7 @@
       ]
     },
     {
-      "male": "pro_steer_bridge.top_studs",
+      "male": "motion_steer_bridge.top_studs",
       "female": "robot_torso_core.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -110431,7 +110431,7 @@
       ]
     },
     {
-      "male": "pro_steer_bridge.top_studs",
+      "male": "motion_steer_bridge.top_studs",
       "female": "robot_arms_grabber.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -110445,7 +110445,7 @@
       ]
     },
     {
-      "male": "pro_steer_bridge.top_studs",
+      "male": "motion_steer_bridge.top_studs",
       "female": "robot_head_visor.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -110459,7 +110459,7 @@
       ]
     },
     {
-      "male": "pro_steer_bridge.top_studs",
+      "male": "motion_steer_bridge.top_studs",
       "female": "robot_back_jetpack.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -110473,7 +110473,7 @@
       ]
     },
     {
-      "male": "pro_steer_bridge.top_studs",
+      "male": "motion_steer_bridge.top_studs",
       "female": "char_head_kid.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -110487,7 +110487,7 @@
       ]
     },
     {
-      "male": "pro_steer_bridge.top_studs",
+      "male": "motion_steer_bridge.top_studs",
       "female": "char_head_chibi.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -110501,7 +110501,7 @@
       ]
     },
     {
-      "male": "pro_steer_bridge.top_studs",
+      "male": "motion_steer_bridge.top_studs",
       "female": "char_head_jumbo.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -110515,7 +110515,7 @@
       ]
     },
     {
-      "male": "pro_steer_bridge.top_studs",
+      "male": "motion_steer_bridge.top_studs",
       "female": "char_head_tall.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -110529,7 +110529,7 @@
       ]
     },
     {
-      "male": "pro_steer_bridge.top_studs",
+      "male": "motion_steer_bridge.top_studs",
       "female": "hair_short_swept.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -110543,7 +110543,7 @@
       ]
     },
     {
-      "male": "pro_steer_bridge.top_studs",
+      "male": "motion_steer_bridge.top_studs",
       "female": "hair_bob.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -110557,7 +110557,7 @@
       ]
     },
     {
-      "male": "pro_steer_bridge.top_studs",
+      "male": "motion_steer_bridge.top_studs",
       "female": "char_head_fox.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -110571,7 +110571,7 @@
       ]
     },
     {
-      "male": "pro_steer_bridge.top_studs",
+      "male": "motion_steer_bridge.top_studs",
       "female": "char_head_bear.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -110585,7 +110585,7 @@
       ]
     },
     {
-      "male": "pro_steer_bridge.top_studs",
+      "male": "motion_steer_bridge.top_studs",
       "female": "robot_head_scout.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -110599,7 +110599,7 @@
       ]
     },
     {
-      "male": "pro_steer_bridge.top_studs",
+      "male": "motion_steer_bridge.top_studs",
       "female": "char_head_cat.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -110613,7 +110613,7 @@
       ]
     },
     {
-      "male": "pro_steer_bridge.top_studs",
+      "male": "motion_steer_bridge.top_studs",
       "female": "char_head_dragon.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -110627,7 +110627,7 @@
       ]
     },
     {
-      "male": "pro_steer_bridge.top_studs",
+      "male": "motion_steer_bridge.top_studs",
       "female": "char_head_alien.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -110641,7 +110641,7 @@
       ]
     },
     {
-      "male": "pro_steer_bridge.top_studs",
+      "male": "motion_steer_bridge.top_studs",
       "female": "char_head_imp.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -110655,7 +110655,7 @@
       ]
     },
     {
-      "male": "pro_steer_bridge.top_studs",
+      "male": "motion_steer_bridge.top_studs",
       "female": "hair_swoosh.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -110669,7 +110669,7 @@
       ]
     },
     {
-      "male": "pro_steer_bridge.top_studs",
+      "male": "motion_steer_bridge.top_studs",
       "female": "hair_long_layered.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -110683,7 +110683,7 @@
       ]
     },
     {
-      "male": "pro_steer_bridge.top_studs",
+      "male": "motion_steer_bridge.top_studs",
       "female": "hair_twin_braids.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -110697,7 +110697,7 @@
       ]
     },
     {
-      "male": "pro_steer_bridge.top_studs",
+      "male": "motion_steer_bridge.top_studs",
       "female": "hair_shag.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -110711,7 +110711,7 @@
       ]
     },
     {
-      "male": "pro_steer_bridge.top_studs",
+      "male": "motion_steer_bridge.top_studs",
       "female": "hair_pompadour.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -110725,7 +110725,7 @@
       ]
     },
     {
-      "male": "pro_steer_bridge.top_studs",
+      "male": "motion_steer_bridge.top_studs",
       "female": "hair_top_bun.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -110739,7 +110739,7 @@
       ]
     },
     {
-      "male": "pro_steer_bridge.top_studs",
+      "male": "motion_steer_bridge.top_studs",
       "female": "hair_side_sweep.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -110753,7 +110753,7 @@
       ]
     },
     {
-      "male": "pro_steer_bridge.top_studs",
+      "male": "motion_steer_bridge.top_studs",
       "female": "hair_spiky.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -110767,7 +110767,7 @@
       ]
     },
     {
-      "male": "pro_steer_bridge.top_studs",
+      "male": "motion_steer_bridge.top_studs",
       "female": "hair_pigtails.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -110781,7 +110781,7 @@
       ]
     },
     {
-      "male": "pro_steer_bridge.top_studs",
+      "male": "motion_steer_bridge.top_studs",
       "female": "hair_ponytail.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -110795,7 +110795,7 @@
       ]
     },
     {
-      "male": "pro_steer_bridge.top_studs",
+      "male": "motion_steer_bridge.top_studs",
       "female": "hair_curly.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -110809,7 +110809,7 @@
       ]
     },
     {
-      "male": "pro_steer_bridge.top_studs",
+      "male": "motion_steer_bridge.top_studs",
       "female": "hair_mohawk.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -110823,7 +110823,7 @@
       ]
     },
     {
-      "male": "pro_steer_bridge.top_studs",
+      "male": "motion_steer_bridge.top_studs",
       "female": "hair_bowl.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -110837,7 +110837,7 @@
       ]
     },
     {
-      "male": "pro_steer_bridge.top_studs",
+      "male": "motion_steer_bridge.top_studs",
       "female": "hair_slick.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -110851,7 +110851,7 @@
       ]
     },
     {
-      "male": "pro_steer_bridge.top_studs",
+      "male": "motion_steer_bridge.top_studs",
       "female": "hair_pixie.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -110865,7 +110865,7 @@
       ]
     },
     {
-      "male": "pro_steer_bridge.top_studs",
+      "male": "motion_steer_bridge.top_studs",
       "female": "hair_side_pony.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -110879,7 +110879,7 @@
       ]
     },
     {
-      "male": "pro_steer_bridge.top_studs",
+      "male": "motion_steer_bridge.top_studs",
       "female": "hair_low_bun.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -110893,7 +110893,7 @@
       ]
     },
     {
-      "male": "pro_steer_bridge.top_studs",
+      "male": "motion_steer_bridge.top_studs",
       "female": "hat_ballcap.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -110907,7 +110907,7 @@
       ]
     },
     {
-      "male": "pro_steer_bridge.top_studs",
+      "male": "motion_steer_bridge.top_studs",
       "female": "hat_beanie.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -110921,7 +110921,7 @@
       ]
     },
     {
-      "male": "pro_steer_bridge.top_studs",
+      "male": "motion_steer_bridge.top_studs",
       "female": "hat_cowboy.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -110935,7 +110935,7 @@
       ]
     },
     {
-      "male": "pro_steer_bridge.top_studs",
+      "male": "motion_steer_bridge.top_studs",
       "female": "hat_hardhat.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -110949,7 +110949,7 @@
       ]
     },
     {
-      "male": "pro_steer_bridge.top_studs",
+      "male": "motion_steer_bridge.top_studs",
       "female": "hat_ranger.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -110963,7 +110963,7 @@
       ]
     },
     {
-      "male": "pro_steer_bridge.top_studs",
+      "male": "motion_steer_bridge.top_studs",
       "female": "hat_tophat.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -110977,7 +110977,7 @@
       ]
     },
     {
-      "male": "pro_steer_bridge.top_studs",
+      "male": "motion_steer_bridge.top_studs",
       "female": "hat_pirate.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -110991,7 +110991,7 @@
       ]
     },
     {
-      "male": "pro_steer_bridge.top_studs",
+      "male": "motion_steer_bridge.top_studs",
       "female": "pack_explorer.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -111005,7 +111005,7 @@
       ]
     },
     {
-      "male": "pro_steer_bridge.top_studs",
+      "male": "motion_steer_bridge.top_studs",
       "female": "char_legs_seated.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -111019,7 +111019,7 @@
       ]
     },
     {
-      "male": "pro_steer_bridge.top_studs",
+      "male": "motion_steer_bridge.top_studs",
       "female": "veh_car_hood_cover.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -111033,7 +111033,7 @@
       ]
     },
     {
-      "male": "pro_steer_bridge.top_studs",
+      "male": "motion_steer_bridge.top_studs",
       "female": "veh_cab_roof_cover.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -111047,7 +111047,7 @@
       ]
     },
     {
-      "male": "pro_steer_bridge.top_studs",
+      "male": "motion_steer_bridge.top_studs",
       "female": "veh_truck_bed_cover.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -111061,7 +111061,7 @@
       ]
     },
     {
-      "male": "pro_steer_bridge.top_studs",
+      "male": "motion_steer_bridge.top_studs",
       "female": "veh_scooter_fairing.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -111075,7 +111075,7 @@
       ]
     },
     {
-      "male": "pro_steer_bridge.top_studs",
+      "male": "motion_steer_bridge.top_studs",
       "female": "veh_moto_cowling.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -111089,7 +111089,7 @@
       ]
     },
     {
-      "male": "pro_steer_bridge.top_studs",
+      "male": "motion_steer_bridge.top_studs",
       "female": "kit_aero_wedge.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -111103,7 +111103,7 @@
       ]
     },
     {
-      "male": "pro_steer_bridge.top_studs",
+      "male": "motion_steer_bridge.top_studs",
       "female": "kit_windscreen.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -111117,7 +111117,7 @@
       ]
     },
     {
-      "male": "pro_steer_bridge.top_studs",
+      "male": "motion_steer_bridge.top_studs",
       "female": "kit_foil_wing.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -111131,7 +111131,7 @@
       ]
     },
     {
-      "male": "pro_steer_bridge.top_studs",
+      "male": "motion_steer_bridge.top_studs",
       "female": "kit_skid_runner.under_sockets",
       "size_class": "small",
       "studs": 1,
@@ -111145,7 +111145,7 @@
       ]
     },
     {
-      "male": "pro_steer_bridge.top_studs",
+      "male": "motion_steer_bridge.top_studs",
       "female": "kit_tilting_tub.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -111159,7 +111159,7 @@
       ]
     },
     {
-      "male": "pro_steer_bridge.top_studs",
+      "male": "motion_steer_bridge.top_studs",
       "female": "kit_scoop_blade.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -111173,7 +111173,7 @@
       ]
     },
     {
-      "male": "pro_steer_bridge.top_studs",
+      "male": "motion_steer_bridge.top_studs",
       "female": "kit_booster_pod.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -111187,7 +111187,7 @@
       ]
     },
     {
-      "male": "pro_steer_bridge.top_studs",
+      "male": "motion_steer_bridge.top_studs",
       "female": "kit_turntable.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -111201,7 +111201,7 @@
       ]
     },
     {
-      "male": "pro_steer_bridge.top_studs",
+      "male": "motion_steer_bridge.top_studs",
       "female": "skin_aero_cowl.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -111215,7 +111215,7 @@
       ]
     },
     {
-      "male": "pro_steer_bridge.top_studs",
+      "male": "motion_steer_bridge.top_studs",
       "female": "skin_windscreen.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -111229,7 +111229,7 @@
       ]
     },
     {
-      "male": "pro_steer_bridge.top_studs",
+      "male": "motion_steer_bridge.top_studs",
       "female": "skin_cargo_shroud.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -111243,8 +111243,8 @@
       ]
     },
     {
-      "male": "pro_steer_bridge.top_studs",
-      "female": "pro_steer_bridge.under_sockets",
+      "male": "motion_steer_bridge.top_studs",
+      "female": "motion_steer_bridge.under_sockets",
       "size_class": "small",
       "studs": 2,
       "gap_min_mm": 0.05,
@@ -111257,7 +111257,7 @@
       ]
     },
     {
-      "male": "pro_steer_bridge.top_studs",
+      "male": "motion_steer_bridge.top_studs",
       "female": "mom_band_core_tray.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -111271,7 +111271,7 @@
       ]
     },
     {
-      "male": "pro_steer_bridge.top_studs",
+      "male": "motion_steer_bridge.top_studs",
       "female": "mom_band_core_lid.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -111285,7 +111285,7 @@
       ]
     },
     {
-      "male": "pro_steer_bridge.top_studs",
+      "male": "motion_steer_bridge.top_studs",
       "female": "mom_jet_valve_body.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -111299,7 +111299,7 @@
       ]
     },
     {
-      "male": "pro_steer_bridge.top_studs",
+      "male": "motion_steer_bridge.top_studs",
       "female": "mom_bellows_base.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -111313,7 +111313,7 @@
       ]
     },
     {
-      "male": "pro_steer_bridge.top_studs",
+      "male": "motion_steer_bridge.top_studs",
       "female": "mom_bellows_leaf.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -111327,7 +111327,7 @@
       ]
     },
     {
-      "male": "pro_steer_bridge.top_studs",
+      "male": "motion_steer_bridge.top_studs",
       "female": "mom_flywheel_tray.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -111341,7 +111341,7 @@
       ]
     },
     {
-      "male": "pro_steer_bridge.top_studs",
+      "male": "motion_steer_bridge.top_studs",
       "female": "mom_flywheel_lid.under_sockets",
       "size_class": "small",
       "studs": 2,
@@ -111355,7 +111355,7 @@
       ]
     },
     {
-      "male": "pro_steer_knuckle_l.wheel_stub",
+      "male": "motion_steer_knuckle_l.wheel_stub",
       "female": "beam_str_tu03.bores",
       "size_class": "pro",
       "fit": "free",
@@ -111371,7 +111371,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_l.wheel_stub",
+      "male": "motion_steer_knuckle_l.wheel_stub",
       "female": "beam_str_tu05.bores",
       "size_class": "pro",
       "fit": "free",
@@ -111387,7 +111387,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_l.wheel_stub",
+      "male": "motion_steer_knuckle_l.wheel_stub",
       "female": "beam_str_tu07.bores",
       "size_class": "pro",
       "fit": "free",
@@ -111403,7 +111403,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_l.wheel_stub",
+      "male": "motion_steer_knuckle_l.wheel_stub",
       "female": "beam_str_tu10.bores",
       "size_class": "pro",
       "fit": "free",
@@ -111419,7 +111419,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_l.wheel_stub",
+      "male": "motion_steer_knuckle_l.wheel_stub",
       "female": "beam_str_tu14.bores",
       "size_class": "pro",
       "fit": "free",
@@ -111435,7 +111435,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_l.wheel_stub",
+      "male": "motion_steer_knuckle_l.wheel_stub",
       "female": "bushing_half.hub",
       "size_class": "pro",
       "fit": "press",
@@ -111451,7 +111451,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_l.wheel_stub",
+      "male": "motion_steer_knuckle_l.wheel_stub",
       "female": "bushing_tu01.hub",
       "size_class": "pro",
       "fit": "press",
@@ -111467,7 +111467,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_l.wheel_stub",
+      "male": "motion_steer_knuckle_l.wheel_stub",
       "female": "gear_spur_z10.hub",
       "size_class": "pro",
       "fit": "press",
@@ -111483,7 +111483,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_l.wheel_stub",
+      "male": "motion_steer_knuckle_l.wheel_stub",
       "female": "gear_spur_z15.hub",
       "size_class": "pro",
       "fit": "press",
@@ -111499,7 +111499,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_l.wheel_stub",
+      "male": "motion_steer_knuckle_l.wheel_stub",
       "female": "gear_spur_z20.hub",
       "size_class": "pro",
       "fit": "press",
@@ -111515,7 +111515,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_l.wheel_stub",
+      "male": "motion_steer_knuckle_l.wheel_stub",
       "female": "gear_spur_z30.hub",
       "size_class": "pro",
       "fit": "press",
@@ -111531,7 +111531,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_l.wheel_stub",
+      "male": "motion_steer_knuckle_l.wheel_stub",
       "female": "gear_rack_tu05.bores",
       "size_class": "pro",
       "fit": "free",
@@ -111547,7 +111547,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_l.wheel_stub",
+      "male": "motion_steer_knuckle_l.wheel_stub",
       "female": "gear_ring_z40.frame_bores",
       "size_class": "pro",
       "fit": "free",
@@ -111563,7 +111563,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_l.wheel_stub",
+      "male": "motion_steer_knuckle_l.wheel_stub",
       "female": "gear_spur_z25.hub",
       "size_class": "pro",
       "fit": "press",
@@ -111579,7 +111579,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_l.wheel_stub",
+      "male": "motion_steer_knuckle_l.wheel_stub",
       "female": "beam_l_tu03x03.bores",
       "size_class": "pro",
       "fit": "free",
@@ -111595,7 +111595,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_l.wheel_stub",
+      "male": "motion_steer_knuckle_l.wheel_stub",
       "female": "beam_l_tu05x03.bores",
       "size_class": "pro",
       "fit": "free",
@@ -111611,7 +111611,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_l.wheel_stub",
+      "male": "motion_steer_knuckle_l.wheel_stub",
       "female": "beam_t_tu05x03.bores",
       "size_class": "pro",
       "fit": "free",
@@ -111627,7 +111627,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_l.wheel_stub",
+      "male": "motion_steer_knuckle_l.wheel_stub",
       "female": "beam_ang45_tu05.bores",
       "size_class": "pro",
       "fit": "free",
@@ -111643,7 +111643,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_l.wheel_stub",
+      "male": "motion_steer_knuckle_l.wheel_stub",
       "female": "forge_mount_pro.bores",
       "size_class": "pro",
       "fit": "free",
@@ -111659,8 +111659,8 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_l.wheel_stub",
-      "female": "adapter_snap_pro.bores",
+      "male": "motion_steer_knuckle_l.wheel_stub",
+      "female": "adapter_snap_motion.bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -111675,7 +111675,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_l.wheel_stub",
+      "male": "motion_steer_knuckle_l.wheel_stub",
       "female": "wheel_tu04.hub",
       "size_class": "pro",
       "fit": "press",
@@ -111691,7 +111691,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_l.wheel_stub",
+      "male": "motion_steer_knuckle_l.wheel_stub",
       "female": "wheel_tu04.cranks",
       "size_class": "pro",
       "fit": "free",
@@ -111707,7 +111707,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_l.wheel_stub",
+      "male": "motion_steer_knuckle_l.wheel_stub",
       "female": "wheel_tu06.hub",
       "size_class": "pro",
       "fit": "press",
@@ -111723,7 +111723,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_l.wheel_stub",
+      "male": "motion_steer_knuckle_l.wheel_stub",
       "female": "wheel_tu06.cranks",
       "size_class": "pro",
       "fit": "free",
@@ -111739,7 +111739,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_l.wheel_stub",
+      "male": "motion_steer_knuckle_l.wheel_stub",
       "female": "hinge_tu02.bores",
       "size_class": "pro",
       "fit": "free",
@@ -111755,7 +111755,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_l.wheel_stub",
+      "male": "motion_steer_knuckle_l.wheel_stub",
       "female": "hinge_tu02.knuckle0",
       "size_class": "pro",
       "fit": "free",
@@ -111771,7 +111771,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_l.wheel_stub",
+      "male": "motion_steer_knuckle_l.wheel_stub",
       "female": "hinge_tu02.knuckle1",
       "size_class": "pro",
       "fit": "free",
@@ -111787,7 +111787,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_l.wheel_stub",
+      "male": "motion_steer_knuckle_l.wheel_stub",
       "female": "cross_connector_tu01.axle_z",
       "size_class": "pro",
       "fit": "press",
@@ -111803,7 +111803,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_l.wheel_stub",
+      "male": "motion_steer_knuckle_l.wheel_stub",
       "female": "cross_connector_tu01.axle_y",
       "size_class": "pro",
       "fit": "press",
@@ -111819,7 +111819,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_l.wheel_stub",
+      "male": "motion_steer_knuckle_l.wheel_stub",
       "female": "racer_axle_block.axle",
       "size_class": "pro",
       "fit": "free",
@@ -111835,7 +111835,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_l.wheel_stub",
+      "male": "motion_steer_knuckle_l.wheel_stub",
       "female": "racer_wheel.hub",
       "size_class": "pro",
       "fit": "press",
@@ -111851,7 +111851,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_l.wheel_stub",
+      "male": "motion_steer_knuckle_l.wheel_stub",
       "female": "char_head_kid.face_slot",
       "size_class": "pro",
       "fit": "press",
@@ -111867,7 +111867,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_l.wheel_stub",
+      "male": "motion_steer_knuckle_l.wheel_stub",
       "female": "char_head_chibi.face_slot",
       "size_class": "pro",
       "fit": "press",
@@ -111883,7 +111883,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_l.wheel_stub",
+      "male": "motion_steer_knuckle_l.wheel_stub",
       "female": "char_head_jumbo.face_slot",
       "size_class": "pro",
       "fit": "press",
@@ -111899,7 +111899,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_l.wheel_stub",
+      "male": "motion_steer_knuckle_l.wheel_stub",
       "female": "char_head_tall.face_slot",
       "size_class": "pro",
       "fit": "press",
@@ -111915,7 +111915,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_l.wheel_stub",
+      "male": "motion_steer_knuckle_l.wheel_stub",
       "female": "prop_skateboard_deck.axle_front",
       "size_class": "pro",
       "fit": "free",
@@ -111931,7 +111931,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_l.wheel_stub",
+      "male": "motion_steer_knuckle_l.wheel_stub",
       "female": "prop_skateboard_deck.axle_rear",
       "size_class": "pro",
       "fit": "free",
@@ -111947,7 +111947,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_l.wheel_stub",
+      "male": "motion_steer_knuckle_l.wheel_stub",
       "female": "veh_wheel_sport.hub",
       "size_class": "pro",
       "fit": "press",
@@ -111963,7 +111963,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_l.wheel_stub",
+      "male": "motion_steer_knuckle_l.wheel_stub",
       "female": "veh_wheel_offroad.hub",
       "size_class": "pro",
       "fit": "press",
@@ -111979,7 +111979,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_l.wheel_stub",
+      "male": "motion_steer_knuckle_l.wheel_stub",
       "female": "veh_wheel_moto.hub",
       "size_class": "pro",
       "fit": "press",
@@ -111995,7 +111995,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_l.wheel_stub",
+      "male": "motion_steer_knuckle_l.wheel_stub",
       "female": "veh_car_chassis.dash_bore",
       "size_class": "pro",
       "fit": "free",
@@ -112011,7 +112011,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_l.wheel_stub",
+      "male": "motion_steer_knuckle_l.wheel_stub",
       "female": "veh_car_chassis.axle_front",
       "size_class": "pro",
       "fit": "free",
@@ -112027,7 +112027,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_l.wheel_stub",
+      "male": "motion_steer_knuckle_l.wheel_stub",
       "female": "veh_car_chassis.axle_rear",
       "size_class": "pro",
       "fit": "free",
@@ -112043,7 +112043,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_l.wheel_stub",
+      "male": "motion_steer_knuckle_l.wheel_stub",
       "female": "veh_truck_chassis.dash_bore",
       "size_class": "pro",
       "fit": "free",
@@ -112059,7 +112059,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_l.wheel_stub",
+      "male": "motion_steer_knuckle_l.wheel_stub",
       "female": "veh_truck_chassis.axle_front",
       "size_class": "pro",
       "fit": "free",
@@ -112075,7 +112075,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_l.wheel_stub",
+      "male": "motion_steer_knuckle_l.wheel_stub",
       "female": "veh_truck_chassis.axle_rear",
       "size_class": "pro",
       "fit": "free",
@@ -112091,7 +112091,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_l.wheel_stub",
+      "male": "motion_steer_knuckle_l.wheel_stub",
       "female": "veh_scooter_frame.headtube",
       "size_class": "pro",
       "fit": "free",
@@ -112107,7 +112107,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_l.wheel_stub",
+      "male": "motion_steer_knuckle_l.wheel_stub",
       "female": "veh_scooter_frame.axle_front",
       "size_class": "pro",
       "fit": "free",
@@ -112123,7 +112123,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_l.wheel_stub",
+      "male": "motion_steer_knuckle_l.wheel_stub",
       "female": "veh_scooter_frame.axle_front_r",
       "size_class": "pro",
       "fit": "free",
@@ -112139,7 +112139,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_l.wheel_stub",
+      "male": "motion_steer_knuckle_l.wheel_stub",
       "female": "veh_scooter_frame.axle_rear",
       "size_class": "pro",
       "fit": "free",
@@ -112155,7 +112155,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_l.wheel_stub",
+      "male": "motion_steer_knuckle_l.wheel_stub",
       "female": "veh_scooter_frame.axle_rear_r",
       "size_class": "pro",
       "fit": "free",
@@ -112171,7 +112171,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_l.wheel_stub",
+      "male": "motion_steer_knuckle_l.wheel_stub",
       "female": "kit_keel_base.steer_bore",
       "size_class": "pro",
       "fit": "free",
@@ -112187,7 +112187,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_l.wheel_stub",
+      "male": "motion_steer_knuckle_l.wheel_stub",
       "female": "kit_clevis_spine.headtube",
       "size_class": "pro",
       "fit": "free",
@@ -112203,7 +112203,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_l.wheel_stub",
+      "male": "motion_steer_knuckle_l.wheel_stub",
       "female": "kit_clevis_spine.clevis_front_l",
       "size_class": "pro",
       "fit": "free",
@@ -112219,7 +112219,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_l.wheel_stub",
+      "male": "motion_steer_knuckle_l.wheel_stub",
       "female": "kit_clevis_spine.clevis_front_r",
       "size_class": "pro",
       "fit": "free",
@@ -112235,7 +112235,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_l.wheel_stub",
+      "male": "motion_steer_knuckle_l.wheel_stub",
       "female": "kit_clevis_spine.clevis_rear_l",
       "size_class": "pro",
       "fit": "free",
@@ -112251,7 +112251,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_l.wheel_stub",
+      "male": "motion_steer_knuckle_l.wheel_stub",
       "female": "kit_clevis_spine.clevis_rear_r",
       "size_class": "pro",
       "fit": "free",
@@ -112267,7 +112267,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_l.wheel_stub",
+      "male": "motion_steer_knuckle_l.wheel_stub",
       "female": "kit_wheel_med.hub",
       "size_class": "pro",
       "fit": "press",
@@ -112283,7 +112283,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_l.wheel_stub",
+      "male": "motion_steer_knuckle_l.wheel_stub",
       "female": "kit_wheel_giant.hub",
       "size_class": "pro",
       "fit": "press",
@@ -112299,7 +112299,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_l.wheel_stub",
+      "male": "motion_steer_knuckle_l.wheel_stub",
       "female": "kit_wheel_giant.face_bores",
       "size_class": "pro",
       "fit": "free",
@@ -112315,7 +112315,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_l.wheel_stub",
+      "male": "motion_steer_knuckle_l.wheel_stub",
       "female": "kit_rotor_blade.hub",
       "size_class": "pro",
       "fit": "press",
@@ -112331,7 +112331,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_l.wheel_stub",
+      "male": "motion_steer_knuckle_l.wheel_stub",
       "female": "kit_aero_wedge.prop_bore",
       "size_class": "pro",
       "fit": "free",
@@ -112347,7 +112347,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_l.wheel_stub",
+      "male": "motion_steer_knuckle_l.wheel_stub",
       "female": "kit_aero_wedge.mast_bore",
       "size_class": "pro",
       "fit": "free",
@@ -112363,7 +112363,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_l.wheel_stub",
+      "male": "motion_steer_knuckle_l.wheel_stub",
       "female": "kit_turntable.center_bore",
       "size_class": "pro",
       "fit": "free",
@@ -112379,8 +112379,8 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_l.wheel_stub",
-      "female": "pro_steer_bridge.kingpins",
+      "male": "motion_steer_knuckle_l.wheel_stub",
+      "female": "motion_steer_bridge.kingpins",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -112395,8 +112395,8 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_l.wheel_stub",
-      "female": "pro_steer_knuckle_l.kingpin_bore",
+      "male": "motion_steer_knuckle_l.wheel_stub",
+      "female": "motion_steer_knuckle_l.kingpin_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -112411,8 +112411,8 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_l.wheel_stub",
-      "female": "pro_steer_knuckle_l.tierod_bore",
+      "male": "motion_steer_knuckle_l.wheel_stub",
+      "female": "motion_steer_knuckle_l.tierod_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -112427,8 +112427,8 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_l.wheel_stub",
-      "female": "pro_steer_knuckle_r.kingpin_bore",
+      "male": "motion_steer_knuckle_l.wheel_stub",
+      "female": "motion_steer_knuckle_r.kingpin_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -112443,8 +112443,8 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_l.wheel_stub",
-      "female": "pro_steer_knuckle_r.tierod_bore",
+      "male": "motion_steer_knuckle_l.wheel_stub",
+      "female": "motion_steer_knuckle_r.tierod_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -112459,8 +112459,8 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_l.wheel_stub",
-      "female": "pro_steer_rack.tierod_bores",
+      "male": "motion_steer_knuckle_l.wheel_stub",
+      "female": "motion_steer_rack.tierod_bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -112475,8 +112475,8 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_l.wheel_stub",
-      "female": "pro_fork_rake_adpt.fork_bores",
+      "male": "motion_steer_knuckle_l.wheel_stub",
+      "female": "motion_fork_rake_adpt.fork_bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -112491,8 +112491,8 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_l.wheel_stub",
-      "female": "pro_axle_keeper.keeper_bores",
+      "male": "motion_steer_knuckle_l.wheel_stub",
+      "female": "motion_axle_keeper.keeper_bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -112507,7 +112507,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_l.wheel_stub",
+      "male": "motion_steer_knuckle_l.wheel_stub",
       "female": "mom_band_core_tray.pto_bore_l",
       "size_class": "pro",
       "fit": "free",
@@ -112523,7 +112523,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_l.wheel_stub",
+      "male": "motion_steer_knuckle_l.wheel_stub",
       "female": "mom_band_core_tray.pto_bore_r",
       "size_class": "pro",
       "fit": "free",
@@ -112539,7 +112539,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_l.wheel_stub",
+      "male": "motion_steer_knuckle_l.wheel_stub",
       "female": "mom_band_spool_pawl.hub",
       "size_class": "pro",
       "fit": "press",
@@ -112555,7 +112555,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_l.wheel_stub",
+      "male": "motion_steer_knuckle_l.wheel_stub",
       "female": "mom_bumper_trigger.mount_bores",
       "size_class": "pro",
       "fit": "free",
@@ -112571,7 +112571,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_l.wheel_stub",
+      "male": "motion_steer_knuckle_l.wheel_stub",
       "female": "mom_slam_base.anchor_bores",
       "size_class": "pro",
       "fit": "free",
@@ -112587,7 +112587,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_l.wheel_stub",
+      "male": "motion_steer_knuckle_l.wheel_stub",
       "female": "mom_jet_valve_body.nozzle_pin",
       "size_class": "pro",
       "fit": "free",
@@ -112603,7 +112603,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_l.wheel_stub",
+      "male": "motion_steer_knuckle_l.wheel_stub",
       "female": "mom_nozzle_set.mount_bore",
       "size_class": "pro",
       "fit": "free",
@@ -112619,7 +112619,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_l.wheel_stub",
+      "male": "motion_steer_knuckle_l.wheel_stub",
       "female": "mom_flywheel_tray.spindle_step",
       "size_class": "pro",
       "fit": "free",
@@ -112635,7 +112635,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_l.wheel_stub",
+      "male": "motion_steer_knuckle_l.wheel_stub",
       "female": "mom_flywheel_lid.spindle_journal",
       "size_class": "pro",
       "fit": "free",
@@ -112651,7 +112651,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_l.wheel_stub",
+      "male": "motion_steer_knuckle_l.wheel_stub",
       "female": "mom_flywheel_rotor.hub",
       "size_class": "pro",
       "fit": "press",
@@ -112667,7 +112667,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_l.wheel_stub",
+      "male": "motion_steer_knuckle_l.wheel_stub",
       "female": "mom_ripcord_rack_150.pull_bore",
       "size_class": "pro",
       "fit": "free",
@@ -112683,7 +112683,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_r.wheel_stub",
+      "male": "motion_steer_knuckle_r.wheel_stub",
       "female": "beam_str_tu03.bores",
       "size_class": "pro",
       "fit": "free",
@@ -112699,7 +112699,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_r.wheel_stub",
+      "male": "motion_steer_knuckle_r.wheel_stub",
       "female": "beam_str_tu05.bores",
       "size_class": "pro",
       "fit": "free",
@@ -112715,7 +112715,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_r.wheel_stub",
+      "male": "motion_steer_knuckle_r.wheel_stub",
       "female": "beam_str_tu07.bores",
       "size_class": "pro",
       "fit": "free",
@@ -112731,7 +112731,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_r.wheel_stub",
+      "male": "motion_steer_knuckle_r.wheel_stub",
       "female": "beam_str_tu10.bores",
       "size_class": "pro",
       "fit": "free",
@@ -112747,7 +112747,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_r.wheel_stub",
+      "male": "motion_steer_knuckle_r.wheel_stub",
       "female": "beam_str_tu14.bores",
       "size_class": "pro",
       "fit": "free",
@@ -112763,7 +112763,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_r.wheel_stub",
+      "male": "motion_steer_knuckle_r.wheel_stub",
       "female": "bushing_half.hub",
       "size_class": "pro",
       "fit": "press",
@@ -112779,7 +112779,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_r.wheel_stub",
+      "male": "motion_steer_knuckle_r.wheel_stub",
       "female": "bushing_tu01.hub",
       "size_class": "pro",
       "fit": "press",
@@ -112795,7 +112795,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_r.wheel_stub",
+      "male": "motion_steer_knuckle_r.wheel_stub",
       "female": "gear_spur_z10.hub",
       "size_class": "pro",
       "fit": "press",
@@ -112811,7 +112811,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_r.wheel_stub",
+      "male": "motion_steer_knuckle_r.wheel_stub",
       "female": "gear_spur_z15.hub",
       "size_class": "pro",
       "fit": "press",
@@ -112827,7 +112827,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_r.wheel_stub",
+      "male": "motion_steer_knuckle_r.wheel_stub",
       "female": "gear_spur_z20.hub",
       "size_class": "pro",
       "fit": "press",
@@ -112843,7 +112843,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_r.wheel_stub",
+      "male": "motion_steer_knuckle_r.wheel_stub",
       "female": "gear_spur_z30.hub",
       "size_class": "pro",
       "fit": "press",
@@ -112859,7 +112859,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_r.wheel_stub",
+      "male": "motion_steer_knuckle_r.wheel_stub",
       "female": "gear_rack_tu05.bores",
       "size_class": "pro",
       "fit": "free",
@@ -112875,7 +112875,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_r.wheel_stub",
+      "male": "motion_steer_knuckle_r.wheel_stub",
       "female": "gear_ring_z40.frame_bores",
       "size_class": "pro",
       "fit": "free",
@@ -112891,7 +112891,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_r.wheel_stub",
+      "male": "motion_steer_knuckle_r.wheel_stub",
       "female": "gear_spur_z25.hub",
       "size_class": "pro",
       "fit": "press",
@@ -112907,7 +112907,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_r.wheel_stub",
+      "male": "motion_steer_knuckle_r.wheel_stub",
       "female": "beam_l_tu03x03.bores",
       "size_class": "pro",
       "fit": "free",
@@ -112923,7 +112923,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_r.wheel_stub",
+      "male": "motion_steer_knuckle_r.wheel_stub",
       "female": "beam_l_tu05x03.bores",
       "size_class": "pro",
       "fit": "free",
@@ -112939,7 +112939,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_r.wheel_stub",
+      "male": "motion_steer_knuckle_r.wheel_stub",
       "female": "beam_t_tu05x03.bores",
       "size_class": "pro",
       "fit": "free",
@@ -112955,7 +112955,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_r.wheel_stub",
+      "male": "motion_steer_knuckle_r.wheel_stub",
       "female": "beam_ang45_tu05.bores",
       "size_class": "pro",
       "fit": "free",
@@ -112971,7 +112971,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_r.wheel_stub",
+      "male": "motion_steer_knuckle_r.wheel_stub",
       "female": "forge_mount_pro.bores",
       "size_class": "pro",
       "fit": "free",
@@ -112987,8 +112987,8 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_r.wheel_stub",
-      "female": "adapter_snap_pro.bores",
+      "male": "motion_steer_knuckle_r.wheel_stub",
+      "female": "adapter_snap_motion.bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -113003,7 +113003,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_r.wheel_stub",
+      "male": "motion_steer_knuckle_r.wheel_stub",
       "female": "wheel_tu04.hub",
       "size_class": "pro",
       "fit": "press",
@@ -113019,7 +113019,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_r.wheel_stub",
+      "male": "motion_steer_knuckle_r.wheel_stub",
       "female": "wheel_tu04.cranks",
       "size_class": "pro",
       "fit": "free",
@@ -113035,7 +113035,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_r.wheel_stub",
+      "male": "motion_steer_knuckle_r.wheel_stub",
       "female": "wheel_tu06.hub",
       "size_class": "pro",
       "fit": "press",
@@ -113051,7 +113051,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_r.wheel_stub",
+      "male": "motion_steer_knuckle_r.wheel_stub",
       "female": "wheel_tu06.cranks",
       "size_class": "pro",
       "fit": "free",
@@ -113067,7 +113067,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_r.wheel_stub",
+      "male": "motion_steer_knuckle_r.wheel_stub",
       "female": "hinge_tu02.bores",
       "size_class": "pro",
       "fit": "free",
@@ -113083,7 +113083,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_r.wheel_stub",
+      "male": "motion_steer_knuckle_r.wheel_stub",
       "female": "hinge_tu02.knuckle0",
       "size_class": "pro",
       "fit": "free",
@@ -113099,7 +113099,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_r.wheel_stub",
+      "male": "motion_steer_knuckle_r.wheel_stub",
       "female": "hinge_tu02.knuckle1",
       "size_class": "pro",
       "fit": "free",
@@ -113115,7 +113115,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_r.wheel_stub",
+      "male": "motion_steer_knuckle_r.wheel_stub",
       "female": "cross_connector_tu01.axle_z",
       "size_class": "pro",
       "fit": "press",
@@ -113131,7 +113131,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_r.wheel_stub",
+      "male": "motion_steer_knuckle_r.wheel_stub",
       "female": "cross_connector_tu01.axle_y",
       "size_class": "pro",
       "fit": "press",
@@ -113147,7 +113147,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_r.wheel_stub",
+      "male": "motion_steer_knuckle_r.wheel_stub",
       "female": "racer_axle_block.axle",
       "size_class": "pro",
       "fit": "free",
@@ -113163,7 +113163,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_r.wheel_stub",
+      "male": "motion_steer_knuckle_r.wheel_stub",
       "female": "racer_wheel.hub",
       "size_class": "pro",
       "fit": "press",
@@ -113179,7 +113179,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_r.wheel_stub",
+      "male": "motion_steer_knuckle_r.wheel_stub",
       "female": "char_head_kid.face_slot",
       "size_class": "pro",
       "fit": "press",
@@ -113195,7 +113195,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_r.wheel_stub",
+      "male": "motion_steer_knuckle_r.wheel_stub",
       "female": "char_head_chibi.face_slot",
       "size_class": "pro",
       "fit": "press",
@@ -113211,7 +113211,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_r.wheel_stub",
+      "male": "motion_steer_knuckle_r.wheel_stub",
       "female": "char_head_jumbo.face_slot",
       "size_class": "pro",
       "fit": "press",
@@ -113227,7 +113227,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_r.wheel_stub",
+      "male": "motion_steer_knuckle_r.wheel_stub",
       "female": "char_head_tall.face_slot",
       "size_class": "pro",
       "fit": "press",
@@ -113243,7 +113243,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_r.wheel_stub",
+      "male": "motion_steer_knuckle_r.wheel_stub",
       "female": "prop_skateboard_deck.axle_front",
       "size_class": "pro",
       "fit": "free",
@@ -113259,7 +113259,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_r.wheel_stub",
+      "male": "motion_steer_knuckle_r.wheel_stub",
       "female": "prop_skateboard_deck.axle_rear",
       "size_class": "pro",
       "fit": "free",
@@ -113275,7 +113275,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_r.wheel_stub",
+      "male": "motion_steer_knuckle_r.wheel_stub",
       "female": "veh_wheel_sport.hub",
       "size_class": "pro",
       "fit": "press",
@@ -113291,7 +113291,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_r.wheel_stub",
+      "male": "motion_steer_knuckle_r.wheel_stub",
       "female": "veh_wheel_offroad.hub",
       "size_class": "pro",
       "fit": "press",
@@ -113307,7 +113307,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_r.wheel_stub",
+      "male": "motion_steer_knuckle_r.wheel_stub",
       "female": "veh_wheel_moto.hub",
       "size_class": "pro",
       "fit": "press",
@@ -113323,7 +113323,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_r.wheel_stub",
+      "male": "motion_steer_knuckle_r.wheel_stub",
       "female": "veh_car_chassis.dash_bore",
       "size_class": "pro",
       "fit": "free",
@@ -113339,7 +113339,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_r.wheel_stub",
+      "male": "motion_steer_knuckle_r.wheel_stub",
       "female": "veh_car_chassis.axle_front",
       "size_class": "pro",
       "fit": "free",
@@ -113355,7 +113355,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_r.wheel_stub",
+      "male": "motion_steer_knuckle_r.wheel_stub",
       "female": "veh_car_chassis.axle_rear",
       "size_class": "pro",
       "fit": "free",
@@ -113371,7 +113371,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_r.wheel_stub",
+      "male": "motion_steer_knuckle_r.wheel_stub",
       "female": "veh_truck_chassis.dash_bore",
       "size_class": "pro",
       "fit": "free",
@@ -113387,7 +113387,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_r.wheel_stub",
+      "male": "motion_steer_knuckle_r.wheel_stub",
       "female": "veh_truck_chassis.axle_front",
       "size_class": "pro",
       "fit": "free",
@@ -113403,7 +113403,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_r.wheel_stub",
+      "male": "motion_steer_knuckle_r.wheel_stub",
       "female": "veh_truck_chassis.axle_rear",
       "size_class": "pro",
       "fit": "free",
@@ -113419,7 +113419,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_r.wheel_stub",
+      "male": "motion_steer_knuckle_r.wheel_stub",
       "female": "veh_scooter_frame.headtube",
       "size_class": "pro",
       "fit": "free",
@@ -113435,7 +113435,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_r.wheel_stub",
+      "male": "motion_steer_knuckle_r.wheel_stub",
       "female": "veh_scooter_frame.axle_front",
       "size_class": "pro",
       "fit": "free",
@@ -113451,7 +113451,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_r.wheel_stub",
+      "male": "motion_steer_knuckle_r.wheel_stub",
       "female": "veh_scooter_frame.axle_front_r",
       "size_class": "pro",
       "fit": "free",
@@ -113467,7 +113467,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_r.wheel_stub",
+      "male": "motion_steer_knuckle_r.wheel_stub",
       "female": "veh_scooter_frame.axle_rear",
       "size_class": "pro",
       "fit": "free",
@@ -113483,7 +113483,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_r.wheel_stub",
+      "male": "motion_steer_knuckle_r.wheel_stub",
       "female": "veh_scooter_frame.axle_rear_r",
       "size_class": "pro",
       "fit": "free",
@@ -113499,7 +113499,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_r.wheel_stub",
+      "male": "motion_steer_knuckle_r.wheel_stub",
       "female": "kit_keel_base.steer_bore",
       "size_class": "pro",
       "fit": "free",
@@ -113515,7 +113515,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_r.wheel_stub",
+      "male": "motion_steer_knuckle_r.wheel_stub",
       "female": "kit_clevis_spine.headtube",
       "size_class": "pro",
       "fit": "free",
@@ -113531,7 +113531,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_r.wheel_stub",
+      "male": "motion_steer_knuckle_r.wheel_stub",
       "female": "kit_clevis_spine.clevis_front_l",
       "size_class": "pro",
       "fit": "free",
@@ -113547,7 +113547,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_r.wheel_stub",
+      "male": "motion_steer_knuckle_r.wheel_stub",
       "female": "kit_clevis_spine.clevis_front_r",
       "size_class": "pro",
       "fit": "free",
@@ -113563,7 +113563,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_r.wheel_stub",
+      "male": "motion_steer_knuckle_r.wheel_stub",
       "female": "kit_clevis_spine.clevis_rear_l",
       "size_class": "pro",
       "fit": "free",
@@ -113579,7 +113579,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_r.wheel_stub",
+      "male": "motion_steer_knuckle_r.wheel_stub",
       "female": "kit_clevis_spine.clevis_rear_r",
       "size_class": "pro",
       "fit": "free",
@@ -113595,7 +113595,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_r.wheel_stub",
+      "male": "motion_steer_knuckle_r.wheel_stub",
       "female": "kit_wheel_med.hub",
       "size_class": "pro",
       "fit": "press",
@@ -113611,7 +113611,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_r.wheel_stub",
+      "male": "motion_steer_knuckle_r.wheel_stub",
       "female": "kit_wheel_giant.hub",
       "size_class": "pro",
       "fit": "press",
@@ -113627,7 +113627,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_r.wheel_stub",
+      "male": "motion_steer_knuckle_r.wheel_stub",
       "female": "kit_wheel_giant.face_bores",
       "size_class": "pro",
       "fit": "free",
@@ -113643,7 +113643,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_r.wheel_stub",
+      "male": "motion_steer_knuckle_r.wheel_stub",
       "female": "kit_rotor_blade.hub",
       "size_class": "pro",
       "fit": "press",
@@ -113659,7 +113659,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_r.wheel_stub",
+      "male": "motion_steer_knuckle_r.wheel_stub",
       "female": "kit_aero_wedge.prop_bore",
       "size_class": "pro",
       "fit": "free",
@@ -113675,7 +113675,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_r.wheel_stub",
+      "male": "motion_steer_knuckle_r.wheel_stub",
       "female": "kit_aero_wedge.mast_bore",
       "size_class": "pro",
       "fit": "free",
@@ -113691,7 +113691,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_r.wheel_stub",
+      "male": "motion_steer_knuckle_r.wheel_stub",
       "female": "kit_turntable.center_bore",
       "size_class": "pro",
       "fit": "free",
@@ -113707,8 +113707,8 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_r.wheel_stub",
-      "female": "pro_steer_bridge.kingpins",
+      "male": "motion_steer_knuckle_r.wheel_stub",
+      "female": "motion_steer_bridge.kingpins",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -113723,8 +113723,8 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_r.wheel_stub",
-      "female": "pro_steer_knuckle_l.kingpin_bore",
+      "male": "motion_steer_knuckle_r.wheel_stub",
+      "female": "motion_steer_knuckle_l.kingpin_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -113739,8 +113739,8 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_r.wheel_stub",
-      "female": "pro_steer_knuckle_l.tierod_bore",
+      "male": "motion_steer_knuckle_r.wheel_stub",
+      "female": "motion_steer_knuckle_l.tierod_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -113755,8 +113755,8 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_r.wheel_stub",
-      "female": "pro_steer_knuckle_r.kingpin_bore",
+      "male": "motion_steer_knuckle_r.wheel_stub",
+      "female": "motion_steer_knuckle_r.kingpin_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -113771,8 +113771,8 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_r.wheel_stub",
-      "female": "pro_steer_knuckle_r.tierod_bore",
+      "male": "motion_steer_knuckle_r.wheel_stub",
+      "female": "motion_steer_knuckle_r.tierod_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -113787,8 +113787,8 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_r.wheel_stub",
-      "female": "pro_steer_rack.tierod_bores",
+      "male": "motion_steer_knuckle_r.wheel_stub",
+      "female": "motion_steer_rack.tierod_bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -113803,8 +113803,8 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_r.wheel_stub",
-      "female": "pro_fork_rake_adpt.fork_bores",
+      "male": "motion_steer_knuckle_r.wheel_stub",
+      "female": "motion_fork_rake_adpt.fork_bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -113819,8 +113819,8 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_r.wheel_stub",
-      "female": "pro_axle_keeper.keeper_bores",
+      "male": "motion_steer_knuckle_r.wheel_stub",
+      "female": "motion_axle_keeper.keeper_bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -113835,7 +113835,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_r.wheel_stub",
+      "male": "motion_steer_knuckle_r.wheel_stub",
       "female": "mom_band_core_tray.pto_bore_l",
       "size_class": "pro",
       "fit": "free",
@@ -113851,7 +113851,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_r.wheel_stub",
+      "male": "motion_steer_knuckle_r.wheel_stub",
       "female": "mom_band_core_tray.pto_bore_r",
       "size_class": "pro",
       "fit": "free",
@@ -113867,7 +113867,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_r.wheel_stub",
+      "male": "motion_steer_knuckle_r.wheel_stub",
       "female": "mom_band_spool_pawl.hub",
       "size_class": "pro",
       "fit": "press",
@@ -113883,7 +113883,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_r.wheel_stub",
+      "male": "motion_steer_knuckle_r.wheel_stub",
       "female": "mom_bumper_trigger.mount_bores",
       "size_class": "pro",
       "fit": "free",
@@ -113899,7 +113899,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_r.wheel_stub",
+      "male": "motion_steer_knuckle_r.wheel_stub",
       "female": "mom_slam_base.anchor_bores",
       "size_class": "pro",
       "fit": "free",
@@ -113915,7 +113915,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_r.wheel_stub",
+      "male": "motion_steer_knuckle_r.wheel_stub",
       "female": "mom_jet_valve_body.nozzle_pin",
       "size_class": "pro",
       "fit": "free",
@@ -113931,7 +113931,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_r.wheel_stub",
+      "male": "motion_steer_knuckle_r.wheel_stub",
       "female": "mom_nozzle_set.mount_bore",
       "size_class": "pro",
       "fit": "free",
@@ -113947,7 +113947,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_r.wheel_stub",
+      "male": "motion_steer_knuckle_r.wheel_stub",
       "female": "mom_flywheel_tray.spindle_step",
       "size_class": "pro",
       "fit": "free",
@@ -113963,7 +113963,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_r.wheel_stub",
+      "male": "motion_steer_knuckle_r.wheel_stub",
       "female": "mom_flywheel_lid.spindle_journal",
       "size_class": "pro",
       "fit": "free",
@@ -113979,7 +113979,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_r.wheel_stub",
+      "male": "motion_steer_knuckle_r.wheel_stub",
       "female": "mom_flywheel_rotor.hub",
       "size_class": "pro",
       "fit": "press",
@@ -113995,7 +113995,7 @@
       "measured": true
     },
     {
-      "male": "pro_steer_knuckle_r.wheel_stub",
+      "male": "motion_steer_knuckle_r.wheel_stub",
       "female": "mom_ripcord_rack_150.pull_bore",
       "size_class": "pro",
       "fit": "free",
@@ -115174,7 +115174,7 @@
     },
     {
       "male": "mom_band_core_tray.rim_studs",
-      "female": "pro_steer_bridge.under_sockets",
+      "female": "motion_steer_bridge.under_sockets",
       "size_class": "small",
       "studs": 1,
       "gap_min_mm": 0.05,
@@ -116448,7 +116448,7 @@
     },
     {
       "male": "mom_band_core_lid.top_studs",
-      "female": "pro_steer_bridge.under_sockets",
+      "female": "motion_steer_bridge.under_sockets",
       "size_class": "small",
       "studs": 4,
       "gap_min_mm": 0.05,
@@ -116864,7 +116864,7 @@
     },
     {
       "male": "mom_slam_plunger.axis",
-      "female": "adapter_snap_pro.bores",
+      "female": "adapter_snap_motion.bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -117584,7 +117584,7 @@
     },
     {
       "male": "mom_slam_plunger.axis",
-      "female": "pro_steer_bridge.kingpins",
+      "female": "motion_steer_bridge.kingpins",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -117600,7 +117600,7 @@
     },
     {
       "male": "mom_slam_plunger.axis",
-      "female": "pro_steer_knuckle_l.kingpin_bore",
+      "female": "motion_steer_knuckle_l.kingpin_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -117616,7 +117616,7 @@
     },
     {
       "male": "mom_slam_plunger.axis",
-      "female": "pro_steer_knuckle_l.tierod_bore",
+      "female": "motion_steer_knuckle_l.tierod_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -117632,7 +117632,7 @@
     },
     {
       "male": "mom_slam_plunger.axis",
-      "female": "pro_steer_knuckle_r.kingpin_bore",
+      "female": "motion_steer_knuckle_r.kingpin_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -117648,7 +117648,7 @@
     },
     {
       "male": "mom_slam_plunger.axis",
-      "female": "pro_steer_knuckle_r.tierod_bore",
+      "female": "motion_steer_knuckle_r.tierod_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -117664,7 +117664,7 @@
     },
     {
       "male": "mom_slam_plunger.axis",
-      "female": "pro_steer_rack.tierod_bores",
+      "female": "motion_steer_rack.tierod_bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -117680,7 +117680,7 @@
     },
     {
       "male": "mom_slam_plunger.axis",
-      "female": "pro_fork_rake_adpt.fork_bores",
+      "female": "motion_fork_rake_adpt.fork_bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -117696,7 +117696,7 @@
     },
     {
       "male": "mom_slam_plunger.axis",
-      "female": "pro_axle_keeper.keeper_bores",
+      "female": "motion_axle_keeper.keeper_bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -119050,7 +119050,7 @@
     },
     {
       "male": "mom_bellows_leaf.top_studs",
-      "female": "pro_steer_bridge.under_sockets",
+      "female": "motion_steer_bridge.under_sockets",
       "size_class": "small",
       "studs": 4,
       "gap_min_mm": 0.05,
@@ -120324,7 +120324,7 @@
     },
     {
       "male": "mom_flywheel_tray.rim_studs",
-      "female": "pro_steer_bridge.under_sockets",
+      "female": "motion_steer_bridge.under_sockets",
       "size_class": "small",
       "studs": 1,
       "gap_min_mm": 0.05,
@@ -121598,7 +121598,7 @@
     },
     {
       "male": "mom_flywheel_lid.top_studs",
-      "female": "pro_steer_bridge.under_sockets",
+      "female": "motion_steer_bridge.under_sockets",
       "size_class": "small",
       "studs": 3,
       "gap_min_mm": 0.05,
@@ -122014,7 +122014,7 @@
     },
     {
       "male": "mom_spindle_shaft.axis",
-      "female": "adapter_snap_pro.bores",
+      "female": "adapter_snap_motion.bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -122734,7 +122734,7 @@
     },
     {
       "male": "mom_spindle_shaft.axis",
-      "female": "pro_steer_bridge.kingpins",
+      "female": "motion_steer_bridge.kingpins",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -122750,7 +122750,7 @@
     },
     {
       "male": "mom_spindle_shaft.axis",
-      "female": "pro_steer_knuckle_l.kingpin_bore",
+      "female": "motion_steer_knuckle_l.kingpin_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -122766,7 +122766,7 @@
     },
     {
       "male": "mom_spindle_shaft.axis",
-      "female": "pro_steer_knuckle_l.tierod_bore",
+      "female": "motion_steer_knuckle_l.tierod_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -122782,7 +122782,7 @@
     },
     {
       "male": "mom_spindle_shaft.axis",
-      "female": "pro_steer_knuckle_r.kingpin_bore",
+      "female": "motion_steer_knuckle_r.kingpin_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -122798,7 +122798,7 @@
     },
     {
       "male": "mom_spindle_shaft.axis",
-      "female": "pro_steer_knuckle_r.tierod_bore",
+      "female": "motion_steer_knuckle_r.tierod_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -122814,7 +122814,7 @@
     },
     {
       "male": "mom_spindle_shaft.axis",
-      "female": "pro_steer_rack.tierod_bores",
+      "female": "motion_steer_rack.tierod_bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -122830,7 +122830,7 @@
     },
     {
       "male": "mom_spindle_shaft.axis",
-      "female": "pro_fork_rake_adpt.fork_bores",
+      "female": "motion_fork_rake_adpt.fork_bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -122846,7 +122846,7 @@
     },
     {
       "male": "mom_spindle_shaft.axis",
-      "female": "pro_axle_keeper.keeper_bores",
+      "female": "motion_axle_keeper.keeper_bores",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,

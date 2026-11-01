@@ -12,7 +12,7 @@ HERE = Path(__file__).parent
 DOCS = [
     ("01_interface_standard.md", "INTERFACE_STANDARD.md", "The standard: lattice, interfaces, checks, fit and tolerance, conformance (generated from interfaces.json)"),
     ("02_snap_spec.md", "snap_v2.md", "Snap line: sizes, part types, how parts connect, design and safety rules"),
-    ("03_pro_spec.md", "pro_v2.md", "Pro line: base standard, families, pin-and-bore and gear rules, fit, print rules"),
+    ("03_motion_spec.md", "motion_v2.md", "Motion line: base standard, families, pin-and-bore and gear rules, fit, print rules"),
     ("04_forge_mount_spec.md", "FORGE_MOUNT.md", "Forge Mount: faces, outlines, peg hole, hugging and clip-on shoes, join pins"),
     ("05_catalog.md", "CATALOG.md", "The 30 + 30 part catalog and its live status (generated)"),
     ("06_agent_instructions.md", "AGENTS.md", "Rules, commands and part list for AI agents (generated)"),

@@ -17,7 +17,7 @@ const read = (rel: string) => readFileSync(join(root, rel), "utf8");
 
 function baseLoco(): Record<string, any> {
   return {
-    edition: "pro", category: "robot", head: "classic", skin: "vinyl_cream", hairColor: "chestnut",
+    edition: "motion", category: "robot", head: "classic", skin: "vinyl_cream", hairColor: "chestnut",
     hatColor: "cobalt_cap", shirt: "off", pants: "off", hair: "off", faceInsert: "sculpted", expr: "spark",
     hat: "buds", crown: "buds", back: "off", prop: "off", vehicle: "none", vehCovers: true, racerKit: true,
     speedScale: 1, explodeTarget: 0, buildMode: "assembled",

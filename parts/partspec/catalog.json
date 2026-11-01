@@ -1,6 +1,6 @@
 {
   "version": "0.1.0-draft",
-  "goal": "The top 30 Snap parts and the top 30 Pro parts, every one verified by the generator gate.",
+  "goal": "The top 30 Snap parts and the top 30 Motion parts, every one verified by the generator gate.",
   "criteria": [
     "Covers every connection type and size class, so the standard is exercised end to end.",
     "Useful on a scanned toy first: add-ons, capsules and mounts weigh more than plain bricks, because that is the product.",
@@ -15,8 +15,9 @@
     "Attach slots: character add-ons and vehicle parts carry attach.kind (character or vehicle), attach.slots, and attach.front: the part's local -y or +y faces the toy's front, or the part is symmetric. Slot names: character head, back, body, top, tail; vehicle front, rear, hood, roof, wheels; robot legs, torso, arms, head, back."
   ],
   "targets": {
-    "snap": 114,
-    "pro": 71
+    "snap": 106,
+    "motion": 79,
+    "pro": 0
   },
   "waves": [
     {
@@ -24,7 +25,7 @@
       "name": "Foundation",
       "requires": [],
       "effort": "M",
-      "scope": "Done: catalog-driven registration (one catalog row per part), the block, tile, slope and dome families, Pro checks I4 to I6 and pin-and-bore mating in the validator, all proven on fixtures. The round block was replaced by a dome because a round outline cannot carry studs on the lattice.",
+      "scope": "Done: catalog-driven registration (one catalog row per part), the block, tile, slope and dome families, bore_grid checks I4 to I6 and pin-and-bore mating in the validator, all proven on fixtures. The round block was replaced by a dome because a round outline cannot carry studs on the lattice.",
       "done": true
     },
     {
@@ -38,12 +39,12 @@
     },
     {
       "id": "W2",
-      "name": "Pro core",
+      "name": "Motion core",
       "requires": [
         "W0"
       ],
       "effort": "M",
-      "scope": "13 parts: five straight beams, pins, shafts and bushings. First Pro fit windows. Pro rows need a `stat` before they register."
+      "scope": "13 parts: five straight beams, pins, shafts and bushings. First Motion fit windows. Motion rows need a `stat` before they register."
     },
     {
       "id": "W3",
@@ -56,16 +57,16 @@
     },
     {
       "id": "W4",
-      "name": "Pro gears, corner beams, mount and adapter",
+      "name": "Motion gears, corner beams, mount and adapter",
       "requires": [
         "W2"
       ],
       "effort": "L",
-      "scope": "13 parts: involute gears on module 2.5, rack, worm, L/T/angled beams, the Pro Forge Mount and the Snap-to-Pro adapter."
+      "scope": "13 parts: involute gears on module 2.5, rack, worm, L/T/angled beams, the Pro Forge Mount and the Snap-to-Motion adapter."
     },
     {
       "id": "W5",
-      "name": "Pro joints and wheels",
+      "name": "Motion joints and wheels",
       "requires": [
         "W2"
       ],
@@ -108,7 +109,7 @@
         "W8"
       ],
       "effort": "M",
-      "scope": "58 parts (48 Snap Small, 10 Pro): eleven Wave 9 character and robot heads across 4 categories (4 smooth organic humanoid heads that share one universal face zone, wig vault and hat cavity: Soft Youth (neutral), Sweet Heart (feminine), Heroic Jaw (masculine) and Jumbo Vinyl, all listed in Kip-Demo.html; 1 Mecha Scout robot head pairing with Kip Classic & Bolt Robot; 3 animal critter heads: Fox, Bear, Whisker Cat; 3 creature heads: Drake Dragon, Starling Alien, Yeti Imp) with 2x1 crown buds, three universal interchangeable 1 TU facial inserts (3D Nose & Smile Face Insert, 3D Button Eyes & Nose Face Insert, and Smooth Flush Decal Face Insert), nineteen sculpted multi-strand wrap-around 2x1 crown wigs (8 Hat-Ready with top 2x1 crown studs + 11 Sculpted-Top; every wig leaves a groove for the shared ear spot), seven wearable 2x1 crown hats, Explorer Rucksack, Builder Spanner, Star Emblem Wand, Street Skateboard Deck, Seated Snap Legs, three stylized Pro vehicle wheels, and V2 modular rolling vehicle chassis with interchangeable snap-on body covers."
+      "scope": "58 parts (48 Snap Small, 10 Motion): eleven Wave 9 character and robot heads across 4 categories (4 smooth organic humanoid heads that share one universal face zone, wig vault and hat cavity: Soft Youth (neutral), Sweet Heart (feminine), Heroic Jaw (masculine) and Jumbo Vinyl, all listed in Kip-Demo.html; 1 Mecha Scout robot head pairing with Kip Classic & Bolt Robot; 3 animal critter heads: Fox, Bear, Whisker Cat; 3 creature heads: Drake Dragon, Starling Alien, Yeti Imp) with 2x1 crown buds, three universal interchangeable 1 TU facial inserts (3D Nose & Smile Face Insert, 3D Button Eyes & Nose Face Insert, and Smooth Flush Decal Face Insert), nineteen sculpted multi-strand wrap-around 2x1 crown wigs (8 Hat-Ready with top 2x1 crown studs + 11 Sculpted-Top; every wig leaves a groove for the shared ear spot), seven wearable 2x1 crown hats, Explorer Rucksack, Builder Spanner, Star Emblem Wand, Street Skateboard Deck, Seated Snap Legs, three stylized Motion vehicle wheels, and V2 modular rolling vehicle chassis with interchangeable snap-on body covers."
     },
     {
       "id": "W10",
@@ -120,25 +121,25 @@
         "W9"
       ],
       "effort": "L",
-      "scope": "19 parts (13 Snap Small, 6 Pro): 16 rigid flat-pack modular craft modules plus 3 smooth 0.80 mm PETG/TPU flex skins across Cards A-D (<= 170 x 170 mm), unlocking 9 canonical craft (Race Car, Dump Truck, Tractor, Trailer, Motorbike/Trike, Aeroplane, Catamaran, Helicopter, Space Shuttle) with 100% intact parts clearing the S1 small-parts cylinder."
+      "scope": "19 parts (13 Snap Small, 6 Motion): 16 rigid flat-pack modular craft modules plus 3 smooth 0.80 mm PETG/TPU flex skins across Cards A-D (<= 170 x 170 mm), unlocking 9 canonical craft (Race Car, Dump Truck, Tractor, Trailer, Motorbike/Trike, Aeroplane, Catamaran, Helicopter, Space Shuttle) with 100% intact parts clearing the S1 small-parts cylinder."
     },
     {
       "id": "W11",
-      "name": "Progressive Power: Pro Steering & Momentum Cores (Cards E1-E2)",
+      "name": "Progressive Power: Motion Steering & Momentum Cores (Cards E1-E2)",
       "requires": [
         "W4",
         "W5",
         "W10"
       ],
       "effort": "L",
-      "scope": "21 parts (8 Snap Small, 13 Pro): Stage-2 Pro row-0 Ackermann rack steering linkage, axle keepers, and positive-trail bike fork adapter, plus Stage-3 Momentum stored-energy propulsion and actuator modules (enclosed #64 band core, bumper trigger, captive slam launcher, balloon jet valve + 3-orifice nozzle selector, 10-deg bellows clamshell, and shrouded 42 mm vertical rip-cord turbine core) across Cards E1-E2 (<= 164 x 164 mm)."
+      "scope": "21 parts (21 Motion): Stage-2 Motion row-0 Ackermann rack steering linkage, axle keepers, and positive-trail bike fork adapter, plus Stage-3 Momentum stored-energy propulsion and actuator modules (enclosed #64 band core, bumper trigger, captive slam launcher, balloon jet valve + 3-orifice nozzle selector, 10-deg bellows clamshell, and shrouded 42 mm vertical rip-cord turbine core) across Cards E1-E2 (<= 164 x 164 mm)."
     },
     {
       "id": "W12",
       "name": "Workshop Props",
       "requires": [],
       "effort": "M",
-      "scope": "12 parts (12 Pro): handheld workshop and play props that clip onto Kip's Pro grip shaft in the hand port, in 4 Kip-Demo.html prop categories (with the 5 earlier props, 17 in all): Tools (Claw Hammer, Flat Screwdriver, Paint Roller), Cleaning (String Mop, Bristle Broom, Scrub Brush, Handheld Vacuum), Instruments (Acoustic Guitar, Brass Trumpet, Rattle Maraca) and Play (Swallow-Tail Flag, Magnifying Glass)."
+      "scope": "12 parts (12 Motion): handheld workshop and play props that clip onto Kip's Pro grip shaft in the hand port, in 4 Kip-Demo.html prop categories (with the 5 earlier props, 17 in all): Tools (Claw Hammer, Flat Screwdriver, Paint Roller), Cleaning (String Mop, Bristle Broom, Scrub Brush, Handheld Vacuum), Instruments (Acoustic Guitar, Brass Trumpet, Rattle Maraca) and Play (Swallow-Tail Flag, Magnifying Glass)."
     }
   ],
   "parts": [
@@ -1074,7 +1075,7 @@
     {
       "id": "beam_str_tu03",
       "name": "Beam STR RND TU03x01x01",
-      "line": "pro",
+      "line": "motion",
       "family": "beam",
       "size": "pro",
       "wave": "W2",
@@ -1095,7 +1096,7 @@
     {
       "id": "beam_str_tu05",
       "name": "Beam STR RND TU05x01x01",
-      "line": "pro",
+      "line": "motion",
       "family": "beam",
       "size": "pro",
       "wave": "W2",
@@ -1116,7 +1117,7 @@
     {
       "id": "beam_str_tu07",
       "name": "Beam STR RND TU07x01x01",
-      "line": "pro",
+      "line": "motion",
       "family": "beam",
       "size": "pro",
       "wave": "W2",
@@ -1137,7 +1138,7 @@
     {
       "id": "beam_str_tu10",
       "name": "Beam STR RND TU10x01x01",
-      "line": "pro",
+      "line": "motion",
       "family": "beam",
       "size": "pro",
       "wave": "W2",
@@ -1158,7 +1159,7 @@
     {
       "id": "beam_str_tu14",
       "name": "Beam STR RND TU14x01x01",
-      "line": "pro",
+      "line": "motion",
       "family": "beam",
       "size": "pro",
       "wave": "W2",
@@ -1179,7 +1180,7 @@
     {
       "id": "pin_friction",
       "name": "Friction Pin",
-      "line": "pro",
+      "line": "motion",
       "family": "pin",
       "size": "pro",
       "wave": "W2",
@@ -1200,7 +1201,7 @@
     {
       "id": "pin_friction_long",
       "name": "Friction Pin Long",
-      "line": "pro",
+      "line": "motion",
       "family": "pin",
       "size": "pro",
       "wave": "W2",
@@ -1221,7 +1222,7 @@
     {
       "id": "pin_free",
       "name": "Free Pin",
-      "line": "pro",
+      "line": "motion",
       "family": "pin",
       "size": "pro",
       "wave": "W2",
@@ -1242,7 +1243,7 @@
     {
       "id": "shaft_tu03",
       "name": "Shaft TU03",
-      "line": "pro",
+      "line": "motion",
       "family": "shaft",
       "size": "pro",
       "wave": "W2",
@@ -1263,7 +1264,7 @@
     {
       "id": "shaft_tu05",
       "name": "Shaft TU05",
-      "line": "pro",
+      "line": "motion",
       "family": "shaft",
       "size": "pro",
       "wave": "W2",
@@ -1284,7 +1285,7 @@
     {
       "id": "shaft_tu07",
       "name": "Shaft TU07",
-      "line": "pro",
+      "line": "motion",
       "family": "shaft",
       "size": "pro",
       "wave": "W2",
@@ -1305,7 +1306,7 @@
     {
       "id": "bushing_half",
       "name": "Bushing 1/2 TU",
-      "line": "pro",
+      "line": "motion",
       "family": "bushing",
       "size": "pro",
       "wave": "W2",
@@ -1326,7 +1327,7 @@
     {
       "id": "bushing_tu01",
       "name": "Bushing TU01",
-      "line": "pro",
+      "line": "motion",
       "family": "bushing",
       "size": "pro",
       "wave": "W2",
@@ -1347,7 +1348,7 @@
     {
       "id": "gear_spur_z10",
       "name": "Gear Spur Z10",
-      "line": "pro",
+      "line": "motion",
       "family": "gear",
       "size": "pro",
       "wave": "W4",
@@ -1368,7 +1369,7 @@
     {
       "id": "gear_spur_z15",
       "name": "Gear Spur Z15",
-      "line": "pro",
+      "line": "motion",
       "family": "gear",
       "size": "pro",
       "wave": "W4",
@@ -1389,7 +1390,7 @@
     {
       "id": "gear_spur_z20",
       "name": "Gear Spur Z20",
-      "line": "pro",
+      "line": "motion",
       "family": "gear",
       "size": "pro",
       "wave": "W4",
@@ -1410,7 +1411,7 @@
     {
       "id": "gear_spur_z30",
       "name": "Gear Spur Z30",
-      "line": "pro",
+      "line": "motion",
       "family": "gear",
       "size": "pro",
       "wave": "W4",
@@ -1431,7 +1432,7 @@
     {
       "id": "gear_rack_tu05",
       "name": "Gear Rack TU05",
-      "line": "pro",
+      "line": "motion",
       "family": "gear",
       "size": "pro",
       "wave": "W4",
@@ -1452,7 +1453,7 @@
     {
       "id": "gear_ring_z40",
       "name": "Gear Ring Z40",
-      "line": "pro",
+      "line": "motion",
       "family": "gear",
       "size": "pro",
       "wave": "W4",
@@ -1474,7 +1475,7 @@
     {
       "id": "gear_spur_z25",
       "name": "Gear Spur Z25",
-      "line": "pro",
+      "line": "motion",
       "family": "gear",
       "size": "pro",
       "wave": "W4",
@@ -1495,7 +1496,7 @@
     {
       "id": "beam_l_tu03x03",
       "name": "Beam L RND TU03x03",
-      "line": "pro",
+      "line": "motion",
       "family": "beam",
       "size": "pro",
       "wave": "W4",
@@ -1537,7 +1538,7 @@
     {
       "id": "beam_l_tu05x03",
       "name": "Beam L RND TU05x03",
-      "line": "pro",
+      "line": "motion",
       "family": "beam",
       "size": "pro",
       "wave": "W4",
@@ -1587,7 +1588,7 @@
     {
       "id": "beam_t_tu05x03",
       "name": "Beam T RND TU05x03",
-      "line": "pro",
+      "line": "motion",
       "family": "beam",
       "size": "pro",
       "wave": "W4",
@@ -1637,7 +1638,7 @@
     {
       "id": "beam_ang45_tu05",
       "name": "Beam ANG45 TU05",
-      "line": "pro",
+      "line": "motion",
       "family": "beam",
       "size": "pro",
       "wave": "W4",
@@ -1679,7 +1680,7 @@
     {
       "id": "forge_mount_pro",
       "name": "Forge Mount (hole-grid face)",
-      "line": "pro",
+      "line": "motion",
       "family": "forge_mount",
       "size": "pro",
       "wave": "W4",
@@ -1703,29 +1704,29 @@
       ]
     },
     {
-      "id": "adapter_snap_pro",
-      "name": "Snap-to-Pro Adapter Plate",
-      "line": "pro",
+      "id": "adapter_snap_motion",
+      "name": "Snap-to-Motion Adapter Plate",
+      "line": "motion",
       "family": "adapter",
       "size": "pro",
       "wave": "W4",
       "note": "3 x 3 TU plate, 1 TU thick: Pro free bores on the 9 cell centres, Small 2x2 studs on the inner cell corners, so each stud stands on solid plate between four bores.",
       "build": {
-        "fn": "snap_pro_adapter"
+        "fn": "snap_motion_adapter"
       },
       "type": "Adapter",
       "stat": "Grip",
-      "behavior": "Joins Snap parts to Pro beams",
+      "behavior": "Joins Snap parts to Motion beams",
       "tags": [
         "adapter",
         "snap",
-        "pro"
+        "motion"
       ]
     },
     {
       "id": "wheel_tu04",
       "name": "Wheel TU04",
-      "line": "pro",
+      "line": "motion",
       "family": "wheel",
       "size": "pro",
       "wave": "W5",
@@ -1746,7 +1747,7 @@
     {
       "id": "wheel_tu06",
       "name": "Wheel TU06",
-      "line": "pro",
+      "line": "motion",
       "family": "wheel",
       "size": "pro",
       "wave": "W5",
@@ -1767,7 +1768,7 @@
     {
       "id": "hinge_tu02",
       "name": "Hinge TU02",
-      "line": "pro",
+      "line": "motion",
       "family": "joint",
       "size": "pro",
       "wave": "W5",
@@ -1787,7 +1788,7 @@
     {
       "id": "cross_connector_tu01",
       "name": "Cross Connector TU01",
-      "line": "pro",
+      "line": "motion",
       "family": "joint",
       "size": "pro",
       "wave": "W5",
@@ -2502,7 +2503,7 @@
     {
       "id": "char_faceplate",
       "name": "3D Nose & Smile Face Insert",
-      "line": "pro",
+      "line": "motion",
       "family": "pin",
       "size": "pro",
       "wave": "W9",
@@ -2524,7 +2525,7 @@
     {
       "id": "char_faceplate_vinyl",
       "name": "3D Button Eyes & Nose Face Insert",
-      "line": "pro",
+      "line": "motion",
       "family": "pin",
       "size": "pro",
       "wave": "W9",
@@ -2547,7 +2548,7 @@
     {
       "id": "char_faceplate_flat",
       "name": "Smooth Flush Decal Face Insert",
-      "line": "pro",
+      "line": "motion",
       "family": "pin",
       "size": "pro",
       "wave": "W9",
@@ -3704,7 +3705,7 @@
     {
       "id": "prop_wrench",
       "name": "Builder Spanner",
-      "line": "pro",
+      "line": "motion",
       "family": "shaft",
       "size": "pro",
       "wave": "W9",
@@ -3726,7 +3727,7 @@
     {
       "id": "prop_star_shield",
       "name": "Star Emblem Wand",
-      "line": "pro",
+      "line": "motion",
       "family": "shaft",
       "size": "pro",
       "wave": "W9",
@@ -3748,7 +3749,7 @@
     {
       "id": "prop_hammer",
       "name": "Claw Hammer",
-      "line": "pro",
+      "line": "motion",
       "family": "shaft",
       "size": "pro",
       "wave": "W12",
@@ -3771,7 +3772,7 @@
     {
       "id": "prop_mop",
       "name": "String Mop",
-      "line": "pro",
+      "line": "motion",
       "family": "shaft",
       "size": "pro",
       "wave": "W12",
@@ -3794,7 +3795,7 @@
     {
       "id": "prop_guitar",
       "name": "Acoustic Guitar",
-      "line": "pro",
+      "line": "motion",
       "family": "shaft",
       "size": "pro",
       "wave": "W12",
@@ -3817,7 +3818,7 @@
     {
       "id": "prop_screwdriver",
       "name": "Flat Screwdriver",
-      "line": "pro",
+      "line": "motion",
       "family": "shaft",
       "size": "pro",
       "wave": "W12",
@@ -3840,7 +3841,7 @@
     {
       "id": "prop_paint_roller",
       "name": "Paint Roller",
-      "line": "pro",
+      "line": "motion",
       "family": "shaft",
       "size": "pro",
       "wave": "W12",
@@ -3863,7 +3864,7 @@
     {
       "id": "prop_broom",
       "name": "Bristle Broom",
-      "line": "pro",
+      "line": "motion",
       "family": "shaft",
       "size": "pro",
       "wave": "W12",
@@ -3886,7 +3887,7 @@
     {
       "id": "prop_scrub_brush",
       "name": "Scrub Brush",
-      "line": "pro",
+      "line": "motion",
       "family": "shaft",
       "size": "pro",
       "wave": "W12",
@@ -3909,7 +3910,7 @@
     {
       "id": "prop_vacuum",
       "name": "Handheld Vacuum",
-      "line": "pro",
+      "line": "motion",
       "family": "shaft",
       "size": "pro",
       "wave": "W12",
@@ -3932,7 +3933,7 @@
     {
       "id": "prop_trumpet",
       "name": "Brass Trumpet",
-      "line": "pro",
+      "line": "motion",
       "family": "shaft",
       "size": "pro",
       "wave": "W12",
@@ -3955,7 +3956,7 @@
     {
       "id": "prop_maracas",
       "name": "Rattle Maraca",
-      "line": "pro",
+      "line": "motion",
       "family": "shaft",
       "size": "pro",
       "wave": "W12",
@@ -3978,7 +3979,7 @@
     {
       "id": "prop_flag",
       "name": "Swallow-Tail Flag",
-      "line": "pro",
+      "line": "motion",
       "family": "shaft",
       "size": "pro",
       "wave": "W12",
@@ -4001,7 +4002,7 @@
     {
       "id": "prop_magnifier",
       "name": "Magnifying Glass",
-      "line": "pro",
+      "line": "motion",
       "family": "shaft",
       "size": "pro",
       "wave": "W12",
@@ -4084,7 +4085,7 @@
     {
       "id": "veh_wheel_sport",
       "name": "Sport 5-Spoke Wheel",
-      "line": "pro",
+      "line": "motion",
       "family": "wheel",
       "size": "pro",
       "wave": "W9",
@@ -4112,7 +4113,7 @@
     {
       "id": "veh_wheel_offroad",
       "name": "Off-Road Beadlock Wheel",
-      "line": "pro",
+      "line": "motion",
       "family": "wheel",
       "size": "pro",
       "wave": "W9",
@@ -4140,7 +4141,7 @@
     {
       "id": "veh_wheel_moto",
       "name": "Moto 3-Spoke Wheel",
-      "line": "pro",
+      "line": "motion",
       "family": "wheel",
       "size": "pro",
       "wave": "W9",
@@ -4265,7 +4266,7 @@
     {
       "id": "veh_steering_wheel",
       "name": "Roadster Steering Wheel",
-      "line": "pro",
+      "line": "motion",
       "family": "pin",
       "size": "pro",
       "wave": "W9",
@@ -4409,14 +4410,14 @@
     {
       "id": "veh_handlebar_fork",
       "name": "Scooter Handlebar Stem",
-      "line": "pro",
+      "line": "motion",
       "family": "shaft",
       "size": "pro",
       "wave": "W9",
       "note": "T-bar steering stem with twin 6.6 mm Pro-shaft handgrips; prints lying on a flat.",
       "stat": "Spin",
       "type": "Vehicle control",
-      "behavior": "Turning Pro steering stem with twin 6.6 mm C-grip handlebars",
+      "behavior": "Turning Motion steering stem with twin 6.6 mm C-grip handlebars",
       "tags": [
         "vehicle",
         "scooter",
@@ -4520,7 +4521,7 @@
     {
       "id": "kit_barbell_shaft",
       "name": "Outboard Barbell Axle & Rotor Mast",
-      "line": "pro",
+      "line": "motion",
       "family": "shaft",
       "size": "pro",
       "wave": "W10",
@@ -4542,7 +4543,7 @@
     {
       "id": "kit_spinner_pin",
       "name": "Pull-Ring Clevis & Prop Spinner Pin",
-      "line": "pro",
+      "line": "motion",
       "family": "shaft",
       "size": "pro",
       "wave": "W10",
@@ -4564,7 +4565,7 @@
     {
       "id": "kit_wheel_med",
       "name": "Medium 1-TU Modular Craft Wheel",
-      "line": "pro",
+      "line": "motion",
       "family": "wheel",
       "size": "pro",
       "wave": "W10",
@@ -4592,7 +4593,7 @@
     {
       "id": "kit_wheel_giant",
       "name": "Giant 1-TU Tractor & Paddle Wheel",
-      "line": "pro",
+      "line": "motion",
       "family": "wheel",
       "size": "pro",
       "wave": "W10",
@@ -4621,7 +4622,7 @@
     {
       "id": "kit_rotor_blade",
       "name": "Airfoil Prop & Crossed Rotor Blade",
-      "line": "pro",
+      "line": "motion",
       "family": "wheel",
       "size": "pro",
       "wave": "W10",
@@ -4911,7 +4912,7 @@
     {
       "id": "kit_yoke_hbar",
       "name": "Universal Flight Yoke, Helm & Handlebar",
-      "line": "pro",
+      "line": "motion",
       "family": "shaft",
       "size": "pro",
       "wave": "W10",
@@ -5015,9 +5016,9 @@
       }
     },
     {
-      "id": "pro_steer_bridge",
-      "name": "Pro Row-0 Ackermann Steering Bridge",
-      "line": "snap",
+      "id": "motion_steer_bridge",
+      "name": "Motion Row-0 Ackermann Steering Bridge",
+      "line": "motion",
       "family": "vehicle",
       "size": "small",
       "wave": "W11",
@@ -5026,13 +5027,13 @@
       "type": "Steering linkage",
       "behavior": "Row-0 T-planform steering bridge with 37.5 mm kingpin span and top servo mount",
       "tags": [
-        "pro",
+        "motion",
         "steering",
         "kitcard",
         "vehicle"
       ],
       "build": {
-        "fn": "pro_steer_bridge",
+        "fn": "motion_steer_bridge",
         "grid": [
           2,
           2
@@ -5042,9 +5043,9 @@
       }
     },
     {
-      "id": "pro_steer_knuckle_l",
-      "name": "Pro Left 15 mm-Scrub Steering Knuckle",
-      "line": "pro",
+      "id": "motion_steer_knuckle_l",
+      "name": "Motion Left 15 mm-Scrub Steering Knuckle",
+      "line": "motion",
       "family": "joint",
       "size": "pro",
       "wave": "W11",
@@ -5053,19 +5054,19 @@
       "type": "Steering knuckle",
       "behavior": "Left bellcrank steering knuckle with 15 mm scrub offset and Pro wheel stub",
       "tags": [
-        "pro",
+        "motion",
         "steering",
         "kitcard",
         "joint"
       ],
       "build": {
-        "fn": "pro_steer_knuckle_l"
+        "fn": "motion_steer_knuckle_l"
       }
     },
     {
-      "id": "pro_steer_knuckle_r",
-      "name": "Pro Right 15 mm-Scrub Steering Knuckle",
-      "line": "pro",
+      "id": "motion_steer_knuckle_r",
+      "name": "Motion Right 15 mm-Scrub Steering Knuckle",
+      "line": "motion",
       "family": "joint",
       "size": "pro",
       "wave": "W11",
@@ -5074,19 +5075,19 @@
       "type": "Steering knuckle",
       "behavior": "Right bellcrank steering knuckle with 15 mm scrub offset and Pro wheel stub",
       "tags": [
-        "pro",
+        "motion",
         "steering",
         "kitcard",
         "joint"
       ],
       "build": {
-        "fn": "pro_steer_knuckle_r"
+        "fn": "motion_steer_knuckle_r"
       }
     },
     {
-      "id": "pro_steer_rack",
-      "name": "Pro Module-2.5 Steering Gear Rack",
-      "line": "pro",
+      "id": "motion_steer_rack",
+      "name": "Motion Module-2.5 Steering Gear Rack",
+      "line": "motion",
       "family": "gear",
       "size": "pro",
       "wave": "W11",
@@ -5095,19 +5096,19 @@
       "type": "Gear rack",
       "behavior": "36 mm module-2.5 steering rack driven by Z10 stem pinion or Stage-4 micro servo",
       "tags": [
-        "pro",
+        "motion",
         "steering",
         "kitcard",
         "gear"
       ],
       "build": {
-        "fn": "pro_steer_rack"
+        "fn": "motion_steer_rack"
       }
     },
     {
-      "id": "pro_fork_rake_adpt",
-      "name": "Pro Positive-Trail Bike Fork Adapter",
-      "line": "pro",
+      "id": "motion_fork_rake_adpt",
+      "name": "Motion Positive-Trail Bike Fork Adapter",
+      "line": "motion",
       "family": "joint",
       "size": "pro",
       "wave": "W11",
@@ -5116,19 +5117,19 @@
       "type": "Steering adapter",
       "behavior": "Positive-trail steerable fork offset block for Inline Motorbike and Cargo Trike",
       "tags": [
-        "pro",
+        "motion",
         "steering",
         "kitcard",
         "motorbike"
       ],
       "build": {
-        "fn": "pro_fork_rake_adpt"
+        "fn": "motion_fork_rake_adpt"
       }
     },
     {
-      "id": "pro_axle_keeper",
-      "name": "Pro Under-Keel PTO Axle Keeper Clip",
-      "line": "pro",
+      "id": "motion_axle_keeper",
+      "name": "Motion Under-Keel PTO Axle Keeper Clip",
+      "line": "motion",
       "family": "joint",
       "size": "pro",
       "wave": "W11",
@@ -5137,19 +5138,19 @@
       "type": "Axle retainer",
       "behavior": "Positive-lock under-keel PTO axle keeper preventing shaft pop-out under burst torque",
       "tags": [
-        "pro",
+        "motion",
         "pto",
         "kitcard",
         "joint"
       ],
       "build": {
-        "fn": "pro_axle_keeper"
+        "fn": "motion_axle_keeper"
       }
     },
     {
       "id": "mom_band_core_tray",
       "name": "Momentum Enclosed Band Core Tray",
-      "line": "snap",
+      "line": "motion",
       "family": "vehicle",
       "size": "small",
       "wave": "W11",
@@ -5174,7 +5175,7 @@
     {
       "id": "mom_band_core_lid",
       "name": "Momentum Band Core Safety Lid",
-      "line": "snap",
+      "line": "motion",
       "family": "vehicle",
       "size": "small",
       "wave": "W11",
@@ -5201,7 +5202,7 @@
     {
       "id": "mom_band_spool_pawl",
       "name": "Momentum Band Wind-Up Spool & Ratchet",
-      "line": "pro",
+      "line": "motion",
       "family": "wheel",
       "size": "pro",
       "wave": "W11",
@@ -5222,7 +5223,7 @@
     {
       "id": "mom_bumper_trigger",
       "name": "Momentum Contact-Release Bumper Trigger",
-      "line": "pro",
+      "line": "motion",
       "family": "beam",
       "size": "pro",
       "wave": "W11",
@@ -5243,7 +5244,7 @@
     {
       "id": "mom_slam_base",
       "name": "Momentum Captive Slam-Launcher Base",
-      "line": "pro",
+      "line": "motion",
       "family": "beam",
       "size": "pro",
       "wave": "W11",
@@ -5264,7 +5265,7 @@
     {
       "id": "mom_slam_plunger",
       "name": "Momentum Captive Slam Plunger Rod",
-      "line": "pro",
+      "line": "motion",
       "family": "shaft",
       "size": "pro",
       "wave": "W11",
@@ -5285,7 +5286,7 @@
     {
       "id": "mom_jet_valve_body",
       "name": "Momentum Balloon Collar & Jet Valve",
-      "line": "snap",
+      "line": "motion",
       "family": "vehicle",
       "size": "small",
       "wave": "W11",
@@ -5312,7 +5313,7 @@
     {
       "id": "mom_nozzle_set",
       "name": "Momentum 3-Orifice Jet Nozzle Selector",
-      "line": "pro",
+      "line": "motion",
       "family": "beam",
       "size": "pro",
       "wave": "W11",
@@ -5333,7 +5334,7 @@
     {
       "id": "mom_bellows_base",
       "name": "Momentum 10-Deg Pneumatic Bellows Base",
-      "line": "snap",
+      "line": "motion",
       "family": "vehicle",
       "size": "small",
       "wave": "W11",
@@ -5358,7 +5359,7 @@
     {
       "id": "mom_bellows_leaf",
       "name": "Momentum Hinged Bellows Upper Leaf",
-      "line": "snap",
+      "line": "motion",
       "family": "vehicle",
       "size": "small",
       "wave": "W11",
@@ -5385,7 +5386,7 @@
     {
       "id": "mom_flywheel_tray",
       "name": "Momentum Shrouded Turbine Core Tray",
-      "line": "snap",
+      "line": "motion",
       "family": "vehicle",
       "size": "small",
       "wave": "W11",
@@ -5410,7 +5411,7 @@
     {
       "id": "mom_flywheel_lid",
       "name": "Momentum Turbine Core Upper Journal Lid",
-      "line": "snap",
+      "line": "motion",
       "family": "vehicle",
       "size": "small",
       "wave": "W11",
@@ -5437,7 +5438,7 @@
     {
       "id": "mom_flywheel_rotor",
       "name": "Momentum 42 mm Inertial Turbine Rotor",
-      "line": "pro",
+      "line": "motion",
       "family": "wheel",
       "size": "pro",
       "wave": "W11",
@@ -5458,7 +5459,7 @@
     {
       "id": "mom_ripcord_rack_150",
       "name": "Momentum 150 mm Toothed Rip-Cord",
-      "line": "pro",
+      "line": "motion",
       "family": "gear",
       "size": "pro",
       "wave": "W11",
@@ -5479,7 +5480,7 @@
     {
       "id": "mom_spindle_shaft",
       "name": "Momentum 78 mm Vertical Turbine Spindle",
-      "line": "pro",
+      "line": "motion",
       "family": "shaft",
       "size": "pro",
       "wave": "W11",

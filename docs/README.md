@@ -14,7 +14,7 @@ on geometry conflicts, [parts-tu-spec.md](parts/parts-tu-spec.md) and
   (Phase 0), `stage-simplification-and-kip-spec.md`, `xp-system-spec.md`
   (Phase 3 gate), parent time gate, flat-pack craft, progressive power, and
   scan-to-3D.
-- `parts/`: Snap and Pro summaries, creating-parts runbook, TU spec, and the
+- `parts/`: Snap and Motion summaries, creating-parts runbook, TU spec, and the
   generated PartSpec snapshot.
 - `decisions/`: dated records `0001`–`0006`.
 - `archive/`: retired docs with their replacements.
@@ -59,7 +59,7 @@ and `shared/toycontract.ts` (`/#toy=…` handoff; legacy
 
 | File | What it is |
 | --- | --- |
-| [snap.md](parts/snap.md) / [pro.md](parts/pro.md) | Product summaries; normative geometry stays in generated PartSpec copies. |
+| [snap.md](parts/snap.md) / [motion.md](parts/motion.md) | Product summaries; normative geometry stays in generated PartSpec copies. |
 | [creating-parts.md](parts/creating-parts.md) | Runbook for new parts and families. |
 | [PartSpec](parts/partspec/README.md) / [specs](parts/partspec/specs/README.md) | Generated readable snapshot; edit sources, then regenerate. |
 | [`../parts/README.md`](../parts/README.md) | Package overview for `parts/partspec/` and retired `parts/scad/`. |

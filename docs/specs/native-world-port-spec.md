@@ -175,7 +175,7 @@ any remaining offscreen DOM shims:
 | `robot.head.{box,dome,cams,tv,visor}` (`5`) | `head` -> Kip `Bolt Robot` / `Visor` head variants (`robotHeadVisor` + sensor/TV faceplate variants) |
 | `robot.top.{antenna,siren,gearcrown,radar,bulb}` (`5`) | `hat` (Crown 2x1 dock) -> `Spark Buds`, `Gear Crown`, radar/bulb crown toppers |
 | `robot.torso.{box,tank,barrel,core,jet}` (`5`) | `back` (Back 2x2 dock) -> `Bolt Jetpack`, `Explorer Pack`, `Core` / `Barrel` back rigs |
-| `robot.arms.{claws,hands,tools,magnets,propellers}` (`5`) | `prop` (Hand Ø6.6 mm shaft dock (5.0 mm flats)) -> `Pro Wrench`, `Pro Spinner`, magnet/claw/propeller tools |
+| `robot.arms.{claws,hands,tools,magnets,propellers}` (`5`) | `prop` (Hand Ø6.6 mm shaft dock (5.0 mm flats)) -> `Motion Wrench`, `Motion Spinner`, magnet/claw/propeller tools |
 | `robot.legs.{walkers,treads,wheels,springs,hover}` (`5`) | `stance` / `boots` -> Kip spring/hover/tread foot mounts |
 
 ### 4.3 Always Auto-Fix & Retiring `"Fix it for me"` (§8)

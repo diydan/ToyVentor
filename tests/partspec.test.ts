@@ -48,23 +48,23 @@ describe("PartSpec bridge", () => {
     expect(r.ok && r.part.footprintMm).toEqual([25, 25]);
   });
 
-  it("skips unmapped stats and Pro parts in default strict mode", () => {
+  it("skips unmapped stats and tier parts in default strict mode", () => {
     const r = convertPartSpecPart({ ...catalog, stat: "Sturdiness" }, manifest);
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.reason).toContain("Sturdiness");
 
-    expect(convertPartSpecPart({ ...catalog, line: "pro", size: "pro" }, manifest).ok).toBe(false);
+    expect(convertPartSpecPart({ ...catalog, line: "motion", size: "pro" }, manifest).ok).toBe(false);
     expect(
       convertPartSpecPart(catalog, { ...manifest, design_status: "needs_reproportion" }).ok,
     ).toBe(false);
     expect(convertPartSpecPart(catalog, undefined).ok).toBe(false);
   });
 
-  it("bridges Pro parts, Forge Mounts, all 19 stats, bboxMm, and CPSC small-part warnings in full TU mode", () => {
+  it("bridges tier parts, Forge Mounts, all 19 stats, bboxMm, and CPSC small-part warnings in full TU mode", () => {
     expect(Object.keys(EXTENDED_STAT_MAP).length).toBeGreaterThanOrEqual(19);
 
     const proGear = convertPartSpecPart(
-      { id: "gear_spur_z10", name: "Gear Spur Z10", line: "pro", size: "pro", stat: "Speed" },
+      { id: "gear_spur_z10", name: "Gear Spur Z10", line: "motion", size: "pro", stat: "Speed" },
       {
         id: "gear_spur_z10",
         design_status: "verified",
@@ -77,12 +77,12 @@ describe("PartSpec bridge", () => {
         print: { orientation: "flat", supports: false },
         safety: { small_part_status: "small_part" },
       },
-      { mapAllStats: true, includePro: true, idPrefix: "", deriveStatValue: true, includeAssets: true },
+      { mapAllStats: true, includeAdvanced: true, idPrefix: "", deriveStatValue: true, includeAssets: true },
     );
     expect(proGear.ok).toBe(true);
     if (!proGear.ok) return;
     expect(proGear.part.id).toBe("gear-spur-z10");
-    expect(proGear.part.line).toBe("pro");
+    expect(proGear.part.line).toBe("motion");
     expect(proGear.part.mount).toBe("hole");
     expect(proGear.part.sizeClass).toBe("small");
     expect(proGear.part.footprintMm).toEqual([12.5, 12.5]);

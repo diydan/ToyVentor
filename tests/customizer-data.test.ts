@@ -60,7 +60,7 @@ describe("customizer snapshot builder mirrors the legacy sheet", () => {
       forge: true, toyType: "character", scrap: 3, types, slots: [],
       options: [], skinZone: false, zone: "c1", paints: [],
       paintSelected: "", movesText: "", forgeRows: [
-        { key: "beam", name: "Beam", desc: "A straight Pro beam.", cost: 2, hasBlueprint: true, owned: 1, canForge: true, onPrintList: false },
+        { key: "beam", name: "Beam", desc: "A straight Motion beam.", cost: 2, hasBlueprint: true, owned: 1, canForge: true, onPrintList: false },
         { key: "bgear", name: "Big gear", desc: "Slow but strong.", cost: 3, hasBlueprint: true, owned: 0, canForge: true, onPrintList: true },
         { key: "brace", name: "Triangle brace", desc: "Stops sagging.", cost: 2, hasBlueprint: false, owned: 0, canForge: false, onPrintList: false },
       ],

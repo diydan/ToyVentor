@@ -15,7 +15,7 @@ How this works: each morning say "start day N" for the Start of Day questions; e
 - [x] Scope locked to spec.md
 
 ### End of Day
-- Shipped: ideation, landed on ToyForge. Building blocks: ToyVentor Snap + Pro (Pro scope TBD). First product design concepts.
+- Shipped: ideation, landed on ToyForge. Building blocks: ToyVentor Snap + Motion (Motion scope TBD). First product design concepts.
 - Origin story: Lego fanatic as a kid, robotics fanatic as an adult; built for my son's ingenuity, with STEM hidden inside a gamified, AI-powered Lego.
 - Demo-able right now: spec + 12-page wireframe only, no code yet.
 - Blockers: none (idea stage).
@@ -34,7 +34,7 @@ Goal: photo a toy, detect mount + size class, save to toybox (wireframe p.2-3).
 - [ ] Workshops/office hours to attend today:
 
 ### End of Day
-- Shipped: docs reorganised into docs/ with Snap and Pro canonical; spec de-duplicated with origin story, example part record, rejected alternatives, honest open questions. App foundation committed: React + TypeScript + Vite SPA for Cloudflare Workers (PWA-ready, not hosted, no service worker yet), Factory/Toybox/Scan screens, Worker API, shared part/toy/set schemas, four builder checks as pure functions, base set as data with validator, seed car + seed figure. Also: under-8 Snap guidance (open-ended, no fail states, 2.5D, ages 1–3 narration layer); household-object characters (SAM outlines a cup or slipper, it sprouts limbs); push-to-talk in the wireframe; design guide and mockups; four Snap sample OpenSCAD parts (Brick 2x2 both sizes, Dragon Wing, Glow Star Capsule) matched to the base set, none printed.
+- Shipped: docs reorganised into docs/ with Snap and Motion canonical; spec de-duplicated with origin story, example part record, rejected alternatives, honest open questions. App foundation committed: React + TypeScript + Vite SPA for Cloudflare Workers (PWA-ready, not hosted, no service worker yet), Factory/Toybox/Scan screens, Worker API, shared part/toy/set schemas, four builder checks as pure functions, base set as data with validator, seed car + seed figure. Also: under-8 Snap guidance (open-ended, no fail states, 2.5D, ages 1–3 narration layer); household-object characters (SAM outlines a cup or slipper, it sprouts limbs); push-to-talk in the wireframe; design guide and mockups; four Snap sample OpenSCAD parts (Brick 2x2 both sizes, Dragon Wing, Glow Star Capsule) matched to the base set, none printed.
 - Discovery: [BlockML](https://blockml.org/) — one model rendering to software, documents, and physical things. Fits our parts pipeline exactly; unproven until tomorrow's spike (one real part through it vs hand-written OpenSCAD, decide before Day 4's print gate).
 - SAM segmentation: WORKING. Test subjects ended up a coffee cup and water bottle — better for the household-object direction than the car. Live sam-3.1 through our Worker: image inline as base64 (Files-upload path is video-only, silently zero-matches images), streaming Responses API, boxes from the output_text lane. "cup" and "water bottle" matched first try; a 210 mm scale anchor derived a 65 mm width. Lessons: one short noun per request ("coffee cup" missed, "cup" hit); SAM gives proportions not millimetres, so a human sets the real longest side; un-outlineable toys save "by hand", never fake-scanned. Still to prove: real phone photos. Caught in time: the API key briefly sat in a committed file; moved to gitignored .dev.vars before any commit.
 - Blockers: OpenSCAD not installed — zero STLs, zero prints. Day 4's calibration test is the hard deadline (BlockML may reroute authoring, not the deadline). Nothing deployed (no D1/KV, no domain). Journal day goals and plan day steps have drifted; plan wins from tomorrow.
@@ -137,7 +137,7 @@ Goal (plan.md Days 5–7): fit/print behavior across bridged sets, exact prototy
 ### Start of Day
 - [x] Must work by tonight: one stage (World IS the app), one lattice with one export path.
 - [x] Parametric route lock-in: one frozen lattice, one shared connector/metadata contract, one export path — done, see Decision.
-- [x] Adapter budget: not applicable, no merge adapters built. The two adapter slots went to the Pro-to-TU migration.
+- [x] Adapter budget: not applicable, no merge adapters built. The two adapter slots went to the Motion-to-TU migration.
 
 ### End of Day
 - One lattice, one contract, one export path: PartSpec contract grew the TU fields the app needs (rotated-fit checks included); bridge scripts carry verified parts into `sets/` with auto-discovery. TU base, wardrobe, garage sets generated, not hand-written. App on TU screens (pack rip, scan targets, legacy engine removal); TU print payloads, Kip wave, world page shipped as assets. Worker gained ownership self-bootstrap + db scripts.
@@ -145,7 +145,7 @@ Goal (plan.md Days 5–7): fit/print behavior across bridged sets, exact prototy
 - Head challenge closed: all six heads are generated and validated (chibi, chin, tall + bear, fox, kid); head/hair meshes refined in `toyventor_parts.py`; viewer + Kip manifests updated; validation manifests regenerated for six heads, eight hairs, robot visor. That retires the spec's "2 known Kip failures" note.
 - Parent time gates shipped: two D1 tables beside `ownership`, `/api/parent/settings` + `/api/parent/time`, STEM-earned play time, calm sleep curtain preserving the parent path while suppressing play entries. Earned minutes additive inside the daily cap, never past it.
 - Modular vehicles, started: Kip Wave 9 (33 parts, 17 assemblies) + six-rank maker ladder gating vehicles by earned XP — Hauler Truck and Motor Scooter at 250, Sport Motorbike and Loader Tractor & Trailer at 600, Prop Aeroplane and Catamaran Boat at 1,100, Rescue Helicopter and Space Shuttle at 1,800, Bolt Power Mech at 2,700. Earned once = unlocked forever; directly unlocked toys keep vehicles regardless of rank. Named, gated, unlockable — the carrying craft is still the flatpack work below. In flight, uncommitted: vehicle-unlock rules + parent XP reset (`resetAt` stamp so offline reset beats stale remote total).
-- STEM power, scoped: four-stage system specified, not built — Snap → Pro → Momentum → Mech on a universal 3 TU power core + chassis interface. Ages 3+ to 10+, each stage with its compliance load (small-parts + 16 CFR 1500.19 balloon rule early; ASTM F963-23 tool-locked battery, IEC 62133 cells, FCC Part 15, COPPA for Mech). Seven-gate verification protocol with numeric pass criteria; spec at Pass 4e after two independent pre-CAD reviews. No repo code changed. Companion flatpack spec carries the craft grammar + Cards A–D datums the stages hang off.
+- STEM power, scoped: four-stage system specified, not built — Snap → Motion → Momentum → Mech on a universal 3 TU power core + chassis interface. Ages 3+ to 10+, each stage with its compliance load (small-parts + 16 CFR 1500.19 balloon rule early; ASTM F963-23 tool-locked battery, IEC 62133 cells, FCC Part 15, COPPA for Mech). Seven-gate verification protocol with numeric pass criteria; spec at Pass 4e after two independent pre-CAD reviews. No repo code changed. Companion flatpack spec carries the craft grammar + Cards A–D datums the stages hang off.
 - Docs: scan-to-3D gated behind a spike with Route B recommended, retired docs archived, product/spec/UX condensed into topic folders.
 - Demo-able: yes, locally — scan or pick a toy, build with live checks, play in World wearing the build, open a pack, reveal a card, export a gated STL. Create mode writes a world. One stage throughout.
 - Merge Forge adapters: not applicable — dropped today, none built.
@@ -156,7 +156,7 @@ Goal (plan.md Days 5–7): fit/print behavior across bridged sets, exact prototy
 - Tomorrow's first task: print Plate 1 (`01_big_blue_brick_L_2x2.stl` + `17_forge_mount_first_print_selector.stl`), apply parent-time migration to remote D1, publish.
 
 ### Addendum — recorded Oct 31 (counts, not a rewrite)
-- Wave 9 is 53 parts (43 Snap + 10 Pro) with 41 assemblies per the Kip manifest and tests — the "33 parts, 17 assemblies" logged above was an early count.
+- Wave 9 is 58 parts (48 Snap + 10 Motion) with 41 assemblies per the Kip manifest and tests — the "33 parts, 17 assemblies" logged above was an early count.
 - The spec's "2 known Kip failures" note is retired (see End of Day above); `docs/product/spec.md` now points at live counts instead of naming a number.
 
 ### Decision recorded — Fri Oct 30
@@ -181,6 +181,12 @@ Goal: fit-filtered market + support-free STL export (wireframe p.7–9). Start: 
 
 Goal: AR color preview + mini-game equip (wireframe p.10–11, stretch: color). Start: must-work item, full masks vs AR-preview cut, toy loads + add-on boost. End: shipped, demo-able, scan-to-game loop on phone, blockers, tomorrow's task. *(Unfilled.)*
 
+### Status — Sun Nov 1: tier rename
+- The product arc is now **Snap → Motion → Pro**. The old `Pro` line (8+, mechanical: beams, pins, shafts, gears, joints) is the **Motion** line; the old **Max** phase (real robots) is the **Pro** tier. The four power stages sit in three tiers by age: `Snap` (3+), `Motion` (8+: steering plus `Momentum` stored-energy propulsion) and `Pro` (10+: `Mech` robotics).
+- Swept code, data, docs and the Kip demo: the `Line` enum is now three-valued, the old `Pro` part ids are `motion_*`, `adapter_snap_pro` is `adapter-snap-motion`, `toyventor_pro.py` is `toyventor_motion.py`, and saved builds keep working because `src/lib/builds.ts` rewrites the old ids on read.
+- "Pro" as the bore_grid *lattice* is deliberately unchanged (`size: "pro"`, `Pro` bores, the `Pro` shaft, `forge_mount_pro`): the tier and the lattice are different axes.
+- Design-log entry added in `parts/partspec/DESIGN_LOG.md`; earlier entries keep the names as written at the time.
+
 ## Day 8 — Mon Nov 2: Reveal + Theme song
 
 Goal: entrance animation + 15 s theme + character card, plays once then saves (wireframe p.12). Start: must-work item, song caching per character id + failure fallback, Minimo clips tagged. End: shipped, demo-able, plays-once-then-saves check, blockers, tomorrow's task. *(Unfilled.)*
@@ -195,19 +201,20 @@ Goal: submission in. No code after 6 PM ET (buffer for form, video, screenshots)
 
 ---
 
-## Later — Max phase (noted Sat Oct 31)
+## Later — Pro phase (noted Sat Oct 31)
 
-Future arc: Snap → Pro → Max, Max being real robots — opening with kid-safe
+Future arc: Snap → Motion → Pro, Pro being real robots — opening with kid-safe
 battle bots (sumo/push, obstacle courses, no destructive weapons) plus
 missions. Thesis: video games accelerated AI development; play does the same
 for robotics. ScanDex exhaust and the asset pipeline are the training-data
-path in. Power-system Momentum/Mech stages sit inside Max. Spec holds the
+path in. Power-system Momentum sits in the Motion tier and Mech is the Pro
+tier. Spec holds the
 detail in [scan-to-3d.md](../specs/scan-to-3d.md); roadmap pointer in
 [spec.md](spec.md).
-- Why Max is real: I'm building a 4-foot household robot — hours in Fusion
+- Why Pro is real: I'm building a 4-foot household robot — hours in Fusion
   360 and Blender making parts, printing, testing, training — and the work
   looks exactly like the game loop above: model it, fit it, check it, try it.
-  The difference is my son watches me do it instead of helping. Max is the
+  The difference is my son watches me do it instead of helping. Pro is the
   phase where he stops watching: every scan, label, measurement, and battle
   bot mission becomes training data for the real thing standing in our house.
 
@@ -223,5 +230,5 @@ decides what ships. New connections arrive with block-level checks (flat
 face, full-form studs, grid registration, preset envelope). ScanDex is the
 collection game around it: confirm-what-it-is, set-the-size, earn XP —
 confirm-not-annotate, parent-gated, on-device-first. Its exhaust sharpens the
-suggester and, later, feeds Max. Robot-training data stays exhaust, never the
+suggester and, later, feeds Pro. Robot-training data stays exhaust, never the
 pitch. Full write-up deferred to the letter.

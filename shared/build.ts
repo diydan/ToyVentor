@@ -1,6 +1,6 @@
 // Virtual-builder placement logic, pure and renderer-free. The board is
 // the toy's top surface in millimetres; placements snap to each part's own
-// grid pitch (footprint / grid units), so Snap studs and Pro holes can
+// grid pitch (footprint / grid units), so Snap studs and Motion holes can
 // share a board without a common denominator hack.
 import type { Part } from "./part";
 import type { Toy } from "./toy";

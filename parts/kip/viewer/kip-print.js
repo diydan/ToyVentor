@@ -77,10 +77,10 @@ export function inventoryFor(s) {
   const unmapped = [];
   const classic = s.head === 'classic';
   const hasHair = s.hair && s.hair !== 'off';
-  const pro = s.edition !== 'snap';
+  const motion = s.edition !== 'snap';
 
   // Body
-  if (pro) {
+  if (motion) {
     items.push(B('torso', 1, 'body'), B('upper_arm', 2, 'body'), B('forearm', 2, 'body'), B('thigh', 2, 'body'), B('shin', 2, 'body'),
       B('spark_peg_big', 5, 'joint'), B('spark_peg_sml', 8, 'joint'));
   } else {
@@ -108,15 +108,15 @@ export function inventoryFor(s) {
   if (HAT_FILE[s.hat]) items.push(P(`hat_${s.hat}`, HAT_FILE[s.hat], 1, 'hat'));
   else if (s.hat === 'wizardHat' || s.hat === 'custom') unmapped.push(s.hat === 'custom' ? 'Custom hat (.stl)' : 'Wizard hat (SDK example)');
   if (BACK_FILE[s.back]) items.push(P(`back_${s.back}`, BACK_FILE[s.back], 1, 'back'));
-  else if (s.back === 'gears') unmapped.push('Pro 2:1 gears (built from several gear parts, no single STL yet)');
+  else if (s.back === 'gears') unmapped.push('Motion 2:1 gears (built from several gear parts, no single STL yet)');
   else if (s.back === 'custom') unmapped.push('Custom / photo wings');
   if (PROP_FILE[s.prop]) items.push(P(`prop_${s.prop}`, PROP_FILE[s.prop], 1, 'prop'));
-  else if (s.prop === 'shaft') unmapped.push('Pro Spinner (built from shaft parts, no single STL yet)');
+  else if (s.prop === 'shaft') unmapped.push('Motion Spinner (built from shaft parts, no single STL yet)');
   else if (s.prop && s.prop !== 'off') unmapped.push(s.prop === 'wand' ? 'Star wand (SDK example)' : 'Custom prop (.stl)');
   if (s.ears === 'comm') items.push(B('ear_acc_l', 1, 'ears'), B('ear_acc_r', 1, 'ears'));
-  else if (s.ears === 'pro') unmapped.push('Pro Scanner ears');
+  else if (s.ears === 'motion') unmapped.push('Motion Scanner ears');
   if (s.tail === 'wag') items.push(P('tail_wag', 'toyventor_waddle_tail_s_S.stl', 1, 'tail'));
-  else if (s.tail === 'pro') unmapped.push('Pro Wheelie tail');
+  else if (s.tail === 'motion') unmapped.push('Motion Wheelie tail');
   if (s.vehicle && s.vehicle !== 'none') unmapped.push(`Vehicle (${s.vehicle}): vehicle parts are not on the v1 plate`);
 
   return { items, unmapped };

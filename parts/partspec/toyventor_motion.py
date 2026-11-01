@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: Apache-2.0
-"""ToyVentor Pro: primitives, pin-and-bore fit, and the Pro rules (I4, I5, I6). Every number comes from interfaces.json.
+"""ToyVentor Motion: primitives, pin-and-bore fit, and the Motion rules (I4, I5, I6). Every number comes from interfaces.json.
 
-Conventions (Pro parts print flat, bores and pins run along z):
+Conventions (Motion parts print flat, bores and pins run along z):
   - bore_grid connector (F): grid anchored at the FIRST bore centre (frame origin), cells at origin + (i, j) * pitch, bore_class free|fixed.
   - pin connector (M): the pin axis at the frame origin, profile round|flats|friction, length_mm.
   - A pin and a bore mate when the axes coincide and the pair is listed in interfaces.json pin_bore.rules.
@@ -780,10 +780,10 @@ def hinge_leaf():
 
 # ---------------------------------------------------------------- fixtures
 def fixtures():
-    """Pro stand-ins that go through the real gate (toyventor_parts.evaluate). They prove the Pro checks work before the catalog has Pro parts,
+    """Motion stand-ins that go through the real gate (toyventor_parts.evaluate). They prove the Pro checks work before the catalog has Pro parts,
     and stay as regression fixtures after. Part dicts have the same shape as the generator's registry entries."""
     def mk(id, fam, fn):
-        return dict(id=id, name=id, type="Pro fixture", line="pro", size="pro", stat="Fit", behavior="fixture", tags=[fam], family=fam, fn=fn, cavity=None, ref=None, kind=None)
+        return dict(id=id, name=id, type="Motion fixture", line="motion", size="pro", stat="Fit", behavior="fixture", tags=[fam], family=fam, fn=fn, cavity=None, ref=None, kind=None)
 
     def beam(n, bc):
         def fn():

@@ -1,26 +1,26 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_hair_short_swept_S.stl",
-  "file_sha256": "9ee69d927a5acf77d55d473889c1a3b92e48833712c21042ec6de59ff99475f7",
+  "file_sha256": "a551a7b8f45778510744c1829d76dfb05309a97c143b1781ff957cc7cebb8fb2",
   "part_id": "hair_short_swept",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-10-31T14:36:23Z",
+  "checked_at": "2026-11-01T02:44:51Z",
   "metrics": {
     "bbox_mm": [
-      42.63,
+      43.88,
       34.26,
       24.1
     ],
-    "volume_cm3": 5.84,
-    "surface_cm2": 56.12,
-    "triangles": 8058,
+    "volume_cm3": 5.99,
+    "surface_cm2": 57.83,
+    "triangles": 8872,
     "ledges": [],
     "layers": 121,
-    "bed_contact_mm2": 67.0,
+    "bed_contact_mm2": 90.0,
     "height_mm": 24.1,
-    "slenderness": 2.94,
+    "slenderness": 2.54,
     "centre_of_mass_over_contact": true,
-    "min_wall_mm": 0.618,
+    "min_wall_mm": 0.559,
     "thin_wall_regions": []
   },
   "bridges": [
@@ -77,7 +77,7 @@
       "level": "block",
       "result": "pass",
       "value": [
-        42.6,
+        43.9,
         34.3,
         24.1
       ],
@@ -132,9 +132,9 @@
       "id": "V9_bed_contact",
       "level": "info",
       "result": "pass",
-      "value": 67.0,
+      "value": 90.0,
       "limit": null,
-      "detail": "height / sqrt(contact) = 2.94; above about 3 the slicer often asks for a brim"
+      "detail": "height / sqrt(contact) = 2.54; above about 3 the slicer often asks for a brim"
     },
     {
       "id": "V8_wall_thickness",

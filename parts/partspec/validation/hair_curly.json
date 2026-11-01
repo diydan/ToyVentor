@@ -1,26 +1,26 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_hair_curly_S.stl",
-  "file_sha256": "890d230a1fadcd6cabd751f9e003be0dc44ccb9e2deb5427efef2b9a9369073f",
+  "file_sha256": "0c42739e81aed4231707a3e1eb76e015773c8a461cb62f602f61c218613b6726",
   "part_id": "hair_curly",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-10-31T14:42:47Z",
+  "checked_at": "2026-11-01T02:45:40Z",
   "metrics": {
     "bbox_mm": [
-      47.67,
+      48.67,
       40.44,
       28.66
     ],
     "volume_cm3": 15.84,
-    "surface_cm2": 76.31,
-    "triangles": 10708,
+    "surface_cm2": 76.43,
+    "triangles": 11604,
     "ledges": [],
     "layers": 143,
-    "bed_contact_mm2": 199.5,
+    "bed_contact_mm2": 203.0,
     "height_mm": 28.66,
-    "slenderness": 2.03,
+    "slenderness": 2.01,
     "centre_of_mass_over_contact": true,
-    "min_wall_mm": 0.375,
+    "min_wall_mm": 0.608,
     "thin_wall_regions": []
   },
   "bridges": [
@@ -62,7 +62,7 @@
       "level": "block",
       "result": "pass",
       "value": [
-        47.7,
+        48.7,
         40.4,
         28.7
       ],
@@ -117,9 +117,9 @@
       "id": "V9_bed_contact",
       "level": "info",
       "result": "pass",
-      "value": 199.5,
+      "value": 203.0,
       "limit": null,
-      "detail": "height / sqrt(contact) = 2.03; above about 3 the slicer often asks for a brim"
+      "detail": "height / sqrt(contact) = 2.01; above about 3 the slicer often asks for a brim"
     },
     {
       "id": "V8_wall_thickness",

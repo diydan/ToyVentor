@@ -25,7 +25,7 @@ if str(PARTSPEC_DIR) not in sys.path:
 
 import toyventor_assembly as asm  # noqa: E402
 import toyventor_parts as tp  # noqa: E402
-import toyventor_pro as pro  # noqa: E402, F401
+import toyventor_motion as motion  # noqa: E402, F401
 
 # Re-export shared CAD & drift-proof connector helpers for `parts/kip/sdk/kip_partspec_sdk.py`
 _rr = tp._rr
@@ -101,7 +101,7 @@ veh_moto_cowling = tp.veh_moto_cowling
 
 # Kip's catalog waves: W9 (wardrobe, heads, wigs, hats, vehicles) and W12 (12 categorised workshop hand props:
 # Tools / Cleaning / Instruments / Play). Builders resolve through `tp.BY_ID`, which looks them up in
-# toyventor_parts, toyventor_pro and toyventor_kitcard, so no per-part re-export is needed here.
+# toyventor_parts, toyventor_motion and toyventor_kitcard, so no per-part re-export is needed here.
 KIP_WAVES = ("W9", "W12")
 KIP_ROWS = [r for r in tp.CATALOG["parts"] if r.get("wave") in KIP_WAVES]
 W9_ROWS = [r for r in KIP_ROWS if r.get("wave") == "W9"]  # kept for older callers

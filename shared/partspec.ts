@@ -4,9 +4,9 @@
 // Two modes:
 // 1. Default strict mode (no options): preserves conservative fail-closed
 //    behavior (exact 4-stat synonyms, Snap only, placeholder stat value).
-// 2. Full catalog mode ({ mapAllStats: true, includePro: true }): bridges
-//    Snap Small (12.5 mm), Snap Large (25 mm), Forge Mounts, Snap-to-Pro
-//    Adapter, and Pro mechanisms (12.5 mm TU) with real bboxMm, STL/GLB
+// 2. Full catalog mode ({ mapAllStats: true, includeAdvanced: true }): bridges
+//    Snap Small (12.5 mm), Snap Large (25 mm), Forge Mounts, Snap-to-Motion
+//    Adapter, and Motion/Pro mechanisms (12.5 mm TU) with real bboxMm, STL/GLB
 //    asset filenames, deterministic 1..3 stat values, and CPSC 16 CFR 1500.19
 //    small-part warnings.
 
@@ -43,8 +43,8 @@ export interface PartSpecManifestPart {
 export interface BridgeOptions {
   /** Map all 19 PartSpec stat labels onto the 4 app game stats. */
   mapAllStats?: boolean;
-  /** Bridge Pro parts (bore_grid, pins, shafts, gears, mounts) onto 12.5 mm TU. */
-  includePro?: boolean;
+  /** Bridge Motion and Pro parts (bore_grid, pins, shafts, gears, mounts) onto 12.5 mm TU. */
+  includeAdvanced?: boolean;
   /** ID prefix (defaults to "partspec-"; pass "" for clean canonical IDs). */
   idPrefix?: string;
   /** Derive 1..3 rarity/tier stat values instead of PLACEHOLDER_STAT_VALUE. */
@@ -149,16 +149,16 @@ export function convertPartSpecPart(
   const id = catalog.id;
   const skip = (reason: string): BridgeResult => ({ ok: false, id, reason });
 
-  const allowPro = options.includePro === true;
-  if (catalog.line !== "snap" && (!allowPro || catalog.line !== "pro")) {
+  const allowAdvanced = options.includeAdvanced === true;
+  if (catalog.line !== "snap" && (!allowAdvanced || (catalog.line !== "motion" && catalog.line !== "pro"))) {
     return skip(`line "${catalog.line}" not bridged yet (snap only)`);
   }
 
   let sizeClass: SizeClass;
   if (catalog.size === "small" || catalog.size === "large") {
     sizeClass = catalog.size;
-  } else if (allowPro && catalog.size === "pro") {
-    // Pro 12.5 mm TU shares the Small 12.5 mm pitch class.
+  } else if (allowAdvanced && catalog.size === "pro") {
+    // The bore_grid 12.5 mm TU shares the Small 12.5 mm pitch class.
     sizeClass = "small";
   } else {
     return skip(`size "${catalog.size}" is not a Snap size class`);
@@ -183,11 +183,12 @@ export function convertPartSpecPart(
   const isForgeMount =
     catalog.family === "forge_mount" ||
     (catalog.tags ?? []).includes("forge_mount") ||
-    catalog.id === "adapter_snap_pro";
+    catalog.id === "adapter_snap_motion";
 
-  const line: Line = catalog.line === "pro" ? "pro" : "snap";
+  const line: Line =
+    catalog.line === "motion" ? "motion" : catalog.line === "pro" ? "pro" : "snap";
   const isHoleGrid =
-    line === "pro" || gridConn.kind === "bore_grid" || gridConn.interface === "bore_grid";
+    line !== "snap" || gridConn.kind === "bore_grid" || gridConn.interface === "bore_grid";
   const mount: Mount = isForgeMount
     ? "forge-mount"
     : isHoleGrid
@@ -257,7 +258,7 @@ export const BASE_SET_PARTSPEC_IDS = [
   "dome_s_2x2",
   "big_blue_brick",
   "spin_capsule",
-  "adapter_snap_pro",
+  "adapter_snap_motion",
   "forge_mount_ring_s",
   "cloud_wings",
   "glow_capsule",

@@ -609,7 +609,7 @@
       },
       {
         "id": "adapter",
-        "part": "adapter_snap_pro",
+        "part": "adapter_snap_motion",
         "pose": {
           "x": 0,
           "y": 0,
@@ -3294,7 +3294,7 @@
       },
       {
         "id": "steer_bridge",
-        "part": "pro_steer_bridge",
+        "part": "motion_steer_bridge",
         "pose": {
           "x": 0.0,
           "y": -50.0,
@@ -3324,7 +3324,7 @@
       },
       {
         "id": "steer_rack",
-        "part": "pro_steer_rack",
+        "part": "motion_steer_rack",
         "pose": {
           "x": 0.0,
           "y": -56.25,

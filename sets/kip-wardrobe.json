@@ -162,8 +162,8 @@
       "glbFile": "robot-back-jetpack.glb",
       "bboxMm": [
         24.8,
-        18.8,
-        19.5
+        19.7,
+        14.8
       ],
       "smallPartWarning": true
     },
@@ -194,9 +194,9 @@
       "stlFile": "robot-head-visor.stl",
       "glbFile": "robot-head-visor.glb",
       "bboxMm": [
-        38,
-        26.4,
-        32.8
+        45.4,
+        34.3,
+        34.4
       ]
     },
     {
@@ -235,7 +235,7 @@
     {
       "id": "prop-wrench",
       "name": "Builder Spanner",
-      "line": "pro",
+      "line": "motion",
       "mount": "hole",
       "sizeClass": "small",
       "grid": {
@@ -268,7 +268,7 @@
     {
       "id": "prop-star-shield",
       "name": "Star Emblem Wand",
-      "line": "pro",
+      "line": "motion",
       "mount": "hole",
       "sizeClass": "small",
       "grid": {

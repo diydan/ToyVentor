@@ -131,7 +131,7 @@ Correctly last — it depends on §3 and §4. Two commitments need owners before
     1. **Top bar:** `[mini icon] Toy Box ▾` · `Build` · `Create` · `Pack` · `⚙️` (plus quiet Story Moods / Character Card access).
     2. **Live 3D Stage:** Toy + current world + tap-to-move/interact + minimal `found / scrap` pill. Zero duplicate buttons.
 - **When `Demo Mode` is `ON` (inside `⚙️`):**
-  - Exposes the full 12-world / `Lab 1–6` quick-jump bar, `Level Editor`, `Kip 3D Rig` launcher, 1-tap `Seed Demo Save` (for the Garden bridge shot), and sandbox `Unlock All Toys & Pro Parts`.
+  - Exposes the full 12-world / `Lab 1–6` quick-jump bar, `Level Editor`, `Kip 3D Rig` launcher, 1-tap `Seed Demo Save` (for the Garden bridge shot), and sandbox `Unlock All Toys & Tier Parts`.
 
 ---
 

@@ -291,7 +291,6 @@ export function PartCardArt({ part }: { part: Pick<Part, "id" | "stat" | "line">
         </svg>
       );
     case "beam-str-tu05":
-    case "pro-beam-tu05":
       return (
         <svg width="44" height="44" viewBox="0 0 36 36" aria-hidden="true">
           <g transform="rotate(-24 18 18)">
@@ -302,7 +301,7 @@ export function PartCardArt({ part }: { part: Pick<Part, "id" | "stat" | "line">
           </g>
         </svg>
       );
-    case "adapter-snap-pro":
+    case "adapter-snap-motion":
     case "forge-mount-ring-s":
     case "forge-mount-small":
       return (

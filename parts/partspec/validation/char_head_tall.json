@@ -1,19 +1,19 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_char_head_tall_S.stl",
-  "file_sha256": "2cc87d1d09d4cfb4dae5b3ec622c1340c5704fb906fb6d17408c630d272a6535",
+  "file_sha256": "82376fc28b1ca180c08ac7692958ebd0508fdeba36393a2299607d25ed50ad75",
   "part_id": "char_head_tall",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-10-31T14:36:18Z",
+  "checked_at": "2026-11-01T02:44:46Z",
   "metrics": {
     "bbox_mm": [
-      39.38,
+      40.04,
       27.67,
       36.2
     ],
-    "volume_cm3": 21.73,
-    "surface_cm2": 48.69,
-    "triangles": 10986,
+    "volume_cm3": 21.75,
+    "surface_cm2": 48.79,
+    "triangles": 11404,
     "ledges": [],
     "layers": 181,
     "bed_contact_mm2": 207.5,
@@ -72,7 +72,7 @@
       "level": "block",
       "result": "pass",
       "value": [
-        39.4,
+        40.0,
         27.7,
         36.2
       ],

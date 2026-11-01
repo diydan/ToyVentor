@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Dump Truck Progressive Mockup — Snap (3+) → Pro (8+) → Momentum (8+) → Mech (10+)</title>
+<title>Dump Truck Progressive Mockup — Snap (3+) → Motion (8+) → Momentum (8+) → Mech (10+)</title>
 <style>
   :root {
     --ink: #1b2238;
@@ -216,7 +216,7 @@
   <div class="row">
     <span class="row-label">Stage</span>
     <button data-stage="snap" class="active">1 · Snap (3+)</button>
-    <button data-stage="pro">2 · Pro (8+) Rack Steer</button>
+    <button data-stage="motion">2 · Motion (8+) Rack Steer</button>
     <button data-stage="band">3A · Momentum Band + Bumper</button>
     <button data-stage="bellows">3B · Momentum Balloon Bellows</button>
     <button data-stage="mech">4 · Mech (10+) Smart RC X-Ray</button>
@@ -340,8 +340,8 @@ const GEOS = {};
 const PART_FILES = [
   'kit_keel_base', 'kit_barbell_shaft', 'kit_wheel_med', 'kit_wheel_giant',
   'kit_aero_wedge', 'kit_windscreen', 'kit_tilting_tub', 'kit_scoop_blade',
-  'kit_yoke_hbar', 'pro_steer_bridge', 'pro_steer_knuckle_l', 'pro_steer_knuckle_r',
-  'pro_steer_rack', 'pro_axle_keeper', 'gear_spur_z10', 'mom_band_core_tray',
+  'kit_yoke_hbar', 'motion_steer_bridge', 'motion_steer_knuckle_l', 'motion_steer_knuckle_r',
+  'motion_steer_rack', 'motion_axle_keeper', 'gear_spur_z10', 'mom_band_core_tray',
   'mom_band_core_lid', 'mom_band_spool_pawl', 'mom_bumper_trigger',
   'mom_bellows_base', 'mom_bellows_leaf', 'mech_core_shell',
   'char_legs_seated', 'robot_torso_core', 'robot_arms_grabber',
@@ -413,9 +413,9 @@ const state = {
 // ---------------------------------------------------------------------------
 const KNUCKLE_FACE_RELIEF = 0.4; // mm; = KNUCKLE_FACE_RELIEF in toyventor_kitcard.py (pivot bores exempt from the axis8 lattice, see that file)
 const STEER = {
-  kpX: 18.75, kpY: -56.25,       // kingpin axes (pro_steer_bridge bosses)
-  arm: 12.5,                     // knuckle kingpin bore -> tierod bore (pro_steer_knuckle_l/r)
-  rackX: 7.8125, rackY: -57.8125, // pro_steer_rack tierod bores: rack origin y=-56.25, bore at local (+-7.8125, -1.5625) (RACK_TIEROD_X)
+  kpX: 18.75, kpY: -56.25,       // kingpin axes (motion_steer_bridge bosses)
+  arm: 12.5,                     // knuckle kingpin bore -> tierod bore (motion_steer_knuckle_l/r)
+  rackX: 7.8125, rackY: -57.8125, // motion_steer_rack tierod bores: rack origin y=-56.25, bore at local (+-7.8125, -1.5625) (RACK_TIEROD_X)
   pinionR: 12.5,                 // gear_spur_z10 pitch radius
   rackStop: 5.20,                // RACK_STOP in toyventor_kitcard.py: 33.9 deg inner / 20.8 outer, circle 60.6 cm (G2 <= 62.0)
   wheelbase: 100.0,              // kingpin line -> rear axle
@@ -491,7 +491,7 @@ function rebuildScene() {
   const wheelR = state.giantWheels ? 25.0 : 18.0;
   cadRoot.position.y = wheelR - 6.25;
 
-  const isSteered = (state.stage === 'pro' || state.stage === 'mech');
+  const isSteered = (state.stage === 'motion' || state.stage === 'mech');
   const hasCore3TU = (state.stage === 'band' || state.stage === 'mech');
   const isBellows = (state.stage === 'bellows');
   const useXray = state.xrayMode === 'on' || (state.xrayMode === 'auto' && (state.stage === 'mech' || state.stage === 'band'));
@@ -528,7 +528,7 @@ function rebuildScene() {
     ptoGear.position.set(-3.125, 0, 0);
     rearAxle.add(ptoGear);
 
-    const keeper = meshOf('pro_axle_keeper', MATS.mint);
+    const keeper = meshOf('motion_axle_keeper', MATS.mint);
     keeper.position.set(0, 43.75, -3.5);
     addExplodeTag(keeper, 0, 8, -24);
     cadRoot.add(keeper);
@@ -588,7 +588,7 @@ function rebuildScene() {
     }
   } else {
     // Stage 2 Pro & Stage 4 Mech Ackermann Row-0 Steering Linkage!
-    const bridge = meshOf('pro_steer_bridge', MATS.mint);
+    const bridge = meshOf('motion_steer_bridge', MATS.mint);
     bridge.position.set(0, -50.0, 12.5);
     addExplodeTag(bridge, 0, -14, 14);
     cadRoot.add(bridge);
@@ -599,20 +599,20 @@ function rebuildScene() {
     cadRoot.add(pinion);
     dynamicRefs.pinion = pinion;
 
-    const rack = meshOf('pro_steer_rack', MATS.tub);
+    const rack = meshOf('motion_steer_rack', MATS.tub);
     rack.position.set(0, -56.25, 25.05);
     addExplodeTag(rack, 0, -22, 26);
     cadRoot.add(rack);
     dynamicRefs.rack = rack;
 
-    if (state.stage === 'pro') {
+    if (state.stage === 'motion') {
       const yoke = meshOf('kit_yoke_hbar', MATS.spark);
       yoke.position.set(0, -37.5, 6.0);
       addExplodeTag(yoke, 0, -10, 38);
       cadRoot.add(yoke);
       dynamicRefs.yoke = yoke;
     } else {
-      // Stage 4 Mech Coaxial 9g Servo Core on pro_steer_bridge rear studs
+      // Stage 4 Mech Coaxial 9g Servo Core on motion_steer_bridge rear studs
       const servoGroup = new THREE.Group();
       servoGroup.position.set(0, -43.5, 28.0);
       addExplodeTag(servoGroup, 0, -16, 40);
@@ -634,7 +634,7 @@ function rebuildScene() {
       orientZ.rotation.z = side < 0 ? Math.PI / 2 : -Math.PI / 2;
       const tiltX = new THREE.Group();
       tiltX.rotation.x = -Math.PI / 2;
-      const knMesh = meshOf(side < 0 ? 'pro_steer_knuckle_l' : 'pro_steer_knuckle_r', MATS.knuckle);
+      const knMesh = meshOf(side < 0 ? 'motion_steer_knuckle_l' : 'motion_steer_knuckle_r', MATS.knuckle);
       knMesh.position.set(side < 0 ? -6.25 : 6.25, 0, -6.25 + KNUCKLE_FACE_RELIEF); // the knuckle STL is re-based to z=0 after any inboard shave, so its bores sit at 6.25 - relief
       tiltX.add(knMesh);
       orientZ.add(tiltX);
@@ -977,8 +977,8 @@ function updateHUD() {
       bed: `Sculpted 4×4 Scow · Tip ${Math.round(state.tipDeg)}° (Z=12.5 mm)`,
     },
     pro: {
-      badge: 'Stage 2 · Pro 8+',
-      title: '2 · Pro (8+) Row-0 Rack-Steered Hauler',
+      badge: 'Stage 2 · Motion 8+',
+      title: '2 · Motion (8+) Row-0 Rack-Steered Hauler',
       cards: 'Card A + Card B + Card E1',
       steer: `Ackermann Knuckles + Z10 Rack (${Math.round(state.steerDeg)}° Lock)`,
       power: 'Rear Z10 PTO Ready + Under-Keel Keeper',
@@ -1017,7 +1017,7 @@ function updateHUD() {
   document.getElementById('hud-power').textContent = META.power;
   document.getElementById('hud-bed').textContent = META.bed;
   // Ghosted geometry that has no catalog part yet (do not read it as a verified part):
-  document.getElementById('hud-illus').textContent = (state.stage === 'pro' || state.stage === 'mech')
+  document.getElementById('hud-illus').textContent = (state.stage === 'motion' || state.stage === 'mech')
     ? 'Tie-rods (ghosted): no catalog part yet'
     : (state.stage === 'bellows' ? 'Hose + nozzle (ghosted): no catalog part yet' : '—');
 }
@@ -1036,7 +1036,7 @@ document.querySelectorAll('[data-stage]').forEach((btn) => {
       bw.textContent = 'Tires: Ø36 Med (#4)';
       bw.classList.remove('mint-on');
     }
-    if (state.stage === 'pro' || state.stage === 'mech') {
+    if (state.stage === 'motion' || state.stage === 'mech') {
       state.steerDeg = 22;
       state.tipDeg = state.stage === 'mech' ? 18 : 0;
     } else if (state.stage === 'band') {
@@ -1293,7 +1293,7 @@ function animate() {
     const smooth = (u) => { const c = Math.max(0, Math.min(1, u)); return c * c * (3 - 2 * c); };
     wall.visible = state.stage === 'band';
 
-    if (state.stage === 'pro' || state.stage === 'mech') {
+    if (state.stage === 'motion' || state.stage === 'mech') {
       // Slalom: kinematic bicycle at the rear axle. The yaw rate comes from the two REAL solved wheel angles
       // (cot(dc) = mean of the wheel cotangents), so the truck actually turns where its wheels point.
       const v = 34.0; // mm/s

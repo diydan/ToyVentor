@@ -8,6 +8,30 @@ import type { Part } from "../../shared/part";
 
 export const BUILD_STORAGE_PREFIX = "toyforge:build:v1:";
 
+/** Part ids renamed by the Snap -> Motion -> Pro tier rename (2026-11-01).
+ *  A saved build stores the part id, so a renamed part would silently drop out
+ *  of a child's build. Rewriting the id on read keeps those builds intact;
+ *  the next save writes the new id. */
+const RENAMED_PART_IDS: Record<string, string> = {
+  "adapter-snap-pro": "adapter-snap-motion",
+  "pro-steer-bridge": "motion-steer-bridge",
+  "pro-steer-knuckle-l": "motion-steer-knuckle-l",
+  "pro-steer-knuckle-r": "motion-steer-knuckle-r",
+  "pro-steer-rack": "motion-steer-rack",
+  "pro-tie-rod-link": "motion-tie-rod-link",
+  "pro-fork-rake-adpt": "motion-fork-rake-adpt",
+  "pro-axle-keeper": "motion-axle-keeper",
+  "pro-tub-hinge": "motion-tub-hinge",
+  "pro-captive-pin-28": "motion-captive-pin-28",
+  "pro-steer-column": "motion-steer-column",
+  "pro-steer-wheel": "motion-steer-wheel",
+  "pro-pilot-pin": "motion-pilot-pin",
+};
+
+export function migratedPartId(partId: string): string {
+  return RENAMED_PART_IDS[partId] ?? partId;
+}
+
 export function buildStorageKey(toyId: string): string {
   return `${BUILD_STORAGE_PREFIX}${toyId}`;
 }
@@ -20,7 +44,12 @@ export function loadBuild(toyId: string, partsById: Map<string, Part>): Placemen
     if (!raw) return [];
     const parsed: unknown = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
-    return (parsed as Placement[]).filter((placement) => partsById.has(placement.partId));
+    return (parsed as Placement[])
+      .map((placement) => {
+        const partId = migratedPartId(placement.partId);
+        return partId === placement.partId ? placement : { ...placement, partId };
+      })
+      .filter((placement) => partsById.has(placement.partId));
   } catch {
     return [];
   }

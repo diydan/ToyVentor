@@ -1,24 +1,24 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_hair_top_bun_S.stl",
-  "file_sha256": "4c2bfca27805f9f33ce19df317e4fbf9501c4cd411762760748cfe08cfcb79c7",
+  "file_sha256": "a62d529da75fd388c4791dd3a90f488c2aeb2e06e48445ba98b625042e7ebe03",
   "part_id": "hair_top_bun",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-10-31T14:41:32Z",
+  "checked_at": "2026-11-01T02:45:20Z",
   "metrics": {
     "bbox_mm": [
-      42.96,
+      43.99,
       34.3,
       36.3
     ],
-    "volume_cm3": 9.39,
-    "surface_cm2": 64.15,
-    "triangles": 4870,
+    "volume_cm3": 9.54,
+    "surface_cm2": 65.86,
+    "triangles": 5672,
     "ledges": [],
     "layers": 181,
-    "bed_contact_mm2": 62.7,
+    "bed_contact_mm2": 87.2,
     "height_mm": 36.3,
-    "slenderness": 4.58,
+    "slenderness": 3.89,
     "centre_of_mass_over_contact": true,
     "min_wall_mm": 0.449,
     "thin_wall_regions": [
@@ -72,7 +72,7 @@
       "level": "block",
       "result": "pass",
       "value": [
-        43.0,
+        44.0,
         34.3,
         36.3
       ],
@@ -127,9 +127,9 @@
       "id": "V9_bed_contact",
       "level": "info",
       "result": "pass",
-      "value": 62.7,
+      "value": 87.2,
       "limit": null,
-      "detail": "height / sqrt(contact) = 4.58; above about 3 the slicer often asks for a brim"
+      "detail": "height / sqrt(contact) = 3.89; above about 3 the slicer often asks for a brim"
     },
     {
       "id": "V8_wall_thickness",

@@ -151,7 +151,7 @@ test("fit matrix covers every mating pair in the index", len(fm["pairs"]) == sum
 test("build edges carry the measured gap (friction and gear-mesh edges excepted)", all("gap_min_mm" in e for r in res.values() for e in r.get("edges", []) if e.get("fit") not in ("friction", "mesh")))
 test("valid builds raise no fit warning", not any(w["code"] == "fit_out_of_tolerance" for n, r in res.items() if n.startswith("valid") for w in r["warnings"]))
 
-# 7d. catalog: the plan for the top 30 Snap and top 30 Pro parts stays consistent with the generator
+# 7d. catalog: the plan for the top 30 Snap and top 30 Motion parts stays consistent with the generator
 import make_catalog  # noqa: E402
 cat = make_catalog.CAT
 ids = [p["id"] for p in cat["parts"]]
@@ -160,15 +160,34 @@ test("catalog ids are unique", len(ids) == len(set(ids)))
 test("catalog has the target count per line", all(sum(p["line"] == ln for p in cat["parts"]) == n for ln, n in cat["targets"].items()))
 test("catalog waves exist and only depend on earlier waves", all(p["wave"] in wave_ids + [None] for p in cat["parts"]) and
      all(all(r in wave_ids[:i] for r in w["requires"]) for i, w in enumerate(cat["waves"])))
+_SCOPE_LINES = (("Snap Small", "snap"), ("Motion", "motion"), ("Pro", "pro"))
 def _scope_counts(w):
-    m = re.match(r"^(\d+) parts \((\d+) Snap Small, (\d+) Pro\)", w.get("scope", ""))
-    return tuple(int(g) for g in m.groups()) if m else None
+    """Wave scope header -> (total, {label: count}); None when the wave has no count header."""
+    m = re.match(r"^(\d+) parts(?: \(([^)]*)\))?(?:[:,].*)?$", w.get("scope", ""))
+    if not m:
+        return None
+    groups = {}
+    for part in (m.group(2) or "").split(","):
+        part = part.strip()
+        if not part:
+            continue
+        g = re.match(r"^(\d+) (Snap Small|Motion|Pro)$", part)
+        if not g:
+            return None
+        groups[g.group(2)] = int(g.group(1))
+    return int(m.group(1)), groups
 test("wave scope leading counts match counted membership", all(
-    _scope_counts(w) is None or _scope_counts(w) == (sum(1 for p in cat["parts"] if p.get("wave") == w["id"]),
-    sum(1 for p in cat["parts"] if p.get("wave") == w["id"] and p["line"] == "snap"),
-    sum(1 for p in cat["parts"] if p.get("wave") == w["id"] and p["line"] == "pro")) for w in cat["waves"]))
+    _scope_counts(w) is None or (
+        _scope_counts(w)[0] == sum(1 for p in cat["parts"] if p.get("wave") == w["id"])
+        # A scope that carries no per-line breakdown only states the wave total.
+        and (not _scope_counts(w)[1] or all(
+            _scope_counts(w)[1].get(label, 0) == sum(1 for p in cat["parts"] if p.get("wave") == w["id"] and p["line"] == line)
+            for label, line in _SCOPE_LINES))
+    ) for w in cat["waves"]))
 test("every generated part is in the catalog", all(p["id"] in ids for p in parts))
-test("catalog sizes follow the line (Snap small/large, Pro pro)", all(p["size"] in (("small", "large") if p["line"] == "snap" else ("pro",)) for p in cat["parts"] if p["family"] != "forge_mount") )
+test("Snap stays on the stud lattice, and bore_grid parts live in the advanced tiers",
+     all(p["size"] in ("small", "large") for p in cat["parts"] if p["line"] == "snap" and p["family"] != "forge_mount")
+     and all(p["line"] in ("motion", "pro") for p in cat["parts"] if p["size"] == "pro" and p["family"] != "forge_mount"))
 test("Snap grids in ids are at least 2x2", all(min(int(d) for d in p["id"].split("_")[-1].split("x")) >= 2 for p in cat["parts"] if p["line"] == "snap" and p["family"] in ("block", "tile", "slope", "round") and p["id"].split("_")[-1][0].isdigit()))
 pr = make_catalog.progress(cat, man)
 test("catalog progress counts only verified parts", all(s["verified"] == sum(1 for p in parts if p["id"] in {q["id"] for q in cat["parts"] if q["line"] == ln} and p["design_status"] == "verified") for ln, s in pr["lines"].items()))
@@ -176,7 +195,7 @@ test("catalog progress counts only verified parts", all(s["verified"] == sum(1 f
 # 7e. W0 foundation: catalog-driven families, Pro checks (dormant in the catalog, proven on fixtures), pin-and-bore mating
 import contextlib  # noqa: E402
 import tempfile  # noqa: E402
-import toyventor_pro as pro  # noqa: E402
+import toyventor_motion as motion  # noqa: E402
 from jsonschema import Draft202012Validator  # noqa: E402
 
 V = Draft202012Validator(tp.SCHEMA)
@@ -199,14 +218,14 @@ for fam, size, build in (("block", "small", {"kind": "plate", "grid": [2, 2]}), 
     test(f"family {fam} {size} {build.get('kind') or ''}: one catalog row passes the gate", row_status(id="t", name="t", family=fam, size=size, build=build)[0] == "verified")
 test("a slope that lands in the marginal band is NOT verified (small, 45 degrees)", row_status(id="t", name="t", family="slope", size="small", build={"grid": [2, 2], "angle_deg": 45}) == ("needs_reproportion", "marginal"))
 
-fixtures = pro.fixtures()
+fixtures = motion.fixtures()
 fx_dir = Path(tempfile.mkdtemp())
 fx_entries = {}
 for part in fixtures:
     e, tm, bad, small = tp.evaluate(part, V)
     tm.export(fx_dir / e["file"])
     fx_entries[part["id"]] = e
-test("all Pro fixtures verify through the real gate", all(e["design_status"] == "verified" for e in fx_entries.values()), str({k: v["design_status"] for k, v in fx_entries.items()}))
+test("all Motion fixtures verify through the real gate", all(e["design_status"] == "verified" for e in fx_entries.values()), str({k: v["design_status"] for k, v in fx_entries.items()}))
 ids_of = lambda e: {c["id"] for c in e["checks"]}  # noqa: E731
 test("applicability: beams get I4 and I5, pins get I5 only, gears get I4 I5 I6, none get I3",
      {"I4_bore_on_grid", "I5_pin_fits_bore"} <= ids_of(fx_entries["fx_beam_free_tu03"]) and "I4_bore_on_grid" not in ids_of(fx_entries["fx_pin_free"]) and "I5_pin_fits_bore" in ids_of(fx_entries["fx_pin_free"])
@@ -216,17 +235,17 @@ test("every part carries exactly the checks that apply to it", all(
 test("measured free-bore gap is the interface gap (0.2 mm)", abs(fx_entries["fx_beam_free_tu03"]["fit"]["gap_min_mm"] - 0.2) < 0.01)
 test("measured flat-drive gap is the interface gap (0.05 mm)", abs(fx_entries["fx_beam_fixed_tu02"]["fit"]["gap_min_mm"] - 0.05) < 0.01)
 sw = [e["fit"]["surface_offset_window_mm"] for e in fx_entries.values() if e["fit"].get("surface_offset_window_mm")]
-test("Pro fit windows contain the calibrated error, same calibration as Snap", all(w[0] <= -0.05 and 0.05 <= w[1] for w in sw))
+test("Motion fit windows contain the calibrated error, same calibration as Snap", all(w[0] <= -0.05 and 0.05 <= w[1] for w in sw))
 
 
 @contextlib.contextmanager
 def bore_override(**kw):
-    saved = {k: pro.BORE[k] for k in kw}
-    pro.BORE.update(kw)
+    saved = {k: motion.BORE[k] for k in kw}
+    motion.BORE.update(kw)
     try:
         yield
     finally:
-        pro.BORE.update(saved)
+        motion.BORE.update(saved)
 
 
 def broken(base_id, overrides=None, mutate=None):
@@ -252,9 +271,9 @@ e, b = broken("fx_beam_free_tu03", mutate=lambda cs: [{**cs[0], "frame": {**cs[0
 test("a bore declared 1 mm off the lattice is caught by I4", "I4_bore_on_grid" in b, str(b))
 e, b = broken("fx_beam_free_tu03", mutate=lambda cs: [{**cs[0], "grid": {**cs[0]["grid"], "nx": 4}}])
 test("a bore declared where there is no hole is caught by I4", "I4_bore_on_grid" in b, str(b))
-test("I6 rejects a gear whose pitch diameter is not whole TU (12 teeth)", not pro.gear_on_grid({"gear": {"module_mm": 2.5, "teeth": 12}}, __import__("numpy").array([[-17.5, -17.5, 0], [17.5, 17.5, 12.5]]))[0])
-test("I6 rejects a gear with the wrong module", not pro.gear_on_grid({"gear": {"module_mm": 3.0, "teeth": 20}}, __import__("numpy").array([[-33, -33, 0], [33, 33, 12.5]]))[0])
-test("I6 accepts every tooth count that is a multiple of 5 at module 2.5", all(pro.gear_on_grid({"gear": {"module_mm": 2.5, "teeth": z}}, __import__("numpy").array([[-1.25 * (z + 2)] * 2 + [0], [1.25 * (z + 2)] * 2 + [12.5]]))[0] for z in (10, 15, 20, 25, 30)))
+test("I6 rejects a gear whose pitch diameter is not whole TU (12 teeth)", not motion.gear_on_grid({"gear": {"module_mm": 2.5, "teeth": 12}}, __import__("numpy").array([[-17.5, -17.5, 0], [17.5, 17.5, 12.5]]))[0])
+test("I6 rejects a gear with the wrong module", not motion.gear_on_grid({"gear": {"module_mm": 3.0, "teeth": 20}}, __import__("numpy").array([[-33, -33, 0], [33, 33, 12.5]]))[0])
+test("I6 accepts every tooth count that is a multiple of 5 at module 2.5", all(motion.gear_on_grid({"gear": {"module_mm": 2.5, "teeth": z}}, __import__("numpy").array([[-1.25 * (z + 2)] * 2 + [0], [1.25 * (z + 2)] * 2 + [12.5]]))[0] for z in (10, 15, 20, 25, 30)))
 
 # pin-and-bore mating in the validator
 (fx_dir / "m.json").write_text(json.dumps({"parts": list(fx_entries.values())}))
@@ -279,16 +298,16 @@ test("a pin off the bore axis is not connected", "floating" in codes_of(r4), str
 test("one shaft through two stacked beams connects both", r5["ok"] and len(r5["edges"]) == 2, str(r5))
 test("accepted pin builds raise no fit warning", not any(r["warnings"] for r in (r1, r2, r5)))
 fm2 = asm.fit_matrix(flib)
-test("Pro fit matrix: every listed pin/bore pair fits as designed, no connector without a partner", fm2["pairs"] and all(r["as_designed"] for r in fm2["pairs"]) and not fm2["orphans"], str(fm2["orphans"]))
+test("Motion fit matrix: every listed pin/bore pair fits as designed, no connector without a partner", fm2["pairs"] and all(r["as_designed"] for r in fm2["pairs"]) and not fm2["orphans"], str(fm2["orphans"]))
 
-# 7f. W2 Pro core with real parts
+# 7f. W2 Motion core with real parts
 test("a round pin in a bushing (fixed bore) is rejected: profile_mismatch", "profile_mismatch" in codes("INVALID_round_pin_in_bushing"))
 test("friction pin through two beams: two friction edges, no collision reported", res["valid_beams_friction_pin"]["ok"] and [e["fit"] for e in res["valid_beams_friction_pin"]["edges"]] == ["friction", "friction"])
 test("shaft through a beam and a bushing: turning fit in the beam, press fit in the bushing",
      sorted(e["fit"] for e in res["valid_shaft_beam_bushing"]["edges"]) == ["free", "press"])
 lay = [p for p in parts if p["id"].startswith(("shaft_", "pin_friction"))]
 test("pins and shafts print lying on a flat (rotated, axis horizontal)", lay and all(p["print"].get("rotation_deg") and p["bbox_mm"][2] <= 5.01 for p in lay), str([(p["id"], p["bbox_mm"]) for p in lay]))
-test("every Pro catalog part is verified once it has build info", all(p["design_status"] == "verified" for p in parts if p["line"] == "pro"))
+test("every Motion and Pro catalog part is verified once it has build info", all(p["design_status"] == "verified" for p in parts if p["line"] in ("motion", "pro")))
 
 # 7g. W3 Snap characters
 by_id = {p["id"]: p for p in parts}
@@ -302,14 +321,14 @@ fits_of = lambda name: sorted(e.get("fit") or "stud" for e in res[name]["edges"]
 test("two gears whose pitch circles touch mesh (Z10 + Z20 at 3 TU)", "mesh" in fits_of("valid_gear_pair_3tu"))
 test("gears placed too close are rejected: gear_mesh_distance", "gear_mesh_distance" in codes("INVALID_gears_2tu_apart"))
 test("a pinion meshes with the rack and inside the ring", fits_of("valid_rack_and_pinion") == ["mesh"] and fits_of("valid_ring_and_pinion") == ["mesh"])
-test("Snap on Pro: a friction pin joins beam and adapter, a Small brick sits on the adapter studs", fits_of("valid_snap_on_pro_adapter") == ["friction", "friction", "stud"])
+test("Snap on Motion: a friction pin joins beam and adapter, a Small brick sits on the adapter studs", fits_of("valid_snap_on_pro_adapter") == ["friction", "friction", "stud"])
 test("a beam pins onto the Pro Forge Mount", fits_of("valid_beam_on_pro_mount") == ["friction", "friction"])
-test("the adapter's fit covers both its studs and its bores", by_id["adapter_snap_pro"]["fit"].get("snap", {}).get("studs_measured") == 4 and by_id["adapter_snap_pro"]["fit"].get("pro", {}).get("studs_measured", 0) > 0)
+test("the adapter's fit covers both its studs and its bores", by_id["adapter_snap_motion"]["fit"].get("snap", {}).get("studs_measured") == 4 and by_id["adapter_snap_motion"]["fit"].get("pro", {}).get("studs_measured", 0) > 0)
 test("every gear's pitch diameter is a whole number of TU", all(abs(p["gear"]["pitch_d_mm"] / 12.5 - round(p["gear"]["pitch_d_mm"] / 12.5)) < 1e-9 for p in parts if p.get("gear", {}).get("kind") in ("spur", "ring")))
 
 # 7i. Forge Mount outlines: square from the catalog, round sized from the scan
 def round_mount(face, size, d):
-    row = dict(id="m", name="m", line="pro" if size == "pro" else "snap", family="forge_mount", size=size, behavior="t", tags=["t"], stat="Grip", type="Forge Mount",
+    row = dict(id="m", name="m", line="motion" if size == "pro" else "snap", family="forge_mount", size=size, behavior="t", tags=["t"], stat="Grip", type="Forge Mount",
                build={"fn": "forge_mount", "face": face, "outline": "round", "outer_d": d, "grid": [2, 2]})
     try:
         return tp.evaluate(tp.part_from_row(row), V)[0]
@@ -375,7 +394,7 @@ test("a Large face is refused join pins (removable pins are small parts for unde
 hug_rows = {
     "hug_face": hug_row(id="hug_face", line="snap", family="forge_mount", size="small", build={"face": "stud_small", "outline": "round", "outer_d": 64, "hole_d": 0, "join_pins": True, "grid": [2, 2]}),
     "hug_shoe": hug_row(id="hug_shoe", line="shared", family="forge_shoe", size="pro", build={"face": "stud_small", "outline": "round", "outer_d": 64, "surface": "cylinder", "radius_mm": 20}),
-    "join_pin": hug_row(id="join_pin", line="pro", family="pin", size="pro", build={"fn": "friction_pin", "length_mm": 10, "fins_at_mm": [2.5, 7.5], "slot_end_mm": 1.0}),
+    "join_pin": hug_row(id="join_pin", line="motion", family="pin", size="pro", build={"fn": "friction_pin", "length_mm": 10, "fins_at_mm": [2.5, 7.5], "slot_end_mm": 1.0}),
 }
 hug_dir = Path(tempfile.mkdtemp())
 hug_parts = {k: tp.part_from_row(r) for k, r in hug_rows.items()}
@@ -500,7 +519,7 @@ if (_ax / "sets" / "catalog.json").exists():
     test("app export: every set and the app's own base.json pass the set schema",
          not list(_v.iter_errors(_cat)) and not list(_v.iter_errors(_base)) and not list(_v.iter_errors(_orig)) and not list(_v.iter_errors(_racer)))
     _sc = json.loads((_ax / "scenes" / "pro-gear-demo.json").read_text())
-    test("app export: the Pro gear scene is a validated build with a 2 : 1 readout, and its GLB exists",
+    test("app export: the Motion gear scene is a validated build with a 2 : 1 readout, and its GLB exists",
          _sc["validated"]["ok"] and _sc["readout"]["ratio"] == 2.0 and (_ax / _sc["glb"]).exists() and sum(n["spins"] for n in _sc["nodes"]) == 4)
     _cr = json.loads((_ax / "sets" / "forge-club-month2-critters.json").read_text())
     _sl = json.loads((_ax / "slots.json").read_text())["slots"]
@@ -562,15 +581,15 @@ _tab = tp.face_depth_table_from_heads()
 _drift = max(abs(a - b) for ra, rb in zip(_tab, tp.FACE_DEPTH) for a, b in zip(ra, rb))
 test("universal face plate: FACE_DEPTH matches the three human heads within 0.06 mm (the plate is never proud of a head)", _drift <= 0.06, f"max drift {_drift:.3f} mm; regenerate the table with tp.face_depth_table_from_heads()")
 
-# 7u. W10 & W11: Flat-pack modular craft kit-cards, Gate G1 9-craft pose sweeps, Pro rack steering & Momentum cores
+# 7u. W10 & W11: Flat-pack modular craft kit-cards, Gate G1 9-craft pose sweeps, Motion rack steering & Momentum cores
 import toyventor_kitcard as _kc
 w10_ids = [r["id"] for r in tp.CATALOG["parts"] if r.get("wave") == "W10"]
 w11_ids = [r["id"] for r in tp.CATALOG["parts"] if r.get("wave") == "W11"]
 test("W10 flat-pack modular craft: all 19 parts are verified and 100% clear the S1 small-parts cylinder",
      len(w10_ids) == 19 and all(by_id[i]["design_status"] == "verified" and by_id[i]["safety"]["small_part_status"] == "above_cylinder" for i in w10_ids))
-test("W11 Pro steering & Momentum stored-energy cores: all 21 parts are verified with zero blocking failures",
+test("W11 Motion steering & Momentum stored-energy cores: all 21 parts are verified with zero blocking failures",
      len(w11_ids) == 21 and all(by_id[i]["design_status"] == "verified" for i in w11_ids))
-_kn_l, _kn_l_conns, _ = _kc.pro_steer_knuckle_l()
+_kn_l, _kn_l_conns, _ = _kc.motion_steer_knuckle_l()
 _kn_pivots = [c for c in _kn_l_conns if c["id"] in ("kingpin_bore", "tierod_bore")]
 test("knuckle cheek relief: 0.4 mm shave with pivot bores off-lattice but re-based with the body",
      abs(_kc.KNUCKLE_FACE_RELIEF - 0.4) < 1e-9 and len(_kn_pivots) == 2
@@ -587,7 +606,7 @@ if (out / "cards" / "kitcard_manifest.json").exists():
              and max(m["outer_mm"]) <= m["limit_mm"] and m["min_gap_mm"] >= 5.0
              for m in _kcm.values()
          ))
-test("W10 & W11 multi-stage craft builds (Race Car, Dump Truck, Helicopter, Pro Rack-Steered Racer, Momentum Band Truck) validate cleanly",
+test("W10 & W11 multi-stage craft builds (Race Car, Dump Truck, Helicopter, Motion Rack-Steered Racer, Momentum Band Truck) validate cleanly",
      all(res[k]["ok"] and not res[k]["warnings"] for k in ("valid_kit_race_car", "valid_kit_dump_truck", "valid_kit_helicopter", "valid_pro_steered_racer", "valid_mom_band_truck")))
 
 # 8. generated instructions list every part and nothing third-party

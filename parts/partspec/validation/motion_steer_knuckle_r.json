@@ -1,8 +1,8 @@
 {
   "validator": "preprint_check 1.2.0",
-  "file": "toyventor_pro_steer_knuckle_r_P.stl",
+  "file": "toyventor_motion_steer_knuckle_r_P.stl",
   "file_sha256": "7a2c40123d7d5426513a885f47bd90b29241274cba097a302353d6a6f1692e94",
-  "part_id": "pro_steer_knuckle_r",
+  "part_id": "motion_steer_knuckle_r",
   "profile": "fdm_pla_0.4",
   "checked_at": "2026-10-31T20:20:48Z",
   "metrics": {

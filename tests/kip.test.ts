@@ -41,7 +41,7 @@ describe("Kip modular character rig & 3D demo viewer integration", () => {
     expect(decodeToyContract(encoded)).toEqual(contract);
   });
 
-  it("ships all Kip Pro (8+), Snap (3+), Shared, PartSpec, and Mixamo assets in public/kip/", () => {
+  it("ships all Kip Motion (8+), Snap (3+), Shared, PartSpec, and Mixamo assets in public/kip/", () => {
     expect(kipManifest.editions.snap.ageGroup).toBe("3+");
     expect(kipManifest.safety.smallPartsWarningRequired).toBe(true);
     expect(existsSync(join(root, "parts/kip/kip.scad"))).toBe(true);
@@ -52,7 +52,7 @@ describe("Kip modular character rig & 3D demo viewer integration", () => {
     );
 
     const allKipStls = [
-      ...kipManifest.editions.pro.exclusiveParts,
+      ...kipManifest.editions.motion.exclusiveParts,
       ...kipManifest.editions.snap.exclusiveParts,
       ...kipManifest.sharedParts,
       ...kipManifest.testAccessories,
@@ -69,12 +69,12 @@ describe("Kip modular character rig & 3D demo viewer integration", () => {
     }
   });
 
-  it("verifies all 65 Kip PartSpec v2 parts (53 Wave 9 + 12 Wave 12 props) and 41 multi-part assemblies as Conforming", () => {
+  it("verifies all 70 Kip PartSpec v2 parts (58 Wave 9 + 12 Wave 12 props) and 41 multi-part assemblies as Conforming", () => {
     const manifestPath = join(root, "public/kip/kip-partspec-manifest.json");
     expect(existsSync(manifestPath)).toBe(true);
     const psManifest = JSON.parse(readFileSync(manifestPath, "utf8"));
     expect(psManifest.status).toBe("verified");
-    expect(psManifest.parts).toHaveLength(65);
+    expect(psManifest.parts).toHaveLength(70);
     expect(psManifest.assemblies).toHaveLength(41);
 
     // `kip_partspec.py` exports Waves W9 and W12; the Kip wardrobe stat rule applies to Wave 9, the workshop props carry their own stats.
@@ -159,7 +159,7 @@ describe("Kip modular character rig & 3D demo viewer integration", () => {
     }
   });
 
-  it("promotes all 53 Kip wardrobe and V2 vehicle parts into parts/partspec as verified Wave 9 (W9)", () => {
+  it("promotes all 58 Kip wardrobe and V2 vehicle parts into parts/partspec as verified Wave 9 (W9)", () => {
     const catalog = JSON.parse(readFileSync(join(root, "parts/partspec/catalog.json"), "utf8"));
     const mainManifest = JSON.parse(
       readFileSync(join(root, "parts/partspec/toyventor_parts.json"), "utf8"),
@@ -168,9 +168,9 @@ describe("Kip modular character rig & 3D demo viewer integration", () => {
     expect(wave9Wave).toBeDefined();
 
     const w9Rows = catalog.parts.filter((p: { wave?: string }) => p.wave === "W9");
-    expect(w9Rows).toHaveLength(53);
-    expect(w9Rows.filter((p: { line: string }) => p.line === "snap")).toHaveLength(43);
-    expect(w9Rows.filter((p: { line: string }) => p.line === "pro")).toHaveLength(10);
+    expect(w9Rows).toHaveLength(58);
+    expect(w9Rows.filter((p: { line: string }) => p.line === "snap")).toHaveLength(48);
+    expect(w9Rows.filter((p: { line: string }) => p.line === "motion")).toHaveLength(10);
 
     const byId = new Map<string, Record<string, unknown>>(
       mainManifest.parts.map((p: { id: string }) => [p.id, p]),

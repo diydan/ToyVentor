@@ -38,7 +38,7 @@ Every interface pitch is an integer multiple of the TU, so all product lines sha
 Pitch 1.0 TU (12.5 mm), halving down to 1/8 TU. Free bore 7.0 mm. Fixed bore flats 5.1 mm. Shaft 6.6 mm round, flats 5.0 mm, 2.0 mm centre hole. Pro hole grid. Free bore: shaft turns. Fixed bore: shaft drives.
 
 
-### Pro parts (pin, beam, gear)
+### Motion parts (pin, beam, gear)
 
 **Friction pin:** shaft 6.6 mm round, flats 5.0 mm, 2.0 mm centre hole; fins 0.4 mm wider across than the bore (target). Friction pin: flat-sided core (6.6 round, 5.0 flats) split open through both insertion ends with solid center web(s) between TU modules so the cantilever prongs flex elastically (<2% PLA strain); a fin on each round side at the centre of every TU stands fin_oversize_mm wider across than the free bore. Prints lying on a flat.
 
@@ -53,7 +53,7 @@ Pitch 1.0 TU (12.5 mm), halving down to 1/8 TU. Free bore 7.0 mm. Fixed bore fla
 
 ### Pro connectors and pin-and-bore rules
 
-Pro parts print flat; most bores and pins run along z, and a connector may point along x or y (hinge knuckles, the cross connector). In a build, Pro parts may be tipped onto their side in quarter turns. A `bore_grid` connector (F) anchors its grid at the first bore centre (`anchor: corner`) with a `bore_class` (free or fixed) and a `depth_mm`; a `lattice` of `cell` means bores sit on cell centres measured from the part's corner, `axis` means on the part axis (gears, wheels). A `pin` connector (M) puts the pin axis at the frame origin, with a `profile` (round, flats, friction) and a `length_mm`. A pin and a bore mate when the axes coincide and their z ranges overlap, and the pair appears in this table:
+Motion parts print flat; most bores and pins run along z, and a connector may point along x or y (hinge knuckles, the cross connector). In a build, Pro parts may be tipped onto their side in quarter turns. A `bore_grid` connector (F) anchors its grid at the first bore centre (`anchor: corner`) with a `bore_class` (free or fixed) and a `depth_mm`; a `lattice` of `cell` means bores sit on cell centres measured from the part's corner, `axis` means on the part axis (gears, wheels). A `pin` connector (M) puts the pin axis at the frame origin, with a `profile` (round, flats, friction) and a `length_mm`. A pin and a bore mate when the axes coincide and their z ranges overlap, and the pair appears in this table:
 
 | Pin interface | Bore class | Fit class |
 | --- | --- | --- |
@@ -200,7 +200,7 @@ interfaces.json (this file). Everything else is generated from it or from the pa
 | standard | `python3 make_standard.py out/INTERFACE_STANDARD.md` |
 | agents | `python3 make_agents.py out` |
 | selftest | `python3 selftest.py out` |
-| catalog | `python3 make_catalog.py out   (progress toward the top 30 Snap and top 30 Pro parts; writes CATALOG.md)` |
+| catalog | `python3 make_catalog.py out   (progress toward the top 30 Snap and top 30 Motion parts; writes CATALOG.md)` |
 | specs | `python3 make_specs.py out   (assembles specs/: the numbered documents to build against)` |
 
 **Impact index:** `toyventor_index.py` answers which parts use an interface, which mating pairs it affects, and which results go stale if it changes.

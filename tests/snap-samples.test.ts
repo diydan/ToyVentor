@@ -66,7 +66,7 @@ describe("TU PartSpec sets and zero-code expansion loader", () => {
     );
   });
 
-  it("includes hero Snap & Pro parts across both 12.5 mm and 25 mm TU sizes", () => {
+  it("includes hero Snap & Motion parts across both 12.5 mm and 25 mm TU sizes", () => {
     for (const id of [
       "racer-spoiler",
       "brick-s-2x2",
@@ -77,8 +77,8 @@ describe("TU PartSpec sets and zero-code expansion loader", () => {
       expect(part(id).line).toBe("snap");
     }
     expect(part("big-blue-brick").sizeClass).toBe("large");
-    for (const id of ["adapter-snap-pro", "beam-str-tu05", "pin-friction", "gear-spur-z10", "gear-spur-z20"]) {
-      expect(part(id).line).toBe("pro");
+    for (const id of ["adapter-snap-motion", "beam-str-tu05", "pin-friction", "gear-spur-z10", "gear-spur-z20"]) {
+      expect(part(id).line).toBe("motion");
     }
   });
 
@@ -106,9 +106,9 @@ describe("TU PartSpec sets and zero-code expansion loader", () => {
         expect(allPass(runChecks(p, toy)), `${p.id} on ${toy.id} (${failed})`).toBe(true);
       }
     }
-    // 2x2 Snap-to-Pro bridge adapter fits both narrow seed toys; 5x5 Forge Mount fits wider toys.
-    expect(allPass(runChecks(part("adapter-snap-pro"), car))).toBe(true);
-    expect(allPass(runChecks(part("adapter-snap-pro"), figure))).toBe(true);
+    // 2x2 Snap-to-Motion bridge adapter fits both narrow seed toys; 5x5 Forge Mount fits wider toys.
+    expect(allPass(runChecks(part("adapter-snap-motion"), car))).toBe(true);
+    expect(allPass(runChecks(part("adapter-snap-motion"), figure))).toBe(true);
     expect(allPass(runChecks(part("forge-mount-ring-s"), wideSmallToy))).toBe(true);
   });
 

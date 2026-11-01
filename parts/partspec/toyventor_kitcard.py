@@ -3,9 +3,9 @@
 """ToyVentor Flat-Pack Modular Craft & Progressive Power Kit-Cards (Waves W10 & W11).
 
 Implements:
-  - Wave W10 (Cards A-D, 19 parts): 15 rigid Snap/Pro modular craft modules + 3 smooth 0.80 mm
+  - Wave W10 (Cards A-D, 19 parts): 15 rigid Snap/Motion modular craft modules + 3 smooth 0.80 mm
     PETG/TPU flex skins (with 0.60 mm rib-free fold corridors) unlocking all 9 canonical craft.
-  - Wave W11 (Cards E1-E2, 21 parts): Stage-2 Pro row-0 Ackermann rack steering linkage, axle
+  - Wave W11 (Cards E1-E2, 21 parts): Stage-2 Motion row-0 Ackermann rack steering linkage, axle
     keepers, raked bike fork adapter, and Stage-3 Momentum stored-energy propulsion/actuator cores.
   - Kit-card plate exporter (`export_kitcards`) producing `card_<id>_loose.stl` and
     `card_<id>_sprue.stl` (`<= 170 x 170 mm` on Cards A-D, `<= 164 x 164 mm` on Cards E1-E2,
@@ -23,11 +23,11 @@ from pathlib import Path
 import numpy as np
 from manifold3d import CrossSection, JoinType, Manifold, OpType
 
-import toyventor_pro as pro
+import toyventor_motion as motion
 from toyventor_geom import rbox, rrect
 
 HERE = Path(__file__).parent
-TU = pro.TU
+TU = motion.TU
 
 
 # --------------------------------------------------------------------------
@@ -78,7 +78,7 @@ def _c_jaw_cutter_x(x0, x1, y_c, z_c=6.25):
     Ø7.00 mm 50-deg teardrop crown (apex z_c + 4.57 = 10.82 mm -> 1.68 mm solid roof under 12.50 mm deck)
     + 6.00 mm snap throat (242-deg wrap) flaring outward to print bed. Single prism extrusion = 0 seams.
     """
-    sec_bore = pro.bore_section_print("free")
+    sec_bore = motion.bore_section_print("free")
     throat = _ccw_poly([(-3.00, 0.0), (3.00, 0.0), (3.00, -1.81), (4.00, -6.50), (-4.00, -6.50), (-3.00, -1.81)])
     sec_land = (sec_bore + throat).rotate(90)
     return Manifold.extrude(sec_land, (x1 - x0) + 0.4).rotate((0, 90, 0)).translate((x0 - 0.2, y_c, z_c))
@@ -114,13 +114,13 @@ def _cruciform_tip_shaft(total_len, conn_len=None, z0=0.0):
     L_conn = total_len if conn_len is None else conn_len
     tip_h = 5.6
     z_bevel = z0 + total_len - tip_h
-    outer = Manifold.extrude(pro._double_d(pro.BORE["shaft_d"], pro.BORE["shaft_flats"]), total_len).translate((0.0, 0.0, z0))
+    outer = Manifold.extrude(motion._double_d(motion.BORE["shaft_d"], motion.BORE["shaft_flats"]), total_len).translate((0.0, 0.0, z0))
     for sx in (-1, 1):
         c_lo = Manifold.cube((2.5, 10.0, 0.05)).translate(((3.50 if sx > 0 else -6.00), -5.0, z_bevel))
         c_hi = Manifold.cube((2.5, 10.0, tip_h + 0.5)).translate(((2.50 if sx > 0 else -5.00), -5.0, z_bevel + 0.8))
         outer = outer - Manifold.batch_hull([c_lo, c_hi])
-    hole = Manifold.extrude(pro._teardrop(pro.BORE["shaft_center_hole"]), total_len + 1.0).translate((0.0, 0.0, z0 - 0.5))
-    conn = pro._pin_conn("shaft_drive", "flats", L_conn, z0=z0)
+    hole = Manifold.extrude(motion._teardrop(motion.BORE["shaft_center_hole"]), total_len + 1.0).translate((0.0, 0.0, z0 - 0.5))
+    conn = motion._pin_conn("shaft_drive", "flats", L_conn, z0=z0)
     return outer - hole, conn
 
 
@@ -217,23 +217,23 @@ def kit_clevis_spine(size="small", grid=(2, 8), **_):
 def kit_barbell_shaft(**_):
     """#3a Full-Span Outboard Barbell Shaft & Heli Mast (6.6 x 78.0 x 5.0 mm LAY_FLAT)."""
     m, conn = _cruciform_tip_shaft(78.0, conn_len=78.0, z0=0.0)
-    return m, [conn], {"print_rotation_deg": pro.LAY_FLAT}
+    return m, [conn], {"print_rotation_deg": motion.LAY_FLAT}
 
 
 def kit_spinner_pin(**_):
     """#3b Ergonomic Pull-Ring Clevis & Prop Spinner Pin (36.0 x 65.0 x 5.0 mm LAY_FLAT).
     Ø36.0 mm grip ring (z = 0..36) + 1.0 x Ø10 thrust standoff (z = 36..37) + 28.0 mm shaft_drive stem (z = 37..65).
     """
-    hy = pro.BORE["shaft_flats"] / 2  # 2.50 mm
+    hy = motion.BORE["shaft_flats"] / 2  # 2.50 mm
     ring_cs = CrossSection.circle(18.0, 96).translate((0.0, 18.0)) - CrossSection.circle(11.4, 72).translate((0.0, 18.0))
     boss_cs = CrossSection.square((10.0, 3.0)).translate((-5.0, 34.0))
     grip = tp._xz_to_layflat(ring_cs + boss_cs, hy)
-    stem = pro.pin_solid("flats", 28.5, z0=36.5)
+    stem = motion.pin_solid("flats", 28.5, z0=36.5)
     # Bevel final 0.8 mm tip for easy clevis entry (well outside [37.0, 62.0] measured zone):
     tip_cut = Manifold.cube((1.2, 8.0, 2.2)).translate((-0.6, -4.0, 62.6))
     m = (grip + stem) - tip_cut
-    conn = pro._pin_conn("shaft_drive", "flats", 25.0, z0=37.0)
-    return m, [conn], {"print_rotation_deg": pro.LAY_FLAT}
+    conn = motion._pin_conn("shaft_drive", "flats", 25.0, z0=37.0)
+    return m, [conn], {"print_rotation_deg": motion.LAY_FLAT}
 
 
 def kit_wheel_med(**_):
@@ -257,8 +257,8 @@ def kit_wheel_med(**_):
     for k in range(5):
         sp = rbox(3.2, 8.8, 4.6, 0.9, 0.0).translate((0.0, 7.2, 7.2)).rotate((0.0, 0.0, 72.0 * k))
         spokes = sp if spokes is None else spokes + sp
-    body = (tire - dish + hub + spokes) - pro.bore_cutter("fixed", H)
-    return body, [pro._hub_conn(H)], {}
+    body = (tire - dish + hub + spokes) - motion.bore_cutter("fixed", H)
+    return body, [motion._hub_conn(H)], {}
 
 
 def kit_wheel_giant(**_):
@@ -273,10 +273,10 @@ def kit_wheel_giant(**_):
     lug = Manifold.cube((2.2, 1.8, H + 2.0)).translate((R - 1.2, -0.9, -1.0))
     for k in range(20):
         tire = tire - lug.rotate((0.0, 0.0, 18.0 * k))
-    body = tire - pro.bore_cutter("fixed", H)
+    body = tire - motion.bore_cutter("fixed", H)
     cranks = [(-TU, 0.0), (TU, 0.0), (0.0, -TU), (0.0, TU)]
     for x, y in cranks:
-        body = body - pro.bore_cutter("free", H, x, y)
+        body = body - motion.bore_cutter("free", H, x, y)
     omit = [[i, j] for i in range(3) for j in range(3) if ((i - 1) * TU, (j - 1) * TU) not in cranks]
     c_crank = {
         "id": "face_bores",
@@ -291,7 +291,7 @@ def kit_wheel_giant(**_):
         "frame": {"origin": [-TU, -TU, 0.0], "normal": [0, 0, 1]},
         "grid": {"nx": 3, "ny": 3, "pitch": TU, "anchor": "corner", "omit_cells": omit},
     }
-    return body, [pro._hub_conn(H), c_crank], {}
+    return body, [motion._hub_conn(H), c_crank], {}
 
 
 def kit_rotor_blade(**_):
@@ -307,8 +307,8 @@ def kit_rotor_blade(**_):
     b_mid = Manifold.extrude(rrect(68.0, 14.8, 4.8), 2.2).translate((0.0, 0.0, 0.4))
     b_top = Manifold.extrude(rrect(64.0, 9.2, 3.2), 0.02).translate((0.0, 0.0, 4.4))
     blades = Manifold.batch_hull([b_bot, b_mid, b_top])
-    body = (hub + blades) - pro.bore_cutter("fixed", H)
-    return body, [pro._hub_conn(H)], {}
+    body = (hub + blades) - motion.bore_cutter("fixed", H)
+    return body, [motion._hub_conn(H)], {}
 
 
 def kit_aero_wedge(size="small", grid=(2, 3), **_):
@@ -332,10 +332,10 @@ def kit_aero_wedge(size="small", grid=(2, 3), **_):
 
     # Blind 23.0 mm front prop_bore along +Y from y = -18.65 to +4.35 at z = 26.5625 (17/8 TU):
     z_prop = 17 * (TU / 8)  # 26.5625 mm
-    sec_p = pro.bore_section_print("free")
+    sec_p = motion.bore_section_print("free")
     cut_prop = Manifold.extrude(sec_p, 23.2).rotate((90, 0, 0)).translate((0.0, 4.35, z_prop))
     m = m - cut_prop
-    c_prop = pro._axis_bore_conn("prop_bore", "free", (0.0, -7.15, z_prop), "y", 23.0, lattice="axis8")
+    c_prop = motion._axis_bore_conn("prop_bore", "free", (0.0, -7.15, z_prop), "y", 23.0, lattice="axis8")
 
     # Blind 13.0 mm top vertical mast_bore at (0.0, +12.50, 20.25..33.25):
     m, c_mast = tp.cut_vertical_bore(m, "mast_bore", 0.0, 12.50, 20.25, 13.0, "free")
@@ -485,7 +485,7 @@ def kit_booster_pod(size="small", grid=(2, 5), lock=True, **_):
         (28.0, 16.8, 44.0, 3.6, 0.0,  0.0, 0.2),
     ])
     bells = None
-    bell_bore = pro._teardrop(5.6, roof_deg=50, segs=48)
+    bell_bore = motion._teardrop(5.6, roof_deg=50, segs=48)
     for sx in (-1, 1):
         b = tp._hull_slices([
             (5.0,   9.2, 15.0, 2.8, sx * 6.0, 24.6, 0.2),
@@ -501,7 +501,7 @@ def kit_booster_pod(size="small", grid=(2, 5), lock=True, **_):
 def kit_turntable(size="small", grid=(4, 4), **_):
     """#14 1-Piece Rotary Crane Slew Base, Fifth-Wheel Hitch & 10-Stud Heli Mast Deck (49.8 x 49.8 x 8.0 mm)."""
     H_deck = 5.2
-    m = tp.block(size, 4, 4, H_deck, 2.0, studs=True) - pro.bore_cutter("free", H_deck, 0.0, 0.0, 0.0)
+    m = tp.block(size, 4, 4, H_deck, 2.0, studs=True) - motion.bore_cutter("free", H_deck, 0.0, 0.0, 0.0)
     c_bore = {
         "id": "center_bore",
         "kind": "bore_grid",
@@ -520,8 +520,8 @@ def kit_turntable(size="small", grid=(4, 4), **_):
 
 def kit_yoke_hbar(**_):
     """#15 Universal Steering Yoke, Boat Helm & Bike Handlebar (46.0 x 38.0 x 5.6 mm LAY_FLAT)."""
-    hy = pro.BORE["shaft_flats"] / 2  # 2.50 mm
-    stem = pro.pin_solid("flats", 26.5, z0=0.0)
+    hy = motion.BORE["shaft_flats"] / 2  # 2.50 mm
+    stem = motion.pin_solid("flats", 26.5, z0=0.0)
     riser_cs = _ccw_poly([(-3.2, 25.5), (3.2, 25.5), (12.0, 38.0), (-12.0, 38.0)])
     hbar_cs = rrect(46.0, 6.0, 2.8).translate((0.0, 35.0))
     head = tp._xz_to_layflat(riser_cs + hbar_cs, hy)
@@ -530,8 +530,8 @@ def kit_yoke_hbar(**_):
         Manifold.extrude(CrossSection.circle(2.0, 48).translate((0.0, 35.0)), 0.1).rotate((90, 0, 0)).translate((0.0, hy + 0.6, 0.0)),
     ])
     m = stem + head + cap
-    conn = pro._pin_conn("shaft_drive", "flats", 25.0, z0=0.0)
-    return m, [conn], {"print_rotation_deg": pro.LAY_FLAT}
+    conn = motion._pin_conn("shaft_drive", "flats", 25.0, z0=0.0)
+    return m, [conn], {"print_rotation_deg": motion.LAY_FLAT}
 
 
 # ==========================================================================
@@ -565,9 +565,9 @@ def _union(items):
 
 def _prop_on_grip(base, grip_tu, relief_cs=None, relief_h=2.0, cuts_cs=None):
     """base: (x, z) head outline on a 5 mm plate; relief_cs: raised top-embossing; cuts_cs: through-holes."""
-    L = grip_tu * pro.TU
-    hy = pro.BORE["shaft_flats"] / 2  # 2.50 mm
-    grip = pro.pin_solid("flats", L + 4.0)
+    L = grip_tu * motion.TU
+    hy = motion.BORE["shaft_flats"] / 2  # 2.50 mm
+    grip = motion.pin_solid("flats", L + 4.0)
     base = base.offset(-0.8, JoinType.Round).offset(0.8, JoinType.Round)
     m = grip + tp._xz_to_layflat(base, hy)
     if relief_cs is not None and not relief_cs.is_empty():
@@ -577,12 +577,12 @@ def _prop_on_grip(base, grip_tu, relief_cs=None, relief_h=2.0, cuts_cs=None):
     if cuts_cs is not None and not cuts_cs.is_empty():
         c_solid = Manifold.extrude(cuts_cs, 2 * hy + 12.0).rotate((90, 0, 0)).translate((0.0, hy + 6.0, 0.0))
         m = m - c_solid
-    return m, [pro._pin_conn("shaft_drive", "flats", L)], {"print_rotation_deg": pro.LAY_FLAT}
+    return m, [motion._pin_conn("shaft_drive", "flats", L)], {"print_rotation_deg": motion.LAY_FLAT}
 
 
 def prop_hammer(grip_tu=3, **_):
     """Tools: claw hammer, steel striking head, curved split claw and V-notch on 3 TU grip (LAY_FLAT)."""
-    L = grip_tu * pro.TU
+    L = grip_tu * motion.TU
     neck = _box_cs(8.0, 12.0, 0.0, L)
     head = _box_cs(28.0, 12.0, -2.0, L + 9.0)
     face = _box_cs(8.0, 18.0, -16.0, L + 6.0)
@@ -595,7 +595,7 @@ def prop_hammer(grip_tu=3, **_):
 
 def prop_screwdriver(grip_tu=3, **_):
     """Tools: screwdriver, 16 mm bulb handle with ribbed grip, 4.2 mm shank and flat flared tip (LAY_FLAT)."""
-    L = grip_tu * pro.TU
+    L = grip_tu * motion.TU
     bulb = CrossSection.batch_hull([_box_cs(8.0, 2.0, 0.0, L), _box_cs(16.0, 6.0, 0.0, L + 4.0), _box_cs(16.0, 6.0, 0.0, L + 16.0), _box_cs(9.0, 2.0, 0.0, L + 22.0)])
     shank = _box_cs(4.2, 34.0, 0.0, L + 21.0)
     tip = CrossSection.batch_hull([_box_cs(4.2, 2.0, 0.0, L + 53.0), _box_cs(8.4, 2.0, 0.0, L + 60.0)])
@@ -606,7 +606,7 @@ def prop_screwdriver(grip_tu=3, **_):
 
 def prop_paint_roller(grip_tu=3, **_):
     """Tools: paint roller, 44 x 14 mm barrel with paint stripe and U-frame crank arm (LAY_FLAT)."""
-    L = grip_tu * pro.TU
+    L = grip_tu * motion.TU
     stem = _box_cs(5.0, 13.0, 0.0, L)
     arm = _stroke([(0.0, L + 11.0), (20.0, L + 11.0), (20.0, L + 19.0)], 2.4)
     roller = _box_cs(44.0, 14.0, 0.0, L + 18.0)
@@ -616,7 +616,7 @@ def prop_paint_roller(grip_tu=3, **_):
 
 def prop_mop(grip_tu=3, **_):
     """Cleaning: string mop, raised clamp pad and 7 flared strands (LAY_FLAT)."""
-    L = grip_tu * pro.TU
+    L = grip_tu * motion.TU
     collar = _box_cs(8.0, 8.0, 0.0, L)
     pad = _box_cs(30.0, 7.0, 0.0, L + 6.0)
     strands = _union([_stroke([(k * 3.8, L + 11.0), (k * 5.4, L + 23.0), (k * 7.0, L + 36.0)], [2.2, 2.0, 1.6]) for k in range(-3, 4)])
@@ -626,7 +626,7 @@ def prop_mop(grip_tu=3, **_):
 
 def prop_broom(grip_tu=3, **_):
     """Cleaning: push broom, flared bristle skirt with raised binding collar (LAY_FLAT)."""
-    L = grip_tu * pro.TU
+    L = grip_tu * motion.TU
     neck = _box_cs(6.4, 18.0, 0.0, L)
     cap = CrossSection.batch_hull([_box_cs(8.0, 2.0, 0.0, L + 16.0), _box_cs(24.0, 4.0, 0.0, L + 24.0)])
     skirt = CrossSection.batch_hull([_box_cs(24.0, 2.0, 0.0, L + 24.0), _box_cs(32.0, 4.0, 0.0, L + 48.0)])
@@ -637,7 +637,7 @@ def prop_broom(grip_tu=3, **_):
 
 def prop_scrub_brush(grip_tu=3, **_):
     """Cleaning: handheld scrub brush, teardrop block with raised central grip ridge (LAY_FLAT)."""
-    L = grip_tu * pro.TU
+    L = grip_tu * motion.TU
     neck = _box_cs(8.0, 10.0, 0.0, L)
     oval = CrossSection.batch_hull([_circ(11.0, 0.0, L + 16.0), _circ(7.0, 0.0, L + 32.0)])
     grip_ridge = _box_cs(6.0, 16.0, 0.0, L + 18.0)
@@ -646,7 +646,7 @@ def prop_scrub_brush(grip_tu=3, **_):
 
 def prop_vacuum(grip_tu=3, **_):
     """Cleaning: handheld vacuum, domed canister with dust window, tube and flared nozzle (LAY_FLAT)."""
-    L = grip_tu * pro.TU
+    L = grip_tu * motion.TU
     collar = _box_cs(8.0, 6.0, 0.0, L)
     can = _box_cs(24.0, 32.0, 0.0, L + 4.0).offset(-4.0, JoinType.Round).offset(4.0, JoinType.Round)
     tube = _box_cs(9.0, 16.0, 0.0, L + 33.0)
@@ -658,7 +658,7 @@ def prop_vacuum(grip_tu=3, **_):
 
 def prop_guitar(grip_tu=3, **_):
     """Instruments: acoustic guitar, waist curves, soundhole, rosette and headstock (LAY_FLAT)."""
-    L = grip_tu * pro.TU
+    L = grip_tu * motion.TU
     waist = _circ(8.5, 0.0, L + 27.0, 36)
     body = CrossSection.batch_hull([_circ(13.5, 0.0, L + 17.0, 48), waist]) + CrossSection.batch_hull([waist, _circ(10.0, 0.0, L + 36.0, 48)])
     neck = _box_cs(6.0, 46.0, 0.0, L + 42.0)
@@ -671,7 +671,7 @@ def prop_guitar(grip_tu=3, **_):
 
 def prop_trumpet(grip_tu=3, **_):
     """Instruments: trumpet, twin brass loops, three valve buttons and flared bell (LAY_FLAT)."""
-    L = grip_tu * pro.TU
+    L = grip_tu * motion.TU
     collar = _box_cs(8.0, 8.0, 0.0, L)
     pipe_l = _stroke([(-5.0, L + 6.0), (-5.0, L + 52.0)], 2.4)
     pipe_r = _stroke([(5.0, L + 12.0), (5.0, L + 52.0)], 2.4)
@@ -685,7 +685,7 @@ def prop_trumpet(grip_tu=3, **_):
 
 def prop_maracas(grip_tu=3, **_):
     """Instruments: maraca, domed 27 mm egg with perforated rattle holes and collar band (LAY_FLAT)."""
-    L = grip_tu * pro.TU
+    L = grip_tu * motion.TU
     egg = CrossSection.batch_hull([_circ(13.5, 0.0, L + 24.0, 48), _circ(8.0, 0.0, L + 9.0, 36)])
     collar = _box_cs(7.0, 10.0, 0.0, L)
     band = _box_cs(15.0, 3.0, 0.0, L + 11.0)
@@ -695,7 +695,7 @@ def prop_maracas(grip_tu=3, **_):
 
 def prop_flag(grip_tu=3, **_):
     """Play: waving swallow-tail banner with ball finial and raised star badge (LAY_FLAT)."""
-    L = grip_tu * pro.TU
+    L = grip_tu * motion.TU
     pole = _box_cs(4.8, 54.0, 0.0, L)
     finial = _circ(3.6, 0.0, L + 56.0, 24)
     top = [(2.4 + i * 2.0, L + 46.0 + 2.0 * math.sin(i * 0.55)) for i in range(18)]
@@ -708,7 +708,7 @@ def prop_flag(grip_tu=3, **_):
 
 def prop_magnifier(grip_tu=3, **_):
     """Play: magnifying glass, circular rim with through-aperture lens window and ribbed handle (LAY_FLAT)."""
-    L = grip_tu * pro.TU
+    L = grip_tu * motion.TU
     ring = _circ(16.0, 0.0, L + 24.0, 48) - _circ(10.0, 0.0, L + 24.0, 48)
     handle = _box_cs(8.0, 14.0, 0.0, L)
     ribs = _union([_box_cs(7.6, 1.6, 0.0, L + 2.5 + 3.0 * k) for k in range(4)])
@@ -746,10 +746,10 @@ def skin_cargo_shroud(size="small", grid=(9, 4), **_):
 
 
 # ==========================================================================
-# WAVE W11: Stage-2 Pro Steering & Stage-3 Momentum Power (Cards E1-E2, 21 parts)
+# WAVE W11: Stage-2 Motion Steering & Stage-3 Momentum Power (Cards E1-E2, 21 parts)
 # ==========================================================================
-def pro_steer_bridge(size="small", grid=(2, 2), lock=True, **_):
-    """T-Planform Stage-2 Pro Row-0 Steering Bridge (48.1 x 24.8 x 15.3 mm).
+def motion_steer_bridge(size="small", grid=(2, 2), lock=True, **_):
+    """T-Planform Stage-2 Motion Row-0 Steering Bridge (48.1 x 24.8 x 15.3 mm).
     - Central 24.8 x 24.8 x 12.5 mm nose hub with 2x2 under_sockets (holes) + 2x2 top_studs (for mech_servo_9g);
     - Swept front row-0 outrigger arms out to Ø10.60 mm (R = 5.30 mm) cylindrical kingpin bosses at (+-18.75, -6.25).
     """
@@ -772,7 +772,7 @@ def pro_steer_bridge(size="small", grid=(2, 2), lock=True, **_):
     c_sock["style"] = "holes"
 
     # Kingpin free bores at (+-18.75, -6.25) -> 37.5 mm = 3 TU pitch on axis8!
-    m = m - pro.bore_cutter("free", H, -18.75, -6.25, 0.0) - pro.bore_cutter("free", H, 18.75, -6.25, 0.0)
+    m = m - motion.bore_cutter("free", H, -18.75, -6.25, 0.0) - motion.bore_cutter("free", H, 18.75, -6.25, 0.0)
     c_kp = {
         "id": "kingpins",
         "kind": "bore_grid",
@@ -807,7 +807,7 @@ KNUCKLE_FACE_RELIEF = 0.4  # mm shaved off the inboard (print-bed) cheek face. T
 def _steer_knuckle(side):
     """Bellcrank steering knuckle (25.6 x 16.0 x 27.1 mm printed stub-up on flat cheek, side = -1 for L, +1 for R).
     - Stepped crank strap (y in [+6.40, +10.05] -> Z_world < 0 below keel nose) + 42-deg beveled kingpin & tie-rod bosses
-      (y in [-5.95, +10.05] -> Z_world_top = 12.20 mm, 0.30 mm clear under pro_steer_bridge at all ±26 deg steering angles!);
+      (y in [-5.95, +10.05] -> Z_world_top = 12.20 mm, 0.30 mm clear under motion_steer_bridge at all ±26 deg steering angles!);
     - Tapered hub riser up to z = 15.00 mm (8.75 mm from z = 6.25 kingpin -> 0.10 mm clear of inner wheel hub at 8.85 mm!)
       topped with vertical +Z shaft_drive wheel stub (z = 15.00..27.50 mm, center = 21.25 mm -> exact 15.00 mm scrub offset!).
     """
@@ -831,19 +831,19 @@ def _steer_knuckle(side):
         Manifold.cylinder(0.4, 5.3, 5.3, 64).translate((xk, 0.0, H_base - 0.4)),
         Manifold.cylinder(0.4, 5.1, 5.1, 64).translate((xk, 0.0, 15.00 - 0.4)),
     ])
-    stub = pro.pin_solid("flats", 13.0, xk, 0.0, 14.50)
+    stub = motion.pin_solid("flats", 13.0, xk, 0.0, 14.50)
     m = (
         (strap + strap_foot + bosses + riser + stub)
-        - pro.bore_cutter_axis("free", 22.0, (xk, yc, 6.25), "y")
-        - pro.bore_cutter_axis("free", 22.0, (xt, yc, 6.25), "y")
+        - motion.bore_cutter_axis("free", 22.0, (xk, yc, 6.25), "y")
+        - motion.bore_cutter_axis("free", 22.0, (xt, yc, 6.25), "y")
     )
     if KNUCKLE_FACE_RELIEF > 0.0:
         m = m ^ Manifold.cube((100.0, 100.0, 100.0)).translate((-50.0, -50.0, KNUCKLE_FACE_RELIEF))  # inboard-face relief (see above)
         m = m.translate((0.0, 0.0, -KNUCKLE_FACE_RELIEF))  # re-base: the relieved face is the new bed face (z_min = 0)
     z_bore = 6.25 - KNUCKLE_FACE_RELIEF
     # lattice "pivot": z is set by the cheek relief (5.85), not the axis8 grid; I4 probes existence, waives position.
-    c_kp = pro._axis_bore_conn("kingpin_bore", "free", (xk, 0.0, z_bore), "y", 11.4, lattice="pivot")
-    c_tr = pro._axis_bore_conn("tierod_bore", "free", (xt, 0.0, z_bore), "y", 11.4, lattice="pivot")
+    c_kp = motion._axis_bore_conn("kingpin_bore", "free", (xk, 0.0, z_bore), "y", 11.4, lattice="pivot")
+    c_tr = motion._axis_bore_conn("tierod_bore", "free", (xt, 0.0, z_bore), "y", 11.4, lattice="pivot")
     c_ax = {
         "id": "wheel_stub",
         "kind": "pin",
@@ -859,13 +859,13 @@ def _steer_knuckle(side):
     return m, [c_kp, c_tr, c_ax], {}
 
 
-def pro_steer_knuckle_l(**_):
-    """Left Stage-2 Pro 15 mm-Scrub Bellcrank Steering Knuckle (25.6 x 16.0 x 27.1 mm)."""
+def motion_steer_knuckle_l(**_):
+    """Left Stage-2 Motion 15 mm-Scrub Bellcrank Steering Knuckle (25.6 x 16.0 x 27.1 mm)."""
     return _steer_knuckle(-1)
 
 
-def pro_steer_knuckle_r(**_):
-    """Right Stage-2 Pro 15 mm-Scrub Bellcrank Steering Knuckle (25.6 x 16.0 x 27.1 mm)."""
+def motion_steer_knuckle_r(**_):
+    """Right Stage-2 Motion 15 mm-Scrub Bellcrank Steering Knuckle (25.6 x 16.0 x 27.1 mm)."""
     return _steer_knuckle(1)
 
 
@@ -912,13 +912,13 @@ def _dx_for_inner(inner_deg, stop=RACK_STOP):
     return (lo + hi) / 2
 
 
-def pro_steer_rack(**_):
-    """Stage-2 Pro Module-2.5 Toothed Steering Rack (36.0 x 15.1 x 6.2 mm).
+def motion_steer_rack(**_):
+    """Stage-2 Motion Module-2.5 Toothed Steering Rack (36.0 x 15.1 x 6.2 mm).
     Full-length conjugate teeth at y_pitch = +6.25 mm (0.5 TU), tip line at y = +8.75 mm, tie-rod free bores at (+-7.8125, -1.5625).
     """
-    mod, a = pro.GEAR["module_mm"], math.radians(pro.GEAR["pressure_angle_deg"])
-    T, L, yp = pro.GEAR["thickness_tu"] * TU, 36.0, TU / 2  # T = 6.25, yp = 6.25
-    p, s = math.pi * mod, math.pi * mod / 2 - pro.GEAR["backlash_mm"] / 2
+    mod, a = motion.GEAR["module_mm"], math.radians(motion.GEAR["pressure_angle_deg"])
+    T, L, yp = motion.GEAR["thickness_tu"] * TU, 36.0, TU / 2  # T = 6.25, yp = 6.25
+    p, s = math.pi * mod, math.pi * mod / 2 - motion.GEAR["backlash_mm"] / 2
     y_root, y_tip = yp - 1.25 * mod, yp + mod  # +3.125, +8.75
     w_root, w_tip = s / 2 + 1.25 * mod * math.tan(a), s / 2 - mod * math.tan(a)
     body = CrossSection.square((L, y_root + 6.35)).translate((-L / 2, -6.35))
@@ -928,7 +928,7 @@ def pro_steer_rack(**_):
         xc = k * p
         sec = sec + _ccw_poly([(xc - w_root, y_root - 0.2), (xc + w_root, y_root - 0.2), (xc + w_tip, y_tip), (xc - w_tip, y_tip)])
     sec = sec ^ CrossSection.square((L, y_tip + 6.35)).translate((-L / 2, -6.35))
-    m = Manifold.extrude(sec, T) - pro.bore_cutter("free", T, -RACK_TIEROD_X, -1.5625, 0.0) - pro.bore_cutter("free", T, RACK_TIEROD_X, -1.5625, 0.0)
+    m = Manifold.extrude(sec, T) - motion.bore_cutter("free", T, -RACK_TIEROD_X, -1.5625, 0.0) - motion.bore_cutter("free", T, RACK_TIEROD_X, -1.5625, 0.0)
     conn = {
         "id": "tierod_bores",
         "kind": "bore_grid",
@@ -943,15 +943,15 @@ def pro_steer_rack(**_):
         "grid": {"nx": 2, "ny": 1, "pitch": 2 * RACK_TIEROD_X, "anchor": "corner"},
     }
     return m, [conn], {"gear": {"kind": "rack", "module_mm": mod, "pitch_line_mm": yp, "length_mm": L, "thickness_mm": T,
-                                "pressure_angle_deg": pro.GEAR["pressure_angle_deg"]}}
+                                "pressure_angle_deg": motion.GEAR["pressure_angle_deg"]}}
 
 
-def pro_fork_rake_adpt(**_):
-    """Stage-2 Pro 15-deg Raked Positive-Trail Bike Fork Adapter (27.8 x 24.8 x 12.5 mm)."""
+def motion_fork_rake_adpt(**_):
+    """Stage-2 Motion 15-deg Raked Positive-Trail Bike Fork Adapter (27.8 x 24.8 x 12.5 mm)."""
     H = 12.5
     body = rbox(27.8, 24.8, H, 2.2, 0.4)
     # Rear vertical bore (pins to #2 headtube) at (0, +6.25) and forward raked-offset fork bore at (0, -6.25) (+6 mm trail!):
-    m = body - pro.bore_cutter("free", H, 0.0, 6.25, 0.0) - pro.bore_cutter("free", H, 0.0, -6.25, 0.0)
+    m = body - motion.bore_cutter("free", H, 0.0, 6.25, 0.0) - motion.bore_cutter("free", H, 0.0, -6.25, 0.0)
     # Side handlebar-stop cheeks:
     conn = {
         "id": "fork_bores",
@@ -969,13 +969,13 @@ def pro_fork_rake_adpt(**_):
     return m, [conn], {}
 
 
-def pro_axle_keeper(**_):
+def motion_axle_keeper(**_):
     """Snap-On Under-Keel Row-8 PTO Axle Keeper Clip (36.0 x 11.0 x 11.0 mm)."""
     H = 11.0
     body = rbox(36.0, 11.0, H, 1.8, 0.4)
     # Central 12.0 mm PTO Z10 gear saddle cutout + twin free axle eyes at x = +-12.50:
     saddle = Manifold.cube((12.4, 12.0, 6.5)).translate((-6.2, -6.0, 5.0))
-    m = (body - saddle) - pro.bore_cutter("free", H, -12.50, 0.0, 0.0) - pro.bore_cutter("free", H, 12.50, 0.0, 0.0)
+    m = (body - saddle) - motion.bore_cutter("free", H, -12.50, 0.0, 0.0) - motion.bore_cutter("free", H, 12.50, 0.0, 0.0)
     conn = {
         "id": "keeper_bores",
         "kind": "bore_grid",
@@ -1051,8 +1051,8 @@ def mom_band_spool_pawl(**_):
     sec_lo = CrossSection.circle(11.5, 96)
     for k in range(8):
         sec_lo = sec_lo + rrect(4.0, 2.8, 0.6).translate((11.0, 0.0)).rotate(45.0 * k)
-    m = (Manifold.extrude(sec_lo, 2.6) + drum) - pro.bore_cutter("fixed", H)
-    return m, [pro._hub_conn(H)], {}
+    m = (Manifold.extrude(sec_lo, 2.6) + drum) - motion.bore_cutter("fixed", H)
+    return m, [motion._hub_conn(H)], {}
 
 
 def mom_bumper_trigger(**_):
@@ -1063,7 +1063,7 @@ def mom_bumper_trigger(**_):
     """
     H = 12.5
     plan = rrect(48.0, 10.0, 2.4).translate((0.0, -15.4)) + rrect(25.0, 32.8, 2.0).translate((0.0, -4.0))
-    m = Manifold.extrude(plan, H) - pro.bore_cutter("free", H, -6.25, 6.25, 0.0) - pro.bore_cutter("free", H, 6.25, 6.25, 0.0)
+    m = Manifold.extrude(plan, H) - motion.bore_cutter("free", H, -6.25, 6.25, 0.0) - motion.bore_cutter("free", H, 6.25, 6.25, 0.0)
     conn = {
         "id": "mount_bores",
         "kind": "bore_grid",
@@ -1086,7 +1086,7 @@ def mom_slam_base(**_):
     body = rbox(62.3, 36.0, H, 2.6, 0.4)
     # Open top guide channel (8.0 mm wide, z = 6.0..18.5) + captive stop pin bore at (0, 0):
     ch = Manifold.cube((64.0, 8.2, 13.0)).translate((-32.0, -4.1, 6.0))
-    m = (body - ch) - pro.bore_cutter("free", H, -18.75, 12.5, 0.0) - pro.bore_cutter("free", H, 18.75, 12.5, 0.0)
+    m = (body - ch) - motion.bore_cutter("free", H, -18.75, 12.5, 0.0) - motion.bore_cutter("free", H, 18.75, 12.5, 0.0)
     conn = {
         "id": "anchor_bores",
         "kind": "bore_grid",
@@ -1105,12 +1105,12 @@ def mom_slam_base(**_):
 
 def mom_slam_plunger(**_):
     """Stage-3 Momentum Captive 35 mm-Stroke Slam Plunger Rod (76.0 x 18.0 x 5.0 mm LAY_FLAT)."""
-    hy = pro.BORE["shaft_flats"] / 2
+    hy = motion.BORE["shaft_flats"] / 2
     head_cs = CrossSection.square((18.0, 12.0)).translate((-9.0, 0.0))
     pad = tp._xz_to_layflat(head_cs, hy)
-    rod = pro.pin_solid("flats", 65.0, z0=11.0)
-    conn = pro._pin_conn("shaft_drive", "flats", 50.0, z0=18.0)
-    return pad + rod, [conn], {"print_rotation_deg": pro.LAY_FLAT}
+    rod = motion.pin_solid("flats", 65.0, z0=11.0)
+    conn = motion._pin_conn("shaft_drive", "flats", 50.0, z0=18.0)
+    return pad + rod, [conn], {"print_rotation_deg": motion.LAY_FLAT}
 
 
 def mom_jet_valve_body(size="small", grid=(4, 2), lock=True, **_):
@@ -1140,7 +1140,7 @@ def mom_nozzle_set(**_):
     for xc, d_exit in ((0.0, 3.0), (9.0, 4.5), (16.5, 6.0)):
         cone = Manifold.cylinder(H + 0.4, 4.2, d_exit / 2, 48).translate((xc, 0.0, -0.2))
         body = body - cone
-    m = body - pro.bore_cutter("free", H, -12.5, 0.0, 0.0)
+    m = body - motion.bore_cutter("free", H, -12.5, 0.0, 0.0)
     conn = {
         "id": "mount_bore",
         "kind": "bore_grid",
@@ -1222,15 +1222,15 @@ def mom_flywheel_rotor(**_):
         Manifold.cylinder(0.02, R - 0.8, R - 0.8, 112),
         Manifold.cylinder(H - 1.6, R, R, 112).translate((0.0, 0.0, 0.8)),
         Manifold.cylinder(0.02, R - 0.8, R - 0.8, 112).translate((0.0, 0.0, H - 0.02)),
-    ]) - pro.bore_cutter("fixed", H)
-    return body, [pro._hub_conn(H)], {}
+    ]) - motion.bore_cutter("fixed", H)
+    return body, [motion._hub_conn(H)], {}
 
 
 def mom_ripcord_rack_150(**_):
     """Stage-3 Momentum 150.0 mm Module-2.5 Toothed Rip-Cord Rack (150.0 x 12.0 x 6.2 mm)."""
-    mod, a = pro.GEAR["module_mm"], math.radians(pro.GEAR["pressure_angle_deg"])
-    T, L, yp = pro.GEAR["thickness_tu"] * TU, 150.0, TU / 2  # T = 6.25, yp = 6.25
-    p, s = math.pi * mod, math.pi * mod / 2 - pro.GEAR["backlash_mm"] / 2
+    mod, a = motion.GEAR["module_mm"], math.radians(motion.GEAR["pressure_angle_deg"])
+    T, L, yp = motion.GEAR["thickness_tu"] * TU, 150.0, TU / 2  # T = 6.25, yp = 6.25
+    p, s = math.pi * mod, math.pi * mod / 2 - motion.GEAR["backlash_mm"] / 2
     y_root, y_tip = yp - 1.25 * mod, yp + mod  # +3.125, +8.75
     w_root, w_tip = s / 2 + 1.25 * mod * math.tan(a), s / 2 - mod * math.tan(a)
     # Back of rack at y = -3.25 -> total width = 8.75 - (-3.25) = 12.00 mm!
@@ -1243,7 +1243,7 @@ def mom_ripcord_rack_150(**_):
         xc = k * p
         sec = sec + _ccw_poly([(xc - w_root, y_root - 0.2), (xc + w_root, y_root - 0.2), (xc + w_tip, y_tip), (xc - w_tip, y_tip)])
     sec = sec ^ CrossSection.square((L, 13.0)).translate((-L / 2, -3.25))
-    m = Manifold.extrude(sec, T) - pro.bore_cutter("free", T, -62.50, 1.5625, 0.0)
+    m = Manifold.extrude(sec, T) - motion.bore_cutter("free", T, -62.50, 1.5625, 0.0)
     conn = {
         "id": "pull_bore",
         "kind": "bore_grid",
@@ -1258,13 +1258,13 @@ def mom_ripcord_rack_150(**_):
         "grid": {"nx": 1, "ny": 1, "pitch": TU, "anchor": "corner"},
     }
     return m, [conn], {"gear": {"kind": "rack", "module_mm": mod, "pitch_line_mm": yp, "length_mm": L, "thickness_mm": T,
-                                "pressure_angle_deg": pro.GEAR["pressure_angle_deg"]}}
+                                "pressure_angle_deg": motion.GEAR["pressure_angle_deg"]}}
 
 
 def mom_spindle_shaft(**_):
     """Stage-3 Momentum 78.0 mm Vertical Turbine & Helicopter Rotor Spindle Shaft (6.6 x 78.0 x 5.0 mm LAY_FLAT)."""
     m, conn = _cruciform_tip_shaft(78.0, conn_len=78.0, z0=0.0)
-    return m, [conn], {"print_rotation_deg": pro.LAY_FLAT}
+    return m, [conn], {"print_rotation_deg": motion.LAY_FLAT}
 
 
 # ==========================================================================
@@ -1333,7 +1333,7 @@ CARD_LAYOUTS = {
         ],
     },
     "card_e1": {
-        "name": "Card E1 — Pro Steering, Axle Keepers, Band Core, Bumper Trigger & Slam Launcher",
+        "name": "Card E1 — Motion Steering, Axle Keepers, Band Core, Bumper Trigger & Slam Launcher",
         "limit_mm": 164.0,
         "material": "PLA/PETG",
         "items": [
@@ -1343,12 +1343,12 @@ CARD_LAYOUTS = {
             ("slam_base", "mom_slam_base", 88.8, 3.0, 62.3, 36.0),
             ("slam_plunger", "mom_slam_plunger", 56.1, 79.0, 76.0, 18.0),
             ("bumper_trig", "mom_bumper_trigger", 3.0, 73.8, 32.8, 48.0),  # 48.0 x 32.8 part, rotated 90 deg on the plate
-            ("steer_bridge", "pro_steer_bridge", 3.0, 126.8, 48.1, 24.8),
-            ("steer_rack", "pro_steer_rack", 44.0, 57.8, 36.0, 15.1),
-            ("knuckle_l", "pro_steer_knuckle_l", 3.0, 34.0, 25.6, 16.0),
-            ("knuckle_r", "pro_steer_knuckle_r", 56.1, 137.0, 25.6, 16.0),
-            ("fork_rake", "pro_fork_rake_adpt", 88.8, 44.0, 27.8, 24.8),
-            ("axle_keep", "pro_axle_keeper", 3.0, 57.8, 36.0, 11.0),
+            ("steer_bridge", "motion_steer_bridge", 3.0, 126.8, 48.1, 24.8),
+            ("steer_rack", "motion_steer_rack", 44.0, 57.8, 36.0, 15.1),
+            ("knuckle_l", "motion_steer_knuckle_l", 3.0, 34.0, 25.6, 16.0),
+            ("knuckle_r", "motion_steer_knuckle_r", 56.1, 137.0, 25.6, 16.0),
+            ("fork_rake", "motion_fork_rake_adpt", 88.8, 44.0, 27.8, 24.8),
+            ("axle_keep", "motion_axle_keeper", 3.0, 57.8, 36.0, 11.0),
             ("z10_a", "gear_spur_z10", 121.6, 44.0, 30.0, 30.0),
             ("z10_b", "gear_spur_z10", 56.1, 102.0, 30.0, 30.0),
         ],
@@ -1570,12 +1570,12 @@ def verify_gate_g1():
 
     results = {}
 
-    # 1. Formula / GT Race Car + Pro row-0 ±26 deg steering sweep (including knuckles!) + Mech 9g servo keep-out:
-    bridge = _raw_geo("pro_steer_bridge", cache).translate((0.0, -50.0, 12.5))
-    rack = _raw_geo("pro_steer_rack", cache).translate((0.0, -56.25, 25.05))
+    # 1. Formula / GT Race Car + Motion row-0 ±26 deg steering sweep (including knuckles!) + Mech 9g servo keep-out:
+    bridge = _raw_geo("motion_steer_bridge", cache).translate((0.0, -50.0, 12.5))
+    rack = _raw_geo("motion_steer_rack", cache).translate((0.0, -56.25, 25.05))
     ghost_servo = rbox(24.8, 37.3, 30.5, 2.0, 0.0).translate((0.0, -50.0, 32.0))
-    kn_l_base = _raw_geo("pro_steer_knuckle_l", cache).translate((-6.25, 0.0, -6.25 + KNUCKLE_FACE_RELIEF)).rotate((-90, 0, 0)).rotate((0, 0, 90))
-    kn_r_base = _raw_geo("pro_steer_knuckle_r", cache).translate((6.25, 0.0, -6.25 + KNUCKLE_FACE_RELIEF)).rotate((-90, 0, 0)).rotate((0, 0, -90))
+    kn_l_base = _raw_geo("motion_steer_knuckle_l", cache).translate((-6.25, 0.0, -6.25 + KNUCKLE_FACE_RELIEF)).rotate((-90, 0, 0)).rotate((0, 0, 90))
+    kn_r_base = _raw_geo("motion_steer_knuckle_r", cache).translate((6.25, 0.0, -6.25 + KNUCKLE_FACE_RELIEF)).rotate((-90, 0, 0)).rotate((0, 0, -90))
     # Steered #4 wheels are clocked 90 deg on Z so Double-D hub flats align with wheel_stub flats. Poses come from the rigid
     # tie-rod closure (_tierod_angles) at the +-RACK_STOP rack stop, not from assumed Ackermann angles: at the stop the knuckles
     # sit at (20.8, 33.9) deg, the inner one on the side the rack moves toward.
@@ -1604,7 +1604,7 @@ def verify_gate_g1():
         + _check_non_overlapping([("keel", keel), ("core_tray", core_tray), ("core_lid", core_lid), ("wind", wind.translate((0.0, -6.25, 12.5))), ("kip", kip), ("tub_55", tub_tipped_core)])
     )
 
-    # 3. Farm / Loader Tractor: Giant Ø50 rear + Pro ±21 deg steered Ø50 front lock check:
+    # 3. Farm / Loader Tractor: Giant Ø50 rear + Motion ±21 deg steered Ø50 front lock check:
     dx21 = _dx_for_inner(GIANT_LOCK_DEG)
     res3 = []
     for sgn in (1.0, -1.0):
