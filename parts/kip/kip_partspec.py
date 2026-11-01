@@ -65,6 +65,8 @@ hair_swoosh = tp.hair_swoosh
 hair_long_layered = tp.hair_long_layered
 hair_twin_braids = tp.hair_twin_braids
 hair_shag = tp.hair_shag
+hair_bowl = tp.hair_bowl
+hair_slick = tp.hair_slick
 hair_pompadour = tp.hair_pompadour
 hair_top_bun = tp.hair_top_bun
 hair_side_sweep = tp.hair_side_sweep
@@ -73,6 +75,9 @@ hair_pigtails = tp.hair_pigtails
 hair_ponytail = tp.hair_ponytail
 hair_curly = tp.hair_curly
 hair_mohawk = tp.hair_mohawk
+hair_pixie = tp.hair_pixie
+hair_side_pony = tp.hair_side_pony
+hair_low_bun = tp.hair_low_bun
 hat_ballcap = tp.hat_ballcap
 hat_beanie = tp.hat_beanie
 hat_cowboy = tp.hat_cowboy
@@ -191,7 +196,7 @@ def verify_assemblies(kip_entries: list[dict]) -> list[tuple[str, dict]]:
     results.append(("seated_human_faceplate_hat_ready_hair_and_hat", asm.validate(lib, b_seated)))
 
     # 2. All character heads, all 3 universal swappable face inserts (`char_faceplate`, `char_faceplate_vinyl`, `char_faceplate_flat`),
-    #    all 14 hairstyles (6 Hat-Ready + 8 Sculpted-Top), and all 7 wearable hats (both on bald heads and stacked on Hat-Ready wigs)
+    #    all 19 hairstyles (8 Hat-Ready + 11 Sculpted-Top), and all 7 wearable hats (both on bald heads and stacked on Hat-Ready wigs)
     for asm_name, head_id, fp_id, crown_id, hat_id in [
         ("kid_sculpted_bob_with_beanie", "char_head_kid", "char_faceplate", "hair_bob", "hat_beanie"),
         ("kid_vinyl_swept_with_ballcap", "char_head_kid", "char_faceplate_vinyl", "hair_short_swept", "hat_ballcap"),
@@ -221,6 +226,11 @@ def verify_assemblies(kip_entries: list[dict]) -> list[tuple[str, dict]]:
         ("tall_vinyl_bald_with_ranger", "char_head_tall", "char_faceplate_vinyl", "hat_ranger", None),
         ("tall_flat_bald_with_tophat", "char_head_tall", "char_faceplate_flat", "hat_tophat", None),
         ("tall_sculpted_with_pompadour", "char_head_tall", "char_faceplate", "hair_pompadour", None),
+        ("kid_sculpted_bowl_with_ballcap", "char_head_kid", "char_faceplate", "hair_bowl", "hat_ballcap"),
+        ("chibi_vinyl_slick_with_beanie", "char_head_chibi", "char_faceplate_vinyl", "hair_slick", "hat_beanie"),
+        ("kid_vinyl_with_hair_pixie", "char_head_kid", "char_faceplate_vinyl", "hair_pixie", None),
+        ("chibi_flat_with_hair_side_pony", "char_head_chibi", "char_faceplate_flat", "hair_side_pony", None),
+        ("tall_sculpted_with_hair_low_bun", "char_head_tall", "char_faceplate", "hair_low_bun", None),
         ("char_head_fox_with_wobble_hat", "char_head_fox", None, "wobble_hat", None),
         ("char_head_bear_with_bumper_horns", "char_head_bear", None, "bumper_horns", None),
         ("robot_head_scout_with_wobble_hat", "robot_head_scout", None, "wobble_hat", None),

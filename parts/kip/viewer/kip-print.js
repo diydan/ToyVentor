@@ -26,6 +26,8 @@ import {
   samplePartAnchors,
   buildSprueCard,
   checkSprueCard,
+  buildBreakoffCouponMesh,
+  buildPegTurretFitCouponMesh,
   sliceMeshAtZ,
   pointToSegDistSq,
   segToSegDist,
@@ -37,6 +39,8 @@ export {
   samplePartAnchors,
   buildSprueCard,
   checkSprueCard,
+  buildBreakoffCouponMesh,
+  buildPegTurretFitCouponMesh,
 };
 
 // ---------------------------------------------------------------------------------------------
@@ -304,15 +308,6 @@ const SOCKET_GUARD_BOXES = Object.freeze({
     [-4.2, 0.0, 83.2, 4.2, 13.4, 92.8],
     [-12.3, 11.8, 75.2, 12.3, 13.4, 99.8],
     [-4.2, 0.2, 58.5, 4.2, 13.3, 67.5],
-  ],
-  head_shell: [
-    [-5.3, -5.3, 0.05, 5.3, 5.3, 8.5],        // bottom neck socket
-    [-22.0, -6.2, 14.0, -17.5, 6.2, 27.5],    // left ear-pod seat
-    [17.5, -6.2, 14.0, 22.0, 6.2, 27.5],      // right ear-pod seat
-    [-15.4, -18.8, 9.8, 15.4, -15.8, 28.6],   // front visor bezel pocket
-  ],
-  head_hood: [
-    [-11.6, -5.8, 39.8, 11.6, 5.8, 41.6],     // top crown mortise
   ],
   snap_arm: [
     [-4.8, -8.6, 0.05, 4.8, 1.0, 7.5],        // bottom wrist socket
@@ -886,8 +881,7 @@ const Z_TURNS = Object.freeze([
   { deg: 180, rot: false, m: [-1, 0, 0, 0, -1, 0, 0, 0, 1], shift: (w, h) => [w, h, 0] },
   { deg: 270, rot: true,  m: [0, 1, 0, -1, 0, 0, 0, 0, 1],  shift: (w) => [0, w, 0] },
 ]);
-// Matches `export_print_oriented` in `parts/kip/kip.scad:1141-1143` (`rotate([-90,0,0])` -> `-y up`) for multi-catchlight visor pins.
-const SCAD_FACE_PIN_ORIENT = Object.freeze({ face_glints: 5 });
+const SCAD_FACE_PIN_ORIENT = Object.freeze({});
 
 function rotateSeatedZ(tri, w, h, turnIdx) {
   const t = Z_TURNS[turnIdx] || Z_TURNS[0];
@@ -947,6 +941,8 @@ function buildRasterPose(tri, w, h, cellMm) {
   return { w, h, cols, rows, rowBits, occCells };
 }
 
+const RASTER_POSE_CACHE = new WeakMap();
+
 /**
  * Deterministic conservative 2D XY mesh silhouette packer (`1.0 mm` bit-packed raster with exact continuous
  * Euclidean `>= gap` dilation across `0/90/180/270 deg` `+Z` turns). Nests concave/diagonal silhouettes cleanly.
@@ -970,15 +966,19 @@ export function packPolygonPlates(instances, boundMm = plateBound().mm, gap = LI
   const getPoses = (inst) => {
     const key = `${inst.id}|${inst.orientation}|${inst.w.toFixed(3)}x${inst.h.toFixed(3)}`;
     if (poseCache.has(key)) return poseCache.get(key);
-    const list = [];
-    for (let ti = 0; ti < 4; ti++) {
-      const rw = Z_TURNS[ti].rot ? inst.h : inst.w;
-      const rh = Z_TURNS[ti].rot ? inst.w : inst.h;
-      if (rw > boundMm + EPS || rh > boundMm + EPS) continue;
-      if (ti === 1 && Math.abs(inst.w - inst.h) < 0.05) continue;
-      const rTri = rotateSeatedZ(inst.tri, inst.w, inst.h, ti);
-      list.push({ turnIdx: ti, rot: Z_TURNS[ti].rot, w: rw, h: rh, raster: buildRasterPose(rTri, rw, rh, cellMm) });
+    let allPoses = (inst.tri && typeof inst.tri === 'object') ? RASTER_POSE_CACHE.get(inst.tri) : null;
+    if (!allPoses) {
+      allPoses = [];
+      for (let ti = 0; ti < 4; ti++) {
+        if (ti === 1 && Math.abs(inst.w - inst.h) < 0.05) continue;
+        const rw = Z_TURNS[ti].rot ? inst.h : inst.w;
+        const rh = Z_TURNS[ti].rot ? inst.w : inst.h;
+        const rTri = rotateSeatedZ(inst.tri, inst.w, inst.h, ti);
+        allPoses.push({ turnIdx: ti, rot: Z_TURNS[ti].rot, w: rw, h: rh, raster: buildRasterPose(rTri, rw, rh, cellMm) });
+      }
+      if (inst.tri && typeof inst.tri === 'object') RASTER_POSE_CACHE.set(inst.tri, allPoses);
     }
+    const list = allPoses.filter((p) => p.w <= boundMm + EPS && p.h <= boundMm + EPS);
     poseCache.set(key, list);
     return list;
   };
@@ -1118,9 +1118,18 @@ export function prepareItem(entry, tri, { verified = false, sha256 = '' } = {}) 
   }
 
   const report = choice.report ?? supportReport(choice.seated.tri);
-  const tier = !report.supportFree ? 'needs-supports'
+  const islands = choice.islands ?? 0;
+  const needsSup = !report.supportFree || islands > 0;
+  const tier = needsSup ? 'needs-supports'
     : (entry.source === 'partspec') ? (verified ? 'support-free' : 'unverified')
       : 'geometry-checked';
+  const supportReason = !needsSup
+    ? null
+    : islands > 0 && !report.supportFree
+      ? `V5 floating islands (${islands}) + V4 overhang ${report.overhangMm2.toFixed(1)} mm²`
+      : islands > 0
+        ? `V5 floating islands (${islands})`
+        : `V4 steep overhang ${report.overhangMm2.toFixed(1)} mm² >= ${LIMITS.steepAreaToleranceMm2} mm²`;
   const { volumeMm3, areaMm2 } = meshVolumeAndArea(choice.seated.tri);
   const hex = entry.hex ? normHex(entry.hex) : '#F4EFE6';
   return {
@@ -1144,7 +1153,8 @@ export function prepareItem(entry, tri, { verified = false, sha256 = '' } = {}) 
     volumeMm3,
     areaMm2,
     orientation: choice.name,
-    islands: choice.islands ?? 0,
+    islands,
+    supportReason,
     report,
     tier,
   };
@@ -1212,8 +1222,14 @@ function materializePlacedPlate(placed, byId, boundMm, centerOnPlate = true) {
       areaMm2: inst.areaMm2,
       tri: world,
       blockerTri: blockerWorld,
+      localTri: inst.tri,
+      localW: inst.w,
+      localH: inst.h,
+      turnIdx,
       z: inst.z,
       orientation: inst.orientation,
+      islands: inst.islands ?? 0,
+      supportReason: inst.supportReason || null,
       report: inst.report,
     };
   });
@@ -1261,12 +1277,44 @@ export function buildPlates(instances, {
 }
 
 /**
- * Plan colour-separated (and support-separated + vehicle-separated) plates for any printer (§5.1, §7.2),
- * including M4 flat-pack sprue kit cards + adjacent loose zones when `profile.flatPackMode === 'sprue'` (§6).
+ * Deterministic support-free summary line computed from a plate plan (§12.6):
+ * returns `'All parts print without supports'` when 0 placed instances have `tier === 'needs-supports'`,
+ * or `'1 part needs supports: <id>'` / `'<N> parts need supports: <ids>'` otherwise.
  */
-export function planColorPlates(preparedItems, rawProfile = createDefaultProfile()) {
+export function supportSummaryLine(platesOrPlan) {
+  const plates = Array.isArray(platesOrPlan)
+    ? platesOrPlan
+    : (platesOrPlan?.plates || platesOrPlan?.rawPlates || []);
+  let count = 0;
+  const names = [];
+  const seen = new Set();
+  for (const entry of plates) {
+    const placed = Array.isArray(entry) ? entry : (entry?.placed || []);
+    for (const p of placed) {
+      if (p?.tier === 'needs-supports') {
+        count++;
+        const id = p.partId || p.part || p.id || p.instance;
+        if (id && !seen.has(id)) {
+          seen.add(id);
+          names.push(id);
+        }
+      }
+    }
+  }
+  if (count === 0) return 'All parts print without supports';
+  return `${count} part${count === 1 ? '' : 's'} need${count === 1 ? 's' : ''} supports: ${names.join(', ')}`;
+}
+
+/**
+ * Plan colour-separated (and support-separated + vehicle-separated) plates for any printer (§5.1, §7.2),
+ * including M4/M6 flat-pack kit trays + adjacent loose zones when `profile.flatPackMode === 'sprue'` (§6, §12).
+ */
+export function planColorPlates(preparedItems, rawProfile = createDefaultProfile(), options = {}) {
   const profile = clampProfile(rawProfile);
   const bound = plateBound(profile.bedXmm, profile.brimMarginMm, profile.bedYmm);
+  const sprueSpec = options?.sprueSpec
+    ? { ...SPRUE_SPEC, ...options.sprueSpec }
+    : (rawProfile?.allowPegsAndTurrets ? { ...SPRUE_SPEC, allowPegsAndTurrets: true } : SPRUE_SPEC);
 
   let workingItems = preparedItems;
   let merges = [];
@@ -1312,8 +1360,8 @@ export function planColorPlates(preparedItems, rawProfile = createDefaultProfile
   const plannedPlates = [];
   const oversize = [];
   const sprueMode = profile.flatPackMode === 'sprue';
-  const usableCardMm = sprueUsableBoundMm(bound.mm);
-  const margin = sprueMarginMm();
+  const usableCardMm = sprueUsableBoundMm(bound.mm, sprueSpec);
+  const margin = sprueMarginMm(sprueSpec);
 
   for (const b of orderedBuckets) {
     const gap = b.requiresSupports ? LIMITS.supportGapMm : LIMITS.gapMm;
@@ -1346,8 +1394,8 @@ export function planColorPlates(preparedItems, rawProfile = createDefaultProfile
     const cardItems = [];
     let looseQueue = [];
     for (const inst of b.items) {
-      const elig = isSprueEligiblePart({ ...inst, partId: inst.id, cardMaxMm: bound.mm });
-      if (elig.ok && samplePartAnchors(inst.tri, { partId: inst.id }).anchors.length >= 2) {
+      const elig = isSprueEligiblePart({ ...inst, partId: inst.id, cardMaxMm: bound.mm }, sprueSpec);
+      if (elig.ok && samplePartAnchors(inst.tri, { partId: inst.id, spec: sprueSpec }).anchors.length >= 2) {
         cardItems.push(inst);
       } else {
         looseQueue.push(inst);
@@ -1355,7 +1403,7 @@ export function planColorPlates(preparedItems, rawProfile = createDefaultProfile
     }
 
     if (cardItems.length > 0) {
-      const cardPacked = buildPlates(cardItems, { boundMm: usableCardMm, gap: SPRUE_SPEC.partGapMm, centerOnPlate: false });
+      const cardPacked = buildPlates(cardItems, { boundMm: usableCardMm, gap: sprueSpec.partGapMm, centerOnPlate: false });
       // Any card item too big for usableCardMm falls back cleanly to looseQueue
       if (cardPacked.oversize.length) {
         const ovSet = new Set(cardPacked.oversize);
@@ -1414,7 +1462,7 @@ export function planColorPlates(preparedItems, rawProfile = createDefaultProfile
           .map(p => ({ ...p, sprueAnchored: false }));
 
         const frameBox = { x: shiftX, y: shiftY, w: cardW, h: cardH };
-        const sprue = buildSprueCard(finalCardParts, { frameBox, boundMm: bound.mm });
+        const sprue = buildSprueCard(finalCardParts, { frameBox, boundMm: bound.mm, spec: sprueSpec });
 
         // Account for kit-card frame & runner filament in spool estimate
         if (sprue && sprue.tri.length) {
@@ -1478,7 +1526,7 @@ export function planColorPlates(preparedItems, rawProfile = createDefaultProfile
     const tags = [];
     if (pl.sprue) {
       const hasLoose = pl.placed.some(p => !p.sprueAnchored);
-      tags.push(hasLoose ? 'Kit card + Loose' : 'Kit card');
+      tags.push(hasLoose ? 'Kit tray + Loose' : 'Kit tray');
     }
     if (pl.requiresSupports) tags.push('Supports');
     if (pl.group === 'vehicle') tags.push('Vehicle');
@@ -1491,6 +1539,8 @@ export function planColorPlates(preparedItems, rawProfile = createDefaultProfile
     pl.fileStem = `plate_${String(i + 1).padStart(2, '0')}_${fileTag.join('_')}`;
   });
 
+  const supportSummary = supportSummaryLine(plannedPlates);
+
   return {
     profile,
     bound,
@@ -1499,6 +1549,7 @@ export function planColorPlates(preparedItems, rawProfile = createDefaultProfile
     oversize,
     merges,
     estimate,
+    supportSummary,
     filamentColoursHex: colorOrder.length ? colorOrder : ['#F4EFE6'],
   };
 }
@@ -1625,7 +1676,7 @@ const ORCA_FILAMENT_SLOT_DEFAULTS = Object.freeze({
   filament_tower_interface_pre_extrusion_length: '0', filament_tower_interface_print_temp: '-1',
   filament_tower_interface_purge_volume: '20', filament_tower_ironing_area: '4', filament_unloading_speed: '90',
   filament_unloading_speed_start: '100', first_layer_print_sequence: '0', first_x_layer_fan_speed: '0',
-  flush_multiplier: '0.3', full_fan_speed_layer: '0', grab_length: '0', hot_plate_temp: '55',
+  full_fan_speed_layer: '0', grab_length: '0', hot_plate_temp: '55',
   hot_plate_temp_initial_layer: '55', idle_temperature: '0', internal_bridge_fan_speed: '-1',
   ironing_fan_speed: '-1', long_retractions_when_cut: '0', long_retractions_when_ec: '0',
   machine_max_junction_deviation: '0.01', max_layer_height: '0', min_layer_height: '0.07',
@@ -1659,7 +1710,10 @@ function buildOrcaProjectSettingsJson(filamentColours, profile) {
   for (const [k, val] of Object.entries(ORCA_FILAMENT_SLOT_DEFAULTS)) {
     perFil[k] = cols.map(() => val);
   }
-  perFil.filament_map = cols.map((_, idx) => String(idx + 1));
+  // `filament_map` is the 1-based physical nozzle index (`1..nozzle_diameter.length`), NOT the filament slot index.
+  // Mapping slot 2+ to nozzle 2+ when `nozzle_diameter` has 1 nozzle aborts `bbs_3mf` project loading in Creality Print / OrcaSlicer.
+  perFil.filament_map = cols.map(() => '1');
+  perFil.min_layer_height = cols.map(() => (nozzle === 0.2 ? '0.04' : '0.07'));
   perFil.wipe_tower_x = cols.map(() => '15');
   perFil.wipe_tower_y = cols.map(() => wipeY);
 
@@ -1668,8 +1722,11 @@ function buildOrcaProjectSettingsJson(filamentColours, profile) {
     from: 'User',
     name: 'Kip Print Pack',
     printer_settings_id: nozzle === 0.2 ? 'Bambu Lab A1 mini 0.2 nozzle' : 'Bambu Lab A1 mini 0.4 nozzle',
-    print_settings_id: nozzle === 0.2 ? '0.12mm Fine @BBL A1M 0.2 nozzle' : '0.20mm Standard @BBL A1M',
+    print_settings_id: nozzle === 0.2 ? '0.12mm Draft @BBL A1M 0.2 nozzle' : '0.20mm Standard @BBL A1M',
     ...perFil,
+    filament_map_mode: 'Auto For Flush',
+    single_extruder_multi_material: '1',
+    flush_multiplier: ['0.3'],
     filament_settings_id: cols.map(() => (mat === 'PETG' ? 'Generic PETG' : 'Generic PLA')),
     filament_ids: cols.map(() => (mat === 'PETG' ? 'GFG99' : 'GFL99')),
     filament_colour: cols,
@@ -1682,7 +1739,7 @@ function buildOrcaProjectSettingsJson(filamentColours, profile) {
     printable_height: String(H),
     bed_exclude_area: ['0x0'],
     layer_height: nozzle === 0.2 ? '0.12' : '0.2',
-    initial_layer_print_height: '0.2',
+    initial_layer_print_height: nozzle === 0.2 ? '0.12' : '0.2',
     wall_loops: '3',
     top_shell_layers: '4',
     bottom_shell_layers: '3',
@@ -1836,6 +1893,10 @@ export function to3mf(placedOrPlate, {
           + '<metadata type="object" key="support_material_style" value="organic"/>'
           + '<metadata type="object" key="support_material_buildplate_only" value="0"/>'
           + '<metadata type="object" key="support_material_threshold" value="0"/>';
+      } else {
+        // Say "no supports" out loud. Without a key the user's own profile decides, and a profile with supports on fills every
+        // bridged socket ceiling of a part this tool verified as support-free (found on a real calibration print, 2026-11-01).
+        prusaMeta += '<metadata type="object" key="support_material" value="0"/>';
       }
       prusaMeta += '<metadata type="object" key="brim_width" value="0"/>';
       prusaCfg += `<object id="${id}" instances_count="1">${prusaMeta}<volume firstid="0" lastid="${Math.max(0, triCount - 1)}"><metadata type="volume" key="volume_type" value="ModelPart"/></volume></object>`;
@@ -1855,6 +1916,8 @@ export function to3mf(placedOrPlate, {
         + '<metadata key="support_type" value="tree(auto)"/>'
         + '<metadata key="support_on_build_plate_only" value="0"/>'
         + '<metadata key="support_threshold_angle" value="35"/>';
+    } else {
+      orcaMeta += '<metadata key="enable_support" value="0"/>'; // explicit off: the user's profile must not add supports to a support-free part
     }
     orcaMeta += '<metadata key="brim_type" value="no_brim"/><metadata key="brim_width" value="0"/>';
     const partsXml = (isOrca && hasBlocker)
@@ -1987,6 +2050,8 @@ export function to3mfProject(plannedPlates, rawProfile = createDefaultProfile(),
           + '<metadata key="support_type" value="tree(auto)"/>'
           + '<metadata key="support_on_build_plate_only" value="0"/>'
           + '<metadata key="support_threshold_angle" value="35"/>';
+      } else {
+        orcaMeta += '<metadata key="enable_support" value="0"/>'; // explicit off, as in the single-plate writer above
       }
       orcaMeta += '<metadata key="brim_type" value="no_brim"/><metadata key="brim_width" value="0"/>';
       const partsXml = hasBlocker
@@ -2052,6 +2117,7 @@ function sanitizeStateForManifest(state = {}) {
 /** Layout summary (`toyventor.kip-plate/2`) written next to every export so a pack can be rebuilt and audited. */
 export function layoutJson(plates, meta = {}) {
   const small = smallParts(plates);
+  const supportSummary = meta.supportSummary || supportSummaryLine(plates);
   const hasSprue = plates.some((entry) => !Array.isArray(entry) && Boolean(entry?.sprue))
     || meta?.profile?.flatPackMode === 'sprue';
   const warnings = [PRINT_PAGE_WARNINGS.always];
@@ -2059,10 +2125,12 @@ export function layoutJson(plates, meta = {}) {
   if (hasSprue) warnings.push(PRINT_PAGE_WARNINGS.sprue_prep);
 
   const sanitizedMeta = { ...meta };
+  delete sanitizedMeta.supportSummary;
   if (sanitizedMeta.state) sanitizedMeta.state = sanitizeStateForManifest(sanitizedMeta.state);
 
   return JSON.stringify({
     format: 'toyventor.kip-plate/2',
+    supportSummary,
     ...sanitizedMeta,
     warnings,
     smallParts: small,
@@ -2105,6 +2173,7 @@ export function layoutJson(plates, meta = {}) {
           rot90: p.rot,
           orientation: p.orientation,
           overhangMm2: +p.report.overhangMm2.toFixed(2),
+          ...(p.supportReason ? { supportReason: p.supportReason } : {}),
           ...(p.sprueAnchored !== undefined ? { sprueAnchored: Boolean(p.sprueAnchored) } : {}),
           ...(p.blockerTri && p.blockerTri.length ? { socketBlockerTris: p.blockerTri.length / 9 } : {}),
         })),
@@ -2114,12 +2183,13 @@ export function layoutJson(plates, meta = {}) {
   }, null, 2);
 }
 
-/** Plain-text one-screen README included at the root of `kip-print-pack.zip` (§9.2, §9.3). */
+/** Plain-text one-screen README included at the root of `kip-print-pack.zip` (§9.2, §9.3, §12.6). */
 export function readmeTxt({ plan, bom, hasPrintSheet = false, stickerFileNames = [] } = {}) {
   const prof = plan.profile;
   const est = plan.estimate;
   const small = smallParts(plan.plates);
   const spruePlateCount = plan.plates.filter(pl => Boolean(pl.sprue)).length;
+  const supportSummary = plan.supportSummary || supportSummaryLine(plan.plates);
   const lines = [
     'KIP 3D PRINT PACK — ToyVentor Modular Character System',
     '======================================================',
@@ -2135,7 +2205,8 @@ export function readmeTxt({ plan, bom, hasPrintSheet = false, stickerFileNames =
     '----------------------',
     `Preset: ${prof.presetId} (${prof.bedXmm} x ${prof.bedYmm} mm bed, ${prof.nozzleMm} mm nozzle, ${prof.material})`,
     `Slicer dialect: ${prof.slicer} | Colour slots: ${prof.maxSlots} (${prof.changerType}) | Fit: ${prof.fitChoice}`,
-    `Layout: ${prof.flatPackMode}${spruePlateCount > 0 ? ` (${spruePlateCount} kit-card plate(s))` : ''} | Strategy: ${prof.multiColorStrategy}`,
+    `Layout: ${prof.flatPackMode === 'sprue' ? 'Kit tray (sprue)' : prof.flatPackMode}${spruePlateCount > 0 ? ` (${spruePlateCount} kit-tray plate(s))` : ''} | Strategy: ${prof.multiColorStrategy}`,
+    `Supports: ${supportSummary}`,
     '',
     'SPOOL BUDGET (ESTIMATE — 3 walls, 15% infill)',
     '---------------------------------------------',
@@ -2157,7 +2228,11 @@ export function readmeTxt({ plan, bom, hasPrintSheet = false, stickerFileNames =
   lines.push('', 'FILES IN THIS PACK', '------------------');
   for (const pl of plan.plates) {
     const sprueNote = pl.sprue ? `, ${pl.sprue.gates.length} V-nick sprue gates` : '';
-    lines.push(`  - plates/${pl.fileStem}.3mf & .stl : ${pl.label} (${pl.placed.length} pcs${sprueNote})`);
+    const supReasons = pl.requiresSupports
+      ? [...new Set(pl.placed.filter(p => p.tier === 'needs-supports').map(p => `${p.partId}: ${p.supportReason || `${p.report.overhangMm2.toFixed(1)} mm² overhang`}`))]
+      : [];
+    const reasonNote = supReasons.length ? ` [${supReasons.join('; ')}]` : '';
+    lines.push(`  - plates/${pl.fileStem}.3mf & .stl : ${pl.label} (${pl.placed.length} pcs${sprueNote})${reasonNote}`);
   }
   lines.push('  - project/kip-project.3mf : Multi-plate OrcaSlicer / Bambu Studio project');
   if (stickerFileNames.length) {

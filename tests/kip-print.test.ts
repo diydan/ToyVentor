@@ -1,6 +1,6 @@
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -13,12 +13,15 @@ import * as bomMod from "../parts/kip/viewer/kip-print-bom.js";
 // @ts-expect-error untyped JS module
 import * as profMod from "../parts/kip/viewer/kip-print-profile.js";
 // @ts-expect-error untyped JS module
+import * as sprueMod from "../parts/kip/viewer/kip-print-sprue.js";
+// @ts-expect-error untyped JS module
 import * as wardrobe from "../parts/kip/viewer/kip-vehicles-wardrobe.js";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 const K = printMod as any;
 const B = bomMod as any;
 const P = profMod as any;
+const S = sprueMod as any;
 const W = wardrobe as any;
 const root = process.cwd();
 const pub = (url: string) => join(root, "public", url);
@@ -238,9 +241,9 @@ describe("packer", () => {
 
 describe("inventory & honest BOM (M1 gates a, c, f)", () => {
   const base = {
-    edition: "pro", category: "robot", head: "classic", faceInsert: "sculpted", expr: "spark",
-    skin: "vinyl_cream", shirt: "off", pants: "off", hair: "off", hairColor: "chestnut",
-    hat: "buds", hatColor: "cobalt_cap", back: "off", prop: "off", ears: "off", tail: "off",
+    edition: "pro", category: "human", head: "kid", faceInsert: "sculpted", expr: "spark",
+    skin: "warm_peach", shirt: "off", pants: "off", hair: "off", hairColor: "chestnut",
+    hat: "buds", hatColor: "cobalt_cap", back: "off", prop: "off", tail: "off",
     vehicle: "none", vehCovers: true, racerKit: true, includeVehicle: true,
   };
   const sumQty = (items: any[], id: string) => items.filter((i) => i.id === id).reduce((a, b) => a + b.qty, 0);
@@ -250,21 +253,14 @@ describe("inventory & honest BOM (M1 gates a, c, f)", () => {
     return [...map.entries()].map(([id, q]) => `${id}x${q}`);
   };
 
-  it("gate (c): peg and turret counts match visible slots on all 13 heads in both editions, and crown_buds_2x1 / wheel_rims never print standalone", () => {
+  it("gate (c): peg and turret counts match visible slots on all 12 heads in both editions, and crown_buds_2x1 / wheel_rims never print standalone", () => {
     for (const hd of W.WARDROBE_HEADS as any[]) {
       const proItems = K.inventoryFor({ ...base, edition: "pro", category: hd.category, head: hd.id }).items;
       const snapItems = K.inventoryFor({ ...base, edition: "snap", category: hd.category, head: hd.id }).items;
-      if (hd.id === "classic") {
-        expect(sumQty(proItems, "spark_peg_big"), `pro classic big pegs`).toBe(5);
-        expect(sumQty(proItems, "neck_turret_2x1"), `pro classic neck turret`).toBe(0);
-        expect(sumQty(snapItems, "snap_turret_big"), `snap classic big turrets`).toBe(5);
-        expect(sumQty(snapItems, "neck_turret_2x1"), `snap classic neck turret`).toBe(0);
-      } else {
-        expect(sumQty(proItems, "spark_peg_big"), `pro ${hd.id} big pegs`).toBe(4);
-        expect(sumQty(proItems, "neck_turret_2x1"), `pro ${hd.id} neck turret`).toBe(1);
-        expect(sumQty(snapItems, "snap_turret_big"), `snap ${hd.id} big turrets`).toBe(4);
-        expect(sumQty(snapItems, "neck_turret_2x1"), `snap ${hd.id} neck turret`).toBe(1);
-      }
+      expect(sumQty(proItems, "spark_peg_big"), `pro ${hd.id} big pegs`).toBe(4);
+      expect(sumQty(proItems, "neck_turret_2x1"), `pro ${hd.id} neck turret`).toBe(1);
+      expect(sumQty(snapItems, "snap_turret_big"), `snap ${hd.id} big turrets`).toBe(4);
+      expect(sumQty(snapItems, "neck_turret_2x1"), `snap ${hd.id} neck turret`).toBe(1);
       expect(sumQty(proItems, "spark_peg_sml")).toBe(8);
       expect(sumQty(snapItems, "snap_turret")).toBe(4);
       expect(snapItems.some((i: any) => i.id === "torso")).toBe(false);
@@ -272,7 +268,7 @@ describe("inventory & honest BOM (M1 gates a, c, f)", () => {
       expect(sumQty(proItems, "crown_buds_2x1")).toBe(0);
     }
 
-    // On non-classic heads with hat="buds", crown_buds_2x1 attaches as an accent to the host head/hair (never standalone)
+    // With hat="buds", crown_buds_2x1 attaches as an accent to the host head/hair (never standalone)
     const withBuds = B.resolveSceneBom({ ...base, category: "human", head: "chibi", hat: "buds" });
     const chibiHead = withBuds.items.find((i: any) => i.id === "char_head_chibi");
     expect(chibiHead?.accents?.[0]?.id).toBe("crown_buds_2x1");
@@ -304,7 +300,6 @@ describe("inventory & honest BOM (M1 gates a, c, f)", () => {
     for (const b of W.BACK_OPTIONS) states.push({ ...base, back: b.id });
     for (const p of [...W.PROP_OPTIONS.map((x: any) => x.id), "wand"]) states.push({ ...base, prop: p });
     for (const f of W.FACE_INSERT_MODES) states.push({ ...base, category: "human", head: "kid", faceInsert: f.id });
-    for (const ears of ["off", "comm", "pro"]) states.push({ ...base, ears });
     for (const tail of ["off", "wag", "pro"]) states.push({ ...base, tail });
     for (const s of W.SHIRT_OPTIONS) states.push({ ...base, category: "human", head: "kid", shirt: s.id });
     for (const p of W.PANTS_OPTIONS) states.push({ ...base, category: "human", head: "kid", pants: p.id });
@@ -336,7 +331,7 @@ describe("inventory & honest BOM (M1 gates a, c, f)", () => {
     }
 
     // Pro mechanisms decompose into real verified catalog gears/shafts/beams/pins
-    const proMech = B.resolveSceneBom({ ...base, back: "gears", prop: "shaft", ears: "pro", tail: "pro" });
+    const proMech = B.resolveSceneBom({ ...base, back: "gears", prop: "shaft", tail: "pro" });
     expect(proMech.unmapped).toEqual([]);
     for (const pid of ["gear_spur_z20", "gear_spur_z10", "pin_friction", "shaft_tu05", "shaft_tu03", "bushing_half", "beam_str_tu03", "cross_connector_tu01", "beam_str_tu05"]) {
       expect(sumQty(proMech.items, pid), `pro mechanism ${pid}`).toBeGreaterThan(0);
@@ -372,6 +367,7 @@ describe("inventory & honest BOM (M1 gates a, c, f)", () => {
     for (const rel of [
       "parts/kip/viewer/kip-print-bom.js",
       "parts/kip/viewer/kip-print-profile.js",
+      "parts/kip/viewer/kip-print-sprue.js",
       "parts/kip/viewer/kip-print-stickers.js",
       "parts/kip/viewer/kip-print.js",
     ]) {
@@ -463,21 +459,19 @@ describe("real parts on disk", () => {
     expect(b.min[1]).toBeCloseTo(0, 4);
   });
 
-  it("base body parts come out of rig pose onto the bed; kip.scad:137 clears forearm/shin/snap_leg while torso stays flagged", () => {
-    const torso = prep("kip.scad", "torso", "/kip/stls/torso.stl");
-    expect(K.bounds(torso.tri).min[2]).toBeCloseTo(0, 4);
-    expect(torso.tier).toBe("needs-supports");
-    expect(torso.report.overhangMm2).toBeGreaterThan(K.LIMITS.steepAreaToleranceMm2);
-    // v_groove_ring fix (dr / tan(38)) cleared forearm, shin, and snap_leg to 0 overhang!
-    for (const cleanId of ["forearm", "shin", "snap_leg", "crown_buds"]) {
-      const part = prep("kip.scad", cleanId, `/kip/stls/${cleanId}.stl`);
-      expect(part.tier, cleanId).toBe("geometry-checked");
-      expect(part.report.overhangMm2, cleanId).toBeLessThanOrEqual(K.LIMITS.steepAreaToleranceMm2);
+  it("all 18 base body STLs come out of rig pose onto z = 0 with zero floating islands and < 1.0 mm² overhang (catalog bar)", () => {
+    const baseIds = [
+      "torso", "back_dock_studs", "upper_arm", "forearm", "hand_l", "hand_r",
+      "thigh", "shin", "boot", "spark_peg_big", "spark_peg_sml", "tail_acc",
+      "snap_torso", "snap_arm", "snap_leg", "snap_turret_big", "snap_turret", "neck_turret_2x1",
+    ];
+    for (const id of baseIds) {
+      const part = prep("kip.scad", id, `/kip/stls/${id}.stl`);
+      expect(K.bounds(part.tri).min[2], `${id} minZ`).toBeCloseTo(0, 4);
+      expect(part.tier, `${id} tier`).toBe("geometry-checked");
+      expect(part.islands, `${id} V5 islands`).toBe(0);
+      expect(part.report.overhangMm2, `${id} V4 overhang`).toBeLessThan(1.0);
     }
-    // Multi-shell `face_glints.stl` lands all 4 disconnected catchlight shells onto z = 0 (zero levitating shells -> Orca RC=0)
-    const glints = prep("kip.scad", "face_glints", "/kip/stls/face_glints.stl");
-    expect(K.bounds(glints.tri).min[2]).toBeCloseTo(0, 4);
-    expect(glints.z).toBeLessThan(2.5);
   });
 
   it("the served validation index has a sha for catalog parts and the index matches the bytes it names", () => {
@@ -495,7 +489,7 @@ describe("real parts on disk", () => {
       edition: "pro", category: "human", head: "kid", faceInsert: "sculpted", expr: "spark",
       skin: "warm_peach", shirt: "spark_tee", pants: "cargo_shorts",
       hair: "short_swept", hairColor: "chestnut", hat: "ranger", hatColor: "cobalt_cap",
-      back: "explorer", prop: "wrench", ears: "off", tail: "off",
+      back: "explorer", prop: "wrench", tail: "off",
       vehicle: "scooter", vehCovers: true, racerKit: true, includeVehicle: true,
     };
     const bom = B.resolveSceneBom(state);
@@ -521,7 +515,7 @@ describe("real parts on disk", () => {
         expect(b.min[2]).toBeCloseTo(0, 3);
       }
     }
-  });
+  }, 25000);
 });
 
 describe("exports", () => {
@@ -582,7 +576,10 @@ describe("exports", () => {
     expect(pModel.match(/<object /g)).toHaveLength(2);
     expect(pModel).toContain('basematerials id="9000"');
     expect(pModel.indexOf('basematerials id="9000"')).toBeLessThan(pModel.indexOf('<object id="1"'));
-    expect(pCfg.match(/support_material"/g)).toHaveLength(1);
+    // every object states its support setting out loud: 1 for the part that needs supports, 0 for the support-free one
+    expect(pCfg.match(/support_material"/g)).toHaveLength(2);
+    expect(pCfg.match(/support_material" value="1"/g)).toHaveLength(1);
+    expect(pCfg.match(/support_material" value="0"/g)).toHaveLength(1);
     expect(pCfg).toContain('xy_size_compensation" value="-0.04"');
 
     const [oNames, oModel, oCfg, oProj] = orcaOut.split("@@\n") as [string, string, string, string];
@@ -591,13 +588,24 @@ describe("exports", () => {
     expect(oModel).not.toContain("PrusaSlicer");
     expect(oCfg).toContain('subtype="normal_part"');
     expect(oCfg.match(/enable_support" value="1"/g)).toHaveLength(1);
+    expect(oCfg.match(/enable_support" value="0"/g)).toHaveLength(1); // the support-free part is told "no supports" explicitly
+    expect(oCfg.match(/enable_support"/g)).toHaveLength((oModel.match(/<object /g) ?? []).length);
     expect(oCfg).toContain('xy_contour_compensation" value="0.025"');
     expect(oCfg).toContain('xy_hole_compensation" value="-0.025"');
     const parsedProj = JSON.parse(oProj);
     expect(parsedProj.filament_colour).toEqual(["#4EB3FC", "#F4EFE6"]);
+    expect(parsedProj.nozzle_diameter).toEqual(["0.4"]);
+    expect(parsedProj.filament_map).toEqual(["1", "1"]);
+    expect(parsedProj.flush_multiplier).toEqual(["0.3"]);
 
-    const [, projModel, projCfg] = projOut.split("@@\n") as [string, string, string];
+    const [, projModel, projCfg, projSettingsRaw] = projOut.split("@@\n") as [string, string, string, string];
+    const parsedMultiProj = JSON.parse(projSettingsRaw);
+    expect(parsedMultiProj.filament_colour).toEqual(["#4EB3FC", "#F4EFE6"]);
+    expect(parsedMultiProj.filament_map).toEqual(["1", "1"]);
+    expect(parsedMultiProj.filament_map.every((n: string) => Number(n) >= 1 && Number(n) <= parsedMultiProj.nozzle_diameter.length)).toBe(true);
     expect(projCfg.match(/<plate>/g)).toHaveLength(2);
+    expect(projCfg.match(/enable_support" value="0"/g)).toHaveLength(1); // plate 1: support-free part, explicit off
+    expect(projCfg.match(/enable_support" value="1"/g)).toHaveLength(1); // plate 2: the part that needs supports
     // Plate 2 sits at col=1 -> x offset = 1 * 1.2 * 256 + (256 - 246)/2 = 307.2 + 5 = 312.2 (or boundMm=170 -> 307.2 + 43 = 350.2)
     expect(projModel).toContain("350.2 43 0");
   });
@@ -620,4 +628,505 @@ describe("exports", () => {
     expect(K.smallParts([[mk(10, 10, 5), mk(40, 10, 5), mk(30, 30, 5), mk(40, 40, 5), mk(20, 20, 60), mk(34, 20, 20)]]))
       .toEqual(["10x10x5", "40x10x5", "30x30x5", "34x20x20"]);
   });
+});
+
+function countUnmatchedHalfEdges(tri: Float32Array): number {
+  const edgeCounts = new Map<string, number>();
+  const vKey = (x: number, y: number, z: number) => `${Math.round(x * 1000)},${Math.round(y * 1000)},${Math.round(z * 1000)}`;
+  for (let t = 0; t < tri.length; t += 9) {
+    const v0 = vKey(tri[t]!, tri[t + 1]!, tri[t + 2]!);
+    const v1 = vKey(tri[t + 3]!, tri[t + 4]!, tri[t + 5]!);
+    const v2 = vKey(tri[t + 6]!, tri[t + 7]!, tri[t + 8]!);
+    for (const [a, b] of [[v0, v1], [v1, v2], [v2, v0]] as const) {
+      const rev = `${b}->${a}`;
+      const revCount = edgeCounts.get(rev) ?? 0;
+      if (revCount > 0) {
+        if (revCount === 1) edgeCounts.delete(rev);
+        else edgeCounts.set(rev, revCount - 1);
+      } else {
+        const fwd = `${a}->${b}`;
+        edgeCounts.set(fwd, (edgeCounts.get(fwd) ?? 0) + 1);
+      }
+    }
+  }
+  let unmatched = 0;
+  for (const c of edgeCounts.values()) unmatched += c;
+  return unmatched;
+}
+
+describe("2D polygon silhouette nesting, custom convex-hull pose search & V5 floating islands", () => {
+  it("nests two 95x95 mm concave L-brackets onto 1 plate (180-deg interlock) while enforcing >= 5 mm continuous mesh clearance", () => {
+    const lTri = Float32Array.from([...solid(0, 0, 0, 95, 20, 8), ...solid(0, 20, 0, 20, 95, 8)]);
+    const prep = K.prepareItem({ id: "l_bracket", source: "partspec", hex: "#4EB3FC" }, lTri, { verified: true });
+    const instances = K.expandInstances([{ ...prep, qty: 2 }]);
+    // Rectangle-only MaxRects needs 2 plates (95 + 5 + 95 = 195 > 170)
+    const rectOnly = K.packPlates(instances.map((p: any) => ({ id: p.instance, w: p.w, h: p.h })), 170, 5);
+    expect(rectOnly.plates.length).toBe(2);
+
+    // Polygon silhouette nesting fits both on 1 plate with >= 5 mm continuous clearance
+    const nested = K.buildPlates(instances, { boundMm: 170, gap: 5, polygonNest: true });
+    expect(nested.plates.length).toBe(1);
+    expect(nested.plates[0]).toHaveLength(2);
+    expect(K.checkPlacement(nested.plates[0], 170, 5)).toEqual([]);
+  });
+
+  it("detects mid-air floating islands (V5) and lands an arbitrarily tilted custom STL flat on its convex support face (det = +1)", () => {
+    const clean = K.seat(solid(0, 0, 0, 20, 20, 12)).tri as Float32Array;
+    expect(K.countFloatingIslands(clean)).toBe(0);
+
+    // An arch/T-arm with a downward-hanging tip starting in mid-air at z = 6 mm (above stem base but disconnected from stem at z = 6..10)
+    const hanging = Float32Array.from([
+      ...solid(0, 0, 0, 6, 6, 16),
+      ...solid(0, 0, 12, 22, 6, 16),
+      ...solid(16, 0, 6, 22, 6, 12), // hangs down to z = 6 in mid-air -> floating island on z = 6.2!
+    ]);
+    expect(K.countFloatingIslands(hanging)).toBeGreaterThanOrEqual(1);
+
+    // Rotate a flat-bottomed custom plaque by 32 deg around X and 23 deg around Y so all 6 axis poses overhang badly
+    const rx = (32 * Math.PI) / 180, ry = (23 * Math.PI) / 180;
+    const cx = Math.cos(rx), sx = Math.sin(rx), cy = Math.cos(ry), sy = Math.sin(ry);
+    const tiltM = [
+      cy, sy * sx, sy * cx,
+      0, cx, -sx,
+      -sy, cy * sx, cy * cx,
+    ];
+    const rawPlaque = K.transform(solid(0, 0, 0, 34, 24, 8), tiltM);
+    expect(K.bestOrientation(rawPlaque).report.supportFree).toBe(false);
+
+    const customPose = K.bestCustomOrientation(rawPlaque);
+    const m = customPose.m as number[];
+    const det = m[0]! * (m[4]! * m[8]! - m[5]! * m[7]!) - m[1]! * (m[3]! * m[8]! - m[5]! * m[6]!) + m[2]! * (m[3]! * m[7]! - m[4]! * m[6]!);
+    expect(det).toBeCloseTo(1, 5);
+    expect(customPose.islands).toBe(0);
+    expect(customPose.report.supportFree).toBe(true);
+    expect(customPose.report.overhangMm2).toBeLessThan(1.0);
+
+    const preparedCustom = K.prepareItem(
+      { id: "custom_crown_stl", source: "custom", bytes: new Uint8Array([1]), hex: "#7C4DFF" },
+      rawPlaque,
+    );
+    expect(preparedCustom.tier).toBe("geometry-checked");
+    expect(preparedCustom.z).toBeCloseTo(8, 1);
+  });
+});
+
+describe("M4 flat-pack sprue kit cards & socket support_blocker protection", () => {
+  const load = (url: string) => K.parseStl(readFileSync(pub(url)));
+
+  it("builds 100% watertight manifold perimeter frames and 0.40 mm V-nick breakaway gates", () => {
+    const frame = S.buildFrameMesh(0, 0, 90, 70);
+    expect(countUnmatchedHalfEdges(frame)).toBe(0);
+    const fb = K.bounds(frame);
+    expect(fb.min[2]).toBeCloseTo(0, 5);
+    expect(fb.max[2]).toBeCloseTo(1.0, 5);
+
+    const singleNick = S.buildVNickGateMesh(10, 10, 22, 10, { wallAtStartMm: 1.6, wallAtEndMm: null });
+    const dualNick = S.buildVNickGateMesh(10, 10, 26, 18, { wallAtStartMm: 1.6, wallAtEndMm: 1.6 });
+    expect(countUnmatchedHalfEdges(singleNick)).toBe(0);
+    expect(countUnmatchedHalfEdges(dualNick)).toBe(0);
+    expect(K.bounds(singleNick).max[2]).toBeCloseTo(0.8, 5);
+    // Verify 0.40 mm V-nick neck vertex is present
+    let minTopZ = Infinity;
+    for (let i = 2; i < singleNick.length; i += 3) {
+      if (singleNick[i]! > 0.05 && singleNick[i]! < minTopZ) minTopZ = singleNick[i]!;
+    }
+    expect(minTopZ).toBeCloseTo(0.4, 4);
+  });
+
+  it("packs sprue kit cards with single-component MST connectivity, keeps pegs/turrets & supports out of cards, and emits sprue_prep warning", () => {
+    const state = {
+      edition: "pro", category: "human", head: "kid", faceInsert: "sculpted", expr: "spark",
+      skin: "warm_peach", shirt: "spark_tee", pants: "cargo_shorts",
+      hair: "short_swept", hairColor: "chestnut", hat: "ranger", hatColor: "cobalt_cap",
+      back: "explorer", prop: "wrench", tail: "off",
+      vehicle: "none", vehCovers: true, racerKit: true, includeVehicle: false,
+    };
+    const bom = B.resolveSceneBom(state);
+    const prepared = bom.items.map((e: any) => K.prepareItem(e, load(e.file), { verified: e.source === "partspec" }));
+    const sprueProfile = P.clampProfile({ ...P.createDefaultProfile(), flatPackMode: "sprue" });
+    const plan = K.planColorPlates(prepared, sprueProfile);
+
+    const spruePlates = plan.plates.filter((pl: any) => Boolean(pl.sprue));
+    expect(spruePlates.length).toBeGreaterThan(0);
+
+    for (const pl of plan.plates) {
+      expect(K.checkPlacement(pl.placed, pl.boundMm, pl.gap)).toEqual([]);
+      if (pl.sprue) {
+        expect(pl.requiresSupports).toBe(false);
+        const cardParts = pl.placed.filter((p: any) => p.sprueAnchored);
+        expect(cardParts.length).toBeGreaterThan(0);
+        expect(K.checkSprueCard(pl.sprue, cardParts)).toEqual([]);
+        // Connectors/pegs must never be anchored into the sprue card
+        for (const cp of cardParts) {
+          expect(cp.partId).not.toMatch(/spark_peg|turret|pin_|gear_/);
+        }
+      }
+    }
+
+    const manifest = JSON.parse(K.layoutJson(plan.plates, { profile: plan.profile }));
+    expect(manifest.warnings).toContain(K.PRINT_PAGE_WARNINGS.sprue_prep);
+    expect(K.readmeTxt({ plan, bom })).toContain(K.PRINT_PAGE_WARNINGS.sprue_prep);
+  }, 25000);
+
+  // SO(3)-invariant UV sphere: guarantees > 10 mm² steep overhang in every possible 3D rotation
+  function uvSphere(cx: number, cy: number, cz: number, r: number, rings = 12, segs = 18): Float32Array {
+    const out: number[] = [];
+    const pt = (i: number, j: number): V3 => {
+      const phi = (Math.PI * i) / rings;
+      const th = (2 * Math.PI * (j % segs)) / segs;
+      const sp = Math.sin(phi);
+      return [cx + r * sp * Math.cos(th), cy + r * sp * Math.sin(th), cz + r * Math.cos(phi)];
+    };
+    for (let i = 0; i < rings; i++) {
+      for (let j = 0; j < segs; j++) {
+        if (i === 0) out.push(...pt(0, 0), ...pt(1, j + 1), ...pt(1, j));
+        else if (i === rings - 1) out.push(...pt(i, j), ...pt(i, j + 1), ...pt(rings, 0));
+        else out.push(...quad(pt(i, j), pt(i + 1, j), pt(i + 1, j + 1), pt(i, j + 1)));
+      }
+    }
+    return outward(out);
+  }
+
+  function makeOverhangingVariant(baseTri: Float32Array): Float32Array {
+    const b = K.bounds(baseTri);
+    const cx = 0.5 * (b.min[0] + b.max[0]);
+    const cy = 0.5 * (b.min[1] + b.max[1]);
+    const cz = 0.5 * (b.min[2] + b.max[2]);
+    return Float32Array.from([...baseTri, ...uvSphere(cx, cy, cz, 8.5)]);
+  }
+
+  it("generates parametric mating-socket support_blocker sub-parts and computed supportSummary when a socketed part needs supports", () => {
+    for (const partId of ["torso", "snap_torso", "snap_arm", "tail_acc"]) {
+      const overTri = makeOverhangingVariant(load(`/kip/stls/${partId}.stl`));
+      const item = K.prepareItem({ id: partId, source: "kip.scad", hex: "#F4EFE6" }, overTri);
+      expect(item.tier, partId).toBe("needs-supports");
+      expect(item.supportReason, partId).toMatch(/steep overhang|floating island/);
+      expect(item.blockerTri, partId).toBeInstanceOf(Float32Array);
+      expect(item.blockerTri.length, partId).toBeGreaterThan(0);
+      expect(K.bounds(item.blockerTri).min[2], `${partId} blocker minZ`).toBeGreaterThanOrEqual(0);
+    }
+
+    const torsoItem = K.prepareItem(
+      { id: "torso", source: "kip.scad", hex: "#F4EFE6" },
+      makeOverhangingVariant(load("/kip/stls/torso.stl")),
+    );
+    const bootItem = K.prepareItem({ id: "boot", qty: 2, source: "kip.scad", hex: "#F4EFE6" }, load("/kip/stls/boot.stl"));
+    const plan = K.planColorPlates([bootItem, torsoItem], P.clampProfile({ ...P.createDefaultProfile(), flatPackMode: "sprue" }));
+    expect(plan.supportSummary).toBe("1 part needs supports: torso");
+    const supPlate = plan.plates.find((pl: any) => pl.requiresSupports)!;
+    expect(supPlate).toBeDefined();
+    expect(supPlate.sprue).toBeNull();
+
+    const manifest = JSON.parse(K.layoutJson(plan.plates, { profile: plan.profile }));
+    expect(manifest.supportSummary).toBe("1 part needs supports: torso");
+    expect(K.readmeTxt({ plan })).toContain("Supports: 1 part needs supports: torso");
+
+    // 1. STL never bakes blocker triangles
+    const stl = K.plateStl(supPlate, "torso_plate");
+    expect(K.parseStl(stl).length).toBe(supPlate.placed[0].tri.length);
+
+    // 2. Orca/Bambu 3MF emits <components> + subtype="support_blocker"
+    const dir = mkdtempSync(join(tmpdir(), "kipguard-"));
+    try {
+      const orca3mf = join(dir, "orca_torso.3mf");
+      const prusa3mf = join(dir, "prusa_torso.3mf");
+      writeFileSync(orca3mf, K.to3mf(supPlate, { slicer: "orca_bambu", profile: plan.profile }));
+      writeFileSync(prusa3mf, K.to3mf(supPlate, { slicer: "prusa", profile: { ...plan.profile, slicer: "prusa" } }));
+
+      const orcaXml = execFileSync(
+        "python3",
+        ["-c", "import zipfile,sys;z=zipfile.ZipFile(sys.argv[1]);print(z.read('3D/3dmodel.model').decode());print('@@');print(z.read('Metadata/model_settings.config').decode())", orca3mf],
+        { encoding: "utf8", maxBuffer: 64 * 1024 * 1024 },
+      );
+      expect(orcaXml).toContain("<components>");
+      expect(orcaXml).toContain('subtype="support_blocker"');
+
+      const prusaXml = execFileSync(
+        "python3",
+        ["-c", "import zipfile,sys;z=zipfile.ZipFile(sys.argv[1]);print(z.read('Metadata/Slic3r_PE_model.config').decode())", prusa3mf],
+        { encoding: "utf8", maxBuffer: 64 * 1024 * 1024 },
+      );
+      expect(prusaXml).toContain('value="ModelPart"');
+      expect(prusaXml).toContain('value="SupportBlocker"');
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  }, 25000);
+});
+
+describe("M6 Kit Tray Edition gates (exhaustive zero-support sweep, Decision 11 flag & Gate 4 coupons)", () => {
+  const load = (url: string) => K.parseStl(readFileSync(pub(url)));
+
+  it("Gate 1: exhaustive sweep across all M1 gate (a) options in both Pro & Snap editions with flatPackMode='sprue' has 0 needs-supports parts and 0 support plates", () => {
+    const valIdx = JSON.parse(readFileSync(pub("/kip/partspec-validation.json"), "utf8")).files as Record<string, any>;
+    const baseState = {
+      edition: "pro", category: "human", head: "kid", faceInsert: "sculpted", expr: "spark",
+      skin: "warm_peach", shirt: "off", pants: "off", hair: "off", hairColor: "chestnut",
+      hat: "off", hatColor: "cobalt_cap", back: "off", prop: "off", tail: "off",
+      vehicle: "none", vehCovers: true, racerKit: true, includeVehicle: true,
+    };
+
+    const states: any[] = [];
+    for (const edition of ["pro", "snap"]) {
+      for (const hd of W.WARDROBE_HEADS) states.push({ ...baseState, edition, category: hd.category, head: hd.id });
+      for (const h of W.HAIR_OPTIONS) states.push({ ...baseState, edition, category: "human", head: "kid", hair: h.id });
+      for (const h of [...W.HAT_OPTIONS.map((x: any) => x.id), "wizardHat"]) states.push({ ...baseState, edition, category: "human", head: "kid", hat: h });
+      for (const b of W.BACK_OPTIONS) states.push({ ...baseState, edition, back: b.id });
+      for (const p of [...W.PROP_OPTIONS.map((x: any) => x.id), "wand"]) states.push({ ...baseState, edition, prop: p });
+      for (const f of W.FACE_INSERT_MODES) states.push({ ...baseState, edition, category: "human", head: "kid", faceInsert: f.id });
+      for (const tail of ["off", "wag", "pro"]) states.push({ ...baseState, edition, tail });
+      for (const s of W.SHIRT_OPTIONS) states.push({ ...baseState, edition, category: "human", head: "kid", shirt: s.id });
+      for (const p of W.PANTS_OPTIONS) states.push({ ...baseState, edition, category: "human", head: "kid", pants: p.id });
+      for (const sk of W.SKIN_TONES) states.push({ ...baseState, edition, category: "human", head: "kid", skin: sk.id });
+      for (const vehicle of ["car", "truck", "scooter", "moto"]) {
+        for (const vehCovers of [true, false]) {
+          for (const racerKit of [true, false]) {
+            states.push({ ...baseState, edition, vehicle, vehCovers, racerKit, includeVehicle: true });
+          }
+        }
+      }
+      states.push({ ...baseState, edition, vehicle: "car", customHoodMode: "sdkCrest" });
+    }
+
+    // Cache mesh preparation per unique STL file so ~190 full tray plans execute deterministically in ~1.5 s
+    const geoCache = new Map<string, any>();
+    const prepFromBomEntry = (e: any) => {
+      let cached = geoCache.get(e.file);
+      if (!cached) {
+        cached = K.prepareItem(e, load(e.file), { verified: e.source === "partspec" });
+        geoCache.set(e.file, cached);
+      }
+      return {
+        ...cached,
+        id: e.id,
+        qty: e.qty,
+        role: e.role,
+        group: e.group || "character",
+        hex: e.hex,
+        colorName: e.colorName,
+        material: e.material || "PLA",
+        accents: Array.isArray(e.accents) ? e.accents : [],
+      };
+    };
+
+    const sprueProfile = P.clampProfile({ ...P.createDefaultProfile(), flatPackMode: "sprue" });
+    for (const st of states) {
+      const bom = B.resolveSceneBom(st, { validationIndex: valIdx });
+      expect(bom.unmapped).toEqual([]);
+      const prepared = bom.items.map(prepFromBomEntry);
+      const plan = K.planColorPlates(prepared, sprueProfile);
+      expect(plan.oversize, `oversize in ${st.edition}/${st.head}/${st.vehicle}`).toEqual([]);
+      expect(plan.plates.filter((pl: any) => pl.requiresSupports)).toHaveLength(0);
+      expect(plan.plates.flatMap((pl: any) => pl.placed).filter((p: any) => p.tier === "needs-supports")).toHaveLength(0);
+      expect(plan.supportSummary).toBe("All parts print without supports");
+    }
+
+    // Reference Leo Explorer look in Pro & Snap: 0 support plates; pegs/turrets loose by default, gated when allowPegsAndTurrets=true
+    const refProBom = B.resolveSceneBom({
+      ...baseState, edition: "pro", shirt: "spark_tee", pants: "cargo_shorts",
+      hair: "short_swept", hat: "ranger", back: "explorer", prop: "wrench", includeVehicle: false,
+    });
+    const refProPrep = refProBom.items.map(prepFromBomEntry);
+    const refProPlan = K.planColorPlates(refProPrep, sprueProfile);
+    const proPlaced = refProPlan.plates.flatMap((pl: any) => pl.placed);
+    expect(proPlaced).toHaveLength(33);
+    expect(proPlaced.filter((p: any) => p.sprueAnchored)).toHaveLength(20);
+    expect(proPlaced.filter((p: any) => !p.sprueAnchored)).toHaveLength(13);
+
+    const refSnapBom = B.resolveSceneBom({
+      ...baseState, edition: "snap", shirt: "spark_tee", pants: "cargo_shorts",
+      hair: "short_swept", hat: "ranger", back: "explorer", prop: "wrench", includeVehicle: false,
+    });
+    const refSnapPrep = refSnapBom.items.map(prepFromBomEntry);
+    const refSnapPlan = K.planColorPlates(refSnapPrep, sprueProfile);
+    const snapPlaced = refSnapPlan.plates.flatMap((pl: any) => pl.placed);
+    expect(snapPlaced).toHaveLength(25);
+    expect(snapPlaced.filter((p: any) => p.sprueAnchored)).toHaveLength(16);
+    expect(snapPlaced.filter((p: any) => !p.sprueAnchored)).toHaveLength(9);
+
+    // Decision 11: enabling allowPegsAndTurrets gates the pegs & turrets cleanly onto kit trays
+    const allGatedPlan = K.planColorPlates(refProPrep, sprueProfile, { sprueSpec: { allowPegsAndTurrets: true } });
+    for (const pl of allGatedPlan.plates) {
+      if (pl.sprue) {
+        const cardParts = pl.placed.filter((p: any) => p.sprueAnchored);
+        expect(K.checkSprueCard(pl.sprue, cardParts, { ...K.SPRUE_SPEC, allowPegsAndTurrets: true })).toEqual([]);
+      }
+    }
+    expect(allGatedPlan.plates.flatMap((pl: any) => pl.placed).filter((p: any) => p.sprueAnchored).length).toBeGreaterThan(20);
+  }, 120000);
+
+  it("Gate 4: builds watertight, zero-support physical break-off and peg/turret socket fit coupons", () => {
+    const breakoff = K.buildBreakoffCouponMesh();
+    expect(breakoff.necksMm).toEqual([0.3, 0.4, 0.6]);
+    for (const sh of breakoff.shells) {
+      expect(countUnmatchedHalfEdges(sh)).toBe(0);
+    }
+    expect(K.supportReport(breakoff.tri).overhangMm2).toBe(0);
+    expect(K.bounds(breakoff.tri).min[2]).toBeCloseTo(0, 4);
+
+    const fitCoupon = K.buildPegTurretFitCouponMesh({
+      pegTri: load("/kip/stls/spark_peg_big.stl"),
+      turretTri: load("/kip/stls/snap_turret.stl"),
+    });
+    expect(fitCoupon.anglesDeg).toEqual([0, 45, 90]);
+    expect(fitCoupon.socketDiametersMm).toEqual([9.0, 8.0]);
+    for (const sh of fitCoupon.shells) {
+      expect(countUnmatchedHalfEdges(sh)).toBe(0);
+    }
+    expect(K.supportReport(fitCoupon.tri).overhangMm2).toBeLessThan(1.0);
+    expect(K.bounds(fitCoupon.tri).min[2]).toBeCloseTo(0, 4);
+
+    const standaloneCoupon = K.buildPegTurretFitCouponMesh();
+    for (const sh of standaloneCoupon.shells) {
+      expect(countUnmatchedHalfEdges(sh)).toBe(0);
+    }
+    expect(K.supportReport(standaloneCoupon.tri).overhangMm2).toBe(0);
+  });
+});
+
+const ORCA_BIN = process.env.ORCA_SLICER_BIN || "/Applications/OrcaSlicer.app/Contents/MacOS/OrcaSlicer";
+describe.runIf(existsSync(ORCA_BIN))("live OrcaSlicer CLI verification gate", () => {
+  const load = (url: string) => K.parseStl(readFileSync(pub(url)));
+
+  it("Gate 3: slices a whole Kip in Kit tray (sprue) mode with ZERO '; FEATURE: Support' lines on every plate, plus proves socket blockers on overhanging custom parts", () => {
+    // 1. Whole Leo Explorer Kip in Kit tray mode -> 0 support features on EVERY plate!
+    const state = {
+      edition: "pro", category: "human", head: "kid", faceInsert: "sculpted", expr: "spark",
+      skin: "warm_peach", shirt: "spark_tee", pants: "cargo_shorts",
+      hair: "short_swept", hairColor: "chestnut", hat: "ranger", hatColor: "cobalt_cap",
+      back: "explorer", prop: "wrench", tail: "wag",
+      vehicle: "none", vehCovers: true, racerKit: true, includeVehicle: false,
+    };
+    const bom = B.resolveSceneBom(state);
+    const prepared = bom.items.map((e: any) => K.prepareItem(e, load(e.file), { verified: e.source === "partspec" }));
+    const prof = P.clampProfile({ ...P.createDefaultProfile(), flatPackMode: "sprue" });
+    const wholeKipPlan = K.planColorPlates(prepared, prof);
+    expect(wholeKipPlan.supportSummary).toBe("All parts print without supports");
+    expect(wholeKipPlan.plates.every((pl: any) => !pl.requiresSupports)).toBe(true);
+
+    // 2. Overhanging torso variant (with overhangs inside shoulder/back-dock SOCKET_GUARD_BOXES + 1 unguarded chest overhang)
+    const baseTorso = load("/kip/stls/torso.stl");
+    const sphereAt = (cx: number, cy: number, cz: number, r: number) => {
+      const out: number[] = [];
+      const rings = 12, segs = 18;
+      const pt = (i: number, j: number): V3 => {
+        const phi = (Math.PI * i) / rings, th = (2 * Math.PI * (j % segs)) / segs, sp = Math.sin(phi);
+        return [cx + r * sp * Math.cos(th), cy + r * sp * Math.sin(th), cz + r * Math.cos(phi)];
+      };
+      for (let i = 0; i < rings; i++) {
+        for (let j = 0; j < segs; j++) {
+          if (i === 0) out.push(...pt(0, 0), ...pt(1, j + 1), ...pt(1, j));
+          else if (i === rings - 1) out.push(...pt(i, j), ...pt(i, j + 1), ...pt(rings, 0));
+          else out.push(...quad(pt(i, j), pt(i + 1, j), pt(i + 1, j + 1), pt(i, j + 1)));
+        }
+      }
+      return outward(out);
+    };
+    const overTorsoTri = Float32Array.from([
+      ...baseTorso,
+      ...sphereAt(-13.2, 0.0, 95.5, 3.0), // strictly inside left shoulder SOCKET_GUARD_BOX
+      ...sphereAt(13.2, 0.0, 95.5, 3.0),  // strictly inside right shoulder SOCKET_GUARD_BOX
+      ...sphereAt(0.0, 0.0, 102.2, 2.8),  // strictly inside neck SOCKET_GUARD_BOX
+      ...sphereAt(-12.0, 0.0, 66.5, 3.0), // strictly inside left hip SOCKET_GUARD_BOX
+      ...sphereAt(12.0, 0.0, 66.5, 3.0),  // strictly inside right hip SOCKET_GUARD_BOX
+      ...sphereAt(0.0, 10.2, 88.0, 2.8),  // strictly inside back central bore SOCKET_GUARD_BOX
+    ]);
+    const overTorsoItem = K.prepareItem({ id: "torso", qty: 1, source: "kip.scad", hex: "#F4EFE6" }, overTorsoTri);
+    const supPlan = K.planColorPlates([overTorsoItem], prof);
+    const blockedPlate = supPlan.plates[0]!;
+    const unblockedPlate = {
+      ...blockedPlate,
+      placed: blockedPlate.placed.map((p: any) => ({ ...p, blockerTri: null })),
+    };
+
+    const dir = mkdtempSync(join(tmpdir(), "kip-orca-cli-"));
+    try {
+      const kipProjPath = join(dir, "whole-kip-kit-tray.3mf");
+      const blockedPath = join(dir, "torso-blocked.3mf");
+      const unblockedPath = join(dir, "torso-unblocked.3mf");
+      const outKip = join(dir, "out-kip");
+      const outBlocked = join(dir, "out-blocked");
+      const outUnblocked = join(dir, "out-unblocked");
+
+      writeFileSync(kipProjPath, K.to3mfProject(wholeKipPlan.plates, prof, { title: "Whole Kip Kit Tray" }));
+      writeFileSync(blockedPath, K.to3mfProject([blockedPlate], prof, { title: "Torso Blocked" }));
+      writeFileSync(unblockedPath, K.to3mfProject([unblockedPlate], prof, { title: "Torso Unblocked" }));
+
+      execFileSync(ORCA_BIN, ["--slice", "0", "--outputdir", outKip, kipProjPath], { stdio: "pipe" });
+      execFileSync(ORCA_BIN, ["--slice", "0", "--outputdir", outBlocked, blockedPath], { stdio: "pipe" });
+      execFileSync(ORCA_BIN, ["--slice", "0", "--outputdir", outUnblocked, unblockedPath], { stdio: "pipe" });
+
+      const kipGcodes = readdirSync(outKip).filter((f) => f.endsWith(".gcode")).sort();
+      expect(kipGcodes).toHaveLength(wholeKipPlan.plates.length);
+
+      for (let idx = 0; idx < kipGcodes.length; idx++) {
+        const gcode = readFileSync(join(outKip, kipGcodes[idx]!), "utf8");
+        expect((gcode.match(/; FEATURE: Support\b/g) ?? []).length, `plate ${idx + 1} (${kipGcodes[idx]}) support lines`).toBe(0);
+        const pl = wholeKipPlan.plates[idx]!;
+        if (pl.sprue) {
+          const firstLayer = gcode.split("; CHANGE_LAYER").find((blk) => blk.includes("; Z_HEIGHT: 0.2")) ?? "";
+          const l1Objects = firstLayer.match(/; printing object [^\r\n]+/g) ?? [];
+          const looseCount = pl.placed.filter((p: any) => !p.sprueAnchored).length;
+          expect(l1Objects, `plate ${idx + 1} layer-1 object union`).toHaveLength(1 + looseCount);
+          expect(l1Objects.some((s) => s.includes(`kit_card_p${idx + 1}_`))).toBe(true);
+        }
+      }
+
+      const blockedGcode = readFileSync(join(outBlocked, readdirSync(outBlocked).find((f) => f.endsWith(".gcode"))!), "utf8");
+      const unblockedGcode = readFileSync(join(outUnblocked, readdirSync(outUnblocked).find((f) => f.endsWith(".gcode"))!), "utf8");
+      const blockedSupBlocks = (blockedGcode.match(/; FEATURE: Support\b/g) ?? []).length;
+      const unblockedSupBlocks = (unblockedGcode.match(/; FEATURE: Support\b/g) ?? []).length;
+      expect(blockedSupBlocks).toBeGreaterThan(20);
+      expect(blockedSupBlocks).toBeLessThan(unblockedSupBlocks * 0.5);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  }, 120000);
+
+  it("Gate 5: a support-free part stays support-free when the user's own profile has supports on (explicit enable_support = 0)", () => {
+    // Found on a real calibration print (2026-11-01): the writer left the support key out for parts it verified as support-free, so a profile
+    // with supports on (Orca "normal(auto)", threshold 30) filled every bridged socket ceiling with support that was very hard to remove.
+    const item = K.prepareItem({ id: "bumper_horns", qty: 1, source: "partspec", hex: "#F4EFE6" }, load("/kip/partspec/toyventor_bumper_horns_S.stl"), { verified: true });
+    expect(item.tier).toBe("support-free");
+    const prof = P.clampProfile({ ...P.createDefaultProfile(), flatPackMode: "off" });
+    const plan = K.planColorPlates([item], prof);
+    expect(plan.plates.every((pl: any) => !pl.requiresSupports)).toBe(true);
+
+    const dir = mkdtempSync(join(tmpdir(), "kip-orca-supports-on-"));
+    try {
+      const srcPath = join(dir, "src.3mf");
+      writeFileSync(srcPath, K.to3mfProject(plan.plates, prof, { title: "Support override" }));
+      // Rewrite the project settings to the user's profile (supports on). The control also drops our per-object key, so the test cannot
+      // pass just because Orca ignored the injected profile.
+      const py = "import zipfile,sys,json,re\n"
+        + "src,dst,strip=sys.argv[1],sys.argv[2],sys.argv[3]=='1'\n"
+        + "with zipfile.ZipFile(src) as zi, zipfile.ZipFile(dst,'w',zipfile.ZIP_STORED) as zo:\n"
+        + "    for it in zi.infolist():\n"
+        + "        d=zi.read(it.filename)\n"
+        + "        if it.filename=='Metadata/project_settings.config':\n"
+        + "            c=json.loads(d); c.update({'enable_support':'1','support_type':'normal(auto)','support_threshold_angle':'30','support_on_build_plate_only':'0'}); d=json.dumps(c).encode()\n"
+        + "        if strip and it.filename=='Metadata/model_settings.config':\n"
+        + "            d=re.sub(rb'<metadata key=\"enable_support\" value=\"0\"/>',b'',d)\n"
+        + "        zo.writestr(it,d)\n";
+      const supportLines = (tag: string, strip: boolean) => {
+        const dst = join(dir, `${tag}.3mf`), out = join(dir, `out-${tag}`);
+        execFileSync("python3", ["-c", py, srcPath, dst, strip ? "1" : "0"]);
+        execFileSync(ORCA_BIN, ["--slice", "0", "--outputdir", out, dst], { stdio: "pipe" });
+        const gcode = readFileSync(join(out, readdirSync(out).find((f) => f.endsWith(".gcode"))!), "utf8");
+        return (gcode.match(/; FEATURE: Support\b/g) ?? []).length;
+      };
+      let keyed = -1, control = -1;
+      try {
+        keyed = supportLines("keyed", false);
+        control = supportLines("control", true);
+      } catch (e: any) {
+        if (e.code === "ENOENT") return; // no python3 to rewrite the zip
+        throw e;
+      }
+      expect(control, "control (no per-object key) must show supports, or this gate proves nothing").toBeGreaterThan(0);
+      expect(keyed, "explicit enable_support = 0 must beat the profile").toBe(0);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  }, 180000);
 });
