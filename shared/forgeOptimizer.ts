@@ -1,6 +1,6 @@
 /**
  * Shared contract for two-stage dynamic / AI-generated part optimization:
- *   Stage 1 (`preview_ready`): ~80-350 ms Web LOD + KHR_mesh_quantization GLB preview
+ *   Stage 1 (`preview_ready`): ~20-40 ms warm Web LOD + KHR_mesh_quantization GLB preview
  *   Stage 2 (`print_ready` | `digital_only`): background V1-V10 gate + finish-safe Print STL + slicer_recipe
  */
 
@@ -15,17 +15,20 @@ export type ForgeOptimizationStatus =
   | "digital_only"
   | "failed";
 
-export type ForgeSlot =
-  | "crown"
-  | "head"
-  | "back"
-  | "hand"
-  | "front"
-  | "hood"
-  | "roof"
-  | "rollbar"
-  | "spoiler"
-  | "exhaust";
+export const FORGE_SLOTS = [
+  "crown",
+  "head",
+  "back",
+  "hand",
+  "front",
+  "hood",
+  "roof",
+  "rollbar",
+  "spoiler",
+  "exhaust",
+] as const;
+
+export type ForgeSlot = (typeof FORGE_SLOTS)[number];
 
 export interface ForgeLoftSlice {
   z: number;
@@ -43,7 +46,6 @@ export interface ForgeRecipeV1 {
   stat?: "Speed" | "Spin" | "Torque" | "Glow";
   behavior?: string;
   slot: ForgeSlot;
-  legalize?: boolean;
   shape:
     | { kind?: "loft"; slices: ForgeLoftSlice[]; height_mm?: number }
     | { kind: "star2d"; points?: number; outer_r_mm?: number; inner_r_mm?: number; grip_tu?: number }
@@ -68,6 +70,7 @@ export interface ForgeFastPreviewResponse {
   status: "preview_ready";
   part_id: string;
   job_id: string | null;
+  draft_artifact: string;
   glb_size: number;
   orig_tris: number;
   web_verts: number;
@@ -75,7 +78,6 @@ export interface ForgeFastPreviewResponse {
   finish_class: "show_curved" | "precision_gear_pin" | "prismatic_structural";
   elapsed_ms: number;
   glb_base64?: string;
-  draft_glb_file?: string;
 }
 
 export interface ForgeOptimizationJob {
@@ -85,8 +87,8 @@ export interface ForgeOptimizationJob {
   status: ForgeOptimizationStatus;
   created_at: number;
   updated_at: number;
-  stl_file: string | null;
-  glb_file: string | null;
+  stl_artifact: string | null;
+  glb_artifact: string | null;
   content_hash: string | null;
   slicer_recipe: PartSlicerRecipe | null;
   metrics: {

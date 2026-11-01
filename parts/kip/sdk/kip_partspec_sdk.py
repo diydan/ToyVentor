@@ -380,33 +380,57 @@ def validate_and_export(
         out_p.mkdir(parents=True, exist_ok=True)
         stl_path = out_p / entry["file"]
         manifest_path = out_p / f"{spec['id']}.partspec.json"
-        tm.export(stl_path)
         if optimize:
+            import io
+
             if scripts_dir not in sys.path:
                 sys.path.insert(0, scripts_dir)
             import optimize_assets  # type: ignore
 
+            raw_buf = io.BytesIO()
+            tm.export(raw_buf, file_type="stl")
             glb_path = out_p / f"{spec['id']}.glb"
             opt = optimize_assets.optimize_single_part(
                 spec["id"],
-                stl_path=stl_path,
+                stl_bytes=raw_buf.getvalue(),
                 out_stl_path=stl_path,
                 out_glb_path=glb_path,
                 slot=spec.get("slot"),
                 validation_dir=PARTSPEC_DIR / "validation",
+                verify_preprint=True,
+                partspec_dir=PARTSPEC_DIR,
             )
-            opt_summary = {
-                "content_hash": opt["content_hash"],
-                "finish_class": opt["finish_class"],
-                "print_simplify_mm": opt["print_simplify_mm"],
-                "web_simplify_mm": opt["web_simplify_mm"],
-                "web_crease_deg": opt["web_crease_deg"],
-                "metrics": opt["metrics"],
-            }
-            entry["glb_file"] = glb_path.name
-            entry["print"]["slicer_recipe"] = opt["slicer_recipe"]
-            entry["asset_optimization"] = opt_summary
-        manifest_path.write_text(json.dumps(entry, indent=2) + "\n")
+            if not opt["print_ok"]:
+                ok = False
+                stl_path = None
+                for pf in opt["preprint_failures"]:
+                    blocking_fail.append(
+                        {
+                            "id": "V_post_simplify_preprint",
+                            "level": "block",
+                            "result": "fail",
+                            "detail": pf,
+                        }
+                    )
+                if not export_web_on_fail and glb_path.exists():
+                    glb_path.unlink(missing_ok=True)
+                    glb_path = None
+            else:
+                opt_summary = {
+                    "content_hash": opt["content_hash"],
+                    "finish_class": opt["finish_class"],
+                    "print_simplify_mm": opt["print_simplify_mm"],
+                    "web_simplify_mm": opt["web_simplify_mm"],
+                    "web_crease_deg": opt["web_crease_deg"],
+                    "metrics": opt["metrics"],
+                }
+                entry["glb_file"] = glb_path.name
+                entry["print"]["slicer_recipe"] = opt["slicer_recipe"]
+                entry["asset_optimization"] = opt_summary
+                manifest_path.write_text(json.dumps(entry, indent=2) + "\n")
+        else:
+            tm.export(stl_path)
+            manifest_path.write_text(json.dumps(entry, indent=2) + "\n")
     elif out_dir is not None and not ok and export_web_on_fail:
         # Digital-only graceful degradation: emit quantized Web GLB preview without unlocking print STL.
         out_p = Path(out_dir)

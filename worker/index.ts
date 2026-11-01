@@ -17,6 +17,7 @@ import { readCappedJson } from "./body";
 import { makeSkin, samConfigured, segmentToy, type MetaEnv } from "./meta";
 import {
   forgeOptimizerConfigured,
+  handleForgeArtifact,
   handleForgeJobStatus,
   handleForgePreview,
   type ForgeOptimizerEnv,
@@ -207,6 +208,11 @@ export default {
     if (url.pathname.startsWith("/api/forge/jobs/")) {
       const jobId = url.pathname.slice("/api/forge/jobs/".length);
       return handleForgeJobStatus(request, env, jobId);
+    }
+
+    if (url.pathname.startsWith("/api/forge/artifacts/")) {
+      const artifactName = url.pathname.slice("/api/forge/artifacts/".length);
+      return handleForgeArtifact(request, env, artifactName);
     }
 
     if (url.pathname === "/api/scan") {

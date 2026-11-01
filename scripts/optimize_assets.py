@@ -630,7 +630,7 @@ def optimize_single_part(
     slot: str | None = None,
     manifest_doc: dict[str, Any] | None = None,
     validation_dir: Path | None = None,
-    verify_preprint: bool = False,
+    verify_preprint: bool = True,
     partspec_dir: Path | None = None,
 ) -> dict[str, Any]:
     """Optimize a single dynamic/custom/AI part for both Print STL and Web GLB tiers."""
@@ -723,12 +723,46 @@ def optimize_single_part(
     preprint_failures: list[str] = []
     if verify_preprint:
         ps_dir = partspec_dir or (Path(__file__).resolve().parent.parent / "parts" / "partspec")
-        import tempfile
-
-        with tempfile.TemporaryDirectory(prefix="tv-opt-check-") as td:
-            tmp_stl = Path(td) / f"{part_id}.stl"
-            tmp_stl.write_bytes(print_stl_bytes)
-            preprint_failures = _verify_one_preprint_worker((str(tmp_stl), str(ps_dir)))
+        preprint_failures = _check_blocking_preprint_in_memory(
+            part_id,
+            p_verts,
+            p_faces,
+            m_print,
+            ps_dir,
+            fail_fast=False,
+        )
+        # If simplification nudged a borderline triangle across a preprint gate, re-test the
+        # bed-snapped unsimplified Manifold (with fail_fast=True so inherently non-printable
+        # meshes reject in milliseconds) before declaring the mesh unprintable.
+        if preprint_failures and print_tris < orig_tris:
+            m_fallback = snap_manifold_to_bed(m_orig)
+            fb_v, fb_f = manifold_to_arrays(m_fallback)
+            fb_failures = _check_blocking_preprint_in_memory(
+                part_id,
+                fb_v,
+                fb_f,
+                m_fallback,
+                ps_dir,
+                fail_fast=True,
+            )
+            if not fb_failures:
+                p_verts, p_faces = fb_v, fb_f
+                print_stl_bytes = encode_binary_stl_bytes(p_verts, p_faces)
+                print_tris = int(len(fb_f))
+                content_hash = hashlib.sha256(print_stl_bytes).hexdigest()[:12]
+                p_bounds = np.vstack([p_verts.min(axis=0), p_verts.max(axis=0)])
+                p_extents = p_bounds[1] - p_bounds[0]
+                p_vol = float(m_fallback.volume())
+                max_bbox_delta = float(np.max(np.abs(p_extents - orig_extents)))
+                rel_vol_delta = abs(p_vol - orig_vol) / max(abs(orig_vol), 1e-6)
+                recipe, telemetry = compute_slicer_recipe_and_telemetry(
+                    part_id,
+                    finish_class,
+                    p_verts,
+                    p_faces,
+                    validation_dir,
+                )
+                preprint_failures = []
 
     print_ok = len(preprint_failures) == 0
 
@@ -741,7 +775,7 @@ def optimize_single_part(
 
     return {
         "part_id": part_id,
-        "content_hash": content_hash,
+        "content_hash": content_hash if print_ok else None,
         "source_sha256": src_sha256,
         "finish_class": finish_class,
         "print_ok": print_ok,
@@ -749,7 +783,7 @@ def optimize_single_part(
         "print_simplify_mm": round(eps_print, 4),
         "web_simplify_mm": round(eps_web, 4),
         "web_crease_deg": crease_deg,
-        "slicer_recipe": recipe,
+        "slicer_recipe": recipe if print_ok else None,
         "stl_bytes": print_stl_bytes if print_ok else None,
         "glb_bytes": glb_bytes,
         "metrics": {
@@ -767,6 +801,80 @@ def optimize_single_part(
     }
 
 
+def _check_blocking_preprint_in_memory(
+    part_id: str,
+    verts: np.ndarray,
+    faces: np.ndarray,
+    mani: manifold3d.Manifold | None,
+    partspec_dir: Path,
+    *,
+    fail_fast: bool = False,
+) -> list[str]:
+    """Evaluate all blocking geometry gates (V1, V2, V3, V4, V5@0.20/0.16mm, V6, V10) in memory."""
+    ps_str = str(partspec_dir)
+    if ps_str not in sys.path:
+        sys.path.insert(0, ps_str)
+    import preprint_check as ppc  # type: ignore
+    import toyventor_ledge as _tl  # type: ignore
+
+    prof = json.loads((partspec_dir / "print_profiles" / "fdm_pla_0.4.json").read_text("utf-8"))
+    lim = prof["limits"]
+    bed = prof["printer"]["bed_mm"]
+
+    tm = trimesh.Trimesh(vertices=verts, faces=faces, process=True)
+    lo, hi = tm.bounds
+    size = hi - lo
+
+    errs: list[str] = []
+    bodies = len(tm.split(only_watertight=False))
+    mani_ok = mani is not None and mani.status() == manifold3d.Error.NoError and mani.num_tri() > 0
+    if not (tm.is_watertight and tm.is_winding_consistent and bodies == 1 and mani_ok):
+        errs.append("V1_mesh_sound")
+        if fail_fast:
+            return errs
+
+    if abs(float(lo[2])) >= 1e-3:
+        errs.append("V2_on_bed")
+        if fail_fast:
+            return errs
+
+    if not all(float(size[i]) <= float(bed[i]) for i in range(3)):
+        errs.append("V3_fits_bed")
+        if fail_fast:
+            return errs
+
+    if ppc.steep_overhang_area(tm, lim) >= lim["steep_area_tolerance_mm2"]:
+        errs.append("V4_no_steep_overhang")
+        if fail_fast:
+            return errs
+
+    if not mani_ok or mani is None:
+        errs.append("V5_no_floating_islands")
+        return errs
+
+    _tl.CANTILEVER_MM = lim.get("ledge_cantilever_mm", 1.0)
+    ledge_area, _ = _tl.ledges(tm, mani, lim["max_bridge_mm"], lim["first_layer_exclusion_mm"])
+    if ledge_area >= lim.get("ledge_max_mm2", 1.0):
+        errs.append("V10_no_ledges")
+        if fail_fast:
+            return errs
+
+    spans = ppc.bridge_spans(tm, lim)
+    if max((s["span_mm"] for s in spans), default=0.0) > lim["max_bridge_mm"]:
+        errs.append("V6_bridge_span")
+        if fail_fast:
+            return errs
+
+    for tag, lh in (("0.20mm", 0.20), ("0.16mm", 0.16)):
+        islands, _, _, _ = ppc.layer_analysis(mani, lh, lim, float(size[2]))
+        if islands:
+            errs.append(f"V5_no_floating_islands@{tag}")
+            if fail_fast:
+                return errs
+
+    return errs
+
+
 def _verify_one_preprint_worker(task: tuple[str, str]) -> list[str]:
     stl_str, partspec_str = task
     if partspec_str not in sys.path:
@@ -776,7 +884,7 @@ def _verify_one_preprint_worker(task: tuple[str, str]) -> list[str]:
     partspec_dir = Path(partspec_str)
     f = Path(stl_str)
     prof_020 = json.loads((partspec_dir / "print_profiles" / "fdm_pla_0.4.json").read_text("utf-8"))
-    prof_016 = dict(prof_020, layer_height_mm=0.16)
+    prof_016 = dict(prof_020, process=dict(prof_020["process"], layer_height_mm=0.16))
 
     errs: list[str] = []
     for tag, prof in (("0.20mm", prof_020), ("0.16mm", prof_016)):

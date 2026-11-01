@@ -1,10 +1,10 @@
-import { execFileSync, spawn } from "node:child_process";
+import { execFileSync, spawn, spawnSync } from "node:child_process";
 import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { clampAdvisorProposal, type OptimizationManifest } from "../scripts/llm-lod-advisor";
 import type { ForgeFastPreviewResponse, ForgeOptimizationJob } from "../shared/forgeOptimizer";
 import { allParts, glbFileFor, stlFileFor } from "../src/lib/catalog";
@@ -13,14 +13,105 @@ import {
   formatToyFinishRecipe,
   slicerRecipeForPart,
 } from "../src/lib/printRecipe";
-import { handleForgeJobStatus, handleForgePreview } from "../worker/forgeOptimizer";
+import {
+  handleForgeArtifact,
+  handleForgeJobStatus,
+  handleForgePreview,
+  resetForgeRateLimit,
+  type ForgeOptimizerEnv,
+} from "../worker/forgeOptimizer";
+import worker from "../worker/index";
+import type { D1Like } from "../worker/ownership";
 
 const ROOT = process.cwd();
 const STL_DIR = join(ROOT, "public/parts-stl");
 const GLB_DIR = join(ROOT, "public/parts-glb");
 const MANIFEST_PATH = join(ROOT, "parts/partspec/asset_optimization_manifest.json");
 
+const DEVICE_A = "12345678-1234-1234-1234-123456789abc";
+const DEVICE_B = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
+
+function resolvePythonVenv(): string | null {
+  const local = resolve(ROOT, "parts/partspec/.venv/bin/python3");
+  if (existsSync(local)) return local;
+  try {
+    const commonGit = execFileSync("git", ["rev-parse", "--git-common-dir"], {
+      cwd: ROOT,
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "ignore"],
+    }).trim();
+    const shared = resolve(ROOT, commonGit, "..", "parts/partspec/.venv/bin/python3");
+    if (existsSync(shared)) return shared;
+  } catch {
+    // ignore
+  }
+  return null;
+}
+
+const PYTHON_VENV = resolvePythonVenv();
+
+function fakeDb(): D1Like {
+  const settings = new Map<string, string>();
+  return {
+    prepare: (sql) => ({
+      bind: (...values: unknown[]) => ({
+        run: async () => {
+          if (sql.includes("INSERT INTO parent_settings")) {
+            const [id, text] = values as [string, string];
+            if (sql.includes("DO NOTHING")) {
+              if (!settings.has(id)) settings.set(id, text);
+            } else {
+              settings.set(id, text);
+            }
+          }
+          return {};
+        },
+        all: async () => {
+          if (sql.includes("FROM parent_settings")) {
+            const [id] = values as [string];
+            const v = settings.get(id);
+            return { results: v !== undefined ? [{ settings_json: v }] : [] };
+          }
+          return { results: [] };
+        },
+      }),
+    }),
+  };
+}
+
+async function mintParentProof(env: ForgeOptimizerEnv, deviceId: string): Promise<string> {
+  const callGate = (body: object) =>
+    worker.fetch(
+      new Request("http://local/api/parent/gate", {
+        method: "POST",
+        headers: { "content-type": "application/json", "x-device-id": deviceId },
+        body: JSON.stringify(body),
+      }),
+      env as never,
+    );
+  const ch = (await (await callGate({ action: "challenge" })).json()) as {
+    a: number;
+    b: number;
+    challengeToken: string;
+  };
+  const verified = await callGate({
+    action: "verify",
+    challengeToken: ch.challengeToken,
+    answer: ch.a * ch.b,
+  });
+  return ((await verified.json()) as { proofToken: string }).proofToken;
+}
+
 describe("Parts asset optimization (Print STL + Web GLB + Toy-Finish Recipes)", () => {
+  beforeEach(() => {
+    resetForgeRateLimit();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    resetForgeRateLimit();
+  });
+
   it("keeps public/parts-glb under 5 MB total and 250 KB per file using KHR_mesh_quantization", () => {
     const glbFiles = readdirSync(GLB_DIR).filter((f) => f.endsWith(".glb"));
     expect(glbFiles.length).toBeGreaterThanOrEqual(45);
@@ -95,7 +186,6 @@ describe("Parts asset optimization (Print STL + Web GLB + Toy-Finish Recipes)", 
       const size = new THREE.Vector3();
       box.getSize(size);
 
-      // STL Z-up (x, y, z) maps to GLB Y-up (x, z, -y) in metres -> sizeMm = [x, z, y]
       if (part?.bboxMm) {
         expect(Math.abs(size.x * 1000 - part.bboxMm[0])).toBeLessThan(0.35);
         expect(Math.abs(size.z * 1000 - part.bboxMm[1])).toBeLessThan(0.35);
@@ -130,7 +220,6 @@ describe("Parts asset optimization (Print STL + Web GLB + Toy-Finish Recipes)", 
     expect(brick?.slicer_recipe.ironing).toBe("all_top");
     expect(brick?.slicer_recipe.ironing_inset_mm).toBeCloseTo(0.21, 2);
 
-    // UI helpers surface 0.12 / 0.16 mm smooth PEI + wall order + seam + ironing
     const domePart = allParts.find((p) => p.id === "dome-s-2x2")!;
     const brickPart = allParts.find((p) => p.id === "brick-s-2x2")!;
     expect(formatShortPrintTag(domePart)).toContain("0.12 mm PLA");
@@ -162,9 +251,9 @@ describe("Parts asset optimization (Print STL + Web GLB + Toy-Finish Recipes)", 
       },
     };
     const clamped = clampAdvisorProposal(baseEntry, {
-      print_simplify_mm: 0.05, // way too coarse for curved show face -> must clamp to 0.008!
-      web_simplify_mm: 0.5, // must clamp to 0.16
-      web_crease_deg: 95, // must clamp to 48
+      print_simplify_mm: 0.05,
+      web_simplify_mm: 0.5,
+      web_crease_deg: 95,
       parent_tip: "Print like Lego bricks on Bambu smooth PEI at 30 mm/s.",
       rationale: "Smooth Duplo dome.",
     });
@@ -200,59 +289,239 @@ describe("Parts asset optimization (Print STL + Web GLB + Toy-Finish Recipes)", 
     }
   });
 
-  it(
-    "serves instant fast-preview quantized GLB and completes background print+web optimization via Worker proxy",
-    async () => {
-      // 1. Unconfigured env returns 503 cleanly
-      const unconfRes = await handleForgePreview(
-        new Request("https://toyventor.test/api/forge/preview", {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({ part_id: "test" }),
-        }),
-        {},
-      );
-      expect(unconfRes.status).toBe(503);
+  it("enforces parent gate, rate limits, non-loopback token requirement, payload allowlist, and upstream error mapping in Worker", async () => {
+    const db = fakeDb();
+    const baseEnv: ForgeOptimizerEnv = {
+      DB: db,
+      PARENT_GATE_SECRET: "gate-secret-for-tests",
+      FORGE_OPTIMIZER_URL: "http://127.0.0.1:8791",
+    };
+    const proofA = await mintParentProof(baseEnv, DEVICE_A);
 
-      // 2. Brand-term guard rejects forbidden names before hitting Python upstream
-      const brandRes = await handleForgePreview(
-        new Request("https://toyventor.test/api/forge/preview", {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({
-            recipe: {
-              name: "Lego Star Crown",
-              slot: "crown",
-              shape: { slices: [{ z: 0, w: 22, d: 11, r: 4 }, { z: 12, w: 14, d: 10, r: 3 }] },
-            },
+    const validRecipeBody = {
+      recipe: {
+        name: "Comet Crown",
+        slot: "crown",
+        shape: {
+          slices: [
+            { z: 0, w: 23.4, d: 11.4, r: 4.5 },
+            { z: 12, w: 14.0, d: 10.0, r: 3.5 },
+          ],
+        },
+      },
+    };
+
+    // 1. Disabled when URL unset OR when non-loopback URL lacks FORGE_OPTIMIZER_TOKEN
+    expect(
+      (
+        await handleForgePreview(
+          new Request("http://local/api/forge/preview", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify(validRecipeBody),
           }),
+          { DB: db, PARENT_GATE_SECRET: "gate-secret-for-tests" },
+        )
+      ).status,
+    ).toBe(503);
+
+    expect(
+      (
+        await handleForgePreview(
+          new Request("http://local/api/forge/preview", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify(validRecipeBody),
+          }),
+          {
+            DB: db,
+            PARENT_GATE_SECRET: "gate-secret-for-tests",
+            FORGE_OPTIMIZER_URL: "https://optimizer.toyventor.internal",
+          },
+        )
+      ).status,
+    ).toBe(503);
+
+    // 2. Parent gate enforced: missing device/proof or wrong device's proof -> 401
+    const unauthedCases: Record<string, string>[] = [
+      { "content-type": "application/json" },
+      { "content-type": "application/json", "x-device-id": DEVICE_A },
+      { "content-type": "application/json", "x-device-id": DEVICE_B, "x-parent-proof": proofA },
+    ];
+    for (const headers of unauthedCases) {
+      const res = await handleForgePreview(
+        new Request("http://local/api/forge/preview", {
+          method: "POST",
+          headers,
+          body: JSON.stringify(validRecipeBody),
         }),
-        { FORGE_OPTIMIZER_URL: "http://127.0.0.1:9" },
+        baseEnv,
       );
-      expect(brandRes.status).toBe(422);
+      expect(res.status).toBe(401);
+      expect(((await res.json()) as { status: string }).status).toBe("gate-required");
+    }
 
-      // 3. Spawn warm forge_optimizer_daemon.py on ephemeral port
-      let py = resolve(ROOT, "parts/partspec/.venv/bin/python3");
-      if (!existsSync(py)) {
-        const commonGit = execFileSync("git", ["rev-parse", "--git-common-dir"], {
-          cwd: ROOT,
-          encoding: "utf8",
-        }).trim();
-        py = resolve(ROOT, commonGit, "..", "parts/partspec/.venv/bin/python3");
+    // 3. Rejects stl_path, verify_preprint, legalize:false, >16 slices, and brand names BEFORE calling fetch
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    try {
+      const authedHeaders = {
+        "content-type": "application/json",
+        "x-device-id": DEVICE_A,
+        "x-parent-proof": proofA,
+      };
+      const domeB64 = readFileSync(join(STL_DIR, "dome-s-2x2.stl")).toString("base64");
+
+      for (const badBody of [
+        { stl_path: "/etc/passwd", part_id: "leak" },
+        { stl_base64: domeB64, verify_preprint: false },
+        { recipe: { ...validRecipeBody.recipe, legalize: false } },
+        {
+          recipe: {
+            name: "Too Many Slices",
+            slot: "crown",
+            shape: {
+              slices: Array.from({ length: 18 }, (_, i) => ({ z: i * 2, w: 18, d: 12, r: 3 })),
+            },
+          },
+        },
+        { recipe: { ...validRecipeBody.recipe, name: "Lego Star Hat" } },
+      ]) {
+        resetForgeRateLimit();
+        const res = await handleForgePreview(
+          new Request("http://local/api/forge/preview", {
+            method: "POST",
+            headers: authedHeaders,
+            body: JSON.stringify(badBody),
+          }),
+          baseEnv,
+        );
+        expect(res.status).toBe(422);
       }
-      if (!existsSync(py)) return;
+      expect(fetchSpy).not.toHaveBeenCalled();
 
+      // 4. Upstream error mapping: non-JSON 502 -> "unavailable" (NOT "unreachable"), TimeoutError -> 504 "timeout", scrub extra path fields
+      resetForgeRateLimit();
+      fetchSpy.mockResolvedValueOnce(
+        new Response("<html>502 Bad Gateway SECRET_PATH=/var/app</html>", {
+          status: 502,
+          headers: { "content-type": "text/html" },
+        }),
+      );
+      const nonJsonRes = await handleForgePreview(
+        new Request("http://local/api/forge/preview", {
+          method: "POST",
+          headers: authedHeaders,
+          body: JSON.stringify(validRecipeBody),
+        }),
+        baseEnv,
+      );
+      expect(nonJsonRes.status).toBe(502);
+      const nonJsonPayload = await nonJsonRes.text();
+      expect(nonJsonPayload).toContain('"unavailable"');
+      expect(nonJsonPayload).not.toContain("SECRET_PATH");
+
+      const timeoutErr = new Error("timed out");
+      timeoutErr.name = "TimeoutError";
+      fetchSpy.mockRejectedValueOnce(timeoutErr);
+      const timeoutRes = await handleForgePreview(
+        new Request("http://local/api/forge/preview", {
+          method: "POST",
+          headers: authedHeaders,
+          body: JSON.stringify(validRecipeBody),
+        }),
+        baseEnv,
+      );
+      expect(timeoutRes.status).toBe(504);
+      expect(((await timeoutRes.json()) as { status: string }).status).toBe("timeout");
+
+      // 5. Rate limit: 3 previews/min/device -> 4th returns 429 slow-down
+      resetForgeRateLimit();
+      fetchSpy.mockImplementation(async () =>
+        new Response(
+          JSON.stringify({
+            ok: true,
+            status: "preview_ready",
+            part_id: "custom_comet_crown",
+            job_id: null,
+            draft_artifact: "custom_comet_crown.12345678.draft.glb",
+            draft_glb_file: "/should/be/scrubbed/out.glb",
+            glb_size: 1024,
+            orig_tris: 400,
+            web_verts: 120,
+            web_tris: 200,
+            finish_class: "show_curved",
+            elapsed_ms: 25,
+          }),
+          { status: 200, headers: { "content-type": "application/json" } },
+        ),
+      );
+      for (let i = 0; i < 3; i++) {
+        const okRes = await handleForgePreview(
+          new Request("http://local/api/forge/preview", {
+            method: "POST",
+            headers: authedHeaders,
+            body: JSON.stringify(validRecipeBody),
+          }),
+          baseEnv,
+        );
+        expect(okRes.status).toBe(200);
+        const bodyText = await okRes.text();
+        expect(bodyText).not.toContain("/should/be/scrubbed");
+      }
+      const fourthRes = await handleForgePreview(
+        new Request("http://local/api/forge/preview", {
+          method: "POST",
+          headers: authedHeaders,
+          body: JSON.stringify(validRecipeBody),
+        }),
+        baseEnv,
+      );
+      expect(fourthRes.status).toBe(429);
+      expect(((await fourthRes.json()) as { status: string }).status).toBe("slow-down");
+    } finally {
+      fetchSpy.mockRestore();
+      resetForgeRateLimit();
+    }
+  });
+
+  it.skipIf(!PYTHON_VENV)(
+    "enforces daemon token auth, queue backpressure, stl_path rejection, torso.stl fail-closed gate, and happy-path optimization",
+    async () => {
+      const py = PYTHON_VENV!;
+      const daemonPath = join(ROOT, "scripts/forge_optimizer_daemon.py");
+
+      // 1. Daemon refuses non-loopback bind without token AND refuses tracked public/kip/custom --out-dir
+      const noTokenBind = spawnSync(py, [daemonPath, "--host", "0.0.0.0", "--port", "0"], {
+        encoding: "utf8",
+      });
+      expect(noTokenBind.status).toBe(2);
+
+      const trackedDirRun = spawnSync(
+        py,
+        [daemonPath, "--port", "0", "--out-dir", join(ROOT, "public/kip/custom")],
+        { encoding: "utf8" },
+      );
+      expect(trackedDirRun.status).toBe(2);
+
+      // 2. Start live daemon with Bearer token + tight max-queue=2 in an isolated temp dir
       const tmpOut = mkdtempSync(join(tmpdir(), "tv-forge-daemon-"));
+      const secretToken = "forge-secret-token-987654";
       const proc = spawn(
         py,
         [
-          join(ROOT, "scripts/forge_optimizer_daemon.py"),
+          daemonPath,
           "--host",
           "127.0.0.1",
           "--port",
           "0",
           "--out-dir",
           tmpOut,
+          "--token",
+          secretToken,
+          "--workers",
+          "1",
+          "--max-queue",
+          "2",
         ],
         { stdio: ["ignore", "pipe", "pipe"] },
       );
@@ -276,94 +545,246 @@ describe("Parts asset optimization (Print STL + Web GLB + Toy-Finish Recipes)", 
           });
         });
 
-        const env = { FORGE_OPTIMIZER_URL: baseUrl };
+        // 2a. Missing or wrong Bearer token -> 401 directly from daemon
+        const unauthRes = await fetch(`${baseUrl}/v1/fast-preview`, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ recipe: {} }),
+        });
+        expect(unauthRes.status).toBe(401);
 
-        // 3a. Recipe v1 fast-preview hot path (zero arbitrary code execution)
-        const recipeRes = await handleForgePreview(
-          new Request("https://toyventor.test/api/forge/preview", {
-            method: "POST",
-            headers: { "content-type": "application/json" },
-            body: JSON.stringify({
-              enqueue_background: false,
-              recipe: {
-                id: "custom_comet_crown",
-                name: "Comet Crown",
-                stat: "Glow",
-                slot: "crown",
-                shape: {
-                  kind: "loft",
-                  slices: [
-                    { z: 0, w: 23.4, d: 11.4, r: 4.5 },
-                    { z: 8, w: 26.0, d: 15.0, r: 5.5 },
-                    { z: 20, w: 9.0, d: 9.0, r: 3.8 },
-                  ],
-                },
-                features: [{ op: "knob", radius_mm: 3.2 }],
-              },
-            }),
+        const wrongTokRes = await fetch(`${baseUrl}/v1/fast-preview`, {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            authorization: "Bearer wrong-token",
+          },
+          body: JSON.stringify({ recipe: {} }),
+        });
+        expect(wrongTokRes.status).toBe(401);
+
+        // 2b. Direct stl_path attempt against daemon (even with valid token) -> 422, no file read or oracle
+        const stlPathAttempt = await fetch(`${baseUrl}/v1/fast-preview`, {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            authorization: `Bearer ${secretToken}`,
+          },
+          body: JSON.stringify({
+            part_id: "probe",
+            stl_path: join(ROOT, "public/kip/stls/torso.stl"),
           }),
-          env,
-        );
-        expect(recipeRes.status).toBe(200);
-        const recipePreview = (await recipeRes.json()) as ForgeFastPreviewResponse;
-        expect(recipePreview.ok).toBe(true);
-        expect(recipePreview.status).toBe("preview_ready");
-        expect(recipePreview.glb_size).toBeLessThan(40 * 1024);
-        expect(recipePreview.glb_base64).toBeTruthy();
+        });
+        expect(stlPathAttempt.status).toBe(422);
 
-        const glbBuf = Buffer.from(recipePreview.glb_base64!, "base64");
-        const loader = new GLTFLoader();
-        const parsedGltf = await loader.parseAsync(new Uint8Array(glbBuf).buffer, "");
-        expect(parsedGltf.scene.children.length).toBeGreaterThan(0);
-
-        // 3b. Two-stage fast preview + background print & web optimization job
-        const domeStlB64 = readFileSync(join(STL_DIR, "dome-s-2x2.stl")).toString("base64");
-        const stage1Res = await handleForgePreview(
-          new Request("https://toyventor.test/api/forge/preview", {
-            method: "POST",
-            headers: { "content-type": "application/json" },
-            body: JSON.stringify({
-              part_id: "custom_dome_ai",
+        // 2b-ii. Direct recipe with legalize:false + 18 slices -> 422 (cannot skip clamps),
+        // and id:"wizard_hat" never overwrites tracked public/kip/custom/custom_wizard_hat.*
+        const wizardBefore = readFileSync(join(ROOT, "public/kip/custom/custom_wizard_hat.glb"));
+        const unlegalizedAttempt = await fetch(`${baseUrl}/v1/fast-preview`, {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            authorization: `Bearer ${secretToken}`,
+          },
+          body: JSON.stringify({
+            recipe: {
+              id: "wizard_hat",
+              name: "Too Many",
               slot: "crown",
-              stl_base64: domeStlB64,
-              enqueue_background: true,
-              include_glb_base64: false,
-            }),
+              legalize: false,
+              shape: {
+                slices: Array.from({ length: 18 }, (_, i) => ({
+                  z: i * 2,
+                  w: 20,
+                  d: 12,
+                  r: 3,
+                })),
+              },
+            },
           }),
-          env,
-        );
-        expect(stage1Res.status).toBe(200);
-        const stage1 = (await stage1Res.json()) as ForgeFastPreviewResponse;
-        expect(stage1.status).toBe("preview_ready");
-        expect(stage1.job_id).toMatch(/^fjob_[a-f0-9]+$/);
+        });
+        expect(unlegalizedAttempt.status).toBe(422);
 
-        let finalJob: ForgeOptimizationJob | null = null;
-        for (let attempt = 0; attempt < 40; attempt++) {
-          const pollRes = await handleForgeJobStatus(
-            new Request(`https://toyventor.test/api/forge/jobs/${stage1.job_id}`),
-            env,
-            stage1.job_id!,
-          );
-          expect(pollRes.status).toBe(200);
-          const job = (await pollRes.json()) as ForgeOptimizationJob;
-          if (job.status === "print_ready" || job.status === "digital_only" || job.status === "failed") {
-            finalJob = job;
+        const wizardValidPreview = await fetch(`${baseUrl}/v1/fast-preview`, {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            authorization: `Bearer ${secretToken}`,
+          },
+          body: JSON.stringify({
+            enqueue_background: false,
+            recipe: {
+              id: "wizard_hat",
+              name: "Safe Hat",
+              slot: "crown",
+              shape: {
+                slices: [
+                  { z: 0, w: 23.4, d: 11.4, r: 4.5 },
+                  { z: 12, w: 14, d: 10, r: 3.5 },
+                ],
+              },
+            },
+          }),
+        });
+        expect(wizardValidPreview.status).toBe(200);
+        expect(
+          readFileSync(join(ROOT, "public/kip/custom/custom_wizard_hat.glb")).equals(wizardBefore),
+        ).toBe(true);
+
+        // 2c. Finding 1 reproduction: torso.stl with verify_preprint: false sent directly to daemon
+        // MUST ignore verify_preprint: false and degrade to `digital_only` with stl_artifact = null!
+        const torsoB64 = readFileSync(join(ROOT, "public/kip/stls/torso.stl")).toString("base64");
+        const torsoSubmit = await fetch(`${baseUrl}/v1/jobs`, {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            authorization: `Bearer ${secretToken}`,
+          },
+          body: JSON.stringify({
+            part_id: "torso_bypass_test",
+            stl_base64: torsoB64,
+            verify_preprint: false,
+          }),
+        });
+        expect(torsoSubmit.status).toBe(202);
+        const { job_id: torsoJobId } = (await torsoSubmit.json()) as { job_id: string };
+
+        let torsoFinal: ForgeOptimizationJob | null = null;
+        for (let i = 0; i < 60; i++) {
+          const r = await fetch(`${baseUrl}/v1/jobs/${torsoJobId}`, {
+            headers: { authorization: `Bearer ${secretToken}` },
+          });
+          const j = (await r.json()) as ForgeOptimizationJob;
+          if (j.status === "print_ready" || j.status === "digital_only" || j.status === "failed") {
+            torsoFinal = j;
             break;
           }
-          await new Promise((r) => setTimeout(r, 150));
+          await new Promise((res) => setTimeout(res, 150));
+        }
+        expect(torsoFinal?.status).toBe("digital_only");
+        expect(torsoFinal?.stl_artifact).toBeNull();
+        expect(torsoFinal?.slicer_recipe).toBeNull();
+        expect(torsoFinal?.glb_artifact).toMatch(/\.draft\.glb$/);
+        expect(torsoFinal?.gate_report?.ok).toBe(false);
+
+        // 2d. Queue backpressure (`--max-queue 2`): submitting 4 concurrent jobs yields 429 queue_full
+        const domeB64 = readFileSync(join(STL_DIR, "dome-s-2x2.stl")).toString("base64");
+        const burst = await Promise.all(
+          Array.from({ length: 4 }, (_, idx) =>
+            fetch(`${baseUrl}/v1/jobs`, {
+              method: "POST",
+              headers: {
+                "content-type": "application/json",
+                authorization: `Bearer ${secretToken}`,
+              },
+              body: JSON.stringify({ part_id: `burst_${idx}`, stl_base64: domeB64 }),
+            }),
+          ),
+        );
+        const statuses = burst.map((r) => r.status);
+        expect(statuses).toContain(429);
+
+        // Drain the 2 accepted burst jobs before running the Worker end-to-end check
+        for (const r of burst) {
+          if (r.status === 202) {
+            const { job_id } = (await r.json()) as { job_id: string };
+            for (let i = 0; i < 40; i++) {
+              const jr = await fetch(`${baseUrl}/v1/jobs/${job_id}`, {
+                headers: { authorization: `Bearer ${secretToken}` },
+              });
+              const j = (await jr.json()) as ForgeOptimizationJob;
+              if (j.status === "print_ready" || j.status === "digital_only" || j.status === "failed") {
+                break;
+              }
+              await new Promise((res) => setTimeout(res, 100));
+            }
+          }
         }
 
-        expect(finalJob?.status).toBe("print_ready");
-        expect(finalJob?.content_hash).toBeTruthy();
-        expect(finalJob?.stl_file && existsSync(finalJob.stl_file)).toBe(true);
-        expect(finalJob?.glb_file && existsSync(finalJob.glb_file)).toBe(true);
-        expect(finalJob?.slicer_recipe?.layer_height_mm).toBe(0.12);
-        expect(finalJob?.gate_report?.ok).toBe(true);
+        // 2e. Full end-to-end Worker -> authenticated daemon flow (zero filesystem paths in responses)
+        resetForgeRateLimit();
+        const db = fakeDb();
+        const env: ForgeOptimizerEnv = {
+          DB: db,
+          PARENT_GATE_SECRET: "gate-secret-for-tests",
+          FORGE_OPTIMIZER_URL: baseUrl,
+          FORGE_OPTIMIZER_TOKEN: secretToken,
+        };
+        const proof = await mintParentProof(env, DEVICE_A);
+        const authed = {
+          "content-type": "application/json",
+          "x-device-id": DEVICE_A,
+          "x-parent-proof": proof,
+        };
+
+        const previewRes = await handleForgePreview(
+          new Request("http://local/api/forge/preview", {
+            method: "POST",
+            headers: authed,
+            body: JSON.stringify({
+              part_id: "dome_e2e",
+              slot: "crown",
+              stl_base64: domeB64,
+              enqueue_background: true,
+              include_glb_base64: true,
+            }),
+          }),
+          env,
+        );
+        expect(previewRes.status).toBe(200);
+        const preview = (await previewRes.json()) as ForgeFastPreviewResponse;
+        expect(preview.status).toBe("preview_ready");
+        expect(preview.draft_artifact).not.toContain("/");
+        expect(JSON.stringify(preview)).not.toContain(tmpOut);
+        expect(preview.glb_base64).toBeTruthy();
+
+        const loader = new GLTFLoader();
+        const gltf = await loader.parseAsync(
+          new Uint8Array(Buffer.from(preview.glb_base64!, "base64")).buffer,
+          "",
+        );
+        expect(gltf.scene.children.length).toBeGreaterThan(0);
+
+        let completed: ForgeOptimizationJob | null = null;
+        for (let i = 0; i < 40; i++) {
+          const jr = await handleForgeJobStatus(
+            new Request(`http://local/api/forge/jobs/${preview.job_id}`, {
+              headers: { "x-device-id": DEVICE_A, "x-parent-proof": proof },
+            }),
+            env,
+            preview.job_id!,
+          );
+          expect(jr.status).toBe(200);
+          const j = (await jr.json()) as ForgeOptimizationJob;
+          if (j.status === "print_ready" || j.status === "digital_only" || j.status === "failed") {
+            completed = j;
+            break;
+          }
+          await new Promise((res) => setTimeout(res, 120));
+        }
+
+        expect(completed?.status).toBe("print_ready");
+        expect(completed?.stl_artifact).toMatch(/^custom_dome_e2e\.[a-f0-9]{12}\.stl$/);
+        expect(completed?.glb_artifact).toMatch(/^custom_dome_e2e\.[a-f0-9]{12}\.glb$/);
+        expect(JSON.stringify(completed)).not.toContain(tmpOut);
+        expect(completed?.slicer_recipe?.layer_height_mm).toBe(0.12);
+
+        // Stream the finalized STL artifact through the gated Worker route
+        const artRes = await handleForgeArtifact(
+          new Request(`http://local/api/forge/artifacts/${completed!.stl_artifact}`, {
+            headers: { "x-device-id": DEVICE_A, "x-parent-proof": proof },
+          }),
+          env,
+          completed!.stl_artifact!,
+        );
+        expect(artRes.status).toBe(200);
+        const stlBytes = new Uint8Array(await artRes.arrayBuffer());
+        expect(stlBytes.byteLength).toBeGreaterThan(84);
       } finally {
         proc.kill("SIGTERM");
         rmSync(tmpOut, { recursive: true, force: true });
       }
     },
-    20_000,
+    30_000,
   );
 });
