@@ -287,28 +287,133 @@ export async function loadExpansionGeos(loadSTL) {
   return out;
 }
 
+export const EXP_PALETTE = {
+  cobalt:   '#2E6FDB',
+  teal:     '#1FA6A0',
+  plum:     '#7C4DFF',
+  sun:      '#FFB830',
+  fox:      '#E86F38',
+  bear:     '#B58052',
+  botSilv:  '#DCE3EE',
+  botScout: '#4E73A8',
+  cat:      '#E5C193',
+  dragon:   '#2EB872',
+  alien:    '#5CD6A9',
+  imp:      '#6E85E6',
+  tire:     '#20232A',
+  rimAlloy: '#EDF2F8',
+  rimGold:  '#FFD25A',
+  custom:   '#7C4DFF',
+};
+
+export function resolveBodyColors({
+  head = 'classic',
+  skinId = 'vinyl_cream',
+  shirtId = 'off',
+  pantsId = 'off',
+  sparkHex = '#FF6B4A',
+} = {}) {
+  const skinObj = SKIN_TONES.find(s => s.id === skinId) || SKIN_TONES[0];
+  const shirt = SHIRT_OPTIONS.find(s => s.id === shirtId) || SHIRT_OPTIONS[0];
+  const pants = PANTS_OPTIONS.find(p => p.id === pantsId) || PANTS_OPTIONS[0];
+
+  const headSkinHex = skinObj.hex.toUpperCase();
+  let bodySkinHex = headSkinHex;
+  if (skinObj.id === 'vinyl_cream') {
+    if (head === 'fox') bodySkinHex = EXP_PALETTE.fox;
+    else if (head === 'bear') bodySkinHex = EXP_PALETTE.bear;
+    else if (head === 'robot') bodySkinHex = EXP_PALETTE.botSilv;
+    else if (head === 'scout') bodySkinHex = EXP_PALETTE.botScout;
+    else if (head === 'cat') bodySkinHex = EXP_PALETTE.cat;
+    else if (head === 'dragon') bodySkinHex = EXP_PALETTE.dragon;
+    else if (head === 'alien') bodySkinHex = EXP_PALETTE.alien;
+    else if (head === 'imp') bodySkinHex = EXP_PALETTE.imp;
+  }
+
+  const isDefaultCleanKip = (
+    head === 'classic' &&
+    skinObj.id === 'vinyl_cream' &&
+    shirt.id === 'off' &&
+    pants.id === 'off'
+  );
+
+  let neckHex = sparkHex.toUpperCase();
+  if (HUMAN_HEAD_IDS.has(head)) neckHex = bodySkinHex;
+  else if (head === 'fox') neckHex = EXP_PALETTE.fox;
+  else if (head === 'bear') neckHex = EXP_PALETTE.bear;
+  else if (head === 'robot') neckHex = '#36405C';
+  else if (head === 'scout') neckHex = '#2A3F66';
+  else if (head === 'cat') neckHex = EXP_PALETTE.cat;
+  else if (head === 'dragon') neckHex = EXP_PALETTE.dragon;
+  else if (head === 'alien') neckHex = EXP_PALETTE.alien;
+  else if (head === 'imp') neckHex = EXP_PALETTE.imp;
+
+  const hasShirt   = (shirt.id !== 'off');
+  const hasPants   = (pants.id !== 'off');
+  const chestHex   = (hasShirt ? shirt.chestHex  : bodySkinHex).toUpperCase();
+  const sleeveHex  = (hasShirt ? shirt.sleeveHex : bodySkinHex).toUpperCase();
+  const forearmHex = ((hasShirt && shirt.longSleeve) ? shirt.sleeveHex : bodySkinHex).toUpperCase();
+  const thighHex   = (hasPants ? pants.legHex    : bodySkinHex).toUpperCase();
+  const shinHex    = ((hasPants && !pants.isShorts) ? pants.legHex : bodySkinHex).toUpperCase();
+  const activeShoeHex = (pants.shoeHex || shirt.shoeHex || (isDefaultCleanKip ? '#F4EFE6' : '#283044')).toUpperCase();
+  const cleanJoint = sparkHex.toUpperCase();
+  const joints = isDefaultCleanKip
+    ? {
+        shoulder: cleanJoint,
+        elbow: cleanJoint,
+        wrist: cleanJoint,
+        hip: cleanJoint,
+        knee: cleanJoint,
+        ankle: cleanJoint,
+      }
+    : {
+        shoulder: sleeveHex,
+        elbow: forearmHex,
+        wrist: bodySkinHex,
+        hip: thighHex,
+        knee: shinHex,
+        ankle: activeShoeHex,
+      };
+
+  return {
+    headSkinHex,
+    bodySkinHex: bodySkinHex.toUpperCase(),
+    isDefaultCleanKip,
+    neckHex: neckHex.toUpperCase(),
+    hasShirt,
+    hasPants,
+    chestHex,
+    sleeveHex,
+    forearmHex,
+    thighHex,
+    shinHex,
+    activeShoeHex,
+    joints,
+  };
+}
+
 export function attachExpansionToKipRig(THREE, kip, expGeos, baseParts, mats, scadMesh, createSlot) {
   // Brand-aligned wardrobe, skin/hair, and alloy wheel materials (`BRAND_STYLE.md`)
   const expMats = {
     skin:     new THREE.MeshPhysicalMaterial({ color: SKIN_TONES[0].hex, roughness: 0.60, clearcoat: 0.03, envMapIntensity: 0.44 }),
     hair:     new THREE.MeshPhysicalMaterial({ color: HAIR_COLORS[0].hex, roughness: 0.42, clearcoat: 0.22, envMapIntensity: 0.70 }),
     hat:      new THREE.MeshPhysicalMaterial({ color: HAT_COLORS[0].hex, roughness: 0.44, clearcoat: 0.22, envMapIntensity: 0.68 }),
-    cobalt:   new THREE.MeshPhysicalMaterial({ color: '#2E6FDB', roughness: 0.34, clearcoat: 0.45, envMapIntensity: 0.76 }),
-    teal:     new THREE.MeshPhysicalMaterial({ color: '#1FA6A0', roughness: 0.35, clearcoat: 0.44, envMapIntensity: 0.76 }),
-    plum:     new THREE.MeshPhysicalMaterial({ color: '#7C4DFF', roughness: 0.34, clearcoat: 0.45, envMapIntensity: 0.76 }),
-    sun:      new THREE.MeshPhysicalMaterial({ color: '#FFB830', roughness: 0.34, clearcoat: 0.46, envMapIntensity: 0.78 }),
-    fox:      new THREE.MeshPhysicalMaterial({ color: '#E86F38', roughness: 0.44, clearcoat: 0.24, envMapIntensity: 0.70 }),
-    bear:     new THREE.MeshPhysicalMaterial({ color: '#B58052', roughness: 0.48, clearcoat: 0.18, envMapIntensity: 0.66 }),
-    botSilv:  new THREE.MeshPhysicalMaterial({ color: '#DCE3EE', roughness: 0.32, metalness: 0.12, clearcoat: 0.48, envMapIntensity: 0.80 }),
-    botScout: new THREE.MeshPhysicalMaterial({ color: '#4E73A8', roughness: 0.30, metalness: 0.14, clearcoat: 0.50, envMapIntensity: 0.80 }),
-    cat:      new THREE.MeshStandardMaterial({ color: '#E5C193', roughness: 0.62, metalness: 0.0 }),
-    dragon:   new THREE.MeshStandardMaterial({ color: '#2EB872', roughness: 0.52, metalness: 0.0 }),
-    alien:    new THREE.MeshStandardMaterial({ color: '#5CD6A9', roughness: 0.42, metalness: 0.0 }),
-    imp:      new THREE.MeshStandardMaterial({ color: '#6E85E6', roughness: 0.64, metalness: 0.0 }),
-    tire:     new THREE.MeshPhysicalMaterial({ color: '#20232A', roughness: 0.56, clearcoat: 0.15, envMapIntensity: 0.55 }),
-    rimAlloy: new THREE.MeshPhysicalMaterial({ color: '#EDF2F8', roughness: 0.26, metalness: 0.22, clearcoat: 0.55, envMapIntensity: 0.88 }),
-    rimGold:  new THREE.MeshPhysicalMaterial({ color: '#FFD25A', roughness: 0.28, metalness: 0.18, clearcoat: 0.52, envMapIntensity: 0.86 }),
-    custom:   new THREE.MeshPhysicalMaterial({ color: '#7C4DFF', roughness: 0.32, clearcoat: 0.50, envMapIntensity: 0.80 }),
+    cobalt:   new THREE.MeshPhysicalMaterial({ color: EXP_PALETTE.cobalt, roughness: 0.34, clearcoat: 0.45, envMapIntensity: 0.76 }),
+    teal:     new THREE.MeshPhysicalMaterial({ color: EXP_PALETTE.teal, roughness: 0.35, clearcoat: 0.44, envMapIntensity: 0.76 }),
+    plum:     new THREE.MeshPhysicalMaterial({ color: EXP_PALETTE.plum, roughness: 0.34, clearcoat: 0.45, envMapIntensity: 0.76 }),
+    sun:      new THREE.MeshPhysicalMaterial({ color: EXP_PALETTE.sun, roughness: 0.34, clearcoat: 0.46, envMapIntensity: 0.78 }),
+    fox:      new THREE.MeshPhysicalMaterial({ color: EXP_PALETTE.fox, roughness: 0.44, clearcoat: 0.24, envMapIntensity: 0.70 }),
+    bear:     new THREE.MeshPhysicalMaterial({ color: EXP_PALETTE.bear, roughness: 0.48, clearcoat: 0.18, envMapIntensity: 0.66 }),
+    botSilv:  new THREE.MeshPhysicalMaterial({ color: EXP_PALETTE.botSilv, roughness: 0.32, metalness: 0.12, clearcoat: 0.48, envMapIntensity: 0.80 }),
+    botScout: new THREE.MeshPhysicalMaterial({ color: EXP_PALETTE.botScout, roughness: 0.30, metalness: 0.14, clearcoat: 0.50, envMapIntensity: 0.80 }),
+    cat:      new THREE.MeshStandardMaterial({ color: EXP_PALETTE.cat, roughness: 0.62, metalness: 0.0 }),
+    dragon:   new THREE.MeshStandardMaterial({ color: EXP_PALETTE.dragon, roughness: 0.52, metalness: 0.0 }),
+    alien:    new THREE.MeshStandardMaterial({ color: EXP_PALETTE.alien, roughness: 0.42, metalness: 0.0 }),
+    imp:      new THREE.MeshStandardMaterial({ color: EXP_PALETTE.imp, roughness: 0.64, metalness: 0.0 }),
+    tire:     new THREE.MeshPhysicalMaterial({ color: EXP_PALETTE.tire, roughness: 0.56, clearcoat: 0.15, envMapIntensity: 0.55 }),
+    rimAlloy: new THREE.MeshPhysicalMaterial({ color: EXP_PALETTE.rimAlloy, roughness: 0.26, metalness: 0.22, clearcoat: 0.55, envMapIntensity: 0.88 }),
+    rimGold:  new THREE.MeshPhysicalMaterial({ color: EXP_PALETTE.rimGold, roughness: 0.28, metalness: 0.18, clearcoat: 0.52, envMapIntensity: 0.86 }),
+    custom:   new THREE.MeshPhysicalMaterial({ color: EXP_PALETTE.custom, roughness: 0.32, clearcoat: 0.50, envMapIntensity: 0.80 }),
   };
 
   // Convert LAY_FLAT ([90,0,0]) shaft STL (y_stl = -L..0, z_stl = 0..5) into X-centered horizontal axle
@@ -708,7 +813,7 @@ export function attachExpansionToKipRig(THREE, kip, expGeos, baseParts, mats, sc
   snapSeatedLegsGroup.visible = false;
   kip.mover.add(snapSeatedLegsGroup);
   const snapSeatedLegsSlot = createSlot('char_legs_seated', snapSeatedLegsGroup, [0, 14, 0], 1.2, 'snap');
-  const seatedLegsMesh = scadMesh(expGeos.charLegsSeated, expMats.cobalt);
+  const seatedLegsMesh = scadMesh(expGeos.charLegsSeated, expMats.cobalt.clone());
   snapSeatedLegsSlot.add(seatedLegsMesh);
 
   // =========================================================================
@@ -1141,62 +1246,26 @@ export function attachExpansionToKipRig(THREE, kip, expGeos, baseParts, mats, sc
   let lastDecalKey = '';
 
   function applyBodySkinAndClothing({ head = 'classic', skinId = 'vinyl_cream', shirtId = 'off', pantsId = 'off' } = {}) {
-    const skinObj = SKIN_TONES.find(s => s.id === skinId) || SKIN_TONES[0];
+    const resolved = resolveBodyColors({ head, skinId, shirtId, pantsId });
+    const {
+      headSkinHex,
+      bodySkinHex,
+      neckHex,
+      hasShirt,
+      chestHex,
+      sleeveHex,
+      forearmHex,
+      thighHex,
+      shinHex,
+      activeShoeHex,
+      joints,
+    } = resolved;
     const shirt = SHIRT_OPTIONS.find(s => s.id === shirtId) || SHIRT_OPTIONS[0];
     const pants = PANTS_OPTIONS.find(p => p.id === pantsId) || PANTS_OPTIONS[0];
 
     // Keep head skin material synced for all 4 human heads + face plate
-    expMats.skin.color.set(skinObj.hex);
-
-    // Exposed skin tone: matches head/face skin tone across neck, hands, short-sleeve forearms, and shorts shins!
-    let bodySkinHex = skinObj.hex;
-    if (skinObj.id === 'vinyl_cream') {
-      if (head === 'fox') bodySkinHex = '#E86F38';
-      else if (head === 'bear') bodySkinHex = '#B58052';
-      else if (head === 'robot') bodySkinHex = '#DCE3EE';
-      else if (head === 'scout') bodySkinHex = '#4E73A8';
-      else if (head === 'cat') bodySkinHex = '#E5C193';
-      else if (head === 'dragon') bodySkinHex = '#2EB872';
-      else if (head === 'alien') bodySkinHex = '#5CD6A9';
-      else if (head === 'imp') bodySkinHex = '#6E85E6';
-    }
-
-    const isDefaultCleanKip = (
-      head === 'classic' &&
-      skinObj.id === 'vinyl_cream' &&
-      shirt.id === 'off' &&
-      pants.id === 'off'
-    );
-
-    if (HUMAN_HEAD_IDS.has(head)) {
-      neckMat.color.set(bodySkinHex);
-    } else if (head === 'fox') {
-      neckMat.color.set('#E86F38');
-    } else if (head === 'bear') {
-      neckMat.color.set('#B58052');
-    } else if (head === 'robot') {
-      neckMat.color.set('#36405C');
-    } else if (head === 'scout') {
-      neckMat.color.set('#2A3F66');
-    } else if (head === 'cat') {
-      neckMat.color.set('#E5C193');
-    } else if (head === 'dragon') {
-      neckMat.color.set('#2EB872');
-    } else if (head === 'alien') {
-      neckMat.color.set('#5CD6A9');
-    } else if (head === 'imp') {
-      neckMat.color.set('#6E85E6');
-    } else {
-      neckMat.color.set('#FF6B4A');
-    }
-
-    const hasShirt   = (shirt.id !== 'off');
-    const hasPants   = (pants.id !== 'off');
-    const chestHex   = hasShirt ? shirt.chestHex  : bodySkinHex;
-    const sleeveHex  = hasShirt ? shirt.sleeveHex : bodySkinHex;
-    const forearmHex = (hasShirt && shirt.longSleeve) ? shirt.sleeveHex : bodySkinHex;
-    const thighHex   = hasPants ? pants.legHex    : bodySkinHex;
-    const shinHex    = (hasPants && !pants.isShorts) ? pants.legHex : bodySkinHex;
+    expMats.skin.color.set(headSkinHex);
+    neckMat.color.set(neckHex);
 
     // 1. Solid Single-Filament Torso (`torso` = solid shirt color when wearing a shirt, else solid body skin!)
     tmpColA.set(chestHex);
@@ -1254,7 +1323,6 @@ export function attachExpansionToKipRig(THREE, kip, expGeos, baseParts, mats, sc
     seatedLegsMesh.material.color.set(thighHex);
 
     // 7. Solid Single-Filament Sneaker Boots (`boot_l/r` = one solid filament color per boot part!)
-    const activeShoeHex = pants.shoeHex || shirt.shoeHex || (isDefaultCleanKip ? '#F4EFE6' : '#283044');
     tmpColA.set(activeShoeHex);
     for (const bm of [bodyMeshes.bootL, bodyMeshes.bootR]) {
       if (!bm) continue;
@@ -1262,16 +1330,12 @@ export function attachExpansionToKipRig(THREE, kip, expGeos, baseParts, mats, sc
     }
 
     // 8. Joint Pegs & Snap Turrets: solid filament colors matching adjacent limb parts!
-    if (isDefaultCleanKip) {
-      for (const jm of Object.values(jointMats)) jm.color.set('#FF6B4A');
-    } else {
-      jointMats.shoulder.color.set(sleeveHex);
-      jointMats.elbow.color.set(forearmHex);
-      jointMats.wrist.color.set(bodySkinHex);
-      jointMats.hip.color.set(thighHex);
-      jointMats.knee.color.set(shinHex);
-      jointMats.ankle.color.set(activeShoeHex);
-    }
+    jointMats.shoulder.color.set(joints.shoulder);
+    jointMats.elbow.color.set(joints.elbow);
+    jointMats.wrist.color.set(joints.wrist);
+    jointMats.hip.color.set(joints.hip);
+    jointMats.knee.color.set(joints.knee);
+    jointMats.ankle.color.set(joints.ankle);
 
     // 9. Front-Only Chest Stencil Sticker (placed strictly on the flat front chest when wearing a shirt!)
     const showTorsoDecal = hasShirt;

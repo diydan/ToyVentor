@@ -197,6 +197,16 @@ try {
   await tab.shot(path.join(SHOTS, "selfie-prompt.png"));
   await tab.evaluate(click("sf-use"));
   check("Use this face wears the prompted face", await tab.waitFor(`(() => { const l = window.kipMenu.ctx.loco; return l.expr === 'selfie' && !(${open}); })()`, 10000));
+
+  await tab.evaluate(`(() => { const i = document.getElementById('km-plateView'); i.checked = true; i.dispatchEvent(new Event('change', { bubbles: true })); })()`);
+  await tab.waitFor(`window.kipPrint.isOn() && !window.kipPrint.isBusy()`, 120000);
+  const selfieStickerCheck = await tab.evaluate(`(async () => {
+    const pdf = await window.kipPrint.exportBytes('stickers-pdf');
+    const head = new TextDecoder('latin1').decode(pdf.subarray(0, 128));
+    const smallStorage = Object.values(localStorage).every(v => v.length < 80) && sessionStorage.length === 0;
+    return { isPdf: head.startsWith('%PDF-1.6'), bytes: pdf.length, smallStorage, cleanUrl: !location.href.includes('data:') };
+  })()`);
+  check("selfie sticker sheet PDF exports cleanly in memory with zero storage or URL pixel leaks", selfieStickerCheck.isPdf && selfieStickerCheck.bytes > 1500 && selfieStickerCheck.smallStorage && selfieStickerCheck.cleanUrl, JSON.stringify(selfieStickerCheck));
   console.log(`\nscreenshots: ${SHOTS}`);
 } finally {
   chrome.close();

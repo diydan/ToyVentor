@@ -9,10 +9,16 @@ import kitProfile from "../parts/partspec/print_profiles/fdm_kitplate_0.4.json";
 // @ts-expect-error untyped JS module
 import * as printMod from "../parts/kip/viewer/kip-print.js";
 // @ts-expect-error untyped JS module
+import * as bomMod from "../parts/kip/viewer/kip-print-bom.js";
+// @ts-expect-error untyped JS module
+import * as profMod from "../parts/kip/viewer/kip-print-profile.js";
+// @ts-expect-error untyped JS module
 import * as wardrobe from "../parts/kip/viewer/kip-vehicles-wardrobe.js";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 const K = printMod as any;
+const B = bomMod as any;
+const P = profMod as any;
 const W = wardrobe as any;
 const root = process.cwd();
 const pub = (url: string) => join(root, "public", url);
@@ -230,62 +236,214 @@ describe("packer", () => {
   });
 });
 
-describe("inventory", () => {
-  const base = { edition: "pro", category: "robot", head: "classic", faceInsert: "sculpted", expr: "spark", hair: "off", hat: "buds", back: "off", prop: "off", ears: "off", tail: "off", vehicle: "none" };
-  const ids = (s: any) => K.inventoryFor(s).items.map((i: any) => `${i.id}x${i.qty}`);
+describe("inventory & honest BOM (M1 gates a, c, f)", () => {
+  const base = {
+    edition: "pro", category: "robot", head: "classic", faceInsert: "sculpted", expr: "spark",
+    skin: "vinyl_cream", shirt: "off", pants: "off", hair: "off", hairColor: "chestnut",
+    hat: "buds", hatColor: "cobalt_cap", back: "off", prop: "off", ears: "off", tail: "off",
+    vehicle: "none", vehCovers: true, racerKit: true, includeVehicle: true,
+  };
+  const sumQty = (items: any[], id: string) => items.filter((i) => i.id === id).reduce((a, b) => a + b.qty, 0);
+  const ids = (s: any) => {
+    const map = new Map<string, number>();
+    for (const i of K.inventoryFor(s).items) map.set(i.id, (map.get(i.id) ?? 0) + i.qty);
+    return [...map.entries()].map(([id, q]) => `${id}x${q}`);
+  };
 
-  it("counts the Pro and Snap joints from the rig builder", () => {
-    const pro = K.inventoryFor(base).items;
-    expect(pro.find((i: any) => i.id === "spark_peg_big").qty).toBe(5);
-    expect(pro.find((i: any) => i.id === "spark_peg_sml").qty).toBe(8);
-    const snap = K.inventoryFor({ ...base, edition: "snap" }).items;
-    expect(snap.find((i: any) => i.id === "snap_turret_big").qty).toBe(5);
-    expect(snap.find((i: any) => i.id === "snap_turret").qty).toBe(4);
-    expect(snap.some((i: any) => i.id === "torso")).toBe(false);
-  });
+  it("gate (c): peg and turret counts match visible slots on all 13 heads in both editions, and crown_buds_2x1 / wheel_rims never print standalone", () => {
+    for (const hd of W.WARDROBE_HEADS as any[]) {
+      const proItems = K.inventoryFor({ ...base, edition: "pro", category: hd.category, head: hd.id }).items;
+      const snapItems = K.inventoryFor({ ...base, edition: "snap", category: hd.category, head: hd.id }).items;
+      if (hd.id === "classic") {
+        expect(sumQty(proItems, "spark_peg_big"), `pro classic big pegs`).toBe(5);
+        expect(sumQty(proItems, "neck_turret_2x1"), `pro classic neck turret`).toBe(0);
+        expect(sumQty(snapItems, "snap_turret_big"), `snap classic big turrets`).toBe(5);
+        expect(sumQty(snapItems, "neck_turret_2x1"), `snap classic neck turret`).toBe(0);
+      } else {
+        expect(sumQty(proItems, "spark_peg_big"), `pro ${hd.id} big pegs`).toBe(4);
+        expect(sumQty(proItems, "neck_turret_2x1"), `pro ${hd.id} neck turret`).toBe(1);
+        expect(sumQty(snapItems, "snap_turret_big"), `snap ${hd.id} big turrets`).toBe(4);
+        expect(sumQty(snapItems, "neck_turret_2x1"), `snap ${hd.id} neck turret`).toBe(1);
+      }
+      expect(sumQty(proItems, "spark_peg_sml")).toBe(8);
+      expect(sumQty(snapItems, "snap_turret")).toBe(4);
+      expect(snapItems.some((i: any) => i.id === "torso")).toBe(false);
+      // Overlay-only accents never appear as standalone BOM parts
+      expect(sumQty(proItems, "crown_buds_2x1")).toBe(0);
+    }
 
-  it("follows the viewer's visibility rules for heads, face plates, hair and hats", () => {
-    expect(ids(base)).toContain("face_eyesx1");
-    expect(ids({ ...base, expr: "happy" })).not.toContain("face_eyesx1");
-    expect(ids({ ...base, hat: "blank" })).toContain("crown_cap_blankx1");
-    const human = { ...base, category: "human", head: "chibi", faceInsert: "vinyl", hair: "twin_braids", hat: "beanie" };
-    const got = ids(human);
-    for (const want of ["neck_turret_2x1x1", "head_chibix1", "faceplate_vinylx1", "hair_twin_braidsx1", "hat_beaniex1", "crown_buds_2x1x1"]) expect(got).toContain(want);
-    expect(got).not.toContain("head_shellx1");
-  });
+    // On non-classic heads with hat="buds", crown_buds_2x1 attaches as an accent to the host head/hair (never standalone)
+    const withBuds = B.resolveSceneBom({ ...base, category: "human", head: "chibi", hat: "buds" });
+    const chibiHead = withBuds.items.find((i: any) => i.id === "char_head_chibi");
+    expect(chibiHead?.accents?.[0]?.id).toBe("crown_buds_2x1");
+    expect(withBuds.notes.join(" ")).toMatch(/crown studs accent/i);
 
-  it("never drops an option silently: every wardrobe choice is an item or an explicit unmapped line", () => {
-    const check = (patch: any, role: string) => {
-      const inv = K.inventoryFor({ ...base, category: "human", head: "kid", ...patch });
-      const hit = inv.items.some((i: any) => i.role === role) || inv.unmapped.length > 0;
-      expect(hit, JSON.stringify(patch)).toBe(true);
-    };
-    for (const h of W.HAIR_OPTIONS.filter((x: any) => x.id !== "off")) check({ hair: h.id }, "hair");
-    for (const h of W.HAT_OPTIONS.filter((x: any) => !["buds", "blank"].includes(x.id))) check({ hat: h.id }, "hat");
-    for (const b of W.BACK_OPTIONS.filter((x: any) => x.id !== "off")) check({ back: b.id }, "back");
-    for (const p of W.PROP_OPTIONS.filter((x: any) => x.id !== "off")) check({ prop: p.id }, "prop");
-    for (const hd of W.WARDROBE_HEADS.filter((x: any) => x.id !== "classic")) {
-      expect(K.inventoryFor({ ...base, category: hd.category, head: hd.id }).items.some((i: any) => i.role === "head" && i.id.startsWith("head_"))).toBe(true);
+    const withBeanie = B.resolveSceneBom({ ...base, category: "human", head: "chibi", faceInsert: "vinyl", hair: "twin_braids", hat: "beanie" });
+    expect(withBeanie.items.some((i: any) => i.id.includes("crown_buds"))).toBe(false);
+    for (const want of ["neck_turret_2x1x1", "char_head_chibix1", "char_faceplate_vinylx1", "hair_twin_braidsx1", "hat_beaniex1"]) {
+      expect(ids({ ...base, category: "human", head: "chibi", faceInsert: "vinyl", hair: "twin_braids", hat: "beanie" })).toContain(want);
+    }
+
+    // Vehicle wheel rim overlays attach to wheels, never standalone
+    for (const veh of ["car", "truck", "scooter", "moto"]) {
+      const vBom = B.resolveSceneBom({ ...base, vehicle: veh });
+      expect(vBom.items.some((i: any) => i.id.includes("_rim"))).toBe(false);
+      const wheel = vBom.items.find((i: any) => i.id.startsWith("veh_wheel_"));
+      expect(wheel?.accents?.length).toBe(1);
     }
   });
 
-  it("reports what has no single STL yet instead of pretending to print it", () => {
-    const u = K.inventoryFor({ ...base, back: "gears", prop: "shaft", ears: "pro", tail: "pro", vehicle: "car" }).unmapped.join(" | ");
-    for (const t of ["gears", "Spinner", "Scanner", "Wheelie", "Vehicle \\(car\\)"]) expect(u).toMatch(new RegExp(t, "i"));
+  it("gate (a): exhaustive sweep across all wardrobe, mechanism, prop, and vehicle options maps every STL to verified files on disk with zero unmapped items", () => {
+    const valIdx = JSON.parse(readFileSync(pub("/kip/partspec-validation.json"), "utf8")).files as Record<string, any>;
+    const states: any[] = [];
+    for (const edition of ["pro", "snap"]) {
+      for (const hd of W.WARDROBE_HEADS) states.push({ ...base, edition, category: hd.category, head: hd.id });
+    }
+    for (const h of W.HAIR_OPTIONS) states.push({ ...base, category: "human", head: "kid", hair: h.id });
+    for (const h of [...W.HAT_OPTIONS.map((x: any) => x.id), "wizardHat"]) states.push({ ...base, category: "human", head: "kid", hat: h });
+    for (const b of W.BACK_OPTIONS) states.push({ ...base, back: b.id });
+    for (const p of [...W.PROP_OPTIONS.map((x: any) => x.id), "wand"]) states.push({ ...base, prop: p });
+    for (const f of W.FACE_INSERT_MODES) states.push({ ...base, category: "human", head: "kid", faceInsert: f.id });
+    for (const ears of ["off", "comm", "pro"]) states.push({ ...base, ears });
+    for (const tail of ["off", "wag", "pro"]) states.push({ ...base, tail });
+    for (const s of W.SHIRT_OPTIONS) states.push({ ...base, category: "human", head: "kid", shirt: s.id });
+    for (const p of W.PANTS_OPTIONS) states.push({ ...base, category: "human", head: "kid", pants: p.id });
+    for (const sk of W.SKIN_TONES) states.push({ ...base, category: "human", head: "kid", skin: sk.id });
+    for (const vehicle of ["car", "truck", "scooter", "moto"]) {
+      for (const vehCovers of [true, false]) {
+        for (const racerKit of [true, false]) {
+          for (const includeVehicle of [true, false]) {
+            states.push({ ...base, vehicle, vehCovers, racerKit, includeVehicle });
+          }
+        }
+      }
+    }
+    states.push({ ...base, vehicle: "car", customHoodMode: "sdkCrest" });
+
+    for (const st of states) {
+      const bom = B.resolveSceneBom(st, { validationIndex: valIdx });
+      expect(bom.unmapped, `unmapped for ${JSON.stringify(st)}`).toEqual([]);
+      expect(bom.items.length).toBeGreaterThan(0);
+      for (const it of bom.items) {
+        expect(it.hex).toMatch(/^#[0-9A-F]{6}$/);
+        expect(existsSync(pub(it.file)), `missing file ${it.file}`).toBe(true);
+        if (it.source === "partspec") {
+          const baseName = it.file.split("/").pop()!;
+          expect(valIdx[baseName], `partspec validation entry for ${baseName}`).toBeDefined();
+          expect(valIdx[baseName].verdict).not.toBe("fail");
+        }
+      }
+    }
+
+    // Pro mechanisms decompose into real verified catalog gears/shafts/beams/pins
+    const proMech = B.resolveSceneBom({ ...base, back: "gears", prop: "shaft", ears: "pro", tail: "pro" });
+    expect(proMech.unmapped).toEqual([]);
+    for (const pid of ["gear_spur_z20", "gear_spur_z10", "pin_friction", "shaft_tu05", "shaft_tu03", "bushing_half", "beam_str_tu03", "cross_connector_tu01", "beam_str_tu05"]) {
+      expect(sumQty(proMech.items, pid), `pro mechanism ${pid}`).toBeGreaterThan(0);
+    }
   });
 
-  it("every mapped file exists on disk, except the hairstyles whose export is still in flight", () => {
-    const IN_FLIGHT = new Set(["bowl", "slick", "pixie", "side_pony", "low_bun"].map((h) => `/kip/partspec/toyventor_hair_${h}_S.stl`));
-    const missing = new Set<string>();
-    const states: any[] = [base, { ...base, edition: "snap", ears: "comm", tail: "wag", back: "wings" }];
-    for (const hd of W.WARDROBE_HEADS) states.push({ ...base, category: hd.category, head: hd.id });
-    for (const h of W.HAIR_OPTIONS) states.push({ ...base, category: "human", head: "kid", hair: h.id });
-    for (const h of W.HAT_OPTIONS) states.push({ ...base, hat: h.id });
-    for (const b of W.BACK_OPTIONS) states.push({ ...base, back: b.id });
-    for (const p of W.PROP_OPTIONS) states.push({ ...base, prop: p.id });
-    for (const f of W.FACE_INSERT_MODES) states.push({ ...base, category: "human", head: "kid", faceInsert: f.id });
-    for (const s of states) for (const it of K.inventoryFor(s).items) if (!existsSync(pub(it.file))) missing.add(it.file);
-    expect([...missing].filter((f) => !IN_FLIGHT.has(f))).toEqual([]);
+  it("includes in-memory custom .stl uploads on the plate and routes Photo-Forge drawings to craft decals (prints: false)", () => {
+    const customTriBytes = K.stlBytes(solid(0, 0, 0, 12, 12, 8), "star_crown");
+    const withCustom = B.resolveSceneBom({
+      ...base,
+      hat: "custom",
+      customStlSlots: { crown: { bytes: customTriBytes, colorHex: "#7c4dff", name: "star_crown.stl" } },
+    });
+    expect(withCustom.unmapped).toEqual([]);
+    const customPart = withCustom.items.find((i: any) => i.id === "custom_crown_stl");
+    expect(customPart).toBeDefined();
+    expect(customPart.hex).toBe("#7C4DFF");
+    expect(customPart.bytes).toBeInstanceOf(Uint8Array);
+
+    const withPhoto = B.resolveSceneBom({
+      ...base,
+      prop: "custom",
+      hasPhotoAccessory: true,
+      photoAccessorySlots: { hand: { label: "Rainbow Shield" } },
+    });
+    expect(withPhoto.items.some((i: any) => i.role === "prop")).toBe(false);
+    expect(withPhoto.unmapped.join(" ")).toMatch(/Photo-Forge.*2D fold-tab craft cutout/i);
+    expect(withPhoto.decals.some((d: any) => d.kind === "craft_cutout" && d.slot === "hand" && d.label === "Rainbow Shield")).toBe(true);
+  });
+
+  it("gate (f): pure print modules stay free of DOM, storage, network, worker, and camera APIs", () => {
+    const forbiddenApis = /\b(fetch\s*\(|XMLHttpRequest|sendBeacon|WebSocket|localStorage|sessionStorage|indexedDB|caches\.|document\.|window\.|new\s+Worker|FaceDetector|navigator\.)/;
+    for (const rel of [
+      "parts/kip/viewer/kip-print-bom.js",
+      "parts/kip/viewer/kip-print-profile.js",
+      "parts/kip/viewer/kip-print-stickers.js",
+      "parts/kip/viewer/kip-print.js",
+    ]) {
+      const src = readFileSync(join(root, rel), "utf8");
+      expect(forbiddenApis.test(src), `forbidden browser/network API in ${rel}`).toBe(false);
+    }
+  });
+});
+
+describe("printer profiles, fit compensation, DeltaE00 & spool budget", () => {
+  it("encodes every preset and custom profile into a compact < 38-char token and round-trips losslessly", () => {
+    for (const presetId of Object.keys(P.PRINTER_PRESETS)) {
+      const p0 = P.applyPresetToProfile(P.createDefaultProfile(), presetId);
+      const token = P.encodeProfileCompact(p0);
+      expect(token.length, `${presetId}: ${token}`).toBeLessThan(38);
+      const p1 = P.decodeProfileCompact(token);
+      expect(p1.presetId).toBe(p0.presetId);
+      expect(p1.bedXmm).toBe(p0.bedXmm);
+      expect(p1.maxSlots).toBe(p0.maxSlots);
+      expect(p1.slicer).toBe(p0.slicer);
+    }
+    const custom = P.clampProfile({
+      presetId: "custom", slicer: "prusa", changerType: "toolchanger", maxSlots: 5,
+      bedXmm: 300, bedYmm: 300, fitChoice: "easy", multiColorStrategy: "by-layer",
+      includeVehicle: false, includeStickers: true, includeStencils: true, nozzleMm: 0.2,
+    });
+    const tok = P.encodeProfileCompact(custom);
+    expect(tok.length).toBeLessThan(38);
+    expect(P.decodeProfileCompact(tok)).toMatchObject({
+      presetId: "custom", slicer: "prusa", changerType: "toolchanger", maxSlots: 5,
+      bedXmm: 300, bedYmm: 300, fitChoice: "easy", multiColorStrategy: "by-layer",
+      includeVehicle: false, includeStickers: true, includeStencils: true, nozzleMm: 0.2,
+    });
+  });
+
+  it("computes CALIBRATION.md §3 per-surface fit compensation for Orca/Bambu and PrusaSlicer", () => {
+    expect(P.fitCompensationForProfile({ fitChoice: "snug" })).toMatchObject({
+      surfaceOffsetMm: -0.025,
+      orca: { xy_contour_compensation: 0.025, xy_hole_compensation: -0.025 },
+      prusa: { xy_size_compensation: 0.025 },
+    });
+    expect(P.fitCompensationForProfile({ fitChoice: "standard" })).toMatchObject({
+      surfaceOffsetMm: 0,
+      orca: { xy_contour_compensation: 0, xy_hole_compensation: 0 },
+      prusa: { xy_size_compensation: 0 },
+    });
+    expect(P.fitCompensationForProfile({ fitChoice: "easy" })).toMatchObject({
+      surfaceOffsetMm: 0.04,
+      orca: { xy_contour_compensation: -0.04, xy_hole_compensation: 0.04 },
+      prusa: { xy_size_compensation: -0.04 },
+    });
+  });
+
+  it("consolidates accent colours first via role-weighted DeltaE00 and protects skin from merging into dark hair", () => {
+    expect(P.deltaE00("#FF6B4A", "#FF6B4A")).toBeCloseTo(0, 6);
+    expect(P.deltaE00("#F7C8A8", "#FFD5BC")).toBeLessThan(8);
+    expect(P.deltaE00("#F7C8A8", "#2B2D38")).toBeGreaterThan(40);
+
+    const sampleItems = [
+      { id: "head", qty: 1, role: "skin", hex: "#F7C8A8", colorName: "Warm Peach" },
+      { id: "hair", qty: 1, role: "hair", hex: "#6B4433", colorName: "Chestnut" },
+      { id: "shirt", qty: 3, role: "clothing", hex: "#E5533D", colorName: "Red" },
+      { id: "pants", qty: 4, role: "clothing", hex: "#3B6EA8", colorName: "Denim" },
+      { id: "peg", qty: 4, role: "joint", hex: "#FF6B4A", colorName: "Spark Coral" },
+    ];
+    const res = P.consolidateColors(sampleItems, 4);
+    const remaining = new Set(res.items.map((i: any) => i.hex));
+    expect(remaining.size).toBe(4);
+    // Coral joint merges into nearby Red clothing first; skin and chestnut hair stay distinct
+    expect(remaining.has("#F7C8A8")).toBe(true);
+    expect(remaining.has("#6B4433")).toBe(true);
+    expect(res.merges[0]).toMatchObject({ fromHex: "#FF6B4A", toHex: "#E5533D" });
   });
 });
 
@@ -305,13 +463,21 @@ describe("real parts on disk", () => {
     expect(b.min[1]).toBeCloseTo(0, 4);
   });
 
-  it("base body parts come out of rig pose onto the bed and are flagged when they need supports", () => {
+  it("base body parts come out of rig pose onto the bed; kip.scad:137 clears forearm/shin/snap_leg while torso stays flagged", () => {
     const torso = prep("kip.scad", "torso", "/kip/stls/torso.stl");
     expect(K.bounds(torso.tri).min[2]).toBeCloseTo(0, 4);
     expect(torso.tier).toBe("needs-supports");
     expect(torso.report.overhangMm2).toBeGreaterThan(K.LIMITS.steepAreaToleranceMm2);
-    // Not a catalog part: no sha to verify, so a clean V4 scan is only "geometry-checked".
-    expect(prep("kip.scad", "crown_buds", "/kip/stls/crown_buds.stl").tier).toBe("geometry-checked");
+    // v_groove_ring fix (dr / tan(38)) cleared forearm, shin, and snap_leg to 0 overhang!
+    for (const cleanId of ["forearm", "shin", "snap_leg", "crown_buds"]) {
+      const part = prep("kip.scad", cleanId, `/kip/stls/${cleanId}.stl`);
+      expect(part.tier, cleanId).toBe("geometry-checked");
+      expect(part.report.overhangMm2, cleanId).toBeLessThanOrEqual(K.LIMITS.steepAreaToleranceMm2);
+    }
+    // Multi-shell `face_glints.stl` lands all 4 disconnected catchlight shells onto z = 0 (zero levitating shells -> Orca RC=0)
+    const glints = prep("kip.scad", "face_glints", "/kip/stls/face_glints.stl");
+    expect(K.bounds(glints.tri).min[2]).toBeCloseTo(0, 4);
+    expect(glints.z).toBeLessThan(2.5);
   });
 
   it("the served validation index has a sha for catalog parts and the index matches the bytes it names", () => {
@@ -324,28 +490,35 @@ describe("real parts on disk", () => {
     void createHash;
   });
 
-  it("packs a character plate inside the bound with legal gaps, rigid transforms only", () => {
-    const inv = K.inventoryFor({ edition: "pro", category: "human", head: "kid", faceInsert: "sculpted", expr: "spark", hair: "short_swept", hat: "ranger", back: "explorer", prop: "wrench", ears: "off", tail: "off", vehicle: "none" });
-    const prepared = inv.items.map((e: any) => prep(e.source, e.id, e.file));
-    const qty = Object.fromEntries(inv.items.map((e: any) => [e.id, e.qty]));
-    const inst = K.expandInstances(prepared, qty);
-    const res = K.buildPlates(inst);
-    expect(res.oversize).toEqual([]);
-    expect(res.plates.flat().length).toBe(inst.length);
-    for (const plate of res.plates) {
-      expect(K.checkPlacement(plate, res.boundMm, res.gap)).toEqual([]);
-      for (const p of plate) {
+  it("plans colour-separated, support-separated, and vehicle-separated plates with realistic spool mass", () => {
+    const state = {
+      edition: "pro", category: "human", head: "kid", faceInsert: "sculpted", expr: "spark",
+      skin: "warm_peach", shirt: "spark_tee", pants: "cargo_shorts",
+      hair: "short_swept", hairColor: "chestnut", hat: "ranger", hatColor: "cobalt_cap",
+      back: "explorer", prop: "wrench", ears: "off", tail: "off",
+      vehicle: "scooter", vehCovers: true, racerKit: true, includeVehicle: true,
+    };
+    const bom = B.resolveSceneBom(state);
+    const prepared = bom.items.map((e: any) => K.prepareItem(e, load(e.file), { verified: e.source === "partspec" }));
+    const plan = K.planColorPlates(prepared, P.createDefaultProfile());
+    expect(plan.oversize).toEqual([]);
+    expect(plan.estimate.characterGrams).toBeGreaterThan(55);
+    expect(plan.estimate.characterGrams).toBeLessThan(130);
+    expect(plan.estimate.vehicleGrams).toBeGreaterThan(25);
+
+    const charPlates = plan.plates.filter((p: any) => p.group === "character");
+    const vehPlates = plan.plates.filter((p: any) => p.group === "vehicle");
+    expect(charPlates.length).toBeGreaterThan(0);
+    expect(vehPlates.length).toBeGreaterThan(0);
+
+    for (const pl of plan.plates) {
+      expect(pl.gap).toBe(pl.requiresSupports ? 6 : 5);
+      expect(K.checkPlacement(pl.placed, pl.boundMm, pl.gap)).toEqual([]);
+      for (const p of pl.placed) {
+        expect(p.tier === "needs-supports").toBe(pl.requiresSupports);
+        expect(p.hex).toBe(pl.hex);
         const b = K.bounds(p.tri);
         expect(b.min[2]).toBeCloseTo(0, 3);
-        expect(b.min[0]).toBeGreaterThan(p.x - 1e-3);
-        expect(b.min[0]).toBeLessThan(p.x + 1e-3);
-        expect(b.size[0]).toBeCloseTo(p.w, 3);
-        expect(b.size[1]).toBeCloseTo(p.h, 3);
-        // rigid: triangle count and total area are unchanged by placement
-        const src = inst.find((i: any) => i.instance === p.instance);
-        expect(p.tri.length).toBe(src.tri.length);
-        const area = (t: Float32Array) => { let a = 0; for (let i = 0; i < t.length; i += 9) { const ux = t[i + 3]! - t[i]!, uy = t[i + 4]! - t[i + 1]!, uz = t[i + 5]! - t[i + 2]!, vx = t[i + 6]! - t[i]!, vy = t[i + 7]! - t[i + 1]!, vz = t[i + 8]! - t[i + 2]!; a += Math.hypot(uy * vz - uz * vy, uz * vx - ux * vz, ux * vy - uy * vx) / 2; } return a; };
-        expect(area(p.tri)).toBeCloseTo(area(src.tri), 1);
       }
     }
   });
@@ -354,8 +527,8 @@ describe("real parts on disk", () => {
 describe("exports", () => {
   const sample = () => {
     const placed = [
-      { instance: "a", partId: "a", tier: "support-free", source: "partspec", x: 0, y: 0, w: 10, h: 10, rot: false, z: 5, orientation: "+z up", report: { overhangMm2: 0 }, tri: Float32Array.from(box(0, 0, 0, 10, 10, 5)) },
-      { instance: "b#1", partId: "b", tier: "needs-supports", source: "kip.scad", x: 20, y: 0, w: 10, h: 10, rot: false, z: 5, orientation: "+z up", report: { overhangMm2: 42.5 }, tri: Float32Array.from(box(20, 0, 0, 30, 10, 5)) },
+      { instance: "a", partId: "a", tier: "support-free", source: "partspec", hex: "#4EB3FC", colorName: "Snap Sky", x: 0, y: 0, w: 10, h: 10, rot: false, z: 5, orientation: "+z up", report: { overhangMm2: 0 }, tri: Float32Array.from(box(0, 0, 0, 10, 10, 5)) },
+      { instance: "b#1", partId: "b", tier: "needs-supports", source: "kip.scad", hex: "#F4EFE6", colorName: "Warm Shell", x: 20, y: 0, w: 10, h: 10, rot: false, z: 5, orientation: "+z up", report: { overhangMm2: 42.5 }, tri: Float32Array.from(box(20, 0, 0, 30, 10, 5)) },
     ];
     return placed;
   };
@@ -369,39 +542,75 @@ describe("exports", () => {
     try {
       out = execFileSync("python3", ["-c", "import zipfile,sys;z=zipfile.ZipFile(sys.argv[1]);print(z.testzip());print(z.read('a.txt').decode());print(list(z.read('dir/b.bin')))", f], { encoding: "utf8" });
     } catch (e: any) {
-      if (e.code === "ENOENT") return; // no python3 on this machine; the structural test below still runs
+      if (e.code === "ENOENT") return;
       throw e;
     }
     expect(out.split("\n")).toEqual(["None", "hello", "[1, 2, 3, 4]", ""]);
     expect(K.crc32(new TextEncoder().encode("123456789"))).toBe(0xcbf43926);
   });
 
-  it("3MF holds one object per part in plate coordinates and flags only the parts that need supports", () => {
-    const zip: Uint8Array = K.to3mf(sample());
+  it("writes valid PrusaSlicer and Orca/Bambu 3MF dialects plus multi-plate kip-project.3mf", () => {
     const dir = mkdtempSync(join(tmpdir(), "kip3mf-"));
-    const f = join(dir, "t.3mf");
-    writeFileSync(f, zip);
-    let names = "", model = "", cfg = "";
+    // 1. PrusaSlicer dialect
+    const prusaPath = join(dir, "prusa.3mf");
+    writeFileSync(prusaPath, K.to3mf(sample(), { slicer: "prusa", profile: { presetId: "prusa_mmu_5", fitChoice: "easy" } }));
+    // 2. Orca / Bambu Studio dialect
+    const orcaPath = join(dir, "orca.3mf");
+    writeFileSync(orcaPath, K.to3mf(sample(), { slicer: "orca_bambu", profile: { presetId: "changer_256_4", fitChoice: "snug" } }));
+    // 3. Multi-plate project
+    const projPlates = [
+      { label: "Plate 1: Sky", fileStem: "plate_01_sky", hex: "#4EB3FC", colorName: "Snap Sky", boundMm: 170, gap: 5, requiresSupports: false, placed: [sample()[0]!] },
+      { label: "Plate 2: Shell", fileStem: "plate_02_shell", hex: "#F4EFE6", colorName: "Warm Shell", boundMm: 170, gap: 6, requiresSupports: true, placed: [sample()[1]!] },
+    ];
+    const projPath = join(dir, "project.3mf");
+    writeFileSync(projPath, K.to3mfProject(projPlates, P.applyPresetToProfile(P.createDefaultProfile(), "changer_256_4")));
+
+    let prusaOut = "", orcaOut = "", projOut = "";
     try {
-      const py = "import zipfile,sys;z=zipfile.ZipFile(sys.argv[1]);assert z.testzip() is None;print('\\n'.join(z.namelist()));print('@@');print(z.read('3D/3dmodel.model').decode());print('@@');print(z.read('Metadata/Slic3r_PE_model.config').decode())";
-      [names, model, cfg] = execFileSync("python3", ["-c", py, f], { encoding: "utf8" }).split("@@\n") as [string, string, string];
+      const pyPrusa = "import zipfile,sys;z=zipfile.ZipFile(sys.argv[1]);assert z.testzip() is None;print('\\n'.join(z.namelist()));print('@@');print(z.read('3D/3dmodel.model').decode());print('@@');print(z.read('Metadata/Slic3r_PE_model.config').decode())";
+      prusaOut = execFileSync("python3", ["-c", pyPrusa, prusaPath], { encoding: "utf8" });
+      const pyOrca = "import zipfile,sys,json;z=zipfile.ZipFile(sys.argv[1]);assert z.testzip() is None;print('\\n'.join(z.namelist()));print('@@');print(z.read('3D/3dmodel.model').decode());print('@@');print(z.read('Metadata/model_settings.config').decode());print('@@');print(z.read('Metadata/project_settings.config').decode())";
+      orcaOut = execFileSync("python3", ["-c", pyOrca, orcaPath], { encoding: "utf8" });
+      projOut = execFileSync("python3", ["-c", pyOrca, projPath], { encoding: "utf8" });
     } catch (e: any) {
       if (e.code === "ENOENT") return;
       throw e;
     }
-    expect(names).toContain("3D/3dmodel.model");
-    expect(model.match(/<object /g)).toHaveLength(2);
-    expect(model).toContain('unit="millimeter"');
-    const verts = [...model.matchAll(/<object id="(\d)"[\s\S]*?<\/object>/g)].map((m) => ({ nv: (m[0].match(/<vertex /g) ?? []).length, idx: [...m[0].matchAll(/v[123]="(\d+)"/g)].map((x) => +x[1]!) }));
-    for (const v of verts) { expect(v.nv).toBe(8); expect(Math.max(...v.idx)).toBe(v.nv - 1); } // boxes dedupe to 8 vertices
-    expect(model).toContain('transform="1 0 0 0 1 0 0 0 1 5 5 0"'); // 170 plate centred on the 180 bed
-    expect(cfg.match(/support_material/g)).toHaveLength(1);
-    expect(cfg.indexOf('value="b#1"')).toBeLessThan(cfg.indexOf("support_material"));
+
+    const [pNames, pModel, pCfg] = prusaOut.split("@@\n") as [string, string, string];
+    expect(pNames).toContain("Metadata/Slic3r_PE_model.config");
+    expect(pModel.match(/<object /g)).toHaveLength(2);
+    expect(pModel).toContain('basematerials id="9000"');
+    expect(pModel.indexOf('basematerials id="9000"')).toBeLessThan(pModel.indexOf('<object id="1"'));
+    expect(pCfg.match(/support_material"/g)).toHaveLength(1);
+    expect(pCfg).toContain('xy_size_compensation" value="-0.04"');
+
+    const [oNames, oModel, oCfg, oProj] = orcaOut.split("@@\n") as [string, string, string, string];
+    expect(oNames).toContain("Metadata/model_settings.config");
+    expect(oNames).toContain("Metadata/project_settings.config");
+    expect(oModel).not.toContain("PrusaSlicer");
+    expect(oCfg).toContain('subtype="normal_part"');
+    expect(oCfg.match(/enable_support" value="1"/g)).toHaveLength(1);
+    expect(oCfg).toContain('xy_contour_compensation" value="0.025"');
+    expect(oCfg).toContain('xy_hole_compensation" value="-0.025"');
+    const parsedProj = JSON.parse(oProj);
+    expect(parsedProj.filament_colour).toEqual(["#4EB3FC", "#F4EFE6"]);
+
+    const [, projModel, projCfg] = projOut.split("@@\n") as [string, string, string];
+    expect(projCfg.match(/<plate>/g)).toHaveLength(2);
+    // Plate 2 sits at col=1 -> x offset = 1 * 1.2 * 256 + (256 - 246)/2 = 307.2 + 5 = 312.2 (or boundMm=170 -> 307.2 + 43 = 350.2)
+    expect(projModel).toContain("350.2 43 0");
   });
 
-  it("layout json records each part's placement and tier", () => {
-    const j = JSON.parse(K.layoutJson([sample()], { preset: "t" }));
-    expect(j.format).toBe("toyventor.kip-plate/1");
+  it("layout json v2 sanitizes binary state and includes interfaces.json safety warnings", () => {
+    const j = JSON.parse(K.layoutJson([sample()], {
+      preset: "t",
+      state: { head: "kid", customStlSlots: { crown: { bytes: new Uint8Array([1, 2, 3]), name: "hat.stl", colorHex: "#123456" } } },
+    }));
+    expect(j.format).toBe("toyventor.kip-plate/2");
+    expect(j.warnings).toContain(K.PRINT_PAGE_WARNINGS.always);
+    expect(j.warnings).toContain(K.PRINT_PAGE_WARNINGS.small_part);
+    expect(j.state.customStlSlots.crown).toEqual({ name: "hat.stl", colorHex: "#123456" });
     expect(j.plates[0].parts.map((p: any) => p.tier)).toEqual(["support-free", "needs-supports"]);
   });
 

@@ -161,6 +161,16 @@ describe("sticker export is 1:1 in millimetres", () => {
 });
 
 describe("privacy by construction", () => {
+  it("the sticker generator module is pure: no network, storage, workers, DOM or detection", () => {
+    for (const rel of ["parts/kip/viewer/kip-print-stickers.js"]) {
+      const modSrc = readFileSync(join(root, rel), "utf8");
+      const modCode = modSrc.split("\n").filter((l) => !/^\s*\/\//.test(l)).join("\n");
+      for (const banned of [/\bfetch\s*\(/, /XMLHttpRequest/, /sendBeacon/, /WebSocket/, /localStorage/, /sessionStorage/, /indexedDB/, /caches\./, /document\./, /window\./, /new Worker/, /FaceDetector/, /\bimport\(/, /navigator\./]) {
+        expect(modCode, `${rel}: ${String(banned)}`).not.toMatch(banned);
+      }
+    }
+  });
+
   const src = readFileSync(join(root, "parts/kip/viewer/kip-selfie.js"), "utf8");
   const code = src.split("\n").filter((l) => !/^\s*\/\//.test(l)).join("\n"); // ignore the comment header that names what is forbidden
 

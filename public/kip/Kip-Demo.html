@@ -516,11 +516,13 @@ import {
   DECAL_EXPRESSIONS,
   KID_DRAWING_PRESETS,
   createDecalExpressionCanvas,
+  createTorsoOutfitDecalCanvas,
   renderKidPresetToCanvas,
   segmentForegroundMask,
   trySamScanEndpoint,
   buildPhotoAccessoryMesh,
   encodeToyContractHash,
+  setSelfieCanvas,
 } from '/kip/kip-forge-sdk.js?v=10.0';
 import {
   KIP_BUILD_VERSION,
@@ -551,6 +553,9 @@ import {
   makeMotoStraddleClip,
   makeSkateboardClip,
 } from '/kip/kip-vehicles-wardrobe.js?v=10.0';
+import { mountKipMenu } from '/kip/kip-menu.js?v=10.0';
+import { mountPrintView } from '/kip/kip-print-view.js?v=10.0';
+import { mountSelfie } from '/kip/kip-selfie.js?v=10.0';
 
 if (window.self !== window.top) document.body.classList.add('in-iframe');
 
@@ -2031,17 +2036,21 @@ function updateStatusText() {
   }
 }
 
+// One entry per clip that has a button; the side menu's Clip select lists the same entries.
+const clipButtons = [];
+function triggerClip(name) {
+  if (loco.buildMode !== 'assembled') exitPileMode();
+  loco.manualOverride = (name !== 'idle');
+  playClip(name);
+}
 function addClipButton(name, label) {
   const row = document.getElementById('row-clips');
   const btn = document.createElement('button');
   btn.dataset.clip = name;
   btn.textContent = label;
-  btn.addEventListener('click', () => {
-    if (loco.buildMode !== 'assembled') exitPileMode();
-    loco.manualOverride = (name !== 'idle');
-    playClip(name);
-  });
+  btn.addEventListener('click', () => triggerClip(name));
   row.appendChild(btn);
+  clipButtons.push({ id: name, label });
 }
 
 // Camera helper for deterministic framing (shifts target slightly lower when bottom UI dock is visible so subject stays clear!)
@@ -2407,7 +2416,7 @@ function setExplodeAmount(val, instant = false) {
   updateStatusText();
 }
 
-btnExplode.addEventListener('click', () => {
+function toggleExplode() {
   const turningOn = loco.explodeTarget < 0.5;
   setExplodeAmount(turningOn ? 1.0 : 0.0, false);
   if (turningOn) applyCameraPreset('exploded');
@@ -2417,7 +2426,8 @@ btnExplode.addEventListener('click', () => {
     camera.position.set(cx + 175, 162, cz + 415);
     controls.target.set(cx, 68, cz);
   }
-});
+}
+btnExplode.addEventListener('click', toggleExplode);
 rngExplode.addEventListener('input', e => {
   setExplodeAmount(parseFloat(e.target.value) / 100, true);
 });
@@ -2470,10 +2480,11 @@ function startPileToBuild(autoFrame = false) {
   updateStatusText();
 }
 
-btnPile.addEventListener('click', () => {
+function togglePartPile() {
   if (loco.buildMode === 'pile') exitPileMode();
   else enterPartPile(true);
-});
+}
+btnPile.addEventListener('click', togglePartPile);
 btnBuild.addEventListener('click', () => startPileToBuild(true));
 
 function refreshPileIfActive() {
@@ -3187,8 +3198,8 @@ document.getElementById('btn-Skeleton').addEventListener('click', toggleRefSkele
 
 const speeds = [1.0, 0.5, 0.25, 1.5];
 let speedIdx = 0;
-document.getElementById('btn-speed').addEventListener('click', () => {
-  speedIdx = (speedIdx + 1) % speeds.length;
+function setSpeedScale(scale) {
+  speedIdx = Math.max(0, speeds.indexOf(scale));
   loco.speedScale = speeds[speedIdx];
   document.getElementById('btn-speed').textContent = `${loco.speedScale}×`;
   if (activeClipName && actions.has(activeClipName)) {
@@ -3197,6 +3208,9 @@ document.getElementById('btn-speed').addEventListener('click', () => {
   if (activeClipName && refActions.has(activeClipName)) {
     refActions.get(activeClipName).setEffectiveTimeScale(loco.speedScale);
   }
+}
+document.getElementById('btn-speed').addEventListener('click', () => {
+  setSpeedScale(speeds[(speedIdx + 1) % speeds.length]);
 });
 
 // --- PHASE 3: CONFORMING LLM PART-MAKER SDK MODAL & CUSTOM .STL MOUNTING ---
@@ -4050,6 +4064,89 @@ window.addEventListener('resize', () => {
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
+
+// --- SIDE MENU (shipped behind ?menu=side until it matches the dock control for control) ---
+// The panel owns no state: it re-reads `loco` (and the few readers below) every tick and calls the same
+// setters the dock buttons call. The adapter below is the only place it touches this script's scope.
+// Plate view: the character's parts packed flat for printing (kip-print.js does the maths, this just feeds it).
+const getPrintState = () => ({
+  edition: loco.edition,
+  category: loco.category,
+  head: loco.head,
+  faceInsert: loco.faceInsert,
+  expr: loco.expr,
+  selfie: loco.expr === 'selfie',
+  skin: loco.skin,
+  shirt: loco.shirt,
+  pants: loco.pants,
+  hair: loco.hair,
+  hairColor: loco.hairColor,
+  hat: loco.hat,
+  hatColor: loco.hatColor,
+  back: loco.back,
+  prop: loco.prop,
+  vehicle: loco.vehicle,
+  vehCovers: loco.vehCovers,
+  racerKit: loco.racerKit,
+  ears: earModes[earIdx],
+  tail: tailModes[tailIdx],
+  hasPhotoAccessory: loco.hasPhotoAccessory,
+  baseColors: Object.fromEntries(
+    Object.entries(mats).map(([k, m]) => [k, `#${m.color.getHexString(THREE.SRGBColorSpace)}`])
+  ),
+});
+const canvasToRgba = (c) => {
+  if (!c || !c.width || !c.height) return null;
+  const g = c.getContext('2d');
+  if (!g) return null;
+  return { w: c.width, h: c.height, data: g.getImageData(0, 0, c.width, c.height).data };
+};
+const renderStickerSources = (state, bom, bonusExprs = []) => {
+  const out = {};
+  const skinObj = SKIN_TONES.find(s => s.id === state.skin) || SKIN_TONES[0];
+  for (const dec of bom?.decals || []) {
+    if (dec.kind === 'selfie_face') {
+      out['face:selfie'] = canvasToRgba(createDecalExpressionCanvas('selfie', state.head, 'flat', { onPlate: true }));
+      for (const bExpr of bonusExprs) {
+        out[`face:${bExpr}:flat`] = canvasToRgba(createDecalExpressionCanvas(bExpr, state.head, 'flat', { onPlate: true }));
+      }
+    } else if (dec.kind === 'human_face') {
+      const ins = dec.faceInsert || 'sculpted';
+      out[`face:${dec.expr || 'spark'}:${ins}`] = canvasToRgba(createDecalExpressionCanvas(dec.expr || 'spark', state.head, ins, { onPlate: true }));
+      if (ins === 'flat') {
+        for (const bExpr of bonusExprs) {
+          out[`face:${bExpr}:flat`] = canvasToRgba(createDecalExpressionCanvas(bExpr, state.head, 'flat', { onPlate: true }));
+        }
+      }
+    } else if (dec.kind === 'classic_visor_face') {
+      out[`classic_visor:${dec.expr || 'happy'}`] = canvasToRgba(createDecalExpressionCanvas(dec.expr || 'happy', 'kid', 'sculpted', { onPlate: false }));
+    } else if (dec.kind === 'creature_face') {
+      const hd = dec.head || state.head || 'fox';
+      out[`creature:${hd}:${dec.expr || 'spark'}`] = canvasToRgba(createDecalExpressionCanvas(dec.expr || 'spark', hd, 'sculpted', { onPlate: false }));
+    } else if (dec.kind === 'shirt') {
+      out[`shirt:${dec.shirtId}`] = canvasToRgba(createTorsoOutfitDecalCanvas(dec.shirtId, state.pants || 'off', skinObj.hex));
+    } else if (dec.kind === 'craft_cutout') {
+      const raw = canvasToRgba(photoSrcCanvas);
+      if (raw && currentPhotoSeg?.mask && currentPhotoSeg.w === raw.w && currentPhotoSeg.h === raw.h) {
+        const masked = new Uint8ClampedArray(raw.data);
+        for (let i = 0; i < currentPhotoSeg.mask.length; i++) {
+          if (!currentPhotoSeg.mask[i]) masked[i * 4 + 3] = 0;
+        }
+        out[`craft:${dec.slot || 'hand'}`] = { w: raw.w, h: raw.h, data: masked };
+      } else if (raw) {
+        out[`craft:${dec.slot || 'hand'}`] = raw;
+      }
+    }
+  }
+  return out;
+};
+const printView = mountPrintView({
+  THREE, scene, camera, controls,
+  getState: getPrintState,
+  renderStickerSources,
+  setCharacterVisible: on => { kip.mover.visible = on; originRing.visible = on; },
+});
+window.kipPrint = printView;
 
 init().catch(err => {
   console.error(err);

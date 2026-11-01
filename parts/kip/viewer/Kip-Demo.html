@@ -516,6 +516,7 @@ import {
   DECAL_EXPRESSIONS,
   KID_DRAWING_PRESETS,
   createDecalExpressionCanvas,
+  createTorsoOutfitDecalCanvas,
   renderKidPresetToCanvas,
   segmentForegroundMask,
   trySamScanEndpoint,
@@ -4067,84 +4068,85 @@ window.addEventListener('resize', () => {
 // --- SIDE MENU (shipped behind ?menu=side until it matches the dock control for control) ---
 // The panel owns no state: it re-reads `loco` (and the few readers below) every tick and calls the same
 // setters the dock buttons call. The adapter below is the only place it touches this script's scope.
-if (params.get('menu') === 'side') {
-  // Plate view: the character's parts packed flat for printing (kip-print.js does the maths, this just feeds it).
-  const printView = mountPrintView({
-    THREE, scene, camera, controls,
-    getState: () => ({
-      edition: loco.edition, category: loco.category, head: loco.head, faceInsert: loco.faceInsert, expr: loco.expr,
-      hair: loco.hair, hat: loco.hat, back: loco.back, prop: loco.prop, vehicle: loco.vehicle,
-      ears: earModes[earIdx], tail: tailModes[tailIdx],
-    }),
-    setCharacterVisible: on => { kip.mover.visible = on; originRing.visible = on; },
-  });
-  window.kipPrint = printView;
-  // Selfie face (memory only, never in the URL or storage): wears a photo on the flat face insert and puts the
-  // previous face back on Remove. Anything that would leave a human head first removes it, so a photo never lingers.
-  let selfieBefore = null;
-  const selfie = mountSelfie({
-    apply: canvas => {
-      if (loco.expr !== 'selfie') selfieBefore = { expr: loco.expr, insert: loco.faceInsert };
-      setSelfieCanvas(canvas);
-      loco.expr = 'selfie';
-      setFaceInsertMode('flat');
-    },
-    restore: () => {
-      setSelfieCanvas(null);
-      if (loco.expr === 'selfie') loco.expr = selfieBefore?.expr ?? 'spark';
-      setFaceInsertMode(selfieBefore?.insert ?? 'sculpted');
-      selfieBefore = null;
-    },
-  });
-  window.kipSelfie = selfie;
-  const leaveSelfie = () => { if (loco.expr === 'selfie') selfie.remove(); };
-  window.kipMenu = mountKipMenu({
-    loco,
-    camera,
-    selfie: { open: selfie.open, remove: selfie.remove },
-    print: {
-      isOn: printView.isOn, busy: printView.isBusy, summary: printView.summary,
-      setOn: on => (on ? printView.enter() : printView.exit()),
-      plateCount: printView.plateCount, plateIndex: printView.plateIndex, setPlate: printView.setPlate,
-      download: printView.download,
-    },
-    ready: () => window.__KIP_READY__ === true,
-    speeds,
-    presets: presets.map(id => ({ id, label: presetLabels[id] })),
-    clips: () => clipButtons,
-    read: {
-      ears: () => earModes[earIdx],
-      tail: () => tailModes[tailIdx],
-      preset: () => presets[presetIdx],
-      speed: () => loco.speedScale,
-      clip: () => activeClipName,
-      refOn: () => refSkeletonGroup?.visible === true,
-      explodeOn: () => loco.explodeTarget >= 0.5,
-      pileOn: () => loco.buildMode === 'pile',
-    },
-    act: {
-      setCategory: id => { if (id !== 'human') leaveSelfie(); setCategoryMode(id); },
-      setHead: id => {
-        if (!HUMAN_HEAD_IDS.has(id)) leaveSelfie();
-        setHeadMode(id);
-        // Stepping onto the chibi head switches to the vinyl insert; a photo must stay on the flat one.
-        if (loco.expr === 'selfie' && loco.faceInsert !== 'flat') setFaceInsertMode('flat');
-      },
-      setFace: id => { leaveSelfie(); setFaceMode(id); },
-      setFaceInsert: id => { if (id !== 'flat') leaveSelfie(); setFaceInsertMode(id); }, setSkin: setSkinTone, setHair: setHairMode,
-      setHairColor, setHat: setCrownMode, setHatColor, setShirt: setShirtMode,
-      setPants: setPantsMode, setBack: setBackMode, setEars: setEarMode, setTail: setTailMode,
-      setProp: setPropMode, setVehicle: id => setVehicleMode(id, true),
-      setCovers: setVehicleCovers, setRacerKit, setEdition, applyPreset: name => { leaveSelfie(); applyPreset(name); },
-      playClip: triggerClip, setSpeed: setSpeedScale,
-      toggleExplode, setExplode: v => setExplodeAmount(v, true), togglePile: togglePartPile,
-      startBuild: () => startPileToBuild(true), toggleRef: toggleRefSkeleton,
-      openLlm: () => modalLlm.classList.add('open'),
-      openPhoto: () => modalPhoto.classList.add('open'),
-      loadFile: loadCustomMixamoOrStlFile,
-    },
-  });
-}
+// Plate view: the character's parts packed flat for printing (kip-print.js does the maths, this just feeds it).
+const getPrintState = () => ({
+  edition: loco.edition,
+  category: loco.category,
+  head: loco.head,
+  faceInsert: loco.faceInsert,
+  expr: loco.expr,
+  selfie: loco.expr === 'selfie',
+  skin: loco.skin,
+  shirt: loco.shirt,
+  pants: loco.pants,
+  hair: loco.hair,
+  hairColor: loco.hairColor,
+  hat: loco.hat,
+  hatColor: loco.hatColor,
+  back: loco.back,
+  prop: loco.prop,
+  vehicle: loco.vehicle,
+  vehCovers: loco.vehCovers,
+  racerKit: loco.racerKit,
+  ears: earModes[earIdx],
+  tail: tailModes[tailIdx],
+  hasPhotoAccessory: loco.hasPhotoAccessory,
+  baseColors: Object.fromEntries(
+    Object.entries(mats).map(([k, m]) => [k, `#${m.color.getHexString(THREE.SRGBColorSpace)}`])
+  ),
+});
+const canvasToRgba = (c) => {
+  if (!c || !c.width || !c.height) return null;
+  const g = c.getContext('2d');
+  if (!g) return null;
+  return { w: c.width, h: c.height, data: g.getImageData(0, 0, c.width, c.height).data };
+};
+const renderStickerSources = (state, bom, bonusExprs = []) => {
+  const out = {};
+  const skinObj = SKIN_TONES.find(s => s.id === state.skin) || SKIN_TONES[0];
+  for (const dec of bom?.decals || []) {
+    if (dec.kind === 'selfie_face') {
+      out['face:selfie'] = canvasToRgba(createDecalExpressionCanvas('selfie', state.head, 'flat', { onPlate: true }));
+      for (const bExpr of bonusExprs) {
+        out[`face:${bExpr}:flat`] = canvasToRgba(createDecalExpressionCanvas(bExpr, state.head, 'flat', { onPlate: true }));
+      }
+    } else if (dec.kind === 'human_face') {
+      const ins = dec.faceInsert || 'sculpted';
+      out[`face:${dec.expr || 'spark'}:${ins}`] = canvasToRgba(createDecalExpressionCanvas(dec.expr || 'spark', state.head, ins, { onPlate: true }));
+      if (ins === 'flat') {
+        for (const bExpr of bonusExprs) {
+          out[`face:${bExpr}:flat`] = canvasToRgba(createDecalExpressionCanvas(bExpr, state.head, 'flat', { onPlate: true }));
+        }
+      }
+    } else if (dec.kind === 'classic_visor_face') {
+      out[`classic_visor:${dec.expr || 'happy'}`] = canvasToRgba(createDecalExpressionCanvas(dec.expr || 'happy', 'kid', 'sculpted', { onPlate: false }));
+    } else if (dec.kind === 'creature_face') {
+      const hd = dec.head || state.head || 'fox';
+      out[`creature:${hd}:${dec.expr || 'spark'}`] = canvasToRgba(createDecalExpressionCanvas(dec.expr || 'spark', hd, 'sculpted', { onPlate: false }));
+    } else if (dec.kind === 'shirt') {
+      out[`shirt:${dec.shirtId}`] = canvasToRgba(createTorsoOutfitDecalCanvas(dec.shirtId, state.pants || 'off', skinObj.hex));
+    } else if (dec.kind === 'craft_cutout') {
+      const raw = canvasToRgba(photoSrcCanvas);
+      if (raw && currentPhotoSeg?.mask && currentPhotoSeg.w === raw.w && currentPhotoSeg.h === raw.h) {
+        const masked = new Uint8ClampedArray(raw.data);
+        for (let i = 0; i < currentPhotoSeg.mask.length; i++) {
+          if (!currentPhotoSeg.mask[i]) masked[i * 4 + 3] = 0;
+        }
+        out[`craft:${dec.slot || 'hand'}`] = { w: raw.w, h: raw.h, data: masked };
+      } else if (raw) {
+        out[`craft:${dec.slot || 'hand'}`] = raw;
+      }
+    }
+  }
+  return out;
+};
+const printView = mountPrintView({
+  THREE, scene, camera, controls,
+  getState: getPrintState,
+  renderStickerSources,
+  setCharacterVisible: on => { kip.mover.visible = on; originRing.visible = on; },
+});
+window.kipPrint = printView;
 
 init().catch(err => {
   console.error(err);

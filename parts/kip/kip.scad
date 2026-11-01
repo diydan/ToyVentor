@@ -134,7 +134,7 @@ module pro_teardrop_bore_cut(d = PRO_FREE_D, depth = 12.8, ch = 0.55) {
 // Support-Free ~38-deg Conical Cosmetic V-Groove Ring (eliminates 90-deg groove overhangs)
 module v_groove_ring(z_mid, r_outer, r_inner, sy = 1.0) {
     dr = r_outer - r_inner;
-    hh = dr * tan(38); // <= 38 deg flank slope!
+    hh = dr / tan(38); // <= 38 deg flank slope from vertical (dr/hh = tan(38))!
     translate([0, 0, z_mid])
         scale([1.0, sy, 1.0])
             difference() {

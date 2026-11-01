@@ -36,6 +36,11 @@ import {
   VEHICLE_OPTIONS,
 } from './kip-vehicles-wardrobe.js?v=10.0';
 import { DECAL_EXPRESSIONS } from './kip-forge-sdk.js?v=10.0';
+import {
+  PRESET_LIST,
+  FIT_OPTIONS,
+  createDefaultProfile,
+} from './kip-print-profile.js';
 
 export const CUSTOM_PRESET = '__custom__';
 export const PANEL_W = 288;
@@ -356,15 +361,133 @@ export function buildMenu(ctx) {
   };
 
   const pr = ctx.print;
+  const readProf = () => (pr?.profile ? pr.profile() : createDefaultProfile());
+  const patchProf = (patch) => pr?.updateProfile?.(patch);
   const print = pr && {
     id: 'print',
     label: 'Print',
     icon: '🖨️',
     controls: [
       { kind: 'toggle', id: 'plateView', label: 'Plate view',
-        title: 'Lay every part of this character flat on a print plate: gaps of at least 5 mm, tier colours, exports',
+        title: 'Lay every part of this character and optional vehicle flat on colour-grouped print plates',
         get: () => pr.isOn(), set: (v) => pr.setOn(v) },
-      { kind: 'info', id: 'printInfo', visibleWhen: () => pr.isOn(), title: 'Plate summary',
+      sel('printer', 'Printer', {
+        title: 'Printer bed size, slicer dialect, and multi-colour slot preset',
+        visibleWhen: () => pr.isOn(),
+        options: () => PRESET_LIST.map((p) => ({ value: p.presetId, label: p.label })),
+        get: () => readProf().presetId,
+        set: (v) => (pr.setPreset ? pr.setPreset(v) : patchProf({ presetId: v })),
+      }),
+      sel('slicer', 'Slicer family', {
+        title: 'Target 3MF metadata dialect: OrcaSlicer / Bambu Studio or PrusaSlicer',
+        visibleWhen: () => pr.isOn() && readProf().presetId === 'custom',
+        options: () => [
+          { value: 'orca_bambu', label: 'OrcaSlicer / Bambu Studio' },
+          { value: 'prusa', label: 'PrusaSlicer' },
+        ],
+        get: () => readProf().slicer === 'prusa' ? 'prusa' : 'orca_bambu',
+        set: (v) => patchProf({ slicer: v }),
+      }),
+      sel('changerType', 'Machine type', {
+        title: 'Single extruder, single-nozzle filament changer, or multi-head toolchanger',
+        visibleWhen: () => pr.isOn() && readProf().presetId === 'custom',
+        options: () => [
+          { value: 'single', label: 'Single extruder (1 colour)' },
+          { value: 'multiplexer', label: 'Single-nozzle changer' },
+          { value: 'toolchanger', label: 'Multi-head toolchanger' },
+        ],
+        get: () => readProf().changerType,
+        set: (v) => patchProf({ changerType: v, maxSlots: v === 'single' ? 1 : Math.max(2, readProf().maxSlots) }),
+      }),
+      { kind: 'range', id: 'customBedMm', label: 'Bed (mm)', min: 150, max: 360, step: 10,
+        title: 'Square printer build plate width and depth in millimetres',
+        visibleWhen: () => pr.isOn() && readProf().presetId === 'custom',
+        get: () => readProf().bedXmm,
+        set: (v) => patchProf({ bedXmm: v, bedYmm: v }) },
+      sel('customNozzle', 'Nozzle', {
+        title: 'Extruder nozzle diameter (0.4 mm standard profile)',
+        visibleWhen: () => pr.isOn() && readProf().presetId === 'custom',
+        options: () => [
+          { value: '0.4', label: '0.4 mm (standard)' },
+          { value: '0.2', label: '0.2 mm (fine)' },
+        ],
+        get: () => String(readProf().nozzleMm),
+        set: (v) => patchProf({ nozzleMm: parseFloat(v) }),
+      }),
+      { kind: 'range', id: 'customSlots', label: 'Colour slots', min: 2, max: 16, step: 1,
+        title: 'Number of loaded filament slots available to the printer',
+        visibleWhen: () => pr.isOn() && readProf().presetId === 'custom' && readProf().changerType !== 'single',
+        get: () => Math.max(2, readProf().maxSlots),
+        set: (v) => patchProf({ maxSlots: v }) },
+      sel('fit', 'Fit', {
+        title: 'Per-object XY contour and hole compensation matching your 1/2/3-dot calibration strip',
+        visibleWhen: () => pr.isOn(),
+        options: () => FIT_OPTIONS.map((f) => ({ value: f.id, label: f.label })),
+        get: () => readProf().fitChoice,
+        set: (v) => patchProf({ fitChoice: v }),
+      }),
+      sel('layout', 'Layout', {
+        title: 'Loose parts on the bed (default) or flat-pack sprue kit card with breakaway V-notches',
+        visibleWhen: () => pr.isOn(),
+        options: () => [
+          { value: 'loose', label: 'Loose parts' },
+          { value: 'sprue', label: 'Kit card (sprue)' },
+        ],
+        get: () => readProf().flatPackMode || 'loose',
+        set: (v) => patchProf({ flatPackMode: v }),
+      }),
+      sel('colours', 'Colours', {
+        title: 'Multi-colour plate strategy when more than one filament slot is available',
+        visibleWhen: () => pr.isOn() && readProf().maxSlots > 1,
+        options: () => [
+          { value: 'auto', label: 'Auto (low waste)' },
+          { value: 'by-layer', label: 'One plate, by layer' },
+          { value: 'split-plates', label: 'One plate per colour' },
+        ],
+        get: () => readProf().multiColorStrategy === 'by-object' ? 'auto' : readProf().multiColorStrategy,
+        set: (v) => patchProf({ multiColorStrategy: v }),
+      }),
+      sel('tooManyColours', 'Too many colours', {
+        title: 'How to handle looks with more filament colours than loaded printer slots',
+        visibleWhen: () => pr.isOn() && readProf().maxSlots > 1 && (pr.summary().sceneColorCount ?? 0) > readProf().maxSlots,
+        options: () => [
+          { value: 'extra-plates', label: 'Use extra plates' },
+          { value: 'merge', label: `Auto-merge to ${readProf().maxSlots} colours` },
+        ],
+        get: () => readProf().tooManyColours || 'extra-plates',
+        set: (v) => patchProf({ tooManyColours: v }),
+      }),
+      { kind: 'toggle', id: 'includeVehicle', label: 'Include vehicle',
+        title: 'Include the active vehicle on dedicated plates in the print pack',
+        visibleWhen: () => pr.isOn() && (loco.vehicle !== 'none' || !!pr.summary().hasVehicleInScene),
+        get: () => readProf().includeVehicle !== false,
+        set: (v) => patchProf({ includeVehicle: v }) },
+      { kind: 'toggle', id: 'stickers', label: 'Stickers',
+        title: 'Include 1:1 printable sticker sheet (PDF, print-then-cut PNG, vector cut SVG & DXF) in the print pack',
+        visibleWhen: () => pr.isOn() && !!pr.summary().hasDecals,
+        get: () => readProf().includeStickers !== false,
+        set: (v) => patchProf({ includeStickers: v }) },
+      { kind: 'toggle', id: 'stencils', label: '3D stencils',
+        title: 'Opt-in snap-over paint stencils (experimental, off by default)',
+        visibleWhen: () => pr.isOn(),
+        get: () => !!readProf().includeStencils,
+        set: (v) => patchProf({ includeStencils: v }) },
+      { kind: 'toggle', id: 'supportCheck', label: 'Support check',
+        title: 'Off: show true filament colours. On: show support-free tier colours and red overhang triangles.',
+        visibleWhen: () => pr.isOn(),
+        get: () => (pr.supportCheck ? pr.supportCheck() : false),
+        set: (v) => pr.setSupportCheck?.(v) },
+      sel('plate', 'Plate', {
+        title: 'Choose which colour or support plate to inspect in the 3D workbench',
+        visibleWhen: () => pr.isOn() && pr.plateCount() > 1,
+        options: () => Array.from({ length: pr.plateCount() }, (_, i) => ({
+          value: String(i),
+          label: pr.plateLabel ? pr.plateLabel(i) : `Plate ${i + 1} of ${pr.plateCount()}`,
+        })),
+        get: () => String(Math.min(pr.plateIndex(), Math.max(0, pr.plateCount() - 1))),
+        set: (v) => pr.setPlate(Number(v)),
+      }),
+      { kind: 'info', id: 'printInfo', visibleWhen: () => pr.isOn(), title: 'Plate summary, spool budget, and warnings',
         text: () => {
           const s = pr.summary();
           return [
@@ -373,21 +496,18 @@ export function buildMenu(ctx) {
             ...(s.errors ?? []).map((e) => `⚠ Missing or unusable: ${e}. Exports are disabled until this is fixed.`),
             ...(s.exportError ? [`⚠ ${s.exportError}`] : []),
             ...(s.unmapped?.length ? [`Not on the plate: ${s.unmapped.join('; ')}`] : []),
+            ...(s.hasSprue ? ['Adult prep: snip kit-card runners at the V-notches with flush cutters and smooth any nibs.'] : []),
             ...(s.small?.length ? ['Small parts: choking hazard for children under 3.'] : []),
             s.note ?? '',
           ].filter(Boolean).join('\n');
         } },
-      sel('plate', 'Plate', {
-        title: 'Which plate to show when the parts need more than one',
-        visibleWhen: () => pr.isOn() && pr.plateCount() > 1,
-        options: () => Array.from({ length: pr.plateCount() }, (_, i) => ({ value: String(i), label: `Plate ${i + 1} of ${pr.plateCount()}` })),
-        get: () => String(pr.plateIndex()),
-        set: (v) => pr.setPlate(Number(v)),
-      }),
-      ...[['export3mf', '3mf', 'Export 3MF', 'Download this plate as a 3MF with one object per part (supports flagged per part)'],
-        ['exportStl', 'stl-zip', 'Export STL zip', 'Download every plate as one STL each, plus layout.json'],
-        ['exportSheet', 'sheet', 'Print sheet (PNG)', 'Download a one-page plate layout with the small-parts warning']]
-        .map(([id, kind, label, title]) => ({ kind: 'action', id, label, title, visibleWhen: () => pr.isOn(),
+      ...[['downloadPack', 'pack', '📦 Download print pack', 'Download kip-print-pack.zip with per-plate 3MFs & STLs, multi-plate project, optional stickers, print sheet PNG, layout.json, and README.txt', () => pr.isOn()],
+        ['exportProject3mf', 'project-3mf', '🗂️ Project 3MF (all plates)', 'Download kip-project.3mf with every plate, colour slot, tree support setting, and socket guard pre-configured for 1-click slicing', () => pr.isOn()],
+        ['export3mf', '3mf', '3MF (this plate)', 'Download the currently selected plate as a single-bed 3MF in your chosen slicer dialect', () => pr.isOn()],
+        ['exportStickers', 'stickers-pdf', 'Sticker sheet (PDF)', 'Download the 1:1 actual-size printable sticker sheet PDF with 50.00 mm calibration bar', () => pr.isOn() && !!pr.summary().hasDecals && readProf().includeStickers !== false],
+        ['exportSheet', 'sheet', 'Print sheet (PNG)', 'Download the visual plate map with colour swatches and boxed small-parts safety warning', () => pr.isOn()],
+        ['exportStl', 'stl-zip', 'Export STL zip', 'Download every plate as one binary STL each, plus layout.json', () => pr.isOn()]]
+        .map(([id, kind, label, title, visibleWhen]) => ({ kind: 'action', id, label, title, visibleWhen,
           disabled: () => pr.busy() || (pr.summary().errors ?? []).length > 0, run: () => pr.download(kind) })),
     ],
   };
