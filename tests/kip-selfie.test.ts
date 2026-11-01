@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { crc32, deflateSync } from "node:zlib";
 import { describe, expect, it } from "vitest";
@@ -182,5 +182,48 @@ describe("privacy by construction", () => {
     const sdk = readFileSync(join(root, "parts/kip/viewer/kip-forge-sdk.js"), "utf8");
     expect(sdk).toMatch(/let selfieCanvas = null/);
     expect(sdk).not.toMatch(/selfieCanvas[^;\n]*(toDataURL|toBlob)/);
+  });
+});
+
+describe("prompt-a-face gallery", () => {
+  it("matches plain words to the right face", () => {
+    expect(S.matchPrompt("a brave knight")?.face.id).toBe("knight");
+    expect(S.matchPrompt("PIRATE")?.face.id).toBe("pirate");
+    expect(S.matchPrompt("robot")?.face.id).toBe("robot");
+    expect(S.matchPrompt("kitty")?.face.id).toBe("cat");
+    expect(S.matchPrompt("spaceman")?.face.id).toBe("astronaut");
+    expect(S.matchPrompt("circus clown")?.face.id).toBe("clown");
+    expect(S.matchPrompt("green monster")?.face.id).toBe("monster");
+    expect(S.matchPrompt("super hero")?.face.id).toBe("superhero");
+  });
+
+  it("returns null for empty or unmatched prompts", () => {
+    expect(S.matchPrompt("")).toBeNull();
+    expect(S.matchPrompt("   ")).toBeNull();
+    expect(S.matchPrompt("dragon")).toBeNull();
+    expect(S.matchPrompt("a fast car")).toBeNull();
+  });
+
+  it("breaks keyword ties in gallery order", () => {
+    // both astronaut and knight list "helmet"; astronaut comes first
+    expect(S.matchPrompt("helmet")?.face.id).toBe("astronaut");
+  });
+
+  it("every gallery face ships its picture with keywords", () => {
+    const faces = S.SAMPLE_FACES;
+    expect(faces.length).toBeGreaterThanOrEqual(8);
+    expect(new Set(faces.map((f: any) => f.id)).size).toBe(faces.length);
+    expect(new Set(faces.map((f: any) => f.label)).size).toBe(faces.length);
+    for (const f of faces) {
+      expect(f.keywords.length).toBeGreaterThan(3);
+      expect(existsSync(join(root, "parts/kip/viewer/selfie-faces", f.file))).toBe(true);
+    }
+  });
+
+  it("the modal offers the prompt box on the intro step", () => {
+    const src = readFileSync(join(root, "parts/kip/viewer/kip-selfie.js"), "utf8");
+    expect(src).toContain('id="sf-prompt"');
+    expect(src).toMatch(/\$\('sf-prompt-go'\)\.addEventListener\('click'/);
+    expect(src).toMatch(/\$\('sf-prompt-row'\)\.hidden = step !== 'intro'/);
   });
 });

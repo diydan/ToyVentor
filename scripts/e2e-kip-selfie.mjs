@@ -181,6 +181,22 @@ try {
   }
   check("no page exceptions on the head sweep", t2.exceptions.length === 0, t2.exceptions[0]);
   t2.close();
+  console.log("\n[9] prompt-a-face: typed words load a sample face with no network");
+  const mark9 = tab.requests.length;
+  await tab.evaluate(click("km-selfie"));
+  await tab.waitFor(open, 10000);
+  check("the prompt box is offered on the intro step", await tab.evaluate(`!!document.getElementById('sf-prompt') && !!document.getElementById('sf-prompt-go') && getComputedStyle(document.getElementById('sf-prompt-row')).display !== 'none'`));
+  await tab.evaluate(`{ document.getElementById('sf-prompt').value = 'a fire-breathing dragon'; }`);
+  await tab.evaluate(click("sf-prompt-go"));
+  check("an unmatched prompt explains itself and stays put", await tab.waitFor(`window.kipSelfie.state.step === 'intro' && /No sample face/.test(document.getElementById('sf-error').textContent)`, 5000));
+  await tab.evaluate(`{ document.getElementById('sf-prompt').value = 'a brave knight'; }`);
+  await tab.evaluate(click("sf-prompt-go"));
+  check("a prompt reaches Adjust with a picture", await tab.waitFor(`${step} === 'adjust' && window.kipSelfie.hasImage()`, 15000));
+  const net9 = tab.requests.slice(mark9).filter((r) => /^https?:/.test(r.url) && !/favicon\.ico$/.test(r.url));
+  check("prompting a face made zero network requests (preloaded with the page)", net9.length === 0, net9.map((r) => `${r.method} ${r.url}`).join(", "));
+  await tab.shot(path.join(SHOTS, "selfie-prompt.png"));
+  await tab.evaluate(click("sf-use"));
+  check("Use this face wears the prompted face", await tab.waitFor(`(() => { const l = window.kipMenu.ctx.loco; return l.expr === 'selfie' && !(${open}); })()`, 10000));
   console.log(`\nscreenshots: ${SHOTS}`);
 } finally {
   chrome.close();

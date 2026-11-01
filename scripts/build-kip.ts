@@ -4,7 +4,7 @@
 //   npx tsx scripts/build-kip.ts --scad       # also recompile all 30 binary STLs via OpenSCAD
 //   npx tsx scripts/build-kip.ts --partspec   # also run PartSpec v2 gate for 18 Kip parts + 3 SDK examples
 import { execFileSync } from "node:child_process";
-import { copyFileSync, existsSync, mkdirSync } from "node:fs";
+import { copyFileSync, cpSync, existsSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 
 const root = process.cwd();
@@ -66,6 +66,8 @@ copyFileSync(
   join(kipSrcDir, "viewer/kip-selfie.js"),
   join(kipOutDir, "kip-selfie.js"),
 );
+// Prompt-a-face gallery: same-origin static pictures the selfie modal preloads with the page.
+cpSync(join(kipSrcDir, "viewer/selfie-faces"), join(kipOutDir, "selfie-faces"), { recursive: true });
 copyFileSync(
   join(kipSrcDir, "kip-manifest.json"),
   join(kipOutDir, "kip-manifest.json"),

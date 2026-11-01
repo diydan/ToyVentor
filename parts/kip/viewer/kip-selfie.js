@@ -8,6 +8,9 @@
 //  - The camera starts only from an explicit tap on a labelled button, every track is stopped when the picture is
 //    taken, the modal closes, the tab hides, or an error occurs.
 //  - No face detection, landmarks or other biometrics: framing is manual pan / zoom / rotate.
+//  - The sample-face gallery below is same-origin static pictures preloaded with the page (before any flow
+//    starts), so prompting one makes zero network requests: the bytes are already in memory, and the typed
+//    prompt lives only in the input box, never in a URL, storage or request.
 //
 // The pure half (above "Browser") has no DOM, so vitest runs it on plain RGBA arrays.
 
@@ -22,6 +25,45 @@ export const STYLES = [
   { id: 'photo', label: 'Photo' },
   { id: 'sketch', label: 'Sketch' },
 ];
+
+/**
+ * Prompt-a-face gallery: ready-made cartoon faces composed for the short wide window (face fills the middle
+ * band, bold readable features at 24 mm), so a child without a camera or photo still gets a face that fits.
+ * Pure data: matched locally by matchPrompt, pictures preloaded with the page, nothing generated at runtime.
+export const SAMPLE_FACES = [
+  { id: 'pirate', label: 'Pirate', file: 'face-pirate.jpg', marks: { eyes: [{ x: 0.3549, y: 0.4608 }, { x: 0.654, y: 0.4616 }], mouth: { x: 0.5054, y: 0.8047 } }, keywords: ['pirate', 'captain', 'bandana', 'red', 'gold', 'earring', 'tooth', 'sailor', 'sea', 'patch'] },
+  { id: 'astronaut', label: 'Astronaut', file: 'face-astronaut.jpg', marks: { eyes: [{ x: 0.3384, y: 0.4975 }, { x: 0.6661, y: 0.4975 }], mouth: { x: 0.5022, y: 0.9065 } }, keywords: ['astronaut', 'space', 'helmet', 'moon', 'stars', 'spaceman', 'nova'] },
+  { id: 'robot', label: 'Robot', file: 'face-robot.jpg', marks: { eyes: [{ x: 0.3491, y: 0.5476 }, { x: 0.6545, y: 0.5484 }], mouth: { x: 0.5036, y: 0.8948 } }, keywords: ['robot', 'metal', 'antenna', 'bot', 'machine', 'steel', 'beep'] },
+  { id: 'cat', label: 'Cat', file: 'face-cat.jpg', marks: { eyes: [{ x: 0.371, y: 0.5217 }, { x: 0.6308, y: 0.5217 }], mouth: { x: 0.5004, y: 0.828 } }, keywords: ['cat', 'kitten', 'kitty', 'whiskers', 'orange', 'tabby', 'pet'] },
+  { id: 'clown', label: 'Clown', file: 'face-clown.jpg', marks: { eyes: [{ x: 0.3656, y: 0.4466 }, { x: 0.6384, y: 0.4457 }], mouth: { x: 0.5022, y: 0.8155 } }, keywords: ['clown', 'circus', 'rainbow', 'funny', 'nose', 'wig', 'joke'] },
+  { id: 'knight', label: 'Knight', file: 'face-knight.jpg', marks: { eyes: [{ x: 0.3768, y: 0.5751 }, { x: 0.6223, y: 0.5743 }], mouth: { x: 0.5076, y: 0.899 } }, keywords: ['knight', 'armor', 'armour', 'helmet', 'brave', 'castle', 'plume', 'sword'] },
+  { id: 'monster', label: 'Monster', file: 'face-monster.jpg', marks: { eyes: [{ x: 0.3795, y: 0.4508 }, { x: 0.6223, y: 0.4624 }], mouth: { x: 0.5049, y: 0.823 } }, keywords: ['monster', 'green', 'horns', 'silly', 'goofy', 'cyclops', 'alien'] },
+  { id: 'superhero', label: 'Superhero', file: 'face-superhero.jpg', marks: { eyes: [{ x: 0.308, y: 0.4566 }, { x: 0.6969, y: 0.4583 }], mouth: { x: 0.4996, y: 0.8464 } }, keywords: ['superhero', 'super', 'hero', 'mask', 'lightning', 'bolt', 'cape', 'power'] },
+];
+
+/** Prompt words that name every sample face, for the "nothing matched" hint. */
+export const SAMPLE_SUGGESTIONS = SAMPLE_FACES.map((f) => f.id).join(', ');
+
+/**
+ * Match typed words against the gallery: exact word hits count double, prefix hits (plurals, "super" for
+ * "superhero") single. Ties go to gallery order. Returns { face, score } or null when nothing matches.
+ */
+export function matchPrompt(text) {
+  const tokens = String(text || '').toLowerCase().split(/[^a-z0-9]+/).filter((t) => t.length > 1); // single letters prefix-match everything
+  if (!tokens.length) return null;
+  let best = null;
+  for (const face of SAMPLE_FACES) {
+    let score = 0;
+    for (const t of tokens) {
+      for (const k of face.keywords) {
+        if (t === k) score += 2;
+        else if (k.startsWith(t) || t.startsWith(k)) score += 1;
+      }
+    }
+    if (score > 0 && (!best || score > best.score)) best = { face, score };
+  }
+  return best;
+}
 
 // ---------------------------------------------------------------------------------------------
 // Pure: framing
@@ -206,6 +248,15 @@ export function mountSelfie(ctx) {
   let isActive = false;
   const state = { step: 'closed', error: '', countdown: 0 };
 
+  // Sample faces ride with the page: preloaded here at mount (before any flow starts), so prompting one
+  // later reuses the in-memory picture and makes zero network requests.
+  const sampleCache = new Map();
+  for (const f of SAMPLE_FACES) {
+    const im = new Image();
+    im.src = `./selfie-faces/${f.file}`;
+    sampleCache.set(f.id, im);
+  }
+
   const css = document.createElement('style');
   css.textContent = `
   #modal-selfie [hidden] { display:none !important; } /* .sf-row's display:flex would otherwise beat the hidden attribute */
@@ -237,6 +288,11 @@ export function mountSelfie(ctx) {
         <label class="file-btn" for="selfie-file" id="sf-upload-label">🖼️ Upload a photo instead</label>
         <input type="file" id="selfie-file" accept="image/*" hidden />
       </div>
+      <div id="sf-prompt-row" class="sf-row">
+        <label class="sf-r" for="sf-prompt">✨ Prompt a face</label>
+        <input type="text" id="sf-prompt" maxlength="80" placeholder="a brave knight…" autocomplete="off" aria-label="Describe a face, for example a brave knight" />
+        <button type="button" id="sf-prompt-go">Find a face</button>
+      </div>
       <div id="sf-cam" hidden>
         <div class="sf-stage sf-cam"><video id="sf-video" autoplay playsinline muted></video><div class="sf-guide"></div><div class="sf-count" id="sf-count" aria-live="assertive"></div></div>
         <div class="sf-row" style="justify-content:center;margin-top:8px"><button type="button" id="sf-snap" class="spark-active">🔴 Snap in ${countdownSec}…</button><button type="button" id="sf-cam-cancel">Cancel</button></div>
@@ -259,6 +315,7 @@ export function mountSelfie(ctx) {
   const show = (step) => {
     state.step = step;
     $('sf-intro').hidden = step !== 'intro';
+    $('sf-prompt-row').hidden = step !== 'intro';
     $('sf-cam').hidden = step !== 'camera';
     $('sf-adjust').hidden = step !== 'adjust';
   };
@@ -363,6 +420,41 @@ export function mountSelfie(ctx) {
     } catch {
       setError('That picture could not be opened. Try another one.');
     }
+  }
+
+  // ---- sample faces ---------------------------------------------------------------
+  /** Load a gallery face into Adjust. Uses the preloaded picture, so no request is made. */
+  async function loadSample(face) {
+    setError('');
+    try {
+      let img = face && sampleCache.get(face.id);
+      if (!img || !img.complete || !img.naturalWidth) {
+        img = new Image();
+        img.src = `./selfie-faces/${face.file}`;
+        await img.decode();
+        sampleCache.set(face.id, img);
+      }
+      const c = document.createElement('canvas');
+      c.width = img.naturalWidth; c.height = img.naturalHeight;
+      c.getContext('2d').drawImage(img, 0, 0);
+      stopCamera(); dropImage();
+      bitmap = c;
+      toAdjust();
+      return face;
+    } catch {
+      setError('That sample face could not be opened. Try another one.');
+      return null;
+    }
+  }
+
+  /** Match a typed prompt against the gallery and load the winner into Adjust. */
+  async function promptFace(text) {
+    const hit = matchPrompt(text);
+    if (!hit) {
+      setError(`No sample face matches that. Try ${SAMPLE_SUGGESTIONS}.`);
+      return null;
+    }
+    return loadSample(hit.face);
   }
 
   // ---- adjust ---------------------------------------------------------------------------
@@ -481,6 +573,8 @@ export function mountSelfie(ctx) {
   $('sf-snap').addEventListener('click', beginCountdown);
   $('selfie-file').addEventListener('change', (e) => { loadFile(e.target.files[0]); e.target.value = ''; });
   $('sf-retake').addEventListener('click', () => { dropImage(); show('intro'); });
+  $('sf-prompt-go').addEventListener('click', () => { promptFace($('sf-prompt').value); });
+  $('sf-prompt').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); promptFace($('sf-prompt').value); } });
   $('sf-zoom').addEventListener('input', (e) => setFrame({ zoom: Number(e.target.value) }));
   $('sf-rot').addEventListener('input', (e) => setFrame({ rotateDeg: Number(e.target.value) }));
   root.querySelectorAll('input[name="sf-style"]').forEach((r) => r.addEventListener('change', () => { style = r.value; if (bitmap) render(); }));
@@ -492,9 +586,10 @@ export function mountSelfie(ctx) {
   window.addEventListener('pagehide', () => { stopCamera(); dropImage(); });
 
   return {
-    open, close, remove, snapNow, loadFile, exportSticker,
+    open, close, remove, snapNow, loadFile, exportSticker, promptFace, loadSample,
     active: () => isActive,
     state,
+    samples: () => SAMPLE_FACES.map((f) => f.id),
     // test hooks: framing without synthesising pointer events
     setFrame: (p) => { if (bitmap) setFrame(p); },
     setStyle: (s) => { style = s; if (bitmap) render(); },

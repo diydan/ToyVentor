@@ -218,6 +218,11 @@ tested: zero http(s) requests during the flow, nothing in web storage, IndexedDB
 after a reload, and a source scan that the module never mentions fetch, storage, workers or the scan endpoint. A selfie
 is taken off when you leave a human head, pick another face or insert, or apply a preset, and the flat insert is kept
 while it is worn. The sticker is a 600 dpi PNG with its density set plus an SVG in millimetres with a cut line, exported
+(8) **Prompt-a-face gallery.** Eight ready-made cartoon faces (`parts/kip/viewer/selfie-faces/`, composed for the short
+wide window) with a prompt box on the intro step: typed words are matched locally against keyword tags (exact hits count
+double, prefix hits single, ties go to gallery order) and the winner loads straight into Adjust. The pictures preload
+with the page, so prompting makes zero network requests; the privacy gates (zero http(s) in-flow, source scan) are
+unchanged and extended with a prompt-flow section in `npm run e2e:kip-selfie`.
 directly from the Adjust step (the plan routed it through the Phase 2 sheet; it does not need to). A real print has not been
 measured; the files measure 23.58 × 10.12 mm at 100%. Not done: the grown-up gate that controls `allow="camera"` when
 embedded (host app), and the COPPA review (compliance owner). Tests: `tests/kip-selfie.test.ts`, `npm run e2e:kip-selfie`.
