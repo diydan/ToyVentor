@@ -24,9 +24,9 @@
       "bbox_mm": [
         38.2,
         27.3,
-        34.2
+        33.8
       ],
-      "volume_cm3": 19.4,
+      "volume_cm3": 19.13,
       "connectors": [
         {
           "id": "under_sockets",
@@ -65,7 +65,7 @@
             "origin": [
               0,
               0,
-              31.4
+              30.97
             ],
             "normal": [
               0,
@@ -116,8 +116,8 @@
       ],
       "safety": {
         "small_part_status": "above_cylinder",
-        "min_enclosing_diameter_mm": 35.49,
-        "margin_pct": 11.8,
+        "min_enclosing_diameter_mm": 35.08,
+        "margin_pct": 10.5,
         "print_page_warning": [
           "Printed at home or by a print service. Not tested to toy-safety standards. Adult supervision required. Check for cracks, sharp edges and loose pieces before each use, and stop using anything that has broken.",
           "Larger than the small-parts test size in our size check. This is not a safety certification, and it is not rated for children under 3 years."
@@ -199,7 +199,7 @@
           "id": "G5_fits_bed",
           "level": "block",
           "result": "pass",
-          "detail": "[38.2, 27.3, 34.2] vs [180, 180, 180]"
+          "detail": "[38.2, 27.3, 33.8] vs [180, 180, 180]"
         },
         {
           "id": "P1_no_supports",
@@ -265,7 +265,7 @@
           "id": "S1_small_part_screen",
           "level": "warn",
           "result": "pass",
-          "detail": "above_cylinder: best-fit diameter 35.49 mm vs 31.75 mm cylinder"
+          "detail": "above_cylinder: best-fit diameter 35.08 mm vs 31.75 mm cylinder"
         },
         {
           "id": "T1_fit_as_designed",
@@ -323,11 +323,11 @@
       ],
       "file": "toyventor_char_head_chibi_S.stl",
       "bbox_mm": [
-        36.8,
-        28.0,
-        34.2
+        39.5,
+        28.2,
+        33.8
       ],
-      "volume_cm3": 20.01,
+      "volume_cm3": 19.76,
       "connectors": [
         {
           "id": "under_sockets",
@@ -366,7 +366,7 @@
             "origin": [
               0,
               0,
-              31.4
+              30.97
             ],
             "normal": [
               0,
@@ -417,8 +417,8 @@
       ],
       "safety": {
         "small_part_status": "above_cylinder",
-        "min_enclosing_diameter_mm": 35.49,
-        "margin_pct": 11.8,
+        "min_enclosing_diameter_mm": 35.08,
+        "margin_pct": 10.5,
         "print_page_warning": [
           "Printed at home or by a print service. Not tested to toy-safety standards. Adult supervision required. Check for cracks, sharp edges and loose pieces before each use, and stop using anything that has broken.",
           "Larger than the small-parts test size in our size check. This is not a safety certification, and it is not rated for children under 3 years."
@@ -500,7 +500,7 @@
           "id": "G5_fits_bed",
           "level": "block",
           "result": "pass",
-          "detail": "[36.8, 28.0, 34.2] vs [180, 180, 180]"
+          "detail": "[39.5, 28.2, 33.8] vs [180, 180, 180]"
         },
         {
           "id": "P1_no_supports",
@@ -566,7 +566,7 @@
           "id": "S1_small_part_screen",
           "level": "warn",
           "result": "pass",
-          "detail": "above_cylinder: best-fit diameter 35.49 mm vs 31.75 mm cylinder"
+          "detail": "above_cylinder: best-fit diameter 35.08 mm vs 31.75 mm cylinder"
         },
         {
           "id": "T1_fit_as_designed",
@@ -624,11 +624,11 @@
       ],
       "file": "toyventor_char_head_jumbo_S.stl",
       "bbox_mm": [
-        37.2,
-        27.5,
-        34.2
+        39.6,
+        27.6,
+        33.8
       ],
-      "volume_cm3": 20.35,
+      "volume_cm3": 20.13,
       "connectors": [
         {
           "id": "under_sockets",
@@ -667,7 +667,7 @@
             "origin": [
               0,
               0,
-              31.4
+              30.97
             ],
             "normal": [
               0,
@@ -718,8 +718,8 @@
       ],
       "safety": {
         "small_part_status": "above_cylinder",
-        "min_enclosing_diameter_mm": 35.49,
-        "margin_pct": 11.8,
+        "min_enclosing_diameter_mm": 35.08,
+        "margin_pct": 10.5,
         "print_page_warning": [
           "Printed at home or by a print service. Not tested to toy-safety standards. Adult supervision required. Check for cracks, sharp edges and loose pieces before each use, and stop using anything that has broken.",
           "Larger than the small-parts test size in our size check. This is not a safety certification, and it is not rated for children under 3 years."
@@ -801,7 +801,7 @@
           "id": "G5_fits_bed",
           "level": "block",
           "result": "pass",
-          "detail": "[37.2, 27.5, 34.2] vs [180, 180, 180]"
+          "detail": "[39.6, 27.6, 33.8] vs [180, 180, 180]"
         },
         {
           "id": "P1_no_supports",
@@ -867,7 +867,7 @@
           "id": "S1_small_part_screen",
           "level": "warn",
           "result": "pass",
-          "detail": "above_cylinder: best-fit diameter 35.49 mm vs 31.75 mm cylinder"
+          "detail": "above_cylinder: best-fit diameter 35.08 mm vs 31.75 mm cylinder"
         },
         {
           "id": "T1_fit_as_designed",
@@ -924,11 +924,11 @@
       ],
       "file": "toyventor_char_head_tall_S.stl",
       "bbox_mm": [
-        39.4,
+        40.0,
         27.7,
-        36.2
+        35.7
       ],
-      "volume_cm3": 21.73,
+      "volume_cm3": 21.45,
       "connectors": [
         {
           "id": "under_sockets",
@@ -967,7 +967,7 @@
             "origin": [
               0,
               0,
-              33.4
+              32.948
             ],
             "normal": [
               0,
@@ -1018,8 +1018,8 @@
       ],
       "safety": {
         "small_part_status": "above_cylinder",
-        "min_enclosing_diameter_mm": 37.42,
-        "margin_pct": 17.9,
+        "min_enclosing_diameter_mm": 36.98,
+        "margin_pct": 16.5,
         "print_page_warning": [
           "Printed at home or by a print service. Not tested to toy-safety standards. Adult supervision required. Check for cracks, sharp edges and loose pieces before each use, and stop using anything that has broken.",
           "Larger than the small-parts test size in our size check. This is not a safety certification, and it is not rated for children under 3 years."
@@ -1101,7 +1101,7 @@
           "id": "G5_fits_bed",
           "level": "block",
           "result": "pass",
-          "detail": "[39.4, 27.7, 36.2] vs [180, 180, 180]"
+          "detail": "[40.0, 27.7, 35.7] vs [180, 180, 180]"
         },
         {
           "id": "P1_no_supports",
@@ -1167,7 +1167,7 @@
           "id": "S1_small_part_screen",
           "level": "warn",
           "result": "pass",
-          "detail": "above_cylinder: best-fit diameter 37.42 mm vs 31.75 mm cylinder"
+          "detail": "above_cylinder: best-fit diameter 36.98 mm vs 31.75 mm cylinder"
         },
         {
           "id": "T1_fit_as_designed",
@@ -1226,9 +1226,9 @@
       "bbox_mm": [
         24.2,
         18.6,
-        13.1
+        13.2
       ],
-      "volume_cm3": 1.15,
+      "volume_cm3": 1.12,
       "connectors": [
         {
           "id": "axis",
@@ -1334,7 +1334,7 @@
           "id": "G5_fits_bed",
           "level": "block",
           "result": "pass",
-          "detail": "[24.2, 18.6, 13.1] vs [180, 180, 180]"
+          "detail": "[24.2, 18.6, 13.2] vs [180, 180, 180]"
         },
         {
           "id": "P1_no_supports",
@@ -1436,10 +1436,10 @@
       "file": "toyventor_char_faceplate_vinyl_P.stl",
       "bbox_mm": [
         24.2,
-        17.8,
-        13.1
+        17.9,
+        13.2
       ],
-      "volume_cm3": 1.15,
+      "volume_cm3": 1.12,
       "connectors": [
         {
           "id": "axis",
@@ -1545,13 +1545,13 @@
           "id": "G5_fits_bed",
           "level": "block",
           "result": "pass",
-          "detail": "[24.2, 17.8, 13.1] vs [180, 180, 180]"
+          "detail": "[24.2, 17.9, 13.2] vs [180, 180, 180]"
         },
         {
           "id": "P1_no_supports",
           "level": "block",
           "result": "pass",
-          "detail": "0.3 mm2 steeper than 45 deg"
+          "detail": "0.4 mm2 steeper than 45 deg"
         },
         {
           "id": "P4_no_ledges",
@@ -1648,9 +1648,9 @@
       "bbox_mm": [
         24.2,
         17.7,
-        13.1
+        13.2
       ],
-      "volume_cm3": 1.14,
+      "volume_cm3": 1.11,
       "connectors": [
         {
           "id": "axis",
@@ -1756,7 +1756,7 @@
           "id": "G5_fits_bed",
           "level": "block",
           "result": "pass",
-          "detail": "[24.2, 17.7, 13.1] vs [180, 180, 180]"
+          "detail": "[24.2, 17.7, 13.2] vs [180, 180, 180]"
         },
         {
           "id": "P1_no_supports",
@@ -1856,11 +1856,11 @@
       ],
       "file": "toyventor_hair_short_swept_S.stl",
       "bbox_mm": [
-        42.6,
-        34.3,
+        43.9,
+        34.4,
         24.1
       ],
-      "volume_cm3": 5.84,
+      "volume_cm3": 6.02,
       "connectors": [
         {
           "id": "under_sockets",
@@ -1915,8 +1915,8 @@
       ],
       "safety": {
         "small_part_status": "above_cylinder",
-        "min_enclosing_diameter_mm": 35.32,
-        "margin_pct": 11.2,
+        "min_enclosing_diameter_mm": 35.42,
+        "margin_pct": 11.5,
         "print_page_warning": [
           "Printed at home or by a print service. Not tested to toy-safety standards. Adult supervision required. Check for cracks, sharp edges and loose pieces before each use, and stop using anything that has broken.",
           "Larger than the small-parts test size in our size check. This is not a safety certification, and it is not rated for children under 3 years."
@@ -1972,7 +1972,7 @@
           "id": "G5_fits_bed",
           "level": "block",
           "result": "pass",
-          "detail": "[42.6, 34.3, 24.1] vs [180, 180, 180]"
+          "detail": "[43.9, 34.4, 24.1] vs [180, 180, 180]"
         },
         {
           "id": "P1_no_supports",
@@ -2020,7 +2020,7 @@
           "id": "S1_small_part_screen",
           "level": "warn",
           "result": "pass",
-          "detail": "above_cylinder: best-fit diameter 35.32 mm vs 31.75 mm cylinder"
+          "detail": "above_cylinder: best-fit diameter 35.42 mm vs 31.75 mm cylinder"
         },
         {
           "id": "T1_fit_as_designed",
@@ -2077,11 +2077,11 @@
       ],
       "file": "toyventor_hair_bob_S.stl",
       "bbox_mm": [
-        47.3,
-        33.9,
+        48.6,
+        34.0,
         26.6
       ],
-      "volume_cm3": 7.05,
+      "volume_cm3": 7.1,
       "connectors": [
         {
           "id": "under_sockets",
@@ -2136,8 +2136,8 @@
       ],
       "safety": {
         "small_part_status": "above_cylinder",
-        "min_enclosing_diameter_mm": 35.57,
-        "margin_pct": 12.0,
+        "min_enclosing_diameter_mm": 35.68,
+        "margin_pct": 12.4,
         "print_page_warning": [
           "Printed at home or by a print service. Not tested to toy-safety standards. Adult supervision required. Check for cracks, sharp edges and loose pieces before each use, and stop using anything that has broken.",
           "Larger than the small-parts test size in our size check. This is not a safety certification, and it is not rated for children under 3 years."
@@ -2193,7 +2193,7 @@
           "id": "G5_fits_bed",
           "level": "block",
           "result": "pass",
-          "detail": "[47.3, 33.9, 26.6] vs [180, 180, 180]"
+          "detail": "[48.6, 34.0, 26.6] vs [180, 180, 180]"
         },
         {
           "id": "P1_no_supports",
@@ -2241,7 +2241,7 @@
           "id": "S1_small_part_screen",
           "level": "warn",
           "result": "pass",
-          "detail": "above_cylinder: best-fit diameter 35.57 mm vs 31.75 mm cylinder"
+          "detail": "above_cylinder: best-fit diameter 35.68 mm vs 31.75 mm cylinder"
         },
         {
           "id": "T1_fit_as_designed",
@@ -3863,11 +3863,11 @@
       ],
       "file": "toyventor_hair_swoosh_S.stl",
       "bbox_mm": [
-        42.7,
-        34.5,
+        43.8,
+        34.7,
         24.1
       ],
-      "volume_cm3": 5.84,
+      "volume_cm3": 6.03,
       "connectors": [
         {
           "id": "under_sockets",
@@ -3922,8 +3922,8 @@
       ],
       "safety": {
         "small_part_status": "above_cylinder",
-        "min_enclosing_diameter_mm": 35.53,
-        "margin_pct": 11.9,
+        "min_enclosing_diameter_mm": 35.63,
+        "margin_pct": 12.2,
         "print_page_warning": [
           "Printed at home or by a print service. Not tested to toy-safety standards. Adult supervision required. Check for cracks, sharp edges and loose pieces before each use, and stop using anything that has broken.",
           "Larger than the small-parts test size in our size check. This is not a safety certification, and it is not rated for children under 3 years."
@@ -3979,7 +3979,7 @@
           "id": "G5_fits_bed",
           "level": "block",
           "result": "pass",
-          "detail": "[42.7, 34.5, 24.1] vs [180, 180, 180]"
+          "detail": "[43.8, 34.7, 24.1] vs [180, 180, 180]"
         },
         {
           "id": "P1_no_supports",
@@ -4027,7 +4027,7 @@
           "id": "S1_small_part_screen",
           "level": "warn",
           "result": "pass",
-          "detail": "above_cylinder: best-fit diameter 35.53 mm vs 31.75 mm cylinder"
+          "detail": "above_cylinder: best-fit diameter 35.63 mm vs 31.75 mm cylinder"
         },
         {
           "id": "T1_fit_as_designed",
@@ -4084,11 +4084,11 @@
       ],
       "file": "toyventor_hair_long_layered_S.stl",
       "bbox_mm": [
-        48.1,
-        34.3,
+        49.4,
+        34.5,
         30.1
       ],
-      "volume_cm3": 8.67,
+      "volume_cm3": 8.75,
       "connectors": [
         {
           "id": "under_sockets",
@@ -4143,8 +4143,8 @@
       ],
       "safety": {
         "small_part_status": "above_cylinder",
-        "min_enclosing_diameter_mm": 37.72,
-        "margin_pct": 18.8,
+        "min_enclosing_diameter_mm": 37.78,
+        "margin_pct": 19.0,
         "print_page_warning": [
           "Printed at home or by a print service. Not tested to toy-safety standards. Adult supervision required. Check for cracks, sharp edges and loose pieces before each use, and stop using anything that has broken.",
           "Larger than the small-parts test size in our size check. This is not a safety certification, and it is not rated for children under 3 years."
@@ -4200,7 +4200,7 @@
           "id": "G5_fits_bed",
           "level": "block",
           "result": "pass",
-          "detail": "[48.1, 34.3, 30.1] vs [180, 180, 180]"
+          "detail": "[49.4, 34.5, 30.1] vs [180, 180, 180]"
         },
         {
           "id": "P1_no_supports",
@@ -4248,7 +4248,7 @@
           "id": "S1_small_part_screen",
           "level": "warn",
           "result": "pass",
-          "detail": "above_cylinder: best-fit diameter 37.72 mm vs 31.75 mm cylinder"
+          "detail": "above_cylinder: best-fit diameter 37.78 mm vs 31.75 mm cylinder"
         },
         {
           "id": "T1_fit_as_designed",
@@ -4306,10 +4306,10 @@
       "file": "toyventor_hair_twin_braids_S.stl",
       "bbox_mm": [
         52.5,
-        33.4,
+        33.5,
         30.1
       ],
-      "volume_cm3": 7.72,
+      "volume_cm3": 7.76,
       "connectors": [
         {
           "id": "under_sockets",
@@ -4364,8 +4364,8 @@
       ],
       "safety": {
         "small_part_status": "above_cylinder",
-        "min_enclosing_diameter_mm": 36.39,
-        "margin_pct": 14.6,
+        "min_enclosing_diameter_mm": 36.51,
+        "margin_pct": 15.0,
         "print_page_warning": [
           "Printed at home or by a print service. Not tested to toy-safety standards. Adult supervision required. Check for cracks, sharp edges and loose pieces before each use, and stop using anything that has broken.",
           "Larger than the small-parts test size in our size check. This is not a safety certification, and it is not rated for children under 3 years."
@@ -4421,7 +4421,7 @@
           "id": "G5_fits_bed",
           "level": "block",
           "result": "pass",
-          "detail": "[52.5, 33.4, 30.1] vs [180, 180, 180]"
+          "detail": "[52.5, 33.5, 30.1] vs [180, 180, 180]"
         },
         {
           "id": "P1_no_supports",
@@ -4469,7 +4469,7 @@
           "id": "S1_small_part_screen",
           "level": "warn",
           "result": "pass",
-          "detail": "above_cylinder: best-fit diameter 36.39 mm vs 31.75 mm cylinder"
+          "detail": "above_cylinder: best-fit diameter 36.51 mm vs 31.75 mm cylinder"
         },
         {
           "id": "T1_fit_as_designed",
@@ -4526,11 +4526,11 @@
       ],
       "file": "toyventor_hair_shag_S.stl",
       "bbox_mm": [
-        43.1,
-        34.8,
+        44.5,
+        35.0,
         24.6
       ],
-      "volume_cm3": 6.12,
+      "volume_cm3": 6.36,
       "connectors": [
         {
           "id": "under_sockets",
@@ -4585,8 +4585,8 @@
       ],
       "safety": {
         "small_part_status": "above_cylinder",
-        "min_enclosing_diameter_mm": 35.9,
-        "margin_pct": 13.1,
+        "min_enclosing_diameter_mm": 35.97,
+        "margin_pct": 13.3,
         "print_page_warning": [
           "Printed at home or by a print service. Not tested to toy-safety standards. Adult supervision required. Check for cracks, sharp edges and loose pieces before each use, and stop using anything that has broken.",
           "Larger than the small-parts test size in our size check. This is not a safety certification, and it is not rated for children under 3 years."
@@ -4642,7 +4642,7 @@
           "id": "G5_fits_bed",
           "level": "block",
           "result": "pass",
-          "detail": "[43.1, 34.8, 24.6] vs [180, 180, 180]"
+          "detail": "[44.5, 35.0, 24.6] vs [180, 180, 180]"
         },
         {
           "id": "P1_no_supports",
@@ -4690,7 +4690,7 @@
           "id": "S1_small_part_screen",
           "level": "warn",
           "result": "pass",
-          "detail": "above_cylinder: best-fit diameter 35.9 mm vs 31.75 mm cylinder"
+          "detail": "above_cylinder: best-fit diameter 35.97 mm vs 31.75 mm cylinder"
         },
         {
           "id": "T1_fit_as_designed",
@@ -4747,11 +4747,11 @@
       ],
       "file": "toyventor_hair_pompadour_S.stl",
       "bbox_mm": [
-        42.9,
+        44.0,
         43.1,
         34.1
       ],
-      "volume_cm3": 9.72,
+      "volume_cm3": 9.89,
       "connectors": [
         {
           "id": "under_sockets",
@@ -4781,8 +4781,8 @@
       ],
       "safety": {
         "small_part_status": "above_cylinder",
-        "min_enclosing_diameter_mm": 44.33,
-        "margin_pct": 39.6,
+        "min_enclosing_diameter_mm": 45.07,
+        "margin_pct": 41.9,
         "print_page_warning": [
           "Printed at home or by a print service. Not tested to toy-safety standards. Adult supervision required. Check for cracks, sharp edges and loose pieces before each use, and stop using anything that has broken.",
           "Larger than the small-parts test size in our size check. This is not a safety certification, and it is not rated for children under 3 years."
@@ -4838,7 +4838,7 @@
           "id": "G5_fits_bed",
           "level": "block",
           "result": "pass",
-          "detail": "[42.9, 43.1, 34.1] vs [180, 180, 180]"
+          "detail": "[44.0, 43.1, 34.1] vs [180, 180, 180]"
         },
         {
           "id": "P1_no_supports",
@@ -4886,7 +4886,7 @@
           "id": "S1_small_part_screen",
           "level": "warn",
           "result": "pass",
-          "detail": "above_cylinder: best-fit diameter 44.33 mm vs 31.75 mm cylinder"
+          "detail": "above_cylinder: best-fit diameter 45.07 mm vs 31.75 mm cylinder"
         },
         {
           "id": "T1_fit_as_designed",
@@ -4943,11 +4943,11 @@
       ],
       "file": "toyventor_hair_top_bun_S.stl",
       "bbox_mm": [
-        43.0,
-        34.3,
+        44.0,
+        34.4,
         36.3
       ],
-      "volume_cm3": 9.39,
+      "volume_cm3": 9.57,
       "connectors": [
         {
           "id": "under_sockets",
@@ -4977,7 +4977,7 @@
       ],
       "safety": {
         "small_part_status": "above_cylinder",
-        "min_enclosing_diameter_mm": 43.13,
+        "min_enclosing_diameter_mm": 43.16,
         "margin_pct": 35.9,
         "print_page_warning": [
           "Printed at home or by a print service. Not tested to toy-safety standards. Adult supervision required. Check for cracks, sharp edges and loose pieces before each use, and stop using anything that has broken.",
@@ -5034,7 +5034,7 @@
           "id": "G5_fits_bed",
           "level": "block",
           "result": "pass",
-          "detail": "[43.0, 34.3, 36.3] vs [180, 180, 180]"
+          "detail": "[44.0, 34.4, 36.3] vs [180, 180, 180]"
         },
         {
           "id": "P1_no_supports",
@@ -5082,7 +5082,7 @@
           "id": "S1_small_part_screen",
           "level": "warn",
           "result": "pass",
-          "detail": "above_cylinder: best-fit diameter 43.13 mm vs 31.75 mm cylinder"
+          "detail": "above_cylinder: best-fit diameter 43.16 mm vs 31.75 mm cylinder"
         },
         {
           "id": "T1_fit_as_designed",
@@ -5139,11 +5139,11 @@
       ],
       "file": "toyventor_hair_side_sweep_S.stl",
       "bbox_mm": [
-        48.2,
-        34.8,
+        48.9,
+        35.0,
         23.8
       ],
-      "volume_cm3": 8.12,
+      "volume_cm3": 8.36,
       "connectors": [
         {
           "id": "under_sockets",
@@ -5173,8 +5173,8 @@
       ],
       "safety": {
         "small_part_status": "above_cylinder",
-        "min_enclosing_diameter_mm": 35.8,
-        "margin_pct": 12.8,
+        "min_enclosing_diameter_mm": 35.89,
+        "margin_pct": 13.1,
         "print_page_warning": [
           "Printed at home or by a print service. Not tested to toy-safety standards. Adult supervision required. Check for cracks, sharp edges and loose pieces before each use, and stop using anything that has broken.",
           "Larger than the small-parts test size in our size check. This is not a safety certification, and it is not rated for children under 3 years."
@@ -5230,13 +5230,13 @@
           "id": "G5_fits_bed",
           "level": "block",
           "result": "pass",
-          "detail": "[48.2, 34.8, 23.8] vs [180, 180, 180]"
+          "detail": "[48.9, 35.0, 23.8] vs [180, 180, 180]"
         },
         {
           "id": "P1_no_supports",
           "level": "block",
           "result": "pass",
-          "detail": "0.6 mm2 steeper than 45 deg"
+          "detail": "0.4 mm2 steeper than 45 deg"
         },
         {
           "id": "P4_no_ledges",
@@ -5278,7 +5278,7 @@
           "id": "S1_small_part_screen",
           "level": "warn",
           "result": "pass",
-          "detail": "above_cylinder: best-fit diameter 35.8 mm vs 31.75 mm cylinder"
+          "detail": "above_cylinder: best-fit diameter 35.89 mm vs 31.75 mm cylinder"
         },
         {
           "id": "T1_fit_as_designed",
@@ -5339,7 +5339,7 @@
         40.7,
         38.0
       ],
-      "volume_cm3": 10.94,
+      "volume_cm3": 11.11,
       "connectors": [
         {
           "id": "under_sockets",
@@ -5532,7 +5532,7 @@
       "file": "toyventor_hair_pigtails_S.stl",
       "bbox_mm": [
         68.1,
-        33.2,
+        33.3,
         30.8
       ],
       "volume_cm3": 12.54,
@@ -5565,8 +5565,8 @@
       ],
       "safety": {
         "small_part_status": "above_cylinder",
-        "min_enclosing_diameter_mm": 49.03,
-        "margin_pct": 54.4,
+        "min_enclosing_diameter_mm": 49.23,
+        "margin_pct": 55.0,
         "print_page_warning": [
           "Printed at home or by a print service. Not tested to toy-safety standards. Adult supervision required. Check for cracks, sharp edges and loose pieces before each use, and stop using anything that has broken.",
           "Larger than the small-parts test size in our size check. This is not a safety certification, and it is not rated for children under 3 years."
@@ -5622,7 +5622,7 @@
           "id": "G5_fits_bed",
           "level": "block",
           "result": "pass",
-          "detail": "[68.1, 33.2, 30.8] vs [180, 180, 180]"
+          "detail": "[68.1, 33.3, 30.8] vs [180, 180, 180]"
         },
         {
           "id": "P1_no_supports",
@@ -5634,7 +5634,7 @@
           "id": "P4_no_ledges",
           "level": "block",
           "result": "pass",
-          "detail": "0.5 mm2 of flat underside held on one side only; worst at z 5.5 mm near [-23.5, 1.6]"
+          "detail": "0.2 mm2 of flat underside held on one side only; worst at z 5.5 mm near [-23.5, 1.7]"
         },
         {
           "id": "P2_bridge_span",
@@ -5670,7 +5670,7 @@
           "id": "S1_small_part_screen",
           "level": "warn",
           "result": "pass",
-          "detail": "above_cylinder: best-fit diameter 49.03 mm vs 31.75 mm cylinder"
+          "detail": "above_cylinder: best-fit diameter 49.23 mm vs 31.75 mm cylinder"
         },
         {
           "id": "T1_fit_as_designed",
@@ -5727,11 +5727,11 @@
       ],
       "file": "toyventor_hair_ponytail_S.stl",
       "bbox_mm": [
-        42.9,
-        49.8,
+        44.0,
+        49.9,
         33.3
       ],
-      "volume_cm3": 9.77,
+      "volume_cm3": 9.95,
       "connectors": [
         {
           "id": "under_sockets",
@@ -5761,8 +5761,8 @@
       ],
       "safety": {
         "small_part_status": "above_cylinder",
-        "min_enclosing_diameter_mm": 43.71,
-        "margin_pct": 37.7,
+        "min_enclosing_diameter_mm": 44.92,
+        "margin_pct": 41.5,
         "print_page_warning": [
           "Printed at home or by a print service. Not tested to toy-safety standards. Adult supervision required. Check for cracks, sharp edges and loose pieces before each use, and stop using anything that has broken.",
           "Larger than the small-parts test size in our size check. This is not a safety certification, and it is not rated for children under 3 years."
@@ -5818,7 +5818,7 @@
           "id": "G5_fits_bed",
           "level": "block",
           "result": "pass",
-          "detail": "[42.9, 49.8, 33.3] vs [180, 180, 180]"
+          "detail": "[44.0, 49.9, 33.3] vs [180, 180, 180]"
         },
         {
           "id": "P1_no_supports",
@@ -5866,7 +5866,7 @@
           "id": "S1_small_part_screen",
           "level": "warn",
           "result": "pass",
-          "detail": "above_cylinder: best-fit diameter 43.71 mm vs 31.75 mm cylinder"
+          "detail": "above_cylinder: best-fit diameter 44.92 mm vs 31.75 mm cylinder"
         },
         {
           "id": "T1_fit_as_designed",
@@ -5923,11 +5923,11 @@
       ],
       "file": "toyventor_hair_curly_S.stl",
       "bbox_mm": [
-        47.7,
+        48.7,
         40.4,
         28.7
       ],
-      "volume_cm3": 15.84,
+      "volume_cm3": 15.82,
       "connectors": [
         {
           "id": "under_sockets",
@@ -5957,7 +5957,7 @@
       ],
       "safety": {
         "small_part_status": "above_cylinder",
-        "min_enclosing_diameter_mm": 42.33,
+        "min_enclosing_diameter_mm": 42.32,
         "margin_pct": 33.3,
         "print_page_warning": [
           "Printed at home or by a print service. Not tested to toy-safety standards. Adult supervision required. Check for cracks, sharp edges and loose pieces before each use, and stop using anything that has broken.",
@@ -6014,7 +6014,7 @@
           "id": "G5_fits_bed",
           "level": "block",
           "result": "pass",
-          "detail": "[47.7, 40.4, 28.7] vs [180, 180, 180]"
+          "detail": "[48.7, 40.4, 28.7] vs [180, 180, 180]"
         },
         {
           "id": "P1_no_supports",
@@ -6062,7 +6062,7 @@
           "id": "S1_small_part_screen",
           "level": "warn",
           "result": "pass",
-          "detail": "above_cylinder: best-fit diameter 42.33 mm vs 31.75 mm cylinder"
+          "detail": "above_cylinder: best-fit diameter 42.32 mm vs 31.75 mm cylinder"
         },
         {
           "id": "T1_fit_as_designed",
@@ -6119,11 +6119,11 @@
       ],
       "file": "toyventor_hair_mohawk_S.stl",
       "bbox_mm": [
-        43.0,
+        43.9,
         37.6,
         35.9
       ],
-      "volume_cm3": 8.55,
+      "volume_cm3": 8.72,
       "connectors": [
         {
           "id": "under_sockets",
@@ -6153,8 +6153,8 @@
       ],
       "safety": {
         "small_part_status": "above_cylinder",
-        "min_enclosing_diameter_mm": 44.36,
-        "margin_pct": 39.7,
+        "min_enclosing_diameter_mm": 44.76,
+        "margin_pct": 41.0,
         "print_page_warning": [
           "Printed at home or by a print service. Not tested to toy-safety standards. Adult supervision required. Check for cracks, sharp edges and loose pieces before each use, and stop using anything that has broken.",
           "Larger than the small-parts test size in our size check. This is not a safety certification, and it is not rated for children under 3 years."
@@ -6210,7 +6210,7 @@
           "id": "G5_fits_bed",
           "level": "block",
           "result": "pass",
-          "detail": "[43.0, 37.6, 35.9] vs [180, 180, 180]"
+          "detail": "[43.9, 37.6, 35.9] vs [180, 180, 180]"
         },
         {
           "id": "P1_no_supports",
@@ -6258,7 +6258,1037 @@
           "id": "S1_small_part_screen",
           "level": "warn",
           "result": "pass",
-          "detail": "above_cylinder: best-fit diameter 44.36 mm vs 31.75 mm cylinder"
+          "detail": "above_cylinder: best-fit diameter 44.76 mm vs 31.75 mm cylinder"
+        },
+        {
+          "id": "T1_fit_as_designed",
+          "level": "block",
+          "result": "pass",
+          "detail": "2 stud(s): gap +0.050 to +0.050 mm, design 0.050, allowed +0.045 to +0.060"
+        },
+        {
+          "id": "T2_fit_tolerance_window",
+          "level": "warn",
+          "result": "pass",
+          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+        },
+        {
+          "id": "F1_printed_fit",
+          "level": "block",
+          "result": "pending",
+          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+        },
+        {
+          "id": "F2_breakage",
+          "level": "block",
+          "result": "pending",
+          "detail": "needs break/impact test: no piece may fit the cylinder after failure"
+        },
+        {
+          "id": "M1_manifest_schema",
+          "level": "block",
+          "result": "pass",
+          "detail": ""
+        }
+      ],
+      "sockets": {
+        "holes": 2,
+        "reliefs": 0,
+        "locked": true
+      }
+    },
+    {
+      "id": "hair_bowl",
+      "name": "Bowl Cut (Hat-Ready)",
+      "type": "Crown hair",
+      "line": "snap",
+      "family": "hair",
+      "size_class": "small",
+      "stat": "Speed",
+      "behavior": "Clean bowl-cut wig with top 2x1 studs for stacking hats or ears",
+      "prints": true,
+      "tags": [
+        "character",
+        "hair",
+        "crown",
+        "kip"
+      ],
+      "file": "toyventor_hair_bowl_S.stl",
+      "bbox_mm": [
+        44.5,
+        34.5,
+        23.6
+      ],
+      "volume_cm3": 6.33,
+      "connectors": [
+        {
+          "id": "under_sockets",
+          "kind": "socket_grid",
+          "gender": "F",
+          "interface": "stud_small",
+          "size_class": "small",
+          "fit_class": "FRICTION",
+          "frame": {
+            "origin": [
+              0,
+              0,
+              0
+            ],
+            "normal": [
+              0,
+              0,
+              -1
+            ]
+          },
+          "grid": {
+            "nx": 2,
+            "ny": 1,
+            "pitch": 12.5
+          }
+        },
+        {
+          "id": "top_studs",
+          "kind": "stud_grid",
+          "gender": "M",
+          "interface": "stud_small",
+          "size_class": "small",
+          "fit_class": "FRICTION",
+          "frame": {
+            "origin": [
+              0,
+              0,
+              4.8
+            ],
+            "normal": [
+              0,
+              0,
+              1
+            ]
+          },
+          "grid": {
+            "nx": 2,
+            "ny": 1,
+            "pitch": 12.5
+          }
+        }
+      ],
+      "safety": {
+        "small_part_status": "above_cylinder",
+        "min_enclosing_diameter_mm": 35.66,
+        "margin_pct": 12.3,
+        "print_page_warning": [
+          "Printed at home or by a print service. Not tested to toy-safety standards. Adult supervision required. Check for cracks, sharp edges and loose pieces before each use, and stop using anything that has broken.",
+          "Larger than the small-parts test size in our size check. This is not a safety certification, and it is not rated for children under 3 years."
+        ]
+      },
+      "print": {
+        "orientation": "bed = z0; lying on a flat, axis horizontal",
+        "supports": false,
+        "rotation_deg": [
+          0,
+          0,
+          0
+        ]
+      },
+      "design_status": "verified",
+      "fit": {
+        "studs_measured": 2,
+        "design_gap_mm": 0.05,
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05,
+        "surface_offset_window_mm": [
+          -0.075,
+          0.075
+        ],
+        "residual_error_mm": 0.05
+      },
+      "checks": [
+        {
+          "id": "G1_watertight",
+          "level": "block",
+          "result": "pass",
+          "detail": ""
+        },
+        {
+          "id": "G2_winding",
+          "level": "block",
+          "result": "pass",
+          "detail": ""
+        },
+        {
+          "id": "G3_single_body",
+          "level": "block",
+          "result": "pass",
+          "detail": "1 body(ies)"
+        },
+        {
+          "id": "G4_on_bed",
+          "level": "block",
+          "result": "pass",
+          "detail": "zmin=0.000"
+        },
+        {
+          "id": "G5_fits_bed",
+          "level": "block",
+          "result": "pass",
+          "detail": "[44.5, 34.5, 23.6] vs [180, 180, 180]"
+        },
+        {
+          "id": "P1_no_supports",
+          "level": "block",
+          "result": "pass",
+          "detail": "0.0 mm2 steeper than 45 deg"
+        },
+        {
+          "id": "P4_no_ledges",
+          "level": "block",
+          "result": "pass",
+          "detail": "0.0 mm2 of flat underside held on one side only"
+        },
+        {
+          "id": "P2_bridge_span",
+          "level": "block",
+          "result": "pass",
+          "detail": "8.2 mm <= 20"
+        },
+        {
+          "id": "P3_wall_min",
+          "level": "info",
+          "result": "pass",
+          "detail": "wall 2.0 mm vs minimum 1.2"
+        },
+        {
+          "id": "I1_lattice",
+          "level": "warn",
+          "result": "pass",
+          "detail": "pitch 12.5 mm vs TU 12.5 mm (ratio 1.000)"
+        },
+        {
+          "id": "I2_connectors_on_part",
+          "level": "block",
+          "result": "pass",
+          "detail": "2 connector(s)"
+        },
+        {
+          "id": "I3_seats_on_reference",
+          "level": "block",
+          "result": "pass",
+          "detail": "overlap 0.000 mm3 with matching reference part"
+        },
+        {
+          "id": "S1_small_part_screen",
+          "level": "warn",
+          "result": "pass",
+          "detail": "above_cylinder: best-fit diameter 35.66 mm vs 31.75 mm cylinder"
+        },
+        {
+          "id": "T1_fit_as_designed",
+          "level": "block",
+          "result": "pass",
+          "detail": "2 stud(s): gap +0.050 to +0.050 mm, design 0.050, allowed +0.045 to +0.060"
+        },
+        {
+          "id": "T2_fit_tolerance_window",
+          "level": "warn",
+          "result": "pass",
+          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+        },
+        {
+          "id": "F1_printed_fit",
+          "level": "block",
+          "result": "pending",
+          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+        },
+        {
+          "id": "F2_breakage",
+          "level": "block",
+          "result": "pending",
+          "detail": "needs break/impact test: no piece may fit the cylinder after failure"
+        },
+        {
+          "id": "M1_manifest_schema",
+          "level": "block",
+          "result": "pass",
+          "detail": ""
+        }
+      ],
+      "sockets": {
+        "holes": 2,
+        "reliefs": 0,
+        "locked": true
+      }
+    },
+    {
+      "id": "hair_slick",
+      "name": "Sleek Side-Part (Hat-Ready)",
+      "type": "Crown hair",
+      "line": "snap",
+      "family": "hair",
+      "size_class": "small",
+      "stat": "Speed",
+      "behavior": "Sleek side-parted wig with top 2x1 studs for stacking hats or ears",
+      "prints": true,
+      "tags": [
+        "character",
+        "hair",
+        "crown",
+        "kip"
+      ],
+      "file": "toyventor_hair_slick_S.stl",
+      "bbox_mm": [
+        43.9,
+        34.2,
+        23.6
+      ],
+      "volume_cm3": 5.9,
+      "connectors": [
+        {
+          "id": "under_sockets",
+          "kind": "socket_grid",
+          "gender": "F",
+          "interface": "stud_small",
+          "size_class": "small",
+          "fit_class": "FRICTION",
+          "frame": {
+            "origin": [
+              0,
+              0,
+              0
+            ],
+            "normal": [
+              0,
+              0,
+              -1
+            ]
+          },
+          "grid": {
+            "nx": 2,
+            "ny": 1,
+            "pitch": 12.5
+          }
+        },
+        {
+          "id": "top_studs",
+          "kind": "stud_grid",
+          "gender": "M",
+          "interface": "stud_small",
+          "size_class": "small",
+          "fit_class": "FRICTION",
+          "frame": {
+            "origin": [
+              0,
+              0,
+              4.8
+            ],
+            "normal": [
+              0,
+              0,
+              1
+            ]
+          },
+          "grid": {
+            "nx": 2,
+            "ny": 1,
+            "pitch": 12.5
+          }
+        }
+      ],
+      "safety": {
+        "small_part_status": "above_cylinder",
+        "min_enclosing_diameter_mm": 35.25,
+        "margin_pct": 11.0,
+        "print_page_warning": [
+          "Printed at home or by a print service. Not tested to toy-safety standards. Adult supervision required. Check for cracks, sharp edges and loose pieces before each use, and stop using anything that has broken.",
+          "Larger than the small-parts test size in our size check. This is not a safety certification, and it is not rated for children under 3 years."
+        ]
+      },
+      "print": {
+        "orientation": "bed = z0; lying on a flat, axis horizontal",
+        "supports": false,
+        "rotation_deg": [
+          0,
+          0,
+          0
+        ]
+      },
+      "design_status": "verified",
+      "fit": {
+        "studs_measured": 2,
+        "design_gap_mm": 0.05,
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05,
+        "surface_offset_window_mm": [
+          -0.075,
+          0.075
+        ],
+        "residual_error_mm": 0.05
+      },
+      "checks": [
+        {
+          "id": "G1_watertight",
+          "level": "block",
+          "result": "pass",
+          "detail": ""
+        },
+        {
+          "id": "G2_winding",
+          "level": "block",
+          "result": "pass",
+          "detail": ""
+        },
+        {
+          "id": "G3_single_body",
+          "level": "block",
+          "result": "pass",
+          "detail": "1 body(ies)"
+        },
+        {
+          "id": "G4_on_bed",
+          "level": "block",
+          "result": "pass",
+          "detail": "zmin=0.000"
+        },
+        {
+          "id": "G5_fits_bed",
+          "level": "block",
+          "result": "pass",
+          "detail": "[43.9, 34.2, 23.6] vs [180, 180, 180]"
+        },
+        {
+          "id": "P1_no_supports",
+          "level": "block",
+          "result": "pass",
+          "detail": "0.0 mm2 steeper than 45 deg"
+        },
+        {
+          "id": "P4_no_ledges",
+          "level": "block",
+          "result": "pass",
+          "detail": "0.0 mm2 of flat underside held on one side only"
+        },
+        {
+          "id": "P2_bridge_span",
+          "level": "block",
+          "result": "pass",
+          "detail": "8.2 mm <= 20"
+        },
+        {
+          "id": "P3_wall_min",
+          "level": "info",
+          "result": "pass",
+          "detail": "wall 2.0 mm vs minimum 1.2"
+        },
+        {
+          "id": "I1_lattice",
+          "level": "warn",
+          "result": "pass",
+          "detail": "pitch 12.5 mm vs TU 12.5 mm (ratio 1.000)"
+        },
+        {
+          "id": "I2_connectors_on_part",
+          "level": "block",
+          "result": "pass",
+          "detail": "2 connector(s)"
+        },
+        {
+          "id": "I3_seats_on_reference",
+          "level": "block",
+          "result": "pass",
+          "detail": "overlap 0.000 mm3 with matching reference part"
+        },
+        {
+          "id": "S1_small_part_screen",
+          "level": "warn",
+          "result": "pass",
+          "detail": "above_cylinder: best-fit diameter 35.25 mm vs 31.75 mm cylinder"
+        },
+        {
+          "id": "T1_fit_as_designed",
+          "level": "block",
+          "result": "pass",
+          "detail": "2 stud(s): gap +0.050 to +0.050 mm, design 0.050, allowed +0.045 to +0.060"
+        },
+        {
+          "id": "T2_fit_tolerance_window",
+          "level": "warn",
+          "result": "pass",
+          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+        },
+        {
+          "id": "F1_printed_fit",
+          "level": "block",
+          "result": "pending",
+          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+        },
+        {
+          "id": "F2_breakage",
+          "level": "block",
+          "result": "pending",
+          "detail": "needs break/impact test: no piece may fit the cylinder after failure"
+        },
+        {
+          "id": "M1_manifest_schema",
+          "level": "block",
+          "result": "pass",
+          "detail": ""
+        }
+      ],
+      "sockets": {
+        "holes": 2,
+        "reliefs": 0,
+        "locked": true
+      }
+    },
+    {
+      "id": "hair_pixie",
+      "name": "Pixie Tufts",
+      "type": "Crown hair",
+      "line": "snap",
+      "family": "hair",
+      "size_class": "small",
+      "stat": "Spin",
+      "behavior": "Short pixie wig with soft crown tufts for any 2x1 human head",
+      "prints": true,
+      "tags": [
+        "character",
+        "hair",
+        "crown",
+        "kip"
+      ],
+      "file": "toyventor_hair_pixie_S.stl",
+      "bbox_mm": [
+        43.1,
+        35.4,
+        29.6
+      ],
+      "volume_cm3": 6.89,
+      "connectors": [
+        {
+          "id": "under_sockets",
+          "kind": "socket_grid",
+          "gender": "F",
+          "interface": "stud_small",
+          "size_class": "small",
+          "fit_class": "FRICTION",
+          "frame": {
+            "origin": [
+              0,
+              0,
+              0
+            ],
+            "normal": [
+              0,
+              0,
+              -1
+            ]
+          },
+          "grid": {
+            "nx": 2,
+            "ny": 1,
+            "pitch": 12.5
+          }
+        }
+      ],
+      "safety": {
+        "small_part_status": "above_cylinder",
+        "min_enclosing_diameter_mm": 43.9,
+        "margin_pct": 38.3,
+        "print_page_warning": [
+          "Printed at home or by a print service. Not tested to toy-safety standards. Adult supervision required. Check for cracks, sharp edges and loose pieces before each use, and stop using anything that has broken.",
+          "Larger than the small-parts test size in our size check. This is not a safety certification, and it is not rated for children under 3 years."
+        ]
+      },
+      "print": {
+        "orientation": "bed = z0; lying on a flat, axis horizontal",
+        "supports": false,
+        "rotation_deg": [
+          0,
+          0,
+          0
+        ]
+      },
+      "design_status": "verified",
+      "fit": {
+        "studs_measured": 2,
+        "design_gap_mm": 0.05,
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05,
+        "surface_offset_window_mm": [
+          -0.075,
+          0.075
+        ],
+        "residual_error_mm": 0.05
+      },
+      "checks": [
+        {
+          "id": "G1_watertight",
+          "level": "block",
+          "result": "pass",
+          "detail": ""
+        },
+        {
+          "id": "G2_winding",
+          "level": "block",
+          "result": "pass",
+          "detail": ""
+        },
+        {
+          "id": "G3_single_body",
+          "level": "block",
+          "result": "pass",
+          "detail": "1 body(ies)"
+        },
+        {
+          "id": "G4_on_bed",
+          "level": "block",
+          "result": "pass",
+          "detail": "zmin=0.000"
+        },
+        {
+          "id": "G5_fits_bed",
+          "level": "block",
+          "result": "pass",
+          "detail": "[43.1, 35.4, 29.6] vs [180, 180, 180]"
+        },
+        {
+          "id": "P1_no_supports",
+          "level": "block",
+          "result": "pass",
+          "detail": "0.0 mm2 steeper than 45 deg"
+        },
+        {
+          "id": "P4_no_ledges",
+          "level": "block",
+          "result": "pass",
+          "detail": "0.0 mm2 of flat underside held on one side only"
+        },
+        {
+          "id": "P2_bridge_span",
+          "level": "block",
+          "result": "pass",
+          "detail": "8.2 mm <= 20"
+        },
+        {
+          "id": "P3_wall_min",
+          "level": "info",
+          "result": "pass",
+          "detail": "wall 2.0 mm vs minimum 1.2"
+        },
+        {
+          "id": "I1_lattice",
+          "level": "warn",
+          "result": "pass",
+          "detail": "pitch 12.5 mm vs TU 12.5 mm (ratio 1.000)"
+        },
+        {
+          "id": "I2_connectors_on_part",
+          "level": "block",
+          "result": "pass",
+          "detail": "1 connector(s)"
+        },
+        {
+          "id": "I3_seats_on_reference",
+          "level": "block",
+          "result": "pass",
+          "detail": "overlap 0.000 mm3 with matching reference part"
+        },
+        {
+          "id": "S1_small_part_screen",
+          "level": "warn",
+          "result": "pass",
+          "detail": "above_cylinder: best-fit diameter 43.9 mm vs 31.75 mm cylinder"
+        },
+        {
+          "id": "T1_fit_as_designed",
+          "level": "block",
+          "result": "pass",
+          "detail": "2 stud(s): gap +0.050 to +0.050 mm, design 0.050, allowed +0.045 to +0.060"
+        },
+        {
+          "id": "T2_fit_tolerance_window",
+          "level": "warn",
+          "result": "pass",
+          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+        },
+        {
+          "id": "F1_printed_fit",
+          "level": "block",
+          "result": "pending",
+          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+        },
+        {
+          "id": "F2_breakage",
+          "level": "block",
+          "result": "pending",
+          "detail": "needs break/impact test: no piece may fit the cylinder after failure"
+        },
+        {
+          "id": "M1_manifest_schema",
+          "level": "block",
+          "result": "pass",
+          "detail": ""
+        }
+      ],
+      "sockets": {
+        "holes": 2,
+        "reliefs": 0,
+        "locked": true
+      }
+    },
+    {
+      "id": "hair_side_pony",
+      "name": "Side Ponytail",
+      "type": "Crown hair",
+      "line": "snap",
+      "family": "hair",
+      "size_class": "small",
+      "stat": "Spin",
+      "behavior": "Side-ponytail wig with a swinging tail for any 2x1 human head",
+      "prints": true,
+      "tags": [
+        "character",
+        "hair",
+        "crown",
+        "kip"
+      ],
+      "file": "toyventor_hair_side_pony_S.stl",
+      "bbox_mm": [
+        51.5,
+        33.5,
+        31.1
+      ],
+      "volume_cm3": 6.94,
+      "connectors": [
+        {
+          "id": "under_sockets",
+          "kind": "socket_grid",
+          "gender": "F",
+          "interface": "stud_small",
+          "size_class": "small",
+          "fit_class": "FRICTION",
+          "frame": {
+            "origin": [
+              0,
+              0,
+              0
+            ],
+            "normal": [
+              0,
+              0,
+              -1
+            ]
+          },
+          "grid": {
+            "nx": 2,
+            "ny": 1,
+            "pitch": 12.5
+          }
+        }
+      ],
+      "safety": {
+        "small_part_status": "above_cylinder",
+        "min_enclosing_diameter_mm": 37.6,
+        "margin_pct": 18.4,
+        "print_page_warning": [
+          "Printed at home or by a print service. Not tested to toy-safety standards. Adult supervision required. Check for cracks, sharp edges and loose pieces before each use, and stop using anything that has broken.",
+          "Larger than the small-parts test size in our size check. This is not a safety certification, and it is not rated for children under 3 years."
+        ]
+      },
+      "print": {
+        "orientation": "bed = z0; lying on a flat, axis horizontal",
+        "supports": false,
+        "rotation_deg": [
+          0,
+          0,
+          0
+        ]
+      },
+      "design_status": "verified",
+      "fit": {
+        "studs_measured": 2,
+        "design_gap_mm": 0.05,
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05,
+        "surface_offset_window_mm": [
+          -0.075,
+          0.075
+        ],
+        "residual_error_mm": 0.05
+      },
+      "checks": [
+        {
+          "id": "G1_watertight",
+          "level": "block",
+          "result": "pass",
+          "detail": ""
+        },
+        {
+          "id": "G2_winding",
+          "level": "block",
+          "result": "pass",
+          "detail": ""
+        },
+        {
+          "id": "G3_single_body",
+          "level": "block",
+          "result": "pass",
+          "detail": "1 body(ies)"
+        },
+        {
+          "id": "G4_on_bed",
+          "level": "block",
+          "result": "pass",
+          "detail": "zmin=0.000"
+        },
+        {
+          "id": "G5_fits_bed",
+          "level": "block",
+          "result": "pass",
+          "detail": "[51.5, 33.5, 31.1] vs [180, 180, 180]"
+        },
+        {
+          "id": "P1_no_supports",
+          "level": "block",
+          "result": "pass",
+          "detail": "0.0 mm2 steeper than 45 deg"
+        },
+        {
+          "id": "P4_no_ledges",
+          "level": "block",
+          "result": "pass",
+          "detail": "0.0 mm2 of flat underside held on one side only"
+        },
+        {
+          "id": "P2_bridge_span",
+          "level": "block",
+          "result": "pass",
+          "detail": "8.2 mm <= 20"
+        },
+        {
+          "id": "P3_wall_min",
+          "level": "info",
+          "result": "pass",
+          "detail": "wall 2.0 mm vs minimum 1.2"
+        },
+        {
+          "id": "I1_lattice",
+          "level": "warn",
+          "result": "pass",
+          "detail": "pitch 12.5 mm vs TU 12.5 mm (ratio 1.000)"
+        },
+        {
+          "id": "I2_connectors_on_part",
+          "level": "block",
+          "result": "pass",
+          "detail": "1 connector(s)"
+        },
+        {
+          "id": "I3_seats_on_reference",
+          "level": "block",
+          "result": "pass",
+          "detail": "overlap 0.000 mm3 with matching reference part"
+        },
+        {
+          "id": "S1_small_part_screen",
+          "level": "warn",
+          "result": "pass",
+          "detail": "above_cylinder: best-fit diameter 37.6 mm vs 31.75 mm cylinder"
+        },
+        {
+          "id": "T1_fit_as_designed",
+          "level": "block",
+          "result": "pass",
+          "detail": "2 stud(s): gap +0.050 to +0.050 mm, design 0.050, allowed +0.045 to +0.060"
+        },
+        {
+          "id": "T2_fit_tolerance_window",
+          "level": "warn",
+          "result": "pass",
+          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+        },
+        {
+          "id": "F1_printed_fit",
+          "level": "block",
+          "result": "pending",
+          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+        },
+        {
+          "id": "F2_breakage",
+          "level": "block",
+          "result": "pending",
+          "detail": "needs break/impact test: no piece may fit the cylinder after failure"
+        },
+        {
+          "id": "M1_manifest_schema",
+          "level": "block",
+          "result": "pass",
+          "detail": ""
+        }
+      ],
+      "sockets": {
+        "holes": 2,
+        "reliefs": 0,
+        "locked": true
+      }
+    },
+    {
+      "id": "hair_low_bun",
+      "name": "Low Nape Bun",
+      "type": "Crown hair",
+      "line": "snap",
+      "family": "hair",
+      "size_class": "small",
+      "stat": "Spin",
+      "behavior": "Centre-parted wig with a low coiled bun for any 2x1 human head",
+      "prints": true,
+      "tags": [
+        "character",
+        "hair",
+        "crown",
+        "kip"
+      ],
+      "file": "toyventor_hair_low_bun_S.stl",
+      "bbox_mm": [
+        44.0,
+        45.9,
+        24.0
+      ],
+      "volume_cm3": 8.77,
+      "connectors": [
+        {
+          "id": "under_sockets",
+          "kind": "socket_grid",
+          "gender": "F",
+          "interface": "stud_small",
+          "size_class": "small",
+          "fit_class": "FRICTION",
+          "frame": {
+            "origin": [
+              0,
+              0,
+              0
+            ],
+            "normal": [
+              0,
+              0,
+              -1
+            ]
+          },
+          "grid": {
+            "nx": 2,
+            "ny": 1,
+            "pitch": 12.5
+          }
+        }
+      ],
+      "safety": {
+        "small_part_status": "above_cylinder",
+        "min_enclosing_diameter_mm": 44.82,
+        "margin_pct": 41.2,
+        "print_page_warning": [
+          "Printed at home or by a print service. Not tested to toy-safety standards. Adult supervision required. Check for cracks, sharp edges and loose pieces before each use, and stop using anything that has broken.",
+          "Larger than the small-parts test size in our size check. This is not a safety certification, and it is not rated for children under 3 years."
+        ]
+      },
+      "print": {
+        "orientation": "bed = z0; lying on a flat, axis horizontal",
+        "supports": false,
+        "rotation_deg": [
+          0,
+          0,
+          0
+        ]
+      },
+      "design_status": "verified",
+      "fit": {
+        "studs_measured": 2,
+        "design_gap_mm": 0.05,
+        "gap_min_mm": 0.05,
+        "gap_max_mm": 0.05,
+        "surface_offset_window_mm": [
+          -0.075,
+          0.075
+        ],
+        "residual_error_mm": 0.05
+      },
+      "checks": [
+        {
+          "id": "G1_watertight",
+          "level": "block",
+          "result": "pass",
+          "detail": ""
+        },
+        {
+          "id": "G2_winding",
+          "level": "block",
+          "result": "pass",
+          "detail": ""
+        },
+        {
+          "id": "G3_single_body",
+          "level": "block",
+          "result": "pass",
+          "detail": "1 body(ies)"
+        },
+        {
+          "id": "G4_on_bed",
+          "level": "block",
+          "result": "pass",
+          "detail": "zmin=0.000"
+        },
+        {
+          "id": "G5_fits_bed",
+          "level": "block",
+          "result": "pass",
+          "detail": "[44.0, 45.9, 24.0] vs [180, 180, 180]"
+        },
+        {
+          "id": "P1_no_supports",
+          "level": "block",
+          "result": "pass",
+          "detail": "0.0 mm2 steeper than 45 deg"
+        },
+        {
+          "id": "P4_no_ledges",
+          "level": "block",
+          "result": "pass",
+          "detail": "0.0 mm2 of flat underside held on one side only"
+        },
+        {
+          "id": "P2_bridge_span",
+          "level": "block",
+          "result": "pass",
+          "detail": "8.2 mm <= 20"
+        },
+        {
+          "id": "P3_wall_min",
+          "level": "info",
+          "result": "pass",
+          "detail": "wall 2.0 mm vs minimum 1.2"
+        },
+        {
+          "id": "I1_lattice",
+          "level": "warn",
+          "result": "pass",
+          "detail": "pitch 12.5 mm vs TU 12.5 mm (ratio 1.000)"
+        },
+        {
+          "id": "I2_connectors_on_part",
+          "level": "block",
+          "result": "pass",
+          "detail": "1 connector(s)"
+        },
+        {
+          "id": "I3_seats_on_reference",
+          "level": "block",
+          "result": "pass",
+          "detail": "overlap 0.000 mm3 with matching reference part"
+        },
+        {
+          "id": "S1_small_part_screen",
+          "level": "warn",
+          "result": "pass",
+          "detail": "above_cylinder: best-fit diameter 44.82 mm vs 31.75 mm cylinder"
         },
         {
           "id": "T1_fit_as_designed",
@@ -6315,11 +7345,11 @@
       ],
       "file": "toyventor_hat_ballcap_S.stl",
       "bbox_mm": [
-        47.5,
+        47.4,
         51.9,
-        18.7
+        18.3
       ],
-      "volume_cm3": 7.73,
+      "volume_cm3": 7.65,
       "connectors": [
         {
           "id": "under_sockets",
@@ -6349,8 +7379,8 @@
       ],
       "safety": {
         "small_part_status": "above_cylinder",
-        "min_enclosing_diameter_mm": 47.07,
-        "margin_pct": 48.3,
+        "min_enclosing_diameter_mm": 47.0,
+        "margin_pct": 48.0,
         "print_page_warning": [
           "Printed at home or by a print service. Not tested to toy-safety standards. Adult supervision required. Check for cracks, sharp edges and loose pieces before each use, and stop using anything that has broken.",
           "Larger than the small-parts test size in our size check. This is not a safety certification, and it is not rated for children under 3 years."
@@ -6406,7 +7436,7 @@
           "id": "G5_fits_bed",
           "level": "block",
           "result": "pass",
-          "detail": "[47.5, 51.9, 18.7] vs [180, 180, 180]"
+          "detail": "[47.4, 51.9, 18.3] vs [180, 180, 180]"
         },
         {
           "id": "P1_no_supports",
@@ -6454,7 +7484,7 @@
           "id": "S1_small_part_screen",
           "level": "warn",
           "result": "pass",
-          "detail": "above_cylinder: best-fit diameter 47.07 mm vs 31.75 mm cylinder"
+          "detail": "above_cylinder: best-fit diameter 47.0 mm vs 31.75 mm cylinder"
         },
         {
           "id": "T1_fit_as_designed",
@@ -6492,7 +7522,7 @@
         "reliefs": 0,
         "locked": true
       },
-      "seat_z_mm": 10.8
+      "seat_z_mm": 10.4
     },
     {
       "id": "hat_beanie",
@@ -6513,10 +7543,10 @@
       "file": "toyventor_hat_beanie_S.stl",
       "bbox_mm": [
         49.6,
-        39.6,
-        25.0
+        39.4,
+        24.6
       ],
-      "volume_cm3": 8.67,
+      "volume_cm3": 8.58,
       "connectors": [
         {
           "id": "under_sockets",
@@ -6546,8 +7576,8 @@
       ],
       "safety": {
         "small_part_status": "above_cylinder",
-        "min_enclosing_diameter_mm": 40.99,
-        "margin_pct": 29.1,
+        "min_enclosing_diameter_mm": 40.67,
+        "margin_pct": 28.1,
         "print_page_warning": [
           "Printed at home or by a print service. Not tested to toy-safety standards. Adult supervision required. Check for cracks, sharp edges and loose pieces before each use, and stop using anything that has broken.",
           "Larger than the small-parts test size in our size check. This is not a safety certification, and it is not rated for children under 3 years."
@@ -6603,7 +7633,7 @@
           "id": "G5_fits_bed",
           "level": "block",
           "result": "pass",
-          "detail": "[49.6, 39.6, 25.0] vs [180, 180, 180]"
+          "detail": "[49.6, 39.4, 24.6] vs [180, 180, 180]"
         },
         {
           "id": "P1_no_supports",
@@ -6651,7 +7681,7 @@
           "id": "S1_small_part_screen",
           "level": "warn",
           "result": "pass",
-          "detail": "above_cylinder: best-fit diameter 40.99 mm vs 31.75 mm cylinder"
+          "detail": "above_cylinder: best-fit diameter 40.67 mm vs 31.75 mm cylinder"
         },
         {
           "id": "T1_fit_as_designed",
@@ -6689,7 +7719,7 @@
         "reliefs": 0,
         "locked": true
       },
-      "seat_z_mm": 10.8
+      "seat_z_mm": 10.4
     },
     {
       "id": "hat_cowboy",
@@ -6711,9 +7741,9 @@
       "bbox_mm": [
         63.2,
         65.6,
-        18.0
+        17.6
       ],
-      "volume_cm3": 17.54,
+      "volume_cm3": 17.52,
       "connectors": [
         {
           "id": "under_sockets",
@@ -6800,7 +7830,7 @@
           "id": "G5_fits_bed",
           "level": "block",
           "result": "pass",
-          "detail": "[63.2, 65.6, 18.0] vs [180, 180, 180]"
+          "detail": "[63.2, 65.6, 17.6] vs [180, 180, 180]"
         },
         {
           "id": "P1_no_supports",
@@ -6886,7 +7916,7 @@
         "reliefs": 0,
         "locked": true
       },
-      "seat_z_mm": 10.0
+      "seat_z_mm": 9.6
     },
     {
       "id": "hat_hardhat",
@@ -6908,9 +7938,9 @@
       "bbox_mm": [
         50.8,
         49.7,
-        19.2
+        18.8
       ],
-      "volume_cm3": 8.9,
+      "volume_cm3": 8.85,
       "connectors": [
         {
           "id": "under_sockets",
@@ -6997,7 +8027,7 @@
           "id": "G5_fits_bed",
           "level": "block",
           "result": "pass",
-          "detail": "[50.8, 49.7, 19.2] vs [180, 180, 180]"
+          "detail": "[50.8, 49.7, 18.8] vs [180, 180, 180]"
         },
         {
           "id": "P1_no_supports",
@@ -7083,7 +8113,7 @@
         "reliefs": 0,
         "locked": true
       },
-      "seat_z_mm": 10.8
+      "seat_z_mm": 10.4
     },
     {
       "id": "hat_ranger",
@@ -7105,9 +8135,9 @@
       "bbox_mm": [
         60.6,
         58.6,
-        18.5
+        18.1
       ],
-      "volume_cm3": 12.43,
+      "volume_cm3": 12.4,
       "connectors": [
         {
           "id": "under_sockets",
@@ -7194,7 +8224,7 @@
           "id": "G5_fits_bed",
           "level": "block",
           "result": "pass",
-          "detail": "[60.6, 58.6, 18.5] vs [180, 180, 180]"
+          "detail": "[60.6, 58.6, 18.1] vs [180, 180, 180]"
         },
         {
           "id": "P1_no_supports",
@@ -7280,7 +8310,7 @@
         "reliefs": 0,
         "locked": true
       },
-      "seat_z_mm": 10.0
+      "seat_z_mm": 9.6
     },
     {
       "id": "hat_tophat",
@@ -7302,9 +8332,9 @@
       "bbox_mm": [
         55.4,
         52.4,
-        25.6
+        25.2
       ],
-      "volume_cm3": 18.28,
+      "volume_cm3": 18.27,
       "connectors": [
         {
           "id": "under_sockets",
@@ -7391,7 +8421,7 @@
           "id": "G5_fits_bed",
           "level": "block",
           "result": "pass",
-          "detail": "[55.4, 52.4, 25.6] vs [180, 180, 180]"
+          "detail": "[55.4, 52.4, 25.2] vs [180, 180, 180]"
         },
         {
           "id": "P1_no_supports",
@@ -7477,7 +8507,7 @@
         "reliefs": 0,
         "locked": true
       },
-      "seat_z_mm": 9.6
+      "seat_z_mm": 9.2
     },
     {
       "id": "hat_pirate",
@@ -7499,9 +8529,9 @@
       "bbox_mm": [
         65.6,
         58.5,
-        16.4
+        16.0
       ],
-      "volume_cm3": 22.21,
+      "volume_cm3": 22.27,
       "connectors": [
         {
           "id": "under_sockets",
@@ -7588,7 +8618,7 @@
           "id": "G5_fits_bed",
           "level": "block",
           "result": "pass",
-          "detail": "[65.6, 58.5, 16.4] vs [180, 180, 180]"
+          "detail": "[65.6, 58.5, 16.0] vs [180, 180, 180]"
         },
         {
           "id": "P1_no_supports",
@@ -7674,7 +8704,7 @@
         "reliefs": 0,
         "locked": true
       },
-      "seat_z_mm": 10.4
+      "seat_z_mm": 10.0
     },
     {
       "id": "pack_explorer",
@@ -15243,6 +16273,41 @@
     },
     {
       "id": "tall_sculpted_with_pompadour",
+      "ok": true,
+      "edges": 2,
+      "errors": [],
+      "warnings": []
+    },
+    {
+      "id": "kid_sculpted_bowl_with_ballcap",
+      "ok": true,
+      "edges": 3,
+      "errors": [],
+      "warnings": []
+    },
+    {
+      "id": "chibi_vinyl_slick_with_beanie",
+      "ok": true,
+      "edges": 3,
+      "errors": [],
+      "warnings": []
+    },
+    {
+      "id": "kid_vinyl_with_hair_pixie",
+      "ok": true,
+      "edges": 2,
+      "errors": [],
+      "warnings": []
+    },
+    {
+      "id": "chibi_flat_with_hair_side_pony",
+      "ok": true,
+      "edges": 2,
+      "errors": [],
+      "warnings": []
+    },
+    {
+      "id": "tall_sculpted_with_hair_low_bun",
       "ok": true,
       "edges": 2,
       "errors": [],

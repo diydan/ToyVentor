@@ -1406,6 +1406,15 @@ FACE_ROOF_SLOPE = 1.18  # the head's support-free brow roof: rises this much per
 FACE_STEM_ZB = 2.9     # plate height of the stem / bore axis
 FACE_HW_MAX = 12.1
 FACE_CEIL_SLOPE = 0.9   # outline narrows at most this much per mm of height above the brow (<= 1.0 keeps the pocket ceiling at >= 45 deg)
+# Rounded outline (front view). Two printing rules bound the shape: the plate prints standing on its chin, so its outline may widen at most
+# FACE_CEIL_SLOPE mm per mm of height (45 deg overhang), and the head pocket is cut round it, so the pocket may narrow at most the same.
+# Inside that +-42 deg band the roundest outline is a circular peak (radius FACE_ROUND_R, widest = FACE_HW_MAX at plate height FACE_ROUND_ZC)
+# with straight 42 deg flanks above and below it and a filleted chin corner. Tune the roundness here and nowhere else: a smaller radius
+# narrows the chin and the top shoulders; the vinyl eye domes (x +-6.0, zb 5.45, r 2.75) need a chin half-width of about 6.9 or more.
+FACE_ROUND_R = 5.0        # radius of the peak arc across the widest part
+FACE_ROUND_ZC = 6.8       # plate height of the widest part (the arc's centre height)
+FACE_ROUND_CHIN_R = 1.8   # fillet radius at the chin corners; its rise stays inside the 0.7 mm first-layer exclusion (0.33 x radius)
+FACE_ROUND_TOP_BLEND = 2.0  # softness (1/mm) of the corner where the shoulder meets the brow-wedge top edge; smaller = rounder, 0 = sharp
 
 
 def _lerp_idx(vals, v):
@@ -1460,9 +1469,9 @@ def face_top_zb(zb_hint=0.0):
     return 14.0
 
 
-def face_outline_hw(zb):
-    """Half-width of the plate at plate height `zb`: the widest the plate can be (<= 12.1) while the face curving away from the centre
-    still leaves at least FACE_TMIN (0.5 at the brow wedge) of plate between the back and the front."""
+def _face_thick_hw(zb):
+    """Half-width where the face curving away from the centre still leaves at least FACE_TMIN (0.5 at the brow wedge) of plate between the
+    back and the front, capped at FACE_HW_MAX."""
     tmin = FACE_TMIN if zb <= 10.5 else max(0.5, FACE_TMIN - (zb - 10.5) * 0.4)
     hw = 0.0
     x = 0.0
@@ -1472,12 +1481,67 @@ def face_outline_hw(zb):
         else:
             break
         x += 0.05
-    if zb > 10.5:                                   # the pocket ceiling corners must slope >= 45 deg to print without supports
-        hw = min(hw, FACE_HW_MAX - FACE_CEIL_SLOPE * (zb - 10.5))
     return hw
 
 
-FACE_STATIONS = (0.0, 0.5, 1.1, 1.8, 2.6, 3.6, 4.8, 6.0, 7.2, 8.4, 9.6, 10.5, 11.2, 11.9, 12.5, 13.0)
+def _face_round_geom():
+    """Derived geometry of the rounded outline: arc extent, flank anchor, chin corner."""
+    s, R, zc, rc = FACE_CEIL_SLOPE, FACE_ROUND_R, FACE_ROUND_ZC, FACE_ROUND_CHIN_R
+    phi = math.atan(s)                                   # flank angle from vertical (42 deg at 0.9)
+    dz = R * math.sin(phi)
+    hw_end = FACE_HW_MAX - R + math.sqrt(R * R - dz * dz)  # arc half-width where it meets a flank
+    z_lo, z_hi = zc - dz, zc + dz
+    h0 = hw_end - s * z_lo                               # the lower flank's half-width at the chin (z = 0), before the corner fillet
+    tau = math.atan2(1.0, s)                             # the corner turns by the flank's angle from horizontal
+    tl = rc * math.tan(tau / 2.0)                        # fillet tangent length
+    return dict(s=s, R=R, zc=zc, rc=rc, z_lo=z_lo, z_hi=z_hi, hw_end=hw_end, h0=h0, tl=tl, z_f=rc * (1.0 - math.cos(tau)))
+
+
+def _face_round_hw(zb):
+    """The rounded envelope alone (no thickness limit): chin fillet, 42 deg lower flank, peak arc, 42 deg upper flank."""
+    g = _face_round_geom()
+    if zb < g["z_lo"]:
+        if zb < g["z_f"] and g["rc"] > 0.0:
+            return (g["h0"] - g["tl"]) + math.sqrt(max(2.0 * g["rc"] * max(zb, 0.0) - zb * zb, 0.0))
+        return g["hw_end"] - g["s"] * (g["z_lo"] - zb)
+    if zb > g["z_hi"]:
+        return g["hw_end"] - g["s"] * (zb - g["z_hi"])
+    return FACE_HW_MAX - g["R"] + math.sqrt(g["R"] ** 2 - (zb - g["zc"]) ** 2)
+
+
+def face_outline_hw(zb):
+    """Half-width of the plate at plate height `zb`: the rounded envelope, cut back wherever the face curving away would leave the plate thinner
+    than FACE_TMIN. Above the brow (10.5) the pocket ceiling corners must slope >= 45 deg to print without supports, so the width also never
+    exceeds the envelope's width at the brow minus FACE_CEIL_SLOPE per mm."""
+    thick, rnd = _face_thick_hw(zb), _face_round_hw(zb)
+    if zb > 10.5:
+        rnd = min(rnd, _face_round_hw(10.5) - FACE_CEIL_SLOPE * (zb - 10.5))
+        if FACE_ROUND_TOP_BLEND > 0.0:                    # smooth minimum: rounds the top corner and is never wider than either limit
+            lo = min(thick, rnd)
+            k = FACE_ROUND_TOP_BLEND
+            return lo - math.log(math.exp(-k * (thick - lo)) + math.exp(-k * (rnd - lo))) / k
+    return min(thick, rnd)
+
+
+def _face_stations():
+    """Plate heights where the outline is sampled: the corner fillet, every 0.7 mm round the peak arc, the arc/flank joins, and the old coarse
+    stations above the shoulder."""
+    g = _face_round_geom()
+    zs = {0.0, 0.5, 1.1, 1.8, 2.6, 3.6, 4.8, 6.0, 7.2, 8.4, 9.6, 10.5, 11.2, 11.9, 12.5, 13.0, g["z_lo"], g["z_hi"], g["zc"]}
+    if g["rc"] > 0.0:
+        zs |= {g["z_f"] * f for f in (0.0, 0.08, 0.25, 0.5, 0.78, 1.0)}
+    z = g["z_lo"]
+    while z < g["z_hi"]:
+        zs.add(round(z, 3))
+        z += 0.7
+    out = []
+    for z in sorted(round(z, 3) for z in zs if 0.0 <= z <= 13.0):
+        if not out or z - out[-1] >= 0.03:          # never two stations closer than 0.03 mm (a zero-height loft slab is a degenerate face)
+            out.append(z)
+    return tuple(out)
+
+
+FACE_STATIONS = _face_stations()
 
 
 def _face_plate_base():
@@ -1492,7 +1556,7 @@ def _face_plate_base():
         if hw < 0.4:
             continue
         ub = face_u(face_back(zb))
-        xs = sorted({0.0, hw} | {x for x in FACE_XS if 0.0 < x < hw})
+        xs = sorted({0.0, hw} | {x for x in FACE_XS if 0.0 < x < hw - 0.08})      # a sample within 0.08 mm of the edge would make a sliver face
         front = [(x, face_u(face_front(x, zb))) for x in xs]
         pts = [(-hw, ub), (hw, ub)] + [(x, u) for x, u in reversed(front)] + [(-x, u) for x, u in front[1:]]
         sections.append((zb, pts))
@@ -1523,7 +1587,7 @@ def _face_outline_polygon_xz(z_bore, grow=0.1):
     top_zb = 10.5
     while top_zb < 17.0:
         top_zb += 0.5
-        right.append((FACE_HW_MAX + grow - FACE_CEIL_SLOPE * (top_zb - 10.5), z0 + top_zb))
+        right.append((face_outline_hw(10.5) + grow - FACE_CEIL_SLOPE * (top_zb - 10.5), z0 + top_zb))
     left = [(-x, z) for x, z in right]
     return [(right[0][0], z0 - 0.06)] + right + list(reversed(left)) + [(left[0][0], z0 - 0.06)]
 
@@ -1552,6 +1616,21 @@ def _finish_human_head(skull, ears, size, lock, z_stud, z_bore):
 # The three human heads: gender-neutral (kid), feminine (chibi) and masculine (tall). They share one face zone (FACE_ZONE_PROFILE), so every field here
 # that touches the plate zone (z_bore, the skull's ryf/pf stations) is blended toward it; the differences are width, jaw squareness, dome, brow and ears.
 # `face_depth_table_from_heads()` rebuilds FACE_DEPTH from these specs, and selftest fails if the checked-in table has drifted.
+# Forehead height of a human head = the brow (top of the face plate, plate height `face_top_zb()` = 13.2) up to the crown (the stud base, `z_stud`), i.e.
+# z_stud - z_bore - FOREHEAD_BROW_ABOVE_BORE: 8.6 mm on kid, chibi and jumbo, 9.04 mm on tall. Hair sat too high on it, so every human head gets
+# FOREHEAD_SCALE of that height (0.95 = 5 % lower, the bottom of the 5-10 % asked for). The crown comes DOWN by the cut and nothing else moves: z_bore, the
+# pocket, the plate, the ears and the jaw are untouched (z_bore must stay on the 1/8 TU lattice, I4_bore_on_grid, so the face zone cannot move 0.4 mm).
+# The ceiling is the small-parts screen: kid, chibi and jumbo are 35.49 mm against the 34.93 mm limit, so a crown cut of 0.43 mm (5 %) passes at 35.08 mm,
+# 0.55 mm (6.4 %) at 34.96 mm and 0.69 mm (8 %) fails at 34.83 mm (marginal).
+FOREHEAD_SCALE = 0.95
+FOREHEAD_BROW_ABOVE_BORE = face_top_zb() - FACE_STEM_ZB     # brow height above the eye line (z_bore): 13.2 - 2.9 = 10.3
+
+
+def forehead_cut(spec):
+    """How far (mm) the crown of a head spec comes down so its forehead height is FOREHEAD_SCALE of what the raw spec says."""
+    return (1.0 - FOREHEAD_SCALE) * (spec["z_stud"] - spec["z_bore"] - FOREHEAD_BROW_ABOVE_BORE)
+
+
 HUMAN_HEAD_SPECS = {
     "char_head_kid": dict(   # neutral
         z_stud=31.4, z_bore=12.5,
@@ -1610,8 +1689,14 @@ HUMAN_HEAD_SPECS = {
 }
 
 
-def _human_head_parts(name):
+def _human_head_spec(name):
+    """The spec with the forehead cut applied: crown (z_stud) down by forehead_cut, everything else as written."""
     sp = HUMAN_HEADS_WITH_JUMBO[name]
+    return dict(sp, z_stud=round(sp["z_stud"] - forehead_cut(sp), 3))
+
+
+def _human_head_parts(name):
+    sp = _human_head_spec(name)
     skull = _organic_human_skull(z_stud=sp["z_stud"], z_bore=sp["z_bore"], **sp["skull"])
     return skull, _human_ears(skull, sp["z_bore"], **sp["ear"]), sp["z_stud"], sp["z_bore"]
 
@@ -1748,12 +1833,17 @@ def _face_eye_lens(cx, cz, a=2.75, h=0.50, tilt_scale=1.0, sink=0.20):
     return lens.translate((cx, face_u(face_front(abs(cx), cz)) - sink, cz))
 
 
+# Vinyl button eyes: centre x (each side) and plate height, base radius is `_face_eye_lens`'s `a`. 6.0 mm puts the domes 12.0 mm apart (14.6 mm at the earlier 7.3).
+FACE_VINYL_EYE_X = 6.0
+FACE_VINYL_EYE_Z = 5.45
+
+
 def char_faceplate_vinyl(stem_tu=1, **_):
     """Universal Collector-Vinyl Button-Eye & Button-Nose Face Insert (face-shaped meniscus plate, `1 TU` flat-sided stem): raised circular button-eye domes
-    (`dia 5.5 mm` at `x = +-7.3 mm`) and a small button nose on a plate that follows the face and sits inset 0.3 mm below the skull surface, plus the soft
+    (`dia 5.5 mm` at `x = +-6.0 mm`, `FACE_VINYL_EYE_X`) and a small button nose on a plate that follows the face and sits inset 0.3 mm below the skull surface, plus the soft
     resting-smile mouth ridge. Interchangeable across all 3 Human Head `face_slot` bores; prints support-free on `LAY_FLAT` (`[90, 0, 0]`)."""
     nose = _face_nose([(2.3, 1.9, 1.5, 0.12), (3.5, 1.7, 1.1, 0.55), (4.5, 1.3, 0.7, 1.00), (5.4, 0.9, 0.4, 0.30)])
-    eyes = [_face_eye_lens(sx * 7.30, 5.45) for sx in (-1, 1)]
+    eyes = [_face_eye_lens(sx * FACE_VINYL_EYE_X, FACE_VINYL_EYE_Z) for sx in (-1, 1)]
     return _face_plate_finish(_face_plate_base() + nose + union(eyes) + _faceplate_mouth(), stem_tu)
 
 
@@ -2158,26 +2248,26 @@ def _wig_cavity_slices(ear_cover=False):
             ( -16.0, 41.65, 29.22, 3.20, 0.0, -1.00),
             ( -15.5, 41.45, 29.38, 3.20, 0.0, -1.03),
             ( -15.0, 41.00, 29.54, 3.20, 0.0, -1.06),
-            ( -14.0, 40.67, 29.86, 3.20, 0.0, -1.15),
-            ( -11.0, 38.73, 29.59, 3.20, 0.0, -1.12),
-            (  -8.0, 38.30, 28.64, 3.20, 0.0, -1.25),
-            (  -5.0, 37.01, 25.86, 3.30, 0.0, -1.05),
-            (  -2.5, 35.48, 22.52, 3.30, 0.0, -0.97),
-            (  -1.0, 34.42, 20.42, 3.10, 0.0, -0.97),
-            (   0.0, 33.02, 19.02, 3.00, 0.0, -0.97),
+            ( -14.0, 40.73, 29.92, 3.20, 0.0, -1.15),
+            ( -11.0, 38.91, 29.77, 3.20, 0.0, -1.12),
+            (  -8.0, 38.54, 28.88, 3.20, 0.0, -1.25),
+            (  -5.0, 37.25, 26.10, 3.30, 0.0, -1.05),
+            (  -2.5, 35.70, 22.70, 3.30, 0.0, -0.97),
+            (  -1.0, 34.47, 20.60, 3.10, 0.0, -0.97),
+            (   0.0, 33.07, 19.20, 3.00, 0.0, -0.97),
         ]
     return [
             ( -17.5, 40.95, 28.74, 3.20, 0.0, -0.84),
             ( -16.0, 40.45, 29.22, 3.20, 0.0, -1.00),
             ( -15.5, 40.25, 29.38, 3.20, 0.0, -1.03),
             ( -15.0, 39.80, 29.54, 3.20, 0.0, -1.06),
-            ( -14.0, 39.47, 29.86, 3.20, 0.0, -1.15),
-            ( -11.0, 37.53, 29.59, 3.20, 0.0, -1.12),
-            (  -8.0, 37.20, 28.64, 3.20, 0.0, -1.25),
-            (  -5.0, 36.51, 25.86, 3.30, 0.0, -1.05),
-            (  -2.5, 35.48, 22.52, 3.30, 0.0, -0.97),
-            (  -1.0, 34.42, 20.42, 3.10, 0.0, -0.97),
-            (   0.0, 33.02, 19.02, 3.00, 0.0, -0.97),
+            ( -14.0, 39.53, 29.92, 3.20, 0.0, -1.15),
+            ( -11.0, 37.70, 29.76, 3.20, 0.0, -1.12),
+            (  -8.0, 37.45, 28.89, 3.20, 0.0, -1.25),
+            (  -5.0, 36.76, 26.11, 3.30, 0.0, -1.05),
+            (  -2.5, 35.69, 22.70, 3.30, 0.0, -0.97),
+            (  -1.0, 34.47, 20.60, 3.10, 0.0, -0.97),
+            (   0.0, 33.07, 19.20, 3.00, 0.0, -0.97),
     ]
 
 
@@ -2746,21 +2836,23 @@ def hair_low_bun(size="small", grid=(2, 1), lock=True, **_):
 # head's stud plane, over a hat-ready wig it is the wig's studs (WIG_TOP_Z above the head's). The cavity is the measured envelope of the six hat-ready wigs
 # (+0.45 mm clearance, ceiling relaxed to print without supports), so one cavity wraps both the bare head and any hat-ready wig, and each hat's rim hangs
 # ~10 mm below the sockets: at the hairline over a wig, just above the brow on a bare head (any lower and a bare-head hat would cover the face plate).
-HAT_RIM = {"ballcap": 10.8, "beanie": 10.8, "cowboy": 10.0, "hardhat": 10.8, "ranger": 10.0, "tophat": 9.6, "pirate": 10.4}   # rim depth below the sockets
+# The forehead cut brought the crown (stud plane) down by up to 0.45 mm onto a fixed plate, so every rim rose 0.4 mm with it: the three 10.8 mm rims would otherwise
+# have gone from 0.70 to 0.27 mm clear of the top of the face art (the brows) on kid, chibi and jumbo.
+HAT_RIM = {"ballcap": 10.4, "beanie": 10.4, "cowboy": 9.6, "hardhat": 10.4, "ranger": 9.6, "tophat": 9.2, "pirate": 10.0}   # rim depth below the sockets
 HAT_WRAP_MM = max(HAT_RIM.values())
 HAT_WALL = 1.9
 HAT_CAVITY_SLICES = [      # (z, w, d, p, cx, cy), z from the socket plane: the hat-ready wig envelope + 0.45 mm clearance, ceiling relaxed to print without supports
-    ( -11.8, 44.10, 34.40, 3.0, 0.0, -1.65),
-    ( -10.8, 43.49, 33.29, 3.0, 0.0, -1.64),
-    (  -8.8, 41.45, 31.10, 3.0, 0.0, -1.51),
-    (  -6.8, 40.31, 28.40, 3.0, 0.0, -1.46),
-    (  -5.8, 39.25, 27.00, 3.0, 0.0, -1.46),
-    (  -4.8, 38.18, 25.60, 3.0, 0.0, -1.46),
-    (  -3.8, 37.88, 24.75, 3.0, 0.0, -1.18),
-    (  -2.8, 37.20, 23.76, 3.0, 0.0, -0.98),
-    (  -1.8, 35.97, 22.56, 3.0, 0.0, -0.88),
-    (  -0.8, 34.57, 21.16, 3.0, 0.0, -0.88),
-    (   0.0, 33.45, 20.04, 3.0, 0.0, -0.88),
+    ( -11.8, 44.34, 34.64, 3.0, 0.0, -1.65),
+    ( -10.8, 43.73, 33.53, 3.0, 0.0, -1.64),
+    (  -8.8, 41.68, 31.32, 3.0, 0.0, -1.51),
+    (  -6.8, 40.47, 28.58, 3.0, 0.0, -1.46),
+    (  -5.8, 39.35, 27.18, 3.0, 0.0, -1.46),
+    (  -4.8, 38.23, 25.78, 3.0, 0.0, -1.46),
+    (  -3.8, 37.93, 24.75, 3.0, 0.0, -1.18),
+    (  -2.8, 37.25, 23.76, 3.0, 0.0, -0.98),
+    (  -1.8, 36.01, 22.56, 3.0, 0.0, -0.88),
+    (  -0.8, 34.61, 21.16, 3.0, 0.0, -0.88),
+    (   0.0, 33.49, 20.04, 3.0, 0.0, -0.88),
 ]
 
 
