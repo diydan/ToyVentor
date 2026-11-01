@@ -139,9 +139,9 @@ describe("Parts asset optimization (Print STL + Web GLB + Toy-Finish Recipes)", 
     expect(totalBytes).toBeLessThanOrEqual(5 * 1024 * 1024);
   });
 
-  it("keeps public/parts-stl watertight binary STLs under 21 MB total and 1.6 MB per file with zero support bloat", () => {
+  it("keeps public/parts-stl watertight binary STLs under 23 MB total and 1.6 MB per file with zero support bloat", () => {
     const stlFiles = readdirSync(STL_DIR).filter((f) => f.endsWith(".stl"));
-    expect(stlFiles.length).toBeGreaterThanOrEqual(46);
+    expect(stlFiles.length).toBeGreaterThanOrEqual(63);
 
     let totalBytes = 0;
     for (const file of stlFiles) {
@@ -156,7 +156,7 @@ describe("Parts asset optimization (Print STL + Web GLB + Toy-Finish Recipes)", 
       expect(buf.length, `${file} binary STL length mismatch`).toBe(84 + tris * 50);
     }
 
-    expect(totalBytes).toBeLessThanOrEqual(21 * 1024 * 1024);
+    expect(totalBytes).toBeLessThanOrEqual(23 * 1024 * 1024);
     expect(existsSync(join(STL_DIR, "forge-mount-first-print.stl"))).toBe(true);
   });
 
@@ -640,9 +640,58 @@ describe("Parts asset optimization (Print STL + Web GLB + Toy-Finish Recipes)", 
           readFileSync(join(ROOT, "public/kip/custom/custom_wizard_hat.glb")).equals(wizardBefore),
         ).toBe(true);
 
-        // 2c. Finding 1 reproduction: torso.stl with verify_preprint: false sent directly to daemon
-        // MUST ignore verify_preprint: false and degrade to `digital_only` with stl_artifact = null!
-        const torsoB64 = readFileSync(join(ROOT, "public/kip/stls/torso.stl")).toString("base64");
+        // 2c. Finding 1 reproduction: a watertight curved-overhang mesh (R=14mm sphere sitting at z=0,
+        // ~309 mm2 sloped -Z overhang) sent with `verify_preprint: false` directly to the daemon MUST
+        // ignore `verify_preprint: false` and degrade to `digital_only` with `stl_artifact = null`!
+        const curvedOverhangB64 = (() => {
+          const R = 14.0;
+          const nLat = 16;
+          const nLon = 24;
+          const pt = (i: number, j: number): [number, number, number] => {
+            const theta = (Math.PI * i) / nLat;
+            const phi = (2 * Math.PI * (j % nLon)) / nLon;
+            const s = Math.sin(theta);
+            return [R * s * Math.cos(phi), R * s * Math.sin(phi), R - R * Math.cos(theta)];
+          };
+          const tris: Array<[[number, number, number], [number, number, number], [number, number, number]]> = [];
+          for (let i = 0; i < nLat; i++) {
+            for (let j = 0; j < nLon; j++) {
+              if (i === 0) {
+                tris.push([[0, 0, 0], pt(1, j + 1), pt(1, j)]);
+              } else if (i === nLat - 1) {
+                tris.push([pt(nLat - 1, j), pt(nLat - 1, j + 1), [0, 0, 2 * R]]);
+              } else {
+                const p00 = pt(i, j);
+                const p01 = pt(i, j + 1);
+                const p10 = pt(i + 1, j);
+                const p11 = pt(i + 1, j + 1);
+                tris.push([p00, p01, p11]);
+                tris.push([p00, p11, p10]);
+              }
+            }
+          }
+          const buf = Buffer.alloc(84 + 50 * tris.length);
+          buf.writeUInt32LE(tris.length, 80);
+          let off = 84;
+          for (const [a, b, c] of tris) {
+            const ux = b[0] - a[0], uy = b[1] - a[1], uz = b[2] - a[2];
+            const vx = c[0] - a[0], vy = c[1] - a[1], vz = c[2] - a[2];
+            const nx = uy * vz - uz * vy;
+            const ny = uz * vx - ux * vz;
+            const nz = ux * vy - uy * vx;
+            const ln = Math.hypot(nx, ny, nz) || 1;
+            buf.writeFloatLE(nx / ln, off);
+            buf.writeFloatLE(ny / ln, off + 4);
+            buf.writeFloatLE(nz / ln, off + 8);
+            for (const [k, p] of [a, b, c].entries()) {
+              buf.writeFloatLE(p[0], off + 12 + k * 12);
+              buf.writeFloatLE(p[1], off + 16 + k * 12);
+              buf.writeFloatLE(p[2], off + 20 + k * 12);
+            }
+            off += 50;
+          }
+          return buf.toString("base64");
+        })();
         const torsoSubmit = await fetch(`${baseUrl}/v1/jobs`, {
           method: "POST",
           headers: {
@@ -650,8 +699,8 @@ describe("Parts asset optimization (Print STL + Web GLB + Toy-Finish Recipes)", 
             authorization: `Bearer ${secretToken}`,
           },
           body: JSON.stringify({
-            part_id: "torso_bypass_test",
-            stl_base64: torsoB64,
+            part_id: "overhang_bypass_test",
+            stl_base64: curvedOverhangB64,
             verify_preprint: false,
           }),
         });
@@ -676,8 +725,8 @@ describe("Parts asset optimization (Print STL + Web GLB + Toy-Finish Recipes)", 
         expect(torsoFinal?.glb_artifact).toMatch(/\.draft\.glb$/);
         expect(torsoFinal?.gate_report?.ok).toBe(false);
 
-        // 2c-ii. Even with `slot: "back"` + `support_policy: "minimal"`, torso.stl MUST still reject
-        // to `digital_only` via M2_show_face_scar (~425 mm2 curved slope > 80 mm2 cap)!
+        // 2c-ii. Even with `slot: "back"` + `support_policy: "minimal"`, curved overhang MUST still reject
+        // to `digital_only` via M2_show_face_scar (~309 mm2 curved slope > 80 mm2 cap)!
         const torsoMinSubmit = await fetch(`${baseUrl}/v1/jobs`, {
           method: "POST",
           headers: {
@@ -685,10 +734,10 @@ describe("Parts asset optimization (Print STL + Web GLB + Toy-Finish Recipes)", 
             authorization: `Bearer ${secretToken}`,
           },
           body: JSON.stringify({
-            part_id: "torso_minimal_reject",
+            part_id: "overhang_minimal_reject",
             slot: "back",
             support_policy: "minimal",
-            stl_base64: torsoB64,
+            stl_base64: curvedOverhangB64,
           }),
         });
         expect(torsoMinSubmit.status).toBe(202);
