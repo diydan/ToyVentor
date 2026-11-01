@@ -79,6 +79,16 @@ parts/partspec/calibration/
 parts/partspec/app_export/
 
 # NOTE: public/kip/stls/, public/kip/vendor/, public/kip/custom/,
-# public/parts-stl/ and public/parts-glb/ are build outputs, but they are
-# tracked on purpose — the app serves them directly, with no build step
-# required. Do not add them here.
+# public/kip/partspec/, public/parts-stl/ and public/parts-glb/ are build
+# outputs, but they are tracked on purpose — the app serves them directly,
+# with no build step required. Do not add them here.
+# Local-only file:// viewer mirror and scratch inspection renders:
+parts/kip/viewer/partspec/
+public/kip/mockup-images/
+# Assembly-orientation viewer mirrors (regenerate: python3 parts/kip/sync_truck_kip.py).
+# Nothing committed loads them; the Truck-Mockup commit un-ignores + adds them.
+public/kip/partspec/mockup/
+# Generated Kip rig (refresh: python3 parts/kip/sync_kip_rig.py --check).
+# Served only by the uncommitted viewer; un-ignore with it.
+parts/kip/viewer/kip-rig.js
+public/kip/kip-rig.js
