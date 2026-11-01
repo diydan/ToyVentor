@@ -1,0 +1,922 @@
+{
+  "version": 2,
+  "defaults": {
+    "print_simplify_mm": {
+      "show_curved": 0.006,
+      "precision_gear_pin": 0.005,
+      "prismatic_structural": 0.016
+    },
+    "web_simplify_mm": 0.08,
+    "web_crease_deg": 34,
+    "quantize": true,
+    "hygiene": {
+      "dry_filament": true,
+      "pla_flow_ratio_hint": "0.96-0.98",
+      "bed_surface": "smooth_pei",
+      "outer_wall_speed_mms": 30,
+      "wall_loops": 3
+    }
+  },
+  "parts": {
+    "adapter-snap-pro": {
+      "source_sha256": "555b0803fafb9412",
+      "finish_class": "precision_gear_pin",
+      "print_simplify_mm": 0.01,
+      "web_simplify_mm": 0.09,
+      "web_crease_deg": 34,
+      "slicer_recipe": {
+        "layer_height_mm": 0.16,
+        "wall_loops": 3,
+        "outer_wall_speed_mms": 30,
+        "wall_order": "outer_first",
+        "seam_position": "aligned",
+        "ironing": "all_top",
+        "ironing_inset_mm": 0.21,
+        "brim_width_mm": 0,
+        "support_mode": "none"
+      }
+    },
+    "beam-str-tu05": {
+      "source_sha256": "d67ff10c902a3dd1",
+      "finish_class": "precision_gear_pin",
+      "print_simplify_mm": 0.01,
+      "web_simplify_mm": 0.09,
+      "web_crease_deg": 34,
+      "slicer_recipe": {
+        "layer_height_mm": 0.16,
+        "wall_loops": 3,
+        "outer_wall_speed_mms": 30,
+        "wall_order": "outer_first",
+        "seam_position": "aligned",
+        "ironing": "all_top",
+        "ironing_inset_mm": 0.21,
+        "brim_width_mm": 0,
+        "support_mode": "none"
+      }
+    },
+    "big-blue-brick": {
+      "source_sha256": "ab3e9cfcb6e5baa9",
+      "finish_class": "prismatic_structural",
+      "print_simplify_mm": 0.018,
+      "web_simplify_mm": 0.09,
+      "web_crease_deg": 34,
+      "slicer_recipe": {
+        "layer_height_mm": 0.16,
+        "wall_loops": 3,
+        "outer_wall_speed_mms": 30,
+        "wall_order": "outer_first",
+        "seam_position": "aligned",
+        "ironing": "all_top",
+        "ironing_inset_mm": 0.21,
+        "brim_width_mm": 0,
+        "support_mode": "none"
+      }
+    },
+    "brick-s-2x2": {
+      "source_sha256": "ab7aba51731857ee",
+      "finish_class": "prismatic_structural",
+      "print_simplify_mm": 0.018,
+      "web_simplify_mm": 0.09,
+      "web_crease_deg": 34,
+      "slicer_recipe": {
+        "layer_height_mm": 0.16,
+        "wall_loops": 3,
+        "outer_wall_speed_mms": 30,
+        "wall_order": "outer_first",
+        "seam_position": "aligned",
+        "ironing": "all_top",
+        "ironing_inset_mm": 0.21,
+        "brim_width_mm": 0,
+        "support_mode": "none"
+      }
+    },
+    "bumper-horns": {
+      "source_sha256": "22deda1dff2cbf2b",
+      "finish_class": "show_curved",
+      "print_simplify_mm": 0.006,
+      "web_simplify_mm": 0.075,
+      "web_crease_deg": 36,
+      "slicer_recipe": {
+        "layer_height_mm": 0.12,
+        "wall_loops": 3,
+        "outer_wall_speed_mms": 30,
+        "wall_order": "inner_first",
+        "seam_position": "aligned",
+        "ironing": "none",
+        "ironing_inset_mm": 0.0,
+        "brim_width_mm": 3,
+        "support_mode": "none"
+      }
+    },
+    "cloud-wings": {
+      "source_sha256": "6f01e0cb70ca0502",
+      "finish_class": "show_curved",
+      "print_simplify_mm": 0.006,
+      "web_simplify_mm": 0.075,
+      "web_crease_deg": 36,
+      "slicer_recipe": {
+        "layer_height_mm": 0.12,
+        "wall_loops": 3,
+        "outer_wall_speed_mms": 30,
+        "wall_order": "inner_first",
+        "seam_position": "aligned",
+        "ironing": "none",
+        "ironing_inset_mm": 0.0,
+        "brim_width_mm": 0,
+        "support_mode": "none"
+      }
+    },
+    "dome-s-2x2": {
+      "source_sha256": "8c4c44aca49b8972",
+      "finish_class": "show_curved",
+      "print_simplify_mm": 0.006,
+      "web_simplify_mm": 0.075,
+      "web_crease_deg": 36,
+      "slicer_recipe": {
+        "layer_height_mm": 0.12,
+        "wall_loops": 3,
+        "outer_wall_speed_mms": 30,
+        "wall_order": "inner_first",
+        "seam_position": "back",
+        "ironing": "none",
+        "ironing_inset_mm": 0.0,
+        "brim_width_mm": 0,
+        "support_mode": "none"
+      }
+    },
+    "forge-mount-first-print": {
+      "source_sha256": "53dbd95509f03787",
+      "finish_class": "precision_gear_pin",
+      "print_simplify_mm": 0.01,
+      "web_simplify_mm": 0.055,
+      "web_crease_deg": 28,
+      "slicer_recipe": {
+        "layer_height_mm": 0.16,
+        "wall_loops": 3,
+        "outer_wall_speed_mms": 30,
+        "wall_order": "inner_first",
+        "seam_position": "aligned",
+        "ironing": "all_top",
+        "ironing_inset_mm": 0.21,
+        "brim_width_mm": 0,
+        "support_mode": "none"
+      }
+    },
+    "forge-mount-ring-s": {
+      "source_sha256": "cbcb25cf85eb8fad",
+      "finish_class": "precision_gear_pin",
+      "print_simplify_mm": 0.01,
+      "web_simplify_mm": 0.055,
+      "web_crease_deg": 28,
+      "slicer_recipe": {
+        "layer_height_mm": 0.16,
+        "wall_loops": 3,
+        "outer_wall_speed_mms": 30,
+        "wall_order": "outer_first",
+        "seam_position": "back",
+        "ironing": "all_top",
+        "ironing_inset_mm": 0.21,
+        "brim_width_mm": 0,
+        "support_mode": "none"
+      }
+    },
+    "gear-spur-z10": {
+      "source_sha256": "8d22fe3fa35c1309",
+      "finish_class": "precision_gear_pin",
+      "print_simplify_mm": 0.01,
+      "web_simplify_mm": 0.055,
+      "web_crease_deg": 28,
+      "slicer_recipe": {
+        "layer_height_mm": 0.16,
+        "wall_loops": 3,
+        "outer_wall_speed_mms": 30,
+        "wall_order": "outer_first",
+        "seam_position": "aligned",
+        "ironing": "none",
+        "ironing_inset_mm": 0.0,
+        "brim_width_mm": 0,
+        "support_mode": "none"
+      }
+    },
+    "gear-spur-z20": {
+      "source_sha256": "21302f518feafb37",
+      "finish_class": "precision_gear_pin",
+      "print_simplify_mm": 0.01,
+      "web_simplify_mm": 0.055,
+      "web_crease_deg": 28,
+      "slicer_recipe": {
+        "layer_height_mm": 0.16,
+        "wall_loops": 3,
+        "outer_wall_speed_mms": 30,
+        "wall_order": "outer_first",
+        "seam_position": "aligned",
+        "ironing": "none",
+        "ironing_inset_mm": 0.0,
+        "brim_width_mm": 0,
+        "support_mode": "none"
+      }
+    },
+    "glow-capsule": {
+      "source_sha256": "1c7f8994b1efff73",
+      "finish_class": "show_curved",
+      "print_simplify_mm": 0.006,
+      "web_simplify_mm": 0.075,
+      "web_crease_deg": 36,
+      "slicer_recipe": {
+        "layer_height_mm": 0.12,
+        "wall_loops": 3,
+        "outer_wall_speed_mms": 30,
+        "wall_order": "inner_first",
+        "seam_position": "back",
+        "ironing": "none",
+        "ironing_inset_mm": 0.0,
+        "brim_width_mm": 3,
+        "support_mode": "none"
+      }
+    },
+    "kit-aero-wedge": {
+      "source_sha256": "2536192342b60dd7",
+      "finish_class": "show_curved",
+      "print_simplify_mm": 0.006,
+      "web_simplify_mm": 0.075,
+      "web_crease_deg": 36,
+      "slicer_recipe": {
+        "layer_height_mm": 0.12,
+        "wall_loops": 3,
+        "outer_wall_speed_mms": 30,
+        "wall_order": "inner_first",
+        "seam_position": "aligned",
+        "ironing": "none",
+        "ironing_inset_mm": 0.0,
+        "brim_width_mm": 0,
+        "support_mode": "none"
+      }
+    },
+    "kit-barbell-shaft": {
+      "source_sha256": "7d258fc8a59bc0e4",
+      "finish_class": "precision_gear_pin",
+      "print_simplify_mm": 0.01,
+      "web_simplify_mm": 0.055,
+      "web_crease_deg": 28,
+      "slicer_recipe": {
+        "layer_height_mm": 0.16,
+        "wall_loops": 3,
+        "outer_wall_speed_mms": 30,
+        "wall_order": "inner_first",
+        "seam_position": "aligned",
+        "ironing": "none",
+        "ironing_inset_mm": 0.0,
+        "brim_width_mm": 0,
+        "support_mode": "none"
+      }
+    },
+    "kit-booster-pod": {
+      "source_sha256": "969ebd6233952a1c",
+      "finish_class": "show_curved",
+      "print_simplify_mm": 0.006,
+      "web_simplify_mm": 0.075,
+      "web_crease_deg": 36,
+      "slicer_recipe": {
+        "layer_height_mm": 0.12,
+        "wall_loops": 3,
+        "outer_wall_speed_mms": 30,
+        "wall_order": "inner_first",
+        "seam_position": "aligned",
+        "ironing": "none",
+        "ironing_inset_mm": 0.0,
+        "brim_width_mm": 0,
+        "support_mode": "none"
+      }
+    },
+    "kit-clevis-spine": {
+      "source_sha256": "4b2d810d6c53c8a1",
+      "finish_class": "precision_gear_pin",
+      "print_simplify_mm": 0.01,
+      "web_simplify_mm": 0.09,
+      "web_crease_deg": 34,
+      "slicer_recipe": {
+        "layer_height_mm": 0.16,
+        "wall_loops": 3,
+        "outer_wall_speed_mms": 30,
+        "wall_order": "inner_first",
+        "seam_position": "aligned",
+        "ironing": "all_top",
+        "ironing_inset_mm": 0.21,
+        "brim_width_mm": 0,
+        "support_mode": "none"
+      }
+    },
+    "kit-foil-wing": {
+      "source_sha256": "0f368a7a82140a2b",
+      "finish_class": "show_curved",
+      "print_simplify_mm": 0.006,
+      "web_simplify_mm": 0.075,
+      "web_crease_deg": 36,
+      "slicer_recipe": {
+        "layer_height_mm": 0.12,
+        "wall_loops": 3,
+        "outer_wall_speed_mms": 30,
+        "wall_order": "inner_first",
+        "seam_position": "aligned",
+        "ironing": "none",
+        "ironing_inset_mm": 0.0,
+        "brim_width_mm": 0,
+        "support_mode": "none"
+      }
+    },
+    "kit-keel-base": {
+      "source_sha256": "c4b64311ec4be046",
+      "finish_class": "prismatic_structural",
+      "print_simplify_mm": 0.018,
+      "web_simplify_mm": 0.09,
+      "web_crease_deg": 34,
+      "slicer_recipe": {
+        "layer_height_mm": 0.16,
+        "wall_loops": 3,
+        "outer_wall_speed_mms": 30,
+        "wall_order": "inner_first",
+        "seam_position": "aligned",
+        "ironing": "all_top",
+        "ironing_inset_mm": 0.21,
+        "brim_width_mm": 0,
+        "support_mode": "none"
+      }
+    },
+    "kit-rotor-blade": {
+      "source_sha256": "2cb09aa5ff96efc2",
+      "finish_class": "precision_gear_pin",
+      "print_simplify_mm": 0.01,
+      "web_simplify_mm": 0.055,
+      "web_crease_deg": 28,
+      "slicer_recipe": {
+        "layer_height_mm": 0.16,
+        "wall_loops": 3,
+        "outer_wall_speed_mms": 30,
+        "wall_order": "outer_first",
+        "seam_position": "aligned",
+        "ironing": "none",
+        "ironing_inset_mm": 0.0,
+        "brim_width_mm": 0,
+        "support_mode": "none"
+      }
+    },
+    "kit-scoop-blade": {
+      "source_sha256": "f7e81218af209d5a",
+      "finish_class": "show_curved",
+      "print_simplify_mm": 0.006,
+      "web_simplify_mm": 0.075,
+      "web_crease_deg": 36,
+      "slicer_recipe": {
+        "layer_height_mm": 0.12,
+        "wall_loops": 3,
+        "outer_wall_speed_mms": 30,
+        "wall_order": "inner_first",
+        "seam_position": "aligned",
+        "ironing": "none",
+        "ironing_inset_mm": 0.0,
+        "brim_width_mm": 0,
+        "support_mode": "none"
+      }
+    },
+    "kit-skid-runner": {
+      "source_sha256": "dc0f4689fce1f285",
+      "finish_class": "prismatic_structural",
+      "print_simplify_mm": 0.018,
+      "web_simplify_mm": 0.09,
+      "web_crease_deg": 34,
+      "slicer_recipe": {
+        "layer_height_mm": 0.16,
+        "wall_loops": 3,
+        "outer_wall_speed_mms": 30,
+        "wall_order": "outer_first",
+        "seam_position": "aligned",
+        "ironing": "all_top",
+        "ironing_inset_mm": 0.21,
+        "brim_width_mm": 0,
+        "support_mode": "none"
+      }
+    },
+    "kit-spinner-pin": {
+      "source_sha256": "2fc5ce8e440bef59",
+      "finish_class": "precision_gear_pin",
+      "print_simplify_mm": 0.01,
+      "web_simplify_mm": 0.055,
+      "web_crease_deg": 28,
+      "slicer_recipe": {
+        "layer_height_mm": 0.16,
+        "wall_loops": 3,
+        "outer_wall_speed_mms": 30,
+        "wall_order": "inner_first",
+        "seam_position": "back",
+        "ironing": "none",
+        "ironing_inset_mm": 0.0,
+        "brim_width_mm": 0,
+        "support_mode": "none"
+      }
+    },
+    "kit-tilting-tub": {
+      "source_sha256": "82dac977b558d030",
+      "finish_class": "prismatic_structural",
+      "print_simplify_mm": 0.018,
+      "web_simplify_mm": 0.09,
+      "web_crease_deg": 34,
+      "slicer_recipe": {
+        "layer_height_mm": 0.16,
+        "wall_loops": 3,
+        "outer_wall_speed_mms": 30,
+        "wall_order": "inner_first",
+        "seam_position": "aligned",
+        "ironing": "all_top",
+        "ironing_inset_mm": 0.21,
+        "brim_width_mm": 0,
+        "support_mode": "none"
+      }
+    },
+    "kit-turntable": {
+      "source_sha256": "44a446a5defb8446",
+      "finish_class": "precision_gear_pin",
+      "print_simplify_mm": 0.01,
+      "web_simplify_mm": 0.055,
+      "web_crease_deg": 28,
+      "slicer_recipe": {
+        "layer_height_mm": 0.16,
+        "wall_loops": 3,
+        "outer_wall_speed_mms": 30,
+        "wall_order": "outer_first",
+        "seam_position": "back",
+        "ironing": "all_top",
+        "ironing_inset_mm": 0.21,
+        "brim_width_mm": 0,
+        "support_mode": "none"
+      }
+    },
+    "kit-wheel-giant": {
+      "source_sha256": "ee6ae3f972bac315",
+      "finish_class": "precision_gear_pin",
+      "print_simplify_mm": 0.01,
+      "web_simplify_mm": 0.055,
+      "web_crease_deg": 28,
+      "slicer_recipe": {
+        "layer_height_mm": 0.16,
+        "wall_loops": 3,
+        "outer_wall_speed_mms": 30,
+        "wall_order": "inner_first",
+        "seam_position": "back",
+        "ironing": "none",
+        "ironing_inset_mm": 0.0,
+        "brim_width_mm": 0,
+        "support_mode": "none"
+      }
+    },
+    "kit-wheel-med": {
+      "source_sha256": "6dad1517c84e55f8",
+      "finish_class": "precision_gear_pin",
+      "print_simplify_mm": 0.01,
+      "web_simplify_mm": 0.055,
+      "web_crease_deg": 28,
+      "slicer_recipe": {
+        "layer_height_mm": 0.16,
+        "wall_loops": 3,
+        "outer_wall_speed_mms": 30,
+        "wall_order": "inner_first",
+        "seam_position": "back",
+        "ironing": "none",
+        "ironing_inset_mm": 0.0,
+        "brim_width_mm": 0,
+        "support_mode": "none"
+      }
+    },
+    "kit-windscreen": {
+      "source_sha256": "6cb1947c8abb6022",
+      "finish_class": "show_curved",
+      "print_simplify_mm": 0.006,
+      "web_simplify_mm": 0.075,
+      "web_crease_deg": 36,
+      "slicer_recipe": {
+        "layer_height_mm": 0.12,
+        "wall_loops": 3,
+        "outer_wall_speed_mms": 30,
+        "wall_order": "inner_first",
+        "seam_position": "aligned",
+        "ironing": "none",
+        "ironing_inset_mm": 0.0,
+        "brim_width_mm": 0,
+        "support_mode": "none"
+      }
+    },
+    "kit-yoke-hbar": {
+      "source_sha256": "8129cc23dca0ba01",
+      "finish_class": "precision_gear_pin",
+      "print_simplify_mm": 0.01,
+      "web_simplify_mm": 0.09,
+      "web_crease_deg": 34,
+      "slicer_recipe": {
+        "layer_height_mm": 0.16,
+        "wall_loops": 3,
+        "outer_wall_speed_mms": 30,
+        "wall_order": "inner_first",
+        "seam_position": "aligned",
+        "ironing": "all_top",
+        "ironing_inset_mm": 0.21,
+        "brim_width_mm": 0,
+        "support_mode": "none"
+      }
+    },
+    "pack-explorer": {
+      "source_sha256": "3586bb7b589c3c09",
+      "finish_class": "prismatic_structural",
+      "print_simplify_mm": 0.018,
+      "web_simplify_mm": 0.09,
+      "web_crease_deg": 34,
+      "slicer_recipe": {
+        "layer_height_mm": 0.16,
+        "wall_loops": 3,
+        "outer_wall_speed_mms": 30,
+        "wall_order": "inner_first",
+        "seam_position": "aligned",
+        "ironing": "all_top",
+        "ironing_inset_mm": 0.21,
+        "brim_width_mm": 0,
+        "support_mode": "none"
+      }
+    },
+    "pin-friction": {
+      "source_sha256": "48d586fadf8b137c",
+      "finish_class": "precision_gear_pin",
+      "print_simplify_mm": 0.01,
+      "web_simplify_mm": 0.055,
+      "web_crease_deg": 28,
+      "slicer_recipe": {
+        "layer_height_mm": 0.16,
+        "wall_loops": 3,
+        "outer_wall_speed_mms": 30,
+        "wall_order": "inner_first",
+        "seam_position": "back",
+        "ironing": "none",
+        "ironing_inset_mm": 0.0,
+        "brim_width_mm": 0,
+        "support_mode": "none"
+      }
+    },
+    "pointy-ears": {
+      "source_sha256": "a5bf80facada5e54",
+      "finish_class": "show_curved",
+      "print_simplify_mm": 0.006,
+      "web_simplify_mm": 0.075,
+      "web_crease_deg": 36,
+      "slicer_recipe": {
+        "layer_height_mm": 0.12,
+        "wall_loops": 3,
+        "outer_wall_speed_mms": 30,
+        "wall_order": "inner_first",
+        "seam_position": "aligned",
+        "ironing": "none",
+        "ironing_inset_mm": 0.0,
+        "brim_width_mm": 0,
+        "support_mode": "none"
+      }
+    },
+    "prop-star-shield": {
+      "source_sha256": "d3fc96fa3901f01e",
+      "finish_class": "prismatic_structural",
+      "print_simplify_mm": 0.018,
+      "web_simplify_mm": 0.09,
+      "web_crease_deg": 34,
+      "slicer_recipe": {
+        "layer_height_mm": 0.16,
+        "wall_loops": 3,
+        "outer_wall_speed_mms": 30,
+        "wall_order": "inner_first",
+        "seam_position": "aligned",
+        "ironing": "all_top",
+        "ironing_inset_mm": 0.21,
+        "brim_width_mm": 0,
+        "support_mode": "none"
+      }
+    },
+    "prop-wrench": {
+      "source_sha256": "cb5bad7994c53879",
+      "finish_class": "prismatic_structural",
+      "print_simplify_mm": 0.018,
+      "web_simplify_mm": 0.09,
+      "web_crease_deg": 34,
+      "slicer_recipe": {
+        "layer_height_mm": 0.16,
+        "wall_loops": 3,
+        "outer_wall_speed_mms": 30,
+        "wall_order": "inner_first",
+        "seam_position": "aligned",
+        "ironing": "all_top",
+        "ironing_inset_mm": 0.21,
+        "brim_width_mm": 0,
+        "support_mode": "none"
+      }
+    },
+    "racer-bull-bar": {
+      "source_sha256": "a205c94cc9392f18",
+      "finish_class": "prismatic_structural",
+      "print_simplify_mm": 0.018,
+      "web_simplify_mm": 0.09,
+      "web_crease_deg": 34,
+      "slicer_recipe": {
+        "layer_height_mm": 0.16,
+        "wall_loops": 3,
+        "outer_wall_speed_mms": 30,
+        "wall_order": "inner_first",
+        "seam_position": "aligned",
+        "ironing": "all_top",
+        "ironing_inset_mm": 0.21,
+        "brim_width_mm": 3,
+        "support_mode": "none"
+      }
+    },
+    "racer-hood-scoop": {
+      "source_sha256": "10608cdcdba720b3",
+      "finish_class": "show_curved",
+      "print_simplify_mm": 0.006,
+      "web_simplify_mm": 0.075,
+      "web_crease_deg": 36,
+      "slicer_recipe": {
+        "layer_height_mm": 0.12,
+        "wall_loops": 3,
+        "outer_wall_speed_mms": 30,
+        "wall_order": "inner_first",
+        "seam_position": "aligned",
+        "ironing": "none",
+        "ironing_inset_mm": 0.0,
+        "brim_width_mm": 0,
+        "support_mode": "none"
+      }
+    },
+    "racer-light-bar": {
+      "source_sha256": "a4b8db6adf97ef2e",
+      "finish_class": "prismatic_structural",
+      "print_simplify_mm": 0.018,
+      "web_simplify_mm": 0.09,
+      "web_crease_deg": 34,
+      "slicer_recipe": {
+        "layer_height_mm": 0.16,
+        "wall_loops": 3,
+        "outer_wall_speed_mms": 30,
+        "wall_order": "outer_first",
+        "seam_position": "aligned",
+        "ironing": "all_top",
+        "ironing_inset_mm": 0.21,
+        "brim_width_mm": 0,
+        "support_mode": "none"
+      }
+    },
+    "racer-roof-rack": {
+      "source_sha256": "c95522567ea1e9d2",
+      "finish_class": "prismatic_structural",
+      "print_simplify_mm": 0.018,
+      "web_simplify_mm": 0.09,
+      "web_crease_deg": 34,
+      "slicer_recipe": {
+        "layer_height_mm": 0.16,
+        "wall_loops": 3,
+        "outer_wall_speed_mms": 30,
+        "wall_order": "outer_first",
+        "seam_position": "aligned",
+        "ironing": "all_top",
+        "ironing_inset_mm": 0.21,
+        "brim_width_mm": 0,
+        "support_mode": "none"
+      }
+    },
+    "racer-spoiler": {
+      "source_sha256": "5c421da0e94be18c",
+      "finish_class": "prismatic_structural",
+      "print_simplify_mm": 0.018,
+      "web_simplify_mm": 0.09,
+      "web_crease_deg": 34,
+      "slicer_recipe": {
+        "layer_height_mm": 0.16,
+        "wall_loops": 3,
+        "outer_wall_speed_mms": 30,
+        "wall_order": "outer_first",
+        "seam_position": "aligned",
+        "ironing": "all_top",
+        "ironing_inset_mm": 0.21,
+        "brim_width_mm": 0,
+        "support_mode": "none"
+      }
+    },
+    "racer-twin-exhaust": {
+      "source_sha256": "73616e229a97680c",
+      "finish_class": "prismatic_structural",
+      "print_simplify_mm": 0.018,
+      "web_simplify_mm": 0.09,
+      "web_crease_deg": 34,
+      "slicer_recipe": {
+        "layer_height_mm": 0.16,
+        "wall_loops": 3,
+        "outer_wall_speed_mms": 30,
+        "wall_order": "inner_first",
+        "seam_position": "aligned",
+        "ironing": "all_top",
+        "ironing_inset_mm": 0.21,
+        "brim_width_mm": 0,
+        "support_mode": "none"
+      }
+    },
+    "racer-wheel": {
+      "source_sha256": "05bf0f664b21d961",
+      "finish_class": "precision_gear_pin",
+      "print_simplify_mm": 0.01,
+      "web_simplify_mm": 0.055,
+      "web_crease_deg": 28,
+      "slicer_recipe": {
+        "layer_height_mm": 0.16,
+        "wall_loops": 3,
+        "outer_wall_speed_mms": 30,
+        "wall_order": "outer_first",
+        "seam_position": "back",
+        "ironing": "none",
+        "ironing_inset_mm": 0.0,
+        "brim_width_mm": 0,
+        "support_mode": "none"
+      }
+    },
+    "robot-back-jetpack": {
+      "source_sha256": "d5cad36fe4e6d9eb",
+      "finish_class": "prismatic_structural",
+      "print_simplify_mm": 0.018,
+      "web_simplify_mm": 0.09,
+      "web_crease_deg": 34,
+      "slicer_recipe": {
+        "layer_height_mm": 0.16,
+        "wall_loops": 3,
+        "outer_wall_speed_mms": 30,
+        "wall_order": "inner_first",
+        "seam_position": "aligned",
+        "ironing": "all_top",
+        "ironing_inset_mm": 0.21,
+        "brim_width_mm": 0,
+        "support_mode": "none"
+      }
+    },
+    "robot-head-visor": {
+      "source_sha256": "02a43cefea12829f",
+      "finish_class": "show_curved",
+      "print_simplify_mm": 0.006,
+      "web_simplify_mm": 0.075,
+      "web_crease_deg": 36,
+      "slicer_recipe": {
+        "layer_height_mm": 0.12,
+        "wall_loops": 3,
+        "outer_wall_speed_mms": 30,
+        "wall_order": "inner_first",
+        "seam_position": "aligned",
+        "ironing": "none",
+        "ironing_inset_mm": 0.0,
+        "brim_width_mm": 0,
+        "support_mode": "none"
+      }
+    },
+    "skin-aero-cowl": {
+      "source_sha256": "f2f090bcda730653",
+      "finish_class": "show_curved",
+      "print_simplify_mm": 0.006,
+      "web_simplify_mm": 0.075,
+      "web_crease_deg": 36,
+      "slicer_recipe": {
+        "layer_height_mm": 0.12,
+        "wall_loops": 3,
+        "outer_wall_speed_mms": 30,
+        "wall_order": "inner_first",
+        "seam_position": "aligned",
+        "ironing": "none",
+        "ironing_inset_mm": 0.0,
+        "brim_width_mm": 0,
+        "support_mode": "none"
+      }
+    },
+    "skin-cargo-shroud": {
+      "source_sha256": "8ed237dfb5b16272",
+      "finish_class": "show_curved",
+      "print_simplify_mm": 0.006,
+      "web_simplify_mm": 0.075,
+      "web_crease_deg": 36,
+      "slicer_recipe": {
+        "layer_height_mm": 0.12,
+        "wall_loops": 3,
+        "outer_wall_speed_mms": 30,
+        "wall_order": "inner_first",
+        "seam_position": "aligned",
+        "ironing": "none",
+        "ironing_inset_mm": 0.0,
+        "brim_width_mm": 0,
+        "support_mode": "none"
+      }
+    },
+    "skin-windscreen": {
+      "source_sha256": "1fe69a4fcfc43807",
+      "finish_class": "show_curved",
+      "print_simplify_mm": 0.006,
+      "web_simplify_mm": 0.075,
+      "web_crease_deg": 36,
+      "slicer_recipe": {
+        "layer_height_mm": 0.12,
+        "wall_loops": 3,
+        "outer_wall_speed_mms": 30,
+        "wall_order": "inner_first",
+        "seam_position": "aligned",
+        "ironing": "none",
+        "ironing_inset_mm": 0.0,
+        "brim_width_mm": 0,
+        "support_mode": "none"
+      }
+    },
+    "spin-capsule": {
+      "source_sha256": "268d5fb2459743ee",
+      "finish_class": "show_curved",
+      "print_simplify_mm": 0.006,
+      "web_simplify_mm": 0.075,
+      "web_crease_deg": 36,
+      "slicer_recipe": {
+        "layer_height_mm": 0.12,
+        "wall_loops": 3,
+        "outer_wall_speed_mms": 30,
+        "wall_order": "inner_first",
+        "seam_position": "back",
+        "ironing": "none",
+        "ironing_inset_mm": 0.0,
+        "brim_width_mm": 0,
+        "support_mode": "none"
+      }
+    },
+    "veh-car-hood-cover": {
+      "source_sha256": "5554cb8b44419cbd",
+      "finish_class": "show_curved",
+      "print_simplify_mm": 0.006,
+      "web_simplify_mm": 0.075,
+      "web_crease_deg": 36,
+      "slicer_recipe": {
+        "layer_height_mm": 0.12,
+        "wall_loops": 3,
+        "outer_wall_speed_mms": 30,
+        "wall_order": "inner_first",
+        "seam_position": "aligned",
+        "ironing": "none",
+        "ironing_inset_mm": 0.0,
+        "brim_width_mm": 0,
+        "support_mode": "none"
+      }
+    },
+    "veh-wheel-sport": {
+      "source_sha256": "5af4c4c5b31d20d6",
+      "finish_class": "precision_gear_pin",
+      "print_simplify_mm": 0.01,
+      "web_simplify_mm": 0.055,
+      "web_crease_deg": 28,
+      "slicer_recipe": {
+        "layer_height_mm": 0.16,
+        "wall_loops": 3,
+        "outer_wall_speed_mms": 30,
+        "wall_order": "inner_first",
+        "seam_position": "back",
+        "ironing": "none",
+        "ironing_inset_mm": 0.0,
+        "brim_width_mm": 0,
+        "support_mode": "none"
+      }
+    },
+    "waddle-tail-s": {
+      "source_sha256": "c02d05029e3f1b41",
+      "finish_class": "show_curved",
+      "print_simplify_mm": 0.006,
+      "web_simplify_mm": 0.075,
+      "web_crease_deg": 36,
+      "slicer_recipe": {
+        "layer_height_mm": 0.12,
+        "wall_loops": 3,
+        "outer_wall_speed_mms": 30,
+        "wall_order": "inner_first",
+        "seam_position": "aligned",
+        "ironing": "none",
+        "ironing_inset_mm": 0.0,
+        "brim_width_mm": 3,
+        "support_mode": "none"
+      }
+    },
+    "wobble-hat": {
+      "source_sha256": "a18448514d546ea6",
+      "finish_class": "show_curved",
+      "print_simplify_mm": 0.006,
+      "web_simplify_mm": 0.075,
+      "web_crease_deg": 36,
+      "slicer_recipe": {
+        "layer_height_mm": 0.12,
+        "wall_loops": 3,
+        "outer_wall_speed_mms": 30,
+        "wall_order": "inner_first",
+        "seam_position": "back",
+        "ironing": "none",
+        "ironing_inset_mm": 0.0,
+        "brim_width_mm": 0,
+        "support_mode": "none"
+      }
+    }
+  }
+}

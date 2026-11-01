@@ -21,6 +21,7 @@
     "test": "vitest run",
     "validate": "tsx scripts/validate-sets.ts",
     "parts": "bash scripts/build-parts.sh",
+    "parts:tune-llm": "tsx scripts/llm-lod-advisor.ts",
     "bridge": "tsx scripts/bridge-partspec.ts",
     "preflight": "tsx scripts/preflight-deploy.ts",
     "spec:review": "tsx scripts/export-spec.ts",

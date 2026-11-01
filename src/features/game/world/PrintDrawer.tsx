@@ -23,6 +23,8 @@ import {
 import { CheckList } from "../../../components/CheckList";
 import { loadBuild, saveBuild } from "../../../lib/builds";
 import { allParts, glbFileFor, partsById, stlFileFor } from "../../../lib/catalog";
+import { formatToyFinishRecipe } from "../../../lib/printRecipe";
+import { ensureModelViewer, preloadPartGlb } from "../../ar/PartPreview";
 import { TryOn } from "../../ar/TryOn";
 import { BuilderCanvas } from "../../builder/BuilderCanvas";
 
@@ -158,9 +160,20 @@ export function PrintDrawer({
   const checksPass = checks.length > 0 && allPass(checks);
   const stlFile = stlFileFor(selectedPart);
   const glbFile = glbFileFor(selectedPart);
+  const finishRecipe = useMemo(
+    () => (selectedPart ? formatToyFinishRecipe(selectedPart) : null),
+    [selectedPart],
+  );
   const canDownloadStl = Boolean(
     selectedPart?.printable && stlFile && checksPass && boardValid,
   );
+
+  // Warm the quantized GLB in parallel whenever the selected printable part changes.
+  useEffect(() => {
+    if (viewMode === "ar" && glbFile) {
+      preloadPartGlb(glbFile);
+    }
+  }, [viewMode, glbFile]);
 
   const isEquipped = Boolean(
     selectedPart && placements.some((p) => p.partId === selectedPart.id),
@@ -217,7 +230,15 @@ export function PrintDrawer({
     : 12.5;
 
   return (
-    <details className="tv-disclosure">
+    <details
+      className="tv-disclosure"
+      onToggle={(e) => {
+        if ((e.currentTarget as HTMLDetailsElement).open) {
+          void ensureModelViewer();
+          if (glbFile) preloadPartGlb(glbFile);
+        }
+      }}
+    >
       <summary>
         <span>
           3D Print &amp; AR Try-On ({fitting.length} fit {toy.name})
@@ -410,11 +431,16 @@ export function PrintDrawer({
                   </div>
                 )}
 
-                <div className="tv-print-meta">
+                <div className="tv-print-meta" style={{ flexDirection: "column", alignItems: "flex-start", gap: 3 }}>
                   <span>
-                    <strong>{selectedPart.name}</strong> · 0.2 mm PLA ·{" "}
-                    {selectedPart.orientation ?? "flat"} · support-free · Prototype (not age-certified)
+                    <strong>{selectedPart.name}</strong> ·{" "}
+                    {finishRecipe?.headline ?? "0.16 mm PLA · smooth PEI · support-free"} · Prototype (not age-certified)
                   </span>
+                  {finishRecipe && (
+                    <span className="fine-print" style={{ margin: 0, opacity: 0.88 }}>
+                      {finishRecipe.checklist}
+                    </span>
+                  )}
                 </div>
 
                 {selectedPart.smallPartWarning && (
