@@ -1790,7 +1790,16 @@ def _faceplate_mouth(n_seg=14):
     return ridge ^ Manifold.cube((30.0, 40.0, 10.5), center=False).translate((-15.0, -5.0, 0.0))   # never outside the plate's chin edge
 
 
+FACE_STEM_FLAT_HALF = 2.5   # half the stem's flat-to-flat width (interfaces.json `shaft_flats` 5.0)
+
+
 def _face_plate_finish(mask_bed, stem_tu):
+    # The plate prints standing on its chin with the stem lying on its flat. The chin edge is FACE_STEM_ZB below the stem axis but the flat is only
+    # FACE_STEM_FLAT_HALF below it, so the stem's whole length used to hover 0.4 mm above the bed: an 11 mm floating cantilever to a slicer
+    # (OrcaSlicer / Bambu Studio "floating cantilever" warning, fires at 6 mm). Trimming the chin level with the flat puts the plate's lowest edge
+    # and the stem flat on the same bed plane. The stem, its axis and every head connector are untouched.
+    chin_trim = FACE_STEM_ZB - FACE_STEM_FLAT_HALF
+    mask_bed = mask_bed ^ Manifold.cube((120.0, 120.0, 60.0), center=False).translate((-60.0, -60.0, chin_trim))
     mask_part = mask_bed.translate((0.0, 0.0, -FACE_STEM_ZB)).rotate((-90.0, 0.0, 0.0))
     stem_len = stem_tu * pro.TU
     stem = pro.pin_solid("flats", stem_len + 0.35, z0=-0.35)
