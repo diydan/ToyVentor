@@ -158,6 +158,16 @@ def compile_recipe_to_partspec(recipe: dict[str, Any]) -> dict[str, Any]:
     if slot not in VALID_SLOTS:
         raise ValueError("invalid slot")
 
+    raw_policy = recipe.get("support_policy")
+    if raw_policy is None:
+        support_policy = "none"
+    else:
+        support_policy = str(raw_policy).strip().lower()
+        if support_policy not in ("none", "minimal"):
+            raise ValueError("invalid support_policy")
+        if support_policy == "minimal" and slot not in ("crown", "head", "back"):
+            raise ValueError("minimal support_policy is only allowed on crown, head, or back slots")
+
     part_id = sanitize_part_id(recipe.get("id") or recipe.get("name"), prefix_custom=True)
     name = str(recipe.get("name") or part_id).strip()[:80]
     stat = str(recipe.get("stat") or "Glow").strip()
@@ -249,14 +259,17 @@ def compile_recipe_to_partspec(recipe: dict[str, Any]) -> dict[str, Any]:
                 bw = float(feat["width_mm"])
                 bd = float(feat["depth_mm"])
                 bt = float(feat["thickness_mm"])
-                body = body + sdk.rounded_slab(bw, bd, bt, r=min(bw, bd) * 0.35, z=1.5)
+                if support_policy == "minimal":
+                    body = body + sdk.wide_brim(bw, bd, thickness_mm=bt, z=0.0)
+                else:
+                    body = body + sdk.rounded_slab(bw, bd, bt, r=min(bw, bd) * 0.35, z=1.5)
 
         if slot == "crown":
-            return sdk.crown_addon(body)
+            return sdk.crown_addon(body, support_policy=support_policy)
         if slot == "head":
-            return sdk.character_head(body, height_mm=head_height_mm)
+            return sdk.character_head(body, height_mm=head_height_mm, support_policy=support_policy)
         if slot == "back":
-            return sdk.backpack_addon(body)
+            return sdk.backpack_addon(body, support_policy=support_policy)
         return sdk.vehicle_addon(body, slot=slot)
 
     return sdk.part_spec(
@@ -265,6 +278,7 @@ def compile_recipe_to_partspec(recipe: dict[str, Any]) -> dict[str, Any]:
         stat=stat,
         behavior=behavior,
         slot=slot,
+        support_policy=support_policy,
         fn=build_fn,
     )
 
@@ -322,6 +336,7 @@ class OptimizerJobManager:
         *,
         part_id: str,
         slot: str | None,
+        support_policy: str = "none",
         compiled_spec: dict[str, Any] | None = None,
         stl_bytes: bytes | None = None,
     ) -> str | None:
@@ -352,7 +367,9 @@ class OptimizerJobManager:
                     break
                 self._jobs.pop(oldest_id, None)
 
-        self._pool.submit(self._run_job, job_id, part_id, slot, compiled_spec, stl_bytes)
+        self._pool.submit(
+            self._run_job, job_id, part_id, slot, support_policy, compiled_spec, stl_bytes
+        )
         return job_id
 
     def _run_job(
@@ -360,6 +377,7 @@ class OptimizerJobManager:
         job_id: str,
         part_id: str,
         slot: str | None,
+        support_policy: str,
         compiled_spec: dict[str, Any] | None,
         stl_bytes: bytes | None,
     ) -> None:
@@ -422,6 +440,7 @@ class OptimizerJobManager:
                 part_id,
                 stl_bytes=stl_bytes,
                 slot=slot,
+                support_policy=support_policy,
                 validation_dir=PARTSPEC_DIR / "validation",
                 verify_preprint=True,
                 partspec_dir=PARTSPEC_DIR,
@@ -562,7 +581,7 @@ def make_handler(manager: OptimizerJobManager, expected_token: str | None):
 
         def _parse_input_source(
             self, body: dict[str, Any]
-        ) -> tuple[str, str | None, dict[str, Any] | None, bytes | None] | None:
+        ) -> tuple[str, str | None, str, dict[str, Any] | None, bytes | None] | None:
             # Hard-reject forbidden / legacy fields (`stl_path`, `verify_preprint`, `legalize`)
             if "stl_path" in body:
                 self._send_json({"ok": False, "status": "invalid", "error": "stl_path is not supported"}, 422)
@@ -579,7 +598,7 @@ def make_handler(manager: OptimizerJobManager, expected_token: str | None):
                     self._send_json({"ok": False, "status": "invalid", "error": "invalid payload"}, 422)
                     return None
                 spec = compile_recipe_to_partspec(body["recipe"])
-                return spec["id"], spec.get("slot"), spec, None
+                return spec["id"], spec.get("slot"), spec.get("support_policy", "none"), spec, None
 
             part_id = sanitize_part_id(body.get("part_id") or "custom_mesh", prefix_custom=True)
             slot_raw = body.get("slot")
@@ -589,8 +608,17 @@ def make_handler(manager: OptimizerJobManager, expected_token: str | None):
                 if s not in VALID_SLOTS:
                     raise ValueError("invalid slot")
                 slot = s
+            raw_policy = body.get("support_policy")
+            if raw_policy is None:
+                support_policy = "none"
+            else:
+                support_policy = str(raw_policy).strip().lower()
+                if support_policy not in ("none", "minimal"):
+                    raise ValueError("invalid support_policy")
+                if support_policy == "minimal" and slot not in ("crown", "head", "back"):
+                    raise ValueError("minimal support_policy requires crown, head, or back slot")
             stl_bytes = decode_stl_base64(body["stl_base64"])
-            return part_id, slot, None, stl_bytes
+            return part_id, slot, support_policy, None, stl_bytes
 
         def do_GET(self) -> None:  # noqa: N802
             path = self.path.split("?", 1)[0]
@@ -669,12 +697,13 @@ def make_handler(manager: OptimizerJobManager, expected_token: str | None):
                 return
             if parsed_input is None:
                 return
-            part_id, slot, compiled_spec, stl_bytes = parsed_input
+            part_id, slot, support_policy, compiled_spec, stl_bytes = parsed_input
 
             if path == "/v1/jobs":
                 job_id = manager.try_enqueue(
                     part_id=part_id,
                     slot=slot,
+                    support_policy=support_policy,
                     compiled_spec=compiled_spec,
                     stl_bytes=stl_bytes,
                 )
@@ -720,6 +749,7 @@ def make_handler(manager: OptimizerJobManager, expected_token: str | None):
                 job_id = manager.try_enqueue(
                     part_id=part_id,
                     slot=slot,
+                    support_policy=support_policy,
                     compiled_spec=compiled_spec,
                     stl_bytes=stl_bytes,
                 )

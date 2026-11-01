@@ -385,6 +385,15 @@ describe("Parts asset optimization (Print STL + Web GLB + Toy-Finish Recipes)", 
           },
         },
         { recipe: { ...validRecipeBody.recipe, name: "Lego Star Hat" } },
+        // Minimal support_policy is strictly rejected on non-cosmetic slots (e.g. hood / hand)
+        {
+          recipe: {
+            name: "Unsupported Hood",
+            slot: "hood",
+            support_policy: "minimal",
+            shape: validRecipeBody.recipe.shape,
+          },
+        },
       ]) {
         resetForgeRateLimit();
         const res = await handleForgePreview(
@@ -667,6 +676,84 @@ describe("Parts asset optimization (Print STL + Web GLB + Toy-Finish Recipes)", 
         expect(torsoFinal?.glb_artifact).toMatch(/\.draft\.glb$/);
         expect(torsoFinal?.gate_report?.ok).toBe(false);
 
+        // 2c-ii. Even with `slot: "back"` + `support_policy: "minimal"`, torso.stl MUST still reject
+        // to `digital_only` via M2_show_face_scar (~425 mm2 curved slope > 80 mm2 cap)!
+        const torsoMinSubmit = await fetch(`${baseUrl}/v1/jobs`, {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            authorization: `Bearer ${secretToken}`,
+          },
+          body: JSON.stringify({
+            part_id: "torso_minimal_reject",
+            slot: "back",
+            support_policy: "minimal",
+            stl_base64: torsoB64,
+          }),
+        });
+        expect(torsoMinSubmit.status).toBe(202);
+        const { job_id: torsoMinJobId } = (await torsoMinSubmit.json()) as { job_id: string };
+        let torsoMinFinal: ForgeOptimizationJob | null = null;
+        for (let i = 0; i < 60; i++) {
+          const r = await fetch(`${baseUrl}/v1/jobs/${torsoMinJobId}`, {
+            headers: { authorization: `Bearer ${secretToken}` },
+          });
+          const j = (await r.json()) as ForgeOptimizationJob;
+          if (j.status === "print_ready" || j.status === "digital_only" || j.status === "failed") {
+            torsoMinFinal = j;
+            break;
+          }
+          await new Promise((res) => setTimeout(res, 150));
+        }
+        expect(torsoMinFinal?.status).toBe("digital_only");
+        expect(torsoMinFinal?.stl_artifact).toBeNull();
+        expect(
+          torsoMinFinal?.gate_report?.preprint_failures?.some((f) => f.includes("M2_show_face_scar")),
+        ).toBe(true);
+
+        // 2c-iii. Opt-in `support_policy: "minimal"` wide-brim wizard hat (`36x25 mm` flat underside
+        // brim outside the 2x1 socket pad, clear build-plate LOS) promotes to `print_ready` (`tree_slim`)!
+        const wideBrimSubmit = await fetch(`${baseUrl}/v1/jobs`, {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            authorization: `Bearer ${secretToken}`,
+          },
+          body: JSON.stringify({
+            recipe: {
+              id: "grand_sun_hat",
+              name: "Grand Sun Wizard Hat",
+              slot: "crown",
+              support_policy: "minimal",
+              shape: {
+                slices: [
+                  { z: 0, w: 23.4, d: 11.6, r: 4.8 },
+                  { z: 7, w: 20.0, d: 13.5, r: 5.2 },
+                  { z: 20, w: 10.0, d: 9.0, r: 3.8 },
+                ],
+              },
+              features: [{ op: "brim", width_mm: 36, depth_mm: 25, thickness_mm: 2.2 }],
+            },
+          }),
+        });
+        expect(wideBrimSubmit.status).toBe(202);
+        const { job_id: wideBrimJobId } = (await wideBrimSubmit.json()) as { job_id: string };
+        let wideBrimFinal: ForgeOptimizationJob | null = null;
+        for (let i = 0; i < 120; i++) {
+          const r = await fetch(`${baseUrl}/v1/jobs/${wideBrimJobId}`, {
+            headers: { authorization: `Bearer ${secretToken}` },
+          });
+          const j = (await r.json()) as ForgeOptimizationJob;
+          if (j.status === "print_ready" || j.status === "digital_only" || j.status === "failed") {
+            wideBrimFinal = j;
+            break;
+          }
+          await new Promise((res) => setTimeout(res, 150));
+        }
+        expect(wideBrimFinal?.status).toBe("print_ready");
+        expect(wideBrimFinal?.slicer_recipe?.support_mode).toBe("tree_slim");
+        expect(wideBrimFinal?.stl_artifact).toMatch(/^custom_grand_sun_hat\.[a-f0-9]{12}\.stl$/);
+
         // 2d. Queue backpressure (`--max-queue 2`): submitting 4 concurrent jobs yields 429 queue_full
         const domeB64 = readFileSync(join(STL_DIR, "dome-s-2x2.stl")).toString("base64");
         const burst = await Promise.all(
@@ -785,6 +872,6 @@ describe("Parts asset optimization (Print STL + Web GLB + Toy-Finish Recipes)", 
         rmSync(tmpOut, { recursive: true, force: true });
       }
     },
-    30_000,
+    45_000,
   );
 });

@@ -19,6 +19,7 @@ import {
   type ForgeLoftSlice,
   type ForgeRecipeV1,
   type ForgeSlot,
+  type ForgeSupportPolicy,
 } from "../shared/forgeOptimizer";
 import { isPlayerId } from "../shared/ownership";
 import { readCappedJson } from "./body";
@@ -158,6 +159,21 @@ function sanitizeRecipe(raw: unknown): { ok: true; recipe: ForgeRecipeV1 } | { o
     return { ok: false };
   }
   if (!isValidSlot(raw.slot)) return { ok: false };
+  let support_policy: ForgeSupportPolicy | undefined;
+  if (raw.support_policy !== undefined) {
+    if (raw.support_policy !== "none" && raw.support_policy !== "minimal") {
+      return { ok: false };
+    }
+    if (
+      raw.support_policy === "minimal" &&
+      raw.slot !== "crown" &&
+      raw.slot !== "head" &&
+      raw.slot !== "back"
+    ) {
+      return { ok: false };
+    }
+    support_policy = raw.support_policy;
+  }
   if (typeof raw.name !== "string" || !raw.name.trim() || raw.name.length > 80) {
     return { ok: false };
   }
@@ -265,6 +281,7 @@ function sanitizeRecipe(raw: unknown): { ok: true; recipe: ForgeRecipeV1 } | { o
       ? { behavior: raw.behavior.trim() }
       : {}),
     slot: raw.slot,
+    ...(support_policy ? { support_policy } : {}),
     shape: cleanShape,
     ...(cleanFeatures ? { features: cleanFeatures } : {}),
   };
@@ -335,12 +352,29 @@ function sanitizePreviewRequest(
     partId = raw.part_id;
   }
 
+  let supportPolicy: ForgeSupportPolicy | undefined;
+  if (raw.support_policy !== undefined && raw.support_policy !== null) {
+    if (raw.support_policy !== "none" && raw.support_policy !== "minimal") {
+      return { ok: false, response: reply(422, { ok: false, status: "invalid" }) };
+    }
+    if (
+      raw.support_policy === "minimal" &&
+      slot !== "crown" &&
+      slot !== "head" &&
+      slot !== "back"
+    ) {
+      return { ok: false, response: reply(422, { ok: false, status: "invalid" }) };
+    }
+    supportPolicy = raw.support_policy;
+  }
+
   return {
     ok: true,
     hasRecipe: false,
     payload: {
       ...(partId ? { part_id: partId } : {}),
       ...(slot ? { slot } : {}),
+      ...(supportPolicy ? { support_policy: supportPolicy } : {}),
       stl_base64: stlB64,
       enqueue_background,
       include_glb_base64,

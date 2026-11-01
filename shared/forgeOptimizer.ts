@@ -29,6 +29,7 @@ export const FORGE_SLOTS = [
 ] as const;
 
 export type ForgeSlot = (typeof FORGE_SLOTS)[number];
+export type ForgeSupportPolicy = "none" | "minimal";
 
 export interface ForgeLoftSlice {
   z: number;
@@ -46,6 +47,7 @@ export interface ForgeRecipeV1 {
   stat?: "Speed" | "Spin" | "Torque" | "Glow";
   behavior?: string;
   slot: ForgeSlot;
+  support_policy?: ForgeSupportPolicy;
   shape:
     | { kind?: "loft"; slices: ForgeLoftSlice[]; height_mm?: number }
     | { kind: "star2d"; points?: number; outer_r_mm?: number; inner_r_mm?: number; grip_tu?: number }
@@ -60,6 +62,7 @@ export interface ForgeFastPreviewRequest {
   recipe?: ForgeRecipeV1;
   part_id?: string;
   slot?: ForgeSlot;
+  support_policy?: ForgeSupportPolicy;
   stl_base64?: string;
   enqueue_background?: boolean;
   include_glb_base64?: boolean;

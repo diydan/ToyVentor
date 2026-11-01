@@ -619,6 +619,9 @@ def build_fast_preview_glb(
     }
 
 
+COSMETIC_MINIMAL_SUPPORT_SLOTS = frozenset({"crown", "head", "back"})
+
+
 def optimize_single_part(
     part_id: str,
     *,
@@ -628,6 +631,7 @@ def optimize_single_part(
     out_stl_path: Path | None = None,
     out_glb_path: Path | None = None,
     slot: str | None = None,
+    support_policy: str = "none",
     manifest_doc: dict[str, Any] | None = None,
     validation_dir: Path | None = None,
     verify_preprint: bool = True,
@@ -764,6 +768,34 @@ def optimize_single_part(
                 )
                 preprint_failures = []
 
+        # Opt-in Minimal-Support Tier (`tree_slim`, build-plate only) for cosmetic slots
+        # (`crown`, `head`, `back`): only considered if mesh soundness, bed seating, bed size,
+        # and bridge span all passed (`V4`/`V5`/`V10` are the sole failures).
+        overhang_only = bool(preprint_failures) and all(
+            f.startswith(("V4_no_steep_overhang", "V5_no_floating_islands", "V10_no_ledges"))
+            for f in preprint_failures
+        )
+        if (
+            overhang_only
+            and support_policy == "minimal"
+            and (slot or "").lower() in COSMETIC_MINIMAL_SUPPORT_SLOTS
+        ):
+            min_sup_errs = _check_minimal_support_eligibility(
+                p_verts,
+                p_faces,
+                m_print,
+                slot=(slot or "").lower(),
+            )
+            if not min_sup_errs:
+                preprint_failures = []
+                recipe = dict(recipe, support_mode="tree_slim")
+                if not recipe.get("parent_tip"):
+                    recipe["parent_tip"] = (
+                        "Enable Tree (Slim) supports on build plate only; support tips touch only the hidden underside rim and keep Snap sockets clean."
+                    )
+            else:
+                preprint_failures.extend(min_sup_errs)
+
     print_ok = len(preprint_failures) == 0
 
     if out_stl_path is not None and print_ok:
@@ -871,6 +903,115 @@ def _check_blocking_preprint_in_memory(
             errs.append(f"V5_no_floating_islands@{tag}")
             if fail_fast:
                 return errs
+
+    return errs
+
+
+def _check_minimal_support_eligibility(
+    verts: np.ndarray,
+    faces: np.ndarray,
+    mani: manifold3d.Manifold,
+    *,
+    slot: str,
+) -> list[str]:
+    """Verify the 3 minimal-support invariants for cosmetic slots (`crown`, `head`, `back`):
+      M1_socket_keepout: 0 steep overhangs/ledges inside the Snap `under_sockets` XY pad,
+                         and all outer overhangs sit at `z >= 3.2 mm`.
+      M2_underside_budget: flat `-Z` contact shelf `<= 750 mm2` and scarred sloped area
+                           (`-0.98 <= n_z < -sin(45 deg)`) `<= 80 mm2`.
+      M3_buildplate_los: `< 1.0 mm2` of overhang occluded by lower part geometry (`Build plate only`).
+    """
+    from manifold3d import CrossSection, FillRule, JoinType
+
+    tm = trimesh.Trimesh(vertices=verts, faces=faces, process=True)
+    n = tm.face_normals
+    c = tm.triangles_center
+    a = tm.area_faces
+
+    bed_hull = mani.slice(0.2).hull()
+    pad_cs = bed_hull.offset(-0.35, JoinType.Round)
+    pad_outer_cs = bed_hull.offset(0.5, JoinType.Round)
+
+    down = (n[:, 2] < -math.sin(math.radians(45.0))) & (c[:, 2] > 0.7)
+    sloped = down & (n[:, 2] >= -0.98)
+    flat_down = down & (n[:, 2] < -0.98)
+
+    errs: list[str] = []
+
+    # M1: Exact 2D CrossSection socket keep-out (360-deg supported stud-socket bridge ceilings at
+    # z <= 4.0 mm are already validated by V6/V10; forbid any sloped overhang in pad or any flat
+    # overhang in pad above z = 4.0 mm, and forbid outer overhangs below z = 3.2 mm).
+    sloped_idxs = np.where(sloped)[0]
+    in_pad_sloped = 0.0
+    if len(sloped_idxs) > 0 and not pad_cs.is_empty():
+        sloped_cs = CrossSection(
+            [tm.vertices[tm.faces[i]][:, :2][::-1].astype(float) for i in sloped_idxs],
+            FillRule.NonZero,
+        )
+        in_pad_sloped = float((sloped_cs ^ pad_cs).area())
+
+    flat_above_seat_idxs = np.where(flat_down & (c[:, 2] > 4.0))[0]
+    in_pad_flat_above = 0.0
+    if len(flat_above_seat_idxs) > 0 and not pad_cs.is_empty():
+        flat_above_cs = CrossSection(
+            [tm.vertices[tm.faces[i]][:, :2][::-1].astype(float) for i in flat_above_seat_idxs],
+            FillRule.NonZero,
+        )
+        in_pad_flat_above = float((flat_above_cs ^ pad_cs).area())
+
+    if in_pad_sloped > 1.0 or in_pad_flat_above > 1.0:
+        errs.append(
+            f"M1_socket_keepout(sloped={in_pad_sloped:.1f}mm2,flat_above={in_pad_flat_above:.1f}mm2)"
+        )
+
+    low_down_idxs = np.where(down & (c[:, 2] <= 3.2))[0]
+    if len(low_down_idxs) > 0:
+        low_cs = CrossSection(
+            [tm.vertices[tm.faces[i]][:, :2][::-1].astype(float) for i in low_down_idxs],
+            FillRule.NonZero,
+        )
+        low_outside_area = float((low_cs - pad_outer_cs).area())
+        if low_outside_area > 1.0:
+            errs.append(f"M1_socket_keepout(low_outside={low_outside_area:.1f}mm2<3.2mm)")
+
+    # M2: Hidden `-Z` contact budget & show-face scar cap
+    sloped_total = float(a[sloped].sum())
+    flat_out_total = 0.0
+    if len(flat_above_seat_idxs) > 0:
+        flat_cs = CrossSection(
+            [tm.vertices[tm.faces[i]][:, :2][::-1].astype(float) for i in flat_above_seat_idxs],
+            FillRule.NonZero,
+        )
+        flat_out_total = float((flat_cs - pad_cs).area())
+    if sloped_total > 80.0:
+        errs.append(f"M2_show_face_scar(sloped={sloped_total:.1f}mm2>80mm2)")
+    if flat_out_total > 750.0:
+        errs.append(f"M2_underside_budget(flat={flat_out_total:.1f}mm2>750mm2)")
+
+    # M3: Unobstructed vertical `-Z` line-of-sight to `z = 0` (`Build plate only` tree supports)
+    support_cand_idxs = np.where(sloped | (flat_down & (c[:, 2] > 4.0)))[0]
+    if len(support_cand_idxs) > 0:
+        bands: dict[int, list[int]] = {}
+        for idx, z_val in zip(support_cand_idxs, c[support_cand_idxs, 2]):
+            bands.setdefault(int(float(z_val) // 2.0), []).append(int(idx))
+        occluded_mm2 = 0.0
+        for b_idx, f_idxs in bands.items():
+            z_cut = b_idx * 2.0 - 0.8
+            if z_cut < 0.4:
+                continue
+            below = CrossSection()
+            for zs in np.arange(0.4, z_cut + 0.01, 1.0):
+                below = below + mani.slice(float(zs))
+            below = below.offset(-0.35, JoinType.Round)
+            if below.is_empty():
+                continue
+            oh = CrossSection(
+                [tm.vertices[tm.faces[i]][:, :2][::-1].astype(float) for i in f_idxs],
+                FillRule.NonZero,
+            )
+            occluded_mm2 += float((oh ^ below).area())
+        if occluded_mm2 > 1.0:
+            errs.append(f"M3_buildplate_los(occluded={occluded_mm2:.1f}mm2>1.0mm2)")
 
     return errs
 
