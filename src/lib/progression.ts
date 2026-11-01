@@ -122,8 +122,12 @@ export interface ProgressionState {
   resetAt?: number;
   /** Per local day (YYYY-MM-DD), daily quest IDs already completed and paid out. */
   completedQuestsByDay?: Record<string, string[]>;
-  /** Non-resetting YYYY-MM-DD stamps for days with >=1 completed daily quest. */
+  /** Non-resetting YYYY-MM-DD stamps for days with >=1 completed daily quest or routine. */
   workshopDays?: string[];
+  /** Parent-configured real-life daily routine IDs enabled for the Toy Box board. */
+  enabledChoreIds?: string[];
+  /** Per local day (YYYY-MM-DD), real-life routine IDs already completed and paid out. */
+  completedChoresByDay?: Record<string, string[]>;
 }
 
 export function emptyProgression(): ProgressionState {
@@ -443,6 +447,33 @@ export function normalizeProgression(raw: unknown): ProgressionState {
         ),
       ].sort()
     : [];
+  const enabledChoreIds = Array.isArray(v.enabledChoreIds)
+    ? [
+        ...new Set(
+          v.enabledChoreIds.filter(
+            (id): id is string => typeof id === "string" && id.length > 0,
+          ),
+        ),
+      ]
+    : undefined;
+  const completedChoresByDay: Record<string, string[]> = {};
+  if (
+    typeof v.completedChoresByDay === "object" &&
+    v.completedChoresByDay !== null &&
+    !Array.isArray(v.completedChoresByDay)
+  ) {
+    for (const [day, ids] of Object.entries(
+      v.completedChoresByDay as Record<string, unknown>,
+    )) {
+      if (!DAY_PATTERN.test(day) || !Array.isArray(ids)) continue;
+      const cleanIds = [
+        ...new Set(
+          ids.filter((id): id is string => typeof id === "string" && id.length > 0),
+        ),
+      ];
+      if (cleanIds.length > 0) completedChoresByDay[day] = cleanIds;
+    }
+  }
   return {
     version: 1,
     totalXp:
@@ -460,6 +491,10 @@ export function normalizeProgression(raw: unknown): ProgressionState {
       ? { completedQuestsByDay }
       : {}),
     ...(workshopDays.length > 0 ? { workshopDays } : {}),
+    ...(enabledChoreIds !== undefined ? { enabledChoreIds } : {}),
+    ...(Object.keys(completedChoresByDay).length > 0
+      ? { completedChoresByDay }
+      : {}),
   };
 }
 
@@ -474,12 +509,14 @@ export function mergeProgression(
     ...new Set([...local.unlockedIds, ...remote.unlockedIds]),
   ];
   const sandboxUnlockAll = local.sandboxUnlockAll || remote.sandboxUnlockAll;
+  const enabledChoreIds = local.enabledChoreIds ?? remote.enabledChoreIds;
   if (localReset !== remoteReset) {
     const newer = localReset > remoteReset ? local : remote;
     return {
       ...newer,
       unlockedIds,
       sandboxUnlockAll,
+      ...(enabledChoreIds !== undefined ? { enabledChoreIds } : {}),
     };
   }
   const missionStars: Record<string, number> = { ...remote.missionStars };
@@ -518,6 +555,19 @@ export function mergeProgression(
     ];
     if (mergedIds.length > 0) completedQuestsByDay[day] = mergedIds;
   }
+  const completedChoresByDay: Record<string, string[]> = {};
+  for (const day of new Set([
+    ...Object.keys(remote.completedChoresByDay ?? {}),
+    ...Object.keys(local.completedChoresByDay ?? {}),
+  ])) {
+    const mergedIds = [
+      ...new Set([
+        ...(remote.completedChoresByDay?.[day] ?? []),
+        ...(local.completedChoresByDay?.[day] ?? []),
+      ]),
+    ];
+    if (mergedIds.length > 0) completedChoresByDay[day] = mergedIds;
+  }
   const workshopDays = [
     ...new Set([
       ...(remote.workshopDays ?? []),
@@ -536,10 +586,14 @@ export function mergeProgression(
       ? { completedQuestsByDay }
       : {}),
     ...(workshopDays.length > 0 ? { workshopDays } : {}),
+    ...(enabledChoreIds !== undefined ? { enabledChoreIds } : {}),
+    ...(Object.keys(completedChoresByDay).length > 0
+      ? { completedChoresByDay }
+      : {}),
   };
 }
 
-/** XP reset wipes totals and stars only; grandfathered unlocks survive. */
+/** XP reset wipes totals and stars only; grandfathered unlocks and routine setup survive. */
 export function resetProgression(
   prog: ProgressionState,
   now = Date.now(),
@@ -548,6 +602,9 @@ export function resetProgression(
     ...emptyProgression(),
     unlockedIds: [...prog.unlockedIds],
     sandboxUnlockAll: prog.sandboxUnlockAll,
+    ...(prog.enabledChoreIds !== undefined
+      ? { enabledChoreIds: [...prog.enabledChoreIds] }
+      : {}),
     resetAt: Math.max(1, Math.floor(now)),
   };
 }

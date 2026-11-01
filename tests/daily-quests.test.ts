@@ -2,13 +2,19 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
+  allChoresWithState,
   applyDailyQuestProgress,
+  CHORE_QUEST_XP,
+  choresForDay,
+  completeRealLifeChore,
   CONCEPT_BADGES,
   conceptBadgesFor,
   DAILY_QUEST_XP,
   dailyQuestsForDay,
   earnedConceptBadges,
   practicedSkillsSummary,
+  REAL_LIFE_CHORES,
+  toggleChoreEnabled,
   workshopDaysCount,
 } from "../src/lib/dailyQuests";
 import {
@@ -261,5 +267,107 @@ describe("Daily Quest Board & non-resetting Workshop Days", () => {
     expect(reset.completedQuestsByDay).toBeUndefined();
     expect(reset.workshopDays).toBeUndefined();
     expect(reset.unlockedIds).toEqual(["seed-shuttle"]);
+  });
+});
+
+describe("Real-Life Chore & Habit Quests ('Real Life Counts')", () => {
+  it("keeps chores off by default, toggles in canonical order, and is em-dash-free", () => {
+    const fresh = emptyProgression();
+    expect(REAL_LIFE_CHORES).toHaveLength(5);
+    for (const spec of REAL_LIFE_CHORES) {
+      expect(spec.title).not.toContain("\u2014");
+      expect(spec.goal).not.toContain("\u2014");
+      expect(spec.parentHint).not.toContain("\u2014");
+    }
+
+    expect(choresForDay("2026-11-01", fresh)).toEqual([]);
+    expect(allChoresWithState("2026-11-01", fresh)).toHaveLength(5);
+
+    const step1 = toggleChoreEnabled(fresh, "read-10m");
+    const step2 = toggleChoreEnabled(step1, "brush-teeth");
+    expect(step2.enabledChoreIds).toEqual(["brush-teeth", "read-10m"]);
+    expect(choresForDay("2026-11-01", step2).map((c) => c.id)).toEqual([
+      "brush-teeth",
+      "read-10m",
+    ]);
+
+    const disabledAgain = toggleChoreEnabled(
+      toggleChoreEnabled(step2, "brush-teeth"),
+      "read-10m",
+    );
+    expect(disabledAgain.enabledChoreIds).toEqual([]);
+    expect(choresForDay("2026-11-01", disabledAgain)).toEqual([]);
+  });
+
+  it("awards +25 XP once per day per enabled chore and stamps Workshop Days without streak loss", () => {
+    let prog = toggleChoreEnabled(emptyProgression(), "brush-teeth");
+    prog = toggleChoreEnabled(prog, "tidy-bench");
+
+    // Disabled chore cannot be farmed
+    const blocked = completeRealLifeChore(prog, "pack-bag", "2026-11-01");
+    expect(blocked.awarded).toBe(0);
+    expect(blocked.chore).toBeNull();
+
+    // First completion awards +25 XP and stamps Workshop Day 1
+    const done1 = completeRealLifeChore(prog, "brush-teeth", "2026-11-01");
+    expect(done1.awarded).toBe(CHORE_QUEST_XP);
+    expect(done1.next.totalXp).toBe(25);
+    expect(workshopDaysCount(done1.next)).toBe(1);
+
+    // Repeating same chore on same day pays 0 XP (anti-farming)
+    const repeat = completeRealLifeChore(
+      done1.next,
+      "brush-teeth",
+      "2026-11-01",
+    );
+    expect(repeat.awarded).toBe(0);
+    expect(repeat.next.totalXp).toBe(25);
+
+    // Second enabled chore on same day pays +25 XP; Workshop Day count stays 1
+    const done2 = completeRealLifeChore(
+      repeat.next,
+      "tidy-bench",
+      "2026-11-01",
+    );
+    expect(done2.awarded).toBe(CHORE_QUEST_XP);
+    expect(done2.next.totalXp).toBe(50);
+    expect(workshopDaysCount(done2.next)).toBe(1);
+
+    // Skipping days (Nov 2..4) and completing on Nov 5 increments Workshop Day to 2
+    const doneNov5 = completeRealLifeChore(
+      done2.next,
+      "brush-teeth",
+      "2026-11-05",
+    );
+    expect(doneNov5.awarded).toBe(CHORE_QUEST_XP);
+    expect(doneNov5.next.totalXp).toBe(75);
+    expect(workshopDaysCount(doneNov5.next)).toBe(2);
+    expect(doneNov5.next.workshopDays).toEqual(["2026-11-01", "2026-11-05"]);
+  });
+
+  it("persists enabledChoreIds across normalize, merge (respecting local disable), and XP reset", () => {
+    const remote = normalizeProgression({
+      totalXp: 100,
+      enabledChoreIds: ["brush-teeth", "read-10m"],
+      completedChoresByDay: { "2026-11-01": ["brush-teeth"] },
+    });
+    // Parent locally disables all routines -> explicit [] beats remote list
+    const localDisabled = normalizeProgression({
+      totalXp: 100,
+      enabledChoreIds: [],
+      completedChoresByDay: { "2026-11-01": ["read-10m"] },
+    });
+    const merged = mergeProgression(localDisabled, remote);
+    expect(merged.enabledChoreIds).toEqual([]);
+    expect(merged.completedChoresByDay?.["2026-11-01"]?.sort()).toEqual([
+      "brush-teeth",
+      "read-10m",
+    ]);
+
+    // Parent routine selection survives XP reset while completedChoresByDay resets
+    const reset = resetProgression(remote, 1_700_000_020_000);
+    expect(reset.totalXp).toBe(0);
+    expect(reset.enabledChoreIds).toEqual(["brush-teeth", "read-10m"]);
+    expect(reset.completedChoresByDay).toBeUndefined();
   });
 });

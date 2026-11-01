@@ -23,6 +23,8 @@ import {
   type ProgressionState,
 } from "../../../lib/progression";
 import {
+  allChoresWithState,
+  CHORE_QUEST_XP,
   practicedSkillsSummary,
   workshopDaysCount,
 } from "../../../lib/dailyQuests";
@@ -35,6 +37,7 @@ export interface GrownUpsSheetProps {
   holdSatisfied?: boolean;
   snapshot: ParentSnapshot;
   progression?: ProgressionState;
+  localDayKey?: string;
   demoMode?: boolean;
   onToggleDemoMode?: (next: boolean) => void;
   onSeedDemoSave?: () => void;
@@ -44,6 +47,7 @@ export interface GrownUpsSheetProps {
   kipUrl?: string;
   onResetXp?: () => void;
   onToggleSandbox?: () => void;
+  onToggleChore?: (choreId: string) => void;
   onSnapshotChange: (next: ParentSnapshot) => void;
   onClose: () => void;
 }
@@ -70,6 +74,7 @@ export function GrownUpsSheet({
   holdSatisfied = false,
   snapshot,
   progression,
+  localDayKey,
   demoMode = false,
   onToggleDemoMode,
   onSeedDemoSave,
@@ -79,6 +84,7 @@ export function GrownUpsSheet({
   kipUrl,
   onResetXp,
   onToggleSandbox,
+  onToggleChore,
   onSnapshotChange,
   onClose,
 }: GrownUpsSheetProps) {
@@ -1017,6 +1023,48 @@ export function GrownUpsSheet({
                 >
                   {confirmResetXp ? "Tap again to confirm Reset XP" : "Reset XP"}
                 </button>
+              </div>
+            </div>
+          )}
+
+          {progression && (
+            <div className="tv-parent-ledger">
+              <div className="tv-parent-row-head" style={{ marginBottom: 0 }}>
+                <div>
+                  <span
+                    className="kicker-label"
+                    style={{ margin: 0, display: "block" }}
+                  >
+                    Real Life Counts
+                  </span>
+                  <b>Real-Life Routines (+{CHORE_QUEST_XP} XP/day)</b>
+                </div>
+                <span className="tv-parent-stat-k">
+                  {(progression.enabledChoreIds ?? []).length} active
+                </span>
+              </div>
+              <p className="tv-moves" style={{ margin: 0, fontSize: 12 }}>
+                Optional offline habits shown in Toy Box. Each tap of &quot;I
+                did it!&quot; awards +{CHORE_QUEST_XP} XP once per day and
+                stamps a Workshop Day (missed days never reset progress).
+              </p>
+              <div className="tv-chips" role="group" aria-label="Real-Life Routines">
+                {allChoresWithState(localDayKey ?? "", progression).map(
+                  (chore) => (
+                    <button
+                      key={chore.id}
+                      type="button"
+                      className="tv-sc"
+                      aria-pressed={chore.enabled}
+                      title={chore.parentHint}
+                      onClick={() => onToggleChore?.(chore.id)}
+                    >
+                      {chore.enabled ? "✓ " : ""}
+                      {chore.title}
+                      {chore.completed ? " (done today)" : ""}
+                    </button>
+                  ),
+                )}
               </div>
             </div>
           )}

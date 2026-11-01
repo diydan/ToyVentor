@@ -77,8 +77,8 @@ export interface ToyRig {
 }
 export type SlotFn = (n: string) => THREE.Group;
 
-var TREAD: THREE.CanvasTexture | null = null;
-function treadTex(): THREE.CanvasTexture {if(TREAD)return TREAD;var c=document.createElement("canvas");c.width=256;c.height=32;var g=c.getContext("2d")!;g.fillStyle="#ffffff";g.fillRect(0,0,256,32);g.fillStyle="#000000";for(var i=0;i<256;i+=16){g.beginPath();g.moveTo(i,0);g.lineTo(i+6,0);g.lineTo(i+12,32);g.lineTo(i+6,32);g.fill()}TREAD=new T.CanvasTexture(c);TREAD.wrapS=TREAD.wrapT=T.RepeatWrapping;return TREAD}
+var TREAD: THREE.Texture | null = null;
+function treadTex(): THREE.Texture {if(TREAD)return TREAD;if(typeof document==="undefined"){var dt=new T.DataTexture(new Uint8Array([255,255,255,255]),1,1);dt.wrapS=dt.wrapT=T.RepeatWrapping;dt.needsUpdate=true;TREAD=dt;return TREAD}var c=document.createElement("canvas");c.width=256;c.height=32;var g=c.getContext("2d")!;g.fillStyle="#ffffff";g.fillRect(0,0,256,32);g.fillStyle="#000000";for(var i=0;i<256;i+=16){g.beginPath();g.moveTo(i,0);g.lineTo(i+6,0);g.lineTo(i+12,32);g.lineTo(i+6,32);g.fill()}var ct=new T.CanvasTexture(c);ct.wrapS=ct.wrapT=T.RepeatWrapping;TREAD=ct;return TREAD}
 
 function buildToy(type: string, sel: RigSel, col: RigColors): ToyRig {
  var rig: ToyRig={g:new T.Group(),slots:{},wheels:[],legs:[],arms:[],feet:[],eyes:[],wings:[],type:type},c1=plastic(col.c1),c2=plastic(col.c2),ink=plastic(INK,{roughness:.6,clearcoat:.2});
@@ -330,3 +330,13 @@ function buildChar3(sel: RigSel, rig: ToyRig, slot: SlotFn, col: RigColors): voi
  rig.h=A.h+hh+.2;rig.w=A.w+(sel.back==="wings"?.6:0)}
 
 export { TREAD, treadTex, buildToy, buildChar3, buildRobot2, wheelMesh, carBody, cabinBody, eyes, eyeOne, eyeZ, face, smileZ, blushZ, vin, glo, pvc, darken, noShadow, latheS, holder, spinner, propeller, baseVinyl, baseBlock, baseCreature, baseRobotKip, partEyes, partEars, partHat, partBack, partTail, partProp, partBoots, screenFace };
+export {
+  MAX_STL_CACHE,
+  clearStlRigCache,
+  getStlRigCacheStats,
+  loadCachedStl,
+  parseStlGeometry,
+  resolveStlHeroRecipe,
+  setStlRigFetcherForTest,
+  upgradeRigWithStl,
+} from "./stlRigLoader";

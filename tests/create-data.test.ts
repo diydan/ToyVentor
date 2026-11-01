@@ -77,8 +77,8 @@ describe("create bridge shape", () => {
     );
     for (const token of [
       "function crSnap()",
-      "function crSubmit(text)",
-      "function crSetInput(t)",
+      "function crSubmit(text: string)",
+      "function crSetInput(t: string)",
       "function crUndo()",
       "function crKeep()",
       "function crCodeToggle()",
