@@ -89,6 +89,4 @@ public/kip/mockup-images/
 # Nothing committed loads them; the Truck-Mockup commit un-ignores + adds them.
 public/kip/partspec/mockup/
 # Generated Kip rig (refresh: python3 parts/kip/sync_kip_rig.py --check).
-# Served only by the uncommitted viewer; un-ignore with it.
-parts/kip/viewer/kip-rig.js
-public/kip/kip-rig.js
+# Tracked since the committed Truck-Mockup page imports it.
