@@ -83,10 +83,11 @@ function stlVertices(path: string): [number, number, number][] {
 }
 
 // A head's crown studs are two columns at |x| 3.0 to 9.6, |y| up to 3.3, above the crown plane (z 30.5). A hat seats
-// on them, so an ear or horn must not add geometry there. Returns the distinct mesh vertices (to 0.01 mm) strictly
-// inside that column: a head with ears must have exactly the vertices a plain head has.
+// on them, so an ear or horn must not add geometry within 1.5 mm of them (Dan, round 4: "needs more space around
+// studs"). Returns the distinct mesh vertices (to 0.01 mm) strictly inside that zone: a head with ears must have
+// exactly the vertices a plain head has.
 function studZoneVertices(path: string): Set<string> {
-  const keep = stlVertices(path).filter(([x, y, z]) => Math.abs(x) > 2.4 && Math.abs(x) < 10.1 && Math.abs(y) < 3.8 && z > 30.7);
+  const keep = stlVertices(path).filter(([x, y, z]) => Math.abs(x) > 1.6 && Math.abs(x) < 11.0 && Math.abs(y) < 4.7 && z > 30.7);
   return new Set(keep.map((v) => v.map((c) => c.toFixed(2)).join(",")));
 }
 
@@ -231,6 +232,11 @@ describe.skipIf(!PYTHON)("Recipe v1 feature ops through the optimizer daemon", (
       expect(job.legalizer?.features_adjusted?.map((f) => f.op), id).toEqual([feats[0].op]);
       const extra = [...studZoneVertices(join(outDir, job.stl_artifact!))].filter((v) => !studVertices.has(v));
       expect(extra, id).toEqual([]);
+      if (id === "ops_test_stud_bear") {
+        // Round ears sit on the side of the head, not above its top face (Dan, round 4).
+        const above = stlVertices(join(outDir, job.stl_artifact!)).filter(([x, , z]) => Math.abs(x) > 11.2 && z > 30.7);
+        expect(above, id).toEqual([]);
+      }
     }
   }, 540_000);
 

@@ -287,3 +287,26 @@ export function widthNear(p: readonly Pt[], zFrom: number, zTo: number, step = 0
   }
   return (cells * step) / Math.max(1, rows);
 }
+
+// ---- roughness of an outline: plain arithmetic on its points ----------------------------------------------------
+
+/** Turning angle at each vertex, degrees, counter-clockwise positive. Plain arithmetic on the output: nothing from the module. */
+export function turns(points: readonly (readonly [number, number])[]): number[] {
+  const n = points.length;
+  return points.map((b, i) => {
+    const a = points[(i + n - 1) % n]!;
+    const c = points[(i + 1) % n]!;
+    const v1 = [b[0] - a[0], b[1] - a[1]];
+    const v2 = [c[0] - b[0], c[1] - b[1]];
+    return (Math.atan2(v1[0]! * v2[1]! - v1[1]! * v2[0]!, v1[0]! * v2[0]! + v1[1]! * v2[1]!) * 180) / Math.PI;
+  });
+}
+/** Corners of 80 degrees or more: on a rounded outline these are the steps of a staircase. */
+export const stairCorners = (points: readonly (readonly [number, number])[]) => turns(points).filter((t) => Math.abs(t) >= 80).length;
+/** Neighbouring vertices that turn opposite ways, each by more than 8 degrees: a zig-zag, not a curve. */
+export function zigzags(points: readonly (readonly [number, number])[]): number {
+  const t = turns(points);
+  return t.filter((v, i) => v * t[(i + 1) % t.length]! < 0 && Math.abs(v) > 8 && Math.abs(t[(i + 1) % t.length]!) > 8).length;
+}
+export const totalTurning = (points: readonly (readonly [number, number])[]) => turns(points).reduce((a, t) => a + Math.abs(t), 0);
+

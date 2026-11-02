@@ -5,8 +5,8 @@ import * as ST from "../parts/kip/viewer/kip-print-stickers.js";
 import { photoStickerItem, type PhotoStickerItem } from "../shared/outlineSticker";
 import { scanOutline, type ScanOutlineSuccess } from "../shared/outlineScan";
 import { composeAffine, legalizeOutline, type Affine } from "../shared/photoOutline";
-import { cropToObject, disc, fillHoles, rasterize, rect, randomBlob, rotated, star, union, type Inside, type Raster } from "./fixtures/outlineMasks";
-import { realCup } from "./fixtures/realCupMask";
+import { cropToObject, disc, fillHoles, rasterize, rect, randomBlob, rotated, stairCorners, star, totalTurning, union, zigzags, type Inside, type Raster } from "./fixtures/outlineMasks";
+import { realCup, realSpoon, SPOON_PHOTO } from "./fixtures/realCupMask";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -323,6 +323,23 @@ describe("renderStickerItemRgba: photo_outline", () => {
     const { pixels, r } = render(item, maskPicture(full, 0.25));
     expect(pixels.length).toBeGreaterThan(2000);
     expect(share(r.data, pixels, RED)).toBeGreaterThan(0.98);
+  });
+});
+
+// ---- the cut line is smooth -----------------------------------------------------------------------------------------------
+
+describe("the sticker's cut line", () => {
+  it("has no notches on the real spoon: no step corners and far less zig-zag than the unsmoothed outline gave", async () => {
+    const { raster, bounds } = await realSpoon();
+    const before = legalizeOutline(raster, { targetHeightMm: 54, fillet_r_mm: 1.0, keepThinParts: true, smoothMm: 0 });
+    const after = scanOutline(raster, bounds, SPOON_PHOTO, { targetHeightMm: 54 });
+    if (!before.ok || !after.ok) throw new Error("no outline");
+    const oldCut = photoStickerItem(before).outerPolyMm;
+    const newCut = photoStickerItem(after).outerPolyMm;
+    expect(stairCorners(oldCut)).toBeGreaterThanOrEqual(4); // guard: the notches were on the cut line before
+    expect(stairCorners(newCut)).toBe(0);
+    expect(zigzags(newCut)).toBeLessThan(zigzags(oldCut) / 2);
+    expect(totalTurning(newCut)).toBeLessThan(totalTurning(oldCut) * 0.7);
   });
 });
 

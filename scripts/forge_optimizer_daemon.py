@@ -370,8 +370,8 @@ def _socket_keepout(head: manifold3d.Manifold) -> manifold3d.Manifold | None:
     return manifold3d.Manifold.extrude(holes.offset(0.6, manifold3d.JoinType.Round), 10.0)
 
 
-STUD_KEEPOUT_MARGIN_MM = 0.6
-EAR_FIT_DROPS_MM = (0.0, 1.5, 3.0, 4.5, 6.0)  # how far down a head's ear or horn pair may move
+STUD_KEEPOUT_MARGIN_MM = 1.5  # Dan, round 4: "needs more space around studs" (0.6 was too tight)
+EAR_FIT_DROPS_MM = (0.0, 1.5, 3.0, 4.5, 6.0, 8.0, 10.0)  # how far down a head's ear or horn pair may move
 EAR_FIT_TILTS_DEG = (0.0, 6.0, 12.0, 18.0)  # how far further out an ear may lean
 STUD_CUT_SIMPLIFY_MM = 0.03
 EAR_FIT_MIN_KEPT = 0.3  # below this share of the asked-for visible volume the pair is reported as dropped
@@ -417,8 +417,12 @@ def _fit_head_pair(
     def visible(m: manifold3d.Manifold) -> float:
         return float((m - body).volume())  # the part that shows outside the head
 
+    def above_top_face(m: manifold3d.Manifold) -> bool:
+        # Round ears sit on the side of the head, not above its top face (Dan, round 4).
+        return op == "ears" and str(feat.get("style")) == "round" and m.bounding_box()[5] > head_height_mm - 0.2
+
     asked = visible(base)
-    if asked < 1.0 or _intersect_volume(base, studs) < 0.3:
+    if asked < 1.0 or (_intersect_volume(base, studs) < 0.3 and not above_top_face(base)):
         return base, None  # nothing shows, or the pair is already clear of the studs
     bx0, _by0, _bz0, bx1, _by1, _bz1 = base.bounding_box()
     x_cap = max((_small_cylinder_mm() - L2_MARGIN_MM) / 2.0, max(abs(bx0), abs(bx1))) + 0.3  # never wider than asked
@@ -429,7 +433,7 @@ def _fit_head_pair(
             if cand is None:
                 continue
             x0, _y0, _z0, x1, _y1, _z1 = cand.bounding_box()
-            if max(abs(x0), abs(x1)) > x_cap:
+            if max(abs(x0), abs(x1)) > x_cap or above_top_face(cand):
                 continue
             cut = cand - studs
             kept = min(1.0, visible(cut) / asked)

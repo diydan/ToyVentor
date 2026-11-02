@@ -146,11 +146,13 @@ rejected, numbers are clamped to bounds, and nothing is executed.
     (two columns at x 3.0 to 9.6 mm each side, y +-3.3, z 30.5 to 33.3; a hat seats
     on them) fill most of a head's 18 to 20 mm wide top, so a pair rooted at the
     upper corners used to grow into them. The daemon now cuts every head ear and
-    horn by a stud keep-out (one plain box per stud column, grown 0.6 mm, from the
-    crown plane up). It first tries the pair as asked, then lower (up to 6 mm) and,
-    for ears, leaning further out (up to 18 degrees), keeps the placement with the
-    most ear still showing outside the head (a clean move beats a cut), inside the
-    small-parts width, and drops any piece the cut leaves floating. What it did is
+    horn by a stud keep-out (one plain box per stud column, grown 1.5 mm, from the
+    crown plane up; 0.6 mm at first, Dan found it too tight). It first tries the
+    pair as asked, then lower (up to 10 mm) and, for ears, leaning further out (up
+    to 18 degrees), keeps the placement with the most ear still showing outside the
+    head (a clean move beats a cut), inside the small-parts width, and drops any
+    piece the cut leaves floating. `round` ears also must not rise above the head's
+    top face (z = `height_mm`): the bear's ears used to poke 1 mm above it. What it did is
     listed in `legalizer.features_adjusted` (for example "moved down 3 mm, trimmed
     where it met the crown studs"); a pair with no room left is listed in
     `features_dropped`. Test: `forge-ops.test.ts` compares the mesh vertices inside
@@ -518,6 +520,32 @@ What the compiler accepts decides the routes (read in the code, 2026-11-02):
     fixture, a thin object where the cup is a fat one. A UI must show `outline.warnings`: an
     object that no gentler rounding can keep (a stick under 1.6 mm) still ends as `ok` with
     `THIN_PARTS_REMOVED` on its outline.
+  - **Smooth edges (2026-11-02, from the spoon).** The plate and the sticker's cut line
+    had notches. The legalizer traced the working raster along its pixel corners (a
+    staircase, one step per 0.2 mm), then simplified with a tolerance of 0.6 of a pixel,
+    smaller than a one-pixel step, so every step survived as a vertex. On the real spoon
+    that was 16 corners of 90 degrees (a run of fourteen down the handle), 38 of 60
+    vertices alternating left and right, and 8 edges under 0.4 mm. The outline is now
+    smoothed before it is simplified: the working raster is blurred (a Gaussian, sigma 2
+    source pixels, kept between 0.3 and 0.8 mm; option `smoothMm`, 0 turns it off) and the
+    0.5 contour is traced at sub-pixel precision (marching squares, with a saddle rule).
+    Measured against the old trace on the real spoon, the real cup and 20 synthetic masks:
+    the spoon's stair corners fall from 16 to 0, zig-zag from 36 to 4, edges under 0.4 mm
+    from 8 to 0, total turning from 2394 to 633 degrees, and its points from 60 to 55; a
+    disc reaches exactly the 360 degrees of turning a circle has; the overlap with the mask
+    moves by 0.005 at most (the spoon's goes up, 0.9826 to 0.9891). The plate section the
+    printer follows goes from 376 vertices to 228 and the STL from 74 to 53 KB; the
+    sticker's cut line has no corner of 80 degrees or more where it had at least 4. The
+    gates do not mind: 52 real gate calls each way gave the same verdict but for one (a
+    paddle that slivered and now passes), 3 slivers against 4. What smoothing cannot do:
+    roughness bigger than the blur (the deliberately rough synthetic discs, 2706 to 1897
+    degrees, still zig-zag), the flat chords the 64-point recipe cap leaves between
+    vertices (about 2.8 mm long with at most 0.12 mm of sag on the spoon's bowl), and the
+    scalloped bleed band outside the cut line, which is trimmed away. A rounded -0.00 in an
+    outline is now 0, because JSON cannot carry a negative zero and the outline would not
+    survive the wire unchanged. Tests: `tests/photo-outline.test.ts` (now 79), with the
+    turning-angle helpers in `tests/fixtures/outlineMasks.ts`; 21 of 21 smoothing mutants
+    caught.
   - C4 orientation: long axis to z, handle end down, with a flip button. The kid
     decides which end is the handle; the model is not asked.
 - **Relief ("puffy").** The builder's crest is one level. Repeating the inward
@@ -1187,6 +1215,22 @@ same prompts can be compared.
   by volume above the crown plane wrongly dropped the bear's ear, so it is scored by the part that
   shows outside the head. Not rerun through Spark: the recipes are unchanged, so the
   eval numbers above stand; Dan has not seen the fixed meshes.
+- **Later the same day (rounds 4 and 5).** Dan re-rated and added notes. The
+  chef hat went from 2 to 3 (crowns 2.71, 8 of 14 at 3 or above; all 22 parts: 2.41,
+  10 at 3 or above). Crown notes, not yet acted on: the wizard hat "no star" (the
+  little stars did not show; the `spikes` op gives points, not stars) and the
+  five-point crown "does not look like a crown at all, crowns should be round" (a
+  loft is one convex hull, so `spikes` on it reads as a bumpy cone, not a ring of
+  points; a crown needs a hollow ring body, which is the non-convex body gap).
+  Fixed-ear round 4 (margin 0.6 mm): bunny 2 (no note), cat 2 "needs more space around
+  studs, ears can be lower", bear unrated with "make ears lower so they do not go
+  above the top stud face". Read as the flat top face the studs stand on (z 30.5),
+  because the bear's ears were already below the stud tips. Round 5 changes: stud
+  margin 1.5 mm, drops up to 10 mm, round ears kept under the top face. Result: the
+  bunny and cat keep 1.45 mm clear of the studs (bunny moved down 3 mm, cat 4.5 mm,
+  top now 33.9 mm, level with the stud tips), the bear moved down 1.5 mm and is not
+  trimmed; all print_ready, design verified. The three are on the taste page as
+  `r5_h03`, `r5_h04`, `r5_h08` ("(lower ears)"), not yet rated.
 - **Reading:** the taste gate is still tripped for heads and partly lifted for
   crowns. The parts still at 1 or 2 are body-shape problems (dome helmet,
   astronaut, pumpkin, wizard cone, chef puff, fez), which the feature ops cannot

@@ -10,8 +10,10 @@ import {
   DEFAULT_TARGET_MM,
   FILLET_LADDER,
   flipOutline,
+  gaussBlur,
   HAND_BOX,
   invertAffine,
+  isoLoops,
   legalizeOutline,
   type OutlineOptions,
   type OutlineSuccess,
@@ -20,6 +22,7 @@ import {
   retryOptions,
   roundingRemovesParts,
   scaleOutline,
+  smoothContour,
   withFlipped,
   withScaled,
 } from "../shared/photoOutline";
@@ -33,6 +36,9 @@ import {
   jaggedDisc,
   polygon,
   polygonIoU,
+  stairCorners,
+  totalTurning,
+  zigzags,
   randomBlob,
   type Raster,
   rasterize,
@@ -43,6 +49,7 @@ import {
   union,
   widthNear,
 } from "./fixtures/outlineMasks";
+import { realCup, realSpoon } from "./fixtures/realCupMask";
 
 function ok(mask: Raster, options?: OutlineOptions): OutlineSuccess {
   const r = legalizeOutline(mask, options);
@@ -660,5 +667,233 @@ describe("roundingRemovesParts: would a recipe fillet take a real part off a fin
     if (!lost.ok) throw new Error("legalize failed");
     expect(lost.warnings).toContain("THIN_PARTS_REMOVED"); // the same mask loses the stick at the default
     expect(roundingRemovesParts(lost.points, 3.0).count).toBe(0); // and what is left has nothing more to lose
+  });
+});
+
+// ---- smoothing the traced outline ------------------------------------------------------------------------------------------
+
+describe("legalizeOutline: the outline is smoothed before it is simplified", () => {
+  const made = (mask: Raster, options: OutlineOptions = {}): OutlineSuccess => {
+    const o = legalizeOutline(mask, { targetHeightMm: 54, ...options });
+    if (!o.ok) throw new Error(`legalize failed: ${o.reason}`);
+    return o;
+  };
+
+  it("the real spoon and the real cup have no staircase: the pixel-corner trace left notches, the smoothed one has none", async () => {
+    const spoon = (await realSpoon()).raster;
+    const cup = (await realCup()).raster;
+    for (const [name, mask, opts] of [["spoon", spoon, { fillet_r_mm: 1.0, keepThinParts: true }], ["cup", cup, { keepThinParts: true }]] as const) {
+      const old = made(mask, { ...opts, smoothMm: 0 });
+      const now = made(mask, opts);
+      expect(stairCorners(old.points), `${name} before`).toBeGreaterThanOrEqual(4); // guard: the notches are really there without smoothing
+      expect(stairCorners(now.points), `${name} after`).toBe(0);
+      expect(zigzags(now.points), `${name} zig-zag`).toBeLessThan(zigzags(old.points) / 2);
+      expect(totalTurning(now.points), `${name} turning`).toBeLessThan(totalTurning(old.points) * 0.6);
+    }
+  });
+
+  it("a disc is as smooth as a circle: 360 degrees of turning in all and no zig-zag, where the pixel-corner trace had twice that", () => {
+    const disc_ = SHAPES.disc();
+    const old = made(disc_, { smoothMm: 0 });
+    const now = made(disc_);
+    expect(totalTurning(old.points)).toBeGreaterThan(600); // guard
+    expect(totalTurning(now.points)).toBeGreaterThan(355);
+    expect(totalTurning(now.points)).toBeLessThan(375);
+    expect(zigzags(now.points)).toBe(0);
+  });
+
+  it("is smoother on random blobs and rough discs too, and never rougher", () => {
+    for (const [name, mask] of [["blob 1", randomBlob(1)], ["blob 2", randomBlob(2)], ["blob 3", randomBlob(3)], ["rough disc 1", jaggedDisc(1)], ["rough disc 2", jaggedDisc(2)]] as const) {
+      const old = made(mask, { smoothMm: 0 });
+      const now = made(mask);
+      expect(totalTurning(now.points), name).toBeLessThanOrEqual(totalTurning(old.points));
+      expect(zigzags(now.points), name).toBeLessThanOrEqual(zigzags(old.points));
+      expect(stairCorners(now.points), name).toBeLessThanOrEqual(stairCorners(old.points));
+    }
+  });
+
+  it("costs the outline no accuracy: the overlap with the mask is within 0.01 of the unsmoothed one, and the size within 0.5 mm", async () => {
+    const spoon = (await realSpoon()).raster;
+    const cases: [string, Raster, OutlineOptions][] = [
+      ["spoon", spoon, { fillet_r_mm: 1.0, keepThinParts: true }],
+      ["disc", SHAPES.disc(), {}],
+      ["star", SHAPES.star(), {}],
+      ["paddle", SHAPES.paddle(), {}],
+      ["blob 1", randomBlob(1), {}],
+      ["blob 2", randomBlob(2), {}],
+    ];
+    for (const [name, mask, opts] of cases) {
+      const old = made(mask, { ...opts, smoothMm: 0 });
+      const now = made(mask, opts);
+      expect(maskIoU(now, mask), name).toBeGreaterThan(maskIoU(old, mask) - 0.01);
+      expect(maskIoU(now, mask), name).toBeGreaterThan(0.93);
+      expect(Math.abs(now.heightMm - old.heightMm), `${name} height`).toBeLessThan(0.5);
+      expect(Math.abs(now.widthMm - old.widthMm), `${name} width`).toBeLessThan(0.5);
+    }
+  });
+
+  it("keeps the thin handle: the spoon at 1.0 still has no parts removed, and its neck is no narrower", async () => {
+    const spoon = (await realSpoon()).raster;
+    const old = made(spoon, { fillet_r_mm: 1.0, keepThinParts: true, smoothMm: 0 });
+    const now = made(spoon, { fillet_r_mm: 1.0, keepThinParts: true });
+    expect(now.warnings).not.toContain("THIN_PARTS_REMOVED");
+    expect(Math.abs(now.heightMm - old.heightMm)).toBeLessThan(0.5);
+    // The narrowest width of the polygon over its middle half: the blur must not thin the neck.
+    const narrowest = (o: OutlineSuccess) => {
+      let best = Infinity;
+      for (let z = o.heightMm * 0.3; z < o.heightMm * 0.9; z += 0.5) {
+        const xs: number[] = [];
+        for (let i = 0; i < o.points.length; i++) {
+          const a = o.points[i]!;
+          const b = o.points[(i + 1) % o.points.length]!;
+          if (a[1] > z !== b[1] > z) xs.push(a[0] + ((z - a[1]) / (b[1] - a[1])) * (b[0] - a[0]));
+        }
+        xs.sort((p, q) => p - q);
+        if (xs.length >= 2) best = Math.min(best, xs[xs.length - 1]! - xs[0]!);
+      }
+      return best;
+    };
+    expect(narrowest(now)).toBeGreaterThan(narrowest(old) - 0.15);
+  });
+
+  it("uses no more of the point budget than before, so the points it saves on straight runs go to the curves", async () => {
+    const spoon = (await realSpoon()).raster;
+    const old = made(spoon, { fillet_r_mm: 1.0, keepThinParts: true, smoothMm: 0 });
+    const now = made(spoon, { fillet_r_mm: 1.0, keepThinParts: true });
+    expect(now.points.length).toBeLessThanOrEqual(old.points.length);
+    expect(now.points.length).toBeLessThan(60);
+  });
+
+  it("takes the option as written: 0 is the old trace, a negative number is 0, NaN is the default, a huge number is the 0.8 mm cap", () => {
+    const mask = randomBlob(2);
+    const off = made(mask, { smoothMm: 0 });
+    expect(made(mask, { smoothMm: -3 }).points).toEqual(off.points);
+    expect(made(mask, { smoothMm: Number.NaN }).points).toEqual(made(mask).points);
+    expect(made(mask, { smoothMm: Number.POSITIVE_INFINITY }).points).toEqual(made(mask).points);
+    expect(made(mask, { smoothMm: 1000 }).points).toEqual(made(mask, { smoothMm: 0.8 }).points);
+    expect(made(mask, { smoothMm: 0.8 }).points).not.toEqual(off.points); // guard: smoothing does change the outline
+    expect(made(mask, { smoothMm: 0.4 }).points).not.toEqual(made(mask, { smoothMm: 0.8 }).points); // and its strength is used
+  });
+
+  it("chooses its own strength from the mask's pixel size: 2 source pixels, no less than 0.3 mm and no more than 0.8 mm", () => {
+    // An object 380 px tall drawn at 54 mm has 0.142 mm pixels: 2 of them is 0.28 mm, so the 0.3 mm floor applies.
+    const fine = rasterize(400, 400, disc(200, 200, 190));
+    expect(made(fine).points).toEqual(made(fine, { smoothMm: 0.3 }).points);
+    expect(made(fine).points).not.toEqual(made(fine, { smoothMm: 0.8 }).points);
+    // An object 76 px tall drawn at 54 mm has 0.71 mm pixels: 2 of them is 1.4 mm, so the 0.8 mm cap applies.
+    const coarse = rasterize(100, 100, disc(50, 50, 38));
+    expect(made(coarse).points).toEqual(made(coarse, { smoothMm: 0.8 }).points);
+    expect(made(coarse).points).not.toEqual(made(coarse, { smoothMm: 0.3 }).points);
+  });
+
+  it("has no negative zero, so an outline survives JSON unchanged (a rounded -0.00 would not)", () => {
+    for (const seed of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]) {
+      for (const h of [54, 90]) {
+        const o = made(randomBlob(seed), { targetHeightMm: h });
+        for (const [x, z] of o.points) {
+          expect(Object.is(x, -0), `blob ${seed}@${h} x`).toBe(false);
+          expect(Object.is(z, -0), `blob ${seed}@${h} z`).toBe(false);
+        }
+        expect(JSON.parse(JSON.stringify(o.points)), `blob ${seed}@${h}`).toEqual(o.points);
+      }
+    }
+  });
+
+  it("stays a simple polygon on every shape, smoothed", () => {
+    for (let seed = 1; seed <= 12; seed++) {
+      const o = made(randomBlob(seed));
+      expect(isSimplePolygon(o.points), `blob ${seed}`).toBe(true);
+    }
+    for (const [name, make] of Object.entries(SHAPES)) {
+      const r = legalizeOutline(make(), { targetHeightMm: 54 });
+      if (r.ok) expect(isSimplePolygon(r.points), name).toBe(true);
+    }
+  });
+});
+
+describe("the smoothing parts, one at a time", () => {
+  const area = (p: readonly (readonly [number, number])[]) => Math.abs(p.reduce((a, q, i) => a + (q[0] * p[(i + 1) % p.length]![1] - p[(i + 1) % p.length]![0] * q[1]), 0)) / 2;
+
+  it("gaussBlur keeps a flat field flat, keeps the mass of a spike, and has the width it was asked for", () => {
+    const w = 61, h = 61;
+    const flat = gaussBlur(new Uint8Array(w * h).fill(1), w, h, 2);
+    expect(Math.min(...flat)).toBeGreaterThan(0.9999);
+    expect(Math.max(...flat)).toBeLessThan(1.0001);
+    const spike = new Uint8Array(w * h);
+    spike[30 * w + 30] = 1;
+    const out = gaussBlur(spike, w, h, 3);
+    let mass = 0, m2 = 0;
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { mass += out[y * w + x]!; m2 += out[y * w + x]! * (x - 30) ** 2; }
+    expect(mass).toBeCloseTo(1, 4);
+    expect(m2).toBeGreaterThan(0.85 * 9); // the variance along x is sigma squared
+    expect(m2).toBeLessThan(1.15 * 9);
+    expect(out[30 * w + 33]).toBeCloseTo(out[30 * w + 27]!, 6); // symmetric
+    expect(out[33 * w + 30]).toBeCloseTo(out[27 * w + 30]!, 6);
+    expect(out[30 * w + 30]).toBeGreaterThan(out[30 * w + 32]!);
+  });
+
+  it("isoLoops puts a contour where the field crosses the level, to a hundredth of a pixel, with pixel centres at half-integers", () => {
+    // A cone centred on pixel (30, 24): 1 - distance / 20, so the 0.5 contour is a circle of radius 10 around that pixel's centre.
+    const w = 60, h = 50;
+    const f = new Float32Array(w * h);
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) f[y * w + x] = Math.max(0, 1 - Math.hypot(x - 30, y - 24) / 20);
+    const loops = isoLoops(f, w, h, 0.5);
+    expect(loops).toHaveLength(1);
+    for (const [x, y] of loops[0]!) {
+      expect(Math.abs(Math.hypot(x - 30.5, y - 24.5) - 10)).toBeLessThan(0.05);
+    }
+    expect(loops[0]!.length).toBeGreaterThan(40);
+    expect(area(loops[0]!)).toBeGreaterThan(Math.PI * 99 * 0.99);
+    expect(area(loops[0]!)).toBeLessThan(Math.PI * 101);
+  });
+
+  it("isoLoops joins two diagonal pixels when the cell's mean is high enough and splits them when it is not", () => {
+    const w = 6, h = 6;
+    const make = (v: number) => {
+      const f = new Float32Array(w * h);
+      f[2 * w + 2] = v; // (2, 2) and (3, 3) are on, (3, 2) and (2, 3) are off: a saddle
+      f[3 * w + 3] = v;
+      return f;
+    };
+    expect(isoLoops(make(1), w, h, 0.5)).toHaveLength(1); // mean 0.5: the centre is in, so they are one shape
+    expect(isoLoops(make(0.8), w, h, 0.5)).toHaveLength(2); // mean 0.4: the centre is out, so they are two
+  });
+
+  it("smoothContour is the biggest piece's outline, not the first or the last", () => {
+    const w = 80, h = 60;
+    // The scan meets loops top row first, so the small blob is placed higher than the big one: it is the first loop found, and the big one must still win.
+    const bin = rasterize(w, h, union(disc(15, 9, 4), disc(50, 38, 18))).data;
+    const c = smoothContour(bin, w, h, 1);
+    expect(area(c)).toBeGreaterThan(Math.PI * 18 * 18 * 0.9);
+    const small = rasterize(w, h, union(disc(25, 30, 18), disc(65, 30, 4))).data; // and the other way round (the big one clear of the edge, so its contour closes)
+    expect(area(smoothContour(small, w, h, 1))).toBeGreaterThan(Math.PI * 18 * 18 * 0.9);
+  });
+
+  it("smoothContour of a raster with nothing in it is empty, so the caller can fall back", () => {
+    expect(smoothContour(new Uint8Array(40 * 40), 40, 40, 1)).toEqual([]);
+  });
+
+  it("the smoothed outline sits where the unsmoothed one does: the centroid has not moved by half a working pixel", () => {
+    const centroid = (p: readonly (readonly [number, number])[]) => {
+      let a = 0, cx = 0, cz = 0;
+      for (let i = 0; i < p.length; i++) {
+        const q = p[(i + 1) % p.length]!;
+        const c = p[i]![0] * q[1] - q[0] * p[i]![1];
+        a += c; cx += (p[i]![0] + q[0]) * c; cz += (p[i]![1] + q[1]) * c;
+      }
+      return [cx / (3 * a), cz / (3 * a)] as const;
+    };
+    // Shapes with a centre of symmetry only. Blurring rounds the tips of an asymmetric one (the paddle's centroid moves 0.04 mm for that
+    // reason) and the two traces choose different vertices within the simplifier's 0.08 mm (a star moves 0.04 mm that way), but a disc and a
+    // square have centroids that cannot move, so any shift there is an offset. A missed half pixel is 0.07 mm at this size.
+    for (const [name, mask] of [["disc", SHAPES.disc()], ["square", rasterize(400, 400, rect(100, 100, 300, 300))]] as const) {
+      const old = legalizeOutline(mask, { targetHeightMm: 54, smoothMm: 0 });
+      const now = legalizeOutline(mask, { targetHeightMm: 54 });
+      if (!old.ok || !now.ok) throw new Error("legalize failed");
+      const [ox, oz] = centroid(old.points);
+      const [nx, nz] = centroid(now.points);
+      expect(Math.abs(ox - nx), `${name} x`).toBeLessThan(0.03);
+      expect(Math.abs(oz - nz), `${name} z`).toBeLessThan(0.03);
+    }
   });
 });
