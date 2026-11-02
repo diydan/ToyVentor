@@ -411,7 +411,7 @@ import { createKipRig } from './kip-rig.js'; // shared Kip rig module, also impo
 import { createDecalExpressionCanvas } from './kip-forge-sdk.js?v=10.0';
 import { mountPrintView } from './kip-print-view.js';
 import { truckGetParts } from './truck-print-parts.js';
-import { loadExpansionGeos, attachExpansionToKipRig, WARDROBE_HEADS, HUMAN_HEAD_IDS, FACE_STEM_MM } from './kip-vehicles-wardrobe.js';
+import { loadExpansionGeos, attachExpansionToKipRig, WARDROBE_HEADS, HUMAN_HEAD_IDS, HAIR_OPTIONS, HAT_OPTIONS, HAT_COLORS, FACE_STEM_MM } from './kip-vehicles-wardrobe.js';
 import { FACEPLATE_SEAT_MM } from './kip-faceplate-shape.js?v=10.0';
 
 const viewport = document.getElementById('viewport');
@@ -503,7 +503,7 @@ const KIP_STACK = { table: null, head: 'char_head_kid', hair: 'hair_short_swept'
 // neck_turret_2x1. Scaled to S = 0.52 so Kip's side-by-side 1x2 TU sneaker boots (45.6 mm -> 23.7 mm) fit cleanly
 // inside #8 Windscreen's 25.2 mm 2-TU cockpit footwell with 0.000 mm³ overlap across all 5 truck stages.
 const KIP_DRIVER = {
-  K: null, geos: null, rig: null, headCadWrap: null, skinMat: null, geoNames: new Map(),
+  K: null, geos: null, rig: null, skinMat: null, geoNames: new Map(),
   scale: 0.52,
 };
 const KIP_HEADS = [
@@ -969,27 +969,8 @@ function rebuildScene() {
       }
     }
 
-    const T = KIP_STACK.table;
-    const hd = T && T.heads[KIP_STACK.head];
     KIP_DRIVER.skinMat.color.set(KIP_HEAD_HEX[KIP_STACK.head] || '#F3BA95');
     syncTruckWardrobeHead();
-    const headCad = KIP_DRIVER.headCadWrap;
-    headCad.clear();
-    if (hd && GEOS[KIP_STACK.head]) {
-      let topZ = hd.top;
-      const hr = hd.human && KIP_STACK.hair && T.hairs[KIP_STACK.hair];
-      if (hr && GEOS[KIP_STACK.hair]) {
-        const hair = meshOf(KIP_STACK.hair, MATS.hair);
-        hair.position.set(0, 0, topZ);
-        headCad.add(hair);
-        topZ = hr.top === null ? null : topZ + hr.top;
-      }
-      if (KIP_STACK.hat && topZ !== null && GEOS[KIP_STACK.hat]) {
-        const hat = meshOf(KIP_STACK.hat, KIP_STACK.hat === 'hat_hardhat' ? MATS.tub : MATS.spark);
-        hat.position.set(KIP_STACK.hat === 'wobble_hat' ? -6.25 : 0, 0, topZ);
-        headCad.add(hat);
-      }
-    }
 
     const S = KIP_DRIVER.scale;
     const hipCadY = isPro ? -0.5 : 1.2;
@@ -1628,6 +1609,37 @@ function syncTruckWardrobeHead() {
   } else {
     exp.decalPlane.visible = false;
   }
+
+  // One Kip hair and hats: use the wardrobe slots, exactly like Kip-Demo.html. The stack keeps its
+  // CAD-style selection IDs; only the ID prefixes are translated here.
+  const stackHairWid = typeof KIP_STACK.hair === 'string' ? KIP_STACK.hair.replace(/^hair_/, '') : 'off';
+  const hairWid = isHuman ? stackHairWid : 'off';
+  const hairOpt = HAIR_OPTIONS.find((h) => h.id === hairWid) || HAIR_OPTIONS[0];
+  const hasHair = isHuman && hairOpt.id !== 'off';
+  const stackHatRaw = typeof KIP_STACK.hat === 'string' ? KIP_STACK.hat : 'off';
+  const hatWid = stackHatRaw === 'hat_wobble_hat' || stackHatRaw === 'wobble_hat'
+    ? 'hat'
+    : stackHatRaw.replace(/^hat_/, '');
+  const canWearHat = hairOpt.hatReady;
+  const headCrownY = (WARDROBE_HEADS.find((h) => h.id === wid) || WARDROBE_HEADS[0]).crownY;
+  const hatOpt = HAT_OPTIONS.find((h) => h.id === hatWid);
+  const hatColor = HAT_COLORS.find((c) => c.id === hatOpt?.defaultCol) || HAT_COLORS[0];
+  exp.expMats.hat.color.set(hatColor.hex);
+
+  exp.hairGroup.visible = hasHair;
+  exp.hairAnchor.position.y = headCrownY;
+  for (const [k, m] of Object.entries(exp.hairMeshes)) m.visible = hasHair && (k === hairOpt.id);
+  exp.hairCrownBuds.position.y = hairOpt.topH;
+  exp.hairCrownBuds.visible = hasHair && hairOpt.hatReady;
+  exp.altCrownBuds.position.y = headCrownY;
+  exp.altCrownBuds.visible = (hatWid !== 'blank' || hasHair);
+
+  KIP_DRIVER.rig.crownAccSlot.visible = canWearHat;
+  exp.crownAnchor.position.y = headCrownY + (hasHair ? hairOpt.topH : 0.0);
+  KIP_DRIVER.rig.pointyEars.visible = canWearHat && (hatWid === 'ears');
+  KIP_DRIVER.rig.wobbleHat.visible = canWearHat && (hatWid === 'hat');
+  for (const [k, m] of Object.entries(exp.hatMeshes)) m.visible = canWearHat && (k === hatWid);
+  exp.customCrownContainer.visible = canWearHat && (hatWid === 'custom');
 }
 
 // Load the Kip Pro (8+) & Snap (3+) body rig from kip-rig.js (same STLs, creases and joints as Kip-Demo.html).
@@ -1673,14 +1685,9 @@ async function loadKipDriver() {
     paintSlot('torso_snap', MATS.spark);
     rig.backStudsSlot.visible = false;
 
-    const headCadWrap = new THREE.Group();
-    headCadWrap.rotation.x = -Math.PI / 2;
-    rig.headLocal.add(headCadWrap);
-
     KIP_DRIVER.K = K;
     KIP_DRIVER.geos = geos;
     KIP_DRIVER.rig = rig;
-    KIP_DRIVER.headCadWrap = headCadWrap;
     KIP_DRIVER.skinMat = skinMat;
   } catch (e) {
     console.warn('Kip rig unavailable:', e);
