@@ -1,6 +1,5 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { decodeMaskToRaster, parseImageStream, recordsOfKind } from "@meta-sam/parser";
 import { describe, expect, it, vi } from "vitest";
 import {
   parseScanOutline,
@@ -12,6 +11,7 @@ import {
 } from "../shared/outlineScan";
 import { applyAffine, legalizeOutline } from "../shared/photoOutline";
 import { disc, rect, type Raster, rasterize, rotated, star, union } from "./fixtures/outlineMasks";
+import { realCup } from "./fixtures/realCupMask";
 
 // The legalizer takes 0.1 to 0.9 s a call and the machine is often at load 50 or more.
 vi.setConfig({ testTimeout: 60_000 });
@@ -196,9 +196,12 @@ describe("scanOutline", () => {
     expect(big.width * big.height).toBeGreaterThan(SCAN_OUTLINE_MAX_PIXELS);
     const r = scanOutline(big, { left: 0, top: 0 }, PHOTO);
     expect(r).toMatchObject({ ok: false, reason: "bad_mask" });
-    // And one just under the limit is let in to the legalizer (it then reports its own verdict on the empty data).
+    // One just under the limit, and one exactly at it, are let in to the legalizer (it reports its own verdict on the empty data).
     const under = { data: new Uint8Array(2000 * 1999), width: 2000, height: 1999 };
     expect(scanOutline(under, { left: 0, top: 0 }, PHOTO)).toMatchObject({ ok: false, reason: "empty_mask" });
+    const exactly = { data: new Uint8Array(2000 * 2000), width: 2000, height: 2000 };
+    expect(exactly.width * exactly.height).toBe(SCAN_OUTLINE_MAX_PIXELS);
+    expect(scanOutline(exactly, { left: 0, top: 0 }, PHOTO)).toMatchObject({ ok: false, reason: "empty_mask" });
   });
 });
 
@@ -260,6 +263,7 @@ describe("parseScanOutline", () => {
     ["a change log of 41", (o) => (o.changes = Array.from({ length: 41 }, () => ({ step: "C1", code: "a", detail: "b" })))],
     ["a warning that is not a string", (o) => (o.warnings = [7])],
     ["a 300 character limit on text", (o) => (o.warnings = ["x".repeat(301)])],
+    ["21 warnings", (o) => (o.warnings = Array.from({ length: 21 }, () => "LOW_FIDELITY"))],
     ["an affine of 5 numbers", (o) => (o.photoToPlate = o.photoToPlate.slice(0, 5))],
     ["an affine with a NaN", (o) => (o.photoToPlate[2] = Number.NaN)],
     ["a zero photo width", (o) => (o.photoSize.width = 0)],
@@ -287,6 +291,14 @@ describe("parseScanOutline", () => {
     expect(parseScanOutline(raw)).toBeUndefined();
   });
 
+  it("takes exactly 64 points, the compiler's limit", () => {
+    const o = JSON.parse(JSON.stringify(sample()));
+    o.points = Array.from({ length: 64 }, (_, i) => [30 * Math.cos((i / 64) * 2 * Math.PI), 40 + 30 * Math.sin((i / 64) * 2 * Math.PI)]);
+    expect(parseScanOutline(o)).toBeDefined();
+    o.points.push([0, 0]);
+    expect(parseScanOutline(o)).toBeUndefined();
+  });
+
   it("takes the ends of the clamp box", () => {
     const o = JSON.parse(JSON.stringify(sample()));
     o.points[0] = [45, 90];
@@ -299,27 +311,6 @@ describe("parseScanOutline", () => {
 });
 
 // ---- a real mask -------------------------------------------------------------------------------------------------
-
-/** The cup captured from a live sam-3.1 call; tests/sam-worker.test.ts holds the same string, read from there so there is one copy. */
-async function realCup() {
-  const src = readFileSync(join(__dirname, "sam-worker.test.ts"), "utf8");
-  const m = /const LIVE_CUP = "(.*?)";\n/s.exec(src);
-  if (!m) throw new Error("the captured cup is gone from tests/sam-worker.test.ts");
-  const live = m[1]!.replace(/\\n/g, "\n").replace(/\\"/g, '"');
-  const lane = { item_id: "m", output_index: 0, content_index: 0 };
-  const events = [
-    { type: "response.output_text.delta", ...lane, delta: live },
-    { type: "response.output_text.done", ...lane, text: live },
-    { type: "response.completed" },
-  ];
-  async function* gen() {
-    yield* events as never[];
-  }
-  const result = await parseImageStream(gen()).finalResult;
-  const rec = recordsOfKind(result.records, "mask")[0]!;
-  const data = decodeMaskToRaster(rec.mask);
-  return { raster: { data, width: rec.mask.width, height: rec.mask.height } as Raster, bounds: { left: rec.bounds.left, top: rec.bounds.top } };
-}
 
 describe("a real SAM mask (the captured cup, 1920 x 1280 photo)", () => {
   it("becomes an outline that lies on the cup in photo pixels, and survives the wire", async () => {
