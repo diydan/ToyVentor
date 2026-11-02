@@ -382,8 +382,8 @@ physics check.
   matched by `Muse` against `ai_catalog.txt` into a playable `toyventor.toy/1`
   build, lifting custom marker/sticker art via `Muse Image`.
 - **Living-Room Course -> Playable 2.5D Level:** `SAM 3.1` segments floor props
-  (`book`, `cup`, `pillow`, `box`) from a side photo -> `Muse Spark` maps their
-  positions and heights into a playable `toyventor.level/1` obstacle course.
+  (`book`, `cup`, `pillow`, `box`) from a side photo -> the kit composes a playable
+  room-themed `toyventor.level/1` around the pinned props (obstacles follow in `level/2`).
 - **Upcycle Lab (Cardboard & Bottle Adapters):** `SAM 3.1` measures a household
   box, tube, or bottle next to a printed `1x1 TU` tile -> `Muse` emits
   parametric clip/axle collar recipes that turn household recycling into a toy.

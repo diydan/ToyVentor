@@ -484,14 +484,14 @@ photos). Minimum per feature:
 
 ## 10. Sign-off
 
-- [ ] Scope = items 1, 2, 3, 6 only; 4, 5, 7 stay parked
-- [ ] Strict backward compatibility + single-photo ephemeral (§1) accepted
-- [ ] §3 spike-first order accepted (Scan Assist vision check gates noun help)
-- [ ] Rollout S0→S5 with per-step eval gates accepted
-- [ ] Feature 3 re-scope accepted (room-themed level on the kit in v1;
+- [x] Scope = items 1, 2, 3, 6 only; 4, 5, 7 stay parked
+- [x] Strict backward compatibility + single-photo ephemeral (§1) accepted
+- [x] §3 spike-first order accepted (Scan Assist vision check gates noun help)
+- [x] Rollout S0→S5 with per-step eval gates accepted
+- [x] Feature 3 re-scope accepted (room-themed level on the kit in v1;
       obstacles wait for `level/2`), with the one-line `spec.md` edit
-- [ ] S0b route gate accepted as a prerequisite to every multi-noun step
-- [ ] Signed: ________  Date: ________
+- [x] S0b route gate accepted as a prerequisite to every multi-noun step
+- [x] Signed: Dan (approved in session)  Date: 2026-11-02
 
 No S0 code starts until the first six boxes are checked. Q7 gates
 every user-facing privacy sentence and S1.
