@@ -85,6 +85,23 @@ describe("Mixamo bank", () => {
     expect(p.armR.y).toBeLessThan(-0.6);
   });
 
+  it("bakes the sad and sneak poses from their expression key, not the reference stance", () => {
+    // Mixamo's two-key pose clips start on the idle stance; sampling key 0 once made both poses identical to idle.
+    const idle = newPose(), sad = newPose(), sneak = newPose();
+    sampleClip(bank.idle!, 0, idle);
+    sampleClip(bank.sad!, 0, sad);
+    sampleClip(bank.sneak!, 0, sneak);
+    const deg = (q: THREE.Quaternion) => (2 * Math.acos(Math.min(1, Math.abs(q.w))) * 180) / Math.PI;
+    const between = (a: THREE.Quaternion, b: THREE.Quaternion) => deg(a.clone().invert().multiply(b));
+    expect(between(idle.head, sad.head)).toBeGreaterThan(30); // head drops
+    expect(between(idle.body, sad.body)).toBeGreaterThan(10); // shoulders slump
+    expect(sneak.armL.z - idle.armL.z).toBeGreaterThan(0.25); // arms come forward to creep
+    expect(sneak.armR.z - idle.armR.z).toBeGreaterThan(0.25);
+    expect(between(idle.body, sneak.body)).toBeGreaterThan(8); // leans in
+    // Rigid legs cannot crouch: a held pose never moves the hips, so it cannot sink or slide the feet.
+    for (const p of [sad, sneak]) expect(p.hips.length()).toBe(0);
+  });
+
   it("never pushes the hips below the floor and loops seamlessly", () => {
     for (const c of [bank.walk!, bank.run!, bank.idle!]) {
       let min = Infinity;

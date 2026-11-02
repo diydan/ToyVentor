@@ -139,7 +139,8 @@ export function bakeClip(root: THREE.Object3D, clip: THREE.AnimationClip, opts: 
   const tmp = new THREE.Vector3();
   let minY = Infinity;
   for (let i = 0; i < frames; i++) {
-    mixer.setTime(isPose ? 0 : (i / (frames - 1)) * duration);
+    // A Mixamo "pose" clip is two keys: key 0 is the reference stance and the last key is the expression (the slouch, the crouch).
+    mixer.setTime(isPose ? clip.duration : (i / (frames - 1)) * duration);
     root.updateMatrixWorld(true);
     bones.Hips!.getWorldPosition(tmp);
     if (i === 0) hipsAt0.copy(tmp);
@@ -159,6 +160,8 @@ export function bakeClip(root: THREE.Object3D, clip: THREE.AnimationClip, opts: 
     dir("RightUpLeg", "RightFoot", out.legR, i);
   }
   // Hips only ever lift Kip (never push the feet through the floor), and a looped clip returns to its start.
+  // A held pose leaves the hips alone: Kip's legs are rigid, so a crouch would sink the feet, and a shift would only slide him.
+  // It contributes torso, head and arms.
   for (let i = 0; i < frames; i++) out.hips[i * 3 + 1] = out.hips[i * 3 + 1]! - minY;
   if (out.loop && frames > 2) {
     out.hips[0] = out.hips[(frames - 1) * 3]!;
@@ -315,8 +318,10 @@ export interface DriverTuning {
   hipsGain: number;
   /** How much of the clip's body lean and twist reaches Kip. */
   bodyGain: number;
+  /** Strength of a held pose (sad, sneak). Mixamo poses are staged for a full-size person; on a big-headed toy at full strength the sad slump reads as a bow. */
+  poseGain: number;
 }
-export const DEFAULT_TUNING: DriverTuning = { walkRefSpeed: 2.4, runFrom: 2.9, runTo: 3.5, hipsGain: 2.2, bodyGain: 0.7 };
+export const DEFAULT_TUNING: DriverTuning = { walkRefSpeed: 2.4, runFrom: 2.9, runTo: 3.5, hipsGain: 2.2, bodyGain: 0.7, poseGain: 0.6 };
 
 export class MixamoDriver {
   private j: Joints | null = null;
@@ -386,7 +391,7 @@ export class MixamoDriver {
       act.t += dt;
       const dur = act.clip.pose ? 1.4 : act.clip.duration;
       // Walking cancels gestures fast; a one-shot stands still.
-      const w = ACTION_ENV(act.t, dur) * (1 - smooth(0.4, 1.2, speed));
+      const w = ACTION_ENV(act.t, dur) * (act.clip.pose ? tn.poseGain : 1) * (1 - smooth(0.4, 1.2, speed));
       sampleClip(act.clip, act.t, this.a);
       mixPose(p, this.a, w);
       if (act.t >= dur) this.action = null;

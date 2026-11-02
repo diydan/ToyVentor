@@ -138,6 +138,7 @@ toolSound,
 bellTone,
 toggleSound,
 noteGesture,
+resetAudio,
 buzz,
 } from "./audio";
 import { createMissions } from "./missions";
@@ -451,6 +452,8 @@ function buildWorld(id: string){
 }
 /* ---------- player ---------- */
 /* Mixamo locomotion + gestures for the Character rig. The bank bakes lazily on the first Character frame; until then (or if it fails) the procedural walk runs. */
+/** World units of width the portrait camera keeps in view (was 7: Kip filled about 18% of a phone's height; 5.2 is about a quarter). */
+const VIEW_W=5.2,DANCE_PUSH=.8;
 var mix: MixamoDriver|null=null,mixLoading=false;
 function mixGo(a: MixAction){return !!(mix&&!reduce&&P.rig&&mix.canDrive(P.rig)&&mix.trigger(a))}
 var P: Record<string, any>={pos:new T.Vector3(2,0,0),face:0,tface:0,speed:0,phase:0,busy:false,target:null,spin:0,lunge:0,hop:0,root:new T.Group(),model:null,rig:null,blinkT:2,dropT:1,showcase:false};
@@ -475,7 +478,7 @@ function moves(){var st=creStats();$$(".mv").forEach(function(b){b.classList.tog
 function updHud(){}
 
 /* ---------- abilities ---------- */
-async function ability(st: string){if(P.busy||P.showcase)return;var sd=STATS[st];if(!sd||!creStats()[st]){if(sd)toast("Build with a part that has "+sd.n+" to use "+sd.m+".");sfx.bump();return}
+async function ability(st: string){if(P.busy||P.showcase)return;var sd=STATS[st];if(!sd||!creStats()[st]){if(sd)toast("Build with a part that has "+sd.n+" to use "+sd.m+".");if(S.type==="character")mixGo("sad");sfx.bump();return}
  var best: any=null,bd=1e9;spots.forEach(function(s){if(s.got||s.d.t!==st)return;if(s.d.t!=="speed"&&!s.hidden)return;var d=Math.abs(s.d.x-P.pos.x);if(d<bd){bd=d;best=s}});
  var abRange: Record<string, number>={glow:4.5,torque:3.2,speed:6.5,spin:3.6},abStand: Record<string, number>={glow:2,torque:1.8,speed:4,spin:1.6};
  if(best&&bd<=12){var dir=best.d.x>=P.pos.x?1:-1,range=abRange[st]??4;P.tface=dir>0?0:Math.PI;
@@ -624,7 +627,7 @@ var FR=0;function frame(){if(disposed)return;FR++;timer.update();var dt=Math.min
  markT+=dt;marker.material.opacity=Math.max(0,.8-markT*1.2);marker.scale.setScalar(1+markT*.6);
  if(!P.showcase){
   if(P.speed>1&&P.hop<.01){P.dustT=(P.dustT||0)-dt;if(P.dustT<0){P.dustT=.13;puff()}}
-  if(P.speed<.1&&!P.busy&&!P.target){P.idleT=(P.idleT||0)+dt;if(P.idleT>6.5){P.idleT=0;if(!reduce)idleAct()}}else P.idleT=0;
+  if(P.speed<.1&&!P.busy&&!P.target){P.idleT=(P.idleT||0)+dt;if(P.idleT>6.5){P.idleT=0;if(!reduce&&!(mix&&mix.busyAction))idleAct()}}else P.idleT=0;
   if(P.joyPending&&!P.busy){P.joyPending=false;if(!reduce)joy()}
   var dirNow=Math.cos(P.tface)>0?1:-1;if(P.lastDir&&dirNow!==P.lastDir&&!P.busy&&!reduce)fx.push({t:0,d:.32,f:function(k){if(!P.busy)P.hop=Math.max(P.hop,.2*Math.sin(Math.PI*k))},end:function(){if(!P.busy)P.hop=0}});P.lastDir=dirNow;
   if(S.type!=="vehicle"&&P.speed>.6&&P.hop<.01){var sgn=Math.sin(P.phase)>0?1:-1;if(sgn!==P.lastStep){P.lastStep=sgn;if(sound&&AC){if(S.type==="robot")tone(210,0,.05,"square",.025,150);else tone(300,0,.06,"sine",.045,180)}}}
@@ -632,9 +635,14 @@ var FR=0;function frame(){if(disposed)return;FR++;timer.update();var dt=Math.min
  motor(S.type==="vehicle"&&!P.showcase?P.speed:0);
  spots.forEach(function(s,i){if(s.glint){s.glint.material.opacity=.25+.3*(1+Math.sin(t*3+i*1.7))/2;s.glint.scale.setScalar(.7+.2*Math.sin(t*3+i))}});
  if(!P.busy&&!P.showcase)spots.forEach(function(s){if(s.got)return;var hk=S.world+s.i;if((s.hidden||s.d.t==="speed")&&near(s,3.6)&&(!hintAt[hk]||t-(hintAt[hk]??0)>6)){hintAt[hk]=t;hint(s)}});
- var asp=camera.aspect,dd0=Math.max(10,Math.min(22,7/(2*Math.tan(camera.fov*Math.PI/360)*asp))),ZK=[1,1.5,2.1][S.zoom||0]??1;P.zd=P.zd==null?ZK:P.zd+(ZK-P.zd)*Math.min(1,dt*4);var dd=dd0*P.zd;
+ // Stopping beside something still hidden: Kip leans in and peers at it (a held Mixamo pose; walking cancels it, and it fires once per visit).
+ var peek=false;if(!P.busy&&!P.showcase&&S.type==="character"&&P.speed<.2)spots.forEach(function(s){if(!s.got&&(s.hidden||s.d.t==="speed")&&near(s,2.6))peek=true});
+ P.peekT=peek?(P.peekT||0)+dt:0;if(P.peekT>.45&&!P.peeked){P.peeked=true;mixGo("sneak")}if(!peek)P.peeked=false;
+ var asp=camera.aspect,dd0=Math.max(10,Math.min(22,VIEW_W/(2*Math.tan(camera.fov*Math.PI/360)*asp))),ZK=[1,1.5,2.1][S.zoom||0]??1;P.zd=P.zd==null?ZK:P.zd+(ZK-P.zd)*Math.min(1,dt*4);
+ // Celebrations (the samba) push the camera in so the dance reads on a phone; walking and idling keep the wide navigation view.
+ var pushT=mix&&mix.busyAction==="dance"?DANCE_PUSH:1;P.push=P.push==null?1:P.push+(pushT-P.push)*Math.min(1,dt*(pushT<1?3:2));var dd=dd0*P.zd*P.push;
  if(P.showcase){cam.x+=(P.pos.x-cam.x)*Math.min(1,dt*4);var hh=(rig.h||2.6),cy2=.36+hh*.5,tn=2*Math.tan(camera.fov*Math.PI/360),d2=Math.max(7,(hh/.33)/tn*(asp<.8?1:.62),((rig.w||1.9)/.8)/(tn*asp));camera.position.set(cam.x,cy2+1,d2);camera.lookAt(cam.x,cy2,0);var W0=hostEl.clientWidth,H0=hostEl.clientHeight;camera.setViewOffset(W0,H0,0,H0*(P.title?-.04:.27),W0,H0)}
- else{var la=Math.cos(P.face)>0?1.5:-1.5,tx=Math.max(3,Math.min(41,P.pos.x+la));cam.x+=(tx-cam.x)*Math.min(1,dt*2.6);camera.position.set(cam.x,2.6+dd*.24,dd);camera.lookAt(cam.x,1.1+(P.zd-1)*1.2,0)}if(scene.fog&&"near" in scene.fog){if(W.fogW!==W.root){W.fogW=W.root;W.fn0=scene.fog.near;W.ff0=scene.fog.far}var fex=P.showcase?0:dd-dd0;scene.fog.near=W.fn0+fex;scene.fog.far=W.ff0+fex}
+ else{var la=(Math.cos(P.face)>0?1:-1)*Math.min(1.5,2*Math.tan(camera.fov*Math.PI/360)*asp*dd*.21),tx=Math.max(3,Math.min(41,P.pos.x+la));cam.x+=(tx-cam.x)*Math.min(1,dt*2.6);camera.position.set(cam.x,2.6+dd*.24,dd);camera.lookAt(cam.x,1.1+(P.zd-1)*1.2,0)}if(scene.fog&&"near" in scene.fog){if(W.fogW!==W.root){W.fogW=W.root;W.fn0=scene.fog.near;W.ff0=scene.fog.far}var fex=P.showcase?0:dd-dd0;scene.fog.near=W.fn0+fex;scene.fog.far=W.ff0+fex}
  if(!reduce&&P.shake>0){camera.position.x+=(Math.random()-.5)*P.shake;camera.position.y+=(Math.random()-.5)*P.shake*.7}P.shake=Math.max(0,(P.shake||0)-dt*1.6);
  var fovT=36+(reduce?0:(P.kick||0)*6);P.kick=Math.max(0,(P.kick||0)-dt*2.4);if(Math.abs(camera.fov-fovT)>.02){camera.fov+=(fovT-camera.fov)*Math.min(1,dt*12);camera.updateProjectionMatrix()}
  followHero(P.pos.x,P.pos.z);
@@ -1119,7 +1127,7 @@ edIoLoad:function(){edIoLoad()},
 edIoClose:function(){edIoClose()},
 edFromTitle:function(){edFromTitle()},
 town:{neighbors:function(){return townNeighbors(S.world)},perk:activePerk,tidy:function(){return townSparkleProgress(S.tidy)},cross:streetCross,tidyNearest:function(){var best=tidySpots.filter(function(s){return !s.done})[0];return best?tidyUp(best):false}},
-dispose:function(){ if(disposed)return; disposed=true; if(P.stlToken)P.stlToken.cancelled=true; cancelAnimationFrame(rafId); if(musTimer)clearInterval(musTimer); clearTimers(); ctrl.abort(); timer.dispose(); try{ if(AC)AC.close(); }catch(e){} try{ if(composer){ composer.passes.forEach(function(p: any){ if(p.dispose)p.dispose(); }); if(composer.renderTarget1)composer.renderTarget1.dispose(); if(composer.renderTarget2)composer.renderTarget2.dispose(); } }catch(e){} try{ scene.traverse(function(o: any){ if(o.geometry&&!o.geometry.userData.stlCached)o.geometry.dispose(); if(o.material){ (Array.isArray(o.material)?o.material:[o.material]).forEach(function(m: any){ for(var k in m){ var v=m[k]; if(v&&v.isTexture)v.dispose(); } if(m.dispose)m.dispose(); }); } }); clearStlRigCache(); if(scene.environment&&scene.environment.dispose)scene.environment.dispose(); disposeEnvironment(); renderer.dispose(); if(renderer.forceContextLoss)renderer.forceContextLoss(); }catch(e){} hostEl.innerHTML=""; } };
+dispose:function(){ if(disposed)return; disposed=true; if(P.stlToken)P.stlToken.cancelled=true; cancelAnimationFrame(rafId); if(musTimer)clearInterval(musTimer); clearTimers(); ctrl.abort(); timer.dispose(); resetAudio(); try{ if(composer){ composer.passes.forEach(function(p: any){ if(p.dispose)p.dispose(); }); if(composer.renderTarget1)composer.renderTarget1.dispose(); if(composer.renderTarget2)composer.renderTarget2.dispose(); } }catch(e){} try{ scene.traverse(function(o: any){ if(o.geometry&&!o.geometry.userData.stlCached)o.geometry.dispose(); if(o.material){ (Array.isArray(o.material)?o.material:[o.material]).forEach(function(m: any){ for(var k in m){ var v=m[k]; if(v&&v.isTexture)v.dispose(); } if(m.dispose)m.dispose(); }); } }); clearStlRigCache(); if(scene.environment&&scene.environment.dispose)scene.environment.dispose(); disposeEnvironment(); renderer.dispose(); if(renderer.forceContextLoss)renderer.forceContextLoss(); }catch(e){} hostEl.innerHTML=""; } };
 // Scoped sizing: host rect via ResizeObserver with window-resize fallback (winOn above).
 resize();
 try { const ro = new ResizeObserver(() => resize()); ro.observe(hostEl); const origDispose = handle.dispose; handle.dispose = () => { try{ro.disconnect();}catch{} origDispose(); }; } catch {}

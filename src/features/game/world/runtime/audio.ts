@@ -69,5 +69,34 @@ export function noteGesture(): void {
   } catch (e) {}
 }
 
+/**
+ * Tear down everything bound to the AudioContext. This module's state outlives a world: without this, dispose() closed the
+ * context but ctx() kept handing the closed one back, and the music bus, motor and noise buffer kept pointing at its dead
+ * nodes, so a world mounted afterwards was silent until the page reloaded. `gestured` and `sound` are the child's, not the
+ * world's, so they stay: the next ctx() builds a fresh context straight away.
+ */
+export function resetAudio(): void {
+  try {
+    if (MOTOR) {
+      MOTOR.o.stop();
+      MOTOR.o2.stop();
+    }
+  } catch (e) {}
+  const old = AC;
+  AC = null;
+  MOTOR = null;
+  MUS.on = false;
+  MUS.bus = null;
+  MUS.rev = null;
+  MUS.next = 0;
+  MUS.step = 0;
+  MUS.bar = 0;
+  delete MUS.nb;
+  try {
+    const closing = old ? old.close() : null;
+    if (closing && closing.catch) closing.catch(function () {});
+  } catch (e) {}
+}
+
 export { AC, sound, gestured, ctx, tone, noise, sfx, partSound, MOTOR, motor, MUS, SONG, musInit, musGain, mnote, kick, hit, toolSound, bellTone, buzz };
 (["snap","found","bolt","shove","crash"] as ("snap"|"found"|"bolt"|"shove"|"crash")[]).forEach(function(k){var f=sfx[k],pat={snap:10,found:[20,40,30],bolt:8,shove:16,crash:30}[k];sfx[k]=function(){f.apply(null,arguments as unknown as []);buzz(pat)}});
