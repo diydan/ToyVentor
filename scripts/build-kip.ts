@@ -103,6 +103,15 @@ copyFileSync(
   join(kipSrcDir, "viewer/Truck-Mockup.html"),
   join(kipOutDir, "Truck-Mockup.html"),
 );
+// Workshop shell (docs/specs/workshop-spec.md): one page with a tab per bench (Kip, Truck); the benches themselves are copied above.
+copyFileSync(
+  join(kipSrcDir, "viewer/Workshop.html"),
+  join(kipOutDir, "Workshop.html"),
+);
+copyFileSync(
+  join(kipSrcDir, "viewer/workshop.js"),
+  join(kipOutDir, "workshop.js"),
+);
 // Describe & build tab (kip-describe-contract.md): the page modules and their data. The 30 part STLs it draws are written straight into
 copyFileSync(
   join(kipSrcDir, "viewer/kip-describe-tab.js"),

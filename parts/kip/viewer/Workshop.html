@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Workshop</title>
+<style>
+  html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: #ece5d6; }
+  #workshop { position: fixed; inset: 0; }
+</style>
+</head>
+<body>
+<!--
+  ToyVentor Workshop (standalone; docs/specs/workshop-spec.md). One page, a tab per bench: Kip (Kip-Demo.html) and Truck (Truck-Mockup.html).
+  The shell is workshop.js; this page only gives it a full-window box. The benches are untouched and still run on their own pages.
+  Query: ?bench=kip|truck picks the bench; every other param goes to that bench (?bench=kip&vehicle=truck, ?bench=truck&driver=snap&head=fox).
+  Hand-test from source without build:kip:  npm run kip:serve   then open  <printed base>/kip/Workshop.html
+-->
+<div id="workshop"></div>
+<script type="module">
+import { mountWorkshop } from '/kip/workshop.js?v=10.0';
+window.workshop = mountWorkshop(document.getElementById('workshop'));
+</script>
+</body>
+</html>
