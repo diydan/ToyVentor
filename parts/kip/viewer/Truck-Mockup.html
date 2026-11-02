@@ -1702,11 +1702,6 @@ document.getElementById('btn-driver').addEventListener('click', () => {
   updateHUD();
 });
 
-async function ensureKipGeo(pid) {
-  if (!pid || GEOS[pid]) return;
-  const raw = await loader.loadAsync(`./partspec/mockup/${pid}.stl`);
-  GEOS[pid] = toCreasedNormals(mergeVertices(raw, 1e-4), THREE.MathUtils.degToRad(32));
-}
 function syncKipButtons() {
   const isSnap = state.driver === 'snap';
   const dbtn = document.getElementById('btn-driver');
@@ -1728,13 +1723,12 @@ function syncKipButtons() {
   hatBtn.textContent = blocked ? 'Hat: n/a (sculpted wig)' : `Hat: ${KIP_STACK.hat ? kipLabel(KIP_STACK.hat) : 'off'}`;
   hatBtn.disabled = !!blocked;
 }
-async function cycleKip(kind) {
+function cycleKip(kind) {
   const T = KIP_STACK.table; if (!T) return;
   const list = { head: KIP_HEADS, hair: [null, ...Object.keys(T.hairs)], hat: [null, ...T.hats] }[kind];
   const cur = list.indexOf(KIP_STACK[kind]);
   KIP_STACK[kind] = list[(cur + 1) % list.length];
   syncKipButtons();
-  await ensureKipGeo(KIP_STACK[kind]);
   rebuildScene();
 }
 document.getElementById('btn-head').addEventListener('click', () => cycleKip('head'));
@@ -1811,7 +1805,6 @@ async function init() {
     const w = pick(q0.get('hair'), 'hair_', (i) => i in KIP_STACK.table.hairs); if (w !== undefined) KIP_STACK.hair = w;
     const t = pick(q0.get('hat'), 'hat_', (i) => KIP_STACK.table.hats.includes(i) || i === 'hat_wobble_hat'); if (t !== undefined) KIP_STACK.hat = t;
     if (q0.get('hat') === 'wobble_hat') KIP_STACK.hat = 'wobble_hat';
-    await Promise.all([KIP_STACK.head, KIP_STACK.hair, KIP_STACK.hat].map(ensureKipGeo));
     syncKipButtons();
   }
   rebuildScene();

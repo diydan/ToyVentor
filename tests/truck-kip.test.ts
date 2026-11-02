@@ -40,5 +40,6 @@ describe("Truck one-Kip hair and hats", () => {
     expect(source).not.toContain("headCadWrap");
     expect(source).not.toContain("meshOf(KIP_STACK.hair");
     expect(source).not.toContain("meshOf(KIP_STACK.hat");
+    expect(source).not.toContain("ensureKipGeo");
   });
 });
