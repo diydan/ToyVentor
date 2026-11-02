@@ -308,7 +308,7 @@ What the compiler accepts decides the routes (read in the code, 2026-11-02):
 
 | Route | Photos | Shape handed to the compiler | Slots | Status |
 | --- | --- | --- | --- | --- |
-| A. Cut-out | 1, object looks flat (drawing, wing, sword, paddle) | `profile2d`: one outline, 3 to 64 points, x within 45 mm, z from -45 to 90 mm | `hand` only | Compiles today; outline step built (`shared/photoOutline.ts`), not wired to the Worker |
+| A. Cut-out | 1, object looks flat (drawing, wing, sword, paddle) | `profile2d`: one outline, 3 to 64 points, x within 45 mm, z from -45 to 90 mm | `hand` only | Compiles today; outline, fit loop and sticker path built (`shared/photoOutline.ts`, `outlineFit.ts`, `outlineSticker.ts`), not wired to the Worker |
 | B. Round | 1, object looks round (cup, bottle, bowl) | `loft` slices, depth `d` taken from width `w` | `crown`, `head`, `back`, vehicle slots | Compiles today; profile extraction not built |
 | C. Chunky | 2 (front, side) | `loft` slices, `w` from the front outline, `d` from the side outline | as B | Compiles today; fitter not built |
 
@@ -351,12 +351,37 @@ What the compiler accepts decides the routes (read in the code, 2026-11-02):
     survives at the new size, then not at the next), so there is none.
   - C3 fit: scale into the clamp box above (default 54 mm tall). L2 does not
     handle hand plates ("L2 only handles loft slots"), so a `marginal`
-    small-parts result goes to the repair loop: rescale the outline by the
-    measured cylinder (`scaleOutline`) and gate again. The band cannot be
-    avoided in advance, because it follows the final shape, not the asked
-    height: a paddle asked for 33 mm came out 17.7 mm tall, its stick being
-    thinner than 3.2 mm. Of the 77 outlines across sizes, all 7 marginal ones had
-    an asked height of 33 or 34 mm (cylinders 32.3 to 34.1 mm).
+    small-parts result is rescaled by the measured cylinder and gated again.
+    The band cannot be avoided in advance, because it follows the final shape,
+    not the asked height: a paddle asked for 33 mm came out 17.7 mm tall, its
+    stick being thinner than 3.2 mm. Of the 77 outlines across sizes, all 7
+    marginal ones had an asked height of 33 or 34 mm (cylinders 32.3 to 34.1 mm).
+  - **The fit loop** (`shared/outlineFit.ts`; pure, the gate is passed in).
+    `fitOutline(mask, options, gate)` gates the outline, and on a failure walks
+    `RETRY_LADDER`, re-running the legalizers from the mask at each rung so the
+    change log stays true. A `marginal` result is rescaled by the measured
+    cylinder: grow first (a legalized outline already sits at the minimum
+    feature, so a shrunk one can lose its thinnest part), aiming 0.75 mm past the
+    band edge (the daemon's own L2 margin), re-aiming once from the new
+    measurement because the cylinder is not proportional to the outline (the grip
+    shaft and neck are fixed size), shrinking only when the 90 mm box blocks
+    growth. It never gates the same shape twice and stops at 8 gate calls.
+    `fitPolygon` and `fitFlipped` do the same on a finished polygon, for after the
+    mask is gone (the kid pressed flip or resize); their fillet rungs change the
+    recipe fillet only. `verdictFromGateReport` reads the daemon's `gate_report`:
+    a marginal part is `ok: false` with an empty failure list, so `small_part` is
+    the only signal.
+  - **Measured on the real compile and gates (2026-11-02, 70 fits: 5 shapes and 5
+    random blobs at asked heights of 24, 33, 34, 40, 54, 70 and 90 mm,
+    `optimize=True`, run at daemon `0f60e97` and again at `13d30f8` with the same
+    outcome and the same attempts for all 70):** 69 end on a passing part and 61
+    of those on the first gate call. The 7 marginal ones (first cylinders 31.95 to
+    34.75 mm, asked heights 33 and 34) each cleared the band with one rescale, a
+    growth of 2 to 12% over the asked height. The one sliver (a paddle asked for
+    40 mm) passed on the 2% nudge. The one that did not end on a part is a 24 mm
+    blade, which the legalizer refuses before any gate call (2.7 mm wide, under
+    the 3.2 mm minimum). Each fit took 2.1 to 3.1 s on average (two runs) and
+    14.8 s at most, nearly all of it the gate, on a machine at load average 55 to 65.
   - C4 orientation: long axis to z, handle end down, with a flip button. The kid
     decides which end is the handle; the model is not asked.
 - **Relief ("puffy").** The builder's crest is one level. Repeating the inward
@@ -370,9 +395,34 @@ What the compiler accepts decides the routes (read in the code, 2026-11-02):
   plate is a custom-outline version of the `craft_grip_card_P` blank that spec
   lists as not yet authored. The sticker goes on the face that lay on the bed,
   which is flat; over the crest or a relief it would wrinkle (that spec found the
-  same with a 0.55 mm ridge). Rule: the sticker path and the plate outline are
-  the same polygon. The sticker is built on the device from the local photo and
-  the returned contour, so no picture comes back from the server.
+  same with a 0.55 mm ridge). The sticker is built on the device from the local
+  photo and the returned contour, so no picture comes back from the server.
+  Built in `shared/outlineSticker.ts` (`photoStickerItem`), which returns the
+  item shape the sticker sheet module plans with.
+  - **The cut path is the polygon with the builder's rounding applied, not the raw
+    polygon.** Simplifying the traced outline leaves sharp convex corners, and the
+    builder's shrink-then-grow takes their tips off. Measured on 14 outlines
+    against the built plate (a section of the real part, 0.1 mm raster): with the
+    raw polygon the sticker overhung the plate by up to 0.28 mm on regular shapes
+    and 0.85 mm on rough ones; with the rounded path, 0.20 and 0.54 mm. Concave
+    corners are not rounded (the builder leaves them), so the path keeps every
+    concave vertex of the recipe exactly. Where an edge is too short for the full
+    radius that corner stays a little sharp, which is the 0.54 mm.
+  - **The plate is the outline plus a neck.** `handheld_prop` unions a 6.4 mm neck
+    (2.5 mm below the polygon's bottom, rising to 35% of its height), so a thin
+    handle shows bare plate beside the sticker (up to 52 mm2 on a star). The
+    sticker never has plate missing behind it.
+  - **Which face, which way round.** `-Y` is the front in the part frame and the
+    bed face is `y = -2.5`, so the sticker sits on the front face, seen from the
+    front: x right, z up, nothing mirrored.
+  - **The photo map.** `legalizeOutline` returns `photoToPlate`, an exact affine
+    from a mask pixel to plate millimetres. The photo is not stored, so without it
+    the device could not place the artwork. `withFlipped` and `withScaled` carry it
+    through the kid's flip and resize, and the retry loop's nudges and rescales do
+    too. Tests check it against the mask itself: the polygon carried back through
+    the map overlaps the mask by 0.98 to 0.996 on the eight cases I printed (tilted,
+    upside down, on its side, flipped, grown), the tests require above 0.95 on all
+    nine, and a map that was not updated by a flip is caught.
 
 **Routes B and C: round and chunky.**
 
@@ -419,10 +469,20 @@ What the compiler accepts decides the routes (read in the code, 2026-11-02):
    and its mask are gone after the SAM call) and `tests/photo-outline.test.ts`
    with masks in `tests/fixtures/outlineMasks.ts`. The fixtures in
    `tests/fixtures/scan-targets.json` hold nouns, not masks, so these masks are
-   new: rasterised shapes, 40 random blobs and 10 rough discs. Still to do: a few
+   new: rasterised shapes, 40 random blobs and 10 rough discs. It also returns
+   `photoToPlate`, the exact photo-pixel-to-plate map the sticker needs (a gap in
+   the first contract: the photo is gone after the SAM call). Still to do: a few
    real photos, and the Worker wiring (the mask is only in memory there).
-2. Route A through the daemon on the flat objects among the 10 F2 photos.
-3. The sticker cut path from the same polygon.
+2. **Built, not yet on real photos (2026-11-02, uncommitted):** the fit loop,
+   `shared/outlineFit.ts` with `tests/outline-fit.test.ts` (33 tests, 10 of 10
+   mutants caught), and its real-gate run above. Still to do: Route A on the flat
+   objects among the 10 F2 photos, and the daemon call from the Worker.
+3. **Built for the path and the photo map (2026-11-02, uncommitted):**
+   `shared/outlineSticker.ts` with `tests/outline-sticker.test.ts` (28 tests, 8
+   of 8 mutants caught): the cut path, as the item shape the sticker sheet module
+   plans with, and the map from the photo onto it. Still to do: draw the artwork
+   on the device (the sheet module has no `photo_outline` sampler yet), and stick
+   a real one on a printed plate.
 4. The relief spike (question 28).
 5. Route B profile extraction.
 6. Route C fitter, after question 29.
@@ -434,7 +494,16 @@ What the compiler accepts decides the routes (read in the code, 2026-11-02):
 - C1 to C4 turn every synthetic mask into a polygon that compiles, and log every
   change they make. First run, met: 33 of 33 pass the production gate at the first
   try (see the measured note under Route A).
-- Sticker path and plate outline are identical point for point (a unit test).
+- Loop: every legalized outline ends on a passing part inside the call budget,
+  or says why it did not. First run, met: 69 of 70, the other refused as too thin
+  before any gate call (see the measured note under Route A).
+- Sticker path: the recipe outline with the builder's rounding applied, not the
+  raw polygon (the raw one overhangs the built plate by up to 0.85 mm). Unit
+  tests: every concave vertex of the recipe is kept exactly, the SVG and DXF the
+  sheet module writes hold the path unchanged, and the path lies on the object in
+  the mask, also after a flip or resize. Against the real built plate it
+  overhangs by at most 0.20 mm on regular shapes and 0.54 mm on rough outlines
+  (measured; target to confirm on a real print).
 - Route C: report the overlap (IoU) between the built loft and each photo's mask,
   per object. No pass mark until the first run says what is reachable.
 
@@ -1404,7 +1473,13 @@ deterministic code verifies geometry, fit, and physics.
     (found by splitting the converted mesh; one star at 54 mm, not a survey).
     Whether the gate should ignore degenerate faces, or the SDK should drop them
     before the gate, is the owner's call. Until then F2b works around it with the
-    retry ladder.
+    retry ladder. (d) The sticker has to be cut to the built plate, and the plate
+    is the recipe polygon rounded again by the builder (plus the neck). The daemon
+    could return the built outline (the `CrossSection` after `handheld_prop`), which
+    would make the sticker exact; F2b rounds the polygon itself in TypeScript, which
+    is within 0.2 mm on regular shapes. (e) `gate_report` in
+    `shared/forgeOptimizer.ts` does not list `small_part`, though the daemon's job
+    record carries it and the fit loop depends on it for the marginal case.
 
 ## Docs impact when this ships
 
