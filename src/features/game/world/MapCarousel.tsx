@@ -28,6 +28,10 @@ export interface MapCarouselProps {
   onAskAge: () => void;
   /** World/lab card: switch the stage in place. */
   onGoWorld: (world: WorldId) => void;
+  /** Start a Learn run (C2). Absent: Learn taps show the coming-soon notice. */
+  onStartLearn?: (track: string, plan: number[]) => void;
+  /** Plan for an explicit RungSheet pick. */
+  planForRung?: (track: string, rung: number) => number[];
 }
 
 const cardLabel = (card: MapCard): string =>
@@ -48,6 +52,8 @@ export function MapCarousel({
   onClose,
   onAskAge,
   onGoWorld,
+  onStartLearn,
+  planForRung,
 }: MapCarouselProps) {
   const trackRef = useRef<HTMLOListElement>(null);
   const [rungsOf, setRungsOf] = useState<LadderState | null>(null);
@@ -106,6 +112,7 @@ export function MapCarousel({
     if (card.kind === "ask") return onAskAge();
     if (card.kind === "learn" && card.ladder) {
       if (card.ladder.choices > 1) return setRungsOf(card.ladder);
+      if (onStartLearn) return onStartLearn(card.id, card.ladder.plan);
       return soon(card.label);
     }
     onGoWorld(card.id as WorldId);
@@ -128,9 +135,12 @@ export function MapCarousel({
     return (
       <RungSheet
         state={rungsOf}
-        onPick={() => {
+        onPick={(rung) => {
+          const track = rungsOf.ladder.id;
+          const label = rungsOf.ladder.label;
           setRungsOf(null);
-          soon(rungsOf.ladder.label);
+          if (onStartLearn) onStartLearn(track, planForRung?.(track, rung) ?? [rung]);
+          else soon(label);
         }}
         onClose={() => setRungsOf(null)}
       />

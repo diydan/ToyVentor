@@ -61,6 +61,7 @@ import {
 } from "./engine";
 import { GrownUpsSheet } from "./GrownUpsSheet";
 import { composeRoomPhotoLevel } from "./runtime/roomPhoto";
+import { planFor } from "../../../lib/learn";
 import { buildMapCards } from "../../../lib/mapCards";
 import { MapCarousel } from "./MapCarousel";
 import { MissionPanel } from "./MissionPanel";
@@ -226,6 +227,9 @@ export function GameCanvas({
             void recordPlayProgress({ completedMissionIds: event.keys }).then(
               ({ snapshot }) => setParentSnapshot(snapshot),
             );
+          }
+          if (event.type === "learnFinished") {
+            setMapOpen(true);
           }
           if (event.type === "missionSolved") {
             const { key, attempts, error, stats, tier: solvedTier } =
@@ -513,6 +517,8 @@ export function GameCanvas({
     setMoreOpen(false);
     setWorldsOpen(false);
     setLiveStatus({ playing: false, listening: false });
+    setMapOpen(false);
+    engine()?.stopLearnRun();
     engine()?.muteSound();
   }, [sleepActive, closeEngineSheets]);
 
@@ -702,6 +708,24 @@ export function GameCanvas({
                 role="menu"
                 aria-label="More studio tools"
               >
+                {state.learn && (
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className="tv-menu-item"
+                    disabled={sleepActive}
+                    onClick={() => {
+                      setMoreOpen(false);
+                      engine()?.stopLearnRun();
+                    }}
+                  >
+                    <span>Free world</span>
+                    <span className="tv-menu-meta">
+                      Learn {state.learn.step} of {state.learn.total}
+                    </span>
+                  </button>
+                )}
+
                 <button
                   type="button"
                   role="menuitem"
@@ -1105,7 +1129,11 @@ export function GameCanvas({
             progression={progression}
             onAction={(action) => engine()?.missionAction(action)}
             onControl={(index) => engine()?.missionControl(index)}
-            onSelectTier={(tier: Tier) => engine()?.setMissionTier(tier)}
+            onSelectTier={
+              state.learn
+                ? undefined
+                : (tier: Tier) => engine()?.setMissionTier(tier)
+            }
           />
         )}
 
@@ -1200,6 +1228,23 @@ export function GameCanvas({
               setMapOpen(false);
               engine()?.goWorld(worldId);
             }}
+            onStartLearn={(track, plan) => {
+              closeEngineSheets();
+              closeReactOverlays();
+              engine()?.startLearnRun(
+                track,
+                plan,
+                (progressionRef.current.ageBand ?? 99) <= 1,
+              );
+            }}
+            planForRung={(track, rung) =>
+              planFor(
+                track,
+                progressionRef.current.ageBand ?? null,
+                progressionRef.current,
+                rung,
+              ) ?? [rung]
+            }
           />
         )}
 

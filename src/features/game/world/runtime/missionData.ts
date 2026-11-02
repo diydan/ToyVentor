@@ -366,3 +366,20 @@ export function cleanData(chrome: Chrome, s: CleanState): MpPanelData {
     ctrls,
   });
 }
+
+/** Panel rung steps (learn Rungs, carousel C2): one question, three picks. */
+export function learnData(
+  chrome: Chrome,
+  stepIndex: number,
+  stepTotal: number,
+  say: string,
+  choices: readonly string[],
+): MpPanelData {
+  return withChrome(chrome, {
+    lines: [`Step ${stepIndex + 1} of ${stepTotal}: ${say}`],
+    chips: [],
+    ctrls: choices.map((label, i) =>
+      ctrl(label, { pick: String(i) }, { primary: true }),
+    ),
+  });
+}

@@ -51,6 +51,8 @@ export interface MissionDeps {
   rockMesh: (r: number, seed: number) => any;
   chestMesh: () => any;
   setTimeout: (fn: () => void, ms: number) => number;
+  /** Learn-run hook: fired with the mission id on every scored win. */
+  onWin?: (key: string) => void;
 }
 
 export interface MissionEntry {
@@ -116,7 +118,7 @@ export function createMissions(deps: MissionDeps): MissionsApi {
   var {S, P, fx, toast, save, notify, updHud, creStats, mPanel, mtPanel, mtFail, walkTo, hop, joy, mpHide, add, resetNear, darkSprite, rockMesh, chestMesh, setTimeout} = deps;
   var MT: Record<string, MissionEntry> = {};
 function mFailNote(m: Mission){var k=mkk(m);S.ma[k]=(S.ma[k]||0)+1;save()}
-function mWinNote(m: Mission){var k=mid(m),akk=mkk(m),st=creStats(),now=Math.max(Date.now(),((S.lastWin&&S.lastWin.at)||0)+1);S.lastWin={key:k,tier:mTier(m),attempts:(S.ma[akk]||0)+1,error:S.me[akk]||0,stats:Object.keys(st).filter(function(s){return st[s]}),at:now};S.ma[akk]=0;delete S.me[akk];m.replaying=false;m.prevSt=null;m.dismissed=true;save()}
+function mWinNote(m: Mission){var k=mid(m),akk=mkk(m),st=creStats(),now=Math.max(Date.now(),((S.lastWin&&S.lastWin.at)||0)+1);S.lastWin={key:k,tier:mTier(m),attempts:(S.ma[akk]||0)+1,error:S.me[akk]||0,stats:Object.keys(st).filter(function(s){return st[s]}),at:now};S.ma[akk]=0;delete S.me[akk];m.replaying=false;m.prevSt=null;m.dismissed=true;save();if(deps.onWin)deps.onWin(k)}
 function mStartReplay(m: Mission){var k=mid(m);m.prevSt=JSON.parse(JSON.stringify(mst(m)));S.ms[k]={tier:(m.prevSt||{}).tier};m.done=false;m.replaying=true;m.dismissed=false;
  var entry=MT[m.type],h0=m.type==="bridge"?m.x-1.75:m.type==="lift"?m.px-.8:(entry?entry.hold(m):m.x-2);if(P.pos.x>h0){P.pos.x=h0;P.target=null;P.elev=0}
  if(m.type==="bridge"){m.plank.position.y=.14;m.plank.rotation.z=0}
@@ -133,7 +135,7 @@ function mCancelReplay(m: Mission){if(!m||!m.replaying||!S.mdone[mid(m)])return;
  if(m.type==="pattern")m.gy=2.3;
  if(m.type==="circuit"){m.dark.visible=false;m.glow.visible=true;m.bulb.material.color.set("#fff3b0");m.bulb.material.emissive.set("#ffd24d")}
  save();var entry=MT[m.type];if(entry)entry.sync(m);else mSync(m)}
-function mid(m: Mission){return S.world+"."+m.type}
+function mid(m: Mission){return m.learnId?String(m.learnId):S.world+"."+m.type}
 function mTier(m: Mission){var s=S.ms[mid(m)]||{};return s.tier===2||s.tier===3?s.tier:1}
 function tq<T>(m: Mission,a: T,b: T,c: T): T {var t=mTier(m);return t===3?c:t===2?b:a}
 function mkk(m: Mission){return mid(m)+":t"+mTier(m)}

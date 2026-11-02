@@ -605,8 +605,19 @@ export interface MissionSolveDetail {
   stats?: string[];
 }
 
+/** Active carousel Learn run (carousel spec §12.1), or null. */
+export interface LearnSnapshot {
+  track: string;
+  rungIndex: number;
+  step: number;
+  total: number;
+  kidMode: boolean;
+}
+
 export type WorldEvent =
   | { type: "ready" }
+  | { type: "learn"; learn: LearnSnapshot | null }
+  | { type: "learnFinished" }
   | { type: "world"; world: string; name?: string }
   | { type: "zoom"; zoom: ZoomLevel }
   | { type: "found"; keys: string[]; total: number; all?: string[] }
@@ -633,6 +644,7 @@ export interface WorldState {
   missionsDoneKeys: string[];
   missionTitle: string | null;
   toast: string;
+  learn: LearnSnapshot | null;
   customizer: CustomizerSnapshot;
   missionPanel: MissionPanelSnapshot;
   create: CreateSnapshot;
@@ -649,6 +661,7 @@ export const initialWorldState: WorldState = {
   missionsDoneKeys: [],
   missionTitle: null,
   toast: "",
+  learn: null,
   customizer: closedCustomizerSnapshot,
   missionPanel: closedMissionPanelSnapshot,
   create: closedCreateSnapshot,
@@ -691,6 +704,12 @@ export function applyWorldEvent(state: WorldState, event: WorldEvent): WorldStat
         : { ...state, missionTitle: event.title };
     case "toast":
       return state.toast === event.text ? state : { ...state, toast: event.text };
+    case "learn":
+      return JSON.stringify(state.learn) === JSON.stringify(event.learn)
+        ? state
+        : { ...state, learn: event.learn };
+    case "learnFinished":
+      return state;
     case "customizer":
       return sameCustomizerSnapshot(state.customizer, event.customizer)
         ? state
@@ -770,6 +789,10 @@ export interface EngineHandle {
   playSeed: (code?: string) => string | null;
   /** Set the camera zoom level in the runtime. */
   setZoom: (zoom: ZoomLevel) => void;
+  /** Start a carousel Learn run over the given rung plan. */
+  startLearnRun: (track: string, plan: number[], kidMode: boolean) => void;
+  /** Stop the active Learn run (Free world). */
+  stopLearnRun: () => void;
   /** Press the open mission panel's main, Forge, or Later button. */
   missionAction: (action: MissionAction) => void;
   /** Press one control from the current mission panel snapshot. */
@@ -885,6 +908,9 @@ interface LegacyHooks {
   setTier?: (tier: number) => void;
   setZoom?: (zoom: number) => void;
   mute?: () => void;
+  startLearnRun?: (track: string, plan: number[], kidMode: boolean) => void;
+  stopLearnRun?: () => void;
+  learnState?: () => { run: LearnSnapshot | null; finished: number };
   /** Stamped mission-panel snapshot, served without touching the DOM. */
   mpSnap?: () => RawMissionPanelSnapshot;
   /** Press stamped mission control i (honors its disabled flag). */
@@ -985,6 +1011,8 @@ export function createEngine(
   let lastMissionsDone = new Set<string>();
   let lastMission: string | null | undefined;
   let lastToast = "";
+  let lastLearnJson = "null";
+  let lastLearnFinished = 0;
   let lastCustomizer = closedCustomizerSnapshot;
   let lastMissionPanel = closedMissionPanelSnapshot;
   let lastCreate = closedCreateSnapshot;
@@ -1245,6 +1273,19 @@ export function createEngine(
     }
     lastToast = toast;
 
+    const learnState = hooks()?.learnState?.();
+    if (learnState) {
+      const learnJson = JSON.stringify(learnState.run);
+      if (learnJson !== lastLearnJson) {
+        lastLearnJson = learnJson;
+        events.onEvent({ type: "learn", learn: learnState.run });
+      }
+      if (learnState.finished !== lastLearnFinished) {
+        lastLearnFinished = learnState.finished;
+        if (ready) events.onEvent({ type: "learnFinished" });
+      }
+    }
+
     const customizer = readCustomizer(save);
     if (!sameCustomizerSnapshot(lastCustomizer, customizer)) {
       lastCustomizer = customizer;
@@ -1283,6 +1324,14 @@ export function createEngine(
     },
     setZoom: (target) => {
       hooks()?.setZoom?.(target);
+      poll();
+    },
+    startLearnRun: (track, plan, kidMode) => {
+      hooks()?.startLearnRun?.(track, plan, kidMode);
+      poll();
+    },
+    stopLearnRun: () => {
+      hooks()?.stopLearnRun?.();
       poll();
     },
     missionAction: (action) => {

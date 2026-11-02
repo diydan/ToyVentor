@@ -8,7 +8,15 @@ Source mockup: `/Users/dan/Downloads/toyventor` (`README.md`,
 `CONTINUE.md`). This spec decides what ports into ToyForge, what ToyForge
 keeps, and in what order. No implementation starts until §14 sign-off.
 
-> Status: **SIGNED OFF 2026-11-02 — C1 landed.** Decisions in §6 bind implementation.
+> Status: **SIGNED OFF 2026-11-02 — C1+C2 landed.** Decisions in §6 bind implementation.
+> C2 as shipped: `startLearnRun`/`stopLearnRun`/`learnState` on the
+> engine facade with `LearnSnapshot` + `learnFinished` events; lab
+> rungs ride the real lab missions at the rung tier; the 21 new-id
+> rungs play as panel steps (`runtime/learnRungs.ts`, mission type
+> `learn`, scored by the stock attempts/win pipeline); finishing a
+> run returns to the Map; `Free world` exits a run from the dock
+> menu. Tier chips hide during a run so the XP tier clamp cannot
+> rewrite a rung's tier. `Hear it` speech arrives with C3 (§11).
 > C1 as shipped: `src/lib/{age,learn,ladders,mapCards}.ts`, `ageBand` in
 > `progression:v1` (§9.3), §9.4 one-time import, `MapCarousel` +
 > `RungSheet` behind dock `⋯` → `Map`, grown-up Age/Levels rows, and
