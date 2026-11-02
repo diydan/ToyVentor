@@ -1084,9 +1084,10 @@ function rebuildScene() {
   updateHUD();
 }
 
-// Pro fits the rear Z10 PTO gear under the bed: the tub's underside hits its teeth below 22.5 deg (237 mm3 at 0 deg). Found by the motion test
-// (every tip 20..26 deg x 12 gear phases, 0.00 mm3 from 22.5 up), so the Pro bed stops at 23 deg. Every other stage lowers the bed fully.
-const PRO_TIP_MIN = 23;
+// Pro fits the rear Z10 PTO gear under the bed: the tub's underside hits its teeth at low tip angles. Found by the motion test on the barrel-hinge tub:
+// 0.38 mm3 at 23.0 deg, 0.00 mm3 from 23.25 up (37 gear phases at 1 deg steps; every 0.5 deg from 23.5 to 29 clean), so the Pro bed stops at 24 deg.
+// (The older trunnion-hinge tub was clean from 22.5, so this was 23.) Re-run the motion test if the tub, hinge or gear changes. Every other stage lowers the bed fully.
+const PRO_TIP_MIN = 24;
 const tipMinDeg = () => (state.stage === 'pro' ? PRO_TIP_MIN : 0);
 
 function updateKinematics() {
