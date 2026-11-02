@@ -2,6 +2,7 @@
 // it only sees /api/* (plus SPA fallback misses). Secrets live here and in
 // .dev.vars locally — never in the browser bundle.
 import seedCar from "../seed/toys/seed-car.json";
+import { parseScanOutlineRequest } from "../shared/outlineScan";
 import {
   dimensionsFromBox,
   dimensionsFromPixelSize,
@@ -60,6 +61,8 @@ interface ScanBody {
     lengthMm?: unknown;
     prompt?: unknown;
     imageDataUrl?: unknown;
+    /** Opt-in (F2b): also return the legalized print outline of the mask. */
+    outline?: unknown;
   };
 }
 
@@ -75,14 +78,26 @@ async function handleSamScan(scan: NonNullable<ScanBody["scan"]>, env: Env) {
   ) {
     return json({ error: "invalid scan request" }, 422);
   }
+  let outlineRequest: ReturnType<typeof parseScanOutlineRequest> | undefined;
+  if (scan.outline !== undefined) {
+    outlineRequest = parseScanOutlineRequest(scan.outline);
+    if (!outlineRequest.ok) return json({ error: "invalid scan request" }, 422);
+  }
 
-  const result = await segmentToy(env, imageDataUrl, prompt);
+  const result = await segmentToy(
+    env,
+    imageDataUrl,
+    prompt,
+    undefined,
+    outlineRequest?.ok ? { outline: outlineRequest.request } : {},
+  );
   console.log(
     JSON.stringify({
       event: "sam_scan",
       prompt,
       status: result.status,
       ...(result.status === "ok" ? { maskApplied: Boolean(result.mask) } : {}),
+      ...(result.status === "ok" && result.outline ? { outline: result.outline.ok ? "ok" : result.outline.reason } : {}),
     }),
   );
   if (result.status !== "ok") {
@@ -119,6 +134,7 @@ async function handleSamScan(scan: NonNullable<ScanBody["scan"]>, env: Env) {
       maskApplied: Boolean(result.mask),
       matches: result.matches,
       box: result.box,
+      ...(result.outline ? { outline: result.outline } : {}),
     },
   });
 }

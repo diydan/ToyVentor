@@ -1,3 +1,4 @@
+import { parseScanOutline, type ScanOutline, type ScanOutlineRequest } from "../../shared/outlineScan";
 import type { Toy } from "../../shared/toy";
 
 /** Client budgets sit above the matching server budgets (worker/meta.ts)
@@ -48,6 +49,8 @@ export interface SamScanRequest {
   lengthMm: number;
   prompt: string;
   imageDataUrl: string;
+  /** Opt in to the print outline of the mask (F2b). Read the reply with `scanOutlineOf`. */
+  outline?: ScanOutlineRequest;
 }
 
 export interface SamScanResponse {
@@ -60,7 +63,14 @@ export interface SamScanResponse {
     message?: string;
     matches?: number;
     box?: unknown;
+    /** Untrusted until `scanOutlineOf` has read it. */
+    outline?: unknown;
   };
+}
+
+/** The print outline of a scan reply, checked field by field, or undefined if there is none or it is not well formed. */
+export function scanOutlineOf(response: SamScanResponse): ScanOutline | undefined {
+  return parseScanOutline(response.sam.outline);
 }
 
 export async function postSamScan(scan: SamScanRequest): Promise<SamScanResponse> {

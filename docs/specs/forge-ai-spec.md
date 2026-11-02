@@ -403,6 +403,25 @@ What the compiler accepts decides the routes (read in the code, 2026-11-02):
     blade, which the legalizer refuses before any gate call (2.7 mm wide, under
     the 3.2 mm minimum). Each fit took 2.1 to 3.1 s on average (two runs) and
     14.8 s at most, nearly all of it the gate, on a machine at load average 55 to 65.
+  - **Through the Worker's routes (2026-11-02, 6 fits against the real Worker
+    handlers and the real daemon).** `shared/outlineGate.ts` (`forgeRouteGate`) is
+    the loop's gate over `POST /api/forge/preview` and then `GET
+    /api/forge/jobs/:id`, with the hand recipe and `enqueue_background: true`. All
+    6 fits ended on a passing part with the same attempts as the direct runs (a
+    sliver cleared by the nudge, a marginal 33.46 mm cleared by a rescale).
+    `small_part` survives the Worker's scrub, so `verdictFromGateReport` needed no
+    change, and the allowlist forwards every outline the legalizer made, point for
+    point (tested on 6 shapes and 4 blobs at 24, 54 and 90 mm). A gate call is a
+    preview of about 20 ms plus a job of under 1.5 s at load average 20. Job states
+    are `queued`, `validating`, `optimizing`, then `print_ready` or `digital_only`
+    (a refused or marginal part is `digital_only`, not an error) or `failed` (no
+    report). The gate never turns "could not run" into a verdict: 429, 401, 503,
+    422, 502, 504, a failed job and a malformed reply each throw an
+    `OutlineGateError` with a `kind`, and the loop rejects. Two limits decide where
+    the loop can run (question 31): the preview budget is 3 a minute per device,
+    and the limiter counts a refused call, so a caller that retries inside the
+    minute stays locked out (six retries 15 s apart were all refused); and a
+    parent proof lasts 2 or 5 minutes.
   - C4 orientation: long axis to z, handle end down, with a flip button. The kid
     decides which end is the handle; the model is not asked.
 - **Relief ("puffy").** The builder's crest is one level. Repeating the inward
@@ -496,8 +515,12 @@ What the compiler accepts decides the routes (read in the code, 2026-11-02):
    real photos, and the Worker wiring (the mask is only in memory there).
 2. **Built, not yet on real photos (2026-11-02, uncommitted):** the fit loop,
    `shared/outlineFit.ts` with `tests/outline-fit.test.ts` (33 tests, 10 of 10
-   mutants caught), and its real-gate run above. Still to do: Route A on the flat
-   objects among the 10 F2 photos, and the daemon call from the Worker.
+   mutants caught), and its real-gate run above. Its gate over the Worker's
+   routes is built too: `shared/outlineGate.ts` with `tests/outline-gate.test.ts`
+   (53 tests, 22 of 22 mutants caught), run against the real handlers and daemon
+   (note under Route A). Not built, and waiting on question 31: where the loop
+   runs, and the Worker returning the outline. Still to do: Route A on the flat
+   objects among the 10 F2 photos.
 3. **Built for the path and the photo map (2026-11-02, uncommitted):**
    `shared/outlineSticker.ts` with `tests/outline-sticker.test.ts` (28 tests, 8
    of 8 mutants caught): the cut path, as the item shape the sticker sheet module
@@ -1543,6 +1566,30 @@ deterministic code verifies geometry, fit, and physics.
     is within 0.2 mm on regular shapes. (e) `gate_report` in
     `shared/forgeOptimizer.ts` does not list `small_part`, though the daemon's job
     record carries it and the fit loop depends on it for the marginal case.
+    (f) The preview route allows 3 calls a minute per device (6 per IP), and its
+    limiter counts a refused call as a hit, so a caller that retries inside the
+    minute is never let back in. One fit is 1 call about 7 times in 8 and 2 calls
+    otherwise (70 fits), and the loop may use up to 8; a kid who flips the handle
+    and resizes twice spends 3 more. A separate budget for fits, or a limiter that
+    does not count refused calls, would let the loop run. Both are security
+    choices in `worker/forgeOptimizer.ts`, so they are the owner's call. The gate
+    driver never retries, for this reason.
+31. F2b, where the fit loop runs. Only the Worker holds the mask raster, and the
+    gate is the daemon behind the forge routes, which need a live parent proof (2
+    or 5 minutes) and are rate limited. No client calls those routes today. Three
+    ways to split the work. (a) The Worker runs `legalizeOutline` on the raster
+    and returns the outline with the scan (about 0.1 to 0.5 s of CPU on a 400 by
+    400 mask in Node; `wrangler.jsonc` sets no CPU limit and I do not know the
+    plan, so check it). The device keeps the polygon and, at the print step behind
+    the grown-up gate, runs `fitPolygon` with `forgeRouteGate`. (b) The Worker
+    returns the mask as run-length data (a few KB, no photo) and the device runs
+    everything. (c) The Worker runs the whole loop and calls the daemon itself: no
+    per-device budget to fight, but one request that can run for a minute. My pick
+    is (a): the digital accessory needs no gate, the fit is a print step, and the
+    print already sits behind the grown-up gate. It needs question 30 (f) settled
+    first, and the peer plan for a contour in the mask summary
+    ([sam-physical-to-digital-spec.md](sam-physical-to-digital-spec.md), section
+    3) can be filled from the same outline instead of a second tracer.
 
 ## Docs impact when this ships
 

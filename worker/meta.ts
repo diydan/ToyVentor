@@ -17,6 +17,8 @@ import {
   type SamBox,
   type SamMaskSummary,
 } from "../shared/sam";
+import { scanOutline, type ScanOutline, type ScanOutlineRequest } from "../shared/outlineScan";
+import type { OutlineMask } from "../shared/photoOutline";
 
 export interface MetaEnv {
   /** Name used by every Meta example. */
@@ -28,7 +30,7 @@ export interface MetaEnv {
 }
 
 export type SamResult =
-  | { status: "ok"; box: SamBox; matches: number; mask?: SamMaskSummary }
+  | { status: "ok"; box: SamBox; matches: number; mask?: SamMaskSummary; outline?: ScanOutline }
   | { status: "no-match" }
   | { status: "not-configured" }
   | { status: "error"; message: string };
@@ -190,10 +192,18 @@ async function collectStream(body: ReadableStream<Uint8Array>): Promise<{
   return { text, events, truncated };
 }
 
-async function decodeMaskSummary(
+/** The decoded mask of the chosen match: the compact summary, and the raster it came from (for the outline). */
+interface DecodedMask {
+  summary: SamMaskSummary;
+  raster: OutlineMask;
+  /** Where the raster's top-left pixel sits in the uploaded image. */
+  bounds: { left: number; top: number };
+}
+
+async function decodeMask(
   events: SamWireEvent[],
   box: SamBox,
-): Promise<SamMaskSummary | undefined> {
+): Promise<DecodedMask | undefined> {
   try {
     async function* source(): AsyncIterable<SamWireEvent> {
       yield* events;
@@ -214,14 +224,21 @@ async function decodeMaskSummary(
       );
     if (!record) return undefined;
 
-    return summarizeMaskRaster(
-      decodeMaskToRaster(record.mask),
+    const raster = decodeMaskToRaster(record.mask);
+    const summary = summarizeMaskRaster(
+      raster,
       record.mask.width,
       record.mask.height,
       record.bounds,
       box.imageWidth,
       box.imageHeight,
     );
+    if (!summary) return undefined;
+    return {
+      summary,
+      raster: { data: raster, width: record.mask.width, height: record.mask.height },
+      bounds: { left: record.bounds.left, top: record.bounds.top },
+    };
   } catch {
     // Any parser/codec failure degrades to the existing box result.
     return undefined;
@@ -233,6 +250,8 @@ export async function segmentToy(
   imageDataUrl: string,
   prompt: string,
   timeoutMs = SAM_TIMEOUT_MS,
+  /** `outline`: also legalize the mask into a print outline (F2b). Absent, nothing extra runs. */
+  options: { outline?: ScanOutlineRequest } = {},
 ): Promise<SamResult> {
   const key = apiKey(env);
   if (!key) return { status: "not-configured" };
@@ -286,15 +305,38 @@ export async function segmentToy(
   const boxes = parseSegmentationBoxes(collected.text);
   const box = largestBox(boxes);
   if (!box) return { status: "no-match" };
-  const mask = collected.truncated
+  const decoded = collected.truncated
     ? undefined
-    : await decodeMaskSummary(collected.events, box);
+    : await decodeMask(collected.events, box);
+  const outline = options.outline ? outlineOf(decoded, box, options.outline) : undefined;
   return {
     status: "ok",
     box,
     matches: boxes.length,
-    ...(mask ? { mask } : {}),
+    ...(decoded ? { mask: decoded.summary } : {}),
+    ...(outline ? { outline } : {}),
   };
+}
+
+/** The print outline for a decoded mask. A legalizer fault must never cost the scan its box and mask, so it becomes a failure. */
+function outlineOf(
+  decoded: DecodedMask | undefined,
+  box: SamBox,
+  request: ScanOutlineRequest,
+): ScanOutline {
+  if (!decoded) {
+    return { ok: false, reason: "bad_mask", detail: "no mask came back for this photo, so there is nothing to outline" };
+  }
+  try {
+    return scanOutline(
+      decoded.raster,
+      decoded.bounds,
+      { width: box.imageWidth, height: box.imageHeight },
+      request,
+    );
+  } catch {
+    return { ok: false, reason: "bad_mask", detail: "the outline step failed on this mask" };
+  }
 }
 
 export type BoxesResult =
