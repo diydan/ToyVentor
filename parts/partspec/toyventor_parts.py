@@ -1630,13 +1630,20 @@ def _face_plate_base():
     return _loft_xy_sections(sections)
 
 
+def _face_chin_trim():
+    """The plate's chin edge is trimmed level with the stem flat (commit 6b20bed), so the plate spans zb FACE_STEM_ZB - FACE_STEM_FLAT_HALF up to its top;
+    the head pocket starts at the same level instead of leaving a slot under the trimmed chin."""
+    return FACE_STEM_ZB - FACE_STEM_FLAT_HALF
+
+
 def _face_pocket_polygon_yz(z_bore):
     """(y, z) outline of the head's plate pocket: floor follows the plate back, bottom edge a hair under the plate, roof parallel to the plate top."""
     z0 = z_bore - 2.9
+    t = _face_chin_trim()
     y_front = -22.0
     zt = face_top_zb()
-    pts = [(y_front, z0 - 0.06), (-(face_back(0.0) - 0.12), z0 - 0.06)]
-    for zb in (0.0, 1.1, 2.6, 3.6, 4.8, 6.0, 7.2, 8.4, 9.6, 10.5):
+    pts = [(y_front, z0 + t - 0.06), (-(face_back(t) - 0.12), z0 + t - 0.06)]
+    for zb in (t, 1.1, 2.6, 3.6, 4.8, 6.0, 7.2, 8.4, 9.6, 10.5):
         pts.append((-(face_back(zb) - 0.12), z0 + zb))
     roof_d0 = face_back(10.5) - 0.12
     pts.append((y_front, z0 + 10.5 + 0.1 + FACE_ROOF_SLOPE * (-y_front - roof_d0)))
@@ -1646,8 +1653,9 @@ def _face_pocket_polygon_yz(z_bore):
 def _face_outline_polygon_xz(z_bore, grow=0.1):
     """Pocket outline in the front view: the plate outline + `grow`, then continuing upward with 42-deg corners (no flat ceiling); the roof plane trims it."""
     z0 = z_bore - 2.9
+    t = _face_chin_trim()
     right = []
-    for zb in list(FACE_STATIONS):
+    for zb in [t] + [s for s in FACE_STATIONS if s > t]:
         if zb > 10.5:
             continue
         right.append((max(face_outline_hw(zb), 0.3) + grow, z0 + zb))
@@ -1656,7 +1664,7 @@ def _face_outline_polygon_xz(z_bore, grow=0.1):
         top_zb += 0.5
         right.append((face_outline_hw(10.5) + grow - FACE_CEIL_SLOPE * (top_zb - 10.5), z0 + top_zb))
     left = [(-x, z) for x, z in right]
-    return [(right[0][0], z0 - 0.06)] + right + list(reversed(left)) + [(left[0][0], z0 - 0.06)]
+    return [(right[0][0], z0 + t - 0.06)] + right + list(reversed(left)) + [(left[0][0], z0 + t - 0.06)]
 
 
 def _human_face_pocket_cutter(z_bore):
