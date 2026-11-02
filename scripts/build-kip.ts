@@ -121,6 +121,15 @@ copyFileSync(
   join(kipSrcDir, "viewer/workshop.js"),
   join(kipOutDir, "workshop.js"),
 );
+// Wind Key Lab: a stand-alone test page for mom_wind_key against the Band core (its overlap table comes from parts/kip/windkey_table.py).
+copyFileSync(
+  join(kipSrcDir, "viewer/WindKey-Lab.html"),
+  join(kipOutDir, "WindKey-Lab.html"),
+);
+copyFileSync(
+  join(kipSrcDir, "viewer/windkey-overlaps.json"),
+  join(kipOutDir, "windkey-overlaps.json"),
+);
 // Describe & build tab (kip-describe-contract.md): the page modules and their data. The 30 part STLs it draws are written straight into
 copyFileSync(
   join(kipSrcDir, "viewer/kip-describe-tab.js"),

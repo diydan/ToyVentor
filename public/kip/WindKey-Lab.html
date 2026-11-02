@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Wind Key Lab — mom_wind_key vs the Band core</title>
+<style>
+  :root {
+    --ink: #1b2238; --muted: #5d657c; --spark: #ff6b4a; --mint: #1fa97c; --bad: #d92f2f;
+    --glass: rgba(255, 255, 255, 0.9); --line: rgba(27, 34, 56, 0.14);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 100%; height: 100%; overflow: hidden; color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: radial-gradient(circle at 50% 38%, #f6f1e7 0%, #e5ddce 68%, #d2c7b5 100%); }
+  #viewport { position: fixed; inset: 0; }
+  canvas { display: block; width: 100%; height: 100%; outline: none; }
+  .panel { position: fixed; top: 12px; left: 12px; width: 330px; max-height: calc(100% - 24px); overflow-y: auto;
+    background: var(--glass); border: 1px solid var(--line); border-radius: 12px; padding: 14px 14px 12px;
+    backdrop-filter: blur(8px); box-shadow: 0 4px 18px rgba(27, 34, 56, 0.12); font-size: 13px; line-height: 1.35; }
+  h1 { font-size: 16px; font-weight: 700; }
+  .sub { color: var(--muted); font-size: 12px; margin: 2px 0 10px; }
+  .row { display: flex; align-items: center; gap: 8px; margin: 6px 0; }
+  .row label.k { width: 62px; color: var(--muted); font-size: 12px; flex: none; }
+  .row input[type=range] { flex: 1; min-width: 0; accent-color: var(--spark); }
+  .row output { width: 62px; text-align: right; font-variant-numeric: tabular-nums; font-size: 12px; flex: none; }
+  .btns { display: flex; flex-wrap: wrap; gap: 5px; margin: 8px 0; }
+  button { font: inherit; font-size: 12px; padding: 4px 8px; border: 1px solid var(--line); border-radius: 7px; background: #fff; color: var(--ink); cursor: pointer; }
+  button:hover { border-color: var(--spark); }
+  button:focus-visible, input:focus-visible { outline: 2px solid var(--cobalt, #2e6fdb); outline-offset: 1px; }
+  .toggles { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 6px 0 8px; font-size: 12px; }
+  .toggles label { display: flex; align-items: center; gap: 5px; cursor: pointer; }
+  #verdict { margin: 8px 0 6px; padding: 7px 9px; border-radius: 8px; font-size: 12.5px; font-weight: 600; }
+  #verdict.bad { background: rgba(217, 47, 47, 0.11); color: var(--bad); }
+  #verdict.ok { background: rgba(31, 169, 124, 0.13); color: #0d7a57; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  td { padding: 2.5px 0; vertical-align: middle; }
+  td.chk { width: 22px; } td.sw { width: 14px; }
+  .sw i { display: block; width: 10px; height: 10px; border-radius: 3px; border: 1px solid rgba(0,0,0,0.2); }
+  td.val { width: 52px; text-align: right; font-variant-numeric: tabular-nums; color: var(--muted); }
+  tr.hit td.val, tr.hit td.nm { color: var(--bad); font-weight: 600; }
+  td.bar { width: 74px; padding: 0 6px; } .bar div { height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; }
+  .bar b { display: block; height: 100%; background: var(--bad); width: 0; }
+  .facts { margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--line); color: var(--muted); font-size: 11.5px; }
+  .facts p + p { margin-top: 4px; }
+  @media (max-width: 620px) { .panel { width: calc(100% - 24px); max-height: 52%; top: auto; bottom: 12px; } }
+</style>
+</head>
+<body>
+<div id="viewport"></div>
+<div class="panel" id="panel">
+  <h1>Wind key lab</h1>
+  <p class="sub">Band stage. The real STLs placed exactly as in the Truck page; overlaps are precomputed with manifold3d.</p>
+
+  <div class="row"><label class="k" for="kx">Key x</label><input id="kx" type="range" min="20" max="70" step="0.1" value="25" /><output id="kxo"></output></div>
+  <div class="row"><label class="k" for="ks">Key spin</label><input id="ks" type="range" min="0" max="330" step="30" value="90" /><output id="kso"></output></div>
+  <div class="btns" id="presets">
+    <button data-x="25">Demo wind pose</button>
+    <button data-x="37">Demo withdrawn</button>
+    <button data-x="46.9">Tip at spool face</button>
+    <button data-x="54.9">Tip at tray wall</button>
+    <button data-x="65">Fully out</button>
+  </div>
+
+  <div class="btns" id="cams">
+    <button data-cam="iso">Iso</button><button data-cam="top">Top</button><button data-cam="end">End (+x)</button><button data-cam="rear">Rear</button>
+  </div>
+  <div class="toggles">
+    <label><input type="checkbox" id="ghost" checked /> Ghost enclosure</label>
+    <label><input type="checkbox" id="section" /> Section at key axis</label>
+  </div>
+
+  <div id="verdict"></div>
+  <table id="parts"></table>
+
+  <div class="facts" id="facts"></div>
+</div>
+
+<script type="module">
+import { THREE, OrbitControls, STLLoader, RoomEnvironment, mergeVertices, toCreasedNormals } from './vendor/three-kip.js';
+
+const viewport = document.getElementById('viewport');
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.localClippingEnabled = true;
+viewport.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+const sun = new THREE.DirectionalLight(0xffffff, 1.4);
+sun.position.set(120, 220, -60);
+scene.add(sun);
+
+const camera = new THREE.PerspectiveCamera(38, window.innerWidth / window.innerHeight, 1, 2000);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+
+// CAD frame (z up, y rear) -> three (y up): same cadRoot as Truck-Mockup.html, wheels sit on y = 0 (wheel R 18, axle z 6.25).
+const WHEEL_R = 18, cadRoot = new THREE.Group();
+cadRoot.rotation.x = -Math.PI / 2;
+cadRoot.position.y = WHEEL_R - 6.25;
+scene.add(cadRoot);
+const AXIS = { y: 43.75, z: 31.25 };   // spool axis in CAD
+const CUT_Y = cadRoot.position.y + AXIS.z;   // three-space height of the key axis
+
+const ground = new THREE.GridHelper(260, 26, 0xb9ae98, 0xd3c9b6);
+ground.position.set(0, 0, -43.75);
+scene.add(ground);
+{ const g = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-60, AXIS.y, AXIS.z), new THREE.Vector3(80, AXIS.y, AXIS.z)]);
+  const axisLine = new THREE.Line(g, new THREE.LineDashedMaterial({ color: 0x1b2238, dashSize: 3, gapSize: 2, transparent: true, opacity: 0.55 }));
+  axisLine.computeLineDistances(); cadRoot.add(axisLine); }
+
+// ---- placements: keep in step with parts/kip/windkey_table.py (both copy Truck-Mockup.html rebuildScene, band stage)
+const M4 = THREE.Matrix4, T = (x, y, z) => new M4().makeTranslation(x, y, z);
+const Rx = (a) => new M4().makeRotationX(a), Ry = (a) => new M4().makeRotationY(a), Rz = (a) => new M4().makeRotationZ(a);
+const mul = (...ms) => ms.reduce((a, b) => a.clone().multiply(b));
+const PTO = THREE.MathUtils.degToRad(17.5), SPOOL = THREE.MathUtils.degToRad(27.0), H = Math.PI / 2;
+const RA = T(0, 43.75, 6.25);
+const PARTS = [
+  { id: 'pto_shaft', label: 'PTO shaft (shaft_tu03)', pid: 'shaft_tu03', M: mul(T(-15.2, 43.75, 31.25), Ry(H), Rz(PTO)), color: '#9aa3b5', ghost: false },
+  { id: 'pto_gear', label: 'PTO gear Z10', pid: 'mom_pto_gear_z10', M: mul(T(-3.125, 43.75, 31.25), Ry(H), Rz(PTO)), color: '#f0a23c', ghost: false },
+  { id: 'spool', label: 'Spool + pawl', pid: 'mom_band_spool_pawl', M: mul(T(3.85, 43.75, 31.25), Ry(H), Rz(SPOOL)), color: '#5c8fe0', ghost: false },
+  { id: 'tray', label: 'Core tray', pid: 'mom_band_core_tray', M: T(0, 37.5, 12.5), color: '#1fa97c', ghost: true },
+  { id: 'lid', label: 'Core lid', pid: 'mom_band_core_lid', M: T(0, 37.5, 44.8), color: '#1fa97c', ghost: true },
+  { id: 'wheel_R', label: 'Rear wheel R', pid: 'kit_wheel_med', M: mul(RA, T(26.7, 0, 0), Ry(H)), color: '#3a3f4d', ghost: true },
+  { id: 'wheel_L', label: 'Rear wheel L', pid: 'kit_wheel_med', M: mul(RA, T(-26.7, 0, 0), Ry(-H)), color: '#3a3f4d', ghost: true },
+  { id: 'rear_axle', label: 'Rear axle', pid: 'kit_barbell_shaft', M: mul(RA, T(-39, 0, 0), Ry(H)), color: '#9aa3b5', ghost: false },
+  { id: 'axle_gear', label: 'Axle gear Z10', pid: 'gear_spur_z10', M: mul(RA, T(-3.125, 0, 0), Ry(H)), color: '#f0a23c', ghost: false },
+  { id: 'sear_pin', label: 'Sear pin', pid: 'pro_captive_pin_28', M: mul(T(24.775, 22.25, 36.0), Ry(-H)), color: '#9aa3b5', ghost: false },
+  { id: 'keel', label: 'Keel', pid: 'kit_keel_base', M: new M4(), color: '#2e6fdb', ghost: true },
+];
+const KEY = { pid: 'mom_wind_key', color: '#ff6b4a' };
+const keyM = (x, spin) => mul(T(x, AXIS.y, AXIS.z), Rx(spin), Ry(-H));
+
+const loader = new STLLoader();
+const geos = {};
+const pids = [...new Set([...PARTS.map((p) => p.pid), KEY.pid])];
+const sectionPlane = new THREE.Plane(new THREE.Vector3(0, -1, 0), CUT_Y);   // keeps y <= CUT_Y: the half below the key axis
+await Promise.all(pids.map(async (pid) => {
+  const raw = await loader.loadAsync(`./partspec/mockup/${pid}.stl`);
+  geos[pid] = toCreasedNormals(mergeVertices(raw, 1e-4), THREE.MathUtils.degToRad(32));
+}));
+const doc = await (await fetch('./windkey-overlaps.json', { cache: 'no-cache' })).json();
+
+function makeMesh(p) {
+  const mat = new THREE.MeshStandardMaterial({ color: p.color, roughness: 0.55, metalness: 0.05, transparent: true, clippingPlanes: [], side: THREE.FrontSide });
+  const m = new THREE.Mesh(geos[p.pid], mat);
+  m.matrixAutoUpdate = false; m.matrix.copy(p.M);
+  cadRoot.add(m);
+  return m;
+}
+for (const p of PARTS) { p.mesh = makeMesh(p); p.on = true; }
+const keyMesh = new THREE.Mesh(geos[KEY.pid], new THREE.MeshStandardMaterial({ color: KEY.color, roughness: 0.45, metalness: 0.05, clippingPlanes: [] }));
+keyMesh.matrixAutoUpdate = false;
+cadRoot.add(keyMesh);
+
+// ---- overlap lookup (linear between the table's x samples)
+function overlapAt(id, x, spinDeg) {
+  // exact at the table's spin steps (30 deg); the slider only offers those. Keys are Python floats: "20.0", "20.5", "41.0".
+  const xs = doc.xs, sk = String((Math.round(spinDeg / doc.spin_step_deg) * doc.spin_step_deg) % 360);
+  const row = (i) => doc.table[xs[i].toFixed(1)][sk][id];
+  if (x <= xs[0]) return row(0);
+  if (x >= xs[xs.length - 1]) return row(xs.length - 1);
+  let i = 0; while (xs[i + 1] < x) i++;
+  const t = (x - xs[i]) / (xs[i + 1] - xs[i]);
+  return row(i) + (row(i + 1) - row(i)) * t;
+}
+
+// ---- UI
+const $ = (id) => document.getElementById(id);
+const kx = $('kx'), ks = $('ks'), tbl = $('parts');
+const MIN = doc.min_overlap_mm3, BAR_MAX = 800;
+const rows = {};
+for (const p of PARTS) {
+  const tr = document.createElement('tr');
+  tr.innerHTML = `<td class="chk"><input type="checkbox" checked aria-label="show ${p.label}"></td><td class="sw"><i style="background:${p.color}"></i></td>` +
+    `<td class="nm">${p.label}</td><td class="bar"><div><b></b></div></td><td class="val"></td>`;
+  tr.querySelector('input').addEventListener('change', (e) => { p.on = e.target.checked; refresh(); });
+  tbl.appendChild(tr);
+  rows[p.id] = tr;
+}
+
+const lowFacts = $('facts');
+lowFacts.innerHTML =
+  `<p><b>Key</b>: flat, 5 mm thick. 28 mm wide paddle (8 deep), a 6.6 mm wide central stem, and two 2.8 mm prongs 7.8 mm either side of the axis. Spans x-${doc.key_reach_mm} .. x along the spool axis and enters from +x.</p>` +
+  `<p><b>Spin</b>: the tray wall has two O4.2 holes at y +-7.8 and the spool two sockets for the prongs, so the key lines up at spin 90 / 270. At spin 0 / 180 the prongs and paddle point up and down, into the rear wheel. Prongs through two fixed holes cannot turn: static overlap does not show that.</p>` +
+  `<p><b>Where things are</b> (x, mm): spool 3.9 .. 16.9, PTO shaft ends 22.3, tray wall 24.9, rear wheel R 26.7 .. 39.0. Axle z 6.25, key axis z 31.25, wheel top z 24.25.</p>` +
+  `<p>Overlap = key at the chosen spin (30 deg steps), mm3 (blocked above ${MIN}). Overlaps are per part, so hiding a part removes exactly its share. Generated ${doc.generated_at} by parts/kip/windkey_table.py; re-run it if the CAD moves.</p>`;
+
+function refresh() {
+  const x = Number(kx.value), spin = THREE.MathUtils.degToRad(Number(ks.value));
+  $('kxo').textContent = `${x.toFixed(1)} mm`; $('kso').textContent = `${ks.value}°`;
+  keyMesh.matrix.copy(keyM(x, spin));
+  const ghost = $('ghost').checked, section = $('section').checked;
+  sectionPlane.constant = CUT_Y;
+  const hits = []; let total = 0;
+  for (const p of PARTS) {
+    const v = overlapAt(p.id, x, Number(ks.value)), hit = p.on && v > MIN;
+    p.mesh.visible = p.on;
+    const mat = p.mesh.material;
+    mat.opacity = p.ghost && ghost ? (hit ? 0.55 : 0.22) : 1; mat.depthWrite = !(p.ghost && ghost);
+    mat.emissive.set(hit ? '#ff2a2a' : '#000000'); mat.emissiveIntensity = hit ? 0.55 : 0;
+    mat.side = section ? THREE.DoubleSide : THREE.FrontSide; mat.clippingPlanes = section ? [sectionPlane] : []; mat.needsUpdate = true;
+    const tr = rows[p.id];
+    tr.classList.toggle('hit', hit);
+    tr.querySelector('.val').textContent = !p.on ? 'hidden' : v > MIN ? v.toFixed(0) : 'clear';
+    tr.querySelector('.bar b').style.width = (p.on ? Math.min(1, v / BAR_MAX) * 100 : 0) + '%';
+    if (hit) { hits.push(p.label); total += v; }
+  }
+  keyMesh.material.side = section ? THREE.DoubleSide : THREE.FrontSide;
+  keyMesh.material.clippingPlanes = section ? [sectionPlane] : []; keyMesh.material.needsUpdate = true;
+  const vd = $('verdict');
+  vd.className = hits.length ? 'bad' : 'ok';
+  vd.textContent = hits.length ? `Blocked: ${total.toFixed(0)} mm3 in ${hits.length} part${hits.length > 1 ? 's' : ''} (${hits.join(', ')})` : 'Clear: no overlap with the visible parts';
+  window.__windkeyState = { x, spin: Number(ks.value), hits, total, ghost, section };
+}
+kx.addEventListener('input', refresh); ks.addEventListener('input', refresh);
+$('ghost').addEventListener('change', refresh); $('section').addEventListener('change', refresh);
+$('presets').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) { kx.value = b.dataset.x; refresh(); } });
+
+const CAMS = {
+  iso: [[120, 105, -175], [10, 30, -44]],
+  top: [[10, 230, -30], [10, 30, -44]],   // x offset 0: the spool axis runs left to right, rear of the truck at the top
+  end: [[210, 45, -44], [10, 32, -44]],
+  rear: [[10, 70, -230], [10, 30, -44]],
+};
+function setCam(name) { const [p, t] = CAMS[name]; camera.position.set(...p); controls.target.set(...t); controls.update(); }
+$('cams').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) setCam(b.dataset.cam); });
+setCam('iso');
+// deep links for testing: ?x=46.85&spin=90&cam=top&section=1&hide=wheel_R,tray
+{ const q = new URLSearchParams(location.search);
+  if (q.has('x')) kx.value = q.get('x'); if (q.has('spin')) ks.value = q.get('spin');
+  if (q.get('section') === '1') $('section').checked = true; if (q.get('ghost') === '0') $('ghost').checked = false;
+  if (CAMS[q.get('cam')]) setCam(q.get('cam'));
+  for (const id of (q.get('hide') || '').split(',')) { const p = PARTS.find((v) => v.id === id); if (p) { p.on = false; rows[id].querySelector('input').checked = false; } } }
+
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight);
+});
+refresh();
+renderer.setAnimationLoop(() => { controls.update(); renderer.render(scene, camera); });
+window.__WINDKEY_READY__ = true;
+</script>
+</body>
+</html>
