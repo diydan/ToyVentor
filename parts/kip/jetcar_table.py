@@ -12,6 +12,7 @@ It also records the placement facts (overlaps and gaps of the jet body against t
 Assumptions (estimates, not measurements): sphere balloon body, 25 mm neck, collar top at z 40.5, jet axis at z 25 (socket height 12.5 above the deck).
 
   /Users/dan/Code/toyforge/parts/partspec/.venv/bin/python3 parts/kip/jetcar_table.py        # from the repo root
+  JETCAR_PS=/path/to/partspec .../python3 parts/kip/jetcar_table.py                          # against another copy of the CAD (the committed lab data should describe the committed CAD)
 
 Writes parts/kip/viewer/jetcar-clearance.json (build:kip copies it to public/kip/). Read-only on everything else.
 """
@@ -26,7 +27,7 @@ import numpy as np
 import trimesh
 
 ROOT = Path(__file__).resolve().parents[2]
-PS = ROOT / "parts" / "partspec"
+PS = Path(os.environ.get("JETCAR_PS") or ROOT / "parts" / "partspec")      # JETCAR_PS: run against another copy of the CAD (e.g. an export of HEAD)
 KIP = ROOT / "public" / "kip"
 POSE = ROOT / "parts" / "kip" / "viewer" / "jetcar-kip-pose.json"
 OUT = ROOT / "parts" / "kip" / "viewer" / "jetcar-clearance.json"
@@ -105,6 +106,8 @@ def main():
     os.chdir(PS)
     import toyventor_kitcard as kc
 
+    sys.path.append(str(ROOT / "parts" / "partspec"))                            # verify_band_jet lives in the repo's partspec even when JETCAR_PS points elsewhere
+
     cache = {}
     g = lambda pid: kc._raw_geo(pid, cache)
     keel, vb = g("kit_keel_base"), g("mom_jet_valve_body")
@@ -121,15 +124,21 @@ def main():
     for label, pid, sgn in (("w36", "kit_wheel_med", 90), ("w50", "kit_wheel_giant", 90)):
         wheel = g(pid).rotate((0, sgn, 0)).translate((26.7, 43.75, 6.25))
         facts[f"{label}_gap_mm"] = rnd(body.min_gap(wheel, 20.0))
-    # narrowest sections of the air path, from the generator's own profiles (inlet O5.0 round, tunnel teardrop, slide-valve open port)
-    areas = {
-        "inlet": math.pi * 2.5 ** 2,
-        "tunnel": kc._flat_floor_teardrop(5.00, -2.00).area(),
-        "valve_port": kc._flat_floor_teardrop(4.8, -2.5).area(),
-    }
+    # narrowest sections of the air path, MEASURED on the solids by the same code the independent check uses (parts/partspec/verify_band_jet.py),
+    # so the lab and the check cannot disagree and a regeneration tracks whatever the CAD now is
+    import verify_band_jet as vbj
+
+    ctx = vbj.Ctx(str(PS))
+    inlet = vbj._enclosed_area(vb.slice(22.0), (0.0, -3.0))
+    tunnel = vbj._enclosed_area(vb.rotate((90, 0, 0)).slice(4.5), (0.0, -12.5))
+    port, port_estimated = vbj._valve_port_area(ctx)
+    areas = {"inlet": inlet, "tunnel": tunnel, "valve_port": port}
+    if any(v is None for v in areas.values()):
+        raise SystemExit(f"could not measure the air path: {areas}")
     narrow = min(areas.values())
     facts["passage_mm2"] = {k: rnd(v) for k, v in areas.items()}
-    facts["passage_equiv_d_mm"] = rnd(2 * math.sqrt(narrow / math.pi))
+    facts["passage_valve_estimated"] = bool(port_estimated)
+    facts["passage_equiv_d_mm"] = round(2 * math.sqrt(narrow / math.pi), 1)
     facts["mass_g_solid_pla"] = {pid: rnd(g(pid).volume() * 1.24e-3) for pid in ("kit_keel_base", "mom_jet_valve_body", "kit_wheel_med", "kit_wheel_giant", "kit_barbell_shaft")}
 
     doc = {
