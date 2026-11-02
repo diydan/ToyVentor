@@ -46,7 +46,7 @@
   <p class="sub">Snap truck, dump tub removed, <code>mom_jet_valve_body</code> on the rear rows with the balloon on top. Real STLs; the nozzle insert and balloon are proposals, not CAD.</p>
 
   <div class="row"><label class="k" for="bd">Balloon &Oslash;</label><input id="bd" type="range" min="100" max="225" step="12.5" value="175" /><output id="bdo"></output></div>
-  <div class="row"><label class="k" for="bl">Lean back</label><input id="bl" type="range" min="0" max="60" step="5" value="30" /><output id="blo"></output></div>
+  <div class="row"><label class="k" for="bl" title="0 = straight up, as the vertical collar gives it">Lean back</label><input id="bl" type="range" min="0" max="60" step="5" value="0" /><output id="blo"></output></div>
   <div class="btns" id="wheels"><span class="k">Wheels</span><button data-w="36">&Oslash;36 (#4)</button><button data-w="50">&Oslash;50 (#5)</button></div>
   <div class="btns" id="nozzles"><span class="k">Nozzle</span><button data-n="3">&Oslash;3</button><button data-n="4.5">&Oslash;4.5</button><button data-n="6">&Oslash;6</button><button data-n="8">&Oslash;8 (new)</button></div>
   <div class="btns" id="cams"><span class="k">View</span><button data-cam="iso">Iso</button><button data-cam="side">Side</button><button data-cam="rear">Rear</button><button data-cam="top">Top</button></div>
@@ -133,10 +133,11 @@ function buildBalloon(D) {
   const body = new THREE.Mesh(new THREE.SphereGeometry(D / 2, 48, 32), bm); body.position.z = NECK + D / 2; balloon.add(body);
 }
 
-const state = { D: 175, lean: 30, wheels: 36, nozzle: 6, dp: 2.5, vol: 5, mass: 150 };
+const state = { D: 175, lean: 0, wheels: 36, nozzle: 6, dp: 2.5, vol: 5, mass: 150 };
 const gridAt = (D, lean) => data.grid.find((g) => g.D === D && g.lean === lean);
-const cls = (v) => (v < 0 ? 'c-bad' : v < 5 ? 'c-warn' : 'c-ok');
-const word = (v) => (v < 0 ? 'touches' : v < 5 ? 'tight' : 'clear');
+// Kip is a soft contact (the balloon deforms and is light); the wheels and the jet stream are hard limits (a balloon over the nozzle kills thrust).
+const cls = (v, soft) => (v < 0 ? (soft ? 'c-warn' : 'c-bad') : v < 5 ? 'c-warn' : 'c-ok');
+const word = (v, soft) => (v < 0 ? (soft ? 'rubs (soft)' : 'reaches it') : v < 5 ? 'tight' : 'clear');
 
 function refresh() {
   const g = gridAt(state.D, state.lean), wk = state.wheels === 36 ? 'w36' : 'w50';
@@ -149,11 +150,13 @@ function refresh() {
   buildBalloon(state.D); buildNozzle(state.nozzle);
   for (const b of document.querySelectorAll('#wheels button')) b.classList.toggle('on', Number(b.dataset.w) === state.wheels);
   for (const b of document.querySelectorAll('#nozzles button')) b.classList.toggle('on', Number(b.dataset.n) === state.nozzle);
-  const rows = [['Kip (back y ' + data.kip_rear_y + ')', g.kip], [`Rear wheels Ø${state.wheels}`, g[wk]], ['Jet stream', g.jet]];
-  $('clear').innerHTML = '<tr><th>Balloon to</th><th>mm</th><th></th></tr>' + rows.map(([n, v]) => `<tr><td>${n}</td><td class="${cls(v)}">${v.toFixed(1)}</td><td class="${cls(v)}">${word(v)}</td></tr>`).join('');
-  const worst = rows.reduce((a, r) => (r[1] < a[1] ? r : a));
-  const v = $('verdict'); v.className = worst[1] < 0 ? 'bad' : worst[1] < 5 ? 'warn' : 'ok';
-  v.textContent = worst[1] < 0 ? `Touches: ${rows.filter((r) => r[1] < 0).map((r) => r[0].split(' (')[0]).join(', ')}` : worst[1] < 5 ? `Tight: ${worst[0].split(' (')[0]} ${worst[1].toFixed(1)} mm` : `Clear by ${worst[1].toFixed(1)} mm or more`;
+  const rows = [['Kip (back y ' + data.kip_rear_y + ')', g.kip, true], [`Rear wheels Ø${state.wheels}`, g[wk], false], ['Jet stream', g.jet, false]];
+  $('clear').innerHTML = '<tr><th>Balloon to</th><th>mm</th><th></th></tr>' + rows.map(([n, v, soft]) => `<tr><td>${n}</td><td class="${cls(v, soft)}">${v.toFixed(1)}</td><td class="${cls(v, soft)}">${word(v, soft)}</td></tr>`).join('');
+  const hard = rows.filter((r) => !r[2]), hardWorst = hard.reduce((x, r) => (r[1] < x[1] ? r : x)), kipRub = g.kip < 0;
+  const v = $('verdict');
+  if (hardWorst[1] < 0) { v.className = 'bad'; v.textContent = `Reaches the ${hardWorst[0].split(' (')[0].toLowerCase()}: a balloon there blocks the jet or hits a wheel`; }
+  else if (hardWorst[1] < 5 || kipRub || g.kip < 5) { v.className = 'warn'; v.textContent = kipRub ? `Rubs Kip by ${(-g.kip).toFixed(1)} mm (soft balloon deforms; hard limits are clear by ${hardWorst[1].toFixed(1)} mm)` : `Tight: ${hardWorst[1] < 5 ? hardWorst[0].split(' (')[0] : 'Kip'} within 5 mm`; }
+  else { v.className = 'ok'; v.textContent = `Clear by ${Math.min(g.kip, hardWorst[1]).toFixed(1)} mm or more`; }
   // nozzle table: ideal nozzle, F = 2 A dP, burn = V / (A sqrt(2 dP / rho)), drag = Crr m g (Crr 0.045 per the spec)
   const dP = state.dp * 1000, rho = 1.2, V = state.vol / 1000, m = state.mass / 1000, drag = 0.045 * m * 9.81;
   $('dpo').textContent = `${state.dp} kPa`; $('volo').textContent = `${state.vol} L`; $('masso').textContent = `${state.mass} g`;
@@ -167,7 +170,8 @@ const f = data.facts;
 $('facts').innerHTML =
   `<p><b>Placement [M]</b>: body centre (0, 50.0, 12.5) on rear rows 8-9. Overlap with the keel ${f.keel_overlap_mm3} mm3; gap to the wheels O36 ${f.w36_gap_mm} mm, O50 ${f.w50_gap_mm} mm; to the windscreen ${f.windscreen_gap_mm} mm; rear face at y ${f.body_bbox[4]} (keel ends 62.4). Only 4 corner studs engage (rows 7-9 have no inner studs).</p>` +
   `<p><b>No axle gear in this stage</b>: the Z10 axle gear overlaps the body by ${f.axle_gear_overlap_mm3} mm3, and a jet car has no PTO to drive.</p>` +
-  `<p><b>Why lean</b>: upright on the collar a balloon from about 125 mm up touches Kip's back; leaning back clears him, but past about 45-50 deg it reaches the jet stream. Balloon = sphere on a ${NECK} mm neck [E]; real balloons are pear-shaped and soft, and a cradle is not designed.</p>` +
+  `<p><b>Straight up is what the CAD gives</b> (vertical collar), so lean 0 is the resting pose. A rigid sphere that size overlaps Kip's back and hat by a few mm; a real balloon is soft and light, so read that as <i>rubs</i>, not <i>blocked</i>. The hard limit is at the other end: a balloon trailing back past about 45-50 deg reaches the jet stream and would smother the nozzle.</p>` +
+  `<p><b>What it probably does in a run [E]</b>: filled with air it floats in air, so its net weight is only the rubber (a few grams) and there is almost no inertia lean. Drag pushes it back: about 27 mN at 2 m/s on a 175 mm sphere (Cd 0.47), 61 mN at 3 m/s, acting about 105 mm above the neck. A pressurised neck (2.5 kPa, 10 mm radius) resists roughly 4 N.mm before it kinks. At the speeds in the nozzle table (about 1.4 m/s for O6, 1.9 m/s for O8, ideal) the drag moment is 1.4-2.6 N.mm, so expect a trail-back, not a fold; above 2-3 m/s it can fold. Rough estimates: a printed jet piece with a real balloon on the real keel will tell. Balloon = sphere on a ${NECK} mm neck [E]; a cradle is not designed.</p>` +
   `<p><b>Nozzle table</b> assumes an ideal nozzle and constant pressure, rolling drag Crr 0.045 (spec). Solid-PLA masses: keel ${f.mass_g_solid_pla.kit_keel_base} g, jet body ${f.mass_g_solid_pla.mom_jet_valve_body} g, wheel O36 ${f.mass_g_solid_pla.kit_wheel_med} g / O50 ${f.mass_g_solid_pla.kit_wheel_giant} g each; real prints use infill. Generated ${data.generated_at} by parts/kip/jetcar_table.py.</p>`;
 
 const CAMS = { iso: [[200, 170, -250], [0, 70, -40]], side: [[420, 110, -45], [0, 70, -45]], rear: [[0, 150, -430], [0, 70, -45]], top: [[0, 480, -35], [0, 40, -45]] };
