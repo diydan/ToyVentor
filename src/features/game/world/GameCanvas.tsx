@@ -544,8 +544,10 @@ export function GameCanvas({
   };
 
   const label = toyName || contract?.name || toy.name;
-  const currentWorldEntry =
-    WORLDS.find((w) => w.id === state.world) ?? WORLDS[0];
+  const currentWorldEntry = WORLDS.find((w) => w.id === state.world) ?? {
+    ...WORLDS[0],
+    label: state.worldName ?? WORLDS[0].label,
+  };
   const hasSavedCard = Boolean(
     themeSignature && revealForBuild(toy.id, themeSignature),
   );
@@ -948,6 +950,21 @@ export function GameCanvas({
                       </button>
                     ))}
                   </div>
+                  <button
+                    type="button"
+                    className={
+                      state.world.startsWith("seed-")
+                        ? "tv-world tv-world-on tv-world-surprise"
+                        : "tv-world tv-world-surprise"
+                    }
+                    aria-label="Surprise world: build a new level from the kit"
+                    onClick={() => {
+                      engine()?.playSeed();
+                      setWorldsOpen(false);
+                    }}
+                  >
+                    {"\u{1F3B2}"} Surprise world
+                  </button>
                   <span className="tv-worlds-group-k">STEM Labs</span>
                   <div className="tv-worlds-grid">
                     {WORLDS.filter((w) => w.lab).map((w) => {

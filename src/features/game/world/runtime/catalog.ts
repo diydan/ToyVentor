@@ -233,6 +233,10 @@ export interface LevelDef {
   id: string;
   name: string;
   theme: string;
+  /** Optional time of day. Re-skins the sky, fog and lighting rig of the theme; absent = the theme's own look. */
+  mood?: "day" | "dusk" | "night";
+  /** Optional seed code when the level was composed by levelKit.ts, so it can be shared and replayed. */
+  seed?: string;
   props: LevelPropRef[];
   spots: LevelSpotRef[];
   missions?: LevelMissionRef[];
@@ -280,7 +284,14 @@ export var CWHY: Record<string, string> = {"mop>crumbs":"Mopping crumbs just mak
 THEME_DEF.beach={night:false,sky:["#2b86d6","#7cc8f2","#fff0c4"],fog:0xcfeaf6,ground:"#e3c08a",hemi:[0xffffff,0xe0c08a,.75],sun:[0xfff1d0,.95],hills:["#4fae86","#3f9c76","#8cc6e6"],orb:[34,30,-90,"#fff4c0"],extras:{sea:1,shells:1,fireflies:"rgba(255,255,255,1)"}};
 THEME_DEF.snow={night:true,sky:["#06102e","#142a66","#2f4f99"],fog:0x1c2f66,ground:"#bccbea",hemi:[0xbcd0ff,0x3a4f8a,.48],sun:[0xd6e2ff,.78],hills:["#7f98cf","#6f89c4","#3f5a9c"],orb:[30,26,-80,"#f4f7ff"],extras:{snowfall:1,aurora:1}};
 THEME_DEF.room={night:true,sky:["#1a1440","#2a2160","#3a2c7a"],fog:0x2a2058,ground:"#9a6a40",hemi:[0xffd7b0,0x3a2a60,.55],sun:[0xffe4c0,.85],hills:null,orb:null,extras:{wall:1,rug:1,fireflies:"rgba(255,224,170,1)"}};
-export function levelWorld(L: { theme: string; name?: string; props?: LevelPropRef[]; spots?: LevelSpotRef[]; missions?: LevelMissionRef[] }): WorldDef {var b=THEME_DEF[L.theme]||THEME_DEF.garden,w: Record<string, any>={};for(var k in b)w[k]=b[k];w.n=L.name||"My world";w.theme=L.theme;
+/** Time-of-day skins any theme can wear: sky gradient (top, mid, horizon), the stars/fireflies flag and the fog colour. */
+export var MOOD_DEF: Record<string, { night: boolean; sky: [string, string, string]; fog: number }> = {
+ day:{night:false,sky:["#2a6fd6","#7fbbf0","#fff0d0"],fog:0xcfe4f6},
+ dusk:{night:true,sky:["#1d1b5c","#a24f84","#ffb27a"],fog:0x4a2f66},
+ night:{night:true,sky:["#060d2c","#16226a","#463f9e"],fog:0x1d2470}
+};
+export function levelWorld(L: { theme: string; mood?: string; name?: string; props?: LevelPropRef[]; spots?: LevelSpotRef[]; missions?: LevelMissionRef[] }): WorldDef {var b=THEME_DEF[L.theme]||THEME_DEF.garden,w: Record<string, any>={};for(var k in b)w[k]=b[k];w.n=L.name||"My world";w.theme=L.theme;
+ var md=L.mood?MOOD_DEF[L.mood]:undefined;if(md){w.mood=L.mood;w.night=md.night;w.sky=md.sky.slice();w.fog=md.fog}
  w.props=(L.props||[]).filter(function(p){return PROPS[p.type]}).map(function(p){var d=PROPS[p.type] as PropDef,a: [string, number, number, (number | string)?]=[p.type,p.x,p.z!=null?p.z:d.z];if(p.y!=null||d.y!=null)a.push(p.y!=null?p.y:(d.y as number));else if(p.type==="lantern"&&L.theme==="junk")a.push("#ff9d5c");return a});
  w.spots=(L.spots||[]).filter(function(s){return HIDE[s.hide]}).map(function(s){var h=HIDE[s.hide] as HideDef,o: WorldSpotDef={k:s.part,t:h.t,x:s.x,z:s.z!=null?s.z:h.z};if(h.t==="junk")o.obj=s.hide;else o.cover=s.hide;if(h.y)o.y=h.y;return o});w.missions=(L.missions||[]).slice();return w as WorldDef}
 LEVELS.push({"format":"toyventor.level/1","id":"lab1","name":"Lab 1: Bridges","theme":"garden","props":[{"type":"lantern","x":3},{"type":"tree","x":-4},{"type":"lantern","x":17},{"type":"lantern","x":30},{"type":"bushes","x":44}],"spots":[],"missions":[{"type":"bridge","x":10,"free":true},{"type":"measure","x":23,"free":true},{"type":"balance","x":36,"free":true}]},

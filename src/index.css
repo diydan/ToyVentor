@@ -2565,6 +2565,7 @@ button.tv-badge-pill:hover {
 .tv-worlds::-webkit-scrollbar { display: none; }
 .tv-world { flex: 0 0 auto; min-height: 30px; padding: 0 8px; border-radius: 9px; border: 2px solid var(--line); background: rgba(16,26,68,.85); color: var(--ink); font: 700 11px var(--font-display); cursor: pointer; }
 .tv-world-on { background: var(--sky, #52b7ff); color: #06122b; }
+.tv-world-surprise { width: 100%; margin: 10px 0 4px; min-height: 44px; }
 
 .tv-worlds-compact {
   position: absolute;

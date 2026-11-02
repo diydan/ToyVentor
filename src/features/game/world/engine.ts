@@ -607,7 +607,7 @@ export interface MissionSolveDetail {
 
 export type WorldEvent =
   | { type: "ready" }
-  | { type: "world"; world: string }
+  | { type: "world"; world: string; name?: string }
   | { type: "zoom"; zoom: ZoomLevel }
   | { type: "found"; keys: string[]; total: number }
   | { type: "missionsDone"; keys: string[]; total: number }
@@ -622,6 +622,8 @@ export type WorldEvent =
 export interface WorldState {
   ready: boolean;
   world: string;
+  /** Display name of the world when it is not one of the fixed WORLDS (composed seed worlds). */
+  worldName?: string;
   zoom: ZoomLevel;
   foundTotal: number;
   missionsDoneTotal: number;
@@ -653,7 +655,9 @@ export function applyWorldEvent(state: WorldState, event: WorldEvent): WorldStat
     case "ready":
       return state.ready ? state : { ...state, ready: true };
     case "world":
-      return state.world === event.world ? state : { ...state, world: event.world };
+      return state.world === event.world && state.worldName === event.name
+        ? state
+        : { ...state, world: event.world, worldName: event.name };
     case "zoom":
       return state.zoom === event.zoom ? state : { ...state, zoom: event.zoom };
     case "found":
@@ -748,6 +752,8 @@ export interface EngineHandle {
   setToy: (contract: ToyContract | null) => void;
   /** Switch world through the engine's own world tabs. Queued until ready. */
   goWorld: (world: WorldId) => void;
+  /** Compose a level from the level kit (a seed code, or random when omitted) and play it. Returns the code. */
+  playSeed: (code?: string) => string | null;
   /** Set the camera zoom through the engine's own zoom button. */
   setZoom: (zoom: ZoomLevel) => void;
   /** Press the open mission panel's main, Forge, or Later button. */
@@ -854,6 +860,8 @@ interface LegacyHooks {
   S?: LegacySave;
   P?: LegacyPlayer;
   go?: (world: string) => void;
+  playSeed?: (code?: string) => string | null;
+  worldName?: (id: string) => string;
   start?: (build: boolean) => void;
   open?: () => void;
   close?: () => void;
@@ -1191,7 +1199,9 @@ export function createEngine(
     }
     if (typeof save.world === "string" && save.world !== lastWorld) {
       lastWorld = save.world;
-      events.onEvent({ type: "world", world: save.world });
+      const fixed = WORLDS.some((w) => w.id === save.world);
+      const name = fixed ? undefined : api.worldName?.(save.world);
+      events.onEvent(name ? { type: "world", world: save.world, name } : { type: "world", world: save.world });
     }
     const zoom = Math.max(0, Math.min(2, save.zoom ?? 0)) as ZoomLevel;
     if (zoom !== lastZoom) {
@@ -1297,6 +1307,10 @@ export function createEngine(
       const api = hooks();
       if (ready && api?.go) api.go(world);
       else pendingWorld = world;
+    },
+    playSeed: (code) => {
+      if (disposed) return null;
+      return hooks()?.playSeed?.(code) ?? null;
     },
     setZoom: (target) => {
       const save = hooks()?.S;

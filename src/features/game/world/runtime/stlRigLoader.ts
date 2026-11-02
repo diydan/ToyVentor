@@ -26,6 +26,8 @@ import {
 
 export const MAX_STL_CACHE = 48;
 export const KIP_MM_SCALE = 0.0185;
+/** Hip height of the Kip figure in mm: where the legs pivot for skeletal animation. */
+export const KIP_HIP_MM = 61.5;
 export const VEH_MM_SCALE = 0.0235;
 
 export type StlFetcher = (url: string) => Promise<ArrayBuffer | null>;
@@ -677,6 +679,7 @@ function applyCharacterStlRig(
   torsoGrp.add(scadMesh(geos.torso!, c1Mat));
   kipFrame.add(torsoGrp);
   rig.body = torsoGrp;
+  rig.mixHipY = KIP_HIP_MM * KIP_MM_SCALE;
 
   // Articulated arms in stage-aligned holders so world.ts walk swing (rotation.z) swings forward/back along +X!
   for (const side of [1, -1] as const) {
@@ -709,9 +712,16 @@ function applyCharacterStlRig(
     footHolder.position.set(0, 0, -side * 10.8 * KIP_MM_SCALE);
     bootsSlot.add(footHolder);
 
+    // The leg hangs from a hip pivot (61.5 mm up) nested in footHolder, so the Mixamo driver can swing it from the
+    // hip while the legacy walk still lifts footHolder. At rest the pivot is identity and nothing moves.
+    const hipHolder = new T.Group();
+    hipHolder.position.y = KIP_HIP_MM * KIP_MM_SCALE;
+    footHolder.add(hipHolder);
+    footHolder.userData.hip = hipHolder;
     const legCad = new T.Group();
     legCad.rotation.y = Math.PI / 2;
     legCad.scale.setScalar(KIP_MM_SCALE);
+    legCad.position.y = -KIP_HIP_MM * KIP_MM_SCALE;
 
     const legMesh = scadMesh(geos.snapLeg!, c2Mat);
     legMesh.position.set(0, 61.5 - 38.6, 0);
@@ -721,7 +731,7 @@ function applyCharacterStlRig(
     bootMesh.position.set(0, 0, 2.0);
     legCad.add(bootMesh);
 
-    footHolder.add(legCad);
+    hipHolder.add(legCad);
     rig.feet.push(footHolder);
   }
   if (sel.boots === "robot.legs.hover") {

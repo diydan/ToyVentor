@@ -22,6 +22,12 @@ let scene!: THREE.Scene;
 let camera!: THREE.PerspectiveCamera;
 let hemi!: THREE.HemisphereLight;
 let sun!: THREE.DirectionalLight;
+let rim!: THREE.DirectionalLight;
+let hero!: THREE.PointLight;
+let pmrem: THREE.PMREMGenerator | null = null;
+let envRT: THREE.WebGLRenderTarget | null = null;
+let envTex: THREE.Texture | null = null;
+let envScale = 1;
 let blob!: THREE.Mesh;
 
 const MC: Record<string, THREE.Material> = {};
@@ -52,21 +58,97 @@ export function initScene(canvas: HTMLCanvasElement): boolean {
   scene.add(hemi);
   sun = new T.DirectionalLight(0xe4e9ff, 0.85);
   sun.castShadow = true;
-  sun.shadow.mapSize.set(1024, 1024);
+  sun.shadow.mapSize.set(2048, 2048);
+  sun.shadow.radius = 3; // PCF filter radius in texels: soft penumbra without a second pass
   sun.shadow.bias = -0.0006;
   sun.shadow.normalBias = 0.035;
   var sc = sun.shadow.camera;
   sc.left = -14; sc.right = 14; sc.top = 14; sc.bottom = -14; sc.near = 1; sc.far = 70;
   scene.add(sun);
   scene.add(sun.target);
-  var rimL = new T.DirectionalLight(0xa9c0ff, 0.5);
-  rimL.position.set(-6, 9, -12);
-  scene.add(rimL);
-  (function(){var pm=new T.PMREMGenerator(renderer),es=new T.Scene();es.add(new T.Mesh(new T.BoxGeometry(20,12,20),new T.MeshBasicMaterial({color:0x141c48,side:T.BackSide})));function panel(x:number,y:number,z:number,w:number,h:number,c:number,k:number){var mm=new T.MeshBasicMaterial({color:c,side:T.DoubleSide});mm.color.multiplyScalar(k);var m=new T.Mesh(new T.PlaneGeometry(w,h),mm);m.position.set(x,y,z);m.lookAt(0,0,0);es.add(m)}panel(0,5.9,0,10,7,0xffffff,1.8);panel(-9.9,2,0,6,4,0x9fbcff,1.1);panel(9.9,1.5,2,5,3,0xffe2c4,1.0);panel(0,1.5,9.9,9,2.2,0xc9d6ff,.8);scene.environment=pm.fromScene(es,.04).texture;pm.dispose()})();
+  // Final physical intensities come from lighting.ts; mark these so linearize() never boosts them again.
+  hemi.userData.lin = 1;
+  sun.userData.lin = 1;
+  rim = new T.DirectionalLight(0xa9c0ff, 0.5);
+  rim.userData.lin = 1;
+  rim.position.set(-6, 9, -12);
+  scene.add(rim);
+  // Soft follow light on the hero so faces stay readable in dusk and night worlds.
+  hero = new T.PointLight(0xffe2b8, 0, 9, 2);
+  hero.userData.lin = 1;
+  scene.add(hero);
+  pmrem = null; envRT = null; envTex = null; envScale = 1;
+  setEnvironment(DEFAULT_ENV);
   var bmat=new T.MeshBasicMaterial({map:canv(128,128,function(g){var gr=g.createRadialGradient(64,64,0,64,64,64);gr.addColorStop(0,"rgba(0,0,0,0.55)");gr.addColorStop(1,"rgba(0,0,0,0)");g.fillStyle=gr;g.fillRect(0,0,128,128)}),transparent:true,depthWrite:false});bmat.polygonOffset=true;bmat.polygonOffsetFactor=-2;bmat.polygonOffsetUnits=-2;blob=new T.Mesh(new T.PlaneGeometry(1,1),bmat);blob.rotation.x=-Math.PI/2;blob.renderOrder=1;scene.add(blob);
   composer = null; bloom = null; grade = null; fxaa = null;
   perf.n = 0; perf.sum = 0; perf.done = QP !== "auto";
+  if (import.meta.env?.DEV) {
+    // Dev-only lighting bench: tune lights/bloom/exposure live from the console.
+    (window as unknown as Record<string, unknown>).__tvDebug = {
+      get renderer() { return renderer; }, get scene() { return scene; }, get camera() { return camera; },
+      get hemi() { return hemi; }, get sun() { return sun; }, get bloom() { return bloom; }, get grade() { return grade; },
+    };
+  }
   return true;
+}
+
+/* ---------- image-based light ---------- */
+export interface EnvPalette { bg: number; top: number; topK: number; left: number; right: number; front: number }
+export const DEFAULT_ENV: EnvPalette = { bg: 0x141c48, top: 0xffffff, topK: 1.8, left: 0x9fbcff, right: 0xffe2c4, front: 0xc9d6ff };
+/** Rebuilds the studio environment the PBR materials reflect, tinted per world (sunset orange on junk, sky blue on day worlds). */
+export function setEnvironment(p: EnvPalette): void {
+  if (!renderer || !scene) return;
+  if (!pmrem) pmrem = new T.PMREMGenerator(renderer);
+  const es = new T.Scene();
+  es.add(new T.Mesh(new T.BoxGeometry(20, 12, 20), new T.MeshBasicMaterial({ color: p.bg, side: T.BackSide })));
+  const panel = (x: number, y: number, z: number, w: number, h: number, c: number, k: number) => {
+    const mm = new T.MeshBasicMaterial({ color: c, side: T.DoubleSide });
+    mm.color.multiplyScalar(k);
+    const m = new T.Mesh(new T.PlaneGeometry(w, h), mm);
+    m.position.set(x, y, z);
+    m.lookAt(0, 0, 0);
+    es.add(m);
+  };
+  panel(0, 5.9, 0, 10, 7, p.top, p.topK);
+  panel(-9.9, 2, 0, 6, 4, p.left, 1.1);
+  panel(9.9, 1.5, 2, 5, 3, p.right, 1.0);
+  panel(0, 1.5, 9.9, 9, 2.2, p.front, 0.8);
+  const rt = pmrem.fromScene(es, 0.04);
+  if (envRT) envRT.dispose();
+  envRT = rt;
+  envTex = rt.texture;
+  scene.environment = envTex;
+  es.traverse((o) => {
+    const m = o as THREE.Mesh;
+    if (m.isMesh) { m.geometry.dispose(); (m.material as THREE.Material).dispose(); }
+  });
+}
+/** Free the environment render target and the PMREM generator (engine teardown). */
+export function disposeEnvironment(): void {
+  if (envRT) { envRT.dispose(); envRT = null; }
+  envTex = null;
+  if (pmrem) { pmrem.dispose(); pmrem = null; }
+}
+/** Scales every material's own envMapIntensity (see bindEnv) so one world can be glossier or flatter than another. */
+export function setEnvScale(s: number): void { envScale = s; }
+/**
+ * three r163+ ignores material.envMapIntensity whenever the light comes from scene.environment: it forces
+ * scene.environmentIntensity on every standard material. That silently flattened this scene's authored
+ * values (0.1 for matte ground, 1.3 for chrome). Binding the map to the material itself restores them.
+ */
+function bindEnv(root: THREE.Object3D): void {
+  if (!envTex) return;
+  root.traverse(function (o) {
+    const mesh = o as THREE.Mesh;
+    if (!mesh.isMesh) return;
+    const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+    for (const m of mats as THREE.MeshStandardMaterial[]) {
+      if (!m || !(m as { isMeshStandardMaterial?: boolean }).isMeshStandardMaterial) continue;
+      if (m.userData.env0 == null) m.userData.env0 = m.envMapIntensity;
+      if (m.envMap === null || m.userData.envBound) { m.envMap = envTex; m.userData.envBound = 1; }
+      m.envMapIntensity = (m.userData.env0 as number) * envScale;
+    }
+  });
 }
 
 /* ---------- canvas textures ---------- */
@@ -93,7 +175,7 @@ function gear(r: number, th: number, mat: THREE.Material, teeth?: number): THREE
 function hemiSphere(r: number, mat: THREE.Material): THREE.Mesh {return M(new T.SphereGeometry(r,28,16,0,Math.PI*2,0,Math.PI/2),mat)}
 function starGeo(): THREE.ExtrudeGeometry {var s=new T.Shape();for(var i=0;i<8;i++){var a=i/8*Math.PI*2-Math.PI/2,r=i%2?.12:.36,x=Math.cos(a)*r,y=Math.sin(a)*r;if(i)s.lineTo(x,y);else s.moveTo(x,y)}return new T.ExtrudeGeometry(s,{depth:.06,bevelEnabled:true,bevelThickness:.03,bevelSize:.03,bevelSegments:2})}
 const STARGEO = starGeo();
-function linearize(root: THREE.Object3D): void {root.traverse(function(o){var l=o as THREE.Light;if(l.isLight&&!o.userData.lin){o.userData.lin=1;l.intensity*=(l as unknown as { isPointLight?: unknown }).isPointLight?5.5:2.6}})}
+function linearize(root: THREE.Object3D): void {bindEnv(root);root.traverse(function(o){var l=o as THREE.Light;if(l.isLight&&!o.userData.lin){o.userData.lin=1;l.intensity*=(l as unknown as { isPointLight?: unknown }).isPointLight?5.5:2.6}})}
 
 /* ---------- color grade + post chain ---------- */
 const GRADE = {uniforms:{tDiffuse:{value:null},uTint:{value:new T.Vector3(1,1,1.04)},uVig:{value:.34},uSat:{value:1.14}},vertexShader:"varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}",fragmentShader:"varying vec2 vUv;uniform sampler2D tDiffuse;uniform vec3 uTint;uniform float uVig;uniform float uSat;void main(){vec4 c=texture2D(tDiffuse,vUv);float l=dot(c.rgb,vec3(.2126,.7152,.0722));c.rgb=mix(vec3(l),c.rgb,uSat)*uTint;float v=smoothstep(.95,.3,length(vUv-.5)*1.3);c.rgb*=mix(1.-uVig,1.,v);gl_FragColor=c;}"};
@@ -104,7 +186,7 @@ function stepDown(onResize: () => void): void {if(bloom&&bloom.enabled){bloom.en
 
 export {
   T,
-  renderer, scene, camera, hemi, sun, blob, perf,
+  renderer, scene, camera, hemi, sun, rim, hero, blob, perf,
   composer, bloom, grade, fxaa,
   MC, GT, GLASS, BUBBLE, STARGEO, GRADE, TINT,
   setupPost, stepDown,
