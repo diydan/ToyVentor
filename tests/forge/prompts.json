@@ -1,0 +1,75 @@
+{
+  "version": 1,
+  "note": "Forge eval text prompts (F1). Kid phrasing, one object each, no brand names. Slot is what the child's choice maps to; the harness gives it to the proposer. Add photos (F2), goals (F5) and the assist sets later.",
+  "prompts": [
+    { "id": "c01", "slot": "crown", "text": "a tall wizard hat with little stars" },
+    { "id": "c02", "slot": "crown", "text": "a floppy chef hat" },
+    { "id": "c03", "slot": "crown", "text": "a pirate hat with a wide brim" },
+    { "id": "c04", "slot": "crown", "text": "a crown with five points" },
+    { "id": "c05", "slot": "crown", "text": "a round beanie with a bobble on top" },
+    { "id": "c06", "slot": "crown", "text": "a tiny top hat" },
+    { "id": "c07", "slot": "crown", "text": "a cone party hat" },
+    { "id": "c08", "slot": "crown", "text": "a cowboy hat" },
+    { "id": "c09", "slot": "crown", "text": "a flat graduation cap with a square top" },
+    { "id": "c10", "slot": "crown", "text": "a pointy hat with a bent tip" },
+    { "id": "c11", "slot": "crown", "text": "a space helmet dome" },
+    { "id": "c12", "slot": "crown", "text": "a fez with a little tassel" },
+    { "id": "c13", "slot": "crown", "text": "a sun hat with a very wide brim" },
+    { "id": "c14", "slot": "crown", "text": "a horned helmet with two curved horns" },
+
+    { "id": "h01", "slot": "head", "text": "a round robot head with a flat top" },
+    { "id": "h02", "slot": "head", "text": "a friendly alien head with a big forehead" },
+    { "id": "h03", "slot": "head", "text": "a bunny head with tall ears" },
+    { "id": "h04", "slot": "head", "text": "a cat head with pointy ears" },
+    { "id": "h05", "slot": "head", "text": "a square astronaut head" },
+    { "id": "h06", "slot": "head", "text": "a dinosaur head with a long snout" },
+    { "id": "h07", "slot": "head", "text": "a pumpkin head" },
+    { "id": "h08", "slot": "head", "text": "a bear head with round ears" },
+
+    { "id": "b01", "slot": "back", "text": "a small backpack" },
+    { "id": "b02", "slot": "back", "text": "a pair of butterfly wings" },
+    { "id": "b03", "slot": "back", "text": "a jetpack with two tanks" },
+    { "id": "b04", "slot": "back", "text": "a turtle shell" },
+    { "id": "b05", "slot": "back", "text": "a big round shell like a snail" },
+    { "id": "b06", "slot": "back", "text": "a bird tail with three feathers" },
+
+    { "id": "a01", "slot": "hand", "text": "a star wand" },
+    { "id": "a02", "slot": "hand", "text": "a magic wand with a heart on top" },
+    { "id": "a03", "slot": "hand", "text": "a paddle for a pretend boat" },
+    { "id": "a04", "slot": "hand", "text": "a flag on a stick" },
+    { "id": "a05", "slot": "hand", "text": "a lollipop" },
+    { "id": "a06", "slot": "hand", "text": "a flower on a stem" },
+    { "id": "a07", "slot": "hand", "text": "a lantern on a stick" },
+    { "id": "a08", "slot": "hand", "text": "a big spoon" },
+
+    { "id": "k01", "slot": "hood", "text": "a racing stripe hood scoop" },
+    { "id": "k02", "slot": "hood", "text": "a flat hood with a round badge" },
+    { "id": "k03", "slot": "hood", "text": "a hood with two air vents" },
+    { "id": "k04", "slot": "hood", "text": "a bumpy off-road hood" },
+    { "id": "k05", "slot": "hood", "text": "a smooth rounded hood bulge" },
+
+    { "id": "r01", "slot": "roof", "text": "a roof box for luggage" },
+    { "id": "r02", "slot": "roof", "text": "a flashing light bar on the roof" },
+    { "id": "r03", "slot": "roof", "text": "a surfboard rack" },
+    { "id": "r04", "slot": "roof", "text": "a little roof fin like a shark fin" },
+    { "id": "r05", "slot": "roof", "text": "a round satellite dish" },
+
+    { "id": "f01", "slot": "front", "text": "a wide bumper with a curve" },
+    { "id": "f02", "slot": "front", "text": "a snow plough blade" },
+    { "id": "f03", "slot": "front", "text": "a bull bar" },
+    { "id": "f04", "slot": "front", "text": "a round front badge plate" },
+
+    { "id": "o01", "slot": "rollbar", "text": "a curved rollbar" },
+    { "id": "o02", "slot": "rollbar", "text": "a rollbar with a little flag" },
+    { "id": "o03", "slot": "rollbar", "text": "a double arch rollbar" },
+
+    { "id": "s01", "slot": "spoiler", "text": "a tall wing spoiler" },
+    { "id": "s02", "slot": "spoiler", "text": "a small duck-tail spoiler" },
+    { "id": "s03", "slot": "spoiler", "text": "a curved wing with end plates" },
+    { "id": "s04", "slot": "spoiler", "text": "a flat wide spoiler" },
+
+    { "id": "e01", "slot": "exhaust", "text": "a fat shiny exhaust pipe" },
+    { "id": "e02", "slot": "exhaust", "text": "two small exhaust pipes" },
+    { "id": "e03", "slot": "exhaust", "text": "a tall chimney exhaust like a steam train" }
+  ]
+}
