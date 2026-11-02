@@ -8,6 +8,11 @@ describe("native world runtime (Phase 0A)", () => {
     for (const id of ["tray", "beltb", "belt", "pcard", "mr", "intro", "bub", "toast", "fade"]) {
       expect(STAGE_HTML).toContain(`id="${id}"`);
     }
+    // Legacy POC surfaces (title, Forge sheet, mission/editor/Create
+    // backing sheets) are React overlays; their markup must not ship.
+    for (const gone of ["forge", "types", "slots", "opts", "play", "tbuild", "mp-go", "ed-body", "cr-in"]) {
+      expect(STAGE_HTML).not.toContain(`id="${gone}"`);
+    }
   });
 
   it("stage CSS ships only the diegetic layer and has valid scoped keyframes/braces", () => {

@@ -9,7 +9,9 @@ completion arrives today as binary flags only (`S.mdone`, emitted as
 ledger already records `completedMissionIds` and STEM `earnedMinutes` per
 day, and ownership sync accepts toys/parts/skins/characters payloads.
 
-> Status: **ACCEPTED — implement.** Decisions 1–7 resolved below, aligned
+> Status: **IMPLEMENTED** (Phase 3; [`src/lib/progression.ts`](../../src/lib/progression.ts),
+> build status in [app-continuation-spec.md](app-continuation-spec.md)).
+> Decisions 1–7 resolved below, aligned
 > with continuation §4.3–§4.6 (shared device pool, daily multiplier rules,
 > per-mission tier gates). Maker Rank gates vehicles only. Greyed-out
 > roster wiring stays Phase 4; Phase 3 ships awards, stars, ranks,

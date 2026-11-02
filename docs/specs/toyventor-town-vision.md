@@ -25,8 +25,8 @@ the canonical contract and **Stretch goals** register in
 Editor's verification notes (Oct 31): Muse Voice Transcribe is real and live
 on the Meta Model API (`muse-voice-transcribe-1.0`, streaming ASR +
 diarization, ~$0.18/hr) — the voice story below is buildable on the approved
-Worker path. "30 hidden parts" has no code behind it yet and is marked
-planned below. World counts read "six worlds and six labs" everywhere; the
+Worker path. "30 hidden parts" is in code (`runtime/catalog.ts` level
+spots, 5 per world including 11 `robot.*`). World counts read "six worlds and six labs" everywhere; the
 draft's "12 worlds" meant the two together.
 
 ---
@@ -48,7 +48,7 @@ physics is the tool.
 
 | Pillar | What already exists |
 | --- | --- |
-| Explore | Six worlds and six labs, hidden-part hooks (30 hidden parts planned, not yet in code), Kip walking in 2.5D |
+| Explore | Six worlds and six labs, 30 hidden-part spots in `catalog.ts`, Kip walking in 2.5D |
 | Missions | 11 mission types across Labs 1 to 6, each with Tiers 1 to 3 |
 | Progress | XP, Maker Ranks, mastery stars, vehicle unlocks |
 | Build | Toy Box, vehicles, Create mode for kid-made worlds |

@@ -754,7 +754,7 @@ export interface EngineHandle {
   goWorld: (world: WorldId) => void;
   /** Compose a level from the level kit (a seed code, or random when omitted) and play it. Returns the code. */
   playSeed: (code?: string) => string | null;
-  /** Set the camera zoom through the engine's own zoom button. */
+  /** Set the camera zoom level in the runtime. */
   setZoom: (zoom: ZoomLevel) => void;
   /** Press the open mission panel's main, Forge, or Later button. */
   missionAction: (action: MissionAction) => void;
@@ -869,6 +869,8 @@ interface LegacyHooks {
   close?: () => void;
   seedDemo?: () => void;
   setTier?: (tier: number) => void;
+  setZoom?: (zoom: number) => void;
+  mute?: () => void;
   /** Stamped mission-panel snapshot, served without touching the DOM. */
   mpSnap?: () => RawMissionPanelSnapshot;
   /** Press stamped mission control i (honors its disabled flag). */
@@ -987,72 +989,28 @@ export function createEngine(
     queueMicrotask(() => { notifyQueued = false; poll(); });
   };
 
-  const click = (selector: string) => {
-    doc()?.querySelector<HTMLElement>(selector)?.click();
-  };
-
-  const buttonList = (root: ParentNode | null, selector: string): HTMLButtonElement[] =>
-    root ? ([...root.querySelectorAll(selector)] as HTMLButtonElement[]) : [];
-
-  const clickWhere = (
-    selector: string,
-    test: (button: HTMLButtonElement) => boolean,
-  ): boolean => {
-    const button = buttonList(doc(), selector).find(test);
-    if (!button) return false;
-    button.click();
-    return true;
-  };
-
   const load = (contract: ToyContract | null) => {
     runtime?.setToy(contract);
   };
 
 
-  const textOf = (element: Node | null | undefined): string =>
-    (element?.textContent ?? "").replace(/\s+/g, " ").trim();
-
-  const pressed = (button: HTMLElement): boolean =>
-    button.getAttribute("aria-pressed") === "true" || button.classList.contains("on");
-
-  // React renders customizer, mission, Create, and editor sheets as overlays
-  // over the viewport; the legacy sheets stay hidden in the frame as backing
-  // control surfaces until their definitions emit data natively.
-  const suppressLegacyPanels = () => {
-    const frameDoc = doc();
-    if (!frameDoc || disposed) return;
-    if (boundDoc !== frameDoc) {
-      boundDoc = frameDoc;
+  // Stage clicks/keys can change runtime state between notify() calls
+  // (tool belt, tray, pickup card); re-sync snapshots after them.
+  const bindHostSync = () => {
+    const host = doc();
+    if (!host || disposed) return;
+    if (boundDoc !== host) {
+      boundDoc = host;
       const syncSoon = () => schedulePoll();
-      frameDoc.addEventListener("click", syncSoon, {
+      host.addEventListener("click", syncSoon, {
         passive: true,
         signal: hostCtrl.signal,
       });
-      frameDoc.addEventListener("keyup", syncSoon, {
+      host.addEventListener("keyup", syncSoon, {
         passive: true,
         signal: hostCtrl.signal,
       });
     }
-  };
-
-  const textLines = (element: Element): string[] => {
-    const lines: string[] = [];
-    let current = "";
-    const walk = (node: Node) => {
-      if (node.nodeType === Node.TEXT_NODE) {
-        current += node.textContent ?? "";
-        return;
-      }
-      if (node.nodeType === Node.ELEMENT_NODE && (node as Element).tagName === "BR") {
-        lines.push(current);
-        current = "";
-        return;
-      }
-      node.childNodes.forEach(walk);
-    };
-    element.childNodes.forEach(walk);
-    lines.push(current);
-    return lines.map(cleanText).filter(Boolean);
   };
 
   // Native mission read (5A-U1): the runtime stamps snapshot data at render
@@ -1062,39 +1020,11 @@ export function createEngine(
     return normalizeMissionPanelSnapshot(snap ?? undefined);
   };
 
-  const cloneValue = (value: unknown): unknown => {
-    try {
-      return value == null ? value : JSON.parse(JSON.stringify(value));
-    } catch {
-      return null;
-    }
-  };
-
   // Native create read (5A-U1 slice R): the runtime serves the same
   // snapshot from live state, so there is nothing left to scrape.
   const readCreate = (): CreateSnapshot => {
     const snap = hooks()?.crSnap?.();
     return normalizeCreateSnapshot(snap ?? undefined);
-  };
-
-  const newFrameEvent = (_frameWindow: unknown, name: string): Event =>
-    new Event(name, { bubbles: true });
-
-  const setFrameValue = (
-    selector: string,
-    value: string,
-    eventName?: "input" | "change",
-  ): boolean => {
-    const frameWindow = window;
-    const element = doc()?.querySelector<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>(
-      selector,
-    );
-    if (!element) return false;
-    element.value = value;
-    if (eventName) {
-      element.dispatchEvent(newFrameEvent(frameWindow, eventName));
-    }
-    return true;
   };
 
   function openCreateNow() {
@@ -1147,7 +1077,7 @@ export function createEngine(
       pendingCustomizer = mode;
       return;
     }
-    suppressLegacyPanels();
+    bindHostSync();
     if (api.P?.title) api.start?.(true);
     else if (!api.cuSnap?.()?.open) api.open?.();
     if (mode === "forge" && !api.cuSnap?.()?.forge) api.cuAct?.("forge");
@@ -1163,7 +1093,7 @@ export function createEngine(
 
   const poll = () => {
     if (disposed) return;
-    suppressLegacyPanels();
+    bindHostSync();
     const api = hooks();
     const save = api?.S;
     if (!api || !save) return;
@@ -1267,7 +1197,7 @@ export function createEngine(
       }
     }
 
-    const frameDoc = doc();
+    const host = doc();
     const missionPanel = readMissionPanel();
     const missionTitle = missionPanel.open ? missionPanel.title : null;
     if (missionTitle !== lastMission) {
@@ -1278,7 +1208,7 @@ export function createEngine(
       lastMissionPanel = missionPanel;
       events.onEvent({ type: "missionPanel", panel: missionPanel });
     }
-    const toastEl = frameDoc?.querySelector<HTMLElement>("#toast");
+    const toastEl = host?.querySelector<HTMLElement>("#toast");
     const toast =
       toastEl && toastEl.classList.contains("on") ? (toastEl.textContent ?? "").trim() : "";
     if (toast && toast !== lastToast) {
@@ -1323,13 +1253,11 @@ export function createEngine(
       return hooks()?.playSeed?.(code) ?? null;
     },
     setZoom: (target) => {
-      const save = hooks()?.S;
-      if (!save) return;
-      const clicks = zoomClicks(save.zoom ?? 0, target);
-      for (let i = 0; i < clicks; i++) click("#zoom");
+      hooks()?.setZoom?.(target);
+      poll();
     },
     missionAction: (action) => {
-      suppressLegacyPanels();
+      bindHostSync();
       hooks()?.mpAct?.(action);
       poll();
     },
@@ -1489,10 +1417,7 @@ export function createEngine(
       hooks()?.start?.(false);
     },
     muteSound: () => {
-      const snd = doc()?.querySelector<HTMLButtonElement>("#snd");
-      if (snd && snd.getAttribute("aria-pressed") === "true") {
-        snd.click();
-      }
+      hooks()?.mute?.();
     },
     seedDemoSave: () => {
       hooks()?.seedDemo?.();

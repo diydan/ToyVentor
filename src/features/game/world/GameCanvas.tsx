@@ -302,7 +302,7 @@ export function GameCanvas({
     return () => window.clearInterval(timer);
   }, [grownUpsOpen]);
 
-  // Honor queued Build/Create/Editor open once the World iframe reports ready.
+  // Honor queued Build/Create/Editor open once the stage reports ready.
   useEffect(() => {
     if (!state.ready || !pendingEngineOpenRef.current) return;
     const target = pendingEngineOpenRef.current;

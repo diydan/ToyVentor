@@ -15,6 +15,13 @@ explicitly out of scope here. No implementation starts until §10 sign-off.
 > Acceptance numbers below are **targets to measure**, never shipped
 > claims, until eval results replace them.
 >
+> Implementation note 2026-11-02: the Feature 3 core landed ahead of
+> §10 sign-off — `composeLevel` `pinnedProps` (K1) and the room prop
+> pack (K2) in `runtime/levelKit.ts`/`catalog.ts`, plus the pure
+> photo-segments-to-level mapper in `runtime/roomPhoto.ts` with
+> `tests/room-photo.test.ts`. No user-facing photo flow ships until
+> sign-off and S0b; Features 1, 2, and 6 have no implementation.
+>
 > Code-verified review applied 2026-11-02: every claim about the Worker,
 > the level format, chore XP and privacy was checked against the repo
 > and corrected (§1, §2, §3, §6, §7, §8). Feature 3 is re-scoped to ride

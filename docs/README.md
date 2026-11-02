@@ -36,12 +36,13 @@ on geometry conflicts, [parts-tu-spec.md](parts/parts-tu-spec.md) and
 
 | File | What it is |
 | --- | --- |
-| [native-world-port-spec.md](specs/native-world-port-spec.md) | **Phase 0:** native Vite/React Three.js stage port, removing the `<iframe>` and `public/world/**`. |
-| [stage-simplification-and-kip-spec.md](specs/stage-simplification-and-kip-spec.md) | Companion spec for `Demo Mode`, cog-mesh fix, Kip V2 unification (`25` `robot.*` aliases), and retiring `#fix`. |
+| [native-world-port-spec.md](specs/native-world-port-spec.md) | **Phase 0 (landed):** native Vite/React Three.js stage port; `<iframe>` and `public/world/**` deleted. |
+| [stage-simplification-and-kip-spec.md](specs/stage-simplification-and-kip-spec.md) | **Landed:** `Demo Mode` v1, cog-mesh fix, Kip V2 unification (`25` `robot.*` aliases), `#fix` retired. |
 | [app-continuation-spec.md](specs/app-continuation-spec.md) | **Phases 1-5:** `Toy Box` bar & `⚙️` PIN gate, enabled roster, STEM XP, locked roster, and weekly packs. |
 | [forge-ai-spec.md](specs/forge-ai-spec.md) | **Proposed:** six Muse Spark features (describe it, scan it, repair loop, host fit, build planner, finish it) on one recipe, gate and repair engine; five assist features (incl. failed-print triage); data plan and a stretch-goal, Glimmer-based, gated roadmap for two own models (Forge recipe writer, brick sculptor). |
 | [toyventor-town-vision.md](specs/toyventor-town-vision.md) | **Vision:** open-world Town (districts, quests, daily rhythm); extends continuation past Phase 5. |
-| [xp-system-spec.md](specs/xp-system-spec.md) | **Phase 3 gate:** STEM XP scoring, 11-mission tolerances, two-track gating, and D1 sync contract. |
+| [xp-system-spec.md](specs/xp-system-spec.md) | **Phase 3 (implemented):** STEM XP scoring, 11-mission tolerances, two-track gating, and D1 sync contract. |
+| [carousel-modes-ladders-spec.md](specs/carousel-modes-ladders-spec.md) | **Draft:** level carousel, game modes, and 7 STEM ladders (38 rungs) ported from the playtest mockup; awaiting §14 sign-off before C1. |
 | [parent-time-gate.md](specs/parent-time-gate.md) | Implemented parent caps and earned STEM time. |
 | [flatpack-modular-craft-spec.md](specs/flatpack-modular-craft-spec.md) | Proposed flat-pack vehicle/craft grammar. |
 | [kip-demo-implementation.md](specs/kip-demo-implementation.md) | **Proposed:** Kip demo left side menu with dropdowns, flat-pack 3D print view, and selfie face plate — the build plan, superseding the deleted design spec. |

@@ -5,6 +5,12 @@ and [app-continuation-spec.md](app-continuation-spec.md) (**Phases 1-5**),
 covering brain-dump sections 6-8. Code-verified against the live tree; counts
 below are observed, not estimated.
 
+> Status: **LANDED** with Phase 0B/Phase 1 (see the build status in
+> [app-continuation-spec.md](app-continuation-spec.md)). Kept as the
+> decision record for Demo Mode v1, the cog-mesh fix, Kip unification,
+> and `#fix` retirement. Post-freeze 2.5D parallax planes (§4) and
+> Demo Mode v2 portals (§3) remain open.
+
 ## 1. Phase 0 Native Port Resolution
 
 Previously, React wrapped the standalone iframe (`ToyVentor-World.html`) via

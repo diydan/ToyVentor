@@ -5,6 +5,18 @@ Companion to [app-continuation-spec.md](app-continuation-spec.md) and
 Slots in as **Phase 0** ahead of Phases 1-5 so the stage runs natively inside
 the Vite/React bundle instead of a scraped same-origin `<iframe>`.
 
+> Status: **LANDED** (Phases 0A+0B; build status in
+> [app-continuation-spec.md](app-continuation-spec.md)). The iframe,
+> `game/build25.py`, `public/world/**`, and the empty `game/` directory
+> are deleted; the only `/world/ToyVentor-World.html` surface left is the
+> Worker's 302 for old `#toy=` links. Legacy POC markup that still
+> shipped inside `runtime/stageDom.ts` (`STAGE_HTML` title/Forge/
+> mission/editor/Create fragments) and the dead DOM-click helpers in
+> `engine.ts` were removed 2026-11-02; zoom and Sleep-Curtain mute now
+> call native runtime hooks (`setZoom`/`mute`). Text below is the
+> original plan, kept as the record; §5 items 2-4 remain the
+> verification checklist.
+
 ## 1. Problem & Goal
 
 Before Phase 0A, [`GameCanvas.tsx`](../../src/features/game/world/GameCanvas.tsx) mounted

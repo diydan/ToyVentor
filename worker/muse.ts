@@ -193,7 +193,7 @@ function cleanRecipe(value: unknown): CleanRecipe | null {
   const props = Array.isArray(value.props) ? value.props : [];
   const spots = Array.isArray(value.spots) ? value.spots : [];
   // Positions clamp into the playable strip, matching the editor's edSnap
-  // (game/engine25.js): the spec's "clamps positions into range" holds here.
+  // (runtime/editor.ts): the spec's "clamps positions into range" holds here.
   const clampX = (x: number) => Math.min(45, Math.max(0, x));
   const cleanProps = props
     .filter((p) => isRecord(p) && typeof p.type === "string" && typeof p.x === "number")

@@ -97,8 +97,8 @@ and gated STL export:
 - Done auto-opens Reveal once for a new build signature; repeat builds return
   directly to the stage.
 - Customizer: toy-type chips, slot chips, visual part cards, paint zone and
-  swatches, engine fit check with `Fix it for me`, and explicitly mocked order
-  preview.
+  swatches, engine fit check (parts pre-filtered to support-free fits; a
+  child's pick is never auto-swapped), and explicitly mocked order preview.
 - Print/AR drawer: AR View (true-scale GLB over the SAM photo, or model-viewer
   orbit for starters) or Stud Grid (12.5 mm snap board with Add, Rotate,
   Remove, Clear), four live checks, gated STL access, prototype material

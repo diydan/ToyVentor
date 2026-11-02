@@ -59,7 +59,14 @@ function bellTone(k: string): void {var b=PB[k];if(!b)return;tone(b.f,0,.7,"sine
 
 export function toggleSound(): boolean {
   sound = !sound;
+  if (MUS.on) musGain(sound ? 0.7 : 0, 0.3);
   return sound;
+}
+/** Silence SFX and music without toggling back on (Sleep Curtain). */
+export function muteAudio(): void {
+  if (!sound) return;
+  sound = false;
+  if (MUS.on) musGain(0, 0.3);
 }
 export function noteGesture(): void {
   gestured = true;

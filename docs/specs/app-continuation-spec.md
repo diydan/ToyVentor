@@ -29,6 +29,7 @@ UX rules, or the TU geometry canon.
 - Phase 3 (XP math, Tier 2/3 presets, 11 STEM Concept Badges, Pro-part gating, 3 rotating Daily Quests, parent-enabled Real-Life Routines `+25 XP/day`, guilt-free Workshop Days): landed.
 - Phase 4A + 4B (all 9 Rank 2-6 vehicles promoted `ready: true` through Rank 6 `Bolt Power Mech`, backed by `modular-craft.json` + `mech-robotics.json`, E2E zero-reload switch verified): landed.
 - Town Slice 1 (connected 6-district `TOWN_RING` street crossings + signposts, `VEHICLE_PERKS`, 12 `TOWN_SPARKLE_SPOTS`): landed.
+- Legacy POC tranche (Nov 2, 2026): `STAGE_HTML` trimmed to the live stage ids, dead `engine.ts` DOM-click helpers deleted, empty `game/` removed; zoom and Sleep-Curtain mute rewired to native runtime hooks (both were dead `#zoom`/`#snd` clicks).
 - Phase 5 (weekly packs) + Town Phases B-E + `SAM 3.1` & `Muse` generative extensions: parked as **Stretch Goals** behind the Nov 4 core freeze (see §8 and [spec.md](../product/spec.md)).
 
 
