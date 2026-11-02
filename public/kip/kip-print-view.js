@@ -5,7 +5,7 @@
 // All geometry, BOM, profile, and 3MF maths live in pure modules (`kip-print-bom.js`, `kip-print-profile.js`,
 // `kip-print.js`); this file handles STL fetching, Three.js plate rendering, canvas sheet drawing, and downloads.
 
-import { resolveSceneBom } from './kip-print-bom.js';
+import { resolveSceneBom, resolveProviderBom } from './kip-print-bom.js';
 import { resolveBodyColors } from './kip-vehicles-wardrobe.js';
 import {
   BONUS_EXPRESSIONS,
@@ -293,10 +293,17 @@ export function mountPrintView(ctx) {
     const state = ctx.getState();
     const valIdx = await loadValidation();
     const manifestByFile = await loadManifest();
-    const bom = resolveSceneBom(state, {
-      includeVehicle: profile.includeVehicle,
-      validationIndex: valIdx,
-    });
+    // Parts provider (Workshop stage 3): benches without Kip scene state supply `[{ id, colour, count }]`.
+    const bom = ctx.getParts
+      ? resolveProviderBom(await ctx.getParts(), {
+        validationIndex: valIdx,
+        manifestParts: [...manifestByFile.values()],
+        notes: ['Truck mechanism: loose plates (sprue only suits static shell parts); axles and pins print lying flat as exported.'],
+      })
+      : resolveSceneBom(state, {
+        includeVehicle: profile.includeVehicle,
+        validationIndex: valIdx,
+      });
 
     const prepared = [];
     const errors = [];

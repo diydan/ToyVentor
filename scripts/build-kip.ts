@@ -103,6 +103,11 @@ copyFileSync(
   join(kipSrcDir, "viewer/kip-rig.js"),
   join(kipOutDir, "kip-rig.js"),
 );
+// Truck print parts provider (Workshop stage 3), imported by Truck-Mockup.html.
+copyFileSync(
+  join(kipSrcDir, "viewer/truck-print-parts.js"),
+  join(kipOutDir, "truck-print-parts.js"),
+);
 copyFileSync(
   join(kipSrcDir, "viewer/Truck-Mockup.html"),
   join(kipOutDir, "Truck-Mockup.html"),

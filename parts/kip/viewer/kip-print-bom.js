@@ -829,3 +829,51 @@ export function resolveSceneBom(state = {}, opts = {}) {
     bodyColors: body,
   };
 }
+
+/**
+ * Parts-provider BOM (Workshop stage 3): a bench that is not Kip's scene (the Truck) supplies plain
+ * `[{ id, colour, count }]` plus the validation index; each id resolves to its print-pose STL exactly as
+ * Kip's PartSpec entries do (source `partspec`, so the planner seats them native — axles and pins keep
+ * their flat print pose). Colour and plate planning downstream are unchanged.
+ */
+export function resolveProviderBom(parts = [], opts = {}) {
+  const catalogFiles = buildCatalogFileMap(opts.validationIndex, opts.manifestParts);
+  const items = [];
+  const unmapped = [];
+  for (const p of parts) {
+    if (!p || typeof p.id !== 'string') continue;
+    const qty = p.count ?? p.qty ?? 1;
+    if (!qty || qty <= 0) continue;
+    const file = p.file || catalogFiles[p.id];
+    if (!file) {
+      unmapped.push(`No print STL mapped for part "${p.id}"`);
+      continue;
+    }
+    const hex = normHex(p.colour || p.hex, '#F4EFE6');
+    items.push({
+      id: p.id,
+      file,
+      qty,
+      hex,
+      colorName: colorNameForHex(hex),
+      material: 'PLA',
+      role: p.role || 'mechanism',
+      source: 'partspec',
+      group: p.group || 'truck',
+      accents: [],
+      bytes: null,
+      customName: '',
+    });
+  }
+  return {
+    items,
+    characterItems: items,
+    vehicleItems: [],
+    includeVehicle: false,
+    hasVehicleInScene: false,
+    unmapped,
+    decals: [],
+    notes: [...(opts.notes || [])],
+    bodyColors: {},
+  };
+}

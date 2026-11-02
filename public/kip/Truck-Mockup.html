@@ -249,6 +249,7 @@
     <button id="btn-hood">Nose: Open Yoke</button>
     <button id="btn-plow">Front Plow (#12): Off</button>
     <button id="btn-kip" class="mint-on">Kip Driver: On</button>
+    <button id="btn-print" title="Plan colour plates for the truck as built and export print files">Print plates</button>
     <button id="btn-driver" title="Pro 8+ = 14-joint ball-and-peg Kip rig (default). Snap 3+ = 1-piece limb & swivel-turret Kip rig.">Rig: Pro 8+</button>
     <button id="btn-head" title="Cycle all 12 Kip PartSpec heads (Human · Robot · Animal · Creature)">Head: kid</button>
     <button id="btn-hair" title="Cycle the wig on Human heads (hat-ready wigs accept a hat)">Hair: short swept</button>
@@ -264,6 +265,17 @@
   </div>
 </div>
 
+<div id="print-panel" style="display:none; position:fixed; left:12px; bottom:12px; z-index:30; background:#161d30; color:#f4efe6; border-radius:12px; padding:12px 14px; font:13px/1.45 system-ui, sans-serif; max-width:340px; box-shadow:0 6px 24px rgba(0,0,0,.35);">
+  <div id="print-status" style="margin-bottom:8px;">Planning plates…</div>
+  <div style="display:flex; gap:6px; flex-wrap:wrap;">
+    <button id="print-prev">← Plate</button>
+    <button id="print-next">Plate →</button>
+    <button id="print-3mf">Download 3MF</button>
+    <button id="print-project">Project 3MF</button>
+    <button id="print-back">Back to truck</button>
+  </div>
+</div>
+
 <script type="module">
 import {
   THREE,
@@ -275,6 +287,8 @@ import {
 } from './vendor/three-kip.js';
 import { createKipRig } from './kip-rig.js'; // shared Kip rig module, also imported by Kip-Demo.html (Workshop stage 2)
 import { createDecalExpressionCanvas } from './kip-forge-sdk.js?v=10.0';
+import { mountPrintView } from './kip-print-view.js';
+import { truckGetParts } from './truck-print-parts.js';
 import { loadExpansionGeos, attachExpansionToKipRig, WARDROBE_HEADS, HUMAN_HEAD_IDS, FACE_STEM_MM } from './kip-vehicles-wardrobe.js';
 import { FACEPLATE_SEAT_MM } from './kip-faceplate-shape.js?v=10.0';
 
@@ -1324,6 +1338,33 @@ document.getElementById('btn-plow').addEventListener('click', (e) => {
   e.target.classList.toggle('mint-on', state.frontPlow);
   rebuildScene();
 });
+
+// Print plates (Workshop stage 3): the shared print view, fed by the Truck parts provider instead of Kip scene state.
+const truckPrint = mountPrintView({
+  THREE, scene, camera, controls,
+  getState: () => ({ stage: state.stage, driver: state.driver, head: KIP_STACK.head }),
+  getParts: () => truckGetParts({ cadRoot, geos: GEOS, partFiles: PART_FILES }),
+  setCharacterVisible: (on) => { cadRoot.visible = on; },
+});
+window.truckPrint = truckPrint;
+const printPanel = document.getElementById('print-panel');
+const printStatus = document.getElementById('print-status');
+function syncPrintPanel() {
+  const on = truckPrint.isOn();
+  printPanel.style.display = on ? 'block' : 'none';
+  if (!on) return;
+  const s = truckPrint.summary();
+  const errs = [...(s.errors || []), ...(s.unmapped || [])];
+  printStatus.textContent = truckPrint.isBusy()
+    ? 'Planning plates…'
+    : `${truckPrint.plateLabel(truckPrint.plateIndex())} · ${s.parts} parts on ${s.plates} plate(s)` + (s.exportError ? ` · ${s.exportError}` : '') + (errs.length ? ` · ${errs.join('; ')}` : '');
+}
+document.getElementById('btn-print').addEventListener('click', async () => { syncPrintPanel(); printPanel.style.display = 'block'; printStatus.textContent = 'Planning plates…'; await truckPrint.enter(); syncPrintPanel(); });
+document.getElementById('print-back').addEventListener('click', () => { truckPrint.exit(); syncPrintPanel(); });
+document.getElementById('print-prev').addEventListener('click', () => { truckPrint.setPlate(truckPrint.plateIndex() - 1); syncPrintPanel(); });
+document.getElementById('print-next').addEventListener('click', () => { truckPrint.setPlate(truckPrint.plateIndex() + 1); syncPrintPanel(); });
+document.getElementById('print-3mf').addEventListener('click', async () => { await truckPrint.download('3mf'); syncPrintPanel(); });
+document.getElementById('print-project').addEventListener('click', async () => { await truckPrint.download('project-3mf'); syncPrintPanel(); });
 
 document.getElementById('btn-kip').addEventListener('click', (e) => {
   state.showKip = !state.showKip;
