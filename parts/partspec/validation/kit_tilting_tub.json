@@ -1,23 +1,23 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_kit_tilting_tub_S.stl",
-  "file_sha256": "2217f4ce69f401da0cd7e0bfd1f7174dd03ec823c47b8e8fe974eb8e9c9a9637",
+  "file_sha256": "34ee25152214c19e4e4ee5e0474a9ffc30c453f779e1b534298ca24a1282b6ee",
   "part_id": "kit_tilting_tub",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-11-02T12:05:08Z",
+  "checked_at": "2026-11-02T15:49:25Z",
   "metrics": {
     "bbox_mm": [
       49.8,
       61.5,
       18.0
     ],
-    "volume_cm3": 20.39,
-    "surface_cm2": 108.63,
-    "triangles": 11222,
+    "volume_cm3": 20.19,
+    "surface_cm2": 108.44,
+    "triangles": 24434,
     "ledges": [],
     "floating_contours": [],
     "layers": 90,
-    "bed_contact_mm2": 1834.1,
+    "bed_contact_mm2": 1802.2,
     "height_mm": 18.0,
     "slenderness": 0.42,
     "centre_of_mass_over_contact": true,
@@ -27,8 +27,8 @@
   "bridges": [
     {
       "z_mm": 4.6,
-      "span_mm": 0.49,
-      "area_mm2": 22.1
+      "span_mm": 0.09,
+      "area_mm2": 4.0
     },
     {
       "z_mm": 4.6,
@@ -84,6 +84,86 @@
       "z_mm": 6.5,
       "span_mm": 0.1,
       "area_mm2": 0.3
+    },
+    {
+      "z_mm": 2.95,
+      "span_mm": 0.16,
+      "area_mm2": 1.1
+    },
+    {
+      "z_mm": 2.95,
+      "span_mm": 0.16,
+      "area_mm2": 1.1
+    },
+    {
+      "z_mm": 2.95,
+      "span_mm": 0.16,
+      "area_mm2": 1.1
+    },
+    {
+      "z_mm": 2.95,
+      "span_mm": 0.16,
+      "area_mm2": 1.1
+    },
+    {
+      "z_mm": 2.95,
+      "span_mm": 0.16,
+      "area_mm2": 1.1
+    },
+    {
+      "z_mm": 2.95,
+      "span_mm": 0.16,
+      "area_mm2": 1.1
+    },
+    {
+      "z_mm": 2.95,
+      "span_mm": 0.16,
+      "area_mm2": 1.1
+    },
+    {
+      "z_mm": 2.95,
+      "span_mm": 0.16,
+      "area_mm2": 1.1
+    },
+    {
+      "z_mm": 2.95,
+      "span_mm": 0.16,
+      "area_mm2": 1.1
+    },
+    {
+      "z_mm": 2.95,
+      "span_mm": 0.16,
+      "area_mm2": 1.1
+    },
+    {
+      "z_mm": 2.95,
+      "span_mm": 0.16,
+      "area_mm2": 1.1
+    },
+    {
+      "z_mm": 2.95,
+      "span_mm": 0.16,
+      "area_mm2": 1.1
+    },
+    {
+      "z_mm": 2.95,
+      "span_mm": 0.16,
+      "area_mm2": 1.1
+    },
+    {
+      "z_mm": 2.95,
+      "span_mm": 0.16,
+      "area_mm2": 1.1
+    },
+    {
+      "z_mm": 2.95,
+      "span_mm": 0.16,
+      "area_mm2": 1.1
+    },
+    {
+      "z_mm": 2.95,
+      "span_mm": 0.16,
+      "area_mm2": 1.1
     }
   ],
   "checks": [
@@ -149,7 +229,7 @@
       "result": "pass",
       "value": 0.49,
       "limit": 20,
-      "detail": "12 bridge(s); widest unsupported span in mm"
+      "detail": "28 bridge(s); widest unsupported span in mm"
     },
     {
       "id": "V5_no_floating_islands",
@@ -171,7 +251,7 @@
       "id": "V9_bed_contact",
       "level": "info",
       "result": "pass",
-      "value": 1834.1,
+      "value": 1802.2,
       "limit": null,
       "detail": "height / sqrt(contact) = 0.42; above about 3 the slicer often asks for a brim"
     },

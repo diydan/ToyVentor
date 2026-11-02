@@ -605,7 +605,8 @@ test("bridge deck is stud-free so the pinion and rack run 0.2 mm above it (the r
      and abs(_br.bounding_box()[5] - (_kc.LINK_TOP_Z - _kc.BRIDGE_Z)) < 1e-6)
 _g1 = _kc.verify_gate_g1()
 test("Gate G1: all 9 canonical craft, 3-point rack capture & bi-directional pin lock, 55-deg dump tip, Momentum packs & 3D jet seal, and Stage-4 Mech COTS keep-outs pass",
-     _g1["ok"] and len(_g1["crafts"]) == 11 and "1b_rack_travel_stop" in _g1["crafts"] and "3b_momentum_packs_and_jet_seal" in _g1["crafts"])
+     _g1["ok"] and len(_g1["crafts"]) == 12 and "1b_rack_travel_stop" in _g1["crafts"] and "2b_dump_truck_tip_sweep" in _g1["crafts"]
+     and "3b_momentum_packs_and_jet_seal" in _g1["crafts"])
 if (out / "cards" / "kitcard_manifest.json").exists():
     _kcm = json.loads((out / "cards" / "kitcard_manifest.json").read_text())["cards"]
     test("kit-card plates: all 8 loose and 8 sprue STLs exist within <= 170/164 mm bounds and >= 5.0 mm inter-part gap",

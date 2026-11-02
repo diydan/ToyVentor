@@ -35522,7 +35522,7 @@
         61.5,
         18.0
       ],
-      "volume_cm3": 20.39,
+      "volume_cm3": 20.19,
       "connectors": [
         {
           "id": "under_sockets",
@@ -35582,7 +35582,7 @@
       ],
       "safety": {
         "small_part_status": "above_cylinder",
-        "min_enclosing_diameter_mm": 63.97,
+        "min_enclosing_diameter_mm": 63.98,
         "margin_pct": 101.5,
         "print_page_warning": [
           "Printed at home or by a print service. Not tested to toy-safety standards. Adult supervision required. Check for cracks, sharp edges and loose pieces before each use, and stop using anything that has broken.",
@@ -35738,7 +35738,7 @@
           "id": "S1_small_part_screen",
           "level": "warn",
           "result": "pass",
-          "detail": "above_cylinder: best-fit diameter 63.97 mm vs 31.75 mm cylinder"
+          "detail": "above_cylinder: best-fit diameter 63.98 mm vs 31.75 mm cylinder"
         },
         {
           "id": "T1_fit_as_designed",

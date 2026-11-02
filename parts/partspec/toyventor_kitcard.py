@@ -413,6 +413,53 @@ TUB_TRUNNION_Y = 30.95
 TUB_TRUNNION_Z = 5.75
 LID_CRADLE_Z = 5.20 + TUB_TRUNNION_Z  # 10.95 mm: matches #11 stowed on a 5.20 mm lid (0.00 mm strain)
 
+# Tub tip relief (found by the Truck motion test, 2026-11-02). The tub's 16 under-sockets stay on the deck studs (keel or stage lid) while it
+# tips about the barrel hinge. The axis is 5.75 mm above the deck, so a socket wall slides e * sin(tip) (0.1 mm at 1 deg) into a 0.05 mm
+# gap, and the rear row only lifts clear of its studs near 18 deg: 7.84 mm3 of overlap on the keel and 15.7 mm3 on a 4x4 lid at 1..17 deg.
+# The sockets are therefore relieved by the swept envelope of the stud grid over the first TUB_RELIEF_MAX_DEG of tip (hulls of 1 deg poses,
+# which can only over-cut). The swept body is the socket cutter itself, so the slots keep the sockets' 0.05 mm seat gap and their self-roofing 42-deg cone.
+TUB_RELIEF_MAX_DEG = 20.0
+TUB_RELIEF_STEP_DEG = 1.0
+TUB_RELIEF_BACK = 0.12   # extra clearance on the hinge side of each slot (the side the stud presses on)
+# The tub's lower front edge also swings 0.25 mm forward at 5 deg into the windscreen's rear wall (0.20 mm rest gap): shave the front face
+# 0.40 mm over the wall height (z 0..6.0, then a 56-deg run-out) so the rest gap is 0.60 mm.
+TUB_FRONT_SHAVE = 0.40
+WIND_WALL_H = 6.4
+
+
+def _tub_stud_relief(size="small"):
+    """Union of the 4 x 4 socket cutters (tub frame, z from the tub underside) swept about the hinge axis for 0..TUB_RELIEF_MAX_DEG of tip."""
+    p = tp.STUD[size]
+    pitch = p["pitch"]
+    # Convex core of the socket cutter (cylinder, then the same 42-deg self-roofing cone), capped 0.15 mm above the stud tip because the cone above
+    # that is never touched, and without the lead-in flare (a hull of two poses would fill the flare's neck and widen every socket). Radius 0.02 mm
+    # inside the socket wall, junction and base heights off the socket's, and a half-segment turn, so the core shares no coplanar face and no
+    # vertex ring with the sockets (coincident rings left 144 zero-area slivers that broke watertightness after the STL vertex merge).
+    r_core = (p["stud_d"] + p["fit"]) / 2 / math.cos(math.pi / (2 * tp.SOCKET_SEG)) - 0.02
+    z_j, z_cap = p["stud_h"] - 0.35 + 0.07, p["stud_h"] + 0.15
+    prof = [(0.0, -0.05), (r_core, -0.05), (r_core, z_j), (r_core - (z_cap - z_j) * math.tan(math.radians(42.0)), z_cap), (0.0, z_cap)]
+    stud = Manifold.revolve(CrossSection([np.array(prof)]), tp.SOCKET_SEG).rotate((0.0, 0.0, 180.0 / tp.SOCKET_SEG)).translate((0.0, TUB_RELIEF_BACK, 0.0))
+    n = int(round(TUB_RELIEF_MAX_DEG / TUB_RELIEF_STEP_DEG))
+    sweeps = []
+    for i in range(4):
+        for j in range(4):
+            s0 = stud.translate(((i - 1.5) * pitch, (j - 1.5) * pitch, 0.0))
+            poses = [
+                s0.translate((0.0, -TUB_TRUNNION_Y, -TUB_TRUNNION_Z)).rotate((k * TUB_RELIEF_STEP_DEG, 0.0, 0.0)).translate((0.0, TUB_TRUNNION_Y, TUB_TRUNNION_Z))
+                for k in range(n + 1)
+            ]
+            sweeps += [Manifold.batch_hull([a, b]) for a, b in zip(poses, poses[1:])]
+    return tp.union(sweeps)
+
+
+def _tub_front_shave(width=52.0, y_front=24.9):
+    """Front-face setback (full width) for the windscreen's rear wall: z -0.1..6.0 at TUB_FRONT_SHAVE, 56-deg run-out up to z 6.6."""
+    t = TUB_FRONT_SHAVE
+    return Manifold.batch_hull([
+        Manifold.cube((width, t + 0.1, WIND_WALL_H - 0.3)).translate((-width / 2, -y_front - 0.1, -0.1)),
+        Manifold.cube((width, 0.1, 0.1)).translate((-width / 2, -y_front - 0.1, WIND_WALL_H + 0.1)),
+    ])
+
 
 def _bellows_knuckle(x0, x1, axis_y, axis_z, rk=5.65, y_fuse=23.2, h_bridge=5.2):
     """Flat-bottomed (z >= 0), cylindrical-topped horizontal X hinge knuckle (0.35 mm bed chamfer, 0 overhang)."""
@@ -515,6 +562,7 @@ def kit_tilting_tub(size="small", grid=(4, 4), **_):
     m = (foot + (outer - cav - cav_top) + knuckles) - pro.bore_cutter_axis("free", 41.0, (0.0, TUB_TRUNNION_Y, TUB_TRUNNION_Z), "x")
     cut_s = tp._conical_socket_cutter(p)
     m = m - tp.union([cut_s.translate(((i - 1.5) * p["pitch"], (j - 1.5) * p["pitch"], 0.0)) for i in range(4) for j in range(4)])
+    m = m - _tub_stud_relief(size) - _tub_front_shave()   # tip relief: see TUB_RELIEF_MAX_DEG above
     c_h = pro._axis_bore_conn("hinge_bore", "free", (-17.30, TUB_TRUNNION_Y, TUB_TRUNNION_Z), "x", 4.4, lattice="pivot")
     return m, [tp.socket_conn(size, 4, 4), c_h], {}
 
@@ -2686,6 +2734,18 @@ def verify_gate_g1():
         + _check_non_overlapping([("keel", keel), ("core_tray", core_tray), ("core_lid", core_lid), ("tub_pin", tub_pin_s3), ("wind", wind.translate((0.0, -6.25, 12.5))), ("kip", kip), ("tub_0_s3", tub_stowed_s3)])
         + _check_non_overlapping([("keel", keel), ("core_tray", core_tray), ("core_lid", core_lid), ("tub_pin", tub_pin_s3), ("wind", wind.translate((0.0, -6.25, 12.5))), ("kip", kip), ("tub_55_s3", tub_55_s3)])
     )
+
+    # 2b. Tip sweep (stages 2 and 3): the first barrel-hinge build passed tip 0 and 55 yet overlapped 7.84 mm3 on the keel and 15.7 mm3 on a lid at 1..17 deg.
+    def _tub_tipped(base_z, tip_deg):
+        return tub.translate((0.0, -TUB_TRUNNION_Y, -TUB_TRUNNION_Z)).rotate((-tip_deg, 0.0, 0.0)).translate((0.0, 37.5 + TUB_TRUNNION_Y, base_z + TUB_TRUNNION_Z))
+    wind_w = wind.translate((0.0, -6.25, 12.5))
+    tip_bad = []
+    for tip in range(1, 25):
+        t2 = _tub_tipped(12.5, float(tip))
+        t3 = _tub_tipped(50.0, float(tip))
+        tip_bad += _check_non_overlapping([("keel", keel), ("hinge", tub_hinge), ("tub_pin", tub_pin_s2), ("wind", wind_w), (f"tub_s2_{tip}deg", t2)])
+        tip_bad += _check_non_overlapping([("keel", keel), ("core_tray", core_tray), ("core_lid", core_lid), ("tub_pin", tub_pin_s3), (f"tub_s3_{tip}deg", t3)])
+    results["2b_dump_truck_tip_sweep"] = tip_bad
 
     # 3. Farm / Loader Tractor: Giant Ø50 rear + Pro ±25 deg steered Ø50 front lock check:
     dx21 = _dx_for_inner(GIANT_LOCK_DEG)

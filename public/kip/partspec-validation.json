@@ -357,7 +357,7 @@
   },
   "toyventor_kit_tilting_tub_S.stl": {
    "part": "kit_tilting_tub",
-   "sha256": "2217f4ce69f401da0cd7e0bfd1f7174dd03ec823c47b8e8fe974eb8e9c9a9637",
+   "sha256": "34ee25152214c19e4e4ee5e0474a9ffc30c453f779e1b534298ca24a1282b6ee",
    "verdict": "pass",
    "brim_width_mm": 0
   },

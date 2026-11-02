@@ -2,7 +2,7 @@
   "validator": "preprint_check 1.2.0",
   "profile": "fdm_pla_0.4",
   "slicer": "PrusaSlicer-2.8.1",
-  "generated_at": "2026-11-02T12:09:00Z",
+  "generated_at": "2026-11-02T15:49:25Z",
   "counts": {
     "pass": 176,
     "pass_with_settings": 0,
@@ -1196,7 +1196,7 @@
       "filament_cost_usd": null,
       "brim_mm": 0,
       "height_mm": 18.0,
-      "bed_contact_mm2": 1834.1,
+      "bed_contact_mm2": 1802.2,
       "slenderness": 0.42,
       "min_wall_mm": null
     },
