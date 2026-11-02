@@ -650,7 +650,7 @@ No C1 code starts until the first five boxes are checked.
 
 ## 15. Open questions
 
-- [ ] **Q1 (blocks C1 polish):** Carousel entry — dock `⋯` → `Map` only, or a dedicated dock `Map` icon? (Dock must still fit `390 px` with one primary visible.) Recommendation: `⋯` first; promote if playtesters miss it.
+- [x] **Q1 (blocks C1 polish) — RESOLVED 2026-11-02:** Carousel entry is dock `⋯` → `Map` **plus** an always-visible end-of-level "Back to Map" action. No dedicated dock `Map` icon (the `390 px` dock keeps one primary visible). Promote to a dedicated icon only if playtesters miss the `⋯` entry. §7/§8 entry points read accordingly.
 - [ ] **Q2 (blocks C1 art):** Card scenes — live offscreen renders (always current, GPU cost) or regenerated stills (cheap, can go stale — the exact `capture-map.cjs` trap)? Recommendation: live renders cached per theme.
 - [ ] **Q3 (blocks C5):** Do new `little.*`/`early.*`/`daily.*` ids ever get Tier 2/3, part-match bonuses, or Daily Quest slots? Recommendation: no until band 0–2 playtests say the Tier 1 loop is fun.
 - [ ] **Q4 (blocks C1 storage):** `ageBand` conflict on multi-device merge + whether Reset XP keeps age. (§9.3 proposes: higher-XP wins; reset keeps age.) Also: one shared age per device (matching one shared XP pool) vs per-toy age? Recommendation: shared, revisited only with per-kid profiles.
