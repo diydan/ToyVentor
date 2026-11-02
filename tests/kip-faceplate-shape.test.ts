@@ -174,7 +174,7 @@ describe("face plate eyes are human-proportioned", () => {
 
   it("a plate-art eye pair is closer than the classic head's, which keeps its own spacing", () => {
     const src = read("parts/kip/viewer/kip-forge-sdk.js");
-    expect(src).toMatch(/const eyeTable = onPlate \? FACEPLATE_EYE_PX : LEGACY_EYE_PX;/);
-    expect(src).toMatch(/LEGACY_EYE_PX = \{ vinyl: \[98, 414\], flatButton: \[102, 410\], flat: \[122, 390\], sculpted: \[104, 408\] \}/);
+    expect(src).toMatch(/const eyeTable = FACEPLATE_EYE_PX;/);
+    expect(src).not.toContain("LEGACY_EYE_PX");
   });
 });

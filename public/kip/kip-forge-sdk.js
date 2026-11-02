@@ -22,7 +22,7 @@ let selfieCanvas = null;
 export function setSelfieCanvas(canvas) { selfieCanvas = canvas ?? null; }
 export function hasSelfieCanvas() { return selfieCanvas !== null; }
 
-/** `onPlate`: the art goes on the rounded human face plate (not the classic head's visor), so it is kept inside the plate outline. */
+/** Human face art goes on the rounded face plate, so it is kept inside the plate outline. */
 /**
  * Eye positions on the human face plate, mm either side of the centre line (the plate is 24.2 mm wide, so a human-proportioned pair is
  * about 45-50% of that apart, centre to centre). The vinyl value is the physical dome position (FACE_VINYL_EYE_X in
@@ -35,8 +35,6 @@ export const FACEPLATE_EYE_MM = { vinyl: 6.0, flatButton: 5.8, flat: 5.3, sculpt
 const MM_PX = 21.69; // art px per mm across the plate: x = 256 +- mm * 21.69
 const eyePair = (mm) => [Math.round(256 - mm * MM_PX), Math.round(256 + mm * MM_PX)];
 const FACEPLATE_EYE_PX = Object.fromEntries(Object.entries(FACEPLATE_EYE_MM).map(([k, v]) => [k, eyePair(v)]));
-/** The classic head's visor plane has its own scale, so its art keeps the original positions. */
-const LEGACY_EYE_PX = { vinyl: [98, 414], flatButton: [102, 410], flat: [122, 390], sculpted: [104, 408] };
 
 export function createDecalExpressionCanvas(expression = 'spark', headType = 'kid', insertMode = 'sculpted', { onPlate = false } = {}) {
   if (expression === 'selfie' && selfieCanvas) return selfieCanvas;
@@ -106,9 +104,8 @@ export function createDecalExpressionCanvas(expression = 'spark', headType = 'ki
   //   - `vinyl` (`char_faceplate_vinyl`): physical 3D button-eye domes sit at `x = ±6.00 mm (FACE_VINYL_EYE_X), zb = 5.45 mm` -> `px = [126, 386], py = 123`!
   //   - `sculpted` (`char_faceplate`): eye planes sit at `x = ±5.80 mm, zb = 5.96 mm` -> `px = [130, 382], py = 110`!
   //   - `flat` (`char_faceplate_flat`): smooth flush printed-decal figure layout -> `px = [141, 371], py = 114`!
-  // On the human face plate the eyes are brought in (FACEPLATE_EYE_MM) so they sit about half a face width apart, like a human face;
-  // the classic head shares this art but has its own visor plane, so it keeps its original spacing.
-  const eyeTable = onPlate ? FACEPLATE_EYE_PX : LEGACY_EYE_PX;
+  // On the human face plate the eyes are brought in (FACEPLATE_EYE_MM) so they sit about half a face width apart, like a human face.
+  const eyeTable = FACEPLATE_EYE_PX;
   const humanEyeX = isVinylInsert
     ? eyeTable.vinyl
     : (isFlatHuman ? (expression === 'button' ? eyeTable.flatButton : eyeTable.flat) : eyeTable.sculpted);

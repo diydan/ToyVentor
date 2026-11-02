@@ -594,7 +594,7 @@ export function attachExpansionToKipRig(THREE, kip, expGeos, baseParts, mats, sc
     imp:   buildConformalDecalGeo(expGeos.charHeadImp,    16.4, 28.0, 13.6),
   };
 
-  const decalTex = new THREE.CanvasTexture(createDecalExpressionCanvas('spark', 'kid', 'sculpted'));
+  const decalTex = new THREE.CanvasTexture(createDecalExpressionCanvas('spark', 'kid', 'sculpted', { onPlate: true }));
   decalTex.colorSpace = THREE.SRGBColorSpace;
   const decalMat = new THREE.MeshStandardMaterial({
     map: decalTex,
