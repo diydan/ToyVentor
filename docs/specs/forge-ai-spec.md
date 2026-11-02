@@ -17,7 +17,8 @@ workflows stay as the fallback throughout.
 
 ## One-paragraph version
 
-Five AI features share one engine. A hosted Muse Spark call proposes a small
+Six AI features share one engine (the sixth, F6, is mostly geometry; see its
+section). A hosted Muse Spark call proposes a small
 JSON **recipe** (never a mesh, never code). Deterministic code legalizes it,
 the existing Python gates build and verify it, and a repair loop feeds
 structured gate failures back until it passes or falls back to something
@@ -35,7 +36,7 @@ part geometry is built by gated, deterministic code. The model only chooses
 parameters. The "never model-generated" wording in that spec must be updated
 when this ships (see "Docs impact").
 
-## The five features
+## The six features
 
 | # | Feature | Input | Output | Model's job | Deterministic job |
 | --- | --- | --- | --- | --- | --- |
@@ -44,6 +45,7 @@ when this ships (see "Docs impact").
 | F3 | Repair loop | A failing recipe plus gate report | A passing recipe | Patch parameters | Hint table, legalizers, retry limits |
 | F4 | Fits this one | Description plus a host (head, vehicle) | Accessory that seats on that host | Shape for the envelope numbers it is given | Host check through the assembly gate |
 | F5 | Build planner | Goal text plus current build | Ordered, valid build | Choose parts from a compact catalog | Retrieval, assembly validation |
+| F6 | Finish it (draft) | An assembled snap-part build | One smooth, polished object for the game and for printing | Optional: pick a finish style and which parts stay crisp | Strip connectors, merge, smooth, gates, both exports |
 
 F3 is not a separate screen. It is the engine F1, F2, F4 and F5 all run on.
 
@@ -157,7 +159,8 @@ rejected, numbers are clamped to bounds, and nothing is executed.
      daemon, always on.
    - L2 size band: if the minimum enclosing cylinder lands in the
      small-parts marginal band, move it out by the smaller change
-     (< 29.5 mm or > 36.0 mm guidance), never below the slot pad. Not built yet.
+     (< 29.5 mm or > 36.0 mm guidance), never below the slot pad. Not built yet; the prompt v1 eval run says it is
+     now worth building (see "Eval harness").
      The gate's own edges (`interfaces.json`, `toyventor_parts.py`): at most
      31.75 mm is `small_part` and passes, 31.75 to 34.925 mm (+10%) is
      `marginal` and fails, above that is `above_cylinder`. The smoke run hit the
@@ -342,6 +345,63 @@ is the **printable** one.
 - **Acceptance (targets):** 30 goal prompts; 100% of returned builds pass
   assembly validation (by construction, since invalid ones are rejected), and
   >= 70% judged "matches the goal" by a human.
+
+## F6: Finish it (draft, added 2026-11-02)
+
+**What it is.** A child or parent takes a build made of snap-together parts and
+presses "Finish". The result is one smooth, polished object: no studs, sockets
+or seams, rounded edges, one continuous surface. It exists twice from one
+source: a polished model in the game and a polished single-piece STL to print.
+The brick build stays the source and is never replaced, so Finish can be undone.
+
+**Assumptions from Dan's request, not yet confirmed.** "Brick-based" means a
+build from the Snap line's stud-and-socket parts. "Polished" means smooth
+surfaces merged into one solid, finished enough to look like a product rather
+than a model kit. Open questions 20 to 23 are the forks.
+
+**Why it fits.** Same rule as the rest of this spec: the model chooses, code
+builds, the gates decide. The model's part is small and optional (a finish style
+and which parts stay crisp, from closed lists), and three presets (soft,
+rounded, blobby) work without it. The geometry is code, and the model never
+edits a mesh. The catalog already has smooth cover parts (`skin_*`, game-only)
+and `optimize_assets.py` already makes the quantized, smooth-normal GLB and the
+finish-safe print STL, so the game and print exports are not new.
+
+**Pipeline.**
+1. Source: the assembled build (part ids, poses, colours) from the toy contract.
+2. Strip: remove every stud, socket and tube, using the connector cells in the
+   manifest, and close the holes they leave.
+3. Merge: union the parts into one body, bridging small gaps between touching
+   parts so the result is one connected solid.
+4. Smooth: round the surface by a chosen amount. Candidate methods are a voxel
+   blur then marching cubes, Manifold's own smoothing, or a signed-distance
+   smooth union. A spike on three real builds picks one. Features finer than
+   about twice the smoothing radius soften or vanish, and each style says so.
+5. Keep list: parts marked crisp (a face plate, a wheel hub) are held out of the
+   smoothing and put back.
+6. Gates: the existing set (watertight, single body, on bed, fits bed, overhang,
+   ledges, bridge, small-parts screen) plus three new ones: no connector remains
+   (unless wearable, below), volume within a stated percentage of the source, and
+   bounding box within a stated distance of the source.
+7. Two exports from the one solid: a game mesh (decimated, smooth normals, colour
+   zones) and a print STL oriented by the existing preprint check.
+
+**Two modes (open question 20).** Display piece: free-standing, no connectors,
+optional base. Wearable: keeps the 2x1 or 2x2 socket footprint underneath so it
+still snaps onto a head or vehicle, like the catalog's add-ons.
+
+**Fallback.** If a style fails the gates, try the next smoother or crisper
+preset. If all fail, show the brick build unchanged with a short reason and
+offer the ordinary kit-card print.
+
+**Acceptance (targets; the spike sets the real numbers).** On 10 real builds: at
+least 8 produce a polished solid that passes every gate on the first preset; a
+person rates at least 7 of the 10 four or higher for "looks finished"; the game
+and print meshes match within the stated bounding-box distance.
+
+**Not in the first version, unless the open questions say otherwise:** moving
+parts, multi-material printing, and any claim that a finished print is safe for
+children under 3.
 
 ## Assist features (prompt workflows, Worker-only)
 
@@ -531,8 +591,8 @@ taste ratings yet):**
   recipes) for 34 extra calls; 24 of those went to heads, which never passed.
 - **Gates:** over all attempts `G3_single_body` failed 42 times, `P4_no_ledges`
   32 and `G1_watertight` 13. None was `small_part_marginal`, and the clamp
-  changed 2 of 60 first-attempt recipes (bounds only, no slope). This run gives
-  no reason to build L2 or more L1.
+  changed 2 of 60 first-attempt recipes (bounds only, no slope). This v0 run gave
+  no reason to build L2 or more L1; the v1 run below changes that.
 - **Heads, 0 of 8:** always `G3_single_body` and `P4_no_ledges`, whatever the
   shape. SDK tests found the cause. `character_head` puts the crown studs at
   `z = height_mm` (30.5), and the v0 prompt never said so, so Spark's heads
@@ -552,6 +612,61 @@ taste ratings yet):**
   the run, so read p95 as an upper bound.
 - **Not measured:** taste, photos (F2), or any tuned-versus-prompted comparison.
   One run, so differences of a few prompts are noise.
+
+**Prompt v1 run (2026-11-02, same 60 prompts, star fillet fixed).** The v1
+prompt and the fillet fix changed together, so this shows their combined effect.
+
+| Slot | Prompts | v0 first | v0 final | v1 first | v1 final |
+| --- | --- | --- | --- | --- | --- |
+| crown | 14 | 14 | 14 | 13 | 14 |
+| head | 8 | 0 | 0 | 4 | 8 |
+| back | 6 | 6 | 6 | 2 | 6 |
+| hand | 8 | 3 | 6 | 6 | 8 |
+| hood, roof | 10 | 10 | 10 | 8 | 10 |
+| front, rollbar, spoiler, exhaust | 14 | 14 | 14 | 14 | 14 |
+| All | 60 | 47 (78%) | 50 (83%) | 47 (78%) | 60 (100%) |
+
+- **Calls and tokens:** 78 calls for 60 prompts (mean 1.30; v0 was 94 and 1.57).
+  13 prompts needed repair: 9 took 2 calls, 3 took 3 and 1 took 4. Tokens per
+  call rose to about 1,150 in and 1,700 out (v0: 740 and 1,590) because the
+  prompt is longer; the run total is about the same (222k against 219k).
+- **First-attempt failures (13):** 8 `small_part_marginal`, 4 `P4_no_ledges`
+  (heads) and 2 each of `G1_watertight` and `G3_single_body` (hands; one hand
+  also had a marginal size).
+- **New marginal sizes:** v0 had none. With real footprints in the prompt Spark
+  builds bigger parts, and they landed in the 31.75 to 34.925 mm band: all four
+  back pieces regressed from first-time passes, and a crown, a hood and a roof
+  joined them. All were fixed by repair, but 11 of the 18 extra calls went to
+  prompts that failed only on size.
+- **L2 now qualifies.** The spec's rule is to add a legalizer when a gate
+  dominates, and size is 8 of the 13 first-attempt failures. A deterministic
+  rescale would spend no model calls on it.
+- **Heads, 8 of 8 after repair:** 4 passed first time; the other 4 failed
+  `P4_no_ledges` once and were repaired in one call each. Not examined further.
+- **Caveats:** one run per prompt version; the two changes are not separated;
+  validity only, no taste ratings; Spark's price is unknown.
+
+**First taste check (2026-11-02, Dan, 19 of the 60 v1 parts: 14 crowns and 5
+heads).** Scale: 1 "not what I asked", 2 "odd or ugly", 3 "fine", 4 "good", 5
+"cute, on-brand". Dan stopped after 19 because many were not close.
+- **Result:** mean 1.47; 14 ones, 1 two, 4 threes, no 4 or 5. Crowns average
+  1.64; all 5 heads are 1.
+- **Pattern:** the only 3s are cones and tapered cylinders (wizard hat, cone
+  party hat, pointy hat, fez). The rest ask for what the recipe cannot make or
+  Spark did not use: a brim (cowboy, pirate), points (crown), horns, ears
+  (bunny, cat). The heads are the same box with two studs whatever was asked.
+- **Viewer:** the first rating page was washed out, which made shapes hard to
+  read. It was fixed after these ratings, and a render of the same meshes with
+  proper lighting agrees with them.
+- **Reading:** the validity gates are not the weak spot; fidelity to the request
+  is. Two likely causes, not yet separated: Recipe v1 cannot express points,
+  ears, horns or curled brims (only `brim` and `knob` are built; `ears`, `fin`,
+  `antenna` and `band` are planned), and the v1 prompt's slot footprints may
+  have narrowed the variety. A tuned model cannot add shapes the recipe cannot
+  express.
+- **Ideas raised, untested:** concept images from the text, SAM silhouettes, and
+  slices fitted to the front and side outlines; and iterating until an automated
+  judge scores at least "fine". See open questions 24 and 25.
 
 Reports first-attempt pass rate, final pass rate, mean model calls per job,
 latency p50 and p95, token usage per job, failure counts per gate id, and a
@@ -855,6 +970,7 @@ ratings) is not included and will likely exceed the GPU bill.
 | 2 | F5 planner (plan and edit modes, which also delivers A4), F4 host argument, host-envelope export, A5 templates | Phase 1 validator | After submission |
 | 2b | F4 cavity-hat builder | Phase 2 | Later |
 | 2c | A6: print about 10 failure coupons, photograph and label them, run the eval, then build the triage flow and fix cards | Phase 0b vision spike | After submission |
+| 2d | F6 Finish it: a spike on 3 real assembled builds (smoothing method, gates, time), then the game path (polished GLB), then the print path | Phase 2 (F5 supplies assembled builds); open questions 20 to 23 answered | After submission |
 | 3 | Forge model track G0 to G6, G7 as a stretch (see "Glimmer Forge: workflow and phases"); sculptor stages R1 and R2 behind their own gate | Phase 1 attempt log and eval numbers | G0 is Phase 0 (before Nov 4); G1 to G7 and the sculptor are a stretch goal |
 
 Honest demo framing for Nov 4: Phase 0 outputs are pre-generated and
@@ -872,12 +988,14 @@ these after legalizers and repair are in place:
 - A hard privacy requirement for self-hosted weights.
 - Taste: ratings stay low on valid parts.
 
-**First reading (2026-11-02).** The Spark baseline's final pass rate is 83%
-overall, above the 70% line, so the pass-rate gate is not tripped. Latency is
-fine, Spark's price is unknown, and taste is unmeasured. The weak slot, head, is
-a prompt gap that hand-built heads fixed, so tuning is not indicated yet. Re-run
-with a prompt v1 that carries each slot's footprint and z span before reading
-the gate again.
+**First reading (2026-11-02, updated after the first taste check).** The Spark
+baseline's final pass rate was 83% with prompt v0 and is 100% with prompt v1 (78%
+on the first attempt both times), well above the 70% line, so the pass-rate gate
+is not tripped. The taste gate looks tripped: Dan's first 19 ratings average 1.47
+with none above 3. The cause is open (see "First taste check"): the recipe cannot
+express many requests, and the prompt may be narrowing variety. A tuned model
+cannot add shapes the recipe cannot make, so richer recipe ops and a taste loop
+come before any tuning. Latency is fine and Spark's price is unknown.
 
 If tuning is chosen, the training set is the gate-filtered sampler output plus
 the attempt log (see "Data plan"). The base model is Muse Glimmer (Dan's
@@ -1030,6 +1148,27 @@ deterministic code verifies geometry, fit, and physics.
     `star_2d`; Spark's three failing first-try stars (5 points 14/6.5, 6 points
     14/7, 10 points 12/9) now pass through the daemon's compile path. The lane's
     follow-up branch still has the original line.
+20. F6, display or wearable? Should a finished object stand alone, or keep its
+    socket footprint so it still attaches to a head or vehicle? One finish
+    recipe can serve both; the gates differ.
+21. F6, moving parts. Do wheels, hands and hinges fuse into the body (a static
+    display model) or stay separate printed pieces with their axles?
+22. F6, size. A finished car can exceed the print bed (`limits.bed_mm` in
+    `interfaces.json`). Scale it down, split it into pinned pieces, or refuse and
+    offer a smaller finish?
+23. F6, colour. Game-only colour zones, one printed colour, or multi-colour
+    printing as separate bodies per colour?
+24. Concept-image path for F1. Can Muse Image generate from text alone? The repo
+    uses it for edits only. If so: front and side images, SAM masks, width and
+    depth per height, loft slices fitted to the outlines and scored by overlap
+    with the mask. Needs image-generation access, latency and cost, a kid-safety
+    and brand filter on generated images, and richer recipe ops, because an
+    outline cannot make separate ears, horns or crown points.
+25. Taste loop. Iterate until a judge scores "fine" (3) or better. The judge is
+    either silhouette overlap with a concept image, or a vision model scoring
+    renders against the request, calibrated on Dan's ratings with some held out.
+    Cap the iterations, stop early when the recipe cannot express the request,
+    and fall back to the nearest catalog part.
 
 ## Docs impact when this ships
 

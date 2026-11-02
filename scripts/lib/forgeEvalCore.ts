@@ -138,10 +138,27 @@ export function extractJsonObject(text: string): unknown | null {
 
 // ---- daemon job shape (subset of shared/forgeOptimizer.ts ForgeOptimizationJob) ----
 
+/** L2 note the daemon adds to a job when the gate said `marginal` and it tried a rescale. */
+export interface L2Note {
+  applied: boolean;
+  path?: string;
+  scale?: number;
+  from_mm?: number | null;
+  to_mm?: number;
+  evals?: number;
+  elapsed_ms?: number;
+  reason?: string;
+}
+
 export interface DaemonJob {
+  job_id?: string;
   status: string;
   elapsed_ms: number | null;
   error: string | null;
+  glb_artifact?: string | null;
+  stl_artifact?: string | null;
+  content_hash?: string | null;
+  legalizer?: { l1_l3_changed?: number; l2?: L2Note } | null;
   gate_report: {
     ok: boolean;
     design_status?: string;
@@ -240,6 +257,12 @@ export interface AttemptRecord {
   legalizerChanges: LoftChange[];
   tokensIn?: number;
   tokensOut?: number;
+  /** From the daemon job: lets a later step find the preview and STL for this attempt. */
+  jobId?: string;
+  glbArtifact?: string | null;
+  stlArtifact?: string | null;
+  /** L2 note, when the daemon tried a small-parts rescale on this attempt. */
+  l2?: L2Note | null;
 }
 
 export interface PromptResult {
@@ -253,6 +276,53 @@ export interface PromptResult {
   totalMs: number;
   /** Manual 1 to 5 "cute and on-brand" rating, filled in by a person later. */
   rating: number | null;
+}
+
+// ---- taste ratings (the manual 1 to 5 "cute and on-brand" score) ----
+
+export interface RatingEntry {
+  rating: number | null;
+  note?: string;
+}
+
+export interface RatingSummary {
+  rated: number;
+  total: number;
+  mean: number | null;
+  histogram: Record<string, number>;
+  bySlot: Record<string, { rated: number; mean: number | null }>;
+  /** Prompt ids rated 1 or 2, the ones to look at first. */
+  low: string[];
+}
+
+/** Put ratings onto results (ids not in `ratings` keep their rating) and summarize them. */
+export function applyRatings(
+  results: PromptResult[],
+  ratings: Record<string, RatingEntry>,
+): { results: PromptResult[]; summary: RatingSummary } {
+  const merged = results.map((r) => {
+    const e = ratings[r.id];
+    const v = e && typeof e.rating === "number" && e.rating >= 1 && e.rating <= 5 ? Math.round(e.rating) : null;
+    return v === null ? r : { ...r, rating: v };
+  });
+  const histogram: Record<string, number> = { "1": 0, "2": 0, "3": 0, "4": 0, "5": 0 };
+  const bySlotSums: Record<string, { n: number; sum: number }> = {};
+  const low: string[] = [];
+  let n = 0;
+  let sum = 0;
+  for (const r of merged) {
+    if (r.rating === null) continue;
+    n++;
+    sum += r.rating;
+    histogram[String(r.rating)] = (histogram[String(r.rating)] ?? 0) + 1;
+    const s = (bySlotSums[r.slot] ??= { n: 0, sum: 0 });
+    s.n++;
+    s.sum += r.rating;
+    if (r.rating <= 2) low.push(r.id);
+  }
+  const bySlot: RatingSummary["bySlot"] = {};
+  for (const [slot, s] of Object.entries(bySlotSums)) bySlot[slot] = { rated: s.n, mean: s.n ? s.sum / s.n : null };
+  return { results: merged, summary: { rated: n, total: merged.length, mean: n ? sum / n : null, histogram, bySlot, low } };
 }
 
 export function percentile(values: number[], p: number): number | null {
@@ -277,6 +347,11 @@ export interface Summary {
   firstAttemptFailuresByGate: Record<string, number>;
   recipesTouchedByLegalizer: number;
   legalizerChangesByKind: Record<string, number>;
+  /** Attempts where the daemon tried L2, how many it rescaled, and how long it took (ms). */
+  l2Tried: number;
+  l2Applied: number;
+  l2MsP50: number | null;
+  l2MsP95: number | null;
   tokensIn: number;
   tokensOut: number;
   bySlot: Record<string, { prompts: number; firstPass: number; finalPass: number }>;
@@ -293,6 +368,9 @@ export function summarize(results: PromptResult[]): Summary {
   let tokensOut = 0;
   const jobMs: number[] = [];
   const valMs: number[] = [];
+  const l2Ms: number[] = [];
+  let l2Tried = 0;
+  let l2Applied = 0;
   for (const r of results) {
     const slot = (bySlot[r.slot] ??= { prompts: 0, firstPass: 0, finalPass: 0 });
     slot.prompts++;
@@ -307,6 +385,11 @@ export function summarize(results: PromptResult[]): Summary {
       if (a.validationMs !== null) valMs.push(a.validationMs);
       tokensIn += a.tokensIn ?? 0;
       tokensOut += a.tokensOut ?? 0;
+      if (a.l2) {
+        l2Tried++;
+        if (a.l2.applied) l2Applied++;
+        if (typeof a.l2.elapsed_ms === "number") l2Ms.push(a.l2.elapsed_ms);
+      }
     });
     const first = r.attempts[0];
     if (first && first.legalizerChanges.length > 0) {
@@ -331,6 +414,10 @@ export function summarize(results: PromptResult[]): Summary {
     firstAttemptFailuresByGate: firstFailures,
     recipesTouchedByLegalizer: touched,
     legalizerChangesByKind: changesByKind,
+    l2Tried,
+    l2Applied,
+    l2MsP50: percentile(l2Ms, 50),
+    l2MsP95: percentile(l2Ms, 95),
     tokensIn,
     tokensOut,
     bySlot,

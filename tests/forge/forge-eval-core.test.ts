@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import prompts from "./prompts.json";
 import {
+  applyRatings,
   buildFeedback,
   extractJsonObject,
   gateKeysOf,
@@ -180,6 +181,55 @@ describe("percentile and summarize", () => {
     expect(s.failuresByGate).toEqual({ small_part_marginal: 1, P1_no_supports: 1 });
     expect(s.recipesTouchedByLegalizer).toBe(1);
     expect(s.bySlot.crown).toEqual({ prompts: 2, firstPass: 1, finalPass: 2 });
+  });
+});
+
+describe("applyRatings", () => {
+  const mk = (id: string, slot: string, rating: number | null = null): PromptResult => ({
+    id, slot, text: "", attempts: [], passedFirst: true, passedFinal: true, calls: 1, totalMs: 1, rating,
+  });
+  it("merges valid ratings, ignores out-of-range ones, and summarizes", () => {
+    const { results, summary } = applyRatings(
+      [mk("a", "crown"), mk("b", "crown"), mk("c", "head"), mk("d", "head", 4)],
+      { a: { rating: 5 }, b: { rating: 2, note: "odd" }, c: { rating: 9 }, x: { rating: 3 } },
+    );
+    expect(results.map((r) => r.rating)).toEqual([5, 2, null, 4]);
+    expect(summary.rated).toBe(3);
+    expect(summary.total).toBe(4);
+    expect(summary.mean).toBeCloseTo((5 + 2 + 4) / 3, 6);
+    expect(summary.histogram).toEqual({ "1": 0, "2": 1, "3": 0, "4": 1, "5": 1 });
+    expect(summary.bySlot.crown).toEqual({ rated: 2, mean: 3.5 });
+    expect(summary.low).toEqual(["b"]);
+  });
+  it("handles no ratings", () => {
+    const { summary } = applyRatings([mk("a", "crown")], {});
+    expect(summary.rated).toBe(0);
+    expect(summary.mean).toBeNull();
+  });
+});
+
+describe("summarize: L2 events", () => {
+  it("counts attempts where the daemon tried L2, how many it applied, and the time", () => {
+    const base = { recipe: null, parseOk: true, compileError: false, validationMs: 1000, wallMs: 1500, legalizerChanges: [] };
+    const results: PromptResult[] = [
+      {
+        id: "a", slot: "back", text: "", passedFirst: true, passedFinal: true, calls: 1, totalMs: 1, rating: null,
+        attempts: [{ ...base, status: "print_ready", gates: [], l2: { applied: true, path: "height", scale: 0.9, elapsed_ms: 8000 } }],
+      },
+      {
+        id: "b", slot: "head", text: "", passedFirst: false, passedFinal: false, calls: 1, totalMs: 1, rating: null,
+        attempts: [{ ...base, status: "digital_only", gates: ["small_part_marginal"], l2: { applied: false, reason: "no shrink", elapsed_ms: 20000 } }],
+      },
+      {
+        id: "c", slot: "crown", text: "", passedFirst: true, passedFinal: true, calls: 1, totalMs: 1, rating: null,
+        attempts: [{ ...base, status: "print_ready", gates: [], l2: null }],
+      },
+    ];
+    const s = summarize(results);
+    expect(s.l2Tried).toBe(2);
+    expect(s.l2Applied).toBe(1);
+    expect(s.l2MsP50).toBe(8000);
+    expect(s.l2MsP95).toBe(20000);
   });
 });
 

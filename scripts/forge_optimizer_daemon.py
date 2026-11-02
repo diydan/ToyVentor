@@ -243,7 +243,9 @@ def compile_recipe_to_partspec(recipe: dict[str, Any]) -> dict[str, Any]:
             )
     head_height_mm = max(24.0, min(38.0, _finite_float(shape.get("height_mm", 30.5), "height_mm")))
 
-    def build_fn() -> tuple[manifold3d.Manifold, list[dict[str, Any]], dict[str, Any]]:
+    def build_for(
+        rows: list[tuple[float, float, float, float, float, float]],
+    ) -> tuple[manifold3d.Manifold, list[dict[str, Any]], dict[str, Any]]:
         if slot == "hand":
             if kind == "profile2d":
                 cs = sdk.polygon_2d(pts_clamped, fillet_r=fillet_r)
@@ -251,12 +253,12 @@ def compile_recipe_to_partspec(recipe: dict[str, Any]) -> dict[str, Any]:
                 cs = sdk.star_2d(points=n_pts, r_outer=r_out, r_inner=r_in, fillet_r=fillet_r)
             return sdk.handheld_prop(cs, grip_tu=grip_tu)
 
-        body = sdk.loft_slabs(slices_legal)
+        body = sdk.loft_slabs(rows)
         for feat in clean_features:
             if feat["op"] == "knob":
                 kr = float(feat["radius_mm"])
-                top_z = float(slices_legal[-1][0]) + kr * 0.65
-                body = body + sdk.sphere(kr, (float(slices_legal[-1][4]), float(slices_legal[-1][5]), top_z))
+                top_z = float(rows[-1][0]) + kr * 0.65
+                body = body + sdk.sphere(kr, (float(rows[-1][4]), float(rows[-1][5]), top_z))
             elif feat["op"] == "brim":
                 bw = float(feat["width_mm"])
                 bd = float(feat["depth_mm"])
@@ -274,7 +276,10 @@ def compile_recipe_to_partspec(recipe: dict[str, Any]) -> dict[str, Any]:
             return sdk.backpack_addon(body, support_policy=support_policy)
         return sdk.vehicle_addon(body, slot=slot)
 
-    return sdk.part_spec(
+    def build_fn() -> tuple[manifold3d.Manifold, list[dict[str, Any]], dict[str, Any]]:
+        return build_for(slices_legal)
+
+    spec = sdk.part_spec(
         id=part_id,
         name=name,
         stat=stat,
@@ -283,6 +288,147 @@ def compile_recipe_to_partspec(recipe: dict[str, Any]) -> dict[str, Any]:
         support_policy=support_policy,
         fn=build_fn,
     )
+    if slot != "hand":
+        # What the L1/L3 clamps changed (they used to be silent), plus what L2 needs to rebuild.
+        spec["legalizer_notes"] = _legalizer_notes(shape.get("slices"), slices_legal)
+
+        def rebuild(rows: list[tuple[float, float, float, float, float, float]]) -> dict[str, Any]:
+            return sdk.part_spec(
+                id=part_id,
+                name=name,
+                stat=stat,
+                behavior=behavior,
+                slot=slot,
+                support_policy=support_policy,
+                fn=lambda: build_for(rows),
+            )
+
+        spec["_l2"] = {"slot": slot, "rows": slices_legal, "rebuild": rebuild}
+    return spec
+
+
+_SLICE_DEFAULTS = {"z": 0.0, "w": 16.0, "d": 12.0, "r": 3.0, "x": 0.0, "y": 0.0}
+
+
+def _legalizer_notes(raw: Any, rows: list[tuple[float, float, float, float, float, float]]) -> dict[str, Any]:
+    """List what the L1 slope clamp and L3 bounds changed, so the eval can count them."""
+    if not isinstance(raw, list):
+        return {}
+    try:
+        ordered = sorted((s for s in raw if isinstance(s, dict)), key=lambda s: float(s.get("z", 0.0)))
+    except (TypeError, ValueError):
+        return {}
+    changes: list[dict[str, Any]] = []
+    for i, (s, row) in enumerate(zip(ordered, rows)):
+        for j, key in enumerate(("z", "w", "d", "r", "x", "y")):
+            try:
+                before = float(s.get(key, _SLICE_DEFAULTS[key]))
+            except (TypeError, ValueError):
+                continue
+            if abs(before - row[j]) > 1e-6:
+                changes.append({"index": i, "field": key, "from": round(before, 3), "to": round(row[j], 3)})
+    return {"l1_l3_changed": len(changes), "l1_l3_changes": changes[:12]}
+
+
+# ---------------------------------------------------------------------------
+# L2: move a marginal small-parts size out of the band (docs/specs/forge-ai-spec.md, "L2")
+# ---------------------------------------------------------------------------
+# The gate calls a part `marginal` (and fails it) between the small-parts cylinder diameter and
+# diameter * (1 + marginal_pct / 100). Both numbers come from interfaces.json; nothing here
+# restates them. L2 only runs after the gate has said `marginal`, so other jobs pay nothing.
+L2_ENABLED = True
+L2_MIN_SCALE = 0.6  # never shrink the part above its base by more than 40%
+L2_MARGIN_MM = 0.75  # aim this far under the cylinder diameter, not at its edge
+L2_BISECT_STEPS = 5
+
+
+def _small_cylinder_mm() -> float:
+    return float(sdk.tp.IF["safety"]["small_parts_cylinder"]["diameter_mm"])
+
+
+def _measure_small(spec: dict[str, Any]) -> dict[str, Any]:
+    """The gate's own small-parts measure (toyventor_parts.evaluate), without the other checks."""
+    m, _conns, extras = spec["fn"]()
+    rot = dict(extras or {}).get("print_rotation_deg")
+    mp = m
+    if rot:
+        mp = m.rotate(tuple(rot))
+        mp = mp.translate((0, 0, -mp.bounding_box()[2]))
+    return sdk.tp.small_part_status(sdk.tp.to_trimesh(mp))
+
+
+def _l2_candidate(
+    rows: list[tuple[float, float, float, float, float, float]], path: str, f: float
+) -> list[tuple[float, float, float, float, float, float]]:
+    """Shrink everything above the base slice: `height` scales z, `xy` scales w, d, r, x, y, `both` does both.
+    Slice 0 stays put so the part still seats on its pad. L1 and L3 run again on the result."""
+    z0 = rows[0][0]
+    out: list[dict[str, float]] = []
+    for i, (z, w, d, r, x, y) in enumerate(rows):
+        if i == 0:
+            out.append({"z": z, "w": w, "d": d, "r": r, "x": x, "y": y})
+            continue
+        k = f if path in ("xy", "both") else 1.0
+        nz = z0 + (z - z0) * f if path in ("height", "both") else z
+        out.append({"z": nz, "w": w * k, "d": d * k, "r": r * k, "x": x * k, "y": y * k})
+    return legalize_loft_slices(out)
+
+
+def l2_rescale(spec: dict[str, Any], measured_mm: float | None = None) -> tuple[dict[str, Any] | None, dict[str, Any]]:
+    """Find the smallest shrink that takes a marginal part under the small-parts cylinder.
+
+    Heads never shrink in height: `character_head` puts the crown studs at z = height_mm, so a
+    shorter body leaves them floating. Returns (rebuilt spec or None, note for the job response)."""
+    ctx = spec.get("_l2")
+    t0 = time.perf_counter()
+    if not ctx:
+        return None, {"applied": False, "reason": "L2 only handles loft slots"}
+    target = _small_cylinder_mm() - L2_MARGIN_MM
+    rows0 = ctx["rows"]
+    paths = ("xy",) if ctx["slot"] == "head" else ("height", "xy", "both")
+    evals = 0
+
+    def diameter(rows: list[tuple[float, float, float, float, float, float]]) -> float:
+        nonlocal evals
+        evals += 1
+        return float(_measure_small(ctx["rebuild"](rows))["min_enclosing_diameter_mm"])
+
+    for path in paths:
+        try:
+            lo, hi = L2_MIN_SCALE, 1.0
+            d_lo = diameter(_l2_candidate(rows0, path, lo))
+            if d_lo > target:
+                continue  # even the full shrink does not clear the band on this path
+            for _ in range(L2_BISECT_STEPS):
+                mid = (lo + hi) / 2
+                d_mid = diameter(_l2_candidate(rows0, path, mid))
+                if d_mid <= target:
+                    lo, d_lo = mid, d_mid
+                else:
+                    hi = mid
+            rows = _l2_candidate(rows0, path, lo)
+            new_spec = ctx["rebuild"](rows)
+            new_spec["legalizer_notes"] = dict(spec.get("legalizer_notes") or {})
+            new_spec["_l2"] = {**ctx, "rows": rows}
+            return new_spec, {
+                "applied": True,
+                "path": path,
+                "scale": round(lo, 3),
+                "from_mm": measured_mm,
+                "to_mm": round(d_lo, 2),
+                "target_mm": round(target, 2),
+                "evals": evals,
+                "elapsed_ms": round((time.perf_counter() - t0) * 1000.0, 1),
+            }
+        except Exception as exc:  # noqa: BLE001
+            sys.stderr.write(f"[forge-optimizer] L2 path {path} failed: {exc}\n")
+            continue
+    return None, {
+        "applied": False,
+        "reason": "no shrink of at most 40% reached the target",
+        "evals": evals,
+        "elapsed_ms": round((time.perf_counter() - t0) * 1000.0, 1),
+    }
 
 
 def build_print_pose_manifold(spec: dict[str, Any]) -> manifold3d.Manifold:
@@ -356,6 +502,7 @@ class OptimizerJobManager:
             "slicer_recipe": None,
             "metrics": None,
             "gate_report": None,
+            "legalizer": None,
             "error": None,
             "elapsed_ms": None,
         }
@@ -387,6 +534,7 @@ class OptimizerJobManager:
         try:
             self._update_job(job_id, status="validating")
             if compiled_spec is not None:
+                legalizer: dict[str, Any] = dict(compiled_spec.get("legalizer_notes") or {})
                 # Run SDK validation inside an isolated temp dir so canonical filenames
                 # (`custom_wizard_hat.*`) can never collide across jobs or overwrite static files.
                 with tempfile.TemporaryDirectory(prefix="tv-job-", dir=str(self.out_dir)) as tmp_job_dir:
@@ -396,6 +544,18 @@ class OptimizerJobManager:
                         optimize=True,
                         export_web_on_fail=True,
                     )
+                    if L2_ENABLED and res["small_part"]["status"] == "marginal" and compiled_spec.get("_l2"):
+                        # L2: only when the gate has just said `marginal`. Rescale, then gate again.
+                        new_spec, l2_note = l2_rescale(compiled_spec, res["small_part"].get("min_enclosing_diameter_mm"))
+                        legalizer["l2"] = l2_note
+                        if new_spec is not None:
+                            compiled_spec = new_spec
+                            res = sdk.validate_and_export(
+                                compiled_spec,
+                                out_dir=tmp_job_dir,
+                                optimize=True,
+                                export_web_on_fail=True,
+                            )
                     elapsed_ms = round((time.perf_counter() - t0) * 1000.0, 1)
                     opt_info = res.get("optimization") or {}
                     c_hash = opt_info.get("content_hash")
@@ -429,6 +589,7 @@ class OptimizerJobManager:
                         "brand_errors": res["brand_errors"],
                         "assembly": res["assembly"],
                     },
+                    legalizer=legalizer or None,
                     elapsed_ms=elapsed_ms,
                 )
                 return
@@ -803,7 +964,11 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--workers", type=int, default=2, help="Background worker threads (default: 2)")
     ap.add_argument("--max-queue", type=int, default=8, help="Max queued+running background jobs before 429 (default: 8)")
     ap.add_argument("--max-connections", type=int, default=16, help="Max concurrent HTTP threads before 503 (default: 16)")
+    ap.add_argument("--no-l2", action="store_true", help="Disable the L2 small-parts rescale (for A/B evals)")
     args = ap.parse_args(argv)
+    global L2_ENABLED
+    if args.no_l2:
+        L2_ENABLED = False
 
     token = args.token.strip() or None
     if args.host.strip().lower() not in LOOPBACK_HOSTS and not token:

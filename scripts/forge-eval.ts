@@ -439,6 +439,10 @@ async function runPrompt(p: PromptCase, proposer: Proposer, o: Opts): Promise<Pr
       legalizerChanges: legalizerChangesFor(prop.recipe),
       tokensIn: prop.tokensIn,
       tokensOut: prop.tokensOut,
+      jobId: outcome.job?.job_id,
+      glbArtifact: outcome.job?.glb_artifact ?? null,
+      stlArtifact: outcome.job?.stl_artifact ?? null,
+      l2: outcome.job?.legalizer?.l2 ?? null,
     };
     attempts.push(attempt);
     if (gates.length === 0 && outcome.status === "print_ready") break;
@@ -546,6 +550,7 @@ async function main() {
       `job latency p50 / p95   ${secs(s.jobMsP50)} / ${secs(s.jobMsP95)}`,
       `validation p50 / p95    ${secs(s.validationMsP50)} / ${secs(s.validationMsP95)}`,
       `recipes the clamp changed (first attempt) ${s.recipesTouchedByLegalizer} ${JSON.stringify(s.legalizerChangesByKind)}`,
+      `L2 (small-parts rescale)  tried ${s.l2Tried}, applied ${s.l2Applied}, time p50 / p95 ${secs(s.l2MsP50)} / ${secs(s.l2MsP95)}`,
       `failures by gate (all attempts)  ${JSON.stringify(s.failuresByGate)}`,
       `failures by gate (first attempt) ${JSON.stringify(s.firstAttemptFailuresByGate)}`,
       `tokens in / out         ${s.tokensIn} / ${s.tokensOut}`,
