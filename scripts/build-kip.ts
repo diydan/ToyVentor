@@ -196,8 +196,6 @@ if (process.argv.includes("--scad")) {
     process.exit(2);
   }
   const parts = [
-    "head_shell", "head_hood", "crown_buds", "crown_cap_blank",
-    "ear_pod_l", "ear_pod_r", "visor", "face_eyes", "face_glints", "face_cheeks",
     "torso", "back_dock_studs", "upper_arm", "forearm", "hand_l", "hand_r",
     "thigh", "shin", "boot", "spark_peg_big", "spark_peg_sml",
     "ear_acc_l", "ear_acc_r", "tail_acc",

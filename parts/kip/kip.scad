@@ -5,7 +5,7 @@
 // ============================================================================
 
 // Select which part to export via -D 'PART="head_shell"'
-PART = "head_shell";
+PART = "torso";
 
 // Set -D 'PRINT_ORIENT=true' to place any part flat on z = 0 in its support-free print pose.
 // Leave false (default) to export in Kip's assembly/viewer coordinate frame.
@@ -214,61 +214,9 @@ module v_groove_ring(z_mid, r_outer, r_inner, sy = 1.0, flank_deg = 38) {
 }
 
 // Superellipse Head Shell 2D Profile (r, z) for revolve, offset by d
-function head_prof_pts(d = 0) =
-    let(
-        R  = HEAD_W / 2 + d,
-        R0 = 15.2 + d * 0.85,
-        H  = HEAD_H + d,
-        z1 = 10.5,   // smooth lower flare (< 38 deg)
-        z2 = 23.5,   // vertical-ish sweet spot for visor & ear pods
-        p  = 2.35    // soft art-toy dome (rounder than cylinder, crisper than sphere)
-    )
-    concat(
-        [[0, max(0, -d)], [R0 - 0.8, max(0, -d)], [R0, 0.8]],
-        [for (k = [1:16])
-            let(t = k / 16)
-            [R0 + (R - R0) * sin(90 * t), 0.8 + (z1 - 0.8) * t]
-        ],
-        [for (k = [1:8])
-            let(t = k / 8)
-            [R, z1 + (z2 - z1) * t]
-        ],
-        [for (k = [1:24])
-            let(t = k / 24, u = pow(max(0, 1 - pow(t, p)), 1 / p))
-            [R * u, z2 + (H - z2) * t]
-        ],
-        [[0, H]]
-    );
-
-module head_solid(d = 0) {
-    scale([1.0, HEAD_D / HEAD_W, 1.0])
-        rotate_extrude($fn = 112)
-            polygon(head_prof_pts(d));
-}
 
 // Chamfered Visor Octagon Profile in (x, z)
-module visor_2d(w, h, c, r_round = 1.6) {
-    cz = c * 1.15;
-    offset(r = r_round, $fn = 36)
-        offset(r = -r_round, $fn = 36)
-            polygon([
-                [-w/2 + c, -h/2],
-                [ w/2 - c, -h/2],
-                [ w/2,     -h/2 + cz],
-                [ w/2,      h/2 - cz],
-                [ w/2 - c,  h/2],
-                [-w/2 + c,  h/2],
-                [-w/2,      h/2 - cz],
-                [-w/2,     -h/2 + cz]
-            ]);
-}
 
-module visor_cutter(w = 30.0, h = 18.5, c = 4.2, zc = 19.0) {
-    translate([0, 0, zc])
-        rotate([90, 0, 0])
-            linear_extrude(height = 35, center = false)
-                visor_2d(w, h, c);
-}
 
 // Rounded Pill Box in 3D
 module pill_box(w, d, h, r) {
@@ -295,226 +243,6 @@ module loft_ellipses(slices) {
             translate([0, 0, z1])
                 scale([s1[1], s1[2], 1])
                     cylinder(h = 0.02, r = 1, center = false, $fn = 84);
-        }
-    }
-}
-
-// ============================================================================
-// 1. HEAD ASSEMBLY (z_local = 0..41.5, placed at z_world = 108.5)
-// ============================================================================
-
-module part_head_shell() {
-    difference() {
-        head_solid(0);
-
-        // Trim hidden top cap at z = 39.1 so head_hood's crown mortise has a solid >= 1.3 mm floor
-        translate([-25, -25, 39.1])
-            cube([50, 50, 10]);
-
-        // Recessed Visor Pocket (1.62 mm step with clean bezel frame & 0.10 mm floor clearance for visor)
-        intersection() {
-            difference() {
-                head_solid(2.0);
-                head_solid(-1.62);
-            }
-            visor_cutter(30.4, 18.8, 4.3, 19.2);
-        }
-
-        // Outer Bezel Groove Line (overlaps 0.6 mm into pocket; top at z=29.44 avoids z=29.5 latitude seam!)
-        intersection() {
-            difference() {
-                head_solid(0.5);
-                head_solid(-0.45);
-            }
-            difference() {
-                visor_cutter(32.2, 20.48, 4.8, 19.2);
-                visor_cutter(29.8, 18.2, 4.1, 19.2);
-            }
-        }
-
-        // Ear-Pod Side Seats (x = +-22, z = 20.0, 50-deg teardrop roof for clean horizontal print!)
-        for (sx = [-1, 1]) {
-            translate([sx * (HEAD_W/2 + 2.0), 0, 20.0])
-                rotate([0, -sx * 90, 0])
-                    rotate([0, 0, sx == 1 ? 90 : -90])
-                        pro_teardrop_bore_cut(11.6, 4.2, 0.3);
-        }
-
-        // Neck Ball-Peg Socket at z=0
-        ball_socket_cut(PEG_BIG_D, 4.8);
-    }
-}
-
-module part_head_hood() {
-    // Sculpted helmet hood with S-scoops around ear pods & 1.2 mm crown mortise lock
-    difference() {
-        union() {
-            difference() {
-                head_solid(1.25);
-                intersection() {
-                    head_solid(0.04);
-                    translate([-30, -30, -2]) cube([60, 60, 41.35]);
-                }
-
-                // Cut away lower chin/neck below z = 9.5
-                translate([0, 0, -5])
-                    cylinder(h = 14.5, r1 = 35, r2 = 35, $fn = 84);
-
-                // Cut away front visor opening generously around bezel
-                visor_cutter(33.2, 21.8, 5.2, 19.2);
-                // Open lower front chin below visor
-                translate([-18, -30, 0])
-                    cube([36, 22, 19.2]);
-
-                // Signature S-Scoop Cutouts around Left & Right Ear Pods
-                for (sx = [-1, 1]) {
-                    hull() {
-                        translate([sx * 24, 0, 20.0])
-                            rotate([0, sx * 90, 0])
-                                cylinder(h = 14, r = 7.6, center = true, $fn = 72);
-                        translate([sx * 24, -6.5, 11.0])
-                            rotate([0, sx * 90, 0])
-                                cylinder(h = 14, r = 6.5, center = true, $fn = 72);
-                    }
-                }
-            }
-
-            // Flat Crown Dock Boss on top (houses 1.2 mm press-fit mortise for crown_buds / crown_cap_blank)
-            intersection() {
-                head_solid(3.2);
-                translate([0, 0, 35.8])
-                    hull() {
-                        translate([0, 0, 0])   pill_box(27.6, 15.6, 0.1, 6.0);
-                        translate([0, 0, 6.0]) pill_box(24.8, 13.2, 0.2, 5.2);
-                    }
-            }
-        }
-
-        // Inner clearance matching trimmed head_shell (leaves 1.25 mm solid floor z = 39.15..40.40!)
-        intersection() {
-            head_solid(0.04);
-            translate([-30, -30, -2])
-                cube([60, 60, 41.15]);
-        }
-
-        // Trim flat horizontal top rim at z = 41.6
-        translate([-30, -30, 41.6])
-            cube([60, 60, 10]);
-
-        // 1.2 mm-deep press-fit Crown Mortise Pocket (0.08 mm per-side clearance around 22.4 x 10.8 tenon)
-        translate([0, 0, 40.4])
-            pill_box(22.56, 10.96, 2.0, 4.88);
-    }
-}
-
-module part_crown_buds() {
-    // Two #FF6B4A Spark Crown Studs on a solid 1.8 mm mortise-tenon pill base (x = +-6.25 mm)
-    // Studs sink 0.5 mm into the pill base so the mesh is 100% single-body watertight, emerging at z = 42.2!
-    union() {
-        translate([0, 0, 40.4])
-            pill_box(22.4, 10.8, 1.8, 4.8);
-        for (sx = [-1, 1]) {
-            translate([sx * (TU / 2), 0, 42.2])
-                tv_stud(root_sink = 0.5);
-        }
-    }
-}
-
-module part_crown_cap_blank() {
-    // Smooth dome cap with matching 22.4 x 10.8 tenon (snaps cleanly into head_hood's crown mortise!)
-    union() {
-        translate([0, 0, 40.4])
-            pill_box(22.4, 10.8, 1.3, 4.8);
-        intersection() {
-            translate([0, 0, 0.5]) head_solid(2.2);
-            translate([0, 0, 41.6])
-                pill_box(22.4, 10.8, 4.0, 4.8);
-        }
-    }
-}
-
-module part_ear_pod(side = 1) {
-    // Stepped concentric 40-deg pivot pod + functional Ø 6.6 mm Snap/Pro center boss!
-    translate([side * (HEAD_W / 2 - 1.2), 0, 20.0])
-        rotate([0, side * 90, 0]) {
-            union() {
-                // Base plug into head shell
-                cylinder(h = 1.6, r = 5.65, $fn = 84);
-                // Outer stepped ring (40-deg conical flank)
-                translate([0, 0, 1.5])
-                    cylinder(h = 1.6, r1 = 6.2, r2 = 5.0, $fn = 84);
-                // Functional Ø 6.6 x 2.8 mm Snap/Pro stud boss (sunk 0.4 mm for watertight union)
-                translate([0, 0, 3.0])
-                    tv_stud(root_sink = 0.4);
-            }
-        }
-}
-
-module part_visor() {
-    // Curved conformal swap-in faceplate (1.42 mm thick) sitting with 0.10 mm clearance inside visor pocket
-    intersection() {
-        difference() {
-            head_solid(-0.10);
-            head_solid(-1.52);
-        }
-        visor_cutter(29.8, 18.2, 4.1, 19.2);
-    }
-}
-
-module part_face_eyes() {
-    // Low-and-wide expressive eyes (z = 17.0, x = +-7.6) with conical flanks
-    intersection() {
-        difference() {
-            head_solid(0.55);
-            head_solid(-0.65);
-        }
-        union() {
-            for (sx = [-1, 1]) {
-                translate([sx * 7.6, -15, 17.0])
-                    rotate([90, 0, sx * 12])
-                        scale([1.0, 1.08, 1.0])
-                            cylinder(h = 12, r1 = 3.2, r2 = 2.35, center = true, $fn = 64);
-            }
-        }
-    }
-}
-
-module part_face_glints() {
-    // Crisp white eye glints
-    intersection() {
-        difference() {
-            head_solid(0.78);
-            head_solid(-0.45);
-        }
-        union() {
-            for (sx = [-1, 1]) {
-                translate([sx * 8.35, -15, 18.05])
-                    rotate([90, 0, sx * 12])
-                        cylinder(h = 12, r = 0.82, center = true, $fn = 36);
-                translate([sx * 6.85, -15, 16.05])
-                    rotate([90, 0, sx * 12])
-                        cylinder(h = 12, r = 0.42, center = true, $fn = 28);
-            }
-        }
-    }
-}
-
-module part_face_cheeks() {
-    // Coral Spark (#FF6B4A) low-wide pill blushes
-    intersection() {
-        difference() {
-            head_solid(0.45);
-            head_solid(-0.75);
-        }
-        union() {
-            for (sx = [-1, 1]) {
-                translate([sx * 11.4, -14, 14.3])
-                    rotate([90, 0, sx * 20])
-                        hull() {
-                            translate([-0.7, 0, 0]) cylinder(h = 12, r = 1.05, center = true, $fn = 36);
-                            translate([ 0.7, 0, 0]) cylinder(h = 12, r = 1.05, center = true, $fn = 36);
-                        }
-            }
         }
     }
 }
@@ -1133,7 +861,7 @@ module part_snap_leg() {
 
 // Reversible, compliant Coral Spark (#FF6B4A) Snap Swivel Turret Collar!
 // - Support-free upright on z = 0 (truncated ends + 45-deg double-chamfered anti-pinch center collar!)
-// - Physically snaps into shared head_shell (d = 9.0), hand_l/r (d = 8.0), and boot (d = 8.0)!
+// - Physically snaps into shared head socket (d = 9.0), hand_l/r (d = 8.0), and boot (d = 8.0)!
 module part_snap_turret(d = PEG_SML_D) {
     _dumbbell_connector(d, true);
 }
@@ -1186,17 +914,7 @@ module part_neck_turret_2x1() {
 // ============================================================================
 
 module build_part(p) {
-    if      (p == "head_shell")      part_head_shell();
-    else if (p == "head_hood")       part_head_hood();
-    else if (p == "crown_buds")      part_crown_buds();
-    else if (p == "crown_cap_blank") part_crown_cap_blank();
-    else if (p == "ear_pod_l")       part_ear_pod( 1);
-    else if (p == "ear_pod_r")       part_ear_pod(-1);
-    else if (p == "visor")           part_visor();
-    else if (p == "face_eyes")       part_face_eyes();
-    else if (p == "face_glints")     part_face_glints();
-    else if (p == "face_cheeks")     part_face_cheeks();
-    else if (p == "torso")           part_torso();
+    if      (p == "torso")           part_torso();
     else if (p == "back_dock_studs") part_back_dock_studs();
     else if (p == "upper_arm")       part_upper_arm();
     else if (p == "forearm")         part_forearm();
@@ -1219,16 +937,7 @@ module build_part(p) {
 }
 
 module export_print_oriented(p) {
-    if      (p == "head_hood")       translate([0, 0, -9.5]) build_part(p);
-    else if (p == "crown_buds")      translate([0, 0, -40.4]) build_part(p);
-    else if (p == "crown_cap_blank") translate([0, 0, -40.4]) build_part(p);
-    else if (p == "ear_pod_l")       rotate([0, -90, 0]) translate([-(HEAD_W / 2 - 1.2), 0, -20.0]) build_part(p);
-    else if (p == "ear_pod_r")       rotate([0,  90, 0]) translate([ (HEAD_W / 2 - 1.2), 0, -20.0]) build_part(p);
-    else if (p == "visor")           translate([0, 0, -10.1]) build_part(p);
-    else if (p == "face_eyes")       rotate([-90, 0, 0]) translate([0, 16.03, -17.0]) build_part(p);
-    else if (p == "face_glints")     rotate([-90, 0, 0]) translate([0, 16.68, -17.0]) build_part(p);
-    else if (p == "face_cheeks")     rotate([-90, 0, 0]) translate([0, 14.27, -14.3]) build_part(p);
-    else if (p == "torso")           translate([0, 0, -57.5]) build_part(p);
+    if      (p == "torso")           translate([0, 0, -57.5]) build_part(p);
     else if (p == "snap_torso")      translate([0, 0, -57.5]) build_part(p);
     else if (p == "back_dock_studs") rotate([90, 0, 0]) translate([0, -12.2, -87.5]) build_part(p);
     else if (p == "tail_acc")        translate([0, 0, 3.00]) rotate([0, 90, 0]) build_part(p);
