@@ -148,15 +148,17 @@ rejected, numbers are clamped to bounds, and nothing is executed.
     `width_mm`, `height_mm`, `z_frac` (how high on the face). A hull of a tip
     sphere and two root spheres at the front wall (-y), added after
     `character_head` like head ears. The top is flat; the underside is a ramp
-    that rises at least 55 degrees, so it prints without supports. That is the
-    limit on its looks: a beak reads well, a muzzle reads as a nose with a long
+    that rises at least 55 degrees (50 as a fallback), so it prints without
+    supports. That is the limit on its looks: a beak reads well, a muzzle reads as a nose with a long
     ramp down the face, and a true flat-bottomed dinosaur snout would need
     supports on the front (the show face), which the M2 gate caps at 80 mm2. It
     is cut away from the neck-socket cavities (`_socket_keepout`) and kept inside
     the flat part of the front wall, because the wall leans and the corners are
-    far back. 13 of 13 probe recipes passed the gates after four fixes (see the
-    "Head ops" note in the taste check section). **Brand check for the owner:**
-    `BRAND_STYLE.md` keeps expressions and fixed facial relief on the swappable
+    far back. 13 of 13 probe recipes passed the gates after four fixes (see "Head
+    ops and prompt v3" below). An op the compiler accepts but cannot build on the
+    given body (a snout on a head whose front already leans forward, an ear on a
+    body too narrow at that height) is listed in `legalizer.features_dropped`.
+    **Brand check for the owner:** `BRAND_STYLE.md` keeps expressions and fixed facial relief on the swappable
     face insert, "never in the head shell", and says it for human heads; a
     snout is silhouette, not an expression, but it takes the decal area of the
     face, so whether custom creature heads may carry one is a product decision.
@@ -961,6 +963,45 @@ features. The daemon has the ops (see "Recipe v1"). Report in the scratchpad
 - **Caveats:** one run, one prompt change plus the op change together, my own
   rating only until Dan re-rates on the round 2 page.
 
+**Head ops and prompt v3 (2026-11-02, same 22 prompts).** Prompt v3 adds the
+`snout` op, says that only ears, horns and snout do anything on a head (knob,
+brim and spikes are now ignored there), suggests horns with `base_mm` 3 and
+`curl` 0 for robot and alien antennae, and says the face looks toward -y. It no
+longer says "do not model noses". Report `forge-eval-spark-v3.json` in the
+scratchpad (the first v3 run, before the last prompt edit, is
+`forge-eval-spark-v3-first.json`).
+- **Validity:** first attempt 20 of 22 (91%), final 22 of 22 (100%), 1.09 model
+  calls per prompt, job latency p50 10.0 s and p95 14.5 s, L2 applied 2 of 2
+  tried. All 8 heads passed first time. Failures were on crowns (P1 2, P4 1,
+  M_minimal_support 1), none from the new ops.
+- **Op use:** 15 of 22 prompts have a feature op (v2: 13, v1: 4): brim 4, horns
+  3, ears 3, spikes 2, knob 2, snout 1. Robot and alien got antenna-style horns,
+  the dinosaur got a snout, bunny, cat and bear got ears. The astronaut and the
+  pumpkin got nothing.
+- **A silent failure the run found, and its fix.** In the first v3 run the
+  dinosaur's snout was dropped without a word: Spark had leaned the whole front of
+  the head forward (depth growing from 12 to 23 mm), the wall already overhangs
+  29 degrees, and a support-free underside (at least 45 degrees from horizontal)
+  gains only about 0.45 mm of reach per mm of height over it, so no ramp could
+  land on that wall. Now (a) the daemon lists any op it accepted but could not
+  build in `legalizer.features_dropped` (snout, ears, horns; test in
+  `forge-ops.test.ts`), (b) it tries a 50 degree ramp when 55 does not fit, and
+  (c) the prompt tells Spark to keep a snout head's front upright (depth 12 to
+  16 mm, `y` 0). In the rerun all 8 heads followed that rule and the snout
+  printed. The cost: heads are slimmer and more slab-like than in v2.
+- **Looks (my read of a contact sheet, scratchpad `v3-heads.png`; Dan has not
+  rated these):** the antennae, the bunny and cat ears and the dinosaur's snout
+  read as what was asked. The bear's ears are still a small lump on the side. The
+  astronaut and pumpkin heads are plain boxes and every head still reads as the
+  same tall slab; a head's silhouette is limited by the 24.6 x 12.1 mm collar and
+  the 41 degree flare, so a rounder or wider head needs a body op, not a face op.
+  A muzzle is a nose-shaped bump with a long ramp down the face; a beak reads
+  best.
+- **Caveats:** one run per prompt version, prompt and ops changed together, my
+  own rating only. The round 3 heads are appended to the Forge Taste Check page
+  (ids `r3_h01` to `r3_h08`, marked "(new)") so Dan can rate them with the round 2
+  parts; at the time of writing the page had round 1 ratings only (19), no round 2.
+
 Reports first-attempt pass rate, final pass rate, mean model calls per job,
 latency p50 and p95, token usage per job, failure counts per gate id, and a
 manual 1 to 5 "cute and on-brand" rating. The gates prove a part is valid and
@@ -1290,8 +1331,11 @@ express many requests, and the prompt may be narrowing variety. A tuned model
 cannot add shapes the recipe cannot make, so richer recipe ops and a taste loop
 come before any tuning. The first round of new ops (prompt v2) kept the final
 pass rate at 100% and lifted feature-op use from 4 of 22 prompts to 13 of 22;
-brims, points, horns and ears now show, heads are still mostly boxes, and Dan's
-re-rating decides whether the taste gate is still tripped. Latency is fine and
+brims, points, horns and ears now show, and heads are still mostly boxes. Head ops
+and prompt v3 raised op use to 15 of 22 and gave the robot, alien and dinosaur
+something (antennae, a snout) without hurting validity (22 of 22 final), but
+the astronaut and pumpkin are still plain slabs. Dan's re-rating decides whether
+the taste gate is still tripped. Latency is fine and
 Spark's price is unknown.
 
 If tuning is chosen, the training set is the gate-filtered sampler output plus

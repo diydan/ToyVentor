@@ -71,7 +71,11 @@ function recipe(id: string, slot: string, slices: object[], features: object[]) 
 interface Job {
   status: string;
   gate_report?: { small_part?: { status?: string }; design_status?: string };
-  legalizer?: { support_policy_promoted?: string; features_ignored?: string[] } | null;
+  legalizer?: {
+    support_policy_promoted?: string;
+    features_ignored?: string[];
+    features_dropped?: { op: string; why: string }[];
+  } | null;
 }
 
 describe.skipIf(!PYTHON)("Recipe v1 feature ops through the optimizer daemon", () => {
@@ -164,6 +168,20 @@ describe.skipIf(!PYTHON)("Recipe v1 feature ops through the optimizer daemon", (
       expect(job.status, id).toBe("print_ready");
     }
   }, 540_000);
+
+  it("reports a snout it cannot build instead of dropping it silently", async () => {
+    // The front of this head leans forward about 29 degrees, so no support-free underside can reach back to the wall.
+    const leaning = [
+      { z: 0, w: 24.6, d: 12.1, r: 3 },
+      { z: 7, w: 26.5, d: 17.5, r: 4, y: -1.5 },
+      { z: 14, w: 28, d: 22.5, r: 5, y: -2.5 },
+      { z: 22, w: 28, d: 23, r: 5, y: -2.5 },
+      { z: 30.5, w: 22, d: 18, r: 4, y: -2 },
+    ];
+    const job = await run(recipe("ops_test_leaning_snout", "head", leaning, [{ op: "snout", length_mm: 14, width_mm: 14, height_mm: 8 }]));
+    expect(job.status).toBe("print_ready");
+    expect(job.legalizer?.features_dropped?.map((f) => f.op)).toEqual(["snout"]);
+  }, 180_000);
 
   it("ignores an op the slot cannot use and an unknown op, and reports both", async () => {
     const job = await run(

@@ -347,7 +347,7 @@ Put the character in the features and keep the body simple. Give different reque
  * (both do nothing there: `character_head` clips them). In the v2 run robot, alien, astronaut, dinosaur and
  * pumpkin heads were all the same tapered box.
  */
-const SNOUT_LINE_V3 = `  - {"op":"snout","style":"muzzle"|"beak"|"bill","length_mm":3-16,"width_mm":6-22,"height_mm":4-16,"z_frac":0.2-0.65}: a snout on the front of an ANIMAL head only (dog, dinosaur, bear, pig = muzzle; parrot, toucan, eagle = beak; duck = bill). z_frac is how high on the face it sits.`;
+const SNOUT_LINE_V3 = `  - {"op":"snout","style":"muzzle"|"beak"|"bill","length_mm":3-16,"width_mm":6-22,"height_mm":4-16,"z_frac":0.2-0.65}: a snout on the front of an ANIMAL head only (dog, dinosaur, bear, pig = muzzle; parrot, toucan, eagle = beak; duck = bill). z_frac is how high on the face it sits. A head with a snout needs an upright face: keep every head slice's "d" between 12 and 16 and its "y" at 0, because a head whose front leans forward cannot hold a snout (it is dropped).`;
 const HEAD_NOTE_V3 = `On a head, only ears, horns and snout do anything (knob, brim and spikes are ignored there). Antennae for a robot or alien are horns with base_mm 3 and curl 0. A bear has round ears 11-14 wide. Put the character in the features`;
 const HEAD_FACT_V1 = "Do not model eyes, mouths or noses; the front stays smooth.";
 const HEAD_FACT_V3 =

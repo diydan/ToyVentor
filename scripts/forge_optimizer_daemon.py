@@ -172,7 +172,8 @@ _SNOUT_STYLES = {
     "beak": (10.0, 8.0, 11.0, 0.30, 0.15),
     "bill": (7.0, 18.0, 6.0, 0.90, 0.50),
 }
-SNOUT_MIN_SLOPE_DEG = 55.0  # the snout's underside must rise at least this steeply (from horizontal) to print without help
+SNOUT_MIN_SLOPE_DEG = 55.0  # the snout's underside should rise at least this steeply (from horizontal) to print without help
+SNOUT_FALLBACK_SLOPE_DEG = 50.0  # tried when 55 does not fit; the gate's limit is 45, and the hull's facets wobble by a degree or two
 SNOUT_ROOT_R = 0.8  # radius of the small root sphere the underside ramp ends in
 SNOUT_ROOT_DEPTH = 1.2  # how far inside the wall its centre sits
 SNOUT_ROOT_FLOOR_MM = 2.0  # its bottom stays at least this high, clear of the collar and the flare
@@ -398,16 +399,16 @@ def _snout_root_y(body: manifold3d.Manifold, z_lo: float) -> float | None:
 
 
 def _snout_ramp(
-    body: manifold3d.Manifold, length: float, tip_r: float, z_top: float, y_ref: float
+    body: manifold3d.Manifold, length: float, tip_r: float, z_top: float, y_ref: float, min_slope_deg: float
 ) -> tuple[float, float, float] | None:
     """Where the snout's printable underside lands. The top is flat at `z_top`; the underside is a ramp from the
-    tip's bottom back to a small root sphere hidden just inside the wall, rising at least SNOUT_MIN_SLOPE_DEG from
+    tip's bottom back to a small root sphere hidden just inside the wall, rising at least `min_slope_deg` from
     horizontal so it prints without supports. The wall leans (heads flare out from the collar), so the root sphere
     is anchored to the wall at its own height; a big sphere there would poke out under the ramp and fail P1.
     Returns (tip_y, tip_z, root_z), or None when the ramp would have to reach below the collar."""
     y_tip = y_ref - (length - tip_r)
     z_tip = z_top - tip_r
-    min_slope = math.radians(SNOUT_MIN_SLOPE_DEG)
+    min_slope = math.radians(min_slope_deg)
     z_lo = z_tip - tip_r
     while z_lo >= SNOUT_ROOT_FLOOR_MM + SNOUT_ROOT_R:
         y_root = _snout_root_y(body, z_lo)
@@ -450,8 +451,11 @@ def _snout_solid(
         return None
     tip_r = max(0.9, tip_r_frac * height / 2.0)
     ramp = None
-    while length >= 3.0:  # shorten until the printable ramp fits above the collar
-        ramp = _snout_ramp(body, length, tip_r, z_top, y_ref)
+    while length >= 3.0:  # shorten until a printable ramp fits above the collar
+        for slope in (SNOUT_MIN_SLOPE_DEG, SNOUT_FALLBACK_SLOPE_DEG):
+            ramp = _snout_ramp(body, length, tip_r, z_top, y_ref, slope)
+            if ramp is not None:
+                break
         if ramp is not None:
             break
         length -= 0.5
@@ -571,11 +575,15 @@ def compile_recipe_to_partspec(recipe: dict[str, Any]) -> dict[str, Any]:
         support_policy = "minimal"
         support_policy_promoted = True
 
+    # Ops the compiler accepted but could not build on this body (reported as `legalizer.features_dropped`).
+    features_dropped: list[dict[str, str]] = []
+
     def build_for(
         rows: list[tuple[float, float, float, float, float, float]],
         fs: float = 1.0,
     ) -> tuple[manifold3d.Manifold, list[dict[str, Any]], dict[str, Any]]:
         """`fs` scales every feature's size (L2 passes the same factor it applies to the slices)."""
+        features_dropped.clear()
         if slot == "hand":
             if kind == "profile2d":
                 cs = sdk.polygon_2d(pts_clamped, fillet_r=fillet_r)
@@ -605,13 +613,18 @@ def compile_recipe_to_partspec(recipe: dict[str, Any]) -> dict[str, Any]:
                 snout = _snout_solid(body, feat, head_height_mm, fs)
                 if snout is not None:
                     after_builder.append(snout)
+                else:
+                    features_dropped.append(
+                        {"op": "snout", "why": "no printable underside fits this front wall; keep the head's front upright (depth d about 12 to 16, y offsets 0)"}
+                    )
             elif op in ("ears", "horns"):
                 solid = _ears_or_horns_solid(op, slot, body, rows, feat, head_height_mm, fs)
-                if solid is not None:
-                    if slot == "head":
-                        after_builder.append(solid)
-                    else:
-                        body = body + solid
+                if solid is None:
+                    features_dropped.append({"op": op, "why": "the body is too narrow where this op attaches"})
+                elif slot == "head":
+                    after_builder.append(solid)
+                else:
+                    body = body + solid
 
         if slot == "crown":
             return sdk.crown_addon(body, support_policy=support_policy)
@@ -658,6 +671,7 @@ def compile_recipe_to_partspec(recipe: dict[str, Any]) -> dict[str, Any]:
             )
 
         spec["_l2"] = {"slot": slot, "rows": slices_legal, "rebuild": rebuild}
+        spec["_features_dropped"] = features_dropped  # filled by the build; the job copies it into `legalizer`
     return spec
 
 
@@ -765,6 +779,7 @@ def l2_rescale(spec: dict[str, Any], measured_mm: float | None = None) -> tuple[
             rows = _l2_candidate(rows0, path, lo)
             new_spec = ctx["rebuild"](rows, fs_of(lo))
             new_spec["legalizer_notes"] = dict(spec.get("legalizer_notes") or {})
+            new_spec["_features_dropped"] = spec.get("_features_dropped") or []
             new_spec["_l2"] = {**ctx, "rows": rows}
             return new_spec, {
                 "applied": True,
@@ -912,6 +927,8 @@ class OptimizerJobManager:
                                 optimize=True,
                                 export_web_on_fail=True,
                             )
+                    if compiled_spec.get("_features_dropped"):
+                        legalizer["features_dropped"] = [dict(d) for d in compiled_spec["_features_dropped"]]
                     elapsed_ms = round((time.perf_counter() - t0) * 1000.0, 1)
                     opt_info = res.get("optimization") or {}
                     c_hash = opt_info.get("content_hash")
