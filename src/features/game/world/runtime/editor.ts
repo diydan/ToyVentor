@@ -124,6 +124,7 @@ export interface EditorApi {
   edIoClose: () => void;
   edIoCopy: () => void;
   edIoLoad: () => void;
+  edLoad: (level: unknown) => boolean;
   edSetIoText: (t: string) => void;
   edControl: (i: number) => void;
   edFromTitle: () => void;
@@ -227,10 +228,12 @@ function edImport(){edIo={open:true,title:"Paste a level to import",text:"",read
 function edIoClose(){edIo.open=false;notify()}
 function edIoCopy(){var done=function(){toast("Copied. Paste it into the level file or a message.")};if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(edIoTxt).then(done,function(){try{document.execCommand("copy");done()}catch(e){toast("Select the text and copy it by hand.")}});else{try{document.execCommand("copy");done()}catch(e){toast("Select the text and copy it by hand.")}}}
 function edIoLoad(){var R: any=null;try{R=JSON.parse(edIoTxt)}catch(e){}if(!edValid(R)){toast("That isn't a ToyVentor level. Check the format line and the part names.");return}edPush();ED.R=R;ED.sel=null;edIo.open=false;edName=R.name||"My world";edTheme=R.theme;edApply();toast("Level imported.")}
+/** Load a level object directly (Feature 3 room-photo levels). Same validation as import; no-op + false when invalid. */
+function edLoad(level: unknown): boolean {if(!edValid(level))return false;var R=JSON.parse(JSON.stringify(level)) as LevelDef;if(ED.on)edPush();ED.R=R;ED.sel=null;edName=R.name||"My world";edTheme=R.theme;if(ED.on)edApply();else{try{localStorage.setItem(ED.kid?"tvCreate":"tvLevel",JSON.stringify(R))}catch(e){}}return true}
 function edSetIoText(t: string){edIoTxt=t}
 function edControl(i: number){if(i===0||i===1)edNudge(i===0?-1:1);else if(i===2)edDelete();else if(i===3)edDoneSel()}
 function edFromTitle(){ctx();ED.kid=false;ED.R=null;edEnter()}
 
 function setBackLabel(v: string){edBackLabel=v}
-return {ED,setBackLabel,esc,edBlank,edCopy,edEngine,edValid,edChecks,edSnapX,edSnap,edItem,edPush,edApply,edUndo,edRedo,pinTex,txtSprite,edMarkers,edFit,edZoom,edView,edEnter,edExit,edPlay,edBack,edFreePart,edPlace,edPick,edX,edPanel,syncEdInputs,edSetTab,edArmToggle,edArmDs,edArm,edNudge,edDelete,edDoneSel,edSetHide,edSetPart,edSetName,edSetTheme,edNew,edZoomBy,edExport,edImport,edIoClose,edIoCopy,edIoLoad,edSetIoText,edControl,edFromTitle,edUp};
+return {ED,setBackLabel,esc,edBlank,edCopy,edEngine,edValid,edChecks,edSnapX,edSnap,edItem,edPush,edApply,edUndo,edRedo,pinTex,txtSprite,edMarkers,edFit,edZoom,edView,edEnter,edExit,edPlay,edBack,edFreePart,edPlace,edPick,edX,edPanel,syncEdInputs,edSetTab,edArmToggle,edArmDs,edArm,edNudge,edDelete,edDoneSel,edSetHide,edSetPart,edSetName,edSetTheme,edNew,edZoomBy,edExport,edImport,edIoClose,edIoCopy,edIoLoad,edLoad,edSetIoText,edControl,edFromTitle,edUp};
 }

@@ -103,6 +103,16 @@ describe("Unit 2e editor factory (deps-injected ED state)", () => {
     expect(composed[0]!.n).toBe("Five hidden parts");
   });
 
+  it("edLoad accepts a composed level and refuses anything else", () => {
+    const EDX = createEditor(stubDeps() as any);
+    const level = composeLevel({ seed: 7, theme: "room" });
+    expect(EDX.edLoad(level)).toBe(true);
+    expect(EDX.ED.R.id).toBe(level.id);
+    expect(EDX.edLoad(null)).toBe(false);
+    expect(EDX.edLoad({ format: "nope/1", theme: "garden", props: [], spots: [] })).toBe(false);
+    expect(EDX.ED.R.id).toBe(level.id); // refused loads never clobber the current level
+  });
+
   it("edNew + edSetName keep a working recipe with undo history", () => {
     const restore = guardSharedState();
     const EDX = createEditor(stubDeps() as any);

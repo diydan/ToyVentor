@@ -794,6 +794,8 @@ export interface EngineHandle {
   createAction: (action: CreateAction) => void;
   /** Open the designer level editor and let React replace its panel. */
   openEditor: () => void;
+  /** Load a toyventor.level/1 object into the editor and open it (Feature 3 room-photo levels). */
+  openEditorWithLevel: (level: unknown) => boolean;
   /** Exit the level editor back to the previous world. */
   closeEditor: () => void;
   /** Run a legacy level-editor toolbar action. */
@@ -913,6 +915,7 @@ interface LegacyHooks {
   edSetIoText?: (text: string) => void;
   edIoCopy?: () => void;
   edIoLoad?: () => void;
+  edLoad?: (level: unknown) => boolean;
   edIoClose?: () => void;
   edFromTitle?: () => void;
   /** Live create snapshot, served without touching the DOM. */
@@ -959,6 +962,7 @@ export function createEngine(
   let pendingWorld: WorldId | null = null;
   let pendingCustomizer: "build" | "forge" | null = null;
   let pendingPanel: "create" | "editor" | null = null;
+  let pendingLevel: unknown = null;
   let lastWorld = "";
   let lastZoom = -1;
   let lastFound = new Set<string>();
@@ -1194,7 +1198,13 @@ export function createEngine(
         const panel = pendingPanel;
         pendingPanel = null;
         if (panel === "create") openCreateNow();
-        else openEditorNow();
+        else {
+          if (pendingLevel != null) {
+            api.edLoad?.(pendingLevel);
+            pendingLevel = null;
+          }
+          openEditorNow();
+        }
       }
     }
     if (typeof save.world === "string" && save.world !== lastWorld) {
@@ -1402,9 +1412,23 @@ export function createEngine(
     openEditor: () => {
       openEditorNow();
     },
+    openEditorWithLevel: (level) => {
+      if (disposed) return false;
+      const api = hooks();
+      if (!ready || !api?.edLoad) {
+        pendingLevel = level;
+        pendingPanel = "editor";
+        return true; // queued; edLoad validates on flush
+      }
+      const ok = api.edLoad(level);
+      if (ok) openEditorNow();
+      poll();
+      return ok;
+    },
     closeEditor: () => {
       if (disposed) return;
       pendingPanel = null;
+      pendingLevel = null;
       hooks()?.ed?.exit?.();
       poll();
     },

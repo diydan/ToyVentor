@@ -280,6 +280,7 @@ export interface WorldRuntimeHandle {
   edSetIoText?: (t: string) => void;
   edIoCopy?: () => void;
   edIoLoad?: () => void;
+  edLoad?: (level: unknown) => boolean;
   edIoClose?: () => void;
   edFromTitle?: () => void;
   town?: {
@@ -698,7 +699,7 @@ function groundPlane(kind: string){var gNames: Record<string, string>={sky:"clou
 
 /* ===== level editor: designers place hiding spots and props on the path, check, playtest, export ===== */
 
-var EDX=createEditor({S:S,P:P,scene:scene,camera:camera,canvas:canvas,hostEl:hostEl,cam:cam,$:$,$$:$$,toast:toast,save:save,notify:notify,flash:flash,updHud:updHud,showIntro:showIntro,buildWorld:buildWorld,crUI:crUI,rayAt:rayAt,laneX:laneX});var ED=EDX.ED;var esc=EDX.esc,edValid=EDX.edValid,edChecks=EDX.edChecks,edSnapX=EDX.edSnapX,edSnap=EDX.edSnap,edUndo=EDX.edUndo,edRedo=EDX.edRedo,edZoom=EDX.edZoom,edView=EDX.edView,edEnter=EDX.edEnter,edExit=EDX.edExit,edPlay=EDX.edPlay,edBack=EDX.edBack,edPlace=EDX.edPlace,edPick=EDX.edPick,edX=EDX.edX,edUp=EDX.edUp,edPanel=EDX.edPanel,edMarkers=EDX.edMarkers,edSetTab=EDX.edSetTab,edArmDs=EDX.edArmDs,edNudge=EDX.edNudge,edDelete=EDX.edDelete,edSetName=EDX.edSetName,edSetTheme=EDX.edSetTheme,edNew=EDX.edNew,edExport=EDX.edExport,edImport=EDX.edImport,edIoClose=EDX.edIoClose,edIoCopy=EDX.edIoCopy,edSetIoText=EDX.edSetIoText,edIoLoad=EDX.edIoLoad,edArm=EDX.edArm,edControl=EDX.edControl,edDoneSel=EDX.edDoneSel,edSetHide=EDX.edSetHide,edSetPart=EDX.edSetPart,edZoomBy=EDX.edZoomBy,edFromTitle=EDX.edFromTitle,edPush=EDX.edPush,edApply=EDX.edApply,edFreePart=EDX.edFreePart,syncEdInputs=EDX.syncEdInputs;
+var EDX=createEditor({S:S,P:P,scene:scene,camera:camera,canvas:canvas,hostEl:hostEl,cam:cam,$:$,$$:$$,toast:toast,save:save,notify:notify,flash:flash,updHud:updHud,showIntro:showIntro,buildWorld:buildWorld,crUI:crUI,rayAt:rayAt,laneX:laneX});var ED=EDX.ED;var esc=EDX.esc,edValid=EDX.edValid,edChecks=EDX.edChecks,edSnapX=EDX.edSnapX,edSnap=EDX.edSnap,edUndo=EDX.edUndo,edRedo=EDX.edRedo,edZoom=EDX.edZoom,edView=EDX.edView,edEnter=EDX.edEnter,edExit=EDX.edExit,edPlay=EDX.edPlay,edBack=EDX.edBack,edPlace=EDX.edPlace,edPick=EDX.edPick,edX=EDX.edX,edUp=EDX.edUp,edPanel=EDX.edPanel,edMarkers=EDX.edMarkers,edSetTab=EDX.edSetTab,edArmDs=EDX.edArmDs,edNudge=EDX.edNudge,edDelete=EDX.edDelete,edSetName=EDX.edSetName,edSetTheme=EDX.edSetTheme,edNew=EDX.edNew,edExport=EDX.edExport,edImport=EDX.edImport,edIoClose=EDX.edIoClose,edIoCopy=EDX.edIoCopy,edSetIoText=EDX.edSetIoText,edIoLoad=EDX.edIoLoad,edLoad=EDX.edLoad,edArm=EDX.edArm,edControl=EDX.edControl,edDoneSel=EDX.edDoneSel,edSetHide=EDX.edSetHide,edSetPart=EDX.edSetPart,edZoomBy=EDX.edZoomBy,edFromTitle=EDX.edFromTitle,edPush=EDX.edPush,edApply=EDX.edApply,edFreePart=EDX.edFreePart,syncEdInputs=EDX.syncEdInputs;
 canvas.addEventListener("pointerdown",function(e: PointerEvent){if(!ED.on)return;e.stopImmediatePropagation();e.preventDefault();ctx();var pk=edPick(e.clientX,e.clientY);ED.drag={x0:e.clientX,y0:e.clientY,cx0:ED.cx,pin:pk,moved:false};try{canvas.setPointerCapture(e.pointerId)}catch(_){}if(pk){ED.arm=null;ED.sel={kind:pk.kind,i:pk.i};edMarkers();edPanel();var np=ED.pins.filter(function(p){return p.kind===pk!.kind&&p.i===pk!.i})[0]||null;ED.drag.pin=np}},true);
 canvas.addEventListener("pointermove",function(e: PointerEvent){if(!ED.on||!ED.drag)return;e.stopImmediatePropagation();var d=ED.drag;if(!d.moved&&Math.hypot(e.clientX-d.x0,e.clientY-d.y0)>7)d.moved=true;if(!d.moved)return;
  if(d.pin){var x=edX(e);if(x!=null){x=edSnapX(x);d.pin.s.position.x=x;d.pin.l.position.x=x;d.nx=x}}
@@ -1129,6 +1130,7 @@ edSetPart:function(v){edSetPart(v)},
 edSetIoText:function(t){edSetIoText(t)},
 edIoCopy:function(){edIoCopy()},
 edIoLoad:function(){edIoLoad()},
+edLoad:function(level){return edLoad(level)},
 edIoClose:function(){edIoClose()},
 edFromTitle:function(){edFromTitle()},
 town:{neighbors:function(){return townNeighbors(S.world)},perk:activePerk,tidy:function(){return townSparkleProgress(S.tidy)},cross:streetCross,tidyNearest:function(){var best=tidySpots.filter(function(s){return !s.done})[0];return best?tidyUp(best):false}},
