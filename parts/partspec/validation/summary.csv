@@ -181,6 +181,10 @@ skin_cargo_shroud,toyventor_skin_cargo_shroud_S.stl,pass_with_warnings,Warnings:
 skin_windscreen,toyventor_skin_windscreen_S.stl,pass_with_warnings,Warnings: V8_wall_thickness,,,,0,4.4,3388.1,0.08,0.5
 slope_l_2x2,toyventor_slope_l_2x2_L.stl,pass,Prints as is,,,,0,59.1,1744.5,1.41,
 slope_s_2x2,toyventor_slope_s_2x2_S.stl,pass,Prints as is,,,,0,19.39,407.7,0.96,
+snap_turret,snap_turret.stl,pass,Prints as is,,,,0,14.6,30.6,2.64,
+snap_turret_big,snap_turret_big.stl,pass,Prints as is,,,,0,17.9,39.8,2.84,
+spark_peg_big,spark_peg_big.stl,pass,Prints as is,,,,0,17.9,39.8,2.84,
+spark_peg_sml,spark_peg_sml.stl,pass,Prints as is,,,,0,14.6,30.6,2.64,
 spin_capsule,toyventor_spin_capsule_L.stl,pass,Prints as is,,,,0,54.69,965.0,1.76,
 tile_l_2x2,toyventor_tile_l_2x2_L.stl,pass,Prints as is,,,,0,10.0,2368.5,0.21,
 tile_s_2x2,toyventor_tile_s_2x2_S.stl,pass,Prints as is,,,,0,5.0,574.9,0.21,

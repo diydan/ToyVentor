@@ -1301,34 +1301,41 @@ function buildSocketCupMesh(cx, cy, d = 9.0, sockClr = 0.15) {
 
 function buildFallbackConnectorMesh(cx, cy, d = 9.0, isTurret = false) {
   const r = d * 0.5;
-  if (!isTurret) {
-    const h = +(d * 0.92).toFixed(3);
-    const rings = [];
-    const steps = 10;
-    for (let i = 0; i <= steps; i++) {
-      const z = (h * i) / steps;
-      const u = (z - h * 0.5) / (r * 1.06);
-      const rad = r * Math.sqrt(Math.max(0.18, 1 - u * u));
-      rings.push([rad, z]);
-    }
-    return buildRevolvedSolidMesh(cx, cy, rings, 48);
-  }
-  const h = +(d * 1.15).toFixed(3);
-  const rBase = +(r * Math.sqrt(1 - 0.5 * 0.5)).toFixed(3);
-  const rShaft = +(r * 0.84).toFixed(3);
-  const rf = +(r + 1.15).toFixed(3);
+  const span = d > 8.5 ? 13.4 : 10.6;
+  const zb = +(d * 0.25).toFixed(3);
+  const zt = +(zb + span).toFixed(3);
+  const h = +(zt + zb).toFixed(3);
   const zm = h * 0.5;
-  const dzFlange = (rf - rShaft) / Math.tan((38 * Math.PI) / 180); // <= 38 deg overhang (< 45 deg)
-  return buildRevolvedSolidMesh(cx, cy, [
-    [rBase, 0.0],
-    [r, d * 0.25],
-    [rShaft, zm - dzFlange - 0.25],
-    [rf, zm - 0.25],
-    [rf, zm + 0.25],
-    [rShaft, zm + dzFlange + 0.25],
-    [r, h - d * 0.25],
-    [rBase, h],
-  ], 48);
+  const rNeck = +(r * 0.70).toFixed(3);
+  const coneRad = (40 * Math.PI) / 180;
+  const aBot = -Math.asin(zb / r);
+  const aTopLo = Math.acos(rNeck / r);
+  const aTan = -coneRad;
+  const rTan = r * Math.cos(coneRad);
+  const zTan = zt + r * Math.sin(aTan);
+  const zCone0 = zTan - (rTan - rNeck) / Math.tan(coneRad);
+  const aTopHi = Math.asin(zb / r);
+  const rings = [];
+  for (let i = 0; i <= 8; i++) {
+    const a = aBot + ((aTopLo - aBot) * i) / 8;
+    rings.push([r * Math.cos(a), zb + r * Math.sin(a)]);
+  }
+  if (isTurret) {
+    const rf = +(r + 0.60).toFixed(3);
+    const dzF = (rf - rNeck) / Math.tan((42 * Math.PI) / 180);
+    rings.push(
+      [rNeck, zm - 0.18 - dzF],
+      [rf, zm - 0.18],
+      [rf, zm + 0.18],
+      [rNeck, zm + 0.18 + dzF],
+    );
+  }
+  rings.push([rNeck, zCone0]);
+  for (let i = 0; i <= 8; i++) {
+    const a = aTan + ((aTopHi - aTan) * i) / 8;
+    rings.push([r * Math.cos(a), zt + r * Math.sin(a)]);
+  }
+  return buildRevolvedSolidMesh(cx, cy, rings, 48);
 }
 
 function placeAndRotateSeatedMesh(srcTri, angleDeg, cx, cy) {
@@ -1427,9 +1434,9 @@ export function buildPegTurretFitCouponMesh({
     shells.push(pMesh, tMesh);
 
     // Opposed gates into left frame, inter-column runner, and right frame:
-    // spark_peg_big (d=9.0) outer wall at z=0.8 is r=3.21 mm; snap_turret (d=8.0) outer wall at z=0.8 is r=3.82 mm
-    shells.push(buildVNickGateMesh(fw - 1.2, cy, pegX - 1.8, cy, { wallAtEndMm: 1.45, spec }));
-    shells.push(buildVNickGateMesh(pegX + 1.8, cy, turX - 2.4, cy, { wallAtStartMm: 1.45, wallAtEndMm: 1.45, spec }));
+    // spark_peg_big (d=9.0, zb=2.25) outer wall at z=0.8 is r=4.26 mm; snap_turret (d=8.0, zb=2.0) outer wall at z=0.8 is r=3.82 mm
+    shells.push(buildVNickGateMesh(fw - 1.2, cy, pegX - 2.8, cy, { wallAtEndMm: 1.46, spec }));
+    shells.push(buildVNickGateMesh(pegX + 2.8, cy, turX - 2.4, cy, { wallAtStartMm: 1.46, wallAtEndMm: 1.45, spec }));
     shells.push(buildVNickGateMesh(turX + 2.4, cy, frameW - fw + 1.2, cy, { wallAtStartMm: 1.45, spec }));
   }
 
@@ -1440,7 +1447,7 @@ export function buildPegTurretFitCouponMesh({
   return {
     tri: concatMeshes(shells),
     shells,
-    bounds: { w: 78, h: frameH, z: 9.4 },
+    bounds: { w: 78, h: frameH, z: 17.9 },
     anglesDeg,
     socketDiametersMm: [9.0, 8.0],
   };

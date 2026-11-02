@@ -868,26 +868,74 @@ module part_boot() {
 // 5. #FF6B4A SPARK BALL-PEGS (Supportless flat-bed compliant joint connectors!)
 // ============================================================================
 
-module part_spark_peg(d = PEG_BIG_D) {
-    // Truncated barrel peg with compliant cross-flex slots, prints flat on z=0!
-    r = d / 2;
-    h = d * 0.92;
+// Shared Zero-Support Double-Ended Compliant Ball-Joint Dumbbell (Pro spark_peg & Snap flanged snap_turret):
+// - Continuous single revolve (<=40 deg from vertical everywhere -> 0.00 mm2 steep overhang!)
+// - Exact ball-to-ball centre span (13.4 mm for d=9.0, 10.6 mm for d=8.0) reaches past both 3.6..4.8 mm socket seats!
+module _dumbbell_connector(d = PEG_BIG_D, with_flange = false) {
+    r        = d / 2;
+    span     = (d > 8.5) ? 13.4 : 10.6;
+    zb       = d * 0.25;          // 2.25 mm (big) / 2.00 mm (sml) -> <=30 deg overhang at z=0
+    zt       = zb + span;
+    h        = zt + zb;           // 17.90 mm (big) / 14.60 mm (sml)
+    zm       = h / 2;
+    r_neck   = r * 0.70;          // Ø6.30 mm (big) / Ø5.60 mm (sml) waist -> >=23 deg swing per socket
+    rf       = r + 0.60;          // compact anti-pinch center stop-ring on Snap turrets
+    dz_f     = (rf - r_neck) / tan(42);
+    cone_deg = 40;                // upper ball underside cone: r_tan = 0.766*r < ro = 0.86*r!
+    a_bot    = -asin(zb / r);
+    a_top_lo = acos(r_neck / r);
+    a_tan    = -cone_deg;
+    r_tan    = r * cos(cone_deg);
+    z_tan    = zt + r * sin(a_tan);
+    z_cone0  = z_tan - (r_tan - r_neck) / tan(cone_deg);
+    a_top_hi = asin(zb / r);
+    sw       = 0.52;
+    z_slot_b = zb + r * 0.55;
+
     difference() {
-        intersection() {
-            translate([0, 0, h / 2])
-                scale([1, 1, 1.06])
-                    sphere(r = r, $fn = 72);
-            cylinder(h = h, r = r + 1, $fn = 72);
-        }
-        // Compliant flex slots at top & bottom so PLA/PETG snaps smoothly without fusing
-        translate([-r - 1, -0.55, h * 0.32])
-            cube([2 * r + 2, 1.1, h]);
-        translate([-0.55, -r - 1, -0.1])
-            cube([1.1, 2 * r + 2, h * 0.68]);
-        // Center axial 2.0 mm relief hole
-        translate([0, 0, -0.1])
-            cylinder(h = h + 0.2, r = 1.0, $fn = 36);
+        rotate_extrude($fn = 84)
+            polygon(concat(
+                [[0, 0]],
+                [for (i = [0:16])
+                    let(a = a_bot + (a_top_lo - a_bot) * i / 16)
+                    [r * cos(a), zb + r * sin(a)]
+                ],
+                with_flange ? [
+                    [r_neck, zm - 0.18 - dz_f],
+                    [rf,     zm - 0.18],
+                    [rf,     zm + 0.18],
+                    [r_neck, zm + 0.18 + dz_f]
+                ] : [],
+                [[r_neck, z_cone0]],
+                [for (i = [0:16])
+                    let(a = a_tan + (a_top_hi - a_tan) * i / 16)
+                    [r * cos(a), zt + r * sin(a)]
+                ],
+                [[0, h]]
+            ));
+
+        // Orthogonal compliant cross-flex slots (upward top slot + <=38-deg gable-roofed bottom slot -> zero V10 ledge!)
+        translate([-(rf + 2), -sw, zt - r * 0.55])
+            cube([2 * (rf + 2), 2 * sw, h]);
+        rotate([0, 0, 90])
+            rotate([90, 0, 0])
+                linear_extrude(height = 2 * (rf + 2), center = true)
+                    polygon([
+                        [-sw, -0.2],
+                        [ sw, -0.2],
+                        [ sw, z_slot_b],
+                        [0.0, z_slot_b + sw / tan(38)],
+                        [-sw, z_slot_b]
+                    ]);
+
+        // Center axial Ø1.90 mm relief bore
+        translate([0, 0, -0.2])
+            cylinder(h = h + 0.4, r = 0.95, $fn = 36);
     }
+}
+
+module part_spark_peg(d = PEG_BIG_D) {
+    _dumbbell_connector(d, false);
 }
 
 // ============================================================================
@@ -1087,41 +1135,7 @@ module part_snap_leg() {
 // - Support-free upright on z = 0 (truncated ends + 45-deg double-chamfered anti-pinch center collar!)
 // - Physically snaps into shared head_shell (d = 9.0), hand_l/r (d = 8.0), and boot (d = 8.0)!
 module part_snap_turret(d = PEG_SML_D) {
-    r  = d / 2;
-    h  = d * 1.15;          // 9.2 mm (sml) / 10.35 mm (big)
-    zb = d * 0.25;          // lower ball equator z (truncated at z=0 with <=41.4 deg overhang!)
-    zt = h - zb;            // upper ball equator z
-    rf = r + 1.15;          // wide center stop-flange radius
-    zm = h / 2;
-    difference() {
-        intersection() {
-            cylinder(h = h, r = rf + 1.0, $fn = 84);
-            union() {
-                // Lower & upper compliant snap-balls
-                translate([0, 0, zb]) sphere(r = r, $fn = 72);
-                translate([0, 0, zt]) sphere(r = r, $fn = 72);
-                // Connecting neck shaft
-                translate([0, 0, zb]) cylinder(h = zt - zb, r = r * 0.84, $fn = 72);
-                // Support-free 45-deg double-chamfered center collar flange (zero mid-air ledge!)
-                hull() {
-                    translate([0, 0, zm - (rf - r * 0.84) - 0.35])
-                        cylinder(h = 0.05, r = r * 0.84, $fn = 72);
-                    translate([0, 0, zm - 0.35])
-                        cylinder(h = 0.70, r = rf, $fn = 72);
-                    translate([0, 0, zm + (rf - r * 0.84) + 0.30])
-                        cylinder(h = 0.05, r = r * 0.84, $fn = 72);
-                }
-            }
-        }
-        // Compliant cross-flex slots at top & bottom ends
-        translate([-rf - 1, -0.52, h * 0.62])
-            cube([2 * rf + 2, 1.04, h]);
-        translate([-0.52, -rf - 1, -0.1])
-            cube([1.04, 2 * rf + 2, h * 0.38 + 0.1]);
-        // Center axial 2.0 mm relief bore
-        translate([0, 0, -0.1])
-            cylinder(h = h + 0.2, r = 1.0, $fn = 36);
-    }
+    _dumbbell_connector(d, true);
 }
 
 // Universal Ø 9.0 mm Ball-to-2x1-Stud Spark Neck Turret (lets BOTH Pro 8+ & Snap 3+ Kip wear ANY PartSpec 2x1 Head!)
