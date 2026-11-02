@@ -254,6 +254,58 @@ describe("kip menu optional groups", () => {
     expect(byId(ctx, "supportCheck").get()).toBe(true);
     expect(byId(ctx, "plate").options()[0].label).toMatch(/Warm Peach \(#F7C8A8\)/);
   });
+
+  it("Print group swatch chips, sticker preview, and grown-up gate disabling (§9.1, §9.3)", () => {
+    const merges = [{ fromHex: "#FF6B4A", fromName: "Coral", toHex: "#F0B238", toName: "Gear Gold", deltaE: 12.3 }];
+    const summary: any = {
+      lines: ["10 parts"], errors: [], sceneColorCount: 5, hasVehicleInScene: false,
+      hasDecals: true, merges: [], gatePending: false, stickerPreviewUrl: null,
+    };
+    const prof: any = {
+      presetId: "changer_256_4", slicer: "orca_bambu", changerType: "multiplexer", maxSlots: 4,
+      multiColorStrategy: "auto", flatPackMode: "loose", bedXmm: 256, bedYmm: 256,
+      nozzleMm: 0.4, fitChoice: "standard", tooManyColours: "merge",
+      includeVehicle: true, includeStickers: true, includeStencils: false,
+    };
+    const ctx: any = {
+      ...fakeCtx(),
+      print: {
+        isOn: () => true, setOn() {}, busy: () => false,
+        summary: () => summary, plateCount: () => 1, plateIndex: () => 0,
+        plateLabel: () => "Plate 1 of 1", setPlate() {},
+        profile: () => prof, setPreset() {}, updateProfile: (p: any) => Object.assign(prof, p),
+        supportCheck: () => false, setSupportCheck() {}, download() {},
+      },
+    };
+
+    // Swatch chips appear only once a merge actually happened, and carry both hexes.
+    expect(byId(ctx, "mergeSwatches").kind).toBe("swatch");
+    expect(visible(ctx, "mergeSwatches")).toBe(false);
+    summary.merges = merges;
+    expect(visible(ctx, "mergeSwatches")).toBe(true);
+    expect(byId(ctx, "mergeSwatches").chips()).toEqual(merges);
+
+    // Sticker preview follows decals + the stickers toggle, and reads the view thumbnail.
+    expect(byId(ctx, "stickerPreview").kind).toBe("preview");
+    expect(visible(ctx, "stickerPreview")).toBe(true);
+    expect(byId(ctx, "stickerPreview").src()).toBe("");
+    summary.stickerPreviewUrl = "blob:thumb-1";
+    expect(byId(ctx, "stickerPreview").src()).toBe("blob:thumb-1");
+    prof.includeStickers = false;
+    expect(visible(ctx, "stickerPreview")).toBe(false);
+    prof.includeStickers = true;
+    summary.hasDecals = false;
+    expect(visible(ctx, "stickerPreview")).toBe(false);
+    summary.hasDecals = true;
+
+    // While the embedded grown-up gate is pending, downloads disable and the summary says why.
+    expect(byId(ctx, "downloadPack").disabled()).toBe(false);
+    summary.gatePending = true;
+    expect(byId(ctx, "downloadPack").disabled()).toBe(true);
+    expect(byId(ctx, "printInfo").text()).toMatch(/Waiting for a grown-up to approve the download/);
+    summary.gatePending = false;
+    expect(byId(ctx, "downloadPack").disabled()).toBe(false);
+  });
 });
 
 describe("kip menu visibility vs kip-manifest.json categoryControls", () => {

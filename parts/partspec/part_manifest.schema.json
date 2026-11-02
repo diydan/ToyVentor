@@ -274,6 +274,93 @@
         },
         "supports": {
           "type": "boolean"
+        },
+        "rotation_deg": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "minItems": 3,
+          "maxItems": 3
+        },
+        "slice_z03": {
+          "type": "object",
+          "required": [
+            "outer",
+            "holes"
+          ],
+          "properties": {
+            "outer": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "array",
+                  "items": {
+                    "type": "number"
+                  },
+                  "minItems": 2,
+                  "maxItems": 2
+                }
+              }
+            },
+            "holes": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "array",
+                  "items": {
+                    "type": "number"
+                  },
+                  "minItems": 2,
+                  "maxItems": 2
+                }
+              }
+            }
+          }
+        },
+        "anchors": {
+          "type": "array",
+          "maxItems": 16,
+          "items": {
+            "type": "object",
+            "required": [
+              "ax",
+              "ay",
+              "wx",
+              "wy",
+              "nx",
+              "ny",
+              "insetMm"
+            ],
+            "properties": {
+              "ax": {
+                "type": "number"
+              },
+              "ay": {
+                "type": "number"
+              },
+              "wx": {
+                "type": "number"
+              },
+              "wy": {
+                "type": "number"
+              },
+              "nx": {
+                "type": "number"
+              },
+              "ny": {
+                "type": "number"
+              },
+              "insetMm": {
+                "type": "number"
+              }
+            }
+          }
+        },
+        "sprue_eligible": {
+          "type": "boolean"
         }
       }
     },

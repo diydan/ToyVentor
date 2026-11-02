@@ -4189,6 +4189,93 @@ def size_tag(size):
     return {"large": "L", "small": "S", "pro": "P"}[size]
 
 
+def _poly_area2(pts):
+    return sum(pts[i][0] * pts[(i + 1) % len(pts)][1] - pts[(i + 1) % len(pts)][0] * pts[i][1] for i in range(len(pts)))
+
+
+def sprue_print_extras(mp):
+    """Build-time kit-card data for the manifest `print` block (kip print spec 6.3): the
+    z = 0.30 mm contact-slice polygons plus up to 16 vetted gate anchors, in the seated
+    frame the viewer uses (printed-manifold coords shifted so the bbox min sits at x/y 0).
+    Anchors come from the slice eroded by the kitcard insets (1.60, then 0.80, then
+    0.35 mm), so every anchor is at least that far from outer walls and holes alike.
+    Each anchor carries its interior point (ax, ay), the wall point (wx, wy) one inset
+    back along the outward unit normal (nx, ny), and the inset used."""
+    empty = {"slice_z03": {"outer": [], "holes": []}, "anchors": [], "sprue_eligible": False}
+    bb = mp.bounding_box()
+    ox, oy, oz = float(bb[0]), float(bb[1]), float(bb[2])
+    try:
+        cs = mp.slice(oz + 0.30)
+        if cs.is_empty():
+            return empty
+    except Exception:
+        return empty
+
+    def seated(poly):
+        pts = []
+        for x, y in poly:
+            p = (round(float(x) - ox, 2), round(float(y) - oy, 2))
+            if not pts or pts[-1] != p:
+                pts.append(p)
+        if len(pts) > 1 and pts[0] == pts[-1]:
+            pts.pop()
+        return pts
+
+    outer, holes = [], []
+    for poly in cs.to_polygons():
+        pts = seated(poly)
+        if len(pts) < 3:
+            continue
+        (outer if _poly_area2(pts) > 0 else holes).append([list(p) for p in pts])
+
+    anchors = []
+    for inset in (1.60, 0.80, 0.35):
+        try:
+            inset_cs = cs.offset(-inset, JoinType.Round)
+        except Exception:
+            break
+        if inset_cs.is_empty():
+            continue
+        kept = []
+        for poly in inset_cs.to_polygons():
+            pts = [(float(x) - ox, float(y) - oy) for x, y in poly]
+            if len(pts) < 3 or _poly_area2(pts) <= 0:
+                continue  # outer boundaries of the eroded solid only, never hole walls
+            n = len(pts)
+            for i in range(n):
+                px, py = pts[i - 1]
+                ax_, ay_ = pts[i]
+                qx, qy = pts[(i + 1) % n]
+                tx, ty = qx - px, qy - py
+                t_len = math.hypot(tx, ty)
+                if t_len < 1e-9:
+                    continue
+                nx, ny = ty / t_len, -tx / t_len  # CCW polygon: outward is right of travel
+                wx, wy = ax_ + inset * nx, ay_ + inset * ny
+                if any(math.hypot(wx - k["wx"], wy - k["wy"]) < 2.5 for k in kept):
+                    continue
+                kept.append({
+                    "ax": round(ax_, 3), "ay": round(ay_, 3),
+                    "wx": round(wx, 3), "wy": round(wy, 3),
+                    "nx": round(nx, 4), "ny": round(ny, 4),
+                    "insetMm": inset,
+                })
+        if len(kept) > 16:
+            step = len(kept) / 16
+            kept = [kept[int(i * step)] for i in range(16)]
+        if len(kept) >= 2:
+            anchors = kept
+            break
+        if kept and not anchors:
+            anchors = kept
+
+    return {
+        "slice_z03": {"outer": outer, "holes": holes},
+        "anchors": anchors,
+        "sprue_eligible": len(anchors) >= 2,
+    }
+
+
 def evaluate(part, validator):
     """Run one part through the whole gate. Real parts and test fixtures take exactly the same path.
     Returns (manifest entry, mesh, blocking failures, small-parts result)."""
@@ -4212,7 +4299,7 @@ def evaluate(part, validator):
         "safety": {"small_part_status": small["status"], "min_enclosing_diameter_mm": small["min_enclosing_diameter_mm"],
                    "margin_pct": small["margin_pct"], "print_page_warning": warnings_for(small["status"])},
         "print": {"orientation": ("bed = z0; show face down on bed, sockets up" if rot and part["size"] != "pro" and abs(rot[0] - 180) < 1e-3 else "bed = z0; lying on a flat, axis horizontal" if rot else "bed = z0; lying flat, bores and pins along z" if part["size"] == "pro" else "bed = z0; studs/body up; underside cavity down" if part["cavity"] else "bed = z0; flat, studs up"),
-                  "supports": False, **({"rotation_deg": rot} if rot else {})},
+                  "supports": False, **({"rotation_deg": rot} if rot else {}), **sprue_print_extras(mp)},
         "design_status": "needs_reproportion",  # placeholder; derived below once every check has run
         "fit": fit_block(fit, part["size"]),
         "checks": checks,

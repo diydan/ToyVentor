@@ -11,6 +11,7 @@ import {
   BONUS_EXPRESSIONS,
   planStickerSheet,
   stickersToPdf,
+  stickersToPng,
   buildStickerPackFiles,
 } from './kip-print-stickers.js';
 import {
@@ -56,6 +57,65 @@ const TIER_COLOR = {
 };
 
 const PROFILE_STORAGE_KEY = 'toyforge.printerProfile.v1';
+
+// Embedded grown-up download gate (spec §9.3 item 6). Standalone (top-level) Kip-Demo downloads
+// immediately. Embedded in a host frame, each download first posts
+// `{ type: 'kip-request-print-gate', kind }` to `window.parent` and waits: the host (which owns
+// the Grown-Ups sheet) answers `{ type: 'kip-print-gate-granted' }` or
+// `{ type: 'kip-print-gate-denied' }` from the parent frame. Hosts should check `event.origin`
+// before granting; the viewer only accepts answers whose `event.source` is its parent frame.
+export const PRINT_GATE_REQUEST = 'kip-request-print-gate';
+export const PRINT_GATE_GRANTED = 'kip-print-gate-granted';
+export const PRINT_GATE_DENIED = 'kip-print-gate-denied';
+
+/** True when `win` is framed by a host page. A throwing `top` access counts as embedded (fail closed). */
+export function isEmbeddedFrame(win) {
+  try {
+    return Boolean(win) && win.self !== win.top;
+  } catch {
+    return true;
+  }
+}
+
+/**
+ * Pure gate state machine (unit-testable without a DOM): one download may be pending at a time.
+ * `request(kind)` returns `'granted'` (standalone: proceed now) or `'pending'` (host asked).
+ * `handleMessage(data, { fromParent })` consumes a host answer and returns
+ * `{ action: 'grant' | 'deny', kind }` for the pending download, or `null` when ignored.
+ */
+export function createPrintGate({ embedded = false, postToParent = () => {} } = {}) {
+  let pendingKind = null;
+  return {
+    isEmbedded: () => embedded,
+    isPending: () => pendingKind !== null,
+    pendingKind: () => pendingKind,
+    request(kind) {
+      if (!embedded) return 'granted';
+      if (pendingKind !== null) return 'pending';
+      pendingKind = kind;
+      postToParent({ type: PRINT_GATE_REQUEST, kind });
+      return 'pending';
+    },
+    handleMessage(data, { fromParent = false } = {}) {
+      if (!embedded || !fromParent || pendingKind === null) return null;
+      if (!data || typeof data !== 'object') return null;
+      if (data.type === PRINT_GATE_GRANTED) {
+        const kind = pendingKind;
+        pendingKind = null;
+        return { action: 'grant', kind };
+      }
+      if (data.type === PRINT_GATE_DENIED) {
+        const kind = pendingKind;
+        pendingKind = null;
+        return { action: 'deny', kind };
+      }
+      return null;
+    },
+    cancel() {
+      pendingKind = null;
+    },
+  };
+}
 
 const hex = (buf) => [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('');
 
@@ -119,6 +179,7 @@ export function mountPrintView(ctx) {
   const fetchBytes = ctx.fetchBytes ?? defaultFetchBytes;
   const cache = new Map(); // url -> { tri, sha, bytes }
   let validationIndex = null;
+  let partspecManifest = null; // file name -> manifest part entry (print.anchors / slice_z03)
   let profile = readStoredProfile();
   let supportCheckOn = false;
   let on = false;
@@ -140,10 +201,42 @@ export function mountPrintView(ctx) {
     small: [],
     note: '',
     exportError: null,
+    merges: [],
+    gatePending: false,
+    stickerPreviewUrl: null,
   };
   let lastBuild = null;
   let watchKey = '';
   let watcher = 0;
+  let stickerPreviewUrl = null;
+  let previewToken = 0;
+
+  const gate = ctx.printGate ?? createPrintGate({
+    embedded: typeof window !== 'undefined' && isEmbeddedFrame(window),
+    postToParent: (msg) => {
+      try {
+        window.parent.postMessage(msg, '*');
+      } catch {
+        // Parent frame unreachable; the download simply stays pending.
+      }
+    },
+  });
+
+  function onGateMessage(ev) {
+    const res = gate.handleMessage(ev?.data, {
+      fromParent: typeof window !== 'undefined' && ev?.source === window.parent,
+    });
+    if (!res) return;
+    summary.gatePending = false;
+    if (res.action === 'grant') {
+      void downloadNow(res.kind);
+    } else {
+      summary.exportError = 'A grown-up did not approve this download.';
+    }
+  }
+  if (typeof window !== 'undefined' && gate.isEmbedded()) {
+    window.addEventListener('message', onGateMessage);
+  }
 
   async function loadValidation() {
     if (validationIndex) return validationIndex;
@@ -154,6 +247,20 @@ export function mountPrintView(ctx) {
       validationIndex = { files: {} };
     }
     return validationIndex;
+  }
+
+  async function loadManifest() {
+    if (partspecManifest) return partspecManifest;
+    partspecManifest = new Map();
+    try {
+      const parsed = JSON.parse(new TextDecoder().decode(await fetchBytes('/kip/kip-partspec-manifest.json')));
+      for (const part of parsed.parts ?? []) {
+        if (part?.file) partspecManifest.set(part.file, part);
+      }
+    } catch {
+      // No manifest: the sprue sampler falls back to live z-slicing per part.
+    }
+    return partspecManifest;
   }
 
   async function load(url) {
@@ -185,6 +292,7 @@ export function mountPrintView(ctx) {
   async function build() {
     const state = ctx.getState();
     const valIdx = await loadValidation();
+    const manifestByFile = await loadManifest();
     const bom = resolveSceneBom(state, {
       includeVehicle: profile.includeVehicle,
       validationIndex: valIdx,
@@ -211,7 +319,18 @@ export function mountPrintView(ctx) {
       const fname = entry.file.split('/').pop();
       const rep = valIdx.files[fname];
       const verified = entry.source === 'partspec' && !!rep && rep.sha256 === rec.sha && rep.verdict !== 'fail';
-      prepared.push(prepareItem(entry, rec.tri, { verified, sha256: rec.sha }));
+      // Precomputed sprue anchors are only trusted for sha-verified bytes: they were computed
+      // from exactly those bytes at build time (§6.3). Unverified parts use the live sampler.
+      const printInfo = verified ? manifestByFile.get(fname)?.print : null;
+      const precomputedAnchors = printInfo && printInfo.sprue_eligible !== false && (printInfo.anchors?.length ?? 0) > 0
+        ? { anchors: printInfo.anchors, slice_z03: printInfo.slice_z03 }
+        : null;
+      prepared.push(prepareItem(entry, rec.tri, {
+        verified,
+        sha256: rec.sha,
+        brimWidthMm: rep?.brim_width_mm ?? 0,
+        precomputedAnchors,
+      }));
     }
 
     const sceneColorCount = new Set(prepared.map(p => p.hex)).size;
@@ -271,9 +390,50 @@ export function mountPrintView(ctx) {
       note: plan.bound.note,
       small: smallParts(plan.rawPlates),
       exportError: null,
+      merges: plan.merges ?? [],
+      gatePending: gate.isPending(),
+      stickerPreviewUrl,
     };
     lastBuild = { plan, bom, state };
+    void refreshStickerPreview(bom, state);
     return plan;
+  }
+
+  function setStickerPreviewUrl(url) {
+    if (stickerPreviewUrl && stickerPreviewUrl !== url) {
+      try {
+        URL.revokeObjectURL(stickerPreviewUrl);
+      } catch {
+        // Already revoked; nothing to do.
+      }
+    }
+    stickerPreviewUrl = url;
+    summary.stickerPreviewUrl = url;
+  }
+
+  // Low-DPI sticker-sheet thumbnail for the menu `preview` control (§9.1). Regenerated only when
+  // a repack actually happens (the 250 ms watcher is signature-gated), never at full export DPI,
+  // and dropped whenever stickers are off or no decals are active. Pixels stay in-page: the blob
+  // URL is revoked as soon as it is replaced.
+  async function refreshStickerPreview(bom, state) {
+    const token = ++previewToken;
+    const want = profile.includeStickers !== false && (bom.decals?.length ?? 0) > 0 && ctx.renderStickerSources;
+    if (!want) {
+      setStickerPreviewUrl(null);
+      return;
+    }
+    try {
+      const bodyColors = resolveBodyColors(state);
+      const opts = { headSkinHex: bodyColors.headSkinHex, shirtHex: bodyColors.chestHex };
+      const sources = await ctx.renderStickerSources(state, bom, BONUS_EXPRESSIONS);
+      if (token !== previewToken) return;
+      const sheetPlan = planStickerSheet(bom.decals, state, opts);
+      const png = stickersToPng(sheetPlan, sources, { ...opts, dpi: 72 });
+      if (token !== previewToken) return;
+      setStickerPreviewUrl(URL.createObjectURL(new Blob([png], { type: 'image/png' })));
+    } catch {
+      if (token === previewToken) setStickerPreviewUrl(null);
+    }
   }
 
   function clearView() {
@@ -420,6 +580,8 @@ export function mountPrintView(ctx) {
   function exit() {
     if (!on) return;
     on = false;
+    gate.cancel();
+    summary.gatePending = false;
     clearInterval(watcher);
     watcher = 0;
     clearView();
@@ -754,6 +916,15 @@ export function mountPrintView(ctx) {
   }
 
   async function download(kind) {
+    if (gate.request(kind) === 'pending') {
+      summary.gatePending = true;
+      summary.exportError = null;
+      return;
+    }
+    return downloadNow(kind);
+  }
+
+  async function downloadNow(kind) {
     let bytes;
     try {
       bytes = await exportBytes(kind);
@@ -803,6 +974,7 @@ export function mountPrintView(ctx) {
     getState: () => ctx.getState(),
     isOn: () => on,
     isBusy: () => busy,
+    gatePending: () => gate.isPending(),
     summary: () => summary,
     plateCount: () => planned.length,
     plateIndex: () => plateIndex,

@@ -103,7 +103,7 @@ function propOptions() {
 }
 
 /**
- * Build the menu description. Control kinds: select | toggle | range | action | file.
+ * Build the menu description. Control kinds: select | toggle | range | action | file | info | swatch | preview.
  * `inPreset` marks the controls a preset sets, used to tell "Leo Explorer" from "Leo Explorer, edited".
  */
 export function buildMenu(ctx) {
@@ -444,6 +444,10 @@ export function buildMenu(ctx) {
         get: () => readProf().tooManyColours || 'extra-plates',
         set: (v) => patchProf({ tooManyColours: v }),
       }),
+      { kind: 'swatch', id: 'mergeSwatches', label: 'Colour merges',
+        title: 'Filament colours auto-merged to fit the loaded slots: the left colour prints as the right colour',
+        visibleWhen: () => pr.isOn() && (pr.summary().merges?.length ?? 0) > 0,
+        chips: () => pr.summary().merges ?? [] },
       { kind: 'toggle', id: 'includeVehicle', label: 'Include vehicle',
         title: 'Include the active vehicle on dedicated plates in the print pack',
         visibleWhen: () => pr.isOn() && (loco.vehicle !== 'none' || !!pr.summary().hasVehicleInScene),
@@ -454,6 +458,10 @@ export function buildMenu(ctx) {
         visibleWhen: () => pr.isOn() && !!pr.summary().hasDecals,
         get: () => readProf().includeStickers !== false,
         set: (v) => patchProf({ includeStickers: v }) },
+      { kind: 'preview', id: 'stickerPreview', label: 'Sticker sheet',
+        title: 'Low-resolution preview of the 1:1 sticker sheet in the print pack (the exported PDF/PNG stays full resolution)',
+        visibleWhen: () => pr.isOn() && !!pr.summary().hasDecals && readProf().includeStickers !== false,
+        src: () => pr.summary().stickerPreviewUrl || '' },
       { kind: 'toggle', id: 'stencils', label: '3D stencils',
         title: 'Include support-free heightfield 3D paint & marker stencils (face, shirt, and 2x1 crown cap; Adult Tool Card in Kit tray mode)',
         visibleWhen: () => pr.isOn(),
@@ -481,6 +489,7 @@ export function buildMenu(ctx) {
             pr.busy() ? 'Packing…' : '',
             ...(s.lines ?? []),
             ...(s.errors ?? []).map((e) => `⚠ Missing or unusable: ${e}. Exports are disabled until this is fixed.`),
+            ...(s.gatePending ? ['Waiting for a grown-up to approve the download…'] : []),
             ...(s.exportError ? [`⚠ ${s.exportError}`] : []),
             ...(s.unmapped?.length ? [`Not on the plate: ${s.unmapped.join('; ')}`] : []),
             ...(s.hasSprue ? ['Adult prep: snip kit-card runners at the V-notches with flush cutters and smooth any nibs.'] : []),
@@ -496,7 +505,7 @@ export function buildMenu(ctx) {
         ['exportSheet', 'sheet', 'Print sheet (PNG)', 'Download the visual plate map with colour swatches and boxed small-parts safety warning', () => pr.isOn()],
         ['exportStl', 'stl-zip', 'Export STL zip', 'Download every plate as one binary STL each, plus layout.json', () => pr.isOn()]]
         .map(([id, kind, label, title, visibleWhen]) => ({ kind: 'action', id, label, title, visibleWhen,
-          disabled: () => pr.busy() || (pr.summary().errors ?? []).length > 0, run: () => pr.download(kind) })),
+          disabled: () => pr.busy() || (pr.summary().errors ?? []).length > 0 || !!pr.summary().gatePending, run: () => pr.download(kind) })),
     ],
   };
 
@@ -611,6 +620,12 @@ const CSS = `
 .km-btn { width: 100%; justify-content: center; margin-bottom: 8px; padding: 7px 10px; font-size: 12.5px; }
 .km-btn:disabled { opacity: 0.45; cursor: not-allowed; }
 .km-info { white-space: pre-line; font-size: 11.5px; line-height: 1.45; color: var(--muted); background: rgba(27, 34, 56, 0.05); border-radius: 9px; padding: 8px 10px; }
+.km-swatches { display: flex; flex-direction: column; gap: 4px; }
+.km-chip { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; font-weight: 650; color: var(--ink); }
+.km-chip-dot { flex: 0 0 auto; width: 14px; height: 14px; border-radius: 4px; border: 1px solid var(--line); }
+.km-chip-arrow { color: var(--muted); font-weight: 500; }
+.km-preview-img { display: block; width: 100%; height: auto; border: 1px solid var(--line); border-radius: 9px; background: #fff; }
+.km-preview-img[hidden] { display: none; }
 .km select:focus-visible, .km button:focus-visible, .km summary:focus-visible, .km-switch input:focus-visible, .km-range input:focus-visible, .km-fab:focus-visible {
   outline: 2px solid var(--spark); outline-offset: 2px;
 }
@@ -768,6 +783,14 @@ export function mountKipMenu(ctx, { root = document.body } = {}) {
       const box = el('div', { class: 'km-info', id, role: 'status', 'aria-live': 'polite', title });
       return { root: el('div', { class: 'km-field', 'data-control': c.id }, box), box };
     }
+    if (c.kind === 'swatch') {
+      const box = el('div', { class: 'km-swatches', id, title });
+      return { root: el('div', { class: 'km-field', 'data-control': c.id }, el('div', { class: 'km-lbl', text: c.label }), box), box, sig: '' };
+    }
+    if (c.kind === 'preview') {
+      const img = el('img', { class: 'km-preview-img', id, alt: 'Sticker sheet preview', title, hidden: true });
+      return { root: el('div', { class: 'km-field', 'data-control': c.id }, el('div', { class: 'km-lbl', text: c.label }), img), img };
+    }
     // action
     const btn = el('button', { type: 'button', class: 'km-btn', id, title }, c.label);
     btn.addEventListener('click', () => { Promise.resolve(c.run()).finally(sync); sync(); });
@@ -834,6 +857,27 @@ export function mountKipMenu(ctx, { root = document.body } = {}) {
         } else if (c.kind === 'info') {
           const t = c.text();
           if (f.box.textContent !== t) f.box.textContent = t;
+        } else if (c.kind === 'swatch') {
+          const chips = c.chips ? c.chips() : [];
+          const sig = chips.map((m) => `${m.fromHex}>${m.toHex}`).join('\n');
+          if (f.sig !== sig) {
+            f.sig = sig;
+            f.box.replaceChildren(...chips.map((m) => el('span', { class: 'km-chip' },
+              el('span', { class: 'km-chip-dot', style: `background:${m.fromHex}` }),
+              el('span', { text: m.fromName || m.fromHex }),
+              el('span', { class: 'km-chip-arrow', text: '→' }),
+              el('span', { class: 'km-chip-dot', style: `background:${m.toHex}` }),
+              el('span', { text: m.toName || m.toHex }))));
+          }
+        } else if (c.kind === 'preview') {
+          const src = c.src ? c.src() : '';
+          if (src) {
+            if (f.img.getAttribute('src') !== src) f.img.setAttribute('src', src);
+            f.img.hidden = false;
+          } else {
+            f.img.hidden = true;
+            f.img.removeAttribute('src');
+          }
         } else if (c.kind === 'action') {
           if (c.active) f.btn.classList.toggle('spark-active', !!c.active());
           if (c.disabled) f.btn.disabled = !!c.disabled();

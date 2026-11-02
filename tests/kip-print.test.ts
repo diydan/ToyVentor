@@ -16,8 +16,11 @@ import * as profMod from "../parts/kip/viewer/kip-print-profile.js";
 import * as sprueMod from "../parts/kip/viewer/kip-print-sprue.js";
 // @ts-expect-error untyped JS module
 import * as wardrobe from "../parts/kip/viewer/kip-vehicles-wardrobe.js";
+// @ts-expect-error untyped JS module
+import * as viewMod from "../parts/kip/viewer/kip-print-view.js";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
+const V = viewMod as any;
 const K = printMod as any;
 const B = bomMod as any;
 const P = profMod as any;
@@ -480,9 +483,14 @@ describe("real parts on disk", () => {
     expect(idx.format).toBe("toyventor.kip-validation-index/1");
     const entry = idx.files["toyventor_hair_bob_S.stl"];
     expect(entry.sha256).toMatch(/^[0-9a-f]{64}$/);
-    // Staleness is allowed (the badge handles it); a malformed sha is not.
-    for (const e of Object.values(idx.files) as any[]) expect(e.sha256).toMatch(/^[0-9a-f]{64}$/);
-    void createHash;
+    // Every indexed sha must hash-match the served bytes it names: a stale index makes the
+    // print view show verified parts as "unverified", so regeneration drift fails here until
+    // `npm run kip:validation-index` (and the STL sync behind it) is rerun.
+    for (const [file, e] of Object.entries(idx.files) as [string, any][]) {
+      expect(e.sha256, file).toMatch(/^[0-9a-f]{64}$/);
+      const bytes = readFileSync(pub(`/kip/partspec/${file}`));
+      expect(createHash("sha256").update(bytes).digest("hex"), file).toBe(e.sha256);
+    }
   });
 
   it("plans colour-separated, support-separated, and vehicle-separated plates with realistic spool mass", () => {
@@ -928,6 +936,126 @@ describe("M4 flat-pack sprue kit cards & socket support_blocker protection", () 
       rmSync(dir, { recursive: true, force: true });
     }
   }, 25000);
+
+  it("golden parity: JS frame/gate constants match toyventor_kitcard.py, divergences explicit (§6.2, §6.5 check 4)", () => {
+    const py = readFileSync(join(root, "parts/partspec/toyventor_kitcard.py"), "utf8");
+    const num = (re: RegExp, what: string) => {
+      const m = py.match(re);
+      expect(m, `kitcard.py ${what}`).toBeTruthy();
+      return Number.parseFloat(m![1]!);
+    };
+    // Python source of truth: _vnick_gate defaults, frame extrude, anchor slice/insets, gap rule.
+    const pyGateW = num(/def _vnick_gate\(x0, y0, x1, y1, w_gate=([\d.]+)/, "_vnick_gate w_gate");
+    const pyGateH = num(/def _vnick_gate\(x0, y0, x1, y1, w_gate=[\d.]+, h_gate=([\d.]+)\)/, "_vnick_gate h_gate");
+    const frameMatch = py.match(/Manifold\.extrude\(rrect\(max_x, max_y, ([\d.]+)\), ([\d.]+)\)/);
+    expect(frameMatch, "kitcard.py frame extrude").toBeTruthy();
+    const pyOuterR = Number.parseFloat(frameMatch![1]!);
+    const pyFrameH = Number.parseFloat(frameMatch![2]!);
+    const pyFrameInset2x = num(/rrect\(max_x - ([\d.]+), max_y - [\d.]+, [\d.]+\)/, "frame inner inset (2x width)");
+    const pyInnerR = num(/rrect\(max_x - [\d.]+, max_y - [\d.]+, ([\d.]+)\)/, "frame inner radius");
+    const pySliceZ = num(/\.slice\(([\d.]+)\)\.offset\(-1\.60/, "_sample_solid_anchors slice z");
+    const pyInset = num(/\.slice\([\d.]+\)\.offset\(-([\d.]+), JoinType\.Round\)/, "_sample_solid_anchors primary inset");
+    const pyFallbackInset = num(/\.slice\([\d.]+\)\.offset\(-([\d.]+), JoinType\.Round\)\s*\n\s*if inset\.is_empty\(\):\s*\n\s*inset = .*\.offset\(-0\.35/, "_sample_solid_anchors fallback inset");
+    expect(py).toMatch(/gap < 4\.99/); // >= 5.00 mm inter-part gap enforcement
+    expect(py).toMatch(/translate\(\(L \* 0\.5,/); // Python nick sits at the bar midpoint
+
+    const spec = S.SPRUE_SPEC;
+    // Shared invariants: the JS port must not drift from the generator on these.
+    expect(spec.gateWidthMm).toBeCloseTo(pyGateW, 9);
+    expect(spec.frameWidthMm).toBeCloseTo(pyFrameInset2x / 2, 9);
+    expect(spec.frameHeightMm).toBeCloseTo(pyFrameH, 9);
+    expect(spec.outerRadiusMm).toBeCloseTo(pyOuterR, 9);
+    expect(spec.innerRadiusMm).toBeCloseTo(pyInnerR, 9);
+    expect(spec.sliceZMm).toBeCloseTo(pySliceZ, 9);
+    expect(spec.anchorInsetMm).toBeCloseTo(pyInset, 9);
+    expect(spec.anchorFallbackInsetMm).toBeCloseTo(pyFallbackInset, 9);
+    expect(spec.partGapMm).toBeCloseTo(5.0, 9);
+
+    // Deliberate divergences (§6.2 table "changed/new"; Decision 7 coupon still physical-pending).
+    // If either side moves, this block is the record that must be updated with the spec table.
+    expect(pyGateH).toBeCloseTo(0.6, 9);
+    expect(spec.gateHeightMm).toBeCloseTo(0.8, 9); // 4 layers, vs Python 0.60
+    expect(spec.neckHeightMm).toBeCloseTo(0.4, 9); // 2 layers, vs Python ~0.30 computed neck
+    expect(spec.nickOffsetFromPartMm).toBeCloseTo(0.8, 9); // nick outside part wall, vs Python midpoint
+    expect(spec.frameGapMm).toBeCloseTo(1.2, 9); // vs Python 0.6 (parts start 3.0 mm from card edge)
+    expect(spec.extraGatePerimeterMm).toBeCloseTo(75.0, 9); // 2-3 gates/part, vs Python 1 (Prim MST only)
+
+    // The frame mesh the browser emits really is the shared 2.40 x 1.00 mm frame at card scale.
+    const fb = K.bounds(S.buildFrameMesh(0, 0, 90, 70, spec));
+    expect(fb.size[0]).toBeCloseTo(90, 6);
+    expect(fb.size[1]).toBeCloseTo(70, 6);
+    expect(fb.size[2]).toBeCloseTo(spec.frameHeightMm, 9);
+    expect(S.sprueMarginMm(spec)).toBeCloseTo(spec.frameWidthMm + spec.frameGapMm, 9);
+  });
+
+  it("consumes manifest precomputed anchors and validated brim (§6.3, §7.1 item 3)", () => {
+    const manifest = JSON.parse(readFileSync(join(root, "parts/kip/kip-partspec-manifest.json"), "utf8"));
+    const servedManifest = JSON.parse(readFileSync(pub("/kip/kip-partspec-manifest.json"), "utf8"));
+    expect(servedManifest).toEqual(manifest);
+    expect(manifest.parts.length).toBeGreaterThan(0);
+    for (const part of manifest.parts) {
+      expect(Array.isArray(part.print.anchors), `${part.id} print.anchors`).toBe(true);
+      expect(part.print.anchors.length, `${part.id} anchor count`).toBeLessThanOrEqual(16);
+      expect(typeof part.print.sprue_eligible, `${part.id} sprue_eligible`).toBe("boolean");
+      expect(part.print.sprue_eligible).toBe(part.print.anchors.length >= 2);
+      expect(Array.isArray(part.print.slice_z03?.outer), `${part.id} slice_z03.outer`).toBe(true);
+      expect(part.print.slice_z03.outer.length, `${part.id} slice_z03 loops`).toBeGreaterThan(0);
+      for (const a of part.print.anchors) {
+        for (const k of ["ax", "ay", "wx", "wy", "nx", "ny", "insetMm"]) {
+          expect(Number.isFinite(a[k]), `${part.id} anchor ${k}`).toBe(true);
+        }
+        expect(Math.hypot(a.nx, a.ny), `${part.id} unit normal`).toBeCloseTo(1, 3);
+      }
+    }
+
+    // The stored slice really is the served kid head at z = 0.30 mm in the seated frame,
+    // and its anchors gate a card exactly like live-sampled ones.
+    const kid = manifest.parts.find((p: any) => p.id === "char_head_kid");
+    expect(kid.print.anchors.length).toBeGreaterThanOrEqual(2);
+    const tri = load(`/kip/partspec/${kid.file}`);
+    const item = K.prepareItem(
+      { id: kid.id, qty: 1, source: "partspec", file: `/kip/partspec/${kid.file}`, hex: "#F4EFE6" },
+      tri,
+      { verified: true, precomputedAnchors: { anchors: kid.print.anchors, slice_z03: kid.print.slice_z03 } },
+    );
+    const fromManifest = S.samplePartAnchors(item.tri, { partId: kid.id, precomputed: item.precomputedAnchors });
+    expect(fromManifest.anchors.length).toBeGreaterThanOrEqual(2);
+    const liveLoops = S.sliceMeshAtZ(item.tri, S.SPRUE_SPEC.sliceZMm).filter((l: any) => !l.isHole);
+    expect(liveLoops.length).toBeGreaterThan(0);
+    for (const a of fromManifest.anchors) {
+      expect(S.pointInLoops(a.ax, a.ay, S.sliceMeshAtZ(item.tri, S.SPRUE_SPEC.sliceZMm)), "manifest anchor inside live slice").toBe(true);
+    }
+    const sprueProfile = P.clampProfile({ ...P.createDefaultProfile(), flatPackMode: "sprue" });
+    const pair = K.planColorPlates([item, { ...item, qty: 1 }], sprueProfile);
+    const cardPlates = pair.plates.filter((pl: any) => pl.sprue);
+    expect(cardPlates.length).toBeGreaterThan(0);
+    for (const pl of cardPlates) {
+      expect(S.checkSprueCard(pl.sprue, pl.placed.filter((p: any) => p.sprueAnchored))).toEqual([]);
+    }
+
+    // A validated-brim part never joins a card: the frame is the adhesion aid (§6.1).
+    const block = solid(0, 0, 0, 30, 20, 5);
+    const mkBlock = (id: string, brimWidthMm: number) => K.prepareItem(
+      { id, qty: 1, source: "partspec", hex: "#36405C" }, block, { verified: true, brimWidthMm },
+    );
+    expect(S.isSprueEligiblePart({ ...mkBlock("test_block_brim", 3), partId: "test_block_brim" })).toEqual({ ok: false, reason: "requires-brim" });
+    const plan = K.planColorPlates([mkBlock("test_block_brim", 3), mkBlock("test_block_plain", 0)], sprueProfile);
+    const placed = plan.plates.flatMap((pl: any) => pl.placed);
+    expect(placed.find((p: any) => p.partId === "test_block_brim")?.sprueAnchored).toBe(false);
+    expect(placed.find((p: any) => p.partId === "test_block_brim")?.brimWidthMm).toBe(3);
+    expect(placed.find((p: any) => p.partId === "test_block_plain")?.sprueAnchored).toBe(true);
+
+    // The served validation index carries the slicer-validated brim per file, copied from each
+    // report's print_settings. (Currently all zero: the 2026-11-02 regeneration ran preprint
+    // stage 1 only — no PrusaSlicer on that machine — so no report carries a brim verdict yet.
+    // The export + consumer path is what this pins; values arrive with the next stage-2 run.)
+    const idx = JSON.parse(readFileSync(pub("/kip/partspec-validation.json"), "utf8"));
+    for (const [file, e] of Object.entries(idx.files) as [string, any][]) {
+      expect(Number.isFinite(e.brim_width_mm) && e.brim_width_mm >= 0, `${file} brim_width_mm`).toBe(true);
+      const report = JSON.parse(readFileSync(join(root, "parts/partspec/validation", `${e.part}.json`), "utf8"));
+      expect(e.brim_width_mm, `${file} brim mirrors report`).toBe(report.print_settings?.brim_width_mm ?? 0);
+    }
+  });
 });
 
 describe("M6 Kit Tray Edition gates (exhaustive zero-support sweep, Decision 11 flag & Gate 4 coupons)", () => {
@@ -1057,6 +1185,61 @@ describe("M6 Kit Tray Edition gates (exhaustive zero-support sweep, Decision 11 
       expect(countUnmatchedHalfEdges(sh)).toBe(0);
     }
     expect(K.supportReport(standaloneCoupon.tri).overhangMm2).toBe(0);
+  });
+});
+
+describe("embedded grown-up print gate (§9.3 item 6)", () => {
+  it("standalone grants immediately and never posts to a parent", () => {
+    const posted: any[] = [];
+    const gate = V.createPrintGate({ embedded: false, postToParent: (m: any) => posted.push(m) });
+    expect(gate.request("pack")).toBe("granted");
+    expect(gate.isPending()).toBe(false);
+    expect(posted).toEqual([]);
+    expect(gate.handleMessage({ type: V.PRINT_GATE_GRANTED }, { fromParent: true })).toBeNull();
+  });
+
+  it("embedded posts kip-request-print-gate once and waits for the parent answer", () => {
+    const posted: any[] = [];
+    const gate = V.createPrintGate({ embedded: true, postToParent: (m: any) => posted.push(m) });
+    expect(gate.request("pack")).toBe("pending");
+    expect(posted).toEqual([{ type: "kip-request-print-gate", kind: "pack" }]);
+    // A second click while waiting must not double-post or replace the pending kind.
+    expect(gate.request("3mf")).toBe("pending");
+    expect(posted).toHaveLength(1);
+    expect(gate.pendingKind()).toBe("pack");
+    // Answers from anyone but the parent frame are ignored.
+    expect(gate.handleMessage({ type: V.PRINT_GATE_GRANTED }, { fromParent: false })).toBeNull();
+    expect(gate.isPending()).toBe(true);
+    // Unrelated parent messages are ignored too.
+    expect(gate.handleMessage({ type: "something-else" }, { fromParent: true })).toBeNull();
+    expect(gate.handleMessage(null, { fromParent: true })).toBeNull();
+    // The parent grant releases exactly the pending download, once.
+    expect(gate.handleMessage({ type: V.PRINT_GATE_GRANTED }, { fromParent: true })).toEqual({ action: "grant", kind: "pack" });
+    expect(gate.isPending()).toBe(false);
+    expect(gate.handleMessage({ type: V.PRINT_GATE_GRANTED }, { fromParent: true })).toBeNull();
+  });
+
+  it("embedded denial and cancel both clear the pending download", () => {
+    const gate = V.createPrintGate({ embedded: true, postToParent: () => {} });
+    gate.request("sheet");
+    expect(gate.handleMessage({ type: V.PRINT_GATE_DENIED }, { fromParent: true })).toEqual({ action: "deny", kind: "sheet" });
+    gate.request("3mf");
+    gate.cancel();
+    expect(gate.isPending()).toBe(false);
+    expect(gate.handleMessage({ type: V.PRINT_GATE_GRANTED }, { fromParent: true })).toBeNull();
+  });
+
+  it("isEmbeddedFrame distinguishes top-level from framed and fails closed", () => {
+    const top: any = {};
+    top.self = top;
+    top.top = top;
+    expect(V.isEmbeddedFrame(top)).toBe(false);
+    const framed: any = { self: {}, top: {} };
+    expect(V.isEmbeddedFrame(framed)).toBe(true);
+    const throwing: any = { self: {} };
+    Object.defineProperty(throwing, "top", { get() { throw new Error("blocked"); } });
+    expect(V.isEmbeddedFrame(throwing)).toBe(true);
+    expect(V.isEmbeddedFrame(null)).toBe(false);
   });
 });
 

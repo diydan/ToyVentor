@@ -380,7 +380,14 @@ const partAnchorsMemo = new WeakMap();
  *   - `(nx, ny)` is the unit outward normal at `(wx, wy)`,
  *   - `(ax, ay) = (wx - insetMm * nx, wy - insetMm * ny)` sits inside solid material.
  */
-export function samplePartAnchors(tri, { partId = '', spec = SPRUE_SPEC, knownShellCount = null } = {}) {
+export function samplePartAnchors(tri, { partId = '', spec = SPRUE_SPEC, knownShellCount = null, precomputed = null } = {}) {
+  // Build-time anchors from `kip-partspec-manifest.json` (`print.anchors` + `print.slice_z03`,
+  // spec 6.3) skip both z-slices and the shell count when they survive the same keep-out
+  // filters the sampler applies. Anything malformed or fully filtered falls back to sampling.
+  if (precomputed) {
+    const fromManifest = samplePrecomputedAnchors(precomputed, { partId, spec });
+    if (fromManifest && fromManifest.anchors.length > 0) return fromManifest;
+  }
   const memoKey = `${partId}|${spec.sliceZMm}|${spec.anchorInsetMm}|${spec.anchorFallbackInsetMm}|${spec.ballSocketKeepoutRadiusMm}`;
   let perTri = partAnchorsMemo.get(tri);
   if (perTri && perTri.has(memoKey)) return perTri.get(memoKey);
@@ -510,6 +517,108 @@ export function samplePartAnchors(tri, { partId = '', spec = SPRUE_SPEC, knownSh
   }
   perTri.set(memoKey, result);
   return result;
+}
+
+function loopFromPolygon(rawPts, isHole) {
+  if (!Array.isArray(rawPts) || rawPts.length < 3) return null;
+  const pts = [];
+  for (const p of rawPts) {
+    if (!Array.isArray(p) || p.length < 2) return null;
+    const x = Number(p[0]), y = Number(p[1]);
+    if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
+    const prev = pts[pts.length - 1];
+    if (!prev || Math.hypot(x - prev[0], y - prev[1]) > 1e-9) pts.push([x, y]);
+  }
+  if (pts.length > 1) {
+    const first = pts[0], last = pts[pts.length - 1];
+    if (Math.hypot(first[0] - last[0], first[1] - last[1]) <= 1e-9) pts.pop();
+  }
+  if (pts.length < 3) return null;
+  let area = shoelaceArea(pts);
+  if (Math.abs(area) < 1e-9) return null;
+  // Outer loops run CCW (area > 0), holes CW (area < 0), matching sliceMeshAtZ.
+  if ((isHole && area > 0) || (!isHole && area < 0)) {
+    pts.reverse();
+    area = -area;
+  }
+  return { pts, area, isHole, perimeter: loopPerimeter(pts), bounds: loopBounds(pts) };
+}
+
+const precomputedMemo = new WeakMap();
+
+/**
+ * Rebuild a sampler result from build-time manifest data (`print.slice_z03` polygons and
+ * `print.anchors`, both in the seated local frame `samplePartAnchors` uses). Anchors are
+ * re-checked against the stored contours with the sampler's keep-out rules (concave-pocket
+ * ray, ball-socket radius, solid interior, hole clearance); the z = 0.90 mm throat check has
+ * no stored equivalent and is covered by the build-time inset, which erodes from holes too.
+ * Returns `null` for anything malformed so callers fall back to live sampling.
+ */
+export function samplePrecomputedAnchors(precomputed, { partId = '', spec = SPRUE_SPEC } = {}) {
+  if (!precomputed || typeof precomputed !== 'object') return null;
+  const memoKey = `${partId}|${spec.minOutwardRayClearMm}|${spec.ballSocketKeepoutRadiusMm}`;
+  let perPre = precomputedMemo.get(precomputed);
+  if (perPre && perPre.has(memoKey)) return perPre.get(memoKey);
+
+  const finish = (result) => {
+    if (!perPre) {
+      perPre = new Map();
+      precomputedMemo.set(precomputed, perPre);
+    }
+    perPre.set(memoKey, result);
+    return result;
+  };
+
+  const slice = precomputed.slice_z03;
+  if (!slice || !Array.isArray(slice.outer) || !Array.isArray(precomputed.anchors)) return finish(null);
+  const outerLoops = slice.outer.map((poly) => loopFromPolygon(poly, false)).filter(Boolean);
+  const holeLoops = (Array.isArray(slice.holes) ? slice.holes : []).map((poly) => loopFromPolygon(poly, true)).filter(Boolean);
+  if (!outerLoops.length) return finish(null);
+  const loops = [...outerLoops, ...holeLoops];
+  const outerPerimeterMm = outerLoops.reduce((s, l) => s + l.perimeter, 0);
+
+  const isBallSocketPart = /^(hand_|upper_arm|forearm|thigh|shin|snap_leg|boot)/.test(partId);
+  const ballSocketCentres = isBallSocketPart
+    ? holeLoops.filter(h => h.bounds.radius >= 3.0 && h.bounds.radius <= 6.2).map(h => [h.bounds.cx, h.bounds.cy])
+    : [];
+
+  const anchors = [];
+  let insetUsedMm = 0;
+  for (const raw of precomputed.anchors) {
+    if (!raw || typeof raw !== 'object') continue;
+    const ax = Number(raw.ax), ay = Number(raw.ay), wx = Number(raw.wx), wy = Number(raw.wy);
+    let nx = Number(raw.nx), ny = Number(raw.ny);
+    const insetMm = Number(raw.insetMm) > 0 ? Number(raw.insetMm) : spec.anchorInsetMm;
+    if (![ax, ay, wx, wy, nx, ny].every(Number.isFinite)) continue;
+    const nLen = Math.hypot(nx, ny);
+    if (nLen < 1e-9) continue;
+    nx /= nLen;
+    ny /= nLen;
+    if (rayLoopsHitDist(wx, wy, nx, ny, outerLoops, 0.08) < spec.minOutwardRayClearMm) continue;
+    if (ballSocketCentres.some(([scx, scy]) => Math.hypot(wx - scx, wy - scy) <= spec.ballSocketKeepoutRadiusMm)) continue;
+    const midX = wx - 0.5 * insetMm * nx;
+    const midY = wy - 0.5 * insetMm * ny;
+    if (!pointInLoops(ax, ay, loops) || !pointInLoops(midX, midY, loops)) continue;
+    let minOuterClear = Infinity;
+    for (const oLoop of outerLoops) minOuterClear = Math.min(minOuterClear, pointToLoopDist(ax, ay, oLoop.pts));
+    if (minOuterClear < insetMm * 0.55) continue;
+    let minHoleClear = Infinity;
+    for (const hole of holeLoops) minHoleClear = Math.min(minHoleClear, pointToLoopDist(ax, ay, hole.pts));
+    if (minHoleClear < 0.35) continue;
+    if (anchors.some(f => Math.hypot(wx - f.wx, wy - f.wy) < 2.5)) continue;
+    anchors.push({ ax, ay, wx, wy, nx, ny, insetMm });
+    insetUsedMm = insetMm;
+  }
+
+  return finish({
+    outerLoops,
+    holeLoops,
+    upperHoleLoops: [],
+    outerPerimeterMm,
+    anchors,
+    insetUsedMm,
+    shellCount: 1,
+  });
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -797,7 +906,7 @@ export function buildSprueCard(placedParts, {
   const partRecords = placedParts.map((p, idx) => {
     const sampled = (p.localTri && Number.isFinite(p.localW) && Number.isFinite(p.localH))
       ? transformSampledPart(
-          samplePartAnchors(p.localTri, { partId: p.partId || p.id || '', spec, knownShellCount: 1 }),
+          samplePartAnchors(p.localTri, { partId: p.partId || p.id || '', spec, knownShellCount: 1, precomputed: p.precomputedAnchors || null }),
           p.localW,
           p.localH,
           p.turnIdx || 0,

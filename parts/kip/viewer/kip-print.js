@@ -24,6 +24,7 @@ import {
   sprueUsableBoundMm,
   isSprueEligiblePart,
   samplePartAnchors,
+  samplePrecomputedAnchors,
   buildSprueCard,
   checkSprueCard,
   buildBreakoffCouponMesh,
@@ -37,6 +38,7 @@ export {
   SPRUE_SPEC,
   isSprueEligiblePart,
   samplePartAnchors,
+  samplePrecomputedAnchors,
   buildSprueCard,
   checkSprueCard,
   buildBreakoffCouponMesh,
@@ -1169,7 +1171,7 @@ function gyLimit(rows, gridN) {
   return gridN - rows;
 }
 
-export function prepareItem(entry, tri, { verified = false, sha256 = '' } = {}) {
+export function prepareItem(entry, tri, { verified = false, sha256 = '', brimWidthMm = 0, precomputedAnchors = null } = {}) {
   const native = entry.source === 'partspec' || entry.source === 'custom-example';
   const isCustomUpload = entry.source === 'custom' || Boolean(entry.bytes);
   const pinOrient = !native && !isCustomUpload ? SCAD_FACE_PIN_ORIENT[entry.id] : undefined;
@@ -1213,6 +1215,8 @@ export function prepareItem(entry, tri, { verified = false, sha256 = '' } = {}) 
     material: entry.material || 'PLA',
     group: entry.group || 'character',
     accents: entry.accents ? [...entry.accents] : [],
+    brimWidthMm: Number(brimWidthMm) || 0,
+    precomputedAnchors: precomputedAnchors || null,
     sha256,
     tri: choice.seated.tri,
     blockerTri: tier === 'needs-supports' ? (choice.seated.auxTri || null) : null,
@@ -1287,6 +1291,8 @@ function materializePlacedPlate(placed, byId, boundMm, centerOnPlate = true) {
       material: inst.material,
       group: inst.group,
       accents: inst.accents,
+      brimWidthMm: inst.brimWidthMm || 0,
+      precomputedAnchors: inst.precomputedAnchors || null,
       sha256: inst.sha256 || '',
       volumeMm3: inst.volumeMm3,
       areaMm2: inst.areaMm2,
@@ -1465,7 +1471,7 @@ export function planColorPlates(preparedItems, rawProfile = createDefaultProfile
     let looseQueue = [];
     for (const inst of b.items) {
       const elig = isSprueEligiblePart({ ...inst, partId: inst.id, cardMaxMm: bound.mm }, sprueSpec);
-      if (elig.ok && samplePartAnchors(inst.tri, { partId: inst.id, spec: sprueSpec }).anchors.length >= 2) {
+      if (elig.ok && samplePartAnchors(inst.tri, { partId: inst.id, spec: sprueSpec, precomputed: inst.precomputedAnchors || null }).anchors.length >= 2) {
         cardItems.push(inst);
       } else {
         looseQueue.push(inst);
