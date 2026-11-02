@@ -609,8 +609,8 @@ def compile_recipe_to_partspec(recipe: dict[str, Any]) -> dict[str, Any]:
         grip_tu = max(2, min(4, int(shape.get("grip_tu", 2))))
         if kind == "profile2d":
             pts_raw = shape.get("points")
-            if not isinstance(pts_raw, list) or not (3 <= len(pts_raw) <= 64):
-                raise ValueError("profile2d requires 3..64 points")
+            if not isinstance(pts_raw, list) or not (3 <= len(pts_raw) <= 256):
+                raise ValueError("profile2d requires 3..256 points")
             pts_clamped = [
                 (
                     max(-45.0, min(45.0, _finite_float(p[0], "px"))),

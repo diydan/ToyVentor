@@ -14,6 +14,7 @@
 //    and never leaks upstream text or server filesystem paths.
 import {
   checkForgeRecipeBrandSafety,
+  FORGE_MAX_PROFILE_POINTS,
   FORGE_SLOTS,
   type ForgeFastPreviewRequest,
   type ForgeLoftSlice,
@@ -219,7 +220,7 @@ function sanitizeRecipe(raw: unknown): { ok: true; recipe: ForgeRecipeV1 } | { o
       ...(isFiniteNum(shapeObj.grip_tu) ? { grip_tu: Math.round(shapeObj.grip_tu) } : {}),
     };
   } else if (raw.slot === "hand" && kindRaw === "profile2d") {
-    if (!Array.isArray(shapeObj.points) || shapeObj.points.length < 3 || shapeObj.points.length > 64) {
+    if (!Array.isArray(shapeObj.points) || shapeObj.points.length < 3 || shapeObj.points.length > FORGE_MAX_PROFILE_POINTS) {
       return { ok: false };
     }
     const pts: [number, number][] = [];

@@ -176,7 +176,7 @@ describe("POST /api/scan with an outline request", () => {
     const o = scanOutlineOf(body);
     expect(o?.ok).toBe(true);
     if (!o?.ok) return;
-    expect(o.points.length).toBeLessThanOrEqual(64);
+    expect(o.points.length).toBeLessThanOrEqual(256);
     expect(o.photoSize).toEqual({ width: 1920, height: 1280 });
     expect(JSON.stringify(body.sam.outline).length).toBeLessThan(6_000);
     // The device reads the reply field by field: a reply that was changed on the way is no outline.

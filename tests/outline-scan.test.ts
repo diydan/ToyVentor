@@ -11,7 +11,7 @@ import {
   type ScanOutlineSuccess,
 } from "../shared/outlineScan";
 import { applyAffine, legalizeOutline } from "../shared/photoOutline";
-import { cropToObject, type Cropped, disc, rect, type Raster, rasterize, rotated, star, union } from "./fixtures/outlineMasks";
+import { cropToObject, type Cropped, disc, jaggedDisc, rect, type Raster, rasterize, rotated, star, union } from "./fixtures/outlineMasks";
 import { realCup, realSpoon, SPOON_PHOTO } from "./fixtures/realCupMask";
 
 // The legalizer takes 0.1 to 0.9 s a call and the machine is often at load 50 or more.
@@ -224,7 +224,7 @@ describe("parseScanOutline", () => {
   // Each row breaks one field of a good reply. The base is checked first so a row cannot pass for the wrong reason.
   const breaks: [string, (o: any) => void][] = [
     ["too few points", (o) => (o.points = o.points.slice(0, 2))],
-    ["too many points", (o) => (o.points = Array.from({ length: 65 }, (_, i) => [i * 0.5, i * 0.5]))],
+    ["too many points", (o) => (o.points = Array.from({ length: 257 }, (_, i) => [(i % 80) * 0.5, Math.floor(i / 80) * 0.5]))],
     ["a point that is not a pair", (o) => (o.points[1] = [1, 2, 3])],
     ["a NaN coordinate", (o) => (o.points[0] = [Number.NaN, 5])],
     ["a string coordinate", (o) => (o.points[0] = ["1", 5])],
@@ -273,12 +273,24 @@ describe("parseScanOutline", () => {
     expect(parseScanOutline(raw)).toBeUndefined();
   });
 
-  it("takes exactly 64 points, the compiler's limit", () => {
+  it("takes exactly 256 points, the compiler's limit, and not one more", () => {
     const o = JSON.parse(JSON.stringify(sample()));
-    o.points = Array.from({ length: 64 }, (_, i) => [30 * Math.cos((i / 64) * 2 * Math.PI), 40 + 30 * Math.sin((i / 64) * 2 * Math.PI)]);
+    const ring = (n: number) => Array.from({ length: n }, (_, i) => [30 * Math.cos((i / n) * 2 * Math.PI), 40 + 30 * Math.sin((i / n) * 2 * Math.PI)]);
+    o.points = ring(256);
     expect(parseScanOutline(o)).toBeDefined();
-    o.points.push([0, 0]);
+    o.points = ring(65); // the old limit is no limit now
+    expect(parseScanOutline(o)).toBeDefined();
+    o.points = ring(257);
     expect(parseScanOutline(o)).toBeUndefined();
+  });
+
+  it("is small enough to ride along with a scan even at the full 240 points: a rough disc stays under 16 KB", () => {
+    const rough = jaggedDisc(1);
+    const c = cropToObject(rough);
+    const o = scanOutline(c.raster, c.bounds, { width: rough.width, height: rough.height }, { targetHeightMm: 54 });
+    if (!o.ok) throw new Error("no outline");
+    expect(o.points.length).toBeGreaterThan(150); // guard: this is a dense outline
+    expect(JSON.stringify(o).length).toBeLessThan(16_000);
   });
 
   it("takes the ends of the clamp box", () => {

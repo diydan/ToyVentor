@@ -156,7 +156,7 @@ describe("planStickerSheet: photo accessories", () => {
     ["no sampler", (i) => delete i.sampler],
     ["another sampler mode", (i) => (i.sampler.mode = "unroll_crop")],
     ["a cut path of 2 points", (i) => (i.outerPolyMm = i.outerPolyMm.slice(0, 2))],
-    ["a cut path of 401 points", (i) => (i.outerPolyMm = Array.from({ length: 401 }, (_, k) => [k % 50, Math.floor(k / 50)]))],
+    ["a cut path of 1201 points", (i) => (i.outerPolyMm = Array.from({ length: 1201 }, (_, k) => [k % 50, Math.floor(k / 50)]))],
     ["a NaN in the cut path", (i) => (i.outerPolyMm[3] = [Number.NaN, 4])],
     ["a string in the cut path", (i) => (i.outerPolyMm[3] = ["1", 4])],
     ["a cut path that is not an array", (i) => (i.outerPolyMm = "square")],

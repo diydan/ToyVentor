@@ -12,7 +12,7 @@
  *
  * The numbers below mirror what the builder does and must be kept in step with
  * `compile_recipe_to_partspec` and `handheld_prop` (scripts/forge_optimizer_daemon.py,
- * parts/kip/sdk/kip_partspec_sdk.py): profile2d takes 3 to 64 points, x within 45 mm,
+ * parts/kip/sdk/kip_partspec_sdk.py): profile2d takes 3 to 256 points, x within 45 mm,
  * z from -45 to 90 mm, `fillet_r_mm` 0.4 to 4 (rounds the outline by that radius:
  * shrink, then grow), and `handheld_prop` rounds by a further 0.8 mm. Rounding twice
  * with radii r1 and r2 equals rounding once with the larger, so the smallest feature
@@ -47,7 +47,7 @@ export interface OutlineOptions {
   targetHeightMm?: number;
   /** Rounding radius written to the recipe, 0.4 to 4 mm. Default 1.6, the first of FILLET_LADDER (the daemon's own default, 1.2, fails the gates on most outlines). */
   fillet_r_mm?: number;
-  /** Point budget, 3 to 64. Default 60, leaving room under the compiler's 64. */
+  /** Point budget, 3 to 256 (the compiler's limit). Default 240, leaving room under it. */
   maxPoints?: number;
   /** `long-axis-up` (default) is C4; `as-photographed` leaves the photo's orientation alone. */
   orient?: "long-axis-up" | "as-photographed";
@@ -68,9 +68,16 @@ export interface OutlineOptions {
    */
   smoothMm?: number;
   /**
+   * How far a straight chord of the outline may leave the smoothed edge, in millimetres (the simplifier's tolerance). A smaller one
+   * follows the edge more closely with more points, up to the point budget; a larger one uses fewer. Only on a smoothed outline
+   * (`smoothMm` above 0). Default 0.03.
+   */
+  sagMm?: number;
+  /**
    * After the blur, the outline is also low-pass filtered along its own length (Taubin smoothing, which does not shrink a shape, so a
-   * thin neck keeps its width): wobble shorter than this many millimetres is taken out, which is what the mask's own noisy edge puts
-   * in. Default: 7% of the longer side, kept between 2 and 8 mm. `0` turns it off. Needs `smoothMm` above 0.
+   * thin neck keeps its width): ripple shorter than this many millimetres is taken out. The blur leaves a ripple of a few hundredths of
+   * a millimetre where the raster's pixels were, and a polygon with many points would follow it, so this is what lets a large point
+   * budget pay off. Only on a smoothed outline. Default 10% of the longer side, kept between 3 and 8 mm; `0` turns it off.
    */
   curveMm?: number;
 }
@@ -171,16 +178,20 @@ export function retryOptions(base: OutlineOptions, attempt: number): OutlineOpti
 }
 /** `handheld_prop` rounds the plate by this much on top of the recipe's fillet. */
 export const GRIP_ROUNDING_MM = 0.8;
-export const MAX_RECIPE_POINTS = 64;
+export const MAX_RECIPE_POINTS = 256;
 
-const DEFAULT_MAX_POINTS = 60;
+const DEFAULT_MAX_POINTS = 240;
 const WORK_LONG_PX = 400; // long side of the working raster
+const DEFAULT_SAG_MM = 0.03; // how far a straight chord may leave the smoothed edge: the simplifier's tolerance on a smoothed contour
+const MIN_EPS_PX = 0.05;
+const CURVE_SHARE = 0.1; // wavelength below which the contour's own ripple is filtered out, as a share of the longer side
+const CURVE_MIN_MM = 3;
+const CURVE_MAX_MM = 8;
+const PIXEL_STAIR_EPS_PX = 0.6; // the tolerance for the pixel-corner trace, which has steps of a pixel
+const PIXEL_TRACE_POINTS = 60; // and its point budget: the trace is all steps, and only a tight budget prunes them
 const SMOOTH_SOURCE_PX = 2; // blur sigma, in source pixels, so a stair step and the mask's own one-pixel wobble are smoothed out
 const SMOOTH_MIN_MM = 0.3;
 const SMOOTH_MAX_MM = 0.8; // past this a 2 mm neck starts to lose width
-const CURVE_SHARE = 0.07; // cut-off wavelength of the outline's own low-pass, as a share of the longer side
-const CURVE_MIN_MM = 2;
-const CURVE_MAX_MM = 8;
 const MAX_MASK_PIXELS = 16_000_000;
 const ROUND_ELONGATION = 1.15; // below this the long axis means nothing
 const UPRIGHT_WITHIN_DEG = 30; // inside this the photo's own "up" is kept
@@ -713,7 +724,7 @@ export function smoothContour(bin: Uint8Array, w: number, h: number, sigmaPx: nu
   return best;
 }
 
-/** Resample a closed loop at equal arc length: `count` points. */
+/** A closed loop resampled at equal arc length into `count` points. */
 function resampleClosed(loop: readonly Vec[], count: number): Vec[] {
   const n = loop.length;
   const cum = [0];
@@ -734,25 +745,24 @@ function resampleClosed(loop: readonly Vec[], count: number): Vec[] {
 }
 
 /**
- * Low-pass a closed loop without shrinking it (Taubin: a smoothing pass and an equal-and-opposite one, so a shape's size is kept while
- * wiggles shorter than `wavelengthPx` are removed). `spacingPx` is the distance between the resampled points.
+ * Low-pass a closed loop without shrinking it. Taubin smoothing is a smoothing pass followed by a slightly stronger opposite one, which
+ * removes wiggles shorter than `wavelengthPx` and keeps the size of the shape. It is only stable while its pass-band edge is small (an
+ * eigenvalue of the discrete Laplacian of at most about 0.1), so the loop is resampled at a twentieth of the wavelength: that fixes the
+ * edge at 0.1 whatever the cut-off, and a short cut-off simply gets finer samples.
  */
-function taubinSmooth(loop: readonly Vec[], spacingPx: number, wavelengthPx: number): Vec[] {
+function taubinSmooth(loop: readonly Vec[], wavelengthPx: number): Vec[] {
   const total = loop.reduce((a, p, i) => a + Math.hypot(loop[(i + 1) % loop.length]![0] - p[0], loop[(i + 1) % loop.length]![1] - p[1]), 0);
-  const count = Math.max(12, Math.round(total / spacingPx));
-  let pts = resampleClosed(loop, count);
-  const h = total / count;
+  const spacing = Math.max(0.2, wavelengthPx / 20);
+  let pts = resampleClosed(loop, Math.max(12, Math.round(total / spacing)));
   const lambda = 0.5;
-  // The pass band edge of the filter, as the eigenvalue of the discrete Laplacian at the cut-off wavelength: k = (2 pi h / wavelength)^2.
-  const kPass = Math.min(1.5, (2 * Math.PI * h / Math.max(wavelengthPx, 4 * h)) ** 2);
-  const mu = 1 / (kPass - 1 / lambda);
+  const mu = 1 / (0.1 - 1 / lambda); // = -0.526: with lambda 0.5 the pass-band edge is 0.1
   const pass = (src: Vec[], w: number): Vec[] =>
     src.map((p, i) => {
       const a = src[(i + src.length - 1) % src.length]!;
       const b = src[(i + 1) % src.length]!;
       return [p[0] + w * ((a[0] + b[0]) / 2 - p[0]), p[1] + w * ((a[1] + b[1]) / 2 - p[1])] as Vec;
     });
-  for (let it = 0; it < 30; it++) pts = pass(pass(pts, lambda), mu);
+  for (let it = 0; it < 40; it++) pts = pass(pass(pts, lambda), mu);
   return pts;
 }
 
@@ -1101,20 +1111,27 @@ export function legalizeOutline(mask: OutlineMask, options: OutlineOptions = {})
   // Trace, then simplify to the point budget while staying a simple polygon.
   const sigmaMm = Number.isFinite(options.smoothMm) ? clampNum(options.smoothMm as number, 0, SMOOTH_MAX_MM) : clampNum(SMOOTH_SOURCE_PX * built.scale, SMOOTH_MIN_MM, SMOOTH_MAX_MM);
   let corners: Vec[] = sigmaMm > 0 ? smoothContour(work, nx, nz, sigmaMm / wpx) : [];
-  const smoothed = corners.length >= 4;
-  if (!smoothed) corners = traceCorners(work, nx, nz);
-  if (corners.length < 4) return { ok: false, reason: "not_simple", detail: "could not trace the outline" };
+  const smoothedTrace = corners.length >= 4;
   const curveMm = Number.isFinite(options.curveMm) ? Math.max(0, options.curveMm as number) : clampNum(CURVE_SHARE * Math.max(built.widthMm, built.heightMm), CURVE_MIN_MM, CURVE_MAX_MM);
-  if (smoothed && curveMm > 0) corners = taubinSmooth(corners, 1, curveMm / wpx);
+  if (smoothedTrace && curveMm > 0) corners = taubinSmooth(corners, curveMm / wpx);
+  if (!smoothedTrace) corners = traceCorners(work, nx, nz);
+  if (corners.length < 4) return { ok: false, reason: "not_simple", detail: "could not trace the outline" };
   let loop: Vec[] = corners;
-  let eps = 0.6;
+  // On a smoothed contour the tolerance is a target sag in millimetres, raised only as far as the point budget needs. On the pixel-corner
+  // trace (smoothing off) it stays at the old 0.6 of a pixel.
+  const sagMm = Number.isFinite(options.sagMm) ? clampNum(options.sagMm as number, 0, 1) : DEFAULT_SAG_MM;
+  let eps = smoothedTrace ? clampNum(sagMm / wpx, MIN_EPS_PX, PIXEL_STAIR_EPS_PX) : PIXEL_STAIR_EPS_PX;
   let simplified = simplifyClosed(loop, eps);
+  while (simplified.length > maxPoints && eps < PIXEL_STAIR_EPS_PX) {
+    eps = Math.min(PIXEL_STAIR_EPS_PX, eps * 1.25);
+    simplified = simplifyClosed(loop, eps);
+  }
   for (let tries = 0; tries < 3 && !isSimple(simplified); tries++) {
     eps /= 2;
     simplified = simplifyClosed(loop, eps);
   }
   if (!isSimple(simplified)) return { ok: false, reason: "not_simple", detail: "the simplified outline crosses itself" };
-  const reduced = reduceTo(simplified, maxPoints);
+  const reduced = reduceTo(simplified, smoothedTrace ? maxPoints : Math.min(maxPoints, PIXEL_TRACE_POINTS));
   if (!reduced.met) warnings.push("POINT_BUDGET_NOT_MET");
   loop = reduced.points;
   if (loop.length > MAX_RECIPE_POINTS) return { ok: false, reason: "not_simple", detail: `${loop.length} points, the compiler takes ${MAX_RECIPE_POINTS}` };

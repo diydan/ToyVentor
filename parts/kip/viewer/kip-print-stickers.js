@@ -471,7 +471,7 @@ function makeUnrolledCropSticker({
 }
 
 const PHOTO_ACCESSORY_MAX_MM = 120.0;
-const PHOTO_ACCESSORY_MAX_POINTS = 400;
+const PHOTO_ACCESSORY_MAX_POINTS = 1200;
 
 function finiteNums(arr, n) {
   return Array.isArray(arr) && arr.length === n && arr.every((v) => typeof v === 'number' && Number.isFinite(v));

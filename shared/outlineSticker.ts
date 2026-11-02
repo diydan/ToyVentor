@@ -26,6 +26,8 @@ type Pt = readonly [number, number];
 
 /** Turns smaller than this (radians) are kept as vertices: they are straight for the builder's rounding. */
 const STRAIGHT_RAD = (1 * Math.PI) / 180;
+/** A corner whose arc would start less than this far from the vertex is left as a vertex: the arc would move the path by thousandths of a millimetre and double the point count. */
+const MIN_TANGENT_MM = 0.05;
 /** An arc is cut into pieces of at most this turn; the chord sits 0.025 mm inside a 1.6 mm arc at this step. */
 const ARC_STEP_RAD = (20 * Math.PI) / 180;
 
@@ -73,6 +75,10 @@ export function roundedPlateOutline(points: readonly Pt[], radiusMm: number = GR
     }
     const tan = Math.tan(turn / 2);
     const tangent = Math.min(radiusMm * tan, 0.5 * inLen, 0.5 * outLen);
+    if (tangent < MIN_TANGENT_MM) {
+      out.push([v[0], v[1]]);
+      continue;
+    }
     const r = tangent / tan;
     const start: Pt = [v[0] - e1[0] * tangent, v[1] - e1[1] * tangent];
     const centre: Pt = [start[0] - e1[1] * r, start[1] + e1[0] * r]; // the left of travel is the inside of a CCW polygon

@@ -40,6 +40,13 @@ export interface ForgeLoftSlice {
   y?: number;
 }
 
+/**
+ * Most points a hand `profile2d` outline may have. The daemon checks it (scripts/forge_optimizer_daemon.py, "3 <= len(pts_raw) <= 256")
+ * and so does the Worker's allowlist; tests/photo-outline.test.ts fails if they drift. It was 64: a spoon's rim then had flat chords of
+ * 5 mm, visible as facets; at 250 points the real gate and builder passed it and the rim rendered smooth (2026-11-02).
+ */
+export const FORGE_MAX_PROFILE_POINTS = 256;
+
 export interface ForgeRecipeV1 {
   v?: 1;
   id?: string;
