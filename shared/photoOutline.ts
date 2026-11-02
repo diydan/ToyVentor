@@ -1066,3 +1066,50 @@ export function withScaled(outline: OutlineSuccess, factor: number): { outline: 
 export function outlineToRecipeShape(result: OutlineSuccess, gripTu = 2): Extract<ForgeRecipeV1["shape"], { kind: "profile2d" }> {
   return { kind: "profile2d", points: result.points.map(([x, z]) => [x, z] as [number, number]), fillet_r_mm: result.fillet_r_mm, grip_tu: gripTu };
 }
+
+/**
+ * Would the builder's rounding at `filletMm` take a real part off this polygon? The polygon-only counterpart of the
+ * legalizer's thin-part test, for a caller that changes the recipe fillet with no mask to re-legalize from (the retry
+ * ladder in `fitPolygon`). The builder rounds by the recipe fillet itself, so a bigger fillet can take a thin part off the
+ * printed plate while the polygon, and the sticker cut to it, still show it, and the gates cannot see the difference
+ * (they pass a spoon with no handle as readily as one with). Same definition of "a part" as the legalizer: a piece that
+ * comes off counts when it is long and bigger than one radius squared, so rounded corners and star tips do not.
+ */
+export function roundingRemovesParts(points: readonly (readonly [number, number])[], filletMm: number): { count: number; areaMm2: number } {
+  const n = points.length;
+  if (n < 3) return { count: 0, areaMm2: 0 };
+  let xMin = Infinity, xMax = -Infinity, zMin = Infinity, zMax = -Infinity;
+  for (const [x, z] of points) {
+    xMin = Math.min(xMin, x); xMax = Math.max(xMax, x);
+    zMin = Math.min(zMin, z); zMax = Math.max(zMax, z);
+  }
+  const widthMm = xMax - xMin;
+  const heightMm = zMax - zMin;
+  if (!(widthMm > 0) || !(heightMm > 0)) return { count: 0, areaMm2: 0 };
+  const radiusMm = Math.max(filletMm, GRIP_ROUNDING_MM);
+  const wpx = Math.max(widthMm, heightMm) / WORK_LONG_PX;
+  const pad = Math.ceil(radiusMm / wpx) + 3;
+  const nx = Math.ceil(widthMm / wpx) + 2 * pad;
+  const nz = Math.ceil(heightMm / wpx) + 2 * pad;
+  const originX = xMin - pad * wpx;
+  const originZ = zMax + pad * wpx;
+  // Even-odd scanline fill, sampled at pixel centres like the legalizer's own raster.
+  const grid = new Uint8Array(nx * nz);
+  for (let j = 0; j < nz; j++) {
+    const zc = originZ - (j + 0.5) * wpx;
+    const xs: number[] = [];
+    for (let a = 0, b = n - 1; a < n; b = a++) {
+      const [xa, za] = points[a]!;
+      const [xb, zb] = points[b]!;
+      if (za > zc !== zb > zc) xs.push(xa + ((zc - za) * (xb - xa)) / (zb - za));
+    }
+    xs.sort((p, q) => p - q);
+    for (let k = 0; k + 1 < xs.length; k += 2) {
+      const from = Math.max(0, Math.ceil((xs[k]! - originX) / wpx - 0.5));
+      const to = Math.min(nx, Math.ceil((xs[k + 1]! - originX) / wpx - 0.5));
+      for (let i = from; i < to; i++) grid[j * nx + i] = 1;
+    }
+  }
+  const rounded = open(grid, nx, nz, radiusMm / wpx);
+  return thinParts(grid, rounded, nx, nz, wpx, radiusMm);
+}

@@ -1,5 +1,6 @@
 import { parseScanOutline, type ScanOutline, type ScanOutlineRequest } from "../../shared/outlineScan";
 import type { Toy } from "../../shared/toy";
+import { deviceId } from "./sync";
 
 /** Client budgets sit above the matching server budgets (worker/meta.ts)
  *  so a server-side timeout answers before the client gives up; either

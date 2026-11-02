@@ -105,8 +105,14 @@ export interface PhotoStickerItem {
   foldLinesMm: [];
   sampler: {
     mode: "photo_outline";
-    /** Mask pixel -> sticker millimetre. A photo larger than the mask: scale the pixel first. */
+    /**
+     * Photo pixel -> sticker millimetre. The pixel is one of the image the outline came from: `photoSize` says how big that is
+     * when the outline arrived with a scan (then the map is in uploaded-image pixels), and is null when the outline was made
+     * straight from a mask (then the map is in mask pixels and the artwork source must be mask-sized).
+     */
     photoToSticker: Affine;
+    /** The size of the image `photoToSticker` counts pixels of. The artwork source may be any resolution of it. */
+    photoSize: { width: number; height: number } | null;
     /** Sticker millimetre -> mask pixel, for drawing the artwork pixel by pixel; null if the map cannot be inverted. */
     stickerToPhoto: Affine | null;
     /** Plate millimetre of the sticker's top-left corner, so `x = X + plateOriginMm.x` and `z = plateOriginMm.z - Y`. */
@@ -128,7 +134,7 @@ export interface PhotoStickerOptions {
  * builder's rounding applied; the only other change is the frame (a shift and a vertical flip into sticker millimetres),
  * so the rest of the pipeline can check the path against the recipe.
  */
-export function photoStickerItem(outline: OutlineSuccess, options: PhotoStickerOptions = {}): PhotoStickerItem {
+export function photoStickerItem(outline: OutlineSuccess & { photoSize?: { width: number; height: number } }, options: PhotoStickerOptions = {}): PhotoStickerItem {
   const radius = Math.max(outline.fillet_r_mm, GRIP_ROUNDING_MM);
   const plate = roundedPlateOutline(outline.points, radius);
   let x0 = Infinity;
@@ -158,6 +164,7 @@ export function photoStickerItem(outline: OutlineSuccess, options: PhotoStickerO
     sampler: {
       mode: "photo_outline",
       photoToSticker,
+      photoSize: outline.photoSize ? { width: outline.photoSize.width, height: outline.photoSize.height } : null,
       stickerToPhoto: invertAffine(photoToSticker) ?? null,
       plateOriginMm: { x: x0, z: z1 },
       roundedByMm: radius,

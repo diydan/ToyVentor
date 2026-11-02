@@ -24,7 +24,7 @@ import {
   RETRY_LADDER,
   retryOptions,
 } from "../shared/photoOutline";
-import { disc, polygon, type Raster, rasterize, SHAPES } from "./fixtures/outlineMasks";
+import { disc, polygon, type Raster, rasterize, rect, SHAPES, union } from "./fixtures/outlineMasks";
 
 // Each rung re-runs the legalizers on a 400 x 400 mask; the machine is often at load 50 or more, so the 5 s default is too tight.
 vi.setConfig({ testTimeout: 60_000 });
@@ -439,5 +439,99 @@ describe("wiring", () => {
     expect(code).not.toMatch(/\b(document|window|fetch|localStorage|sessionStorage|XMLHttpRequest|Date\.now|Math\.random|performance\.now|setTimeout)\b/);
     const from = [...code.matchAll(/from\s+"([^"]+)"/g)].map((m) => m[1]);
     expect(new Set(from)).toEqual(new Set(["./forgeOptimizer", "./photoOutline"]));
+  });
+});
+
+// ---- fitPolygon: the rungs follow the outline's own fillet ---------------------------------------------------------------
+
+describe("fitPolygon: the rungs follow the outline's own fillet and never take a part off the plate", () => {
+  /** A head on a thin stick: 10 px of 380, so 2.2 mm wide at 85 mm. It survives a 1.0 fillet (2.0 mm) and not the default 1.6 (3.2 mm). */
+  const thin = rasterize(400, 400, union(disc(200, 90, 80), rect(195, 160, 205, 390)));
+  /** The same with a stick 19 px wide: 4.3 mm at 85 mm, so it survives 2.0 (4.0 mm) and not 3.0 (6.0 mm). */
+  const medium = rasterize(400, 400, union(disc(200, 90, 80), rect(190, 160, 209, 390)));
+  // Asked for 85 mm, not the 90 mm maximum: at the maximum the box caps a size nudge, the nudge is the same shape, and a shape is never gated twice.
+  const made = (mask: Raster, fillet?: number): OutlineSuccess => {
+    const o = legalizeOutline(mask, { targetHeightMm: 85, keepThinParts: true, ...(fillet === undefined ? {} : { fillet_r_mm: fillet }) });
+    if (!o.ok) throw new Error("legalize failed");
+    return o;
+  };
+  const fillets = (shapes: OutlineShape[]) => shapes.map((s) => s.fillet_r_mm);
+
+  it("an outline made at 1.0 to keep its stick is gated at 1.0 on every nudge, then at 0.8, and never at 2.0 or 3.0", async () => {
+    const outline = made(thin, 1.0);
+    expect(outline.warnings).not.toContain("THIN_PARTS_REMOVED"); // guard: the stick is in the outline
+    const { gate, shapes } = recorder(() => sliver());
+    const r = await fitPolygon(outline, gate);
+    expect(r.ok).toBe(false);
+    expect(fillets(shapes)).toEqual([1.0, 1.0, 1.0, 0.8]);
+    expect(r.attempts.map((a) => a.kind)).toEqual(["first", "size_nudge", "size_nudge", "fillet"]);
+    if (!r.ok) expect(r.reason).toBe("gate_failed");
+  });
+
+  it("an outline at 0.8 has nowhere gentler to go: three nudges and no fillet rung", async () => {
+    const { gate, shapes } = recorder(() => sliver());
+    await fitPolygon(made(thin, 0.8), gate);
+    expect(fillets(shapes)).toEqual([0.8, 0.8, 0.8]);
+  });
+
+  it("a default outline still has its ladder: 1.6, two nudges at 1.6, then 2.0 and 3.0", async () => {
+    const { gate, shapes } = recorder(() => sliver());
+    await fitPolygon(made(rasterize(400, 400, disc(200, 200, 150))), gate);
+    expect(fillets(shapes)).toEqual([1.6, 1.6, 1.6, 2.0, 3.0]);
+  });
+
+  it("skips only the rung that would take the stick off: 2.0 is gated, 3.0 is not, and the skip costs no gate call", async () => {
+    const outline = made(medium);
+    expect(outline.fillet_r_mm).toBe(1.6);
+    expect(outline.warnings).not.toContain("THIN_PARTS_REMOVED");
+    const { gate, shapes } = recorder(() => sliver());
+    const r = await fitPolygon(outline, gate);
+    expect(fillets(shapes)).toEqual([1.6, 1.6, 1.6, 2.0]);
+    expect(r.attempts).toHaveLength(4);
+    if (!r.ok) expect(r.reason).toBe("gate_failed"); // not out_of_budget: the skipped rung did not use up a call
+  });
+
+  it("a stick that a default-fillet outline keeps is protected from 2.0 too when it is thinner", async () => {
+    // 3.4 mm wide at 85 mm: survives 1.6 (3.2 mm) and not 2.0 (4.0 mm).
+    const mask = rasterize(400, 400, union(disc(200, 90, 80), rect(192, 160, 207, 390)));
+    const outline = made(mask);
+    expect(outline.warnings).not.toContain("THIN_PARTS_REMOVED");
+    const { gate, shapes } = recorder(() => sliver());
+    await fitPolygon(outline, gate);
+    expect(fillets(shapes)).toEqual([1.6, 1.6, 1.6]);
+  });
+
+  it("an outline already at 3.0 is offered no other fillet: not 2.0 (that is gentler, and would be a step back) and not 3.0 again", async () => {
+    const { gate, shapes } = recorder(() => sliver());
+    await fitPolygon(made(rasterize(400, 400, disc(200, 200, 150)), 3.0), gate);
+    expect(fillets(shapes)).toEqual([3.0, 3.0, 3.0]);
+  });
+
+  it("passes at the gentler rung, with that fillet in the recipe and the polygon unchanged", async () => {
+    const outline = made(thin, 1.0);
+    const { gate } = recorder((_s, call) => (call <= 3 ? sliver() : pass()));
+    const r = await fitPolygon(outline, gate);
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.outline.fillet_r_mm).toBe(0.8);
+    expect(r.outline.points).toEqual(outline.points);
+    expect(r.outline.changes.at(-1)).toMatchObject({ step: "C2", code: "retry_fillet", value: 0.8 });
+  });
+
+  it("a nudge scales the polygon and keeps the fillet; the first call is the outline untouched", async () => {
+    const outline = made(thin, 1.0);
+    const { gate, shapes } = recorder((_s, call) => (call === 1 ? sliver() : pass()));
+    const r = await fitPolygon(outline, gate);
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(shapes[0]!.points).toEqual(outline.points);
+    expect(r.outline.fillet_r_mm).toBe(1.0);
+    expect(r.outline.heightMm / outline.heightMm).toBeCloseTo(1.02, 2);
+  });
+
+  it("fitFlipped keeps the outline's fillet the same way", async () => {
+    const { gate, shapes } = recorder(() => sliver());
+    await fitFlipped(made(thin, 1.0), gate);
+    expect(fillets(shapes)).toEqual([1.0, 1.0, 1.0, 0.8]);
   });
 });

@@ -40,6 +40,13 @@ export const SCAN_OUTLINE_HEIGHT_MM = { min: 8, max: HAND_BOX.maxHeightMm } as c
  */
 export const SCAN_OUTLINE_MAX_PIXELS = 4_000_000;
 
+/**
+ * Fillets to try, gentlest rounding last, when the default one takes a thin part off the object. 1.0 mm kept the whole spoon
+ * from a real SAM mask at 90 mm where 1.6 took the handle off; below 0.8 nothing changes (the builder rounds by at least 0.8).
+ */
+export const KEEP_PARTS_FILLETS = [1.2, 1.0, 0.8] as const;
+const round1 = (v: number) => Math.round(v * 10) / 10;
+
 /** What a scan may ask for. Everything is optional; the legalizer's own defaults apply to what is left out. */
 export interface ScanOutlineRequest {
   /** Height of the outline in mm, 8 to 90. Default 54 (the legalizer's). */
@@ -99,8 +106,25 @@ export function scanOutline(
     ...(request.orient === undefined ? {} : { orient: request.orient }),
     ...(request.flip === undefined ? {} : { flip: request.flip }),
   };
-  const out = legalizeOutline(raster, options);
+  let out = legalizeOutline(raster, options);
   if (!out.ok) return out;
+  // A part narrower than the rounding is taken off the outline, and nothing downstream can tell: the gates pass a spoon with no
+  // handle as readily as one with. When growing (inside the 90 mm box) did not keep a part, round more gently and keep the first
+  // fillet that leaves the whole object; if none does, the default result stands, with its THIN_PARTS_REMOVED warning.
+  if (out.warnings.includes("THIN_PARTS_REMOVED")) {
+    for (const fillet of KEEP_PARTS_FILLETS) {
+      const gentler = legalizeOutline(raster, { ...options, fillet_r_mm: fillet });
+      if (!gentler.ok || gentler.warnings.includes("THIN_PARTS_REMOVED")) continue;
+      out = {
+        ...gentler,
+        changes: [
+          ...gentler.changes,
+          { step: "C2", code: "lowered_fillet_to_keep_parts", detail: `parts narrower than ${round1(2 * out.fillet_r_mm)} mm were being taken off, so the outline is rounded by ${fillet} mm instead and keeps them`, value: fillet },
+        ],
+      };
+      break;
+    }
+  }
   // Mask pixel = photo pixel minus the raster's corner; the corner is a whole pixel, so this shift is exact.
   const photoToPlate = composeAffine(out.photoToPlate, [1, 0, 0, 1, -bounds.left, -bounds.top]);
   return { ...out, photoToPlate, photoSize: { width: photo.width, height: photo.height } };

@@ -142,6 +142,19 @@ rejected, numbers are clamped to bounds, and nothing is executed.
     above the crown seat.
   - `horns`: a mirrored pair of curved horns, `length_mm`, `base_mm`, `curl`.
     Heads and crowns only.
+  - **Head ears and horns keep off the crown studs** (`_fit_head_pair`). The studs
+    (two columns at x 3.0 to 9.6 mm each side, y +-3.3, z 30.5 to 33.3; a hat seats
+    on them) fill most of a head's 18 to 20 mm wide top, so a pair rooted at the
+    upper corners used to grow into them. The daemon now cuts every head ear and
+    horn by a stud keep-out (one plain box per stud column, grown 0.6 mm, from the
+    crown plane up). It first tries the pair as asked, then lower (up to 6 mm) and,
+    for ears, leaning further out (up to 18 degrees), keeps the placement with the
+    most ear still showing outside the head (a clean move beats a cut), inside the
+    small-parts width, and drops any piece the cut leaves floating. What it did is
+    listed in `legalizer.features_adjusted` (for example "moved down 3 mm, trimmed
+    where it met the crown studs"); a pair with no room left is listed in
+    `features_dropped`. Test: `forge-ops.test.ts` compares the mesh vertices inside
+    the stud column with a plain head's.
   - `spikes`: a row of 2 to 7 points along the top, for crown points and
     feathers. Crowns and backs only (the head top is the crown seat).
   - `snout` (heads only): `style` `muzzle | beak | bill`, `length_mm`,
@@ -444,6 +457,67 @@ What the compiler accepts decides the routes (read in the code, 2026-11-02):
     photo and no mask come back; the log says only that an outline was made. A fault
     in the outline step costs the scan nothing: it becomes a failure and the box and
     mask are still returned.
+  - **The print step (built 2026-11-02, question 31 option a).**
+    `preparePhotoAccessory(scan, gate, options)` in `shared/photoAccessory.ts` takes
+    what `scanOutlineOf` returned. It applies the kid's flip and resize (the 90 mm box
+    may cap a resize; `appliedScale` says what was used), fits the outline with
+    `fitPolygon` and the injected gate, and returns the recipe that passed (a hand
+    `profile2d` part, exactly the shape the gate passed), the final outline with its
+    change log and attempts, the sticker item and its decal for
+    `buildStickerPackFiles`, and the plate of the job that passed. It has no network,
+    DOM or photo code. Every failure leaves the digital-only fallback: `no_outline`,
+    `invalid_options` and `brand_rejected` (all before any gate call), `gate_error` (the
+    gate could not run: a limit, no grown-up proof, the optimizer off or down, a job
+    that failed, with the typed error and its `retryAfterS`), and the fit's own
+    `gate_failed`, `marginal_unresolved` and `out_of_budget`, with the attempts and the
+    first outline. A gate that could not run is never turned into a verdict; an error
+    that is not the gate's own is thrown on. `forgeRouteGate` now returns `artifacts`
+    on a pass (job id, the plate name `<part>.<12 hex>.stl`, the model file and the
+    hash), only for a `print_ready` job with a passing report and a plate name the
+    artifacts route would take. `fetchPlateStl` (`shared/outlineGate.ts`) fetches that
+    plate through `/api/forge/artifacts/:name` with the same typed errors, refuses any
+    other name before asking, and accepts 84 bytes up to the Worker's 2.5 MB cap.
+    Checked through the real Worker routes: a scan reply as JSON, read back by
+    `parseScanOutline`, flipped, a marginal result rescaled, the plate bytes equal to
+    the daemon's, and the four sticker files built. The sticker's overlap with the
+    object stays above 0.95 for a lollipop under flip, resize, rescale and nudge. A
+    star is lower at small sizes (0.949 at 33 mm, 0.974 at 54 mm, 0.980 at 70 mm, the
+    same with or without a flip) because its thin tips are rounded like the printed
+    plate. Tests: `tests/photo-accessory.test.ts` (22) and `tests/outline-gate.test.ts`
+    (now 89), with the Worker and fake daemon shared in
+    `tests/fixtures/forgeWorkerHarness.ts`; 38 of 38 mutants caught. Nothing calls it
+    yet, and in production it needs the fit budget of question 30 (f): without it a
+    kid who flips a few times meets the Worker's 3 a minute.
+  - **A real photo with a thin handle: the steel spoon (2026-11-02).** Dan's photo of a
+    steel spoon on a paper towel went through the whole chain: a real SAM call through
+    the real `/api/scan` handler (0.7 to 1.0 s), the device-side read, the fit through
+    the Worker's forge routes to a real daemon, the plate, and the sticker sheet drawn
+    from the full-size photo. SAM's mask was good (91 by 447 px, the handle 10 to 22 px
+    wide). The first run shipped a **bowl with no handle** and called it a success:
+    at the default 1.6 mm rounding nothing narrower than 3.2 mm survives, the spoon's
+    neck is 2.0 mm at the 90 mm maximum, so the legalizer took the handle off at every
+    size (a 21 mm bowl at 54 mm asked), and the gates passed the bowl as readily as a
+    spoon, because they check that a part is safe to print and not that it is the
+    photo. Three fixes, each checked against the real mask and the real daemon.
+    (1) `scanOutline` rounds more gently when parts would be lost: it tries 1.2, 1.0
+    then 0.8 mm and keeps the first that leaves the whole object (`lowered_fillet_to_keep_parts`
+    in the change log); the spoon keeps its handle at 1.0, at 81 mm. (2) `fitPolygon`'s
+    rungs are relative to the outline's own fillet: its size nudges used to reset the
+    fillet to 1.6, which would have rounded a gently rounded outline harder and taken the
+    handle off again, and a gentler outline gets one more rung, 0.8. (3) `fitPolygon` skips
+    a bigger-fillet rung (2.0, 3.0) that would take a part off the polygon
+    (`roundingRemovesParts`, the polygon-only form of the legalizer's own thin-part test);
+    the builder rounds by the recipe fillet itself, so those rungs could remove a part from
+    the plate while the polygon, and the sticker cut to it, still showed it.
+    Real gate results for the whole spoon (fillet by size, 2026-11-02): at 90 mm 1.0, 0.8
+    and 0.4 pass and 0.6 slivers; at 72 mm only 0.8 passes; at 54 mm all fail. The fit
+    that shipped: 16.4 by 81 mm at fillet 1.0 slivered three times (81, 82.6, 84.2 mm), then
+    0.8 passed, 4 gate calls. The plate is one watertight body, 16.4 by 109 by 6.6 mm (the
+    spoon plus the builder's grip peg), with a 2.0 mm neck. `tests/fixtures/spoon-sam-reply.sse`
+    keeps the SAM stream (4.7 KB, the mask and ids, no photo, no key) as a second real
+    fixture, a thin object where the cup is a fat one. A UI must show `outline.warnings`: an
+    object that no gentler rounding can keep (a stick under 1.6 mm) still ends as `ok` with
+    `THIN_PARTS_REMOVED` on its outline.
   - C4 orientation: long axis to z, handle end down, with a flip button. The kid
     decides which end is the handle; the model is not asked.
 - **Relief ("puffy").** The builder's crest is one level. Repeating the inward
@@ -470,6 +544,26 @@ What the compiler accepts decides the routes (read in the code, 2026-11-02):
     corners are not rounded (the builder leaves them), so the path keeps every
     concave vertex of the recipe exactly. Where an edge is too short for the full
     radius that corner stays a little sharp, which is the 0.54 mm.
+  - **The artwork (built 2026-11-02).** `parts/kip/viewer/kip-print-stickers.js` plans
+    a `{kind: 'photo_accessory', item}` decal as one sticker and one spare
+    (`spare: false` for one), and draws it with a `photo_outline` sampler: each
+    sticker pixel goes through the item's `stickerToPhoto` map to a place in the photo,
+    and the colour is read from `renderedSources['photo:<id>']`, which the device fills
+    from its own picture at any resolution (pixel centres are matched, so half size and
+    double size draw the same sticker). The item is rebuilt field by field on the way in
+    and an unusable one (no cut path, no invertible map, a side over 120 mm) is skipped
+    without an error; the id and label are made safe for the PDF. The plan carries
+    geometry only and no pixels, as that module's privacy rules require. Where the cut
+    path touches the photo's edge the edge colour repeats, never white. Checked with a
+    photo whose object is red and everything else blue: through the real outline and
+    the real cup mask, 98% or more of the sticker is the object, and a mirrored,
+    upside-down or turned map drops that below 80% (a canary test). A mask-sized source
+    with no photo size also works. Tests: `tests/photo-sticker-art.test.ts` (38 tests,
+    30 of 30 mutants caught). Written to `parts/kip/viewer/` and copied to `public/kip/`
+    as that one file (not a full `build:kip`, which would take other sessions'
+    half-finished viewer files with it). Nothing calls it yet. One thing to watch on a
+    real print: the cut path is the simplified, rounded outline, so a hair of
+    background colour can show at the edge (under 2% of the sticker on the test shapes).
   - **The plate is the outline plus a neck.** `handheld_prop` unions a 6.4 mm neck
     (2.5 mm below the polygon's bottom, rising to 35% of its height), so a thin
     handle shows bare plate beside the sticker (up to 52 mm2 on a star). The
@@ -543,15 +637,18 @@ What the compiler accepts decides the routes (read in the code, 2026-11-02):
    (note under Route A). The Worker now returns the outline with a scan, which is the
    decision in question 31 (a): `shared/outlineScan.ts` and the opt-in on `/api/scan`
    (`tests/outline-scan.test.ts` and `tests/scan-outline-worker.test.ts`, 85 tests, 37
-   of 37 mutants caught). Not built: the device's print step that runs `fitPolygon`
-   with `forgeRouteGate` (no screen for it exists), and a budget for it (question 30
-   f). Still to do: Route A on the flat objects among the 10 F2 photos.
+   of 37 mutants caught). The device's print step is built too, as one function
+   (`shared/photoAccessory.ts`, the print-step note under Route A). Not built: a
+   screen that calls it, and a budget for the fit (question 30 f). Still to do:
+   Route A on the flat objects among the 10 F2 photos.
 3. **Built for the path and the photo map (2026-11-02, uncommitted):**
    `shared/outlineSticker.ts` with `tests/outline-sticker.test.ts` (28 tests, 8
    of 8 mutants caught): the cut path, as the item shape the sticker sheet module
-   plans with, and the map from the photo onto it. Still to do: draw the artwork
-   on the device (the sheet module has no `photo_outline` sampler yet), and stick
-   a real one on a printed plate.
+   plans with, and the map from the photo onto it. The artwork is built too (see the
+   artwork note under "Colour on a one-colour printer"): the sheet module has a
+   `photo_accessory` decal and a `photo_outline` sampler, and the print step builds the
+   decal. Still to do: a screen that hands over the device's photo, and sticking a
+   real sticker on a printed plate.
 4. The relief spike (question 28).
 5. Route B profile extraction.
 6. Route C fitter, after question 29.
@@ -1068,16 +1165,28 @@ same prompts can be compared.
   at 3 or above, against 4 of 19 in round 1.
 - **Dan's notes:** the cat "good but overlaps studs", the bear "ears overlap
   studs".
-- **Cause of the stud overlap, measured, not fixed.** `character_head` puts two
-  crown studs on every head, at x from 3.0 to 9.6 mm each side, y +-3.3, z 30.5 to
-  33.3 (hats seat on them). A head's top is only 18 to 20 mm wide, so ears placed
+- **Cause of the stud overlap, measured, then fixed (same day).** `character_head`
+  puts two crown studs on every head, at x from 3.0 to 9.6 mm each side, y +-3.3,
+  z 30.5 to 33.3 (hats seat on them). A head's top is only 18 to 20 mm wide, so ears placed
   at the upper corners (root at z = height - 5, x = half-width - 0.35 x radius)
-  land on the studs. Extra ear volume inside the stud columns grown by 0.6 mm:
+  landed on the studs. Extra ear volume inside the stud columns grown by 0.6 mm:
   bunny 88 mm3, cat 16 mm3, bear 1.5 mm3 (the bear's ear cap merges into the stud
   instead of adding volume). Robot and alien antennae sit at x +-12 to +-15.6 and
-  touch nothing. No gate checks this: all 8 heads passed. Any fix has to respect
-  the 31.75 mm small-parts width limit, which leaves only about 6 mm of width
-  beside each stud column, so ears cannot simply move outward.
+  touched nothing. No gate checked this: all 8 heads passed. Dan's answer was "1 or
+  move ear down or increase angle", so the daemon now fits head ears and horns
+  around the studs (see the `ears` bullet under `features`). Result on the saved v3
+  recipes and six stress cases (tall pointy, big and huge round, wide pointy, horns,
+  ears plus beak): all 11 print_ready with design status verified, 0.0 mm3 inside
+  the stud keep-out, one body each. The bunny and cat moved down 3 mm, the bear lost a
+  1 mm cap, a wide pointy ear leaned out 18 degrees. The cost is looks: the cat's
+  ears are now flat blades hugging the sides of the head, and a wide ear is cut to
+  fit the strip beside the studs, because the 31.75 mm small-parts width leaves
+  only about 6 mm of room there. Two traps on the way: a rounded stud outline left
+  hair-thin triangles on the cut face that export as zero-volume "bodies" (G1 and
+  G3 failed on bunny and cat), so the keep-out is plain boxes; and scoring the cut
+  by volume above the crown plane wrongly dropped the bear's ear, so it is scored by the part that
+  shows outside the head. Not rerun through Spark: the recipes are unchanged, so the
+  eval numbers above stand; Dan has not seen the fixed meshes.
 - **Reading:** the taste gate is still tripped for heads and partly lifted for
   crowns. The parts still at 1 or 2 are body-shape problems (dome helmet,
   astronaut, pumpkin, wizard cone, chef puff, fez), which the feature ops cannot
@@ -1419,8 +1528,9 @@ the astronaut and pumpkin are still plain slabs. Dan's re-rating of the 22 parts
 lifted the mean from 1.47 (round 1, 19 parts) to 2.36 and the share at 3 or above
 from 4 of 19 to 9 of 22: crowns improved clearly (1.64 to 2.64), heads only a
 little (1.0 to 2.0 on the same five prompts). The taste gate is therefore still
-tripped for heads. Two heads lost points because ears overlap the crown studs
-(see "Dan's ratings of rounds 2 and 3"). Latency is fine and
+tripped for heads. Two heads lost points because ears overlap the crown studs;
+head ears and horns are now fitted around the studs (see "Dan's ratings of rounds
+2 and 3"), and that fix is not yet re-rated. Latency is fine and
 Spark's price is unknown.
 
 If tuning is chosen, the training set is the gate-filtered sampler output plus
@@ -1635,7 +1745,9 @@ deterministic code verifies geometry, fit, and physics.
     and resizes twice spends 3 more. A separate budget for fits, or a limiter that
     does not count refused calls, would let the loop run. Both are security
     choices in `worker/forgeOptimizer.ts`, so they are the owner's call. The gate
-    driver never retries, for this reason.
+    driver never retries, for this reason. The real spoon fit needed 4 gate calls (three
+    slivers, then a pass) and met the limit on its fourth until the limiter was reset
+    by hand; so 3 a minute is below what one real fit can use.
 31. F2b, where the fit loop runs. Only the Worker holds the mask raster, and the
     gate is the daemon behind the forge routes, which need a live parent proof (2
     or 5 minutes) and are rate limited. No client calls those routes today. Three
@@ -1652,6 +1764,13 @@ deterministic code verifies geometry, fit, and physics.
     The Worker half is built. The device half needs question 30 (f) settled first, and the peer plan for a contour in the mask summary
     ([sam-physical-to-digital-spec.md](sam-physical-to-digital-spec.md), section
     3) can be filled from the same outline instead of a second tracer.
+
+32. F2b, thin necks. The spoon's printed plate has a 2.0 mm wide neck, 5 mm thick,
+    and the gates pass it (they test printability, not strength). In plane the weak
+    direction is the 2.0 mm width. Is that sturdy enough for a prop a child holds, or
+    should the legalizer refuse or thicken necks under some width (say 3.2 mm, by a small
+    global outward offset, a tenth of a millimetre or two on a 90 mm outline) and say so?
+    Cheapest answer: print the spoon plate and bend it. I have not built a thickening step.
 
 ## Docs impact when this ships
 

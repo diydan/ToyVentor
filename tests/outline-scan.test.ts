@@ -4,38 +4,20 @@ import { describe, expect, it, vi } from "vitest";
 import {
   parseScanOutline,
   parseScanOutlineRequest,
+  KEEP_PARTS_FILLETS,
   SCAN_OUTLINE_MAX_PIXELS,
   scanOutline,
   type ScanOutline,
   type ScanOutlineSuccess,
 } from "../shared/outlineScan";
 import { applyAffine, legalizeOutline } from "../shared/photoOutline";
-import { disc, rect, type Raster, rasterize, rotated, star, union } from "./fixtures/outlineMasks";
-import { realCup } from "./fixtures/realCupMask";
+import { cropToObject, type Cropped, disc, rect, type Raster, rasterize, rotated, star, union } from "./fixtures/outlineMasks";
+import { realCup, realSpoon, SPOON_PHOTO } from "./fixtures/realCupMask";
 
 // The legalizer takes 0.1 to 0.9 s a call and the machine is often at load 50 or more.
 vi.setConfig({ testTimeout: 60_000 });
 
 // ---- helpers: a photo with the object somewhere in it, cropped the way the model sends it --------------------------
-
-interface Cropped {
-  raster: Raster;
-  bounds: { left: number; top: number };
-  photo: Raster;
-}
-
-function cropToObject(photo: Raster): Cropped {
-  let x0 = photo.width, y0 = photo.height, x1 = -1, y1 = -1;
-  for (let y = 0; y < photo.height; y++)
-    for (let x = 0; x < photo.width; x++)
-      if (photo.data[y * photo.width + x]) {
-        x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y);
-      }
-  const w = x1 - x0 + 1, h = y1 - y0 + 1;
-  const data = new Uint8Array(w * h);
-  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) data[y * w + x] = photo.data[(y + y0) * photo.width + x + x0] ? 1 : 0;
-  return { raster: { data, width: w, height: h }, bounds: { left: x0, top: y0 }, photo };
-}
 
 /** Independent of the code under test: ray casting. */
 function inside(poly: readonly (readonly [number, number])[], x: number, z: number): boolean {
@@ -378,5 +360,101 @@ describe("outlineScan.ts", () => {
     const code = src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
     expect(code.length).toBeGreaterThan(2000);
     expect(code).not.toMatch(/\bwindow\b|\bdocument\b|localStorage|\bprocess\.|\bfetch\b/);
+  });
+});
+
+// ---- keeping a thin part by rounding more gently ------------------------------------------------------------------------
+
+describe("scanOutline: a part narrower than the rounding is kept by rounding more gently", () => {
+  /** A head on a stick `stickPx` wide and 410 px tall overall: at the 90 mm maximum the stick is stickPx / 410 * 90 mm wide. */
+  const lollipopPhoto = (stickPx: number) => inPhoto(union(disc(320, 110, 80), rect(320 - stickPx / 2, 180, 320 + stickPx / 2, 440)));
+
+  /** Share of the stick's own photo pixels that land inside the outline. */
+  function stickCovered(o: ScanOutlineSuccess, stickPx: number): number {
+    let n = 0, hit = 0;
+    for (let y = 220; y < 430; y += 2)
+      for (let x = Math.ceil(320 - stickPx / 2) + 1; x < 320 + stickPx / 2 - 1; x += 1) {
+        const [px, pz] = applyAffine(o.photoToPlate, x, y);
+        n++;
+        if (inside(o.points, px, pz)) hit++;
+      }
+    return hit / n;
+  }
+
+  // Each stick is between two rounding limits (a fillet f keeps nothing narrower than 2f, at least 1.6 mm), so one fillet is the first that keeps it.
+  const cases: [string, number, number][] = [
+    ["2.9 mm at full size (under 3.2, over 2.4)", 13, 1.2],
+    ["2.2 mm at full size (under 2.4, over 2.0)", 10, 1.0],
+    ["1.8 mm at full size (under 2.0, over 1.6)", 8, 0.8],
+  ];
+  it.each(cases)("a stick %s keeps its stick at fillet %f, the largest that does", (_name, stickPx, expectedFillet) => {
+    const c = lollipopPhoto(stickPx);
+    const plain = legalizeOutline(c.raster, { targetHeightMm: 54, keepThinParts: true });
+    if (!plain.ok) throw new Error("legalize failed");
+    expect(plain.warnings).toContain("THIN_PARTS_REMOVED"); // guard: at the default the stick is taken off
+    const o = ok(scanOutline(c.raster, c.bounds, PHOTO, { targetHeightMm: 54 }));
+    expect(o.fillet_r_mm).toBe(expectedFillet);
+    expect(o.warnings).not.toContain("THIN_PARTS_REMOVED");
+    expect(o.changes.at(-1)).toMatchObject({ step: "C2", code: "lowered_fillet_to_keep_parts", value: expectedFillet });
+    expect(o.heightMm).toBeGreaterThan(plain.heightMm * 1.5); // the whole object, not the head alone
+    expect(stickCovered(o, stickPx)).toBeGreaterThan(0.95);
+    expect(photoIoU(o, c.photo)).toBeGreaterThan(0.9);
+    expect(parseScanOutline(JSON.parse(JSON.stringify(o)))).toEqual(o); // and the reply survives the wire
+  });
+
+  it("leaves the default and its warning when no gentler rounding keeps the part: a stick under 1.6 mm", () => {
+    const c = lollipopPhoto(5);
+    const o = ok(scanOutline(c.raster, c.bounds, PHOTO, { targetHeightMm: 54 }));
+    expect(o.fillet_r_mm).toBe(1.6);
+    expect(o.warnings).toContain("THIN_PARTS_REMOVED");
+    expect(o.changes.map((x) => x.code)).not.toContain("lowered_fillet_to_keep_parts");
+  });
+
+  it("does not touch an outline that lost nothing: a disc, a star, and a stick wide enough for the default", () => {
+    for (const make of [() => inPhoto(disc(400, 200, 90)), () => inPhoto(star(320, 240, 160, 70)), () => lollipopPhoto(20)]) {
+      const c = make();
+      const o = ok(scanOutline(c.raster, c.bounds, PHOTO, { targetHeightMm: 54 }));
+      expect(o.fillet_r_mm).toBe(1.6);
+      expect(o.changes.map((x) => x.code)).not.toContain("lowered_fillet_to_keep_parts");
+    }
+  });
+
+  it("exports the fillets it tries, gentlest last, none under the builder's own 0.8 rounding", () => {
+    expect([...KEEP_PARTS_FILLETS]).toEqual([1.2, 1.0, 0.8]);
+  });
+});
+
+describe("a real SAM mask with a thin handle (the steel spoon, 288 x 512 upload)", () => {
+  it("keeps the whole spoon: the default rounding takes the handle off, the gentler one keeps it", async () => {
+    const { raster, bounds } = await realSpoon();
+    expect([raster.width, raster.height]).toEqual([91, 447]); // guard: this is the real mask
+    const plain = legalizeOutline(raster, { targetHeightMm: 54, keepThinParts: true });
+    if (!plain.ok) throw new Error("legalize failed");
+    expect(plain.warnings).toContain("THIN_PARTS_REMOVED"); // what the pipeline used to ship: a bowl with no handle
+    expect(plain.heightMm).toBeLessThan(25);
+
+    const o = ok(scanOutline(raster, bounds, SPOON_PHOTO, { targetHeightMm: 54 }));
+    expect(o.warnings).toEqual([]);
+    expect(o.fillet_r_mm).toBeLessThan(1.6);
+    expect(o.heightMm).toBeGreaterThan(75);
+    expect(o.heightMm).toBeLessThanOrEqual(90);
+    expect(o.widthMm).toBeGreaterThan(14);
+    expect(o.changes.map((c) => c.code)).toContain("lowered_fillet_to_keep_parts");
+    expect(o.fidelity).toBeGreaterThan(0.95);
+
+    // In photo pixels: the outline covers the handle (the lower half of the spoon) and the whole object overlaps well.
+    const photo = { width: SPOON_PHOTO.width, height: SPOON_PHOTO.height, data: new Uint8Array(SPOON_PHOTO.width * SPOON_PHOTO.height) };
+    for (let y = 0; y < raster.height; y++) for (let x = 0; x < raster.width; x++) if (raster.data[y * raster.width + x]) photo.data[(y + bounds.top) * photo.width + x + bounds.left] = 1;
+    let handle = 0, covered = 0;
+    for (let y = bounds.top + Math.round(raster.height * 0.55); y < bounds.top + raster.height; y++)
+      for (let x = bounds.left; x < bounds.left + raster.width; x++) {
+        if (!photo.data[y * photo.width + x]) continue;
+        handle++;
+        const [px, pz] = applyAffine(o.photoToPlate, x, y);
+        if (inside(o.points, px, pz)) covered++;
+      }
+    expect(handle).toBeGreaterThan(2000); // guard: there is a handle to cover
+    expect(covered / handle).toBeGreaterThan(0.95);
+    expect(photoIoU(o, photo)).toBeGreaterThan(0.95);
   });
 });

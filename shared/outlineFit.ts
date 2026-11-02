@@ -21,10 +21,14 @@
 
 import type { ForgeRecipeV1 } from "./forgeOptimizer";
 import {
+  DEFAULT_FILLET_MM,
+  FILLET_LADDER,
+  GRIP_ROUNDING_MM,
   legalizeOutline,
   outlineToRecipeShape,
   retryOptions,
   RETRY_LADDER,
+  roundingRemovesParts,
   withFlipped,
   withScaled,
   type OutlineChange,
@@ -46,6 +50,15 @@ export const RESCALE_AIM_MM = 0.75;
 /** Gate calls one fit may use. Each is 3 to 30 s on the daemon, so the ladder (5 rungs) plus a rescale must not run on. */
 export const DEFAULT_MAX_GATE_CALLS = 8;
 
+/** The files the gate job left for a part that passed: names to ask the artifacts route for, never paths. */
+export interface GateArtifacts {
+  jobId: string;
+  /** The plate to print, `<part>.<12 hex>.stl`. */
+  stl: string;
+  glb: string | null;
+  contentHash: string | null;
+}
+
 /** What the loop needs to know about one gate run. */
 export interface OutlineVerdict {
   status: "pass" | "marginal" | "fail";
@@ -53,6 +66,8 @@ export interface OutlineVerdict {
   cylinderMm?: number;
   /** Ids of the blocking and pre-print failures; `[]` for a pass or a marginal result. */
   failures: string[];
+  /** Set by a gate that ran a job and got a plate file back (a pass). The loop does not read it; the print step does. */
+  artifacts?: GateArtifacts;
 }
 
 /** Runs the compile and gates for this shape and says what happened. Rejects only when the gate itself could not run. */
@@ -279,11 +294,27 @@ export async function fitOutline(mask: OutlineMask, options: OutlineOptions & Fi
  * rounds a little more in the builder than the change log can say.
  */
 export async function fitPolygon(outline: OutlineSuccess, gate: OutlineGate, options: FitOptions = {}): Promise<FitResult> {
+  const f0 = outline.fillet_r_mm;
+  // The rungs are relative to the outline's own fillet: the size nudges keep it (an outline rounded gently to keep a thin handle
+  // must not be rounded harder by a retry), and the fillet alternatives are the ones that cannot take parts off it.
+  const rungs: { fillet_r_mm: number; sizeFactor: number }[] = [
+    { fillet_r_mm: f0, sizeFactor: 1 },
+    ...RETRY_LADDER.filter((r) => r.sizeFactor !== 1).map((r) => ({ fillet_r_mm: f0, sizeFactor: r.sizeFactor })),
+    ...alternativeFillets(f0).map((fillet_r_mm) => ({ fillet_r_mm, sizeFactor: 1 })),
+  ];
   return runFit(
     (i) => {
-      const step = RETRY_LADDER[i];
+      const step = rungs[i];
       if (!step) return undefined;
       if (i === 0) return outline;
+      if (step.fillet_r_mm > f0) {
+        // The builder rounds by the recipe fillet itself, so a bigger one can take a thin part off the plate that this polygon (and
+        // the sticker cut to it) still shows, and the gates pass the plate either way. Skip a rung that would.
+        const lost = roundingRemovesParts(outline.points, step.fillet_r_mm);
+        if (lost.count > 0) {
+          return { ok: false, reason: "too_thin", detail: `a fillet of ${step.fillet_r_mm} mm would take ${lost.count} part${lost.count === 1 ? "" : "s"} (${round2(lost.areaMm2)} mm2) off the plate` };
+        }
+      }
       const scaled = step.sizeFactor === 1 ? { outline, factor: 1 } : withScaled(outline, step.sizeFactor);
       return {
         ...scaled.outline,
@@ -302,6 +333,16 @@ export async function fitPolygon(outline: OutlineSuccess, gate: OutlineGate, opt
     gate,
     options,
   );
+}
+
+/**
+ * Other recipe fillets worth a gate call when the size nudges did not help. From the default (1.6 mm) up: 2.0 and 3.0, which
+ * `fitPolygon` skips where they would take a part off. From a gentler fillet (an outline that was rounded less to keep a thin
+ * part): only the builder's own grip rounding, 0.8 mm, which cannot take anything off a shape that survived 1.0.
+ */
+function alternativeFillets(f0: number): number[] {
+  if (f0 < DEFAULT_FILLET_MM) return f0 > GRIP_ROUNDING_MM ? [GRIP_ROUNDING_MM] : [];
+  return FILLET_LADDER.slice(1).filter((f) => f > f0);
 }
 
 /** The kid's flip button on a finished outline: a half turn of the polygon (and of its photo map), then gated again. */

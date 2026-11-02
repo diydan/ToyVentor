@@ -18,6 +18,7 @@ import {
   outlineToRecipeShape,
   RETRY_LADDER,
   retryOptions,
+  roundingRemovesParts,
   scaleOutline,
   withFlipped,
   withScaled,
@@ -546,5 +547,118 @@ describe("recipe shape and wiring", () => {
     expect(code).not.toMatch(/\b(document|window|fetch|localStorage|sessionStorage|XMLHttpRequest|Date\.now|Math\.random|performance\.now)\b/);
     const imports = code.match(/^[ \t]*import\s.*$/gm)?.map((l) => l.trim()) ?? [];
     expect(imports).toEqual(['import type { ForgeRecipeV1 } from "./forgeOptimizer";']);
+  });
+});
+
+// ---- would the builder's rounding take a part off this polygon? ------------------------------------------------------------
+
+/** A counter-clockwise lollipop in plate mm: a stick `stickWidth` wide and `stickLength` long, bottom at z = 0, and a round head on top. */
+function lollipop(stickWidth: number, stickLength = 50, headR = 9): [number, number][] {
+  const half = stickWidth / 2;
+  const headZ = stickLength + headR;
+  const join = headZ - Math.sqrt(headR * headR - half * half);
+  const a0 = Math.atan2(join - headZ, half);
+  const pts: [number, number][] = [[-half, 0], [half, 0], [half, join]];
+  const steps = 40;
+  for (let i = 0; i <= steps; i++) {
+    const a = a0 + ((Math.PI - 2 * a0) * i) / steps;
+    pts.push([headR * Math.cos(a), headZ + headR * Math.sin(a)]);
+  }
+  pts.push([-half, join]);
+  return pts;
+}
+
+describe("roundingRemovesParts: would a recipe fillet take a real part off a finished polygon?", () => {
+  it("finds a thin stick the rounding would take, and not before the rounding is wide enough", () => {
+    const stick = lollipop(2.4); // 2.4 mm wide: survives a 1.0 fillet (nothing under 2.0 mm), not 1.6 (nothing under 3.2 mm)
+    expect(roundingRemovesParts(stick, 0.8).count).toBe(0);
+    expect(roundingRemovesParts(stick, 1.0).count).toBe(0);
+    const at16 = roundingRemovesParts(stick, 1.6);
+    expect(at16.count).toBe(1);
+    expect(at16.areaMm2).toBeGreaterThan(80); // about the stick: 2.4 mm by 50 mm is 120 mm2
+    expect(at16.areaMm2).toBeLessThan(135);
+    expect(roundingRemovesParts(stick, 3).count).toBe(1);
+  });
+
+  it("puts the edge where the rule says: a 4.4 mm stick survives 2.0 (nothing under 4.0 mm) and not 3.0 (nothing under 6.0 mm)", () => {
+    const stick = lollipop(4.4);
+    expect(roundingRemovesParts(stick, 1.6).count).toBe(0);
+    expect(roundingRemovesParts(stick, 2.0).count).toBe(0);
+    expect(roundingRemovesParts(stick, 3.0).count).toBe(1);
+  });
+
+  it("rounds by at least the builder's own 0.8 mm, whatever the recipe fillet: a 1.4 mm stick goes at fillet 0.4, a 1.9 mm stick does not go at 0.8", () => {
+    expect(roundingRemovesParts(lollipop(1.4), 0.4).count).toBe(1);
+    expect(roundingRemovesParts(lollipop(1.4), 0.8).count).toBe(1);
+    expect(roundingRemovesParts(lollipop(1.9), 0.4).count).toBe(0);
+    expect(roundingRemovesParts(lollipop(1.9), 0.8).count).toBe(0);
+  });
+
+  it("never takes less as the fillet grows", () => {
+    const stick = lollipop(3.0);
+    let last = 0;
+    for (const f of [0.4, 0.8, 1.0, 1.2, 1.6, 2.0, 3.0, 4.0]) {
+      const a = roundingRemovesParts(stick, f).areaMm2;
+      expect(a, `fillet ${f}`).toBeGreaterThanOrEqual(last - 0.5);
+      last = a;
+    }
+    expect(last).toBeGreaterThan(50); // guard: the loop reached a fillet that removes something
+  });
+
+  it("does not count rounded corners or the tips of a star as parts, as the legalizer does not", () => {
+    const circle = Array.from({ length: 60 }, (_, i): [number, number] => [20 * Math.cos((i / 60) * 2 * Math.PI), 20 + 20 * Math.sin((i / 60) * 2 * Math.PI)]);
+    const square: [number, number][] = [[-15, 0], [15, 0], [15, 30], [-15, 30]];
+    const starPts = Array.from({ length: 10 }, (_, i): [number, number] => {
+      const r = i % 2 === 0 ? 28 : 12;
+      const a = Math.PI / 2 + (i / 10) * 2 * Math.PI;
+      return [r * Math.cos(a), 28 + r * Math.sin(a)];
+    });
+    for (const [name, poly] of [["circle", circle], ["square", square], ["star", starPts]] as const) {
+      expect(roundingRemovesParts(poly, 3.0).count, name).toBe(0);
+    }
+  });
+
+  it("gives the same answer for either winding, and wherever the polygon sits", () => {
+    const stick = lollipop(2.4);
+    const base = roundingRemovesParts(stick, 1.6);
+    const reversed = roundingRemovesParts([...stick].reverse(), 1.6);
+    const moved = roundingRemovesParts(stick.map(([x, z]): [number, number] => [x + 12.5, z - 31]), 1.6);
+    for (const other of [reversed, moved]) {
+      expect(other.count).toBe(base.count);
+      expect(Math.abs(other.areaMm2 - base.areaMm2)).toBeLessThan(4);
+    }
+  });
+
+  it("fills a polygon whose rows cross it four times: two thin prongs on a bar are two parts, in either winding", () => {
+    // A bar 16 mm wide and 8 mm tall with two prongs 2.4 mm wide and 32 mm long, 11.2 mm apart. Counter-clockwise.
+    const fork: [number, number][] = [[-8, 0], [8, 0], [8, 40], [5.6, 40], [5.6, 8], [-5.6, 8], [-5.6, 40], [-8, 40]];
+    for (const [name, poly] of [["counter-clockwise", fork], ["clockwise", [...fork].reverse()]] as const) {
+      expect(roundingRemovesParts(poly, 1.6).count, name).toBe(2); // each prong is under 3.2 mm: both go, as two pieces
+      expect(roundingRemovesParts(poly, 1.0).count, name).toBe(0); // and neither is under 2.0 mm
+    }
+    const area = roundingRemovesParts(fork, 1.6).areaMm2;
+    expect(area).toBeGreaterThan(110); // two prongs of 2.4 x 32 mm is 154 mm2, less where they meet the bar
+    expect(area).toBeLessThan(160);
+  });
+
+  it("says nothing for a polygon that is not one", () => {
+    expect(roundingRemovesParts([], 1.6)).toEqual({ count: 0, areaMm2: 0 });
+    expect(roundingRemovesParts([[0, 0], [5, 5]], 1.6)).toEqual({ count: 0, areaMm2: 0 });
+    expect(roundingRemovesParts([[0, 0], [5, 0], [10, 0]], 1.6)).toEqual({ count: 0, areaMm2: 0 }); // no height
+    expect(roundingRemovesParts([[3, 0], [3, 5], [3, 9]], 1.6)).toEqual({ count: 0, areaMm2: 0 }); // no width
+    expect(roundingRemovesParts([[1, 1], [1, 1], [1, 1]], 1.6)).toEqual({ count: 0, areaMm2: 0 }); // no size at all: nothing to divide by
+  });
+
+  it("agrees with the legalizer: an outline it made with the stick kept is not harmed by its own fillet, and is by a bigger one", () => {
+    const mask = rasterize(400, 400, union(disc(200, 90, 80), rect(195, 160, 205, 390)));
+    const kept = legalizeOutline(mask, { targetHeightMm: 90, fillet_r_mm: 1.0, keepThinParts: true });
+    if (!kept.ok) throw new Error("legalize failed");
+    expect(kept.warnings).not.toContain("THIN_PARTS_REMOVED");
+    expect(roundingRemovesParts(kept.points, kept.fillet_r_mm).count).toBe(0);
+    expect(roundingRemovesParts(kept.points, 1.6).count).toBe(1);
+    const lost = legalizeOutline(mask, { targetHeightMm: 90, fillet_r_mm: 1.6, keepThinParts: true });
+    if (!lost.ok) throw new Error("legalize failed");
+    expect(lost.warnings).toContain("THIN_PARTS_REMOVED"); // the same mask loses the stick at the default
+    expect(roundingRemovesParts(lost.points, 3.0).count).toBe(0); // and what is left has nothing more to lose
   });
 });

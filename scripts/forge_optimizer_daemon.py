@@ -308,11 +308,15 @@ def _ears_or_horns_solid(
     feat: dict[str, Any],
     head_height_mm: float,
     fs: float,
+    z_shift: float = 0.0,
+    tilt_add: float = 0.0,
 ) -> manifold3d.Manifold | None:
     """A mirrored pair on the upper corners of the body. The root sits inside the body (clamped to its
-    width at that height), so the pair always fuses with it; the tilt carries the tip clear of the crown pad."""
+    width at that height), so the pair always fuses with it; the tilt carries the tip clear of the crown pad.
+    `z_shift` (negative = lower) and `tilt_add` (degrees outward, ears only) let `_fit_head_pair` move a head's
+    pair off the crown studs."""
     if slot == "head":
-        z_root = head_height_mm - 5.0  # just under the crown seat
+        z_root = head_height_mm - 5.0 + z_shift  # just under the crown seat
     else:
         z_lo, z_hi = float(rows[0][0]), float(rows[-1][0])
         z_root = z_hi - 0.12 * (z_hi - z_lo) if op == "ears" else z_lo + 0.62 * (z_hi - z_lo)
@@ -327,7 +331,7 @@ def _ears_or_horns_solid(
         tip = {"round": rb, "pointy": max(0.9, rb * 0.28), "tall": max(1.4, rb * 0.7)}[str(feat["style"])]
         x_root = max(2.0, hw - 0.35 * rb)
         ear = sdk.hull([sdk.sphere(rb, (0.0, 0.0, 0.0)), sdk.sphere(tip, (0.0, 0.0, height))])
-        ear = ear.scale((1.0, thick / width, 1.0)).rotate((0.0, float(feat["tilt_deg"]), 0.0))
+        ear = ear.scale((1.0, thick / width, 1.0)).rotate((0.0, float(feat["tilt_deg"]) + tilt_add, 0.0))
         fill = _root_fill(rb, x_root, z_root, hw, thick / width)
         return _mirror_pair(ear.translate((x_root, 0.0, z_root)) + fill)
     length = float(feat["length_mm"]) * fs
@@ -364,6 +368,94 @@ def _socket_keepout(head: manifold3d.Manifold) -> manifold3d.Manifold | None:
     if holes.is_empty():
         return None
     return manifold3d.Manifold.extrude(holes.offset(0.6, manifold3d.JoinType.Round), 10.0)
+
+
+STUD_KEEPOUT_MARGIN_MM = 0.6
+EAR_FIT_DROPS_MM = (0.0, 1.5, 3.0, 4.5, 6.0)  # how far down a head's ear or horn pair may move
+EAR_FIT_TILTS_DEG = (0.0, 6.0, 12.0, 18.0)  # how far further out an ear may lean
+STUD_CUT_SIMPLIFY_MM = 0.03
+EAR_FIT_MIN_KEPT = 0.3  # below this share of the asked-for visible volume the pair is reported as dropped
+
+
+def _stud_keepout(head: manifold3d.Manifold, head_height_mm: float) -> manifold3d.Manifold | None:
+    """The crown studs of a built head grown by 0.6 mm and extruded up from the crown plane. A hat seats on the
+    studs, so nothing a recipe adds to a head may sit in this volume."""
+    cs = head.slice(head_height_mm + 1.0)
+    if cs.is_empty():
+        return None
+    # One plain box per stud column: a rounded outline would leave hair-thin triangles on the cut face.
+    m = STUD_KEEPOUT_MARGIN_MM
+    boxes = []
+    for poly in cs.to_polygons():
+        xs, ys = poly[:, 0], poly[:, 1]
+        x0, x1, y0, y1 = float(xs.min()) - m, float(xs.max()) + m, float(ys.min()) - m, float(ys.max()) + m
+        boxes.append(manifold3d.Manifold.cube((x1 - x0, y1 - y0, 40.0)).translate((x0, y0, head_height_mm)))
+    return manifold3d.Manifold.batch_boolean(boxes, manifold3d.OpType.Add) if boxes else None
+
+
+def _intersect_volume(a: manifold3d.Manifold, b: manifold3d.Manifold) -> float:
+    return float(manifold3d.Manifold.batch_boolean([a, b], manifold3d.OpType.Intersect).volume())
+
+
+def _fit_head_pair(
+    op: str,
+    body: manifold3d.Manifold,
+    rows: list[tuple[float, float, float, float, float, float]],
+    feat: dict[str, Any],
+    head_height_mm: float,
+    fs: float,
+    studs: manifold3d.Manifold | None,
+) -> tuple[manifold3d.Manifold | None, dict[str, str] | None]:
+    """Place a head's ear or horn pair so it clears the crown studs. A head's top is only about 18 to 20 mm wide and
+    the studs fill most of it, so a pair rooted at the upper corners lands on them. Try the pair as asked, then lower
+    and (ears) leaning further out, keep the candidate whose visible part beside the studs is largest, inside the
+    small-parts width, and cut it by the stud keep-out. Returns (solid, note); the note says what moved."""
+    base = _ears_or_horns_solid(op, "head", body, rows, feat, head_height_mm, fs)
+    if base is None or studs is None:
+        return base, None
+
+    def visible(m: manifold3d.Manifold) -> float:
+        return float((m - body).volume())  # the part that shows outside the head
+
+    asked = visible(base)
+    if asked < 1.0 or _intersect_volume(base, studs) < 0.3:
+        return base, None  # nothing shows, or the pair is already clear of the studs
+    bx0, _by0, _bz0, bx1, _by1, _bz1 = base.bounding_box()
+    x_cap = max((_small_cylinder_mm() - L2_MARGIN_MM) / 2.0, max(abs(bx0), abs(bx1))) + 0.3  # never wider than asked
+    best: tuple[float, float, float, manifold3d.Manifold, float, float] | None = None  # (score, drop, tilt, cut, kept, trimmed)
+    for drop in EAR_FIT_DROPS_MM:
+        for tilt in EAR_FIT_TILTS_DEG if op == "ears" else (0.0,):
+            cand = _ears_or_horns_solid(op, "head", body, rows, feat, head_height_mm, fs, z_shift=-drop, tilt_add=tilt)
+            if cand is None:
+                continue
+            x0, _y0, _z0, x1, _y1, _z1 = cand.bounding_box()
+            if max(abs(x0), abs(x1)) > x_cap:
+                continue
+            cut = cand - studs
+            kept = min(1.0, visible(cut) / asked)
+            trimmed = _intersect_volume(cand, studs) / asked
+            score = kept - 0.5 * trimmed - 0.02 * drop - 0.005 * tilt  # a clean move beats a cut
+            if best is None or score > best[0] + 1e-9:
+                best = (score, drop, tilt, cut, kept, trimmed)
+    if best is None:
+        return None, {"op": op, "why": "no placement beside the crown studs fits inside the small-parts width"}
+    _score, drop, tilt, cut, kept, trimmed = best
+    # Drop pieces the cut left floating: a part that does not touch the body is a separate island.
+    pieces = [c for c in cut.decompose() if _intersect_volume(c, body) > 0.5]
+    solid = manifold3d.Manifold.batch_boolean(pieces, manifold3d.OpType.Add) if pieces else None
+    if solid is not None:
+        # The cut leaves hair-thin triangles that collapse to zero-volume "bodies" when the mesh is exported.
+        solid = solid.simplify(STUD_CUT_SIMPLIFY_MM)
+    if solid is None or kept < EAR_FIT_MIN_KEPT:
+        return None, {"op": op, "why": "no room beside the crown studs; the part would be mostly cut away"}
+    moved = []
+    if drop > 0:
+        moved.append(f"moved down {drop:g} mm")
+    if tilt > 0:
+        moved.append(f"leaned out {tilt:g} degrees more")
+    if trimmed * asked > 0.3:
+        moved.append("trimmed where it met the crown studs")
+    return solid, {"op": op, "why": ", ".join(moved), "kept_share": f"{kept:.2f}"}
 
 
 def _wall_y(body: manifold3d.Manifold, z: float) -> float | None:
@@ -577,6 +669,8 @@ def compile_recipe_to_partspec(recipe: dict[str, Any]) -> dict[str, Any]:
 
     # Ops the compiler accepted but could not build on this body (reported as `legalizer.features_dropped`).
     features_dropped: list[dict[str, str]] = []
+    # Ops built, but moved or trimmed to fit (reported as `legalizer.features_adjusted`).
+    features_adjusted: list[dict[str, str]] = []
 
     def build_for(
         rows: list[tuple[float, float, float, float, float, float]],
@@ -584,6 +678,7 @@ def compile_recipe_to_partspec(recipe: dict[str, Any]) -> dict[str, Any]:
     ) -> tuple[manifold3d.Manifold, list[dict[str, Any]], dict[str, Any]]:
         """`fs` scales every feature's size (L2 passes the same factor it applies to the slices)."""
         features_dropped.clear()
+        features_adjusted.clear()
         if slot == "hand":
             if kind == "profile2d":
                 cs = sdk.polygon_2d(pts_clamped, fillet_r=fillet_r)
@@ -592,7 +687,8 @@ def compile_recipe_to_partspec(recipe: dict[str, Any]) -> dict[str, Any]:
             return sdk.handheld_prop(cs, grip_tu=grip_tu)
 
         body = sdk.loft_slabs(rows)
-        after_builder: list[manifold3d.Manifold] = []  # head ears and horns: `character_head` clips above the seat
+        after_builder: list[manifold3d.Manifold] = []  # head snout: `character_head` clips above the seat
+        head_pairs: list[dict[str, Any]] = []  # head ears and horns, placed once the crown studs exist
         for feat in clean_features:
             op = feat["op"]
             if op == "knob":
@@ -618,11 +714,12 @@ def compile_recipe_to_partspec(recipe: dict[str, Any]) -> dict[str, Any]:
                         {"op": "snout", "why": "no printable underside fits this front wall; keep the head's front upright (depth d about 12 to 16, y offsets 0)"}
                     )
             elif op in ("ears", "horns"):
+                if slot == "head":
+                    head_pairs.append(feat)
+                    continue
                 solid = _ears_or_horns_solid(op, slot, body, rows, feat, head_height_mm, fs)
                 if solid is None:
                     features_dropped.append({"op": op, "why": "the body is too narrow where this op attaches"})
-                elif slot == "head":
-                    after_builder.append(solid)
                 else:
                     body = body + solid
 
@@ -630,6 +727,18 @@ def compile_recipe_to_partspec(recipe: dict[str, Any]) -> dict[str, Any]:
             return sdk.crown_addon(body, support_policy=support_policy)
         if slot == "head":
             m, conns, ex = sdk.character_head(body, height_mm=head_height_mm, support_policy=support_policy)
+            if head_pairs:
+                studs = _stud_keepout(m, head_height_mm)
+                for feat in head_pairs:
+                    solid, note = _fit_head_pair(feat["op"], body, rows, feat, head_height_mm, fs, studs)
+                    if solid is None:
+                        features_dropped.append(
+                            note or {"op": feat["op"], "why": "the body is too narrow where this op attaches"}
+                        )
+                    else:
+                        after_builder.append(solid)
+                        if note is not None:
+                            features_adjusted.append(note)
             if after_builder:
                 keepout = _socket_keepout(m)
                 for solid in after_builder:
@@ -672,6 +781,7 @@ def compile_recipe_to_partspec(recipe: dict[str, Any]) -> dict[str, Any]:
 
         spec["_l2"] = {"slot": slot, "rows": slices_legal, "rebuild": rebuild}
         spec["_features_dropped"] = features_dropped  # filled by the build; the job copies it into `legalizer`
+        spec["_features_adjusted"] = features_adjusted
     return spec
 
 
@@ -780,6 +890,7 @@ def l2_rescale(spec: dict[str, Any], measured_mm: float | None = None) -> tuple[
             new_spec = ctx["rebuild"](rows, fs_of(lo))
             new_spec["legalizer_notes"] = dict(spec.get("legalizer_notes") or {})
             new_spec["_features_dropped"] = spec.get("_features_dropped") or []
+            new_spec["_features_adjusted"] = spec.get("_features_adjusted") or []
             new_spec["_l2"] = {**ctx, "rows": rows}
             return new_spec, {
                 "applied": True,
@@ -929,6 +1040,8 @@ class OptimizerJobManager:
                             )
                     if compiled_spec.get("_features_dropped"):
                         legalizer["features_dropped"] = [dict(d) for d in compiled_spec["_features_dropped"]]
+                    if compiled_spec.get("_features_adjusted"):
+                        legalizer["features_adjusted"] = [dict(d) for d in compiled_spec["_features_adjusted"]]
                     elapsed_ms = round((time.perf_counter() - t0) * 1000.0, 1)
                     opt_info = res.get("optimization") or {}
                     c_hash = opt_info.get("content_hash")

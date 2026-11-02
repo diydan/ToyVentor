@@ -112,6 +112,50 @@ export const SHAPES = {
   twoBlobs: () => rasterize(400, 400, union(disc(120, 200, 100), disc(335, 200, 40))),
 } as const;
 
+/** An object in a photo, cropped to its bounding box the way the model sends a mask: the crop, where it sits, and the photo. */
+export interface Cropped {
+  raster: Raster;
+  bounds: { left: number; top: number };
+  photo: Raster;
+}
+
+export function cropToObject(photo: Raster): Cropped {
+  let x0 = photo.width, y0 = photo.height, x1 = -1, y1 = -1;
+  for (let y = 0; y < photo.height; y++)
+    for (let x = 0; x < photo.width; x++)
+      if (photo.data[y * photo.width + x]) {
+        x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y);
+      }
+  const w = x1 - x0 + 1, h = y1 - y0 + 1;
+  const data = new Uint8Array(w * h);
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) data[y * w + x] = photo.data[(y + y0) * photo.width + x + x0] ? 1 : 0;
+  return { raster: { data, width: w, height: h }, bounds: { left: x0, top: y0 }, photo };
+}
+
+/** The raster with every enclosed hole filled (a flood from the border marks the background; what it misses is inside). */
+export function fillHoles(r: Raster): Raster {
+  const { width: w, height: h } = r;
+  const reached = new Uint8Array(w * h);
+  const stack: number[] = [];
+  const visit = (x: number, y: number) => {
+    if (x < 0 || y < 0 || x >= w || y >= h) return;
+    const i = y * w + x;
+    if (reached[i] || r.data[i]) return;
+    reached[i] = 1;
+    stack.push(i);
+  };
+  for (let x = 0; x < w; x++) { visit(x, 0); visit(x, h - 1); }
+  for (let y = 0; y < h; y++) { visit(0, y); visit(w - 1, y); }
+  while (stack.length) {
+    const i = stack.pop()!;
+    const x = i % w, y = (i / w) | 0;
+    visit(x + 1, y); visit(x - 1, y); visit(x, y + 1); visit(x, y - 1);
+  }
+  const data = new Uint8Array(w * h);
+  for (let i = 0; i < w * h; i++) data[i] = r.data[i] || !reached[i] ? 1 : 0;
+  return { data, width: w, height: h };
+}
+
 // ---- independent checkers --------------------------------------------------------------------------
 
 export const countOn = (r: Raster) => r.data.reduce((a, b) => a + b, 0);

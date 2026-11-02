@@ -20,7 +20,7 @@
  * Pure apart from the injected `fetch` and `sleep`; imports only the loop.
  */
 
-import { type OutlineGate, type OutlineShape, verdictFromGateReport } from "./outlineFit";
+import { type GateArtifacts, type OutlineGate, type OutlineShape, type OutlineVerdict, verdictFromGateReport } from "./outlineFit";
 
 export type OutlineGateErrorKind =
   /** 429: the Worker's per-device or per-IP budget (preview 3 a minute, poll 30 a minute) or the daemon's queue is full. */
@@ -59,6 +59,11 @@ const JOB_RUNNING = new Set(["queued", "validating", "optimizing"]);
 /** Job states that carry a gate report. `digital_only` is a part the gates refused, not an error. */
 const JOB_DONE = new Set(["print_ready", "digital_only"]);
 const JOB_ID_RE = /^fjob_[a-f0-9]{12}$/;
+/** A plate file as the daemon names it. Narrower than the Worker's own artifact pattern (no drafts, no GLB): this is the print file. */
+const PLATE_NAME_RE = /^[a-z0-9_]{2,64}\.[a-f0-9]{12}\.stl$/;
+/** The Worker's cap on a plate (`MAX_FORGE_STL_BYTES` in worker/forgeOptimizer.ts), and the smallest binary STL (80 byte header + 4 byte count). */
+export const PLATE_STL_MAX_BYTES = 2_500_000;
+const STL_MIN_BYTES = 84;
 
 /** The poll budget is 30 a minute a device, so the wait grows: 1 s, 1.5 s, 2 s, then 3 s and up (20 a minute). */
 export function pollDelayMs(poll: number): number {
@@ -129,7 +134,7 @@ export function forgeRouteGate(options: RouteGateOptions = {}): OutlineGate {
     return json;
   }
 
-  return async (shape: OutlineShape) => {
+  return async (shape: OutlineShape): Promise<OutlineVerdict> => {
     const started = await call("/preview", {
       method: "POST",
       body: JSON.stringify({ recipe: { name, slot: "hand", shape }, enqueue_background: true, include_glb_base64: false }),
@@ -148,7 +153,53 @@ export function forgeRouteGate(options: RouteGateOptions = {}): OutlineGate {
       if (JOB_RUNNING.has(status)) continue;
       if (status === "failed") throw new OutlineGateError("job_failed", "the gate job failed before it produced a report");
       if (!JOB_DONE.has(status)) throw new OutlineGateError("bad_reply", `unknown job status "${status}"`);
-      return verdictFromGateReport(job.gate_report);
+      const verdict = verdictFromGateReport(job.gate_report);
+      const artifacts = status === "print_ready" && verdict.status === "pass" ? artifactsOf(jobId, job) : undefined;
+      return artifacts ? { ...verdict, artifacts } : verdict;
     }
   };
+}
+
+/** The plate of a finished job, or undefined when the job names none the artifacts route would take. */
+function artifactsOf(jobId: string, job: Record<string, unknown>): GateArtifacts | undefined {
+  const stl = job.stl_artifact;
+  if (typeof stl !== "string" || !PLATE_NAME_RE.test(stl)) return undefined;
+  const glb = job.glb_artifact;
+  const hash = job.content_hash;
+  return { jobId, stl, glb: typeof glb === "string" ? glb : null, contentHash: typeof hash === "string" ? hash : null };
+}
+
+/**
+ * The plate to print: the STL a passing gate job left, fetched through the Worker's artifacts route (parent gate and the poll
+ * budget apply). Takes the same `fetch`, `headers` and `base` as `forgeRouteGate`. Throws an `OutlineGateError` like the gate does;
+ * a name that is not a plate file, a reply with no bytes, or one over the Worker's cap is `bad_reply` or `rejected`, never bytes.
+ */
+export async function fetchPlateStl(name: string, options: Pick<RouteGateOptions, "fetch" | "headers" | "base"> = {}): Promise<Uint8Array> {
+  if (typeof name !== "string" || !PLATE_NAME_RE.test(name)) throw new OutlineGateError("rejected", "that is not the name of a plate file");
+  const doFetch = options.fetch ?? ((url: string, init?: RequestInit) => fetch(url, init));
+  const base = (options.base ?? "/api/forge").replace(/\/+$/, "");
+  let res: Response;
+  try {
+    const extra = options.headers ? await options.headers() : {};
+    res = await doFetch(`${base}/artifacts/${name}`, { method: "GET", headers: { ...extra } });
+  } catch (err) {
+    throw new OutlineGateError("unavailable", `could not reach the forge route: ${err instanceof Error ? err.message : String(err)}`);
+  }
+  if (res.status < 200 || res.status >= 300) {
+    const retry = Number(res.headers.get("retry-after"));
+    throw new OutlineGateError(kindForStatus(res.status), `forge route answered ${res.status}`, {
+      httpStatus: res.status,
+      ...(Number.isFinite(retry) && retry > 0 ? { retryAfterS: retry } : {}),
+    });
+  }
+  const declared = Number(res.headers.get("content-length"));
+  if (Number.isFinite(declared) && declared > PLATE_STL_MAX_BYTES) throw new OutlineGateError("bad_reply", "the plate file is over the size limit", { httpStatus: res.status });
+  let bytes: Uint8Array;
+  try {
+    bytes = new Uint8Array(await res.arrayBuffer());
+  } catch {
+    throw new OutlineGateError("unavailable", "the plate file stopped part way", { httpStatus: res.status });
+  }
+  if (bytes.length < STL_MIN_BYTES || bytes.length > PLATE_STL_MAX_BYTES) throw new OutlineGateError("bad_reply", `the plate file is ${bytes.length} bytes`, { httpStatus: res.status });
+  return bytes;
 }

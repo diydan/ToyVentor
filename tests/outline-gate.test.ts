@@ -2,11 +2,10 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { fitOutline, type OutlineShape } from "../shared/outlineFit";
-import { forgeRouteGate, OutlineGateError, type OutlineGateErrorKind, pollDelayMs, type RouteGateOptions } from "../shared/outlineGate";
+import { fetchPlateStl, forgeRouteGate, OutlineGateError, type OutlineGateErrorKind, PLATE_STL_MAX_BYTES, pollDelayMs, type RouteGateOptions } from "../shared/outlineGate";
 import { legalizeOutline, outlineToRecipeShape } from "../shared/photoOutline";
 import { forgeRateLimited, resetForgeRateLimit, type ForgeOptimizerEnv } from "../worker/forgeOptimizer";
-import worker from "../worker/index";
-import type { D1Like } from "../worker/ownership";
+import { DEVICE, fakeDaemon, forgeEnv, mintParentProof, viaWorker } from "./fixtures/forgeWorkerHarness";
 import { randomBlob, SHAPES } from "./fixtures/outlineMasks";
 
 // The real compile runs once per rung on a 400 x 400 mask, and the machine is often at load 50 or more.
@@ -21,6 +20,7 @@ interface Step {
   status?: number;
   json?: unknown;
   raw?: string;
+  bytes?: Uint8Array;
   headers?: Record<string, string>;
   throws?: Error;
 }
@@ -32,7 +32,7 @@ function scripted(steps: Step[]) {
     const step = steps[calls.length - 1];
     if (!step) throw new Error(`unscripted call ${calls.length}: ${init?.method} ${url}`);
     if (step.throws) throw step.throws;
-    return new Response(step.raw ?? JSON.stringify(step.json ?? {}), {
+    return new Response((step.bytes as BodyInit | undefined) ?? step.raw ?? JSON.stringify(step.json ?? {}), {
       status: step.status ?? 200,
       headers: { "content-type": "application/json", ...(step.headers ?? {}) },
     });
@@ -253,72 +253,157 @@ describe("forgeRouteGate: when the gate could not run it throws, with a kind", (
   });
 });
 
-// ---- through the real Worker routes ------------------------------------------------------------------------------
+// ---- the plate of a passing job ------------------------------------------------------------------------------------
 
-const DEVICE = "12345678-1234-1234-1234-123456789abc";
+const PLATE = "custom_photo_outline.0123456789ab.stl";
+const stlBytes = (n: number) => new Uint8Array(n).fill(7);
+const jobWithPlate = (extra: Record<string, unknown> = {}, status = "print_ready", report: unknown = REPORT_PASS) => ({
+  json: { ok: true, job_id: JOB, status, gate_report: report, stl_artifact: PLATE, glb_artifact: "custom_photo_outline.0123456789ab.glb", content_hash: "0123456789ab", ...extra },
+});
 
-function fakeDb(): D1Like {
-  const settings = new Map<string, string>();
-  return {
-    prepare: (sql) => ({
-      bind: (...values: unknown[]) => ({
-        run: async () => {
-          if (sql.includes("INSERT INTO parent_settings")) {
-            const [id, text] = values as [string, string];
-            if (!(sql.includes("DO NOTHING") && settings.has(id))) settings.set(id, text);
-          }
-          return {};
-        },
-        all: async () => {
-          if (sql.includes("FROM parent_settings")) {
-            const v = settings.get(values[0] as string);
-            return { results: v !== undefined ? [{ settings_json: v }] : [] };
-          }
-          return { results: [] };
-        },
-      }),
-    }),
-  };
-}
-
-async function mintParentProof(env: ForgeOptimizerEnv): Promise<string> {
-  const callGate = (body: object) =>
-    worker.fetch(
-      new Request("http://local/api/parent/gate", { method: "POST", headers: { "content-type": "application/json", "x-device-id": DEVICE }, body: JSON.stringify(body) }),
-      env as never,
-    );
-  const ch = (await (await callGate({ action: "challenge" })).json()) as { a: number; b: number; challengeToken: string };
-  const verified = await callGate({ action: "verify", challengeToken: ch.challengeToken, answer: ch.a * ch.b });
-  return ((await verified.json()) as { proofToken: string }).proofToken;
-}
-
-/** The optimizer daemon, as the Worker sees it: records what it is sent, answers from a script. */
-function fakeDaemon(reports: unknown[], overrides: { previewStatus?: number; previewHeaders?: Record<string, string>; jobStatus?: string } = {}) {
-  const recipes: any[] = [];
-  const jobs = new Map<string, unknown>();
-  const json = (body: unknown, status = 200, headers: Record<string, string> = {}) =>
-    new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json", ...headers } });
-  const spy = vi.spyOn(globalThis, "fetch").mockImplementation(async (input, init) => {
-    const url = String(input);
-    const path = new URL(url).pathname;
-    if (path === "/v1/fast-preview") {
-      if (overrides.previewStatus) return json({ ok: false, status: "x" }, overrides.previewStatus, overrides.previewHeaders ?? {});
-      const body = JSON.parse(String(init?.body));
-      recipes.push(body);
-      const id = `fjob_${String(recipes.length).padStart(12, "0")}`;
-      jobs.set(id, reports[recipes.length - 1] ?? reports.at(-1));
-      return json({ ok: true, status: "preview_ready", part_id: "custom_photo_outline", job_id: id, draft_artifact: "", glb_size: 1, orig_tris: 1, web_verts: 1, web_tris: 1, finish_class: "show_curved", elapsed_ms: 1 });
-    }
-    const m = /^\/v1\/jobs\/(fjob_[a-f0-9]{12})$/.exec(path);
-    if (m) {
-      const report: any = jobs.get(m[1]!);
-      if (report === undefined) return json({ ok: false, status: "not-found" }, 404);
-      return json({ ok: true, job_id: m[1], part_id: "custom_photo_outline", status: overrides.jobStatus ?? (report.ok ? "print_ready" : "digital_only"), gate_report: report });
-    }
-    return json({ ok: false }, 404);
+describe("forgeRouteGate: the artifacts of a pass", () => {
+  it("hands back the plate, the model file and the hash of the job that passed", async () => {
+    const { gate } = gateWith([started(), jobWithPlate()]);
+    expect(await gate(SHAPE)).toEqual({
+      status: "pass",
+      cylinderMm: 61,
+      failures: [],
+      artifacts: { jobId: JOB, stl: PLATE, glb: "custom_photo_outline.0123456789ab.glb", contentHash: "0123456789ab" },
+    });
   });
-  return { recipes, spy };
-}
+
+  it("leaves the model file and hash null when the job does not name them", async () => {
+    const { gate } = gateWith([started(), jobWithPlate({ glb_artifact: null, content_hash: 5 })]);
+    expect((await gate(SHAPE)).artifacts).toEqual({ jobId: JOB, stl: PLATE, glb: null, contentHash: null });
+  });
+
+  it("reports none when the job names no plate, as a stand-in gate's job does not", async () => {
+    const { gate } = gateWith([started(), done(REPORT_PASS)]);
+    const v = await gate(SHAPE);
+    expect(v.status).toBe("pass");
+    expect("artifacts" in v).toBe(false);
+  });
+
+  it.each([
+    ["a path", "../../etc/passwd.stl"],
+    ["a draft", "custom_photo_outline.01234567.draft.stl"],
+    ["a model file", "custom_photo_outline.0123456789ab.glb"],
+    ["capitals", "Custom_Photo.0123456789ab.stl"],
+    ["a short hash", "custom_photo_outline.0123456789a.stl"],
+    ["a trailing path", `${PLATE}/..`],
+    ["a number", 7],
+    ["null", null],
+  ])("reports none for a plate name that is %s", async (_name, stl) => {
+    const { gate } = gateWith([started(), jobWithPlate({ stl_artifact: stl })]);
+    const v = await gate(SHAPE);
+    expect(v.status).toBe("pass");
+    expect("artifacts" in v).toBe(false);
+  });
+
+  it("reports none unless the job is print_ready AND the report is a pass: a file beside a failing report, or a passing report on a part that is not print ready, is not a plate to print", async () => {
+    const notReady = gateWith([started(), jobWithPlate({}, "digital_only", REPORT_PASS)]);
+    expect((await notReady.gate(SHAPE)).status).toBe("pass");
+    expect("artifacts" in (await gateWith([started(), jobWithPlate({}, "digital_only", REPORT_PASS)]).gate(SHAPE))).toBe(false);
+    const failing = gateWith([started(), jobWithPlate({}, "print_ready", REPORT_SLIVER)]);
+    const v = await failing.gate(SHAPE);
+    expect(v.status).toBe("fail");
+    expect("artifacts" in v).toBe(false);
+  });
+
+  it("reports none for a part the gates refused or called marginal, even if the job left a file", async () => {
+    const refused = gateWith([started(), jobWithPlate({}, "digital_only", REPORT_SLIVER)]);
+    expect("artifacts" in (await refused.gate(SHAPE))).toBe(false);
+    const marginal = gateWith([started(), jobWithPlate({}, "digital_only", REPORT_MARGINAL)]);
+    expect("artifacts" in (await marginal.gate(SHAPE))).toBe(false);
+  });
+});
+
+describe("fetchPlateStl", () => {
+  const fetcher = (steps: Step[]) => {
+    const s = scripted(steps);
+    return { ...s, run: (name = PLATE, extra: Parameters<typeof fetchPlateStl>[1] = {}) => fetchPlateStl(name, { fetch: s.fetch, ...extra }) };
+  };
+
+  it("asks the artifacts route for the plate, with the caller's headers, and returns the bytes", async () => {
+    const { run, calls } = fetcher([{ bytes: stlBytes(500) }]);
+    let n = 0;
+    const bytes = await run(PLATE, { headers: () => ({ "x-parent-proof": `proof-${++n}` }) });
+    expect(bytes).toEqual(stlBytes(500));
+    expect(calls).toHaveLength(1);
+    expect(calls[0]!.url).toBe(`/api/forge/artifacts/${PLATE}`);
+    expect(calls[0]!.init?.method).toBe("GET");
+    expect((calls[0]!.init?.headers as Record<string, string>)["x-parent-proof"]).toBe("proof-1");
+  });
+
+  it("takes the base the caller chose", async () => {
+    const { run, calls } = fetcher([{ bytes: stlBytes(100) }]);
+    await run(PLATE, { base: "https://example.test/api/forge/" });
+    expect(calls[0]!.url).toBe(`https://example.test/api/forge/artifacts/${PLATE}`);
+  });
+
+  it.each([
+    ["a path", "../../etc/passwd"],
+    ["a draft", "custom_photo_outline.01234567.draft.stl"],
+    ["a model file", "custom_photo_outline.0123456789ab.glb"],
+    ["capitals", "Custom.0123456789ab.stl"],
+    ["empty", ""],
+    ["a query", `${PLATE}?x=1`],
+  ])("refuses %s as a name, without asking the route", async (_name, bad) => {
+    const { run, calls } = fetcher([{ bytes: stlBytes(100) }]);
+    const err = await errorOf(run(bad));
+    expect(err.kind).toBe("rejected");
+    expect(calls).toHaveLength(0);
+  });
+
+  it.each([
+    [401, "gate_required"],
+    [429, "slow_down"],
+    [503, "disabled"],
+    [404, "unavailable"],
+    [422, "rejected"],
+    [500, "unavailable"],
+    [504, "timeout"],
+  ] as [number, OutlineGateErrorKind][])("answers %i: %s", async (status, kind) => {
+    const { run } = fetcher([{ status, json: { ok: false } }]);
+    const err = await errorOf(run());
+    expect(err.kind).toBe(kind);
+    expect(err.httpStatus).toBe(status);
+  });
+
+  it("reads retry-after on a 429", async () => {
+    const { run } = fetcher([{ status: 429, json: {}, headers: { "retry-after": "5" } }]);
+    expect((await errorOf(run())).retryAfterS).toBe(5);
+  });
+
+  it("gives no retry-after when a 429 sent none", async () => {
+    const { run } = fetcher([{ status: 429, json: {} }]);
+    const err = await errorOf(run());
+    expect(err.kind).toBe("slow_down");
+    expect(err.retryAfterS).toBeUndefined();
+  });
+
+  it("is unavailable when the connection drops, before or during the body", async () => {
+    expect((await errorOf(fetcher([{ throws: new Error("socket hang up") }]).run())).kind).toBe("unavailable");
+    const broken = async () => new Response(new ReadableStream({ start: (c) => c.error(new Error("cut")) }), { status: 200 });
+    expect((await errorOf(fetchPlateStl(PLATE, { fetch: broken }))).kind).toBe("unavailable");
+  });
+
+  it("takes a file from the smallest binary STL (84 bytes) to the Worker's cap, and nothing outside it", async () => {
+    expect((await fetcher([{ bytes: stlBytes(84) }]).run()).length).toBe(84);
+    expect((await fetcher([{ bytes: stlBytes(PLATE_STL_MAX_BYTES) }]).run()).length).toBe(PLATE_STL_MAX_BYTES);
+    for (const n of [0, 10, 83, PLATE_STL_MAX_BYTES + 1]) {
+      const err = await errorOf(fetcher([{ bytes: stlBytes(n) }]).run());
+      expect(err.kind, `${n} bytes`).toBe("bad_reply");
+    }
+  });
+
+  it("refuses by the declared length before reading a body that is over the cap", async () => {
+    const { run } = fetcher([{ bytes: stlBytes(200), headers: { "content-length": String(PLATE_STL_MAX_BYTES + 1) } }]);
+    expect((await errorOf(run())).kind).toBe("bad_reply");
+  });
+});
+
+// ---- through the real Worker routes ------------------------------------------------------------------------------
 
 describe("forgeRouteGate through the real Worker routes", () => {
   let env: ForgeOptimizerEnv;
@@ -326,7 +411,7 @@ describe("forgeRouteGate through the real Worker routes", () => {
 
   beforeEach(async () => {
     resetForgeRateLimit();
-    env = { DB: fakeDb(), PARENT_GATE_SECRET: "gate-secret-for-tests", FORGE_OPTIMIZER_URL: "http://127.0.0.1:8791" };
+    env = forgeEnv();
     proof = await mintParentProof(env);
   });
   afterEach(() => {
@@ -334,7 +419,6 @@ describe("forgeRouteGate through the real Worker routes", () => {
     resetForgeRateLimit();
   });
 
-  const viaWorker = (e: ForgeOptimizerEnv = env) => async (url: string, init?: RequestInit) => worker.fetch(new Request(`http://local${url}`, init), e as never);
   const gate = (extra: Partial<RouteGateOptions> = {}, e: ForgeOptimizerEnv = env) =>
     forgeRouteGate({ fetch: viaWorker(e), headers: () => ({ "x-device-id": DEVICE, "x-parent-proof": proof }), sleep: async () => {}, ...extra });
 
@@ -444,6 +528,34 @@ describe("forgeRouteGate through the real Worker routes", () => {
   it("a job the daemon ends failed is job_failed", async () => {
     fakeDaemon([REPORT_PASS], { jobStatus: "failed" });
     expect((await errorOf(gate()(SHAPE))).kind).toBe("job_failed");
+  });
+
+  it("carries the plate through the Worker: the verdict names it and fetchPlateStl gets the daemon's bytes, unchanged", async () => {
+    const bytes = Uint8Array.from({ length: 1234 }, (_, i) => (i * 31) % 251);
+    const daemon = fakeDaemon([REPORT_PASS], { plate: { name: PLATE, bytes } });
+    const v = await gate()(SHAPE);
+    expect(v.artifacts).toEqual({ jobId: "fjob_000000000001", stl: PLATE, glb: "custom_photo_outline.0123456789ab.glb", contentHash: "0123456789ab" });
+    const got = await fetchPlateStl(PLATE, { fetch: viaWorker(env), headers: () => ({ "x-device-id": DEVICE, "x-parent-proof": proof }) });
+    expect(got).toEqual(bytes);
+    expect(daemon.artifactRequests).toEqual([PLATE]);
+  });
+
+  it("the Worker's artifacts route wants the grown-up proof, and 404s a plate the daemon does not have", async () => {
+    const daemon = fakeDaemon([REPORT_PASS], { plate: { name: PLATE, bytes: stlBytes(300) } });
+    const noProof = await errorOf(fetchPlateStl(PLATE, { fetch: viaWorker(env), headers: () => ({ "x-device-id": DEVICE }) }));
+    expect(noProof.kind).toBe("gate_required");
+    expect(daemon.artifactRequests).toHaveLength(0);
+    const missing = await errorOf(fetchPlateStl("other_part.0123456789ab.stl", { fetch: viaWorker(env), headers: () => ({ "x-device-id": DEVICE, "x-parent-proof": proof }) }));
+    expect(missing.kind).toBe("unavailable");
+    expect(missing.httpStatus).toBe(404);
+  });
+
+  it("never asks the Worker for a name it would not serve: nothing reaches the daemon", async () => {
+    const daemon = fakeDaemon([REPORT_PASS], { plate: { name: PLATE, bytes: stlBytes(300) } });
+    for (const bad of ["custom_photo_outline.01234567.draft.stl", "../x.stl"]) {
+      await errorOf(fetchPlateStl(bad, { fetch: viaWorker(env), headers: () => ({ "x-device-id": DEVICE, "x-parent-proof": proof }) }));
+    }
+    expect(daemon.artifactRequests).toHaveLength(0);
   });
 
   it("passes the small-parts facts through the Worker's scrub: small_part reaches the verdict", async () => {

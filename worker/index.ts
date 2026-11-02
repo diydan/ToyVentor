@@ -26,6 +26,7 @@ import {
 import { handleMuseSpark, museConfigured, type MuseEnv } from "./muse";
 import { handleOwnership, type OwnershipEnv } from "./ownership";
 import { handleParent, type ParentEnv } from "./parent";
+import { handleRoomScan } from "./roomScan";
 import { handleSelfieCartoon, handleSelfieFaceParts, selfieCloudEnabled, type SelfieEnv } from "./selfie";
 
 export interface Env
@@ -52,6 +53,10 @@ function json(data: unknown, status = 200): Response {
 }
 
 interface ScanBody {
+  /** Feature 3: "room" routes to the gated multi-noun room scan (worker/roomScan.ts). Absent = toy scan. */
+  mode?: unknown;
+  imageDataUrl?: unknown;
+  nouns?: unknown;
   toy?: unknown;
   prompt?: unknown;
   scan?: {
@@ -151,6 +156,8 @@ async function handleScanPost(request: Request, env: Env): Promise<Response> {
       parsedScan.over ? 413 : 400,
     );
   const body = parsedScan.value as ScanBody;
+
+  if (body.mode === "room") return handleRoomScan(request, env, body);
 
   if (body.scan) return handleSamScan(body.scan, env);
 

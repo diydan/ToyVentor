@@ -3,7 +3,7 @@
 // and is skipped without it, the same as tests/parts-asset-optimization.test.ts.
 import { type ChildProcessByStdio, execFileSync, spawn } from "node:child_process";
 import type { Readable } from "node:stream";
-import { existsSync, mkdtempSync, rmSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -68,13 +68,37 @@ function recipe(id: string, slot: string, slices: object[], features: object[]) 
   };
 }
 
+// Vertices of a binary STL (80-byte header, u32 count, then 50 bytes per triangle: normal, 3 vertices, attribute).
+function stlVertices(path: string): [number, number, number][] {
+  const b = readFileSync(path);
+  const n = b.readUInt32LE(80);
+  const out: [number, number, number][] = [];
+  for (let t = 0; t < n; t++) {
+    for (let v = 0; v < 3; v++) {
+      const o = 84 + t * 50 + 12 + v * 12;
+      out.push([b.readFloatLE(o), b.readFloatLE(o + 4), b.readFloatLE(o + 8)]);
+    }
+  }
+  return out;
+}
+
+// A head's crown studs are two columns at |x| 3.0 to 9.6, |y| up to 3.3, above the crown plane (z 30.5). A hat seats
+// on them, so an ear or horn must not add geometry there. Returns the distinct mesh vertices (to 0.01 mm) strictly
+// inside that column: a head with ears must have exactly the vertices a plain head has.
+function studZoneVertices(path: string): Set<string> {
+  const keep = stlVertices(path).filter(([x, y, z]) => Math.abs(x) > 2.4 && Math.abs(x) < 10.1 && Math.abs(y) < 3.8 && z > 30.7);
+  return new Set(keep.map((v) => v.map((c) => c.toFixed(2)).join(",")));
+}
+
 interface Job {
   status: string;
+  stl_artifact?: string;
   gate_report?: { small_part?: { status?: string }; design_status?: string };
   legalizer?: {
     support_policy_promoted?: string;
     features_ignored?: string[];
     features_dropped?: { op: string; why: string }[];
+    features_adjusted?: { op: string; why: string }[];
   } | null;
 }
 
@@ -182,6 +206,33 @@ describe.skipIf(!PYTHON)("Recipe v1 feature ops through the optimizer daemon", (
     expect(job.status).toBe("print_ready");
     expect(job.legalizer?.features_dropped?.map((f) => f.op)).toEqual(["snout"]);
   }, 180_000);
+
+  it("keeps head ears and horns off the crown studs and says what it moved", async () => {
+    // The top of a head is 18 to 20 mm wide and the studs fill most of it, so ears rooted at the upper corners used to
+    // grow into them (88 mm3 on this bunny). They are now lowered, leaned out, or trimmed, and the job says which.
+    const slices = [
+      { z: 0, w: 24.6, d: 12.1, r: 3 },
+      { z: 10, w: 25, d: 14, r: 5 },
+      { z: 20, w: 22, d: 14.5, r: 6 },
+      { z: 30.5, w: 18, d: 13, r: 5 },
+    ];
+    const withHeight = (r: object) => ({ ...r, shape: { kind: "loft", slices, height_mm: 30.5 } });
+    const plain = await run(withHeight(recipe("ops_test_plain_head", "head", slices, [])));
+    expect(plain.status).toBe("print_ready");
+    const studVertices = studZoneVertices(join(outDir, plain.stl_artifact!));
+    expect(studVertices.size).toBeGreaterThan(0);
+    for (const [id, feats] of [
+      ["ops_test_stud_bunny", [{ op: "ears", style: "tall", width_mm: 7, height_mm: 22, tilt_deg: 10 }]],
+      ["ops_test_stud_bear", [{ op: "ears", style: "round", width_mm: 12, height_mm: 12, tilt_deg: 0 }]],
+      ["ops_test_stud_horns", [{ op: "horns", length_mm: 14, base_mm: 6, curl: 0.5 }]],
+    ] as const) {
+      const job = await run(withHeight(recipe(id, "head", slices, [...feats])));
+      expect(job.status, id).toBe("print_ready");
+      expect(job.legalizer?.features_adjusted?.map((f) => f.op), id).toEqual([feats[0].op]);
+      const extra = [...studZoneVertices(join(outDir, job.stl_artifact!))].filter((v) => !studVertices.has(v));
+      expect(extra, id).toEqual([]);
+    }
+  }, 540_000);
 
   it("ignores an op the slot cannot use and an unknown op, and reports both", async () => {
     const job = await run(

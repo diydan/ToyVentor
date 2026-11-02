@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { scanOutlineOf, type SamScanResponse } from "../src/lib/api";
 import { parseScanOutline } from "../shared/outlineScan";
 import { applyAffine } from "../shared/photoOutline";
-import { realCup } from "./fixtures/realCupMask";
+import { realCup, realSpoon, SPOON_PHOTO, spoonSamReply } from "./fixtures/realCupMask";
 import worker from "../worker/index";
 import { segmentToy } from "../worker/meta";
 
@@ -243,5 +243,29 @@ describe("POST /api/scan with an outline request", () => {
       expect(l).not.toContain("points");
       expect(l).not.toContain("PHOTO-BYTES");
     }
+  });
+});
+
+describe("the real spoon stream through the Worker", () => {
+  const stubSpoon = () => vi.stubGlobal("fetch", vi.fn(async () => new Response(spoonSamReply(), { status: 200, headers: { "content-type": "text/event-stream" } })));
+  const post = (body: unknown) => worker.fetch(new Request("http://local/api/scan", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) }), ENV as never);
+
+  it("returns the whole spoon, handle included, equal to the outline of the independently decoded mask", async () => {
+    stubSpoon();
+    const res = await post({ scan: { id: "spoon-1", name: "Spoon", kind: "other", lengthMm: 200, prompt: "spoon", imageDataUrl: IMAGE, outline: { targetHeightMm: 54 } } });
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as SamScanResponse;
+    expect(body.sam).toMatchObject({ applied: true, maskApplied: true, matches: 1, box: { x1: 109, y1: 22, x2: 199, y2: 468, imageWidth: 288, imageHeight: 512 } });
+    const o = scanOutlineOf(body);
+    expect(o?.ok).toBe(true);
+    if (!o?.ok) return;
+    expect(o.warnings).toEqual([]); // the handle is kept
+    expect(o.fillet_r_mm).toBeLessThan(1.6);
+    expect(o.heightMm).toBeGreaterThan(75);
+    expect(o.photoSize).toEqual(SPOON_PHOTO);
+    // The Worker's own decode of a tall, offset, non-square mask must give the legalizer what the vendor parser gives.
+    const real = await vi.importActual<typeof import("../shared/outlineScan")>("../shared/outlineScan");
+    const spoon = await realSpoon();
+    expect(o).toEqual(real.scanOutline(spoon.raster, spoon.bounds, SPOON_PHOTO, { targetHeightMm: 54 }));
   });
 });

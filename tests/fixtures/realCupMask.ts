@@ -27,3 +27,27 @@ export async function realCup(): Promise<{ raster: Raster; bounds: { left: numbe
   const data = decodeMaskToRaster(rec.mask);
   return { raster: { data, width: rec.mask.width, height: rec.mask.height } as Raster, bounds: { left: rec.bounds.left, top: rec.bounds.top } };
 }
+
+// A second real capture: the whole SSE stream sam-3.1 sent for a photo of a steel spoon on a paper towel (2026-11-02, a 288 x 512
+// upload, the prompt "spoon"). Only the mask encoding and response ids are in it, no image and no key. The spoon is the case the cup
+// is not: a handle 10 to 22 px wide on a 447 px tall mask, so at print size it is narrower than the default rounding allows.
+export const SPOON_PHOTO = { width: 288, height: 512 } as const;
+
+/** The raw reply, as the Worker's fetch would have read it. */
+export function spoonSamReply(): string {
+  return readFileSync(join(__dirname, "spoon-sam-reply.sse"), "utf8");
+}
+
+export async function realSpoon(): Promise<{ raster: Raster; bounds: { left: number; top: number } }> {
+  const events = spoonSamReply()
+    .split("\n")
+    .filter((l) => l.startsWith("data: ") && !l.includes("[DONE]"))
+    .map((l) => JSON.parse(l.slice(6)));
+  async function* gen() {
+    yield* events as never[];
+  }
+  const result = await parseImageStream(gen()).finalResult;
+  const rec = recordsOfKind(result.records, "mask")[0]!;
+  const data = decodeMaskToRaster(rec.mask);
+  return { raster: { data, width: rec.mask.width, height: rec.mask.height } as Raster, bounds: { left: rec.bounds.left, top: rec.bounds.top } };
+}
