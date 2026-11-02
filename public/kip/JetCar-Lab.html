@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Jet Car Lab — balloon on top of the Snap truck</title>
+<style>
+  :root { --ink: #1b2238; --muted: #5d657c; --spark: #ff6b4a; --bad: #d92f2f; --warn: #b7791f; --ok: #0d7a57;
+    --glass: rgba(255, 255, 255, 0.92); --line: rgba(27, 34, 56, 0.14); }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 100%; height: 100%; overflow: hidden; color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: radial-gradient(circle at 50% 38%, #f6f1e7 0%, #e5ddce 68%, #d2c7b5 100%); }
+  #viewport { position: fixed; inset: 0; }
+  canvas { display: block; width: 100%; height: 100%; outline: none; }
+  .panel { position: fixed; top: 12px; left: 12px; width: 344px; max-height: calc(100% - 24px); overflow-y: auto; background: var(--glass);
+    border: 1px solid var(--line); border-radius: 12px; padding: 14px 14px 12px; backdrop-filter: blur(8px);
+    box-shadow: 0 4px 18px rgba(27, 34, 56, 0.12); font-size: 13px; line-height: 1.35; }
+  h1 { font-size: 16px; font-weight: 700; } .sub { color: var(--muted); font-size: 12px; margin: 2px 0 10px; }
+  .row { display: flex; align-items: center; gap: 8px; margin: 6px 0; }
+  .row label.k { width: 74px; color: var(--muted); font-size: 12px; flex: none; }
+  .row input[type=range] { flex: 1; min-width: 0; accent-color: var(--spark); }
+  .row output { width: 64px; text-align: right; font-variant-numeric: tabular-nums; font-size: 12px; flex: none; }
+  .btns { display: flex; flex-wrap: wrap; gap: 5px; margin: 7px 0; align-items: center; }
+  .btns span.k { width: 74px; color: var(--muted); font-size: 12px; }
+  button { font: inherit; font-size: 12px; padding: 4px 8px; border: 1px solid var(--line); border-radius: 7px; background: #fff; color: var(--ink); cursor: pointer; }
+  button:hover { border-color: var(--spark); } button.on { background: var(--ink); color: #fff; border-color: var(--ink); }
+  button:focus-visible, input:focus-visible { outline: 2px solid #2e6fdb; outline-offset: 1px; }
+  .toggles { display: flex; gap: 14px; margin: 6px 0; font-size: 12px; } .toggles label { display: flex; align-items: center; gap: 5px; cursor: pointer; }
+  #verdict { margin: 8px 0 6px; padding: 7px 9px; border-radius: 8px; font-size: 12.5px; font-weight: 600; }
+  #verdict.bad { background: rgba(217, 47, 47, 0.11); color: var(--bad); } #verdict.warn { background: rgba(183, 121, 31, 0.13); color: var(--warn); }
+  #verdict.ok { background: rgba(31, 169, 124, 0.13); color: var(--ok); }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; margin: 4px 0; } td, th { padding: 2.5px 3px; text-align: right; font-variant-numeric: tabular-nums; }
+  td:first-child, th:first-child { text-align: left; } th { color: var(--muted); font-weight: 600; border-bottom: 1px solid var(--line); }
+  .c-bad { color: var(--bad); font-weight: 600; } .c-warn { color: var(--warn); font-weight: 600; } .c-ok { color: var(--ok); }
+  tr.sel td { background: rgba(255, 107, 74, 0.1); }
+  .facts { margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--line); color: var(--muted); font-size: 11.5px; } .facts p + p { margin-top: 4px; }
+  h2 { font-size: 12px; margin: 10px 0 2px; color: var(--ink); }
+  @media (max-width: 620px) { .panel { width: calc(100% - 24px); max-height: 52%; top: auto; bottom: 12px; } }
+</style>
+</head>
+<body>
+<div id="viewport"></div>
+<div class="panel">
+  <h1>Jet car lab</h1>
+  <p class="sub">Snap truck, dump tub removed, <code>mom_jet_valve_body</code> on the rear rows with the balloon on top. Real STLs; the nozzle insert and balloon are proposals, not CAD.</p>
+
+  <div class="row"><label class="k" for="bd">Balloon &Oslash;</label><input id="bd" type="range" min="100" max="225" step="12.5" value="175" /><output id="bdo"></output></div>
+  <div class="row"><label class="k" for="bl">Lean back</label><input id="bl" type="range" min="0" max="60" step="5" value="30" /><output id="blo"></output></div>
+  <div class="btns" id="wheels"><span class="k">Wheels</span><button data-w="36">&Oslash;36 (#4)</button><button data-w="50">&Oslash;50 (#5)</button></div>
+  <div class="btns" id="nozzles"><span class="k">Nozzle</span><button data-n="3">&Oslash;3</button><button data-n="4.5">&Oslash;4.5</button><button data-n="6">&Oslash;6</button><button data-n="8">&Oslash;8 (new)</button></div>
+  <div class="btns" id="cams"><span class="k">View</span><button data-cam="iso">Iso</button><button data-cam="side">Side</button><button data-cam="rear">Rear</button><button data-cam="top">Top</button></div>
+  <div class="toggles"><label><input type="checkbox" id="kip" checked /> Kip</label><label><input type="checkbox" id="jetvis" checked /> Jet stream</label></div>
+
+  <div id="verdict"></div>
+  <table id="clear"><tr><th>Balloon to</th><th>mm</th><th></th></tr></table>
+
+  <h2>Nozzle: thrust and burn (ideal nozzle)</h2>
+  <div class="row"><label class="k" for="dp">Pressure</label><input id="dp" type="range" min="1.5" max="4" step="0.25" value="2.5" /><output id="dpo"></output></div>
+  <div class="row"><label class="k" for="vol">Air</label><input id="vol" type="range" min="3" max="6" step="0.5" value="5" /><output id="volo"></output></div>
+  <div class="row"><label class="k" for="mass">Truck mass</label><input id="mass" type="range" min="80" max="250" step="10" value="150" /><output id="masso"></output></div>
+  <table id="noz"><tr><th>Nozzle</th><th>thrust</th><th>burn</th><th>vs drag</th></tr></table>
+
+  <div class="facts" id="facts"></div>
+</div>
+
+<script type="module">
+import { THREE, OrbitControls, STLLoader, RoomEnvironment, mergeVertices, toCreasedNormals } from './vendor/three-kip.js';
+
+const $ = (id) => document.getElementById(id);
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); renderer.setSize(window.innerWidth, window.innerHeight);
+$('viewport').appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+scene.environment = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(), 0.04).texture;
+const sun = new THREE.DirectionalLight(0xffffff, 1.3); sun.position.set(140, 260, -80); scene.add(sun);
+const camera = new THREE.PerspectiveCamera(38, window.innerWidth / window.innerHeight, 1, 3000);
+const controls = new OrbitControls(camera, renderer.domElement); controls.enableDamping = true;
+
+// CAD frame (z up, +y rear) -> three (y up): same cadRoot as Truck-Mockup.html. Wheels sit on y = 0.
+const cadRoot = new THREE.Group(); cadRoot.rotation.x = -Math.PI / 2; scene.add(cadRoot);
+const ground = new THREE.GridHelper(520, 52, 0xb9ae98, 0xd3c9b6); scene.add(ground);
+
+const M4 = THREE.Matrix4, T = (x, y, z) => new M4().makeTranslation(x, y, z), Ry = (a) => new M4().makeRotationY(a);
+const mul = (...ms) => ms.reduce((a, b) => a.clone().multiply(b)), H = Math.PI / 2;
+const BODY_Y = 50.0, DECK_Z = 12.5, COLLAR_TOP = [0, BODY_Y - 3.0, DECK_Z + 28.0], JET_Z = DECK_Z + 12.5;
+
+const loader = new STLLoader(), geos = {};
+const kipPose = await (await fetch('./jetcar-kip-pose.json', { cache: 'no-cache' })).json();
+const data = await (await fetch('./jetcar-clearance.json', { cache: 'no-cache' })).json();
+const urlOf = (g) => (g.startsWith('stls/') ? `./${g}.stl` : `./partspec/mockup/${g}.stl`);
+const names = [...new Set(['kit_keel_base', 'kit_barbell_shaft', 'kit_wheel_med', 'kit_wheel_giant', 'kit_windscreen', 'mom_jet_valve_body', ...kipPose.rows.map((r) => r.geo)])];
+await Promise.all(names.map(async (g) => { geos[g] = toCreasedNormals(mergeVertices(await loader.loadAsync(urlOf(g)), 1e-4), THREE.MathUtils.degToRad(32)); }));
+
+const mat = (color, extra = {}) => new THREE.MeshStandardMaterial({ color, roughness: 0.55, metalness: 0.05, ...extra });
+const place = (g, M, color, parent = cadRoot) => { const m = new THREE.Mesh(geos[g], mat(color)); m.matrixAutoUpdate = false; m.matrix.copy(M); parent.add(m); return m; };
+place('kit_keel_base', new M4(), '#2e6fdb');
+place('kit_windscreen', T(0, -6.25, 12.5), '#9fc4ee');
+place('mom_jet_valve_body', T(0, BODY_Y, DECK_Z), '#1fa97c');
+const axleY = { front: -56.25, rear: 43.75 }, wheelMeshes = [];
+for (const [which, y] of Object.entries(axleY)) {
+  place('kit_barbell_shaft', mul(T(-39.0, y, 6.25), Ry(H)), '#9aa3b5');
+  for (const [x, a] of [[-26.7, -H], [26.7, H]]) for (const g of ['kit_wheel_med', 'kit_wheel_giant']) {
+    const m = place(g, mul(T(x, y, 6.25), Ry(a)), '#3a3f4d'); m.userData = { size: g === 'kit_wheel_med' ? 36 : 50, axle: which }; wheelMeshes.push(m);
+  }
+}
+const kipGroup = new THREE.Group(); cadRoot.add(kipGroup);
+for (const r of kipPose.rows) {
+  const color = r.geo.startsWith('hat_') ? '#f5c518' : r.geo.startsWith('hair_') ? '#6b4a2b' : r.geo.startsWith('char_') ? '#f3c9a5' : '#ff6b4a';
+  const m = new THREE.Mesh(geos[r.geo], mat(color)); m.matrixAutoUpdate = false; m.matrix.fromArray(r.m); kipGroup.add(m);
+}
+
+// Proposed nozzle insert (NOT repo CAD): a tapered plug into the body's rear socket (y 8.5..14.7, O7.45 -> 8.30), a flange behind it, and a
+// convergent exit with the chosen orifice. The existing mom_nozzle_set (one bar, three plugs) cannot be seated, see the spec.
+const nozzleGroup = new THREE.Group(); nozzleGroup.position.set(0, BODY_Y, JET_Z); cadRoot.add(nozzleGroup);
+function buildNozzle(d) {
+  while (nozzleGroup.children.length) { const c = nozzleGroup.children.pop(); c.geometry.dispose(); }
+  const r = d / 2, prof = [[2.5, 8.5], [3.72, 8.5], [4.15, 14.7], [7.0, 14.7], [7.0, 17.2], [r + 1.4, 24.0], [r, 24.0], [r, 22.0], [2.5, 17.2]]
+    .map(([x, y]) => new THREE.Vector2(x, y));
+  const m = new THREE.Mesh(new THREE.LatheGeometry(prof, 40), mat('#ff6b4a', { side: THREE.DoubleSide })); nozzleGroup.add(m);
+}
+const jetMesh = new THREE.Mesh(new THREE.ConeGeometry(5, 60, 24, 1, true), mat('#9ad1ff', { transparent: true, opacity: 0.35, depthWrite: false, side: THREE.DoubleSide }));
+jetMesh.rotation.x = 0; jetMesh.position.set(0, BODY_Y + 24 + 30, JET_Z); cadRoot.add(jetMesh);   // cone axis is local y = +y (the jet runs rearward, wider downstream)
+jetMesh.rotation.z = Math.PI;                                                                       // narrow end at the nozzle
+
+// Balloon: sphere on a neck, hinged at the collar top, leaning rearward (+y) by `lean`.
+const balloon = new THREE.Group(); balloon.position.set(...COLLAR_TOP); cadRoot.add(balloon);
+const NECK = data.assumptions.neck_mm;
+function buildBalloon(D) {
+  while (balloon.children.length) { const c = balloon.children.pop(); c.geometry.dispose(); }
+  const bm = mat('#ff7a8a', { transparent: true, opacity: 0.5, depthWrite: false });
+  const neck = new THREE.Mesh(new THREE.CylinderGeometry(7, 10, NECK, 24), bm); neck.rotation.x = Math.PI / 2; neck.position.z = NECK / 2; balloon.add(neck);
+  const body = new THREE.Mesh(new THREE.SphereGeometry(D / 2, 48, 32), bm); body.position.z = NECK + D / 2; balloon.add(body);
+}
+
+const state = { D: 175, lean: 30, wheels: 36, nozzle: 6, dp: 2.5, vol: 5, mass: 150 };
+const gridAt = (D, lean) => data.grid.find((g) => g.D === D && g.lean === lean);
+const cls = (v) => (v < 0 ? 'c-bad' : v < 5 ? 'c-warn' : 'c-ok');
+const word = (v) => (v < 0 ? 'touches' : v < 5 ? 'tight' : 'clear');
+
+function refresh() {
+  const g = gridAt(state.D, state.lean), wk = state.wheels === 36 ? 'w36' : 'w50';
+  $('bdo').textContent = `${state.D} mm`; $('blo').textContent = `${state.lean}°`;
+  cadRoot.position.y = (state.wheels === 36 ? 18 : 25) - 6.25;   // body rides on the rear wheels (front pair follows the same size)
+  ground.position.set(0, 0, -43.75);
+  for (const m of wheelMeshes) m.visible = m.userData.size === state.wheels;
+  kipGroup.visible = $('kip').checked; jetMesh.visible = $('jetvis').checked;
+  balloon.rotation.x = -THREE.MathUtils.degToRad(state.lean);
+  buildBalloon(state.D); buildNozzle(state.nozzle);
+  for (const b of document.querySelectorAll('#wheels button')) b.classList.toggle('on', Number(b.dataset.w) === state.wheels);
+  for (const b of document.querySelectorAll('#nozzles button')) b.classList.toggle('on', Number(b.dataset.n) === state.nozzle);
+  const rows = [['Kip (back y ' + data.kip_rear_y + ')', g.kip], [`Rear wheels Ø${state.wheels}`, g[wk]], ['Jet stream', g.jet]];
+  $('clear').innerHTML = '<tr><th>Balloon to</th><th>mm</th><th></th></tr>' + rows.map(([n, v]) => `<tr><td>${n}</td><td class="${cls(v)}">${v.toFixed(1)}</td><td class="${cls(v)}">${word(v)}</td></tr>`).join('');
+  const worst = rows.reduce((a, r) => (r[1] < a[1] ? r : a));
+  const v = $('verdict'); v.className = worst[1] < 0 ? 'bad' : worst[1] < 5 ? 'warn' : 'ok';
+  v.textContent = worst[1] < 0 ? `Touches: ${rows.filter((r) => r[1] < 0).map((r) => r[0].split(' (')[0]).join(', ')}` : worst[1] < 5 ? `Tight: ${worst[0].split(' (')[0]} ${worst[1].toFixed(1)} mm` : `Clear by ${worst[1].toFixed(1)} mm or more`;
+  // nozzle table: ideal nozzle, F = 2 A dP, burn = V / (A sqrt(2 dP / rho)), drag = Crr m g (Crr 0.045 per the spec)
+  const dP = state.dp * 1000, rho = 1.2, V = state.vol / 1000, m = state.mass / 1000, drag = 0.045 * m * 9.81;
+  $('dpo').textContent = `${state.dp} kPa`; $('volo').textContent = `${state.vol} L`; $('masso').textContent = `${state.mass} g`;
+  $('noz').innerHTML = '<tr><th>Nozzle</th><th>thrust</th><th>burn</th><th>vs drag</th></tr>' + [3, 4.5, 6, 8].map((d) => {
+    const A = Math.PI * (d / 2000) ** 2, F = 2 * A * dP, t = V / (A * Math.sqrt((2 * dP) / rho)), r = F / drag;
+    return `<tr class="${d === state.nozzle ? 'sel' : ''}"><td>&Oslash;${d}</td><td>${(F * 101.97).toFixed(1)} gf</td><td>${t.toFixed(1)} s</td><td class="${r < 1 ? 'c-bad' : r < 1.5 ? 'c-warn' : 'c-ok'}">${r.toFixed(2)}x</td></tr>`;
+  }).join('');
+  window.__jetState = { ...state, kip: g.kip, wheel: g[wk], jet: g.jet, verdict: v.className };
+}
+const f = data.facts;
+$('facts').innerHTML =
+  `<p><b>Placement [M]</b>: body centre (0, 50.0, 12.5) on rear rows 8-9. Overlap with the keel ${f.keel_overlap_mm3} mm3; gap to the wheels O36 ${f.w36_gap_mm} mm, O50 ${f.w50_gap_mm} mm; to the windscreen ${f.windscreen_gap_mm} mm; rear face at y ${f.body_bbox[4]} (keel ends 62.4). Only 4 corner studs engage (rows 7-9 have no inner studs).</p>` +
+  `<p><b>No axle gear in this stage</b>: the Z10 axle gear overlaps the body by ${f.axle_gear_overlap_mm3} mm3, and a jet car has no PTO to drive.</p>` +
+  `<p><b>Why lean</b>: upright on the collar a balloon from about 125 mm up touches Kip's back; leaning back clears him, but past about 45-50 deg it reaches the jet stream. Balloon = sphere on a ${NECK} mm neck [E]; real balloons are pear-shaped and soft, and a cradle is not designed.</p>` +
+  `<p><b>Nozzle table</b> assumes an ideal nozzle and constant pressure, rolling drag Crr 0.045 (spec). Solid-PLA masses: keel ${f.mass_g_solid_pla.kit_keel_base} g, jet body ${f.mass_g_solid_pla.mom_jet_valve_body} g, wheel O36 ${f.mass_g_solid_pla.kit_wheel_med} g / O50 ${f.mass_g_solid_pla.kit_wheel_giant} g each; real prints use infill. Generated ${data.generated_at} by parts/kip/jetcar_table.py.</p>`;
+
+const CAMS = { iso: [[200, 170, -250], [0, 70, -40]], side: [[420, 110, -45], [0, 70, -45]], rear: [[0, 150, -430], [0, 70, -45]], top: [[0, 480, -35], [0, 40, -45]] };
+function setCam(n) { const [p, t] = CAMS[n]; camera.position.set(...p); controls.target.set(...t); controls.update(); }
+$('bd').addEventListener('input', () => { state.D = Number($('bd').value); refresh(); });
+$('bl').addEventListener('input', () => { state.lean = Number($('bl').value); refresh(); });
+for (const id of ['dp', 'vol', 'mass']) $(id).addEventListener('input', () => { state[id] = Number($(id).value); refresh(); });
+$('wheels').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) { state.wheels = Number(b.dataset.w); refresh(); } });
+$('nozzles').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) { state.nozzle = Number(b.dataset.n); refresh(); } });
+$('cams').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) setCam(b.dataset.cam); });
+$('kip').addEventListener('change', refresh); $('jetvis').addEventListener('change', refresh);
+{ const q = new URLSearchParams(location.search);   // ?D=200&lean=30&wheels=50&nozzle=8&cam=side&kip=0
+  if (q.has('D')) { state.D = Number(q.get('D')); $('bd').value = state.D; }
+  if (q.has('lean')) { state.lean = Number(q.get('lean')); $('bl').value = state.lean; }
+  if (q.get('wheels') === '50') state.wheels = 50; if (q.has('nozzle')) state.nozzle = Number(q.get('nozzle'));
+  if (q.get('kip') === '0') $('kip').checked = false; setCam(CAMS[q.get('cam')] ? q.get('cam') : 'iso'); }
+window.addEventListener('resize', () => { camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); });
+refresh();
+renderer.setAnimationLoop(() => { controls.update(); renderer.render(scene, camera); });
+window.__JETCAR_READY__ = true;
+</script>
+</body>
+</html>

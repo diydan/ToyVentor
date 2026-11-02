@@ -29,6 +29,7 @@ PARTS = [
     "gear_spur_z10", "shaft_tu03",
     "mom_band_core_tray", "mom_band_core_lid", "mom_pto_gear_z10", "mom_band_spool_pawl", "mom_latch_pawl", "mom_wind_key", "mom_bumper_trigger",
     "mom_bellows_base", "mom_bellows_leaf",
+    "mom_jet_valve_body",   # Jet Car Lab (parts/kip/viewer/JetCar-Lab.html); the slide valve and nozzle set are print-orientation parts and are not drawn
     "mech_drive_tray", "mech_drive_lid", "mech_n20_pinion_z10",
     "mech_brain_tray", "mech_brain_lid", "mech_bat_door_screw",
     "mech_servo_mount", "mech_servo_lid", "mech_servo_pinion_z10", "pro_pilot_pin", "mech_sill_duct",

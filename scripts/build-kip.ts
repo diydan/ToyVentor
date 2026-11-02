@@ -130,6 +130,10 @@ copyFileSync(
   join(kipSrcDir, "viewer/windkey-overlaps.json"),
   join(kipOutDir, "windkey-overlaps.json"),
 );
+// Jet Car Lab: balloon on top of the Snap truck (clearance table from parts/kip/jetcar_table.py, driver pose snapshot from the Truck probe).
+for (const f of ["JetCar-Lab.html", "jetcar-clearance.json", "jetcar-kip-pose.json"]) {
+  copyFileSync(join(kipSrcDir, "viewer", f), join(kipOutDir, f));
+}
 // Describe & build tab (kip-describe-contract.md): the page modules and their data. The 30 part STLs it draws are written straight into
 copyFileSync(
   join(kipSrcDir, "viewer/kip-describe-tab.js"),
