@@ -1376,43 +1376,28 @@ def mom_band_core_tray(size="small", grid=(4, 4), **_):
     m = m + Manifold.cylinder(21.0, 4.0, 4.0, 48).translate((-16.0, -16.0, 5.0))
     m = m + Manifold.cylinder(12.5, 4.0, 4.0, 48).translate((16.0, -16.0, 5.0))
     # Internal drop-in PTO spool pedestals + left axial shaft stop wall at x in [-17.10, -15.45]:
-    bore_cs = CrossSection.circle(pro.BORE["free_d"] / 2, 64)
-    throat_cs = _ccw_poly([(-3.00, 0.0), (3.00, 0.0), (3.00, 1.80), (3.60, 3.00), (-3.60, 3.00), (-3.00, 1.80)])
-    jaw_2d = (bore_cs + throat_cs).rotate(90)
+    # Closed 360-deg saddle bores (2026-11-02): the open C-jaw throat lost +Z capture twice per turn
+    # when a shaft flat faced up; closed 50-deg teardrop bores (support-free roof) retain the shaft
+    # at every angle (tilt-in assembly).
+    jaw_2d = pro._teardrop(pro.BORE["free_d"], roof_deg=50, segs=64).rotate(90)
     for x0, x1 in ((-15.10, -9.90), (17.10, 22.30)):
         w = x1 - x0
-        ped = rbox(w, 10.0, 15.6, 1.0, 0.0).translate(((x0 + x1) / 2, 6.25, 5.0))
+        ped = rbox(w, 10.0, 18.8, 1.0, 0.0).translate(((x0 + x1) / 2, 6.25, 5.0))  # top z=23.8: >=1.5 mm wall over the closed bore crown (22.25)
         cut = Manifold.extrude(jaw_2d, w + 0.6).rotate((0, 90, 0)).translate((x0 - 0.3, 6.25, 18.75))
         m = m + (ped - cut)
     stop_l = rbox(1.65, 10.0, 16.8, 0.7, 0.0).translate((-16.275, 6.25, 5.0))
     m = m + stop_l
-    # Front-right sear-pawl boss (x in [+18.0, +23.8], y = -15.25, z = 23.50) + double-shear stanchion (x in [-2.10, +1.40]):
-    lp_lo = Manifold.cube((1.4, 10.4, 0.2)).translate((22.4, -20.45, 14.5))
-    lp_hi = Manifold.cube((5.8, 10.4, 11.4)).translate((18.0, -20.45, 19.6))
-    stanchion = rbox(3.5, 10.4, 24.5, 1.0, 0.0).translate((-0.35, -15.25, 5.0))
-    m = m + Manifold.batch_hull([lp_lo, lp_hi]) + stanchion
-    # Centered bottom PTO gear window (10.0 x 26.0 mm at x = 0.0, y = +6.25 -> clears row-8 Z10 gear & keeps stanchion on solid floor):
+    # Centered bottom PTO gear window (10.0 x 26.0 mm at x = 0.0, y = +6.25 -> clears row-8 Z10 gear):
     m = m - Manifold.extrude(rrect(10.0, 26.0, 1.6), 6.0).translate((0.0, 6.25, -0.4))
-    # Double-shear sear pawl bore along X at (y = -15.25, z = 23.50): 50-deg teardrop right head pocket (x >= 23.25) -> snap shoulder (x = -2.10):
-    m = m - pro.bore_cutter_axis("free", 34.0, (10.0, -15.25, 23.50), "x")
-    head_cb = Manifold.extrude(pro._teardrop(10.2, roof_deg=50, segs=48).rotate(90), 2.5).rotate((0, 90, 0)).translate((23.25, -15.25, 23.50))
-    m = m - head_cb
-    c_latch = pro._axis_bore_conn("latch_bore", "free", (20.60, -15.25, 23.50), "x", 5.0, lattice="pivot")
-    # Twin 50-deg teardrop key-prong ports on right wall at (y = 6.25 +- 7.80, z = 18.75), straddling the right saddle:
-    kp_sec = pro._teardrop(4.2, roof_deg=50, segs=36).rotate(90)
-    for dy in (-7.80, 7.80):
-        m = m - Manifold.extrude(kp_sec, 10.0).rotate((0, 90, 0)).translate((16.5, 6.25 + dy, 18.75))
-    # Front gabled bumper-trip window at (x = +12.50, y = -24.9, z = 13.5..21.5):
-    trig_prof = _ccw_poly([(-3.2, 0.0), (3.2, 0.0), (3.2, 5.0), (0.0, 8.2), (-3.2, 5.0)])
-    m = m - Manifold.extrude(trig_prof, 6.0).rotate((90, 0, 0)).translate((12.50, -21.5, 13.5))
+    # (Sear-pawl boss/bore, winding-key ports and bumper-trip window removed 2026-11-02, pull-back-only Option B.)
     m = _cut_tray_sockets(m, size)
-    return m, conns + [c_latch], {}
+    return m, conns, {}
 
 
 def mom_band_core_lid(size="small", grid=(4, 4), lock=True, **_):
-    """Stage-3 Momentum Enclosed Band Core Safety Lid With PTO Gear Dome, Toggle Slot & Barrel Hinge (49.8 x 61.5 x 16.6 mm)."""
-    slot = Manifold.extrude(rrect(5.0, 10.6, 1.2), 6.0).translate((12.50, -12.50, -0.3))
-    return _lid_with_pto_gear_relief(size, lock, extra_cut=slot, include_knuckles=True)
+    """Stage-3 Momentum Enclosed Band Core Safety Lid With PTO Gear Dome & Barrel Hinge (49.8 x 61.5 x 16.6 mm).
+    (Sear toggle slot removed 2026-11-02, pull-back-only Option B.)"""
+    return _lid_with_pto_gear_relief(size, lock, extra_cut=None, include_knuckles=True)
 
 
 def mom_pto_gear_z10(**_):
@@ -1429,14 +1414,15 @@ def mom_pto_gear_z10(**_):
         Manifold.cylinder(0.3, 9.30, 9.30, 96).translate((0.0, 0.0, T_gear - 0.3)),
         Manifold.cylinder(0.6, 12.20, 12.20, 96).translate((0.0, 0.0, H - 0.6)),
     ])
-    # Internal 8-tooth radial sawtooth cavity (R_valley = 10.35 mm ramping smoothly inward to R_crest = 9.60 mm):
+    # Internal 8-tooth radial sawtooth cavity (mirrored 2026-11-02 so the clutch locks on pull-back:
+    # R_crest = 9.60 mm at sector end ramping outward to R_valley = 10.35 mm at sector start):
     cav_pts = []
     for k in range(8):
         a0 = math.radians(45.0 * k)
-        cav_pts.append((9.60 * math.cos(a0), 9.60 * math.sin(a0)))
+        cav_pts.append((10.35 * math.cos(a0), 10.35 * math.sin(a0)))
         for s in range(1, 7):
             ang = math.radians(45.0 * k + 43.0 * s / 6.0)
-            rr = 9.60 + 0.75 * (s / 6.0)
+            rr = 10.35 - 0.75 * (s / 6.0)
             cav_pts.append((rr * math.cos(ang), rr * math.sin(ang)))
     cup_cav = Manifold.extrude(_ccw_poly(cav_pts), 3.10).translate((0.0, 0.0, H - 2.90))
     m = ((gear_body + cup_outer) - cup_cav) - pro.bore_cutter("fixed", H)
@@ -1459,7 +1445,7 @@ def mom_band_spool_pawl(**_):
     arm_pts = []
     for s in range(11):
         t = s / 10.0
-        ang = math.radians(112.0 * t)
+        ang = math.radians(-112.0 * t)  # mirrored 2026-11-02 to match the mirrored pocket (locks on pull-back)
         rr = 5.30 + 4.22 * t  # spirals from R = 5.30 out to R = 9.52 (with r=0.64 -> R_outer = 10.16 mm in R_valley = 10.35 mm)
         arm_pts.append((rr * math.cos(ang), rr * math.sin(ang)))
     arm_cs = _stroke(arm_pts, 0.64)
@@ -1475,18 +1461,15 @@ def mom_band_spool_pawl(**_):
         Manifold.cylinder(0.30, 6.35, 6.35, 96).translate((0.0, 0.0, 6.20)),
         Manifold.cylinder(2.50, 10.15, 10.15, 96).translate((0.0, 0.0, 10.50)),
     ])
-    tooth_lo = Manifold.extrude(_ccw_poly([(5.8, -0.8), (7.2, -0.4), (7.2, 0.4), (5.8, 0.9)]), 0.2).translate((0.0, 0.0, 6.70))
-    tooth_hi = Manifold.extrude(_ccw_poly([(8.8, -1.4), (10.8, -0.6), (10.6, 0.6), (8.8, 1.7)]), 2.0).translate((0.0, 0.0, 11.00))
-    tooth_one = Manifold.batch_hull([tooth_lo, tooth_hi])
-    teeth = None
-    for k in range(8):
-        tk = tooth_one.rotate((0, 0, 45.0 * k))
-        teeth = tk if teeth is None else teeth + tk
-    m = (pawl_bed + drum + hook_up + flare_cone + teeth) - pro.bore_cutter("free", H)
-    for dy in (-7.80, 7.80):
-        cone_k = Manifold.cylinder(1.9, 1.9, 0.1, 32).translate((0.0, dy, H - 4.0))
-        cyl_k = Manifold.cylinder(2.4, 1.9, 1.9, 32).translate((0.0, dy, H - 2.2))
-        m = m - cyl_k - cone_k
+    # Drum left retaining flange (2026-11-02): 55-deg conical skirt at the drum base keeps a slack
+    # band out of the pawls (conical, not a flat disc, so P4 sees no ledge).
+    # (Hold-ratchet teeth + winding-key sockets removed with the pull-back-only decision, Option B.)
+    flange = Manifold.batch_hull([
+        Manifold.cylinder(0.3, 5.8, 5.8, 64).translate((0.0, 0.0, 2.3)),
+        Manifold.cylinder(0.3, 8.4, 8.4, 64).translate((0.0, 0.0, 3.3)),
+        Manifold.cylinder(0.3, 6.4, 6.4, 64).translate((0.0, 0.0, 4.6)),
+    ])
+    m = (pawl_bed + drum + hook_up + flare_cone + flange) - pro.bore_cutter("free", H)
     c_hub = {
         "id": "hub",
         "kind": "bore_grid",
@@ -1681,8 +1664,8 @@ def mom_jet_valve_body(size="small", grid=(4, 2), lock=True, **_):
         Manifold.cylinder(1.6, 10.4, 10.4, 64).translate((0.0, -3.0, 26.4)),
     ])
     m, conns, ex = tp.integrated_sockets(wings + turret + collar, size, lock)
-    inlet = Manifold.cylinder(16.0, 2.50, 2.50, 48).translate((0.0, -3.30, 12.8))
-    tun_sec = _flat_floor_teardrop(5.00, -2.00)
+    inlet = Manifold.cylinder(16.0, 3.90, 3.90, 48).translate((0.0, -4.60, 12.8))  # O7.8 inlet offset aft: at y=-3.3 its rim would reach past the tunnel lip (y=-0.1) and bypass the spool plug in CLOSED
+    tun_sec = _flat_floor_teardrop(7.16, -2.50)  # identical to the spool plug tip profile: the plug covers the tunnel cross-section at every station (a taller tunnel roof leaks over the plug shoulder in CLOSED)
     tunnel = Manifold.extrude(tun_sec, 9.30).rotate((90, 0, 0)).translate((0.0, 9.2, 12.50))
     # Rear 4-deg tapered 50-deg teardrop female nozzle socket (y = +8.4..+14.6, d = 7.45 -> 8.30 mm):
     noz_lo = Manifold.extrude(pro._teardrop(7.45, roof_deg=50, segs=48), 0.1).rotate((90, 0, 0)).translate((0.0, 8.5, 12.50))
@@ -1724,30 +1707,35 @@ def mom_jet_slide_valve(**_):
     ])
     rod = pro._tapered_dd_extrude(pro.BORE["shaft_d"], flats, 13.3, bot_tip=False, top_tip=True).translate((0.0, 0.0, 24.7))
     # Cross-port along X_assy with 50-deg teardrop apex along +Y_assy (+Z_print in LAY_FLAT = [90, 0, 0]) and 0.90 mm bed floor:
-    port = Manifold.extrude(pro._teardrop(4.8, roof_deg=50, segs=48), 10.0).rotate((0, 90, 0)).translate((-5.0, 0.40, 21.5))
+    port = Manifold.extrude(pro._teardrop(6.6, roof_deg=50, segs=48), 10.0).rotate((0, 90, 0)).translate((-5.0, 0.40, 21.5))
     m = (head + taper_plug + port_zone + ramp_to_rod + rod) - port
     conn = pro._pin_conn("pin_free", "round", 11.0, z0=26.0, flats_mm=flats)
     return m, [conn], {"print_rotation_deg": pro.LAY_FLAT}
 
 
 def mom_nozzle_set(**_):
-    """Stage-3 Momentum 4-Deg Taper-Plug 3-Orifice Nozzle Set (42.0 x 14.0 x 13.5 mm: Ø3.0 / Ø4.5 / Ø6.0 mm).
-    Prints flat on z = 0 with three vertical 4-deg Luer-tapered 50-deg-teardrop male nozzle plugs (z = 4.5..10.5)
-    that press-wedge coaxially into mom_jet_valve_body's rear exhaust socket for leak-free horizontal +Y thrust.
+    """Stage-3 Momentum Individual Rear-Orifice Nozzle Inserts (42.2 x 9.2 x 8.2 mm sprue: Ø3.0 / Ø4.5 / Ø6.0 / Ø8.0 mm).
+    Four individual 4-deg Luer-tapered inserts on 1.80 x 0.60 mm breakaway tabs (snap apart before use);
+    each insert's taper plug (teardrop 8.25 -> 7.50, z = 2.0..8.2) press-wedges alone into
+    mom_jet_valve_body's rear socket (7.45 -> 8.30) -- the old monolithic 3-plug bar could never seat.
+    Orifice converges to the rear grip face (orifice at the rear, per the 2026-11-02 audit).
     """
-    H_bar = 4.5
-    bar = rbox(42.0, 14.0, H_bar, 2.2, 0.4)
-    plugs = None
-    bores = None
-    for xc, d_exit in ((-7.5, 3.0), (2.5, 4.5), (13.0, 6.0)):
-        p_lo = Manifold.extrude(pro._teardrop(8.36, roof_deg=50, segs=64), 0.2).translate((xc, 0.0, H_bar - 0.2))
-        p_mid = Manifold.extrude(pro._teardrop(7.52, roof_deg=50, segs=64), 0.2).translate((xc, 0.0, 10.3))
-        p_tip = Manifold.cylinder(3.0, 4.2, 3.8, 48).translate((xc, 0.0, 10.5))
-        plug = Manifold.batch_hull([p_lo, p_mid]) + p_tip
-        plugs = plug if plugs is None else plugs + plug
-        cone = Manifold.cylinder(9.6, 2.85, d_exit / 2, 48).translate((xc, 0.0, -0.2)) + Manifold.cylinder(4.6, d_exit / 2, d_exit / 2, 48).translate((xc, 0.0, 9.2))
-        bores = cone if bores is None else bores + cone
-    m = ((bar + plugs) - bores) - pro.bore_cutter("free", H_bar, -15.625, 0.0, 0.0)
+    inserts = None
+    for xc, d_exit in ((-19.5, 3.0), (-6.5, 4.5), (6.5, 6.0), (19.5, 8.0)):
+        flange = Manifold.cylinder(2.0, 5.6, 5.6, 48).translate((xc, 0.0, 0.0))
+        p_lo = Manifold.extrude(pro._teardrop(8.25, roof_deg=50, segs=64), 0.2).translate((xc, 0.0, 2.0))
+        p_hi = Manifold.extrude(pro._teardrop(7.50, roof_deg=50, segs=64), 0.2).translate((xc, 0.0, 8.0))
+        plug = Manifold.batch_hull([p_lo, p_hi])
+        bore = Manifold.cylinder(8.6, d_exit / 2, 3.0, 48).translate((xc, 0.0, -0.2))
+        ins = (flange + plug) - bore
+        inserts = ins if inserts is None else inserts + ins
+    tabs = None
+    for xc in (-13.0, 13.0):
+        tab = Manifold.cube((2.2, 1.8, 0.6)).translate((xc - 1.1, -0.9, 0.7))
+        tabs = tab if tabs is None else tabs + tab
+    # Center storage plate between the middle inserts, with a free bore so the set stores on a pin:
+    plate = Manifold.cube((13.0, 10.4, 2.0)).translate((-6.5, -5.2, 0.0))
+    m = (inserts + tabs + plate) - pro.bore_cutter("free", 2.4, 0.0, 0.0, 0.0)
     conn = {
         "id": "mount_bore",
         "kind": "bore_grid",
@@ -1756,9 +1744,9 @@ def mom_nozzle_set(**_):
         "size_class": "pro",
         "fit_class": "PIN",
         "bore_class": "free",
-        "depth_mm": H_bar,
+        "depth_mm": 2.0,
         "lattice": "axis8",
-        "frame": {"origin": [-15.625, 0.0, 0.0], "normal": [0, 0, 1]},
+        "frame": {"origin": [0.0, 0.0, 0.0], "normal": [0, 0, 1]},
         "grid": {"nx": 1, "ny": 1, "pitch": TU, "anchor": "corner"},
     }
     return m, [conn], {}
@@ -2293,7 +2281,7 @@ CARD_LAYOUTS = {
         ],
     },
     "card_e2": {
-        "name": "Card E2 — Stage-3 Freewheel Band Core, Winding Key, Bumper Trigger & Slam Launcher",
+        "name": "Card E2 — Motion Pull-Back Band Core (mirrored clutch) & Slam Launcher",
         "limit_mm": 164.0,
         "material": "PLA/PETG",
         "items": [
@@ -2302,38 +2290,31 @@ CARD_LAYOUTS = {
             ("pto_z10", "mom_pto_gear_z10", 112.6, 3.0, 30.0, 28.9),
             ("pto_shaft", "shaft_tu03", 147.6, 3.0, 6.6, 37.5),
             ("slam_base", "mom_slam_base", 3.0, 69.5, 62.3, 38.0),
-            ("bumper_trig", "mom_bumper_trigger", 70.3, 69.5, 48.0, 42.0),
-            ("wind_key", "mom_wind_key", 123.3, 45.5, 28.0, 30.0),
-            ("band_spool", "mom_band_spool_pawl", 123.3, 80.5, 21.6, 21.6),
+            ("axle_z10", "gear_spur_z10", 70.3, 69.5, 30.0, 30.0),
+            ("band_spool", "mom_band_spool_pawl", 123.3, 80.5, 20.3, 20.3),
             ("slam_plunger", "mom_slam_plunger", 3.0, 116.5, 94.0, 18.0),
-            ("latch_pawl", "mom_latch_pawl", 102.0, 116.5, 25.7, 15.8),
             ("cpin_e2_1", "pro_captive_pin_28", 3.0, 139.5, 29.7, 9.6),
             ("cpin_e2_2", "pro_captive_pin_28", 37.7, 139.5, 29.7, 9.6),
-            ("cpin_e2_3", "pro_captive_pin_28", 72.4, 139.5, 29.7, 9.6),
-            ("cpin_e2_4", "pro_captive_pin_28", 107.1, 139.5, 29.7, 9.6),
         ],
     },
     "card_e3": {
-        "name": "Card E3 — Taper-Sealed Balloon Jet, Hinged Bellows & Shrouded Rip-Cord Turbine Core",
+        "name": "Card E3 — Motion Balloon Jet (O8 passages, individual inserts) & Shrouded Rip-Cord Turbine Core",
         "limit_mm": 164.0,
         "material": "PLA/PETG",
         "items": [
             ("ripcord", "mom_ripcord_rack_150", 3.0, 3.0, 150.0, 12.0),
-            ("bel_base", "mom_bellows_base", 3.0, 20.0, 49.8, 68.8),
-            ("bel_leaf", "mom_bellows_leaf", 57.8, 20.0, 49.8, 68.8),
+            ("nozzles", "mom_nozzle_set", 52.8, 20.0, 50.2, 12.0),
             ("fw_tray", "mom_flywheel_tray", 3.0, 93.8, 49.8, 49.8),
             ("fw_lid", "mom_flywheel_lid", 57.8, 93.8, 49.8, 49.8),
             ("spindle", "mom_spindle_shaft", 3.0, 148.6, 78.0, 6.6),
-            ("bel_pin", "shaft_tu03", 86.0, 148.6, 37.5, 6.6),
             ("rotor_fw", "mom_flywheel_rotor", 112.6, 20.0, 42.0, 42.0),
             ("z10_c", "gear_spur_z10", 112.6, 67.0, 30.0, 28.9),
             ("jet_slide", "mom_jet_slide_valve", 147.6, 67.0, 9.6, 38.0),
-            ("nozzles", "mom_nozzle_set", 112.6, 100.9, 14.0, 42.0),
             ("jet_valve", "mom_jet_valve_body", 131.6, 110.0, 27.8, 49.8),
         ],
     },
     "card_f": {
-        "name": "Card F — Stage-4 PETG Drop-In RC Drive, Low-CG Brain & Coaxial Servo Housings",
+        "name": "Card F — Pro Powered Add-On (PETG): RC Drive, Low-CG Brain & Coaxial Servo Housings",
         "limit_mm": 164.0,
         "material": "PETG",
         "items": [
@@ -2607,8 +2588,18 @@ def _pneumatic_jet_check(cache):
     vb = _raw_geo("mom_jet_valve_body", cache)
     sv = _raw_geo("mom_jet_slide_valve", cache)
     ns = _raw_geo("mom_nozzle_set", cache)
-    # Seat center Ø4.5 mm nozzle plug (local xc = +2.5, z = 4.5..10.5) coaxially into rear 4-deg Luer socket (y = 8.5..14.7, z = 12.50):
-    noz_seated = ns.translate((-2.5, 0.0, 0.0)).rotate((-90, 0, 0)).translate((0.0, 19.05, 12.50))
+    # Seat the Ø4.5 mm insert (local xc = -5.5, snapped off its sprue) coaxially into the rear
+    # 4-deg Luer socket (y = 8.5..14.7, z = 12.50), tip toward -Y reaching y ~= 9.0:
+    ins45 = ns ^ Manifold.cube((9.8, 12.0, 10.0)).translate((-11.4, -6.0, 0.0))
+    noz_seated = ins45.rotate((90, 0, 0)).translate((6.5, 17.2, 12.50))
+    # Seating assertion (2026-11-02): the insert must actually enter the socket with ~0 overlap.
+    _seat_fail = []
+    _ibb = noz_seated.bounding_box()
+    _v_seat = (noz_seated ^ vb).volume()
+    if _ibb[1] > 10.0:
+        _seat_fail.append(("jet_seat", "insert_tip_outside_socket", f"tip y={_ibb[1]:.2f} > 10.0"))
+    if _v_seat > 0.5:
+        _seat_fail.append(("jet_seat", "insert_overlap", f"{_v_seat:.2f} mm3 > 0.5"))
     # Spool oriented along -X from +X side with 50-deg teardrop apex along +Z_world: p_world = (-z_sv, -x_sv, +y_sv) + (x0, -3.0, 12.50)
     spool_base = sv.rotate((0, -90, 0)).rotate((90, 0, 0))
     spool_closed = spool_base.translate((14.50, -3.0, 12.50))
@@ -2623,7 +2614,7 @@ def _pneumatic_jet_check(cache):
     pt_exhaust = np.array([[0.0, 17.5, 12.5]])
     pts_sockets = np.array([[sx, sy, 2.0] for sx in (-18.75, -6.25, 6.25, 18.75) for sy in (-6.25, 6.25)])
 
-    issues = []
+    issues = list(_seat_fail)
     for mode, spool in (("OPEN", spool_open), ("CLOSED", spool_closed)):
         air = fluid_box - (vb + noz_seated + spool)
         tm_air = tp.to_trimesh(air)
@@ -2776,28 +2767,38 @@ def verify_gate_g1():
     if spool_placed is None:
         spool_placed = spool_raw.rotate((0, 90, 0)).translate((3.85, 43.75, 31.25))
     pto_shaft = _raw_geo("shaft_tu03", cache).rotate((0, 0, ph_pto)).rotate((0, 90, 0)).translate((-15.20, 43.75, 31.25))
-    latch_pin = _raw_geo("pro_captive_pin_28", cache).rotate((0, -90, 0)).translate((24.775, 22.25, 36.00))
-    bumper = _raw_geo("mom_bumper_trigger", cache).translate((0.0, -50.0, 12.50))
-    bumper_pin = _raw_geo("pro_captive_pin_28", cache).translate((0.0, -37.5, -1.525))
     res_mom = _check_non_overlapping([
         ("keel", keel), ("band_tray", core_tray), ("band_lid", core_lid),
         ("pto_shaft", pto_shaft), ("pto_gear", pto_placed), ("spool", spool_placed),
-        ("axle_z10", axle_z10), ("latch_pin", latch_pin), ("bumper", bumper), ("bumper_pin", bumper_pin),
+        ("axle_z10", axle_z10),
         *outboard_wheels(w_med, -56.25), *outboard_wheels(w_gnt, 43.75),
     ])
+    # 3c. Band clutch direction + closed-saddle shaft capture (2026-11-02, pull-back-only Option B):
+    # Mirrored clutch must lock when spool lags gear (relative rotation < 0) and overrun when > 0:
+    # overlap growth under a -3 deg spool step must dominate the +3 deg step.
+    clutch_fail = []
+    if spool_placed is not None:
+        def _about_shaft(solid, deg):
+            return solid.translate((0.0, -43.75, -31.25)).rotate((deg, 0.0, 0.0)).translate((0.0, 43.75, 31.25))
+        v_lock = (_about_shaft(spool_placed, -10.0) ^ pto_placed).volume()
+        v_over = (_about_shaft(spool_placed, 10.0) ^ pto_placed).volume()
+        if not (v_lock > 0.5 and v_lock > 2.0 * max(v_over, 0.01)):
+            clutch_fail.append(("clutch_direction", f"lock {v_lock:.2f} vs overrun {v_over:.2f} mm3", "lock must dominate"))
+        # Closed saddle bores: at every shaft angle, a +1.2 mm lift (past the 1.0 mm flat-up bore
+        # clearance, at the lid-dome catch) must hit tray material -- the shaft can never escape.
+        for k in range(12):
+            spun = _about_shaft(pto_shaft, 30.0 * k)
+            v_lift = (spun.translate((0.0, 0.0, 1.2)) ^ core_tray).volume()
+            if v_lift < 0.05:
+                clutch_fail.append(("shaft_capture", f"angle {30 * k} deg", f"lift uncaught ({v_lift:.3f} mm3)"))
+    results["3c_band_clutch_and_shaft_capture"] = clutch_fail
     # Slam launcher 0..35 mm captive stroke check:
     slam_b = _raw_geo("mom_slam_base", cache)
     slam_pin = _raw_geo("pro_captive_pin_28", cache).rotate((-90, 0, 0)).translate((0.0, -20.525, 9.375))
     slam_pl_upright = _raw_geo("mom_slam_plunger", cache).rotate((0, 90, 0)).translate((-74.5, 0.0, 9.375))
     for s_dx in (0.0, 17.5, 35.0):
         res_mom += _check_non_overlapping([("slam_base", slam_b), ("slam_pin", slam_pin), (f"plunger_{s_dx}", slam_pl_upright.translate((s_dx, 0.0, 0.0)))])
-    # Bellows 10..50 deg hinged lift check:
-    bel_b = _raw_geo("mom_bellows_base", cache)
-    bel_p = _raw_geo("shaft_tu03", cache).rotate((0, 90, 0)).translate((-18.75, BELLOWS_HINGE_Y, BELLOWS_BASE_HINGE_Z))
-    bel_l_raw = _raw_geo("mom_bellows_leaf", cache)
-    for b_deg in (10.0, 30.0, 50.0):
-        bel_l = bel_l_raw.translate((0.0, -BELLOWS_HINGE_Y, -BELLOWS_LEAF_HINGE_Z)).rotate((-b_deg, 0.0, 0.0)).translate((0.0, BELLOWS_HINGE_Y, BELLOWS_BASE_HINGE_Z))
-        res_mom += _check_non_overlapping([(f"bel_base_{b_deg}", bel_b), ("bel_pin", bel_p), (f"bel_leaf_{b_deg}", bel_l)])
+    # (Bellows lift check removed 2026-11-02: bellows dropped from the decided ladder and Card E3.)
     # Shrouded flywheel turbine + ripcord check:
     fw_tray = _raw_geo("mom_flywheel_tray", cache)
     fw_lid = _raw_geo("mom_flywheel_lid", cache).translate((0.0, 0.0, 32.3))

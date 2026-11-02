@@ -1,6 +1,9 @@
-# Spec (draft for review): first motion stage, key-wound vs pull-back, and the stage ladder
+# Spec: First Motion Stage, Key-Wound vs Pull-Back, and the `Snap -> Motion -> Pro` Ladder
 
-**Status:** draft 4, 2026-11-02, for Dan's review. **Pass rules for the balloon-jet print test (section 10.4) are agreed.** **Decided by Dan (2026-11-02): the ladder is Snap -> Motion -> Pro, with no separate Mech stage (its advanced parts merge into Pro), and a bigger-wheel option is wanted in every stage.** Still open: pull-back vs key for Motion (recommendation below), and the Pro powered-module questions (section 6). Mechanical soundness only: no age grading, compliance or card layout here. **Nothing in CAD or in the locked spec has been changed.** If this is accepted, the changes go into [progressive-power-system-spec.md](progressive-power-system-spec.md) and [functional-print-mechanics-spec.md](functional-print-mechanics-spec.md).
+**Status:** draft 5, 2026-11-02 — **Decisions locked by Dan (section 6); CAD implementation in progress (`Gate G1` `13/13` PASS; [`verify_band_jet.py`](../../parts/partspec/verify_band_jet.py) `4/8` PASS, `4/8` OPEN).**
+- **Decided & applied in specs + `CARD_LAYOUTS`:** Ladder **`Snap -> Motion -> Pro`** (no separate `Mech` stage; `Card F` = optional **Pro Powered Add-On** `10+`, servo replaces hand column/wheel); pull-back-only Band Core (`key`, `latch pawl`, `bumper`, and `bellows` dropped from `Cards E2–E3`; rear axle `gear_spur_z10` added to `Card E2`); `Ø50` wheels first-class in every stage; top-balloon jet (`mom_jet_valve_body`) selected.
+- **Done in uncommitted `toyventor_kitcard.py`:** Band Core clutch mirrored (`C1` PASS + `Gate G1` `3c` PASS), tray saddles closed to `360°` teardrop `free` bores (`C3` PASS, `0.35 mm` max `+Z` lift), conical left drum flange (`R = 8.4 mm`) added, and `C6`/`C8` placement & gear-mesh checks pass.
+- **Still open before STL re-export (`4 FAIL` in `verify_band_jet.py`):** **`C4`** (`mom_nozzle_set` center `13.0 x 10.4 x 2.0 mm` storage plate at `toyventor_kitcard.py:1732` is unioned *after* cutting the bores, blocking half the `O4.5 -> O3.2` and `O6.0 -> O4.2` rear orifices while `O8.0` chokes internally to `O6.1` inside a `7.50 mm` tip), **`C5`** (enlarged passages bottleneck at `mom_jet_slide_valve`'s `33.8 mm2` / `O6.56` port -> `8.5 gf = 1.26x < 1.30x` drag at `150 g`; needs `>= 35.3 mm2` / `O >= 6.71 mm` enclosed port), **`C2`** (`0.56 mm < 0.75 mm` nominal pawl bite), and **`C7`** (`Truck-Mockup.html` `17.5 / 27.0 deg` viewer phases overlap `2.91 mm3` post-mirror; `public/kip/partspec/*.stl` & `validation/*.json` also await re-export). Companion specs [progressive-power-system-spec.md](progressive-power-system-spec.md) and [functional-print-mechanics-spec.md](functional-print-mechanics-spec.md) are synced to this scorecard.
 
 **Draft 2 corrects draft 1.** A review pass found problems in the CAD that draft 1 missed, and checking them also found three errors in draft 1 itself (the rear wheel is not a blocker at the right key spin, the key's shape was described wrongly, and "geometry works" confused "no overlap" with "functions"). Section 7 lists every review finding and how it was checked.
 
@@ -198,17 +201,20 @@ What the merge changes, to settle in section 6: Mech is graded 10+ and carries t
 
 Decided: ladder Snap -> Motion -> Pro; no Mech stage; bigger wheel wanted; **balloon = the jet piece with the balloon on top, the bellows dropped**.
 
+Decided (Dan, 2026-11-02, implementation pass):
+
+- **Pull-back only; key, latch pawl and bumper dropped for now** (section 4 item 2). Option C (key as later upgrade) stays open.
+- **Pro's powered module: optional add-on.** Pro = hand-steered rack steering (8+); the powered module (servo, drive motor, brain — former Mech/Card F) is an optional upgrade with its own 10+ grading.
+- **Hand vs servo steering: servo replaces the column and wheel; never both fitted.**
+- **Jet body and nozzle: enlarge internal passages to about O8 and redesign `mom_nozzle_set` as individual rear-orifice inserts (O3.0/4.5/6.0/8.0).**
+- **Traction: O50 first-class in Motion and Pro now; O-ring groove only if the section 5 friction coupon calls for it.**
+- **Card re-cut accepted:** the Motion card gains a `gear_spur_z10`; bellows leaves the cards; the powered module keeps its own plate as the Pro powered add-on.
+- **One shared tray/lid across cores: deferred** (too large for this pass).
+
 Still open:
 
-- **Pull-back only, key dropped for now?** (my recommendation: yes; section 4 item 2)
-- **Pro's powered module: required or optional?** Merging Mech into Pro makes Pro 10+ unless the servo, drive motor and brain stay an optional add-on with its own grading. I suggest optional: Pro = hand-steered rack steering, plus a powered upgrade.
-- **Hand steering and servo steering together?** The Mech truck drops the steering column and wheel; the merged Pro needs one rule.
 - **Balloon cradle:** probably a rear stop to limit the trail-back (not a tilt-holder), and whether to let the balloon rest against Kip at rest or hold it back about 30 deg; decide after a printed balloon test on the real keel (nothing is designed).
-- **Jet body and nozzle:** enlarge the body's internal passages (about O8; changes `mom_jet_valve_body` and `mom_jet_slide_valve`) and redesign `mom_nozzle_set` as individual inserts; add an O8 nozzle only after that (CAD change, regen and card change).
 - **Balloon size to support:** 150-225 mm all work with a 15-45 deg lean; smaller is lighter and needs less lean.
-- **Traction:** O50 first, then an O-ring groove (my suggestion), TPU sleeve only if the coupon says so.
-- Does moving Motion before Pro re-cut the cards (Card E2 needs a `gear_spur_z10`)? It will; confirm that is acceptable.
-- Is one shared tray/lid across the cores a goal, or too large a change for now?
 
 ## 7. Review log: findings checked against the CAD (2026-11-02)
 
@@ -232,16 +238,16 @@ Still open:
 ## 8. Sources
 
 - Jet truck checks: `parts/kip/jetcar_table.py` -> `parts/kip/viewer/jetcar-clearance.json`; driver pose snapshot `parts/kip/viewer/jetcar-kip-pose.json` (from the Truck page's `?probe=sweep`); interactive: `parts/kip/viewer/JetCar-Lab.html`. Nozzle-seat and mass probes: scratch scripts on the generator's own geometry (`toyventor_kitcard._raw_geo`).
-- Balloon-car research: [NASA Glenn balloon rocket car](https://www.grc.nasa.gov/WWW/K-12/BGP/Ashlie/BalloonRocketCar_easy.html); [SMU balloon-powered car lab](https://s2.smu.edu/propulsion/Pages/balloonlab.htm); [Eurobricks balloon LEGO car thread](https://www.eurobricks.com/forum/forums/topic/9183-help-for-school-project); [Mombrite](https://www.mombrite.com/balloon-powered-lego-cars/); [Science Sparks](https://www.science-sparks.com/balloon-powered-lego-car/). Read, not just listed. Jet-valve CAD: `mom_jet_valve_body` in `parts/partspec/toyventor_kitcard.py`.
+- Balloon-car research: [NASA Glenn balloon rocket car](https://www.grc.nasa.gov/WWW/K-12/BGP/Ashlie/BalloonRocketCar_easy.html); [SMU balloon-powered car lab](https://s2.smu.edu/propulsion/Pages/balloonlab.htm); [Eurobricks balloon brick-car thread](https://www.eurobricks.com/forum/forums/topic/9183-help-for-school-project); [Mombrite](https://www.mombrite.com/balloon-powered-lego-cars/); [Science Sparks](https://www.science-sparks.com/balloon-powered-lego-car/). Read, not just listed. Jet-valve CAD: `mom_jet_valve_body` in `parts/partspec/toyventor_kitcard.py`.
 
 - Overlap table: `parts/kip/windkey_table.py` -> `parts/kip/viewer/windkey-overlaps.json` (per spin, 30 deg steps); interactive: `parts/kip/viewer/WindKey-Lab.html`.
 - Clutch, pawl, saddle, key and wall measurements: probes of the committed mockup STLs in `public/kip/partspec/mockup/` (scratch scripts, not kept in the repo).
 - Reuse table: part lists in the motion-suite probe frames (`J2_tip`, `J6_demo`) of the committed `Truck-Mockup.html`; tray/lid pairs from the PartSpec catalog; card lists from [functional-print-mechanics-spec.md](functional-print-mechanics-spec.md) section 5.
 - Stage definitions and band numbers: [progressive-power-system-spec.md](progressive-power-system-spec.md) section 3.2 and [functional-print-mechanics-spec.md](functional-print-mechanics-spec.md) section 3.1.
 
-## 9. Draft additions for `functional-print-mechanics-spec.md` (for that document's owner)
+## 9. Historical draft additions for `functional-print-mechanics-spec.md` *(Applied & Superseded 2026-11-02)*
 
-That document's Band Core warning (section 3, "Open Stage-3A Band Core & Bumper CAD Defects") says "five `P0` defects" but lists four bullets, and it does not carry the jet findings. Proposed text, in that document's own style. **Not applied: I have not edited that file.**
+> **Applied status (`2026-11-02`):** Incorporated into [functional-print-mechanics-spec.md](functional-print-mechanics-spec.md) (`Review Status`, `§0.1–§0.3`, `§3` Warning, `§3.1`, `§3.4`, `§5`, `§6`) and [progressive-power-system-spec.md](progressive-power-system-spec.md), updated further to reflect the live [`verify_band_jet.py`](../../parts/partspec/verify_band_jet.py) scorecard (`C1/C3/C6/C8` PASS, `C2/C4/C5/C7` OPEN). Kept below as the pre-pass handoff record:
 
 **9.1 Warning banner: fix the count and add two items.** Change "found five `P0` defects" to "found seven defect groups" (bullet 4 already groups three) and append:
 
@@ -253,11 +259,13 @@ That document's Band Core warning (section 3, "Open Stage-3A Band Core & Bumper 
 
 **9.3 Section 3.4.** In the mermaid node `Nozzle`, add "(not seatable as modelled)". After the `_pneumatic_jet_check()` sentence in the last bullet, add: "It also does **not** test that any nozzle plug seats in the socket; the pose it uses leaves the plugs outside the body." Add a performance sentence: "Bound, `2.5 kPa`, `5 L`, nozzle in series with the body's own `~Ø5` air path (inlet `19.6 mm2`, valve port `20.4 mm2`, tunnel `20.6 mm2`): `~3.2 gf` (`Ø3.0`), `~4.9 gf` (`Ø4.5`), `~4.7 gf` (`Ø6.0`), `~3.4 gf` (`Ø8.0`), maximum `A x dP ~ 5 gf` whatever the nozzle; rolling drag is `0.066 N` for the `150 g` solid-PLA Snap truck plus jet piece (the spec's `110 g` reference needs infill) and `0.049 N` at `110 g`, so thrust over drag is `<= 1.0x`." Replace the existing `2.5-14 gf` table in `progressive-power-system-spec.md` (section 3.2, `mom_jet_valve`) the same way.
 
-**9.4 Ladder note (one line under the document banner).** "Decided 2026-11-02 (Dan): ladder Snap -> Motion -> Pro, no separate Mech stage, balloon = `mom_jet_valve_body` with the balloon on top, bellows dropped; see `motion-stage-options-spec.md`." This document still uses the four-stage numbering and the key and bumper in Stage 3A, which matches the shipped CAD, not that decision.
+**9.4 Ladder note (one line under the document banner).** "Decided 2026-11-02 (Dan): ladder Snap -> Motion -> Pro, no separate Mech stage, balloon = `mom_jet_valve_body` with the balloon on top, bellows dropped; see `motion-stage-options-spec.md`."
 
 ## 10. Print-and-test plan: balloon jet on the real keel
 
-**Purpose.** Settle three things the CAD cannot: how a real balloon behaves on the vertical collar, whether the truck moves at all through the body's roughly O5 air path, and which wheel and nozzle help. **Nothing here needs a CAD change**; the second print is only worth making once the first answers are in.
+> **Export status note (`2026-11-02`):** The STL files currently on disk in `public/kip/partspec/` (`toyventor_mom_jet_valve_body_S.stl`, `toyventor_mom_jet_slide_valve_P.stl`) are still the **pre-edit `~O5 mm` parts** (`19.6 / 20.4 / 20.6 mm2`), which match the baseline predictions in 10.3 below. Uncommitted `parts/partspec/toyventor_kitcard.py` enlarges the passages (`47.6 / 33.8 / 40.5 mm2`) and redraws `mom_nozzle_set` as `4` inserts (`50.2 x 12.0 x 8.2 mm`), **but still fails `verify_band_jet.py` `C4` (center storage plate blocks `O4.5` & `O6.0` bores; `O8.0` chokes to `O6.1`) and `C5` (`33.8 mm2` port caps thrust at `8.5 gf = 1.26x < 1.30x` drag)**. Fix `C4/C5` and re-export STLs before printing the enlarged-passage coupon (or run T0–T6 below as the `~O5` baseline control).
+
+**Purpose.** Settle three things the CAD cannot: how a real balloon behaves on the vertical collar, whether the truck moves through the printed passages, and which wheel and nozzle help.
 
 ### 10.1 What to print and gather
 

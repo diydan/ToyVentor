@@ -35,7 +35,7 @@ from manifold3d import CrossSection, Manifold
 MIN_OVERLAP = 0.05          # mm3, the threshold the motion checks use
 AXIS_Y, AXIS_Z = 43.75, 31.25
 GEAR_X, SPOOL_X, SHAFT_X = -3.125, 3.85, -15.20       # as Truck-Mockup.html places them (band stage)
-VIEWER_PTO_DEG, VIEWER_SPOOL_DEG = 17.5, 27.0
+VIEWER_DEFAULT = (17.5, 27.0)   # the committed viewer's phases; used only when Truck-Mockup.html is not next to the CAD being checked (e.g. an export of HEAD)
 
 
 def rnd(v, n=2):
@@ -44,6 +44,7 @@ def rnd(v, n=2):
 
 class Ctx:
     def __init__(self, ps):
+        self.ps = ps
         sys.path.insert(0, ps)
         os.chdir(ps)
         import toyventor_kitcard as kc
@@ -51,6 +52,21 @@ class Ctx:
 
     def g(self, pid):
         return self.kc._raw_geo(pid, self.cache)
+
+
+def viewer_phases(c):
+    """(PTO phase, spool phase) in degrees as the Truck viewer sets them (STEER.ptoPhaseRad / spoolPhaseRad), read from its source so they cannot drift from this check.
+    The Truck script lives in Truck-Mockup.html, or in truck-bench.js once the Workshop stage-4 move has happened: look in both."""
+    import re
+    base = os.path.join(c.ps, "..", "kip", "viewer")
+    for name in ("Truck-Mockup.html", "truck-bench.js"):
+        try:
+            text = open(os.path.join(base, name)).read()
+            vals = [float(re.search(rf"{key}:\s*THREE\.MathUtils\.degToRad\(([\d.]+)\)", text).group(1)) for key in ("ptoPhaseRad", "spoolPhaseRad")]
+            return vals[0], vals[1], f"read from {name}"
+        except (OSError, AttributeError):
+            continue
+    return VIEWER_DEFAULT[0], VIEWER_DEFAULT[1], "defaults: no Truck-Mockup.html or truck-bench.js with the STEER phases next to this CAD"
 
 
 def on_axis(m, x, phase_deg):
@@ -321,17 +337,16 @@ def check_jet_placement(c):
 
 # ---------------------------------------------------------------------------------------------------------------------------- C7
 def check_viewer_pose(c):
-    gear = on_axis(c.g("mom_pto_gear_z10"), GEAR_X, VIEWER_PTO_DEG)
-    spool = on_axis(c.g("mom_band_spool_pawl"), SPOOL_X, VIEWER_SPOOL_DEG)
-    ov = overlap(gear, spool)
-    return ("PASS" if ov <= MIN_OVERLAP else "FAIL"), f"PTO gear vs spool overlap at the viewer's phases ({VIEWER_PTO_DEG}, {VIEWER_SPOOL_DEG} deg): {ov:.2f} mm3", {}
+    pto, spool_deg, src = viewer_phases(c)
+    ov = overlap(on_axis(c.g("mom_pto_gear_z10"), GEAR_X, pto), on_axis(c.g("mom_band_spool_pawl"), SPOOL_X, spool_deg))
+    return ("PASS" if ov <= MIN_OVERLAP else "FAIL"), f"PTO gear vs spool overlap at the viewer's phases ({pto:g}, {spool_deg:g} deg, {src}): {ov:.2f} mm3", {}
 
 
 def check_gear_mesh(c):
-    pto = on_axis(c.g("mom_pto_gear_z10"), GEAR_X, VIEWER_PTO_DEG)
+    pto_deg, _, src = viewer_phases(c)
     axle = c.g("gear_spur_z10").rotate((0, 90, 0)).translate((GEAR_X, AXIS_Y, 6.25))
-    ov = overlap(pto, axle)
-    return ("PASS" if ov <= MIN_OVERLAP else "FAIL"), f"PTO gear (viewer phase {VIEWER_PTO_DEG} deg) vs rear axle gear tooth overlap: {ov:.2f} mm3", {}
+    ov = overlap(on_axis(c.g("mom_pto_gear_z10"), GEAR_X, pto_deg), axle)
+    return ("PASS" if ov <= MIN_OVERLAP else "FAIL"), f"PTO gear (viewer phase {pto_deg:g} deg, {src}) vs rear axle gear tooth overlap: {ov:.2f} mm3", {}
 
 
 CHECKS = [
