@@ -6,6 +6,8 @@ import {
   type ParentSettingsUpdateInput,
 } from "../../../../shared/parent-time";
 import { kipDemoUrl } from "../../../../shared/toycontract";
+import { postRoomPhoto } from "../../../lib/api";
+import { downscalePhoto } from "../../scan/scan";
 import {
   getLocalPinCooldownUntil,
   requestGateChallenge,
@@ -42,6 +44,8 @@ export interface GrownUpsSheetProps {
   onToggleDemoMode?: (next: boolean) => void;
   onSeedDemoSave?: () => void;
   onOpenEditor?: () => void;
+  /** Feature 3 (dark, Demo Mode): photo segments -> composed room level in the editor. Returns a status line. */
+  onRoomPhoto?: (segments: Array<{ noun: string; box: { x1: number; y1: number; x2: number; y2: number } }>) => string;
   onJumpWorld?: (worldId: WorldId) => void;
   currentWorld?: string;
   kipUrl?: string;
@@ -79,6 +83,7 @@ export function GrownUpsSheet({
   onToggleDemoMode,
   onSeedDemoSave,
   onOpenEditor,
+  onRoomPhoto,
   onJumpWorld,
   currentWorld,
   kipUrl,
@@ -100,6 +105,7 @@ export function GrownUpsSheet({
   const [nowTick, setNowTick] = useState<number>(() => Date.now());
   const [gateError, setGateError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [roomBusy, setRoomBusy] = useState(false);
   const [statusNote, setStatusNote] = useState<string | null>(null);
   const [confirmResetXp, setConfirmResetXp] = useState(false);
   const [sittingSession, setSittingSession] = useState<GateSession | null>(null);
@@ -495,6 +501,40 @@ export function GrownUpsSheet({
     settings.enabled && totalCapToday > 0
       ? Math.min(100, Math.round((status.usedSeconds / (totalCapToday * 60)) * 100))
       : 0;
+  /** Feature 3 (dark): one side-on room photo -> SAM segments -> composed level in the editor. Photo is discarded server-side. */
+  const onRoomPhotoFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file || !onRoomPhoto || roomBusy) return;
+    setRoomBusy(true);
+    setStatusNote("Looking at your room photo…");
+    try {
+      const imageDataUrl = await downscalePhoto(file);
+      const res = await postRoomPhoto(imageDataUrl, activeProof);
+      if (res.sam.status === "gate-required") {
+        setStatusNote("Room photos need a live grown-up sign-in. Re-open Grown-ups with your PIN, then try again.");
+        return;
+      }
+      if (res.sam.status === "slow-down") {
+        setStatusNote("Too many room photos just now. Wait a minute, then try again.");
+        return;
+      }
+      if (!res.sam.configured) {
+        setStatusNote("Photo levels are not switched on for this build yet.");
+        return;
+      }
+      if (res.segments.length === 0) {
+        setStatusNote("I could not spot any room props in that photo. Try a side-on photo with the floor in view.");
+        return;
+      }
+      setStatusNote(onRoomPhoto(res.segments));
+    } catch {
+      setStatusNote("Could not read that photo just now. Check the connection and try again.");
+    } finally {
+      setRoomBusy(false);
+    }
+  };
+
   const effectiveKipUrl = kipUrl ?? kipDemoUrl();
 
   return (
@@ -888,6 +928,20 @@ export function GrownUpsSheet({
                     >
                       Level Editor
                     </button>
+                  )}
+                  {onRoomPhoto && (
+                    <label className="tv-ctl" style={{ cursor: roomBusy ? "wait" : "pointer" }}>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        capture="environment"
+                        aria-label="Room photo for a level"
+                        disabled={roomBusy}
+                        onChange={onRoomPhotoFile}
+                        style={{ position: "absolute", width: 1, height: 1, opacity: 0, pointerEvents: "none" }}
+                      />
+                      {roomBusy ? "Reading photo…" : "Room Photo Level"}
+                    </label>
                   )}
                   <a
                     className="tv-ctl"

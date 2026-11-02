@@ -59,6 +59,7 @@ import {
   type EngineHandle,
 } from "./engine";
 import { GrownUpsSheet } from "./GrownUpsSheet";
+import { composeRoomPhotoLevel } from "./runtime/roomPhoto";
 import { MissionPanel } from "./MissionPanel";
 import { MyToySheet } from "./MyToySheet";
 import { isPackClaimedToday, PackOverlay } from "./PackOverlay";
@@ -1185,6 +1186,17 @@ export function GameCanvas({
           onToggleDemoMode={handleToggleDemoMode}
           onSeedDemoSave={() => engine()?.seedDemoSave?.()}
           onOpenEditor={openEditorSheet}
+          onRoomPhoto={(segments) => {
+            const seed = (Date.now() % 0xffffff) + 1;
+            const result = composeRoomPhotoLevel({ seed, segments });
+            const opened = engine()?.openEditorWithLevel(result.level) ?? false;
+            if (!opened) return "That level could not be opened. Try the photo again.";
+            setGrownUpsOpen(false);
+            const found = result.mapped;
+            return result.fallback
+              ? "Made a starter room level in the editor. The photo props are yours to place."
+              : `Made “${result.level.name}” in the editor from ${found} spotted prop${found === 1 ? "" : "s"}. Press Play to try it.`;
+          }}
           onJumpWorld={(worldId) => engine()?.goWorld(worldId)}
           currentWorld={state.world}
           kipUrl={kipUrl}

@@ -93,6 +93,60 @@ export interface SkinResponse {
   skin: { applied: boolean; status?: string; message?: string };
 }
 
+/** Room-photo segments (Feature 3). Box fractions are checked field by field; the reply is untrusted. */
+export interface RoomPhotoSegment {
+  noun: string;
+  box: { x1: number; y1: number; x2: number; y2: number };
+}
+
+export interface RoomPhotoResponse {
+  segments: RoomPhotoSegment[];
+  sam: { configured: boolean; calls?: number; status?: string; message?: string };
+}
+
+const ROOM_SCAN_TIMEOUT_MS = 60_000; // up to 12 SAM calls under one 45 s server deadline
+
+function parseRoomSegments(raw: unknown): RoomPhotoSegment[] {
+  if (!Array.isArray(raw)) return [];
+  const out: RoomPhotoSegment[] = [];
+  for (const item of raw) {
+    if (typeof item !== "object" || item === null) continue;
+    const { noun, box } = item as { noun?: unknown; box?: Record<string, unknown> };
+    if (typeof noun !== "string" || !noun || typeof box !== "object" || box === null) continue;
+    const { x1, y1, x2, y2 } = box;
+    if (![x1, y1, x2, y2].every((v) => typeof v === "number" && Number.isFinite(v))) continue;
+    out.push({ noun, box: { x1: x1 as number, y1: y1 as number, x2: x2 as number, y2: y2 as number } });
+    if (out.length >= 16) break;
+  }
+  return out;
+}
+
+/**
+ * Send one side-on room photo for SAM prop segmentation (POST /api/scan, mode "room").
+ * Parent-gated server-side (S0b): pass the live sitting proof token. Throws on transport
+ * failure; gate/config outcomes arrive in `sam` so the UI can fall back honestly.
+ */
+export async function postRoomPhoto(imageDataUrl: string, proofToken?: string): Promise<RoomPhotoResponse> {
+  const res = await fetchWithTimeout(
+    "/api/scan",
+    {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "x-device-id": deviceId(),
+        ...(proofToken && proofToken !== "local-proof" ? { "x-parent-proof": proofToken } : {}),
+      },
+      body: JSON.stringify({ mode: "room", imageDataUrl }),
+    },
+    ROOM_SCAN_TIMEOUT_MS,
+  );
+  if (res.status === 401) return { segments: [], sam: { configured: true, status: "gate-required" } };
+  if (res.status === 429) return { segments: [], sam: { configured: true, status: "slow-down" } };
+  if (!res.ok) throw new Error(`room scan failed: ${res.status}`);
+  const body = (await res.json()) as { segments?: unknown; sam?: RoomPhotoResponse["sam"] };
+  return { segments: parseRoomSegments(body.segments), sam: body.sam ?? { configured: false } };
+}
+
 export async function postSkin(imageDataUrl: string, style: string): Promise<SkinResponse> {
   const res = await fetchWithTimeout(
     "/api/skin",
