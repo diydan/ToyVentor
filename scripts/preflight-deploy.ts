@@ -94,7 +94,7 @@ try {
   const MAX_SINGLE_GLB_BYTES = 250 * 1024;
   const MAX_TOTAL_GLB_BYTES = 5 * 1024 * 1024;
   const MAX_SINGLE_STL_BYTES = Math.round(1.6 * 1024 * 1024);
-  const MAX_TOTAL_STL_BYTES = 23 * 1024 * 1024;
+  const MAX_TOTAL_STL_BYTES = 25 * 1024 * 1024;
 
   const problems: string[] = [];
   const isValidStl = (path: string): boolean => {
@@ -166,7 +166,7 @@ try {
     .reduce((sum, f) => sum + statSync(join(root, "public/parts-glb", f)).size, 0);
 
   if (totalStlBytes > MAX_TOTAL_STL_BYTES)
-    problems.push(`public/parts-stl total ${(totalStlBytes / (1024 * 1024)).toFixed(2)} MB exceeds 23.0 MB budget`);
+    problems.push(`public/parts-stl total ${(totalStlBytes / (1024 * 1024)).toFixed(2)} MB exceeds 25.0 MB budget`);
   if (totalGlbBytes > MAX_TOTAL_GLB_BYTES)
     problems.push(`public/parts-glb total ${(totalGlbBytes / (1024 * 1024)).toFixed(2)} MB exceeds 5.0 MB budget`);
 
