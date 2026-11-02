@@ -32,6 +32,8 @@ export interface MapCarouselProps {
   onStartLearn?: (track: string, plan: number[]) => void;
   /** Plan for an explicit RungSheet pick. */
   planForRung?: (track: string, rung: number) => number[];
+  /** Switch to the branching trail-map view of the same places. */
+  onShowExplorer?: () => void;
 }
 
 const cardLabel = (card: MapCard): string =>
@@ -54,6 +56,7 @@ export function MapCarousel({
   onGoWorld,
   onStartLearn,
   planForRung,
+  onShowExplorer,
 }: MapCarouselProps) {
   const trackRef = useRef<HTMLOListElement>(null);
   const [rungsOf, setRungsOf] = useState<LadderState | null>(null);
@@ -154,6 +157,11 @@ export function MapCarousel({
           <span className="kicker-label kicker-gold">Places to play</span>
           <b className="tv-sh-title">Map</b>
         </div>
+        {onShowExplorer ? (
+          <button type="button" className="tv-ctl" onClick={onShowExplorer}>
+            Trail map
+          </button>
+        ) : null}
         <button type="button" className="tv-ctl" onClick={onAskAge}>
           {ageBand === null ? "Age: ask a grown-up" : `Age ${BANDS[ageBand]?.label ?? ""}`}
         </button>

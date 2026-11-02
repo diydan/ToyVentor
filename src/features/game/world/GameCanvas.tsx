@@ -36,6 +36,7 @@ import {
   familyStars,
   grandfatherToyIds,
   loadProgression,
+  markExplorerVisited,
   mergeProgression,
   MISSION_STAT,
   missionTypeOf,
@@ -61,8 +62,10 @@ import {
 } from "./engine";
 import { GrownUpsSheet } from "./GrownUpsSheet";
 import { composeRoomPhotoLevel } from "./runtime/roomPhoto";
+import { buildExplorerGraph } from "../../../lib/explorerMap";
 import { planFor } from "../../../lib/learn";
 import { buildMapCards } from "../../../lib/mapCards";
+import { ExplorerMap } from "./ExplorerMap";
 import { MapCarousel } from "./MapCarousel";
 import { MissionPanel } from "./MissionPanel";
 import { MyToySheet } from "./MyToySheet";
@@ -149,6 +152,7 @@ export function GameCanvas({
   });
   const [moreOpen, setMoreOpen] = useState(false);
   const [mapOpen, setMapOpen] = useState(false);
+  const [mapView, setMapView] = useState<"cards" | "trail">("cards");
   const [worldsOpen, setWorldsOpen] = useState(false);
   const [demoMode, setDemoMode] = useState<boolean>(() => loadDemoMode());
   const [skinTick, setSkinTick] = useState(0);
@@ -184,6 +188,18 @@ export function GameCanvas({
       window.clearTimeout(xpToastTimerRef.current);
     }
     xpToastTimerRef.current = window.setTimeout(() => setXpToast(null), 4000);
+  }, []);
+
+  // Walking to a trail-map node reveals it (gentle fog) for next time.
+  const visitExplorerNode = useCallback((nodeId: string) => {
+    const { next, changed } = markExplorerVisited(
+      progressionRef.current,
+      nodeId,
+    );
+    if (!changed) return;
+    saveProgression(next);
+    setProgression(next);
+    void pushProgression(next);
   }, []);
 
   // Sync Play Time settings + today's ledger on boot.
@@ -1209,7 +1225,64 @@ export function GameCanvas({
           onEquipped={(next) => onPlacementsChange(next)}
         />
 
-        {mapOpen && !sleepActive && (
+        {mapOpen && !sleepActive && mapView === "trail" && (
+          <ExplorerMap
+            graph={buildExplorerGraph({
+              cards: buildMapCards({
+                ageBand: progression.ageBand ?? null,
+                prog: progression,
+                found: new Set(state.foundKeys),
+                missionsDone: new Set(state.missionsDoneKeys),
+              }),
+              visited: new Set(progression.explorerVisited ?? []),
+              currentId: state.world,
+              openAll: progression.sandboxUnlockAll,
+            })}
+            currentId={state.world}
+            guide={
+              <ToyMiniIcon toy={toy} accentColor={toyColor} skinVersion={skinTick} />
+            }
+            guideName={label}
+            onClose={() => setMapOpen(false)}
+            onShowCards={() => setMapView("cards")}
+            onAskAge={() => openGrownUps(false)}
+            onGoWorld={(worldId) => {
+              visitExplorerNode(worldId);
+              setMapOpen(false);
+              engine()?.goWorld(worldId);
+            }}
+            onGoFrontier={(node) => {
+              // playSeed returns null when the level cannot start (player
+              // busy, showcase, editor). Reveal and close only when it began.
+              if (!node.seedCode) return false;
+              const started = engine()?.playSeed(node.seedCode, node.theme);
+              if (!started) return false;
+              visitExplorerNode(node.id);
+              setMapOpen(false);
+              return true;
+            }}
+            onStartLearn={(track, plan) => {
+              visitExplorerNode(track);
+              closeEngineSheets();
+              closeReactOverlays();
+              engine()?.startLearnRun(
+                track,
+                plan,
+                (progressionRef.current.ageBand ?? 99) <= 1,
+              );
+            }}
+            planForRung={(track, rung) =>
+              planFor(
+                track,
+                progressionRef.current.ageBand ?? null,
+                progressionRef.current,
+                rung,
+              ) ?? [rung]
+            }
+          />
+        )}
+
+        {mapOpen && !sleepActive && mapView === "cards" && (
           <MapCarousel
             cards={buildMapCards({
               ageBand: progression.ageBand ?? null,
@@ -1245,6 +1318,7 @@ export function GameCanvas({
                 rung,
               ) ?? [rung]
             }
+            onShowExplorer={() => setMapView("trail")}
           />
         )}
 

@@ -131,6 +131,8 @@ export interface ProgressionState {
   completedChoresByDay?: Record<string, string[]>;
   /** Grown-up-set age band index 0-5 for the Map carousel; absent = unset. */
   ageBand?: number;
+  /** Explorer-map node ids the child has walked to (gentle-fog reveal set). */
+  explorerVisited?: string[];
 }
 
 export function emptyProgression(): ProgressionState {
@@ -358,6 +360,39 @@ export function applySolve(
   return { next, awarded, stars, kind, rankBefore, rankAfter, newVehicles };
 }
 
+/** Explorer node ids: authored ("garden") or frontier ("frontier:lab3:1"). */
+export const EXPLORER_NODE_PATTERN = /^[A-Za-z0-9_-]+(?::[A-Za-z0-9_-]+)*$/;
+
+export function cleanExplorerVisited(raw: unknown): string[] {
+  if (!Array.isArray(raw)) return [];
+  return [
+    ...new Set(
+      raw.filter(
+        (id): id is string =>
+          typeof id === "string" &&
+          id.length <= 64 &&
+          EXPLORER_NODE_PATTERN.test(id),
+      ),
+    ),
+  ];
+}
+
+/** Record an explorer-map visit. Invalid or repeat ids change nothing. */
+export function markExplorerVisited(
+  prog: ProgressionState,
+  nodeId: string,
+): { next: ProgressionState; changed: boolean } {
+  if (nodeId.length > 64 || !EXPLORER_NODE_PATTERN.test(nodeId)) {
+    return { next: prog, changed: false };
+  }
+  const existing = prog.explorerVisited ?? [];
+  if (existing.includes(nodeId)) return { next: prog, changed: false };
+  return {
+    next: { ...prog, explorerVisited: [...existing, nodeId] },
+    changed: true,
+  };
+}
+
 const KEY_PATTERN = /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+:t[123]$/;
 const DAY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -484,6 +519,7 @@ export function normalizeProgression(raw: unknown): ProgressionState {
     v.ageBand <= 5
       ? v.ageBand
       : undefined;
+  const explorerVisited = cleanExplorerVisited(v.explorerVisited);
   return {
     version: 1,
     totalXp:
@@ -506,6 +542,7 @@ export function normalizeProgression(raw: unknown): ProgressionState {
       ? { completedChoresByDay }
       : {}),
     ...(ageBand !== undefined ? { ageBand } : {}),
+    ...(explorerVisited.length > 0 ? { explorerVisited } : {}),
   };
 }
 
@@ -601,6 +638,10 @@ export function mergeProgression(
       ...(local.workshopDays ?? []),
     ]),
   ].sort();
+  const explorerVisited = cleanExplorerVisited([
+    ...(remote.explorerVisited ?? []),
+    ...(local.explorerVisited ?? []),
+  ]);
   return {
     version: 1,
     totalXp: Math.max(local.totalXp, remote.totalXp),
@@ -618,6 +659,7 @@ export function mergeProgression(
       ? { completedChoresByDay }
       : {}),
     ...(ageBand !== undefined ? { ageBand } : {}),
+    ...(explorerVisited.length > 0 ? { explorerVisited } : {}),
   };
 }
 

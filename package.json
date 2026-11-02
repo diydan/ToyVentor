@@ -6,10 +6,12 @@
   "scripts": {
     "dev": "vite",
     "e2e": "node scripts/e2e-chrome.mjs",
+    "e2e:trail": "node scripts/e2e-trail.mjs",
     "e2e:kip-menu": "node scripts/e2e-kip-menu.mjs",
     "e2e:kip-print": "node scripts/e2e-kip-print.mjs",
     "e2e:kip-selfie": "node scripts/e2e-kip-selfie.mjs",
     "e2e:workshop": "node scripts/e2e-workshop.mjs",
+    "e2e:bench-lifecycle": "node scripts/e2e-bench-lifecycle.mjs",
     "build": "tsc --noEmit && vite build && rm -f dist/toyventor/.dev.vars",
     "build:kip": "tsx scripts/build-kip.ts",
     "kip:validate-part": "tsx scripts/validate-llm-part.ts",

@@ -2851,6 +2851,136 @@ button.tv-badge-pill:hover {
   color: #2b1d00;
 }
 
+/* --- Explorer trail map (branching overworld beside the carousel) --- */
+
+.tv-trail-legend {
+  margin: 0;
+  font: 600 12px var(--fb, sans-serif);
+  color: var(--mut, #bfcaf5);
+}
+
+.tv-trail-scroll {
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  max-height: 52vh;
+  margin: 0 -6px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 14px;
+  background: rgba(8, 15, 43, 0.85);
+  scrollbar-width: thin;
+}
+
+.tv-trail-canvas {
+  position: relative;
+}
+
+.tv-trail-roads {
+  position: absolute;
+  inset: 0;
+}
+
+.tv-trail-area-name {
+  fill: rgba(244, 247, 255, 0.55);
+  font: 700 11px var(--fb, sans-serif);
+  letter-spacing: 0.04em;
+}
+
+.tv-trail-road-done {
+  stroke: var(--gold, #ffd24d);
+  stroke-width: 5;
+  stroke-linecap: round;
+  opacity: 0.9;
+}
+
+.tv-trail-road-next {
+  stroke: rgba(244, 247, 255, 0.55);
+  stroke-width: 5;
+  stroke-linecap: round;
+  stroke-dasharray: 0.1 10;
+}
+
+.tv-trail-node-wrap {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 96px;
+  transform: translate(-50%, -50%);
+}
+
+.tv-trail-node {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  padding: 0;
+  border-radius: 50%;
+  border: 3px solid var(--accent, #52b7ff);
+  background: var(--surface, #101a44);
+  color: var(--accent, #52b7ff);
+  cursor: pointer;
+}
+
+.tv-trail-node:focus-visible {
+  outline: 3px solid var(--focus, #ffd24d);
+  outline-offset: 3px;
+}
+
+.tv-trail-node-next {
+  border-style: dashed;
+  opacity: 0.75;
+}
+
+.tv-trail-node-clouded {
+  border-style: dashed;
+  border-color: rgba(244, 247, 255, 0.35);
+  color: rgba(244, 247, 255, 0.55);
+  opacity: 0.65;
+}
+
+.tv-trail-node-here {
+  box-shadow: 0 0 0 3px rgba(255, 210, 77, 0.55);
+}
+
+.tv-trail-glyph {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.tv-trail-done {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--gold, #ffd24d);
+  color: #2b1d00;
+  font: 800 11px var(--fb, sans-serif);
+}
+
+.tv-trail-node-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 3px;
+  text-align: center;
+  font: 700 11px var(--fb, sans-serif);
+  color: var(--ink, #f4f7ff);
+  text-shadow: 0 1px 3px rgba(2, 6, 28, 0.9);
+  pointer-events: none;
+}
+
+.tv-trail-count {
+  font-weight: 600;
+  color: var(--mut, #bfcaf5);
+}
+
 .tv-rung-list {
   display: flex;
   flex-direction: column;
