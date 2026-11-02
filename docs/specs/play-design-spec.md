@@ -305,6 +305,56 @@ Convert the youngest levels first, because they gain most from touching the worl
 | Series or parallel | Wiring choice, then a door | Party lights start the party; long-lasting lights guide the family home |
 | Exact ratio | Gear choice, then a door | The gears set the clock tower, so the bell rings and the train leaves |
 
+## The composition kit: near-infinite levels from reusable parts
+
+Added Nov 2, 2026. This is the first working layer of "levels are data built from tested primitives" (decision 3). It
+runs on today's `toyventor.level/1`; the `level/2` primitives above are the next layer, not a prerequisite.
+
+A level is a **stack of independent layers**. Each layer is a small closed catalog the engine already knows, so any
+choice in one layer works with any choice in the others and no per-level code is written.
+
+| Layer | What varies | Where it lives | Choices today |
+| --- | --- | --- | --- |
+| Theme | Ground, hills, sky, props vocabulary, hiding covers | `catalog.ts` `THEME_DEF`, `HKIND` | 6 |
+| Mood (time of day) | Sky gradient, stars, fog, the whole light rig | `catalog.ts` `MOOD_DEF`, `lighting.ts` `moodRig` | 3 (any theme x any mood) |
+| Rhythm | Five spots on a jittered grid: junk machine first, then at least 3 different moves | `levelKit.ts` | about 168 move orders x grid jitter |
+| Scenery | 4 to 6 clusters picked and ordered per gap from the theme's props | `levelKit.ts` `CLUSTERS` | 5 to 6 clusters per theme |
+| Parts | Which of the 30 world parts is hidden where, unfound parts first | `PART` | 30 x 29 x 28 x 27 x 26 |
+| Stations | One or two free STEM stations (no blueprints, so never a dead end) | `MDEF`, `missions.ts` | 11 |
+| Seed | Everything above, deterministically | `levelKit.ts` `composeLevel` | shareable 4-character code |
+
+`composeLevel({ seed, theme?, mood?, owned? })` returns a `toyventor.level/1` file (plus optional `mood` and `seed`
+fields, both additive). The same seed always gives the same level, so a code like `8K3F` can be replayed or shared with
+parent approval. `checkLevel` restates the editor's acceptance rules (five different real parts, a junk machine in the
+first 10 units, spots 4 apart and inside 4 to 42, at least three moves) so a composed level and a child's hand-made one
+are held to one bar. `kitSize()` reports a conservative lower bound of about 6 x 10^12 distinct levels before position
+jitter. The "Surprise world" button in the Worlds sheet calls `playSeed()`, which composes, registers the level as
+`seed-<code>` and walks in.
+
+What the kit guarantees (tested in `tests/level-kit.test.ts` over 3,000 seeds): determinism, the editor checks, every
+prop and part exists in the catalog, stations never overlap a spot, every theme and mood appears, and the hand-made
+explore worlds pass the same checks.
+
+**What it cannot do yet, and the order to fix it** (each item is a hardcoded place found in the Nov 2 review):
+
+1. **Puzzle variety needs the primitives.** Stations are still the 11 hand-coded missions, so two levels differ in
+   scenery, rhythm and mood but not in what the child works out. The next layer is `toyventor.level/2` with `poke`,
+   `carry`, `turn`, `load` and `tune` as parameterized modules (see "The interaction primitives"). Until then the kit
+   tunes difficulty only through the existing tier 1 to 3.
+2. **World width is a literal.** The strip is 0 to 46 in about a dozen places (`world.ts` bounds, `crFreeX`,
+   `edSnapX`, street signs at 0.85 and 43.85). `LevelDef` needs a `length` field so a level can be short for ages 2 to 3
+   and long for older bands.
+3. **Mission state is keyed `world.type`** (`missions.ts` `mid()`), so two composed levels with the same station share
+   completion. Composed worlds avoid this today only because each is `seed-<code>`; saved progress should key on the
+   level id and station index.
+4. **A new theme touches nine places** (`THEME_DEF`, `THEMES`, `TNAME`, `WN`, `SONG`, `LIGHT_RIGS`, `groundPlane`,
+   `extras2`, `CHIPS`) and `HKIND` is indexed by theme position. A single theme record holding all of it would let
+   content packs add themes as data.
+5. **Hiding covers are an if-chain** (`buildCover`, `junkMachine`, `reveal`). Each cover needs a declarative
+   `{ build, reveal, glintHeight }` entry before a content pack can add one.
+6. **Muse and the kit disagree.** `CR_INSTR` tells Muse "3 to 6 spots" while `edChecks` demands exactly five. The kit
+   and Muse should share `checkLevel`.
+
 ## Open questions
 
 - [ ] Should the mission card become a character speaking in the world for ages 2 to 4, with the card as a fallback?
