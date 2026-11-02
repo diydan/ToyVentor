@@ -43,6 +43,7 @@ import {
   pullProgression,
   pushProgression,
   resetProgression,
+  runCarouselImportOnce,
   saveProgression,
   type MissionType,
   type ProgressionState,
@@ -60,6 +61,8 @@ import {
 } from "./engine";
 import { GrownUpsSheet } from "./GrownUpsSheet";
 import { composeRoomPhotoLevel } from "./runtime/roomPhoto";
+import { buildMapCards } from "../../../lib/mapCards";
+import { MapCarousel } from "./MapCarousel";
 import { MissionPanel } from "./MissionPanel";
 import { MyToySheet } from "./MyToySheet";
 import { isPackClaimedToday, PackOverlay } from "./PackOverlay";
@@ -144,6 +147,7 @@ export function GameCanvas({
     listening: false,
   });
   const [moreOpen, setMoreOpen] = useState(false);
+  const [mapOpen, setMapOpen] = useState(false);
   const [worldsOpen, setWorldsOpen] = useState(false);
   const [demoMode, setDemoMode] = useState<boolean>(() => loadDemoMode());
   const [skinTick, setSkinTick] = useState(0);
@@ -160,9 +164,12 @@ export function GameCanvas({
   );
   const [missionGraceUntil, setMissionGraceUntil] = useState(0);
   const prevLockedRef = useRef(parentSnapshot.status.locked);
-  const [progression, setProgression] = useState<ProgressionState>(() =>
-    loadProgression(),
-  );
+  const [progression, setProgression] = useState<ProgressionState>(() => {
+    const loaded = loadProgression();
+    const imported = runCarouselImportOnce(loaded);
+    if (imported !== loaded) saveProgression(imported);
+    return imported;
+  });
   const progressionRef = useRef(progression);
   progressionRef.current = progression;
   const placementsRef = useRef(placements);
@@ -417,6 +424,7 @@ export function GameCanvas({
   }, [customizer.open, create.open, editor.open, missionPanel.open]);
 
   const closeReactOverlays = useCallback(() => {
+    setMapOpen(false);
     setToySheetOpen(false);
     setPackOpen(false);
     setRevealState(null);
@@ -694,6 +702,21 @@ export function GameCanvas({
                 role="menu"
                 aria-label="More studio tools"
               >
+                <button
+                  type="button"
+                  role="menuitem"
+                  className="tv-menu-item"
+                  disabled={sleepActive}
+                  onClick={() => {
+                    closeEngineSheets();
+                    closeReactOverlays();
+                    setMapOpen(true);
+                  }}
+                >
+                  <span>Map</span>
+                  <span className="tv-menu-meta">Play</span>
+                </button>
+
                 <button
                   type="button"
                   role="menuitem"
@@ -1158,6 +1181,28 @@ export function GameCanvas({
           onEquipped={(next) => onPlacementsChange(next)}
         />
 
+        {mapOpen && !sleepActive && (
+          <MapCarousel
+            cards={buildMapCards({
+              ageBand: progression.ageBand ?? null,
+              prog: progression,
+              found: new Set(state.foundKeys),
+              missionsDone: new Set(state.missionsDoneKeys),
+            })}
+            ageBand={progression.ageBand ?? null}
+            guide={
+              <ToyMiniIcon toy={toy} accentColor={toyColor} skinVersion={skinTick} />
+            }
+            guideName={label}
+            onClose={() => setMapOpen(false)}
+            onAskAge={() => openGrownUps(false)}
+            onGoWorld={(worldId) => {
+              setMapOpen(false);
+              engine()?.goWorld(worldId);
+            }}
+          />
+        )}
+
         <RevealOverlay
           open={Boolean(revealState)}
           firstReveal={Boolean(revealState?.first)}
@@ -1214,6 +1259,20 @@ export function GameCanvas({
             saveProgression(next);
             setProgression(next);
             void pushProgression(next);
+          }}
+          onSetAgeBand={(band: number | null) => {
+            const next = { ...progressionRef.current };
+            if (band !== null) next.ageBand = band;
+            else delete next.ageBand;
+            saveProgression(next);
+            setProgression(next);
+            void pushProgression(next);
+          }}
+          onOpenMap={() => {
+            setGrownUpsOpen(false);
+            closeEngineSheets();
+            closeReactOverlays();
+            setMapOpen(true);
           }}
           onToggleChore={(choreId: string) => {
             const next = toggleChoreEnabled(progressionRef.current, choreId);

@@ -609,8 +609,8 @@ export type WorldEvent =
   | { type: "ready" }
   | { type: "world"; world: string; name?: string }
   | { type: "zoom"; zoom: ZoomLevel }
-  | { type: "found"; keys: string[]; total: number }
-  | { type: "missionsDone"; keys: string[]; total: number }
+  | { type: "found"; keys: string[]; total: number; all?: string[] }
+  | { type: "missionsDone"; keys: string[]; total: number; all?: string[] }
   | { type: "missionSolved"; detail: MissionSolveDetail }
   | { type: "mission"; title: string | null }
   | { type: "toast"; text: string }
@@ -626,7 +626,11 @@ export interface WorldState {
   worldName?: string;
   zoom: ZoomLevel;
   foundTotal: number;
+  /** Every hidden-part key found so far (Map carousel pips). */
+  foundKeys: string[];
   missionsDoneTotal: number;
+  /** Every mission id done so far (Map carousel pips). */
+  missionsDoneKeys: string[];
   missionTitle: string | null;
   toast: string;
   customizer: CustomizerSnapshot;
@@ -640,7 +644,9 @@ export const initialWorldState: WorldState = {
   world: "garden",
   zoom: 0,
   foundTotal: 0,
+  foundKeys: [],
   missionsDoneTotal: 0,
+  missionsDoneKeys: [],
   missionTitle: null,
   toast: "",
   customizer: closedCustomizerSnapshot,
@@ -660,14 +666,22 @@ export function applyWorldEvent(state: WorldState, event: WorldEvent): WorldStat
         : { ...state, world: event.world, worldName: event.name };
     case "zoom":
       return state.zoom === event.zoom ? state : { ...state, zoom: event.zoom };
-    case "found":
-      return state.foundTotal === event.total
+    case "found": {
+      const foundKeys =
+        event.all ?? [...new Set([...state.foundKeys, ...event.keys])];
+      return state.foundTotal === event.total &&
+        state.foundKeys.length === foundKeys.length
         ? state
-        : { ...state, foundTotal: event.total };
-    case "missionsDone":
-      return state.missionsDoneTotal === event.total
+        : { ...state, foundTotal: event.total, foundKeys };
+    }
+    case "missionsDone": {
+      const missionsDoneKeys =
+        event.all ?? [...new Set([...state.missionsDoneKeys, ...event.keys])];
+      return state.missionsDoneTotal === event.total &&
+        state.missionsDoneKeys.length === missionsDoneKeys.length
         ? state
-        : { ...state, missionsDoneTotal: event.total };
+        : { ...state, missionsDoneTotal: event.total, missionsDoneKeys };
+    }
     case "missionSolved":
       // Scoring detail for the XP layer; HUD totals come from missionsDone.
       return state;
@@ -1108,11 +1122,20 @@ export function createEngine(
       events.onEvent({ type: "ready" });
       // Ignore wins recorded before this mount so reloads never re-award XP.
       lastWinAt = save.lastWin?.at ?? -1;
+      if (lastFound.size > 0) {
+        events.onEvent({
+          type: "found",
+          keys: [],
+          total: lastFound.size,
+          all: [...lastFound],
+        });
+      }
       if (lastMissionsDone.size > 0) {
         events.onEvent({
           type: "missionsDone",
           keys: [],
           total: lastMissionsDone.size,
+          all: [...lastMissionsDone],
         });
       }
       if (pendingWorld) {
@@ -1155,7 +1178,12 @@ export function createEngine(
     );
     const fresh = diffFoundKeys(lastFound, foundKeys);
     if (fresh.length > 0 || foundKeys.size !== lastFound.size) {
-      events.onEvent({ type: "found", keys: fresh, total: foundKeys.size });
+      events.onEvent({
+        type: "found",
+        keys: fresh,
+        total: foundKeys.size,
+        all: [...foundKeys],
+      });
     }
     lastFound = foundKeys;
 
@@ -1170,6 +1198,7 @@ export function createEngine(
         type: "missionsDone",
         keys: freshMissions,
         total: mdoneKeys.size,
+        all: [...mdoneKeys],
       });
     }
     lastMissionsDone = mdoneKeys;

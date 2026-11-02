@@ -30,6 +30,7 @@ import {
   practicedSkillsSummary,
   workshopDaysCount,
 } from "../../../lib/dailyQuests";
+import { BANDS } from "../../../lib/age";
 import { resolvePhase4VehicleRoster } from "../../../lib/vehicleReadiness";
 import { WORLDS, type WorldId } from "./engine";
 
@@ -51,6 +52,10 @@ export interface GrownUpsSheetProps {
   kipUrl?: string;
   onResetXp?: () => void;
   onToggleSandbox?: () => void;
+  /** Set/clear the carousel age band (progression ageBand, carousel spec §9). */
+  onSetAgeBand?: (band: number | null) => void;
+  /** Open the Map carousel (Levels row). */
+  onOpenMap?: () => void;
   onToggleChore?: (choreId: string) => void;
   onSnapshotChange: (next: ParentSnapshot) => void;
   onClose: () => void;
@@ -89,6 +94,8 @@ export function GrownUpsSheet({
   kipUrl,
   onResetXp,
   onToggleSandbox,
+  onSetAgeBand,
+  onOpenMap,
   onToggleChore,
   onSnapshotChange,
   onClose,
@@ -964,6 +971,46 @@ export function GrownUpsSheet({
                     </button>
                   )}
                 </div>
+
+                {progression && onSetAgeBand && (
+                  <div>
+                    <span className="tv-parent-stat-k" style={{ marginBottom: 4 }}>
+                      Who is playing? (Map age)
+                    </span>
+                    <div className="tv-chips" role="group" aria-label="Age band">
+                      {BANDS.map((band, i) => (
+                        <button
+                          key={band.id}
+                          type="button"
+                          className="tv-sc"
+                          aria-pressed={progression.ageBand === i}
+                          aria-label={`Ages ${band.label}`}
+                          onClick={() => onSetAgeBand(i)}
+                        >
+                          {band.label}
+                        </button>
+                      ))}
+                      {progression.ageBand !== undefined && (
+                        <button
+                          type="button"
+                          className="tv-sc"
+                          onClick={() => onSetAgeBand(null)}
+                        >
+                          Clear age
+                        </button>
+                      )}
+                    </div>
+                    <p className="tv-moves" style={{ fontSize: 12 }}>
+                      The age picks which Learn levels the Map shows. Changing it
+                      never removes stars or XP.
+                    </p>
+                    {onOpenMap && (
+                      <button type="button" className="tv-ctl" onClick={onOpenMap}>
+                        Levels: open the Map
+                      </button>
+                    )}
+                  </div>
+                )}
 
                 {onJumpWorld && (
                   <div>

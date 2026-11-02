@@ -3,6 +3,7 @@
 // id "progression:v1" (see docs/specs/xp-system-spec.md). One shared pool
 // per device; no per-kid or per-toy XP.
 import type { StatName } from "../../shared/part";
+import { LADDERS, rungKey } from "./ladders";
 import { pullOwnership, pushOwnership } from "./sync";
 
 export const PROGRESSION_STORAGE_KEY = "toyforge:progression:v1";
@@ -128,6 +129,8 @@ export interface ProgressionState {
   enabledChoreIds?: string[];
   /** Per local day (YYYY-MM-DD), real-life routine IDs already completed and paid out. */
   completedChoresByDay?: Record<string, string[]>;
+  /** Grown-up-set age band index 0-5 for the Map carousel; absent = unset. */
+  ageBand?: number;
 }
 
 export function emptyProgression(): ProgressionState {
@@ -474,6 +477,13 @@ export function normalizeProgression(raw: unknown): ProgressionState {
       if (cleanIds.length > 0) completedChoresByDay[day] = cleanIds;
     }
   }
+  const ageBand =
+    typeof v.ageBand === "number" &&
+    Number.isInteger(v.ageBand) &&
+    v.ageBand >= 0 &&
+    v.ageBand <= 5
+      ? v.ageBand
+      : undefined;
   return {
     version: 1,
     totalXp:
@@ -495,7 +505,20 @@ export function normalizeProgression(raw: unknown): ProgressionState {
     ...(Object.keys(completedChoresByDay).length > 0
       ? { completedChoresByDay }
       : {}),
+    ...(ageBand !== undefined ? { ageBand } : {}),
   };
+}
+
+/** §9.3: non-null age wins; conflicting ages follow the higher-XP record. */
+function mergedAgeBand(
+  local: ProgressionState,
+  remote: ProgressionState,
+): number | undefined {
+  if (local.ageBand === undefined) return remote.ageBand;
+  if (remote.ageBand === undefined || remote.ageBand === local.ageBand) {
+    return local.ageBand;
+  }
+  return local.totalXp >= remote.totalXp ? local.ageBand : remote.ageBand;
 }
 
 /** Union merge: highest XP/stars win unless one side carries a newer parent reset. */
@@ -510,14 +533,18 @@ export function mergeProgression(
   ];
   const sandboxUnlockAll = local.sandboxUnlockAll || remote.sandboxUnlockAll;
   const enabledChoreIds = local.enabledChoreIds ?? remote.enabledChoreIds;
+  const ageBand = mergedAgeBand(local, remote);
   if (localReset !== remoteReset) {
     const newer = localReset > remoteReset ? local : remote;
-    return {
+    const merged: ProgressionState = {
       ...newer,
       unlockedIds,
       sandboxUnlockAll,
       ...(enabledChoreIds !== undefined ? { enabledChoreIds } : {}),
     };
+    if (ageBand !== undefined) merged.ageBand = ageBand;
+    else delete merged.ageBand;
+    return merged;
   }
   const missionStars: Record<string, number> = { ...remote.missionStars };
   for (const [key, stars] of Object.entries(local.missionStars)) {
@@ -590,6 +617,7 @@ export function mergeProgression(
     ...(Object.keys(completedChoresByDay).length > 0
       ? { completedChoresByDay }
       : {}),
+    ...(ageBand !== undefined ? { ageBand } : {}),
   };
 }
 
@@ -602,6 +630,7 @@ export function resetProgression(
     ...emptyProgression(),
     unlockedIds: [...prog.unlockedIds],
     sandboxUnlockAll: prog.sandboxUnlockAll,
+    ...(prog.ageBand !== undefined ? { ageBand: prog.ageBand } : {}),
     ...(prog.enabledChoreIds !== undefined
       ? { enabledChoreIds: [...prog.enabledChoreIds] }
       : {}),
@@ -651,6 +680,87 @@ export async function pushProgression(prog: ProgressionState): Promise<void> {
     id: PROGRESSION_OWNERSHIP_ID,
     payload: prog,
   });
+}
+
+export const CAROUSEL_IMPORT_MARKER = "carousel:imported:v1";
+
+/**
+ * One-time silent playtest-mockup import (carousel spec §9.4): tvAge ->
+ * ageBand, each finished rung (tvDone, plus tvLittle for `little`) ->
+ * 1 star on its rung key, no retro XP. tf25 found/mdone already share
+ * ToyForge goal keys and re-derive from our own save, so only its
+ * presence counts as a trigger. Idempotent via the marker key.
+ */
+export function importCarouselMockup(
+  prog: ProgressionState,
+  getItem: (key: string) => string | null = (key) => {
+    try {
+      return localStorage.getItem(key);
+    } catch {
+      return null;
+    }
+  },
+): { next: ProgressionState; imported: boolean } {
+  if (getItem(CAROUSEL_IMPORT_MARKER) !== null) return { next: prog, imported: false };
+  const tvAge = getItem("tvAge");
+  const tvDoneRaw = getItem("tvDone");
+  const tvLittleRaw = getItem("tvLittle");
+  const tf25 = getItem("tf25");
+  if (tvAge === null && tvDoneRaw === null && tvLittleRaw === null && tf25 === null) {
+    return { next: prog, imported: false };
+  }
+  const missionStars = { ...prog.missionStars };
+  const grant = (trackId: string, indexes: unknown): void => {
+    const ladder = LADDERS.find((l) => l.id === trackId);
+    if (!ladder || !Array.isArray(indexes)) return;
+    for (const i of indexes) {
+      if (!Number.isInteger(i)) continue;
+      const rung = ladder.rungs[i as number];
+      if (!rung) continue;
+      const key = rungKey(rung);
+      missionStars[key] = Math.max(missionStars[key] ?? 0, 1);
+    }
+  };
+  try {
+    const done = JSON.parse(tvDoneRaw ?? "{}") as Record<string, unknown>;
+    for (const [trackId, indexes] of Object.entries(done)) grant(trackId, indexes);
+  } catch {
+    /* corrupt mockup data imports nothing */
+  }
+  try {
+    grant("little", JSON.parse(tvLittleRaw ?? "[]") as unknown);
+  } catch {
+    /* corrupt mockup data imports nothing */
+  }
+  const parsedAge = tvAge === null ? null : Number(tvAge);
+  const ageBand =
+    prog.ageBand === undefined &&
+    parsedAge !== null &&
+    Number.isInteger(parsedAge) &&
+    parsedAge >= 0 &&
+    parsedAge <= 5
+      ? parsedAge
+      : prog.ageBand;
+  return {
+    next: {
+      ...prog,
+      missionStars,
+      ...(ageBand !== undefined ? { ageBand } : {}),
+    },
+    imported: true,
+  };
+}
+
+/** Run the §9.4 import against localStorage and stamp the marker. */
+export function runCarouselImportOnce(prog: ProgressionState): ProgressionState {
+  const { next, imported } = importCarouselMockup(prog);
+  if (!imported) return prog;
+  try {
+    localStorage.setItem(CAROUSEL_IMPORT_MARKER, "1");
+  } catch {
+    /* storage unavailable: a later boot retries */
+  }
+  return next;
 }
 
 export async function pullProgression(): Promise<ProgressionState | null> {

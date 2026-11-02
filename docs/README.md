@@ -42,7 +42,7 @@ on geometry conflicts, [parts-tu-spec.md](parts/parts-tu-spec.md) and
 | [forge-ai-spec.md](specs/forge-ai-spec.md) | **Proposed:** six Muse Spark features (describe it, scan it, repair loop, host fit, build planner, finish it) on one recipe, gate and repair engine; five assist features (incl. failed-print triage); data plan and a stretch-goal, Glimmer-based, gated roadmap for two own models (Forge recipe writer, brick sculptor). |
 | [toyventor-town-vision.md](specs/toyventor-town-vision.md) | **Vision:** open-world Town (districts, quests, daily rhythm); extends continuation past Phase 5. |
 | [xp-system-spec.md](specs/xp-system-spec.md) | **Phase 3 (implemented):** STEM XP scoring, 11-mission tolerances, two-track gating, and D1 sync contract. |
-| [carousel-modes-ladders-spec.md](specs/carousel-modes-ladders-spec.md) | **Draft:** level carousel, game modes, and 7 STEM ladders (38 rungs) ported from the playtest mockup; awaiting §14 sign-off before C1. |
+| [carousel-modes-ladders-spec.md](specs/carousel-modes-ladders-spec.md) | **C1 landed:** level carousel shell, age bands, and 7 STEM ladders (38 rungs) from the playtest mockup; Learn runs are C2. |
 | [parent-time-gate.md](specs/parent-time-gate.md) | Implemented parent caps and earned STEM time. |
 | [flatpack-modular-craft-spec.md](specs/flatpack-modular-craft-spec.md) | Proposed flat-pack vehicle/craft grammar. |
 | [kip-demo-implementation.md](specs/kip-demo-implementation.md) | **Proposed:** Kip demo left side menu with dropdowns, flat-pack 3D print view, and selfie face plate — the build plan, superseding the deleted design spec. |

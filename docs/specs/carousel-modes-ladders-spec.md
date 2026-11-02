@@ -8,7 +8,14 @@ Source mockup: `/Users/dan/Downloads/toyventor` (`README.md`,
 `CONTINUE.md`). This spec decides what ports into ToyForge, what ToyForge
 keeps, and in what order. No implementation starts until §14 sign-off.
 
-> Status: **DRAFT — for review.** Decisions in §6 bind implementation.
+> Status: **SIGNED OFF 2026-11-02 — C1 landed.** Decisions in §6 bind implementation.
+> C1 as shipped: `src/lib/{age,learn,ladders,mapCards}.ts`, `ageBand` in
+> `progression:v1` (§9.3), §9.4 one-time import, `MapCarousel` +
+> `RungSheet` behind dock `⋯` → `Map`, grown-up Age/Levels rows, and
+> engine `found`/`missionsDone` key snapshots for pips. Cards ship
+> theme scenes (Q2 open); Learn taps show the coming-soon notice
+> until C2. Scoring map note: `circuits` mints `circuits.series` (the
+> three `lab4.circuit` tiers are consumed by the first three rungs).
 > Open questions in §15 block the phases named beside them.
 
 ## 1. Problem & goal
@@ -639,14 +646,16 @@ level from the stage in `≤ 2` taps without reading.
 
 ## 14. Sign-off
 
-- [ ] §4 verdict accepted (port carousel/taxonomy/content; keep ToyForge shell; skip engine/routing/storage)
-- [ ] Decisions 1–7 (§6) accepted
-- [ ] §10.2 scoring map accepted (reuse lab ids + new `little.*`/`early.*`/`daily.*`; no retro XP)
-- [ ] §9.3 single-store + §9.4 silent import accepted
-- [ ] Phase order C1→C5 accepted (carousel shell first)
-- [ ] Signed: ________  Date: ________
+- [x] §4 verdict accepted (port carousel/taxonomy/content; keep ToyForge shell; skip engine/routing/storage)
+- [x] Decisions 1–7 (§6) accepted
+- [x] §10.2 scoring map accepted (reuse lab ids + new `little.*`/`early.*`/`daily.*`; no retro XP)
+- [x] §9.3 single-store + §9.4 silent import accepted
+- [x] Phase order C1→C5 accepted (carousel shell first)
+- [x] Signed: Dan (approved in session, "yes, go")  Date: 2026-11-02
 
-No C1 code starts until the first five boxes are checked.
+C1 started 2026-11-02 on this sign-off. Q2 stays open for C1 (cards ship
+theme scenes without captured art); Q4 follows the §9.3 recommendation
+(higher-`totalXp` record wins, reset keeps age, one shared age).
 
 ## 15. Open questions
 
