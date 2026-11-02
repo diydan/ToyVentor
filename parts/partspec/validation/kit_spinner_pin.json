@@ -1,10 +1,10 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_kit_spinner_pin_P.stl",
-  "file_sha256": "c8f08b3b3fa17309994f499b0d75a7ed59135ab697a1612570be22d40d468752",
+  "file_sha256": "8c9434287e41d164a2aa24c2a9447c5c6db95aa99e2e181b300f1375918285d6",
   "part_id": "kit_spinner_pin",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-11-02T00:34:34Z",
+  "checked_at": "2026-11-02T12:04:52Z",
   "metrics": {
     "bbox_mm": [
       36.0,
@@ -13,11 +13,11 @@
     ],
     "volume_cm3": 3.83,
     "surface_cm2": 29.46,
-    "triangles": 1124,
+    "triangles": 1092,
     "ledges": [],
     "floating_contours": [],
     "layers": 25,
-    "bed_contact_mm2": 745.8,
+    "bed_contact_mm2": 744.8,
     "height_mm": 5.0,
     "slenderness": 0.18,
     "centre_of_mass_over_contact": true,
@@ -110,7 +110,7 @@
       "id": "V9_bed_contact",
       "level": "info",
       "result": "pass",
-      "value": 745.8,
+      "value": 744.8,
       "limit": null,
       "detail": "height / sqrt(contact) = 0.18; above about 3 the slicer often asks for a brim"
     },

@@ -4,7 +4,7 @@
   "file_sha256": "bc319e2e17f21c6120f7bb833e2a0d7587b27ef223276be17cc8da8c079062b6",
   "part_id": "hinge_tu02",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-11-02T00:29:37Z",
+  "checked_at": "2026-11-02T11:58:07Z",
   "metrics": {
     "bbox_mm": [
       25.0,
@@ -163,7 +163,7 @@
       0
     ],
     "engine": "PrusaSlicer-2.8.1",
-    "reused_from": "2026-11-01T21:31:53Z"
+    "reused_from": "2026-11-02T00:29:37Z"
   },
   "verdict": "pass",
   "summary": "Prints as is"

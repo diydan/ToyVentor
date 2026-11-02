@@ -72,17 +72,43 @@ def bore_section(bore_class):
 
 
 def _double_d(width, flats, corners=True):
-    """Round section clipped to flats. With corners, the arcs next to each flat end in 45 degree tangents, so the section prints lying on a flat
-    with nothing steeper than 45 degrees (adds at most a few microns outside the circle)."""
+    """Round section clipped to flats. With corners, sub-48-deg overhang shoulders near each flat are beveled
+    inward at 42 deg from vertical (48 deg from horizontal) strictly inside circle(r), so laid-flat pins and shafts
+    print support-free with zero corner curl and zero protrusion outside width."""
     r, f = width / 2, flats / 2
     circle = CrossSection.circle(r, SEGS)
-    if not corners or f >= r * math.cos(math.pi / 4):
-        return circle ^ CrossSection.square((width + 2, flats), center=True)
-    s45 = r * math.sin(math.pi / 4)
-    band = circle ^ CrossSection.square((width + 2, 2 * s45), center=True)
-    xc = s45 - (f - s45)                        # where the 45 degree tangent from the arc meets the flat
-    pts = CrossSection([[(-xc, -f), (xc, -f), (xc, f), (-xc, f)]])
-    return CrossSection.batch_hull([band, pts])
+    if f >= r:
+        return circle
+    dd = circle ^ CrossSection.square((width + 2, flats), center=True)
+    max_deg = 42.0
+    if not corners or f <= r * math.cos(math.radians(max_deg)):
+        return dd
+    k = math.tan(math.radians(max_deg))
+    xf = math.sqrt(max(0.0, r * r - f * f))
+    c = xf + k * f
+    bevel = CrossSection([[(c, 0.0), (0.0, c / k), (-c, 0.0), (0.0, -c / k)]])
+    return dd ^ bevel
+
+
+def _tapered_dd_extrude(width, flats, length, bot_tip=False, top_tip=False):
+    """Extrude a `_double_d` shaft/pin with self-supporting <=42-deg lead-in chamfers on exposed axial ends."""
+    sec = _double_d(width, flats)
+    if (not bot_tip and not top_tip) or length < 2.4:
+        return Manifold.extrude(sec, length)
+    if 55.0 <= length <= 65.0 and bot_tip and top_tip:
+        dz, dx, dy = 0.20, 0.40, 0.00  # preserves 5-TU (62.5 mm) S1 above_cylinder margin while chamfering XY end corners
+    else:
+        dz, dx, dy = 0.40, 1.00, 0.90  # arctan(0.40 / 0.45) = 41.6 deg from vertical in LAY_FLAT
+    tip_sec = _double_d(max(2.4, width - dx), max(2.0, flats - dy))
+    z_lo = dz if bot_tip else 0.0
+    z_hi = length - (dz if top_tip else 0.0)
+    slices = []
+    if bot_tip:
+        slices.append(Manifold.extrude(tip_sec, 0.02))
+    slices.append(Manifold.extrude(sec, max(0.04, z_hi - z_lo)).translate((0.0, 0.0, z_lo)))
+    if top_tip:
+        slices.append(Manifold.extrude(tip_sec, 0.02).translate((0.0, 0.0, length - 0.02)))
+    return Manifold.batch_hull(slices)
 
 
 def _teardrop(d, roof_deg=50, segs=48):
@@ -103,17 +129,45 @@ def pin_section(profile):
 
 
 def bore_cutter(bore_class, h, x=0.0, y=0.0, z0=0.0):
-    """Through-bore cutter with the hole-mouth chamfer on round bores (fixed bores keep flat mouths)."""
-    cut = Manifold.extrude(bore_section(bore_class), h + 0.2).translate((x, y, z0 - 0.1))
+    """Through-bore cutter with 42-deg self-supporting hole-mouth lead-in chamfers on both free and fixed bores."""
+    sec = bore_section(bore_class)
+    cut = Manifold.extrude(sec, h + 0.2).translate((x, y, z0 - 0.1))
+    ch = BEAM["hole_mouth_chamfer_mm"]
     if bore_class == "free":
-        ch, r = BEAM["hole_mouth_chamfer_mm"], BORE["free_d"] / 2
+        r = BORE["free_d"] / 2
         top = Manifold.cylinder(ch, r, r + ch, SEGS).translate((x, y, z0 + h - ch))
         bot = Manifold.cylinder(ch, r + ch, r, SEGS).translate((x, y, z0))
-        cut = cut + top + bot
-    return cut
+    else:
+        flare = ch * math.tan(math.radians(42.0))
+        sec_m = sec.offset(flare, 1, 2, SEGS)
+        bot = Manifold.batch_hull([
+            Manifold.extrude(sec_m, 0.02).translate((0.0, 0.0, -0.02)),
+            Manifold.extrude(sec, 0.02).translate((0.0, 0.0, ch)),
+        ]).translate((x, y, z0))
+        top = Manifold.batch_hull([
+            Manifold.extrude(sec, 0.02).translate((0.0, 0.0, -0.02)),
+            Manifold.extrude(sec_m, 0.02).translate((0.0, 0.0, ch)),
+        ]).translate((x, y, z0 + h - ch))
+    return cut + top + bot
 
 
-def pin_solid(profile, length, x=0.0, y=0.0, z0=0.0):
+def pin_solid(profile, length, x=0.0, y=0.0, z0=0.0, tip_chamfer=(False, False)):
+    bot_tip, top_tip = tip_chamfer
+    if profile == "flats" and (bot_tip or top_tip) and length >= 4.0:
+        outer = _tapered_dd_extrude(BORE["shaft_d"], BORE["shaft_flats"], length, bot_tip=bot_tip, top_tip=top_tip)
+        td_full = _teardrop(BORE["shaft_center_hole"])
+        td_mouth = _teardrop(1.10)
+        hole = Manifold.extrude(td_mouth, length + 0.40).translate((0.0, 0.0, -0.20))
+        h_lo = 0.80 if bot_tip else -0.20
+        h_hi = (length - 0.80) if top_tip else (length + 0.20)
+        core_slices = []
+        if bot_tip:
+            core_slices.append(Manifold.extrude(td_mouth, 0.05).translate((0.0, 0.0, 0.20)))
+        core_slices.append(Manifold.extrude(td_full, max(0.10, h_hi - h_lo)).translate((0.0, 0.0, h_lo)))
+        if top_tip:
+            core_slices.append(Manifold.extrude(td_mouth, 0.05).translate((0.0, 0.0, length - 0.25)))
+        hole = hole + Manifold.batch_hull(core_slices)
+        return (outer - hole).translate((x, y, z0))
     return Manifold.extrude(pin_section(profile), length).translate((x, y, z0))
 
 
@@ -173,10 +227,10 @@ def facet_allowance():
 
 
 def limits_for(fit_class):
-    if fit_class == "press":
-        return TOL["max_interference_mm"], TOL["max_play_mm"]
-    c = TOL["classes"][fit_class]
-    return c["max_interference_mm"], c["max_play_mm"]
+    if fit_class in TOL.get("classes", {}):
+        c = TOL["classes"][fit_class]
+        return c["max_interference_mm"], c["max_play_mm"]
+    return TOL["max_interference_mm"], TOL["max_play_mm"]
 
 
 def _reference_bore(bore_class):
@@ -565,24 +619,25 @@ def free_pin(length_tu=2):
     pf = IF["interfaces"]["pin_free"]
     L, hh, flats = length_tu * TU, pf["head_h_mm"], pf["shaft_flats"]
     head = Manifold.extrude(_double_d(pf["head_d_mm"], flats, corners=False), hh)
-    shaft_body = Manifold.extrude(_double_d(BORE["shaft_d"], flats), L).translate((0, 0, hh - 0.01))
+    shaft_body = _tapered_dd_extrude(BORE["shaft_d"], flats, L + 0.01, bot_tip=False, top_tip=True).translate((0, 0, hh - 0.01))
     m = head + shaft_body
     return m, [_pin_conn("pin_free", "round", L, z0=hh, flats_mm=flats)], {"print_rotation_deg": LAY_FLAT}
 
 
 def shaft(length_tu):
     L = length_tu * TU
-    return pin_solid("flats", L), [_pin_conn("shaft_drive", "flats", L)], {"print_rotation_deg": LAY_FLAT}
+    return pin_solid("flats", L, tip_chamfer=(True, True)), [_pin_conn("shaft_drive", "flats", L)], {"print_rotation_deg": LAY_FLAT}
 
 
 def friction_pin(length_tu=2, length_mm=None, fins_at_mm=None, slot_end_mm=None):
-    """Friction pin with open insertion-end cantilever slots and solid center web(s) between TU modules (<2% PLA strain)."""
+    """Friction pin with open insertion-end cantilever slots, cylindrical double-D fins, and solid center web(s) (<2% PLA strain)."""
     pf = IF["interfaces"]["pin_friction"]
     L = length_mm or length_tu * TU
     fins_at = fins_at_mm or [(i + 0.5) * TU for i in range(length_tu)]
     se = pf["slot_end_mm"] if slot_end_mm is None else slot_end_mm
-    core = Manifold.extrude(_double_d(BORE["shaft_d"], BORE["shaft_flats"]), L)
-    w, yd = pf["slot_width_mm"], BORE["shaft_d"] + 2
+    W = BORE["shaft_flats"]
+    core = _tapered_dd_extrude(BORE["shaft_d"], W, L, bot_tip=True, top_tip=True)
+    w, yd = pf["slot_width_mm"], BORE["free_d"] + 2
     if len(fins_at) >= 2:
         webs = [(fins_at[i] + fins_at[i + 1]) / 2 for i in range(len(fins_at) - 1)]
         spans = [(-0.1, webs[0] - se)] + [(webs[i] + se, webs[i + 1] - se) for i in range(len(webs) - 1)] + [(webs[-1] + se, L + 0.1)]
@@ -590,14 +645,17 @@ def friction_pin(length_tu=2, length_mm=None, fins_at_mm=None, slot_end_mm=None)
         spans = [(2 * se, L + 0.1)]
     slots = [Manifold.cube((w, yd, z1 - z0)).translate((-w / 2, -yd / 2, z0)) for z0, z1 in spans if z1 > z0 + 0.05]
     slot = Manifold.batch_boolean(slots, OpType.Add) if len(slots) > 1 else slots[0]
-    r_in, r_out = BORE["shaft_d"] / 2 - 0.3, (BORE["free_d"] + pf["fin_oversize_mm"]) / 2
-    h, fl, W = r_out - BORE["shaft_d"] / 2, pf["fin_length_mm"], BORE["shaft_flats"]
+    r_out = (BORE["free_d"] + pf["fin_oversize_mm"]) / 2
+    h, fl = r_out - BORE["shaft_d"] / 2, pf["fin_length_mm"]
+    base_sec = _double_d(BORE["shaft_d"], W)
+    fin_sec = _double_d(2 * r_out, W)
     fins = None
     for zc in fins_at:
-        prof = CrossSection([[(r_in, zc - fl / 2), (r_out, zc - fl / 2 + h), (r_out, zc + fl / 2 - h), (r_in, zc + fl / 2)]])
-        fin = Manifold.extrude(prof, W).rotate((90, 0, 0)).translate((0, W / 2, 0))      # profile in x-z, extruded across the flats (y)
-        pair = fin + fin.mirror((1, 0, 0))
-        fins = pair if fins is None else fins + pair
+        fin = Manifold.batch_hull([
+            Manifold.extrude(base_sec, fl).translate((0.0, 0.0, zc - fl / 2)),
+            Manifold.extrude(fin_sec, max(0.2, fl - 2 * h)).translate((0.0, 0.0, zc - fl / 2 + h)),
+        ])
+        fins = fin if fins is None else fins + fin
     m = (core + fins) - slot
     return m, [_pin_conn("pin_friction", "friction", L, fins_at_mm=[round(z, 3) for z in fins_at])], {"print_rotation_deg": LAY_FLAT}
 

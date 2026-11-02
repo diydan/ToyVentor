@@ -1,25 +1,25 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_pro_steer_bridge_S.stl",
-  "file_sha256": "3d75223da91034efaa89b3b24bd36ac921cd0c412f6f43e1caebf71da2952eb6",
+  "file_sha256": "ef24c5d02dc22ef8f8768faf37d52ef09f6083df93470a013ff88a186cfe53d4",
   "part_id": "pro_steer_bridge",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-11-02T00:35:29Z",
+  "checked_at": "2026-11-02T12:05:52Z",
   "metrics": {
     "bbox_mm": [
       48.4,
       31.8,
       23.15
     ],
-    "volume_cm3": 10.42,
-    "surface_cm2": 48.8,
-    "triangles": 4634,
+    "volume_cm3": 10.41,
+    "surface_cm2": 48.73,
+    "triangles": 5402,
     "ledges": [],
     "floating_contours": [],
     "layers": 116,
-    "bed_contact_mm2": 631.9,
+    "bed_contact_mm2": 625.0,
     "height_mm": 23.15,
-    "slenderness": 0.92,
+    "slenderness": 0.93,
     "centre_of_mass_over_contact": true,
     "min_wall_mm": null,
     "thin_wall_regions": []
@@ -121,9 +121,9 @@
       "id": "V9_bed_contact",
       "level": "info",
       "result": "pass",
-      "value": 631.9,
+      "value": 625.0,
       "limit": null,
-      "detail": "height / sqrt(contact) = 0.92; above about 3 the slicer often asks for a brim"
+      "detail": "height / sqrt(contact) = 0.93; above about 3 the slicer often asks for a brim"
     },
     {
       "id": "V8_wall_thickness",

@@ -1,19 +1,19 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_char_head_jumbo_S.stl",
-  "file_sha256": "7dff68e5796bf53cc32bd6dea698b341f90443d6bc3c99f2008cbcf07518e8d6",
+  "file_sha256": "7687111af7f7826efa6b27b07c34fc78f0aa8078066d0d1fc304cf8334f6339c",
   "part_id": "char_head_jumbo",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-11-02T00:30:14Z",
+  "checked_at": "2026-11-02T11:59:05Z",
   "metrics": {
     "bbox_mm": [
       39.61,
       27.58,
       33.77
     ],
-    "volume_cm3": 20.09,
-    "surface_cm2": 46.55,
-    "triangles": 11620,
+    "volume_cm3": 20.1,
+    "surface_cm2": 46.59,
+    "triangles": 11596,
     "ledges": [],
     "floating_contours": [],
     "layers": 169,
@@ -24,7 +24,7 @@
     "min_wall_mm": 0.089,
     "thin_wall_regions": [
       {
-        "area_mm2": 5.61,
+        "area_mm2": 5.97,
         "min_mm": 0.089,
         "at_mm": [
           3.13,
@@ -36,9 +36,9 @@
   },
   "bridges": [
     {
-      "z_mm": 15.05,
-      "span_mm": 4.86,
-      "area_mm2": 65.6
+      "z_mm": 15.12,
+      "span_mm": 4.73,
+      "area_mm2": 63.9
     }
   ],
   "checks": [
@@ -102,7 +102,7 @@
       "id": "V6_bridge_span",
       "level": "block",
       "result": "pass",
-      "value": 4.86,
+      "value": 4.73,
       "limit": 20,
       "detail": "1 bridge(s); widest unsupported span in mm"
     },

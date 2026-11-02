@@ -1,6 +1,7 @@
 #!/usr/bin/env node
-// Writes public/kip/partspec-validation.json: for every served catalog STL, the sha-256 and verdict recorded
-// in parts/partspec/validation/<part>.json. The print view hashes the bytes it fetches and shows "verified"
+// Writes public/kip/partspec-validation.json: for every served catalog STL, the sha-256, verdict, and
+// validated brim width recorded in parts/partspec/validation/<part>.json (`print_settings.brim_width_mm`,
+// spec §7.1 item 3; 0 when the slicer stage needed none). The print view hashes the bytes it fetches and shows "verified"
 // only when they match this index; a mismatch (stale report) or an unlisted file shows "unverified".
 // Deterministic (sorted, no timestamp) so reruns only change the file when a report changes.
 // Run: node scripts/kip-validation-index.mjs
@@ -20,7 +21,12 @@ for (const name of readdirSync(validationDir).sort()) {
   const report = JSON.parse(readFileSync(join(validationDir, name), "utf8"));
   if (!report.file || !report.file_sha256) continue;
   if (!existsSync(join(served, report.file))) continue; // not served to the viewer
-  files[report.file] = { part: report.part_id, sha256: report.file_sha256, verdict: report.verdict };
+  files[report.file] = {
+    part: report.part_id,
+    sha256: report.file_sha256,
+    verdict: report.verdict,
+    brim_width_mm: report.print_settings?.brim_width_mm ?? 0,
+  };
 }
 const index = { format: "toyventor.kip-validation-index/1", files };
 writeFileSync(outFile, `${JSON.stringify(index, null, 1)}\n`);

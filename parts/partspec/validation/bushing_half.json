@@ -1,25 +1,25 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_bushing_half_P.stl",
-  "file_sha256": "8f0d5f3923fec4614280b3ba4b5853d0da7b1d1166f5ec44a4aef2bd67b661fd",
+  "file_sha256": "214c24371f00545ee8b1b762515d3fc273d0a9dc1df9cba9821d39042b92ef13",
   "part_id": "bushing_half",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-11-02T00:27:40Z",
+  "checked_at": "2026-11-02T11:56:20Z",
   "metrics": {
     "bbox_mm": [
       11.0,
       11.0,
       6.25
     ],
-    "volume_cm3": 0.39,
-    "surface_cm2": 4.73,
-    "triangles": 600,
+    "volume_cm3": 0.38,
+    "surface_cm2": 4.63,
+    "triangles": 1208,
     "ledges": [],
     "floating_contours": [],
     "layers": 31,
-    "bed_contact_mm2": 62.8,
+    "bed_contact_mm2": 56.0,
     "height_mm": 6.25,
-    "slenderness": 0.79,
+    "slenderness": 0.84,
     "centre_of_mass_over_contact": true,
     "min_wall_mm": null,
     "thin_wall_regions": []
@@ -110,9 +110,9 @@
       "id": "V9_bed_contact",
       "level": "info",
       "result": "pass",
-      "value": 62.8,
+      "value": 56.0,
       "limit": null,
-      "detail": "height / sqrt(contact) = 0.79; above about 3 the slicer often asks for a brim"
+      "detail": "height / sqrt(contact) = 0.84; above about 3 the slicer often asks for a brim"
     },
     {
       "id": "V8_wall_thickness",
@@ -121,50 +121,10 @@
       "value": 0,
       "limit": 0,
       "detail": "regions where the wall is under 0.8 mm (two nozzle widths) over 2.0 mm2, or under 0.4 mm (one nozzle width) over 0.25 mm2; sharp edges and slivers are ignored"
-    },
-    {
-      "id": "S1_slices",
-      "level": "block",
-      "result": "pass",
-      "value": null,
-      "limit": null,
-      "detail": "sliced without errors"
-    },
-    {
-      "id": "S2_slicer_stability",
-      "level": "warn",
-      "result": "pass",
-      "value": null,
-      "limit": null,
-      "detail": "no stability warnings"
-    },
-    {
-      "id": "S3_slicer_blocking",
-      "level": "block",
-      "result": "pass",
-      "value": null,
-      "limit": null,
-      "detail": "nothing the slicer would print in mid-air"
     }
   ],
   "print_settings": {},
-  "slicer": {
-    "ok": true,
-    "brim_mm": 0,
-    "seconds_to_slice": 0.9,
-    "warnings": [],
-    "filament_g": 0.49,
-    "filament_m": 0.16,
-    "filament_cost_usd": 0.01,
-    "print_time_s": 385,
-    "layers": 31,
-    "warnings_without_brim": [],
-    "brims_tried_mm": [
-      0
-    ],
-    "engine": "PrusaSlicer-2.8.1",
-    "reused_from": "2026-11-01T21:30:10Z"
-  },
+  "slicer": null,
   "verdict": "pass",
   "summary": "Prints as is"
 }

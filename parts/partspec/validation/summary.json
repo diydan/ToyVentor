@@ -2,10 +2,10 @@
   "validator": "preprint_check 1.2.0",
   "profile": "fdm_pla_0.4",
   "slicer": "PrusaSlicer-2.8.1",
-  "generated_at": "2026-11-02T00:38:23Z",
+  "generated_at": "2026-11-02T12:09:00Z",
   "counts": {
-    "pass": 172,
-    "pass_with_settings": 4,
+    "pass": 176,
+    "pass_with_settings": 0,
     "pass_with_warnings": 29,
     "fail": 0
   },
@@ -225,13 +225,13 @@
       "file": "toyventor_bushing_half_P.stl",
       "verdict": "pass",
       "summary": "Prints as is",
-      "filament_g": 0.49,
-      "print_time_min": 6.4,
-      "filament_cost_usd": 0.01,
+      "filament_g": null,
+      "print_time_min": null,
+      "filament_cost_usd": null,
       "brim_mm": 0,
       "height_mm": 6.25,
-      "bed_contact_mm2": 62.8,
-      "slenderness": 0.79,
+      "bed_contact_mm2": 56.0,
+      "slenderness": 0.84,
       "min_wall_mm": null
     },
     {
@@ -239,13 +239,13 @@
       "file": "toyventor_bushing_tu01_P.stl",
       "verdict": "pass",
       "summary": "Prints as is",
-      "filament_g": 0.99,
-      "print_time_min": 13.0,
-      "filament_cost_usd": 0.02,
+      "filament_g": null,
+      "print_time_min": null,
+      "filament_cost_usd": null,
       "brim_mm": 0,
       "height_mm": 12.5,
-      "bed_contact_mm2": 62.8,
-      "slenderness": 1.58,
+      "bed_contact_mm2": 56.0,
+      "slenderness": 1.67,
       "min_wall_mm": null
     },
     {
@@ -258,8 +258,8 @@
       "filament_cost_usd": null,
       "brim_mm": 0,
       "height_mm": 12.75,
-      "bed_contact_mm2": 103.4,
-      "slenderness": 1.25,
+      "bed_contact_mm2": 101.6,
+      "slenderness": 1.26,
       "min_wall_mm": null
     },
     {
@@ -272,8 +272,8 @@
       "filament_cost_usd": null,
       "brim_mm": 0,
       "height_mm": 12.75,
-      "bed_contact_mm2": 103.4,
-      "slenderness": 1.25,
+      "bed_contact_mm2": 101.6,
+      "slenderness": 1.26,
       "min_wall_mm": null
     },
     {
@@ -286,8 +286,8 @@
       "filament_cost_usd": null,
       "brim_mm": 0,
       "height_mm": 12.75,
-      "bed_contact_mm2": 103.4,
-      "slenderness": 1.25,
+      "bed_contact_mm2": 101.6,
+      "slenderness": 1.26,
       "min_wall_mm": null
     },
     {
@@ -477,13 +477,13 @@
       "file": "toyventor_cross_connector_tu01_P.stl",
       "verdict": "pass",
       "summary": "Prints as is",
-      "filament_g": 2.75,
-      "print_time_min": 18.9,
-      "filament_cost_usd": 0.06,
+      "filament_g": null,
+      "print_time_min": null,
+      "filament_cost_usd": null,
       "brim_mm": 0,
       "height_mm": 12.5,
-      "bed_contact_mm2": 249.8,
-      "slenderness": 0.79,
+      "bed_contact_mm2": 243.1,
+      "slenderness": 0.8,
       "min_wall_mm": null
     },
     {
@@ -580,7 +580,7 @@
       "filament_cost_usd": null,
       "brim_mm": 0,
       "height_mm": 6.25,
-      "bed_contact_mm2": 426.7,
+      "bed_contact_mm2": 420.0,
       "slenderness": 0.3,
       "min_wall_mm": null
     },
@@ -594,8 +594,8 @@
       "filament_cost_usd": null,
       "brim_mm": 0,
       "height_mm": 6.25,
-      "bed_contact_mm2": 1030.8,
-      "slenderness": 0.19,
+      "bed_contact_mm2": 1024.1,
+      "slenderness": 0.2,
       "min_wall_mm": null
     },
     {
@@ -608,7 +608,7 @@
       "filament_cost_usd": null,
       "brim_mm": 0,
       "height_mm": 6.25,
-      "bed_contact_mm2": 1880.7,
+      "bed_contact_mm2": 1873.9,
       "slenderness": 0.14,
       "min_wall_mm": null
     },
@@ -622,7 +622,7 @@
       "filament_cost_usd": null,
       "brim_mm": 0,
       "height_mm": 6.25,
-      "bed_contact_mm2": 2976.1,
+      "bed_contact_mm2": 2969.4,
       "slenderness": 0.11,
       "min_wall_mm": null
     },
@@ -636,7 +636,7 @@
       "filament_cost_usd": null,
       "brim_mm": 0,
       "height_mm": 6.25,
-      "bed_contact_mm2": 4317.1,
+      "bed_contact_mm2": 4310.3,
       "slenderness": 0.1,
       "min_wall_mm": null
     },
@@ -1070,7 +1070,7 @@
       "filament_cost_usd": null,
       "brim_mm": 0,
       "height_mm": 5.0,
-      "bed_contact_mm2": 352.9,
+      "bed_contact_mm2": 348.7,
       "slenderness": 0.27,
       "min_wall_mm": null
     },
@@ -1140,8 +1140,8 @@
       "filament_cost_usd": null,
       "brim_mm": 0,
       "height_mm": 6.0,
-      "bed_contact_mm2": 953.2,
-      "slenderness": 0.19,
+      "bed_contact_mm2": 946.4,
+      "slenderness": 0.2,
       "min_wall_mm": null
     },
     {
@@ -1182,7 +1182,7 @@
       "filament_cost_usd": null,
       "brim_mm": 0,
       "height_mm": 5.0,
-      "bed_contact_mm2": 745.8,
+      "bed_contact_mm2": 744.8,
       "slenderness": 0.18,
       "min_wall_mm": null
     },
@@ -1224,7 +1224,7 @@
       "filament_cost_usd": null,
       "brim_mm": 0,
       "height_mm": 12.3,
-      "bed_contact_mm2": 1519.6,
+      "bed_contact_mm2": 1512.9,
       "slenderness": 0.32,
       "min_wall_mm": null
     },
@@ -1238,8 +1238,8 @@
       "filament_cost_usd": null,
       "brim_mm": 0,
       "height_mm": 12.3,
-      "bed_contact_mm2": 842.0,
-      "slenderness": 0.42,
+      "bed_contact_mm2": 835.3,
+      "slenderness": 0.43,
       "min_wall_mm": null
     },
     {
@@ -1266,7 +1266,7 @@
       "filament_cost_usd": null,
       "brim_mm": 0,
       "height_mm": 5.6,
-      "bed_contact_mm2": 455.7,
+      "bed_contact_mm2": 453.4,
       "slenderness": 0.26,
       "min_wall_mm": null
     },
@@ -1364,7 +1364,7 @@
       "filament_cost_usd": null,
       "brim_mm": 0,
       "height_mm": 6.25,
-      "bed_contact_mm2": 438.5,
+      "bed_contact_mm2": 425.0,
       "slenderness": 0.3,
       "min_wall_mm": null
     },
@@ -1532,7 +1532,7 @@
       "filament_cost_usd": null,
       "brim_mm": 0,
       "height_mm": 12.0,
-      "bed_contact_mm2": 1261.7,
+      "bed_contact_mm2": 1255.0,
       "slenderness": 0.34,
       "min_wall_mm": null
     },
@@ -1560,8 +1560,8 @@
       "filament_cost_usd": null,
       "brim_mm": 0,
       "height_mm": 9.17,
-      "bed_contact_mm2": 185.5,
-      "slenderness": 0.67,
+      "bed_contact_mm2": 182.8,
+      "slenderness": 0.68,
       "min_wall_mm": null
     },
     {
@@ -1616,8 +1616,8 @@
       "filament_cost_usd": null,
       "brim_mm": 0,
       "height_mm": 9.6,
-      "bed_contact_mm2": 426.7,
-      "slenderness": 0.46,
+      "bed_contact_mm2": 420.0,
+      "slenderness": 0.47,
       "min_wall_mm": 0.658
     },
     {
@@ -1658,7 +1658,7 @@
       "filament_cost_usd": null,
       "brim_mm": 0,
       "height_mm": 5.0,
-      "bed_contact_mm2": 825.5,
+      "bed_contact_mm2": 823.6,
       "slenderness": 0.17,
       "min_wall_mm": null
     },
@@ -1672,7 +1672,7 @@
       "filament_cost_usd": null,
       "brim_mm": 0,
       "height_mm": 5.0,
-      "bed_contact_mm2": 352.9,
+      "bed_contact_mm2": 348.7,
       "slenderness": 0.27,
       "min_wall_mm": null
     },
@@ -1686,7 +1686,7 @@
       "filament_cost_usd": null,
       "brim_mm": 0,
       "height_mm": 5.0,
-      "bed_contact_mm2": 405.9,
+      "bed_contact_mm2": 403.8,
       "slenderness": 0.25,
       "min_wall_mm": null
     },
@@ -1742,8 +1742,8 @@
       "filament_cost_usd": null,
       "brim_mm": 0,
       "height_mm": 5.6,
-      "bed_contact_mm2": 105.5,
-      "slenderness": 0.55,
+      "bed_contact_mm2": 101.5,
+      "slenderness": 0.56,
       "min_wall_mm": null
     },
     {
@@ -1756,8 +1756,8 @@
       "filament_cost_usd": null,
       "brim_mm": 0,
       "height_mm": 5.6,
-      "bed_contact_mm2": 152.9,
-      "slenderness": 0.45,
+      "bed_contact_mm2": 147.4,
+      "slenderness": 0.46,
       "min_wall_mm": null
     },
     {
@@ -1770,8 +1770,8 @@
       "filament_cost_usd": null,
       "brim_mm": 0,
       "height_mm": 5.0,
-      "bed_contact_mm2": 71.5,
-      "slenderness": 0.59,
+      "bed_contact_mm2": 67.8,
+      "slenderness": 0.61,
       "min_wall_mm": null
     },
     {
@@ -1784,8 +1784,8 @@
       "filament_cost_usd": null,
       "brim_mm": 0,
       "height_mm": 5.0,
-      "bed_contact_mm2": 109.4,
-      "slenderness": 0.48,
+      "bed_contact_mm2": 104.6,
+      "slenderness": 0.49,
       "min_wall_mm": null
     },
     {
@@ -1868,8 +1868,8 @@
       "filament_cost_usd": null,
       "brim_mm": 0,
       "height_mm": 5.0,
-      "bed_contact_mm2": 117.3,
-      "slenderness": 0.46,
+      "bed_contact_mm2": 112.9,
+      "slenderness": 0.47,
       "min_wall_mm": null
     },
     {
@@ -1896,9 +1896,9 @@
       "filament_cost_usd": null,
       "brim_mm": 0,
       "height_mm": 5.6,
-      "bed_contact_mm2": 50.6,
-      "slenderness": 0.79,
-      "min_wall_mm": 0.189
+      "bed_contact_mm2": 48.1,
+      "slenderness": 0.81,
+      "min_wall_mm": 0.755
     },
     {
       "part_id": "pro_steer_bridge",
@@ -1910,8 +1910,8 @@
       "filament_cost_usd": null,
       "brim_mm": 0,
       "height_mm": 23.15,
-      "bed_contact_mm2": 631.9,
-      "slenderness": 0.92,
+      "bed_contact_mm2": 625.0,
+      "slenderness": 0.93,
       "min_wall_mm": null
     },
     {
@@ -1924,7 +1924,7 @@
       "filament_cost_usd": null,
       "brim_mm": 0,
       "height_mm": 5.0,
-      "bed_contact_mm2": 197.7,
+      "bed_contact_mm2": 192.7,
       "slenderness": 0.36,
       "min_wall_mm": null
     },
@@ -1980,8 +1980,8 @@
       "filament_cost_usd": null,
       "brim_mm": 0,
       "height_mm": 13.0,
-      "bed_contact_mm2": 361.6,
-      "slenderness": 0.68,
+      "bed_contact_mm2": 354.8,
+      "slenderness": 0.69,
       "min_wall_mm": null
     },
     {
@@ -2022,7 +2022,7 @@
       "filament_cost_usd": null,
       "brim_mm": 0,
       "height_mm": 6.8,
-      "bed_contact_mm2": 1199.2,
+      "bed_contact_mm2": 1196.4,
       "slenderness": 0.2,
       "min_wall_mm": null
     },
@@ -2036,7 +2036,7 @@
       "filament_cost_usd": null,
       "brim_mm": 0,
       "height_mm": 6.8,
-      "bed_contact_mm2": 1176.2,
+      "bed_contact_mm2": 1173.4,
       "slenderness": 0.2,
       "min_wall_mm": null
     },
@@ -2050,7 +2050,7 @@
       "filament_cost_usd": null,
       "brim_mm": 0,
       "height_mm": 6.6,
-      "bed_contact_mm2": 1418.9,
+      "bed_contact_mm2": 1416.1,
       "slenderness": 0.18,
       "min_wall_mm": null
     },
@@ -2064,7 +2064,7 @@
       "filament_cost_usd": null,
       "brim_mm": 0,
       "height_mm": 7.2,
-      "bed_contact_mm2": 779.7,
+      "bed_contact_mm2": 777.0,
       "slenderness": 0.26,
       "min_wall_mm": null
     },
@@ -2078,7 +2078,7 @@
       "filament_cost_usd": null,
       "brim_mm": 0,
       "height_mm": 6.8,
-      "bed_contact_mm2": 723.5,
+      "bed_contact_mm2": 720.8,
       "slenderness": 0.25,
       "min_wall_mm": null
     },
@@ -2092,7 +2092,7 @@
       "filament_cost_usd": null,
       "brim_mm": 0,
       "height_mm": 6.8,
-      "bed_contact_mm2": 887.4,
+      "bed_contact_mm2": 884.6,
       "slenderness": 0.23,
       "min_wall_mm": null
     },
@@ -2106,7 +2106,7 @@
       "filament_cost_usd": null,
       "brim_mm": 0,
       "height_mm": 7.2,
-      "bed_contact_mm2": 1088.8,
+      "bed_contact_mm2": 1086.1,
       "slenderness": 0.22,
       "min_wall_mm": null
     },
@@ -2120,7 +2120,7 @@
       "filament_cost_usd": null,
       "brim_mm": 0,
       "height_mm": 6.8,
-      "bed_contact_mm2": 968.1,
+      "bed_contact_mm2": 965.3,
       "slenderness": 0.22,
       "min_wall_mm": null
     },
@@ -2134,8 +2134,8 @@
       "filament_cost_usd": null,
       "brim_mm": 0,
       "height_mm": 6.8,
-      "bed_contact_mm2": 712.7,
-      "slenderness": 0.25,
+      "bed_contact_mm2": 709.9,
+      "slenderness": 0.26,
       "min_wall_mm": null
     },
     {
@@ -2148,7 +2148,7 @@
       "filament_cost_usd": null,
       "brim_mm": 0,
       "height_mm": 7.2,
-      "bed_contact_mm2": 773.8,
+      "bed_contact_mm2": 771.1,
       "slenderness": 0.26,
       "min_wall_mm": null
     },
@@ -2176,7 +2176,7 @@
       "filament_cost_usd": null,
       "brim_mm": 0,
       "height_mm": 7.0,
-      "bed_contact_mm2": 687.8,
+      "bed_contact_mm2": 685.5,
       "slenderness": 0.27,
       "min_wall_mm": null
     },
@@ -2190,7 +2190,7 @@
       "filament_cost_usd": null,
       "brim_mm": 0,
       "height_mm": 7.2,
-      "bed_contact_mm2": 1221.2,
+      "bed_contact_mm2": 1218.4,
       "slenderness": 0.21,
       "min_wall_mm": null
     },
@@ -2204,7 +2204,7 @@
       "filament_cost_usd": null,
       "brim_mm": 0,
       "height_mm": 6.6,
-      "bed_contact_mm2": 1252.1,
+      "bed_contact_mm2": 1249.3,
       "slenderness": 0.19,
       "min_wall_mm": null
     },
@@ -2218,22 +2218,22 @@
       "filament_cost_usd": null,
       "brim_mm": 0,
       "height_mm": 5.0,
-      "bed_contact_mm2": 484.5,
+      "bed_contact_mm2": 481.8,
       "slenderness": 0.23,
       "min_wall_mm": null
     },
     {
       "part_id": "racer_axle",
       "file": "toyventor_racer_axle_S.stl",
-      "verdict": "pass_with_settings",
-      "summary": "Prints with brim_width_mm = 3",
-      "filament_g": 1.28,
-      "print_time_min": 7.0,
-      "filament_cost_usd": 0.03,
-      "brim_mm": 3,
+      "verdict": "pass",
+      "summary": "Prints as is",
+      "filament_g": null,
+      "print_time_min": null,
+      "filament_cost_usd": null,
+      "brim_mm": 0,
       "height_mm": 5.0,
-      "bed_contact_mm2": 169.7,
-      "slenderness": 0.38,
+      "bed_contact_mm2": 165.5,
+      "slenderness": 0.39,
       "min_wall_mm": null
     },
     {
@@ -2339,13 +2339,13 @@
       "file": "toyventor_racer_wheel_S.stl",
       "verdict": "pass",
       "summary": "Prints as is",
-      "filament_g": 1.13,
-      "print_time_min": 8.9,
-      "filament_cost_usd": 0.02,
+      "filament_g": null,
+      "print_time_min": null,
+      "filament_cost_usd": null,
       "brim_mm": 0,
       "height_mm": 6.0,
-      "bed_contact_mm2": 195.6,
-      "slenderness": 0.43,
+      "bed_contact_mm2": 188.9,
+      "slenderness": 0.44,
       "min_wall_mm": null
     },
     {
@@ -2449,42 +2449,42 @@
     {
       "part_id": "shaft_tu03",
       "file": "toyventor_shaft_tu03_P.stl",
-      "verdict": "pass_with_settings",
-      "summary": "Prints with brim_width_mm = 3",
-      "filament_g": 1.28,
-      "print_time_min": 7.0,
-      "filament_cost_usd": 0.03,
-      "brim_mm": 3,
+      "verdict": "pass",
+      "summary": "Prints as is",
+      "filament_g": null,
+      "print_time_min": null,
+      "filament_cost_usd": null,
+      "brim_mm": 0,
       "height_mm": 5.0,
-      "bed_contact_mm2": 169.7,
-      "slenderness": 0.38,
+      "bed_contact_mm2": 165.5,
+      "slenderness": 0.39,
       "min_wall_mm": null
     },
     {
       "part_id": "shaft_tu05",
       "file": "toyventor_shaft_tu05_P.stl",
-      "verdict": "pass_with_settings",
-      "summary": "Prints with brim_width_mm = 3",
-      "filament_g": 2.13,
-      "print_time_min": 11.4,
-      "filament_cost_usd": 0.04,
-      "brim_mm": 3,
+      "verdict": "pass",
+      "summary": "Prints as is",
+      "filament_g": null,
+      "print_time_min": null,
+      "filament_cost_usd": null,
+      "brim_mm": 0,
       "height_mm": 5.0,
-      "bed_contact_mm2": 282.8,
+      "bed_contact_mm2": 280.4,
       "slenderness": 0.3,
       "min_wall_mm": null
     },
     {
       "part_id": "shaft_tu07",
       "file": "toyventor_shaft_tu07_P.stl",
-      "verdict": "pass_with_settings",
-      "summary": "Prints with brim_width_mm = 3",
-      "filament_g": 2.97,
-      "print_time_min": 15.7,
-      "filament_cost_usd": 0.06,
-      "brim_mm": 3,
+      "verdict": "pass",
+      "summary": "Prints as is",
+      "filament_g": null,
+      "print_time_min": null,
+      "filament_cost_usd": null,
+      "brim_mm": 0,
       "height_mm": 5.0,
-      "bed_contact_mm2": 395.9,
+      "bed_contact_mm2": 389.9,
       "slenderness": 0.25,
       "min_wall_mm": null
     },
@@ -2652,7 +2652,7 @@
       "filament_cost_usd": null,
       "brim_mm": 0,
       "height_mm": 6.6,
-      "bed_contact_mm2": 497.3,
+      "bed_contact_mm2": 493.6,
       "slenderness": 0.3,
       "min_wall_mm": null
     },
@@ -2750,8 +2750,8 @@
       "filament_cost_usd": null,
       "brim_mm": 0,
       "height_mm": 14.0,
-      "bed_contact_mm2": 739.6,
-      "slenderness": 0.51,
+      "bed_contact_mm2": 732.9,
+      "slenderness": 0.52,
       "min_wall_mm": null
     },
     {
@@ -2764,8 +2764,8 @@
       "filament_cost_usd": null,
       "brim_mm": 0,
       "height_mm": 14.0,
-      "bed_contact_mm2": 1259.2,
-      "slenderness": 0.39,
+      "bed_contact_mm2": 1252.4,
+      "slenderness": 0.4,
       "min_wall_mm": null
     },
     {
@@ -2778,7 +2778,7 @@
       "filament_cost_usd": null,
       "brim_mm": 0,
       "height_mm": 13.5,
-      "bed_contact_mm2": 820.4,
+      "bed_contact_mm2": 813.7,
       "slenderness": 0.47,
       "min_wall_mm": null
     },
@@ -2815,12 +2815,12 @@
       "file": "toyventor_wheel_tu04_P.stl",
       "verdict": "pass",
       "summary": "Prints as is",
-      "filament_g": 11.86,
-      "print_time_min": 84.1,
-      "filament_cost_usd": 0.24,
+      "filament_g": null,
+      "print_time_min": null,
+      "filament_cost_usd": null,
       "brim_mm": 0,
       "height_mm": 12.5,
-      "bed_contact_mm2": 1637.5,
+      "bed_contact_mm2": 1630.8,
       "slenderness": 0.31,
       "min_wall_mm": null
     },
@@ -2829,12 +2829,12 @@
       "file": "toyventor_wheel_tu06_P.stl",
       "verdict": "pass",
       "summary": "Prints as is",
-      "filament_g": 24.21,
-      "print_time_min": 161.9,
-      "filament_cost_usd": 0.48,
+      "filament_g": null,
+      "print_time_min": null,
+      "filament_cost_usd": null,
       "brim_mm": 0,
       "height_mm": 12.5,
-      "bed_contact_mm2": 3853.0,
+      "bed_contact_mm2": 3846.2,
       "slenderness": 0.2,
       "min_wall_mm": null
     },

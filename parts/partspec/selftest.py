@@ -214,8 +214,9 @@ test("applicability: beams get I4 and I5, pins get I5 only, gears get I4 I5 I6, 
      and "I6_gear_on_grid" in ids_of(fx_entries["fx_gear_z20"]) and not any("I3_seats_on_reference" in ids_of(e) for e in fx_entries.values()))
 test("every part carries exactly the checks that apply to it", all(
     ids_of(p) - {"M1_manifest_schema"} == {cid for cid in tp.IF["checks"] if cid != "M1_manifest_schema" and tp.check_applies(cid, p["connectors"], p["family"])} for p in parts))
+_flat_gap = (pro.BORE["fixed_flats"] - pro.BORE["shaft_flats"]) / 2
 test("measured free-bore gap is the interface gap (0.2 mm)", abs(fx_entries["fx_beam_free_tu03"]["fit"]["gap_min_mm"] - 0.2) < 0.01)
-test("measured flat-drive gap is the interface gap (0.05 mm)", abs(fx_entries["fx_beam_fixed_tu02"]["fit"]["gap_min_mm"] - 0.05) < 0.01)
+test(f"measured flat-drive gap is the interface gap ({_flat_gap} mm)", abs(fx_entries["fx_beam_fixed_tu02"]["fit"]["gap_min_mm"] - _flat_gap) < 0.01)
 sw = [e["fit"]["surface_offset_window_mm"] for e in fx_entries.values() if e["fit"].get("surface_offset_window_mm")]
 test("Pro fit windows contain the calibrated error, same calibration as Snap", all(w[0] <= -0.05 and 0.05 <= w[1] for w in sw))
 
@@ -274,7 +275,7 @@ test("attach() refuses a pin and bore that pin_bore.rules does not list", refuse
 r4 = asm.validate(flib, [bf, asm.place("fx_pin_free", -9.5, 0, -3.75, pid="pin")])
 r5 = asm.validate(flib, [bf, asm.place("fx_beam_free_tu03", 0, 0, 12.5, pid="beam2"), asm.attach(flib, bf, "bores", "fx_shaft_drive", "axis", (2, 0), (0, 0), pid="sh", dz=-2.5)])
 test("a free pin in a free bore is accepted with a measured gap", r1["ok"] and r1["edges"][0]["fit"] == "free" and abs(r1["edges"][0]["gap_min_mm"] - 0.2) < 0.01, str(r1))
-test("a flat shaft in a fixed bore is accepted as a press fit", r2["ok"] and r2["edges"][0]["fit"] == "press" and abs(r2["edges"][0]["gap_min_mm"] - 0.05) < 0.01, str(r2))
+test("a flat shaft in a fixed bore is accepted as a press fit", r2["ok"] and r2["edges"][0]["fit"] == "press" and abs(r2["edges"][0]["gap_min_mm"] - _flat_gap) < 0.01, str(r2))
 test("a round pin in a fixed bore is rejected: profile_mismatch", "profile_mismatch" in codes_of(r3), str(codes_of(r3)))
 test("a pin off the bore axis is not connected", "floating" in codes_of(r4), str(codes_of(r4)))
 test("one shaft through two stacked beams connects both", r5["ok"] and len(r5["edges"]) == 2, str(r5))
@@ -428,7 +429,7 @@ test("hinge: one pin through four interleaved knuckles from two leaves, measured
      res["valid_hinge"]["ok"] and len(res["valid_hinge"]["edges"]) == 4 and all(abs(e["gap_min_mm"] - 0.2) < 0.01 for e in res["valid_hinge"]["edges"]))
 ca = res["valid_cart_axle"]
 test("cart: a horizontal axle drives through the cross connector and both wheels (press fits measured sideways)",
-     ca["ok"] and sum(e.get("fit") == "press" for e in ca["edges"]) == 4 and all(abs(e["gap_min_mm"] - 0.05) < 0.01 for e in ca["edges"] if e.get("fit") == "press"))
+     ca["ok"] and sum(e.get("fit") == "press" for e in ca["edges"]) == 4 and all(abs(e["gap_min_mm"] - _flat_gap) < 0.01 for e in ca["edges"] if e.get("fit") == "press"))
 test("an axle 2 mm off its bore is not connected", "floating" in codes("INVALID_axle_off_its_bore"))
 test("a flat shaft rolled crosswise to a fixed bore is caught", bool({"collision", "fit_out_of_tolerance"} & (codes("INVALID_shaft_flats_crosswise") | {w["code"] for w in res["INVALID_shaft_flats_crosswise"]["warnings"]})))
 test("a stud part cannot be tipped over", "unsupported_pose" in codes("INVALID_tipped_brick"))

@@ -7166,7 +7166,7 @@
         25.0,
         5.0
       ],
-      "volume_cm3": 0.52,
+      "volume_cm3": 0.51,
       "connectors": [
         {
           "id": "axis",
@@ -7203,8 +7203,8 @@
       ],
       "safety": {
         "small_part_status": "small_part",
-        "min_enclosing_diameter_mm": 8.93,
-        "margin_pct": -71.9,
+        "min_enclosing_diameter_mm": 7.45,
+        "margin_pct": -76.5,
         "print_page_warning": [
           "Printed at home or by a print service. Not tested to toy-safety standards. Adult supervision required. Check for cracks, sharp edges and loose pieces before each use, and stop using anything that has broken.",
           "CHOKING HAZARD - Small parts. Not for children under 3 years."
@@ -7309,7 +7309,7 @@
           "id": "S1_small_part_screen",
           "level": "warn",
           "result": "fail",
-          "detail": "small_part: best-fit diameter 8.93 mm vs 31.75 mm cylinder"
+          "detail": "small_part: best-fit diameter 7.45 mm vs 31.75 mm cylinder"
         },
         {
           "id": "T1_fit_as_designed",
@@ -7364,7 +7364,7 @@
         37.5,
         5.0
       ],
-      "volume_cm3": 0.79,
+      "volume_cm3": 0.78,
       "connectors": [
         {
           "id": "axis",
@@ -7402,8 +7402,8 @@
       ],
       "safety": {
         "small_part_status": "small_part",
-        "min_enclosing_diameter_mm": 8.93,
-        "margin_pct": -71.9,
+        "min_enclosing_diameter_mm": 7.45,
+        "margin_pct": -76.5,
         "print_page_warning": [
           "Printed at home or by a print service. Not tested to toy-safety standards. Adult supervision required. Check for cracks, sharp edges and loose pieces before each use, and stop using anything that has broken.",
           "CHOKING HAZARD - Small parts. Not for children under 3 years."
@@ -7508,7 +7508,7 @@
           "id": "S1_small_part_screen",
           "level": "warn",
           "result": "fail",
-          "detail": "small_part: best-fit diameter 8.93 mm vs 31.75 mm cylinder"
+          "detail": "small_part: best-fit diameter 7.45 mm vs 31.75 mm cylinder"
         },
         {
           "id": "T1_fit_as_designed",
@@ -7563,7 +7563,7 @@
         26.5,
         5.6
       ],
-      "volume_cm3": 0.87,
+      "volume_cm3": 0.85,
       "connectors": [
         {
           "id": "axis",
@@ -7766,7 +7766,7 @@
         37.5,
         5.0
       ],
-      "volume_cm3": 0.98,
+      "volume_cm3": 0.97,
       "connectors": [
         {
           "id": "axis",
@@ -7818,7 +7818,7 @@
       "design_status": "verified",
       "fit": {
         "studs_measured": 2,
-        "design_gap_mm": 0.04999999999999982,
+        "design_gap_mm": 0.125,
         "pairs": [
           {
             "pin": "shaft_drive",
@@ -7831,15 +7831,15 @@
             "pin": "shaft_drive",
             "bore": "fixed",
             "fit": "press",
-            "gap_min_mm": 0.05,
-            "gap_max_mm": 0.05
+            "gap_min_mm": 0.125,
+            "gap_max_mm": 0.125
           }
         ],
-        "gap_min_mm": 0.05,
+        "gap_min_mm": 0.125,
         "gap_max_mm": 0.2,
         "surface_offset_window_mm": [
-          -0.075,
-          0.075
+          -0.062,
+          0.088
         ],
         "residual_error_mm": 0.05
       },
@@ -7926,19 +7926,19 @@
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "2 of 2 pin/bore pair(s) measured: gap +0.050 to +0.200 mm"
+          "detail": "2 of 2 pin/bore pair(s) measured: gap +0.125 to +0.200 mm"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.062 to +0.088 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.062 to +0.088 mm"
         },
         {
           "id": "F2_breakage",
@@ -7975,7 +7975,7 @@
         62.5,
         5.0
       ],
-      "volume_cm3": 1.63,
+      "volume_cm3": 1.62,
       "connectors": [
         {
           "id": "axis",
@@ -8008,8 +8008,8 @@
       ],
       "safety": {
         "small_part_status": "above_cylinder",
-        "min_enclosing_diameter_mm": 35.03,
-        "margin_pct": 10.3,
+        "min_enclosing_diameter_mm": 34.95,
+        "margin_pct": 10.1,
         "print_page_warning": [
           "Printed at home or by a print service. Not tested to toy-safety standards. Adult supervision required. Check for cracks, sharp edges and loose pieces before each use, and stop using anything that has broken.",
           "Larger than the small-parts test size in our size check. This is not a safety certification, and it is not rated for children under 3 years."
@@ -8027,7 +8027,7 @@
       "design_status": "verified",
       "fit": {
         "studs_measured": 2,
-        "design_gap_mm": 0.04999999999999982,
+        "design_gap_mm": 0.125,
         "pairs": [
           {
             "pin": "shaft_drive",
@@ -8040,15 +8040,15 @@
             "pin": "shaft_drive",
             "bore": "fixed",
             "fit": "press",
-            "gap_min_mm": 0.05,
-            "gap_max_mm": 0.05
+            "gap_min_mm": 0.125,
+            "gap_max_mm": 0.125
           }
         ],
-        "gap_min_mm": 0.05,
+        "gap_min_mm": 0.125,
         "gap_max_mm": 0.2,
         "surface_offset_window_mm": [
-          -0.075,
-          0.075
+          -0.062,
+          0.088
         ],
         "residual_error_mm": 0.05
       },
@@ -8129,25 +8129,25 @@
           "id": "S1_small_part_screen",
           "level": "warn",
           "result": "pass",
-          "detail": "above_cylinder: best-fit diameter 35.03 mm vs 31.75 mm cylinder"
+          "detail": "above_cylinder: best-fit diameter 34.95 mm vs 31.75 mm cylinder"
         },
         {
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "2 of 2 pin/bore pair(s) measured: gap +0.050 to +0.200 mm"
+          "detail": "2 of 2 pin/bore pair(s) measured: gap +0.125 to +0.200 mm"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.062 to +0.088 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.062 to +0.088 mm"
         },
         {
           "id": "F2_breakage",
@@ -8184,7 +8184,7 @@
         87.5,
         5.0
       ],
-      "volume_cm3": 2.28,
+      "volume_cm3": 2.27,
       "connectors": [
         {
           "id": "axis",
@@ -8217,8 +8217,8 @@
       ],
       "safety": {
         "small_part_status": "above_cylinder",
-        "min_enclosing_diameter_mm": 72.88,
-        "margin_pct": 129.5,
+        "min_enclosing_diameter_mm": 72.51,
+        "margin_pct": 128.4,
         "print_page_warning": [
           "Printed at home or by a print service. Not tested to toy-safety standards. Adult supervision required. Check for cracks, sharp edges and loose pieces before each use, and stop using anything that has broken.",
           "Larger than the small-parts test size in our size check. This is not a safety certification, and it is not rated for children under 3 years."
@@ -8236,7 +8236,7 @@
       "design_status": "verified",
       "fit": {
         "studs_measured": 2,
-        "design_gap_mm": 0.04999999999999982,
+        "design_gap_mm": 0.125,
         "pairs": [
           {
             "pin": "shaft_drive",
@@ -8249,15 +8249,15 @@
             "pin": "shaft_drive",
             "bore": "fixed",
             "fit": "press",
-            "gap_min_mm": 0.05,
-            "gap_max_mm": 0.05
+            "gap_min_mm": 0.125,
+            "gap_max_mm": 0.125
           }
         ],
-        "gap_min_mm": 0.05,
+        "gap_min_mm": 0.125,
         "gap_max_mm": 0.2,
         "surface_offset_window_mm": [
-          -0.075,
-          0.075
+          -0.062,
+          0.088
         ],
         "residual_error_mm": 0.05
       },
@@ -8338,25 +8338,25 @@
           "id": "S1_small_part_screen",
           "level": "warn",
           "result": "pass",
-          "detail": "above_cylinder: best-fit diameter 72.88 mm vs 31.75 mm cylinder"
+          "detail": "above_cylinder: best-fit diameter 72.51 mm vs 31.75 mm cylinder"
         },
         {
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "2 of 2 pin/bore pair(s) measured: gap +0.050 to +0.200 mm"
+          "detail": "2 of 2 pin/bore pair(s) measured: gap +0.125 to +0.200 mm"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.062 to +0.088 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.062 to +0.088 mm"
         },
         {
           "id": "F2_breakage",
@@ -8393,7 +8393,7 @@
         11.0,
         6.2
       ],
-      "volume_cm3": 0.39,
+      "volume_cm3": 0.38,
       "connectors": [
         {
           "id": "hub",
@@ -8441,21 +8441,21 @@
       "design_status": "verified",
       "fit": {
         "studs_measured": 1,
-        "design_gap_mm": 0.04999999999999982,
+        "design_gap_mm": 0.125,
         "pairs": [
           {
             "pin": "shaft_drive",
             "bore": "fixed",
             "fit": "press",
-            "gap_min_mm": 0.05,
-            "gap_max_mm": 0.05
+            "gap_min_mm": 0.125,
+            "gap_max_mm": 0.125
           }
         ],
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05,
+        "gap_min_mm": 0.125,
+        "gap_max_mm": 0.125,
         "surface_offset_window_mm": [
-          -0.075,
-          0.075
+          -0.062,
+          0.088
         ],
         "residual_error_mm": 0.05
       },
@@ -8548,19 +8548,19 @@
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "1 of 1 pin/bore pair(s) measured: gap +0.050 to +0.050 mm"
+          "detail": "1 of 1 pin/bore pair(s) measured: gap +0.125 to +0.125 mm"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.062 to +0.088 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.062 to +0.088 mm"
         },
         {
           "id": "F2_breakage",
@@ -8597,7 +8597,7 @@
         11.0,
         12.5
       ],
-      "volume_cm3": 0.78,
+      "volume_cm3": 0.77,
       "connectors": [
         {
           "id": "hub",
@@ -8645,21 +8645,21 @@
       "design_status": "verified",
       "fit": {
         "studs_measured": 1,
-        "design_gap_mm": 0.04999999999999982,
+        "design_gap_mm": 0.125,
         "pairs": [
           {
             "pin": "shaft_drive",
             "bore": "fixed",
             "fit": "press",
-            "gap_min_mm": 0.05,
-            "gap_max_mm": 0.05
+            "gap_min_mm": 0.125,
+            "gap_max_mm": 0.125
           }
         ],
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05,
+        "gap_min_mm": 0.125,
+        "gap_max_mm": 0.125,
         "surface_offset_window_mm": [
-          -0.075,
-          0.075
+          -0.062,
+          0.088
         ],
         "residual_error_mm": 0.05
       },
@@ -8752,19 +8752,19 @@
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "1 of 1 pin/bore pair(s) measured: gap +0.050 to +0.050 mm"
+          "detail": "1 of 1 pin/bore pair(s) measured: gap +0.125 to +0.125 mm"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.062 to +0.088 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.062 to +0.088 mm"
         },
         {
           "id": "F2_breakage",
@@ -8801,7 +8801,7 @@
         28.9,
         6.2
       ],
-      "volume_cm3": 2.67,
+      "volume_cm3": 2.66,
       "connectors": [
         {
           "id": "hub",
@@ -8849,21 +8849,21 @@
       "design_status": "verified",
       "fit": {
         "studs_measured": 1,
-        "design_gap_mm": 0.04999999999999982,
+        "design_gap_mm": 0.125,
         "pairs": [
           {
             "pin": "shaft_drive",
             "bore": "fixed",
             "fit": "press",
-            "gap_min_mm": 0.05,
-            "gap_max_mm": 0.05
+            "gap_min_mm": 0.125,
+            "gap_max_mm": 0.125
           }
         ],
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05,
+        "gap_min_mm": 0.125,
+        "gap_max_mm": 0.125,
         "surface_offset_window_mm": [
-          -0.075,
-          0.075
+          -0.062,
+          0.088
         ],
         "residual_error_mm": 0.05
       },
@@ -8962,19 +8962,19 @@
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "1 of 1 pin/bore pair(s) measured: gap +0.050 to +0.050 mm"
+          "detail": "1 of 1 pin/bore pair(s) measured: gap +0.125 to +0.125 mm"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.062 to +0.088 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.062 to +0.088 mm"
         },
         {
           "id": "F2_breakage",
@@ -9021,7 +9021,7 @@
         42.4,
         6.2
       ],
-      "volume_cm3": 6.44,
+      "volume_cm3": 6.43,
       "connectors": [
         {
           "id": "hub",
@@ -9069,21 +9069,21 @@
       "design_status": "verified",
       "fit": {
         "studs_measured": 1,
-        "design_gap_mm": 0.04999999999999982,
+        "design_gap_mm": 0.125,
         "pairs": [
           {
             "pin": "shaft_drive",
             "bore": "fixed",
             "fit": "press",
-            "gap_min_mm": 0.05,
-            "gap_max_mm": 0.05
+            "gap_min_mm": 0.125,
+            "gap_max_mm": 0.125
           }
         ],
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05,
+        "gap_min_mm": 0.125,
+        "gap_max_mm": 0.125,
         "surface_offset_window_mm": [
-          -0.075,
-          0.075
+          -0.062,
+          0.088
         ],
         "residual_error_mm": 0.05
       },
@@ -9182,19 +9182,19 @@
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "1 of 1 pin/bore pair(s) measured: gap +0.050 to +0.050 mm"
+          "detail": "1 of 1 pin/bore pair(s) measured: gap +0.125 to +0.125 mm"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.062 to +0.088 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.062 to +0.088 mm"
         },
         {
           "id": "F2_breakage",
@@ -9289,21 +9289,21 @@
       "design_status": "verified",
       "fit": {
         "studs_measured": 1,
-        "design_gap_mm": 0.04999999999999982,
+        "design_gap_mm": 0.125,
         "pairs": [
           {
             "pin": "shaft_drive",
             "bore": "fixed",
             "fit": "press",
-            "gap_min_mm": 0.05,
-            "gap_max_mm": 0.05
+            "gap_min_mm": 0.125,
+            "gap_max_mm": 0.125
           }
         ],
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05,
+        "gap_min_mm": 0.125,
+        "gap_max_mm": 0.125,
         "surface_offset_window_mm": [
-          -0.075,
-          0.075
+          -0.062,
+          0.088
         ],
         "residual_error_mm": 0.05
       },
@@ -9402,19 +9402,19 @@
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "1 of 1 pin/bore pair(s) measured: gap +0.050 to +0.050 mm"
+          "detail": "1 of 1 pin/bore pair(s) measured: gap +0.125 to +0.125 mm"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.062 to +0.088 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.062 to +0.088 mm"
         },
         {
           "id": "F2_breakage",
@@ -9461,7 +9461,7 @@
         79.7,
         6.2
       ],
-      "volume_cm3": 26.98,
+      "volume_cm3": 26.97,
       "connectors": [
         {
           "id": "hub",
@@ -9509,21 +9509,21 @@
       "design_status": "verified",
       "fit": {
         "studs_measured": 1,
-        "design_gap_mm": 0.04999999999999982,
+        "design_gap_mm": 0.125,
         "pairs": [
           {
             "pin": "shaft_drive",
             "bore": "fixed",
             "fit": "press",
-            "gap_min_mm": 0.05,
-            "gap_max_mm": 0.05
+            "gap_min_mm": 0.125,
+            "gap_max_mm": 0.125
           }
         ],
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05,
+        "gap_min_mm": 0.125,
+        "gap_max_mm": 0.125,
         "surface_offset_window_mm": [
-          -0.075,
-          0.075
+          -0.062,
+          0.088
         ],
         "residual_error_mm": 0.05
       },
@@ -9622,19 +9622,19 @@
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "1 of 1 pin/bore pair(s) measured: gap +0.050 to +0.050 mm"
+          "detail": "1 of 1 pin/bore pair(s) measured: gap +0.125 to +0.125 mm"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.062 to +0.088 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.062 to +0.088 mm"
         },
         {
           "id": "F2_breakage",
@@ -10143,7 +10143,7 @@
         67.4,
         6.2
       ],
-      "volume_cm3": 18.6,
+      "volume_cm3": 18.59,
       "connectors": [
         {
           "id": "hub",
@@ -10191,21 +10191,21 @@
       "design_status": "verified",
       "fit": {
         "studs_measured": 1,
-        "design_gap_mm": 0.04999999999999982,
+        "design_gap_mm": 0.125,
         "pairs": [
           {
             "pin": "shaft_drive",
             "bore": "fixed",
             "fit": "press",
-            "gap_min_mm": 0.05,
-            "gap_max_mm": 0.05
+            "gap_min_mm": 0.125,
+            "gap_max_mm": 0.125
           }
         ],
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05,
+        "gap_min_mm": 0.125,
+        "gap_max_mm": 0.125,
         "surface_offset_window_mm": [
-          -0.075,
-          0.075
+          -0.062,
+          0.088
         ],
         "residual_error_mm": 0.05
       },
@@ -10304,19 +10304,19 @@
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "1 of 1 pin/bore pair(s) measured: gap +0.050 to +0.050 mm"
+          "detail": "1 of 1 pin/bore pair(s) measured: gap +0.125 to +0.125 mm"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.062 to +0.088 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.062 to +0.088 mm"
         },
         {
           "id": "F2_breakage",
@@ -11901,7 +11901,7 @@
         50.0,
         12.5
       ],
-      "volume_cm3": 21.15,
+      "volume_cm3": 21.14,
       "connectors": [
         {
           "id": "hub",
@@ -12000,14 +12000,14 @@
       "design_status": "verified",
       "fit": {
         "studs_measured": 9,
-        "design_gap_mm": 0.04999999999999982,
+        "design_gap_mm": 0.125,
         "pairs": [
           {
             "pin": "shaft_drive",
             "bore": "fixed",
             "fit": "press",
-            "gap_min_mm": 0.05,
-            "gap_max_mm": 0.05
+            "gap_min_mm": 0.125,
+            "gap_max_mm": 0.125
           },
           {
             "pin": "pin_free",
@@ -12030,11 +12030,11 @@
             "measured": false
           }
         ],
-        "gap_min_mm": 0.05,
+        "gap_min_mm": 0.125,
         "gap_max_mm": 0.2,
         "surface_offset_window_mm": [
-          -0.075,
-          0.075
+          -0.062,
+          0.088
         ],
         "residual_error_mm": 0.05
       },
@@ -12127,19 +12127,19 @@
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "3 of 4 pin/bore pair(s) measured: gap +0.050 to +0.200 mm"
+          "detail": "3 of 4 pin/bore pair(s) measured: gap +0.125 to +0.200 mm"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.062 to +0.088 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.062 to +0.088 mm"
         },
         {
           "id": "F2_breakage",
@@ -12176,7 +12176,7 @@
         75.0,
         12.5
       ],
-      "volume_cm3": 49.34,
+      "volume_cm3": 49.33,
       "connectors": [
         {
           "id": "hub",
@@ -12323,14 +12323,14 @@
       "design_status": "verified",
       "fit": {
         "studs_measured": 17,
-        "design_gap_mm": 0.04999999999999982,
+        "design_gap_mm": 0.125,
         "pairs": [
           {
             "pin": "shaft_drive",
             "bore": "fixed",
             "fit": "press",
-            "gap_min_mm": 0.05,
-            "gap_max_mm": 0.05
+            "gap_min_mm": 0.125,
+            "gap_max_mm": 0.125
           },
           {
             "pin": "pin_free",
@@ -12353,11 +12353,11 @@
             "measured": false
           }
         ],
-        "gap_min_mm": 0.05,
+        "gap_min_mm": 0.125,
         "gap_max_mm": 0.2,
         "surface_offset_window_mm": [
-          -0.075,
-          0.075
+          -0.062,
+          0.088
         ],
         "residual_error_mm": 0.05
       },
@@ -12450,19 +12450,19 @@
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "3 of 4 pin/bore pair(s) measured: gap +0.050 to +0.200 mm"
+          "detail": "3 of 4 pin/bore pair(s) measured: gap +0.125 to +0.200 mm"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.062 to +0.088 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.062 to +0.088 mm"
         },
         {
           "id": "F2_breakage",
@@ -12815,7 +12815,7 @@
         12.5,
         12.5
       ],
-      "volume_cm3": 3.03,
+      "volume_cm3": 3.01,
       "connectors": [
         {
           "id": "axle_z",
@@ -12896,28 +12896,28 @@
       "design_status": "verified",
       "fit": {
         "studs_measured": 2,
-        "design_gap_mm": 0.04999999999999982,
+        "design_gap_mm": 0.125,
         "pairs": [
           {
             "pin": "shaft_drive",
             "bore": "fixed",
             "fit": "press",
-            "gap_min_mm": 0.05,
-            "gap_max_mm": 0.05
+            "gap_min_mm": 0.125,
+            "gap_max_mm": 0.125
           },
           {
             "pin": "shaft_drive",
             "bore": "fixed",
             "fit": "press",
-            "gap_min_mm": 0.05,
-            "gap_max_mm": 0.05
+            "gap_min_mm": 0.125,
+            "gap_max_mm": 0.125
           }
         ],
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05,
+        "gap_min_mm": 0.125,
+        "gap_max_mm": 0.125,
         "surface_offset_window_mm": [
-          -0.075,
-          0.075
+          -0.062,
+          0.088
         ],
         "residual_error_mm": 0.05
       },
@@ -13010,19 +13010,19 @@
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "2 of 2 pin/bore pair(s) measured: gap +0.050 to +0.050 mm"
+          "detail": "2 of 2 pin/bore pair(s) measured: gap +0.125 to +0.125 mm"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.062 to +0.088 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.062 to +0.088 mm"
         },
         {
           "id": "F2_breakage",
@@ -14538,7 +14538,7 @@
         17.9,
         6.0
       ],
-      "volume_cm3": 1.22,
+      "volume_cm3": 1.21,
       "connectors": [
         {
           "id": "hub",
@@ -14586,21 +14586,21 @@
       "design_status": "verified",
       "fit": {
         "studs_measured": 1,
-        "design_gap_mm": 0.04999999999999982,
+        "design_gap_mm": 0.125,
         "pairs": [
           {
             "pin": "shaft_drive",
             "bore": "fixed",
             "fit": "press",
-            "gap_min_mm": 0.05,
-            "gap_max_mm": 0.05
+            "gap_min_mm": 0.125,
+            "gap_max_mm": 0.125
           }
         ],
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05,
+        "gap_min_mm": 0.125,
+        "gap_max_mm": 0.125,
         "surface_offset_window_mm": [
-          -0.075,
-          0.075
+          -0.062,
+          0.088
         ],
         "residual_error_mm": 0.05
       },
@@ -14693,19 +14693,19 @@
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "1 of 1 pin/bore pair(s) measured: gap +0.050 to +0.050 mm"
+          "detail": "1 of 1 pin/bore pair(s) measured: gap +0.125 to +0.125 mm"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.062 to +0.088 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.062 to +0.088 mm"
         },
         {
           "id": "F2_breakage",
@@ -14743,7 +14743,7 @@
         37.5,
         5.0
       ],
-      "volume_cm3": 0.98,
+      "volume_cm3": 0.97,
       "connectors": [
         {
           "id": "axis",
@@ -14795,7 +14795,7 @@
       "design_status": "verified",
       "fit": {
         "studs_measured": 2,
-        "design_gap_mm": 0.04999999999999982,
+        "design_gap_mm": 0.125,
         "pairs": [
           {
             "pin": "shaft_drive",
@@ -14808,15 +14808,15 @@
             "pin": "shaft_drive",
             "bore": "fixed",
             "fit": "press",
-            "gap_min_mm": 0.05,
-            "gap_max_mm": 0.05
+            "gap_min_mm": 0.125,
+            "gap_max_mm": 0.125
           }
         ],
-        "gap_min_mm": 0.05,
+        "gap_min_mm": 0.125,
         "gap_max_mm": 0.2,
         "surface_offset_window_mm": [
-          -0.075,
-          0.075
+          -0.062,
+          0.088
         ],
         "residual_error_mm": 0.05
       },
@@ -14903,19 +14903,19 @@
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "2 of 2 pin/bore pair(s) measured: gap +0.050 to +0.200 mm"
+          "detail": "2 of 2 pin/bore pair(s) measured: gap +0.125 to +0.200 mm"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.062 to +0.088 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.062 to +0.088 mm"
         },
         {
           "id": "F2_breakage",
@@ -16241,7 +16241,7 @@
         27.3,
         33.8
       ],
-      "volume_cm3": 19.09,
+      "volume_cm3": 19.1,
       "connectors": [
         {
           "id": "under_sockets",
@@ -16345,11 +16345,11 @@
       "design_status": "verified",
       "fit": {
         "studs_measured": 3,
-        "design_gap_mm": 0.04999999999999982,
+        "design_gap_mm": 0.05,
         "gap_min_mm": 0.048,
-        "gap_max_mm": 0.05,
+        "gap_max_mm": 0.125,
         "surface_offset_window_mm": [
-          -0.075,
+          -0.062,
           0.074
         ],
         "residual_error_mm": 0.05,
@@ -16366,21 +16366,21 @@
         },
         "pro": {
           "studs_measured": 1,
-          "design_gap_mm": 0.04999999999999982,
+          "design_gap_mm": 0.125,
           "pairs": [
             {
               "pin": "shaft_drive",
               "bore": "fixed",
               "fit": "press",
-              "gap_min_mm": 0.05,
-              "gap_max_mm": 0.05
+              "gap_min_mm": 0.125,
+              "gap_max_mm": 0.125
             }
           ],
-          "gap_min_mm": 0.05,
-          "gap_max_mm": 0.05,
+          "gap_min_mm": 0.125,
+          "gap_max_mm": 0.125,
           "surface_offset_window_mm": [
-            -0.075,
-            0.075
+            -0.062,
+            0.088
           ],
           "residual_error_mm": 0.05
         }
@@ -16486,19 +16486,19 @@
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "2 stud(s) gap +0.048 to +0.048 mm; 1 pin/bore pair(s) gap +0.050 to +0.050 mm"
+          "detail": "2 stud(s) gap +0.048 to +0.048 mm; 1 pin/bore pair(s) gap +0.125 to +0.125 mm"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.074 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.062 to +0.074 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.074 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.062 to +0.074 mm"
         },
         {
           "id": "F2_breakage",
@@ -16542,7 +16542,7 @@
         28.2,
         33.8
       ],
-      "volume_cm3": 19.73,
+      "volume_cm3": 19.74,
       "connectors": [
         {
           "id": "under_sockets",
@@ -16646,11 +16646,11 @@
       "design_status": "verified",
       "fit": {
         "studs_measured": 3,
-        "design_gap_mm": 0.04999999999999982,
+        "design_gap_mm": 0.05,
         "gap_min_mm": 0.048,
-        "gap_max_mm": 0.05,
+        "gap_max_mm": 0.125,
         "surface_offset_window_mm": [
-          -0.075,
+          -0.062,
           0.074
         ],
         "residual_error_mm": 0.05,
@@ -16667,21 +16667,21 @@
         },
         "pro": {
           "studs_measured": 1,
-          "design_gap_mm": 0.04999999999999982,
+          "design_gap_mm": 0.125,
           "pairs": [
             {
               "pin": "shaft_drive",
               "bore": "fixed",
               "fit": "press",
-              "gap_min_mm": 0.05,
-              "gap_max_mm": 0.05
+              "gap_min_mm": 0.125,
+              "gap_max_mm": 0.125
             }
           ],
-          "gap_min_mm": 0.05,
-          "gap_max_mm": 0.05,
+          "gap_min_mm": 0.125,
+          "gap_max_mm": 0.125,
           "surface_offset_window_mm": [
-            -0.075,
-            0.075
+            -0.062,
+            0.088
           ],
           "residual_error_mm": 0.05
         }
@@ -16787,19 +16787,19 @@
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "2 stud(s) gap +0.048 to +0.048 mm; 1 pin/bore pair(s) gap +0.050 to +0.050 mm"
+          "detail": "2 stud(s) gap +0.048 to +0.048 mm; 1 pin/bore pair(s) gap +0.125 to +0.125 mm"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.074 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.062 to +0.074 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.074 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.062 to +0.074 mm"
         },
         {
           "id": "F2_breakage",
@@ -16843,7 +16843,7 @@
         27.6,
         33.8
       ],
-      "volume_cm3": 20.09,
+      "volume_cm3": 20.1,
       "connectors": [
         {
           "id": "under_sockets",
@@ -16947,11 +16947,11 @@
       "design_status": "verified",
       "fit": {
         "studs_measured": 3,
-        "design_gap_mm": 0.04999999999999982,
+        "design_gap_mm": 0.05,
         "gap_min_mm": 0.048,
-        "gap_max_mm": 0.05,
+        "gap_max_mm": 0.125,
         "surface_offset_window_mm": [
-          -0.075,
+          -0.062,
           0.074
         ],
         "residual_error_mm": 0.05,
@@ -16968,21 +16968,21 @@
         },
         "pro": {
           "studs_measured": 1,
-          "design_gap_mm": 0.04999999999999982,
+          "design_gap_mm": 0.125,
           "pairs": [
             {
               "pin": "shaft_drive",
               "bore": "fixed",
               "fit": "press",
-              "gap_min_mm": 0.05,
-              "gap_max_mm": 0.05
+              "gap_min_mm": 0.125,
+              "gap_max_mm": 0.125
             }
           ],
-          "gap_min_mm": 0.05,
-          "gap_max_mm": 0.05,
+          "gap_min_mm": 0.125,
+          "gap_max_mm": 0.125,
           "surface_offset_window_mm": [
-            -0.075,
-            0.075
+            -0.062,
+            0.088
           ],
           "residual_error_mm": 0.05
         }
@@ -17088,19 +17088,19 @@
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "2 stud(s) gap +0.048 to +0.048 mm; 1 pin/bore pair(s) gap +0.050 to +0.050 mm"
+          "detail": "2 stud(s) gap +0.048 to +0.048 mm; 1 pin/bore pair(s) gap +0.125 to +0.125 mm"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.074 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.062 to +0.074 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.074 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.062 to +0.074 mm"
         },
         {
           "id": "F2_breakage",
@@ -17143,7 +17143,7 @@
         27.7,
         35.7
       ],
-      "volume_cm3": 21.42,
+      "volume_cm3": 21.43,
       "connectors": [
         {
           "id": "under_sockets",
@@ -17247,11 +17247,11 @@
       "design_status": "verified",
       "fit": {
         "studs_measured": 3,
-        "design_gap_mm": 0.04999999999999982,
+        "design_gap_mm": 0.05,
         "gap_min_mm": 0.048,
-        "gap_max_mm": 0.05,
+        "gap_max_mm": 0.125,
         "surface_offset_window_mm": [
-          -0.075,
+          -0.062,
           0.074
         ],
         "residual_error_mm": 0.05,
@@ -17268,21 +17268,21 @@
         },
         "pro": {
           "studs_measured": 1,
-          "design_gap_mm": 0.04999999999999982,
+          "design_gap_mm": 0.125,
           "pairs": [
             {
               "pin": "shaft_drive",
               "bore": "fixed",
               "fit": "press",
-              "gap_min_mm": 0.05,
-              "gap_max_mm": 0.05
+              "gap_min_mm": 0.125,
+              "gap_max_mm": 0.125
             }
           ],
-          "gap_min_mm": 0.05,
-          "gap_max_mm": 0.05,
+          "gap_min_mm": 0.125,
+          "gap_max_mm": 0.125,
           "surface_offset_window_mm": [
-            -0.075,
-            0.075
+            -0.062,
+            0.088
           ],
           "residual_error_mm": 0.05
         }
@@ -17388,19 +17388,19 @@
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "2 stud(s) gap +0.048 to +0.048 mm; 1 pin/bore pair(s) gap +0.050 to +0.050 mm"
+          "detail": "2 stud(s) gap +0.048 to +0.048 mm; 1 pin/bore pair(s) gap +0.125 to +0.125 mm"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.074 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.062 to +0.074 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.074 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.062 to +0.074 mm"
         },
         {
           "id": "F2_breakage",
@@ -17476,8 +17476,8 @@
       ],
       "safety": {
         "small_part_status": "small_part",
-        "min_enclosing_diameter_mm": 21.21,
-        "margin_pct": -33.2,
+        "min_enclosing_diameter_mm": 20.94,
+        "margin_pct": -34.0,
         "print_page_warning": [
           "Printed at home or by a print service. Not tested to toy-safety standards. Adult supervision required. Check for cracks, sharp edges and loose pieces before each use, and stop using anything that has broken.",
           "CHOKING HAZARD - Small parts. Not for children under 3 years."
@@ -17495,7 +17495,7 @@
       "design_status": "verified",
       "fit": {
         "studs_measured": 2,
-        "design_gap_mm": 0.04999999999999982,
+        "design_gap_mm": 0.125,
         "pairs": [
           {
             "pin": "shaft_drive",
@@ -17508,15 +17508,15 @@
             "pin": "shaft_drive",
             "bore": "fixed",
             "fit": "press",
-            "gap_min_mm": 0.05,
-            "gap_max_mm": 0.05
+            "gap_min_mm": 0.125,
+            "gap_max_mm": 0.125
           }
         ],
-        "gap_min_mm": 0.05,
+        "gap_min_mm": 0.125,
         "gap_max_mm": 0.2,
         "surface_offset_window_mm": [
-          -0.075,
-          0.075
+          -0.062,
+          0.088
         ],
         "residual_error_mm": 0.05
       },
@@ -17597,25 +17597,25 @@
           "id": "S1_small_part_screen",
           "level": "warn",
           "result": "fail",
-          "detail": "small_part: best-fit diameter 21.21 mm vs 31.75 mm cylinder"
+          "detail": "small_part: best-fit diameter 20.94 mm vs 31.75 mm cylinder"
         },
         {
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "2 of 2 pin/bore pair(s) measured: gap +0.050 to +0.200 mm"
+          "detail": "2 of 2 pin/bore pair(s) measured: gap +0.125 to +0.200 mm"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.062 to +0.088 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.062 to +0.088 mm"
         },
         {
           "id": "F2_breakage",
@@ -17687,8 +17687,8 @@
       ],
       "safety": {
         "small_part_status": "small_part",
-        "min_enclosing_diameter_mm": 21.21,
-        "margin_pct": -33.2,
+        "min_enclosing_diameter_mm": 20.94,
+        "margin_pct": -34.0,
         "print_page_warning": [
           "Printed at home or by a print service. Not tested to toy-safety standards. Adult supervision required. Check for cracks, sharp edges and loose pieces before each use, and stop using anything that has broken.",
           "CHOKING HAZARD - Small parts. Not for children under 3 years."
@@ -17706,7 +17706,7 @@
       "design_status": "verified",
       "fit": {
         "studs_measured": 2,
-        "design_gap_mm": 0.04999999999999982,
+        "design_gap_mm": 0.125,
         "pairs": [
           {
             "pin": "shaft_drive",
@@ -17719,15 +17719,15 @@
             "pin": "shaft_drive",
             "bore": "fixed",
             "fit": "press",
-            "gap_min_mm": 0.05,
-            "gap_max_mm": 0.05
+            "gap_min_mm": 0.125,
+            "gap_max_mm": 0.125
           }
         ],
-        "gap_min_mm": 0.05,
+        "gap_min_mm": 0.125,
         "gap_max_mm": 0.2,
         "surface_offset_window_mm": [
-          -0.075,
-          0.075
+          -0.062,
+          0.088
         ],
         "residual_error_mm": 0.05
       },
@@ -17808,25 +17808,25 @@
           "id": "S1_small_part_screen",
           "level": "warn",
           "result": "fail",
-          "detail": "small_part: best-fit diameter 21.21 mm vs 31.75 mm cylinder"
+          "detail": "small_part: best-fit diameter 20.94 mm vs 31.75 mm cylinder"
         },
         {
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "2 of 2 pin/bore pair(s) measured: gap +0.050 to +0.200 mm"
+          "detail": "2 of 2 pin/bore pair(s) measured: gap +0.125 to +0.200 mm"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.062 to +0.088 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.062 to +0.088 mm"
         },
         {
           "id": "F2_breakage",
@@ -17898,8 +17898,8 @@
       ],
       "safety": {
         "small_part_status": "small_part",
-        "min_enclosing_diameter_mm": 21.21,
-        "margin_pct": -33.2,
+        "min_enclosing_diameter_mm": 20.94,
+        "margin_pct": -34.0,
         "print_page_warning": [
           "Printed at home or by a print service. Not tested to toy-safety standards. Adult supervision required. Check for cracks, sharp edges and loose pieces before each use, and stop using anything that has broken.",
           "CHOKING HAZARD - Small parts. Not for children under 3 years."
@@ -17917,7 +17917,7 @@
       "design_status": "verified",
       "fit": {
         "studs_measured": 2,
-        "design_gap_mm": 0.04999999999999982,
+        "design_gap_mm": 0.125,
         "pairs": [
           {
             "pin": "shaft_drive",
@@ -17930,15 +17930,15 @@
             "pin": "shaft_drive",
             "bore": "fixed",
             "fit": "press",
-            "gap_min_mm": 0.05,
-            "gap_max_mm": 0.05
+            "gap_min_mm": 0.125,
+            "gap_max_mm": 0.125
           }
         ],
-        "gap_min_mm": 0.05,
+        "gap_min_mm": 0.125,
         "gap_max_mm": 0.2,
         "surface_offset_window_mm": [
-          -0.075,
-          0.075
+          -0.062,
+          0.088
         ],
         "residual_error_mm": 0.05
       },
@@ -18019,25 +18019,25 @@
           "id": "S1_small_part_screen",
           "level": "warn",
           "result": "fail",
-          "detail": "small_part: best-fit diameter 21.21 mm vs 31.75 mm cylinder"
+          "detail": "small_part: best-fit diameter 20.94 mm vs 31.75 mm cylinder"
         },
         {
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "2 of 2 pin/bore pair(s) measured: gap +0.050 to +0.200 mm"
+          "detail": "2 of 2 pin/bore pair(s) measured: gap +0.125 to +0.200 mm"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.062 to +0.088 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.062 to +0.088 mm"
         },
         {
           "id": "F2_breakage",
@@ -25200,8 +25200,8 @@
       ],
       "safety": {
         "small_part_status": "small_part",
-        "min_enclosing_diameter_mm": 30.52,
-        "margin_pct": -3.9,
+        "min_enclosing_diameter_mm": 29.89,
+        "margin_pct": -5.8,
         "print_page_warning": [
           "Printed at home or by a print service. Not tested to toy-safety standards. Adult supervision required. Check for cracks, sharp edges and loose pieces before each use, and stop using anything that has broken.",
           "CHOKING HAZARD - Small parts. Not for children under 3 years."
@@ -25219,7 +25219,7 @@
       "design_status": "verified",
       "fit": {
         "studs_measured": 2,
-        "design_gap_mm": 0.04999999999999982,
+        "design_gap_mm": 0.125,
         "pairs": [
           {
             "pin": "shaft_drive",
@@ -25232,15 +25232,15 @@
             "pin": "shaft_drive",
             "bore": "fixed",
             "fit": "press",
-            "gap_min_mm": 0.05,
-            "gap_max_mm": 0.05
+            "gap_min_mm": 0.125,
+            "gap_max_mm": 0.125
           }
         ],
-        "gap_min_mm": 0.05,
+        "gap_min_mm": 0.125,
         "gap_max_mm": 0.2,
         "surface_offset_window_mm": [
-          -0.075,
-          0.075
+          -0.062,
+          0.088
         ],
         "residual_error_mm": 0.05
       },
@@ -25321,25 +25321,25 @@
           "id": "S1_small_part_screen",
           "level": "warn",
           "result": "fail",
-          "detail": "small_part: best-fit diameter 30.52 mm vs 31.75 mm cylinder"
+          "detail": "small_part: best-fit diameter 29.89 mm vs 31.75 mm cylinder"
         },
         {
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "2 of 2 pin/bore pair(s) measured: gap +0.050 to +0.200 mm"
+          "detail": "2 of 2 pin/bore pair(s) measured: gap +0.125 to +0.200 mm"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.062 to +0.088 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.062 to +0.088 mm"
         },
         {
           "id": "F2_breakage",
@@ -25410,8 +25410,8 @@
       ],
       "safety": {
         "small_part_status": "above_cylinder",
-        "min_enclosing_diameter_mm": 35.8,
-        "margin_pct": 12.7,
+        "min_enclosing_diameter_mm": 35.54,
+        "margin_pct": 11.9,
         "print_page_warning": [
           "Printed at home or by a print service. Not tested to toy-safety standards. Adult supervision required. Check for cracks, sharp edges and loose pieces before each use, and stop using anything that has broken.",
           "Larger than the small-parts test size in our size check. This is not a safety certification, and it is not rated for children under 3 years."
@@ -25429,7 +25429,7 @@
       "design_status": "verified",
       "fit": {
         "studs_measured": 2,
-        "design_gap_mm": 0.04999999999999982,
+        "design_gap_mm": 0.125,
         "pairs": [
           {
             "pin": "shaft_drive",
@@ -25442,15 +25442,15 @@
             "pin": "shaft_drive",
             "bore": "fixed",
             "fit": "press",
-            "gap_min_mm": 0.05,
-            "gap_max_mm": 0.05
+            "gap_min_mm": 0.125,
+            "gap_max_mm": 0.125
           }
         ],
-        "gap_min_mm": 0.05,
+        "gap_min_mm": 0.125,
         "gap_max_mm": 0.2,
         "surface_offset_window_mm": [
-          -0.075,
-          0.075
+          -0.062,
+          0.088
         ],
         "residual_error_mm": 0.05
       },
@@ -25531,25 +25531,25 @@
           "id": "S1_small_part_screen",
           "level": "warn",
           "result": "pass",
-          "detail": "above_cylinder: best-fit diameter 35.8 mm vs 31.75 mm cylinder"
+          "detail": "above_cylinder: best-fit diameter 35.54 mm vs 31.75 mm cylinder"
         },
         {
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "2 of 2 pin/bore pair(s) measured: gap +0.050 to +0.200 mm"
+          "detail": "2 of 2 pin/bore pair(s) measured: gap +0.125 to +0.200 mm"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.062 to +0.088 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.062 to +0.088 mm"
         },
         {
           "id": "F2_breakage",
@@ -25621,8 +25621,8 @@
       ],
       "safety": {
         "small_part_status": "above_cylinder",
-        "min_enclosing_diameter_mm": 48.1,
-        "margin_pct": 51.5,
+        "min_enclosing_diameter_mm": 47.82,
+        "margin_pct": 50.6,
         "print_page_warning": [
           "Printed at home or by a print service. Not tested to toy-safety standards. Adult supervision required. Check for cracks, sharp edges and loose pieces before each use, and stop using anything that has broken.",
           "Larger than the small-parts test size in our size check. This is not a safety certification, and it is not rated for children under 3 years."
@@ -25640,7 +25640,7 @@
       "design_status": "verified",
       "fit": {
         "studs_measured": 2,
-        "design_gap_mm": 0.04999999999999982,
+        "design_gap_mm": 0.125,
         "pairs": [
           {
             "pin": "shaft_drive",
@@ -25653,15 +25653,15 @@
             "pin": "shaft_drive",
             "bore": "fixed",
             "fit": "press",
-            "gap_min_mm": 0.05,
-            "gap_max_mm": 0.05
+            "gap_min_mm": 0.125,
+            "gap_max_mm": 0.125
           }
         ],
-        "gap_min_mm": 0.05,
+        "gap_min_mm": 0.125,
         "gap_max_mm": 0.2,
         "surface_offset_window_mm": [
-          -0.075,
-          0.075
+          -0.062,
+          0.088
         ],
         "residual_error_mm": 0.05
       },
@@ -25742,25 +25742,25 @@
           "id": "S1_small_part_screen",
           "level": "warn",
           "result": "pass",
-          "detail": "above_cylinder: best-fit diameter 48.1 mm vs 31.75 mm cylinder"
+          "detail": "above_cylinder: best-fit diameter 47.82 mm vs 31.75 mm cylinder"
         },
         {
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "2 of 2 pin/bore pair(s) measured: gap +0.050 to +0.200 mm"
+          "detail": "2 of 2 pin/bore pair(s) measured: gap +0.125 to +0.200 mm"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.062 to +0.088 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.062 to +0.088 mm"
         },
         {
           "id": "F2_breakage",
@@ -25832,8 +25832,8 @@
       ],
       "safety": {
         "small_part_status": "above_cylinder",
-        "min_enclosing_diameter_mm": 64.72,
-        "margin_pct": 103.9,
+        "min_enclosing_diameter_mm": 64.4,
+        "margin_pct": 102.8,
         "print_page_warning": [
           "Printed at home or by a print service. Not tested to toy-safety standards. Adult supervision required. Check for cracks, sharp edges and loose pieces before each use, and stop using anything that has broken.",
           "Larger than the small-parts test size in our size check. This is not a safety certification, and it is not rated for children under 3 years."
@@ -25851,7 +25851,7 @@
       "design_status": "verified",
       "fit": {
         "studs_measured": 2,
-        "design_gap_mm": 0.04999999999999982,
+        "design_gap_mm": 0.125,
         "pairs": [
           {
             "pin": "shaft_drive",
@@ -25864,15 +25864,15 @@
             "pin": "shaft_drive",
             "bore": "fixed",
             "fit": "press",
-            "gap_min_mm": 0.05,
-            "gap_max_mm": 0.05
+            "gap_min_mm": 0.125,
+            "gap_max_mm": 0.125
           }
         ],
-        "gap_min_mm": 0.05,
+        "gap_min_mm": 0.125,
         "gap_max_mm": 0.2,
         "surface_offset_window_mm": [
-          -0.075,
-          0.075
+          -0.062,
+          0.088
         ],
         "residual_error_mm": 0.05
       },
@@ -25953,25 +25953,25 @@
           "id": "S1_small_part_screen",
           "level": "warn",
           "result": "pass",
-          "detail": "above_cylinder: best-fit diameter 64.72 mm vs 31.75 mm cylinder"
+          "detail": "above_cylinder: best-fit diameter 64.4 mm vs 31.75 mm cylinder"
         },
         {
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "2 of 2 pin/bore pair(s) measured: gap +0.050 to +0.200 mm"
+          "detail": "2 of 2 pin/bore pair(s) measured: gap +0.125 to +0.200 mm"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.062 to +0.088 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.062 to +0.088 mm"
         },
         {
           "id": "F2_breakage",
@@ -26043,8 +26043,8 @@
       ],
       "safety": {
         "small_part_status": "above_cylinder",
-        "min_enclosing_diameter_mm": 130.29,
-        "margin_pct": 310.4,
+        "min_enclosing_diameter_mm": 130.11,
+        "margin_pct": 309.8,
         "print_page_warning": [
           "Printed at home or by a print service. Not tested to toy-safety standards. Adult supervision required. Check for cracks, sharp edges and loose pieces before each use, and stop using anything that has broken.",
           "Larger than the small-parts test size in our size check. This is not a safety certification, and it is not rated for children under 3 years."
@@ -26062,7 +26062,7 @@
       "design_status": "verified",
       "fit": {
         "studs_measured": 2,
-        "design_gap_mm": 0.04999999999999982,
+        "design_gap_mm": 0.125,
         "pairs": [
           {
             "pin": "shaft_drive",
@@ -26075,15 +26075,15 @@
             "pin": "shaft_drive",
             "bore": "fixed",
             "fit": "press",
-            "gap_min_mm": 0.05,
-            "gap_max_mm": 0.05
+            "gap_min_mm": 0.125,
+            "gap_max_mm": 0.125
           }
         ],
-        "gap_min_mm": 0.05,
+        "gap_min_mm": 0.125,
         "gap_max_mm": 0.2,
         "surface_offset_window_mm": [
-          -0.075,
-          0.075
+          -0.062,
+          0.088
         ],
         "residual_error_mm": 0.05
       },
@@ -26164,25 +26164,25 @@
           "id": "S1_small_part_screen",
           "level": "warn",
           "result": "pass",
-          "detail": "above_cylinder: best-fit diameter 130.29 mm vs 31.75 mm cylinder"
+          "detail": "above_cylinder: best-fit diameter 130.11 mm vs 31.75 mm cylinder"
         },
         {
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "2 of 2 pin/bore pair(s) measured: gap +0.050 to +0.200 mm"
+          "detail": "2 of 2 pin/bore pair(s) measured: gap +0.125 to +0.200 mm"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.062 to +0.088 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.062 to +0.088 mm"
         },
         {
           "id": "F2_breakage",
@@ -26221,7 +26221,7 @@
         99.5,
         6.8
       ],
-      "volume_cm3": 3.75,
+      "volume_cm3": 3.74,
       "connectors": [
         {
           "id": "axis",
@@ -26254,8 +26254,8 @@
       ],
       "safety": {
         "small_part_status": "above_cylinder",
-        "min_enclosing_diameter_mm": 87.34,
-        "margin_pct": 175.1,
+        "min_enclosing_diameter_mm": 86.95,
+        "margin_pct": 173.9,
         "print_page_warning": [
           "Printed at home or by a print service. Not tested to toy-safety standards. Adult supervision required. Check for cracks, sharp edges and loose pieces before each use, and stop using anything that has broken.",
           "Larger than the small-parts test size in our size check. This is not a safety certification, and it is not rated for children under 3 years."
@@ -26273,7 +26273,7 @@
       "design_status": "verified",
       "fit": {
         "studs_measured": 2,
-        "design_gap_mm": 0.04999999999999982,
+        "design_gap_mm": 0.125,
         "pairs": [
           {
             "pin": "shaft_drive",
@@ -26286,15 +26286,15 @@
             "pin": "shaft_drive",
             "bore": "fixed",
             "fit": "press",
-            "gap_min_mm": 0.05,
-            "gap_max_mm": 0.05
+            "gap_min_mm": 0.125,
+            "gap_max_mm": 0.125
           }
         ],
-        "gap_min_mm": 0.05,
+        "gap_min_mm": 0.125,
         "gap_max_mm": 0.2,
         "surface_offset_window_mm": [
-          -0.075,
-          0.075
+          -0.062,
+          0.088
         ],
         "residual_error_mm": 0.05
       },
@@ -26375,25 +26375,25 @@
           "id": "S1_small_part_screen",
           "level": "warn",
           "result": "pass",
-          "detail": "above_cylinder: best-fit diameter 87.34 mm vs 31.75 mm cylinder"
+          "detail": "above_cylinder: best-fit diameter 86.95 mm vs 31.75 mm cylinder"
         },
         {
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "2 of 2 pin/bore pair(s) measured: gap +0.050 to +0.200 mm"
+          "detail": "2 of 2 pin/bore pair(s) measured: gap +0.125 to +0.200 mm"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.062 to +0.088 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.062 to +0.088 mm"
         },
         {
           "id": "F2_breakage",
@@ -26432,7 +26432,7 @@
         69.5,
         6.8
       ],
-      "volume_cm3": 5.11,
+      "volume_cm3": 5.1,
       "connectors": [
         {
           "id": "axis",
@@ -26465,8 +26465,8 @@
       ],
       "safety": {
         "small_part_status": "above_cylinder",
-        "min_enclosing_diameter_mm": 57.76,
-        "margin_pct": 81.9,
+        "min_enclosing_diameter_mm": 57.28,
+        "margin_pct": 80.4,
         "print_page_warning": [
           "Printed at home or by a print service. Not tested to toy-safety standards. Adult supervision required. Check for cracks, sharp edges and loose pieces before each use, and stop using anything that has broken.",
           "Larger than the small-parts test size in our size check. This is not a safety certification, and it is not rated for children under 3 years."
@@ -26484,7 +26484,7 @@
       "design_status": "verified",
       "fit": {
         "studs_measured": 2,
-        "design_gap_mm": 0.04999999999999982,
+        "design_gap_mm": 0.125,
         "pairs": [
           {
             "pin": "shaft_drive",
@@ -26497,15 +26497,15 @@
             "pin": "shaft_drive",
             "bore": "fixed",
             "fit": "press",
-            "gap_min_mm": 0.05,
-            "gap_max_mm": 0.05
+            "gap_min_mm": 0.125,
+            "gap_max_mm": 0.125
           }
         ],
-        "gap_min_mm": 0.05,
+        "gap_min_mm": 0.125,
         "gap_max_mm": 0.2,
         "surface_offset_window_mm": [
-          -0.075,
-          0.075
+          -0.062,
+          0.088
         ],
         "residual_error_mm": 0.05
       },
@@ -26586,25 +26586,25 @@
           "id": "S1_small_part_screen",
           "level": "warn",
           "result": "pass",
-          "detail": "above_cylinder: best-fit diameter 57.76 mm vs 31.75 mm cylinder"
+          "detail": "above_cylinder: best-fit diameter 57.28 mm vs 31.75 mm cylinder"
         },
         {
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "2 of 2 pin/bore pair(s) measured: gap +0.050 to +0.200 mm"
+          "detail": "2 of 2 pin/bore pair(s) measured: gap +0.125 to +0.200 mm"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.062 to +0.088 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.062 to +0.088 mm"
         },
         {
           "id": "F2_breakage",
@@ -26676,8 +26676,8 @@
       ],
       "safety": {
         "small_part_status": "above_cylinder",
-        "min_enclosing_diameter_mm": 78.53,
-        "margin_pct": 147.3,
+        "min_enclosing_diameter_mm": 77.85,
+        "margin_pct": 145.2,
         "print_page_warning": [
           "Printed at home or by a print service. Not tested to toy-safety standards. Adult supervision required. Check for cracks, sharp edges and loose pieces before each use, and stop using anything that has broken.",
           "Larger than the small-parts test size in our size check. This is not a safety certification, and it is not rated for children under 3 years."
@@ -26695,7 +26695,7 @@
       "design_status": "verified",
       "fit": {
         "studs_measured": 2,
-        "design_gap_mm": 0.04999999999999982,
+        "design_gap_mm": 0.125,
         "pairs": [
           {
             "pin": "shaft_drive",
@@ -26708,15 +26708,15 @@
             "pin": "shaft_drive",
             "bore": "fixed",
             "fit": "press",
-            "gap_min_mm": 0.05,
-            "gap_max_mm": 0.05
+            "gap_min_mm": 0.125,
+            "gap_max_mm": 0.125
           }
         ],
-        "gap_min_mm": 0.05,
+        "gap_min_mm": 0.125,
         "gap_max_mm": 0.2,
         "surface_offset_window_mm": [
-          -0.075,
-          0.075
+          -0.062,
+          0.088
         ],
         "residual_error_mm": 0.05
       },
@@ -26797,25 +26797,25 @@
           "id": "S1_small_part_screen",
           "level": "warn",
           "result": "pass",
-          "detail": "above_cylinder: best-fit diameter 78.53 mm vs 31.75 mm cylinder"
+          "detail": "above_cylinder: best-fit diameter 77.85 mm vs 31.75 mm cylinder"
         },
         {
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "2 of 2 pin/bore pair(s) measured: gap +0.050 to +0.200 mm"
+          "detail": "2 of 2 pin/bore pair(s) measured: gap +0.125 to +0.200 mm"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.062 to +0.088 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.062 to +0.088 mm"
         },
         {
           "id": "F2_breakage",
@@ -26887,8 +26887,8 @@
       ],
       "safety": {
         "small_part_status": "above_cylinder",
-        "min_enclosing_diameter_mm": 58.25,
-        "margin_pct": 83.5,
+        "min_enclosing_diameter_mm": 57.74,
+        "margin_pct": 81.9,
         "print_page_warning": [
           "Printed at home or by a print service. Not tested to toy-safety standards. Adult supervision required. Check for cracks, sharp edges and loose pieces before each use, and stop using anything that has broken.",
           "Larger than the small-parts test size in our size check. This is not a safety certification, and it is not rated for children under 3 years."
@@ -26906,7 +26906,7 @@
       "design_status": "verified",
       "fit": {
         "studs_measured": 2,
-        "design_gap_mm": 0.04999999999999982,
+        "design_gap_mm": 0.125,
         "pairs": [
           {
             "pin": "shaft_drive",
@@ -26919,15 +26919,15 @@
             "pin": "shaft_drive",
             "bore": "fixed",
             "fit": "press",
-            "gap_min_mm": 0.05,
-            "gap_max_mm": 0.05
+            "gap_min_mm": 0.125,
+            "gap_max_mm": 0.125
           }
         ],
-        "gap_min_mm": 0.05,
+        "gap_min_mm": 0.125,
         "gap_max_mm": 0.2,
         "surface_offset_window_mm": [
-          -0.075,
-          0.075
+          -0.062,
+          0.088
         ],
         "residual_error_mm": 0.05
       },
@@ -27008,25 +27008,25 @@
           "id": "S1_small_part_screen",
           "level": "warn",
           "result": "pass",
-          "detail": "above_cylinder: best-fit diameter 58.25 mm vs 31.75 mm cylinder"
+          "detail": "above_cylinder: best-fit diameter 57.74 mm vs 31.75 mm cylinder"
         },
         {
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "2 of 2 pin/bore pair(s) measured: gap +0.050 to +0.200 mm"
+          "detail": "2 of 2 pin/bore pair(s) measured: gap +0.125 to +0.200 mm"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.062 to +0.088 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.062 to +0.088 mm"
         },
         {
           "id": "F2_breakage",
@@ -27098,8 +27098,8 @@
       ],
       "safety": {
         "small_part_status": "above_cylinder",
-        "min_enclosing_diameter_mm": 83.38,
-        "margin_pct": 162.6,
+        "min_enclosing_diameter_mm": 82.96,
+        "margin_pct": 161.3,
         "print_page_warning": [
           "Printed at home or by a print service. Not tested to toy-safety standards. Adult supervision required. Check for cracks, sharp edges and loose pieces before each use, and stop using anything that has broken.",
           "Larger than the small-parts test size in our size check. This is not a safety certification, and it is not rated for children under 3 years."
@@ -27117,7 +27117,7 @@
       "design_status": "verified",
       "fit": {
         "studs_measured": 2,
-        "design_gap_mm": 0.04999999999999982,
+        "design_gap_mm": 0.125,
         "pairs": [
           {
             "pin": "shaft_drive",
@@ -27130,15 +27130,15 @@
             "pin": "shaft_drive",
             "bore": "fixed",
             "fit": "press",
-            "gap_min_mm": 0.05,
-            "gap_max_mm": 0.05
+            "gap_min_mm": 0.125,
+            "gap_max_mm": 0.125
           }
         ],
-        "gap_min_mm": 0.05,
+        "gap_min_mm": 0.125,
         "gap_max_mm": 0.2,
         "surface_offset_window_mm": [
-          -0.075,
-          0.075
+          -0.062,
+          0.088
         ],
         "residual_error_mm": 0.05
       },
@@ -27219,25 +27219,25 @@
           "id": "S1_small_part_screen",
           "level": "warn",
           "result": "pass",
-          "detail": "above_cylinder: best-fit diameter 83.38 mm vs 31.75 mm cylinder"
+          "detail": "above_cylinder: best-fit diameter 82.96 mm vs 31.75 mm cylinder"
         },
         {
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "2 of 2 pin/bore pair(s) measured: gap +0.050 to +0.200 mm"
+          "detail": "2 of 2 pin/bore pair(s) measured: gap +0.125 to +0.200 mm"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.062 to +0.088 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.062 to +0.088 mm"
         },
         {
           "id": "F2_breakage",
@@ -27309,8 +27309,8 @@
       ],
       "safety": {
         "small_part_status": "above_cylinder",
-        "min_enclosing_diameter_mm": 99.32,
-        "margin_pct": 212.8,
+        "min_enclosing_diameter_mm": 99.21,
+        "margin_pct": 212.5,
         "print_page_warning": [
           "Printed at home or by a print service. Not tested to toy-safety standards. Adult supervision required. Check for cracks, sharp edges and loose pieces before each use, and stop using anything that has broken.",
           "Larger than the small-parts test size in our size check. This is not a safety certification, and it is not rated for children under 3 years."
@@ -27328,7 +27328,7 @@
       "design_status": "verified",
       "fit": {
         "studs_measured": 2,
-        "design_gap_mm": 0.04999999999999982,
+        "design_gap_mm": 0.125,
         "pairs": [
           {
             "pin": "shaft_drive",
@@ -27341,15 +27341,15 @@
             "pin": "shaft_drive",
             "bore": "fixed",
             "fit": "press",
-            "gap_min_mm": 0.05,
-            "gap_max_mm": 0.05
+            "gap_min_mm": 0.125,
+            "gap_max_mm": 0.125
           }
         ],
-        "gap_min_mm": 0.05,
+        "gap_min_mm": 0.125,
         "gap_max_mm": 0.2,
         "surface_offset_window_mm": [
-          -0.075,
-          0.075
+          -0.062,
+          0.088
         ],
         "residual_error_mm": 0.05
       },
@@ -27430,25 +27430,25 @@
           "id": "S1_small_part_screen",
           "level": "warn",
           "result": "pass",
-          "detail": "above_cylinder: best-fit diameter 99.32 mm vs 31.75 mm cylinder"
+          "detail": "above_cylinder: best-fit diameter 99.21 mm vs 31.75 mm cylinder"
         },
         {
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "2 of 2 pin/bore pair(s) measured: gap +0.050 to +0.200 mm"
+          "detail": "2 of 2 pin/bore pair(s) measured: gap +0.125 to +0.200 mm"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.062 to +0.088 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.062 to +0.088 mm"
         },
         {
           "id": "F2_breakage",
@@ -27520,8 +27520,8 @@
       ],
       "safety": {
         "small_part_status": "above_cylinder",
-        "min_enclosing_diameter_mm": 56.14,
-        "margin_pct": 76.8,
+        "min_enclosing_diameter_mm": 55.71,
+        "margin_pct": 75.5,
         "print_page_warning": [
           "Printed at home or by a print service. Not tested to toy-safety standards. Adult supervision required. Check for cracks, sharp edges and loose pieces before each use, and stop using anything that has broken.",
           "Larger than the small-parts test size in our size check. This is not a safety certification, and it is not rated for children under 3 years."
@@ -27539,7 +27539,7 @@
       "design_status": "verified",
       "fit": {
         "studs_measured": 2,
-        "design_gap_mm": 0.04999999999999982,
+        "design_gap_mm": 0.125,
         "pairs": [
           {
             "pin": "shaft_drive",
@@ -27552,15 +27552,15 @@
             "pin": "shaft_drive",
             "bore": "fixed",
             "fit": "press",
-            "gap_min_mm": 0.05,
-            "gap_max_mm": 0.05
+            "gap_min_mm": 0.125,
+            "gap_max_mm": 0.125
           }
         ],
-        "gap_min_mm": 0.05,
+        "gap_min_mm": 0.125,
         "gap_max_mm": 0.2,
         "surface_offset_window_mm": [
-          -0.075,
-          0.075
+          -0.062,
+          0.088
         ],
         "residual_error_mm": 0.05
       },
@@ -27641,25 +27641,25 @@
           "id": "S1_small_part_screen",
           "level": "warn",
           "result": "pass",
-          "detail": "above_cylinder: best-fit diameter 56.14 mm vs 31.75 mm cylinder"
+          "detail": "above_cylinder: best-fit diameter 55.71 mm vs 31.75 mm cylinder"
         },
         {
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "2 of 2 pin/bore pair(s) measured: gap +0.050 to +0.200 mm"
+          "detail": "2 of 2 pin/bore pair(s) measured: gap +0.125 to +0.200 mm"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.062 to +0.088 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.062 to +0.088 mm"
         },
         {
           "id": "F2_breakage",
@@ -27698,7 +27698,7 @@
         97.1,
         6.8
       ],
-      "volume_cm3": 6.09,
+      "volume_cm3": 6.08,
       "connectors": [
         {
           "id": "axis",
@@ -27731,8 +27731,8 @@
       ],
       "safety": {
         "small_part_status": "above_cylinder",
-        "min_enclosing_diameter_mm": 84.74,
-        "margin_pct": 166.9,
+        "min_enclosing_diameter_mm": 84.38,
+        "margin_pct": 165.8,
         "print_page_warning": [
           "Printed at home or by a print service. Not tested to toy-safety standards. Adult supervision required. Check for cracks, sharp edges and loose pieces before each use, and stop using anything that has broken.",
           "Larger than the small-parts test size in our size check. This is not a safety certification, and it is not rated for children under 3 years."
@@ -27750,7 +27750,7 @@
       "design_status": "verified",
       "fit": {
         "studs_measured": 2,
-        "design_gap_mm": 0.04999999999999982,
+        "design_gap_mm": 0.125,
         "pairs": [
           {
             "pin": "shaft_drive",
@@ -27763,15 +27763,15 @@
             "pin": "shaft_drive",
             "bore": "fixed",
             "fit": "press",
-            "gap_min_mm": 0.05,
-            "gap_max_mm": 0.05
+            "gap_min_mm": 0.125,
+            "gap_max_mm": 0.125
           }
         ],
-        "gap_min_mm": 0.05,
+        "gap_min_mm": 0.125,
         "gap_max_mm": 0.2,
         "surface_offset_window_mm": [
-          -0.075,
-          0.075
+          -0.062,
+          0.088
         ],
         "residual_error_mm": 0.05
       },
@@ -27852,25 +27852,25 @@
           "id": "S1_small_part_screen",
           "level": "warn",
           "result": "pass",
-          "detail": "above_cylinder: best-fit diameter 84.74 mm vs 31.75 mm cylinder"
+          "detail": "above_cylinder: best-fit diameter 84.38 mm vs 31.75 mm cylinder"
         },
         {
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "2 of 2 pin/bore pair(s) measured: gap +0.050 to +0.200 mm"
+          "detail": "2 of 2 pin/bore pair(s) measured: gap +0.125 to +0.200 mm"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.062 to +0.088 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.062 to +0.088 mm"
         },
         {
           "id": "F2_breakage",
@@ -27909,7 +27909,7 @@
         77.5,
         6.8
       ],
-      "volume_cm3": 4.21,
+      "volume_cm3": 4.2,
       "connectors": [
         {
           "id": "axis",
@@ -27942,8 +27942,8 @@
       ],
       "safety": {
         "small_part_status": "above_cylinder",
-        "min_enclosing_diameter_mm": 60.01,
-        "margin_pct": 89.0,
+        "min_enclosing_diameter_mm": 59.37,
+        "margin_pct": 87.0,
         "print_page_warning": [
           "Printed at home or by a print service. Not tested to toy-safety standards. Adult supervision required. Check for cracks, sharp edges and loose pieces before each use, and stop using anything that has broken.",
           "Larger than the small-parts test size in our size check. This is not a safety certification, and it is not rated for children under 3 years."
@@ -27961,7 +27961,7 @@
       "design_status": "verified",
       "fit": {
         "studs_measured": 2,
-        "design_gap_mm": 0.04999999999999982,
+        "design_gap_mm": 0.125,
         "pairs": [
           {
             "pin": "shaft_drive",
@@ -27974,15 +27974,15 @@
             "pin": "shaft_drive",
             "bore": "fixed",
             "fit": "press",
-            "gap_min_mm": 0.05,
-            "gap_max_mm": 0.05
+            "gap_min_mm": 0.125,
+            "gap_max_mm": 0.125
           }
         ],
-        "gap_min_mm": 0.05,
+        "gap_min_mm": 0.125,
         "gap_max_mm": 0.2,
         "surface_offset_window_mm": [
-          -0.075,
-          0.075
+          -0.062,
+          0.088
         ],
         "residual_error_mm": 0.05
       },
@@ -28063,25 +28063,25 @@
           "id": "S1_small_part_screen",
           "level": "warn",
           "result": "pass",
-          "detail": "above_cylinder: best-fit diameter 60.01 mm vs 31.75 mm cylinder"
+          "detail": "above_cylinder: best-fit diameter 59.37 mm vs 31.75 mm cylinder"
         },
         {
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "2 of 2 pin/bore pair(s) measured: gap +0.050 to +0.200 mm"
+          "detail": "2 of 2 pin/bore pair(s) measured: gap +0.125 to +0.200 mm"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.062 to +0.088 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.062 to +0.088 mm"
         },
         {
           "id": "F2_breakage",
@@ -28664,7 +28664,7 @@
         36.0,
         13.5
       ],
-      "volume_cm3": 11.22,
+      "volume_cm3": 11.21,
       "connectors": [
         {
           "id": "hub",
@@ -28712,21 +28712,21 @@
       "design_status": "verified",
       "fit": {
         "studs_measured": 1,
-        "design_gap_mm": 0.04999999999999982,
+        "design_gap_mm": 0.125,
         "pairs": [
           {
             "pin": "shaft_drive",
             "bore": "fixed",
             "fit": "press",
-            "gap_min_mm": 0.05,
-            "gap_max_mm": 0.05
+            "gap_min_mm": 0.125,
+            "gap_max_mm": 0.125
           }
         ],
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05,
+        "gap_min_mm": 0.125,
+        "gap_max_mm": 0.125,
         "surface_offset_window_mm": [
-          -0.075,
-          0.075
+          -0.062,
+          0.088
         ],
         "residual_error_mm": 0.05
       },
@@ -28819,19 +28819,19 @@
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "1 of 1 pin/bore pair(s) measured: gap +0.050 to +0.050 mm"
+          "detail": "1 of 1 pin/bore pair(s) measured: gap +0.125 to +0.125 mm"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.062 to +0.088 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.062 to +0.088 mm"
         },
         {
           "id": "F2_breakage",
@@ -28869,7 +28869,7 @@
         44.0,
         14.0
       ],
-      "volume_cm3": 18.2,
+      "volume_cm3": 18.19,
       "connectors": [
         {
           "id": "hub",
@@ -28917,21 +28917,21 @@
       "design_status": "verified",
       "fit": {
         "studs_measured": 1,
-        "design_gap_mm": 0.04999999999999982,
+        "design_gap_mm": 0.125,
         "pairs": [
           {
             "pin": "shaft_drive",
             "bore": "fixed",
             "fit": "press",
-            "gap_min_mm": 0.05,
-            "gap_max_mm": 0.05
+            "gap_min_mm": 0.125,
+            "gap_max_mm": 0.125
           }
         ],
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05,
+        "gap_min_mm": 0.125,
+        "gap_max_mm": 0.125,
         "surface_offset_window_mm": [
-          -0.075,
-          0.075
+          -0.062,
+          0.088
         ],
         "residual_error_mm": 0.05
       },
@@ -29024,19 +29024,19 @@
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "1 of 1 pin/bore pair(s) measured: gap +0.050 to +0.050 mm"
+          "detail": "1 of 1 pin/bore pair(s) measured: gap +0.125 to +0.125 mm"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.062 to +0.088 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.062 to +0.088 mm"
         },
         {
           "id": "F2_breakage",
@@ -29075,7 +29075,7 @@
         36.0,
         14.0
       ],
-      "volume_cm3": 11.67,
+      "volume_cm3": 11.66,
       "connectors": [
         {
           "id": "hub",
@@ -29123,21 +29123,21 @@
       "design_status": "verified",
       "fit": {
         "studs_measured": 1,
-        "design_gap_mm": 0.04999999999999982,
+        "design_gap_mm": 0.125,
         "pairs": [
           {
             "pin": "shaft_drive",
             "bore": "fixed",
             "fit": "press",
-            "gap_min_mm": 0.05,
-            "gap_max_mm": 0.05
+            "gap_min_mm": 0.125,
+            "gap_max_mm": 0.125
           }
         ],
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05,
+        "gap_min_mm": 0.125,
+        "gap_max_mm": 0.125,
         "surface_offset_window_mm": [
-          -0.075,
-          0.075
+          -0.062,
+          0.088
         ],
         "residual_error_mm": 0.05
       },
@@ -29230,19 +29230,19 @@
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "1 of 1 pin/bore pair(s) measured: gap +0.050 to +0.050 mm"
+          "detail": "1 of 1 pin/bore pair(s) measured: gap +0.125 to +0.125 mm"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.062 to +0.088 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.062 to +0.088 mm"
         },
         {
           "id": "F2_breakage",
@@ -31908,8 +31908,8 @@
       ],
       "safety": {
         "small_part_status": "above_cylinder",
-        "min_enclosing_diameter_mm": 44.28,
-        "margin_pct": 39.5,
+        "min_enclosing_diameter_mm": 44.24,
+        "margin_pct": 39.3,
         "print_page_warning": [
           "Printed at home or by a print service. Not tested to toy-safety standards. Adult supervision required. Check for cracks, sharp edges and loose pieces before each use, and stop using anything that has broken.",
           "Larger than the small-parts test size in our size check. This is not a safety certification, and it is not rated for children under 3 years."
@@ -31927,7 +31927,7 @@
       "design_status": "verified",
       "fit": {
         "studs_measured": 2,
-        "design_gap_mm": 0.04999999999999982,
+        "design_gap_mm": 0.125,
         "pairs": [
           {
             "pin": "shaft_drive",
@@ -31940,15 +31940,15 @@
             "pin": "shaft_drive",
             "bore": "fixed",
             "fit": "press",
-            "gap_min_mm": 0.05,
-            "gap_max_mm": 0.05
+            "gap_min_mm": 0.125,
+            "gap_max_mm": 0.125
           }
         ],
-        "gap_min_mm": 0.05,
+        "gap_min_mm": 0.125,
         "gap_max_mm": 0.2,
         "surface_offset_window_mm": [
-          -0.075,
-          0.075
+          -0.062,
+          0.088
         ],
         "residual_error_mm": 0.05
       },
@@ -32029,25 +32029,25 @@
           "id": "S1_small_part_screen",
           "level": "warn",
           "result": "pass",
-          "detail": "above_cylinder: best-fit diameter 44.28 mm vs 31.75 mm cylinder"
+          "detail": "above_cylinder: best-fit diameter 44.24 mm vs 31.75 mm cylinder"
         },
         {
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "2 of 2 pin/bore pair(s) measured: gap +0.050 to +0.200 mm"
+          "detail": "2 of 2 pin/bore pair(s) measured: gap +0.125 to +0.200 mm"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.062 to +0.088 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.062 to +0.088 mm"
         },
         {
           "id": "F2_breakage",
@@ -33406,7 +33406,7 @@
         78.0,
         5.0
       ],
-      "volume_cm3": 2.01,
+      "volume_cm3": 2.0,
       "connectors": [
         {
           "id": "axis",
@@ -33439,8 +33439,8 @@
       ],
       "safety": {
         "small_part_status": "above_cylinder",
-        "min_enclosing_diameter_mm": 60.62,
-        "margin_pct": 90.9,
+        "min_enclosing_diameter_mm": 59.9,
+        "margin_pct": 88.7,
         "print_page_warning": [
           "Printed at home or by a print service. Not tested to toy-safety standards. Adult supervision required. Check for cracks, sharp edges and loose pieces before each use, and stop using anything that has broken.",
           "Larger than the small-parts test size in our size check. This is not a safety certification, and it is not rated for children under 3 years."
@@ -33458,7 +33458,7 @@
       "design_status": "verified",
       "fit": {
         "studs_measured": 2,
-        "design_gap_mm": 0.04999999999999982,
+        "design_gap_mm": 0.125,
         "pairs": [
           {
             "pin": "shaft_drive",
@@ -33471,15 +33471,15 @@
             "pin": "shaft_drive",
             "bore": "fixed",
             "fit": "press",
-            "gap_min_mm": 0.05,
-            "gap_max_mm": 0.05
+            "gap_min_mm": 0.125,
+            "gap_max_mm": 0.125
           }
         ],
-        "gap_min_mm": 0.05,
+        "gap_min_mm": 0.125,
         "gap_max_mm": 0.2,
         "surface_offset_window_mm": [
-          -0.075,
-          0.075
+          -0.062,
+          0.088
         ],
         "residual_error_mm": 0.05
       },
@@ -33560,25 +33560,25 @@
           "id": "S1_small_part_screen",
           "level": "warn",
           "result": "pass",
-          "detail": "above_cylinder: best-fit diameter 60.62 mm vs 31.75 mm cylinder"
+          "detail": "above_cylinder: best-fit diameter 59.9 mm vs 31.75 mm cylinder"
         },
         {
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "2 of 2 pin/bore pair(s) measured: gap +0.050 to +0.200 mm"
+          "detail": "2 of 2 pin/bore pair(s) measured: gap +0.125 to +0.200 mm"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.062 to +0.088 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.062 to +0.088 mm"
         },
         {
           "id": "F2_breakage",
@@ -33669,7 +33669,7 @@
       "design_status": "verified",
       "fit": {
         "studs_measured": 2,
-        "design_gap_mm": 0.04999999999999982,
+        "design_gap_mm": 0.125,
         "pairs": [
           {
             "pin": "shaft_drive",
@@ -33682,15 +33682,15 @@
             "pin": "shaft_drive",
             "bore": "fixed",
             "fit": "press",
-            "gap_min_mm": 0.05,
-            "gap_max_mm": 0.05
+            "gap_min_mm": 0.125,
+            "gap_max_mm": 0.125
           }
         ],
-        "gap_min_mm": 0.05,
+        "gap_min_mm": 0.125,
         "gap_max_mm": 0.2,
         "surface_offset_window_mm": [
-          -0.075,
-          0.075
+          -0.062,
+          0.088
         ],
         "residual_error_mm": 0.05
       },
@@ -33777,19 +33777,19 @@
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "2 of 2 pin/bore pair(s) measured: gap +0.050 to +0.200 mm"
+          "detail": "2 of 2 pin/bore pair(s) measured: gap +0.125 to +0.200 mm"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.062 to +0.088 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.062 to +0.088 mm"
         },
         {
           "id": "F2_breakage",
@@ -33827,7 +33827,7 @@
         36.0,
         12.3
       ],
-      "volume_cm3": 10.41,
+      "volume_cm3": 10.4,
       "connectors": [
         {
           "id": "hub",
@@ -33875,21 +33875,21 @@
       "design_status": "verified",
       "fit": {
         "studs_measured": 1,
-        "design_gap_mm": 0.04999999999999982,
+        "design_gap_mm": 0.125,
         "pairs": [
           {
             "pin": "shaft_drive",
             "bore": "fixed",
             "fit": "press",
-            "gap_min_mm": 0.05,
-            "gap_max_mm": 0.05
+            "gap_min_mm": 0.125,
+            "gap_max_mm": 0.125
           }
         ],
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05,
+        "gap_min_mm": 0.125,
+        "gap_max_mm": 0.125,
         "surface_offset_window_mm": [
-          -0.075,
-          0.075
+          -0.062,
+          0.088
         ],
         "residual_error_mm": 0.05
       },
@@ -33982,19 +33982,19 @@
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "1 of 1 pin/bore pair(s) measured: gap +0.050 to +0.050 mm"
+          "detail": "1 of 1 pin/bore pair(s) measured: gap +0.125 to +0.125 mm"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.062 to +0.088 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.062 to +0.088 mm"
         },
         {
           "id": "F2_breakage",
@@ -34033,7 +34033,7 @@
         49.9,
         12.3
       ],
-      "volume_cm3": 20.96,
+      "volume_cm3": 20.95,
       "connectors": [
         {
           "id": "hub",
@@ -34132,14 +34132,14 @@
       "design_status": "verified",
       "fit": {
         "studs_measured": 9,
-        "design_gap_mm": 0.04999999999999982,
+        "design_gap_mm": 0.125,
         "pairs": [
           {
             "pin": "shaft_drive",
             "bore": "fixed",
             "fit": "press",
-            "gap_min_mm": 0.05,
-            "gap_max_mm": 0.05
+            "gap_min_mm": 0.125,
+            "gap_max_mm": 0.125
           },
           {
             "pin": "pin_free",
@@ -34162,11 +34162,11 @@
             "measured": false
           }
         ],
-        "gap_min_mm": 0.05,
+        "gap_min_mm": 0.125,
         "gap_max_mm": 0.2,
         "surface_offset_window_mm": [
-          -0.075,
-          0.075
+          -0.062,
+          0.088
         ],
         "residual_error_mm": 0.05
       },
@@ -34259,19 +34259,19 @@
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "3 of 4 pin/bore pair(s) measured: gap +0.050 to +0.200 mm"
+          "detail": "3 of 4 pin/bore pair(s) measured: gap +0.125 to +0.200 mm"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.062 to +0.088 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.062 to +0.088 mm"
         },
         {
           "id": "F2_breakage",
@@ -34310,7 +34310,7 @@
         20.0,
         6.0
       ],
-      "volume_cm3": 4.55,
+      "volume_cm3": 4.54,
       "connectors": [
         {
           "id": "hub",
@@ -34358,21 +34358,21 @@
       "design_status": "verified",
       "fit": {
         "studs_measured": 1,
-        "design_gap_mm": 0.04999999999999982,
+        "design_gap_mm": 0.125,
         "pairs": [
           {
             "pin": "shaft_drive",
             "bore": "fixed",
             "fit": "press",
-            "gap_min_mm": 0.05,
-            "gap_max_mm": 0.05
+            "gap_min_mm": 0.125,
+            "gap_max_mm": 0.125
           }
         ],
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05,
+        "gap_min_mm": 0.125,
+        "gap_max_mm": 0.125,
         "surface_offset_window_mm": [
-          -0.075,
-          0.075
+          -0.062,
+          0.088
         ],
         "residual_error_mm": 0.05
       },
@@ -34465,19 +34465,19 @@
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "1 of 1 pin/bore pair(s) measured: gap +0.050 to +0.050 mm"
+          "detail": "1 of 1 pin/bore pair(s) measured: gap +0.125 to +0.125 mm"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.062 to +0.088 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.062 to +0.088 mm"
         },
         {
           "id": "F2_breakage",
@@ -36500,7 +36500,7 @@
         38.0,
         5.6
       ],
-      "volume_cm3": 2.38,
+      "volume_cm3": 2.37,
       "connectors": [
         {
           "id": "axis",
@@ -36533,8 +36533,8 @@
       ],
       "safety": {
         "small_part_status": "above_cylinder",
-        "min_enclosing_diameter_mm": 38.33,
-        "margin_pct": 20.7,
+        "min_enclosing_diameter_mm": 38.27,
+        "margin_pct": 20.5,
         "print_page_warning": [
           "Printed at home or by a print service. Not tested to toy-safety standards. Adult supervision required. Check for cracks, sharp edges and loose pieces before each use, and stop using anything that has broken.",
           "Larger than the small-parts test size in our size check. This is not a safety certification, and it is not rated for children under 3 years."
@@ -36552,7 +36552,7 @@
       "design_status": "verified",
       "fit": {
         "studs_measured": 2,
-        "design_gap_mm": 0.04999999999999982,
+        "design_gap_mm": 0.125,
         "pairs": [
           {
             "pin": "shaft_drive",
@@ -36565,15 +36565,15 @@
             "pin": "shaft_drive",
             "bore": "fixed",
             "fit": "press",
-            "gap_min_mm": 0.05,
-            "gap_max_mm": 0.05
+            "gap_min_mm": 0.125,
+            "gap_max_mm": 0.125
           }
         ],
-        "gap_min_mm": 0.05,
+        "gap_min_mm": 0.125,
         "gap_max_mm": 0.2,
         "surface_offset_window_mm": [
-          -0.075,
-          0.075
+          -0.062,
+          0.088
         ],
         "residual_error_mm": 0.05
       },
@@ -36654,25 +36654,25 @@
           "id": "S1_small_part_screen",
           "level": "warn",
           "result": "pass",
-          "detail": "above_cylinder: best-fit diameter 38.33 mm vs 31.75 mm cylinder"
+          "detail": "above_cylinder: best-fit diameter 38.27 mm vs 31.75 mm cylinder"
         },
         {
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "2 of 2 pin/bore pair(s) measured: gap +0.050 to +0.200 mm"
+          "detail": "2 of 2 pin/bore pair(s) measured: gap +0.125 to +0.200 mm"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.062 to +0.088 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.062 to +0.088 mm"
         },
         {
           "id": "F2_breakage",
@@ -37322,7 +37322,7 @@
         31.8,
         23.1
       ],
-      "volume_cm3": 10.42,
+      "volume_cm3": 10.41,
       "connectors": [
         {
           "id": "under_sockets",
@@ -37396,11 +37396,11 @@
       "design_status": "verified",
       "fit": {
         "studs_measured": 6,
-        "design_gap_mm": 0.04999999999999982,
+        "design_gap_mm": 0.05,
         "gap_min_mm": 0.048,
-        "gap_max_mm": 0.05,
+        "gap_max_mm": 0.125,
         "surface_offset_window_mm": [
-          -0.075,
+          -0.062,
           0.074
         ],
         "residual_error_mm": 0.05,
@@ -37417,21 +37417,21 @@
         },
         "pro": {
           "studs_measured": 2,
-          "design_gap_mm": 0.04999999999999982,
+          "design_gap_mm": 0.125,
           "pairs": [
             {
               "pin": "shaft_drive",
               "bore": "fixed",
               "fit": "press",
-              "gap_min_mm": 0.05,
-              "gap_max_mm": 0.05
+              "gap_min_mm": 0.125,
+              "gap_max_mm": 0.125
             }
           ],
-          "gap_min_mm": 0.05,
-          "gap_max_mm": 0.05,
+          "gap_min_mm": 0.125,
+          "gap_max_mm": 0.125,
           "surface_offset_window_mm": [
-            -0.075,
-            0.075
+            -0.062,
+            0.088
           ],
           "residual_error_mm": 0.05
         }
@@ -37513,7 +37513,7 @@
           "id": "I3_seats_on_reference",
           "level": "block",
           "result": "pass",
-          "detail": "overlap -0.000 mm3 with matching reference part"
+          "detail": "overlap 0.000 mm3 with matching reference part"
         },
         {
           "id": "I4_bore_on_grid",
@@ -37537,19 +37537,19 @@
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "4 stud(s) gap +0.048 to +0.048 mm; 1 pin/bore pair(s) gap +0.050 to +0.050 mm"
+          "detail": "4 stud(s) gap +0.048 to +0.048 mm; 1 pin/bore pair(s) gap +0.125 to +0.125 mm"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.074 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.062 to +0.074 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.074 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.062 to +0.074 mm"
         },
         {
           "id": "F2_breakage",
@@ -37592,7 +37592,7 @@
         25.6,
         27.1
       ],
-      "volume_cm3": 3.71,
+      "volume_cm3": 3.7,
       "connectors": [
         {
           "id": "kingpin_bore",
@@ -37689,8 +37689,8 @@
       ],
       "safety": {
         "small_part_status": "small_part",
-        "min_enclosing_diameter_mm": 30.62,
-        "margin_pct": -3.6,
+        "min_enclosing_diameter_mm": 30.49,
+        "margin_pct": -4.0,
         "print_page_warning": [
           "Printed at home or by a print service. Not tested to toy-safety standards. Adult supervision required. Check for cracks, sharp edges and loose pieces before each use, and stop using anything that has broken.",
           "CHOKING HAZARD - Small parts. Not for children under 3 years."
@@ -37703,7 +37703,7 @@
       "design_status": "verified",
       "fit": {
         "studs_measured": 5,
-        "design_gap_mm": 0.04999999999999982,
+        "design_gap_mm": 0.125,
         "pairs": [
           {
             "pin": "pin_free",
@@ -37729,8 +37729,8 @@
             "pin": "shaft_drive",
             "bore": "fixed",
             "fit": "press",
-            "gap_min_mm": 0.05,
-            "gap_max_mm": 0.05
+            "gap_min_mm": 0.125,
+            "gap_max_mm": 0.125
           },
           {
             "pin": "shaft_drive",
@@ -37743,15 +37743,15 @@
             "pin": "shaft_drive",
             "bore": "fixed",
             "fit": "press",
-            "gap_min_mm": 0.05,
-            "gap_max_mm": 0.05
+            "gap_min_mm": 0.125,
+            "gap_max_mm": 0.125
           }
         ],
-        "gap_min_mm": 0.05,
+        "gap_min_mm": 0.125,
         "gap_max_mm": 0.2,
         "surface_offset_window_mm": [
-          -0.075,
-          0.075
+          -0.062,
+          0.088
         ],
         "residual_error_mm": 0.05
       },
@@ -37838,25 +37838,25 @@
           "id": "S1_small_part_screen",
           "level": "warn",
           "result": "fail",
-          "detail": "small_part: best-fit diameter 30.62 mm vs 31.75 mm cylinder"
+          "detail": "small_part: best-fit diameter 30.49 mm vs 31.75 mm cylinder"
         },
         {
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "5 of 6 pin/bore pair(s) measured: gap +0.050 to +0.200 mm"
+          "detail": "5 of 6 pin/bore pair(s) measured: gap +0.125 to +0.200 mm"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.062 to +0.088 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.062 to +0.088 mm"
         },
         {
           "id": "F2_breakage",
@@ -37894,7 +37894,7 @@
         25.6,
         27.1
       ],
-      "volume_cm3": 3.71,
+      "volume_cm3": 3.7,
       "connectors": [
         {
           "id": "kingpin_bore",
@@ -37991,8 +37991,8 @@
       ],
       "safety": {
         "small_part_status": "small_part",
-        "min_enclosing_diameter_mm": 30.62,
-        "margin_pct": -3.6,
+        "min_enclosing_diameter_mm": 30.43,
+        "margin_pct": -4.2,
         "print_page_warning": [
           "Printed at home or by a print service. Not tested to toy-safety standards. Adult supervision required. Check for cracks, sharp edges and loose pieces before each use, and stop using anything that has broken.",
           "CHOKING HAZARD - Small parts. Not for children under 3 years."
@@ -38005,7 +38005,7 @@
       "design_status": "verified",
       "fit": {
         "studs_measured": 5,
-        "design_gap_mm": 0.04999999999999982,
+        "design_gap_mm": 0.125,
         "pairs": [
           {
             "pin": "pin_free",
@@ -38031,8 +38031,8 @@
             "pin": "shaft_drive",
             "bore": "fixed",
             "fit": "press",
-            "gap_min_mm": 0.05,
-            "gap_max_mm": 0.05
+            "gap_min_mm": 0.125,
+            "gap_max_mm": 0.125
           },
           {
             "pin": "shaft_drive",
@@ -38045,15 +38045,15 @@
             "pin": "shaft_drive",
             "bore": "fixed",
             "fit": "press",
-            "gap_min_mm": 0.05,
-            "gap_max_mm": 0.05
+            "gap_min_mm": 0.125,
+            "gap_max_mm": 0.125
           }
         ],
-        "gap_min_mm": 0.05,
+        "gap_min_mm": 0.125,
         "gap_max_mm": 0.2,
         "surface_offset_window_mm": [
-          -0.075,
-          0.075
+          -0.062,
+          0.088
         ],
         "residual_error_mm": 0.05
       },
@@ -38140,25 +38140,25 @@
           "id": "S1_small_part_screen",
           "level": "warn",
           "result": "fail",
-          "detail": "small_part: best-fit diameter 30.62 mm vs 31.75 mm cylinder"
+          "detail": "small_part: best-fit diameter 30.43 mm vs 31.75 mm cylinder"
         },
         {
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "5 of 6 pin/bore pair(s) measured: gap +0.050 to +0.200 mm"
+          "detail": "5 of 6 pin/bore pair(s) measured: gap +0.125 to +0.200 mm"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.062 to +0.088 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.062 to +0.088 mm"
         },
         {
           "id": "F2_breakage",
@@ -38686,7 +38686,7 @@
         39.0,
         5.6
       ],
-      "volume_cm3": 1.26,
+      "volume_cm3": 1.24,
       "connectors": [
         {
           "id": "axis",
@@ -40210,7 +40210,7 @@
         38.0,
         21.0
       ],
-      "volume_cm3": 40.17,
+      "volume_cm3": 40.16,
       "connectors": [
         {
           "id": "stop_bore",
@@ -40292,14 +40292,14 @@
       "design_status": "verified",
       "fit": {
         "studs_measured": 5,
-        "design_gap_mm": 0.04999999999999982,
+        "design_gap_mm": 0.125,
         "pairs": [
           {
             "pin": "shaft_drive",
             "bore": "fixed",
             "fit": "press",
-            "gap_min_mm": 0.05,
-            "gap_max_mm": 0.05
+            "gap_min_mm": 0.125,
+            "gap_max_mm": 0.125
           },
           {
             "pin": "pin_free",
@@ -40322,11 +40322,11 @@
             "measured": false
           }
         ],
-        "gap_min_mm": 0.05,
+        "gap_min_mm": 0.125,
         "gap_max_mm": 0.2,
         "surface_offset_window_mm": [
-          -0.075,
-          0.075
+          -0.062,
+          0.088
         ],
         "residual_error_mm": 0.05
       },
@@ -40419,19 +40419,19 @@
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "3 of 4 pin/bore pair(s) measured: gap +0.050 to +0.200 mm"
+          "detail": "3 of 4 pin/bore pair(s) measured: gap +0.125 to +0.200 mm"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.062 to +0.088 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.062 to +0.088 mm"
         },
         {
           "id": "F2_breakage",
@@ -40502,8 +40502,8 @@
       ],
       "safety": {
         "small_part_status": "above_cylinder",
-        "min_enclosing_diameter_mm": 81.34,
-        "margin_pct": 156.2,
+        "min_enclosing_diameter_mm": 80.89,
+        "margin_pct": 154.8,
         "print_page_warning": [
           "Printed at home or by a print service. Not tested to toy-safety standards. Adult supervision required. Check for cracks, sharp edges and loose pieces before each use, and stop using anything that has broken.",
           "Larger than the small-parts test size in our size check. This is not a safety certification, and it is not rated for children under 3 years."
@@ -40521,7 +40521,7 @@
       "design_status": "verified",
       "fit": {
         "studs_measured": 2,
-        "design_gap_mm": 0.04999999999999982,
+        "design_gap_mm": 0.125,
         "pairs": [
           {
             "pin": "shaft_drive",
@@ -40534,15 +40534,15 @@
             "pin": "shaft_drive",
             "bore": "fixed",
             "fit": "press",
-            "gap_min_mm": 0.05,
-            "gap_max_mm": 0.05
+            "gap_min_mm": 0.125,
+            "gap_max_mm": 0.125
           }
         ],
-        "gap_min_mm": 0.05,
+        "gap_min_mm": 0.125,
         "gap_max_mm": 0.2,
         "surface_offset_window_mm": [
-          -0.075,
-          0.075
+          -0.062,
+          0.088
         ],
         "residual_error_mm": 0.05
       },
@@ -40623,25 +40623,25 @@
           "id": "S1_small_part_screen",
           "level": "warn",
           "result": "pass",
-          "detail": "above_cylinder: best-fit diameter 81.34 mm vs 31.75 mm cylinder"
+          "detail": "above_cylinder: best-fit diameter 80.89 mm vs 31.75 mm cylinder"
         },
         {
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "2 of 2 pin/bore pair(s) measured: gap +0.050 to +0.200 mm"
+          "detail": "2 of 2 pin/bore pair(s) measured: gap +0.125 to +0.200 mm"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.062 to +0.088 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.062 to +0.088 mm"
         },
         {
           "id": "F2_breakage",
@@ -42434,7 +42434,7 @@
         42.0,
         12.0
       ],
-      "volume_cm3": 16.15,
+      "volume_cm3": 16.13,
       "connectors": [
         {
           "id": "hub",
@@ -42482,21 +42482,21 @@
       "design_status": "verified",
       "fit": {
         "studs_measured": 1,
-        "design_gap_mm": 0.04999999999999982,
+        "design_gap_mm": 0.125,
         "pairs": [
           {
             "pin": "shaft_drive",
             "bore": "fixed",
             "fit": "press",
-            "gap_min_mm": 0.05,
-            "gap_max_mm": 0.05
+            "gap_min_mm": 0.125,
+            "gap_max_mm": 0.125
           }
         ],
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05,
+        "gap_min_mm": 0.125,
+        "gap_max_mm": 0.125,
         "surface_offset_window_mm": [
-          -0.075,
-          0.075
+          -0.062,
+          0.088
         ],
         "residual_error_mm": 0.05
       },
@@ -42589,19 +42589,19 @@
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "1 of 1 pin/bore pair(s) measured: gap +0.050 to +0.050 mm"
+          "detail": "1 of 1 pin/bore pair(s) measured: gap +0.125 to +0.125 mm"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.062 to +0.088 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.062 to +0.088 mm"
         },
         {
           "id": "F2_breakage",
@@ -42871,7 +42871,7 @@
         78.0,
         5.0
       ],
-      "volume_cm3": 2.01,
+      "volume_cm3": 2.0,
       "connectors": [
         {
           "id": "axis",
@@ -42904,8 +42904,8 @@
       ],
       "safety": {
         "small_part_status": "above_cylinder",
-        "min_enclosing_diameter_mm": 60.62,
-        "margin_pct": 90.9,
+        "min_enclosing_diameter_mm": 59.9,
+        "margin_pct": 88.7,
         "print_page_warning": [
           "Printed at home or by a print service. Not tested to toy-safety standards. Adult supervision required. Check for cracks, sharp edges and loose pieces before each use, and stop using anything that has broken.",
           "Larger than the small-parts test size in our size check. This is not a safety certification, and it is not rated for children under 3 years."
@@ -42923,7 +42923,7 @@
       "design_status": "verified",
       "fit": {
         "studs_measured": 2,
-        "design_gap_mm": 0.04999999999999982,
+        "design_gap_mm": 0.125,
         "pairs": [
           {
             "pin": "shaft_drive",
@@ -42936,15 +42936,15 @@
             "pin": "shaft_drive",
             "bore": "fixed",
             "fit": "press",
-            "gap_min_mm": 0.05,
-            "gap_max_mm": 0.05
+            "gap_min_mm": 0.125,
+            "gap_max_mm": 0.125
           }
         ],
-        "gap_min_mm": 0.05,
+        "gap_min_mm": 0.125,
         "gap_max_mm": 0.2,
         "surface_offset_window_mm": [
-          -0.075,
-          0.075
+          -0.062,
+          0.088
         ],
         "residual_error_mm": 0.05
       },
@@ -43025,25 +43025,25 @@
           "id": "S1_small_part_screen",
           "level": "warn",
           "result": "pass",
-          "detail": "above_cylinder: best-fit diameter 60.62 mm vs 31.75 mm cylinder"
+          "detail": "above_cylinder: best-fit diameter 59.9 mm vs 31.75 mm cylinder"
         },
         {
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "2 of 2 pin/bore pair(s) measured: gap +0.050 to +0.200 mm"
+          "detail": "2 of 2 pin/bore pair(s) measured: gap +0.125 to +0.200 mm"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.062 to +0.088 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.062 to +0.088 mm"
         },
         {
           "id": "F2_breakage",
@@ -43401,7 +43401,7 @@
       "design_status": "verified",
       "fit": {
         "studs_measured": 2,
-        "design_gap_mm": 0.04999999999999982,
+        "design_gap_mm": 0.125,
         "pairs": [
           {
             "pin": "shaft_drive",
@@ -43414,15 +43414,15 @@
             "pin": "shaft_drive",
             "bore": "fixed",
             "fit": "press",
-            "gap_min_mm": 0.05,
-            "gap_max_mm": 0.05
+            "gap_min_mm": 0.125,
+            "gap_max_mm": 0.125
           }
         ],
-        "gap_min_mm": 0.05,
+        "gap_min_mm": 0.125,
         "gap_max_mm": 0.2,
         "surface_offset_window_mm": [
-          -0.075,
-          0.075
+          -0.062,
+          0.088
         ],
         "residual_error_mm": 0.05
       },
@@ -43509,19 +43509,19 @@
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "2 of 2 pin/bore pair(s) measured: gap +0.050 to +0.200 mm"
+          "detail": "2 of 2 pin/bore pair(s) measured: gap +0.125 to +0.200 mm"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.062 to +0.088 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.062 to +0.088 mm"
         },
         {
           "id": "F2_breakage",
@@ -43559,7 +43559,7 @@
         46.5,
         5.0
       ],
-      "volume_cm3": 1.2,
+      "volume_cm3": 1.19,
       "connectors": [
         {
           "id": "axis",
@@ -43611,7 +43611,7 @@
       "design_status": "verified",
       "fit": {
         "studs_measured": 2,
-        "design_gap_mm": 0.04999999999999982,
+        "design_gap_mm": 0.125,
         "pairs": [
           {
             "pin": "shaft_drive",
@@ -43624,15 +43624,15 @@
             "pin": "shaft_drive",
             "bore": "fixed",
             "fit": "press",
-            "gap_min_mm": 0.05,
-            "gap_max_mm": 0.05
+            "gap_min_mm": 0.125,
+            "gap_max_mm": 0.125
           }
         ],
-        "gap_min_mm": 0.05,
+        "gap_min_mm": 0.125,
         "gap_max_mm": 0.2,
         "surface_offset_window_mm": [
-          -0.075,
-          0.075
+          -0.062,
+          0.088
         ],
         "residual_error_mm": 0.05
       },
@@ -43719,19 +43719,19 @@
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "2 of 2 pin/bore pair(s) measured: gap +0.050 to +0.200 mm"
+          "detail": "2 of 2 pin/bore pair(s) measured: gap +0.125 to +0.200 mm"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.062 to +0.088 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.062 to +0.088 mm"
         },
         {
           "id": "F2_breakage",
@@ -43769,7 +43769,7 @@
         23.0,
         13.0
       ],
-      "volume_cm3": 3.83,
+      "volume_cm3": 3.82,
       "connectors": [
         {
           "id": "hub",
@@ -43817,21 +43817,21 @@
       "design_status": "verified",
       "fit": {
         "studs_measured": 1,
-        "design_gap_mm": 0.04999999999999982,
+        "design_gap_mm": 0.125,
         "pairs": [
           {
             "pin": "shaft_drive",
             "bore": "fixed",
             "fit": "press",
-            "gap_min_mm": 0.05,
-            "gap_max_mm": 0.05
+            "gap_min_mm": 0.125,
+            "gap_max_mm": 0.125
           }
         ],
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05,
+        "gap_min_mm": 0.125,
+        "gap_max_mm": 0.125,
         "surface_offset_window_mm": [
-          -0.075,
-          0.075
+          -0.062,
+          0.088
         ],
         "residual_error_mm": 0.05
       },
@@ -43924,19 +43924,19 @@
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "1 of 1 pin/bore pair(s) measured: gap +0.050 to +0.050 mm"
+          "detail": "1 of 1 pin/bore pair(s) measured: gap +0.125 to +0.125 mm"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.062 to +0.088 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.062 to +0.088 mm"
         },
         {
           "id": "F2_breakage",
@@ -43974,7 +43974,7 @@
         28.9,
         9.6
       ],
-      "volume_cm3": 3.06,
+      "volume_cm3": 3.05,
       "connectors": [
         {
           "id": "hub",
@@ -44022,21 +44022,21 @@
       "design_status": "verified",
       "fit": {
         "studs_measured": 1,
-        "design_gap_mm": 0.04999999999999982,
+        "design_gap_mm": 0.125,
         "pairs": [
           {
             "pin": "shaft_drive",
             "bore": "fixed",
             "fit": "press",
-            "gap_min_mm": 0.05,
-            "gap_max_mm": 0.05
+            "gap_min_mm": 0.125,
+            "gap_max_mm": 0.125
           }
         ],
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05,
+        "gap_min_mm": 0.125,
+        "gap_max_mm": 0.125,
         "surface_offset_window_mm": [
-          -0.075,
-          0.075
+          -0.062,
+          0.088
         ],
         "residual_error_mm": 0.05
       },
@@ -44135,19 +44135,19 @@
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "1 of 1 pin/bore pair(s) measured: gap +0.050 to +0.050 mm"
+          "detail": "1 of 1 pin/bore pair(s) measured: gap +0.125 to +0.125 mm"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.062 to +0.088 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.062 to +0.088 mm"
         },
         {
           "id": "F2_breakage",
@@ -44446,8 +44446,8 @@
       ],
       "safety": {
         "small_part_status": "small_part",
-        "min_enclosing_diameter_mm": 27.99,
-        "margin_pct": -11.9,
+        "min_enclosing_diameter_mm": 27.95,
+        "margin_pct": -12.0,
         "print_page_warning": [
           "Printed at home or by a print service. Not tested to toy-safety standards. Adult supervision required. Check for cracks, sharp edges and loose pieces before each use, and stop using anything that has broken.",
           "CHOKING HAZARD - Small parts. Not for children under 3 years."
@@ -44465,7 +44465,7 @@
       "design_status": "verified",
       "fit": {
         "studs_measured": 2,
-        "design_gap_mm": 0.04999999999999982,
+        "design_gap_mm": 0.125,
         "pairs": [
           {
             "pin": "shaft_drive",
@@ -44478,15 +44478,15 @@
             "pin": "shaft_drive",
             "bore": "fixed",
             "fit": "press",
-            "gap_min_mm": 0.05,
-            "gap_max_mm": 0.05
+            "gap_min_mm": 0.125,
+            "gap_max_mm": 0.125
           }
         ],
-        "gap_min_mm": 0.05,
+        "gap_min_mm": 0.125,
         "gap_max_mm": 0.2,
         "surface_offset_window_mm": [
-          -0.075,
-          0.075
+          -0.062,
+          0.088
         ],
         "residual_error_mm": 0.05
       },
@@ -44567,25 +44567,25 @@
           "id": "S1_small_part_screen",
           "level": "warn",
           "result": "fail",
-          "detail": "small_part: best-fit diameter 27.99 mm vs 31.75 mm cylinder"
+          "detail": "small_part: best-fit diameter 27.95 mm vs 31.75 mm cylinder"
         },
         {
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "2 of 2 pin/bore pair(s) measured: gap +0.050 to +0.200 mm"
+          "detail": "2 of 2 pin/bore pair(s) measured: gap +0.125 to +0.200 mm"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.062 to +0.088 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.062 to +0.088 mm"
         },
         {
           "id": "F2_breakage",
@@ -44623,7 +44623,7 @@
         38.0,
         9.2
       ],
-      "volume_cm3": 1.44,
+      "volume_cm3": 1.43,
       "connectors": [
         {
           "id": "axis",
@@ -46409,7 +46409,7 @@
         19.0,
         32.8
       ],
-      "volume_cm3": 7.46,
+      "volume_cm3": 7.44,
       "connectors": [
         {
           "id": "under_sockets",
@@ -46493,11 +46493,11 @@
       "design_status": "verified",
       "fit": {
         "studs_measured": 4,
-        "design_gap_mm": 0.04999999999999982,
+        "design_gap_mm": 0.05,
         "gap_min_mm": 0.048,
-        "gap_max_mm": 0.05,
+        "gap_max_mm": 0.125,
         "surface_offset_window_mm": [
-          -0.075,
+          -0.062,
           0.074
         ],
         "residual_error_mm": 0.05,
@@ -46514,21 +46514,21 @@
         },
         "pro": {
           "studs_measured": 2,
-          "design_gap_mm": 0.04999999999999982,
+          "design_gap_mm": 0.125,
           "pairs": [
             {
               "pin": "shaft_drive",
               "bore": "fixed",
               "fit": "press",
-              "gap_min_mm": 0.05,
-              "gap_max_mm": 0.05
+              "gap_min_mm": 0.125,
+              "gap_max_mm": 0.125
             }
           ],
-          "gap_min_mm": 0.05,
-          "gap_max_mm": 0.05,
+          "gap_min_mm": 0.125,
+          "gap_max_mm": 0.125,
           "surface_offset_window_mm": [
-            -0.075,
-            0.075
+            -0.062,
+            0.088
           ],
           "residual_error_mm": 0.05
         }
@@ -46634,19 +46634,19 @@
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "2 stud(s) gap +0.048 to +0.048 mm; 1 pin/bore pair(s) gap +0.050 to +0.050 mm"
+          "detail": "2 stud(s) gap +0.048 to +0.048 mm; 1 pin/bore pair(s) gap +0.125 to +0.125 mm"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.074 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.062 to +0.074 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.074 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.062 to +0.074 mm"
         },
         {
           "id": "F2_breakage",
@@ -46689,7 +46689,7 @@
         12.4,
         6.2
       ],
-      "volume_cm3": 2.66,
+      "volume_cm3": 2.65,
       "connectors": [
         {
           "id": "clamp_bores",
@@ -46737,21 +46737,21 @@
       "design_status": "verified",
       "fit": {
         "studs_measured": 2,
-        "design_gap_mm": 0.04999999999999982,
+        "design_gap_mm": 0.125,
         "pairs": [
           {
             "pin": "shaft_drive",
             "bore": "fixed",
             "fit": "press",
-            "gap_min_mm": 0.05,
-            "gap_max_mm": 0.05
+            "gap_min_mm": 0.125,
+            "gap_max_mm": 0.125
           }
         ],
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05,
+        "gap_min_mm": 0.125,
+        "gap_max_mm": 0.125,
         "surface_offset_window_mm": [
-          -0.075,
-          0.075
+          -0.062,
+          0.088
         ],
         "residual_error_mm": 0.05
       },
@@ -46844,19 +46844,19 @@
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "1 of 1 pin/bore pair(s) measured: gap +0.050 to +0.050 mm"
+          "detail": "1 of 1 pin/bore pair(s) measured: gap +0.125 to +0.125 mm"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.062 to +0.088 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.062 to +0.088 mm"
         },
         {
           "id": "F2_breakage",
@@ -47128,7 +47128,7 @@
         31.5,
         5.6
       ],
-      "volume_cm3": 0.59,
+      "volume_cm3": 0.57,
       "connectors": [
         {
           "id": "axis",

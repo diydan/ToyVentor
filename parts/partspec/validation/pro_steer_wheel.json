@@ -1,25 +1,25 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_pro_steer_wheel_P.stl",
-  "file_sha256": "c01d9c8e0c0fdc60f22f9cd2a7bedb32d813fab04c49a9aa2a6c95a4431c55a9",
+  "file_sha256": "ef723f9d2eefb1192fe3c09576453f440e1e7dfbee8cb86f6aa66724c104bf62",
   "part_id": "pro_steer_wheel",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-11-02T00:37:00Z",
+  "checked_at": "2026-11-02T12:07:32Z",
   "metrics": {
     "bbox_mm": [
       23.0,
       23.0,
       13.0
     ],
-    "volume_cm3": 3.83,
-    "surface_cm2": 20.9,
-    "triangles": 2640,
+    "volume_cm3": 3.82,
+    "surface_cm2": 20.85,
+    "triangles": 2944,
     "ledges": [],
     "floating_contours": [],
     "layers": 65,
-    "bed_contact_mm2": 361.6,
+    "bed_contact_mm2": 354.8,
     "height_mm": 13.0,
-    "slenderness": 0.68,
+    "slenderness": 0.69,
     "centre_of_mass_over_contact": true,
     "min_wall_mm": null,
     "thin_wall_regions": []
@@ -110,9 +110,9 @@
       "id": "V9_bed_contact",
       "level": "info",
       "result": "pass",
-      "value": 361.6,
+      "value": 354.8,
       "limit": null,
-      "detail": "height / sqrt(contact) = 0.68; above about 3 the slicer often asks for a brim"
+      "detail": "height / sqrt(contact) = 0.69; above about 3 the slicer often asks for a brim"
     },
     {
       "id": "V8_wall_thickness",

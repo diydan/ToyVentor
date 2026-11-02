@@ -1,25 +1,25 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_prop_screwdriver_P.stl",
-  "file_sha256": "1709f4ac51302a3cd9f66b8ac0221baa057638e58e3698c5fe9e7d6e61564ac7",
+  "file_sha256": "ff3c251ef5ded183282c1f03c57035293b707706062055771263b43ee3efbcb3",
   "part_id": "prop_screwdriver",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-11-02T00:32:43Z",
+  "checked_at": "2026-11-02T12:03:10Z",
   "metrics": {
     "bbox_mm": [
       16.0,
       99.5,
       6.8
     ],
-    "volume_cm3": 3.75,
-    "surface_cm2": 30.03,
-    "triangles": 580,
+    "volume_cm3": 3.74,
+    "surface_cm2": 29.99,
+    "triangles": 808,
     "ledges": [],
     "floating_contours": [],
     "layers": 34,
-    "bed_contact_mm2": 712.7,
+    "bed_contact_mm2": 709.9,
     "height_mm": 6.8,
-    "slenderness": 0.25,
+    "slenderness": 0.26,
     "centre_of_mass_over_contact": true,
     "min_wall_mm": null,
     "thin_wall_regions": []
@@ -62,7 +62,7 @@
       "id": "V4_no_steep_overhang",
       "level": "block",
       "result": "pass",
-      "value": 0.0,
+      "value": 0.01,
       "limit": 1.0,
       "detail": "mm2 of downward surface steeper than 45 deg (flat bridges excluded)"
     },
@@ -110,9 +110,9 @@
       "id": "V9_bed_contact",
       "level": "info",
       "result": "pass",
-      "value": 712.7,
+      "value": 709.9,
       "limit": null,
-      "detail": "height / sqrt(contact) = 0.25; above about 3 the slicer often asks for a brim"
+      "detail": "height / sqrt(contact) = 0.26; above about 3 the slicer often asks for a brim"
     },
     {
       "id": "V8_wall_thickness",

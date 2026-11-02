@@ -20,7 +20,7 @@
     59.7,
     6.6
   ],
-  "volume_cm3": 4.23,
+  "volume_cm3": 4.22,
   "connectors": [
     {
       "id": "axis",
@@ -53,8 +53,8 @@
   ],
   "safety": {
     "small_part_status": "above_cylinder",
-    "min_enclosing_diameter_mm": 35.39,
-    "margin_pct": 11.5,
+    "min_enclosing_diameter_mm": 34.99,
+    "margin_pct": 10.2,
     "print_page_warning": [
       "Printed at home or by a print service. Not tested to toy-safety standards. Adult supervision required. Check for cracks, sharp edges and loose pieces before each use, and stop using anything that has broken.",
       "Larger than the small-parts test size in our size check. This is not a safety certification, and it is not rated for children under 3 years."
@@ -83,7 +83,7 @@
   "design_status": "verified",
   "fit": {
     "studs_measured": 2,
-    "design_gap_mm": 0.04999999999999982,
+    "design_gap_mm": 0.125,
     "pairs": [
       {
         "pin": "shaft_drive",
@@ -96,15 +96,15 @@
         "pin": "shaft_drive",
         "bore": "fixed",
         "fit": "press",
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.125,
+        "gap_max_mm": 0.125
       }
     ],
-    "gap_min_mm": 0.05,
+    "gap_min_mm": 0.125,
     "gap_max_mm": 0.2,
     "surface_offset_window_mm": [
-      -0.075,
-      0.075
+      -0.062,
+      0.088
     ],
     "residual_error_mm": 0.05
   },
@@ -185,25 +185,25 @@
       "id": "S1_small_part_screen",
       "level": "warn",
       "result": "pass",
-      "detail": "above_cylinder: best-fit diameter 35.39 mm vs 31.75 mm cylinder"
+      "detail": "above_cylinder: best-fit diameter 34.99 mm vs 31.75 mm cylinder"
     },
     {
       "id": "T1_fit_as_designed",
       "level": "block",
       "result": "pass",
-      "detail": "2 of 2 pin/bore pair(s) measured: gap +0.050 to +0.200 mm"
+      "detail": "2 of 2 pin/bore pair(s) measured: gap +0.125 to +0.200 mm"
     },
     {
       "id": "T2_fit_tolerance_window",
       "level": "warn",
       "result": "pass",
-      "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+      "detail": "surface offset window -0.062 to +0.088 mm vs calibrated error +/-0.05"
     },
     {
       "id": "F1_printed_fit",
       "level": "block",
       "result": "pending",
-      "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+      "detail": "needs calibration print: printer surface offset must land in -0.062 to +0.088 mm"
     },
     {
       "id": "F2_breakage",
@@ -220,25 +220,25 @@
   ],
   "glb_file": "custom_star_wand.glb",
   "asset_optimization": {
-    "content_hash": "679ffed2042a",
+    "content_hash": "cbb073c3f94b",
     "finish_class": "precision_gear_pin",
     "print_simplify_mm": 0.005,
     "web_simplify_mm": 0.055,
     "web_crease_deg": 28,
     "metrics": {
-      "orig_bytes": 45484,
-      "print_bytes": 41684,
-      "glb_bytes": 9508,
-      "orig_tris": 908,
-      "print_tris": 832,
-      "web_verts": 476,
-      "web_tris": 428,
+      "orig_bytes": 56884,
+      "print_bytes": 52284,
+      "glb_bytes": 11116,
+      "orig_tris": 1136,
+      "print_tris": 1044,
+      "web_verts": 568,
+      "web_tris": 512,
       "max_bbox_delta_mm": 0.0,
-      "rel_vol_delta_pct": 0.00111,
-      "overhang_22_mm2": 87.9,
-      "flat_top_mm2": 724.19,
-      "bed_area_mm2": 717.52,
-      "v11_show_face_overhang_30_mm2": 0.0,
+      "rel_vol_delta_pct": 0.00825,
+      "overhang_22_mm2": 87.24,
+      "flat_top_mm2": 722.44,
+      "bed_area_mm2": 716.05,
+      "v11_show_face_overhang_30_mm2": 1.45,
       "v11_status": "pass"
     }
   }

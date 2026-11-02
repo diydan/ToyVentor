@@ -286,7 +286,7 @@ def handheld_prop(
     """
     L = grip_tu * pro.TU
     hy = pro.BORE["shaft_flats"] / 2  # 2.50 mm
-    grip = pro.pin_solid("flats", L + 5.0)
+    grip = pro.pin_solid("flats", L + 5.0, tip_chamfer=(True, False))
 
     if isinstance(head_2d_or_3d, CrossSection):
         bx0, bz0, bx1, bz1 = head_2d_or_3d.bounds()

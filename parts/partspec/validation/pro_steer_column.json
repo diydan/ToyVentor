@@ -1,23 +1,23 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_pro_steer_column_P.stl",
-  "file_sha256": "9449fc1b75ff5f5471ff00cedbc626feabc0a7e6620003e698d5842ad0afaa37",
+  "file_sha256": "219ea6ab99cbf9a2b6ad51aff5e1391eef1a36faf6eee3b6dcf3398aa93c903b",
   "part_id": "pro_steer_column",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-11-02T00:37:00Z",
+  "checked_at": "2026-11-02T12:07:31Z",
   "metrics": {
     "bbox_mm": [
       10.6,
       46.55,
       5.0
     ],
-    "volume_cm3": 1.2,
-    "surface_cm2": 13.43,
-    "triangles": 996,
+    "volume_cm3": 1.19,
+    "surface_cm2": 13.39,
+    "triangles": 942,
     "ledges": [],
     "floating_contours": [],
     "layers": 25,
-    "bed_contact_mm2": 197.7,
+    "bed_contact_mm2": 192.7,
     "height_mm": 5.0,
     "slenderness": 0.36,
     "centre_of_mass_over_contact": true,
@@ -110,7 +110,7 @@
       "id": "V9_bed_contact",
       "level": "info",
       "result": "pass",
-      "value": 197.7,
+      "value": 192.7,
       "limit": null,
       "detail": "height / sqrt(contact) = 0.36; above about 3 the slicer often asks for a brim"
     },

@@ -103,7 +103,7 @@ def _cruciform_tip_shaft(total_len, conn_len=None, z0=0.0):
     L_conn = total_len if conn_len is None else conn_len
     tip_h = 5.6
     z_bevel = z0 + total_len - tip_h
-    outer = Manifold.extrude(pro._double_d(pro.BORE["shaft_d"], pro.BORE["shaft_flats"]), total_len).translate((0.0, 0.0, z0))
+    outer = pro._tapered_dd_extrude(pro.BORE["shaft_d"], pro.BORE["shaft_flats"], total_len, bot_tip=True, top_tip=False).translate((0.0, 0.0, z0))
     for sx in (-1, 1):
         c_lo = Manifold.cube((2.5, 10.0, 0.05)).translate(((3.50 if sx > 0 else -6.00), -5.0, z_bevel))
         c_hi = Manifold.cube((2.5, 10.0, tip_h + 0.5)).translate(((2.50 if sx > 0 else -5.00), -5.0, z_bevel + 0.8))
@@ -226,7 +226,7 @@ def kit_spinner_pin(**_):
 
 
 def kit_wheel_med(**_):
-    """#4 Medium 1-TU Modular Wheel (36.0 x 36.0 x 12.3 mm, 5.10 mm fixed hub)."""
+    """#4 Medium 1-TU Modular Wheel (36.0 x 36.0 x 12.3 mm, 5.25 mm fixed hub)."""
     D, H = 36.0, 12.3
     R = D / 2
     tire = Manifold.batch_hull([
@@ -585,7 +585,7 @@ def kit_turntable(size="small", grid=(4, 4), **_):
 def kit_yoke_hbar(**_):
     """#15 Universal Steering Yoke, Boat Helm & Bike Handlebar (46.0 x 38.0 x 5.6 mm LAY_FLAT)."""
     hy = pro.BORE["shaft_flats"] / 2  # 2.50 mm
-    stem = pro.pin_solid("flats", 26.5, z0=0.0)
+    stem = pro.pin_solid("flats", 26.5, z0=0.0, tip_chamfer=(True, False))
     riser_cs = _ccw_poly([(-3.2, 25.5), (3.2, 25.5), (12.0, 38.0), (-12.0, 38.0)])
     hbar_cs = rrect(46.0, 6.0, 2.8).translate((0.0, 35.0))
     head = tp._xz_to_layflat(riser_cs + hbar_cs, hy)
@@ -631,7 +631,7 @@ def _prop_on_grip(base, grip_tu, relief_cs=None, relief_h=2.0, cuts_cs=None):
     """base: (x, z) head outline on a 5 mm plate; relief_cs: raised top-embossing; cuts_cs: through-holes."""
     L = grip_tu * pro.TU
     hy = pro.BORE["shaft_flats"] / 2  # 2.50 mm
-    grip = pro.pin_solid("flats", L + 4.0)
+    grip = pro.pin_solid("flats", L + 4.0, tip_chamfer=(True, False))
     base = base.offset(-0.8, JoinType.Round).offset(0.8, JoinType.Round)
     m = grip + tp._xz_to_layflat(base, hy)
     if relief_cs is not None and not relief_cs.is_empty():
@@ -990,7 +990,7 @@ def _steer_knuckle(side):
         Manifold.cylinder(0.4, 5.3, 5.3, 64).translate((xk, 0.0, H_base - 0.4)),
         Manifold.cylinder(0.4, 5.1, 5.1, 64).translate((xk, 0.0, 15.00 - 0.4)),
     ])
-    stub = pro.pin_solid("flats", 13.0, xk, 0.0, 14.50)
+    stub = pro.pin_solid("flats", 13.0, xk, 0.0, 14.50, tip_chamfer=(False, True))
     # Horizontal Ø8.00 mm 50-deg teardrop snap-barb latch pocket for y in [-4.15, +10.50] (Z_world <= +10.40 mm, 0 overhang):
     latch_sec = pro._teardrop(8.00, roof_deg=50, segs=48)
     latch_pocket = Manifold.extrude(latch_sec, 14.65).rotate((90, 0, 0)).translate((xt, 10.50, 6.25))
@@ -1076,7 +1076,7 @@ def _captive_drive_pin(head_w, head_h, latch_span, conn_len):
     barb = Manifold.batch_hull([
         Manifold.extrude(pro._double_d(pro.BORE["shaft_d"], flats), 0.06).translate((0.0, 0.0, z_latch + 0.12)),
         Manifold.extrude(pro._double_d(7.60, flats, corners=False), 0.65).translate((0.0, 0.0, z_latch + 0.24)),
-        Manifold.extrude(pro._double_d(5.70, flats), 0.15).translate((0.0, 0.0, z_tip - 0.15)),
+        Manifold.extrude(pro._double_d(5.70, flats - 0.80), 0.15).translate((0.0, 0.0, z_tip - 0.15)),
     ])
     hole_stop = max(3.0, z_slot - 2.2)
     center_hole = Manifold.batch_hull([
@@ -1491,7 +1491,7 @@ def mom_wind_key(**_):
         + rrect(2.8, 6.5, 0.8).translate((7.80, 13.0))
     )
     handle = tp._xz_to_layflat(wing_cs, hy)
-    stem = pro.pin_solid("flats", 21.5, z0=8.5)
+    stem = pro.pin_solid("flats", 21.5, z0=8.5, tip_chamfer=(False, True))
     conn = pro._pin_conn("shaft_drive", "flats", 12.5, z0=17.0)
     return handle + stem, [conn], {"print_rotation_deg": pro.LAY_FLAT}
 
@@ -1592,10 +1592,11 @@ def mom_slam_plunger(**_):
     head_cs = rrect(18.0, 7.5, 1.8).translate((0.0, 3.75))
     bar_cs = rrect(12.6, 74.5, 1.4).translate((0.0, 43.75)) - rrect(7.0, 43.0, 3.4).translate((0.0, 57.0))
     body = tp._xz_to_layflat(head_cs + bar_cs, hy)
-    tail_outer = Manifold.extrude(pro._double_d(pro.BORE["shaft_d"], flats), 14.5).translate((0.0, 0.0, 79.5))
+    tail_outer = pro._tapered_dd_extrude(pro.BORE["shaft_d"], flats, 14.5, bot_tip=False, top_tip=True).translate((0.0, 0.0, 79.5))
     tail_hole = Manifold.batch_hull([
         Manifold.extrude(pro._teardrop(pro.BORE["shaft_center_hole"]), 0.1).translate((0.0, 0.0, 81.2)),
-        Manifold.extrude(pro._teardrop(pro.BORE["shaft_center_hole"]), 12.5).translate((0.0, 0.0, 82.0)),
+        Manifold.extrude(pro._teardrop(pro.BORE["shaft_center_hole"]), 11.4).translate((0.0, 0.0, 82.0)),
+        Manifold.extrude(pro._teardrop(1.20), 0.8).translate((0.0, 0.0, 93.8)),
     ])
     conn = pro._pin_conn("shaft_drive", "flats", 12.5, z0=81.2)
     return (body + tail_outer) - tail_hole, [conn], {"print_rotation_deg": pro.LAY_FLAT}
@@ -1673,7 +1674,7 @@ def mom_jet_slide_valve(**_):
         Manifold.extrude(_flat_floor_teardrop(7.05, fy), 0.2).translate((0.0, 0.0, 23.4)),
         Manifold.extrude(rod_cs, 0.2).translate((0.0, 0.0, 25.0)),
     ])
-    rod = Manifold.extrude(rod_cs, 13.3).translate((0.0, 0.0, 24.7))
+    rod = pro._tapered_dd_extrude(pro.BORE["shaft_d"], flats, 13.3, bot_tip=False, top_tip=True).translate((0.0, 0.0, 24.7))
     # Cross-port along X_assy with 50-deg teardrop apex along +Y_assy (+Z_print in LAY_FLAT = [90, 0, 0]) and 0.90 mm bed floor:
     port = Manifold.extrude(pro._teardrop(4.8, roof_deg=50, segs=48), 10.0).rotate((0, 90, 0)).translate((-5.0, 0.40, 21.5))
     m = (head + taper_plug + port_zone + ramp_to_rod + rod) - port
@@ -2061,7 +2062,7 @@ def pro_pilot_pin(**_):
     hh, flats = 1.50, pf["shaft_flats"]
     hy = flats / 2
     head = Manifold.extrude(pro._double_d(9.6, flats, corners=False), hh)
-    shank = Manifold.extrude(pro._double_d(pro.BORE["shaft_d"], flats), 30.10).translate((0.0, 0.0, hh - 0.10))
+    shank = pro._tapered_dd_extrude(pro.BORE["shaft_d"], flats, 30.10, bot_tip=False, top_tip=True).translate((0.0, 0.0, hh - 0.10))
     barb = Manifold.batch_hull([
         Manifold.extrude(pro._double_d(pro.BORE["shaft_d"], flats), 0.06).translate((0.0, 0.0, 14.12)),
         Manifold.extrude(pro._double_d(7.70, flats, corners=False), 0.65).translate((0.0, 0.0, 14.24)),

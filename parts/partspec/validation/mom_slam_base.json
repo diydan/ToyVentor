@@ -1,17 +1,17 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_mom_slam_base_P.stl",
-  "file_sha256": "25ac06d7538a73794ce39753f891333ed19c9c09b4ddd7e17893a8b08ba617ae",
+  "file_sha256": "c87c80fa26c0f95f91fc6933617ae067b99278065061e0e3e37a4aa9bdf9675e",
   "part_id": "mom_slam_base",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-11-02T00:36:05Z",
+  "checked_at": "2026-11-02T12:06:35Z",
   "metrics": {
     "bbox_mm": [
       62.3,
       38.0,
       21.0
     ],
-    "volume_cm3": 40.17,
+    "volume_cm3": 40.16,
     "surface_cm2": 132.5,
     "triangles": 3430,
     "ledges": [],
@@ -36,14 +36,14 @@
       "area_mm2": 93.7
     },
     {
-      "z_mm": 11.93,
-      "span_mm": 4.86,
-      "area_mm2": 78.7
+      "z_mm": 12.0,
+      "span_mm": 4.73,
+      "area_mm2": 76.7
     },
     {
-      "z_mm": 11.93,
+      "z_mm": 12.0,
       "span_mm": 3.55,
-      "area_mm2": 17.2
+      "area_mm2": 16.8
     }
   ],
   "checks": [
@@ -107,7 +107,7 @@
       "id": "V6_bridge_span",
       "level": "block",
       "result": "pass",
-      "value": 4.86,
+      "value": 4.73,
       "limit": 20,
       "detail": "4 bridge(s); widest unsupported span in mm"
     },

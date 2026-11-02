@@ -4,7 +4,7 @@
   "file_sha256": "1047b989bfcbf2f23be38ab250f6623cd9807aa6268aa7cd097c1fe9b95644b0",
   "part_id": "beam_str_tu07",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-11-02T00:27:34Z",
+  "checked_at": "2026-11-02T11:56:14Z",
   "metrics": {
     "bbox_mm": [
       87.5,
@@ -163,7 +163,7 @@
       0
     ],
     "engine": "PrusaSlicer-2.8.1",
-    "reused_from": "2026-11-01T21:30:05Z"
+    "reused_from": "2026-11-02T00:27:34Z"
   },
   "verdict": "pass",
   "summary": "Prints as is"

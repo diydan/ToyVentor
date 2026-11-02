@@ -1,25 +1,25 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_mom_jet_slide_valve_P.stl",
-  "file_sha256": "477d118543e848992cd53757ac6e2a3fb1208fc58b271498a8de51202ec9d871",
+  "file_sha256": "07ee4afa6f81b00b400d96f87f84e04839fe4d5be2c1776cf619434ac959da2a",
   "part_id": "mom_jet_slide_valve",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-11-02T00:37:03Z",
+  "checked_at": "2026-11-02T12:07:37Z",
   "metrics": {
     "bbox_mm": [
       9.6,
       38.0,
       9.17
     ],
-    "volume_cm3": 1.44,
-    "surface_cm2": 10.65,
-    "triangles": 1108,
+    "volume_cm3": 1.43,
+    "surface_cm2": 10.58,
+    "triangles": 1024,
     "ledges": [],
     "floating_contours": [],
     "layers": 46,
-    "bed_contact_mm2": 185.5,
+    "bed_contact_mm2": 182.8,
     "height_mm": 9.17,
-    "slenderness": 0.67,
+    "slenderness": 0.68,
     "centre_of_mass_over_contact": true,
     "min_wall_mm": null,
     "thin_wall_regions": []
@@ -110,9 +110,9 @@
       "id": "V9_bed_contact",
       "level": "info",
       "result": "pass",
-      "value": 185.5,
+      "value": 182.8,
       "limit": null,
-      "detail": "height / sqrt(contact) = 0.67; above about 3 the slicer often asks for a brim"
+      "detail": "height / sqrt(contact) = 0.68; above about 3 the slicer often asks for a brim"
     },
     {
       "id": "V8_wall_thickness",

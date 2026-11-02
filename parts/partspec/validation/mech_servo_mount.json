@@ -1,19 +1,19 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_mech_servo_mount_S.stl",
-  "file_sha256": "c75154a7358127cffcb2bbdb2fe8ffe6ec44e509491711d032aca56c33ee87e7",
+  "file_sha256": "79c8e625532c85e3351462cc3c9d474a5da6cfe72cadbca17896e16afb386519",
   "part_id": "mech_servo_mount",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-11-02T00:37:57Z",
+  "checked_at": "2026-11-02T12:08:55Z",
   "metrics": {
     "bbox_mm": [
       48.0,
       19.05,
       32.8
     ],
-    "volume_cm3": 7.46,
-    "surface_cm2": 48.15,
-    "triangles": 2642,
+    "volume_cm3": 7.44,
+    "surface_cm2": 48.06,
+    "triangles": 3250,
     "ledges": [],
     "floating_contours": [],
     "layers": 164,

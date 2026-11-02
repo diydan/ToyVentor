@@ -1,23 +1,23 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_gear_spur_z25_P.stl",
-  "file_sha256": "36d491e2f74a2e38e90e8cbc0e815628400d0c70a8376f41f6ee616e4dcf2d23",
+  "file_sha256": "3e975cb291430a30992c8300727e388461b5b8bb6ba8cd97acf42e080594b7ec",
   "part_id": "gear_spur_z25",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-11-02T00:29:24Z",
+  "checked_at": "2026-11-02T11:57:50Z",
   "metrics": {
     "bbox_mm": [
       67.32,
       67.45,
       6.25
     ],
-    "volume_cm3": 18.6,
-    "surface_cm2": 85.78,
-    "triangles": 29356,
+    "volume_cm3": 18.59,
+    "surface_cm2": 85.68,
+    "triangles": 29964,
     "ledges": [],
     "floating_contours": [],
     "layers": 31,
-    "bed_contact_mm2": 2976.1,
+    "bed_contact_mm2": 2969.4,
     "height_mm": 6.25,
     "slenderness": 0.11,
     "centre_of_mass_over_contact": true,
@@ -110,7 +110,7 @@
       "id": "V9_bed_contact",
       "level": "info",
       "result": "pass",
-      "value": 2976.1,
+      "value": 2969.4,
       "limit": null,
       "detail": "height / sqrt(contact) = 0.11; above about 3 the slicer often asks for a brim"
     },

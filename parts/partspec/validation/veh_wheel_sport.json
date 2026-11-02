@@ -1,23 +1,23 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_veh_wheel_sport_P.stl",
-  "file_sha256": "5af4c4c5b31d20d66fde63a1745f0d158a551db6dd216183d783d4890b9556ef",
+  "file_sha256": "3af7046a1bb4d570af1ddc5182ebf50a7a92092b0d902328d46f872dbb0deb23",
   "part_id": "veh_wheel_sport",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-11-02T00:32:49Z",
+  "checked_at": "2026-11-02T12:03:18Z",
   "metrics": {
     "bbox_mm": [
       35.96,
       35.96,
       13.5
     ],
-    "volume_cm3": 11.22,
-    "surface_cm2": 45.55,
-    "triangles": 2568,
+    "volume_cm3": 11.21,
+    "surface_cm2": 45.49,
+    "triangles": 3280,
     "ledges": [],
     "floating_contours": [],
     "layers": 67,
-    "bed_contact_mm2": 820.4,
+    "bed_contact_mm2": 813.7,
     "height_mm": 13.5,
     "slenderness": 0.47,
     "centre_of_mass_over_contact": true,
@@ -110,7 +110,7 @@
       "id": "V9_bed_contact",
       "level": "info",
       "result": "pass",
-      "value": 820.4,
+      "value": 813.7,
       "limit": null,
       "detail": "height / sqrt(contact) = 0.47; above about 3 the slicer often asks for a brim"
     },

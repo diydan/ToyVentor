@@ -1,23 +1,23 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_mech_servo_lid_P.stl",
-  "file_sha256": "6be847908635f4919bf88507e2551dae91a07eeea899a97d47fc9e957d0e0529",
+  "file_sha256": "f02786b5732c3928fffb44a368944f1594200bbcddeaac0b9b16b9fec2d18407",
   "part_id": "mech_servo_lid",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-11-02T00:37:57Z",
+  "checked_at": "2026-11-02T12:08:55Z",
   "metrics": {
     "bbox_mm": [
       48.0,
       12.4,
       6.25
     ],
-    "volume_cm3": 2.66,
-    "surface_cm2": 19.68,
-    "triangles": 1124,
+    "volume_cm3": 2.65,
+    "surface_cm2": 19.57,
+    "triangles": 1732,
     "ledges": [],
     "floating_contours": [],
     "layers": 31,
-    "bed_contact_mm2": 438.5,
+    "bed_contact_mm2": 425.0,
     "height_mm": 6.25,
     "slenderness": 0.3,
     "centre_of_mass_over_contact": true,
@@ -110,7 +110,7 @@
       "id": "V9_bed_contact",
       "level": "info",
       "result": "pass",
-      "value": 438.5,
+      "value": 425.0,
       "limit": null,
       "detail": "height / sqrt(contact) = 0.3; above about 3 the slicer often asks for a brim"
     },

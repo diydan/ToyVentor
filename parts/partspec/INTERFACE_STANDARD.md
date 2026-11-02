@@ -35,12 +35,12 @@ Every interface pitch is an integer multiple of the TU, so all product lines sha
 
 ### Hole grid (Pro)
 
-Pitch 1.0 TU (12.5 mm), halving down to 1/8 TU. Free bore 7.0 mm. Fixed bore flats 5.1 mm. Shaft 6.6 mm round, flats 5.0 mm, 2.0 mm centre hole. Pro hole grid. Free bore: shaft turns. Fixed bore: shaft drives.
+Pitch 1.0 TU (12.5 mm), halving down to 1/8 TU. Free bore 7.0 mm. Fixed bore flats 5.25 mm. Shaft 6.6 mm round, flats 5.0 mm, 2.0 mm centre hole. Pro hole grid. Free bore: shaft turns. Fixed bore: shaft drives (5.25 mm XY flats mate laid-flat 5.00 mm Z-flats with 0.40 mm mouth chamfers).
 
 
 ### Pro parts (pin, beam, gear)
 
-**Friction pin:** shaft 6.6 mm round, flats 5.0 mm, 2.0 mm centre hole; fins 0.4 mm wider across than the bore (target). Friction pin: flat-sided core (6.6 round, 5.0 flats) split open through both insertion ends with solid center web(s) between TU modules so the cantilever prongs flex elastically (<2% PLA strain); a fin on each round side at the centre of every TU stands fin_oversize_mm wider across than the free bore. Prints lying on a flat.
+**Friction pin:** shaft 6.6 mm round, flats 5.0 mm, 2.0 mm centre hole; fins 0.45 mm wider across than the bore (target). Friction pin: flat-sided core (6.6 round, 5.0 flats) split open through both insertion ends with solid center web(s) between TU modules so the cantilever prongs flex elastically (<2% PLA strain); a cylindrical double-D fin on each round side at the centre of every TU stands fin_oversize_mm wider across than the free bore. Prints lying on a flat.
 
 **Beam:** 1.0 TU section, longest 14 TU (175.0 mm); outside fillet 1.5 mm (0.5 mm on small features); hole-mouth chamfer 0.4 mm; bed-edge chamfer 0.5 mm. One bore on the centre of every TU cell along the length (first bore 0.5 TU from the end).
 
@@ -123,7 +123,7 @@ Fit is measured, not assumed. After a part is built it is seated on its matching
 - **T1 (block):** each measured gap equals the interface's design gap (fit / 2) within the faceting allowance, and the design gap itself is inside the limits: at most 0.2 mm play and 0.1 mm interference (radial).
 - **T2 (warn):** if both parts print with a surface error of up to +/-0.05 mm after calibration, the gap still stays inside those limits. The part's **fit window** is the printer surface offset range that satisfies both limits, and the calibration print has to land inside it (check F1).
 - **Fit matrix:** `build_check` seats every male stud connector on every complementary female connector in the catalog, measures each pair, and lists any connector with no partner. Every build also measures each connection it makes and warns with `fit_out_of_tolerance` if one is off.
-- **Fit classes:** `press` (studs in tubes, flat shafts in fixed bores) uses the limits above. `free`: A round pin or shaft that must turn in a free bore: it may never bind, and may rattle no more than this. TARGETS.; `friction`: Compliant friction-pin fins: interference is by design (fin_oversize / 2). Not measured here; retention needs a print.
+- **Fit classes:** `press` (studs in tubes, flat shafts in fixed bores) uses the limits above. `press`: A laid-flat double-D drive shaft (`Z = shaft_flats`) sliding into an XY `fixed` bore (`fixed_flats`): positive anti-rotation torque comes from the double-D corners while across-flats clearance absorbs FDM Z-height growth.; `free`: A round pin or shaft that must turn in a free bore: it may never bind, and may rattle no more than this. TARGETS.; `friction`: Compliant friction-pin fins: interference is by design (fin_oversize / 2). Not measured here; retention needs a print.
 - **Resolution:** fit-critical cylinders use 96 segments, so polygon error stays under 0.01 mm.
 
 | Tolerance value | mm |
@@ -133,7 +133,7 @@ Fit is measured, not assumed. After a part is built it is seated on its matching
 | `max_interference_mm` | 0.1 |
 | `max_play_mm` | 0.2 |
 | `design_gap_tol_mm` | 0.005 |
-| `classes` | {'free': {'max_interference_mm': 0.0, 'max_play_mm': 0.35, 'note': 'A round pin or shaft that must turn in a free bore: it may never bind, and may rattle no more than this. TARGETS.'}, 'friction': {'note': 'Compliant friction-pin fins: interference is by design (fin_oversize / 2). Not measured here; retention needs a print.'}} |
+| `classes` | {'press': {'max_interference_mm': 0.05, 'max_play_mm': 0.25, 'note': 'A laid-flat double-D drive shaft (`Z = shaft_flats`) sliding into an XY `fixed` bore (`fixed_flats`): positive anti-rotation torque comes from the double-D corners while across-flats clearance absorbs FDM Z-height growth.'}, 'free': {'max_interference_mm': 0.0, 'max_play_mm': 0.35, 'note': 'A round pin or shaft that must turn in a free bore: it may never bind, and may rattle no more than this. TARGETS.'}, 'friction': {'note': 'Compliant friction-pin fins: interference is by design (fin_oversize / 2). Not measured here; retention needs a print.'}} |
 
 TARGETS until the calibration print. A surface offset moves every material surface by that amount, so a stud and a tube that both print oversize by e lose 2e of radial gap. Surface error is the spread left after a printer's offsets are applied. Max interference is the deepest radial interference still pushable by hand; max play is the loosest radial clearance still held firmly.
 

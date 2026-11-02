@@ -1,10 +1,10 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_prop_guitar_P.stl",
-  "file_sha256": "48bd76259f69b0d77ba6f67fa8481c135d4f8567fc0c23afe0081745101f3bc0",
+  "file_sha256": "3ce061d149cb8ec41b2c71d6e9d9890ae5b9b6122e6962f061ef4c1f482f99ba",
   "part_id": "prop_guitar",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-11-02T00:32:43Z",
+  "checked_at": "2026-11-02T12:03:10Z",
   "metrics": {
     "bbox_mm": [
       26.99,
@@ -12,12 +12,12 @@
       6.6
     ],
     "volume_cm3": 7.27,
-    "surface_cm2": 49.2,
-    "triangles": 1544,
+    "surface_cm2": 49.16,
+    "triangles": 1772,
     "ledges": [],
     "floating_contours": [],
     "layers": 33,
-    "bed_contact_mm2": 1418.9,
+    "bed_contact_mm2": 1416.1,
     "height_mm": 6.6,
     "slenderness": 0.18,
     "centre_of_mass_over_contact": true,
@@ -62,7 +62,7 @@
       "id": "V4_no_steep_overhang",
       "level": "block",
       "result": "pass",
-      "value": 0.0,
+      "value": 0.01,
       "limit": 1.0,
       "detail": "mm2 of downward surface steeper than 45 deg (flat bridges excluded)"
     },
@@ -110,7 +110,7 @@
       "id": "V9_bed_contact",
       "level": "info",
       "result": "pass",
-      "value": 1418.9,
+      "value": 1416.1,
       "limit": null,
       "detail": "height / sqrt(contact) = 0.18; above about 3 the slicer often asks for a brim"
     },

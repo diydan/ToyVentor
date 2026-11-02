@@ -1,10 +1,10 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_prop_maracas_P.stl",
-  "file_sha256": "e0dd8f4c2df9f21685ba11007284af371586734d77ae41e475f6c85d9d48ca8f",
+  "file_sha256": "fccc1a0ba1d4e932aad3de09439804fff8b41457a937c92385001e73e20c895e",
   "part_id": "prop_maracas",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-11-02T00:32:43Z",
+  "checked_at": "2026-11-02T12:03:11Z",
   "metrics": {
     "bbox_mm": [
       26.99,
@@ -12,12 +12,12 @@
       6.8
     ],
     "volume_cm3": 4.61,
-    "surface_cm2": 31.75,
-    "triangles": 1052,
+    "surface_cm2": 31.71,
+    "triangles": 1280,
     "ledges": [],
     "floating_contours": [],
     "layers": 34,
-    "bed_contact_mm2": 887.4,
+    "bed_contact_mm2": 884.6,
     "height_mm": 6.8,
     "slenderness": 0.23,
     "centre_of_mass_over_contact": true,
@@ -62,7 +62,7 @@
       "id": "V4_no_steep_overhang",
       "level": "block",
       "result": "pass",
-      "value": 0.0,
+      "value": 0.01,
       "limit": 1.0,
       "detail": "mm2 of downward surface steeper than 45 deg (flat bridges excluded)"
     },
@@ -110,7 +110,7 @@
       "id": "V9_bed_contact",
       "level": "info",
       "result": "pass",
-      "value": 887.4,
+      "value": 884.6,
       "limit": null,
       "detail": "height / sqrt(contact) = 0.23; above about 3 the slicer often asks for a brim"
     },

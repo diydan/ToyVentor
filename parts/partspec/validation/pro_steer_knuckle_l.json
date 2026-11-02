@@ -1,19 +1,19 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_pro_steer_knuckle_l_P.stl",
-  "file_sha256": "0eac481b133ed84c70e0d39e0ee7821841252eeea3d10a3b4515887cd08d4f23",
+  "file_sha256": "fd1cb7c8fadd70f36aa0a0790a213818c905e5f8f6205ac5a91351017cc794db",
   "part_id": "pro_steer_knuckle_l",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-11-02T00:35:29Z",
+  "checked_at": "2026-11-02T12:05:52Z",
   "metrics": {
     "bbox_mm": [
       25.6,
       25.6,
       27.1
     ],
-    "volume_cm3": 3.71,
-    "surface_cm2": 35.08,
-    "triangles": 1906,
+    "volume_cm3": 3.7,
+    "surface_cm2": 35.04,
+    "triangles": 2134,
     "ledges": [],
     "floating_contours": [],
     "layers": 136,
@@ -36,9 +36,9 @@
   },
   "bridges": [
     {
-      "z_mm": 8.4,
-      "span_mm": 4.86,
-      "area_mm2": 55.4
+      "z_mm": 8.48,
+      "span_mm": 4.73,
+      "area_mm2": 54.0
     }
   ],
   "checks": [
@@ -102,7 +102,7 @@
       "id": "V6_bridge_span",
       "level": "block",
       "result": "pass",
-      "value": 4.86,
+      "value": 4.73,
       "limit": 20,
       "detail": "1 bridge(s); widest unsupported span in mm"
     },

@@ -82,11 +82,11 @@
       "fit_class": "PIN",
       "pitch_tu": 1.0,
       "free_d": 7.0,
-      "fixed_flats": 5.1,
+      "fixed_flats": 5.25,
       "shaft_d": 6.6,
       "shaft_flats": 5.0,
       "shaft_center_hole": 2.0,
-      "note": "Pro hole grid. Free bore: shaft turns. Fixed bore: shaft drives."
+      "note": "Pro hole grid. Free bore: shaft turns. Fixed bore: shaft drives (5.25 mm XY flats mate laid-flat 5.00 mm Z-flats with 0.40 mm mouth chamfers)."
     },
     "pin_friction": {
       "kind": "pin",
@@ -96,8 +96,8 @@
       "shaft_d": 6.6,
       "shaft_flats": 5.0,
       "shaft_center_hole": 2.0,
-      "fin_oversize_mm": 0.4,
-      "note": "Friction pin: flat-sided core (6.6 round, 5.0 flats) split open through both insertion ends with solid center web(s) between TU modules so the cantilever prongs flex elastically (<2% PLA strain); a fin on each round side at the centre of every TU stands fin_oversize_mm wider across than the free bore. Prints lying on a flat.",
+      "fin_oversize_mm": 0.45,
+      "note": "Friction pin: flat-sided core (6.6 round, 5.0 flats) split open through both insertion ends with solid center web(s) between TU modules so the cantilever prongs flex elastically (<2% PLA strain); a cylindrical double-D fin on each round side at the centre of every TU stands fin_oversize_mm wider across than the free bore. Prints lying on a flat.",
       "profile": "friction",
       "slot_width_mm": 2.2,
       "slot_end_mm": 1.0,
@@ -111,7 +111,7 @@
       "profile": "round",
       "shaft_d": 6.6,
       "shaft_flats": 5.6,
-      "note": "Free-turning pin with a 9.0 mm stop head and 5.6 mm bed-seating flats (>5.1 mm fixed bore so it cannot enter fixed hubs, while turning freely in 7.0 mm round bores). Prints lying on a flat so filament runs axially.",
+      "note": "Free-turning pin with a 9.0 mm stop head and 5.6 mm bed-seating flats (>5.25 mm fixed bore so it cannot enter fixed hubs, while turning freely in 7.0 mm round bores with 42-deg self-supporting flank bevels). Prints lying on a flat so filament runs axially.",
       "head_d_mm": 9.0,
       "head_h_mm": 1.5
     },
@@ -443,6 +443,11 @@
     "design_gap_tol_mm": 0.005,
     "note": "TARGETS until the calibration print. A surface offset moves every material surface by that amount, so a stud and a tube that both print oversize by e lose 2e of radial gap. Surface error is the spread left after a printer's offsets are applied. Max interference is the deepest radial interference still pushable by hand; max play is the loosest radial clearance still held firmly.",
     "classes": {
+      "press": {
+        "max_interference_mm": 0.05,
+        "max_play_mm": 0.25,
+        "note": "A laid-flat double-D drive shaft (`Z = shaft_flats`) sliding into an XY `fixed` bore (`fixed_flats`): positive anti-rotation torque comes from the double-D corners while across-flats clearance absorbs FDM Z-height growth."
+      },
       "free": {
         "max_interference_mm": 0.0,
         "max_play_mm": 0.35,

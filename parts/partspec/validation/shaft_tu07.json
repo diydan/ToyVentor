@@ -1,23 +1,23 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_shaft_tu07_P.stl",
-  "file_sha256": "7bfbc122cff37f38d4669f13313dfc242f38c62086f7e7067bf38dddc9568d92",
+  "file_sha256": "e2fc33e274c6b429e0211e84eedad8913a13965e4b778578d8052bb9ef641d58",
   "part_id": "shaft_tu07",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-11-02T00:27:40Z",
+  "checked_at": "2026-11-02T11:56:20Z",
   "metrics": {
     "bbox_mm": [
       6.6,
       87.5,
       5.0
     ],
-    "volume_cm3": 2.28,
-    "surface_cm2": 24.05,
-    "triangles": 384,
+    "volume_cm3": 2.27,
+    "surface_cm2": 23.97,
+    "triangles": 872,
     "ledges": [],
     "floating_contours": [],
     "layers": 25,
-    "bed_contact_mm2": 395.9,
+    "bed_contact_mm2": 389.9,
     "height_mm": 5.0,
     "slenderness": 0.25,
     "centre_of_mass_over_contact": true,
@@ -62,7 +62,7 @@
       "id": "V4_no_steep_overhang",
       "level": "block",
       "result": "pass",
-      "value": 0.0,
+      "value": 0.01,
       "limit": 1.0,
       "detail": "mm2 of downward surface steeper than 45 deg (flat bridges excluded)"
     },
@@ -110,7 +110,7 @@
       "id": "V9_bed_contact",
       "level": "info",
       "result": "pass",
-      "value": 395.9,
+      "value": 389.9,
       "limit": null,
       "detail": "height / sqrt(contact) = 0.25; above about 3 the slicer often asks for a brim"
     },
@@ -121,55 +121,10 @@
       "value": 0,
       "limit": 0,
       "detail": "regions where the wall is under 0.8 mm (two nozzle widths) over 2.0 mm2, or under 0.4 mm (one nozzle width) over 0.25 mm2; sharp edges and slivers are ignored"
-    },
-    {
-      "id": "S1_slices",
-      "level": "block",
-      "result": "pass",
-      "value": null,
-      "limit": null,
-      "detail": "sliced without errors"
-    },
-    {
-      "id": "S2_slicer_stability",
-      "level": "warn",
-      "result": "pass",
-      "value": null,
-      "limit": null,
-      "detail": "low bed adhesion without a brim; a 3 mm brim clears it"
-    },
-    {
-      "id": "S3_slicer_blocking",
-      "level": "block",
-      "result": "pass",
-      "value": null,
-      "limit": null,
-      "detail": "nothing the slicer would print in mid-air"
     }
   ],
-  "print_settings": {
-    "brim_width_mm": 3
-  },
-  "slicer": {
-    "ok": true,
-    "brim_mm": 3,
-    "seconds_to_slice": 0.8,
-    "warnings": [],
-    "filament_g": 2.97,
-    "filament_m": 1.0,
-    "filament_cost_usd": 0.06,
-    "print_time_s": 939,
-    "layers": 25,
-    "warnings_without_brim": [
-      "Low bed adhesion"
-    ],
-    "brims_tried_mm": [
-      0,
-      3
-    ],
-    "engine": "PrusaSlicer-2.8.1",
-    "reused_from": "2026-11-01T21:30:10Z"
-  },
-  "verdict": "pass_with_settings",
-  "summary": "Prints with brim_width_mm = 3"
+  "print_settings": {},
+  "slicer": null,
+  "verdict": "pass",
+  "summary": "Prints as is"
 }

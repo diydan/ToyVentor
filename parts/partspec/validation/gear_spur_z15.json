@@ -1,25 +1,25 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_gear_spur_z15_P.stl",
-  "file_sha256": "3c615b67e93b72568e642465b8e85493767b0e7dabbeca0b09fd1c2529b00ca8",
+  "file_sha256": "de5039fde294d7cb30e23e563a7a4dbcdbf085f8bf4f383532048963f4b63a98",
   "part_id": "gear_spur_z15",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-11-02T00:27:55Z",
+  "checked_at": "2026-11-02T11:56:33Z",
   "metrics": {
     "bbox_mm": [
       42.18,
       42.39,
       6.25
     ],
-    "volume_cm3": 6.44,
-    "surface_cm2": 37.08,
-    "triangles": 15076,
+    "volume_cm3": 6.43,
+    "surface_cm2": 36.98,
+    "triangles": 15684,
     "ledges": [],
     "floating_contours": [],
     "layers": 31,
-    "bed_contact_mm2": 1030.8,
+    "bed_contact_mm2": 1024.1,
     "height_mm": 6.25,
-    "slenderness": 0.19,
+    "slenderness": 0.2,
     "centre_of_mass_over_contact": true,
     "min_wall_mm": null,
     "thin_wall_regions": []
@@ -110,9 +110,9 @@
       "id": "V9_bed_contact",
       "level": "info",
       "result": "pass",
-      "value": 1030.8,
+      "value": 1024.1,
       "limit": null,
-      "detail": "height / sqrt(contact) = 0.19; above about 3 the slicer often asks for a brim"
+      "detail": "height / sqrt(contact) = 0.2; above about 3 the slicer often asks for a brim"
     },
     {
       "id": "V8_wall_thickness",

@@ -1,10 +1,10 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_pro_captive_pin_28_P.stl",
-  "file_sha256": "1a86df406a6a709a8a1c2e1b295dfb6a7aee52ab3e193b9cfac0c0ad3c5c9413",
+  "file_sha256": "15f7f483ce8868aa0a05132e469b1f211a809d5f8f846478ccc4a21fb5694708",
   "part_id": "pro_captive_pin_28",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-11-02T00:37:00Z",
+  "checked_at": "2026-11-02T12:07:31Z",
   "metrics": {
     "bbox_mm": [
       9.6,
@@ -12,14 +12,14 @@
       5.0
     ],
     "volume_cm3": 0.74,
-    "surface_cm2": 8.71,
-    "triangles": 1012,
+    "surface_cm2": 8.68,
+    "triangles": 952,
     "ledges": [],
     "floating_contours": [],
     "layers": 25,
-    "bed_contact_mm2": 117.3,
+    "bed_contact_mm2": 112.9,
     "height_mm": 5.0,
-    "slenderness": 0.46,
+    "slenderness": 0.47,
     "centre_of_mass_over_contact": true,
     "min_wall_mm": null,
     "thin_wall_regions": []
@@ -110,9 +110,9 @@
       "id": "V9_bed_contact",
       "level": "info",
       "result": "pass",
-      "value": 117.3,
+      "value": 112.9,
       "limit": null,
-      "detail": "height / sqrt(contact) = 0.46; above about 3 the slicer often asks for a brim"
+      "detail": "height / sqrt(contact) = 0.47; above about 3 the slicer often asks for a brim"
     },
     {
       "id": "V8_wall_thickness",

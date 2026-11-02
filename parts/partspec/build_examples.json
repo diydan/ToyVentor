@@ -319,8 +319,8 @@
         "female": "bu.hub",
         "engaged_studs": 1,
         "fit": "press",
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.125,
+        "gap_max_mm": 0.125
       }
     ]
   },
@@ -408,16 +408,16 @@
         "female": "g10.hub",
         "engaged_studs": 1,
         "fit": "press",
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.125,
+        "gap_max_mm": 0.125
       },
       {
         "male": "s3.axis",
         "female": "g20.hub",
         "engaged_studs": 1,
         "fit": "press",
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.125,
+        "gap_max_mm": 0.125
       }
     ]
   },
@@ -486,7 +486,7 @@
       },
       {
         "code": "collision",
-        "detail": "g10 and g20 overlap by 1088 mm3"
+        "detail": "g10 and g20 overlap by 1087 mm3"
       }
     ],
     "warnings": [],
@@ -512,16 +512,16 @@
         "female": "g10.hub",
         "engaged_studs": 1,
         "fit": "press",
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.125,
+        "gap_max_mm": 0.125
       },
       {
         "male": "s2.axis",
         "female": "g20.hub",
         "engaged_studs": 1,
         "fit": "press",
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.125,
+        "gap_max_mm": 0.125
       }
     ]
   },
@@ -868,16 +868,16 @@
         "female": "gearA.hub",
         "engaged_studs": 1,
         "fit": "press",
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.125,
+        "gap_max_mm": 0.125
       },
       {
         "male": "shaftB.axis",
         "female": "gearB.hub",
         "engaged_studs": 1,
         "fit": "press",
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.125,
+        "gap_max_mm": 0.125
       }
     ]
   },
@@ -1135,32 +1135,32 @@
         "female": "cross.axle_z",
         "engaged_studs": 1,
         "fit": "press",
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.125,
+        "gap_max_mm": 0.125
       },
       {
         "male": "axle.axis",
         "female": "cross.axle_y",
         "engaged_studs": 1,
         "fit": "press",
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.125,
+        "gap_max_mm": 0.125
       },
       {
         "male": "axle.axis",
         "female": "wheelA.hub",
         "engaged_studs": 1,
         "fit": "press",
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.125,
+        "gap_max_mm": 0.125
       },
       {
         "male": "axle.axis",
         "female": "wheelB.hub",
         "engaged_studs": 1,
         "fit": "press",
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.125,
+        "gap_max_mm": 0.125
       }
     ]
   },
@@ -1219,7 +1219,7 @@
       },
       {
         "code": "collision",
-        "detail": "cross and axle overlap by 111 mm3"
+        "detail": "cross and axle overlap by 110 mm3"
       }
     ],
     "warnings": [],
@@ -1237,8 +1237,8 @@
         "female": "cross.axle_z",
         "engaged_studs": 1,
         "fit": "press",
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.125,
+        "gap_max_mm": 0.125
       }
     ]
   },
@@ -1293,13 +1293,13 @@
     "errors": [
       {
         "code": "collision",
-        "detail": "cross and axle overlap by 54 mm3"
+        "detail": "cross and axle overlap by 46 mm3"
       }
     ],
     "warnings": [
       {
         "code": "fit_out_of_tolerance",
-        "detail": "axle.axis with cross.axle_y: measured gap -0.746 to -0.746 mm is outside the press limits"
+        "detail": "axle.axis with cross.axle_y: measured gap -0.671 to -0.671 mm is outside the press limits"
       }
     ],
     "edges": [
@@ -1316,16 +1316,16 @@
         "female": "cross.axle_z",
         "engaged_studs": 1,
         "fit": "press",
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.125,
+        "gap_max_mm": 0.125
       },
       {
         "male": "axle.axis",
         "female": "cross.axle_y",
         "engaged_studs": 1,
         "fit": "press",
-        "gap_min_mm": -0.746,
-        "gap_max_mm": -0.746
+        "gap_min_mm": -0.671,
+        "gap_max_mm": -0.671
       }
     ]
   },
@@ -1445,16 +1445,16 @@
         "female": "wheelL.hub",
         "engaged_studs": 1,
         "fit": "press",
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.125,
+        "gap_max_mm": 0.125
       },
       {
         "male": "axle.axis",
         "female": "wheelR.hub",
         "engaged_studs": 1,
         "fit": "press",
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.125,
+        "gap_max_mm": 0.125
       }
     ]
   },
@@ -1565,8 +1565,8 @@
         "female": "head.face_slot",
         "engaged_studs": 1,
         "fit": "press",
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.125,
+        "gap_max_mm": 0.125
       },
       {
         "male": "head.top_studs",
@@ -1681,8 +1681,8 @@
         "female": "head.face_slot",
         "engaged_studs": 1,
         "fit": "press",
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.125,
+        "gap_max_mm": 0.125
       },
       {
         "male": "head.top_studs",
@@ -1800,8 +1800,8 @@
         "female": "head.face_slot",
         "engaged_studs": 1,
         "fit": "press",
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.125,
+        "gap_max_mm": 0.125
       },
       {
         "male": "head.top_studs",
@@ -2095,32 +2095,32 @@
         "female": "wl_f.hub",
         "engaged_studs": 1,
         "fit": "press",
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.125,
+        "gap_max_mm": 0.125
       },
       {
         "male": "ax_f.axis",
         "female": "wr_f.hub",
         "engaged_studs": 1,
         "fit": "press",
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.125,
+        "gap_max_mm": 0.125
       },
       {
         "male": "ax_r.axis",
         "female": "wl_r.hub",
         "engaged_studs": 1,
         "fit": "press",
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.125,
+        "gap_max_mm": 0.125
       },
       {
         "male": "ax_r.axis",
         "female": "wr_r.hub",
         "engaged_studs": 1,
         "fit": "press",
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.125,
+        "gap_max_mm": 0.125
       }
     ]
   },
@@ -2383,32 +2383,32 @@
         "female": "wl_f.hub",
         "engaged_studs": 1,
         "fit": "press",
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.125,
+        "gap_max_mm": 0.125
       },
       {
         "male": "ax_f.axis",
         "female": "wr_f.hub",
         "engaged_studs": 1,
         "fit": "press",
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.125,
+        "gap_max_mm": 0.125
       },
       {
         "male": "ax_r.axis",
         "female": "wl_r.hub",
         "engaged_studs": 1,
         "fit": "press",
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.125,
+        "gap_max_mm": 0.125
       },
       {
         "male": "ax_r.axis",
         "female": "wr_r.hub",
         "engaged_studs": 1,
         "fit": "press",
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.125,
+        "gap_max_mm": 0.125
       }
     ]
   },
@@ -2591,16 +2591,16 @@
         "female": "wm_f.hub",
         "engaged_studs": 1,
         "fit": "press",
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.125,
+        "gap_max_mm": 0.125
       },
       {
         "male": "ax_r.axis",
         "female": "wm_r.hub",
         "engaged_studs": 1,
         "fit": "press",
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.125,
+        "gap_max_mm": 0.125
       }
     ]
   },
@@ -2810,16 +2810,16 @@
         "female": "wm_f.hub",
         "engaged_studs": 1,
         "fit": "press",
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.125,
+        "gap_max_mm": 0.125
       },
       {
         "male": "ax_r.axis",
         "female": "wm_r.hub",
         "engaged_studs": 1,
         "fit": "press",
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.125,
+        "gap_max_mm": 0.125
       },
       {
         "male": "moto_cowling.tank_studs",
@@ -2952,32 +2952,32 @@
         "female": "wl_f.hub",
         "engaged_studs": 1,
         "fit": "press",
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.125,
+        "gap_max_mm": 0.125
       },
       {
         "male": "ax_f.axis",
         "female": "wr_f.hub",
         "engaged_studs": 1,
         "fit": "press",
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.125,
+        "gap_max_mm": 0.125
       },
       {
         "male": "ax_r.axis",
         "female": "wl_r.hub",
         "engaged_studs": 1,
         "fit": "press",
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.125,
+        "gap_max_mm": 0.125
       },
       {
         "male": "ax_r.axis",
         "female": "wr_r.hub",
         "engaged_studs": 1,
         "fit": "press",
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.125,
+        "gap_max_mm": 0.125
       }
     ]
   },
@@ -3275,8 +3275,8 @@
         "female": "main_rotor.hub",
         "engaged_studs": 1,
         "fit": "press",
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.125,
+        "gap_max_mm": 0.125
       }
     ]
   },
@@ -3421,32 +3421,32 @@
         "female": "steer_bridge.kingpins",
         "engaged_studs": 1,
         "fit": "press",
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.125,
+        "gap_max_mm": 0.125
       },
       {
         "male": "kingpin_r.axis",
         "female": "steer_bridge.kingpins",
         "engaged_studs": 1,
         "fit": "press",
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.125,
+        "gap_max_mm": 0.125
       },
       {
         "male": "steer_column.axis",
         "female": "steer_pinion.hub",
         "engaged_studs": 1,
         "fit": "press",
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.125,
+        "gap_max_mm": 0.125
       },
       {
         "male": "steer_column.axis",
         "female": "steer_wheel.hub",
         "engaged_studs": 1,
         "fit": "press",
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.125,
+        "gap_max_mm": 0.125
       },
       {
         "male": "kingpin_l.axis",
@@ -3768,7 +3768,7 @@
       },
       {
         "code": "collision",
-        "detail": "bu and pin overlap by 24 mm3"
+        "detail": "bu and pin overlap by 15 mm3"
       }
     ],
     "warnings": [],

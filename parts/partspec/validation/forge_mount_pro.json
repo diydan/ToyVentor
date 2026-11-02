@@ -4,7 +4,7 @@
   "file_sha256": "dfdbb15df044e0f70373e4a5cffbac8bf6001c1234ba962e895af080a1776166",
   "part_id": "forge_mount_pro",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-11-02T00:29:31Z",
+  "checked_at": "2026-11-02T11:57:56Z",
   "metrics": {
     "bbox_mm": [
       62.5,
@@ -163,7 +163,7 @@
       0
     ],
     "engine": "PrusaSlicer-2.8.1",
-    "reused_from": "2026-11-01T21:31:47Z"
+    "reused_from": "2026-11-02T00:29:31Z"
   },
   "verdict": "pass",
   "summary": "Prints as is"

@@ -1,25 +1,25 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_pin_free_tu03_P.stl",
-  "file_sha256": "99b58558990f405ca4cec9614b2f1f0729805969800bd69a3b2946faedcebb3d",
+  "file_sha256": "b7af6eda2d0bd8bfd51d30996000ac5ab3bc037a492d252248b6f50260540577",
   "part_id": "pin_free_tu03",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-11-02T00:35:30Z",
+  "checked_at": "2026-11-02T12:05:52Z",
   "metrics": {
     "bbox_mm": [
       9.0,
-      38.99,
+      39.0,
       5.6
     ],
-    "volume_cm3": 1.26,
-    "surface_cm2": 8.96,
-    "triangles": 444,
+    "volume_cm3": 1.24,
+    "surface_cm2": 8.87,
+    "triangles": 416,
     "ledges": [],
     "floating_contours": [],
     "layers": 28,
-    "bed_contact_mm2": 152.9,
+    "bed_contact_mm2": 147.4,
     "height_mm": 5.6,
-    "slenderness": 0.45,
+    "slenderness": 0.46,
     "centre_of_mass_over_contact": true,
     "min_wall_mm": null,
     "thin_wall_regions": []
@@ -110,9 +110,9 @@
       "id": "V9_bed_contact",
       "level": "info",
       "result": "pass",
-      "value": 152.9,
+      "value": 147.4,
       "limit": null,
-      "detail": "height / sqrt(contact) = 0.45; above about 3 the slicer often asks for a brim"
+      "detail": "height / sqrt(contact) = 0.46; above about 3 the slicer often asks for a brim"
     },
     {
       "id": "V8_wall_thickness",

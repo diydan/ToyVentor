@@ -1,25 +1,25 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_veh_wheel_moto_P.stl",
-  "file_sha256": "dcd21119d1db09ee046973335ec9ffd9429371fd9787b7ae844dd9f527d90420",
+  "file_sha256": "2e4757be080ce9acf77c2f9ce6f63b7b0a96f0b2c1a8e37c9ea6d6e927c1018d",
   "part_id": "veh_wheel_moto",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-11-02T00:32:50Z",
+  "checked_at": "2026-11-02T12:03:19Z",
   "metrics": {
     "bbox_mm": [
       35.97,
       35.97,
       14.0
     ],
-    "volume_cm3": 11.67,
-    "surface_cm2": 42.55,
-    "triangles": 2404,
+    "volume_cm3": 11.66,
+    "surface_cm2": 42.46,
+    "triangles": 3012,
     "ledges": [],
     "floating_contours": [],
     "layers": 70,
-    "bed_contact_mm2": 739.6,
+    "bed_contact_mm2": 732.9,
     "height_mm": 14.0,
-    "slenderness": 0.51,
+    "slenderness": 0.52,
     "centre_of_mass_over_contact": true,
     "min_wall_mm": null,
     "thin_wall_regions": []
@@ -110,9 +110,9 @@
       "id": "V9_bed_contact",
       "level": "info",
       "result": "pass",
-      "value": 739.6,
+      "value": 732.9,
       "limit": null,
-      "detail": "height / sqrt(contact) = 0.51; above about 3 the slicer often asks for a brim"
+      "detail": "height / sqrt(contact) = 0.52; above about 3 the slicer often asks for a brim"
     },
     {
       "id": "V8_wall_thickness",

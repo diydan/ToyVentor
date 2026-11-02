@@ -1,23 +1,23 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_mom_flywheel_rotor_P.stl",
-  "file_sha256": "72bd9d16b31df62b7bfc47fc67954c9257e9455746e26a55155016b5e335407a",
+  "file_sha256": "c81b31ff97d025b2353c2e3d4a785cc2d6408532e1dc9e9d2d1ce47c0a2a4ac6",
   "part_id": "mom_flywheel_rotor",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-11-02T00:36:59Z",
+  "checked_at": "2026-11-02T12:07:31Z",
   "metrics": {
     "bbox_mm": [
       42.0,
       42.0,
       12.0
     ],
-    "volume_cm3": 16.15,
-    "surface_cm2": 44.15,
-    "triangles": 1112,
+    "volume_cm3": 16.13,
+    "surface_cm2": 44.06,
+    "triangles": 1720,
     "ledges": [],
     "floating_contours": [],
     "layers": 60,
-    "bed_contact_mm2": 1261.7,
+    "bed_contact_mm2": 1255.0,
     "height_mm": 12.0,
     "slenderness": 0.34,
     "centre_of_mass_over_contact": true,
@@ -110,7 +110,7 @@
       "id": "V9_bed_contact",
       "level": "info",
       "result": "pass",
-      "value": 1261.7,
+      "value": 1255.0,
       "limit": null,
       "detail": "height / sqrt(contact) = 0.34; above about 3 the slicer often asks for a brim"
     },

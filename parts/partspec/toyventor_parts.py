@@ -1877,7 +1877,7 @@ def _face_plate_finish(mask_bed, stem_tu):
     mask_bed = mask_bed ^ Manifold.cube((120.0, 120.0, 60.0), center=False).translate((-60.0, -60.0, chin_trim))
     mask_part = mask_bed.translate((0.0, 0.0, -FACE_STEM_ZB)).rotate((-90.0, 0.0, 0.0))
     stem_len = stem_tu * pro.TU
-    stem = pro.pin_solid("flats", stem_len + 0.35, z0=-0.35)
+    stem = pro.pin_solid("flats", stem_len + 0.35, z0=-0.35, tip_chamfer=(False, True))
     m = mask_part + stem
     conn = pro._pin_conn("shaft_drive", "flats", stem_len, z0=0.0)
     return m, [conn], {"print_rotation_deg": [90, 0, 0]}
@@ -3194,7 +3194,7 @@ def prop_wrench(grip_tu=3, **_):
     """Open-jaw ToyVentor spanner on a 6.60 mm flat-sided Pro shaft (LAY_FLAT, fits C-grip hand and Pro bores)."""
     L = grip_tu * pro.TU
     hy = pro.BORE["shaft_flats"] / 2
-    grip = pro.pin_solid("flats", L + 4.0)
+    grip = pro.pin_solid("flats", L + 4.0, tip_chamfer=(True, False))
     ring_outer = CrossSection.circle(11.5, 64).translate((0.0, L + 12.5))
     neck = CrossSection.square((6.4, 8.0), center=True).translate((0.0, L + 2.5))
     jaw_slot = CrossSection.square((9.6, 13.0), center=True).translate((0.0, L + 17.5))
@@ -3209,7 +3209,7 @@ def prop_star_shield(grip_tu=2, **_):
     """Star-emblem shield/wand on a 2 TU (25 mm) 6.60 mm flat-sided Pro handle (LAY_FLAT)."""
     L = grip_tu * pro.TU
     hy = pro.BORE["shaft_flats"] / 2
-    grip = pro.pin_solid("flats", L + 6.0)
+    grip = pro.pin_solid("flats", L + 6.0, tip_chamfer=(True, False))
     cz = L + 19.0
     pts = []
     for k in range(10):
@@ -3674,7 +3674,7 @@ def veh_handlebar_fork(stem_tu=2, **_):
     """Scooter and Motorbike T-bar steering stem with twin 6.60 mm Pro-shaft handgrips (LAY_FLAT)."""
     L_stem = stem_tu * pro.TU
     hy = pro.BORE["shaft_flats"] / 2
-    stem = pro.pin_solid("flats", L_stem + 12.0)
+    stem = pro.pin_solid("flats", L_stem + 12.0, tip_chamfer=(True, False))
     riser_pts = [(-3.2, 27.0), (3.2, 27.0), (11.0, 41.8), (-11.0, 41.8)]
     riser = _xz_to_layflat(CrossSection([np.array(riser_pts)]), hy)
     bar_sec = pro._double_d(pro.BORE["shaft_d"], pro.BORE["shaft_flats"])

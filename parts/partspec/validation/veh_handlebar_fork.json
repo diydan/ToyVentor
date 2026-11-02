@@ -1,10 +1,10 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_veh_handlebar_fork_P.stl",
-  "file_sha256": "c28bc1b501b21d766ea46740ab2e72b70ba3920f95096581bb01eb942a01d791",
+  "file_sha256": "d19862271920b2b46ff501fd92619ada23a096d9c04256b3e604a5b0d667e83e",
   "part_id": "veh_handlebar_fork",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-11-02T00:33:58Z",
+  "checked_at": "2026-11-02T12:04:19Z",
   "metrics": {
     "bbox_mm": [
       52.0,
@@ -12,12 +12,12 @@
       6.6
     ],
     "volume_cm3": 2.9,
-    "surface_cm2": 21.72,
-    "triangles": 1244,
+    "surface_cm2": 21.68,
+    "triangles": 1408,
     "ledges": [],
     "floating_contours": [],
     "layers": 33,
-    "bed_contact_mm2": 497.3,
+    "bed_contact_mm2": 493.6,
     "height_mm": 6.6,
     "slenderness": 0.3,
     "centre_of_mass_over_contact": true,
@@ -62,7 +62,7 @@
       "id": "V4_no_steep_overhang",
       "level": "block",
       "result": "pass",
-      "value": 0.0,
+      "value": 0.01,
       "limit": 1.0,
       "detail": "mm2 of downward surface steeper than 45 deg (flat bridges excluded)"
     },
@@ -110,7 +110,7 @@
       "id": "V9_bed_contact",
       "level": "info",
       "result": "pass",
-      "value": 497.3,
+      "value": 493.6,
       "limit": null,
       "detail": "height / sqrt(contact) = 0.3; above about 3 the slicer often asks for a brim"
     },

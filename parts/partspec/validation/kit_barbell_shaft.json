@@ -1,23 +1,23 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_kit_barbell_shaft_P.stl",
-  "file_sha256": "cca820829939d5ab60eddcfdc60c789d06cbbe5f0070e617cdc21ac88b319ab4",
+  "file_sha256": "0ea8412091bd7f995b8d1b807063cbc72ecc5aff59c4e505f4fa2a7fb08a9950",
   "part_id": "kit_barbell_shaft",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-11-02T00:34:33Z",
+  "checked_at": "2026-11-02T12:04:52Z",
   "metrics": {
     "bbox_mm": [
       6.6,
       78.0,
       5.0
     ],
-    "volume_cm3": 2.01,
-    "surface_cm2": 21.43,
-    "triangles": 400,
+    "volume_cm3": 2.0,
+    "surface_cm2": 21.37,
+    "triangles": 476,
     "ledges": [],
     "floating_contours": [],
     "layers": 25,
-    "bed_contact_mm2": 352.9,
+    "bed_contact_mm2": 348.7,
     "height_mm": 5.0,
     "slenderness": 0.27,
     "centre_of_mass_over_contact": true,
@@ -110,7 +110,7 @@
       "id": "V9_bed_contact",
       "level": "info",
       "result": "pass",
-      "value": 352.9,
+      "value": 348.7,
       "limit": null,
       "detail": "height / sqrt(contact) = 0.27; above about 3 the slicer often asks for a brim"
     },

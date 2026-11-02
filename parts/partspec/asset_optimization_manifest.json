@@ -181,7 +181,7 @@
       }
     },
     "gear-spur-z10": {
-      "source_sha256": "8d22fe3fa35c1309",
+      "source_sha256": "dcfbea9eb46eb96b",
       "finish_class": "precision_gear_pin",
       "print_simplify_mm": 0.005,
       "web_simplify_mm": 0.055,
@@ -199,7 +199,7 @@
       }
     },
     "gear-spur-z20": {
-      "source_sha256": "21302f518feafb37",
+      "source_sha256": "9b32cb0fe4f598e5",
       "finish_class": "precision_gear_pin",
       "print_simplify_mm": 0.005,
       "web_simplify_mm": 0.055,
@@ -253,7 +253,7 @@
       }
     },
     "kit-barbell-shaft": {
-      "source_sha256": "cca820829939d5ab",
+      "source_sha256": "0ea8412091bd7f99",
       "finish_class": "precision_gear_pin",
       "print_simplify_mm": 0.005,
       "web_simplify_mm": 0.055,
@@ -343,7 +343,7 @@
       }
     },
     "kit-rotor-blade": {
-      "source_sha256": "80cee62ee207e950",
+      "source_sha256": "32d49708fd2a6fea",
       "finish_class": "precision_gear_pin",
       "print_simplify_mm": 0.005,
       "web_simplify_mm": 0.055,
@@ -397,7 +397,7 @@
       }
     },
     "kit-spinner-pin": {
-      "source_sha256": "c8f08b3b3fa17309",
+      "source_sha256": "8c9434287e41d164",
       "finish_class": "precision_gear_pin",
       "print_simplify_mm": 0.005,
       "web_simplify_mm": 0.055,
@@ -451,7 +451,7 @@
       }
     },
     "kit-wheel-giant": {
-      "source_sha256": "f4d564685705b827",
+      "source_sha256": "cf06a325da984a60",
       "finish_class": "precision_gear_pin",
       "print_simplify_mm": 0.005,
       "web_simplify_mm": 0.055,
@@ -469,7 +469,7 @@
       }
     },
     "kit-wheel-med": {
-      "source_sha256": "73ae3fae0251f8ac",
+      "source_sha256": "676c762b51d9b72a",
       "finish_class": "precision_gear_pin",
       "print_simplify_mm": 0.005,
       "web_simplify_mm": 0.055,
@@ -505,7 +505,7 @@
       }
     },
     "kit-yoke-hbar": {
-      "source_sha256": "bf0002a2088ef70d",
+      "source_sha256": "330c6d54bd2bfbe3",
       "finish_class": "precision_gear_pin",
       "print_simplify_mm": 0.005,
       "web_simplify_mm": 0.09,
@@ -613,7 +613,7 @@
       }
     },
     "mech-servo-mount": {
-      "source_sha256": "c75154a7358127cf",
+      "source_sha256": "79c8e625532c85e3",
       "finish_class": "prismatic_structural",
       "print_simplify_mm": 0.016,
       "web_simplify_mm": 0.09,
@@ -757,7 +757,7 @@
       }
     },
     "pin-friction": {
-      "source_sha256": "48d586fadf8b137c",
+      "source_sha256": "d75c6542e4c6d489",
       "finish_class": "precision_gear_pin",
       "print_simplify_mm": 0.005,
       "web_simplify_mm": 0.055,
@@ -793,7 +793,7 @@
       }
     },
     "pro-steer-bridge": {
-      "source_sha256": "3d75223da91034ef",
+      "source_sha256": "ef24c5d02dc22ef8",
       "finish_class": "prismatic_structural",
       "print_simplify_mm": 0.016,
       "web_simplify_mm": 0.09,
@@ -811,7 +811,7 @@
       }
     },
     "prop-star-shield": {
-      "source_sha256": "d3fc96fa3901f01e",
+      "source_sha256": "92a4f823ccb340bb",
       "finish_class": "prismatic_structural",
       "print_simplify_mm": 0.016,
       "web_simplify_mm": 0.09,
@@ -829,7 +829,7 @@
       }
     },
     "prop-wrench": {
-      "source_sha256": "cb5bad7994c53879",
+      "source_sha256": "52a1c749bc35e584",
       "finish_class": "prismatic_structural",
       "print_simplify_mm": 0.016,
       "web_simplify_mm": 0.09,
@@ -955,7 +955,7 @@
       }
     },
     "racer-wheel": {
-      "source_sha256": "05bf0f664b21d961",
+      "source_sha256": "ec4fedea1b6516db",
       "finish_class": "precision_gear_pin",
       "print_simplify_mm": 0.005,
       "web_simplify_mm": 0.055,
@@ -1099,7 +1099,7 @@
       }
     },
     "veh-wheel-sport": {
-      "source_sha256": "5af4c4c5b31d20d6",
+      "source_sha256": "3af7046a1bb4d570",
       "finish_class": "precision_gear_pin",
       "print_simplify_mm": 0.005,
       "web_simplify_mm": 0.055,

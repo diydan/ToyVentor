@@ -1,25 +1,25 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_veh_wheel_offroad_P.stl",
-  "file_sha256": "008eeeab9e417f507c737cfeda1fe0d78a3d51d792fca265f3485c0368f5efec",
+  "file_sha256": "af78414583ff1cc69e35d012d11b6fa9a95db5468746409c0753e7244664ee56",
   "part_id": "veh_wheel_offroad",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-11-02T00:32:50Z",
+  "checked_at": "2026-11-02T12:03:18Z",
   "metrics": {
     "bbox_mm": [
       43.92,
       44.0,
       14.0
     ],
-    "volume_cm3": 18.2,
-    "surface_cm2": 63.51,
-    "triangles": 2906,
+    "volume_cm3": 18.19,
+    "surface_cm2": 63.46,
+    "triangles": 3210,
     "ledges": [],
     "floating_contours": [],
     "layers": 70,
-    "bed_contact_mm2": 1259.2,
+    "bed_contact_mm2": 1252.4,
     "height_mm": 14.0,
-    "slenderness": 0.39,
+    "slenderness": 0.4,
     "centre_of_mass_over_contact": true,
     "min_wall_mm": null,
     "thin_wall_regions": []
@@ -110,9 +110,9 @@
       "id": "V9_bed_contact",
       "level": "info",
       "result": "pass",
-      "value": 1259.2,
+      "value": 1252.4,
       "limit": null,
-      "detail": "height / sqrt(contact) = 0.39; above about 3 the slicer often asks for a brim"
+      "detail": "height / sqrt(contact) = 0.4; above about 3 the slicer often asks for a brim"
     },
     {
       "id": "V8_wall_thickness",

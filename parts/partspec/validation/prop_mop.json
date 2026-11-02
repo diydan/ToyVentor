@@ -1,10 +1,10 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_prop_mop_P.stl",
-  "file_sha256": "dafe6f8aa113fbc1dc895192f528b19c248b65f2ba477c08c40ce3a88738f647",
+  "file_sha256": "58d0e0dee332da6b7aa8c483b58b7e0426a6d07ddb35b710de401abffd5825a4",
   "part_id": "prop_mop",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-11-02T00:32:43Z",
+  "checked_at": "2026-11-02T12:03:10Z",
   "metrics": {
     "bbox_mm": [
       45.17,
@@ -12,12 +12,12 @@
       7.2
     ],
     "volume_cm3": 5.81,
-    "surface_cm2": 49.47,
-    "triangles": 1408,
+    "surface_cm2": 49.43,
+    "triangles": 1636,
     "ledges": [],
     "floating_contours": [],
     "layers": 36,
-    "bed_contact_mm2": 1088.8,
+    "bed_contact_mm2": 1086.1,
     "height_mm": 7.2,
     "slenderness": 0.22,
     "centre_of_mass_over_contact": true,
@@ -62,7 +62,7 @@
       "id": "V4_no_steep_overhang",
       "level": "block",
       "result": "pass",
-      "value": 0.0,
+      "value": 0.01,
       "limit": 1.0,
       "detail": "mm2 of downward surface steeper than 45 deg (flat bridges excluded)"
     },
@@ -110,7 +110,7 @@
       "id": "V9_bed_contact",
       "level": "info",
       "result": "pass",
-      "value": 1088.8,
+      "value": 1086.1,
       "limit": null,
       "detail": "height / sqrt(contact) = 0.22; above about 3 the slicer often asks for a brim"
     },
