@@ -207,7 +207,7 @@
       <span>Ackermann Angles</span><span id="hud-ackermann">L 0.0° · R 0.0°</span>
       <span>Rack Travel</span><span id="hud-rack">dx: 0.00 mm (max ±5.20)</span>
       <span>COTS / Ghost</span><span id="hud-illus">—</span>
-      <span>Gate G1 Check</span><span style="color:#1fa97c;" title="Verified in toyventor_kitcard.py verify_gate_g1() and probe sweep.">0.000 mm³ overlap (G1 pass)</span>
+      <span>Gate G1 Check</span><span id="hud-g1" style="color:#1fa97c;" title="Verified in toyventor_kitcard.py verify_gate_g1() and probe sweep.">0.000 mm³ overlap (G1 pass)</span>
     </div>
   </div>
 </div>
@@ -219,6 +219,7 @@
     <button data-stage="pro">2 · Pro (8+) Rack Steer</button>
     <button data-stage="band">3A · Momentum Band + Bumper</button>
     <button data-stage="bellows">3B · Momentum Balloon Bellows</button>
+    <button data-stage="jet" title="Proposal: balloon upright on top of mom_jet_valve_body, no dump tub (docs/specs/motion-stage-options-spec.md)">3B′ · Balloon Jet (proposal)</button>
     <button data-stage="mech">4 · Mech (10+) Smart RC X-Ray</button>
     <span class="sep"></span>
     <button id="btn-demo" class="spark-on">▶ Action Demo</button>
@@ -248,6 +249,9 @@
     <button id="btn-wheels">Tires: Ø36 Med (#4)</button>
     <button id="btn-hood">Nose: Open Yoke</button>
     <button id="btn-plow">Front Plow (#12): Off</button>
+    <button id="btn-jet-balloon" style="display:none" title="Cycle the balloon diameter (mm)">Balloon: Ø175</button>
+    <button id="btn-jet-lean" style="display:none" title="Lean the balloon back. 0° = straight up, as the vertical collar gives it">Lean: 0°</button>
+    <button id="btn-jet-nozzle" style="display:none" title="Cycle the nozzle insert (proposal geometry, not repo CAD)">Nozzle: Ø6</button>
     <button id="btn-kip" class="mint-on">Kip Driver: On</button>
     <button id="btn-print" title="Plan colour plates for the truck as built and export print files">Print plates</button>
     <button id="btn-driver" title="Pro 8+ = 14-joint ball-and-peg Kip rig (default). Snap 3+ = 1-piece limb & swivel-turret Kip rig.">Rig: Pro 8+</button>
@@ -366,7 +370,7 @@ const PART_FILES = [
   'gear_spur_z10', 'shaft_tu03',
   'mom_band_core_tray', 'mom_band_core_lid', 'mom_pto_gear_z10',
   'mom_band_spool_pawl', 'mom_latch_pawl', 'mom_wind_key', 'mom_bumper_trigger',
-  'mom_bellows_base', 'mom_bellows_leaf',
+  'mom_bellows_base', 'mom_bellows_leaf', 'mom_jet_valve_body',
   'mech_drive_tray', 'mech_drive_lid', 'mech_n20_pinion_z10',
   'mech_brain_tray', 'mech_brain_lid', 'mech_bat_door_screw',
   'mech_servo_mount', 'mech_servo_lid', 'mech_servo_pinion_z10',
@@ -451,6 +455,7 @@ const state = {
   wheelSpin: 0,
   spoolSpin: 0,     // independent of wheelSpin so Stage 3A's overrunning clutch halts the spool at slack while wheels coast
   sweepRunning: false,
+  balloonD: 175, balloonLean: 0, jetNozzle: 6, jetFill: 1,   // Stage 3B' balloon jet (proposal): balloon diameter mm, lean-back deg, nozzle bore mm, inflation 0..1
 };
 
 // ---------------------------------------------------------------------------
@@ -528,6 +533,22 @@ function meshOf(pid, mat) {
   return m;
 }
 
+// Stage 3B' balloon jet (proposal; docs/specs/motion-stage-options-spec.md section 2, parts/kip/viewer/JetCar-Lab.html). mom_jet_valve_body is repo CAD; the nozzle insert,
+// balloon and jet stream below are procedural stand-ins. The collar top is at (0, 47.0, 40.5); the balloon is a sphere on a 25 mm neck, upright unless balloonLean > 0.
+const JET_NECK = 25.0;
+function jetNozzleGeo(d) {   // tapered plug into the body's rear socket (y 8.5..14.7), flange, convergent exit; body frame, axis +y
+  const r = d / 2;
+  const prof = [[2.5, 8.5], [3.72, 8.5], [4.15, 14.7], [7.0, 14.7], [7.0, 17.2], [r + 1.4, 24.0], [r, 24.0], [r, 22.0], [2.5, 17.2]].map(([x, y]) => new THREE.Vector2(x, y));
+  return new THREE.LatheGeometry(prof, 40);
+}
+function applyJetBalloon() {   // inflation: volume follows jetFill, so the diameter follows its cube root
+  const b = dynamicRefs.jetBalloonBody;
+  if (!b) return;
+  const r = (state.balloonD / 2) * Math.cbrt(Math.max(0.03, state.jetFill));
+  b.scale.setScalar(r);
+  b.position.z = JET_NECK + r;
+}
+
 function rboxMesh(w, d, h, mat) {
   const g = new THREE.BoxGeometry(w, d, h);
   const m = new THREE.Mesh(g, mat);
@@ -581,7 +602,7 @@ function rebuildScene() {
   addExplodeTag(rWR, 18, 0, 0);
   rearAxle.add(rWR);
 
-  if (state.stage !== 'snap' && state.stage !== 'bellows') {
+  if (state.stage !== 'snap' && state.stage !== 'bellows' && state.stage !== 'jet') {   // the jet stage has no PTO, and the gear would overlap mom_jet_valve_body by 442 mm3
     const ptoGear = meshOf('gear_spur_z10', MATS.spark);
     ptoGear.rotation.y = Math.PI / 2;
     ptoGear.position.set(-3.125, 0, 0);
@@ -1027,6 +1048,36 @@ function rebuildScene() {
     exGroup.visible = false;
     cadRoot.add(exGroup);
     dynamicRefs.exhaust = exGroup;
+  } else if (state.stage === 'jet') {
+    // Proposal: no dump tub. mom_jet_valve_body sits on the keel's rear rows 8..9 (centre y 50.0, corner studs only) with the balloon upright on its vertical collar.
+    const jet = meshOf('mom_jet_valve_body', MATS.mint);
+    jet.position.set(0, 50.0, 12.5);
+    addExplodeTag(jet, 0, 18, 22);
+    cadRoot.add(jet);
+    const nozMat = MATS.spark.clone(); nozMat.side = THREE.DoubleSide;
+    const noz = new THREE.Mesh(jetNozzleGeo(state.jetNozzle), nozMat);
+    noz.position.set(0, 50.0, 25.0);
+    addExplodeTag(noz, 0, 34, 12);
+    cadRoot.add(noz);
+    const balloon = new THREE.Group();
+    balloon.position.set(0, 47.0, 40.5);
+    balloon.rotation.x = -THREE.MathUtils.degToRad(state.balloonLean);
+    const neck = new THREE.Mesh(new THREE.CylinderGeometry(7, 10, JET_NECK, 24), MATS.balloon);
+    neck.rotation.x = Math.PI / 2; neck.position.z = JET_NECK / 2;
+    const body = new THREE.Mesh(new THREE.SphereGeometry(1, 40, 28), MATS.balloon);
+    balloon.add(neck, body);
+    addExplodeTag(balloon, 0, 8, 40);
+    cadRoot.add(balloon);
+    dynamicRefs.jetBalloonBody = body;
+    if (!state.demoRunning) state.jetFill = 1;
+    applyJetBalloon();
+    const streamMat = makeMat('#9AD1FF', 0.35, 0.4); streamMat.side = THREE.DoubleSide; streamMat.depthWrite = false;
+    const stream = new THREE.Mesh(new THREE.ConeGeometry(5, 60, 24, 1, true), streamMat);
+    stream.rotation.z = Math.PI;   // narrow end at the nozzle exit, widening rearward
+    stream.position.set(0, 50.0 + 24.0 + 30.0, 25.0);
+    stream.visible = false;        // shown only while the demo vents
+    cadRoot.add(stream);
+    dynamicRefs.jetStream = stream;
   } else if (state.stage === 'mech') {
     // Printable Card F PETG 3-TU Drive Core + 2-TU Low-CG Brain Core + COTS N20 / 602535 LiPo / 38x38 PCBA / XIAO
     const dTray = meshOf('mech_drive_tray', useXray ? MATS.cyanGlass : MATS.mint);
@@ -1223,6 +1274,14 @@ function updateHUD() {
       power: 'shaft_tu03 Barrel Hinge + 9" Balloon Clamshell',
       bed: `Pneumatic Lift · ${belDeg}° (10°..50° Stroke, Rated 100 g)`,
     },
+    jet: {
+      badge: "Stage 3B′ · Momentum 8+ (proposal)",
+      title: "3B′ · Momentum Balloon Jet · upright balloon on top (proposal)",
+      cards: 'Card A + Card B + mom_jet_valve_body + mom_jet_slide_valve (Card E3)',
+      steer: 'Closed Through-Bore Barbell · no tub, no axle gear',
+      power: `Balloon Ø${state.balloonD} · lean ${state.balloonLean}° · nozzle Ø${state.jetNozzle} · body air path ≈ Ø5 (≤ ~5 gf)`,
+      bed: 'No dump tub: balloon on the collar, rows 8..9',
+    },
     mech: {
       badge: 'Stage 4 · Mech 10+',
       title: '4 · Mech (10+) Printable PETG RC Servo + Drive/Brain',
@@ -1242,9 +1301,20 @@ function updateHUD() {
   const illus = [];
   if (state.stage === 'band') illus.push('#32 rubber band (COTS)');
   if (state.stage === 'bellows') illus.push('9" balloon + 4×6 silicone tube (COTS)');
+  if (state.stage === 'jet') illus.push('9" latex balloon + hand pump + tube nozzle (COTS)');
   if (state.stage === 'mech') illus.push('N20 + SG90 + 602535 LiPo + PCBA/XIAO (COTS)');
   if (state.showKip && KIP_DRIVER.rig) illus.push(`Kip ${state.driver === 'snap' ? 'Snap 3+' : 'Pro 8+'} rig (${KIP_DRIVER.scale}× cab scale)`);
   document.getElementById('hud-illus').textContent = illus.length ? illus.join(' · ') : '—';
+  const g1 = document.getElementById('hud-g1');   // the jet pose is not covered by any Gate G1 craft: do not claim a pass
+  if (state.stage === 'jet') {
+    g1.textContent = 'not in Gate G1 · 0 mm³ vs keel (jetcar_table.py)';
+    g1.style.color = '#b7791f';
+    g1.title = 'Proposal. mom_jet_valve_body seats on rear rows 8..9 with 0 mm³ keel overlap and 1.8 mm to the wheels (parts/kip/jetcar_table.py), but no Gate G1 craft covers this stage.';
+  } else {
+    g1.textContent = '0.000 mm³ overlap (G1 pass)';
+    g1.style.color = '#1fa97c';
+    g1.title = 'Verified in toyforge_kitcard.py verify_gate_g1() and probe sweep.';
+  }
 }
 
 // UI Bindings
@@ -1270,14 +1340,26 @@ document.querySelectorAll('[data-stage]').forEach((btn) => {
     } else if (state.stage === 'bellows') {
       state.steerDeg = 0;
       state.tipDeg = 28;
+    } else if (state.stage === 'jet') {
+      state.steerDeg = 0;
+      state.tipDeg = 0;
     } else {
       state.steerDeg = 0;
       state.tipDeg = 22;
     }
+    for (const id of ['btn-jet-balloon', 'btn-jet-lean', 'btn-jet-nozzle']) document.getElementById(id).style.display = state.stage === 'jet' ? '' : 'none';
+    if (state.stage === 'jet') document.getElementById('status-text').textContent = 'Proposal: balloon upright on mom_jet_valve_body, no tub. As drawn the body\'s ~Ø5 air path caps thrust near 5 gf, so the truck is not predicted to move (spec section 2). Demo = inflate and vent only.';
     syncSliders();
     rebuildScene();
   });
 });
+
+// Stage 3B' options: cycle balloon diameter, lean and nozzle (balloon lean 0 = straight up, as the vertical collar gives it)
+const JET_D = [125, 150, 175, 200], JET_LEAN = [0, 15, 30, 45], JET_NOZ = [3, 4.5, 6, 8];
+const cycle = (list, v) => list[(Math.max(0, list.indexOf(v)) + 1) % list.length];
+document.getElementById('btn-jet-balloon').addEventListener('click', (e) => { state.balloonD = cycle(JET_D, state.balloonD); e.target.textContent = `Balloon: Ø${state.balloonD}`; rebuildScene(); updateHUD(); });
+document.getElementById('btn-jet-lean').addEventListener('click', (e) => { state.balloonLean = cycle(JET_LEAN, state.balloonLean); e.target.textContent = `Lean: ${state.balloonLean}°`; rebuildScene(); updateHUD(); });
+document.getElementById('btn-jet-nozzle').addEventListener('click', (e) => { state.jetNozzle = cycle(JET_NOZ, state.jetNozzle); e.target.textContent = `Nozzle: Ø${state.jetNozzle}`; rebuildScene(); updateHUD(); });
 
 function syncSliders() {
   document.getElementById('rng-tip').min = tipMinDeg();
@@ -1587,6 +1669,15 @@ async function init() {
   const q = new URLSearchParams(location.search);
   if (q.get('wheels') === 'giant') document.getElementById('btn-wheels').click();
   if (q.get('stage')) document.querySelector(`[data-stage="${q.get('stage')}"]`)?.click();
+  if (state.stage === 'jet') {   // ?stage=jet&balloon=200&lean=30&nozzle=8
+    if (q.has('balloon')) state.balloonD = Number(q.get('balloon'));
+    if (q.has('lean')) state.balloonLean = Number(q.get('lean'));
+    if (q.has('nozzle')) state.jetNozzle = Number(q.get('nozzle'));
+    document.getElementById('btn-jet-balloon').textContent = `Balloon: Ø${state.balloonD}`;
+    document.getElementById('btn-jet-lean').textContent = `Lean: ${state.balloonLean}°`;
+    document.getElementById('btn-jet-nozzle').textContent = `Nozzle: Ø${state.jetNozzle}`;
+    rebuildScene();
+  }
   if (q.has('steer')) { state.steerDeg = Number(q.get('steer')); }
   if (q.has('tip')) { state.tipDeg = Number(q.get('tip')); }
   if (q.has('demoT')) { state.demoRunning = true; state.demoT = Number(q.get('demoT')); state.demoHold = q.get('hold') === '1'; } // ?demoT=1.9&hold=1
@@ -1613,6 +1704,7 @@ window.__truckProbeSweep = (cases = [
   { stage: 'mech', driver: 'snap', steerDeg: 0, tipDeg: 18 },
   { stage: 'band', steerDeg: 0, tipDeg: 0 }, { stage: 'band', tipDeg: 55 },
   { stage: 'bellows', tipDeg: 10 }, { stage: 'bellows', tipDeg: 48 },
+  { stage: 'jet', tipDeg: 0 },
   { stage: 'snap', tipDeg: 0 }, { stage: 'snap', tipDeg: 55 },
 ]) => cases.map((c) => {
   Object.assign(state, { driver: 'pro', giantWheels: false, steerDeg: 0, tipDeg: 22 }, c);
@@ -1829,6 +1921,13 @@ function animate() {
         state.tipDeg = 10.0;
       }
       applyWheelSpin();
+    } else if (state.stage === 'jet') {
+      // 4.5 s inflate / vent loop. The truck stays put on purpose: the body as drawn is predicted too restrictive to move it (docs/specs/motion-stage-options-spec.md section 2).
+      const cyc = state.demoT % 4.5;
+      state.jetFill = cyc < 1.5 ? smooth(cyc / 1.5) : cyc < 2.0 ? 1 : cyc < 4.0 ? 1 - 0.97 * smooth((cyc - 2.0) / 2.0) : 0.03;
+      if (dynamicRefs.jetStream) dynamicRefs.jetStream.visible = cyc >= 2.0 && cyc < 4.0;
+      applyJetBalloon();
+      state.tipDeg = 0;
     } else {
       state.tipDeg = 27.5 - Math.cos(state.demoT * 1.8) * 27.5;
     }
