@@ -470,6 +470,47 @@ function makeUnrolledCropSticker({
   };
 }
 
+const PHOTO_ACCESSORY_MAX_MM = 120.0;
+const PHOTO_ACCESSORY_MAX_POINTS = 400;
+
+function finiteNums(arr, n) {
+  return Array.isArray(arr) && arr.length === n && arr.every((v) => typeof v === 'number' && Number.isFinite(v));
+}
+
+/**
+ * F2b photo accessory: a sticker whose cut path and photo map were built elsewhere (shared/outlineSticker.ts `photoStickerItem`)
+ * and arrive as data. Rebuilt field by field so a malformed item never reaches the packer or the writers; returns null for one
+ * that cannot be drawn (no cut path, no invertible photo map, a size past the sheet). Carries geometry only, never pixels.
+ */
+function photoAccessoryBase(it) {
+  if (!it || typeof it !== 'object' || !it.sampler || it.sampler.mode !== 'photo_outline') return null;
+  const poly = it.outerPolyMm;
+  if (!Array.isArray(poly) || poly.length < 3 || poly.length > PHOTO_ACCESSORY_MAX_POINTS) return null;
+  if (!poly.every((p) => finiteNums(p, 2))) return null;
+  if (!(it.w > 0 && it.w <= PHOTO_ACCESSORY_MAX_MM && it.h > 0 && it.h <= PHOTO_ACCESSORY_MAX_MM)) return null;
+  if (!finiteNums(it.sampler.stickerToPhoto, 6)) return null;
+  const size = it.sampler.photoSize;
+  const photoSize = size && size.width > 0 && size.height > 0 ? { width: size.width, height: size.height } : null;
+  const id = String(it.id || 'photo_accessory').toLowerCase().replace(/[^a-z0-9_]/g, '_').slice(0, 40) || 'photo_accessory';
+  return {
+    id,
+    kind: 'photo_accessory',
+    label: String(it.label || 'Photo accessory').replace(/[^\x20-\x7e]/g, ' ').slice(0, 60),
+    w: it.w,
+    h: it.h,
+    bgHex: normHex(it.bgHex || '#FFFFFF'),
+    outerPolyMm: ensureWinding(poly.map(([x, y]) => [x, y]), true),
+    holePolysMm: [],
+    foldLinesMm: [],
+    sampler: {
+      mode: 'photo_outline',
+      sourceKey: `photo:${id}`,
+      stickerToPhoto: it.sampler.stickerToPhoto.slice(),
+      photoSize,
+    },
+  };
+}
+
 /**
  * Plan the complete 2D sticker sheet layout for the active scene BOM decals (§8.1 A-D).
  * Deterministic and pure: inspects only `bomDecals` and scalar `state` fields (never image pixels).
@@ -617,6 +658,14 @@ export function planStickerSheet(bomDecals = [], state = {}, opts = {}) {
             fullDims,
           },
         });
+      }
+    } else if (dec.kind === 'photo_accessory') {
+      // F2b: a photo-shaped accessory. `dec.item` is the prebuilt cut path and photo map; the artwork is the device's own photo,
+      // handed to the renderer as `renderedSources['photo:<id>']`. One sticker and one spare, like the face sets (`spare: false` for one).
+      const base = photoAccessoryBase(dec.item);
+      if (base) {
+        items.push(base);
+        if (dec.spare !== false) items.push({ ...base, id: `${base.id}_spare`, label: `${base.label} (spare)` });
       }
     } else if (dec.kind === 'craft_cutout') {
       // §8.1 C: Mirrored left & right panels joined across a vertical dashed fold line + 6.0 mm glue/mount tab inside one closed cut contour.
@@ -865,6 +914,19 @@ export function renderStickerItemRgba(item, renderedSources = {}, dpi = 300, ble
       } else if (smp.mode === 'planar_uv_box') {
         u = smp.u0 + (localXMm / item.w) * (smp.u1 - smp.u0);
         v = smp.v0 + (localYMm / item.h) * (smp.v1 - smp.v0);
+      } else if (smp.mode === 'photo_outline') {
+        // Sticker millimetre -> a pixel of the photo the outline came from -> the same place in the source we were handed,
+        // which may be any resolution of that photo (pixel centres line up: index i of W sits at (i + 0.5) / W).
+        const m = smp.stickerToPhoto;
+        const ix = m[0] * localXMm + m[2] * localYMm + m[4];
+        const iy = m[1] * localXMm + m[3] * localYMm + m[5];
+        const sw = src ? src.w : 1;
+        const sh = src ? src.h : 1;
+        const pw = smp.photoSize ? smp.photoSize.width : sw;
+        const ph = smp.photoSize ? smp.photoSize.height : sh;
+        // Clamped: the cut path hugs the object, and a path a hair past the photo's edge must repeat the edge colour, not print white.
+        u = sw > 1 ? Math.min(1, Math.max(0, ((ix + 0.5) * sw / pw - 0.5) / (sw - 1))) : 0.5;
+        v = sh > 1 ? Math.min(1, Math.max(0, ((iy + 0.5) * sh / ph - 0.5) / (sh - 1))) : 0.5;
       } else if (smp.mode === 'mirrored_craft') {
         if (localXMm <= smp.panelW) {
           u = localXMm / smp.panelW;

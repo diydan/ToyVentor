@@ -71,7 +71,8 @@ function buildKipRig(geos, partspec) {
 
   function addProPegMesh(slot, isBig, axis = 'y') {
     const g = isBig ? geos.spark_peg_big : geos.spark_peg_sml;
-    const h = (isBig ? 9.0 : 8.0) * 0.92;
+    if (!g.boundingBox) g.computeBoundingBox();
+    const h = g.boundingBox ? (g.boundingBox.max.z - g.boundingBox.min.z) : (isBig ? 17.9 : 14.6);
     const m = scadMesh(g, mats.spark);
     m.position.y = -h / 2;
     if (axis === 'x') {
@@ -86,7 +87,8 @@ function buildKipRig(geos, partspec) {
 
   function addSnapTurretMesh(slot, isBig, axis = 'y') {
     const g = isBig ? geos.snap_turret_big : geos.snap_turret;
-    const h = (isBig ? 9.0 : 8.0) * 1.15;
+    if (!g.boundingBox) g.computeBoundingBox();
+    const h = g.boundingBox ? (g.boundingBox.max.z - g.boundingBox.min.z) : (isBig ? 17.9 : 14.6);
     const m = scadMesh(g, mats.spark);
     m.position.y = -h / 2;
     if (axis === 'x') {
