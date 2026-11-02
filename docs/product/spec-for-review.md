@@ -1,6 +1,6 @@
 # ToyVentor: Spec (toyventor.com)
 
-> Review copy, generated 2026-11-01 from `docs/product/spec.md`. Do not
+> Review copy, generated 2026-11-02 from `docs/product/spec.md`. Do not
 > edit this file by hand: run `npm run spec:review` after changing the spec.
 > The block below is for reviewers. Delete it before publishing.
 
