@@ -164,33 +164,44 @@ def check_shaft_capture(c):
 
 # ---------------------------------------------------------------------------------------------------------------------------- C4
 def _insert_slabs(ns):
-    """Individually printable inserts joined by thin breakaway tabs: find each insert as a disc in a slice just above the tabs, return [(xc, slab solid)]."""
-    for z in (1.8, 1.7, 1.9, 1.6):
-        comps = ns.slice(z).decompose()
+    """Individually printable inserts (joined by tabs and maybe a storage plate): find each insert from the plug cross-sections, which stay separate above the
+    flange and plate, and return [(xc, slab)] where slab isolates one insert. Returns [] for the old monolithic bar (its bottom slice is a single plate)."""
+    if len(ns.slice(0.5).decompose()) < 2:
+        return []
+    top = ns.bounding_box()[5]
+    for z in (0.5 * top, 0.4 * top, 0.6 * top):
+        comps = sorted(ns.slice(z).decompose(), key=lambda q: q.bounds()[0])
         if len(comps) >= 2:
-            out = []
-            for cc in sorted(comps, key=lambda q: q.bounds()[0]):
-                b = cc.bounds()
-                xc, w = (b[0] + b[2]) / 2, b[2] - b[0]
-                out.append((xc, ns ^ Manifold.cube((w + 0.6, 20.0, 20.0)).translate((xc - (w + 0.6) / 2, -10.0, -1.0))))
-            return out
+            centres = [(cc.bounds()[0] + cc.bounds()[2]) / 2 for cc in comps]
+            half = max(min(np.diff(centres)) / 2 - 0.3, 3.0)                 # half the nearest-neighbour spacing: includes the insert's flange, excludes the neighbours' plugs
+            return [(xc, ns ^ Manifold.cube((2 * half, 20.0, 20.0)).translate((xc - half, -10.0, -1.0))) for xc in centres]
     return []
 
 
 def _insert_bore(slab, xc):
-    """(rear orifice diameter, narrowest bore diameter) of one insert, measured on slices along its axis (local z)."""
+    """(rear orifice diameter, narrowest bore diameter, offset of the rear bore's centre from the insert axis) of one insert, measured on slices along its axis.
+    A large offset means something blocks part of the orifice (a half disc sits off-axis)."""
     bb = slab.bounding_box()
-    areas = []
+    areas, offset = [], 0.0
     for z in np.arange(bb[2] + 0.1, bb[5] - 0.05, 0.2):
         cs = slab.slice(z)
-        if not cs.is_empty():
-            a = _enclosed_area(cs, (xc, 0.0))
-            if a:
-                areas.append(a)
+        if cs.is_empty():
+            continue
+        b = cs.bounds()
+        box = CrossSection.square((b[2] - b[0] + 4, b[3] - b[1] + 4)).translate((b[0] - 2, b[1] - 2))
+        hits = [comp for comp in (box - cs).decompose()
+                if comp.bounds()[0] <= xc <= comp.bounds()[2] and comp.bounds()[1] <= 0.0 <= comp.bounds()[3] or
+                (abs((comp.bounds()[0] + comp.bounds()[2]) / 2 - xc) < 3.0 and abs((comp.bounds()[1] + comp.bounds()[3]) / 2) < 1.0)]
+        hits = [h for h in hits if h.area() < 0.5 * box.area()]
+        if hits:
+            h = min(hits, key=lambda q: q.area())
+            if not areas:
+                offset = abs((h.bounds()[0] + h.bounds()[2]) / 2 - xc)
+            areas.append(h.area())
     if not areas:
-        return None, None
+        return None, None, 0.0
     d = lambda a: 2 * math.sqrt(a / math.pi)
-    return d(areas[0]), d(min(areas))
+    return d(areas[0]), d(min(areas)), offset
 
 
 def check_nozzle_seat(c):
@@ -201,12 +212,14 @@ def check_nozzle_seat(c):
         for xc, slab in slabs:
             seated = slab.rotate((90, 0, 0)).translate((-xc, 17.2, 12.5))            # plug pointing into the body, rear socket axis at (0, y, 12.5)
             ov, tip = overlap(seated, vb), seated.bounding_box()[1]
-            rear, throat = _insert_bore(slab, xc)
+            rear, throat, off = _insert_bore(slab, xc)
             if ov > 0.5 or tip > 10.0:
                 bad.append(f"insert at x {xc:+.1f}: overlap {ov:.1f} mm3, tip y {tip:.1f}")
             if rear is None:
                 bad.append(f"insert at x {xc:+.1f}: bore not measurable")
                 continue
+            if off > 0.4:
+                bad.append(f"insert at x {xc:+.1f}: the rear orifice is centred {off:.1f} mm off the insert axis, so part of it is blocked (storage plate across the bore?); measured O{rear:.1f}")
             if throat < 0.97 * rear:
                 bad.append(f"insert at x {xc:+.1f}: rear orifice O{rear:.1f} but narrowest bore O{throat:.1f} (the throat is inside, so it flows like O{throat:.1f})")
             notes.append(f"O{rear:.1f}/{throat:.1f}")
@@ -267,7 +280,7 @@ def check_air_path(c):
     a1 = min(stations.values())
     nozzles = []                                                                # (label, throat diameter): measured on the inserts when there are some
     for xc, slab in _insert_slabs(c.g("mom_nozzle_set")):
-        rear, throat = _insert_bore(slab, xc)
+        rear, throat, off = _insert_bore(slab, xc)
         if throat:
             nozzles.append((f"O{rear:.1f}", throat))
     measured = bool(nozzles)
