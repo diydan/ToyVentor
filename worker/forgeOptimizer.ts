@@ -137,6 +137,20 @@ function isFiniteNum(v: unknown): v is number {
   return typeof v === "number" && Number.isFinite(v);
 }
 
+/** The listed keys of `f` that are finite numbers; everything else is dropped (the daemon clamps the rest). */
+function numFields<K extends string>(f: Record<string, unknown>, keys: readonly K[]): Partial<Record<K, number>> {
+  const out: Partial<Record<K, number>> = {};
+  for (const k of keys) {
+    const v = f[k];
+    if (isFiniteNum(v)) out[k] = v;
+  }
+  return out;
+}
+
+function oneOf<T extends string>(v: unknown, allowed: readonly T[]): T | undefined {
+  return typeof v === "string" && (allowed as readonly string[]).includes(v) ? (v as T) : undefined;
+}
+
 function isValidSlot(v: unknown): v is ForgeSlot {
   return typeof v === "string" && (FORGE_SLOTS as readonly string[]).includes(v);
 }
@@ -265,6 +279,27 @@ function sanitizeRecipe(raw: unknown): { ok: true; recipe: ForgeRecipeV1 } | { o
           ...(isFiniteNum(f.width_mm) ? { width_mm: f.width_mm } : {}),
           ...(isFiniteNum(f.depth_mm) ? { depth_mm: f.depth_mm } : {}),
           ...(isFiniteNum(f.thickness_mm) ? { thickness_mm: f.thickness_mm } : {}),
+        });
+      } else if (f.op === "ears") {
+        const style = oneOf(f.style, ["round", "pointy", "tall"] as const);
+        cleanFeatures.push({
+          op: "ears",
+          ...(style ? { style } : {}),
+          ...numFields(f, ["width_mm", "height_mm", "thickness_mm", "tilt_deg"] as const),
+        });
+      } else if (f.op === "horns") {
+        cleanFeatures.push({ op: "horns", ...numFields(f, ["length_mm", "base_mm", "curl"] as const) });
+      } else if (f.op === "spikes") {
+        cleanFeatures.push({
+          op: "spikes",
+          ...numFields(f, ["count", "height_mm", "base_mm", "center_boost_mm"] as const),
+        });
+      } else if (f.op === "snout") {
+        const style = oneOf(f.style, ["muzzle", "beak", "bill"] as const);
+        cleanFeatures.push({
+          op: "snout",
+          ...(style ? { style } : {}),
+          ...numFields(f, ["length_mm", "width_mm", "height_mm", "z_frac"] as const),
         });
       } else {
         return { ok: false };

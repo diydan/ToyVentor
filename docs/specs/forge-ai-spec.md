@@ -133,7 +133,9 @@ rejected, numbers are clamped to bounds, and nothing is executed.
   being able to break geometry. Built in the daemon (2026-11-02), all with
   tests in `tests/forge/forge-ops.test.ts`:
   - `knob` (ball on top) and `brim` (flat brim, `width_mm`, `depth_mm`,
-    `thickness_mm`).
+    `thickness_mm`). Not for heads: `character_head` clips above the crown seat
+    and flare-clips the sides, so a knob changed nothing and a brim added 68 mm3;
+    both are now ignored on a head and listed in `features_ignored`.
   - `ears`: a mirrored pair on the upper corners, `style` `round | pointy |
     tall`, `width_mm`, `height_mm`, `tilt_deg`. Heads and crowns only. On a head
     they are added after `character_head`, because that builder clips everything
@@ -142,6 +144,22 @@ rejected, numbers are clamped to bounds, and nothing is executed.
     Heads and crowns only.
   - `spikes`: a row of 2 to 7 points along the top, for crown points and
     feathers. Crowns and backs only (the head top is the crown seat).
+  - `snout` (heads only): `style` `muzzle | beak | bill`, `length_mm`,
+    `width_mm`, `height_mm`, `z_frac` (how high on the face). A hull of a tip
+    sphere and two root spheres at the front wall (-y), added after
+    `character_head` like head ears. The top is flat; the underside is a ramp
+    that rises at least 55 degrees, so it prints without supports. That is the
+    limit on its looks: a beak reads well, a muzzle reads as a nose with a long
+    ramp down the face, and a true flat-bottomed dinosaur snout would need
+    supports on the front (the show face), which the M2 gate caps at 80 mm2. It
+    is cut away from the neck-socket cavities (`_socket_keepout`) and kept inside
+    the flat part of the front wall, because the wall leans and the corners are
+    far back. 13 of 13 probe recipes passed the gates after four fixes (see the
+    "Head ops" note in the taste check section). **Brand check for the owner:**
+    `BRAND_STYLE.md` keeps expressions and fixed facial relief on the swappable
+    face insert, "never in the head shell", and says it for human heads; a
+    snout is silhouette, not an expression, but it takes the decal area of the
+    face, so whether custom creature heads may carry one is a product decision.
   - An op the slot cannot use, or an unknown op, is dropped and listed in
     `legalizer.features_ignored`.
   - Planned, not in the compiler: `fin`, `antenna`, `band`, and a curled brim.
@@ -156,8 +174,9 @@ rejected, numbers are clamped to bounds, and nothing is executed.
     changes the print plan (a few supports), so it is a decision for the owner
     of the print workflow, not only a compiler detail.
   - The worker (`worker/forgeOptimizer.ts`) and `shared/forgeOptimizer.ts`
-    still allow only `knob` and `brim`; they need the new ops before the app
-    can use them. Not done here.
+    now accept all six ops (2026-11-02): it keeps only finite numbers and known
+    style names, still refuses an op it does not know, and leaves the clamping
+    to the daemon. Tests: `tests/forge/forge-worker-features.test.ts`.
 - `support_policy` (optional): `none` (default) or `minimal`; `minimal` is only
   allowed on `crown`, `head` and `back`. `shape.height_mm` (optional, 24 to 38)
   sets a head's height.

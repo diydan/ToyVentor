@@ -63,7 +63,7 @@ interface Opts {
   maxCalls: number;
   out: string | null;
   resume: boolean;
-  promptVersion: "v0" | "v1" | "v2";
+  promptVersion: "v0" | "v1" | "v2" | "v3";
   jobTimeoutMs: number;
 }
 
@@ -122,7 +122,7 @@ function parseArgs(argv: string[]): Opts {
         break;
       case "--prompt": {
         const v = next();
-        if (v !== "v0" && v !== "v1" && v !== "v2") throw new Error("--prompt must be v0, v1 or v2");
+        if (v !== "v0" && v !== "v1" && v !== "v2" && v !== "v3") throw new Error("--prompt must be v0, v1, v2 or v3");
         o.promptVersion = v;
         break;
       }
@@ -341,16 +341,42 @@ const FEATURES_V2 = `- "features": optional list of at most 6 from these ops. A 
   - {"op":"knob","radius_mm":1.8-6}: a ball on top (bobble, pompom, tassel).
 Put the character in the features and keep the body simple. Give different requests different body shapes: a chef hat is wider at the top, a beanie is rounded, a top hat is a straight tube, a cone hat tapers to a point.`;
 
+/**
+ * v3 adds the head snout op and fixes what v1 and v2 told Spark about heads. v1 said "do not model noses",
+ * so a dinosaur "with a long snout" could only be the same box, and v2 let it put a knob or a brim on a head
+ * (both do nothing there: `character_head` clips them). In the v2 run robot, alien, astronaut, dinosaur and
+ * pumpkin heads were all the same tapered box.
+ */
+const SNOUT_LINE_V3 = `  - {"op":"snout","style":"muzzle"|"beak"|"bill","length_mm":3-16,"width_mm":6-22,"height_mm":4-16,"z_frac":0.2-0.65}: a snout on the front of an ANIMAL head only (dog, dinosaur, bear, pig = muzzle; parrot, toucan, eagle = beak; duck = bill). z_frac is how high on the face it sits.`;
+const HEAD_NOTE_V3 = `On a head, only ears, horns and snout do anything (knob, brim and spikes are ignored there). Antennae for a robot or alien are horns with base_mm 3 and curl 0. A bear has round ears 11-14 wide. Put the character in the features`;
+const HEAD_FACT_V1 = "Do not model eyes, mouths or noses; the front stays smooth.";
+const HEAD_FACT_V3 =
+  "Do not model eyes or mouths (decals go there). Keep the body a plain head: ears, horns and a snout are added on top of it. The face looks toward negative y, so never move head slices to positive y.";
+
+function replaceOnce(text: string, from: string, to: string, what: string): string {
+  if (!text.includes(from)) throw new Error(`v3 prompt: ${what} moved`);
+  return text.replace(from, to);
+}
+
 const FEATURES_V0_LINE = `- "features": optional list of at most 6: {"op":"knob","radius_mm":1.8-6} or {"op":"brim","width_mm":16-42,"depth_mm":12-32,"thickness_mm":1.6-4}.`;
 
-function systemPromptFor(version: "v0" | "v1" | "v2"): string {
+function systemPromptFor(version: "v0" | "v1" | "v2" | "v3"): string {
   if (version === "v0") return RECIPE_PROMPT_V0;
   if (version === "v1") return `${RECIPE_PROMPT_V0}\n\n${SLOT_FACTS_V1}`;
   if (!RECIPE_PROMPT_V0.includes(FEATURES_V0_LINE)) throw new Error("v2 prompt: the v0 features line moved");
-  return `${RECIPE_PROMPT_V0.replace(FEATURES_V0_LINE, FEATURES_V2)}\n\n${SLOT_FACTS_V1}`;
+  const withV2 = RECIPE_PROMPT_V0.replace(FEATURES_V0_LINE, FEATURES_V2);
+  if (version === "v2") return `${withV2}\n\n${SLOT_FACTS_V1}`;
+  const features = replaceOnce(
+    replaceOnce(FEATURES_V2, '  - {"op":"knob"', `${SNOUT_LINE_V3}\n  - {"op":"knob"`, "the knob line"),
+    "Put the character in the features",
+    HEAD_NOTE_V3,
+    "the features closing note",
+  );
+  const facts = replaceOnce(SLOT_FACTS_V1, HEAD_FACT_V1, HEAD_FACT_V3, "the head slot fact");
+  return `${RECIPE_PROMPT_V0.replace(FEATURES_V0_LINE, features)}\n\n${facts}`;
 }
 
-function sparkProposer(version: "v0" | "v1" | "v2"): Proposer {
+function sparkProposer(version: "v0" | "v1" | "v2" | "v3"): Proposer {
   const system = systemPromptFor(version);
   const key = process.env.MODEL_API_KEY ?? process.env.META_MODEL_API_KEY;
   if (!key) throw new Error("--proposer spark needs MODEL_API_KEY or META_MODEL_API_KEY in the environment");

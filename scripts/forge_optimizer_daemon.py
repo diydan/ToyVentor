@@ -158,13 +158,24 @@ def legalize_loft_slices(raw_slices: Any) -> list[tuple[float, float, float, flo
 # ---------------------------------------------------------------------------
 AUTO_MINIMAL_FOR_OVERHANG = True  # `--no-auto-minimal` turns the none -> minimal promotion off
 SLAB_THICKNESS_MM = 0.8  # `sdk.loft_slabs` default slab thickness
-FEATURE_OPS = ("knob", "brim", "ears", "horns", "spikes")
+FEATURE_OPS = ("knob", "brim", "ears", "horns", "spikes", "snout")
 _EAR_STYLES = {
     # style: (height_mm, width_mm, tilt_deg) defaults; "round" is a flat disc, "pointy" a leaf, "tall" a bunny ear
     "round": (0.0, 11.0, 8.0),
     "pointy": (11.0, 9.0, 22.0),
     "tall": (22.0, 7.0, 12.0),
 }
+_SNOUT_STYLES = {
+    # style: (length_mm, width_mm, height_mm, tip_width_frac, tip_radius_frac) defaults;
+    # "muzzle" is a blunt dog/dino/bear snout, "beak" a narrow pointed one, "bill" a short wide duck bill
+    "muzzle": (9.0, 12.0, 9.0, 0.75, 0.55),
+    "beak": (10.0, 8.0, 11.0, 0.30, 0.15),
+    "bill": (7.0, 18.0, 6.0, 0.90, 0.50),
+}
+SNOUT_MIN_SLOPE_DEG = 55.0  # the snout's underside must rise at least this steeply (from horizontal) to print without help
+SNOUT_ROOT_R = 0.8  # radius of the small root sphere the underside ramp ends in
+SNOUT_ROOT_DEPTH = 1.2  # how far inside the wall its centre sits
+SNOUT_ROOT_FLOOR_MM = 2.0  # its bottom stays at least this high, clear of the collar and the flare
 
 
 def _clamp(val: Any, lo: float, hi: float, default: float, name: str) -> float:
@@ -177,6 +188,8 @@ def _parse_feature(feat: dict[str, Any], slot: str) -> dict[str, Any] | None:
     op = str(feat.get("op", "")).lower()
     if op not in FEATURE_OPS:
         return None
+    if op in ("knob", "brim") and slot == "head":
+        return None  # `character_head` clips above the crown seat and flare-clips the sides: both would do nothing
     if op == "knob":
         return {"op": "knob", "radius_mm": _clamp(feat.get("radius_mm"), 1.8, 6.0, 3.2, "radius_mm")}
     if op == "brim":
@@ -209,6 +222,21 @@ def _parse_feature(feat: dict[str, Any], slot: str) -> dict[str, Any] | None:
             "length_mm": _clamp(feat.get("length_mm"), 8.0, 30.0, 18.0, "length_mm"),
             "base_mm": _clamp(feat.get("base_mm"), 3.0, 9.0, 6.0, "base_mm"),
             "curl": _clamp(feat.get("curl"), 0.0, 1.0, 0.6, "curl"),
+        }
+    if op == "snout":
+        if slot != "head":
+            return None
+        style = str(feat.get("style", "muzzle")).lower()
+        if style not in _SNOUT_STYLES:
+            style = "muzzle"
+        l0, w0, h0, _tw, _tr = _SNOUT_STYLES[style]
+        return {
+            "op": "snout",
+            "style": style,
+            "length_mm": _clamp(feat.get("length_mm"), 3.0, 16.0, l0, "length_mm"),
+            "width_mm": _clamp(feat.get("width_mm"), 6.0, 22.0, w0, "width_mm"),
+            "height_mm": _clamp(feat.get("height_mm"), 4.0, 16.0, h0, "height_mm"),
+            "z_frac": _clamp(feat.get("z_frac"), 0.2, 0.65, 0.4, "z_frac"),
         }
     # spikes: a row of points along x on top of a crown or back piece (the head top is the crown seat)
     if slot not in ("crown", "back"):
@@ -323,6 +351,125 @@ def _ears_or_horns_solid(
         ]
     )
     return _mirror_pair(horn + _root_fill(rb, x_root, z_root, hw, 1.0))
+
+
+def _socket_keepout(head: manifold3d.Manifold) -> manifold3d.Manifold | None:
+    """The neck-socket cavities of a built head, grown by 0.6 mm and extruded up through their roofs. Solids added
+    after `character_head` (snout, ears, horns) are cut by this so they never fill or roof over a socket."""
+    cs = head.slice(3.0)
+    if cs.is_empty():
+        return None
+    holes = cs.hull() - cs
+    if holes.is_empty():
+        return None
+    return manifold3d.Manifold.extrude(holes.offset(0.6, manifold3d.JoinType.Round), 10.0)
+
+
+def _wall_y(body: manifold3d.Manifold, z: float) -> float | None:
+    """The front (-y) wall of `body` at height z, or None when the body does not reach z."""
+    cs = body.slice(z)
+    if cs.is_empty():
+        return None
+    return float(cs.bounds()[1])
+
+
+def _flat_front_half_width(body: manifold3d.Manifold, z: float) -> float:
+    """Half the width of the flat part of the front wall at height z. A wider snout would hang its root spheres
+    off the rounded corners, where the wall is further back, and print as floating islands."""
+    cs = body.slice(z)
+    if cs.is_empty():
+        return 0.0
+    x0, y0, x1, _y1 = cs.bounds()
+    strip = manifold3d.CrossSection.square((x1 - x0 + 2.0, 0.05)).translate((x0 - 1.0, y0))
+    inter = cs ^ strip  # in manifold3d `^` is intersection
+    if inter.is_empty():
+        return 0.0
+    a, _b, c, _d = inter.bounds()
+    return max(0.0, 0.5 * (c - a) - 0.5)
+
+
+def _snout_root_y(body: manifold3d.Manifold, z_lo: float) -> float | None:
+    """y of the snout's small root sphere at height z_lo: inside the wall at the sphere's centre and at its bottom
+    (the wall leans, and a sphere bottom that sticks out of it shows up as a floating island in the first layers)."""
+    walls = [_wall_y(body, z_lo), _wall_y(body, z_lo - SNOUT_ROOT_R)]
+    if any(w is None for w in walls):
+        return None
+    return max(w for w in walls if w is not None) + SNOUT_ROOT_DEPTH
+
+
+def _snout_ramp(
+    body: manifold3d.Manifold, length: float, tip_r: float, z_top: float, y_ref: float
+) -> tuple[float, float, float] | None:
+    """Where the snout's printable underside lands. The top is flat at `z_top`; the underside is a ramp from the
+    tip's bottom back to a small root sphere hidden just inside the wall, rising at least SNOUT_MIN_SLOPE_DEG from
+    horizontal so it prints without supports. The wall leans (heads flare out from the collar), so the root sphere
+    is anchored to the wall at its own height; a big sphere there would poke out under the ramp and fail P1.
+    Returns (tip_y, tip_z, root_z), or None when the ramp would have to reach below the collar."""
+    y_tip = y_ref - (length - tip_r)
+    z_tip = z_top - tip_r
+    min_slope = math.radians(SNOUT_MIN_SLOPE_DEG)
+    z_lo = z_tip - tip_r
+    while z_lo >= SNOUT_ROOT_FLOOR_MM + SNOUT_ROOT_R:
+        y_root = _snout_root_y(body, z_lo)
+        if y_root is not None:
+            df = y_root - y_tip
+            dz = z_tip - z_lo
+            d = math.hypot(df, dz)
+            slope = math.atan2(dz, df) + math.asin(max(-1.0, min(1.0, (SNOUT_ROOT_R - tip_r) / d)))
+            if slope >= min_slope:
+                return y_tip, z_tip, z_lo
+        z_lo -= 0.25
+    return None
+
+
+def _snout_solid(
+    body: manifold3d.Manifold, feat: dict[str, Any], head_height_mm: float, fs: float
+) -> manifold3d.Manifold | None:
+    """A snout on the front (-y) of a head: a hull of a tip sphere and two root spheres at the wall.
+    The head is clipped at z = height_mm, and the snout is added after `character_head` (like head ears) so
+    its flare clip does not shave it back."""
+    _l0, _w0, _h0, tip_w_frac, tip_r_frac = _SNOUT_STYLES[str(feat["style"])]
+    length = float(feat["length_mm"]) * fs
+    width = float(feat["width_mm"]) * fs
+    height = float(feat["height_mm"]) * fs
+    z_c = float(feat["z_frac"]) * head_height_mm
+    r_up = min(height / 2.0, 4.5)
+    z_top = min(z_c + height / 2.0, head_height_mm - 2.5)
+    z_top = max(z_top, 2.0 + 2.0 * r_up)  # the upper root sphere's bottom stays above the collar
+    if z_top > head_height_mm - 2.5:
+        return None
+    z_up = z_top - r_up
+    y_ref = _wall_y(body, z_up)
+    cs = body.slice(z_up)
+    if y_ref is None or cs.is_empty():
+        return None
+    x0, _y0, x1, _y1 = cs.bounds()
+    cx = 0.5 * (x0 + x1)
+    width = min(width, 1.7 * 0.5 * (x1 - x0))
+    if width < 3.0:
+        return None
+    tip_r = max(0.9, tip_r_frac * height / 2.0)
+    ramp = None
+    while length >= 3.0:  # shorten until the printable ramp fits above the collar
+        ramp = _snout_ramp(body, length, tip_r, z_top, y_ref)
+        if ramp is not None:
+            break
+        length -= 0.5
+    if ramp is None:
+        return None
+    y_tip, z_tip, z_lo = ramp
+    flat = min(_flat_front_half_width(body, z_up), _flat_front_half_width(body, z_lo))
+    width = min(width, 2.0 * flat)
+    if width < 3.0:
+        return None
+
+    def ball(r: float, y: float, z: float, half_w: float) -> manifold3d.Manifold:
+        return sdk.sphere(r, (0.0, 0.0, 0.0)).scale((half_w / r, 1.0, 1.0)).translate((cx, y, z))
+
+    root_up = ball(r_up, y_ref + r_up, z_up, width / 2.0)  # tangent to the wall, so its underside stays inside it
+    root_lo = ball(SNOUT_ROOT_R, _snout_root_y(body, z_lo) or (y_ref + SNOUT_ROOT_DEPTH), z_lo, width / 2.0)
+    tip = ball(tip_r, y_tip, z_tip, max(0.9, tip_w_frac * width / 2.0))
+    return sdk.hull([root_up, root_lo, tip])
 
 
 def compile_recipe_to_partspec(recipe: dict[str, Any]) -> dict[str, Any]:
@@ -454,6 +601,10 @@ def compile_recipe_to_partspec(recipe: dict[str, Any]) -> dict[str, Any]:
                     body = body + sdk.rounded_slab(bw, bd, bt, r=min(bw, bd) * 0.35, z=1.5)
             elif op == "spikes":
                 body = body + _spikes_solid(rows, feat, fs)
+            elif op == "snout":
+                snout = _snout_solid(body, feat, head_height_mm, fs)
+                if snout is not None:
+                    after_builder.append(snout)
             elif op in ("ears", "horns"):
                 solid = _ears_or_horns_solid(op, slot, body, rows, feat, head_height_mm, fs)
                 if solid is not None:
@@ -466,8 +617,10 @@ def compile_recipe_to_partspec(recipe: dict[str, Any]) -> dict[str, Any]:
             return sdk.crown_addon(body, support_policy=support_policy)
         if slot == "head":
             m, conns, ex = sdk.character_head(body, height_mm=head_height_mm, support_policy=support_policy)
-            for solid in after_builder:
-                m = m + solid
+            if after_builder:
+                keepout = _socket_keepout(m)
+                for solid in after_builder:
+                    m = m + (solid - keepout if keepout is not None else solid)
             return m, conns, ex
         if slot == "back":
             return sdk.backpack_addon(body, support_policy=support_policy)

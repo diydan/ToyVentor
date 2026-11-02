@@ -52,9 +52,28 @@ export interface ForgeRecipeV1 {
     | { kind?: "loft"; slices: ForgeLoftSlice[]; height_mm?: number }
     | { kind: "star2d"; points?: number; outer_r_mm?: number; inner_r_mm?: number; grip_tu?: number }
     | { kind: "profile2d"; points: [number, number][]; fillet_r_mm?: number; grip_tu?: number };
+  /** Every number is optional and clamped by the daemon; an op the slot cannot use is ignored and reported. */
   features?: Array<
     | { op: "knob"; radius_mm?: number }
     | { op: "brim"; width_mm?: number; depth_mm?: number; thickness_mm?: number }
+    | {
+        op: "ears";
+        style?: "round" | "pointy" | "tall";
+        width_mm?: number;
+        height_mm?: number;
+        thickness_mm?: number;
+        tilt_deg?: number;
+      }
+    | { op: "horns"; length_mm?: number; base_mm?: number; curl?: number }
+    | { op: "spikes"; count?: number; height_mm?: number; base_mm?: number; center_boost_mm?: number }
+    | {
+        op: "snout";
+        style?: "muzzle" | "beak" | "bill";
+        length_mm?: number;
+        width_mm?: number;
+        height_mm?: number;
+        z_frac?: number;
+      }
   >;
 }
 

@@ -1,4 +1,4 @@
-// Recipe v1 feature ops (ears, horns, spikes, brim) through the real optimizer daemon and its gates.
+// Recipe v1 feature ops (ears, horns, spikes, snout, brim) through the real optimizer daemon and its gates.
 // Spawns scripts/forge_optimizer_daemon.py on an ephemeral loopback port, so it needs the partspec venv
 // and is skipped without it, the same as tests/parts-asset-optimization.test.ts.
 import { type ChildProcessByStdio, execFileSync, spawn } from "node:child_process";
@@ -45,6 +45,14 @@ const HEAD = [
   { z: 8, w: 26, d: 12, r: 5 },
   { z: 22, w: 26, d: 12, r: 5 },
   { z: 30.5, w: 24, d: 11.5, r: 4.5 },
+];
+// A round head that flares well out from the collar: the wall leans and the corners are far back,
+// which is where a snout's root spheres used to hang off the head.
+const WIDE_HEAD = [
+  { z: 0, w: 24.6, d: 12.1, r: 4 },
+  { z: 10, w: 34, d: 22, r: 8 },
+  { z: 22, w: 34, d: 22, r: 8 },
+  { z: 30.5, w: 26, d: 14, r: 5 },
 ];
 
 function recipe(id: string, slot: string, slices: object[], features: object[]) {
@@ -145,6 +153,18 @@ describe.skipIf(!PYTHON)("Recipe v1 feature ops through the optimizer daemon", (
     expect(ears.status).toBe("print_ready");
   }, 360_000);
 
+  it("prints heads with a muzzle, a beak and a bill, and a beak on a flared round head", async () => {
+    for (const [id, slices, feats] of [
+      ["ops_test_muzzle", HEAD, [{ op: "snout" }]],
+      ["ops_test_beak", HEAD, [{ op: "snout", style: "beak" }]],
+      ["ops_test_bill", HEAD, [{ op: "snout", style: "bill", z_frac: 0.3, length_mm: 12, height_mm: 4, width_mm: 22 }]],
+      ["ops_test_wide_beak", WIDE_HEAD, [{ op: "snout", style: "beak" }, { op: "ears", style: "pointy" }]],
+    ] as const) {
+      const job = await run({ ...recipe(id, "head", [...slices], [...feats]), shape: { kind: "loft", slices, height_mm: 30.5 } });
+      expect(job.status, id).toBe("print_ready");
+    }
+  }, 540_000);
+
   it("ignores an op the slot cannot use and an unknown op, and reports both", async () => {
     const job = await run(
       recipe("ops_test_ignored", "crown", HELMET, [
@@ -157,5 +177,10 @@ describe.skipIf(!PYTHON)("Recipe v1 feature ops through the optimizer daemon", (
     // spikes are allowed on a crown; the head top is the crown seat, so a head ignores them.
     const head = await run(recipe("ops_test_head_spikes", "head", HEAD, [{ op: "spikes", count: 3 }]));
     expect(head.legalizer?.features_ignored).toEqual(["spikes"]);
+    // a snout is a head op; a knob and a brim do nothing on a head (the builder clips them away).
+    const crownSnout = await run(recipe("ops_test_crown_snout", "crown", HELMET, [{ op: "snout" }]));
+    expect(crownSnout.legalizer?.features_ignored).toEqual(["snout"]);
+    const headHatOps = await run(recipe("ops_test_head_hat_ops", "head", HEAD, [{ op: "knob" }, { op: "brim" }]));
+    expect(headHatOps.legalizer?.features_ignored).toEqual(["knob", "brim"]);
   }, 360_000);
 });
