@@ -12,6 +12,9 @@
 //   - ry turns a forward-pointing limb sideways (positive toward +X) and twists a hanging one about its own length.
 // Knees (LeftLeg, RightLeg) only ever use rx >= 0: the existing clips span 0 to 92 and a knee does not bend backwards.
 // Every clip is a seamless loop (a function of the phase `ph` over one full turn) so it can play under the page's looping mixer.
+// The page keeps the lowest foot on the floor, so hip height cannot lift Kip off the ground: there is no jump clip (Space already hops).
+// How the poses were checked: tests/kip-clips.test.ts for the numbers, and contact sheets (six frames per clip, 3/4 and front cameras) made
+// with window.kipClips.scrub(id, t) from the real page, because a prop's long axis lies sideways across the hand and only a render shows it.
 
 export const KIP_CLIP_JOINTS = Object.freeze([
   'Hips', 'Head',
@@ -104,14 +107,13 @@ const reactions = [
   {
     id: 'clap', label: 'Clap', dur: 1.2,
     pose(ph, setQ) {
-      const close = Math.pow(0.5 + 0.5 * C(ph * 2), 2); // 1 = hands together, two claps per cycle
-      const spread = 16 - close * 16;
+      const open = 1 - Math.pow(0.5 + 0.5 * C(ph * 2), 2); // 0 = hands together, 1 = hands apart; two claps a cycle
       setQ('Hips', 0, 0, 0);
       setQ('Head', -2, 0, 0);
-      setQ('LeftArm', -52, -24 + spread * 0.4, 0); setQ('LeftForeArm', -72, -12 - spread * 0.6, 0); setQ('LeftHand', 0, 0, 0);
-      setQ('RightArm', -52, 24 - spread * 0.4, 0); setQ('RightForeArm', -72, 12 + spread * 0.6, 0); setQ('RightHand', 0, 0, 0);
+      setQ('LeftArm', -52, -16 + 22 * open, 0); setQ('LeftForeArm', -72, -10 + 14 * open, 0); setQ('LeftHand', 0, 0, 0);
+      setQ('RightArm', -52, 16 - 22 * open, 0); setQ('RightForeArm', -72, 10 - 14 * open, 0); setQ('RightHand', 0, 0, 0);
       rest(setQ, { left: false });
-      return [0, HIP_Y + close * 0.8, 0];
+      return [0, HIP_Y + (1 - open) * 0.8, 0];
     },
   },
   {
@@ -120,35 +122,38 @@ const reactions = [
       setQ('Hips', 0, S(ph) * 4, 2);
       setQ('Head', 8 + S(ph * 2) * 5, -10 + S(ph) * 16, 9 + S(ph) * 6);
       setQ('RightArm', -34 + S(ph * 3) * 3, -26, -8); setQ('RightForeArm', -118 + S(ph * 3) * 7, -6, 0); setQ('RightHand', S(ph * 3) * 10, 0, 0); // a tapping wrist
-      setQ('LeftArm', -48, 22, 6); setQ('LeftForeArm', -62, 18, 0); setQ('LeftHand', 0, 0, 0); // supports the elbow
+      setQ('LeftArm', -50, -40, 4); setQ('LeftForeArm', -72, -34, 0); setQ('LeftHand', 0, 0, 0); // across the body, under the right elbow
       rest(setQ, { left: false });
       return [0, HIP_Y, 0];
     },
   },
   {
-    id: 'jump', label: 'Jump', dur: 1.4,
+    id: 'flex', label: 'Flex', dur: 1.6,
     pose(ph, setQ) {
-      const air = Math.max(0, S(ph));           // 0 to 1 hump over the first half: in the air
-      const squat = Math.max(0, -S(ph));        // 0 to 1 hump over the second half: crouch before and after the leap
-      setQ('Hips', 6 * squat, 0, 0);
-      setQ('Head', -6 * squat - 4 * air, 0, 0);
-      setQ('LeftArm', -20 - squat * 36 + air * 150, 4, 16 + air * 34); setQ('LeftForeArm', -10, 0, 0); setQ('LeftHand', 0, 0, 0);
-      setQ('RightArm', -20 - squat * 36 + air * 150, -4, -16 - air * 34); setQ('RightForeArm', -10, 0, 0); setQ('RightHand', 0, 0, 0);
-      setQ('LeftUpLeg', -8 - squat * 54 + air * 8, 2, 4); setQ('LeftLeg', 6 + squat * 78 - air * 4, 0, 0); setQ('LeftFoot', 2 - squat * 14 + air * 22, 0, -3);
-      setQ('RightUpLeg', -8 - squat * 54 + air * 8, -2, -4); setQ('RightLeg', 6 + squat * 78 - air * 4, 0, 0); setQ('RightFoot', 2 - squat * 14 + air * 22, 0, 3);
-      return [0, HIP_Y - squat * 12 + air * 22, 0];
+      const pump = S(ph * 2);   // two flexes a cycle
+      const k = 0.5 + 0.5 * pump;
+      setQ('Hips', -2, S(ph) * 5, 0);
+      setQ('Head', -6, S(ph) * 8, S(ph) * 3);
+      setQ('LeftArm', -6, 0, 96 + k * 4); setQ('LeftForeArm', 0, 94, 78 + k * 30); setQ('LeftHand', 0, 0, 0);
+      setQ('RightArm', -6, 0, -96 - k * 4); setQ('RightForeArm', 0, -94, -78 - k * 30); setQ('RightHand', 0, 0, 0);
+      setQ('LeftUpLeg', -2, 2, 12); setQ('LeftLeg', 4, 0, 0); setQ('LeftFoot', 0, 0, -9);
+      setQ('RightUpLeg', -2, -2, -12); setQ('RightLeg', 4, 0, 0); setQ('RightFoot', 0, 0, 9);
+      return [0, HIP_Y - 1 + k * 1.2, 0];
     },
   },
   {
     id: 'bow', label: 'Bow', dur: 2.6,
     pose(ph, setQ) {
       const b = hold(ph, 0.35);
-      setQ('Hips', 44 * b, 0, 0);
+      setQ('Hips', 28 * b, 0, 0);
       setQ('Head', 8 * b, 0, 0);
       setQ('LeftArm', -6 + 10 * b, 4, 12 - 6 * b); setQ('LeftForeArm', -14 - 30 * b, 6, 0); setQ('LeftHand', 0, 0, 0);
       setQ('RightArm', -6 + 10 * b, -4, -12 + 6 * b); setQ('RightForeArm', -14 - 30 * b, -6, 0); setQ('RightHand', 0, 0, 0);
-      rest(setQ, { left: false });
-      return [0, HIP_Y - 3 * b, -3 * b];
+      rest(setQ, { left: false, legs: false });
+      // The legs hang from the hips joint, so pitching the hips pitches them too: counter-rotate the thighs and the bow folds at the waist.
+      setQ('LeftUpLeg', 2 - 28 * b, 3, 3); setQ('LeftLeg', 0, 0, 0); setQ('LeftFoot', 0, 0, -3);
+      setQ('RightUpLeg', 2 - 28 * b, -3, -3); setQ('RightLeg', 0, 0, 0); setQ('RightFoot', 0, 0, 3);
+      return [0, HIP_Y - 1 * b, -2 * b];
     },
   },
   {
@@ -157,7 +162,7 @@ const reactions = [
       const a = hold(ph, 0.5);
       setQ('Hips', 0, -4 * a, 0);
       setQ('Head', -3 * a, 6 * a, 0);
-      setQ('RightArm', -6 - 14 * a, 0, -12 - 92 * a); setQ('RightForeArm', -10 * a, -94 * a, -20 - 96 * a); setQ('RightHand', 0, 0, -4 * a);
+      setQ('RightArm', -6 - 14 * a, 0, -12 - 100 * a); setQ('RightForeArm', -10 * a, -94 * a, -20 - 112 * a); setQ('RightHand', 0, 0, -4 * a);
       setQ('LeftArm', -6, 6, 12); setQ('LeftForeArm', -12, 8, 4); setQ('LeftHand', 0, 0, -6);
       rest(setQ, { left: false });
       return [0, HIP_Y, 0];
@@ -226,54 +231,61 @@ const dances = [
 // Prop clips: the right hand carries the prop (makeHandheldProp: its long axis lies sideways across the hand), the left arm stays out of
 // the way. The poses below are what the contact sheet showed reads as the job; see docs/specs/kip-clips-notes.md for how they were checked.
 // ---------------------------------------------------------------------------------------------------------------------------------
-function work(setQ, { arm, fore, hand, hips = [0, 0, 0], head = [0, 0, 0], left = null }) {
+function work(setQ, { arm, fore, hand, hips = [0, 0, 0], head = [0, 0, 0], left = null, crouch = 0 }) {
   setQ('Hips', ...hips);
   setQ('Head', ...head);
   setQ('RightArm', ...arm); setQ('RightForeArm', ...fore); setQ('RightHand', ...hand);
   if (left) { setQ('LeftArm', ...left.arm); setQ('LeftForeArm', ...left.fore); setQ('LeftHand', ...(left.hand ?? [0, 0, 0])); }
-  rest(setQ, { left: !left });
+  rest(setQ, { left: !left, legs: crouch === 0 });
+  if (crouch > 0) { // knees and hips bent so a hand-held tool can reach the floor; the foot stays flat (the chain's angles sum to zero)
+    setQ('LeftUpLeg', -2 - 24 * crouch, 3, 3); setQ('LeftLeg', 30 * crouch, 0, 0); setQ('LeftFoot', -6 * crouch, 0, -3);
+    setQ('RightUpLeg', -2 - 24 * crouch, -3, -3); setQ('RightLeg', 30 * crouch, 0, 0); setQ('RightFoot', -6 * crouch, 0, 3);
+  }
 }
 
+// What the hand angles do to a prop (the prop hangs off a node under the hand with a fixed 90 degree twist about the arm, so its long axis is the
+// hand's forward direction): hand rx pitches it (0 = across the forearm, +90 = along the forearm beyond the hand), hand ry swings it about the
+// arm (90 = sideways, 180 = turned end for end, which puts a working end that points down up instead), hand rz only rolls it. The Euler order is
+// ZYX, so rx is applied first and ry then turns the pitched prop about its own length: that is how a screwdriver rolls.
 const props = [
   { id: 'prop_broom', prop: 'broom', label: 'Sweep (broom)', dur: 2.0,
     pose(ph, setQ) { const s = S(ph);
-      work(setQ, { arm: [-44 + s * 8, -10 + s * 16, -10], fore: [-40, 0, 0], hand: [0, 90, 0], hips: [8, s * 10, 0], head: [10, -s * 6, 0] });
-      return [0, HIP_Y - 1, 0]; } },
+      work(setQ, { arm: [-30 + s * 6, -4 + s * 16, -8], fore: [-24, 0, 0], hand: [0, 0, 84], hips: [16, s * 7, 0], head: [14, -s * 5, 0], crouch: 0.55 });
+      return [0, HIP_Y - 4, 0]; } },
   { id: 'prop_mop', prop: 'mop', label: 'Mop', dur: 2.4,
     pose(ph, setQ) { const s = S(ph);
-      work(setQ, { arm: [-42, -12 + s * 20, -10], fore: [-44, 0, 0], hand: [0, 90, 0], hips: [10, s * 12, 0], head: [12, -s * 8, 0] });
-      return [0, HIP_Y - 1, 0]; } },
+      work(setQ, { arm: [-34, -6 + s * 18, -8], fore: [-28, 0, 0], hand: [0, 0, 84], hips: [18, s * 9, 0], head: [16, -s * 6, 0], crouch: 0.55 });
+      return [0, HIP_Y - 4, 0]; } },
   { id: 'prop_scrub_brush', prop: 'scrub_brush', label: 'Scrub (brush)', dur: 1.0,
     pose(ph, setQ) { const s = S(ph * 2);
-      work(setQ, { arm: [-58, -6, -8], fore: [-70 + s * 18, 0, 0], hand: [0, 0, 80], hips: [14, 0, 0], head: [16, 0, 0] });
-      return [0, HIP_Y - 2, 0]; } },
+      work(setQ, { arm: [-40 + s * 12, -2, -8], fore: [-44 + s * 6, 0, 0], hand: [0, 0, 86], hips: [20, 0, 0], head: [20, 0, 0], crouch: 0.7 });
+      return [0, HIP_Y - 6, 0]; } },
   { id: 'prop_vacuum', prop: 'vacuum', label: 'Vacuum', dur: 2.4,
     pose(ph, setQ) { const s = S(ph);
-      work(setQ, { arm: [-50, -16 + s * 22, -8], fore: [-40, 0, 0], hand: [0, 90, 0], hips: [6, s * 8, 0], head: [8, -s * 6, 0] });
-      return [0, HIP_Y - 0.5, 0]; } },
+      work(setQ, { arm: [-38, -10 + s * 20, -8], fore: [-42, 0, 0], hand: [0, 0, 70], hips: [10, s * 8, 0], head: [10, -s * 6, 0], crouch: 0.3 });
+      return [0, HIP_Y - 2, 0]; } },
   { id: 'prop_paint_roller', prop: 'paint_roller', label: 'Paint (roller)', dur: 2.0,
     pose(ph, setQ) { const s = S(ph);
-      work(setQ, { arm: [-60 - s * 40, -6, -6], fore: [-46 + s * 10, 0, 0], hand: [0, 90, 0], hips: [0, 0, 0], head: [-10 - s * 6, 0, 0] });
+      work(setQ, { arm: [-96 - s * 26, -4, -6], fore: [-14 + s * 6, 0, 0], hand: [0, 180, 0], hips: [0, 0, 0], head: [-12 - s * 5, 0, 0] });
       return [0, HIP_Y, 0]; } },
   { id: 'prop_hammer', prop: 'hammer', label: 'Hammer', dur: 1.2,
-    pose(ph, setQ) { const k = Math.pow(0.5 - 0.5 * C(ph), 2); // slow wind-up, quick strike
-      work(setQ, { arm: [-70 - k * 70, -8, -8], fore: [-30 - k * 40, 0, 0], hand: [0, 90, 0], hips: [6 + k * 6, 0, 0], head: [10, 0, 0] });
+    pose(ph, setQ) { const k = Math.pow(0.5 - 0.5 * C(ph), 2); // slow wind-up overhead, quick strike down
+      work(setQ, { arm: [-60 - k * 90, -6, -8], fore: [-24 - k * 36, 0, 0], hand: [0, 0, 84], hips: [8 + k * 8, 0, 0], head: [10, 0, 0] });
       return [0, HIP_Y - k * 1.5, 0]; } },
   { id: 'prop_screwdriver', prop: 'screwdriver', label: 'Screw (driver)', dur: 1.6,
     pose(ph, setQ) { const s = S(ph * 2);
-      work(setQ, { arm: [-62, -8, -8], fore: [-74, 0, 0], hand: [0, 90 + s * 6, s * 40], hips: [8, 0, 0], head: [14, 0, 0] });
+      work(setQ, { arm: [-44, -6, -8], fore: [-46, 0, 0], hand: [90, s * 80, 0], hips: [0, 0, 0], head: [10, 0, 0] });
       return [0, HIP_Y - 1, 0]; } },
   { id: 'prop_wrench', prop: 'wrench', label: 'Tighten (wrench)', dur: 1.8,
     pose(ph, setQ) { const s = hold(ph, 0.2);
-      work(setQ, { arm: [-62, -6, -8], fore: [-66, 0, 0], hand: [0, 0, 20 + s * 70], hips: [8, 0, 0], head: [12, 0, 0] });
+      work(setQ, { arm: [-62, -6, -8], fore: [-66, 0, 0], hand: [-35 + s * 70, 0, 70], hips: [8, 0, 0], head: [12, 0, 0] });
       return [0, HIP_Y - 1, 0]; } },
   { id: 'prop_guitar', prop: 'guitar', label: 'Strum (guitar)', dur: 1.2,
     pose(ph, setQ) { const s = S(ph * 2);
-      work(setQ, { arm: [-36 + s * 5, -18, -10], fore: [-76 + s * 17, 0, 0], hand: [s * 14, 0, 70], hips: [0, 8 + S(ph) * 5, S(ph) * 3], head: [8 + s * 8, -12, 0], left: { arm: [-46, 26, 10], fore: [-52, 20, 0] } });
+      work(setQ, { arm: [-34, -14, -8], fore: [-68 + s * 14, 0, 0], hand: [s * 12, 0, 56], hips: [0, 8 + S(ph) * 5, S(ph) * 3], head: [8 + s * 8, -12, 0], left: { arm: [-58, 12, 8], fore: [-58, 8, 0] } });
       return [0, HIP_Y + Math.abs(s) * 0.6, 0]; } },
   { id: 'prop_trumpet', prop: 'trumpet', label: 'Trumpet', dur: 2.0,
-    pose(ph, setQ) { const s = S(ph * 2);
-      const p = S(ph);
+    pose(ph, setQ) { const s = S(ph * 2); const p = S(ph);
       work(setQ, { arm: [-30 + p * 7, -26, -6], fore: [-116 + s * 5, 0, 0], hand: [0, 0, 80], hips: [-4 + p * 3, 0, p * 4], head: [-8 + p * 9, p * 6, 0] });
       return [0, HIP_Y + Math.abs(s) * 0.5, 0]; } },
   { id: 'prop_maracas', prop: 'maracas', label: 'Shake (maracas)', dur: 0.8,
@@ -282,11 +294,11 @@ const props = [
       return [0, HIP_Y + Math.abs(s) * 1.2, 0]; } },
   { id: 'prop_flag', prop: 'flag', label: 'Wave (flag)', dur: 2.0,
     pose(ph, setQ) { const s = S(ph);
-      work(setQ, { arm: [-18, 0, -86 + s * 8], fore: [-24, -90, -52 + s * 12], hand: [0, 0, 0], hips: [0, s * 3, 2], head: [-6, 6, 6] });
+      work(setQ, { arm: [-42, -14 + s * 28, -14], fore: [-56, 0, 0], hand: [0, 180, 0], hips: [0, s * 4, 0], head: [-6, 6, 4] });
       return [0, HIP_Y + Math.abs(s) * 1.4, 0]; } },
   { id: 'prop_magnifier', prop: 'magnifier', label: 'Inspect (magnifier)', dur: 3.0,
     pose(ph, setQ) { const s = S(ph);
-      work(setQ, { arm: [-66 + s * 6, -10 + s * 10, -6], fore: [-34, 0, 0], hand: [0, 0, 60], hips: [10, s * 6, 0], head: [14 + s * 4, -s * 8, 0] });
+      work(setQ, { arm: [-52, -6 + s * 10, -6], fore: [-36, 0, 0], hand: [0, 180, 0], hips: [10, s * 6, 0], head: [8 + s * 3, -s * 8, 0] });
       return [0, HIP_Y - 1.2, 0]; } },
   { id: 'prop_shield', prop: 'shield', label: 'Block (shield)', dur: 1.4,
     pose(ph, setQ) { const k = Math.pow(0.5 - 0.5 * C(ph * 2), 2);

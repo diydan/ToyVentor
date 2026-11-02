@@ -131,7 +131,8 @@ describe("kip clips: wiring", () => {
 
   it("stays pure: no page state, no DOM, no network", () => {
     const src = read("parts/kip/viewer/kip-clips.js");
-    expect(src).not.toMatch(/\b(document|window|fetch|localStorage|sessionStorage|XMLHttpRequest)\b/);
+    const code = src.replace(/\/\/.*$/gm, ""); // comments may name the page hooks; only code counts
+    expect(code).not.toMatch(/\b(document|window|fetch|localStorage|sessionStorage|XMLHttpRequest)\b/);
     expect(src).not.toMatch(/^\s*import\s/m);
   });
 });
