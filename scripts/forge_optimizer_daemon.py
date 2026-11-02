@@ -248,7 +248,7 @@ def compile_recipe_to_partspec(recipe: dict[str, Any]) -> dict[str, Any]:
             if kind == "profile2d":
                 cs = sdk.polygon_2d(pts_clamped, fillet_r=fillet_r)
             else:
-                cs = sdk.star_2d(points=n_pts, r_outer=r_out, r_inner=r_in)
+                cs = sdk.star_2d(points=n_pts, r_outer=r_out, r_inner=r_in, fillet_r=fillet_r)
             return sdk.handheld_prop(cs, grip_tu=grip_tu)
 
         body = sdk.loft_slabs(slices_legal)

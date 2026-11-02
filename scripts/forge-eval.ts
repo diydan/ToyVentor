@@ -63,6 +63,7 @@ interface Opts {
   maxCalls: number;
   out: string | null;
   resume: boolean;
+  promptVersion: "v0" | "v1";
   jobTimeoutMs: number;
 }
 
@@ -80,6 +81,7 @@ function parseArgs(argv: string[]): Opts {
     maxCalls: 4,
     out: null,
     resume: false,
+    promptVersion: "v1",
     jobTimeoutMs: 240_000,
   };
   const args = argv.filter((a) => a !== "--");
@@ -118,6 +120,12 @@ function parseArgs(argv: string[]): Opts {
       case "--resume":
         o.resume = true;
         break;
+      case "--prompt": {
+        const v = next();
+        if (v !== "v0" && v !== "v1") throw new Error("--prompt must be v0 or v1");
+        o.promptVersion = v;
+        break;
+      }
       case "--job-timeout-s":
         o.jobTimeoutMs = Math.max(5, Number.parseInt(next(), 10) || 240) * 1000;
         break;
@@ -288,6 +296,23 @@ Printing rules (the checker rejects breaking them):
 Example for slot crown:
 {"v":1,"id":"wizard_hat","name":"Starlight Wizard Hat","stat":"Glow","behavior":"Tall hat that clicks onto the crown studs","slot":"crown","shape":{"kind":"loft","slices":[{"z":0,"w":23.4,"d":11.4,"r":4.6},{"z":7.5,"w":27.5,"d":17,"r":6.2,"y":-1.8},{"z":17,"w":11,"d":11,"r":4.5,"y":-0.5},{"z":23.5,"w":5.6,"d":5.6,"r":2.4,"y":1.2}]}}`;
 
+/**
+ * v1 adds the per-slot facts v0 left out. The first Spark baseline (v0) failed every head because
+ * `character_head` puts the crown studs at z = height_mm (30.5) and the prompt never said so, and
+ * because heads started wider than the 24.6 x 12.1 collar. Footprints are from the slot table in
+ * public/kip/LLM_PART_PROMPT.md and VEHICLE_SLOTS in parts/kip/sdk/kip_partspec_sdk.py.
+ * The hand paragraph is a hypothesis from the baseline failures (the daemon centres the shape's
+ * bounding box on the grip, so a pole at the edge of a flag does not touch the grip neck).
+ */
+const SLOT_FACTS_V1 = `Slot facts (z = 0 is the bottom of your shape, sizes in mm):
+- crown: sits on a head's crown studs. Slice 0 should be about 23.8 wide x 11.6 deep.
+- head: sits on a neck collar 24.6 wide x 12.1 deep. Slice 0 should be about 24.6 x 12.1, then grow gradually. The head is 30.5 tall: your LAST slice must be at z = 30.5, or set "height_mm" (24 to 38) inside "shape" and end at that z. Crown studs are added on top automatically, so do not model them. Do not model eyes, mouths or noses; the front stays smooth.
+- back: sits on a backpack plate 24.6 x 24.6. Slice 0 should be about that size.
+- front, rollbar, spoiler: sit on a socket pad 23.8 wide x 11.6 deep. Slice 0 should be about that size.
+- exhaust: sits on a socket pad 11.6 wide x 23.8 deep. Slice 0 should be about that size.
+- hood, roof: sit on a socket pad 23.8 x 23.8. Slice 0 should be about that size.
+- hand: a flat 2D shape on a stick that a toy hand holds. For stars and flowers use star2d (points 3 to 12, outer_r_mm 12 to 28, inner_r_mm about half of outer_r_mm). For anything else use profile2d: points [x, z] with z from 0 up, 18 to 40 tall. The shape is centred on the grip automatically, so its handle must run up the middle of the shape's width, starting at z = 0, and everything must be one connected piece. Do not put a stick at the edge of the shape (a flag pole on the left edge fails). Avoid parts thinner than 3 mm.`;
+
 function outputTextOf(body: unknown): string {
   if (!isRecord(body)) return "";
   if (typeof body.output_text === "string") return body.output_text;
@@ -301,7 +326,8 @@ function outputTextOf(body: unknown): string {
   return text;
 }
 
-function sparkProposer(): Proposer {
+function sparkProposer(version: "v0" | "v1"): Proposer {
+  const system = version === "v1" ? `${RECIPE_PROMPT_V0}\n\n${SLOT_FACTS_V1}` : RECIPE_PROMPT_V0;
   const key = process.env.MODEL_API_KEY ?? process.env.META_MODEL_API_KEY;
   if (!key) throw new Error("--proposer spark needs MODEL_API_KEY or META_MODEL_API_KEY in the environment");
   const base = (process.env.META_MODEL_API_URL ?? "https://api.meta.ai/v1").replace(/\/+$/, "").replace(/\/responses$/, "");
@@ -330,11 +356,11 @@ function sparkProposer(): Proposer {
 
   const wish = (p: PromptCase) => `Child's wish: "${p.text}"\nSlot: ${p.slot}`;
   return {
-    name: `spark:${model}`,
-    propose: (p) => call(`${RECIPE_PROMPT_V0}\n\n${wish(p)}\nAnswer with the JSON object only.`),
+    name: version === "v1" ? `spark:${model}:v1` : `spark:${model}`,
+    propose: (p) => call(`${system}\n\n${wish(p)}\nAnswer with the JSON object only.`),
     repair: (p, prev, feedback) =>
       call(
-        `${RECIPE_PROMPT_V0}\n\n${wish(p)}\n\nYour previous recipe:\n${JSON.stringify(prev)}\n\nProblems the checker found:\n${feedback
+        `${system}\n\n${wish(p)}\n\nYour previous recipe:\n${JSON.stringify(prev)}\n\nProblems the checker found:\n${feedback
           .map((f) => `- ${f.gate}${f.measured !== undefined ? ` (measured ${f.measured})` : ""}${f.limit ? ` (limit ${f.limit})` : ""}: ${f.hint}`)
           .join("\n")}\n\nReturn a corrected recipe as one JSON object only.`,
       ),
@@ -454,7 +480,7 @@ async function main() {
   if (o.limit) prompts = prompts.slice(0, o.limit);
   if (prompts.length === 0) throw new Error("no prompts selected");
 
-  const proposer = o.proposer === "spark" ? sparkProposer() : stubProposer();
+  const proposer = o.proposer === "spark" ? sparkProposer(o.promptVersion) : stubProposer();
   try {
     const h = await fetch(`${o.daemon}/health`, { signal: AbortSignal.timeout(5000) });
     if (!h.ok) throw new Error(`health returned ${h.status}`);
@@ -489,7 +515,7 @@ async function main() {
       o.out,
       JSON.stringify(
         {
-          meta: { proposer: proposer.name, daemon: o.daemon, prompts: o.prompts, startedAt, maxCalls: o.maxCalls, promptVersion: "v0", complete, selected: prompts.length },
+          meta: { proposer: proposer.name, daemon: o.daemon, prompts: o.prompts, startedAt, maxCalls: o.maxCalls, promptVersion: o.proposer === "spark" ? o.promptVersion : "stub", complete, selected: prompts.length },
           summary: summarize(results),
           results,
         },
