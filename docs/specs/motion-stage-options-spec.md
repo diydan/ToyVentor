@@ -1,6 +1,6 @@
 # Spec (draft for review): first motion stage, key-wound vs pull-back, and the stage ladder
 
-**Status:** draft 3, 2026-11-02, for Dan's review. **Decided by Dan (2026-11-02): the ladder is Snap -> Motion -> Pro, with no separate Mech stage (its advanced parts merge into Pro), and a bigger-wheel option is wanted in every stage.** Still open: pull-back vs key for Motion (recommendation below), and the Pro powered-module questions (section 6). Mechanical soundness only: no age grading, compliance or card layout here. **Nothing in CAD or in the locked spec has been changed.** If this is accepted, the changes go into [progressive-power-system-spec.md](progressive-power-system-spec.md) and [functional-print-mechanics-spec.md](functional-print-mechanics-spec.md).
+**Status:** draft 4, 2026-11-02, for Dan's review. **Pass rules for the balloon-jet print test (section 10.4) are agreed.** **Decided by Dan (2026-11-02): the ladder is Snap -> Motion -> Pro, with no separate Mech stage (its advanced parts merge into Pro), and a bigger-wheel option is wanted in every stage.** Still open: pull-back vs key for Motion (recommendation below), and the Pro powered-module questions (section 6). Mechanical soundness only: no age grading, compliance or card layout here. **Nothing in CAD or in the locked spec has been changed.** If this is accepted, the changes go into [progressive-power-system-spec.md](progressive-power-system-spec.md) and [functional-print-mechanics-spec.md](functional-print-mechanics-spec.md).
 
 **Draft 2 corrects draft 1.** A review pass found problems in the CAD that draft 1 missed, and checking them also found three errors in draft 1 itself (the rear wheel is not a blocker at the right key spin, the key's shape was described wrongly, and "geometry works" confused "no overlap" with "functions"). Section 7 lists every review finding and how it was checked.
 
@@ -115,7 +115,7 @@ Dan's steer (2026-11-02): the balloon should **stick out of the top, not sit und
 
 **The viewer's balloon is not a real balloon [E]:** a 9 inch balloon holding 4-6 L is about 20-23 cm across when free (sphere of that volume), against a truck 50 mm wide; the viewer draws it as a 36 x 36 x 16 mm pinched ellipsoid inside the bellows. A real one has to stick out, as you say.
 
-**The spec's jet numbers are consistent with an ideal nozzle [E]:** thrust F = 2 x A x pressure at 2.5 kPa gives O3.0 0.035 N, O4.5 0.08 N, O6.0 0.14 N, and air time = 5 L / (A x 64 m/s) gives about 11 s, 4.9 s and 2.7 s: they match the spec's 2.5-14 gf and 2.5-10 s. It leaves out nozzle losses and the pressure curve. Against the spec's 0.0485 N rolling drag for the 110 g craft, **O3.0 cannot move it on a hard floor** (0.5-0.9x drag); only O4.5 and O6.0 can. A larger **O8** nozzle would give about 0.25 N for about 1.5 s: worth adding to the set because the lab sizes start at 5-6 mm.
+**The spec's jet numbers are consistent with an ideal nozzle, but the body's own air path is the real limit [M for the areas, E for the model].** Ideal nozzle, F = 2 x A x pressure at 2.5 kPa: O3.0 0.035 N, O4.5 0.08 N, O6.0 0.14 N, and air time = 5 L / (A x 64 m/s) about 11 s, 4.9 s and 2.7 s: these match the spec's 2.5-14 gf and 2.5-10 s. **But the air has to get through `mom_jet_valve_body` first: inlet 19.6 mm2 (O5.0), valve open port 20.4 mm2, tunnel 20.6 mm2, so about O5.0 everywhere.** With that passage and a nozzle as two orifices in series, the jet thrust is rho Q^2 / A_nozzle with Q = A_eff x sqrt(2 x pressure / rho): **O3.0 3.2 gf, O4.5 4.9 gf, O6.0 4.7 gf, O8.0 3.4 gf**, and the most any nozzle can give is about A x pressure = 0.049 N (5 gf). The spec's 8-14 gf for O6.0 is 2-3 times too high, and a wider nozzle does not help: O8 is worse than O4.5. Against the spec's 0.0485 N rolling drag (110 g) the best case is 1.0x, and at the kit's real solid-PLA mass (about 150 g, drag 0.066 N) **no nozzle moves the truck**. To benefit from O6 or O8 the body's inlet, valve port and tunnel must be enlarged first: with an O8 passage an O6 nozzle gives about 0.11 N (1.6x drag at 150 g). The lab's *Body passage* slider shows this.
 
 **Requirements for the balloon piece (proposal):**
 
@@ -123,18 +123,18 @@ Dan's steer (2026-11-02): the balloon should **stick out of the top, not sit und
 2. **Nozzle straight back along the truck axis**, with the jet clear of the rear wheels, the hinge and anything else.
 3. **No dump tub in this mode**: it is the heaviest part on those rows and the piece needs the space. (This drops the bellows idea of a balloon under the tub; the bellows parts, `mom_bellows_base` and `mom_bellows_leaf`, would go.)
 4. **Inflation by hand pump on the collar**, no mouthpiece (spec rule); the valve must hold pressure (spec: 15% diameter loss or less over 15 s).
-5. **Nozzle set extended with O8**, tested against O4.5 and O6.0.
+5. **Enlarge the body's internal passages first** (inlet, valve port and tunnel to about O8, which changes `mom_jet_valve_body` and `mom_jet_slide_valve`); only then do O6 and O8 nozzles pay off. As drawn, every nozzle is capped near 5 gf.
 6. **Wheels free-rolling**; test O36 vs O50, since the larger wheel lowers rolling resistance but adds mass.
 7. **Stability [E]:** the thrust line at about z 25 is a few millimetres above the centre of mass, so the pitching moment is about 1 N.mm against a restoring moment of about 54 N.mm (1.08 N weight x 50 mm half-wheelbase). Tipping from thrust is not the risk; **wind drag on a 20 cm balloon on a 50 mm truck is [?]** and the lab test should measure it.
 
-**Checked on the truck (2026-11-02; interactive: `/kip/JetCar-Lab.html`, data from `parts/kip/jetcar_table.py`):**
+**Checked on the truck (2026-11-02; interactive: `/kip/JetCar-Lab.html`, data from `parts/kip/jetcar_table.py`). It is also a stage in the Truck viewer: `/kip/Truck-Mockup.html?stage=jet` (button "3B' Balloon Jet (proposal)"; options Balloon, Lean, Nozzle; `&balloon=200&lean=30&nozzle=8`), and in the Workshop `/kip/Workshop.html?bench=truck&stage=jet`. The viewer stage draws the real jet body, no tub and no axle gear, with a procedural nozzle insert and balloon, and its Gate G1 line reads "not in Gate G1" because no craft covers it; its Action Demo only inflates and vents (the truck stays put, matching section 2). The bellows stage is left in place until you confirm it can go.**
 
 - **Placement [M].** `mom_jet_valve_body` seats on the keel's rear rows 8-9, body centre (0, 50.0, 12.5): overlap with the keel 0, **1.8 mm to either wheel size (O36 or O50)**, 25.2 mm to the windscreen, rear face at y 64.4 (the keel ends at 62.4). Only the four corner studs engage, because rows 7-9 have no inner studs (the PTO slot).
 - **No axle gear in this stage [M].** The Z10 axle gear overlaps the body by 442 mm3, and a jet car has no PTO, so Motion (b) uses no Pro-line gear and Card E2's missing `gear_spur_z10` does not matter for the balloon.
 - **Straight up is the pose the CAD gives; it rubs Kip but is not blocked [M for the geometry, E for the balloon].** The collar is vertical, so the balloon starts upright. Kip's back is at y 9.6 and the collar at y 47. A *rigid* sphere (25 mm neck) overlaps him from about 125 mm diameter up (-0.7 mm at 125, -7.2 at 200; only 100 mm clears, by 3.4), but a real balloon is soft and light, so that is a rub, not a block. **The hard limit is the other end:** a balloon leaning back past about 45-50 deg reaches the jet stream (and a wheel is never the limit, 30+ mm). Leaning back 15-45 deg clears both Kip and the jet (10-50 at 150 mm); 30 deg is the balanced choice (at 200 mm: 23.6 mm to Kip, 23.8 mm to the jet).
 - **What the balloon probably does in a run [E, order of magnitude].** Filled with air it floats in air, so its net weight is only the rubber (a few grams) and it has almost no inertia lean. **Air drag is what pushes it back:** about 27 mN at 2 m/s on a 175 mm sphere (Cd 0.47) and 61 mN at 3 m/s, acting about 105 mm above the neck. A pressurised neck (2.5 kPa, 10 mm radius) resists roughly 4 N.mm before it kinks. At the end-of-burn speeds from the nozzle table (about 1.4 m/s with O6 and 1.9 m/s with O8, ideal, 150 g) the drag moment is 1.4-2.6 N.mm, so expect it to trail back, not fold; above 2-3 m/s it can fold. So the likely pose is **upright at rest, trailing back during the run**, and the hard question is stopping it trailing into the jet. A printed jet piece with a real balloon on the real keel should settle this before any cradle is drawn.
 - **The nozzle set cannot be used as drawn [M].** `mom_nozzle_set` is one bar carrying three plugs. Seated the way the gate seats it (plate behind the body, plugs pointing rearward, y 19-33) it never enters the socket, and `_pneumatic_jet_check` only tests air connectivity inside a box, so it cannot notice. Turned to point into the body, at the pose where its 4 deg cone mates with the socket (plate against the rear face) one plug overlaps the body by **83-89 mm3**, because its tip (O8.4 tapering to 7.6, beyond the cone) lands in the 5.0 mm wide tunnel, and the whole bar overlaps by about **520 mm3** because the other two plugs hit the turret. (Pulled back until only the tip is inside the socket mouth the overlap falls to 9.6 mm3, which is not a seated pose.) The nozzle needs a redesign as **individual inserts with the orifice at the rear**; the lab draws a proposed insert (O3 / 4.5 / 6 / 8), not CAD.
-- **Mass changes which nozzles work [M for the parts, E for infill].** Solid PLA: keel 71 g, jet body 20 g, shaft 2.5 g, wheel 13 g (O36) or 26 g (O50) each; the Snap truck with the jet piece and four O36 wheels is about 150 g before Kip, against the spec's 110 g reference (real prints use infill, so less). Four O50 wheels add about 52 g. At 150 g and 2.5 kPa the ideal-nozzle thrust over rolling drag is **O3 0.53x, O4.5 1.20x, O6 2.13x, O8 3.80x**: O3 cannot move it and O4.5 barely does, so O6 and O8 are the practical nozzles. This is an upper bound: it ignores nozzle losses and the pressure curve.
+- **Mass decides whether it moves at all [M for the parts, E for infill].** Solid PLA: keel 71 g, jet body 20 g, shaft 2.5 g, wheel 13 g (O36) or 26 g (O50) each; the Snap truck with the jet piece and four O36 wheels is about 150 g before Kip, against the spec's 110 g reference (real prints use infill, so less; four O50 wheels add about 52 g). Rolling drag at Crr 0.045 is 0.066 N at 150 g and 0.049 N at 110 g, while the body's air path caps thrust at about 0.049 N, so thrust over drag is **0.47x (O3), 0.73x (O4.5), 0.70x (O6), 0.50x (O8) at 150 g**: nothing moves it as drawn, and 110 g is the break-even. Ideal-nozzle numbers (`3.8x` for O8 and so on) overstated this and are withdrawn.
 
 ### Option C: both, key later
 
@@ -204,7 +204,7 @@ Still open:
 - **Pro's powered module: required or optional?** Merging Mech into Pro makes Pro 10+ unless the servo, drive motor and brain stay an optional add-on with its own grading. I suggest optional: Pro = hand-steered rack steering, plus a powered upgrade.
 - **Hand steering and servo steering together?** The Mech truck drops the steering column and wheel; the merged Pro needs one rule.
 - **Balloon cradle:** probably a rear stop to limit the trail-back (not a tilt-holder), and whether to let the balloon rest against Kip at rest or hold it back about 30 deg; decide after a printed balloon test on the real keel (nothing is designed).
-- **Nozzle:** redesign `mom_nozzle_set` as individual inserts and add O8 (CAD change, regen and card change).
+- **Jet body and nozzle:** enlarge the body's internal passages (about O8; changes `mom_jet_valve_body` and `mom_jet_slide_valve`) and redesign `mom_nozzle_set` as individual inserts; add an O8 nozzle only after that (CAD change, regen and card change).
 - **Balloon size to support:** 150-225 mm all work with a 15-45 deg lean; smaller is lighter and needs less lean.
 - **Traction:** O50 first, then an O-ring groove (my suggestion), TPU sleeve only if the coupon says so.
 - Does moving Motion before Pro re-cut the cards (Card E2 needs a `gear_spur_z10`)? It will; confirm that is acceptable.
@@ -243,13 +243,74 @@ Still open:
 
 That document's Band Core warning (section 3, "Open Stage-3A Band Core & Bumper CAD Defects") says "five `P0` defects" but lists four bullets, and it does not carry the jet findings. Proposed text, in that document's own style. **Not applied: I have not edited that file.**
 
-**9.1 Warning banner: fix the count and add two items.** Change "found five `P0` defects" to "found six defect groups" (bullet 4 already groups three) and append:
+**9.1 Warning banner: fix the count and add two items.** Change "found five `P0` defects" to "found seven defect groups" (bullet 4 already groups three) and append:
 
 > 5. **Unseatable `mom_nozzle_set` and an untested seat:** the set is one `42.0 x 14.0 x 13.5 mm` bar carrying three plugs (`Ø3.0 / Ø4.5 / Ø6.0 mm`). Seated as `_pneumatic_jet_check()` seats it (`rotate((-90, 0, 0))`, `translate((0, 19.05, 12.50))`) the plate sits behind the body and the plugs point rearward (`y = 19.05 .. 32.55`), so no plug enters the `y = 8.5 .. 14.7` socket; the check only tests inlet-to-exhaust air connectivity inside a box (`(0, -3, 24.5)` to `(0, 17.5, 12.5)`), not seating. Turned to point into the body (`rotate((90, 0, 0))`, `y_plate = 19.05 .. 19.2`), one plug overlaps `mom_jet_valve_body` by `83-89 mm3` (its `Ø8.4 -> 7.6 mm` tip lands in the `5.0 mm` tunnel) and the whole bar by `~520 mm3` (the other two plugs hit the turret). The nozzle needs redesigning as individual inserts with the orifice at the rear.
 > 6. **Balloon jet not placed on any truck:** on the Snap truck's rear rows 8-9 (body centre `(0, 50.0, 12.5)`) `mom_jet_valve_body` seats with `0 mm3` keel overlap, `1.8 mm` to either wheel size, `25.2 mm` to `kit_windscreen`, on four corner studs only (rows 7-9 have no inner studs), and overlaps the rear `gear_spur_z10` by `442 mm3`, so the jet stage carries no axle gear. A balloon standing straight up on the vertical collar rubs Kip's back and hat from about `Ø125 mm` (soft contact); trailing back past about `45-50 deg` it reaches the jet stream (`z = 25`). Interactive check: `/kip/JetCar-Lab.html`.
+> 7. **Jet air path capped near `Ø5 mm`:** `mom_jet_valve_body`'s inlet (`19.6 mm2`, `Ø5.0`), `mom_jet_slide_valve` open port (`20.4 mm2`) and tunnel (`20.6 mm2`) are all about `Ø5`. In series with any nozzle this limits jet thrust to about `A x dP = 0.049 N` (`~5 gf`) at `2.5 kPa`: `Ø3.0` `~3.2 gf`, `Ø4.5` `~4.9 gf`, `Ø6.0` `~4.7 gf`, `Ø8.0` `~3.4 gf`, so the `2.5-14 gf` table is `2-3x` high for `Ø6.0` and a wider nozzle does not help. Rolling drag is `0.066 N` at `150 g` (solid-PLA Snap truck plus jet piece), so no nozzle moves the truck as drawn. The passages must be enlarged (about `Ø8`) before larger nozzles matter.
 
 **9.2 `D3` (line "D3 - Pneumatic geometry").** Replace "Resolved in CAD" with "Open: nozzle set cannot be seated (see Warning item 5)", and replace "while `mom_nozzle_set` press-wedges `4.0 deg` Luer-tapered male plugs ... coaxially into the rear socket (3.4)" with "while `mom_nozzle_set` is intended to press-wedge `4.0 deg` Luer-tapered male plugs ... into the rear socket, which the shipped geometry cannot do (3.4)".
 
-**9.3 Section 3.4.** In the mermaid node `Nozzle`, add "(not seatable as modelled)". After the `_pneumatic_jet_check()` sentence in the last bullet, add: "It also does **not** test that any nozzle plug seats in the socket; the pose it uses leaves the plugs outside the body." Add a performance sentence: "Bound, ideal nozzle at `2.5 kPa`, `5 L`, `150 g` solid-PLA Snap truck plus jet piece (the spec's `110 g` reference needs infill): thrust over rolling drag `0.53x` (`Ø3.0`), `1.20x` (`Ø4.5`), `2.13x` (`Ø6.0`), `3.80x` for a proposed `Ø8.0`; `Ø3.0` cannot move the truck on a hard floor."
+**9.3 Section 3.4.** In the mermaid node `Nozzle`, add "(not seatable as modelled)". After the `_pneumatic_jet_check()` sentence in the last bullet, add: "It also does **not** test that any nozzle plug seats in the socket; the pose it uses leaves the plugs outside the body." Add a performance sentence: "Bound, `2.5 kPa`, `5 L`, nozzle in series with the body's own `~Ø5` air path (inlet `19.6 mm2`, valve port `20.4 mm2`, tunnel `20.6 mm2`): `~3.2 gf` (`Ø3.0`), `~4.9 gf` (`Ø4.5`), `~4.7 gf` (`Ø6.0`), `~3.4 gf` (`Ø8.0`), maximum `A x dP ~ 5 gf` whatever the nozzle; rolling drag is `0.066 N` for the `150 g` solid-PLA Snap truck plus jet piece (the spec's `110 g` reference needs infill) and `0.049 N` at `110 g`, so thrust over drag is `<= 1.0x`." Replace the existing `2.5-14 gf` table in `progressive-power-system-spec.md` (section 3.2, `mom_jet_valve`) the same way.
 
 **9.4 Ladder note (one line under the document banner).** "Decided 2026-11-02 (Dan): ladder Snap -> Motion -> Pro, no separate Mech stage, balloon = `mom_jet_valve_body` with the balloon on top, bellows dropped; see `motion-stage-options-spec.md`." This document still uses the four-stage numbering and the key and bumper in Stage 3A, which matches the shipped CAD, not that decision.
+
+## 10. Print-and-test plan: balloon jet on the real keel
+
+**Purpose.** Settle three things the CAD cannot: how a real balloon behaves on the vertical collar, whether the truck moves at all through the body's roughly O5 air path, and which wheel and nozzle help. **Nothing here needs a CAD change**; the second print is only worth making once the first answers are in.
+
+### 10.1 What to print and gather
+
+| Item | Source / spec | Note |
+| :--- | :--- | :--- |
+| `mom_jet_valve_body` | `public/kip/partspec/toyventor_mom_jet_valve_body_S.stl` (print orientation as exported, no supports) | the verified part; also a Card E3 item |
+| `mom_jet_slide_valve` | `public/kip/partspec/toyventor_mom_jet_slide_valve_P.stl` | the cross-bore leaks without it |
+| Snap truck | keel, 2 barbell shafts, 4 `kit_wheel_med` (plus 4 `kit_wheel_giant` for the wheel test), windscreen, Kip seated; **no tub, no hinge, no axle gear** | an existing Snap truck works |
+| `mom_nozzle_set` | **do not use**: one bar, three plugs, cannot seat (section 2) | |
+| Nozzles | rigid tube about 8 mm outside diameter that presses into the rear socket (7.45 mm at the inner end, 8.30 mm at the mouth), cut in lengths of about 25 mm, with bores of about 3, 4.5 and 6 mm; also the bare socket | COTS |
+| Balloons and pump | 9 inch latex balloons (a bag), a hand pump (no mouth inflation: the spec has no mouthpiece) | adults 8+, supervised; keep burst pieces from small children (spec latex warning) |
+| Measuring | kitchen scale (0.1 g), tape measure, a flat board with a ruler (for the roll-down test), phone camera at 60 fps or better on a stand, masking tape marks every 25 cm along the track | |
+| Track | smooth tile or laminate, 4 m or more | the lab method uses 10-15 m of tape |
+
+Print the body in PLA at your normal settings and **write down the infill, perimeters and finished weight**; the mass is a first-order input.
+
+### 10.2 Measurements, in order
+
+1. **Mass (T0).** Weigh the finished truck (with Kip and a balloon deflated on the collar), the body and the valve. Record against the model (about 150 g solid PLA).
+2. **Rolling drag (T1).** Tilt the board slowly until the truck, pushed gently, just keeps rolling: drag coefficient = rise / run. The model assumes 0.045 (2.6 deg, 4.6 cm rise per metre); drag force = coefficient x weight. This replaces an assumption with a number.
+3. **Seal (T2).** Inflate to about 15 cm with the valve OPEN, close it, remove the pump, and watch 15 s: **pass if the balloon loses 15% of its diameter or less** (the spec's gate).
+4. **Balloon posture (T3).** At 125, 150 and 175 mm (cut a card gauge): note at rest whether it stands upright, leans, or rests on Kip's hat and back. Film the first run from the side: trail angle from video frames, and whether the balloon ever reaches the jet axis or collapses over the nozzle at the end of the burn.
+5. **Runs (T4).** For each nozzle (bare socket, then the 3, 4.5 and 6 mm tubes), 3 runs from the same start mark with a full 175 mm balloon: distance, time to stop, and acceleration from the video (marks every 25 cm). Thrust = mass x acceleration + drag during the burn.
+6. **Wheels (T5).** Repeat the best nozzle with O50 wheels (all four, or the rear pair), and note the mass change.
+7. **Optional, to test the passage limit (T6).** On a spare body, drill the inlet from the collar top and the tunnel from the rear socket out to about 7 mm, leave the slide valve out, tape the cross-bore ends, and hold the neck shut with a clothespin until release. Rerun the 4.5 and 6 mm nozzles.
+
+### 10.3 Predictions to beat (written before the test, so it can fail)
+
+| Configuration | Predicted thrust (2.5 kPa, 5 L) | Predicted thrust over drag at 150 g |
+| :--- | ---: | ---: |
+| O3 nozzle | 3.2 gf | 0.47x |
+| O4.5 nozzle | 4.9 gf | 0.73x |
+| O6 nozzle | 4.7 gf | 0.70x |
+| bare socket (about O8) | 3.4 gf | 0.50x |
+| T6: passage O7 with O4.5 / O6 | about 6.9 / 9.4 gf | about 1.0x / 1.4x |
+
+If the truck moves clearly in T4 as drawn, **my passage model is wrong** (the pressure may be higher, the mass lower, or the passage not the limit): say so in the record and fix section 2.
+
+### 10.4 Pass rules (agreed by Dan, 2026-11-02) and what each outcome means
+
+| Result | Rule | If it fails or surprises |
+| :--- | :--- | :--- |
+| Seal | 15% diameter loss or less in 15 s | thicken the 0.70 mm roof web (spec); the jet is not usable until it holds |
+| Moves | thrust over drag 1.3x or more with some nozzle, as drawn | **expected to fail:** enlarge the body's passages (about O8, `mom_jet_valve_body` and `mom_jet_slide_valve`) and redo with T6 as the target |
+| Goes | mean of 3 runs of 2 m or more on tile (the spec's low end) | lower mass (infill, Kip off), O50 wheels, or larger passages |
+| Balloon clear | trail angle under 45 deg in every frame, jet never obstructed | add a rear stop; if it folds over the nozzle at the end of the burn, a cradle or a shorter neck |
+| Soft contact | the truck tracks straight within 10 cm over 2 m and Kip is not knocked over | hold the balloon back about 30 deg (an angled neck seat) or use a smaller balloon |
+
+### 10.5 Record sheet (one row per run)
+
+date, body infill and weight, truck mass, drag coefficient, wheel size, nozzle (bore), balloon diameter at start, pressure note, distance, stop time, peak acceleration, trail angle (max), contact with Kip (none / rubs / pushes), jet obstructed (y/n), seal loss over 15 s, notes. Keep the video.
+
+### 10.6 Cost and time
+
+Two small prints (about 20 g and 2 g of PLA at solid, less with infill), a bag of balloons and a pack of tubing; one session of about two hours for T0-T5, plus about an hour for T6. The result decides whether the next step is a cradle, wider passages, or both.
+
