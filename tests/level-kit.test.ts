@@ -128,6 +128,18 @@ describe("level kit composer", () => {
     );
   });
 
+  it("K2: the room prop pack is in the catalog and shows up in composed room levels", () => {
+    const pack = ["chair", "plant", "teddy", "ball", "cushions"];
+    for (const t of pack) expect(PROPS[t], t).toBeTruthy();
+    const seen = new Set<string>();
+    for (let seed = 1; seed <= 300; seed++) {
+      const l = composeLevel({ seed, theme: "room" });
+      expect(checkLevel(l).every((c) => c.ok), `seed ${seed}`).toBe(true);
+      for (const p of l.props) seen.add(p.type);
+    }
+    for (const t of pack) expect(seen.has(t), t).toBe(true);
+  });
+
   it("reports a kit size in the billions", () => {
     expect(kitSize()).toBeGreaterThan(1e9);
   });

@@ -77,6 +77,12 @@ const CLUSTERS: Record<string, Cluster[]> = {
     { props: [{ type: "books", dx: 0 }, { type: "blocks", dx: 3, z: -4.2 }] },
     { props: [{ type: "lamp", dx: 0, z: -5.5 }] },
     { props: [{ type: "blocks", dx: 0 }, { type: "lamp", dx: 3 }] },
+    // K2 room prop pack: chair, plant, teddy, ball, cushions (also the Feature 3 photo-prop vocabulary).
+    { props: [{ type: "chair", dx: 0 }, { type: "teddy", dx: 2.2 }] },
+    { props: [{ type: "plant", dx: 0 }, { type: "ball", dx: 2.4 }] },
+    { props: [{ type: "cushions", dx: 0 }, { type: "books", dx: 2.6 }] },
+    { props: [{ type: "teddy", dx: 0 }, { type: "cushions", dx: 2.8, z: -4 }] },
+    { props: [{ type: "ball", dx: 0 }, { type: "chair", dx: 3, z: -4.5 }] },
   ],
 };
 

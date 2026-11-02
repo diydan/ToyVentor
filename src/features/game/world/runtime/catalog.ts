@@ -207,7 +207,7 @@ export interface PropDef {
   y?: number;
 }
 export var PROPS: Record<string, PropDef> = {lantern:{z:-1.6,n:"Lantern"},tree:{z:-4,n:"Tree"},bushes:{z:-2.5,n:"Bushes"},windmill:{z:-5.5,n:"Windmill"},cottage:{z:-16,n:"Cottage"},cloud:{z:-18,n:"Cloud"},island:{z:-15,y:6,n:"Floating island"},tire:{z:-2,n:"Tire"},drum:{z:-2.2,n:"Oil drum"},shed:{z:-12,n:"Shed"},cranebg:{z:-14,n:"Big crane"},
- palm:{z:-3,n:"Palm tree"},umbrella:{z:-2.2,n:"Beach umbrella"},sandcastle:{z:-2.6,n:"Sandcastle"},pine:{z:-4,n:"Pine tree"},snowman:{z:-2.4,n:"Snowman"},igloo:{z:-7,n:"Igloo"},lamp:{z:-3,n:"Floor lamp"},blocks:{z:-3.5,n:"Toy blocks"},books:{z:-2.6,n:"Book stack"}};
+ palm:{z:-3,n:"Palm tree"},umbrella:{z:-2.2,n:"Beach umbrella"},sandcastle:{z:-2.6,n:"Sandcastle"},pine:{z:-4,n:"Pine tree"},snowman:{z:-2.4,n:"Snowman"},igloo:{z:-7,n:"Igloo"},lamp:{z:-3,n:"Floor lamp"},blocks:{z:-3.5,n:"Toy blocks"},books:{z:-2.6,n:"Book stack"},chair:{z:-2.4,n:"Little chair"},plant:{z:-2.8,n:"Potted plant"},teddy:{z:-2.2,n:"Teddy bear"},ball:{z:-2,n:"Play ball"},cushions:{z:-2.6,n:"Cushion pile"}};
 export var THEMES: Record<string, number> = {garden:0,sky:1,junk:2,beach:3,snow:4,room:5},KCOL: Record<string, string> = {junk:"#f4f7ff",glow:"#5af0b0",torque:"#a78bff",speed:"#52b7ff",spin:"#ffd24d"};
 /* level files: each world is data in the same format the editor exports */
 export interface LevelPropRef {
