@@ -538,6 +538,40 @@ reference six ship on ToyForge's existing `MissionPanel` (with §11.4
 panel-visibility rules) and convert per §12. Kid mode may tuck the
 tool belt behind the panel, but moves, dock, and `Hear it` remain.
 
+### 11.6 Path depth (decided 2026-11-02, lands first in C3)
+
+Movement today is a strict 1D lane (`pos.z` stays 0; facing is 0 or
+π; ground taps resolve through `laneX()`). C3 widens it to a shallow
+**path**: the toy may stand/walk at z ∈ [−1.2, +1.2] around the lane
+centre and faces its movement direction, including toward and away
+from the camera. The path is still one authored strip — no free
+roaming, no new navigation system. Tap targets become ground
+points; near-detection, mission bounds, tidy/spot radii, and street
+crossings become z-aware; camera framing and blob shadow follow z.
+Keyboard keeps left/right on the lane centre (up/down nudge z).
+Acceptance joins §13: tap-a-spot reaches all four facing
+quadrants; existing labs/worlds complete unchanged on the centre
+line.
+
+### 11.7 Prop reaction contract (decided 2026-11-02, binds C3+)
+
+No dead props. Every reusable scene prop (the `propBuilders` table
+in `world.ts` and anything added later) declares three behaviours:
+
+- `idle` — a calm loop (sway, glow pulse, slow spin), still under
+  `prefers-reduced-motion`.
+- `poke` — a < 100 ms tap reaction (wiggle, hop, squeak, flash
+  small, crack stage advance), never gold unless it is a reward.
+- `use` — where sensible, a state change the level can read (lamp
+  on/off + light pool, tree shake → fruit falls, stone cracks in
+  stages, plant sprout, chair wobble-settle, teddy squish, ball
+  roll, books flutter, blocks topple, cloud rain sprinkle, drum
+  wobble, cottage window light, signpost spin).
+
+A registry test lists every prop builder and fails if a prop has no
+reaction entry. Existing partial credit (tidy spots, bolts, lamp
+circuit, windmill blades) is grandfathered as their `use`.
+
 ## 12. Engine-facade changes & rollout
 
 All changes go through [engine.ts](../../src/features/game/world/engine.ts)
@@ -676,33 +710,48 @@ theme scenes without captured art); Q4 follows the §9.3 recommendation
 - [ ] **Q7 (blocks C2 copy):** Mission-card voice for bands 0–1 — character speaking in-world with card fallback (play-design open question), or card + `Hear it` only at launch?
 - [ ] **Q8 (post-C5):** Do converted rungs become `toyventor.level/2` recipes immediately (play-design plan steps 2–3), or ship as hand-coded missions first and become recipes in the generator phase?
 
-## 16. Animation improvements (Mixamo-informed, procedural)
+## 16. Animation (Mixamo baked curves + procedural)
 
-General game-feel upgrade, independent of the C1–C5 order (A1 can run
-with C1). No new renderer, no skeleton swap.
+General game-feel upgrade, independent of the C1–C5 order. No new
+renderer, no skeleton on the playable rig.
 
-### 16.1 Today (baseline to beat)
+### 16.1 Today (reconciled 2026-11-02, code-verified)
 
-The stage toy is STL + procedural parts (`playerRig.ts`,
-`stlRigLoader.ts`) animated in `world.ts` `frame()`: arm/leg swing by
-`sin(phase)`, `P.hop` sine arcs, `joy()` hop+spin, blink/happy-eye
-scaling, squash from hop velocity, wheel spin, wing flap, dust puffs
-and step sounds. The Mixamo GLBs (`public/kip/mixamo/Xbot.glb`,
-`Michelle.glb`) run only in the standalone Kip demo
-(`public/kip/Kip-Demo.html`); the game has **no** `AnimationMixer`,
-no clips, and no skeleton on the playable rig.
+An earlier draft of this section said the game had no clips and no
+`AnimationMixer`. That is stale: commits `bf7cdb3`/`84f8961` landed
+`runtime/mixamo.ts`. As shipped:
+
+- `bakeClip` runs an `AnimationMixer` **once at load** over the
+  Mixamo GLBs (`public/kip/mixamo/Xbot.glb`, `Michelle.glb`) and
+  keeps only joint curves: hips offset, body/head quaternions, and
+  arm/leg direction vectors as typed arrays. The ~65-bone skeleton
+  is discarded; nothing skeletal drives the playable rig.
+- `MixamoDriver` samples/blends those baked curves per frame onto
+  our hard-part joints (`rig.arms`, feet hip pivots via
+  `userData.hip`, `rig.head`, `rig.g`). Bank today (verified live):
+  `idle`, `walk`, `run`, `nod` (agree), `no` (headShake), `sneak`,
+  `sad`, `dance` (SambaDance, capped 4.4 s). `joy()` celebrates with
+  the dance clip; wrong/right code cards play `no`/`nod`; hidden
+  spots trigger `sneak`; failed abilities play `sad`.
+- The driver engages only for `rig.type === "character"` with
+  joints present. Vehicle and `rig.type === "robot"` builds keep
+  the procedural equivalents (sine swing, `P.hop` arcs, squash from
+  hop velocity, wheel spin, dust, step sounds), which are also the
+  fallback while the bank loads or if it fails.
+- Known gap: `mixGo` one-shot actions honour
+  `prefers-reduced-motion`, but the per-frame locomotion drive in
+  `world.ts` `frame()` is not yet gated the same way.
 
 ### 16.2 Approach: borrow the motion, not the skeleton
 
-Mixamo clips drive a humanoid skeleton (~65 bones); our rig is
-hard parts on a handful of joints (`rig.arms`, `rig.legs`,
-`rig.feet`, `rig.head`, `rig.body`, slots). Direct retargeting would
-break every part combo and Printable-part fidelity. Instead: use
-Mixamo clips (in the Kip demo, where a skeleton *does* exist) as
-movement reference, and re-express each as parametric joint curves in
-`world.ts`/`playerRig.ts` — same technique as §11 world-kit rules.
-Result: every Character/Vehicle/robot-alias build animates, print
-geometry never moves, and `prefers-reduced-motion` keeps a still path.
+Direct retargeting would break every part combo and Printable-part
+fidelity, so clips are baked to curves as above — the same outcome
+this section originally asked for ("re-express as joint curves"),
+sampled from the clips instead of hand-authored. New motions enter
+either way: add a clip to `MIXAMO_SOURCES` (needs a human to
+download it from mixamo.com; an agent session cannot fetch account
+assets) or author a parametric curve for rigs the driver cannot
+reach. Print geometry never moves either way.
 
 Rules for every new motion: responds < 100 ms to its trigger; calm at
 rest (vision: resting screens stay calm); gold/celebration motion
@@ -716,10 +765,10 @@ input; landing/step sounds stay synced to the visual contact frame.
 
 | Move | Mixamo reference | Parametric form on our rig | Trigger |
 | --- | --- | --- | --- |
-| Walking | `Walking` / `Catwalk` (slowed, toy-like) | Two-beat step cycle: feet lift/plant with dwell, counter-swing arms, slight body roll + head bob; speed-tied stride length, no foot slide | Any locomotion (`speed > 0`) |
-| Jumping | `Jump` (takeoff / air / land) | Anticipation dip → stretch up → tuck → land with overshoot squash ("jump pop"), dust ring on touch-down; separate small hop for tap-feedback | Hop/move actions, level wins, carousel guide bob |
-| Pushing | `Pushing` / `Shoving Object` | Lean-in, both arms forward, short steps, body tilt with effort wobble; vehicle equivalent: nose-dip + wheel chug | `carry`/`load` pushes, bridge test, junk reveals |
-| Jump-on / pop | `Jumping On` + land squash | Bigger anticipation + double-pop (land squash → spring back), blob-shadow squeeze, optional ring FX | Collecting a part, `joy()`, chest arrival (§11 `finishLevel`) |
+| Walking | `walk` + `run` (Xbot, baked) | **Done.** Baked cycle with walk→run cross-fade (`walkRefSpeed` 2.4, run 2.9–3.5, `hipsGain` 2.2). Remaining: verify "no foot slide at cruise" on phone (§16.5) | Any locomotion (`speed > 0`) |
+| Jumping | `Jump` (takeoff / air / land) | **Open.** No jump clip in the bank and no player jump move; only `P.hop` sine arcs + squash + blob squeeze exist. Parametric first (dip → stretch → tuck → overshoot land, dust on touch-down); swap in a clip if one is downloaded | Hop/move actions, level wins, carousel guide bob |
+| Pushing | `Pushing` / `Shoving Object` | **Open.** No push clip; torque is a 0.7-unit lunge tween + shake. Parametric first: lean-in, both arms forward, short steps, effort wobble; vehicle nose-dip + wheel chug | `carry`/`load` pushes, bridge test, junk reveals |
+| Jump-on / pop | `Jumping On` + land squash | **Superseded.** Collect/`joy()` plays the baked `dance` clip on driven rigs (hop+spin+squash fallback elsewhere). A distinct double-pop is not planned | Collecting a part, `joy()`, chest arrival (§11 `finishLevel`) |
 
 **A2 — Level actions (pairs with C3 world-first):** idle breathing +
 look-around (head/eye saccades, blink already exists), run/dash lean,
@@ -742,11 +791,13 @@ land/go/stop.
 
 ### 16.4 Explicitly not now
 
-Dance loops, sitting/crouch/climb full-body clips, finger/hand
-detail, facial blendshapes beyond eyes/brows, and any in-game
-`AnimationMixer` skeleton. The Kip demo may keep growing its Mixamo
-library as the reference viewer; only motions listed above graduate
-into the game, each with a reduced-motion still and a muted/sound-off
+Sitting/crouch/climb full-body clips, finger/hand detail, facial
+blendshapes beyond eyes/brows, and any **live** skeleton on the
+playable rig (a load-time `AnimationMixer` for baking is shipped
+and stays). The earlier "no dance loops" line is retired: the
+short capped `dance` celebrate is shipped and stays. Only motions
+listed above graduate into the game, each with a reduced-motion
+still (locomotion gating above included) and a muted/sound-off
 read (motion must read without audio).
 
 ### 16.5 Acceptance (joins §13 gates)
@@ -758,5 +809,22 @@ unchanged (one WebGL context, no extra render pass — curves only);
 touch response still < 100 ms with A1 enabled; real-phone touch
 check rides with the C3 gate (§13.3).
 
+## 17. Freeze polish (decided 2026-11-02, after C3)
 
+Two presentation items, neither blocking C3–C5:
 
+1. **Title menu + turntable.** Boot currently skips the title state
+   (`P.title = true` then immediate `startPlay(false)` in
+   `world.ts`). Restore a real main menu on the existing factory
+   turntable (spinning meshing cogs already animate in showcase
+   mode): equipped toy on the turntable, Play / Build / Create
+   entries, then the same world boot as today. The trimmed title
+   markup is recoverable from git history (`stageDom.ts` before
+   `296de10`); reimplement as React chrome over the live stage, not
+   as stage DOM.
+2. **Parallax image backdrops.** Replace far backdrop geometry
+   (hill spheres) with generated-image planes on stepped depths,
+   keeping all gameplay geometry 3D. Approach, measured layer
+   order, sizes, and fallback live in
+   [parallax-backdrops-spec.md](parallax-backdrops-spec.md);
+   nothing ships until its interactive mockup is approved.

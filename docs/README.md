@@ -43,6 +43,7 @@ on geometry conflicts, [parts-tu-spec.md](parts/parts-tu-spec.md) and
 | [toyventor-town-vision.md](specs/toyventor-town-vision.md) | **Vision:** open-world Town (districts, quests, daily rhythm); extends continuation past Phase 5. |
 | [xp-system-spec.md](specs/xp-system-spec.md) | **Phase 3 (implemented):** STEM XP scoring, 11-mission tolerances, two-track gating, and D1 sync contract. |
 | [carousel-modes-ladders-spec.md](specs/carousel-modes-ladders-spec.md) | **C1+C2 landed:** level carousel, age bands, and playable Learn runs across 7 STEM ladders (38 rungs); world-first conversion is C3+. |
+| [parallax-backdrops-spec.md](specs/parallax-backdrops-spec.md) | **Draft (mockup built):** generated-image backdrop planes on stepped depths replacing hill spheres; gameplay stays 3D; awaiting mockup approval. |
 | [parent-time-gate.md](specs/parent-time-gate.md) | Implemented parent caps and earned STEM time. |
 | [flatpack-modular-craft-spec.md](specs/flatpack-modular-craft-spec.md) | Proposed flat-pack vehicle/craft grammar. |
 | [kip-demo-implementation.md](specs/kip-demo-implementation.md) | **Proposed:** Kip demo left side menu with dropdowns, flat-pack 3D print view, and selfie face plate — the build plan, superseding the deleted design spec. |
