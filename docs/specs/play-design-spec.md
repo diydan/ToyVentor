@@ -280,10 +280,25 @@ Robot checks run on every build: the solver finishes, the wrong-first player get
 Convert the youngest levels first, because they gain most from touching the world. Then rebuild the rest on the primitive library, and only then turn on generation.
 
 1. World-first for ages 2 to 6. Move every Little ones and Early learning interaction into the world, and give the last four Early learning levels their cause and effect (table below). Done when no Little ones or Early learning level needs a panel button.
-2. The primitive library. Rebuild poke, carry, sort, sequence, turn, toggle, and load as shared modules with parameter schemas, events, solvers, and accessibility actions, then port those levels onto them. Done when those levels are recipes, not code.
-3. The recipe format and validator. Ship toyventor.level/2, the logic checks, and the robot playtester as one command. Done when every hand-made level passes.
+2. The primitive library. Rebuild poke, carry, sort, sequence, turn, toggle, and load as shared modules with parameter schemas, events, solvers, and accessibility actions, then port those levels onto them. Done when those levels are recipes, not code. The composition kit's stations are its first customers: until a station is a primitive, two composed levels differ in scenery, rhythm and mood but not in what the child works out. Include one traversal verb that lets a prop block the path and be passed (hop over, push aside, or carry or feed past); the photo flow in sam-physical-to-digital-spec section 6 needs it for obstacles (open question below).
+3. The recipe format and validator. Ship toyventor.level/2, the logic checks, and the robot playtester as one command. Done when every hand-made level passes. This step also removes three hardcoded limits found in the Nov 2 review: a `length` field instead of the literal 0 to 46 strip, mission and station state keyed by level id and station index instead of `world.type`, and `checkLevel` carried into level/2 as the one shared set of rules.
 4. The remaining primitives. tune, design, connect, program, and real, plus world-first versions of the STEM tracks, and the last cause-and-effect fixes.
-5. Generation, team-only first. Muse Spark drafts monthly pack levels through the full pipeline, with human review. Then grown-up and teacher requests, then kids' Create mode.
+5. Generation, team-only first. Muse Spark drafts monthly pack levels through the full pipeline, with human review. Then grown-up and teacher requests, then kids' Create mode. Every producer feeds the same pipeline: Muse Spark drafts, the composition kit composes, and photo flows (sam-physical-to-digital-spec section 6) pin props from a side photo. Content packs also need two things the engine does not have as data: one theme record (a new theme touches nine places today) and declarative hiding covers (`buildCover`, `junkMachine` and `reveal` are an if-chain).
+
+Alongside the steps, on `level/1` only and with no dependency on them. These are small, and K1 and K2 unblock Feature 3 v1 of the photo spec:
+
+- K1. `composeLevel({ pinnedProps })`: props pinned at given x, with spots, stations and mood composed around them.
+- K2. A room prop pack: 4 to 6 props for the `room` theme, which has three today (`lamp`, `books`, `blocks`). A prop is a procedural builder in `propBuilders` (`world.ts`) plus a `PROPS` entry, a `CLUSTERS` entry and a test. It is code, not data.
+- K3. Muse and the kit share `checkLevel`. `CR_INSTR` tells Muse "3 to 6 spots" while `edChecks` demands exactly five.
+
+Runtime follow-ups from the Nov 2 review. These are read-only findings that were not reproduced, so verify each before fixing (the one bug that was reproduced, audio silent after a world remount, is fixed and not listed):
+
+- Keyboard and screen-reader stand-ins for world objects. Primitives already require accessibility actions, and the stage canvas has none.
+- Gate the ambient animation on the reduced-motion flag (`reduce`); most of it ignores it.
+- Module-level singletons in `worldScene.ts` (the native port spec forbids them), and geometries and textures that `dispose` does not free.
+- Small tap targets on the stage chrome, and per-frame allocations in the frame loop.
+- Low-end phone performance is untested. The lighting rig adds a 2048 shadow map, key, rim and hero lights and an environment map per world, and it was measured only on a desktop GPU (about 60 fps, 20 ms worst frame). The first cuts are the shadow map size and the rim and hero lights.
+- Mixamo drives only the Kip character. Robots and vehicles keep the procedural animation.
 
 ## Converting today's levels
 
@@ -335,25 +350,28 @@ What the kit guarantees (tested in `tests/level-kit.test.ts` over 3,000 seeds): 
 prop and part exists in the catalog, stations never overlap a spot, every theme and mood appears, and the hand-made
 explore worlds pass the same checks.
 
-**What it cannot do yet, and the order to fix it** (each item is a hardcoded place found in the Nov 2 review):
+The kit is also the backend for photo-derived levels: sam-physical-to-digital-spec section 6 pins the photographed
+props and lets `composeLevel` fill in spots, stations and mood (K1 and K2 in the Plan).
+
+**What it cannot do yet** (each item is a hardcoded place found in the Nov 2 review; the order to fix them is the Plan above):
 
 1. **Puzzle variety needs the primitives.** Stations are still the 11 hand-coded missions, so two levels differ in
    scenery, rhythm and mood but not in what the child works out. The next layer is `toyventor.level/2` with `poke`,
    `carry`, `turn`, `load` and `tune` as parameterized modules (see "The interaction primitives"). Until then the kit
-   tunes difficulty only through the existing tier 1 to 3.
+   tunes difficulty only through the existing tier 1 to 3. (Plan step 2.)
 2. **World width is a literal.** The strip is 0 to 46 in about a dozen places (`world.ts` bounds, `crFreeX`,
    `edSnapX`, street signs at 0.85 and 43.85). `LevelDef` needs a `length` field so a level can be short for ages 2 to 3
-   and long for older bands.
+   and long for older bands. (Plan step 3.)
 3. **Mission state is keyed `world.type`** (`missions.ts` `mid()`), so two composed levels with the same station share
    completion. Composed worlds avoid this today only because each is `seed-<code>`; saved progress should key on the
-   level id and station index.
+   level id and station index. (Plan step 3.)
 4. **A new theme touches nine places** (`THEME_DEF`, `THEMES`, `TNAME`, `WN`, `SONG`, `LIGHT_RIGS`, `groundPlane`,
    `extras2`, `CHIPS`) and `HKIND` is indexed by theme position. A single theme record holding all of it would let
-   content packs add themes as data.
+   content packs add themes as data. (Plan step 5.)
 5. **Hiding covers are an if-chain** (`buildCover`, `junkMachine`, `reveal`). Each cover needs a declarative
-   `{ build, reveal, glintHeight }` entry before a content pack can add one.
+   `{ build, reveal, glintHeight }` entry before a content pack can add one. (Plan step 5.)
 6. **Muse and the kit disagree.** `CR_INSTR` tells Muse "3 to 6 spots" while `edChecks` demands exactly five. The kit
-   and Muse should share `checkLevel`.
+   and Muse should share `checkLevel`. (K3.)
 
 ## Open questions
 
@@ -361,3 +379,4 @@ explore worlds pass the same checks.
 - [ ] Which Create mode limits apply to kid-generated levels: bands 2 to 6 only, and family-private always?
 - [ ] Who reviews generated pack levels, and how fast does a monthly pack need to turn around?
 - [ ] When do real-child playtests start, and who runs them?
+- [ ] Which traversal verb makes a prop an obstacle: hop over, push aside, carry or feed past, or a bridge? Feature 3 v2 of the photo spec (its Q8) waits on it.
