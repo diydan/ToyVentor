@@ -274,7 +274,9 @@ import {
   toCreasedNormals,
 } from './vendor/three-kip.js';
 import { createKipRig } from './kip-rig.js'; // shared Kip rig module, also imported by Kip-Demo.html (Workshop stage 2)
-import { createDecalExpressionCanvas } from './kip-forge-sdk.js?v=10.0'; // same face art as Kip-Demo (Workshop: one Kip)
+import { createDecalExpressionCanvas } from './kip-forge-sdk.js?v=10.0';
+import { loadExpansionGeos, attachExpansionToKipRig, WARDROBE_HEADS, HUMAN_HEAD_IDS, FACE_STEM_MM } from './kip-vehicles-wardrobe.js';
+import { FACEPLATE_SEAT_MM } from './kip-faceplate-shape.js?v=10.0';
 
 const viewport = document.getElementById('viewport');
 const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
@@ -503,45 +505,6 @@ function steerSolution(steerDeg) {
   // Ackermann ideal outer angle for this inner angle: cot(outer) - cot(inner) = kingpin span / wheelbase
   const ideal = inner > 1e-6 ? Math.atan(1 / (1 / Math.tan(inner) + STEER.kpSpan / STEER.wheelbase)) : 0;
   return { dx, aPlus, aMinus, inner, outer, ideal };
-}
-
-// Same expression decal Kip-Demo wraps on its face plate (spark on the sculpted insert), built in the mockup
-// plate's assembly frame (x across, y up from the chin edge at y = -2.9, z out of the face) so it rides the
-// Truck face mesh as a child.
-let _truckFaceDecal = null;
-function truckFaceDecal() {
-  if (_truckFaceDecal) return _truckFaceDecal;
-  const W = 23.6, H = 10.1, Y0 = -2.7, NX = 56, NZ = 28;
-  const probe = new THREE.Mesh(GEOS.char_faceplate, MATS.tub);
-  probe.updateMatrixWorld(true);
-  const ray = new THREE.Raycaster();
-  const pos = [], uv = [], idx = [];
-  for (let j = 0; j <= NZ; j++) {
-    const y = Y0 + (H * j) / NZ;
-    for (let i = 0; i <= NX; i++) {
-      const x = -W / 2 + (W * i) / NX;
-      ray.set(new THREE.Vector3(x, y, -28), new THREE.Vector3(0, 0, 1));
-      const hit = ray.intersectObject(probe, false)[0];
-      const z = (hit ? hit.point.z : -0.12 + x * x * 0.002) - 0.22;
-      pos.push(x, y, z);
-      uv.push(i / NX, j / NZ);
-    }
-  }
-  for (let j = 0; j < NZ; j++) for (let i = 0; i < NX; i++) {
-    const a = j * (NX + 1) + i, b = a + 1, c = a + NX + 1, d = c + 1;
-    idx.push(a, c, b, b, c, d);
-  }
-  const g = new THREE.BufferGeometry();
-  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
-  g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
-  g.setIndex(idx);
-  g.computeVertexNormals();
-  const tex = new THREE.CanvasTexture(createDecalExpressionCanvas('spark', 'kid', 'sculpted', { onPlate: true }));
-  tex.colorSpace = THREE.SRGBColorSpace;
-  const mat = new THREE.MeshStandardMaterial({ map: tex, transparent: true, alphaTest: 0.02, roughness: 0.44, metalness: 0.0, envMapIntensity: 0.18, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 });
-  _truckFaceDecal = new THREE.Mesh(g, mat);
-  _truckFaceDecal.renderOrder = 2;
-  return _truckFaceDecal;
 }
 
 function meshOf(pid, mat) {
@@ -856,19 +819,11 @@ function rebuildScene() {
     const T = KIP_STACK.table;
     const hd = T && T.heads[KIP_STACK.head];
     KIP_DRIVER.skinMat.color.set(KIP_HEAD_HEX[KIP_STACK.head] || '#F3BA95');
+    syncTruckWardrobeHead();
     const headCad = KIP_DRIVER.headCadWrap;
     headCad.clear();
     if (hd && GEOS[KIP_STACK.head]) {
-      headCad.add(meshOf(KIP_STACK.head, KIP_DRIVER.skinMat));
       let topZ = hd.top;
-      if (hd.human && GEOS.char_faceplate) {
-        const face = meshOf('char_faceplate', KIP_DRIVER.skinMat);
-        face.rotation.order = 'ZYX';
-        face.rotation.set(Math.PI / 2, 0, Math.PI);
-        face.position.set(0, hd.boreY, hd.boreZ);
-        face.add(truckFaceDecal());
-        headCad.add(face);
-      }
       const hr = hd.human && KIP_STACK.hair && T.hairs[KIP_STACK.hair];
       if (hr && GEOS[KIP_STACK.hair]) {
         const hair = meshOf(KIP_STACK.hair, MATS.hair);
@@ -1377,6 +1332,38 @@ document.getElementById('btn-kip').addEventListener('click', (e) => {
   rebuildScene();
 });
 
+// One Kip: the driver head is Kip-Demo's wardrobe head (same meshes, face plate, seat and decal), not the old CAD stack head.
+const wardrobeId = (stackId) => stackId.replace(/^(char_head_|robot_head_)/, '').replace('visor', 'robot');
+function syncTruckWardrobeHead() {
+  const exp = KIP_DRIVER.rig?.exp;
+  if (!exp) return;
+  const wid = wardrobeId(KIP_STACK.head);
+  exp.altHeadsGroup.visible = true;
+  for (const [k, hm] of Object.entries(exp.headMeshes)) hm.visible = (k === wid);
+  exp.altCrownBuds.visible = false;
+  const isHuman = HUMAN_HEAD_IDS.has(wid);
+  exp.faceplateGroup.visible = isHuman;
+  if (isHuman) {
+    const dt = WARDROBE_HEADS.find((h) => h.id === wid) || WARDROBE_HEADS[0];
+    exp.faceplateHolder.position.set(0, dt.faceY - 2.50 + FACEPLATE_SEAT_MM.raise, FACE_STEM_MM - FACEPLATE_SEAT_MM.sink);
+    exp.faceplateMesh.visible = true;
+    exp.faceplateVinylMesh.visible = false;
+    exp.faceplateFlatMesh.visible = false;
+    exp.faceplateDecalPlane.geometry = exp.faceplateDecalGeos.sculpted;
+    exp.faceplateDecalPlane.visible = true;
+    exp.decalPlane.visible = false;
+  } else if (exp.headDecalGeos[wid]) {
+    const tex = new THREE.CanvasTexture(createDecalExpressionCanvas('spark', wid, 'sculpted', { onPlate: false }));
+    tex.colorSpace = THREE.SRGBColorSpace;
+    exp.decalPlane.material.map = tex;
+    exp.decalPlane.material.needsUpdate = true;
+    exp.decalPlane.geometry = exp.headDecalGeos[wid];
+    exp.decalPlane.visible = true;
+  } else {
+    exp.decalPlane.visible = false;
+  }
+}
+
 // Load the Kip Pro (8+) & Snap (3+) body rig from kip-rig.js (same STLs, creases and joints as Kip-Demo.html).
 async function loadKipDriver() {
   try {
@@ -1385,6 +1372,11 @@ async function loadKipDriver() {
     const rig = K.buildKipRig(geos, baseParts);
     for (const [n, g] of Object.entries(geos)) KIP_DRIVER.geoNames.set(g, 'stls/' + n);
     for (const [n, g] of Object.entries(baseParts)) KIP_DRIVER.geoNames.set(g, 'partspec/' + n);
+
+    try {
+      const expGeos = await loadExpansionGeos(K.loadSTL);
+      rig.exp = attachExpansionToKipRig(THREE, rig, expGeos, baseParts, K.mats, K.scadMesh, rig.createSlot);
+    } catch (e) { console.warn('Kip wardrobe unavailable:', e); }
 
     const skinMat = makeMat('#F3BA95', 1, 0.42);
     const slotById = Object.fromEntries(rig.partSlots.map((s) => [s.id, s.grp]));
