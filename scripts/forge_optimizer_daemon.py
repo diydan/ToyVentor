@@ -152,6 +152,179 @@ def legalize_loft_slices(raw_slices: Any) -> list[tuple[float, float, float, flo
     return [(row[0], row[1], row[2], row[3], row[4], row[5]) for row in parsed]
 
 
+# ---------------------------------------------------------------------------
+# Feature ops (docs/specs/forge-ai-spec.md, "Recipe v1"): every number is clamped, nothing is rejected.
+# The loft is one convex hull, so a brim, an ear, a horn or a row of points can only come from these.
+# ---------------------------------------------------------------------------
+AUTO_MINIMAL_FOR_OVERHANG = True  # `--no-auto-minimal` turns the none -> minimal promotion off
+SLAB_THICKNESS_MM = 0.8  # `sdk.loft_slabs` default slab thickness
+FEATURE_OPS = ("knob", "brim", "ears", "horns", "spikes")
+_EAR_STYLES = {
+    # style: (height_mm, width_mm, tilt_deg) defaults; "round" is a flat disc, "pointy" a leaf, "tall" a bunny ear
+    "round": (0.0, 11.0, 8.0),
+    "pointy": (11.0, 9.0, 22.0),
+    "tall": (22.0, 7.0, 12.0),
+}
+
+
+def _clamp(val: Any, lo: float, hi: float, default: float, name: str) -> float:
+    raw = default if val is None else val
+    return max(lo, min(hi, _finite_float(raw, name)))
+
+
+def _parse_feature(feat: dict[str, Any], slot: str) -> dict[str, Any] | None:
+    """Clamp one feature to its bounds. Returns None when the op is unknown or not allowed on this slot."""
+    op = str(feat.get("op", "")).lower()
+    if op not in FEATURE_OPS:
+        return None
+    if op == "knob":
+        return {"op": "knob", "radius_mm": _clamp(feat.get("radius_mm"), 1.8, 6.0, 3.2, "radius_mm")}
+    if op == "brim":
+        return {
+            "op": "brim",
+            "width_mm": _clamp(feat.get("width_mm"), 16.0, 42.0, 28.0, "width_mm"),
+            "depth_mm": _clamp(feat.get("depth_mm"), 12.0, 32.0, 18.0, "depth_mm"),
+            "thickness_mm": _clamp(feat.get("thickness_mm"), 1.6, 4.0, 2.2, "thickness_mm"),
+        }
+    if op == "ears":
+        if slot not in ("head", "crown"):
+            return None
+        style = str(feat.get("style", "round")).lower()
+        if style not in _EAR_STYLES:
+            style = "round"
+        h0, w0, t0 = _EAR_STYLES[style]
+        return {
+            "op": "ears",
+            "style": style,
+            "height_mm": _clamp(feat.get("height_mm"), 0.0, 26.0, h0, "height_mm") if style != "round" else 0.0,
+            "width_mm": _clamp(feat.get("width_mm"), 5.0, 16.0, w0, "width_mm"),
+            "thickness_mm": _clamp(feat.get("thickness_mm"), 2.4, 6.0, 3.6, "thickness_mm"),
+            "tilt_deg": _clamp(feat.get("tilt_deg"), 0.0, 35.0, t0, "tilt_deg"),
+        }
+    if op == "horns":
+        if slot not in ("head", "crown"):
+            return None
+        return {
+            "op": "horns",
+            "length_mm": _clamp(feat.get("length_mm"), 8.0, 30.0, 18.0, "length_mm"),
+            "base_mm": _clamp(feat.get("base_mm"), 3.0, 9.0, 6.0, "base_mm"),
+            "curl": _clamp(feat.get("curl"), 0.0, 1.0, 0.6, "curl"),
+        }
+    # spikes: a row of points along x on top of a crown or back piece (the head top is the crown seat)
+    if slot not in ("crown", "back"):
+        return None
+    return {
+        "op": "spikes",
+        "count": int(_clamp(feat.get("count"), 2, 7, 5, "count")),
+        "height_mm": _clamp(feat.get("height_mm"), 3.0, 16.0, 7.0, "height_mm"),
+        "base_mm": _clamp(feat.get("base_mm"), 2.5, 7.0, 4.0, "base_mm"),
+        "center_boost_mm": _clamp(feat.get("center_boost_mm"), 0.0, 6.0, 0.0, "center_boost_mm"),
+    }
+
+
+def _half_width_at(body: manifold3d.Manifold, z: float) -> float:
+    """Half the x extent of `body` at height z (0 when the body does not reach z)."""
+    cs = body.slice(z)
+    if cs.is_empty():
+        return 0.0
+    x0, _y0, x1, _y1 = cs.bounds()
+    return max(0.0, min(abs(x0), abs(x1)))
+
+
+def _mirror_pair(m: manifold3d.Manifold) -> manifold3d.Manifold:
+    return m + m.mirror((1.0, 0.0, 0.0))
+
+
+def _root_fill(rb: float, x_root: float, z_root: float, hw: float, y_scale: float) -> manifold3d.Manifold:
+    """A teardrop under a root sphere, tangent to the body wall, so the root's underside is steep enough to print.
+    Without it the sphere's lower half hangs off the wall and fails P1 (steeper than 45 degrees)."""
+    r_low = 0.8 * rb
+    x_low = max(0.0, hw - r_low) - x_root
+    drop = sdk.hull([sdk.sphere(rb, (0.0, 0.0, 0.0)), sdk.sphere(r_low, (x_low, 0.0, -2.0 * rb))])
+    return drop.scale((1.0, y_scale, 1.0)).translate((x_root, 0.0, z_root))
+
+
+def _spikes_solid(
+    rows: list[tuple[float, float, float, float, float, float]], feat: dict[str, Any], fs: float
+) -> manifold3d.Manifold:
+    """A row of points along x across the top slice. Vertical cones, so they print without help."""
+    z, w, _d, _r, cx, cy = rows[-1]
+    z_top = z + SLAB_THICKNESS_MM
+    count = int(feat["count"])
+    base = float(feat["base_mm"]) * fs
+    height = float(feat["height_mm"]) * fs
+    boost = float(feat["center_boost_mm"]) * fs
+    span = max(0.0, w / 2.0 - base * 0.45)
+    pts = []
+    for i in range(count):
+        t = i / (count - 1)
+        x = cx - span + 2.0 * span * t
+        h = height + boost * (1.0 - abs(2.0 * t - 1.0))
+        pts.append(
+            sdk.hull(
+                [
+                    sdk.sphere(base / 2.0, (x, cy, z_top - base * 0.15)),
+                    sdk.sphere(max(0.4, base * 0.12), (x, cy, z_top + h)),
+                ]
+            )
+        )
+    return sdk.union(pts)
+
+
+def _ears_or_horns_solid(
+    op: str,
+    slot: str,
+    body: manifold3d.Manifold,
+    rows: list[tuple[float, float, float, float, float, float]],
+    feat: dict[str, Any],
+    head_height_mm: float,
+    fs: float,
+) -> manifold3d.Manifold | None:
+    """A mirrored pair on the upper corners of the body. The root sits inside the body (clamped to its
+    width at that height), so the pair always fuses with it; the tilt carries the tip clear of the crown pad."""
+    if slot == "head":
+        z_root = head_height_mm - 5.0  # just under the crown seat
+    else:
+        z_lo, z_hi = float(rows[0][0]), float(rows[-1][0])
+        z_root = z_hi - 0.12 * (z_hi - z_lo) if op == "ears" else z_lo + 0.62 * (z_hi - z_lo)
+    hw = _half_width_at(body, z_root)
+    if hw < 2.0:
+        return None
+    if op == "ears":
+        width = float(feat["width_mm"]) * fs
+        height = float(feat["height_mm"]) * fs
+        thick = float(feat["thickness_mm"])
+        rb = width / 2.0
+        tip = {"round": rb, "pointy": max(0.9, rb * 0.28), "tall": max(1.4, rb * 0.7)}[str(feat["style"])]
+        x_root = max(2.0, hw - 0.35 * rb)
+        ear = sdk.hull([sdk.sphere(rb, (0.0, 0.0, 0.0)), sdk.sphere(tip, (0.0, 0.0, height))])
+        ear = ear.scale((1.0, thick / width, 1.0)).rotate((0.0, float(feat["tilt_deg"]), 0.0))
+        fill = _root_fill(rb, x_root, z_root, hw, thick / width)
+        return _mirror_pair(ear.translate((x_root, 0.0, z_root)) + fill)
+    length = float(feat["length_mm"]) * fs
+    rb = float(feat["base_mm"]) * fs / 2.0
+    curl = float(feat["curl"])
+    n = 6
+    phi0 = math.radians(55.0)  # steeper than 45 degrees from the wall so the underside prints
+    phi1 = phi0 + curl * math.radians(90.0 - 55.0)
+    x_root = max(2.0, hw - 0.8 * rb)
+    px = pz = 0.0
+    chain: list[tuple[float, float, float]] = []
+    for k in range(n + 1):
+        s = k / n
+        chain.append((px, pz, max(0.9, rb * (1.0 - 0.85 * s))))
+        ang = phi0 + (phi1 - phi0) * s
+        px += (length / n) * math.cos(ang)
+        pz += (length / n) * math.sin(ang)
+    horn = sdk.union(
+        [
+            sdk.hull([sdk.sphere(r, (x_root + x, 0.0, z_root + z)) for (x, z, r) in chain[i : i + 2]])
+            for i in range(n)
+        ]
+    )
+    return _mirror_pair(horn + _root_fill(rb, x_root, z_root, hw, 1.0))
+
+
 def compile_recipe_to_partspec(recipe: dict[str, Any]) -> dict[str, Any]:
     """Compile a JSON Recipe v1 object into a `kip_partspec_sdk.part_spec` (no eval/exec)."""
     slot = str(recipe.get("slot", "crown")).strip().lower()
@@ -223,29 +396,39 @@ def compile_recipe_to_partspec(recipe: dict[str, Any]) -> dict[str, Any]:
     raw_features = recipe.get("features") or []
     if not isinstance(raw_features, list) or len(raw_features) > 6:
         raise ValueError("recipe.features must be a list of at most 6 items")
-    clean_features: list[dict[str, float | str]] = []
+    clean_features: list[dict[str, Any]] = []
+    features_ignored: list[str] = []
     for feat in raw_features:
         if not isinstance(feat, dict):
             continue
-        op = str(feat.get("op", "")).lower()
-        if op == "knob":
-            clean_features.append(
-                {"op": "knob", "radius_mm": max(1.8, min(6.0, _finite_float(feat.get("radius_mm", 3.2), "radius_mm")))}
-            )
-        elif op == "brim":
-            clean_features.append(
-                {
-                    "op": "brim",
-                    "width_mm": max(16.0, min(42.0, _finite_float(feat.get("width_mm", 28.0), "width_mm"))),
-                    "depth_mm": max(12.0, min(32.0, _finite_float(feat.get("depth_mm", 18.0), "depth_mm"))),
-                    "thickness_mm": max(1.6, min(4.0, _finite_float(feat.get("thickness_mm", 2.2), "thickness_mm"))),
-                }
-            )
+        parsed_feat = _parse_feature(feat, slot)
+        if parsed_feat is None:
+            op_name = str(feat.get("op", "")).lower()
+            if op_name:
+                features_ignored.append(op_name)
+        else:
+            clean_features.append(parsed_feat)
     head_height_mm = max(24.0, min(38.0, _finite_float(shape.get("height_mm", 30.5), "height_mm")))
+
+    # A brim or a horn hangs in the air, and the support-free flare clip in the slot builders would
+    # shave it back to a 41 degree cone. `minimal` keeps it, at the price of a few supports. This is a
+    # print-plan decision, so it is reported on the job (`legalizer.support_policy_promoted`) and can be
+    # switched off with `--no-auto-minimal`.
+    support_policy_promoted = False
+    if (
+        AUTO_MINIMAL_FOR_OVERHANG
+        and support_policy == "none"
+        and slot in ("crown", "head", "back")
+        and any(f["op"] in ("brim", "horns") for f in clean_features)
+    ):
+        support_policy = "minimal"
+        support_policy_promoted = True
 
     def build_for(
         rows: list[tuple[float, float, float, float, float, float]],
+        fs: float = 1.0,
     ) -> tuple[manifold3d.Manifold, list[dict[str, Any]], dict[str, Any]]:
+        """`fs` scales every feature's size (L2 passes the same factor it applies to the slices)."""
         if slot == "hand":
             if kind == "profile2d":
                 cs = sdk.polygon_2d(pts_clamped, fillet_r=fillet_r)
@@ -254,24 +437,38 @@ def compile_recipe_to_partspec(recipe: dict[str, Any]) -> dict[str, Any]:
             return sdk.handheld_prop(cs, grip_tu=grip_tu)
 
         body = sdk.loft_slabs(rows)
+        after_builder: list[manifold3d.Manifold] = []  # head ears and horns: `character_head` clips above the seat
         for feat in clean_features:
-            if feat["op"] == "knob":
-                kr = float(feat["radius_mm"])
+            op = feat["op"]
+            if op == "knob":
+                kr = float(feat["radius_mm"]) * fs
                 top_z = float(rows[-1][0]) + kr * 0.65
                 body = body + sdk.sphere(kr, (float(rows[-1][4]), float(rows[-1][5]), top_z))
-            elif feat["op"] == "brim":
-                bw = float(feat["width_mm"])
-                bd = float(feat["depth_mm"])
+            elif op == "brim":
+                bw = float(feat["width_mm"]) * fs
+                bd = float(feat["depth_mm"]) * fs
                 bt = float(feat["thickness_mm"])
                 if support_policy == "minimal":
                     body = body + sdk.wide_brim(bw, bd, thickness_mm=bt, z=0.0)
                 else:
                     body = body + sdk.rounded_slab(bw, bd, bt, r=min(bw, bd) * 0.35, z=1.5)
+            elif op == "spikes":
+                body = body + _spikes_solid(rows, feat, fs)
+            elif op in ("ears", "horns"):
+                solid = _ears_or_horns_solid(op, slot, body, rows, feat, head_height_mm, fs)
+                if solid is not None:
+                    if slot == "head":
+                        after_builder.append(solid)
+                    else:
+                        body = body + solid
 
         if slot == "crown":
             return sdk.crown_addon(body, support_policy=support_policy)
         if slot == "head":
-            return sdk.character_head(body, height_mm=head_height_mm, support_policy=support_policy)
+            m, conns, ex = sdk.character_head(body, height_mm=head_height_mm, support_policy=support_policy)
+            for solid in after_builder:
+                m = m + solid
+            return m, conns, ex
         if slot == "back":
             return sdk.backpack_addon(body, support_policy=support_policy)
         return sdk.vehicle_addon(body, slot=slot)
@@ -291,8 +488,12 @@ def compile_recipe_to_partspec(recipe: dict[str, Any]) -> dict[str, Any]:
     if slot != "hand":
         # What the L1/L3 clamps changed (they used to be silent), plus what L2 needs to rebuild.
         spec["legalizer_notes"] = _legalizer_notes(shape.get("slices"), slices_legal)
+        if support_policy_promoted:
+            spec["legalizer_notes"]["support_policy_promoted"] = "none->minimal"
+        if features_ignored:
+            spec["legalizer_notes"]["features_ignored"] = features_ignored
 
-        def rebuild(rows: list[tuple[float, float, float, float, float, float]]) -> dict[str, Any]:
+        def rebuild(rows: list[tuple[float, float, float, float, float, float]], fs: float = 1.0) -> dict[str, Any]:
             return sdk.part_spec(
                 id=part_id,
                 name=name,
@@ -300,7 +501,7 @@ def compile_recipe_to_partspec(recipe: dict[str, Any]) -> dict[str, Any]:
                 behavior=behavior,
                 slot=slot,
                 support_policy=support_policy,
-                fn=lambda: build_for(rows),
+                fn=lambda: build_for(rows, fs),
             )
 
         spec["_l2"] = {"slot": slot, "rows": slices_legal, "rebuild": rebuild}
@@ -388,26 +589,28 @@ def l2_rescale(spec: dict[str, Any], measured_mm: float | None = None) -> tuple[
     paths = ("xy",) if ctx["slot"] == "head" else ("height", "xy", "both")
     evals = 0
 
-    def diameter(rows: list[tuple[float, float, float, float, float, float]]) -> float:
+    def diameter(rows: list[tuple[float, float, float, float, float, float]], fs: float) -> float:
         nonlocal evals
         evals += 1
-        return float(_measure_small(ctx["rebuild"](rows))["min_enclosing_diameter_mm"])
+        return float(_measure_small(ctx["rebuild"](rows, fs))["min_enclosing_diameter_mm"])
 
     for path in paths:
         try:
+            # Features (brim, ears, horns, points) shrink with the slices; a height-only shrink leaves them alone.
+            fs_of = (lambda f: f) if path in ("xy", "both") else (lambda f: 1.0)
             lo, hi = L2_MIN_SCALE, 1.0
-            d_lo = diameter(_l2_candidate(rows0, path, lo))
+            d_lo = diameter(_l2_candidate(rows0, path, lo), fs_of(lo))
             if d_lo > target:
                 continue  # even the full shrink does not clear the band on this path
             for _ in range(L2_BISECT_STEPS):
                 mid = (lo + hi) / 2
-                d_mid = diameter(_l2_candidate(rows0, path, mid))
+                d_mid = diameter(_l2_candidate(rows0, path, mid), fs_of(mid))
                 if d_mid <= target:
                     lo, d_lo = mid, d_mid
                 else:
                     hi = mid
             rows = _l2_candidate(rows0, path, lo)
-            new_spec = ctx["rebuild"](rows)
+            new_spec = ctx["rebuild"](rows, fs_of(lo))
             new_spec["legalizer_notes"] = dict(spec.get("legalizer_notes") or {})
             new_spec["_l2"] = {**ctx, "rows": rows}
             return new_spec, {
@@ -965,10 +1168,17 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--max-queue", type=int, default=8, help="Max queued+running background jobs before 429 (default: 8)")
     ap.add_argument("--max-connections", type=int, default=16, help="Max concurrent HTTP threads before 503 (default: 16)")
     ap.add_argument("--no-l2", action="store_true", help="Disable the L2 small-parts rescale (for A/B evals)")
+    ap.add_argument(
+        "--no-auto-minimal",
+        action="store_true",
+        help="Do not promote support_policy none -> minimal when a recipe has a brim or horns (they get clipped instead)",
+    )
     args = ap.parse_args(argv)
-    global L2_ENABLED
+    global L2_ENABLED, AUTO_MINIMAL_FOR_OVERHANG
     if args.no_l2:
         L2_ENABLED = False
+    if args.no_auto_minimal:
+        AUTO_MINIMAL_FOR_OVERHANG = False
 
     token = args.token.strip() or None
     if args.host.strip().lower() not in LOOPBACK_HOSTS and not token:

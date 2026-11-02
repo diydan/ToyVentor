@@ -63,7 +63,7 @@ interface Opts {
   maxCalls: number;
   out: string | null;
   resume: boolean;
-  promptVersion: "v0" | "v1";
+  promptVersion: "v0" | "v1" | "v2";
   jobTimeoutMs: number;
 }
 
@@ -122,7 +122,7 @@ function parseArgs(argv: string[]): Opts {
         break;
       case "--prompt": {
         const v = next();
-        if (v !== "v0" && v !== "v1") throw new Error("--prompt must be v0 or v1");
+        if (v !== "v0" && v !== "v1" && v !== "v2") throw new Error("--prompt must be v0, v1 or v2");
         o.promptVersion = v;
         break;
       }
@@ -326,8 +326,32 @@ function outputTextOf(body: unknown): string {
   return text;
 }
 
-function sparkProposer(version: "v0" | "v1"): Proposer {
-  const system = version === "v1" ? `${RECIPE_PROMPT_V0}\n\n${SLOT_FACTS_V1}` : RECIPE_PROMPT_V0;
+/**
+ * v2 documents the feature ops the daemon gained after the first taste check (ears, horns, spikes,
+ * and a brim that survives). In the v1 run Spark left "features" empty for 18 of 22 crowns and heads,
+ * even for "a pirate hat with a wide brim", and Dan rated 19 of those parts 1.47 out of 5 on average:
+ * hats were tapered blocks and every head was the same box. The v2 text also tells it to keep the body
+ * simple and put the character in the features.
+ */
+const FEATURES_V2 = `- "features": optional list of at most 6 from these ops. A body shape alone is a plain block, so use them whenever the request names a part like a brim, ears, horns or points:
+  - {"op":"brim","width_mm":16-42,"depth_mm":12-32,"thickness_mm":1.6-4}: a flat brim around the bottom (pirate, sun, cowboy or top hat). Keep the slices narrow and let the brim make the width.
+  - {"op":"ears","style":"round"|"pointy"|"tall","width_mm":5-16,"height_mm":0-26,"tilt_deg":0-35}: a mirrored pair of flat ears on the upper corners of a head or crown. Bear = round, cat = pointy, bunny = tall.
+  - {"op":"horns","length_mm":8-30,"base_mm":3-9,"curl":0-1}: a mirrored pair of curved horns on the sides of a crown or head.
+  - {"op":"spikes","count":2-7,"height_mm":3-16,"base_mm":2.5-7,"center_boost_mm":0-6}: a row of points along the top of a crown or back piece (crown points, feathers).
+  - {"op":"knob","radius_mm":1.8-6}: a ball on top (bobble, pompom, tassel).
+Put the character in the features and keep the body simple. Give different requests different body shapes: a chef hat is wider at the top, a beanie is rounded, a top hat is a straight tube, a cone hat tapers to a point.`;
+
+const FEATURES_V0_LINE = `- "features": optional list of at most 6: {"op":"knob","radius_mm":1.8-6} or {"op":"brim","width_mm":16-42,"depth_mm":12-32,"thickness_mm":1.6-4}.`;
+
+function systemPromptFor(version: "v0" | "v1" | "v2"): string {
+  if (version === "v0") return RECIPE_PROMPT_V0;
+  if (version === "v1") return `${RECIPE_PROMPT_V0}\n\n${SLOT_FACTS_V1}`;
+  if (!RECIPE_PROMPT_V0.includes(FEATURES_V0_LINE)) throw new Error("v2 prompt: the v0 features line moved");
+  return `${RECIPE_PROMPT_V0.replace(FEATURES_V0_LINE, FEATURES_V2)}\n\n${SLOT_FACTS_V1}`;
+}
+
+function sparkProposer(version: "v0" | "v1" | "v2"): Proposer {
+  const system = systemPromptFor(version);
   const key = process.env.MODEL_API_KEY ?? process.env.META_MODEL_API_KEY;
   if (!key) throw new Error("--proposer spark needs MODEL_API_KEY or META_MODEL_API_KEY in the environment");
   const base = (process.env.META_MODEL_API_URL ?? "https://api.meta.ai/v1").replace(/\/+$/, "").replace(/\/responses$/, "");
@@ -356,7 +380,7 @@ function sparkProposer(version: "v0" | "v1"): Proposer {
 
   const wish = (p: PromptCase) => `Child's wish: "${p.text}"\nSlot: ${p.slot}`;
   return {
-    name: version === "v1" ? `spark:${model}:v1` : `spark:${model}`,
+    name: version === "v0" ? `spark:${model}` : `spark:${model}:${version}`,
     propose: (p) => call(`${system}\n\n${wish(p)}\nAnswer with the JSON object only.`),
     repair: (p, prev, feedback) =>
       call(

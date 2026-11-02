@@ -128,10 +128,36 @@ rejected, numbers are clamped to bounds, and nothing is executed.
 - `shape.kind`: `loft` (all slots except hand; the compiler enforces 2 to 16
   slices and the prompt asks for 3 to 12), `profile2d` (hand slot, polygon in
   x,z, 3 to 64 points), `star2d` (hand slot, the default there).
-- `features`: at most 6, from an allowlist. Built: `brim` and `knob`. Planned,
-  not in the compiler: `ears`, `fin`, `antenna`, `band`. Each is a parametric op
-  with bounded numbers, so the model can add character without being able to
-  break geometry.
+- `features`: at most 6, from an allowlist. Each is a parametric op with bounded
+  numbers (clamped, never rejected), so the model can add character without
+  being able to break geometry. Built in the daemon (2026-11-02), all with
+  tests in `tests/forge/forge-ops.test.ts`:
+  - `knob` (ball on top) and `brim` (flat brim, `width_mm`, `depth_mm`,
+    `thickness_mm`).
+  - `ears`: a mirrored pair on the upper corners, `style` `round | pointy |
+    tall`, `width_mm`, `height_mm`, `tilt_deg`. Heads and crowns only. On a head
+    they are added after `character_head`, because that builder clips everything
+    above the crown seat.
+  - `horns`: a mirrored pair of curved horns, `length_mm`, `base_mm`, `curl`.
+    Heads and crowns only.
+  - `spikes`: a row of 2 to 7 points along the top, for crown points and
+    feathers. Crowns and backs only (the head top is the crown seat).
+  - An op the slot cannot use, or an unknown op, is dropped and listed in
+    `legalizer.features_ignored`.
+  - Planned, not in the compiler: `fin`, `antenna`, `band`, and a curled brim.
+    A curled brim was tried and fails the gates (P1 steeper than 45 degrees,
+    P4 ledges, M2 and M3 minimal-support checks), so a cowboy brim stays flat.
+  - **Why the old recipes had no brims.** The loft is one convex hull, and the
+    slot builders clip with a 41 degree support-free flare, which shaved a 40 x
+    30 mm brim down to about 32 x 19 mm. The compiler now promotes
+    `support_policy` from `none` to `minimal` when a recipe has a `brim` or
+    `horns` (the lane's opt-in minimal-support tier), and says so in
+    `legalizer.support_policy_promoted`. `--no-auto-minimal` turns it off. This
+    changes the print plan (a few supports), so it is a decision for the owner
+    of the print workflow, not only a compiler detail.
+  - The worker (`worker/forgeOptimizer.ts`) and `shared/forgeOptimizer.ts`
+    still allow only `knob` and `brim`; they need the new ops before the app
+    can use them. Not done here.
 - `support_policy` (optional): `none` (default) or `minimal`; `minimal` is only
   allowed on `crown`, `head` and `back`. `shape.height_mm` (optional, 24 to 38)
   sets a head's height.
@@ -269,6 +295,152 @@ is the **printable** one.
 - **Acceptance (targets):** with 10 photos (cup, bottle, bowl, shoe, toy car,
   kid drawing and others) and 3 roles each, >= 70% yield a verified printable
   recipe with no model repair, and 100% yield something usable via fallback.
+
+### F2b: Photo-shaped accessories (plan, 2026-11-02)
+
+Dan's decisions (2026-11-02): the printed result is an **accessory Kip wears or
+holds**, not a keepsake, and the SAM path below is approved for the beta as it
+stands. Keepsakes (cookie cutter, playdough stamp, charm) would reuse the same
+contour code; they are parked until accessories work. The connector always comes
+from the slot builder, so every route below ends on a part that attaches.
+
+What the compiler accepts decides the routes (read in the code, 2026-11-02):
+
+| Route | Photos | Shape handed to the compiler | Slots | Status |
+| --- | --- | --- | --- | --- |
+| A. Cut-out | 1, object looks flat (drawing, wing, sword, paddle) | `profile2d`: one outline, 3 to 64 points, x within 45 mm, z from -45 to 90 mm | `hand` only | Compiles today; outline step built (`shared/photoOutline.ts`), not wired to the Worker |
+| B. Round | 1, object looks round (cup, bottle, bowl) | `loft` slices, depth `d` taken from width `w` | `crown`, `head`, `back`, vehicle slots | Compiles today; profile extraction not built |
+| C. Chunky | 2 (front, side) | `loft` slices, `w` from the front outline, `d` from the side outline | as B | Compiles today; fitter not built |
+
+**Route A: cut-out.**
+
+- **What the hand builder does with an outline** (`handheld_prop`): joins it to a
+  grip shaft (6.60 mm across the flats, `grip_tu` 2 to 4) through a 6.4 mm neck,
+  rounds it twice (by the recipe's `fillet_r_mm`, then by 0.8 mm; each is shrink,
+  then grow), extrudes a 5.0 mm plate printed lay-flat, and adds a 1.6 mm crest
+  inset 2.4 mm. So the outline is one polygon: holes are lost, two separate
+  pieces fail `G3_single_body`, and anything thinner than twice the larger
+  rounding vanishes (3.2 mm at the fillet F2b uses, 1.6).
+- **Measured on the real gates (2026-11-02, 33 legalized outlines, daemon at
+  `0f60e97`, `validate_and_export`):** at the daemon's default `fillet_r_mm` of 1.2
+  only 8 pass; every failure is `G1_watertight` plus `G3_single_body`. At 1.6 all
+  33 pass, at 2.0 32, at 3.0 32. The failures are zero-volume two-triangle
+  slivers beside the main body (a star at 54 mm: 4 slivers, 816 faces in the
+  body), not a real split. They come and go with the radius, not with size
+  (fails at 0.8, 1.2 and 2.4, passes at 0.4, 1.6, 2.0, 3.0 and 4.0; 0.8 and 2.4
+  are the builder's own rounding and crest inset), so a bigger radius is not
+  safer in general. On the production path (`optimize=True`, about 0.4 s each)
+  all 33 pass at 1.6 on the first try. Across 77 more outlines at asked heights
+  of 24, 33, 34, 40, 70 and 90 mm, 68 passed first try, 7 came back `marginal`
+  (below) and 2 were slivers. Rule: F2b writes 1.6, and an F3 hint-table entry
+  for `G1_watertight` or `G3_single_body` on a hand `profile2d` walks
+  `RETRY_LADDER` in `shared/photoOutline.ts`: same fillet at 1.02 and 1.04 times
+  the size, then fillet 2.0, then 3.0. Both slivers passed after a 2% nudge with
+  the same shape. Fillets 2.0 and 3.0 also passed them, but only by raising the
+  smallest feature to 4 and 6 mm, which removed the paddle's stick, so they come
+  last. Nudges alone are no substitute for 1.6: at 1.2 they rescued 14 of 33.
+  Do not compute a radius.
+- **Contour legalizers** (pure TypeScript in the Worker, no model call; each one
+  reports what it changed, as in F3, so the eval can count them):
+  - C1 one body: keep the largest piece and fill holes.
+  - C2 minimum feature: apply the same rounding (the larger of the fillet and
+    0.8 mm) to the outline first, so the preview and the print agree. Which parts
+    are too thin is decided at the requested size and the size is kept; with
+    `keepThinParts` the outline grows (within the 90 mm box) to the smallest
+    size at which they survive. A refit after removal flip-flops (the part
+    survives at the new size, then not at the next), so there is none.
+  - C3 fit: scale into the clamp box above (default 54 mm tall). L2 does not
+    handle hand plates ("L2 only handles loft slots"), so a `marginal`
+    small-parts result goes to the repair loop: rescale the outline by the
+    measured cylinder (`scaleOutline`) and gate again. The band cannot be
+    avoided in advance, because it follows the final shape, not the asked
+    height: a paddle asked for 33 mm came out 17.7 mm tall, its stick being
+    thinner than 3.2 mm. Of the 77 outlines across sizes, all 7 marginal ones had
+    an asked height of 33 or 34 mm (cylinders 32.3 to 34.1 mm).
+  - C4 orientation: long axis to z, handle end down, with a flip button. The kid
+    decides which end is the handle; the model is not asked.
+- **Relief ("puffy").** The builder's crest is one level. Repeating the inward
+  offset for 2 to 4 levels gives a stepped dome. Each level sits inside the one
+  below it, so it prints support-free by construction, and it invents no shape.
+  It needs one allowlisted feature, `relief`, with bounded levels and height (a
+  Recipe v1 change; the optimizer lane agrees it first, question 19).
+- **Colour on a one-colour printer.** The legalized polygon also becomes the cut
+  path of a photo sticker, as in the craft cutout for photo accessories
+  ([kip-print-workflow-spec.md](kip-print-workflow-spec.md) 4.3 and 8.1 C). The
+  plate is a custom-outline version of the `craft_grip_card_P` blank that spec
+  lists as not yet authored. The sticker goes on the face that lay on the bed,
+  which is flat; over the crest or a relief it would wrinkle (that spec found the
+  same with a 0.55 mm ridge). Rule: the sticker path and the plate outline are
+  the same polygon. The sticker is built on the device from the local photo and
+  the returned contour, so no picture comes back from the server.
+
+**Routes B and C: round and chunky.**
+
+- **B.** The width profile in F2's first bullet gives `w(z)`. One silhouette
+  cannot tell a drawing of a cup from a cup, so the kid answers one question,
+  "flat like a drawing, or round like a cup?" (A1's vision call could pre-select
+  it as a second enumerated field; that changes A1's contract, so propose it,
+  do not assume it).
+- **C.** The front photo gives `w(z)` and the x centre. The side photo gives
+  `d(z)` and the y centre. Both are scaled to the same object height. Each of 6
+  to 12 slices becomes `{z, w, d, r, x, y}`, fields the loft already has, with
+  `r` a fraction of the smaller of `w` and `d`. The compiler then runs L1 to L3
+  as for any recipe. Each slice is a rounded rectangle, so concavities are lost
+  (a mug handle, a horn, a spoon bowl). Label it a chunky stand-in, never a scan.
+- **Question 24 is the same fitter** fed with generated front and side images.
+  Real photos need no image-generation access, so build it on photos first and
+  let question 24 reuse it.
+- **SAM 3D slices** (the optional depth source named under "Runtime workflow")
+  are a third source of `d(z)` in the same slice format. Compare all three on one
+  eval. A model's mesh cannot become a Recipe and never prints; only slice
+  numbers cross over.
+- **Scale comes from the slot.** The accessory is fitted to the slot's envelope
+  (the crown pad is 23.8 by 11.6 mm), not to the photo's real size, so no
+  reference tile is needed. The 1x1 TU tile stays with stretch goal 6, where the
+  real size matters.
+
+**Privacy and beta.**
+
+- Object photos use `POST /api/scan` and SAM as today. That route has no parent
+  gate in the Worker code; the gate and consent apply to the opt-in selfie cloud,
+  and printing stays behind the grown-up gate. No photo is stored; only the mask
+  summary (contour, profile) is kept. Approved for the beta as it is (Dan,
+  2026-11-02). Whether a public release needs more is question 26.
+- No on-device masking spike. The local colour cut-out in `kip-forge-sdk.js`
+  (flood fill from the corners; plain backgrounds only) stays as the offline
+  fallback. Revisit only if the release review says photos must not leave the
+  device.
+
+**Order of work** (each step tests alone):
+
+1. **Done (2026-11-02, uncommitted):** `shared/photoOutline.ts`
+   (`legalizeOutline`: mask in, `profile2d` points and a change log out; plus
+   `flipOutline` and `scaleOutline`, which work on the polygon because the photo
+   and its mask are gone after the SAM call) and `tests/photo-outline.test.ts`
+   with masks in `tests/fixtures/outlineMasks.ts`. The fixtures in
+   `tests/fixtures/scan-targets.json` hold nouns, not masks, so these masks are
+   new: rasterised shapes, 40 random blobs and 10 rough discs. Still to do: a few
+   real photos, and the Worker wiring (the mask is only in memory there).
+2. Route A through the daemon on the flat objects among the 10 F2 photos.
+3. The sticker cut path from the same polygon.
+4. The relief spike (question 28).
+5. Route B profile extraction.
+6. Route C fitter, after question 29.
+
+**Acceptance (targets, to be confirmed by the first run):**
+
+- Route A: >= 70% of the flat photos verified with no model repair (the F2
+  figure), and 100% usable via the existing digital-only fallback.
+- C1 to C4 turn every synthetic mask into a polygon that compiles, and log every
+  change they make. First run, met: 33 of 33 pass the production gate at the first
+  try (see the measured note under Route A).
+- Sticker path and plate outline are identical point for point (a unit test).
+- Route C: report the overlap (IoU) between the built loft and each photo's mask,
+  per object. No pass mark until the first run says what is reachable.
+
+**Not doing in F2b:** a model-drawn outline; printing the photo itself (the print
+is the shape plus a sticker); concave 3D reconstruction (scan-to-3d.md Routes A
+and E stay experiments).
 
 ## F3: Repair loop
 
@@ -660,13 +832,46 @@ heads).** Scale: 1 "not what I asked", 2 "odd or ugly", 3 "fine", 4 "good", 5
   proper lighting agrees with them.
 - **Reading:** the validity gates are not the weak spot; fidelity to the request
   is. Two likely causes, not yet separated: Recipe v1 cannot express points,
-  ears, horns or curled brims (only `brim` and `knob` are built; `ears`, `fin`,
-  `antenna` and `band` are planned), and the v1 prompt's slot footprints may
-  have narrowed the variety. A tuned model cannot add shapes the recipe cannot
-  express.
+  ears, horns or curled brims (only `brim` and `knob` were built at the time),
+  and the v1 prompt's slot footprints may have narrowed the variety. A tuned
+  model cannot add shapes the recipe cannot express.
 - **Ideas raised, untested:** concept images from the text, SAM silhouettes, and
   slices fitted to the front and side outlines; and iterating until an automated
   judge scores at least "fine". See open questions 24 and 25.
+- **Causes, measured afterwards (2026-11-02).** Both were real. In the v1 run
+  Spark left `features` empty for 18 of the 22 crowns and heads, even for "a
+  pirate hat with a wide brim", and every recipe used `support_policy: none`.
+  Under `none` the slot builders clip anything outside a 41 degree support-free
+  flare, so the existing `brim` was shaved from 40 x 30 mm to about 32 x 19 mm,
+  and the loft is a single convex hull, so nothing else could stick out either.
+- **Text-to-image check (2026-11-02):** `POST /images/generations` with
+  `muse-image-1.0` and a text-only prompt returned a clean white-background
+  1920 x 1280 image in 17 s with the existing Meta key (a pirate hat with a
+  curved brim and a skull badge). So the concept-image path in open question 24
+  is feasible; its price per image is not known.
+
+**Prompt v2 run (2026-11-02, 22 prompts: the 14 crowns and 8 heads, after the new
+feature ops).** Prompt v2 documents `ears`, `horns`, `spikes`, a brim that
+survives, and tells Spark to keep the body simple and put the character in the
+features. The daemon has the ops (see "Recipe v1"). Report in the scratchpad
+`forge-eval-spark-v2.json`.
+- **Validity:** first attempt 18 of 22 (82%), final 22 of 22 (100%), 1.23 model
+  calls per prompt, job latency p50 9.6 s and p95 17.6 s, L2 applied once. First
+  attempt failures: `P4_no_ledges` 3, `P1_no_supports` 2, `M_minimal_support` 1.
+- **Op use:** Spark put a feature op on 13 of 22 prompts, against 4 of 22 in v1
+  (brim 4, ears 3, knob 3, spikes 2, horns 1).
+- **Looks (my read of a contact sheet; Dan's re-rating is pending):** pirate,
+  cowboy, top and sun hats now have brims, "five points" has five points, the
+  horned helmet has horns, and the bunny and cat heads have ears. Still weak:
+  every head without ears is the same box (robot, alien, astronaut, dinosaur,
+  pumpkin); the bear's round ears are small lumps; the dinosaur has no snout; the
+  graduation cap is an inverted funnel rather than a flat board on a stem; the
+  chef hat and fez are blocks.
+- **Next in the recipe:** heads need ops of their own (a `snout`, a face
+  bulge, ridges for a pumpkin), and a hat body needs a way to be non-convex
+  (a hollow crown, a stem under a plate).
+- **Caveats:** one run, one prompt change plus the op change together, my own
+  rating only until Dan re-rates on the round 2 page.
 
 Reports first-attempt pass rate, final pass rate, mean model calls per job,
 latency p50 and p95, token usage per job, failure counts per gate id, and a
@@ -995,7 +1200,11 @@ is not tripped. The taste gate looks tripped: Dan's first 19 ratings average 1.4
 with none above 3. The cause is open (see "First taste check"): the recipe cannot
 express many requests, and the prompt may be narrowing variety. A tuned model
 cannot add shapes the recipe cannot make, so richer recipe ops and a taste loop
-come before any tuning. Latency is fine and Spark's price is unknown.
+come before any tuning. The first round of new ops (prompt v2) kept the final
+pass rate at 100% and lifted feature-op use from 4 of 22 prompts to 13 of 22;
+brims, points, horns and ears now show, heads are still mostly boxes, and Dan's
+re-rating decides whether the taste gate is still tripped. Latency is fine and
+Spark's price is unknown.
 
 If tuning is chosen, the training set is the gate-filtered sampler output plus
 the attempt log (see "Data plan"). The base model is Muse Glimmer (Dan's
@@ -1169,6 +1378,33 @@ deterministic code verifies geometry, fit, and physics.
     renders against the request, calibrated on Dan's ratings with some held out.
     Cap the iterations, stop early when the recipe cannot express the request,
     and fall back to the nearest catalog part.
+26. F2b, photo privacy before release. Beta is approved on the current
+    `/api/scan` path. Does a public release need the parent gate and consent for
+    object photos, as the selfie cloud has, and what happens when a person is in
+    frame? A1's vision call could flag it.
+27. F2b, back plaque. Can a flat outline sit on the 2x2 backpack pad
+    support-free? By the flare rule (outward growth at most 0.78 x dz per side) a
+    4 mm plate overhangs about 3 mm per side, so about 31 mm across on the
+    24.6 mm pad (an estimate from the rule; nothing built or printed). Anything
+    wider needs `support_policy: minimal` (allowed on `back`) or a tapered
+    pedestal. Spike `backpack_addon` with an extruded outline before promising a
+    back slot for Route A.
+28. F2b, relief. Do 2 to 4 stepped levels read as a dome or as terraces on the
+    Ender at 0.2 mm layers, and what is the smallest step that survives? Print
+    three coupons before the `relief` feature goes into Recipe v1.
+29. F2b, capture. Does a kid or parent take a usable side photo (upright, the
+    object filling the frame to the same height as the front one)? Try about 5
+    attempts before building the Route C screen. The fallback is Route B.
+30. F2b, for the optimizer lane's owner (the daemon and SDK are theirs; I changed
+    nothing there). (a) The daemon's default `fillet_r_mm` for `profile2d` is 1.2
+    and fails the gates on 25 of 33 traced outlines; 1.6 passes 33 of 33 (open
+    question 19 has the star version). A default of 1.6 would help every caller.
+    (b) L2 skips hand plates, so a marginal hand part has no automatic fix.
+    (c) The failing meshes are the main body plus zero-volume two-face pieces
+    (found by splitting the converted mesh; one star at 54 mm, not a survey).
+    Whether the gate should ignore degenerate faces, or the SDK should drop them
+    before the gate, is the owner's call. Until then F2b works around it with the
+    retry ladder.
 
 ## Docs impact when this ships
 
@@ -1181,4 +1417,7 @@ deterministic code verifies geometry, fit, and physics.
   vision).
 - [LLM_PART_PROMPT.md](../../parts/kip/sdk/LLM_PART_PROMPT.md): document
   Recipe v1 alongside the Python script format.
+- [kip-print-workflow-spec.md](kip-print-workflow-spec.md): when F2b Route A
+  lands, the photo accessory's `craft_grip_card_P` blank (listed there as not
+  authored) is replaced by the F2b plate. Its owner decides the wording.
 - [README.md](../README.md): index this spec (done with this file).
