@@ -98,6 +98,43 @@ What B removes: key, latch pawl (not modelled today), the `ARMED` hold, the spoo
 
 **Suggestion:** make O50 the first answer to traction (it needs no new part), and add a rubber O-ring groove to **both** wheel sizes as the second. Coupon #1 becomes a four-way: O36 / O50 x bare PLA / O-ring.
 
+### Balloon option (Motion b): research and requirements
+
+Dan's steer (2026-11-02): the balloon should **stick out of the top, not sit under the dump tip**, and a special piece for balloon power is fine. Confirmed: the bellows is dropped and the jet piece is the balloon option.
+
+**What other balloon cars do** (classroom and hobby sources; none gives thrust data for a car like ours):
+
+- The balloon neck goes on a rigid nozzle or tube and is secured to it (a rubber band in NASA's version), and the **nozzle points straight out of the tail**, with the neck pointing rearward ([NASA Glenn](https://www.grc.nasa.gov/WWW/K-12/BGP/Ashlie/BalloonRocketCar_easy.html), [Eurobricks](https://www.eurobricks.com/forum/forums/topic/9183-help-for-school-project)).
+- **Nozzle size trades thrust against burn time and the sources do not agree on the best size**: bigger gives more thrust and empties faster, smaller gives less thrust and may roll longer (NASA). A university propulsion lab tests a 10 mm and a 5-6 mm nozzle at balloon diameters of 15, 20 and 25 cm, on a smooth tile floor with 10-15 m of tape, and gets thrust from deflation time and distance ([SMU](https://s2.smu.edu/propulsion/Pages/balloonlab.htm)). **Our nozzle set (O3.0 / 4.5 / 6.0) tops out at the smallest size that lab uses.**
+- **Light, low, long and wide**: one builder's car that worked was "low, flat, and long" ([Mombrite](https://www.mombrite.com/balloon-powered-lego-cars/)); another with a balloon holder on the back "fell over quite a lot" and the author suggests "lighter, wider" ([Science Sparks](https://www.science-sparks.com/balloon-powered-lego-car/)). A search summary also said the inflated balloon should rest on the car, not the floor; I could not confirm that on a page I read, but it is sensible.
+- **Wheels**: NASA says to find every place parts rub; Eurobricks builders prefer thin, light wheels because large tyres add weight, and argue over rubber grip against friction. Larger wheels roll with less resistance in general **[E]**. A jet car's wheels are not driven, so grip does not matter; that differs from pull-back, where it is the problem.
+- Balloon pressure varies during the burn, so thrust is not constant (an [IYPT 2011 team report](https://archive.iypt.org/iypt_book/2011_5_Car_Brazil_BCS_v3.pdf), known only from a search summary: the PDF would not read here). The SMU lab simply assumes constant acceleration. Printed balloon-powered *air engines* also exist (a different route, not pursued here).
+- Not usable: the Instructables 3D-printed jet car and the toy-brick "balloon engine" listing would not load (title only, HTTP 403), and a search snippet describing a balloon on a top pipe did not appear on the page it came from. Many other hits were low-quality and were ignored.
+
+**What our CAD already has [M]:** `mom_jet_valve_body` (49.8 x 27.8 x 28.0 mm, 4x2 stud footprint) is already a balloon-on-top piece: a smooth top balloon collar (OD 19.2, bead 20.8, vertical O5.0 inlet up to z 28), a tapered slide-valve seat, and a rear 4 deg Luer socket for `mom_nozzle_set` (O3.0 / 4.5 / 6.0) pointing +Y, with `mom_jet_slide_valve` shutting it. So the piece you describe exists. It is **not drawn in any truck stage and has not been placed on the truck**.
+
+**The viewer's balloon is not a real balloon [E]:** a 9 inch balloon holding 4-6 L is about 20-23 cm across when free (sphere of that volume), against a truck 50 mm wide; the viewer draws it as a 36 x 36 x 16 mm pinched ellipsoid inside the bellows. A real one has to stick out, as you say.
+
+**The spec's jet numbers are consistent with an ideal nozzle [E]:** thrust F = 2 x A x pressure at 2.5 kPa gives O3.0 0.035 N, O4.5 0.08 N, O6.0 0.14 N, and air time = 5 L / (A x 64 m/s) gives about 11 s, 4.9 s and 2.7 s: they match the spec's 2.5-14 gf and 2.5-10 s. It leaves out nozzle losses and the pressure curve. Against the spec's 0.0485 N rolling drag for the 110 g craft, **O3.0 cannot move it on a hard floor** (0.5-0.9x drag); only O4.5 and O6.0 can. A larger **O8** nozzle would give about 0.25 N for about 1.5 s: worth adding to the set because the lab sizes start at 5-6 mm.
+
+**Requirements for the balloon piece (proposal):**
+
+1. **Balloon on top** on the collar, with a **cradle or saddle ring** that carries the inflated balloon and keeps it off the wheels and the floor.
+2. **Nozzle straight back along the truck axis**, with the jet clear of the rear wheels, the hinge and anything else.
+3. **No dump tub in this mode**: it is the heaviest part on those rows and the piece needs the space. (This drops the bellows idea of a balloon under the tub; the bellows parts, `mom_bellows_base` and `mom_bellows_leaf`, would go.)
+4. **Inflation by hand pump on the collar**, no mouthpiece (spec rule); the valve must hold pressure (spec: 15% diameter loss or less over 15 s).
+5. **Nozzle set extended with O8**, tested against O4.5 and O6.0.
+6. **Wheels free-rolling**; test O36 vs O50, since the larger wheel lowers rolling resistance but adds mass.
+7. **Stability [E]:** the thrust line at about z 25 is a few millimetres above the centre of mass, so the pitching moment is about 1 N.mm against a restoring moment of about 54 N.mm (1.08 N weight x 50 mm half-wheelbase). Tipping from thrust is not the risk; **wind drag on a 20 cm balloon on a 50 mm truck is [?]** and the lab test should measure it.
+
+**Checked on the truck (2026-11-02; interactive: `/kip/JetCar-Lab.html`, data from `parts/kip/jetcar_table.py`):**
+
+- **Placement [M].** `mom_jet_valve_body` seats on the keel's rear rows 8-9, body centre (0, 50.0, 12.5): overlap with the keel 0, **1.8 mm to either wheel size (O36 or O50)**, 25.2 mm to the windscreen, rear face at y 64.4 (the keel ends at 62.4). Only the four corner studs engage, because rows 7-9 have no inner studs (the PTO slot).
+- **No axle gear in this stage [M].** The Z10 axle gear overlaps the body by 442 mm3, and a jet car has no PTO, so Motion (b) uses no Pro-line gear and Card E2's missing `gear_spur_z10` does not matter for the balloon.
+- **A vertical balloon hits Kip [M for the geometry, E for the balloon shape].** Kip's back is at y 9.6 and the collar at y 47. A sphere balloon (25 mm neck) standing straight up touches him from about 125 mm diameter up (-0.7 mm at 125, -7.2 at 200; only 100 mm clears, by 3.4). **Leaning it back clears him, but too far reaches the jet stream.** Lean that clears both by at least 5 mm: 10-50 deg at 150 mm, **15-45 deg at 175-225 mm**; 30 deg is the balanced choice (at 200 mm: 23.6 mm to Kip, 23.8 mm to the jet). So the cradle's job is to **hold the balloon about 30 deg back**, not just to carry it. The wheels are never the limit (30+ mm).
+- **The nozzle set cannot be used as drawn [M].** `mom_nozzle_set` is one bar carrying three plugs. Seated the way the gate seats it (plate behind the body, plugs pointing rearward, y 19-33) it never enters the socket, and `_pneumatic_jet_check` only tests air connectivity inside a box, so it cannot notice. Pushed into the socket, one plug still overlaps the body by about 9.6 mm3 (the plug's tip, O8.4 tapering to 7.6, is larger than the socket, O7.45 at its inner end), and with the bar's other two plugs present the overlap is about 530 mm3. The nozzle needs a redesign as **individual inserts with the orifice at the rear**; the lab draws a proposed insert (O3 / 4.5 / 6 / 8), not CAD.
+- **Mass changes which nozzles work [M for the parts, E for infill].** Solid PLA: keel 71 g, jet body 20 g, shaft 2.5 g, wheel 13 g (O36) or 26 g (O50) each; the Snap truck with the jet piece and four O36 wheels is about 150 g before Kip, against the spec's 110 g reference (real prints use infill, so less). Four O50 wheels add about 52 g. At 150 g and 2.5 kPa the ideal-nozzle thrust over rolling drag is **O3 0.53x, O4.5 1.20x, O6 2.13x, O8 3.80x**: O3 cannot move it and O4.5 barely does, so O6 and O8 are the practical nozzles. This is an upper bound: it ignores nozzle losses and the pressure curve.
+
 ### Option C: both, key later
 
 Ship B first. Add `ARMED` as an upgrade only after it has an access path designed in (Option A's list) and a modelled and swept latch pawl.
@@ -121,7 +158,7 @@ Ship B first. Add `ARMED` as an upgrade only after it has an access path designe
 | Stage | Contents | Viewer stage today | Notes |
 | :--- | :--- | :--- | :--- |
 | **1 Snap** | static build, no motion (Cards A-D) | `snap` | unchanged |
-| **2 Motion** | one core in the rear rows 6-9 at a time, fixed axles: **(a) pull-back band core**, **(b) balloon**: bellows lifting the tub, and the jet valve set | `band`, `bellows` | mixes lines: bellows base/leaf and jet valve body are Snap-line; the band core needs Pro-line hardware (axle `gear_spur_z10`, `shaft_tu03`, spool, PTO gear) |
+| **2 Motion** | one core in the rear rows 6-9 at a time, fixed axles: **(a) pull-back band core**, **(b) balloon jet**: `mom_jet_valve_body` with the balloon on top, on the Snap truck with the tub removed and **no axle gear** (see the balloon section; the bellows that tips the bed is dropped: decided) | `band`, `bellows` | mixes lines: bellows base/leaf and jet valve body are Snap-line; the band core needs Pro-line hardware (axle `gear_spur_z10`, `shaft_tu03`, spool, PTO gear) |
 | **3 Pro** | rack steering (9 parts) **plus the powered module merged in from Mech** (servo steering, drive motor, brain) | `pro` + `mech` | Mech already reuses 7 of Pro's 9 steering parts, so the merge adds only the powered parts: **11, which is Card F, printed in PETG** (drive tray/lid, brain tray/lid, servo mount/lid, two pinions, battery-door screw, pilot pin, sill duct). The viewer's Mech truck is a 9g servo on the rack, an N20 motor, a 602535 LiPo and an XIAO board |
 
 **What the viewer shows today [M]:** stage 3B (balloon) is a pin-hinged bellows that **tips the dump bed** (10-50 deg, rated 100 g payload) with a hose and puff rings; it does **not** propel the truck. The balloon *jet* parts (`mom_jet_valve_body`, `mom_jet_slide_valve`, `mom_nozzle_set`, Card E3) exist in the catalog but are not drawn in any truck stage. So a balloon-propelled Motion truck has not been modelled yet.
@@ -158,13 +195,16 @@ What the merge changes, to settle in section 6: Mech is graded 10+ and carries t
 
 ## 6. Decisions for Dan
 
-Decided: ladder Snap -> Motion -> Pro; no Mech stage; bigger wheel wanted.
+Decided: ladder Snap -> Motion -> Pro; no Mech stage; bigger wheel wanted; **balloon = the jet piece with the balloon on top, the bellows dropped**.
 
 Still open:
 
 - **Pull-back only, key dropped for now?** (my recommendation: yes; section 4 item 2)
 - **Pro's powered module: required or optional?** Merging Mech into Pro makes Pro 10+ unless the servo, drive motor and brain stay an optional add-on with its own grading. I suggest optional: Pro = hand-steered rack steering, plus a powered upgrade.
 - **Hand steering and servo steering together?** The Mech truck drops the steering column and wheel; the merged Pro needs one rule.
+- **Balloon cradle:** hold the balloon about 30 deg rearward on the jet piece (design not started; a printed balloon test on the real keel should come first).
+- **Nozzle:** redesign `mom_nozzle_set` as individual inserts and add O8 (CAD change, regen and card change).
+- **Balloon size to support:** 150-225 mm all work with a 15-45 deg lean; smaller is lighter and needs less lean.
 - **Traction:** O50 first, then an O-ring groove (my suggestion), TPU sleeve only if the coupon says so.
 - Does moving Motion before Pro re-cut the cards (Card E2 needs a `gear_spur_z10`)? It will; confirm that is acceptable.
 - Is one shared tray/lid across the cores a goal, or too large a change for now?
@@ -189,6 +229,9 @@ Still open:
 | Coupon ordering, pass/fail thresholds, traction decision | **Accepted** into sections 5 and 6 | |
 
 ## 8. Sources
+
+- Jet truck checks: `parts/kip/jetcar_table.py` -> `parts/kip/viewer/jetcar-clearance.json`; driver pose snapshot `parts/kip/viewer/jetcar-kip-pose.json` (from the Truck page's `?probe=sweep`); interactive: `parts/kip/viewer/JetCar-Lab.html`. Nozzle-seat and mass probes: scratch scripts on the generator's own geometry (`toyventor_kitcard._raw_geo`).
+- Balloon-car research: [NASA Glenn balloon rocket car](https://www.grc.nasa.gov/WWW/K-12/BGP/Ashlie/BalloonRocketCar_easy.html); [SMU balloon-powered car lab](https://s2.smu.edu/propulsion/Pages/balloonlab.htm); [Eurobricks balloon LEGO car thread](https://www.eurobricks.com/forum/forums/topic/9183-help-for-school-project); [Mombrite](https://www.mombrite.com/balloon-powered-lego-cars/); [Science Sparks](https://www.science-sparks.com/balloon-powered-lego-car/). Read, not just listed. Jet-valve CAD: `mom_jet_valve_body` in `parts/partspec/toyventor_kitcard.py`.
 
 - Overlap table: `parts/kip/windkey_table.py` -> `parts/kip/viewer/windkey-overlaps.json` (per spin, 30 deg steps); interactive: `parts/kip/viewer/WindKey-Lab.html`.
 - Clutch, pawl, saddle, key and wall measurements: probes of the committed mockup STLs in `public/kip/partspec/mockup/` (scratch scripts, not kept in the repo).
