@@ -26,7 +26,7 @@ PARTS = [
     "kit_scoop_blade", "kit_turntable", "kit_yoke_hbar", "pro_tub_hinge",
     "pro_steer_bridge", "pro_steer_knuckle_l", "pro_steer_knuckle_r", "pro_steer_rack", "pro_tie_rod_link",
     "pro_captive_pin_28", "pro_steer_column", "pro_steer_wheel", "pin_free_tu03", "pin_free",
-    "pro_axle_keeper", "gear_spur_z10", "shaft_tu03",
+    "gear_spur_z10", "shaft_tu03",
     "mom_band_core_tray", "mom_band_core_lid", "mom_pto_gear_z10", "mom_band_spool_pawl", "mom_latch_pawl", "mom_wind_key", "mom_bumper_trigger",
     "mom_bellows_base", "mom_bellows_leaf",
     "mech_drive_tray", "mech_drive_lid", "mech_n20_pinion_z10",

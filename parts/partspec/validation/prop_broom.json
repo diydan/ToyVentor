@@ -4,7 +4,7 @@
   "file_sha256": "887ea34e2f96e6f348bfae1eb23100665c03aa89deb5c43c1ed4e7c945b6c6ff",
   "part_id": "prop_broom",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-11-01T21:35:19Z",
+  "checked_at": "2026-11-02T00:32:43Z",
   "metrics": {
     "bbox_mm": [
       32.0,
@@ -15,6 +15,7 @@
     "surface_cm2": 39.01,
     "triangles": 550,
     "ledges": [],
+    "floating_contours": [],
     "layers": 34,
     "bed_contact_mm2": 1199.2,
     "height_mm": 6.8,
@@ -72,6 +73,14 @@
       "value": 0.0,
       "limit": 1.0,
       "detail": "mm2 of flat underside held on one side only (a ledge over air, not a bridge)"
+    },
+    {
+      "id": "V11_floating_contour",
+      "level": "block",
+      "result": "pass",
+      "value": 0,
+      "limit": 0,
+      "detail": "unanchored interior hole loops in bridge ceilings or low-Z hovering cantilevers"
     },
     {
       "id": "V6_bridge_span",

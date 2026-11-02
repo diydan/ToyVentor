@@ -8,16 +8,18 @@ One print turns ToyVentor's fit targets into measurements for your printer. File
 
 | File | What it is |
 | --- | --- |
+| `toyventor_cal_forge_mount_first_print.stl` | Hidden-calibration 3x2 Small Forge Mount + 1/2/3-dot selector strip + 2x1 test brick |
 | `toyventor_cal_snap_ladder.stl` | Snap stud-hole ladder, 8 steps |
-| `toyventor_cal_stud_tester.stl` | One designed Small stud on a handle |
+| `toyventor_cal_stud_tester.stl` | One designed Small stud on a solid-bottom handle (zero underside cavities) |
 | `toyventor_cal_pro_ladder.stl` | Pro ladder: flat-sided bores (one row) and round bores (other row), 8 steps |
 | `toyventor_shaft_tu03_P.stl` | Shaft, for the flat-sided row |
 | `toyventor_pin_free_P.stl` | Free pin, for the round row (should turn) |
 | `toyventor_pin_friction_P.stl` | Friction pin, for the round row (should grip) |
 | `toyventor_cal_cube_cell.stl` | Print-optimised experiment: cube cell with a hole in every face (**print 2**) |
 | `toyventor_cal_face_plate.stl` | Print-optimised experiment: smooth face plate with a crush-rib plug (**print 2**) |
+| `toyventor_cal_flex_skin_coupon.stl` | Card D 0.80/0.60 mm flex skin coupon (prints smooth show-face-down with upward-opening blind stud sockets; zero supports) |
 
-Print every file as it loads (flat on the bed, no supports). **Give the shaft, free pin, friction pin and cube cells a 3 mm brim:** the slicer's stability check says they can come loose from the bed without one (`validation/calibration/`). Trim the brim off before testing. Settings: 0.4 mm nozzle, 0.2 mm layers, PLA, 3 walls, 15 to 20% infill. **Set any XY, contour or hole compensation to 0 for this print,** so it shows how the printer really runs. Note the printer, slicer and filament.
+Print every file as it loads (flat on the bed, no supports — every underside socket is self-roofing and the flex skin prints show-face-down so even slicers with Auto Support left on generate zero support material inside sockets). **Give the shaft, free pin, friction pin and cube cells a 3 mm brim:** the slicer's stability check says they can come loose from the bed without one (`validation/calibration/`). Trim the brim off before testing. Settings: 0.4 mm nozzle, 0.2 mm layers, PLA, 3 walls, 15 to 20% infill. **Set any XY, contour or hole compensation to 0 for this print,** so it shows how the printer really runs. Note the printer, slicer and filament.
 
 ## 2. Read the ladders
 
@@ -39,6 +41,8 @@ Record both steps.
 - Join the two cubes with the friction pin, side to side and then top to bottom. Does it grip, and come apart by hand?
 - Push a face plate into an open hole. Does it hold, come out by hand, and sit flat?
 - The point: if the friction pin and plates fit at 0 compensation, while the studs in test A needed a step other than 2, flexing joints beat precise ones on this printer.
+
+**E. Flex skin coupon (on the 3x2 Forge Mount base).** Flip the flex skin over (its smooth bed face is the outside show surface) and press its blind stud sockets onto the 3x2 Forge Mount studs. Fold the free flap along the 0.60 mm hinge web and count the folds before whitening or cracking (PLA is a feel-and-count baseline; Card D skins print in PETG or TPU).
 
 ## 3. Turn the step into one setting
 
@@ -66,6 +70,7 @@ A  Snap stud step:
 B  Pro shaft step:
 C  Free pin step:            Friction pin step:
 D  Cubes: sideways holes clean? yes / no | pin grips in cube: yes / loose / tight | face plate holds: yes / loose / tight
+E  Flex skin: sockets fit? yes / loose / tight | folds before whitening/crack:
 Reprint at -s: step 2 feels right?  yes / no
 Notes (anything that broke, warped, or felt odd):
 ```

@@ -4,7 +4,7 @@
   "file_sha256": "af2887b0903ea98e447d6163bda155c52f560b1d9b7ee46a46392f414df2be2f",
   "part_id": "racer_axle_block",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-11-01T21:32:00Z",
+  "checked_at": "2026-11-02T00:29:42Z",
   "metrics": {
     "bbox_mm": [
       24.8,
@@ -15,6 +15,7 @@
     "surface_cm2": 33.51,
     "triangles": 6784,
     "ledges": [],
+    "floating_contours": [],
     "layers": 89,
     "bed_contact_mm2": 585.2,
     "height_mm": 17.8,
@@ -72,6 +73,14 @@
       "value": 0.0,
       "limit": 1.0,
       "detail": "mm2 of flat underside held on one side only (a ledge over air, not a bridge)"
+    },
+    {
+      "id": "V11_floating_contour",
+      "level": "block",
+      "result": "pass",
+      "value": 0,
+      "limit": 0,
+      "detail": "unanchored interior hole loops in bridge ceilings or low-Z hovering cantilevers"
     },
     {
       "id": "V6_bridge_span",

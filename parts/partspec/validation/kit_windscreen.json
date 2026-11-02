@@ -1,69 +1,30 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_kit_windscreen_S.stl",
-  "file_sha256": "fb73bf6c92111d4388e7c0138cbd39f7e1b6f8f3c24a1618e20a47880067441f",
+  "file_sha256": "b5113eb9d76d8c01e1eb8a5befac39353ddef1713195425294f8eb8ca9f196ed",
   "part_id": "kit_windscreen",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-11-01T21:37:21Z",
+  "checked_at": "2026-11-02T00:34:41Z",
   "metrics": {
     "bbox_mm": [
       49.8,
       37.3,
       23.5
     ],
-    "volume_cm3": 16.97,
-    "surface_cm2": 83.93,
-    "triangles": 10084,
+    "volume_cm3": 17.52,
+    "surface_cm2": 81.82,
+    "triangles": 11108,
     "ledges": [],
+    "floating_contours": [],
     "layers": 117,
-    "bed_contact_mm2": 942.5,
+    "bed_contact_mm2": 889.9,
     "height_mm": 23.5,
-    "slenderness": 0.77,
+    "slenderness": 0.79,
     "centre_of_mass_over_contact": true,
     "min_wall_mm": null,
     "thin_wall_regions": []
   },
   "bridges": [
-    {
-      "z_mm": 3.2,
-      "span_mm": 6.7,
-      "area_mm2": 35.2
-    },
-    {
-      "z_mm": 3.2,
-      "span_mm": 6.7,
-      "area_mm2": 35.2
-    },
-    {
-      "z_mm": 3.2,
-      "span_mm": 6.7,
-      "area_mm2": 35.2
-    },
-    {
-      "z_mm": 3.2,
-      "span_mm": 6.7,
-      "area_mm2": 35.2
-    },
-    {
-      "z_mm": 3.2,
-      "span_mm": 6.7,
-      "area_mm2": 35.2
-    },
-    {
-      "z_mm": 3.2,
-      "span_mm": 6.7,
-      "area_mm2": 35.2
-    },
-    {
-      "z_mm": 3.2,
-      "span_mm": 6.7,
-      "area_mm2": 35.2
-    },
-    {
-      "z_mm": 3.2,
-      "span_mm": 6.7,
-      "area_mm2": 35.2
-    },
     {
       "z_mm": 11.5,
       "span_mm": 6.0,
@@ -125,12 +86,20 @@
       "detail": "mm2 of flat underside held on one side only (a ledge over air, not a bridge)"
     },
     {
+      "id": "V11_floating_contour",
+      "level": "block",
+      "result": "pass",
+      "value": 0,
+      "limit": 0,
+      "detail": "unanchored interior hole loops in bridge ceilings or low-Z hovering cantilevers"
+    },
+    {
       "id": "V6_bridge_span",
       "level": "block",
       "result": "pass",
-      "value": 6.7,
+      "value": 6.0,
       "limit": 20,
-      "detail": "10 bridge(s); widest unsupported span in mm"
+      "detail": "2 bridge(s); widest unsupported span in mm"
     },
     {
       "id": "V5_no_floating_islands",
@@ -152,9 +121,9 @@
       "id": "V9_bed_contact",
       "level": "info",
       "result": "pass",
-      "value": 942.5,
+      "value": 889.9,
       "limit": null,
-      "detail": "height / sqrt(contact) = 0.77; above about 3 the slicer often asks for a brim"
+      "detail": "height / sqrt(contact) = 0.79; above about 3 the slicer often asks for a brim"
     },
     {
       "id": "V8_wall_thickness",

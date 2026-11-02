@@ -4,7 +4,7 @@
   "file_sha256": "73ae3fae0251f8acc80e7d1d7f0f1039365943a6a63269b8b8d516e4442bd5d9",
   "part_id": "kit_wheel_med",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-11-01T21:37:15Z",
+  "checked_at": "2026-11-02T00:34:34Z",
   "metrics": {
     "bbox_mm": [
       35.96,
@@ -15,6 +15,7 @@
     "surface_cm2": 43.7,
     "triangles": 3128,
     "ledges": [],
+    "floating_contours": [],
     "layers": 62,
     "bed_contact_mm2": 842.0,
     "height_mm": 12.3,
@@ -72,6 +73,14 @@
       "value": 0.0,
       "limit": 1.0,
       "detail": "mm2 of flat underside held on one side only (a ledge over air, not a bridge)"
+    },
+    {
+      "id": "V11_floating_contour",
+      "level": "block",
+      "result": "pass",
+      "value": 0,
+      "limit": 0,
+      "detail": "unanchored interior hole loops in bridge ceilings or low-Z hovering cantilevers"
     },
     {
       "id": "V6_bridge_span",

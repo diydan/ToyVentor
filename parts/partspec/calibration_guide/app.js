@@ -40,8 +40,8 @@ const KEY = 'toyforge.calibration-guide.v1';
 const PM = A.print_meta || null;
 const printerDefault = PM ? [PM.printer_model, PM.slicer, PM.filament_settings_id].filter(Boolean).join(' / ') : '';
 const blank = () => ({
-  printer: printerDefault, dots: '', A: '', B: '', Cfree: '', Cfric: '', Dholes: '', Dpin: '', Dplate: '', Ejaw: '', Ecrack: '', Fsock: '', Ffolds: '',
-  notes: '', prep: { brims: false, fp: false, cj: false },
+  printer: printerDefault, dots: '', A: '', B: '', Cfree: '', Cfric: '', Dholes: '', Dpin: '', Dplate: '', Esock: '', Efolds: '',
+  notes: '', prep: { brims: false, fp: false },
 });
 let card = blank();
 try {
@@ -50,7 +50,7 @@ try {
 } catch { /* private window or blocked storage: the card still works for this visit */ }
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(card)); } catch { /* ignore */ } };
 
-const FIELD_STEP = { dots: 'dots', A: 'A', B: 'B', Cfree: 'C', Cfric: 'C', Dholes: 'D', Dpin: 'D', Dplate: 'D', Ejaw: 'E', Ecrack: 'E', Fsock: 'F', Ffolds: 'F' };
+const FIELD_STEP = { dots: 'dots', A: 'A', B: 'B', Cfree: 'C', Cfric: 'C', Dholes: 'D', Dpin: 'D', Dplate: 'D', Esock: 'E', Efolds: 'E' };
 const FIELDS = Object.keys(FIELD_STEP);
 const filled = (f) => card[f] !== '' && card[f] != null;
 
@@ -166,7 +166,8 @@ function removeInst(inst) { scene3d.remove(inst.group); inst.cap.remove(); insts
 // flex-skin flap: swings as one rigid piece about the hinge line (axis along y through the pivot, in the part's own frame)
 const _qf = new THREE.Quaternion(), _pv = new THREE.Vector3(), _tp = new THREE.Vector3(), AXIS_Y = new THREE.Vector3(0, 1, 0);
 function foldPose(inst) {
-  _qf.setFromAxisAngle(AXIS_Y, (-state.fold * Math.PI) / 180);
+  const dir = inst.fold.dir ?? -1;
+  _qf.setFromAxisAngle(AXIS_Y, (dir * state.fold * Math.PI) / 180);
   _pv.set(inst.fold.pivot[0], 0, inst.fold.pivot[1]);
   _tp.copy(_pv).applyQuaternion(_qf);
   _tp.subVectors(_pv, _tp).applyQuaternion(inst.cur.q);
@@ -197,10 +198,9 @@ function buildLabels(v) {
 
 function tryInfo(sc, v) {
   if (sc === 'dots') return { t: v.id, s: ['1 dot', '2 dots', '3 dots'][+v.id - 1] };
-  if (sc === 'cjaw') return { t: 'J' + v.id, s: fmt(A.jaws[+v.id - 1].throat_mm, 2) };
   return { t: v.id, s: sgn(STEPS_MM[+v.id - 1], 1) };
 }
-const TRY_CAPTION = { dots: 'Socket', snap: 'Hole', pro_b: 'Hole', pro_c_free: 'Hole', pro_c_fric: 'Hole', cjaw: 'Jaw' };
+const TRY_CAPTION = { dots: 'Socket', snap: 'Hole', pro_b: 'Hole', pro_c_free: 'Hole', pro_c_fric: 'Hole' };
 
 function buildToolbar(sid) {
   const sc = sceneOf(sid), row = $('tryrow');
@@ -408,14 +408,13 @@ const STEPS = [
   { id: 'B', k: 'B', name: 'Shaft', scene: 'pro_b' },
   { id: 'C', k: 'C', name: 'Pins', scene: 'pro_c_free' },
   { id: 'D', k: 'D', name: 'Cubes', scene: 'cube_side' },
-  { id: 'E', k: 'E', name: 'C-jaw', scene: 'cjaw' },
-  { id: 'F', k: 'F', name: 'Flex', scene: 'flex' },
+  { id: 'E', k: 'E', name: 'Flex', scene: 'flex' },
   { id: 'result', k: '✓', name: 'Result', scene: 'overview' },
 ];
 const stepIdx = (id) => STEPS.findIndex((s) => s.id === id);
 
 function stepStatus(id) {
-  if (id === 'prep') { const n = Object.values(card.prep).filter(Boolean).length; return n === 3 ? 2 : n ? 1 : 0; }
+  if (id === 'prep') { const n = Object.values(card.prep).filter(Boolean).length; return n === 2 ? 2 : n ? 1 : 0; }
   const fs = FIELDS.filter((f) => FIELD_STEP[f] === id);
   if (!fs.length) return id === 'result' ? (FIELDS.every(filled) ? 2 : 0) : 0;
   const n = fs.filter(filled).length;
@@ -434,7 +433,6 @@ function variantForStep(id) {
     case 'A': return ladder(card.A);
     case 'B': return ladder(card.B);
     case 'C': return ladder(state.sub.C === 'free' ? card.Cfree : card.Cfric);
-    case 'E': return card.Ejaw ? String(['end', 'middle', 'other'].indexOf(card.Ejaw) + 1) : null;
     default: return null;
   }
 }
@@ -470,7 +468,7 @@ function setField(f, v) {
   if (typeof v === 'number' && FIELD_STEP[f] === state.step) { // show the step you just scored
     const vid = variantForStep(state.step);
     if (vid && sceneOf(state.scene).variants.some((x) => x.id === vid)) setVariant(vid);
-  } else if (f === 'dots' || f === 'Ejaw') { const vid = variantForStep(state.step); if (vid) setVariant(vid); }
+  } else if (f === 'dots') { const vid = variantForStep(state.step); if (vid) setVariant(vid); }
   syncAll();
 }
 function choice(field, options, cls = '') {
@@ -535,7 +533,7 @@ R.plate = (p) => {
   p.append(sect('How to use this'));
   p.append(h('ol', { class: 'steps' },
     h('li', { html: '<b>Prep</b>: trim the brims, snap the tabs.' }),
-    h('li', { html: 'Work through the tabs <b>1, A to F</b>. The 3D view shows the exact test pose; flip <b>Exploded</b> to see what goes into what, <b>Construction</b> to see it assembled.' }),
+    h('li', { html: 'Work through the tabs <b>1, A to E</b>. The 3D view shows the exact test pose; flip <b>Exploded</b> to see what goes into what, <b>Construction</b> to see it assembled.' }),
     h('li', { html: 'Score each test in the card on the right. Everything saves in this browser as you go.' }),
     h('li', { html: '<b>Result</b> shows the slicer offset and gives you the text to paste back.' })));
   if (PM) {
@@ -551,10 +549,10 @@ R.plate = (p) => {
     p.append(h('div', { class: 'kv' }, rows.flatMap(([k, v, s]) => [h('span', { class: 'k' }, k), h('span', {}, v), s ? h('span', { class: `s ${s[0]}` }, s[1]) : h('span')])));
     if (PM.enable_support === '1') {
       const sup = Object.entries(PM.supports_by_object || {});
-      const NICE = { cal_flex_skin_coupon: 'flex skin coupon', cal_stud_tester: 'stud tester', cal_forge_mount_first_print: 'Forge Mount First-Print', cal_cube_cell: 'cube cell', cal_snap_ladder: 'snap ladder', cal_pro_ladder: 'pro ladder', cal_cjaw_coupon: 'C-jaw coupon' };
+      const NICE = { cal_flex_skin_coupon: 'flex skin coupon', cal_stud_tester: 'stud tester', cal_forge_mount_first_print: 'Forge Mount First-Print', cal_cube_cell: 'cube cell', cal_snap_ladder: 'snap ladder', cal_pro_ladder: 'pro ladder' };
       p.append(sup.length
-        ? callout('warn', 'Supports were switched on', `Support material was generated inside only: <b>${sup.map(([o, n]) => `${esc(NICE[o] || o)} (${n} moves)`).join(', ')}</b>. Every other piece, including the ladders, pins, cubes, C-jaw and dot strip, got none, so those fits were not touched by support. Those two pieces have flat-ceiling sockets, which a slicer with supports on fills.`)
-        : callout('warn', 'Supports were switched on', 'The slice had supports enabled, though no piece ended up with any.'));
+        ? callout('warn', 'Supports were switched on in that slice', `Support material was generated inside only: <b>${sup.map(([o, n]) => `${esc(NICE[o] || o)} (${n} moves)`).join(', ')}</b>. Every other gauge (ladders, pins, cubes and dot strip) got zero support moves, so their fits are clean. Note: the updated calibration STLs now print the flex skin smooth show-face-down with upward-opening sockets and give the stud tester a solid flat bottom, eliminating all socket support moves even with Auto Support left on.`)
+        : callout('info', 'Zero support moves generated', 'Supports were enabled in the slicer, and every calibration piece generated zero support moves.'));
     }
   }
   p.append(navButtons());
@@ -571,7 +569,6 @@ R.prep = (p) => {
   };
   p.append(check('brims', '<b>Trim the brims completely off</b> the shaft, free pin, friction pin and cube cell, so a leftover lip does not fake a tight fit.'));
   p.append(check('fp', '<b>Snap the 1.2 mm tabs on the Forge Mount First-Print</b>. It separates into the 3×2 stud base, the 1/2/3-dot strip, and the 2×1 single-stud test brick.'));
-  p.append(check('cj', '<b>Snap the tabs on the C-Jaw coupon</b>. It separates into the 3×2 studded C-jaw block and the flat-sided test bar.'));
   p.append(callout('info', 'In the 3D view', 'Press <b>Exploded</b> to see where each piece parts. The red <b>snap</b> tags mark the tabs. Any stub left on a piece sits on the bed face, so trim it flush if it catches.'));
   p.append(navButtons());
 };
@@ -648,33 +645,22 @@ R.D = (p) => {
 };
 
 R.E = (p) => {
-  p.append(head('E · C-jaw axle coupon', 'Three snap jaws with throats of −0.05, 0.00 and +0.05 mm.'));
-  p.append(holding('C-jaw block', 'Flat-sided bar'));
-  p.append(h('p', {}, 'Snap the flat-sided bar up into the three C-jaws on the bottom. Note which jaw clicks in cleanly without cracking and lets the bar spin without dropping out.'));
-  p.append(callout('info', 'Which jaw is which', 'Hold the block with the studs up and the two snapped-off tab stubs on your right: the <b>−0.05</b> jaw is the end nearest you, <b>+0.05</b> is the far end. The 3D view starts from underneath, where the jaws open; press <b>Top</b> to match what you see in your hand.'));
-  p.append(h('div', { class: 'card' }, sect('Scorecard'),
-    field('Best jaw', '', choice('Ejaw', [{ v: 'end', label: 'End', sub: '−0.05 mm' }, { v: 'middle', label: 'Middle', sub: '0.00 mm' }, { v: 'other', label: 'Other end', sub: '+0.05 mm' }, { v: 'none', label: 'None worked', ghost: true }])),
-    field('Cracked?', '', choice('Ecrack', [{ v: 'no', label: 'No' }, { v: 'yes', label: 'Yes' }]))));
-  p.append(notesBox(), navButtons());
-};
-
-R.F = (p) => {
-  p.append(head('F · Flex skin coupon', '0.80 mm sheet with 0.60 mm hinge webs. Printed in PLA this time, so this is a feel-and-count test, not the PETG endurance gate.'));
+  p.append(head('E · Flex skin coupon', '0.80 mm sheet with 0.60 mm hinge webs, printed smooth show-face-down so its blind stud sockets open upward with zero support plugs.'));
   p.append(holding('Flex skin coupon', 'Forge Mount base'));
   p.append(h('ol', { class: 'steps' },
-    h('li', { html: 'Press the skin\'s <b>underside sockets</b> onto the 3×2 Forge Mount studs.' }),
+    h('li', { html: 'Flip the skin over (the smooth bed face is the outside show surface) and press its <b>blind stud sockets</b> onto the 3×2 Forge Mount studs.' }),
     h('li', { html: 'Fold the loose flap along the <b>0.60 mm hinge</b> (drag the <b>Fold</b> slider in the 3D view to see which flap).' }),
-    h('li', { html: 'Note how the sockets feel, and <b>count the folds</b> until the hinge whitens or cracks.' })));
+    h('li', { html: 'Note how the sockets feel, and <b>count the folds</b> until the hinge whitens or cracks (PLA is a baseline count; Card D skins print in PETG or TPU).' })));
   p.append(h('div', { class: 'card' }, sect('Scorecard'),
-    field('Stud sockets fit?', '', choice('Fsock', [{ v: 'yes', label: 'Yes' }, { v: 'loose', label: 'Loose' }, { v: 'tight', label: 'Tight' }])),
-    field('Folds before whitening or cracking', 'a number', numInput('Ffolds', 'e.g. 12'))));
+    field('Stud sockets fit?', '', choice('Esock', [{ v: 'yes', label: 'Yes' }, { v: 'loose', label: 'Loose' }, { v: 'tight', label: 'Tight' }])),
+    field('Folds before whitening or cracking', 'a number', numInput('Efolds', 'e.g. 12'))));
   p.append(notesBox(), navButtons());
 };
 
 // ------------------------------------------------------------------ result
 const LADDER_FIELDS = new Set(['A', 'B', 'Cfree', 'Cfric']);
 const LADDER_WORDS = { tight: 'none (every step too tight)', loose: 'none (every step too loose)' };
-const WORDS = { none: 'none', end: 'end (-0.05 mm)', middle: 'middle (0.00 mm)', other: 'other end (+0.05 mm)' };
+const WORDS = { none: 'none' };
 function show(f) { // the scorecard text for field f ('loose' on a pin test means loose, not "every step too loose")
   const v = card[f];
   if (v === '' || v == null) return '';
@@ -707,8 +693,7 @@ function scoreText() {
     `B  Pro shaft step (1-8): ${show('B')}`,
     `C  Free pin step (1-8): ${show('Cfree')}        Friction pin step (1-8): ${show('Cfric')}`,
     `D  Cube sideways holes clean? ${show('Dholes')} | pin in cube: ${show('Dpin')} | face plate: ${show('Dplate')}`,
-    `E  C-jaw coupon best jaw: ${show('Ejaw')} | cracked? ${show('Ecrack')}`,
-    `F  Flex skin (PLA): sockets fit? ${show('Fsock')} | folds before whitening/crack: ${show('Ffolds')}`,
+    `E  Flex skin (PLA): sockets fit? ${show('Esock')} | folds before whitening/crack: ${show('Efolds')}`,
     `Notes: ${card.notes.replace(/\n+/g, ' / ')}`,
   ];
   const extra = [];
@@ -779,7 +764,7 @@ DERIVE.missing = (el) => {
   const miss = FIELDS.filter((f) => !filled(f));
   if (!miss.length) { el.append(callout('pass', 'Scorecard complete', 'Every field is filled in.')); return; }
   const steps = [...new Set(miss.map((f) => FIELD_STEP[f]))];
-  const names = { dots: '1 Dots', A: 'A Snap', B: 'B Shaft', C: 'C Pins', D: 'D Cubes', E: 'E C-jaw', F: 'F Flex' };
+  const names = { dots: '1 Dots', A: 'A Snap', B: 'B Shaft', C: 'C Pins', D: 'D Cubes', E: 'E Flex' };
   el.append(h('div', { class: 'callout warn missing' }, h('b', { class: 't' }, `${miss.length} of ${FIELDS.length} fields still empty`),
     steps.map((s) => h('a', { onclick: () => go(s) }, names[s]))));
 };

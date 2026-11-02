@@ -1,22 +1,23 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_kit_clevis_spine_S.stl",
-  "file_sha256": "b2132c8a84a01f0720dd8703fe647ce45fe32dbc0b629c6e3de6d84a1e4733c0",
+  "file_sha256": "8b92a7f798cb1c5176212aa46ce2a85c9cedde58cb52a8b2c9a9fcd6ba5ae0a5",
   "part_id": "kit_clevis_spine",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-11-01T21:37:14Z",
+  "checked_at": "2026-11-02T00:34:33Z",
   "metrics": {
     "bbox_mm": [
       27.8,
       99.8,
       15.3
     ],
-    "volume_cm3": 20.66,
-    "surface_cm2": 91.86,
-    "triangles": 8570,
+    "volume_cm3": 20.14,
+    "surface_cm2": 95.56,
+    "triangles": 8692,
     "ledges": [],
+    "floating_contours": [],
     "layers": 77,
-    "bed_contact_mm2": 1681.7,
+    "bed_contact_mm2": 1745.6,
     "height_mm": 15.3,
     "slenderness": 0.37,
     "centre_of_mass_over_contact": true,
@@ -61,7 +62,7 @@
       "id": "V4_no_steep_overhang",
       "level": "block",
       "result": "pass",
-      "value": 0.23,
+      "value": 0.0,
       "limit": 1.0,
       "detail": "mm2 of downward surface steeper than 45 deg (flat bridges excluded)"
     },
@@ -72,6 +73,14 @@
       "value": 0.0,
       "limit": 1.0,
       "detail": "mm2 of flat underside held on one side only (a ledge over air, not a bridge)"
+    },
+    {
+      "id": "V11_floating_contour",
+      "level": "block",
+      "result": "pass",
+      "value": 0,
+      "limit": 0,
+      "detail": "unanchored interior hole loops in bridge ceilings or low-Z hovering cantilevers"
     },
     {
       "id": "V6_bridge_span",
@@ -101,7 +110,7 @@
       "id": "V9_bed_contact",
       "level": "info",
       "result": "pass",
-      "value": 1681.7,
+      "value": 1745.6,
       "limit": null,
       "detail": "height / sqrt(contact) = 0.37; above about 3 the slicer often asks for a brim"
     },

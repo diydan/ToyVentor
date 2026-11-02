@@ -1,22 +1,23 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_mom_flywheel_lid_S.stl",
-  "file_sha256": "d11f56a70fdf72a7226eae3e61fe409c5a2cad23ed54f4a4d0cc7369d079374a",
+  "file_sha256": "9b5b56213da7d5321bf04766fb61fea7b1c183905483e7a2263d13df97728b73",
   "part_id": "mom_flywheel_lid",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-11-01T21:41:52Z",
+  "checked_at": "2026-11-02T00:36:59Z",
   "metrics": {
     "bbox_mm": [
       49.8,
       49.8,
       8.0
     ],
-    "volume_cm3": 11.98,
-    "surface_cm2": 76.56,
-    "triangles": 25536,
+    "volume_cm3": 12.01,
+    "surface_cm2": 75.61,
+    "triangles": 31464,
     "ledges": [],
+    "floating_contours": [],
     "layers": 40,
-    "bed_contact_mm2": 1808.4,
+    "bed_contact_mm2": 1703.1,
     "height_mm": 8.0,
     "slenderness": 0.19,
     "centre_of_mass_over_contact": true,
@@ -25,84 +26,64 @@
   },
   "bridges": [
     {
-      "z_mm": 3.2,
-      "span_mm": 6.7,
-      "area_mm2": 35.2
+      "z_mm": 4.9,
+      "span_mm": 2.29,
+      "area_mm2": 4.1
     },
     {
-      "z_mm": 3.2,
-      "span_mm": 6.7,
-      "area_mm2": 35.2
+      "z_mm": 4.9,
+      "span_mm": 2.29,
+      "area_mm2": 4.1
     },
     {
-      "z_mm": 3.2,
-      "span_mm": 6.7,
-      "area_mm2": 35.2
+      "z_mm": 4.9,
+      "span_mm": 2.29,
+      "area_mm2": 4.1
     },
     {
-      "z_mm": 3.2,
-      "span_mm": 6.7,
-      "area_mm2": 35.2
+      "z_mm": 4.9,
+      "span_mm": 2.29,
+      "area_mm2": 4.1
     },
     {
-      "z_mm": 3.2,
-      "span_mm": 6.7,
-      "area_mm2": 35.2
+      "z_mm": 4.9,
+      "span_mm": 2.29,
+      "area_mm2": 4.1
     },
     {
-      "z_mm": 3.2,
-      "span_mm": 6.7,
-      "area_mm2": 35.2
+      "z_mm": 4.9,
+      "span_mm": 2.29,
+      "area_mm2": 4.1
     },
     {
-      "z_mm": 3.2,
-      "span_mm": 6.7,
-      "area_mm2": 35.2
+      "z_mm": 4.9,
+      "span_mm": 2.29,
+      "area_mm2": 4.1
     },
     {
-      "z_mm": 3.2,
-      "span_mm": 6.7,
-      "area_mm2": 35.2
+      "z_mm": 4.9,
+      "span_mm": 2.29,
+      "area_mm2": 4.1
     },
     {
-      "z_mm": 3.2,
-      "span_mm": 6.7,
-      "area_mm2": 35.2
+      "z_mm": 4.9,
+      "span_mm": 2.29,
+      "area_mm2": 4.1
     },
     {
-      "z_mm": 3.2,
-      "span_mm": 6.7,
-      "area_mm2": 35.2
+      "z_mm": 4.9,
+      "span_mm": 2.29,
+      "area_mm2": 4.1
     },
     {
-      "z_mm": 3.2,
-      "span_mm": 6.7,
-      "area_mm2": 35.2
+      "z_mm": 4.9,
+      "span_mm": 2.29,
+      "area_mm2": 4.1
     },
     {
-      "z_mm": 3.2,
-      "span_mm": 6.7,
-      "area_mm2": 35.2
-    },
-    {
-      "z_mm": 3.2,
-      "span_mm": 6.7,
-      "area_mm2": 35.2
-    },
-    {
-      "z_mm": 3.2,
-      "span_mm": 6.7,
-      "area_mm2": 35.2
-    },
-    {
-      "z_mm": 3.2,
-      "span_mm": 6.7,
-      "area_mm2": 35.2
-    },
-    {
-      "z_mm": 3.2,
-      "span_mm": 6.7,
-      "area_mm2": 35.2
+      "z_mm": 4.9,
+      "span_mm": 2.29,
+      "area_mm2": 4.1
     }
   ],
   "checks": [
@@ -155,12 +136,20 @@
       "detail": "mm2 of flat underside held on one side only (a ledge over air, not a bridge)"
     },
     {
+      "id": "V11_floating_contour",
+      "level": "block",
+      "result": "pass",
+      "value": 0,
+      "limit": 0,
+      "detail": "unanchored interior hole loops in bridge ceilings or low-Z hovering cantilevers"
+    },
+    {
       "id": "V6_bridge_span",
       "level": "block",
       "result": "pass",
-      "value": 6.7,
+      "value": 2.29,
       "limit": 20,
-      "detail": "16 bridge(s); widest unsupported span in mm"
+      "detail": "12 bridge(s); widest unsupported span in mm"
     },
     {
       "id": "V5_no_floating_islands",
@@ -182,7 +171,7 @@
       "id": "V9_bed_contact",
       "level": "info",
       "result": "pass",
-      "value": 1808.4,
+      "value": 1703.1,
       "limit": null,
       "detail": "height / sqrt(contact) = 0.19; above about 3 the slicer often asks for a brim"
     },

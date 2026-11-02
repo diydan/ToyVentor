@@ -9,31 +9,31 @@ beam_str_tu07,toyventor_beam_str_tu07_P.stl,pass,Prints as is,13.05,113.8,0.26,0
 beam_str_tu10,toyventor_beam_str_tu10_P.stl,pass,Prints as is,18.67,163.5,0.37,0,12.5,998.7,0.4,
 beam_str_tu14,toyventor_beam_str_tu14_P.stl,pass,Prints as is,26.16,229.4,0.52,0,12.5,1402.4,0.33,
 beam_t_tu05x03,toyventor_beam_t_tu05x03_P.stl,pass,Prints as is,11.29,95.7,0.23,0,12.5,695.4,0.47,
-big_blue_brick,toyventor_big_blue_brick_L.stl,pass,Prints as is,30.46,149.7,0.61,0,35.6,701.7,1.34,
-bounce_capsule_s,toyventor_bounce_capsule_s_S.stl,pass,Prints as is,2.1,14.3,0.04,0,20.0,137.7,1.7,
-brick_l_2x4,toyventor_brick_l_2x4_L.stl,pass,Prints as is,58.55,291.6,1.17,0,35.6,1437.6,0.94,
-brick_s_2x2,toyventor_brick_s_2x2_S.stl,pass,Prints as is,5.52,35.7,0.11,0,17.8,201.6,1.25,
-bumper_horns,toyventor_bumper_horns_S.stl,pass_with_settings,Prints with brim_width_mm = 3,2.73,25.9,0.05,3,23.6,189.3,1.72,
+big_blue_brick,toyventor_big_blue_brick_L.stl,pass,Prints as is,,,,0,35.6,1744.5,0.85,
+bounce_capsule_s,toyventor_bounce_capsule_s_S.stl,pass,Prints as is,,,,0,20.0,131.1,1.75,
+brick_l_2x4,toyventor_brick_l_2x4_L.stl,pass,Prints as is,,,,0,35.6,3555.6,0.6,
+brick_s_2x2,toyventor_brick_s_2x2_S.stl,pass,Prints as is,,,,0,17.8,407.7,0.88,
+bumper_horns,toyventor_bumper_horns_S.stl,pass,Prints as is,,,,0,23.6,176.2,1.78,
 bushing_half,toyventor_bushing_half_P.stl,pass,Prints as is,0.49,6.4,0.01,0,6.25,62.8,0.79,
 bushing_tu01,toyventor_bushing_tu01_P.stl,pass,Prints as is,0.99,13.0,0.02,0,12.5,62.8,1.58,
 char_faceplate,toyventor_char_faceplate_P.stl,pass,Prints as is,,,,0,12.75,103.4,1.25,
 char_faceplate_flat,toyventor_char_faceplate_flat_P.stl,pass,Prints as is,,,,0,12.75,103.4,1.25,
 char_faceplate_vinyl,toyventor_char_faceplate_vinyl_P.stl,pass,Prints as is,,,,0,12.75,103.4,1.25,
-char_head_alien,toyventor_char_head_alien_S.stl,pass,Prints as is,,,,0,38.4,207.5,2.67,
-char_head_bear,toyventor_char_head_bear_S.stl,pass,Prints as is,,,,0,34.4,290.9,2.02,
-char_head_cat,toyventor_char_head_cat_S.stl,pass,Prints as is,,,,0,37.8,290.9,2.22,
-char_head_chibi,toyventor_char_head_chibi_S.stl,pass_with_warnings,Warnings: V8_wall_thickness,,,,0,33.77,207.5,2.34,0.089
-char_head_dragon,toyventor_char_head_dragon_S.stl,pass,Prints as is,,,,0,37.6,290.9,2.2,
-char_head_fox,toyventor_char_head_fox_S.stl,pass,Prints as is,,,,0,38.0,290.9,2.23,
-char_head_imp,toyventor_char_head_imp_S.stl,pass,Prints as is,,,,0,32.4,290.9,1.9,
-char_head_jumbo,toyventor_char_head_jumbo_S.stl,pass_with_warnings,Warnings: V8_wall_thickness,,,,0,33.77,207.5,2.34,0.089
-char_head_kid,toyventor_char_head_kid_S.stl,pass_with_warnings,Warnings: V8_wall_thickness,,,,0,33.77,207.5,2.34,0.089
-char_head_tall,toyventor_char_head_tall_S.stl,pass_with_warnings,Warnings: V8_wall_thickness,,,,0,35.75,207.5,2.48,0.089
-char_legs_seated,toyventor_char_legs_seated_S.stl,pass,Prints as is,,,,0,18.8,449.9,0.89,
-cloud_wings,toyventor_cloud_wings_S.stl,pass,Prints as is,,,,0,39.95,423.9,1.94,
-cloud_wings_l,toyventor_cloud_wings_l_L.stl,pass,Prints as is,60.54,282.9,1.21,0,71.5,1013.4,2.25,
+char_head_alien,toyventor_char_head_alien_S.stl,pass,Prints as is,,,,0,38.4,194.4,2.75,
+char_head_bear,toyventor_char_head_bear_S.stl,pass,Prints as is,,,,0,34.4,277.7,2.06,
+char_head_cat,toyventor_char_head_cat_S.stl,pass,Prints as is,,,,0,37.8,277.7,2.27,
+char_head_chibi,toyventor_char_head_chibi_S.stl,pass_with_warnings,Warnings: V8_wall_thickness,,,,0,33.77,194.4,2.42,0.089
+char_head_dragon,toyventor_char_head_dragon_S.stl,pass,Prints as is,,,,0,37.6,277.7,2.26,
+char_head_fox,toyventor_char_head_fox_S.stl,pass,Prints as is,,,,0,38.0,277.7,2.28,
+char_head_imp,toyventor_char_head_imp_S.stl,pass,Prints as is,,,,0,32.4,277.7,1.94,
+char_head_jumbo,toyventor_char_head_jumbo_S.stl,pass_with_warnings,Warnings: V8_wall_thickness,,,,0,33.77,194.4,2.42,0.089
+char_head_kid,toyventor_char_head_kid_S.stl,pass_with_warnings,Warnings: V8_wall_thickness,,,,0,33.77,194.4,2.42,0.089
+char_head_tall,toyventor_char_head_tall_S.stl,pass_with_warnings,Warnings: V8_wall_thickness,,,,0,35.75,194.4,2.56,0.089
+char_legs_seated,toyventor_char_legs_seated_S.stl,pass,Prints as is,,,,0,18.8,423.6,0.91,
+cloud_wings,toyventor_cloud_wings_S.stl,pass,Prints as is,,,,0,39.95,397.6,2.0,
+cloud_wings_l,toyventor_cloud_wings_l_L.stl,pass,Prints as is,,,,0,71.5,982.6,2.28,
 cross_connector_tu01,toyventor_cross_connector_tu01_P.stl,pass,Prints as is,2.75,18.9,0.06,0,12.5,249.8,0.79,
-dome_s_2x2,toyventor_dome_s_2x2_S.stl,pass,Prints as is,3.43,19.2,0.07,0,16.4,201.6,1.15,
+dome_s_2x2,toyventor_dome_s_2x2_S.stl,pass,Prints as is,,,,0,16.4,407.7,0.81,
 forge_mount_pro,toyventor_forge_mount_pro_P.stl,pass,Prints as is,24.42,198.2,0.49,0,12.5,2653.2,0.24,
 forge_mount_ring,toyventor_forge_mount_ring_L.stl,pass,Prints as is,25.91,143.3,0.52,0,15.6,5182.5,0.22,
 forge_mount_ring_s,toyventor_forge_mount_ring_s_S.stl,pass,Prints as is,12.81,86.3,0.26,0,7.8,3535.2,0.13,
@@ -44,74 +44,73 @@ gear_spur_z15,toyventor_gear_spur_z15_P.stl,pass,Prints as is,,,,0,6.25,1030.8,0
 gear_spur_z20,toyventor_gear_spur_z20_P.stl,pass,Prints as is,,,,0,6.25,1880.7,0.14,
 gear_spur_z25,toyventor_gear_spur_z25_P.stl,pass,Prints as is,,,,0,6.25,2976.1,0.11,
 gear_spur_z30,toyventor_gear_spur_z30_P.stl,pass,Prints as is,,,,0,6.25,4317.1,0.1,
-glow_capsule,toyventor_glow_capsule_S.stl,pass_with_settings,Prints with brim_width_mm = 3,12.85,51.8,0.26,3,46.88,249.2,2.97,
-glow_capsule_l,toyventor_glow_capsule_l_L.stl,pass,Prints as is,76.66,253.0,1.53,0,93.75,978.2,3.0,
+glow_capsule,toyventor_glow_capsule_S.stl,pass,Prints as is,,,,0,46.88,238.4,3.04,
+glow_capsule_l,toyventor_glow_capsule_l_L.stl,pass,Prints as is,,,,0,93.75,952.2,3.04,
 hair_bob,toyventor_hair_bob_S.stl,pass_with_warnings,Warnings: V8_wall_thickness,,,,0,26.6,174.3,2.01,0.718
 hair_bowl,toyventor_hair_bowl_S.stl,pass,Prints as is,,,,0,23.6,172.5,1.8,0.313
-hair_curly,toyventor_hair_curly_S.stl,pass,Prints as is,,,,0,28.66,203.0,2.01,
+hair_curly,toyventor_hair_curly_S.stl,pass_with_warnings,Warnings: V8_wall_thickness,,,,0,28.66,203.0,2.01,0.384
 hair_long_layered,toyventor_hair_long_layered_S.stl,pass_with_warnings,Warnings: V8_wall_thickness,,,,0,30.1,206.9,2.09,0.338
-hair_low_bun,toyventor_hair_low_bun_S.stl,pass_with_warnings,Warnings: V8_wall_thickness,,,,0,24.0,111.8,2.27,0.41
+hair_low_bun,toyventor_hair_low_bun_S.stl,pass_with_warnings,Warnings: V8_wall_thickness,,,,0,24.09,111.8,2.28,0.41
 hair_mohawk,toyventor_hair_mohawk_S.stl,pass,Prints as is,,,,0,35.9,86.8,3.85,0.766
 hair_pigtails,toyventor_hair_pigtails_S.stl,pass_with_warnings,Warnings: V8_wall_thickness,,,,0,30.8,176.4,2.32,0.632
-hair_pixie,toyventor_hair_pixie_S.stl,pass,Prints as is,,,,0,29.6,94.4,3.05,0.69
+hair_pixie,toyventor_hair_pixie_S.stl,pass,Prints as is,,,,0,29.6,94.4,3.05,0.704
 hair_pompadour,toyventor_hair_pompadour_S.stl,pass,Prints as is,,,,0,34.1,86.7,3.66,0.766
 hair_ponytail,toyventor_hair_ponytail_S.stl,pass,Prints as is,,,,0,33.3,90.5,3.5,0.519
-hair_shag,toyventor_hair_shag_S.stl,pass_with_warnings,Warnings: V8_wall_thickness,,,,0,24.6,100.5,2.45,0.584
+hair_shag,toyventor_hair_shag_S.stl,pass_with_warnings,Warnings: V8_wall_thickness,,,,0,24.6,100.5,2.45,0.459
 hair_short_swept,toyventor_hair_short_swept_S.stl,pass,Prints as is,,,,0,24.1,90.0,2.54,0.519
 hair_side_pony,toyventor_hair_side_pony_S.stl,pass,Prints as is,,,,0,31.1,89.3,3.29,0.519
-hair_side_sweep,toyventor_hair_side_sweep_S.stl,pass_with_warnings,Warnings: V8_wall_thickness,,,,0,23.79,160.7,1.88,0.57
-hair_slick,toyventor_hair_slick_S.stl,pass_with_warnings,Warnings: V8_wall_thickness,,,,0,23.6,100.0,2.36,0.561
-hair_spiky,toyventor_hair_spiky_S.stl,pass_with_warnings,Warnings: V8_wall_thickness,,,,0,38.0,87.3,4.07,0.719
-hair_swoosh,toyventor_hair_swoosh_S.stl,pass_with_warnings,Warnings: V8_wall_thickness,,,,0,24.1,90.3,2.54,0.617
+hair_side_sweep,toyventor_hair_side_sweep_S.stl,pass_with_warnings,Warnings: V8_wall_thickness,,,,0,26.59,160.7,2.1,0.243
+hair_slick,toyventor_hair_slick_S.stl,pass_with_warnings,Warnings: V8_wall_thickness,,,,0,23.6,100.0,2.36,0.449
+hair_spiky,toyventor_hair_spiky_S.stl,pass_with_warnings,Warnings: V8_wall_thickness,,,,0,38.0,87.3,4.07,0.51
+hair_swoosh,toyventor_hair_swoosh_S.stl,pass_with_warnings,Warnings: V8_wall_thickness,,,,0,24.1,90.3,2.54,0.665
 hair_top_bun,toyventor_hair_top_bun_S.stl,pass_with_warnings,Warnings: V8_wall_thickness,,,,0,36.3,87.2,3.89,0.41
 hair_twin_braids,toyventor_hair_twin_braids_S.stl,pass_with_warnings,Warnings: V8_wall_thickness,,,,0,30.1,152.4,2.44,0.49
-hat_ballcap,toyventor_hat_ballcap_S.stl,pass,Prints as is,,,,0,18.3,706.8,0.69,
+hat_ballcap,toyventor_hat_ballcap_S.stl,pass,Prints as is,,,,0,19.6,706.8,0.74,
 hat_beanie,toyventor_hat_beanie_S.stl,pass,Prints as is,,,,0,24.6,415.4,1.21,
 hat_cowboy,toyventor_hat_cowboy_S.stl,pass,Prints as is,,,,0,17.59,1750.5,0.42,
-hat_hardhat,toyventor_hat_hardhat_S.stl,pass,Prints as is,,,,0,18.8,895.8,0.63,
-hat_pirate,toyventor_hat_pirate_S.stl,pass,Prints as is,,,,0,15.99,821.6,0.56,
+hat_hardhat,toyventor_hat_hardhat_S.stl,pass,Prints as is,,,,0,19.3,895.8,0.64,
+hat_pirate,toyventor_hat_pirate_S.stl,pass,Prints as is,,,,0,17.49,821.6,0.61,
 hat_ranger,toyventor_hat_ranger_S.stl,pass,Prints as is,,,,0,18.09,1584.7,0.45,
 hat_tophat,toyventor_hat_tophat_S.stl,pass,Prints as is,,,,0,25.2,1061.1,0.77,
 hinge_tu02,toyventor_hinge_tu02_P.stl,pass,Prints as is,4.66,39.5,0.09,0,12.5,345.0,0.67,
-kit_aero_wedge,toyventor_kit_aero_wedge_S.stl,pass,Prints as is,,,,0,33.25,301.0,1.92,
+kit_aero_wedge,toyventor_kit_aero_wedge_S.stl,pass,Prints as is,,,,0,33.25,624.1,1.33,
 kit_barbell_shaft,toyventor_kit_barbell_shaft_P.stl,pass,Prints as is,,,,0,5.0,352.9,0.27,
-kit_booster_pod,toyventor_kit_booster_pod_S.stl,pass,Prints as is,,,,0,28.0,1184.2,0.81,
-kit_clevis_spine,toyventor_kit_clevis_spine_S.stl,pass,Prints as is,,,,0,15.3,1681.7,0.37,
-kit_foil_wing,toyventor_kit_foil_wing_S.stl,pass,Prints as is,,,,0,5.0,2511.8,0.1,
-kit_keel_base,toyventor_kit_keel_base_S.stl,pass,Prints as is,,,,0,15.3,3631.0,0.25,
+kit_booster_pod,toyventor_kit_booster_pod_S.stl,pass,Prints as is,,,,0,28.0,1118.4,0.84,
+kit_clevis_spine,toyventor_kit_clevis_spine_S.stl,pass,Prints as is,,,,0,15.3,1745.6,0.37,
+kit_foil_wing,toyventor_kit_foil_wing_S.stl,pass,Prints as is,,,,0,7.28,2372.9,0.15,
+kit_keel_base,toyventor_kit_keel_base_S.stl,pass_with_warnings,Warnings: V8_wall_thickness,,,,0,15.3,4740.7,0.22,0.067
 kit_rotor_blade,toyventor_kit_rotor_blade_P.stl,pass,Prints as is,,,,0,6.0,953.2,0.19,
-kit_scoop_blade,toyventor_kit_scoop_blade_S.stl,pass,Prints as is,,,,0,20.0,1378.9,0.54,
-kit_skid_runner,toyventor_kit_skid_runner_S.stl,pass,Prints as is,,,,0,20.0,1574.3,0.5,
+kit_scoop_blade,toyventor_kit_scoop_blade_S.stl,pass,Prints as is,,,,0,20.0,1300.0,0.55,
+kit_skid_runner,toyventor_kit_skid_runner_S.stl,pass,Prints as is,,,,0,20.0,1515.1,0.51,
 kit_spinner_pin,toyventor_kit_spinner_pin_P.stl,pass,Prints as is,,,,0,5.0,745.8,0.18,
-kit_tilting_tub,toyventor_kit_tilting_tub_S.stl,pass,Prints as is,,,,0,18.0,1085.7,0.55,
-kit_turntable,toyventor_kit_turntable_S.stl,pass,Prints as is,,,,0,8.0,826.3,0.28,
+kit_tilting_tub,toyventor_kit_tilting_tub_S.stl,pass,Prints as is,,,,0,18.0,1834.1,0.42,
+kit_turntable,toyventor_kit_turntable_S.stl,pass,Prints as is,,,,0,8.0,1685.6,0.19,
 kit_wheel_giant,toyventor_kit_wheel_giant_P.stl,pass,Prints as is,,,,0,12.3,1519.6,0.32,
 kit_wheel_med,toyventor_kit_wheel_med_P.stl,pass,Prints as is,,,,0,12.3,842.0,0.42,
-kit_windscreen,toyventor_kit_windscreen_S.stl,pass,Prints as is,,,,0,23.5,942.5,0.77,
+kit_windscreen,toyventor_kit_windscreen_S.stl,pass,Prints as is,,,,0,23.5,889.9,0.79,
 kit_yoke_hbar,toyventor_kit_yoke_hbar_P.stl,pass,Prints as is,,,,0,5.6,455.7,0.26,
-mech-servo-mount,mech-servo-mount.stl,fail,Blocked: V4_no_steep_overhang,,,,0,32.8,177.7,2.46,0.583
 mech_bat_door_screw,toyventor_mech_bat_door_screw_P.stl,pass,Prints as is,,,,0,5.8,262.8,0.36,0.441
-mech_brain_lid,toyventor_mech_brain_lid_S.stl,pass,Prints as is,,,,0,9.7,1823.7,0.23,
-mech_brain_tray,toyventor_mech_brain_tray_S.stl,pass_with_warnings,Warnings: V8_wall_thickness,,,,0,22.6,836.4,0.78,0.4
-mech_drive_lid,toyventor_mech_drive_lid_S.stl,pass,Prints as is,,,,0,9.7,1787.7,0.23,
-mech_drive_tray,toyventor_mech_drive_tray_S.stl,pass_with_warnings,Warnings: V8_wall_thickness,,,,0,35.1,720.9,1.31,0.422
+mech_brain_lid,toyventor_mech_brain_lid_S.stl,pass,Prints as is,,,,0,16.6,1734.2,0.4,
+mech_brain_tray,toyventor_mech_brain_tray_S.stl,pass_with_warnings,Warnings: V8_wall_thickness,,,,0,22.6,1704.8,0.55,0.4
+mech_drive_lid,toyventor_mech_drive_lid_S.stl,pass,Prints as is,,,,0,8.0,1601.1,0.2,
+mech_drive_tray,toyventor_mech_drive_tray_S.stl,pass_with_warnings,Warnings: V8_wall_thickness,,,,0,35.1,1493.0,0.91,0.422
 mech_n20_pinion_z10,toyventor_mech_n20_pinion_z10_P.stl,pass,Prints as is,,,,0,20.0,258.0,1.25,
 mech_servo_lid,toyventor_mech_servo_lid_P.stl,pass,Prints as is,,,,0,6.25,438.5,0.3,
-mech_servo_mount,toyventor_mech_servo_mount_S.stl,pass_with_warnings,Warnings: V8_wall_thickness,,,,0,32.8,177.4,2.46,0.65
+mech_servo_mount,toyventor_mech_servo_mount_S.stl,pass_with_warnings,Warnings: V8_wall_thickness,,,,0,32.8,164.2,2.56,0.65
 mech_servo_pinion_z10,toyventor_mech_servo_pinion_z10_P.stl,pass,Prints as is,,,,0,8.8,413.6,0.43,0.62
-mech_sill_duct,toyventor_mech_sill_duct_S.stl,pass_with_warnings,Warnings: V8_wall_thickness,,,,0,11.0,942.5,0.36,0.55
-mini_plate,toyventor_mini_plate_S.stl,pass,Prints as is,5.03,40.1,0.1,0,7.8,400.3,0.39,
-mom_band_core_lid,toyventor_mom_band_core_lid_S.stl,pass,Prints as is,,,,0,9.7,1755.6,0.23,
-mom_band_core_tray,toyventor_mom_band_core_tray_S.stl,pass,Prints as is,,,,0,35.1,723.6,1.3,0.775
+mech_sill_duct,toyventor_mech_sill_duct_S.stl,pass_with_warnings,Warnings: V8_wall_thickness,,,,0,11.6,889.9,0.39,0.55
+mini_plate,toyventor_mini_plate_S.stl,pass,Prints as is,,,,0,7.8,840.4,0.27,
+mom_band_core_lid,toyventor_mom_band_core_lid_S.stl,pass,Prints as is,,,,0,16.6,1671.3,0.41,
+mom_band_core_tray,toyventor_mom_band_core_tray_S.stl,pass,Prints as is,,,,0,35.1,1523.6,0.9,0.623
 mom_band_spool_pawl,toyventor_mom_band_spool_pawl_P.stl,pass,Prints as is,,,,0,13.0,96.5,1.32,0.733
-mom_bellows_base,toyventor_mom_bellows_base_S.stl,pass,Prints as is,,,,0,19.15,1154.6,0.56,
-mom_bellows_leaf,toyventor_mom_bellows_leaf_S.stl,pass,Prints as is,,,,0,11.4,2013.0,0.25,
-mom_bumper_trigger,toyventor_mom_bumper_trigger_P.stl,pass,Prints as is,,,,0,12.5,961.5,0.4,
-mom_flywheel_lid,toyventor_mom_flywheel_lid_S.stl,pass,Prints as is,,,,0,8.0,1808.4,0.19,
+mom_bellows_base,toyventor_mom_bellows_base_S.stl,pass_with_warnings,Warnings: V8_wall_thickness,,,,0,19.15,2049.1,0.42,0.292
+mom_bellows_leaf,toyventor_mom_bellows_leaf_S.stl,pass,Prints as is,,,,0,11.4,1907.7,0.26,
+mom_bumper_trigger,toyventor_mom_bumper_trigger_P.stl,pass,Prints as is,,,,0,12.5,930.2,0.41,
+mom_flywheel_lid,toyventor_mom_flywheel_lid_S.stl,pass,Prints as is,,,,0,8.0,1703.1,0.19,
 mom_flywheel_rotor,toyventor_mom_flywheel_rotor_P.stl,pass,Prints as is,,,,0,12.0,1261.7,0.34,
-mom_flywheel_tray,toyventor_mom_flywheel_tray_S.stl,pass,Prints as is,,,,0,35.1,836.4,1.21,
+mom_flywheel_tray,toyventor_mom_flywheel_tray_S.stl,pass,Prints as is,,,,0,35.1,1731.0,0.84,
 mom_jet_slide_valve,toyventor_mom_jet_slide_valve_P.stl,pass,Prints as is,,,,0,9.17,185.5,0.67,
-mom_jet_valve_body,toyventor_mom_jet_valve_body_S.stl,pass,Prints as is,,,,0,28.0,904.8,0.93,0.451
+mom_jet_valve_body,toyventor_mom_jet_valve_body_S.stl,pass,Prints as is,,,,0,28.0,852.2,0.96,0.451
 mom_latch_pawl,toyventor_mom_latch_pawl_P.stl,pass,Prints as is,,,,0,5.2,192.8,0.37,
 mom_nozzle_set,toyventor_mom_nozzle_set_P.stl,pass,Prints as is,,,,0,13.5,430.9,0.65,
 mom_pto_gear_z10,toyventor_mom_pto_gear_z10_P.stl,pass,Prints as is,,,,0,9.6,426.7,0.46,0.658
@@ -120,31 +119,29 @@ mom_slam_base,toyventor_mom_slam_base_P.stl,pass,Prints as is,,,,0,21.0,2212.2,0
 mom_slam_plunger,toyventor_mom_slam_plunger_P.stl,pass,Prints as is,,,,0,5.0,825.5,0.17,
 mom_spindle_shaft,toyventor_mom_spindle_shaft_P.stl,pass,Prints as is,,,,0,5.0,352.9,0.27,
 mom_wind_key,toyventor_mom_wind_key_P.stl,pass,Prints as is,,,,0,5.0,405.9,0.25,
-pack_explorer,toyventor_pack_explorer_S.stl,pass,Prints as is,,,,0,18.8,449.9,0.89,
-pebble_armor_shell,toyventor_pebble_armor_shell_S.stl,pass,Prints as is,11.5,63.6,0.23,0,18.75,1580.0,0.47,
-pebble_armor_shell_l,toyventor_pebble_armor_shell_l_L.stl,pass,Prints as is,11.1,53.1,0.22,0,18.75,1564.0,0.47,
+pack_explorer,toyventor_pack_explorer_S.stl,pass,Prints as is,,,,0,18.8,423.6,0.91,
+pebble_armor_shell,toyventor_pebble_armor_shell_S.stl,pass,Prints as is,,,,0,18.75,1498.9,0.48,
+pebble_armor_shell_l,toyventor_pebble_armor_shell_l_L.stl,pass,Prints as is,,,,0,18.75,1509.9,0.48,
 pin_free,toyventor_pin_free_P.stl,pass,Prints as is,,,,0,5.6,105.5,0.55,
 pin_free_tu03,toyventor_pin_free_tu03_P.stl,pass,Prints as is,,,,0,5.6,152.9,0.45,
 pin_friction,toyventor_pin_friction_P.stl,pass,Prints as is,,,,0,5.0,71.5,0.59,
 pin_friction_long,toyventor_pin_friction_long_P.stl,pass,Prints as is,,,,0,5.0,109.4,0.48,
-plate_l_2x2,toyventor_plate_l_2x2_L.stl,pass,Prints as is,13.43,76.2,0.27,0,15.6,701.7,0.59,
-plate_l_2x4,toyventor_plate_l_2x4_L.stl,pass,Prints as is,26.19,150.7,0.52,0,15.6,1437.6,0.41,
-plate_s_2x2,toyventor_plate_s_2x2_S.stl,pass,Prints as is,2.55,19.2,0.05,0,7.8,201.6,0.55,
-plate_s_4x4,toyventor_plate_s_4x4_S.stl,pass,Prints as is,10.11,86.0,0.2,0,7.8,836.4,0.27,
-pointy_ears,toyventor_pointy_ears_S.stl,pass,Prints as is,1.97,18.8,0.04,0,21.72,189.3,1.58,
-pro-steer-bridge,pro-steer-bridge.stl,fail,Blocked: V4_no_steep_overhang,,,,0,23.15,675.4,0.89,
-pro_axle_keeper,toyventor_pro_axle_keeper_P.stl,pass,Prints as is,,,,0,6.55,197.9,0.47,
+plate_l_2x2,toyventor_plate_l_2x2_L.stl,pass,Prints as is,,,,0,15.6,1744.5,0.37,
+plate_l_2x4,toyventor_plate_l_2x4_L.stl,pass,Prints as is,,,,0,15.6,3555.6,0.26,
+plate_s_2x2,toyventor_plate_s_2x2_S.stl,pass,Prints as is,,,,0,7.8,407.7,0.39,
+plate_s_4x4,toyventor_plate_s_4x4_S.stl,pass,Prints as is,,,,0,7.8,1731.0,0.19,
+pointy_ears,toyventor_pointy_ears_S.stl,pass,Prints as is,,,,0,21.72,176.2,1.64,
 pro_captive_pin_28,toyventor_pro_captive_pin_28_P.stl,pass,Prints as is,,,,0,5.0,117.3,0.46,
 pro_fork_rake_adpt,toyventor_pro_fork_rake_adpt_P.stl,pass,Prints as is,,,,0,12.5,564.3,0.53,
 pro_pilot_pin,toyventor_pro_pilot_pin_P.stl,pass_with_warnings,Warnings: V8_wall_thickness,,,,0,5.6,50.6,0.79,0.189
-pro_steer_bridge,toyventor_pro_steer_bridge_S.stl,pass,Prints as is,,,,0,23.15,674.4,0.89,
+pro_steer_bridge,toyventor_pro_steer_bridge_S.stl,pass,Prints as is,,,,0,23.15,631.9,0.92,
 pro_steer_column,toyventor_pro_steer_column_P.stl,pass,Prints as is,,,,0,5.0,197.7,0.36,
 pro_steer_knuckle_l,toyventor_pro_steer_knuckle_l_P.stl,pass_with_warnings,Warnings: V8_wall_thickness,,,,0,27.1,189.8,1.97,0.029
 pro_steer_knuckle_r,toyventor_pro_steer_knuckle_r_P.stl,pass_with_warnings,Warnings: V8_wall_thickness,,,,0,27.1,189.8,1.97,0.029
 pro_steer_rack,toyventor_pro_steer_rack_P.stl,pass,Prints as is,,,,0,6.25,361.1,0.33,
 pro_steer_wheel,toyventor_pro_steer_wheel_P.stl,pass,Prints as is,,,,0,13.0,361.6,0.68,
 pro_tie_rod_link,toyventor_pro_tie_rod_link_P.stl,pass,Prints as is,,,,0,10.05,233.0,0.66,
-pro_tub_hinge,toyventor_pro_tub_hinge_P.stl,pass,Prints as is,,,,0,20.8,354.5,1.1,
+pro_tub_hinge,toyventor_pro_tub_hinge_P.stl,pass,Prints as is,,,,0,19.4,339.8,1.05,
 prop_broom,toyventor_prop_broom_P.stl,pass,Prints as is,,,,0,6.8,1199.2,0.2,
 prop_flag,toyventor_prop_flag_P.stl,pass,Prints as is,,,,0,6.8,1176.2,0.2,
 prop_guitar,toyventor_prop_guitar_P.stl,pass,Prints as is,,,,0,6.6,1418.9,0.18,
@@ -162,48 +159,48 @@ prop_vacuum,toyventor_prop_vacuum_P.stl,pass,Prints as is,,,,0,6.6,1252.1,0.19,
 prop_wrench,toyventor_prop_wrench_P.stl,pass,Prints as is,,,,0,5.0,484.5,0.23,
 racer_axle,toyventor_racer_axle_S.stl,pass_with_settings,Prints with brim_width_mm = 3,1.28,7.0,0.03,3,5.0,169.7,0.38,
 racer_axle_block,toyventor_racer_axle_block_S.stl,pass,Prints as is,,,,0,17.8,585.2,0.74,
-racer_bull_bar,toyventor_racer_bull_bar_S.stl,pass,Prints as is,,,,0,15.3,189.3,1.11,
-racer_hood_scoop,toyventor_racer_hood_scoop_S.stl,pass,Prints as is,3.05,19.8,0.06,0,9.81,423.9,0.48,
-racer_light_bar,toyventor_racer_light_bar_S.stl,pass,Prints as is,,,,0,10.2,189.3,0.74,
-racer_roof_rack,toyventor_racer_roof_rack_S.stl,pass,Prints as is,5.44,47.1,0.11,0,13.7,446.5,0.65,
-racer_spoiler,toyventor_racer_spoiler_S.stl,pass,Prints as is,2.49,20.8,0.05,0,13.8,209.5,0.95,
-racer_twin_exhaust,toyventor_racer_twin_exhaust_S.stl,pass,Prints as is,,,,0,15.3,189.3,1.11,
+racer_bull_bar,toyventor_racer_bull_bar_S.stl,pass,Prints as is,,,,0,15.3,176.2,1.15,
+racer_hood_scoop,toyventor_racer_hood_scoop_S.stl,pass,Prints as is,,,,0,9.81,397.6,0.49,
+racer_light_bar,toyventor_racer_light_bar_S.stl,pass,Prints as is,,,,0,10.2,176.2,0.77,
+racer_roof_rack,toyventor_racer_roof_rack_S.stl,pass,Prints as is,,,,0,13.7,420.2,0.67,
+racer_spoiler,toyventor_racer_spoiler_S.stl,pass,Prints as is,,,,0,13.8,196.4,0.98,
+racer_twin_exhaust,toyventor_racer_twin_exhaust_S.stl,pass,Prints as is,,,,0,15.3,176.2,1.15,
 racer_wheel,toyventor_racer_wheel_S.stl,pass,Prints as is,1.13,8.9,0.02,0,6.0,195.6,0.43,
-ridge_fin,toyventor_ridge_fin_S.stl,pass_with_settings,Prints with brim_width_mm = 3,2.16,19.6,0.04,3,23.8,189.3,1.73,
-robot_arms_grabber,toyventor_robot_arms_grabber_S.stl,pass,Prints as is,,,,0,7.8,743.0,0.29,
-robot_back_jetpack,toyventor_robot_back_jetpack_S.stl,pass,Prints as is,,,,0,14.8,214.7,1.01,
-robot_head_scout,toyventor_robot_head_scout_S.stl,pass,Prints as is,,,,0,35.6,207.5,2.47,
-robot_head_visor,toyventor_robot_head_visor_S.stl,pass,Prints as is,,,,0,34.4,207.5,2.39,
-robot_legs_stomper,toyventor_robot_legs_stomper_S.stl,pass,Prints as is,,,,0,20.8,395.9,1.05,
-robot_torso_core,toyventor_robot_torso_core_S.stl,pass,Prints as is,,,,0,22.8,425.8,1.1,
+ridge_fin,toyventor_ridge_fin_S.stl,pass,Prints as is,,,,0,23.8,176.2,1.79,
+robot_arms_grabber,toyventor_robot_arms_grabber_S.stl,pass_with_warnings,Warnings: V8_wall_thickness,,,,0,7.8,697.2,0.3,0.445
+robot_back_jetpack,toyventor_robot_back_jetpack_S.stl,pass,Prints as is,,,,0,14.8,201.5,1.04,
+robot_head_scout,toyventor_robot_head_scout_S.stl,pass,Prints as is,,,,0,35.6,194.4,2.55,
+robot_head_visor,toyventor_robot_head_visor_S.stl,pass,Prints as is,,,,0,34.4,194.4,2.47,
+robot_legs_stomper,toyventor_robot_legs_stomper_S.stl,pass,Prints as is,,,,0,20.8,369.6,1.08,
+robot_torso_core,toyventor_robot_torso_core_S.stl,pass,Prints as is,,,,0,22.8,399.5,1.14,
 shaft_tu03,toyventor_shaft_tu03_P.stl,pass_with_settings,Prints with brim_width_mm = 3,1.28,7.0,0.03,3,5.0,169.7,0.38,
 shaft_tu05,toyventor_shaft_tu05_P.stl,pass_with_settings,Prints with brim_width_mm = 3,2.13,11.4,0.04,3,5.0,282.8,0.3,
 shaft_tu07,toyventor_shaft_tu07_P.stl,pass_with_settings,Prints with brim_width_mm = 3,2.97,15.7,0.06,3,5.0,395.9,0.25,
-skin_aero_cowl,toyventor_skin_aero_cowl_S.stl,pass_with_warnings,Warnings: V8_wall_thickness,,,,0,4.4,2807.6,0.08,0.6
-skin_cargo_shroud,toyventor_skin_cargo_shroud_S.stl,pass_with_warnings,Warnings: V8_wall_thickness,,,,0,4.4,4306.4,0.07,0.6
-skin_windscreen,toyventor_skin_windscreen_S.stl,pass_with_warnings,Warnings: V8_wall_thickness,,,,0,4.4,2682.8,0.08,0.6
-slope_l_2x2,toyventor_slope_l_2x2_L.stl,pass,Prints as is,33.14,137.3,0.66,0,59.1,701.7,2.23,
-slope_s_2x2,toyventor_slope_s_2x2_S.stl,pass,Prints as is,4.47,23.5,0.09,0,19.39,201.6,1.37,
-spin_capsule,toyventor_spin_capsule_L.stl,pass,Prints as is,32.16,118.5,0.64,0,54.69,991.8,1.74,
-tile_l_2x2,toyventor_tile_l_2x2_L.stl,pass,Prints as is,11.62,58.7,0.23,0,10.0,701.7,0.38,
-tile_s_2x2,toyventor_tile_s_2x2_S.stl,pass,Prints as is,2.1,13.8,0.04,0,5.0,201.6,0.35,
-veh_cab_roof_cover,toyventor_veh_cab_roof_cover_S.stl,pass,Prints as is,,,,0,20.3,214.3,1.39,
+skin_aero_cowl,toyventor_skin_aero_cowl_S.stl,pass_with_warnings,Warnings: V8_wall_thickness,,,,0,4.4,3512.3,0.07,0.6
+skin_cargo_shroud,toyventor_skin_cargo_shroud_S.stl,pass_with_warnings,Warnings: V8_wall_thickness,,,,0,4.4,5494.8,0.06,0.6
+skin_windscreen,toyventor_skin_windscreen_S.stl,pass_with_warnings,Warnings: V8_wall_thickness,,,,0,4.4,3388.1,0.08,0.5
+slope_l_2x2,toyventor_slope_l_2x2_L.stl,pass,Prints as is,,,,0,59.1,1744.5,1.41,
+slope_s_2x2,toyventor_slope_s_2x2_S.stl,pass,Prints as is,,,,0,19.39,407.7,0.96,
+spin_capsule,toyventor_spin_capsule_L.stl,pass,Prints as is,,,,0,54.69,965.0,1.76,
+tile_l_2x2,toyventor_tile_l_2x2_L.stl,pass,Prints as is,,,,0,10.0,2368.5,0.21,
+tile_s_2x2,toyventor_tile_s_2x2_S.stl,pass,Prints as is,,,,0,5.0,574.9,0.21,
+veh_cab_roof_cover,toyventor_veh_cab_roof_cover_S.stl,pass,Prints as is,,,,0,20.3,201.1,1.43,
 veh_car_chassis,toyventor_veh_car_chassis_S.stl,pass,Prints as is,,,,0,25.3,5044.8,0.36,
-veh_car_hood_cover,toyventor_veh_car_hood_cover_S.stl,pass,Prints as is,,,,0,17.3,448.5,0.82,
+veh_car_hood_cover,toyventor_veh_car_hood_cover_S.stl,pass,Prints as is,,,,0,17.3,422.1,0.84,
 veh_handlebar_fork,toyventor_veh_handlebar_fork_P.stl,pass,Prints as is,,,,0,6.6,497.3,0.3,
-veh_moto_cowling,toyventor_veh_moto_cowling_S.stl,pass,Prints as is,,,,0,31.8,446.9,1.5,
-veh_scooter_fairing,toyventor_veh_scooter_fairing_S.stl,pass,Prints as is,,,,0,15.0,212.9,1.03,
+veh_moto_cowling,toyventor_veh_moto_cowling_S.stl,pass,Prints as is,,,,0,31.8,420.6,1.55,
+veh_scooter_fairing,toyventor_veh_scooter_fairing_S.stl,pass,Prints as is,,,,0,15.0,199.7,1.06,
 veh_scooter_frame,toyventor_veh_scooter_frame_S.stl,pass,Prints as is,,,,0,31.8,3543.2,0.53,
 veh_steering_wheel,toyventor_veh_steering_wheel_P.stl,pass,Prints as is,,,,0,31.0,468.3,1.43,
-veh_truck_bed_cover,toyventor_veh_truck_bed_cover_S.stl,pass,Prints as is,,,,0,20.2,685.5,0.77,
+veh_truck_bed_cover,toyventor_veh_truck_bed_cover_S.stl,pass,Prints as is,,,,0,20.2,646.0,0.79,
 veh_truck_chassis,toyventor_veh_truck_chassis_S.stl,pass,Prints as is,,,,0,28.8,5861.8,0.38,
 veh_wheel_moto,toyventor_veh_wheel_moto_P.stl,pass,Prints as is,,,,0,14.0,739.6,0.51,
 veh_wheel_offroad,toyventor_veh_wheel_offroad_P.stl,pass,Prints as is,,,,0,14.0,1259.2,0.39,
 veh_wheel_sport,toyventor_veh_wheel_sport_P.stl,pass,Prints as is,,,,0,13.5,820.4,0.47,
-waddle_tail,toyventor_waddle_tail_L.stl,pass,Prints as is,17.54,74.2,0.35,0,78.71,564.4,3.31,
-waddle_tail_s,toyventor_waddle_tail_s_S.stl,pass_with_settings,Prints with brim_width_mm = 3,4.3,34.2,0.09,3,40.35,189.3,2.93,
+waddle_tail,toyventor_waddle_tail_L.stl,pass,Prints as is,,,,0,78.71,530.1,3.42,
+waddle_tail_s,toyventor_waddle_tail_s_S.stl,pass,Prints as is,,,,0,40.35,176.2,3.04,
 wheel_tu04,toyventor_wheel_tu04_P.stl,pass,Prints as is,11.86,84.1,0.24,0,12.5,1637.5,0.31,
 wheel_tu06,toyventor_wheel_tu06_P.stl,pass,Prints as is,24.21,161.9,0.48,0,12.5,3853.0,0.2,
-wobble_hat,toyventor_wobble_hat_S.stl,pass,Prints as is,2.03,19.7,0.04,0,26.04,195.6,1.86,
-zoom_capsule,toyventor_zoom_capsule_L.stl,pass,Prints as is,16.34,68.2,0.33,0,62.68,830.2,2.18,
-zoom_capsule_s,toyventor_zoom_capsule_s_S.stl,pass_with_settings,Prints with brim_width_mm = 5,3.32,23.0,0.07,5,31.34,207.2,2.18,
+wobble_hat,toyventor_wobble_hat_S.stl,pass,Prints as is,,,,0,26.04,189.1,1.89,
+zoom_capsule,toyventor_zoom_capsule_L.stl,pass,Prints as is,,,,0,62.68,810.6,2.2,
+zoom_capsule_s,toyventor_zoom_capsule_s_S.stl,pass,Prints as is,,,,0,31.34,199.6,2.22,

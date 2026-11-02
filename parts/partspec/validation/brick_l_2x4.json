@@ -1,50 +1,30 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_brick_l_2x4_L.stl",
-  "file_sha256": "b325a1a02a7133cf69811e5974de4e4b6cc847a5089ba3310c747fe1c181e9b6",
+  "file_sha256": "f5f3d275d66348ff342aadc06e5fe4aa14e56ebe1792e62c8cbc1c6a03762ac9",
   "part_id": "brick_l_2x4",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-11-01T21:28:53Z",
+  "checked_at": "2026-11-02T00:26:15Z",
   "metrics": {
     "bbox_mm": [
       99.7,
       49.7,
       35.6
     ],
-    "volume_cm3": 63.3,
-    "surface_cm2": 365.12,
-    "triangles": 15124,
+    "volume_cm3": 145.57,
+    "surface_cm2": 223.07,
+    "triangles": 16916,
     "ledges": [],
+    "floating_contours": [],
     "layers": 178,
-    "bed_contact_mm2": 1437.6,
+    "bed_contact_mm2": 3555.6,
     "height_mm": 35.6,
-    "slenderness": 0.94,
+    "slenderness": 0.6,
     "centre_of_mass_over_contact": true,
     "min_wall_mm": null,
     "thin_wall_regions": []
   },
-  "bridges": [
-    {
-      "z_mm": 27.0,
-      "span_mm": 16.47,
-      "area_mm2": 2949.4
-    },
-    {
-      "z_mm": 27.0,
-      "span_mm": 13.29,
-      "area_mm2": 138.8
-    },
-    {
-      "z_mm": 27.0,
-      "span_mm": 13.29,
-      "area_mm2": 138.8
-    },
-    {
-      "z_mm": 27.0,
-      "span_mm": 13.29,
-      "area_mm2": 138.8
-    }
-  ],
+  "bridges": [],
   "checks": [
     {
       "id": "V1_mesh_sound",
@@ -95,12 +75,20 @@
       "detail": "mm2 of flat underside held on one side only (a ledge over air, not a bridge)"
     },
     {
+      "id": "V11_floating_contour",
+      "level": "block",
+      "result": "pass",
+      "value": 0,
+      "limit": 0,
+      "detail": "unanchored interior hole loops in bridge ceilings or low-Z hovering cantilevers"
+    },
+    {
       "id": "V6_bridge_span",
       "level": "block",
       "result": "pass",
-      "value": 16.47,
+      "value": 0.0,
       "limit": 20,
-      "detail": "4 bridge(s); widest unsupported span in mm"
+      "detail": "0 bridge(s); widest unsupported span in mm"
     },
     {
       "id": "V5_no_floating_islands",
@@ -122,9 +110,9 @@
       "id": "V9_bed_contact",
       "level": "info",
       "result": "pass",
-      "value": 1437.6,
+      "value": 3555.6,
       "limit": null,
-      "detail": "height / sqrt(contact) = 0.94; above about 3 the slicer often asks for a brim"
+      "detail": "height / sqrt(contact) = 0.6; above about 3 the slicer often asks for a brim"
     },
     {
       "id": "V8_wall_thickness",
@@ -133,54 +121,10 @@
       "value": 0,
       "limit": 0,
       "detail": "regions where the wall is under 0.8 mm (two nozzle widths) over 2.0 mm2, or under 0.4 mm (one nozzle width) over 0.25 mm2; sharp edges and slivers are ignored"
-    },
-    {
-      "id": "S1_slices",
-      "level": "block",
-      "result": "pass",
-      "value": null,
-      "limit": null,
-      "detail": "sliced without errors"
-    },
-    {
-      "id": "S2_slicer_stability",
-      "level": "warn",
-      "result": "pass",
-      "value": null,
-      "limit": null,
-      "detail": "noted: Long bridging extrusions"
-    },
-    {
-      "id": "S3_slicer_blocking",
-      "level": "block",
-      "result": "pass",
-      "value": null,
-      "limit": null,
-      "detail": "nothing the slicer would print in mid-air"
     }
   ],
   "print_settings": {},
-  "slicer": {
-    "ok": true,
-    "brim_mm": 0,
-    "seconds_to_slice": 13.2,
-    "warnings": [
-      "Long bridging extrusions"
-    ],
-    "filament_g": 58.55,
-    "filament_m": 19.63,
-    "filament_cost_usd": 1.17,
-    "print_time_s": 17494,
-    "layers": 178,
-    "warnings_without_brim": [
-      "Long bridging extrusions"
-    ],
-    "brims_tried_mm": [
-      0
-    ],
-    "engine": "PrusaSlicer-2.8.1",
-    "reused_from": "2026-10-31T14:24:55Z"
-  },
+  "slicer": null,
   "verdict": "pass",
   "summary": "Prints as is"
 }

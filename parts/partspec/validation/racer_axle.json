@@ -4,7 +4,7 @@
   "file_sha256": "de5861d4cd313d495deb2c87575312b519918b48c28ad2307215f608d5bb3ae8",
   "part_id": "racer_axle",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-11-01T21:32:00Z",
+  "checked_at": "2026-11-02T00:29:42Z",
   "metrics": {
     "bbox_mm": [
       6.6,
@@ -15,6 +15,7 @@
     "surface_cm2": 10.61,
     "triangles": 384,
     "ledges": [],
+    "floating_contours": [],
     "layers": 25,
     "bed_contact_mm2": 169.7,
     "height_mm": 5.0,
@@ -72,6 +73,14 @@
       "value": 0.0,
       "limit": 1.0,
       "detail": "mm2 of flat underside held on one side only (a ledge over air, not a bridge)"
+    },
+    {
+      "id": "V11_floating_contour",
+      "level": "block",
+      "result": "pass",
+      "value": 0,
+      "limit": 0,
+      "detail": "unanchored interior hole loops in bridge ceilings or low-Z hovering cantilevers"
     },
     {
       "id": "V6_bridge_span",
@@ -160,7 +169,7 @@
     ],
     "engine": "PrusaSlicer-2.8.1",
     "slice_logic": "1",
-    "reused_from": "2026-10-31T14:35:44Z"
+    "reused_from": "2026-11-01T21:32:00Z"
   },
   "verdict": "pass_with_settings",
   "summary": "Prints with brim_width_mm = 3"

@@ -84,6 +84,20 @@ The assist features (detailed after the Forge sections):
   (at most 60 characters) with the image and calls `segmentToy`.
 - [play-design-spec.md](play-design-spec.md): the nine-step level drafting
   pipeline that level review follows.
+- The forge-optimizer lane (`feat/parts-asset-optimization`, in `main` through
+  `058cf61`; read and smoke-run 2026-11-02): `shared/forgeOptimizer.ts`
+  (`ForgeRecipeV1`, job and gate-report types, brand check),
+  `scripts/forge_optimizer_daemon.py` (warm daemon started by
+  `npm run forge:optimizer`: `compile_recipe_to_partspec`, the mandatory L1
+  slope clamp, `validate_and_export`, which re-runs the print gate on the
+  optimized mesh (`verify_preprint=True` is set inside the SDK, not by the
+  request), a bounded queue, bearer auth, content-addressed artifacts)
+  and `worker/forgeOptimizer.ts` behind `POST /api/forge/preview`,
+  `GET /api/forge/jobs/:id` and `GET /api/forge/artifacts/:name` (off until
+  `FORGE_OPTIMIZER_URL` is set). It has an opt-in minimal-support tier
+  (`support_policy: "minimal"`) for crown, head and back slots. It calls no
+  model. A later commit (`6f8f2b1`: gate parity test, slow-client and cache
+  bounds) is on `feat/parts-asset-optimization-followups`, not in `main`.
 
 ## Shared engine
 
@@ -109,13 +123,24 @@ rejected, numbers are clamped to bounds, and nothing is executed.
 
 - `slot`: `crown | head | back | hand | front | rollbar | spoiler | hood | roof | exhaust`
   (the builders already in the SDK prompt table).
-- `shape.kind`: `loft` (3 to 12 slices, all slots except hand), `profile2d`
-  (hand slot, polygon in x,z), `star2d`.
-- `features`: at most 6, from an allowlist (`brim`, `knob`, `ears`, `fin`,
-  `antenna`, `band`). Each is a parametric op with bounded numbers, so the model
-  can add character without being able to break geometry.
+- `shape.kind`: `loft` (all slots except hand; the compiler enforces 2 to 16
+  slices and the prompt asks for 3 to 12), `profile2d` (hand slot, polygon in
+  x,z, 3 to 64 points), `star2d` (hand slot, the default there).
+- `features`: at most 6, from an allowlist. Built: `brim` and `knob`. Planned,
+  not in the compiler: `ears`, `fin`, `antenna`, `band`. Each is a parametric op
+  with bounded numbers, so the model can add character without being able to
+  break geometry.
+- `support_policy` (optional): `none` (default) or `minimal`; `minimal` is only
+  allowed on `crown`, `head` and `back`. `shape.height_mm` (optional, 24 to 38)
+  sets a head's height.
 - `id` gets a `custom_` prefix server-side. `stat` is one of Speed, Spin,
   Torque, Glow. Brand terms are rejected before and after the model call.
+- **As built.** `ForgeRecipeV1` in `shared/forgeOptimizer.ts` and
+  `compile_recipe_to_partspec` in `scripts/forge_optimizer_daemon.py` already
+  implement this recipe as listed here (read, and smoke-run with 12 crown
+  jobs, 2026-11-02). Where
+  this section and that code differ, the code wins until the optimizer lane
+  agrees a change (open question 19).
 
 ### Pipeline (every feature)
 
@@ -128,13 +153,21 @@ rejected, numbers are clamped to bounds, and nothing is executed.
 3. **Legalize (no model call).** Deterministic fixes applied before any
    gate runs:
    - L1 slope clamp: outward growth per side <= 0.78 x dz between slices
-     (the P1/P4 rule from the prompt).
+     (the P1/P4 rule from the prompt). Built: `legalize_loft_slices` in the
+     daemon, always on.
    - L2 size band: if the minimum enclosing cylinder lands in the
      small-parts marginal band, move it out by the smaller change
-     (< 29.5 mm or > 36.0 mm guidance), never below the slot pad.
-   - L3 clamp every number to the slot's bounds.
+     (< 29.5 mm or > 36.0 mm guidance), never below the slot pad. Not built yet.
+     The gate's own edges (`interfaces.json`, `toyventor_parts.py`): at most
+     31.75 mm is `small_part` and passes, 31.75 to 34.925 mm (+10%) is
+     `marginal` and fails, above that is `above_cylinder`. The smoke run hit the
+     band at 31.86 mm and 33.48 mm. The 29.5 and 36.0 mm figures are guidance
+     with margin around that band.
+   - L3 clamp every number to the slot's bounds. Built in the daemon for loft
+     slices, hand shapes and features.
    Ship L1 and L2 first. Add more only when the eval shows a gate dominating.
-4. **Build and gate.** Python compiler (`forge_recipe.py`) turns the recipe
+4. **Build and gate.** Python compiler (`compile_recipe_to_partspec` in
+   `scripts/forge_optimizer_daemon.py`) turns the recipe
    into an SDK `part_spec` and runs `validate_and_export()`. Output is the
    slim JSON report plus STL and manifest on success.
 5. **Repair (F3).** On failure, send the model only the structured failures
@@ -155,7 +188,7 @@ The gates are Python and `manifold3d`; they cannot run in a Worker. Options:
 
 | Option | Verdict |
 | --- | --- |
-| A. Local validator server (`scripts/forge-serve.ts` wrapping `forge_recipe.py`), Worker proxies when `FORGE_VALIDATOR_URL` is set | **Phase 0/1.** No new infra, works for the Nov 4 demo and for pre-generating a showcase set. |
+| A. Local validator server. Partly built as the optimizer daemon (`npm run forge:optimizer`, `scripts/forge_optimizer_daemon.py`); the Worker proxies when `FORGE_OPTIMIZER_URL` is set (`worker/forgeOptimizer.ts`, off by default) | **Phase 0/1.** No new infra, works for the Nov 4 demo and for pre-generating a showcase set. |
 | B. Cloudflare Container or Sandbox running the venv | **Phase 1b.** Same HTTP contract as A, so swapping is config. |
 | C. Port gates to TypeScript with `manifold-3d` WASM | **Rejected.** Large port, and a second copy of the gates will drift from the Python source of truth. |
 
@@ -165,6 +198,15 @@ slim report. Jobs are asynchronous (`POST /api/forge` returns `jobId`; poll
 done, failed`. A job is several calls long, far past the 13 s single-call
 budget in `muse.ts`, so the UI shows staged "Forging..." progress. The wait
 is part of the experience, not a bug.
+
+The optimizer lane already has routes (`POST /api/forge/preview`,
+`GET /api/forge/jobs/:id`, `GET /api/forge/artifacts/:name`) and job states
+(`queued, preview_ready, validating, optimizing, print_ready, digital_only,
+failed`) that cover compile and gate only. Proposal: the Forge job (propose and
+repair) stays the outer layer with the stages above, hands each recipe to an
+optimizer job and returns that job's `job_id`; since `/api/forge/jobs/:id`
+belongs to the optimizer, the outer poll route needs a different name (open
+question 19).
 
 ### Guards
 
@@ -186,9 +228,10 @@ is part of the experience, not a bug.
 
 - **Flow:** text in, slot inferred if not given, pipeline above, verified STL
   plus preview on the equipped host.
-- **Fastest cut:** the prompt and validator already exist. Phase 0 is just the
-  Recipe schema, `forge_recipe.py`, and a CLI loop (`npm run forge:run`)
-  that calls Spark and writes verified parts to `public/kip/custom/`.
+- **Fastest cut:** the prompt, validator, compiler and gate server already
+  exist (the optimizer daemon). Phase 0 is just the model call, L2, and a CLI
+  loop (`npm run forge:run`) that calls Spark, sends each recipe to the daemon
+  and writes verified parts to `public/kip/custom/`.
 - **Acceptance (targets, to be confirmed by the first eval run):**
   - >= 80% of the eval prompts end verified within 4 model calls.
   - 0 brand-term violations in shipped output (hard requirement).
@@ -232,6 +275,20 @@ is the **printable** one.
 - **Feedback format to the model:** per failure, `{gate, measured, limit,
   hint}`. No raw logs. Example hint: "P1: slice 3 grows 6.1 mm per side over
   dz 5.0; limit 3.9. Reduce growth or add slices."
+- **What the daemon returns today (smoke run, 2026-11-02, 12 jobs):**
+  - A marginal small-parts result comes back `ok: false`,
+    `design_status: "needs_reproportion"` and `blocking_failures: []`. The only
+    signal is `small_part` (`status`, `min_enclosing_diameter_mm`,
+    `margin_pct`), so repair feedback must be built from `small_part` and
+    `design_status` as well as `blocking_failures`.
+  - A recipe that fails to compile (an unknown slot, for example) gets HTTP 422
+    `invalid payload` with no reason, by design. The repair loop cannot learn
+    from it unless the outer layer checks the same bounds first or the daemon
+    gains a safe detail channel (open question 19).
+  - The L1 clamp changes slices silently: an over-flared hat (a 40 mm slice
+    2 mm above a 24 mm base) came back `print_ready`, and by the clamp rule that
+    slice is cut to about 27 mm, but the response lists nothing that moved.
+    Legalizers should report each change so the eval can count them.
 - **Stops:** passes, 4 calls used, or the same gate fails twice on the same
   recipe (no progress).
 - **Deliverable beyond the loop:** `npm run forge:repair -- my_part.py` for
@@ -422,7 +479,7 @@ sections 5 to 7, `parts/partspec/preprint_check.py`,
 | --- | --- | --- |
 | Orientation, supports, bridges, brim | No | `preprint_check.py` gates overhang, floating islands, bridge span and ledges at the catalog bar (1.0 mm² steep overhang, 20 mm bridge). Orientation is a search over a few poses. The open work is browser parity with the gate and exporting each part's brim width (print workflow spec 7.1). |
 | Plate packing, kit-card and sprue layout, colour consolidation | No | Packing and clustering algorithms (print workflow spec 5 and 6). |
-| Printable generated parts | Already here | The L1 slope clamp is the 45° rule and the F3 loop reads gate failures. The eval already counts failures per gate id; support-free yield is read from those counts. |
+| Printable generated parts | Already here | The L1 slope clamp is the 45° rule and the F3 loop reads gate failures. The eval already counts failures per gate id; support-free yield is read from those counts. The optimizer daemon (see "Already in the repo") already runs `validate_and_export`, which re-runs the print gate on the optimized mesh, and returns a `slicer_recipe`; it calls no model. |
 | Existing Kip parts that fail the overhang check (9 of 30 per print workflow spec 7.3) | Not a product feature | CAD work. A model could propose `.scad` edits with the gate as accept or reject, but a parameter sweep gets most of that value, so keep it a dev-time tool. |
 | Per-printer tolerance | Statistics, not an LLM | A prior by printer, nozzle and material, updated from the hidden 1/2/3 fit choice ([parts-tu-spec.md](../parts/parts-tu-spec.md) section 2). The photo variant is stretch item 7. Waits on `F1_printed_fit` data; the calibration print started 2026-10-31. |
 | Failed-print triage | Yes | A6 above. |
@@ -436,6 +493,61 @@ set so each layer's value is measured:
 1. Single shot, no legalizer, no repair.
 2. Plus legalizers.
 3. Plus repair loop.
+
+**Built (2026-11-02, uncommitted):** `scripts/forge-eval.ts`,
+`scripts/lib/forgeEvalCore.ts` and `tests/forge/` (60 text prompts over the ten
+slots; 13 tests, strict `tsc` clean). It sends each prompt to a proposer and
+each recipe to the optimizer daemon (`npm run forge:optimizer`). The Spark
+proposer calls the Responses API as `worker/muse.ts` does and reads its key only
+from `MODEL_API_KEY` or `META_MODEL_API_KEY`; its prompt is a v0. The stub
+proposer tests plumbing and measures no model. The Spark proposer has run the
+full set once (below). The report is rewritten after every prompt and
+`--resume` continues a killed run. Two deviations from the three modes above:
+- The daemon always applies L1, so "no legalizer" cannot be measured directly.
+  The harness reports how many recipes the clamp would have changed
+  (`recipesTouchedByLegalizer`), using a TypeScript mirror checked against the
+  Python clamp on three cases.
+- Mode 1 is `--max-calls 1` and mode 3 is the default of up to 4 calls; the
+  loop stops early when the same gates fail twice on the same recipe. Mode 2
+  waits for L2.
+
+**First Spark baseline (2026-11-02, `muse-spark-1.3`, prompt v0, 60 prompts, up
+to 4 calls, one run; validity only, no taste ratings yet):**
+
+| Slot | Prompts | First attempt | Final |
+| --- | --- | --- | --- |
+| crown | 14 | 14 | 14 |
+| head | 8 | 0 | 0 |
+| hand | 8 | 3 | 6 |
+| back, hood, roof, front, rollbar, spoiler, exhaust | 30 | 30 | 30 |
+| All | 60 | 47 (78%) | 50 (83%) |
+
+- **Calls and tokens:** 94 calls for 60 prompts (mean 1.57); 69,850 tokens in and
+  149,396 out, about 740 in and 1,590 out per call (the output figure may
+  include reasoning tokens). Spark's price is not stated, so there is no cost
+  figure.
+- **Repair loop:** it recovered 3 of the 13 first-attempt failures (all hand
+  recipes) for 34 extra calls; 24 of those went to heads, which never passed.
+- **Gates:** over all attempts `G3_single_body` failed 42 times, `P4_no_ledges`
+  32 and `G1_watertight` 13. None was `small_part_marginal`, and the clamp
+  changed 2 of 60 first-attempt recipes (bounds only, no slope). This run gives
+  no reason to build L2 or more L1.
+- **Heads, 0 of 8:** always `G3_single_body` and `P4_no_ledges`, whatever the
+  shape. SDK tests found the cause. `character_head` puts the crown studs at
+  `z = height_mm` (30.5), and the v0 prompt never said so, so Spark's heads
+  stopped near 17 mm and left the studs floating. They also started 16 mm deep
+  on a 12.1 mm collar, which makes a ledge. Two hand-written heads that start at
+  the 24.6 x 12.1 mm collar, grow at most 0.78 x dz per side and span 0 to
+  30.5 mm both pass. This is a prompt gap (per-slot footprint and z span from
+  `LLM_PART_PROMPT.md`'s slot table), not evidence that the model cannot do
+  heads.
+- **Hands, 6 of 8 after repair:** the star wand and the flag on a stick failed
+  `G1_watertight` and `G3_single_body` on all 4 calls; cause not investigated.
+- **Latency:** validation p50 2.5 s, p95 16.3 s; whole job p50 9.9 s, p95 26.4 s
+  including the model call. The machine's load average fell from 73 to 20 during
+  the run, so read p95 as an upper bound.
+- **Not measured:** taste, photos (F2), or any tuned-versus-prompted comparison.
+  One run, so differences of a few prompts are noise.
 
 Reports first-attempt pass rate, final pass rate, mean model calls per job,
 latency p50 and p95, token usage per job, failure counts per gate id, and a
@@ -649,7 +761,7 @@ blank screen, and never an unverified part called printable.
    syntax failures, so the adapter only has to learn what is valid and good.
 5. **Legalize.** L1 slope clamp, L2 small-parts size band, L3 clamp.
    Deterministic and logged.
-6. **Compile and gate.** `forge_recipe.py` builds a `part_spec`;
+6. **Compile and gate.** The daemon's `compile_recipe_to_partspec` builds a `part_spec`;
    `validate_and_export()` runs the gates: overhang, islands, bridges, ledges,
    the small-parts screen, brand errors and the attach test on a reference
    parent.
@@ -706,7 +818,7 @@ blank screen, and never an unverified part called printable.
 
 | Phase | Scope | Needs | Cost (E) | Gate or stop rule | Target |
 | --- | --- | --- | --- | --- | --- |
-| G0 | Baseline and eval: Recipe v1 schema, `forge_recipe.py`, legalizers L1 and L2, CLI loop, eval harness (about 60 prompts), pre-generated showcase; prompted baseline on hosted Spark | Local venv and Spark key | No GPU spend | An eval report exists: per-gate failure counts, first-attempt and final pass rates, cost and latency per job | Before Nov 4 (this is Phase 0) |
+| G0 | Baseline and eval: Recipe v1 schema and compiler (built in the optimizer daemon, with L1 and L3), legalizer L2, model call and repair loop, CLI loop, eval harness (about 60 prompts), pre-generated showcase; prompted baseline on hosted Spark | Local venv and Spark key | No GPU spend | An eval report exists: per-gate failure counts, first-attempt and final pass rates, cost and latency per job | Before Nov 4 (this is Phase 0) |
 | G1 | Glimmer baseline and smoke test: serve base Glimmer on Modal; run the eval prompted, with and without constrained decoding; 30 to 100 step QLoRA smoke test on about 50 recipes; record tokens per second, peak memory and cold start; test adapter serving | Modal account, G0 eval set | $5 to $20 | The smoke test saves an adapter; constrained output is valid JSON on at least 99% of calls (target); baseline numbers recorded; open question 15 answered. If Glimmer will not train or serve, stop and report. | Stretch goal; not needed for Nov 4 |
 | G2 | Data: 10 to 20 exemplar recipes measured from catalog STLs; sampler within slot bounds; gate-filtered pairs; failure-to-fix pairs; programmatic captions first, Glimmer captions for a subset; held-out eval split; license manifest | G0 compiler and legalizers; gates on Modal CPU or the local validator | $1 to $3 CPU per 50k gate runs; captions $0 to $300 | Humans spot-check style and diversity; sampler diversity measured; no eval prompt or slot appears in training | After G1 |
 | G3 | Pilot SFT: 3k to 5k pairs, QLoRA, 1 to 3 epochs, 2 to 3 variants in parallel; held-out eval against the G1 baselines. Starts only if the G1 baseline trips a Forge-model gate. | G1, G2 | $8 to $12 per run; about $30 for a three-way sweep | Beats the best prompted Glimmer baseline on first-attempt pass rate with no drop in rating. If not, stop spending: improve the data, try r=32, or stay prompted. | After G2 |
@@ -732,9 +844,9 @@ ratings) is not included and will likely exceed the GPU bill.
 
 | Phase | Scope | Needs | Target |
 | --- | --- | --- | --- |
-| 0 | Recipe schema, `forge_recipe.py`, legalizers L1 and L2, CLI loop, eval harness, pre-generated showcase set (F1, F3 core) | Local venv and Spark key only | Before Nov 4 |
+| 0 | Model call and repair loop, legalizer L2, CLI loop, eval harness, pre-generated showcase set (F1, F3 core); the Recipe v1 compiler, L1, L3 and the gate server already exist in the optimizer daemon | Local venv and Spark key only | Before Nov 4 |
 | 0b | A1 vision spike then flow, A2 template table then model rewrite, `worker/assist.ts` | Spark key only; no validator | Before Nov 4 if the vision spike passes |
-| 1 | `/api/forge` job route, local validator server, F2 profile extraction and printable path, attempt log, UI entry points | Phase 0 | Nov 4 stretch, otherwise right after |
+| 1 | `/api/forge` job route, local validator server (the optimizer daemon, partly built), F2 profile extraction and printable path, attempt log, UI entry points | Phase 0 | Nov 4 stretch, otherwise right after |
 | 1b | Validator in a Container or Sandbox | Phase 1 | After submission |
 | 2 | F5 planner (plan and edit modes, which also delivers A4), F4 host argument, host-envelope export, A5 templates | Phase 1 validator | After submission |
 | 2b | F4 cavity-hat builder | Phase 2 | Later |
@@ -755,6 +867,13 @@ these after legalizers and repair are in place:
 - Cost or latency per job is unacceptable at expected volume.
 - A hard privacy requirement for self-hosted weights.
 - Taste: ratings stay low on valid parts.
+
+**First reading (2026-11-02).** The Spark baseline's final pass rate is 83%
+overall, above the 70% line, so the pass-rate gate is not tripped. Latency is
+fine, Spark's price is unknown, and taste is unmeasured. The weak slot, head, is
+a prompt gap that hand-built heads fixed, so tuning is not indicated yet. Re-run
+with a prompt v1 that carries each slot's footprint and z span before reading
+the gate again.
 
 If tuning is chosen, the training set is the gate-filtered sampler output plus
 the attempt log (see "Data plan"). The base model is Muse Glimmer (Dan's
@@ -831,8 +950,14 @@ deterministic code verifies geometry, fit, and physics.
 
 ## Open questions (resolve by measurement, not debate)
 
-1. Validation latency per recipe, including the assembly attach test. Not yet
-   measured; it sets the job time budget.
+1. Validation latency per recipe, including the assembly attach test; it sets
+   the job time budget. First numbers (2026-11-02, crown hats through the
+   optimizer daemon, one worker): 3.0 to 5.4 s for the first three jobs (load
+   not measured), then 7.3 to 31.3 s for nine more, with a load average of 55
+   measured afterwards. Budget 5 to 30 s per validation until it is measured on
+   a quiet machine; four repair rounds then add 20 s to 2 min before model time.
+   Baseline run (94 jobs, load average 73 falling to 20): validation p50 2.5 s,
+   p95 16.3 s.
 2. Whether hosted Muse Spark accepts image input through the Responses API.
    Muse Spark Open's page says it perceives images; hosted behavior is
    unverified here. F2 does not depend on it; A1 does.
@@ -882,6 +1007,23 @@ deterministic code verifies geometry, fit, and physics.
     its parameter counts are as inferred (816B total, 42B active), whether any
     tuning recipe exists, and what serving costs on Modal. G7 does not start
     until these are answered.
+19. Contract alignment with the optimizer lane. The outer Forge job
+    (`POST /api/forge`; stages `proposing`, `checking`, `repairing`) versus the
+    lane's routes and job states (`/api/forge/preview`, `/api/forge/jobs/:id`;
+    `queued` to `print_ready` or `digital_only`). Proposal: keep the Forge job
+    as an outer layer that hands each recipe to an optimizer job and returns its
+    `job_id`; give the outer poll route another name; treat the lane's Recipe v1
+    limits (2 to 16 slices, `knob` and `brim` only, `support_policy`) as
+    canonical and add `ears`, `fin`, `antenna` and `band` only when the eval
+    shows a need. The lane's owner agrees this before any Phase 0 change to its
+    files. Also for that owner: the daemon's hand path hardcodes
+    `fillet_r = 1.4` for `star2d`, while the verified `custom_star_wand` uses
+    1.6. In an SDK-only test (2026-11-02) the same star passes at 1.6 and fails
+    `G1_watertight` and `G3_single_body` at 1.4 (`center_z` made no difference),
+    and 5 of the 6 star shapes tried through the daemon failed. Fixed in
+    `main` on 2026-11-02 (uncommitted): the daemon now uses 1.6, and 8 of 9
+    star shapes pass in an SDK test (the ninth is a marginal size). The lane's
+    follow-up branch still has the 1.4 line.
 
 ## Docs impact when this ships
 

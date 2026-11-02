@@ -4,7 +4,7 @@
   "file_sha256": "e87cc5543b54a7275b155646cc92d2dee2691f1f9b0bcf655fbf9f2e01d49093",
   "part_id": "veh_truck_chassis",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-11-01T21:36:19Z",
+  "checked_at": "2026-11-02T00:33:47Z",
   "metrics": {
     "bbox_mm": [
       58.0,
@@ -15,6 +15,7 @@
     "surface_cm2": 240.61,
     "triangles": 36712,
     "ledges": [],
+    "floating_contours": [],
     "layers": 144,
     "bed_contact_mm2": 5861.8,
     "height_mm": 28.8,
@@ -93,6 +94,14 @@
       "value": 0.0,
       "limit": 1.0,
       "detail": "mm2 of flat underside held on one side only (a ledge over air, not a bridge)"
+    },
+    {
+      "id": "V11_floating_contour",
+      "level": "block",
+      "result": "pass",
+      "value": 0,
+      "limit": 0,
+      "detail": "unanchored interior hole loops in bridge ceilings or low-Z hovering cantilevers"
     },
     {
       "id": "V6_bridge_span",

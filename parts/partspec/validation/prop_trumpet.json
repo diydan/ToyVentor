@@ -4,7 +4,7 @@
   "file_sha256": "3e09bf7388f2cadd93197877252940be9c8ac0c78c9d04012e00b51f205be943",
   "part_id": "prop_trumpet",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-11-01T21:35:19Z",
+  "checked_at": "2026-11-02T00:32:43Z",
   "metrics": {
     "bbox_mm": [
       36.0,
@@ -15,6 +15,7 @@
     "surface_cm2": 46.36,
     "triangles": 1188,
     "ledges": [],
+    "floating_contours": [],
     "layers": 36,
     "bed_contact_mm2": 1221.2,
     "height_mm": 7.2,
@@ -72,6 +73,14 @@
       "value": 0.0,
       "limit": 1.0,
       "detail": "mm2 of flat underside held on one side only (a ledge over air, not a bridge)"
+    },
+    {
+      "id": "V11_floating_contour",
+      "level": "block",
+      "result": "pass",
+      "value": 0,
+      "limit": 0,
+      "detail": "unanchored interior hole loops in bridge ceilings or low-Z hovering cantilevers"
     },
     {
       "id": "V6_bridge_span",

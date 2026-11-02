@@ -4,7 +4,7 @@
   "file_sha256": "99b58558990f405ca4cec9614b2f1f0729805969800bd69a3b2946faedcebb3d",
   "part_id": "pin_free_tu03",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-11-01T21:39:48Z",
+  "checked_at": "2026-11-02T00:35:30Z",
   "metrics": {
     "bbox_mm": [
       9.0,
@@ -15,6 +15,7 @@
     "surface_cm2": 8.96,
     "triangles": 444,
     "ledges": [],
+    "floating_contours": [],
     "layers": 28,
     "bed_contact_mm2": 152.9,
     "height_mm": 5.6,
@@ -72,6 +73,14 @@
       "value": 0.0,
       "limit": 1.0,
       "detail": "mm2 of flat underside held on one side only (a ledge over air, not a bridge)"
+    },
+    {
+      "id": "V11_floating_contour",
+      "level": "block",
+      "result": "pass",
+      "value": 0,
+      "limit": 0,
+      "detail": "unanchored interior hole loops in bridge ceilings or low-Z hovering cantilevers"
     },
     {
       "id": "V6_bridge_span",

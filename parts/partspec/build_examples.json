@@ -40,15 +40,15 @@
         "male": "ring.top_studs",
         "female": "brick.under_sockets",
         "engaged_studs": 3,
-        "gap_min_mm": 0.058,
-        "gap_max_mm": 0.058
+        "gap_min_mm": 0.045,
+        "gap_max_mm": 0.045
       },
       {
         "male": "brick.top_studs",
         "female": "tail.under_sockets",
         "engaged_studs": 2,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.045,
+        "gap_max_mm": 0.045
       }
     ]
   },
@@ -83,8 +83,8 @@
         "male": "plate.top_studs",
         "female": "glow.under_sockets",
         "engaged_studs": 1,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.048,
+        "gap_max_mm": 0.048
       }
     ]
   },
@@ -119,8 +119,8 @@
         "male": "plate.top_studs",
         "female": "wings.under_sockets",
         "engaged_studs": 4,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.048,
+        "gap_max_mm": 0.048
       }
     ]
   },
@@ -170,15 +170,15 @@
         "male": "plate.top_studs",
         "female": "glow.under_sockets",
         "engaged_studs": 1,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.048,
+        "gap_max_mm": 0.048
       },
       {
         "male": "plate.top_studs",
         "female": "wings.under_sockets",
         "engaged_studs": 4,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.048,
+        "gap_max_mm": 0.048
       }
     ]
   },
@@ -213,8 +213,8 @@
         "male": "b1.top_studs",
         "female": "b2.under_sockets",
         "engaged_studs": 2,
-        "gap_min_mm": 0.058,
-        "gap_max_mm": 0.058
+        "gap_min_mm": 0.045,
+        "gap_max_mm": 0.045
       }
     ]
   },
@@ -658,8 +658,8 @@
         "male": "adapter.top_studs",
         "female": "brick.under_sockets",
         "engaged_studs": 4,
-        "gap_min_mm": 0.058,
-        "gap_max_mm": 0.058
+        "gap_min_mm": 0.048,
+        "gap_max_mm": 0.048
       }
     ]
   },
@@ -942,29 +942,29 @@
         "male": "legs.top_studs",
         "female": "torso.under_sockets",
         "engaged_studs": 4,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.048,
+        "gap_max_mm": 0.048
       },
       {
         "male": "torso.top_studs",
         "female": "arms.under_sockets",
         "engaged_studs": 4,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.048,
+        "gap_max_mm": 0.048
       },
       {
         "male": "arms.top_studs",
         "female": "head.under_sockets",
         "engaged_studs": 2,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.048,
+        "gap_max_mm": 0.048
       },
       {
         "male": "arms.top_studs",
         "female": "pack.under_sockets",
         "engaged_studs": 2,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.048,
+        "gap_max_mm": 0.048
       }
     ]
   },
@@ -1437,8 +1437,8 @@
         "male": "block.top_studs",
         "female": "chassis.under_sockets",
         "engaged_studs": 4,
-        "gap_min_mm": 0.058,
-        "gap_max_mm": 0.058
+        "gap_min_mm": 0.048,
+        "gap_max_mm": 0.048
       },
       {
         "male": "axle.axis",
@@ -1543,22 +1543,22 @@
         "male": "legs.top_studs",
         "female": "torso.under_sockets",
         "engaged_studs": 4,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.048,
+        "gap_max_mm": 0.048
       },
       {
         "male": "torso.top_studs",
         "female": "arms.under_sockets",
         "engaged_studs": 4,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.048,
+        "gap_max_mm": 0.048
       },
       {
         "male": "arms.top_studs",
         "female": "head.under_sockets",
         "engaged_studs": 2,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.048,
+        "gap_max_mm": 0.048
       },
       {
         "male": "faceplate.axis",
@@ -1572,15 +1572,15 @@
         "male": "head.top_studs",
         "female": "hair.under_sockets",
         "engaged_studs": 2,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.052,
+        "gap_max_mm": 0.052
       },
       {
         "male": "hair.top_studs",
         "female": "hat.under_sockets",
         "engaged_studs": 1,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.048,
+        "gap_max_mm": 0.048
       }
     ]
   },
@@ -1659,22 +1659,22 @@
         "male": "legs.top_studs",
         "female": "torso.under_sockets",
         "engaged_studs": 4,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.048,
+        "gap_max_mm": 0.048
       },
       {
         "male": "torso.top_studs",
         "female": "arms.under_sockets",
         "engaged_studs": 4,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.048,
+        "gap_max_mm": 0.048
       },
       {
         "male": "arms.top_studs",
         "female": "head.under_sockets",
         "engaged_studs": 2,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.048,
+        "gap_max_mm": 0.048
       },
       {
         "male": "faceplate.axis",
@@ -1688,8 +1688,8 @@
         "male": "head.top_studs",
         "female": "hat.under_sockets",
         "engaged_studs": 2,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.052,
+        "gap_max_mm": 0.052
       }
     ]
   },
@@ -1778,22 +1778,22 @@
         "male": "legs.top_studs",
         "female": "torso.under_sockets",
         "engaged_studs": 4,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.048,
+        "gap_max_mm": 0.048
       },
       {
         "male": "torso.top_studs",
         "female": "arms.under_sockets",
         "engaged_studs": 4,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.048,
+        "gap_max_mm": 0.048
       },
       {
         "male": "arms.top_studs",
         "female": "head.under_sockets",
         "engaged_studs": 2,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.048,
+        "gap_max_mm": 0.048
       },
       {
         "male": "faceplate.axis",
@@ -1807,15 +1807,15 @@
         "male": "head.top_studs",
         "female": "hair.under_sockets",
         "engaged_studs": 2,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.052,
+        "gap_max_mm": 0.052
       },
       {
         "male": "hair.top_studs",
         "female": "hat.under_sockets",
         "engaged_studs": 2,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.052,
+        "gap_max_mm": 0.052
       }
     ]
   },
@@ -2014,43 +2014,43 @@
         "male": "car.hood_studs",
         "female": "hood_cover.under_sockets",
         "engaged_studs": 4,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.048,
+        "gap_max_mm": 0.048
       },
       {
         "male": "car.rollbar_studs",
         "female": "cab_cover.under_sockets",
         "engaged_studs": 2,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.048,
+        "gap_max_mm": 0.048
       },
       {
         "male": "car.front_studs",
         "female": "bull_bar.under_sockets",
         "engaged_studs": 2,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.048,
+        "gap_max_mm": 0.048
       },
       {
         "male": "car.spoiler_studs",
         "female": "spoiler.under_sockets",
         "engaged_studs": 2,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.048,
+        "gap_max_mm": 0.048
       },
       {
         "male": "car.exhaust_studs",
         "female": "exhaust.under_sockets",
         "engaged_studs": 2,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.048,
+        "gap_max_mm": 0.048
       },
       {
         "male": "car.top_studs",
         "female": "driver_legs.under_sockets",
         "engaged_studs": 4,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.048,
+        "gap_max_mm": 0.048
       },
       {
         "male": "wheel_steer.axis",
@@ -2080,15 +2080,15 @@
         "male": "hood_cover.top_studs",
         "female": "hood_scoop.under_sockets",
         "engaged_studs": 4,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.048,
+        "gap_max_mm": 0.048
       },
       {
         "male": "cab_cover.top_studs",
         "female": "light_bar.under_sockets",
         "engaged_studs": 2,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.048,
+        "gap_max_mm": 0.048
       },
       {
         "male": "ax_f.axis",
@@ -2309,36 +2309,36 @@
         "male": "truck.hood_studs",
         "female": "hood_cover.under_sockets",
         "engaged_studs": 4,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.048,
+        "gap_max_mm": 0.048
       },
       {
         "male": "truck.roof_studs",
         "female": "cab_cover.under_sockets",
         "engaged_studs": 2,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.048,
+        "gap_max_mm": 0.048
       },
       {
         "male": "truck.cargo_studs",
         "female": "bed_cover.under_sockets",
         "engaged_studs": 6,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.048,
+        "gap_max_mm": 0.048
       },
       {
         "male": "truck.front_studs",
         "female": "bull_bar.under_sockets",
         "engaged_studs": 2,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.048,
+        "gap_max_mm": 0.048
       },
       {
         "male": "truck.top_studs",
         "female": "driver_legs.under_sockets",
         "engaged_studs": 4,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.048,
+        "gap_max_mm": 0.048
       },
       {
         "male": "wheel_steer.axis",
@@ -2368,15 +2368,15 @@
         "male": "cab_cover.top_studs",
         "female": "roof_rack.under_sockets",
         "engaged_studs": 4,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.048,
+        "gap_max_mm": 0.048
       },
       {
         "male": "bed_cover.bed_studs",
         "female": "cargo_pack.under_sockets",
         "engaged_studs": 4,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.048,
+        "gap_max_mm": 0.048
       },
       {
         "male": "ax_f.axis",
@@ -2529,22 +2529,22 @@
         "male": "scooter.fairing_studs",
         "female": "fairing.under_sockets",
         "engaged_studs": 2,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.048,
+        "gap_max_mm": 0.048
       },
       {
         "male": "scooter.seat_studs",
         "female": "rider_legs.under_sockets",
         "engaged_studs": 4,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.048,
+        "gap_max_mm": 0.048
       },
       {
         "male": "scooter.exhaust_studs",
         "female": "exhaust.under_sockets",
         "engaged_studs": 2,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.048,
+        "gap_max_mm": 0.048
       },
       {
         "male": "handlebars.axis",
@@ -2741,22 +2741,22 @@
         "male": "scooter.fairing_studs",
         "female": "fairing.under_sockets",
         "engaged_studs": 2,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.048,
+        "gap_max_mm": 0.048
       },
       {
         "male": "scooter.seat_studs",
         "female": "rider_legs.under_sockets",
         "engaged_studs": 4,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.048,
+        "gap_max_mm": 0.048
       },
       {
         "male": "scooter.exhaust_studs",
         "female": "exhaust.under_sockets",
         "engaged_studs": 2,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.048,
+        "gap_max_mm": 0.048
       },
       {
         "male": "handlebars.axis",
@@ -2802,8 +2802,8 @@
         "male": "scooter.top_studs",
         "female": "moto_cowling.under_sockets",
         "engaged_studs": 4,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.048,
+        "gap_max_mm": 0.048
       },
       {
         "male": "ax_f.axis",
@@ -2825,8 +2825,8 @@
         "male": "moto_cowling.tank_studs",
         "female": "tank_pod.under_sockets",
         "engaged_studs": 1,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.048,
+        "gap_max_mm": 0.048
       }
     ]
   },
@@ -3052,29 +3052,29 @@
         "male": "keel.top_studs",
         "female": "nose_wedge.under_sockets",
         "engaged_studs": 6,
-        "gap_min_mm": 0.056,
-        "gap_max_mm": 0.058
+        "gap_min_mm": 0.048,
+        "gap_max_mm": 0.048
       },
       {
         "male": "keel.top_studs",
         "female": "windscreen.under_sockets",
         "engaged_studs": 8,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.048,
+        "gap_max_mm": 0.048
       },
       {
         "male": "keel.top_studs",
         "female": "pilot_legs.under_sockets",
         "engaged_studs": 4,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.048,
+        "gap_max_mm": 0.048
       },
       {
         "male": "keel.top_studs",
         "female": "gt_wing.under_sockets",
         "engaged_studs": 4,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.048,
+        "gap_max_mm": 0.048
       },
       {
         "male": "yoke.axis",
@@ -3147,22 +3147,22 @@
         "male": "keel.top_studs",
         "female": "windscreen.under_sockets",
         "engaged_studs": 8,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.048,
+        "gap_max_mm": 0.048
       },
       {
         "male": "keel.top_studs",
         "female": "driver_legs.under_sockets",
         "engaged_studs": 4,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.048,
+        "gap_max_mm": 0.048
       },
       {
         "male": "keel.top_studs",
         "female": "dump_tub.under_sockets",
         "engaged_studs": 10,
-        "gap_min_mm": 0.056,
-        "gap_max_mm": 0.058
+        "gap_min_mm": 0.048,
+        "gap_max_mm": 0.048
       },
       {
         "male": "yoke.axis",
@@ -3245,22 +3245,22 @@
         "male": "keel.top_studs",
         "female": "pilot_legs.under_sockets",
         "engaged_studs": 4,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.048,
+        "gap_max_mm": 0.048
       },
       {
         "male": "keel.top_studs",
         "female": "mast_deck.under_sockets",
         "engaged_studs": 10,
-        "gap_min_mm": 0.056,
-        "gap_max_mm": 0.058
+        "gap_min_mm": 0.048,
+        "gap_max_mm": 0.048
       },
       {
         "male": "mast_deck.top_studs",
         "female": "mast_house.under_sockets",
         "engaged_studs": 6,
-        "gap_min_mm": 0.056,
-        "gap_max_mm": 0.058
+        "gap_min_mm": 0.048,
+        "gap_max_mm": 0.048
       },
       {
         "male": "rotor_mast.axis",
@@ -3405,8 +3405,8 @@
         "male": "keel.top_studs",
         "female": "steer_bridge.under_sockets",
         "engaged_studs": 4,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.048,
+        "gap_max_mm": 0.048
       },
       {
         "male": "steer_column.axis",
@@ -3576,22 +3576,22 @@
         "male": "keel.top_studs",
         "female": "band_tray.under_sockets",
         "engaged_studs": 10,
-        "gap_min_mm": 0.056,
-        "gap_max_mm": 0.058
+        "gap_min_mm": 0.048,
+        "gap_max_mm": 0.048
       },
       {
         "male": "band_tray.rim_studs",
         "female": "band_lid.under_sockets",
         "engaged_studs": 4,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.048,
+        "gap_max_mm": 0.048
       },
       {
         "male": "band_lid.top_studs",
         "female": "dump_tub.under_sockets",
         "engaged_studs": 16,
-        "gap_min_mm": 0.054,
-        "gap_max_mm": 0.058
+        "gap_min_mm": 0.048,
+        "gap_max_mm": 0.048
       }
     ]
   },
@@ -3686,50 +3686,50 @@
         "male": "keel.top_studs",
         "female": "servo_mount.under_sockets",
         "engaged_studs": 2,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.048,
+        "gap_max_mm": 0.048
       },
       {
         "male": "keel.top_studs",
         "female": "sill_duct.under_sockets",
         "engaged_studs": 8,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.048,
+        "gap_max_mm": 0.048
       },
       {
         "male": "keel.top_studs",
         "female": "drive_tray.under_sockets",
         "engaged_studs": 10,
-        "gap_min_mm": 0.056,
-        "gap_max_mm": 0.058
+        "gap_min_mm": 0.048,
+        "gap_max_mm": 0.048
       },
       {
         "male": "drive_tray.rim_studs",
         "female": "drive_lid.under_sockets",
         "engaged_studs": 4,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.048,
+        "gap_max_mm": 0.048
       },
       {
         "male": "drive_lid.top_studs",
         "female": "brain_tray.under_sockets",
         "engaged_studs": 16,
-        "gap_min_mm": 0.054,
-        "gap_max_mm": 0.058
+        "gap_min_mm": 0.048,
+        "gap_max_mm": 0.048
       },
       {
         "male": "brain_tray.rim_studs",
         "female": "brain_lid.under_sockets",
         "engaged_studs": 4,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05
+        "gap_min_mm": 0.048,
+        "gap_max_mm": 0.048
       },
       {
         "male": "brain_lid.top_studs",
         "female": "dump_tub.under_sockets",
         "engaged_studs": 16,
-        "gap_min_mm": 0.054,
-        "gap_max_mm": 0.058
+        "gap_min_mm": 0.048,
+        "gap_max_mm": 0.048
       }
     ]
   },
@@ -3809,7 +3809,7 @@
       },
       {
         "code": "collision",
-        "detail": "plate and tail overlap by 293 mm3"
+        "detail": "plate and tail overlap by 285 mm3"
       }
     ],
     "warnings": [],
@@ -3879,7 +3879,7 @@
       },
       {
         "code": "collision",
-        "detail": "b1 and b2 overlap by 14136 mm3"
+        "detail": "b1 and b2 overlap by 45627 mm3"
       }
     ],
     "warnings": [],

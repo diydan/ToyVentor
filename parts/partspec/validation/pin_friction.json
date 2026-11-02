@@ -4,7 +4,7 @@
   "file_sha256": "48d586fadf8b137cacdf82515adae65156cdf6e8a8aa2569d4808d84a0fa5cf0",
   "part_id": "pin_friction",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-11-01T21:30:09Z",
+  "checked_at": "2026-11-02T00:27:39Z",
   "metrics": {
     "bbox_mm": [
       7.4,
@@ -15,6 +15,7 @@
     "surface_cm2": 7.82,
     "triangles": 564,
     "ledges": [],
+    "floating_contours": [],
     "layers": 25,
     "bed_contact_mm2": 71.5,
     "height_mm": 5.0,
@@ -72,6 +73,14 @@
       "value": 0.0,
       "limit": 1.0,
       "detail": "mm2 of flat underside held on one side only (a ledge over air, not a bridge)"
+    },
+    {
+      "id": "V11_floating_contour",
+      "level": "block",
+      "result": "pass",
+      "value": 0,
+      "limit": 0,
+      "detail": "unanchored interior hole loops in bridge ceilings or low-Z hovering cantilevers"
     },
     {
       "id": "V6_bridge_span",

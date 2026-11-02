@@ -1,40 +1,30 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_robot_head_visor_S.stl",
-  "file_sha256": "02a43cefea12829fc7276454c528a38dae8c438b825f7878b9f19e3f99b4b441",
+  "file_sha256": "31cc9b545e8e35cc8fcb3f2ff109f1dfc2f341ccd1077ebaf8c75265f14cea39",
   "part_id": "robot_head_visor",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-11-01T21:32:28Z",
+  "checked_at": "2026-11-02T00:29:59Z",
   "metrics": {
     "bbox_mm": [
       45.4,
       34.34,
       34.4
     ],
-    "volume_cm3": 26.64,
-    "surface_cm2": 49.07,
-    "triangles": 14654,
+    "volume_cm3": 26.6,
+    "surface_cm2": 49.0,
+    "triangles": 14914,
     "ledges": [],
+    "floating_contours": [],
     "layers": 172,
-    "bed_contact_mm2": 207.5,
+    "bed_contact_mm2": 194.4,
     "height_mm": 34.4,
-    "slenderness": 2.39,
+    "slenderness": 2.47,
     "centre_of_mass_over_contact": true,
     "min_wall_mm": null,
     "thin_wall_regions": []
   },
-  "bridges": [
-    {
-      "z_mm": 3.2,
-      "span_mm": 6.7,
-      "area_mm2": 35.2
-    },
-    {
-      "z_mm": 3.2,
-      "span_mm": 6.7,
-      "area_mm2": 35.2
-    }
-  ],
+  "bridges": [],
   "checks": [
     {
       "id": "V1_mesh_sound",
@@ -85,12 +75,20 @@
       "detail": "mm2 of flat underside held on one side only (a ledge over air, not a bridge)"
     },
     {
+      "id": "V11_floating_contour",
+      "level": "block",
+      "result": "pass",
+      "value": 0,
+      "limit": 0,
+      "detail": "unanchored interior hole loops in bridge ceilings or low-Z hovering cantilevers"
+    },
+    {
       "id": "V6_bridge_span",
       "level": "block",
       "result": "pass",
-      "value": 6.7,
+      "value": 0.0,
       "limit": 20,
-      "detail": "2 bridge(s); widest unsupported span in mm"
+      "detail": "0 bridge(s); widest unsupported span in mm"
     },
     {
       "id": "V5_no_floating_islands",
@@ -112,9 +110,9 @@
       "id": "V9_bed_contact",
       "level": "info",
       "result": "pass",
-      "value": 207.5,
+      "value": 194.4,
       "limit": null,
-      "detail": "height / sqrt(contact) = 2.39; above about 3 the slicer often asks for a brim"
+      "detail": "height / sqrt(contact) = 2.47; above about 3 the slicer often asks for a brim"
     },
     {
       "id": "V8_wall_thickness",

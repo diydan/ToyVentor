@@ -240,6 +240,25 @@ function scadMesh(
   return m;
 }
 
+/**
+ * Reconstruct assembly-frame Y-up pose from a flex-skin STL exported in `[180, 0, 0]`
+ * show-face-down print orientation (`z_print = thicknessMm - z_assy`, `y_print = -y_assy`).
+ */
+function scadInvertedMesh(
+  geo: THREE.BufferGeometry,
+  mat: THREE.Material,
+  thicknessMm = 4.4,
+): THREE.Group {
+  const g = new T.Group();
+  const m = new T.Mesh(geo, mat);
+  m.rotation.x = Math.PI / 2;
+  m.position.y = thicknessMm;
+  m.castShadow = true;
+  m.receiveShadow = true;
+  g.add(m);
+  return g;
+}
+
 function disposeSlotChildren(slot: THREE.Group): void {
   while (slot.children.length > 0) {
     const child = slot.children[0]!;
@@ -930,11 +949,11 @@ function applyVehicleStlRig(
     keel.position.y = baseY;
     bodyCad.add(keel);
 
-    const cowl = scadMesh(geos.cowl!, c2Mat);
+    const cowl = scadInvertedMesh(geos.cowl!, c2Mat);
     cowl.position.set(0, baseY + 14.0, 28.0);
     shellCad.add(cowl);
 
-    const canopy = scadMesh(geos.canopy!, GLASS);
+    const canopy = scadInvertedMesh(geos.canopy!, GLASS);
     canopy.position.set(0, baseY + 18.0, -4.0);
     shellCad.add(canopy);
 
@@ -1012,7 +1031,7 @@ function applyVehicleStlRig(
     canopy.position.set(0, skidsY + 14.0, 26.0);
     shellCad.add(canopy);
 
-    const cowl = scadMesh(geos.cowl!, c2Mat);
+    const cowl = scadInvertedMesh(geos.cowl!, c2Mat);
     cowl.position.set(0, skidsY + 15.0, -8.0);
     shellCad.add(cowl);
 
@@ -1054,11 +1073,11 @@ function applyVehicleStlRig(
     nose.position.set(0, baseY + 6.0, 52.0);
     frontCad.add(nose);
 
-    const shroud = scadMesh(geos.shroud!, shellCream);
+    const shroud = scadInvertedMesh(geos.shroud!, shellCream);
     shroud.position.set(0, baseY + 15.0, -4.0);
     shellCad.add(shroud);
 
-    const canopy = scadMesh(geos.canopy!, GLASS);
+    const canopy = scadInvertedMesh(geos.canopy!, GLASS);
     canopy.position.set(0, baseY + 18.0, 26.0);
     shellCad.add(canopy);
 

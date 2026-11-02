@@ -1,24 +1,25 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_waddle_tail_L.stl",
-  "file_sha256": "a016ca94a7cd1a11c82fdf56d36e5e212726923d8e5d5bffde188fadee621adb",
+  "file_sha256": "f62fc124b35b8a0b7fd9ca4ff9bb33abd8779e3dd0f477f29ca8e56d4458183b",
   "part_id": "waddle_tail",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-11-01T21:28:40Z",
+  "checked_at": "2026-11-02T00:25:58Z",
   "metrics": {
     "bbox_mm": [
       32.89,
       51.69,
       78.71
     ],
-    "volume_cm3": 38.34,
-    "surface_cm2": 82.84,
-    "triangles": 3254,
+    "volume_cm3": 38.57,
+    "surface_cm2": 84.31,
+    "triangles": 4166,
     "ledges": [],
+    "floating_contours": [],
     "layers": 394,
-    "bed_contact_mm2": 564.4,
+    "bed_contact_mm2": 530.1,
     "height_mm": 78.71,
-    "slenderness": 3.31,
+    "slenderness": 3.42,
     "centre_of_mass_over_contact": true,
     "min_wall_mm": null,
     "thin_wall_regions": []
@@ -28,16 +29,6 @@
       "z_mm": 7.1,
       "span_mm": 0.3,
       "area_mm2": 17.8
-    },
-    {
-      "z_mm": 6.0,
-      "span_mm": 13.29,
-      "area_mm2": 138.8
-    },
-    {
-      "z_mm": 6.0,
-      "span_mm": 13.29,
-      "area_mm2": 138.8
     }
   ],
   "checks": [
@@ -90,12 +81,20 @@
       "detail": "mm2 of flat underside held on one side only (a ledge over air, not a bridge)"
     },
     {
+      "id": "V11_floating_contour",
+      "level": "block",
+      "result": "pass",
+      "value": 0,
+      "limit": 0,
+      "detail": "unanchored interior hole loops in bridge ceilings or low-Z hovering cantilevers"
+    },
+    {
       "id": "V6_bridge_span",
       "level": "block",
       "result": "pass",
-      "value": 13.29,
+      "value": 0.3,
       "limit": 20,
-      "detail": "3 bridge(s); widest unsupported span in mm"
+      "detail": "1 bridge(s); widest unsupported span in mm"
     },
     {
       "id": "V5_no_floating_islands",
@@ -117,9 +116,9 @@
       "id": "V9_bed_contact",
       "level": "info",
       "result": "pass",
-      "value": 564.4,
+      "value": 530.1,
       "limit": null,
-      "detail": "height / sqrt(contact) = 3.31; above about 3 the slicer often asks for a brim"
+      "detail": "height / sqrt(contact) = 3.42; above about 3 the slicer often asks for a brim"
     },
     {
       "id": "V8_wall_thickness",
@@ -128,51 +127,10 @@
       "value": 0,
       "limit": 0,
       "detail": "regions where the wall is under 0.8 mm (two nozzle widths) over 2.0 mm2, or under 0.4 mm (one nozzle width) over 0.25 mm2; sharp edges and slivers are ignored"
-    },
-    {
-      "id": "S1_slices",
-      "level": "block",
-      "result": "pass",
-      "value": null,
-      "limit": null,
-      "detail": "sliced without errors"
-    },
-    {
-      "id": "S2_slicer_stability",
-      "level": "warn",
-      "result": "pass",
-      "value": null,
-      "limit": null,
-      "detail": "no stability warnings"
-    },
-    {
-      "id": "S3_slicer_blocking",
-      "level": "block",
-      "result": "pass",
-      "value": null,
-      "limit": null,
-      "detail": "nothing the slicer would print in mid-air"
     }
   ],
   "print_settings": {},
-  "slicer": {
-    "ok": true,
-    "brim_mm": 0,
-    "seconds_to_slice": 3.7,
-    "warnings": [],
-    "filament_g": 17.54,
-    "filament_m": 5.88,
-    "filament_cost_usd": 0.35,
-    "print_time_s": 4452,
-    "layers": 393,
-    "warnings_without_brim": [],
-    "brims_tried_mm": [
-      0
-    ],
-    "engine": "PrusaSlicer-2.8.1",
-    "slice_logic": "1",
-    "reused_from": "2026-10-31T14:24:06Z"
-  },
+  "slicer": null,
   "verdict": "pass",
   "summary": "Prints as is"
 }

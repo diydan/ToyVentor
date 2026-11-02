@@ -4,7 +4,7 @@
   "file_sha256": "7b65fffc2168a9ae1278ee26e9ca2322fcd6bcc4947f81972be6a073ec7da36a",
   "part_id": "gear_rack_tu05",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-11-01T21:31:23Z",
+  "checked_at": "2026-11-02T00:28:49Z",
   "metrics": {
     "bbox_mm": [
       62.5,
@@ -15,6 +15,7 @@
     "surface_cm2": 40.06,
     "triangles": 4000,
     "ledges": [],
+    "floating_contours": [],
     "layers": 31,
     "bed_contact_mm2": 927.3,
     "height_mm": 6.25,
@@ -72,6 +73,14 @@
       "value": 0.0,
       "limit": 1.0,
       "detail": "mm2 of flat underside held on one side only (a ledge over air, not a bridge)"
+    },
+    {
+      "id": "V11_floating_contour",
+      "level": "block",
+      "result": "pass",
+      "value": 0,
+      "limit": 0,
+      "detail": "unanchored interior hole loops in bridge ceilings or low-Z hovering cantilevers"
     },
     {
       "id": "V6_bridge_span",
@@ -154,7 +163,7 @@
       0
     ],
     "engine": "PrusaSlicer-2.8.1",
-    "reused_from": "2026-10-31T14:33:58Z"
+    "reused_from": "2026-11-01T21:31:23Z"
   },
   "verdict": "pass",
   "summary": "Prints as is"

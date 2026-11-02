@@ -458,7 +458,7 @@ const STEER = {
   pilotPinZ: -1.525,             // pro_pilot_pin from below #1 steer_bore supporting mech_servo_pinion_z10 in double shear
   ptoPhaseRad: THREE.MathUtils.degToRad(17.5),   // valley-in-tooth phase for upper Z10 PTO gear vs row-8 axle Z10 gear
   spoolPhaseRad: THREE.MathUtils.degToRad(27.0), // seats 4 spiral ratchet leaves into 8-tooth axial sawtooth valleys
-  tubTrunnionY: 30.80, tubTrunnionZ: 2.50,       // shared zero-strain rear dump trunnions on kit_tilting_tub
+  tubTrunnionY: 30.95, tubTrunnionZ: 5.75,       // enclosed cylindrical barrel-hinge axis on kit_tilting_tub pinned by shaft_tu03
   bellowsHingeY: 38.25, bellowsBaseHingeZ: 13.50, bellowsLeafHingeZ: 5.75,
   wheelbase: 100.0,              // kingpin line -> rear axle
   kpSpan: 37.5,                  // kingpin-to-kingpin
@@ -751,7 +751,7 @@ function rebuildScene() {
     }
   }
 
-  // Optional #12 Front Snowplow / Dozer Blade in front C-jaw!
+  // Optional #12 Front Snowplow / Dozer Blade
   if (state.frontPlow) {
     const plow = meshOf('kit_scoop_blade', MATS.tub);
     plow.rotation.x = Math.PI / 2;
@@ -854,12 +854,18 @@ function rebuildScene() {
     cadRoot.add(kipGroup);
   }
 
-  // 5. Rear Power Core (rows 6..9) + Zero-Strain Trunnion-Hinged #11 Tipping Dump Tub
+  // 5. Rear Power Core (rows 6..9) + Enclosed Barrel-Hinged #11 Tipping Dump Tub (pinned by shaft_tu03)
   if (state.stage === 'snap' || state.stage === 'pro') {
     const tHinge = meshOf('pro_tub_hinge', MATS.mint);
-    tHinge.position.set(0, 56.25, -3.80);
+    tHinge.position.set(0, 62.40, 4.50);
     addExplodeTag(tHinge, 0, 22, -10);
     cadRoot.add(tHinge);
+
+    const tPin = meshOf('shaft_tu03', MATS.steel);
+    tPin.rotation.y = Math.PI / 2;
+    tPin.position.set(-18.75, 37.5 + STEER.tubTrunnionY, 12.5 + STEER.tubTrunnionZ);
+    addExplodeTag(tPin, -26, 22, 18);
+    cadRoot.add(tPin);
 
     const tubHinge = new THREE.Group();
     tubHinge.position.set(0, 37.5 + STEER.tubTrunnionY, 12.5 + STEER.tubTrunnionZ);
@@ -936,6 +942,12 @@ function rebuildScene() {
     lid.position.set(0, 37.5, 44.8);
     addExplodeTag(lid, 0, 14, 34);
     cadRoot.add(lid);
+
+    const tPin = meshOf('shaft_tu03', MATS.steel);
+    tPin.rotation.y = Math.PI / 2;
+    tPin.position.set(-18.75, 37.5 + STEER.tubTrunnionY, 50.0 + STEER.tubTrunnionZ);
+    addExplodeTag(tPin, -26, 22, 44);
+    cadRoot.add(tPin);
 
     const tubHinge = new THREE.Group();
     tubHinge.position.set(0, 37.5 + STEER.tubTrunnionY, 50.0 + STEER.tubTrunnionZ);
@@ -1052,6 +1064,12 @@ function rebuildScene() {
     elecGroup.add(mot, lipo, pcb, mcu);
     cadRoot.add(elecGroup);
 
+    const tubPin = meshOf('shaft_tu03', MATS.steel);
+    tubPin.rotation.y = Math.PI / 2;
+    tubPin.position.set(-18.75, 37.5 + STEER.tubTrunnionY, 75.0 + STEER.tubTrunnionZ);
+    addExplodeTag(tubPin, -26, 22, 58);
+    cadRoot.add(tubPin);
+
     const tubHinge = new THREE.Group();
     tubHinge.position.set(0, 37.5 + STEER.tubTrunnionY, 75.0 + STEER.tubTrunnionZ);
     addExplodeTag(tubHinge, 0, 22, 66);
@@ -1166,17 +1184,17 @@ function updateHUD() {
       badge: 'Stage 1 · Snap 3+',
       title: '1 · Snap (3+) Utility Dump Truck',
       cards: state.bulldogHood ? 'Card A + Card B + pro_tub_hinge (+ #7)' : 'Card A + Card B + pro_tub_hinge',
-      steer: 'Fixed Bottom-Click Barbell (Zero Play)',
+      steer: 'Closed Through-Bore Barbell (Zero Play)',
       power: 'Push-Along · Z_axle = 6.25 mm',
-      bed: `Zero-Strain Trunnion Hinge · Tip ${Math.round(state.tipDeg)}° (Z=12.5 mm)`,
+      bed: `Enclosed Barrel Hinge · Tip ${Math.round(state.tipDeg)}° (Z=12.5 mm)`,
     },
     pro: {
       badge: 'Stage 2 · Pro 8+',
       title: '2 · Pro (8+) Captive Row-0 Rack-Steered Hauler',
       cards: 'Card A + Card B + Card E1',
       steer: `Double-Shear Clevis + Ø23 Wheel Skirt (${Math.round(state.steerDeg)}° Lock)`,
-      power: 'Rear Z10 PTO Ready + Under-Keel Keeper',
-      bed: `Zero-Strain Trunnion Hinge · Tip ${Math.round(state.tipDeg)}° (Z=12.5 mm)`,
+      power: 'Rear Z10 PTO Ready · Closed 360° Axle Bore',
+      bed: `Enclosed Barrel Hinge · Tip ${Math.round(state.tipDeg)}° (Z=12.5 mm)`,
     },
     band: {
       badge: 'Stage 3A · Momentum 8+',
@@ -1184,13 +1202,13 @@ function updateHUD() {
       cards: 'Card A + Card B + Card E1 (0.22 J Band Core)',
       steer: 'Captive Bumper Trigger (IF-Contact-THEN-Dump)',
       power: '4-Leaf Freewheel Spool + Double-Shear PTO (Z=31.25 mm)',
-      bed: `Lid Trunnion Cradles · Tip ${Math.round(state.tipDeg)}° (Z=50.0 mm)`,
+      bed: `Lid Barrel Knuckles · Tip ${Math.round(state.tipDeg)}° (Z=50.0 mm)`,
     },
     bellows: {
       badge: 'Stage 3B · Momentum 8+',
       title: '3B · Momentum Pin-Hinged Pneumatic Bellows Tipper',
       cards: 'Card A + Card B + Card E2',
-      steer: 'Fixed Bottom-Click Barbell',
+      steer: 'Closed Through-Bore Barbell',
       power: 'shaft_tu03 Barrel Hinge + 9" Balloon Clamshell',
       bed: `Pneumatic Lift · ${belDeg}° (10°..50° Stroke, Rated 100 g)`,
     },
@@ -1200,7 +1218,7 @@ function updateHUD() {
       cards: 'Cards A + B + E1 + Card F (PETG, 11 Parts)',
       steer: `Row-2 9g Servo + Horn-Pocket Z10 (${srvDeg.toFixed(1)}° / ${srvUs} µs)`,
       power: 'Double-Shear N20 + 602535 LiPo + XIAO → 25 mm PTO',
-      bed: `Brain-Lid Cradles · Tip ${Math.round(state.tipDeg)}° (Z=75.0 mm)`,
+      bed: `Brain-Lid Barrel Knuckles · Tip ${Math.round(state.tipDeg)}° (Z=75.0 mm)`,
     },
   }[state.stage];
 

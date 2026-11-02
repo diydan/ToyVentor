@@ -4,7 +4,7 @@
   "file_sha256": "e0dd8f4c2df9f21685ba11007284af371586734d77ae41e475f6c85d9d48ca8f",
   "part_id": "prop_maracas",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-11-01T21:35:19Z",
+  "checked_at": "2026-11-02T00:32:43Z",
   "metrics": {
     "bbox_mm": [
       26.99,
@@ -15,6 +15,7 @@
     "surface_cm2": 31.75,
     "triangles": 1052,
     "ledges": [],
+    "floating_contours": [],
     "layers": 34,
     "bed_contact_mm2": 887.4,
     "height_mm": 6.8,
@@ -72,6 +73,14 @@
       "value": 0.0,
       "limit": 1.0,
       "detail": "mm2 of flat underside held on one side only (a ledge over air, not a bridge)"
+    },
+    {
+      "id": "V11_floating_contour",
+      "level": "block",
+      "result": "pass",
+      "value": 0,
+      "limit": 0,
+      "detail": "unanchored interior hole loops in bridge ceilings or low-Z hovering cantilevers"
     },
     {
       "id": "V6_bridge_span",

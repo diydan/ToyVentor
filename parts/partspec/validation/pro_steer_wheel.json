@@ -4,7 +4,7 @@
   "file_sha256": "c01d9c8e0c0fdc60f22f9cd2a7bedb32d813fab04c49a9aa2a6c95a4431c55a9",
   "part_id": "pro_steer_wheel",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-11-01T21:41:53Z",
+  "checked_at": "2026-11-02T00:37:00Z",
   "metrics": {
     "bbox_mm": [
       23.0,
@@ -15,6 +15,7 @@
     "surface_cm2": 20.9,
     "triangles": 2640,
     "ledges": [],
+    "floating_contours": [],
     "layers": 65,
     "bed_contact_mm2": 361.6,
     "height_mm": 13.0,
@@ -72,6 +73,14 @@
       "value": 0.0,
       "limit": 1.0,
       "detail": "mm2 of flat underside held on one side only (a ledge over air, not a bridge)"
+    },
+    {
+      "id": "V11_floating_contour",
+      "level": "block",
+      "result": "pass",
+      "value": 0,
+      "limit": 0,
+      "detail": "unanchored interior hole loops in bridge ceilings or low-Z hovering cantilevers"
     },
     {
       "id": "V6_bridge_span",

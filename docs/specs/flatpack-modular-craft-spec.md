@@ -1,5 +1,7 @@
 # Spec: Universal Flat-Pack Modular Vehicle & Craft System (Pass 4g — Locked for Pass 5 CAD)
 
+> **Post-Pass-5 CAD Revision Note (2026-11-01):** All `c_jaw_tu01` keyhole C-claws and `pro_axle_keeper` clips described below were retired in favor of clean closed `360°` `50°`-teardrop Pro `free` through-bores (`Ø7.0 mm` at `z_axle = 6.25 mm`) on `kit_keel_base` and `kit_clevis_spine`, plus interleaved enclosed cylindrical barrel-hinge knuckles (`_bellows_knuckle` pinned by `shaft_tu03`) on `kit_tilting_tub` and `pro_tub_hinge`. In addition, all `Card D` flex skins (`skin_*`) and flat tiles (`tile_*`) export smooth show-face-down (`print_rotation_deg = [180, 0, 0]`) with upward-opening blind stud sockets, and all `-Z` female stud sockets use `42°`-from-vertical self-roofing cones (`0` slicer support moves). See `parts/partspec/DESIGN_LOG.md` and `docs/specs/functional-print-mechanics-spec.md` for live CAD geometry.
+
 ## Status, Scope & Canonical Authority
 
 - **Status:** Final Pre-CAD Engineering Specification (**Pass 4g — Locked for Pass 5 CAD**, closing all prior `P0`/`P1`/`P2` findings from the Pass 4f adversarial delta-review). Pass 5 implementation has since landed as `parts/partspec/toyventor_kitcard.py`; section 6 records the plan it executed, not remaining work — confirm each step before reusing this spec.

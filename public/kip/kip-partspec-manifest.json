@@ -26,7 +26,7 @@
         27.3,
         33.8
       ],
-      "volume_cm3": 19.13,
+      "volume_cm3": 19.09,
       "connectors": [
         {
           "id": "under_sockets",
@@ -247,7 +247,7 @@
           "id": "I3_seats_on_reference",
           "level": "block",
           "result": "pass",
-          "detail": "overlap 0.000 mm3 with matching reference part"
+          "detail": "overlap -0.000 mm3 with matching reference part"
         },
         {
           "id": "I4_bore_on_grid",
@@ -327,7 +327,7 @@
         28.2,
         33.8
       ],
-      "volume_cm3": 19.76,
+      "volume_cm3": 19.73,
       "connectors": [
         {
           "id": "under_sockets",
@@ -628,7 +628,7 @@
         27.6,
         33.8
       ],
-      "volume_cm3": 20.13,
+      "volume_cm3": 20.09,
       "connectors": [
         {
           "id": "under_sockets",
@@ -849,7 +849,7 @@
           "id": "I3_seats_on_reference",
           "level": "block",
           "result": "pass",
-          "detail": "overlap 0.000 mm3 with matching reference part"
+          "detail": "overlap -0.000 mm3 with matching reference part"
         },
         {
           "id": "I4_bore_on_grid",
@@ -928,7 +928,7 @@
         27.7,
         35.7
       ],
-      "volume_cm3": 21.45,
+      "volume_cm3": 21.42,
       "connectors": [
         {
           "id": "under_sockets",
@@ -1149,7 +1149,7 @@
           "id": "I3_seats_on_reference",
           "level": "block",
           "result": "pass",
-          "detail": "overlap 0.000 mm3 with matching reference part"
+          "detail": "overlap -0.000 mm3 with matching reference part"
         },
         {
           "id": "I4_bore_on_grid",
@@ -1860,7 +1860,7 @@
         34.4,
         24.1
       ],
-      "volume_cm3": 6.02,
+      "volume_cm3": 5.92,
       "connectors": [
         {
           "id": "under_sockets",
@@ -1935,11 +1935,11 @@
       "fit": {
         "studs_measured": 2,
         "design_gap_mm": 0.05,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05,
+        "gap_min_mm": 0.052,
+        "gap_max_mm": 0.052,
         "surface_offset_window_mm": [
-          -0.075,
-          0.075
+          -0.074,
+          0.076
         ],
         "residual_error_mm": 0.05
       },
@@ -1990,7 +1990,7 @@
           "id": "P2_bridge_span",
           "level": "block",
           "result": "pass",
-          "detail": "8.2 mm <= 20"
+          "detail": "no cavity"
         },
         {
           "id": "P3_wall_min",
@@ -2026,19 +2026,19 @@
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "2 stud(s): gap +0.050 to +0.050 mm, design 0.050, allowed +0.045 to +0.060"
+          "detail": "2 stud(s): gap +0.052 to +0.052 mm, design 0.050, allowed +0.045 to +0.060"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.074 to +0.076 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.074 to +0.076 mm"
         },
         {
           "id": "F2_breakage",
@@ -2081,7 +2081,7 @@
         34.0,
         26.6
       ],
-      "volume_cm3": 7.1,
+      "volume_cm3": 7.0,
       "connectors": [
         {
           "id": "under_sockets",
@@ -2156,11 +2156,11 @@
       "fit": {
         "studs_measured": 2,
         "design_gap_mm": 0.05,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05,
+        "gap_min_mm": 0.052,
+        "gap_max_mm": 0.052,
         "surface_offset_window_mm": [
-          -0.075,
-          0.075
+          -0.074,
+          0.076
         ],
         "residual_error_mm": 0.05
       },
@@ -2211,7 +2211,7 @@
           "id": "P2_bridge_span",
           "level": "block",
           "result": "pass",
-          "detail": "8.2 mm <= 20"
+          "detail": "no cavity"
         },
         {
           "id": "P3_wall_min",
@@ -2247,19 +2247,19 @@
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "2 stud(s): gap +0.050 to +0.050 mm, design 0.050, allowed +0.045 to +0.060"
+          "detail": "2 stud(s): gap +0.052 to +0.052 mm, design 0.050, allowed +0.045 to +0.060"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.074 to +0.076 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.074 to +0.076 mm"
         },
         {
           "id": "F2_breakage",
@@ -2302,7 +2302,7 @@
         37.8,
         38.0
       ],
-      "volume_cm3": 27.31,
+      "volume_cm3": 27.27,
       "connectors": [
         {
           "id": "under_sockets",
@@ -2458,7 +2458,7 @@
           "id": "I3_seats_on_reference",
           "level": "block",
           "result": "pass",
-          "detail": "overlap 0.000 mm3 with matching reference part"
+          "detail": "overlap -0.000 mm3 with matching reference part"
         },
         {
           "id": "S1_small_part_screen",
@@ -2525,7 +2525,7 @@
         37.6,
         34.4
       ],
-      "volume_cm3": 28.82,
+      "volume_cm3": 28.78,
       "connectors": [
         {
           "id": "under_sockets",
@@ -2681,7 +2681,7 @@
           "id": "I3_seats_on_reference",
           "level": "block",
           "result": "pass",
-          "detail": "overlap 0.000 mm3 with matching reference part"
+          "detail": "overlap -0.000 mm3 with matching reference part"
         },
         {
           "id": "S1_small_part_screen",
@@ -2748,7 +2748,7 @@
         34.8,
         35.6
       ],
-      "volume_cm3": 28.22,
+      "volume_cm3": 28.18,
       "connectors": [
         {
           "id": "under_sockets",
@@ -2904,7 +2904,7 @@
           "id": "I3_seats_on_reference",
           "level": "block",
           "result": "pass",
-          "detail": "overlap 0.000 mm3 with matching reference part"
+          "detail": "overlap -0.000 mm3 with matching reference part"
         },
         {
           "id": "S1_small_part_screen",
@@ -2972,7 +2972,7 @@
         35.8,
         37.8
       ],
-      "volume_cm3": 26.79,
+      "volume_cm3": 26.75,
       "connectors": [
         {
           "id": "under_sockets",
@@ -3128,7 +3128,7 @@
           "id": "I3_seats_on_reference",
           "level": "block",
           "result": "pass",
-          "detail": "overlap 0.000 mm3 with matching reference part"
+          "detail": "overlap -0.000 mm3 with matching reference part"
         },
         {
           "id": "S1_small_part_screen",
@@ -3196,7 +3196,7 @@
         37.5,
         37.6
       ],
-      "volume_cm3": 27.65,
+      "volume_cm3": 27.62,
       "connectors": [
         {
           "id": "under_sockets",
@@ -3352,7 +3352,7 @@
           "id": "I3_seats_on_reference",
           "level": "block",
           "result": "pass",
-          "detail": "overlap 0.000 mm3 with matching reference part"
+          "detail": "overlap -0.000 mm3 with matching reference part"
         },
         {
           "id": "S1_small_part_screen",
@@ -3420,7 +3420,7 @@
         35.0,
         38.4
       ],
-      "volume_cm3": 31.64,
+      "volume_cm3": 31.6,
       "connectors": [
         {
           "id": "under_sockets",
@@ -3644,7 +3644,7 @@
         37.0,
         32.4
       ],
-      "volume_cm3": 29.77,
+      "volume_cm3": 29.73,
       "connectors": [
         {
           "id": "under_sockets",
@@ -3800,7 +3800,7 @@
           "id": "I3_seats_on_reference",
           "level": "block",
           "result": "pass",
-          "detail": "overlap 0.000 mm3 with matching reference part"
+          "detail": "overlap -0.000 mm3 with matching reference part"
         },
         {
           "id": "S1_small_part_screen",
@@ -3867,7 +3867,7 @@
         34.7,
         24.1
       ],
-      "volume_cm3": 6.03,
+      "volume_cm3": 5.93,
       "connectors": [
         {
           "id": "under_sockets",
@@ -3942,11 +3942,11 @@
       "fit": {
         "studs_measured": 2,
         "design_gap_mm": 0.05,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05,
+        "gap_min_mm": 0.052,
+        "gap_max_mm": 0.052,
         "surface_offset_window_mm": [
-          -0.075,
-          0.075
+          -0.074,
+          0.076
         ],
         "residual_error_mm": 0.05
       },
@@ -3997,7 +3997,7 @@
           "id": "P2_bridge_span",
           "level": "block",
           "result": "pass",
-          "detail": "8.2 mm <= 20"
+          "detail": "no cavity"
         },
         {
           "id": "P3_wall_min",
@@ -4033,19 +4033,19 @@
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "2 stud(s): gap +0.050 to +0.050 mm, design 0.050, allowed +0.045 to +0.060"
+          "detail": "2 stud(s): gap +0.052 to +0.052 mm, design 0.050, allowed +0.045 to +0.060"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.074 to +0.076 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.074 to +0.076 mm"
         },
         {
           "id": "F2_breakage",
@@ -4088,7 +4088,7 @@
         34.5,
         30.1
       ],
-      "volume_cm3": 8.75,
+      "volume_cm3": 8.65,
       "connectors": [
         {
           "id": "under_sockets",
@@ -4163,11 +4163,11 @@
       "fit": {
         "studs_measured": 2,
         "design_gap_mm": 0.05,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05,
+        "gap_min_mm": 0.052,
+        "gap_max_mm": 0.052,
         "surface_offset_window_mm": [
-          -0.075,
-          0.075
+          -0.074,
+          0.076
         ],
         "residual_error_mm": 0.05
       },
@@ -4218,7 +4218,7 @@
           "id": "P2_bridge_span",
           "level": "block",
           "result": "pass",
-          "detail": "8.2 mm <= 20"
+          "detail": "no cavity"
         },
         {
           "id": "P3_wall_min",
@@ -4254,19 +4254,19 @@
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "2 stud(s): gap +0.050 to +0.050 mm, design 0.050, allowed +0.045 to +0.060"
+          "detail": "2 stud(s): gap +0.052 to +0.052 mm, design 0.050, allowed +0.045 to +0.060"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.074 to +0.076 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.074 to +0.076 mm"
         },
         {
           "id": "F2_breakage",
@@ -4309,7 +4309,7 @@
         33.5,
         30.1
       ],
-      "volume_cm3": 7.76,
+      "volume_cm3": 7.65,
       "connectors": [
         {
           "id": "under_sockets",
@@ -4384,11 +4384,11 @@
       "fit": {
         "studs_measured": 2,
         "design_gap_mm": 0.05,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05,
+        "gap_min_mm": 0.052,
+        "gap_max_mm": 0.052,
         "surface_offset_window_mm": [
-          -0.075,
-          0.075
+          -0.074,
+          0.076
         ],
         "residual_error_mm": 0.05
       },
@@ -4439,7 +4439,7 @@
           "id": "P2_bridge_span",
           "level": "block",
           "result": "pass",
-          "detail": "8.2 mm <= 20"
+          "detail": "no cavity"
         },
         {
           "id": "P3_wall_min",
@@ -4475,19 +4475,19 @@
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "2 stud(s): gap +0.050 to +0.050 mm, design 0.050, allowed +0.045 to +0.060"
+          "detail": "2 stud(s): gap +0.052 to +0.052 mm, design 0.050, allowed +0.045 to +0.060"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.074 to +0.076 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.074 to +0.076 mm"
         },
         {
           "id": "F2_breakage",
@@ -4530,7 +4530,7 @@
         35.0,
         24.6
       ],
-      "volume_cm3": 6.36,
+      "volume_cm3": 6.26,
       "connectors": [
         {
           "id": "under_sockets",
@@ -4605,11 +4605,11 @@
       "fit": {
         "studs_measured": 2,
         "design_gap_mm": 0.05,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05,
+        "gap_min_mm": 0.052,
+        "gap_max_mm": 0.052,
         "surface_offset_window_mm": [
-          -0.075,
-          0.075
+          -0.074,
+          0.076
         ],
         "residual_error_mm": 0.05
       },
@@ -4660,7 +4660,7 @@
           "id": "P2_bridge_span",
           "level": "block",
           "result": "pass",
-          "detail": "8.2 mm <= 20"
+          "detail": "no cavity"
         },
         {
           "id": "P3_wall_min",
@@ -4696,19 +4696,19 @@
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "2 stud(s): gap +0.050 to +0.050 mm, design 0.050, allowed +0.045 to +0.060"
+          "detail": "2 stud(s): gap +0.052 to +0.052 mm, design 0.050, allowed +0.045 to +0.060"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.074 to +0.076 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.074 to +0.076 mm"
         },
         {
           "id": "F2_breakage",
@@ -4751,7 +4751,7 @@
         43.1,
         34.1
       ],
-      "volume_cm3": 9.89,
+      "volume_cm3": 11.57,
       "connectors": [
         {
           "id": "under_sockets",
@@ -4781,8 +4781,8 @@
       ],
       "safety": {
         "small_part_status": "above_cylinder",
-        "min_enclosing_diameter_mm": 45.07,
-        "margin_pct": 41.9,
+        "min_enclosing_diameter_mm": 45.14,
+        "margin_pct": 42.2,
         "print_page_warning": [
           "Printed at home or by a print service. Not tested to toy-safety standards. Adult supervision required. Check for cracks, sharp edges and loose pieces before each use, and stop using anything that has broken.",
           "Larger than the small-parts test size in our size check. This is not a safety certification, and it is not rated for children under 3 years."
@@ -4801,11 +4801,11 @@
       "fit": {
         "studs_measured": 2,
         "design_gap_mm": 0.05,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05,
+        "gap_min_mm": 0.052,
+        "gap_max_mm": 0.052,
         "surface_offset_window_mm": [
-          -0.075,
-          0.075
+          -0.074,
+          0.076
         ],
         "residual_error_mm": 0.05
       },
@@ -4856,7 +4856,7 @@
           "id": "P2_bridge_span",
           "level": "block",
           "result": "pass",
-          "detail": "8.2 mm <= 20"
+          "detail": "no cavity"
         },
         {
           "id": "P3_wall_min",
@@ -4886,25 +4886,25 @@
           "id": "S1_small_part_screen",
           "level": "warn",
           "result": "pass",
-          "detail": "above_cylinder: best-fit diameter 45.07 mm vs 31.75 mm cylinder"
+          "detail": "above_cylinder: best-fit diameter 45.14 mm vs 31.75 mm cylinder"
         },
         {
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "2 stud(s): gap +0.050 to +0.050 mm, design 0.050, allowed +0.045 to +0.060"
+          "detail": "2 stud(s): gap +0.052 to +0.052 mm, design 0.050, allowed +0.045 to +0.060"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.074 to +0.076 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.074 to +0.076 mm"
         },
         {
           "id": "F2_breakage",
@@ -4947,7 +4947,7 @@
         34.4,
         36.3
       ],
-      "volume_cm3": 9.57,
+      "volume_cm3": 10.69,
       "connectors": [
         {
           "id": "under_sockets",
@@ -4997,11 +4997,11 @@
       "fit": {
         "studs_measured": 2,
         "design_gap_mm": 0.05,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05,
+        "gap_min_mm": 0.052,
+        "gap_max_mm": 0.052,
         "surface_offset_window_mm": [
-          -0.075,
-          0.075
+          -0.074,
+          0.076
         ],
         "residual_error_mm": 0.05
       },
@@ -5052,7 +5052,7 @@
           "id": "P2_bridge_span",
           "level": "block",
           "result": "pass",
-          "detail": "8.2 mm <= 20"
+          "detail": "no cavity"
         },
         {
           "id": "P3_wall_min",
@@ -5088,19 +5088,19 @@
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "2 stud(s): gap +0.050 to +0.050 mm, design 0.050, allowed +0.045 to +0.060"
+          "detail": "2 stud(s): gap +0.052 to +0.052 mm, design 0.050, allowed +0.045 to +0.060"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.074 to +0.076 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.074 to +0.076 mm"
         },
         {
           "id": "F2_breakage",
@@ -5141,9 +5141,9 @@
       "bbox_mm": [
         48.9,
         35.0,
-        23.8
+        26.6
       ],
-      "volume_cm3": 8.36,
+      "volume_cm3": 10.14,
       "connectors": [
         {
           "id": "under_sockets",
@@ -5173,8 +5173,8 @@
       ],
       "safety": {
         "small_part_status": "above_cylinder",
-        "min_enclosing_diameter_mm": 35.89,
-        "margin_pct": 13.1,
+        "min_enclosing_diameter_mm": 36.75,
+        "margin_pct": 15.8,
         "print_page_warning": [
           "Printed at home or by a print service. Not tested to toy-safety standards. Adult supervision required. Check for cracks, sharp edges and loose pieces before each use, and stop using anything that has broken.",
           "Larger than the small-parts test size in our size check. This is not a safety certification, and it is not rated for children under 3 years."
@@ -5193,11 +5193,11 @@
       "fit": {
         "studs_measured": 2,
         "design_gap_mm": 0.05,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05,
+        "gap_min_mm": 0.052,
+        "gap_max_mm": 0.052,
         "surface_offset_window_mm": [
-          -0.075,
-          0.075
+          -0.074,
+          0.076
         ],
         "residual_error_mm": 0.05
       },
@@ -5230,7 +5230,7 @@
           "id": "G5_fits_bed",
           "level": "block",
           "result": "pass",
-          "detail": "[48.9, 35.0, 23.8] vs [180, 180, 180]"
+          "detail": "[48.9, 35.0, 26.6] vs [180, 180, 180]"
         },
         {
           "id": "P1_no_supports",
@@ -5248,7 +5248,7 @@
           "id": "P2_bridge_span",
           "level": "block",
           "result": "pass",
-          "detail": "8.2 mm <= 20"
+          "detail": "no cavity"
         },
         {
           "id": "P3_wall_min",
@@ -5278,25 +5278,25 @@
           "id": "S1_small_part_screen",
           "level": "warn",
           "result": "pass",
-          "detail": "above_cylinder: best-fit diameter 35.89 mm vs 31.75 mm cylinder"
+          "detail": "above_cylinder: best-fit diameter 36.75 mm vs 31.75 mm cylinder"
         },
         {
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "2 stud(s): gap +0.050 to +0.050 mm, design 0.050, allowed +0.045 to +0.060"
+          "detail": "2 stud(s): gap +0.052 to +0.052 mm, design 0.050, allowed +0.045 to +0.060"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.074 to +0.076 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.074 to +0.076 mm"
         },
         {
           "id": "F2_breakage",
@@ -5339,7 +5339,7 @@
         40.7,
         38.0
       ],
-      "volume_cm3": 11.11,
+      "volume_cm3": 11.82,
       "connectors": [
         {
           "id": "under_sockets",
@@ -5389,11 +5389,11 @@
       "fit": {
         "studs_measured": 2,
         "design_gap_mm": 0.05,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05,
+        "gap_min_mm": 0.052,
+        "gap_max_mm": 0.052,
         "surface_offset_window_mm": [
-          -0.075,
-          0.075
+          -0.074,
+          0.076
         ],
         "residual_error_mm": 0.05
       },
@@ -5444,7 +5444,7 @@
           "id": "P2_bridge_span",
           "level": "block",
           "result": "pass",
-          "detail": "8.2 mm <= 20"
+          "detail": "no cavity"
         },
         {
           "id": "P3_wall_min",
@@ -5480,19 +5480,19 @@
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "2 stud(s): gap +0.050 to +0.050 mm, design 0.050, allowed +0.045 to +0.060"
+          "detail": "2 stud(s): gap +0.052 to +0.052 mm, design 0.050, allowed +0.045 to +0.060"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.074 to +0.076 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.074 to +0.076 mm"
         },
         {
           "id": "F2_breakage",
@@ -5535,7 +5535,7 @@
         33.3,
         30.8
       ],
-      "volume_cm3": 12.54,
+      "volume_cm3": 14.17,
       "connectors": [
         {
           "id": "under_sockets",
@@ -5585,11 +5585,11 @@
       "fit": {
         "studs_measured": 2,
         "design_gap_mm": 0.05,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05,
+        "gap_min_mm": 0.052,
+        "gap_max_mm": 0.052,
         "surface_offset_window_mm": [
-          -0.075,
-          0.075
+          -0.074,
+          0.076
         ],
         "residual_error_mm": 0.05
       },
@@ -5640,7 +5640,7 @@
           "id": "P2_bridge_span",
           "level": "block",
           "result": "pass",
-          "detail": "8.2 mm <= 20"
+          "detail": "no cavity"
         },
         {
           "id": "P3_wall_min",
@@ -5676,19 +5676,19 @@
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "2 stud(s): gap +0.050 to +0.050 mm, design 0.050, allowed +0.045 to +0.060"
+          "detail": "2 stud(s): gap +0.052 to +0.052 mm, design 0.050, allowed +0.045 to +0.060"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.074 to +0.076 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.074 to +0.076 mm"
         },
         {
           "id": "F2_breakage",
@@ -5731,7 +5731,7 @@
         49.9,
         33.3
       ],
-      "volume_cm3": 9.95,
+      "volume_cm3": 11.62,
       "connectors": [
         {
           "id": "under_sockets",
@@ -5761,8 +5761,8 @@
       ],
       "safety": {
         "small_part_status": "above_cylinder",
-        "min_enclosing_diameter_mm": 44.92,
-        "margin_pct": 41.5,
+        "min_enclosing_diameter_mm": 45.19,
+        "margin_pct": 42.3,
         "print_page_warning": [
           "Printed at home or by a print service. Not tested to toy-safety standards. Adult supervision required. Check for cracks, sharp edges and loose pieces before each use, and stop using anything that has broken.",
           "Larger than the small-parts test size in our size check. This is not a safety certification, and it is not rated for children under 3 years."
@@ -5781,11 +5781,11 @@
       "fit": {
         "studs_measured": 2,
         "design_gap_mm": 0.05,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05,
+        "gap_min_mm": 0.052,
+        "gap_max_mm": 0.052,
         "surface_offset_window_mm": [
-          -0.075,
-          0.075
+          -0.074,
+          0.076
         ],
         "residual_error_mm": 0.05
       },
@@ -5836,7 +5836,7 @@
           "id": "P2_bridge_span",
           "level": "block",
           "result": "pass",
-          "detail": "8.2 mm <= 20"
+          "detail": "no cavity"
         },
         {
           "id": "P3_wall_min",
@@ -5866,25 +5866,25 @@
           "id": "S1_small_part_screen",
           "level": "warn",
           "result": "pass",
-          "detail": "above_cylinder: best-fit diameter 44.92 mm vs 31.75 mm cylinder"
+          "detail": "above_cylinder: best-fit diameter 45.19 mm vs 31.75 mm cylinder"
         },
         {
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "2 stud(s): gap +0.050 to +0.050 mm, design 0.050, allowed +0.045 to +0.060"
+          "detail": "2 stud(s): gap +0.052 to +0.052 mm, design 0.050, allowed +0.045 to +0.060"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.074 to +0.076 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.074 to +0.076 mm"
         },
         {
           "id": "F2_breakage",
@@ -5927,7 +5927,7 @@
         40.4,
         28.7
       ],
-      "volume_cm3": 15.82,
+      "volume_cm3": 15.77,
       "connectors": [
         {
           "id": "under_sockets",
@@ -5977,11 +5977,11 @@
       "fit": {
         "studs_measured": 2,
         "design_gap_mm": 0.05,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05,
+        "gap_min_mm": 0.052,
+        "gap_max_mm": 0.052,
         "surface_offset_window_mm": [
-          -0.075,
-          0.075
+          -0.074,
+          0.076
         ],
         "residual_error_mm": 0.05
       },
@@ -6032,7 +6032,7 @@
           "id": "P2_bridge_span",
           "level": "block",
           "result": "pass",
-          "detail": "8.2 mm <= 20"
+          "detail": "no cavity"
         },
         {
           "id": "P3_wall_min",
@@ -6068,19 +6068,19 @@
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "2 stud(s): gap +0.050 to +0.050 mm, design 0.050, allowed +0.045 to +0.060"
+          "detail": "2 stud(s): gap +0.052 to +0.052 mm, design 0.050, allowed +0.045 to +0.060"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.074 to +0.076 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.074 to +0.076 mm"
         },
         {
           "id": "F2_breakage",
@@ -6123,7 +6123,7 @@
         37.6,
         35.9
       ],
-      "volume_cm3": 8.72,
+      "volume_cm3": 9.91,
       "connectors": [
         {
           "id": "under_sockets",
@@ -6153,8 +6153,8 @@
       ],
       "safety": {
         "small_part_status": "above_cylinder",
-        "min_enclosing_diameter_mm": 44.76,
-        "margin_pct": 41.0,
+        "min_enclosing_diameter_mm": 44.96,
+        "margin_pct": 41.6,
         "print_page_warning": [
           "Printed at home or by a print service. Not tested to toy-safety standards. Adult supervision required. Check for cracks, sharp edges and loose pieces before each use, and stop using anything that has broken.",
           "Larger than the small-parts test size in our size check. This is not a safety certification, and it is not rated for children under 3 years."
@@ -6173,11 +6173,11 @@
       "fit": {
         "studs_measured": 2,
         "design_gap_mm": 0.05,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05,
+        "gap_min_mm": 0.052,
+        "gap_max_mm": 0.052,
         "surface_offset_window_mm": [
-          -0.075,
-          0.075
+          -0.074,
+          0.076
         ],
         "residual_error_mm": 0.05
       },
@@ -6228,7 +6228,7 @@
           "id": "P2_bridge_span",
           "level": "block",
           "result": "pass",
-          "detail": "8.2 mm <= 20"
+          "detail": "no cavity"
         },
         {
           "id": "P3_wall_min",
@@ -6258,25 +6258,25 @@
           "id": "S1_small_part_screen",
           "level": "warn",
           "result": "pass",
-          "detail": "above_cylinder: best-fit diameter 44.76 mm vs 31.75 mm cylinder"
+          "detail": "above_cylinder: best-fit diameter 44.96 mm vs 31.75 mm cylinder"
         },
         {
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "2 stud(s): gap +0.050 to +0.050 mm, design 0.050, allowed +0.045 to +0.060"
+          "detail": "2 stud(s): gap +0.052 to +0.052 mm, design 0.050, allowed +0.045 to +0.060"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.074 to +0.076 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.074 to +0.076 mm"
         },
         {
           "id": "F2_breakage",
@@ -6319,7 +6319,7 @@
         34.5,
         23.6
       ],
-      "volume_cm3": 6.33,
+      "volume_cm3": 6.22,
       "connectors": [
         {
           "id": "under_sockets",
@@ -6394,11 +6394,11 @@
       "fit": {
         "studs_measured": 2,
         "design_gap_mm": 0.05,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05,
+        "gap_min_mm": 0.052,
+        "gap_max_mm": 0.052,
         "surface_offset_window_mm": [
-          -0.075,
-          0.075
+          -0.074,
+          0.076
         ],
         "residual_error_mm": 0.05
       },
@@ -6449,7 +6449,7 @@
           "id": "P2_bridge_span",
           "level": "block",
           "result": "pass",
-          "detail": "8.2 mm <= 20"
+          "detail": "no cavity"
         },
         {
           "id": "P3_wall_min",
@@ -6485,19 +6485,19 @@
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "2 stud(s): gap +0.050 to +0.050 mm, design 0.050, allowed +0.045 to +0.060"
+          "detail": "2 stud(s): gap +0.052 to +0.052 mm, design 0.050, allowed +0.045 to +0.060"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.074 to +0.076 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.074 to +0.076 mm"
         },
         {
           "id": "F2_breakage",
@@ -6540,7 +6540,7 @@
         34.2,
         23.6
       ],
-      "volume_cm3": 5.9,
+      "volume_cm3": 5.8,
       "connectors": [
         {
           "id": "under_sockets",
@@ -6615,11 +6615,11 @@
       "fit": {
         "studs_measured": 2,
         "design_gap_mm": 0.05,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05,
+        "gap_min_mm": 0.052,
+        "gap_max_mm": 0.052,
         "surface_offset_window_mm": [
-          -0.075,
-          0.075
+          -0.074,
+          0.076
         ],
         "residual_error_mm": 0.05
       },
@@ -6670,7 +6670,7 @@
           "id": "P2_bridge_span",
           "level": "block",
           "result": "pass",
-          "detail": "8.2 mm <= 20"
+          "detail": "no cavity"
         },
         {
           "id": "P3_wall_min",
@@ -6706,19 +6706,19 @@
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "2 stud(s): gap +0.050 to +0.050 mm, design 0.050, allowed +0.045 to +0.060"
+          "detail": "2 stud(s): gap +0.052 to +0.052 mm, design 0.050, allowed +0.045 to +0.060"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.074 to +0.076 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.074 to +0.076 mm"
         },
         {
           "id": "F2_breakage",
@@ -6761,7 +6761,7 @@
         35.4,
         29.6
       ],
-      "volume_cm3": 6.89,
+      "volume_cm3": 8.21,
       "connectors": [
         {
           "id": "under_sockets",
@@ -6811,11 +6811,11 @@
       "fit": {
         "studs_measured": 2,
         "design_gap_mm": 0.05,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05,
+        "gap_min_mm": 0.052,
+        "gap_max_mm": 0.052,
         "surface_offset_window_mm": [
-          -0.075,
-          0.075
+          -0.074,
+          0.076
         ],
         "residual_error_mm": 0.05
       },
@@ -6866,7 +6866,7 @@
           "id": "P2_bridge_span",
           "level": "block",
           "result": "pass",
-          "detail": "8.2 mm <= 20"
+          "detail": "no cavity"
         },
         {
           "id": "P3_wall_min",
@@ -6902,19 +6902,19 @@
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "2 stud(s): gap +0.050 to +0.050 mm, design 0.050, allowed +0.045 to +0.060"
+          "detail": "2 stud(s): gap +0.052 to +0.052 mm, design 0.050, allowed +0.045 to +0.060"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.074 to +0.076 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.074 to +0.076 mm"
         },
         {
           "id": "F2_breakage",
@@ -6957,7 +6957,7 @@
         33.5,
         31.1
       ],
-      "volume_cm3": 6.94,
+      "volume_cm3": 8.59,
       "connectors": [
         {
           "id": "under_sockets",
@@ -6987,8 +6987,8 @@
       ],
       "safety": {
         "small_part_status": "above_cylinder",
-        "min_enclosing_diameter_mm": 37.6,
-        "margin_pct": 18.4,
+        "min_enclosing_diameter_mm": 37.99,
+        "margin_pct": 19.6,
         "print_page_warning": [
           "Printed at home or by a print service. Not tested to toy-safety standards. Adult supervision required. Check for cracks, sharp edges and loose pieces before each use, and stop using anything that has broken.",
           "Larger than the small-parts test size in our size check. This is not a safety certification, and it is not rated for children under 3 years."
@@ -7007,11 +7007,11 @@
       "fit": {
         "studs_measured": 2,
         "design_gap_mm": 0.05,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05,
+        "gap_min_mm": 0.052,
+        "gap_max_mm": 0.052,
         "surface_offset_window_mm": [
-          -0.075,
-          0.075
+          -0.074,
+          0.076
         ],
         "residual_error_mm": 0.05
       },
@@ -7062,7 +7062,7 @@
           "id": "P2_bridge_span",
           "level": "block",
           "result": "pass",
-          "detail": "8.2 mm <= 20"
+          "detail": "no cavity"
         },
         {
           "id": "P3_wall_min",
@@ -7092,25 +7092,25 @@
           "id": "S1_small_part_screen",
           "level": "warn",
           "result": "pass",
-          "detail": "above_cylinder: best-fit diameter 37.6 mm vs 31.75 mm cylinder"
+          "detail": "above_cylinder: best-fit diameter 37.99 mm vs 31.75 mm cylinder"
         },
         {
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "2 stud(s): gap +0.050 to +0.050 mm, design 0.050, allowed +0.045 to +0.060"
+          "detail": "2 stud(s): gap +0.052 to +0.052 mm, design 0.050, allowed +0.045 to +0.060"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.074 to +0.076 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.074 to +0.076 mm"
         },
         {
           "id": "F2_breakage",
@@ -7151,9 +7151,9 @@
       "bbox_mm": [
         44.0,
         45.9,
-        24.0
+        24.1
       ],
-      "volume_cm3": 8.77,
+      "volume_cm3": 10.44,
       "connectors": [
         {
           "id": "under_sockets",
@@ -7183,8 +7183,8 @@
       ],
       "safety": {
         "small_part_status": "above_cylinder",
-        "min_enclosing_diameter_mm": 44.82,
-        "margin_pct": 41.2,
+        "min_enclosing_diameter_mm": 45.17,
+        "margin_pct": 42.3,
         "print_page_warning": [
           "Printed at home or by a print service. Not tested to toy-safety standards. Adult supervision required. Check for cracks, sharp edges and loose pieces before each use, and stop using anything that has broken.",
           "Larger than the small-parts test size in our size check. This is not a safety certification, and it is not rated for children under 3 years."
@@ -7203,11 +7203,11 @@
       "fit": {
         "studs_measured": 2,
         "design_gap_mm": 0.05,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05,
+        "gap_min_mm": 0.052,
+        "gap_max_mm": 0.052,
         "surface_offset_window_mm": [
-          -0.075,
-          0.075
+          -0.074,
+          0.076
         ],
         "residual_error_mm": 0.05
       },
@@ -7240,7 +7240,7 @@
           "id": "G5_fits_bed",
           "level": "block",
           "result": "pass",
-          "detail": "[44.0, 45.9, 24.0] vs [180, 180, 180]"
+          "detail": "[44.0, 45.9, 24.1] vs [180, 180, 180]"
         },
         {
           "id": "P1_no_supports",
@@ -7258,7 +7258,7 @@
           "id": "P2_bridge_span",
           "level": "block",
           "result": "pass",
-          "detail": "8.2 mm <= 20"
+          "detail": "no cavity"
         },
         {
           "id": "P3_wall_min",
@@ -7288,25 +7288,25 @@
           "id": "S1_small_part_screen",
           "level": "warn",
           "result": "pass",
-          "detail": "above_cylinder: best-fit diameter 44.82 mm vs 31.75 mm cylinder"
+          "detail": "above_cylinder: best-fit diameter 45.17 mm vs 31.75 mm cylinder"
         },
         {
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "2 stud(s): gap +0.050 to +0.050 mm, design 0.050, allowed +0.045 to +0.060"
+          "detail": "2 stud(s): gap +0.052 to +0.052 mm, design 0.050, allowed +0.045 to +0.060"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.074 to +0.076 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.074 to +0.076 mm"
         },
         {
           "id": "F2_breakage",
@@ -7347,9 +7347,9 @@
       "bbox_mm": [
         47.4,
         51.9,
-        18.3
+        19.6
       ],
-      "volume_cm3": 7.65,
+      "volume_cm3": 8.37,
       "connectors": [
         {
           "id": "under_sockets",
@@ -7399,11 +7399,11 @@
       "fit": {
         "studs_measured": 2,
         "design_gap_mm": 0.05,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05,
+        "gap_min_mm": 0.052,
+        "gap_max_mm": 0.052,
         "surface_offset_window_mm": [
-          -0.075,
-          0.075
+          -0.074,
+          0.076
         ],
         "residual_error_mm": 0.05
       },
@@ -7436,7 +7436,7 @@
           "id": "G5_fits_bed",
           "level": "block",
           "result": "pass",
-          "detail": "[47.4, 51.9, 18.3] vs [180, 180, 180]"
+          "detail": "[47.4, 51.9, 19.6] vs [180, 180, 180]"
         },
         {
           "id": "P1_no_supports",
@@ -7454,7 +7454,7 @@
           "id": "P2_bridge_span",
           "level": "block",
           "result": "pass",
-          "detail": "8.2 mm <= 20"
+          "detail": "no cavity"
         },
         {
           "id": "P3_wall_min",
@@ -7490,19 +7490,19 @@
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "2 stud(s): gap +0.050 to +0.050 mm, design 0.050, allowed +0.045 to +0.060"
+          "detail": "2 stud(s): gap +0.052 to +0.052 mm, design 0.050, allowed +0.045 to +0.060"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.074 to +0.076 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.074 to +0.076 mm"
         },
         {
           "id": "F2_breakage",
@@ -7546,7 +7546,7 @@
         39.4,
         24.6
       ],
-      "volume_cm3": 8.58,
+      "volume_cm3": 8.47,
       "connectors": [
         {
           "id": "under_sockets",
@@ -7596,11 +7596,11 @@
       "fit": {
         "studs_measured": 2,
         "design_gap_mm": 0.05,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05,
+        "gap_min_mm": 0.052,
+        "gap_max_mm": 0.052,
         "surface_offset_window_mm": [
-          -0.075,
-          0.075
+          -0.074,
+          0.076
         ],
         "residual_error_mm": 0.05
       },
@@ -7651,7 +7651,7 @@
           "id": "P2_bridge_span",
           "level": "block",
           "result": "pass",
-          "detail": "8.2 mm <= 20"
+          "detail": "no cavity"
         },
         {
           "id": "P3_wall_min",
@@ -7687,19 +7687,19 @@
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "2 stud(s): gap +0.050 to +0.050 mm, design 0.050, allowed +0.045 to +0.060"
+          "detail": "2 stud(s): gap +0.052 to +0.052 mm, design 0.050, allowed +0.045 to +0.060"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.074 to +0.076 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.074 to +0.076 mm"
         },
         {
           "id": "F2_breakage",
@@ -7743,7 +7743,7 @@
         65.6,
         17.6
       ],
-      "volume_cm3": 17.52,
+      "volume_cm3": 17.41,
       "connectors": [
         {
           "id": "under_sockets",
@@ -7793,11 +7793,11 @@
       "fit": {
         "studs_measured": 2,
         "design_gap_mm": 0.05,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05,
+        "gap_min_mm": 0.052,
+        "gap_max_mm": 0.052,
         "surface_offset_window_mm": [
-          -0.075,
-          0.075
+          -0.074,
+          0.076
         ],
         "residual_error_mm": 0.05
       },
@@ -7848,7 +7848,7 @@
           "id": "P2_bridge_span",
           "level": "block",
           "result": "pass",
-          "detail": "8.2 mm <= 20"
+          "detail": "no cavity"
         },
         {
           "id": "P3_wall_min",
@@ -7884,19 +7884,19 @@
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "2 stud(s): gap +0.050 to +0.050 mm, design 0.050, allowed +0.045 to +0.060"
+          "detail": "2 stud(s): gap +0.052 to +0.052 mm, design 0.050, allowed +0.045 to +0.060"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.074 to +0.076 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.074 to +0.076 mm"
         },
         {
           "id": "F2_breakage",
@@ -7938,9 +7938,9 @@
       "bbox_mm": [
         50.8,
         49.7,
-        18.8
+        19.3
       ],
-      "volume_cm3": 8.85,
+      "volume_cm3": 9.07,
       "connectors": [
         {
           "id": "under_sockets",
@@ -7990,11 +7990,11 @@
       "fit": {
         "studs_measured": 2,
         "design_gap_mm": 0.05,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05,
+        "gap_min_mm": 0.052,
+        "gap_max_mm": 0.052,
         "surface_offset_window_mm": [
-          -0.075,
-          0.075
+          -0.074,
+          0.076
         ],
         "residual_error_mm": 0.05
       },
@@ -8027,7 +8027,7 @@
           "id": "G5_fits_bed",
           "level": "block",
           "result": "pass",
-          "detail": "[50.8, 49.7, 18.8] vs [180, 180, 180]"
+          "detail": "[50.8, 49.7, 19.3] vs [180, 180, 180]"
         },
         {
           "id": "P1_no_supports",
@@ -8045,7 +8045,7 @@
           "id": "P2_bridge_span",
           "level": "block",
           "result": "pass",
-          "detail": "8.2 mm <= 20"
+          "detail": "no cavity"
         },
         {
           "id": "P3_wall_min",
@@ -8081,19 +8081,19 @@
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "2 stud(s): gap +0.050 to +0.050 mm, design 0.050, allowed +0.045 to +0.060"
+          "detail": "2 stud(s): gap +0.052 to +0.052 mm, design 0.050, allowed +0.045 to +0.060"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.074 to +0.076 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.074 to +0.076 mm"
         },
         {
           "id": "F2_breakage",
@@ -8137,7 +8137,7 @@
         58.6,
         18.1
       ],
-      "volume_cm3": 12.4,
+      "volume_cm3": 12.29,
       "connectors": [
         {
           "id": "under_sockets",
@@ -8187,11 +8187,11 @@
       "fit": {
         "studs_measured": 2,
         "design_gap_mm": 0.05,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05,
+        "gap_min_mm": 0.052,
+        "gap_max_mm": 0.052,
         "surface_offset_window_mm": [
-          -0.075,
-          0.075
+          -0.074,
+          0.076
         ],
         "residual_error_mm": 0.05
       },
@@ -8242,7 +8242,7 @@
           "id": "P2_bridge_span",
           "level": "block",
           "result": "pass",
-          "detail": "8.2 mm <= 20"
+          "detail": "no cavity"
         },
         {
           "id": "P3_wall_min",
@@ -8278,19 +8278,19 @@
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "2 stud(s): gap +0.050 to +0.050 mm, design 0.050, allowed +0.045 to +0.060"
+          "detail": "2 stud(s): gap +0.052 to +0.052 mm, design 0.050, allowed +0.045 to +0.060"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.074 to +0.076 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.074 to +0.076 mm"
         },
         {
           "id": "F2_breakage",
@@ -8334,7 +8334,7 @@
         52.4,
         25.2
       ],
-      "volume_cm3": 18.27,
+      "volume_cm3": 18.16,
       "connectors": [
         {
           "id": "under_sockets",
@@ -8384,11 +8384,11 @@
       "fit": {
         "studs_measured": 2,
         "design_gap_mm": 0.05,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05,
+        "gap_min_mm": 0.052,
+        "gap_max_mm": 0.052,
         "surface_offset_window_mm": [
-          -0.075,
-          0.075
+          -0.074,
+          0.076
         ],
         "residual_error_mm": 0.05
       },
@@ -8439,7 +8439,7 @@
           "id": "P2_bridge_span",
           "level": "block",
           "result": "pass",
-          "detail": "8.2 mm <= 20"
+          "detail": "no cavity"
         },
         {
           "id": "P3_wall_min",
@@ -8475,19 +8475,19 @@
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "2 stud(s): gap +0.050 to +0.050 mm, design 0.050, allowed +0.045 to +0.060"
+          "detail": "2 stud(s): gap +0.052 to +0.052 mm, design 0.050, allowed +0.045 to +0.060"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.074 to +0.076 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.074 to +0.076 mm"
         },
         {
           "id": "F2_breakage",
@@ -8529,9 +8529,9 @@
       "bbox_mm": [
         65.6,
         58.5,
-        16.0
+        17.5
       ],
-      "volume_cm3": 22.27,
+      "volume_cm3": 23.13,
       "connectors": [
         {
           "id": "under_sockets",
@@ -8581,11 +8581,11 @@
       "fit": {
         "studs_measured": 2,
         "design_gap_mm": 0.05,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05,
+        "gap_min_mm": 0.052,
+        "gap_max_mm": 0.052,
         "surface_offset_window_mm": [
-          -0.075,
-          0.075
+          -0.074,
+          0.076
         ],
         "residual_error_mm": 0.05
       },
@@ -8618,7 +8618,7 @@
           "id": "G5_fits_bed",
           "level": "block",
           "result": "pass",
-          "detail": "[65.6, 58.5, 16.0] vs [180, 180, 180]"
+          "detail": "[65.6, 58.5, 17.5] vs [180, 180, 180]"
         },
         {
           "id": "P1_no_supports",
@@ -8636,7 +8636,7 @@
           "id": "P2_bridge_span",
           "level": "block",
           "result": "pass",
-          "detail": "8.2 mm <= 20"
+          "detail": "no cavity"
         },
         {
           "id": "P3_wall_min",
@@ -8672,19 +8672,19 @@
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "2 stud(s): gap +0.050 to +0.050 mm, design 0.050, allowed +0.045 to +0.060"
+          "detail": "2 stud(s): gap +0.052 to +0.052 mm, design 0.050, allowed +0.045 to +0.060"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.074 to +0.076 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.074 to +0.076 mm"
         },
         {
           "id": "F2_breakage",
@@ -8728,7 +8728,7 @@
         26.7,
         18.8
       ],
-      "volume_cm3": 9.88,
+      "volume_cm3": 9.8,
       "connectors": [
         {
           "id": "under_sockets",
@@ -8885,7 +8885,7 @@
           "id": "I3_seats_on_reference",
           "level": "block",
           "result": "pass",
-          "detail": "overlap -0.000 mm3 with matching reference part"
+          "detail": "overlap 0.000 mm3 with matching reference part"
         },
         {
           "id": "S1_small_part_screen",
@@ -12009,21 +12009,21 @@
       "fit": {
         "studs_measured": 12,
         "design_gap_mm": 0.05,
-        "gap_min_mm": 0.056,
+        "gap_min_mm": 0.05,
         "gap_max_mm": 0.2,
         "surface_offset_window_mm": [
-          -0.071,
-          0.078
+          -0.075,
+          0.075
         ],
         "residual_error_mm": 0.05,
         "snap": {
           "studs_measured": 8,
           "design_gap_mm": 0.05,
-          "gap_min_mm": 0.056,
-          "gap_max_mm": 0.058,
+          "gap_min_mm": 0.05,
+          "gap_max_mm": 0.05,
           "surface_offset_window_mm": [
-            -0.071,
-            0.078
+            -0.075,
+            0.075
           ],
           "residual_error_mm": 0.05
         },
@@ -12152,7 +12152,7 @@
           "id": "I3_seats_on_reference",
           "level": "block",
           "result": "pass",
-          "detail": "overlap -0.000 mm3 with matching reference part"
+          "detail": "overlap 0.000 mm3 with matching reference part"
         },
         {
           "id": "I4_bore_on_grid",
@@ -12176,19 +12176,19 @@
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "8 stud(s) gap +0.056 to +0.058 mm; 4 pin/bore pair(s) gap +0.200 to +0.200 mm"
+          "detail": "8 stud(s) gap +0.050 to +0.050 mm; 4 pin/bore pair(s) gap +0.200 to +0.200 mm"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.071 to +0.078 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.071 to +0.078 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
         },
         {
           "id": "F2_breakage",
@@ -12226,7 +12226,7 @@
         27.1,
         18.8
       ],
-      "volume_cm3": 9.48,
+      "volume_cm3": 9.4,
       "connectors": [
         {
           "id": "under_sockets",
@@ -12382,7 +12382,7 @@
           "id": "I3_seats_on_reference",
           "level": "block",
           "result": "pass",
-          "detail": "overlap -0.000 mm3 with matching reference part"
+          "detail": "overlap 0.000 mm3 with matching reference part"
         },
         {
           "id": "S1_small_part_screen",
@@ -13329,21 +13329,21 @@
       "fit": {
         "studs_measured": 14,
         "design_gap_mm": 0.05,
-        "gap_min_mm": 0.056,
+        "gap_min_mm": 0.05,
         "gap_max_mm": 0.2,
         "surface_offset_window_mm": [
-          -0.071,
-          0.078
+          -0.075,
+          0.075
         ],
         "residual_error_mm": 0.05,
         "snap": {
           "studs_measured": 8,
           "design_gap_mm": 0.05,
-          "gap_min_mm": 0.056,
-          "gap_max_mm": 0.058,
+          "gap_min_mm": 0.05,
+          "gap_max_mm": 0.05,
           "surface_offset_window_mm": [
-            -0.071,
-            0.078
+            -0.075,
+            0.075
           ],
           "residual_error_mm": 0.05
         },
@@ -13492,7 +13492,7 @@
           "id": "I3_seats_on_reference",
           "level": "block",
           "result": "pass",
-          "detail": "overlap 0.000 mm3 with matching reference part"
+          "detail": "overlap -0.000 mm3 with matching reference part"
         },
         {
           "id": "I4_bore_on_grid",
@@ -13516,19 +13516,19 @@
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "8 stud(s) gap +0.056 to +0.058 mm; 6 pin/bore pair(s) gap +0.200 to +0.200 mm"
+          "detail": "8 stud(s) gap +0.050 to +0.050 mm; 6 pin/bore pair(s) gap +0.200 to +0.200 mm"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.071 to +0.078 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.071 to +0.078 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
         },
         {
           "id": "F2_breakage",
@@ -13567,7 +13567,7 @@
         34.4,
         17.3
       ],
-      "volume_cm3": 13.18,
+      "volume_cm3": 13.1,
       "connectors": [
         {
           "id": "under_sockets",
@@ -13723,7 +13723,7 @@
           "id": "I3_seats_on_reference",
           "level": "block",
           "result": "pass",
-          "detail": "overlap -0.000 mm3 with matching reference part"
+          "detail": "overlap 0.000 mm3 with matching reference part"
         },
         {
           "id": "S1_small_part_screen",
@@ -13791,7 +13791,7 @@
         25.0,
         20.3
       ],
-      "volume_cm3": 9.02,
+      "volume_cm3": 8.98,
       "connectors": [
         {
           "id": "under_sockets",
@@ -13947,7 +13947,7 @@
           "id": "I3_seats_on_reference",
           "level": "block",
           "result": "pass",
-          "detail": "overlap -0.000 mm3 with matching reference part"
+          "detail": "overlap 0.000 mm3 with matching reference part"
         },
         {
           "id": "S1_small_part_screen",
@@ -14450,21 +14450,21 @@
       "fit": {
         "studs_measured": 14,
         "design_gap_mm": 0.05,
-        "gap_min_mm": 0.056,
+        "gap_min_mm": 0.05,
         "gap_max_mm": 0.2,
         "surface_offset_window_mm": [
-          -0.071,
-          0.078
+          -0.075,
+          0.075
         ],
         "residual_error_mm": 0.05,
         "snap": {
           "studs_measured": 8,
           "design_gap_mm": 0.05,
-          "gap_min_mm": 0.056,
-          "gap_max_mm": 0.058,
+          "gap_min_mm": 0.05,
+          "gap_max_mm": 0.05,
           "surface_offset_window_mm": [
-            -0.071,
-            0.078
+            -0.075,
+            0.075
           ],
           "residual_error_mm": 0.05
         },
@@ -14613,7 +14613,7 @@
           "id": "I3_seats_on_reference",
           "level": "block",
           "result": "pass",
-          "detail": "overlap -0.000 mm3 with matching reference part"
+          "detail": "overlap 0.000 mm3 with matching reference part"
         },
         {
           "id": "I4_bore_on_grid",
@@ -14637,19 +14637,19 @@
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "8 stud(s) gap +0.056 to +0.058 mm; 6 pin/bore pair(s) gap +0.200 to +0.200 mm"
+          "detail": "8 stud(s) gap +0.050 to +0.050 mm; 6 pin/bore pair(s) gap +0.200 to +0.200 mm"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.071 to +0.078 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.071 to +0.078 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
         },
         {
           "id": "F2_breakage",
@@ -14688,7 +14688,7 @@
         38.4,
         20.2
       ],
-      "volume_cm3": 13.45,
+      "volume_cm3": 13.34,
       "connectors": [
         {
           "id": "under_sockets",
@@ -14845,7 +14845,7 @@
           "id": "I3_seats_on_reference",
           "level": "block",
           "result": "pass",
-          "detail": "overlap 0.000 mm3 with matching reference part"
+          "detail": "overlap -0.000 mm3 with matching reference part"
         },
         {
           "id": "S1_small_part_screen",
@@ -15184,21 +15184,21 @@
       "fit": {
         "studs_measured": 14,
         "design_gap_mm": 0.05,
-        "gap_min_mm": 0.058,
+        "gap_min_mm": 0.05,
         "gap_max_mm": 0.2,
         "surface_offset_window_mm": [
-          -0.071,
-          0.079
+          -0.075,
+          0.075
         ],
         "residual_error_mm": 0.05,
         "snap": {
           "studs_measured": 4,
           "design_gap_mm": 0.05,
-          "gap_min_mm": 0.058,
-          "gap_max_mm": 0.058,
+          "gap_min_mm": 0.05,
+          "gap_max_mm": 0.05,
           "surface_offset_window_mm": [
-            -0.071,
-            0.079
+            -0.075,
+            0.075
           ],
           "residual_error_mm": 0.05
         },
@@ -15411,19 +15411,19 @@
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "4 stud(s) gap +0.058 to +0.058 mm; 10 pin/bore pair(s) gap +0.200 to +0.200 mm"
+          "detail": "4 stud(s) gap +0.050 to +0.050 mm; 10 pin/bore pair(s) gap +0.200 to +0.200 mm"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.071 to +0.079 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.071 to +0.079 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
         },
         {
           "id": "F2_breakage",
@@ -15462,7 +15462,7 @@
         20.0,
         15.0
       ],
-      "volume_cm3": 6.09,
+      "volume_cm3": 6.05,
       "connectors": [
         {
           "id": "under_sockets",
@@ -15871,7 +15871,7 @@
         25.9,
         31.8
       ],
-      "volume_cm3": 20.87,
+      "volume_cm3": 20.79,
       "connectors": [
         {
           "id": "under_sockets",

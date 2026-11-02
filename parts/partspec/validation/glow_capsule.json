@@ -1,10 +1,10 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_glow_capsule_S.stl",
-  "file_sha256": "1c7f8994b1efff73e30f8d51aafbdaa7e4c2fe85e4e73e75995edcaae30e6295",
+  "file_sha256": "644c654ea99bd998490a9b40f1e6e269cdf982f5ea9ca23209c0715d92d577f0",
   "part_id": "glow_capsule",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-11-01T21:28:43Z",
+  "checked_at": "2026-11-02T00:26:04Z",
   "metrics": {
     "bbox_mm": [
       37.5,
@@ -12,24 +12,19 @@
       46.88
     ],
     "volume_cm3": 33.13,
-    "surface_cm2": 52.88,
-    "triangles": 2174,
+    "surface_cm2": 52.77,
+    "triangles": 2168,
     "ledges": [],
+    "floating_contours": [],
     "layers": 234,
-    "bed_contact_mm2": 249.2,
+    "bed_contact_mm2": 238.4,
     "height_mm": 46.88,
-    "slenderness": 2.97,
+    "slenderness": 3.04,
     "centre_of_mass_over_contact": true,
     "min_wall_mm": null,
     "thin_wall_regions": []
   },
-  "bridges": [
-    {
-      "z_mm": 3.2,
-      "span_mm": 6.7,
-      "area_mm2": 35.2
-    }
-  ],
+  "bridges": [],
   "checks": [
     {
       "id": "V1_mesh_sound",
@@ -80,12 +75,20 @@
       "detail": "mm2 of flat underside held on one side only (a ledge over air, not a bridge)"
     },
     {
+      "id": "V11_floating_contour",
+      "level": "block",
+      "result": "pass",
+      "value": 0,
+      "limit": 0,
+      "detail": "unanchored interior hole loops in bridge ceilings or low-Z hovering cantilevers"
+    },
+    {
       "id": "V6_bridge_span",
       "level": "block",
       "result": "pass",
-      "value": 6.7,
+      "value": 0.0,
       "limit": 20,
-      "detail": "1 bridge(s); widest unsupported span in mm"
+      "detail": "0 bridge(s); widest unsupported span in mm"
     },
     {
       "id": "V5_no_floating_islands",
@@ -107,9 +110,9 @@
       "id": "V9_bed_contact",
       "level": "info",
       "result": "pass",
-      "value": 249.2,
+      "value": 238.4,
       "limit": null,
-      "detail": "height / sqrt(contact) = 2.97; above about 3 the slicer often asks for a brim"
+      "detail": "height / sqrt(contact) = 3.04; above about 3 the slicer often asks for a brim"
     },
     {
       "id": "V8_wall_thickness",
@@ -118,56 +121,10 @@
       "value": 0,
       "limit": 0,
       "detail": "regions where the wall is under 0.8 mm (two nozzle widths) over 2.0 mm2, or under 0.4 mm (one nozzle width) over 0.25 mm2; sharp edges and slivers are ignored"
-    },
-    {
-      "id": "S1_slices",
-      "level": "block",
-      "result": "pass",
-      "value": null,
-      "limit": null,
-      "detail": "sliced without errors"
-    },
-    {
-      "id": "S2_slicer_stability",
-      "level": "warn",
-      "result": "pass",
-      "value": null,
-      "limit": null,
-      "detail": "low bed adhesion without a brim; a 3 mm brim clears it"
-    },
-    {
-      "id": "S3_slicer_blocking",
-      "level": "block",
-      "result": "pass",
-      "value": null,
-      "limit": null,
-      "detail": "nothing the slicer would print in mid-air"
     }
   ],
-  "print_settings": {
-    "brim_width_mm": 3
-  },
-  "slicer": {
-    "ok": true,
-    "brim_mm": 3,
-    "seconds_to_slice": 2.6,
-    "warnings": [],
-    "filament_g": 12.85,
-    "filament_m": 4.31,
-    "filament_cost_usd": 0.26,
-    "print_time_s": 3109,
-    "layers": 234,
-    "warnings_without_brim": [
-      "Low bed adhesion"
-    ],
-    "brims_tried_mm": [
-      0,
-      3
-    ],
-    "engine": "PrusaSlicer-2.8.1",
-    "slice_logic": "1",
-    "reused_from": "2026-10-31T14:24:24Z"
-  },
-  "verdict": "pass_with_settings",
-  "summary": "Prints with brim_width_mm = 3"
+  "print_settings": {},
+  "slicer": null,
+  "verdict": "pass",
+  "summary": "Prints as is"
 }

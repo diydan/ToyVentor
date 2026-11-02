@@ -4,7 +4,7 @@
   "file_sha256": "cca820829939d5ab60eddcfdc60c789d06cbbe5f0070e617cdc21ac88b319ab4",
   "part_id": "mom_spindle_shaft",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-11-01T21:41:52Z",
+  "checked_at": "2026-11-02T00:36:59Z",
   "metrics": {
     "bbox_mm": [
       6.6,
@@ -15,6 +15,7 @@
     "surface_cm2": 21.43,
     "triangles": 400,
     "ledges": [],
+    "floating_contours": [],
     "layers": 25,
     "bed_contact_mm2": 352.9,
     "height_mm": 5.0,
@@ -72,6 +73,14 @@
       "value": 0.0,
       "limit": 1.0,
       "detail": "mm2 of flat underside held on one side only (a ledge over air, not a bridge)"
+    },
+    {
+      "id": "V11_floating_contour",
+      "level": "block",
+      "result": "pass",
+      "value": 0,
+      "limit": 0,
+      "detail": "unanchored interior hole loops in bridge ceilings or low-Z hovering cantilevers"
     },
     {
       "id": "V6_bridge_span",

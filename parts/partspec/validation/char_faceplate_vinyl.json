@@ -4,7 +4,7 @@
   "file_sha256": "5dc8b3c7b63fe819aedb4bc691b87598481591c5e6e4336c5a600bb892aef541",
   "part_id": "char_faceplate_vinyl",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-11-01T21:32:53Z",
+  "checked_at": "2026-11-02T00:30:20Z",
   "metrics": {
     "bbox_mm": [
       24.2,
@@ -15,6 +15,7 @@
     "surface_cm2": 10.62,
     "triangles": 2936,
     "ledges": [],
+    "floating_contours": [],
     "layers": 64,
     "bed_contact_mm2": 103.4,
     "height_mm": 12.75,
@@ -78,6 +79,14 @@
       "value": 0.0,
       "limit": 1.0,
       "detail": "mm2 of flat underside held on one side only (a ledge over air, not a bridge)"
+    },
+    {
+      "id": "V11_floating_contour",
+      "level": "block",
+      "result": "pass",
+      "value": 0,
+      "limit": 0,
+      "detail": "unanchored interior hole loops in bridge ceilings or low-Z hovering cantilevers"
     },
     {
       "id": "V6_bridge_span",

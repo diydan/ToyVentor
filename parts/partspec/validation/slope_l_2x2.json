@@ -1,43 +1,43 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_slope_l_2x2_L.stl",
-  "file_sha256": "555bfe79717bd797a5036264a164d41bd87c903d8a8c7f05c50731e51d9e102d",
+  "file_sha256": "30a00a53f6d23ce615a2398031c7a3e70a36fbdef503c83cd6818b4f40a169a9",
   "part_id": "slope_l_2x2",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-11-01T21:29:37Z",
+  "checked_at": "2026-11-02T00:27:02Z",
   "metrics": {
     "bbox_mm": [
       49.7,
       49.7,
       59.1
     ],
-    "volume_cm3": 76.45,
-    "surface_cm2": 149.07,
-    "triangles": 1904,
-    "ledges": [],
+    "volume_cm3": 83.86,
+    "surface_cm2": 140.91,
+    "triangles": 2664,
+    "ledges": [
+      {
+        "z_mm": 9.5,
+        "area_mm2": 0.3,
+        "at_mm": [
+          -24.7,
+          23.3
+        ]
+      }
+    ],
+    "floating_contours": [],
     "layers": 295,
-    "bed_contact_mm2": 701.7,
+    "bed_contact_mm2": 1744.5,
     "height_mm": 59.1,
-    "slenderness": 2.23,
+    "slenderness": 1.41,
     "centre_of_mass_over_contact": true,
     "min_wall_mm": null,
     "thin_wall_regions": []
   },
   "bridges": [
     {
-      "z_mm": 7.0,
-      "span_mm": 16.47,
-      "area_mm2": 1527.9
-    },
-    {
-      "z_mm": 7.0,
-      "span_mm": 13.29,
-      "area_mm2": 138.8
-    },
-    {
       "z_mm": 9.5,
-      "span_mm": 0.3,
-      "area_mm2": 56.4
+      "span_mm": 0.97,
+      "area_mm2": 182.0
     }
   ],
   "checks": [
@@ -85,17 +85,25 @@
       "id": "V10_no_ledges",
       "level": "block",
       "result": "pass",
-      "value": 0.0,
+      "value": 0.3,
       "limit": 1.0,
-      "detail": "mm2 of flat underside held on one side only (a ledge over air, not a bridge)"
+      "detail": "mm2 of flat underside held on one side only (a ledge over air, not a bridge); worst at z 9.5 mm near [-24.7, 23.3]"
+    },
+    {
+      "id": "V11_floating_contour",
+      "level": "block",
+      "result": "pass",
+      "value": 0,
+      "limit": 0,
+      "detail": "unanchored interior hole loops in bridge ceilings or low-Z hovering cantilevers"
     },
     {
       "id": "V6_bridge_span",
       "level": "block",
       "result": "pass",
-      "value": 16.47,
+      "value": 0.97,
       "limit": 20,
-      "detail": "3 bridge(s); widest unsupported span in mm"
+      "detail": "1 bridge(s); widest unsupported span in mm"
     },
     {
       "id": "V5_no_floating_islands",
@@ -117,9 +125,9 @@
       "id": "V9_bed_contact",
       "level": "info",
       "result": "pass",
-      "value": 701.7,
+      "value": 1744.5,
       "limit": null,
-      "detail": "height / sqrt(contact) = 2.23; above about 3 the slicer often asks for a brim"
+      "detail": "height / sqrt(contact) = 1.41; above about 3 the slicer often asks for a brim"
     },
     {
       "id": "V8_wall_thickness",
@@ -128,55 +136,10 @@
       "value": 0,
       "limit": 0,
       "detail": "regions where the wall is under 0.8 mm (two nozzle widths) over 2.0 mm2, or under 0.4 mm (one nozzle width) over 0.25 mm2; sharp edges and slivers are ignored"
-    },
-    {
-      "id": "S1_slices",
-      "level": "block",
-      "result": "pass",
-      "value": null,
-      "limit": null,
-      "detail": "sliced without errors"
-    },
-    {
-      "id": "S2_slicer_stability",
-      "level": "warn",
-      "result": "pass",
-      "value": null,
-      "limit": null,
-      "detail": "noted: Long bridging extrusions"
-    },
-    {
-      "id": "S3_slicer_blocking",
-      "level": "block",
-      "result": "pass",
-      "value": null,
-      "limit": null,
-      "detail": "nothing the slicer would print in mid-air"
     }
   ],
   "print_settings": {},
-  "slicer": {
-    "ok": true,
-    "brim_mm": 0,
-    "seconds_to_slice": 2.2,
-    "warnings": [
-      "Long bridging extrusions"
-    ],
-    "filament_g": 33.14,
-    "filament_m": 11.11,
-    "filament_cost_usd": 0.66,
-    "print_time_s": 8236,
-    "layers": 295,
-    "warnings_without_brim": [
-      "Long bridging extrusions"
-    ],
-    "brims_tried_mm": [
-      0
-    ],
-    "engine": "PrusaSlicer-2.8.1",
-    "slice_logic": "1",
-    "reused_from": "2026-10-31T14:27:22Z"
-  },
+  "slicer": null,
   "verdict": "pass",
   "summary": "Prints as is"
 }

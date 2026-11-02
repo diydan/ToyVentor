@@ -248,7 +248,7 @@
         "value": 2
       },
       "printable": true,
-      "orientation": "bed = z0; studs/body up; underside cavity down",
+      "orientation": "bed = z0; flat, studs up",
       "supportFree": true,
       "stlFile": "kit-aero-wedge.stl",
       "glbFile": "kit-aero-wedge.glb",
@@ -319,7 +319,7 @@
       "bboxMm": [
         74.8,
         49.8,
-        5
+        7.3
       ]
     },
     {
@@ -376,13 +376,13 @@
         "value": 2
       },
       "printable": true,
-      "orientation": "bed = z0; studs/body up; underside cavity down",
+      "orientation": "bed = z0; flat, studs up",
       "supportFree": true,
       "stlFile": "kit-tilting-tub.stl",
       "glbFile": "kit-tilting-tub.glb",
       "bboxMm": [
         49.8,
-        59,
+        61.5,
         18
       ]
     },
@@ -472,7 +472,7 @@
         "value": 2
       },
       "printable": true,
-      "orientation": "bed = z0; studs/body up; underside cavity down",
+      "orientation": "bed = z0; flat, studs up",
       "supportFree": true,
       "stlFile": "kit-turntable.stl",
       "glbFile": "kit-turntable.glb",
@@ -536,7 +536,7 @@
         "value": 1
       },
       "printable": true,
-      "orientation": "bed = z0; flat, studs up",
+      "orientation": "bed = z0; show face down on bed, sockets up",
       "supportFree": true,
       "stlFile": "skin-aero-cowl.stl",
       "glbFile": "skin-aero-cowl.glb",
@@ -568,7 +568,7 @@
         "value": 1
       },
       "printable": true,
-      "orientation": "bed = z0; flat, studs up",
+      "orientation": "bed = z0; show face down on bed, sockets up",
       "supportFree": true,
       "stlFile": "skin-windscreen.stl",
       "glbFile": "skin-windscreen.glb",
@@ -600,7 +600,7 @@
         "value": 2
       },
       "printable": true,
-      "orientation": "bed = z0; flat, studs up",
+      "orientation": "bed = z0; show face down on bed, sockets up",
       "supportFree": true,
       "stlFile": "skin-cargo-shroud.stl",
       "glbFile": "skin-cargo-shroud.glb",

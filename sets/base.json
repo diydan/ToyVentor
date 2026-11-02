@@ -58,7 +58,7 @@
         "value": 1
       },
       "printable": true,
-      "orientation": "bed = z0; studs/body up; underside cavity down",
+      "orientation": "bed = z0; flat, studs up",
       "supportFree": true,
       "stlFile": "brick-s-2x2.stl",
       "glbFile": "brick-s-2x2.glb",
@@ -91,7 +91,7 @@
         "value": 1
       },
       "printable": true,
-      "orientation": "bed = z0; studs/body up; underside cavity down",
+      "orientation": "bed = z0; flat, studs up",
       "supportFree": true,
       "stlFile": "dome-s-2x2.stl",
       "glbFile": "dome-s-2x2.glb",
@@ -124,7 +124,7 @@
         "value": 1
       },
       "printable": true,
-      "orientation": "bed = z0; studs/body up; underside cavity down",
+      "orientation": "bed = z0; flat, studs up",
       "supportFree": true,
       "stlFile": "big-blue-brick.stl",
       "glbFile": "big-blue-brick.glb",

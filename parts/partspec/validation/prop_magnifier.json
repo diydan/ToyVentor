@@ -4,7 +4,7 @@
   "file_sha256": "afae07d1d6eba768858303df76bfa2402ac31648328215683b397be1e4f6eb76",
   "part_id": "prop_magnifier",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-11-01T21:35:20Z",
+  "checked_at": "2026-11-02T00:32:43Z",
   "metrics": {
     "bbox_mm": [
       31.99,
@@ -15,6 +15,7 @@
     "surface_cm2": 33.61,
     "triangles": 1788,
     "ledges": [],
+    "floating_contours": [],
     "layers": 34,
     "bed_contact_mm2": 723.5,
     "height_mm": 6.8,
@@ -72,6 +73,14 @@
       "value": 0.0,
       "limit": 1.0,
       "detail": "mm2 of flat underside held on one side only (a ledge over air, not a bridge)"
+    },
+    {
+      "id": "V11_floating_contour",
+      "level": "block",
+      "result": "pass",
+      "value": 0,
+      "limit": 0,
+      "detail": "unanchored interior hole loops in bridge ceilings or low-Z hovering cantilevers"
     },
     {
       "id": "V6_bridge_span",

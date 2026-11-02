@@ -4,7 +4,7 @@
   "file_sha256": "cb5bad7994c53879448decf9b6c17e15073cec9b3c322b833b8ad5620a0126c3",
   "part_id": "prop_wrench",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-11-01T21:35:19Z",
+  "checked_at": "2026-11-02T00:32:43Z",
   "metrics": {
     "bbox_mm": [
       23.0,
@@ -15,6 +15,7 @@
     "surface_cm2": 20.97,
     "triangles": 760,
     "ledges": [],
+    "floating_contours": [],
     "layers": 25,
     "bed_contact_mm2": 484.5,
     "height_mm": 5.0,
@@ -72,6 +73,14 @@
       "value": 0.0,
       "limit": 1.0,
       "detail": "mm2 of flat underside held on one side only (a ledge over air, not a bridge)"
+    },
+    {
+      "id": "V11_floating_contour",
+      "level": "block",
+      "result": "pass",
+      "value": 0,
+      "limit": 0,
+      "detail": "unanchored interior hole loops in bridge ceilings or low-Z hovering cantilevers"
     },
     {
       "id": "V6_bridge_span",

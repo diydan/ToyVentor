@@ -4,7 +4,7 @@
   "file_sha256": "c28bc1b501b21d766ea46740ab2e72b70ba3920f95096581bb01eb942a01d791",
   "part_id": "veh_handlebar_fork",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-11-01T21:36:31Z",
+  "checked_at": "2026-11-02T00:33:58Z",
   "metrics": {
     "bbox_mm": [
       52.0,
@@ -15,6 +15,7 @@
     "surface_cm2": 21.72,
     "triangles": 1244,
     "ledges": [],
+    "floating_contours": [],
     "layers": 33,
     "bed_contact_mm2": 497.3,
     "height_mm": 6.6,
@@ -72,6 +73,14 @@
       "value": 0.0,
       "limit": 1.0,
       "detail": "mm2 of flat underside held on one side only (a ledge over air, not a bridge)"
+    },
+    {
+      "id": "V11_floating_contour",
+      "level": "block",
+      "result": "pass",
+      "value": 0,
+      "limit": 0,
+      "detail": "unanchored interior hole loops in bridge ceilings or low-Z hovering cantilevers"
     },
     {
       "id": "V6_bridge_span",

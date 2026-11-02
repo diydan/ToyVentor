@@ -56,7 +56,7 @@
         "value": 3
       },
       "printable": true,
-      "orientation": "bed = z0; studs/body up; underside cavity down",
+      "orientation": "bed = z0; flat, studs up",
       "supportFree": true,
       "stlFile": "mom-band-core-tray.stl",
       "glbFile": "mom-band-core-tray.glb",
@@ -94,8 +94,8 @@
       "glbFile": "mom-band-core-lid.glb",
       "bboxMm": [
         49.8,
-        60.9,
-        9.7
+        61.5,
+        16.6
       ]
     },
     {
@@ -120,7 +120,7 @@
         "value": 3
       },
       "printable": true,
-      "orientation": "bed = z0; studs/body up; underside cavity down",
+      "orientation": "bed = z0; flat, studs up",
       "supportFree": true,
       "stlFile": "mom-flywheel-tray.stl",
       "glbFile": "mom-flywheel-tray.glb",
@@ -184,7 +184,7 @@
         "value": 3
       },
       "printable": true,
-      "orientation": "bed = z0; studs/body up; underside cavity down",
+      "orientation": "bed = z0; flat, studs up",
       "supportFree": true,
       "stlFile": "mech-drive-tray.stl",
       "glbFile": "mech-drive-tray.glb",
@@ -196,7 +196,7 @@
     },
     {
       "id": "mech-drive-lid",
-      "name": "Mech Drive Core Clamp & Hinge Lid",
+      "name": "Mech Drive Core Clamp Lid",
       "line": "snap",
       "mount": "stud",
       "sizeClass": "small",
@@ -222,8 +222,8 @@
       "glbFile": "mech-drive-lid.glb",
       "bboxMm": [
         49.8,
-        60.9,
-        9.7
+        49.8,
+        8
       ]
     },
     {
@@ -248,7 +248,7 @@
         "value": 3
       },
       "printable": true,
-      "orientation": "bed = z0; studs/body up; underside cavity down",
+      "orientation": "bed = z0; flat, studs up",
       "supportFree": true,
       "stlFile": "mech-brain-tray.stl",
       "glbFile": "mech-brain-tray.glb",
@@ -286,8 +286,8 @@
       "glbFile": "mech-brain-lid.glb",
       "bboxMm": [
         49.8,
-        60.9,
-        9.7
+        61.5,
+        16.6
       ]
     },
     {
@@ -417,7 +417,7 @@
       "bboxMm": [
         49.8,
         37.3,
-        11
+        11.6
       ]
     }
   ]

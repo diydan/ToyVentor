@@ -71,9 +71,13 @@ def tube_dims(p):
     return (p["stud_d"] + p["fit"]) / 2, (gap - p["fit"]) / 2
 
 
-def _conical_socket_cutter(p, z_cap=None):
+SOCKET_SEG = 64
+
+
+def _conical_socket_cutter(p, z_cap=None, segs=SOCKET_SEG):
     """Self-roofing 42-deg-from-vertical conical female stud socket with mouth lead-in chamfer."""
-    r_sock = (p["stud_d"] + p["fit"]) / 2
+    r_nom = (p["stud_d"] + p["fit"]) / 2
+    r_sock = r_nom / math.cos(math.pi / (2 * segs))
     lead = 0.40 if p["pitch"] < 20.0 else 0.50
     z_cyl = p["stud_h"] - 0.35
     tan_a = math.tan(math.radians(42.0))
@@ -91,12 +95,13 @@ def _conical_socket_cutter(p, z_cap=None):
         (r_top, z_top),
         (0.0, z_top),
     ]
-    return Manifold.revolve(CrossSection([np.array(prof)]), FIT_SEG)
+    return Manifold.revolve(CrossSection([np.array(prof)]), segs)
 
 
-def _blind_tile_socket_cutter(p):
+def _blind_tile_socket_cutter(p, segs=SOCKET_SEG):
     """Blind cylindrical female stud socket for parts printed upside-down (show face on bed, sockets opening +Z)."""
-    r_sock = (p["stud_d"] + p["fit"]) / 2
+    r_nom = (p["stud_d"] + p["fit"]) / 2
+    r_sock = r_nom / math.cos(math.pi / (2 * segs))
     lead = 0.40 if p["pitch"] < 20.0 else 0.50
     depth = p["stud_h"] + 0.40
     prof = [
@@ -106,7 +111,7 @@ def _blind_tile_socket_cutter(p):
         (r_sock, depth),
         (0.0, depth),
     ]
-    return Manifold.revolve(CrossSection([np.array(prof)]), FIT_SEG)
+    return Manifold.revolve(CrossSection([np.array(prof)]), segs)
 
 
 def block(size, nx, ny, h, top, studs=True):

@@ -4,7 +4,7 @@
   "file_sha256": "1a86df406a6a709a8a1c2e1b295dfb6a7aee52ab3e193b9cfac0c0ad3c5c9413",
   "part_id": "pro_captive_pin_28",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-11-01T21:41:52Z",
+  "checked_at": "2026-11-02T00:37:00Z",
   "metrics": {
     "bbox_mm": [
       9.6,
@@ -15,6 +15,7 @@
     "surface_cm2": 8.71,
     "triangles": 1012,
     "ledges": [],
+    "floating_contours": [],
     "layers": 25,
     "bed_contact_mm2": 117.3,
     "height_mm": 5.0,
@@ -72,6 +73,14 @@
       "value": 0.0,
       "limit": 1.0,
       "detail": "mm2 of flat underside held on one side only (a ledge over air, not a bridge)"
+    },
+    {
+      "id": "V11_floating_contour",
+      "level": "block",
+      "result": "pass",
+      "value": 0,
+      "limit": 0,
+      "detail": "unanchored interior hole loops in bridge ceilings or low-Z hovering cantilevers"
     },
     {
       "id": "V6_bridge_span",

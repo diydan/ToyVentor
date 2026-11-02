@@ -1,5 +1,7 @@
 # Spec: Four-Stage Progressive Power & Robotics System (`Snap → Pro → Momentum → Mech`, Pass 4g — Locked for Pass 5 CAD)
 
+> **Post-Pass-5 CAD Revision Note (2026-11-01):** Open `c_jaw_tu01` axle/lid claws, `pro_axle_keeper`, and `cjaw_coupon` described below were replaced in CAD (`parts/partspec/toyventor_kitcard.py`) by closed `360°` `50°`-teardrop Pro `free` axle through-bores on `kit_keel_base` (`rows 0, 7, 8`) and interleaved enclosed cylindrical barrel-hinge knuckles (`TUB_TRUNNION_Y = 30.95`, `TUB_TRUNNION_Z = 5.75`) pinned by `shaft_tu03` on `kit_tilting_tub`, `pro_tub_hinge`, `mom_band_core_lid`, and `mech_brain_lid` (`W11` = `30` parts; `mech_drive_lid` stays flush so `mech_bat_door_screw` clears above it). All `-Z` female stud sockets use `42°` self-roofing cones (`0` slicer supports). See `parts/partspec/DESIGN_LOG.md` for the live record.
+
 ## Status, Scope & Canonical Authority
 
 - **Status:** Final Pre-CAD Engineering & Physics Specification (**Pass 4g — Locked for Pass 5 CAD**, closing all prior `P0`/`P1`/`P2` findings from the Pass 4f adversarial delta-review).

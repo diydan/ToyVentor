@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Calibration guide, step 1 of 2: geometry and assemblies for calibration-guide.html.
 
-Reads the printed calibration STLs from ../calibration, splits the two breakaway-tab coupons into the pieces you
+Reads the printed calibration STLs from ../calibration, splits the breakaway-tab first-print coupon into the pieces you
 snap apart, places every gauge pair in its test pose (the "construction" view) with an explode offset (the "exploded"
 view), checks each pose for interference, and writes guide_assets.json. build.mjs bundles that with the viewer into one
 self-contained page.
@@ -118,7 +118,6 @@ def seated(label, small, small_pose, big_part, big_pose, min_vol):
 # ------------------------------------------------------------------ parts
 RAW = {
     "first_print": load("toyventor_cal_forge_mount_first_print.stl"),
-    "cjaw": load("toyventor_cal_cjaw_coupon.stl"),
     "snap_ladder": load("toyventor_cal_snap_ladder.stl"),
     "stud_tester": load("toyventor_cal_stud_tester.stl"),
     "pro_ladder": load("toyventor_cal_pro_ladder.stl"),
@@ -130,7 +129,7 @@ RAW = {
     "flex_skin": load("toyventor_cal_flex_skin_coupon.stl"),
 }
 
-# Breakaway-tab geometry mirrors make_calibration._build_first_print_components / cjaw_coupon (tab = 3.2 x 1.2 mm bridge).
+# Breakaway-tab geometry mirrors make_calibration._build_first_print_components (tab = 3.2 x 1.2 mm bridge).
 BRIDGE = 3.6
 W_M = 3 * TU - 2 * GAP
 W_S = 15.0
@@ -140,8 +139,6 @@ X_T = X_S + W_S / 2 + BRIDGE + W_T / 2
 SHIFT = -((X_T + W_T / 2) - W_M / 2) / 2.0
 FP_CUT = [W_M / 2 + BRIDGE / 2 + SHIFT, X_S + W_S / 2 + BRIDGE / 2 + SHIFT]      # mid-gap planes: mount|strip, strip|brick
 FP_MOUNT_X, FP_STRIP_X, FP_STUD_X = SHIFT, X_S + SHIFT, X_T + TU / 2 + SHIFT
-CJ_W = 2 * TU - 0.2
-CJ_CUT = CJ_W / 2 + BRIDGE / 2
 
 
 def split_x(tm, cuts, names, tab_count):
@@ -168,12 +165,11 @@ def split_x(tm, cuts, names, tab_count):
     return parts
 
 
-print("Splitting the joined coupons")
+print("Splitting the joined coupon")
 fp = split_x(RAW["first_print"], FP_CUT, ["fp_mount", "fp_strip", "fp_brick"], [2, 1])
-cj = split_x(RAW["cjaw"], [CJ_CUT], ["cj_block", "cj_bar"], [2])
 
 MAN = {
-    **fp, **cj,
+    **fp,
     **{k: to_manifold(RAW[k]) for k in ("snap_ladder", "stud_tester", "pro_ladder", "shaft", "pin_free", "pin_friction", "cube", "face_plate", "flex_skin")},
 }
 MESH = {k: (RAW[k] if k in RAW else to_trimesh(v)) for k, v in MAN.items()}
@@ -182,8 +178,6 @@ PART_META = {
     "fp_mount":     ("Forge Mount base (3x2 studs)", "body"),
     "fp_strip":     ("1/2/3-dot socket strip", "gauge"),
     "fp_brick":     ("2x1 test brick (1 stud)", "tester"),
-    "cj_block":     ("C-jaw block (3 jaws)", "gauge"),
-    "cj_bar":       ("Flat-sided test bar", "tester"),
     "snap_ladder":  ("Snap ladder", "gauge"),
     "stud_tester":  ("Stud tester", "tester"),
     "pro_ladder":   ("Pro ladder", "gauge"),
@@ -229,21 +223,17 @@ def fmt_d(d):
     return f"{d:+.1f}" if abs(d) > 1e-9 else "0.0"
 
 
-# --- prep: the two joined plates, tabs and snap lines
-FP_T = tr(0, 26, 0)
-CJ_T = tr(-5.1, -28, 0)
+# --- prep: the joined first-print plate, tabs and snap lines
+FP_T = tr(0, 0, 0)
 SCENES["prep"] = {
     "title": "Snap the tabs", "explodable": True, "cam": "top", "explode": 1.0,
-    "variants": [variant("all", "Both plates", [
+    "variants": [variant("all", "First-print plate", [
         item("mount", "fp_mount", FP_T, (-16, 0, 0)),
         item("strip", "fp_strip", FP_T, (0, 0, 0)),
         item("brick", "fp_brick", FP_T, (16, 0, 0)),
-        item("block", "cj_block", CJ_T, (-10, 0, 0)),
-        item("bar", "cj_bar", CJ_T, (10, 0, 0)),
     ], [
         lab("snap", "mount", (FP_CUT[0], 0, 3.2), cls="snap"),
         lab("snap", "strip", (FP_CUT[1], 0, 10.5), cls="snap"),
-        lab("snap", "block", (CJ_CUT, 0, 3.2), cls="snap"),
     ])],
 }
 
@@ -385,35 +375,14 @@ seated("face plate plug in cube", MAN["face_plate"], plate_pose, "cube", ID, 100
 SCENES["cube_plate"] = {"title": "Face plate", "explodable": True, "cam": "iso", "explode": 0.0, "variants": [variant("p", "Face plate in an open hole", [
     item("cube", "cube", ID), item("plate", "face_plate", plate_pose, (0, 0, 22))])]}
 
-# --- E: C-jaw coupon; the flat bar snaps up into jaw 1..3 (throat -0.05, 0.00, +0.05)
-print("Pose check: bar in C-jaws")
-# the tab stubs left on the bar would catch in the throat, so the test pose uses the bar with its stubs trimmed flush
-MAN["cj_bar_trim"] = MAN["cj_bar"] ^ slab(CJ_W / 2 + BRIDGE - 0.001, 500.0)
-MESH["cj_bar_trim"] = to_trimesh(MAN["cj_bar_trim"])
-PART_META["cj_bar_trim"] = ("Flat-sided test bar (stubs trimmed)", "tester")
-bb = MESH["cj_bar_trim"].bounds
-bar_c = ((bb[0] + bb[1]) / 2)
-JAW_Y = [-TU, 0.0, TU]
-JAW_D = [-0.05, 0.00, 0.05]
-JAW_NAMES = ["end (-0.05 mm)", "middle (0.00 mm)", "other end (+0.05 mm)"]
-e_variants = []
-for j, yc in enumerate(JAW_Y):
-    mb = tr(0, yc, 6.25) @ rz(90) @ tr(-bar_c[0], -bar_c[1], -bar_c[2])
-    check_pose(f"bar in jaw {j + 1} ({JAW_D[j]:+.2f} mm throat)", MAN["cj_block"], MAN["cj_bar_trim"], ID, mb, 0.02)
-    seated(f"bar seated in jaw {j + 1}", MAN["cj_bar_trim"], mb, "cj_block", ID, 450)
-    e_variants.append(variant(j + 1, f"Jaw {j + 1} ({JAW_D[j]:+.2f} mm)", [
-        item("block", "cj_block", ID),
-        item("bar", "cj_bar_trim", mb, (0, 0, -28)),
-    ], [lab(f"J{k + 1}", "block", (0, JAW_Y[k], -0.5), pick=str(k + 1), sub=f"{JAW_D[k]:+.2f}") for k in range(3)]))
-SCENES["cjaw"] = {"title": "C-jaw coupon", "explodable": True, "cam": "under", "explode": 0.0, "variants": e_variants, "default": "2"}
-
-# --- F: skin sockets on the mount studs; hinge flap folds down beside the mount
+# --- E: skin sockets on the mount studs (skin prints smooth show-face-down, so rx(180) flips sockets down onto studs); hinge flap folds down beside the mount
 print("Pose check: flex skin on mount")
-skin_pose = tr(-TU, 0, PLATE_H)
+SKIN_H = float(RAW["flex_skin"].bounds[1][2] - RAW["flex_skin"].bounds[0][2])
+skin_pose = tr(-TU, 0, PLATE_H + SKIN_H) @ rx(180)
 mount_pose = tr(-FP_MOUNT_X, 0, 0)
 check_pose("flex skin sockets on mount studs", MAN["flex_skin"], MAN["fp_mount"], skin_pose, mount_pose, 0.05)
 seated("mount studs inside flex skin", MAN["fp_mount"], mount_pose, "flex_skin", skin_pose, 250)
-# hinge web: the 0.6 mm corridor nearest the mount edge (skin frame), found by ray casting the actual STL
+# hinge web: the 0.6 mm corridor nearest the mount edge (skin print frame: z = 0..0.6 mm), found by ray casting the actual STL
 skin = RAW["flex_skin"]
 xs = np.arange(-9.0, -4.0, 0.02)
 hits = []
@@ -444,7 +413,7 @@ if abs(MAN["flex_skin_a"].volume() + MAN["flex_skin_b"].volume() - MAN["flex_ski
 SCENES["flex"] = {"title": "Flex skin on mount", "explodable": True, "cam": "iso", "explode": 0.0, "variants": [variant("f", "Skin pressed on the mount", [
     item("mount", "fp_mount", mount_pose),
     item("skin", "flex_skin_a", skin_pose, (0, 0, 24)),
-    item("flap", "flex_skin_b", skin_pose, (0, 0, 24), fold={"pivot": [round(hinge_c, 4), 0.3]}, nocap=True),
+    item("flap", "flex_skin_b", skin_pose, (0, 0, 24), fold={"pivot": [round(hinge_c, 4), 0.3], "dir": 1}, nocap=True),
 ])]}
 
 
@@ -458,10 +427,9 @@ def group_box(pids):
 # (group id, parts, badge letter, step to open on click ('C:fric' also picks the sub-view), name)
 GROUPS = [
     ("fp", ["fp_mount", "fp_strip", "fp_brick"], "1", "dots", "Forge Mount First-Print"),
-    ("cj", ["cj_block", "cj_bar"], "E", "E", "C-jaw coupon"),
     ("pro", ["pro_ladder"], "B", "B", "Pro ladder"),
     ("snap", ["snap_ladder"], "A", "A", "Snap ladder"),
-    ("skin", ["flex_skin"], "F", "F", "Flex skin"),
+    ("skin", ["flex_skin"], "E", "E", "Flex skin"),
     ("tester", ["stud_tester"], "A", "A", "Stud tester"),
     ("shaft", ["shaft"], "B", "B", "Shaft"),
     ("free", ["pin_free"], "C", "C:free", "Free pin"),
@@ -538,7 +506,6 @@ assets = {
     "parts": {pid: {"name": PART_META[pid][0], "tone": PART_META[pid][1], "bbox": bbox(pid), "stl": stl_b64(MESH[pid])} for pid in MAN},
     "scenes": SCENES,
     "kit": {"steps_mm": kit["steps_mm"], "sockets": kit["first_print_selector"]["sockets"], "window": kit["first_print_selector"]["combined_window_mm"]},
-    "jaws": [{"name": n, "throat_mm": d} for n, d in zip(JAW_NAMES, JAW_D)],
     "print_meta": PRINT_META,
     "notes": {"cube_pin": CUBE_PIN},
 }

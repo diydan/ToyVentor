@@ -1,24 +1,25 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_mom_jet_valve_body_S.stl",
-  "file_sha256": "d206da6086306c82b6970728050eab349d9678d6178538a70657bf719c43ccd5",
+  "file_sha256": "31a64e20a72365723e5bcf538106e46d25e1258cc08835938227c72d2cbbab02",
   "part_id": "mom_jet_valve_body",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-11-01T21:40:46Z",
+  "checked_at": "2026-11-02T00:36:07Z",
   "metrics": {
     "bbox_mm": [
       49.8,
       27.8,
       28.0
     ],
-    "volume_cm3": 16.02,
-    "surface_cm2": 67.14,
-    "triangles": 4906,
+    "volume_cm3": 16.08,
+    "surface_cm2": 67.51,
+    "triangles": 7502,
     "ledges": [],
+    "floating_contours": [],
     "layers": 140,
-    "bed_contact_mm2": 904.8,
+    "bed_contact_mm2": 852.2,
     "height_mm": 28.0,
-    "slenderness": 0.93,
+    "slenderness": 0.96,
     "centre_of_mass_over_contact": true,
     "min_wall_mm": 0.451,
     "thin_wall_regions": []
@@ -28,46 +29,6 @@
       "z_mm": 19.8,
       "span_mm": 0.2,
       "area_mm2": 0.5
-    },
-    {
-      "z_mm": 3.2,
-      "span_mm": 6.7,
-      "area_mm2": 35.2
-    },
-    {
-      "z_mm": 3.2,
-      "span_mm": 6.7,
-      "area_mm2": 35.2
-    },
-    {
-      "z_mm": 3.2,
-      "span_mm": 6.7,
-      "area_mm2": 35.2
-    },
-    {
-      "z_mm": 3.2,
-      "span_mm": 6.7,
-      "area_mm2": 35.2
-    },
-    {
-      "z_mm": 3.2,
-      "span_mm": 6.7,
-      "area_mm2": 35.2
-    },
-    {
-      "z_mm": 3.2,
-      "span_mm": 6.7,
-      "area_mm2": 35.2
-    },
-    {
-      "z_mm": 3.2,
-      "span_mm": 6.7,
-      "area_mm2": 35.2
-    },
-    {
-      "z_mm": 3.2,
-      "span_mm": 6.7,
-      "area_mm2": 35.2
     }
   ],
   "checks": [
@@ -120,12 +81,20 @@
       "detail": "mm2 of flat underside held on one side only (a ledge over air, not a bridge)"
     },
     {
+      "id": "V11_floating_contour",
+      "level": "block",
+      "result": "pass",
+      "value": 0,
+      "limit": 0,
+      "detail": "unanchored interior hole loops in bridge ceilings or low-Z hovering cantilevers"
+    },
+    {
       "id": "V6_bridge_span",
       "level": "block",
       "result": "pass",
-      "value": 6.7,
+      "value": 0.2,
       "limit": 20,
-      "detail": "9 bridge(s); widest unsupported span in mm"
+      "detail": "1 bridge(s); widest unsupported span in mm"
     },
     {
       "id": "V5_no_floating_islands",
@@ -147,9 +116,9 @@
       "id": "V9_bed_contact",
       "level": "info",
       "result": "pass",
-      "value": 904.8,
+      "value": 852.2,
       "limit": null,
-      "detail": "height / sqrt(contact) = 0.93; above about 3 the slicer often asks for a brim"
+      "detail": "height / sqrt(contact) = 0.96; above about 3 the slicer often asks for a brim"
     },
     {
       "id": "V8_wall_thickness",

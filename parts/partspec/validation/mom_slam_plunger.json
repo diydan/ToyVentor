@@ -4,7 +4,7 @@
   "file_sha256": "8ef3cc9076164e93c2a4172473ca91d1857fd4f7a101256fb9a94da13f4d5315",
   "part_id": "mom_slam_plunger",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-11-01T21:40:44Z",
+  "checked_at": "2026-11-02T00:36:05Z",
   "metrics": {
     "bbox_mm": [
       18.0,
@@ -15,6 +15,7 @@
     "surface_cm2": 33.21,
     "triangles": 702,
     "ledges": [],
+    "floating_contours": [],
     "layers": 25,
     "bed_contact_mm2": 825.5,
     "height_mm": 5.0,
@@ -72,6 +73,14 @@
       "value": 0.0,
       "limit": 1.0,
       "detail": "mm2 of flat underside held on one side only (a ledge over air, not a bridge)"
+    },
+    {
+      "id": "V11_floating_contour",
+      "level": "block",
+      "result": "pass",
+      "value": 0,
+      "limit": 0,
+      "detail": "unanchored interior hole loops in bridge ceilings or low-Z hovering cantilevers"
     },
     {
       "id": "V6_bridge_span",

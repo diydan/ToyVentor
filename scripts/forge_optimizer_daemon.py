@@ -204,7 +204,9 @@ def compile_recipe_to_partspec(recipe: dict[str, Any]) -> dict[str, Any]:
             fillet_r = max(0.4, min(4.0, _finite_float(shape.get("fillet_r_mm", 1.2), "fillet_r_mm")))
         else:
             pts_clamped = []
-            fillet_r = 1.4
+            # 1.4 fails G1_watertight and G3_single_body on most stars (6 of 9 shapes tried);
+            # 1.6 is what parts/kip/sdk/examples/example_star_wand.py uses and passes 8 of 9.
+            fillet_r = 1.6
             n_pts = max(3, min(12, int(shape.get("points", 5))))
             r_out = max(10.0, min(28.0, _finite_float(shape.get("outer_r_mm", 18.0), "outer_r_mm")))
             r_in = max(5.0, min(r_out - 2.0, _finite_float(shape.get("inner_r_mm", r_out * 0.52), "inner_r_mm")))

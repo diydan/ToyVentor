@@ -570,8 +570,8 @@ w11_ids = [r["id"] for r in tp.CATALOG["parts"] if r.get("wave") == "W11"]
 w13_ids = [r["id"] for r in tp.CATALOG["parts"] if r.get("wave") == "W13"]
 test("W10 flat-pack modular craft: all 19 parts are verified and 100% clear the S1 small-parts cylinder",
      len(w10_ids) == 19 and all(by_id[i]["design_status"] == "verified" and by_id[i]["safety"]["small_part_status"] == "above_cylinder" for i in w10_ids))
-test("W11 Pro steering & Momentum stored-energy cores: all 31 parts are verified with zero blocking failures",
-     len(w11_ids) == 31 and all(by_id[i]["design_status"] == "verified" for i in w11_ids))
+test("W11 Pro steering & Momentum stored-energy cores: all 30 parts are verified with zero blocking failures",
+     len(w11_ids) == 30 and all(by_id[i]["design_status"] == "verified" for i in w11_ids))
 test("W13 Stage-4 PETG RC/Mech housings & couplers: all 11 parts are verified with zero blocking failures",
      len(w13_ids) == 11 and all(by_id[i]["design_status"] == "verified" for i in w13_ids))
 _kn_l, _kn_l_conns, _ = _kc.pro_steer_knuckle_l()

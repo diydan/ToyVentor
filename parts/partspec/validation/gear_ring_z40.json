@@ -4,7 +4,7 @@
   "file_sha256": "5bb7ef62cc19f1c9a3d46cd1be9335d3b55332c058b84170734136a9d5016137",
   "part_id": "gear_ring_z40",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-11-01T21:31:24Z",
+  "checked_at": "2026-11-02T00:28:50Z",
   "metrics": {
     "bbox_mm": [
       125.0,
@@ -15,6 +15,7 @@
     "surface_cm2": 222.15,
     "triangles": 9992,
     "ledges": [],
+    "floating_contours": [],
     "layers": 31,
     "bed_contact_mm2": 7337.2,
     "height_mm": 6.25,
@@ -72,6 +73,14 @@
       "value": 0.0,
       "limit": 1.0,
       "detail": "mm2 of flat underside held on one side only (a ledge over air, not a bridge)"
+    },
+    {
+      "id": "V11_floating_contour",
+      "level": "block",
+      "result": "pass",
+      "value": 0,
+      "limit": 0,
+      "detail": "unanchored interior hole loops in bridge ceilings or low-Z hovering cantilevers"
     },
     {
       "id": "V6_bridge_span",
@@ -154,7 +163,7 @@
       0
     ],
     "engine": "PrusaSlicer-2.8.1",
-    "reused_from": "2026-10-31T14:34:05Z"
+    "reused_from": "2026-11-01T21:31:24Z"
   },
   "verdict": "pass",
   "summary": "Prints as is"

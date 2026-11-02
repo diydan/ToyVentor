@@ -4,7 +4,7 @@
   "file_sha256": "f3a754de560dd4e20dfc87169891ec7efceeaca16fa438c5fe835fc50475ff8f",
   "part_id": "pro_tie_rod_link",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-11-01T21:39:48Z",
+  "checked_at": "2026-11-02T00:35:30Z",
   "metrics": {
     "bbox_mm": [
       26.87,
@@ -15,6 +15,7 @@
     "surface_cm2": 9.44,
     "triangles": 1736,
     "ledges": [],
+    "floating_contours": [],
     "layers": 50,
     "bed_contact_mm2": 233.0,
     "height_mm": 10.05,
@@ -72,6 +73,14 @@
       "value": 0.0,
       "limit": 1.0,
       "detail": "mm2 of flat underside held on one side only (a ledge over air, not a bridge)"
+    },
+    {
+      "id": "V11_floating_contour",
+      "level": "block",
+      "result": "pass",
+      "value": 0,
+      "limit": 0,
+      "detail": "unanchored interior hole loops in bridge ceilings or low-Z hovering cantilevers"
     },
     {
       "id": "V6_bridge_span",

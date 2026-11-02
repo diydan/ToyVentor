@@ -813,7 +813,7 @@ def _build_flex_skin(w, d, size="small", center_book_fold=False):
     ])
     r_b = hole_r + wall
     boss_prof = [(0.0, 0.0), (r_b - 0.35, 0.0), (r_b, 0.35), (r_b, H - 0.40), (0.0, H - 0.40)]
-    boss_unit = Manifold.revolve(CrossSection([np.array(boss_prof)]), tp.FIT_SEG)
+    boss_unit = Manifold.revolve(CrossSection([np.array(boss_prof)]), tp.SOCKET_SEG)
     clip_prism = Manifold.extrude(fp.offset(-0.05, JoinType.Round), H - 0.35)
     bosses = tp.union([(boss_unit.translate((x, y, 0.0)) ^ clip_prism) for x, y in full])
     cut_b = tp._blind_tile_socket_cutter(p)
@@ -821,9 +821,9 @@ def _build_flex_skin(w, d, size="small", center_book_fold=False):
     m = (sheet + bosses) - cuts
 
     corridors = [-6.25, 6.25] if center_book_fold else [-18.75, 18.75]
-    gr_prof = _ccw_poly([(-0.90, 3.50), (0.90, 3.50), (0.70, 3.80), (-0.70, 3.80)]).rotate(90)
+    gr_prof = _ccw_poly([(-0.90, 3.50), (0.90, 3.50), (0.70, 3.80), (-0.70, 3.80)])
     for xc in corridors:
-        groove = Manifold.extrude(gr_prof, d + 1.0).rotate((-90, 0, 90)).translate((xc, -(d + 1.0) / 2, 0.0))
+        groove = Manifold.extrude(gr_prof, d + 1.0).rotate((90, 0, 0)).translate((xc, (d + 1.0) / 2, 0.0))
         m = m - groove
 
     nx = int(round(2 * max(abs(x) for x, _ in full) / pitch)) + 1
@@ -919,16 +919,16 @@ def pro_steer_bridge(size="small", grid=(2, 2), lock=True, **_):
     c_sock = tp.socket_conn(size, 2, 2)
     c_sock["style"] = "holes"
 
-    # Kingpin fixed bores (z = 4.45..9.00 mm) between 42-deg bottom stud-relief cones (r_top=2.20 inside fixed flats) and top Ø8.00 snap pockets:
-    r_sock = (p["stud_d"] + p["fit"]) / 2
-    z_kp_cone = 2.95 + (r_sock - 2.20) / math.tan(math.radians(42.0))
-    cut_kp = Manifold.revolve(CrossSection([np.array([
-        (0.0, -0.02), (r_sock + 0.42, -0.02), (r_sock, 0.40), (r_sock, 2.95), (2.20, z_kp_cone + 0.2), (0.0, z_kp_cone + 0.2),
-    ])]), pro.SEGS)
+    # Kingpin fixed bores (z = 4.20..9.00 mm) with orthogonal planar Y-flat stud-relief prisms (|x| <= 2.35 inside fixed chord):
+    prof_yz = _ccw_poly([
+        (-3.85, -0.05), (3.85, -0.05), (3.45, 0.35), (3.45, 2.95),
+        (1.80, 4.95), (-1.80, 4.95), (-3.45, 2.95), (-3.45, 0.35),
+    ])
+    y_rel = Manifold.extrude(prof_yz.rotate(90), 4.70).rotate((0, 90, 0)).translate((-2.35, 0.0, 0.0))
+    m = m - pro.bore_cutter("fixed", H, -18.75, -6.25, 0.0) - pro.bore_cutter("fixed", H, 18.75, -6.25, 0.0)
     for sx in (-18.75, 18.75):
-        m = m - cut_kp.translate((sx, -6.25, 0.0))
-        m = m - pro.bore_cutter("fixed", 9.10 - 4.35, sx, -6.25, 4.35)
         m = m - Manifold.cylinder(H - 9.00 + 0.2, 4.00, 4.00, 64).translate((sx, -6.25, 9.00))
+        m = m - y_rel.translate((sx, -6.25, 0.0))
     c_kp = {
         "id": "kingpins",
         "kind": "bore_grid",
@@ -937,9 +937,9 @@ def pro_steer_bridge(size="small", grid=(2, 2), lock=True, **_):
         "size_class": "pro",
         "fit_class": "PIN",
         "bore_class": "fixed",
-        "depth_mm": 4.55,
+        "depth_mm": 4.80,
         "lattice": "axis8",
-        "frame": {"origin": [-18.75, -6.25, 4.45], "normal": [0, 0, 1]},
+        "frame": {"origin": [-18.75, -6.25, 4.20], "normal": [0, 0, 1]},
         "grid": {"nx": 2, "ny": 1, "pitch": 37.5, "anchor": "corner"},
     }
     # Front prow, rack guide wall and travel stop. Local frame: world = (0, BRIDGE_Y, BRIDGE_Z) + local.
@@ -1957,7 +1957,7 @@ def mech_servo_mount(size="small", grid=(2, 2), lock=True, **_):
     gear_clear = Manifold.batch_hull([
         Manifold.cylinder(0.1, 15.6, 15.6, 64).translate((0.0, 0.0, 12.0)),
         Manifold.cylinder(0.1, 15.6, 15.6, 64).translate((0.0, 0.0, 19.5)),
-        Manifold.cylinder(0.1, 6.1, 6.1, 64).translate((0.0, 0.0, 29.0)),
+        Manifold.cylinder(0.1, 6.1, 6.1, 64).translate((0.0, 0.0, 29.8)),
     ])
     sg90_well = Manifold.cube((12.6, 23.0, 8.0)).translate((-6.3, -16.8, 25.8))
     sg90_ears = Manifold.cube((12.6, 33.0, 3.5)).translate((-6.3, -21.7, 30.1))
@@ -2669,19 +2669,21 @@ def verify_gate_g1():
                 stop_fail.append((pname, f"dz={dz:+.2f}", f"unretained ({v_lock:.4f} mm3)"))
     results["1b_rack_travel_stop"] = stop_fail
 
-    # 2. Dump / Tow Truck: zero-strain stowed + 55-deg dump tip on BOTH (#1 + pro_tub_hinge) AND (3-TU Core + Lid):
-    tub_hinge = _raw_geo("pro_tub_hinge", cache).translate((0.0, 56.25, -3.80))
+    # 2. Dump / Tow Truck: zero-strain stowed + 55-deg dump tip on BOTH (#1 + pro_tub_hinge) AND (3-TU Core + Lid), pinned by shaft_tu03:
+    tub_hinge = _raw_geo("pro_tub_hinge", cache).translate((0.0, 62.40, 4.50))
+    tub_pin_s2 = _raw_geo("shaft_tu03", cache).rotate((0, 90, 0)).translate((-18.75, 37.5 + TUB_TRUNNION_Y, 12.5 + TUB_TRUNNION_Z))
     tub_stowed_s2 = tub.translate((0.0, 37.5, 12.5))
-    tub_55_s2 = tub.translate((0.0, -TUB_TRUNNION_Y, -TUB_TRUNNION_Z)).rotate((-55.0, 0.0, 0.0)).translate((0.0, 37.5 + TUB_TRUNNION_Y, 15.0))
+    tub_55_s2 = tub.translate((0.0, -TUB_TRUNNION_Y, -TUB_TRUNNION_Z)).rotate((-55.0, 0.0, 0.0)).translate((0.0, 37.5 + TUB_TRUNNION_Y, 12.5 + TUB_TRUNNION_Z))
     core_tray = _raw_geo("mom_band_core_tray", cache).translate((0.0, 37.5, 12.5))
     core_lid = _raw_geo("mom_band_core_lid", cache).translate((0.0, 37.5, 44.8))
+    tub_pin_s3 = _raw_geo("shaft_tu03", cache).rotate((0, 90, 0)).translate((-18.75, 37.5 + TUB_TRUNNION_Y, 50.0 + TUB_TRUNNION_Z))
     tub_stowed_s3 = tub.translate((0.0, 37.5, 50.0))
-    tub_55_s3 = tub.translate((0.0, -TUB_TRUNNION_Y, -TUB_TRUNNION_Z)).rotate((-55.0, 0.0, 0.0)).translate((0.0, 37.5 + TUB_TRUNNION_Y, 52.5))
+    tub_55_s3 = tub.translate((0.0, -TUB_TRUNNION_Y, -TUB_TRUNNION_Z)).rotate((-55.0, 0.0, 0.0)).translate((0.0, 37.5 + TUB_TRUNNION_Y, 50.0 + TUB_TRUNNION_Z))
     results["2_dump_truck_stowed_and_55deg"] = (
-        _check_non_overlapping([("keel", keel), ("hinge", tub_hinge), ("wind", wind.translate((0.0, -6.25, 12.5))), ("kip", kip), ("tub_0", tub_stowed_s2)])
-        + _check_non_overlapping([("keel", keel), ("hinge", tub_hinge), ("wind", wind.translate((0.0, -6.25, 12.5))), ("kip", kip), ("tub_55_s2", tub_55_s2)])
-        + _check_non_overlapping([("keel", keel), ("core_tray", core_tray), ("core_lid", core_lid), ("wind", wind.translate((0.0, -6.25, 12.5))), ("kip", kip), ("tub_0_s3", tub_stowed_s3)])
-        + _check_non_overlapping([("keel", keel), ("core_tray", core_tray), ("core_lid", core_lid), ("wind", wind.translate((0.0, -6.25, 12.5))), ("kip", kip), ("tub_55_s3", tub_55_s3)])
+        _check_non_overlapping([("keel", keel), ("hinge", tub_hinge), ("tub_pin", tub_pin_s2), ("wind", wind.translate((0.0, -6.25, 12.5))), ("kip", kip), ("tub_0", tub_stowed_s2)])
+        + _check_non_overlapping([("keel", keel), ("hinge", tub_hinge), ("tub_pin", tub_pin_s2), ("wind", wind.translate((0.0, -6.25, 12.5))), ("kip", kip), ("tub_55_s2", tub_55_s2)])
+        + _check_non_overlapping([("keel", keel), ("core_tray", core_tray), ("core_lid", core_lid), ("tub_pin", tub_pin_s3), ("wind", wind.translate((0.0, -6.25, 12.5))), ("kip", kip), ("tub_0_s3", tub_stowed_s3)])
+        + _check_non_overlapping([("keel", keel), ("core_tray", core_tray), ("core_lid", core_lid), ("tub_pin", tub_pin_s3), ("wind", wind.translate((0.0, -6.25, 12.5))), ("kip", kip), ("tub_55_s3", tub_55_s3)])
     )
 
     # 3. Farm / Loader Tractor: Giant Ø50 rear + Pro ±25 deg steered Ø50 front lock check:
@@ -2823,8 +2825,9 @@ def verify_gate_g1():
     ghost_lipo = Manifold.cube((25.0, 35.0, 6.2)).translate((-12.5, 37.5 - 14.5, 55.5))
     ghost_pcb = Manifold.extrude(rrect(38.0, 38.0, 7.5), 1.6).translate((0.0, 37.5, 62.8))
     ghost_xiao = Manifold.cube((21.0, 17.8, 4.5)).translate((-10.5, 37.5 - 10.0, 64.5))
+    tub_pin_s4 = _raw_geo("shaft_tu03", cache).rotate((0, 90, 0)).translate((-18.75, 37.5 + TUB_TRUNNION_Y, 75.0 + TUB_TRUNNION_Z))
     tub_stowed_s4 = tub.translate((0.0, 37.5, 75.0))
-    tub_55_s4 = tub.translate((0.0, -TUB_TRUNNION_Y, -TUB_TRUNNION_Z)).rotate((-55.0, 0.0, 0.0)).translate((0.0, 37.5 + TUB_TRUNNION_Y, 77.5))
+    tub_55_s4 = tub.translate((0.0, -TUB_TRUNNION_Y, -TUB_TRUNNION_Z)).rotate((-55.0, 0.0, 0.0)).translate((0.0, 37.5 + TUB_TRUNNION_Y, 75.0 + TUB_TRUNNION_Z))
 
     for sgn in (-1.0, 0.0, 1.0):
         dx_rc = sgn * dx21
@@ -2842,6 +2845,7 @@ def verify_gate_g1():
             ("sill", sill), ("kip", kip),
             ("drv_tray", drv_tray), ("ghost_n20", ghost_n20), ("n20_pinion", n20_pin), ("axle_z10", axle_z10), ("drv_lid", drv_lid),
             ("brn_tray", brn_tray), ("ghost_lipo", ghost_lipo), ("ghost_pcb", ghost_pcb), ("ghost_xiao", ghost_xiao), ("bat_door", bat_door), ("brn_lid", brn_lid),
+            ("tub_pin_s4", tub_pin_s4),
             ("tub_0_s4" if sgn == 0.0 else "tub_55_s4", tub_stowed_s4 if sgn == 0.0 else tub_55_s4),
             (f"w50_fl_{sgn}", w50_l), (f"w50_fr_{sgn}", w50_r), *outboard_wheels(w_gnt, 43.75),
         ])

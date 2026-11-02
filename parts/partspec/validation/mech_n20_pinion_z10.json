@@ -4,7 +4,7 @@
   "file_sha256": "3d0739dbf6054660b6205bf59d944dcfbadf3c06e53f93078c0127f047a4fad0",
   "part_id": "mech_n20_pinion_z10",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-11-01T21:42:31Z",
+  "checked_at": "2026-11-02T00:37:30Z",
   "metrics": {
     "bbox_mm": [
       30.0,
@@ -15,6 +15,7 @@
     "surface_cm2": 26.53,
     "triangles": 10524,
     "ledges": [],
+    "floating_contours": [],
     "layers": 100,
     "bed_contact_mm2": 258.0,
     "height_mm": 20.0,
@@ -78,6 +79,14 @@
       "value": 0.0,
       "limit": 1.0,
       "detail": "mm2 of flat underside held on one side only (a ledge over air, not a bridge)"
+    },
+    {
+      "id": "V11_floating_contour",
+      "level": "block",
+      "result": "pass",
+      "value": 0,
+      "limit": 0,
+      "detail": "unanchored interior hole loops in bridge ceilings or low-Z hovering cantilevers"
     },
     {
       "id": "V6_bridge_span",

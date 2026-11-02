@@ -4,7 +4,7 @@
   "file_sha256": "fc8fb9d44c2067d6a9bd61b16a2ea7913879c74b1fb670fe2f4daa43bd6a1e4c",
   "part_id": "mom_band_spool_pawl",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-11-01T21:40:41Z",
+  "checked_at": "2026-11-02T00:36:04Z",
   "metrics": {
     "bbox_mm": [
       21.6,
@@ -15,6 +15,7 @@
     "surface_cm2": 16.6,
     "triangles": 3278,
     "ledges": [],
+    "floating_contours": [],
     "layers": 65,
     "bed_contact_mm2": 96.5,
     "height_mm": 13.0,
@@ -113,6 +114,14 @@
       "value": 0.0,
       "limit": 1.0,
       "detail": "mm2 of flat underside held on one side only (a ledge over air, not a bridge)"
+    },
+    {
+      "id": "V11_floating_contour",
+      "level": "block",
+      "result": "pass",
+      "value": 0,
+      "limit": 0,
+      "detail": "unanchored interior hole loops in bridge ceilings or low-Z hovering cantilevers"
     },
     {
       "id": "V6_bridge_span",

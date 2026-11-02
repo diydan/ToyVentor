@@ -4,7 +4,7 @@
   "file_sha256": "008eeeab9e417f507c737cfeda1fe0d78a3d51d792fca265f3485c0368f5efec",
   "part_id": "veh_wheel_offroad",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-11-01T21:35:26Z",
+  "checked_at": "2026-11-02T00:32:50Z",
   "metrics": {
     "bbox_mm": [
       43.92,
@@ -15,6 +15,7 @@
     "surface_cm2": 63.51,
     "triangles": 2906,
     "ledges": [],
+    "floating_contours": [],
     "layers": 70,
     "bed_contact_mm2": 1259.2,
     "height_mm": 14.0,
@@ -72,6 +73,14 @@
       "value": 0.0,
       "limit": 1.0,
       "detail": "mm2 of flat underside held on one side only (a ledge over air, not a bridge)"
+    },
+    {
+      "id": "V11_floating_contour",
+      "level": "block",
+      "result": "pass",
+      "value": 0,
+      "limit": 0,
+      "detail": "unanchored interior hole loops in bridge ceilings or low-Z hovering cantilevers"
     },
     {
       "id": "V6_bridge_span",

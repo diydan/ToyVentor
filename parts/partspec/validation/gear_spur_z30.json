@@ -4,7 +4,7 @@
   "file_sha256": "508b3499c9040ad739dd2204cc825bf359637581b32d26bb41d47a1de160c1ae",
   "part_id": "gear_spur_z30",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-11-01T21:31:23Z",
+  "checked_at": "2026-11-02T00:28:49Z",
   "metrics": {
     "bbox_mm": [
       80.0,
@@ -15,6 +15,7 @@
     "surface_cm2": 117.5,
     "triangles": 35376,
     "ledges": [],
+    "floating_contours": [],
     "layers": 31,
     "bed_contact_mm2": 4317.1,
     "height_mm": 6.25,
@@ -72,6 +73,14 @@
       "value": 0.0,
       "limit": 1.0,
       "detail": "mm2 of flat underside held on one side only (a ledge over air, not a bridge)"
+    },
+    {
+      "id": "V11_floating_contour",
+      "level": "block",
+      "result": "pass",
+      "value": 0,
+      "limit": 0,
+      "detail": "unanchored interior hole loops in bridge ceilings or low-Z hovering cantilevers"
     },
     {
       "id": "V6_bridge_span",

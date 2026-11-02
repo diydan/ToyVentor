@@ -4,7 +4,7 @@
   "file_sha256": "7bfbc122cff37f38d4669f13313dfc242f38c62086f7e7067bf38dddc9568d92",
   "part_id": "shaft_tu07",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-11-01T21:30:10Z",
+  "checked_at": "2026-11-02T00:27:40Z",
   "metrics": {
     "bbox_mm": [
       6.6,
@@ -15,6 +15,7 @@
     "surface_cm2": 24.05,
     "triangles": 384,
     "ledges": [],
+    "floating_contours": [],
     "layers": 25,
     "bed_contact_mm2": 395.9,
     "height_mm": 5.0,
@@ -72,6 +73,14 @@
       "value": 0.0,
       "limit": 1.0,
       "detail": "mm2 of flat underside held on one side only (a ledge over air, not a bridge)"
+    },
+    {
+      "id": "V11_floating_contour",
+      "level": "block",
+      "result": "pass",
+      "value": 0,
+      "limit": 0,
+      "detail": "unanchored interior hole loops in bridge ceilings or low-Z hovering cantilevers"
     },
     {
       "id": "V6_bridge_span",
@@ -159,7 +168,7 @@
       3
     ],
     "engine": "PrusaSlicer-2.8.1",
-    "reused_from": "2026-10-31T14:29:35Z"
+    "reused_from": "2026-11-01T21:30:10Z"
   },
   "verdict": "pass_with_settings",
   "summary": "Prints with brim_width_mm = 3"

@@ -80,7 +80,6 @@ One base unit: 1 TU = 12.5 mm. Every interface pitch is an integer multiple of t
 | `pin_friction` | pin | pro | 12.5 | PIN | n/a |
 | `pin_free` | pin | pro | 12.5 | PIN_FREE | n/a |
 | `shaft_drive` | pin | pro | 12.5 | PIN_DRIVE | n/a |
-| `c_jaw_tu01` | c_jaw | pro | 12.5 | SNAP_JAW | n/a |
 | `flank_rail_tu02` | mortise | small | 12.5 | FRICTION | n/a |
 
 Each size has its own clearance value (stud_small.fit, stud_large.fit). Both start at 0.10 mm as placeholders. Print clearance does not scale linearly with part size, so Large is expected to need more; the calibration piece sets both.
@@ -234,8 +233,8 @@ Each size has its own clearance value (stud_small.fit, stud_large.fit). Both sta
 | `veh_scooter_fairing` | snap | small | verified | Speed | `under_sockets` socket_grid/F 2x1 |
 | `veh_handlebar_fork` | pro | pro | verified | Spin | `axis` pin/M 1x1 |
 | `veh_moto_cowling` | snap | small | verified | Speed | `under_sockets` socket_grid/F 2x2; `tank_studs` stud_grid/M 2x1 |
-| `kit_keel_base` | snap | small | verified | Sturdiness | `top_studs` stud_grid/M 4x10; `steer_bore` bore_grid/F 1x1 |
-| `kit_clevis_spine` | snap | small | verified | Reach | `top_studs` stud_grid/M 2x2; `headtube` bore_grid/F 1x1; `clevis_front_l` bore_grid/F 1x1; `clevis_front_r` bore_grid/F 1x1; `clevis_rear_l` bore_grid/F 1x1; `clevis_rear_r` bore_grid/F 1x1 |
+| `kit_keel_base` | snap | small | verified | Sturdiness | `top_studs` stud_grid/M 4x10; `steer_bore` bore_grid/F 1x1; `axle_row0` bore_grid/F 1x1; `axle_row7_l` bore_grid/F 1x1; `axle_row7_r` bore_grid/F 1x1; `axle_row8_l` bore_grid/F 1x1; `axle_row8_r` bore_grid/F 1x1 |
+| `kit_clevis_spine` | snap | small | verified | Reach | `top_studs` stud_grid/M 2x2; `headtube` bore_grid/F 1x1; `kickstand_bore` bore_grid/F 1x1; `clevis_front_l` bore_grid/F 1x1; `clevis_front_r` bore_grid/F 1x1; `clevis_rear_l` bore_grid/F 1x1; `clevis_rear_r` bore_grid/F 1x1 |
 | `kit_barbell_shaft` | pro | pro | verified | Spin | `axis` pin/M 1x1 |
 | `kit_spinner_pin` | pro | pro | verified | Spin | `axis` pin/M 1x1 |
 | `kit_wheel_med` | pro | pro | verified | Roll | `hub` bore_grid/F 1x1 |
@@ -245,7 +244,7 @@ Each size has its own clearance value (stud_small.fit, stud_large.fit). Both sta
 | `kit_windscreen` | snap | small | verified | Awareness | `under_sockets` socket_grid/F 4x3; `top_studs` stud_grid/M 4x3 |
 | `kit_foil_wing` | snap | small | verified | Lift | `under_sockets` socket_grid/F 5x4 |
 | `kit_skid_runner` | snap | small | verified | Slide | `under_sockets` socket_grid/F 1x9 |
-| `kit_tilting_tub` | snap | small | verified | Toughness | `under_sockets` socket_grid/F 4x4 |
+| `kit_tilting_tub` | snap | small | verified | Toughness | `under_sockets` socket_grid/F 4x4; `hinge_bore` bore_grid/F 1x1 |
 | `kit_scoop_blade` | snap | small | verified | Power | `under_sockets` socket_grid/F 4x3 |
 | `kit_booster_pod` | snap | small | verified | Launch | `under_sockets` socket_grid/F 2x5 |
 | `kit_turntable` | snap | small | verified | Spin | `top_studs` stud_grid/M 4x4; `under_sockets` socket_grid/F 4x4; `center_bore` bore_grid/F 1x1 |
@@ -260,9 +259,8 @@ Each size has its own clearance value (stud_small.fit, stud_large.fit). Both sta
 | `pro_tie_rod_link` | pro | pro | verified | Balance | `rack_stub` pin/M 1x1; `pivot_bore` bore_grid/F 1x1 |
 | `pin_free_tu03` | pro | pro | verified | Spin | `axis` pin/M 1x1 |
 | `pro_fork_rake_adpt` | pro | pro | verified | Balance | `fork_bores` bore_grid/F 1x2 |
-| `pro_axle_keeper` | pro | pro | verified | Sturdiness |  |
 | `mom_band_core_tray` | snap | small | verified | Power | `under_sockets` socket_grid/F 4x4; `rim_studs` stud_grid/M 4x4; `latch_bore` bore_grid/F 1x1 |
-| `mom_band_core_lid` | snap | small | verified | Sturdiness | `under_sockets` socket_grid/F 4x4; `top_studs` stud_grid/M 4x4 |
+| `mom_band_core_lid` | snap | small | verified | Sturdiness | `under_sockets` socket_grid/F 4x4; `top_studs` stud_grid/M 4x4; `hinge_bore` bore_grid/F 1x1 |
 | `mom_band_spool_pawl` | pro | pro | verified | Torque | `hub` bore_grid/F 1x1 |
 | `mom_bumper_trigger` | pro | pro | verified | Awareness | `mount_bores` bore_grid/F 1x1 |
 | `mom_slam_base` | pro | pro | verified | Launch | `stop_bore` bore_grid/F 1x1; `anchor_bores` bore_grid/F 2x1 |
@@ -276,7 +274,7 @@ Each size has its own clearance value (stud_small.fit, stud_large.fit). Both sta
 | `mom_flywheel_rotor` | pro | pro | verified | Spin | `hub` bore_grid/F 1x1 |
 | `mom_ripcord_rack_150` | pro | pro | verified | Launch | `pull_bore` bore_grid/F 1x1 |
 | `mom_spindle_shaft` | pro | pro | verified | Spin | `axis` pin/M 1x1 |
-| `pro_tub_hinge` | pro | pro | verified | Lift | `hitch_bore` bore_grid/F 1x1 |
+| `pro_tub_hinge` | pro | pro | verified | Lift | `hitch_bore` bore_grid/F 1x1; `hinge_bore` bore_grid/F 1x1 |
 | `pro_captive_pin_28` | pro | pro | verified | Sturdiness | `axis` pin/M 1x1 |
 | `pro_steer_column` | pro | pro | verified | Balance | `axis` pin/M 1x1 |
 | `pro_steer_wheel` | pro | pro | verified | Balance | `hub` bore_grid/F 1x1 |
@@ -288,7 +286,7 @@ Each size has its own clearance value (stud_small.fit, stud_large.fit). Both sta
 | `mech_drive_lid` | snap | small | verified | Sturdiness | `under_sockets` socket_grid/F 4x4; `top_studs` stud_grid/M 4x4 |
 | `mech_n20_pinion_z10` | pro | pro | verified | Torque | `axis` pin/M 1x1 |
 | `mech_brain_tray` | snap | small | verified | Awareness | `under_sockets` socket_grid/F 4x4; `rim_studs` stud_grid/M 4x4 |
-| `mech_brain_lid` | snap | small | verified | Awareness | `under_sockets` socket_grid/F 4x4; `top_studs` stud_grid/M 4x4 |
+| `mech_brain_lid` | snap | small | verified | Awareness | `under_sockets` socket_grid/F 4x4; `top_studs` stud_grid/M 4x4; `hinge_bore` bore_grid/F 1x1 |
 | `mech_bat_door_screw` | pro | pro | verified | Sturdiness | `hitch_bore` bore_grid/F 1x1 |
 | `mech_servo_mount` | snap | small | verified | Balance | `under_sockets` socket_grid/F 2x2; `clamp_bores` bore_grid/F 2x1 |
 | `mech_servo_lid` | pro | pro | verified | Sturdiness | `clamp_bores` bore_grid/F 2x1 |
@@ -330,40 +328,40 @@ Warning `unverified_part` means a part is not re-proportioned to the current lat
 
 After each part is built, the generator seats it on its matching reference part, slices both at mid-stud height and measures the radial gap of every engaged stud. `T1_fit_as_designed` (block) requires the measured gap to equal the design gap and to sit inside the limits (max play 0.2 mm, max interference 0.1 mm). `T2_fit_tolerance_window` (warn) requires it to stay inside those limits when printers are calibrated to +/-0.05 mm per surface. `build_check` also fit-measures every mating pair in the catalog (`fit_matrix.json`) and every connection in a build.
 
-**Calibration target:** every part fits when the printer's surface offset is inside -0.071 to +0.075 mm (the intersection of all part windows). An uncalibrated printer (+/-0.1 mm) is outside that window, so calibration is required.
+**Calibration target:** every part fits when the printer's surface offset is inside -0.074 to +0.073 mm (the intersection of all part windows). An uncalibrated printer (+/-0.1 mm) is outside that window, so calibration is required.
 
 | Part | Studs measured | Gap min to max (mm) | Design gap (mm) | Window (mm per surface) |
 | --- | --- | --- | --- | --- |
-| `big_blue_brick` | 4 | +0.058 to +0.058 | 0.050 | -0.071 to +0.079 |
-| `mini_plate` | 8 | +0.056 to +0.058 | 0.050 | -0.071 to +0.078 |
-| `forge_mount_ring` | 3 | +0.058 to +0.058 | 0.050 | -0.071 to +0.079 |
-| `waddle_tail` | 2 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
-| `cloud_wings` | 4 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
-| `pebble_armor_shell` | 9 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
-| `zoom_capsule` | 1 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
-| `glow_capsule` | 1 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
-| `spin_capsule` | 1 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
-| `brick_l_2x4` | 8 | +0.056 to +0.058 | 0.050 | -0.071 to +0.078 |
-| `plate_l_2x2` | 4 | +0.058 to +0.058 | 0.050 | -0.071 to +0.079 |
-| `plate_l_2x4` | 8 | +0.056 to +0.058 | 0.050 | -0.071 to +0.078 |
-| `plate_s_2x2` | 4 | +0.058 to +0.058 | 0.050 | -0.071 to +0.079 |
-| `plate_s_4x4` | 16 | +0.054 to +0.058 | 0.050 | -0.071 to +0.077 |
-| `brick_s_2x2` | 4 | +0.058 to +0.058 | 0.050 | -0.071 to +0.079 |
-| `tile_s_2x2` | 4 | +0.058 to +0.058 | 0.050 | -0.071 to +0.079 |
-| `tile_l_2x2` | 4 | +0.058 to +0.058 | 0.050 | -0.071 to +0.079 |
-| `slope_s_2x2` | 4 | +0.058 to +0.058 | 0.050 | -0.071 to +0.079 |
-| `slope_l_2x2` | 4 | +0.058 to +0.058 | 0.050 | -0.071 to +0.079 |
-| `dome_s_2x2` | 4 | +0.058 to +0.058 | 0.050 | -0.071 to +0.079 |
-| `forge_mount_ring_s` | 4 | +0.058 to +0.058 | 0.050 | -0.071 to +0.079 |
-| `bumper_horns` | 2 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
-| `pointy_ears` | 2 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
-| `wobble_hat` | 1 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
-| `ridge_fin` | 2 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
-| `cloud_wings_l` | 1 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
-| `pebble_armor_shell_l` | 2 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
-| `zoom_capsule_s` | 1 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
-| `glow_capsule_l` | 1 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
-| `bounce_capsule_s` | 1 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
+| `big_blue_brick` | 4 | +0.045 to +0.045 | 0.050 | -0.077 to +0.073 |
+| `mini_plate` | 8 | +0.048 to +0.048 | 0.050 | -0.076 to +0.074 |
+| `forge_mount_ring` | 3 | +0.045 to +0.045 | 0.050 | -0.077 to +0.073 |
+| `waddle_tail` | 2 | +0.045 to +0.045 | 0.050 | -0.077 to +0.073 |
+| `cloud_wings` | 4 | +0.048 to +0.048 | 0.050 | -0.076 to +0.074 |
+| `pebble_armor_shell` | 9 | +0.048 to +0.048 | 0.050 | -0.076 to +0.074 |
+| `zoom_capsule` | 1 | +0.045 to +0.045 | 0.050 | -0.077 to +0.073 |
+| `glow_capsule` | 1 | +0.048 to +0.048 | 0.050 | -0.076 to +0.074 |
+| `spin_capsule` | 1 | +0.045 to +0.045 | 0.050 | -0.077 to +0.073 |
+| `brick_l_2x4` | 8 | +0.045 to +0.045 | 0.050 | -0.077 to +0.073 |
+| `plate_l_2x2` | 4 | +0.045 to +0.045 | 0.050 | -0.077 to +0.073 |
+| `plate_l_2x4` | 8 | +0.045 to +0.045 | 0.050 | -0.077 to +0.073 |
+| `plate_s_2x2` | 4 | +0.048 to +0.048 | 0.050 | -0.076 to +0.074 |
+| `plate_s_4x4` | 16 | +0.048 to +0.048 | 0.050 | -0.076 to +0.074 |
+| `brick_s_2x2` | 4 | +0.048 to +0.048 | 0.050 | -0.076 to +0.074 |
+| `tile_s_2x2` | 4 | +0.048 to +0.048 | 0.050 | -0.076 to +0.074 |
+| `tile_l_2x2` | 4 | +0.045 to +0.045 | 0.050 | -0.077 to +0.073 |
+| `slope_s_2x2` | 4 | +0.048 to +0.048 | 0.050 | -0.076 to +0.074 |
+| `slope_l_2x2` | 4 | +0.045 to +0.045 | 0.050 | -0.077 to +0.073 |
+| `dome_s_2x2` | 4 | +0.048 to +0.048 | 0.050 | -0.076 to +0.074 |
+| `forge_mount_ring_s` | 4 | +0.048 to +0.048 | 0.050 | -0.076 to +0.074 |
+| `bumper_horns` | 2 | +0.048 to +0.048 | 0.050 | -0.076 to +0.074 |
+| `pointy_ears` | 2 | +0.048 to +0.048 | 0.050 | -0.076 to +0.074 |
+| `wobble_hat` | 1 | +0.048 to +0.048 | 0.050 | -0.076 to +0.074 |
+| `ridge_fin` | 2 | +0.048 to +0.048 | 0.050 | -0.076 to +0.074 |
+| `cloud_wings_l` | 1 | +0.045 to +0.045 | 0.050 | -0.077 to +0.073 |
+| `pebble_armor_shell_l` | 2 | +0.045 to +0.045 | 0.050 | -0.077 to +0.073 |
+| `zoom_capsule_s` | 1 | +0.048 to +0.048 | 0.050 | -0.076 to +0.074 |
+| `glow_capsule_l` | 1 | +0.045 to +0.045 | 0.050 | -0.077 to +0.073 |
+| `bounce_capsule_s` | 1 | +0.048 to +0.048 | 0.050 | -0.076 to +0.074 |
 | `beam_str_tu03` | 6 | +0.200 to +0.200 | 0.200 | -0.075 to +0.100 |
 | `beam_str_tu05` | 10 | +0.200 to +0.200 | 0.200 | -0.075 to +0.100 |
 | `beam_str_tu07` | 14 | +0.200 to +0.200 | 0.200 | -0.075 to +0.100 |
@@ -387,67 +385,67 @@ After each part is built, the generator seats it on its matching reference part,
 | `beam_t_tu05x03` | 14 | +0.200 to +0.200 | 0.200 | -0.075 to +0.100 |
 | `beam_ang45_tu05` | 10 | +0.200 to +0.200 | 0.200 | -0.075 to +0.100 |
 | `forge_mount_pro` | 40 | +0.200 to +0.200 | 0.200 | -0.075 to +0.100 |
-| `adapter_snap_pro` | 22 | +0.058 to +0.200 | 0.050 | -0.071 to +0.079 |
+| `adapter_snap_pro` | 22 | +0.048 to +0.200 | 0.050 | -0.075 to +0.074 |
 | `wheel_tu04` | 9 | +0.050 to +0.200 | 0.050 | -0.075 to +0.075 |
 | `wheel_tu06` | 17 | +0.050 to +0.200 | 0.050 | -0.075 to +0.075 |
 | `hinge_tu02` | 8 | +0.200 to +0.200 | 0.200 | -0.075 to +0.100 |
 | `cross_connector_tu01` | 2 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
-| `racer_spoiler` | 2 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
-| `racer_bull_bar` | 2 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
-| `racer_hood_scoop` | 4 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
-| `racer_twin_exhaust` | 2 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
-| `racer_light_bar` | 2 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
-| `racer_roof_rack` | 4 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
-| `racer_axle_block` | 6 | +0.058 to +0.200 | 0.050 | -0.071 to +0.079 |
+| `racer_spoiler` | 2 | +0.048 to +0.048 | 0.050 | -0.076 to +0.074 |
+| `racer_bull_bar` | 2 | +0.048 to +0.048 | 0.050 | -0.076 to +0.074 |
+| `racer_hood_scoop` | 4 | +0.048 to +0.048 | 0.050 | -0.076 to +0.074 |
+| `racer_twin_exhaust` | 2 | +0.048 to +0.048 | 0.050 | -0.076 to +0.074 |
+| `racer_light_bar` | 2 | +0.048 to +0.048 | 0.050 | -0.076 to +0.074 |
+| `racer_roof_rack` | 4 | +0.048 to +0.048 | 0.050 | -0.076 to +0.074 |
+| `racer_axle_block` | 6 | +0.048 to +0.200 | 0.050 | -0.075 to +0.074 |
 | `racer_wheel` | 1 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
 | `racer_axle` | 2 | +0.050 to +0.200 | 0.050 | -0.075 to +0.075 |
-| `waddle_tail_s` | 2 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
-| `robot_legs_stomper` | 4 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
-| `robot_torso_core` | 4 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
-| `robot_arms_grabber` | 4 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
-| `robot_head_visor` | 2 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
-| `robot_back_jetpack` | 2 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
-| `char_head_kid` | 3 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
-| `char_head_chibi` | 3 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
-| `char_head_jumbo` | 3 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
-| `char_head_tall` | 3 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
+| `waddle_tail_s` | 2 | +0.048 to +0.048 | 0.050 | -0.076 to +0.074 |
+| `robot_legs_stomper` | 4 | +0.048 to +0.048 | 0.050 | -0.076 to +0.074 |
+| `robot_torso_core` | 4 | +0.048 to +0.048 | 0.050 | -0.076 to +0.074 |
+| `robot_arms_grabber` | 4 | +0.048 to +0.048 | 0.050 | -0.076 to +0.074 |
+| `robot_head_visor` | 2 | +0.048 to +0.048 | 0.050 | -0.076 to +0.074 |
+| `robot_back_jetpack` | 2 | +0.048 to +0.048 | 0.050 | -0.076 to +0.074 |
+| `char_head_kid` | 3 | +0.048 to +0.050 | 0.050 | -0.075 to +0.074 |
+| `char_head_chibi` | 3 | +0.048 to +0.050 | 0.050 | -0.075 to +0.074 |
+| `char_head_jumbo` | 3 | +0.048 to +0.050 | 0.050 | -0.075 to +0.074 |
+| `char_head_tall` | 3 | +0.048 to +0.050 | 0.050 | -0.075 to +0.074 |
 | `char_faceplate` | 2 | +0.050 to +0.200 | 0.050 | -0.075 to +0.075 |
 | `char_faceplate_vinyl` | 2 | +0.050 to +0.200 | 0.050 | -0.075 to +0.075 |
 | `char_faceplate_flat` | 2 | +0.050 to +0.200 | 0.050 | -0.075 to +0.075 |
-| `hair_short_swept` | 2 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
-| `hair_bob` | 2 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
-| `char_head_fox` | 2 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
-| `char_head_bear` | 2 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
-| `robot_head_scout` | 2 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
-| `char_head_cat` | 2 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
-| `char_head_dragon` | 2 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
-| `char_head_alien` | 2 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
-| `char_head_imp` | 2 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
-| `hair_swoosh` | 2 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
-| `hair_long_layered` | 2 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
-| `hair_twin_braids` | 2 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
-| `hair_shag` | 2 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
-| `hair_pompadour` | 2 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
-| `hair_top_bun` | 2 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
-| `hair_side_sweep` | 2 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
-| `hair_spiky` | 2 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
-| `hair_pigtails` | 2 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
-| `hair_ponytail` | 2 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
-| `hair_curly` | 2 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
-| `hair_mohawk` | 2 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
-| `hair_bowl` | 2 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
-| `hair_slick` | 2 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
-| `hair_pixie` | 2 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
-| `hair_side_pony` | 2 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
-| `hair_low_bun` | 2 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
-| `hat_ballcap` | 2 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
-| `hat_beanie` | 2 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
-| `hat_cowboy` | 2 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
-| `hat_hardhat` | 2 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
-| `hat_ranger` | 2 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
-| `hat_tophat` | 2 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
-| `hat_pirate` | 2 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
-| `pack_explorer` | 4 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
+| `hair_short_swept` | 2 | +0.052 to +0.052 | 0.050 | -0.074 to +0.076 |
+| `hair_bob` | 2 | +0.052 to +0.052 | 0.050 | -0.074 to +0.076 |
+| `char_head_fox` | 2 | +0.048 to +0.048 | 0.050 | -0.076 to +0.074 |
+| `char_head_bear` | 2 | +0.048 to +0.048 | 0.050 | -0.076 to +0.074 |
+| `robot_head_scout` | 2 | +0.048 to +0.048 | 0.050 | -0.076 to +0.074 |
+| `char_head_cat` | 2 | +0.048 to +0.048 | 0.050 | -0.076 to +0.074 |
+| `char_head_dragon` | 2 | +0.048 to +0.048 | 0.050 | -0.076 to +0.074 |
+| `char_head_alien` | 2 | +0.048 to +0.048 | 0.050 | -0.076 to +0.074 |
+| `char_head_imp` | 2 | +0.048 to +0.048 | 0.050 | -0.076 to +0.074 |
+| `hair_swoosh` | 2 | +0.052 to +0.052 | 0.050 | -0.074 to +0.076 |
+| `hair_long_layered` | 2 | +0.052 to +0.052 | 0.050 | -0.074 to +0.076 |
+| `hair_twin_braids` | 2 | +0.052 to +0.052 | 0.050 | -0.074 to +0.076 |
+| `hair_shag` | 2 | +0.052 to +0.052 | 0.050 | -0.074 to +0.076 |
+| `hair_pompadour` | 2 | +0.052 to +0.052 | 0.050 | -0.074 to +0.076 |
+| `hair_top_bun` | 2 | +0.052 to +0.052 | 0.050 | -0.074 to +0.076 |
+| `hair_side_sweep` | 2 | +0.052 to +0.052 | 0.050 | -0.074 to +0.076 |
+| `hair_spiky` | 2 | +0.052 to +0.052 | 0.050 | -0.074 to +0.076 |
+| `hair_pigtails` | 2 | +0.052 to +0.052 | 0.050 | -0.074 to +0.076 |
+| `hair_ponytail` | 2 | +0.052 to +0.052 | 0.050 | -0.074 to +0.076 |
+| `hair_curly` | 2 | +0.052 to +0.052 | 0.050 | -0.074 to +0.076 |
+| `hair_mohawk` | 2 | +0.052 to +0.052 | 0.050 | -0.074 to +0.076 |
+| `hair_bowl` | 2 | +0.052 to +0.052 | 0.050 | -0.074 to +0.076 |
+| `hair_slick` | 2 | +0.052 to +0.052 | 0.050 | -0.074 to +0.076 |
+| `hair_pixie` | 2 | +0.052 to +0.052 | 0.050 | -0.074 to +0.076 |
+| `hair_side_pony` | 2 | +0.052 to +0.052 | 0.050 | -0.074 to +0.076 |
+| `hair_low_bun` | 2 | +0.052 to +0.052 | 0.050 | -0.074 to +0.076 |
+| `hat_ballcap` | 2 | +0.052 to +0.052 | 0.050 | -0.074 to +0.076 |
+| `hat_beanie` | 2 | +0.052 to +0.052 | 0.050 | -0.074 to +0.076 |
+| `hat_cowboy` | 2 | +0.052 to +0.052 | 0.050 | -0.074 to +0.076 |
+| `hat_hardhat` | 2 | +0.052 to +0.052 | 0.050 | -0.074 to +0.076 |
+| `hat_ranger` | 2 | +0.052 to +0.052 | 0.050 | -0.074 to +0.076 |
+| `hat_tophat` | 2 | +0.052 to +0.052 | 0.050 | -0.074 to +0.076 |
+| `hat_pirate` | 2 | +0.052 to +0.052 | 0.050 | -0.074 to +0.076 |
+| `pack_explorer` | 4 | +0.048 to +0.048 | 0.050 | -0.076 to +0.074 |
 | `prop_wrench` | 2 | +0.050 to +0.200 | 0.050 | -0.075 to +0.075 |
 | `prop_star_shield` | 2 | +0.050 to +0.200 | 0.050 | -0.075 to +0.075 |
 | `prop_hammer` | 2 | +0.050 to +0.200 | 0.050 | -0.075 to +0.075 |
@@ -462,63 +460,63 @@ After each part is built, the generator seats it on its matching reference part,
 | `prop_maracas` | 2 | +0.050 to +0.200 | 0.050 | -0.075 to +0.075 |
 | `prop_flag` | 2 | +0.050 to +0.200 | 0.050 | -0.075 to +0.075 |
 | `prop_magnifier` | 2 | +0.050 to +0.200 | 0.050 | -0.075 to +0.075 |
-| `prop_skateboard_deck` | 12 | +0.056 to +0.200 | 0.050 | -0.071 to +0.078 |
-| `char_legs_seated` | 4 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
+| `prop_skateboard_deck` | 12 | +0.048 to +0.200 | 0.050 | -0.075 to +0.074 |
+| `char_legs_seated` | 4 | +0.048 to +0.048 | 0.050 | -0.076 to +0.074 |
 | `veh_wheel_sport` | 1 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
 | `veh_wheel_offroad` | 1 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
 | `veh_wheel_moto` | 1 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
-| `veh_car_chassis` | 14 | +0.056 to +0.200 | 0.050 | -0.071 to +0.078 |
-| `veh_car_hood_cover` | 4 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
-| `veh_cab_roof_cover` | 2 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
+| `veh_car_chassis` | 14 | +0.048 to +0.200 | 0.050 | -0.075 to +0.074 |
+| `veh_car_hood_cover` | 4 | +0.048 to +0.048 | 0.050 | -0.076 to +0.074 |
+| `veh_cab_roof_cover` | 2 | +0.048 to +0.048 | 0.050 | -0.076 to +0.074 |
 | `veh_steering_wheel` | 1 | +0.200 to +0.200 | 0.200 | -0.075 to +0.100 |
-| `veh_truck_chassis` | 14 | +0.056 to +0.200 | 0.050 | -0.071 to +0.078 |
-| `veh_truck_bed_cover` | 6 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
-| `veh_scooter_frame` | 14 | +0.058 to +0.200 | 0.050 | -0.071 to +0.079 |
-| `veh_scooter_fairing` | 2 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
+| `veh_truck_chassis` | 14 | +0.048 to +0.200 | 0.050 | -0.075 to +0.074 |
+| `veh_truck_bed_cover` | 6 | +0.048 to +0.048 | 0.050 | -0.076 to +0.074 |
+| `veh_scooter_frame` | 14 | +0.048 to +0.200 | 0.050 | -0.075 to +0.074 |
+| `veh_scooter_fairing` | 2 | +0.048 to +0.048 | 0.050 | -0.076 to +0.074 |
 | `veh_handlebar_fork` | 2 | +0.050 to +0.200 | 0.050 | -0.075 to +0.075 |
-| `veh_moto_cowling` | 4 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
-| `kit_keel_base` | 30 | +0.054 to +0.200 | 0.050 | -0.071 to +0.077 |
-| `kit_clevis_spine` | 14 | +0.058 to +0.200 | 0.050 | -0.071 to +0.079 |
+| `veh_moto_cowling` | 4 | +0.048 to +0.048 | 0.050 | -0.076 to +0.074 |
+| `kit_keel_base` | 40 | +0.048 to +0.200 | 0.050 | -0.075 to +0.074 |
+| `kit_clevis_spine` | 16 | +0.048 to +0.200 | 0.050 | -0.075 to +0.074 |
 | `kit_barbell_shaft` | 2 | +0.050 to +0.200 | 0.050 | -0.075 to +0.075 |
 | `kit_spinner_pin` | 2 | +0.050 to +0.200 | 0.050 | -0.075 to +0.075 |
 | `kit_wheel_med` | 1 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
 | `kit_wheel_giant` | 9 | +0.050 to +0.200 | 0.050 | -0.075 to +0.075 |
 | `kit_rotor_blade` | 1 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
-| `kit_aero_wedge` | 10 | +0.056 to +0.200 | 0.050 | -0.071 to +0.078 |
-| `kit_windscreen` | 8 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
-| `kit_foil_wing` | 18 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
-| `kit_skid_runner` | 9 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
-| `kit_tilting_tub` | 16 | +0.054 to +0.058 | 0.050 | -0.071 to +0.077 |
-| `kit_scoop_blade` | 12 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
-| `kit_booster_pod` | 8 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
-| `kit_turntable` | 18 | +0.054 to +0.200 | 0.050 | -0.071 to +0.077 |
+| `kit_aero_wedge` | 10 | +0.048 to +0.200 | 0.050 | -0.075 to +0.074 |
+| `kit_windscreen` | 8 | +0.048 to +0.048 | 0.050 | -0.076 to +0.074 |
+| `kit_foil_wing` | 18 | +0.048 to +0.048 | 0.050 | -0.076 to +0.074 |
+| `kit_skid_runner` | 9 | +0.048 to +0.048 | 0.050 | -0.076 to +0.074 |
+| `kit_tilting_tub` | 18 | +0.048 to +0.200 | 0.050 | -0.075 to +0.074 |
+| `kit_scoop_blade` | 12 | +0.048 to +0.048 | 0.050 | -0.076 to +0.074 |
+| `kit_booster_pod` | 8 | +0.048 to +0.048 | 0.050 | -0.076 to +0.074 |
+| `kit_turntable` | 18 | +0.048 to +0.200 | 0.050 | -0.075 to +0.074 |
 | `kit_yoke_hbar` | 2 | +0.050 to +0.200 | 0.050 | -0.075 to +0.075 |
-| `skin_aero_cowl` | 21 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
-| `skin_windscreen` | 21 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
-| `skin_cargo_shroud` | 36 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
-| `pro_steer_bridge` | 6 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
+| `skin_aero_cowl` | 21 | +0.048 to +0.048 | 0.050 | -0.076 to +0.074 |
+| `skin_windscreen` | 21 | +0.048 to +0.048 | 0.050 | -0.076 to +0.074 |
+| `skin_cargo_shroud` | 36 | +0.048 to +0.048 | 0.050 | -0.076 to +0.074 |
+| `pro_steer_bridge` | 6 | +0.048 to +0.050 | 0.050 | -0.075 to +0.074 |
 | `pro_steer_knuckle_l` | 5 | +0.050 to +0.200 | 0.050 | -0.075 to +0.075 |
 | `pro_steer_knuckle_r` | 5 | +0.050 to +0.200 | 0.050 | -0.075 to +0.075 |
 | `pro_steer_rack` | 4 | +0.200 to +0.200 | 0.200 | -0.075 to +0.100 |
 | `pro_tie_rod_link` | 3 | +0.200 to +0.200 | 0.200 | -0.075 to +0.100 |
 | `pin_free_tu03` | 1 | +0.200 to +0.200 | 0.200 | -0.075 to +0.100 |
 | `pro_fork_rake_adpt` | 4 | +0.200 to +0.200 | 0.200 | -0.075 to +0.100 |
-| `mom_band_core_tray` | 18 | +0.055 to +0.200 | 0.050 | -0.071 to +0.077 |
-| `mom_band_core_lid` | 14 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
+| `mom_band_core_tray` | 18 | +0.048 to +0.200 | 0.050 | -0.075 to +0.074 |
+| `mom_band_core_lid` | 16 | +0.048 to +0.200 | 0.050 | -0.075 to +0.074 |
 | `mom_band_spool_pawl` | 2 | +0.200 to +0.200 | 0.200 | -0.075 to +0.100 |
 | `mom_bumper_trigger` | 2 | +0.200 to +0.200 | 0.200 | -0.075 to +0.100 |
 | `mom_slam_base` | 5 | +0.050 to +0.200 | 0.050 | -0.075 to +0.075 |
 | `mom_slam_plunger` | 2 | +0.050 to +0.200 | 0.050 | -0.075 to +0.075 |
-| `mom_jet_valve_body` | 10 | +0.050 to +0.200 | 0.050 | -0.075 to +0.075 |
+| `mom_jet_valve_body` | 10 | +0.048 to +0.200 | 0.050 | -0.075 to +0.074 |
 | `mom_nozzle_set` | 2 | +0.200 to +0.200 | 0.200 | -0.075 to +0.100 |
-| `mom_bellows_base` | 18 | +0.054 to +0.200 | 0.050 | -0.071 to +0.077 |
-| `mom_bellows_leaf` | 18 | +0.050 to +0.200 | 0.050 | -0.075 to +0.075 |
-| `mom_flywheel_tray` | 18 | +0.054 to +0.200 | 0.050 | -0.071 to +0.077 |
-| `mom_flywheel_lid` | 18 | +0.050 to +0.200 | 0.050 | -0.075 to +0.075 |
+| `mom_bellows_base` | 18 | +0.048 to +0.200 | 0.050 | -0.075 to +0.074 |
+| `mom_bellows_leaf` | 18 | +0.048 to +0.200 | 0.050 | -0.075 to +0.074 |
+| `mom_flywheel_tray` | 18 | +0.048 to +0.200 | 0.050 | -0.075 to +0.074 |
+| `mom_flywheel_lid` | 18 | +0.048 to +0.200 | 0.050 | -0.075 to +0.074 |
 | `mom_flywheel_rotor` | 1 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
 | `mom_ripcord_rack_150` | 2 | +0.200 to +0.200 | 0.200 | -0.075 to +0.100 |
 | `mom_spindle_shaft` | 2 | +0.050 to +0.200 | 0.050 | -0.075 to +0.075 |
-| `pro_tub_hinge` | 2 | +0.200 to +0.200 | 0.200 | -0.075 to +0.100 |
+| `pro_tub_hinge` | 4 | +0.200 to +0.200 | 0.200 | -0.075 to +0.100 |
 | `pro_captive_pin_28` | 2 | +0.050 to +0.200 | 0.050 | -0.075 to +0.075 |
 | `pro_steer_column` | 2 | +0.050 to +0.200 | 0.050 | -0.075 to +0.075 |
 | `pro_steer_wheel` | 1 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
@@ -526,17 +524,17 @@ After each part is built, the generator seats it on its matching reference part,
 | `mom_latch_pawl` | 2 | +0.200 to +0.200 | 0.200 | -0.075 to +0.100 |
 | `mom_wind_key` | 2 | +0.050 to +0.200 | 0.050 | -0.075 to +0.075 |
 | `mom_jet_slide_valve` | 1 | +0.200 to +0.200 | 0.200 | -0.075 to +0.100 |
-| `mech_drive_tray` | 18 | +0.055 to +0.200 | 0.050 | -0.071 to +0.077 |
-| `mech_drive_lid` | 14 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
+| `mech_drive_tray` | 18 | +0.048 to +0.200 | 0.050 | -0.075 to +0.074 |
+| `mech_drive_lid` | 14 | +0.048 to +0.048 | 0.050 | -0.076 to +0.074 |
 | `mech_n20_pinion_z10` | 1 | +0.200 to +0.200 | 0.200 | -0.075 to +0.100 |
-| `mech_brain_tray` | 16 | +0.054 to +0.058 | 0.050 | -0.071 to +0.077 |
-| `mech_brain_lid` | 16 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
+| `mech_brain_tray` | 16 | +0.048 to +0.048 | 0.050 | -0.076 to +0.074 |
+| `mech_brain_lid` | 18 | +0.048 to +0.200 | 0.050 | -0.075 to +0.074 |
 | `mech_bat_door_screw` | 2 | +0.200 to +0.200 | 0.200 | -0.075 to +0.100 |
-| `mech_servo_mount` | 4 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
+| `mech_servo_mount` | 4 | +0.048 to +0.050 | 0.050 | -0.075 to +0.074 |
 | `mech_servo_lid` | 2 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
 | `mech_servo_pinion_z10` | 2 | +0.200 to +0.200 | 0.200 | -0.075 to +0.100 |
 | `pro_pilot_pin` | 1 | +0.200 to +0.200 | 0.200 | -0.075 to +0.100 |
-| `mech_sill_duct` | 8 | +0.050 to +0.050 | 0.050 | -0.075 to +0.075 |
+| `mech_sill_duct` | 8 | +0.048 to +0.048 | 0.050 | -0.076 to +0.074 |
 
 Rules: do not change a stud, tube or `fit` number without re-running `generate` and `build_check`; a fit change moves every window. A fit that passes here is a design-time result. Never report it as a printed fit; `F1_printed_fit` stays pending until a calibration print lands inside the window.
 
@@ -593,11 +591,11 @@ python3 toyventor_index.py out checks S1_small_part_screen
 
 | Interface | Parts using it | Mating pairs |
 | --- | --- | --- |
-| `bore_grid` | `adapter_snap_pro`, `beam_ang45_tu05`, `beam_l_tu03x03`, `beam_l_tu05x03`, `beam_str_tu03`, `beam_str_tu05`, `beam_str_tu07`, `beam_str_tu10`, `beam_str_tu14`, `beam_t_tu05x03`, `bushing_half`, `bushing_tu01`, `char_head_chibi`, `char_head_jumbo`, `char_head_kid`, `char_head_tall`, `cross_connector_tu01`, `forge_mount_pro`, `gear_rack_tu05`, `gear_ring_z40`, `gear_spur_z10`, `gear_spur_z15`, `gear_spur_z20`, `gear_spur_z25`, `gear_spur_z30`, `hinge_tu02`, `kit_aero_wedge`, `kit_clevis_spine`, `kit_keel_base`, `kit_rotor_blade`, `kit_turntable`, `kit_wheel_giant`, `kit_wheel_med`, `mech_bat_door_screw`, `mech_drive_tray`, `mech_servo_lid`, `mech_servo_mount`, `mech_servo_pinion_z10`, `mom_band_core_tray`, `mom_band_spool_pawl`, `mom_bellows_base`, `mom_bellows_leaf`, `mom_bumper_trigger`, `mom_flywheel_lid`, `mom_flywheel_rotor`, `mom_flywheel_tray`, `mom_jet_valve_body`, `mom_latch_pawl`, `mom_nozzle_set`, `mom_pto_gear_z10`, `mom_ripcord_rack_150`, `mom_slam_base`, `pro_fork_rake_adpt`, `pro_steer_bridge`, `pro_steer_knuckle_l`, `pro_steer_knuckle_r`, `pro_steer_rack`, `pro_steer_wheel`, `pro_tie_rod_link`, `pro_tub_hinge`, `prop_skateboard_deck`, `racer_axle_block`, `racer_wheel`, `veh_car_chassis`, `veh_scooter_frame`, `veh_truck_chassis`, `veh_wheel_moto`, `veh_wheel_offroad`, `veh_wheel_sport`, `wheel_tu04`, `wheel_tu06` | 0 |
+| `bore_grid` | `adapter_snap_pro`, `beam_ang45_tu05`, `beam_l_tu03x03`, `beam_l_tu05x03`, `beam_str_tu03`, `beam_str_tu05`, `beam_str_tu07`, `beam_str_tu10`, `beam_str_tu14`, `beam_t_tu05x03`, `bushing_half`, `bushing_tu01`, `char_head_chibi`, `char_head_jumbo`, `char_head_kid`, `char_head_tall`, `cross_connector_tu01`, `forge_mount_pro`, `gear_rack_tu05`, `gear_ring_z40`, `gear_spur_z10`, `gear_spur_z15`, `gear_spur_z20`, `gear_spur_z25`, `gear_spur_z30`, `hinge_tu02`, `kit_aero_wedge`, `kit_clevis_spine`, `kit_keel_base`, `kit_rotor_blade`, `kit_tilting_tub`, `kit_turntable`, `kit_wheel_giant`, `kit_wheel_med`, `mech_bat_door_screw`, `mech_brain_lid`, `mech_drive_tray`, `mech_servo_lid`, `mech_servo_mount`, `mech_servo_pinion_z10`, `mom_band_core_lid`, `mom_band_core_tray`, `mom_band_spool_pawl`, `mom_bellows_base`, `mom_bellows_leaf`, `mom_bumper_trigger`, `mom_flywheel_lid`, `mom_flywheel_rotor`, `mom_flywheel_tray`, `mom_jet_valve_body`, `mom_latch_pawl`, `mom_nozzle_set`, `mom_pto_gear_z10`, `mom_ripcord_rack_150`, `mom_slam_base`, `pro_fork_rake_adpt`, `pro_steer_bridge`, `pro_steer_knuckle_l`, `pro_steer_knuckle_r`, `pro_steer_rack`, `pro_steer_wheel`, `pro_tie_rod_link`, `pro_tub_hinge`, `prop_skateboard_deck`, `racer_axle_block`, `racer_wheel`, `veh_car_chassis`, `veh_scooter_frame`, `veh_truck_chassis`, `veh_wheel_moto`, `veh_wheel_offroad`, `veh_wheel_sport`, `wheel_tu04`, `wheel_tu06` | 0 |
 | `forge_mount.attach` | `forge_mount_pro`, `forge_mount_ring`, `forge_mount_ring_s` | 0 |
-| `pin_free` | `mech_n20_pinion_z10`, `mom_jet_slide_valve`, `pin_free`, `pin_free_tu03`, `pro_pilot_pin`, `pro_tie_rod_link`, `veh_steering_wheel` | 441 |
-| `pin_friction` | `pin_friction`, `pin_friction_long` | 126 |
-| `shaft_drive` | `char_faceplate`, `char_faceplate_flat`, `char_faceplate_vinyl`, `kit_barbell_shaft`, `kit_spinner_pin`, `kit_yoke_hbar`, `mom_slam_plunger`, `mom_spindle_shaft`, `mom_wind_key`, `pro_captive_pin_28`, `pro_steer_column`, `pro_steer_knuckle_l`, `pro_steer_knuckle_r`, `prop_broom`, `prop_flag`, `prop_guitar`, `prop_hammer`, `prop_magnifier`, `prop_maracas`, `prop_mop`, `prop_paint_roller`, `prop_screwdriver`, `prop_scrub_brush`, `prop_star_shield`, `prop_trumpet`, `prop_vacuum`, `prop_wrench`, `racer_axle`, `shaft_tu03`, `shaft_tu05`, `shaft_tu07`, `veh_handlebar_fork` | 3008 |
+| `pin_free` | `mech_n20_pinion_z10`, `mom_jet_slide_valve`, `pin_free`, `pin_free_tu03`, `pro_pilot_pin`, `pro_tie_rod_link`, `veh_steering_wheel` | 511 |
+| `pin_friction` | `pin_friction`, `pin_friction_long` | 146 |
+| `shaft_drive` | `char_faceplate`, `char_faceplate_flat`, `char_faceplate_vinyl`, `kit_barbell_shaft`, `kit_spinner_pin`, `kit_yoke_hbar`, `mom_slam_plunger`, `mom_spindle_shaft`, `mom_wind_key`, `pro_captive_pin_28`, `pro_steer_column`, `pro_steer_knuckle_l`, `pro_steer_knuckle_r`, `prop_broom`, `prop_flag`, `prop_guitar`, `prop_hammer`, `prop_magnifier`, `prop_maracas`, `prop_mop`, `prop_paint_roller`, `prop_screwdriver`, `prop_scrub_brush`, `prop_star_shield`, `prop_trumpet`, `prop_vacuum`, `prop_wrench`, `racer_axle`, `shaft_tu03`, `shaft_tu05`, `shaft_tu07`, `veh_handlebar_fork` | 3328 |
 | `stud_large` | `big_blue_brick`, `brick_l_2x4`, `cloud_wings_l`, `forge_mount_ring`, `glow_capsule_l`, `pebble_armor_shell_l`, `plate_l_2x2`, `plate_l_2x4`, `slope_l_2x2`, `spin_capsule`, `tile_l_2x2`, `waddle_tail`, `zoom_capsule` | 60 |
 | `stud_small` | `adapter_snap_pro`, `bounce_capsule_s`, `brick_s_2x2`, `bumper_horns`, `char_head_alien`, `char_head_bear`, `char_head_cat`, `char_head_chibi`, `char_head_dragon`, `char_head_fox`, `char_head_imp`, `char_head_jumbo`, `char_head_kid`, `char_head_tall`, `char_legs_seated`, `cloud_wings`, `dome_s_2x2`, `forge_mount_ring_s`, `glow_capsule`, `hair_bob`, `hair_bowl`, `hair_curly`, `hair_long_layered`, `hair_low_bun`, `hair_mohawk`, `hair_pigtails`, `hair_pixie`, `hair_pompadour`, `hair_ponytail`, `hair_shag`, `hair_short_swept`, `hair_side_pony`, `hair_side_sweep`, `hair_slick`, `hair_spiky`, `hair_swoosh`, `hair_top_bun`, `hair_twin_braids`, `hat_ballcap`, `hat_beanie`, `hat_cowboy`, `hat_hardhat`, `hat_pirate`, `hat_ranger`, `hat_tophat`, `kit_aero_wedge`, `kit_booster_pod`, `kit_clevis_spine`, `kit_foil_wing`, `kit_keel_base`, `kit_scoop_blade`, `kit_skid_runner`, `kit_tilting_tub`, `kit_turntable`, `kit_windscreen`, `mech_brain_lid`, `mech_brain_tray`, `mech_drive_lid`, `mech_drive_tray`, `mech_servo_mount`, `mech_sill_duct`, `mini_plate`, `mom_band_core_lid`, `mom_band_core_tray`, `mom_bellows_base`, `mom_bellows_leaf`, `mom_flywheel_lid`, `mom_flywheel_tray`, `mom_jet_valve_body`, `pack_explorer`, `pebble_armor_shell`, `plate_s_2x2`, `plate_s_4x4`, `pointy_ears`, `pro_steer_bridge`, `prop_skateboard_deck`, `racer_axle_block`, `racer_bull_bar`, `racer_hood_scoop`, `racer_light_bar`, `racer_roof_rack`, `racer_spoiler`, `racer_twin_exhaust`, `ridge_fin`, `robot_arms_grabber`, `robot_back_jetpack`, `robot_head_scout`, `robot_head_visor`, `robot_legs_stomper`, `robot_torso_core`, `skin_aero_cowl`, `skin_cargo_shroud`, `skin_windscreen`, `slope_s_2x2`, `tile_s_2x2`, `veh_cab_roof_cover`, `veh_car_chassis`, `veh_car_hood_cover`, `veh_moto_cowling`, `veh_scooter_fairing`, `veh_scooter_frame`, `veh_truck_bed_cover`, `veh_truck_chassis`, `waddle_tail_s`, `wobble_hat`, `zoom_capsule_s` | 6402 |
 
@@ -608,7 +606,7 @@ The top 30 Snap parts and the top 30 Pro parts, every one verified by the genera
 | Line | Verified | Built, not verified | Target |
 | --- | --- | --- | --- |
 | Snap | 120 | 0 | 120 |
-| Pro | 86 | 0 | 86 |
+| Pro | 85 | 0 | 85 |
 
 Ready to build now: none.
 

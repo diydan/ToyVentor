@@ -4,7 +4,7 @@
   "file_sha256": "80cee62ee207e950fc0aaf9427c98aecd4cf22d2387accf6c0c90164ad550d7e",
   "part_id": "kit_rotor_blade",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-11-01T21:37:16Z",
+  "checked_at": "2026-11-02T00:34:35Z",
   "metrics": {
     "bbox_mm": [
       68.0,
@@ -15,6 +15,7 @@
     "surface_cm2": 27.21,
     "triangles": 972,
     "ledges": [],
+    "floating_contours": [],
     "layers": 30,
     "bed_contact_mm2": 953.2,
     "height_mm": 6.0,
@@ -72,6 +73,14 @@
       "value": 0.0,
       "limit": 1.0,
       "detail": "mm2 of flat underside held on one side only (a ledge over air, not a bridge)"
+    },
+    {
+      "id": "V11_floating_contour",
+      "level": "block",
+      "result": "pass",
+      "value": 0,
+      "limit": 0,
+      "detail": "unanchored interior hole loops in bridge ceilings or low-Z hovering cantilevers"
     },
     {
       "id": "V6_bridge_span",

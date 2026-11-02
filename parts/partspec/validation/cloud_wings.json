@@ -1,10 +1,10 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_cloud_wings_S.stl",
-  "file_sha256": "6f01e0cb70ca0502e81a614974da69b8f8fa61ed115844cec15194c12c57944e",
+  "file_sha256": "8df432489de4c2e1de4a39b727a7f8d97da9bda97e3ccce1eacaf5f7e8cbbbff",
   "part_id": "cloud_wings",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-11-01T21:28:40Z",
+  "checked_at": "2026-11-02T00:25:59Z",
   "metrics": {
     "bbox_mm": [
       58.2,
@@ -12,13 +12,14 @@
       39.95
     ],
     "volume_cm3": 17.82,
-    "surface_cm2": 78.03,
-    "triangles": 2344,
+    "surface_cm2": 77.23,
+    "triangles": 3692,
     "ledges": [],
+    "floating_contours": [],
     "layers": 200,
-    "bed_contact_mm2": 423.9,
+    "bed_contact_mm2": 397.6,
     "height_mm": 39.95,
-    "slenderness": 1.94,
+    "slenderness": 2.0,
     "centre_of_mass_over_contact": true,
     "min_wall_mm": null,
     "thin_wall_regions": []
@@ -43,26 +44,6 @@
       "z_mm": 4.3,
       "span_mm": 0.18,
       "area_mm2": 0.1
-    },
-    {
-      "z_mm": 3.2,
-      "span_mm": 6.7,
-      "area_mm2": 35.2
-    },
-    {
-      "z_mm": 3.2,
-      "span_mm": 6.7,
-      "area_mm2": 35.2
-    },
-    {
-      "z_mm": 3.2,
-      "span_mm": 6.7,
-      "area_mm2": 35.2
-    },
-    {
-      "z_mm": 3.2,
-      "span_mm": 6.7,
-      "area_mm2": 35.2
     }
   ],
   "checks": [
@@ -115,12 +96,20 @@
       "detail": "mm2 of flat underside held on one side only (a ledge over air, not a bridge)"
     },
     {
+      "id": "V11_floating_contour",
+      "level": "block",
+      "result": "pass",
+      "value": 0,
+      "limit": 0,
+      "detail": "unanchored interior hole loops in bridge ceilings or low-Z hovering cantilevers"
+    },
+    {
       "id": "V6_bridge_span",
       "level": "block",
       "result": "pass",
-      "value": 6.7,
+      "value": 0.18,
       "limit": 20,
-      "detail": "8 bridge(s); widest unsupported span in mm"
+      "detail": "4 bridge(s); widest unsupported span in mm"
     },
     {
       "id": "V5_no_floating_islands",
@@ -142,9 +131,9 @@
       "id": "V9_bed_contact",
       "level": "info",
       "result": "pass",
-      "value": 423.9,
+      "value": 397.6,
       "limit": null,
-      "detail": "height / sqrt(contact) = 1.94; above about 3 the slicer often asks for a brim"
+      "detail": "height / sqrt(contact) = 2.0; above about 3 the slicer often asks for a brim"
     },
     {
       "id": "V8_wall_thickness",

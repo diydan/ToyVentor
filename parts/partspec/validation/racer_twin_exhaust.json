@@ -1,40 +1,30 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_racer_twin_exhaust_S.stl",
-  "file_sha256": "fd0a600d8f7a0c61b29b312e41c1e0d0465b217e8db7af406b699521110138d6",
+  "file_sha256": "6276f66996477c11576856ac1ed2a633b2cfef6cc6ecaf888d12c65a08fd0c73",
   "part_id": "racer_twin_exhaust",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-11-01T21:31:54Z",
+  "checked_at": "2026-11-02T00:29:39Z",
   "metrics": {
     "bbox_mm": [
       11.9,
       24.4,
       15.3
     ],
-    "volume_cm3": 1.56,
-    "surface_cm2": 13.87,
-    "triangles": 1848,
+    "volume_cm3": 1.63,
+    "surface_cm2": 13.97,
+    "triangles": 2904,
     "ledges": [],
+    "floating_contours": [],
     "layers": 77,
-    "bed_contact_mm2": 189.3,
+    "bed_contact_mm2": 176.2,
     "height_mm": 15.3,
-    "slenderness": 1.11,
+    "slenderness": 1.15,
     "centre_of_mass_over_contact": true,
     "min_wall_mm": null,
     "thin_wall_regions": []
   },
-  "bridges": [
-    {
-      "z_mm": 3.2,
-      "span_mm": 6.7,
-      "area_mm2": 35.2
-    },
-    {
-      "z_mm": 3.2,
-      "span_mm": 6.7,
-      "area_mm2": 35.2
-    }
-  ],
+  "bridges": [],
   "checks": [
     {
       "id": "V1_mesh_sound",
@@ -85,12 +75,20 @@
       "detail": "mm2 of flat underside held on one side only (a ledge over air, not a bridge)"
     },
     {
+      "id": "V11_floating_contour",
+      "level": "block",
+      "result": "pass",
+      "value": 0,
+      "limit": 0,
+      "detail": "unanchored interior hole loops in bridge ceilings or low-Z hovering cantilevers"
+    },
+    {
       "id": "V6_bridge_span",
       "level": "block",
       "result": "pass",
-      "value": 6.7,
+      "value": 0.0,
       "limit": 20,
-      "detail": "2 bridge(s); widest unsupported span in mm"
+      "detail": "0 bridge(s); widest unsupported span in mm"
     },
     {
       "id": "V5_no_floating_islands",
@@ -112,9 +110,9 @@
       "id": "V9_bed_contact",
       "level": "info",
       "result": "pass",
-      "value": 189.3,
+      "value": 176.2,
       "limit": null,
-      "detail": "height / sqrt(contact) = 1.11; above about 3 the slicer often asks for a brim"
+      "detail": "height / sqrt(contact) = 1.15; above about 3 the slicer often asks for a brim"
     },
     {
       "id": "V8_wall_thickness",

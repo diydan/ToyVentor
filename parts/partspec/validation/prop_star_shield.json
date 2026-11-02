@@ -4,7 +4,7 @@
   "file_sha256": "d3fc96fa3901f01e49e061e4bbda2e7ed09dc5c517d3797b4f0f662dc000fa16",
   "part_id": "prop_star_shield",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-11-01T21:35:19Z",
+  "checked_at": "2026-11-02T00:32:43Z",
   "metrics": {
     "bbox_mm": [
       31.96,
@@ -15,6 +15,7 @@
     "surface_cm2": 25.83,
     "triangles": 1040,
     "ledges": [],
+    "floating_contours": [],
     "layers": 35,
     "bed_contact_mm2": 687.8,
     "height_mm": 7.0,
@@ -72,6 +73,14 @@
       "value": 0.0,
       "limit": 1.0,
       "detail": "mm2 of flat underside held on one side only (a ledge over air, not a bridge)"
+    },
+    {
+      "id": "V11_floating_contour",
+      "level": "block",
+      "result": "pass",
+      "value": 0,
+      "limit": 0,
+      "detail": "unanchored interior hole loops in bridge ceilings or low-Z hovering cantilevers"
     },
     {
       "id": "V6_bridge_span",

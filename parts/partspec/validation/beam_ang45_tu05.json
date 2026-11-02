@@ -4,7 +4,7 @@
   "file_sha256": "b66d9f3248af6077ef2ee1ab36e3ed9c5370dfab50dc1158505c2428203500e3",
   "part_id": "beam_ang45_tu05",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-11-01T21:31:45Z",
+  "checked_at": "2026-11-02T00:29:28Z",
   "metrics": {
     "bbox_mm": [
       62.5,
@@ -15,6 +15,7 @@
     "surface_cm2": 46.89,
     "triangles": 4850,
     "ledges": [],
+    "floating_contours": [],
     "layers": 62,
     "bed_contact_mm2": 649.6,
     "height_mm": 12.5,
@@ -72,6 +73,14 @@
       "value": 0.0,
       "limit": 1.0,
       "detail": "mm2 of flat underside held on one side only (a ledge over air, not a bridge)"
+    },
+    {
+      "id": "V11_floating_contour",
+      "level": "block",
+      "result": "pass",
+      "value": 0,
+      "limit": 0,
+      "detail": "unanchored interior hole loops in bridge ceilings or low-Z hovering cantilevers"
     },
     {
       "id": "V6_bridge_span",
@@ -154,7 +163,7 @@
       0
     ],
     "engine": "PrusaSlicer-2.8.1",
-    "reused_from": "2026-10-31T14:35:18Z"
+    "reused_from": "2026-11-01T21:31:45Z"
   },
   "verdict": "pass",
   "summary": "Prints as is"

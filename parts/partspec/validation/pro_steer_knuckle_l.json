@@ -4,7 +4,7 @@
   "file_sha256": "0eac481b133ed84c70e0d39e0ee7821841252eeea3d10a3b4515887cd08d4f23",
   "part_id": "pro_steer_knuckle_l",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-11-01T21:39:47Z",
+  "checked_at": "2026-11-02T00:35:29Z",
   "metrics": {
     "bbox_mm": [
       25.6,
@@ -15,6 +15,7 @@
     "surface_cm2": 35.08,
     "triangles": 1906,
     "ledges": [],
+    "floating_contours": [],
     "layers": 136,
     "bed_contact_mm2": 189.8,
     "height_mm": 27.1,
@@ -88,6 +89,14 @@
       "value": 0.0,
       "limit": 1.0,
       "detail": "mm2 of flat underside held on one side only (a ledge over air, not a bridge)"
+    },
+    {
+      "id": "V11_floating_contour",
+      "level": "block",
+      "result": "pass",
+      "value": 0,
+      "limit": 0,
+      "detail": "unanchored interior hole loops in bridge ceilings or low-Z hovering cantilevers"
     },
     {
       "id": "V6_bridge_span",

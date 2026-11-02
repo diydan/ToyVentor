@@ -1,50 +1,40 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_robot_arms_grabber_S.stl",
-  "file_sha256": "b6c26b4a79ebb51955ff1d3d5531810aa3f076aa21f3c56cf591ca7aff5cde96",
+  "file_sha256": "3dff6800c6b4576534b6cbee2bc50563e279e2da259a9501a226dc5882210f44",
   "part_id": "robot_arms_grabber",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-11-01T21:32:12Z",
+  "checked_at": "2026-11-02T00:29:50Z",
   "metrics": {
     "bbox_mm": [
       48.2,
       35.9,
       7.8
     ],
-    "volume_cm3": 4.43,
-    "surface_cm2": 36.13,
-    "triangles": 10752,
+    "volume_cm3": 4.41,
+    "surface_cm2": 36.12,
+    "triangles": 11022,
     "ledges": [],
+    "floating_contours": [],
     "layers": 39,
-    "bed_contact_mm2": 743.0,
+    "bed_contact_mm2": 697.2,
     "height_mm": 7.8,
-    "slenderness": 0.29,
+    "slenderness": 0.3,
     "centre_of_mass_over_contact": true,
-    "min_wall_mm": null,
-    "thin_wall_regions": []
+    "min_wall_mm": 0.445,
+    "thin_wall_regions": [
+      {
+        "area_mm2": 3.9,
+        "min_mm": 0.746,
+        "at_mm": [
+          17.11,
+          -6.78,
+          5.0
+        ]
+      }
+    ]
   },
-  "bridges": [
-    {
-      "z_mm": 3.2,
-      "span_mm": 6.7,
-      "area_mm2": 35.2
-    },
-    {
-      "z_mm": 3.2,
-      "span_mm": 6.7,
-      "area_mm2": 35.2
-    },
-    {
-      "z_mm": 3.2,
-      "span_mm": 6.7,
-      "area_mm2": 35.2
-    },
-    {
-      "z_mm": 3.2,
-      "span_mm": 6.7,
-      "area_mm2": 35.2
-    }
-  ],
+  "bridges": [],
   "checks": [
     {
       "id": "V1_mesh_sound",
@@ -95,12 +85,20 @@
       "detail": "mm2 of flat underside held on one side only (a ledge over air, not a bridge)"
     },
     {
+      "id": "V11_floating_contour",
+      "level": "block",
+      "result": "pass",
+      "value": 0,
+      "limit": 0,
+      "detail": "unanchored interior hole loops in bridge ceilings or low-Z hovering cantilevers"
+    },
+    {
       "id": "V6_bridge_span",
       "level": "block",
       "result": "pass",
-      "value": 6.7,
+      "value": 0.0,
       "limit": 20,
-      "detail": "4 bridge(s); widest unsupported span in mm"
+      "detail": "0 bridge(s); widest unsupported span in mm"
     },
     {
       "id": "V5_no_floating_islands",
@@ -122,21 +120,21 @@
       "id": "V9_bed_contact",
       "level": "info",
       "result": "pass",
-      "value": 743.0,
+      "value": 697.2,
       "limit": null,
-      "detail": "height / sqrt(contact) = 0.29; above about 3 the slicer often asks for a brim"
+      "detail": "height / sqrt(contact) = 0.3; above about 3 the slicer often asks for a brim"
     },
     {
       "id": "V8_wall_thickness",
       "level": "warn",
-      "result": "pass",
-      "value": 0,
+      "result": "warn",
+      "value": 1,
       "limit": 0,
-      "detail": "regions where the wall is under 0.8 mm (two nozzle widths) over 2.0 mm2, or under 0.4 mm (one nozzle width) over 0.25 mm2; sharp edges and slivers are ignored"
+      "detail": "regions where the wall is under 0.8 mm (two nozzle widths) over 2.0 mm2, or under 0.4 mm (one nozzle width) over 0.25 mm2; worst 0.746 mm at [17.11, -6.78, 5.0]"
     }
   ],
   "print_settings": {},
   "slicer": null,
-  "verdict": "pass",
-  "summary": "Prints as is"
+  "verdict": "pass_with_warnings",
+  "summary": "Warnings: V8_wall_thickness"
 }

@@ -4,7 +4,7 @@
   "file_sha256": "477d118543e848992cd53757ac6e2a3fb1208fc58b271498a8de51202ec9d871",
   "part_id": "mom_jet_slide_valve",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-11-01T21:41:56Z",
+  "checked_at": "2026-11-02T00:37:03Z",
   "metrics": {
     "bbox_mm": [
       9.6,
@@ -15,6 +15,7 @@
     "surface_cm2": 10.65,
     "triangles": 1108,
     "ledges": [],
+    "floating_contours": [],
     "layers": 46,
     "bed_contact_mm2": 185.5,
     "height_mm": 9.17,
@@ -72,6 +73,14 @@
       "value": 0.0,
       "limit": 1.0,
       "detail": "mm2 of flat underside held on one side only (a ledge over air, not a bridge)"
+    },
+    {
+      "id": "V11_floating_contour",
+      "level": "block",
+      "result": "pass",
+      "value": 0,
+      "limit": 0,
+      "detail": "unanchored interior hole loops in bridge ceilings or low-Z hovering cantilevers"
     },
     {
       "id": "V6_bridge_span",

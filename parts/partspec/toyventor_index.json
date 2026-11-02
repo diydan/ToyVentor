@@ -26420,10 +26420,16 @@
           "axle_rear_r"
         ],
         "kit_keel_base": [
-          "steer_bore"
+          "steer_bore",
+          "axle_row0",
+          "axle_row7_l",
+          "axle_row7_r",
+          "axle_row8_l",
+          "axle_row8_r"
         ],
         "kit_clevis_spine": [
           "headtube",
+          "kickstand_bore",
           "clevis_front_l",
           "clevis_front_r",
           "clevis_rear_l",
@@ -26442,6 +26448,9 @@
         "kit_aero_wedge": [
           "prop_bore",
           "mast_bore"
+        ],
+        "kit_tilting_tub": [
+          "hinge_bore"
         ],
         "kit_turntable": [
           "center_bore"
@@ -26468,6 +26477,9 @@
         ],
         "mom_band_core_tray": [
           "latch_bore"
+        ],
+        "mom_band_core_lid": [
+          "hinge_bore"
         ],
         "mom_band_spool_pawl": [
           "hub"
@@ -26504,7 +26516,8 @@
           "pull_bore"
         ],
         "pro_tub_hinge": [
-          "hitch_bore"
+          "hitch_bore",
+          "hinge_bore"
         ],
         "pro_steer_wheel": [
           "hub"
@@ -26517,6 +26530,9 @@
         ],
         "mech_drive_tray": [
           "pto_pilot_bore"
+        ],
+        "mech_brain_lid": [
+          "hinge_bore"
         ],
         "mech_bat_door_screw": [
           "hitch_bore"
@@ -26677,7 +26693,31 @@
         },
         {
           "male": "pin_friction.axis",
+          "female": "kit_keel_base.axle_row0"
+        },
+        {
+          "male": "pin_friction.axis",
+          "female": "kit_keel_base.axle_row7_l"
+        },
+        {
+          "male": "pin_friction.axis",
+          "female": "kit_keel_base.axle_row7_r"
+        },
+        {
+          "male": "pin_friction.axis",
+          "female": "kit_keel_base.axle_row8_l"
+        },
+        {
+          "male": "pin_friction.axis",
+          "female": "kit_keel_base.axle_row8_r"
+        },
+        {
+          "male": "pin_friction.axis",
           "female": "kit_clevis_spine.headtube"
+        },
+        {
+          "male": "pin_friction.axis",
+          "female": "kit_clevis_spine.kickstand_bore"
         },
         {
           "male": "pin_friction.axis",
@@ -26709,6 +26749,10 @@
         },
         {
           "male": "pin_friction.axis",
+          "female": "kit_tilting_tub.hinge_bore"
+        },
+        {
+          "male": "pin_friction.axis",
           "female": "kit_turntable.center_bore"
         },
         {
@@ -26734,6 +26778,10 @@
         {
           "male": "pin_friction.axis",
           "female": "mom_band_core_tray.latch_bore"
+        },
+        {
+          "male": "pin_friction.axis",
+          "female": "mom_band_core_lid.hinge_bore"
         },
         {
           "male": "pin_friction.axis",
@@ -26781,11 +26829,19 @@
         },
         {
           "male": "pin_friction.axis",
+          "female": "pro_tub_hinge.hinge_bore"
+        },
+        {
+          "male": "pin_friction.axis",
           "female": "mom_latch_pawl.pivot_bore"
         },
         {
           "male": "pin_friction.axis",
           "female": "mech_drive_tray.pto_pilot_bore"
+        },
+        {
+          "male": "pin_friction.axis",
+          "female": "mech_brain_lid.hinge_bore"
         },
         {
           "male": "pin_friction.axis",
@@ -26929,7 +26985,31 @@
         },
         {
           "male": "pin_friction_long.axis",
+          "female": "kit_keel_base.axle_row0"
+        },
+        {
+          "male": "pin_friction_long.axis",
+          "female": "kit_keel_base.axle_row7_l"
+        },
+        {
+          "male": "pin_friction_long.axis",
+          "female": "kit_keel_base.axle_row7_r"
+        },
+        {
+          "male": "pin_friction_long.axis",
+          "female": "kit_keel_base.axle_row8_l"
+        },
+        {
+          "male": "pin_friction_long.axis",
+          "female": "kit_keel_base.axle_row8_r"
+        },
+        {
+          "male": "pin_friction_long.axis",
           "female": "kit_clevis_spine.headtube"
+        },
+        {
+          "male": "pin_friction_long.axis",
+          "female": "kit_clevis_spine.kickstand_bore"
         },
         {
           "male": "pin_friction_long.axis",
@@ -26961,6 +27041,10 @@
         },
         {
           "male": "pin_friction_long.axis",
+          "female": "kit_tilting_tub.hinge_bore"
+        },
+        {
+          "male": "pin_friction_long.axis",
           "female": "kit_turntable.center_bore"
         },
         {
@@ -26986,6 +27070,10 @@
         {
           "male": "pin_friction_long.axis",
           "female": "mom_band_core_tray.latch_bore"
+        },
+        {
+          "male": "pin_friction_long.axis",
+          "female": "mom_band_core_lid.hinge_bore"
         },
         {
           "male": "pin_friction_long.axis",
@@ -27033,11 +27121,19 @@
         },
         {
           "male": "pin_friction_long.axis",
+          "female": "pro_tub_hinge.hinge_bore"
+        },
+        {
+          "male": "pin_friction_long.axis",
           "female": "mom_latch_pawl.pivot_bore"
         },
         {
           "male": "pin_friction_long.axis",
           "female": "mech_drive_tray.pto_pilot_bore"
+        },
+        {
+          "male": "pin_friction_long.axis",
+          "female": "mech_brain_lid.hinge_bore"
         },
         {
           "male": "pin_friction_long.axis",
@@ -27208,7 +27304,31 @@
         },
         {
           "male": "pin_free.axis",
+          "female": "kit_keel_base.axle_row0"
+        },
+        {
+          "male": "pin_free.axis",
+          "female": "kit_keel_base.axle_row7_l"
+        },
+        {
+          "male": "pin_free.axis",
+          "female": "kit_keel_base.axle_row7_r"
+        },
+        {
+          "male": "pin_free.axis",
+          "female": "kit_keel_base.axle_row8_l"
+        },
+        {
+          "male": "pin_free.axis",
+          "female": "kit_keel_base.axle_row8_r"
+        },
+        {
+          "male": "pin_free.axis",
           "female": "kit_clevis_spine.headtube"
+        },
+        {
+          "male": "pin_free.axis",
+          "female": "kit_clevis_spine.kickstand_bore"
         },
         {
           "male": "pin_free.axis",
@@ -27240,6 +27360,10 @@
         },
         {
           "male": "pin_free.axis",
+          "female": "kit_tilting_tub.hinge_bore"
+        },
+        {
+          "male": "pin_free.axis",
           "female": "kit_turntable.center_bore"
         },
         {
@@ -27265,6 +27389,10 @@
         {
           "male": "pin_free.axis",
           "female": "mom_band_core_tray.latch_bore"
+        },
+        {
+          "male": "pin_free.axis",
+          "female": "mom_band_core_lid.hinge_bore"
         },
         {
           "male": "pin_free.axis",
@@ -27312,11 +27440,19 @@
         },
         {
           "male": "pin_free.axis",
+          "female": "pro_tub_hinge.hinge_bore"
+        },
+        {
+          "male": "pin_free.axis",
           "female": "mom_latch_pawl.pivot_bore"
         },
         {
           "male": "pin_free.axis",
           "female": "mech_drive_tray.pto_pilot_bore"
+        },
+        {
+          "male": "pin_free.axis",
+          "female": "mech_brain_lid.hinge_bore"
         },
         {
           "male": "pin_free.axis",
@@ -27460,7 +27596,31 @@
         },
         {
           "male": "veh_steering_wheel.axis",
+          "female": "kit_keel_base.axle_row0"
+        },
+        {
+          "male": "veh_steering_wheel.axis",
+          "female": "kit_keel_base.axle_row7_l"
+        },
+        {
+          "male": "veh_steering_wheel.axis",
+          "female": "kit_keel_base.axle_row7_r"
+        },
+        {
+          "male": "veh_steering_wheel.axis",
+          "female": "kit_keel_base.axle_row8_l"
+        },
+        {
+          "male": "veh_steering_wheel.axis",
+          "female": "kit_keel_base.axle_row8_r"
+        },
+        {
+          "male": "veh_steering_wheel.axis",
           "female": "kit_clevis_spine.headtube"
+        },
+        {
+          "male": "veh_steering_wheel.axis",
+          "female": "kit_clevis_spine.kickstand_bore"
         },
         {
           "male": "veh_steering_wheel.axis",
@@ -27492,6 +27652,10 @@
         },
         {
           "male": "veh_steering_wheel.axis",
+          "female": "kit_tilting_tub.hinge_bore"
+        },
+        {
+          "male": "veh_steering_wheel.axis",
           "female": "kit_turntable.center_bore"
         },
         {
@@ -27517,6 +27681,10 @@
         {
           "male": "veh_steering_wheel.axis",
           "female": "mom_band_core_tray.latch_bore"
+        },
+        {
+          "male": "veh_steering_wheel.axis",
+          "female": "mom_band_core_lid.hinge_bore"
         },
         {
           "male": "veh_steering_wheel.axis",
@@ -27564,11 +27732,19 @@
         },
         {
           "male": "veh_steering_wheel.axis",
+          "female": "pro_tub_hinge.hinge_bore"
+        },
+        {
+          "male": "veh_steering_wheel.axis",
           "female": "mom_latch_pawl.pivot_bore"
         },
         {
           "male": "veh_steering_wheel.axis",
           "female": "mech_drive_tray.pto_pilot_bore"
+        },
+        {
+          "male": "veh_steering_wheel.axis",
+          "female": "mech_brain_lid.hinge_bore"
         },
         {
           "male": "veh_steering_wheel.axis",
@@ -27712,7 +27888,31 @@
         },
         {
           "male": "pro_tie_rod_link.rack_stub",
+          "female": "kit_keel_base.axle_row0"
+        },
+        {
+          "male": "pro_tie_rod_link.rack_stub",
+          "female": "kit_keel_base.axle_row7_l"
+        },
+        {
+          "male": "pro_tie_rod_link.rack_stub",
+          "female": "kit_keel_base.axle_row7_r"
+        },
+        {
+          "male": "pro_tie_rod_link.rack_stub",
+          "female": "kit_keel_base.axle_row8_l"
+        },
+        {
+          "male": "pro_tie_rod_link.rack_stub",
+          "female": "kit_keel_base.axle_row8_r"
+        },
+        {
+          "male": "pro_tie_rod_link.rack_stub",
           "female": "kit_clevis_spine.headtube"
+        },
+        {
+          "male": "pro_tie_rod_link.rack_stub",
+          "female": "kit_clevis_spine.kickstand_bore"
         },
         {
           "male": "pro_tie_rod_link.rack_stub",
@@ -27744,6 +27944,10 @@
         },
         {
           "male": "pro_tie_rod_link.rack_stub",
+          "female": "kit_tilting_tub.hinge_bore"
+        },
+        {
+          "male": "pro_tie_rod_link.rack_stub",
           "female": "kit_turntable.center_bore"
         },
         {
@@ -27769,6 +27973,10 @@
         {
           "male": "pro_tie_rod_link.rack_stub",
           "female": "mom_band_core_tray.latch_bore"
+        },
+        {
+          "male": "pro_tie_rod_link.rack_stub",
+          "female": "mom_band_core_lid.hinge_bore"
         },
         {
           "male": "pro_tie_rod_link.rack_stub",
@@ -27816,11 +28024,19 @@
         },
         {
           "male": "pro_tie_rod_link.rack_stub",
+          "female": "pro_tub_hinge.hinge_bore"
+        },
+        {
+          "male": "pro_tie_rod_link.rack_stub",
           "female": "mom_latch_pawl.pivot_bore"
         },
         {
           "male": "pro_tie_rod_link.rack_stub",
           "female": "mech_drive_tray.pto_pilot_bore"
+        },
+        {
+          "male": "pro_tie_rod_link.rack_stub",
+          "female": "mech_brain_lid.hinge_bore"
         },
         {
           "male": "pro_tie_rod_link.rack_stub",
@@ -27964,7 +28180,31 @@
         },
         {
           "male": "pin_free_tu03.axis",
+          "female": "kit_keel_base.axle_row0"
+        },
+        {
+          "male": "pin_free_tu03.axis",
+          "female": "kit_keel_base.axle_row7_l"
+        },
+        {
+          "male": "pin_free_tu03.axis",
+          "female": "kit_keel_base.axle_row7_r"
+        },
+        {
+          "male": "pin_free_tu03.axis",
+          "female": "kit_keel_base.axle_row8_l"
+        },
+        {
+          "male": "pin_free_tu03.axis",
+          "female": "kit_keel_base.axle_row8_r"
+        },
+        {
+          "male": "pin_free_tu03.axis",
           "female": "kit_clevis_spine.headtube"
+        },
+        {
+          "male": "pin_free_tu03.axis",
+          "female": "kit_clevis_spine.kickstand_bore"
         },
         {
           "male": "pin_free_tu03.axis",
@@ -27996,6 +28236,10 @@
         },
         {
           "male": "pin_free_tu03.axis",
+          "female": "kit_tilting_tub.hinge_bore"
+        },
+        {
+          "male": "pin_free_tu03.axis",
           "female": "kit_turntable.center_bore"
         },
         {
@@ -28021,6 +28265,10 @@
         {
           "male": "pin_free_tu03.axis",
           "female": "mom_band_core_tray.latch_bore"
+        },
+        {
+          "male": "pin_free_tu03.axis",
+          "female": "mom_band_core_lid.hinge_bore"
         },
         {
           "male": "pin_free_tu03.axis",
@@ -28068,11 +28316,19 @@
         },
         {
           "male": "pin_free_tu03.axis",
+          "female": "pro_tub_hinge.hinge_bore"
+        },
+        {
+          "male": "pin_free_tu03.axis",
           "female": "mom_latch_pawl.pivot_bore"
         },
         {
           "male": "pin_free_tu03.axis",
           "female": "mech_drive_tray.pto_pilot_bore"
+        },
+        {
+          "male": "pin_free_tu03.axis",
+          "female": "mech_brain_lid.hinge_bore"
         },
         {
           "male": "pin_free_tu03.axis",
@@ -28216,7 +28472,31 @@
         },
         {
           "male": "mom_jet_slide_valve.axis",
+          "female": "kit_keel_base.axle_row0"
+        },
+        {
+          "male": "mom_jet_slide_valve.axis",
+          "female": "kit_keel_base.axle_row7_l"
+        },
+        {
+          "male": "mom_jet_slide_valve.axis",
+          "female": "kit_keel_base.axle_row7_r"
+        },
+        {
+          "male": "mom_jet_slide_valve.axis",
+          "female": "kit_keel_base.axle_row8_l"
+        },
+        {
+          "male": "mom_jet_slide_valve.axis",
+          "female": "kit_keel_base.axle_row8_r"
+        },
+        {
+          "male": "mom_jet_slide_valve.axis",
           "female": "kit_clevis_spine.headtube"
+        },
+        {
+          "male": "mom_jet_slide_valve.axis",
+          "female": "kit_clevis_spine.kickstand_bore"
         },
         {
           "male": "mom_jet_slide_valve.axis",
@@ -28248,6 +28528,10 @@
         },
         {
           "male": "mom_jet_slide_valve.axis",
+          "female": "kit_tilting_tub.hinge_bore"
+        },
+        {
+          "male": "mom_jet_slide_valve.axis",
           "female": "kit_turntable.center_bore"
         },
         {
@@ -28273,6 +28557,10 @@
         {
           "male": "mom_jet_slide_valve.axis",
           "female": "mom_band_core_tray.latch_bore"
+        },
+        {
+          "male": "mom_jet_slide_valve.axis",
+          "female": "mom_band_core_lid.hinge_bore"
         },
         {
           "male": "mom_jet_slide_valve.axis",
@@ -28320,11 +28608,19 @@
         },
         {
           "male": "mom_jet_slide_valve.axis",
+          "female": "pro_tub_hinge.hinge_bore"
+        },
+        {
+          "male": "mom_jet_slide_valve.axis",
           "female": "mom_latch_pawl.pivot_bore"
         },
         {
           "male": "mom_jet_slide_valve.axis",
           "female": "mech_drive_tray.pto_pilot_bore"
+        },
+        {
+          "male": "mom_jet_slide_valve.axis",
+          "female": "mech_brain_lid.hinge_bore"
         },
         {
           "male": "mom_jet_slide_valve.axis",
@@ -28468,7 +28764,31 @@
         },
         {
           "male": "mech_n20_pinion_z10.axis",
+          "female": "kit_keel_base.axle_row0"
+        },
+        {
+          "male": "mech_n20_pinion_z10.axis",
+          "female": "kit_keel_base.axle_row7_l"
+        },
+        {
+          "male": "mech_n20_pinion_z10.axis",
+          "female": "kit_keel_base.axle_row7_r"
+        },
+        {
+          "male": "mech_n20_pinion_z10.axis",
+          "female": "kit_keel_base.axle_row8_l"
+        },
+        {
+          "male": "mech_n20_pinion_z10.axis",
+          "female": "kit_keel_base.axle_row8_r"
+        },
+        {
+          "male": "mech_n20_pinion_z10.axis",
           "female": "kit_clevis_spine.headtube"
+        },
+        {
+          "male": "mech_n20_pinion_z10.axis",
+          "female": "kit_clevis_spine.kickstand_bore"
         },
         {
           "male": "mech_n20_pinion_z10.axis",
@@ -28500,6 +28820,10 @@
         },
         {
           "male": "mech_n20_pinion_z10.axis",
+          "female": "kit_tilting_tub.hinge_bore"
+        },
+        {
+          "male": "mech_n20_pinion_z10.axis",
           "female": "kit_turntable.center_bore"
         },
         {
@@ -28525,6 +28849,10 @@
         {
           "male": "mech_n20_pinion_z10.axis",
           "female": "mom_band_core_tray.latch_bore"
+        },
+        {
+          "male": "mech_n20_pinion_z10.axis",
+          "female": "mom_band_core_lid.hinge_bore"
         },
         {
           "male": "mech_n20_pinion_z10.axis",
@@ -28572,11 +28900,19 @@
         },
         {
           "male": "mech_n20_pinion_z10.axis",
+          "female": "pro_tub_hinge.hinge_bore"
+        },
+        {
+          "male": "mech_n20_pinion_z10.axis",
           "female": "mom_latch_pawl.pivot_bore"
         },
         {
           "male": "mech_n20_pinion_z10.axis",
           "female": "mech_drive_tray.pto_pilot_bore"
+        },
+        {
+          "male": "mech_n20_pinion_z10.axis",
+          "female": "mech_brain_lid.hinge_bore"
         },
         {
           "male": "mech_n20_pinion_z10.axis",
@@ -28720,7 +29056,31 @@
         },
         {
           "male": "pro_pilot_pin.axis",
+          "female": "kit_keel_base.axle_row0"
+        },
+        {
+          "male": "pro_pilot_pin.axis",
+          "female": "kit_keel_base.axle_row7_l"
+        },
+        {
+          "male": "pro_pilot_pin.axis",
+          "female": "kit_keel_base.axle_row7_r"
+        },
+        {
+          "male": "pro_pilot_pin.axis",
+          "female": "kit_keel_base.axle_row8_l"
+        },
+        {
+          "male": "pro_pilot_pin.axis",
+          "female": "kit_keel_base.axle_row8_r"
+        },
+        {
+          "male": "pro_pilot_pin.axis",
           "female": "kit_clevis_spine.headtube"
+        },
+        {
+          "male": "pro_pilot_pin.axis",
+          "female": "kit_clevis_spine.kickstand_bore"
         },
         {
           "male": "pro_pilot_pin.axis",
@@ -28752,6 +29112,10 @@
         },
         {
           "male": "pro_pilot_pin.axis",
+          "female": "kit_tilting_tub.hinge_bore"
+        },
+        {
+          "male": "pro_pilot_pin.axis",
           "female": "kit_turntable.center_bore"
         },
         {
@@ -28777,6 +29141,10 @@
         {
           "male": "pro_pilot_pin.axis",
           "female": "mom_band_core_tray.latch_bore"
+        },
+        {
+          "male": "pro_pilot_pin.axis",
+          "female": "mom_band_core_lid.hinge_bore"
         },
         {
           "male": "pro_pilot_pin.axis",
@@ -28824,11 +29192,19 @@
         },
         {
           "male": "pro_pilot_pin.axis",
+          "female": "pro_tub_hinge.hinge_bore"
+        },
+        {
+          "male": "pro_pilot_pin.axis",
           "female": "mom_latch_pawl.pivot_bore"
         },
         {
           "male": "pro_pilot_pin.axis",
           "female": "mech_drive_tray.pto_pilot_bore"
+        },
+        {
+          "male": "pro_pilot_pin.axis",
+          "female": "mech_brain_lid.hinge_bore"
         },
         {
           "male": "pro_pilot_pin.axis",
@@ -29150,7 +29526,31 @@
         },
         {
           "male": "shaft_tu03.axis",
+          "female": "kit_keel_base.axle_row0"
+        },
+        {
+          "male": "shaft_tu03.axis",
+          "female": "kit_keel_base.axle_row7_l"
+        },
+        {
+          "male": "shaft_tu03.axis",
+          "female": "kit_keel_base.axle_row7_r"
+        },
+        {
+          "male": "shaft_tu03.axis",
+          "female": "kit_keel_base.axle_row8_l"
+        },
+        {
+          "male": "shaft_tu03.axis",
+          "female": "kit_keel_base.axle_row8_r"
+        },
+        {
+          "male": "shaft_tu03.axis",
           "female": "kit_clevis_spine.headtube"
+        },
+        {
+          "male": "shaft_tu03.axis",
+          "female": "kit_clevis_spine.kickstand_bore"
         },
         {
           "male": "shaft_tu03.axis",
@@ -29194,6 +29594,10 @@
         },
         {
           "male": "shaft_tu03.axis",
+          "female": "kit_tilting_tub.hinge_bore"
+        },
+        {
+          "male": "shaft_tu03.axis",
           "female": "kit_turntable.center_bore"
         },
         {
@@ -29231,6 +29635,10 @@
         {
           "male": "shaft_tu03.axis",
           "female": "mom_band_core_tray.latch_bore"
+        },
+        {
+          "male": "shaft_tu03.axis",
+          "female": "mom_band_core_lid.hinge_bore"
         },
         {
           "male": "shaft_tu03.axis",
@@ -29286,6 +29694,10 @@
         },
         {
           "male": "shaft_tu03.axis",
+          "female": "pro_tub_hinge.hinge_bore"
+        },
+        {
+          "male": "shaft_tu03.axis",
           "female": "pro_steer_wheel.hub"
         },
         {
@@ -29299,6 +29711,10 @@
         {
           "male": "shaft_tu03.axis",
           "female": "mech_drive_tray.pto_pilot_bore"
+        },
+        {
+          "male": "shaft_tu03.axis",
+          "female": "mech_brain_lid.hinge_bore"
         },
         {
           "male": "shaft_tu03.axis",
@@ -29526,7 +29942,31 @@
         },
         {
           "male": "shaft_tu05.axis",
+          "female": "kit_keel_base.axle_row0"
+        },
+        {
+          "male": "shaft_tu05.axis",
+          "female": "kit_keel_base.axle_row7_l"
+        },
+        {
+          "male": "shaft_tu05.axis",
+          "female": "kit_keel_base.axle_row7_r"
+        },
+        {
+          "male": "shaft_tu05.axis",
+          "female": "kit_keel_base.axle_row8_l"
+        },
+        {
+          "male": "shaft_tu05.axis",
+          "female": "kit_keel_base.axle_row8_r"
+        },
+        {
+          "male": "shaft_tu05.axis",
           "female": "kit_clevis_spine.headtube"
+        },
+        {
+          "male": "shaft_tu05.axis",
+          "female": "kit_clevis_spine.kickstand_bore"
         },
         {
           "male": "shaft_tu05.axis",
@@ -29570,6 +30010,10 @@
         },
         {
           "male": "shaft_tu05.axis",
+          "female": "kit_tilting_tub.hinge_bore"
+        },
+        {
+          "male": "shaft_tu05.axis",
           "female": "kit_turntable.center_bore"
         },
         {
@@ -29607,6 +30051,10 @@
         {
           "male": "shaft_tu05.axis",
           "female": "mom_band_core_tray.latch_bore"
+        },
+        {
+          "male": "shaft_tu05.axis",
+          "female": "mom_band_core_lid.hinge_bore"
         },
         {
           "male": "shaft_tu05.axis",
@@ -29662,6 +30110,10 @@
         },
         {
           "male": "shaft_tu05.axis",
+          "female": "pro_tub_hinge.hinge_bore"
+        },
+        {
+          "male": "shaft_tu05.axis",
           "female": "pro_steer_wheel.hub"
         },
         {
@@ -29675,6 +30127,10 @@
         {
           "male": "shaft_tu05.axis",
           "female": "mech_drive_tray.pto_pilot_bore"
+        },
+        {
+          "male": "shaft_tu05.axis",
+          "female": "mech_brain_lid.hinge_bore"
         },
         {
           "male": "shaft_tu05.axis",
@@ -29902,7 +30358,31 @@
         },
         {
           "male": "shaft_tu07.axis",
+          "female": "kit_keel_base.axle_row0"
+        },
+        {
+          "male": "shaft_tu07.axis",
+          "female": "kit_keel_base.axle_row7_l"
+        },
+        {
+          "male": "shaft_tu07.axis",
+          "female": "kit_keel_base.axle_row7_r"
+        },
+        {
+          "male": "shaft_tu07.axis",
+          "female": "kit_keel_base.axle_row8_l"
+        },
+        {
+          "male": "shaft_tu07.axis",
+          "female": "kit_keel_base.axle_row8_r"
+        },
+        {
+          "male": "shaft_tu07.axis",
           "female": "kit_clevis_spine.headtube"
+        },
+        {
+          "male": "shaft_tu07.axis",
+          "female": "kit_clevis_spine.kickstand_bore"
         },
         {
           "male": "shaft_tu07.axis",
@@ -29946,6 +30426,10 @@
         },
         {
           "male": "shaft_tu07.axis",
+          "female": "kit_tilting_tub.hinge_bore"
+        },
+        {
+          "male": "shaft_tu07.axis",
           "female": "kit_turntable.center_bore"
         },
         {
@@ -29983,6 +30467,10 @@
         {
           "male": "shaft_tu07.axis",
           "female": "mom_band_core_tray.latch_bore"
+        },
+        {
+          "male": "shaft_tu07.axis",
+          "female": "mom_band_core_lid.hinge_bore"
         },
         {
           "male": "shaft_tu07.axis",
@@ -30038,6 +30526,10 @@
         },
         {
           "male": "shaft_tu07.axis",
+          "female": "pro_tub_hinge.hinge_bore"
+        },
+        {
+          "male": "shaft_tu07.axis",
           "female": "pro_steer_wheel.hub"
         },
         {
@@ -30051,6 +30543,10 @@
         {
           "male": "shaft_tu07.axis",
           "female": "mech_drive_tray.pto_pilot_bore"
+        },
+        {
+          "male": "shaft_tu07.axis",
+          "female": "mech_brain_lid.hinge_bore"
         },
         {
           "male": "shaft_tu07.axis",
@@ -30278,7 +30774,31 @@
         },
         {
           "male": "racer_axle.axis",
+          "female": "kit_keel_base.axle_row0"
+        },
+        {
+          "male": "racer_axle.axis",
+          "female": "kit_keel_base.axle_row7_l"
+        },
+        {
+          "male": "racer_axle.axis",
+          "female": "kit_keel_base.axle_row7_r"
+        },
+        {
+          "male": "racer_axle.axis",
+          "female": "kit_keel_base.axle_row8_l"
+        },
+        {
+          "male": "racer_axle.axis",
+          "female": "kit_keel_base.axle_row8_r"
+        },
+        {
+          "male": "racer_axle.axis",
           "female": "kit_clevis_spine.headtube"
+        },
+        {
+          "male": "racer_axle.axis",
+          "female": "kit_clevis_spine.kickstand_bore"
         },
         {
           "male": "racer_axle.axis",
@@ -30322,6 +30842,10 @@
         },
         {
           "male": "racer_axle.axis",
+          "female": "kit_tilting_tub.hinge_bore"
+        },
+        {
+          "male": "racer_axle.axis",
           "female": "kit_turntable.center_bore"
         },
         {
@@ -30359,6 +30883,10 @@
         {
           "male": "racer_axle.axis",
           "female": "mom_band_core_tray.latch_bore"
+        },
+        {
+          "male": "racer_axle.axis",
+          "female": "mom_band_core_lid.hinge_bore"
         },
         {
           "male": "racer_axle.axis",
@@ -30414,6 +30942,10 @@
         },
         {
           "male": "racer_axle.axis",
+          "female": "pro_tub_hinge.hinge_bore"
+        },
+        {
+          "male": "racer_axle.axis",
           "female": "pro_steer_wheel.hub"
         },
         {
@@ -30427,6 +30959,10 @@
         {
           "male": "racer_axle.axis",
           "female": "mech_drive_tray.pto_pilot_bore"
+        },
+        {
+          "male": "racer_axle.axis",
+          "female": "mech_brain_lid.hinge_bore"
         },
         {
           "male": "racer_axle.axis",
@@ -30654,7 +31190,31 @@
         },
         {
           "male": "char_faceplate.axis",
+          "female": "kit_keel_base.axle_row0"
+        },
+        {
+          "male": "char_faceplate.axis",
+          "female": "kit_keel_base.axle_row7_l"
+        },
+        {
+          "male": "char_faceplate.axis",
+          "female": "kit_keel_base.axle_row7_r"
+        },
+        {
+          "male": "char_faceplate.axis",
+          "female": "kit_keel_base.axle_row8_l"
+        },
+        {
+          "male": "char_faceplate.axis",
+          "female": "kit_keel_base.axle_row8_r"
+        },
+        {
+          "male": "char_faceplate.axis",
           "female": "kit_clevis_spine.headtube"
+        },
+        {
+          "male": "char_faceplate.axis",
+          "female": "kit_clevis_spine.kickstand_bore"
         },
         {
           "male": "char_faceplate.axis",
@@ -30698,6 +31258,10 @@
         },
         {
           "male": "char_faceplate.axis",
+          "female": "kit_tilting_tub.hinge_bore"
+        },
+        {
+          "male": "char_faceplate.axis",
           "female": "kit_turntable.center_bore"
         },
         {
@@ -30735,6 +31299,10 @@
         {
           "male": "char_faceplate.axis",
           "female": "mom_band_core_tray.latch_bore"
+        },
+        {
+          "male": "char_faceplate.axis",
+          "female": "mom_band_core_lid.hinge_bore"
         },
         {
           "male": "char_faceplate.axis",
@@ -30790,6 +31358,10 @@
         },
         {
           "male": "char_faceplate.axis",
+          "female": "pro_tub_hinge.hinge_bore"
+        },
+        {
+          "male": "char_faceplate.axis",
           "female": "pro_steer_wheel.hub"
         },
         {
@@ -30803,6 +31375,10 @@
         {
           "male": "char_faceplate.axis",
           "female": "mech_drive_tray.pto_pilot_bore"
+        },
+        {
+          "male": "char_faceplate.axis",
+          "female": "mech_brain_lid.hinge_bore"
         },
         {
           "male": "char_faceplate.axis",
@@ -31030,7 +31606,31 @@
         },
         {
           "male": "char_faceplate_vinyl.axis",
+          "female": "kit_keel_base.axle_row0"
+        },
+        {
+          "male": "char_faceplate_vinyl.axis",
+          "female": "kit_keel_base.axle_row7_l"
+        },
+        {
+          "male": "char_faceplate_vinyl.axis",
+          "female": "kit_keel_base.axle_row7_r"
+        },
+        {
+          "male": "char_faceplate_vinyl.axis",
+          "female": "kit_keel_base.axle_row8_l"
+        },
+        {
+          "male": "char_faceplate_vinyl.axis",
+          "female": "kit_keel_base.axle_row8_r"
+        },
+        {
+          "male": "char_faceplate_vinyl.axis",
           "female": "kit_clevis_spine.headtube"
+        },
+        {
+          "male": "char_faceplate_vinyl.axis",
+          "female": "kit_clevis_spine.kickstand_bore"
         },
         {
           "male": "char_faceplate_vinyl.axis",
@@ -31074,6 +31674,10 @@
         },
         {
           "male": "char_faceplate_vinyl.axis",
+          "female": "kit_tilting_tub.hinge_bore"
+        },
+        {
+          "male": "char_faceplate_vinyl.axis",
           "female": "kit_turntable.center_bore"
         },
         {
@@ -31111,6 +31715,10 @@
         {
           "male": "char_faceplate_vinyl.axis",
           "female": "mom_band_core_tray.latch_bore"
+        },
+        {
+          "male": "char_faceplate_vinyl.axis",
+          "female": "mom_band_core_lid.hinge_bore"
         },
         {
           "male": "char_faceplate_vinyl.axis",
@@ -31166,6 +31774,10 @@
         },
         {
           "male": "char_faceplate_vinyl.axis",
+          "female": "pro_tub_hinge.hinge_bore"
+        },
+        {
+          "male": "char_faceplate_vinyl.axis",
           "female": "pro_steer_wheel.hub"
         },
         {
@@ -31179,6 +31791,10 @@
         {
           "male": "char_faceplate_vinyl.axis",
           "female": "mech_drive_tray.pto_pilot_bore"
+        },
+        {
+          "male": "char_faceplate_vinyl.axis",
+          "female": "mech_brain_lid.hinge_bore"
         },
         {
           "male": "char_faceplate_vinyl.axis",
@@ -31406,7 +32022,31 @@
         },
         {
           "male": "char_faceplate_flat.axis",
+          "female": "kit_keel_base.axle_row0"
+        },
+        {
+          "male": "char_faceplate_flat.axis",
+          "female": "kit_keel_base.axle_row7_l"
+        },
+        {
+          "male": "char_faceplate_flat.axis",
+          "female": "kit_keel_base.axle_row7_r"
+        },
+        {
+          "male": "char_faceplate_flat.axis",
+          "female": "kit_keel_base.axle_row8_l"
+        },
+        {
+          "male": "char_faceplate_flat.axis",
+          "female": "kit_keel_base.axle_row8_r"
+        },
+        {
+          "male": "char_faceplate_flat.axis",
           "female": "kit_clevis_spine.headtube"
+        },
+        {
+          "male": "char_faceplate_flat.axis",
+          "female": "kit_clevis_spine.kickstand_bore"
         },
         {
           "male": "char_faceplate_flat.axis",
@@ -31450,6 +32090,10 @@
         },
         {
           "male": "char_faceplate_flat.axis",
+          "female": "kit_tilting_tub.hinge_bore"
+        },
+        {
+          "male": "char_faceplate_flat.axis",
           "female": "kit_turntable.center_bore"
         },
         {
@@ -31487,6 +32131,10 @@
         {
           "male": "char_faceplate_flat.axis",
           "female": "mom_band_core_tray.latch_bore"
+        },
+        {
+          "male": "char_faceplate_flat.axis",
+          "female": "mom_band_core_lid.hinge_bore"
         },
         {
           "male": "char_faceplate_flat.axis",
@@ -31542,6 +32190,10 @@
         },
         {
           "male": "char_faceplate_flat.axis",
+          "female": "pro_tub_hinge.hinge_bore"
+        },
+        {
+          "male": "char_faceplate_flat.axis",
           "female": "pro_steer_wheel.hub"
         },
         {
@@ -31555,6 +32207,10 @@
         {
           "male": "char_faceplate_flat.axis",
           "female": "mech_drive_tray.pto_pilot_bore"
+        },
+        {
+          "male": "char_faceplate_flat.axis",
+          "female": "mech_brain_lid.hinge_bore"
         },
         {
           "male": "char_faceplate_flat.axis",
@@ -31782,7 +32438,31 @@
         },
         {
           "male": "prop_wrench.axis",
+          "female": "kit_keel_base.axle_row0"
+        },
+        {
+          "male": "prop_wrench.axis",
+          "female": "kit_keel_base.axle_row7_l"
+        },
+        {
+          "male": "prop_wrench.axis",
+          "female": "kit_keel_base.axle_row7_r"
+        },
+        {
+          "male": "prop_wrench.axis",
+          "female": "kit_keel_base.axle_row8_l"
+        },
+        {
+          "male": "prop_wrench.axis",
+          "female": "kit_keel_base.axle_row8_r"
+        },
+        {
+          "male": "prop_wrench.axis",
           "female": "kit_clevis_spine.headtube"
+        },
+        {
+          "male": "prop_wrench.axis",
+          "female": "kit_clevis_spine.kickstand_bore"
         },
         {
           "male": "prop_wrench.axis",
@@ -31826,6 +32506,10 @@
         },
         {
           "male": "prop_wrench.axis",
+          "female": "kit_tilting_tub.hinge_bore"
+        },
+        {
+          "male": "prop_wrench.axis",
           "female": "kit_turntable.center_bore"
         },
         {
@@ -31863,6 +32547,10 @@
         {
           "male": "prop_wrench.axis",
           "female": "mom_band_core_tray.latch_bore"
+        },
+        {
+          "male": "prop_wrench.axis",
+          "female": "mom_band_core_lid.hinge_bore"
         },
         {
           "male": "prop_wrench.axis",
@@ -31918,6 +32606,10 @@
         },
         {
           "male": "prop_wrench.axis",
+          "female": "pro_tub_hinge.hinge_bore"
+        },
+        {
+          "male": "prop_wrench.axis",
           "female": "pro_steer_wheel.hub"
         },
         {
@@ -31931,6 +32623,10 @@
         {
           "male": "prop_wrench.axis",
           "female": "mech_drive_tray.pto_pilot_bore"
+        },
+        {
+          "male": "prop_wrench.axis",
+          "female": "mech_brain_lid.hinge_bore"
         },
         {
           "male": "prop_wrench.axis",
@@ -32158,7 +32854,31 @@
         },
         {
           "male": "prop_star_shield.axis",
+          "female": "kit_keel_base.axle_row0"
+        },
+        {
+          "male": "prop_star_shield.axis",
+          "female": "kit_keel_base.axle_row7_l"
+        },
+        {
+          "male": "prop_star_shield.axis",
+          "female": "kit_keel_base.axle_row7_r"
+        },
+        {
+          "male": "prop_star_shield.axis",
+          "female": "kit_keel_base.axle_row8_l"
+        },
+        {
+          "male": "prop_star_shield.axis",
+          "female": "kit_keel_base.axle_row8_r"
+        },
+        {
+          "male": "prop_star_shield.axis",
           "female": "kit_clevis_spine.headtube"
+        },
+        {
+          "male": "prop_star_shield.axis",
+          "female": "kit_clevis_spine.kickstand_bore"
         },
         {
           "male": "prop_star_shield.axis",
@@ -32202,6 +32922,10 @@
         },
         {
           "male": "prop_star_shield.axis",
+          "female": "kit_tilting_tub.hinge_bore"
+        },
+        {
+          "male": "prop_star_shield.axis",
           "female": "kit_turntable.center_bore"
         },
         {
@@ -32239,6 +32963,10 @@
         {
           "male": "prop_star_shield.axis",
           "female": "mom_band_core_tray.latch_bore"
+        },
+        {
+          "male": "prop_star_shield.axis",
+          "female": "mom_band_core_lid.hinge_bore"
         },
         {
           "male": "prop_star_shield.axis",
@@ -32294,6 +33022,10 @@
         },
         {
           "male": "prop_star_shield.axis",
+          "female": "pro_tub_hinge.hinge_bore"
+        },
+        {
+          "male": "prop_star_shield.axis",
           "female": "pro_steer_wheel.hub"
         },
         {
@@ -32307,6 +33039,10 @@
         {
           "male": "prop_star_shield.axis",
           "female": "mech_drive_tray.pto_pilot_bore"
+        },
+        {
+          "male": "prop_star_shield.axis",
+          "female": "mech_brain_lid.hinge_bore"
         },
         {
           "male": "prop_star_shield.axis",
@@ -32534,7 +33270,31 @@
         },
         {
           "male": "prop_hammer.axis",
+          "female": "kit_keel_base.axle_row0"
+        },
+        {
+          "male": "prop_hammer.axis",
+          "female": "kit_keel_base.axle_row7_l"
+        },
+        {
+          "male": "prop_hammer.axis",
+          "female": "kit_keel_base.axle_row7_r"
+        },
+        {
+          "male": "prop_hammer.axis",
+          "female": "kit_keel_base.axle_row8_l"
+        },
+        {
+          "male": "prop_hammer.axis",
+          "female": "kit_keel_base.axle_row8_r"
+        },
+        {
+          "male": "prop_hammer.axis",
           "female": "kit_clevis_spine.headtube"
+        },
+        {
+          "male": "prop_hammer.axis",
+          "female": "kit_clevis_spine.kickstand_bore"
         },
         {
           "male": "prop_hammer.axis",
@@ -32578,6 +33338,10 @@
         },
         {
           "male": "prop_hammer.axis",
+          "female": "kit_tilting_tub.hinge_bore"
+        },
+        {
+          "male": "prop_hammer.axis",
           "female": "kit_turntable.center_bore"
         },
         {
@@ -32615,6 +33379,10 @@
         {
           "male": "prop_hammer.axis",
           "female": "mom_band_core_tray.latch_bore"
+        },
+        {
+          "male": "prop_hammer.axis",
+          "female": "mom_band_core_lid.hinge_bore"
         },
         {
           "male": "prop_hammer.axis",
@@ -32670,6 +33438,10 @@
         },
         {
           "male": "prop_hammer.axis",
+          "female": "pro_tub_hinge.hinge_bore"
+        },
+        {
+          "male": "prop_hammer.axis",
           "female": "pro_steer_wheel.hub"
         },
         {
@@ -32683,6 +33455,10 @@
         {
           "male": "prop_hammer.axis",
           "female": "mech_drive_tray.pto_pilot_bore"
+        },
+        {
+          "male": "prop_hammer.axis",
+          "female": "mech_brain_lid.hinge_bore"
         },
         {
           "male": "prop_hammer.axis",
@@ -32910,7 +33686,31 @@
         },
         {
           "male": "prop_mop.axis",
+          "female": "kit_keel_base.axle_row0"
+        },
+        {
+          "male": "prop_mop.axis",
+          "female": "kit_keel_base.axle_row7_l"
+        },
+        {
+          "male": "prop_mop.axis",
+          "female": "kit_keel_base.axle_row7_r"
+        },
+        {
+          "male": "prop_mop.axis",
+          "female": "kit_keel_base.axle_row8_l"
+        },
+        {
+          "male": "prop_mop.axis",
+          "female": "kit_keel_base.axle_row8_r"
+        },
+        {
+          "male": "prop_mop.axis",
           "female": "kit_clevis_spine.headtube"
+        },
+        {
+          "male": "prop_mop.axis",
+          "female": "kit_clevis_spine.kickstand_bore"
         },
         {
           "male": "prop_mop.axis",
@@ -32954,6 +33754,10 @@
         },
         {
           "male": "prop_mop.axis",
+          "female": "kit_tilting_tub.hinge_bore"
+        },
+        {
+          "male": "prop_mop.axis",
           "female": "kit_turntable.center_bore"
         },
         {
@@ -32991,6 +33795,10 @@
         {
           "male": "prop_mop.axis",
           "female": "mom_band_core_tray.latch_bore"
+        },
+        {
+          "male": "prop_mop.axis",
+          "female": "mom_band_core_lid.hinge_bore"
         },
         {
           "male": "prop_mop.axis",
@@ -33046,6 +33854,10 @@
         },
         {
           "male": "prop_mop.axis",
+          "female": "pro_tub_hinge.hinge_bore"
+        },
+        {
+          "male": "prop_mop.axis",
           "female": "pro_steer_wheel.hub"
         },
         {
@@ -33059,6 +33871,10 @@
         {
           "male": "prop_mop.axis",
           "female": "mech_drive_tray.pto_pilot_bore"
+        },
+        {
+          "male": "prop_mop.axis",
+          "female": "mech_brain_lid.hinge_bore"
         },
         {
           "male": "prop_mop.axis",
@@ -33286,7 +34102,31 @@
         },
         {
           "male": "prop_guitar.axis",
+          "female": "kit_keel_base.axle_row0"
+        },
+        {
+          "male": "prop_guitar.axis",
+          "female": "kit_keel_base.axle_row7_l"
+        },
+        {
+          "male": "prop_guitar.axis",
+          "female": "kit_keel_base.axle_row7_r"
+        },
+        {
+          "male": "prop_guitar.axis",
+          "female": "kit_keel_base.axle_row8_l"
+        },
+        {
+          "male": "prop_guitar.axis",
+          "female": "kit_keel_base.axle_row8_r"
+        },
+        {
+          "male": "prop_guitar.axis",
           "female": "kit_clevis_spine.headtube"
+        },
+        {
+          "male": "prop_guitar.axis",
+          "female": "kit_clevis_spine.kickstand_bore"
         },
         {
           "male": "prop_guitar.axis",
@@ -33330,6 +34170,10 @@
         },
         {
           "male": "prop_guitar.axis",
+          "female": "kit_tilting_tub.hinge_bore"
+        },
+        {
+          "male": "prop_guitar.axis",
           "female": "kit_turntable.center_bore"
         },
         {
@@ -33367,6 +34211,10 @@
         {
           "male": "prop_guitar.axis",
           "female": "mom_band_core_tray.latch_bore"
+        },
+        {
+          "male": "prop_guitar.axis",
+          "female": "mom_band_core_lid.hinge_bore"
         },
         {
           "male": "prop_guitar.axis",
@@ -33422,6 +34270,10 @@
         },
         {
           "male": "prop_guitar.axis",
+          "female": "pro_tub_hinge.hinge_bore"
+        },
+        {
+          "male": "prop_guitar.axis",
           "female": "pro_steer_wheel.hub"
         },
         {
@@ -33435,6 +34287,10 @@
         {
           "male": "prop_guitar.axis",
           "female": "mech_drive_tray.pto_pilot_bore"
+        },
+        {
+          "male": "prop_guitar.axis",
+          "female": "mech_brain_lid.hinge_bore"
         },
         {
           "male": "prop_guitar.axis",
@@ -33662,7 +34518,31 @@
         },
         {
           "male": "prop_screwdriver.axis",
+          "female": "kit_keel_base.axle_row0"
+        },
+        {
+          "male": "prop_screwdriver.axis",
+          "female": "kit_keel_base.axle_row7_l"
+        },
+        {
+          "male": "prop_screwdriver.axis",
+          "female": "kit_keel_base.axle_row7_r"
+        },
+        {
+          "male": "prop_screwdriver.axis",
+          "female": "kit_keel_base.axle_row8_l"
+        },
+        {
+          "male": "prop_screwdriver.axis",
+          "female": "kit_keel_base.axle_row8_r"
+        },
+        {
+          "male": "prop_screwdriver.axis",
           "female": "kit_clevis_spine.headtube"
+        },
+        {
+          "male": "prop_screwdriver.axis",
+          "female": "kit_clevis_spine.kickstand_bore"
         },
         {
           "male": "prop_screwdriver.axis",
@@ -33706,6 +34586,10 @@
         },
         {
           "male": "prop_screwdriver.axis",
+          "female": "kit_tilting_tub.hinge_bore"
+        },
+        {
+          "male": "prop_screwdriver.axis",
           "female": "kit_turntable.center_bore"
         },
         {
@@ -33743,6 +34627,10 @@
         {
           "male": "prop_screwdriver.axis",
           "female": "mom_band_core_tray.latch_bore"
+        },
+        {
+          "male": "prop_screwdriver.axis",
+          "female": "mom_band_core_lid.hinge_bore"
         },
         {
           "male": "prop_screwdriver.axis",
@@ -33798,6 +34686,10 @@
         },
         {
           "male": "prop_screwdriver.axis",
+          "female": "pro_tub_hinge.hinge_bore"
+        },
+        {
+          "male": "prop_screwdriver.axis",
           "female": "pro_steer_wheel.hub"
         },
         {
@@ -33811,6 +34703,10 @@
         {
           "male": "prop_screwdriver.axis",
           "female": "mech_drive_tray.pto_pilot_bore"
+        },
+        {
+          "male": "prop_screwdriver.axis",
+          "female": "mech_brain_lid.hinge_bore"
         },
         {
           "male": "prop_screwdriver.axis",
@@ -34038,7 +34934,31 @@
         },
         {
           "male": "prop_paint_roller.axis",
+          "female": "kit_keel_base.axle_row0"
+        },
+        {
+          "male": "prop_paint_roller.axis",
+          "female": "kit_keel_base.axle_row7_l"
+        },
+        {
+          "male": "prop_paint_roller.axis",
+          "female": "kit_keel_base.axle_row7_r"
+        },
+        {
+          "male": "prop_paint_roller.axis",
+          "female": "kit_keel_base.axle_row8_l"
+        },
+        {
+          "male": "prop_paint_roller.axis",
+          "female": "kit_keel_base.axle_row8_r"
+        },
+        {
+          "male": "prop_paint_roller.axis",
           "female": "kit_clevis_spine.headtube"
+        },
+        {
+          "male": "prop_paint_roller.axis",
+          "female": "kit_clevis_spine.kickstand_bore"
         },
         {
           "male": "prop_paint_roller.axis",
@@ -34082,6 +35002,10 @@
         },
         {
           "male": "prop_paint_roller.axis",
+          "female": "kit_tilting_tub.hinge_bore"
+        },
+        {
+          "male": "prop_paint_roller.axis",
           "female": "kit_turntable.center_bore"
         },
         {
@@ -34119,6 +35043,10 @@
         {
           "male": "prop_paint_roller.axis",
           "female": "mom_band_core_tray.latch_bore"
+        },
+        {
+          "male": "prop_paint_roller.axis",
+          "female": "mom_band_core_lid.hinge_bore"
         },
         {
           "male": "prop_paint_roller.axis",
@@ -34174,6 +35102,10 @@
         },
         {
           "male": "prop_paint_roller.axis",
+          "female": "pro_tub_hinge.hinge_bore"
+        },
+        {
+          "male": "prop_paint_roller.axis",
           "female": "pro_steer_wheel.hub"
         },
         {
@@ -34187,6 +35119,10 @@
         {
           "male": "prop_paint_roller.axis",
           "female": "mech_drive_tray.pto_pilot_bore"
+        },
+        {
+          "male": "prop_paint_roller.axis",
+          "female": "mech_brain_lid.hinge_bore"
         },
         {
           "male": "prop_paint_roller.axis",
@@ -34414,7 +35350,31 @@
         },
         {
           "male": "prop_broom.axis",
+          "female": "kit_keel_base.axle_row0"
+        },
+        {
+          "male": "prop_broom.axis",
+          "female": "kit_keel_base.axle_row7_l"
+        },
+        {
+          "male": "prop_broom.axis",
+          "female": "kit_keel_base.axle_row7_r"
+        },
+        {
+          "male": "prop_broom.axis",
+          "female": "kit_keel_base.axle_row8_l"
+        },
+        {
+          "male": "prop_broom.axis",
+          "female": "kit_keel_base.axle_row8_r"
+        },
+        {
+          "male": "prop_broom.axis",
           "female": "kit_clevis_spine.headtube"
+        },
+        {
+          "male": "prop_broom.axis",
+          "female": "kit_clevis_spine.kickstand_bore"
         },
         {
           "male": "prop_broom.axis",
@@ -34458,6 +35418,10 @@
         },
         {
           "male": "prop_broom.axis",
+          "female": "kit_tilting_tub.hinge_bore"
+        },
+        {
+          "male": "prop_broom.axis",
           "female": "kit_turntable.center_bore"
         },
         {
@@ -34495,6 +35459,10 @@
         {
           "male": "prop_broom.axis",
           "female": "mom_band_core_tray.latch_bore"
+        },
+        {
+          "male": "prop_broom.axis",
+          "female": "mom_band_core_lid.hinge_bore"
         },
         {
           "male": "prop_broom.axis",
@@ -34550,6 +35518,10 @@
         },
         {
           "male": "prop_broom.axis",
+          "female": "pro_tub_hinge.hinge_bore"
+        },
+        {
+          "male": "prop_broom.axis",
           "female": "pro_steer_wheel.hub"
         },
         {
@@ -34563,6 +35535,10 @@
         {
           "male": "prop_broom.axis",
           "female": "mech_drive_tray.pto_pilot_bore"
+        },
+        {
+          "male": "prop_broom.axis",
+          "female": "mech_brain_lid.hinge_bore"
         },
         {
           "male": "prop_broom.axis",
@@ -34790,7 +35766,31 @@
         },
         {
           "male": "prop_scrub_brush.axis",
+          "female": "kit_keel_base.axle_row0"
+        },
+        {
+          "male": "prop_scrub_brush.axis",
+          "female": "kit_keel_base.axle_row7_l"
+        },
+        {
+          "male": "prop_scrub_brush.axis",
+          "female": "kit_keel_base.axle_row7_r"
+        },
+        {
+          "male": "prop_scrub_brush.axis",
+          "female": "kit_keel_base.axle_row8_l"
+        },
+        {
+          "male": "prop_scrub_brush.axis",
+          "female": "kit_keel_base.axle_row8_r"
+        },
+        {
+          "male": "prop_scrub_brush.axis",
           "female": "kit_clevis_spine.headtube"
+        },
+        {
+          "male": "prop_scrub_brush.axis",
+          "female": "kit_clevis_spine.kickstand_bore"
         },
         {
           "male": "prop_scrub_brush.axis",
@@ -34834,6 +35834,10 @@
         },
         {
           "male": "prop_scrub_brush.axis",
+          "female": "kit_tilting_tub.hinge_bore"
+        },
+        {
+          "male": "prop_scrub_brush.axis",
           "female": "kit_turntable.center_bore"
         },
         {
@@ -34871,6 +35875,10 @@
         {
           "male": "prop_scrub_brush.axis",
           "female": "mom_band_core_tray.latch_bore"
+        },
+        {
+          "male": "prop_scrub_brush.axis",
+          "female": "mom_band_core_lid.hinge_bore"
         },
         {
           "male": "prop_scrub_brush.axis",
@@ -34926,6 +35934,10 @@
         },
         {
           "male": "prop_scrub_brush.axis",
+          "female": "pro_tub_hinge.hinge_bore"
+        },
+        {
+          "male": "prop_scrub_brush.axis",
           "female": "pro_steer_wheel.hub"
         },
         {
@@ -34939,6 +35951,10 @@
         {
           "male": "prop_scrub_brush.axis",
           "female": "mech_drive_tray.pto_pilot_bore"
+        },
+        {
+          "male": "prop_scrub_brush.axis",
+          "female": "mech_brain_lid.hinge_bore"
         },
         {
           "male": "prop_scrub_brush.axis",
@@ -35166,7 +36182,31 @@
         },
         {
           "male": "prop_vacuum.axis",
+          "female": "kit_keel_base.axle_row0"
+        },
+        {
+          "male": "prop_vacuum.axis",
+          "female": "kit_keel_base.axle_row7_l"
+        },
+        {
+          "male": "prop_vacuum.axis",
+          "female": "kit_keel_base.axle_row7_r"
+        },
+        {
+          "male": "prop_vacuum.axis",
+          "female": "kit_keel_base.axle_row8_l"
+        },
+        {
+          "male": "prop_vacuum.axis",
+          "female": "kit_keel_base.axle_row8_r"
+        },
+        {
+          "male": "prop_vacuum.axis",
           "female": "kit_clevis_spine.headtube"
+        },
+        {
+          "male": "prop_vacuum.axis",
+          "female": "kit_clevis_spine.kickstand_bore"
         },
         {
           "male": "prop_vacuum.axis",
@@ -35210,6 +36250,10 @@
         },
         {
           "male": "prop_vacuum.axis",
+          "female": "kit_tilting_tub.hinge_bore"
+        },
+        {
+          "male": "prop_vacuum.axis",
           "female": "kit_turntable.center_bore"
         },
         {
@@ -35247,6 +36291,10 @@
         {
           "male": "prop_vacuum.axis",
           "female": "mom_band_core_tray.latch_bore"
+        },
+        {
+          "male": "prop_vacuum.axis",
+          "female": "mom_band_core_lid.hinge_bore"
         },
         {
           "male": "prop_vacuum.axis",
@@ -35302,6 +36350,10 @@
         },
         {
           "male": "prop_vacuum.axis",
+          "female": "pro_tub_hinge.hinge_bore"
+        },
+        {
+          "male": "prop_vacuum.axis",
           "female": "pro_steer_wheel.hub"
         },
         {
@@ -35315,6 +36367,10 @@
         {
           "male": "prop_vacuum.axis",
           "female": "mech_drive_tray.pto_pilot_bore"
+        },
+        {
+          "male": "prop_vacuum.axis",
+          "female": "mech_brain_lid.hinge_bore"
         },
         {
           "male": "prop_vacuum.axis",
@@ -35542,7 +36598,31 @@
         },
         {
           "male": "prop_trumpet.axis",
+          "female": "kit_keel_base.axle_row0"
+        },
+        {
+          "male": "prop_trumpet.axis",
+          "female": "kit_keel_base.axle_row7_l"
+        },
+        {
+          "male": "prop_trumpet.axis",
+          "female": "kit_keel_base.axle_row7_r"
+        },
+        {
+          "male": "prop_trumpet.axis",
+          "female": "kit_keel_base.axle_row8_l"
+        },
+        {
+          "male": "prop_trumpet.axis",
+          "female": "kit_keel_base.axle_row8_r"
+        },
+        {
+          "male": "prop_trumpet.axis",
           "female": "kit_clevis_spine.headtube"
+        },
+        {
+          "male": "prop_trumpet.axis",
+          "female": "kit_clevis_spine.kickstand_bore"
         },
         {
           "male": "prop_trumpet.axis",
@@ -35586,6 +36666,10 @@
         },
         {
           "male": "prop_trumpet.axis",
+          "female": "kit_tilting_tub.hinge_bore"
+        },
+        {
+          "male": "prop_trumpet.axis",
           "female": "kit_turntable.center_bore"
         },
         {
@@ -35623,6 +36707,10 @@
         {
           "male": "prop_trumpet.axis",
           "female": "mom_band_core_tray.latch_bore"
+        },
+        {
+          "male": "prop_trumpet.axis",
+          "female": "mom_band_core_lid.hinge_bore"
         },
         {
           "male": "prop_trumpet.axis",
@@ -35678,6 +36766,10 @@
         },
         {
           "male": "prop_trumpet.axis",
+          "female": "pro_tub_hinge.hinge_bore"
+        },
+        {
+          "male": "prop_trumpet.axis",
           "female": "pro_steer_wheel.hub"
         },
         {
@@ -35691,6 +36783,10 @@
         {
           "male": "prop_trumpet.axis",
           "female": "mech_drive_tray.pto_pilot_bore"
+        },
+        {
+          "male": "prop_trumpet.axis",
+          "female": "mech_brain_lid.hinge_bore"
         },
         {
           "male": "prop_trumpet.axis",
@@ -35918,7 +37014,31 @@
         },
         {
           "male": "prop_maracas.axis",
+          "female": "kit_keel_base.axle_row0"
+        },
+        {
+          "male": "prop_maracas.axis",
+          "female": "kit_keel_base.axle_row7_l"
+        },
+        {
+          "male": "prop_maracas.axis",
+          "female": "kit_keel_base.axle_row7_r"
+        },
+        {
+          "male": "prop_maracas.axis",
+          "female": "kit_keel_base.axle_row8_l"
+        },
+        {
+          "male": "prop_maracas.axis",
+          "female": "kit_keel_base.axle_row8_r"
+        },
+        {
+          "male": "prop_maracas.axis",
           "female": "kit_clevis_spine.headtube"
+        },
+        {
+          "male": "prop_maracas.axis",
+          "female": "kit_clevis_spine.kickstand_bore"
         },
         {
           "male": "prop_maracas.axis",
@@ -35962,6 +37082,10 @@
         },
         {
           "male": "prop_maracas.axis",
+          "female": "kit_tilting_tub.hinge_bore"
+        },
+        {
+          "male": "prop_maracas.axis",
           "female": "kit_turntable.center_bore"
         },
         {
@@ -35999,6 +37123,10 @@
         {
           "male": "prop_maracas.axis",
           "female": "mom_band_core_tray.latch_bore"
+        },
+        {
+          "male": "prop_maracas.axis",
+          "female": "mom_band_core_lid.hinge_bore"
         },
         {
           "male": "prop_maracas.axis",
@@ -36054,6 +37182,10 @@
         },
         {
           "male": "prop_maracas.axis",
+          "female": "pro_tub_hinge.hinge_bore"
+        },
+        {
+          "male": "prop_maracas.axis",
           "female": "pro_steer_wheel.hub"
         },
         {
@@ -36067,6 +37199,10 @@
         {
           "male": "prop_maracas.axis",
           "female": "mech_drive_tray.pto_pilot_bore"
+        },
+        {
+          "male": "prop_maracas.axis",
+          "female": "mech_brain_lid.hinge_bore"
         },
         {
           "male": "prop_maracas.axis",
@@ -36294,7 +37430,31 @@
         },
         {
           "male": "prop_flag.axis",
+          "female": "kit_keel_base.axle_row0"
+        },
+        {
+          "male": "prop_flag.axis",
+          "female": "kit_keel_base.axle_row7_l"
+        },
+        {
+          "male": "prop_flag.axis",
+          "female": "kit_keel_base.axle_row7_r"
+        },
+        {
+          "male": "prop_flag.axis",
+          "female": "kit_keel_base.axle_row8_l"
+        },
+        {
+          "male": "prop_flag.axis",
+          "female": "kit_keel_base.axle_row8_r"
+        },
+        {
+          "male": "prop_flag.axis",
           "female": "kit_clevis_spine.headtube"
+        },
+        {
+          "male": "prop_flag.axis",
+          "female": "kit_clevis_spine.kickstand_bore"
         },
         {
           "male": "prop_flag.axis",
@@ -36338,6 +37498,10 @@
         },
         {
           "male": "prop_flag.axis",
+          "female": "kit_tilting_tub.hinge_bore"
+        },
+        {
+          "male": "prop_flag.axis",
           "female": "kit_turntable.center_bore"
         },
         {
@@ -36375,6 +37539,10 @@
         {
           "male": "prop_flag.axis",
           "female": "mom_band_core_tray.latch_bore"
+        },
+        {
+          "male": "prop_flag.axis",
+          "female": "mom_band_core_lid.hinge_bore"
         },
         {
           "male": "prop_flag.axis",
@@ -36430,6 +37598,10 @@
         },
         {
           "male": "prop_flag.axis",
+          "female": "pro_tub_hinge.hinge_bore"
+        },
+        {
+          "male": "prop_flag.axis",
           "female": "pro_steer_wheel.hub"
         },
         {
@@ -36443,6 +37615,10 @@
         {
           "male": "prop_flag.axis",
           "female": "mech_drive_tray.pto_pilot_bore"
+        },
+        {
+          "male": "prop_flag.axis",
+          "female": "mech_brain_lid.hinge_bore"
         },
         {
           "male": "prop_flag.axis",
@@ -36670,7 +37846,31 @@
         },
         {
           "male": "prop_magnifier.axis",
+          "female": "kit_keel_base.axle_row0"
+        },
+        {
+          "male": "prop_magnifier.axis",
+          "female": "kit_keel_base.axle_row7_l"
+        },
+        {
+          "male": "prop_magnifier.axis",
+          "female": "kit_keel_base.axle_row7_r"
+        },
+        {
+          "male": "prop_magnifier.axis",
+          "female": "kit_keel_base.axle_row8_l"
+        },
+        {
+          "male": "prop_magnifier.axis",
+          "female": "kit_keel_base.axle_row8_r"
+        },
+        {
+          "male": "prop_magnifier.axis",
           "female": "kit_clevis_spine.headtube"
+        },
+        {
+          "male": "prop_magnifier.axis",
+          "female": "kit_clevis_spine.kickstand_bore"
         },
         {
           "male": "prop_magnifier.axis",
@@ -36714,6 +37914,10 @@
         },
         {
           "male": "prop_magnifier.axis",
+          "female": "kit_tilting_tub.hinge_bore"
+        },
+        {
+          "male": "prop_magnifier.axis",
           "female": "kit_turntable.center_bore"
         },
         {
@@ -36751,6 +37955,10 @@
         {
           "male": "prop_magnifier.axis",
           "female": "mom_band_core_tray.latch_bore"
+        },
+        {
+          "male": "prop_magnifier.axis",
+          "female": "mom_band_core_lid.hinge_bore"
         },
         {
           "male": "prop_magnifier.axis",
@@ -36806,6 +38014,10 @@
         },
         {
           "male": "prop_magnifier.axis",
+          "female": "pro_tub_hinge.hinge_bore"
+        },
+        {
+          "male": "prop_magnifier.axis",
           "female": "pro_steer_wheel.hub"
         },
         {
@@ -36819,6 +38031,10 @@
         {
           "male": "prop_magnifier.axis",
           "female": "mech_drive_tray.pto_pilot_bore"
+        },
+        {
+          "male": "prop_magnifier.axis",
+          "female": "mech_brain_lid.hinge_bore"
         },
         {
           "male": "prop_magnifier.axis",
@@ -37046,7 +38262,31 @@
         },
         {
           "male": "veh_handlebar_fork.axis",
+          "female": "kit_keel_base.axle_row0"
+        },
+        {
+          "male": "veh_handlebar_fork.axis",
+          "female": "kit_keel_base.axle_row7_l"
+        },
+        {
+          "male": "veh_handlebar_fork.axis",
+          "female": "kit_keel_base.axle_row7_r"
+        },
+        {
+          "male": "veh_handlebar_fork.axis",
+          "female": "kit_keel_base.axle_row8_l"
+        },
+        {
+          "male": "veh_handlebar_fork.axis",
+          "female": "kit_keel_base.axle_row8_r"
+        },
+        {
+          "male": "veh_handlebar_fork.axis",
           "female": "kit_clevis_spine.headtube"
+        },
+        {
+          "male": "veh_handlebar_fork.axis",
+          "female": "kit_clevis_spine.kickstand_bore"
         },
         {
           "male": "veh_handlebar_fork.axis",
@@ -37090,6 +38330,10 @@
         },
         {
           "male": "veh_handlebar_fork.axis",
+          "female": "kit_tilting_tub.hinge_bore"
+        },
+        {
+          "male": "veh_handlebar_fork.axis",
           "female": "kit_turntable.center_bore"
         },
         {
@@ -37127,6 +38371,10 @@
         {
           "male": "veh_handlebar_fork.axis",
           "female": "mom_band_core_tray.latch_bore"
+        },
+        {
+          "male": "veh_handlebar_fork.axis",
+          "female": "mom_band_core_lid.hinge_bore"
         },
         {
           "male": "veh_handlebar_fork.axis",
@@ -37182,6 +38430,10 @@
         },
         {
           "male": "veh_handlebar_fork.axis",
+          "female": "pro_tub_hinge.hinge_bore"
+        },
+        {
+          "male": "veh_handlebar_fork.axis",
           "female": "pro_steer_wheel.hub"
         },
         {
@@ -37195,6 +38447,10 @@
         {
           "male": "veh_handlebar_fork.axis",
           "female": "mech_drive_tray.pto_pilot_bore"
+        },
+        {
+          "male": "veh_handlebar_fork.axis",
+          "female": "mech_brain_lid.hinge_bore"
         },
         {
           "male": "veh_handlebar_fork.axis",
@@ -37422,7 +38678,31 @@
         },
         {
           "male": "kit_barbell_shaft.axis",
+          "female": "kit_keel_base.axle_row0"
+        },
+        {
+          "male": "kit_barbell_shaft.axis",
+          "female": "kit_keel_base.axle_row7_l"
+        },
+        {
+          "male": "kit_barbell_shaft.axis",
+          "female": "kit_keel_base.axle_row7_r"
+        },
+        {
+          "male": "kit_barbell_shaft.axis",
+          "female": "kit_keel_base.axle_row8_l"
+        },
+        {
+          "male": "kit_barbell_shaft.axis",
+          "female": "kit_keel_base.axle_row8_r"
+        },
+        {
+          "male": "kit_barbell_shaft.axis",
           "female": "kit_clevis_spine.headtube"
+        },
+        {
+          "male": "kit_barbell_shaft.axis",
+          "female": "kit_clevis_spine.kickstand_bore"
         },
         {
           "male": "kit_barbell_shaft.axis",
@@ -37466,6 +38746,10 @@
         },
         {
           "male": "kit_barbell_shaft.axis",
+          "female": "kit_tilting_tub.hinge_bore"
+        },
+        {
+          "male": "kit_barbell_shaft.axis",
           "female": "kit_turntable.center_bore"
         },
         {
@@ -37503,6 +38787,10 @@
         {
           "male": "kit_barbell_shaft.axis",
           "female": "mom_band_core_tray.latch_bore"
+        },
+        {
+          "male": "kit_barbell_shaft.axis",
+          "female": "mom_band_core_lid.hinge_bore"
         },
         {
           "male": "kit_barbell_shaft.axis",
@@ -37558,6 +38846,10 @@
         },
         {
           "male": "kit_barbell_shaft.axis",
+          "female": "pro_tub_hinge.hinge_bore"
+        },
+        {
+          "male": "kit_barbell_shaft.axis",
           "female": "pro_steer_wheel.hub"
         },
         {
@@ -37571,6 +38863,10 @@
         {
           "male": "kit_barbell_shaft.axis",
           "female": "mech_drive_tray.pto_pilot_bore"
+        },
+        {
+          "male": "kit_barbell_shaft.axis",
+          "female": "mech_brain_lid.hinge_bore"
         },
         {
           "male": "kit_barbell_shaft.axis",
@@ -37798,7 +39094,31 @@
         },
         {
           "male": "kit_spinner_pin.axis",
+          "female": "kit_keel_base.axle_row0"
+        },
+        {
+          "male": "kit_spinner_pin.axis",
+          "female": "kit_keel_base.axle_row7_l"
+        },
+        {
+          "male": "kit_spinner_pin.axis",
+          "female": "kit_keel_base.axle_row7_r"
+        },
+        {
+          "male": "kit_spinner_pin.axis",
+          "female": "kit_keel_base.axle_row8_l"
+        },
+        {
+          "male": "kit_spinner_pin.axis",
+          "female": "kit_keel_base.axle_row8_r"
+        },
+        {
+          "male": "kit_spinner_pin.axis",
           "female": "kit_clevis_spine.headtube"
+        },
+        {
+          "male": "kit_spinner_pin.axis",
+          "female": "kit_clevis_spine.kickstand_bore"
         },
         {
           "male": "kit_spinner_pin.axis",
@@ -37842,6 +39162,10 @@
         },
         {
           "male": "kit_spinner_pin.axis",
+          "female": "kit_tilting_tub.hinge_bore"
+        },
+        {
+          "male": "kit_spinner_pin.axis",
           "female": "kit_turntable.center_bore"
         },
         {
@@ -37879,6 +39203,10 @@
         {
           "male": "kit_spinner_pin.axis",
           "female": "mom_band_core_tray.latch_bore"
+        },
+        {
+          "male": "kit_spinner_pin.axis",
+          "female": "mom_band_core_lid.hinge_bore"
         },
         {
           "male": "kit_spinner_pin.axis",
@@ -37934,6 +39262,10 @@
         },
         {
           "male": "kit_spinner_pin.axis",
+          "female": "pro_tub_hinge.hinge_bore"
+        },
+        {
+          "male": "kit_spinner_pin.axis",
           "female": "pro_steer_wheel.hub"
         },
         {
@@ -37947,6 +39279,10 @@
         {
           "male": "kit_spinner_pin.axis",
           "female": "mech_drive_tray.pto_pilot_bore"
+        },
+        {
+          "male": "kit_spinner_pin.axis",
+          "female": "mech_brain_lid.hinge_bore"
         },
         {
           "male": "kit_spinner_pin.axis",
@@ -38174,7 +39510,31 @@
         },
         {
           "male": "kit_yoke_hbar.axis",
+          "female": "kit_keel_base.axle_row0"
+        },
+        {
+          "male": "kit_yoke_hbar.axis",
+          "female": "kit_keel_base.axle_row7_l"
+        },
+        {
+          "male": "kit_yoke_hbar.axis",
+          "female": "kit_keel_base.axle_row7_r"
+        },
+        {
+          "male": "kit_yoke_hbar.axis",
+          "female": "kit_keel_base.axle_row8_l"
+        },
+        {
+          "male": "kit_yoke_hbar.axis",
+          "female": "kit_keel_base.axle_row8_r"
+        },
+        {
+          "male": "kit_yoke_hbar.axis",
           "female": "kit_clevis_spine.headtube"
+        },
+        {
+          "male": "kit_yoke_hbar.axis",
+          "female": "kit_clevis_spine.kickstand_bore"
         },
         {
           "male": "kit_yoke_hbar.axis",
@@ -38218,6 +39578,10 @@
         },
         {
           "male": "kit_yoke_hbar.axis",
+          "female": "kit_tilting_tub.hinge_bore"
+        },
+        {
+          "male": "kit_yoke_hbar.axis",
           "female": "kit_turntable.center_bore"
         },
         {
@@ -38255,6 +39619,10 @@
         {
           "male": "kit_yoke_hbar.axis",
           "female": "mom_band_core_tray.latch_bore"
+        },
+        {
+          "male": "kit_yoke_hbar.axis",
+          "female": "mom_band_core_lid.hinge_bore"
         },
         {
           "male": "kit_yoke_hbar.axis",
@@ -38310,6 +39678,10 @@
         },
         {
           "male": "kit_yoke_hbar.axis",
+          "female": "pro_tub_hinge.hinge_bore"
+        },
+        {
+          "male": "kit_yoke_hbar.axis",
           "female": "pro_steer_wheel.hub"
         },
         {
@@ -38323,6 +39695,10 @@
         {
           "male": "kit_yoke_hbar.axis",
           "female": "mech_drive_tray.pto_pilot_bore"
+        },
+        {
+          "male": "kit_yoke_hbar.axis",
+          "female": "mech_brain_lid.hinge_bore"
         },
         {
           "male": "kit_yoke_hbar.axis",
@@ -38550,7 +39926,31 @@
         },
         {
           "male": "pro_steer_knuckle_l.wheel_stub",
+          "female": "kit_keel_base.axle_row0"
+        },
+        {
+          "male": "pro_steer_knuckle_l.wheel_stub",
+          "female": "kit_keel_base.axle_row7_l"
+        },
+        {
+          "male": "pro_steer_knuckle_l.wheel_stub",
+          "female": "kit_keel_base.axle_row7_r"
+        },
+        {
+          "male": "pro_steer_knuckle_l.wheel_stub",
+          "female": "kit_keel_base.axle_row8_l"
+        },
+        {
+          "male": "pro_steer_knuckle_l.wheel_stub",
+          "female": "kit_keel_base.axle_row8_r"
+        },
+        {
+          "male": "pro_steer_knuckle_l.wheel_stub",
           "female": "kit_clevis_spine.headtube"
+        },
+        {
+          "male": "pro_steer_knuckle_l.wheel_stub",
+          "female": "kit_clevis_spine.kickstand_bore"
         },
         {
           "male": "pro_steer_knuckle_l.wheel_stub",
@@ -38594,6 +39994,10 @@
         },
         {
           "male": "pro_steer_knuckle_l.wheel_stub",
+          "female": "kit_tilting_tub.hinge_bore"
+        },
+        {
+          "male": "pro_steer_knuckle_l.wheel_stub",
           "female": "kit_turntable.center_bore"
         },
         {
@@ -38631,6 +40035,10 @@
         {
           "male": "pro_steer_knuckle_l.wheel_stub",
           "female": "mom_band_core_tray.latch_bore"
+        },
+        {
+          "male": "pro_steer_knuckle_l.wheel_stub",
+          "female": "mom_band_core_lid.hinge_bore"
         },
         {
           "male": "pro_steer_knuckle_l.wheel_stub",
@@ -38686,6 +40094,10 @@
         },
         {
           "male": "pro_steer_knuckle_l.wheel_stub",
+          "female": "pro_tub_hinge.hinge_bore"
+        },
+        {
+          "male": "pro_steer_knuckle_l.wheel_stub",
           "female": "pro_steer_wheel.hub"
         },
         {
@@ -38699,6 +40111,10 @@
         {
           "male": "pro_steer_knuckle_l.wheel_stub",
           "female": "mech_drive_tray.pto_pilot_bore"
+        },
+        {
+          "male": "pro_steer_knuckle_l.wheel_stub",
+          "female": "mech_brain_lid.hinge_bore"
         },
         {
           "male": "pro_steer_knuckle_l.wheel_stub",
@@ -38926,7 +40342,31 @@
         },
         {
           "male": "pro_steer_knuckle_r.wheel_stub",
+          "female": "kit_keel_base.axle_row0"
+        },
+        {
+          "male": "pro_steer_knuckle_r.wheel_stub",
+          "female": "kit_keel_base.axle_row7_l"
+        },
+        {
+          "male": "pro_steer_knuckle_r.wheel_stub",
+          "female": "kit_keel_base.axle_row7_r"
+        },
+        {
+          "male": "pro_steer_knuckle_r.wheel_stub",
+          "female": "kit_keel_base.axle_row8_l"
+        },
+        {
+          "male": "pro_steer_knuckle_r.wheel_stub",
+          "female": "kit_keel_base.axle_row8_r"
+        },
+        {
+          "male": "pro_steer_knuckle_r.wheel_stub",
           "female": "kit_clevis_spine.headtube"
+        },
+        {
+          "male": "pro_steer_knuckle_r.wheel_stub",
+          "female": "kit_clevis_spine.kickstand_bore"
         },
         {
           "male": "pro_steer_knuckle_r.wheel_stub",
@@ -38970,6 +40410,10 @@
         },
         {
           "male": "pro_steer_knuckle_r.wheel_stub",
+          "female": "kit_tilting_tub.hinge_bore"
+        },
+        {
+          "male": "pro_steer_knuckle_r.wheel_stub",
           "female": "kit_turntable.center_bore"
         },
         {
@@ -39007,6 +40451,10 @@
         {
           "male": "pro_steer_knuckle_r.wheel_stub",
           "female": "mom_band_core_tray.latch_bore"
+        },
+        {
+          "male": "pro_steer_knuckle_r.wheel_stub",
+          "female": "mom_band_core_lid.hinge_bore"
         },
         {
           "male": "pro_steer_knuckle_r.wheel_stub",
@@ -39062,6 +40510,10 @@
         },
         {
           "male": "pro_steer_knuckle_r.wheel_stub",
+          "female": "pro_tub_hinge.hinge_bore"
+        },
+        {
+          "male": "pro_steer_knuckle_r.wheel_stub",
           "female": "pro_steer_wheel.hub"
         },
         {
@@ -39075,6 +40527,10 @@
         {
           "male": "pro_steer_knuckle_r.wheel_stub",
           "female": "mech_drive_tray.pto_pilot_bore"
+        },
+        {
+          "male": "pro_steer_knuckle_r.wheel_stub",
+          "female": "mech_brain_lid.hinge_bore"
         },
         {
           "male": "pro_steer_knuckle_r.wheel_stub",
@@ -39302,7 +40758,31 @@
         },
         {
           "male": "mom_slam_plunger.axis",
+          "female": "kit_keel_base.axle_row0"
+        },
+        {
+          "male": "mom_slam_plunger.axis",
+          "female": "kit_keel_base.axle_row7_l"
+        },
+        {
+          "male": "mom_slam_plunger.axis",
+          "female": "kit_keel_base.axle_row7_r"
+        },
+        {
+          "male": "mom_slam_plunger.axis",
+          "female": "kit_keel_base.axle_row8_l"
+        },
+        {
+          "male": "mom_slam_plunger.axis",
+          "female": "kit_keel_base.axle_row8_r"
+        },
+        {
+          "male": "mom_slam_plunger.axis",
           "female": "kit_clevis_spine.headtube"
+        },
+        {
+          "male": "mom_slam_plunger.axis",
+          "female": "kit_clevis_spine.kickstand_bore"
         },
         {
           "male": "mom_slam_plunger.axis",
@@ -39346,6 +40826,10 @@
         },
         {
           "male": "mom_slam_plunger.axis",
+          "female": "kit_tilting_tub.hinge_bore"
+        },
+        {
+          "male": "mom_slam_plunger.axis",
           "female": "kit_turntable.center_bore"
         },
         {
@@ -39383,6 +40867,10 @@
         {
           "male": "mom_slam_plunger.axis",
           "female": "mom_band_core_tray.latch_bore"
+        },
+        {
+          "male": "mom_slam_plunger.axis",
+          "female": "mom_band_core_lid.hinge_bore"
         },
         {
           "male": "mom_slam_plunger.axis",
@@ -39438,6 +40926,10 @@
         },
         {
           "male": "mom_slam_plunger.axis",
+          "female": "pro_tub_hinge.hinge_bore"
+        },
+        {
+          "male": "mom_slam_plunger.axis",
           "female": "pro_steer_wheel.hub"
         },
         {
@@ -39451,6 +40943,10 @@
         {
           "male": "mom_slam_plunger.axis",
           "female": "mech_drive_tray.pto_pilot_bore"
+        },
+        {
+          "male": "mom_slam_plunger.axis",
+          "female": "mech_brain_lid.hinge_bore"
         },
         {
           "male": "mom_slam_plunger.axis",
@@ -39678,7 +41174,31 @@
         },
         {
           "male": "mom_spindle_shaft.axis",
+          "female": "kit_keel_base.axle_row0"
+        },
+        {
+          "male": "mom_spindle_shaft.axis",
+          "female": "kit_keel_base.axle_row7_l"
+        },
+        {
+          "male": "mom_spindle_shaft.axis",
+          "female": "kit_keel_base.axle_row7_r"
+        },
+        {
+          "male": "mom_spindle_shaft.axis",
+          "female": "kit_keel_base.axle_row8_l"
+        },
+        {
+          "male": "mom_spindle_shaft.axis",
+          "female": "kit_keel_base.axle_row8_r"
+        },
+        {
+          "male": "mom_spindle_shaft.axis",
           "female": "kit_clevis_spine.headtube"
+        },
+        {
+          "male": "mom_spindle_shaft.axis",
+          "female": "kit_clevis_spine.kickstand_bore"
         },
         {
           "male": "mom_spindle_shaft.axis",
@@ -39722,6 +41242,10 @@
         },
         {
           "male": "mom_spindle_shaft.axis",
+          "female": "kit_tilting_tub.hinge_bore"
+        },
+        {
+          "male": "mom_spindle_shaft.axis",
           "female": "kit_turntable.center_bore"
         },
         {
@@ -39759,6 +41283,10 @@
         {
           "male": "mom_spindle_shaft.axis",
           "female": "mom_band_core_tray.latch_bore"
+        },
+        {
+          "male": "mom_spindle_shaft.axis",
+          "female": "mom_band_core_lid.hinge_bore"
         },
         {
           "male": "mom_spindle_shaft.axis",
@@ -39814,6 +41342,10 @@
         },
         {
           "male": "mom_spindle_shaft.axis",
+          "female": "pro_tub_hinge.hinge_bore"
+        },
+        {
+          "male": "mom_spindle_shaft.axis",
           "female": "pro_steer_wheel.hub"
         },
         {
@@ -39827,6 +41359,10 @@
         {
           "male": "mom_spindle_shaft.axis",
           "female": "mech_drive_tray.pto_pilot_bore"
+        },
+        {
+          "male": "mom_spindle_shaft.axis",
+          "female": "mech_brain_lid.hinge_bore"
         },
         {
           "male": "mom_spindle_shaft.axis",
@@ -40054,7 +41590,31 @@
         },
         {
           "male": "pro_captive_pin_28.axis",
+          "female": "kit_keel_base.axle_row0"
+        },
+        {
+          "male": "pro_captive_pin_28.axis",
+          "female": "kit_keel_base.axle_row7_l"
+        },
+        {
+          "male": "pro_captive_pin_28.axis",
+          "female": "kit_keel_base.axle_row7_r"
+        },
+        {
+          "male": "pro_captive_pin_28.axis",
+          "female": "kit_keel_base.axle_row8_l"
+        },
+        {
+          "male": "pro_captive_pin_28.axis",
+          "female": "kit_keel_base.axle_row8_r"
+        },
+        {
+          "male": "pro_captive_pin_28.axis",
           "female": "kit_clevis_spine.headtube"
+        },
+        {
+          "male": "pro_captive_pin_28.axis",
+          "female": "kit_clevis_spine.kickstand_bore"
         },
         {
           "male": "pro_captive_pin_28.axis",
@@ -40098,6 +41658,10 @@
         },
         {
           "male": "pro_captive_pin_28.axis",
+          "female": "kit_tilting_tub.hinge_bore"
+        },
+        {
+          "male": "pro_captive_pin_28.axis",
           "female": "kit_turntable.center_bore"
         },
         {
@@ -40135,6 +41699,10 @@
         {
           "male": "pro_captive_pin_28.axis",
           "female": "mom_band_core_tray.latch_bore"
+        },
+        {
+          "male": "pro_captive_pin_28.axis",
+          "female": "mom_band_core_lid.hinge_bore"
         },
         {
           "male": "pro_captive_pin_28.axis",
@@ -40190,6 +41758,10 @@
         },
         {
           "male": "pro_captive_pin_28.axis",
+          "female": "pro_tub_hinge.hinge_bore"
+        },
+        {
+          "male": "pro_captive_pin_28.axis",
           "female": "pro_steer_wheel.hub"
         },
         {
@@ -40203,6 +41775,10 @@
         {
           "male": "pro_captive_pin_28.axis",
           "female": "mech_drive_tray.pto_pilot_bore"
+        },
+        {
+          "male": "pro_captive_pin_28.axis",
+          "female": "mech_brain_lid.hinge_bore"
         },
         {
           "male": "pro_captive_pin_28.axis",
@@ -40430,7 +42006,31 @@
         },
         {
           "male": "pro_steer_column.axis",
+          "female": "kit_keel_base.axle_row0"
+        },
+        {
+          "male": "pro_steer_column.axis",
+          "female": "kit_keel_base.axle_row7_l"
+        },
+        {
+          "male": "pro_steer_column.axis",
+          "female": "kit_keel_base.axle_row7_r"
+        },
+        {
+          "male": "pro_steer_column.axis",
+          "female": "kit_keel_base.axle_row8_l"
+        },
+        {
+          "male": "pro_steer_column.axis",
+          "female": "kit_keel_base.axle_row8_r"
+        },
+        {
+          "male": "pro_steer_column.axis",
           "female": "kit_clevis_spine.headtube"
+        },
+        {
+          "male": "pro_steer_column.axis",
+          "female": "kit_clevis_spine.kickstand_bore"
         },
         {
           "male": "pro_steer_column.axis",
@@ -40474,6 +42074,10 @@
         },
         {
           "male": "pro_steer_column.axis",
+          "female": "kit_tilting_tub.hinge_bore"
+        },
+        {
+          "male": "pro_steer_column.axis",
           "female": "kit_turntable.center_bore"
         },
         {
@@ -40511,6 +42115,10 @@
         {
           "male": "pro_steer_column.axis",
           "female": "mom_band_core_tray.latch_bore"
+        },
+        {
+          "male": "pro_steer_column.axis",
+          "female": "mom_band_core_lid.hinge_bore"
         },
         {
           "male": "pro_steer_column.axis",
@@ -40566,6 +42174,10 @@
         },
         {
           "male": "pro_steer_column.axis",
+          "female": "pro_tub_hinge.hinge_bore"
+        },
+        {
+          "male": "pro_steer_column.axis",
           "female": "pro_steer_wheel.hub"
         },
         {
@@ -40579,6 +42191,10 @@
         {
           "male": "pro_steer_column.axis",
           "female": "mech_drive_tray.pto_pilot_bore"
+        },
+        {
+          "male": "pro_steer_column.axis",
+          "female": "mech_brain_lid.hinge_bore"
         },
         {
           "male": "pro_steer_column.axis",
@@ -40806,7 +42422,31 @@
         },
         {
           "male": "mom_wind_key.axis",
+          "female": "kit_keel_base.axle_row0"
+        },
+        {
+          "male": "mom_wind_key.axis",
+          "female": "kit_keel_base.axle_row7_l"
+        },
+        {
+          "male": "mom_wind_key.axis",
+          "female": "kit_keel_base.axle_row7_r"
+        },
+        {
+          "male": "mom_wind_key.axis",
+          "female": "kit_keel_base.axle_row8_l"
+        },
+        {
+          "male": "mom_wind_key.axis",
+          "female": "kit_keel_base.axle_row8_r"
+        },
+        {
+          "male": "mom_wind_key.axis",
           "female": "kit_clevis_spine.headtube"
+        },
+        {
+          "male": "mom_wind_key.axis",
+          "female": "kit_clevis_spine.kickstand_bore"
         },
         {
           "male": "mom_wind_key.axis",
@@ -40850,6 +42490,10 @@
         },
         {
           "male": "mom_wind_key.axis",
+          "female": "kit_tilting_tub.hinge_bore"
+        },
+        {
+          "male": "mom_wind_key.axis",
           "female": "kit_turntable.center_bore"
         },
         {
@@ -40887,6 +42531,10 @@
         {
           "male": "mom_wind_key.axis",
           "female": "mom_band_core_tray.latch_bore"
+        },
+        {
+          "male": "mom_wind_key.axis",
+          "female": "mom_band_core_lid.hinge_bore"
         },
         {
           "male": "mom_wind_key.axis",
@@ -40942,6 +42590,10 @@
         },
         {
           "male": "mom_wind_key.axis",
+          "female": "pro_tub_hinge.hinge_bore"
+        },
+        {
+          "male": "mom_wind_key.axis",
           "female": "pro_steer_wheel.hub"
         },
         {
@@ -40955,6 +42607,10 @@
         {
           "male": "mom_wind_key.axis",
           "female": "mech_drive_tray.pto_pilot_bore"
+        },
+        {
+          "male": "mom_wind_key.axis",
+          "female": "mech_brain_lid.hinge_bore"
         },
         {
           "male": "mom_wind_key.axis",
@@ -42242,6 +43898,7 @@
     },
     "kit_tilting_tub": {
       "interfaces": [
+        "bore_grid",
         "stud_small"
       ],
       "design_status": "verified",
@@ -42365,12 +44022,6 @@
       "size_class": "pro",
       "line": "pro"
     },
-    "pro_axle_keeper": {
-      "interfaces": [],
-      "design_status": "verified",
-      "size_class": "pro",
-      "line": "pro"
-    },
     "mom_band_core_tray": {
       "interfaces": [
         "bore_grid",
@@ -42382,6 +44033,7 @@
     },
     "mom_band_core_lid": {
       "interfaces": [
+        "bore_grid",
         "stud_small"
       ],
       "design_status": "verified",
@@ -42596,6 +44248,7 @@
     },
     "mech_brain_lid": {
       "interfaces": [
+        "bore_grid",
         "stud_small"
       ],
       "design_status": "verified",
@@ -42827,7 +44480,6 @@
         "pro_tie_rod_link": "pending",
         "pin_free_tu03": "pending",
         "pro_fork_rake_adpt": "pending",
-        "pro_axle_keeper": "pending",
         "mom_band_core_tray": "pending",
         "mom_band_core_lid": "pending",
         "mom_band_spool_pawl": "pending",
@@ -43038,7 +44690,6 @@
         "pro_tie_rod_link": "pending",
         "pin_free_tu03": "pending",
         "pro_fork_rake_adpt": "pending",
-        "pro_axle_keeper": "pending",
         "mom_band_core_tray": "pending",
         "mom_band_core_lid": "pending",
         "mom_band_spool_pawl": "pending",
@@ -43128,7 +44779,6 @@
         "pro_tie_rod_link": "fail",
         "pin_free_tu03": "fail",
         "pro_fork_rake_adpt": "fail",
-        "pro_axle_keeper": "fail",
         "mom_band_spool_pawl": "fail",
         "mom_nozzle_set": "fail",
         "pro_tub_hinge": "fail",
@@ -43149,8 +44799,7 @@
     "I1_lattice": {
       "level": "warn",
       "parts": {
-        "pro_steer_rack": "fail",
-        "pro_axle_keeper": "fail"
+        "pro_steer_rack": "fail"
       }
     }
   }

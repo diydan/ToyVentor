@@ -1,24 +1,25 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_mom_bumper_trigger_P.stl",
-  "file_sha256": "49f486093f2b6150758fab584249d451553152138f6355632c4396f92af00de0",
+  "file_sha256": "4004a001adbe0ff5b13d5f625af13aa82976ff016286ea9d0aeaeb3aa1d29bd2",
   "part_id": "mom_bumper_trigger",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-11-01T21:40:42Z",
+  "checked_at": "2026-11-02T00:36:04Z",
   "metrics": {
     "bbox_mm": [
       48.0,
       42.0,
       12.5
     ],
-    "volume_cm3": 13.41,
-    "surface_cm2": 63.01,
-    "triangles": 3964,
+    "volume_cm3": 13.51,
+    "surface_cm2": 62.23,
+    "triangles": 3680,
     "ledges": [],
+    "floating_contours": [],
     "layers": 62,
-    "bed_contact_mm2": 961.5,
+    "bed_contact_mm2": 930.2,
     "height_mm": 12.5,
-    "slenderness": 0.4,
+    "slenderness": 0.41,
     "centre_of_mass_over_contact": true,
     "min_wall_mm": null,
     "thin_wall_regions": []
@@ -74,6 +75,14 @@
       "detail": "mm2 of flat underside held on one side only (a ledge over air, not a bridge)"
     },
     {
+      "id": "V11_floating_contour",
+      "level": "block",
+      "result": "pass",
+      "value": 0,
+      "limit": 0,
+      "detail": "unanchored interior hole loops in bridge ceilings or low-Z hovering cantilevers"
+    },
+    {
       "id": "V6_bridge_span",
       "level": "block",
       "result": "pass",
@@ -101,9 +110,9 @@
       "id": "V9_bed_contact",
       "level": "info",
       "result": "pass",
-      "value": 961.5,
+      "value": 930.2,
       "limit": null,
-      "detail": "height / sqrt(contact) = 0.4; above about 3 the slicer often asks for a brim"
+      "detail": "height / sqrt(contact) = 0.41; above about 3 the slicer often asks for a brim"
     },
     {
       "id": "V8_wall_thickness",

@@ -4,7 +4,7 @@
   "file_sha256": "983ab092560f78d755d61f62aca65919d6280d3f9dd7dfb632914a96fbecf746",
   "part_id": "mech_bat_door_screw",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-11-01T21:43:04Z",
+  "checked_at": "2026-11-02T00:37:57Z",
   "metrics": {
     "bbox_mm": [
       33.6,
@@ -15,6 +15,7 @@
     "surface_cm2": 10.33,
     "triangles": 1860,
     "ledges": [],
+    "floating_contours": [],
     "layers": 29,
     "bed_contact_mm2": 262.8,
     "height_mm": 5.8,
@@ -78,6 +79,14 @@
       "value": 0.0,
       "limit": 1.0,
       "detail": "mm2 of flat underside held on one side only (a ledge over air, not a bridge)"
+    },
+    {
+      "id": "V11_floating_contour",
+      "level": "block",
+      "result": "pass",
+      "value": 0,
+      "limit": 0,
+      "detail": "unanchored interior hole loops in bridge ceilings or low-Z hovering cantilevers"
     },
     {
       "id": "V6_bridge_span",

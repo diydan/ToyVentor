@@ -1,110 +1,30 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_mom_bellows_leaf_S.stl",
-  "file_sha256": "a14ed75fd29a87c184918102d5c5a8f5f0d3fcb0427e8d1bc618ca63c68b542c",
+  "file_sha256": "54c17f2d219132cf00688a1099a9457c1e27801e08ae3631276630ce84808a89",
   "part_id": "mom_bellows_leaf",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-11-01T21:41:23Z",
+  "checked_at": "2026-11-02T00:36:34Z",
   "metrics": {
     "bbox_mm": [
       49.8,
       68.8,
       11.4
     ],
-    "volume_cm3": 13.61,
-    "surface_cm2": 90.02,
-    "triangles": 33020,
+    "volume_cm3": 13.24,
+    "surface_cm2": 88.39,
+    "triangles": 34102,
     "ledges": [],
+    "floating_contours": [],
     "layers": 57,
-    "bed_contact_mm2": 2013.0,
+    "bed_contact_mm2": 1907.7,
     "height_mm": 11.4,
-    "slenderness": 0.25,
+    "slenderness": 0.26,
     "centre_of_mass_over_contact": true,
     "min_wall_mm": null,
     "thin_wall_regions": []
   },
-  "bridges": [
-    {
-      "z_mm": 3.2,
-      "span_mm": 6.7,
-      "area_mm2": 35.2
-    },
-    {
-      "z_mm": 3.2,
-      "span_mm": 6.7,
-      "area_mm2": 35.2
-    },
-    {
-      "z_mm": 3.2,
-      "span_mm": 6.7,
-      "area_mm2": 35.2
-    },
-    {
-      "z_mm": 3.2,
-      "span_mm": 6.7,
-      "area_mm2": 35.2
-    },
-    {
-      "z_mm": 3.2,
-      "span_mm": 6.7,
-      "area_mm2": 35.2
-    },
-    {
-      "z_mm": 3.2,
-      "span_mm": 6.7,
-      "area_mm2": 35.2
-    },
-    {
-      "z_mm": 3.2,
-      "span_mm": 6.7,
-      "area_mm2": 35.2
-    },
-    {
-      "z_mm": 3.2,
-      "span_mm": 6.7,
-      "area_mm2": 35.2
-    },
-    {
-      "z_mm": 3.2,
-      "span_mm": 6.7,
-      "area_mm2": 35.2
-    },
-    {
-      "z_mm": 3.2,
-      "span_mm": 6.7,
-      "area_mm2": 35.2
-    },
-    {
-      "z_mm": 3.2,
-      "span_mm": 6.7,
-      "area_mm2": 35.2
-    },
-    {
-      "z_mm": 3.2,
-      "span_mm": 6.7,
-      "area_mm2": 35.2
-    },
-    {
-      "z_mm": 3.2,
-      "span_mm": 6.7,
-      "area_mm2": 35.2
-    },
-    {
-      "z_mm": 3.2,
-      "span_mm": 6.7,
-      "area_mm2": 35.2
-    },
-    {
-      "z_mm": 3.2,
-      "span_mm": 6.7,
-      "area_mm2": 35.2
-    },
-    {
-      "z_mm": 3.2,
-      "span_mm": 6.7,
-      "area_mm2": 35.2
-    }
-  ],
+  "bridges": [],
   "checks": [
     {
       "id": "V1_mesh_sound",
@@ -155,12 +75,20 @@
       "detail": "mm2 of flat underside held on one side only (a ledge over air, not a bridge)"
     },
     {
+      "id": "V11_floating_contour",
+      "level": "block",
+      "result": "pass",
+      "value": 0,
+      "limit": 0,
+      "detail": "unanchored interior hole loops in bridge ceilings or low-Z hovering cantilevers"
+    },
+    {
       "id": "V6_bridge_span",
       "level": "block",
       "result": "pass",
-      "value": 6.7,
+      "value": 0.0,
       "limit": 20,
-      "detail": "16 bridge(s); widest unsupported span in mm"
+      "detail": "0 bridge(s); widest unsupported span in mm"
     },
     {
       "id": "V5_no_floating_islands",
@@ -182,9 +110,9 @@
       "id": "V9_bed_contact",
       "level": "info",
       "result": "pass",
-      "value": 2013.0,
+      "value": 1907.7,
       "limit": null,
-      "detail": "height / sqrt(contact) = 0.25; above about 3 the slicer often asks for a brim"
+      "detail": "height / sqrt(contact) = 0.26; above about 3 the slicer often asks for a brim"
     },
     {
       "id": "V8_wall_thickness",
