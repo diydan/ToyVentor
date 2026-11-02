@@ -274,6 +274,7 @@ import {
   toCreasedNormals,
 } from './vendor/three-kip.js';
 import { createKipRig } from './kip-rig.js'; // shared Kip rig module, also imported by Kip-Demo.html (Workshop stage 2)
+import { createDecalExpressionCanvas } from './kip-forge-sdk.js?v=10.0'; // same face art as Kip-Demo (Workshop: one Kip)
 
 const viewport = document.getElementById('viewport');
 const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
@@ -502,6 +503,45 @@ function steerSolution(steerDeg) {
   // Ackermann ideal outer angle for this inner angle: cot(outer) - cot(inner) = kingpin span / wheelbase
   const ideal = inner > 1e-6 ? Math.atan(1 / (1 / Math.tan(inner) + STEER.kpSpan / STEER.wheelbase)) : 0;
   return { dx, aPlus, aMinus, inner, outer, ideal };
+}
+
+// Same expression decal Kip-Demo wraps on its face plate (spark on the sculpted insert), built in the mockup
+// plate's assembly frame (x across, y up from the chin edge at y = -2.9, z out of the face) so it rides the
+// Truck face mesh as a child.
+let _truckFaceDecal = null;
+function truckFaceDecal() {
+  if (_truckFaceDecal) return _truckFaceDecal;
+  const W = 23.6, H = 10.1, Y0 = -2.7, NX = 56, NZ = 28;
+  const probe = new THREE.Mesh(GEOS.char_faceplate, MATS.tub);
+  probe.updateMatrixWorld(true);
+  const ray = new THREE.Raycaster();
+  const pos = [], uv = [], idx = [];
+  for (let j = 0; j <= NZ; j++) {
+    const y = Y0 + (H * j) / NZ;
+    for (let i = 0; i <= NX; i++) {
+      const x = -W / 2 + (W * i) / NX;
+      ray.set(new THREE.Vector3(x, y, -28), new THREE.Vector3(0, 0, 1));
+      const hit = ray.intersectObject(probe, false)[0];
+      const z = (hit ? hit.point.z : -0.12 + x * x * 0.002) - 0.22;
+      pos.push(x, y, z);
+      uv.push(i / NX, j / NZ);
+    }
+  }
+  for (let j = 0; j < NZ; j++) for (let i = 0; i < NX; i++) {
+    const a = j * (NX + 1) + i, b = a + 1, c = a + NX + 1, d = c + 1;
+    idx.push(a, c, b, b, c, d);
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+  g.setIndex(idx);
+  g.computeVertexNormals();
+  const tex = new THREE.CanvasTexture(createDecalExpressionCanvas('spark', 'kid', 'sculpted', { onPlate: true }));
+  tex.colorSpace = THREE.SRGBColorSpace;
+  const mat = new THREE.MeshStandardMaterial({ map: tex, transparent: true, alphaTest: 0.02, roughness: 0.44, metalness: 0.0, envMapIntensity: 0.18, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 });
+  _truckFaceDecal = new THREE.Mesh(g, mat);
+  _truckFaceDecal.renderOrder = 2;
+  return _truckFaceDecal;
 }
 
 function meshOf(pid, mat) {
@@ -826,6 +866,7 @@ function rebuildScene() {
         face.rotation.order = 'ZYX';
         face.rotation.set(Math.PI / 2, 0, Math.PI);
         face.position.set(0, hd.boreY, hd.boreZ);
+        face.add(truckFaceDecal());
         headCad.add(face);
       }
       const hr = hd.human && KIP_STACK.hair && T.hairs[KIP_STACK.hair];
