@@ -422,6 +422,28 @@ What the compiler accepts decides the routes (read in the code, 2026-11-02):
     and the limiter counts a refused call, so a caller that retries inside the
     minute stays locked out (six retries 15 s apart were all refused); and a
     parent proof lasts 2 or 5 minutes.
+  - **A real SAM mask (the one captured cup, 2026-11-02).** The repo holds one live
+    mask, the cup in `tests/sam-worker.test.ts` (491 by 371 pixels, 6.1% of the filled
+    object enclosed holes). `legalizeOutline` turns it into 60 points at fidelity
+    0.996, rotated 98 degrees because the cup lies on its side, with the holes filled,
+    in 0.5 to 0.9 s of CPU (the same mask enlarged to 2.9 MP took 0.9 s, so the cost
+    is not the pixel count). Carried back through the photo map into photo pixels it
+    overlaps the hole-filled mask by 0.995 and the raw mask by 0.933; the gap is the
+    holes, which C1 fills on purpose. One real mask is a smoke test, not a survey.
+  - **The wire (question 31, option a; built 2026-11-02).** `POST /api/scan` takes an
+    opt-in `scan.outline: {targetHeightMm?, orient?, flip?}` (strictly parsed; a bad
+    one is a 422 before SAM is called) and, only then, returns `sam.outline`: the
+    legalized outline, or a failure with its reason. Without the field nothing runs
+    and the reply is as before. `shared/outlineScan.ts` does the work and holds the
+    reader. Thin parts are kept (the outline grows inside the 90 mm box), a mask over
+    4 MP is refused, and `photoToPlate` in the reply maps a pixel of the UPLOADED
+    image to plate millimetres (the Worker folds in where the mask's crop sits), with
+    `photoSize` so the device can check it is the same photo. The device reads the reply
+    with `scanOutlineOf` (`src/lib/api.ts`), which rebuilds it field by field and
+    returns nothing for a reply that is cut, changed or out of the clamp box. No
+    photo and no mask come back; the log says only that an outline was made. A fault
+    in the outline step costs the scan nothing: it becomes a failure and the box and
+    mask are still returned.
   - C4 orientation: long axis to z, handle end down, with a flip button. The kid
     decides which end is the handle; the model is not asked.
 - **Relief ("puffy").** The builder's crest is one level. Repeating the inward
@@ -518,9 +540,12 @@ What the compiler accepts decides the routes (read in the code, 2026-11-02):
    mutants caught), and its real-gate run above. Its gate over the Worker's
    routes is built too: `shared/outlineGate.ts` with `tests/outline-gate.test.ts`
    (53 tests, 22 of 22 mutants caught), run against the real handlers and daemon
-   (note under Route A). Not built, and waiting on question 31: where the loop
-   runs, and the Worker returning the outline. Still to do: Route A on the flat
-   objects among the 10 F2 photos.
+   (note under Route A). The Worker now returns the outline with a scan, which is the
+   decision in question 31 (a): `shared/outlineScan.ts` and the opt-in on `/api/scan`
+   (`tests/outline-scan.test.ts` and `tests/scan-outline-worker.test.ts`, 85 tests, 37
+   of 37 mutants caught). Not built: the device's print step that runs `fitPolygon`
+   with `forgeRouteGate` (no screen for it exists), and a budget for it (question 30
+   f). Still to do: Route A on the flat objects among the 10 F2 photos.
 3. **Built for the path and the photo map (2026-11-02, uncommitted):**
    `shared/outlineSticker.ts` with `tests/outline-sticker.test.ts` (28 tests, 8
    of 8 mutants caught): the cut path, as the item shape the sticker sheet module
@@ -1023,7 +1048,40 @@ scratchpad (the first v3 run, before the last prompt edit, is
 - **Caveats:** one run per prompt version, prompt and ops changed together, my
   own rating only. The round 3 heads are appended to the Forge Taste Check page
   (ids `r3_h01` to `r3_h08`, marked "(new)") so Dan can rate them with the round 2
-  parts; at the time of writing the page had round 1 ratings only (19), no round 2.
+  parts. Dan rated all 30 afterwards; see the next block.
+
+**Dan's ratings of rounds 2 and 3 (2026-11-02, all 30 parts on the Forge Taste
+Check page, 1 to 5).** Round 1 (prompt v1) covered 14 crowns and 5 heads, so the
+same prompts can be compared.
+- **Crowns, prompt v2, same 14 prompts as round 1:** mean 1.64 to 2.64; 7 of 14
+  at 3 or above (round 1: 4 of 14). Best: the beanie with a bobble (5) and the
+  horned helmet (4). Worst: the space helmet dome (1). Wizard, chef, pirate,
+  five-point crown, bent pointy hat and fez are all 2. Three prompts that scored 3
+  in round 1 (wizard, bent pointy hat, fez) scored 2 now, so the new ops did not
+  help the hats whose problem is the body shape.
+- **Heads:** v2 mean 1.62, v3 mean 1.88 (robot 1, alien 3, bunny 3, cat 2,
+  astronaut 1, dinosaur 2, pumpkin 1, bear 2). On the five heads that were also in
+  round 1 the mean went 1.0 to 1.6 to 2.0. The alien (1 to 3), the bunny (2 to 3)
+  and the dinosaur (1 to 2) gained from v3. The cat (3 to 2) and the bear (3 to 2)
+  lost, and both carry a note.
+- **All 22 prompts, best current version (crowns v2, heads v3):** mean 2.36, 9 of 22
+  at 3 or above, against 4 of 19 in round 1.
+- **Dan's notes:** the cat "good but overlaps studs", the bear "ears overlap
+  studs".
+- **Cause of the stud overlap, measured, not fixed.** `character_head` puts two
+  crown studs on every head, at x from 3.0 to 9.6 mm each side, y +-3.3, z 30.5 to
+  33.3 (hats seat on them). A head's top is only 18 to 20 mm wide, so ears placed
+  at the upper corners (root at z = height - 5, x = half-width - 0.35 x radius)
+  land on the studs. Extra ear volume inside the stud columns grown by 0.6 mm:
+  bunny 88 mm3, cat 16 mm3, bear 1.5 mm3 (the bear's ear cap merges into the stud
+  instead of adding volume). Robot and alien antennae sit at x +-12 to +-15.6 and
+  touch nothing. No gate checks this: all 8 heads passed. Any fix has to respect
+  the 31.75 mm small-parts width limit, which leaves only about 6 mm of width
+  beside each stud column, so ears cannot simply move outward.
+- **Reading:** the taste gate is still tripped for heads and partly lifted for
+  crowns. The parts still at 1 or 2 are body-shape problems (dome helmet,
+  astronaut, pumpkin, wizard cone, chef puff, fez), which the feature ops cannot
+  express.
 
 Reports first-attempt pass rate, final pass rate, mean model calls per job,
 latency p50 and p95, token usage per job, failure counts per gate id, and a
@@ -1357,8 +1415,12 @@ pass rate at 100% and lifted feature-op use from 4 of 22 prompts to 13 of 22;
 brims, points, horns and ears now show, and heads are still mostly boxes. Head ops
 and prompt v3 raised op use to 15 of 22 and gave the robot, alien and dinosaur
 something (antennae, a snout) without hurting validity (22 of 22 final), but
-the astronaut and pumpkin are still plain slabs. Dan's re-rating decides whether
-the taste gate is still tripped. Latency is fine and
+the astronaut and pumpkin are still plain slabs. Dan's re-rating of the 22 parts
+lifted the mean from 1.47 (round 1, 19 parts) to 2.36 and the share at 3 or above
+from 4 of 19 to 9 of 22: crowns improved clearly (1.64 to 2.64), heads only a
+little (1.0 to 2.0 on the same five prompts). The taste gate is therefore still
+tripped for heads. Two heads lost points because ears overlap the crown studs
+(see "Dan's ratings of rounds 2 and 3"). Latency is fine and
 Spark's price is unknown.
 
 If tuning is chosen, the training set is the gate-filtered sampler output plus
@@ -1586,8 +1648,8 @@ deterministic code verifies geometry, fit, and physics.
     everything. (c) The Worker runs the whole loop and calls the daemon itself: no
     per-device budget to fight, but one request that can run for a minute. My pick
     is (a): the digital accessory needs no gate, the fit is a print step, and the
-    print already sits behind the grown-up gate. It needs question 30 (f) settled
-    first, and the peer plan for a contour in the mask summary
+    print already sits behind the grown-up gate. **Decided (Dan, 2026-11-02): (a).**
+    The Worker half is built. The device half needs question 30 (f) settled first, and the peer plan for a contour in the mask summary
     ([sam-physical-to-digital-spec.md](sam-physical-to-digital-spec.md), section
     3) can be filled from the same outline instead of a second tracer.
 
