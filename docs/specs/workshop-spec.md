@@ -11,7 +11,7 @@ One standalone page, `/kip/Workshop.html`, with a tab per bench. It exists so th
 | Stage | What | State |
 |---|---|---|
 | 1 | Shell (`workshop.js`) hosting each bench as a page in an iframe, one at a time. Kip-Demo.html and Truck-Mockup.html untouched. | built, `npm run e2e:workshop` |
-| 2 | Turn the generated `kip-rig.js` (cut out of Kip-Demo.html by `parts/kip/sync_kip_rig.py`) into a real module that both benches import; delete the sync script. Needs Kip-Demo.html and Truck-Mockup.html edited. | not started |
+| 2 | Turn the generated `kip-rig.js` (cut out of Kip-Demo.html by `parts/kip/sync_kip_rig.py`) into a real module that both benches import; delete the sync script. Needs Kip-Demo.html and Truck-Mockup.html edited. | built, `npm run e2e:workshop` |
 | 3 | Print view takes a parts provider instead of reading Kip's scene state (below). | not started |
 | 4 | Benches become modules mounted in one scene, one menu, one print view. Then mount in the game. | not started |
 

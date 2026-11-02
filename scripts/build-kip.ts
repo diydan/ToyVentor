@@ -98,7 +98,7 @@ copyFileSync(
   join(kipSrcDir, "viewer/kip-faceplate-shape.js"),
   join(kipOutDir, "kip-faceplate-shape.js"),
 );
-// Truck-Mockup.html shows Kip Pro (8+) / Snap (3+) in the cab: kip-rig.js is generated from Kip-Demo.html (parts/kip/sync_kip_rig.py --check).
+// Both benches (Kip-Demo.html, Truck-Mockup.html) import the shared Kip rig module kip-rig.js (Workshop stage 2).
 copyFileSync(
   join(kipSrcDir, "viewer/kip-rig.js"),
   join(kipOutDir, "kip-rig.js"),

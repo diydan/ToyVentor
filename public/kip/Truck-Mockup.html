@@ -273,7 +273,7 @@ import {
   mergeVertices,
   toCreasedNormals,
 } from './vendor/three-kip.js';
-import { createKipRig } from './kip-rig.js'; // generated from Kip-Demo.html by parts/kip/sync_kip_rig.py
+import { createKipRig } from './kip-rig.js'; // shared Kip rig module, also imported by Kip-Demo.html (Workshop stage 2)
 
 const viewport = document.getElementById('viewport');
 const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
