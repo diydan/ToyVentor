@@ -16,7 +16,7 @@ import math
 import sys
 from pathlib import Path
 
-from manifold3d import Manifold
+from manifold3d import CrossSection, Manifold
 
 import toyventor_fit as tf
 import toyventor_parts as tp
@@ -172,32 +172,65 @@ def pro_ladder():
 
 
 # ---------------------------------------------------------------- print-optimised experiment (cube cell + face plate)
-RIB_W, RIB_BITE, CORE_GAP, PLUG_H, PLATE_T = 0.8, 0.25, 0.2, 4.0, 2.0
+RIB_W, RIB_BITE, CORE_GAP, PLUG_H, PLATE_T = 0.75, 0.16, 0.20, 4.5, 2.0
+
+
+def _chamfered_horiz_bore(length, centre, axis):
+    """Horizontal teardrop free bore with <=38-deg-from-vertical outer mouth lead-in chamfers at +-length/2."""
+    ch = 0.45
+    flare = ch * math.tan(math.radians(38.0))   # +0.352 mm per side -> Ø7.70 mm mouth (> Ø7.45 mm friction fin), 0 steep overhangs
+    sec = pro.bore_section_print("free")
+    sec_m = sec.offset(flare, 1, 2, SEGS)
+    s_in, s_out = (sec.rotate(90), sec_m.rotate(90)) if axis == "x" else (sec, sec_m)
+    z_a, z_b, z_c, z_d = -0.20, ch, length - ch, length + 0.20
+    rod = (
+        Manifold.batch_hull([Manifold.extrude(s_out, 0.20).translate((0, 0, z_a)), Manifold.extrude(s_in, 0.04).translate((0, 0, z_b))])
+        + Manifold.extrude(s_in, z_c - z_b + 0.04).translate((0, 0, z_b))
+        + Manifold.batch_hull([Manifold.extrude(s_in, 0.04).translate((0, 0, z_c)), Manifold.extrude(s_out, 0.20).translate((0, 0, z_d - 0.20))])
+    )
+    cut = rod.rotate((0, 90, 0)).translate((-length / 2, 0, 0)) if axis == "x" else rod.rotate((90, 0, 0)).translate((0, length / 2, 0))
+    return cut.translate(centre)
 
 
 def cube_cell():
-    """A 12.5 mm cube with a free bore through every face (sideways bores print as teardrops), so any face joins any face with
-    the existing friction pin. Prints flat, no supports. Print two."""
+    """A 12.5 mm cube with a chamfered free bore through every face (sideways bores print as teardrops) and a self-supporting
+    38-deg internal throat drum across the 3-bore centre so friction-pin fins pass in and out without snagging. Prints flat, no supports. Print two."""
     c = rbox(TU, TU, TU, 1.0, pro.BEAM["bed_chamfer_mm"])
     c = c - pro.bore_cutter("free", TU, 0.0, 0.0)
     for axis in ("x", "y"):
-        c = c - pro.bore_cutter_axis("free", TU, (0.0, 0.0, TU / 2), axis)
-    return c
+        c = c - _chamfered_horiz_bore(TU, (0.0, 0.0, TU / 2), axis)
+    r = pro.BORE["free_d"] / 2
+    r_hub, r_in = r + 0.36, r - 0.20            # Ø7.72 mm internal lead-in (> Ø7.45 mm fin) tapering into the Ø7.00 mm vertical Z bore
+    dz = (r_hub - r_in) / math.tan(math.radians(38.0))
+    z_lo, z_hi = TU / 2 - r, TU / 2 + r
+    hub_prof = [(0.0, z_lo - dz), (r_in, z_lo - dz), (r_hub, z_lo), (r_hub, z_hi), (r_in, z_hi + dz), (0.0, z_hi + dz)]
+    hub = Manifold.revolve(CrossSection([hub_prof]), 72).rotate((0, 0, 2.5))
+    return c - hub
 
 
 def face_plate():
-    """A smooth 12.5 mm face plate. Its plug grips a free bore by three crush ribs (0.8 mm wide, biting 0.25 mm into the bore wall),
-    so it fits across printer error without calibration. Prints smooth face down: the visible face is the bed side."""
+    """A smooth 12.5 mm face plate. Its hollow 4-petal slotted plug grips any vertical or sideways free bore via four diagonal
+    (45/135/225/315 deg) crush ribs (0.75 mm wide, 0.16 mm radial bite), flexing elastically by hand across printer error. Prints smooth face down."""
     plate = rbox(TU, TU, PLATE_T, 1.0, 0.4)
     R = pro.BORE["free_d"] / 2
     r0 = R - CORE_GAP
-    core = Manifold.cylinder(PLUG_H - 0.8, r0, r0, SEGS) + Manifold.cylinder(0.8, r0, r0 - 0.6, SEGS).translate((0, 0, PLUG_H - 0.8))
-    env = Manifold.cylinder(PLUG_H - 1.2, R + RIB_BITE, R + RIB_BITE, SEGS) + Manifold.cylinder(1.2, R + RIB_BITE, r0 - 0.6, SEGS).translate((0, 0, PLUG_H - 1.2))
+    r_in = 1.45
+    core = Manifold.cylinder(PLUG_H - 0.8, r0, r0, SEGS) + Manifold.cylinder(0.8, r0, r0 - 0.55, SEGS).translate((0, 0, PLUG_H - 0.8))
+    env = Manifold.cylinder(PLUG_H - 1.0, R + RIB_BITE, R + RIB_BITE, SEGS) + Manifold.cylinder(1.0, R + RIB_BITE, r0 - 0.55, SEGS).translate((0, 0, PLUG_H - 1.0))
     ribs = None
-    for k in range(3):
-        rib = Manifold.cube((R + RIB_BITE + 0.5 - (r0 - 0.3), RIB_W, PLUG_H)).translate((r0 - 0.3, -RIB_W / 2, 0)).rotate((0, 0, 120 * k))
+    for k in range(4):
+        rib = Manifold.cube((R + RIB_BITE + 0.5 - (r0 - 0.3), RIB_W, PLUG_H)).translate((r0 - 0.3, -RIB_W / 2, 0)).rotate((0, 0, 45 + 90 * k))
         ribs = rib if ribs is None else ribs + rib
-    plug = (core + (ribs ^ env)).translate((0, 0, PLATE_T - 0.01))
+    bore = (
+        Manifold.cylinder(PLUG_H - 0.35, r_in, r_in, 48).translate((0, 0, 0.35))
+        + Manifold.cylinder(0.25, r_in + 0.25, r_in, 48).translate((0, 0, PLUG_H - 0.20))
+    )
+    slot_w = 0.85
+    slots = (
+        Manifold.cube((2 * (R + 1.0), slot_w, PLUG_H - 0.55)).translate((-(R + 1.0), -slot_w / 2, 0.65))
+        + Manifold.cube((slot_w, 2 * (R + 1.0), PLUG_H - 0.55)).translate((-slot_w / 2, -(R + 1.0), 0.65))
+    )
+    plug = ((core + (ribs ^ env)) - bore - slots).translate((0, 0, PLATE_T - 0.01))
     return plate + plug
 
 

@@ -635,7 +635,7 @@ R.D = (p) => {
   p.append(h('ul', { class: 'plain' },
     h('li', { html: 'Do the sideways teardrop holes in the 12.5 mm cube look clean?' }),
     h('li', { html: 'Join the two cubes with the friction pin, <b>side to side</b>, then <b>top to bottom</b>. Does the pin grip inside both the vertical and the sideways holes, and do the cubes come apart by hand?' }),
-    h('li', { html: 'Press the face plate (3 crush ribs) into an open hole: does it hold, sit flat, and pull out by hand?' })));
+    h('li', { html: 'Press the face plate (4 compliant crush-rib petals) into an open hole: does it hold, sit flat, and pull out by hand?' })));
   if (cp) p.append(callout('warn', 'Heads-up from the CAD', `With the pin pushed all the way through, its grip fins land in the middle of each cube, where the three holes cross, so the CAD shows <b>${cp.full_insertion_mm3} mm³</b> of bite there (a Pro-ladder hole gives ${cp.ladder_mm3} mm³). If the pin feels <b>loose</b> at full depth, that is the design, not your printer. Try it pushed about ${Math.abs(cp.best_offset_mm)} mm off-centre, where the CAD bite is ${cp.best_offset_mm3} mm³, and say so in the notes.`));
   p.append(h('div', { class: 'card' }, sect('Scorecard'),
     field('Cube sideways holes clean?', '', choice('Dholes', [{ v: 'yes', label: 'Yes' }, { v: 'no', label: 'No' }])),
