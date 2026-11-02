@@ -52,6 +52,7 @@ for _p in (str(SCRIPTS_DIR), str(SDK_DIR), str(KIP_DIR), str(PARTSPEC_DIR)):
 # Warm imports at daemon startup (0 ms import penalty per request)
 import kip_partspec_sdk as sdk  # type: ignore  # noqa: E402
 import manifold3d  # noqa: E402
+import numpy as np  # noqa: E402
 import optimize_assets  # type: ignore  # noqa: E402
 
 VALID_SLOTS = (
@@ -150,6 +151,98 @@ def legalize_loft_slices(raw_slices: Any) -> list[tuple[float, float, float, flo
         cur[3] = max(0.8, min(0.48 * min(cur[1], cur[2]), cur[3]))
 
     return [(row[0], row[1], row[2], row[3], row[4], row[5]) for row in parsed]
+
+
+# ---------------------------------------------------------------------------
+# Symmetry (Dan, 2026-11-02: "check if there is symmetry and if so split in centers and make symmetrical").
+# Most toy shapes are meant to be left-right symmetric, and a model's coordinates are never exactly even.
+# A shape that overlaps its own mirror image by SYMMETRY_MIN_IOU or more is treated as meant-to-be-symmetric:
+# it is split on its centre line and rebuilt from one half and that half's mirror. Below that it is left alone
+# (a lightning bolt, a bent hat tip) and the job says so.
+# ---------------------------------------------------------------------------
+SYMMETRY_MIN_IOU = 0.93  # mirror overlap (intersection over union) that counts as "meant to be symmetric"
+SYMMETRY_SNAP_X_MM = 1.0  # a centre line or loft slice offset this close to x = 0 is noise and snaps to 0
+SYMMETRY_MAX_POINTS = 64  # the profile2d contract
+
+
+def _mirror_x(cs: manifold3d.CrossSection, axis: float) -> manifold3d.CrossSection:
+    return cs.translate((-axis, 0.0)).mirror((1.0, 0.0)).translate((axis, 0.0))
+
+
+def _iou(a: manifold3d.CrossSection, b: manifold3d.CrossSection) -> float:
+    union = (a + b).area()
+    return float((a ^ b).area() / union) if union > 0.0 else 1.0
+
+
+def _counter_clockwise(pts: list[tuple[float, float]]) -> tuple[list[tuple[float, float]], bool]:
+    """`sdk.polygon_2d` fills counter-clockwise outlines only: a clockwise one builds an empty part without an error.
+    Returns (points, whether they were reversed)."""
+    area2 = sum(pts[i][0] * pts[(i + 1) % len(pts)][1] - pts[(i + 1) % len(pts)][0] * pts[i][1] for i in range(len(pts)))
+    return (list(reversed(pts)), True) if area2 < 0.0 else (list(pts), False)
+
+
+def _symmetrize_polygon(
+    pts: list[tuple[float, float]],
+) -> tuple[list[tuple[float, float]], dict[str, Any] | None]:
+    """Split a profile on its vertical centre line and rebuild it from its larger half plus that half's mirror.
+    Returns (points, note). The note is None when the profile is already symmetric."""
+    cs = manifold3d.CrossSection([[(float(x), float(z)) for x, z in pts]])
+    if cs.is_empty() or cs.area() < 1.0:
+        return pts, None
+    x0, _z0, x1, _z1 = cs.bounds()
+    axis = 0.5 * (x0 + x1)
+    if abs(axis) <= SYMMETRY_SNAP_X_MM:
+        axis = 0.0
+    iou = _iou(cs, _mirror_x(cs, axis))
+    if iou >= 0.9995:
+        return pts, None
+    note: dict[str, Any] = {"kind": "profile2d", "axis_mm": round(axis, 2), "iou_before": round(iou, 3)}
+    if iou < SYMMETRY_MIN_IOU:
+        note["action"] = "kept_asymmetric"
+        return pts, note
+    big = 400.0
+    right = cs ^ manifold3d.CrossSection.square((big, big)).translate((axis, -big / 2.0))
+    left = cs ^ manifold3d.CrossSection.square((big, big)).translate((axis - big, -big / 2.0))
+    keep, side = (right, "right") if right.area() >= left.area() else (left, "left")
+    sym = keep + _mirror_x(keep, axis)
+    out = sym
+    eps = 0.02
+    while out.num_vert() > SYMMETRY_MAX_POINTS and eps < 1.0:
+        eps *= 1.6
+        out = sym.simplify(eps)
+    polys = out.to_polygons()
+    if len(polys) != 1 or len(polys[0]) < 3 or len(polys[0]) > SYMMETRY_MAX_POINTS:
+        note["action"] = "kept_asymmetric"
+        note["why"] = "the mirrored profile is not one simple outline"
+        return pts, note
+    note["action"] = f"mirrored_{side}_half"
+    note["iou_after"] = round(_iou(out, _mirror_x(out, axis)), 3)
+    note["points"] = len(polys[0])
+    return [(float(a), float(b)) for a, b in polys[0]], note
+
+
+def _symmetrize_loft_rows(
+    rows: list[tuple[float, float, float, float, float, float]],
+) -> tuple[list[tuple[float, float, float, float, float, float]], dict[str, Any] | None]:
+    """A loft is symmetric left to right when every slice is centred on x = 0. Offsets under 1 mm are noise and
+    snap to 0; bigger ones are a deliberate lean (a bent hat tip) and stay, reported with the shape's mirror overlap."""
+    mx = max((abs(r[4]) for r in rows), default=0.0)
+    if mx < 1e-9:
+        return rows, None
+    body = sdk.loft_slabs(rows)
+    both = [body, body.mirror((1.0, 0.0, 0.0))]
+    inter = manifold3d.Manifold.batch_boolean(both, manifold3d.OpType.Intersect).volume()
+    union = manifold3d.Manifold.batch_boolean(both, manifold3d.OpType.Add).volume()
+    note: dict[str, Any] = {
+        "kind": "loft",
+        "max_x_offset_mm": round(mx, 2),
+        "iou_before": round(float(inter / union) if union > 0 else 1.0, 3),
+    }
+    if mx <= SYMMETRY_SNAP_X_MM:
+        note["action"] = "snapped_x_to_centre"
+        return [(z, w, d, r, 0.0, y) for (z, w, d, r, _x, y) in rows], note
+    note["action"] = "kept_asymmetric"
+    return rows, note
 
 
 # ---------------------------------------------------------------------------
@@ -269,7 +362,8 @@ def _root_fill(rb: float, x_root: float, z_root: float, hw: float, y_scale: floa
     Without it the sphere's lower half hangs off the wall and fails P1 (steeper than 45 degrees)."""
     r_low = 0.8 * rb
     x_low = max(0.0, hw - r_low) - x_root
-    drop = sdk.hull([sdk.sphere(rb, (0.0, 0.0, 0.0)), sdk.sphere(r_low, (x_low, 0.0, -2.0 * rb))])
+    depth = max(2.0 * rb, 1.3 * (-x_low))  # a root moved well outside the wall needs a longer, 45-degree-plus ramp
+    drop = sdk.hull([sdk.sphere(rb, (0.0, 0.0, 0.0)), sdk.sphere(r_low, (x_low, 0.0, -depth))])
     return drop.scale((1.0, y_scale, 1.0)).translate((x_root, 0.0, z_root))
 
 
@@ -310,11 +404,12 @@ def _ears_or_horns_solid(
     fs: float,
     z_shift: float = 0.0,
     tilt_add: float = 0.0,
+    x_shift: float = 0.0,
 ) -> manifold3d.Manifold | None:
     """A mirrored pair on the upper corners of the body. The root sits inside the body (clamped to its
     width at that height), so the pair always fuses with it; the tilt carries the tip clear of the crown pad.
-    `z_shift` (negative = lower) and `tilt_add` (degrees outward, ears only) let `_fit_head_pair` move a head's
-    pair off the crown studs."""
+    `z_shift` (negative = lower), `tilt_add` (degrees outward, ears only) and `x_shift` (mm further apart) let
+    `_fit_head_pair` move a head's pair off the crown studs."""
     if slot == "head":
         z_root = head_height_mm - 5.0 + z_shift  # just under the crown seat
     else:
@@ -329,7 +424,7 @@ def _ears_or_horns_solid(
         thick = float(feat["thickness_mm"])
         rb = width / 2.0
         tip = {"round": rb, "pointy": max(0.9, rb * 0.28), "tall": max(1.4, rb * 0.7)}[str(feat["style"])]
-        x_root = max(2.0, hw - 0.35 * rb)
+        x_root = max(2.0, hw - 0.35 * rb) + x_shift
         ear = sdk.hull([sdk.sphere(rb, (0.0, 0.0, 0.0)), sdk.sphere(tip, (0.0, 0.0, height))])
         ear = ear.scale((1.0, thick / width, 1.0)).rotate((0.0, float(feat["tilt_deg"]) + tilt_add, 0.0))
         fill = _root_fill(rb, x_root, z_root, hw, thick / width)
@@ -340,7 +435,7 @@ def _ears_or_horns_solid(
     n = 6
     phi0 = math.radians(55.0)  # steeper than 45 degrees from the wall so the underside prints
     phi1 = phi0 + curl * math.radians(90.0 - 55.0)
-    x_root = max(2.0, hw - 0.8 * rb)
+    x_root = max(2.0, hw - 0.8 * rb) + x_shift
     px = pz = 0.0
     chain: list[tuple[float, float, float]] = []
     for k in range(n + 1):
@@ -373,8 +468,64 @@ def _socket_keepout(head: manifold3d.Manifold) -> manifold3d.Manifold | None:
 STUD_KEEPOUT_MARGIN_MM = 1.5  # Dan, round 4: "needs more space around studs" (0.6 was too tight)
 EAR_FIT_DROPS_MM = (0.0, 1.5, 3.0, 4.5, 6.0, 8.0, 10.0)  # how far down a head's ear or horn pair may move
 EAR_FIT_TILTS_DEG = (0.0, 6.0, 12.0, 18.0)  # how far further out an ear may lean
+EAR_FIT_SHIFTS_MM = (0.0, 1.5, 3.0, 4.5, 6.0, 7.5, 9.0)  # how far each side may move outward (the pair ends up twice as far apart)
+EAR_FIT_OVERHANG_MM2 = 3.0  # a placement that adds more than this much P1 overhang is not used
 STUD_CUT_SIMPLIFY_MM = 0.03
 EAR_FIT_MIN_KEPT = 0.3  # below this share of the asked-for visible volume the pair is reported as dropped
+
+
+EAR_SLENDER_MAX = 2.4  # taller than this many widths, or taller than EAR_TALL_MAX_MM, and an ear snaps on a head
+EAR_TALL_MAX_MM = 15.0
+EAR_SLENDER_RATIO = 2.2  # the height a fragile ear is cut back to, in widths
+EAR_MIN_WIDTH_MM = 8.0
+EAR_MAX_TILT_FRAGILE = 3.0  # a fragile ear also stands up straight
+
+
+def _sturdy_head_ear(feat: dict[str, Any]) -> tuple[dict[str, Any], str | None]:
+    """Dan, round 6, on the bunny: "looks fragile, not sure we need the bend, can we make shorter". A head ear that is
+    tall and thin (over 15 mm, or over 2.4 widths) is cut back to at most 15 mm and 2.2 widths, widened to at least
+    8 mm, and stood up straight. Ears that are already stout (the cat, the bear) are left exactly as asked."""
+    if feat.get("op") != "ears" or str(feat.get("style")) == "round":
+        return feat, None
+    h, w, tilt = float(feat["height_mm"]), float(feat["width_mm"]), float(feat["tilt_deg"])
+    if h <= EAR_TALL_MAX_MM and h <= EAR_SLENDER_MAX * w:
+        return feat, None
+    w2 = max(w, EAR_MIN_WIDTH_MM)
+    h2 = min(h, EAR_TALL_MAX_MM, EAR_SLENDER_RATIO * w2)
+    t2 = min(tilt, EAR_MAX_TILT_FRAGILE)
+    out = dict(feat, height_mm=h2, width_mm=w2, tilt_deg=t2)
+    bits = [f"cut from {h:g} to {h2:g} mm tall"]
+    if w2 != w:
+        bits.append(f"widened from {w:g} to {w2:g} mm")
+    if t2 != tilt:
+        bits.append(f"stood up from {tilt:g} to {t2:g} degrees")
+    return out, "kept sturdy: " + ", ".join(bits)
+
+
+HEAD_TOPS = ("studs", "dome")
+HEAD_DOME_MAX_MM = 5.0
+
+
+def _domed_top(
+    m: manifold3d.Manifold, conns: list[dict[str, Any]], height_mm: float
+) -> tuple[manifold3d.Manifold, list[dict[str, Any]]]:
+    """The no-studs head: cut the crown studs off and round the flat crown seat into an ellipsoidal dome that keeps
+    the head's height. Above the start of the dome the head is rebuilt as the hull of its own outline shrinking to the
+    apex, so it is smooth, convex and has no overhang. The `top_studs` connector goes with the studs."""
+    x0, y0, x1, y1 = m.slice(height_mm - 1.0).bounds()
+    dome_h = min(HEAD_DOME_MAX_MM, 0.9 * 0.5 * (y1 - y0))
+    z0 = height_mm - dome_h
+    # 0.03 mm inside the wall: an outline that coincides with the wall leaves hair-thin triangles at the seam
+    outline = m.slice(z0).hull().offset(-0.03, manifold3d.JoinType.Round)
+    cx, cy = 0.5 * (x0 + x1), 0.5 * (y0 + y1)
+    below = m ^ manifold3d.Manifold.cube((400.0, 400.0, z0 + 50.0)).translate((-200.0, -200.0, -50.0))
+    slabs = [manifold3d.Manifold.extrude(outline, 0.02).translate((0.0, 0.0, z0 - 0.5))]
+    for deg in (0.0, 12.0, 24.0, 36.0, 48.0, 58.0, 68.0, 76.0, 83.0, 88.0):
+        th = math.radians(deg)
+        s = math.cos(th)
+        cs = outline.translate((-cx, -cy)).scale((s, s)).translate((cx, cy))
+        slabs.append(manifold3d.Manifold.extrude(cs, 0.02).translate((0.0, 0.0, z0 + dome_h * math.sin(th))))
+    return below + sdk.hull(slabs), [c for c in conns if c.get("id") != "top_studs"]
 
 
 def _stud_keepout(head: manifold3d.Manifold, head_height_mm: float) -> manifold3d.Manifold | None:
@@ -397,6 +548,19 @@ def _intersect_volume(a: manifold3d.Manifold, b: manifold3d.Manifold) -> float:
     return float(manifold3d.Manifold.batch_boolean([a, b], manifold3d.OpType.Intersect).volume())
 
 
+def _overhang_area(m: manifold3d.Manifold, z_min: float = 6.0) -> float:
+    """Area (mm2) of faces above z_min whose normal tilts down past 45 degrees from horizontal: what P1 rejects."""
+    mesh = m.to_mesh()
+    v = np.asarray(mesh.vert_properties)[:, :3]
+    t = np.asarray(mesh.tri_verts)
+    a, b, c = v[t[:, 0]], v[t[:, 1]], v[t[:, 2]]
+    n = np.cross(b - a, c - a)
+    twice = np.linalg.norm(n, axis=1)
+    nz = n[:, 2] / np.maximum(twice, 1e-12)
+    zc = (a[:, 2] + b[:, 2] + c[:, 2]) / 3.0
+    return float((0.5 * twice)[(nz < -0.7071) & (zc > z_min)].sum())
+
+
 def _fit_head_pair(
     op: str,
     body: manifold3d.Manifold,
@@ -407,12 +571,18 @@ def _fit_head_pair(
     studs: manifold3d.Manifold | None,
 ) -> tuple[manifold3d.Manifold | None, dict[str, str] | None]:
     """Place a head's ear or horn pair so it clears the crown studs. A head's top is only about 18 to 20 mm wide and
-    the studs fill most of it, so a pair rooted at the upper corners lands on them. Try the pair as asked, then lower
-    and (ears) leaning further out, keep the candidate whose visible part beside the studs is largest, inside the
-    small-parts width, and cut it by the stud keep-out. Returns (solid, note); the note says what moved."""
+    the studs fill most of it, so a pair rooted at the upper corners lands on them.
+
+    Dan, round 5: "no cuts to the ears, just make the ears further apart". So the first pass looks for a placement
+    that needs no cut at all: the pair as asked, then lower, leaning out, and moved further apart, cheapest change
+    first, and it must still print (no new overhang) and keep the head out of the small-parts band that fails
+    (31.75 to 34.9 mm wide). Only when no such placement exists does a second pass cut the pair by the stud keep-out.
+    Returns (solid, note); the note says what moved."""
     base = _ears_or_horns_solid(op, "head", body, rows, feat, head_height_mm, fs)
-    if base is None or studs is None:
-        return base, None
+    if base is None:
+        return None, None
+    if studs is None:
+        studs = manifold3d.Manifold()  # no studs (the domed head): only the top-face rule for round ears applies
 
     def visible(m: manifold3d.Manifold) -> float:
         return float((m - body).volume())  # the part that shows outside the head
@@ -426,14 +596,50 @@ def _fit_head_pair(
         return base, None  # nothing shows, or the pair is already clear of the studs
     bx0, _by0, _bz0, bx1, _by1, _bz1 = base.bounding_box()
     x_cap = max((_small_cylinder_mm() - L2_MARGIN_MM) / 2.0, max(abs(bx0), abs(bx1))) + 0.3  # never wider than asked
+    x_above = (_small_cylinder_mm() * 1.1) / 2.0 + 0.4  # wide enough to be above the cylinder, clear of the marginal band
+    tilts = EAR_FIT_TILTS_DEG if op == "ears" else (0.0,)
+
+    def half_width_ok(m: manifold3d.Manifold, allow_wide: bool) -> bool:
+        x0, _y0, _z0, x1, _y1, _z1 = m.bounding_box()
+        half = max(abs(x0), abs(x1))
+        return half <= x_cap or (allow_wide and half >= x_above)
+
+    def describe(drop: float, tilt: float, shift: float, trimmed: bool) -> str:
+        moved = []
+        if drop > 0:
+            moved.append(f"moved down {drop:g} mm")
+        if shift > 0:
+            moved.append(f"moved {2 * shift:g} mm further apart")
+        if tilt > 0:
+            moved.append(f"leaned out {tilt:g} degrees more")
+        if trimmed:
+            moved.append("trimmed where it met the crown studs")
+        return ", ".join(moved)
+
+    # Pass 1: no cut. Cheapest change first.
+    combos = sorted(
+        ((d, t, sh) for d in EAR_FIT_DROPS_MM for t in tilts for sh in EAR_FIT_SHIFTS_MM),
+        key=lambda c: 0.02 * c[0] + 0.02 * c[1] + 0.02 * c[2],  # a lean costs as much as a move: no bend unless needed
+    )
+    for drop, tilt, shift in combos:
+        cand = _ears_or_horns_solid(
+            op, "head", body, rows, feat, head_height_mm, fs, z_shift=-drop, tilt_add=tilt, x_shift=shift
+        )
+        if cand is None or above_top_face(cand) or not half_width_ok(cand, allow_wide=shift > 0):
+            continue
+        if _intersect_volume(cand, studs) > 0.3 or _overhang_area(cand - body) > EAR_FIT_OVERHANG_MM2:
+            continue
+        kept = min(1.0, visible(cand) / asked)
+        if kept < EAR_FIT_MIN_KEPT:
+            continue
+        return cand, {"op": op, "why": describe(drop, tilt, shift, False), "kept_share": f"{kept:.2f}"}
+
+    # Pass 2: nothing clears the studs without a cut. Keep the placement with the most ear showing, and cut it.
     best: tuple[float, float, float, manifold3d.Manifold, float, float] | None = None  # (score, drop, tilt, cut, kept, trimmed)
     for drop in EAR_FIT_DROPS_MM:
-        for tilt in EAR_FIT_TILTS_DEG if op == "ears" else (0.0,):
+        for tilt in tilts:
             cand = _ears_or_horns_solid(op, "head", body, rows, feat, head_height_mm, fs, z_shift=-drop, tilt_add=tilt)
-            if cand is None:
-                continue
-            x0, _y0, _z0, x1, _y1, _z1 = cand.bounding_box()
-            if max(abs(x0), abs(x1)) > x_cap or above_top_face(cand):
+            if cand is None or not half_width_ok(cand, allow_wide=False) or above_top_face(cand):
                 continue
             cut = cand - studs
             kept = min(1.0, visible(cut) / asked)
@@ -452,14 +658,7 @@ def _fit_head_pair(
         solid = solid.simplify(STUD_CUT_SIMPLIFY_MM)
     if solid is None or kept < EAR_FIT_MIN_KEPT:
         return None, {"op": op, "why": "no room beside the crown studs; the part would be mostly cut away"}
-    moved = []
-    if drop > 0:
-        moved.append(f"moved down {drop:g} mm")
-    if tilt > 0:
-        moved.append(f"leaned out {tilt:g} degrees more")
-    if trimmed * asked > 0.3:
-        moved.append("trimmed where it met the crown studs")
-    return solid, {"op": op, "why": ", ".join(moved), "kept_share": f"{kept:.2f}"}
+    return solid, {"op": op, "why": describe(drop, tilt, 0.0, trimmed * asked > 0.3), "kept_share": f"{kept:.2f}"}
 
 
 def _wall_y(body: manifold3d.Manifold, z: float) -> float | None:
@@ -604,6 +803,8 @@ def compile_recipe_to_partspec(recipe: dict[str, Any]) -> dict[str, Any]:
         raise ValueError("recipe.shape must be an object")
     kind = str(shape.get("kind") or ("star2d" if slot == "hand" else "loft")).strip().lower()
 
+    symmetry_note: dict[str, Any] | None = None
+    profile_reversed = False
     # Pre-validate and legalize parameters eagerly before returning `part_spec`
     if slot == "hand":
         grip_tu = max(2, min(4, int(shape.get("grip_tu", 2))))
@@ -622,6 +823,8 @@ def compile_recipe_to_partspec(recipe: dict[str, Any]) -> dict[str, Any]:
             if len(pts_clamped) < 3:
                 raise ValueError("invalid profile2d points")
             fillet_r = max(0.4, min(4.0, _finite_float(shape.get("fillet_r_mm", 1.2), "fillet_r_mm")))
+            pts_clamped, profile_reversed = _counter_clockwise(pts_clamped)
+            pts_clamped, symmetry_note = _symmetrize_polygon(pts_clamped)
         else:
             pts_clamped = []
             # 1.4 fails G1_watertight and G3_single_body on most stars (6 of 9 shapes tried);
@@ -633,6 +836,7 @@ def compile_recipe_to_partspec(recipe: dict[str, Any]) -> dict[str, Any]:
         slices_legal: list[tuple[float, float, float, float, float, float]] = []
     else:
         slices_legal = legalize_loft_slices(shape.get("slices"))
+        slices_legal, symmetry_note = _symmetrize_loft_rows(slices_legal)
         grip_tu = 2
         pts_clamped = []
         fillet_r = 1.2
@@ -656,6 +860,10 @@ def compile_recipe_to_partspec(recipe: dict[str, Any]) -> dict[str, Any]:
         else:
             clean_features.append(parsed_feat)
     head_height_mm = max(24.0, min(38.0, _finite_float(shape.get("height_mm", 30.5), "height_mm")))
+    # `studs` (default) is the brand head with its two crown buds and flat seat; `dome` has no studs and a rounded top.
+    head_top = str(shape.get("top", "studs")).strip().lower()
+    if head_top not in HEAD_TOPS:
+        head_top = "studs"
 
     # A brim or a horn hangs in the air, and the support-free flare clip in the slot builders would
     # shave it back to a 41 degree cone. `minimal` keeps it, at the price of a few supports. This is a
@@ -731,9 +939,13 @@ def compile_recipe_to_partspec(recipe: dict[str, Any]) -> dict[str, Any]:
             return sdk.crown_addon(body, support_policy=support_policy)
         if slot == "head":
             m, conns, ex = sdk.character_head(body, height_mm=head_height_mm, support_policy=support_policy)
+            if head_top == "dome":
+                m, conns = _domed_top(m, conns, head_height_mm)
             if head_pairs:
-                studs = _stud_keepout(m, head_height_mm)
+                # With studs, ears and horns keep off them; on the domed head there are none to avoid.
+                studs = _stud_keepout(m, head_height_mm) if head_top == "studs" else None
                 for feat in head_pairs:
+                    feat, sturdy = _sturdy_head_ear(feat)
                     solid, note = _fit_head_pair(feat["op"], body, rows, feat, head_height_mm, fs, studs)
                     if solid is None:
                         features_dropped.append(
@@ -741,8 +953,12 @@ def compile_recipe_to_partspec(recipe: dict[str, Any]) -> dict[str, Any]:
                         )
                     else:
                         after_builder.append(solid)
-                        if note is not None:
-                            features_adjusted.append(note)
+                        why = "; ".join(t for t in (sturdy, note["why"] if note else None) if t)
+                        if why:
+                            entry = {"op": feat["op"], "why": why}
+                            if note and "kept_share" in note:
+                                entry["kept_share"] = note["kept_share"]
+                            features_adjusted.append(entry)
             if after_builder:
                 keepout = _socket_keepout(m)
                 for solid in after_builder:
@@ -764,9 +980,19 @@ def compile_recipe_to_partspec(recipe: dict[str, Any]) -> dict[str, Any]:
         support_policy=support_policy,
         fn=build_fn,
     )
+    if slot == "hand" and (symmetry_note is not None or profile_reversed):
+        spec["legalizer_notes"] = {}
+        if symmetry_note is not None:
+            spec["legalizer_notes"]["symmetry"] = symmetry_note
+        if profile_reversed:
+            spec["legalizer_notes"]["profile2d_reversed"] = True  # the points ran clockwise; they were turned round
     if slot != "hand":
         # What the L1/L3 clamps changed (they used to be silent), plus what L2 needs to rebuild.
-        spec["legalizer_notes"] = _legalizer_notes(shape.get("slices"), slices_legal)
+        spec["legalizer_notes"] = _legalizer_notes(
+            shape.get("slices"), slices_legal, skip_x=bool(symmetry_note and symmetry_note.get("action") == "snapped_x_to_centre")
+        )
+        if symmetry_note is not None:
+            spec["legalizer_notes"]["symmetry"] = symmetry_note
         if support_policy_promoted:
             spec["legalizer_notes"]["support_policy_promoted"] = "none->minimal"
         if features_ignored:
@@ -792,8 +1018,11 @@ def compile_recipe_to_partspec(recipe: dict[str, Any]) -> dict[str, Any]:
 _SLICE_DEFAULTS = {"z": 0.0, "w": 16.0, "d": 12.0, "r": 3.0, "x": 0.0, "y": 0.0}
 
 
-def _legalizer_notes(raw: Any, rows: list[tuple[float, float, float, float, float, float]]) -> dict[str, Any]:
-    """List what the L1 slope clamp and L3 bounds changed, so the eval can count them."""
+def _legalizer_notes(
+    raw: Any, rows: list[tuple[float, float, float, float, float, float]], skip_x: bool = False
+) -> dict[str, Any]:
+    """List what the L1 slope clamp and L3 bounds changed, so the eval can count them. `skip_x` leaves out the x
+    offsets the symmetry step snapped to the centre line; those are reported under `symmetry` instead."""
     if not isinstance(raw, list):
         return {}
     try:
@@ -803,6 +1032,8 @@ def _legalizer_notes(raw: Any, rows: list[tuple[float, float, float, float, floa
     changes: list[dict[str, Any]] = []
     for i, (s, row) in enumerate(zip(ordered, rows)):
         for j, key in enumerate(("z", "w", "d", "r", "x", "y")):
+            if skip_x and key == "x":
+                continue
             try:
                 before = float(s.get(key, _SLICE_DEFAULTS[key]))
             except (TypeError, ValueError):

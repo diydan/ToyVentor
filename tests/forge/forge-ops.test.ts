@@ -91,6 +91,36 @@ function studZoneVertices(path: string): Set<string> {
   return new Set(keep.map((v) => v.map((c) => c.toFixed(2)).join(",")));
 }
 
+// Left and right x extent of a binary STL.
+function stlXRange(path: string): [number, number] {
+  const xs = stlVertices(path).map((v) => v[0]);
+  return [Math.min(...xs), Math.max(...xs)];
+}
+
+// A heart outline (x, z) whose right half is `narrower` (a fraction) narrower than its left: a hand-drawn wobble.
+function heartPoints(narrower: number): number[][] {
+  const pts: number[][] = [];
+  for (let i = 0; i < 24; i++) {
+    const t = (2 * Math.PI * i) / 24;
+    const x = 16 * Math.sin(t) ** 3;
+    const z = 13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t);
+    pts.push([Math.round(x * 0.8 * (x > 0 ? 1 - narrower : 1) * 100) / 100, Math.round((z * 0.8 + 14) * 100) / 100]);
+  }
+  return pts;
+}
+
+function handRecipe(id: string, points: number[][]) {
+  return {
+    v: 1,
+    id,
+    name: id.replace(/_/g, " "),
+    stat: "Glow",
+    behavior: "symmetry probe",
+    slot: "hand",
+    shape: { kind: "profile2d", points, fillet_r_mm: 1.2 },
+  };
+}
+
 interface Job {
   status: string;
   stl_artifact?: string;
@@ -100,6 +130,9 @@ interface Job {
     features_ignored?: string[];
     features_dropped?: { op: string; why: string }[];
     features_adjusted?: { op: string; why: string }[];
+    symmetry?: { kind: string; action: string; iou_before: number; iou_after?: number };
+    profile2d_reversed?: boolean;
+    l1_l3_changed?: number;
   } | null;
 }
 
@@ -210,7 +243,7 @@ describe.skipIf(!PYTHON)("Recipe v1 feature ops through the optimizer daemon", (
 
   it("keeps head ears and horns off the crown studs and says what it moved", async () => {
     // The top of a head is 18 to 20 mm wide and the studs fill most of it, so ears rooted at the upper corners used to
-    // grow into them (88 mm3 on this bunny). They are now lowered, leaned out, or trimmed, and the job says which.
+    // grow into them (88 mm3 on this bunny). They are now moved down, leaned out or moved further apart (a cut only as a last resort), and the job says which.
     const slices = [
       { z: 0, w: 24.6, d: 12.1, r: 3 },
       { z: 10, w: 25, d: 14, r: 5 },
@@ -230,6 +263,9 @@ describe.skipIf(!PYTHON)("Recipe v1 feature ops through the optimizer daemon", (
       const job = await run(withHeight(recipe(id, "head", slices, [...feats])));
       expect(job.status, id).toBe("print_ready");
       expect(job.legalizer?.features_adjusted?.map((f) => f.op), id).toEqual([feats[0].op]);
+      // Dan, round 5: "no cuts to the ears, just make the ears further apart". The bunny and bear clear the studs by
+      // moving, not by trimming.
+      if (id !== "ops_test_stud_horns") expect(job.legalizer?.features_adjusted?.[0]?.why, id).not.toContain("trimmed");
       const extra = [...studZoneVertices(join(outDir, job.stl_artifact!))].filter((v) => !studVertices.has(v));
       expect(extra, id).toEqual([]);
       if (id === "ops_test_stud_bear") {
@@ -239,6 +275,99 @@ describe.skipIf(!PYTHON)("Recipe v1 feature ops through the optimizer daemon", (
       }
     }
   }, 540_000);
+
+  it("keeps tall thin head ears sturdy and leaves stout ones exactly as asked", async () => {
+    // Dan, round 6, on the bunny: "looks fragile, not sure we need the bend, can we make shorter".
+    const slices = [
+      { z: 0, w: 24.6, d: 12.1, r: 3 },
+      { z: 10, w: 25, d: 14, r: 5 },
+      { z: 20, w: 22, d: 14.5, r: 6 },
+      { z: 30.5, w: 18, d: 13, r: 5 },
+    ];
+    const withHeight = (r: object) => ({ ...r, shape: { kind: "loft", slices, height_mm: 30.5 } });
+    const bunny = await run(
+      withHeight(recipe("ops_test_sturdy_bunny", "head", slices, [{ op: "ears", style: "tall", width_mm: 7, height_mm: 22, tilt_deg: 10 }])),
+    );
+    expect(bunny.status).toBe("print_ready");
+    expect(bunny.legalizer?.features_adjusted?.[0]?.why).toContain("kept sturdy: cut from 22 to 15 mm tall");
+    // The cat's ears (pointy, 8 wide, 12 tall) are stout: the sturdiness step must not touch them.
+    const cat = await run(
+      withHeight(recipe("ops_test_stout_cat", "head", slices, [{ op: "ears", style: "pointy", width_mm: 8, height_mm: 12, tilt_deg: 10 }])),
+    );
+    expect(cat.status).toBe("print_ready");
+    expect(cat.legalizer?.features_adjusted?.[0]?.why ?? "").not.toContain("kept sturdy");
+  }, 360_000);
+
+  it("builds a head without studs and with a domed top", async () => {
+    // Dan, round 6: "a version with and without studs; the one without should have a curved top rather than flat".
+    const slices = [
+      { z: 0, w: 24.6, d: 12.1, r: 4 },
+      { z: 10, w: 25.5, d: 13.5, r: 5 },
+      { z: 20, w: 24.5, d: 13.8, r: 5 },
+      { z: 30.5, w: 20, d: 12.5, r: 5 },
+    ];
+    const mk = (id: string, top: string | undefined, feats: object[]) => ({
+      ...recipe(id, "head", slices, feats),
+      shape: { kind: "loft", slices, height_mm: 30.5, ...(top ? { top } : {}) },
+    });
+    const withStuds = await run(mk("ops_test_top_studs", undefined, []));
+    expect(withStuds.status).toBe("print_ready");
+    const topOf = (path: string) => Math.max(...stlVertices(path).map((v) => v[2]));
+    expect(topOf(join(outDir, withStuds.stl_artifact!))).toBeGreaterThan(33); // the studs stand 2.8 mm above the seat
+
+    const dome = await run(mk("ops_test_top_dome", "dome", []));
+    expect(dome.status).toBe("print_ready");
+    const domePath = join(outDir, dome.stl_artifact!);
+    expect(topOf(domePath)).toBeLessThan(30.7); // same height as the flat seat, no studs
+    // Domed: the top is not flat. A flat seat would still be about 18 mm wide at z 30.2; under a dome it has shrunk.
+    const nearApex = stlVertices(domePath).filter((v) => v[2] > 30.2).map((v) => v[0]);
+    expect(nearApex.length).toBeGreaterThan(0);
+    expect(Math.max(...nearApex) - Math.min(...nearApex)).toBeLessThan(10);
+
+    // Round ears on the domed head still stay below its top, and nothing needs to dodge studs.
+    const bear = await run(mk("ops_test_top_dome_bear", "dome", [{ op: "ears", style: "round", width_mm: 12, height_mm: 12, tilt_deg: 0 }]));
+    expect(bear.status).toBe("print_ready");
+    expect(topOf(join(outDir, bear.stl_artifact!))).toBeLessThan(30.7);
+  }, 540_000);
+
+  it("makes a nearly symmetric outline exactly symmetric and leaves a lopsided one alone", async () => {
+    // Dan, 2026-11-02: check for symmetry and, if there is some, split on the centre and mirror one half.
+    const lopsided = await run(handRecipe("ops_test_heart_lopsided", heartPoints(0.04)));
+    expect(lopsided.status).toBe("print_ready");
+    expect(lopsided.legalizer?.symmetry?.action).toMatch(/^mirrored_(left|right)_half$/);
+    expect(lopsided.legalizer?.symmetry?.iou_after).toBeGreaterThan(0.999);
+    const [x0, x1] = stlXRange(join(outDir, lopsided.stl_artifact!));
+    expect(Math.abs(x0 + x1)).toBeLessThan(0.05); // the part is centred, left edge = right edge
+
+    const exact = await run(handRecipe("ops_test_heart_exact", heartPoints(0)));
+    expect(exact.legalizer?.symmetry).toBeUndefined(); // already symmetric: nothing to say
+
+    // A lightning bolt overlaps its mirror image by about half: that is the design, so it stays as drawn.
+    const bolt = await run(handRecipe("ops_test_bolt", [[0, 40], [10, 40], [3, 24], [14, 24], [-6, 0], [-1, 18], [-10, 18]]));
+    expect(bolt.legalizer?.symmetry?.action).toBe("kept_asymmetric");
+    expect(bolt.legalizer?.symmetry?.iou_before).toBeLessThan(0.7);
+  }, 360_000);
+
+  it("turns a clockwise outline round instead of building an empty part", async () => {
+    // sdk.polygon_2d fills counter-clockwise outlines only; a clockwise one used to build nothing, with no error.
+    const job = await run(handRecipe("ops_test_square_cw", [[-10, 0], [-10, 20], [10, 20], [10, 0]]));
+    expect(job.status).toBe("print_ready");
+    expect(job.legalizer?.profile2d_reversed).toBe(true);
+  }, 180_000);
+
+  it("snaps tiny slice x offsets to the centre line and keeps a deliberate lean", async () => {
+    const noisy = HEAD.map((s, i) => ({ ...s, x: [0.2, -0.3, 0.6, 0.4][i] }));
+    const snapped = await run({ ...recipe("ops_test_head_x_noise", "head", noisy, []), shape: { kind: "loft", slices: noisy, height_mm: 30.5 } });
+    expect(snapped.status).toBe("print_ready");
+    expect(snapped.legalizer?.symmetry?.action).toBe("snapped_x_to_centre");
+    expect(snapped.legalizer?.l1_l3_changed).toBe(0); // reported under `symmetry`, not as a clamp
+    const [x0, x1] = stlXRange(join(outDir, snapped.stl_artifact!));
+    expect(Math.abs(x0 + x1)).toBeLessThan(0.05);
+
+    const leaning = HEAD.map((s, i) => ({ ...s, x: [0, 1, 3, 6][i] }));
+    const kept = await run({ ...recipe("ops_test_head_lean", "head", leaning, []), shape: { kind: "loft", slices: leaning, height_mm: 30.5 } });
+    expect(kept.legalizer?.symmetry?.action).toBe("kept_asymmetric");
+  }, 360_000);
 
   it("ignores an op the slot cannot use and an unknown op, and reports both", async () => {
     const job = await run(

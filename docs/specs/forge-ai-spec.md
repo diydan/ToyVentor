@@ -127,7 +127,7 @@ rejected, numbers are clamped to bounds, and nothing is executed.
   (the builders already in the SDK prompt table).
 - `shape.kind`: `loft` (all slots except hand; the compiler enforces 2 to 16
   slices and the prompt asks for 3 to 12), `profile2d` (hand slot, polygon in
-  x,z, 3 to 64 points), `star2d` (hand slot, the default there).
+  x,z, 3 to 256 points), `star2d` (hand slot, the default there).
 - `features`: at most 6, from an allowlist. Each is a parametric op with bounded
   numbers (clamped, never rejected), so the model can add character without
   being able to break geometry. Built in the daemon (2026-11-02), all with
@@ -145,18 +145,53 @@ rejected, numbers are clamped to bounds, and nothing is executed.
   - **Head ears and horns keep off the crown studs** (`_fit_head_pair`). The studs
     (two columns at x 3.0 to 9.6 mm each side, y +-3.3, z 30.5 to 33.3; a hat seats
     on them) fill most of a head's 18 to 20 mm wide top, so a pair rooted at the
-    upper corners used to grow into them. The daemon now cuts every head ear and
-    horn by a stud keep-out (one plain box per stud column, grown 1.5 mm, from the
-    crown plane up; 0.6 mm at first, Dan found it too tight). It first tries the
-    pair as asked, then lower (up to 10 mm) and, for ears, leaning further out (up
-    to 18 degrees), keeps the placement with the most ear still showing outside the
-    head (a clean move beats a cut), inside the small-parts width, and drops any
-    piece the cut leaves floating. `round` ears also must not rise above the head's
-    top face (z = `height_mm`): the bear's ears used to poke 1 mm above it. What it did is
-    listed in `legalizer.features_adjusted` (for example "moved down 3 mm, trimmed
-    where it met the crown studs"); a pair with no room left is listed in
+    upper corners used to grow into them. The daemon now keeps a stud keep-out
+    (one plain box per stud column, grown 1.5 mm, from the crown plane up; 0.6 mm
+    at first, Dan found it too tight) free of ear and horn material, in two passes.
+    Pass 1 (Dan, round 5: "no cuts to the ears, just make the ears further
+    apart") looks for a placement that needs no cut: the pair as asked, then lower
+    (up to 10 mm), leaning further out (ears, up to 18 degrees) and moved further
+    apart (up to 9 mm each side), cheapest change first. A candidate must also add
+    no P1 overhang (a pre-check on its faces, 3 mm2), keep the head's width out of
+    the 31.75 to 34.9 mm band that fails the small-parts gate (either within 31
+    mm or above 35.2 mm, which passes as above the cylinder), and a root that hangs
+    well outside the wall gets a longer 45-degree ramp. Pass 2 runs only when
+    nothing clears the studs uncut: the placement with the most ear still showing
+    is cut by the keep-out, and any piece the cut leaves floating is dropped.
+    `round` ears also must not rise above the head's top face (z = `height_mm`):
+    the bear's ears used to poke 1 mm above it. What it did is listed in
+    `legalizer.features_adjusted` (for example "moved down 3 mm, moved 3 mm
+    further apart"; pass 2 adds "trimmed where it met the crown studs"); a pair
+    with no room left is listed in
     `features_dropped`. Test: `forge-ops.test.ts` compares the mesh vertices inside
     the stud column with a plain head's.
+  - **Sturdy head ears** (`_sturdy_head_ear`; Dan, round 6, on the bunny: "looks
+    fragile, not sure we need the bend, can we make shorter"). A head ear that is
+    over 15 mm tall or over 2.4 widths is cut back to at most 15 mm and 2.2 widths,
+    widened to at least 8 mm and stood up to at most 3 degrees (the 22 x 7 mm
+    bunny ear with a 10 degree tilt becomes 15 x 8 mm, 3 degrees). Stout ears (the
+    cat's 12 x 8 mm, the bear's discs) are left as asked. A lean now costs the
+    fitter as much as a move, so ears are moved apart before they are leaned. The
+    note lands in `features_adjusted` ("kept sturdy: cut from 22 to 15 mm tall, ...").
+  - **No-studs head** (`shape.top: "dome"`, default `"studs"`; Dan, round 6: "a
+    version with and without studs; the one without should have a curved top rather
+    than flat"). Built in the daemon without touching the SDK (`_domed_top`):
+    `character_head` runs as usual, then the studs are cut off, the `top_studs`
+    connector is dropped, and the last 5 mm under the crown plane are rebuilt as
+    the hull of the head's own outline shrinking along a cosine curve to the apex, so
+    the head keeps its height and the top is a smooth ellipsoidal dome with no
+    overhang. Ears and horns need not dodge studs there, so they sit where the
+    recipe put them (round ears still stay under the top). The dome outline is
+    inset 0.03 mm from the wall: flush, the seam left hair-thin triangles that
+    failed G1 and G3 (the same trap as the stud cut). Plain, bunny, cat and bear
+    heads with a dome all print_ready, design verified. **Not wired through
+    yet:** `worker/forgeOptimizer.ts` and `shared/forgeOptimizer.ts` whitelist shape
+    fields, so `top` is dropped there until a line is added to each, and the
+    Spark prompt does not mention it. **Brand check for the owner:** the brand file
+    (`parts/partspec/BRAND_STYLE.md`) rule 1 says "every head carries two studs on
+    its crown... they stay functional (hats, ears and horns fit on them)", and the
+    family test counts "two crown buds"; a head without studs is an exception to
+    that rule, so whether and where it ships is a product call.
   - `spikes`: a row of 2 to 7 points along the top, for crown points and
     feathers. Crowns and backs only (the head top is the crown seat).
   - `snout` (heads only): `style` `muzzle | beak | bill`, `length_mm`,
@@ -230,6 +265,28 @@ rejected, numbers are clamped to bounds, and nothing is executed.
      with margin around that band.
    - L3 clamp every number to the slot's bounds. Built in the daemon for loft
      slices, hand shapes and features.
+   - L4 symmetry (Dan, 2026-11-02: "check if there is symmetry and if so split in
+     centers and make symmetrical"). Built in the daemon (`_symmetrize_polygon`,
+     `_symmetrize_loft_rows`), reported as `legalizer.symmetry`. A `profile2d`
+     outline is mirrored on its vertical centre line (the bounding-box centre,
+     snapped to x = 0 within 1 mm) and measured by how much it overlaps its own
+     mirror image (intersection over union). At 0.93 or more it is treated as
+     meant to be symmetric: it is split on the centre line, the larger half is
+     kept, and the outline is rebuilt from that half and its mirror (at most 64
+     points); `iou_after` is then 1.0. Below 0.93 (a lightning bolt scores 0.52)
+     it stays as drawn and the note says `kept_asymmetric`; an already symmetric
+     outline gets no note. A loft is symmetric when every slice is centred on
+     x = 0: offsets up to 1 mm are noise and snap to 0 (reported as
+     `snapped_x_to_centre`, not as an L1/L3 change); bigger ones are a deliberate
+     lean, like a bent hat tip, and stay (`kept_asymmetric`, with the mirror
+     overlap). The 0.93 threshold is the knob: false positives (flattening a
+     deliberately lopsided shape) cost more than false negatives, so it is set
+     high; a heart whose right half was 4% narrower scored 0.956 and was fixed,
+     at 12% it scored 0.87 and was left. Not applied to the photo outline
+     (C-legalizers above) yet. The same change fixed a hole found while testing:
+     `sdk.polygon_2d` fills counter-clockwise outlines only, so a clockwise
+     `profile2d` built an empty part with no error; the points are now turned
+     round (`legalizer.profile2d_reversed`). Tests: `forge-ops.test.ts`, three.
    Ship L1 and L2 first. Add more only when the eval shows a gate dominating.
 4. **Build and gate.** Python compiler (`compile_recipe_to_partspec` in
    `scripts/forge_optimizer_daemon.py`) turns the recipe
@@ -344,7 +401,7 @@ What the compiler accepts decides the routes (read in the code, 2026-11-02):
 
 | Route | Photos | Shape handed to the compiler | Slots | Status |
 | --- | --- | --- | --- | --- |
-| A. Cut-out | 1, object looks flat (drawing, wing, sword, paddle) | `profile2d`: one outline, 3 to 64 points, x within 45 mm, z from -45 to 90 mm | `hand` only | Compiles today; outline, fit loop and sticker path built (`shared/photoOutline.ts`, `outlineFit.ts`, `outlineSticker.ts`), not wired to the Worker |
+| A. Cut-out | 1, object looks flat (drawing, wing, sword, paddle) | `profile2d`: one outline, 3 to 256 points, x within 45 mm, z from -45 to 90 mm | `hand` only | Compiles today; outline, fit loop and sticker path built (`shared/photoOutline.ts`, `outlineFit.ts`, `outlineSticker.ts`), not wired to the Worker |
 | B. Round | 1, object looks round (cup, bottle, bowl) | `loft` slices, depth `d` taken from width `w` | `crown`, `head`, `back`, vehicle slots | Compiles today; profile extraction not built |
 | C. Chunky | 2 (front, side) | `loft` slices, `w` from the front outline, `d` from the side outline | as B | Compiles today; fitter not built |
 
@@ -546,6 +603,41 @@ What the compiler accepts decides the routes (read in the code, 2026-11-02):
     survive the wire unchanged. Tests: `tests/photo-outline.test.ts` (now 79), with the
     turning-angle helpers in `tests/fixtures/outlineMasks.ts`; 21 of 21 smoothing mutants
     caught.
+  - **Smoother still: the point cap (2026-11-02, Dan: "still not smooth enough").** What was
+    left after the smoothing above was faceting. The plate took at most 64 points, so the
+    spoon's rim was straight chords of 5 to 10 mm meeting at visible corners; a flat-shaded
+    view showed each as its own band, with a largest kink of 8.9 degrees. The limit was in the
+    daemon (`3 <= len(pts_raw) <= 64`) and in the Worker's allowlist; the SDK has none. On a
+    scratch copy of the daemon with it raised, the real gate and builder took 100, 160 and 250
+    points (print-ready at fillet 0.8, slivers at 1.0, exactly as at 55 points) and the
+    250-point plate rendered as a smooth curve. With Dan's approval the limit is now 256 in
+    both, one shared constant (`FORGE_MAX_PROFILE_POINTS`); `tests/forge/profile-points.test.ts`
+    builds 256 points on the real daemon and refuses 257, and the optimizer lane's own tests
+    still pass. More points help only if the contour under them is smoother than the tolerance:
+    below a 0.08 mm tolerance a disc's total turning rose from 360 to 608 degrees, the polygon
+    following ripple. So the outline is also low-pass filtered along its own length (Taubin
+    smoothing, option `curveMm`, default a tenth of the longer side kept between 3 and 8 mm; it
+    does not shrink, so the spoon's neck is still 1.8 mm wide), and the simplifier's tolerance
+    is now a target sag (`sagMm`, default 0.015 mm) with a default budget of 240 points. My
+    first version of the filter was unstable (the spoon's zig-zag went from 4 to 63): a Taubin
+    filter needs its pass-band edge near 0.1, so the loop is resampled at a twentieth of the
+    cut-off. Measured on the real spoon: 55 points became 145, the overlap with the mask 0.9826
+    before any smoothing, 0.9891 after the first round and 0.9904 now, the worst corner 49
+    degrees (it was 19 once the stairs went), zig-zag 0. Against the exact circle a disc's
+    vertices are 0.026 mm RMS away (0.109 mm for the pixel trace, four times closer, 0.069 mm at
+    worst). In the 50 against 250 point test, rim edges over 1.5 mm on the bowl fell from 18 to
+    2 and the longest from 5.1 mm to 2.1 mm. The unsmoothed fallback keeps its old budget of 60.
+    The sticker's cut path leaves a gentle corner as a vertex (an arc starting within 0.2 mm of
+    it would move the path by 0.012 mm at most), so it stays about as long as the outline, and
+    the sticker module takes up to 1200 points. The real spoon through the whole chain: 145
+    points, the Worker and the real daemon took it, the same four gate calls, a plate of
+    16.42 by 109.07 by 6.6 mm in 65 KB, one watertight body. A measurement of mine that I
+    corrected on the way: counting only kinks between edges over 0.8 mm made 250 points look
+    like 0.6 degrees; the largest turn at any vertex is still 6.9 degrees, on edges a quarter of
+    a millimetre long, so the gain is in the width of the flat bands (what the eye sees), not
+    in the angle. Tests: `tests/photo-outline.test.ts` (now 88); 24 mutants, 23 caught, and the
+    survivor (the loop that raises the tolerance when the budget binds) gives the same outlines
+    as plain pruning, 10 to 30% faster on rough shapes, so it stays as a speed step.
   - C4 orientation: long axis to z, handle end down, with a flip button. The kid
     decides which end is the handle; the model is not asked.
 - **Relief ("puffy").** The builder's crest is one level. Repeating the inward
@@ -1231,6 +1323,21 @@ same prompts can be compared.
   top now 33.9 mm, level with the stud tips), the bear moved down 1.5 mm and is not
   trimmed; all print_ready, design verified. The three are on the taste page as
   `r5_h03`, `r5_h04`, `r5_h08` ("(lower ears)"), not yet rated.
+- **Round 5 and 6 (same day).** Round 5 (margin 1.5 mm, lower ears) scored: bear
+  5, bunny 3, cat 2 with "i'd prefer no cuts to the ears and just make the ears
+  further apart". The first 5 for any part. So pass 1 above now moves ears
+  apart instead of cutting them. Result on the saved recipes: bunny moved 9 mm
+  further apart (head 39.3 mm wide, above the cylinder, so it passes), cat moved
+  down 3 mm and 3 mm further apart (31.2 mm wide), bear unchanged (moved down 1.5
+  mm); all print_ready, design verified, gap to the studs 5.2 mm (bunny) and 3.1 mm
+  (cat), no part cut. Round 6 on the taste page: `r6_h03`, `r6_h04` ("(ears
+  apart)"), not yet rated; the bear is not repeated because it scored 5. Dan's
+  round 6 reply on the bunny was "looks fragile, not sure we need the bend, can we
+  make shorter" and on the cat and bear "good" (cat and bear are unchanged since:
+  same content hashes). Round 7 on the taste page: `r7_h03` (sturdy bunny), and the
+  no-studs dome heads `r7_h03d`, `r7_h04d`, `r7_h08d`; the straightened bunny with
+  studs now sits 12 mm further apart than before, a 37 mm wide head, because an
+  upright 8 mm ear needs about 11 mm of clear space beside the studs.
 - **Reading:** the taste gate is still tripped for heads and partly lifted for
   crowns. The parts still at 1 or 2 are body-shape problems (dome helmet,
   astronaut, pumpkin, wizard cone, chef puff, fez), which the feature ops cannot
@@ -1792,6 +1899,13 @@ deterministic code verifies geometry, fit, and physics.
     driver never retries, for this reason. The real spoon fit needed 4 gate calls (three
     slivers, then a pass) and met the limit on its fourth until the limiter was reset
     by hand; so 3 a minute is below what one real fit can use.
+    (g) Done with Dan's approval on 2026-11-02: the point limit of a hand `profile2d` is
+    256, not 64, in `scripts/forge_optimizer_daemon.py` (the check at the start of the
+    `profile2d` branch) and in the Worker's allowlist (now the shared constant
+    `FORGE_MAX_PROFILE_POINTS`). The SDK needed nothing. `tests/forge/profile-points.test.ts`
+    covers the daemon; the eval's prompt text (`scripts/forge-eval.ts`,
+    `scripts/lib/forgeEvalCore.ts`) still says 3 to 64, which stays true as a sub-range, and
+    is the owner's to widen if a model should draw denser outlines.
 31. F2b, where the fit loop runs. Only the Worker holds the mask raster, and the
     gate is the daemon behind the forge routes, which need a live parent proof (2
     or 5 minutes) and are rate limited. No client calls those routes today. Three
