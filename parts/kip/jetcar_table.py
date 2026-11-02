@@ -121,6 +121,15 @@ def main():
     for label, pid, sgn in (("w36", "kit_wheel_med", 90), ("w50", "kit_wheel_giant", 90)):
         wheel = g(pid).rotate((0, sgn, 0)).translate((26.7, 43.75, 6.25))
         facts[f"{label}_gap_mm"] = rnd(body.min_gap(wheel, 20.0))
+    # narrowest sections of the air path, from the generator's own profiles (inlet O5.0 round, tunnel teardrop, slide-valve open port)
+    areas = {
+        "inlet": math.pi * 2.5 ** 2,
+        "tunnel": kc._flat_floor_teardrop(5.00, -2.00).area(),
+        "valve_port": kc._flat_floor_teardrop(4.8, -2.5).area(),
+    }
+    narrow = min(areas.values())
+    facts["passage_mm2"] = {k: rnd(v) for k, v in areas.items()}
+    facts["passage_equiv_d_mm"] = rnd(2 * math.sqrt(narrow / math.pi))
     facts["mass_g_solid_pla"] = {pid: rnd(g(pid).volume() * 1.24e-3) for pid in ("kit_keel_base", "mom_jet_valve_body", "kit_wheel_med", "kit_wheel_giant", "kit_barbell_shaft")}
 
     doc = {

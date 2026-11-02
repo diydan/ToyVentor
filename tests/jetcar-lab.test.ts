@@ -37,6 +37,14 @@ describe("jet car lab", () => {
     expect(typeof data.kip_rear_y).toBe("number");
   });
 
+  it("derives the body passage from the CAD and the page starts the slider at it", () => {
+    expect(data.facts.passage_equiv_d_mm).toBeGreaterThan(4);
+    expect(data.facts.passage_equiv_d_mm).toBeLessThan(6);   // the body as drawn is about O5: the nozzle table depends on it
+    for (const k of ["inlet", "tunnel", "valve_port"]) expect(data.facts.passage_mm2[k], k).toBeGreaterThan(10);
+    expect(page).toContain("pass: data.facts.passage_equiv_d_mm");
+    expect(slider("pa").min).toBeLessThanOrEqual(data.facts.passage_equiv_d_mm);
+  });
+
   it("is a real sweep: a vertical balloon touches Kip and a 30 deg lean clears him", () => {
     const at = (D: number, lean: number) => data.grid.find((g: any) => g.D === D && g.lean === lean);
     expect(at(175, 0).kip).toBeLessThan(0);

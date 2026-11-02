@@ -48,18 +48,19 @@
   <div class="row"><label class="k" for="bd">Balloon &Oslash;</label><input id="bd" type="range" min="100" max="225" step="12.5" value="175" /><output id="bdo"></output></div>
   <div class="row"><label class="k" for="bl" title="0 = straight up, as the vertical collar gives it">Lean back</label><input id="bl" type="range" min="0" max="60" step="5" value="0" /><output id="blo"></output></div>
   <div class="btns" id="wheels"><span class="k">Wheels</span><button data-w="36">&Oslash;36 (#4)</button><button data-w="50">&Oslash;50 (#5)</button></div>
-  <div class="btns" id="nozzles"><span class="k">Nozzle</span><button data-n="3">&Oslash;3</button><button data-n="4.5">&Oslash;4.5</button><button data-n="6">&Oslash;6</button><button data-n="8">&Oslash;8 (new)</button></div>
+  <div class="btns" id="nozzles"><span class="k">Nozzle</span><button data-n="3">&Oslash;3</button><button data-n="4.5">&Oslash;4.5</button><button data-n="6">&Oslash;6</button><button data-n="8">&Oslash;8</button></div>
   <div class="btns" id="cams"><span class="k">View</span><button data-cam="iso">Iso</button><button data-cam="side">Side</button><button data-cam="rear">Rear</button><button data-cam="top">Top</button></div>
   <div class="toggles"><label><input type="checkbox" id="kip" checked /> Kip</label><label><input type="checkbox" id="jetvis" checked /> Jet stream</label></div>
 
   <div id="verdict"></div>
   <table id="clear"><tr><th>Balloon to</th><th>mm</th><th></th></tr></table>
 
-  <h2>Nozzle: thrust and burn (ideal nozzle)</h2>
+  <h2>Nozzle: thrust through the body, and burn</h2>
   <div class="row"><label class="k" for="dp">Pressure</label><input id="dp" type="range" min="1.5" max="4" step="0.25" value="2.5" /><output id="dpo"></output></div>
   <div class="row"><label class="k" for="vol">Air</label><input id="vol" type="range" min="3" max="6" step="0.5" value="5" /><output id="volo"></output></div>
   <div class="row"><label class="k" for="mass">Truck mass</label><input id="mass" type="range" min="80" max="250" step="10" value="150" /><output id="masso"></output></div>
-  <table id="noz"><tr><th>Nozzle</th><th>thrust</th><th>burn</th><th>vs drag</th></tr></table>
+  <div class="row"><label class="k" for="pa" title="Narrowest internal section of the air path. 5.0 = mom_jet_valve_body as drawn (inlet O5.0, valve port, tunnel).">Body passage</label><input id="pa" type="range" min="5" max="10" step="0.5" value="5" /><output id="pao"></output></div>
+  <table id="noz"></table>
 
   <div class="facts" id="facts"></div>
 </div>
@@ -133,7 +134,7 @@ function buildBalloon(D) {
   const body = new THREE.Mesh(new THREE.SphereGeometry(D / 2, 48, 32), bm); body.position.z = NECK + D / 2; balloon.add(body);
 }
 
-const state = { D: 175, lean: 0, wheels: 36, nozzle: 6, dp: 2.5, vol: 5, mass: 150 };
+const state = { D: 175, lean: 0, wheels: 36, nozzle: 6, dp: 2.5, vol: 5, mass: 150, pass: data.facts.passage_equiv_d_mm };
 const gridAt = (D, lean) => data.grid.find((g) => g.D === D && g.lean === lean);
 // Kip is a soft contact (the balloon deforms and is light); the wheels and the jet stream are hard limits (a balloon over the nozzle kills thrust).
 const cls = (v, soft) => (v < 0 ? (soft ? 'c-warn' : 'c-bad') : v < 5 ? 'c-warn' : 'c-ok');
@@ -157,12 +158,13 @@ function refresh() {
   if (hardWorst[1] < 0) { v.className = 'bad'; v.textContent = `Reaches the ${hardWorst[0].split(' (')[0].toLowerCase()}: a balloon there blocks the jet or hits a wheel`; }
   else if (hardWorst[1] < 5 || kipRub || g.kip < 5) { v.className = 'warn'; v.textContent = kipRub ? `Rubs Kip by ${(-g.kip).toFixed(1)} mm (soft balloon deforms; hard limits are clear by ${hardWorst[1].toFixed(1)} mm)` : `Tight: ${hardWorst[1] < 5 ? hardWorst[0].split(' (')[0] : 'Kip'} within 5 mm`; }
   else { v.className = 'ok'; v.textContent = `Clear by ${Math.min(g.kip, hardWorst[1]).toFixed(1)} mm or more`; }
-  // nozzle table: ideal nozzle, F = 2 A dP, burn = V / (A sqrt(2 dP / rho)), drag = Crr m g (Crr 0.045 per the spec)
-  const dP = state.dp * 1000, rho = 1.2, V = state.vol / 1000, m = state.mass / 1000, drag = 0.045 * m * 9.81;
-  $('dpo').textContent = `${state.dp} kPa`; $('volo').textContent = `${state.vol} L`; $('masso').textContent = `${state.mass} g`;
-  $('noz').innerHTML = '<tr><th>Nozzle</th><th>thrust</th><th>burn</th><th>vs drag</th></tr>' + [3, 4.5, 6, 8].map((d) => {
-    const A = Math.PI * (d / 2000) ** 2, F = 2 * A * dP, t = V / (A * Math.sqrt((2 * dP) / rho)), r = F / drag;
-    return `<tr class="${d === state.nozzle ? 'sel' : ''}"><td>&Oslash;${d}</td><td>${(F * 101.97).toFixed(1)} gf</td><td>${t.toFixed(1)} s</td><td class="${r < 1 ? 'c-bad' : r < 1.5 ? 'c-warn' : 'c-ok'}">${r.toFixed(2)}x</td></tr>`;
+  // nozzle table. Air path = the body's narrowest internal section A1 in series with the nozzle A2 (equal discharge coefficients, incompressible):
+  // Q = Aeff sqrt(2 dP / rho), Aeff = 1 / sqrt(1/A1^2 + 1/A2^2); the jet thrust is rho Q^2 / A2. 'ideal' = nozzle only, F = 2 A2 dP. Drag = Crr m g (Crr 0.045, spec).
+  const dP = state.dp * 1000, rho = 1.2, V = state.vol / 1000, m = state.mass / 1000, drag = 0.045 * m * 9.81, A1 = Math.PI * (state.pass / 2000) ** 2;
+  $('dpo').textContent = `${state.dp} kPa`; $('volo').textContent = `${state.vol} L`; $('masso').textContent = `${state.mass} g`; $('pao').textContent = `Ø${state.pass}`; $('pa').value = state.pass;
+  $('noz').innerHTML = '<tr><th>Nozzle</th><th>ideal</th><th>thru body</th><th>burn</th><th>vs drag</th></tr>' + [3, 4.5, 6, 8].map((d) => {
+    const A2 = Math.PI * (d / 2000) ** 2, Fid = 2 * A2 * dP, Aeff = 1 / Math.sqrt(1 / A1 ** 2 + 1 / A2 ** 2), Q = Aeff * Math.sqrt((2 * dP) / rho), F = (rho * Q * Q) / A2, t = V / Q, r = F / drag;
+    return `<tr class="${d === state.nozzle ? 'sel' : ''}"><td>&Oslash;${d}</td><td>${(Fid * 101.97).toFixed(1)} gf</td><td>${(F * 101.97).toFixed(1)} gf</td><td>${t.toFixed(1)} s</td><td class="${r < 1 ? 'c-bad' : r < 1.5 ? 'c-warn' : 'c-ok'}">${r.toFixed(2)}x</td></tr>`;
   }).join('');
   window.__jetState = { ...state, kip: g.kip, wheel: g[wk], jet: g.jet, verdict: v.className };
 }
@@ -172,13 +174,15 @@ $('facts').innerHTML =
   `<p><b>No axle gear in this stage</b>: the Z10 axle gear overlaps the body by ${f.axle_gear_overlap_mm3} mm3, and a jet car has no PTO to drive.</p>` +
   `<p><b>Straight up is what the CAD gives</b> (vertical collar), so lean 0 is the resting pose. A rigid sphere that size overlaps Kip's back and hat by a few mm; a real balloon is soft and light, so read that as <i>rubs</i>, not <i>blocked</i>. The hard limit is at the other end: a balloon trailing back past about 45-50 deg reaches the jet stream and would smother the nozzle.</p>` +
   `<p><b>What it probably does in a run [E]</b>: filled with air it floats in air, so its net weight is only the rubber (a few grams) and there is almost no inertia lean. Drag pushes it back: about 27 mN at 2 m/s on a 175 mm sphere (Cd 0.47), 61 mN at 3 m/s, acting about 105 mm above the neck. A pressurised neck (2.5 kPa, 10 mm radius) resists roughly 4 N.mm before it kinks. At the speeds in the nozzle table (about 1.4 m/s for O6, 1.9 m/s for O8, ideal) the drag moment is 1.4-2.6 N.mm, so expect a trail-back, not a fold; above 2-3 m/s it can fold. Rough estimates: a printed jet piece with a real balloon on the real keel will tell. Balloon = sphere on a ${NECK} mm neck [E]; a cradle is not designed.</p>` +
-  `<p><b>Nozzle table</b> assumes an ideal nozzle and constant pressure, rolling drag Crr 0.045 (spec). Solid-PLA masses: keel ${f.mass_g_solid_pla.kit_keel_base} g, jet body ${f.mass_g_solid_pla.mom_jet_valve_body} g, wheel O36 ${f.mass_g_solid_pla.kit_wheel_med} g / O50 ${f.mass_g_solid_pla.kit_wheel_giant} g each; real prints use infill. Generated ${data.generated_at} by parts/kip/jetcar_table.py.</p>`;
+  `<p><b>The body's own air path is about O${f.passage_equiv_d_mm}</b> [M]: inlet ${f.passage_mm2.inlet} mm2, valve open port ${f.passage_mm2.valve_port} mm2, tunnel ${f.passage_mm2.tunnel} mm2. In series with a nozzle that caps the thrust near A x pressure, about 0.049 N (5 gf) at 2.5 kPa, and a nozzle wider than the passage is choked (O8 gives less than O4.5). The spec's 2.5-14 gf table ignores this. Slide <i>Body passage</i> up to see what an enlarged body would give.</p>` +
+  `<p><b>Nozzle table</b> assumes constant pressure and rolling drag Crr 0.045 (spec), with the passage and nozzle as two orifices in series [E]. Solid-PLA masses: keel ${f.mass_g_solid_pla.kit_keel_base} g, jet body ${f.mass_g_solid_pla.mom_jet_valve_body} g, wheel O36 ${f.mass_g_solid_pla.kit_wheel_med} g / O50 ${f.mass_g_solid_pla.kit_wheel_giant} g each; real prints use infill. Generated ${data.generated_at} by parts/kip/jetcar_table.py.</p>`;
 
 const CAMS = { iso: [[200, 170, -250], [0, 70, -40]], side: [[420, 110, -45], [0, 70, -45]], rear: [[0, 150, -430], [0, 70, -45]], top: [[0, 480, -35], [0, 40, -45]] };
 function setCam(n) { const [p, t] = CAMS[n]; camera.position.set(...p); controls.target.set(...t); controls.update(); }
 $('bd').addEventListener('input', () => { state.D = Number($('bd').value); refresh(); });
 $('bl').addEventListener('input', () => { state.lean = Number($('bl').value); refresh(); });
 for (const id of ['dp', 'vol', 'mass']) $(id).addEventListener('input', () => { state[id] = Number($(id).value); refresh(); });
+$('pa').addEventListener('input', () => { state.pass = Number($('pa').value); refresh(); });
 $('wheels').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) { state.wheels = Number(b.dataset.w); refresh(); } });
 $('nozzles').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) { state.nozzle = Number(b.dataset.n); refresh(); } });
 $('cams').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) setCam(b.dataset.cam); });
