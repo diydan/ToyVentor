@@ -98,6 +98,36 @@ describe("level kit composer", () => {
     expect(seedToCode(1).length).toBeGreaterThanOrEqual(4);
   });
 
+  it("K1: pinnedProps are placed verbatim in order, and the kit composes around them", () => {
+    const pinned = [
+      { type: "books", x: 8 },
+      { type: "lamp", x: 20 },
+      { type: "blocks", x: 33 },
+    ];
+    for (let seed = 1; seed <= 200; seed++) {
+      const l = composeLevel({ seed, theme: "room", pinnedProps: pinned });
+      // Every pinned prop survives, in photo order, at its pinned x.
+      const at = pinned.map((p) => l.props.findIndex((q) => q.type === p.type && q.x === p.x));
+      expect(at.every((i) => i >= 0), `seed ${seed}`).toBe(true);
+      expect(at).toEqual([...at].sort((a, b) => a - b));
+      // The level still passes the shared bar, and no spot cover sits on a pinned prop.
+      expect(checkLevel(l).every((c) => c.ok), `seed ${seed}`).toBe(true);
+      for (const s of l.spots) for (const p of pinned) expect(Math.abs(s.x - p.x)).toBeGreaterThanOrEqual(1.6);
+      const w = levelWorld(l);
+      expect(w.spots.length).toBe(l.spots.length);
+      expect(w.props.length).toBe(l.props.length);
+    }
+    // Unknown pinned types are dropped, never invented; empty pinnedProps is a no-op.
+    const l = composeLevel({ seed: 9, pinnedProps: [{ type: "not-a-prop", x: 10 }, { type: "tree", x: 12 }] });
+    expect(l.props.some((p) => p.type === "not-a-prop")).toBe(false);
+    expect(l.props.some((p) => p.type === "tree" && p.x === 12)).toBe(true);
+    expect(JSON.stringify(composeLevel({ seed: 42, pinnedProps: [] }))).toBe(JSON.stringify(composeLevel({ seed: 42 })));
+    // Deterministic with pinned props too.
+    expect(JSON.stringify(composeLevel({ seed: 7, pinnedProps: pinned }))).toBe(
+      JSON.stringify(composeLevel({ seed: 7, pinnedProps: pinned })),
+    );
+  });
+
   it("reports a kit size in the billions", () => {
     expect(kitSize()).toBeGreaterThan(1e9);
   });

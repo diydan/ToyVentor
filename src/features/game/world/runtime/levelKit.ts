@@ -97,6 +97,12 @@ export interface ComposeOptions {
   mood?: Mood;
   /** Part keys the child already found: composed levels hide other parts first so every find is new. */
   owned?: ReadonlySet<string>;
+  /**
+   * K1: props pinned at given x (e.g. photographed room props, in photo order). They are placed verbatim
+   * (unknown types dropped, x clamped to the strip) and spots, scenery clusters, stations and mood are
+   * composed around them. Absent or empty = the plain seeded composer, byte-identical output.
+   */
+  pinnedProps?: readonly LevelPropRef[];
 }
 export interface ComposedLevel extends LevelDef { seed: string; mood: Mood }
 
@@ -116,11 +122,29 @@ function hideFor(kind: string, theme: string): string {
   return row[3][THEMES[theme] ?? 0] ?? row[3][0]!;
 }
 
+/** Sanitize pinned props: catalog types only, x clamped/snapped to the strip, input order preserved. */
+function sanitizePinned(pinned: readonly LevelPropRef[] | undefined): LevelPropRef[] {
+  if (!pinned?.length) return [];
+  const out: LevelPropRef[] = [];
+  for (const p of pinned) {
+    if (!PROPS[p.type] || !Number.isFinite(p.x)) continue;
+    const ref: LevelPropRef = { type: p.type, x: Math.round(Math.max(0, Math.min(45, p.x)) * 2) / 2 };
+    if (p.z != null) ref.z = p.z;
+    if (p.y != null) ref.y = p.y;
+    out.push(ref);
+    if (out.length >= 16) break;
+  }
+  return out;
+}
+
 export function composeLevel(opts: ComposeOptions): ComposedLevel {
   const r = rng(opts.seed);
   const theme = opts.theme && CLUSTERS[opts.theme] ? opts.theme : pick(r, THEME_IDS);
   const mood: Mood = opts.mood ?? pick(r, MOODS);
   const owned = opts.owned ?? new Set<string>();
+  const pinned = sanitizePinned(opts.pinnedProps);
+  // Pinned props count as foreground unless they carry an explicit background z: photographed props sit in the lane.
+  const pinnedNear = (x: number, d: number) => pinned.some((p) => Math.abs(p.x - x) < d && (p.z ?? 0) > -3);
 
   // 1. Rhythm: five spots on a jittered grid, always >= 4 apart and inside 4..42; the junk machine opens the level.
   const base = [6, 14, 22, 30, 38];
@@ -128,6 +152,22 @@ export function composeLevel(opts: ComposeOptions): ComposedLevel {
   for (let i = 1; i < xs.length; i++) xs[i] = Math.max(xs[i]!, xs[i - 1]! + 4.5);
   const overflow = xs[4]! - 41.5;
   if (overflow > 0) for (let i = 0; i < 5; i++) xs[i] = xs[i]! - overflow * (i / 4);
+  // K1: when any spot cover would sit on a pinned prop, re-place spots left-to-right, each at the
+  // clear position nearest its jittered spot (room reserved for the spots still to come). No-op otherwise.
+  if (pinned.length && xs.some((x) => pinnedNear(x, 1.6))) {
+    let prev = 0; // previous spot x (0 = none yet; spots start >= 4.5)
+    for (let i = 0; i < xs.length; i++) {
+      const lo = i === 0 ? 4.5 : prev + 4.5;
+      const hi = 41.5 - 4.5 * (xs.length - 1 - i);
+      let best: number | null = null;
+      for (let x = lo; x <= hi + 1e-9; x = Math.round((x + 0.5) * 2) / 2) {
+        if (pinnedNear(x, 1.6)) continue;
+        if (best === null || Math.abs(x - xs[i]!) < Math.abs(best - xs[i]!)) best = x;
+      }
+      if (best !== null) xs[i] = best;
+      prev = xs[i]!;
+    }
+  }
 
   // 2. Moves: junk first, then four spots drawn so at least three different moves appear.
   const moves = ["glow", "torque", "speed", "spin"];
@@ -144,16 +184,18 @@ export function composeLevel(opts: ComposeOptions): ComposedLevel {
 
   const spots: LevelSpotRef[] = kinds.map((k, i) => ({ part: parts[i]!, hide: hideFor(k, theme), x: xs[i]! }));
 
-  // 4. Scenery: clusters in the gaps, never on top of a spot's cover.
-  const props: LevelPropRef[] = [];
+  // 4. Scenery: pinned props first (verbatim, in order), then clusters in the gaps, never on a spot or a pin.
+  const props: LevelPropRef[] = [...pinned];
   const clusters = shuffle(r, CLUSTERS[theme]!);
   const gaps = [2, 10, 18, 26, 34, 41].map((g) => g + (r() * 2 - 1));
   gaps.forEach((gx, i) => {
+    if (pinnedNear(gx, 2.5)) return; // a pinned prop already fills this gap
     const c = clusters[i % clusters.length]!;
     for (const p of c.props) {
       const x = Math.round((gx + p.dx) * 2) / 2;
       if (x < 0 || x > 45) continue;
       if (spots.some((s) => Math.abs(s.x - x) < 1.6 && (PROPS[p.type]?.z ?? 0) > -3)) continue;
+      if (pinnedNear(x, 1.6) && (PROPS[p.type]?.z ?? 0) > -3) continue;
       const ref: LevelPropRef = { type: p.type, x };
       if (p.z != null) ref.z = p.z;
       if (p.y != null) ref.y = p.y;
@@ -169,7 +211,7 @@ export function composeLevel(opts: ComposeOptions): ComposedLevel {
     if (missions.length >= want) break;
     for (let tries = 0; tries < 12; tries++) {
       const x = Math.round((10 + r() * 30) * 2) / 2;
-      if (spots.every((s) => Math.abs(s.x - x) >= 3.5) && missions.every((m) => Math.abs(m.x - x) >= 6)) {
+      if (spots.every((s) => Math.abs(s.x - x) >= 3.5) && missions.every((m) => Math.abs(m.x - x) >= 6) && !pinnedNear(x, 2.5)) {
         missions.push({ type, x, free: true });
         break;
       }
