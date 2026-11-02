@@ -131,21 +131,21 @@
       "fit": {
         "studs_measured": 3,
         "design_gap_mm": 0.04999999999999982,
-        "gap_min_mm": 0.05,
+        "gap_min_mm": 0.048,
         "gap_max_mm": 0.05,
         "surface_offset_window_mm": [
           -0.075,
-          0.075
+          0.074
         ],
         "residual_error_mm": 0.05,
         "snap": {
           "studs_measured": 2,
           "design_gap_mm": 0.05,
-          "gap_min_mm": 0.05,
-          "gap_max_mm": 0.05,
+          "gap_min_mm": 0.048,
+          "gap_max_mm": 0.048,
           "surface_offset_window_mm": [
-            -0.075,
-            0.075
+            -0.076,
+            0.074
           ],
           "residual_error_mm": 0.05
         },
@@ -247,7 +247,7 @@
           "id": "I3_seats_on_reference",
           "level": "block",
           "result": "pass",
-          "detail": "overlap -0.000 mm3 with matching reference part"
+          "detail": "overlap 0.000 mm3 with matching reference part"
         },
         {
           "id": "I4_bore_on_grid",
@@ -271,19 +271,19 @@
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "2 stud(s) gap +0.050 to +0.050 mm; 1 pin/bore pair(s) gap +0.050 to +0.050 mm"
+          "detail": "2 stud(s) gap +0.048 to +0.048 mm; 1 pin/bore pair(s) gap +0.050 to +0.050 mm"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.075 to +0.074 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.074 mm"
         },
         {
           "id": "F2_breakage",
@@ -432,21 +432,21 @@
       "fit": {
         "studs_measured": 3,
         "design_gap_mm": 0.04999999999999982,
-        "gap_min_mm": 0.05,
+        "gap_min_mm": 0.048,
         "gap_max_mm": 0.05,
         "surface_offset_window_mm": [
           -0.075,
-          0.075
+          0.074
         ],
         "residual_error_mm": 0.05,
         "snap": {
           "studs_measured": 2,
           "design_gap_mm": 0.05,
-          "gap_min_mm": 0.05,
-          "gap_max_mm": 0.05,
+          "gap_min_mm": 0.048,
+          "gap_max_mm": 0.048,
           "surface_offset_window_mm": [
-            -0.075,
-            0.075
+            -0.076,
+            0.074
           ],
           "residual_error_mm": 0.05
         },
@@ -572,19 +572,19 @@
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "2 stud(s) gap +0.050 to +0.050 mm; 1 pin/bore pair(s) gap +0.050 to +0.050 mm"
+          "detail": "2 stud(s) gap +0.048 to +0.048 mm; 1 pin/bore pair(s) gap +0.050 to +0.050 mm"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.075 to +0.074 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.074 mm"
         },
         {
           "id": "F2_breakage",
@@ -733,21 +733,21 @@
       "fit": {
         "studs_measured": 3,
         "design_gap_mm": 0.04999999999999982,
-        "gap_min_mm": 0.05,
+        "gap_min_mm": 0.048,
         "gap_max_mm": 0.05,
         "surface_offset_window_mm": [
           -0.075,
-          0.075
+          0.074
         ],
         "residual_error_mm": 0.05,
         "snap": {
           "studs_measured": 2,
           "design_gap_mm": 0.05,
-          "gap_min_mm": 0.05,
-          "gap_max_mm": 0.05,
+          "gap_min_mm": 0.048,
+          "gap_max_mm": 0.048,
           "surface_offset_window_mm": [
-            -0.075,
-            0.075
+            -0.076,
+            0.074
           ],
           "residual_error_mm": 0.05
         },
@@ -849,7 +849,7 @@
           "id": "I3_seats_on_reference",
           "level": "block",
           "result": "pass",
-          "detail": "overlap -0.000 mm3 with matching reference part"
+          "detail": "overlap 0.000 mm3 with matching reference part"
         },
         {
           "id": "I4_bore_on_grid",
@@ -873,19 +873,19 @@
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "2 stud(s) gap +0.050 to +0.050 mm; 1 pin/bore pair(s) gap +0.050 to +0.050 mm"
+          "detail": "2 stud(s) gap +0.048 to +0.048 mm; 1 pin/bore pair(s) gap +0.050 to +0.050 mm"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.075 to +0.074 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.074 mm"
         },
         {
           "id": "F2_breakage",
@@ -1033,21 +1033,21 @@
       "fit": {
         "studs_measured": 3,
         "design_gap_mm": 0.04999999999999982,
-        "gap_min_mm": 0.05,
+        "gap_min_mm": 0.048,
         "gap_max_mm": 0.05,
         "surface_offset_window_mm": [
           -0.075,
-          0.075
+          0.074
         ],
         "residual_error_mm": 0.05,
         "snap": {
           "studs_measured": 2,
           "design_gap_mm": 0.05,
-          "gap_min_mm": 0.05,
-          "gap_max_mm": 0.05,
+          "gap_min_mm": 0.048,
+          "gap_max_mm": 0.048,
           "surface_offset_window_mm": [
-            -0.075,
-            0.075
+            -0.076,
+            0.074
           ],
           "residual_error_mm": 0.05
         },
@@ -1149,7 +1149,7 @@
           "id": "I3_seats_on_reference",
           "level": "block",
           "result": "pass",
-          "detail": "overlap -0.000 mm3 with matching reference part"
+          "detail": "overlap 0.000 mm3 with matching reference part"
         },
         {
           "id": "I4_bore_on_grid",
@@ -1173,19 +1173,19 @@
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "2 stud(s) gap +0.050 to +0.050 mm; 1 pin/bore pair(s) gap +0.050 to +0.050 mm"
+          "detail": "2 stud(s) gap +0.048 to +0.048 mm; 1 pin/bore pair(s) gap +0.050 to +0.050 mm"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.075 to +0.074 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.074 mm"
         },
         {
           "id": "F2_breakage",
@@ -2373,11 +2373,11 @@
       "fit": {
         "studs_measured": 2,
         "design_gap_mm": 0.05,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05,
+        "gap_min_mm": 0.048,
+        "gap_max_mm": 0.048,
         "surface_offset_window_mm": [
-          -0.075,
-          0.075
+          -0.076,
+          0.074
         ],
         "residual_error_mm": 0.05
       },
@@ -2458,7 +2458,7 @@
           "id": "I3_seats_on_reference",
           "level": "block",
           "result": "pass",
-          "detail": "overlap -0.000 mm3 with matching reference part"
+          "detail": "overlap 0.000 mm3 with matching reference part"
         },
         {
           "id": "S1_small_part_screen",
@@ -2470,19 +2470,19 @@
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "2 stud(s): gap +0.050 to +0.050 mm, design 0.050, allowed +0.045 to +0.060"
+          "detail": "2 stud(s): gap +0.048 to +0.048 mm, design 0.050, allowed +0.045 to +0.060"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.076 to +0.074 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.076 to +0.074 mm"
         },
         {
           "id": "F2_breakage",
@@ -2596,11 +2596,11 @@
       "fit": {
         "studs_measured": 2,
         "design_gap_mm": 0.05,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05,
+        "gap_min_mm": 0.048,
+        "gap_max_mm": 0.048,
         "surface_offset_window_mm": [
-          -0.075,
-          0.075
+          -0.076,
+          0.074
         ],
         "residual_error_mm": 0.05
       },
@@ -2681,7 +2681,7 @@
           "id": "I3_seats_on_reference",
           "level": "block",
           "result": "pass",
-          "detail": "overlap -0.000 mm3 with matching reference part"
+          "detail": "overlap 0.000 mm3 with matching reference part"
         },
         {
           "id": "S1_small_part_screen",
@@ -2693,19 +2693,19 @@
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "2 stud(s): gap +0.050 to +0.050 mm, design 0.050, allowed +0.045 to +0.060"
+          "detail": "2 stud(s): gap +0.048 to +0.048 mm, design 0.050, allowed +0.045 to +0.060"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.076 to +0.074 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.076 to +0.074 mm"
         },
         {
           "id": "F2_breakage",
@@ -2819,11 +2819,11 @@
       "fit": {
         "studs_measured": 2,
         "design_gap_mm": 0.05,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05,
+        "gap_min_mm": 0.048,
+        "gap_max_mm": 0.048,
         "surface_offset_window_mm": [
-          -0.075,
-          0.075
+          -0.076,
+          0.074
         ],
         "residual_error_mm": 0.05
       },
@@ -2904,7 +2904,7 @@
           "id": "I3_seats_on_reference",
           "level": "block",
           "result": "pass",
-          "detail": "overlap -0.000 mm3 with matching reference part"
+          "detail": "overlap 0.000 mm3 with matching reference part"
         },
         {
           "id": "S1_small_part_screen",
@@ -2916,19 +2916,19 @@
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "2 stud(s): gap +0.050 to +0.050 mm, design 0.050, allowed +0.045 to +0.060"
+          "detail": "2 stud(s): gap +0.048 to +0.048 mm, design 0.050, allowed +0.045 to +0.060"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.076 to +0.074 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.076 to +0.074 mm"
         },
         {
           "id": "F2_breakage",
@@ -3043,11 +3043,11 @@
       "fit": {
         "studs_measured": 2,
         "design_gap_mm": 0.05,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05,
+        "gap_min_mm": 0.048,
+        "gap_max_mm": 0.048,
         "surface_offset_window_mm": [
-          -0.075,
-          0.075
+          -0.076,
+          0.074
         ],
         "residual_error_mm": 0.05
       },
@@ -3128,7 +3128,7 @@
           "id": "I3_seats_on_reference",
           "level": "block",
           "result": "pass",
-          "detail": "overlap -0.000 mm3 with matching reference part"
+          "detail": "overlap 0.000 mm3 with matching reference part"
         },
         {
           "id": "S1_small_part_screen",
@@ -3140,19 +3140,19 @@
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "2 stud(s): gap +0.050 to +0.050 mm, design 0.050, allowed +0.045 to +0.060"
+          "detail": "2 stud(s): gap +0.048 to +0.048 mm, design 0.050, allowed +0.045 to +0.060"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.076 to +0.074 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.076 to +0.074 mm"
         },
         {
           "id": "F2_breakage",
@@ -3267,11 +3267,11 @@
       "fit": {
         "studs_measured": 2,
         "design_gap_mm": 0.05,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05,
+        "gap_min_mm": 0.048,
+        "gap_max_mm": 0.048,
         "surface_offset_window_mm": [
-          -0.075,
-          0.075
+          -0.076,
+          0.074
         ],
         "residual_error_mm": 0.05
       },
@@ -3352,7 +3352,7 @@
           "id": "I3_seats_on_reference",
           "level": "block",
           "result": "pass",
-          "detail": "overlap -0.000 mm3 with matching reference part"
+          "detail": "overlap 0.000 mm3 with matching reference part"
         },
         {
           "id": "S1_small_part_screen",
@@ -3364,19 +3364,19 @@
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "2 stud(s): gap +0.050 to +0.050 mm, design 0.050, allowed +0.045 to +0.060"
+          "detail": "2 stud(s): gap +0.048 to +0.048 mm, design 0.050, allowed +0.045 to +0.060"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.076 to +0.074 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.076 to +0.074 mm"
         },
         {
           "id": "F2_breakage",
@@ -3491,11 +3491,11 @@
       "fit": {
         "studs_measured": 2,
         "design_gap_mm": 0.05,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05,
+        "gap_min_mm": 0.048,
+        "gap_max_mm": 0.048,
         "surface_offset_window_mm": [
-          -0.075,
-          0.075
+          -0.076,
+          0.074
         ],
         "residual_error_mm": 0.05
       },
@@ -3588,19 +3588,19 @@
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "2 stud(s): gap +0.050 to +0.050 mm, design 0.050, allowed +0.045 to +0.060"
+          "detail": "2 stud(s): gap +0.048 to +0.048 mm, design 0.050, allowed +0.045 to +0.060"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.076 to +0.074 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.076 to +0.074 mm"
         },
         {
           "id": "F2_breakage",
@@ -3715,11 +3715,11 @@
       "fit": {
         "studs_measured": 2,
         "design_gap_mm": 0.05,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05,
+        "gap_min_mm": 0.048,
+        "gap_max_mm": 0.048,
         "surface_offset_window_mm": [
-          -0.075,
-          0.075
+          -0.076,
+          0.074
         ],
         "residual_error_mm": 0.05
       },
@@ -3800,7 +3800,7 @@
           "id": "I3_seats_on_reference",
           "level": "block",
           "result": "pass",
-          "detail": "overlap -0.000 mm3 with matching reference part"
+          "detail": "overlap 0.000 mm3 with matching reference part"
         },
         {
           "id": "S1_small_part_screen",
@@ -3812,19 +3812,19 @@
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "2 stud(s): gap +0.050 to +0.050 mm, design 0.050, allowed +0.045 to +0.060"
+          "detail": "2 stud(s): gap +0.048 to +0.048 mm, design 0.050, allowed +0.045 to +0.060"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.076 to +0.074 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.076 to +0.074 mm"
         },
         {
           "id": "F2_breakage",
@@ -8800,11 +8800,11 @@
       "fit": {
         "studs_measured": 4,
         "design_gap_mm": 0.05,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05,
+        "gap_min_mm": 0.048,
+        "gap_max_mm": 0.048,
         "surface_offset_window_mm": [
-          -0.075,
-          0.075
+          -0.076,
+          0.074
         ],
         "residual_error_mm": 0.05
       },
@@ -8885,7 +8885,7 @@
           "id": "I3_seats_on_reference",
           "level": "block",
           "result": "pass",
-          "detail": "overlap 0.000 mm3 with matching reference part"
+          "detail": "overlap -0.000 mm3 with matching reference part"
         },
         {
           "id": "S1_small_part_screen",
@@ -8897,19 +8897,19 @@
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "4 stud(s): gap +0.050 to +0.050 mm, design 0.050, allowed +0.045 to +0.060"
+          "detail": "4 stud(s): gap +0.048 to +0.048 mm, design 0.050, allowed +0.045 to +0.060"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.076 to +0.074 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.076 to +0.074 mm"
         },
         {
           "id": "F2_breakage",
@@ -12009,21 +12009,21 @@
       "fit": {
         "studs_measured": 12,
         "design_gap_mm": 0.05,
-        "gap_min_mm": 0.05,
+        "gap_min_mm": 0.048,
         "gap_max_mm": 0.2,
         "surface_offset_window_mm": [
           -0.075,
-          0.075
+          0.074
         ],
         "residual_error_mm": 0.05,
         "snap": {
           "studs_measured": 8,
           "design_gap_mm": 0.05,
-          "gap_min_mm": 0.05,
-          "gap_max_mm": 0.05,
+          "gap_min_mm": 0.048,
+          "gap_max_mm": 0.048,
           "surface_offset_window_mm": [
-            -0.075,
-            0.075
+            -0.076,
+            0.074
           ],
           "residual_error_mm": 0.05
         },
@@ -12152,7 +12152,7 @@
           "id": "I3_seats_on_reference",
           "level": "block",
           "result": "pass",
-          "detail": "overlap 0.000 mm3 with matching reference part"
+          "detail": "overlap -0.000 mm3 with matching reference part"
         },
         {
           "id": "I4_bore_on_grid",
@@ -12176,19 +12176,19 @@
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "8 stud(s) gap +0.050 to +0.050 mm; 4 pin/bore pair(s) gap +0.200 to +0.200 mm"
+          "detail": "8 stud(s) gap +0.048 to +0.048 mm; 4 pin/bore pair(s) gap +0.200 to +0.200 mm"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.075 to +0.074 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.074 mm"
         },
         {
           "id": "F2_breakage",
@@ -12297,11 +12297,11 @@
       "fit": {
         "studs_measured": 4,
         "design_gap_mm": 0.05,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05,
+        "gap_min_mm": 0.048,
+        "gap_max_mm": 0.048,
         "surface_offset_window_mm": [
-          -0.075,
-          0.075
+          -0.076,
+          0.074
         ],
         "residual_error_mm": 0.05
       },
@@ -12382,7 +12382,7 @@
           "id": "I3_seats_on_reference",
           "level": "block",
           "result": "pass",
-          "detail": "overlap 0.000 mm3 with matching reference part"
+          "detail": "overlap -0.000 mm3 with matching reference part"
         },
         {
           "id": "S1_small_part_screen",
@@ -12394,19 +12394,19 @@
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "4 stud(s): gap +0.050 to +0.050 mm, design 0.050, allowed +0.045 to +0.060"
+          "detail": "4 stud(s): gap +0.048 to +0.048 mm, design 0.050, allowed +0.045 to +0.060"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.076 to +0.074 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.076 to +0.074 mm"
         },
         {
           "id": "F2_breakage",
@@ -13329,21 +13329,21 @@
       "fit": {
         "studs_measured": 14,
         "design_gap_mm": 0.05,
-        "gap_min_mm": 0.05,
+        "gap_min_mm": 0.048,
         "gap_max_mm": 0.2,
         "surface_offset_window_mm": [
           -0.075,
-          0.075
+          0.074
         ],
         "residual_error_mm": 0.05,
         "snap": {
           "studs_measured": 8,
           "design_gap_mm": 0.05,
-          "gap_min_mm": 0.05,
-          "gap_max_mm": 0.05,
+          "gap_min_mm": 0.048,
+          "gap_max_mm": 0.048,
           "surface_offset_window_mm": [
-            -0.075,
-            0.075
+            -0.076,
+            0.074
           ],
           "residual_error_mm": 0.05
         },
@@ -13516,19 +13516,19 @@
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "8 stud(s) gap +0.050 to +0.050 mm; 6 pin/bore pair(s) gap +0.200 to +0.200 mm"
+          "detail": "8 stud(s) gap +0.048 to +0.048 mm; 6 pin/bore pair(s) gap +0.200 to +0.200 mm"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.075 to +0.074 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.074 mm"
         },
         {
           "id": "F2_breakage",
@@ -13638,11 +13638,11 @@
       "fit": {
         "studs_measured": 4,
         "design_gap_mm": 0.05,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05,
+        "gap_min_mm": 0.048,
+        "gap_max_mm": 0.048,
         "surface_offset_window_mm": [
-          -0.075,
-          0.075
+          -0.076,
+          0.074
         ],
         "residual_error_mm": 0.05
       },
@@ -13735,19 +13735,19 @@
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "4 stud(s): gap +0.050 to +0.050 mm, design 0.050, allowed +0.045 to +0.060"
+          "detail": "4 stud(s): gap +0.048 to +0.048 mm, design 0.050, allowed +0.045 to +0.060"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.076 to +0.074 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.076 to +0.074 mm"
         },
         {
           "id": "F2_breakage",
@@ -13862,11 +13862,11 @@
       "fit": {
         "studs_measured": 2,
         "design_gap_mm": 0.05,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05,
+        "gap_min_mm": 0.048,
+        "gap_max_mm": 0.048,
         "surface_offset_window_mm": [
-          -0.075,
-          0.075
+          -0.076,
+          0.074
         ],
         "residual_error_mm": 0.05
       },
@@ -13959,19 +13959,19 @@
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "2 stud(s): gap +0.050 to +0.050 mm, design 0.050, allowed +0.045 to +0.060"
+          "detail": "2 stud(s): gap +0.048 to +0.048 mm, design 0.050, allowed +0.045 to +0.060"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.076 to +0.074 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.076 to +0.074 mm"
         },
         {
           "id": "F2_breakage",
@@ -14450,21 +14450,21 @@
       "fit": {
         "studs_measured": 14,
         "design_gap_mm": 0.05,
-        "gap_min_mm": 0.05,
+        "gap_min_mm": 0.048,
         "gap_max_mm": 0.2,
         "surface_offset_window_mm": [
           -0.075,
-          0.075
+          0.074
         ],
         "residual_error_mm": 0.05,
         "snap": {
           "studs_measured": 8,
           "design_gap_mm": 0.05,
-          "gap_min_mm": 0.05,
-          "gap_max_mm": 0.05,
+          "gap_min_mm": 0.048,
+          "gap_max_mm": 0.048,
           "surface_offset_window_mm": [
-            -0.075,
-            0.075
+            -0.076,
+            0.074
           ],
           "residual_error_mm": 0.05
         },
@@ -14613,7 +14613,7 @@
           "id": "I3_seats_on_reference",
           "level": "block",
           "result": "pass",
-          "detail": "overlap 0.000 mm3 with matching reference part"
+          "detail": "overlap -0.000 mm3 with matching reference part"
         },
         {
           "id": "I4_bore_on_grid",
@@ -14637,19 +14637,19 @@
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "8 stud(s) gap +0.050 to +0.050 mm; 6 pin/bore pair(s) gap +0.200 to +0.200 mm"
+          "detail": "8 stud(s) gap +0.048 to +0.048 mm; 6 pin/bore pair(s) gap +0.200 to +0.200 mm"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.075 to +0.074 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.074 mm"
         },
         {
           "id": "F2_breakage",
@@ -14760,11 +14760,11 @@
       "fit": {
         "studs_measured": 6,
         "design_gap_mm": 0.05,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05,
+        "gap_min_mm": 0.048,
+        "gap_max_mm": 0.048,
         "surface_offset_window_mm": [
-          -0.075,
-          0.075
+          -0.076,
+          0.074
         ],
         "residual_error_mm": 0.05
       },
@@ -14845,7 +14845,7 @@
           "id": "I3_seats_on_reference",
           "level": "block",
           "result": "pass",
-          "detail": "overlap -0.000 mm3 with matching reference part"
+          "detail": "overlap 0.000 mm3 with matching reference part"
         },
         {
           "id": "S1_small_part_screen",
@@ -14857,19 +14857,19 @@
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "6 stud(s): gap +0.050 to +0.050 mm, design 0.050, allowed +0.045 to +0.060"
+          "detail": "6 stud(s): gap +0.048 to +0.048 mm, design 0.050, allowed +0.045 to +0.060"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.076 to +0.074 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.076 to +0.074 mm"
         },
         {
           "id": "F2_breakage",
@@ -15184,21 +15184,21 @@
       "fit": {
         "studs_measured": 14,
         "design_gap_mm": 0.05,
-        "gap_min_mm": 0.05,
+        "gap_min_mm": 0.048,
         "gap_max_mm": 0.2,
         "surface_offset_window_mm": [
           -0.075,
-          0.075
+          0.074
         ],
         "residual_error_mm": 0.05,
         "snap": {
           "studs_measured": 4,
           "design_gap_mm": 0.05,
-          "gap_min_mm": 0.05,
-          "gap_max_mm": 0.05,
+          "gap_min_mm": 0.048,
+          "gap_max_mm": 0.048,
           "surface_offset_window_mm": [
-            -0.075,
-            0.075
+            -0.076,
+            0.074
           ],
           "residual_error_mm": 0.05
         },
@@ -15411,19 +15411,19 @@
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "4 stud(s) gap +0.050 to +0.050 mm; 10 pin/bore pair(s) gap +0.200 to +0.200 mm"
+          "detail": "4 stud(s) gap +0.048 to +0.048 mm; 10 pin/bore pair(s) gap +0.200 to +0.200 mm"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.075 to +0.074 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.074 mm"
         },
         {
           "id": "F2_breakage",
@@ -15508,11 +15508,11 @@
       "fit": {
         "studs_measured": 2,
         "design_gap_mm": 0.05,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05,
+        "gap_min_mm": 0.048,
+        "gap_max_mm": 0.048,
         "surface_offset_window_mm": [
-          -0.075,
-          0.075
+          -0.076,
+          0.074
         ],
         "residual_error_mm": 0.05
       },
@@ -15593,7 +15593,7 @@
           "id": "I3_seats_on_reference",
           "level": "block",
           "result": "pass",
-          "detail": "overlap 0.000 mm3 with matching reference part"
+          "detail": "overlap -0.000 mm3 with matching reference part"
         },
         {
           "id": "S1_small_part_screen",
@@ -15605,19 +15605,19 @@
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "2 stud(s): gap +0.050 to +0.050 mm, design 0.050, allowed +0.045 to +0.060"
+          "detail": "2 stud(s): gap +0.048 to +0.048 mm, design 0.050, allowed +0.045 to +0.060"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.076 to +0.074 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.076 to +0.074 mm"
         },
         {
           "id": "F2_breakage",
@@ -15943,11 +15943,11 @@
       "fit": {
         "studs_measured": 4,
         "design_gap_mm": 0.05,
-        "gap_min_mm": 0.05,
-        "gap_max_mm": 0.05,
+        "gap_min_mm": 0.048,
+        "gap_max_mm": 0.048,
         "surface_offset_window_mm": [
-          -0.075,
-          0.075
+          -0.076,
+          0.074
         ],
         "residual_error_mm": 0.05
       },
@@ -16040,19 +16040,19 @@
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "4 stud(s): gap +0.050 to +0.050 mm, design 0.050, allowed +0.045 to +0.060"
+          "detail": "4 stud(s): gap +0.048 to +0.048 mm, design 0.050, allowed +0.045 to +0.060"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.075 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.076 to +0.074 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.075 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.076 to +0.074 mm"
         },
         {
           "id": "F2_breakage",
