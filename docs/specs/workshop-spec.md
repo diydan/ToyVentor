@@ -12,7 +12,7 @@ One standalone page, `/kip/Workshop.html`, with a tab per bench. It exists so th
 |---|---|---|
 | 1 | Shell (`workshop.js`) hosting each bench as a page in an iframe, one at a time. Kip-Demo.html and Truck-Mockup.html untouched. | built, `npm run e2e:workshop` |
 | 2 | Turn the generated `kip-rig.js` (cut out of Kip-Demo.html by `parts/kip/sync_kip_rig.py`) into a real module that both benches import; delete the sync script. Needs Kip-Demo.html and Truck-Mockup.html edited. | built, `npm run e2e:workshop` |
-| 3 | Print view takes a parts provider instead of reading Kip's scene state (below). | not started |
+| 3 | Print view takes a parts provider instead of reading Kip's scene state (below). | built, `npm run e2e:workshop` + Truck print browser check |
 | 4 | Benches become modules mounted in one scene, one menu, one print view. Then mount in the game. | not started |
 
 Stage 1 deliberately embeds whole pages. What it buys: one place to open both, a tested tab and URL contract, no edits to files other sessions own, a hidden bench is unloaded (its WebGL context is freed), and the host boundary the game needs (`mountWorkshop(el, { urlSync: false })`, no globals, does not touch the host's URL or title). What it does not buy: the two benches still have their own menus and print views; the shell cannot yet carry a model from one bench to the other.
