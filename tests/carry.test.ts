@@ -8,6 +8,8 @@ import {
   type CarryParams,
 } from "../src/features/game/world/runtime/carry";
 import { validateLevel2, type Level2Recipe } from "../src/features/game/world/runtime/level2";
+import { LEVEL2_RECIPES, stepsFromCarry } from "../src/features/game/world/runtime/level2Recipes";
+import { learnRungDef } from "../src/features/game/world/runtime/learnRungs";
 
 // Pack the car (play-design conversion table): each thing fits exactly one place.
 const packCar: CarryParams = {
@@ -90,5 +92,19 @@ describe("level/2 carry primitive", () => {
     expect(solveCarry(cowRecipe.interaction.params)).toEqual([{ itemId: "grass", targetId: "cow" }]);
     const bad = { ...cowRecipe, interaction: { primitive: "dance", params: cowRecipe.interaction.params } };
     expect(validateLevel2(bad as never).length).toBeGreaterThan(0);
+  });
+
+  it("converted rungs: recipes validate and their panel steps come from the solver", () => {
+    for (const recipe of LEVEL2_RECIPES) {
+      expect(validateLevel2(recipe), recipe.id).toEqual([]);
+      const def = learnRungDef(recipe.id);
+      expect(def, recipe.id).toBeDefined();
+      expect(def!.steps).toEqual(stepsFromCarry(recipe.interaction.params));
+      expect(def!.steps.length).toBeGreaterThan(0);
+      for (const step of def!.steps) {
+        expect(step.choices).toHaveLength(3);
+        expect(step.say).toMatch(/^Where does the .+ go\?$/);
+      }
+    }
   });
 });

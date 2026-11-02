@@ -405,6 +405,87 @@ export async function segmentBoxes(
   return boxes.length ? { status: "ok", boxes } : { status: "no-match" };
 }
 
+export type InspectResult = { checked: true; nouns: string[] } | { checked: false };
+
+const INSPECT_TIMEOUT_MS = 12_000;
+const NOUN_RE = /^[a-z][a-z ]{0,39}$/;
+
+/** Defensively pull ranked segmenter nouns out of a Spark reply (JSON, possibly fenced). Exported for tests. */
+export function parseInspectNouns(text: string): string[] {
+  try {
+    const start = text.indexOf("{");
+    const end = text.lastIndexOf("}");
+    if (start < 0 || end <= start) return [];
+    const parsed = JSON.parse(text.slice(start, end + 1)) as { nouns?: unknown };
+    if (!Array.isArray(parsed.nouns)) return [];
+    const out: string[] = [];
+    for (const raw of parsed.nouns) {
+      if (typeof raw !== "string") continue;
+      const noun = raw.trim().toLowerCase();
+      if (NOUN_RE.test(noun) && !out.includes(noun)) out.push(noun);
+      if (out.length >= 6) break;
+    }
+    return out;
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Scan Assist (forge-ai A1; spike passed live 2026-11-02): one Spark vision call proposes ranked nouns
+ * for SAM. Fail-soft by contract — any failure answers { checked: false } and the caller keeps today's
+ * client-noun behaviour. Low reasoning effort first (the spike's default effort took ~10 s); one plain
+ * retry covers models that reject the reasoning parameter.
+ */
+export async function inspectPhotoNouns(
+  env: MetaEnv,
+  imageDataUrl: string,
+  timeoutMs = INSPECT_TIMEOUT_MS,
+): Promise<InspectResult> {
+  const key = apiKey(env);
+  if (!key || !imageDataUrl.startsWith("data:image/")) return { checked: false };
+  const call = (withEffort: boolean) =>
+    fetch(responsesUrl(env), {
+      method: "POST",
+      headers: { authorization: `Bearer ${key}`, "content-type": "application/json" },
+      body: JSON.stringify({
+        model: "muse-spark-1.3",
+        ...(withEffort ? { reasoning: { effort: "low" } } : {}),
+        input: [
+          {
+            type: "message",
+            role: "user",
+            content: [
+              {
+                type: "input_text",
+                text: 'List the main objects in this photo as short nouns for an image segmenter. Reply with JSON only: {"nouns": ["...", "..."]} ranked by prominence, at most 6.',
+              },
+              { type: "input_image", image_url: imageDataUrl },
+            ],
+          },
+        ],
+      }),
+      signal: AbortSignal.timeout(timeoutMs),
+    });
+  try {
+    let res = await call(true);
+    if (!res.ok) res = await call(false);
+    if (!res.ok) return { checked: false };
+    const body = (await res.json()) as {
+      output?: Array<{ content?: Array<{ type?: string; text?: string }> }>;
+    };
+    const text = (body.output ?? [])
+      .flatMap((o) => o.content ?? [])
+      .filter((c) => c.type === "output_text" && typeof c.text === "string")
+      .map((c) => c.text as string)
+      .join("");
+    const nouns = parseInspectNouns(text);
+    return nouns.length ? { checked: true, nouns } : { checked: false };
+  } catch {
+    return { checked: false };
+  }
+}
+
 /** The selfie cartoon redraw: Muse Image edits the photo into a flat, outlined, plain-backdrop cartoon portrait. */
 export const SELFIE_CARTOON_PROMPT =
   "Redraw this photo as a friendly flat cartoon portrait for a children's toy. Keep the same head position, hair colour, skin tone and expression, and keep the face large and centred. Bold dark outlines, flat colours, one solid plain pale background colour, no text, no letters, no watermark. Family friendly.";

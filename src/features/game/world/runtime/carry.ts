@@ -11,12 +11,16 @@
 
 export interface CarryItemDef {
   id: string;
+  /** Kid-facing name (panel prompts, speech). Defaults to the id. */
+  label?: string;
   /** Targets this item accepts. Empty = a distractor that never places (the rock beside the grass). */
   targetIds: string[];
 }
 
 export interface CarryTargetDef {
   id: string;
+  /** Kid-facing name (panel prompts, speech). Defaults to the id. */
+  label?: string;
   /** Lane position (level x units). */
   x: number;
 }

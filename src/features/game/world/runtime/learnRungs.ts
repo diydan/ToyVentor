@@ -1,3 +1,5 @@
+import { PACK_CAR_RECIPE, TIDY_ONE_THING_RECIPE, stepsFromCarry } from "./level2Recipes";
+
 // Panel content for carousel rungs with no in-world lab mission
 // (carousel spec §10.2 new ids: little.*, early.*, daily.*,
 // gears.ratio, gears.gearbox, circuits.series). Each rung is a short
@@ -51,10 +53,8 @@ export const LEARN_RUNGS: LearnRungDef[] = [
     s("Who can fly?", ["🐟 Fish", "🐦 Bird", "🐢 Turtle"], 1, "Wings help this animal fly."),
     s("Who hops?", ["🐌 Snail", "🐸 Frog", "🐙 Octopus"], 1, "Hop, hop! This animal jumps with big legs."),
   ], "Hello, animal friends!"),
-  d("little.pack", "Pack the car", "Pack everything the car needs for a trip.", [
-    s("What goes in the car first?", ["🎒 Bag", "🌳 Tree", "🏠 House"], 0, "Only things that fit in a car can go."),
-    s("What else can ride along?", ["☁️ Cloud", "🧸 Teddy", "🌊 Ocean"], 1, "Teddy is small and soft. Teddy fits!"),
-  ], "All packed. Beep beep, off we go!"),
+  // level/2: steps generated from the carry recipe (runtime/level2Recipes.ts) so panel and primitive agree.
+  d("little.pack", "Pack the car", PACK_CAR_RECIPE.card.goal, stepsFromCarry(PACK_CAR_RECIPE.interaction.params), "All packed. Beep beep, off we go!"),
   d("little.peek", "Peekaboo", "Find who is hiding.", [
     s("Someone is hiding behind the bush. Who is it?", ["🐰 Bunny ears", "🪨 Just a rock", "Nothing there"], 0, "Two long ears are poking out at the top."),
     s("Peekaboo! The bunny is…", ["Asleep", "Hiding still", "Here! 🙈➡️🐰"], 2, "Peekaboo means: now you see me!"),
@@ -63,10 +63,7 @@ export const LEARN_RUNGS: LearnRungDef[] = [
     s("The light is green. What does the car do?", ["Stop", "GO! 🚗💨", "Sleep"], 1, "Green means go!"),
     s("Uh oh, a duck is crossing. What now?", ["Go faster", "Beep loudly", "Stop and wait 🦆"], 2, "Cars wait and let the duck cross safely."),
   ], "Go, car, go! You drove safely."),
-  d("little.tidy", "Tidy one thing", "Put one thing back where it lives.", [
-    s("A book is on the floor. Where does it live?", ["📚 Bookshelf", "🛁 Bathtub", "🧊 Fridge"], 0, "Books live with other books."),
-    s("A sock is under the chair. Where does it live?", ["🍽️ Table", "🧺 Laundry basket", "🪴 Plant pot"], 1, "Socks go with the washing."),
-  ], "Tidy! One thing at a time is how tidying works."),
+  d("little.tidy", "Tidy one thing", TIDY_ONE_THING_RECIPE.card.goal, stepsFromCarry(TIDY_ONE_THING_RECIPE.interaction.params), "Tidy! One thing at a time is how tidying works."),
   // --- Early learning (ages 3-4) ---
   d("early.colors", "Colors", "Name the colors.", [
     s("What color is a banana?", ["🔵 Blue", "🟡 Yellow", "🟣 Purple"], 1, "Bananas are the color of sunshine."),

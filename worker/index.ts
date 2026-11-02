@@ -15,7 +15,7 @@ import {
   type ToyKind,
 } from "../shared/toy";
 import { readCappedJson } from "./body";
-import { makeSkin, samConfigured, segmentToy, type MetaEnv } from "./meta";
+import { inspectPhotoNouns, makeSkin, samConfigured, segmentToy, type MetaEnv } from "./meta";
 import {
   forgeOptimizerConfigured,
   handleForgeArtifact,
@@ -89,13 +89,27 @@ async function handleSamScan(scan: NonNullable<ScanBody["scan"]>, env: Env) {
     if (!outlineRequest.ok) return json({ error: "invalid scan request" }, 422);
   }
 
-  const result = await segmentToy(
-    env,
-    imageDataUrl,
-    prompt,
-    undefined,
-    outlineRequest?.ok ? { outline: outlineRequest.request } : {},
-  );
+  // Scan Assist (A1): Spark noun inspection runs alongside the first SAM call so a no-match can retry
+  // immediately with better nouns. Fail-soft: { checked: false } keeps today's client-noun behaviour.
+  const outlineOpts = outlineRequest?.ok ? { outline: outlineRequest.request } : {};
+  const [firstResult, inspect] = await Promise.all([
+    segmentToy(env, imageDataUrl, prompt, undefined, outlineOpts),
+    inspectPhotoNouns(env, imageDataUrl),
+  ]);
+  let result = firstResult;
+  let assistNoun: string | undefined;
+  if (result.status === "no-match" && inspect.checked) {
+    for (const noun of inspect.nouns.slice(0, 2)) {
+      if (noun === prompt.trim().toLowerCase()) continue;
+      const retry = await segmentToy(env, imageDataUrl, noun, 10_000, outlineOpts);
+      if (retry.status === "ok") {
+        result = retry;
+        assistNoun = noun;
+        break;
+      }
+    }
+  }
+  const inspectInfo = inspect.checked ? { nouns: inspect.nouns, checked: true, ...(assistNoun ? { used: assistNoun } : {}) } : { checked: false };
   console.log(
     JSON.stringify({
       event: "sam_scan",
@@ -112,6 +126,7 @@ async function handleSamScan(scan: NonNullable<ScanBody["scan"]>, env: Env) {
         configured: samConfigured(env),
         applied: false,
         status: result.status,
+        inspect: inspectInfo,
         ...(result.status === "error" ? { message: result.message } : {}),
       },
     });
@@ -139,6 +154,7 @@ async function handleSamScan(scan: NonNullable<ScanBody["scan"]>, env: Env) {
       maskApplied: Boolean(result.mask),
       matches: result.matches,
       box: result.box,
+      inspect: inspectInfo,
       ...(result.outline ? { outline: result.outline } : {}),
     },
   });

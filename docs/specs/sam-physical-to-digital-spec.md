@@ -502,11 +502,11 @@ every user-facing privacy sentence and S1.
 - [ ] **Q2 (blocks S4):** Twin Sync pose ambition: slot-level (v1, proposed) vs capturing arm/wheel poses? Cost grows fast past slot-level.
 - [ ] **Q3 (blocks S3):** Is the printed TU scale tile required in-frame for level heights, or do relative bands play well enough? Decide from the S3 eval.
 - [ ] **Q4 (blocks S5):** Tidy-delta threshold per surface (bench vs floor vs bed) — one global rule or per-quest data? Needs the §7.4 pair results.
-- [ ] **Q5 (blocks S1 copy):** Scavenger concept list for launch (lever/gear/wheel only, or add pulley/ramp/screw per Concept Badges)?
+- [x] **Q5 — RESOLVED 2026-11-02:** Launch concepts are lever/gear/wheel only (`src/lib/scavenger.ts`). Pulley/ramp/screw join only after S1 eval shows the three work.
 - [ ] **Q6 (post-S1):** Do Feature 6 verdicts feed ScanDex/suggester training exhaust (future-vision), and under what parent consent wording? Default: no, until Max planning says otherwise.
-- [ ] **Q7 (blocks S1 and every privacy sentence):** What does the SAM provider retain, for how long, and is it used for training? Record the answer (the terms or the account setting) in `docs/decisions/` as 0007. Until then UI copy promises only what our Worker does.
+- [ ] **Q7 (partially answered 2026-11-02):** `docs/decisions/0007-sam-provider-retention.md` records our Worker's behaviour and the copy rule (promise only our side). The provider terms themselves are still to be read and pasted there; no public privacy claim until then. S1 may build behind that copy rule.
 - [ ] **Q8 (blocks F3 v2):** Which `level/2` primitive makes a photographed prop an obstacle: a hop-over verb, push aside, carry or feed past, or a bridge? Decided in play-design-spec; v1 does not need it.
 - [ ] **Q9 (blocks S0b):** One limiter for `/api/scan` and the new routes, or per-route budgets? Where does it count (Durable Object, KV, D1), given in-isolate counters reset per isolate?
-- [ ] **Q10 (blocks S1):** Is there a daily XP ceiling across all real-life quests, or does each quest id pay +25 on its own (up to 125 a day with five routines today)?
+- [x] **Q10 — RESOLVED 2026-11-02:** One shared +25 XP/day ceiling across ALL real-life quests (routines + scavenger combined), as §7.3 already states. First verified completion of the day pays; the rest still tick the board and Workshop Days. Implementation must enforce the shared cap in one place when scavenger ids join (today each routine pays its own +25 — reconcile at S1 integration, grandfathering nothing retroactively).
 
 

@@ -1,6 +1,8 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  inspectPhotoNouns,
   makeSkin,
+  parseInspectNouns,
   SAM_TIMEOUT_MS,
   segmentToy,
   SKIN_TIMEOUT_MS,
@@ -152,5 +154,41 @@ describe("upstream timeouts", () => {
     if (result.status !== "error") return;
     expect(result.message).toMatch(/timed out/);
     expect(result.message).not.toMatch(/Bearer|test-key/);
+  });
+});
+
+describe("Scan Assist inspect (A1)", () => {
+  it("parses ranked nouns defensively (fenced, noisy, overlong)", () => {
+    expect(parseInspectNouns(JSON.stringify({ nouns: ["Chair", "teddy bear", "CHAIR", "x".repeat(50)] }))).toEqual([
+      "chair",
+      "teddy bear",
+    ]);
+    expect(parseInspectNouns("```json\n{\"nouns\": [\"book\"]}\n```")).toEqual(["book"]);
+    expect(parseInspectNouns("no json here")).toEqual([]);
+    expect(parseInspectNouns('{"nouns": "book"}')).toEqual([]);
+  });
+
+  it("fails soft without a key (checked: false, no fetch)", async () => {
+    const fetchMock = vi.fn(async () => new Response("{}"));
+    vi.stubGlobal("fetch", fetchMock);
+    expect(await inspectPhotoNouns({}, "data:image/jpeg;base64,x")).toEqual({ checked: false });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("returns nouns from a Spark-shaped reply", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        Response.json({
+          output: [
+            { type: "message", content: [{ type: "output_text", text: '{"nouns": ["chair", "bear"]}' }] },
+          ],
+        }),
+      ),
+    );
+    expect(await inspectPhotoNouns({ MODEL_API_KEY: "test-key" }, "data:image/jpeg;base64,x")).toEqual({
+      checked: true,
+      nouns: ["chair", "bear"],
+    });
   });
 });
