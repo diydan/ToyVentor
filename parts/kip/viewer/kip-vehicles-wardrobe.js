@@ -5,7 +5,7 @@ import {
   createTorsoOutfitDecalCanvas,
   createLegOutfitDecalCanvas,
 } from './kip-forge-sdk.js?v=10.0';
-import { FACEPLATE_DECAL } from './kip-faceplate-shape.js?v=10.0';
+import { FACEPLATE_DECAL, FACEPLATE_SEAT_MM } from './kip-faceplate-shape.js?v=10.0';
 
 export const KIP_BUILD_VERSION = 'v10.1';
 export const HAIR_WRAP_MM = 16.5;
@@ -506,7 +506,7 @@ export function attachExpansionToKipRig(THREE, kip, expGeos, baseParts, mats, sc
   kip.headLocal.add(faceplateGroup);
   const faceplateSlot = createSlot('char_faceplate', faceplateGroup, [0, 8, 56], 4.35, 'both', 'alt_head');
   const faceplateHolder = new THREE.Group();
-  faceplateHolder.position.set(0, 17.1875 - 2.50, FACE_STEM_MM); // stem axis is 2.5 mm above the trimmed chin edge (was 2.9 before 6b20bed)
+  faceplateHolder.position.set(0, 17.1875 - 2.50 + FACEPLATE_SEAT_MM.raise, FACE_STEM_MM - FACEPLATE_SEAT_MM.sink); // stem axis is 2.5 mm above the trimmed chin edge (was 2.9 before 6b20bed), seated per FACEPLATE_SEAT_MM
   faceplateSlot.add(faceplateHolder);
 
   const fpOrient = new THREE.Group();

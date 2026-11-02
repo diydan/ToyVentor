@@ -146,6 +146,32 @@ describe("face plate eyes are human-proportioned", () => {
     for (const k of ["sculpted", "flatButton", "flat"]) expect(E[k] + 2.6 + 1.5).toBeLessThan(S.plateHalfWidth(5.8));
   });
 
+  it("the seated plate sits in the kid pocket: chin at its bottom edge, rim not proud of the lip", () => {
+    // Holder wiring: both seat sites must apply the shared correction.
+    expect(read("parts/kip/viewer/Kip-Demo.html")).toContain("dt.faceY - 2.50 + FACEPLATE_SEAT_MM.raise");
+    expect(read("parts/kip/viewer/Kip-Demo.html")).toContain("FACE_STEM_MM - FACEPLATE_SEAT_MM.sink");
+    expect(read("parts/kip/viewer/kip-vehicles-wardrobe.js")).toContain("FACEPLATE_SEAT_MM.raise");
+    const seat = S.FACEPLATE_SEAT_MM as { raise: number; sink: number };
+    const head = parseStl(readFileSync(join(root, "public/kip/partspec/toyventor_char_head_kid_S.stl"))) as Float32Array;
+    const plate = parseStl(readFileSync(join(root, "public/kip/partspec/toyventor_char_faceplate_P.stl"))) as Float32Array;
+    const frontAt = (t: Float32Array, y: number, x0: number, x1: number) => {
+      let mn = Infinity;
+      for (let i = 0; i < t.length; i += 3) if (Math.abs(t[i + 2]! - y) < 0.5 && Math.abs(t[i]!) >= x0 && Math.abs(t[i]!) <= x1) mn = Math.min(mn, t[i + 1]!);
+      return mn === Infinity ? NaN : -mn;
+    };
+    // Pocket bottom: first height (from y=8 up) whose centre front is recessed below 11 mm.
+    let pocketBottom = NaN;
+    for (let y = 8; y <= 14 && Number.isNaN(pocketBottom); y += 0.5) if (frontAt(head, y, 0, 5) < 11) pocketBottom = y;
+    const chinY = 12.5 - 2.5 + seat.raise; // kid faceY datum, holder formula
+    expect(chinY).toBeGreaterThanOrEqual(pocketBottom - 0.15);
+    expect(chinY).toBeLessThanOrEqual(pocketBottom + 0.6);
+    // Rim at zb 10-12 vs head lip at the same heights: seated rim must not ride more than 0.4 mm proud.
+    let rimFront = -Infinity;
+    for (let i = 0; i < plate.length; i += 3) if (plate[i + 2]! >= 9 && plate[i + 2]! <= 12.5 && Math.abs(plate[i]!) >= 8) rimFront = Math.max(rimFront, plate[i + 1]!);
+    const lip = frontAt(head, chinY + 11, 8, 11);
+    expect(10.167 - seat.sink + rimFront).toBeLessThanOrEqual(lip + 0.4);
+  });
+
   it("a plate-art eye pair is closer than the classic head's, which keeps its own spacing", () => {
     const src = read("parts/kip/viewer/kip-forge-sdk.js");
     expect(src).toMatch(/const eyeTable = onPlate \? FACEPLATE_EYE_PX : LEGACY_EYE_PX;/);

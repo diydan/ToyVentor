@@ -62,6 +62,13 @@ export function windowHalfWidth(zb) {
 /** Eye-line height, half the eye spacing (mm), and mouth height on the plate. */
 export const FACE_TARGET_MM = { eyeZb: 5.4, eyeHalfSpan: 5.3, mouthZb: 1.1 };
 
+/**
+ * Viewer seat correction for the plate holder (measured from the kid head + sculpted plate STLs, 2026-11-02):
+ * with the bare CAD datum the plate chin (faceY - 2.5) hangs ~0.7 mm below the head pocket's bottom edge and
+ * the plate rim rides ~1.6 mm proud of the pocket floor/lip line. `raise` lifts the holder, `sink` pulls it back.
+ */
+export const FACEPLATE_SEAT_MM = { raise: 0.7, sink: 1.6 };
+
 /** Window size in mm: the bounding box of the outline (what the picture canvas covers). */
 export const WINDOW_MM = { w: +(2 * widest).toFixed(2), h: +(WINDOW_ZB.max - WINDOW_ZB.min).toFixed(2) };
 /** Where the picture sits on the plate: the conformal decal plane `buildConformalFaceplateDecalGeo(width, height, centerY)`. */

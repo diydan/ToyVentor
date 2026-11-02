@@ -459,6 +459,7 @@ import { mountSelfie } from '/kip/kip-selfie.js?v=10.0';
 import { mountDescribe } from '/kip/kip-describe-tab.js?v=10.0';
 import { KIP_CLIPS, clipForProp, isPropClip, makeKipClip } from '/kip/kip-clips.js?v=10.0';
 import { createKipRig } from '/kip/kip-rig.js?v=10.0';
+import { FACEPLATE_SEAT_MM } from '/kip/kip-faceplate-shape.js?v=10.0';
 
 if (window.self !== window.top) document.body.classList.add('in-iframe');
 
@@ -1735,7 +1736,7 @@ function syncHeadHairHatLayout() {
   refreshDecalTexture();
   kip.exp.faceplateGroup.visible = isHuman;
   // The plate STL's z = 0 is the printed chin edge; its stem axis is 2.9 - 0.4 (chin trim, 6b20bed) = 2.5 mm above it.
-  kip.exp.faceplateHolder.position.set(0, dt.faceY - 2.50, FACE_STEM_MM);
+  kip.exp.faceplateHolder.position.set(0, dt.faceY - 2.50 + FACEPLATE_SEAT_MM.raise, FACE_STEM_MM - FACEPLATE_SEAT_MM.sink);
   kip.exp.faceplateMesh.visible      = isHuman && (loco.faceInsert === 'sculpted');
   kip.exp.faceplateVinylMesh.visible = isHuman && (loco.faceInsert === 'vinyl');
   kip.exp.faceplateFlatMesh.visible  = isHuman && (loco.faceInsert === 'flat');
