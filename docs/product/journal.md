@@ -177,6 +177,11 @@ Goal: fit-filtered market + support-free STL export (wireframe p.7–9). Start: 
 - Process: `parts/` freeze in effect with lanes assigned — lime-ionosphere owns the jumbo+ballcap stack (uncommitted `_hat_body` rework has since landed; re-verify `valid_kip_seated_jumbo` on next run); Truck-Mockup Commit 2 held for author confirmation.
 - Print, Day 5–6 blocker lifting: calibration print (F1) started Sat Oct 31, ~5 h run. First real plastic — fit loops unblock when it lands. Since: colour-grouped 3MF print workflow + 1:1 sticker sheet landed (`509e7c2`, M1+M2); F1 outcome still to record.
 
+### End of Day — Sat Oct 31 (backfilled Nov 2; reconstructed from git log, not witnessed)
+- Shipped, 27 commits: 5A world splits + phase 1–4 Toy Box/XP (`a35e342`, `5dce199`, `233e763`, `7479874`, `8e70b3b`), headless-Chrome e2e suites (`5dfead8`, `3509493`), Wave 9 viewer/assets at 53 parts / 41 assemblies (`8195d3c`), Jumbo Vinyl head (`9aa3627`, wired `715197f`, reshaped `7313021`), truck steering demo (`b28ebc3`), side menu/print/selfie demo (`aa60423`), knuckle fix (`8600b09`), CI trunk guard, vendor split.
+- Goal check (Market + Print): print half moved — F1 running, M1+M2 3MF workflow landed next day (`509e7c2` is a Nov 1 commit). Fit-filtered market: no Oct 31 evidence found in history; unrecorded, not claimed.
+- F1 outcome: still printing at close; scorecard landed Nov 2 (see Day 8).
+
 ## Day 7 — Sun Nov 1: Color + Play
 
 Goal: AR color preview + mini-game equip (wireframe p.10–11, stretch: color). Start: must-work item, full masks vs AR-preview cut, toy loads + add-on boost. End: shipped, demo-able, scan-to-game loop on phone, blockers, tomorrow's task. *(Unfilled.)*
@@ -193,9 +198,23 @@ Goal: AR color preview + mini-game equip (wireframe p.10–11, stretch: color). 
 - Still open at close of day: torso `digital_only` flake + `check_worker` poses (no owners left — all peer sessions except one gone); F1 outcome (Dan running); ~470 dirty paths, all other lanes' live work, deliberately untouched.
 - INCIDENT 23:03 — destructive `git reset --hard dad0f7c` (mine, no pre-save, no recovery ref) wiped ~200 tracked dirty paths. Commits intact through `dad0f7c`. Recovery, same night: ocean-sabik's log held no workspace deltas (2 edits to a /tmp copy only). Reconstructed from session logs + surviving /tmp patches instead. Restored verbatim: Kip-Demo `mountDescribe` import + mount block (viewer + public mirrors, byte-identical) — `tests/kip-describe.test.ts` back to 3/3. Everything else destroyed was either already committed (town `38084fc`, Kit/Mech `9509343`, Kip-print `355052e`, describe tab) or belongs to the still-live Kip-print lane (7 red: kip-print ×4, faceplate-shape, stickers, kip.test count 18-vs-30 — HEAD-red tests whose uncommitted fixes died in the reset; lane re-editing live as of 23:13, left untouched). Rule adopted: no `reset --hard` / broad restore without an explicit ask + a `workspace-recovery.sh save` first.
 
+### End of Day — Sun Nov 1 (backfilled Nov 2; reconstructed from git log + the midday/evening notes above, not witnessed)
+- Shipped, 41 commits: 3MF print workflow M1+M2 (`509e7c2`), describe-and-build tab (`fafe1be`), quests board + Rank 5 roster (`fb95052`), asset-optimization merge + 85 payloads (`f331ff2`, `a513452`), town (`38084fc`), Kit/Mech/Momentum generators (`9509343`), kip-print hairstyles (`355052e`), reveal theme song a day early (`bc324e6`), full reset recovery chain (`f3dcb2c`–`df33eb2`).
+- Goal check (AR color + mini-game equip): no Nov 1 evidence found for either — the day went to print workflow, assets, town, and recovery instead. Unmet as written; no late edit to the goal, it stands as the miss it was.
+- F1 outcome: Dan still running the print at close; scorecard recorded Nov 2 (see Day 8).
+
 ## Day 8 — Mon Nov 2: Reveal + Theme song
 
 Goal: entrance animation + 15 s theme + character card, plays once then saves (wireframe p.12). Start: must-work item, song caching per character id + failure fallback, Minimo clips tagged. End: shipped, demo-able, plays-once-then-saves check, blockers, tomorrow's task. *(Unfilled.)*
+
+### End of Day — Mon Nov 2 (recorded ~02:25 CET, witnessed)
+- Crown rebuild: 26 hair/hat STLs with zero-support ledges + 26 validation reports + custom crest/wizard-hat SDK outputs (`23db98e`); kit-tray M6 print workflow, `kip-print` 42/42 incl. M6 Gate 1 sweep + live-Orca Gates 3 & 5 (`7803b2c`; Gate 5 re-pointed at `veh_car_chassis` after the bumper rebuild made its control support-free); classic-head retirement complete (`09b2d20` + audit); regenerated STLs/manifests (`f60a7b2`); Truck-Mockup PRO_TIP_MIN 24° for the barrel-hinge tub (`c7c957f`).
+- Calibration Print 1 scorecard (Dan, by hand): snap ladder best step 2 (`D = 0.0`, slicer compensation stays 0/0); pro shaft +0.3, free pin +0.4; show-face-down skin reprint tight with 12 folds (vs 4 before); supports-on slice filled flat-ceiling sockets, motivating the conical-socket + show-face-down rework. `F1_printed_fit` / `F2_breakage` still pending (one printer, one filament).
+- Forge eval harness: 60 prompts, stub + Spark proposers (`84660e6`); prompt v1 with slot facts + real daemon star-fillet fix (`0ab20a4`); spec notes (`2f0a779`). v0 baseline: 47/60 first attempt, 50/60 final. Spark v1 run in flight at close.
+- Assets: fresh bridge outputs 24.13 MB vs 25 MB budget (`80178b3`); asset suite 8/8.
+- Goal check (Reveal + theme): theme song landed a day early (Nov 1, `bc324e6`); entrance animation + character card + plays-once-then-saves: no Nov 2 evidence found — open, carry to Day 9.
+- Verification at close: `tsc` 0 errors, `sync_public` 6/6, `preprint --catalog` exit 0, kip-menu 23/23, stickers 9/9, forge core 13/13. Tree fully committed through `2f0a779`.
+- Open at close: Workshop viewer lane (peer, live, uncommitted); Spark v1 run still going; Day 9 freeze tomorrow.
 
 ## Day 9 — Tue Nov 3: Polish + Demo
 
