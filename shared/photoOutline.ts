@@ -67,6 +67,12 @@ export interface OutlineOptions {
    * reached the 360 degrees of turning a circle has, and the overlap with the mask moved by 0.003 at most). `0` turns it off.
    */
   smoothMm?: number;
+  /**
+   * After the blur, the outline is also low-pass filtered along its own length (Taubin smoothing, which does not shrink a shape, so a
+   * thin neck keeps its width): wobble shorter than this many millimetres is taken out, which is what the mask's own noisy edge puts
+   * in. Default: 7% of the longer side, kept between 2 and 8 mm. `0` turns it off. Needs `smoothMm` above 0.
+   */
+  curveMm?: number;
 }
 
 export interface OutlineOrientation {
@@ -172,6 +178,9 @@ const WORK_LONG_PX = 400; // long side of the working raster
 const SMOOTH_SOURCE_PX = 2; // blur sigma, in source pixels, so a stair step and the mask's own one-pixel wobble are smoothed out
 const SMOOTH_MIN_MM = 0.3;
 const SMOOTH_MAX_MM = 0.8; // past this a 2 mm neck starts to lose width
+const CURVE_SHARE = 0.07; // cut-off wavelength of the outline's own low-pass, as a share of the longer side
+const CURVE_MIN_MM = 2;
+const CURVE_MAX_MM = 8;
 const MAX_MASK_PIXELS = 16_000_000;
 const ROUND_ELONGATION = 1.15; // below this the long axis means nothing
 const UPRIGHT_WITHIN_DEG = 30; // inside this the photo's own "up" is kept
@@ -704,6 +713,49 @@ export function smoothContour(bin: Uint8Array, w: number, h: number, sigmaPx: nu
   return best;
 }
 
+/** Resample a closed loop at equal arc length: `count` points. */
+function resampleClosed(loop: readonly Vec[], count: number): Vec[] {
+  const n = loop.length;
+  const cum = [0];
+  for (let i = 0; i < n; i++) cum.push(cum[i]! + Math.hypot(loop[(i + 1) % n]![0] - loop[i]![0], loop[(i + 1) % n]![1] - loop[i]![1]));
+  const total = cum[n]!;
+  const out: Vec[] = [];
+  let seg = 0;
+  for (let k = 0; k < count; k++) {
+    const at = (k / count) * total;
+    while (seg < n - 1 && cum[seg + 1]! < at) seg++;
+    const a = loop[seg]!;
+    const b = loop[(seg + 1) % n]!;
+    const span = cum[seg + 1]! - cum[seg]!;
+    const t = span > 0 ? (at - cum[seg]!) / span : 0;
+    out.push([a[0] + t * (b[0] - a[0]), a[1] + t * (b[1] - a[1])]);
+  }
+  return out;
+}
+
+/**
+ * Low-pass a closed loop without shrinking it (Taubin: a smoothing pass and an equal-and-opposite one, so a shape's size is kept while
+ * wiggles shorter than `wavelengthPx` are removed). `spacingPx` is the distance between the resampled points.
+ */
+function taubinSmooth(loop: readonly Vec[], spacingPx: number, wavelengthPx: number): Vec[] {
+  const total = loop.reduce((a, p, i) => a + Math.hypot(loop[(i + 1) % loop.length]![0] - p[0], loop[(i + 1) % loop.length]![1] - p[1]), 0);
+  const count = Math.max(12, Math.round(total / spacingPx));
+  let pts = resampleClosed(loop, count);
+  const h = total / count;
+  const lambda = 0.5;
+  // The pass band edge of the filter, as the eigenvalue of the discrete Laplacian at the cut-off wavelength: k = (2 pi h / wavelength)^2.
+  const kPass = Math.min(1.5, (2 * Math.PI * h / Math.max(wavelengthPx, 4 * h)) ** 2);
+  const mu = 1 / (kPass - 1 / lambda);
+  const pass = (src: Vec[], w: number): Vec[] =>
+    src.map((p, i) => {
+      const a = src[(i + src.length - 1) % src.length]!;
+      const b = src[(i + 1) % src.length]!;
+      return [p[0] + w * ((a[0] + b[0]) / 2 - p[0]), p[1] + w * ((a[1] + b[1]) / 2 - p[1])] as Vec;
+    });
+  for (let it = 0; it < 30; it++) pts = pass(pass(pts, lambda), mu);
+  return pts;
+}
+
 const cross = (o: Vec, a: Vec, b: Vec) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
 const dist = (a: Vec, b: Vec) => Math.hypot(a[0] - b[0], a[1] - b[1]);
 
@@ -1049,8 +1101,11 @@ export function legalizeOutline(mask: OutlineMask, options: OutlineOptions = {})
   // Trace, then simplify to the point budget while staying a simple polygon.
   const sigmaMm = Number.isFinite(options.smoothMm) ? clampNum(options.smoothMm as number, 0, SMOOTH_MAX_MM) : clampNum(SMOOTH_SOURCE_PX * built.scale, SMOOTH_MIN_MM, SMOOTH_MAX_MM);
   let corners: Vec[] = sigmaMm > 0 ? smoothContour(work, nx, nz, sigmaMm / wpx) : [];
-  if (corners.length < 4) corners = traceCorners(work, nx, nz);
+  const smoothed = corners.length >= 4;
+  if (!smoothed) corners = traceCorners(work, nx, nz);
   if (corners.length < 4) return { ok: false, reason: "not_simple", detail: "could not trace the outline" };
+  const curveMm = Number.isFinite(options.curveMm) ? Math.max(0, options.curveMm as number) : clampNum(CURVE_SHARE * Math.max(built.widthMm, built.heightMm), CURVE_MIN_MM, CURVE_MAX_MM);
+  if (smoothed && curveMm > 0) corners = taubinSmooth(corners, 1, curveMm / wpx);
   let loop: Vec[] = corners;
   let eps = 0.6;
   let simplified = simplifyClosed(loop, eps);
