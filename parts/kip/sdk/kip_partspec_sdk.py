@@ -83,6 +83,25 @@ def rounded_slab(
     return kp._rr(w, d, r, h, z=z, x=x, y=y)
 
 
+sequential_socket_cutter = tp.sequential_socket_cutter
+teardrop_bore_cutter = tp.teardrop_bore_cutter
+
+
+def clamp_layflat_bed(body: Manifold, floor_y: float = -2.50) -> Manifold:
+    """Ensure a 3D `LAY_FLAT` (`[90, 0, 0]`) sub-body seats coplanar with the grip shaft bed plane (`y = floor_y`).
+
+    Prevents secondary stems or heads from hovering `0.2..1.5 mm` above `z_print = 0` (Orca floating cantilever).
+    """
+    bb = body.bounding_box()
+    min_y = float(bb[1])
+    if min_y < floor_y - 1e-4:
+        keep = Manifold.cube((400.0, 400.0, 400.0)).translate((-200.0, floor_y, -200.0))
+        return body ^ keep
+    if 0.05 < (min_y - floor_y) <= 0.85:
+        return body.translate((0.0, floor_y - min_y, 0.0))
+    return body
+
+
 def loft_slabs(slices: list[tuple], Thickness: float = 0.8) -> Manifold:
     """Smooth convex loft through `[(z, w, d, r)` or `(z, w, d, r, x, y), ...]`."""
     slabs = []
@@ -289,7 +308,7 @@ def handheld_prop(
                 )
                 m = m + crest
     else:
-        m = grip + head_2d_or_3d.translate((0.0, 0.0, L + 1.0))
+        m = grip + clamp_layflat_bed(head_2d_or_3d.translate((0.0, 0.0, L + 1.0)), floor_y=-hy)
 
     conn = pro._pin_conn("shaft_drive", "flats", L)
     return m, [conn], {"print_rotation_deg": pro.LAY_FLAT}
@@ -575,6 +594,49 @@ def validate_and_export(
             },
         }
 
+    # Spatial self-repair diagnostics (exact 3D print-frame coordinates for LLM retry loops)
+    import preprint_check as ppc
+    import toyventor_ledge as tl
+    from manifold3d import Mesh as _ManiMesh
+
+    repair_hints: dict = {}
+    n_f, c_f, a_f = tm.face_normals, tm.triangles_center, tm.area_faces
+    steep_mask = (n_f[:, 2] < -math.sin(math.radians(tp.LIM["max_overhang_deg"]))) & (n_f[:, 2] >= -0.98) & (c_f[:, 2] > tp.LIM["first_layer_exclusion_mm"])
+    if steep_mask.any():
+        worst_idx = int(np.where(steep_mask)[0][np.argmax(a_f[steep_mask])])
+        pts_s = c_f[steep_mask]
+        repair_hints["steep_overhang"] = {
+            "total_area_mm2": round(float(a_f[steep_mask].sum()), 2),
+            "worst_face_at_mm": [round(float(v), 2) for v in c_f[worst_idx]],
+            "region_bbox_mm": [pts_s.min(axis=0).round(2).tolist(), pts_s.max(axis=0).round(2).tolist()],
+        }
+    if tm.is_watertight:
+        mp_mani = Manifold(_ManiMesh(vert_properties=np.asarray(tm.vertices, dtype=np.float32), tri_verts=np.asarray(tm.faces, dtype=np.uint32)))
+        if mp_mani.status().name == "NoError" and not mp_mani.is_empty():
+            _, l_regs = tl.ledges(tm, mp_mani, tp.LIM["max_bridge_mm"], tp.LIM["first_layer_exclusion_mm"])
+            if l_regs:
+                repair_hints["ledges"] = l_regs[:3]
+            fc_regs = tl.floating_contours(tm, mp_mani, tp.LIM["max_bridge_mm"], tp.LIM["first_layer_exclusion_mm"])
+            if fc_regs:
+                repair_hints["floating_contours"] = fc_regs[:3]
+        thin_regs = [r for r in ppc.thin_regions(tm, tp.LIM["min_wall_mm"]) if r["area_mm2"] >= 2.0 or (r["min_mm"] < 0.4 and r["area_mm2"] >= 0.25)]
+        if thin_regs:
+            repair_hints["thin_walls"] = thin_regs[:3]
+            if support_policy != "minimal":
+                # Also surface floating_contours as a blocking check for custom LLM parts
+                pass
+    if repair_hints.get("floating_contours") and support_policy != "minimal":
+        fc0 = repair_hints["floating_contours"][0]
+        fc_check = {
+            "id": "V11_floating_contour",
+            "level": "block",
+            "result": "fail",
+            "detail": f"{len(repair_hints['floating_contours'])} floating contour(s); first ({fc0['kind']}) at z {fc0['z_mm']} mm near {fc0['at_mm']}",
+        }
+        entry["checks"].append(fc_check)
+        blocking_fail.append(fc_check)
+        ok = False
+
     return {
         "ok": ok,
         "id": spec["id"],
@@ -584,6 +646,7 @@ def validate_and_export(
         "volume_cm3": entry["volume_cm3"],
         "small_part": small,
         "blocking_failures": blocking_fail,
+        "repair_hints": repair_hints,
         "brand_errors": brand_errors,
         "assembly": asm_report,
         "stl_file": str(stl_path) if stl_path else entry["file"],

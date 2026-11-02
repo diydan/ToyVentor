@@ -12,7 +12,7 @@ import math
 import numpy as np
 import trimesh
 from matplotlib.path import Path
-from manifold3d import CrossSection, FillRule
+from manifold3d import CrossSection, FillRule, JoinType
 
 RES = 0.4              # mm per grid cell
 CANTILEVER_MM = 1.0    # a flat overhang this short prints off the perimeter below it
@@ -92,3 +92,80 @@ def ledges(tm, mani, max_bridge_mm=20.0, exclusion_mm=0.7):
             found.append({"z_mm": round(z, 2), "area_mm2": round(area, 1), "at_mm": [round(float(xs[ix]), 1), round(float(ys[iy]), 1)]})
             total += area
     return round(total, 1), sorted(found, key=lambda f: -f["area_mm2"])
+
+
+def floating_contours(tm, mani, max_bridge_mm=20.0, exclusion_mm=0.7, low_z_mm=0.18, min_loop_mm=12.0, ledge_max_mm2=1.0):
+    """OrcaSlicer-parity floating-cantilever gate (`V11_floating_contour`).
+
+    Catches the two failure modes missed by area-only `V4`/`V6`/`V10`:
+      1. `unanchored_hole_loop`: an interior hole loop (`perimeter >= min_loop_mm`, e.g. circular sockets cut into
+         an elevated vault ceiling) with zero support in the layer below (`z - 0.12 mm`), forcing mid-air loops.
+      2. `low_z_cantilever`: a flat downward face hovering in the `low_z_mm < z <= exclusion_mm` band (e.g. a stem
+         hovering 0.40 mm off the bed) that is neither bridged on two sides nor within `CANTILEVER_MM` of support.
+    """
+    issues = []
+    kmax = int(math.ceil(max_bridge_mm / RES))
+    for z, region in flat_regions(tm, low_z_mm):
+        if region.area() < 0.5:
+            continue
+        # 1. Check interior hole loops across all heights above the first layer (`z > low_z_mm`)
+        sup_cs = mani.slice(max(0.02, z - 0.12)).offset(0.45, JoinType.Round)
+        sup_paths = [Path(np.asarray(sp)) for sp in sup_cs.to_polygons() if len(sp) >= 3]
+        for poly in region.to_polygons():
+            pts = np.asarray(poly, dtype=float)
+            if len(pts) < 3:
+                continue
+            s_area = 0.5 * float(np.sum(pts[:, 0] * np.roll(pts[:, 1], -1) - np.roll(pts[:, 0], -1) * pts[:, 1]))
+            if s_area >= 0.0:
+                continue  # outer boundary of ceiling; interior holes have negative signed area
+            perim = float(np.sum(np.linalg.norm(np.roll(pts, -1, axis=0) - pts, axis=1)))
+            if perim < min_loop_mm:
+                continue
+            dense = []
+            for i in range(len(pts)):
+                p0, p1 = pts[i], pts[(i + 1) % len(pts)]
+                seg_len = float(np.linalg.norm(p1 - p0))
+                steps = max(1, int(math.ceil(seg_len / 0.5)))
+                for s in range(steps):
+                    dense.append(p0 + (p1 - p0) * (s / steps))
+            dense_arr = np.asarray(dense)
+            inside_sup = np.zeros(len(dense_arr), dtype=bool)
+            for sp in sup_paths:
+                inside_sup ^= sp.contains_points(dense_arr)
+            if not inside_sup.any():
+                issues.append({
+                    "kind": "unanchored_hole_loop",
+                    "z_mm": round(z, 2),
+                    "perimeter_mm": round(perim, 2),
+                    "at_mm": [round(float(v), 1) for v in pts.mean(axis=0)],
+                })
+
+        # 2. Check low-Z hovering flat cantilevers (`low_z_mm < z <= exclusion_mm`) skipped by V10
+        if z <= exclusion_mm + 1e-6:
+            x0, y0, x1, y1 = region.bounds()
+            pad = max_bridge_mm + 1.0
+            xs = np.arange(x0 - pad, x1 + pad, RES)
+            ys = np.arange(y0 - pad, y1 + pad, RES)
+            R = _raster(region.to_polygons(), xs, ys)
+            if not R.any():
+                continue
+            S = _raster(mani.slice(max(0.02, z - 0.1)).to_polygons(), xs, ys) & ~R
+            held = np.zeros(R.shape, dtype=bool)
+            near = np.full(R.shape, np.inf)
+            for dx, dy in DIRS:
+                step = math.hypot(dx, dy) * RES
+                a = _steps_to(S, dy, dx, kmax) * step
+                b = _steps_to(S, -dy, -dx, kmax) * step
+                held |= (a + b) <= max_bridge_mm + 2 * RES
+                near = np.minimum(near, np.minimum(a, b))
+            ledge = R & ~held & (near > CANTILEVER_MM)
+            area = float(ledge.sum()) * RES * RES
+            if area >= ledge_max_mm2:
+                iy, ix = np.argwhere(ledge)[len(np.argwhere(ledge)) // 2]
+                issues.append({
+                    "kind": "low_z_cantilever",
+                    "z_mm": round(z, 2),
+                    "area_mm2": round(area, 1),
+                    "at_mm": [round(float(xs[ix]), 1), round(float(ys[iy]), 1)],
+                })
+    return issues

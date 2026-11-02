@@ -599,9 +599,8 @@ export function bestCustomOrientation(tri, lim = LIMITS) {
   }
 
   hullNormals.sort((a, b) => b.supportArea - a.supportArea);
-  hullNormals.slice(0, 8).forEach((hn, k) => {
-    const baseM = rotationLandingNormalDown(hn.ux, hn.uy, hn.uz);
-    // Align Z-yaw for tightest axis-aligned XY bounding rectangle
+  const alignTightYaw = (ux, uy, uz) => {
+    const baseM = rotationLandingNormalDown(ux, uy, uz);
     let bestM = baseM;
     let bestBoxArea = Infinity;
     const baseRot = transform(tri, baseM);
@@ -623,8 +622,78 @@ export function bestCustomOrientation(tri, lim = LIMITS) {
         bestM = mulMat3([c, -s, 0, s, c, 0, 0, 0, 1], baseM);
       }
     }
-    candidates.push({ index: 6 + k, name: `hull#${k + 1}`, m: bestM, isAxis: false });
+    return bestM;
+  };
+
+  hullNormals.slice(0, 8).forEach((hn, k) => {
+    candidates.push({ index: 6 + k, name: `hull#${k + 1}`, m: alignTightYaw(hn.ux, hn.uy, hn.uz), isAxis: false });
   });
+
+  // Tweaker-3 3-point convex-hull facet search: finds flat resting planes spanned across 3 distinct hull
+  // vertices (e.g. rim tips + heel on sculpted/organic meshes) where no single large triangle shares that normal.
+  const extVerts = [];
+  for (let dx = -1; dx <= 1; dx++) {
+    for (let dy = -1; dy <= 1; dy++) {
+      for (let dz = -1; dz <= 1; dz++) {
+        if (dx === 0 && dy === 0 && dz === 0) continue;
+        let bestDot = -Infinity, bx = 0, by = 0, bz = 0;
+        for (let i = 0; i < tri.length; i += 3) {
+          const d = dx * tri[i] + dy * tri[i + 1] + dz * tri[i + 2];
+          if (d > bestDot) { bestDot = d; bx = tri[i]; by = tri[i + 1]; bz = tri[i + 2]; }
+        }
+        if (!extVerts.some(v => Math.hypot(v[0] - bx, v[1] - by, v[2] - bz) < 0.25)) {
+          extVerts.push([bx, by, bz]);
+        }
+      }
+    }
+  }
+  const tripodPlanes = [];
+  for (let a = 0; a < extVerts.length; a++) {
+    const va = extVerts[a];
+    for (let b = a + 1; b < extVerts.length; b++) {
+      const vb = extVerts[b];
+      const abx = vb[0] - va[0], aby = vb[1] - va[1], abz = vb[2] - va[2];
+      for (let c = b + 1; c < extVerts.length; c++) {
+        const vc = extVerts[c];
+        const acx = vc[0] - va[0], acy = vc[1] - va[1], acz = vc[2] - va[2];
+        let nx = aby * acz - abz * acy, ny = abz * acx - abx * acz, nz = abx * acy - aby * acx;
+        const triArea2 = Math.hypot(nx, ny, nz);
+        if (triArea2 < 8.0) continue; // span at least 4 mm2 tripod base
+        nx /= triArea2; ny /= triArea2; nz /= triArea2;
+        const d0 = nx * va[0] + ny * va[1] + nz * va[2];
+        // Check if all extreme vertices lie on one side of this tripod plane
+        let posOut = 0, negOut = 0;
+        for (let q = 0; q < extVerts.length; q++) {
+          const dq = (nx * extVerts[q][0] + ny * extVerts[q][1] + nz * extVerts[q][2]) - d0;
+          if (dq > 0.08) posOut++;
+          else if (dq < -0.08) negOut++;
+          if (posOut > 0 && negOut > 0) break;
+        }
+        if (posOut > 0 && negOut > 0) continue;
+        if (posOut > 0) { nx = -nx; ny = -ny; nz = -nz; }
+        if (Math.max(Math.abs(nx), Math.abs(ny), Math.abs(nz)) > 0.996) continue;
+        if (hullNormals.some(h => h.ux * nx + h.uy * ny + h.uz * nz > 0.985)) continue;
+        if (tripodPlanes.some(p => p.ux * nx + p.uy * ny + p.uz * nz > 0.985)) continue;
+        tripodPlanes.push({ ux: nx, uy: ny, uz: nz, spanArea: triArea2 * 0.5 });
+      }
+    }
+  }
+  tripodPlanes.sort((a, b) => b.spanArea - a.spanArea);
+  tripodPlanes.slice(0, 4).forEach((tp, k) => {
+    candidates.push({ index: 14 + k, name: `hull3pt#${k + 1}`, m: alignTightYaw(tp.ux, tp.uy, tp.uz), isAxis: false });
+  });
+
+  // Measure bed-contact perimeter length (Tweaker-3 `bottom_contour` adhesion metric)
+  const bedContourMm = (sTri) => {
+    let perim = 0;
+    for (let t = 0; t < sTri.length; t += 9) {
+      const z0 = sTri[t + 2], z1 = sTri[t + 5], z2 = sTri[t + 8];
+      if (z0 <= 0.22 && z1 <= 0.22 && z2 > 0.22) perim += Math.hypot(sTri[t + 3] - sTri[t], sTri[t + 4] - sTri[t + 1]);
+      else if (z1 <= 0.22 && z2 <= 0.22 && z0 > 0.22) perim += Math.hypot(sTri[t + 6] - sTri[t + 3], sTri[t + 7] - sTri[t + 4]);
+      else if (z2 <= 0.22 && z0 <= 0.22 && z1 > 0.22) perim += Math.hypot(sTri[t] - sTri[t + 6], sTri[t + 1] - sTri[t + 7]);
+    }
+    return perim;
+  };
 
   let best = null;
   for (const c of candidates) {
@@ -632,10 +701,11 @@ export function bestCustomOrientation(tri, lim = LIMITS) {
     const seated = { tri: seatedRes.tri, size: seatedRes.size };
     const rep = supportReport(seated.tri, lim);
     const islands = countFloatingIslands(seated.tri, 0.40, lim);
-    if (c.index === 0 && islands === 0 && rep.supportFree) {
+    if (c.index === 0 && islands === 0 && rep.supportFree && rep.contactMm2 >= 4.0) {
       return { index: 0, name: c.name, m: c.m, seated, report: rep, islands: 0 };
     }
-    const cost = islands * 1000 + rep.overhangMm2 - 0.02 * rep.contactMm2 + 0.05 * rep.heightMm;
+    const contour = bedContourMm(seated.tri);
+    const cost = islands * 1000 + rep.overhangMm2 - 0.02 * rep.contactMm2 - 0.008 * contour + 0.05 * rep.heightMm;
     if (!best || cost < best.cost - 1e-4) {
       best = { index: c.index, name: c.name, m: c.m, seated, report: rep, islands, cost };
     }
@@ -1582,43 +1652,200 @@ export function crc32(u8) {
   return (c ^ 0xffffffff) >>> 0;
 }
 
-/** Minimal zip writer, "stored" (no compression). files: [{ name, data: Uint8Array | string }]. */
-export function zipStore(files) {
-  const enc = new TextEncoder();
+// Zero-dependency synchronous RFC 1951 raw DEFLATE (fixed-Huffman + 32 KB hash LZ77) for ~6x smaller `.3mf` / `.zip` exports.
+const DEFLATE_LEN_BASE = new Uint16Array([3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15, 17, 19, 23, 27, 31, 35, 43, 51, 59, 67, 83, 99, 115, 131, 163, 195, 227, 258]);
+const DEFLATE_LEN_EXTRA = new Uint8Array([0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 0]);
+const DEFLATE_DIST_BASE = new Uint16Array([1, 2, 3, 4, 5, 7, 9, 13, 17, 25, 33, 49, 65, 97, 129, 193, 257, 385, 513, 769, 1025, 1537, 2049, 3073, 4097, 6145, 8193, 12289, 16385, 24577]);
+const DEFLATE_DIST_EXTRA = new Uint8Array([0, 0, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13, 13]);
+
+function revBits(v, n) {
+  let r = 0;
+  for (let i = 0; i < n; i++) { r = (r << 1) | (v & 1); v >>>= 1; }
+  return r;
+}
+
+const FIXED_LIT_CODE = new Uint16Array(288);
+const FIXED_LIT_BITS = new Uint8Array(288);
+const FIXED_DIST_CODE = new Uint8Array(30);
+(() => {
+  for (let s = 0; s <= 143; s++) { FIXED_LIT_CODE[s] = revBits(0x30 + s, 8); FIXED_LIT_BITS[s] = 8; }
+  for (let s = 144; s <= 255; s++) { FIXED_LIT_CODE[s] = revBits(0x190 + (s - 144), 9); FIXED_LIT_BITS[s] = 9; }
+  for (let s = 256; s <= 279; s++) { FIXED_LIT_CODE[s] = revBits(s - 256, 7); FIXED_LIT_BITS[s] = 7; }
+  for (let s = 280; s <= 287; s++) { FIXED_LIT_CODE[s] = revBits(0xc0 + (s - 280), 8); FIXED_LIT_BITS[s] = 8; }
+  for (let d = 0; d < 30; d++) FIXED_DIST_CODE[d] = revBits(d, 5);
+})();
+
+export function deflateRawSync(u8) {
+  const n = u8.length;
+  let cap = Math.max(256, (n + (n >>> 2)) | 0);
+  let out = new Uint8Array(cap);
+  let pos = 0, bitBuf = 0, bitLen = 0;
+  const putBits = (val, cnt) => {
+    bitBuf |= (val << bitLen);
+    bitLen += cnt;
+    while (bitLen >= 8) {
+      if (pos >= cap) {
+        cap *= 2;
+        const grown = new Uint8Array(cap);
+        grown.set(out);
+        out = grown;
+      }
+      out[pos++] = bitBuf & 0xff;
+      bitBuf >>>= 8;
+      bitLen -= 8;
+    }
+  };
+
+  // BFINAL = 1 (1 bit), BTYPE = 01 fixed Huffman (2 bits LSB-first -> 0b01) => 3 bits = 0b011
+  putBits(0b011, 3);
+
+  const head = new Int32Array(32768).fill(-1);
+  const prev = new Int32Array(32768).fill(-1);
+  let i = 0;
+  while (i < n) {
+    let bestLen = 0, bestDist = 0;
+    if (i + 3 < n) {
+      const h = (((u8[i] | (u8[i + 1] << 8) | (u8[i + 2] << 16) | (u8[i + 3] << 24)) * 0x1e35a7bd) >>> 17) & 32767;
+      let cand = head[h];
+      prev[i & 32767] = cand;
+      head[h] = i;
+      let chain = 0;
+      const maxLen = Math.min(258, n - i);
+      while (cand >= 0 && (i - cand) <= 32768 && chain++ < 24) {
+        if (u8[cand + bestLen] === u8[i + bestLen] && u8[cand] === u8[i]) {
+          let l = 1;
+          while (l < maxLen && u8[cand + l] === u8[i + l]) l++;
+          if (l >= 4 && l > bestLen) {
+            bestLen = l;
+            bestDist = i - cand;
+            if (l === maxLen) break;
+          }
+        }
+        const nextCand = prev[cand & 32767];
+        if (nextCand >= cand) break;
+        cand = nextCand;
+      }
+    }
+
+    if (bestLen >= 4) {
+      let lIdx = 28;
+      if (bestLen < 258) {
+        lIdx = 0;
+        while (lIdx < 27 && DEFLATE_LEN_BASE[lIdx + 1] <= bestLen) lIdx++;
+      }
+      const lSym = 257 + lIdx;
+      putBits(FIXED_LIT_CODE[lSym], FIXED_LIT_BITS[lSym]);
+      if (DEFLATE_LEN_EXTRA[lIdx]) putBits(bestLen - DEFLATE_LEN_BASE[lIdx], DEFLATE_LEN_EXTRA[lIdx]);
+
+      let dIdx = 0;
+      while (dIdx < 29 && DEFLATE_DIST_BASE[dIdx + 1] <= bestDist) dIdx++;
+      putBits(FIXED_DIST_CODE[dIdx], 5);
+      if (DEFLATE_DIST_EXTRA[dIdx]) putBits(bestDist - DEFLATE_DIST_BASE[dIdx], DEFLATE_DIST_EXTRA[dIdx]);
+
+      const endStep = Math.min(i + bestLen, n - 3);
+      for (let k = i + 1; k < endStep; k++) {
+        const hk = (((u8[k] | (u8[k + 1] << 8) | (u8[k + 2] << 16) | (u8[k + 3] << 24)) * 0x1e35a7bd) >>> 17) & 32767;
+        prev[k & 32767] = head[hk];
+        head[hk] = k;
+      }
+      i += bestLen;
+    } else {
+      const lit = u8[i++];
+      putBits(FIXED_LIT_CODE[lit], FIXED_LIT_BITS[lit]);
+    }
+  }
+
+  putBits(FIXED_LIT_CODE[256], FIXED_LIT_BITS[256]);
+  if (bitLen > 0) {
+    if (pos >= cap) {
+      const grown = new Uint8Array(pos + 1);
+      grown.set(out);
+      out = grown;
+    }
+    out[pos++] = bitBuf & 0xff;
+  }
+  return out.subarray(0, pos);
+}
+
+function buildZipFromEncodedEntries(entries) {
   const parts = [];
   const central = [];
   let offset = 0;
-  for (const f of files) {
-    const name = enc.encode(f.name);
-    const data = typeof f.data === 'string' ? enc.encode(f.data) : f.data;
-    const crc = crc32(data);
+  for (const e of entries) {
+    const { name, payload, uncompLen, crc, method } = e;
     const local = new Uint8Array(30 + name.length);
     const dv = new DataView(local.buffer);
-    dv.setUint32(0, 0x04034b50, true); dv.setUint16(4, 20, true); dv.setUint16(6, 0x0800, true); dv.setUint16(8, 0, true);
+    dv.setUint32(0, 0x04034b50, true); dv.setUint16(4, 20, true); dv.setUint16(6, 0x0800, true); dv.setUint16(8, method, true);
     dv.setUint16(10, 0, true); dv.setUint16(12, 0x21, true); dv.setUint32(14, crc, true);
-    dv.setUint32(18, data.length, true); dv.setUint32(22, data.length, true); dv.setUint16(26, name.length, true); dv.setUint16(28, 0, true);
+    dv.setUint32(18, payload.length, true); dv.setUint32(22, uncompLen, true); dv.setUint16(26, name.length, true); dv.setUint16(28, 0, true);
     local.set(name, 30);
-    parts.push(local, data);
+    parts.push(local, payload);
     const c = new Uint8Array(46 + name.length);
     const cv = new DataView(c.buffer);
     cv.setUint32(0, 0x02014b50, true); cv.setUint16(4, 20, true); cv.setUint16(6, 20, true); cv.setUint16(8, 0x0800, true);
-    cv.setUint16(10, 0, true); cv.setUint16(12, 0, true); cv.setUint16(14, 0x21, true); cv.setUint32(16, crc, true);
-    cv.setUint32(20, data.length, true); cv.setUint32(24, data.length, true); cv.setUint16(28, name.length, true);
+    cv.setUint16(10, method, true); cv.setUint16(12, 0, true); cv.setUint16(14, 0x21, true); cv.setUint32(16, crc, true);
+    cv.setUint32(20, payload.length, true); cv.setUint32(24, uncompLen, true); cv.setUint16(28, name.length, true);
     cv.setUint32(42, offset, true);
     c.set(name, 46);
     central.push(c);
-    offset += local.length + data.length;
+    offset += local.length + payload.length;
   }
   const cdSize = central.reduce((a, c) => a + c.length, 0);
   const end = new Uint8Array(22);
   const ev = new DataView(end.buffer);
-  ev.setUint32(0, 0x06054b50, true); ev.setUint16(8, files.length, true); ev.setUint16(10, files.length, true);
+  ev.setUint32(0, 0x06054b50, true); ev.setUint16(8, entries.length, true); ev.setUint16(10, entries.length, true);
   ev.setUint32(12, cdSize, true); ev.setUint32(16, offset, true);
   const total = offset + cdSize + 22;
   const out = new Uint8Array(total);
   let o = 0;
   for (const p of [...parts, ...central, end]) { out.set(p, o); o += p.length; }
   return out;
+}
+
+/** Synchronous zip writer with automatic RFC 1951 raw deflate (`method = 8`) on compressible entries (`~6x` smaller `.3mf`). */
+export function zipStore(files, { compress = true } = {}) {
+  const enc = new TextEncoder();
+  const entries = files.map((f) => {
+    const nameStr = String(f.name);
+    const name = enc.encode(nameStr);
+    const data = typeof f.data === 'string' ? enc.encode(f.data) : f.data;
+    const crc = crc32(data);
+    const skipDeflate = !compress || data.length < 128 || /\.(png|jpg|jpeg|webp|zip|3mf)$/i.test(nameStr);
+    if (!skipDeflate) {
+      const comp = deflateRawSync(data);
+      if (comp.length < data.length) {
+        return { name, payload: comp, uncompLen: data.length, crc, method: 8 };
+      }
+    }
+    return { name, payload: data, uncompLen: data.length, crc, method: 0 };
+  });
+  return buildZipFromEncodedEntries(entries);
+}
+
+/** Async zip writer using native Web/Node `CompressionStream('deflate-raw')` dynamic Huffman when available. */
+export async function zipDeflate(files) {
+  if (typeof CompressionStream === 'undefined') return zipStore(files);
+  const enc = new TextEncoder();
+  const entries = [];
+  for (const f of files) {
+    const nameStr = String(f.name);
+    const name = enc.encode(nameStr);
+    const data = typeof f.data === 'string' ? enc.encode(f.data) : f.data;
+    const crc = crc32(data);
+    if (data.length >= 128 && !/\.(png|jpg|jpeg|webp|zip|3mf)$/i.test(nameStr)) {
+      const cs = new CompressionStream('deflate-raw');
+      const writer = cs.writable.getWriter();
+      writer.write(data);
+      writer.close();
+      const comp = new Uint8Array(await new Response(cs.readable).arrayBuffer());
+      if (comp.length < data.length) {
+        entries.push({ name, payload: comp, uncompLen: data.length, crc, method: 8 });
+        continue;
+      }
+    }
+    entries.push({ name, payload: data, uncompLen: data.length, crc, method: 0 });
+  }
+  return buildZipFromEncodedEntries(entries);
 }
 
 const xml = (s) => String(s).replace(/[<>&"']/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&apos;' })[c]);
@@ -1713,9 +1940,11 @@ function buildOrcaProjectSettingsJson(filamentColours, profile) {
   // `filament_map` is the 1-based physical nozzle index (`1..nozzle_diameter.length`), NOT the filament slot index.
   // Mapping slot 2+ to nozzle 2+ when `nozzle_diameter` has 1 nozzle aborts `bbs_3mf` project loading in Creality Print / OrcaSlicer.
   perFil.filament_map = cols.map(() => '1');
+  perFil.filament_max_volumetric_speed = cols.map(() => (mat === 'PETG' ? '12' : '18'));
   perFil.min_layer_height = cols.map(() => (nozzle === 0.2 ? '0.04' : '0.07'));
   perFil.wipe_tower_x = cols.map(() => '15');
   perFil.wipe_tower_y = cols.map(() => wipeY);
+  const isMultiMat = profile.changerType !== 'single' && (profile.maxSlots || 1) > 1;
 
   return JSON.stringify({
     version: '02.02.00.50',
@@ -1725,7 +1954,7 @@ function buildOrcaProjectSettingsJson(filamentColours, profile) {
     print_settings_id: nozzle === 0.2 ? '0.12mm Draft @BBL A1M 0.2 nozzle' : '0.20mm Standard @BBL A1M',
     ...perFil,
     filament_map_mode: 'Auto For Flush',
-    single_extruder_multi_material: '1',
+    single_extruder_multi_material: isMultiMat ? '1' : '0',
     flush_multiplier: ['0.3'],
     filament_settings_id: cols.map(() => (mat === 'PETG' ? 'Generic PETG' : 'Generic PLA')),
     filament_ids: cols.map(() => (mat === 'PETG' ? 'GFG99' : 'GFL99')),
@@ -1745,6 +1974,42 @@ function buildOrcaProjectSettingsJson(filamentColours, profile) {
     bottom_shell_layers: '3',
     sparse_infill_density: '15%',
     sparse_infill_pattern: 'grid',
+    outer_wall_speed: nozzle === 0.2 ? '120' : '200',
+    inner_wall_speed: nozzle === 0.2 ? '150' : '300',
+    sparse_infill_speed: nozzle === 0.2 ? '150' : '270',
+    internal_solid_infill_speed: nozzle === 0.2 ? '150' : '250',
+    top_surface_speed: nozzle === 0.2 ? '120' : '200',
+    gap_infill_speed: nozzle === 0.2 ? '120' : '250',
+    travel_speed: '700',
+    initial_layer_speed: '50',
+    initial_layer_infill_speed: '105',
+    bridge_speed: '50',
+    enable_overhang_speed: '1',
+    overhang_1_4_speed: '0',
+    overhang_2_4_speed: '50',
+    overhang_3_4_speed: '30',
+    overhang_4_4_speed: '10',
+    default_acceleration: '6000',
+    outer_wall_acceleration: '5000',
+    inner_wall_acceleration: '6000',
+    initial_layer_acceleration: '500',
+    top_surface_acceleration: '2000',
+    travel_acceleration: '9000',
+    machine_max_acceleration_x: ['20000', '20000'],
+    machine_max_acceleration_y: ['20000', '20000'],
+    machine_max_acceleration_z: ['1500', '1500'],
+    machine_max_acceleration_e: ['5000', '5000'],
+    machine_max_acceleration_extruding: ['20000', '20000'],
+    machine_max_acceleration_retracting: ['5000', '5000'],
+    machine_max_acceleration_travel: ['9000', '9000'],
+    machine_max_speed_x: ['500', '200'],
+    machine_max_speed_y: ['500', '200'],
+    machine_max_speed_z: ['30', '30'],
+    machine_max_speed_e: ['30', '30'],
+    machine_max_jerk_x: ['9', '9'],
+    machine_max_jerk_y: ['9', '9'],
+    machine_max_jerk_z: ['5', '5'],
+    machine_max_jerk_e: ['3', '3'],
     wall_generator: 'arachne',
     detect_thin_wall: '1',
     gcode_flavor: 'marlin',
@@ -1929,7 +2194,9 @@ export function to3mf(placedOrPlate, {
 
   // Never write "PrusaSlicer" in Application for Orca/Bambu files (§5.2 #3).
   const appMeta = isOrca ? 'BambuStudio-01.09.05.51' : 'ToyVentor Kip print view';
-  const model = `<?xml version="1.0" encoding="UTF-8"?><model unit="millimeter" xml:lang="en-US" xmlns="http://schemas.microsoft.com/3dmanufacturing/core/2015/02" xmlns:m="http://schemas.microsoft.com/3dmanufacturing/material/2015/02"><metadata name="Title">${xml(title)}</metadata><metadata name="Application">${appMeta}</metadata><resources>${materialsXml}${objects}</resources><build>${build}</build></model>`;
+  const bbsNs = isOrca ? ' xmlns:BambuStudio="http://schemas.bambulab.com/package/2021"' : '';
+  const bbsVerMeta = isOrca ? '<metadata name="BambuStudio:3mfVersion">1</metadata>' : '';
+  const model = `<?xml version="1.0" encoding="UTF-8"?><model unit="millimeter" xml:lang="en-US" xmlns="http://schemas.microsoft.com/3dmanufacturing/core/2015/02" xmlns:m="http://schemas.microsoft.com/3dmanufacturing/material/2015/02"${bbsNs}><metadata name="Title">${xml(title)}</metadata><metadata name="Application">${appMeta}</metadata>${bbsVerMeta}<resources>${materialsXml}${objects}</resources><build>${build}</build></model>`;
 
   const entries = [
     { name: '[Content_Types].xml', data: '<?xml version="1.0" encoding="UTF-8"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="model" ContentType="application/vnd.ms-package.3dmanufacturing-3dmodel+xml"/><Default Extension="config" ContentType="text/xml"/></Types>' },
@@ -1939,7 +2206,7 @@ export function to3mf(placedOrPlate, {
 
   const filCols = filamentColours || palette.map(c => c.hex);
   if (isOrca) {
-    const plateXml = `<plate><metadata key="plater_id" value="1"/><metadata key="plater_name" value="${xml(title)}"/><metadata key="print_sequence" value="${prof.multiColorStrategy === 'by-object' ? 'by object' : 'by layer'}"/>${orcaPlateInstances}</plate>`;
+    const plateXml = `<plate><metadata key="plater_id" value="1"/><metadata key="plater_name" value="${xml(title)}"/><metadata key="locked" value="false"/><metadata key="filament_map_mode" value="Auto For Flush"/><metadata key="print_sequence" value="${prof.multiColorStrategy === 'by-object' ? 'by object' : 'by layer'}"/>${orcaPlateInstances}</plate>`;
     entries.push(
       { name: 'Metadata/model_settings.config', data: `<?xml version="1.0" encoding="UTF-8"?><config>${orcaObjCfg}${plateXml}</config>` },
       { name: 'Metadata/project_settings.config', data: buildOrcaProjectSettingsJson(filCols, prof) },
@@ -2061,10 +2328,10 @@ export function to3mfProject(plannedPlates, rawProfile = createDefaultProfile(),
       instancesXml += `<model_instance><metadata key="object_id" value="${id}"/><metadata key="instance_id" value="0"/><metadata key="identify_id" value="${identifyId++}"/></model_instance>`;
     }
 
-    orcaPlatesXml += `<plate><metadata key="plater_id" value="${k + 1}"/><metadata key="plater_name" value="${xml(pl.label || `Plate ${k + 1}`)}"/><metadata key="print_sequence" value="by layer"/>${instancesXml}</plate>`;
+    orcaPlatesXml += `<plate><metadata key="plater_id" value="${k + 1}"/><metadata key="plater_name" value="${xml(pl.label || `Plate ${k + 1}`)}"/><metadata key="locked" value="false"/><metadata key="filament_map_mode" value="Auto For Flush"/><metadata key="print_sequence" value="by layer"/>${instancesXml}</plate>`;
   });
 
-  const model = `<?xml version="1.0" encoding="UTF-8"?><model unit="millimeter" xml:lang="en-US" xmlns="http://schemas.microsoft.com/3dmanufacturing/core/2015/02" xmlns:m="http://schemas.microsoft.com/3dmanufacturing/material/2015/02"><metadata name="Title">${xml(title)}</metadata><metadata name="Application">BambuStudio-01.09.05.51</metadata><resources>${materialsXml}${objects}</resources><build>${build}</build></model>`;
+  const model = `<?xml version="1.0" encoding="UTF-8"?><model unit="millimeter" xml:lang="en-US" xmlns="http://schemas.microsoft.com/3dmanufacturing/core/2015/02" xmlns:m="http://schemas.microsoft.com/3dmanufacturing/material/2015/02" xmlns:BambuStudio="http://schemas.bambulab.com/package/2021"><metadata name="Title">${xml(title)}</metadata><metadata name="Application">BambuStudio-01.09.05.51</metadata><metadata name="BambuStudio:3mfVersion">1</metadata><resources>${materialsXml}${objects}</resources><build>${build}</build></model>`;
 
   return zipStore([
     { name: '[Content_Types].xml', data: '<?xml version="1.0" encoding="UTF-8"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="model" ContentType="application/vnd.ms-package.3dmanufacturing-3dmodel+xml"/><Default Extension="config" ContentType="text/xml"/></Types>' },

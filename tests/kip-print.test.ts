@@ -527,20 +527,69 @@ describe("exports", () => {
     return placed;
   };
 
-  it("writes a valid zip that Python's zipfile accepts, with matching CRCs", () => {
-    const zip = K.zipStore([{ name: "a.txt", data: "hello" }, { name: "dir/b.bin", data: Uint8Array.from([1, 2, 3, 4]) }]);
+  it("writes a valid zip (including RFC 1951 deflate on compressible entries) that Python's zipfile accepts, with matching CRCs", async () => {
+    const bigXml = '<vertex x="12.3456" y="-7.8901" z="0.0000"/>'.repeat(200);
+    const files = [
+      { name: "a.txt", data: "hello" },
+      { name: "dir/b.bin", data: Uint8Array.from([1, 2, 3, 4]) },
+      { name: "3D/3dmodel.model", data: bigXml },
+    ];
+    const zip = K.zipStore(files);
+    const asyncZip = await K.zipDeflate(files);
+    expect(zip.length).toBeLessThan(bigXml.length * 0.25);
+    expect(asyncZip.length).toBeLessThan(bigXml.length * 0.25);
     const dir = mkdtempSync(join(tmpdir(), "kipzip-"));
     const f = join(dir, "t.zip");
+    const fAsync = join(dir, "t-async.zip");
     writeFileSync(f, zip);
-    let out = "";
+    writeFileSync(fAsync, asyncZip);
+    let out = "", outAsync = "";
     try {
-      out = execFileSync("python3", ["-c", "import zipfile,sys;z=zipfile.ZipFile(sys.argv[1]);print(z.testzip());print(z.read('a.txt').decode());print(list(z.read('dir/b.bin')))", f], { encoding: "utf8" });
+      const pyCheck = "import zipfile,sys;z=zipfile.ZipFile(sys.argv[1]);print(z.testzip());print(z.read('a.txt').decode());print(list(z.read('dir/b.bin')));print(z.getinfo('3D/3dmodel.model').compress_type);print(z.read('3D/3dmodel.model').decode()==sys.argv[2])";
+      out = execFileSync("python3", ["-c", pyCheck, f, bigXml], { encoding: "utf8" });
+      outAsync = execFileSync("python3", ["-c", pyCheck, fAsync, bigXml], { encoding: "utf8" });
     } catch (e: any) {
       if (e.code === "ENOENT") return;
       throw e;
     }
-    expect(out.split("\n")).toEqual(["None", "hello", "[1, 2, 3, 4]", ""]);
+    expect(out.split("\n")).toEqual(["None", "hello", "[1, 2, 3, 4]", "8", "True", ""]);
+    expect(outAsync.split("\n")).toEqual(["None", "hello", "[1, 2, 3, 4]", "8", "True", ""]);
     expect(K.crc32(new TextEncoder().encode("123456789"))).toBe(0xcbf43926);
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  it("lands tilted custom meshes cleanly via bestCustomOrientation convex-hull & 3-point tripod pose search", () => {
+    const tiltMesh = (src: number[], a1: number, a2: number) => {
+      const c1 = Math.cos(a1), s1 = Math.sin(a1);
+      const c2 = Math.cos(a2), s2 = Math.sin(a2);
+      const out = new Float32Array(src.length);
+      for (let i = 0; i < src.length; i += 3) {
+        const x0 = src[i]!, y0 = src[i + 1]!, z0 = src[i + 2]!;
+        const y1 = c1 * y0 - s1 * z0, z1 = s1 * y0 + c1 * z0;
+        out[i] = c2 * x0 + s2 * z1;
+        out[i + 1] = y1;
+        out[i + 2] = -s2 * x0 + c2 * z1;
+      }
+      return out;
+    };
+    // 1. Compound-tilted flat box (even at <45 deg where point-contact has 0 overhang, must land flat on 20x20 facet)
+    const tiltedBox = tiltMesh([...solid(-10, -10, 0, 10, 10, 6)], 0.42, 0.31);
+    const boxPose = K.bestCustomOrientation(tiltedBox);
+    expect(boxPose.islands).toBe(0);
+    expect(boxPose.report.overhangMm2).toBeLessThan(0.5);
+    expect(boxPose.report.contactMm2).toBeGreaterThan(350);
+
+    // 2. Compound-tilted 3-legged tripod arch with uneven leg lengths (no single face lies in the 3-foot plane; requires hull3pt#)
+    const tripodRaw = [
+      ...solid(-10, -8, 0, -7, -5, 10),    // leg A bottoms at z=0
+      ...solid(7, -8, 1.5, 10, -5, 10),    // leg B bottoms at z=1.5
+      ...solid(-1.5, 7, 3.0, 1.5, 10, 10), // leg C bottoms at z=3.0
+      ...solid(-10, -8, 10, 10, 10, 13),   // bridge cap at z=10..13
+    ];
+    const tiltedTripod = tiltMesh(tripodRaw, 0.85, -0.52);
+    const tripodPose = K.bestCustomOrientation(tiltedTripod);
+    expect(tripodPose.islands).toBe(0);
+    expect(tripodPose.name.startsWith("hull")).toBe(true);
   });
 
   it("writes valid PrusaSlicer and Orca/Bambu 3MF dialects plus multi-plate kip-project.3mf", () => {
@@ -586,6 +635,7 @@ describe("exports", () => {
     expect(oNames).toContain("Metadata/model_settings.config");
     expect(oNames).toContain("Metadata/project_settings.config");
     expect(oModel).not.toContain("PrusaSlicer");
+    expect(oModel).toContain('<metadata name="BambuStudio:3mfVersion">1</metadata>');
     expect(oCfg).toContain('subtype="normal_part"');
     expect(oCfg.match(/enable_support" value="1"/g)).toHaveLength(1);
     expect(oCfg.match(/enable_support" value="0"/g)).toHaveLength(1); // the support-free part is told "no supports" explicitly
@@ -596,18 +646,43 @@ describe("exports", () => {
     expect(parsedProj.filament_colour).toEqual(["#4EB3FC", "#F4EFE6"]);
     expect(parsedProj.nozzle_diameter).toEqual(["0.4"]);
     expect(parsedProj.filament_map).toEqual(["1", "1"]);
+    expect(parsedProj.single_extruder_multi_material).toBe("1");
     expect(parsedProj.flush_multiplier).toEqual(["0.3"]);
+    expect(parsedProj.outer_wall_speed).toBe("200");
+    expect(parsedProj.inner_wall_speed).toBe("300");
+    expect(parsedProj.default_acceleration).toBe("6000");
+    expect(parsedProj.filament_max_volumetric_speed).toEqual(["18", "18"]);
 
     const [, projModel, projCfg, projSettingsRaw] = projOut.split("@@\n") as [string, string, string, string];
     const parsedMultiProj = JSON.parse(projSettingsRaw);
     expect(parsedMultiProj.filament_colour).toEqual(["#4EB3FC", "#F4EFE6"]);
     expect(parsedMultiProj.filament_map).toEqual(["1", "1"]);
+    expect(parsedMultiProj.single_extruder_multi_material).toBe("1");
     expect(parsedMultiProj.filament_map.every((n: string) => Number(n) >= 1 && Number(n) <= parsedMultiProj.nozzle_diameter.length)).toBe(true);
+    expect(projModel).toContain('<metadata name="BambuStudio:3mfVersion">1</metadata>');
     expect(projCfg.match(/<plate>/g)).toHaveLength(2);
+    expect(projCfg).toContain('<metadata key="locked" value="false"/>');
     expect(projCfg.match(/enable_support" value="0"/g)).toHaveLength(1); // plate 1: support-free part, explicit off
     expect(projCfg.match(/enable_support" value="1"/g)).toHaveLength(1); // plate 2: the part that needs supports
     // Plate 2 sits at col=1 -> x offset = 1 * 1.2 * 256 + (256 - 246)/2 = 307.2 + 5 = 312.2 (or boundMm=170 -> 307.2 + 43 = 350.2)
     expect(projModel).toContain("350.2 43 0");
+
+    // 4. Single-colour 300x300x340 (`large_300`): disables single_extruder_multi_material ('0') and spaces plates on a 360 mm grid
+    const large300Plates = [
+      { label: "Plate 1: Sky", fileStem: "plate_01_sky", hex: "#4EB3FC", colorName: "Snap Sky", boundMm: 290, gap: 5, requiresSupports: false, placed: [sample()[0]!] },
+      { label: "Plate 2: Shell", fileStem: "plate_02_shell", hex: "#F4EFE6", colorName: "Warm Shell", boundMm: 290, gap: 6, requiresSupports: true, placed: [sample()[1]!] },
+    ];
+    const large300Path = join(dir, "project-300.3mf");
+    writeFileSync(large300Path, K.to3mfProject(large300Plates, P.applyPresetToProfile(P.createDefaultProfile(), "large_300")));
+    const pyLarge = "import zipfile,sys;z=zipfile.ZipFile(sys.argv[1]);assert z.testzip() is None;print(z.read('3D/3dmodel.model').decode());print('@@');print(z.read('Metadata/project_settings.config').decode())";
+    const [l300Model, l300SettingsRaw] = execFileSync("python3", ["-c", pyLarge, large300Path], { encoding: "utf8" }).split("@@\n") as [string, string];
+    const parsedL300 = JSON.parse(l300SettingsRaw);
+    expect(parsedL300.single_extruder_multi_material).toBe("0");
+    expect(parsedL300.printable_area).toEqual(["0x0", "300x0", "300x300", "0x300"]);
+    expect(parsedL300.printable_height).toBe("340");
+    // Plate 2 sits at col=1 on 300 mm bed -> x offset = 1 * 1.2 * 300 + (300 - 290)/2 = 360 + 5 = 365, y offset = 5
+    expect(l300Model).toContain("365 5 0");
+    rmSync(dir, { recursive: true, force: true });
   });
 
   it("layout json v2 sanitizes binary state and includes interfaces.json safety warnings", () => {

@@ -1,20 +1,21 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_hair_ponytail_S.stl",
-  "file_sha256": "08b0f96e3658ee8c618d3e1eaea298ac5b0d2eaedd3c0bc69f7c39fcb95b2f5a",
+  "file_sha256": "164c7f81947684bc9b05118b16efc3cd2f66de294293d614003152fb90230c30",
   "part_id": "hair_ponytail",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-11-01T21:34:54Z",
+  "checked_at": "2026-11-01T22:28:46Z",
   "metrics": {
     "bbox_mm": [
       44.01,
       49.91,
       33.3
     ],
-    "volume_cm3": 9.95,
-    "surface_cm2": 68.59,
-    "triangles": 5478,
+    "volume_cm3": 11.62,
+    "surface_cm2": 71.04,
+    "triangles": 6728,
     "ledges": [],
+    "floating_contours": [],
     "layers": 166,
     "bed_contact_mm2": 90.5,
     "height_mm": 33.3,
@@ -26,18 +27,38 @@
   "bridges": [
     {
       "z_mm": 16.6,
-      "span_mm": 10.03,
-      "area_mm2": 490.0
+      "span_mm": 6.93,
+      "area_mm2": 99.1
     },
     {
-      "z_mm": 19.7,
-      "span_mm": 6.7,
-      "area_mm2": 35.2
+      "z_mm": 16.6,
+      "span_mm": 5.8,
+      "area_mm2": 111.3
     },
     {
-      "z_mm": 19.7,
+      "z_mm": 16.6,
+      "span_mm": 6.93,
+      "area_mm2": 99.1
+    },
+    {
+      "z_mm": 16.85,
       "span_mm": 6.7,
-      "area_mm2": 35.2
+      "area_mm2": 47.7
+    },
+    {
+      "z_mm": 16.85,
+      "span_mm": 5.28,
+      "area_mm2": 34.7
+    },
+    {
+      "z_mm": 16.85,
+      "span_mm": 6.7,
+      "area_mm2": 47.7
+    },
+    {
+      "z_mm": 16.85,
+      "span_mm": 5.28,
+      "area_mm2": 34.7
     }
   ],
   "checks": [
@@ -90,12 +111,20 @@
       "detail": "mm2 of flat underside held on one side only (a ledge over air, not a bridge)"
     },
     {
+      "id": "V11_floating_contour",
+      "level": "block",
+      "result": "pass",
+      "value": 0,
+      "limit": 0,
+      "detail": "unanchored interior hole loops in bridge ceilings or low-Z hovering cantilevers"
+    },
+    {
       "id": "V6_bridge_span",
       "level": "block",
       "result": "pass",
-      "value": 10.03,
+      "value": 6.93,
       "limit": 20,
-      "detail": "3 bridge(s); widest unsupported span in mm"
+      "detail": "7 bridge(s); widest unsupported span in mm"
     },
     {
       "id": "V5_no_floating_islands",

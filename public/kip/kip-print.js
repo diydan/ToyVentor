@@ -26,6 +26,8 @@ import {
   samplePartAnchors,
   buildSprueCard,
   checkSprueCard,
+  buildBreakoffCouponMesh,
+  buildPegTurretFitCouponMesh,
   sliceMeshAtZ,
   pointToSegDistSq,
   segToSegDist,
@@ -37,6 +39,8 @@ export {
   samplePartAnchors,
   buildSprueCard,
   checkSprueCard,
+  buildBreakoffCouponMesh,
+  buildPegTurretFitCouponMesh,
 };
 
 // ---------------------------------------------------------------------------------------------
@@ -304,15 +308,6 @@ const SOCKET_GUARD_BOXES = Object.freeze({
     [-4.2, 0.0, 83.2, 4.2, 13.4, 92.8],
     [-12.3, 11.8, 75.2, 12.3, 13.4, 99.8],
     [-4.2, 0.2, 58.5, 4.2, 13.3, 67.5],
-  ],
-  head_shell: [
-    [-5.3, -5.3, 0.05, 5.3, 5.3, 8.5],        // bottom neck socket
-    [-22.0, -6.2, 14.0, -17.5, 6.2, 27.5],    // left ear-pod seat
-    [17.5, -6.2, 14.0, 22.0, 6.2, 27.5],      // right ear-pod seat
-    [-15.4, -18.8, 9.8, 15.4, -15.8, 28.6],   // front visor bezel pocket
-  ],
-  head_hood: [
-    [-11.6, -5.8, 39.8, 11.6, 5.8, 41.6],     // top crown mortise
   ],
   snap_arm: [
     [-4.8, -8.6, 0.05, 4.8, 1.0, 7.5],        // bottom wrist socket
@@ -604,9 +599,8 @@ export function bestCustomOrientation(tri, lim = LIMITS) {
   }
 
   hullNormals.sort((a, b) => b.supportArea - a.supportArea);
-  hullNormals.slice(0, 8).forEach((hn, k) => {
-    const baseM = rotationLandingNormalDown(hn.ux, hn.uy, hn.uz);
-    // Align Z-yaw for tightest axis-aligned XY bounding rectangle
+  const alignTightYaw = (ux, uy, uz) => {
+    const baseM = rotationLandingNormalDown(ux, uy, uz);
     let bestM = baseM;
     let bestBoxArea = Infinity;
     const baseRot = transform(tri, baseM);
@@ -628,8 +622,78 @@ export function bestCustomOrientation(tri, lim = LIMITS) {
         bestM = mulMat3([c, -s, 0, s, c, 0, 0, 0, 1], baseM);
       }
     }
-    candidates.push({ index: 6 + k, name: `hull#${k + 1}`, m: bestM, isAxis: false });
+    return bestM;
+  };
+
+  hullNormals.slice(0, 8).forEach((hn, k) => {
+    candidates.push({ index: 6 + k, name: `hull#${k + 1}`, m: alignTightYaw(hn.ux, hn.uy, hn.uz), isAxis: false });
   });
+
+  // Tweaker-3 3-point convex-hull facet search: finds flat resting planes spanned across 3 distinct hull
+  // vertices (e.g. rim tips + heel on sculpted/organic meshes) where no single large triangle shares that normal.
+  const extVerts = [];
+  for (let dx = -1; dx <= 1; dx++) {
+    for (let dy = -1; dy <= 1; dy++) {
+      for (let dz = -1; dz <= 1; dz++) {
+        if (dx === 0 && dy === 0 && dz === 0) continue;
+        let bestDot = -Infinity, bx = 0, by = 0, bz = 0;
+        for (let i = 0; i < tri.length; i += 3) {
+          const d = dx * tri[i] + dy * tri[i + 1] + dz * tri[i + 2];
+          if (d > bestDot) { bestDot = d; bx = tri[i]; by = tri[i + 1]; bz = tri[i + 2]; }
+        }
+        if (!extVerts.some(v => Math.hypot(v[0] - bx, v[1] - by, v[2] - bz) < 0.25)) {
+          extVerts.push([bx, by, bz]);
+        }
+      }
+    }
+  }
+  const tripodPlanes = [];
+  for (let a = 0; a < extVerts.length; a++) {
+    const va = extVerts[a];
+    for (let b = a + 1; b < extVerts.length; b++) {
+      const vb = extVerts[b];
+      const abx = vb[0] - va[0], aby = vb[1] - va[1], abz = vb[2] - va[2];
+      for (let c = b + 1; c < extVerts.length; c++) {
+        const vc = extVerts[c];
+        const acx = vc[0] - va[0], acy = vc[1] - va[1], acz = vc[2] - va[2];
+        let nx = aby * acz - abz * acy, ny = abz * acx - abx * acz, nz = abx * acy - aby * acx;
+        const triArea2 = Math.hypot(nx, ny, nz);
+        if (triArea2 < 8.0) continue; // span at least 4 mm2 tripod base
+        nx /= triArea2; ny /= triArea2; nz /= triArea2;
+        const d0 = nx * va[0] + ny * va[1] + nz * va[2];
+        // Check if all extreme vertices lie on one side of this tripod plane
+        let posOut = 0, negOut = 0;
+        for (let q = 0; q < extVerts.length; q++) {
+          const dq = (nx * extVerts[q][0] + ny * extVerts[q][1] + nz * extVerts[q][2]) - d0;
+          if (dq > 0.08) posOut++;
+          else if (dq < -0.08) negOut++;
+          if (posOut > 0 && negOut > 0) break;
+        }
+        if (posOut > 0 && negOut > 0) continue;
+        if (posOut > 0) { nx = -nx; ny = -ny; nz = -nz; }
+        if (Math.max(Math.abs(nx), Math.abs(ny), Math.abs(nz)) > 0.996) continue;
+        if (hullNormals.some(h => h.ux * nx + h.uy * ny + h.uz * nz > 0.985)) continue;
+        if (tripodPlanes.some(p => p.ux * nx + p.uy * ny + p.uz * nz > 0.985)) continue;
+        tripodPlanes.push({ ux: nx, uy: ny, uz: nz, spanArea: triArea2 * 0.5 });
+      }
+    }
+  }
+  tripodPlanes.sort((a, b) => b.spanArea - a.spanArea);
+  tripodPlanes.slice(0, 4).forEach((tp, k) => {
+    candidates.push({ index: 14 + k, name: `hull3pt#${k + 1}`, m: alignTightYaw(tp.ux, tp.uy, tp.uz), isAxis: false });
+  });
+
+  // Measure bed-contact perimeter length (Tweaker-3 `bottom_contour` adhesion metric)
+  const bedContourMm = (sTri) => {
+    let perim = 0;
+    for (let t = 0; t < sTri.length; t += 9) {
+      const z0 = sTri[t + 2], z1 = sTri[t + 5], z2 = sTri[t + 8];
+      if (z0 <= 0.22 && z1 <= 0.22 && z2 > 0.22) perim += Math.hypot(sTri[t + 3] - sTri[t], sTri[t + 4] - sTri[t + 1]);
+      else if (z1 <= 0.22 && z2 <= 0.22 && z0 > 0.22) perim += Math.hypot(sTri[t + 6] - sTri[t + 3], sTri[t + 7] - sTri[t + 4]);
+      else if (z2 <= 0.22 && z0 <= 0.22 && z1 > 0.22) perim += Math.hypot(sTri[t] - sTri[t + 6], sTri[t + 1] - sTri[t + 7]);
+    }
+    return perim;
+  };
 
   let best = null;
   for (const c of candidates) {
@@ -637,10 +701,11 @@ export function bestCustomOrientation(tri, lim = LIMITS) {
     const seated = { tri: seatedRes.tri, size: seatedRes.size };
     const rep = supportReport(seated.tri, lim);
     const islands = countFloatingIslands(seated.tri, 0.40, lim);
-    if (c.index === 0 && islands === 0 && rep.supportFree) {
+    if (c.index === 0 && islands === 0 && rep.supportFree && rep.contactMm2 >= 4.0) {
       return { index: 0, name: c.name, m: c.m, seated, report: rep, islands: 0 };
     }
-    const cost = islands * 1000 + rep.overhangMm2 - 0.02 * rep.contactMm2 + 0.05 * rep.heightMm;
+    const contour = bedContourMm(seated.tri);
+    const cost = islands * 1000 + rep.overhangMm2 - 0.02 * rep.contactMm2 - 0.008 * contour + 0.05 * rep.heightMm;
     if (!best || cost < best.cost - 1e-4) {
       best = { index: c.index, name: c.name, m: c.m, seated, report: rep, islands, cost };
     }
@@ -886,8 +951,7 @@ const Z_TURNS = Object.freeze([
   { deg: 180, rot: false, m: [-1, 0, 0, 0, -1, 0, 0, 0, 1], shift: (w, h) => [w, h, 0] },
   { deg: 270, rot: true,  m: [0, 1, 0, -1, 0, 0, 0, 0, 1],  shift: (w) => [0, w, 0] },
 ]);
-// Matches `export_print_oriented` in `parts/kip/kip.scad:1141-1143` (`rotate([-90,0,0])` -> `-y up`) for multi-catchlight visor pins.
-const SCAD_FACE_PIN_ORIENT = Object.freeze({ face_glints: 5 });
+const SCAD_FACE_PIN_ORIENT = Object.freeze({});
 
 function rotateSeatedZ(tri, w, h, turnIdx) {
   const t = Z_TURNS[turnIdx] || Z_TURNS[0];
@@ -947,6 +1011,8 @@ function buildRasterPose(tri, w, h, cellMm) {
   return { w, h, cols, rows, rowBits, occCells };
 }
 
+const RASTER_POSE_CACHE = new WeakMap();
+
 /**
  * Deterministic conservative 2D XY mesh silhouette packer (`1.0 mm` bit-packed raster with exact continuous
  * Euclidean `>= gap` dilation across `0/90/180/270 deg` `+Z` turns). Nests concave/diagonal silhouettes cleanly.
@@ -970,15 +1036,19 @@ export function packPolygonPlates(instances, boundMm = plateBound().mm, gap = LI
   const getPoses = (inst) => {
     const key = `${inst.id}|${inst.orientation}|${inst.w.toFixed(3)}x${inst.h.toFixed(3)}`;
     if (poseCache.has(key)) return poseCache.get(key);
-    const list = [];
-    for (let ti = 0; ti < 4; ti++) {
-      const rw = Z_TURNS[ti].rot ? inst.h : inst.w;
-      const rh = Z_TURNS[ti].rot ? inst.w : inst.h;
-      if (rw > boundMm + EPS || rh > boundMm + EPS) continue;
-      if (ti === 1 && Math.abs(inst.w - inst.h) < 0.05) continue;
-      const rTri = rotateSeatedZ(inst.tri, inst.w, inst.h, ti);
-      list.push({ turnIdx: ti, rot: Z_TURNS[ti].rot, w: rw, h: rh, raster: buildRasterPose(rTri, rw, rh, cellMm) });
+    let allPoses = (inst.tri && typeof inst.tri === 'object') ? RASTER_POSE_CACHE.get(inst.tri) : null;
+    if (!allPoses) {
+      allPoses = [];
+      for (let ti = 0; ti < 4; ti++) {
+        if (ti === 1 && Math.abs(inst.w - inst.h) < 0.05) continue;
+        const rw = Z_TURNS[ti].rot ? inst.h : inst.w;
+        const rh = Z_TURNS[ti].rot ? inst.w : inst.h;
+        const rTri = rotateSeatedZ(inst.tri, inst.w, inst.h, ti);
+        allPoses.push({ turnIdx: ti, rot: Z_TURNS[ti].rot, w: rw, h: rh, raster: buildRasterPose(rTri, rw, rh, cellMm) });
+      }
+      if (inst.tri && typeof inst.tri === 'object') RASTER_POSE_CACHE.set(inst.tri, allPoses);
     }
+    const list = allPoses.filter((p) => p.w <= boundMm + EPS && p.h <= boundMm + EPS);
     poseCache.set(key, list);
     return list;
   };
@@ -1118,9 +1188,18 @@ export function prepareItem(entry, tri, { verified = false, sha256 = '' } = {}) 
   }
 
   const report = choice.report ?? supportReport(choice.seated.tri);
-  const tier = !report.supportFree ? 'needs-supports'
+  const islands = choice.islands ?? 0;
+  const needsSup = !report.supportFree || islands > 0;
+  const tier = needsSup ? 'needs-supports'
     : (entry.source === 'partspec') ? (verified ? 'support-free' : 'unverified')
       : 'geometry-checked';
+  const supportReason = !needsSup
+    ? null
+    : islands > 0 && !report.supportFree
+      ? `V5 floating islands (${islands}) + V4 overhang ${report.overhangMm2.toFixed(1)} mm²`
+      : islands > 0
+        ? `V5 floating islands (${islands})`
+        : `V4 steep overhang ${report.overhangMm2.toFixed(1)} mm² >= ${LIMITS.steepAreaToleranceMm2} mm²`;
   const { volumeMm3, areaMm2 } = meshVolumeAndArea(choice.seated.tri);
   const hex = entry.hex ? normHex(entry.hex) : '#F4EFE6';
   return {
@@ -1144,7 +1223,8 @@ export function prepareItem(entry, tri, { verified = false, sha256 = '' } = {}) 
     volumeMm3,
     areaMm2,
     orientation: choice.name,
-    islands: choice.islands ?? 0,
+    islands,
+    supportReason,
     report,
     tier,
   };
@@ -1212,8 +1292,14 @@ function materializePlacedPlate(placed, byId, boundMm, centerOnPlate = true) {
       areaMm2: inst.areaMm2,
       tri: world,
       blockerTri: blockerWorld,
+      localTri: inst.tri,
+      localW: inst.w,
+      localH: inst.h,
+      turnIdx,
       z: inst.z,
       orientation: inst.orientation,
+      islands: inst.islands ?? 0,
+      supportReason: inst.supportReason || null,
       report: inst.report,
     };
   });
@@ -1261,12 +1347,44 @@ export function buildPlates(instances, {
 }
 
 /**
- * Plan colour-separated (and support-separated + vehicle-separated) plates for any printer (§5.1, §7.2),
- * including M4 flat-pack sprue kit cards + adjacent loose zones when `profile.flatPackMode === 'sprue'` (§6).
+ * Deterministic support-free summary line computed from a plate plan (§12.6):
+ * returns `'All parts print without supports'` when 0 placed instances have `tier === 'needs-supports'`,
+ * or `'1 part needs supports: <id>'` / `'<N> parts need supports: <ids>'` otherwise.
  */
-export function planColorPlates(preparedItems, rawProfile = createDefaultProfile()) {
+export function supportSummaryLine(platesOrPlan) {
+  const plates = Array.isArray(platesOrPlan)
+    ? platesOrPlan
+    : (platesOrPlan?.plates || platesOrPlan?.rawPlates || []);
+  let count = 0;
+  const names = [];
+  const seen = new Set();
+  for (const entry of plates) {
+    const placed = Array.isArray(entry) ? entry : (entry?.placed || []);
+    for (const p of placed) {
+      if (p?.tier === 'needs-supports') {
+        count++;
+        const id = p.partId || p.part || p.id || p.instance;
+        if (id && !seen.has(id)) {
+          seen.add(id);
+          names.push(id);
+        }
+      }
+    }
+  }
+  if (count === 0) return 'All parts print without supports';
+  return `${count} part${count === 1 ? '' : 's'} need${count === 1 ? 's' : ''} supports: ${names.join(', ')}`;
+}
+
+/**
+ * Plan colour-separated (and support-separated + vehicle-separated) plates for any printer (§5.1, §7.2),
+ * including M4/M6 flat-pack kit trays + adjacent loose zones when `profile.flatPackMode === 'sprue'` (§6, §12).
+ */
+export function planColorPlates(preparedItems, rawProfile = createDefaultProfile(), options = {}) {
   const profile = clampProfile(rawProfile);
   const bound = plateBound(profile.bedXmm, profile.brimMarginMm, profile.bedYmm);
+  const sprueSpec = options?.sprueSpec
+    ? { ...SPRUE_SPEC, ...options.sprueSpec }
+    : (rawProfile?.allowPegsAndTurrets ? { ...SPRUE_SPEC, allowPegsAndTurrets: true } : SPRUE_SPEC);
 
   let workingItems = preparedItems;
   let merges = [];
@@ -1312,8 +1430,8 @@ export function planColorPlates(preparedItems, rawProfile = createDefaultProfile
   const plannedPlates = [];
   const oversize = [];
   const sprueMode = profile.flatPackMode === 'sprue';
-  const usableCardMm = sprueUsableBoundMm(bound.mm);
-  const margin = sprueMarginMm();
+  const usableCardMm = sprueUsableBoundMm(bound.mm, sprueSpec);
+  const margin = sprueMarginMm(sprueSpec);
 
   for (const b of orderedBuckets) {
     const gap = b.requiresSupports ? LIMITS.supportGapMm : LIMITS.gapMm;
@@ -1346,8 +1464,8 @@ export function planColorPlates(preparedItems, rawProfile = createDefaultProfile
     const cardItems = [];
     let looseQueue = [];
     for (const inst of b.items) {
-      const elig = isSprueEligiblePart({ ...inst, partId: inst.id, cardMaxMm: bound.mm });
-      if (elig.ok && samplePartAnchors(inst.tri, { partId: inst.id }).anchors.length >= 2) {
+      const elig = isSprueEligiblePart({ ...inst, partId: inst.id, cardMaxMm: bound.mm }, sprueSpec);
+      if (elig.ok && samplePartAnchors(inst.tri, { partId: inst.id, spec: sprueSpec }).anchors.length >= 2) {
         cardItems.push(inst);
       } else {
         looseQueue.push(inst);
@@ -1355,7 +1473,7 @@ export function planColorPlates(preparedItems, rawProfile = createDefaultProfile
     }
 
     if (cardItems.length > 0) {
-      const cardPacked = buildPlates(cardItems, { boundMm: usableCardMm, gap: SPRUE_SPEC.partGapMm, centerOnPlate: false });
+      const cardPacked = buildPlates(cardItems, { boundMm: usableCardMm, gap: sprueSpec.partGapMm, centerOnPlate: false });
       // Any card item too big for usableCardMm falls back cleanly to looseQueue
       if (cardPacked.oversize.length) {
         const ovSet = new Set(cardPacked.oversize);
@@ -1414,7 +1532,7 @@ export function planColorPlates(preparedItems, rawProfile = createDefaultProfile
           .map(p => ({ ...p, sprueAnchored: false }));
 
         const frameBox = { x: shiftX, y: shiftY, w: cardW, h: cardH };
-        const sprue = buildSprueCard(finalCardParts, { frameBox, boundMm: bound.mm });
+        const sprue = buildSprueCard(finalCardParts, { frameBox, boundMm: bound.mm, spec: sprueSpec });
 
         // Account for kit-card frame & runner filament in spool estimate
         if (sprue && sprue.tri.length) {
@@ -1478,7 +1596,7 @@ export function planColorPlates(preparedItems, rawProfile = createDefaultProfile
     const tags = [];
     if (pl.sprue) {
       const hasLoose = pl.placed.some(p => !p.sprueAnchored);
-      tags.push(hasLoose ? 'Kit card + Loose' : 'Kit card');
+      tags.push(hasLoose ? 'Kit tray + Loose' : 'Kit tray');
     }
     if (pl.requiresSupports) tags.push('Supports');
     if (pl.group === 'vehicle') tags.push('Vehicle');
@@ -1491,6 +1609,8 @@ export function planColorPlates(preparedItems, rawProfile = createDefaultProfile
     pl.fileStem = `plate_${String(i + 1).padStart(2, '0')}_${fileTag.join('_')}`;
   });
 
+  const supportSummary = supportSummaryLine(plannedPlates);
+
   return {
     profile,
     bound,
@@ -1499,6 +1619,7 @@ export function planColorPlates(preparedItems, rawProfile = createDefaultProfile
     oversize,
     merges,
     estimate,
+    supportSummary,
     filamentColoursHex: colorOrder.length ? colorOrder : ['#F4EFE6'],
   };
 }
@@ -1531,43 +1652,200 @@ export function crc32(u8) {
   return (c ^ 0xffffffff) >>> 0;
 }
 
-/** Minimal zip writer, "stored" (no compression). files: [{ name, data: Uint8Array | string }]. */
-export function zipStore(files) {
-  const enc = new TextEncoder();
+// Zero-dependency synchronous RFC 1951 raw DEFLATE (fixed-Huffman + 32 KB hash LZ77) for ~6x smaller `.3mf` / `.zip` exports.
+const DEFLATE_LEN_BASE = new Uint16Array([3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15, 17, 19, 23, 27, 31, 35, 43, 51, 59, 67, 83, 99, 115, 131, 163, 195, 227, 258]);
+const DEFLATE_LEN_EXTRA = new Uint8Array([0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 0]);
+const DEFLATE_DIST_BASE = new Uint16Array([1, 2, 3, 4, 5, 7, 9, 13, 17, 25, 33, 49, 65, 97, 129, 193, 257, 385, 513, 769, 1025, 1537, 2049, 3073, 4097, 6145, 8193, 12289, 16385, 24577]);
+const DEFLATE_DIST_EXTRA = new Uint8Array([0, 0, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13, 13]);
+
+function revBits(v, n) {
+  let r = 0;
+  for (let i = 0; i < n; i++) { r = (r << 1) | (v & 1); v >>>= 1; }
+  return r;
+}
+
+const FIXED_LIT_CODE = new Uint16Array(288);
+const FIXED_LIT_BITS = new Uint8Array(288);
+const FIXED_DIST_CODE = new Uint8Array(30);
+(() => {
+  for (let s = 0; s <= 143; s++) { FIXED_LIT_CODE[s] = revBits(0x30 + s, 8); FIXED_LIT_BITS[s] = 8; }
+  for (let s = 144; s <= 255; s++) { FIXED_LIT_CODE[s] = revBits(0x190 + (s - 144), 9); FIXED_LIT_BITS[s] = 9; }
+  for (let s = 256; s <= 279; s++) { FIXED_LIT_CODE[s] = revBits(s - 256, 7); FIXED_LIT_BITS[s] = 7; }
+  for (let s = 280; s <= 287; s++) { FIXED_LIT_CODE[s] = revBits(0xc0 + (s - 280), 8); FIXED_LIT_BITS[s] = 8; }
+  for (let d = 0; d < 30; d++) FIXED_DIST_CODE[d] = revBits(d, 5);
+})();
+
+export function deflateRawSync(u8) {
+  const n = u8.length;
+  let cap = Math.max(256, (n + (n >>> 2)) | 0);
+  let out = new Uint8Array(cap);
+  let pos = 0, bitBuf = 0, bitLen = 0;
+  const putBits = (val, cnt) => {
+    bitBuf |= (val << bitLen);
+    bitLen += cnt;
+    while (bitLen >= 8) {
+      if (pos >= cap) {
+        cap *= 2;
+        const grown = new Uint8Array(cap);
+        grown.set(out);
+        out = grown;
+      }
+      out[pos++] = bitBuf & 0xff;
+      bitBuf >>>= 8;
+      bitLen -= 8;
+    }
+  };
+
+  // BFINAL = 1 (1 bit), BTYPE = 01 fixed Huffman (2 bits LSB-first -> 0b01) => 3 bits = 0b011
+  putBits(0b011, 3);
+
+  const head = new Int32Array(32768).fill(-1);
+  const prev = new Int32Array(32768).fill(-1);
+  let i = 0;
+  while (i < n) {
+    let bestLen = 0, bestDist = 0;
+    if (i + 3 < n) {
+      const h = (((u8[i] | (u8[i + 1] << 8) | (u8[i + 2] << 16) | (u8[i + 3] << 24)) * 0x1e35a7bd) >>> 17) & 32767;
+      let cand = head[h];
+      prev[i & 32767] = cand;
+      head[h] = i;
+      let chain = 0;
+      const maxLen = Math.min(258, n - i);
+      while (cand >= 0 && (i - cand) <= 32768 && chain++ < 24) {
+        if (u8[cand + bestLen] === u8[i + bestLen] && u8[cand] === u8[i]) {
+          let l = 1;
+          while (l < maxLen && u8[cand + l] === u8[i + l]) l++;
+          if (l >= 4 && l > bestLen) {
+            bestLen = l;
+            bestDist = i - cand;
+            if (l === maxLen) break;
+          }
+        }
+        const nextCand = prev[cand & 32767];
+        if (nextCand >= cand) break;
+        cand = nextCand;
+      }
+    }
+
+    if (bestLen >= 4) {
+      let lIdx = 28;
+      if (bestLen < 258) {
+        lIdx = 0;
+        while (lIdx < 27 && DEFLATE_LEN_BASE[lIdx + 1] <= bestLen) lIdx++;
+      }
+      const lSym = 257 + lIdx;
+      putBits(FIXED_LIT_CODE[lSym], FIXED_LIT_BITS[lSym]);
+      if (DEFLATE_LEN_EXTRA[lIdx]) putBits(bestLen - DEFLATE_LEN_BASE[lIdx], DEFLATE_LEN_EXTRA[lIdx]);
+
+      let dIdx = 0;
+      while (dIdx < 29 && DEFLATE_DIST_BASE[dIdx + 1] <= bestDist) dIdx++;
+      putBits(FIXED_DIST_CODE[dIdx], 5);
+      if (DEFLATE_DIST_EXTRA[dIdx]) putBits(bestDist - DEFLATE_DIST_BASE[dIdx], DEFLATE_DIST_EXTRA[dIdx]);
+
+      const endStep = Math.min(i + bestLen, n - 3);
+      for (let k = i + 1; k < endStep; k++) {
+        const hk = (((u8[k] | (u8[k + 1] << 8) | (u8[k + 2] << 16) | (u8[k + 3] << 24)) * 0x1e35a7bd) >>> 17) & 32767;
+        prev[k & 32767] = head[hk];
+        head[hk] = k;
+      }
+      i += bestLen;
+    } else {
+      const lit = u8[i++];
+      putBits(FIXED_LIT_CODE[lit], FIXED_LIT_BITS[lit]);
+    }
+  }
+
+  putBits(FIXED_LIT_CODE[256], FIXED_LIT_BITS[256]);
+  if (bitLen > 0) {
+    if (pos >= cap) {
+      const grown = new Uint8Array(pos + 1);
+      grown.set(out);
+      out = grown;
+    }
+    out[pos++] = bitBuf & 0xff;
+  }
+  return out.subarray(0, pos);
+}
+
+function buildZipFromEncodedEntries(entries) {
   const parts = [];
   const central = [];
   let offset = 0;
-  for (const f of files) {
-    const name = enc.encode(f.name);
-    const data = typeof f.data === 'string' ? enc.encode(f.data) : f.data;
-    const crc = crc32(data);
+  for (const e of entries) {
+    const { name, payload, uncompLen, crc, method } = e;
     const local = new Uint8Array(30 + name.length);
     const dv = new DataView(local.buffer);
-    dv.setUint32(0, 0x04034b50, true); dv.setUint16(4, 20, true); dv.setUint16(6, 0x0800, true); dv.setUint16(8, 0, true);
+    dv.setUint32(0, 0x04034b50, true); dv.setUint16(4, 20, true); dv.setUint16(6, 0x0800, true); dv.setUint16(8, method, true);
     dv.setUint16(10, 0, true); dv.setUint16(12, 0x21, true); dv.setUint32(14, crc, true);
-    dv.setUint32(18, data.length, true); dv.setUint32(22, data.length, true); dv.setUint16(26, name.length, true); dv.setUint16(28, 0, true);
+    dv.setUint32(18, payload.length, true); dv.setUint32(22, uncompLen, true); dv.setUint16(26, name.length, true); dv.setUint16(28, 0, true);
     local.set(name, 30);
-    parts.push(local, data);
+    parts.push(local, payload);
     const c = new Uint8Array(46 + name.length);
     const cv = new DataView(c.buffer);
     cv.setUint32(0, 0x02014b50, true); cv.setUint16(4, 20, true); cv.setUint16(6, 20, true); cv.setUint16(8, 0x0800, true);
-    cv.setUint16(10, 0, true); cv.setUint16(12, 0, true); cv.setUint16(14, 0x21, true); cv.setUint32(16, crc, true);
-    cv.setUint32(20, data.length, true); cv.setUint32(24, data.length, true); cv.setUint16(28, name.length, true);
+    cv.setUint16(10, method, true); cv.setUint16(12, 0, true); cv.setUint16(14, 0x21, true); cv.setUint32(16, crc, true);
+    cv.setUint32(20, payload.length, true); cv.setUint32(24, uncompLen, true); cv.setUint16(28, name.length, true);
     cv.setUint32(42, offset, true);
     c.set(name, 46);
     central.push(c);
-    offset += local.length + data.length;
+    offset += local.length + payload.length;
   }
   const cdSize = central.reduce((a, c) => a + c.length, 0);
   const end = new Uint8Array(22);
   const ev = new DataView(end.buffer);
-  ev.setUint32(0, 0x06054b50, true); ev.setUint16(8, files.length, true); ev.setUint16(10, files.length, true);
+  ev.setUint32(0, 0x06054b50, true); ev.setUint16(8, entries.length, true); ev.setUint16(10, entries.length, true);
   ev.setUint32(12, cdSize, true); ev.setUint32(16, offset, true);
   const total = offset + cdSize + 22;
   const out = new Uint8Array(total);
   let o = 0;
   for (const p of [...parts, ...central, end]) { out.set(p, o); o += p.length; }
   return out;
+}
+
+/** Synchronous zip writer with automatic RFC 1951 raw deflate (`method = 8`) on compressible entries (`~6x` smaller `.3mf`). */
+export function zipStore(files, { compress = true } = {}) {
+  const enc = new TextEncoder();
+  const entries = files.map((f) => {
+    const nameStr = String(f.name);
+    const name = enc.encode(nameStr);
+    const data = typeof f.data === 'string' ? enc.encode(f.data) : f.data;
+    const crc = crc32(data);
+    const skipDeflate = !compress || data.length < 128 || /\.(png|jpg|jpeg|webp|zip|3mf)$/i.test(nameStr);
+    if (!skipDeflate) {
+      const comp = deflateRawSync(data);
+      if (comp.length < data.length) {
+        return { name, payload: comp, uncompLen: data.length, crc, method: 8 };
+      }
+    }
+    return { name, payload: data, uncompLen: data.length, crc, method: 0 };
+  });
+  return buildZipFromEncodedEntries(entries);
+}
+
+/** Async zip writer using native Web/Node `CompressionStream('deflate-raw')` dynamic Huffman when available. */
+export async function zipDeflate(files) {
+  if (typeof CompressionStream === 'undefined') return zipStore(files);
+  const enc = new TextEncoder();
+  const entries = [];
+  for (const f of files) {
+    const nameStr = String(f.name);
+    const name = enc.encode(nameStr);
+    const data = typeof f.data === 'string' ? enc.encode(f.data) : f.data;
+    const crc = crc32(data);
+    if (data.length >= 128 && !/\.(png|jpg|jpeg|webp|zip|3mf)$/i.test(nameStr)) {
+      const cs = new CompressionStream('deflate-raw');
+      const writer = cs.writable.getWriter();
+      writer.write(data);
+      writer.close();
+      const comp = new Uint8Array(await new Response(cs.readable).arrayBuffer());
+      if (comp.length < data.length) {
+        entries.push({ name, payload: comp, uncompLen: data.length, crc, method: 8 });
+        continue;
+      }
+    }
+    entries.push({ name, payload: data, uncompLen: data.length, crc, method: 0 });
+  }
+  return buildZipFromEncodedEntries(entries);
 }
 
 const xml = (s) => String(s).replace(/[<>&"']/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&apos;' })[c]);
@@ -1625,7 +1903,7 @@ const ORCA_FILAMENT_SLOT_DEFAULTS = Object.freeze({
   filament_tower_interface_pre_extrusion_length: '0', filament_tower_interface_print_temp: '-1',
   filament_tower_interface_purge_volume: '20', filament_tower_ironing_area: '4', filament_unloading_speed: '90',
   filament_unloading_speed_start: '100', first_layer_print_sequence: '0', first_x_layer_fan_speed: '0',
-  flush_multiplier: '0.3', full_fan_speed_layer: '0', grab_length: '0', hot_plate_temp: '55',
+  full_fan_speed_layer: '0', grab_length: '0', hot_plate_temp: '55',
   hot_plate_temp_initial_layer: '55', idle_temperature: '0', internal_bridge_fan_speed: '-1',
   ironing_fan_speed: '-1', long_retractions_when_cut: '0', long_retractions_when_ec: '0',
   machine_max_junction_deviation: '0.01', max_layer_height: '0', min_layer_height: '0.07',
@@ -1659,17 +1937,25 @@ function buildOrcaProjectSettingsJson(filamentColours, profile) {
   for (const [k, val] of Object.entries(ORCA_FILAMENT_SLOT_DEFAULTS)) {
     perFil[k] = cols.map(() => val);
   }
-  perFil.filament_map = cols.map((_, idx) => String(idx + 1));
+  // `filament_map` is the 1-based physical nozzle index (`1..nozzle_diameter.length`), NOT the filament slot index.
+  // Mapping slot 2+ to nozzle 2+ when `nozzle_diameter` has 1 nozzle aborts `bbs_3mf` project loading in Creality Print / OrcaSlicer.
+  perFil.filament_map = cols.map(() => '1');
+  perFil.filament_max_volumetric_speed = cols.map(() => (mat === 'PETG' ? '12' : '18'));
+  perFil.min_layer_height = cols.map(() => (nozzle === 0.2 ? '0.04' : '0.07'));
   perFil.wipe_tower_x = cols.map(() => '15');
   perFil.wipe_tower_y = cols.map(() => wipeY);
+  const isMultiMat = profile.changerType !== 'single' && (profile.maxSlots || 1) > 1;
 
   return JSON.stringify({
     version: '02.02.00.50',
     from: 'User',
     name: 'Kip Print Pack',
     printer_settings_id: nozzle === 0.2 ? 'Bambu Lab A1 mini 0.2 nozzle' : 'Bambu Lab A1 mini 0.4 nozzle',
-    print_settings_id: nozzle === 0.2 ? '0.12mm Fine @BBL A1M 0.2 nozzle' : '0.20mm Standard @BBL A1M',
+    print_settings_id: nozzle === 0.2 ? '0.12mm Draft @BBL A1M 0.2 nozzle' : '0.20mm Standard @BBL A1M',
     ...perFil,
+    filament_map_mode: 'Auto For Flush',
+    single_extruder_multi_material: isMultiMat ? '1' : '0',
+    flush_multiplier: ['0.3'],
     filament_settings_id: cols.map(() => (mat === 'PETG' ? 'Generic PETG' : 'Generic PLA')),
     filament_ids: cols.map(() => (mat === 'PETG' ? 'GFG99' : 'GFL99')),
     filament_colour: cols,
@@ -1682,12 +1968,48 @@ function buildOrcaProjectSettingsJson(filamentColours, profile) {
     printable_height: String(H),
     bed_exclude_area: ['0x0'],
     layer_height: nozzle === 0.2 ? '0.12' : '0.2',
-    initial_layer_print_height: '0.2',
+    initial_layer_print_height: nozzle === 0.2 ? '0.12' : '0.2',
     wall_loops: '3',
     top_shell_layers: '4',
     bottom_shell_layers: '3',
     sparse_infill_density: '15%',
     sparse_infill_pattern: 'grid',
+    outer_wall_speed: nozzle === 0.2 ? '120' : '200',
+    inner_wall_speed: nozzle === 0.2 ? '150' : '300',
+    sparse_infill_speed: nozzle === 0.2 ? '150' : '270',
+    internal_solid_infill_speed: nozzle === 0.2 ? '150' : '250',
+    top_surface_speed: nozzle === 0.2 ? '120' : '200',
+    gap_infill_speed: nozzle === 0.2 ? '120' : '250',
+    travel_speed: '700',
+    initial_layer_speed: '50',
+    initial_layer_infill_speed: '105',
+    bridge_speed: '50',
+    enable_overhang_speed: '1',
+    overhang_1_4_speed: '0',
+    overhang_2_4_speed: '50',
+    overhang_3_4_speed: '30',
+    overhang_4_4_speed: '10',
+    default_acceleration: '6000',
+    outer_wall_acceleration: '5000',
+    inner_wall_acceleration: '6000',
+    initial_layer_acceleration: '500',
+    top_surface_acceleration: '2000',
+    travel_acceleration: '9000',
+    machine_max_acceleration_x: ['20000', '20000'],
+    machine_max_acceleration_y: ['20000', '20000'],
+    machine_max_acceleration_z: ['1500', '1500'],
+    machine_max_acceleration_e: ['5000', '5000'],
+    machine_max_acceleration_extruding: ['20000', '20000'],
+    machine_max_acceleration_retracting: ['5000', '5000'],
+    machine_max_acceleration_travel: ['9000', '9000'],
+    machine_max_speed_x: ['500', '200'],
+    machine_max_speed_y: ['500', '200'],
+    machine_max_speed_z: ['30', '30'],
+    machine_max_speed_e: ['30', '30'],
+    machine_max_jerk_x: ['9', '9'],
+    machine_max_jerk_y: ['9', '9'],
+    machine_max_jerk_z: ['5', '5'],
+    machine_max_jerk_e: ['3', '3'],
     wall_generator: 'arachne',
     detect_thin_wall: '1',
     gcode_flavor: 'marlin',
@@ -1836,6 +2158,10 @@ export function to3mf(placedOrPlate, {
           + '<metadata type="object" key="support_material_style" value="organic"/>'
           + '<metadata type="object" key="support_material_buildplate_only" value="0"/>'
           + '<metadata type="object" key="support_material_threshold" value="0"/>';
+      } else {
+        // Say "no supports" out loud. Without a key the user's own profile decides, and a profile with supports on fills every
+        // bridged socket ceiling of a part this tool verified as support-free (found on a real calibration print, 2026-11-01).
+        prusaMeta += '<metadata type="object" key="support_material" value="0"/>';
       }
       prusaMeta += '<metadata type="object" key="brim_width" value="0"/>';
       prusaCfg += `<object id="${id}" instances_count="1">${prusaMeta}<volume firstid="0" lastid="${Math.max(0, triCount - 1)}"><metadata type="volume" key="volume_type" value="ModelPart"/></volume></object>`;
@@ -1855,6 +2181,8 @@ export function to3mf(placedOrPlate, {
         + '<metadata key="support_type" value="tree(auto)"/>'
         + '<metadata key="support_on_build_plate_only" value="0"/>'
         + '<metadata key="support_threshold_angle" value="35"/>';
+    } else {
+      orcaMeta += '<metadata key="enable_support" value="0"/>'; // explicit off: the user's profile must not add supports to a support-free part
     }
     orcaMeta += '<metadata key="brim_type" value="no_brim"/><metadata key="brim_width" value="0"/>';
     const partsXml = (isOrca && hasBlocker)
@@ -1866,7 +2194,9 @@ export function to3mf(placedOrPlate, {
 
   // Never write "PrusaSlicer" in Application for Orca/Bambu files (§5.2 #3).
   const appMeta = isOrca ? 'BambuStudio-01.09.05.51' : 'ToyVentor Kip print view';
-  const model = `<?xml version="1.0" encoding="UTF-8"?><model unit="millimeter" xml:lang="en-US" xmlns="http://schemas.microsoft.com/3dmanufacturing/core/2015/02" xmlns:m="http://schemas.microsoft.com/3dmanufacturing/material/2015/02"><metadata name="Title">${xml(title)}</metadata><metadata name="Application">${appMeta}</metadata><resources>${materialsXml}${objects}</resources><build>${build}</build></model>`;
+  const bbsNs = isOrca ? ' xmlns:BambuStudio="http://schemas.bambulab.com/package/2021"' : '';
+  const bbsVerMeta = isOrca ? '<metadata name="BambuStudio:3mfVersion">1</metadata>' : '';
+  const model = `<?xml version="1.0" encoding="UTF-8"?><model unit="millimeter" xml:lang="en-US" xmlns="http://schemas.microsoft.com/3dmanufacturing/core/2015/02" xmlns:m="http://schemas.microsoft.com/3dmanufacturing/material/2015/02"${bbsNs}><metadata name="Title">${xml(title)}</metadata><metadata name="Application">${appMeta}</metadata>${bbsVerMeta}<resources>${materialsXml}${objects}</resources><build>${build}</build></model>`;
 
   const entries = [
     { name: '[Content_Types].xml', data: '<?xml version="1.0" encoding="UTF-8"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="model" ContentType="application/vnd.ms-package.3dmanufacturing-3dmodel+xml"/><Default Extension="config" ContentType="text/xml"/></Types>' },
@@ -1876,7 +2206,7 @@ export function to3mf(placedOrPlate, {
 
   const filCols = filamentColours || palette.map(c => c.hex);
   if (isOrca) {
-    const plateXml = `<plate><metadata key="plater_id" value="1"/><metadata key="plater_name" value="${xml(title)}"/><metadata key="print_sequence" value="${prof.multiColorStrategy === 'by-object' ? 'by object' : 'by layer'}"/>${orcaPlateInstances}</plate>`;
+    const plateXml = `<plate><metadata key="plater_id" value="1"/><metadata key="plater_name" value="${xml(title)}"/><metadata key="locked" value="false"/><metadata key="filament_map_mode" value="Auto For Flush"/><metadata key="print_sequence" value="${prof.multiColorStrategy === 'by-object' ? 'by object' : 'by layer'}"/>${orcaPlateInstances}</plate>`;
     entries.push(
       { name: 'Metadata/model_settings.config', data: `<?xml version="1.0" encoding="UTF-8"?><config>${orcaObjCfg}${plateXml}</config>` },
       { name: 'Metadata/project_settings.config', data: buildOrcaProjectSettingsJson(filCols, prof) },
@@ -1987,6 +2317,8 @@ export function to3mfProject(plannedPlates, rawProfile = createDefaultProfile(),
           + '<metadata key="support_type" value="tree(auto)"/>'
           + '<metadata key="support_on_build_plate_only" value="0"/>'
           + '<metadata key="support_threshold_angle" value="35"/>';
+      } else {
+        orcaMeta += '<metadata key="enable_support" value="0"/>'; // explicit off, as in the single-plate writer above
       }
       orcaMeta += '<metadata key="brim_type" value="no_brim"/><metadata key="brim_width" value="0"/>';
       const partsXml = hasBlocker
@@ -1996,10 +2328,10 @@ export function to3mfProject(plannedPlates, rawProfile = createDefaultProfile(),
       instancesXml += `<model_instance><metadata key="object_id" value="${id}"/><metadata key="instance_id" value="0"/><metadata key="identify_id" value="${identifyId++}"/></model_instance>`;
     }
 
-    orcaPlatesXml += `<plate><metadata key="plater_id" value="${k + 1}"/><metadata key="plater_name" value="${xml(pl.label || `Plate ${k + 1}`)}"/><metadata key="print_sequence" value="by layer"/>${instancesXml}</plate>`;
+    orcaPlatesXml += `<plate><metadata key="plater_id" value="${k + 1}"/><metadata key="plater_name" value="${xml(pl.label || `Plate ${k + 1}`)}"/><metadata key="locked" value="false"/><metadata key="filament_map_mode" value="Auto For Flush"/><metadata key="print_sequence" value="by layer"/>${instancesXml}</plate>`;
   });
 
-  const model = `<?xml version="1.0" encoding="UTF-8"?><model unit="millimeter" xml:lang="en-US" xmlns="http://schemas.microsoft.com/3dmanufacturing/core/2015/02" xmlns:m="http://schemas.microsoft.com/3dmanufacturing/material/2015/02"><metadata name="Title">${xml(title)}</metadata><metadata name="Application">BambuStudio-01.09.05.51</metadata><resources>${materialsXml}${objects}</resources><build>${build}</build></model>`;
+  const model = `<?xml version="1.0" encoding="UTF-8"?><model unit="millimeter" xml:lang="en-US" xmlns="http://schemas.microsoft.com/3dmanufacturing/core/2015/02" xmlns:m="http://schemas.microsoft.com/3dmanufacturing/material/2015/02" xmlns:BambuStudio="http://schemas.bambulab.com/package/2021"><metadata name="Title">${xml(title)}</metadata><metadata name="Application">BambuStudio-01.09.05.51</metadata><metadata name="BambuStudio:3mfVersion">1</metadata><resources>${materialsXml}${objects}</resources><build>${build}</build></model>`;
 
   return zipStore([
     { name: '[Content_Types].xml', data: '<?xml version="1.0" encoding="UTF-8"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="model" ContentType="application/vnd.ms-package.3dmanufacturing-3dmodel+xml"/><Default Extension="config" ContentType="text/xml"/></Types>' },
@@ -2052,6 +2384,7 @@ function sanitizeStateForManifest(state = {}) {
 /** Layout summary (`toyventor.kip-plate/2`) written next to every export so a pack can be rebuilt and audited. */
 export function layoutJson(plates, meta = {}) {
   const small = smallParts(plates);
+  const supportSummary = meta.supportSummary || supportSummaryLine(plates);
   const hasSprue = plates.some((entry) => !Array.isArray(entry) && Boolean(entry?.sprue))
     || meta?.profile?.flatPackMode === 'sprue';
   const warnings = [PRINT_PAGE_WARNINGS.always];
@@ -2059,10 +2392,12 @@ export function layoutJson(plates, meta = {}) {
   if (hasSprue) warnings.push(PRINT_PAGE_WARNINGS.sprue_prep);
 
   const sanitizedMeta = { ...meta };
+  delete sanitizedMeta.supportSummary;
   if (sanitizedMeta.state) sanitizedMeta.state = sanitizeStateForManifest(sanitizedMeta.state);
 
   return JSON.stringify({
     format: 'toyventor.kip-plate/2',
+    supportSummary,
     ...sanitizedMeta,
     warnings,
     smallParts: small,
@@ -2105,6 +2440,7 @@ export function layoutJson(plates, meta = {}) {
           rot90: p.rot,
           orientation: p.orientation,
           overhangMm2: +p.report.overhangMm2.toFixed(2),
+          ...(p.supportReason ? { supportReason: p.supportReason } : {}),
           ...(p.sprueAnchored !== undefined ? { sprueAnchored: Boolean(p.sprueAnchored) } : {}),
           ...(p.blockerTri && p.blockerTri.length ? { socketBlockerTris: p.blockerTri.length / 9 } : {}),
         })),
@@ -2114,12 +2450,13 @@ export function layoutJson(plates, meta = {}) {
   }, null, 2);
 }
 
-/** Plain-text one-screen README included at the root of `kip-print-pack.zip` (§9.2, §9.3). */
+/** Plain-text one-screen README included at the root of `kip-print-pack.zip` (§9.2, §9.3, §12.6). */
 export function readmeTxt({ plan, bom, hasPrintSheet = false, stickerFileNames = [] } = {}) {
   const prof = plan.profile;
   const est = plan.estimate;
   const small = smallParts(plan.plates);
   const spruePlateCount = plan.plates.filter(pl => Boolean(pl.sprue)).length;
+  const supportSummary = plan.supportSummary || supportSummaryLine(plan.plates);
   const lines = [
     'KIP 3D PRINT PACK — ToyVentor Modular Character System',
     '======================================================',
@@ -2135,7 +2472,8 @@ export function readmeTxt({ plan, bom, hasPrintSheet = false, stickerFileNames =
     '----------------------',
     `Preset: ${prof.presetId} (${prof.bedXmm} x ${prof.bedYmm} mm bed, ${prof.nozzleMm} mm nozzle, ${prof.material})`,
     `Slicer dialect: ${prof.slicer} | Colour slots: ${prof.maxSlots} (${prof.changerType}) | Fit: ${prof.fitChoice}`,
-    `Layout: ${prof.flatPackMode}${spruePlateCount > 0 ? ` (${spruePlateCount} kit-card plate(s))` : ''} | Strategy: ${prof.multiColorStrategy}`,
+    `Layout: ${prof.flatPackMode === 'sprue' ? 'Kit tray (sprue)' : prof.flatPackMode}${spruePlateCount > 0 ? ` (${spruePlateCount} kit-tray plate(s))` : ''} | Strategy: ${prof.multiColorStrategy}`,
+    `Supports: ${supportSummary}`,
     '',
     'SPOOL BUDGET (ESTIMATE — 3 walls, 15% infill)',
     '---------------------------------------------',
@@ -2157,7 +2495,11 @@ export function readmeTxt({ plan, bom, hasPrintSheet = false, stickerFileNames =
   lines.push('', 'FILES IN THIS PACK', '------------------');
   for (const pl of plan.plates) {
     const sprueNote = pl.sprue ? `, ${pl.sprue.gates.length} V-nick sprue gates` : '';
-    lines.push(`  - plates/${pl.fileStem}.3mf & .stl : ${pl.label} (${pl.placed.length} pcs${sprueNote})`);
+    const supReasons = pl.requiresSupports
+      ? [...new Set(pl.placed.filter(p => p.tier === 'needs-supports').map(p => `${p.partId}: ${p.supportReason || `${p.report.overhangMm2.toFixed(1)} mm² overhang`}`))]
+      : [];
+    const reasonNote = supReasons.length ? ` [${supReasons.join('; ')}]` : '';
+    lines.push(`  - plates/${pl.fileStem}.3mf & .stl : ${pl.label} (${pl.placed.length} pcs${sprueNote})${reasonNote}`);
   }
   lines.push('  - project/kip-project.3mf : Multi-plate OrcaSlicer / Bambu Studio project');
   if (stickerFileNames.length) {

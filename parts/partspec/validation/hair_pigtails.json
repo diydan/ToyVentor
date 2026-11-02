@@ -1,19 +1,19 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_hair_pigtails_S.stl",
-  "file_sha256": "2e019c63f3a67814a14637e51b3fddbbe7db802a223a03114d795d2f876703f9",
+  "file_sha256": "4629a0ac4db400c9fd4f259b3979062bddc876700af8f8cc0a3c41690218de9e",
   "part_id": "hair_pigtails",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-11-01T21:34:53Z",
+  "checked_at": "2026-11-01T22:28:44Z",
   "metrics": {
     "bbox_mm": [
       68.1,
       33.34,
       30.8
     ],
-    "volume_cm3": 12.54,
-    "surface_cm2": 74.66,
-    "triangles": 5590,
+    "volume_cm3": 14.17,
+    "surface_cm2": 76.51,
+    "triangles": 6844,
     "ledges": [
       {
         "z_mm": 5.5,
@@ -24,6 +24,7 @@
         ]
       }
     ],
+    "floating_contours": [],
     "layers": 154,
     "bed_contact_mm2": 176.4,
     "height_mm": 30.8,
@@ -73,18 +74,38 @@
     },
     {
       "z_mm": 17.1,
-      "span_mm": 10.03,
-      "area_mm2": 490.0
+      "span_mm": 6.93,
+      "area_mm2": 99.1
     },
     {
-      "z_mm": 20.2,
-      "span_mm": 6.7,
-      "area_mm2": 35.2
+      "z_mm": 17.1,
+      "span_mm": 5.8,
+      "area_mm2": 111.3
     },
     {
-      "z_mm": 20.2,
+      "z_mm": 17.1,
+      "span_mm": 6.93,
+      "area_mm2": 99.1
+    },
+    {
+      "z_mm": 17.35,
       "span_mm": 6.7,
-      "area_mm2": 35.2
+      "area_mm2": 47.7
+    },
+    {
+      "z_mm": 17.35,
+      "span_mm": 5.28,
+      "area_mm2": 34.7
+    },
+    {
+      "z_mm": 17.35,
+      "span_mm": 6.7,
+      "area_mm2": 47.7
+    },
+    {
+      "z_mm": 17.35,
+      "span_mm": 5.28,
+      "area_mm2": 34.7
     }
   ],
   "checks": [
@@ -137,12 +158,20 @@
       "detail": "mm2 of flat underside held on one side only (a ledge over air, not a bridge); worst at z 5.5 mm near [-23.5, 1.7]"
     },
     {
+      "id": "V11_floating_contour",
+      "level": "block",
+      "result": "pass",
+      "value": 0,
+      "limit": 0,
+      "detail": "unanchored interior hole loops in bridge ceilings or low-Z hovering cantilevers"
+    },
+    {
       "id": "V6_bridge_span",
       "level": "block",
       "result": "pass",
-      "value": 10.03,
+      "value": 6.93,
       "limit": 20,
-      "detail": "5 bridge(s); widest unsupported span in mm"
+      "detail": "9 bridge(s); widest unsupported span in mm"
     },
     {
       "id": "V5_no_floating_islands",

@@ -519,7 +519,7 @@ def integrated_sockets(body, size, lock=False):
         if disk.is_empty():
             continue
         req = roof_shell.translate((x, y, 0.0))
-        if req.volume() > 1e-6 and (req - body).volume() < 0.01 * req.volume():
+        if req.volume() > 1e-6 and (req - body).volume() < 1e-4:
             continue                                          # already roofed (e.g., by an overlying stud or tall body): leave the shape untouched
         body = body + (boss_unit.translate((x, y, 0.0)) ^ foot_prism)
     cuts = [cut_f.translate((x, y, 0.0)) for x, y in full + relief]
@@ -2512,12 +2512,78 @@ def _sculpted_hairline_cutter(z_hem=-16.5, ear_cover=False, bang_style="parted_l
     return cutter
 
 
+def sequential_socket_cutter(p, cav_cs, cells=((-0.5, 0.0), (0.5, 0.0)), slot_axis="y"):
+    """Generalized DfAM sequential-bridge female stud socket cutter for elevated vault ceilings (`z = 0`).
+
+    Punching a bare circular bore into a hollow vault ceiling forces slicers to extrude closed circular loops
+    in mid-air (triggering OrcaSlicer's floating-cantilever warning).
+      - Stage 1 (`z <= 0.35 mm`): straight slots along `slot_axis` clipped to `cav_cs` so the ceiling bridges
+        wall-to-wall in solid straight strips (`0` interior holes).
+      - Stage 2 (`0.35 .. 0.70 mm`): perpendicular straight bridges forming `2r x 2r` squares over each cell.
+      - Stage 3 (`>= 0.70 mm`): `<= 40 deg` loft into the `FIT_SEG` cylinder + `42 deg` self-roofing cone.
+    """
+    r_sock = (p["stud_d"] + p["fit"]) / 2
+    pitch = p["pitch"]
+    z1, z2 = 0.35, 0.70
+    z_cyl = p["stud_h"] - 0.35
+    z3 = min(z_cyl - 0.08, z2 + r_sock * (math.sqrt(2) - 1.0) / math.tan(math.radians(40.0)))
+    tan_a = math.tan(math.radians(42.0))
+    z_apex = z_cyl + (r_sock - 0.08) / tan_a
+
+    slot_boxes = CrossSection()
+    for sx, sy in cells:
+        cx, cy = sx * pitch, sy * pitch
+        dim = (200.0, 2 * r_sock) if slot_axis == "x" else (2 * r_sock, 200.0)
+        slot_boxes = slot_boxes + CrossSection.square(dim, center=True).translate((cx, cy))
+    clipped_slots = slot_boxes ^ cav_cs.offset(0.05, JoinType.Round)
+    cut1 = Manifold.extrude(clipped_slots, z1 + 0.05).translate((0.0, 0.0, -0.05))
+
+    ang = [2.0 * math.pi * i / FIT_SEG for i in range(FIT_SEG)]
+    sq_ring = [
+        (
+            r_sock * math.cos(a) / max(abs(math.cos(a)), abs(math.sin(a))),
+            r_sock * math.sin(a) / max(abs(math.cos(a)), abs(math.sin(a))),
+        )
+        for a in ang
+    ]
+    ci_ring = [(r_sock * math.cos(a), r_sock * math.sin(a)) for a in ang]
+    ap_ring = [(0.08 * math.cos(a), 0.08 * math.sin(a)) for a in ang]
+    unit = _ring_stack_manifold([(z1 - 0.03, sq_ring), (z2, sq_ring), (z3, ci_ring), (z_cyl, ci_ring), (z_apex, ap_ring)])
+    return cut1 + union([unit.translate((sx * pitch, sy * pitch, 0.0)) for sx, sy in cells])
+
+
+def _sequential_crown_socket_cutter(p, cav_cs):
+    """2x1 crown socket specialization of `sequential_socket_cutter`."""
+    return sequential_socket_cutter(p, cav_cs, cells=((-0.5, 0.0), (0.5, 0.0)), slot_axis="y")
+
+
+def teardrop_bore_cutter(length, radius, crown_deg=45.0, seg=FIT_SEG):
+    """DfAM teardrop horizontal bore cutter extruded along +Z (rotate to X/Y so +Y in 2D points to +Z_print).
+
+    Eliminates top-arch bridge sag on horizontal `LAY_FLAT` pinholes while preserving exact cylindrical side/bottom fit.
+    """
+    sin_a = math.sin(math.radians(crown_deg))
+    tan_a = math.tan(math.radians(crown_deg))
+    a_start = math.radians(crown_deg)
+    a_end = math.pi - a_start
+    pts = [(0.0, radius / sin_a)]
+    steps = max(16, seg)
+    for i in range(steps + 1):
+        # Sweep from right tangent (+x, +y) clockwise through bottom (-y) to left tangent (-x, +y)
+        a = a_start - (2.0 * math.pi - (a_end - a_start)) * (i / steps)
+        pts.append((radius * math.cos(a), radius * math.sin(a)))
+    _ = tan_a
+    cs = CrossSection([pts], FillRule.NonZero)
+    return Manifold.extrude(cs, length)
+
+
 def _finish_sculpted_wig(outer_body, size="small", z_hem=-16.5, ear_cover=False, bang_style="parted_left", nape_notches=True, top_studs_z=None):
-    """Trim bottom skirt at `z_hem`, subtract universal skull vault + sculpted hairline + conical 2x1 stud sockets at `z = 0`."""
+    """Trim bottom skirt at `z_hem`, subtract universal skull vault + sculpted hairline + sequential-bridge conical 2x1 stud sockets at `z = 0`."""
     p = STUD[size]
+    cav = _wrap_wig_cavity(z_hem=z_hem, ear_cover=ear_cover)
 
     body = keep_above(outer_body, z_hem)
-    body = body - _wrap_wig_cavity(z_hem=z_hem, ear_cover=ear_cover)
+    body = body - cav
     body = body - _sculpted_hairline_cutter(z_hem=z_hem, ear_cover=ear_cover, bang_style=bang_style, nape_notches=nape_notches)
 
     conns = [socket_conn(size, 2, 1)]
@@ -2526,9 +2592,7 @@ def _finish_sculpted_wig(outer_body, size="small", z_hem=-16.5, ear_cover=False,
             body = body + Manifold.cylinder(0.35, p["stud_d"] / 2 - 0.15, p["stud_d"] / 2 - 0.15, FIT_SEG).translate((sx * p["pitch"], 0.0, top_studs_z - 0.20))
         body, c_top = add_studs_at(body, size, 2, 1, 0.0, 0.0, top_studs_z, "top_studs")
         conns.append(c_top)
-    cut = _conical_socket_cutter(p)
-    for sx in (-0.5, 0.5):
-        body = body - cut.translate((sx * p["pitch"], 0.0, 0.0))
+    body = body - _sequential_crown_socket_cutter(p, cav.slice(-0.02))
     return body, conns, {"print_rotation_deg": [0, 0, 0], "sockets": {"holes": 2, "reliefs": 0, "locked": True}}
 
 
@@ -2988,13 +3052,10 @@ def _hat_band(rim, z_lo, z_hi, grow, n_locks=0, lock_amp=0.0):
 
 
 def _finish_wearable_hat(outer_body, size="small", rim=HAT_WRAP_MM):
-    """Seat the rim cleanly on the bed at `z = -rim` for zero-support printing, cut the wig-envelope vault and conical `2x1` crown sockets at `z = 0.0`."""
+    """Seat the rim cleanly on the bed at `z = -rim` for zero-support printing, cut the wig-envelope vault and sequential-bridge `2x1` crown sockets at `z = 0.0`."""
     p = STUD[size]
-    cut = _conical_socket_cutter(p)
-    body = keep_above(outer_body, -rim)
-    body = body - _hat_crown_cavity()
-    for sx in (-0.5, 0.5):
-        body = body - cut.translate((sx * p["pitch"], 0.0, 0.0))
+    cav = _hat_crown_cavity()
+    body = keep_above(outer_body, -rim) - cav - _sequential_crown_socket_cutter(p, cav.slice(-0.02))
     return (
         body,
         [socket_conn(size, 2, 1)],

@@ -1,20 +1,21 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_hair_short_swept_S.stl",
-  "file_sha256": "e96ba9f175dc6c5e1aaa16dd82483c840440208494252811ec24e408e716002a",
+  "file_sha256": "e7b059a825f70614136692292c7e39ec2780589d30de3734876f97a7aac837d8",
   "part_id": "hair_short_swept",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-11-01T21:32:55Z",
+  "checked_at": "2026-11-01T22:28:16Z",
   "metrics": {
     "bbox_mm": [
       43.88,
       34.41,
       24.1
     ],
-    "volume_cm3": 6.02,
-    "surface_cm2": 58.06,
-    "triangles": 8900,
+    "volume_cm3": 5.92,
+    "surface_cm2": 58.09,
+    "triangles": 10726,
     "ledges": [],
+    "floating_contours": [],
     "layers": 121,
     "bed_contact_mm2": 90.0,
     "height_mm": 24.1,
@@ -31,28 +32,48 @@
     },
     {
       "z_mm": 16.6,
-      "span_mm": 10.03,
-      "area_mm2": 490.0
+      "span_mm": 6.93,
+      "area_mm2": 99.1
     },
     {
-      "z_mm": 19.7,
-      "span_mm": 6.7,
-      "area_mm2": 35.2
+      "z_mm": 16.6,
+      "span_mm": 5.8,
+      "area_mm2": 111.3
     },
     {
-      "z_mm": 19.7,
-      "span_mm": 6.7,
-      "area_mm2": 35.2
-    },
-    {
-      "z_mm": 21.3,
-      "span_mm": 0.37,
-      "area_mm2": 7.2
+      "z_mm": 16.6,
+      "span_mm": 6.93,
+      "area_mm2": 99.1
     },
     {
       "z_mm": 21.3,
-      "span_mm": 0.37,
-      "area_mm2": 7.2
+      "span_mm": 0.15,
+      "area_mm2": 3.0
+    },
+    {
+      "z_mm": 21.3,
+      "span_mm": 0.15,
+      "area_mm2": 3.0
+    },
+    {
+      "z_mm": 16.85,
+      "span_mm": 6.7,
+      "area_mm2": 47.7
+    },
+    {
+      "z_mm": 16.85,
+      "span_mm": 5.28,
+      "area_mm2": 34.7
+    },
+    {
+      "z_mm": 16.85,
+      "span_mm": 6.7,
+      "area_mm2": 47.7
+    },
+    {
+      "z_mm": 16.85,
+      "span_mm": 5.28,
+      "area_mm2": 34.7
     }
   ],
   "checks": [
@@ -105,12 +126,20 @@
       "detail": "mm2 of flat underside held on one side only (a ledge over air, not a bridge)"
     },
     {
+      "id": "V11_floating_contour",
+      "level": "block",
+      "result": "pass",
+      "value": 0,
+      "limit": 0,
+      "detail": "unanchored interior hole loops in bridge ceilings or low-Z hovering cantilevers"
+    },
+    {
       "id": "V6_bridge_span",
       "level": "block",
       "result": "pass",
-      "value": 10.03,
+      "value": 6.93,
       "limit": 20,
-      "detail": "6 bridge(s); widest unsupported span in mm"
+      "detail": "10 bridge(s); widest unsupported span in mm"
     },
     {
       "id": "V5_no_floating_islands",

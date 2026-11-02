@@ -20,7 +20,7 @@
     25.6,
     18.6
   ],
-  "volume_cm3": 6.85,
+  "volume_cm3": 6.76,
   "connectors": [
     {
       "id": "under_sockets",
@@ -208,26 +208,26 @@
   },
   "glb_file": "custom_hood_crest.glb",
   "asset_optimization": {
-    "content_hash": "53c6ee29d027",
+    "content_hash": "e36c1e1be906",
     "finish_class": "show_curved",
     "print_simplify_mm": 0.006,
     "web_simplify_mm": 0.075,
     "web_crease_deg": 36,
     "metrics": {
-      "orig_bytes": 125884,
-      "print_bytes": 123284,
-      "glb_bytes": 15968,
-      "orig_tris": 2516,
-      "print_tris": 2464,
-      "web_verts": 802,
-      "web_tris": 850,
+      "orig_bytes": 188684,
+      "print_bytes": 171084,
+      "glb_bytes": 25348,
+      "orig_tris": 3772,
+      "print_tris": 3420,
+      "web_verts": 1340,
+      "web_tris": 1336,
       "max_bbox_delta_mm": 0.0,
-      "rel_vol_delta_pct": 0.00044,
-      "overhang_22_mm2": 0.0,
-      "flat_top_mm2": 264.61,
-      "bed_area_mm2": 423.87,
-      "v11_show_face_overhang_30_mm2": 0.0,
-      "v11_status": "pass"
+      "rel_vol_delta_pct": 6e-05,
+      "overhang_22_mm2": 210.55,
+      "flat_top_mm2": 264.96,
+      "bed_area_mm2": 388.2,
+      "v11_show_face_overhang_30_mm2": 46.03,
+      "v11_status": "advisory"
     }
   }
 }

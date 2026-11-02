@@ -1,43 +1,74 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_hair_curly_S.stl",
-  "file_sha256": "c581364021cc156bdff622cacd7523b0dbe4acd77c0e003304ba6358dc4c85c3",
+  "file_sha256": "8baa9f4a0d6c11649be0bc78192b21bf6548c40a30e6b4e451e717944b69283a",
   "part_id": "hair_curly",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-11-01T21:34:59Z",
+  "checked_at": "2026-11-01T22:28:54Z",
   "metrics": {
     "bbox_mm": [
       48.67,
       40.44,
       28.66
     ],
-    "volume_cm3": 15.82,
-    "surface_cm2": 76.61,
-    "triangles": 11646,
+    "volume_cm3": 15.77,
+    "surface_cm2": 75.83,
+    "triangles": 12878,
     "ledges": [],
+    "floating_contours": [],
     "layers": 143,
     "bed_contact_mm2": 203.0,
     "height_mm": 28.66,
     "slenderness": 2.01,
     "centre_of_mass_over_contact": true,
-    "min_wall_mm": null,
-    "thin_wall_regions": []
+    "min_wall_mm": 0.384,
+    "thin_wall_regions": [
+      {
+        "area_mm2": 1.03,
+        "min_mm": 0.384,
+        "at_mm": [
+          10.56,
+          -15.36,
+          5.29
+        ]
+      }
+    ]
   },
   "bridges": [
     {
       "z_mm": 17.1,
-      "span_mm": 10.03,
-      "area_mm2": 490.0
+      "span_mm": 6.93,
+      "area_mm2": 99.1
     },
     {
-      "z_mm": 20.2,
-      "span_mm": 6.7,
-      "area_mm2": 35.2
+      "z_mm": 17.1,
+      "span_mm": 5.8,
+      "area_mm2": 111.3
     },
     {
-      "z_mm": 20.2,
+      "z_mm": 17.1,
+      "span_mm": 6.93,
+      "area_mm2": 99.1
+    },
+    {
+      "z_mm": 17.35,
       "span_mm": 6.7,
-      "area_mm2": 35.2
+      "area_mm2": 47.7
+    },
+    {
+      "z_mm": 17.35,
+      "span_mm": 5.28,
+      "area_mm2": 34.7
+    },
+    {
+      "z_mm": 17.35,
+      "span_mm": 6.7,
+      "area_mm2": 47.7
+    },
+    {
+      "z_mm": 17.35,
+      "span_mm": 5.28,
+      "area_mm2": 34.7
     }
   ],
   "checks": [
@@ -90,12 +121,20 @@
       "detail": "mm2 of flat underside held on one side only (a ledge over air, not a bridge)"
     },
     {
+      "id": "V11_floating_contour",
+      "level": "block",
+      "result": "pass",
+      "value": 0,
+      "limit": 0,
+      "detail": "unanchored interior hole loops in bridge ceilings or low-Z hovering cantilevers"
+    },
+    {
       "id": "V6_bridge_span",
       "level": "block",
       "result": "pass",
-      "value": 10.03,
+      "value": 6.93,
       "limit": 20,
-      "detail": "3 bridge(s); widest unsupported span in mm"
+      "detail": "7 bridge(s); widest unsupported span in mm"
     },
     {
       "id": "V5_no_floating_islands",
@@ -124,14 +163,14 @@
     {
       "id": "V8_wall_thickness",
       "level": "warn",
-      "result": "pass",
-      "value": 0,
+      "result": "warn",
+      "value": 1,
       "limit": 0,
-      "detail": "regions where the wall is under 0.8 mm (two nozzle widths) over 2.0 mm2, or under 0.4 mm (one nozzle width) over 0.25 mm2; sharp edges and slivers are ignored"
+      "detail": "regions where the wall is under 0.8 mm (two nozzle widths) over 2.0 mm2, or under 0.4 mm (one nozzle width) over 0.25 mm2; worst 0.384 mm at [10.56, -15.36, 5.29]"
     }
   ],
   "print_settings": {},
   "slicer": null,
-  "verdict": "pass",
-  "summary": "Prints as is"
+  "verdict": "pass_with_warnings",
+  "summary": "Warnings: V8_wall_thickness"
 }

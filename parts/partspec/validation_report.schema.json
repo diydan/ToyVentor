@@ -45,7 +45,9 @@
         "centre_of_mass_over_contact": {"type": ["boolean", "null"]},
         "min_wall_mm": {"type": ["number", "null"]},
         "min_wall_at_mm": {"type": ["array", "null"], "items": {"type": "number"}},
-        "ledges": {"type": "array", "description": "Flat undersides held on one side only: z, area and a point near the worst one."}
+        "thin_wall_regions": {"type": "array", "description": "Connected regions thinner than min_wall_mm with min thickness and 3D coordinates."},
+        "ledges": {"type": "array", "description": "Flat undersides held on one side only: z, area and a point near the worst one."},
+        "floating_contours": {"type": "array", "description": "Unanchored hole loops in bridge ceilings or low-Z hovering cantilevers caught by V11."}
       }
     },
     "bridges": {"type": "array", "items": {"type": "object", "properties": {"z_mm": {"type": "number"}, "span_mm": {"type": "number"}, "area_mm2": {"type": "number"}}}},

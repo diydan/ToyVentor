@@ -238,6 +238,19 @@ def geometry_checks(tm, mani, prof):
         checks.append(_check("V10_no_ledges", "block", ledge_area < lim.get("ledge_max_mm2", 1.0), ledge_area, lim.get("ledge_max_mm2", 1.0),
                              "mm2 of flat underside held on one side only (a ledge over air, not a bridge)"
                              + (f"; worst at z {ledge_regions[0]['z_mm']} mm near {ledge_regions[0]['at_mm']}" if ledge_regions else "")))
+        fc_issues = _tl.floating_contours(
+            tm, mani,
+            max_bridge_mm=lim["max_bridge_mm"],
+            exclusion_mm=lim["first_layer_exclusion_mm"],
+            min_loop_mm=lim.get("floating_loop_min_mm", 12.0),
+            ledge_max_mm2=lim.get("ledge_max_mm2", 1.0),
+        )
+        metrics["floating_contours"] = fc_issues[:5]
+        checks.append(_check(
+            "V11_floating_contour", "block", not fc_issues, len(fc_issues), 0,
+            "unanchored interior hole loops in bridge ceilings or low-Z hovering cantilevers"
+            + (f"; first ({fc_issues[0]['kind']}) at z {fc_issues[0]['z_mm']} mm near {fc_issues[0]['at_mm']}" if fc_issues else ""),
+        ))
     spans = bridge_spans(tm, lim)
     worst = max((s["span_mm"] for s in spans), default=0.0)
     checks.append(_check("V6_bridge_span", "block", worst <= lim["max_bridge_mm"], worst, lim["max_bridge_mm"], f"{len(spans)} bridge(s); widest unsupported span in mm"))
@@ -336,6 +349,35 @@ def _slice_once(exe, stl, prof, brim):
             ts = grab_val(r"; estimated printing time \(normal mode\) = (.+)")
             res["print_time_s"] = _parse_time(ts) if ts else None
             res["layers"] = g.count(";LAYER_CHANGE")
+            # Post-slice G-code static preflight: count bridge sections and flag ultra-short layers (< 4 s) with cooling risk
+            res["bridge_sections"] = len(re.findall(r";(?:TYPE|FEATURE):\s*Bridge", g, re.IGNORECASE))
+            layer_times = []
+            cur_t = 0.0
+            has_ext = False
+            for gl in g.splitlines():
+                if gl.startswith(";LAYER_CHANGE"):
+                    if has_ext and cur_t > 0:
+                        layer_times.append(cur_t)
+                    cur_t, has_ext = 0.0, False
+                elif gl.startswith("G1 "):
+                    fm = re.search(r"F([\d.]+)", gl)
+                    if fm:
+                        last_f = float(fm.group(1))
+                    if "E" in gl and "last_f" in locals() and last_f > 1.0:
+                        has_ext = True
+                        xm = re.search(r"X([-\d.]+)", gl)
+                        ym = re.search(r"Y([-\d.]+)", gl)
+                        if xm and ym and "lx" in locals():
+                            cur_t += math.hypot(float(xm.group(1)) - lx, float(ym.group(1)) - ly) / (last_f / 60.0)
+                        if xm:
+                            lx = float(xm.group(1))
+                        if ym:
+                            ly = float(ym.group(1))
+            if len(layer_times) > 2:
+                # Ignore final summit cap layer
+                core_lt = layer_times[:-1]
+                res["min_layer_time_s"] = round(min(core_lt), 2)
+                res["short_cooling_layers"] = sum(1 for lt in core_lt if lt < 4.0)
         else:
             res["error"] = log.strip().splitlines()[-3:] if log.strip() else ["slicer failed"]
         return res
