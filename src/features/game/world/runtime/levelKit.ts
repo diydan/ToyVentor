@@ -180,6 +180,9 @@ export function composeLevel(opts: ComposeOptions): ComposedLevel {
   return { format: "toyventor.level/1", id: `seed-${code.toLowerCase()}`, name: `${pick(r, ADJ[mood])} ${NOUN[theme]}`, theme, mood, seed: code, props, spots, missions };
 }
 
+/** The one spot-count rule every producer shares (kit, editor Checks, Muse Create): exactly five hiding spots. */
+export const SPOT_COUNT = 5;
+
 export interface LevelCheck { ok: boolean; n: string; why: string }
 
 /**
@@ -193,7 +196,7 @@ export function checkLevel(L: LevelDef, strictFive = true): LevelCheck[] {
   const moves = new Set<string>();
   sp.forEach((s) => { const h = HIDE[s.hide]; if (h && h.t !== "junk") moves.add(h.t); });
   return [
-    { ok: strictFive ? sp.length === 5 : sp.length >= 1 && sp.length <= 5, n: "Hidden parts", why: `${sp.length} placed` },
+    { ok: strictFive ? sp.length === SPOT_COUNT : sp.length >= 1 && sp.length <= SPOT_COUNT, n: strictFive ? "Five hidden parts" : "Hidden parts", why: `${sp.length} placed` },
     { ok: sp.some((s) => HIDE[s.hide]?.t === "junk" && s.x <= 10), n: "A junk machine in the first 10 units", why: "The first find never needs a move" },
     { ok: keys.every((k, i) => !!PART[k] && PART[k]!.st !== "none" && keys.indexOf(k) === i), n: "Each spot hides a different real part", why: "No repeats, no looks-only parts" },
     { ok: xs.every((x, i) => !i || x - xs[i - 1]! >= 4), n: "Spots at least 4 units apart", why: "Two glints never overlap" },

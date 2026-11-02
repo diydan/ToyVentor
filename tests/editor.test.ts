@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { createEditor } from "../src/features/game/world/runtime/editor";
+import { SPOT_COUNT, checkLevel, composeLevel } from "../src/features/game/world/runtime/levelKit";
 import { WORLDS } from "../src/features/game/world/runtime/catalog";
 import { MUS } from "../src/features/game/world/runtime/audio";
 
@@ -89,6 +90,17 @@ describe("Unit 2e editor factory (deps-injected ED state)", () => {
     expect(EDX.edValid({ format: "toyventor.level/1", theme: "nope", props: [], spots: [] })).toBe(false);
     const copy = EDX.edCopy("garden");
     expect(copy.id).toBe("garden-copy");
+  });
+
+  it("K3: editor Checks are checkLevel (one shared bar, SPOT_COUNT spots)", () => {
+    const EDX = createEditor(stubDeps() as any);
+    expect(SPOT_COUNT).toBe(5);
+    for (const level of [composeLevel({ seed: 42 }), EDX.edBlank("garden"), EDX.edCopy("garden")]) {
+      expect(EDX.edChecks(level)).toEqual(checkLevel(level));
+    }
+    const composed = EDX.edChecks(composeLevel({ seed: 42 }));
+    expect(composed.every((c) => c.ok)).toBe(true);
+    expect(composed[0]!.n).toBe("Five hidden parts");
   });
 
   it("edNew + edSetName keep a working recipe with undo history", () => {

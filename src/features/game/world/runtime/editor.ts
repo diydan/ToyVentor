@@ -12,6 +12,7 @@ import {
 } from "./catalog";
 import { ctx, sfx, MUS, musInit, musGain, sound } from "./audio";
 import * as EDD from "./editorData";
+import { checkLevel } from "./levelKit";
 
 export interface EditorPin {
   kind: "spot" | "prop";
@@ -138,15 +139,8 @@ function edCopy(id: string): LevelDef {var w=WORLDS[id]!;return {format:"toyvent
  spots:w.spots.map(function(s): LevelSpotRef {var hideKey=s.obj||s.cover||"",o: LevelSpotRef={part:s.k,hide:hideKey,x:s.x},h=HIDE[o.hide];if(h&&s.z!==h.z)o.z=s.z;return o}),missions:(w.missions||[]).slice()}}
 function edEngine(R: LevelDef){var w=levelWorld(R);w.spots=w.spots.filter(function(s){return Boolean(PART[s.k])});return w}
 function edValid(R: any): R is LevelDef {return Boolean(R&&R.format==="toyventor.level/1"&&THEMES[R.theme]!=null&&Array.isArray(R.props)&&Array.isArray(R.spots)&&R.props.every(function(p: any){return p&&PROPS[p.type]&&typeof p.x==="number"})&&R.spots.every(function(s: any){return s&&HIDE[s.hide]&&PART[s.part]&&typeof s.x==="number"}))}
-function edChecks(R: LevelDef): EditorCheck[] {var sp=R.spots,c: EditorCheck[]=[],keys=sp.map(function(s){return s.part}),xs=sp.map(function(s){return s.x}).sort(function(a,b){return a-b}),mv: Record<string, number>={};
- sp.forEach(function(s){var hd=HIDE[s.hide];if(hd&&hd.t!=="junk")mv[hd.t]=1});
- c.push({ok:sp.length===5,n:"Five hidden parts",why:sp.length+" placed"});
- c.push({ok:sp.some(function(s){var hd=HIDE[s.hide];return Boolean(hd&&hd.t==="junk"&&s.x<=10)}),n:"A junk machine in the first 10 units",why:"So the first find never needs a move"});
- c.push({ok:keys.every(function(k,i){var pt=PART[k];return Boolean(pt&&pt.st!=="none"&&keys.indexOf(k)===i)}),n:"Each spot hides a different real part",why:"No repeats and no looks-only parts"});
- c.push({ok:xs.every(function(x,i){return !i||x-(xs[i-1]??0)>=4}),n:"Spots at least 4 units apart",why:"So two glints never overlap"});
- c.push({ok:sp.every(function(s){return s.x>=4&&s.x<=42}),n:"Spots between unit 4 and unit 42",why:"Clear of the start and the edge"});
- c.push({ok:Object.keys(mv).length>=3,n:"At least three different moves",why:"So the level teaches more than one trick"});
- return c}
+// K3: the editor Checks ARE checkLevel — one shared bar for hand-made, composed, and Claude-drafted levels.
+function edChecks(R: LevelDef): EditorCheck[] {return checkLevel(R)}
 function edSnapX(x: number){return Math.round(Math.max(0,Math.min(45,x))*2)/2}
 function edItem(k: string,i: number): any {if(!ED.R)return null;return k==="spot"?ED.R.spots[i]:ED.R.props[i]}
 function edPush(){ED.undo.push(JSON.stringify(ED.R));if(ED.undo.length>60)ED.undo.shift();ED.redo=[]}
