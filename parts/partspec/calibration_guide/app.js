@@ -40,8 +40,10 @@ const KEY = 'toyforge.calibration-guide.v1';
 const PM = A.print_meta || null;
 const printerDefault = PM ? [PM.printer_model, PM.slicer, PM.filament_settings_id].filter(Boolean).join(' / ') : '';
 const blank = () => ({
-  printer: printerDefault, dots: '', A: '', B: '', Cfree: '', Cfric: '', Dholes: '', Dpin: '', Dplate: '', Esock: '', Efolds: '',
-  notes: '', prep: { brims: false, fp: false },
+  printer: printerDefault, dots: '', dotsBrick: '', A: '', B: '', Bcross: '', Cfree: '', Cfric: '',
+  Dholes: '', Dpin: '', Dplate: '', Esock: '', Efolds: '',
+  Fbreak: '', Fstub: '', Fbig: '', Fsml: '', Fpose: '',
+  notes: '', prep: { brims: false, fp: false, kip: false },
 });
 let card = blank();
 try {
@@ -50,7 +52,15 @@ try {
 } catch { /* private window or blocked storage: the card still works for this visit */ }
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(card)); } catch { /* ignore */ } };
 
-const FIELD_STEP = { dots: 'dots', A: 'A', B: 'B', Cfree: 'C', Cfric: 'C', Dholes: 'D', Dpin: 'D', Dplate: 'D', Esock: 'E', Efolds: 'E' };
+const FIELD_STEP = {
+  dots: 'dots', dotsBrick: 'dots',
+  A: 'A',
+  B: 'B', Bcross: 'B',
+  Cfree: 'C', Cfric: 'C',
+  Dholes: 'D', Dpin: 'D', Dplate: 'D',
+  Esock: 'E', Efolds: 'E',
+  Fbreak: 'F', Fstub: 'F', Fbig: 'F', Fsml: 'F', Fpose: 'F',
+};
 const FIELDS = Object.keys(FIELD_STEP);
 const filled = (f) => card[f] !== '' && card[f] != null;
 
@@ -103,9 +113,10 @@ mq.addEventListener?.('change', applyTheme);
 const bedGroup = new THREE.Group();
 bedGroup.visible = false;
 if (GL) {
-  const plane = new THREE.Mesh(new THREE.PlaneGeometry(220, 220), bedMat);
+  const bedSz = A.scenes.overview?.bed?.[0] || 220;
+  const plane = new THREE.Mesh(new THREE.PlaneGeometry(bedSz, bedSz), bedMat);
   plane.position.z = -0.15;
-  const grid = new THREE.GridHelper(220, 22, 0x000000, 0x000000);
+  const grid = new THREE.GridHelper(bedSz, Math.round(bedSz / 10), 0x000000, 0x000000);
   grid.material = gridMat; grid.rotation.x = Math.PI / 2; grid.position.z = -0.1;
   bedGroup.add(plane, grid);
   scene3d.add(bedGroup);
@@ -180,7 +191,7 @@ const capsEl = h('div', { class: 'caps' });
 labelsEl.append(capsEl);
 let labelObjs = [];
 
-const state = { step: 'plate', sub: { C: 'free', D: 'side' }, scene: 'overview', variant: 'plate', explode: 0, explodeTarget: 0, fold: 0, names: true, cam: 'iso' };
+const state = { step: 'plate', sub: { dots: 'strip', B: 'ladder', C: 'free', D: 'side', F: 'arm' }, scene: 'overview', variant: 'plate', explode: 0, explodeTarget: 0, fold: 0, names: true, cam: 'iso' };
 const sceneOf = (id) => A.scenes[id];
 
 function buildLabels(v) {
@@ -198,9 +209,10 @@ function buildLabels(v) {
 
 function tryInfo(sc, v) {
   if (sc === 'dots') return { t: v.id, s: ['1 dot', '2 dots', '3 dots'][+v.id - 1] };
+  if (sc === 'pro_b_cross') return v.id === 'vert' ? { t: 'Vertical', s: '5.25 mm' } : { t: 'Sideways', s: 'teardrop' };
   return { t: v.id, s: sgn(STEPS_MM[+v.id - 1], 1) };
 }
-const TRY_CAPTION = { dots: 'Socket', snap: 'Hole', pro_b: 'Hole', pro_c_free: 'Hole', pro_c_fric: 'Hole' };
+const TRY_CAPTION = { dots: 'Socket', snap: 'Hole', pro_b: 'Hole', pro_b_cross: 'Bore', pro_c_free: 'Hole', pro_c_fric: 'Hole' };
 
 function buildToolbar(sid) {
   const sc = sceneOf(sid), row = $('tryrow');
@@ -409,12 +421,13 @@ const STEPS = [
   { id: 'C', k: 'C', name: 'Pins', scene: 'pro_c_free' },
   { id: 'D', k: 'D', name: 'Cubes', scene: 'cube_side' },
   { id: 'E', k: 'E', name: 'Flex', scene: 'flex' },
+  { id: 'F', k: 'F', name: 'Kip', scene: 'kip_arm' },
   { id: 'result', k: '✓', name: 'Result', scene: 'overview' },
 ];
 const stepIdx = (id) => STEPS.findIndex((s) => s.id === id);
 
 function stepStatus(id) {
-  if (id === 'prep') { const n = Object.values(card.prep).filter(Boolean).length; return n === 2 ? 2 : n ? 1 : 0; }
+  if (id === 'prep') { const ks = Object.keys(blank().prep); const n = ks.filter((k) => card.prep[k]).length; return n === ks.length ? 2 : n ? 1 : 0; }
   const fs = FIELDS.filter((f) => FIELD_STEP[f] === id);
   if (!fs.length) return id === 'result' ? (FIELDS.every(filled) ? 2 : 0) : 0;
   const n = fs.filter(filled).length;
@@ -422,16 +435,19 @@ function stepStatus(id) {
 }
 
 function sceneForStep(id) {
+  if (id === 'dots') return state.sub.dots === 'brick' ? 'dots_brick' : 'dots';
+  if (id === 'B') return state.sub.B === 'cross' ? 'pro_b_cross' : 'pro_b';
   if (id === 'C') return state.sub.C === 'free' ? 'pro_c_free' : 'pro_c_fric';
   if (id === 'D') return `cube_${state.sub.D}`;
+  if (id === 'F') return state.sub.F === 'coupons' ? 'kip_coupons' : 'kip_arm';
   return STEPS[stepIdx(id)].scene;
 }
 function variantForStep(id) {
   const ladder = (v) => (typeof v === 'number' ? String(v) : null);
   switch (id) {
-    case 'dots': return card.dots ? String(card.dots) : null;
+    case 'dots': return state.sub.dots === 'strip' && card.dots ? String(card.dots) : null;
     case 'A': return ladder(card.A);
-    case 'B': return ladder(card.B);
+    case 'B': return state.sub.B === 'ladder' ? ladder(card.B) : null;
     case 'C': return ladder(state.sub.C === 'free' ? card.Cfree : card.Cfric);
     default: return null;
   }
@@ -440,7 +456,7 @@ function variantForStep(id) {
 function go(target) {
   let [id, sub] = String(target).split(':');
   if (stepIdx(id) < 0) id = 'plate';
-  if (sub && (id === 'C' || id === 'D')) state.sub[id] = sub;
+  if (sub && id in state.sub) state.sub[id] = sub;
   state.step = id;
   const sid = sceneForStep(id);
   showScene(sid, variantForStep(id), { fresh: true });
@@ -468,7 +484,7 @@ function setField(f, v) {
   if (typeof v === 'number' && FIELD_STEP[f] === state.step) { // show the step you just scored
     const vid = variantForStep(state.step);
     if (vid && sceneOf(state.scene).variants.some((x) => x.id === vid)) setVariant(vid);
-  } else if (f === 'dots') { const vid = variantForStep(state.step); if (vid) setVariant(vid); }
+  } else if (f === 'dots' && state.sub.dots === 'strip') { const vid = variantForStep(state.step); if (vid) setVariant(vid); }
   syncAll();
 }
 function choice(field, options, cls = '') {
@@ -529,11 +545,11 @@ const R = {};
 
 R.plate = (p) => {
   p.append(head('Your calibration plate', 'Pieces are drawn flat on the bed the way they print. The arrangement is illustrative; your slicer laid them out its own way. Click any piece (or its badge) to jump to its test.'));
-  p.append(callout('warn', 'Safety first', 'Keep the pins, shaft, stud tester, cubes and ladders out of reach of young children. They are small-parts testing gauges.'));
+  p.append(callout('warn', 'Safety first', 'Keep the pins, shaft, stud tester, cubes, ladders, and Kip ball-joint pegs/turrets out of reach of young children. They are small-parts testing gauges.'));
   p.append(sect('How to use this'));
   p.append(h('ol', { class: 'steps' },
-    h('li', { html: '<b>Prep</b>: trim the brims, snap the tabs.' }),
-    h('li', { html: 'Work through the tabs <b>1, A to E</b>. The 3D view shows the exact test pose; flip <b>Exploded</b> to see what goes into what, <b>Construction</b> to see it assembled.' }),
+    h('li', { html: '<b>Prep</b>: trim the brims, snap the tabs, and snip the Kip sprue gates.' }),
+    h('li', { html: 'Work through the tabs <b>1, A to F</b>. The 3D view shows the exact test pose; flip <b>Exploded</b> to see what goes into what, <b>Construction</b> to see it assembled.' }),
     h('li', { html: 'Score each test in the card on the right. Everything saves in this browser as you go.' }),
     h('li', { html: '<b>Result</b> shows the slicer offset and gives you the text to paste back.' })));
   if (PM) {
@@ -559,7 +575,7 @@ R.plate = (p) => {
 };
 
 R.prep = (p) => {
-  p.append(head('Prep: de-brim and snap the tabs', 'Two things before any fit test, or leftovers will fake a tight fit.'));
+  p.append(head('Prep: de-brim, snap tabs, and snip Kip gates', 'Three quick things before any fit test, so leftover brims or gate stubs do not fake a tight fit.'));
   p.append(sect('Checklist'));
   const check = (key, text) => {
     const cb = h('input', { type: 'checkbox' });
@@ -567,21 +583,28 @@ R.prep = (p) => {
     cb.addEventListener('change', () => { card.prep[key] = cb.checked; save(); syncAll(); });
     return h('label', { class: 'chk', style: 'display:flex;gap:8px;align-items:flex-start;margin:8px 0;color:var(--ink);font-size:14px' }, cb, h('span', { html: text }));
   };
-  p.append(check('brims', '<b>Trim the brims completely off</b> the shaft, free pin, friction pin and cube cell, so a leftover lip does not fake a tight fit.'));
+  p.append(check('brims', '<b>Trim the brims completely off</b> the shaft, free pin, friction pin, cube cells, and Kip upper arm, so a leftover lip does not fake a tight fit.'));
   p.append(check('fp', '<b>Snap the 1.2 mm tabs on the Forge Mount First-Print</b>. It separates into the 3×2 stud base, the 1/2/3-dot strip, and the 2×1 single-stud test brick.'));
+  p.append(check('kip', '<b>Snip the gated connectors off the Kip peg &amp; turret coupon</b> at the V-notches (keep track of which came off the sprue vs. the 4 loose connectors on the plate).'));
   p.append(callout('info', 'In the 3D view', 'Press <b>Exploded</b> to see where each piece parts. The red <b>snap</b> tags mark the tabs. Any stub left on a piece sits on the bed face, so trim it flush if it catches.'));
   p.append(navButtons());
 };
 
 R.dots = (p) => {
-  p.append(head('1 · Dot strip: your Fit setting', 'This is the one question a customer would ever see: which socket clicked best?'));
-  p.append(holding('Forge Mount First-Print → 1/2/3-dot strip', '2×1 test brick'));
-  p.append(h('p', {}, "Press the test brick's stud into each underside socket on the dotted strip. The 3D view drops the strip over the stud."));
-  const rows = A.kit.sockets.map((s, i) => h('tr', { class: s.as_designed ? 'hl' : '' }, h('td', {}, `${s.dots} dot${s.dots > 1 ? 's' : ''}`), h('td', {}, ['Snug', 'Standard', 'Easy'][i]), h('td', {}, `${s.clearance_mm.toFixed(2)} mm${s.as_designed ? ' (designed)' : ''}`)));
-  p.append(h('table', { class: 'mini' }, h('tr', {}, h('th', {}, 'Dots'), h('th', {}, 'Fit'), h('th', {}, 'Clearance')), rows));
+  p.append(head('1 · Dot strip & zero-support 2×2 brick', 'Which Fit socket clicked best, and do the 42°-coned 2×2 brick sockets clutch cleanly with Supports OFF?'));
+  p.append(holding('Forge Mount First-Print → 1/2/3-dot strip', '2×1 test brick', '2×2 brick'));
+  p.append(subTabs('dots', [{ v: 'strip', label: '1/2/3-dot strip' }, { v: 'brick', label: '2×2 brick (Supports OFF)' }], () => swapScene(sceneForStep('dots'))));
+  if (state.sub.dots === 'strip') {
+    p.append(h('p', {}, "Press the test brick's stud into each underside socket on the dotted strip. The 3D view drops the strip over the stud."));
+    const rows = A.kit.sockets.map((s, i) => h('tr', { class: s.as_designed ? 'hl' : '' }, h('td', {}, `${s.dots} dot${s.dots > 1 ? 's' : ''}`), h('td', {}, ['Snug', 'Standard', 'Easy'][i]), h('td', {}, `${s.clearance_mm.toFixed(2)} mm${s.as_designed ? ' (designed)' : ''}`)));
+    p.append(h('table', { class: 'mini' }, h('tr', {}, h('th', {}, 'Dots'), h('th', {}, 'Fit'), h('th', {}, 'Clearance')), rows));
+  } else {
+    p.append(h('p', {}, 'Inspect the underside of the 2×2 brick (printed Supports OFF with 42° socket ceiling cones) for clean bridging, then press it onto four studs of the 3×2 Forge Mount base.'));
+  }
   p.append(passBox('Goes in with a firm thumb press, holds upside-down with a gentle shake, and pulls off by hand without tools.'));
   p.append(h('div', { class: 'card' }, sect('Scorecard'),
-    field('Best socket', '', choice('dots', [{ v: 1, label: '1', sub: 'Snug' }, { v: 2, label: '2', sub: 'Standard' }, { v: 3, label: '3', sub: 'Easy' }, { v: 'none', label: 'None felt right', ghost: true }])),
+    field('Best socket (1/2/3-dot strip)', '', choice('dots', [{ v: 1, label: '1', sub: 'Snug' }, { v: 2, label: '2', sub: 'Standard' }, { v: 3, label: '3', sub: 'Easy' }, { v: 'none', label: 'None felt right', ghost: true }])),
+    field('2×2 brick sockets (Supports OFF)', 'clutch cleanly on 3×2 mount?', choice('dotsBrick', [{ v: 'yes', label: 'Yes' }, { v: 'loose', label: 'Loose' }, { v: 'tight', label: 'Tight' }])),
     derive('dotsInfo')));
   p.append(notesBox(), navButtons());
 };
@@ -602,12 +625,20 @@ R.A = (p) => {
 };
 
 R.B = (p) => {
-  p.append(head('B · Pro ladder, flat-sided holes', 'Double-D holes that should lock the shaft against turning.'));
-  p.append(holding('Pro ladder', 'Shaft'));
-  ladderIntro(p);
-  p.append(h('p', {}, 'Use the flat-sided holes: the row along the notched edge. The shaft goes in from the top.'));
-  p.append(passBox('Slides in with finger pressure and has zero rotational play. Record the step that does both.'));
-  p.append(h('div', { class: 'card' }, sect('Scorecard'), field('Pro shaft step (1 to 8)', '', stepChips('B')), derive('abAgree')));
+  p.append(head('B · Pro shaft & 5.25 mm cross connector', 'Double-D flat-sided bores that lock the shaft against turning (vertical + sideways).'));
+  p.append(holding('Pro ladder', 'Cross connector (2×1)', 'Shaft'));
+  p.append(subTabs('B', [{ v: 'ladder', label: 'Pro ladder (steps 1–8)' }, { v: 'cross', label: 'Cross connector (5.25 mm)' }], () => swapScene(sceneForStep('B'))));
+  if (state.sub.B === 'ladder') {
+    ladderIntro(p);
+    p.append(h('p', {}, 'Use the flat-sided holes along the notched edge (your Print 1 Pro ladder works directly with Print 2\'s de-brimmed shaft).'));
+  } else {
+    p.append(h('p', {}, 'Slide the shaft into both the vertical and the sideways nominal 5.25 mm flat-sided bores on Print 2\'s 2×1 cross connector (42° corner bevels + 0.40 mm mouth chamfers). Use Try Bore below the 3D view to switch between Vertical and Sideways.'));
+  }
+  p.append(passBox('Slides in with finger pressure and has zero rotational play.'));
+  p.append(h('div', { class: 'card' }, sect('Scorecard'),
+    field('Pro shaft step (1 to 8)', '', stepChips('B')),
+    field('Cross connector 5.25 mm bores', 'both vertical & sideways slide with zero play?', choice('Bcross', [{ v: 'good', label: 'Good' }, { v: 'loose', label: 'Loose' }, { v: 'tight', label: 'Tight' }])),
+    derive('abAgree')));
   p.append(notesBox(), navButtons());
 };
 
@@ -657,6 +688,30 @@ R.E = (p) => {
   p.append(notesBox(), navButtons());
 };
 
+R.F = (p) => {
+  p.append(head('F · Kip ball joints & kit-tray break-off', 'Double-ended compliant Ø9.0 mm (shoulder/hip) and Ø8.0 mm (elbow/limb) ball joints plus kit-tray V-nick break-off coupon, printed with zero supports.'));
+  p.append(holding('Kip peg & turret coupon', 'Break-off coupon', 'Torso + Upper arm + Forearm', 'Loose pegs & turrets'));
+  p.append(subTabs('F', [{ v: 'arm', label: 'Torso + Arm pose' }, { v: 'coupons', label: 'Gate 4 Coupons' }], () => swapScene(sceneForStep('F'))));
+  if (state.sub.F === 'coupons') {
+    p.append(h('ol', { class: 'steps' },
+      h('li', { html: '<b>Break-off coupon:</b> Twist/snap the three plaques (<b>0.30, 0.40, 0.60 mm</b> V-nick necks). Pick the thinnest neck that survived printing intact and snapped cleanly by hand.' }),
+      h('li', { html: '<b>Peg &amp; turret coupon:</b> Test the 3 sprue-gated Ø9.0 mm pegs and 3 Ø8.0 mm Snap turrets (0°/45°/90° gate angles) in the coupon\'s <b>Ø9.0 and Ø8.0 mm snap gauge cups</b>, and compare them against the 4 loose bed-printed connectors.' })));
+  } else {
+    p.append(h('ol', { class: 'steps' },
+      h('li', { html: 'Snap the double-ended <b>Ø9.0 mm peg</b> into Kip\'s torso shoulder socket and press <b>upper_arm</b> onto its outer ball (flip <b>Exploded ↔ Construction</b> in 3D). Also check the Ø9.0 mm Snap turret with center stop-collar.' }),
+      h('li', { html: 'Snap the double-ended <b>Ø8.0 mm peg</b> between <b>upper_arm</b> and <b>forearm</b> at the elbow (and check the Ø8.0 mm Snap turret).' }),
+      h('li', { html: 'Raise Kip\'s assembled arm out sideways (~78°, as shown in 3D) and verify it <b>holds its pose under gravity</b> without drooping or whitening/cracking a socket lip.' })));
+  }
+  p.append(passBox('Clean V-nick break-off by hand, full ball seating without socket lip cracking, and raised arm holds its pose under its own weight.'));
+  p.append(h('div', { class: 'card' }, sect('Scorecard'),
+    field('Best V-nick break-off neck', 'intact on bed, snaps cleanly by hand', choice('Fbreak', [{ v: '0.30', label: '0.30 mm' }, { v: '0.40', label: '0.40 mm' }, { v: '0.60', label: '0.60 mm' }, { v: 'none', label: 'None clean', ghost: true }])),
+    field('Sprue-snapped vs. loose seating', '', choice('Fstub', [{ v: 'flush', label: 'Seats flush' }, { v: 'trim', label: 'Needs knife trim' }, { v: 'blocked', label: 'Stub blocks seat' }])),
+    field('Ø9.0 mm shoulder/hip joint', '', choice('Fbig', [{ v: 'good', label: 'Good' }, { v: 'loose', label: 'Loose' }, { v: 'tight', label: 'Tight' }, { v: 'cracked', label: 'Cracked lip' }])),
+    field('Ø8.0 mm elbow/limb joint', '', choice('Fsml', [{ v: 'good', label: 'Good' }, { v: 'loose', label: 'Loose' }, { v: 'tight', label: 'Tight' }, { v: 'cracked', label: 'Cracked lip' }])),
+    field('Raised arm pose hold', 'sideways on torso', choice('Fpose', [{ v: 'holds', label: 'Holds pose' }, { v: 'droops', label: 'Droops' }, { v: 'blocked', label: "Won't seat" }]))));
+  p.append(notesBox(), navButtons());
+};
+
 // ------------------------------------------------------------------ result
 const LADDER_FIELDS = new Set(['A', 'B', 'Cfree', 'Cfric']);
 const LADDER_WORDS = { tight: 'none (every step too tight)', loose: 'none (every step too loose)' };
@@ -688,12 +743,13 @@ function scoreText() {
   const d = derived();
   const lines = [
     `Printer / slicer / filament: ${card.printer}`,
-    `1-2-3 Dot strip best socket: ${show('dots')}`,
+    `1-2-3 Dot strip best socket: ${show('dots')} | 2x2 brick (Supports OFF): ${show('dotsBrick')}`,
     `A  Snap stud step (1-8): ${show('A')}`,
-    `B  Pro shaft step (1-8): ${show('B')}`,
+    `B  Pro shaft step (1-8): ${show('B')} | 5.25 mm cross connector (vert+side): ${show('Bcross')}`,
     `C  Free pin step (1-8): ${show('Cfree')}        Friction pin step (1-8): ${show('Cfric')}`,
     `D  Cube sideways holes clean? ${show('Dholes')} | pin in cube: ${show('Dpin')} | face plate: ${show('Dplate')}`,
     `E  Flex skin (PLA): sockets fit? ${show('Esock')} | folds before whitening/crack: ${show('Efolds')}`,
+    `F  Kip joints: V-nick ${show('Fbreak')} mm | sprue stub: ${show('Fstub')} | Ø9 big: ${show('Fbig')} | Ø8 sml: ${show('Fsml')} | arm pose: ${show('Fpose')}`,
     `Notes: ${card.notes.replace(/\n+/g, ' / ')}`,
   ];
   const extra = [];
@@ -764,7 +820,7 @@ DERIVE.missing = (el) => {
   const miss = FIELDS.filter((f) => !filled(f));
   if (!miss.length) { el.append(callout('pass', 'Scorecard complete', 'Every field is filled in.')); return; }
   const steps = [...new Set(miss.map((f) => FIELD_STEP[f]))];
-  const names = { dots: '1 Dots', A: 'A Snap', B: 'B Shaft', C: 'C Pins', D: 'D Cubes', E: 'E Flex' };
+  const names = { dots: '1 Dots', A: 'A Snap', B: 'B Shaft', C: 'C Pins', D: 'D Cubes', E: 'E Flex', F: 'F Kip' };
   el.append(h('div', { class: 'callout warn missing' }, h('b', { class: 't' }, `${miss.length} of ${FIELDS.length} fields still empty`),
     steps.map((s) => h('a', { onclick: () => go(s) }, names[s]))));
 };

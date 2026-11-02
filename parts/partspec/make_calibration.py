@@ -13,7 +13,10 @@ Outputs go to calibration/. Exit code is non-zero if any piece fails a print or 
 """
 import json
 import math
+import subprocess
 import sys
+import uuid
+import zipfile
 from pathlib import Path
 
 from manifold3d import CrossSection, Manifold
@@ -23,7 +26,7 @@ import toyventor_parts as tp
 import toyventor_pro as pro
 from toyventor_geom import rbox
 
-HERE = Path(__file__).parent
+HERE = Path(__file__).resolve().parent
 STEPS = [round(-0.1 + 0.1 * k, 2) for k in range(8)]        # extra clearance across, mm
 NOMINAL = STEPS.index(0.0)
 FIRST_PRINT_CLEARANCES = [0.00, 0.10, 0.26]                 # snug (1 dot), standard (2 dots), easy (3 dots), mm across
@@ -259,9 +262,11 @@ PIECES = {
     "toyventor_cal_flex_skin_coupon.stl": (flex_skin_coupon, "Gate G7 Card D 0.80/0.60 mm PETG Book-Fold endurance coupon (printed show-face-down, upward blind sockets, 500 folds)"),
 }
 FROM_CATALOG = {
-    "toyventor_shaft_tu03_P.stl": "Shaft for the fixed-bore row",
+    "toyventor_shaft_tu03_P.stl": "Shaft for the fixed-bore row and cross connector",
     "toyventor_pin_free_P.stl": "Free pin for the free-bore row (should turn)",
     "toyventor_pin_friction_P.stl": "Friction pin for the free-bore row (should grip)",
+    "toyventor_cross_connector_tu01_P.stl": "2x1 Pro cross connector: vertical and sideways 5.25 mm fixed double-D bores",
+    "toyventor_brick_s_2x2_S.stl": "2x2 Small brick: zero-support 42-deg conical underside stud sockets",
 }
 
 
@@ -273,6 +278,195 @@ def check(m):
     fails = [n for n, ok in (("not watertight", tm.is_watertight), ("not one body", bodies == 1), ("not on the bed", abs(lo[2]) < 1e-3),
                              (f"{steep:.1f} mm2 needs supports", steep < 1.0), ("too big for the bed", all((hi - lo) <= 180))) if not ok]
     return tm, fails
+
+
+def _build_kip_coupons(out):
+    """Export Kip §12.7 Gate 4 peg/turret socket coupon and Decision 7 break-off coupon STLs when Kip assets exist."""
+    repo = HERE.parent.parent
+    kip_print_js = repo / "parts/kip/viewer/kip-print.js"
+    kip_stls = repo / "public/kip/stls"
+    if not kip_print_js.exists() or not (kip_stls / "spark_peg_big.stl").exists():
+        return None
+    fit_stl = out / "kip_cal_peg_turret_coupon.stl"
+    brk_stl = out / "kip_cal_breakoff_coupon.stl"
+    js = (
+        f"import({json.dumps(str(kip_print_js))}).then(async (K) => {{"
+        " const fs = await import('node:fs');"
+        " const load = (p) => K.parseStl(fs.readFileSync(p));"
+        f" const fit = K.buildPegTurretFitCouponMesh({{ pegTri: load({json.dumps(str(kip_stls / 'spark_peg_big.stl'))}), turretTri: load({json.dumps(str(kip_stls / 'snap_turret.stl'))}) }});"
+        " const brk = K.buildBreakoffCouponMesh();"
+        f" fs.writeFileSync({json.dumps(str(fit_stl))}, K.stlBytes(fit.tri, 'kip_cal_peg_turret_coupon'));"
+        f" fs.writeFileSync({json.dumps(str(brk_stl))}, K.stlBytes(brk.tri, 'kip_cal_breakoff_coupon'));"
+        "});"
+    )
+    subprocess.run(["node", "-e", js], cwd=str(repo), check=True)
+    return kip_stls
+
+
+def build_print2_verify_3mf(out, search_dirs):
+    """Build a 1-click OrcaSlicer 2.4.2 Print 2 + Kip ball-joint verification plate (`Print2_Verify.3mf`, Supports OFF, 0/0 XY comp)
+    inheriting the printer/filament/process profile from `toyventor_cal_pro_ladder.3mf` when present."""
+    ref_3mf = out / "toyventor_cal_pro_ladder.3mf"
+    brick_stl = next((d / "toyventor_brick_s_2x2_S.stl" for d in search_dirs if (d / "toyventor_brick_s_2x2_S.stl").exists()), None)
+    cross_stl = next((d / "toyventor_cross_connector_tu01_P.stl" for d in search_dirs if (d / "toyventor_cross_connector_tu01_P.stl").exists()), None)
+    if not ref_3mf.exists() or brick_stl is None or cross_stl is None:
+        return None
+    import trimesh
+
+    kip_stls = _build_kip_coupons(out)
+
+    with zipfile.ZipFile(ref_3mf) as zf:
+        proj_cfg = json.loads(zf.read("Metadata/project_settings.config"))
+        content_types = zf.read("[Content_Types].xml")
+        slice_info = zf.read("Metadata/slice_info.config")
+        fil_seq = zf.read("Metadata/filament_sequence.json")
+
+    proj_cfg["enable_support"] = "0"
+    proj_cfg["xy_hole_compensation"] = "0"
+    proj_cfg["xy_contour_compensation"] = "0"
+    proj_cfg["brim_type"] = "no_brim"
+    proj_cfg["brim_width"] = "0"
+
+    # Skips already-printed pro_ladder (saves ~1h54m); includes cross_connector_tu01 to verify new 5.25 mm vertical + sideways fixed bores
+    items_spec = [
+        ("toyventor_shaft_tu03_P.stl",           out / "toyventor_shaft_tu03_P.stl",     90.0,  135.0, True),
+        ("toyventor_pin_free_P.stl",             out / "toyventor_pin_free_P.stl",       111.0, 135.0, True),
+        ("toyventor_pin_friction_P.stl",         out / "toyventor_pin_friction_P.stl",   132.0, 135.0, True),
+        ("toyventor_cal_cube_cell_1.stl",        out / "toyventor_cal_cube_cell.stl",    155.0, 145.0, True),
+        ("toyventor_cal_cube_cell_2.stl",        out / "toyventor_cal_cube_cell.stl",    181.0, 145.0, True),
+        ("toyventor_cal_face_plate_1.stl",       out / "toyventor_cal_face_plate.stl",   155.0, 121.0, False),
+        ("toyventor_cal_face_plate_2.stl",       out / "toyventor_cal_face_plate.stl",   181.0, 121.0, False),
+        ("toyventor_cross_connector_tu01_P.stl", cross_stl,                              210.0, 145.0, False),
+        ("toyventor_brick_s_2x2_S.stl",          brick_stl,                              210.0, 117.0, False),
+    ]
+    if kip_stls is not None:
+        items_spec.extend([
+            ("kip_cal_peg_turret_coupon.stl", out / "kip_cal_peg_turret_coupon.stl", 122.0, 190.0, False),
+            ("kip_cal_breakoff_coupon.stl",   out / "kip_cal_breakoff_coupon.stl",   196.0, 190.0, False),
+            ("kip_torso.stl",                 kip_stls / "torso.stl",                101.0,  84.0, False),
+            ("kip_forearm.stl",               kip_stls / "forearm.stl",              136.0,  84.0, False),
+            ("kip_upper_arm.stl",             kip_stls / "upper_arm.stl",            164.0,  84.0, True),
+            ("kip_spark_peg_big.stl",         kip_stls / "spark_peg_big.stl",        190.0,  91.0, False),
+            ("kip_spark_peg_sml.stl",         kip_stls / "spark_peg_sml.stl",        208.0,  91.0, False),
+            ("kip_snap_turret_big.stl",       kip_stls / "snap_turret_big.stl",      190.0,  74.0, False),
+            ("kip_snap_turret.stl",           kip_stls / "snap_turret.stl",          208.0,  74.0, False),
+        ])
+
+    rels = (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">\n'
+        ' <Relationship Target="/3D/3dmodel.model" Id="rel-1" Type="http://schemas.microsoft.com/3dmanufacturing/2013/01/3dmodel"/>\n'
+        '</Relationships>\n'
+    ).encode()
+    model_rels = ['<?xml version="1.0" encoding="UTF-8"?>', '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">']
+    res_lines, build_lines, obj_cfg_lines, inst_cfg_lines, asm_cfg_lines = [], [], [], [], []
+    obj_files = {}
+    placed_boxes = []
+
+    for idx, (name, stl_path, px, py, use_brim) in enumerate(items_spec, start=1):
+        mesh_id, wrap_id = 2 * idx - 1, 2 * idx
+        tm = trimesh.load(stl_path, force="mesh")
+        sz = tm.bounds[1] - tm.bounds[0]
+        brim_pad = 3.0 if use_brim else 0.0
+        box = (name, px - sz[0] / 2 - brim_pad, py - sz[1] / 2 - brim_pad, px + sz[0] / 2 + brim_pad, py + sz[1] / 2 + brim_pad)
+        for prev_name, x0, y0, x1, y1 in placed_boxes:
+            gx = max(0.0, max(x0 - box[3], box[1] - x1))
+            gy = max(0.0, max(y0 - box[4], box[2] - y1))
+            gap = math.hypot(gx, gy)
+            if gap < 5.0:
+                raise ValueError(f"Print2_Verify collision/tight gap ({gap:.2f} mm < 5.0 mm) between {prev_name} and {name}")
+        placed_boxes.append(box)
+        ctr = (tm.bounds[0] + tm.bounds[1]) / 2.0
+        zc = float((tm.bounds[1][2] - tm.bounds[0][2]) / 2.0)
+        verts = tm.vertices - ctr
+        obj_path = f"/3D/Objects/{name}_{mesh_id}.model"
+        model_rels.append(f' <Relationship Target="{obj_path}" Id="rel-{idx}" Type="http://schemas.microsoft.com/3dmanufacturing/2013/01/3dmodel"/>')
+        v_xml = "\n".join(f'     <vertex x="{v[0]:.7f}" y="{v[1]:.7f}" z="{v[2]:.7f}"/>' for v in verts)
+        t_xml = "\n".join(f'     <triangle v1="{f[0]}" v2="{f[1]}" v3="{f[2]}"/>' for f in tm.faces)
+        u_mesh = str(uuid.uuid5(uuid.NAMESPACE_DNS, f"print2-mesh-{idx}-{name}"))
+        u_wrap = str(uuid.uuid5(uuid.NAMESPACE_DNS, f"print2-wrap-{idx}-{name}"))
+        u_comp = str(uuid.uuid5(uuid.NAMESPACE_DNS, f"print2-comp-{idx}-{name}"))
+        u_item = str(uuid.uuid5(uuid.NAMESPACE_DNS, f"print2-item-{idx}-{name}"))
+        obj_files[obj_path.lstrip("/")] = (
+            '<?xml version="1.0" encoding="UTF-8"?>\n'
+            '<model unit="millimeter" xml:lang="en-US" xmlns="http://schemas.microsoft.com/3dmanufacturing/core/2015/02" '
+            'xmlns:BambuStudio="http://schemas.bambulab.com/package/2021" xmlns:p="http://schemas.microsoft.com/3dmanufacturing/production/2015/06" requiredextensions="p">\n'
+            ' <metadata name="BambuStudio:3mfVersion">1</metadata>\n'
+            ' <resources>\n'
+            f'  <object id="{mesh_id}" p:UUID="{u_mesh}" type="model">\n'
+            f'   <mesh>\n    <vertices>\n{v_xml}\n    </vertices>\n    <triangles>\n{t_xml}\n    </triangles>\n   </mesh>\n'
+            '  </object>\n </resources>\n</model>\n'
+        ).encode()
+        res_lines.append(
+            f'  <object id="{wrap_id}" p:UUID="{u_wrap}" type="model">\n'
+            f'   <components>\n    <component p:path="{obj_path}" objectid="{mesh_id}" p:UUID="{u_comp}" transform="1 0 0 0 1 0 0 0 1 0 0 0"/>\n   </components>\n'
+            '  </object>'
+        )
+        build_lines.append(f'  <item objectid="{wrap_id}" p:UUID="{u_item}" transform="1 0 0 0 1 0 0 0 1 {px:.4f} {py:.4f} {zc:.5f}" printable="1" auto_drop="1"/>')
+        brim_meta = (
+            '    <metadata key="brim_type" value="outer_only"/>\n    <metadata key="brim_width" value="3"/>\n'
+            if use_brim else
+            '    <metadata key="brim_type" value="no_brim"/>\n    <metadata key="brim_width" value="0"/>\n'
+        )
+        obj_cfg_lines.append(
+            f'  <object id="{wrap_id}">\n'
+            f'    <metadata key="name" value="{name}"/>\n'
+            '    <metadata key="extruder" value="1"/>\n'
+            '    <metadata key="enable_support" value="0"/>\n'
+            f'{brim_meta}'
+            f'    <part id="{mesh_id}" subtype="normal_part">\n'
+            f'      <metadata key="name" value="{name}"/>\n'
+            '      <metadata key="matrix" value="1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1"/>\n'
+            f'      <metadata key="source_file" value="{stl_path.name}"/>\n'
+            '      <metadata key="source_object_id" value="0"/>\n'
+            '      <metadata key="source_volume_id" value="0"/>\n'
+            '      <metadata key="source_offset_x" value="0"/>\n'
+            '      <metadata key="source_offset_y" value="0"/>\n'
+            f'      <metadata key="source_offset_z" value="{zc:.5f}"/>\n'
+            '      <mesh_stat edges_fixed="0" degenerate_facets="0" facets_removed="0" facets_reversed="0" backwards_edges="0"/>\n'
+            '    </part>\n  </object>'
+        )
+        inst_cfg_lines.append(
+            '    <model_instance>\n'
+            f'      <metadata key="object_id" value="{wrap_id}"/>\n'
+            '      <metadata key="instance_id" value="0"/>\n'
+            f'      <metadata key="identify_id" value="{1000 + idx}"/>\n'
+            '    </model_instance>'
+        )
+        asm_cfg_lines.append(f'   <assemble_item object_id="{wrap_id}" instance_id="0" transform="1 0 0 0 1 0 0 0 1 0 0 {zc:.5f}" offset="0 0 0" />')
+
+    model_rels.append("</Relationships>")
+    root_model = (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<model unit="millimeter" xml:lang="en-US" xmlns="http://schemas.microsoft.com/3dmanufacturing/core/2015/02" '
+        'xmlns:BambuStudio="http://schemas.bambulab.com/package/2021" xmlns:p="http://schemas.microsoft.com/3dmanufacturing/production/2015/06" requiredextensions="p">\n'
+        ' <metadata name="Application">BambuStudio-02.06.00.51</metadata>\n'
+        ' <metadata name="OrcaSlicer">2.4.2</metadata>\n'
+        ' <metadata name="BambuStudio:3mfVersion">1</metadata>\n'
+        ' <metadata name="Title">ToyVentor Print 2 + Kip Ball-Joint Verify (Supports OFF)</metadata>\n'
+        ' <resources>\n' + "\n".join(res_lines) + "\n </resources>\n"
+        ' <build p:UUID="2c7c17d8-22b5-4d84-8835-1976022ea370">\n' + "\n".join(build_lines) + "\n </build>\n</model>\n"
+    ).encode()
+    model_settings = (
+        '<?xml version="1.0" encoding="UTF-8"?>\n<config>\n'
+        + "\n".join(obj_cfg_lines) + "\n"
+        + '  <plate>\n    <metadata key="plater_id" value="1"/>\n    <metadata key="plater_name" value="Print 2 Verify"/>\n    <metadata key="locked" value="false"/>\n'
+        + "\n".join(inst_cfg_lines) + "\n  </plate>\n  <assemble>\n" + "\n".join(asm_cfg_lines) + "\n  </assemble>\n</config>\n"
+    ).encode()
+
+    dst_3mf = out / "Print2_Verify.3mf"
+    with zipfile.ZipFile(dst_3mf, "w", compression=zipfile.ZIP_DEFLATED) as zo:
+        zo.writestr("[Content_Types].xml", content_types)
+        zo.writestr("_rels/.rels", rels)
+        zo.writestr("3D/3dmodel.model", root_model)
+        zo.writestr("3D/_rels/3dmodel.model.rels", "\n".join(model_rels).encode())
+        for k, v in obj_files.items():
+            zo.writestr(k, v)
+        zo.writestr("Metadata/project_settings.config", json.dumps(proj_cfg, indent=2).encode())
+        zo.writestr("Metadata/model_settings.config", model_settings)
+        zo.writestr("Metadata/slice_info.config", slice_info)
+        zo.writestr("Metadata/filament_sequence.json", fil_seq)
+    return dst_3mf
 
 
 def main(out="calibration", src=None):
@@ -295,6 +489,9 @@ def main(out="calibration", src=None):
         if found is None:
             raise FileNotFoundError(f"{name} not found in {[str(d) for d in search_dirs]}; generate catalog STLs first")
         (out / name).write_bytes(found.read_bytes())
+    p2_path = build_print2_verify_3mf(out, search_dirs)
+    if p2_path is not None:
+        print(f"PASS  {p2_path.name:42s} Supports OFF, 0/0 XY comp, selective 3 mm brim")
     (out / "calibration_kit.json").write_text(json.dumps({
         "steps_mm": STEPS,
         "nominal_step": NOMINAL + 1,

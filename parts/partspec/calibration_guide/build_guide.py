@@ -71,6 +71,12 @@ def load(name):
     return trimesh.load(CAL / name, force="mesh")
 
 
+def load_seated(path):
+    tm = trimesh.load(path, force="mesh")
+    tm.apply_translation((0.0, 0.0, -float(tm.bounds[0][2])))
+    return tm
+
+
 def to_manifold(tm):
     return Manifold(Mesh(vert_properties=np.asarray(tm.vertices, np.float32), tri_verts=np.asarray(tm.faces, np.uint32)))
 
@@ -116,6 +122,7 @@ def seated(label, small, small_pose, big_part, big_pose, min_vol):
 
 
 # ------------------------------------------------------------------ parts
+KIP_STLS = PARTSPEC.parent.parent / "public/kip/stls"
 RAW = {
     "first_print": load("toyventor_cal_forge_mount_first_print.stl"),
     "snap_ladder": load("toyventor_cal_snap_ladder.stl"),
@@ -127,6 +134,15 @@ RAW = {
     "cube": load("toyventor_cal_cube_cell.stl"),
     "face_plate": load("toyventor_cal_face_plate.stl"),
     "flex_skin": load("toyventor_cal_flex_skin_coupon.stl"),
+    "cross_conn": load("toyventor_cross_connector_tu01_P.stl"),
+    "brick_2x2": load("toyventor_brick_s_2x2_S.stl"),
+    "kip_fit_coupon": load("kip_cal_peg_turret_coupon.stl"),
+    "kip_brk_coupon": load("kip_cal_breakoff_coupon.stl"),
+    "kip_torso": load_seated(KIP_STLS / "torso.stl"),
+    "kip_upper_arm": load_seated(KIP_STLS / "upper_arm.stl"),
+    "kip_forearm": load_seated(KIP_STLS / "forearm.stl"),
+    "kip_peg_big": load_seated(KIP_STLS / "spark_peg_big.stl"),
+    "kip_peg_sml": load_seated(KIP_STLS / "spark_peg_sml.stl"),
 }
 
 # Breakaway-tab geometry mirrors make_calibration._build_first_print_components (tab = 3.2 x 1.2 mm bridge).
@@ -170,23 +186,36 @@ fp = split_x(RAW["first_print"], FP_CUT, ["fp_mount", "fp_strip", "fp_brick"], [
 
 MAN = {
     **fp,
-    **{k: to_manifold(RAW[k]) for k in ("snap_ladder", "stud_tester", "pro_ladder", "shaft", "pin_free", "pin_friction", "cube", "face_plate", "flex_skin")},
+    **{k: to_manifold(RAW[k]) for k in (
+        "snap_ladder", "stud_tester", "pro_ladder", "shaft", "pin_free", "pin_friction",
+        "cube", "face_plate", "flex_skin", "cross_conn", "brick_2x2",
+        "kip_fit_coupon", "kip_brk_coupon", "kip_torso", "kip_upper_arm", "kip_forearm", "kip_peg_big", "kip_peg_sml",
+    )},
 }
 MESH = {k: (RAW[k] if k in RAW else to_trimesh(v)) for k, v in MAN.items()}
 
 PART_META = {
-    "fp_mount":     ("Forge Mount base (3x2 studs)", "body"),
-    "fp_strip":     ("1/2/3-dot socket strip", "gauge"),
-    "fp_brick":     ("2x1 test brick (1 stud)", "tester"),
-    "snap_ladder":  ("Snap ladder", "gauge"),
-    "stud_tester":  ("Stud tester", "tester"),
-    "pro_ladder":   ("Pro ladder", "gauge"),
-    "shaft":        ("Shaft", "tester"),
-    "pin_free":     ("Free pin", "tester"),
-    "pin_friction": ("Friction pin", "tester"),
-    "cube":         ("Cube cell", "gauge"),
-    "face_plate":   ("Face plate", "tester"),
-    "flex_skin":    ("Flex skin coupon", "soft"),
+    "fp_mount":       ("Forge Mount base (3x2 studs)", "body"),
+    "fp_strip":       ("1/2/3-dot socket strip", "gauge"),
+    "fp_brick":       ("2x1 test brick (1 stud)", "tester"),
+    "snap_ladder":    ("Snap ladder", "gauge"),
+    "stud_tester":    ("Stud tester", "tester"),
+    "pro_ladder":     ("Pro ladder", "gauge"),
+    "shaft":          ("Shaft", "tester"),
+    "pin_free":       ("Free pin", "tester"),
+    "pin_friction":   ("Friction pin", "tester"),
+    "cube":           ("Cube cell", "gauge"),
+    "face_plate":     ("Face plate", "tester"),
+    "flex_skin":      ("Flex skin coupon", "soft"),
+    "cross_conn":     ("2x1 cross connector (5.25 mm fixed bores)", "gauge"),
+    "brick_2x2":      ("2x2 brick (42-deg zero-support sockets)", "body"),
+    "kip_fit_coupon": ("Kip peg & turret fit coupon", "gauge"),
+    "kip_brk_coupon": ("Kip kit-tray break-off coupon", "gauge"),
+    "kip_torso":      ("Kip Pro torso (support-free)", "body"),
+    "kip_upper_arm":  ("Kip upper arm", "body"),
+    "kip_forearm":    ("Kip forearm", "body"),
+    "kip_peg_big":    ("Kip Ø9.0 mm ball-peg", "tester"),
+    "kip_peg_sml":    ("Kip Ø8.0 mm ball-peg", "tester"),
 }
 
 
@@ -252,6 +281,18 @@ for j, yc in enumerate(STRIP_SOCKET_Y):
     ], [lab(str(k + 1), "strip", (FP_STRIP_X, y2, 11.8), pick=str(k + 1), sub=f"{dot_clearance[k]:.2f} mm") for k, y2 in enumerate(STRIP_SOCKET_Y)]))
 SCENES["dots"] = {"title": "Dot strip", "explodable": True, "cam": "iso", "explode": 0.0, "variants": dots_variants, "default": "2"}
 
+print("Pose check: 2x2 zero-support brick on Forge Mount studs")
+mount_pose_dots = tr(-FP_MOUNT_X, 0, 0)
+brick2_pose = tr(TU / 2, 0, PLATE_H)
+check_pose("2x2 brick on mount studs", MAN["brick_2x2"], MAN["fp_mount"], brick2_pose, mount_pose_dots, 0.05)
+seated("mount studs inside 2x2 brick", MAN["fp_mount"], mount_pose_dots, "brick_2x2", brick2_pose, 120)
+SCENES["dots_brick"] = {"title": "2x2 zero-support brick", "explodable": True, "cam": "iso", "explode": 0.0, "variants": [
+    variant("b2", "2x2 brick on Forge Mount", [
+        item("mount", "fp_mount", mount_pose_dots),
+        item("brick2", "brick_2x2", brick2_pose, (0, 0, 26)),
+    ], [lab("42° cones", "brick2", (0, 0, 15.0), cls="note", sub="zero supports")])
+]}
+
 
 # --- A / B / C: ladders and the gauges that go in them
 def hole_x(k, length=8 * TU):
@@ -313,6 +354,24 @@ print("  overlap by step (mm3):", " ".join(f"{v:.2f}" for v in b_ov))
 if max(b_ov) > 0.5:
     problems.append(f"shaft interferes in CAD: {b_ov}")
 SCENES["pro_b"] = {"title": "Shaft in flat-sided row", "explodable": True, "cam": "iso", "explode": 0.0, "variants": b_variants, "default": "2"}
+
+print("Pose check: shaft in 2x1 cross connector (vertical + sideways 5.25 mm fixed bores)")
+ms_cvert = tr(-TU / 2, 0.0, -5.0) @ SH
+ms_cside = tr(TU / 2, -TU / 2 - 5.0, PRO_H / 2) @ rx(-90.0) @ SH
+check_pose("shaft in cross connector vertical fixed bore", MAN["cross_conn"], MAN["shaft"], ID, ms_cvert, 0.02)
+check_pose("shaft in cross connector sideways fixed bore", MAN["cross_conn"], MAN["shaft"], ID, ms_cside, 0.02)
+seated("shaft inside cross connector (vertical)", MAN["shaft"], ms_cvert, "cross_conn", ID, 250)
+seated("shaft inside cross connector (sideways)", MAN["shaft"], ms_cside, "cross_conn", ID, 250)
+SCENES["pro_b_cross"] = {"title": "Cross connector (5.25 mm fixed)", "explodable": True, "cam": "iso", "explode": 0.0, "default": "vert", "variants": [
+    variant("vert", "Vertical fixed bore", [
+        item("cross", "cross_conn", ID),
+        item("pin", "shaft", ms_cvert, (0, 0, 28)),
+    ], [lab("vert", "cross", (-TU / 2, -TU / 2 - 2.0, PRO_H), pick="vert", sub="5.25 mm"), lab("side", "cross", (TU / 2, -TU / 2 - 2.0, PRO_H), pick="side", sub="teardrop")]),
+    variant("side", "Sideways fixed bore", [
+        item("cross", "cross_conn", ID),
+        item("pin", "shaft", ms_cside, (0, -28, 0)),
+    ], [lab("vert", "cross", (-TU / 2, -TU / 2 - 2.0, PRO_H), pick="vert", sub="5.25 mm"), lab("side", "cross", (TU / 2, -TU / 2 - 2.0, PRO_H), pick="side", sub="teardrop")]),
+]}
 
 # C: free pin (head up) and friction pin in the round row
 FREE_HEAD_T = 2.0
@@ -416,6 +475,47 @@ SCENES["flex"] = {"title": "Flex skin on mount", "explodable": True, "cam": "iso
     item("flap", "flex_skin_b", skin_pose, (0, 0, 24), fold={"pivot": [round(hinge_c, 4), 0.3], "dir": 1}, nocap=True),
 ])]}
 
+# --- F: Kip ball-joint & kit-tray verification (§12.7 Gate 4 coupons + torso/arm assembly)
+print("Pose check: Kip shoulder + elbow double-ball joints")
+kip_tilt = 78.0
+kip_ux, kip_uz = -np.sin(np.radians(kip_tilt)), -np.cos(np.radians(kip_tilt))
+kip_sh_seat = (15.0 + 4.2 * kip_ux, 0.0, (95.5 - 57.5) + 4.2 * kip_uz)
+KIP_SPAN_B, KIP_SPAN_S = 13.4, 10.6
+m_kpeg_b = tr(*kip_sh_seat) @ ry(kip_tilt) @ tr(0, 0, -2.25)
+m_kua = tr(*kip_sh_seat) @ ry(kip_tilt) @ tr(0, 0, KIP_SPAN_B + (22.0 - 4.2)) @ ry(180.0)
+kip_elb_d = KIP_SPAN_B + (22.0 - 4.2) - 4.0
+m_kpeg_s = tr(*kip_sh_seat) @ ry(kip_tilt) @ tr(0, 0, kip_elb_d - 2.00)
+m_kfa = tr(*kip_sh_seat) @ ry(kip_tilt) @ tr(0, 0, kip_elb_d + KIP_SPAN_S + (21.0 - 4.0)) @ ry(180.0)
+check_pose("Kip torso / Ø9.0 shoulder peg", MAN["kip_torso"], MAN["kip_peg_big"], ID, m_kpeg_b, 0.02)
+check_pose("Kip upper_arm / Ø9.0 shoulder peg", MAN["kip_upper_arm"], MAN["kip_peg_big"], m_kua, m_kpeg_b, 0.02)
+check_pose("Kip upper_arm / Ø8.0 elbow peg", MAN["kip_upper_arm"], MAN["kip_peg_sml"], m_kua, m_kpeg_s, 0.02)
+check_pose("Kip forearm / Ø8.0 elbow peg", MAN["kip_forearm"], MAN["kip_peg_sml"], m_kfa, m_kpeg_s, 0.02)
+check_pose("Kip torso / upper_arm gap", MAN["kip_torso"], MAN["kip_upper_arm"], ID, m_kua, 0.005)
+check_pose("Kip upper_arm / forearm gap", MAN["kip_upper_arm"], MAN["kip_forearm"], m_kua, m_kfa, 0.005)
+
+SCENES["kip_coupons"] = {"title": "Kip Gate 4 coupons", "explodable": False, "cam": "iso", "explode": 0.0, "variants": [
+    variant("c", "Peg/turret & break-off coupons", [
+        item("fitc", "kip_fit_coupon", tr(-68.0, -26.0, 0.0)),
+        item("brkc", "kip_brk_coupon", tr(18.0, -19.0, 0.0)),
+    ], [
+        lab("0°/45°/90°", "fitc", (28.0, 52.0, 18.5), cls="note", sub="Ø9 peg · Ø8 turret"),
+        lab("Ø9 & Ø8 cups", "fitc", (69.5, 26.0, 11.0), cls="note", sub="snap gauges"),
+        lab("0.30 / 0.40 / 0.60", "brkc", (28.0, 20.0, 5.0), cls="snap", sub="V-nick necks"),
+    ])
+]}
+SCENES["kip_arm"] = {"title": "Kip torso + arm", "explodable": True, "cam": "iso", "explode": 0.0, "variants": [
+    variant("a", "Sideways shoulder + elbow pose check", [
+        item("torso", "kip_torso", ID),
+        item("pegB", "kip_peg_big", m_kpeg_b, (18, 0, 4)),
+        item("ua", "kip_upper_arm", m_kua, (36, 0, 8)),
+        item("pegS", "kip_peg_sml", m_kpeg_s, (54, 0, 11)),
+        item("fa", "kip_forearm", m_kfa, (74, 0, 15)),
+    ], [
+        lab("Ø9.0", "pegB", (0, 0, 9.0), cls="note", sub="shoulder"),
+        lab("Ø8.0", "pegS", (0, 0, 7.3), cls="note", sub="elbow"),
+    ])
+]}
+
 
 # --- overview: illustrative bed layout (print orientation, as the STLs load); not the slicer's arrangement
 def group_box(pids):
@@ -426,20 +526,29 @@ def group_box(pids):
 
 # (group id, parts, badge letter, step to open on click ('C:fric' also picks the sub-view), name)
 GROUPS = [
-    ("fp", ["fp_mount", "fp_strip", "fp_brick"], "1", "dots", "Forge Mount First-Print"),
-    ("pro", ["pro_ladder"], "B", "B", "Pro ladder"),
+    ("fp", ["fp_mount", "fp_strip", "fp_brick"], "1", "dots:strip", "Forge Mount First-Print"),
+    ("pro", ["pro_ladder"], "B", "B:ladder", "Pro ladder"),
     ("snap", ["snap_ladder"], "A", "A", "Snap ladder"),
+    ("kfit", ["kip_fit_coupon"], "F", "F:coupons", "Kip peg & turret coupon"),
+    ("kbrk", ["kip_brk_coupon"], "F", "F:coupons", "Kip break-off coupon"),
+    ("ktor", ["kip_torso"], "F", "F:arm", "Kip torso"),
+    ("kua", ["kip_upper_arm"], "F", "F:arm", "Kip upper arm"),
+    ("kfa", ["kip_forearm"], "F", "F:arm", "Kip forearm"),
     ("skin", ["flex_skin"], "E", "E", "Flex skin"),
     ("tester", ["stud_tester"], "A", "A", "Stud tester"),
-    ("shaft", ["shaft"], "B", "B", "Shaft"),
+    ("brick2", ["brick_2x2"], "1", "dots:brick", "2x2 brick"),
+    ("cross", ["cross_conn"], "B", "B:cross", "Cross connector"),
+    ("shaft", ["shaft"], "B", "B:ladder", "Shaft"),
     ("free", ["pin_free"], "C", "C:free", "Free pin"),
     ("fric", ["pin_friction"], "C", "C:fric", "Friction pin"),
     ("cubeA", ["cube"], "D", "D:side", "Cube cell"),
     ("cubeB", ["cube"], "D", "D:side", "Cube cell"),
     ("plateA", ["face_plate"], "D", "D:plate", "Face plate"),
     ("plateB", ["face_plate"], "D", "D:plate", "Face plate"),
+    ("kpb", ["kip_peg_big"], "F", "F:arm", "Kip Ø9 peg"),
+    ("kps", ["kip_peg_sml"], "F", "F:arm", "Kip Ø8 peg"),
 ]
-BED, MARGIN, SPACE = 220.0, 8.0, 7.0
+BED, MARGIN, SPACE = 260.0, 8.0, 7.0
 ov_items, ov_labels, rows = [], [], []
 x_cur, y_cur, row_h = -BED / 2 + MARGIN, BED / 2 - MARGIN, 0.0
 for gid, pids, badge, go, name in GROUPS:
