@@ -512,7 +512,8 @@ full set once (below). The report is rewritten after every prompt and
   waits for L2.
 
 **First Spark baseline (2026-11-02, `muse-spark-1.3`, prompt v0, 60 prompts, up
-to 4 calls, one run; validity only, no taste ratings yet):**
+to 4 calls, one run, star fillet bug still in the daemon; validity only, no
+taste ratings yet):**
 
 | Slot | Prompts | First attempt | Final |
 | --- | --- | --- | --- |
@@ -541,8 +542,11 @@ to 4 calls, one run; validity only, no taste ratings yet):**
   30.5 mm both pass. This is a prompt gap (per-slot footprint and z span from
   `LLM_PART_PROMPT.md`'s slot table), not evidence that the model cannot do
   heads.
-- **Hands, 6 of 8 after repair:** the star wand and the flag on a stick failed
-  `G1_watertight` and `G3_single_body` on all 4 calls; cause not investigated.
+- **Hands, 6 of 8 after repair:** the three first-try stars (wand, lollipop,
+  flower) failed because the daemon built stars at the SDK's 1.4 fillet; fixed
+  after the run (see open question 19). The flag on a stick failed on all 4
+  calls. Hypothesis, not isolated: the SDK centres a profile's bounding box on
+  the grip, so a pole at the edge of the flag never touches the grip neck.
 - **Latency:** validation p50 2.5 s, p95 16.3 s; whole job p50 9.9 s, p95 26.4 s
   including the model call. The machine's load average fell from 73 to 20 during
   the run, so read p95 as an upper bound.
@@ -1020,10 +1024,12 @@ deterministic code verifies geometry, fit, and physics.
     `fillet_r = 1.4` for `star2d`, while the verified `custom_star_wand` uses
     1.6. In an SDK-only test (2026-11-02) the same star passes at 1.6 and fails
     `G1_watertight` and `G3_single_body` at 1.4 (`center_z` made no difference),
-    and 5 of the 6 star shapes tried through the daemon failed. Fixed in
-    `main` on 2026-11-02 (uncommitted): the daemon now uses 1.6, and 8 of 9
-    star shapes pass in an SDK test (the ninth is a marginal size). The lane's
-    follow-up branch still has the 1.4 line.
+    and 5 of the 6 star shapes tried through the daemon failed. A first fix
+    changed a variable that star shapes never read, so the baseline below still
+    ran at 1.4. The real fix (uncommitted, 2026-11-02) passes `fillet_r` into
+    `star_2d`; Spark's three failing first-try stars (5 points 14/6.5, 6 points
+    14/7, 10 points 12/9) now pass through the daemon's compile path. The lane's
+    follow-up branch still has the original line.
 
 ## Docs impact when this ships
 
