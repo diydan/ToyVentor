@@ -26,6 +26,7 @@ import {
   parseStl,
   prepareItem,
   planColorPlates,
+  supportSummaryLine,
   plateStl,
   to3mf,
   to3mfProject,
@@ -218,10 +219,12 @@ export function mountPrintView(ctx) {
     }
 
     const spruePlateCount = plan.plates.filter(pl => Boolean(pl.sprue)).length;
+    const supportSummary = plan.supportSummary || supportSummaryLine(plan.plates);
     const lines = [
       `${totalParts} parts across ${plan.plates.length} plate${plan.plates.length === 1 ? '' : 's'} (${plan.bound.mm} mm plate on ${profile.bedXmm}×${profile.bedYmm} mm bed)`,
+      supportSummary,
       ...(spruePlateCount > 0
-        ? [`Kit cards: ${spruePlateCount} sprue plate${spruePlateCount === 1 ? '' : 's'} (2.4×1.0 mm frame, 0.4 mm V-notches)`]
+        ? [`Kit trays: ${spruePlateCount} sprue plate${spruePlateCount === 1 ? '' : 's'} (2.4×1.0 mm frame, 0.4 mm V-notches)`]
         : []),
       `Spool budget (est.): ~${est.totalGrams} g (${est.minTotalGrams}–${est.maxTotalGrams} g)`
         + (bom.hasVehicleInScene ? (profile.includeVehicle ? ` · vehicle +${est.vehicleGrams} g` : ' · vehicle excluded') : ''),
@@ -455,9 +458,12 @@ export function mountPrintView(ctx) {
     const pad = 40;
     const w = Math.max(760, Math.round(bedX * PX + pad * 2));
 
+    const supportSummary = plan.supportSummary || supportSummaryLine(plan.plates);
+    const hasSupportPlates = plan.plates.some(pl => Boolean(pl.requiresSupports));
     const headerLines = [
       `${summary.parts} parts · ${plan.plates.length} plate${plan.plates.length === 1 ? '' : 's'} · ~${plan.estimate.totalGrams} g ${prof.material} (est. ${plan.estimate.minTotalGrams}–${plan.estimate.maxTotalGrams} g)`,
       `Printer: ${prof.presetId} (${bedX}×${bedY} mm, ${prof.nozzleMm} mm nozzle, fit: ${prof.fitChoice}, slicer: ${prof.slicer})`,
+      supportSummary,
     ];
     if (summary.unmapped?.length) {
       headerLines.push(`Not on 3D plates: ${summary.unmapped.join('; ')}`);
@@ -477,7 +483,7 @@ export function mountPrintView(ctx) {
       ...(small.length ? [`${PRINT_PAGE_WARNINGS.small_part} Small-parts screen (${small.length} pcs): ${small.slice(0, 12).join(', ')}${small.length > 12 ? '…' : ''}.`] : []),
       ...(hasAnySprue ? [PRINT_PAGE_WARNINGS.sprue_prep] : []),
       PRINT_PAGE_WARNINGS.always,
-      'Parts marked "Needs supports" are placed on dedicated support plates (>= 6 mm spacing) with mating-socket guards and require slicer supports enabled.',
+      ...(hasSupportPlates ? ['Parts marked "Needs supports" are placed on dedicated support plates (>= 6 mm spacing) with mating-socket guards and require slicer supports enabled.'] : []),
     ];
     const warnWrapped = warnParagraphs.flatMap(p => wrapTextLines(mg, p, warnInnerW));
     const warnBoxH = 44 + warnWrapped.length * 17;

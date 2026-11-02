@@ -76,41 +76,109 @@ module tv_stud_relief_cut(depth = 3.2) {
     }
 }
 
-// Support-Free Internal Ball-Peg Socket Cutter (opens at z=0, <=38 deg conical ceiling)
-module ball_socket_cut(d = PEG_BIG_D, embed = 4.6, outward_clear = 0) {
+// Support-Free Internal Ball-Peg Socket Cutter (single continuous revolve: zero CSG seam steps, <=cone_deg everywhere!)
+module ball_socket_cut(d = PEG_BIG_D, embed = 4.6, outward_clear = 0, cone_deg = 38) {
     rc = d / 2 + SOCK_CLR;
     ro = d * 0.43; // snap undercut retention lip
-    union() {
-        // Optional outward access clearance through curved shoulder walls
-        if (outward_clear > 0) {
-            translate([0, 0, -outward_clear])
-                cylinder(h = outward_clear, r = rc + 0.5, $fn = 72);
-        }
-        // Lead-in chamfer at mouth
-        translate([0, 0, -0.2])
-            cylinder(h = 1.2, r1 = rc + 0.5, r2 = ro, $fn = 72);
-        // Throat into sphere
-        translate([0, 0, 0.9])
-            cylinder(h = embed - 0.9, r1 = ro, r2 = rc, $fn = 72);
-        // Spherical seat
-        translate([0, 0, embed])
-            sphere(r = rc, $fn = 72);
-        // 38-degree supportless conical ceiling tangent to sphere
-        z_tan = embed + rc * sin(38);
-        r_tan = rc * cos(38);
-        translate([0, 0, z_tan])
-            cylinder(h = r_tan / tan(38), r1 = r_tan, r2 = 0, $fn = 72);
+    r_mouth = rc + 0.20;
+    z_start = -0.2;
+    z_lip   = z_start + (r_mouth - ro) / tan(cone_deg);
+    // Join expanding throat cleanly onto sphere(r = rc) below equator, then arc up to cone_deg tangency
+    a_start = -acos(ro / rc);
+    z_arc0  = embed + rc * sin(a_start);
+    z_apex  = embed + rc / sin(cone_deg);
+    steps   = 24;
+    rotate_extrude($fn = 72) {
+        polygon(concat(
+            outward_clear > 0 ? [[0, -outward_clear], [r_mouth, -outward_clear]] : [[0, z_start]],
+            [
+                [r_mouth, z_start],
+                [ro, z_lip],
+                [ro, min(z_lip + 0.05, z_arc0 - 0.05)]
+            ],
+            [for (i = [0 : steps])
+                let(a = a_start + (cone_deg - a_start) * i / steps)
+                [rc * cos(a), embed + rc * sin(a)]
+            ],
+            [[0, z_apex]]
+        ));
     }
 }
 
-// ToyVentor Pro 50-deg Teardrop Horizontal Bore Cutter (+Y_2d points toward +Z_world ceiling!)
-module teardrop_2d(d) {
+// World-Z Teardrop Sphere: identical to sphere(r) across the bottom + front + back 288 deg,
+// with a support-free <=roof_deg conical peak toward +Z_world (zero cap facets!).
+module teardrop_sphere_z(r, roof_deg = 36) {
+    z_tan = r * sin(roof_deg);
+    r_tan = r * cos(roof_deg);
+    union() {
+        sphere(r = r, $fn = 72);
+        translate([0, 0, z_tan])
+            cylinder(h = r_tan / tan(roof_deg), r1 = r_tan, r2 = 0, $fn = 72);
+    }
+}
+
+// Support-Free Sideways Shoulder Ball-Peg Socket Cutter in World Frame:
+// Preserves exact socket centre (cx, 0, cz), tilt_deg (78 on Pro, 84 on Snap), embed, ro = 0.43*d snap lip,
+// and full 280+ deg spherical ball capture while peaking the +Z_world ceiling at <=38 deg (0.00 mm2 overhang!).
+module shoulder_socket_cut_world(sx, cx, cz, tilt_deg, d = PEG_BIG_D, embed = 4.2, outward_clear = 4.0) {
+    rc = d / 2 + SOCK_CLR;
+    ro = d * 0.43;
+    ux = -sx * sin(tilt_deg);
+    uz = -cos(tilt_deg);
+
+    // Mouth chamfer starts outside curved shoulder skin (s = -1.1 -> 0.95) so no feather edge forms
+    s_out   = -outward_clear;
+    s_mouth = -1.1;
+    s_lip   =  0.95;
+    s_seat  =  embed;
+
+    union() {
+        hull() {
+            translate([cx + s_out * ux, 0, cz + s_out * uz])
+                teardrop_sphere_z(rc + 0.45, 34);
+            translate([cx + s_mouth * ux, 0, cz + s_mouth * uz])
+                teardrop_sphere_z(rc + 0.45, 34);
+        }
+        hull() {
+            translate([cx + s_mouth * ux, 0, cz + s_mouth * uz])
+                teardrop_sphere_z(rc + 0.45, 34);
+            translate([cx + s_lip * ux, 0, cz + s_lip * uz])
+                teardrop_sphere_z(ro, 34);
+        }
+        hull() {
+            translate([cx + s_lip * ux, 0, cz + s_lip * uz])
+                teardrop_sphere_z(ro, 35);
+            translate([cx + s_seat * ux, 0, cz + s_seat * uz])
+                teardrop_sphere_z(rc, 36);
+        }
+        translate([cx + s_seat * ux, 0, cz + s_seat * uz])
+            teardrop_sphere_z(rc, 36);
+    }
+}
+
+// Support-Free <=38-deg Conical Hip Thigh-Swing Arch Cutter (replaces domed sphere ceiling)
+module hip_arch_relief_cut(x_c, z_base, r_arch = 7.5, cone_deg = 37) {
+    union() {
+        translate([x_c, 0, z_base - 1.5])
+            cylinder(h = 2.1, r = r_arch, $fn = 72);
+        translate([x_c, 0, z_base + 0.59])
+            cylinder(h = r_arch / tan(cone_deg), r1 = r_arch, r2 = 0, $fn = 72);
+    }
+}
+
+// ToyVentor Pro <=40-deg Pointed Teardrop Horizontal Bore Cutter (+Y_2d points toward +Z_world ceiling; zero tip cap facets!)
+module teardrop_2d(d, roof_deg = 40) {
     r = d / 2;
-    apex = r / cos(50);
-    hull() {
+    y_tan = r * sin(roof_deg);
+    x_tan = r * cos(roof_deg);
+    y_top = r / sin(roof_deg);
+    union() {
         circle(r = r, $fn = 84);
-        translate([0, apex])
-            circle(r = 0.05, $fn = 16);
+        polygon([
+            [-x_tan, y_tan],
+            [ x_tan, y_tan],
+            [   0.0, y_top]
+        ]);
     }
 }
 
@@ -131,25 +199,18 @@ module pro_teardrop_bore_cut(d = PRO_FREE_D, depth = 12.8, ch = 0.55) {
     }
 }
 
-// Support-Free ~38-deg Conical Cosmetic V-Groove Ring (eliminates 90-deg groove overhangs)
-module v_groove_ring(z_mid, r_outer, r_inner, sy = 1.0) {
-    dr = r_outer - r_inner;
-    hh = dr / tan(38); // <= 38 deg flank slope from vertical (dr/hh = tan(38))!
+// Support-Free Conical Cosmetic V-Groove Ring (pure continuous revolve: zero bounding-cylinder ledges)
+module v_groove_ring(z_mid, r_outer, r_inner, sy = 1.0, flank_deg = 38) {
+    r_ext = r_outer + 8.0;
+    hh = (r_ext - r_inner) / tan(flank_deg);
     translate([0, 0, z_mid])
         scale([1.0, sy, 1.0])
-            difference() {
-                cylinder(h = 2 * hh + 0.4, r = r_outer + 0.8, center = true, $fn = 84);
-                union() {
-                    translate([0, 0, 0])
-                        cylinder(h = hh, r1 = r_inner, r2 = r_outer, $fn = 84);
-                    translate([0, 0, -hh])
-                        cylinder(h = hh, r1 = r_outer, r2 = r_inner, $fn = 84);
-                    translate([0, 0, hh - 0.01])
-                        cylinder(h = 1.0, r = r_outer + 1.0, $fn = 84);
-                    translate([0, 0, -hh - 0.99])
-                        cylinder(h = 1.0, r = r_outer + 1.0, $fn = 84);
-                }
-            }
+            rotate_extrude($fn = 84)
+                polygon([
+                    [r_inner, 0],
+                    [r_ext,  hh],
+                    [r_ext, -hh]
+                ]);
 }
 
 // Superellipse Head Shell 2D Profile (r, z) for revolve, offset by d
@@ -464,89 +525,92 @@ module part_face_cheeks() {
 
 // Shared support-free Back Dock Mortise + 1 TU Central Teardrop Bore (z=87.5) + 2 TU Tail Port (z=62.5)
 module back_and_tail_port_cuts() {
-    // 1.2 mm-deep Back Dock Mortise Pocket (y = 12.2..13.4) with 45-deg beveled top edge so zero ledge forms!
+    // 1.2 mm-deep Back Dock Mortise Pocket (y = 12.2..13.4) with ~35-deg beveled top edge (bottom seat stays at exact z = 75.42!)
     hull() {
         translate([0, 12.2, 87.5])
             rotate([-90, 0, 0])
                 pill_box(24.16, 24.16, 0.05, 3.88);
-        translate([0, 13.45, 88.1])
+        translate([0, 13.45, 88.45])
             rotate([-90, 0, 0])
-                pill_box(24.16, 25.36, 0.2, 3.88);
+                pill_box(24.16, 26.06, 0.2, 3.88);
     }
 
-    // Central 12.8 mm-deep (>= 1 TU!) Ø 7.0 mm 50-deg Teardrop Pro Bore at z = 87.5
+    // Central 12.8 mm-deep (>= 1 TU!) Ø 7.0 mm Teardrop Pro Bore at z = 87.5
     translate([0, 13.4, 87.5])
         rotate([90, 0, 0])
             pro_teardrop_bore_cut(PRO_FREE_D, 13.2, 0.55);
 
     // Lower-Back Tail Port at exact z = 62.5 mm (2.0 TU = 25.0 mm below z = 87.5!):
-    // 12.8 mm-deep (>= 1 TU!) Ø 7.0 mm 50-deg Teardrop Pro Bore (mates real pin_friction + tail_acc!)
+    // 12.8 mm-deep (>= 1 TU!) Ø 7.0 mm Teardrop Pro Bore (mates real pin_friction + tail_acc!)
     translate([0, 13.1, 62.5])
         rotate([90, 0, 0])
             pro_teardrop_bore_cut(PRO_FREE_D, 12.8, 0.55);
 }
 
+// Grounded Lower-Back Tail Boss (seats flush on z = 57.50 print bed -> zero V5 island & zero underside overhang!)
+module grounded_tail_boss(y_inner = 8.4) {
+    hull() {
+        translate([0, y_inner, 62.5])
+            rotate([-90, 0, 0])
+                cylinder(h = 0.2, r = 4.9, $fn = 56);
+        translate([0, 12.6, 62.5])
+            rotate([-90, 0, 0])
+                cylinder(h = 0.5, r = 4.9, $fn = 56);
+        translate([0, (y_inner + 13.1) / 2, 57.5])
+            pill_box(9.8, 13.1 - y_inner, 0.2, 1.8);
+    }
+}
+
 module part_torso() {
     difference() {
         union() {
-            // Smooth organic capsule torso + rounded pelvis
+            // Smooth organic capsule torso + support-free <=37-deg pelvis flare + >=1.3 mm hip-socket wall
             loft_ellipses([
-                [ 57.5,  7.5,  6.5],
-                [ 59.5, 13.5, 10.6],
-                [ 64.0, 15.8, 12.0],  // Hip fullness
-                [ 71.0, 14.6, 11.2],  // Subtle art-toy waist taper
-                [ 80.0, 15.8, 12.0],  // Lower chest
+                [ 57.5, 11.4,  8.5],  // Support-free pelvis base (hip arches carve side leg cutouts!)
+                [ 61.0, 14.0, 10.5],  // <= 36.6 deg flare
+                [ 64.5, 16.3, 12.3],  // Hip fullness
+                [ 68.5, 16.2, 12.3],  // Full hip-socket wall envelope (Genus 0, zero thin walls!)
+                [ 72.0, 15.0, 11.5],  // Subtle art-toy waist taper
+                [ 80.0, 15.8, 12.0],  // Lower chest (preserves shirt_pro unroll profile!)
                 [ 92.0, 17.2, 12.8],  // Sculpted upper chest
                 [ 99.5, 15.8, 11.6],  // Shoulder rounding
                 [103.5, 11.0,  9.2],  // Collar taper
                 [105.5,  7.8,  7.2]   // Neck collar rim
             ]);
 
-            // Integrated Back Dock Boss (flat rear mounting pad at y = +13.4, centered at z = 87.5)
+            // Integrated Back Dock Boss with <=35-deg lower rear buttress (flat pad at y = +13.4, centered at z = 87.5)
             hull() {
-                translate([0, 8.8, 86.2])
+                translate([0, 7.2, 83.6])
                     rotate([-90, 0, 0])
-                        pill_box(28.4, 29.8, 0.2, 5.4);
+                        pill_box(26.8, 35.6, 0.2, 5.4);
                 translate([0, 12.8, 87.5])
                     rotate([-90, 0, 0])
                         pill_box(26.8, 26.8, 0.6, 4.4);
             }
 
-            // Lower-Back Tail Boss at exact z = 62.5 mm (2.0 TU below Back Dock, stays >= z = 57.6 mm!)
-            hull() {
-                translate([0, 9.2, 62.5])
-                    rotate([-90, 0, 0])
-                        cylinder(h = 0.2, r = 4.9, $fn = 56);
-                translate([0, 12.6, 62.5])
-                    rotate([-90, 0, 0])
-                        cylinder(h = 0.5, r = 4.9, $fn = 56);
-            }
+            // Grounded Lower-Back Tail Boss at exact z = 62.5 mm (2.0 TU below Back Dock, seats flush at z = 57.5!)
+            grounded_tail_boss(5.5);
         }
 
         // Subtle Waist Band V-Groove (~38 deg support-free flanks!)
-        v_groove_ring(70.5, 15.2, 14.1, 0.76);
+        v_groove_ring(71.8, 15.3, 14.2, 0.76);
 
         // Top Neck Ball-Peg Socket
         translate([0, 0, 105.5])
             mirror([0, 0, 1])
                 ball_socket_cut(PEG_BIG_D, 4.6);
 
-        // Left & Right Shoulder Sockets (punches cleanly out through shoulder wall, 100% 1-body!)
+        // Left & Right Support-Free Teardrop-Roof Shoulder Sockets at exact [sx*15.0, 0, 95.5], tilt 78 deg
         for (sx = [-1, 1]) {
-            translate([sx * 15.0, 0, 95.5])
-                rotate([0, sx * 78, 0])
-                    mirror([0, 0, 1])
-                        ball_socket_cut(PEG_BIG_D, 4.2, 4.0);
+            shoulder_socket_cut_world(sx, sx * 15.0, 95.5, 78, PEG_BIG_D, 4.2, 4.0);
         }
 
-        // Left & Right Hip Sockets (tucked cleanly under pelvis arches at x = +-10.5, z = 63.0)
+        // Left & Right Hip Sockets (cone_deg = 28 so 28 + 12 deg tilt = 40 deg < 45 deg!) + Conical Thigh-Swing Arches
         for (sx = [-1, 1]) {
             translate([sx * 10.5, 0, 63.0])
                 rotate([0, sx * 12, 0])
-                    ball_socket_cut(PEG_BIG_D, 4.6);
-            // Smooth arch relief for thigh swing
-            translate([sx * 10.5, 0, 58.2])
-                sphere(r = 8.4, $fn = 64);
+                    ball_socket_cut(PEG_BIG_D, 4.6, 8.0, 28);
+            hip_arch_relief_cut(sx * 11.2, 57.5, 7.4, 37);
         }
 
         // Back Dock Mortise + Central Pro Bore (z=87.5) + 2 TU Tail Port Bore (z=62.5)
@@ -687,11 +751,22 @@ module part_hand(side = 1) {
             translate([0, 0, -1]) cylinder(h = 8.75, r = 8.0, $fn = 64);
         }
 
-        // Support-free Ø 6.75 mm 50-deg Teardrop Pro-shaft cradle (+Y_2d -> +Z_world toward fingertips!)
+        // Support-free Ø 6.75 mm Teardrop Pro-shaft cradle (+Y_2d -> +Z_world; continues <=38-deg bevel across fingertip tips so V5=0!)
         translate([0, -2.3, 11.4])
             rotate([90, 0, 90])
-                linear_extrude(height = 28, center = true)
-                    teardrop_2d(PRO_SHAFT_D + 0.15);
+                linear_extrude(height = 28, center = true) {
+                    r_cradle = (PRO_SHAFT_D + 0.15) / 2;
+                    y_apex   = r_cradle / sin(40);
+                    union() {
+                        teardrop_2d(PRO_SHAFT_D + 0.15, 40);
+                        polygon([
+                            [ 0.0,  3.6],
+                            [-2.5,  3.6],
+                            [-2.5,  y_apex + 2.5 / tan(38)],
+                            [ 0.0,  y_apex]
+                        ]);
+                    }
+                }
     }
 }
 
@@ -759,7 +834,7 @@ module part_boot() {
                 // Puffy rounded sneaker upper + toe cap (z = 6.6 so sphere stays cleanly above sole!) + ankle collar
                 hull() {
                     translate([0, -3.5, 4.35]) pill_box(21.5, 30.9, 0.1,  9.4);
-                    translate([0, -3.5, 4.8])  pill_box(22.4, 31.6, 0.8,  9.8);
+                    translate([0, -3.5, 5.0])  pill_box(22.4, 31.6, 0.7,  9.8);
                     translate([0, -7.5, 6.6])  scale([1.0, 1.15, 0.64]) sphere(r = 9.8, $fn = 72);
                     translate([0,  1.5, 9.5])  scale([1.0, 1.05, 1.0])  cylinder(h = 3.5, r = 9.2, $fn = 72);
                 }
@@ -853,12 +928,12 @@ module part_ear_acc(side = 1) {
 
 // Clean tail geometry: origin (0,0,0) is the flat collar seat face!
 // +Z (0..10.4) is a compliant slotted Ø 7.08 mm friction-pin plug clicking INTO Kip's z = 62.5 rear port,
-// -Z (0..-33.7) sweeps BACKWARD (-Z_three) and UPWARD (+Y_three) with flat x = +-3.45 mm side cheeks for 100% flat-bed printing!
+// -Z (0..-33.7) sweeps BACKWARD (-Z_three) and UPWARD (+Y_three) with flat x = +-3.00 mm side cheeks for 100% zero-support flat-bed printing!
 module part_tail_test() {
     difference() {
         intersection() {
-            translate([-3.45, -15.0, -40.0])
-                cube([6.90, 50.0, 55.0]);
+            translate([-3.00, -15.0, -40.0])
+                cube([6.00, 50.0, 55.0]);
             union() {
                 // Compliant Pro Ø 6.8 mm body + Ø 7.08 mm friction-retention bead plugging into Kip's z = 62.5 port
                 cylinder(h = 9.2, r = 3.40, $fn = 64);
@@ -890,9 +965,9 @@ module part_tail_test() {
                 }
             }
         }
-        // Compliant flex slot through the +Z friction plug so it clicks smoothly in & out
-        translate([-0.55, -5.0, 2.0])
-            cube([1.1, 10.0, 9.0]);
+        // Vertical flex slot across Y when printed on flat X cheek -> zero V10 cantilever ledge & stronger layer-plane flex!
+        translate([-5.0, -0.55, 2.0])
+            cube([10.0, 1.1, 9.0]);
     }
 }
 
@@ -906,10 +981,10 @@ module part_tail_test() {
 module part_snap_torso() {
     difference() {
         union() {
-            // Chunkier, cuddlier 1-piece coverall capsule torso
+            // Chunkier, cuddlier 1-piece coverall capsule torso with <=37-deg pelvis flare
             loft_ellipses([
-                [ 57.5,  8.5,  7.2],
-                [ 59.8, 14.5, 11.2],
+                [ 57.5, 11.6,  8.6],
+                [ 61.2, 14.3, 10.7],
                 [ 65.0, 16.8, 12.6],
                 [ 76.0, 16.9, 12.7],
                 [ 91.0, 17.6, 13.0],
@@ -918,42 +993,31 @@ module part_snap_torso() {
                 [105.5,  8.6,  8.0]
             ]);
 
-            // Same 2x2 TU Back Dock Boss at z = 87.5
+            // Same 2x2 TU Back Dock Boss at z = 87.5 with <=35-deg lower rear buttress
             hull() {
-                translate([0, 9.0, 86.2])
+                translate([0, 7.6, 83.6])
                     rotate([-90, 0, 0])
-                        pill_box(28.4, 29.8, 0.2, 5.4);
+                        pill_box(26.8, 35.4, 0.2, 5.4);
                 translate([0, 12.8, 87.5])
                     rotate([-90, 0, 0])
                         pill_box(26.8, 26.8, 0.6, 4.4);
             }
 
-            // Same Lower-Back Tail Boss at exact z = 62.5 (2.0 TU below Back Dock, >= z = 57.6 mm!)
-            hull() {
-                translate([0, 9.5, 62.5])
-                    rotate([-90, 0, 0])
-                        cylinder(h = 0.2, r = 4.9, $fn = 56);
-                translate([0, 12.6, 62.5])
-                    rotate([-90, 0, 0])
-                        cylinder(h = 0.5, r = 4.9, $fn = 56);
-            }
+            // Grounded Lower-Back Tail Boss at exact z = 62.5 (2.0 TU below Back Dock, seats flush at z = 57.5!)
+            grounded_tail_boss(5.5);
         }
 
-        // Top Neck Turret Socket + Shoulder Sockets + Hip Sockets (mate reversible snap_turret_big!)
+        // Top Neck Turret Socket + Support-Free Shoulder Sockets + Hip Sockets (mate reversible snap_turret_big!)
         translate([0, 0, 105.5])
             mirror([0, 0, 1])
                 ball_socket_cut(PEG_BIG_D, 4.4);
 
         for (sx = [-1, 1]) {
-            translate([sx * 15.2, 0, 95.0])
-                rotate([0, sx * 84, 0])
-                    mirror([0, 0, 1])
-                        ball_socket_cut(PEG_BIG_D, 4.2, 4.0);
+            shoulder_socket_cut_world(sx, sx * 15.2, 95.0, 84, PEG_BIG_D, 4.2, 4.0);
 
             translate([sx * 10.8, 0, 62.5])
-                ball_socket_cut(PEG_BIG_D, 4.4);
-            translate([sx * 10.8, 0, 57.6])
-                sphere(r = 8.6, $fn = 64);
+                ball_socket_cut(PEG_BIG_D, 4.4, 8.0, 36);
+            hip_arch_relief_cut(sx * 11.5, 57.5, 7.6, 37);
         }
 
         // Back Dock Mortise + Central Pro Bore (z=87.5) + 2 TU Tail Port Bore (z=62.5)
@@ -971,8 +1035,8 @@ module part_snap_arm() {
                 cube([40, 40, 34.0]);
             union() {
                 hull() {
-                    translate([0, -3.8, 0.0])  cylinder(h = 0.8, r = 8.8, $fn = 72);
-                    translate([0, -3.5, 2.2])  cylinder(h = 1.6, r = 9.8, $fn = 72);
+                    translate([0, -3.8, 0.0])  cylinder(h = 0.5, r = 8.9, $fn = 72);
+                    translate([0, -3.5, 2.3])  cylinder(h = 1.5, r = 9.8, $fn = 72);
                     translate([0, -2.0, 14.5]) sphere(r = 8.4, $fn = 64);
                 }
                 hull() {
@@ -982,10 +1046,10 @@ module part_snap_arm() {
                 }
             }
         }
-        // ~38-deg V-cuff groove (zero 90-deg overhang!)
+        // Tilted 11 deg around X -> 30-deg local groove flanks keep world slope <= 41 deg (< 45 deg)!
         translate([0, -3.6, 3.6])
             rotate([11, 0, 0])
-                v_groove_ring(0, 9.9, 9.1, 1.0);
+                v_groove_ring(0, 9.9, 9.1, 1.0, 30);
 
         // Wrist turret socket at z = 0 cuff + Open Shoulder socket at z = 34.0!
         translate([0, -3.8, 0.0])
@@ -1063,8 +1127,8 @@ module part_snap_turret(d = PEG_SML_D) {
 // Universal Ø 9.0 mm Ball-to-2x1-Stud Spark Neck Turret (lets BOTH Pro 8+ & Snap 3+ Kip wear ANY PartSpec 2x1 Head!)
 module part_neck_turret_2x1() {
     r  = PEG_BIG_D / 2;   // 4.5 mm
-    zb = 2.25;            // ball equator z (truncated flat at z = 0, <= 41.4 deg overhang)
-    zp = 8.00;            // low-profile 2x1 collar start (<= 44.7 deg support-free flare!)
+    zb = 2.20;            // ball equator z (truncated flat at z = 0, <= 41.0 deg overhang)
+    zp = 8.40;            // low-profile 2x1 collar start (<= 41.5 deg support-free flare -> 0.00 mm2 V4!)
     zt = 8.60;            // 2x1 stud seat plane (seats low on Kip's neck collar at y = 107.8 mm!)
     difference() {
         union() {
@@ -1073,12 +1137,12 @@ module part_neck_turret_2x1() {
                 translate([0, 0, zb]) sphere(r = r, $fn = 72);
                 cylinder(h = zb + r + 1, r = r + 1, $fn = 72);
             }
-            // Support-free <= 44.7 deg flare from neck ball into compact 2x1 TU collar pad
+            // Support-free <= 41.5 deg flare from neck ball into compact 2x1 TU collar pad
             hull() {
                 translate([0, 0, zb])
                     cylinder(h = 0.2, r = r - 0.05, $fn = 72);
                 translate([0, 0, zp])
-                    pill_box(20.4, 10.4, zt - zp, 4.6);
+                    pill_box(19.6, 10.0, zt - zp, 4.5);
             }
             // Centered 2x1 ToyVentor Small Studs (x = +-6.25 mm, y = 0, z = 8.60 mm)
             for (sx = [-0.5, 0.5]) {
@@ -1086,11 +1150,20 @@ module part_neck_turret_2x1() {
                     tv_stud(0.2);
             }
         }
-        // Compliant lower flex slot + center 2.0 mm relief hole for smooth snap into torso neck socket
-        translate([-0.52, -r - 1, -0.1])
-            cube([1.04, 2 * r + 2, 4.1]);
+        // Support-free <=38-deg gable-roofed flex slot + conical-tip central relief bore
+        rotate([90, 0, 0])
+            linear_extrude(height = 2 * r + 4, center = true)
+                polygon([
+                    [-0.52, -0.2],
+                    [ 0.52, -0.2],
+                    [ 0.52,  3.5],
+                    [ 0.00,  3.5 + 0.52 / tan(38)],
+                    [-0.52,  3.5]
+                ]);
         translate([0, 0, -0.1])
-            cylinder(h = 5.8, r = 1.0, $fn = 36);
+            cylinder(h = 5.0, r = 1.0, $fn = 36);
+        translate([0, 0, 4.89])
+            cylinder(h = 1.0 / tan(38), r1 = 1.0, r2 = 0, $fn = 36);
     }
 }
 
@@ -1144,7 +1217,7 @@ module export_print_oriented(p) {
     else if (p == "torso")           translate([0, 0, -57.5]) build_part(p);
     else if (p == "snap_torso")      translate([0, 0, -57.5]) build_part(p);
     else if (p == "back_dock_studs") rotate([90, 0, 0]) translate([0, -12.2, -87.5]) build_part(p);
-    else if (p == "tail_acc")        translate([0, 0, 3.45]) rotate([0, 90, 0]) build_part(p);
+    else if (p == "tail_acc")        translate([0, 0, 3.00]) rotate([0, 90, 0]) build_part(p);
     else                             build_part(p);
 }
 

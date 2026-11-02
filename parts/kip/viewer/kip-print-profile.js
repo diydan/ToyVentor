@@ -42,6 +42,21 @@ export const PRINTER_PRESETS = Object.freeze({
     sequential: null,
     purgeGramsPerChange: 0,
   },
+  large_300: {
+    presetId: 'large_300',
+    label: 'Large 300 (1 colour)',
+    slicer: 'orca_bambu',
+    changerType: 'single',
+    maxSlots: 1,
+    multiColorStrategy: 'split-plates',
+    bedXmm: 300,
+    bedYmm: 300,
+    maxZmm: 340,
+    brimMarginMm: 5.0,
+    exclusionZones: [],
+    sequential: null,
+    purgeGramsPerChange: 0,
+  },
   changer_256_4: {
     presetId: 'changer_256_4',
     label: '4-Slot Changer 256 (X1/P1)',
@@ -261,7 +276,8 @@ export function fitCompensationForProfile(profile) {
 }
 
 // Compact < 38-char profile token for `toyforge.printerProfile.v1` so storage stays tiny.
-const PRESET_CODES = ['compact_180', 'standard_220', 'changer_256_4', 'changer_a1_4', 'changer_256_8', 'prusa_mmu_5', 'toolchanger_5', 'custom'];
+// Append new presets after `custom` (index 7) so existing `1:0..1:7` tokens keep their exact indices.
+const PRESET_CODES = ['compact_180', 'standard_220', 'changer_256_4', 'changer_a1_4', 'changer_256_8', 'prusa_mmu_5', 'toolchanger_5', 'custom', 'large_300'];
 const SLICER_CODES = ['orca_bambu', 'prusa', 'generic'];
 const CHANGER_CODES = ['single', 'multiplexer', 'toolchanger'];
 const STRAT_CODES = ['split-plates', 'auto', 'by-layer', 'by-object'];

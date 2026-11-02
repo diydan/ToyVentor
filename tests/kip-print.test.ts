@@ -1159,9 +1159,9 @@ describe.runIf(existsSync(ORCA_BIN))("live OrcaSlicer CLI verification gate", ()
   }, 120000);
 
   it("Gate 5: a support-free part stays support-free when the user's own profile has supports on (explicit enable_support = 0)", () => {
-    // Found on a real calibration print (2026-11-01): the writer left the support key out for parts it verified as support-free, so a profile
-    // with supports on (Orca "normal(auto)", threshold 30) filled every bridged socket ceiling with support that was very hard to remove.
-    const item = K.prepareItem({ id: "bumper_horns", qty: 1, source: "partspec", hex: "#F4EFE6" }, load("/kip/partspec/toyventor_bumper_horns_S.stl"), { verified: true });
+    // Found on a real calibration print (2026-11-01): leaving the support key out for parts verified as support-free lets a profile
+    // with supports on (Orca "normal(auto)", threshold 30, dont_support_bridges 0) fill legal short bridges (e.g. veh_car_chassis) with support.
+    const item = K.prepareItem({ id: "veh_car_chassis", qty: 1, source: "partspec", hex: "#F4EFE6" }, load("/kip/partspec/toyventor_veh_car_chassis_S.stl"), { verified: true });
     expect(item.tier).toBe("support-free");
     const prof = P.clampProfile({ ...P.createDefaultProfile(), flatPackMode: "off" });
     const plan = K.planColorPlates([item], prof);
