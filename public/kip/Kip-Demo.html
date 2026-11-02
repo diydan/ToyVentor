@@ -457,6 +457,7 @@ import { mountKipMenu } from '/kip/kip-menu.js?v=10.0';
 import { mountPrintView } from '/kip/kip-print-view.js?v=10.0';
 import { mountSelfie } from '/kip/kip-selfie.js?v=10.0';
 import { mountDescribe } from '/kip/kip-describe-tab.js?v=10.0';
+import { KIP_CLIPS, clipForProp, isPropClip, makeKipClip } from '/kip/kip-clips.js?v=10.0';
 
 if (window.self !== window.top) document.body.classList.add('in-iframe');
 
@@ -1993,6 +1994,12 @@ async function init() {
   actions.set('skate_cruise', kipMixer.clipAction(makeSkateboardClip(THREE)));
   registerClip('skate_cruise', 'Skate');
 
+  // Reactions, short dances and one clip per handheld prop (kip-clips.js): hand-built, same 14 joints and 30 fps as the clips above.
+  for (const entry of KIP_CLIPS) {
+    actions.set(entry.id, kipMixer.clipAction(makeKipClip(THREE, entry)));
+    registerClip(entry.id, entry.label);
+  }
+
   xbotVis.scale.multiplyScalar(83.5);
   refMixer = new THREE.AnimationMixer(xbotVis);
   for (const [rawName] of clipLabels) {
@@ -2131,6 +2138,8 @@ function getDefaultRestClip() {
   if (loco.vehicle === 'scooter') return 'scooter_ride';
   if (loco.vehicle === 'moto') return 'moto_straddle';
   if (loco.prop === 'skateboard') return 'skate_cruise';
+  const propClip = clipForProp(loco.prop);
+  if (propClip && actions.has(propClip)) return propClip;
   return 'idle';
 }
 
@@ -2541,10 +2550,15 @@ function setPropMode(mode) {
   kip.exp.customWandGroup.visible = (loco.prop === 'wand');
   kip.exp.customHandGroup.visible = (loco.prop === 'custom');
 
+  // A prop with a clip (broom: sweep, hammer: strike ...) plays it on foot, like the skateboard; putting the prop away returns to the rest clip.
+  const propClip = loco.vehicle === 'none' ? clipForProp(loco.prop) : null;
   if (loco.prop === 'skateboard' && loco.buildMode === 'assembled' && actions.has('skate_cruise')) {
     loco.manualOverride = false;
     playClip('skate_cruise', 0.18);
-  } else if (loco.prop !== 'skateboard' && activeClipName === 'skate_cruise') {
+  } else if (propClip && loco.buildMode === 'assembled' && actions.has(propClip)) {
+    loco.manualOverride = false;
+    playClip(propClip, 0.18);
+  } else if (loco.prop !== 'skateboard' && (activeClipName === 'skate_cruise' || isPropClip(activeClipName))) {
     playClip(getDefaultRestClip(), 0.18);
   }
 
@@ -3671,6 +3685,20 @@ const printView = mountPrintView({
 });
 window.kipPrint = printView;
 window.kipRig = () => ({ THREE, kip, mats });
+// Test and contact-sheet hook for kip-clips.js: freeze the rig at time t of a clip (a registered id, or an AnimationClip the caller built). Not used by the page.
+window.kipClips = {
+  entries: KIP_CLIPS,
+  scrub(clipOrId, t) {
+    const id = typeof clipOrId === 'string' ? clipOrId : clipOrId.name;
+    if (!actions.has(id)) actions.set(id, kipMixer.clipAction(clipOrId));
+    triggerClip(id); // the menu's own path: it sets manualOverride, without which the loop snaps back to the rest clip next frame
+    const a = actions.get(id);
+    for (const [k, other] of actions) if (k !== id) other.stop();
+    a.paused = true; a.time = t; a.setEffectiveWeight(1);
+    kipMixer.update(0);
+    return id;
+  },
+};
 // Describe & build (parts/kip/viewer/kip-describe-contract.md): type what to build, see it as an exploded view, watch it go together. It owns its panel
 // and toggle button and draws in its own group; while it is open the character is hidden. `kip` is only set once init() has run, hence the guard.
 const describeTab = mountDescribe({

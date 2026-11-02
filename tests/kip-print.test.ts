@@ -369,6 +369,7 @@ describe("inventory & honest BOM (M1 gates a, c, f)", () => {
       "parts/kip/viewer/kip-print-profile.js",
       "parts/kip/viewer/kip-print-sprue.js",
       "parts/kip/viewer/kip-print-stickers.js",
+      "parts/kip/viewer/kip-print-stencils.js",
       "parts/kip/viewer/kip-print.js",
     ]) {
       const src = readFileSync(join(root, rel), "utf8");

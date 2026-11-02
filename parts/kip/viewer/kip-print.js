@@ -2451,7 +2451,7 @@ export function layoutJson(plates, meta = {}) {
 }
 
 /** Plain-text one-screen README included at the root of `kip-print-pack.zip` (§9.2, §9.3, §12.6). */
-export function readmeTxt({ plan, bom, hasPrintSheet = false, stickerFileNames = [] } = {}) {
+export function readmeTxt({ plan, bom, hasPrintSheet = false, stickerFileNames = [], stencilFileNames = [] } = {}) {
   const prof = plan.profile;
   const est = plan.estimate;
   const small = smallParts(plan.plates);
@@ -2466,6 +2466,7 @@ export function readmeTxt({ plan, bom, hasPrintSheet = false, stickerFileNames =
     `WARNING: ${PRINT_PAGE_WARNINGS.small_part}`,
     small.length ? `Small-parts screen (${small.length} pcs): ${small.join(', ')}` : 'Small-parts screen: none flagged.',
     ...(spruePlateCount > 0 || prof.flatPackMode === 'sprue' ? [`WARNING: ${PRINT_PAGE_WARNINGS.sprue_prep}`] : []),
+    ...(stencilFileNames.length ? ['Individual 3D paint stencils fit the 31.75 mm small-parts cylinder once snipped from the Adult Tool Card; adult use/supervision required.'] : []),
     PRINT_PAGE_WARNINGS.always,
     '',
     'PRINTER & SLICER SETUP',
@@ -2506,6 +2507,9 @@ export function readmeTxt({ plan, bom, hasPrintSheet = false, stickerFileNames =
     lines.push('  - stickers/sticker-sheet.pdf : 1:1 printable sticker sheet (print at 100% / Actual size; verify 50.00 mm bar)');
     lines.push('  - stickers/stickers.png, stickers-cut.svg, stickers-cut.dxf : Print-then-cut artwork & cutter paths');
   }
+  if (stencilFileNames.length) {
+    lines.push(`  - stencils/* (${stencilFileNames.length} files) : Support-free heightfield 3D paint & marker stencils (print planar outer face on bed, cavity facing up)`);
+  }
   if (hasPrintSheet) lines.push('  - print-sheet.png : Visual plate map, colour swatches & warning notice');
   lines.push('  - layout.json : Reproducible plate manifest & part SHA-256 checksums');
 
@@ -2521,8 +2525,8 @@ export function readmeTxt({ plan, bom, hasPrintSheet = false, stickerFileNames =
   return lines.join('\n');
 }
 
-/** Build the complete `kip-print-pack.zip` entry list (`README.txt`, `plates/*`, `project/kip-project.3mf`, optional `stickers/*`, `print-sheet.png`, `layout.json`). */
-export function buildPrintPackFiles({ plan, bom, state = {}, printSheetPng = null, stickerFiles = [] } = {}) {
+/** Build the complete `kip-print-pack.zip` entry list (`README.txt`, `plates/*`, `project/kip-project.3mf`, optional `stickers/*`, optional `stencils/*`, `print-sheet.png`, `layout.json`). */
+export function buildPrintPackFiles({ plan, bom, state = {}, printSheetPng = null, stickerFiles = [], stencilFiles = [], stencilsMeta = null } = {}) {
   const prof = plan.profile;
   const files = [
     {
@@ -2532,6 +2536,7 @@ export function buildPrintPackFiles({ plan, bom, state = {}, printSheetPng = nul
         bom,
         hasPrintSheet: Boolean(printSheetPng),
         stickerFileNames: stickerFiles.map(f => f.name),
+        stencilFileNames: stencilFiles.map(f => f.name),
       }),
     },
   ];
@@ -2567,6 +2572,10 @@ export function buildPrintPackFiles({ plan, bom, state = {}, printSheetPng = nul
     if (sf && sf.name && sf.data) files.push({ name: sf.name, data: sf.data });
   }
 
+  for (const stf of stencilFiles) {
+    if (stf && stf.name && stf.data) files.push({ name: stf.name, data: stf.data });
+  }
+
   if (printSheetPng) {
     files.push({ name: 'print-sheet.png', data: printSheetPng });
   }
@@ -2581,6 +2590,7 @@ export function buildPrintPackFiles({ plan, bom, state = {}, printSheetPng = nul
       unmapped: bom?.unmapped || [],
       notes: bom?.notes || [],
       decals: bom?.decals || [],
+      ...(stencilsMeta ? { stencils: stencilsMeta } : {}),
     }),
   });
 

@@ -455,7 +455,7 @@ export function buildMenu(ctx) {
         get: () => readProf().includeStickers !== false,
         set: (v) => patchProf({ includeStickers: v }) },
       { kind: 'toggle', id: 'stencils', label: '3D stencils',
-        title: 'Opt-in snap-over paint stencils (experimental, off by default)',
+        title: 'Include support-free heightfield 3D paint & marker stencils (face, shirt, and 2x1 crown cap; Adult Tool Card in Kit tray mode)',
         visibleWhen: () => pr.isOn(),
         get: () => !!readProf().includeStencils,
         set: (v) => patchProf({ includeStencils: v }) },
@@ -492,6 +492,7 @@ export function buildMenu(ctx) {
         ['exportProject3mf', 'project-3mf', '🗂️ Project 3MF (all plates)', 'Download kip-project.3mf with every plate, colour slot, tree support setting, and socket guard pre-configured for 1-click slicing', () => pr.isOn()],
         ['export3mf', '3mf', '3MF (this plate)', 'Download the currently selected plate as a single-bed 3MF in your chosen slicer dialect', () => pr.isOn()],
         ['exportStickers', 'stickers-pdf', 'Sticker sheet (PDF)', 'Download the 1:1 actual-size printable sticker sheet PDF with 50.00 mm calibration bar', () => pr.isOn() && !!pr.summary().hasDecals && readProf().includeStickers !== false],
+        ['exportStencils', 'stencils-stl', 'Stencils (STL)', 'Download support-free 3D paint & marker stencils as a binary STL (joined into an Adult Tool Card in Kit tray mode)', () => pr.isOn() && !!readProf().includeStencils],
         ['exportSheet', 'sheet', 'Print sheet (PNG)', 'Download the visual plate map with colour swatches and boxed small-parts safety warning', () => pr.isOn()],
         ['exportStl', 'stl-zip', 'Export STL zip', 'Download every plate as one binary STL each, plus layout.json', () => pr.isOn()]]
         .map(([id, kind, label, title, visibleWhen]) => ({ kind: 'action', id, label, title, visibleWhen,

@@ -14,6 +14,12 @@ import {
   buildStickerPackFiles,
 } from './kip-print-stickers.js';
 import {
+  describeStencilSet,
+  planStencils,
+  stencilsToStl,
+  buildStencilPackFiles,
+} from './kip-print-stencils.js';
+import {
   createDefaultProfile,
   applyPresetToProfile,
   clampProfile,
@@ -220,12 +226,14 @@ export function mountPrintView(ctx) {
 
     const spruePlateCount = plan.plates.filter(pl => Boolean(pl.sprue)).length;
     const supportSummary = plan.supportSummary || supportSummaryLine(plan.plates);
+    const stencilInfo = profile.includeStencils ? describeStencilSet(state, { flatPackMode: profile.flatPackMode }) : null;
     const lines = [
       `${totalParts} parts across ${plan.plates.length} plate${plan.plates.length === 1 ? '' : 's'} (${plan.bound.mm} mm plate on ${profile.bedXmm}×${profile.bedYmm} mm bed)`,
       supportSummary,
       ...(spruePlateCount > 0
         ? [`Kit trays: ${spruePlateCount} sprue plate${spruePlateCount === 1 ? '' : 's'} (2.4×1.0 mm frame, 0.4 mm V-notches)`]
         : []),
+      ...(stencilInfo ? [stencilInfo.summaryLine] : []),
       `Spool budget (est.): ~${est.totalGrams} g (${est.minTotalGrams}–${est.maxTotalGrams} g)`
         + (bom.hasVehicleInScene ? (profile.includeVehicle ? ` · vehicle +${est.vehicleGrams} g` : ' · vehicle excluded') : ''),
       ...est.spools.map(s => `• ${s.colorName} (${s.hex}): ~${s.grams} g · ${s.partCount} pcs`),
@@ -243,6 +251,9 @@ export function mountPrintView(ctx) {
     if (bom.notes?.length) {
       for (const n of bom.notes) lines.push(n);
     }
+    if (stencilInfo?.notes?.length) {
+      for (const n of stencilInfo.notes) lines.push(n);
+    }
 
     if (plan.oversize.length) errors.push(`Too big for a ${plan.bound.mm} mm plate: ${plan.oversize.join(', ')}`);
 
@@ -255,7 +266,8 @@ export function mountPrintView(ctx) {
       sceneColorCount,
       hasVehicleInScene: bom.hasVehicleInScene,
       hasDecals: (bom.decals?.length ?? 0) > 0,
-      hasSprue: spruePlateCount > 0,
+      hasStencils: Boolean(profile.includeStencils),
+      hasSprue: spruePlateCount > 0 || (Boolean(profile.includeStencils) && profile.flatPackMode === 'sprue'),
       note: plan.bound.note,
       small: smallParts(plan.rawPlates),
       exportError: null,
@@ -617,7 +629,23 @@ export function mountPrintView(ctx) {
     return new Uint8Array(await blob.arrayBuffer());
   }
 
-  /** Bytes for an export: 'pack' | 'project-3mf' | '3mf' | 'stickers-pdf' | 'stl-zip' | 'sheet' (PNG). Throws on incomplete plate. */
+  function buildActiveStencilPlan(plan, bom, state, bodyColors, renderedSources = {}) {
+    const fpItem = bom.items.find(it => it.id && it.id.startsWith('char_faceplate'));
+    const torsoItem = bom.items.find(it => it.id === 'torso' || it.id === 'snap_torso');
+    const faceplateTri = fpItem?.file ? cache.get(fpItem.file)?.tri || null : null;
+    const torsoTri = torsoItem?.file ? cache.get(torsoItem.file)?.tri || null : null;
+    return planStencils(state, bom, {
+      flatPackMode: plan.profile.flatPackMode,
+      boundMm: plan.bound.mm,
+      faceplateTri,
+      torsoTri,
+      renderedSources,
+      skinHex: bodyColors.headSkinHex,
+      shirtHex: bodyColors.chestHex,
+    });
+  }
+
+  /** Bytes for an export: 'pack' | 'project-3mf' | '3mf' | 'stickers-pdf' | 'stencils-stl' | 'stl-zip' | 'sheet' (PNG). Throws on incomplete plate. */
   async function exportBytes(kind) {
     const { plan, bom, state } = exportable();
     const prof = plan.profile;
@@ -635,18 +663,58 @@ export function mountPrintView(ctx) {
       return stickersToPdf(sheetPlan, renderedSources, stickerOpts);
     }
 
+    if (kind === 'stencils-stl') {
+      const renderedSources = ctx.renderStickerSources ? await ctx.renderStickerSources(state, bom, []) : {};
+      const stencilPlan = buildActiveStencilPlan(plan, bom, state, bodyColors, renderedSources);
+      return stencilsToStl(stencilPlan);
+    }
+
     if (kind === 'project-3mf') {
       return to3mfProject(plan.plates, prof, { title: 'Kip Print Pack' });
     }
 
     if (kind === 'pack') {
       const sheetPng = await renderSheet(plan, bom);
-      let stickerFiles = [];
-      if (prof.includeStickers !== false && bom.decals?.length) {
-        const renderedSources = ctx.renderStickerSources ? await ctx.renderStickerSources(state, bom, BONUS_EXPRESSIONS) : {};
-        stickerFiles = buildStickerPackFiles(bom.decals, state, renderedSources, stickerOpts);
+      const wantStickers = prof.includeStickers !== false && Boolean(bom.decals?.length);
+      const wantStencils = Boolean(prof.includeStencils);
+      const renderedSources = (wantStickers || wantStencils) && ctx.renderStickerSources
+        ? await ctx.renderStickerSources(state, bom, wantStickers ? BONUS_EXPRESSIONS : [])
+        : {};
+      const stickerFiles = wantStickers
+        ? buildStickerPackFiles(bom.decals, state, renderedSources, stickerOpts)
+        : [];
+      let stencilFiles = [];
+      let stencilsMeta = null;
+      if (wantStencils) {
+        const stencilPlan = buildActiveStencilPlan(plan, bom, state, bodyColors, renderedSources);
+        stencilFiles = buildStencilPackFiles(stencilPlan, prof);
+        stencilsMeta = {
+          mode: stencilPlan.sprue ? 'adult-tool-card' : 'loose',
+          tools: stencilPlan.tools.map(t => ({
+            id: t.id,
+            kind: t.kind,
+            w: t.w,
+            h: t.h,
+            dz: t.dz,
+            overhangMm2: +t.report.overhangMm2.toFixed(2),
+            bridgesAdded: t.bridgesAdded,
+          })),
+          notes: stencilPlan.notes,
+          ...(stencilPlan.sprue ? {
+            frameBox: stencilPlan.sprue.frameBox,
+            gateCount: stencilPlan.sprue.gates.length,
+          } : {}),
+        };
       }
-      const packFiles = buildPrintPackFiles({ plan, bom, state, printSheetPng: sheetPng, stickerFiles });
+      const packFiles = buildPrintPackFiles({
+        plan,
+        bom,
+        state,
+        printSheetPng: sheetPng,
+        stickerFiles,
+        stencilFiles,
+        stencilsMeta,
+      });
       return zipStore(packFiles);
     }
     if (kind === '3mf') {
@@ -701,7 +769,9 @@ export function mountPrintView(ctx) {
         ? 'model/3mf'
         : kind === 'stickers-pdf'
           ? 'application/pdf'
-          : 'application/zip';
+          : kind === 'stencils-stl'
+            ? 'model/stl'
+            : 'application/zip';
     const name = kind === 'pack'
       ? 'kip-print-pack.zip'
       : kind === 'project-3mf'
@@ -710,9 +780,11 @@ export function mountPrintView(ctx) {
           ? 'kip-print-sheet.png'
           : kind === 'stickers-pdf'
             ? 'kip-sticker-sheet.pdf'
-            : kind === '3mf'
-              ? `${activePlate?.fileStem || 'kip-plate'}.3mf`
-              : 'kip-plates-stl.zip';
+            : kind === 'stencils-stl'
+              ? (profile.flatPackMode === 'sprue' ? 'kip-stencils-card.stl' : 'kip-stencils.stl')
+              : kind === '3mf'
+                ? `${activePlate?.fileStem || 'kip-plate'}.3mf`
+                : 'kip-plates-stl.zip';
     const a = document.createElement('a');
     a.href = URL.createObjectURL(new Blob([bytes], { type }));
     a.download = name;

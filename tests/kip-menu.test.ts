@@ -218,6 +218,12 @@ describe("kip menu optional groups", () => {
     expect(visible(ctx, "includeVehicle")).toBe(true);
     expect(visible(ctx, "stickers")).toBe(true);
     expect(visible(ctx, "stencils")).toBe(true);
+    expect(visible(ctx, "exportStencils")).toBe(false);
+    byId(ctx, "stencils").set(true);
+    expect(byId(ctx, "stencils").get()).toBe(true);
+    expect(visible(ctx, "exportStencils")).toBe(true);
+    byId(ctx, "exportStencils").run();
+    expect(downloadedKind).toBe("stencils-stl");
     expect(visible(ctx, "supportCheck")).toBe(true);
     expect(visible(ctx, "downloadPack")).toBe(true);
     expect(visible(ctx, "exportProject3mf")).toBe(true);

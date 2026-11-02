@@ -377,8 +377,12 @@ describe("sticker export is 1:1 in millimetres", () => {
 });
 
 describe("privacy by construction", () => {
-  it("the image maths and sticker generator modules are pure: no network, storage, workers, DOM or detection", () => {
-    for (const rel of ["parts/kip/viewer/kip-selfie-image.js", "parts/kip/viewer/kip-print-stickers.js"]) {
+  it("the image maths and sticker/stencil generator modules are pure: no network, storage, workers, DOM or detection", () => {
+    for (const rel of [
+      "parts/kip/viewer/kip-selfie-image.js",
+      "parts/kip/viewer/kip-print-stickers.js",
+      "parts/kip/viewer/kip-print-stencils.js",
+    ]) {
       const modSrc = readFileSync(join(root, rel), "utf8");
       const modCode = modSrc.split("\n").filter((l) => !/^\s*\/\//.test(l)).join("\n");
       for (const banned of [/\bfetch\s*\(/, /XMLHttpRequest/, /sendBeacon/, /WebSocket/, /localStorage/, /sessionStorage/, /indexedDB/, /caches\./, /document\./, /window\./, /new Worker/, /FaceDetector/, /\bimport\(/, /navigator\./]) {

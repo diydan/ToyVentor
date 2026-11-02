@@ -75,6 +75,10 @@ copyFileSync(
   join(kipOutDir, "kip-print-stickers.js"),
 );
 copyFileSync(
+  join(kipSrcDir, "viewer/kip-print-stencils.js"),
+  join(kipOutDir, "kip-print-stencils.js"),
+);
+copyFileSync(
   join(kipSrcDir, "viewer/kip-print-view.js"),
   join(kipOutDir, "kip-print-view.js"),
 );
@@ -102,6 +106,11 @@ copyFileSync(
 copyFileSync(
   join(kipSrcDir, "viewer/Truck-Mockup.html"),
   join(kipOutDir, "Truck-Mockup.html"),
+);
+// Hand-built reaction, dance and prop clips (kip-clips.js), imported by Kip-Demo.html.
+copyFileSync(
+  join(kipSrcDir, "viewer/kip-clips.js"),
+  join(kipOutDir, "kip-clips.js"),
 );
 // Workshop shell (docs/specs/workshop-spec.md): one page with a tab per bench (Kip, Truck); the benches themselves are copied above.
 copyFileSync(
