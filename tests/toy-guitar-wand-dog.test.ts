@@ -181,3 +181,36 @@ describe("buildDog", () => {
     expect(parts.earR.rotation.x).toBe(-0.15);
   });
 });
+
+import { HAPPY_S } from "../src/features/game/world/runtime/dog";
+
+describe("dogPose: running and being delighted (the fetch)", () => {
+  it("running: bounding along with its tail up and flying and its ears flapping, for as long as it is cued so", () => {
+    let wag = 0, bobSum = 0, bobMin = 9, ear = 0;
+    for (let t = 0; t < 4; t += 0.01) {
+      const p = dogPose(t, "run", 100);                                 // however long ago it was cued
+      wag = Math.max(wag, Math.abs(p.tailYaw));
+      bobSum += p.bob; bobMin = Math.min(bobMin, p.bob);
+      ear = Math.max(ear, Math.abs(p.earFlop));
+      expect(p.tailLift).toBe(0.6);
+      expect(p.bodyPitch).toBeLessThan(0);
+    }
+    expect(wag).toBeGreaterThan(0.45);
+    expect(bobMin).toBeGreaterThanOrEqual(0);                            // it bounds: never dips below the floor
+    expect(bobSum / 400).toBeGreaterThan(0.02);
+    expect(ear).toBeGreaterThan(0.2);
+  });
+
+  it("delighted: hops on the spot with a fast wag for HAPPY_S, then it is just a dog again", () => {
+    let bob = 0, wag = 0;
+    for (let t = 0; t < HAPPY_S; t += 0.01) { const p = dogPose(2 + t, "happy", t); bob = Math.max(bob, p.bob); wag = Math.max(wag, Math.abs(p.tailYaw)); }
+    expect(bob).toBeGreaterThan(0.04);
+    expect(wag).toBeGreaterThan(0.6);
+    expect(dogPose(5, "happy", HAPPY_S + 0.01)).toEqual(dogPose(5, null, Infinity));
+    expect(dogPose(5, "happy", -1)).toEqual(dogPose(5, null, Infinity));
+  });
+
+  it("the `idle` cue is the plain dog", () => {
+    expect(dogPose(5, "idle", 0.2)).toEqual(dogPose(5, null, Infinity));
+  });
+});

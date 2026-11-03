@@ -160,3 +160,44 @@ describe("onTap and squish", () => {
     expect(c.toast).not.toHaveBeenCalled();
   });
 });
+
+describe("placeProp", () => {
+  it("moves a prop along the floor, turns it and holds it up, and the move persists every frame", () => {
+    const c = room();
+    const b = ball(c, 10);
+    c.fx.placeProp(b, 14, { ry: Math.PI, lift: 0.55 });
+    run(c.fx, 0.5);
+    expect(b.holder.position.x).toBeCloseTo(14, 9);
+    expect(b.holder.position.y).toBeCloseTo(0.55, 9);
+    expect(b.holder.rotation.y).toBeCloseTo(Math.PI, 9);
+    c.fx.placeProp(b, 15);                                              // only x: the turn and the lift stay
+    run(c.fx, 0.2, 0.5);
+    expect(b.holder.position.x).toBeCloseTo(15, 9);
+    expect(b.holder.position.y).toBeCloseTo(0.55, 9);
+    expect(b.holder.rotation.y).toBeCloseTo(Math.PI, 9);
+    c.fx.placeProp(b, 15, { lift: 0 });
+    run(c.fx, 0.2, 0.7);
+    expect(b.holder.position.y).toBeCloseTo(0, 9);
+  });
+
+  it("an animation that is playing carries on from the new place (a squish on a moved prop)", () => {
+    const c = room();
+    const cu = cushions(c);
+    c.fx.squish(cu);
+    run(c.fx, 0.1);
+    c.fx.placeProp(cu, 9);
+    let min = 1, t = 0.1;
+    for (let i = 0; i < 40; i++) { t += 1 / 60; c.fx.update(1 / 60, t); min = Math.min(min, cu.holder.scale.y); }
+    expect(cu.holder.position.x).toBeCloseTo(9, 9);
+    expect(min).toBeLessThan(0.97);
+  });
+
+  it("a kicked ball can be lifted too: the lift adds to the bounce", () => {
+    const c = room();
+    const b = ball(c, 10);
+    c.fx.placeProp(b, 10, { lift: 1 });
+    c.fx.kickBall(b, 3, 0);
+    run(c.fx, 0.2);
+    expect(b.holder.position.y).toBeGreaterThanOrEqual(1 - 1e-9);
+  });
+});

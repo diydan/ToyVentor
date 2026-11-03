@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // 390x844 headless-Chrome E2E for the second set of Toy Room toys (docs/specs/playful-interactions-spec.md section 6): tap the BOOKS and Kip reads three names aloud, tap the GUITAR and Kip picks it up and strums
-// (notes float up), tap the BUBBLE set and Kip blows bubbles that can be popped with a tap, tap the DOG and it barks, then Kip pets it. Also: the dog is alive on its own (its tail never stops wagging).
+// (notes float up), tap the BUBBLE set and Kip blows bubbles that can be popped with a tap, tap the DOG and it barks, then Kip pets it. Also: the dog is alive on its own (its tail never stops wagging), and the dog fetches a kicked ball and brings it back.
 // Real mouse events; /api/voice is intercepted (no spend). Needs a real GPU: --headless=new with the Metal backend. Run: node scripts/e2e-toyroom2.mjs
 // Overrides: E2E_CHROME, E2E_PORT, E2E_DEBUG_PORT, E2E_PROFILE, E2E_SHOTS (screenshot directory).
 import { spawn } from "node:child_process";
@@ -229,6 +229,37 @@ async function main() {
     check("dog: which it loves (wags harder), with hearts floating up", pet.some((s) => s.cue === "pet") && pet.some((s) => s.hearts >= 1), JSON.stringify({ cue: [...new Set(pet.map((s) => s.cue))], hearts: Math.max(...pet.map((s) => s.hearts)) }));
     await waitFor(async () => ((await phase(cdp)) === "idle" ? true : null), { timeoutMs: 6000, everyMs: 60, label: "petting over" });
     check("dog: Kip is free to move again", (await toy(cdp)).busy === false);
+
+    // ---- fetch: Kip kicks the ball and the dog brings it back ----
+    await cdp.ev(`(() => { const w = window.__tvWorld; if (w.acts) w.acts.reset(); w.P.busy = false; w.P.hop = 0; return true; })()`);
+    // The dog stands where it ended up; put it back at the right-hand end and the ball in the middle of the room, and Kip next to the ball.
+    await cdp.ev(`(() => { const w = window.__tvWorld; const dog = w.props.list().find((p) => p.type === "dog"); const ball = w.props.list().find((p) => p.type === "ball"); w.props.placeProp(dog, 42.2, { ry: Math.PI, lift: 0 }); w.props.placeProp(ball, 34.5, { lift: 0 }); return true; })()`);
+    await stage(cdp, "ball", 1.9);
+    const ballNow = () => world(cdp, `(() => { const i = w.props.list().find((p) => p.type === "ball"); return { x: i.base.px, y: i.holder.position.y, moving: !!i.kick }; })()`);
+    const dogNow = () => world(cdp, `(() => { const i = w.props.list().find((p) => p.type === "dog"); return { x: i.base.px, ry: i.base.ry, cue: i.holder.userData.cue ? i.holder.userData.cue.name : null }; })()`);
+    const f0 = { ball: await ballNow(), dog: await dogNow() };
+    await tapProp(cdp, "ball");
+    let shotFetch = false;
+    const fetchRun = await sample(cdp, 11000, async () => {
+      const b = await ballNow(), d = await dogNow(), ph = await world(cdp, `w.fetch.phase`), k = await toy(cdp);
+      if (!shotFetch && ph === "dropping") { shotFetch = true; await shot(cdp, "5-fetch"); }
+      return { b, d, ph, kx: k.x, ka: k.action };
+    }, 60);
+    check("fetch: the dog sets off after the ball only once it has stopped (it waits while the ball is flying)", (() => { const firstRun = fetchRun.findIndex((s) => s.ph === "chasing"); return firstRun > 0 && fetchRun.slice(0, firstRun).some((s) => s.ph === "waiting" && s.b.moving) && fetchRun[firstRun].b.moving === false; })(), JSON.stringify(fetchRun.map((s) => `${s.ph}${s.b.moving ? "*" : ""}`).filter((p, i, a) => p !== a[i - 1]).slice(0, 12)));
+    check("fetch: it goes through chasing, returning and dropping, and ends idle", ["waiting", "chasing", "returning", "dropping", "idle"].every((p) => fetchRun.some((s) => s.ph === p)) && fetchRun.at(-1).ph === "idle", JSON.stringify(fetchRun.map((s) => s.ph).filter((p, i, a) => p !== a[i - 1])));
+    check("fetch: it runs (the run cue) and the ball is in its mouth, off the floor, on the way back", fetchRun.some((s) => s.d.cue === "run") && fetchRun.some((s) => s.ph === "returning" && s.b.y > 0.4), "");
+    const end = fetchRun.at(-1);
+    check("fetch: it ends with the ball near Kip, within a couple of units of its feet, at rest on the floor", Math.abs(end.b.x - end.kx) < 3.2 && end.b.y < 0.05 && !end.b.moving, JSON.stringify({ ball: end.b, kip: end.kx }));
+    check("fetch: and the dog is beside it, facing Kip", Math.abs(end.d.x - end.kx) < 3.2 && end.d.ry === Math.PI, JSON.stringify(end.d));
+    check("fetch: Kip did not trot after the ball (it stayed where it kicked from)", Math.abs(end.kx - fetchRun[0].kx) < 0.8, JSON.stringify([fetchRun[0].kx, end.kx]));
+    check("fetch: the ball is no longer where it was kicked to, but near where the dog dropped it (it came back)", end.b.x < f0.ball.x + 3.5, JSON.stringify([f0.ball.x, end.b.x]));
+    // and it can be kicked again
+    const again = await propScreen(cdp, "ball");
+    if (again && again.visible && again.x > 30 && again.x < 380) {
+      await tapProp(cdp, "ball");
+      const second = await sample(cdp, 9000, async () => ({ ph: await world(cdp, `w.fetch.phase`), b: await ballNow() }), 80);
+      check("fetch: kick it again and the dog fetches it again", second.some((s) => s.ph === "returning") && second.at(-1).ph === "idle", JSON.stringify([...new Set(second.map((s) => s.ph))]));
+    } else check("fetch: the ball is on screen to kick again", false, JSON.stringify(again));
 
     check("no page exceptions", cdp.exceptions.length === 0, cdp.exceptions.slice(0, 3).join(" | "));
     killAll();

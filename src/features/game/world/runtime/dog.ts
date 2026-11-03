@@ -4,10 +4,12 @@
 import { T, M, plastic } from "./worldScene";
 import type * as THREE from "three";
 
-export type DogCue = "bark" | "pet";
+export type DogCue = "bark" | "pet" | "run" | "happy" | "idle";
 /** How long a cue's reaction lasts, in seconds. */
 export const BARK_S = 0.9;
 export const PET_REACTION_S = 2.8;
+/** How long the delighted `happy` reaction lasts (after a kick, and after dropping the ball it fetched). `run` lasts until the dog is cued again. */
+export const HAPPY_S = 1.4;
 /** The two woofs of a bark: when each starts after the cue (seconds) and how long each lasts. */
 export const WOOFS: ReadonlyArray<{ at: number; len: number }> = [{ at: 0, len: 0.14 }, { at: 0.2, len: 0.14 }];
 
@@ -55,6 +57,20 @@ export function dogPose(t: number, cue: string | null, age: number): DogPose {
     pose.headRoll = 0.12 * Math.sin(t * 3);
     pose.bob = 0.03 * Math.max(0, Math.sin(t * 9));
     pose.earFlop = 0.2 + 0.1 * Math.sin(t * 5);
+  }
+  else if (cue === "run") {                          // running with the ball (or after it): bouncing along, tail up and flying, ears flapping
+    pose.bob = 0.05 * Math.abs(Math.sin(t * 13));
+    pose.tailYaw = 0.5 * Math.sin(t * 14);
+    pose.tailLift = 0.6;
+    pose.headPitch = -0.05;
+    pose.earFlop = 0.25 * Math.sin(t * 13);
+    pose.bodyPitch = -0.04;
+  } else if (cue === "happy" && age >= 0 && age < HAPPY_S) {   // delighted: hopping on the spot, tail going round
+    pose.bob = 0.06 * Math.abs(Math.sin(t * 11));
+    pose.tailYaw = 0.7 * Math.sin(t * 18);
+    pose.tailLift = 0.55;
+    pose.headPitch = -0.1;
+    pose.earFlop = 0.2;
   }
   return pose;
 }

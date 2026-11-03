@@ -93,6 +93,8 @@ export interface ActsWorld extends Omit<VisitAdapter, "onPhase"> {
   /** Where Kip's mouth is while it faces `dir`. */
   mouth(dir: 1 | -1): P3;
   bubbles: { blow(from: P3, dir: 1 | -1, n: number): void };
+  /** A dog, if there is one, goes after the ball Kip has just kicked and brings it back (dogFetch.ts): true if it will, so Kip does not trot after the ball itself. Absent: no dog. */
+  fetch?(ball: PropInst): boolean;
   /** Place the toy (during the cushion jump). */
   setPosition(x: number, y: number, z: number): void;
   tone(freq: number, delay: number, dur: number, type: OscillatorType, vol: number, slideTo?: number): void;
@@ -189,13 +191,14 @@ export function createActs(w: ActsWorld) {
 
   function kickVisit(inst: PropInst): Visit {
     const x = inst.base.px;
+    let fetched = false;
     let dir: 1 | -1 = x + KICK_ROOM > BALL_BOUNDS[1] ? -1 : 1;           // kick it to the right (where the camera shows most room), unless the wall is too close
     if (x - dir * KICK_STAND < BALL_BOUNDS[0] || x - dir * KICK_STAND > BALL_BOUNDS[1]) dir = (-dir) as 1 | -1;
     return {
       standX: x - dir * KICK_STAND, face: dir, seconds: KICK_S,
       begin: () => { w.clip("kick"); },
-      cues: [{ at: KICK_CONTACT_S, fn: () => { w.fx.kickBall(inst, dir * KICK_VX, KICK_VY); w.tone(160, 0, 0.1, "square", 0.07, 90); } }],
-      end: () => { following = { inst, dir }; },                          // (a reset cuts a kick short and clears this again)
+      cues: [{ at: KICK_CONTACT_S, fn: () => { w.fx.kickBall(inst, dir * KICK_VX, KICK_VY); w.tone(160, 0, 0.1, "square", 0.07, 90); fetched = w.fetch ? w.fetch(inst) : false; } }],
+      end: () => { if (!fetched) following = { inst, dir }; },            // (a reset cuts a kick short and clears this again) a dog that fetches the ball saves Kip the trot
     };
   }
 

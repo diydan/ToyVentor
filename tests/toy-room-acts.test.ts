@@ -80,7 +80,7 @@ function inst(type: string, px: number, pz = -2.4, h = 2): PropInst {
   return { type, base: { px, pz }, size: new THREE.Vector3(1.6, h, 1.6) } as unknown as PropInst;
 }
 
-function game(opts: { eater?: "character" | "robot" | "vehicle"; allowed?: boolean; start?: { x: number; y: number; z: number } } = {}) {
+function game(opts: { eater?: "character" | "robot" | "vehicle"; allowed?: boolean; start?: { x: number; y: number; z: number }; fetch?: boolean } = {}) {
   const root = new THREE.Group();
   const s = { eater: opts.eater ?? "character", allowed: opts.allowed ?? true, pos: { ...(opts.start ?? { x: 12, y: 0, z: 0.4 }) }, target: null as number | null };
   const log: string[] = [];
@@ -94,6 +94,7 @@ function game(opts: { eater?: "character" | "robot" | "vehicle"; allowed?: boole
   const says: PropInst[] = [], flutters: PropInst[] = [], cues: Array<[PropInst, string]> = [], visibility: Array<[PropInst, boolean]> = [];
   const nearbyCalls: Array<[number, number, ReadonlyArray<string> | undefined]> = [];
   const nearbyList: PropInst[] = [];
+  const fetches: PropInst[] = [];
   const w = {
     position: () => ({ ...s.pos }), targetX: () => s.target,
     walkTo: (x: number, z: number) => { s.target = x; log.push(`walkTo:${+x.toFixed(3)},${z}`); },
@@ -104,6 +105,7 @@ function game(opts: { eater?: "character" | "robot" | "vehicle"; allowed?: boole
     setPosition: (x: number, y: number, z: number) => { s.pos = { x, y, z }; places.push([x, y, z]); },
     tone: (f: number) => { tones.push(f); },
     phase: (p: VisitPhase) => phases.push(p),
+    ...(opts.fetch === undefined ? {} : { fetch: (b: PropInst) => { fetches.push(b); log.push("fetch"); return opts.fetch!; } }),
     hold: (i: string) => { held.push(`hold:${i}`); log.push(`hold:${i}`); },
     release: () => { held.push("release"); log.push("release"); },
     mouth: (d: number) => ({ x: s.pos.x + 0.5 * d, y: 1.8, z: s.pos.z }),
@@ -119,7 +121,7 @@ function game(opts: { eater?: "character" | "robot" | "vehicle"; allowed?: boole
   const acts = createActs(w as never);
   const run = (seconds: number, dt = 1 / 30) => { for (let t = 0; t < seconds - 1e-9; t += dt) acts.update(dt); };
   const arriveAt = (x: number) => { s.pos.x = x; s.target = null; };
-  return { acts, s, log, phases, places, squished, kicks, tones, root, run, arriveAt, held, blows, says, flutters, cues, visibility, nearbyCalls, nearbyList };
+  return { acts, s, log, phases, places, squished, kicks, tones, root, run, arriveAt, held, blows, says, flutters, cues, visibility, nearbyCalls, nearbyList, fetches };
 }
 
 describe("which props do something", () => {
@@ -418,6 +420,56 @@ describe("petting the dog", () => {
   });
 });
 
+describe("a dog that fetches", () => {
+  const ball = () => ({ ...inst("ball", 10, -2), kick: null as unknown });
+  it("is sent after the ball at the moment of contact, once, and not before", () => {
+    const g = game({ fetch: true });
+    const b = ball();
+    g.acts.tap(b);
+    g.arriveAt(10 - KICK_STAND);
+    g.run(KICK_CONTACT_S - 0.1);
+    expect(g.fetches).toHaveLength(0);
+    g.run(0.3);
+    expect(g.fetches).toEqual([b]);
+    expect(g.kicks).toHaveLength(1);
+    expect(g.log.indexOf("fetch")).toBeGreaterThan(g.log.indexOf("clip:kick"));
+    g.run(KICK_S + 2);
+    expect(g.fetches).toHaveLength(1);
+  });
+
+  it("saves Kip the trot: it does not walk after the ball when the dog is bringing it back", () => {
+    const g = game({ fetch: true });
+    const b = ball();
+    g.acts.tap(b);
+    g.arriveAt(10 - KICK_STAND);
+    g.run(KICK_CONTACT_S + 0.1);
+    (b as { kick: unknown }).kick = { moving: true };
+    g.run(KICK_S);
+    g.log.length = 0;
+    (b as { kick: unknown }).kick = null;
+    (b as { base: { px: number } }).base.px = 14.2;
+    g.run(3);
+    expect(g.log.filter((l) => l.startsWith("walkTo"))).toEqual([]);
+  });
+
+  it("with no dog in the room (fetch says no, or there is no fetch at all) Kip trots after the ball as before", () => {
+    for (const fetch of [false, undefined]) {
+      const g = game({ fetch });
+      const b = ball();
+      g.acts.tap(b);
+      g.arriveAt(10 - KICK_STAND);
+      g.run(KICK_CONTACT_S + 0.1);
+      (b as { kick: unknown }).kick = { moving: true };
+      g.run(KICK_S);
+      g.log.length = 0;
+      (b as { kick: unknown }).kick = null;
+      (b as { base: { px: number } }).base.px = 14.2;
+      g.run(0.3);
+      expect(g.log.filter((l) => l.startsWith("walkTo")), String(fetch)).toHaveLength(1);
+    }
+  });
+});
+
 describe("following the ball", () => {
   const ball = () => ({ ...inst("ball", 10, -2), kick: null });
   function kicked(g: ReturnType<typeof game>, b: ReturnType<typeof ball>) {
@@ -583,7 +635,7 @@ describe("wiring in world.ts", () => {
   const world = readFileSync(path.join(__dirname, "..", "src/features/game/world/runtime/world.ts"), "utf8");
   const catalog = readFileSync(path.join(__dirname, "..", "src/features/game/world/runtime/catalog.ts"), "utf8");
   it("every prop tap is heard by the acts, a tap during an act is swallowed before anything else, and the acts are updated and reset with the world", () => {
-    expect(world).toContain("onTap:function(inst: any){ACTS.tap(inst)}");
+    expect(world).toContain("ACTS.tap(inst)}");
     expect(world).toContain("if(SLEEPH.consume())return;if(ACTS.consume())return;");
     expect(world).toContain("SLEEPH.update(dt);ACTS.update(dt);");
     expect(world).toContain("SLEEPH.reset();ACTS.reset();");
@@ -600,8 +652,15 @@ describe("wiring in world.ts", () => {
     expect(world).toContain("bubbles:function(x,z){return add(buildBubbleBottle(x,z))}");
     expect(world).toContain("dog:function(x,z){return add(buildDog(x,z))}");
     expect(world).toContain("if(BUBBLES.count&&BUBBLES.popAt(ray))return;");                  // a tap on a bubble is used before anything else
-    expect(world).toContain("SLEEPH.update(dt);ACTS.update(dt);BUBBLES.update(dt);");
-    expect(world).toContain("SLEEPH.reset();ACTS.reset();BUBBLES.reset();HELD.release();");
+    expect(world).toContain("BUBBLES.update(dt);");
+    expect(world).toContain("BUBBLES.reset();HELD.release();");
+  });
+  it("the dog fetch is wired: started by a kick when there is a dog, updated each frame, cancelled with the world and when the dog is tapped", () => {
+    expect(world).toContain("fetch:function(ball: any){if(!theDog())return false;fetchBall=ball;DOGF.start();return true}");
+    expect(world).toContain("SLEEPH.update(dt);ACTS.update(dt);DOGF.update(dt);BUBBLES.update(dt);");
+    expect(world).toContain("SLEEPH.reset();ACTS.reset();DOGF.cancel();BUBBLES.reset();HELD.release();");
+    expect(world).toContain('onTap:function(inst: any){if(inst.type==="dog")DOGF.cancel();ACTS.tap(inst)}');
+    expect(world).toContain("bubbles:BUBBLES,held:HELD,fetch:DOGF,");
   });
   it("Kip can hold a book, the guitar and the wand: the right arm is arms[1] and the mouth is found from Kip's own box", () => {
     expect(world).toContain("hold:function(i: \"book\"|\"guitar\"|\"wand\"){HELD.hold(i,P.model,P.rig&&P.rig.arms&&P.rig.arms[1])}");

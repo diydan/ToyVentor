@@ -213,11 +213,16 @@ async function main() {
     let shotTaken = false;
     const kick = await sample(cdp, 6500, async () => { const b = await ballState(cdp); const a = (await toy(cdp)).action; if (!shotTaken && b.y > 0.5) { shotTaken = true; await shot(cdp, "3-kick"); } return { a, ...b }; }, 40);
     check("ball: Kip plays the kick clip", kick.some((s) => s.a === "kick"), JSON.stringify([...new Set(kick.map((s) => s.a))]));
-    check("ball: it flies off the floor and travels a few units (not across the room)", Math.max(...kick.map((s) => s.y)) > 0.3 && Math.abs(kick.at(-1).x - ball0.x) > 3 && Math.abs(kick.at(-1).x - ball0.x) < 8, JSON.stringify({ from: ball0.x, to: kick.at(-1).x, up: Math.max(...kick.map((s) => s.y)) }));
-    check("ball: it was kicked to the RIGHT (where the camera shows room), away from Kip", kick.at(-1).x - ball0.x > 3, JSON.stringify({ from: ball0.x, to: kick.at(-1).x }));
-    check("ball: it rolled (turned) and has come to rest on the floor", Math.abs(kick.at(-1).spin) > 3 && kick.at(-1).moving === false && kick.at(-1).y < 0.01, JSON.stringify(kick.at(-1)));
-    const stopped = kick.at(-1).x;
-    check("ball: where it stopped is where it stays", Math.abs((await ballState(cdp)).x - stopped) < 0.001);
+    // (The Toy Room has a dog, which fetches the ball back once it has stopped: measure the kick up to the moment the ball first comes to rest.)
+    const flew = kick.findIndex((s) => s.moving);
+    const stopAt = kick.findIndex((s, i) => i > flew && flew >= 0 && !s.moving);
+    const stop = stopAt >= 0 ? kick[stopAt] : kick.at(-1);
+    const flight = stopAt >= 0 ? kick.slice(0, stopAt + 1) : kick;
+    check("ball: it flies off the floor and travels a few units (not across the room)", Math.max(...flight.map((s) => s.y)) > 0.3 && Math.abs(stop.x - ball0.x) > 3 && Math.abs(stop.x - ball0.x) < 8, JSON.stringify({ from: ball0.x, to: stop.x, up: Math.max(...flight.map((s) => s.y)) }));
+    check("ball: it was kicked to the RIGHT (where the camera shows room), away from Kip", stop.x - ball0.x > 3, JSON.stringify({ from: ball0.x, to: stop.x }));
+    check("ball: it rolled (turned) and has come to rest on the floor", Math.abs(stop.spin) > 3 && stop.moving === false && stop.y < 0.01, JSON.stringify(stop));
+    const stopped = stop.x;
+    check("ball: it stays where it stopped until the dog fetches it", kick.slice(stopAt, stopAt + 4).every((s) => Math.abs(s.x - stopped) < 0.001), JSON.stringify(kick.slice(stopAt, stopAt + 4).map((s) => +s.x.toFixed(3))));
     check("ball: Kip is free to move again", (await phase(cdp)) === "idle" && (await toy(cdp)).busy === false);
     // kick it again: Kip follows it
     const ballAt2 = await propScreen(cdp, "ball");

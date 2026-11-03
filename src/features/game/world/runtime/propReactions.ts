@@ -102,6 +102,8 @@ export interface PropInst {
   glows: Array<{ m: THREE.MeshStandardMaterial; i: number }>;
   kids: Map<THREE.Object3D, ChildBase>;
   slots: Slot[];
+  /** Extra height (world units) the prop is held up at, over everything else: a ball in the dog's mouth. Set with `placeProp`. */
+  lift: number;
   /** A ball that has been kicked and is still moving: where it is along the floor and how high; null when it is at rest. */
   kick: BallState | null;
   /** The fruit this prop grows and drops (a tree's `userData.treeKind` says which; apples otherwise) and how many hang at once. */
@@ -246,6 +248,15 @@ export function createPropFx(deps: PropFxDeps) {
   /** The `n` named props nearest to x (not the ones whose type is in `exclude`), for Kip to read the names of. */
   function nearby(x: number, n: number, exclude: ReadonlyArray<string> = []): PropInst[] {
     return insts.filter((i) => i.spec.noun && !exclude.includes(i.type)).sort((a, b) => Math.abs(a.base.px - x) - Math.abs(b.base.px - x)).slice(0, Math.max(0, n));
+  }
+  /**
+   * Move a prop along the floor (the dog running, the ball in its mouth): its place is `x` from now on, optionally turned to `ry` (the dog faces -x at pi and +x at 0) and held `lift` units off the ground.
+   * What it was doing is left alone (a roll or a wag carries on from the new place).
+   */
+  function placeProp(inst: PropInst, x: number, opts: { ry?: number; lift?: number } = {}) {
+    inst.base.px = x;
+    if (opts.ry !== undefined) inst.base.ry = opts.ry;
+    if (opts.lift !== undefined) inst.lift = opts.lift;
   }
   /** The prop gets a squish and nothing else (no name, no sound beyond its own chirp): the teddy being hugged, the cushions being landed on. */
   function squish(inst: PropInst) { useSquish(inst); }
@@ -597,7 +608,7 @@ export function createPropFx(deps: PropFxDeps) {
       base: { px: holder.position.x, py: holder.position.y, pz: holder.position.z, rx: holder.rotation.x, ry: holder.rotation.y, rz: holder.rotation.z, sx: holder.scale.x, sy: holder.scale.y, sz: holder.scale.z },
       phase: Math.random() * Math.PI * 2, size, on: true,
       lightColor: type === "lantern" && typeof arg === "string" && /^#[0-9a-f]{6}$/i.test(arg) ? arg : null,
-      lights: [], sprites: [], glows: [], kids: new Map(), slots: [], kick: null, fruit: "apple", fruitSlots: 3, dir: 1, taps: 0, proxy: null,
+      lights: [], sprites: [], glows: [], kids: new Map(), slots: [], kick: null, lift: 0, fruit: "apple", fruitSlots: 3, dir: 1, taps: 0, proxy: null,
     };
     for (const c of (pivot ?? holder).children) inst.kids.set(c, { pos: c.position.clone(), rot: c.rotation.clone(), scale: c.scale.clone() });
 
@@ -742,6 +753,7 @@ export function createPropFx(deps: PropFxDeps) {
       if (inst.on) for (const s of inst.sprites) s.s.scale.setScalar(s.k * (1 + 0.05 * Math.sin(t * 2.6 + inst.phase)));
       const tick = inst.holder.userData.tick as ((t: number, dt: number) => void) | undefined;
       if (tick) tick(t, dt);                                  // a prop that animates its own parts (the dog)
+      o.dy += inst.lift;
       if (inst.kick) {                                       // a kicked ball: along the floor and up, turning as it rolls
         const next = stepBall(inst.kick, dt, BALL_BOUNDS[0], BALL_BOUNDS[1]);
         inst.base.px = next.x;
@@ -809,7 +821,7 @@ export function createPropFx(deps: PropFxDeps) {
 
   return {
     register, tap, update, reset, activate, screenPos, nameOf,
-    pickFruit, liftFruit, carryFruit, dropFruit, eatFruit, lightsOut, squish, kickBall, cue, nearby,
+    pickFruit, liftFruit, carryFruit, dropFruit, eatFruit, lightsOut, squish, kickBall, cue, nearby, placeProp,
     /** Flutter a prop's pages (the book being read) without a tap. */
     flutter: useFlutter,
     /** Say a prop's name (caption and voice), exactly as a tap does, without reacting. */

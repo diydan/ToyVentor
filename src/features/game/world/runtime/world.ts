@@ -153,6 +153,7 @@ import { buildBed } from "./bed";
 import { bushKind, kindById, orchardKind, palmFronds, palmFruitOffsets, palmKind, treeShape, type TreeKind } from "./treeKinds";
 import { createSleepHook } from "./sleepHook";
 import { createActs } from "./toyRoomActs";
+import { createFetch } from "./dogFetch";
 import { createBubbles } from "./bubbles";
 import { createHeld } from "./heldItems";
 import { buildGuitarProp } from "./guitar";
@@ -381,7 +382,7 @@ function creStats(): Record<string, boolean> {var o: Record<string, boolean>={},
 var W: Record<string, any>={root:null},spots: any[]=[],bolts: THREE.Object3D[]=[],signHits: THREE.Object3D[]=[],tidySpots: Array<{ id: string; x: number; label: string; g: THREE.Group; hit: THREE.Object3D; done: boolean }>=[],streetCd=0,autoWalk=false;
 function add<T extends THREE.Object3D>(o: T): T {W.root.add(o);return o}
 /* "No dead props" (carousel spec 11.7): every placed prop is tappable, reacts, and says what it is. See propReactions.ts. */
-var PFX=createPropFx({root:function(){return W.root},camera:function(){return camera},canvas:canvas,toast:function(s: string){toast(s)},boostWindmill:function(){W.fast=4},reduced:function(){return reduce},onBed:function(inst: {base: {px: number;pz: number}}){SLEEPH.tapBed({x:inst.base.px,z:inst.base.pz})},onTap:function(inst: any){ACTS.tap(inst)}});
+var PFX=createPropFx({root:function(){return W.root},camera:function(){return camera},canvas:canvas,toast:function(s: string){toast(s)},boostWindmill:function(){W.fast=4},reduced:function(){return reduce},onBed:function(inst: {base: {px: number;pz: number}}){SLEEPH.tapBed({x:inst.base.px,z:inst.base.pz})},onTap:function(inst: any){if(inst.type==="dog")DOGF.cancel();ACTS.tap(inst)}});
 /* The little things the toy can be made to do, shared by feeding and sleeping (feedingHook.ts, sleepHook.ts). */
 var TOYFX={clip:function(a: "eat"|"sour"|"belly_pat"){return mixGo(a)},hop:function(h: number,d: number){fx.push({t:0,d:d,f:function(k: number){if(!P.busy)P.hop=h*Math.sin(Math.PI*k)},end:function(){if(!P.busy)P.hop=0}})},wobble:function(){fx.push({t:0,d:.6,f:function(k: number){if(!P.busy)P.spin=.3*Math.sin(k*Math.PI*6)*(1-k)},end:function(){if(!P.busy)P.spin=0}})},tone:function(f: number,dl: number,du: number,ty: OscillatorType,v: number,sl?: number){tone(f,dl,du,ty,v,sl)},spark:function(p: THREE.Vector3){burst(p)}};
 /* Drag a fruit onto the toy to feed it (playful-interactions spec section 4): the gesture, appetite and toy reactions live in feedingHook.ts; this only says what the toy is and how to nudge it. */
@@ -393,8 +394,12 @@ var SLEEPH=createSleepHook({root:function(){return W.root},eater:function(){retu
 /* What Kip holds while it plays (book, guitar, wand) and the soap bubbles it blows (a tap pops one): heldItems.ts and bubbles.ts. */
 var HELD=createHeld();
 var BUBBLES=createBubbles({root:function(){return W.root},tone:function(f: number,dl: number,du: number,ty: OscillatorType,v: number,sl?: number){tone(f,dl,du,ty,v,sl)}});
+/* The dog fetches the ball Kip kicks (dogFetch.ts): it runs to the ball once it has stopped, carries it back and drops it near Kip. */
+var fetchBall: any=null;
+function theDog(){return PFX.list().filter(function(p: any){return p.type==="dog"})[0]||null}
+var DOGF=createFetch({dogX:function(){var d=theDog();return d?d.base.px:0},ballX:function(){return fetchBall?fetchBall.base.px:0},ballResting:function(){return !fetchBall||!fetchBall.kick},toyX:function(){return P.pos.x},moveDog:function(x: number,dir: number){var d=theDog();if(d)PFX.placeProp(d,x,{ry:dir>0?0:Math.PI})},moveBall:function(x: number,l: number){if(fetchBall)PFX.placeProp(fetchBall,x,{lift:l})},dropBall:function(){if(fetchBall){PFX.placeProp(fetchBall,fetchBall.base.px,{lift:0});PFX.kickBall(fetchBall,0,1.8)}},cue:function(n: "run"|"happy"|"idle"){var d=theDog();if(d)PFX.cue(d,n)},woof:function(){tone(300,0,.09,"sawtooth",.08,180);tone(260,.17,.1,"sawtooth",.08,160)}});
 /* Hug the teddy, jump on the cushions, kick the ball (playful-interactions spec section 6): the state machine is visitRoutine.ts, the acts toyRoomActs.ts; this says what the toy and the room are. */
-var ACTS=createActs({root:function(){return W.root},eater:function(){return S.type==="robot"?"robot":S.type==="vehicle"?"vehicle":"character"},allowed:function(){return !paused&&!P.showcase&&!P.mDrive&&!P.busy&&!ED.on&&!SLEEPH.busy},position:function(){return{x:P.pos.x,y:P.hop||0,z:P.pos.z}},targetX:function(){return P.target?P.target.x:null},walkTo:function(x: number,z: number){setTarget(x,z)},stopWalk:function(){P.target=null},face:function(d: number){P.face=P.tface=d>0?0:Math.PI},clip:function(a: "hug"|"kick"|"cheer"|"read"|"strum"|"blow"|"pet"){return mixGo(a)},hold:function(i: "book"|"guitar"|"wand"){HELD.hold(i,P.model,P.rig&&P.rig.arms&&P.rig.arms[1])},release:function(){HELD.release()},mouth:function(d: number){var b=new T.Box3().setFromObject(P.root);return{x:d>0?b.max.x:b.min.x,y:b.min.y+(b.max.y-b.min.y)*.8,z:(b.min.z+b.max.z)/2}},bubbles:BUBBLES,setPosition:function(x: number,y: number,z: number){P.pos.x=x;P.pos.z=z;P.hop=y},tone:function(f: number,dl: number,du: number,ty: OscillatorType,v: number,sl?: number){tone(f,dl,du,ty,v,sl)},phase:function(p: string){P.busy=p==="acting";if(p==="acting")P.target=null;if(p!=="acting")P.hop=0},fx:PFX});
+var ACTS=createActs({root:function(){return W.root},eater:function(){return S.type==="robot"?"robot":S.type==="vehicle"?"vehicle":"character"},allowed:function(){return !paused&&!P.showcase&&!P.mDrive&&!P.busy&&!ED.on&&!SLEEPH.busy},position:function(){return{x:P.pos.x,y:P.hop||0,z:P.pos.z}},targetX:function(){return P.target?P.target.x:null},walkTo:function(x: number,z: number){setTarget(x,z)},stopWalk:function(){P.target=null},face:function(d: number){P.face=P.tface=d>0?0:Math.PI},clip:function(a: "hug"|"kick"|"cheer"|"read"|"strum"|"blow"|"pet"){return mixGo(a)},hold:function(i: "book"|"guitar"|"wand"){HELD.hold(i,P.model,P.rig&&P.rig.arms&&P.rig.arms[1])},release:function(){HELD.release()},mouth:function(d: number){var b=new T.Box3().setFromObject(P.root);return{x:d>0?b.max.x:b.min.x,y:b.min.y+(b.max.y-b.min.y)*.8,z:(b.min.z+b.max.z)/2}},bubbles:BUBBLES,fetch:function(ball: any){if(!theDog())return false;fetchBall=ball;DOGF.start();return true},setPosition:function(x: number,y: number,z: number){P.pos.x=x;P.pos.z=z;P.hop=y},tone:function(f: number,dl: number,du: number,ty: OscillatorType,v: number,sl?: number){tone(f,dl,du,ty,v,sl)},phase:function(p: string){P.busy=p==="acting";if(p==="acting")P.target=null;if(p!=="acting")P.hop=0},fx:PFX});
 function cottage(x: number,z: number){var g=new T.Group();g.position.set(x,0,z);g.add(M(new T.BoxGeometry(2.4,1.6,1.8),matte("#141f55"),0,.8,0));var rf=M(new T.ConeGeometry(1.9,1.2,4),matte("#101a4a"),0,2.2,0);rf.rotation.y=Math.PI/4;g.add(rf);g.add(M(new T.BoxGeometry(.4,.4,.05),glowMat("#ffd24d",2),.4,.9,.92));var cg=glowSprite("rgba(255,210,77,0.4)",2.5);cg.position.set(.4,.9,1);g.add(cg);return add(g)}
 function island(x: number,z: number,y?: number,s?: number){var g=new T.Group();g.position.set(x,y||0,z);g.scale.setScalar(s||1);g.add(M(new T.CylinderGeometry(1.6,1.6,.3,24),matte("#43c29a"),0,0,0));g.add(M(new T.ConeGeometry(1.5,1.8,8),matte("#7a6aa8",true),0,-1.05,0).rotateX(Math.PI));for(var i=0;i<5;i++){var a=i/5*6.28;g.add(M(new T.ConeGeometry(.06,.3,4),matte("#2f8a6e",true),Math.cos(a)*1.1,.3,Math.sin(a)*1.1))}return add(g)}
 function drum(x: number,z: number){var g=new T.Group();g.position.set(x,0,z);g.add(M(new T.CylinderGeometry(.45,.45,1.1,20),plastic("#b0566a"),0,.55,0));[.2,.9].forEach(function(y){var r=M(new T.TorusGeometry(.46,.04,8,24),plastic("#7a3a4a"),0,y,0);r.rotation.x=Math.PI/2;g.add(r)});return add(g)}
@@ -478,7 +483,7 @@ function tidyUp(ts: { id: string; x: number; label: string; g: THREE.Group; hit:
  return true;
 }
 function buildWorld(id: string){
- if(W.backdrop){W.backdrop.dispose()}if(W.root){scene.remove(W.root)}W={root:new T.Group(),blades:[],blink:[]};scene.add(W.root);PFX.reset();FEED.reset();SLEEPH.reset();ACTS.reset();BUBBLES.reset();HELD.release();spots.length=0;bolts.length=0;signHits.length=0;tidySpots.length=0;sceneCarry=null;sceneVisit=null;sceneMarks=[];
+ if(W.backdrop){W.backdrop.dispose()}if(W.root){scene.remove(W.root)}W={root:new T.Group(),blades:[],blink:[]};scene.add(W.root);PFX.reset();FEED.reset();SLEEPH.reset();ACTS.reset();DOGF.cancel();BUBBLES.reset();HELD.release();spots.length=0;bolts.length=0;signHits.length=0;tidySpots.length=0;sceneCarry=null;sceneVisit=null;sceneMarks=[];
  var R=WORLDS[id]!;
  scene.background=canv(4,512,function(g,w,h){var gr=g.createLinearGradient(0,0,0,h);gr.addColorStop(0,R.sky[0]);gr.addColorStop(.3,R.sky[1]);gr.addColorStop(.52,R.sky[2]);gr.addColorStop(1,R.sky[2]);g.fillStyle=gr;g.fillRect(0,0,w,h)});
  applyLightRig(R,id);
@@ -721,7 +726,7 @@ function resize(){var r=hostEl.getBoundingClientRect(),w=Math.max(1,r.width),h=M
 winOn("resize",resize);
 var FR=0;var paused=false;function frame(){if(disposed)return;if(paused){timer.update();rafId=requestAnimationFrame(frame);return}FR++;timer.update();var dt=Math.min(.05,timer.getDelta())*(1);t+=dt;streetCd=Math.max(0,streetCd-dt);
  for(var i=fx.length-1;i>=0;i--){var e=fx[i]!;e.t+=dt;var k=Math.min(1,e.t/e.d);e.f(k,dt);if(k>=1){fx.splice(i,1);if(e.end)e.end()}}
- PFX.update(dt,t);FEED.update(dt);SLEEPH.update(dt);ACTS.update(dt);BUBBLES.update(dt);
+ PFX.update(dt,t);FEED.update(dt);SLEEPH.update(dt);ACTS.update(dt);DOGF.update(dt);BUBBLES.update(dt);
  var pk=activePerk(),nb0=(!ED.on&&!ED.testing)?townNeighbors(S.world):null,kLo=nb0?.2:.5,kHi=nb0?44.6:43.5;
  var sp=0,kd=(keys.r?1:0)-(keys.l?1:0),ku=((keys.u?1:0)-(keys.d?1:0)),vmax=pk?pk.vmax:(S.type==="vehicle"?5.2:3.4);
  if(kd&&!P.busy&&!P.showcase&&!P.mDrive){P.target=null;P.pos.x=Math.max(kLo,Math.min(kHi,P.pos.x+kd*vmax*dt));P.pos.z+=(0-P.pos.z)*Math.min(1,dt*1.5);P.tface=kd>0?0:Math.PI;sp=vmax}
@@ -1344,6 +1349,6 @@ dispose:function(){ if(disposed)return; disposed=true; if(W.backdrop)W.backdrop.
 // Scoped sizing: host rect via ResizeObserver with window-resize fallback (winOn above).
 resize();
 try { const ro = new ResizeObserver(() => resize()); ro.observe(hostEl); const origDispose = handle.dispose; handle.dispose = () => { try{ro.disconnect();}catch{} origDispose(); }; } catch {}
-if(import.meta.env?.DEV)(window as unknown as Record<string,unknown>).__tvWorld={handle:handle,mixGo:mixGo,getMix:function(){return mix},P:P,props:PFX,feed:FEED,sleep:SLEEPH,acts:ACTS,bubbles:BUBBLES,held:HELD,visit:function(){return sceneVisit?{at:sceneVisit.at,pending:sceneVisit.pending,done:sceneVisit.done,nudges:sceneNudges}:null}};
+if(import.meta.env?.DEV)(window as unknown as Record<string,unknown>).__tvWorld={handle:handle,mixGo:mixGo,getMix:function(){return mix},P:P,props:PFX,feed:FEED,sleep:SLEEPH,acts:ACTS,bubbles:BUBBLES,held:HELD,fetch:DOGF,visit:function(){return sceneVisit?{at:sceneVisit.at,pending:sceneVisit.pending,done:sceneVisit.done,nudges:sceneNudges}:null}};
 return handle;
 }
