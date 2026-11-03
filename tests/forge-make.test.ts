@@ -253,6 +253,27 @@ describe("POST /api/forge/make", () => {
     expect(out.recipe.behavior).toBe("Made from your idea");
   });
 
+  it("replaces a trademarked name the model produced, in the part name and in each language (the intake only knows building-toy brands)", async () => {
+    model = modelSays({ recipe: recipeOf({ name: "Pikachu Hat", behavior: "A Disney hat" }), names: { ...NAMES, es: { w: "sombrero de Spiderman", g: "m" } } });
+    const out = (await (await make({ text: "a yellow mouse hat" })).json()) as { name: string; recipe: { behavior: string }; names: Record<string, { w: string }> };
+    expect(out.name).toBe("My Creation");
+    expect(out.recipe.behavior).toBe("Made from your idea");
+    expect(Object.keys(out.names)).not.toContain("es"); // that language is dropped, the others stay
+    expect(out.names.en!.w).toBe("wizard hat");
+    resetForgeRateLimit();
+    // an English name that is a brand takes every language with it: English is the fallback for all of them
+    model = modelSays({ recipe: recipeOf(), names: { ...NAMES, en: { w: "pokemon hat", g: "m" } } });
+    expect(((await (await make({ text: "a hat" })).json()) as { names: unknown }).names).toEqual({});
+  });
+
+  it("gives the daemon long enough to build a part before calling the first look unavailable", async () => {
+    const fs = await import("node:fs");
+    const src = fs.readFileSync(new URL("../worker/forgeMake.ts", import.meta.url), "utf8");
+    expect(src).toMatch(/MAKE_PREVIEW_TIMEOUT_MS = (\d[\d_]*)/);
+    const ms = Number(/MAKE_PREVIEW_TIMEOUT_MS = (\d[\d_]*)/.exec(src)![1]!.replace(/_/g, ""));
+    expect(ms).toBeGreaterThanOrEqual(60_000); // a monkey head builds in 37 CPU-seconds
+  });
+
   it("reads a model that sends only the recipe, with no envelope", async () => {
     model = modelSays(recipeOf());
     const res = await make({ text: "a wizard hat" });

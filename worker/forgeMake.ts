@@ -21,7 +21,6 @@ import { issueSpokenNames, parseNames, type SigningEnv } from "./forgeNames";
 import {
   JOB_ID_RE,
   UPSTREAM_POLL_TIMEOUT_MS,
-  UPSTREAM_PREVIEW_TIMEOUT_MS,
   fetchUpstreamJson,
   gateForge,
   handleForgeJobStatus,
@@ -53,6 +52,12 @@ export const makeRequiresProof = (env: ForgeMakeEnv): boolean => env.FORGE_MAKE_
 const MAX_MAKE_BODY_BYTES = 12_000;
 /** Spark took 14 to 36 s for a recipe plus names in the eval (p95 36 s); the daemon's first look then takes about 40 ms. */
 const MODEL_TIMEOUT_MS = 55_000;
+/**
+ * How long the daemon gets for the first look. The shared 8 s (UPSTREAM_PREVIEW_TIMEOUT_MS) suits a mesh that is already built; for a recipe the daemon
+ * builds the part first, and a head with big side ears takes 37 CPU-seconds (a monkey, measured 2026-11-03), so 8 s turned those wishes into "unavailable".
+ * A busy machine does the same to a quick one (a fox head is 0.6 CPU-seconds and still timed out while the Mac was at load 188).
+ */
+const MAKE_PREVIEW_TIMEOUT_MS = 90_000;
 const TERMINAL = new Set(["print_ready", "digital_only", "failed"]);
 
 const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === "object" && v !== null && !Array.isArray(v);
@@ -83,6 +88,16 @@ async function askModel(env: ForgeMakeEnv, key: string, prompt: string): Promise
     return null;
   }
 }
+
+/**
+ * Defence in depth on what the MODEL says (the part's name and its names in seven languages): the intake and recipe checks only know the building-toy
+ * brands (FORBIDDEN_BRAND_RE in shared/forgeOptimizer.ts), but a child may well ask for a spiderman mask or a pikachu hat. In the 2026-11-03 run of 40 wishes
+ * the model turned all four into generic names, so this has never fired; it is here because that is the model's behaviour and not a guarantee. Unambiguous
+ * names only (no "frozen", "sonic" or "elsa", which are also ordinary words). A match replaces the part's name, or drops that language's name.
+ * The list is a product call and short on purpose: extend it as the owner of the brand rule decides.
+ */
+export const KID_BRAND_RE =
+  /\b(spider-?man|bat-?man|super-?man|wonder woman|iron man|pok[eé]mon|pikachu|mickey mouse|minnie mouse|disney|marvel|hello kitty|sanrio|nintendo|super mario|minecraft|roblox|barbie|paw patrol|peppa pig|star wars|darth vader|harry potter|hogwarts|transformers|optimus prime|hot wheels|fortnite|pixar|nickelodeon)\b/i;
 
 /** The child's words, cleaned: contact details out, control characters out, whitespace collapsed. */
 function cleanWish(raw: unknown): string {
@@ -178,14 +193,14 @@ export async function handleForgeMake(request: Request, env: ForgeMakeEnv): Prom
   const name = tidy(clean.recipe.name);
   const recipe: ForgeRecipeV1 = {
     ...clean.recipe,
-    name: kidSafeText(name, text.toLowerCase()) ? name : "My Creation",
-    behavior: clean.recipe.behavior && kidSafeText(clean.recipe.behavior, text.toLowerCase()) ? tidy(clean.recipe.behavior) : "Made from your idea",
+    name: kidSafeText(name, text.toLowerCase()) && !KID_BRAND_RE.test(name) ? name : "My Creation",
+    behavior: clean.recipe.behavior && kidSafeText(clean.recipe.behavior, text.toLowerCase()) && !KID_BRAND_RE.test(clean.recipe.behavior) ? tidy(clean.recipe.behavior) : "Made from your idea",
   };
 
   const up = await fetchUpstreamJson(
     upstreamUrl(g.baseUrl, "/v1/fast-preview"),
     { method: "POST", headers: upstreamHeaders(env), body: JSON.stringify({ recipe, enqueue_background: true, include_glb_base64: true }) },
-    UPSTREAM_PREVIEW_TIMEOUT_MS,
+    MAKE_PREVIEW_TIMEOUT_MS,
     "forge_make",
   );
   // The daemon answers 400 or 422 for a recipe it cannot compile (fetchUpstreamJson turns that into a 422): not a failure of the service, a recipe to
@@ -196,7 +211,9 @@ export async function handleForgeMake(request: Request, env: ForgeMakeEnv): Prom
   }
   if (!up.ok) return up.response;
 
-  const { names } = parseNames(envelope.names, text.toLowerCase());
+  const parsedNames = parseNames(envelope.names, text.toLowerCase());
+  const names = Object.fromEntries(Object.entries(parsedNames.names).filter(([, n]) => !KID_BRAND_RE.test(n.w))) as typeof parsedNames.names;
+  if (!names.en) for (const k of Object.keys(names)) delete names[k as keyof typeof names]; // English is every language's fallback: with no good English name nothing is kept
   const signed = await issueSpokenNames(env, names);
   logEvent("forge_make", "ok", { attempt, slot: recipe.slot, repaired: repair !== undefined, namesKept: Object.keys(names).length, spoken: Object.keys(signed).length });
   return reply(200, {
