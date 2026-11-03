@@ -22,7 +22,7 @@ DESTS = [ROOT / "public" / "kip" / "partspec" / "mockup", ROOT / "parts" / "kip"
 
 # Assembly-frame parts the viewer loads. char_* come from sync_truck_kip.py.
 PARTS = [
-    "kit_keel_base", "kit_barbell_shaft", "kit_wheel_med", "kit_wheel_giant", "kit_aero_wedge", "kit_windscreen", "kit_tilting_tub",
+    "kit_keel_base", "kit_barbell_shaft", "kit_wheel_med", "kit_wheel_giant", "kit_wheel_med_free", "kit_wheel_giant_free", "kit_aero_wedge", "kit_windscreen", "kit_tilting_tub",
     "kit_scoop_blade", "kit_turntable", "kit_yoke_hbar", "pro_tub_hinge",
     "pro_steer_bridge", "pro_steer_knuckle_l", "pro_steer_knuckle_r", "pro_steer_rack", "pro_tie_rod_link",
     "pro_captive_pin_28", "pro_steer_column", "pro_steer_wheel", "pin_free_tu03", "pin_free",
