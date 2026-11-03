@@ -90,11 +90,11 @@ stats }`); no new gameplay events.
 
 ## Household library drops (added 2026-11-03, Dan: use the household items in the weekend games)
 
-Source: [household-library-spec.md](household-library-spec.md): 50 everyday objects, each a small optimised 3D part (five are built as a
-pilot), chosen from the scan list's ranking and matched from a word or a photo. This section says how the Garage uses them; the library spec owns
+Source: [household-library-spec.md](household-library-spec.md): 60 everyday objects (the 50, then ten more), each a small optimised 3D part (all
+built, 2026-11-03), chosen from the scan list's ranking and matched from a word or a photo. This section says how the Garage uses them; the library spec owns
 the items.
 
-- **The weekend's New part is a library item.** Fifty items is almost exactly a year of weekends (52), so the catalog is long enough that the
+- **The weekend's New part is a library item.** Sixty items is a little over a year of weekends (52), so the catalog is long enough that the
   rotation rarely repeats. Same rule as before: deterministic, offline, no immediate repeat. The order is authored, so a theme is possible: the six
   garage tools (hammer, screwdriver, pliers, flashlight, tape measure, bucket) make a natural **tool weekend**.
 - **The loaner is shown in 3D** on the Garage sheet ("This weekend: the wooden spoon") and equips in the hand slot to try for the weekend. The
@@ -105,8 +105,10 @@ the items.
 - **Remix kind:** swap the held item for another of the same family (a mug for a bowl), then add the twist.
 - **Age bands:** the pre-reader versions pick between two items by picture. Tools and sharp-looking items follow the age rule decided in
   household-library-spec.md ("Decided after phase 2"): limited by band, with a simplified item or one multi-purpose support tool standing in for the
-  young, and more real tools needed in the older bands. Its band cut-offs are proposed, not confirmed; until they are, the garage tools stay held back
-  from bands 0 and 1.
+  young, and more real tools needed in the older bands. Dan confirmed it (2026-11-03): bands 0-1 get no `sharp-looking` item and no real tool and the
+  support tool stands in for any tool job; band 2 gets the blunt tools, one needed per job (the support tool fills in the rest); band 3 needs 2
+  different tools; bands 4-5 need 3. The catalog carries `minBand` on every item and the support tool (`maxBand` 2); the Garage's tool-job counting is not
+  built yet.
 - **The check** reads the equipped hand item, so `buildSummary()` gains one field, the item id. No new events.
 - **Build it for real** uses the printable relief where it passed the gates; an item that did not is digital-only, and the sheet says so.
 - **Rewards:** unchanged. The mission id, the STEM minutes, the XP, the stamp and the trophy do not depend on which item the drop used.
@@ -292,8 +294,8 @@ Saturday Nov 7). **Not tried on a real phone.**
 
 ## Still open
 
-- Whether Phase 1's launch drops can use the pilot items, and the age rule's exact cut-offs and "a job needs 1, 2, 3 tools" numbers
-  (household-library-spec.md: the rule is decided, the numbers are proposed). Equipping a library item is settled in that spec's phase 4;
+- Whether Phase 1's launch drops can use the pilot items. (The age rule and its cut-offs are decided, household-library-spec.md; the Garage's tool-job
+  counting is to build.) Equipping a library item is settled in that spec's phase 4;
   keeping a loaner is decided (scan the real one, finding it in a room as the fallback).
 - The 10-minute Garage grace (length, and whether it should also apply on
   weekday drops).

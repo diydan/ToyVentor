@@ -27,6 +27,9 @@ from stl_to_glb import _encode_glb_chunks, build_indexed_creased_mesh, pad4  # n
 
 
 HEX_RE = re.compile(r"^#[0-9A-Fa-f]{6}$")
+# Positions are 16-bit integers in one scale, so a triangle's area is a whole multiple of half a step squared (about 1e-6 mm2 for a 90 mm item).
+# Anything under this is therefore exactly zero in the file: two corners on one lattice point, or three on a line.
+MIN_TRI_AREA_MM2 = 1e-7
 
 
 def srgb_hex_to_linear(hex_colour: str) -> List[float]:
@@ -50,7 +53,7 @@ def zoned_glb(
     crease_deg: float = 34.0,
     extras: Optional[dict] = None,
 ) -> Tuple[bytes, dict]:
-    """Returns (glb bytes, {"verts": n, "tris": n, "zoneTris": {"<zone>": triangles in that zone, ...}}).
+    """Returns (glb bytes, {"verts": n, "tris": n, "zeroAreaTris": n, "openEdges": n, "zoneTris": {"<zone>": triangles in that zone, ...}}).
     `tri_zone[i]` names the zone of triangle i; `zones` lists (name, #RRGGBB) in material order. Every zone must own at least one triangle and every
     triangle a listed zone."""
     if len(tri_zone) != len(faces):
@@ -80,6 +83,21 @@ def zoned_glb(
     nor_buf[:, :3] = nq
 
     idx = np.asarray(indices, dtype=np.uint32).reshape(-1, 3)
+    # what the game will load: the quantised corners of every triangle, not the float ones (a first carrot had two slivers that only the 16-bit grid showed)
+    corners = q.astype(np.float64)[idx] * (span / 65535.0) * 1000.0  # millimetres
+    area = np.linalg.norm(np.cross(corners[:, 1] - corners[:, 0], corners[:, 2] - corners[:, 0]), axis=1) / 2.0
+    zero_area = int((area < MIN_TRI_AREA_MM2).sum())
+    # welded on the file's own grid, every directed edge must occur exactly once and so must its reverse: a hole, or two parts touching along a line
+    # (a pinched edge: the checkerboard's cells met at corners), shows as an edge that does not
+    _, weld = np.unique(q, axis=0, return_inverse=True)
+    weld = np.asarray(weld).reshape(-1).astype(np.int64)
+    w = weld[idx.astype(np.int64)]
+    n_w = int(weld.max()) + 1
+    ea = np.concatenate([w[:, 0], w[:, 1], w[:, 2]])
+    eb = np.concatenate([w[:, 1], w[:, 2], w[:, 0]])
+    keys, counts = np.unique(ea * n_w + eb, return_counts=True)
+    reverse = (keys % n_w) * n_w + (keys // n_w)
+    open_edges = int(((counts != 1) | ~np.isin(reverse, keys)).sum())
     idx_dtype, idx_ctype = ("<u2", 5123) if count <= 65535 else ("<u4", 5125)
 
     chunks: List[bytes] = [pos_buf.tobytes(), nor_buf.tobytes()]
@@ -130,4 +148,4 @@ def zoned_glb(
         "buffers": [{"byteLength": sum(len(c) for c in chunks)}],
     }
     glb = _encode_glb_chunks(gltf, b"".join(chunks))
-    return glb, {"verts": int(count), "tris": int(len(idx)), "zoneTris": zone_tris}
+    return glb, {"verts": int(count), "tris": int(len(idx)), "zeroAreaTris": zero_area, "openEdges": open_edges, "zoneTris": zone_tris}

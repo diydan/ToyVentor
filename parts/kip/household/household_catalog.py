@@ -1,4 +1,4 @@
-"""The household library catalog: 50 everyday objects, the words that map a child's word (or a scan's label) to each, and how each is built.
+"""The household library catalog: 60 everyday objects (the first 50 and the next ten), the words that map a child's word (or a scan's label) to each, and how each is built.
 Source of truth for `public/kip/household/catalog.json`, whose build fields (triangles, bytes, zones, hash) `build_household.py` adds.
 
 See docs/specs/household-library-spec.md. Standard library only, so it runs without the partspec venv:
@@ -74,6 +74,49 @@ ITEMS: List[Tuple[str, str, Optional[int], int, str, List[str], List[str], str]]
     ("tape_measure", "Tape measure", None, 80, "RC", ["tape measure", "measuring tape"], ["garage", "tool"], "Added (garage)."),
     ("alarm_clock", "Alarm clock", 91, 120, "RC", ["clock", "alarm clock"], [], "Bells and feet as a composite."),
     ("desk_lamp", "Desk lamp", 92, 200, "RC", ["lamp", "desk lamp"], [], "Shade revolved, arm as a hulled chain."),
+    # the next ten (phase 5): plain boxes, a puzzle piece and the first soft things, all from the scan list
+    ("board_game", "Board game", 23, 300, "C", ["board game", "boardgame", "game box"], [], "A box on its edge; the lid carries a four by four board as a second colour zone."),
+    ("jigsaw", "Jigsaw piece", 24, 300, "E", ["puzzle", "jigsaw", "jigsaw puzzle", "puzzle piece"], [], "One edge piece stands for the puzzle: a flat bottom edge to hold, two knobs and a socket."),
+    ("notebook", "Notebook", 39, 210, "C", ["notebook", "journal", "diary", "exercise book"], [], "Cover, pages and an elastic strap as colour zones."),
+    ("book", "Book", 40, 220, "C", ["book", "hardback", "storybook", "story book", "picture book"], [], "Rounded spine; a plain label with no title."),
+    ("playing_cards", "Playing cards", 42, 90, "C", ["card", "cards", "playing card", "playing cards", "deck of cards"], [], "A squared deck with one heart: a single card is too thin to hold."),
+    ("pencil_case", "Pencil case", 47, 200, "C", ["pencil case", "pencil box", "pencil pouch"], [], "Zip and puller as a second colour zone."),
+    ("soap", "Bar of soap", 65, 90, "C", ["soap", "bar of soap"], [], "Stands on its long edge; a plain oval, no lettering."),
+    ("sponge", "Sponge", 66, 120, "C", ["sponge", "kitchen sponge", "scrubber"], [], "Lying flat, so the front shows the two layers and the holes."),
+    ("cereal_box", "Cereal box", 69, 190, "C", ["cereal box", "cereal", "box"], [], "A plain box: window and band as colour zones, no print. The scan list's own word for it is the bare 'box'."),
+    ("lunchbox", "Lunchbox", 90, 220, "C", ["lunchbox", "lunch box"], [], "Base, lid, and a latch and handle as the third zone."),
+]
+ITEM_COUNT = 60  # the first 50 (phases 2 and 3) and the next ten (phase 5): the checker refuses a catalog with any other number
+
+# ---- the age rule (Dan, 2026-11-03: "limit based on age", the engine's six bands in src/lib/age.ts: 0 = 2-3, 1 = 3-4, 2 = 5-6, 3 = 7-9, 4 = 10-12, 5 = 13+) ----
+# Bands 0 and 1: no sharp-looking item and no real tool (garage item); the support tool stands in for any tool job. Band 2: blunt tools (the garage
+# items) are allowed, sharp-looking ones are not; the support tool still stands in for the rest. Band 3 and up: every item, and the support tool stops.
+# A tool job needs 1, 2 or 3 different real tools in bands 2, 3, and 4-5 (the Garage reads that; it is not catalog data).
+BAND_SHARP, BAND_TOOL = 3, 2
+SUPPORT_LAST_BAND = 2  # the support tool is offered, and stands in for tool jobs, up to this band
+
+
+def min_band(tags: List[str]) -> int:
+    """The youngest age band an item is shown to, from its tags."""
+    if "sharp-looking" in tags:
+        return BAND_SHARP
+    if "garage" in tags or "tool" in tags:
+        return BAND_TOOL
+    return 0
+
+
+# Items that read at a glance for ages 2 to 4: a plain rounded or chunky shape, one or two colours, nothing fine. They are the pool the youngest
+# bands pick between ("which one is the ball?", by picture). My choice from the pictures; edit the list, the tests keep it honest (never a tool, never
+# sharp-looking, at most two colour zones).
+SIMPLE_IDS = frozenset({
+    "ball", "mug", "water_bottle", "drinking_glass", "bowl", "plate", "orange", "banana", "carrot", "lemon", "wooden_spoon", "toothbrush",
+    "crayon", "soap", "sponge", "toy_brick", "yo_yo", "flying_disc", "cookie_tin", "marble",
+})
+
+# The support tool (outside the 60, never matched by a word): one chunky, rounded multi-purpose toy tool that stands in for any tool job in the
+# youngest bands. id, label, real mm, family, note.
+SUPPORT_ITEMS: List[Tuple[str, str, int, str, str]] = [
+    ("support_tool", "Toy tool", 150, "RC", "A chunky mallet head with a gear on the front: stands in for any tool job in bands 0 to 2. No words: never matched."),
 ]
 
 ID_RE = re.compile(r"^[a-z][a-z0-9_]*$")
@@ -94,8 +137,21 @@ def static_rows() -> List[dict]:
         {
             "id": iid, "label": label, "scanRank": rank, "realMm": real, "propMm": prop_mm(real),
             "family": family, "words": list(words), "tags": list(tags), "note": note,
+            "minBand": min_band(list(tags)), "simple": iid in SIMPLE_IDS,
         }
         for (iid, label, rank, real, family, words, tags, note) in ITEMS
+    ]
+
+
+def support_rows() -> List[dict]:
+    """The support tool(s): a row like an item's, with no words and no scan rank, shown from band 0 up to SUPPORT_LAST_BAND."""
+    return [
+        {
+            "id": iid, "label": label, "scanRank": None, "realMm": real, "propMm": prop_mm(real),
+            "family": family, "words": [], "tags": [], "note": note,
+            "minBand": 0, "maxBand": SUPPORT_LAST_BAND, "simple": True,
+        }
+        for (iid, label, real, family, note) in SUPPORT_ITEMS
     ]
 
 
@@ -138,6 +194,27 @@ def problems(rows: List[dict]) -> List[str]:
             ranks[rank] = iid
         if r.get("propMm") != prop_mm(r.get("realMm", 0)):
             out.append(f"{iid}: propMm {r.get('propMm')} is not realMm {r.get('realMm')} clamped to {PROP_MIN_MM}..{PROP_MAX_MM}")
+        want = min_band(list(r.get("tags", [])))
+        if r.get("minBand") != want:
+            out.append(f"{iid}: minBand {r.get('minBand')!r} is not {want}, what its tags ({', '.join(r.get('tags', [])) or 'none'}) give")
+        if not isinstance(r.get("simple"), bool):
+            out.append(f"{iid}: simple must be true or false")
+        elif r["simple"] and want != 0:
+            out.append(f"{iid}: a simple item (for the youngest bands) cannot be tagged {', '.join(r.get('tags', []))}")
+    return out
+
+
+def support_problems(rows: List[dict]) -> List[str]:
+    """What is wrong with the support tool rows: they are items that are never matched, so no words and no scan rank, and an age range from band 0."""
+    out = [p for p in problems(rows) if "no words" not in p and "minBand" not in p and "simple item" not in p]
+    for r in rows:
+        iid = r.get("id", "")
+        if r.get("words"):
+            out.append(f"{iid}: a support tool has no words (it is never matched)")
+        if r.get("scanRank") is not None:
+            out.append(f"{iid}: a support tool has no scan rank")
+        if r.get("minBand") != 0 or r.get("maxBand") != SUPPORT_LAST_BAND:
+            out.append(f"{iid}: a support tool is shown in bands 0 to {SUPPORT_LAST_BAND}, not {r.get('minBand')} to {r.get('maxBand')}")
     return out
 
 
@@ -145,14 +222,23 @@ def main(argv: List[str]) -> int:
     if "--verify" in argv:  # python3 household_catalog.py --verify <catalog.json>: check the rows of a written catalog; exit 1 and print every fault
         doc = json.load(open(argv[argv.index("--verify") + 1]))
         found = problems(doc["items"])
-        if len(doc["items"]) != 50:
-            found.append(f"{len(doc['items'])} items, not 50")
+        support = doc.get("support")
+        if not support:
+            found.append("no support tool")
+        else:
+            found += support_problems(support)
+        if len(doc["items"]) != ITEM_COUNT:
+            found.append(f"{len(doc['items'])} items, not {ITEM_COUNT}")
         for p in found:
             print("PROBLEM:", p)
         print(f"{len(doc['items'])} items checked, {len(found)} problems")
         return 1 if found else 0
     rows = static_rows()
     bad = problems(rows)
+    if "--json-support" in argv:
+        json.dump(support_rows(), sys.stdout, indent=1)
+        print()
+        return 0 if not support_problems(support_rows()) else 1
     if "--json" in argv:
         json.dump(rows, sys.stdout, indent=1)
         print()

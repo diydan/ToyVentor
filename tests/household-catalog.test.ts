@@ -1,4 +1,4 @@
-// The household library (docs/specs/household-library-spec.md, phase 2): public/kip/household/catalog.json and the GLBs it lists.
+// The household library (docs/specs/household-library-spec.md, phases 2, 3 and 5: 60 items): public/kip/household/catalog.json and the GLBs it lists.
 // Fast: no geometry is built. The GLBs are read back with a reader written here (not the writer's code) and checked as geometry: the right size,
 // a closed and consistently oriented surface, the same volume as the solid they were made from. The catalog's rules are also run through the
 // checker `household_catalog.py --verify` on deliberately broken copies, so the checker itself is shown to fail. Needs only a system python3 for
@@ -17,18 +17,21 @@ const CATALOG_PY = join(ROOT, "parts/kip/household/household_catalog.py");
 interface Zone { name: string; hex: string; tris: number }
 interface Item {
   id: string; label: string; scanRank: number | null; realMm: number; propMm: number; family: string; words: string[]; tags: string[]; note: string;
+  minBand: number; maxBand?: number; simple: boolean;
   built: boolean; glb: string | null;
   bytes?: number; sha256?: string; tris?: number; verts?: number; zones?: Zone[]; bboxMm?: [number, number, number]; volumeMm3?: number;
 }
-interface Catalog { version: number; budget: { maxTris: number; maxBytes: number; maxZones: number }; items: Item[] }
+interface Catalog { version: number; budget: { maxTris: number; maxBytes: number; maxZones: number }; items: Item[]; support: Item[] }
 
 const CATALOG = JSON.parse(readFileSync(join(DIR, "catalog.json"), "utf8")) as Catalog;
 const ITEMS = CATALOG.items;
+const SUPPORT = CATALOG.support;
 const BUILT = ITEMS.filter((i) => i.built);
+const ALL_BUILT = [...BUILT, ...SUPPORT.filter((i) => i.built)]; // the support tool is a built item too: every GLB gets the same geometry checks
 const SCAN = new Map(
   (JSON.parse(readFileSync(join(ROOT, "tests/fixtures/scan-targets.json"), "utf8")) as { items: { rank: number; lengthMm: number; widthMm: number }[] }).items.map((t) => [t.rank, t]),
 );
-const STATIC_FIELDS = ["id", "label", "scanRank", "realMm", "propMm", "family", "words", "tags", "note"] as const;
+const STATIC_FIELDS = ["id", "label", "scanRank", "realMm", "propMm", "family", "words", "tags", "note", "minBand", "simple"] as const;
 
 // ---- an independent GLB reader -------------------------------------------------------------------------------------------------------
 
@@ -100,10 +103,19 @@ const srgbToLinear = (hex: string) =>
 // ---- catalog data ----------------------------------------------------------------------------------------------------------------------
 
 describe("household catalog: data", () => {
-  it("lists 50 items and states the budget the spec set", () => {
+  it("lists 60 items (the first 50, then the next ten) and states the budget the spec set", () => {
     expect(CATALOG.version).toBe(1);
     expect(CATALOG.budget).toEqual({ maxTris: 1000, maxBytes: 25 * 1024, maxZones: 3 });
-    expect(ITEMS).toHaveLength(50);
+    expect(ITEMS).toHaveLength(60);
+  });
+
+  it("keeps the first 50 as they were and puts the plain boxes, the puzzle piece and the soft things after them (phase 5)", () => {
+    expect(ITEMS.slice(0, 3).map((i) => i.id)).toEqual(["ball", "mug", "water_bottle"]);
+    expect(ITEMS[49]!.id).toBe("desk_lamp");
+    expect(ITEMS.slice(50).map((i) => i.id)).toEqual([
+      "board_game", "jigsaw", "notebook", "book", "playing_cards", "pencil_case", "soap", "sponge", "cereal_box", "lunchbox",
+    ]);
+    for (const i of ITEMS.slice(50)) expect(i.scanRank, `${i.id} is from the scan list`).not.toBeNull();
   });
 
   it("gives every item a unique snake_case id and a label", () => {
@@ -156,6 +168,36 @@ describe("household catalog: data", () => {
     for (const i of ITEMS) expect(i.propMm, i.id).toBe(Math.min(90, Math.max(40, i.realMm)));
   });
 
+  it("limits by age band as Dan decided: sharp-looking from band 3, the other garage items from band 2, everything else from band 0", () => {
+    const at = (b: number) => ITEMS.filter((i) => i.minBand === b).map((i) => i.id).sort();
+    expect(at(3)).toEqual(["fork", "scissors", "screwdriver", "toy_sword"]);
+    expect(at(2)).toEqual(["bucket", "flashlight", "hammer", "pliers", "tape_measure"]);
+    expect(at(0)).toHaveLength(51);
+    expect(at(1) as string[]).toEqual([]);
+    for (const i of ITEMS) expect([0, 1, 2, 3, 4, 5], i.id).toContain(i.minBand);
+  });
+
+  it("keeps a pool of simple items for the youngest bands: never a tool, never sharp-looking, at most two colours, and enough to pick between", () => {
+    const simple = ITEMS.filter((i) => i.simple);
+    expect(simple.length).toBeGreaterThanOrEqual(12);
+    expect(new Set(simple.map((i) => i.family)).size, "more than one family, so a pair is not always alike").toBeGreaterThan(2);
+    for (const i of simple) {
+      expect(i.minBand, i.id).toBe(0);
+      expect(i.tags, i.id).toEqual([]);
+      expect(i.zones!.length, `${i.id} colour zones`).toBeLessThanOrEqual(2);
+    }
+  });
+
+  it("has one support tool outside the 60: no words (never matched), no scan rank, shown in bands 0 to 2", () => {
+    expect(SUPPORT.map((i) => i.id)).toEqual(["support_tool"]);
+    const t = SUPPORT[0]!;
+    expect(t.words).toEqual([]);
+    expect(t.scanRank).toBeNull();
+    expect([t.minBand, t.maxBand]).toEqual([0, 2]);
+    expect(ITEMS.map((i) => i.id)).not.toContain(t.id);
+    expect(t.built).toBe(true);
+  });
+
   it("tags the garage items and the sharp-looking ones as the spec lists them", () => {
     const tagged = (t: string) => ITEMS.filter((i) => i.tags.includes(t)).map((i) => i.id).sort();
     expect(tagged("sharp-looking")).toEqual(["fork", "scissors", "screwdriver", "toy_sword"]);
@@ -172,14 +214,19 @@ describe("household catalog: built items", () => {
     expect(r.filter((i) => !i.built).map((i) => i.id)).toEqual([]);
   });
 
-  it("has a GLB for each built item and for nothing else", () => {
-    const files = readdirSync(DIR).filter((f) => f.endsWith(".glb")).sort();
-    expect(files).toEqual(BUILT.map((i) => i.glb!).sort());
-    for (const i of ITEMS) if (!i.built) expect(i.glb, i.id).toBeNull();
-    for (const i of BUILT) expect(i.glb, i.id).toBe(`${i.id}.glb`);
+  it("builds every item in the catalog (phase 3 finished the other 31)", () => {
+    expect(ITEMS.filter((i) => !i.built).map((i) => i.id)).toEqual([]);
+    expect(BUILT).toHaveLength(ITEMS.length);
   });
 
-  describe.each(BUILT.map((i) => [i.id, i] as const))("%s", (_id, item) => {
+  it("has a GLB for each built item (and the support tool) and for nothing else", () => {
+    const files = readdirSync(DIR).filter((f) => f.endsWith(".glb")).sort();
+    expect(files).toEqual(ALL_BUILT.map((i) => i.glb!).sort());
+    for (const i of ITEMS) if (!i.built) expect(i.glb, i.id).toBeNull();
+    for (const i of ALL_BUILT) expect(i.glb, i.id).toBe(`${i.id}.glb`);
+  });
+
+  describe.each(ALL_BUILT.map((i) => [i.id, i] as const))("%s", (_id, item) => {
     const path = join(DIR, `${item.id}.glb`);
     const glb = readGlb(path);
 
@@ -259,6 +306,19 @@ describe("household catalog: built items", () => {
       expect(Math.abs(volume - item.volumeMm3!) / item.volumeMm3!, "volume against the solid's").toBeLessThan(0.005);
     });
 
+    it("has no triangle without area (a union that leaves two edges touching makes a sliver the normals cannot be computed for)", () => {
+      let thin = 0;
+      for (const p of glb.prims)
+        for (let t = 0; t < p.tris.length; t += 3) {
+          const P = [0, 1, 2].map((k) => [glb.lib[p.tris[t + k]! * 3]!, glb.lib[p.tris[t + k]! * 3 + 1]!, glb.lib[p.tris[t + k]! * 3 + 2]!]);
+          const u = [P[1]![0]! - P[0]![0]!, P[1]![1]! - P[0]![1]!, P[1]![2]! - P[0]![2]!];
+          const w = [P[2]![0]! - P[0]![0]!, P[2]![1]! - P[0]![1]!, P[2]![2]! - P[0]![2]!];
+          const area = Math.hypot(u[1]! * w[2]! - u[2]! * w[1]!, u[2]! * w[0]! - u[0]! * w[2]!, u[0]! * w[1]! - u[1]! * w[0]!) / 2;
+          if (area < 1e-7) thin++; // positions are 16-bit integers: a real triangle is at least about 1e-6 mm2 (half a step squared), so under 1e-7 is exactly zero
+        }
+      expect(thin, "triangles with no area").toBe(0);
+    });
+
     it("has unit normals that point out of the surface", () => {
       let inward = 0;
       let tris = 0;
@@ -312,7 +372,7 @@ describe.skipIf(!PY3)("household catalog: the checker (household_catalog.py)", (
 
   it("passes the committed catalog", () => {
     const r = verify(() => {});
-    expect(r.out).toContain("50 items checked, 0 problems");
+    expect(r.out).toContain("60 items checked, 0 problems");
     expect(r.code).toBe(0);
   });
 
@@ -320,6 +380,8 @@ describe.skipIf(!PY3)("household catalog: the checker (household_catalog.py)", (
     const rows = JSON.parse(execFileSync(PY3!, [CATALOG_PY, "--json"], { encoding: "utf8" })) as Item[];
     const pick = (i: Item) => Object.fromEntries(STATIC_FIELDS.map((f) => [f, i[f]]));
     expect(rows.map(pick)).toEqual(ITEMS.map(pick));
+    const support = JSON.parse(execFileSync(PY3!, [CATALOG_PY, "--json-support"], { encoding: "utf8" })) as Item[];
+    expect(support.map(pick)).toEqual(SUPPORT.map(pick));
   });
 
   const cases: [string, (d: Catalog) => void, RegExp][] = [
@@ -335,7 +397,14 @@ describe.skipIf(!PY3)("household catalog: the checker (household_catalog.py)", (
     ["a brand word in a label", (d) => (d.items[0]!.label = "Frisbee"), /brand term 'Frisbee'/],
     ["a brand word in a word list", (d) => d.items[0]!.words.push("thermos"), /brand term 'thermos'/],
     ["an id that is not snake_case", (d) => (d.items[0]!.id = "Ball-1"), /bad id/],
-    ["49 items", (d) => d.items.pop(), /49 items, not 50/],
+    ["59 items", (d) => d.items.pop(), /59 items, not 60/],
+    ["a tool shown to the youngest (minBand 0 on a hammer)", (d) => (d.items.find((i) => i.id === "hammer")!.minBand = 0), /hammer: minBand 0 is not 2/],
+    ["a sharp-looking item allowed from band 2", (d) => (d.items.find((i) => i.id === "fork")!.minBand = 2), /fork: minBand 2 is not 3/],
+    ["a simple item that is a tool", (d) => (d.items.find((i) => i.id === "hammer")!.simple = true), /hammer: a simple item .* cannot be tagged garage, tool/],
+    ["a simple flag that is not a boolean", (d) => ((d.items[0] as unknown as { simple: unknown }).simple = "yes"), /ball: simple must be true or false/],
+    ["no support tool", (d) => (d.support = []), /no support tool/],
+    ["a support tool with a word", (d) => d.support[0]!.words.push("mallet"), /support_tool: a support tool has no words/],
+    ["a support tool shown past band 2", (d) => (d.support[0]!.maxBand = 5), /support_tool: a support tool is shown in bands 0 to 2, not 0 to 5/],
   ];
   it.each(cases)("fails on %s", (_name, mutate, expected) => {
     const r = verify(mutate);

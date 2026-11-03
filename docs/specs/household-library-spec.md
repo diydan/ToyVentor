@@ -1,10 +1,10 @@
-# Household library: 50 everyday objects as 3D parts (draft 1, 2026-11-03)
+# Household library: 50 everyday objects as 3D parts, and the next ten (draft 2, 2026-11-03)
 
 A library of 50 household objects, each a small, optimised 3D part that the game can show and, as an option, the printer can make, matched
 from a child's word or photo. Companion to [forge-ai-spec.md](forge-ai-spec.md) (F2 and F2b, the photo routes),
 [garage-weekend-spec.md](garage-weekend-spec.md) (where these become the weekend parts), and `tests/fixtures/scan-targets.json` (the ranked
-list this is chosen from). **Status (2026-11-03): phase 2 is built.** 19 of the 50 have a builder, a game GLB and a catalog entry (all 15 revolved
-items plus the four pilot items); the other 31 are in the catalog as data only. See "Phase 2: what was built".
+list this is chosen from). **Status (2026-11-03): phases 2, 3 and 5 are built.** All 60 items (the 50, then the next ten) have a builder, a game
+GLB and a catalog entry; see "Phase 2: what was built" and "Phases 3 and 5: what was built". The game side (phase 4) is its own section when it lands.
 
 ## Decisions (Dan, 2026-11-03)
 
@@ -93,16 +93,36 @@ scan list uses is not copied here (two of them are trademarks, which this repo d
 longest side at prop scale, clamped to 40 to 90 mm so it fits Kip's hand and clears the small-parts screen (a marginal band of 31.75 to
 34.925 mm of enclosing cylinder fails the gate). Every word maps to exactly one item (107 words).
 
+**The next ten (phase 5).** All ten are the scan list's own plain items, so each is linked by rank like the first 50; they are rows 51 to 60 of the
+catalog, after the desk lamp, and the first 50 keep their order.
+
+| # | id | item | scan rank | family | real mm | prop mm | words |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 51 | `board_game` | Board game | 23 | C | 300 | 90 | board game, boardgame, game box |
+| 52 | `jigsaw` | Jigsaw piece | 24 | E | 300 | 90 | puzzle, jigsaw, jigsaw puzzle, puzzle piece |
+| 53 | `notebook` | Notebook | 39 | C | 210 | 90 | notebook, journal, diary, exercise book |
+| 54 | `book` | Book | 40 | C | 220 | 90 | book, hardback, storybook, story book, picture book |
+| 55 | `playing_cards` | Playing cards | 42 | C | 90 | 90 | card, cards, playing card, playing cards, deck of cards |
+| 56 | `pencil_case` | Pencil case | 47 | C | 200 | 90 | pencil case, pencil box, pencil pouch |
+| 57 | `soap` | Bar of soap | 65 | C | 90 | 90 | soap, bar of soap |
+| 58 | `sponge` | Sponge | 66 | C | 120 | 90 | sponge, kitchen sponge, scrubber |
+| 59 | `cereal_box` | Cereal box | 69 | C | 190 | 90 | cereal box, cereal, box |
+| 60 | `lunchbox` | Lunchbox | 90 | C | 220 | 90 | lunchbox, lunch box |
+
+"The first soft shapes" is read as the soap and the sponge; the properly soft items (sneaker, slipper, sock, sunglasses) stay out, as below. Two items
+stand for a whole: one edge piece for the puzzle (a box of pieces cannot be held) and a squared deck for the cards (one card is too thin to grip).
+The scan list's own word for the cereal box is the bare "box", so that word maps there.
+
 **Left out, and why.**
 
 | Left out | Why |
 | --- | --- |
 | Toy car, bus, truck, train, aeroplane, helicopter, boat, bicycle, scooter, skateboard | vehicles: they have their own slots and builders |
 | Teddy, doll, action figure, robot, dinosaur, stuffed animals, rubber duck, cat toy | characters and soft figures: their own pipeline |
-| Sock, T-shirt, backpack, slipper, sneaker, wallet, sunglasses, glasses | soft or fiddly shapes; sneaker and sunglasses are the first to add |
+| T-shirt, backpack, wallet, glasses | soft or fiddly shapes |
 | Slime, modelling dough, balloon, toothpaste tube, mushroom, kaleidoscope, marble run, castle | unstable, soft, or too complex for one held part |
 | Remote, game controller, calculator, wristwatch | screens and buttons that copy real brands' shapes: a generic one adds little and risks a look-alike |
-| Board game, jigsaw, notebook, book, cereal box, lunchbox, pencil case, soap, sponge, playing card | plain boxes: the next ten, cheap to add |
+| Sneaker, slipper, sock, sunglasses | the first soft and fiddly shapes: the next to add after the ten above |
 
 ## Pilot (measured 2026-11-03)
 
@@ -135,14 +155,15 @@ What this showed:
 
 - **Where:** `parts/kip/household/`: `household_builders.py` (one builder per item, returning colour-zone pieces), `household_catalog.py` (the 50
   rows as data, standard library only, with its own checker), `household_glb.py` (the zoned GLB writer), `build_household.py` (builds, checks and
-  writes). Output: `public/kip/household/<id>.glb` and `catalog.json` (the 50 rows plus, for a built item, its triangles, bytes, hash, zones,
+  writes). Output: `public/kip/household/<id>.glb` and `catalog.json` (the 60 rows plus, for a built item, its triangles, bytes, hash, zones,
   size and volume). The printable-relief step is not part of phase 2.
 - **Coordinates:** millimetres; z up; the grip point at the origin; the object stands on z = 0; the front, the side a photo is projected onto, is +y.
   The GLB uses the repo's usual print-frame to glTF change, (x, y, z) mm to (x, z, -y) / 1000, so it sits in a hand slot as any printed accessory's
   GLB does. Which way the game turns +y toward the camera is part of the equip question (open question 2); it is not decided here.
 - **Budgets (kept):** the whole asset at most 1,000 triangles and 25 KB (25,600 bytes) as a GLB; at most three colour zones (named materials); round
   things are built at 28 segments (24 for the ball, 30 for the fruit, 32 to 36 for discs and the marble). No UVs are authored. Measured on the 19 built
-  items: 168 to 848 triangles, 5.2 to 13.8 KB each (168 KB for all 19), at most 3 zones, so the proposed budget stands with room.
+  items: 168 to 848 triangles, 5.2 to 13.8 KB each (168 KB for all 19), at most 3 zones, so the proposed budget stands with room. Measured on all
+  60: 52 to 848 triangles, 2.9 to 16.1 KB each, 499 KB in all; 17 items have one zone, 27 two and 16 three.
 - **Photo as colour:** the game projects the photo onto the whole asset from the front, as `buildPhotoAccessoryMesh` does for the digital
   accessory. The colour zones are the fallback for an item with no photo.
 - **Printable version:** only called printable if the gates pass (the honest-claims rule in forge-ai-spec.md). Items that do not pass are digital-only
@@ -173,7 +194,7 @@ result, and is the strongest argument for the library.
 
 ## In the Garage weekends
 
-The 50 items are 50 weekend loaners, almost exactly a year of Fridays. See "Household library drops" in
+The 60 items are 60 weekend loaners, a little over a year of Fridays. See "Household library drops" in
 [garage-weekend-spec.md](garage-weekend-spec.md): the weekend's New part is a library item; the Idea kind can be "find one at home";
 the garage tools are a natural weekend pack.
 
@@ -181,19 +202,21 @@ the garage tools are a natural weekend pack.
 
 Built (phase 2), in two files:
 
-- `tests/household-catalog.test.ts` (fast, no geometry built): 50 unique ids; every word maps to exactly one item; every scan rank is used once, exists
+- `tests/household-catalog.test.ts` (fast, no geometry built): 60 unique ids; every word maps to exactly one item; every scan rank is used once, exists
   in the scan list and carries that list's size; families, tags and prop sizes; no brand term. Every committed GLB is read back by a reader written in
   the test (not the writer's code) and checked as geometry: size and hash, within the budget, a material per zone in its colour, the triangle counts,
-  standing on z = 0 with its longest side the prop size, a closed and consistently oriented surface whose signed volume is the solid's, and unit
-  normals that point outwards. The catalog checker (`household_catalog.py --verify`) is run on copies broken in 13 ways and must fail each.
+  standing on z = 0 with its longest side the prop size, no triangle without area, a closed and consistently oriented surface whose signed volume is
+  the solid's, and unit normals that point outwards. The catalog checker (`household_catalog.py --verify`) is run on copies broken in 13 ways and must
+  fail each.
 - `tests/household-build.test.ts` (needs the partspec venv, skipped without it): `build_household.py --check` finds the committed files exactly as a
   fresh build produces them (nobody edited a builder or the data without rebuilding), a partial build matches byte for byte, and `--check` reports a
   changed byte, a missing file, a stray file and an edited catalog. `tests/fixtures/household_canaries.py` feeds the build's checks broken solids
   (a floating part, off the floor, wrong size, a grip that misses or only grazes, empty), budget overruns, an uncoloured zone, a bad colour and a brand
-  word; each must be caught.
+  word; each must be caught. Two regressions are kept as canaries (the first carrot's touching leaves, the first board game's pinched squares): the
+  build must refuse each and accept the item now in the library.
 
-Still to build (phase 3): a printable version marked printable only if it passes its gates. Matching (phase 4): each word finds its item, a near word
-finds nothing, and the offer is never made below the confidence rule.
+Still to build: a printable version marked printable only if it passes its gates (see "Printable versions"). Matching (phase 4): each word finds its
+item, a near word finds nothing, and the offer is never made below the confidence rule.
 
 ## Phase 2: what was built
 
@@ -234,18 +257,52 @@ colours, with the floor and the grip point marked: grip at the bottom, zones in 
 the front, the pencil is held by its eraser with the point up.
 
 **Open from this phase:** the frame's front (+y here, glTF -z in the file) against what the game's hand slot expects (decided to settle in phase 4,
-see "Decided after phase 2"); the spinning top is held by its 3.4 mm point (it passes, with 33 mm3 of contact, but a stick under a point is a thin
-join; see open question 2 for the three options).
+see "Decided after phase 2"); the spinning top was held by its point (it passed with 33 mm3 of contact, a thin join); Dan chose the blunt peg
+(71), see "Decided after phase 2".
+
+## Phases 3 and 5: what was built (2026-11-03)
+
+The other 31 of the first 50 (phase 3) and the next ten (phase 5) were built the way phase 2 was: one builder each in `household_builders.py`, a GLB
+each, a catalog row, the same build rules and the same tests. `parts/partspec/.venv/bin/python3 parts/kip/household/build_household.py` rebuilds all
+60 in a few seconds, byte for byte. Every GLB was decoded by the independent reader and drawn from three sides before it was accepted.
+
+- **How the new ones are held.** Handled items stand handle down with the working end up (hammer, screwdriver, pliers, toothbrush, paintbrush, marker,
+  crayon, glue stick, toy sword, bubble wand, fork, key, ruler, hairbrush). The carrot is held by its blunt 3.6 mm tip with its leaves up, the key by
+  its ring, the avocado is a half on its flat base (skin, flesh and a pit standing proud of the front), the stapler, comb, board game, notebook, book,
+  cereal box, soap, playing cards and jigsaw piece stand or lie with their big face to +y, and the sponge lies flat so the front shows its two layers.
+  Flat items are plates with their faces to +y. Tools wear a `garage` or `tool` tag; `sharp-looking` items (fork, scissors, screwdriver, toy sword)
+  end in rounded tips of radius 1.6 mm or more.
+- **Grip margins.** The thinnest contacts with the shaft, of 72 mm3: plate 19, spinning top 33, banana 35, avocado 36, yo-yo 37, lemon 37, ruler 38,
+  book 43, comb 43, notebook 44, key 44. The threshold stays 12.
+- **What the checks and the pictures found in the new ones** (each is now a rule or a canary, so it cannot come back):
+  - **The first carrot** had three leaves growing from one point; where they touched edge on the union left two triangles with no area, which only
+    the file's 16-bit grid showed. The build now counts zero-area triangles in the encoded file and refuses (a triangle's area there is a whole multiple
+    of half a step squared, about 1e-6 mm2 for a 90 mm item, so under 1e-7 is exactly zero); the independent reader checks the same.
+  - **The first checkerboard** (board game) had dark squares meeting at their corners, which pinches the surface along a line. The build's own checks
+    (one connected solid, the volume) did not see it; the independent reader's welded-edge test did. The build now runs the same test on the file's grid
+    (every directed edge once, its reverse once), and the cells are 14 mm on a 15 mm pitch.
+  - **A clockwise 2D polygon is silently dropped** by manifold3d. The stapler's arm came out empty (the build said so), and the playing cards' heart
+    lost its triangle and looked like a bow (only the picture showed it). Every polygon is written counter-clockwise.
+  - **Pages 0.1 mm off the boards** (notebook, book) left slits and internal faces that drew over the cover in the renderer. The pages now overlap the
+    boards by 0.2 mm.
+- **Tests.** The two household files went from 163 tests to 475. Mutation rounds on what was added: 12 changes to the new builders (a floating stem or
+  handle, a grip that misses, a sliver of a fork, a zone with no colour, a reversed polygon, and a harmless nudge that only the drift check can see)
+  and 8 to the new checks (each check removed or weakened in turn, and the old carrot and board game put back): all 20 were killed. The round found a
+  trap in its own driver: Python reuses a cached `.pyc` for a source file of the same size changed within the same second, so a run could execute the
+  previous mutation. The driver now clears `__pycache__` and sets `PYTHONDONTWRITEBYTECODE`.
+- **What phase 5 did not do.** The properly soft items (sneaker, slipper, sock, sunglasses) are still out. The age rule's data (`minBand`, `simple`,
+  the support tool) and the blunt-peg top were built after Dan confirmed them, below.
 
 ## Phases
 
 1. **Spec and pilot** (this document): the list, the pilot, the numbers. Done.
 2. **The 15 simplest** (the pure revolved items, family R): builders, the GLB for each, the catalog JSON and the tests. **Done 2026-11-03**, with
    the four pilot items kept (mug, wooden spoon, pencil, banana): 19 built. See below.
-3. **The rest of the 50**, including the composites and the organic items; the printable-relief "make it printable" step; the build test.
+3. **The rest of the 50**, including the composites and the organic items; the build test. **Done 2026-11-03**: all 50 built. The printable-relief step is on demand (decided after phase 2); its measurement is in "Printable versions".
 4. **The game side:** equipping a library item in the hand slot, the match offer in the print panel, the weekend loaner. Needs a decision on how a
    GLB part is equipped in the game (the Kip viewer already loads a custom prop into the hand; the React game does not yet).
-5. **The next ten** (plain boxes and the first soft shapes).
+5. **The next ten** (plain boxes, a puzzle piece, soap and a sponge). **Done 2026-11-03**: board game, jigsaw piece, notebook, book, playing cards,
+   pencil case, soap, sponge, cereal box and lunchbox, all from the scan list. The properly soft items come after.
 
 ## Decided after phase 2 (Dan, 2026-11-03)
 
@@ -254,25 +311,37 @@ join; see open question 2 for the three options).
    **simplified item to match**, or a **multi-purpose tool** that does the job of several, so what the child is doing still works; an older band
    **needs more of the real tools**. (Dan: "if tools [are] disabled use the support tools to work in lower age tiers but in older require more
    tools".)
-   - **Proposed mechanism: my reading of "support tools", not confirmed, and the numbers are mine.** A tool job in a weekend names what it needs.
-     Bands 0-1: no `sharp-looking` items and no real tools; one chunky, rounded multi-purpose toy tool (the support tool, a new item outside the 50)
-     stands in for any tool job; simplified shapes for matching; pick between two by picture. Band 2: blunt tools allowed (hammer, pliers,
-     flashlight, tape measure, bucket), no `sharp-looking`; the support tool still stands in for the rest; a tool job needs 1 tool. Band 3: every item;
-     the support tool no longer stands in; a tool job needs 2 different tools. Bands 4-5: every item; a tool job needs 3.
-   - The catalog already carries what the rule reads (`tool`, `garage`, `sharp-looking`); a `minBand` per item and a `simple` variant are not built.
+   - **Confirmed (Dan, 2026-11-03: "agreed yes to both"):** one chunky, rounded multi-purpose toy tool, the **support tool** (a new item outside the
+     60), stands in for the tool jobs of the youngest bands, and older bands need more of the real tools. A tool job in a weekend names what it needs.
+
+     | Band (age) | Items shown | A tool job needs |
+     | --- | --- | --- |
+     | 0-1 (2-3, 3-4) | no `sharp-looking` item and no real tool; simple shapes; pick between two by picture | the support tool, which stands in for any job |
+     | 2 (5-6) | blunt tools too (hammer, pliers, flashlight, tape measure, bucket), no `sharp-looking` | 1 tool; the support tool still stands in for the rest |
+     | 3 (7-9) | every item; the support tool no longer stands in | 2 different tools |
+     | 4-5 (10-12, 13+) | every item | 3 different tools |
+
+   - **Built (2026-11-03):** a `minBand` on every catalog row, computed from its tags and checked (sharp-looking items 3, the other garage items 2, the
+     other 51 items 0); a `simple` flag on 20 items that read at a glance for ages 2 to 4 (one or two colours, never a tool, never sharp-looking, at
+     least three families: ball, mug, water bottle, drinking glass, bowl, plate, orange, banana, carrot, lemon, wooden spoon, toothbrush, crayon, soap,
+     sponge, toy brick, yo-yo, flying disc, cookie tin, marble); and the support tool itself, `support_tool` (a mallet head with a gear on its front, handle
+     down), held in the catalog's separate `support` list so the 60 stay 60 and no word ever maps to it. It is shown in bands 0 to 2.
+   - **Not built:** the Garage's side, a tool job counting 1, 2 or 3 different tools by band and the support tool standing in (it reads `minBand`,
+     `maxBand` and the support list; `src/lib/garage.ts` is where it lands), and per-item simplified shapes (the `simple` pool picks items that are
+     already simple; an item that is complicated, such as the comb or the ruler, is simply not in it).
 2. **Equip in the game: ok.** Decided in phase 4 by loading one library GLB through the Kip viewer's custom-prop hand path and seeing which way it
    faces; if it faces away, the equip step turns it 180 degrees about z and the assets stay in the printed-part frame.
 3. **Keeping a weekend loaner: scan the real one** (the real-life leg), **with finding it in a room of the map as the fallback** for a child who cannot
    scan.
 4. **Printable versions: digital first, a printable version on demand.** Built only for an item a weekend asks for, and called printable only if it
    passes the gates.
+5. **The spinning top gets a short blunt peg** (Dan, 2026-11-03: "agreed yes to both"). Done: the 6.8 mm peg gives 71 of 72 mm3 of contact with the
+   shaft where the 3.2 mm point gave 33, and it still reads as a top; a test keeps it above 60.
 
 ## Open questions
 
-1. **The support tool and the numbers above:** is a single multi-purpose toy tool what was meant, and are the band cut-offs and "a job needs 1, 2, 3
-   tools" right? Until confirmed, the Garage spec's hold-back of the garage tools from bands 0 and 1 stands.
-2. **The spinning top.** Held by its point it passes with 33 of 72 mm3 of contact. Flipped (held by its spindle) it has full contact (72) but reads as
-   a mushroom or a lampshade on a stick. A short blunt peg on the tip keeps it reading as a top and has 71. Recommended: the blunt peg. Not changed in
-   the repo until decided. Pictures: scratchpad `household/top-compare-sheet-1.png`.
-3. **The silhouette check** in the confidence rule needs a threshold from real photos: the photo batch tool can supply it once there are more
+1. **The silhouette check** in the confidence rule needs a threshold from real photos: the photo batch tool can supply it once there are more
    photos of forks, spatulas and wands.
+2. **Tool jobs in the Garage:** the counts (1, 2, 3 tools) and the support tool standing in are decided and not yet in the Garage's code; they come
+   with the weekend loaner wiring.
+3. **The soft items** (sneaker, slipper, sock, sunglasses) are not built and need a decision on how a soft shape is drawn as a held, rigid part.

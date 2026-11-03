@@ -118,6 +118,9 @@ describe.skipIf(!PYTHON)("household build", () => {
     }, 120_000);
 
     it("passes a sound item", () => expect(c.good).toEqual([]));
+    it("holds the spinning top by a blunt peg: nearly all of the shaft's footprint meets it, where a sharp point met under half", () => {
+      expect(c.grip_spinning_top_mm3).toBeGreaterThan(60);
+    });
     it("catches a part that floats free of the rest", () => expect(c.floating_piece).toEqual([expect.stringMatching(/2 separate pieces/)]));
     it("catches an item that is not on the floor", () => expect(c.off_the_floor.join("\n")).toMatch(/lowest point is z = 3/));
     it("catches an item of the wrong size", () => expect(c.wrong_size).toEqual([expect.stringMatching(/longest side is 20\.000 mm, not the prop size 40 mm/)]));
@@ -134,6 +137,25 @@ describe.skipIf(!PYTHON)("household build", () => {
     });
     it("catches a brand word", () => expect(c.brand_in_note).toEqual([expect.stringMatching(/brand term/)]));
     it("does not treat an item without a builder as an error", () => expect(c.unbuilt_item_is_not_an_error).toEqual([false, []]));
+    it("counts a triangle that has no area in the file (a sliver the 16-bit grid collapses), and none in a sound mesh", () => {
+      expect(c.glb_sound_mesh).toBe(0);
+      expect(c.sliver_is_real_in_floats).toBeGreaterThan(1e-5); // it is not degenerate before quantising: only the file's own grid shows it
+      expect(c.glb_sliver).toBeGreaterThanOrEqual(1);
+    });
+    it("refuses the first carrot (leaves touching edge on left two slivers) and accepts the one in the library", () => {
+      expect(c.sliver_carrot.join("\n")).toMatch(/carrot: 2 triangle\(s\) with no area in the file/); // its open edges are reported too: both come from the same touching leaves
+      expect(c.real_carrot).toEqual([]);
+    });
+    it("counts the edges that are open or pinched in the file: none in a cube or two properly overlapping cubes, some where cubes touch along a line or a triangle is missing", () => {
+      expect(c.open_edges_one_cube).toBe(0);
+      expect(c.open_edges_overlapping_cubes).toBe(0);
+      expect(c.open_edges_touching_along_a_line).toBeGreaterThan(0);
+      expect(c.open_edges_hole).toBeGreaterThan(0);
+    });
+    it("refuses the first board game (squares meeting at their corners pinch the surface) and accepts the one in the library", () => {
+      expect(c.pinched_checkerboard).toEqual([expect.stringMatching(/board_game: \d+ edge\(s\) that are open or pinched in the file/)]);
+      expect(c.real_board_game).toEqual([]);
+    });
     it("catches triangles from a piece that was never tagged", () => {
       expect(c.untagged_pieces.length).toBeGreaterThan(0);
       for (const p of c.untagged_pieces) expect(p).toMatch(/untagged piece/);

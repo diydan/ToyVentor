@@ -25,6 +25,8 @@
    ],
    "tags": [],
    "note": "A stripe as a second colour zone.",
+   "minBand": 0,
+   "simple": true,
    "built": true,
    "glb": "ball.glb",
    "bytes": 8000,
@@ -66,6 +68,8 @@
    ],
    "tags": [],
    "note": "Revolved body, opening, D handle.",
+   "minBand": 0,
+   "simple": true,
    "built": true,
    "glb": "mug.glb",
    "bytes": 9748,
@@ -99,6 +103,8 @@
    ],
    "tags": [],
    "note": "Cap as a second colour zone.",
+   "minBand": 0,
+   "simple": true,
    "built": true,
    "glb": "water_bottle.glb",
    "bytes": 10416,
@@ -138,6 +144,8 @@
    ],
    "tags": [],
    "note": "Cap as a second colour zone.",
+   "minBand": 0,
+   "simple": false,
    "built": true,
    "glb": "flask.glb",
    "bytes": 8716,
@@ -177,6 +185,8 @@
    ],
    "tags": [],
    "note": "Open top, shallow.",
+   "minBand": 0,
+   "simple": true,
    "built": true,
    "glb": "drinking_glass.glb",
    "bytes": 6032,
@@ -210,6 +220,8 @@
    ],
    "tags": [],
    "note": "Lid as a second colour zone.",
+   "minBand": 0,
+   "simple": false,
    "built": true,
    "glb": "jam_jar.glb",
    "bytes": 7744,
@@ -250,6 +262,8 @@
    ],
    "tags": [],
    "note": "Plain: no label, no brand.",
+   "minBand": 0,
+   "simple": false,
    "built": true,
    "glb": "soda_can.glb",
    "bytes": 11084,
@@ -284,6 +298,8 @@
    ],
    "tags": [],
    "note": "",
+   "minBand": 0,
+   "simple": true,
    "built": true,
    "glb": "cookie_tin.glb",
    "bytes": 7364,
@@ -319,6 +335,8 @@
    ],
    "tags": [],
    "note": "Shallow recess.",
+   "minBand": 0,
+   "simple": true,
    "built": true,
    "glb": "bowl.glb",
    "bytes": 8020,
@@ -353,6 +371,8 @@
    ],
    "tags": [],
    "note": "Added: the commonest table item the scan list lacks.",
+   "minBand": 0,
+   "simple": true,
    "built": true,
    "glb": "plate.glb",
    "bytes": 9092,
@@ -388,8 +408,32 @@
     "garage"
    ],
    "note": "Added (garage). Handle as a thin arc.",
-   "built": false,
-   "glb": null
+   "minBand": 2,
+   "simple": false,
+   "built": true,
+   "glb": "bucket.glb",
+   "bytes": 15048,
+   "sha256": "c36401f8c3c14468dadd34c0aac2385c69183643aa1c07232d87c9f2f8b6fc13",
+   "tris": 720,
+   "verts": 754,
+   "zones": [
+    {
+     "name": "body",
+     "hex": "#3FA7D6",
+     "tris": 248
+    },
+    {
+     "name": "handle",
+     "hex": "#B8BEC6",
+     "tris": 472
+    }
+   ],
+   "bboxMm": [
+    66.99,
+    65.75,
+    90.0
+   ],
+   "volumeMm3": 32164.4
   },
   {
    "id": "watering_can",
@@ -403,8 +447,37 @@
    ],
    "tags": [],
    "note": "Spout and handle.",
-   "built": false,
-   "glb": null
+   "minBand": 0,
+   "simple": false,
+   "built": true,
+   "glb": "watering_can.glb",
+   "bytes": 10396,
+   "sha256": "7225549216b92f108099bc387c7b0416ffdac0f99c26edb42e03fad6eb7e9cbb",
+   "tris": 458,
+   "verts": 466,
+   "zones": [
+    {
+     "name": "body",
+     "hex": "#4FA36B",
+     "tris": 282
+    },
+    {
+     "name": "handle",
+     "hex": "#2F7A4B",
+     "tris": 118
+    },
+    {
+     "name": "rose",
+     "hex": "#D9DDE0",
+     "tris": 58
+    }
+   ],
+   "bboxMm": [
+    90.0,
+    39.78,
+    49.39
+   ],
+   "volumeMm3": 47577.4
   },
   {
    "id": "potted_plant",
@@ -421,8 +494,37 @@
    ],
    "tags": [],
    "note": "Pot plus a few leaf lofts.",
-   "built": false,
-   "glb": null
+   "minBand": 0,
+   "simple": false,
+   "built": true,
+   "glb": "potted_plant.glb",
+   "bytes": 14508,
+   "sha256": "db9a06440ac0c335b01c8565101dac1f70a423afe5639efc58222091c79abcec",
+   "tris": 706,
+   "verts": 684,
+   "zones": [
+    {
+     "name": "pot",
+     "hex": "#C8693A",
+     "tris": 264
+    },
+    {
+     "name": "soil",
+     "hex": "#5A3E2B",
+     "tris": 107
+    },
+    {
+     "name": "leaves",
+     "hex": "#4FAE4A",
+     "tris": 335
+    }
+   ],
+   "bboxMm": [
+    61.19,
+    49.17,
+    90.0
+   ],
+   "volumeMm3": 47027.2
   },
   {
    "id": "spinning_top",
@@ -437,10 +539,12 @@
    ],
    "tags": [],
    "note": "Spins in the game.",
+   "minBand": 0,
+   "simple": false,
    "built": true,
    "glb": "spinning_top.glb",
    "bytes": 11088,
-   "sha256": "5f4bd8303b90676e607f14e1b88a81921d7668c71ce5467976def701af5a6dc8",
+   "sha256": "ee23106c0835ef52de133530c9c3607fde17c1829c7dc86ed9d2f8e8b6b67a71",
    "tris": 616,
    "verts": 506,
    "zones": [
@@ -455,7 +559,7 @@
     52.63,
     60.0
    ],
-   "volumeMm3": 40090.4
+   "volumeMm3": 40673.8
   },
   {
    "id": "yo_yo",
@@ -470,6 +574,8 @@
    ],
    "tags": [],
    "note": "",
+   "minBand": 0,
+   "simple": true,
    "built": true,
    "glb": "yo_yo.glb",
    "bytes": 10516,
@@ -504,6 +610,8 @@
    ],
    "tags": [],
    "note": "Spins in the game.",
+   "minBand": 0,
+   "simple": true,
    "built": true,
    "glb": "flying_disc.glb",
    "bytes": 7800,
@@ -536,6 +644,8 @@
    ],
    "tags": [],
    "note": "Prop scale is larger than life so it can be held.",
+   "minBand": 0,
+   "simple": true,
    "built": true,
    "glb": "marble.glb",
    "bytes": 7444,
@@ -568,8 +678,37 @@
    ],
    "tags": [],
    "note": "Stem and leaf as colour zones.",
-   "built": false,
-   "glb": null
+   "minBand": 0,
+   "simple": false,
+   "built": true,
+   "glb": "apple.glb",
+   "bytes": 11800,
+   "sha256": "7be5679359359d06c74597f965b299fb0d21876bdbc4a307e3486c511ff73799",
+   "tris": 690,
+   "verts": 469,
+   "zones": [
+    {
+     "name": "body",
+     "hex": "#D93A3A",
+     "tris": 538
+    },
+    {
+     "name": "stem",
+     "hex": "#6B4A2A",
+     "tris": 68
+    },
+    {
+     "name": "leaf",
+     "hex": "#4FA84A",
+     "tris": 84
+    }
+   ],
+   "bboxMm": [
+    79.93,
+    79.93,
+    80.0
+   ],
+   "volumeMm3": 244245.2
   },
   {
    "id": "orange",
@@ -583,6 +722,8 @@
    ],
    "tags": [],
    "note": "Stem nub as a second colour zone.",
+   "minBand": 0,
+   "simple": true,
    "built": true,
    "glb": "orange.glb",
    "bytes": 8648,
@@ -621,6 +762,8 @@
    ],
    "tags": [],
    "note": "",
+   "minBand": 0,
+   "simple": true,
    "built": true,
    "glb": "lemon.glb",
    "bytes": 9704,
@@ -653,6 +796,8 @@
    ],
    "tags": [],
    "note": "Stem as a second colour zone.",
+   "minBand": 0,
+   "simple": true,
    "built": true,
    "glb": "banana.glb",
    "bytes": 7936,
@@ -690,8 +835,32 @@
    ],
    "tags": [],
    "note": "",
-   "built": false,
-   "glb": null
+   "minBand": 0,
+   "simple": true,
+   "built": true,
+   "glb": "carrot.glb",
+   "bytes": 9976,
+   "sha256": "7984de919a1bd1ddbdd209088abd06e1a73e57ee123dfee0cf5dce4f64fff6b6",
+   "tris": 508,
+   "verts": 438,
+   "zones": [
+    {
+     "name": "body",
+     "hex": "#F28A1E",
+     "tris": 404
+    },
+    {
+     "name": "leaf",
+     "hex": "#4FA84A",
+     "tris": 104
+    }
+   ],
+   "bboxMm": [
+    22.96,
+    22.96,
+    90.0
+   ],
+   "volumeMm3": 14943.0
   },
   {
    "id": "avocado",
@@ -705,8 +874,37 @@
    ],
    "tags": [],
    "note": "",
-   "built": false,
-   "glb": null
+   "minBand": 0,
+   "simple": false,
+   "built": true,
+   "glb": "avocado.glb",
+   "bytes": 6960,
+   "sha256": "d1b84beaa13245e2b67051a9ab2a711f283ed345120d2c406a8994fef595dfe3",
+   "tris": 360,
+   "verts": 230,
+   "zones": [
+    {
+     "name": "skin",
+     "hex": "#2F5D34",
+     "tris": 237
+    },
+    {
+     "name": "flesh",
+     "hex": "#C9DE7A",
+     "tris": 47
+    },
+    {
+     "name": "pit",
+     "hex": "#7A4A2A",
+     "tris": 76
+    }
+   ],
+   "bboxMm": [
+    75.48,
+    47.18,
+    90.0
+   ],
+   "volumeMm3": 122382.9
   },
   {
    "id": "wooden_spoon",
@@ -723,6 +921,8 @@
    ],
    "tags": [],
    "note": "Bowl dished.",
+   "minBand": 0,
+   "simple": true,
    "built": true,
    "glb": "wooden_spoon.glb",
    "bytes": 13796,
@@ -757,8 +957,27 @@
     "sharp-looking"
    ],
    "note": "Blunt tines (radius 1.6 mm or more).",
-   "built": false,
-   "glb": null
+   "minBand": 3,
+   "simple": false,
+   "built": true,
+   "glb": "fork.glb",
+   "bytes": 5356,
+   "sha256": "9c09eb78856e26d35158450c67c4c23405a0c28dbb1a7bf53a614b0d3d004fe1",
+   "tris": 204,
+   "verts": 236,
+   "zones": [
+    {
+     "name": "body",
+     "hex": "#C9CDD3",
+     "tris": 204
+    }
+   ],
+   "bboxMm": [
+    17.61,
+    4.6,
+    90.0
+   ],
+   "volumeMm3": 4447.9
   },
   {
    "id": "key",
@@ -772,8 +991,27 @@
    ],
    "tags": [],
    "note": "",
-   "built": false,
-   "glb": null
+   "minBand": 0,
+   "simple": false,
+   "built": true,
+   "glb": "key.glb",
+   "bytes": 6076,
+   "sha256": "4b83b90d76ee9f29f117369535b1daecdec7170ec157014e8834c23f3af166bf",
+   "tris": 236,
+   "verts": 280,
+   "zones": [
+    {
+     "name": "body",
+     "hex": "#D9B24C",
+     "tris": 236
+    }
+   ],
+   "bboxMm": [
+    27.35,
+    4.1,
+    60.0
+   ],
+   "volumeMm3": 3209.7
   },
   {
    "id": "comb",
@@ -787,8 +1025,27 @@
    ],
    "tags": [],
    "note": "Teeth wide enough to print (at least 1.6 mm).",
-   "built": false,
-   "glb": null
+   "minBand": 0,
+   "simple": false,
+   "built": true,
+   "glb": "comb.glb",
+   "bytes": 9088,
+   "sha256": "3c889ba99228117ea426e5dc7758795755003871b4bb0a2a2a034a0c7420f018",
+   "tris": 324,
+   "verts": 488,
+   "zones": [
+    {
+     "name": "body",
+     "hex": "#4A8FE0",
+     "tris": 324
+    }
+   ],
+   "bboxMm": [
+    90.0,
+    3.6,
+    36.0
+   ],
+   "volumeMm3": 8352.0
   },
   {
    "id": "hairbrush",
@@ -803,8 +1060,37 @@
    ],
    "tags": [],
    "note": "",
-   "built": false,
-   "glb": null
+   "minBand": 0,
+   "simple": false,
+   "built": true,
+   "glb": "hairbrush.glb",
+   "bytes": 15776,
+   "sha256": "05f45124770b9ef59faabe04da6021af468706fb025783b48c2a7deefb3fb53a",
+   "tris": 678,
+   "verts": 805,
+   "zones": [
+    {
+     "name": "handle",
+     "hex": "#B5763E",
+     "tris": 174
+    },
+    {
+     "name": "head",
+     "hex": "#E08FB0",
+     "tris": 248
+    },
+    {
+     "name": "bristles",
+     "hex": "#F4EFE6",
+     "tris": 256
+    }
+   ],
+   "bboxMm": [
+    42.75,
+    15.08,
+    90.0
+   ],
+   "volumeMm3": 20302.8
   },
   {
    "id": "toothbrush",
@@ -819,8 +1105,32 @@
    ],
    "tags": [],
    "note": "",
-   "built": false,
-   "glb": null
+   "minBand": 0,
+   "simple": true,
+   "built": true,
+   "glb": "toothbrush.glb",
+   "bytes": 8052,
+   "sha256": "64b5a904415e6af972666a5e791ff2992f9ca5f65ae7e4e2de80fe25ce151752",
+   "tris": 276,
+   "verts": 392,
+   "zones": [
+    {
+     "name": "handle",
+     "hex": "#2FB5B0",
+     "tris": 148
+    },
+    {
+     "name": "bristles",
+     "hex": "#F4F4F0",
+     "tris": 128
+    }
+   ],
+   "bboxMm": [
+    8.49,
+    10.4,
+    90.0
+   ],
+   "volumeMm3": 3132.0
   },
   {
    "id": "paintbrush",
@@ -836,8 +1146,37 @@
    ],
    "tags": [],
    "note": "The bare word 'brush' goes here: hair and tooth brushes need their own word.",
-   "built": false,
-   "glb": null
+   "minBand": 0,
+   "simple": false,
+   "built": true,
+   "glb": "paintbrush.glb",
+   "bytes": 8088,
+   "sha256": "6b260956966d128b4cb74b20375f62d7974e82213792530d223cb9e63646b6c7",
+   "tris": 440,
+   "verts": 282,
+   "zones": [
+    {
+     "name": "handle",
+     "hex": "#D9A441",
+     "tris": 220
+    },
+    {
+     "name": "ferrule",
+     "hex": "#C9CDD3",
+     "tris": 80
+    },
+    {
+     "name": "bristles",
+     "hex": "#2E6FD8",
+     "tris": 140
+    }
+   ],
+   "bboxMm": [
+    9.6,
+    9.6,
+    90.0
+   ],
+   "volumeMm3": 4426.6
   },
   {
    "id": "pencil",
@@ -851,6 +1190,8 @@
    ],
    "tags": [],
    "note": "Held by the eraser end. Ferrule and eraser as colour zones.",
+   "minBand": 0,
+   "simple": false,
    "built": true,
    "glb": "pencil.glb",
    "bytes": 5188,
@@ -896,8 +1237,32 @@
    ],
    "tags": [],
    "note": "",
-   "built": false,
-   "glb": null
+   "minBand": 0,
+   "simple": false,
+   "built": true,
+   "glb": "marker.glb",
+   "bytes": 5988,
+   "sha256": "31263c9a3d9d4fcd648c927ede5a01073658e1b9dea62775e154cc3ecc8a3b38",
+   "tris": 260,
+   "verts": 230,
+   "zones": [
+    {
+     "name": "body",
+     "hex": "#2E86DE",
+     "tris": 60
+    },
+    {
+     "name": "cap",
+     "hex": "#F2F2F2",
+     "tris": 200
+    }
+   ],
+   "bboxMm": [
+    13.5,
+    12.4,
+    90.0
+   ],
+   "volumeMm3": 8803.5
   },
   {
    "id": "crayon",
@@ -912,8 +1277,32 @@
    ],
    "tags": [],
    "note": "One crayon, not the box.",
-   "built": false,
-   "glb": null
+   "minBand": 0,
+   "simple": true,
+   "built": true,
+   "glb": "crayon.glb",
+   "bytes": 6736,
+   "sha256": "a751a851184ddf11b5961f98b4c3da408d967b312f903157ca1462e4787fe634",
+   "tris": 320,
+   "verts": 262,
+   "zones": [
+    {
+     "name": "body",
+     "hex": "#E8483A",
+     "tris": 200
+    },
+    {
+     "name": "wrapper",
+     "hex": "#F5E6C8",
+     "tris": 120
+    }
+   ],
+   "bboxMm": [
+    9.8,
+    9.8,
+    90.0
+   ],
+   "volumeMm3": 5320.0
   },
   {
    "id": "eraser",
@@ -928,8 +1317,32 @@
    ],
    "tags": [],
    "note": "",
-   "built": false,
-   "glb": null
+   "minBand": 0,
+   "simple": false,
+   "built": true,
+   "glb": "eraser.glb",
+   "bytes": 4900,
+   "sha256": "03e7cacd4e223ea54cb140235631bb5a0468e1de676147f966ea951ba14616c3",
+   "tris": 252,
+   "verts": 144,
+   "zones": [
+    {
+     "name": "body",
+     "hex": "#F2A7B8",
+     "tris": 148
+    },
+    {
+     "name": "sleeve",
+     "hex": "#3B6FD4",
+     "tris": 104
+    }
+   ],
+   "bboxMm": [
+    60.0,
+    13.2,
+    23.2
+   ],
+   "volumeMm3": 16065.3
   },
   {
    "id": "ruler",
@@ -943,8 +1356,32 @@
    ],
    "tags": [],
    "note": "Tick marks as raised ribs.",
-   "built": false,
-   "glb": null
+   "minBand": 0,
+   "simple": false,
+   "built": true,
+   "glb": "ruler.glb",
+   "bytes": 11296,
+   "sha256": "6fd3f5d723c50ce377873979ba3f458671a0bb0d03f19a71ce382ff290e0e8bd",
+   "tris": 448,
+   "verts": 578,
+   "zones": [
+    {
+     "name": "body",
+     "hex": "#F2D16B",
+     "tris": 192
+    },
+    {
+     "name": "ticks",
+     "hex": "#2A2A2A",
+     "tris": 256
+    }
+   ],
+   "bboxMm": [
+    18.0,
+    3.8,
+    90.0
+   ],
+   "volumeMm3": 5251.5
   },
   {
    "id": "scissors",
@@ -960,8 +1397,32 @@
     "sharp-looking"
    ],
    "note": "Blunt blades, loops left open as relief only.",
-   "built": false,
-   "glb": null
+   "minBand": 3,
+   "simple": false,
+   "built": true,
+   "glb": "scissors.glb",
+   "bytes": 10104,
+   "sha256": "3c736cce27ab2c356b69ff1d97d283388bb75379b41535b7ffee49491dfb906e",
+   "tris": 452,
+   "verts": 476,
+   "zones": [
+    {
+     "name": "blade",
+     "hex": "#C9CDD3",
+     "tris": 120
+    },
+    {
+     "name": "handle",
+     "hex": "#E8483A",
+     "tris": 332
+    }
+   ],
+   "bboxMm": [
+    45.42,
+    5.0,
+    90.0
+   ],
+   "volumeMm3": 5497.7
   },
   {
    "id": "glue_stick",
@@ -976,8 +1437,32 @@
    ],
    "tags": [],
    "note": "",
-   "built": false,
-   "glb": null
+   "minBand": 0,
+   "simple": false,
+   "built": true,
+   "glb": "glue_stick.glb",
+   "bytes": 5712,
+   "sha256": "ca1bf7f26fca486dfbba1e77ca2360aa6b940137b043dba274104e4e4341c5cf",
+   "tris": 238,
+   "verts": 217,
+   "zones": [
+    {
+     "name": "body",
+     "hex": "#F5F1E8",
+     "tris": 70
+    },
+    {
+     "name": "cap",
+     "hex": "#3B6FD4",
+     "tris": 168
+    }
+   ],
+   "bboxMm": [
+    19.2,
+    19.2,
+    90.0
+   ],
+   "volumeMm3": 23327.5
   },
   {
    "id": "stapler",
@@ -991,8 +1476,32 @@
    ],
    "tags": [],
    "note": "",
-   "built": false,
-   "glb": null
+   "minBand": 0,
+   "simple": false,
+   "built": true,
+   "glb": "stapler.glb",
+   "bytes": 2908,
+   "sha256": "a820979fff1c9c775cbb31a73d1d9df2e78a1f79f6acbccd66ee3e07adff40b1",
+   "tris": 52,
+   "verts": 80,
+   "zones": [
+    {
+     "name": "body",
+     "hex": "#D13B3B",
+     "tris": 30
+    },
+    {
+     "name": "base",
+     "hex": "#2B2B2B",
+     "tris": 22
+    }
+   ],
+   "bboxMm": [
+    90.0,
+    16.0,
+    27.0
+   ],
+   "volumeMm3": 28481.0
   },
   {
    "id": "tape_dispenser",
@@ -1007,8 +1516,37 @@
    ],
    "tags": [],
    "note": "",
-   "built": false,
-   "glb": null
+   "minBand": 0,
+   "simple": false,
+   "built": true,
+   "glb": "tape_dispenser.glb",
+   "bytes": 8980,
+   "sha256": "cf949c7f7e21c52266257a19ae122a32e833c9c17ab97177dc508ad28d02a398",
+   "tris": 412,
+   "verts": 372,
+   "zones": [
+    {
+     "name": "body",
+     "hex": "#2B2B2B",
+     "tris": 150
+    },
+    {
+     "name": "tape",
+     "hex": "#F2E2A0",
+     "tris": 162
+    },
+    {
+     "name": "core",
+     "hex": "#B07A4A",
+     "tris": 100
+    }
+   ],
+   "bboxMm": [
+    90.0,
+    22.5,
+    68.52
+   ],
+   "volumeMm3": 65971.1
   },
   {
    "id": "dice",
@@ -1023,8 +1561,32 @@
    ],
    "tags": [],
    "note": "Pips as shallow dimples.",
-   "built": false,
-   "glb": null
+   "minBand": 0,
+   "simple": false,
+   "built": true,
+   "glb": "dice.glb",
+   "bytes": 14280,
+   "sha256": "3abd8ed92a94d595ee49eeb8b7fe2933facdb00cb817a02862c8a87aa4f5485f",
+   "tris": 572,
+   "verts": 768,
+   "zones": [
+    {
+     "name": "body",
+     "hex": "#F5F1E8",
+     "tris": 242
+    },
+    {
+     "name": "pips",
+     "hex": "#222222",
+     "tris": 330
+    }
+   ],
+   "bboxMm": [
+    40.0,
+    40.0,
+    39.23
+   ],
+   "volumeMm3": 55357.1
   },
   {
    "id": "toy_brick",
@@ -1041,8 +1603,27 @@
    ],
    "tags": [],
    "note": "Studs match the Snap line; generic, no brand.",
-   "built": false,
-   "glb": null
+   "minBand": 0,
+   "simple": true,
+   "built": true,
+   "glb": "toy_brick.glb",
+   "bytes": 9328,
+   "sha256": "a67d5c57e07a9c17fe8fadc8097b42586ebff37e633706afa64817cf42610c80",
+   "tris": 332,
+   "verts": 504,
+   "zones": [
+    {
+     "name": "body",
+     "hex": "#D93A3A",
+     "tris": 332
+    }
+   ],
+   "bboxMm": [
+    40.0,
+    20.0,
+    14.5
+   ],
+   "volumeMm3": 10129.0
   },
   {
    "id": "bubble_wand",
@@ -1057,8 +1638,32 @@
    ],
    "tags": [],
    "note": "",
-   "built": false,
-   "glb": null
+   "minBand": 0,
+   "simple": false,
+   "built": true,
+   "glb": "bubble_wand.glb",
+   "bytes": 7088,
+   "sha256": "c5228096e2aaae80c8437d62018a9846c1570ed05bd97b136b0beeb9afaa931c",
+   "tris": 300,
+   "verts": 300,
+   "zones": [
+    {
+     "name": "handle",
+     "hex": "#8E5BD9",
+     "tris": 60
+    },
+    {
+     "name": "ring",
+     "hex": "#4FC3F7",
+     "tris": 240
+    }
+   ],
+   "bboxMm": [
+    36.0,
+    7.41,
+    90.0
+   ],
+   "volumeMm3": 4485.8
   },
   {
    "id": "toy_sword",
@@ -1075,8 +1680,37 @@
     "sharp-looking"
    ],
    "note": "Blunt, rounded edge.",
-   "built": false,
-   "glb": null
+   "minBand": 3,
+   "simple": false,
+   "built": true,
+   "glb": "toy_sword.glb",
+   "bytes": 5544,
+   "sha256": "2a20381ec9ce82b00ae16cb8fe2bc67a8c2e47cd2339f805d8567af31e5c3975",
+   "tris": 184,
+   "verts": 200,
+   "zones": [
+    {
+     "name": "blade",
+     "hex": "#C9CDD3",
+     "tris": 30
+    },
+    {
+     "name": "grip",
+     "hex": "#8A5A2B",
+     "tris": 40
+    },
+    {
+     "name": "hilt",
+     "hex": "#D4A22C",
+     "tris": 114
+    }
+   ],
+   "bboxMm": [
+    26.0,
+    10.4,
+    90.0
+   ],
+   "volumeMm3": 3481.4
   },
   {
    "id": "hammer",
@@ -1094,8 +1728,32 @@
     "tool"
    ],
    "note": "Added (garage).",
-   "built": false,
-   "glb": null
+   "minBand": 2,
+   "simple": false,
+   "built": true,
+   "glb": "hammer.glb",
+   "bytes": 5128,
+   "sha256": "a8dc9dc250d715a855b0d0fb9daad12767e0defa3d45bcdc04af497763065bec",
+   "tris": 180,
+   "verts": 198,
+   "zones": [
+    {
+     "name": "handle",
+     "hex": "#B5763E",
+     "tris": 58
+    },
+    {
+     "name": "head",
+     "hex": "#8D949C",
+     "tris": 122
+    }
+   ],
+   "bboxMm": [
+    57.48,
+    12.27,
+    90.0
+   ],
+   "volumeMm3": 14688.9
   },
   {
    "id": "screwdriver",
@@ -1113,8 +1771,32 @@
     "sharp-looking"
    ],
    "note": "Added (garage). Blunt tip.",
-   "built": false,
-   "glb": null
+   "minBand": 3,
+   "simple": false,
+   "built": true,
+   "glb": "screwdriver.glb",
+   "bytes": 6996,
+   "sha256": "fb2ef3cbe8d2dcb35b6636264c056a2f356d2680b718e8de6227ed7d44c0b402",
+   "tris": 342,
+   "verts": 271,
+   "zones": [
+    {
+     "name": "handle",
+     "hex": "#F2A22C",
+     "tris": 212
+    },
+    {
+     "name": "shaft",
+     "hex": "#B8BEC6",
+     "tris": 130
+    }
+   ],
+   "bboxMm": [
+    19.2,
+    19.2,
+    90.0
+   ],
+   "volumeMm3": 10239.5
   },
   {
    "id": "pliers",
@@ -1131,8 +1813,32 @@
     "tool"
    ],
    "note": "Added (garage).",
-   "built": false,
-   "glb": null
+   "minBand": 2,
+   "simple": false,
+   "built": true,
+   "glb": "pliers.glb",
+   "bytes": 4508,
+   "sha256": "56472ab138a9d1311a988c03cf453c50e690badc89cee29d50495e1d4df8fe00",
+   "tris": 150,
+   "verts": 161,
+   "zones": [
+    {
+     "name": "grip",
+     "hex": "#D93A3A",
+     "tris": 43
+    },
+    {
+     "name": "steel",
+     "hex": "#A9B0B8",
+     "tris": 107
+    }
+   ],
+   "bboxMm": [
+    24.56,
+    7.16,
+    90.0
+   ],
+   "volumeMm3": 10047.9
   },
   {
    "id": "flashlight",
@@ -1149,8 +1855,37 @@
     "garage"
    ],
    "note": "Added (garage). Lens as a glow zone.",
-   "built": false,
-   "glb": null
+   "minBand": 2,
+   "simple": false,
+   "built": true,
+   "glb": "flashlight.glb",
+   "bytes": 10420,
+   "sha256": "6ba7e79ef920971d7216336eb904e71d4ea0c57dd94e028bc33aa50aabd428e6",
+   "tris": 562,
+   "verts": 417,
+   "zones": [
+    {
+     "name": "body",
+     "hex": "#F2C230",
+     "tris": 220
+    },
+    {
+     "name": "head",
+     "hex": "#3A3A3A",
+     "tris": 260
+    },
+    {
+     "name": "lens",
+     "hex": "#FFF1A8",
+     "tris": 82
+    }
+   ],
+   "bboxMm": [
+    30.43,
+    30.43,
+    90.0
+   ],
+   "volumeMm3": 35646.2
   },
   {
    "id": "tape_measure",
@@ -1168,8 +1903,32 @@
     "tool"
    ],
    "note": "Added (garage).",
-   "built": false,
-   "glb": null
+   "minBand": 2,
+   "simple": false,
+   "built": true,
+   "glb": "tape_measure.glb",
+   "bytes": 4588,
+   "sha256": "7013a2e81b46ee77da033d8be849c0daa22e34b554b35ee453fb45bc68689f46",
+   "tris": 140,
+   "verts": 168,
+   "zones": [
+    {
+     "name": "case",
+     "hex": "#F2C230",
+     "tris": 98
+    },
+    {
+     "name": "tape",
+     "hex": "#C9CDD3",
+     "tris": 42
+    }
+   ],
+   "bboxMm": [
+    80.0,
+    20.87,
+    48.7
+   ],
+   "volumeMm3": 47442.4
   },
   {
    "id": "alarm_clock",
@@ -1184,8 +1943,37 @@
    ],
    "tags": [],
    "note": "Bells and feet as a composite.",
-   "built": false,
-   "glb": null
+   "minBand": 0,
+   "simple": false,
+   "built": true,
+   "glb": "alarm_clock.glb",
+   "bytes": 16096,
+   "sha256": "a0a8d10bc73ee3c0ca3919046afa7bd4322b12f7d90a65892f0ba71ff5131ba7",
+   "tris": 800,
+   "verts": 770,
+   "zones": [
+    {
+     "name": "body",
+     "hex": "#E24A3B",
+     "tris": 433
+    },
+    {
+     "name": "face",
+     "hex": "#F5F1E8",
+     "tris": 93
+    },
+    {
+     "name": "bells",
+     "hex": "#C9CDD3",
+     "tris": 274
+    }
+   ],
+   "bboxMm": [
+    77.59,
+    30.26,
+    90.0
+   ],
+   "volumeMm3": 144167.1
   },
   {
    "id": "desk_lamp",
@@ -1200,8 +1988,511 @@
    ],
    "tags": [],
    "note": "Shade revolved, arm as a hulled chain.",
-   "built": false,
-   "glb": null
+   "minBand": 0,
+   "simple": false,
+   "built": true,
+   "glb": "desk_lamp.glb",
+   "bytes": 16468,
+   "sha256": "86fa39023818934cd4b75f85a3eda207513937d864a435339121ba14b709c881",
+   "tris": 842,
+   "verts": 781,
+   "zones": [
+    {
+     "name": "body",
+     "hex": "#3A3A3A",
+     "tris": 404
+    },
+    {
+     "name": "shade",
+     "hex": "#E8A322",
+     "tris": 354
+    },
+    {
+     "name": "bulb",
+     "hex": "#FFF1A8",
+     "tris": 84
+    }
+   ],
+   "bboxMm": [
+    85.74,
+    53.8,
+    90.0
+   ],
+   "volumeMm3": 24488.7
+  },
+  {
+   "id": "board_game",
+   "label": "Board game",
+   "scanRank": 23,
+   "realMm": 300,
+   "propMm": 90,
+   "family": "C",
+   "words": [
+    "board game",
+    "boardgame",
+    "game box"
+   ],
+   "tags": [],
+   "note": "A box on its edge; the lid carries a four by four board as a second colour zone.",
+   "minBand": 0,
+   "simple": false,
+   "built": true,
+   "glb": "board_game.glb",
+   "bytes": 5872,
+   "sha256": "bb0fe7483f2bdec2e59939054f5386099ee2b05d44950c0049e303f0471d4b8f",
+   "tris": 220,
+   "verts": 240,
+   "zones": [
+    {
+     "name": "box",
+     "hex": "#3B6FD4",
+     "tris": 140
+    },
+    {
+     "name": "squares",
+     "hex": "#F5F1E8",
+     "tris": 80
+    }
+   ],
+   "bboxMm": [
+    90.0,
+    20.8,
+    90.0
+   ],
+   "volumeMm3": 161198.8
+  },
+  {
+   "id": "jigsaw",
+   "label": "Jigsaw piece",
+   "scanRank": 24,
+   "realMm": 300,
+   "propMm": 90,
+   "family": "E",
+   "words": [
+    "puzzle",
+    "jigsaw",
+    "jigsaw puzzle",
+    "puzzle piece"
+   ],
+   "tags": [],
+   "note": "One edge piece stands for the puzzle: a flat bottom edge to hold, two knobs and a socket.",
+   "minBand": 0,
+   "simple": false,
+   "built": true,
+   "glb": "jigsaw.glb",
+   "bytes": 6492,
+   "sha256": "624468e4578bacdd3acbae0ae965ea1ce0394d96ab4f16d8e8021631adb9b6cd",
+   "tris": 264,
+   "verts": 300,
+   "zones": [
+    {
+     "name": "body",
+     "hex": "#2FB5B0",
+     "tris": 264
+    }
+   ],
+   "bboxMm": [
+    90.0,
+    9.17,
+    90.0
+   ],
+   "volumeMm3": 46247.1
+  },
+  {
+   "id": "notebook",
+   "label": "Notebook",
+   "scanRank": 39,
+   "realMm": 210,
+   "propMm": 90,
+   "family": "C",
+   "words": [
+    "notebook",
+    "journal",
+    "diary",
+    "exercise book"
+   ],
+   "tags": [],
+   "note": "Cover, pages and an elastic strap as colour zones.",
+   "minBand": 0,
+   "simple": false,
+   "built": true,
+   "glb": "notebook.glb",
+   "bytes": 5244,
+   "sha256": "e4548376a82d58a9a57c4cde95ce7ed5a02e6667030aeee3af43f9ad12d7e324",
+   "tris": 150,
+   "verts": 193,
+   "zones": [
+    {
+     "name": "cover",
+     "hex": "#E8483A",
+     "tris": 91
+    },
+    {
+     "name": "pages",
+     "hex": "#F5F1E8",
+     "tris": 10
+    },
+    {
+     "name": "strap",
+     "hex": "#2B2B2B",
+     "tris": 49
+    }
+   ],
+   "bboxMm": [
+    60.0,
+    9.4,
+    90.0
+   ],
+   "volumeMm3": 47681.2
+  },
+  {
+   "id": "book",
+   "label": "Book",
+   "scanRank": 40,
+   "realMm": 220,
+   "propMm": 90,
+   "family": "C",
+   "words": [
+    "book",
+    "hardback",
+    "storybook",
+    "story book",
+    "picture book"
+   ],
+   "tags": [],
+   "note": "Rounded spine; a plain label with no title.",
+   "minBand": 0,
+   "simple": false,
+   "built": true,
+   "glb": "book.glb",
+   "bytes": 5252,
+   "sha256": "d8463a8fb6de2949723548abc91f7c26aed49e24ee09c19fcedd14f0bd5f422c",
+   "tris": 158,
+   "verts": 191,
+   "zones": [
+    {
+     "name": "cover",
+     "hex": "#2F7A4B",
+     "tris": 132
+    },
+    {
+     "name": "pages",
+     "hex": "#F5E6C8",
+     "tris": 16
+    },
+    {
+     "name": "label",
+     "hex": "#D4A22C",
+     "tris": 10
+    }
+   ],
+   "bboxMm": [
+    62.0,
+    16.8,
+    90.0
+   ],
+   "volumeMm3": 83005.1
+  },
+  {
+   "id": "playing_cards",
+   "label": "Playing cards",
+   "scanRank": 42,
+   "realMm": 90,
+   "propMm": 90,
+   "family": "C",
+   "words": [
+    "card",
+    "cards",
+    "playing card",
+    "playing cards",
+    "deck of cards"
+   ],
+   "tags": [],
+   "note": "A squared deck with one heart: a single card is too thin to hold.",
+   "minBand": 0,
+   "simple": false,
+   "built": true,
+   "glb": "playing_cards.glb",
+   "bytes": 4972,
+   "sha256": "d8a0fbc13818f74ab3d8171354171dc7d8386d86faeb2b23f595cd976615c34e",
+   "tris": 200,
+   "verts": 174,
+   "zones": [
+    {
+     "name": "cards",
+     "hex": "#F5F1E8",
+     "tris": 119
+    },
+    {
+     "name": "heart",
+     "hex": "#D93A3A",
+     "tris": 81
+    }
+   ],
+   "bboxMm": [
+    63.0,
+    16.8,
+    90.0
+   ],
+   "volumeMm3": 89419.6
+  },
+  {
+   "id": "pencil_case",
+   "label": "Pencil case",
+   "scanRank": 47,
+   "realMm": 200,
+   "propMm": 90,
+   "family": "C",
+   "words": [
+    "pencil case",
+    "pencil box",
+    "pencil pouch"
+   ],
+   "tags": [],
+   "note": "Zip and puller as a second colour zone.",
+   "minBand": 0,
+   "simple": false,
+   "built": true,
+   "glb": "pencil_case.glb",
+   "bytes": 5472,
+   "sha256": "422a34df721ce4046c1989669106f882429079ed911aa49a18e8562abc90b500",
+   "tris": 268,
+   "verts": 184,
+   "zones": [
+    {
+     "name": "body",
+     "hex": "#3FA7D6",
+     "tris": 178
+    },
+    {
+     "name": "zip",
+     "hex": "#2B2B2B",
+     "tris": 90
+    }
+   ],
+   "bboxMm": [
+    90.0,
+    30.0,
+    36.0
+   ],
+   "volumeMm3": 72771.1
+  },
+  {
+   "id": "soap",
+   "label": "Bar of soap",
+   "scanRank": 65,
+   "realMm": 90,
+   "propMm": 90,
+   "family": "C",
+   "words": [
+    "soap",
+    "bar of soap"
+   ],
+   "tags": [],
+   "note": "Stands on its long edge; a plain oval, no lettering.",
+   "minBand": 0,
+   "simple": true,
+   "built": true,
+   "glb": "soap.glb",
+   "bytes": 5276,
+   "sha256": "f8240f4ac40debce8361b5451548e144473f20eaf93f94f71995ec567f5362d4",
+   "tris": 252,
+   "verts": 176,
+   "zones": [
+    {
+     "name": "body",
+     "hex": "#F2A7B8",
+     "tris": 182
+    },
+    {
+     "name": "emboss",
+     "hex": "#F5F1E8",
+     "tris": 70
+    }
+   ],
+   "bboxMm": [
+    90.0,
+    26.8,
+    56.0
+   ],
+   "volumeMm3": 119508.6
+  },
+  {
+   "id": "sponge",
+   "label": "Sponge",
+   "scanRank": 66,
+   "realMm": 120,
+   "propMm": 90,
+   "family": "C",
+   "words": [
+    "sponge",
+    "kitchen sponge",
+    "scrubber"
+   ],
+   "tags": [],
+   "note": "Lying flat, so the front shows the two layers and the holes.",
+   "minBand": 0,
+   "simple": true,
+   "built": true,
+   "glb": "sponge.glb",
+   "bytes": 8240,
+   "sha256": "bec587cc5e14e09d2b9291ae93addcda8db67756a80cac694569b63feccea77f",
+   "tris": 364,
+   "verts": 368,
+   "zones": [
+    {
+     "name": "sponge",
+     "hex": "#F5E050",
+     "tris": 254
+    },
+    {
+     "name": "pad",
+     "hex": "#4FA84A",
+     "tris": 110
+    }
+   ],
+   "bboxMm": [
+    90.0,
+    60.0,
+    28.0
+   ],
+   "volumeMm3": 147836.3
+  },
+  {
+   "id": "cereal_box",
+   "label": "Cereal box",
+   "scanRank": 69,
+   "realMm": 190,
+   "propMm": 90,
+   "family": "C",
+   "words": [
+    "cereal box",
+    "cereal",
+    "box"
+   ],
+   "tags": [],
+   "note": "A plain box: window and band as colour zones, no print. The scan list's own word for it is the bare 'box'.",
+   "minBand": 0,
+   "simple": false,
+   "built": true,
+   "glb": "cereal_box.glb",
+   "bytes": 6244,
+   "sha256": "18d7632883d1968a1cc0e02144237a5cb80d5c32bc087b9cc184b45ec51fc3e3",
+   "tris": 252,
+   "verts": 224,
+   "zones": [
+    {
+     "name": "box",
+     "hex": "#F2C230",
+     "tris": 142
+    },
+    {
+     "name": "window",
+     "hex": "#F5F1E8",
+     "tris": 70
+    },
+    {
+     "name": "band",
+     "hex": "#D13B3B",
+     "tris": 40
+    }
+   ],
+   "bboxMm": [
+    56.6,
+    19.1,
+    90.0
+   ],
+   "volumeMm3": 91784.3
+  },
+  {
+   "id": "lunchbox",
+   "label": "Lunchbox",
+   "scanRank": 90,
+   "realMm": 220,
+   "propMm": 90,
+   "family": "C",
+   "words": [
+    "lunchbox",
+    "lunch box"
+   ],
+   "tags": [],
+   "note": "Base, lid, and a latch and handle as the third zone.",
+   "minBand": 0,
+   "simple": false,
+   "built": true,
+   "glb": "lunchbox.glb",
+   "bytes": 11248,
+   "sha256": "f2c96d3070c59b8cab68faa515efe8349067ebc92064f8bfc315dbdcffb2c1fc",
+   "tris": 552,
+   "verts": 492,
+   "zones": [
+    {
+     "name": "base",
+     "hex": "#E8483A",
+     "tris": 112
+    },
+    {
+     "name": "lid",
+     "hex": "#3FA7D6",
+     "tris": 130
+    },
+    {
+     "name": "hardware",
+     "hex": "#B8BEC6",
+     "tris": 310
+    }
+   ],
+   "bboxMm": [
+    90.0,
+    37.2,
+    64.7
+   ],
+   "volumeMm3": 153022.1
+  }
+ ],
+ "support": [
+  {
+   "id": "support_tool",
+   "label": "Toy tool",
+   "scanRank": null,
+   "realMm": 150,
+   "propMm": 90,
+   "family": "RC",
+   "words": [],
+   "tags": [],
+   "note": "A chunky mallet head with a gear on the front: stands in for any tool job in bands 0 to 2. No words: never matched.",
+   "minBand": 0,
+   "maxBand": 2,
+   "simple": true,
+   "built": true,
+   "glb": "support_tool.glb",
+   "bytes": 9324,
+   "sha256": "89b78ea89efb79023e4d4160f8cc81ed7091fd9bd26df14f7cf3954a331903ab",
+   "tris": 388,
+   "verts": 412,
+   "zones": [
+    {
+     "name": "handle",
+     "hex": "#F2A22C",
+     "tris": 62
+    },
+    {
+     "name": "head",
+     "hex": "#3B6FD4",
+     "tris": 174
+    },
+    {
+     "name": "gear",
+     "hex": "#F5E050",
+     "tris": 152
+    }
+   ],
+   "bboxMm": [
+    55.77,
+    29.03,
+    90.0
+   ],
+   "volumeMm3": 58852.6
   }
  ]
 }

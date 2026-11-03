@@ -6,7 +6,7 @@
 
 Each item is built once as a whole 3D solid (household_builders.py), checked (`solid_problems`), and encoded (household_glb.py). The build fails, writing
 nothing, if any built item breaks a rule: one connected solid, standing on z = 0 with its longest side the catalog's prop size, material at the grip
-point, within the triangle, byte and colour-zone budgets, every piece's zone coloured, no brand term.
+point, no zero-area triangle, within the triangle, byte and colour-zone budgets, every piece's zone coloured, no brand term.
 The output is deterministic (no dates), so `--check` is a real drift test.
 """
 from __future__ import annotations
@@ -116,6 +116,10 @@ def build_item(row: dict) -> Tuple[dict, Optional[bytes], List[str]]:
         iid, verts, faces, tri_zone, list(colours.items()),
         extras={"household": {"id": iid, "gripMm": [0, 0, 0], "zones": list(colours), "front": "+y in the library frame (-z in this file)"}},
     )
+    if info["zeroAreaTris"]:
+        problems.append(f"{iid}: {info['zeroAreaTris']} triangle(s) with no area in the file (a sliver where two edges of a union touch)")
+    if info["openEdges"]:
+        problems.append(f"{iid}: {info['openEdges']} edge(s) that are open or pinched in the file (a hole, or two parts touching along a line)")
     if info["tris"] > MAX_TRIS:
         problems.append(f"{iid}: {info['tris']} triangles, at most {MAX_TRIS}")
     if len(glb) > MAX_BYTES:
@@ -137,8 +141,9 @@ def build_item(row: dict) -> Tuple[dict, Optional[bytes], List[str]]:
 
 def build_all(only: Optional[List[str]] = None) -> Tuple[dict, Dict[str, bytes], List[str]]:
     rows = hc.static_rows()
-    problems = hc.problems(rows)
-    ids = {r["id"] for r in rows}
+    support_rows = hc.support_rows()
+    problems = hc.problems(rows) + hc.support_problems(support_rows)
+    ids = {r["id"] for r in rows} | {r["id"] for r in support_rows}
     for o in only or []:
         if o not in ids:
             problems.append(f"--only: unknown item {o!r}")
@@ -152,6 +157,16 @@ def build_all(only: Optional[List[str]] = None) -> Tuple[dict, Dict[str, bytes],
         items.append(entry)
         if glb is not None:
             glbs[row["id"]] = glb
+    support = []
+    for row in support_rows:
+        if only and row["id"] not in only:
+            support.append({**row, "built": False, "glb": None})
+            continue
+        entry, glb, probs = build_item(row)
+        problems += probs
+        support.append(entry)
+        if glb is not None:
+            glbs[row["id"]] = glb
     doc = {
         "version": 1,
         "frame": {
@@ -160,6 +175,7 @@ def build_all(only: Optional[List[str]] = None) -> Tuple[dict, Dict[str, bytes],
         },
         "budget": {"maxTris": MAX_TRIS, "maxBytes": MAX_BYTES, "maxZones": MAX_ZONES},
         "items": items,
+        "support": support,
     }
     return doc, glbs, problems
 
@@ -173,7 +189,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     only = [s for s in args.only.split(",") if s]
 
     doc, glbs, problems = build_all(only or None)
-    for e in doc["items"]:
+    for e in doc["items"] + doc["support"]:
         if e["built"]:
             zs = "/".join(f"{z['name']}:{z['tris']}" for z in e["zones"])
             print(f"{e['id']:15} {e['tris']:4} tris {e['bytes']:6} B  {e['bboxMm']}  zones {zs}")
