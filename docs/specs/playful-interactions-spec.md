@@ -124,14 +124,24 @@ and `lighting.ts` `setDusk` (the tint and the dimmed lights), `propReactions.ts`
 (all mutation-checked) and `scripts/e2e-bed.mjs` in real Chrome (21 checks, including "the bed is still there once the jetpack is found", which fails without the fix); props e2e now 82/82 and feeding e2e 20/20.
 **Not done:** generated Toy Room levels (`levelKit`) do not place a bed (only the default room and the editor do); a robot's power-down; the quiet-hours tie-in.
 
+**Built (2026-11-03, later): hug the teddy, jump on the cushions, kick the ball.** The default Toy Room now has a pile of cushions (x 22.8), a teddy (x 26) and a ball (x 34.5) (generated Toy Room levels already had them). **Tap one and Kip walks over and does it:**
+the **teddy** is hugged (Kip walks to just left of it, the hand-built `hug` clip: arms open, squeeze, ease, squeeze again; the teddy squishes and a heart floats up with a chime at each squeeze, and the toast still says "Brown teddy bear"); the **cushions** are
+jumped on (Kip hops up onto the pile in an eased arc, cheers with both arms up, bounces three times, each smaller, each landing squishing the pile with a rising boing, and hops back down to where it stood); the **ball** is kicked (the hand-built `kick` clip,
+the foot meets it at 0.42 s, it flies, bounces, rolls and stops about four units away and STAYS there, turning as it rolls; then Kip trots after it and stands behind it, so it can be kicked again; kicked to the right, where the camera shows room, unless the wall is too close).
+A tap while Kip walks over drops the visit (Kip goes where it was sent); a tap during the action is swallowed; sleeping and acting never overlap; a vehicle just lets the prop react as before. **Code:** `runtime/visitRoutine.ts` (the generic "walk over, then do something" state machine),
+`runtime/toyRoomActs.ts` (the three acts, the jump's path `jumpPath`, the hearts, the follow), `runtime/ballKick.ts` (ball physics: gravity, bounce, bounce friction, roll friction, walls, always at rest within 10 s), `proceduralClips.ts` (`hug`, `kick`, `cheer`),
+`propReactions.ts` (`onTap` for every prop, `kickBall` with the ball's own motion, `squish`) and a handful of small `world.ts` edits (`ACTS`, shared `TOYFX`, `consume()`, update, reset). **Checked:** 30 + 26 + 13 + 11 + 9 + 23 unit tests (all mutation-checked) and
+`scripts/e2e-toyroom.mjs` in real Chrome (26 checks); props e2e 90/90, feeding 20/20, bed 21/21, orchard 35/35. **Not done:** the teddy does not catch the ball; no robot power-down: **robots are no longer a toy** (`migrateRobotToKip`/`cuType` turn a robot into Kip), so there is nothing to build;
+a vehicle still just refuses the bed (parking it in a garage prop is the spec's idea and is not built). Trap: once the camera has settled Kip is near the middle of the screen, so only about two units to its right are visible (a ball kicked four units away is off screen; that is why Kip follows it).
+
 **More like it, ranked by delight for effort** (all need only a prop plus one or two clips; the table is the backlog):
 
 | Where | Interaction | Needs | Effort |
 | --- | --- | --- | --- |
-| Toy Room | **Ball:** the toy kicks it, it bounces and rolls, the teddy catches | kick clip, ball physics (a roll exists) | small |
+| Toy Room | **Ball:** the toy kicks it, it bounces and rolls, the teddy catches | kick clip, ball physics (a roll exists) | small. **Built (the teddy does not catch)** |
 | Toy Room | **Blocks:** tap to stack a tower, it wobbles, tap the top to knock it down | stack state | small |
-| Toy Room | **Cushions:** jump on them, they squish and boing | bounce clip | small |
-| Toy Room | **Teddy:** hug it, a heart floats up | hug clip | small |
+| Toy Room | **Cushions:** jump on them, they squish and boing | bounce clip | small. **Built** |
+| Toy Room | **Teddy:** hug it, a heart floats up | hug clip | small. **Built** |
 | Toy Room | **Books:** open one, pages flutter and a line of a story is read aloud (the voice path exists) | story text | medium |
 | Toy Room | **Toy piano / xylophone:** tap keys, notes play | a few notes | small |
 | Toy Room | **Mirror:** the toy sees itself and pulls faces (Kip's face system) | face clips | medium |

@@ -12,6 +12,7 @@
 import * as THREE from "three";
 import { colorKeyFromHex, describeObject, languageInfo, type ColorKey, type Described, type LangCode, type NounKey } from "../../../../lib/propNames";
 import { getPropLang } from "../../../../lib/propSpeech";
+import { BALL_BOUNDS, kick as startKick, stepBall, type BallState } from "./ballKick";
 import { kindById, kindFits, slotDirs } from "./treeKinds";
 import { prefetchObjectVoices, sayObject } from "../../../../lib/propVoice";
 import { sfx, sound, tone } from "./audio";
@@ -97,6 +98,8 @@ export interface PropInst {
   glows: Array<{ m: THREE.MeshStandardMaterial; i: number }>;
   kids: Map<THREE.Object3D, ChildBase>;
   slots: Slot[];
+  /** A ball that has been kicked and is still moving: where it is along the floor and how high; null when it is at rest. */
+  kick: BallState | null;
   /** The fruit this prop grows and drops (a tree's `userData.treeKind` says which; apples otherwise) and how many hang at once. */
   fruit: FruitKind;
   fruitSlots: number;
@@ -130,6 +133,8 @@ export interface PropFxDeps {
   canSpeak?: () => boolean;
   /** A bed was tapped: the world sends the toy to it (`inst.holder.position` is where the bed stands). */
   onBed?: (inst: PropInst) => void;
+  /** Any prop was tapped (after it has reacted and named itself): the world may send the toy over to hug the teddy, jump on the cushions or kick the ball. */
+  onTap?: (inst: PropInst) => void;
 }
 
 /** World-space box around a prop's real meshes only: glow sprites (a lantern's is 4 units wide) and our own hit proxy do not count. */
@@ -229,6 +234,19 @@ export function createPropFx(deps: PropFxDeps) {
   const chirp = (inst: PropInst) => tone(360 + ((inst.phase * 37) % 220), 0, 0.07, "triangle", 0.05, 560 + ((inst.phase * 53) % 200));
 
   // ---- pokes (the immediate tap reaction) -------------------------------------------------------------------------------
+  /** The prop gets a squish and nothing else (no name, no sound beyond its own chirp): the teddy being hugged, the cushions being landed on. */
+  function squish(inst: PropInst) { useSquish(inst); }
+  /**
+   * Kick a ball: it flies off along the floor with the given speed and lift, bounces and rolls to a stop (ballKick.ts), staying wherever it ends up. Cancels a roll in place; ignored for a prop
+   * that is not a ball. Returns false if it could not be kicked.
+   */
+  function kickBall(inst: PropInst, vx: number, vy: number): boolean {
+    if (inst.type !== "ball") return false;
+    for (let i = anims.length - 1; i >= 0; i--) { const a = anims[i]!; if (a.inst === inst && a.kind === "use") { anims.splice(i, 1); a.end?.(); } }
+    inst.kick = startKick(inst.base.px, vx, vy);
+    tone(180, 0, 0.09, "sine", 0.1, 110);
+    return true;
+  }
   function poke(inst: PropInst) {
     const a = amp();
     chirp(inst);
@@ -365,6 +383,7 @@ export function createPropFx(deps: PropFxDeps) {
     }, () => ks.forEach((o) => restoreKid(inst, o)));
   }
   function useRoll(inst: PropInst) {
+    if (inst.kick) return;                                   // a ball already flying or rolling from a kick is not also rolled in place
     const dir = (inst.dir *= -1);
     play(inst, "use", 1.7, (k, o) => {
       const dx = dir * 1.8 * Math.sin(k * Math.PI);
@@ -524,6 +543,7 @@ export function createPropFx(deps: PropFxDeps) {
     poke(inst);
     use(inst);
     announce(inst);
+    deps.onTap?.(inst);
   }
 
   // ---- registration -----------------------------------------------------------------------------------------------------
@@ -561,7 +581,7 @@ export function createPropFx(deps: PropFxDeps) {
       base: { px: holder.position.x, py: holder.position.y, pz: holder.position.z, rx: holder.rotation.x, ry: holder.rotation.y, rz: holder.rotation.z, sx: holder.scale.x, sy: holder.scale.y, sz: holder.scale.z },
       phase: Math.random() * Math.PI * 2, size, on: true,
       lightColor: type === "lantern" && typeof arg === "string" && /^#[0-9a-f]{6}$/i.test(arg) ? arg : null,
-      lights: [], sprites: [], glows: [], kids: new Map(), slots: [], fruit: "apple", fruitSlots: 3, dir: 1, taps: 0, proxy: null,
+      lights: [], sprites: [], glows: [], kids: new Map(), slots: [], kick: null, fruit: "apple", fruitSlots: 3, dir: 1, taps: 0, proxy: null,
     };
     for (const c of (pivot ?? holder).children) inst.kids.set(c, { pos: c.position.clone(), rot: c.rotation.clone(), scale: c.scale.clone() });
 
@@ -704,6 +724,13 @@ export function createPropFx(deps: PropFxDeps) {
       if (inst.spec.idle === "sway") o.rz += Math.sin(t * 0.9 + inst.phase) * 0.011 * a;
       else if (inst.spec.idle === "bob") o.dy += Math.sin(t * 0.7 + inst.phase) * 0.08 * a;
       if (inst.on) for (const s of inst.sprites) s.s.scale.setScalar(s.k * (1 + 0.05 * Math.sin(t * 2.6 + inst.phase)));
+      if (inst.kick) {                                       // a kicked ball: along the floor and up, turning as it rolls
+        const next = stepBall(inst.kick, dt, BALL_BOUNDS[0], BALL_BOUNDS[1]);
+        inst.base.px = next.x;
+        o.dy += next.h;
+        if (inst.pivot) inst.pivot.rotation.z = next.spin;
+        inst.kick = next.resting ? null : next;
+      }
       offs.set(inst, o);
       for (const slot of inst.slots) if (!slot.mesh && slot.regrowAt > 0 && t >= slot.regrowAt) { slot.regrowAt = 0; growFruit(inst, slot); }
     }
@@ -764,7 +791,7 @@ export function createPropFx(deps: PropFxDeps) {
 
   return {
     register, tap, update, reset, activate, screenPos, nameOf,
-    pickFruit, liftFruit, carryFruit, dropFruit, eatFruit, lightsOut,
+    pickFruit, liftFruit, carryFruit, dropFruit, eatFruit, lightsOut, squish, kickBall,
     /** A tap on a fruit the drag handler already picked (it said "no move", so it was a tap): says its name and reacts like `tap` does. */
     tapFruitRef: (ref: FruitRef) => tapFruit(ref.mesh, ref.kind),
     list: () => insts.slice(),

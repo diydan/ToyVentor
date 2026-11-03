@@ -1,4 +1,4 @@
-// Hand-authored clips for the in-game Character (Kip): eat, sour, belly_pat, yawn and sleep.
+// Hand-authored clips for the in-game Character (Kip): eat, sour, belly_pat, yawn, sleep, hug, kick and cheer.
 //
 // The world's character has only the five baked Mixamo actions (dance, nod, no, sneak, sad), so nothing in the game could eat or sleep
 // (docs/specs/playful-interactions-spec.md). Mixamo needs an Adobe login, so these are written by hand, as keyframes, and BAKED INTO THE SAME
@@ -88,6 +88,11 @@ const HAND_DOWN: V3 = [-0.12, -0.95, 0.15];
 // (in hip-heights) puts the middle of the lying body where the standing figure was, which is what a bed needs.
 const LIE_FORWARD = 0.5;
 
+/** The moment in the `kick` clip when the foot meets the ball (seconds): the ball is launched on this cue. */
+export const KICK_CONTACT_S = 0.42;
+/** The first, deeper squeeze of the `hug` clip (seconds): a heart floats up on this cue. */
+export const HUG_SQUEEZE_S = 0.8;
+
 /** Authored in real angles. Each is the whole motion, ending back at rest so it can blend out cleanly. */
 export const PROCEDURAL_CLIPS: ClipBank = {
   // One bite: hand to mouth, three chews (the head bobs), a swallow, then a little happy hop. 1.7 s.
@@ -122,6 +127,32 @@ export const PROCEDURAL_CLIPS: ClipBank = {
     { t: 1.1, head: [-0.4, 0, 0] },
     { t: 1.8, head: [0, 0, 0], body: [0, 0, 0], armL: REST.armL, armR: REST.armR, hips: [0, 0, 0] },
   ]),
+  // Hug a teddy: arms open forward, close in on it with a squeeze (the body leans in, the head tips down), ease off, squeeze again, let go. 2 s. The first squeeze is at HUG_SQUEEZE_S.
+  hug: bake("hug", 2.0, false, [
+    { t: 0 },
+    { t: 0.35, armL: [0.55, -0.15, 0.8], armR: [-0.55, -0.15, 0.8], body: [0.1, 0, 0], head: [0.1, 0, 0] },
+    { t: HUG_SQUEEZE_S, armL: [0.12, -0.3, 0.95], armR: [-0.12, -0.3, 0.95], body: [0.2, 0, 0], head: [0.25, 0, 0] },
+    { t: 1.1, armL: [0.28, -0.3, 0.9], armR: [-0.28, -0.3, 0.9], body: [0.14, 0, 0], head: [0.18, 0, 0] },
+    { t: 1.3, armL: [0.1, -0.3, 0.96], armR: [-0.1, -0.3, 0.96], body: [0.2, 0, 0], head: [0.25, 0, 0] },
+    { t: 1.7, armL: [0.5, -0.4, 0.6], armR: [-0.5, -0.4, 0.6], body: [0.05, 0, 0], head: [0.05, 0, 0] },
+    { t: 2.0, armL: REST.armL, armR: REST.armR, body: [0, 0, 0], head: [0, 0, 0] },
+  ]),
+  // Kick a ball with the figure's right leg (-X): the leg winds back, swings through to the front at KICK_CONTACT_S, follows through and comes back; the body leans back, the arms counter-swing, a small hop. 1 s.
+  kick: bake("kick", 1.0, false, [
+    { t: 0 },
+    { t: 0.2, legR: [0.0, -0.75, -0.6], armL: [0.3, -0.6, 0.6], armR: [-0.3, -0.6, -0.5], body: [0.08, 0, 0] },
+    { t: KICK_CONTACT_S, legR: [-0.05, -0.2, 0.97], armL: [0.3, -0.7, -0.4], armR: [-0.3, -0.5, 0.7], body: [-0.12, 0, 0], hips: [0, 0.04, 0] },
+    { t: 0.55, legR: [0.0, 0.05, 1.0], hips: [0, 0.05, 0.02] },
+    { t: 1.0, legR: REST.legR, armL: REST.armL, armR: REST.armR, body: [0, 0, 0], hips: [0, 0, 0] },
+  ]),
+  // A cheer for the top of a jump: both arms up and out, the head up, a little hop, then down again. 1.3 s.
+  cheer: bake("cheer", 1.3, false, [
+    { t: 0 },
+    { t: 0.25, armL: [0.35, 0.9, 0.2], armR: [-0.35, 0.9, 0.2], head: [-0.15, 0, 0], hips: [0, 0.06, 0] },
+    { t: 0.55, armL: [0.45, 0.85, 0.15], armR: [-0.45, 0.85, 0.15] },
+    { t: 0.85, armL: [0.3, 0.92, 0.2], armR: [-0.3, 0.92, 0.2], hips: [0, 0.04, 0] },
+    { t: 1.3, armL: REST.armL, armR: REST.armR, head: [0, 0, 0], hips: [0, 0, 0] },
+  ]),
   // Asleep on its back, held until released: a true 90 degrees (after the driver's body gain), arms and legs along the body, head on the pillow,
   // a slow breath (the chest rises) and a slight head roll. The hips lift the body clear of the surface it lies on. 4 s, loops.
   sleep: bake("sleep", 4, true, [
@@ -132,4 +163,4 @@ export const PROCEDURAL_CLIPS: ClipBank = {
 };
 
 /** The names, for the driver's action type and for tests. */
-export const PROCEDURAL_ACTIONS = Object.keys(PROCEDURAL_CLIPS) as Array<"eat" | "sour" | "belly_pat" | "yawn" | "sleep">;
+export const PROCEDURAL_ACTIONS = Object.keys(PROCEDURAL_CLIPS) as Array<"eat" | "sour" | "belly_pat" | "yawn" | "sleep" | "hug" | "kick" | "cheer">;
