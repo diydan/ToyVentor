@@ -1688,10 +1688,7 @@ same prompts can be compared.
   fox, a lion, pigs, an owl, two elephants, a rabbit, three dinosaurs, three
   pumpkins, three robots, three aliens and a devil, and the 12-head animal pack. What
   they share: a squat round head with a rounded chin and simple, distinct ears. Built
-  from that, all in the daemon with tests: (1) **ear styles**: `floppy` (a pointed leaf
-  hanging down the side, its tip resting on the wall: a hanging tip is a floating
-  island, V5, so the leaf leans to follow the wall, which on a head that is widest
-  part way up means leaning inward by up to 25 degrees), `z_frac` (0.3 to 0.9 up the
+  from that, all in the daemon with tests: (1) **ear styles**: `floppy` (since removed, see the next block), `z_frac` (0.3 to 0.9 up the
   head: 0.5 to 0.7 puts ears on the sides, the default is the top corner) and round
   ears up to 24 mm wide. A round ear with `z_frac` stands mostly outside the wall
   (centre 0.1 radius out), where the top-corner ears keep 35% in, so the bear,
@@ -1723,6 +1720,28 @@ same prompts can be compared.
   antennae, headphone cups, a crest, a pumpkin stem on the dome head. Jobs with a
   searched pair take 20 to 30 s. 42 forge tests. Round 13 on the taste page:
   `r13_v01` to `r13_v14`.
+- **Round 13 ratings and the follow-up (2026-11-03).** Monkey **5**, fox **5**, fennec
+  **5**, corgi **5**, pig 4, owl 4, devil 3, lion 2 ("does not look like a lion"),
+  gorilla 2 ("does not look like a gorilla"), beagle 1 ("normal ears no floppy"),
+  and no score but notes on the elephant ("ears too small and no trunk"), the panda
+  ("does not look like a panda"), the tiger (same) and the lop bunny ("ears are not
+  floppy"). Of the 10 scored, mean 3.6. What came of it: **floppy ears were built and
+  then dropped at Dan's request** ("omit floppy, I think we have enough"): the first
+  version (a straight leaf from the top corner) sank into the head's widest part and
+  read as a plain ear; a second (a flap following the cheek's outline, attached along
+  its whole length) did read as floppy and printed at lengths up to about 20 mm, but is
+  gone from the daemon, the prompt, the test and the variety set (v01 and v12 removed).
+  The beagle and lop bunny prompts are out, so 12 variety prompts remain. **Elephant**:
+  the big flaps are made 20 to 30% smaller by the support-free fit, and a trunk was
+  tried (a tapered ridge down the face, a chain of ellipsoids behind the front wall)
+  and removed: the front wall already leans forward going up (up to 38 degrees), so a
+  trunk that narrows downward passes the 45 degree limit unless it is only 3 to 4 mm
+  proud, which does not read as a trunk. Both need supports (the print-plan call, as
+  for the dinosaur's snout). **Lion, panda, tiger, gorilla**: they are told apart by a
+  mane, black eye patches and ears, stripes and a brow, not by the shape of the skull.
+  Panda patches and tiger stripes are colour, so they belong to the face insert or
+  the skin; a mane and a brow ridge are geometry that has not been built (a mane
+  radiating sideways has the same overhang problem as big flap ears). 42 forge tests.
 - **Reading:** the taste gate is still tripped for heads and partly lifted for
   crowns. The parts still at 1 or 2 are body-shape problems (dome helmet,
   astronaut, pumpkin, wizard cone, chef puff, fez), which the feature ops cannot
