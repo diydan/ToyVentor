@@ -10,13 +10,16 @@
 // an error, so a model hiccup never breaks Create mode for a kid.
 import { readCappedJson } from "./body";
 import type { MetaEnv } from "./meta";
+import { DEFAULT_TEXT_MODEL, askText, resolveBackend, resolveModel } from "./modelBackend";
+// The hosted-API helpers live in modelBackend.ts (the only file that reads the Meta key or URL); they are re-exported so existing imports keep working.
+export { apiKey, apiUrl, outputTextOf, resolveModel } from "./modelBackend";
 
 export interface MuseEnv extends MetaEnv {
   /** Model id for Create mode. Defaults to the current Muse Spark. */
   MUSE_SPARK_MODEL?: string;
 }
 
-const DEFAULT_MODEL = "muse-spark-1.3";
+const DEFAULT_MODEL = DEFAULT_TEXT_MODEL;
 /** The game sends the recipe rules plus the child's words, so the prompt
  *  is long. This is a ceiling, not a target. */
 const MAX_INPUT_CHARS = 8_000;
@@ -66,44 +69,6 @@ function isRecord(v: unknown): v is Record<string, unknown> {
 
 function isHex(v: unknown): v is string {
   return typeof v === "string" && /^#[0-9a-f]{6}$/i.test(v);
-}
-
-/** Model ids this route will call. Anything else is refused, so a client
- *  cannot use the kid-facing route to reach another model. */
-export function resolveModel(requested: unknown, env: MuseEnv): string | null {
-  const wanted = typeof requested === "string" ? requested : "";
-  if (wanted && !/^muse-spark/i.test(wanted)) return null;
-  const configured = env.MUSE_SPARK_MODEL?.trim();
-  if (configured && /^muse-spark/i.test(configured)) return configured;
-  return DEFAULT_MODEL;
-}
-
-export function apiUrl(env: MetaEnv, path: string): string {
-  const base = (env.META_MODEL_API_URL ?? "https://api.meta.ai/v1")
-    .replace(/\/+$/, "")
-    .replace(/\/responses$/, "");
-  return `${base}${path}`;
-}
-
-export function apiKey(env: MetaEnv): string | undefined {
-  return env.MODEL_API_KEY ?? env.META_MODEL_API_KEY;
-}
-
-/** Pull the plain text out of a Responses API body. The SDK exposes
- *  output_text; the raw body carries it in output[].content[].text. */
-export function outputTextOf(body: unknown): string {
-  if (!isRecord(body)) return "";
-  if (typeof body.output_text === "string") return body.output_text;
-  const output = Array.isArray(body.output) ? body.output : [];
-  let text = "";
-  for (const item of output) {
-    if (!isRecord(item)) continue;
-    const content = Array.isArray(item.content) ? item.content : [];
-    for (const part of content) {
-      if (isRecord(part) && typeof part.text === "string") text += part.text;
-    }
-  }
-  return text;
 }
 
 /** The model sometimes wraps JSON in a code fence. Take the first JSON
@@ -231,8 +196,8 @@ export async function handleMuseSpark(request: Request, env: MuseEnv): Promise<R
     return json({
       ok: true,
       route: "muse-spark",
-      model: resolveModel(undefined, env) ?? DEFAULT_MODEL,
-      configured: Boolean(apiKey(env)),
+      model: resolveBackend(env, "text").mode === "hosted" ? resolveModel(undefined, env) ?? DEFAULT_MODEL : null, // our own model's name is not published
+      configured: resolveBackend(env, "text").mode !== "off",
     });
   }
   if (request.method !== "POST") return json({ error: "method not allowed" }, 405);
@@ -261,53 +226,24 @@ export async function handleMuseSpark(request: Request, env: MuseEnv): Promise<R
   const wantedModel = resolveModel(body.model, env);
   if (!wantedModel) return json({ error: "model must be muse-spark" }, 422);
 
-  const key = apiKey(env);
-  if (!key) return json({ error: "muse is not configured" }, 503);
+  const backend = resolveBackend(env, "text"); // hosted (Meta), self (our own model) or off: see worker/modelBackend.ts
+  if (backend.mode === "off") return json({ error: "muse is not configured" }, 503);
 
   const prompt = `${SAFETY}\n\n${scrubContactDetails(input)}`;
 
   // Low reasoning effort keeps a kid's wait short: the task is a small
   // JSON recipe, not a hard problem. If a model refuses the parameter,
   // the same request goes again without it, inside the same time budget
-  // so the pair can never outlast the game's own 18s wait.
-  const startedAt = Date.now();
-  const remainingMs = () => MODEL_TIMEOUT_MS - (Date.now() - startedAt);
-  const attempt = async (withEffort: boolean): Promise<Response> =>
-    fetch(apiUrl(env, "/responses"), {
-      method: "POST",
-      headers: {
-        authorization: `Bearer ${key}`,
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({
-        model: wantedModel,
-        input: prompt,
-        ...(withEffort ? { reasoning: { effort: "low" } } : {}),
-      }),
-      signal: AbortSignal.timeout(Math.max(1, remainingMs())),
-    });
-
-  let res: Response;
-  try {
-    res = await attempt(true);
-    if (res.status === 400 && remainingMs() > 0) {
-      // Older models do not know the reasoning parameter.
-      res = await attempt(false);
-    }
-  } catch {
+  // so the pair can never outlast the game's own 18s wait (askText does both).
+  const asked = await askText(backend, prompt, { timeoutMs: MODEL_TIMEOUT_MS, model: wantedModel });
+  if (!asked.ok) {
     // Error detail stays server side. The game only needs to know the
     // call failed so it can fall back to its word parser.
-    console.log(JSON.stringify({ event: "muse_spark", status: "fetch-failed" }));
-    return json({ error: "muse request failed" }, 502);
+    console.log(JSON.stringify({ event: "muse_spark", status: asked.status === null ? "fetch-failed" : asked.status, backend: backend.mode }));
+    return json({ error: asked.status === null ? "muse request failed" : `muse returned ${asked.status}` }, 502);
   }
 
-  if (!res.ok) {
-    console.log(JSON.stringify({ event: "muse_spark", status: res.status }));
-    return json({ error: `muse returned ${res.status}` }, 502);
-  }
-
-  const raw = (await res.json()) as unknown;
-  const text = outputTextOf(raw);
+  const text = asked.text;
   const parsed = firstJsonObject(text);
   if (!isRecord(parsed)) {
     console.log(JSON.stringify({ event: "muse_spark", status: "unparseable" }));
@@ -327,7 +263,8 @@ export async function handleMuseSpark(request: Request, env: MuseEnv): Promise<R
     JSON.stringify({
       event: "muse_spark",
       status: "ok",
-      model: wantedModel,
+      backend: backend.mode,
+      ...(backend.mode === "hosted" ? { model: wantedModel } : {}),
       props: recipe.props.length,
       spots: recipe.spots.length,
       ...(sayFiltered ? { sayFiltered: true } : {}),
@@ -338,5 +275,5 @@ export async function handleMuseSpark(request: Request, env: MuseEnv): Promise<R
 
 /** Health check for the deploy preflight. */
 export function museConfigured(env: MetaEnv): boolean {
-  return Boolean(apiKey(env));
+  return resolveBackend(env, "text").mode !== "off";
 }

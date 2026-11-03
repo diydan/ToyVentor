@@ -18,6 +18,7 @@ import {
   type SamMaskSummary,
 } from "../shared/sam";
 import { scanOutline, type ScanOutline, type ScanOutlineRequest } from "../shared/outlineScan";
+import { type BackendEnv, hostedOnly } from "./modelBackend";
 import type { OutlineMask } from "../shared/photoOutline";
 
 export interface MetaEnv {
@@ -35,23 +36,13 @@ export type SamResult =
   | { status: "not-configured" }
   | { status: "error"; message: string };
 
-function apiKey(env: MetaEnv): string | undefined {
-  return env.MODEL_API_KEY ?? env.META_MODEL_API_KEY;
-}
-
-export function samConfigured(env: MetaEnv): boolean {
-  return Boolean(apiKey(env));
-}
-
-function apiUrl(env: MetaEnv, path: string): string {
-  const base = (env.META_MODEL_API_URL ?? "https://api.meta.ai/v1")
-    .replace(/\/+$/, "")
-    .replace(/\/responses$/, "");
-  return `${base}${path}`;
-}
-
-function responsesUrl(env: MetaEnv): string {
-  return apiUrl(env, "/responses");
+/**
+ * Which of these calls may run is decided by the model switch (worker/modelBackend.ts), one capability each: segment (SAM), image (the image model) and
+ * text (the photo-nouns look). None has an adapter for our own models yet, so only "hosted" runs them; "self" and "off" answer "not configured" and send
+ * nothing, so a switch pointed at our own models can never quietly reach Meta from here.
+ */
+export function samConfigured(env: BackendEnv): boolean {
+  return hostedOnly(env, "segment") !== null;
 }
 
 export type SkinResult =
@@ -79,18 +70,19 @@ function upstreamError(prefix: string, err: unknown): string {
 
 /** Muse Image edit: repaint the toy's surface, keep everything else. */
 export async function makeSkin(
-  env: MetaEnv,
+  env: BackendEnv,
   imageDataUrl: string,
   style: string,
   timeoutMs = SKIN_TIMEOUT_MS,
 ): Promise<SkinResult> {
-  const key = apiKey(env);
+  const hosted = hostedOnly(env, "image");
+  const key = hosted?.key;
   if (!key) return { status: "not-configured" };
   if (!imageDataUrl.startsWith("data:image/"))
     return { status: "error", message: "image must be a data:image URL" };
   let res: Response;
   try {
-    res = await fetch(apiUrl(env, "/images/edits"), {
+    res = await fetch(hosted!.url("/images/edits"), {
       method: "POST",
       headers: { authorization: `Bearer ${key}`, "content-type": "application/json" },
       body: JSON.stringify({
@@ -246,21 +238,22 @@ async function decodeMask(
 }
 
 export async function segmentToy(
-  env: MetaEnv,
+  env: BackendEnv,
   imageDataUrl: string,
   prompt: string,
   timeoutMs = SAM_TIMEOUT_MS,
   /** `outline`: also legalize the mask into a print outline (F2b). Absent, nothing extra runs. */
   options: { outline?: ScanOutlineRequest } = {},
 ): Promise<SamResult> {
-  const key = apiKey(env);
+  const hosted = hostedOnly(env, "segment");
+  const key = hosted?.key;
   if (!key) return { status: "not-configured" };
   if (!imageDataUrl.startsWith("data:image/"))
     return { status: "error", message: "image must be a data:image URL" };
 
   let res: Response;
   try {
-    res = await fetch(responsesUrl(env), {
+    res = await fetch(hosted!.url("/responses"), {
       method: "POST",
       headers: {
         authorization: `Bearer ${key}`,
@@ -350,19 +343,20 @@ export type BoxesResult =
  * on every frame, so the last box per objectId wins. The error message is generic on purpose: callers never forward it.
  */
 export async function segmentBoxes(
-  env: MetaEnv,
+  env: BackendEnv,
   imageDataUrl: string,
   prompt: string,
   timeoutMs = SAM_TIMEOUT_MS,
 ): Promise<BoxesResult> {
-  const key = apiKey(env);
+  const hosted = hostedOnly(env, "segment");
+  const key = hosted?.key;
   if (!key) return { status: "not-configured" };
   if (!imageDataUrl.startsWith("data:image/"))
     return { status: "error", message: "image must be a data:image URL" };
 
   let res: Response;
   try {
-    res = await fetch(responsesUrl(env), {
+    res = await fetch(hosted!.url("/responses"), {
       method: "POST",
       headers: {
         authorization: `Bearer ${key}`,
@@ -438,14 +432,15 @@ export function parseInspectNouns(text: string): string[] {
  * retry covers models that reject the reasoning parameter.
  */
 export async function inspectPhotoNouns(
-  env: MetaEnv,
+  env: BackendEnv,
   imageDataUrl: string,
   timeoutMs = INSPECT_TIMEOUT_MS,
 ): Promise<InspectResult> {
-  const key = apiKey(env);
+  const hosted = hostedOnly(env, "text");
+  const key = hosted?.key;
   if (!key || !imageDataUrl.startsWith("data:image/")) return { checked: false };
   const call = (withEffort: boolean) =>
-    fetch(responsesUrl(env), {
+    fetch(hosted!.url("/responses"), {
       method: "POST",
       headers: { authorization: `Bearer ${key}`, "content-type": "application/json" },
       body: JSON.stringify({
@@ -491,17 +486,18 @@ export const SELFIE_CARTOON_PROMPT =
   "Redraw this photo as a friendly flat cartoon portrait for a children's toy. Keep the same head position, hair colour, skin tone and expression, and keep the face large and centred. Bold dark outlines, flat colours, one solid plain pale background colour, no text, no letters, no watermark. Family friendly.";
 
 export async function cartoonizeFace(
-  env: MetaEnv,
+  env: BackendEnv,
   imageDataUrl: string,
   timeoutMs = SKIN_TIMEOUT_MS,
 ): Promise<SkinResult> {
-  const key = apiKey(env);
+  const hosted = hostedOnly(env, "image");
+  const key = hosted?.key;
   if (!key) return { status: "not-configured" };
   if (!imageDataUrl.startsWith("data:image/"))
     return { status: "error", message: "image must be a data:image URL" };
   let res: Response;
   try {
-    res = await fetch(apiUrl(env, "/images/edits"), {
+    res = await fetch(hosted!.url("/images/edits"), {
       method: "POST",
       headers: { authorization: `Bearer ${key}`, "content-type": "application/json" },
       body: JSON.stringify({

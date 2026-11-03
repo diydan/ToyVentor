@@ -32,10 +32,11 @@ import {
   upstreamUrl,
   type ForgeOptimizerEnv,
 } from "./forgeOptimizer";
-import { type MuseEnv, apiKey, apiUrl, firstJsonObject, kidSafeText, outputTextOf, resolveModel, scrubContactDetails, tidy } from "./muse";
+import { type BackendEnv, askText, resolveBackend } from "./modelBackend";
+import { firstJsonObject, kidSafeText, scrubContactDetails, tidy } from "./muse";
 
 export type ForgeMakeEnv = ForgeOptimizerEnv &
-  MuseEnv &
+  BackendEnv &
   SigningEnv & {
     /** Set to "1" to put the grown-up proof back in front of making a part. Unset: making and previewing need only the device id and the rate limits. */
     FORGE_MAKE_REQUIRES_PROOF?: string;
@@ -62,42 +63,17 @@ const TERMINAL = new Set(["print_ready", "digital_only", "failed"]);
 
 const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === "object" && v !== null && !Array.isArray(v);
 
-/** One model call, the way worker/muse.ts makes one: low reasoning effort, and the same request again without it if the model refuses the parameter. */
-async function askModel(env: ForgeMakeEnv, key: string, prompt: string): Promise<string | null> {
-  const model = resolveModel(undefined, env);
-  if (!model) return null;
-  const startedAt = Date.now();
-  const remaining = () => MODEL_TIMEOUT_MS - (Date.now() - startedAt);
-  const attempt = (withEffort: boolean): Promise<Response> =>
-    fetch(apiUrl(env, "/responses"), {
-      method: "POST",
-      headers: { authorization: `Bearer ${key}`, "content-type": "application/json" },
-      body: JSON.stringify({ model, input: prompt, ...(withEffort ? { reasoning: { effort: "low" } } : {}) }),
-      signal: AbortSignal.timeout(Math.max(1, remaining())),
-    });
-  try {
-    let res = await attempt(true);
-    if (res.status === 400 && remaining() > 0) res = await attempt(false);
-    if (!res.ok) {
-      logEvent("forge_make", "model_status", { httpStatus: res.status });
-      return null;
-    }
-    return outputTextOf((await res.json()) as unknown);
-  } catch {
-    logEvent("forge_make", "model_failed"); // error detail stays on the server
-    return null;
-  }
-}
-
 /**
  * Defence in depth on what the MODEL says (the part's name and its names in seven languages): the intake and recipe checks only know the building-toy
  * brands (FORBIDDEN_BRAND_RE in shared/forgeOptimizer.ts), but a child may well ask for a spiderman mask or a pikachu hat. In the 2026-11-03 run of 40 wishes
  * the model turned all four into generic names, so this has never fired; it is here because that is the model's behaviour and not a guarantee. Unambiguous
  * names only (no "frozen", "sonic" or "elsa", which are also ordinary words). A match replaces the part's name, or drops that language's name.
- * The list is a product call and short on purpose: extend it as the owner of the brand rule decides.
+ * The list is a product call and short on purpose: extend it as the owner of the brand rule decides. Bare "mickey" and "minnie" (Dan, 2026-11-04) because base Glimmer named a
+ * part "Mickey Style Ears Hat" for "mickey mouse ears" and the two-word form missed it. This filter runs on what the MODEL says, never on the child's wish, and a false positive
+ * only swaps a name for "My Creation", so it can afford to be liberal; refusing a child's own wish is the costly side and stays narrow.
  */
 export const KID_BRAND_RE =
-  /\b(spider-?man|bat-?man|super-?man|wonder woman|iron man|pok[eé]mon|pikachu|mickey mouse|minnie mouse|disney|marvel|hello kitty|sanrio|nintendo|super mario|minecraft|roblox|barbie|paw patrol|peppa pig|star wars|darth vader|harry potter|hogwarts|transformers|optimus prime|hot wheels|fortnite|pixar|nickelodeon)\b/i;
+  /\b(spider-?man|bat-?man|super-?man|wonder woman|iron man|pok[eé]mon|pikachu|mickey|minnie|disney|marvel|hello kitty|sanrio|nintendo|super mario|minecraft|roblox|barbie|paw patrol|peppa pig|star wars|darth vader|harry potter|hogwarts|transformers|optimus prime|hot wheels|fortnite|pixar|nickelodeon)\b/i;
 
 /** The child's words, cleaned: contact details out, control characters out, whitespace collapsed. */
 function cleanWish(raw: unknown): string {
@@ -145,8 +121,11 @@ function parseRequest(raw: unknown): Parsed {
 }
 
 export async function handleForgeMake(request: Request, env: ForgeMakeEnv): Promise<Response> {
-  const key = apiKey(env);
-  if (request.method === "POST" && !key) return reply(503, { ok: false, status: "disabled" }); // nothing to spend, nothing to gate
+  const backend = resolveBackend(env, "text");
+  if (request.method === "POST" && backend.mode === "off") {
+    logEvent("forge_make", "backend_off", { reason: backend.reason }); // a switch set to off, or to a model we have not configured: nothing to spend, nothing to gate
+    return reply(503, { ok: false, status: "disabled" });
+  }
   const g = await gateForge(request, env, "POST", "preview", "forge_make", makeRequiresProof(env));
   if (!g.ok) return g.response;
 
@@ -176,8 +155,12 @@ export async function handleForgeMake(request: Request, env: ForgeMakeEnv): Prom
     }
   }
 
-  const modelText = await askModel(env, key!, buildMakePrompt({ text, ...(slot ? { slot } : {}), ...(previous ? { previous, feedback } : {}) }));
-  if (modelText === null) return reply(502, { ok: false, status: "unavailable", attempt });
+  const asked = await askText(backend, buildMakePrompt({ text, ...(slot ? { slot } : {}), ...(previous ? { previous, feedback } : {}) }), { timeoutMs: MODEL_TIMEOUT_MS });
+  if (!asked.ok) {
+    logEvent("forge_make", asked.status === null ? "model_failed" : "model_status", { ...(asked.status !== null ? { httpStatus: asked.status } : {}), backend: backend.mode }); // error detail stays on the server
+    return reply(502, { ok: false, status: "unavailable", attempt });
+  }
+  const modelText = asked.text;
 
   const envelope = firstJsonObject(modelText);
   if (!isRecord(envelope)) return reply(502, { ok: false, status: "no-recipe", attempt });
@@ -215,7 +198,7 @@ export async function handleForgeMake(request: Request, env: ForgeMakeEnv): Prom
   const names = Object.fromEntries(Object.entries(parsedNames.names).filter(([, n]) => !KID_BRAND_RE.test(n.w))) as typeof parsedNames.names;
   if (!names.en) for (const k of Object.keys(names)) delete names[k as keyof typeof names]; // English is every language's fallback: with no good English name nothing is kept
   const signed = await issueSpokenNames(env, names);
-  logEvent("forge_make", "ok", { attempt, slot: recipe.slot, repaired: repair !== undefined, namesKept: Object.keys(names).length, spoken: Object.keys(signed).length });
+  logEvent("forge_make", "ok", { backend: backend.mode, attempt, slot: recipe.slot, repaired: repair !== undefined, namesKept: Object.keys(names).length, spoken: Object.keys(signed).length });
   return reply(200, {
     ...scrubPreviewOutput(up.data),
     attempt,

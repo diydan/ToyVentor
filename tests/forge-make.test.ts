@@ -68,6 +68,8 @@ const recipeOf = (over: object = {}) => ({ v: 1, id: "wizard_hat", name: "Starli
 
 interface Seen {
   model: { input: string }[];
+  /** Every model call as it went out: where, with what key, and what body (hosted and our own alike). */
+  modelCalls: { url: string; auth: string | null; body: { model?: string; input?: string; instructions?: string; messages?: { role?: string; content: string }[] } }[];
   daemonPosts: { recipe: Record<string, unknown> }[];
   daemonGets: string[];
 }
@@ -94,14 +96,16 @@ describe("POST /api/forge/make", () => {
       VOICE_SIGNING_KEY: "voice-signing-key-for-the-tests-0123456789",
     };
     headers = { "content-type": "application/json", "x-device-id": DEVICE, "x-parent-proof": await parentProof(env) };
-    seen = { model: [], daemonPosts: [], daemonGets: [] };
+    seen = { model: [], modelCalls: [], daemonPosts: [], daemonGets: [] };
     model = modelSays({ recipe: recipeOf(), names: NAMES });
     daemonPreview = () => json({ ok: true, status: "preview_ready", part_id: "custom_wizard_hat", job_id: "fjob_0123456789ab", draft_artifact: "custom_wizard_hat.x.draft.glb", glb_size: 10, orig_tris: 5, web_verts: 5, web_tris: 5, finish_class: "show_curved", elapsed_ms: 40, glb_base64: "Z2xi" });
     daemonJob = () => json({ job_id: "fjob_0123456789ab", status: "print_ready", gate_report: { ok: true } });
     vi.spyOn(globalThis, "fetch").mockImplementation(async (input, init) => {
       const url = String(input instanceof Request ? input.url : input);
-      if (url.includes("/responses")) {
-        seen.model.push(JSON.parse(String(init?.body)) as { input: string });
+      if (url.includes("/responses") || url.includes("/chat/completions")) {
+        const body = JSON.parse(String(init?.body)) as { input: string };
+        seen.model.push(body);
+        seen.modelCalls.push({ url, auth: new Headers(init?.headers).get("authorization"), body });
         return model();
       }
       if (url.startsWith(DAEMON) && url.endsWith("/v1/fast-preview")) {
@@ -132,6 +136,99 @@ describe("POST /api/forge/make", () => {
     const res = await make({ text: "a wizard hat" }, headers, { ...env, MODEL_API_KEY: undefined, META_MODEL_API_KEY: undefined });
     expect(res.status).toBe(503);
     expect(seen.model).toHaveLength(0);
+  });
+
+  describe("the model switch (worker/modelBackend.ts)", () => {
+    const SELF: ForgeMakeEnv = { MODEL_BACKEND: "self", SELF_TEXT_URL: "https://glimmer.example.test/v1/", SELF_TEXT_MODEL: "muse-glimmer-30b", SELF_TEXT_KEY: "own-key" };
+    const logs = () => vi.mocked(console.log).mock.calls.map((c) => String(c[0]));
+
+    beforeEach(() => {
+      vi.spyOn(console, "log").mockImplementation(() => undefined);
+    });
+
+    it("hosted (the default): the call goes to Meta with the Meta key and the Spark model", async () => {
+      expect((await make({ text: "a wizard hat" })).status).toBe(200);
+      expect(seen.modelCalls).toHaveLength(1);
+      expect(seen.modelCalls[0]).toMatchObject({ url: "https://api.meta.ai/v1/responses", auth: "Bearer test-key", body: { model: "muse-spark-1.3" } });
+      expect(logs().some((l) => l.includes('"status":"ok"') && l.includes('"backend":"hosted"'))).toBe(true);
+    });
+
+    it("self: the call goes to OUR endpoint with OUR key and model name, in the responses shape, and nothing goes to Meta even though the Meta key is set", async () => {
+      expect((await make({ text: "a wizard hat" }, headers, { ...env, ...SELF })).status).toBe(200);
+      expect(seen.modelCalls).toHaveLength(1);
+      expect(seen.modelCalls[0]).toMatchObject({ url: "https://glimmer.example.test/v1/responses", auth: "Bearer own-key", body: { model: "muse-glimmer-30b" } });
+      expect(seen.modelCalls.some((c) => c.url.includes("meta.ai"))).toBe(false);
+      expect(logs().some((l) => l.includes('"status":"ok"') && l.includes('"backend":"self"'))).toBe(true);
+    });
+
+    it("self with SELF_TEXT_API=chat speaks /chat/completions and reads the chat reply", async () => {
+      model = () => json({ choices: [{ message: { content: JSON.stringify({ recipe: recipeOf(), names: NAMES }) } }] });
+      const res = await make({ text: "a wizard hat" }, headers, { ...env, ...SELF, SELF_TEXT_API: "chat" });
+      expect(res.status).toBe(200);
+      expect(seen.modelCalls[0]).toMatchObject({ url: "https://glimmer.example.test/v1/chat/completions", auth: "Bearer own-key", body: { model: "muse-glimmer-30b" } });
+      // Glimmer's reasoning strength rides in the system prompt, and no `reasoning` parameter is sent to our own model
+      expect(seen.modelCalls[0]!.body.messages?.[0]).toEqual({ role: "system", content: "Reasoning strength: low" });
+      expect(seen.modelCalls[0]!.body.messages?.[1]?.content).toContain("Child's wish");
+      expect(seen.modelCalls[0]!.body).not.toHaveProperty("reasoning_effort");
+      expect(seen.daemonPosts).toHaveLength(1); // the recipe from the chat reply reached the daemon
+    });
+
+    it("self in the responses shape sends the strength as `instructions`, and only one attempt even if the server answers 400", async () => {
+      model = () => json({ error: "bad request" }, 400);
+      const res = await make({ text: "a wizard hat" }, headers, { ...env, ...SELF });
+      expect(res.status).toBe(502);
+      expect(seen.modelCalls).toHaveLength(1); // no second try without a parameter we never sent
+      expect(seen.modelCalls[0]!.body).toMatchObject({ model: "muse-glimmer-30b", instructions: "Reasoning strength: low" });
+      expect(seen.modelCalls[0]!.body).not.toHaveProperty("reasoning");
+    });
+
+    it("hosted still sends the reasoning parameter and retries without it on a 400 (unchanged)", async () => {
+      let n = 0;
+      model = () => (++n === 1 ? json({ error: "unknown parameter" }, 400) : json({ output_text: JSON.stringify({ recipe: recipeOf(), names: NAMES }) }));
+      expect((await make({ text: "a wizard hat" })).status).toBe(200);
+      expect(seen.modelCalls).toHaveLength(2);
+      expect(seen.modelCalls[0]!.body).toHaveProperty("reasoning");
+      expect(seen.modelCalls[1]!.body).not.toHaveProperty("reasoning");
+    });
+
+    it("self without a key sends no authorization header at all", async () => {
+      await make({ text: "a wizard hat" }, headers, { ...env, ...SELF, SELF_TEXT_KEY: undefined });
+      expect(seen.modelCalls[0]!.auth).toBeNull();
+    });
+
+    it("FAIL CLOSED: self with no endpoint answers 503 disabled and makes NO network call, even with the Meta key set", async () => {
+      const res = await make({ text: "a wizard hat" }, headers, { ...env, MODEL_BACKEND: "self" });
+      expect(res.status).toBe(503);
+      expect(((await res.json()) as { status: string }).status).toBe("disabled");
+      expect(globalThis.fetch).not.toHaveBeenCalled();
+      expect(logs().some((l) => l.includes('"backend_off"') && l.includes('"not_configured"'))).toBe(true);
+    });
+
+    it("off, and a misspelt switch: 503 disabled, no network call, and the log says why", async () => {
+      for (const [mode, reason] of [["off", "disabled"], ["selfhosted", "invalid"]] as const) {
+        resetForgeRateLimit();
+        const res = await make({ text: "a wizard hat" }, headers, { ...env, MODEL_BACKEND: mode });
+        expect(res.status).toBe(503);
+        expect(logs().some((l) => l.includes('"backend_off"') && l.includes(`"${reason}"`))).toBe(true);
+      }
+      expect(globalThis.fetch).not.toHaveBeenCalled();
+    });
+
+    it("a request cannot choose: a header or a body field naming a backend changes nothing", async () => {
+      const sneaky = { ...headers, "x-model-backend": "hosted", "x-backend": "hosted" };
+      const off = await make({ text: "a wizard hat", backend: "hosted", MODEL_BACKEND: "hosted" }, sneaky, { ...env, MODEL_BACKEND: "off" });
+      expect(off.status).toBe(503);
+      expect(globalThis.fetch).not.toHaveBeenCalled();
+      resetForgeRateLimit();
+      await make({ text: "a wizard hat", backend: "hosted" }, sneaky, { ...env, ...SELF });
+      expect(seen.modelCalls.map((c) => c.url)).toEqual(["https://glimmer.example.test/v1/responses"]);
+    });
+
+    it("no log line carries a URL, a key or the model name", async () => {
+      await make({ text: "a wizard hat" }, headers, { ...env, ...SELF });
+      const all = logs().join("\n");
+      for (const secret of ["own-key", "test-key", "glimmer.example.test", "muse-glimmer-30b"]) expect(all).not.toContain(secret);
+    });
   });
 
   it("needs no grown-up proof to make a part (Dan, 2026-11-03), but does need a device id", async () => {
@@ -261,6 +358,12 @@ describe("POST /api/forge/make", () => {
     expect(Object.keys(out.names)).not.toContain("es"); // that language is dropped, the others stay
     expect(out.names.en!.w).toBe("wizard hat");
     resetForgeRateLimit();
+    // the 2026-11-04 Glimmer slip: a bare character first name in the part's name ("Mickey Style Ears Hat") used to get through the two-word list
+    resetForgeRateLimit();
+    model = modelSays({ recipe: recipeOf({ name: "Mickey Style Ears Hat", behavior: "Minnie bow on top" }), names: NAMES });
+    const slip = (await (await make({ text: "mickey mouse ears" })).json()) as { name: string; recipe: { behavior: string } };
+    expect(slip.name).toBe("My Creation");
+    expect(slip.recipe.behavior).toBe("Made from your idea");
     // an English name that is a brand takes every language with it: English is the fallback for all of them
     model = modelSays({ recipe: recipeOf(), names: { ...NAMES, en: { w: "pokemon hat", g: "m" } } });
     expect(((await (await make({ text: "a hat" })).json()) as { names: unknown }).names).toEqual({});

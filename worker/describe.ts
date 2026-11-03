@@ -14,7 +14,8 @@
 // error status so the tab quietly falls back to its own matcher.
 import book from "../parts/kip/viewer/kip-describe-recipes.json";
 import { readCappedJson } from "./body";
-import { SAFETY, apiKey, apiUrl, firstJsonObject, kidSafeText, outputTextOf, resolveModel, scrubContactDetails, tidy, type MuseEnv } from "./muse";
+import { askText, resolveBackend, resolveModel } from "./modelBackend";
+import { SAFETY, firstJsonObject, kidSafeText, scrubContactDetails, tidy, type MuseEnv } from "./muse";
 
 export const DESCRIBE_CONTRACT = 1;
 const MAX_BODY_BYTES = 4_000;
@@ -67,7 +68,7 @@ const squish = (t: string) => t.toLowerCase().replace(/\s+/g, " ").trim();
 
 export async function handleDescribe(request: Request, env: MuseEnv): Promise<Response> {
   if (request.method === "GET") {
-    return json({ ok: true, route: "describe", contract: DESCRIBE_CONTRACT, model: resolveModel(undefined, env), configured: Boolean(apiKey(env)), builds: RECIPES.length });
+    return json({ ok: true, route: "describe", contract: DESCRIBE_CONTRACT, model: resolveBackend(env, "text").mode === "hosted" ? resolveModel(undefined, env) : null, configured: resolveBackend(env, "text").mode !== "off", builds: RECIPES.length });
   }
   if (request.method !== "POST") return json({ error: "method not allowed" }, 405);
   if (describeRateLimited(request.headers.get("CF-Connecting-IP"))) return json({ error: "Slow down, one build at a time. Try again in a minute." }, 429);
@@ -80,34 +81,16 @@ export async function handleDescribe(request: Request, env: MuseEnv): Promise<Re
   if (!description) return json({ error: "description is required" }, 422);
   if (description.length > MAX_DESCRIPTION) return json({ error: `description over ${MAX_DESCRIPTION} characters` }, 413);
 
-  const key = apiKey(env);
-  const model = resolveModel(undefined, env);
-  if (!key || !model) return json({ error: "muse is not configured" }, 503);
+  const backend = resolveBackend(env, "text"); // hosted (Meta), self (our own model) or off: see worker/modelBackend.ts
+  if (backend.mode === "off") return json({ error: "muse is not configured" }, 503);
 
-  const startedAt = Date.now();
-  const remaining = () => MODEL_TIMEOUT_MS - (Date.now() - startedAt);
-  const input = describePrompt(description);
-  const attempt = (withEffort: boolean) =>
-    fetch(apiUrl(env, "/responses"), {
-      method: "POST",
-      headers: { authorization: `Bearer ${key}`, "content-type": "application/json" },
-      body: JSON.stringify({ model, input, ...(withEffort ? { reasoning: { effort: "low" } } : {}) }),
-      signal: AbortSignal.timeout(Math.max(1, remaining())),
-    });
-  let res: Response;
-  try {
-    res = await attempt(true);
-    if (res.status === 400 && remaining() > 0) res = await attempt(false); // older models do not know the reasoning parameter
-  } catch {
-    console.log(JSON.stringify({ event: "describe", status: "fetch-failed" }));
-    return json({ error: "muse request failed" }, 502);
-  }
-  if (!res.ok) {
-    console.log(JSON.stringify({ event: "describe", status: res.status }));
-    return json({ error: `muse returned ${res.status}` }, 502);
+  const asked = await askText(backend, describePrompt(description), { timeoutMs: MODEL_TIMEOUT_MS });
+  if (!asked.ok) {
+    console.log(JSON.stringify({ event: "describe", status: asked.status === null ? "fetch-failed" : asked.status, backend: backend.mode }));
+    return json({ error: asked.status === null ? "muse request failed" : `muse returned ${asked.status}` }, 502);
   }
 
-  const reply = firstJsonObject(outputTextOf((await res.json()) as unknown));
+  const reply = firstJsonObject(asked.text);
   if (!isRecord(reply)) {
     console.log(JSON.stringify({ event: "describe", status: "unparseable" }));
     return json({ error: "muse did not return JSON" }, 502);
@@ -119,15 +102,15 @@ export async function handleDescribe(request: Request, env: MuseEnv): Promise<Re
   const id = typeof reply.recipeId === "string" ? reply.recipeId : "";
   const recipe = BY_ID.get(id);
   if (recipe) {
-    console.log(JSON.stringify({ event: "describe", status: "ok", model, recipe: recipe.id, sayFiltered: sayRaw !== "" && say === "" }));
+    console.log(JSON.stringify({ event: "describe", status: "ok", backend: backend.mode, recipe: recipe.id, sayFiltered: sayRaw !== "" && say === "" }));
     const note = `Muse picked "${recipe.title}", a checked build. ${say}`.trim().slice(0, 200);
     return json({ contract: DESCRIBE_CONTRACT, title: recipe.title, note, validated: true, steps: recipe.steps, poses: recipe.reference.poses });
   }
   const questionRaw = clean(reply.question, 200);
   if (questionRaw && kidSafeText(questionRaw, childSaid)) {
-    console.log(JSON.stringify({ event: "describe", status: "question", model }));
+    console.log(JSON.stringify({ event: "describe", status: "question", backend: backend.mode }));
     return json({ contract: DESCRIBE_CONTRACT, clarifyingQuestion: questionRaw });
   }
-  console.log(JSON.stringify({ event: "describe", status: "no-pick", model }));
+  console.log(JSON.stringify({ event: "describe", status: "no-pick", backend: backend.mode }));
   return json({ error: "muse did not pick a build" }, 502);
 }

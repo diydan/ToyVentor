@@ -1,5 +1,7 @@
 # Copy to .dev.vars for local dev. Never put real values in THIS file:
 # it is committed. The Worker reads these, the browser never does.
+# The hosted Meta key (the older name META_MODEL_API_KEY still works). Only worker/modelBackend.ts reads it, and only for a capability whose
+# backend is "hosted" (see the model switch below). A child-facing deployment on our own models can leave it empty.
 MODEL_API_KEY=
 META_MODEL_API_URL=https://api.meta.ai/v1
 MUREKA_API_KEY=
@@ -8,8 +10,39 @@ MUREKA_API_KEY=
 MUSE_SPARK_MODEL=
 # Optional: the opt-in "Smart face" for the Kip selfie (/api/selfie/face-parts finds eyes and mouth with SAM 3.1,
 # /api/selfie/cartoon redraws the photo with Muse Image). It sends ONE downscaled photo of the child to Meta's models, so:
-#   - it is OFF unless this is exactly "on" (and MODEL_API_KEY is set);
+#   - it is OFF unless this is exactly "on" and the hosted segment capability is configured (MODEL_API_KEY set and SEGMENT_BACKEND not self/off:
+#     SAM has no adapter for our own models yet, so "self" means off);
 #   - every request also needs the parent gate (x-parent-proof, needs the D1 binding and PARENT_GATE_SECRET or the seeded key)
 #     and the client's consent screen (x-selfie-consent: v1);
 #   - keep it OFF in production until the COPPA review is done.
 SELFIE_CLOUD=
+
+# Model switch (worker/modelBackend.ts, docs/decisions/0008-meta-models-and-under-18-users.md). Server-side only; a client can never choose.
+# MODEL_BACKEND = hosted | self | off. Unset means hosted (today's behaviour). "self" NEVER falls back to hosted: with no endpoint below it is off.
+# A capability's own variable wins over MODEL_BACKEND: TEXT_BACKEND, SEGMENT_BACKEND, IMAGE_BACKEND, TRANSCRIBE_BACKEND.
+MODEL_BACKEND=
+TEXT_BACKEND=
+SEGMENT_BACKEND=
+IMAGE_BACKEND=
+TRANSCRIBE_BACKEND=
+# Our own models: https base URL (http only on localhost), optional key. Text also needs the served model name; SELF_TEXT_API is
+# "responses" (default) or "chat" (/chat/completions; llama.cpp serves Glimmer on this one). SELF_TEXT_REASONING is Glimmer's reasoning
+# strength, sent in the system prompt: low (default), medium, high, xhigh, or off to send none.
+# Glimmer v1 on Modal (scripts/modal/glimmer_server.py), with MODEL_BACKEND=self (or TEXT_BACKEND=self for the text capability only):
+#   SELF_TEXT_URL=https://<workspace>--toyventor-glimmer.us-east.modal.run/v1   SELF_TEXT_MODEL=muse-glimmer-30B   SELF_TEXT_API=chat
+#   SELF_TEXT_KEY = the key you gave the Modal secret glimmer-api-key (LLAMA_API_KEY). Segment, image and transcribe have no adapter yet.
+SELF_TEXT_URL=
+SELF_TEXT_KEY=
+SELF_TEXT_MODEL=
+SELF_TEXT_API=
+SELF_TEXT_REASONING=
+SELF_SEGMENT_URL=
+SELF_SEGMENT_KEY=
+SELF_IMAGE_URL=
+SELF_IMAGE_KEY=
+SELF_TRANSCRIBE_URL=
+SELF_TRANSCRIBE_KEY=
+
+# The grown-up check (worker/parent.ts). Signs the challenge and proof tokens. Unset: a random secret kept in the database is used.
+# The Meta model key is no longer a fallback for this (2026-11-03), so a deployment with no model key still has a working gate.
+PARENT_GATE_SECRET=

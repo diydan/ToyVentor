@@ -24,8 +24,8 @@ import {
 import type { D1Like, OwnershipEnv } from "./ownership";
 
 export interface ParentEnv extends OwnershipEnv {
+  /** Signs the grown-up challenge and proof tokens. Unset: a random secret kept in the database is used (below). */
   PARENT_GATE_SECRET?: string;
-  MODEL_API_KEY?: string;
 }
 
 const MAX_PARENT_BYTES = 16_384;
@@ -125,7 +125,9 @@ async function hashPin(playerId: string, pin: string): Promise<string> {
 }
 
 async function resolveHmacKey(env: ParentEnv, db: D1Like): Promise<CryptoKey> {
-  let rawSecret = env.PARENT_GATE_SECRET || env.MODEL_API_KEY || "";
+  // The Meta model key used to be a fallback signing secret here (2026-11-03: removed). A model key belongs to the model switch (worker/modelBackend.ts)
+  // alone, and a child-facing deployment may have none. Tokens are short-lived (2 to 5 minutes), so the change only ends proofs already in flight.
+  let rawSecret = env.PARENT_GATE_SECRET || "";
   if (!rawSecret) {
     const existing = await withParentTables(db, () =>
       db
