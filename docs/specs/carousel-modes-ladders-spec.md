@@ -606,7 +606,9 @@ circuit, windmill blades) is grandfathered as their `use`.
 editor's play-test (`propBuilders` is used in exactly one place), so created and generated props behave exactly like built-in
 ones. The 25 built-ins each declare `idle` / `poke` / `use` in `PROP_SPECS`: lantern, lamp and cottage window switch on and off
 (the real lights, glow sprite and glass); tree, palm, pine and bushes drop apples, coconuts, snow and berries (a tree shows
-three apples hanging so it looks shakeable, and grows them back after ≈10 s); cloud rains; plant sprouts; blocks topple and
+three apples hanging so it looks shakeable, and grows them back after ≈10 s; the apples are 0.24 units across with a faint glow of their own colour, hung on the
+foliage's real surface in the lower front of the crown by a ray from its centre, because a fitted ellipsoid left two of three inside the leaves and
+the third was about 9 px on a phone, dark red on a dark crown: looked at in the real Garden, 2026-11-03); cloud rains; plant sprouts; blocks topple and
 re-stack; books flutter; ball rolls out and back; chair wobble-settles; teddy and cushions squish; drum booms; umbrella spins;
 snowman's hat hops; windmill blades spin up. Tests: `tests/prop-reactions.test.ts` (the registry guard parses the real
 `propBuilders` table and fails if a builder has no `PROP_SPECS` entry) and the real-app `scripts/e2e-props.mjs`. A prop type

@@ -134,8 +134,10 @@ const easeOutBack = (k: number) => { const c1 = 1.70158, c3 = c1 + 1; return 1 +
 const cap = (s: string, lang: LangCode) => s.charAt(0).toLocaleUpperCase(languageInfo(lang).bcp47) + s.slice(1);
 
 type FruitKind = "apple" | "coconut" | "snow" | "berry" | "rain";
-const FRUIT: Record<FruitKind, { r: number; color: string; rough: number; sy?: number }> = {
-  apple: { r: 0.15, color: "#e5392b", rough: 0.35 },
+/** `glow`: a little emissive of its own colour so it still reads against dark foliage (kept under 0.3, the level the lamp-glow scan treats as a light). */
+const FRUIT: Record<FruitKind, { r: number; color: string; rough: number; sy?: number; glow?: number }> = {
+  // 0.24, up from 0.15 (2026-11-03): at 0.15 a hanging apple was about 9 px on a phone, dark red on a dark crown, and easy to miss.
+  apple: { r: 0.24, color: "#e5392b", rough: 0.35, glow: 0.28 },
   coconut: { r: 0.17, color: "#6b4423", rough: 0.8 },
   snow: { r: 0.2, color: "#f4f8ff", rough: 0.7 },
   berry: { r: 0.09, color: "#d62d4a", rough: 0.4 },
@@ -159,7 +161,7 @@ export function createPropFx(deps: PropFxDeps) {
       const f = FRUIT[kind];
       const mat = kind === "rain"
         ? new THREE.MeshBasicMaterial({ color: f.color, transparent: true, opacity: 0.85 })
-        : new THREE.MeshPhysicalMaterial({ color: f.color, roughness: f.rough, clearcoat: kind === "apple" ? 0.8 : 0.2 });
+        : new THREE.MeshPhysicalMaterial({ color: f.color, roughness: f.rough, clearcoat: kind === "apple" ? 0.8 : 0.2, ...(f.glow ? { emissive: new THREE.Color(f.color), emissiveIntensity: f.glow } : {}) });
       k = { geo: new THREE.SphereGeometry(f.r, 14, 10), mat };
       kits.set(kind, k);
     }
@@ -466,12 +468,42 @@ export function createPropFx(deps: PropFxDeps) {
     inst.holder.add(m);
     slot.mesh = m;
   }
+  /**
+   * Where each apple hangs: (azimuth from the front, elevation from the crown's centre), in degrees. All three face the camera, so none sits on the
+   * silhouette edge, and all hang in the lower half of the crown: the toast bar that names a prop (and every "+1 scrap" line) covers the middle of the
+   * crown on a phone, which hid two of the three when they hung higher (looked at in the real Garden, 2026-11-03). Lower is also where a kid can reach.
+   */
+  const APPLE_DIRS: ReadonlyArray<readonly [number, number]> = [[-38, -8], [12, -24], [50, -6]];
+
+  /**
+   * The point where a ray from the crown's centre leaves the real foliage, in the holder's own space, or null when nothing is hit. The crown is lumpy: a
+   * point on a fitted ellipsoid is often INSIDE the leaves (that is where two of the three apples used to hang, which is why only one was ever visible).
+   * Our own tap proxy and the fruit do not count as foliage.
+   */
+  function foliageSurface(holder: THREE.Group, centre: THREE.Vector3, dir: THREE.Vector3, reach: number): THREE.Vector3 | null {
+    holder.updateWorldMatrix(true, true);
+    const targets: THREE.Object3D[] = [];
+    holder.traverse((o) => { const m = o as THREE.Mesh; if (m.isMesh && !o.userData.noPick && !o.userData.hitProxy) targets.push(o); });
+    if (!targets.length) return null;
+    const start = holder.localToWorld(centre.clone().addScaledVector(dir, reach));
+    const middle = holder.localToWorld(centre.clone());
+    const ray = new THREE.Raycaster(start, dir.clone().negate().transformDirection(holder.matrixWorld), 0, start.distanceTo(middle) * 1.05);
+    const hit = ray.intersectObjects(targets, false)[0];
+    return hit ? holder.worldToLocal(hit.point.clone()) : null;
+  }
   function hangApples(inst: PropInst) {
     const W = Math.max(inst.size.x, inst.size.z), H = inst.size.y;
-    const rx = W * 0.4, rz = W * 0.36, ry = H * 0.2, cy = H * 0.68;
-    [[-50, 10], [20, -15], [75, 25]].forEach(([azi, el]) => {
-      const phi = (azi! * Math.PI) / 180, th = (el! * Math.PI) / 180;
-      const slot: Slot = { local: new THREE.Vector3(rx * Math.cos(th) * Math.sin(phi) * 0.95, cy + ry * Math.sin(th), rz * Math.cos(th) * Math.cos(phi) * 0.95), mesh: null, regrowAt: 0 };
+    const rx = W * 0.4, rz = W * 0.36, ry = H * 0.2;
+    const centre = new THREE.Vector3(inst.proxy?.position.x ?? 0, H * 0.64, inst.proxy?.position.z ?? 0);
+    APPLE_DIRS.forEach(([azi, el]) => {
+      const phi = (azi * Math.PI) / 180, th = (el * Math.PI) / 180;
+      const dir = new THREE.Vector3(Math.cos(th) * Math.sin(phi), Math.sin(th), Math.cos(th) * Math.cos(phi));
+      const surface = foliageSurface(inst.holder, centre, dir, Math.max(W, H) * 2);
+      // Resting on the foliage with about half of it outside, so it reads as hanging in front of the leaves. No hit (a crown the ray cannot see): the old fitted ellipsoid.
+      const local = surface
+        ? surface.addScaledVector(dir, FRUIT.apple.r * 0.5)
+        : new THREE.Vector3(centre.x + rx * Math.cos(th) * Math.sin(phi) * 0.95, centre.y + ry * Math.sin(th), centre.z + rz * Math.cos(th) * Math.cos(phi) * 0.95);
+      const slot: Slot = { local, mesh: null, regrowAt: 0 };
       appleAt(inst, slot);
       inst.slots.push(slot);
     });

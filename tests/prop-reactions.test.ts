@@ -446,3 +446,72 @@ describe("worlds reset cleanly", () => {
     expect(world.children.filter((c) => (c as THREE.Mesh).isMesh)).toHaveLength(0);
   });
 });
+
+// ---- the apples on a tree can be SEEN (2026-11-03 look at the real Garden: two of three hung inside the leaves, the third was 9 px) ----------------
+describe("hanging apples sit on the real foliage, face the camera, and are big enough to see", () => {
+  // A lumpy, non-spherical crown on a trunk: a fitted ellipsoid does not match it, so a point on such an ellipsoid lands inside the leaves.
+  const CROWN = { r: 1.6, sx: 1.2, sy: 1.0, sz: 0.9, y: 3.2 };
+  function crownTree() {
+    const { fx, world } = setup();
+    const g = new THREE.Group();
+    g.position.set(14, 0, -2.4);
+    const crown = new THREE.Mesh(new THREE.SphereGeometry(CROWN.r, 28, 18), new THREE.MeshStandardMaterial());
+    crown.scale.set(CROWN.sx, CROWN.sy, CROWN.sz);
+    crown.position.y = CROWN.y;
+    g.add(box(0.5, 2, 0.5, 1), crown);
+    world.add(g);
+    const inst = fx.register("tree", [g])!;
+    return { fx, inst };
+  }
+  /** 1.0 is exactly on the crown's surface, below 1 is inside the leaves. */
+  const ellipsoidRadius = (p: THREE.Vector3) => Math.hypot((p.x) / (CROWN.r * CROWN.sx), (p.y - CROWN.y) / (CROWN.r * CROWN.sy), (p.z) / (CROWN.r * CROWN.sz));
+
+  it("hangs every apple on the foliage surface with part of it outside: none buried in the leaves, none floating away", () => {
+    const { inst } = crownTree();
+    expect(inst.slots).toHaveLength(3);
+    for (const s of inst.slots) {
+      const k = ellipsoidRadius(s.local);
+      expect(k, `apple at ${s.local.toArray().map((v) => v.toFixed(2))}`).toBeGreaterThan(0.99);
+      expect(k).toBeLessThan(1.2);
+    }
+  });
+  it("all three face the camera (+z) instead of sitting on the silhouette edge or behind the crown", () => {
+    const { inst } = crownTree();
+    for (const s of inst.slots) expect(s.local.z, s.local.toArray().join()).toBeGreaterThan(0.5);
+  });
+  it("spreads them across the crown, so they are three apples and not one clump", () => {
+    const { inst } = crownTree();
+    const [a, b, c] = inst.slots.map((s) => s.local);
+    for (const [p, q] of [[a, b], [a, c], [b, c]] as const) expect(p!.distanceTo(q!)).toBeGreaterThan(0.9);
+  });
+  it("the apple is about 1.6 times its old size and carries a small glow of its own colour (so it reads on a dark crown)", () => {
+    const { inst } = crownTree();
+    const mesh = inst.slots[0]!.mesh!;
+    expect((mesh.geometry as THREE.SphereGeometry).parameters.radius).toBeGreaterThanOrEqual(0.22);
+    const mat = mesh.material as THREE.MeshPhysicalMaterial;
+    expect(mat.emissive.getHex()).toBe(mat.color.getHex());
+    expect(mat.emissiveIntensity).toBeGreaterThan(0.1);
+    expect(mat.emissiveIntensity).toBeLessThan(0.3); // 0.3 is where the lamp-glow scan starts treating a material as a light
+  });
+  it("our own tap proxy and the fruit never count as foliage: the apples are not on the proxy box, and a regrown apple returns to the same spot", () => {
+    const { fx, inst } = crownTree();
+    expect(inst.proxy).not.toBeNull();
+    const before = inst.slots.map((s) => s.local.clone());
+    fx.activate(inst);
+    for (const s of inst.slots) if (!s.mesh) s.regrowAt = 1;
+    run(fx, 2);
+    expect(inst.slots.every((s) => s.mesh)).toBe(true);
+    inst.slots.forEach((s, i) => expect(s.local.distanceTo(before[i]!)).toBe(0));
+    for (const s of inst.slots) expect(s.mesh!.position.distanceTo(s.local)).toBe(0);
+  });
+  it("a plain box tree still gets three apples, on its surface", () => {
+    const { fx, world } = setup();
+    const g = new THREE.Group();
+    g.position.set(14, 0, -2.4);
+    g.add(box(2, 5, 2, 2.5));
+    world.add(g);
+    const inst = fx.register("tree", [g])!;
+    expect(inst.slots).toHaveLength(3);
+    for (const s of inst.slots) expect(s.local.z).toBeGreaterThan(0.9); // the box's front face is at z = 1, the apple rests against it
+  });
+});
