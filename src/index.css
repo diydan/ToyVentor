@@ -102,12 +102,17 @@
 :root {
   color-scheme: dark;
 
-  --night-900: #080f2b;
-  --surface: #101a44;
-  --surface-2: #18265e;
-  --surface-3: #22337e;
-  --line: #7f9bff;
-  --line-soft: #2c3f94;
+  /* Dusk navy. The two main fills are RGB triplets so translucent variants
+     (rgb(var(--surface-rgb) / 0.9)) follow the palette instead of being
+     hard-coded in a hundred rules; the named tokens derive from them. */
+  --night-rgb: 14 24 70;
+  --surface-rgb: 29 45 120;
+  --night-900: rgb(var(--night-rgb));
+  --surface: rgb(var(--surface-rgb));
+  --surface-2: #2a3fa0;
+  --surface-3: #3a56bd;
+  --line: #a3b6ff;
+  --line-soft: #3c53b8;
 
   --ink: #f4f7ff;
   --ink-muted: #bfcaf5;
@@ -185,7 +190,7 @@
   --shadow-btn-violet-pressed:
     inset 0 2px 0 rgba(255, 255, 255, 0.25), 0 1px 0 #6f55d6,
     0 3px 8px rgba(167, 139, 255, 0.25);
-  --shadow-btn-ghost: 0 4px 0 #2c3f94;
+  --shadow-btn-ghost: 0 4px 0 var(--line-soft);
   --shadow-sheet: 0 16px 40px rgba(2, 6, 28, 0.65);
   --shadow-glow-gold:
     0 0 0 3px rgba(255, 210, 77, 0.45), 0 0 36px rgba(255, 210, 77, 0.65);
@@ -385,7 +390,7 @@ a.cta {
   padding: 8px 12px;
   border-radius: 14px;
   border: 2px solid var(--line-soft);
-  background: rgba(16, 26, 68, 0.78);
+  background: rgb(var(--surface-rgb) / 0.78);
   color: var(--ink);
   display: flex;
   align-items: center;
@@ -414,7 +419,7 @@ a.cta {
   width: 44px;
   height: 44px;
   border-radius: 12px;
-  background: rgba(8, 15, 43, 0.85);
+  background: rgb(var(--night-rgb) / 0.85);
   border: 1px solid rgba(255, 255, 255, 0.14);
   display: flex;
   align-items: center;
@@ -454,7 +459,7 @@ a.cta {
   height: 82px;
   border-radius: 18px;
   background:
-    radial-gradient(60% 60% at 50% 65%, rgba(82, 183, 255, 0.32), rgba(8, 15, 43, 0.92));
+    radial-gradient(60% 60% at 50% 65%, rgba(82, 183, 255, 0.32), rgb(var(--night-rgb) / 0.92));
   border: 2px solid var(--sky-500);
   box-shadow: 0 0 18px rgba(82, 183, 255, 0.25);
   display: flex;
@@ -653,7 +658,7 @@ a.cta {
   border-radius: var(--radius-lg);
   background:
     radial-gradient(70% 60% at 50% 36%, rgba(82, 183, 255, 0.16), transparent 72%),
-    rgba(8, 15, 43, 0.85);
+    rgb(var(--night-rgb) / 0.85);
   box-shadow: var(--shadow-glass);
   cursor: grab;
 }
@@ -709,7 +714,7 @@ a.cta {
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  background: rgba(16, 26, 68, 0.92);
+  background: rgb(var(--surface-rgb) / 0.92);
   -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
   border-bottom: 1px solid rgba(255, 255, 255, 0.14);
@@ -787,7 +792,7 @@ a.cta {
   padding: 0 14px;
   border-radius: var(--radius-pill);
   border: 2px solid var(--line);
-  background: rgba(16, 26, 68, 0.72);
+  background: rgb(var(--surface-rgb) / 0.72);
   color: var(--ink);
   font-family: var(--font-display);
   font-size: 14px;
@@ -1225,7 +1230,7 @@ a.cta {
   padding: 0 14px;
   border-radius: 12px;
   border: 2px solid var(--line);
-  background: rgba(16, 26, 68, 0.86);
+  background: rgb(var(--surface-rgb) / 0.86);
   color: var(--ink);
   font-family: var(--font-display);
   font-size: 14px;
@@ -1507,7 +1512,7 @@ a.cta {
 .pack-fan-art {
   height: 58px;
   border-radius: 9px;
-  background: radial-gradient(circle at 50% 45%, var(--cg, rgba(82, 183, 255, 0.45)), #22337e 74%);
+  background: radial-gradient(circle at 50% 45%, var(--cg, rgba(82, 183, 255, 0.45)), var(--surface-3) 74%);
   box-shadow: inset 0 -6px 12px rgba(0, 0, 0, 0.25);
   display: flex;
   align-items: center;
@@ -1594,7 +1599,7 @@ a.cta {
   top: 12px;
   padding: 10px 12px;
   border-radius: 12px;
-  background: rgba(16, 26, 68, 0.96);
+  background: rgb(var(--surface-rgb) / 0.96);
   border: 1px solid var(--line);
   font-size: 13px;
   font-weight: 600;
@@ -1764,7 +1769,7 @@ a.cta {
   border-radius: var(--radius-lg);
   border: 2px solid var(--gold);
   background:
-    radial-gradient(60% 60% at 50% 45%, rgba(255, 210, 77, 0.2), rgba(16, 26, 68, 0.92));
+    radial-gradient(60% 60% at 50% 45%, rgba(255, 210, 77, 0.2), rgb(var(--surface-rgb) / 0.92));
   box-shadow: var(--shadow-glow-gold);
   display: flex;
   flex-direction: column;
@@ -1815,7 +1820,7 @@ a.cta {
   align-items: center;
   justify-content: space-between;
   gap: 4px;
-  background: rgba(16, 26, 68, 0.95);
+  background: rgb(var(--surface-rgb) / 0.95);
   border-bottom: 1px solid rgba(255, 255, 255, 0.14);
   z-index: 14;
 }
@@ -1905,7 +1910,7 @@ a.cta {
   width: 20px;
   height: 20px;
   border-radius: 6px;
-  background: rgba(8, 14, 42, 0.65);
+  background: rgb(var(--night-rgb) / 0.65);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -2016,7 +2021,7 @@ a.cta {
   width: 224px;
   padding: 6px;
   border-radius: 16px;
-  background: rgba(16, 26, 68, 0.98);
+  background: rgb(var(--surface-rgb) / 0.98);
   border: 2px solid var(--line);
   box-shadow: 0 18px 40px rgba(2, 6, 28, 0.72);
   z-index: 24;
@@ -2080,7 +2085,7 @@ a.cta {
   background: radial-gradient(
     70% 60% at 50% 25%,
     rgba(255, 210, 77, 0.22),
-    rgba(16, 26, 68, 0.95)
+    rgb(var(--surface-rgb) / 0.95)
   );
   box-shadow: var(--shadow-glow-gold);
   text-align: center;
@@ -2092,7 +2097,7 @@ a.cta {
 .tv-pack-summary {
   padding: 12px;
   border-radius: 16px;
-  background: rgba(16, 26, 68, 0.92);
+  background: rgb(var(--surface-rgb) / 0.92);
   border: 1px solid var(--glass-line);
   display: flex;
   flex-direction: column;
@@ -2154,7 +2159,7 @@ a.cta {
   width: 52px;
   height: 52px;
   border-radius: 12px;
-  background: rgba(8, 15, 43, 0.72);
+  background: rgb(var(--night-rgb) / 0.72);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2185,7 +2190,7 @@ a.cta {
   width: 48px;
   height: 48px;
   border-radius: 12px;
-  background: rgba(8, 15, 43, 0.78);
+  background: rgb(var(--night-rgb) / 0.78);
   border: 1px solid rgba(255, 255, 255, 0.14);
   display: inline-flex;
   align-items: center;
@@ -2306,7 +2311,7 @@ a.cta {
   padding: 8px 10px;
   border-radius: 14px;
   border: 1.5px solid var(--line-soft);
-  background: rgba(8, 15, 43, 0.72);
+  background: rgb(var(--night-rgb) / 0.72);
   color: var(--ink);
   text-align: left;
   min-width: 0;
@@ -2326,7 +2331,7 @@ button.tv-companion-card:hover {
   width: 38px;
   height: 38px;
   border-radius: 10px;
-  background: rgba(16, 26, 68, 0.9);
+  background: rgb(var(--surface-rgb) / 0.9);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -2358,7 +2363,7 @@ button.tv-companion-card:hover {
   padding: 8px 10px;
   border-radius: 12px;
   border: 1.5px solid var(--line-soft);
-  background: rgba(8, 15, 43, 0.72);
+  background: rgb(var(--night-rgb) / 0.72);
   color: var(--ink);
 }
 
@@ -2372,7 +2377,7 @@ button.tv-companion-card:hover {
   height: 22px;
   border-radius: 50%;
   border: 1.5px solid var(--line-soft);
-  background: rgba(16, 26, 68, 0.9);
+  background: rgb(var(--surface-rgb) / 0.9);
   color: var(--mint);
   font-size: 12px;
   font-weight: 800;
@@ -2449,7 +2454,7 @@ button.tv-badge-pill:hover {
 .tv-disclosure {
   border-radius: 14px;
   border: 1.5px solid rgba(82, 183, 255, 0.38);
-  background: rgba(8, 15, 43, 0.76);
+  background: rgb(var(--night-rgb) / 0.76);
   padding: 9px 11px;
 }
 
@@ -2537,7 +2542,7 @@ button.tv-badge-pill:hover {
   flex-wrap: wrap;
   padding: 7px 10px;
   border-radius: 12px;
-  background: rgba(8, 15, 43, 0.68);
+  background: rgb(var(--night-rgb) / 0.68);
   border: 1px solid var(--line-soft);
   font-size: 12px;
   font-weight: 700;
@@ -2563,7 +2568,7 @@ button.tv-badge-pill:hover {
 }
 .tv-worlds { position: absolute; top: 8px; left: 8px; right: 8px; display: flex; gap: 4px; overflow-x: auto; z-index: 5; scrollbar-width: none; }
 .tv-worlds::-webkit-scrollbar { display: none; }
-.tv-world { flex: 0 0 auto; min-height: 30px; padding: 0 8px; border-radius: 9px; border: 2px solid var(--line); background: rgba(16,26,68,.85); color: var(--ink); font: 700 11px var(--font-display); cursor: pointer; }
+.tv-world { flex: 0 0 auto; min-height: 30px; padding: 0 8px; border-radius: 9px; border: 2px solid var(--line); background: rgb(var(--surface-rgb) / .85); color: var(--ink); font: 700 11px var(--font-display); cursor: pointer; }
 .tv-world-on { background: var(--sky, #52b7ff); color: #06122b; }
 .tv-world-surprise { width: 100%; margin: 10px 0 4px; min-height: 44px; }
 
@@ -2579,7 +2584,7 @@ button.tv-badge-pill:hover {
   padding: 0 10px;
   border-radius: 10px;
   border: 2px solid var(--line);
-  background: rgba(16, 26, 68, 0.88);
+  background: rgb(var(--surface-rgb) / 0.88);
   color: var(--ink);
   font: 700 12px var(--font-display);
   display: inline-flex;
@@ -2593,7 +2598,7 @@ button.tv-badge-pill:hover {
   width: min(300px, calc(100vw - 16px));
   padding: 10px;
   border-radius: 14px;
-  background: rgba(16, 26, 68, 0.97);
+  background: rgb(var(--surface-rgb) / 0.97);
   border: 2px solid var(--line);
   box-shadow: 0 16px 36px rgba(2, 6, 28, 0.72);
   display: flex;
@@ -2621,7 +2626,7 @@ button.tv-badge-pill:hover {
   padding: 0 11px;
   border-radius: 11px;
   border: 2px solid var(--line);
-  background: rgba(16, 26, 68, 0.9);
+  background: rgb(var(--surface-rgb) / 0.9);
   box-shadow: 0 3px 0 var(--line-soft);
   color: var(--ink);
   font-family: var(--font-display);
@@ -2665,7 +2670,7 @@ button.tv-badge-pill:hover {
 
 .tv-ctl-violet {
   border-color: var(--violet-500);
-  background: linear-gradient(180deg, #3a2c8a, #22337e);
+  background: linear-gradient(180deg, #3a2c8a, var(--surface-3));
   color: var(--ink);
 }
 
@@ -2690,7 +2695,7 @@ button.tv-badge-pill:hover {
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   padding: 14px 14px 18px;
-  background: rgba(16, 26, 68, 0.96);
+  background: rgb(var(--surface-rgb) / 0.96);
   -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
   border-top: 1px solid rgba(255, 255, 255, 0.24);
@@ -2781,7 +2786,7 @@ button.tv-badge-pill:hover {
   justify-content: center;
   height: 84px;
   color: var(--accent, #52b7ff);
-  background: rgba(8, 15, 43, 0.85);
+  background: rgb(var(--night-rgb) / 0.85);
 }
 
 .tv-map-glyph {
@@ -2851,134 +2856,341 @@ button.tv-badge-pill:hover {
   color: #2b1d00;
 }
 
-/* --- Explorer trail map (branching overworld beside the carousel) --- */
+/* --- Explorer trail map: a full-screen console-style overworld --- */
 
-.tv-trail-legend {
-  margin: 0;
-  font: 600 12px var(--fb, sans-serif);
-  color: var(--mut, #bfcaf5);
+.tv-trail-full {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  overflow: hidden;
+  background: #2a7fd0;
+  animation: tv-trail-in 220ms ease-out both;
+}
+
+@keyframes tv-trail-in {
+  from { opacity: 0; transform: scale(1.03); }
+  to { opacity: 1; transform: none; }
 }
 
 .tv-trail-scroll {
-  overflow: auto;
-  -webkit-overflow-scrolling: touch;
-  max-height: 52vh;
-  margin: 0 -6px;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: 14px;
-  background: rgba(8, 15, 43, 0.85);
-  scrollbar-width: thin;
-}
-
-.tv-trail-canvas {
-  position: relative;
-}
-
-.tv-trail-roads {
   position: absolute;
   inset: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  cursor: grab;
 }
 
-.tv-trail-area-name {
-  fill: rgba(244, 247, 255, 0.55);
-  font: 700 11px var(--fb, sans-serif);
-  letter-spacing: 0.04em;
+.tv-trail-scroll::-webkit-scrollbar { display: none; }
+
+.tv-trail-canvas { position: relative; }
+
+.tv-trail-art {
+  position: absolute;
+  inset: 0;
+  display: block;
+}
+
+.tv-trail-waves { animation: tv-trail-waves 6s linear infinite; }
+
+@keyframes tv-trail-waves {
+  to { transform: translate(64px, 36px); }
+}
+
+.tv-trail-puffs { animation: tv-trail-drift 40s ease-in-out infinite alternate; }
+
+@keyframes tv-trail-drift {
+  from { transform: translateX(-28px); }
+  to { transform: translateX(28px); }
+}
+
+/* Roads: a dirt path with a dark edge; dotted footprints where it is next. */
+.tv-trail-road-edge {
+  fill: none;
+  stroke: #2b3585;
+  stroke-width: 20;
+  stroke-linecap: round;
 }
 
 .tv-trail-road-done {
-  stroke: var(--gold, #ffd24d);
-  stroke-width: 5;
+  fill: none;
+  stroke: #fdf1c6;
+  stroke-width: 12;
   stroke-linecap: round;
-  opacity: 0.9;
 }
 
-.tv-trail-road-next {
-  stroke: rgba(244, 247, 255, 0.55);
-  stroke-width: 5;
+.tv-trail-road-dots-edge {
+  fill: none;
+  stroke: #2b3585;
+  stroke-width: 12;
   stroke-linecap: round;
-  stroke-dasharray: 0.1 10;
+  stroke-dasharray: 0.1 20;
 }
 
-.tv-trail-node-wrap {
-  position: absolute;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 96px;
-  transform: translate(-50%, -50%);
+.tv-trail-road-dots {
+  fill: none;
+  stroke: #fff4cf;
+  stroke-width: 7;
+  stroke-linecap: round;
+  stroke-dasharray: 0.1 20;
 }
 
+/* Places: the button is the tap target, the SVG inside is the picture. */
 .tv-trail-node {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 52px;
-  height: 52px;
+  position: absolute;
+  width: 64px;
+  height: 64px;
+  margin: -32px 0 0 -32px;
   padding: 0;
-  border-radius: 50%;
-  border: 3px solid var(--accent, #52b7ff);
-  background: var(--surface, #101a44);
-  color: var(--accent, #52b7ff);
+  border: 0;
+  background: none;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 120ms ease-out;
 }
+
+.tv-trail-node::before {
+  /* Pad the hit area out to 72px without moving the picture. */
+  content: "";
+  position: absolute;
+  inset: -4px;
+}
+
+.tv-trail-node svg {
+  display: block;
+  width: 64px;
+  height: 64px;
+  overflow: visible;
+  filter: drop-shadow(0 2px 0 rgba(10, 20, 70, 0.26));
+}
+
+.tv-trail-node:hover { transform: scale(1.08); }
+.tv-trail-node:active { transform: scale(0.95); }
+.tv-trail-node-next svg { opacity: 0.82; }
+.tv-trail-node-clouded svg { filter: drop-shadow(0 3px 4px rgba(40, 90, 150, 0.3)); }
 
 .tv-trail-node:focus-visible {
-  outline: 3px solid var(--focus, #ffd24d);
-  outline-offset: 3px;
-}
-
-.tv-trail-node-next {
-  border-style: dashed;
-  opacity: 0.75;
-}
-
-.tv-trail-node-clouded {
-  border-style: dashed;
-  border-color: rgba(244, 247, 255, 0.35);
-  color: rgba(244, 247, 255, 0.55);
-  opacity: 0.65;
-}
-
-.tv-trail-node-here {
-  box-shadow: 0 0 0 3px rgba(255, 210, 77, 0.55);
-}
-
-.tv-trail-glyph {
-  font-size: 22px;
-  line-height: 1;
-}
-
-.tv-trail-done {
-  position: absolute;
-  top: -6px;
-  right: -6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
+  outline: 4px solid #fff;
+  outline-offset: -2px;
   border-radius: 50%;
-  background: var(--gold, #ffd24d);
-  color: #2b1d00;
-  font: 800 11px var(--fb, sans-serif);
 }
 
-.tv-trail-node-label {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-top: 3px;
-  text-align: center;
-  font: 700 11px var(--fb, sans-serif);
-  color: var(--ink, #f4f7ff);
-  text-shadow: 0 1px 3px rgba(2, 6, 28, 0.9);
+.tv-trail-node-here::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  width: 62px;
+  height: 62px;
+  margin: -31px 0 0 -31px;
+  border: 4px solid #fff;
+  border-radius: 50%;
+  opacity: 0.85;
+  animation: tv-trail-ring 1.4s ease-out infinite;
   pointer-events: none;
 }
 
-.tv-trail-count {
-  font-weight: 600;
-  color: var(--mut, #bfcaf5);
+@keyframes tv-trail-ring {
+  from { transform: scale(0.8); opacity: 0.9; }
+  to { transform: scale(1.35); opacity: 0; }
+}
+
+.tv-trail-flag {
+  position: absolute;
+  left: 50%;
+  top: -18px;
+  transform: translateX(-50%);
+  font-size: 24px;
+  line-height: 1;
+  color: #ffe066;
+  text-shadow: 0 2px 0 #2b3585, 0 0 6px rgba(255, 224, 102, 0.9);
+  animation: tv-trail-bounce 0.7s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+
+@keyframes tv-trail-bounce {
+  from { transform: translate(-50%, 0); }
+  to { transform: translate(-50%, 8px); }
+}
+
+/* The toy: stands on a place, hops between them. */
+.tv-trail-kip {
+  position: absolute;
+  width: 0;
+  height: 0;
+  z-index: 3;
+  pointer-events: none;
+  transition: left 110ms linear, top 110ms linear;
+}
+
+.tv-trail-kip-shadow {
+  position: absolute;
+  left: -16px;
+  top: -4px;
+  width: 32px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(10, 20, 70, 0.28);
+}
+
+.tv-trail-kip-body {
+  position: absolute;
+  left: -30px;
+  top: -74px;
+  width: 60px;
+  height: 66px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  animation: tv-trail-idle 1.6s ease-in-out infinite;
+}
+
+.tv-trail-kip-hop .tv-trail-kip-body { animation: tv-trail-hop 0.22s ease-in-out infinite; }
+
+/* The toy's tile becomes a round token with a wooden rim, like a game piece. */
+.tv-trail-kip-body .tv-toy-roster-thumb {
+  width: 54px;
+  height: 54px;
+  border: 3px solid #1e2a6b;
+  border-radius: 50%;
+  background: #f4f7ff;
+  box-shadow: 0 3px 0 rgba(10, 20, 70, 0.35);
+}
+
+.tv-trail-kip-dot {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #ffd23f;
+  border: 3px solid #1e2a6b;
+}
+
+@keyframes tv-trail-idle {
+  0%, 100% { translate: 0 0; }
+  50% { translate: 0 -4px; }
+}
+
+@keyframes tv-trail-hop {
+  0%, 100% { translate: 0 0; }
+  50% { translate: 0 -16px; }
+}
+
+/* HUD: the app's own plate and buttons, so the bright map reads as the same
+   product as the night-navy screens around it. */
+.tv-trail-hud {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  z-index: 4;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  padding: max(10px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) 0 max(12px, env(safe-area-inset-left));
+  pointer-events: none;
+}
+
+.tv-trail-hud > * { pointer-events: auto; }
+
+.tv-trail-plate {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  max-width: 58%;
+  padding: 9px 14px 10px;
+  color: var(--ink);
+  background: rgb(var(--surface-rgb) / 0.94);
+  border: 2px solid var(--line);
+  border-radius: 14px;
+  box-shadow: 0 3px 0 var(--line-soft), 0 10px 22px rgba(2, 6, 28, 0.35);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+
+.tv-trail-plate-kicker {
+  margin: 0 0 1px;
+  font-size: 11px;
+}
+
+.tv-trail-plate-title {
+  flex: none;
+  font-size: 19px;
+  overflow-wrap: anywhere;
+}
+
+.tv-trail-hud-btns { display: flex; gap: 8px; }
+
+/* Same .tv-ctl as the dock and sheets, just bigger for a map you play with. */
+.tv-trail-ctl {
+  min-width: 56px;
+  min-height: 46px;
+  padding: 0 16px;
+  font-size: 15px;
+  box-shadow: 0 3px 0 var(--line-soft), 0 8px 16px rgba(2, 6, 28, 0.3);
+}
+
+.tv-trail-play-wrap {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: max(18px, env(safe-area-inset-bottom));
+  z-index: 4;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+
+/* Mint is the app's "active / go" colour (the carousel's current card). */
+.tv-trail-play {
+  min-width: 190px;
+  min-height: 58px;
+  padding: 0 30px;
+  color: var(--ink-on-sky);
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  background: linear-gradient(#8bf7cb, #46d9a0);
+  border: 3px solid var(--surface-2);
+  border-radius: 30px;
+  box-shadow: 0 5px 0 var(--surface-2), 0 12px 20px rgba(2, 6, 28, 0.3);
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.tv-trail-play:active { transform: translateY(3px); box-shadow: 0 2px 0 var(--surface-2); }
+.tv-trail-play:disabled { opacity: 0.55; cursor: default; }
+.tv-trail-play:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+
+.tv-trail-notice {
+  position: absolute;
+  left: 50%;
+  bottom: calc(max(18px, env(safe-area-inset-bottom)) + 76px);
+  z-index: 4;
+  max-width: min(86%, 420px);
+  margin: 0;
+  padding: 8px 14px;
+  transform: translateX(-50%);
+  text-align: center;
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 700;
+  background: rgb(var(--surface-rgb) / 0.94);
+  border: 2px solid var(--line);
+  border-radius: 12px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tv-trail-full,
+  .tv-trail-waves,
+  .tv-trail-puffs,
+  .tv-trail-node-here::after,
+  .tv-trail-flag,
+  .tv-trail-kip-body { animation: none; }
+  .tv-trail-kip { transition: none; }
 }
 
 .tv-rung-list {
@@ -2999,7 +3211,7 @@ button.tv-badge-pill:hover {
   padding: 8px 12px;
   text-align: left;
   color: var(--ink);
-  background: rgba(8, 15, 43, 0.9);
+  background: rgb(var(--night-rgb) / 0.9);
   border: 2px solid rgba(255, 255, 255, 0.25);
   border-radius: 12px;
   cursor: pointer;
@@ -3257,7 +3469,7 @@ button.tv-badge-pill:hover {
   padding: 10px;
   border-radius: 14px;
   border: 2px solid var(--line-soft);
-  background: rgba(8, 15, 43, 0.85);
+  background: rgb(var(--night-rgb) / 0.85);
 }
 
 .tv-fg-lock {
@@ -3281,7 +3493,7 @@ button.tv-badge-pill:hover {
   padding: 8px 10px;
   border-radius: 12px;
   border: 2px dashed var(--line);
-  background: rgba(8, 15, 43, 0.72);
+  background: rgb(var(--night-rgb) / 0.72);
 }
 
 .tv-mp-sn {
@@ -3336,7 +3548,7 @@ button.tv-badge-pill:hover {
 }
 
 .tv-pseq-q {
-  background: rgba(8, 15, 43, 0.9);
+  background: rgb(var(--night-rgb) / 0.9);
   border-color: var(--gold);
   color: var(--gold);
 }
@@ -3359,7 +3571,7 @@ button.tv-badge-pill:hover {
   min-height: 40px;
   border-radius: 12px;
   border: 2px solid var(--line);
-  background: rgba(8, 15, 43, 0.92);
+  background: rgb(var(--night-rgb) / 0.92);
   color: var(--ink);
   font-family: var(--font-display);
   font-size: 13px;
@@ -3384,7 +3596,7 @@ button.tv-badge-pill:hover {
   padding: 0 12px;
   border-radius: 999px;
   border: 2px solid var(--line-soft);
-  background: rgba(8, 15, 43, 0.9);
+  background: rgb(var(--night-rgb) / 0.9);
   color: var(--ink);
   font-family: var(--font-body);
   font-size: 13px;
@@ -3420,7 +3632,7 @@ button.tv-badge-pill:hover {
 .tv-cr-cards li {
   padding: 7px 10px;
   border-radius: 10px;
-  background: rgba(8, 15, 43, 0.72);
+  background: rgb(var(--night-rgb) / 0.72);
   border: 1px solid var(--line-soft);
   font-size: 13px;
   font-weight: 600;
@@ -3458,7 +3670,7 @@ button.tv-badge-pill:hover {
   padding: 8px 8px 8px 24px;
   border-radius: 12px;
   border: 2px solid var(--line-soft);
-  background: rgba(8, 15, 43, 0.92);
+  background: rgb(var(--night-rgb) / 0.92);
   color: var(--ink);
   text-align: left;
   font-family: var(--font-display);
@@ -3507,7 +3719,7 @@ button.tv-badge-pill:hover {
   align-items: flex-start;
   padding: 8px 10px;
   border-radius: 12px;
-  background: rgba(8, 15, 43, 0.72);
+  background: rgb(var(--night-rgb) / 0.72);
   border: 2px solid var(--line-soft);
   font-family: var(--font-display);
   font-size: 13px;
@@ -3574,7 +3786,7 @@ button.tv-badge-pill:hover {
   resize: vertical;
   border-radius: 12px;
   border: 2px solid var(--line-soft);
-  background: rgba(8, 15, 43, 0.92);
+  background: rgb(var(--night-rgb) / 0.92);
   color: var(--ink);
   font: 500 12px ui-monospace, SFMono-Regular, Menlo, monospace;
   padding: 10px;
@@ -3642,7 +3854,7 @@ button.tv-badge-pill:hover {
   text-align: center;
   padding: 24px 20px;
   border-radius: 22px;
-  background: rgba(16, 26, 68, 0.86);
+  background: rgb(var(--surface-rgb) / 0.86);
   border: 1.5px solid var(--glass-line);
   box-shadow: var(--shadow-sheet);
   display: flex;
@@ -3688,7 +3900,7 @@ button.tv-badge-pill:hover {
   align-self: center;
   padding: 18px 16px;
   border-radius: 18px;
-  background: rgba(16, 26, 68, 0.94);
+  background: rgb(var(--surface-rgb) / 0.94);
   border: 1.5px solid var(--line);
   display: flex;
   flex-direction: column;
@@ -3738,7 +3950,7 @@ button.tv-badge-pill:hover {
   padding: 0 12px;
   border-radius: 12px;
   border: 2px solid var(--line);
-  background: rgba(8, 15, 43, 0.95);
+  background: rgb(var(--night-rgb) / 0.95);
   color: var(--ink);
   font-family: var(--font-display);
   font-size: 18px;
@@ -3757,7 +3969,7 @@ button.tv-badge-pill:hover {
 .tv-parent-ledger {
   padding: 12px 14px;
   border-radius: 16px;
-  background: rgba(16, 26, 68, 0.92);
+  background: rgb(var(--surface-rgb) / 0.92);
   border: 1.5px solid var(--line);
   display: flex;
   flex-direction: column;
@@ -3849,7 +4061,7 @@ button.tv-badge-pill:hover {
   padding: 0 8px;
   border-radius: 8px;
   border: 1.5px solid var(--line);
-  background: rgba(8, 15, 43, 0.95);
+  background: rgb(var(--night-rgb) / 0.95);
   color: var(--ink);
   font-family: var(--font-body);
 }
@@ -3879,7 +4091,7 @@ button.tv-badge-pill:hover {
   height: 14px;
   border-radius: 50%;
   border: 2px solid var(--line);
-  background: rgba(8, 15, 43, 0.9);
+  background: rgb(var(--night-rgb) / 0.9);
   transition: background-color 100ms ease, border-color 100ms ease, transform 100ms ease;
 }
 

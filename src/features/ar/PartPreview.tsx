@@ -55,7 +55,7 @@ export function preloadPartGlb(glbFile: string | undefined): void {
 const STAGE_STYLE: CSSProperties = {
   width: "100%",
   height: 220,
-  background: "radial-gradient(circle at 50% 35%, #22337e, #080f2b)",
+  background: "radial-gradient(circle at 50% 35%, var(--surface-3), var(--night-900))",
   borderRadius: 12,
   border: "1px solid var(--glass-line)",
 };

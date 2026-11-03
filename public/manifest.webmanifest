@@ -4,8 +4,8 @@
   "description": "Scan a toy, build printable upgrades on it, play in AR.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#080f2b",
-  "theme_color": "#080f2b",
+  "background_color": "#0e1846",
+  "theme_color": "#0e1846",
   "icons": [
     { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
   ]
