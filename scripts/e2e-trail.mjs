@@ -176,7 +176,8 @@ async function openPage() {
  *  one (sandbox unlocks vehicles) can leave a different toy selected. */
 // The page's clock, pinned (it still ticks): a Wednesday and a Saturday at noon UTC.
 // Pinned so the Garage's weekend state never depends on the day the suite runs.
-const CLOCKS = { weekday: Date.UTC(2026, 10, 4, 12), weekend: Date.UTC(2026, 10, 7, 12) };
+// `household` is a Saturday of a household weekend (2026-11-13 is the first one: an orange) and `householdWeekday` the Wednesday before it.
+const CLOCKS = { weekday: Date.UTC(2026, 10, 4, 12), weekend: Date.UTC(2026, 10, 7, 12), household: Date.UTC(2026, 10, 14, 12), householdWeekday: Date.UTC(2026, 10, 11, 12) };
 const clockShim = (ms) =>
   `(()=>{const R=Date,t0=R.now(),now=()=>${ms}+(R.now()-t0);class D extends R{constructor(...a){a.length?super(...a):super(now())}static now(){return now()}}Date=D;})();`;
 
@@ -688,6 +689,17 @@ const shotNamed = async (cdp, name) => {
   const r = await cdp.send("Page.captureScreenshot", { format: "png" });
   writeFileSync(path.join(SHOTS, `${name}.png`), Buffer.from(r.data, "base64"));
 };
+/** A close-up of one place on the trail map (its box, scrolled into view, enlarged), for looking at small art such as the roof stars. */
+const shotNodeNamed = async (cdp, id, name) => {
+  if (!SHOTS) return;
+  const box = await cdp.evaluate(`(()=>{const b=document.querySelector('[data-node-id="${id}"]');if(!b)return null;b.scrollIntoView({block:"center",inline:"center"});const r=b.getBoundingClientRect();return {x:r.x,y:r.y,w:r.width,h:r.height}})()`);
+  if (!box) return;
+  await sleep(250);
+  const r2 = await cdp.evaluate(`(()=>{const r=document.querySelector('[data-node-id="${id}"]').getBoundingClientRect();return {x:r.x,y:r.y,w:r.width,h:r.height}})()`);
+  mkdirSync(SHOTS, { recursive: true });
+  const r = await cdp.send("Page.captureScreenshot", { format: "png", clip: { x: Math.max(0, r2.x - 10), y: Math.max(0, r2.y - 10), width: r2.w + 20, height: r2.h + 20, scale: 5 } });
+  writeFileSync(path.join(SHOTS, `${name}.png`), Buffer.from(r.data, "base64"));
+};
 /** The part worn in a slot, read from the live toy. */
 const worn = (cdp, slot) => cdp.evaluate(`window.__tvWorld.handle.buildSummary().sel[${JSON.stringify(slot)}]||null`);
 
@@ -839,6 +851,135 @@ async function scenarioGaragePhase2(cdp) {
   check("phase2: with drops off the sheet says so and offers Free build", /New drops are off/.test(await sheetText(cdp, ".tv-sheet-garage")) && /Free build/.test(await sheetText(cdp, ".tv-sheet-garage")));
 }
 
+// The household weekends (docs/specs/garage-weekend-spec.md, "Household library drops"): every weekend that is not a Build Day names an item to find at
+// home. The grown-up's "We found it" is behind the parent gate and is covered by unit tests (the gate bootstrap is too heavy here); this plays the child's
+// side for real: the sheet, "Who's that shape?", the hints, what a skip pays, and the hollow roof star.
+const shapeState = (cdp) =>
+  cdp.evaluate(`(()=>{const s=document.querySelector(".tv-shape");if(!s)return null;const t=s.querySelector(".tv-shape-target");return {target:s.dataset.target,level:Number(s.dataset.level),choices:[...s.querySelectorAll(".tv-shape-choice")].map(b=>b.dataset.item),hint:[...s.querySelectorAll(".tv-shape-choice-hint")].map(b=>b.dataset.item),name:(s.querySelector(".tv-shape-name")?.textContent)||"",view:t?t.dataset.view:null,pips:s.querySelectorAll(".tv-shape-pips li.on").length,done:!!s.querySelector(".tv-shape-done"),text:s.textContent}})()`);
+const tapChoice = (cdp, id) => cdp.evaluate(`(()=>{const b=document.querySelector('.tv-shape-choice[data-item="${id}"]');if(!b)return false;b.click();return true})()`);
+const openHouseholdSheet = async (cdp) => {
+  await openTrail(cdp);
+  await tapNode(cdp, "garage");
+  await waitKipAt(cdp, "garage");
+  await clickPlay(cdp);
+  await waitFor(() => cdp.evaluate(`!!document.querySelector(".tv-sheet-garage")`), { label: "garage sheet" });
+};
+const startShapeGame = async (cdp) => {
+  await waitFor(() => cdp.evaluate(`document.querySelectorAll(".tv-house-fig svg path").length>=2`), { label: "household pictures" });
+  check("household: the weekend's picture is drawn in its colours", await cdp.evaluate(`document.querySelector(".tv-house-fig svg path")?.getAttribute("fill")==="#F28C28"`));
+  await clickButton(cdp, ".tv-sheet-garage button", "Can\u2019t find one");
+  await waitFor(() => cdp.evaluate(`!!document.querySelector(".tv-shape .tv-shape-choice:not([disabled])")`), { label: "shape game" });
+};
+const roofStars = (cdp) =>
+  cdp.evaluate(`(()=>{const g=document.querySelector('[data-node-id="garage"] svg');return g?{gold:g.querySelectorAll('path[data-star="gold"]').length,hollow:g.querySelectorAll('path[data-star="hollow"]').length}:null})()`);
+
+async function scenarioGarageHousehold(cdp) {
+  await loadApp(cdp, { version: 1, totalXp: 0, ageBand: 3 }, { fresh: true, clock: "household" });
+  await openHouseholdSheet(cdp);
+  check("household: the sheet says New this weekend and Find it, with no Start button", (await sheetText(cdp, ".tv-garage-tag")) === "New this weekend" && (await sheetText(cdp, ".tv-garage-kind")) === "Find it" && !(await cdp.evaluate(`!!document.querySelector(".tv-garage-start")`)), await sheetText(cdp, ".tv-sheet-garage"));
+  check("household: it names the weekend's item, written for the age (7-9)", (await sheetText(cdp, ".tv-garage-title")) === "Find an orange" && /Can.t find one\? Play/.test(await sheetText(cdp, ".tv-sheet-garage")), await sheetText(cdp, ".tv-garage-title"));
+  check("household: nothing equips, so no loaner part is open in Build", !(await cdp.evaluate(`!!document.querySelector(".tv-garage-chip")`)));
+  await startShapeGame(cdp);
+  await shotNamed(cdp, "household-shape-start");
+  const catalog = await cdp.evaluate(`fetch("/kip/household/catalog.json").then(r=>r.json()).then(c=>Object.fromEntries(c.items.map(i=>[i.id,{band:i.minBand,like:i.confusableWith,simple:i.simple}])))`);
+  let s = await shapeState(cdp);
+  check("shape: the game opens on the weekend's item, as a silhouette, with four pictures and nothing marked", s.target === "orange" && s.view === "silhouette" && s.choices.length === 4 && s.choices.includes("orange") && s.hint.length === 0 && s.name === "" && s.level === 0 && s.pips === 0, JSON.stringify(s));
+  const wrongOk = (st) => st.choices.filter((c) => c !== st.target).every((c) => catalog[c].band <= 3 && !catalog[st.target].like.includes(c) && !catalog[c].like.includes(st.target));
+  check("shape: the wrong pictures never look like the answer and are not above the child's band", wrongOk(s), JSON.stringify(s.choices));
+  const xp0 = (await progOf(cdp)).totalXp ?? 0;
+  // wrong taps: a new item each time, the streak starts again, hints arrive in order and never finish it
+  for (let n = 1; n <= 5; n++) {
+    const before = await shapeState(cdp);
+    await tapChoice(cdp, before.choices.find((c) => c !== before.target));
+    await sleep(120);
+    s = await shapeState(cdp);
+    if (n === 1) check("shape: a wrong answer gives a different item, streak at zero, and does not say which was right", s.target !== before.target && s.pips === 0 && s.hint.length === 0 && /Not that one/.test(s.text), JSON.stringify(s));
+    if (n === 2) check("shape: two wrong taps change nothing else yet", s.level === 0 && s.view === "silhouette", JSON.stringify(s));
+    if (n === 3) { check("shape: after three wrong taps the picture gains its colours", s.level === 1 && s.view === "colour" && s.hint.length === 0, JSON.stringify(s)); await shotNamed(cdp, "household-shape-colours"); }
+    if (n === 4) check("shape: four wrong taps: still no name", s.level === 1 && s.name === "", JSON.stringify(s));
+    if (n === 5) { check("shape: after five the name is shown and the right picture is highlighted", s.level === 2 && s.hint.length === 1 && s.hint[0] === s.target && s.name.length > 0 && !s.done, JSON.stringify(s)); await shotNamed(cdp, "household-shape-hint"); }
+  }
+  const p0 = await progOf(cdp);
+  check("shape: five wrong taps pay nothing and finish nothing", (p0.totalXp ?? 0) === xp0 && !(p0.garageDone || []).length && !s.done, JSON.stringify({ xp: p0.totalXp, d: p0.garageDone }));
+  // following the highlight finishes it in exactly three taps (the band's streak)
+  for (let n = 1; n <= 3; n++) {
+    s = await shapeState(cdp);
+    check(`shape: the highlighted picture is the right one (tap ${n})`, s.hint[0] === s.target, JSON.stringify(s));
+    await tapChoice(cdp, s.hint[0]);
+    await sleep(150);
+  }
+  await waitFor(() => cdp.evaluate(`!!document.querySelector(".tv-shape-done")`), { label: "shape done" });
+  const done = await sheetText(cdp, ".tv-shape-done");
+  check("shape: finishing says what it paid: XP, and no play time", /You did it/.test(done) && /\+40 XP/.test(done) && /no play time/.test(done), done);
+  await shotNamed(cdp, "household-shape-done");
+  const p1 = await progOf(cdp);
+  check("skip: it paid 40 XP once", (p1.totalXp ?? 0) === xp0 + 40, `${xp0} -> ${p1.totalXp}`);
+  check("skip: the weekend is done, and is NOT recorded as found", JSON.stringify(p1.garageDone) === JSON.stringify(["2026-11-13"]) && !p1.garageFound, JSON.stringify({ d: p1.garageDone, f: p1.garageFound }));
+  check("skip: it stamps a Workshop Day", Array.isArray(p1.workshopDays) && /^2026-11-1[34]$/.test(p1.workshopDays[0]), JSON.stringify(p1.workshopDays));
+  check("skip: it earns no play time (nothing credited to the parent ledger)", !(await ledgerIds(cdp)).includes("garage.2026-11-13"), JSON.stringify(await ledgerIds(cdp)));
+  // close, look at the sheet and the roof
+  await clickButton(cdp, ".tv-shape button", "Close");
+  await waitFor(() => cdp.evaluate(`!!document.querySelector(".tv-sheet-garage:not(.tv-shape)")`), { label: "back to the drop" });
+  check("skip: the sheet says Done this weekend, offers no replay and no more skipping", /Done this weekend/.test(await sheetText(cdp, ".tv-garage-tag")) && /gold star/.test(await sheetText(cdp, ".tv-sheet-garage")) && !(await cdp.evaluate(`!!document.querySelector(".tv-house-skip")`)), await sheetText(cdp, ".tv-sheet-garage"));
+  await shotNamed(cdp, "household-done-sheet");
+  await clickButton(cdp, ".tv-sheet-garage button", "Close");
+  await sleep(300);
+  await openTrail(cdp);
+  const roof = await roofStars(cdp);
+  check("roof: a skipped weekend is a hollow star, not a gold one", roof && roof.hollow === 1 && roof.gold === 0, JSON.stringify(roof));
+  await shotNodeNamed(cdp, "garage", "household-roof-closeup");
+  await tapNode(cdp, "garage");
+  await waitKipAt(cdp, "garage");
+  check("roof: the plate says the weekend is done, not \u201cBuilt it\u201d", /Done/.test(await sheetText(cdp, ".tv-trail-plate-title") + (await sheetText(cdp, ".tv-trail-plate-kicker"))) && !/Built it/.test(await sheetText(cdp, ".tv-trail-plate-kicker")), await sheetText(cdp, ".tv-trail-plate-kicker"));
+  await shotNamed(cdp, "household-roof-hollow");
+}
+
+async function scenarioGarageHouseholdTiny(cdp) {
+  await loadApp(cdp, { version: 1, totalXp: 0, ageBand: 0 }, { fresh: true, clock: "household" });
+  await openHouseholdSheet(cdp);
+  check("tiny: the youngest read a short title with an exclamation mark and no skip hint of rules", (await sheetText(cdp, ".tv-garage-title")) === "Find an orange!", await sheetText(cdp, ".tv-garage-title"));
+  await startShapeGame(cdp);
+  let s = await shapeState(cdp);
+  check("tiny: two pictures to pick from, both simple things", s.target === "orange" && s.choices.length === 2, JSON.stringify(s));
+  const catalog = await cdp.evaluate(`fetch("/kip/household/catalog.json").then(r=>r.json()).then(c=>Object.fromEntries(c.items.map(i=>[i.id,i.simple])))`);
+  check("tiny: the wrong picture is a simple item", s.choices.filter((c) => c !== s.target).every((c) => catalog[c] === true), JSON.stringify(s.choices));
+  const before = s;
+  await tapChoice(cdp, s.choices.find((c) => c !== s.target));
+  await sleep(150);
+  s = await shapeState(cdp);
+  check("tiny: a wrong tap retries the SAME shape with the same pictures", s.target === before.target && JSON.stringify(s.choices) === JSON.stringify(before.choices) && /Try again/.test(s.text), JSON.stringify(s));
+  await tapChoice(cdp, s.target);
+  await sleep(150);
+  s = await shapeState(cdp);
+  check("tiny: a right tap moves on to another shape, one of two in a row done", s.target !== before.target && s.pips === 1 && !s.done, JSON.stringify(s));
+  await tapChoice(cdp, s.target);
+  await waitFor(() => cdp.evaluate(`!!document.querySelector(".tv-shape-done")`), { label: "tiny done" });
+  check("tiny: two right in a row finishes it and pays 40 XP", ((await progOf(cdp)).totalXp ?? 0) === 40);
+  await shotNamed(cdp, "household-tiny-done");
+}
+
+// Demo Mode's Preview weekend on a Wednesday before a household weekend: the flow runs and nothing is saved.
+async function scenarioGarageHouseholdPreview(cdp) {
+  await loadApp(cdp, { version: 1, totalXp: 0, ageBand: 3 }, { fresh: true, clock: "householdWeekday", extra: { "toyforge:demo-mode:v1": "1", "tvGaragePreview:v1": "1" } });
+  await openHouseholdSheet(cdp);
+  check("household preview: a weekday shows the next weekend's find-it card", (await sheetText(cdp, ".tv-garage-title")) === "Find an orange" && (await sheetText(cdp, ".tv-garage-tag")) === "New this weekend", await sheetText(cdp, ".tv-garage-title"));
+  await startShapeGame(cdp);
+  for (let n = 0; n < 5; n++) {
+    const st = await shapeState(cdp);
+    await tapChoice(cdp, st.choices.find((c) => c !== st.target));
+    await sleep(100);
+  }
+  for (let n = 0; n < 3; n++) {
+    const st = await shapeState(cdp);
+    await tapChoice(cdp, st.hint[0]);
+    await sleep(150);
+  }
+  await waitFor(() => cdp.evaluate(`!!document.querySelector(".tv-shape-done")`), { label: "preview done" });
+  check("household preview: it says nothing is saved", /Nothing is saved/.test(await sheetText(cdp, ".tv-shape-done")), await sheetText(cdp, ".tv-shape-done"));
+  const p = await progOf(cdp);
+  check("household preview: no XP, no weekend marked done, no Workshop Day", (p.totalXp ?? 0) === 0 && !(p.garageDone || []).length && !(p.workshopDays || []).length, JSON.stringify({ xp: p.totalXp, d: p.garageDone }));
+}
+
 async function scenarioGaragePreview(cdp) {
   await loadApp(cdp, { version: 1, totalXp: 0, ageBand: 3 }, { fresh: true, extra: { "toyforge:demo-mode:v1": "1", "tvGaragePreview:v1": "1" } });
   await openTrail(cdp);
@@ -924,6 +1065,9 @@ async function main() {
     await run("garage-weekend", scenarioGarageWeekend);
     await run("garage-preview", scenarioGaragePreview);
     await run("garage-phase2", scenarioGaragePhase2);
+    await run("garage-household", scenarioGarageHousehold);
+    await run("garage-household-tiny", scenarioGarageHouseholdTiny);
+    await run("garage-household-preview", scenarioGarageHouseholdPreview);
   } finally {
     killAll();
   }

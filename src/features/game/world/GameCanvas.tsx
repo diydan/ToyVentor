@@ -12,12 +12,14 @@ import { isBuiltInToy, type Toy } from "../../../../shared/toy";
 import { loadToyPortrait, PORTRAIT_PX, saveToyPortrait } from "../../../lib/toyPortrait";
 import {
   completeGarage,
+  completeGarageHousehold,
   completeGarageReal,
   GARAGE_DAYS_DEFAULT,
   GARAGE_DROPS,
   GARAGE_GRACE_MS,
   garageGraceLeftMs,
   garageStatus,
+  garageTrophyCounts,
   loanKeys,
   missionDone,
   missionParts,
@@ -93,6 +95,8 @@ import {
 } from "./engine";
 import { GarageGoalChip } from "./GarageGoalChip";
 import { GarageSheet } from "./GarageSheet";
+import { HouseholdConfirm, useHouseholdPictures } from "./HouseholdWeekend";
+import { householdDropForWeekend } from "../../../lib/garageHouseholdData";
 import { GrownUpsSheet } from "./GrownUpsSheet";
 import { composeRoomPhotoLevel } from "./runtime/roomPhoto";
 import {
@@ -109,6 +113,7 @@ import { MyToySheet } from "./MyToySheet";
 import { isPackClaimedToday, PackOverlay } from "./PackOverlay";
 import { RevealOverlay } from "./RevealOverlay";
 import { SleepCurtain } from "./SleepCurtain";
+import { WorkshopLauncher } from "./WorkshopLauncher";
 import { ToyCustomizer } from "./ToyCustomizer";
 import { ToyMiniIcon } from "./ToyMiniIcon";
 
@@ -549,9 +554,15 @@ export function GameCanvas({
     dropEnabled: progression.garageDrop,
     days: progression.garageDays,
     preview: demoMode && garagePreview,
+    found: progression.garageFound,
+    householdDrop: householdDropForWeekend,
   });
   const garageRef = useRef(garage);
   garageRef.current = garage;
+  // The household weekends' pictures, loaded the first time the Garage sheet or the Grown-Ups sheet is open on one.
+  const housePictures = useHouseholdPictures((garageOpen || grownUpsOpen) && garage.kind === "household");
+  // The roof stars: gold for a build weekend or a household weekend that was found, hollow for one that was skipped.
+  const garageTrophies = garageTrophyCounts(progression.garageDone, progression.garageFound);
 
   // Garage grace: a mission underway when today's limit runs out may finish,
   // for up to 10 minutes a weekend, never in quiet hours. Spent only while the
@@ -769,6 +780,43 @@ export function GameCanvas({
     engineRef.current?.openCustomizer("build");
   }, [closeEngineSheets, closeReactOverlays, endGarageMission]);
 
+  // A household weekend finished by playing "Who's that shape?": XP and the stamp, no play time. Preview weekend saves nothing.
+  const finishHouseholdSkip = useCallback((): string => {
+    const { weekendKey, preview } = garageRef.current;
+    if (preview) return "Preview only. Nothing is saved.";
+    const dayKey = localDay(Date.now(), getLocalParentSnapshot().settings.timezone);
+    const res = completeGarageHousehold(progressionRef.current, weekendKey, dayKey, "skipped");
+    if (res.awarded <= 0) return "Done already. There is nothing more to earn this weekend.";
+    saveProgression(res.next);
+    setProgression(res.next);
+    void pushProgression(res.next);
+    const rankNote = res.rankAfter.rank > res.rankBefore.rank ? ` · Rank ${res.rankAfter.rank}: ${res.rankAfter.title}` : "";
+    return `+${res.awarded} XP · skipping earns no play time${rankNote}`;
+  }, []);
+
+  // The grown-up's "We found it": XP, the stamp and the play-time minutes. Preview weekend saves nothing.
+  const confirmHouseholdFound = useCallback((): string | Promise<string> => {
+    const { weekendKey, preview, done } = garageRef.current;
+    if (preview) return "Preview only. Nothing is saved.";
+    const dayKey = localDay(Date.now(), parentSnapshot.settings.timezone);
+    const res = completeGarageHousehold(progressionRef.current, weekendKey, dayKey, "found");
+    if (res.next === progressionRef.current) {
+      return done ? "This weekend is already finished." : "Nothing to confirm: “We found it” is switched off with the real-life leg.";
+    }
+    saveProgression(res.next);
+    setProgression(res.next);
+    void pushProgression(res.next);
+    const rankNote = res.rankAfter.rank > res.rankBefore.rank ? ` · Rank ${res.rankAfter.rank}: ${res.rankAfter.title}` : "";
+    const say = (minutes: number) => `Found it! +${res.awarded} XP${minutes > 0 ? ` · +${minutes} min play time` : ""}${rankNote}`;
+    if (!res.stemMissionId) return say(0);
+    return recordPlayProgress({ completedMissionIds: [res.stemMissionId] })
+      .then(({ snapshot, awardedMinutes }) => {
+        setParentSnapshot(snapshot);
+        return say(awardedMinutes);
+      })
+      .catch(() => say(0));
+  }, [parentSnapshot.settings.timezone]);
+
   const freeBuildFromGarage = useCallback(() => {
     endGarageMission();
     openBuildSheet();
@@ -948,6 +996,8 @@ export function GameCanvas({
           >
             Build
           </button>
+
+          <WorkshopLauncher engine={engineRef} disabled={sleepActive} />
 
           <button
             type="button"
@@ -1585,7 +1635,7 @@ export function GameCanvas({
                 prog: progression,
                 found: new Set(state.foundKeys),
                 missionsDone: new Set(state.missionsDoneKeys),
-                garage: { weekend: garage.isWeekend && garage.dropEnabled, done: garage.done, trophies: (progression.garageDone ?? []).length },
+                garage: { weekend: garage.isWeekend && garage.dropEnabled, done: garage.done, trophies: garageTrophies.gold, hollow: garageTrophies.hollow, household: garage.kind === "household" },
               }),
               visited: new Set(progression.explorerVisited ?? []),
               currentId: state.world,
@@ -1665,7 +1715,7 @@ export function GameCanvas({
               prog: progression,
               found: new Set(state.foundKeys),
               missionsDone: new Set(state.missionsDoneKeys),
-              garage: { weekend: garage.isWeekend && garage.dropEnabled, done: garage.done, trophies: (progression.garageDone ?? []).length },
+              garage: { weekend: garage.isWeekend && garage.dropEnabled, done: garage.done, trophies: garageTrophies.gold, hollow: garageTrophies.hollow, household: garage.kind === "household" },
             })}
             ageBand={progression.ageBand ?? null}
             guide={
@@ -1708,6 +1758,11 @@ export function GameCanvas({
             onClose={() => setGarageOpen(false)}
             realLifeOn={progression.garageRealLife !== false}
             buildRealUrl={kipUrl ?? null}
+            household={
+              garage.kind === "household"
+                ? { pictures: housePictures, ageBand: progression.ageBand ?? null, onSkipFinished: finishHouseholdSkip }
+                : undefined
+            }
           />
         )}
 
@@ -1851,6 +1906,16 @@ export function GameCanvas({
             setProgression(next);
             void pushProgression(next);
           }}
+          garageHousehold={
+            garage.kind === "household" ? (
+              <HouseholdConfirm
+                status={garage}
+                pictures={housePictures}
+                realLifeOn={progression.garageRealLife !== false}
+                onConfirm={confirmHouseholdFound}
+              />
+            ) : null
+          }
           onConfirmGarageReal={() => {
             const dayKey = localDay(Date.now(), parentSnapshot.settings.timezone);
             const res = completeGarageReal(progressionRef.current, garageRef.current.weekendKey, dayKey);

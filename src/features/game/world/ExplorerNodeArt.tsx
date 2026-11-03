@@ -130,32 +130,36 @@ function House({ complete, night }: { complete: boolean; night: boolean }) {
  * Finished weekends as roof trophies: up to four small stars along the roof
  * edge, then a count. Permanent while the weekends stay finished.
  */
-function Trophies({ count }: { count: number }) {
-  const shown = Math.min(4, count);
+function Trophies({ count, hollow = 0 }: { count: number; hollow?: number }) {
+  // Gold stars first, then hollow ones: a hollow star is a household weekend finished by a skip, not by finding the thing, so the roof stays a
+  // true picture of real-world effort (garage-weekend-spec.md, "Rewards").
+  const total = count + hollow;
+  const shown = Math.min(4, total);
   if (shown <= 0) return null;
   return (
     <g aria-hidden="true">
       {Array.from({ length: shown }, (_, i) => (
         <path
           key={i}
+          data-star={i < count ? "gold" : "hollow"}
           transform={`translate(${18 + i * 9.5} 8.5) scale(0.55)`}
           d="M0-8l2.4 4.9 5.4.8-3.9 3.8.9 5.4L0 4.4l-4.8 2.5.9-5.4-3.9-3.8 5.4-.8z"
-          fill="#ffd24d"
+          fill={i < count ? "#ffd24d" : "none"}
           stroke={INK}
           strokeWidth="2.4"
           strokeLinejoin="round"
         />
       ))}
-      {count > shown ? (
+      {total > shown ? (
         <text x="58" y="12" textAnchor="end" fontSize="9" fontWeight="900" fill={INK} fontFamily="Figtree, system-ui, sans-serif">
-          +{count - shown}
+          +{total - shown}
         </text>
       ) : null}
     </g>
   );
 }
 
-function Garage({ hot, done, night, trophies = 0 }: { hot: boolean; done: boolean; night: boolean; trophies?: number }) {
+function Garage({ hot, done, night, trophies = 0, hollow = 0 }: { hot: boolean; done: boolean; night: boolean; trophies?: number; hollow?: number }) {
   const lit = hot || night;
   return (
     <svg viewBox="0 0 64 64" aria-hidden="true" data-lit={lit ? "1" : undefined}>
@@ -163,7 +167,7 @@ function Garage({ hot, done, night, trophies = 0 }: { hot: boolean; done: boolea
       <ellipse cx="32" cy="55" rx="25" ry="6" fill={SHADOW} />
       <rect x="8" y="27" width="48" height="28" rx="3" fill="#e8edf7" stroke={INK} strokeWidth="2.6" />
       <path d="M4 29 32 11l28 18z" fill="#6f7fa8" stroke={INK} strokeWidth="2.6" strokeLinejoin="round" />
-      <Trophies count={trophies} />
+      <Trophies count={trophies} hollow={hollow} />
       <rect x="15" y="35" width="34" height="20" rx="2" fill={hot ? "#ffd866" : "#c7d2e6"} stroke={INK} strokeWidth="2.2" />
       {hot ? (
         <>
@@ -237,6 +241,7 @@ export function NodeArt({ node, night = false }: { node: ExplorerNode; night?: b
         done={node.complete}
         night={night}
         trophies={node.card?.trophies ?? 0}
+        hollow={node.card?.hollow ?? 0}
       />
     );
   }

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import {
   PARENT_PRESETS,
   isValidPin,
@@ -78,6 +78,8 @@ export interface GrownUpsSheetProps {
   garageRealDone?: boolean;
   /** Confirm "We built it"; returns the status line to show. */
   onConfirmGarageReal?: () => string;
+  /** A household weekend (find one at home): this takes the place of "We built it", which has nothing to confirm there. */
+  garageHousehold?: ReactNode;
   onSnapshotChange: (next: ParentSnapshot) => void;
   onClose: () => void;
 }
@@ -137,6 +139,7 @@ export function GrownUpsSheet({
   onSetGarageRealLife,
   garageRealDone = false,
   onConfirmGarageReal,
+  garageHousehold = null,
   onSnapshotChange,
   onClose,
 }: GrownUpsSheetProps) {
@@ -1314,22 +1317,26 @@ export function GrownUpsSheet({
                   {garageRealLifeOn ? "Real-life leg: On" : "Real-life leg: Off"}
                 </button>
               </div>
-              <p className="tv-moves" style={{ margin: 0, fontSize: 12 }}>
-                After the in-app drop, the family rebuilds it with real parts.
-                Confirming here stamps a Workshop Day and pays +10 XP, only
-                when no real-life XP was earned yet today.
-              </p>
-              {onConfirmGarageReal && (
-                <button
-                  type="button"
-                  className="tv-ctl tv-ctl-primary"
-                  disabled={!garageSummary?.done || !garageRealLifeOn || garageRealDone}
-                  onClick={() => setStatusNote(onConfirmGarageReal())}
-                >
-                  {garageRealDone
-                    ? "Built it for real ★"
-                    : "We built it"}
-                </button>
+              {garageHousehold ?? (
+                <>
+                  <p className="tv-moves" style={{ margin: 0, fontSize: 12 }}>
+                    After the in-app drop, the family rebuilds it with real parts.
+                    Confirming here stamps a Workshop Day and pays +10 XP, only
+                    when no real-life XP was earned yet today.
+                  </p>
+                  {onConfirmGarageReal && (
+                    <button
+                      type="button"
+                      className="tv-ctl tv-ctl-primary"
+                      disabled={!garageSummary?.done || !garageRealLifeOn || garageRealDone}
+                      onClick={() => setStatusNote(onConfirmGarageReal())}
+                    >
+                      {garageRealDone
+                        ? "Built it for real ★"
+                        : "We built it"}
+                    </button>
+                  )}
+                </>
               )}
             </div>
             </>

@@ -32,6 +32,10 @@ export interface MapCard {
   badge?: "new";
   /** The Garage card: finished weekends, shown as roof trophies on the map. */
   trophies?: number;
+  /** The Garage card: household weekends finished by a skip, drawn as hollow roof stars after the gold ones. */
+  hollow?: number;
+  /** The Garage card on a household weekend: finished means "Done", not "Built it". */
+  household?: true;
 }
 
 export interface MapStop {
@@ -114,7 +118,7 @@ export interface MapCardsInput {
    * The Garage (garage-weekend-spec.md). Absent = no Garage card, which keeps the
    * plain list the carousel tests were written against. The game always passes it.
    */
-  garage?: { weekend: boolean; done: boolean; trophies?: number };
+  garage?: { weekend: boolean; done: boolean; trophies?: number; hollow?: number; household?: boolean };
 }
 
 /**
@@ -158,6 +162,7 @@ export function buildMapCards(input: MapCardsInput): MapCard[] {
   if (input.garage) {
     const hot = input.garage.weekend && !input.garage.done;
     const trophies = Math.max(0, Math.floor(input.garage.trophies ?? 0));
+    const hollow = Math.max(0, Math.floor(input.garage.hollow ?? 0));
     garageCard = {
       id: "garage",
       kind: "garage",
@@ -170,6 +175,8 @@ export function buildMapCards(input: MapCardsInput): MapCard[] {
       suggested: false,
       ...(hot ? { badge: "new" as const } : {}),
       ...(trophies > 0 ? { trophies } : {}),
+      ...(hollow > 0 ? { hollow } : {}),
+      ...(input.garage.household ? { household: true as const } : {}),
     };
     // Weekend and waiting: first in the row. Otherwise it sits before the worlds.
     if (hot) cards.unshift(garageCard);

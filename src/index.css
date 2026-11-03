@@ -3229,6 +3229,58 @@ button.tv-badge-pill:hover {
 .tv-garage-start { align-self: flex-start; min-height: 48px; padding: 0 22px; font-size: 16px; background: var(--gold); color: var(--ink-on-sky); border-color: var(--gold); }
 .tv-garage-free { align-self: flex-start; min-height: 44px; }
 
+/* The household weekends (find one at home, or play "Who's that shape?"). */
+.tv-house-row { display: flex; flex-wrap: wrap; gap: 10px; }
+.tv-house-fig { display: flex; flex-direction: column; align-items: center; gap: 4px; margin: 0; max-width: 92px; }
+.tv-house-fig figcaption { color: var(--ink-muted); font: 700 12px/1.1 var(--font-body); text-align: center; }
+.tv-house-pic { display: block; width: 76px; height: 76px; flex: none; }
+.tv-house-pic-empty { background: rgb(var(--night-rgb) / 0.5); border-radius: 12px; }
+.tv-house-skip { margin-top: 2px; }
+.tv-house-confirm { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+
+.tv-shape-stage {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  padding: 8px;
+  background: #f4f0e6;
+  border: 3px solid var(--gold);
+  border-radius: 16px;
+}
+.tv-shape-target { width: min(32vw, 118px); height: min(32vw, 118px); }
+.tv-shape-name { margin: 0; color: #1c2236; font: 800 18px/1.1 var(--font-display); }
+.tv-shape-pips { display: flex; justify-content: center; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.tv-shape-pips li { width: 14px; height: 14px; border: 2px solid var(--gold); border-radius: 50%; }
+.tv-shape-pips li.on { background: var(--gold); }
+.tv-shape-choices { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.tv-shape-choices[data-count="3"] { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.tv-shape-choice {
+  display: grid;
+  place-items: center;
+  min-height: 78px;
+  padding: 6px;
+  background: #f4f0e6;
+  border: 3px solid var(--line-soft);
+  border-radius: 16px;
+  cursor: pointer;
+}
+.tv-shape-choice:disabled { opacity: 0.5; cursor: default; }
+.tv-shape-choice .tv-house-pic { width: 62px; height: 62px; }
+.tv-shape-choice-hint { border-color: var(--gold); box-shadow: 0 0 0 4px rgba(255, 210, 77, 0.6); }
+.tv-shape-choice-wrong { animation: tv-shape-shake 360ms ease; border-color: #ff8a7a; }
+.tv-shape-done { display: grid; justify-items: center; gap: 4px; text-align: center; }
+.tv-shape-done b { font: 800 20px/1.1 var(--font-display); }
+
+@keyframes tv-shape-shake {
+  0%, 100% { transform: none; }
+  25% { transform: translateX(-6px); }
+  75% { transform: translateX(6px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tv-shape-choice-wrong { animation: none; }
+}
+
 .tv-garage-chip {
   position: absolute;
   left: 10px;

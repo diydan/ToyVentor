@@ -88,33 +88,147 @@ The check reads the live build: the equipped part per slot and the build's
 stats. It needs one additive engine read, `buildSummary()` (`{ type, sel,
 stats }`); no new gameplay events.
 
-## Household library drops (added 2026-11-03, Dan: use the household items in the weekend games)
+## Household library drops (added 2026-11-03, Dan: use the household items in the weekend games; simplified the same day)
 
 Source: [household-library-spec.md](household-library-spec.md): 60 everyday objects (the 50, then ten more), each a small optimised 3D part (all
-built, 2026-11-03), chosen from the scan list's ranking and matched from a word or a photo. This section says how the Garage uses them; the library spec owns
-the items.
+built, 2026-11-03), chosen from the scan list's ranking and matched from a word or a photo. This section says how the Garage uses them; the library spec
+owns the items.
 
-- **The weekend's New part is a library item.** Sixty items is a little over a year of weekends (52), so the catalog is long enough that the
-  rotation rarely repeats. Same rule as before: deterministic, offline, no immediate repeat. The order is authored, so a theme is possible: the six
-  garage tools (hammer, screwdriver, pliers, flashlight, tape measure, bucket) make a natural **tool weekend**.
-- **The loaner is shown in 3D** on the Garage sheet ("This weekend: the wooden spoon") and equips in the hand slot to try for the weekend. The
-  loaner rule is unchanged: it is not given away.
-- **Idea kind, "Find one at home".** The sheet shows the item; the child finds the real one. Taking a photo is optional (the in-app drop never
-  needs one), goes through the same print panel and photo path as any scan, and gets the match offer: "This looks like a spoon. Want the 3D spoon,
-  coloured from your photo?" A photo the model cannot trace but whose word is right still gets the library item.
-- **Remix kind:** swap the held item for another of the same family (a mug for a bowl), then add the twist.
-- **Age bands:** the pre-reader versions pick between two items by picture. Tools and sharp-looking items follow the age rule decided in
-  household-library-spec.md ("Decided after phase 2"): limited by band, with a simplified item or one multi-purpose support tool standing in for the
-  young, and more real tools needed in the older bands. Dan confirmed it (2026-11-03): bands 0-1 get no `sharp-looking` item and no real tool and the
-  support tool stands in for any tool job; band 2 gets the blunt tools, one needed per job (the support tool fills in the rest); band 3 needs 2
-  different tools; bands 4-5 need 3. The catalog carries `minBand` on every item and the support tool (`maxBand` 2); the Garage's tool-job counting is not
-  built yet.
-- **The check** reads the equipped hand item, so `buildSummary()` gains one field, the item id. No new events.
-- **Build it for real** uses the printable relief where it passed the gates; an item that did not is digital-only, and the sheet says so.
-- **Rewards:** unchanged. The mission id, the STEM minutes, the XP, the stamp and the trophy do not depend on which item the drop used.
-- **Launch drops (Phase 1):** the five pilot items (ball, mug, wooden spoon, pencil, banana) are built and could be the first loaners, but a
-  library part cannot be equipped in the game yet (household-library-spec.md, open question 2). Phase 1 stays as specified unless that turns out to
-  be cheap; the library is Phase 2 content.
+**Dan's simplification (2026-11-03): no 3D loaner for household items.** Nothing is equipped in the game, so no hand slot, no vehicle question and no stat
+or world per item. A household weekend is **"find one at home"**, with a way to skip that is not one tap.
+
+- **One item a weekend.** The weekend's drop names one library item, shown by a picture and its name on the Garage sheet. Same rotation rules as every
+  drop: deterministic, offline, no immediate repeat. Sixty items is a little over a year of weekends (52). The order is authored, so a theme is
+  possible (the garage tools make a **tool weekend**, below).
+- **Two ways to finish. Either one completes the drop.**
+  - **Find it.** The child finds the real one. A grown-up confirms "We found it" behind the parent gate, the pattern the real-life leg already uses
+    (`garageRealByDay`), with the item's picture on the confirm so the grown-up knows what was asked. Full reward. Scanning it in the Kip viewer is a
+    bonus and never required: the photo gets the library's match offer and the 3D item coloured from the photo (game only, never in a print).
+  - **Skip it: "Who's that shape?"** (clue-based, no reading). The game shows the weekend's item as a black silhouette seen from the front, drawn from
+    the item's own 3D model, and the child picks it from a few pictures. A right answer plays the item's name aloud (the say-what-it-is voice). The
+    silhouette needs no authored text or art and works in every language, so pre-readers can play it.
+
+    | Age group (`bandGroupOf`) | Pictures to pick from | Right in a row to finish |
+    | --- | --- | --- |
+    | tiny (bands 0-1) | 2 | 2 |
+    | early (band 2) | 3 | 2 |
+    | mid (band 3) | 4 | 3 |
+    | older (bands 4-5) | 4 | 3 |
+
+    The wrong pictures come from the same **group** as the right one (cutlery, tools, fruit, containers, stationery, toys, bath, kitchen: a
+    hand-written `group` on each catalog row, not the build `family` column, which is a construction family), **but never an item whose real silhouette
+    is close to the answer's** (the build writes a `confusableWith` list per item), never an item the child's band may not see (`minBand`, so a fork is
+    not a wrong answer at band 2 either), and topped up from the whole pool when the group is too small; the youngest group draws only from the `simple`
+    pool. (Review, 2026-11-03: measured on the real outlines, 15 of the 190 pairs among the 20 simple items overlap 90 percent or more from the front,
+    all discs: ball, plate, flying disc, yo-yo, marble, orange; a three-quarter view roughly halves that and cannot fix it, because those things are
+    round. So the pair must be chosen, not drawn at random.) The game shows the **three-quarter** silhouette; the front picture is for the grown-up's
+    confirm. A wrong answer in the early, mid and older groups starts the streak again with a different item and does not say which was right; **in the
+    tiny group it retries the same item** (a streak is not an idea at two, and a swap never says why the last answer was wrong). **Always completable:**
+    after 3 misses on an item the picture gains its colours, after 5 the name is said and the right picture is highlighted, and the child still has to tap
+    it. Tapping wrong answers can never finish a skip. The numbers are my proposal, as is the reward below.
+- **Rewards.** Find it: unchanged (XP, play-time minutes, Workshop Day stamp, roof trophy). Skip it: the XP, the stamp and the trophy, **no play-time
+  minutes** (those stay for real-world effort, the same "paid only after a change" idea the minutes already follow). Proposed; Dan has not objected.
+  Decided by Dan (2026-11-03: "2 yes", "3 yes hollow star"): a find pays the drop's 40 XP and does not consume the +25 XP/day ceiling; a skipped weekend is a
+  hollow roof star. Two consequences found in review (2026-11-03): (1) **a household weekend needs its own completion**, `completeGarageHousehold(prog, weekendKey, dayKey,
+  mode)` with `mode` `"found" | "skipped"`, because `completeGarageReal` refuses a weekend whose in-app drop is not done (`garage.ts:679`) and pays the
+  real-life 10 XP, not the drop's 40. Both modes set `garageDone` (no second completion), record the mode in a new `garageFound` list, and pay the drop's
+  40 XP and the Workshop Day stamp; only "found" earns the STEM minutes (`garage.<weekendKey>`); a find should not consume the shared +25 XP/day
+  real-life ceiling (it is the drop's reward, not a quest's bonus) but does block a same-day "We built it" through the existing `earnedToday` rule.
+  (2) **The roof must not claim a skipped weekend as found.** The stars count `garageDone` (`GameCanvas.tsx:1588`); a skipped weekend gets a different
+  mark (a hollow star) so the roof stays a true picture of real-world effort. Name the two grown-up buttons differently ("We found it" is the drop;
+  "We built it" is a bonus on a done drop).
+- **Tool weekends** (the items tagged `garage`: hammer, screwdriver, pliers, flashlight, tape measure, bucket; the rule reads the `garage` tag, which all
+  six carry, not `tool`, which the bucket and the flashlight lack) follow the age rule decided in household-library-spec.md ("Decided after phase 2"). A
+  tool job names how many different tools to find: bands 0-1 are never asked to handle a real tool: the chunky **support tool** is the *picture* on the
+  sheet and in the game, and the task is "ask a grown-up to show you a tool", which the grown-up confirms (so the tiny weekend has a real-world referent
+  and no product is needed); band 2 finds 1 blunt tool (five are open to it, the screwdriver is band 3); band 3 finds 2 different tools; bands 4-5 find
+  3. The sheet says what counts (three different ones from the six it shows), because many homes do not own three. `sharp-looking` items (fork, scissors,
+  screwdriver, toy sword) are not asked for before band 3. The catalog carries `minBand` on every item and the support tool (`maxBand` 2); the Garage's
+  counting is not built yet.
+- **Household items do not use the Remix kind** (it swaps a held item, and nothing is held). The other kinds are unchanged.
+- **The rotation (decided, Dan 2026-11-03: yes).** `dropForWeekend` is `weeks % GARAGE_DROPS.length` over 12 drops today; appending 60 household drops would make a
+  household weekend come round every sixth weekend, not every weekend. Proposed: **one Build Day a month** (the first weekend of the month keeps a build
+  drop, every other weekend is a household weekend): about 40 household weekends a year, the 60 items cycle in about 18 months, both catalogs stay
+  alive; one line of code and a test.
+- **The names (Dan, 2026-11-03: "use the google TTS worker we bound in the Cloudflare Worker to create any missing ones, save and track for future";
+  translations from "muse llm ... use direct not via cloudflare"; spend on the live voice "once we approve some samples").** A right answer says the
+  item's name, but the game's spoken names are a controlled vocabulary (`src/lib/propNames.ts`: 25 noun keys, 7 languages, native review in
+  `docs/review/spoken-names.md`) and the 60 household labels are not in it. Plan: a committed `src/lib/householdNames.json` holds each item's **bare noun**
+  (no article, no colour, so no gender agreement) in the 7 languages, English from the catalog label and the other six written by the **Muse model called
+  directly** (a script that loads the key itself, like `scripts/kip-gen-faces.ts`; never via the Cloudflare AI binding; Dan runs it), each entry marked
+  unreviewed until a native speaker approves it. The household items join the voice route as vocabulary keys (`h=<item id>`, never free text, like the part
+  names); each clip is generated once on first use by the Google TTS binding and kept in the edge cache; a committed **ledger** records which clips exist,
+  the text each speaks and a hash of the audio, so a new item gets its clip later and nothing is regenerated. The device voice (explicit language tag)
+  speaks the name until a clip exists. Samples first: Dan approves a sample of names (and a few clips) before the full run of about 420 clips.
+  **Built (2026-11-03, a forked agent; checked by the main session):** `src/lib/householdNames.json` (61 ids; English from the catalog label, `soda can` for
+  the can; the six other languages empty until the Muse script runs), `householdNames.ts` (lookup, `HOUSEHOLD_IDS`), `householdNamesCheck.ts` (validator:
+  bare noun, 1 to 3 words, no article or colour word, kid-safe, no two items sharing a noun in a language), `householdVoice.ts` (`speakHouseholdName(itemId)`:
+  Gemini clip, then the device voice with an explicit language tag, English in English where a language has no name), `scripts/household-names.ts` (Muse,
+  direct, reads the key from the environment or `.dev.vars`, never printed, budget 16 calls, stops on 401/403/429, never overwrites an approved name),
+  the `h=<item id>` key in `worker/voice.ts` (closed vocabulary, no free text, the cache key carries a fingerprint of the text so a corrected noun is a new
+  clip), `scripts/prewarm-voice.ts` (`--list`, `--missing`, `--force`, `--only`) with the ledger `src/lib/householdVoice.ledger.json`, and a "Household names"
+  section in `docs/review/spoken-names.md`. Checked: 158 tests in the 7 related files re-run by the main session, `tsc` clean for these files; the agent's
+  mutation round killed 48 of 48 in the end. Not verified: the real Muse call, any real audio, a deployed `h=` route. The Garage's `speakName` hook calls
+  `speakHouseholdName`.
+- **The offer when the helper is offline** (answered, Dan's question 4): offer the 3D item for transport failures only (`offline`, `helper_off`, `busy`,
+  `slow_down`), by the child's own word, inside the child's band, with its own reason (`word_only`) and its own sentence that does not mention tracing
+  ("You said spoon. Here is the 3D wooden spoon."); never for the child's own faults (`invalid_input`, `too_large`).
+- **The scan is never required, and never blocks.** The game has no camera (`getUserMedia` appears nowhere in `src/`; the photo path is the Kip
+  viewer's), the one real photo fails the 0.95 bar, and the matcher is strict on words. A grown-up confirm is the only way to complete "Find it"; a
+  scan may only ever add to a completion, never gate one or contradict a grown-up. The 0.95 bar stays: fidelity answers "is this outline safe to cut
+  along?", the word alone picks the item, and 0.924 is evidence the trace needs work, not that the bar is too high.
+- **The drop shape.** A household drop needs a new goal kind (it names an item; a tool weekend names a count), and its four band variants are
+  **template-built**, as the phase-2 template drops were, not 240 hand-written briefs.
+- **What it needs built:** the 60 household drops (the rotation rule above, the goal kind and the templates, the item's picture on the sheet and on the
+  confirm); the library build's pictures (**built**: `pictures.json`, `group`, `confusableWith`, household-library-spec.md); `completeGarageHousehold`, `garageFound` and the roof mark; "Who's that shape?"
+  (small, pure logic from the catalog, tested like the other Garage logic: `src/lib/garageHousehold.ts` beside `src/lib/garage.ts`); the grown-up confirm
+  names the item; the word-only offer. Later, if the game gets its own camera: a scan that matches the item as an additional route, never the only one.
+- **Launch drops (Phase 1)** stay as specified: the household drops are Phase 2 content.
+
+### Household weekends: what was built (2026-11-03, a forked agent; checked by the main session)
+
+`src/lib/garageHousehold.ts` (pure logic), `garageHouseholdData.ts` (the catalog bundled so it works offline, the pictures loaded lazily),
+`src/lib/garage.ts` (`completeGarageHousehold`, `garageTrophyCounts`, the household goal kind), `progression.ts` (`garageFound`), the roof
+(`mapCards.ts`, `ExplorerNodeArt.tsx`, `ExplorerMap.tsx`), `HouseholdWeekend.tsx` (the pictures, "Who's that shape?" and the grown-up's "We found it"),
+`GarageSheet.tsx`, `GrownUpsSheet.tsx`, `GameCanvas.tsx`, `index.css`; tests `tests/garage-household.test.ts` (66) and `garage-household-ui.test.ts` (21);
+`scripts/e2e-trail.mjs` gains three household scenarios.
+
+- **Build Days.** The weekend whose Friday has day-of-month 1 to 7 keeps a build drop (`dropForWeekend` unchanged); every other weekend is a household
+  weekend, **but weekends before launch are all Build Days** (the pinned pre-launch scenarios expect build drops); household numbering starts at 0 on
+  2026-11-13, an orange. After the first twelve Build Days a build drop can return as soon as 3 Build Days later (the formula counts weekends and months
+  have 4 or 5), most gaps are 11 to 14: a month-by-month count would make every gap exactly 12.
+- **Household rotation.** Every 8th household weekend is a tool weekend. The others follow a hand-written order of 54 items, round-robin by group with the
+  simple ones first, the six tools excluded (they are the tool weekends); items added later are appended. An age gate substitutes the next allowed item
+  in the order, and the youngest only get simple items.
+- **Tool jobs.** The youngest see the toy tool as the picture ("ask a grown-up to show you a tool"); early finds 1 of five tools, mid 2, older 3 of the
+  six; the pool comes from the `garage` tag and `minBand`.
+- **Shape game** (`garageHousehold.ts`, a pure state machine): 2, 3, 4, 4 pictures and 2, 2, 3, 3 right in a row; wrong pictures from the same group first,
+  never look-alikes, never above the child's band, only simple items for the youngest, topped up from the rest of the allowed pool. The youngest retry the
+  same shape and keep their streak; the older groups restart the streak with a different item. The miss count never resets: colours appear after 3 misses,
+  and after 5 the name and the highlighted right picture, and these stay on. A property test shows no run of wrong taps can finish it; tapping the
+  highlighted picture finishes it in at most `need` taps (so after 5 misses a skip takes 2 or 3 taps, against about 8 for a child who only guesses).
+  Speech is the no-op `speakName` (called through `shapeSpeech`), to be wired to `speakHouseholdName`.
+- **Completion.** `completeGarageHousehold(found | skipped)` refuses Build Days and a second completion. Both modes pay 40 XP and stamp the Workshop Day;
+  only a find earns the play-time minutes (`garage.<weekendKey>`) and is recorded in `garageFound`. A find is written to `garageRealByDay`, so a later
+  same-day "We built it" pays 0 (a skip does not block it), and never touches `completedChoresByDay`, so it never uses the 25 XP/day ceiling (a routine the
+  same day still pays 25). `completeGarageReal` refuses a weekend that was found. A find needs the real-life leg switched on; a skip does not. Preview
+  weekends save nothing for either.
+- **Roof.** A finished household weekend that is not in `garageFound` is a hollow star; build weekends and pre-launch weekends are gold. Gold stars are drawn
+  first, up to four shown with "+N" for the rest; the Grown-Ups sheet shows the item's picture on the household confirm, which replaces "We built it" on
+  household weekends.
+- **Verified.** Main session re-ran `tests/garage-household*.test.ts` and `tests/garage.test.ts` (143 tests) and `tsc` (clean apart from another lane's
+  `tests/yard-vehicles.test.ts`). The agent's runs: 220 tests across the garage, household, progression, daily quest, scavenger and explorer files (the
+  explorer-art tests need a 120 s timeout while the machine is loaded); `node scripts/e2e-trail.mjs` 160 of 160 on Metal, including the three new
+  scenarios, with screenshots looked at (the shape game on one screen with all four pictures, the hint state, the done sheet, a roof close-up with a hollow
+  star); a mutation round of 81 single-line breakages, all killed (five survivors at first got tests). Trap: a mutation run that overlaps a browser run
+  reloads the app through Vite and breaks the browser run.
+- **Not verified.** The grown-up's "We found it" in a browser (behind the parent gate: unit and markup tests only); a real phone; the voice (no-op hook); a
+  production `vite build` (the code imports the catalog and pictures JSON from `public/` by relative path, fine in dev and in tests, untested in a build:
+  run `npm run build` before a deploy).
+- **Open for Dan.** (1) Keep the weekend-counting rotation, or count Build Days month by month (a one-line change, every gap 12)? (2) A skipped weekend can't
+  be upgraded to a find later (`completeGarageHousehold` is a no-op once done): should a grown-up be able to turn a skip into a find, adding the minutes?
+  (3) A find needs the real-life leg on, so a family that switched real-life tasks off can only skip. (4) Skips are judged by weekend type, not stored, so
+  if the Build Day rule ever changes old weekends would flip: store skips explicitly?
 
 ## Rewards and what it counts for
 
@@ -294,9 +408,8 @@ Saturday Nov 7). **Not tried on a real phone.**
 
 ## Still open
 
-- Whether Phase 1's launch drops can use the pilot items. (The age rule and its cut-offs are decided, household-library-spec.md; the Garage's tool-job
-  counting is to build.) Equipping a library item is settled in that spec's phase 4;
-  keeping a loaner is decided (scan the real one, finding it in a room as the fallback).
+- The household weekends: the skip game's numbers (pictures and streak per group) and its reward (no play-time minutes), the household drops
+  and the front pictures to build, and the Garage's tool-job counting (household-library-spec.md; the age rule and its cut-offs are decided).
 - The 10-minute Garage grace (length, and whether it should also apply on
   weekday drops).
 - Time-of-day look for the Garage and the worlds: see "Time of day" below.

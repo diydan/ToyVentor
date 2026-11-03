@@ -94,6 +94,13 @@ export type GarageGoal =
   | { kind: "statCount"; count: number }
   /** Change parts from the build the child started with, under a twist. */
   | { kind: "remix"; changes: number; gainStat?: boolean; keepStats?: boolean }
+  /**
+   * A household weekend (household-library-spec.md): find one at home, or skip by playing "Who's that shape?". It is never met by a build, so
+   * `checkGoal` never says ok: a grown-up confirms the find, or the shape game finishes it (`completeGarageHousehold`). `items` are the library
+   * item ids asked for (one item, or the tools of a tool weekend), `count` how many different ones, and `toyTool` the youngest tool weekend, where
+   * the toy support tool is the picture and the task is to ask a grown-up to show a tool.
+   */
+  | { kind: "household"; items: readonly string[]; count: number; toyTool?: boolean }
   | { kind: "all"; goals: readonly GarageGoal[] };
 
 export interface GoalPart {
@@ -186,6 +193,9 @@ export function checkGoal(goal: GarageGoal, build: BuildSummary, baseline?: Buil
       }
       return { ok: parts.every((p) => p.ok), parts };
     }
+    case "household":
+      // Never met by a build: the grown-up's "We found it" or the shape game completes a household weekend.
+      return { ok: false, parts: [{ label: goal.toyTool ? "Ask a grown-up to show you a tool" : "Find one at home", ok: false }] };
     case "all": {
       const checks = goal.goals.map((g) => checkGoal(g, build, baseline));
       return { ok: checks.every((c) => c.ok), parts: checks.flatMap((c) => c.parts) };
@@ -218,6 +228,8 @@ export interface GarageDrop {
   byGroup: Record<BandGroup, GarageVariant>;
   /** New part: the parts opened to try for the weekend, one per toy type. */
   loan?: Record<GarageToyType, string>;
+  /** A household weekend (garageHousehold.ts builds these): what it is about, so the sheet can show the item. */
+  household?: { kind: "item" | "tools"; itemId?: string };
 }
 
 const CROWN: Record<GarageToyType, string> = {
@@ -525,6 +537,20 @@ export function dropForWeekend(weekendKey: string): GarageDrop {
   return GARAGE_DROPS[((weeks % len) + len) % len]!;
 }
 
+/**
+ * Is this weekend a Build Day? The first weekend of each month (the Friday's day of the month is 1 to 7) keeps a build drop from the rotation
+ * above, which is unchanged for it; every other weekend is a household weekend (garageHousehold.ts). Dan, 2026-11-03: without it, adding the
+ * household drops to the same rotation would bring a household weekend round only every sixth weekend. A key that is not a date is a Build Day,
+ * so nothing unexpected is ever treated as a household weekend; so is every weekend before the first one (the rule starts at launch, and the Garage
+ * before it was all build weekends).
+ */
+export function isBuildDayWeekend(weekendKey: string): boolean {
+  const w = weekendOf(weekendKey);
+  if (w === null) return true;
+  if (dayNumber(w.weekendKey)! < dayNumber(FIRST_WEEKEND)!) return true;
+  return Number(w.weekendKey.slice(8, 10)) <= 7; // the Friday that opens the weekend
+}
+
 /** The parts a drop opens to try, for every toy type. */
 export function loanKeys(drop: GarageDrop): string[] {
   return drop.loan ? Object.values(drop.loan) : [];
@@ -536,6 +562,10 @@ export function loanKeys(drop: GarageDrop): string[] {
 export const GARAGE_DAYS_DEFAULT: readonly number[] = [0, 5, 6];
 
 export interface GarageStatus {
+  /** A Build Day (a build drop from the rotation) or a household weekend (find one at home, or skip). */
+  kind: "build" | "household";
+  /** This weekend was finished by a find (a household weekend); false for a skip and for a build. */
+  found: boolean;
   dayKey: string;
   /** It is a drop day (or Preview weekend is on): the Garage is animated and in focus. */
   isWeekend: boolean;
@@ -564,6 +594,13 @@ export function garageStatus(input: {
   days?: readonly number[];
   /** Demo Mode "Preview weekend": show the weekend state on a weekday. */
   preview?: boolean;
+  /** Weekends finished by a find (`garageFound`). */
+  found?: readonly string[];
+  /**
+   * The household drop for a weekend that is not a Build Day, or null (`householdDropFor` in garageHousehold.ts, which needs the library catalog,
+   * so the caller passes it in). Absent: every weekend is a build weekend, as before the household weekends.
+   */
+  householdDrop?: (weekendKey: string) => GarageDrop | null;
 }): GarageStatus {
   const real = weekendOf(input.dayKey) ?? weekendOf(FIRST_WEEKEND)!;
   const preview = input.preview === true && !real.isWeekend;
@@ -575,11 +612,14 @@ export function garageStatus(input: {
   // switch only hides the card, never the Garage itself.
   const dow = dayOfWeek(input.dayKey);
   const live = preview || (dow !== null && days.includes(dow) && real.isWeekend);
-  const drop = dropForWeekend(weekendKey);
+  const household = !isBuildDayWeekend(weekendKey) ? (input.householdDrop?.(weekendKey) ?? null) : null;
+  const drop = household ?? dropForWeekend(weekendKey);
   const group = bandGroupOf(input.ageBand);
   const done = (input.done ?? []).includes(weekendKey);
   const dropEnabled = input.dropEnabled !== false;
   return {
+    kind: household ? "household" : "build",
+    found: household !== null && done && (input.found ?? []).includes(weekendKey),
     dayKey: input.dayKey,
     isWeekend: live,
     weekendKey,
@@ -677,6 +717,8 @@ export function completeGarageReal(
   }
   if (prog.garageRealLife === false) return noop;
   if (!(prog.garageDone ?? []).includes(weekendKey)) return noop;
+  // A household weekend that was found has nothing to build: "We found it" was its real-life step.
+  if ((prog.garageFound ?? []).includes(weekendKey)) return noop;
   const realToday = prog.garageRealByDay?.[dayKey] ?? [];
   if (realToday.includes(weekendKey)) return noop;
   const earnedToday =
@@ -700,6 +742,73 @@ export function completeGarageReal(
     rankBefore,
     rankAfter: rankFor(prog.totalXp + awarded),
   };
+}
+
+/** How a household weekend was finished. */
+export type HouseholdMode = "found" | "skipped";
+
+/**
+ * Finish a household weekend (household-library-spec.md, garage-weekend-spec.md "Household library drops"): the grown-up's "We found it", or the child's
+ * "Who's that shape?" skip. Not `completeGarage` (it has a build to wait for) and not `completeGarageReal` (it refuses a weekend with no in-app drop done
+ * and pays the real-life 10, not the drop's 40). Both ways pay the drop's XP once, stamp the Workshop Day and remember the weekend as done, so it cannot
+ * be finished twice; only a find earns play-time minutes (`stemMissionId`, the same mission id as a build) and is remembered in `garageFound`, so the roof
+ * can tell a found weekend from a skipped one. A find does NOT touch `completedChoresByDay`, so it never uses the shared +25 XP/day real-life ceiling
+ * (that ceiling counts routines), but it IS written to `garageRealByDay`, which a later same-day "We built it" reads (`earnedToday`): that one then pays 0.
+ * A find needs the real-life leg switched on (a family that turned real-life tasks off can still skip). Only a household weekend can be finished here.
+ */
+export function completeGarageHousehold(
+  prog: ProgressionState,
+  weekendKey: string,
+  dayKey: string,
+  mode: HouseholdMode,
+): GarageCompleteResult {
+  const rankBefore = rankFor(prog.totalXp);
+  const noop: GarageCompleteResult = { next: prog, awarded: 0, rankBefore, rankAfter: rankBefore, stemMissionId: null };
+  if (mode !== "found" && mode !== "skipped") return noop;
+  if (dayNumber(weekendKey) === null || !DAY_RE.test(dayKey) || dayNumber(dayKey) === null) return noop;
+  if (isBuildDayWeekend(weekendKey)) return noop;
+  const done = prog.garageDone ?? [];
+  if (done.includes(weekendKey)) return noop;
+  if (mode === "found" && prog.garageRealLife === false) return noop;
+  const stamps = [...new Set([...(prog.workshopDays ?? []), dayKey])].sort();
+  const next: ProgressionState = {
+    ...prog,
+    totalXp: prog.totalXp + GARAGE_XP,
+    garageDone: [...done, weekendKey].sort().slice(-GARAGE_DONE_MAX),
+    workshopDays: stamps,
+    ...(mode === "found"
+      ? {
+          garageFound: [...(prog.garageFound ?? []), weekendKey].sort().slice(-GARAGE_DONE_MAX),
+          garageRealByDay: {
+            ...(prog.garageRealByDay ?? {}),
+            [dayKey]: [...new Set([...(prog.garageRealByDay?.[dayKey] ?? []), weekendKey])],
+          },
+        }
+      : {}),
+  };
+  return {
+    next,
+    awarded: GARAGE_XP,
+    rankBefore,
+    rankAfter: rankFor(next.totalXp),
+    stemMissionId: mode === "found" ? garageMissionId(weekendKey) : null,
+  };
+}
+
+/**
+ * The roof stars (a Garage trophy per finished weekend): gold for a build weekend and for a household weekend that was found, hollow for a household
+ * weekend that was skipped, so the roof stays a true picture of real-world effort. A skipped one is a finished weekend that is a household weekend and is
+ * not in `garageFound`.
+ */
+export function garageTrophyCounts(
+  done: readonly string[] | undefined,
+  found: readonly string[] | undefined,
+): { gold: number; hollow: number } {
+  const foundSet = new Set(found ?? []);
+  let hollow = 0;
+  const all = new Set(done ?? []);
+  for (const key of all) if (!isBuildDayWeekend(key) && !foundSet.has(key)) hollow++;
+  return { gold: all.size - hollow, hollow };
 }
 
 /* -------------------------------------------------------------- grace */
