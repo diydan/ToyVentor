@@ -8,6 +8,7 @@ import {
   HAT_COLORS,
   HAIR_OPTIONS,
   WEARABLE_HAT_IDS,
+  headphonesFit,
   HAT_OPTIONS,
   SHIRT_OPTIONS,
   PANTS_OPTIONS,
@@ -80,6 +81,7 @@ export const DEFAULT_CATALOG_PART_FILES = Object.freeze({
   hat_beanie: '/kip/partspec/toyventor_hat_beanie_S.stl',
   hat_cowboy: '/kip/partspec/toyventor_hat_cowboy_S.stl',
   hat_hardhat: '/kip/partspec/toyventor_hat_hardhat_S.stl',
+  hat_headphones: '/kip/partspec/toyventor_hat_headphones_S.stl',
   hat_pirate: '/kip/partspec/toyventor_hat_pirate_S.stl',
   hat_ranger: '/kip/partspec/toyventor_hat_ranger_S.stl',
   hat_tophat: '/kip/partspec/toyventor_hat_tophat_S.stl',
@@ -522,7 +524,9 @@ export function resolveSceneBom(state = {}, opts = {}) {
 
   // Hats & Crown Toppers (only mounted when `canWearHat` is true)
   if (canWearHat) {
-    if (WEARABLE_HAT_IDS.has(hatId)) {
+    if (hatId === 'headphones' && !headphonesFit(state.head ?? 'kid', state.hair ?? 'off')) {
+      notes.push('Party Headphones fit the four human heads over a bald head or a short Hat-Ready wig only: not included.');
+    } else if (WEARABLE_HAT_IDS.has(hatId)) {
       const hatOpt = HAT_OPTIONS.find(h => h.id === hatId);
       const hatColId = state.hatColor || hatOpt?.defaultCol || HAT_COLORS[0].id;
       const hatColObj = HAT_COLORS.find(c => c.id === hatColId) || HAT_COLORS[0];

@@ -277,6 +277,12 @@
    "verdict": "pass",
    "brim_width_mm": 0
   },
+  "toyventor_hat_headphones_S.stl": {
+   "part": "hat_headphones",
+   "sha256": "05490525b248b9aaee7c4ac6e634a7818421094125ff6afd2f1c1ed33d6491c7",
+   "verdict": "pass",
+   "brim_width_mm": 0
+  },
   "toyventor_hat_pirate_S.stl": {
    "part": "hat_pirate",
    "sha256": "8f3ee35f6f1166226a23ccf8efd22860c3f32dcff236d431281c8576844b5be0",

@@ -2,9 +2,9 @@
   "validator": "preprint_check 1.2.0",
   "profile": "fdm_pla_0.4",
   "slicer": "PrusaSlicer-2.8.1",
-  "generated_at": "2026-11-03T14:26:06Z",
+  "generated_at": "2026-11-03T15:24:39Z",
   "counts": {
-    "pass": 185,
+    "pass": 186,
     "pass_with_settings": 0,
     "pass_with_warnings": 32,
     "fail": 0
@@ -989,6 +989,20 @@
       "bed_contact_mm2": 895.8,
       "slenderness": 0.64,
       "min_wall_mm": null
+    },
+    {
+      "part_id": "hat_headphones",
+      "file": "toyventor_hat_headphones_S.stl",
+      "verdict": "pass",
+      "summary": "Prints as is",
+      "filament_g": null,
+      "print_time_min": null,
+      "filament_cost_usd": null,
+      "brim_mm": 0,
+      "height_mm": 24.5,
+      "bed_contact_mm2": 352.9,
+      "slenderness": 1.3,
+      "min_wall_mm": 0.234
     },
     {
       "part_id": "hat_pirate",

@@ -309,6 +309,10 @@
   },
   {
     "male": "mini_plate.top_studs",
+    "female": "hat_headphones.under_sockets"
+  },
+  {
+    "male": "mini_plate.top_studs",
     "female": "pack_explorer.under_sockets"
   },
   {
@@ -889,6 +893,10 @@
   },
   {
     "male": "plate_s_2x2.top_studs",
+    "female": "hat_headphones.under_sockets"
+  },
+  {
+    "male": "plate_s_2x2.top_studs",
     "female": "pack_explorer.under_sockets"
   },
   {
@@ -1277,6 +1285,10 @@
   },
   {
     "male": "plate_s_4x4.top_studs",
+    "female": "hat_headphones.under_sockets"
+  },
+  {
+    "male": "plate_s_4x4.top_studs",
     "female": "pack_explorer.under_sockets"
   },
   {
@@ -1665,6 +1677,10 @@
   },
   {
     "male": "brick_s_2x2.top_studs",
+    "female": "hat_headphones.under_sockets"
+  },
+  {
+    "male": "brick_s_2x2.top_studs",
     "female": "pack_explorer.under_sockets"
   },
   {
@@ -2053,6 +2069,10 @@
   },
   {
     "male": "forge_mount_ring_s.top_studs",
+    "female": "hat_headphones.under_sockets"
+  },
+  {
+    "male": "forge_mount_ring_s.top_studs",
     "female": "pack_explorer.under_sockets"
   },
   {
@@ -4625,6 +4645,10 @@
   },
   {
     "male": "adapter_snap_pro.top_studs",
+    "female": "hat_headphones.under_sockets"
+  },
+  {
+    "male": "adapter_snap_pro.top_studs",
     "female": "pack_explorer.under_sockets"
   },
   {
@@ -5013,6 +5037,10 @@
   },
   {
     "male": "racer_roof_rack.top_studs",
+    "female": "hat_headphones.under_sockets"
+  },
+  {
+    "male": "racer_roof_rack.top_studs",
     "female": "pack_explorer.under_sockets"
   },
   {
@@ -5398,6 +5426,10 @@
   {
     "male": "racer_axle_block.top_studs",
     "female": "hat_pirate.under_sockets"
+  },
+  {
+    "male": "racer_axle_block.top_studs",
+    "female": "hat_headphones.under_sockets"
   },
   {
     "male": "racer_axle_block.top_studs",
@@ -6217,6 +6249,10 @@
   },
   {
     "male": "robot_legs_stomper.top_studs",
+    "female": "hat_headphones.under_sockets"
+  },
+  {
+    "male": "robot_legs_stomper.top_studs",
     "female": "pack_explorer.under_sockets"
   },
   {
@@ -6605,6 +6641,10 @@
   },
   {
     "male": "robot_torso_core.top_studs",
+    "female": "hat_headphones.under_sockets"
+  },
+  {
+    "male": "robot_torso_core.top_studs",
     "female": "pack_explorer.under_sockets"
   },
   {
@@ -6993,6 +7033,10 @@
   },
   {
     "male": "robot_arms_grabber.top_studs",
+    "female": "hat_headphones.under_sockets"
+  },
+  {
+    "male": "robot_arms_grabber.top_studs",
     "female": "pack_explorer.under_sockets"
   },
   {
@@ -7381,6 +7425,10 @@
   },
   {
     "male": "robot_head_visor.top_studs",
+    "female": "hat_headphones.under_sockets"
+  },
+  {
+    "male": "robot_head_visor.top_studs",
     "female": "pack_explorer.under_sockets"
   },
   {
@@ -7769,6 +7817,10 @@
   },
   {
     "male": "char_head_kid.top_studs",
+    "female": "hat_headphones.under_sockets"
+  },
+  {
+    "male": "char_head_kid.top_studs",
     "female": "pack_explorer.under_sockets"
   },
   {
@@ -8157,6 +8209,10 @@
   },
   {
     "male": "char_head_chibi.top_studs",
+    "female": "hat_headphones.under_sockets"
+  },
+  {
+    "male": "char_head_chibi.top_studs",
     "female": "pack_explorer.under_sockets"
   },
   {
@@ -8545,6 +8601,10 @@
   },
   {
     "male": "char_head_jumbo.top_studs",
+    "female": "hat_headphones.under_sockets"
+  },
+  {
+    "male": "char_head_jumbo.top_studs",
     "female": "pack_explorer.under_sockets"
   },
   {
@@ -8930,6 +8990,10 @@
   {
     "male": "char_head_tall.top_studs",
     "female": "hat_pirate.under_sockets"
+  },
+  {
+    "male": "char_head_tall.top_studs",
+    "female": "hat_headphones.under_sockets"
   },
   {
     "male": "char_head_tall.top_studs",
@@ -10605,6 +10669,10 @@
   },
   {
     "male": "hair_short_swept.top_studs",
+    "female": "hat_headphones.under_sockets"
+  },
+  {
+    "male": "hair_short_swept.top_studs",
     "female": "pack_explorer.under_sockets"
   },
   {
@@ -10993,6 +11061,10 @@
   },
   {
     "male": "hair_bob.top_studs",
+    "female": "hat_headphones.under_sockets"
+  },
+  {
+    "male": "hair_bob.top_studs",
     "female": "pack_explorer.under_sockets"
   },
   {
@@ -11381,6 +11453,10 @@
   },
   {
     "male": "char_head_fox.top_studs",
+    "female": "hat_headphones.under_sockets"
+  },
+  {
+    "male": "char_head_fox.top_studs",
     "female": "pack_explorer.under_sockets"
   },
   {
@@ -11769,6 +11845,10 @@
   },
   {
     "male": "char_head_bear.top_studs",
+    "female": "hat_headphones.under_sockets"
+  },
+  {
+    "male": "char_head_bear.top_studs",
     "female": "pack_explorer.under_sockets"
   },
   {
@@ -12157,6 +12237,10 @@
   },
   {
     "male": "robot_head_scout.top_studs",
+    "female": "hat_headphones.under_sockets"
+  },
+  {
+    "male": "robot_head_scout.top_studs",
     "female": "pack_explorer.under_sockets"
   },
   {
@@ -12545,6 +12629,10 @@
   },
   {
     "male": "char_head_cat.top_studs",
+    "female": "hat_headphones.under_sockets"
+  },
+  {
+    "male": "char_head_cat.top_studs",
     "female": "pack_explorer.under_sockets"
   },
   {
@@ -12933,6 +13021,10 @@
   },
   {
     "male": "char_head_dragon.top_studs",
+    "female": "hat_headphones.under_sockets"
+  },
+  {
+    "male": "char_head_dragon.top_studs",
     "female": "pack_explorer.under_sockets"
   },
   {
@@ -13321,6 +13413,10 @@
   },
   {
     "male": "char_head_alien.top_studs",
+    "female": "hat_headphones.under_sockets"
+  },
+  {
+    "male": "char_head_alien.top_studs",
     "female": "pack_explorer.under_sockets"
   },
   {
@@ -13709,6 +13805,10 @@
   },
   {
     "male": "char_head_imp.top_studs",
+    "female": "hat_headphones.under_sockets"
+  },
+  {
+    "male": "char_head_imp.top_studs",
     "female": "pack_explorer.under_sockets"
   },
   {
@@ -14097,6 +14197,10 @@
   },
   {
     "male": "hair_swoosh.top_studs",
+    "female": "hat_headphones.under_sockets"
+  },
+  {
+    "male": "hair_swoosh.top_studs",
     "female": "pack_explorer.under_sockets"
   },
   {
@@ -14485,6 +14589,10 @@
   },
   {
     "male": "hair_long_layered.top_studs",
+    "female": "hat_headphones.under_sockets"
+  },
+  {
+    "male": "hair_long_layered.top_studs",
     "female": "pack_explorer.under_sockets"
   },
   {
@@ -14873,6 +14981,10 @@
   },
   {
     "male": "hair_twin_braids.top_studs",
+    "female": "hat_headphones.under_sockets"
+  },
+  {
+    "male": "hair_twin_braids.top_studs",
     "female": "pack_explorer.under_sockets"
   },
   {
@@ -15261,6 +15373,10 @@
   },
   {
     "male": "hair_shag.top_studs",
+    "female": "hat_headphones.under_sockets"
+  },
+  {
+    "male": "hair_shag.top_studs",
     "female": "pack_explorer.under_sockets"
   },
   {
@@ -15649,6 +15765,10 @@
   },
   {
     "male": "hair_bowl.top_studs",
+    "female": "hat_headphones.under_sockets"
+  },
+  {
+    "male": "hair_bowl.top_studs",
     "female": "pack_explorer.under_sockets"
   },
   {
@@ -16037,6 +16157,10 @@
   },
   {
     "male": "hair_slick.top_studs",
+    "female": "hat_headphones.under_sockets"
+  },
+  {
+    "male": "hair_slick.top_studs",
     "female": "pack_explorer.under_sockets"
   },
   {
@@ -16422,6 +16546,10 @@
   {
     "male": "pack_explorer.pack_top_studs",
     "female": "hat_pirate.under_sockets"
+  },
+  {
+    "male": "pack_explorer.pack_top_studs",
+    "female": "hat_headphones.under_sockets"
   },
   {
     "male": "pack_explorer.pack_top_studs",
@@ -24089,6 +24217,10 @@
   },
   {
     "male": "prop_skateboard_deck.top_studs",
+    "female": "hat_headphones.under_sockets"
+  },
+  {
+    "male": "prop_skateboard_deck.top_studs",
     "female": "pack_explorer.under_sockets"
   },
   {
@@ -24477,6 +24609,10 @@
   },
   {
     "male": "char_legs_seated.top_studs",
+    "female": "hat_headphones.under_sockets"
+  },
+  {
+    "male": "char_legs_seated.top_studs",
     "female": "pack_explorer.under_sockets"
   },
   {
@@ -24865,6 +25001,10 @@
   },
   {
     "male": "veh_car_chassis.top_studs",
+    "female": "hat_headphones.under_sockets"
+  },
+  {
+    "male": "veh_car_chassis.top_studs",
     "female": "pack_explorer.under_sockets"
   },
   {
@@ -25253,6 +25393,10 @@
   },
   {
     "male": "veh_car_chassis.front_studs",
+    "female": "hat_headphones.under_sockets"
+  },
+  {
+    "male": "veh_car_chassis.front_studs",
     "female": "pack_explorer.under_sockets"
   },
   {
@@ -25641,6 +25785,10 @@
   },
   {
     "male": "veh_car_chassis.hood_studs",
+    "female": "hat_headphones.under_sockets"
+  },
+  {
+    "male": "veh_car_chassis.hood_studs",
     "female": "pack_explorer.under_sockets"
   },
   {
@@ -26029,6 +26177,10 @@
   },
   {
     "male": "veh_car_chassis.rollbar_studs",
+    "female": "hat_headphones.under_sockets"
+  },
+  {
+    "male": "veh_car_chassis.rollbar_studs",
     "female": "pack_explorer.under_sockets"
   },
   {
@@ -26417,6 +26569,10 @@
   },
   {
     "male": "veh_car_chassis.spoiler_studs",
+    "female": "hat_headphones.under_sockets"
+  },
+  {
+    "male": "veh_car_chassis.spoiler_studs",
     "female": "pack_explorer.under_sockets"
   },
   {
@@ -26805,6 +26961,10 @@
   },
   {
     "male": "veh_car_chassis.exhaust_studs",
+    "female": "hat_headphones.under_sockets"
+  },
+  {
+    "male": "veh_car_chassis.exhaust_studs",
     "female": "pack_explorer.under_sockets"
   },
   {
@@ -27193,6 +27353,10 @@
   },
   {
     "male": "veh_car_hood_cover.top_studs",
+    "female": "hat_headphones.under_sockets"
+  },
+  {
+    "male": "veh_car_hood_cover.top_studs",
     "female": "pack_explorer.under_sockets"
   },
   {
@@ -27578,6 +27742,10 @@
   {
     "male": "veh_cab_roof_cover.top_studs",
     "female": "hat_pirate.under_sockets"
+  },
+  {
+    "male": "veh_cab_roof_cover.top_studs",
+    "female": "hat_headphones.under_sockets"
   },
   {
     "male": "veh_cab_roof_cover.top_studs",
@@ -28269,6 +28437,10 @@
   },
   {
     "male": "veh_truck_chassis.top_studs",
+    "female": "hat_headphones.under_sockets"
+  },
+  {
+    "male": "veh_truck_chassis.top_studs",
     "female": "pack_explorer.under_sockets"
   },
   {
@@ -28657,6 +28829,10 @@
   },
   {
     "male": "veh_truck_chassis.front_studs",
+    "female": "hat_headphones.under_sockets"
+  },
+  {
+    "male": "veh_truck_chassis.front_studs",
     "female": "pack_explorer.under_sockets"
   },
   {
@@ -29045,6 +29221,10 @@
   },
   {
     "male": "veh_truck_chassis.hood_studs",
+    "female": "hat_headphones.under_sockets"
+  },
+  {
+    "male": "veh_truck_chassis.hood_studs",
     "female": "pack_explorer.under_sockets"
   },
   {
@@ -29433,6 +29613,10 @@
   },
   {
     "male": "veh_truck_chassis.roof_studs",
+    "female": "hat_headphones.under_sockets"
+  },
+  {
+    "male": "veh_truck_chassis.roof_studs",
     "female": "pack_explorer.under_sockets"
   },
   {
@@ -29821,6 +30005,10 @@
   },
   {
     "male": "veh_truck_chassis.cargo_studs",
+    "female": "hat_headphones.under_sockets"
+  },
+  {
+    "male": "veh_truck_chassis.cargo_studs",
     "female": "pack_explorer.under_sockets"
   },
   {
@@ -30209,6 +30397,10 @@
   },
   {
     "male": "veh_truck_bed_cover.bed_studs",
+    "female": "hat_headphones.under_sockets"
+  },
+  {
+    "male": "veh_truck_bed_cover.bed_studs",
     "female": "pack_explorer.under_sockets"
   },
   {
@@ -30597,6 +30789,10 @@
   },
   {
     "male": "veh_scooter_frame.top_studs",
+    "female": "hat_headphones.under_sockets"
+  },
+  {
+    "male": "veh_scooter_frame.top_studs",
     "female": "pack_explorer.under_sockets"
   },
   {
@@ -30985,6 +31181,10 @@
   },
   {
     "male": "veh_scooter_frame.fairing_studs",
+    "female": "hat_headphones.under_sockets"
+  },
+  {
+    "male": "veh_scooter_frame.fairing_studs",
     "female": "pack_explorer.under_sockets"
   },
   {
@@ -31373,6 +31573,10 @@
   },
   {
     "male": "veh_scooter_frame.seat_studs",
+    "female": "hat_headphones.under_sockets"
+  },
+  {
+    "male": "veh_scooter_frame.seat_studs",
     "female": "pack_explorer.under_sockets"
   },
   {
@@ -31758,6 +31962,10 @@
   {
     "male": "veh_scooter_frame.exhaust_studs",
     "female": "hat_pirate.under_sockets"
+  },
+  {
+    "male": "veh_scooter_frame.exhaust_studs",
+    "female": "hat_headphones.under_sockets"
   },
   {
     "male": "veh_scooter_frame.exhaust_studs",
@@ -32577,6 +32785,10 @@
   },
   {
     "male": "veh_moto_cowling.tank_studs",
+    "female": "hat_headphones.under_sockets"
+  },
+  {
+    "male": "veh_moto_cowling.tank_studs",
     "female": "pack_explorer.under_sockets"
   },
   {
@@ -32965,6 +33177,10 @@
   },
   {
     "male": "kit_keel_base.top_studs",
+    "female": "hat_headphones.under_sockets"
+  },
+  {
+    "male": "kit_keel_base.top_studs",
     "female": "pack_explorer.under_sockets"
   },
   {
@@ -33350,6 +33566,10 @@
   {
     "male": "kit_clevis_spine.top_studs",
     "female": "hat_pirate.under_sockets"
+  },
+  {
+    "male": "kit_clevis_spine.top_studs",
+    "female": "hat_headphones.under_sockets"
   },
   {
     "male": "kit_clevis_spine.top_studs",
@@ -34597,6 +34817,10 @@
   },
   {
     "male": "kit_windscreen.top_studs",
+    "female": "hat_headphones.under_sockets"
+  },
+  {
+    "male": "kit_windscreen.top_studs",
     "female": "pack_explorer.under_sockets"
   },
   {
@@ -34982,6 +35206,10 @@
   {
     "male": "kit_turntable.top_studs",
     "female": "hat_pirate.under_sockets"
+  },
+  {
+    "male": "kit_turntable.top_studs",
+    "female": "hat_headphones.under_sockets"
   },
   {
     "male": "kit_turntable.top_studs",
@@ -37001,6 +37229,10 @@
   },
   {
     "male": "mom_band_core_tray.rim_studs",
+    "female": "hat_headphones.under_sockets"
+  },
+  {
+    "male": "mom_band_core_tray.rim_studs",
     "female": "pack_explorer.under_sockets"
   },
   {
@@ -37386,6 +37618,10 @@
   {
     "male": "mom_band_core_lid.top_studs",
     "female": "hat_pirate.under_sockets"
+  },
+  {
+    "male": "mom_band_core_lid.top_studs",
+    "female": "hat_headphones.under_sockets"
   },
   {
     "male": "mom_band_core_lid.top_studs",
@@ -38205,6 +38441,10 @@
   },
   {
     "male": "mom_bellows_leaf.top_studs",
+    "female": "hat_headphones.under_sockets"
+  },
+  {
+    "male": "mom_bellows_leaf.top_studs",
     "female": "pack_explorer.under_sockets"
   },
   {
@@ -38593,6 +38833,10 @@
   },
   {
     "male": "mom_flywheel_tray.rim_studs",
+    "female": "hat_headphones.under_sockets"
+  },
+  {
+    "male": "mom_flywheel_tray.rim_studs",
     "female": "pack_explorer.under_sockets"
   },
   {
@@ -38978,6 +39222,10 @@
   {
     "male": "mom_flywheel_lid.top_studs",
     "female": "hat_pirate.under_sockets"
+  },
+  {
+    "male": "mom_flywheel_lid.top_studs",
+    "female": "hat_headphones.under_sockets"
   },
   {
     "male": "mom_flywheel_lid.top_studs",
@@ -41381,6 +41629,10 @@
   },
   {
     "male": "mech_drive_tray.rim_studs",
+    "female": "hat_headphones.under_sockets"
+  },
+  {
+    "male": "mech_drive_tray.rim_studs",
     "female": "pack_explorer.under_sockets"
   },
   {
@@ -41766,6 +42018,10 @@
   {
     "male": "mech_drive_lid.top_studs",
     "female": "hat_pirate.under_sockets"
+  },
+  {
+    "male": "mech_drive_lid.top_studs",
+    "female": "hat_headphones.under_sockets"
   },
   {
     "male": "mech_drive_lid.top_studs",
@@ -42457,6 +42713,10 @@
   },
   {
     "male": "mech_brain_tray.rim_studs",
+    "female": "hat_headphones.under_sockets"
+  },
+  {
+    "male": "mech_brain_tray.rim_studs",
     "female": "pack_explorer.under_sockets"
   },
   {
@@ -42842,6 +43102,10 @@
   {
     "male": "mech_brain_lid.top_studs",
     "female": "hat_pirate.under_sockets"
+  },
+  {
+    "male": "mech_brain_lid.top_studs",
+    "female": "hat_headphones.under_sockets"
   },
   {
     "male": "mech_brain_lid.top_studs",

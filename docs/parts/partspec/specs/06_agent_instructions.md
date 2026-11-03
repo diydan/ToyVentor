@@ -203,6 +203,7 @@ Each size has its own clearance value (stud_small.fit, stud_large.fit). Both sta
 | `hat_ranger` | snap | small | verified | Speed | `under_sockets` socket_grid/F 2x1 |
 | `hat_tophat` | snap | small | verified | Glow | `under_sockets` socket_grid/F 2x1 |
 | `hat_pirate` | snap | small | verified | Spin | `under_sockets` socket_grid/F 2x1 |
+| `hat_headphones` | snap | small | verified | Glow | `under_sockets` socket_grid/F 2x1 |
 | `pack_explorer` | snap | small | verified | Torque | `under_sockets` socket_grid/F 2x2; `pack_top_studs` stud_grid/M 2x1 |
 | `prop_wrench` | pro | pro | verified | Torque | `axis` pin/M 1x1 |
 | `prop_star_shield` | pro | pro | verified | Glow | `axis` pin/M 1x1 |
@@ -453,6 +454,7 @@ After each part is built, the generator seats it on its matching reference part,
 | `hat_ranger` | 2 | +0.052 to +0.052 | 0.050 | -0.074 to +0.076 |
 | `hat_tophat` | 2 | +0.052 to +0.052 | 0.050 | -0.074 to +0.076 |
 | `hat_pirate` | 2 | +0.052 to +0.052 | 0.050 | -0.074 to +0.076 |
+| `hat_headphones` | 2 | +0.052 to +0.052 | 0.050 | -0.074 to +0.076 |
 | `pack_explorer` | 4 | +0.048 to +0.048 | 0.050 | -0.076 to +0.074 |
 | `prop_wrench` | 2 | +0.125 to +0.200 | 0.125 | -0.062 to +0.088 |
 | `prop_star_shield` | 2 | +0.125 to +0.200 | 0.125 | -0.062 to +0.088 |
@@ -613,7 +615,7 @@ python3 toyventor_index.py out checks S1_small_part_screen
 | `pin_friction` | `pin_friction`, `pin_friction_long` | 150 |
 | `shaft_drive` | `char_faceplate`, `char_faceplate_flat`, `char_faceplate_vinyl`, `kit_barbell_shaft`, `kit_barbell_shaft_9tu`, `kit_barbell_shaft_wide`, `kit_spinner_pin`, `kit_yoke_hbar`, `mom_slam_plunger`, `mom_spindle_shaft`, `mom_wind_key`, `pro_captive_pin_28`, `pro_steer_column`, `prop_broom`, `prop_flag`, `prop_frying_pan`, `prop_guitar`, `prop_hammer`, `prop_magnifier`, `prop_maracas`, `prop_mop`, `prop_paint_roller`, `prop_screwdriver`, `prop_scrub_brush`, `prop_spatula`, `prop_star_shield`, `prop_trumpet`, `prop_upright_vacuum`, `prop_vacuum`, `prop_wrench`, `racer_axle`, `shaft_tu03`, `shaft_tu05`, `shaft_tu07`, `veh_handlebar_fork` | 3745 |
 | `stud_large` | `big_blue_brick`, `brick_l_2x4`, `cloud_wings_l`, `forge_mount_ring`, `glow_capsule_l`, `pebble_armor_shell_l`, `plate_l_2x2`, `plate_l_2x4`, `slope_l_2x2`, `spin_capsule`, `tile_l_2x2`, `waddle_tail`, `zoom_capsule` | 60 |
-| `stud_small` | `adapter_snap_pro`, `bounce_capsule_s`, `brick_s_2x2`, `bumper_horns`, `char_head_alien`, `char_head_bear`, `char_head_cat`, `char_head_chibi`, `char_head_dragon`, `char_head_fox`, `char_head_imp`, `char_head_jumbo`, `char_head_kid`, `char_head_tall`, `char_legs_seated`, `cloud_wings`, `dome_s_2x2`, `forge_mount_ring_s`, `glow_capsule`, `hair_bob`, `hair_bowl`, `hair_curly`, `hair_long_layered`, `hair_low_bun`, `hair_mohawk`, `hair_pigtails`, `hair_pixie`, `hair_pompadour`, `hair_ponytail`, `hair_shag`, `hair_short_swept`, `hair_side_pony`, `hair_side_sweep`, `hair_slick`, `hair_spiky`, `hair_swoosh`, `hair_top_bun`, `hair_twin_braids`, `hat_ballcap`, `hat_beanie`, `hat_cowboy`, `hat_hardhat`, `hat_pirate`, `hat_ranger`, `hat_tophat`, `kit_aero_wedge`, `kit_booster_pod`, `kit_clevis_spine`, `kit_foil_wing`, `kit_keel_base`, `kit_scoop_blade`, `kit_skid_runner`, `kit_tilting_tub`, `kit_turntable`, `kit_windscreen`, `mech_brain_lid`, `mech_brain_tray`, `mech_drive_lid`, `mech_drive_tray`, `mech_servo_mount`, `mech_sill_duct`, `mini_plate`, `mom_band_core_lid`, `mom_band_core_tray`, `mom_bellows_base`, `mom_bellows_leaf`, `mom_flywheel_lid`, `mom_flywheel_tray`, `mom_jet_valve_body`, `pack_explorer`, `pebble_armor_shell`, `plate_s_2x2`, `plate_s_4x4`, `pointy_ears`, `pro_steer_bridge`, `prop_skateboard_deck`, `racer_axle_block`, `racer_bull_bar`, `racer_hood_scoop`, `racer_light_bar`, `racer_roof_rack`, `racer_spoiler`, `racer_twin_exhaust`, `ridge_fin`, `robot_arms_grabber`, `robot_back_jetpack`, `robot_head_scout`, `robot_head_visor`, `robot_legs_stomper`, `robot_torso_core`, `skin_aero_cowl`, `skin_cargo_shroud`, `skin_windscreen`, `slope_s_2x2`, `tile_s_2x2`, `veh_cab_roof_cover`, `veh_car_chassis`, `veh_car_hood_cover`, `veh_moto_cowling`, `veh_scooter_fairing`, `veh_scooter_frame`, `veh_truck_bed_cover`, `veh_truck_chassis`, `waddle_tail_s`, `wobble_hat`, `zoom_capsule_s` | 6402 |
+| `stud_small` | `adapter_snap_pro`, `bounce_capsule_s`, `brick_s_2x2`, `bumper_horns`, `char_head_alien`, `char_head_bear`, `char_head_cat`, `char_head_chibi`, `char_head_dragon`, `char_head_fox`, `char_head_imp`, `char_head_jumbo`, `char_head_kid`, `char_head_tall`, `char_legs_seated`, `cloud_wings`, `dome_s_2x2`, `forge_mount_ring_s`, `glow_capsule`, `hair_bob`, `hair_bowl`, `hair_curly`, `hair_long_layered`, `hair_low_bun`, `hair_mohawk`, `hair_pigtails`, `hair_pixie`, `hair_pompadour`, `hair_ponytail`, `hair_shag`, `hair_short_swept`, `hair_side_pony`, `hair_side_sweep`, `hair_slick`, `hair_spiky`, `hair_swoosh`, `hair_top_bun`, `hair_twin_braids`, `hat_ballcap`, `hat_beanie`, `hat_cowboy`, `hat_hardhat`, `hat_headphones`, `hat_pirate`, `hat_ranger`, `hat_tophat`, `kit_aero_wedge`, `kit_booster_pod`, `kit_clevis_spine`, `kit_foil_wing`, `kit_keel_base`, `kit_scoop_blade`, `kit_skid_runner`, `kit_tilting_tub`, `kit_turntable`, `kit_windscreen`, `mech_brain_lid`, `mech_brain_tray`, `mech_drive_lid`, `mech_drive_tray`, `mech_servo_mount`, `mech_sill_duct`, `mini_plate`, `mom_band_core_lid`, `mom_band_core_tray`, `mom_bellows_base`, `mom_bellows_leaf`, `mom_flywheel_lid`, `mom_flywheel_tray`, `mom_jet_valve_body`, `pack_explorer`, `pebble_armor_shell`, `plate_s_2x2`, `plate_s_4x4`, `pointy_ears`, `pro_steer_bridge`, `prop_skateboard_deck`, `racer_axle_block`, `racer_bull_bar`, `racer_hood_scoop`, `racer_light_bar`, `racer_roof_rack`, `racer_spoiler`, `racer_twin_exhaust`, `ridge_fin`, `robot_arms_grabber`, `robot_back_jetpack`, `robot_head_scout`, `robot_head_visor`, `robot_legs_stomper`, `robot_torso_core`, `skin_aero_cowl`, `skin_cargo_shroud`, `skin_windscreen`, `slope_s_2x2`, `tile_s_2x2`, `veh_cab_roof_cover`, `veh_car_chassis`, `veh_car_hood_cover`, `veh_moto_cowling`, `veh_scooter_fairing`, `veh_scooter_frame`, `veh_truck_bed_cover`, `veh_truck_chassis`, `waddle_tail_s`, `wobble_hat`, `zoom_capsule_s` | 6468 |
 
 ## Catalog (end game)
 
@@ -621,7 +623,7 @@ The top 30 Snap parts and the top 30 Pro parts, every one verified by the genera
 
 | Line | Verified | Built, not verified | Target |
 | --- | --- | --- | --- |
-| Snap | 120 | 0 | 120 |
+| Snap | 121 | 0 | 121 |
 | Pro | 93 | 0 | 93 |
 
 Ready to build now: none.

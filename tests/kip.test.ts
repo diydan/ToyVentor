@@ -75,13 +75,13 @@ describe("Kip modular character rig & 3D demo viewer integration", () => {
     }
   });
 
-  it("verifies all 73 Kip PartSpec v2 parts (58 Wave 9 + 15 Wave 12 props) and 46 multi-part assemblies as Conforming", () => {
+  it("verifies all 74 Kip PartSpec v2 parts (59 Wave 9 + 15 Wave 12 props) and 50 multi-part assemblies as Conforming", () => {
     const manifestPath = join(root, "public/kip/kip-partspec-manifest.json");
     expect(existsSync(manifestPath)).toBe(true);
     const psManifest = JSON.parse(readFileSync(manifestPath, "utf8"));
     expect(psManifest.status).toBe("verified");
-    expect(psManifest.parts).toHaveLength(73);
-    expect(psManifest.assemblies).toHaveLength(46);
+    expect(psManifest.parts).toHaveLength(74);
+    expect(psManifest.assemblies).toHaveLength(50);
 
     // `kip_partspec.py` exports Waves W9 and W12; the Kip wardrobe stat rule applies to Wave 9, the workshop props carry their own stats.
     const catalog = JSON.parse(readFileSync(join(root, "parts/partspec/catalog.json"), "utf8"));
@@ -198,7 +198,7 @@ describe("Kip modular character rig & 3D demo viewer integration", () => {
     }
   });
 
-  it("promotes all 58 Kip wardrobe and V2 vehicle parts into parts/partspec as verified Wave 9 (W9)", () => {
+  it("promotes all 59 Kip wardrobe and V2 vehicle parts into parts/partspec as verified Wave 9 (W9)", () => {
     const catalog = JSON.parse(readFileSync(join(root, "parts/partspec/catalog.json"), "utf8"));
     const mainManifest = JSON.parse(
       readFileSync(join(root, "parts/partspec/toyventor_parts.json"), "utf8"),
@@ -207,8 +207,8 @@ describe("Kip modular character rig & 3D demo viewer integration", () => {
     expect(wave9Wave).toBeDefined();
 
     const w9Rows = catalog.parts.filter((p: { wave?: string }) => p.wave === "W9");
-    expect(w9Rows).toHaveLength(58);
-    expect(w9Rows.filter((p: { line: string }) => p.line === "snap")).toHaveLength(48);
+    expect(w9Rows).toHaveLength(59);
+    expect(w9Rows.filter((p: { line: string }) => p.line === "snap")).toHaveLength(49);
     expect(w9Rows.filter((p: { line: string }) => p.line === "pro")).toHaveLength(10);
 
     const byId = new Map<string, Record<string, unknown>>(

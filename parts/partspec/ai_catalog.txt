@@ -113,6 +113,7 @@ hat_hardhat [snap, small] tags=character,hat,crown,kip stat=Torque connectors=(u
 hat_ranger [snap, small] tags=character,hat,crown,kip stat=Speed connectors=(under_sockets:socket_grid/F/small/2x1)
 hat_tophat [snap, small] tags=character,hat,crown,kip stat=Glow connectors=(under_sockets:socket_grid/F/small/2x1)
 hat_pirate [snap, small] tags=character,hat,crown,kip stat=Spin connectors=(under_sockets:socket_grid/F/small/2x1)
+hat_headphones [snap, small] tags=character,hat,crown,kip,headphones stat=Glow connectors=(under_sockets:socket_grid/F/small/2x1)
 pack_explorer [snap, small] tags=character,back,pack,kip stat=Torque connectors=(under_sockets:socket_grid/F/small/2x2; pack_top_studs:stud_grid/M/small/2x1)
 prop_wrench [pro, pro] tags=prop,hand,tool,kip stat=Torque connectors=(axis:pin/M/pro/1x1)
 prop_star_shield [pro, pro] tags=prop,hand,shield,kip stat=Glow connectors=(axis:pin/M/pro/1x1)

@@ -22,7 +22,7 @@ Every number lives in `interfaces.json`, the single source of truth; where a doc
 
 | Line | Verified | Target |
 | --- | --- | --- |
-| Snap | 120 | 120 |
+| Snap | 121 | 121 |
 | Pro | 93 | 93 |
 
 Verified means every geometry and fit check passes. Nothing has been printed yet, so printed-fit and breakage checks are pending for every part.

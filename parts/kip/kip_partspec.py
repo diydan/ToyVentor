@@ -231,6 +231,11 @@ def verify_assemblies(kip_entries: list[dict]) -> list[tuple[str, dict]]:
         ("kid_vinyl_with_hair_pixie", "char_head_kid", "char_faceplate_vinyl", "hair_pixie", None),
         ("chibi_flat_with_hair_side_pony", "char_head_chibi", "char_faceplate_flat", "hair_side_pony", None),
         ("tall_sculpted_with_hair_low_bun", "char_head_tall", "char_faceplate", "hair_low_bun", None),
+        # Party headphones: bald human heads and the five short Hat-Ready wigs (the long ones, Bob, Long Flow and Twin Braids, hang to where the legs go and collide)
+        ("kid_sculpted_bald_with_headphones", "char_head_kid", "char_faceplate", "hat_headphones", None),
+        ("chibi_vinyl_swept_with_headphones", "char_head_chibi", "char_faceplate_vinyl", "hair_short_swept", "hat_headphones"),
+        ("tall_flat_bowl_with_headphones", "char_head_tall", "char_faceplate_flat", "hair_bowl", "hat_headphones"),
+        ("jumbo_vinyl_slick_with_headphones", "char_head_jumbo", "char_faceplate_vinyl", "hair_slick", "hat_headphones"),
         ("char_head_fox_with_wobble_hat", "char_head_fox", None, "wobble_hat", None),
         ("char_head_bear_with_bumper_horns", "char_head_bear", None, "bumper_horns", None),
         ("robot_head_scout_with_wobble_hat", "robot_head_scout", None, "wobble_hat", None),

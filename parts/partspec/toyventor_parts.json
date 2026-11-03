@@ -24922,6 +24922,204 @@
       "seat_z_mm": 10.0
     },
     {
+      "id": "hat_headphones",
+      "name": "Party Headphones",
+      "type": "Crown headgear",
+      "line": "snap",
+      "family": "hair",
+      "size_class": "small",
+      "stat": "Glow",
+      "behavior": "Wearable 2x1 headphones for bald human heads and short Hat-Ready hairstyles; the cups glow to the beat in the game",
+      "prints": true,
+      "tags": [
+        "character",
+        "hat",
+        "crown",
+        "kip",
+        "headphones"
+      ],
+      "file": "toyventor_hat_headphones_S.stl",
+      "bbox_mm": [
+        59.9,
+        13.0,
+        24.5
+      ],
+      "volume_cm3": 3.43,
+      "connectors": [
+        {
+          "id": "under_sockets",
+          "kind": "socket_grid",
+          "gender": "F",
+          "interface": "stud_small",
+          "size_class": "small",
+          "fit_class": "FRICTION",
+          "frame": {
+            "origin": [
+              0,
+              0,
+              0
+            ],
+            "normal": [
+              0,
+              0,
+              -1
+            ]
+          },
+          "grid": {
+            "nx": 2,
+            "ny": 1,
+            "pitch": 12.5
+          }
+        }
+      ],
+      "safety": {
+        "small_part_status": "above_cylinder",
+        "min_enclosing_diameter_mm": 36.82,
+        "margin_pct": 16.0,
+        "print_page_warning": [
+          "Printed at home or by a print service. Not tested to toy-safety standards. Adult supervision required. Check for cracks, sharp edges and loose pieces before each use, and stop using anything that has broken.",
+          "Larger than the small-parts test size in our size check. This is not a safety certification, and it is not rated for children under 3 years."
+        ]
+      },
+      "print": {
+        "orientation": "bed = z0; show face down on bed, sockets up",
+        "supports": false,
+        "rotation_deg": [
+          180,
+          0,
+          0
+        ]
+      },
+      "design_status": "verified",
+      "fit": {
+        "studs_measured": 2,
+        "design_gap_mm": 0.05,
+        "gap_min_mm": 0.052,
+        "gap_max_mm": 0.052,
+        "surface_offset_window_mm": [
+          -0.074,
+          0.076
+        ],
+        "residual_error_mm": 0.05
+      },
+      "checks": [
+        {
+          "id": "G1_watertight",
+          "level": "block",
+          "result": "pass",
+          "detail": ""
+        },
+        {
+          "id": "G2_winding",
+          "level": "block",
+          "result": "pass",
+          "detail": ""
+        },
+        {
+          "id": "G3_single_body",
+          "level": "block",
+          "result": "pass",
+          "detail": "1 body(ies)"
+        },
+        {
+          "id": "G4_on_bed",
+          "level": "block",
+          "result": "pass",
+          "detail": "zmin=0.000"
+        },
+        {
+          "id": "G5_fits_bed",
+          "level": "block",
+          "result": "pass",
+          "detail": "[59.9, 13.0, 24.5] vs [180, 180, 180]"
+        },
+        {
+          "id": "P1_no_supports",
+          "level": "block",
+          "result": "pass",
+          "detail": "0.0 mm2 steeper than 45 deg"
+        },
+        {
+          "id": "P4_no_ledges",
+          "level": "block",
+          "result": "pass",
+          "detail": "0.0 mm2 of flat underside held on one side only"
+        },
+        {
+          "id": "P2_bridge_span",
+          "level": "block",
+          "result": "pass",
+          "detail": "no cavity"
+        },
+        {
+          "id": "P3_wall_min",
+          "level": "info",
+          "result": "pass",
+          "detail": "wall 2.0 mm vs minimum 1.2"
+        },
+        {
+          "id": "I1_lattice",
+          "level": "warn",
+          "result": "pass",
+          "detail": "pitch 12.5 mm vs TU 12.5 mm (ratio 1.000)"
+        },
+        {
+          "id": "I2_connectors_on_part",
+          "level": "block",
+          "result": "pass",
+          "detail": "1 connector(s)"
+        },
+        {
+          "id": "I3_seats_on_reference",
+          "level": "block",
+          "result": "pass",
+          "detail": "overlap 0.000 mm3 with matching reference part"
+        },
+        {
+          "id": "S1_small_part_screen",
+          "level": "warn",
+          "result": "pass",
+          "detail": "above_cylinder: best-fit diameter 36.82 mm vs 31.75 mm cylinder"
+        },
+        {
+          "id": "T1_fit_as_designed",
+          "level": "block",
+          "result": "pass",
+          "detail": "2 stud(s): gap +0.052 to +0.052 mm, design 0.050, allowed +0.045 to +0.060"
+        },
+        {
+          "id": "T2_fit_tolerance_window",
+          "level": "warn",
+          "result": "pass",
+          "detail": "surface offset window -0.074 to +0.076 mm vs calibrated error +/-0.05"
+        },
+        {
+          "id": "F1_printed_fit",
+          "level": "block",
+          "result": "pending",
+          "detail": "needs calibration print: printer surface offset must land in -0.074 to +0.076 mm"
+        },
+        {
+          "id": "F2_breakage",
+          "level": "block",
+          "result": "pending",
+          "detail": "needs break/impact test: no piece may fit the cylinder after failure"
+        },
+        {
+          "id": "M1_manifest_schema",
+          "level": "block",
+          "result": "pass",
+          "detail": ""
+        }
+      ],
+      "sockets": {
+        "holes": 2,
+        "reliefs": 0,
+        "locked": true
+      },
+      "seat_z_mm": 22.0
+    },
+    {
       "id": "pack_explorer",
       "name": "Explorer Rucksack",
       "type": "Back add-on",

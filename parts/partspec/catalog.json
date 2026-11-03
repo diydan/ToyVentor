@@ -15,7 +15,7 @@
     "Attach slots: character add-ons and vehicle parts carry attach.kind (character or vehicle), attach.slots, and attach.front: the part's local -y or +y faces the toy's front, or the part is symmetric. Slot names: character head, back, body, top, tail; vehicle front, rear, hood, roof, wheels; robot legs, torso, arms, head, back."
   ],
   "targets": {
-    "snap": 120,
+    "snap": 121,
     "pro": 93
   },
   "waves": [
@@ -108,7 +108,7 @@
         "W8"
       ],
       "effort": "M",
-      "scope": "58 parts (48 Snap Small, 10 Pro): eleven Wave 9 character and robot heads across 4 categories (4 smooth organic humanoid heads that share one universal face zone, wig vault and hat cavity: Soft Youth (neutral), Sweet Heart (feminine), Heroic Jaw (masculine) and Jumbo Vinyl, all listed in Kip-Demo.html; 1 Mecha Scout robot head pairing with Kip Classic & Bolt Robot; 3 animal critter heads: Fox, Bear, Whisker Cat; 3 creature heads: Drake Dragon, Starling Alien, Yeti Imp) with 2x1 crown buds, three universal interchangeable 1 TU facial inserts (3D Nose & Smile Face Insert, 3D Button Eyes & Nose Face Insert, and Smooth Flush Decal Face Insert), nineteen sculpted multi-strand wrap-around 2x1 crown wigs (8 Hat-Ready with top 2x1 crown studs + 11 Sculpted-Top; every wig leaves a groove for the shared ear spot), seven wearable 2x1 crown hats, Explorer Rucksack, Builder Spanner, Star Emblem Wand, Street Skateboard Deck, Seated Snap Legs, three stylized Pro vehicle wheels, and V2 modular rolling vehicle chassis with interchangeable snap-on body covers."
+      "scope": "59 parts (49 Snap Small, 10 Pro): eleven Wave 9 character and robot heads across 4 categories (4 smooth organic humanoid heads that share one universal face zone, wig vault and hat cavity: Soft Youth (neutral), Sweet Heart (feminine), Heroic Jaw (masculine) and Jumbo Vinyl, all listed in Kip-Demo.html; 1 Mecha Scout robot head pairing with Kip Classic & Bolt Robot; 3 animal critter heads: Fox, Bear, Whisker Cat; 3 creature heads: Drake Dragon, Starling Alien, Yeti Imp) with 2x1 crown buds, three universal interchangeable 1 TU facial inserts (3D Nose & Smile Face Insert, 3D Button Eyes & Nose Face Insert, and Smooth Flush Decal Face Insert), nineteen sculpted multi-strand wrap-around 2x1 crown wigs (8 Hat-Ready with top 2x1 crown studs + 11 Sculpted-Top; every wig leaves a groove for the shared ear spot), seven wearable 2x1 crown hats, one-piece Party Headphones (human heads and short Hat-Ready wigs; prints upside down), Explorer Rucksack, Builder Spanner, Star Emblem Wand, Street Skateboard Deck, Seated Snap Legs, three stylized Pro vehicle wheels, and V2 modular rolling vehicle chassis with interchangeable snap-on body covers."
     },
     {
       "id": "W10",
@@ -3683,6 +3683,40 @@
           "head"
         ],
         "front": "-y"
+      }
+    },
+    {
+      "id": "hat_headphones",
+      "name": "Party Headphones",
+      "line": "snap",
+      "family": "hair",
+      "size": "small",
+      "wave": "W9",
+      "note": "One-piece headphones for the four human heads: a 12 mm band over the crown on the 2x1 studs, legs straight down both sides and a small tapered cup at each ear. Cut from the wearable-hat shell (the Hat-Ready wig vault and the sequential-bridge crown sockets), so it sits over a bald head or a short Hat-Ready wig (Swept, Swoosh, Shag, Bowl, Sleek Part); the long Hat-Ready wigs (Bob, Long Flow, Twin Braids) and the animal and robot heads do not fit. Prints UPSIDE DOWN, support-free (the roof is the bed).",
+      "stat": "Glow",
+      "type": "Crown headgear",
+      "behavior": "Wearable 2x1 headphones for bald human heads and short Hat-Ready hairstyles; the cups glow to the beat in the game",
+      "tags": [
+        "character",
+        "hat",
+        "crown",
+        "kip",
+        "headphones"
+      ],
+      "build": {
+        "fn": "hat_headphones",
+        "grid": [
+          2,
+          1
+        ],
+        "lock": true
+      },
+      "attach": {
+        "kind": "character",
+        "slots": [
+          "head"
+        ],
+        "front": "symmetric"
       }
     },
     {

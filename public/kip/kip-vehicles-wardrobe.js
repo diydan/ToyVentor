@@ -107,16 +107,16 @@ export const HAT_COLORS = [
 ];
 
 export const HAIR_OPTIONS = [
-  { id: 'off',          label: 'None',                    hatReady: true,  topH: 0.0,  seatY: 0.0 },
+  { id: 'off',          label: 'None',                    hatReady: true,  earReady: true,  topH: 0.0,  seatY: 0.0 },
   // topH = WIG_TOP_Z (4.8 mm): where a hat-ready wig's 2x1 studs sit above the head's stud plane. seatY = the wig's hem, i.e. its lowest point.
-  { id: 'short_swept',  label: 'Swept (Hat-Ready)',       hatReady: true,  topH: 4.8, seatY: -16.5 },
+  { id: 'short_swept',  label: 'Swept (Hat-Ready)',       hatReady: true,  earReady: true,  topH: 4.8, seatY: -16.5 },
   { id: 'bob',          label: 'Bob (Hat-Ready)',         hatReady: true,  topH: 4.8, seatY: -19.0 },
-  { id: 'swoosh',       label: 'Swoosh (Hat-Ready)',      hatReady: true,  topH: 4.8, seatY: -16.5 },
+  { id: 'swoosh',       label: 'Swoosh (Hat-Ready)',      hatReady: true,  earReady: true,  topH: 4.8, seatY: -16.5 },
   { id: 'long_layered', label: 'Long Flow (Hat-Ready)',   hatReady: true,  topH: 4.8, seatY: -22.5 },
   { id: 'twin_braids',  label: 'Twin Braids (Hat-Ready)', hatReady: true,  topH: 4.8, seatY: -22.5 },
-  { id: 'shag',         label: 'Shag (Hat-Ready)',        hatReady: true,  topH: 4.8, seatY: -17.0 },
-  { id: 'bowl',         label: 'Bowl Cut (Hat-Ready)',    hatReady: true,  topH: 4.8, seatY: -16.0 },
-  { id: 'slick',        label: 'Sleek Part (Hat-Ready)',  hatReady: true,  topH: 4.8, seatY: -16.0 },
+  { id: 'shag',         label: 'Shag (Hat-Ready)',        hatReady: true,  earReady: true,  topH: 4.8, seatY: -17.0 },
+  { id: 'bowl',         label: 'Bowl Cut (Hat-Ready)',    hatReady: true,  earReady: true,  topH: 4.8, seatY: -16.0 },
+  { id: 'slick',        label: 'Sleek Part (Hat-Ready)',  hatReady: true,  earReady: true,  topH: 4.8, seatY: -16.0 },
   { id: 'pompadour',    label: 'Pompadour',               hatReady: false, topH: 0.0,  seatY: -16.5 },
   { id: 'top_bun',      label: 'Top Bun',                 hatReady: false, topH: 0.0,  seatY: -16.5 },
   { id: 'side_sweep',   label: 'Side Sweep',              hatReady: false, topH: 0.0,  seatY: -19.0 },
@@ -131,8 +131,18 @@ export const HAIR_OPTIONS = [
 ];
 
 export const WEARABLE_HAT_IDS = new Set([
-  'ballcap', 'beanie', 'cowboy', 'hardhat', 'ranger', 'tophat', 'pirate',
+  'ballcap', 'beanie', 'cowboy', 'hardhat', 'ranger', 'tophat', 'pirate', 'headphones',
 ]);
+
+// Party headphones (`hat_headphones`, spike and measurements in docs/specs/dance-party-spec.md 2.2 and 6.1): one piece that PRINTS UPSIDE DOWN, so its STL is the worn part turned
+// 180 degrees about x and lifted by the 4 mm roof: the viewer turns it back and lifts it by HEADPHONES_ROOF_MM. It fits the four human heads over a bald head or a short Hat-Ready
+// wig (`earReady`); the long Hat-Ready wigs (Bob, Long Flow, Twin Braids) hang to where its legs go, and the animal and robot heads are wider. Measured, not assumed.
+export const HEADPHONES_ROOF_MM = 4.0;
+export function headphonesFit(headId, hairId) {
+  if (!HUMAN_HEAD_IDS.has(headId)) return false;
+  const hair = HAIR_OPTIONS.find((h) => h.id === hairId) || HAIR_OPTIONS[0];
+  return Boolean(hair.earReady);
+}
 
 export const HAT_OPTIONS = [
   { id: 'buds',    label: 'Spark Buds' },
@@ -143,6 +153,7 @@ export const HAT_OPTIONS = [
   { id: 'ranger',  label: 'Explorer Hat',    defaultCol: 'ranger_olive' },
   { id: 'tophat',  label: 'Dapper Top Hat',  defaultCol: 'charcoal_ink' },
   { id: 'pirate',  label: 'Tricorne Hat',    defaultCol: 'charcoal_ink' },
+  { id: 'headphones', label: 'Party Headphones', defaultCol: 'cobalt_cap' },
   { id: 'hat',     label: 'Wobble Hat' },
   { id: 'ears',    label: 'Pointy Ears' },
   { id: 'horns',   label: 'Bumper Horns' },
@@ -253,6 +264,7 @@ export async function loadExpansionGeos(loadSTL) {
     ['hatRanger',          loadSTL(`/kip/partspec/toyventor_hat_ranger_S.stl${vq}`, 34)],
     ['hatTophat',          loadSTL(`/kip/partspec/toyventor_hat_tophat_S.stl${vq}`, 34)],
     ['hatPirate',          loadSTL(`/kip/partspec/toyventor_hat_pirate_S.stl${vq}`, 32)],
+    ['hatHeadphones',      loadSTL(`/kip/partspec/toyventor_hat_headphones_S.stl${vq}`, 34)],
     ['bumperHorns',        loadSTL(`/kip/partspec/toyventor_bumper_horns_S.stl${vq}`, 34)],
     // Backpacks & Props
     ['packExplorer',      loadSTL('/kip/partspec/toyventor_pack_explorer_S.stl', 35)],
@@ -684,13 +696,15 @@ export function attachExpansionToKipRig(THREE, kip, expGeos, baseParts, mats, sc
     ranger:    scadMesh(expGeos.hatRanger,       expMats.hat),
     tophat:    scadMesh(expGeos.hatTophat,       expMats.hat),
     pirate:    scadMesh(expGeos.hatPirate,       expMats.hat),
+    headphones: scadMesh(expGeos.hatHeadphones,  expMats.hat),
     horns:     scadMesh(expGeos.bumperHorns,     expMats.sun),
     ponytail:  scadMesh(expGeos.hairPonytail,    expMats.hair),
     wizardHat: scadMesh(expGeos.customWizardHat, expMats.plum),
   };
   for (const [k, m] of Object.entries(hatMeshes)) {
     // Support-free wearable hats sit on the bed at z_stl = 0 (rim) with the 2x1 sockets at z_stl = HAT_RIM_MM[id]: the rim wraps down over the head
-    m.position.y = WEARABLE_HAT_IDS.has(k) ? -(HAT_RIM_MM[k] ?? HAT_WRAP_MM) : (k === 'ponytail' ? -HAIR_WRAP_MM : 0);
+    m.position.y = k === 'headphones' ? HEADPHONES_ROOF_MM : WEARABLE_HAT_IDS.has(k) ? -(HAT_RIM_MM[k] ?? HAT_WRAP_MM) : (k === 'ponytail' ? -HAIR_WRAP_MM : 0);
+    if (k === 'headphones') m.rotation.x = Math.PI / 2;     // printed upside down: turn it back (scadMesh's -90 degrees becomes +90)
     m.visible = false;
     crownAnchor.add(m);
   }

@@ -3170,6 +3170,63 @@ def hat_pirate(size="small", grid=(2, 1), lock=True, **_):
     return _finish_wearable_hat(dome + (tricorne - dish_cut), size=size, rim=rim)
 
 
+def _teardrop_bar(zc, r, x_half, slope_deg=52.0):
+    """A bar along x whose (y, z) section is a circle of radius `r` centred at `zc` with a point on its +z side, its two sides `slope_deg` from horizontal.
+    Printed with that point DOWN (a part flipped for printing) a horizontal round shape needs no support: the classic teardrop.
+    The polygon runs counter-clockwise from the left tangent point round the bottom to the right one and THEN the apex: an apex appended out of angular order is
+    silently dropped by the polygon constructor and the "teardrop" is a plain circle."""
+    phi = 90.0 - slope_deg                                   # the point's half angle from the vertical
+    d = r / math.sin(math.radians(phi))
+    a0, a1 = 90.0 + (90.0 - phi), 90.0 - (90.0 - phi) + 360.0
+    n = 24
+    pts = [(r * math.cos(math.radians(a0 + (a1 - a0) * k / n)), zc + r * math.sin(math.radians(a0 + (a1 - a0) * k / n))) for k in range(n + 1)] + [(0.0, zc + d)]
+    m = Manifold.extrude(CrossSection([pts]), 2 * x_half).rotate((90, 0, 0)).rotate((0, 0, 90))     # local (u, v, w) -> world (w, u, v): section in (y, z), run along x
+    return m.translate((-x_half, 0, 0))
+
+
+def _teardrop_loft(zc, r0, r1, x0, x1, slope_deg=52.0):
+    """Hull of a big teardrop slab at x0 and a small one at x1: every lower facet stays at or above `slope_deg` from horizontal."""
+    a = _teardrop_bar(zc, r0, 0.5, slope_deg).translate((x0 + 0.5, 0, 0))
+    b = _teardrop_bar(zc, r1, 0.25, slope_deg).translate((x1 - 0.25, 0, 0))
+    return Manifold.batch_hull([a, b])
+
+
+def hat_headphones(size="small", grid=(2, 1), lock=True, band_w=6.0, grow=0.9, z_leg_bot=-22.0, cup_r=6.5, cup_taper=3.5, cup_depth=5.0, cup_zc=8.0, cup_in=3.5, **_):
+    """Party headphones for the human heads: a 12 mm band over the crown on the 2x1 studs, legs straight down both sides, a small tapered cup at each ear. ONE piece that prints UPSIDE DOWN.
+
+    It is cut from the wearable-hat shell, so it reuses the wig-envelope vault (Hat-Ready wig envelope + 0.45 mm clearance) and the sequential-bridge crown sockets. Worn, the 33 mm flat crown ceiling
+    is wider than a bridge (limit 20 mm); printed flipped (`print_rotation_deg` [180, 0, 0], the standard Snap add-on orientation) the roof is the bed and the ceiling is a flat floor.
+    Rules that made it print without supports (each cost a failed run, see the design log): the legs ARE the shell extended straight down (a separate leg of another width is a downward ledge
+    once flipped); the roof closes at about 50 degrees; the cups are teardrop lofts whose pointed tips are embedded in the shell wall and never rise above it (a tip that starts above the bed with
+    nothing under it passes the face-angle gate and still needs a support; the Orca slice is the real check). Fits the four human heads (0.00 mm3 interference); not the animal or robot heads, which are wider."""
+    rim = -z_leg_bot
+    gfn = (lambda z, g=grow: g)
+    lower = _hat_rings_lower(rim, HAT_WALL, 0, 0.0, 0.0, gfn)                       # the hat's own shell, extended straight down as the legs
+    w0, d0, p0, cy0 = _hat_dims(0.0)
+    w0 += 2 * (HAT_WALL + grow)
+    d0 += 2 * (HAT_WALL + grow)
+    roof_t = 4.0
+    roof = [(z, _strand_ring_pts(w0 - 1.7 * z, d0 - 1.7 * z, p_exp=p0, cy=cy0, n_pts=72, n_locks=0, lock_amp=0.0)) for z in (2.0, roof_t)]
+    shell = _ring_stack_manifold(lower + roof)
+    strip = shell ^ Manifold.cube((80, 2 * band_w, 60), center=True).translate((0, 0, 10))     # a narrow strip across the head
+    head_half = HAT_CAVITY_SLICES[0][1] / 2.0
+    leg_out = head_half + HAT_WALL + grow
+    cups = []
+    for sx in (1, -1):
+        c = _teardrop_loft(z_leg_bot + cup_zc, cup_r, cup_r - cup_taper, leg_out - cup_in, leg_out + cup_depth)
+        cups.append(c if sx > 0 else c.mirror((1, 0, 0)))
+    p = STUD[size]
+    cav = _hat_crown_cavity()
+    z_cav = HAT_CAVITY_SLICES[0][0] - 0.8
+    cav_tube = Manifold.cube((2 * head_half, 40.0, z_cav - (z_leg_bot - 2.0) + 0.01)).translate((-head_half, -20.0, z_leg_bot - 2.0))     # the same cavity, straight down between the legs
+    body = keep_above(strip + cups[0] + cups[1], z_leg_bot) - cav - cav_tube - _sequential_crown_socket_cutter(p, cav.slice(-0.02))
+    return (
+        body,
+        [socket_conn(size, 2, 1)],
+        {"print_rotation_deg": [180, 0, 0], "sockets": {"holes": 2, "reliefs": 0, "locked": True}, "seat_z_mm": rim},
+    )
+
+
 def pack_explorer(size="small", grid=(2, 2), lock=True, **_):
     """2x2 Explorer field rucksack with rolled upper bedroll and top 2x1 accessory studs."""
     hx, hy = _half(size, grid[0]), _half(size, grid[1])
