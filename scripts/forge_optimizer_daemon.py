@@ -257,8 +257,6 @@ _EAR_STYLES = {
     "round": (0.0, 11.0, 8.0),
     "pointy": (11.0, 9.0, 22.0),
     "tall": (22.0, 7.0, 12.0),
-    # "floppy" hangs down the side of the head like a beagle's or a lop rabbit's: `height_mm` is its length
-    "floppy": (16.0, 9.0, 12.0),
 }
 _SNOUT_STYLES = {
     # style: (length_mm, width_mm, height_mm, tip_width_frac, tip_radius_frac) defaults;
@@ -266,6 +264,8 @@ _SNOUT_STYLES = {
     "muzzle": (9.0, 12.0, 9.0, 0.75, 0.55),
     "beak": (10.0, 8.0, 11.0, 0.30, 0.15),
     "bill": (7.0, 18.0, 6.0, 0.90, 0.50),
+    # "trunk" hangs down the middle of the face: `length_mm` is how far down it runs, `height_mm` how far it stands out at the top
+    "trunk": (18.0, 9.0, 7.0, 0.9, 1.0),
 }
 SNOUT_MIN_SLOPE_DEG = 55.0  # the snout's underside should rise at least this steeply (from horizontal) to print without help
 SNOUT_FALLBACK_SLOPE_DEG = 50.0  # tried when 55 does not fit; the gate's limit is 45, and the hull's facets wobble by a degree or two
@@ -333,10 +333,10 @@ def _parse_feature(feat: dict[str, Any], slot: str) -> dict[str, Any] | None:
         return {
             "op": "snout",
             "style": style,
-            "length_mm": _clamp(feat.get("length_mm"), 3.0, 16.0, l0, "length_mm"),
+            "length_mm": _clamp(feat.get("length_mm"), 8.0 if style == "trunk" else 3.0, 26.0 if style == "trunk" else 16.0, l0, "length_mm"),
             "width_mm": _clamp(feat.get("width_mm"), 6.0, 22.0, w0, "width_mm"),
-            "height_mm": _clamp(feat.get("height_mm"), 4.0, 16.0, h0, "height_mm"),
-            "z_frac": _clamp(feat.get("z_frac"), 0.2, 0.65, 0.4, "z_frac"),
+            "height_mm": _clamp(feat.get("height_mm"), 4.0, 12.0 if style == "trunk" else 16.0, h0, "height_mm"),
+            "z_frac": _clamp(feat.get("z_frac"), 0.4 if style == "trunk" else 0.2, 0.85 if style == "trunk" else 0.65, 0.75 if style == "trunk" else 0.4, "z_frac"),
         }
     if op == "ribs":
         # vertical grooves round the sides of a head (a pumpkin, a melon, a beehive); the front stays smooth
@@ -597,31 +597,6 @@ def _ears_or_horns_solid(
         height = float(feat["height_mm"]) * fs
         thick = float(feat["thickness_mm"])
         rb = width / 2.0
-        if str(feat["style"]) == "floppy":
-            # A flap lying along the cheek (Dan, round 13: the leaf that hung from the top corner sank into the head's widest part,
-            # which is part way up, and read as a plain ear). A chain of flat ellipsoids follows the wall's own outline from the
-            # root down, each standing off the wall by about a fifth of the flap's thickness, tapering to a point at the bottom.
-            # It is attached along its whole length, so there is no overhang to hold up and no tip hanging in the air.
-            n = 7
-            drop = max(4.0, min(height, z_root - 6.0))  # the flap stops 6 mm above the bed, clear of the collar's flare
-            t_full = max(thick, 3.6) * 1.4  # a flap is thicker than a standing ear so it shows from the front
-            spheres = []
-            for i in range(n + 1):
-                t = i / n
-                z = z_root - drop * t
-                hw_i = min(_half_width_at(body, z), 12.3 + 0.869 * (z - 1.0))  # the loft, trimmed to the 41 degree flare
-                r = rb * (0.55 + 0.45 * math.sin(math.pi * min(1.0, (t + 0.18) / 0.9) * 0.5)) * (1.0 - 0.8 * t**2)  # widest near the top
-                r = max(r, 0.7)
-                x_half = max(0.45, 0.5 * t_full * r / rb)  # half-thickness in x: full at the widest, tapering with the flap to a point
-                sx = x_half / r
-                # centre outside the wall, but never by more than 60% of this sphere's own half-thickness: past that the flap lifts off
-                # the wall and its tip hangs in the air (an overhang and a floating island)
-                stand_off = min((0.5 * t_full - 0.8) * (1.0 - 0.7 * t), 0.6 * r * sx)
-                spheres.append(
-                    sdk.sphere(1.0, (0.0, 0.0, 0.0)).scale((r * sx, r, r)).translate((hw_i + stand_off + x_shift, 0.0, z))
-                )
-            flap = sdk.union([sdk.hull(spheres[i : i + 2]) for i in range(n)])
-            return _mirror_pair(flap.simplify(STUD_CUT_SIMPLIFY_MM))
         tip = {"round": rb, "pointy": max(0.9, rb * 0.28), "tall": max(1.4, rb * 0.7)}[str(feat["style"])]
         # an ear on the side of the head (z_frac given) stands mostly outside the wall, like a monkey's or an elephant's; one at
         # the top corner sits 35% into it, as before (the bear, bunny and cat were rated on that)
@@ -697,7 +672,7 @@ def _sturdy_head_ear(feat: dict[str, Any]) -> tuple[dict[str, Any], str | None]:
         if float(feat["base_mm"]) >= HEAD_HORN_MIN_BASE_MM:
             return feat, None
         return dict(feat, base_mm=HEAD_HORN_MIN_BASE_MM), f"kept sturdy: base widened from {float(feat['base_mm']):g} to {HEAD_HORN_MIN_BASE_MM:g} mm"
-    if feat.get("op") != "ears" or str(feat.get("style")) in ("round", "floppy"):
+    if feat.get("op") != "ears" or str(feat.get("style")) == "round":
         return feat, None
     h, w, tilt = float(feat["height_mm"]), float(feat["width_mm"]), float(feat["tilt_deg"])
     if h <= EAR_TALL_MAX_MM and h <= EAR_SLENDER_MAX * w:
@@ -1095,6 +1070,42 @@ def _snout_solid(
     return sdk.hull([root_up, root_lo, tip])
 
 
+def _trunk_solid(body: manifold3d.Manifold, feat: dict[str, Any], head_height_mm: float, fs: float) -> manifold3d.Manifold | None:
+    """An elephant's trunk (Dan, round 13: "no trunk"): a tapered ridge down the middle of the face, standing out `height_mm`
+    at the top and narrowing to nothing at the bottom, a chain of ellipsoids each sitting 1.5 mm behind the front wall. It is
+    attached along its whole length, so nothing hangs in the air, but narrowing downward leans its surface backward, on top of
+    the lean the front wall already has (a head's front leans forward going up, up to 38 degrees): the surface must stay within
+    45 degrees of vertical, so it may narrow only as fast as the wall allows (0.85 mm back per mm down in all). If it cannot
+    taper to a point above z 8 within `length_mm`, there is no trunk (reported), because its rounded end would be an overhang."""
+    length = float(feat["length_mm"]) * fs
+    width = float(feat["width_mm"]) * fs
+    proud = float(feat["height_mm"]) * fs
+    z0 = min(float(feat["z_frac"]) * head_height_mm, head_height_mm - 3.5)
+    step = 2.5
+    chain = [(z0, proud)]
+    z, p = z0, proud
+    while p > 0.6 and (z0 - z) < length and z - step >= 8.0:
+        w_here, w_next = _wall_y(body, z), _wall_y(body, z - step)
+        if w_here is None or w_next is None:
+            return None
+        allowed = 0.85 * step - (w_next - w_here)  # mm the stand-out may shrink on this step (the wall already leans back by w_next - w_here)
+        p = max(0.4, p - max(allowed, 0.0))
+        z -= step
+        chain.append((z, p))
+    if chain[-1][1] > 0.6 or len(chain) < 3:
+        return None
+    parts = []
+    n = len(chain) - 1
+    for i, (zi, pi) in enumerate(chain):
+        wall = _wall_y(body, zi)
+        if wall is None:
+            return None
+        r = pi + 1.5  # radius in y and z: the centre sits 1.5 mm behind the wall, so it always overlaps it
+        half_w = max(0.9, 0.5 * width * (1.0 - 0.5 * i / max(n, 1)))
+        parts.append(sdk.sphere(1.0, (0.0, 0.0, 0.0)).scale((half_w, r, r)).translate((0.0, wall + 1.5, zi)))
+    return sdk.union([sdk.hull(parts[i : i + 2]) for i in range(len(parts) - 1)]).simplify(STUD_CUT_SIMPLIFY_MM)
+
+
 def compile_recipe_to_partspec(recipe: dict[str, Any]) -> dict[str, Any]:
     """Compile a JSON Recipe v1 object into a `kip_partspec_sdk.part_spec` (no eval/exec)."""
     slot = str(recipe.get("slot", "crown")).strip().lower()
@@ -1255,7 +1266,10 @@ def compile_recipe_to_partspec(recipe: dict[str, Any]) -> dict[str, Any]:
                 body = body + _star_topper(rows, feat, fs)
             elif op == "snout":
                 snout_info: dict[str, float] = {}
-                snout = _snout_solid(body, feat, head_height_mm, fs, snout_info)
+                if str(feat["style"]) == "trunk":
+                    snout = _trunk_solid(body, feat, head_height_mm, fs)
+                else:
+                    snout = _snout_solid(body, feat, head_height_mm, fs, snout_info)
                 if snout is not None:
                     after_builder.append(snout)
                     bits = []

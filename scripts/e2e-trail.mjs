@@ -4,7 +4,8 @@
 // server another session is running. Exits nonzero on any failing check.
 // Run: npm run e2e:trail
 // Overrides: E2E_CHROME (binary), E2E_PORT, E2E_DEBUG_PORT, E2E_PROFILE,
-//            E2E_SHOTS (dir; when set, saves trail-map screenshots).
+//            E2E_SHOTS (dir; when set, saves trail-map screenshots),
+//            E2E_ONLY (comma-separated scenario names, e.g. garage-weekend).
 //
 // Guards, in the real React overlay (unit tests cannot see these):
 //   - which view the Map opens in by age (carousel for 2-6 and unset, trail
@@ -577,7 +578,7 @@ async function scenarioSecret(cdp) {
   await openMap(cdp); // records what is shown (no secret yet)
   const secretIds = () =>
     cdp.evaluate(`[...document.querySelectorAll('[data-node-id^="secret:"]')].map((b) => b.dataset.nodeId)`);
-  check("secret exits are hidden until a world is complete", (await secretIds()).length === 0);
+  check("secret exits are hidden until a world is complete", (await secretIds()).length === 0, JSON.stringify({ ids: await secretIds(), sandbox: (await progOf(cdp))?.sandboxUnlockAll }));
   await clickButton(cdp, ".tv-trail-hud button", "Home");
   await sleep(300);
 
@@ -690,7 +691,7 @@ const shotNamed = async (cdp, name) => {
 /** The part worn in a slot, read from the live toy. */
 const worn = (cdp, slot) => cdp.evaluate(`window.__tvWorld.handle.buildSummary().sel[${JSON.stringify(slot)}]||null`);
 
-// The Garage on an ordinary weekday: always there, not lit, last weekend's drop,
+// The Garage on an ordinary weekday: always there, not lit, the latest drop,
 // free build works, and the weekend's loaner part is not wearable.
 async function scenarioGarageWeekday(cdp) {
   await loadApp(cdp, { version: 1, totalXp: 0, ageBand: 3 }, { fresh: true });
@@ -706,8 +707,10 @@ async function scenarioGarageWeekday(cdp) {
   await waitFor(() => cdp.evaluate(`!!document.querySelector(".tv-sheet-garage")`), { label: "garage sheet" });
   check("weekday: the sheet opens over the closed map", !(await hasTrail(cdp)));
   const tag = await sheetText(cdp, ".tv-garage-tag");
-  check("weekday: it shows last weekend's drop and when the next arrives", /Last weekend/.test(tag) && /arrives on Friday/.test(await sheetText(cdp, ".tv-sheet-garage")), tag);
-  check("weekday: the drop is written for the age (7-9)", (await sheetText(cdp, ".tv-garage-title")) === "Weekend loaner", await sheetText(cdp, ".tv-garage-title"));
+  check("weekday: it shows the latest drop and when the next arrives", /latest drop/i.test(tag) && /arrives on Friday/.test(await sheetText(cdp, ".tv-sheet-garage")), tag);
+  // The pinned Wednesday is before the first launch weekend, so the latest drop is the
+  // rotation's one before the first: the remix, in its 7-9 wording.
+  check("weekday: the drop is written for the age (7-9)", (await sheetText(cdp, ".tv-garage-title")) === "Remix with a twist", await sheetText(cdp, ".tv-garage-title"));
   await shotNamed(cdp, "garage-weekday-sheet");
 
   // The loaner is a weekend thing: on a weekday it cannot be worn.
@@ -726,10 +729,10 @@ async function scenarioGarageCarousel(cdp) {
   await loadApp(cdp, { version: 1, totalXp: 0, ageBand: 1 }, { fresh: true });
   await openMap(cdp);
   const card = await cdp.evaluate(`(()=>{const li=document.querySelector('.tv-map-card[data-id="garage"]');return li?{hot:li.classList.contains("tv-map-card-hot"),badge:!!li.querySelector(".tv-map-new")}:null})()`);
-  check("carousel, weekday: the Garage is a card and not marked NEW", card && card.hot === false && card.badge === false, JSON.stringify(card));
+  check("carousel, weekday: the Garage is a card and not marked NEW", card && card.hot === false && card.badge === false, JSON.stringify(card) + " ids " + (await cdp.evaluate(`[...document.querySelectorAll(".tv-map-card")].map(l=>l.dataset.id).join(",")`)));
   await cdp.evaluate(`document.querySelector('.tv-map-card[data-id="garage"] .tv-map-card-btn').click()`);
   await waitFor(() => cdp.evaluate(`!!document.querySelector(".tv-sheet-garage")`), { label: "garage sheet" });
-  check("carousel: the card opens the Garage, written for age 3-4", (await sheetText(cdp, ".tv-garage-title")) === "Try the new part!", await sheetText(cdp, ".tv-garage-title"));
+  check("carousel: the card opens the Garage, written for age 3-4", (await sheetText(cdp, ".tv-garage-title")) === "Change one thing!", await sheetText(cdp, ".tv-garage-title"));
 
   // Weekend: the same card is NEW and first.
   await loadApp(cdp, { version: 1, totalXp: 0, ageBand: 1 }, { fresh: true, clock: "weekend" });
@@ -812,6 +815,9 @@ async function scenarioGaragePreview(cdp) {
   await waitFor(() => cdp.evaluate(`!!document.querySelector(".tv-sheet-garage")`), { label: "garage sheet" });
   check("preview: the sheet says New this weekend", (await sheetText(cdp, ".tv-garage-tag")) === "New this weekend");
   const xp0 = (await progOf(cdp)).totalXp ?? 0;
+  // The dev worker keeps a ledger between scenarios and merges it in when it answers,
+  // so compare against what is there before the mission, not against empty.
+  const ledger0 = JSON.stringify(await ledgerIds(cdp));
   await clickButton(cdp, ".tv-sheet-garage button", "Start");
   await waitFor(() => cdp.evaluate(`!!document.querySelector(".tv-garage-chip")`), { label: "chip" });
   await cdp.evaluate(`(()=>{const h=window.__tvWorld.handle;h.cuSlot("hat");h.cuPart("crown")})()`);
@@ -819,7 +825,7 @@ async function scenarioGaragePreview(cdp) {
   check("preview: it runs through to Done and says nothing is saved", /Nothing is saved/.test(await sheetText(cdp, ".tv-garage-chip")), await sheetText(cdp, ".tv-garage-chip"));
   const p = await progOf(cdp);
   check("preview: no XP, no weekend marked done, no Workshop Day", (p.totalXp ?? 0) === xp0 && !(p.garageDone || []).length && !(p.workshopDays || []).length, JSON.stringify({ xp: p.totalXp, d: p.garageDone, w: p.workshopDays }));
-  check("preview: nothing credited to the parent ledger", !(await ledgerIds(cdp)).some((id) => String(id).startsWith("garage.")), JSON.stringify(await ledgerIds(cdp)));
+  check("preview: nothing credited to the parent ledger", JSON.stringify(await ledgerIds(cdp)) === ledger0, `${ledger0} -> ${JSON.stringify(await ledgerIds(cdp))}`);
 }
 
 async function main() {
@@ -857,7 +863,9 @@ async function main() {
     killAll();
     process.exit(130);
   });
+  const only = process.env.E2E_ONLY ? process.env.E2E_ONLY.split(",") : null;
   const run = async (name, fn) => {
+    if (only && !only.includes(name)) return;
     const page = await openPage();
     try {
       await fn(page);

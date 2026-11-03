@@ -1,12 +1,7 @@
 {
  "version": 1,
- "note": "Head variety set (2026-11-03): requests drawn from Dan's Sketchfab picks. Slot head, kid phrasing, one object each.",
+ "note": "Head variety set (2026-11-03): requests drawn from Dan's Sketchfab picks. Slot head, kid phrasing, one object each. v01 (beagle) and v12 (lop bunny) were dropped when floppy ears were.",
  "prompts": [
-  {
-   "id": "v01",
-   "slot": "head",
-   "text": "a beagle head with long floppy ears"
-  },
   {
    "id": "v02",
    "slot": "head",
@@ -56,11 +51,6 @@
    "id": "v11",
    "slot": "head",
    "text": "a fennec fox head with huge ears"
-  },
-  {
-   "id": "v12",
-   "slot": "head",
-   "text": "a floppy-eared bunny head"
   },
   {
    "id": "v13",

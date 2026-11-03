@@ -307,8 +307,8 @@ describe.skipIf(!PYTHON)("Recipe v1 feature ops through the optimizer daemon", (
     expect(stlVertices(join(outDir, ribbed.stl_artifact!)).length).toBeGreaterThan(stlVertices(join(outDir, plain.stl_artifact!)).length);
   }, 540_000);
 
-  it("builds floppy ears and ears on the sides of a head, and prints them without supports", async () => {
-    // Dan's Sketchfab picks (2026-11-03): a beagle's floppy ears, a monkey's round side ears, an elephant's flaps.
+  it("builds ears on the sides of a head and prints them without supports", async () => {
+    // Dan's Sketchfab picks (2026-11-03): a monkey's round side ears, an elephant's flaps. (Floppy ears were built and then dropped at his request.)
     const slices = [
       { z: 0, w: 26, d: 12.7, r: 5 },
       { z: 5, w: 33.7, d: 20, r: 7 },
@@ -322,11 +322,6 @@ describe.skipIf(!PYTHON)("Recipe v1 feature ops through the optimizer daemon", (
     const plain = await run(withHeight(recipe("ops_test_variety_plain", "head", slices, [])));
     expect(plain.status).toBe("print_ready");
     const [px0, px1] = stlXRange(join(outDir, plain.stl_artifact!));
-    const floppy = await run(withHeight(recipe("ops_test_floppy", "head", slices, [{ op: "ears", style: "floppy", width_mm: 10, height_mm: 18, z_frac: 0.8 }])));
-    expect(floppy.status).toBe("print_ready");
-    expect(floppy.legalizer?.features_dropped).toBeUndefined();
-    const fv = stlVertices(join(outDir, floppy.stl_artifact!));
-    expect(Math.max(...fv.map((v) => Math.abs(v[0])))).toBeGreaterThan(Math.max(Math.abs(px0), px1) - 0.5); // it hangs on the side
     const side = await run(withHeight(recipe("ops_test_side_ears", "head", slices, [{ op: "ears", style: "round", width_mm: 14, z_frac: 0.55 }])));
     expect(side.status).toBe("print_ready");
     expect(side.legalizer?.features_dropped).toBeUndefined();

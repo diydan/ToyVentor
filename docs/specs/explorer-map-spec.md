@@ -240,7 +240,9 @@ neighbours.
 - No hard gates, secret-exit locks, or vehicle gates on roads.
   Vehicle perks stay soft (connected-town slice 1).
 - The Garage (an always-open build place with a weekend drop, on the map and
-  in the carousel) is specified in garage-weekend-spec.md and not built.
+  in the carousel) is specified and built in phase 1 in garage-weekend-spec.md.
+  On the trail map it is a place at (2, -1) with one road to Lab 6, always
+  revealed; it moves no other place (checked in every age band and at depth).
 - No secret exit off Toy Room (its roads are crowded), and none off a
   lab or ladder. A secret exit has no reward beyond the level itself.
 - Tier 2 and 3 only add a station and raise its starting tier; the

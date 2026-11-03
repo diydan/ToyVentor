@@ -28,8 +28,8 @@ export function GarageSheet({ status, onStart, onFreeBuild, onClose }: GarageShe
       ? "Done this weekend ★"
       : "New this weekend"
     : done
-      ? "Last weekend: done ★"
-      : "Last weekend's drop";
+      ? "The latest drop: done ★"
+      : "The latest drop";
   return (
     <section className="tv-sheet tv-sheet-garage" role="region" aria-label="Garage">
       <div className="tv-sh-top">

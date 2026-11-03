@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { PART, TYPES } from "../src/features/game/world/runtime/catalog";
 import { isMissionId } from "../shared/parent-time";
+import { buildMapCards } from "../src/lib/mapCards";
 import {
   BAND_GROUPS,
   bandGroupOf,
@@ -476,5 +477,43 @@ describe("Garage settings kept on the device", () => {
     const blocked = { getItem: () => { throw new Error("x"); }, setItem: () => { throw new Error("x"); } };
     expect(loadGraceUsedMs("2026-11-06", blocked)).toBe(0);
     expect(() => saveGraceUsedMs("2026-11-06", 5, blocked)).not.toThrow();
+  });
+});
+
+describe("the Garage card on the carousel", () => {
+  const base = { ageBand: 2, prog: prog(), found: new Set<string>(), missionsDone: new Set<string>() };
+  const ids = (cards: ReturnType<typeof buildMapCards>): string[] => cards.map((c) => c.id);
+
+  it("is absent unless the caller asks for it (older callers are unchanged)", () => {
+    expect(ids(buildMapCards(base))).not.toContain("garage");
+  });
+
+  it("sits before the worlds on a weekday, with no badge and no suggestion", () => {
+    const cards = buildMapCards({ ...base, garage: { weekend: false, done: false } });
+    const at = ids(cards).indexOf("garage");
+    expect(at).toBeGreaterThan(-1);
+    expect(cards[at + 1]!.kind).toBe("world");
+    expect(cards[at]!.badge).toBeUndefined();
+    expect(cards[at]!.suggested).toBe(false);
+  });
+
+  it("jumps to the front with a NEW badge, and is the suggestion, on a weekend with its drop waiting", () => {
+    const cards = buildMapCards({ ...base, garage: { weekend: true, done: false } });
+    expect(cards[0]!.id).toBe("garage");
+    expect(cards[0]!.badge).toBe("new");
+    expect(cards.filter((c) => c.suggested).map((c) => c.id)).toEqual(["garage"]);
+  });
+
+  it("goes back to its place, ticked, once the weekend's drop is done", () => {
+    const cards = buildMapCards({ ...base, garage: { weekend: true, done: true } });
+    expect(cards[0]!.id).not.toBe("garage");
+    const g = cards.find((c) => c.id === "garage")!;
+    expect(g.badge).toBeUndefined();
+    expect(g.complete).toBe(true);
+  });
+
+  it("a grown-up still has to set the age first: Ask stays the suggestion", () => {
+    const cards = buildMapCards({ ...base, ageBand: null, garage: { weekend: true, done: false } });
+    expect(cards.find((c) => c.suggested)!.kind).toBe("ask");
   });
 });

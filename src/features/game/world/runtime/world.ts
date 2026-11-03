@@ -149,6 +149,7 @@ import { ladderById } from "../../../../lib/ladders";
 import { toyPortraitSignature } from "../../../../lib/toyPortrait";
 import type { BuildSummary, StatId } from "../../../../lib/garage";
 import { learnRungDef } from "./learnRungs";
+import { arriveScene, itemMarkerX, startSceneCarry, tapSceneItem, tapSceneTarget, type SceneCarrySession } from "./level2Scene";
 import {
 renderer,
 scene,
@@ -445,7 +446,7 @@ function tidyUp(ts: { id: string; x: number; label: string; g: THREE.Group; hit:
  return true;
 }
 function buildWorld(id: string){
- if(W.root){scene.remove(W.root)}W={root:new T.Group(),blades:[],blink:[]};scene.add(W.root);PFX.reset();spots.length=0;bolts.length=0;signHits.length=0;tidySpots.length=0;
+ if(W.root){scene.remove(W.root)}W={root:new T.Group(),blades:[],blink:[]};scene.add(W.root);PFX.reset();spots.length=0;bolts.length=0;signHits.length=0;tidySpots.length=0;sceneCarry=null;sceneMarks=[];
  var R=WORLDS[id]!;
  scene.background=canv(4,512,function(g,w,h){var gr=g.createLinearGradient(0,0,0,h);gr.addColorStop(0,R.sky[0]);gr.addColorStop(.3,R.sky[1]);gr.addColorStop(.52,R.sky[2]);gr.addColorStop(1,R.sky[2]);g.fillStyle=gr;g.fillRect(0,0,w,h)});
  applyLightRig(R,id);
@@ -666,7 +667,8 @@ function rayAt(cx: number,cy: number){var r=canvas.getBoundingClientRect();ndc.s
 function laneX(){return ray.ray.intersectPlane(lane,hitP)?hitP.x:null}
 function junkHit(){var arr=spots.filter(function(s){return s.junk&&!s.got&&!s.broken}).map(function(s){return s.junk as THREE.Object3D});if(!arr.length)return null;var h=ray.intersectObjects(arr,true);if(!h.length)return null;var o: THREE.Object3D | null=h[0]!.object;while(o&&arr.indexOf(o)<0)o=o.parent;return spots.filter(function(s){return s.junk===o})[0]||null}
 function setTarget(x: number){var nb=(!ED.on&&!ED.testing)?townNeighbors(S.world):null,lo=nb?.2:.5,hi=nb?44.6:43.5;P.target=new T.Vector3(Math.max(lo,Math.min(hi,x)),0,0);marker.position.set(P.target.x,.06,0);markT=0}
-canvas.addEventListener("pointerdown",function(e: PointerEvent){ctx();if(P.showcase||P.mDrive)return;rayAt(e.clientX,e.clientY);var hb=ray.intersectObjects(bolts,false);if(hb.length){unbolt(hb[0]!.object);return}var js=junkHit();if(js){unboltNext(js);return}var th=ray.intersectObjects(tidySpots.filter(function(s){return !s.done}).map(function(s){return s.hit}),false);if(th.length&&th[0]!.object.userData.tidy){var te=th[0]!.object.userData.tidy;if(Math.abs(P.pos.x-te.x)<3.2){tidyUp(te);return}setTarget(te.x);return}var sh=ray.intersectObjects(signHits,false);if(sh.length&&!P.busy){var sdir=sh[0]!.object.userData.signDir;setTarget(sdir==="west"?.25:44.55);return}if(!ED.on&&PFX.tap(ray))return;if(P.busy)return;var x=laneX();if(x==null)return;hold={id:e.pointerId};try{canvas.setPointerCapture(e.pointerId)}catch(_){}setTarget(x)});
+canvas.addEventListener("pointerdown",function(e: PointerEvent){ctx();if(P.showcase||P.mDrive)return;rayAt(e.clientX,e.clientY);var hb=ray.intersectObjects(bolts,false);if(hb.length){unbolt(hb[0]!.object);return}var js=junkHit();if(js){unboltNext(js);return}var th=ray.intersectObjects(tidySpots.filter(function(s){return !s.done}).map(function(s){return s.hit}),false);if(th.length&&th[0]!.object.userData.tidy){var te=th[0]!.object.userData.tidy;if(Math.abs(P.pos.x-te.x)<3.2){tidyUp(te);return}setTarget(te.x);return}if(sceneCarry){var ch=ray.intersectObjects(sceneMarks.map(function(mk){return mk.hit}),false);if(ch.length){var ref=ch[0]!.object.userData.sceneCarry;if(ref){if(ref.kind==="item"){var mk2=sceneMarks.filter(function(m){return m.kind==="item"&&m.id===ref.id})[0]!;var ri=tapSceneItem(sceneCarry,ref.id,mk2.x);if(ri.action==="goto")setTarget(ri.x);toast(ri.say);return}var mk3=sceneMarks.filter(function(m){return m.kind==="target"&&m.id===ref.id})[0]!;var rt=tapSceneTarget(sceneCarry,ref.id,mk3.x);if(rt.action==="goto")setTarget(rt.x);toast(rt.say);return}}}
+var sh=ray.intersectObjects(signHits,false);if(sh.length&&!P.busy){var sdir=sh[0]!.object.userData.signDir;setTarget(sdir==="west"?.25:44.55);return}if(!ED.on&&PFX.tap(ray))return;if(P.busy)return;var x=laneX();if(x==null)return;hold={id:e.pointerId};try{canvas.setPointerCapture(e.pointerId)}catch(_){}setTarget(x)});
 canvas.addEventListener("pointermove",function(e: PointerEvent){if(!hold||hold.id!==e.pointerId||P.busy||P.showcase)return;rayAt(e.clientX,e.clientY);var x=laneX();if(x!=null)setTarget(x)});
 function endHold(e: PointerEvent){if(hold&&hold.id===e.pointerId)hold=null}
 canvas.addEventListener("pointerup",endHold);canvas.addEventListener("pointercancel",endHold);
@@ -688,7 +690,18 @@ var FR=0;function frame(){if(disposed)return;FR++;timer.update();var dt=Math.min
  else if(P.target&&!P.busy&&!P.showcase){var dx=P.target.x-P.pos.x,dist=Math.abs(dx);if(dist<.06)P.target=null;else{var ramp=Math.min(1,dist/.8+.35),step=Math.min(dist,vmax*ramp*dt);P.pos.x+=Math.sign(dx)*step;if(dist>.15)P.tface=dx>0?0:Math.PI;sp=step/dt}}
  var wantWest=!!(kd<0||(P.target&&P.target.x<=.6)),wantEast=!!(kd>0||(P.target&&P.target.x>=44.2));
  if(!P.mDrive&&!P.showcase){var mb=mBounds();if(P.pos.x>mb[1]){P.pos.x=mb[1];if(P.target&&P.target.x>mb[1])P.target=null}if(P.pos.x<mb[0]){P.pos.x=mb[0];if(P.target&&P.target.x<mb[0])P.target=null}}mUpdate(dt);
- if(!P.showcase&&!P.busy&&!P.mDrive){tidySpots.forEach(function(ts){if(ts.done)return;if(ts.g.userData.spark)ts.g.userData.spark.scale.setScalar(.7+.15*Math.sin(t*4+ts.x));if(Math.abs(P.pos.x-ts.x)<1.25&&(P.elev||0)<.8)tidyUp(ts)})}
+ function resolveSceneArrival(){if(!sceneCarry||!sceneCarry.pending)return;var session=sceneCarry;var pd0=session.pending;if(!pd0)return;var pd:{x:number;itemId:string}|{x:number;targetId:string}=pd0;
+ var mk=null as null|{kind: string;id: string;x: number;g: THREE.Group;hit: THREE.Object3D};
+ for(var i=0;i<sceneMarks.length;i++){var cand=sceneMarks[i]!;if("itemId" in pd){if(cand.kind==="item"&&cand.id===(pd as {itemId:string}).itemId){mk=cand;break}}else if(cand.kind==="target"&&cand.id===(pd as {targetId:string}).targetId){mk=cand;break}}
+ if(!mk||Math.abs(P.pos.x-mk.x)>=1.25||(P.elev||0)>=.8)return;
+ var ar=arriveScene(session);if(!ar)return;
+ if(ar.event==="picked"){sfx.pop();toast(ar.say);return}
+ if(ar.event==="placed"){sfx.pop();burst(new T.Vector3(mk.x,.6,0));var placed=null as null|{g: THREE.Group};for(var j=0;j<sceneMarks.length;j++){var c2=sceneMarks[j]!;if(c2.kind==="item"&&c2.id===ar.itemId){placed=c2;break}}if(placed)placed.g.visible=false;toast(ar.say);return}
+ if(ar.event==="wrong"){if(curMission)mFailNote(curMission);if(sfx.bump)sfx.bump();toast(ar.say+" "+ar.hint);cueSceneMark(correctTargetFor(session));return}
+ var doneMk=null as null|{g: THREE.Group};for(var k=0;k<sceneMarks.length;k++){var c3=sceneMarks[k]!;if(c3.kind==="item"&&c3.id===ar.itemId){doneMk=c3;break}}
+ if(doneMk)doneMk.g.visible=false;sfx.found();if(curMission){var wdef=learnRungDef(session.missionId);mtWin(curMission,wdef?wdef.winText:"All done!")}sceneCarry=null;clearSceneMarks()}
+if(!P.showcase&&!P.busy&&!P.mDrive)resolveSceneArrival();
+if(!P.showcase&&!P.busy&&!P.mDrive){tidySpots.forEach(function(ts){if(ts.done)return;if(ts.g.userData.spark)ts.g.userData.spark.scale.setScalar(.7+.15*Math.sin(t*4+ts.x));if(Math.abs(P.pos.x-ts.x)<1.25&&(P.elev||0)<.8)tidyUp(ts)})}
  if(nb0&&!P.mDrive&&!P.showcase&&!P.busy&&!autoWalk&&streetCd<=0){if(P.pos.x<=.48&&wantWest)streetCross("west");else if(P.pos.x>=44.38&&(P.elev||0)<1.5&&wantEast)streetCross("east")}
  P.speed+=(sp-P.speed)*Math.min(1,dt*10);
  var df=((P.tface-P.face+Math.PI*3)%(Math.PI*2))-Math.PI;P.face+=df*Math.min(1,dt*10);
@@ -879,6 +892,8 @@ function mReplayPrompt(m: Mission,_title: string){curMission=m;mpOpen=true;mpSta
    without touching the DOM beyond one hidden-flag read. */
 var mpStamp: any=null,mpOpen=false,curMission: Mission | null=null;
 var learnRun: {track:string;plan:number[];at:number;kidMode:boolean;rungMissionId:string}|null=null,learnFinished=0;
+var sceneCarry: SceneCarrySession|null=null,sceneMarks: Array<{kind: string;id: string;x: number;g: THREE.Group;hit: THREE.Object3D}>=[];
+function clearSceneMarks(){sceneMarks.forEach(function(mk){if(mk.g.parent)mk.g.parent.remove(mk.g)});sceneMarks=[]}
 function mpChrome(title: string,goal: string,actL: string,binText: string,forgeAvailable: boolean){return {title:title,goal:goal,actionLabel:actL,binText:binText,forgeAvailable:forgeAvailable}}
 function mpData(m: Mission): any {
   var tier=mTier(m),midV=mid(m);
@@ -1022,10 +1037,23 @@ function mpLater(m: Mission | null){if(m){if(m.replaying)mCancelReplay(m);m.dism
    the missions onWin hook and advance the plan. */
 function openLearnRung(){if(!learnRun)return;var lad=ladderById(learnRun.track);if(!lad){learnRun=null;notify();return}var rung=lad.rungs[learnRun.plan[learnRun.at]!]!;learnRun.rungMissionId=rung.missionId;
  if(rung.missionId.indexOf("lab")===0){var parts=rung.missionId.split("."),lw=parts[0]!,lt=parts[1]!;if(S.world!==lw)switchWorld(lw);var m: Mission|undefined=(W.missions||[]).find(function(x: Mission){return x.type===lt});if(!m){toast("That level is not here yet.");learnRun=null;notify();return}var st0=mst(m);st0.tier=rung.tier;m.dismissed=false;var entry=MT[m.type];if(entry){if(entry.st)entry.st(m);entry.sync(m)}else mSync(m);P.pos.x=entry?entry.hold(m):m.x-2;P.target=null;mUpdateCur=m;save();mPanel(m);notify();return}
- var ldef2=learnRungDef(rung.missionId);if(!ldef2){learnRun=null;notify();return}if(!S.ms[rung.missionId])S.ms[rung.missionId]={};S.ms[rung.missionId].tier=rung.tier;var vm: Mission={type:"learn",learnId:rung.missionId,x:P.pos.x,done:!!S.mdone[rung.missionId]};curMission=vm;mUpdateCur=vm;save();mtPanel(vm);notify()}
-function onLearnWin(key: string){if(!learnRun||key!==learnRun.rungMissionId)return;var run=learnRun;run.at++;if(run.at>=run.plan.length){var lad2=ladderById(run.track);learnRun=null;learnFinished++;toast("You finished "+(lad2?lad2.label:"")+"!");notify();return}setTimeout(function(){if(learnRun===run)openLearnRung()},1200)}
+ var ldef2=learnRungDef(rung.missionId);if(!ldef2){learnRun=null;notify();return}if(!S.ms[rung.missionId])S.ms[rung.missionId]={};S.ms[rung.missionId].tier=rung.tier;var vm: Mission={type:"learn",learnId:rung.missionId,x:P.pos.x,done:!!S.mdone[rung.missionId]};curMission=vm;mUpdateCur=vm;save();mtPanel(vm);startSceneMarkers(rung.missionId);notify()}
+function startSceneMarkers(missionId: string){clearSceneMarks();sceneCarry=startSceneCarry(missionId);if(!sceneCarry)return;var session=sceneCarry;
+ session.params.items.forEach(function(item,idx){var x=itemMarkerX(idx);var g=new T.Group();g.position.set(x,0,0);
+  g.add(M(rbox(.55,.5,.55,.1),plastic("#3c55b8"),0,.28,0));var lb=textSprite(item.label||item.id,"#e8ecff",.5);lb.position.set(0,1.15,0);g.add(lb);
+  var hit=new T.Mesh(new T.SphereGeometry(.95,8,6),new T.MeshBasicMaterial({visible:false}));hit.position.set(0,.4,0);hit.userData={sceneCarry:{kind:"item",id:item.id}};g.add(hit);add(g);
+  sceneMarks.push({kind:"item",id:item.id,x:x,g:g,hit:hit})});
+ session.params.targets.forEach(function(target){var g2=new T.Group();g2.position.set(target.x,0,0);
+  var ring=new T.Mesh(new T.TorusGeometry(.62,.09,10,28),new T.MeshBasicMaterial({color:0x5af0b0}));ring.rotation.x=-Math.PI/2;ring.position.y=.06;g2.add(ring);
+  var lb2=textSprite(target.label||target.id,"#5af0b0",.5);lb2.position.set(0,1.5,0);g2.add(lb2);
+  var hit2=new T.Mesh(new T.SphereGeometry(.95,8,6),new T.MeshBasicMaterial({visible:false}));hit2.position.set(0,.4,0);hit2.userData={sceneCarry:{kind:"target",id:target.id}};g2.add(hit2);add(g2);
+  sceneMarks.push({kind:"target",id:target.id,x:target.x,g:g2,hit:hit2})});
+ toast(session.params.items.length+" things to put away. Tap one.")}
+function correctTargetFor(session: SceneCarrySession): string{var held=session.state.held;if(!held)return "";var item=session.params.items.filter(function(i){return i.id===held})[0];return item&&item.targetIds[0]||""}
+function cueSceneMark(id: string){var mk=sceneMarks.filter(function(m){return m.id===id})[0];if(!mk)return;var g=mk.g;fx.push({t:0,d:1.1,f:function(k){g.scale.setScalar(1+.18*Math.sin(k*Math.PI*3))},end:function(){g.scale.setScalar(1)}})}
+function onLearnWin(key: string){if(!learnRun||key!==learnRun.rungMissionId)return;var run=learnRun;run.at++;if(run.at>=run.plan.length){var lad2=ladderById(run.track);learnRun=null;sceneCarry=null;clearSceneMarks();learnFinished++;toast("You finished "+(lad2?lad2.label:"")+"!");notify();return}setTimeout(function(){if(learnRun===run)openLearnRung()},1200)}
 function startLearnRunFn(track: string,plan: number[],kidMode: boolean){var lad=ladderById(track);if(!lad||!plan.length)return;learnRun={track:track,plan:plan.slice(),at:0,kidMode:!!kidMode,rungMissionId:""};openLearnRung();notify()}
-function stopLearnRunFn(){if(curMission&&curMission.type==="learn"){mpOpen=false;curMission=null;mUpdateCur=null}learnRun=null;notify()}
+function stopLearnRunFn(){if(curMission&&curMission.type==="learn"){mpOpen=false;curMission=null;mUpdateCur=null}learnRun=null;sceneCarry=null;clearSceneMarks();notify()}
 function learnStateFn(){return {run:learnRun?{track:learnRun.track,rungIndex:learnRun.plan[learnRun.at]??-1,step:learnRun.at+1,total:learnRun.plan.length,kidMode:learnRun.kidMode}:null,finished:learnFinished}}
 function scrapGain(n: number,why?: string){S.scrap=(S.scrap||0)+n;save();if(why)toast("+"+n+" scrap ("+why+"). You have "+S.scrap+".")}
 function cylBetween(a: THREE.Vector3,b: THREE.Vector3,r: number,mat: THREE.Material){var d=new T.Vector3().subVectors(b,a),len=d.length(),c=M(new T.CylinderGeometry(r,r,len,10),mat);c.position.copy(a).add(b).multiplyScalar(.5);c.quaternion.setFromUnitVectors(new T.Vector3(0,1,0),d.clone().normalize());return c}

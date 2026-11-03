@@ -65,6 +65,10 @@ export const TIDY_ONE_THING_RECIPE: Level2Recipe = {
 
 export const LEVEL2_RECIPES: Level2Recipe[] = [PACK_CAR_RECIPE, TIDY_ONE_THING_RECIPE];
 
+/** Recipe backing a learn rung (recipe id === mission id), when the rung is level/2. */
+export const carryRecipeByMissionId = (missionId: string): Level2Recipe | undefined =>
+  LEVEL2_RECIPES.find((r) => r.id === missionId);
+
 /**
  * Panel steps generated from the carry solution: one "where does X go?" step per placed item, the
  * correct target among three choices (correct target + the next two targets, rotating so the answer

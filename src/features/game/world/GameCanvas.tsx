@@ -799,7 +799,6 @@ export function GameCanvas({
         const minuteNote = minutes > 0 ? ` · +${minutes} min play time` : "";
         setGarageReward(`+${res.awarded} XP${minuteNote}${rankNote}`);
         setGarageDoneNow(true);
-        showXpToast(`+${res.awarded} XP · Garage${minuteNote}${rankNote}`);
       };
       if (res.stemMissionId) {
         void recordPlayProgress({ completedMissionIds: [res.stemMissionId] })
@@ -813,7 +812,7 @@ export function GameCanvas({
       }
     }, 400);
     return () => window.clearInterval(id);
-  }, [garageMission, garageDoneNow, state.ready, showXpToast]);
+  }, [garageMission, garageDoneNow, state.ready]);
 
   // Weekend loaner parts: open to try on Friday to Sunday, taken back after.
   useEffect(() => {

@@ -1,10 +1,11 @@
-# Garage: the weekend build drop — spec (draft 1, 2026-11-03)
+# Garage: the weekend build drop — spec (draft 2, 2026-11-03; phase 1 built)
 
 A place on the map and in the carousel where a child builds new things.
 The Garage is **always open**. What changes is a **new drop every Friday,
 Saturday and Sunday** (a new part to try, an idea, or a remix), and on those
-days the Garage is animated and is the focus of the map. Spec only; nothing
-here is built yet.
+days the Garage is animated and is the focus of the map. **Phase 1 is built**
+(see "Phase 1 as built" below); the real-life leg, parent controls and roof
+trophies are phase 2 and not built.
 
 ## Decisions (Dan, 2026-11-03)
 
@@ -87,6 +88,30 @@ The check reads the live build: the equipped part per slot and the build's
 stats. It needs one additive engine read, `buildSummary()` (`{ type, sel,
 stats }`); no new gameplay events.
 
+## Household library drops (added 2026-11-03, Dan: use the household items in the weekend games)
+
+Source: [household-library-spec.md](household-library-spec.md): 50 everyday objects, each a small optimised 3D part (five are built as a
+pilot), chosen from the scan list's ranking and matched from a word or a photo. This section says how the Garage uses them; the library spec owns
+the items.
+
+- **The weekend's New part is a library item.** Fifty items is almost exactly a year of weekends (52), so the catalog is long enough that the
+  rotation rarely repeats. Same rule as before: deterministic, offline, no immediate repeat. The order is authored, so a theme is possible: the six
+  garage tools (hammer, screwdriver, pliers, flashlight, tape measure, bucket) make a natural **tool weekend**.
+- **The loaner is shown in 3D** on the Garage sheet ("This weekend: the wooden spoon") and equips in the hand slot to try for the weekend. The
+  loaner rule is unchanged: it is not given away.
+- **Idea kind, "Find one at home".** The sheet shows the item; the child finds the real one. Taking a photo is optional (the in-app drop never
+  needs one), goes through the same print panel and photo path as any scan, and gets the match offer: "This looks like a spoon. Want the 3D spoon,
+  coloured from your photo?" A photo the model cannot trace but whose word is right still gets the library item.
+- **Remix kind:** swap the held item for another of the same family (a mug for a bowl), then add the twist.
+- **Age bands:** the pre-reader versions pick between two items by picture. Tools and sharp-looking items follow the age rule that
+  household-library-spec.md leaves as an open question; until it is decided the garage tools are held back from bands 0 and 1.
+- **The check** reads the equipped hand item, so `buildSummary()` gains one field, the item id. No new events.
+- **Build it for real** uses the printable relief where it passed the gates; an item that did not is digital-only, and the sheet says so.
+- **Rewards:** unchanged. The mission id, the STEM minutes, the XP, the stamp and the trophy do not depend on which item the drop used.
+- **Launch drops (Phase 1):** the five pilot items (ball, mug, wooden spoon, pencil, banana) are built and could be the first loaners, but a
+  library part cannot be equipped in the game yet (household-library-spec.md, open question 2). Phase 1 stays as specified unless that turns out to
+  be cheap; the library is Phase 2 content.
+
 ## Rewards and what it counts for
 
 - **STEM minutes:** the mission id is `garage.<weekendKey>`, passed to
@@ -155,6 +180,63 @@ updates progress, the stamp and the parent ledger's STEM minutes; the loaner
 part opens for the weekend and closes after; nothing replays on the next
 open.
 
+## Phase 1 as built (2026-11-03)
+
+In the app: the Garage place on the trail map (a building with a roll-up door,
+at (2, -1) off Lab 6, always in colour), a Garage card on the carousel, one
+**Garage sheet** over either, a **goal chip** that rides over the stage while
+a mission is on, three launch drops (new-part loaner, idea, remix) each with a
+tiny / early / mid / older wording, the weekend window and rotation, XP, the
+Workshop Day stamp, the STEM credit, the weekend loaner part, the Garage grace
+and Demo Mode's Preview weekend. Code: `src/lib/garage.ts` (pure),
+`src/lib/garageDevice.ts` (device settings), `GarageSheet.tsx`,
+`GarageGoalChip.tsx`, plumbing in `GameCanvas.tsx`, `engine.ts`
+(`buildSummary`, `setLoanKeys`) and `runtime/world.ts`.
+
+How it behaves, where this differs from the design above:
+
+- **Done means changed.** A mission finishes when the goal holds and the child
+  has changed at least one part since pressing Start. A toy that already
+  glows does not pay out for "make it glow"; the chip then adds a "Change
+  something" step. Switching between Character and Vehicle restarts the
+  mission from the new toy.
+- **Remix starts from the build at Start**, not from a saved last build, so
+  there is no `garageLastBuild`.
+- **No door animation record.** The lit door and sparks show on every
+  weekend day until the drop is done, so there is no `garageSeen`.
+- **Days after the weekend:** the latest drop stays in the Garage Monday to
+  Thursday, labelled "The latest drop", doing it still pays once. Before the
+  first launch weekend (Fri Nov 6) the "latest drop" is the rotation's earlier
+  one, the remix.
+- **Paid once per weekend.** XP is `GARAGE_XP` (40, the Daily Job amount),
+  the weekend key goes in `garageDone`, the day goes in `workshopDays`, and
+  the mission `garage.<Friday>` goes to `recordPlayProgress` so the parent's
+  STEM minutes apply inside their cap. The chip says what was paid
+  ("+40 XP · +5 min play time"; no minutes line when the cap or the setting
+  gives none). A replay says so and pays nothing.
+- **Loaner:** on a weekend the drop's part (crown for a character, booster for
+  a vehicle) opens in Build for the weekend; on Monday a worn, unfound loaner
+  goes back to the stock part. A part the child really found is never touched.
+  Build does not label the loaner yet; it sits in its normal tab (Crown, Rear).
+- **Grace:** a mission underway when today's limit locks the toy may finish,
+  10 minutes once per weekend, never in quiet hours, spent only while the
+  mission is unfinished and the limit is what locked it. It is stored on the
+  device per weekend. Covered by unit tests of the arithmetic; **not exercised
+  end to end**.
+- **Preview weekend (Demo Mode):** shows next Friday's drop as a weekend. It is
+  a pretend weekend: finishing it runs the chip to Done and says "Preview
+  only. Nothing is saved", and pays nothing, marks nothing done and credits
+  nothing, so it cannot touch the real first weekend.
+- **Not built:** parent controls (drop switch, days), the real-life leg and its
+  grown-up confirm (`garageReal`), roof trophies, the 3D loaner on the sheet,
+  a loaner label in Build, and drops beyond the three.
+
+Verified: `tests/garage.test.ts` (45; window, rotation, every goal reachable
+with parts a child has open, checks, completion, card order, device settings)
+and `npm run e2e:trail` scenarios `garage-weekday`, `garage-carousel`,
+`garage-weekend`, `garage-preview` with a pinned clock (a Wednesday and the
+Saturday Nov 7). **Not tried on a real phone.**
+
 ## Scope against the freeze (Day 9 is the last day for features)
 
 - **Phase 1 (fits only if started now):** the Garage place on the map and in
@@ -181,6 +263,8 @@ open.
 
 ## Still open
 
+- How a household library item is equipped in the game, whether Phase 1's launch drops can use the pilot items, and whether the garage tools
+  and sharp-looking items are shown to every age band (household-library-spec.md, open questions 1 to 3).
 - The 10-minute Garage grace (length, and whether it should also apply on
   weekday drops).
 - Time-of-day look for the Garage and the worlds: see "Time of day" below.
