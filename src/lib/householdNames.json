@@ -1,189 +1,555 @@
 {
   "version": 1,
-  "pending": ["es", "fr", "de", "it", "pt", "tr"],
+  "pending": [],
   "names": {
     "ball": {
-      "en": { "w": "ball", "source": "catalog", "review": "unreviewed" }
+      "en": { "w": "ball", "source": "catalog", "review": "unreviewed" },
+      "es": { "w": "pelota", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "fr": { "w": "ballon", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "de": { "w": "Ball", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "it": { "w": "pallone", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "pt": { "w": "bola", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "tr": { "w": "top", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" }
     },
     "mug": {
-      "en": { "w": "mug", "source": "catalog", "review": "unreviewed" }
+      "en": { "w": "mug", "source": "catalog", "review": "unreviewed" },
+      "es": { "w": "taza", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "fr": { "w": "tasse", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "de": { "w": "Tasse", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "it": { "w": "tazza", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "pt": { "w": "caneca", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "tr": { "w": "kupa", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" }
     },
     "water_bottle": {
-      "en": { "w": "water bottle", "source": "catalog", "review": "unreviewed" }
+      "en": { "w": "water bottle", "source": "catalog", "review": "unreviewed" },
+      "es": { "w": "botella", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "fr": { "w": "bouteille", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "de": { "w": "Flasche", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "it": { "w": "bottiglia", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "pt": { "w": "garrafinha", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "tr": { "w": "şişe", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" }
     },
     "flask": {
-      "en": { "w": "flask", "source": "catalog", "review": "unreviewed" }
+      "en": { "w": "flask", "source": "catalog", "review": "unreviewed" },
+      "es": { "w": "termo", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "fr": { "w": "gourde", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "de": { "w": "Isolierflasche", "source": "muse:hand:2026-11-03", "review": "unreviewed" },
+      "it": { "w": "borraccia", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "pt": { "w": "termo", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "tr": { "w": "termos", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" }
     },
     "drinking_glass": {
-      "en": { "w": "drinking glass", "source": "catalog", "review": "unreviewed" }
+      "en": { "w": "drinking glass", "source": "catalog", "review": "unreviewed" },
+      "es": { "w": "vaso", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "fr": { "w": "verre", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "de": { "w": "Glas", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "it": { "w": "bicchiere", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "pt": { "w": "copo", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "tr": { "w": "bardak", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" }
     },
     "jam_jar": {
-      "en": { "w": "jam jar", "source": "catalog", "review": "unreviewed" }
+      "en": { "w": "jam jar", "source": "catalog", "review": "unreviewed" },
+      "es": { "w": "tarro", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "fr": { "w": "pot", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "de": { "w": "Marmeladenglas", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "it": { "w": "vasetto", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "pt": { "w": "pote", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "tr": { "w": "kavanoz", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" }
     },
     "soda_can": {
-      "en": { "w": "soda can", "source": "edited:a lone 'can' reads as the verb when spoken", "review": "unreviewed" }
+      "en": { "w": "soda can", "source": "edited:a lone 'can' reads as the verb when spoken", "review": "unreviewed" },
+      "es": { "w": "lata", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "fr": { "w": "canette", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "de": { "w": "Dose", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "it": { "w": "lattina", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "pt": { "w": "lata", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "tr": { "w": "içecek kutusu", "source": "muse:hand:2026-11-03", "review": "unreviewed" }
     },
     "cookie_tin": {
-      "en": { "w": "cookie tin", "source": "catalog", "review": "unreviewed" }
+      "en": { "w": "cookie tin", "source": "catalog", "review": "unreviewed" },
+      "es": { "w": "lata de galletas", "source": "muse:hand:2026-11-03", "review": "unreviewed" },
+      "fr": { "w": "boîte à biscuits", "source": "muse:hand:2026-11-03", "review": "unreviewed" },
+      "de": { "w": "Keksdose", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "it": { "w": "scatola dei biscotti", "source": "muse:hand:2026-11-03", "review": "unreviewed" },
+      "pt": { "w": "lata de biscoitos", "source": "muse:hand:2026-11-03", "review": "unreviewed" },
+      "tr": { "w": "bisküvi kutusu", "source": "muse:hand:2026-11-03", "review": "unreviewed" }
     },
     "bowl": {
-      "en": { "w": "bowl", "source": "catalog", "review": "unreviewed" }
+      "en": { "w": "bowl", "source": "catalog", "review": "unreviewed" },
+      "es": { "w": "bol", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "fr": { "w": "bol", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "de": { "w": "Schüssel", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "it": { "w": "ciotola", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "pt": { "w": "tigela", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "tr": { "w": "kase", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" }
     },
     "plate": {
-      "en": { "w": "plate", "source": "catalog", "review": "unreviewed" }
+      "en": { "w": "plate", "source": "catalog", "review": "unreviewed" },
+      "es": { "w": "plato", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "fr": { "w": "assiette", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "de": { "w": "Teller", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "it": { "w": "piatto", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "pt": { "w": "prato", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "tr": { "w": "tabak", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" }
     },
     "bucket": {
-      "en": { "w": "bucket", "source": "catalog", "review": "unreviewed" }
+      "en": { "w": "bucket", "source": "catalog", "review": "unreviewed" },
+      "es": { "w": "cubo", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "fr": { "w": "seau", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "de": { "w": "Eimer", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "it": { "w": "secchio", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "pt": { "w": "balde", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "tr": { "w": "kova", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" }
     },
     "watering_can": {
-      "en": { "w": "watering can", "source": "catalog", "review": "unreviewed" }
+      "en": { "w": "watering can", "source": "catalog", "review": "unreviewed" },
+      "es": { "w": "regadera", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "fr": { "w": "arrosoir", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "de": { "w": "Gießkanne", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "it": { "w": "annaffiatoio", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "pt": { "w": "regador", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "tr": { "w": "sulama kabı", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" }
     },
     "potted_plant": {
-      "en": { "w": "potted plant", "source": "catalog", "review": "unreviewed" }
+      "en": { "w": "potted plant", "source": "catalog", "review": "unreviewed" },
+      "es": { "w": "planta", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "fr": { "w": "plante", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "de": { "w": "Pflanze", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "it": { "w": "pianta", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "pt": { "w": "planta", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "tr": { "w": "çiçek", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" }
     },
     "spinning_top": {
-      "en": { "w": "spinning top", "source": "catalog", "review": "unreviewed" }
+      "en": { "w": "spinning top", "source": "catalog", "review": "unreviewed" },
+      "es": { "w": "peonza", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "fr": { "w": "toupie", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "de": { "w": "Kreisel", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "it": { "w": "trottola", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "pt": { "w": "pião", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "tr": { "w": "topaç", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" }
     },
     "yo_yo": {
-      "en": { "w": "yo-yo", "source": "catalog", "review": "unreviewed" }
+      "en": { "w": "yo-yo", "source": "catalog", "review": "unreviewed" },
+      "es": { "w": "yoyó", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "fr": { "w": "yoyo", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "de": { "w": "Jo-Jo", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "it": { "w": "yoyo", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "pt": { "w": "ioiô", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "tr": { "w": "yoyo", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" }
     },
     "flying_disc": {
-      "en": { "w": "flying disc", "source": "catalog", "review": "unreviewed" }
+      "en": { "w": "flying disc", "source": "catalog", "review": "unreviewed" },
+      "es": { "w": "disco volador", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "fr": { "w": "disque volant", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "de": { "w": "Flugscheibe", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "it": { "w": "disco volante", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "pt": { "w": "disco voador", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "tr": { "w": "uçan disk", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" }
     },
     "marble": {
-      "en": { "w": "marble", "source": "catalog", "review": "unreviewed" }
+      "en": { "w": "marble", "source": "catalog", "review": "unreviewed" },
+      "es": { "w": "canica", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "fr": { "w": "bille", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "de": { "w": "Murmel", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "it": { "w": "biglia", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "pt": { "w": "bolinha de gude", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "tr": { "w": "misket", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" }
     },
     "apple": {
-      "en": { "w": "apple", "source": "catalog", "review": "unreviewed" }
+      "en": { "w": "apple", "source": "catalog", "review": "unreviewed" },
+      "es": { "w": "manzana", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "fr": { "w": "pomme", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "de": { "w": "Apfel", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "it": { "w": "mela", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "pt": { "w": "maçã", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "tr": { "w": "elma", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" }
     },
     "orange": {
-      "en": { "w": "orange", "source": "catalog", "review": "unreviewed" }
+      "en": { "w": "orange", "source": "catalog", "review": "unreviewed" },
+      "es": { "w": "naranja", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "fr": { "w": "orange", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "de": { "w": "Orange", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "it": { "w": "arancia", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "pt": { "w": "laranja", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "tr": { "w": "portakal", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" }
     },
     "lemon": {
-      "en": { "w": "lemon", "source": "catalog", "review": "unreviewed" }
+      "en": { "w": "lemon", "source": "catalog", "review": "unreviewed" },
+      "es": { "w": "limón", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "fr": { "w": "citron", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "de": { "w": "Zitrone", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "it": { "w": "limone", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "pt": { "w": "limão", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "tr": { "w": "limon", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" }
     },
     "banana": {
-      "en": { "w": "banana", "source": "catalog", "review": "unreviewed" }
+      "en": { "w": "banana", "source": "catalog", "review": "unreviewed" },
+      "es": { "w": "plátano", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "fr": { "w": "banane", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "de": { "w": "Banane", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "it": { "w": "banana", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "pt": { "w": "banana", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "tr": { "w": "muz", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" }
     },
     "carrot": {
-      "en": { "w": "carrot", "source": "catalog", "review": "unreviewed" }
+      "en": { "w": "carrot", "source": "catalog", "review": "unreviewed" },
+      "es": { "w": "zanahoria", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "fr": { "w": "carotte", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "de": { "w": "Möhre", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "it": { "w": "carota", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "pt": { "w": "cenoura", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "tr": { "w": "havuç", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" }
     },
     "avocado": {
-      "en": { "w": "avocado", "source": "catalog", "review": "unreviewed" }
+      "en": { "w": "avocado", "source": "catalog", "review": "unreviewed" },
+      "es": { "w": "aguacate", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "fr": { "w": "avocat", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "de": { "w": "Avocado", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "it": { "w": "avocado", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "pt": { "w": "abacate", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "tr": { "w": "avokado", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" }
     },
     "wooden_spoon": {
-      "en": { "w": "wooden spoon", "source": "catalog", "review": "unreviewed" }
+      "en": { "w": "wooden spoon", "source": "catalog", "review": "unreviewed" },
+      "es": { "w": "cuchara de madera", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "fr": { "w": "cuillère en bois", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "de": { "w": "Kochlöffel", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "it": { "w": "cucchiaio di legno", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "pt": { "w": "colher de pau", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "tr": { "w": "tahta kaşık", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" }
     },
     "fork": {
-      "en": { "w": "fork", "source": "catalog", "review": "unreviewed" }
+      "en": { "w": "fork", "source": "catalog", "review": "unreviewed" },
+      "es": { "w": "tenedor", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "fr": { "w": "fourchette", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "de": { "w": "Gabel", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "it": { "w": "forchetta", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "pt": { "w": "garfo", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "tr": { "w": "çatal", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" }
     },
     "key": {
-      "en": { "w": "key", "source": "catalog", "review": "unreviewed" }
+      "en": { "w": "key", "source": "catalog", "review": "unreviewed" },
+      "es": { "w": "llave", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "fr": { "w": "clé", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "de": { "w": "Schlüssel", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "it": { "w": "chiave", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "pt": { "w": "chave", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "tr": { "w": "anahtar", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" }
     },
     "comb": {
-      "en": { "w": "comb", "source": "catalog", "review": "unreviewed" }
+      "en": { "w": "comb", "source": "catalog", "review": "unreviewed" },
+      "es": { "w": "peine", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "fr": { "w": "peigne", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "de": { "w": "Kamm", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "it": { "w": "pettine", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "pt": { "w": "pente", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "tr": { "w": "tarak", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" }
     },
     "hairbrush": {
-      "en": { "w": "hairbrush", "source": "catalog", "review": "unreviewed" }
+      "en": { "w": "hairbrush", "source": "catalog", "review": "unreviewed" },
+      "es": { "w": "cepillo de pelo", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "fr": { "w": "brosse à cheveux", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "de": { "w": "Haarbürste", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "it": { "w": "spazzola", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "pt": { "w": "escova de cabelo", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "tr": { "w": "saç fırçası", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" }
     },
     "toothbrush": {
-      "en": { "w": "toothbrush", "source": "catalog", "review": "unreviewed" }
+      "en": { "w": "toothbrush", "source": "catalog", "review": "unreviewed" },
+      "es": { "w": "cepillo de dientes", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "fr": { "w": "brosse à dents", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "de": { "w": "Zahnbürste", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "it": { "w": "spazzolino", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "pt": { "w": "escova de dente", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "tr": { "w": "diş fırçası", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" }
     },
     "paintbrush": {
-      "en": { "w": "paintbrush", "source": "catalog", "review": "unreviewed" }
+      "en": { "w": "paintbrush", "source": "catalog", "review": "unreviewed" },
+      "es": { "w": "pincel", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "fr": { "w": "pinceau", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "de": { "w": "Pinsel", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "it": { "w": "pennello", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "pt": { "w": "pincel", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "tr": { "w": "fırça", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" }
     },
     "pencil": {
-      "en": { "w": "pencil", "source": "catalog", "review": "unreviewed" }
+      "en": { "w": "pencil", "source": "catalog", "review": "unreviewed" },
+      "es": { "w": "lápiz", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "fr": { "w": "crayon", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "de": { "w": "Bleistift", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "it": { "w": "matita", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "pt": { "w": "lápis", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "tr": { "w": "kurşun kalem", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" }
     },
     "marker": {
-      "en": { "w": "marker", "source": "catalog", "review": "unreviewed" }
+      "en": { "w": "marker", "source": "catalog", "review": "unreviewed" },
+      "es": { "w": "rotulador", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "fr": { "w": "feutre", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "de": { "w": "Filzstift", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "it": { "w": "pennarello", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "pt": { "w": "canetinha", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "tr": { "w": "keçeli kalem", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" }
     },
     "crayon": {
-      "en": { "w": "crayon", "source": "catalog", "review": "unreviewed" }
+      "en": { "w": "crayon", "source": "catalog", "review": "unreviewed" },
+      "es": { "w": "lápiz de cera", "source": "muse:hand:2026-11-03", "review": "unreviewed" },
+      "fr": { "w": "crayon de cire", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "de": { "w": "Wachsmalstift", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "it": { "w": "pastello", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "pt": { "w": "giz de cera", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "tr": { "w": "pastel boya", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" }
     },
     "eraser": {
-      "en": { "w": "eraser", "source": "catalog", "review": "unreviewed" }
+      "en": { "w": "eraser", "source": "catalog", "review": "unreviewed" },
+      "es": { "w": "goma", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "fr": { "w": "gomme", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "de": { "w": "Radiergummi", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "it": { "w": "gomma", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "pt": { "w": "borracha", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "tr": { "w": "silgi", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" }
     },
     "ruler": {
-      "en": { "w": "ruler", "source": "catalog", "review": "unreviewed" }
+      "en": { "w": "ruler", "source": "catalog", "review": "unreviewed" },
+      "es": { "w": "regla", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "fr": { "w": "règle", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "de": { "w": "Lineal", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "it": { "w": "righello", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "pt": { "w": "régua", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "tr": { "w": "cetvel", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" }
     },
     "scissors": {
-      "en": { "w": "scissors", "source": "catalog", "review": "unreviewed" }
+      "en": { "w": "scissors", "source": "catalog", "review": "unreviewed" },
+      "es": { "w": "tijeras", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "fr": { "w": "ciseaux", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "de": { "w": "Schere", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "it": { "w": "forbici", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "pt": { "w": "tesoura", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "tr": { "w": "makas", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" }
     },
     "glue_stick": {
-      "en": { "w": "glue stick", "source": "catalog", "review": "unreviewed" }
+      "en": { "w": "glue stick", "source": "catalog", "review": "unreviewed" },
+      "es": { "w": "pegamento en barra", "source": "muse:hand:2026-11-03", "review": "unreviewed" },
+      "fr": { "w": "colle", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "de": { "w": "Klebestift", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "it": { "w": "colla", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "pt": { "w": "cola", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "tr": { "w": "yapıştırıcı", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" }
     },
     "stapler": {
-      "en": { "w": "stapler", "source": "catalog", "review": "unreviewed" }
+      "en": { "w": "stapler", "source": "catalog", "review": "unreviewed" },
+      "es": { "w": "grapadora", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "fr": { "w": "agrafeuse", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "de": { "w": "Hefter", "source": "muse:hand:2026-11-03", "review": "unreviewed" },
+      "it": { "w": "cucitrice", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "pt": { "w": "grampeador", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "tr": { "w": "zımba", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" }
     },
     "tape_dispenser": {
-      "en": { "w": "tape dispenser", "source": "catalog", "review": "unreviewed" }
+      "en": { "w": "tape dispenser", "source": "catalog", "review": "unreviewed" },
+      "es": { "w": "cinta adhesiva", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "fr": { "w": "ruban adhésif", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "de": { "w": "Klebeband", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "it": { "w": "nastro adesivo", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "pt": { "w": "fita adesiva", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "tr": { "w": "bant", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" }
     },
     "dice": {
-      "en": { "w": "dice", "source": "catalog", "review": "unreviewed" }
+      "en": { "w": "dice", "source": "catalog", "review": "unreviewed" },
+      "es": { "w": "dados", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "fr": { "w": "dés", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "de": { "w": "Würfel", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "it": { "w": "dadi", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "pt": { "w": "dados", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "tr": { "w": "zarlar", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" }
     },
     "toy_brick": {
-      "en": { "w": "toy brick", "source": "catalog", "review": "unreviewed" }
+      "en": { "w": "toy brick", "source": "catalog", "review": "unreviewed" },
+      "es": { "w": "bloque", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "fr": { "w": "brique", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "de": { "w": "Baustein", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "it": { "w": "mattoncino", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "pt": { "w": "bloquinho", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "tr": { "w": "blok", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" }
     },
     "bubble_wand": {
-      "en": { "w": "bubble wand", "source": "catalog", "review": "unreviewed" }
+      "en": { "w": "bubble wand", "source": "catalog", "review": "unreviewed" },
+      "es": { "w": "pompero", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "fr": { "w": "baguette à bulles", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "de": { "w": "Pustestab", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "it": { "w": "soffiabolle", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "pt": { "w": "varinha de bolhas", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "tr": { "w": "baloncuk çubuğu", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" }
     },
     "toy_sword": {
-      "en": { "w": "toy sword", "source": "catalog", "review": "unreviewed" }
+      "en": { "w": "toy sword", "source": "catalog", "review": "unreviewed" },
+      "es": { "w": "espada", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "fr": { "w": "épée", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "de": { "w": "Schwert", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "it": { "w": "spada", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "pt": { "w": "espada", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "tr": { "w": "kılıç", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" }
     },
     "hammer": {
-      "en": { "w": "hammer", "source": "catalog", "review": "unreviewed" }
+      "en": { "w": "hammer", "source": "catalog", "review": "unreviewed" },
+      "es": { "w": "martillo", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "fr": { "w": "marteau", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "de": { "w": "Hammer", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "it": { "w": "martello", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "pt": { "w": "martelo", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "tr": { "w": "çekiç", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" }
     },
     "screwdriver": {
-      "en": { "w": "screwdriver", "source": "catalog", "review": "unreviewed" }
+      "en": { "w": "screwdriver", "source": "catalog", "review": "unreviewed" },
+      "es": { "w": "destornillador", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "fr": { "w": "tournevis", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "de": { "w": "Schraubenzieher", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "it": { "w": "cacciavite", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "pt": { "w": "chave de fenda", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "tr": { "w": "tornavida", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" }
     },
     "pliers": {
-      "en": { "w": "pliers", "source": "catalog", "review": "unreviewed" }
+      "en": { "w": "pliers", "source": "catalog", "review": "unreviewed" },
+      "es": { "w": "alicates", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "fr": { "w": "pince", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "de": { "w": "Zange", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "it": { "w": "pinza", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "pt": { "w": "alicate", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "tr": { "w": "pense", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" }
     },
     "flashlight": {
-      "en": { "w": "flashlight", "source": "catalog", "review": "unreviewed" }
+      "en": { "w": "flashlight", "source": "catalog", "review": "unreviewed" },
+      "es": { "w": "linterna", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "fr": { "w": "lampe torche", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "de": { "w": "Taschenlampe", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "it": { "w": "torcia", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "pt": { "w": "lanterna", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "tr": { "w": "el feneri", "source": "muse:hand:2026-11-03", "review": "unreviewed" }
     },
     "tape_measure": {
-      "en": { "w": "tape measure", "source": "catalog", "review": "unreviewed" }
+      "en": { "w": "tape measure", "source": "catalog", "review": "unreviewed" },
+      "es": { "w": "metro", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "fr": { "w": "mètre ruban", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "de": { "w": "Maßband", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "it": { "w": "metro a nastro", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "pt": { "w": "trena", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "tr": { "w": "mezura", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" }
     },
     "alarm_clock": {
-      "en": { "w": "alarm clock", "source": "catalog", "review": "unreviewed" }
+      "en": { "w": "alarm clock", "source": "catalog", "review": "unreviewed" },
+      "es": { "w": "despertador", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "fr": { "w": "réveil", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "de": { "w": "Wecker", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "it": { "w": "sveglia", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "pt": { "w": "despertador", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "tr": { "w": "çalar saat", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" }
     },
     "desk_lamp": {
-      "en": { "w": "desk lamp", "source": "catalog", "review": "unreviewed" }
+      "en": { "w": "desk lamp", "source": "catalog", "review": "unreviewed" },
+      "es": { "w": "lámpara", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "fr": { "w": "lampe", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "de": { "w": "Lampe", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "it": { "w": "lampada", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "pt": { "w": "abajur", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "tr": { "w": "lamba", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" }
     },
     "board_game": {
-      "en": { "w": "board game", "source": "catalog", "review": "unreviewed" }
+      "en": { "w": "board game", "source": "catalog", "review": "unreviewed" },
+      "es": { "w": "juego de mesa", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "fr": { "w": "jeu de société", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "de": { "w": "Brettspiel", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "it": { "w": "gioco da tavolo", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "pt": { "w": "jogo de tabuleiro", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "tr": { "w": "kutu oyunu", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" }
     },
     "jigsaw": {
-      "en": { "w": "jigsaw piece", "source": "catalog", "review": "unreviewed" }
+      "en": { "w": "jigsaw piece", "source": "catalog", "review": "unreviewed" },
+      "es": { "w": "puzle", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "fr": { "w": "puzzle", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "de": { "w": "Puzzle", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "it": { "w": "puzzle", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "pt": { "w": "quebra-cabeça", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "tr": { "w": "yapboz", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" }
     },
     "notebook": {
-      "en": { "w": "notebook", "source": "catalog", "review": "unreviewed" }
+      "en": { "w": "notebook", "source": "catalog", "review": "unreviewed" },
+      "es": { "w": "cuaderno", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "fr": { "w": "cahier", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "de": { "w": "Heft", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "it": { "w": "quaderno", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "pt": { "w": "caderno", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "tr": { "w": "defter", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" }
     },
     "book": {
-      "en": { "w": "book", "source": "catalog", "review": "unreviewed" }
+      "en": { "w": "book", "source": "catalog", "review": "unreviewed" },
+      "es": { "w": "libro", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "fr": { "w": "livre", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "de": { "w": "Buch", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "it": { "w": "libro", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "pt": { "w": "livro", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "tr": { "w": "kitap", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" }
     },
     "playing_cards": {
-      "en": { "w": "playing cards", "source": "catalog", "review": "unreviewed" }
+      "en": { "w": "playing cards", "source": "catalog", "review": "unreviewed" },
+      "es": { "w": "cartas", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "fr": { "w": "cartes", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "de": { "w": "Karten", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "it": { "w": "carte", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "pt": { "w": "cartas", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "tr": { "w": "oyun kartları", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" }
     },
     "pencil_case": {
-      "en": { "w": "pencil case", "source": "catalog", "review": "unreviewed" }
+      "en": { "w": "pencil case", "source": "catalog", "review": "unreviewed" },
+      "es": { "w": "estuche", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "fr": { "w": "trousse", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "de": { "w": "Mäppchen", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "it": { "w": "astuccio", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "pt": { "w": "estojo", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "tr": { "w": "kalemlik", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" }
     },
     "soap": {
-      "en": { "w": "bar of soap", "source": "catalog", "review": "unreviewed" }
+      "en": { "w": "bar of soap", "source": "catalog", "review": "unreviewed" },
+      "es": { "w": "jabón", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "fr": { "w": "savon", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "de": { "w": "Seife", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "it": { "w": "saponetta", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "pt": { "w": "sabonete", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "tr": { "w": "sabun", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" }
     },
     "sponge": {
-      "en": { "w": "sponge", "source": "catalog", "review": "unreviewed" }
+      "en": { "w": "sponge", "source": "catalog", "review": "unreviewed" },
+      "es": { "w": "esponja", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "fr": { "w": "éponge", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "de": { "w": "Schwamm", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "it": { "w": "spugna", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "pt": { "w": "esponja", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "tr": { "w": "sünger", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" }
     },
     "cereal_box": {
-      "en": { "w": "cereal box", "source": "catalog", "review": "unreviewed" }
+      "en": { "w": "cereal box", "source": "catalog", "review": "unreviewed" },
+      "es": { "w": "cereales", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "fr": { "w": "céréales", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "de": { "w": "Müsli", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "it": { "w": "cereali", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "pt": { "w": "cereal", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "tr": { "w": "mısır gevreği", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" }
     },
     "lunchbox": {
-      "en": { "w": "lunchbox", "source": "catalog", "review": "unreviewed" }
+      "en": { "w": "lunchbox", "source": "catalog", "review": "unreviewed" },
+      "es": { "w": "fiambrera", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "fr": { "w": "boîte à goûter", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "de": { "w": "Brotdose", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "it": { "w": "portamerenda", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "pt": { "w": "lancheira", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "tr": { "w": "beslenme çantası", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" }
     },
     "support_tool": {
-      "en": { "w": "toy tool", "source": "catalog", "review": "unreviewed" }
+      "en": { "w": "toy tool", "source": "catalog", "review": "unreviewed" },
+      "es": { "w": "herramienta de juguete", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "fr": { "w": "outil jouet", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "de": { "w": "Spielzeugwerkzeug", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "it": { "w": "attrezzo giocattolo", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "pt": { "w": "ferramenta de brinquedo", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" },
+      "tr": { "w": "oyuncak alet", "source": "muse:muse-spark-1.3:2026-11-03", "review": "unreviewed" }
     }
   }
 }

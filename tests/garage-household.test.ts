@@ -42,7 +42,7 @@ import {
   SHAPE_NAME_AFTER,
   SHAPE_NEED,
   shapeSpeech,
-  speakName,
+  nameToSay,
   startShape,
   tapShape,
   TOOL_WEEKEND_EVERY,
@@ -609,8 +609,23 @@ describe("Who's that shape?", () => {
       expect(shapeSpeech(s, same)).toBeNull(); // nothing new: no repeat
     });
 
-    it("is a no-op where the name would be spoken, until the voice is wired", () => {
-      expect(speakName("ball")).toBeUndefined();
+    it("says the name of what was found on a right answer, and on a wrong one only when that tap shows the name", () => {
+      const ctx = ctxOf(22);
+      const s = startShape(ctx, { ageBand: 4, firstTarget: "ball" });
+      expect(nameToSay(s, tapShape(s, s.target, ctx), s.target)).toBe(s.target); // a right answer says its name
+      let cur = s;
+      const said: (string | null)[] = [];
+      let lastTarget = "";
+      for (let n = 0; n < 5; n++) {
+        const wrong = wrongPick(cur);
+        const next = tapShape(cur, wrong, ctx);
+        said.push(nameToSay(cur, next, wrong));
+        lastTarget = next.target; // in the older groups a wrong tap starts a new round with a different item
+        cur = next;
+      }
+      expect(said.slice(0, 4)).toEqual([null, null, null, null]); // four misses say nothing
+      expect(said[4], "the fifth miss shows the name of the round it starts, so says it").toBe(lastTarget);
+      expect(cur.nameShown).toBe(true);
     });
   });
 });

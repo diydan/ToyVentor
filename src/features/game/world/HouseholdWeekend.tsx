@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { GarageStatus } from "../../../lib/garage";
-import { shapeSpeech, speakName, startShape, tapShape, type ShapeState } from "../../../lib/garageHousehold";
+import { nameToSay, startShape, tapShape, type ShapeState } from "../../../lib/garageHousehold";
+import { speakHouseholdName } from "../../../lib/householdVoice";
 import {
   HOUSEHOLD_ITEMS,
   HOUSEHOLD_SUPPORT,
@@ -138,8 +139,8 @@ export function ShapeGame({
   const tap = (id: string) => {
     if (state.done || !pictures) return;
     const next = tapShape(state, id, ctx);
-    const say = shapeSpeech(state, next);
-    if (say) speakName(say);
+    const say = nameToSay(state, next, id);
+    if (say) speakHouseholdName(say);
     setNote(
       next.done
         ? "You did it!"

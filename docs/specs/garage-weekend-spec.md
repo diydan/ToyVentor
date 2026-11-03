@@ -168,8 +168,17 @@ or world per item. A household weekend is **"find one at home"**, with a way to 
   the `h=<item id>` key in `worker/voice.ts` (closed vocabulary, no free text, the cache key carries a fingerprint of the text so a corrected noun is a new
   clip), `scripts/prewarm-voice.ts` (`--list`, `--missing`, `--force`, `--only`) with the ledger `src/lib/householdVoice.ledger.json`, and a "Household names"
   section in `docs/review/spoken-names.md`. Checked: 158 tests in the 7 related files re-run by the main session, `tsc` clean for these files; the agent's
-  mutation round killed 48 of 48 in the end. Not verified: the real Muse call, any real audio, a deployed `h=` route. The Garage's `speakName` hook calls
-  `speakHouseholdName`.
+  mutation round killed 48 of 48 in the end. The Garage calls `speakHouseholdName` (a right answer says the name of what was found; a miss says it only when
+  that tap shows the name: `nameToSay`).
+  **The names exist (2026-11-03).** Dan ran the Muse script (direct, not via Cloudflare): all 60 items and the toy tool in the six languages, every entry
+  unreviewed. A first sample called the toy tool "hammer" in all six languages because the script's own description said "a play mallet"; the description now
+  says the name must mean "toy tool". I hand-corrected 11 weak words (source `muse:hand:2026-11-03`, still unreviewed): the cookie tin (es, fr, it, pt, tr
+  had a bare "box"), the German flask (`Isolierflasche`, not the brand-derived `Thermosflasche`), the Turkish soda can (`içecek kutusu`; `kutu` also means
+  box), the Turkish flashlight (`el feneri`; `fener` is a lantern), the German stapler (`Hefter`), the Spanish crayon (`lápiz de cera`) and glue stick
+  (`pegamento en barra`). Still for a native speaker: Turkish `kupa` (mug; also a trophy), `top` (ball; the English word "top"), `termos`. **22 texts are
+  spelled the same in two or more languages** (listed in `docs/review/spoken-names.md`: ball, tasse, termo, lata, bol, planta, yoyo, orange, banana, banane,
+  avocado, pincel, crayon, dados, espada, hammer, despertador, lampe, puzzle, libro, cartas, esponja), so the Gemini voice may speak them in the wrong
+  accent; the device voice with an explicit language tag cannot. Not verified: any real audio (samples pending), a deployed `h=` route.
 - **The offer when the helper is offline** (answered, Dan's question 4): offer the 3D item for transport failures only (`offline`, `helper_off`, `busy`,
   `slow_down`), by the child's own word, inside the child's band, with its own reason (`word_only`) and its own sentence that does not mention tracing
   ("You said spoon. Here is the 3D wooden spoon."); never for the child's own faults (`invalid_input`, `too_large`).

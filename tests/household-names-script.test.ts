@@ -1,7 +1,7 @@
 // scripts/household-names.ts, with NO network and NO real key: a stub fetch plays the Meta Responses API. The real call is run by Dan
 // (`npx tsx scripts/household-names.ts --sample`); these tests pin what it asks, what it accepts, what it will never overwrite, when it stops, and that the key
 // is used for the call but never printed.
-import { copyFileSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, describe, expect, it, vi } from "vitest";
@@ -260,7 +260,11 @@ describe("the command line", () => {
   afterAll(() => rmSync(dir, { recursive: true, force: true }));
   const fresh = () => {
     const names = join(dir, `names-${Math.random().toString(36).slice(2)}.json`);
-    copyFileSync(NAMES_PATH, names);
+    // the command-line tests start from an English-only file made from the real one, so they hold whatever state the real names file is in
+    const real = readNames();
+    const order = loadCatalogRows().map((r) => r.id);
+    const englishOnly: NamesFile = { version: real.version, pending: [...TARGET_LANGS], names: Object.fromEntries(order.map((id) => [id, { en: real.names[id]!.en }])) };
+    writeFileSync(names, serializeNames(englishOnly, order));
     const out: string[] = [];
     return { names, out, io: (extra: Record<string, unknown> = {}) => ({ log: (s: string) => out.push(s), err: (s: string) => out.push(s), env: { MODEL_API_KEY: KEY }, namesPath: names, ...extra }) };
   };

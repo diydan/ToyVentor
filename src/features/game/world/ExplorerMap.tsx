@@ -106,7 +106,7 @@ function placeInfo(node: ExplorerNode | undefined): { title: string; sub: string
   if (node.kind === "garage") {
     return {
       title: "Garage",
-      sub: node.card?.badge === "new" ? "New this weekend" : node.complete ? "Built it ★" : "Always open",
+      sub: node.card?.badge === "new" ? "New this weekend" : node.complete ? (node.card?.household ? "Done ★" : "Built it ★") : "Always open",
       action: "Build!",
     };
   }

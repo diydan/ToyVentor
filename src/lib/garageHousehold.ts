@@ -358,7 +358,7 @@ export function tapShape(state: ShapeState, pickedId: string, ctx: ShapeContext)
 
 /**
  * The item whose name the game should say aloud now, or null: when the name has just been shown (the level reached 2, or a new round began at level 2).
- * The game calls `speakName` with it. Pure, so a test can see exactly when.
+ * `nameToSay` uses it. Pure, so a test can see exactly when.
  */
 export function shapeSpeech(prev: ShapeState | null, next: ShapeState): string | null {
   if (!next.nameShown || next.done) return null;
@@ -366,10 +366,10 @@ export function shapeSpeech(prev: ShapeState | null, next: ShapeState): string |
 }
 
 /**
- * Say an item's name aloud. A deliberate NO-OP for now: the game's spoken names are a controlled vocabulary (src/lib/propNames.ts) and the household
- * names are not in it yet; the main session adds them through the voice route. Where the shape game reaches level 2 it calls this, and nothing else
- * has to change when the voice arrives.
+ * The item whose name to say aloud after a tap, or null: a right answer says the name of what was found (it is the reward and the lesson), and a wrong
+ * answer says it only when that tap has just shown the name (the fifth miss). The sheet passes the result to `speakHouseholdName`.
  */
-export function speakName(_itemId: string): void {
-  // intentionally empty
+export function nameToSay(prev: ShapeState, next: ShapeState, tappedId: string): string | null {
+  if (tappedId === prev.target) return prev.target;
+  return shapeSpeech(prev, next);
 }
