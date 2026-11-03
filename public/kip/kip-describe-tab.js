@@ -65,7 +65,121 @@ const CSS = `
   .kdb-steps li:hover, .kdb-steps li.on { background: #26304a; } .kdb-panel code { background: #26304a; }
 }
 @media (prefers-reduced-motion: reduce) { .kdb-panel, .kdb-toggle { transition: none; } }
+/* the waiting state: a little workshop (conveyor belt, bricks that come and go, a parts pile that fills) */
+.kdb-workshop { position: relative; height: 86px; margin: 10px 0 2px; border-radius: 12px; overflow: hidden; background: linear-gradient(#f3f5fa, #e1e6f0); box-shadow: inset 0 0 0 1px #c9cfdc; transition: opacity .35s; }
+.kdb-workshop[hidden] { display: none; }
+.kdb-workshop.kdb-done { opacity: 0; }
+.kdb-lane { position: absolute; left: 0; right: 112px; bottom: 26px; height: 24px; }
+.kdb-brick { position: absolute; bottom: 0; left: -64px; line-height: 0; animation: kdb-ride var(--d, 4s) linear forwards; transition: transform .22s, opacity .22s; }
+.kdb-brick .kdb-bi { display: block; line-height: 0; }
+.kdb-brick.kdb-poof { transform: translateY(-14px) scale(.2); opacity: 0; }
+.kdb-brick.kdb-drop .kdb-bi { animation: kdb-fall .42s ease-in forwards; }
+.kdb-brick.kdb-static { animation: none; }
+@keyframes kdb-ride { from { transform: translateX(0); } to { transform: translateX(var(--run, 230px)); } }
+@keyframes kdb-fall { to { transform: translate(24px, 44px) rotate(48deg); opacity: 0; } }
+.kdb-belt { position: absolute; left: 0; right: 100px; bottom: 8px; height: 18px; border-radius: 9px; background: repeating-linear-gradient(90deg, #3b4560 0 12px, #4a5575 12px 24px); box-shadow: inset 0 -3px 0 rgba(0,0,0,.28), 0 2px 0 #1b2238; animation: kdb-belt .5s linear infinite; }
+.kdb-done .kdb-belt { animation-play-state: paused; }
+@keyframes kdb-belt { to { background-position-x: 24px; } }
+.kdb-pile { position: absolute; right: 8px; bottom: 6px; width: 92px; height: 66px; }
+.kdb-pb { position: absolute; line-height: 0; opacity: 0; transform: scale(.3); transition: opacity .18s, transform .3s cubic-bezier(.3, 1.7, .5, 1); }
+.kdb-pb.on { opacity: 1; transform: none; }
+@media (prefers-color-scheme: dark) { .kdb-workshop { background: linear-gradient(#26304a, #1b2238); box-shadow: inset 0 0 0 1px #3b4560; } }
+@media (prefers-reduced-motion: reduce) { .kdb-belt, .kdb-brick, .kdb-brick .kdb-bi { animation: none !important; } .kdb-pb, .kdb-workshop { transition: none; } }
 `;
+
+// ---- the waiting state -----------------------------------------------------------------------------------------------------
+// The model takes a few seconds (4 to 10 with Muse) and nothing tells us how far along it is, so this is honest about being a pastime, not a progress
+// report: a conveyor belt carries random common bricks that appear, sometimes pop away, and drop into a parts pile; the pile fills on a gentle curve
+// that holds the last two bricks back until the real answer arrives; the words change every few seconds. Nothing shows if the answer is quick. With
+// reduced motion the belt is still and the bricks sit on it; the pile still counts up. It never touches the 3D scene.
+const BRICK_COLOURS = ['#FF5A4D', '#52B7FF', '#FFD24D', '#2FAE7E', '#FF9D5C', '#A78BFF', '#F4EFE6'];
+const THINK_LINES = [[0, 'Looking through the parts bin…'], [3, 'Sorting the bricks…'], [6, 'Finding parts that fit…'], [10, 'Still looking, thank you for waiting…']];
+const DRAW_LINES = [[0, 'Laying out the parts…'], [6, 'Almost there…']];
+const LOAD_LINES = [[0, 'Loading the part list…']];
+const PILE_SPOTS = [[0, 0], [1, 0], [2, 0], [3, 0], [0.5, 1], [1.5, 1], [2.5, 1], [1, 2], [2, 2], [1.5, 3]];   // a pyramid: (column, row), bottom row first
+const PILE_HELD_BACK = 2;                                                                                           // bricks the curve never reaches before the answer
+
+/** A little brick (studs 1 to 4) or a wheel (studs 0), as inline SVG. Static strings only: nothing the user typed ever gets near innerHTML. */
+const brickSvg = (studs, colour, scale = 1) => {
+  if (studs === 0) return `<svg viewBox="0 0 20 20" width="${20 * scale}" height="${20 * scale}" aria-hidden="true"><circle cx="10" cy="10" r="9.5" fill="#262D40"/><circle cx="10" cy="10" r="4.6" fill="${colour}"/><circle cx="10" cy="10" r="1.6" fill="#262D40"/></svg>`;
+  const w = studs * 11, bumps = Array.from({ length: studs }, (_, i) => `<rect x="${i * 11 + 2.5}" y="0" width="6" height="4" rx="2" fill="${colour}"/>`).join('');
+  return `<svg viewBox="0 0 ${w} 16" width="${w * scale}" height="${16 * scale}" aria-hidden="true">${bumps}<rect x="0" y="3" width="${w}" height="13" rx="2.5" fill="${colour}"/><rect x="0" y="3" width="${w}" height="4" rx="2.5" fill="#fff" opacity=".3"/><rect x="0" y="12" width="${w}" height="4" rx="2.5" fill="#000" opacity=".17"/></svg>`;
+};
+const pick = (list) => list[Math.floor(Math.random() * list.length)];
+
+function createWorkshop({ onLabel = () => {} } = {}) {
+  const reducedMotion = () => Boolean(globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches);
+  const node = el('div', { class: 'kdb-workshop', 'aria-hidden': 'true', hidden: '' });
+  const lane = el('div', { class: 'kdb-lane' });
+  const belt = el('div', { class: 'kdb-belt' });
+  const pile = el('div', { class: 'kdb-pile' });
+  const pbs = PILE_SPOTS.map(([c, r], i) => {
+    const b = el('span', { class: 'kdb-pb' });
+    b.innerHTML = brickSvg(2, BRICK_COLOURS[i % BRICK_COLOURS.length], 0.9);
+    b.style.left = `${c * 21}px`; b.style.bottom = `${r * 14}px`;
+    pile.append(b);
+    return b;
+  });
+  node.append(lane, belt, pile);
+  let timers = [], t0 = 0, lines = THINK_LINES, line = -1, active = false, hideTimer = 0;
+  const later = (fn, ms) => { const id = setTimeout(fn, ms); timers.push(id); return id; };
+  const setPile = (n) => pbs.forEach((b, i) => b.classList.toggle('on', i < n));
+
+  function spawn() {
+    if (!active || lane.children.length >= 6) return;
+    const studs = pick([0, 1, 2, 2, 3, 4]), colour = pick(BRICK_COLOURS), dur = 3000 + Math.random() * 1700;
+    const outer = el('span', { class: 'kdb-brick' }), inner = el('span', { class: 'kdb-bi' });
+    inner.innerHTML = brickSvg(studs, colour, 1);
+    outer.append(inner);
+    outer.style.setProperty('--d', `${dur}ms`);
+    outer.addEventListener('animationend', (e) => {
+      if (e.target !== outer) return;
+      outer.classList.add('kdb-drop');
+      setTimeout(() => outer.remove(), 450);
+    });
+    lane.append(outer);
+    if (Math.random() < 0.35) later(() => { outer.classList.add('kdb-poof'); setTimeout(() => outer.remove(), 260); }, dur * (0.25 + Math.random() * 0.4));   // some bricks come and go mid-belt
+  }
+  function loop() { if (!active) return; spawn(); later(loop, 450 + Math.random() * 650); }
+  function tick() {
+    if (!active) return;
+    const secs = (performance.now() - t0) / 1000;
+    const want = [...lines].reverse().findIndex(([at]) => secs >= at);
+    const i = want < 0 ? 0 : lines.length - 1 - want;
+    if (i !== line) { line = i; onLabel(lines[i][1]); }
+    setPile(Math.min(PILE_SPOTS.length - PILE_HELD_BACK, Math.floor(PILE_SPOTS.length * (1 - Math.exp(-secs / 5.5)))));
+    later(tick, 250);
+  }
+  function clear() { timers.forEach(clearTimeout); timers = []; clearTimeout(hideTimer); lane.replaceChildren(); }
+
+  return {
+    node,
+    /** Begin waiting. `delayMs`: stay invisible this long so a quick answer never flashes it. The label starts at once. */
+    start({ lines: l = THINK_LINES, delayMs = 350 } = {}) {
+      clear(); active = true; lines = l; line = -1; t0 = performance.now();
+      node.classList.remove('kdb-done'); setPile(0);
+      tick();
+      later(() => {
+        if (!active) return;
+        node.hidden = false;
+        node.style.setProperty('--run', `${lane.clientWidth + 64}px`);
+        if (reducedMotion()) { [0.12, 0.42, 0.72].forEach((f, i) => { const o = el('span', { class: 'kdb-brick kdb-static' }); o.innerHTML = brickSvg([2, 4, 0][i], BRICK_COLOURS[i * 2], 1); o.style.left = `${f * lane.clientWidth}px`; lane.append(o); }); }
+        else loop();
+      }, delayMs);
+    },
+    /** Switch the wording (and restart its clock) without resetting the pile, e.g. from thinking to drawing. */
+    setLines(l) { lines = l; line = -1; t0 = performance.now(); },
+    /** Stop waiting. With `finished` the pile completes and the strip fades out; otherwise it just goes. */
+    stop({ finished = false } = {}) {
+      active = false; timers.forEach(clearTimeout); timers = [];
+      if (!node.hidden && finished) {
+        setPile(PILE_SPOTS.length); node.classList.add('kdb-done');
+        hideTimer = setTimeout(() => { node.hidden = true; lane.replaceChildren(); node.classList.remove('kdb-done'); }, 450);
+      } else { node.hidden = true; lane.replaceChildren(); }
+    },
+    get visible() { return !node.hidden; },
+  };
+}
 
 const store = {
   get() { try { return globalThis.sessionStorage?.getItem(STORE_KEY) ?? ''; } catch { return ''; } },
@@ -98,6 +212,7 @@ export function mountDescribe({
   const go = el('button', { class: 'kdb-go', type: 'button' }, 'Build it');
   const examples = el('div', { class: 'kdb-examples', role: 'group', 'aria-label': 'Examples' });
   const status = el('p', { class: 'kdb-status', role: 'status', 'aria-live': 'polite' }, 'Say what you would like to build.');
+  const workshop = createWorkshop({ onLabel: (msg) => { status.textContent = msg; } });
   const badge = el('span', { class: 'kdb-badge', hidden: '' });
   const playBtn = el('button', { type: 'button' }, 'Play build');
   const backBtn = el('button', { type: 'button', 'aria-label': 'Back one step' }, 'Back');
@@ -122,7 +237,7 @@ export function mountDescribe({
     el('p', {}, 'What is sent: with an address, your description and the list of part names go only to that address. With no address, your description (phone numbers and emails removed first) goes to the app\'s server and on to Muse, only to pick a build. Nothing is stored except that address, and only for this browser tab.'));
   const close = el('button', { type: 'button', 'aria-label': 'Close' }, 'Close');
   const panel = el('section', { class: 'kdb-panel', 'aria-label': 'Describe and build', hidden: '' }, el('h2', {}, 'Describe & build', close),
-    el('label', { for: 'kdb-text' }, 'What should we build?'), text, examples, go, status, badge, buildBox, sliderBox, langBox, list, caption, settings);
+    el('label', { for: 'kdb-text' }, 'What should we build?'), text, examples, go, status, workshop.node, badge, buildBox, sliderBox, langBox, list, caption, settings);
   const toggle = el('button', { class: 'kdb-toggle', type: 'button', 'aria-expanded': 'false', 'aria-controls': 'kdb-panel' }, 'Describe & build');
   panel.id = 'kdb-panel';
   container.append(toggle, panel);
@@ -164,14 +279,18 @@ export function mountDescribe({
   async function ready() {
     if (book && parts && view) return;
     loading ??= (async () => {
-      say('Loading the part list…');
-      [book, parts] = await Promise.all([loadRecipeBook(recipeUrl, fetchImpl), loadPartsData(partsUrl, fetchImpl)]);
-      view = createDescribeView({ THREE, STLLoader, mergeVertices, toCreasedNormals, partsData: parts, base: stlBase });
-      view.group.visible = isOpen;
-      scene.add(view.group);
-      for (const r of book.recipes) {
-        examples.append(el('button', { type: 'button', title: r.title, onclick: () => { text.value = r.description; build(); } }, r.description));
-      }
+      workshop.start({ lines: LOAD_LINES, delayMs: 500 });
+      try {
+        [book, parts] = await Promise.all([loadRecipeBook(recipeUrl, fetchImpl), loadPartsData(partsUrl, fetchImpl)]);
+        view = createDescribeView({ THREE, STLLoader, mergeVertices, toCreasedNormals, partsData: parts, base: stlBase });
+        view.group.visible = isOpen;
+        scene.add(view.group);
+        for (const r of book.recipes) {
+          examples.append(el('button', { type: 'button', title: r.title, onclick: () => { text.value = r.description; build(); } }, r.description));
+        }
+        workshop.stop({ finished: true });
+        say('Say what you would like to build.');
+      } catch (e) { workshop.stop(); throw e; }
     })().catch((e) => { loading = null; throw e; });
     await loading;
   }
@@ -235,7 +354,7 @@ export function mountDescribe({
     busy = true; go.disabled = true;
     try {
       await ready();
-      say('Thinking…');
+      workshop.start({ lines: THINK_LINES });   // the little workshop: bricks on a belt, a pile that fills (see createWorkshop)
       const ep = epInput.value.trim();
       store.set(ep);
       const useDefault = !ep && Boolean(defaultEndpoint);               // no address typed: try the app's own route, and fall back quietly if it is not there
@@ -248,10 +367,11 @@ export function mountDescribe({
       stop();
       if (!result.poses) {
         view.clear(); list.replaceChildren(); sliderBox.hidden = true; buildBox.hidden = true; n = 0; p = 0;
+        workshop.stop();
         say(`${result.note} It has no checked positions, so it is not drawn.`);
         return;
       }
-      say('Drawing…');
+      workshop.setLines(DRAW_LINES);
       await view.show(result);
       renderSteps(result);
       spokenStep = -1; caption.textContent = '';
@@ -261,8 +381,10 @@ export function mountDescribe({
       buildBox.hidden = false;
       labels();
       view.frame(camera, controls);
+      workshop.stop({ finished: true });
       say(`${result.title}. ${result.note}${result.clarifyingQuestion ? ` Question: ${result.clarifyingQuestion}` : ''}`);
     } catch (e) {
+      workshop.stop();
       say(`Sorry, that did not work: ${e.message}`);
     } finally {
       busy = false; go.disabled = false;
@@ -331,7 +453,7 @@ export function mountDescribe({
     ready,
     /** Unmount: hand the camera and the character back, stop the player, remove the toggle and panel (the shared <style> stays). */
     dispose() {
-      stopVoice();
+      stopVoice(); workshop.stop();
       if (isOpen) closePanel(); else stop();
       view?.dispose?.();
       toggle.remove(); panel.remove();

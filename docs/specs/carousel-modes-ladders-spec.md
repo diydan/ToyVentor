@@ -655,7 +655,8 @@ Decision (Dan, 2026-11-03): a tap also says the object and its colour, in a lang
   spoken text as a caption, and falls back to the English part name if the voice route is down (then it leaves the route alone for
   a minute). **Forge** has no screen yet, and its parts are free-form so no table can cover them. The plan when it exists: the
   generator returns its object's name in all seven languages in the same call that makes the object, and the Worker signs that
-  text so `/api/voice` can speak it without becoming an open text-to-speech endpoint. Until then a generator that wants its
+  text so `/api/voice` can speak it without becoming an open text-to-speech endpoint (worked out in
+  [forge-ai-spec.md](forge-ai-spec.md), "Naming and the waiting state"). Until then a generator that wants its
   object spoken returns a `noun` key from `NOUN_KEYS` and a `color` (`describeObject`); free text is spoken in English only,
   never half-translated.
 - **Content change.** The Garden's only tree sat at x = −4, off the left edge of the playable lane, so no kid could ever tap one.
@@ -691,7 +692,7 @@ extend to Learn runs unchanged.
 | --- | --- | --- |
 | **C1 — Carousel shell** | `age.ts`/`learn.ts`/`ladders.ts`/`mapCards.ts` + `ageBand` in progression + `MapCarousel`/`RungSheet`/`AgePicker`; World/Lab cards live; Learn cards visible with correct pips/suggestion; toy-as-guide | §13 carousel + age-map checks green; no Learn run yet (Learn tap → "coming soon" toast) |
 | **C2 — Learn runs (panel)** | Facade `startLearnRun`; all 38 rungs playable via `MissionPanel`; §10.2 scoring; post-run return to map | Every rung solvable + scored; XP/quest badges update; grace/curtain hold |
-| **C3 — World-first little** | §11 runtime contracts + six reference levels; toast-twin prompts; `proxyPanel` | Six e2e scenarios pass muted + keyboard-only; play-design checks pass |
+| **C3 — World-first little** | §11 runtime contracts + six reference levels; toast-twin prompts; `proxyPanel` | Six e2e scenarios pass muted + keyboard-only; play-design checks pass. **Landed 2026-11-03** (`73166c0` path depth, `658f635` visit sessions, `abf5b41` speech twin, `a35815e` idleCue): headless-verified; real-phone gate (§13.3, Q6) open, gating C4 |
 | **C4 — early + daily** | World-first `early` (4) + `daily` (8); routine copy split (§10.3) | No panel button needed for bands 0–2 |
 | **C5 — Banded polish** | World-first `bridges`/`gears`/`circuits`/`code` (20 rungs), tier mapping review | Panel only as §11.4 fallback everywhere |
 
@@ -755,6 +756,12 @@ references only; ToyForge implements its own under `tests/`.
    then finishes; random taps never error or stick; muted run finishes
    on toast text alone; keyboard/screen-reader run finishes via
    `proxyPanel`; every touch reacts (< `100 ms`).
+   **Verified headless 2026-11-03:** Pop 2★ after a deliberate scene
+   miss; full scene runs for Animals, Peek (bush reveal seen), Go
+   (duck copy seen); engineless toast-only run; Tab+Enter keyboard
+   run wins Pop; speech utterances recorded; 40 unit tests; zero
+   page exceptions. Real-phone + real-child still open
+   (§13.3–§13.4).
 5. **Toy guide** (new, Decision 3): rebuilding the toy (new parts /
    paint) updates the carousel guide without reopening; name announced.
 6. **Parent systems**: Sleep Curtain locks a Learn run with grace

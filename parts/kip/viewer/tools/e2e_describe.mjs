@@ -25,7 +25,7 @@ const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.json': 'applic
 
 // static server: /kip/tools/<f> and /kip/<f> from the viewer folder, everything else from public/
 const voice = { seen: [], fail: false };
-const describeStub = { seen: [], fail: false, id: 'skateboard' };   // stand-in for the app's /api/describe (Muse picks a checked build); never calls a model
+const describeStub = { seen: [], fail: false, id: 'skateboard', delayMs: 0 };   // stand-in for the app's /api/describe (Muse picks a checked build); never calls a model
 const tinyWav = (() => { const n = 2400, b = Buffer.alloc(44 + n * 2); b.write('RIFF', 0); b.writeUInt32LE(36 + n * 2, 4); b.write('WAVEfmt ', 8); b.writeUInt32LE(16, 16); b.writeUInt16LE(1, 20); b.writeUInt16LE(1, 22); b.writeUInt32LE(24000, 24); b.writeUInt32LE(48000, 28); b.writeUInt16LE(2, 32); b.writeUInt16LE(16, 34); b.write('data', 36); b.writeUInt32LE(n * 2, 40); return b; })();
 const web = http.createServer((req, res) => {
   if (new URL(req.url, 'http://x').pathname === '/api/describe') {
@@ -33,10 +33,13 @@ const web = http.createServer((req, res) => {
     req.on('data', (c) => { raw += c; });
     req.on('end', () => {
       try { describeStub.seen.push(JSON.parse(raw || '{}')); } catch { describeStub.seen.push({ bad: raw }); }
-      if (describeStub.fail) { res.writeHead(503, { 'content-type': 'application/json' }); res.end('{"error":"muse is not configured"}'); return; }
-      const r = doc.recipes.find((x) => x.id === describeStub.id);
-      res.writeHead(200, { 'content-type': 'application/json' });
-      res.end(JSON.stringify({ contract: 1, title: r.title, note: `Muse picked "${r.title}", a checked build. Hello!`, validated: true, steps: r.steps, poses: r.reference.poses }));
+      const answer = () => {
+        if (describeStub.fail) { res.writeHead(503, { 'content-type': 'application/json' }); res.end('{"error":"muse is not configured"}'); return; }
+        const r = doc.recipes.find((x) => x.id === describeStub.id);
+        res.writeHead(200, { 'content-type': 'application/json' });
+        res.end(JSON.stringify({ contract: 1, title: r.title, note: `Muse picked "${r.title}", a checked build. Hello!`, validated: true, steps: r.steps, poses: r.reference.poses }));
+      };
+      setTimeout(answer, describeStub.delayMs);   // Muse takes seconds; the waiting state is what the child sees meanwhile
     });
     return;
   }
@@ -296,6 +299,37 @@ try {
   await page2.waitFor("document.querySelector('.kdb-status').textContent.length > 0 && !document.querySelector('.kdb-go').disabled", 60000);
   describeStub.seen.length = 0;
   check('a typed address wins: with one set, the built-in route is not asked', await page2.waitFor("document.querySelector('.kdb-go').disabled === false", 20000) && describeStub.seen.length === 0, JSON.stringify(describeStub.seen));
+
+
+  console.log('\n[5c] the waiting state: a little workshop (belt, bricks that come and go, a parts pile)');
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  await ev2("document.querySelector('#kdb-endpoint').value = ''");
+  describeStub.fail = false; describeStub.id = 'race-car'; describeStub.delayMs = 9000; describeStub.seen.length = 0;   // 9 s: long enough that a slow software-GPU screenshot cannot outrun the wait
+  await ev2("document.querySelector('#kdb-text').value = 'a race car'; document.querySelector('.kdb-go').click()");
+  check('right away the words are the first line', (await ev2("document.querySelector('.kdb-status').textContent")) === 'Looking through the parts bin…');
+  check('after a moment the workshop appears', await page2.waitFor("!document.querySelector('.kdb-workshop').hidden", 3000));
+  check('bricks ride the belt', await page2.waitFor("document.querySelectorAll('.kdb-brick').length >= 1", 3000));
+  await sleep(1500);
+  await page2.shot(path.join(SHOTS, 'workshop-waiting.png'));
+  check('it is purely decorative to a screen reader (hidden), while the status line keeps the words', await ev2("document.querySelector('.kdb-workshop').getAttribute('aria-hidden') === 'true' && document.querySelector('.kdb-status').getAttribute('role') === 'status'"));
+  // Both checks read the SAME moment and insist the answer has not arrived yet (the strip is still showing), so a slow run fails loudly instead of misreporting.
+  await page2.waitFor("document.querySelector('.kdb-status').textContent !== 'Looking through the parts bin…' && document.querySelectorAll('.kdb-pb.on').length >= 3", 5000);
+  const mid = JSON.parse(await ev2("JSON.stringify({ text: document.querySelector('.kdb-status').textContent, on: document.querySelectorAll('.kdb-pb.on').length, waiting: !document.querySelector('.kdb-workshop').hidden })"));
+  check('a few seconds in, the wording moves on and the pile has started to fill', mid.waiting && mid.text !== 'Looking through the parts bin…' && /…$/.test(mid.text) && mid.on >= 3, JSON.stringify(mid));
+  check('while waiting the pile is never full (the last two bricks are held for the real answer)', mid.waiting && mid.on <= 8, JSON.stringify(mid));
+  check('no more than six bricks are ever on the belt at once', (await ev2("document.querySelectorAll('.kdb-brick').length")) <= 6);
+  check('the answer arrives, the build is drawn (10 parts) and the strip goes away', await page2.waitFor("window.__describe.view.meshes.length === 10 && document.querySelector('.kdb-workshop').hidden === true", 180000));
+  check('the status line then tells the result, not a waiting line', (await ev2("document.querySelector('.kdb-status').textContent")).includes('Roadster'), await ev2("document.querySelector('.kdb-status').textContent"));
+  check('and nothing keeps running behind it: no bricks left on the belt', (await ev2("document.querySelectorAll('.kdb-brick').length")) === 0);
+  // reduced motion: the belt is still and the bricks sit on it (the pile still counts up)
+  await ev2("window.matchMedia = (q) => ({ matches: /reduce/.test(q), media: q, addEventListener() {}, removeEventListener() {}, addListener() {}, removeListener() {} })");
+  describeStub.id = 'skateboard'; describeStub.delayMs = 2500;
+  await ev2("document.querySelector('#kdb-text').value = 'a skateboard'; document.querySelector('.kdb-go').click()");
+  check('with reduced motion the workshop shows three still bricks and nothing moves', await page2.waitFor("!document.querySelector('.kdb-workshop').hidden && document.querySelectorAll('.kdb-brick.kdb-static').length === 3 && document.querySelectorAll('.kdb-brick:not(.kdb-static)').length === 0", 5000));
+  await sleep(1200);
+  check('the pile still counts up with reduced motion, and no moving bricks appear', await page2.waitFor("document.querySelectorAll('.kdb-pb.on').length >= 1 && document.querySelectorAll('.kdb-brick:not(.kdb-static)').length === 0", 4000));
+  await page2.waitFor("window.__describe.view.meshes.length === 7 && document.querySelector('.kdb-workshop').hidden === true", 180000);
+  describeStub.delayMs = 0;
 
   console.log('\n[6] privacy, errors, narrow layout');
   const origins = new Set(page.requests.map((r) => { try { return new URL(r.url).origin; } catch { return r.url.slice(0, 5); } }));

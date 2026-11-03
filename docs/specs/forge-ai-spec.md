@@ -181,6 +181,63 @@ slim report. Jobs are async with staged "Forging..." progress
 - Logging: recipe, per-gate outcome, attempt count, latency. Kid prompts are
   not stored (eval set excepted).
 
+### Naming and the waiting state (proposed 2026-11-03; nothing built, there is no Forge screen yet)
+
+Two things a Forge screen needs that Describe & Build already has: the object says its name in the kid's language, and the wait
+shows honest progress. Both are written here so the screen can be built without re-deciding them.
+
+**Naming, spoken in the seven languages (`src/lib/propNames.ts`, `/api/voice`).**
+
+- **Why the closed vocabulary cannot cover Forge.** A spoon or a wizard hat is free text. `/api/voice` takes vocabulary keys only,
+  on purpose: it must never become an open text-to-speech endpoint.
+- **The model returns the names, in the same call.** The reply envelope (beside the recipe, like `say` in Create mode; Recipe v1
+  itself does not change, because the daemon rejects unknown keys) gains `names`: for each of `en es fr de it pt tr`, the
+  `Noun` shape `propNames.ts` already uses, `{ w, g, pl? }` (word, gender, plural). About 100 extra tokens, no extra call. The
+  colour is not in the name: it is the colour the preview draws (or the kid picks at print time), reduced to one of the 12
+  colour words by `colorKeyFromHex` and attached by `nounPhrase()`, so word order and agreement stay code-built ("cuchara roja",
+  "roter Löffel", "kırmızı kaşık"), never model-written.
+- **The Worker checks every name before it is trusted.** Kid-safety filter and brand filter (`kidSafeText`), at most 40 characters,
+  letters, spaces, hyphens and apostrophes only, no copy of the kid's own words. A language that fails is spoken as the English
+  name by the device voice with a caption, never as a half-translated phrase (the same rule `describeObject` follows).
+- **Signed speech.** The job reply carries, per language that passed, a signature `HMAC(VOICE_SIGNING_KEY, lang|text)`.
+  `/api/voice?lang=&t=<text>&sig=` verifies it before it reaches the existing cache and the AI binding. The endpoint can then only
+  speak text the Worker itself produced and filtered, one cached clip per name, so it is still not an open TTS endpoint. It needs
+  one new Worker secret (`VOICE_SIGNING_KEY`; Dan sets it). Without the secret the route refuses text, as today.
+- **Cost and speed.** No prewarm is possible for free-form names, so a first tap takes about 2.3 s. Fetch one clip right after the
+  job finishes, in the kid's chosen language only; the other six on demand.
+- **Measure before trusting gender.** The vocabulary gives ground truth: 25 props and 30 parts, about 330 gendered nouns across
+  six languages. Ask the model to name those and score gender and plural against the table; below an agreed threshold the
+  language speaks the bare noun with no colour (the spec's rule: measurement, not debate).
+- **Prerequisite probe (not done).** The voice model picks its language from the text alone. Short free-form words are the worst
+  case ("taco", "radio", "pizza" read the same in several languages), and 19 built phrases are already spelled the same in two
+  languages (`docs/review/spoken-names.md`). Probe the binding for a language hint before building signed speech; if there is none,
+  a short free-form name may come out in the wrong accent.
+
+**The waiting state: the workshop, driven by real stages.** Describe & Build's wait is a timed decoration (4 to 10 s, one model
+call). Forge's is longer and has real signals, so its pending UI should show them, not guess:
+
+| Stage (real event) | What the strip shows | Words |
+| --- | --- | --- |
+| `queued`, `proposing` (call n of at most 4) | bricks ride the belt | "Looking through the parts bin…" |
+| `preview_ready` (about 20 to 40 ms warm) | the first look appears at once and can be turned; the pile jumps | "Here is your first look. Checking it can print…" |
+| `validating`, `optimizing` (gates V1 to V10) | belt slows, a scan light passes over the first look | "Checking it can print…" |
+| repair (call n+1) | one brick pops out and a fresh one rides in | "Fixing a thin bit…" |
+| rest (rate limit, `retry-after`) | belt pauses | "A short rest. Trying again in 8 s…" with the real countdown |
+| `print_ready` / `digital_only` / `failed` | pile completes / completes, note "fine on screen" / bricks stop, calm line, fallback part shown | result line |
+
+- The pile's floor is the count of finished real stages; time only creeps it inside the current stage, and it never fills before the
+  result (the last two bricks are held back), as in Describe & Build. "Try n of 4" is shown only when the call count is real.
+- **Show the thing early.** The two-stage contract exists for this: the kid sees and turns the preview while validation finishes
+  in the background, which is a better answer to a long wait than any animation.
+- **Where it is needed first.** The photo "Print it" panel (`kip-photo-print.js`) already emits the stages (`checking` with
+  the try number, `waiting` with seconds, `asking_again`, `fetching_plate`) and shows them as plain text; a measured spoon fit
+  took 4 gate calls and hit the 3 a minute limit on the fourth, so real rests happen. Plan: lift `createWorkshop` out of
+  `kip-describe-tab.js` into its own shared viewer module with `setStage(name, detail)`, use it in both. Not built; the panel's
+  files are being edited by another lane.
+- **Not measured:** validation latency per recipe (open question 1). A run on 2026-11-03 was skipped on purpose: load average 38
+  and no daemon up, so any number would be inflated. Take it on a quiet machine
+  (`npm run forge:optimizer`, then `npx tsx scripts/forge-eval.ts --proposer stub --slots crown --limit 6`).
+
 ## Level hint ladders (hand-authored)
 
 Three tiers per level (nudge, clue, show) from a closed vocabulary, written
