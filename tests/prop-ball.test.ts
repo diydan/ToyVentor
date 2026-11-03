@@ -2,7 +2,7 @@
 import * as THREE from "three";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { BALL_BOUNDS, BALL_R } from "../src/features/game/world/runtime/ballKick";
-import { createPropFx, type PropFxDeps } from "../src/features/game/world/runtime/propReactions";
+import { createPropFx, type PropFxDeps, type PropInst } from "../src/features/game/world/runtime/propReactions";
 import { PROP_LANG_KEY } from "../src/lib/propSpeech";
 import { resetVoiceBackoff } from "../src/lib/propVoice";
 
@@ -126,7 +126,7 @@ describe("onTap and squish", () => {
   it("every tap on a prop is reported to the world once, after the prop has reacted and named itself", () => {
     let c!: ReturnType<typeof room>;
     const toastsWhenHeard: number[] = [];
-    const onTap = vi.fn(() => { if (toastsWhenHeard.length === 0) toastsWhenHeard.push(c.toast.mock.calls.length); });
+    const onTap = vi.fn((_inst: PropInst) => { if (toastsWhenHeard.length === 0) toastsWhenHeard.push(c.toast.mock.calls.length); });
     c = room({ onTap });
     const b = ball(c);
     const cu = cushions(c);

@@ -212,7 +212,7 @@ describe("kicking the ball", () => {
 });
 
 describe("following the ball", () => {
-  const ball = () => ({ ...inst("ball", 10, -2), kick: null as unknown });
+  const ball = () => ({ ...inst("ball", 10, -2), kick: null });
   function kicked(g: ReturnType<typeof game>, b: ReturnType<typeof ball>) {
     g.acts.tap(b);
     g.arriveAt(10 - KICK_STAND);
