@@ -1,0 +1,145 @@
+{
+ "heads": {
+  "char_head_kid": {
+   "top": 30.97,
+   "boreY": -10.167,
+   "boreZ": 12.5,
+   "human": true
+  },
+  "char_head_chibi": {
+   "top": 30.97,
+   "boreY": -10.167,
+   "boreZ": 12.5,
+   "human": true
+  },
+  "char_head_tall": {
+   "top": 32.948,
+   "boreY": -10.167,
+   "boreZ": 14.0625,
+   "human": true
+  },
+  "char_head_jumbo": {
+   "top": 30.97,
+   "boreY": -10.167,
+   "boreZ": 12.5,
+   "human": true
+  },
+  "robot_head_visor": {
+   "top": 31.6,
+   "boreY": null,
+   "boreZ": null,
+   "human": false
+  },
+  "robot_head_scout": {
+   "top": 32.8,
+   "boreY": null,
+   "boreZ": null,
+   "human": false
+  },
+  "char_head_fox": {
+   "top": 26.2,
+   "boreY": null,
+   "boreZ": null,
+   "human": false
+  },
+  "char_head_bear": {
+   "top": 27.2,
+   "boreY": null,
+   "boreZ": null,
+   "human": false
+  },
+  "char_head_cat": {
+   "top": 26.8,
+   "boreY": null,
+   "boreZ": null,
+   "human": false
+  },
+  "char_head_dragon": {
+   "top": 27.6,
+   "boreY": null,
+   "boreZ": null,
+   "human": false
+  },
+  "char_head_alien": {
+   "top": 35.6,
+   "boreY": null,
+   "boreZ": null,
+   "human": false
+  },
+  "char_head_imp": {
+   "top": 28.4,
+   "boreY": null,
+   "boreZ": null,
+   "human": false
+  }
+ },
+ "hairs": {
+  "hair_bob": {
+   "top": 4.8
+  },
+  "hair_bowl": {
+   "top": 4.8
+  },
+  "hair_curly": {
+   "top": null
+  },
+  "hair_long_layered": {
+   "top": 4.8
+  },
+  "hair_low_bun": {
+   "top": null
+  },
+  "hair_mohawk": {
+   "top": null
+  },
+  "hair_pigtails": {
+   "top": null
+  },
+  "hair_pixie": {
+   "top": null
+  },
+  "hair_pompadour": {
+   "top": null
+  },
+  "hair_ponytail": {
+   "top": null
+  },
+  "hair_shag": {
+   "top": 4.8
+  },
+  "hair_short_swept": {
+   "top": 4.8
+  },
+  "hair_side_pony": {
+   "top": null
+  },
+  "hair_side_sweep": {
+   "top": null
+  },
+  "hair_slick": {
+   "top": 4.8
+  },
+  "hair_spiky": {
+   "top": null
+  },
+  "hair_swoosh": {
+   "top": 4.8
+  },
+  "hair_top_bun": {
+   "top": null
+  },
+  "hair_twin_braids": {
+   "top": 4.8
+  }
+ },
+ "hats": [
+  "hat_hardhat",
+  "hat_ballcap",
+  "hat_beanie",
+  "hat_cowboy",
+  "hat_ranger",
+  "hat_tophat",
+  "hat_pirate",
+  "wobble_hat"
+ ]
+}

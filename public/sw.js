@@ -13,7 +13,7 @@
    - /api/* always goes to the network so scan results are never stale.
    - /sw.js itself is never cached: a cached worker can never update itself.
    Bump the version when this file's strategy changes. */
-const CACHE = "toyventor-v3";
+const CACHE = "toyventor-v4";
 const SHELL = ["/", "/manifest.webmanifest", "/icon.svg"];
 const IMMUTABLE_PREFIXES = ["/assets/", "/fonts/", "/parts-glb/", "/parts-stl/", "/kip/"];
 
