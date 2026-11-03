@@ -287,7 +287,7 @@ describe("preparePhotoAccessory: failures leave the caller its fallback", () => 
 describe("preparePhotoAccessory: the real steel spoon", () => {
   async function spoon() {
     const { raster, bounds } = await realSpoon();
-    const outline = scanOutline(raster, bounds, SPOON_PHOTO, { targetHeightMm: 54 });
+    const outline = scanOutline(raster, bounds, SPOON_PHOTO, { targetHeightMm: 54, symmetry: "off" }); // off: these tests are about the gate ladder and the photo fit
     if (!outline.ok) throw new Error(`no outline: ${outline.reason}`);
     const photo: Raster = { width: SPOON_PHOTO.width, height: SPOON_PHOTO.height, data: new Uint8Array(SPOON_PHOTO.width * SPOON_PHOTO.height) };
     for (let y = 0; y < raster.height; y++) for (let x = 0; x < raster.width; x++) if (raster.data[y * raster.width + x]) photo.data[(y + bounds.top) * photo.width + x + bounds.left] = 1;
@@ -399,11 +399,91 @@ describe("the whole print step: scan reply, fit, plate, sticker pack", () => {
 
 // ---- the module stays pure ----------------------------------------------------------------------------------------
 
+describe("preparePhotoAccessory: when the daemon rewrote the outline", () => {
+  const REWROTE = { action: "mirrored_right_half", iouBefore: 0.962, iouAfter: 1, points: 112 };
+  const warningsOf = (a: PhotoAccessory) => a.outline.warnings;
+
+  it("says so, in the result and as a warning, and still builds the recipe and the sticker from the outline it holds", async () => {
+    const { outline } = scan(LOLLIPOP);
+    const plain = ok(await preparePhotoAccessory(outline, recorder().gate));
+    const a = ok(await preparePhotoAccessory(outline, recorder(() => pass({ daemonSymmetry: REWROTE })).gate));
+    expect(a.gateRewrite).toEqual(REWROTE);
+    expect(warningsOf(a)).toContain("GATE_REWROTE_OUTLINE");
+    expect(a.outline.points).toEqual(plain.outline.points); // the warning is the only change to the outline
+    expect(a.recipe).toEqual(plain.recipe);
+    expect(a.sticker).toEqual(plain.sticker);
+    expect(plain.gateRewrite).toBeUndefined();
+    expect("gateRewrite" in plain).toBe(false);
+    expect(warningsOf(plain)).not.toContain("GATE_REWROTE_OUTLINE");
+  });
+
+  it.each([
+    ["kept_asymmetric", { action: "kept_asymmetric", iouBefore: 0.52, iouAfter: null, points: null }],
+    ["snapped_x_to_centre", { action: "snapped_x_to_centre", iouBefore: null, iouAfter: null, points: null }],
+  ] as const)("a note that leaves the outline as it was (%s) is not a rewrite", async (_name, note) => {
+    const a = ok(await preparePhotoAccessory(scan(LOLLIPOP).outline, recorder(() => pass({ daemonSymmetry: note })).gate));
+    expect("gateRewrite" in a).toBe(false);
+    expect(warningsOf(a)).not.toContain("GATE_REWROTE_OUTLINE");
+  });
+
+  it("both halves count: mirrored_left_half is a rewrite too", async () => {
+    const a = ok(await preparePhotoAccessory(scan(LOLLIPOP).outline, recorder(() => pass({ daemonSymmetry: { ...REWROTE, action: "mirrored_left_half" } })).gate));
+    expect(a.gateRewrite?.action).toBe("mirrored_left_half");
+  });
+
+  it("the warning is not added twice", async () => {
+    const { outline } = scan(LOLLIPOP);
+    const a = ok(await preparePhotoAccessory({ ...outline, warnings: ["GATE_REWROTE_OUTLINE"] }, recorder(() => pass({ daemonSymmetry: REWROTE })).gate));
+    expect(warningsOf(a).filter((w) => w === "GATE_REWROTE_OUTLINE")).toHaveLength(1);
+  });
+
+  it("only the job that made the plate counts: a rewrite on an attempt that failed is not reported, one on the pass is", async () => {
+    const { outline } = scan(LOLLIPOP);
+    const early = ok(await preparePhotoAccessory(outline, recorder((_s, call) => (call === 1 ? { ...sliver(), daemonSymmetry: REWROTE } : pass())).gate));
+    expect(early.attempts.length).toBeGreaterThan(1); // guard: the first attempt did fail
+    expect("gateRewrite" in early).toBe(false);
+    const late = ok(await preparePhotoAccessory(outline, recorder((_s, call) => (call === 1 ? sliver() : pass({ daemonSymmetry: REWROTE }))).gate));
+    expect(late.attempts.length).toBeGreaterThan(1);
+    expect(late.gateRewrite).toEqual(REWROTE);
+  });
+
+  describe("through the real Worker", () => {
+    let env: ReturnType<typeof forgeEnv>;
+    let proof: string;
+    beforeEach(async () => {
+      resetForgeRateLimit();
+      env = forgeEnv();
+      proof = await mintParentProof(env);
+    });
+    afterEach(() => {
+      vi.restoreAllMocks();
+      resetForgeRateLimit();
+    });
+    const PASS = { ok: true, design_status: "ok", small_part: { status: "above_cylinder", min_enclosing_diameter_mm: 40 }, blocking_failures: [], brand_errors: [] };
+
+    it("the daemon's note reaches the result: gateRewrite and the warning", async () => {
+      fakeDaemon([PASS], { legalizers: [{ symmetry: { kind: "profile2d", axis_mm: 0, iou_before: 0.962, action: "mirrored_right_half", iou_after: 1, points: 112 } }] });
+      const routes = { fetch: viaWorker(env), headers: () => ({ "x-device-id": DEVICE, "x-parent-proof": proof }) };
+      const a = ok(await preparePhotoAccessory(scan(LOLLIPOP, { targetHeightMm: 54 }).outline, forgeRouteGate({ ...routes, sleep: async () => {} })));
+      expect(a.gateRewrite).toEqual(REWROTE);
+      expect(a.outline.warnings).toContain("GATE_REWROTE_OUTLINE");
+    });
+
+    it("and a daemon that has nothing to say leaves both out", async () => {
+      fakeDaemon([PASS]);
+      const routes = { fetch: viaWorker(env), headers: () => ({ "x-device-id": DEVICE, "x-parent-proof": proof }) };
+      const a = ok(await preparePhotoAccessory(scan(LOLLIPOP, { targetHeightMm: 54 }).outline, forgeRouteGate({ ...routes, sleep: async () => {} })));
+      expect("gateRewrite" in a).toBe(false);
+      expect(a.outline.warnings).not.toContain("GATE_REWROTE_OUTLINE");
+    });
+  });
+});
+
 describe("photoAccessory.ts", () => {
   it("imports only shared modules, and nothing of the browser, the Worker or the network", () => {
     const src = readFileSync(join(__dirname, "..", "shared", "photoAccessory.ts"), "utf8");
     const imports = [...src.matchAll(/^import[\s\S]*?from "(.*)";$/gm)].map((m) => m[1]);
-    expect(imports.sort()).toEqual(["./forgeOptimizer", "./outlineFit", "./outlineGate", "./outlineScan", "./outlineSticker", "./photoOutline"]);
+    expect(imports.sort()).toEqual(["./forgeOptimizer", "./outlineFit", "./outlineGate", "./outlineScan", "./outlineSticker", "./outlineSymmetry", "./photoOutline"]);
     const code = src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
     expect(code.length).toBeGreaterThan(2000);
     expect(code).not.toMatch(/\bwindow\b|\bdocument\b|localStorage|\bprocess\.|\bfetch\b/);

@@ -30,6 +30,7 @@ import {
   type OutlineStep,
   type OutlineSuccess,
 } from "./photoOutline";
+import { MAX_ROW_SHIFT_POINTS, symmetrizeOutline } from "./outlineSymmetry";
 
 /** The smallest and largest outline height a caller may ask for, mm (the clamp box is 90 tall). */
 export const SCAN_OUTLINE_HEIGHT_MM = { min: 8, max: HAND_BOX.maxHeightMm } as const;
@@ -55,6 +56,12 @@ export interface ScanOutlineRequest {
   orient?: "long-axis-up" | "as-photographed";
   /** Swap which end is the handle. */
   flip?: boolean;
+  /**
+   * Mirror symmetry (outlineSymmetry.ts). `auto` (default): if the object is mirror symmetric, straighten its axis and make both sides
+   * identical, but only when no edge moves more than 1 mm. `mirror`: do it whenever it can be done (the kid pressed the button); a
+   * `NOT_SYMMETRIC` warning says when it could not. `off`: leave the outline as traced.
+   */
+  symmetry?: "auto" | "off" | "mirror";
 }
 
 /** An outline that came back with a scan: the legalizer's result, plus the size of the photo the pixels belong to. */
@@ -79,6 +86,10 @@ export function parseScanOutlineRequest(raw: unknown): { ok: true; request: Scan
   if (raw.flip !== undefined) {
     if (typeof raw.flip !== "boolean") return { ok: false };
     request.flip = raw.flip;
+  }
+  if (raw.symmetry !== undefined) {
+    if (raw.symmetry !== "auto" && raw.symmetry !== "off" && raw.symmetry !== "mirror") return { ok: false };
+    request.symmetry = raw.symmetry;
   }
   return { ok: true, request };
 }
@@ -125,9 +136,17 @@ export function scanOutline(
       break;
     }
   }
+  // A symmetric object is made symmetric here, while the outline still has its own map from the mask (the straightening moves that map too).
+  let finished: OutlineSuccess = out;
+  const symmetry = request.symmetry ?? "auto";
+  if (symmetry !== "off") {
+    const made = symmetrizeOutline(out, { mode: symmetry === "mirror" ? "mirror" : "auto" });
+    finished = made.outline;
+    if (symmetry === "mirror" && !made.report.applied && !made.report.symmetric) finished = { ...finished, warnings: [...finished.warnings, "NOT_SYMMETRIC"] };
+  }
   // Mask pixel = photo pixel minus the raster's corner; the corner is a whole pixel, so this shift is exact.
-  const photoToPlate = composeAffine(out.photoToPlate, [1, 0, 0, 1, -bounds.left, -bounds.top]);
-  return { ...out, photoToPlate, photoSize: { width: photo.width, height: photo.height } };
+  const photoToPlate = composeAffine(finished.photoToPlate, [1, 0, 0, 1, -bounds.left, -bounds.top]);
+  return { ...finished, photoToPlate, photoSize: { width: photo.width, height: photo.height } };
 }
 
 // ---- the reply, as the device reads it ----------------------------------------------------------------------------
@@ -148,6 +167,19 @@ const text = (v: unknown): v is string => typeof v === "string" && v.length <= M
 function parseAffine(v: unknown): Affine | undefined {
   if (!Array.isArray(v) || v.length !== 6 || !v.every(isNum)) return undefined;
   return [v[0], v[1], v[2], v[3], v[4], v[5]] as unknown as Affine;
+}
+
+/** The per-row slide table (OutlineSuccess.rowShift): [z, shift] pairs, z strictly ascending, inside the hand box. Anything else is malformed. */
+function parseRowShift(v: unknown): [number, number][] | undefined {
+  if (!Array.isArray(v) || v.length < 2 || v.length > MAX_ROW_SHIFT_POINTS) return undefined;
+  const out: [number, number][] = [];
+  for (const p of v) {
+    if (!Array.isArray(p) || p.length !== 2 || !isNum(p[0]) || !isNum(p[1])) return undefined;
+    if (p[0] < -1 || p[0] > HAND_BOX.maxHeightMm + 1 || Math.abs(p[1]) > HAND_BOX.halfWidthMm) return undefined;
+    if (out.length && p[0] <= out[out.length - 1]![0]) return undefined;
+    out.push([p[0], p[1]]);
+  }
+  return out;
 }
 
 function parseChanges(v: unknown): OutlineChange[] | undefined {
@@ -194,6 +226,8 @@ export function parseScanOutline(raw: unknown): ScanOutline | undefined {
   if (!Array.isArray(raw.warnings) || raw.warnings.length > MAX_WARNINGS || !raw.warnings.every(text)) return undefined;
   const photoToPlate = parseAffine(raw.photoToPlate);
   if (!photoToPlate) return undefined;
+  const rowShift = raw.rowShift === undefined ? undefined : parseRowShift(raw.rowShift);
+  if (raw.rowShift !== undefined && !rowShift) return undefined; // a slide table that is there and wrong would draw a wrong sticker: no outline at all
   const size = raw.photoSize;
   if (!isRecord(size) || !Number.isInteger(size.width) || !Number.isInteger(size.height) || (size.width as number) <= 0 || (size.height as number) <= 0) return undefined;
 
@@ -208,6 +242,7 @@ export function parseScanOutline(raw: unknown): ScanOutline | undefined {
     warnings: [...(raw.warnings as string[])],
     fidelity: raw.fidelity,
     photoToPlate,
+    ...(rowShift ? { rowShift } : {}),
     photoSize: { width: size.width as number, height: size.height as number },
   };
 }

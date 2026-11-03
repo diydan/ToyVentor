@@ -2,9 +2,9 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { fitOutline, type OutlineShape } from "../shared/outlineFit";
-import { fetchPlateStl, forgeRouteGate, OutlineGateError, type OutlineGateErrorKind, PLATE_STL_MAX_BYTES, pollDelayMs, type RouteGateOptions } from "../shared/outlineGate";
+import { daemonSymmetryOf, fetchPlateStl, forgeRouteGate, OutlineGateError, type OutlineGateErrorKind, PLATE_STL_MAX_BYTES, pollDelayMs, type RouteGateOptions } from "../shared/outlineGate";
 import { legalizeOutline, outlineToRecipeShape } from "../shared/photoOutline";
-import { forgeRateLimited, resetForgeRateLimit, type ForgeOptimizerEnv } from "../worker/forgeOptimizer";
+import { forgeRateLimited, forgeRateLimitWait, resetForgeRateLimit, type ForgeOptimizerEnv } from "../worker/forgeOptimizer";
 import { DEVICE, fakeDaemon, forgeEnv, mintParentProof, viaWorker } from "./fixtures/forgeWorkerHarness";
 import { randomBlob, SHAPES } from "./fixtures/outlineMasks";
 
@@ -159,6 +159,56 @@ describe("forgeRouteGate: what the verdict is", () => {
     const { gate } = gateWith([started(), done(null, "digital_only")]);
     const v = await gate(SHAPE);
     expect(v.status).toBe("fail");
+  });
+});
+
+// ---- the daemon's own symmetry note --------------------------------------------------------------------------------
+
+describe("forgeRouteGate: the daemon's symmetry note", () => {
+  const NOTE = { kind: "profile2d", axis_mm: 0.4, iou_before: 0.971, action: "mirrored_right_half", iou_after: 1, points: 112 };
+  const withNote = (report: unknown, status: string, legalizer: unknown) => ({ json: { ok: true, job_id: JOB, status, gate_report: report, legalizer } });
+
+  it("is carried into the verdict, whatever the verdict is: a pass, a fail and a marginal", async () => {
+    for (const [report, status, want] of [[REPORT_PASS, "print_ready", "pass"], [REPORT_SLIVER, "digital_only", "fail"], [REPORT_MARGINAL, "digital_only", "marginal"]] as const) {
+      const { gate } = gateWith([started(), withNote(report, status, { symmetry: NOTE })]);
+      const v = await gate(SHAPE);
+      expect(v.status).toBe(want);
+      expect(v.daemonSymmetry).toEqual({ action: "mirrored_right_half", iouBefore: 0.971, iouAfter: 1, points: 112 });
+    }
+  });
+
+  it("is absent when the job has none: the verdict has no such key at all", async () => {
+    const { gate } = gateWith([started(), done(REPORT_PASS)]);
+    expect("daemonSymmetry" in (await gate(SHAPE))).toBe(false);
+    const { gate: g2 } = gateWith([started(), withNote(REPORT_PASS, "print_ready", null)]);
+    expect("daemonSymmetry" in (await g2(SHAPE))).toBe(false);
+  });
+
+  it("reads a note that leaves the outline alone as what it is: kept_asymmetric is a note, not a rewrite", () => {
+    expect(daemonSymmetryOf({ symmetry: { action: "kept_asymmetric", iou_before: 0.52 } })).toEqual({ action: "kept_asymmetric", iouBefore: 0.52, iouAfter: null, points: null });
+  });
+
+  it.each([
+    ["no legalizer", undefined],
+    ["a string", "mirrored_right_half"],
+    ["an array", [{ symmetry: NOTE }]],
+    ["no symmetry in it", { l2: { action: "rescaled" } }],
+    ["symmetry as an array", { symmetry: [NOTE] }],
+    ["an action that is not a string", { symmetry: { ...NOTE, action: 7 } }],
+    ["an empty action", { symmetry: { ...NOTE, action: "" } }],
+    ["an action with odd characters", { symmetry: { ...NOTE, action: "Mirrored right <b>" } }],
+    ["an action 41 characters long", { symmetry: { ...NOTE, action: "a".repeat(41) } }],
+  ] as const)("a note that cannot be read is no note: %s", (_name, legalizer) => {
+    expect(daemonSymmetryOf(legalizer)).toBeUndefined();
+  });
+
+  it("takes only numbers it can use: a number that is not finite, or a string, is null, and the action is kept", () => {
+    expect(daemonSymmetryOf({ symmetry: { action: "mirrored_left_half", iou_before: "0.97", iou_after: Number.POSITIVE_INFINITY, points: null } })).toEqual({
+      action: "mirrored_left_half",
+      iouBefore: null,
+      iouAfter: null,
+      points: null,
+    });
   });
 });
 
@@ -453,6 +503,51 @@ describe("forgeRouteGate through the real Worker routes", () => {
     expect(result.attempts[0]!.failures).toEqual(["G1_watertight", "G3_single_body"]);
   });
 
+  it("passes the daemon's symmetry note through the allowlist, those four fields and nothing else of its legalizer notes", async () => {
+    fakeDaemon([REPORT_PASS], {
+      legalizers: [{
+        symmetry: { kind: "profile2d", axis_mm: 0.4, iou_before: 0.971, action: "mirrored_right_half", iou_after: 1, points: 112, why: "internal wording", secret: "S3CRET" },
+        l2: { action: "rescaled", factor: 1.04 },
+        features_dropped: [{ kind: "ears", why: "internal" }],
+      }],
+    });
+    const v = await gate()({ kind: "profile2d", points: [[-5, 0], [5, 0], [5, 10], [-5, 10]], fillet_r_mm: 1.6, grip_tu: 2 });
+    expect(v.daemonSymmetry).toEqual({ action: "mirrored_right_half", iouBefore: 0.971, iouAfter: 1, points: 112 });
+    const res = await viaWorker(env)("/api/forge/jobs/fjob_000000000001", { method: "GET", headers: { "x-device-id": DEVICE, "x-parent-proof": proof } });
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as Record<string, unknown>;
+    expect(body.legalizer).toEqual({ symmetry: { action: "mirrored_right_half", iou_before: 0.971, iou_after: 1, points: 112 } });
+    expect(JSON.stringify(body)).not.toMatch(/S3CRET|internal|features_dropped|rescaled/);
+  });
+
+  it.each([
+    ["an action with odd characters", { symmetry: { action: "Mirrored <b>", iou_before: 0.9 } }],
+    ["an action that is not a string", { symmetry: { action: 7, iou_before: 0.9 } }],
+    ["an action 41 characters long", { symmetry: { action: "a".repeat(41) } }],
+    ["symmetry that is not an object", { symmetry: "mirrored_right_half" }],
+    ["no symmetry note, only other notes", { l2: { action: "rescaled" } }],
+    ["a legalizer that is not an object", "mirrored_right_half"],
+  ] as const)("a note the Worker cannot trust does not go out: %s", async (_name, legalizer) => {
+    fakeDaemon([REPORT_PASS], { legalizers: [legalizer] });
+    await gate()({ kind: "profile2d", points: [[-5, 0], [5, 0], [5, 10], [-5, 10]], fillet_r_mm: 1.6, grip_tu: 2 });
+    const res = await viaWorker(env)("/api/forge/jobs/fjob_000000000001", { method: "GET", headers: { "x-device-id": DEVICE, "x-parent-proof": proof } });
+    expect(((await res.json()) as Record<string, unknown>).legalizer).toBeNull();
+  });
+
+  it("sends a number only as a number: a string where a number belongs goes out as null, the action stays", async () => {
+    fakeDaemon([REPORT_PASS], { legalizers: [{ symmetry: { action: "mirrored_left_half", iou_before: "0.97", iou_after: [1], points: { n: 100 } } }] });
+    await gate()({ kind: "profile2d", points: [[-5, 0], [5, 0], [5, 10], [-5, 10]], fillet_r_mm: 1.6, grip_tu: 2 });
+    const res = await viaWorker(env)("/api/forge/jobs/fjob_000000000001", { method: "GET", headers: { "x-device-id": DEVICE, "x-parent-proof": proof } });
+    expect(((await res.json()) as Record<string, unknown>).legalizer).toEqual({ symmetry: { action: "mirrored_left_half", iou_before: null, iou_after: null, points: null } });
+  });
+
+  it("says legalizer: null when the daemon had no note, so the field is always there", async () => {
+    fakeDaemon([REPORT_PASS]);
+    await gate()({ kind: "profile2d", points: [[-5, 0], [5, 0], [5, 10], [-5, 10]], fillet_r_mm: 1.6, grip_tu: 2 });
+    const res = await viaWorker(env)("/api/forge/jobs/fjob_000000000001", { method: "GET", headers: { "x-device-id": DEVICE, "x-parent-proof": proof } });
+    expect(((await res.json()) as Record<string, unknown>).legalizer).toBeNull();
+  });
+
   it("lets through every outline the legalizer makes: the Worker's allowlist never refuses one", async () => {
     const daemon = fakeDaemon([REPORT_PASS]);
     const g = gate();
@@ -478,6 +573,24 @@ describe("forgeRouteGate through the real Worker routes", () => {
     expect(sent).toBeGreaterThanOrEqual(15); // guard: the loop above must have exercised the route
   });
 
+  it("the Worker's allowlist takes an outline of exactly 256 points and refuses 257: the limit is the daemon's, and it is the same number", async () => {
+    const daemon = fakeDaemon([REPORT_PASS]);
+    const ring = (n: number): OutlineShape => ({
+      kind: "profile2d",
+      points: Array.from({ length: n }, (_, i): [number, number] => [Math.round(20 * Math.cos((i / n) * 2 * Math.PI) * 100) / 100, Math.round((25 + 20 * Math.sin((i / n) * 2 * Math.PI)) * 100) / 100]),
+      fillet_r_mm: 1.6,
+      grip_tu: 2,
+    });
+    const g = gate();
+    expect((await g(ring(256))).status).toBe("pass");
+    expect(daemon.recipes).toHaveLength(1);
+    expect(daemon.recipes[0].recipe.shape.points).toHaveLength(256); // forwarded whole
+    const err = await errorOf(g(ring(257)));
+    expect(err.kind).toBe("rejected");
+    expect(daemon.recipes).toHaveLength(1); // the 257 point outline never reached the daemon
+    expect((await g(ring(65))).status).toBe("pass"); // and the old limit of 64 is gone
+  });
+
   it("a fourth gate call inside a minute is slow_down, and it never reaches the daemon", async () => {
     const daemon = fakeDaemon([REPORT_PASS]);
     const g = gate();
@@ -498,6 +611,127 @@ describe("forgeRouteGate through the real Worker routes", () => {
     resetForgeRateLimit();
     [0, 1, 2].forEach((s) => forgeRateLimited("preview", DEVICE, null, at(s)));
     expect(forgeRateLimited("preview", DEVICE, null, at(61))).toBe(false);
+  });
+
+  describe("the retry time the limiter names", () => {
+    const t0 = 9_000_000;
+    const at = (s: number) => t0 + s * 1000;
+    const DEV = (n: number) => `1234567${n}-1234-1234-1234-123456789abc`;
+
+    /** Replays calls at these times (seconds, may be fractional) on one device and returns the last answer, in seconds to wait (0 = let in). */
+    const replay = (secs: number[], device = DEVICE, ip: string | null = null) => {
+      let last = 0;
+      for (const s of secs) last = forgeRateLimitWait("preview", device, ip, at(s));
+      return last;
+    };
+
+    it("is 0 for a call that is let in, and for the first three of a minute", () => {
+      expect([0, 1, 2].map((s) => forgeRateLimitWait("preview", DEVICE, null, at(s)))).toEqual([0, 0, 0]);
+    });
+
+    it("names the time the oldest hit that still counts leaves the window: a fourth call at 5 s waits until 61 s", () => {
+      replay([0, 1, 2]);
+      expect(forgeRateLimitWait("preview", DEVICE, null, at(5))).toBe(56); // 1 s + 60 s - 5 s
+    });
+
+    it("grows with each refused call, because a refused call counts: a fifth call at 10 s waits until 62 s", () => {
+      replay([0, 1, 2, 5]);
+      expect(forgeRateLimitWait("preview", DEVICE, null, at(10))).toBe(52); // 2 s + 60 s - 10 s
+    });
+
+    it("is never over a window and never under a second", () => {
+      for (const gap of [0, 0.001, 0.5, 30, 59.9]) {
+        resetForgeRateLimit();
+        const w = replay([0, 0, 0, gap]);
+        expect(w).toBeGreaterThanOrEqual(1);
+        expect(w).toBeLessThanOrEqual(60);
+      }
+    });
+
+    it("is the smallest whole number of seconds that works: a call at the named time is let in and a call a second sooner is not (500 random call patterns)", () => {
+      let seed = 20261103;
+      const rnd = () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 2 ** 32);
+      let refusals = 0;
+      for (let k = 0; k < 500; k++) {
+        const n = 4 + Math.floor(rnd() * 9);
+        const secs: number[] = [];
+        let now = 0;
+        for (let i = 0; i < n; i++) {
+          now += rnd() < 0.3 ? 0 : Math.round(rnd() * 25_000) / 1000;
+          secs.push(now);
+        }
+        resetForgeRateLimit();
+        const w = replay(secs);
+        if (w === 0) continue;
+        refusals++;
+        const last = secs[secs.length - 1]!;
+        resetForgeRateLimit();
+        replay(secs);
+        expect(forgeRateLimitWait("preview", DEVICE, null, at(last + w)), `pattern ${k}: at the named ${w} s`).toBe(0);
+        resetForgeRateLimit();
+        replay(secs);
+        expect(forgeRateLimitWait("preview", DEVICE, null, at(last + w - 1)), `pattern ${k}: a second before the named ${w} s`).toBeGreaterThan(0);
+      }
+      expect(refusals).toBeGreaterThan(200); // guard: the patterns really did cause refusals
+    });
+
+    it("counts the address's budget too: seven different devices from one address, the seventh is refused for the address's sake", () => {
+      const waits = [0, 1, 2, 3, 4, 5, 6].map((s, i) => forgeRateLimitWait("preview", DEV(i), "203.0.113.7", at(s)));
+      expect(waits.slice(0, 6)).toEqual([0, 0, 0, 0, 0, 0]);
+      expect(waits[6]).toBe(55); // the second hit (1 s) + 60 s - 6 s
+    });
+
+    it("when the device and the address both refuse, the longer wait is named", () => {
+      const waits = [0, 1, 2, 3, 4, 5, 6].map((s) => forgeRateLimitWait("preview", DEVICE, "203.0.113.8", at(s)));
+      // The device budget is 3, so its seventh call waits until the fifth hit (4 s) is a window old: 58 s. The address budget is 6: 55 s.
+      expect(waits[6]).toBe(58);
+    });
+
+    it("the boolean form says the same as the wait", () => {
+      expect([0, 1, 2, 5].map((s) => forgeRateLimited("preview", DEVICE, null, at(s)))).toEqual([false, false, false, true]);
+    });
+
+    it("the Worker's refusal carries it as a retry-after header, a whole number of seconds from 1 to 60, and the gate reads it", async () => {
+      fakeDaemon([REPORT_PASS]);
+      const g = gate();
+      for (let i = 0; i < 3; i++) await g(SHAPE);
+      const err = await errorOf(g(SHAPE));
+      expect(err.kind).toBe("slow_down");
+      expect(Number.isInteger(err.retryAfterS)).toBe(true);
+      expect(err.retryAfterS).toBeGreaterThanOrEqual(1);
+      expect(err.retryAfterS).toBeLessThanOrEqual(60);
+      const raw = await viaWorker(env)("/api/forge/preview", { method: "POST", headers: { "content-type": "application/json", "x-device-id": DEVICE, "x-parent-proof": proof }, body: JSON.stringify({ recipe: { name: "x", slot: "hand", shape: SHAPE }, enqueue_background: true, include_glb_base64: false }) });
+      expect(raw.status).toBe(429);
+      expect(raw.headers.get("retry-after")).toMatch(/^\d{1,2}$/);
+      expect(await raw.json()).toEqual({ ok: false, status: "slow-down" });
+    });
+
+    it("the header is exactly the limiter's wait: three calls in two seconds and a fourth five seconds in is told 56 s", async () => {
+      fakeDaemon([REPORT_PASS]);
+      const t = Date.now();
+      vi.useFakeTimers({ toFake: ["Date"] });
+      try {
+        const g = gate();
+        for (const s of [0, 1, 2]) {
+          vi.setSystemTime(t + s * 1000);
+          expect((await g(SHAPE)).status).toBe("pass");
+        }
+        vi.setSystemTime(t + 5000);
+        const err = await errorOf(g(SHAPE));
+        expect(err.retryAfterS).toBe(56); // the second call (1 s) leaves the window at 61 s
+        vi.setSystemTime(t + 5000 + 56_000); // asking at the named time is let in
+        expect((await g(SHAPE)).status).toBe("pass");
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it("a call that is let in has no retry-after", async () => {
+      fakeDaemon([REPORT_PASS]);
+      const raw = await viaWorker(env)("/api/forge/preview", { method: "POST", headers: { "content-type": "application/json", "x-device-id": DEVICE, "x-parent-proof": proof }, body: JSON.stringify({ recipe: { name: "x", slot: "hand", shape: SHAPE }, enqueue_background: true, include_glb_base64: false }) });
+      expect(raw.status).toBe(200);
+      expect(raw.headers.get("retry-after")).toBeNull();
+    });
   });
 
   it("no parent proof is gate_required", async () => {

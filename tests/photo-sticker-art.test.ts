@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 // @ts-expect-error untyped browser JS module
 import * as ST from "../parts/kip/viewer/kip-print-stickers.js";
 import { photoStickerItem, type PhotoStickerItem } from "../shared/outlineSticker";
+import { preparePhotoAccessory } from "../shared/photoAccessory";
 import { scanOutline, type ScanOutlineSuccess } from "../shared/outlineScan";
 import { composeAffine, legalizeOutline, type Affine } from "../shared/photoOutline";
 import { cropToObject, disc, fillHoles, rasterize, rect, randomBlob, rotated, stairCorners, star, totalTurning, union, zigzags, type Inside, type Raster } from "./fixtures/outlineMasks";
@@ -167,6 +168,17 @@ describe("planStickerSheet: photo accessories", () => {
     ["a photo map of 5 numbers", (i) => (i.sampler.stickerToPhoto = i.sampler.stickerToPhoto.slice(0, 5))],
     ["a NaN in the photo map", (i) => (i.sampler.stickerToPhoto[4] = Number.NaN)],
   ];
+  it("takes a cut path of exactly 1200 points, the module's limit for a dense outline, and not 1201", () => {
+    const ring = (n: number) => Array.from({ length: n }, (_, k) => [20 + 20 * Math.cos((k / n) * 2 * Math.PI), 20 + 20 * Math.sin((k / n) * 2 * Math.PI)]);
+    const dense = JSON.parse(JSON.stringify(item));
+    dense.outerPolyMm = ring(1200);
+    dense.w = 40;
+    dense.h = 40;
+    expect(planOf(dense).items).toHaveLength(2);
+    dense.outerPolyMm = ring(1201);
+    expect(planOf(dense).items).toHaveLength(0);
+  });
+
   it("takes the base item", () => {
     expect(planOf(JSON.parse(JSON.stringify(item))).items).toHaveLength(2);
   });
@@ -327,6 +339,150 @@ describe("renderStickerItemRgba: photo_outline", () => {
 });
 
 // ---- the cut line is smooth -----------------------------------------------------------------------------------------------
+
+// ---- the per-row slide: no fringe of background on a symmetric sticker --------------------------------------------------------
+
+describe("the per-row slide in the sticker artwork", () => {
+  /** The real spoon's mask placed in a photo of the size the model saw, as a Raster. */
+  async function spoonPhoto(): Promise<Raster> {
+    const s = await realSpoon();
+    const data = new Uint8Array(SPOON_PHOTO.width * SPOON_PHOTO.height);
+    for (let y = 0; y < s.raster.height; y++) for (let x = 0; x < s.raster.width; x++) if (s.raster.data[y * s.raster.width + x]) data[(y + s.bounds.top) * SPOON_PHOTO.width + x + s.bounds.left] = 1;
+    return { data, width: SPOON_PHOTO.width, height: SPOON_PHOTO.height };
+  }
+  const without = (item: PhotoStickerItem): PhotoStickerItem => {
+    const copy = JSON.parse(JSON.stringify(item));
+    delete copy.sampler.rowShiftMm;
+    return copy;
+  };
+  const blueShare = (item: PhotoStickerItem, photo: Raster, dpi = 110) => {
+    const { pixels, r } = render(item, maskPicture(photo), dpi);
+    expect(pixels.length).toBeGreaterThan(2500); // guard: a real area was checked
+    return share(r.data, pixels, BLUE);
+  };
+  const TILTED_BUMPY = union(disc(200, 90, 70), rect(185, 150, 215, 380), disc(128, 92, 12), disc(188, 250, 7), disc(174, 330, 5));
+
+  it("the real spoon fills its symmetric cut path with the spoon: the fringe of background is under 1% with the slide and over 2% without it", async () => {
+    const photo = await spoonPhoto();
+    const { item, outline } = chain(photo, { targetHeightMm: 54 }, SPOON_PHOTO);
+    expect(outline.changes.map((c) => c.code)).toContain("made_symmetric"); // guard
+    expect(item.sampler.rowShiftMm).toBeDefined();
+    const withSlide = blueShare(item, photo);
+    const noSlide = blueShare(without(item), photo);
+    expect(noSlide).toBeGreaterThan(0.02);
+    expect(withSlide).toBeLessThan(0.01);
+    expect(withSlide).toBeLessThan(noSlide / 4);
+  });
+
+  it("a shape that leans 8 degrees, made upright and symmetric, fills its cut path too", () => {
+    const shape = rotated(TILTED_BUMPY, 200, 200, 8);
+    const { photo, item, outline } = chain(shape, { targetHeightMm: 54, orient: "as-photographed" });
+    expect(outline.changes.map((c) => c.code)).toContain("made_symmetric"); // guard
+    const withSlide = blueShare(item, photo);
+    const noSlide = blueShare(without(item), photo);
+    expect(noSlide).toBeGreaterThan(0.005); // the bumps are mild, so the fringe is smaller than the spoon's
+    expect(withSlide).toBeLessThan(0.004);
+    expect(withSlide).toBeLessThan(noSlide / 3);
+  });
+
+  it("an object that was symmetric already needs no slide, and has none worth the name: a disc's sticker is the object", () => {
+    const { photo, item } = chain(disc(400, 200, 90));
+    expect(blueShare(item, photo)).toBeLessThan(0.01);
+    expect(item.sampler.rowShiftMm === undefined || Math.max(...item.sampler.rowShiftMm.map((p) => Math.abs(p[1]))) < 0.1).toBe(true);
+  });
+
+  it("the sign and the size are right: a constant slide of +3 mm shows the photo 3 mm along the row, so a lens of background is left on the far side", () => {
+    // A disc cut from a disc photo, the artwork slid by d. Two equal discs offset by d overlap in a lens, so the share of the cut path
+    // that is background is 1 - (2/pi)(acos(d/2R) - (d/2R) sqrt(1 - (d/2R)^2)): worked out here, not taken from the module.
+    const { photo, item } = chain(disc(400, 200, 90));
+    const R = item.w / 2;
+    const slid = (d: number): PhotoStickerItem => ({ ...item, sampler: { ...item.sampler, rowShiftMm: [[0, d], [item.h, d]] } });
+    for (const d of [3, -3, 1.5]) {
+      const { pixels, r } = render(slid(d), maskPicture(photo), 110);
+      const k = Math.abs(d) / (2 * R);
+      const expected = 1 - (2 / Math.PI) * (Math.acos(k) - k * Math.sqrt(1 - k * k));
+      const blue = pixels.filter((p) => near(r.data, p.o, BLUE));
+      expect(Math.abs(blue.length / pixels.length - expected), `d ${d}`).toBeLessThan(0.015);
+      // Which side: the artwork at X comes from X + d, so for d > 0 the object has moved left and the background shows on the right.
+      const meanX = blue.reduce((s, p) => s + p.x, 0) / blue.length;
+      if (d > 0) expect(meanX, `d ${d}`).toBeGreaterThan(item.w / 2 + R * 0.4);
+      else expect(meanX, `d ${d}`).toBeLessThan(item.w / 2 - R * 0.4);
+    }
+  });
+
+  it("holds through the print step's own flip and resize, and through a marginal result that makes the fit loop rescale", async () => {
+    const photo = await spoonPhoto();
+    const { outline } = chain(photo, { targetHeightMm: 54 }, SPOON_PHOTO);
+    const marginalFirst = (() => {
+      let n = 0;
+      return async () => (++n === 1 ? { status: "marginal" as const, failures: [] as string[], cylinderMm: 33.5 } : { status: "pass" as const, failures: [] as string[] });
+    })();
+    for (const [name, options, gate] of [
+      ["flipped", { flip: true }, async () => ({ status: "pass" as const, failures: [] as string[] })],
+      ["resized to 70%", { scale: 0.7 }, async () => ({ status: "pass" as const, failures: [] as string[] })],
+      ["flipped, resized and rescaled by the loop", { flip: true, scale: 1.2 }, marginalFirst],
+    ] as const) {
+      const r = await preparePhotoAccessory(outline, gate, options);
+      expect(r.ok, name).toBe(true);
+      if (!r.ok) continue;
+      expect(r.sticker.sampler.rowShiftMm, name).toBeDefined();
+      const noSlide = blueShare(without(r.sticker), photo);
+      const withSlide = blueShare(r.sticker, photo);
+      expect(noSlide, `${name}: guard, a fringe without the slide`).toBeGreaterThan(0.02);
+      expect(withSlide, name).toBeLessThan(0.012);
+    }
+  });
+
+  it("the sheet module keeps the table: a planned item carries a copy of it, rebuilt pair by pair", async () => {
+    const { item } = chain(await spoonPhoto(), { targetHeightMm: 54 }, SPOON_PHOTO);
+    const plan = planOf(item, { spare: false });
+    expect(plan.items[0].sampler.rowShiftMm).toEqual(item.sampler.rowShiftMm);
+    expect(plan.items[0].sampler.rowShiftMm).not.toBe(item.sampler.rowShiftMm);
+    const before = JSON.stringify(plan.items[0].sampler.rowShiftMm);
+    item.sampler.rowShiftMm![0]![1] += 5; // changing the caller's table afterwards does not change the plan
+    expect(JSON.stringify(plan.items[0].sampler.rowShiftMm)).toBe(before);
+  });
+
+  it.each([
+    ["not an array", "slide"],
+    ["one pair", [[0, 0.1]]],
+    ["a pair of three", [[0, 0.1, 9], [5, 0.2, 9]]],
+    ["a string for a number", [["0", 0.1], [5, 0.2]]],
+    ["a number that is not finite", [[0, Number.NaN], [5, 0.2]]],
+    ["rows not rising", [[5, 0.1], [0, 0.2]]],
+    ["a row repeated", [[0, 0.1], [0, 0.2]]],
+    ["a slide wider than the plate", [[0, 50], [5, 0.2]]],
+    ["257 pairs", Array.from({ length: 257 }, (_, i) => [i, 0.1])],
+  ])("a table the module cannot trust (%s) is left out and the sticker is still drawn, with no slide", async (_name, bad) => {
+    const { item } = chain(await spoonPhoto(), { targetHeightMm: 54 }, SPOON_PHOTO);
+    const broken = JSON.parse(JSON.stringify(item));
+    broken.sampler.rowShiftMm = bad;
+    const plan = planOf(broken, { spare: false });
+    expect(plan.items).toHaveLength(1);
+    expect("rowShiftMm" in plan.items[0].sampler).toBe(false);
+    expect(plan.items[0].outerPolyMm.length).toBe(item.outerPolyMm.length);
+  });
+
+  it("rowShiftAt: exact at the pairs, linear between them, the end value beyond them, and fine with two pairs", () => {
+    const t: [number, number][] = [[0, 1], [10, -1], [20, 3]];
+    expect(ST.rowShiftAt(t, 0)).toBe(1);
+    expect(ST.rowShiftAt(t, 10)).toBe(-1);
+    expect(ST.rowShiftAt(t, 20)).toBe(3);
+    expect(ST.rowShiftAt(t, 5)).toBeCloseTo(0, 12);
+    expect(ST.rowShiftAt(t, 15)).toBeCloseTo(1, 12);
+    expect(ST.rowShiftAt(t, -50)).toBe(1);
+    expect(ST.rowShiftAt(t, 50)).toBe(3);
+    expect(ST.rowShiftAt([[2, 4], [6, 8]], 4)).toBeCloseTo(6, 12);
+    let seed = 3;
+    const rnd = () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 2 ** 32);
+    const big: [number, number][] = Array.from({ length: 200 }, (_, i): [number, number] => [i * 0.5, rnd() * 2 - 1]);
+    for (let y = 0; y < 99.5; y += 0.173) { // the last row is at 99.5: beyond it the module holds the end value, which is its own test above
+      const i = Math.min(198, Math.floor(y / 0.5));
+      const f = (y - big[i]![0]) / (big[i + 1]![0] - big[i]![0]);
+      expect(ST.rowShiftAt(big, y)).toBeCloseTo(big[i]![1] + f * (big[i + 1]![1] - big[i]![1]), 9);
+    }
+  });
+});
 
 describe("the sticker's cut line", () => {
   it("has no notches on the real spoon: no step corners and far less zig-zag than the unsmoothed outline gave", async () => {

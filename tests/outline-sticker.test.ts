@@ -116,6 +116,33 @@ describe("roundedPlateOutline: the builder's rounding of convex corners", () => 
   });
 });
 
+describe("roundedPlateOutline on a dense polygon: gentle corners are left alone", () => {
+  const ring = (n: number, r = 27): Pt[] => Array.from({ length: n }, (_, i): Pt => [r * Math.cos((i / n) * 2 * Math.PI), 30 + r * Math.sin((i / n) * 2 * Math.PI)]);
+
+  it("a 120 point circle keeps its 120 points: each corner turns 3 degrees, so its arc would start 0.04 mm from the vertex and move the path by a thousandth of a millimetre", () => {
+    const out = roundedPlateOutline(ring(120), 1.6);
+    expect(out).toHaveLength(120);
+    for (const [x, z] of ring(120)) expect(out.some(([ox, oz]) => Math.abs(ox - x) < 0.002 && Math.abs(oz - z) < 0.002)).toBe(true); // every vertex is still there, unmoved
+  });
+
+  it("a sharp corner still gets its arc, and the gentle ones around it still do not", () => {
+    // A 40 mm square with a 120 point arc cut into one side: the four sharp corners are rounded, the arc's own vertices are not.
+    const base: Pt[] = [[-20, 0], [20, 0], [20, 40], [-20, 40]];
+    const withArc: Pt[] = [...base.slice(0, 2), ...Array.from({ length: 40 }, (_, i): Pt => [20 - 0.5 * i, 40 + 0.03 * Math.sin((i / 40) * Math.PI)]), ...base.slice(3)];
+    const out = roundedPlateOutline(withArc, 1.6);
+    expect(out.length).toBeGreaterThan(withArc.length); // arcs were added at the right-angle corners
+    expect(out.length).toBe(withArc.length + 4 * 5); // exactly the four right-angle corners, each cut into 5 pieces (90 degrees in steps of 20): not two points on each of the 40 gentle vertices
+  });
+
+  it("a dense outline from the legalizer gives a cut path about as long as the outline, not twice as long", () => {
+    const o = ok(SHAPES.disc(), { targetHeightMm: 54 });
+    expect(o.points.length).toBeGreaterThan(64); // guard: this is a dense outline
+    const cut = photoStickerItem(o).outerPolyMm;
+    expect(cut.length).toBeLessThan(o.points.length * 1.15);
+    expect(cut.length).toBeLessThanOrEqual(1200); // inside the sheet module's own limit
+  });
+});
+
 describe("photoStickerItem: the cut path and where the photo sits on it", () => {
   const paddle = () => ok(SHAPES.paddle());
 
@@ -246,6 +273,66 @@ describe("the sticker sits on the object in the photo (checked against the mask,
     expect(registration(flipped, mask, stale).onObject).toBeLessThan(0.7);
     const wrong = { ...flipped.sampler, photoToSticker: [1, 0, 0, 1, 0, 0] as const, stickerToPhoto: [1, 0, 0, 1, 0, 0] as const };
     expect(registration(flipped, mask, wrong as unknown as typeof flipped.sampler).onObject).toBeLessThan(0.2);
+  });
+});
+
+describe("photoStickerItem: the per-row slide in sticker coordinates", () => {
+  const TABLE: [number, number][] = [[0, 0.2], [10, -0.4], [30, 0.1], [45, 0.3]];
+  const slideAt = (t: readonly Pt[], z: number) => {
+    if (z <= t[0]![0]) return t[0]![1];
+    if (z >= t[t.length - 1]![0]) return t[t.length - 1]![1];
+    for (let i = 1; i < t.length; i++) if (z <= t[i]![0]) return t[i - 1]![1] + ((z - t[i - 1]![0]) / (t[i]![0] - t[i - 1]![0])) * (t[i]![1] - t[i - 1]![1]);
+    return 0;
+  };
+
+  it("turns plate heights into sticker rows: the table runs down the sticker, rising in Y, and a plate point reads the same slide either way", () => {
+    const outline = { ...ok(SHAPES.paddle()), rowShift: TABLE };
+    const item = photoStickerItem(outline);
+    const t = item.sampler.rowShiftMm!;
+    expect(t).toHaveLength(TABLE.length);
+    for (let i = 1; i < t.length; i++) expect(t[i]![0]).toBeGreaterThan(t[i - 1]![0]);
+    const { x: x0, z: z1 } = item.sampler.plateOriginMm;
+    void x0;
+    for (let z = -2; z <= 47; z += 0.37) {
+      const Y = z1 - z; // a plate height as a sticker row
+      expect(Math.abs(slideAt(t, Y) - slideAt(TABLE, z)), `at plate z ${z.toFixed(2)}`).toBeLessThan(0.002);
+    }
+  });
+
+  it("changes nothing else: the cut path, the size and the photo map are the same as for the outline without it", () => {
+    const plain = ok(SHAPES.paddle());
+    const a = photoStickerItem(plain);
+    const b = photoStickerItem({ ...plain, rowShift: TABLE });
+    expect(b.outerPolyMm).toEqual(a.outerPolyMm);
+    expect([b.w, b.h]).toEqual([a.w, a.h]);
+    expect(b.sampler.stickerToPhoto).toEqual(a.sampler.stickerToPhoto);
+    expect(b.sampler.photoToSticker).toEqual(a.sampler.photoToSticker);
+    expect(b.sampler.plateOriginMm).toEqual(a.sampler.plateOriginMm);
+  });
+
+  it("has no table when the outline has none, and the key is not there at all", () => {
+    expect("rowShiftMm" in photoStickerItem(ok(SHAPES.paddle())).sampler).toBe(false);
+  });
+
+  it("a slide along x is the same number of millimetres on the sticker: the sign and size are kept, and no zero is negative", () => {
+    const item = photoStickerItem({ ...ok(SHAPES.paddle()), rowShift: [[0, 0.5], [20, -0.5], [40, 0]] });
+    const ds = item.sampler.rowShiftMm!.map((p) => p[1]).sort((p, q) => p - q);
+    expect(ds).toEqual([-0.5, 0, 0.5]);
+    expect(item.sampler.rowShiftMm!.some(([y, d]) => Object.is(y, -0) || Object.is(d, -0))).toBe(false);
+  });
+
+  it("a flipped and resized outline's table gives the same slide at the same sticker row as the original did at the same photo point", () => {
+    const base = { ...ok(SHAPES.paddle()), rowShift: TABLE };
+    const flipped = withFlipped(base);
+    const scaled = withScaled(base, 0.8).outline;
+    for (const [name, o] of [["flipped", flipped], ["scaled", scaled]] as const) {
+      const item = photoStickerItem(o);
+      const t = item.sampler.rowShiftMm!;
+      expect(t.length, name).toBe(TABLE.length);
+      for (let i = 1; i < t.length; i++) expect(t[i]![0], `${name}: rising`).toBeGreaterThan(t[i - 1]![0]);
+      const { z: z1 } = item.sampler.plateOriginMm;
+      for (const [z, d] of o.rowShift!) expect(Math.abs(slideAt(t, z1 - z) - d), `${name} at ${z}`).toBeLessThan(0.002);
+    }
   });
 });
 

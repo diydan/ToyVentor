@@ -20,7 +20,7 @@
  * Pure apart from the injected `fetch` and `sleep`; imports only the loop.
  */
 
-import { type GateArtifacts, type OutlineGate, type OutlineShape, type OutlineVerdict, verdictFromGateReport } from "./outlineFit";
+import { type DaemonSymmetry, type GateArtifacts, type OutlineGate, type OutlineShape, type OutlineVerdict, verdictFromGateReport } from "./outlineFit";
 
 export type OutlineGateErrorKind =
   /** 429: the Worker's per-device or per-IP budget (preview 3 a minute, poll 30 a minute) or the daemon's queue is full. */
@@ -155,9 +155,22 @@ export function forgeRouteGate(options: RouteGateOptions = {}): OutlineGate {
       if (!JOB_DONE.has(status)) throw new OutlineGateError("bad_reply", `unknown job status "${status}"`);
       const verdict = verdictFromGateReport(job.gate_report);
       const artifacts = status === "print_ready" && verdict.status === "pass" ? artifactsOf(jobId, job) : undefined;
-      return artifacts ? { ...verdict, artifacts } : verdict;
+      const daemonSymmetry = daemonSymmetryOf(job.legalizer);
+      return { ...verdict, ...(artifacts ? { artifacts } : {}), ...(daemonSymmetry ? { daemonSymmetry } : {}) };
     }
   };
+}
+
+/**
+ * The daemon's symmetry note from a job's `legalizer` (`{ symmetry: { action, iou_before, iou_after, points } }`), or undefined when there
+ * is none or it is not well formed: a note that cannot be read is no note, never a guess.
+ */
+export function daemonSymmetryOf(legalizer: unknown): DaemonSymmetry | undefined {
+  if (!isRecord(legalizer) || !isRecord(legalizer.symmetry)) return undefined;
+  const s = legalizer.symmetry;
+  if (typeof s.action !== "string" || !/^[a-z_]{1,40}$/.test(s.action)) return undefined;
+  const num = (v: unknown): number | null => (typeof v === "number" && Number.isFinite(v) ? v : null);
+  return { action: s.action, iouBefore: num(s.iou_before), iouAfter: num(s.iou_after), points: num(s.points) };
 }
 
 /** The plate of a finished job, or undefined when the job names none the artifacts route would take. */

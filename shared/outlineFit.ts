@@ -59,6 +59,18 @@ export interface GateArtifacts {
   contentHash: string | null;
 }
 
+/**
+ * What the daemon's own symmetry step said about the outline it was sent (the Worker passes `legalizer.symmetry` through). `action`
+ * `mirrored_left_half` or `mirrored_right_half` means the plate was built from a different outline than the one that was sent: the daemon
+ * kept one half about the bounding-box centre and mirrored it. `kept_asymmetric` and `snapped_x_to_centre` leave the outline as it was.
+ */
+export interface DaemonSymmetry {
+  action: string;
+  iouBefore: number | null;
+  iouAfter: number | null;
+  points: number | null;
+}
+
 /** What the loop needs to know about one gate run. */
 export interface OutlineVerdict {
   status: "pass" | "marginal" | "fail";
@@ -68,6 +80,8 @@ export interface OutlineVerdict {
   failures: string[];
   /** Set by a gate that ran a job and got a plate file back (a pass). The loop does not read it; the print step does. */
   artifacts?: GateArtifacts;
+  /** Set when the daemon's symmetry step said anything about this outline; see `DaemonSymmetry`. */
+  daemonSymmetry?: DaemonSymmetry;
 }
 
 /** Runs the compile and gates for this shape and says what happened. Rejects only when the gate itself could not run. */

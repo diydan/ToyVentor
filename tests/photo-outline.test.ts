@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { FORGE_MAX_PROFILE_POINTS, type ForgeRecipeV1 } from "../shared/forgeOptimizer";
 import {
   type Affine,
@@ -52,6 +52,10 @@ import {
   widthNear,
 } from "./fixtures/outlineMasks";
 import { realCup, realSpoon } from "./fixtures/realCupMask";
+
+// The legalizer takes 0.1 to 0.9 s a call, some tests make a dozen, and the machine is often at load 30 or more (one test failed once at 5.4 s, just past
+// the 5 s default, and passed on every rerun).
+vi.setConfig({ testTimeout: 60_000 });
 
 function ok(mask: Raster, options?: OutlineOptions): OutlineSuccess {
   const r = legalizeOutline(mask, options);
@@ -701,11 +705,19 @@ describe("legalizeOutline: the outline is smoothed before it is simplified", () 
   it("a disc is nearly as smooth as a circle: about 360 degrees of turning in all and no zig-zag, where the pixel-corner trace had twice that", () => {
     const disc_ = SHAPES.disc();
     const old = made(disc_, { smoothMm: 0 });
-    const now = made(disc_);
+    const now = made(disc_, { sagMm: 0.03 }); // the tolerance at which a polygon is as near a circle as it gets (386 measured)
     expect(totalTurning(old.points)).toBeGreaterThan(600); // guard
     expect(totalTurning(now.points)).toBeGreaterThan(355);
-    expect(totalTurning(now.points)).toBeLessThan(400); // 360 plus a little ripple that the filter leaves (it was 386 measured)
+    expect(totalTurning(now.points)).toBeLessThan(400);
     expect(zigzags(now.points)).toBe(0);
+  });
+
+  it("at the default tolerance a disc has no zig-zag and no corner over 12 degrees, with more points and a little more turning than a plain circle", () => {
+    const now = made(SHAPES.disc());
+    expect(zigzags(now.points)).toBe(0);
+    expect(Math.max(...turns(now.points).map(Math.abs))).toBeLessThan(12); // 8 measured
+    expect(now.points.length).toBeGreaterThan(110);
+    expect(totalTurning(now.points)).toBeLessThan(560); // 487 measured: a gentle ripple, never a reversal
   });
 
   it("has less zig-zag per vertex and no more stair corners on random blobs and rough discs, which are rough on purpose", () => {
@@ -818,6 +830,112 @@ describe("legalizeOutline: the outline is smoothed before it is simplified", () 
       const r = legalizeOutline(make(), { targetHeightMm: 54 });
       if (r.ok) expect(isSimplePolygon(r.points), name).toBe(true);
     }
+  });
+});
+
+describe("a bigger point budget, and a filter that lets it pay off", () => {
+  const made = (mask: Raster, options: OutlineOptions = {}): OutlineSuccess => {
+    const o = legalizeOutline(mask, { targetHeightMm: 54, ...options });
+    if (!o.ok) throw new Error(`legalize failed: ${o.reason}`);
+    return o;
+  };
+  const narrowest = (o: OutlineSuccess) => {
+    let best = Infinity;
+    for (let z = o.heightMm * 0.3; z < o.heightMm * 0.9; z += 0.5) {
+      const xs: number[] = [];
+      for (let i = 0; i < o.points.length; i++) {
+        const a = o.points[i]!;
+        const b = o.points[(i + 1) % o.points.length]!;
+        if (a[1] > z !== b[1] > z) xs.push(a[0] + ((z - a[1]) / (b[1] - a[1])) * (b[0] - a[0]));
+      }
+      xs.sort((p, q) => p - q);
+      if (xs.length >= 2) best = Math.min(best, xs[xs.length - 1]! - xs[0]!);
+    }
+    return best;
+  };
+
+  it("a disc gets well over 64 points and every one is on the circle: against the exact circle the error is 4 times smaller than the pixel trace's", () => {
+    // The disc is analytic: canvas centre (200, 200) is pixel index (199.5, 199.5), radius 150 px. Through the outline's own photo map that is a known
+    // centre and radius in millimetres, so the vertices can be measured against the true circle and not against a fit made from themselves.
+    const circleError = (o: OutlineSuccess) => {
+      const [cx, cz] = applyAffine(o.photoToPlate, 199.5, 199.5);
+      const R = 150 * Math.hypot(o.photoToPlate[0], o.photoToPlate[1]);
+      const e = o.points.map(([x, z]) => Math.hypot(x - cx, z - cz) - R);
+      return { R, max: Math.max(...e.map(Math.abs)), rms: Math.sqrt(e.reduce((a, v) => a + v * v, 0) / e.length) };
+    };
+    const disc_ = SHAPES.disc();
+    const now = made(disc_);
+    const old = made(disc_, { smoothMm: 0 });
+    expect(now.points.length).toBeGreaterThan(64);
+    expect(now.points.length).toBeLessThanOrEqual(240);
+    expect(circleError(now).R).toBeGreaterThan(26); // guard: the 54 mm disc is 27 mm in radius
+    expect(circleError(now).max).toBeLessThan(0.1); // 0.069 measured
+    expect(circleError(now).rms).toBeLessThan(0.04); // 0.026 measured, 0.109 for the pixel trace
+    expect(circleError(now).rms).toBeLessThan(circleError(old).rms / 3);
+    expect(circleError(now).rms).toBeLessThan(circleError(made(disc_, { curveMm: 0 })).rms); // the edge filter earns its place
+  });
+
+  it("the point budget is kept: 64 gives at most 64 points and still fits the mask, and a budget past 256 is cut to 256", () => {
+    const disc_ = SHAPES.disc();
+    const small = made(disc_, { maxPoints: 64 });
+    expect(small.points.length).toBeLessThanOrEqual(64);
+    expect(maskIoU(small, disc_)).toBeGreaterThan(0.97);
+    const rough = made(jaggedDisc(1), { maxPoints: 1000 });
+    expect(rough.points.length).toBeLessThanOrEqual(MAX_RECIPE_POINTS);
+    expect(rough.points.length).toBeGreaterThan(150); // guard: a rough edge used the budget
+  });
+
+  it("a smaller sag tolerance gives more points and a larger one fewer, monotonically, on a smooth shape", () => {
+    const disc_ = SHAPES.disc();
+    const counts = [0.2, 0.08, 0.05, 0.03].map((sagMm) => made(disc_, { sagMm }).points.length);
+    for (let i = 1; i < counts.length; i++) expect(counts[i]!, `sag step ${i}`).toBeGreaterThanOrEqual(counts[i - 1]!);
+    expect(counts[3]!).toBeGreaterThan(counts[0]! * 1.4);
+  });
+
+  it("the filter along the edge is what makes the extra points smooth: at the same tolerance, without it the disc follows ripple and turns a third more", () => {
+    const disc_ = SHAPES.disc();
+    const without = totalTurning(made(disc_, { curveMm: 0 }).points);
+    const withIt = totalTurning(made(disc_).points);
+    expect(without).toBeGreaterThan(600); // 718 measured: far more than the 360 degrees of a circle
+    expect(withIt).toBeLessThan(without * 0.75); // 487 measured
+  });
+
+  it("is stable at every cut-off: the real spoon never explodes into zig-zag and keeps its size and its neck", async () => {
+    const spoon = (await realSpoon()).raster;
+    const base = { fillet_r_mm: 1.0, keepThinParts: true } as const;
+    const plain = made(spoon, { ...base, curveMm: 0 });
+    for (const curveMm of [1, 1.5, 2.5, 4, 6, 8, 20]) {
+      const o = made(spoon, { ...base, curveMm });
+      expect(zigzags(o.points), `curve ${curveMm}`).toBeLessThanOrEqual(12); // an unstable filter gave 63
+      expect(maskIoU(o, spoon), `curve ${curveMm}`).toBeGreaterThan(0.98);
+      expect(Math.abs(o.heightMm - plain.heightMm), `curve ${curveMm} height`).toBeLessThan(0.6);
+      expect(narrowest(o), `curve ${curveMm} neck`).toBeGreaterThan(narrowest(plain) - 0.1); // the filter does not shrink a thin neck
+    }
+  });
+
+  it("chooses the edge filter's cut-off from the size: a tenth of the longer side, no less than 3 mm and no more than 8 mm", () => {
+    const disc_ = SHAPES.disc();
+    // 54 mm: a tenth is 5.4 mm. 90 mm: a tenth is 9, so the 8 mm cap applies. 20 mm: a tenth is 2, so the 3 mm floor applies.
+    for (const [height, expected, notExpected] of [[54, 5.4, [3, 8]], [90, 8, [9]], [20, 3, [2]]] as const) {
+      const byDefault = made(disc_, { targetHeightMm: height }).points;
+      expect(byDefault, `${height} mm`).toEqual(made(disc_, { targetHeightMm: height, curveMm: expected }).points);
+      for (const other of notExpected) expect(byDefault, `${height} mm is not ${other}`).not.toEqual(made(disc_, { targetHeightMm: height, curveMm: other }).points);
+    }
+  });
+
+  it("takes both options as written: NaN is the default, a negative number is zero, a huge sag is capped", () => {
+    const mask = randomBlob(2);
+    expect(made(mask, { curveMm: Number.NaN }).points).toEqual(made(mask).points);
+    expect(made(mask, { curveMm: -5 }).points).toEqual(made(mask, { curveMm: 0 }).points);
+    expect(made(mask, { sagMm: Number.NaN }).points).toEqual(made(mask).points);
+    expect(made(mask, { sagMm: 1000 }).points).toEqual(made(mask, { sagMm: 1 }).points);
+    expect(made(mask, { sagMm: -1 }).points).toEqual(made(mask, { sagMm: 0 }).points);
+    expect(made(mask, { sagMm: 0.5 }).points).not.toEqual(made(mask, { sagMm: 0.03 }).points); // and the value is used
+  });
+
+  it("an outline that could not be smoothed keeps the old budget of 60, whatever the caller allows", () => {
+    expect(made(SHAPES.disc(), { smoothMm: 0, maxPoints: 240 }).points.length).toBeLessThanOrEqual(60);
+    expect(made(randomBlob(1), { smoothMm: 0, maxPoints: 240 }).points.length).toBeLessThanOrEqual(60);
   });
 });
 

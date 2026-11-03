@@ -304,6 +304,34 @@ function blendedHalf(frame: ReturnType<typeof frameOf>): Pt[] | "crossings" | "n
   return half;
 }
 
+/** The longest `rowShift` table a result carries. */
+export const MAX_ROW_SHIFT_POINTS = 256;
+/** A slide under this is not worth drawing: the sticker would not change by a printable amount. */
+const MIN_SLIDE_MM = 0.005;
+const SHIFT_SAG_MM = 0.01;
+
+/**
+ * The per-row slide that puts the photographed object on the symmetric outline: how far each row of the object sits from the axis, as a
+ * short table. `rows` are [z, offset] in the new plate frame, one per 0.05 mm. Simplified so the sticker's slide is never more than
+ * 0.01 mm off the true one, rounded to a micron, and left out (undefined) when the object already sits on the axis.
+ */
+export function rowShiftOf(rows: readonly Pt[]): [number, number][] | undefined {
+  if (rows.length < 2 || rows.every(([, d]) => Math.abs(d) < MIN_SLIDE_MM)) return undefined;
+  let eps = SHIFT_SAG_MM;
+  let pts = simplifyPolyline(rows as Pt[], eps);
+  while (pts.length > MAX_ROW_SHIFT_POINTS && eps < 1) {
+    eps *= 1.5;
+    pts = simplifyPolyline(rows as Pt[], eps);
+  }
+  const out: [number, number][] = [];
+  for (const [z, d] of pts) {
+    const pair: [number, number] = [Math.round(z * 1000) / 1000 + 0, Math.round(d * 1000) / 1000 + 0];
+    const prev = out[out.length - 1];
+    if (!prev || pair[0] > prev[0]) out.push(pair);
+  }
+  return out.length >= 2 ? out : undefined;
+}
+
 export interface SymmetrizeResult<T extends OutlineSuccess> {
   outline: T;
   report: SymmetryReport;
@@ -354,7 +382,9 @@ export function symmetrizeOutline<T extends OutlineSuccess>(outline: T, options:
   }
   let half: Pt[];
   let centre = 0;
+  let rowCentres: Pt[] | null = null; // [z, centre] of every row, when the outline is made row by row (not by the blend)
   if (oneEveryRow && rows.length >= 8) {
+    rowCentres = rows.map((r): Pt => [r.z, r.c]);
     // Where the object's centre line sits on average (weighted by width): the symmetric outline is centred there, so the photo stays where it was.
     let wSum = 0;
     let cSum = 0;
@@ -439,8 +469,10 @@ export function symmetrizeOutline<T extends OutlineSuccess>(outline: T, options:
     value: round2(move),
   };
   const fidelity = Math.round(outline.fidelity * agreement * 1000) / 1000;
+  const rowShift = rowCentres ? rowShiftOf(rowCentres.map(([z, c]): Pt => [z - zLow, c - centre])) : undefined;
   const result: T = {
     ...outline,
+    ...(rowShift ? { rowShift } : {}),
     points: pts,
     widthMm: round2(2 * Math.max(pe.xMax, -pe.xMin)),
     heightMm: round2(pe.zMax),

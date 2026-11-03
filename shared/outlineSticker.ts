@@ -26,8 +26,11 @@ type Pt = readonly [number, number];
 
 /** Turns smaller than this (radians) are kept as vertices: they are straight for the builder's rounding. */
 const STRAIGHT_RAD = (1 * Math.PI) / 180;
-/** A corner whose arc would start less than this far from the vertex is left as a vertex: the arc would move the path by thousandths of a millimetre and double the point count. */
-const MIN_TANGENT_MM = 0.05;
+/**
+ * A corner whose arc would start less than this far from the vertex is left as a vertex. The arc would move the path by at most 0.012 mm (a
+ * 14 degree kink at the 1.6 mm radius) and would double the point count of a dense outline, where almost every corner is a gentle one.
+ */
+const MIN_TANGENT_MM = 0.2;
 /** An arc is cut into pieces of at most this turn; the chord sits 0.025 mm inside a 1.6 mm arc at this step. */
 const ARC_STEP_RAD = (20 * Math.PI) / 180;
 
@@ -125,6 +128,13 @@ export interface PhotoStickerItem {
     plateOriginMm: { x: number; z: number };
     /** The rounding radius that was applied to get the cut path. */
     roundedByMm: number;
+    /**
+     * Present when the outline was made symmetric row by row (`OutlineSuccess.rowShift`), in sticker millimetres: [Y, shift] pairs, Y
+     * ascending (down the sticker). The artwork at sticker (X, Y) is read from the photo where `stickerToPhoto` puts (X + shift(Y), Y), so
+     * the photographed object fills the symmetric cut path instead of leaving a fringe of background. Linear between the pairs, constant
+     * beyond the ends. Absent: no slide.
+     */
+    rowShiftMm?: [number, number][];
   };
 }
 
@@ -157,6 +167,9 @@ export function photoStickerItem(outline: OutlineSuccess & { photoSize?: { width
   // Counter-clockwise in (x, z) is counter-clockwise on screen here, so reverse to the clockwise the sheet module expects.
   if (signedArea(poly) < 0) poly = poly.reverse();
   const photoToSticker = composeAffine([1, 0, 0, -1, -x0, z1], outline.photoToPlate);
+  // The sticker's Y runs down from the top of the cut path (Y = z1 - z) and its X is the plate's x less x0, so a slide along x is the same
+  // number of millimetres in both; only the order of the rows turns round.
+  const rowShiftMm = outline.rowShift?.map(([z, d]): [number, number] => [round3(z1 - z) + 0, round3(d) + 0]).reverse();
   return {
     id: options.id ?? "photo_accessory",
     kind: "photo_accessory",
@@ -174,6 +187,7 @@ export function photoStickerItem(outline: OutlineSuccess & { photoSize?: { width
       stickerToPhoto: invertAffine(photoToSticker) ?? null,
       plateOriginMm: { x: x0, z: z1 },
       roundedByMm: radius,
+      ...(rowShiftMm && rowShiftMm.length >= 2 ? { rowShiftMm } : {}),
     },
   };
 }

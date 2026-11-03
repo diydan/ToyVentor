@@ -70,7 +70,7 @@ export interface OutlineOptions {
   /**
    * How far a straight chord of the outline may leave the smoothed edge, in millimetres (the simplifier's tolerance). A smaller one
    * follows the edge more closely with more points, up to the point budget; a larger one uses fewer. Only on a smoothed outline
-   * (`smoothMm` above 0). Default 0.03.
+   * (`smoothMm` above 0). Default 0.015 (the real spoon, cup, a disc, a paddle and a blob all stayed free of zig-zag down to 0.01).
    */
   sagMm?: number;
   /**
@@ -101,7 +101,7 @@ export interface OutlineSuccess {
   heightMm: number;
   orientation: OutlineOrientation;
   changes: OutlineChange[];
-  /** Short codes the caller may turn into a hint: SPLIT_OBJECT, LARGE_HOLES_FILLED, THIN_PARTS_REMOVED, LOW_FIDELITY, POINT_BUDGET_NOT_MET. */
+  /** Short codes the caller may turn into a hint: SPLIT_OBJECT, LARGE_HOLES_FILLED, THIN_PARTS_REMOVED, LOW_FIDELITY, POINT_BUDGET_NOT_MET, NOT_SYMMETRIC (outlineScan.ts: mirror was asked for and could not be done), and GATE_REWROTE_OUTLINE (photoAccessory.ts: the daemon's own symmetry step rebuilt the outline, so the plate differs from it). */
   warnings: string[];
   /** Overlap (intersection over union) of the polygon with the rounded mask it came from, 0 to 1. */
   fidelity: number;
@@ -112,6 +112,15 @@ export interface OutlineSuccess {
    * `withFlipped` and `withScaled` keep it in step with `points`; `flipOutline` and `scaleOutline` do not touch it.
    */
   photoToPlate: Affine;
+  /**
+   * Set when `symmetrizeOutline` made the outline symmetric row by row (outlineSymmetry.ts). Each row of the symmetric outline has the
+   * width the object has in the photo, but is centred on the plate's axis, while `photoToPlate` still puts the object where it was
+   * traced. So at plate height `z` the object sits `shift` further along x than the outline: the photo pixel behind the plate point
+   * (x, z) is `photoToPlate`^-1 of (x + shift(z), z), shift interpolated between these [z, shift] pairs (mm, z ascending, constant
+   * beyond the ends). A sticker drawn without it shows a fringe of background where the object leans. Absent when the outline was not
+   * symmetrized row by row (a blend, or not at all): then there is nothing to slide. `withFlipped` and `withScaled` transform it.
+   */
+  rowShift?: [number, number][];
 }
 
 export interface OutlineFailure {
@@ -182,7 +191,7 @@ export const MAX_RECIPE_POINTS = 256;
 
 const DEFAULT_MAX_POINTS = 240;
 const WORK_LONG_PX = 400; // long side of the working raster
-const DEFAULT_SAG_MM = 0.03; // how far a straight chord may leave the smoothed edge: the simplifier's tolerance on a smoothed contour
+const DEFAULT_SAG_MM = 0.015; // how far a straight chord may leave the smoothed edge: the simplifier's tolerance on a smoothed contour
 const MIN_EPS_PX = 0.05;
 const CURVE_SHARE = 0.1; // wavelength below which the contour's own ripple is filtered out, as a share of the longer side
 const CURVE_MIN_MM = 3;
@@ -203,6 +212,7 @@ type Vec = [number, number];
 
 const clampNum = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
 const round2 = (v: number) => Math.round(v * 100) / 100;
+const round3 = (v: number) => Math.round(v * 1000) / 1000;
 
 // ---------------------------------------------------------------------------
 // Raster helpers
@@ -400,6 +410,10 @@ function open(bin: Uint8Array, w: number, h: number, r: number): Uint8Array {
   for (let i = 0; i < out.length; i++) out[i] = fgDist[i]! <= r2 ? 1 : 0;
   return out;
 }
+
+/** `open` and `thinParts`, shared with outlineSymmetry.ts. */
+export const openRaster = open;
+export const thinPartsRemoved = thinParts;
 
 function invert(bin: Uint8Array): Uint8Array {
   const out = new Uint8Array(bin.length);
@@ -833,6 +847,10 @@ function douglasPeucker(p: readonly Vec[], eps: number): Vec[] {
   return p.filter((_, i) => keep[i] === 1);
 }
 
+/** Douglas-Peucker on an open polyline (its ends are kept) and the simple-polygon test, shared with outlineSymmetry.ts. */
+export const simplifyPolyline = (p: readonly [number, number][], eps: number): [number, number][] => douglasPeucker(p, eps);
+export const polygonIsSimple = (p: readonly [number, number][]): boolean => isSimple(p);
+
 /** Douglas-Peucker on a closed loop: split at the vertex farthest from vertex 0 and simplify each half. */
 function simplifyClosed(p: readonly Vec[], eps: number): Vec[] {
   if (p.length <= 4) return [...p];
@@ -1203,7 +1221,7 @@ export function flipOutline(points: readonly (readonly [number, number])[]): [nu
   let zMax = -Infinity;
   for (const [, z] of points) zMax = Math.max(zMax, z);
   // x -> -x and z -> top - z is a half turn about the middle: the winding stays counter-clockwise, and doing it twice is exact.
-  return points.map(([x, z]): [number, number] => [round2(-x), round2(zMax - z)]);
+  return points.map(([x, z]): [number, number] => [round2(-x) + 0, round2(zMax - z) + 0]); // + 0: a vertex on the centre line must not become -0
 }
 
 /**
@@ -1219,7 +1237,7 @@ export function scaleOutline(points: readonly (readonly [number, number])[], fac
     zMax = Math.max(zMax, z);
   }
   const f = Number.isFinite(factor) && factor > 0 ? Math.min(factor, HAND_BOX.halfWidthMm / Math.max(xAbs, 1e-9), HAND_BOX.maxHeightMm / Math.max(zMax, 1e-9)) : 1;
-  return { points: points.map(([x, z]) => [round2(x * f), round2(z * f)] as [number, number]), factor: f };
+  return { points: points.map(([x, z]) => [round2(x * f) + 0, round2(z * f) + 0] as [number, number]), factor: f };
 }
 
 /** `outer` after `inner`: apply `inner` first. */
@@ -1258,8 +1276,11 @@ const sizeOf = (points: readonly (readonly [number, number])[]) => {
 export function withFlipped(outline: OutlineSuccess): OutlineSuccess {
   const points = flipOutline(outline.points);
   const { zMax } = sizeOf(outline.points);
+  // A half turn maps (x, z) to (-x, zMax - z), so the slide that put an object row on the outline at z puts it, mirrored, at zMax - z.
+  const rowShift = outline.rowShift ? outline.rowShift.map(([z, d]): [number, number] => [round3(zMax - z) + 0, round3(-d) + 0]).reverse() : undefined;
   return {
     ...outline,
+    ...(rowShift ? { rowShift } : {}),
     points,
     photoToPlate: composeAffine([-1, 0, 0, -1, 0, zMax], outline.photoToPlate),
     orientation: { ...outline.orientation, flipped: !outline.orientation.flipped },
@@ -1275,6 +1296,7 @@ export function withScaled(outline: OutlineSuccess, factor: number): { outline: 
     factor: f,
     outline: {
       ...outline,
+      ...(outline.rowShift ? { rowShift: outline.rowShift.map(([z, d]): [number, number] => [round3(z * f) + 0, round3(d * f) + 0]) } : {}),
       points: scaled.points,
       ...(({ widthMm, heightMm }) => ({ widthMm, heightMm }))(sizeOf(scaled.points)),
       photoToPlate: composeAffine([f, 0, 0, f, 0, 0], outline.photoToPlate),
@@ -1295,6 +1317,47 @@ export function outlineToRecipeShape(result: OutlineSuccess, gripTu = 2): Extrac
  * (they pass a spoon with no handle as readily as one with). Same definition of "a part" as the legalizer: a piece that
  * comes off counts when it is long and bigger than one radius squared, so rounded corners and star tips do not.
  */
+/**
+ * A polygon (x right, z up, millimetres) filled onto a raster of square `pxMm` cells with `padPx` empty cells all round: even-odd scanline
+ * fill sampled at cell centres, like the legalizer's own raster. Row j is at z = originZ - (j + 0.5) * pxMm, column i at x = originX + (i + 0.5) * pxMm.
+ * Shared with outlineSymmetry.ts.
+ */
+export function rasterizePolygon(
+  points: readonly (readonly [number, number])[],
+  pxMm: number,
+  padPx: number,
+  frame?: { originX: number; originZ: number; nx: number; nz: number },
+): { grid: Uint8Array; nx: number; nz: number; originX: number; originZ: number } {
+  const n = points.length;
+  let xMin = Infinity, xMax = -Infinity, zMin = Infinity, zMax = -Infinity;
+  for (const [x, z] of points) {
+    xMin = Math.min(xMin, x); xMax = Math.max(xMax, x);
+    zMin = Math.min(zMin, z); zMax = Math.max(zMax, z);
+  }
+  // A frame given by the caller is used as it is (padPx is then ignored): the symmetry code needs the raster's middle column to be an axis.
+  const nx = frame ? frame.nx : Math.ceil((xMax - xMin) / pxMm) + 2 * padPx;
+  const nz = frame ? frame.nz : Math.ceil((zMax - zMin) / pxMm) + 2 * padPx;
+  const originX = frame ? frame.originX : xMin - padPx * pxMm;
+  const originZ = frame ? frame.originZ : zMax + padPx * pxMm;
+  const grid = new Uint8Array(nx * nz);
+  for (let j = 0; j < nz; j++) {
+    const zc = originZ - (j + 0.5) * pxMm;
+    const xs: number[] = [];
+    for (let a = 0, b = n - 1; a < n; b = a++) {
+      const [xa, za] = points[a]!;
+      const [xb, zb] = points[b]!;
+      if (za > zc !== zb > zc) xs.push(xa + ((zc - za) * (xb - xa)) / (zb - za));
+    }
+    xs.sort((p, q) => p - q);
+    for (let k = 0; k + 1 < xs.length; k += 2) {
+      const from = Math.max(0, Math.ceil((xs[k]! - originX) / pxMm - 0.5));
+      const to = Math.min(nx, Math.ceil((xs[k + 1]! - originX) / pxMm - 0.5));
+      for (let i = from; i < to; i++) grid[j * nx + i] = 1;
+    }
+  }
+  return { grid, nx, nz, originX, originZ };
+}
+
 export function roundingRemovesParts(points: readonly (readonly [number, number])[], filletMm: number): { count: number; areaMm2: number } {
   const n = points.length;
   if (n < 3) return { count: 0, areaMm2: 0 };
@@ -1308,28 +1371,7 @@ export function roundingRemovesParts(points: readonly (readonly [number, number]
   if (!(widthMm > 0) || !(heightMm > 0)) return { count: 0, areaMm2: 0 };
   const radiusMm = Math.max(filletMm, GRIP_ROUNDING_MM);
   const wpx = Math.max(widthMm, heightMm) / WORK_LONG_PX;
-  const pad = Math.ceil(radiusMm / wpx) + 3;
-  const nx = Math.ceil(widthMm / wpx) + 2 * pad;
-  const nz = Math.ceil(heightMm / wpx) + 2 * pad;
-  const originX = xMin - pad * wpx;
-  const originZ = zMax + pad * wpx;
-  // Even-odd scanline fill, sampled at pixel centres like the legalizer's own raster.
-  const grid = new Uint8Array(nx * nz);
-  for (let j = 0; j < nz; j++) {
-    const zc = originZ - (j + 0.5) * wpx;
-    const xs: number[] = [];
-    for (let a = 0, b = n - 1; a < n; b = a++) {
-      const [xa, za] = points[a]!;
-      const [xb, zb] = points[b]!;
-      if (za > zc !== zb > zc) xs.push(xa + ((zc - za) * (xb - xa)) / (zb - za));
-    }
-    xs.sort((p, q) => p - q);
-    for (let k = 0; k + 1 < xs.length; k += 2) {
-      const from = Math.max(0, Math.ceil((xs[k]! - originX) / wpx - 0.5));
-      const to = Math.min(nx, Math.ceil((xs[k + 1]! - originX) / wpx - 0.5));
-      for (let i = from; i < to; i++) grid[j * nx + i] = 1;
-    }
-  }
+  const { grid, nx, nz } = rasterizePolygon(points, wpx, Math.ceil(radiusMm / wpx) + 3);
   const rounded = open(grid, nx, nz, radiusMm / wpx);
   return thinParts(grid, rounded, nx, nz, wpx, radiusMm);
 }

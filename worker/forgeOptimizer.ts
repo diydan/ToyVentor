@@ -50,11 +50,36 @@ const LIMITS = {
 type RateKind = keyof typeof LIMITS;
 const hits = new Map<string, number[]>();
 
-function recordHit(key: string, limit: number, now: number): boolean {
+/**
+ * Records one call against `key` and says how long, in whole seconds, until the next call would be let in: 0 when this one was.
+ * Every call counts, refused ones too (a caller that keeps asking keeps itself out). The next call is let in once the hit
+ * `limit` places from the end of the window is a window old, because only then are `limit - 1` earlier hits left.
+ */
+function recordHit(key: string, limit: number, now: number): number {
   const recent = (hits.get(key) ?? []).filter((t) => now - t < RATE_WINDOW_MS);
   recent.push(now);
   hits.set(key, recent);
-  return recent.length > limit;
+  if (recent.length <= limit) return 0;
+  const frees = recent[recent.length - limit]!;
+  // Every hit in `recent` is under a window old, so this is positive and the rounded-up wait is at least a second.
+  return Math.ceil((frees + RATE_WINDOW_MS - now) / 1000);
+}
+
+/** Counts a call against the device's and the address's budgets. Returns the seconds to wait before another would be let in, 0 if this one was. */
+export function forgeRateLimitWait(
+  kind: RateKind,
+  deviceId: string,
+  ip: string | null | undefined,
+  now = Date.now(),
+): number {
+  if (hits.size > 5_000) {
+    for (const [k, v] of hits) {
+      if (!v.some((t) => now - t < RATE_WINDOW_MS)) hits.delete(k);
+    }
+  }
+  const byDevice = recordHit(`${kind}|dev|${deviceId}`, LIMITS[kind].device, now);
+  const byIp = ip ? recordHit(`${kind}|ip|${ip}`, LIMITS[kind].ip, now) : 0;
+  return Math.max(byDevice, byIp);
 }
 
 export function forgeRateLimited(
@@ -63,14 +88,7 @@ export function forgeRateLimited(
   ip: string | null | undefined,
   now = Date.now(),
 ): boolean {
-  if (hits.size > 5_000) {
-    for (const [k, v] of hits) {
-      if (!v.some((t) => now - t < RATE_WINDOW_MS)) hits.delete(k);
-    }
-  }
-  const byDevice = recordHit(`${kind}|dev|${deviceId}`, LIMITS[kind].device, now);
-  const byIp = ip ? recordHit(`${kind}|ip|${ip}`, LIMITS[kind].ip, now) : false;
-  return byDevice || byIp;
+  return forgeRateLimitWait(kind, deviceId, ip, now) > 0;
 }
 
 export function resetForgeRateLimit(): void {
@@ -449,9 +467,11 @@ async function gateForge(
     logEvent(event, "gate-required");
     return { ok: false, response: reply(401, { ok: false, status: "gate-required" }) };
   }
-  if (forgeRateLimited(rateKind, deviceId, request.headers.get("CF-Connecting-IP"))) {
-    logEvent(event, "slow-down");
-    return { ok: false, response: reply(429, { ok: false, status: "slow-down" }) };
+  const wait = forgeRateLimitWait(rateKind, deviceId, request.headers.get("CF-Connecting-IP"));
+  if (wait > 0) {
+    logEvent(event, "slow-down", { retryAfterS: wait });
+    // Says when a retry will be let in; a caller that asks sooner only extends its own lock-out.
+    return { ok: false, response: reply(429, { ok: false, status: "slow-down" }, { "retry-after": String(wait) }) };
   }
   return { ok: true, baseUrl };
 }
@@ -529,6 +549,19 @@ function scrubPreviewOutput(d: Record<string, unknown>): Record<string, unknown>
   };
 }
 
+/**
+ * What the daemon's own symmetry step did to a hand outline (`legalizer.symmetry` on the job record), so the caller can tell that the plate
+ * was built from a different outline than the one it sent. Only these four fields and only these types go out; the daemon's other
+ * legalizer notes (size rescale, dropped features) stay behind the allowlist.
+ */
+function scrubLegalizer(v: unknown): { symmetry: { action: string; iou_before: number | null; iou_after: number | null; points: number | null } } | null {
+  if (!isRecord(v) || !isRecord(v.symmetry)) return null;
+  const s = v.symmetry;
+  if (typeof s.action !== "string" || !/^[a-z_]{1,40}$/.test(s.action)) return null;
+  const num = (x: unknown): number | null => (isFiniteNum(x) ? x : null);
+  return { symmetry: { action: s.action, iou_before: num(s.iou_before), iou_after: num(s.iou_after), points: num(s.points) } };
+}
+
 function scrubJobOutput(d: Record<string, unknown>): Record<string, unknown> {
   return {
     ok: Boolean(d.ok),
@@ -543,6 +576,7 @@ function scrubJobOutput(d: Record<string, unknown>): Record<string, unknown> {
     slicer_recipe: isRecord(d.slicer_recipe) ? d.slicer_recipe : null,
     metrics: isRecord(d.metrics) ? d.metrics : null,
     gate_report: isRecord(d.gate_report) ? d.gate_report : null,
+    legalizer: scrubLegalizer(d.legalizer),
     error: typeof d.error === "string" ? "optimization failed" : null,
     elapsed_ms: typeof d.elapsed_ms === "number" ? d.elapsed_ms : null,
   };

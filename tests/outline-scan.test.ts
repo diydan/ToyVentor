@@ -97,7 +97,7 @@ describe("scanOutline", () => {
     const c = inPhoto(disc(400, 200, 90));
     expect(c.bounds.left).toBeGreaterThan(100); // guard: the object is not at the corner, so the shift matters
     expect(c.bounds.top).toBeGreaterThan(50);
-    const o = ok(scanOutline(c.raster, c.bounds, PHOTO, { targetHeightMm: 54 }));
+    const o = ok(scanOutline(c.raster, c.bounds, PHOTO, { targetHeightMm: 54, symmetry: "off" })); // off: this test is about the photo map, not the symmetry
     const direct = legalizeOutline(c.raster, { targetHeightMm: 54, keepThinParts: true });
     if (!direct.ok) throw new Error("legalize failed");
     expect(o.points).toEqual(direct.points);
@@ -366,9 +366,9 @@ describe("a real SAM mask (the captured cup, 1920 x 1280 photo)", () => {
 // ---- the module stays pure ---------------------------------------------------------------------------------------
 
 describe("outlineScan.ts", () => {
-  it("imports only the legalizer's module, and nothing of the browser or the Worker", () => {
+  it("imports only the legalizer's module and the symmetry module, and nothing of the browser or the Worker", () => {
     const src = readFileSync(join(__dirname, "..", "shared", "outlineScan.ts"), "utf8");
-    expect([...src.matchAll(/^import[\s\S]*?from "(.*)";$/gm)].map((m) => m[1])).toEqual(["./photoOutline"]);
+    expect([...src.matchAll(/^import[\s\S]*?from "(.*)";$/gm)].map((m) => m[1])).toEqual(["./photoOutline", "./outlineSymmetry"]);
     const code = src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
     expect(code.length).toBeGreaterThan(2000);
     expect(code).not.toMatch(/\bwindow\b|\bdocument\b|localStorage|\bprocess\.|\bfetch\b/);
@@ -407,7 +407,7 @@ describe("scanOutline: a part narrower than the rounding is kept by rounding mor
     const o = ok(scanOutline(c.raster, c.bounds, PHOTO, { targetHeightMm: 54 }));
     expect(o.fillet_r_mm).toBe(expectedFillet);
     expect(o.warnings).not.toContain("THIN_PARTS_REMOVED");
-    expect(o.changes.at(-1)).toMatchObject({ step: "C2", code: "lowered_fillet_to_keep_parts", value: expectedFillet });
+    expect(o.changes.find((x) => x.code === "lowered_fillet_to_keep_parts")).toMatchObject({ step: "C2", code: "lowered_fillet_to_keep_parts", value: expectedFillet });
     expect(o.heightMm).toBeGreaterThan(plain.heightMm * 1.5); // the whole object, not the head alone
     expect(stickCovered(o, stickPx)).toBeGreaterThan(0.95);
     expect(photoIoU(o, c.photo)).toBeGreaterThan(0.9);
@@ -445,7 +445,7 @@ describe("a real SAM mask with a thin handle (the steel spoon, 288 x 512 upload)
     expect(plain.warnings).toContain("THIN_PARTS_REMOVED"); // what the pipeline used to ship: a bowl with no handle
     expect(plain.heightMm).toBeLessThan(25);
 
-    const o = ok(scanOutline(raster, bounds, SPOON_PHOTO, { targetHeightMm: 54 }));
+    const o = ok(scanOutline(raster, bounds, SPOON_PHOTO, { targetHeightMm: 54, symmetry: "off" })); // off: this test is about keeping the handle and fitting the photo
     expect(o.warnings).toEqual([]);
     expect(o.fillet_r_mm).toBeLessThan(1.6);
     expect(o.heightMm).toBeGreaterThan(75);

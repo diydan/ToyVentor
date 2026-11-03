@@ -190,7 +190,9 @@ describe("POST /api/scan with an outline request", () => {
   it("leaves a scan without the field exactly as it was: no outline key, the same toy", async () => {
     stubSam(LIVE_CUP);
     const plain = (await (await post({ scan: scan() })).json()) as SamScanResponse;
-    expect(Object.keys(plain.sam).sort()).toEqual(["applied", "box", "configured", "maskApplied", "matches"]);
+    const keys = Object.keys(plain.sam);
+    for (const k of ["applied", "box", "configured", "maskApplied", "matches"]) expect(keys).toContain(k); // other features add keys of their own (inspect)
+    expect(keys).not.toContain("outline");
     expect(scanOutlineOf(plain)).toBeUndefined();
     stubSam(LIVE_CUP);
     const withOutline = (await (await post({ scan: scan({ outline: {} }) })).json()) as SamScanResponse;
