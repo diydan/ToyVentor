@@ -472,6 +472,9 @@ function makeUnrolledCropSticker({
 
 const PHOTO_ACCESSORY_MAX_MM = 120.0;
 const PHOTO_ACCESSORY_MAX_POINTS = 1200;
+/** The most pairs, and the farthest slide in mm, a photo accessory's per-row slide table may have (the hand box is 90 mm wide). */
+const PHOTO_ROW_SHIFT_MAX_POINTS = 256;
+const PHOTO_ROW_SHIFT_MAX_MM = 45.0;
 
 function finiteNums(arr, n) {
   return Array.isArray(arr) && arr.length === n && arr.every((v) => typeof v === 'number' && Number.isFinite(v));
@@ -482,6 +485,37 @@ function finiteNums(arr, n) {
  * and arrive as data. Rebuilt field by field so a malformed item never reaches the packer or the writers; returns null for one
  * that cannot be drawn (no cut path, no invertible photo map, a size past the sheet). Carries geometry only, never pixels.
  */
+/** The slide table rebuilt pair by pair, or null if it is not a table this module would trust: then the sticker is drawn without a slide. */
+function cleanRowShift(t) {
+  if (!Array.isArray(t) || t.length < 2 || t.length > PHOTO_ROW_SHIFT_MAX_POINTS) return null;
+  const out = [];
+  let prev = -Infinity;
+  for (const p of t) {
+    if (!finiteNums(p, 2) || p[0] <= prev || Math.abs(p[1]) > PHOTO_ROW_SHIFT_MAX_MM) return null;
+    prev = p[0];
+    out.push([p[0], p[1]]);
+  }
+  return out;
+}
+
+/**
+ * How far to slide the artwork along x at sticker row `y` (mm): linear between the table's [Y, shift] pairs, the end value beyond them.
+ * The symmetric cut path has each row's width but centres it on the axis, so the photographed object sits this far to one side.
+ */
+export function rowShiftAt(table, y) {
+  const n = table.length;
+  if (y <= table[0][0]) return table[0][1];
+  if (y >= table[n - 1][0]) return table[n - 1][1];
+  let lo = 0;
+  let hi = n - 1;
+  while (hi - lo > 1) {
+    const mid = (lo + hi) >> 1;
+    if (table[mid][0] <= y) lo = mid; else hi = mid;
+  }
+  const t = (y - table[lo][0]) / (table[hi][0] - table[lo][0]);
+  return table[lo][1] + t * (table[hi][1] - table[lo][1]);
+}
+
 function photoAccessoryBase(it) {
   if (!it || typeof it !== 'object' || !it.sampler || it.sampler.mode !== 'photo_outline') return null;
   const poly = it.outerPolyMm;
@@ -492,6 +526,7 @@ function photoAccessoryBase(it) {
   const size = it.sampler.photoSize;
   const photoSize = size && size.width > 0 && size.height > 0 ? { width: size.width, height: size.height } : null;
   const id = String(it.id || 'photo_accessory').toLowerCase().replace(/[^a-z0-9_]/g, '_').slice(0, 40) || 'photo_accessory';
+  const rowShiftMm = cleanRowShift(it.sampler.rowShiftMm);
   return {
     id,
     kind: 'photo_accessory',
@@ -507,6 +542,7 @@ function photoAccessoryBase(it) {
       sourceKey: `photo:${id}`,
       stickerToPhoto: it.sampler.stickerToPhoto.slice(),
       photoSize,
+      ...(rowShiftMm ? { rowShiftMm } : {}),
     },
   };
 }
@@ -918,8 +954,11 @@ export function renderStickerItemRgba(item, renderedSources = {}, dpi = 300, ble
         // Sticker millimetre -> a pixel of the photo the outline came from -> the same place in the source we were handed,
         // which may be any resolution of that photo (pixel centres line up: index i of W sits at (i + 0.5) / W).
         const m = smp.stickerToPhoto;
-        const ix = m[0] * localXMm + m[2] * localYMm + m[4];
-        const iy = m[1] * localXMm + m[3] * localYMm + m[5];
+        // A symmetric cut path has each row's width but centres it on the axis; the object in the photo sits `shift` to one side, so
+        // the artwork is read that far along the row and fills the path with the object, not with a fringe of background.
+        const sx = smp.rowShiftMm ? localXMm + rowShiftAt(smp.rowShiftMm, localYMm) : localXMm;
+        const ix = m[0] * sx + m[2] * localYMm + m[4];
+        const iy = m[1] * sx + m[3] * localYMm + m[5];
         const sw = src ? src.w : 1;
         const sh = src ? src.h : 1;
         const pw = smp.photoSize ? smp.photoSize.width : sw;

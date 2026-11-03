@@ -272,8 +272,8 @@ rejected, numbers are clamped to bounds, and nothing is executed.
      snapped to x = 0 within 1 mm) and measured by how much it overlaps its own
      mirror image (intersection over union). At 0.93 or more it is treated as
      meant to be symmetric: it is split on the centre line, the larger half is
-     kept, and the outline is rebuilt from that half and its mirror (at most 64
-     points); `iou_after` is then 1.0. Below 0.93 (a lightning bolt scores 0.52)
+     kept, and the outline is rebuilt from that half and its mirror (at most 256
+     points, the profile2d limit); `iou_after` is then 1.0. Below 0.93 (a lightning bolt scores 0.52)
      it stays as drawn and the note says `kept_asymmetric`; an already symmetric
      outline gets no note. A loft is symmetric when every slice is centred on
      x = 0: offsets up to 1 mm are noise and snap to 0 (reported as
@@ -638,6 +638,165 @@ What the compiler accepts decides the routes (read in the code, 2026-11-02):
     in the angle. Tests: `tests/photo-outline.test.ts` (now 88); 24 mutants, 23 caught, and the
     survivor (the loop that raises the tolerance when the budget binds) gives the same outlines
     as plain pruning, 10 to 30% faster on rough shapes, so it stays as a speed step.
+  - **Outline mirror symmetry (2026-11-02, Dan: check for symmetry and, if there is some, split it down the
+    centre and make both sides the same).** `shared/outlineSymmetry.ts`, called by `scanOutline`
+    after the fillet ladder (request option `symmetry`: `auto` by default, `off`, or `mirror`) and
+    by the print step as a button (`preparePhotoAccessory(..., { symmetry: "mirror" })`).
+    *Detecting.* The best mirror axis is searched within 12 degrees of upright (coarse to fine,
+    ties go to the most upright, so a disc stays upright), scored by overlap with the mirror image
+    on a 0.15 mm raster. Overlap alone does not decide it: the real spoon (bowl off its handle) and
+    the real cup (a handle on one side) overlap their mirror images by 0.86 and 0.87. What tells
+    them apart is the shape of the mismatch. Open it with a disc the size of the fillet: for the
+    spoon every bit of it is a sliver along an edge and goes (lump share 0); for the cup the handle
+    survives (over 5% of the area). Symmetric means a lump share of at most 0.5%.
+    *Making it.* At each height the left and right edge are read and the symmetric half-width is
+    their average, so every row keeps its width exactly (area is kept to 0.5%, a thin handle off the
+    axis keeps its width) and the outline is centred on its centre of mass. An earlier version
+    averaged a blurred raster with its mirror image and lost the spoon's off-axis handle; that is
+    now only the fallback for an outline where some height has more than one piece (a star's side
+    arms), and it is refused (`parts_lost`) if it would drop a piece wider than 1 mm and over
+    1 mm^2. One half is simplified to the 0.015 mm sag within the point budget (240, half each
+    side) and reflected, so every vertex has an exact twin at (-x, z). The photo map carries the
+    straightening, centring and lowering, so the sticker artwork stays registered. Automatic mode
+    declines to move any edge more than 1.0 mm (`moved_too_far`); the button allows 15% of the
+    size, and an object that overlaps its mirror image by under 70% is never touched. Every refusal
+    comes back as the same outline object with a reason, `NOT_SYMMETRIC` is a warning only when the
+    caller asked for `mirror`, and the change log gets a `made_symmetric` entry with the largest
+    move. Running it twice is a no-op.
+    *Measured on the real spoon, through the real SAM call, Worker and daemon:* 138 points (145
+    before), no edge moved more than 0.63 mm, the axis straightened by 0.5 degrees, fidelity 0.997
+    to 0.924. The same four gate calls (fillet 1.0 slivers, two size nudges sliver, 0.8 passes),
+    one watertight body, 65 KB. The plate STL mirrored about its own centre plane overlaps itself
+    by 0.909 before and 1.0000 after (volume 4145 and 4144 mm^3, checked with the real boolean
+    engine, not the outline). The cost was the one a user would expect: the sticker's cut line
+    follows the symmetric outline, and the photographed bowl leans a little, so on the bowl the
+    line stood up to 0.6 mm off the spoon's edge and a fringe of background showed on the sticker.
+    *The per-row slide* (2026-11-03) closes that. Each row of the symmetric outline has the width
+    the object has in the photo and is only re-centred, so the object sits sideways of the outline
+    by an amount that depends on the row, `s(z)`. The outline now carries that as `rowShift`, a
+    table of at most 256 `[z, shift]` pairs (the rows read every 0.05 mm, simplified to 0.01 mm,
+    rounded to a micron; only when the outline was made row by row, not by the blend), and the
+    sticker artwork at plate point (x, z) is read from the photo at `photoToPlate`^-1 of
+    (x + s(z), z): a slide, not a stretch, so nothing is distorted. `withFlipped` and `withScaled`
+    carry it (a half turn maps (z, s) to (zMax - z, -s), a resize by f to (fz, fs)); the strict
+    parser takes it and rejects an outline whose table is there and wrong; `photoStickerItem` turns
+    it into sticker rows (`sampler.rowShiftMm`, Y = z1 - z); `kip-print-stickers.js` applies it
+    before its photo map and quietly ignores a table it cannot trust. Measured on the real spoon,
+    with a photo drawn from its mask: the share of the sticker that is table instead of spoon
+    falls from 3.45% to 0.37%, about ninefold. What is left is the resolution of a 288 by 512
+    photo (the cut line is within half a photo pixel, 0.14 mm, of a hard-edged mask along the
+    handle), which no slide can remove. Where the symmetric outline came from the blend (a star's
+    arms, a notch) there is no row table and so no slide.
+    *Limits found.* The legalizer's own low-pass filter can leave a hairline notch row (0.19 mm
+    wide) at a sharp concave corner, and a shape with a real crevice (a step beside a rounded head)
+    has rows of two pieces; both send the shape to the blend, which in `mirror` mode may refuse as
+    `parts_lost`. Bridging hairline gaps would help the first and was left out. The legalizer keeps
+    one connected piece, so separate parts never reach this module.
+    *The daemon's own L4 symmetry (above) also runs on a photo outline*, because it runs on every
+    `profile2d` that reaches the gate. Measured with its own function: an outline that is exactly
+    symmetric (what this module produces, also after the fit loop's scale and flip) is left alone,
+    and `tests/forge/profile-points.test.ts` now pins that on the real daemon. An outline that is
+    only nearly symmetric is rewritten there: the paddle with `symmetry: "off"` (overlap 0.997)
+    went from 112 points to 63, and the plate then no longer matches the sticker's cut line. This
+    module's automatic mode makes most such outlines exact first, so it can only happen with
+    `symmetry: "off"`, or when this module declines an object the daemon accepts (a move over
+    1.0 mm on a large object). Fixed with Dan's approval (2026-11-02): the daemon's
+    `SYMMETRY_MAX_POINTS` was 64, the old profile2d contract, which squeezed a 112-point outline to
+    63 and left its `iou_after` at 0.997; it is now 256, and the same outline comes back with 114
+    points and 1.0 (`tests/forge/profile-points.test.ts`, on the real daemon). The notes are on the
+    job record (`legalizer.symmetry`) and the Worker's `scrubJobOutput` used to drop them; it now
+    passes that one note and nothing else of the daemon's legalizer notes, four fields with fixed
+    types (`action`, `iou_before`, `iou_after`, `points`; `legalizer` is `null` when there is none).
+    `forgeRouteGate` reads it into the verdict (`daemonSymmetry`), and `preparePhotoAccessory`
+    reports a rewrite (`mirrored_left_half` or `mirrored_right_half` on the job that made the plate)
+    as `gateRewrite` and the outline warning `GATE_REWROTE_OUTLINE`: the plate then differs from
+    the outline and the sticker, more the lower `iouBefore` (the outline's own overlap with its
+    mirror image) was. Only the final job counts. A rewrite still
+    happens for a near-symmetric outline when symmetry is off or declined here; it is now exact,
+    full-resolution and reported, not squeezed and silent. Not done: making the plate and the sticker
+    agree in that case (the daemon does not send back the points it built from).
+    Tests: `tests/outline-symmetry.test.ts` (64, nine of them for the slide): detection table, exact twins, an independent
+    mirror-overlap check, per-row averaging, the off-axis thin part, the real spoon and cup, the
+    centre of mass carried through the photo map, fidelity against a separately computed overlap,
+    hand-drawn outlines for the cases the legalizer cannot produce (a lump, a long spike), and the
+    scan and button wiring. Mutation testing: 32 mutants, 21 caught the first time; the 11
+    survivors were nine test gaps (centring, fidelity, the 15% cap, `parts_lost`, mirror versus
+    auto in the scan and the button), now closed and all killed, and two dead lines (a reversal of
+    the half that never ran, a negative-zero guard that cannot occur), removed after a throwing
+    probe showed neither fires on any test or variant. Because auto is now the default, the
+    photo-fit tests that compare against the raw trace are pinned to `symmetry: "off"`. The slide:
+    30 mutants across the table's frame, flip and resize, the sticker conversion, the parser and the
+    renderer, all caught (one needed a new test, for rows that repeat a height). The strongest
+    check is independent of the module: each vertex of the symmetric outline, slid and carried
+    back through the photo, must land on the original traced outline (within 0.08 mm on the
+    spoon, a leaning bumpy paddle and a bumpy paddle; a one-row tolerance on a square lump, whose
+    vertical steps no single slide can satisfy within one 0.05 mm row).
+  - **The print panel (2026-11-03, uncommitted).** The screen over `preparePhotoAccessory`:
+    `parts/kip/viewer/kip-photo-print.js` (buttons and pictures only) over
+    `shared/photoPrintFlow.ts` (every decision, bundled by `scripts/build-kip.ts` into
+    `public/kip/kip-photo-print-core.js`, 36 KB). It lives in the Kip viewer, in the existing
+    Photo-to-Accessory modal's neighbourhood and for the hand slot only (`profile2d` is
+    hand-only), and has its own full-aspect photo picker, because that modal crops its photo
+    to a 256 px square and would cut a spoon in half. Steps: what is it (a word, at most 60
+    characters) and a photo (shrunk to 512 px for the helper, 1024 px kept in memory for the
+    sticker) and a size of 30 to 90 mm; find the shape (one request, to `/api/scan` only); the
+    cut line drawn on the photo with flip, bigger and smaller and, when the scan did not
+    already do it, "make both sides the same" (`previewChoices` applies the choices in the
+    print step's order and a test pins that the first gate call gets exactly the previewed
+    points); the grown-up question (the app's parent gate, proof kept in the closure); the fit;
+    then the plate (.stl) and the sticker sheet (.pdf, .png, .svg, .dxf) as downloads.
+    Every message is one calm sentence written in the flow module, never a server's words or a
+    raw code (`hintsFor` turns the outline's warnings into sentences and says nothing for a code
+    it does not know). The screen copy says the photo goes to the online helper and that our
+    server does not keep it, which is the Worker's behaviour only (decision 0007 says not to
+    promise more until the provider's terms are in); question 26 stays open for a public release.
+    *Two findings, both fixed (2026-11-03).* (1) The Worker's own limiter refused the fourth gate call
+    in a minute with `429` and no `retry-after`, and a refused call counts as a hit, so asking again
+    at 20 s only extended the lock-out. A fit that needs four calls (the real spoon does) cannot
+    finish in one go under a limit of three a minute, so the flow waits out a refusal, shows the
+    countdown, and asks the same call again, and renews an expired grown-up check through the screen
+    in the middle of the fit. The Worker now names the wait: `forgeRateLimitWait` returns the
+    seconds until a call would be let in (the hit `limit` places from the end of the window is a
+    window old, plus a second's rounding up; the address's budget is counted too and the longer wait
+    wins) and the 429 carries it as `retry-after`; a test shows that a call at the named time is
+    let in and one a second sooner is not, over 500 random call patterns. Without a time (an older
+    Worker, or any other 429) the flow waits a full window and a second, 61 s. A spoon through the
+    panel therefore waits a little under a minute at the fourth call and no longer. (2) The sticker
+    fringe: see "The per-row slide" under the symmetry note above. In the real bench page the
+    bowl's arc of table is gone; what is left on a 2 mm handle is the photo's own resolution.
+    *In the Kip page.* The Photo modal's button row has a "Print it" button
+    (`btn-print-photo`, in `parts/kip/viewer/kip-bench.js`, where the page's script lives since
+    Workshop stage 4a). The bench loads the panel with a dynamic `import()` on the first click, not a
+    static import, so the bench loads the same with or without the generated bundle; the panel
+    gets the bench root, is published as `kipPhotoPrint`, and is disposed by the bench's teardown
+    (a test pins each of these). `scripts/build-kip.ts` copies the panel and bundles the flow
+    module, and `tests/photo-print-flow.test.ts` rebuilds the bundle and compares it with the
+    committed `public/kip/kip-photo-print-core.js`, so a stale copy fails a test. Seen only in
+    the real page: the bench has a bare `canvas { width: 100%; height: 100% }` rule for its 3D
+    view, which stretched the photo canvas to the card's width and pushed the buttons off screen;
+    the panel now sets its canvas size itself and the e2e checks the size and that the main
+    buttons are on screen, inside the bench, at the cut-line step and at the done step.
+    Tests: `tests/photo-print-flow.test.ts` (110: request, scan against scripted replies and the
+    real `/api/scan` with the captured spoon, the gate client, the print step through the real
+    Worker and a misbehaving backend, the previews, the page wiring, the panel's own promises
+    read from its source); 58 mutants on the flow module, 57 caught, the survivor
+    equivalent (a rethrow into the same `try`); the wiring tests read text and were not
+    mutated, because the files they read belong to another session's live suites.
+    `scripts/e2e-kip-photo-print.mjs` (52 checks, `npm
+    run e2e:kip-photo-print`): headless Chrome drives the panel against the REAL Worker routes
+    (parent gate, forge routes, allowlist, scrub, limiter) with only the model provider and the
+    daemon stood in, using the real spoon's mask drawn as a photo; it checks that nothing is sent
+    before "Find the shape", the one scan request, the cut line on the photo, the gate with a
+    wrong answer, the proof on every forge request, no photo in the forge request, the plate
+    link byte for byte, the sticker PNG, no cookie or storage write, a daemon that is down as a
+    calm sentence, Escape, and `dispose()`; and then in the real Kip bench page: the button, the
+    panel inside the bench root, the whole way to the done step, and disposing the whole bench
+    with the panel open leaves nothing of it in the page. Of its 52 checks one is the fringe on
+    the sticker picture the child gets, calibrated in-process against the same spoon with and
+    without the slide. The other Kip suites pass with the new button in the page (menu 41,
+    workshop 43, print 29, bench lifecycle 32). Not yet done: a real print-and-stick, and the
+    budget question (30 f): the exact retry time makes a four-call fit workable, it is not a
+    bigger budget.
   - C4 orientation: long axis to z, handle end down, with a flip button. The kid
     decides which end is the handle; the model is not asked.
 - **Relief ("puffy").** The builder's crest is one level. Repeating the inward
@@ -758,8 +917,10 @@ What the compiler accepts decides the routes (read in the code, 2026-11-02):
    decision in question 31 (a): `shared/outlineScan.ts` and the opt-in on `/api/scan`
    (`tests/outline-scan.test.ts` and `tests/scan-outline-worker.test.ts`, 85 tests, 37
    of 37 mutants caught). The device's print step is built too, as one function
-   (`shared/photoAccessory.ts`, the print-step note under Route A). Not built: a
-   screen that calls it, and a budget for the fit (question 30 f). Still to do:
+   (`shared/photoAccessory.ts`, the print-step note under Route A). The screen that
+   calls it is built too and is in the Kip page's Photo modal (2026-11-03, see "The print
+   panel" under Route A). Not built: a budget for the fit (question 30 f).
+   Still to do:
    Route A on the flat objects among the 10 F2 photos.
 3. **Built for the path and the photo map (2026-11-02, uncommitted):**
    `shared/outlineSticker.ts` with `tests/outline-sticker.test.ts` (28 tests, 8
@@ -767,7 +928,7 @@ What the compiler accepts decides the routes (read in the code, 2026-11-02):
    plans with, and the map from the photo onto it. The artwork is built too (see the
    artwork note under "Colour on a one-colour printer"): the sheet module has a
    `photo_accessory` decal and a `photo_outline` sampler, and the print step builds the
-   decal. Still to do: a screen that hands over the device's photo, and sticking a
+   decal. The screen that hands over the device's photo is built (the print panel). Still to do: sticking a
    real sticker on a printed plate.
 4. The relief spike (question 28).
 5. Route B profile extraction.
@@ -1338,6 +1499,189 @@ same prompts can be compared.
   no-studs dome heads `r7_h03d`, `r7_h04d`, `r7_h08d`; the straightened bunny with
   studs now sits 12 mm further apart than before, a 37 mm wide head, because an
   upright 8 mm ear needs about 11 mm of clear space beside the studs.
+- **Forge heads against the catalog (Kip) heads (Dan, round 7: "the heads are very
+  narrow, how do they compare to the latest kip heads on other angles").** Measured
+  from `public/kip/partspec/toyventor_*head*_S.stl`: the twelve catalog heads are
+  38 to 55 mm wide, 27 to 38 mm deep and 32 to 38 mm high, 19,000 to 31,000 mm3. The
+  forge heads are 25 to 31 mm wide (37 with the bunny's ears), 13 mm deep, 30.5 to
+  33 mm high, about 9,000 mm3: under half the volume, a third to half the depth. A
+  Kip kid head grows from the 26 x 12.7 mm collar to 38 x 26 mm at z 15 and keeps
+  that to z 25; forge heads stay at the collar size. Three causes. (1)
+  `character_head` clips the back flat at y <= +6.15 over the whole height ("to
+  clear backpacks"), where the catalog heads reach y +12.6 to +18.4 above z 5. (2)
+  Prompt v3's upright-face rule (depth 12 to 16, y 0, there so a snout can attach)
+  and examples near the collar size keep Spark slim. (3) L2 only shrinks, so a
+  head in the 31.75 to 34.9 mm band is made smaller, where a Kip-sized head wants to
+  grow a little to clear it. It is not the 41 degree flare limit: a recipe copied
+  from the kid head's own slices (26 x 12.7 growing to 38.1 x 25.7) builds with no
+  blocking gate failure; with the clip it comes out D-shaped from above (front
+  -14.5, back +6.2). Pictures (front, side, top): scratchpad `kip-views.png`.
+  **Fixed (Dan said yes to all three, same day).** (1) SDK: `character_head`'s rear clip
+  is now a ramp, y <= +6.15 at the collar growing 0.78 mm per mm of height up to 20
+  mm behind the neck centre (`HEAD_REAR_RAMP`, `HEAD_REAR_MAX_MM`); only the forge
+  daemon calls it, the catalog heads are built elsewhere. A first version with a hard
+  step at z 3 left a 24 mm2 flat ledge (P4); the ramp has the loft's own slope so
+  it adds none. The kid-profile head now reaches y +12.6, like the catalog kid. (2)
+  Prompt v4 (`--prompt v4`, `--print-prompt` prints it): heads are "BIG and ROUND,
+  38 to 55 mm wide and 26 to 38 deep", the kid head's seven slices are given as the
+  standard, the sizes 31.75 to 34.9 are called out, and the v3 "keep d 12 to 16 and
+  y at 0" rule is replaced by "the front may move forward at most 0.5 mm per mm of
+  height" after checking that snouts attach (beak, muzzle and bill, no drops) to
+  Kip-shaped heads with a 22 degree forward lean. (3) L2 can grow a head: for
+  heads it now also searches a growth of up to 25% that clears the band's top edge
+  (cylinder x 1.10 + 0.4 mm) and takes the smaller change, with growth winning up
+  to 1.3 x the shrink; the note says `direction`. The Kip-profile head measured
+  34.77 mm and now grows 11% to 35.3 mm (above the cylinder) instead of shrinking
+  21%; a head at 32.3 mm still shrinks 5%. Note the measure is the smallest
+  cylinder around the part, so it depends on height as well as width, which is
+  why growth needs about 11% for 0.6 mm. **Spark v4 on the 8 head prompts:** 8
+  of 8 on the first attempt (v3: 8 of 8), 1.0 calls, job p50 16.5 s and p95 44 s,
+  L2 grew the dinosaur 10%. Sizes now 40 to 59 mm wide (robot and alien 57 to 59
+  because their antennae count), 27 to 31 mm deep, 33 to 44 mm high, 22,000 to
+  30,000 mm3, against the catalog's 38 to 55 x 27 to 38 x 32 to 38 and 19,000 to
+  31,000 mm3. On the taste page as `r8_h01` to `r8_h08`, not yet rated. Ears and
+  studs are small next to the bigger heads. Not done: the Spark run covered the
+  heads only, so the crown prompts did not change; the worker and shared types
+  still drop `shape.top`.
+- **Round crowns (Dan, round 2: five-point crown "does not look like a crown at
+  all, crowns should be round"; same day, after "continue").** The loft is one
+  convex hull, so points on it were a bumpy cone. Two crown ops, built in the daemon
+  without touching the SDK: `spikes` with `layout: "ring"` (3 to 12 points, `base_mm`
+  3 to 9, `wall_mm` 1.6 to 4) and `hollow` (`wall_mm`, `depth_mm`, a pot or bowl
+  hat). Both carve an open-top pocket (`_hollow_pocket`: the top outline inset by
+  the wall, floor at least 4 mm above the socket seat, open upward so it prints
+  without help); the ring then puts `count` wedge-shaped teeth round the rim
+  (`_ring_teeth`), the first at the front centre so the crown is mirror symmetric,
+  each a flat foot as wide as the wall rising to a small tip, so every face is
+  steeper than 45 degrees. A ring on a top too small to hollow is reported in
+  `features_dropped` (`hollow`). Two traps: the carve left hair-thin triangles that
+  export as zero-volume bodies (G1, G3), fixed by `simplify(0.03)` after the carve
+  and after the teeth, and a hull to a tiny sphere tip did the same, so the tips
+  are small boxes. A round body is w = d = 26 from z 9.5 up (it can only grow
+  from the 23.8 x 11.6 pad at 0.78 mm per mm), a flared cup, which also reads as a
+  crown. Prompt v5 (`--prompt v5`) documents both ops and gives the standard round
+  crown's slices. **Spark v5 on the 14 crown prompts:** 13 of 14 first attempt, 14 of
+  14 final, 1.07 calls, p50 16.6 s; the five-point crown came out as a ring crown
+  (26 x 26 x 27 mm, `spikes:ring`); the space helmet used `hollow` on a dome, an
+  open cup, which is probably wrong for a helmet. The others are unchanged in kind.
+  Taste page: `r9_c04`, `r9_c11`, not yet rated. Not done: stars for the wizard
+  hat; the worker and shared types do not know `hollow` or the ring layout yet
+  (they drop them).
+- **Dan's ratings of rounds 7 to 9 (2026-11-02, late) and the changes they led to
+  (2026-11-03).** Round 7: the sturdy bunny with studs 3, and the three no-studs dome
+  heads (bunny, cat, bear) **all 5**. Round 8, the Kip-sized heads: robot 3 and alien
+  3 ("antenna are too thin"), astronaut 2 (same note), bunny 2 and cat 2 ("ears will
+  block studs"), dinosaur 1, pumpkin 1, bear 5. Round 9: the ring crown 3 ("triangles
+  are not smooth on seam to crown"), the hollow helmet 1. Then, in chat: the wizard
+  hat "still has no star on top" and the five-point crown "is still not a crown".
+  Changes, all in the daemon, with tests: (1) **`star` op** (crowns): an upright
+  five-point star on the very top, plump (inner radius 0.55 of the outer one) with the
+  lower inner vertex pulled into a 54 degree stem that goes 1.5 mm into the hat, so
+  nothing under it is shallower than 45 degrees (a plain star's lower legs have a
+  24 degree underside and failed P1). A winding trap: the stem polygon first ran
+  clockwise, which `CrossSection` reads as empty, so the star floated. (2) **Zigzag
+  crown rim** replaces the thorn teeth: each of `count` (4 to 12) points is built
+  straight, as a trapezoid with a 1 mm flat tip, then bent round the rim with
+  `warp_batch`, so the rim is one smooth zigzag with no seam; neighbouring points
+  overlap by 0.4 mm, the teeth sit 0.1 mm inside the wall (a 0.03 mm step collapsed
+  under the 0.03 mm simplify into slivers), and a 3-point crown still left slivers,
+  so the minimum is 4. (3) **Ears keep clear of the whole hat seat** (the 2x1 crown
+  pad, 24.4 x 11.9 mm, plus 1 mm; it was the two studs plus 1.5 mm, which let the
+  Kip-sized heads' ears stand in the pad column). (4) **Antennae**: a head's horn is
+  at least 5.5 mm thick at its base (`HEAD_HORN_MIN_BASE_MM`) and prompt v5 tells Spark
+  6 mm. (5) **Ear root ramp**: three faults found by the new Spark run (the bear
+  failed P1 on all four attempts): the ramp was sized from the head's width at the
+  ear's height rather than the narrower width where it ends; its slope was measured
+  between sphere centres, but the outer tangent is shallower (43, not 52 degrees);
+  and the check ignored the part below z 6. It now ends inside the narrowest wall
+  along its drop, runs at a rise of 1.7 per run, stays 3 mm over the bed, and every
+  candidate is checked with the gate's own measure (`toyventor_parts.overhang_area`,
+  under 1.0 mm2) on the real head with the pair on it. (6) **Prompt v5** also keeps
+  `hollow` for bowl, pot and basket hats only, so a helmet stays a closed dome.
+  **Spark v5 on the 14 crown and 8 head prompts:** the wizard hat used `star`, the
+  five-point crown used the ring, the helmet is a closed dome, robot, alien and
+  astronaut have 6 mm antennae; all 11 recipes that changed (wizard, crown, helmet,
+  the heads) print_ready with design verified under the final daemon. 39 forge tests.
+  Round 10 on the taste page: `r10_c01`, `r10_c04`, `r10_c11`, `r10_h01` to
+  `r10_h08`. **Not fixed:** the dinosaur (1): its muzzle is built but only about
+  3 mm long, because a support-free ramp from a front that leans forward cannot be
+  long (z_tip - 2 mm, over the ramp slope); a long snout needs supports on the show
+  face (the print-plan call flagged earlier). The pumpkin (1) is a plain slab: it
+  needs lobes, which no op makes. The wizard hat's "little stars" are one star on
+  the tip, not several on the sides.
+- **Round 10 ratings (2026-11-02, late) and round 11.** Zigzag crown **5**, wizard
+  hat with a star 4, bear 5, closed helmet dome 3, robot, alien and astronaut 3 (no
+  note: the thicker antennae fixed the earlier "too thin"), bunny 2 and cat 2 ("ears
+  will block studs, move ears further apart"), dinosaur 1 ("no snout"), pumpkin 1
+  ("blank"). Changes, with tests: (1) the seat margin is 3.5 mm, not 1.0, so ears
+  keep clear of a 26 to 30 mm hat: the round crown reaches 13.0 mm each side of
+  the centre and the pad is 12.2. (2) **Snout**: it is moved up the face, 1.5 mm at a
+  time, before it is shortened, and `features_adjusted` says so. A 14 mm muzzle
+  used to be shortened to about 3 mm; it now sticks out about 10 mm (8.5 after the
+  size check), high on the face where a support-free ramp fits. (3) **`ribs` op**
+  (heads only): `count` 6 to 12 vertical grooves (`width_mm` 2 to 6, `depth_mm` 0.8
+  to 3.5) round the sides, front centre skipped so it stays smooth for decals;
+  each groove follows the wall as a chain of spheres ending in a point (ceiling 62
+  degrees) so it prints without help. Trap: a groove centred exactly on the faceted
+  wall grazed it and left 40 zero-volume bodies (G1, G3); the centre is now at
+  least 0.25 mm inside the wall. Prompt v5 gives Spark the pumpkin recipe (count 8,
+  5 wide, 3 deep). A head needs about 5.5 groove widths of wall height or the op is
+  reported in `features_dropped`. **Brand check for the owner:** ribs are relief on
+  the head shell, like the snout; the front stays smooth, but whether a custom
+  head may carry them is a product call. **Spark v5 on the 8 heads:** 7 of 8 on
+  the first attempt (the pumpkin failed P1 once and was repaired), 8 of 8 final,
+  1.13 calls; all 8 print_ready under the final daemon. 40 forge tests. Round 11
+  on the taste page: `r11_h01` to `r11_h08`.
+- **Round 11 ratings and round 12 (2026-11-03).** Bunny **5**, cat **5** (ears
+  3.5 mm further from the hat seat worked), alien 4, robot 3, astronaut 3, pumpkin 3
+  (ribs: 1 to 3), dinosaur 2 ("weird snout", up from 1), bear **1** with no note. The
+  bear had no ears: the ear fitter rejected every lowered placement as "wider than
+  asked", because on a head that widens downward lowering an ear moves it outward,
+  and dropped the pair; the job reported it in `features_dropped`, which nobody
+  sees in the render. Fixes: only the marginal small-parts band (31.75 to 34.9 mm
+  across) is avoided, not "wider than asked"; and a pair that cannot be fitted now
+  stays where it was asked, with a note, instead of vanishing (losing the ears
+  is worse than ears that touch the hat seat). A second fault showed once the ears
+  were back: the root ramp's lowest sphere stuck out 1.6 mm2 at z 8, because the
+  wall was sampled at the sphere's centre but its bottom is 4.8 mm lower where the
+  head tapers in; the ramp now also samples the wall under the sphere. Regression
+  test: a bear widest part way up keeps its ears. The dinosaur's snout is the best the
+  support-free rule allows (8.5 mm out, high on the face); blunter tips came out
+  shorter (5.5 to 6 mm), so the current shape stays. A snout that looks right
+  needs a flat underside and therefore supports on the face (the print-plan call).
+  41 forge tests. Round 12 on the taste page: `r12_h08`, the bear with its ears,
+  which Dan rated 5 ("bear is good").
+- **Inspiration review: Sketchfab (2026-11-03, Dan: "all the heads are too basic,
+  I'd like more variety").** Dan gave a Sketchfab API key (kept only in a temporary
+  file in the scratchpad, not in the repo or memory). 24 searches of the form
+  "cute ... head" (dinosaur, cat, dog, bear, bunny, fox, panda, owl, dragon, robot,
+  alien, monster, pumpkin, frog, pig, penguin, unicorn, monkey, lion, elephant, shark)
+  returned 226 usable results after dropping restricted, very heavy (over 80,000
+  faces) and irrelevant ones. Only titles, licences, likes, links and small
+  thumbnails were fetched, no models, because Sketchfab content is fine for browsing
+  as inspiration but not for training (NoAI tags, Creative Commons leakage; see
+  "Data plan"). The relevance of the search is poor (full characters, hats, swords),
+  so the page groups and filters them. Private gallery with a heart on each:
+  https://claude.ai/artifact/RtLEyJBkvkjurFRubkE8ju (hearts go to the page's `picks`
+  collection). What the examples have that ours do not: (1) **body shape**: round,
+  squat "emoji" heads with a rounded chin and a muzzle bulge, where ours are boxy
+  slabs; the catalog (Kip) heads vary a lot too (fox, bear, cat, alien, chibi, jumbo,
+  tall, imp, dragon, robot visor and scout) but the v4/v5 prompt gives Spark one
+  profile (the kid head). (2) **Ears**: tall bunny, round side ears at mid height
+  (monkey, panda, bear), pointed (fox, cat), big flaps (elephant), floppy, owl tufts.
+  (3) **Muzzles and noses**: pig snout disc, fox and dog cone muzzle, bills and
+  beaks (duck, penguin, owl), ball noses. (4) **Cheeks and manes**: fox cheek tufts,
+  lion mane ring. (5) **Horns**: a single unicorn horn, swept-back dragon horns,
+  antlers; robots with ball-tipped antennae and headphone cups. (6) **Crests and
+  spines** along the top for dinosaurs and dragons (on the no-studs head, where
+  nothing sits on top). (7) Spots, eye patches and faces are decals (the face
+  insert), not geometry. Candidate work, cheapest first: a **head library** in the
+  prompt (measured slice tables for all 12 catalog heads, named) instead of the
+  single kid profile; new **ear styles** (side round, flap, floppy); **horn styles**
+  (single, swept) and ball-tipped antennae and headphone cups; **cheek tufts**
+  (down-pointing leaves, steeper than 45 degrees); a **nose ball or disc** and a
+  **crest** for dome heads. A flat-bottomed snout or disc nose still needs the
+  print-plan decision on supports.
 - **Reading:** the taste gate is still tripped for heads and partly lifted for
   crowns. The parts still at 1 or 2 are body-shape problems (dome helmet,
   astronaut, pumpkin, wizard cone, chef puff, fez), which the feature ops cannot

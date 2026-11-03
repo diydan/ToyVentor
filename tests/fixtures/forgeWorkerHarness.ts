@@ -56,6 +56,8 @@ export interface DaemonOverrides {
   previewStatus?: number;
   previewHeaders?: Record<string, string>;
   jobStatus?: string;
+  /** The `legalizer` field of each job record, one per preview like the reports (the last repeats); the real daemon puts its notes there. */
+  legalizers?: unknown[];
   /** A plate the passing jobs report and the artifact route serves. */
   plate?: { name: string; bytes: Uint8Array };
   artifactStatus?: number;
@@ -68,6 +70,7 @@ export function fakeDaemon(reports: unknown[], overrides: DaemonOverrides = {}) 
   const recipes: any[] = [];
   const artifactRequests: string[] = [];
   const jobs = new Map<string, unknown>();
+  const legalizers = new Map<string, unknown>();
   const json = (body: unknown, status = 200, headers: Record<string, string> = {}) =>
     new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json", ...headers } });
   const spy = vi.spyOn(globalThis, "fetch").mockImplementation(async (input, init) => {
@@ -78,6 +81,7 @@ export function fakeDaemon(reports: unknown[], overrides: DaemonOverrides = {}) 
       recipes.push(body);
       const id = `fjob_${String(recipes.length).padStart(12, "0")}`;
       jobs.set(id, reports[recipes.length - 1] ?? reports.at(-1));
+      if (overrides.legalizers) legalizers.set(id, overrides.legalizers[recipes.length - 1] ?? overrides.legalizers.at(-1));
       return json({ ok: true, status: "preview_ready", part_id: "custom_photo_outline", job_id: id, draft_artifact: "", glb_size: 1, orig_tris: 1, web_verts: 1, web_tris: 1, finish_class: "show_curved", elapsed_ms: 1 });
     }
     const m = /^\/v1\/jobs\/(fjob_[a-f0-9]{12})$/.exec(path);
@@ -92,6 +96,7 @@ export function fakeDaemon(reports: unknown[], overrides: DaemonOverrides = {}) 
         part_id: "custom_photo_outline",
         status,
         gate_report: report,
+        ...(legalizers.has(m[1]!) ? { legalizer: legalizers.get(m[1]!) } : {}),
         ...(plate ? { stl_artifact: plate.name, glb_artifact: plate.name.replace(/\.stl$/, ".glb"), content_hash: plate.name.split(".")[1] } : {}),
       });
     }

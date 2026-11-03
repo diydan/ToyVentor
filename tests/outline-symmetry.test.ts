@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
-import { AXIS_MAX_DEG, detectSymmetry, LUMP_MAX_SHARE, MAX_MOVE_MM, symmetrizeOutline } from "../shared/outlineSymmetry";
+import { AXIS_MAX_DEG, detectSymmetry, LUMP_MAX_SHARE, MAX_MOVE_MM, MAX_ROW_SHIFT_POINTS, rowShiftOf, symmetrizeOutline } from "../shared/outlineSymmetry";
 import { parseScanOutline, parseScanOutlineRequest, scanOutline, type ScanOutlineSuccess } from "../shared/outlineScan";
 import { preparePhotoAccessory } from "../shared/photoAccessory";
 import { applyAffine, invertAffine, legalizeOutline, type OutlineOptions, type OutlineSuccess, withFlipped, withScaled } from "../shared/photoOutline";
@@ -442,6 +442,215 @@ describe("mirror mode on hand-drawn outlines", () => {
     const { outline, report } = symmetrizeOutline(before, { mode: "mirror" });
     expect(outline).toBe(before);
     expect(report.reason).toBe("parts_lost");
+  });
+});
+
+// ---- the per-row slide ---------------------------------------------------------------------------------------------------
+// The symmetric outline keeps each row's width and centres it on the axis, so the photographed object sits sideways of it by a
+// different amount in each row. `rowShift` is that amount, so a sticker can be drawn from the photo without a fringe of background.
+
+/** The slide at plate height z, interpolated between the pairs, constant beyond the ends. Written here, not taken from the module. */
+function slideAt(table: readonly Pt[], z: number): number {
+  if (z <= table[0]![0]) return table[0]![1];
+  const last = table[table.length - 1]!;
+  if (z >= last[0]) return last[1];
+  for (let i = 1; i < table.length; i++) {
+    if (z <= table[i]![0]) {
+      const [z0, d0] = table[i - 1]!;
+      const [z1, d1] = table[i]!;
+      return d0 + ((z - z0) / (z1 - z0)) * (d1 - d0);
+    }
+  }
+  return last[1];
+}
+
+function distToPolygon(poly: readonly Pt[], [px, pz]: Pt): number {
+  let best = Infinity;
+  for (let i = 0; i < poly.length; i++) {
+    const [ax, az] = poly[i]!;
+    const [bx, bz] = poly[(i + 1) % poly.length]!;
+    const dx = bx - ax;
+    const dz = bz - az;
+    const len2 = dx * dx + dz * dz;
+    const t = len2 === 0 ? 0 : Math.max(0, Math.min(1, ((px - ax) * dx + (pz - az) * dz) / len2));
+    best = Math.min(best, Math.hypot(px - (ax + t * dx), pz - (az + t * dz)));
+  }
+  return best;
+}
+
+/** Where the photo is read for plate point (x, z) of `o`: the photo pixel behind (x + slide(z), z). `dz` reads the slide that far up or down the table. */
+function photoPixelFor(o: OutlineSuccess, [x, z]: Pt, dz = 0): Pt {
+  const back = invertAffine(o.photoToPlate)!;
+  return applyAffine(back, x + (o.rowShift ? slideAt(o.rowShift, z + dz) : 0), z) as Pt;
+}
+
+/**
+ * The largest distance, in the OLD outline's millimetres, from the old traced boundary to where each vertex of the new outline reads the photo.
+ * `rowTol` lets a vertex take its slide from anywhere within that many millimetres of its own height: only a vertical step needs it, where the
+ * slide jumps by millimetres between two rows 0.05 mm apart and a vertex 0.02 mm from the step cannot read a single right value.
+ */
+function worstMissFromTrace(before: OutlineSuccess, after: OutlineSuccess, rowTol = 0): number {
+  let worst = 0;
+  const dzs = rowTol > 0 ? [-rowTol, -rowTol / 2, 0, rowTol / 2, rowTol] : [0];
+  for (const v of after.points as Pt[]) {
+    let best = Infinity;
+    for (const dz of dzs) {
+      const [px, py] = photoPixelFor(after, v, dz);
+      const old = applyAffine(before.photoToPlate, px, py) as Pt; // that photo pixel, on the old plate
+      best = Math.min(best, distToPolygon(before.points as Pt[], old));
+    }
+    worst = Math.max(worst, best);
+  }
+  return worst;
+}
+
+describe("rowShift: the slide that puts the photographed object on the symmetric outline", () => {
+  const TILTED = () => rasterize(400, 400, rotated(union(disc(200, 100, 80), rect(185, 170, 215, 380)), 200, 200, 8));
+  /** A paddle with bumps on one side, leaning 8 degrees: a big slide in every row AND a straightened axis, so the slide has to survive the turn. */
+  const TILTED_BUMPY = () => rasterize(400, 400, rotated(union(disc(200, 90, 70), rect(185, 150, 215, 380), disc(128, 92, 12), disc(188, 250, 7), disc(174, 330, 5)), 200, 200, 8));
+
+  it("without the slide the symmetric outline reads the photo off its edge; with it, every vertex reads exactly the traced edge", async () => {
+    const before = made((await realSpoon()).raster, { fillet_r_mm: 1.0, keepThinParts: true });
+    const { outline } = symmetrizeOutline(before);
+    expect(outline.rowShift).toBeDefined();
+    const noSlide = { ...outline, rowShift: undefined } as OutlineSuccess;
+    const missWithout = worstMissFromTrace(before, noSlide);
+    const missWith = worstMissFromTrace(before, outline);
+    expect(missWithout).toBeGreaterThan(0.3); // guard: the fringe was real, about the size of the move
+    expect(missWith).toBeLessThan(0.08); // the polygon's own sag (0.015) and the table's (0.01), and rounding
+  });
+
+  it("the same on a hand-drawn lump, whose map is the identity, and on a shape that leans, whose axis was turned", () => {
+    for (const [name, before, mode, tol] of [
+      ["lump (square: its walls are vertical steps, so a row's tolerance)", hand([-18, 12, 28]), "mirror", 0.06],
+      ["leaning bumpy paddle", made(TILTED_BUMPY(), { orient: "as-photographed" }), "auto", 0],
+      ["bumpy paddle", made(BUMPY), "auto", 0],
+    ] as const) {
+      const { outline, report } = symmetrizeOutline(before, { mode });
+      expect(report.applied, name).toBe(true);
+      if (name.startsWith("leaning")) expect(Math.abs(report.axis.angleDeg), "guard: the axis was turned").toBeGreaterThan(3);
+      expect(outline.rowShift, name).toBeDefined();
+      const miss = worstMissFromTrace(before, outline, tol);
+      expect(miss, `${name}: the slide puts every vertex on the traced edge`).toBeLessThan(0.08);
+      expect(worstMissFromTrace(before, { ...outline, rowShift: undefined } as OutlineSuccess, tol), `${name} without it`).toBeGreaterThan(Math.max(miss * 3, 0.15));
+    }
+  });
+
+  it("is a table of at most 256 pairs, z strictly rising, inside the plate, each slide small, rounded to a micron", async () => {
+    const { outline } = symmetrizeOutline(made((await realSpoon()).raster, { fillet_r_mm: 1.0, keepThinParts: true }));
+    const t = outline.rowShift!;
+    expect(t.length).toBeGreaterThanOrEqual(2);
+    expect(t.length).toBeLessThanOrEqual(MAX_ROW_SHIFT_POINTS);
+    for (let i = 1; i < t.length; i++) expect(t[i]![0]).toBeGreaterThan(t[i - 1]![0]);
+    expect(t[0]![0]).toBeGreaterThanOrEqual(-0.1);
+    expect(t[t.length - 1]![0]).toBeLessThanOrEqual(outline.heightMm + 0.1);
+    expect(Math.max(...t.map((p) => Math.abs(p[1])))).toBeLessThan(MAX_MOVE_MM + 0.5);
+    for (const [z, d] of t) {
+      expect(Math.abs(z * 1000 - Math.round(z * 1000))).toBeLessThan(1e-6);
+      expect(Math.abs(d * 1000 - Math.round(d * 1000))).toBeLessThan(1e-6);
+      expect(Object.is(z, -0) || Object.is(d, -0)).toBe(false);
+    }
+  });
+
+  it("is absent when there is nothing to slide or no rows to read: a blend (the star), a refusal, and an outline already on its axis", () => {
+    const star = symmetrizeOutline(made(SHAPES.star()));
+    expect(star.report.applied).toBe(true);
+    expect("rowShift" in star.outline).toBe(false); // the blend has no rows to average
+    const lump = hand([-18, 12, 28]);
+    expect("rowShift" in symmetrizeOutline(lump).outline).toBe(false); // refused: the same object back
+    expect("rowShift" in made(SHAPES.paddle())).toBe(false); // an outline that was never symmetrized
+    expect(rowShiftOf([[0, 0], [10, 0.001], [20, 0]])).toBeUndefined(); // already on its axis
+  });
+
+  it("running it twice does not slide twice: the second pass returns the same object, table and all", () => {
+    const once = symmetrizeOutline(hand([-18, 12, 28]), { mode: "mirror" }).outline;
+    const again = symmetrizeOutline(once, { mode: "mirror" });
+    expect(again.outline).toBe(once);
+  });
+
+  it("flip and resize carry it: the photo pixel behind each vertex is the same after as before (spoon, lump, leaning shape)", async () => {
+    const spoon = symmetrizeOutline(made((await realSpoon()).raster, { fillet_r_mm: 1.0, keepThinParts: true })).outline;
+    const lump = symmetrizeOutline(hand([-18, 12, 28]), { mode: "mirror" }).outline;
+    const lean = symmetrizeOutline(made(TILTED_BUMPY(), { orient: "as-photographed" })).outline;
+    for (const [name, o] of [["spoon", spoon], ["lump", lump], ["leaning", lean]] as const) {
+      expect(o.rowShift, name).toBeDefined();
+      const zMax = Math.max(...o.points.map((p) => p[1]));
+      const flipped = withFlipped(o);
+      const scaled = withScaled(o, 0.8);
+      const both = withScaled(withFlipped(o), 1.15);
+      for (const [label, t, map] of [
+        ["flip", flipped, ([x, z]: Pt): Pt => [-x, zMax - z]],
+        ["scale 0.8", scaled.outline, ([x, z]: Pt): Pt => [x * scaled.factor, z * scaled.factor]],
+        ["flip then scale", both.outline, ([x, z]: Pt): Pt => [-x * both.factor, (zMax - z) * both.factor]],
+      ] as const) {
+        let worst = 0;
+        for (const v of o.points as Pt[]) {
+          const [ax, ay] = photoPixelFor(o, v);
+          const [bx, by] = photoPixelFor(t, map(v));
+          worst = Math.max(worst, Math.hypot(ax - bx, ay - by));
+        }
+        expect(worst, `${name}: ${label}`).toBeLessThan(0.15); // photo pixels; vertices are rounded to 0.01 mm
+        expect(t.rowShift, `${name}: ${label}`).toBeDefined();
+        for (let i = 1; i < t.rowShift!.length; i++) expect(t.rowShift![i]![0], `${name}: ${label} stays ascending`).toBeGreaterThan(t.rowShift![i - 1]![0]);
+      }
+      // Two half turns are the identity, to the rounding of the points.
+      const back = withFlipped(withFlipped(o));
+      expect(back.rowShift!.length).toBe(o.rowShift!.length);
+      for (let i = 0; i < o.rowShift!.length; i++) {
+        expect(Math.abs(back.rowShift![i]![0] - o.rowShift![i]![0])).toBeLessThan(0.02);
+        expect(Math.abs(back.rowShift![i]![1] - o.rowShift![i]![1])).toBeLessThan(0.002);
+      }
+    }
+  });
+
+  it("an outline with no slide stays without one through flip and resize", () => {
+    const plain = made(SHAPES.paddle());
+    expect("rowShift" in withFlipped(plain)).toBe(false);
+    expect("rowShift" in withScaled(plain, 1.2).outline).toBe(false);
+  });
+
+  it("rowShiftOf: a ramp is kept to within a hundredth of a millimetre, noise past the cap is thinned to it, and the order is rising", () => {
+    const ramp: Pt[] = Array.from({ length: 400 }, (_, i): Pt => [i * 0.05, 0.4 * Math.sin(i / 60)]);
+    const t = rowShiftOf(ramp)!;
+    expect(t.length).toBeLessThan(ramp.length / 3);
+    for (const [z, d] of ramp) expect(Math.abs(slideAt(t, z) - d)).toBeLessThan(0.0125);
+    let seed = 7;
+    const rnd = () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 2 ** 32);
+    const noisy: Pt[] = Array.from({ length: 2000 }, (_, i): Pt => [i * 0.04, (rnd() - 0.5) * 0.8]);
+    const thinned = rowShiftOf(noisy)!;
+    expect(thinned.length).toBeLessThanOrEqual(MAX_ROW_SHIFT_POINTS);
+    for (let i = 1; i < thinned.length; i++) expect(thinned[i]![0]).toBeGreaterThan(thinned[i - 1]![0]);
+    expect(rowShiftOf([[0, 0.5]])).toBeUndefined(); // one row is not a table
+    // Rows that repeat a height (a caller's mistake, not the pipeline's: its rows are 0.05 mm apart) never make a table the parser would refuse.
+    const dup = rowShiftOf([[0, 0.3], [0, 0.4], [5, 0.1], [10, 0.5]])!;
+    expect(dup.length).toBeGreaterThanOrEqual(2);
+    for (let i = 1; i < dup.length; i++) expect(dup[i]![0]).toBeGreaterThan(dup[i - 1]![0]);
+    const wire = JSON.parse(JSON.stringify({ ...made(SHAPES.paddle()), photoSize: { width: 640, height: 480 }, rowShift: dup }));
+    expect(parseScanOutline(wire)?.ok).toBe(true);
+  });
+
+  it("goes over the wire with the outline, and a table that is there and wrong makes the outline unreadable", async () => {
+    const { outline } = symmetrizeOutline(made((await realSpoon()).raster, { fillet_r_mm: 1.0, keepThinParts: true }));
+    const wire = (extra: object) => JSON.parse(JSON.stringify({ ...outline, photoSize: { width: 288, height: 512 }, ...extra }));
+    const read = parseScanOutline(wire({}));
+    expect(read?.ok && read.rowShift).toEqual(outline.rowShift);
+    expect(parseScanOutline(wire({ rowShift: undefined }))?.ok).toBe(true); // absent is fine (the outline of a blend, or an older Worker)
+    const t = outline.rowShift!;
+    for (const [name, bad] of [
+      ["not an array", "slide"],
+      ["a single pair", [t[0]]],
+      ["a pair of three", [[0, 0, 0], ...t.slice(1)]],
+      ["a string for a number", [["0", 0], ...t.slice(1)]],
+      ["z not rising", [t[1], t[0], ...t.slice(2)]],
+      ["z repeated", [t[0], t[0], ...t.slice(1)]],
+      ["a slide wider than the plate", [[t[0]![0], 60], ...t.slice(1)]],
+      ["z far above the plate", [...t, [500, 0]]],
+      ["z far below it", [[-50, 0], ...t]],
+      ["longer than the cap", Array.from({ length: MAX_ROW_SHIFT_POINTS + 1 }, (_, i) => [i * 0.3, 0])],
+      ["a number that is not finite", [[0, null], ...t.slice(1)]],
+    ] as const) {
+      expect(parseScanOutline(wire({ rowShift: bad })), name).toBeUndefined();
+    }
   });
 });
 
