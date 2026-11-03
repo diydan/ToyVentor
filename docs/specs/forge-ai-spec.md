@@ -163,6 +163,21 @@ rejected, numbers are clamped, nothing is executed.
   full-height column over the pad (a cut at the old box top left a flat underside
   that failed P4), and each cut candidate must still pass the gate's own overhang
   measure or the pair is left off.
+- **Worker to daemon, end to end (2026-11-03).** `tests/forge-worker-daemon.test.ts` sends
+  recipes through the real Worker routes (`/api/forge/preview`, the job route, the gated
+  artifact route) to the real daemon, nothing stubbed: a head with a brow and ears, the
+  universal cover and a cover sized to a head all come back `print_ready`, verified, with no
+  server path in any response. Before it, the Worker allowlist was tested against a stub and
+  the daemon directly, never together. Findings for whoever builds the app side: (1) **the
+  job route allows 30 polls a minute per device** (about one every 2 s); a client that polls
+  faster gets 429 with `retry-after`, and must wait it out. (2) **The parent-gate proof lasts
+  2 minutes** (`PROOF_EVERY_TIME_TTL_MS`) and a slow head job can take longer (the L2
+  small-parts rescale on a slim head took about 150 s), so a poll can come back 401 mid-job and
+  the grown-up must be asked again. (3) **Nothing in the app sends text to the Forge yet.** The
+  only UI caller of `/api/forge` is the photo-accessory print flow. The Describe and Build tab
+  calls `/api/describe` (Muse picks one of the checked build recipes), a different system.
+  The path text to Spark to recipe to daemon exists only in `scripts/forge-eval.ts`; the Worker
+  route takes a finished recipe, so F1 ("Describe it") is still to be built if it is wanted.
 - **Daemon race found 2026-11-03.** `parts/partspec/preprint_check.py` keeps the
   last ray-cast result in a module-level list (`_SAMPLED`), so two jobs gating in
   the daemon's two worker threads can read each other's hits: one of six
