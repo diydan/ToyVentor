@@ -975,6 +975,13 @@ export function mountSelfie(ctx) {
   }
 
   async function downloadSticker() {
+    // Under 'gated' (workshop.js) the host hands in its grown-up check: a picture of a child's face does not leave as a file until a grown-up has said yes.
+    if (ctx.askGrownUp) {
+      let ok = false;
+      try { ok = (await ctx.askGrownUp('sticker'))?.ok === true; } catch { ok = false; } // fail closed
+      if (!ok) { setError('A grown-up has to say yes before the sticker can be saved.'); return; }
+      setError('');
+    }
     try {
       const { png, svg } = await exportSticker();
       for (const [name, data, type] of [['kip-face-sticker.png', png, 'image/png'], ['kip-face-sticker.svg', svg, 'image/svg+xml']]) {
