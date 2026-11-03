@@ -12,7 +12,7 @@
 import * as THREE from "three";
 import { colorKeyFromHex, describeObject, languageInfo, type ColorKey, type Described, type LangCode, type NounKey } from "../../../../lib/propNames";
 import { getPropLang } from "../../../../lib/propSpeech";
-import { kindById, slotDirs } from "./treeKinds";
+import { kindById, kindFits, slotDirs } from "./treeKinds";
 import { prefetchObjectVoices, sayObject } from "../../../../lib/propVoice";
 import { sfx, sound, tone } from "./audio";
 
@@ -169,7 +169,7 @@ export const FRUIT: Record<FruitKind, { r: number; color: string; rough: number;
   plum: { r: 0.2, color: "#7a3b8f", rough: 0.35, glow: 0.2, noun: "plum", say: "purple" },
   strawberry: { r: 0.15, color: "#e8283c", rough: 0.45, sy: 1.15, glow: 0.2, noun: "strawberry", say: "red" },
   blueberry: { r: 0.11, color: "#3d5ad6", rough: 0.4, glow: 0.2, noun: "blueberries", say: "blue" },
-  coconut: { r: 0.17, color: "#6b4423", rough: 0.8, noun: "coconut", say: "brown" },
+  coconut: { r: 0.22, color: "#6b4423", rough: 0.8, noun: "coconut", say: "brown" },
   pumpkin: { r: 0.34, color: "#ff8a1f", rough: 0.6, sy: 0.8, glow: 0.2, noun: "pumpkin", say: "orange" },
   snow: { r: 0.2, color: "#f4f8ff", rough: 0.7 },
   berry: { r: 0.09, color: "#d62d4a", rough: 0.4, noun: "strawberry", say: "red" },
@@ -402,9 +402,9 @@ export function createPropFx(deps: PropFxDeps) {
     switch (inst.spec.use) {
       case "light": useLight(inst); break;
       case "fruit": useFruit(inst); break;
-      case "coconuts": burst(inst, "coconut", 2, 0.95, Math.max(0.5, inst.size.x * 0.25), 0.4); break;
+      case "coconuts": if (inst.slots.length) useFruit(inst); else burst(inst, "coconut", 2, 0.95, Math.max(0.5, inst.size.x * 0.25), 0.4); break;
       case "snow": burst(inst, "snow", 3, 0.55, Math.max(0.6, inst.size.x * 0.3), 0.2); break;
-      case "berries": burst(inst, "berry", 4, 0.9, Math.max(0.5, inst.size.x * 0.3), 2.2); break;
+      case "berries": if (inst.slots.length) useFruit(inst); else burst(inst, "berry", 4, 0.9, Math.max(0.5, inst.size.x * 0.3), 2.2); break;
       case "rain": useRain(inst); break;
       case "sprout": useSprout(inst); break;
       case "topple": useTopple(inst); break;
@@ -593,10 +593,11 @@ export function createPropFx(deps: PropFxDeps) {
         }
       });
     }
-    if (type === "tree") {
-      const tk = kindById(String(holder.userData.treeKind ?? ""));      // an orchard tree grows its own fruit; anything else grows apples as it always did
-      if (tk) { inst.fruit = tk.fruit; inst.fruitSlots = tk.slots; }
-      hangFruit(inst);
+    if (type === "tree" || type === "palm" || type === "bushes") {
+      // A tree, palm or bush built as a kind (treeKinds.ts) grows ITS fruit. A kind that does not fit the prop (a pear on a bush) is ignored; a plain tree grows apples as it always did.
+      const tk = kindById(String(holder.userData.treeKind ?? ""));
+      if (tk && kindFits(type, tk)) { inst.fruit = tk.fruit; inst.fruitSlots = tk.slots; hangFruit(inst); }
+      else if (type === "tree") hangFruit(inst);
     }
 
     holder.userData.propInst = inst;
@@ -637,6 +638,16 @@ export function createPropFx(deps: PropFxDeps) {
     return hit ? holder.worldToLocal(hit.point.clone()) : null;
   }
   function hangFruit(inst: PropInst) {
+    // A builder that knows exactly where its fruit hang (a palm: under the fronds) says so, as local positions in the holder; otherwise the fruit sits on the foliage surface.
+    const fixed = inst.holder.userData.fruitSlots as ReadonlyArray<readonly [number, number, number]> | undefined;
+    if (Array.isArray(fixed) && fixed.length) {
+      for (const p of fixed.slice(0, inst.fruitSlots)) {
+        const slot: Slot = { local: new THREE.Vector3(p[0], p[1], p[2]), mesh: null, regrowAt: 0 };
+        fruitAt(inst, slot);
+        inst.slots.push(slot);
+      }
+      return;
+    }
     const W = Math.max(inst.size.x, inst.size.z), H = inst.size.y;
     const rx = W * 0.4, rz = W * 0.36, ry = H * 0.2;
     const centre = new THREE.Vector3(inst.proxy?.position.x ?? 0, H * 0.64, inst.proxy?.position.z ?? 0);

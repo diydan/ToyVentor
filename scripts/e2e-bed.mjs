@@ -207,7 +207,7 @@ async function main() {
       await sleep(600);
       check("mind: tapping elsewhere drops the sleep and Kip goes where it was sent", (await phase(cdp)) === "awake", String(await phase(cdp)));
       await sleep(1500);
-      check("mind: and it never climbed or lay down", (await toySnap(cdp)).y === 0);
+      check("mind: and it never climbed or lay down (still on the floor; the world's little turn-around hop aside)", (await toySnap(cdp)).y < 0.3);
     } else check("mind: the bed was on screen", false, JSON.stringify(b2));
 
     // ---- 4. the bed is also the hiding place of the jetpack, and it stays when that part has been found (it used to vanish: the cover is only built for unfound parts) ----

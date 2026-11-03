@@ -97,6 +97,20 @@ export function kindsFor(world: string): TreeKind[] {
   return TREE_KINDS.filter((k) => k.worlds.includes(world));
 }
 
+/** Which crowns each kind of prop can grow: a `tree` prop the blob crowns, a `palm` the palm crown, a `bushes` prop the bush crown. A kind on the wrong prop is ignored (a pear on a bush is not a thing). */
+export const CROWNS_FOR_PROP: Readonly<Record<string, ReadonlyArray<CrownShape>>> = { tree: ["round", "tall", "wide"], palm: ["palm"], bushes: ["bush"] };
+export const kindFits = (propType: string, kind: TreeKind): boolean => !!CROWNS_FOR_PROP[propType]?.includes(kind.crown);
+
+/** Where a palm's fruit hang, relative to the top of its trunk where the fronds meet: under the fronds and in front of the trunk, so the camera sees them. The first `slots` of these are used. */
+export const PALM_FRUIT_OFFSETS: ReadonlyArray<readonly [number, number, number]> = [[0.3, -0.3, 0.34], [-0.28, -0.33, 0.36], [0.02, -0.4, 0.42]];
+export function palmFruitOffsets(kind: TreeKind): ReadonlyArray<readonly [number, number, number]> {
+  return PALM_FRUIT_OFFSETS.slice(0, Math.min(kind.slots, PALM_FRUIT_OFFSETS.length));
+}
+/** The two greens the fronds alternate between. The coconut palm's are the Beach's own, as `palm()` always drew them. */
+export function palmFronds(kind: TreeKind): readonly [string, string] {
+  return kind.id === "banana" ? ["#6bd36a", "#58c25c"] : ["#249a5c", "#2fae6a"];
+}
+
 function pick(kinds: TreeKind[], index: number): TreeKind | undefined {
   if (!kinds.length) return undefined;
   const i = Number.isFinite(index) ? Math.max(0, Math.floor(index)) : 0;
@@ -104,16 +118,14 @@ function pick(kinds: TreeKind[], index: number): TreeKind | undefined {
 }
 
 /**
- * The kind of the i-th TREE placed in a world (a `tree` prop; bushes have their own, `bushKind`): the world's tree kinds in a fixed order, so a row of trees is mixed
- * (two neighbours never match while the world has two or more) and the same level always grows the same orchard. Tree 0 is the first kind in the table order that grows
- * there (the apple tree in the Garden, the coconut palm on the Beach), so the tree that is in each world today stays what it is. A world with none yields undefined
- * (the caller keeps whatever it built before).
+ * The kind of the i-th prop of a type placed in a world: the world's kinds that fit that prop, in a fixed order, so a row is mixed (two neighbours never match while there are two or more
+ * kinds) and the same level always grows the same orchard. Number 0 is the first kind in the table order that grows there (the apple tree in the Garden, the coconut palm on the Beach), so what
+ * each world already had stays what it is. A world with none yields undefined (the caller keeps whatever it built before).
  */
-export function orchardKind(world: string, index: number): TreeKind | undefined {
-  return pick(kindsFor(world).filter((k) => k.crown !== "bush"), index);
+export function kindFor(world: string, propType: string, index: number): TreeKind | undefined {
+  return pick(kindsFor(world).filter((k) => kindFits(propType, k)), index);
 }
-
-/** The kind of the i-th BUSH placed in a world (strawberry, blueberry in the Garden), same rules as `orchardKind`. */
-export function bushKind(world: string, index: number): TreeKind | undefined {
-  return pick(kindsFor(world).filter((k) => k.crown === "bush"), index);
-}
+/** The i-th TREE in a world (the apple tree first), the i-th PALM (the coconut palm first) and the i-th BUSH (strawberry first). */
+export const orchardKind = (world: string, index: number) => kindFor(world, "tree", index);
+export const palmKind = (world: string, index: number) => kindFor(world, "palm", index);
+export const bushKind = (world: string, index: number) => kindFor(world, "bushes", index);

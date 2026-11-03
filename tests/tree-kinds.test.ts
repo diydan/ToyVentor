@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { FRUIT } from "../src/features/game/world/runtime/propReactions";
-import { CROWN_BLOBS, SLOT_DIRS, TREE_KINDS, bushKind, kindById, kindsFor, orchardKind, slotDirs, treeShape } from "../src/features/game/world/runtime/treeKinds";
+import { CROWN_BLOBS, PALM_FRUIT_OFFSETS, SLOT_DIRS, TREE_KINDS, bushKind, kindById, kindFits, kindFor, kindsFor, orchardKind, palmFronds, palmFruitOffsets, palmKind, slotDirs, treeShape } from "../src/features/game/world/runtime/treeKinds";
 
 const RUNTIME = path.join(__dirname, "..", "src/features/game/world/runtime");
 
@@ -158,32 +158,85 @@ describe("slotDirs", () => {
   });
 });
 
-describe("orchardKind", () => {
-  it("is deterministic and starts with the tree each world already has", () => {
+describe("kindFor and its three wrappers", () => {
+  it("is deterministic and starts with what each world already has: the apple tree, the coconut palm, the strawberry bush", () => {
     expect(orchardKind("garden", 0)?.id).toBe("apple");
-    expect(orchardKind("beach", 0)?.id).toBe("coconut");
+    expect(palmKind("beach", 0)?.id).toBe("coconut");
+    expect(bushKind("garden", 0)?.id).toBe("strawberry");
     expect(orchardKind("garden", 5)).toBe(orchardKind("garden", 5));
   });
 
-  it("mixes a row of trees: no two neighbours match, and the Garden grows at least four kinds", () => {
-    for (const w of ["garden", "beach", "sky"]) {
-      const row = Array.from({ length: 20 }, (_, i) => orchardKind(w, i)!.id);
-      for (let i = 1; i < row.length; i++) expect(row[i], `${w} tree ${i}`).not.toBe(row[i - 1]);
+  it("mixes a row: no two neighbours match, and the Garden grows at least four kinds of tree", () => {
+    for (const [w, type] of [["garden", "tree"], ["beach", "palm"], ["sky", "tree"], ["garden", "bushes"]] as const) {
+      const row = Array.from({ length: 20 }, (_, i) => kindFor(w, type, i)!.id);
+      for (let i = 1; i < row.length; i++) expect(row[i], `${w} ${type} ${i}`).not.toBe(row[i - 1]);
     }
     expect(new Set(Array.from({ length: 8 }, (_, i) => orchardKind("garden", i)!.id)).size).toBeGreaterThanOrEqual(4);
   });
 
-  it("never plants a bush where a tree goes, and bushes get bush kinds", () => {
-    for (let i = 0; i < 12; i++) expect(orchardKind("garden", i)!.crown).not.toBe("bush");
-    expect(bushKind("garden", 0)!.crown).toBe("bush");
+  it("each prop type gets only kinds that fit it: trees blob crowns, palms palms, bushes bushes", () => {
+    for (let i = 0; i < 12; i++) {
+      expect(["round", "tall", "wide"]).toContain(orchardKind("garden", i)!.crown);
+      expect(bushKind("garden", i)!.crown).toBe("bush");
+      expect(palmKind("beach", i)!.crown).toBe("palm");
+    }
     expect(bushKind("garden", 1)!.id).not.toBe(bushKind("garden", 0)!.id);
   });
 
-  it("returns undefined for a world with none, and tolerates odd indices", () => {
+  it("returns undefined where nothing of that type grows, and tolerates odd indices", () => {
     expect(orchardKind("junk", 0)).toBeUndefined();
     expect(bushKind("beach", 0)).toBeUndefined();
+    expect(orchardKind("beach", 0)).toBeUndefined();            // the Beach has palms, not trees
+    expect(palmKind("garden", 0)).toBeUndefined();
+    expect(kindFor("garden", "lamp", 0)).toBeUndefined();
     expect(orchardKind("garden", -3)?.id).toBe("apple");
     expect(orchardKind("garden", 2.9)).toBe(orchardKind("garden", 2));
     expect(orchardKind("garden", Number.NaN)?.id).toBe("apple");
+  });
+});
+
+describe("kindFits", () => {
+  it("a kind only fits the prop whose crown it has", () => {
+    expect(kindFits("tree", kindById("pear")!)).toBe(true);
+    expect(kindFits("tree", kindById("coconut")!)).toBe(false);
+    expect(kindFits("palm", kindById("banana")!)).toBe(true);
+    expect(kindFits("palm", kindById("apple")!)).toBe(false);
+    expect(kindFits("bushes", kindById("blueberry")!)).toBe(true);
+    expect(kindFits("bushes", kindById("pear")!)).toBe(false);
+    expect(kindFits("lamp", kindById("apple")!)).toBe(false);
+    for (const k of TREE_KINDS) expect(["tree", "palm", "bushes"].filter((t) => kindFits(t, k)), k.id).toHaveLength(1);   // every kind fits exactly one prop
+  });
+});
+
+describe("world.ts draws palms and bushes by kind", () => {
+  const world = readFileSync(path.join(RUNTIME, "world.ts"), "utf8");
+  it("the palm and bushes builders take a kind, the prop table picks it, and the palm says where its fruit hang", () => {
+    expect(world).toContain("palm:function(x,z){return palm(x,z,x<3?undefined:palmKind(R.theme||id,palmN++))}");
+    expect(world).toContain("bushes:function(x,z){return bushes(x,z,bushKind(R.theme||id,bushN++))}");
+    const at = world.indexOf("function palm(");
+    const src = world.slice(at, at + 2400);
+    expect(src).toContain("palmFronds(pk)");
+    expect(src).toContain("g.userData.fruitSlots=palmFruitOffsets(pk)");
+    expect(src).not.toContain('plastic("#6b4423")');                        // the three decorative coconuts are real fruit now
+    expect(world.slice(world.indexOf("function bushes("), world.indexOf("function bushes(") + 600)).toContain("g.userData.treeKind=kind.id");
+  });
+});
+
+describe("palms", () => {
+  it("the fruit hang under the fronds, in front of the trunk, as many as the kind says", () => {
+    for (const id of ["coconut", "banana"]) {
+      const k = kindById(id)!;
+      const offs = palmFruitOffsets(k);
+      expect(offs, id).toHaveLength(k.slots);
+      for (const [, y, z] of offs) { expect(y, `${id} below the fronds`).toBeLessThan(0); expect(z, `${id} faces the camera`).toBeGreaterThan(0.2); }
+    }
+    expect(palmFruitOffsets(kindById("coconut")!)).toHaveLength(2);
+    expect(palmFruitOffsets(kindById("banana")!)).toHaveLength(3);
+    expect(palmFruitOffsets({ ...kindById("banana")!, slots: 99 })).toHaveLength(PALM_FRUIT_OFFSETS.length);   // never more places than there are
+  });
+
+  it("the coconut palm keeps the greens it always had, and the banana palm's are lighter", () => {
+    expect(palmFronds(kindById("coconut")!)).toEqual(["#249a5c", "#2fae6a"]);
+    expect(palmFronds(kindById("banana")!)).not.toEqual(palmFronds(kindById("coconut")!));
   });
 });

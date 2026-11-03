@@ -75,13 +75,65 @@ describe("every orchard tree grows its own fruit", () => {
 });
 
 describe("the kind decides the slots and where the fruit sits", () => {
-  it("the number of fruit follows the kind", () => {
-    for (const [kind, n] of [["apple", 3], ["coconut", 2], ["strawberry", 4]] as const) expect(garden(kind).inst.slots, kind).toHaveLength(n);
+  it("the number of fruit follows the kind, on the prop that kind belongs to", () => {
+    for (const [kind, type, n] of [["apple", "tree", 3], ["coconut", "palm", 2], ["banana", "palm", 3], ["strawberry", "bushes", 4], ["blueberry", "bushes", 4]] as const) {
+      expect(garden(kind, type).inst.slots, `${kind} on ${type}`).toHaveLength(n);
+    }
   });
 
   it("a bigger fruit sits a little further out of the leaves than a smaller one (half of it outside)", () => {
     const apple = garden("apple").inst.slots[1]!.local, cherry = garden("cherry").inst.slots[1]!.local;
     expect(apple.z - cherry.z).toBeCloseTo((FRUIT.apple.r - FRUIT.cherry.r) * 0.5 * 0.89, 2);
+  });
+});
+
+describe("palms and bushes grow their kind's fruit too", () => {
+  it("a coconut palm hangs two coconuts, a banana palm three bananas, a strawberry bush four strawberries", () => {
+    for (const [kind, type, fruit, n] of [["coconut", "palm", "coconut", 2], ["banana", "palm", "banana", 3], ["strawberry", "bushes", "strawberry", 4], ["blueberry", "bushes", "blueberry", 4]] as const) {
+      const { inst } = garden(kind, type);
+      expect(inst.fruit, kind).toBe(fruit);
+      expect(inst.slots.every((s) => s.mesh!.userData.fruitKind === fruit), kind).toBe(true);
+      expect(inst.slots.length, kind).toBe(n);
+    }
+  });
+
+  it("a shake drops two of that fruit as real loose fruit (not the old anonymous burst), and they grow back", () => {
+    for (const [kind, type, fruit] of [["coconut", "palm", "coconut"], ["strawberry", "bushes", "strawberry"]] as const) {
+      const { fx, inst } = garden(kind, type);
+      fx.activate(inst);
+      expect(fx.fallers.map((f) => f.kind), kind).toEqual([fruit, fruit]);
+      expect(inst.slots.filter((s) => s.mesh).length, `${kind}: two came off the plant`).toBe(inst.slots.length - 2);
+      run(fx, 16);
+      expect(inst.slots.every((s) => s.mesh && s.mesh.userData.fruitKind === fruit), kind).toBe(true);
+    }
+  });
+
+  it("with no kind they behave as before: a palm still bursts coconuts and a bush berries, and hang nothing", () => {
+    const palm = garden(undefined, "palm");
+    expect(palm.inst.slots).toHaveLength(0);
+    palm.fx.activate(palm.inst);
+    expect(palm.fx.fallers.every((f) => f.kind === "coconut")).toBe(true);
+    expect(palm.fx.fallerCount()).toBe(2);
+    const bush = garden(undefined, "bushes");
+    expect(bush.inst.slots).toHaveLength(0);
+    bush.fx.activate(bush.inst);
+    expect(bush.fx.fallers.every((f) => f.kind === "berry")).toBe(true);
+    expect(bush.fx.fallerCount()).toBe(4);
+  });
+
+  it("a builder that says where its fruit hang (userData.fruitSlots) gets them exactly there, and only as many as the kind has", () => {
+    const world = new THREE.Group();
+    const canvas = { getBoundingClientRect: () => ({ left: 0, top: 0, width: 800, height: 400 }) } as unknown as HTMLElement;
+    const fx = createPropFx({ root: () => world, camera: () => new THREE.PerspectiveCamera(), canvas, toast: () => {}, boostWindmill: () => {}, reduced: () => false, canSpeak: () => false });
+    const g = new THREE.Group();
+    g.add(new THREE.Mesh(new THREE.BoxGeometry(1, 4, 1), new THREE.MeshStandardMaterial()));
+    g.userData.treeKind = "coconut";
+    g.userData.fruitSlots = [[0.3, 3.7, 0.34], [-0.28, 3.67, 0.36], [0.02, 3.6, 0.42]];       // three places, the kind has two
+    world.add(g);
+    const inst = fx.register("palm", [g])!;
+    expect(inst.slots).toHaveLength(2);
+    expect(inst.slots.map((s) => s.local.toArray().map((v) => +v.toFixed(5)))).toEqual([[0.3, 3.7, 0.34], [-0.28, 3.67, 0.36]]);
+    expect(inst.slots[0]!.mesh!.position.toArray().map((v) => +v.toFixed(5))).toEqual([0.3, 3.7, 0.34]);
   });
 });
 
@@ -110,7 +162,7 @@ describe("what a tap says", () => {
 
 describe("everything else is as it was", () => {
   it("a tree with no kind, or one the orchard does not know, grows three apples", () => {
-    for (const k of [undefined, "no-such-tree", ""]) {
+    for (const k of [undefined, "no-such-tree", "", "coconut", "strawberry"]) {      // the last two are real kinds, but not tree kinds
       const { inst } = garden(k);
       expect(inst.fruit, String(k)).toBe("apple");
       expect(inst.slots, String(k)).toHaveLength(3);

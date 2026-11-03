@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // 390x844 headless-Chrome E2E for the ORCHARD (docs/specs/playful-interactions-spec.md section 3): the Garden's trees are not all apple trees. Each lane tree has its own kind (apple, pear,
-// orange, cherry), its own fruit hanging on it, and the fruit says its own name and can be dragged to Kip and eaten. Real mouse events; /api/voice is intercepted (no spend).
+// orange, cherry), its own fruit hanging on it, and the fruit says its own name and can be dragged to Kip and eaten. The Beach has a coconut palm and a banana palm, the Garden a strawberry bush. Real mouse events; /api/voice is intercepted (no spend).
 // Needs a real GPU: --headless=new with the Metal backend. Run: node scripts/e2e-orchard.mjs     Overrides: E2E_CHROME, E2E_PORT, E2E_DEBUG_PORT, E2E_PROFILE, E2E_SHOTS (screenshot directory).
 import { spawn } from "node:child_process";
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
@@ -144,6 +144,25 @@ const treeList = (cdp) => world(cdp, `JSON.stringify(w.props.list().filter((p) =
 // The LOWEST hanging fruit of the tree at x (the top of the screen has buttons over it), in client pixels.
 const fruitOn = (cdp, x) => cdp.ev(`(() => { const cam = window.__tvDebug.camera; const i = window.__tvWorld.props.list().find((p) => p.type === "tree" && Math.abs(p.holder.position.x - ${x}) < 0.01); const r = document.querySelector("canvas").getBoundingClientRect(); let best = null; for (const s of i.slots) { if (!s.mesh) continue; const v = s.mesh.getWorldPosition(${V3}()).project(cam); const p = { x: r.left + (v.x * 0.5 + 0.5) * r.width, y: r.top + (-v.y * 0.5 + 0.5) * r.height, on: Math.abs(v.x) < 1 && Math.abs(v.y) < 1 }; if (!best || p.y > best.y) best = p; } return best || { x: 0, y: 0, on: false }; })()`);
 const hangingAt = (cdp, x) => world(cdp, `w.props.list().find((p) => p.type === "tree" && Math.abs(p.holder.position.x - ${x}) < 0.01).slots.filter((s) => s.mesh).length`);
+const plants = (cdp, type, minX = 3) => world(cdp, `JSON.stringify(w.props.list().filter((p) => p.type === ${JSON.stringify(type)} && p.holder.position.x >= ${minX}).sort((a, b) => a.holder.position.x - b.holder.position.x).map((p) => ({ x: p.holder.position.x, kind: p.holder.userData.treeKind, fruit: p.fruit, slots: p.slots.length, hung: p.slots.filter((s) => s.mesh).map((s) => s.mesh.userData.fruitKind) })))`).then((s) => JSON.parse(s));
+const lowestFruit = (cdp, type, x) => cdp.ev(`(() => { const cam = window.__tvDebug.camera; const i = window.__tvWorld.props.list().find((p) => p.type === ${JSON.stringify(type)} && Math.abs(p.holder.position.x - ${x}) < 0.01); const r = document.querySelector("canvas").getBoundingClientRect(); let best = null; for (const s of i.slots) { if (!s.mesh) continue; const v = s.mesh.getWorldPosition(${V3}()).project(cam); const p = { x: r.left + (v.x * 0.5 + 0.5) * r.width, y: r.top + (-v.y * 0.5 + 0.5) * r.height, on: Math.abs(v.x) < 1 && Math.abs(v.y) < 1 }; if (!best || p.y > best.y) best = p; } return best || { x: 0, y: 0, on: false }; })()`);
+const hangingOf = (cdp, type, x) => world(cdp, `w.props.list().find((p) => p.type === ${JSON.stringify(type)} && Math.abs(p.holder.position.x - ${x}) < 0.01).slots.filter((s) => s.mesh).length`);
+/** Walk Kip to a plant, tap its lowest fruit and check what it says; then leave it. */
+async function visit(cdp, type, t, said, label, dx = 3.2) {
+  await cdp.ev(`(() => { const w = window.__tvWorld; w.P.pos.x = ${t.x} - ${dx}; w.P.pos.z = 0; w.P.target = null; })()`);
+  const on = await waitFor(async () => { await dismissAny(cdp); const f = await lowestFruit(cdp, type, t.x); return f.on && f.x > 30 && f.x < 360 && f.y > 170 && f.y < 760 ? f : null; }, { timeoutMs: 15000, label: `${label} fruit on screen` }).catch(() => null);
+  check(`${label}: its fruit is on screen`, Boolean(on), JSON.stringify({ on, fruit: await lowestFruit(cdp, type, t.x), toy: await toyAt(cdp), plant: t }));
+  await sleep(700);
+  await shot(cdp, `plant-${label.replace(/ /g, "-")}`);
+  if (!on) return;
+  await clearToast(cdp);
+  const f = await lowestFruit(cdp, type, t.x);
+  await mouse(cdp, "mousePressed", f.x, f.y);
+  await mouse(cdp, "mouseReleased", f.x, f.y);
+  await sleep(450);
+  check(`${label}: tapping its fruit says '${said}'`, (await toastText(cdp)) === said, String(await toastText(cdp)));
+  check(`${label}: and one fruit came off (one fewer hanging)`, (await hangingOf(cdp, type, t.x)) === t.slots - 1, String(await hangingOf(cdp, type, t.x)));
+}
 const SAYS = { apple: "Red apple", pear: "Green pear", orange: "Orange", cherry: "Red cherries" };
 
 async function main() {
@@ -211,6 +230,39 @@ async function main() {
     await sleep(1200);
     check("pear: and the pear is gone from the tree and from the ground", (await hangingAt(cdp, pear.x)) === before - 1 && (await world(cdp, `w.props.fallers.length`)) <= fallersBefore, `hanging ${await hangingAt(cdp, pear.x)} (was ${before}), loose ${await world(cdp, `w.props.fallers.length`)} (was ${fallersBefore}); pear slots ${hangBefore} -> ${await pearTreeHang()}; loose ${looseBefore} -> ${await loose()}; press at ${JSON.stringify(pf)} kip ${JSON.stringify(kip)}`);
     await shot(cdp, "pear-eaten");
+
+    // ---- the Garden's bushes: a strawberry bush near the start and a blueberry bush past the bridge ----
+    const bushes = await plants(cdp, "bushes");
+    check("bushes: the Garden has a strawberry bush and a blueberry bush, four fruit hanging on each", JSON.stringify(bushes.map((b) => b.kind)) === JSON.stringify(["strawberry", "blueberry"]) && bushes.every((b) => b.slots === 4 && b.hung.length === 4 && b.hung.every((h) => h === b.fruit)), JSON.stringify(bushes));
+    if (bushes[0]) await visit(cdp, "bushes", bushes[0], "Red strawberry", "strawberry bush", 2.0);
+
+    // ---- the Beach: a coconut palm and a banana palm ----
+    await cdp.ev(`window.__tvWorld.handle.go("beach")`);
+    await sleep(3500);
+    await dismissAny(cdp);
+    const palms = await plants(cdp, "palm");
+    check("beach: the lane has a coconut palm and a banana palm, in that order", JSON.stringify(palms.map((p) => p.kind)) === JSON.stringify(["coconut", "banana"]), JSON.stringify(palms));
+    check("beach: two coconuts hang on the coconut palm and three bananas on the banana palm", palms[0]?.hung.length === 2 && palms[0].hung.every((h) => h === "coconut") && palms[1]?.hung.length === 3 && palms[1].hung.every((h) => h === "banana"), JSON.stringify(palms));
+    const offLanePalm = await world(cdp, `w.props.list().filter((p) => p.type === "palm" && p.holder.position.x < 3).map((p) => p.holder.userData.treeKind).join(",")`);
+    check("beach: the palm left of the lane is the plain coconut palm and took no turn", offLanePalm === "coconut", String(offLanePalm));
+    await waitFor(() => world(cdp, `!!(w.getMix() && w.getMix().canDrive(w.P.rig))`), { timeoutMs: 30000, label: "the character clips (beach)" });
+    if (palms[0]) await visit(cdp, "palm", palms[0], "Brown coconut", "coconut palm", 2.6);
+    if (palms[1]) {
+      await visit(cdp, "palm", palms[1], "Yellow banana", "banana palm", 2.6);
+      // feed Kip a banana straight off the palm
+      await cdp.ev(`(() => { const w = window.__tvWorld; w.P.pos.x = ${palms[1].x} - 2.6; w.P.pos.z = 0; w.P.target = null; })()`);
+      await sleep(1800);
+      await world(cdp, `(() => { for (const p of w.props.list()) for (const s of p.slots) if (!s.mesh) s.regrowAt = 1e9; return true; })()`);
+      const bf = await waitFor(async () => { const f = await lowestFruit(cdp, "palm", palms[1].x); return f.on && f.x > 30 && f.x < 360 && f.y > 170 ? f : null; }, { timeoutMs: 15000, label: "banana on screen" });
+      const kip2 = await toyAt(cdp);
+      const hb = await hangingOf(cdp, "palm", palms[1].x);
+      await dragTo(cdp, bf, kip2, { release: true, steps: 8 });
+      const ate2 = await waitFor(async () => ((await action(cdp)) === "eat" ? true : null), { timeoutMs: 1500, everyMs: 30, label: "eat" }).catch(() => false);
+      check("banana: dragged onto Kip, it is eaten (the eat clip plays)", ate2 === true, String(await action(cdp)));
+      await sleep(1000);
+      check("banana: and it is gone from the palm", (await hangingOf(cdp, "palm", palms[1].x)) === hb - 1, `${await hangingOf(cdp, "palm", palms[1].x)} (was ${hb})`);
+      await shot(cdp, "banana-eaten");
+    }
 
     check("no page exceptions", cdp.exceptions.length === 0, cdp.exceptions.slice(0, 3).join(" | "));
     killAll();
