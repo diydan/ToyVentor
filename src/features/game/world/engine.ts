@@ -807,6 +807,8 @@ export interface EngineHandle {
   capturePortrait: (size?: number) => ToyPortrait | null;
   /** Set the camera zoom level in the runtime. */
   setZoom: (zoom: ZoomLevel) => void;
+  /** Pause the world (no drawing, no keyboard, music faded out) while a full-screen overlay such as the Workshop is open; false resumes it. */
+  setPaused: (paused: boolean) => void;
   /** Start a carousel Learn run over the given rung plan. */
   startLearnRun: (track: string, plan: number[], kidMode: boolean) => void;
   /** Stop the active Learn run (Free world). */
@@ -929,6 +931,7 @@ interface LegacyHooks {
   seedDemo?: () => void;
   setTier?: (tier: number) => void;
   setZoom?: (zoom: number) => void;
+  setPaused?: (paused: boolean) => void;
   mute?: () => void;
   startLearnRun?: (track: string, plan: number[], kidMode: boolean) => void;
   stopLearnRun?: () => void;
@@ -1354,6 +1357,9 @@ export function createEngine(
     setZoom: (target) => {
       hooks()?.setZoom?.(target);
       poll();
+    },
+    setPaused: (paused) => {
+      hooks()?.setPaused?.(paused);
     },
     startLearnRun: (track, plan, kidMode) => {
       hooks()?.startLearnRun?.(track, plan, kidMode);

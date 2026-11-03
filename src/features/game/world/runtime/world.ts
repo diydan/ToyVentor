@@ -257,7 +257,7 @@ export interface WorldRuntimeHandle {
   seedDemo?: () => void;
   setTier?: (t: number) => void;
   setZoom?: (z: number) => void;
-  /** Stop drawing and ignore the keyboard while something else (the Workshop overlay) has the screen. */
+  /** Stop drawing, ignore the keyboard and fade the music out while something else (the Workshop overlay) has the screen; false brings the music back to the player's own sound setting. */
   setPaused?: (paused: boolean) => void;
   mute?: () => void;
   startLearnRun?: (track: string, plan: number[], kidMode: boolean) => void;
@@ -1261,7 +1261,7 @@ setToy:function(contract){ if(!contract){ S.type="character"; S.sel=stockSel(); 
 seedDemo:function(){ mInit(); S.scrap=Math.max(S.scrap||0,12); S.bp.beam=1; S.bp.brace=1; S.bp.sgear=1; S.bp.bgear=1; S.bp.gearpair=1; S.bin.beam=Math.max(S.bin.beam||0,2); S.bin.brace=Math.max(S.bin.brace||0,2); S.bin.sgear=Math.max(S.bin.sgear||0,2); S.bin.bgear=Math.max(S.bin.bgear||0,2); delete S.mdone["garden.bridge"]; delete S.ms["garden.bridge"]; mpOpen=false; S.world="garden"; buildWorld("garden"); P.pos.set(6.5,0,0); P.target=null; P.elev=0; cam.x=7.5; save(); toast("Demo save ready in Garden."); notify(); },
 getWorld:function(){return S.world},
 setTier:function(t){t=t===2||t===3?t:1;var m=curM();if(!m||W.missions.indexOf(m)<0||P.busy||P.mDrive)return;var k=mid(m),cur=mTier(m);if(m.done&&!m.replaying){mStartReplay(m);S.ms[k]={tier:t};if(MT[m.type]){MT[m.type]!.st&&MT[m.type]!.st(m);MT[m.type]!.sync(m)}else mSync(m);save();mPanel(m);return}if(cur===t){mPanel(m);return}var old=S.ms[k]||{};if(!m.free&&!m.replaying){["deck","support","mid","drum"].forEach(function(sl){if(old[sl])S.bin[old[sl]]=(S.bin[old[sl]]||0)+1})}S.ms[k]={tier:t};if(MT[m.type]){MT[m.type]!.st&&MT[m.type]!.st(m);MT[m.type]!.sync(m)}else mSync(m);save();mPanel(m);},
-setZoom:function(z){setZoom(z)},setPaused:function(v){paused=!!v},
+setZoom:function(z){setZoom(z)},setPaused:function(v){paused=!!v;if(MUS.on)musGain(paused?0:(sound?.7:0),paused?.3:.8)},
 mute:function(){muteAudio()},
 startLearnRun:function(track,plan,kidMode){startLearnRunFn(track,plan,kidMode)},
 stopLearnRun:function(){stopLearnRunFn()},
