@@ -54,7 +54,7 @@ import { mountPrintView } from '/kip/kip-print-view.js?v=10.0';
 import { mountSelfie } from '/kip/kip-selfie.js?v=10.0';
 import { mountDescribe } from '/kip/kip-describe-tab.js?v=10.0';
 import { KIP_CLIPS, clipForProp, isPropClip, makeKipClip } from '/kip/kip-clips.js?v=10.0';
-import { createKipRig } from '/kip/kip-rig.js?v=10.0';
+import { createKipSession } from '/kip/kip-session.js?v=10.0';
 import { FACEPLATE_SEAT_MM } from '/kip/kip-faceplate-shape.js?v=10.0';
 import { disposeThreeScene } from '/kip/bench-lifecycle.js?v=10.0';
 import { BLUEPRINT } from '/kip/bench-look.js?v=10.0';
@@ -495,6 +495,9 @@ if (ownsStyle) {
 const $el = (id) => benchRoot.querySelector('#' + id);
 const offs = [];
 const stage = env.stage ?? null; // a host's shared renderer, camera and controls (Workshop stage 4b, bench-stage.js); null: this bench builds its own
+const kipSession = env.sharedKip ?? createKipSession({ THREE, STLLoader, mergeVertices, toCreasedNormals });
+kipSession.acquire('kip');
+let unregisterKipSync = null;
 const hosted = stage !== null;
 let active = !hosted; // a hosted bench draws and reads input only while the host has it active
 let started = !hosted; // hosted: the stage ticks this bench from the moment it is active, but the rig is not built until init() has run (set below)
@@ -636,8 +639,8 @@ const stlLoader = new STLLoader();
 const gltfLoader = new GLTFLoader();
 const fbxLoader = new FBXLoader();
 
-// Rig (loadSTL, scadMesh, mats, buildKipRig, STL_NAMES) lives in kip-rig.js, shared with Truck-Mockup.html (Workshop stage 2).
-const { loadSTL, scadMesh, mats, buildKipRig, STL_NAMES } = createKipRig({ THREE, STLLoader, mergeVertices, toCreasedNormals, KIP_BUILD_VERSION });
+// Rig helpers come from the shared Kip session (kip-session.js -> kip-rig.js), shared with Truck-Mockup.html.
+const { scadMesh, mats } = kipSession.K;
 
 // Build Kip with leaf partSlots so Pro (8+), Snap (4-8), Exploded View, and Tabletop Pile->Build all share one rig!
 
@@ -1327,44 +1330,16 @@ function applyCameraPreset(presetName) {
 }
 
 async function init() {
-  const [geosArr, partArr, expGeos, xbotGltf, michelleGltf] = await Promise.all([
-    Promise.all(STL_NAMES.map(async n => [n, await loadSTL(`/kip/stls/${n}.stl`, 38)])),
-    Promise.all([
-      loadSTL('/kip/partspec/toyventor_pointy_ears_S.stl', 35),
-      loadSTL('/kip/partspec/toyventor_wobble_hat_S.stl', 35),
-      loadSTL('/kip/partspec/toyventor_cloud_wings_S.stl', 35),
-      loadSTL('/kip/partspec/toyventor_beam_str_tu03_P.stl', 35),
-      loadSTL('/kip/partspec/toyventor_beam_str_tu05_P.stl', 35),
-      loadSTL('/kip/partspec/toyventor_gear_spur_z20_P.stl', 25),
-      loadSTL('/kip/partspec/toyventor_gear_spur_z10_P.stl', 25),
-      loadSTL('/kip/partspec/toyventor_shaft_tu05_P.stl', 35),
-      loadSTL('/kip/partspec/toyventor_shaft_tu03_P.stl', 35),
-      loadSTL('/kip/partspec/toyventor_pin_friction_P.stl', 35),
-      loadSTL('/kip/partspec/toyventor_bushing_half_P.stl', 30),
-      loadSTL('/kip/partspec/toyventor_cross_connector_tu01_P.stl', 35),
-      loadSTL('/kip/partspec/toyventor_wheel_tu04_P.stl', 30),
-    ]),
-    loadExpansionGeos(loadSTL),
+  const [sharedKipData, xbotGltf, michelleGltf] = await Promise.all([
+    kipSession.load(),
     gltfLoader.loadAsync('/kip/mixamo/Xbot.glb'),
     gltfLoader.loadAsync('/kip/mixamo/Michelle.glb'),
   ]);
+  if (!sharedKipData?.rig) return;
 
-  const geos = Object.fromEntries(geosArr);
-  const [
-    pointyEars, wobbleHat, cloudWings, beamTu03, beamTu05,
-    gearZ20, gearZ10, shaftTu05, shaftTu03, pinFriction,
-    bushingHalf, crossConnector, wheelTu04
-  ] = partArr;
-
-  const baseParts = {
-    pointyEars, wobbleHat, cloudWings, beamTu03, beamTu05,
-    gearZ20, gearZ10, shaftTu05, shaftTu03, pinFriction,
-    bushingHalf, crossConnector, wheelTu04
-  };
-
-  kip = buildKipRig(geos, baseParts);
-  kip.exp = attachExpansionToKipRig(THREE, kip, expGeos, baseParts, mats, scadMesh, kip.createSlot);
-  scene.add(kip.mover);
+  kip = sharedKipData.rig;
+  unregisterKipSync = kipSession.registerSync(adoptSharedDriverState);
+  attachSharedKip();
   kipMixer = new THREE.AnimationMixer(kip.grounder);
 
   // Clean-room Mixamo Reference bone-and-joint kinematic rig (zero third-party character mesh!)
@@ -1503,6 +1478,7 @@ async function init() {
   }
 
   // Initialize default head/faceplate/hair/hat layout, then apply URL query overrides
+  if (kipSession.state.source) adoptSharedDriverState();
   syncHeadHairHatLayout();
   if (params.get('edition') === 'snap') setEdition('snap');
   const startPreset = params.get('loadout') || params.get('preset');
@@ -1595,6 +1571,25 @@ function syncNeckAndSeatedVisibility() {
   kip.exp.snapSeatedLegsGroup.visible = false;
 }
 
+function attachSharedKip() {
+  if (!kip || !active) return false;
+  return kipSession.borrow('kip', scene) === kip;
+}
+
+function adoptSharedDriverState(sharedState = kipSession.state) {
+  if (!kip?.exp || !sharedState?.source) return false;
+  loco.edition = sharedState.edition === 'snap' ? 'snap' : 'pro';
+  loco.head = sharedState.head || loco.head;
+  if (loco.head !== 'custom') loco.category = categoryOfHead(loco.head);
+  loco.hair = HUMAN_HEAD_IDS.has(loco.head) ? (sharedState.hair || 'off') : 'off';
+  loco.hat = sharedState.hat || 'buds';
+  loco.crown = loco.hat;
+  setEdition(loco.edition);
+  syncHeadHairHatLayout();
+  updateStatusText();
+  return true;
+}
+
 function setEdition(ed) {
   loco.edition = (ed === 'snap') ? 'snap' : 'pro';
   const isPro = loco.edition === 'pro';
@@ -1630,6 +1625,7 @@ function setEdition(ed) {
   if (loco.buildMode !== 'assembled') {
     layoutPartPile(kip, loco.edition);
   }
+  kipSession.setDriverState({ edition: loco.edition }, 'kip');
   updateStatusText();
 }
 
@@ -1856,6 +1852,12 @@ function syncHeadHairHatLayout() {
   });
 
   syncNeckAndSeatedVisibility();
+  kipSession.setDriverState({
+    edition: loco.edition,
+    head: loco.head,
+    hair: loco.hair,
+    hat: loco.hat,
+  }, 'kip');
 }
 
 function setHeadMode(headId) {
@@ -3296,3 +3298,6 @@ function setActive(on) {
 if (hosted) benchRoot.hidden = true; // a hosted bench starts hidden until the stage activates one
 return { root: benchRoot, ready, dispose, frame, setActive, hosted };
 }
+    attachSharedKip();
+    if (kip && kipSession.state.source) adoptSharedDriverState();
+    kipSession.release('kip');

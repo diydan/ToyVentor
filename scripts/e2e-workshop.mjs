@@ -49,6 +49,7 @@ try {
   check("document title names the bench", shell.title === "Workshop · Kip", shell.title);
 
   check("Kip finishes loading", await a.waitFor(KIP_READY, 240000), "never reached __KIP_READY__");
+  await a.evaluate(`(window.__sharedMover = ${W}.sharedKip().rig.mover, true)`);
   const kip = await a.evaluate(`({
     vehicle: ${W}.handles('kip').kipMenu?.ctx?.loco?.vehicle,
     backLinkHidden: getComputedStyle(document.querySelector('.kip-bench .back-link')).display === 'none',
@@ -116,11 +117,16 @@ try {
     pop: document.querySelector('.ws-pop').getAttribute('href'),
     note: document.querySelector('.ws-note').textContent,
     active: ${W}.stage().activeId,
+    sameMover: ${W}.sharedKip().rig.mover === window.__sharedMover,
+    moverInTruck: window.__sharedMover.parent?.isScene !== true && !!window.__sharedMover.parent?.parent?.parent,
+    lease: ${W}.sharedKip().leaseOwner,
   })`);
   check("the Kip stays mounted (hidden) and keeps its state while the Truck is shown", truck.kipKept && truck.roots === 2 && truck.kipVehicle === "truck", JSON.stringify(truck));
   check("still one WebGL canvas, now inside the Truck, and the stage's active bench is the Truck", truck.canvases === 1 && truck.canvasInTruck && truck.truckShown && truck.active === "truck", JSON.stringify(truck));
   check("Truck tab is the selected one and the address bar says ?bench=truck (forwarded params dropped)", truck.selected === "truck" && truck.search === "?bench=truck", `${truck.selected} ${truck.search}`);
   check("title, note and 'open on its own page' follow the bench", truck.title === "Workshop · Truck" && /dump truck/i.test(truck.note) && truck.pop === "/kip/Truck-Mockup.html", `${truck.title} | ${truck.note} | ${truck.pop}`);
+  check("Truck is driving the same shared Kip mover", truck.sameMover && truck.moverInTruck && truck.lease === "truck", JSON.stringify(truck));
+  check("the rig and wardrobe STLs were requested once across both benches", a.requests.filter((r) => /\/kip\/stls\/torso\.stl/.test(r.url)).length === 1 && a.requests.filter((r) => /toyventor_char_head_kid_S\.stl/.test(r.url)).length === 1, a.requests.filter((r) => /torso\.stl|char_head_kid/.test(r.url)).map((r) => r.url).join(","));
   await a.shot(path.join(SHOTS, "truck-bench.png"));
 
   // Canary: throw on purpose and require the exception hook to see it, so "no uncaught exception" below can fail.
@@ -133,8 +139,9 @@ try {
   await a.evaluate("history.back()");
   check("Back selects Kip again", await a.waitFor(`${selected}.join() === 'kip'`, 15000));
   await settle(300);
-  const back = await a.evaluate(`({ same: ${W}.bench('kip').root === window.__kipRoot, search: location.search, roots: document.querySelectorAll('.kip-bench, .truck-bench').length, canvasInKip: ${W}.stage().canvas.closest('.kip-bench') !== null, vehicle: ${W}.handles('kip').kipMenu?.ctx?.loco?.vehicle })`);
+  const back = await a.evaluate(`({ same: ${W}.bench('kip').root === window.__kipRoot, search: location.search, roots: document.querySelectorAll('.kip-bench, .truck-bench').length, canvasInKip: ${W}.stage().canvas.closest('.kip-bench') !== null, vehicle: ${W}.handles('kip').kipMenu?.ctx?.loco?.vehicle, sameMover: ${W}.sharedKip().rig.mover === window.__sharedMover, moverInKip: window.__sharedMover.parent?.isScene === true, lease: ${W}.sharedKip().leaseOwner })`);
   check("Back restores the deep-link entry on the same mounted Kip, state intact", back.same && back.search === "?bench=kip&vehicle=truck" && back.roots === 2 && back.canvasInKip && back.vehicle === "truck", JSON.stringify(back));
+  check("Back returns the same shared Kip mover to the Kip scene", back.sameMover && back.moverInKip && back.lease === "kip", JSON.stringify(back));
   await a.evaluate("history.forward()");
   check("Forward selects Truck again", await a.waitFor(`${selected}.join() === 'truck' && ${W}.stage().activeId === 'truck'`, 15000));
   // a plain tab pick back to Kip keeps its state too, and writes a clean address
@@ -157,8 +164,9 @@ try {
   await b.evaluate("document.querySelector('a[href=\"./Kip-Demo.html\"]').click()");
   check("the bench's own link to Kip flips the tab bar to Kip", await b.waitFor(`${selected}.join() === 'kip'`, 60000));
   check("Kip mounts and loads from that link", await b.waitFor(KIP_READY, 240000), "never reached __KIP_READY__");
-  const followed = await b.evaluate(`({ marker: window.__marker, search: location.search, title: document.title, pop: document.querySelector('.ws-pop').getAttribute('href'), roots: document.querySelectorAll('.kip-bench, .truck-bench').length, canvasInKip: ${W}.stage().canvas.closest('.kip-bench') !== null })`);
+  const followed = await b.evaluate(`({ marker: window.__marker, search: location.search, title: document.title, pop: document.querySelector('.ws-pop').getAttribute('href'), roots: document.querySelectorAll('.kip-bench, .truck-bench').length, canvasInKip: ${W}.stage().canvas.closest('.kip-bench') !== null, loco: { edition: ${W}.handles('kip').kipMenu?.ctx?.loco?.edition, head: ${W}.handles('kip').kipMenu?.ctx?.loco?.head }, shared: ${W}.sharedKip().state })`);
   check("without leaving the page, and the address bar, title and 'own page' link match", followed.marker === "same page" && followed.search === "?bench=kip" && followed.title === "Workshop · Kip" && /Kip-Demo\.html$/.test(followed.pop) && followed.roots === 2 && followed.canvasInKip, JSON.stringify(followed));
+  check("Kip adopts the Truck-first Snap fox driver from the shared session", followed.loco.edition === "snap" && followed.loco.head === "fox" && followed.shared.edition === "snap" && followed.shared.head === "fox", JSON.stringify(followed));
   check("no uncaught exception while the bench linked to the other", b.exceptions.length === 0, b.exceptions.slice(0, 3).join(" || "));
   b.close();
 

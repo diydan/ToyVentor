@@ -130,6 +130,11 @@ copyFileSync(
   join(kipSrcDir, "viewer/bench-stage.js"),
   join(kipOutDir, "bench-stage.js"),
 );
+// Shared Kip session (Workshop stage 4b-3): one loaded rig handed between the Kip and Truck benches.
+copyFileSync(
+  join(kipSrcDir, "viewer/kip-session.js"),
+  join(kipOutDir, "kip-session.js"),
+);
 // Blueprint look shared by both benches (colours of the ground, grid, fog and shadow).
 copyFileSync(
   join(kipSrcDir, "viewer/bench-look.js"),
@@ -181,6 +186,11 @@ for (const f of ["JetCar-Lab.html", "jetcar-clearance.json", "jetcar-kip-pose.js
 copyFileSync(
   join(kipSrcDir, "viewer/kip-describe-tab.js"),
   join(kipOutDir, "kip-describe-tab.js"),
+);
+// The waiting state (belt, bricks, parts pile) shared by the Describe & build tab and the photo "Print it" panel.
+copyFileSync(
+  join(kipSrcDir, "viewer/kip-workshop-wait.js"),
+  join(kipOutDir, "kip-workshop-wait.js"),
 );
 copyFileSync(
   join(kipSrcDir, "viewer/kip-describe.js"),

@@ -88,11 +88,14 @@ describe("workshop shell: benches and build wiring", () => {
     expect(build).toContain("viewer/Workshop.html");
     expect(build).toContain("viewer/workshop.js");
     expect(build).toContain("viewer/bench-stage.js");
+    expect(build).toContain("viewer/kip-session.js");
     expect(read("parts/kip/viewer/Workshop.html")).toMatch(/from '\/kip\/workshop\.js(\?[^']*)?'/);
     // the shell loads the stage and three.js with import(); both must be files the build serves
     const shellSrc = read("parts/kip/viewer/workshop.js");
     expect(shellSrc).toContain("'/kip/bench-stage.js'");
     expect(shellSrc).toContain("'/kip/vendor/three-kip.js'");
+    expect(shellSrc).toContain("'/kip/kip-session.js?v=10.0'");
+    expect(shellSrc).toContain("sharedKip,");
   });
 
   it("has no static imports, so Node can load the pure URL functions and the shell can be mounted anywhere (the stage, three.js and the benches arrive with import())", () => {

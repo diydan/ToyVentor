@@ -165,6 +165,7 @@ describe("Kip modular character rig & 3D demo viewer integration", () => {
       "parts/kip/viewer/kip-selfie-cloud.js",
       "parts/kip/viewer/kip-faceplate-shape.js",
       "parts/kip/viewer/kip-rig.js",
+      "parts/kip/viewer/kip-session.js",
       "parts/kip/viewer/truck-print-parts.js",
       "parts/kip/viewer/kip-clips.js",
       "parts/kip/viewer/workshop.js",

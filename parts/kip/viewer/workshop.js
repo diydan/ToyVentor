@@ -80,7 +80,7 @@ function ensureStyle(doc) {
 
 /**
  * Mount the shell into `root` (an element with a size: the shell fills it).
- * opts: { benches = DEFAULT_BENCHES, urlSync = true, stageModule = '/kip/bench-stage.js', threeModule = '/kip/vendor/three-kip.js' }
+ * opts: { benches = DEFAULT_BENCHES, urlSync = true, stageModule = '/kip/bench-stage.js', threeModule = '/kip/vendor/three-kip.js', kipSessionModule = '/kip/kip-session.js?v=10.0' }
  *   urlSync  true: the shell owns ?bench= in the address bar (push on tab pick, Back works) and sets document.title.
  *            false: it touches neither (for a host such as the game that owns the URL).
  * Returns { select(id, { push = true, forward }) -> Promise, current(), bench(id), handles(id), stage(), ready(), benches, destroy() }.
@@ -92,6 +92,7 @@ export function mountWorkshop(root, opts = {}) {
   const urlSync = opts.urlSync !== false;
   const stageModule = opts.stageModule ?? '/kip/bench-stage.js';
   const threeModule = opts.threeModule ?? '/kip/vendor/three-kip.js';
+  const kipSessionModule = opts.kipSessionModule ?? '/kip/kip-session.js?v=10.0';
   const doc = root.ownerDocument;
   const win = doc.defaultView;
   ensureStyle(doc);
@@ -136,6 +137,7 @@ export function mountWorkshop(root, opts = {}) {
 
   let currentId = null;
   let stage = null;
+  let sharedKip = null;
   let stagePromise = null;
   let loadingEl = null;
   let destroyed = false;
@@ -170,8 +172,16 @@ export function mountWorkshop(root, opts = {}) {
 
   /** The one stage (renderer, camera, controls, loop) every bench draws on; made the first time a bench is needed. */
   function ensureStage() {
-    stagePromise ??= Promise.all([import(stageModule), import(threeModule)]).then(([{ createStage }, { THREE, OrbitControls }]) => {
-      if (!destroyed) stage = createStage({ THREE, OrbitControls, host: stageEl });
+    stagePromise ??= Promise.all([import(stageModule), import(threeModule), import(kipSessionModule)]).then(([
+      { createStage },
+      { THREE, OrbitControls, STLLoader, mergeVertices, toCreasedNormals },
+      { createKipSession },
+    ]) => {
+      if (!destroyed) {
+        stage = createStage({ THREE, OrbitControls, host: stageEl });
+        sharedKip = createKipSession({ THREE, STLLoader, mergeVertices, toCreasedNormals });
+        sharedKip.acquire('workshop'); // the host keeps the session alive across bench unmount/remount
+      }
       return stage;
     });
     return stagePromise;
@@ -200,6 +210,7 @@ export function mountWorkshop(root, opts = {}) {
       const globals = {};
       const handle = mod[bench.mount](stageEl, {
         stage,
+        sharedKip,
         globals,
         getSearch: () => (f ? `?${f}` : ''),
         getHash: () => '',
@@ -282,6 +293,7 @@ export function mountWorkshop(root, opts = {}) {
     bench: (id) => mounted.get(id)?.handle ?? null,
     handles: (id) => mounted.get(id)?.globals ?? null,
     stage: () => stage,
+    sharedKip: () => sharedKip,
     ready: () => queue,
     destroy() {
       if (destroyed) return;
@@ -290,6 +302,8 @@ export function mountWorkshop(root, opts = {}) {
       stageEl.removeEventListener('click', onStageClick, true);
       stage?.stop();
       for (const id of [...mounted.keys()]) unmount(id);
+      sharedKip?.releaseRef('workshop');
+      sharedKip = null;
       stage?.dispose();
       root.innerHTML = '';
       root.classList.remove('ws-root');

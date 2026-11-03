@@ -9,7 +9,7 @@ import {
   mergeVertices,
   toCreasedNormals,
 } from './vendor/three-kip.js';
-import { createKipRig } from '/kip/kip-rig.js?v=10.0'; // shared Kip rig module, also imported by kip-bench.js (Workshop stage 2)
+import { createKipSession } from '/kip/kip-session.js?v=10.0'; // one loaded Kip rig, shared with kip-bench.js (Workshop stage 4b-3)
 import { createDecalExpressionCanvas } from '/kip/kip-forge-sdk.js?v=10.0';
 import { mountPrintView } from '/kip/kip-print-view.js?v=10.0';
 import { truckGetParts } from './truck-print-parts.js';
@@ -492,6 +492,10 @@ const $el = (id) => benchRoot.querySelector('#' + id);
 const offs = [];
 const stage = env.stage ?? null; // a host's shared renderer, camera and controls (Workshop stage 4b, bench-stage.js); null: this bench builds its own
 const hosted = stage !== null;
+const kipSession = env.sharedKip ?? createKipSession({ THREE, STLLoader, mergeVertices, toCreasedNormals });
+const sharedKip = !!env.sharedKip;
+kipSession.acquire('truck');
+let truckLoaded = false;
 let active = !hosted; // a hosted bench draws and reads input only while the host has it active
 const listen = (target, type, fn, opts) => {
   const h = (e) => { if (active) fn(e); };
@@ -788,6 +792,48 @@ function addExplodeTag(obj, dx, dy, dz) {
 
 let dynamicRefs = {};
 
+function prepareSharedKipForTruck(rig) {
+  rig.mover.position.set(0, 0, 0);
+  rig.mover.quaternion.identity();
+  rig.mover.scale.setScalar(1);
+  rig.grounder.position.set(0, 0, 0);
+  rig.grounder.quaternion.identity();
+  rig.grounder.scale.setScalar(1);
+  for (const s of rig.partSlots || []) {
+    s.grp.position.set(0, 0, 0);
+    s.grp.quaternion.identity();
+    s.grp.scale.setScalar(1);
+  }
+  for (const flex of Object.values(rig.flexArms || {})) {
+    flex.mesh.visible = false;
+    flex.deform(new THREE.Quaternion());
+  }
+  for (const flex of Object.values(rig.flexLegs || {})) {
+    flex.mesh.visible = false;
+    flex.deform(new THREE.Quaternion());
+  }
+  const rigid = rig.rigidSnapMeshes || {};
+  for (const key of ['armL', 'armR']) {
+    if (!rigid[key]) continue;
+    rigid[key].visible = true;
+    if (KIP_DRIVER.skinMat) rigid[key].material = KIP_DRIVER.skinMat;
+  }
+  for (const key of ['legL', 'legR']) {
+    if (!rigid[key]) continue;
+    rigid[key].visible = true;
+    rigid[key].material = MATS.denim;
+  }
+  const exp = rig.exp;
+  const hide = [
+    rig.backStudsSlot, rig.wingsGroup, rig.proBackGroup, rig.snapTailGroup, rig.proTailGroup, rig.proStaffGroup,
+    exp?.explorerGroup, exp?.jetpackGroup, exp?.customBackGroup, exp?.wrenchGroup, exp?.shieldGroup,
+    exp?.customWandGroup, exp?.customHandGroup, exp?.skateboardGroup, exp?.snapSeatedLegsGroup,
+    exp?.carGroup, exp?.truckGroup, exp?.bikeGroup,
+    ...Object.values(exp?.workshopGroups || {}),
+  ];
+  for (const grp of hide) if (grp) grp.visible = false;
+}
+
 function rebuildScene() {
   while (cadRoot.children.length) cadRoot.remove(cadRoot.children[0]);
   dynamicRefs = {};
@@ -1020,12 +1066,15 @@ function rebuildScene() {
   addExplodeTag(wind, 0, -4, 18);
   cadRoot.add(wind);
 
-  if (state.showKip && KIP_DRIVER.rig) {
+  const borrowedRig = sharedKip ? (active ? kipSession.borrow('truck') : null) : KIP_DRIVER.rig;
+  if (state.showKip && borrowedRig) {
     const kipGroup = new THREE.Group();
     addExplodeTag(kipGroup, 0, 0, 32);
-    const rig = KIP_DRIVER.rig;
+    const rig = borrowedRig;
+    if (sharedKip) adoptSharedDriverState();
     const isPro = state.driver !== 'snap';
     for (const s of rig.editionParts.pro) s.visible = isPro;
+    prepareSharedKipForTruck(rig);
     for (const s of rig.editionParts.snap) s.visible = !isPro;
 
     const d2r = THREE.MathUtils.degToRad;
@@ -1066,7 +1115,11 @@ function rebuildScene() {
     }
 
     KIP_DRIVER.skinMat.color.set(KIP_HEAD_HEX[KIP_STACK.head] || '#F3BA95');
-    syncTruckWardrobeHead();
+    if (sharedKip) {
+      if (!kipSession.syncDriver()) syncTruckWardrobeHead();
+    } else {
+      syncTruckWardrobeHead();
+    }
 
     const S = KIP_DRIVER.scale;
     const hipCadY = isPro ? -0.5 : 1.2;
@@ -1585,12 +1638,44 @@ $el('btn-kip').addEventListener('click', (e) => {
 
 // One Kip: the driver head is Kip-Demo's wardrobe head (same meshes, face plate, seat and decal), not the old CAD stack head.
 const wardrobeId = (stackId) => stackId.replace(/^(char_head_|robot_head_)/, '').replace('visor', 'robot');
+const wardrobeHatId = (stackHat) => {
+  if (!stackHat || stackHat === 'off') return 'buds';
+  return stackHat === 'hat_wobble_hat' || stackHat === 'wobble_hat' ? 'hat' : stackHat.replace(/^hat_/, '');
+};
+const stackHeadId = (wid) => wid === 'robot' ? 'robot_head_visor' : wid === 'scout' ? 'robot_head_scout' : `char_head_${wid}`;
+function sharedDriverPatchFromStack() {
+  return {
+    edition: state.driver,
+    head: wardrobeId(KIP_STACK.head),
+    hair: typeof KIP_STACK.hair === 'string' ? KIP_STACK.hair.replace(/^hair_/, '') : 'off',
+    hat: wardrobeHatId(KIP_STACK.hat),
+  };
+}
+function publishSharedDriverState() {
+  kipSession.setDriverState(sharedDriverPatchFromStack(), 'truck');
+}
+function adoptSharedDriverState() {
+  const s = kipSession.state;
+  if (!s?.source) return false;
+  state.driver = s.edition === 'snap' ? 'snap' : 'pro';
+  const head = stackHeadId(s.head || 'kid');
+  if (KIP_HEADS.includes(head)) KIP_STACK.head = head;
+  const hair = !s.hair || s.hair === 'off' ? null : `hair_${s.hair}`;
+  if (!KIP_STACK.table || !hair || hair in KIP_STACK.table.hairs) KIP_STACK.hair = hair;
+  const hat = !s.hat || s.hat === 'buds' || s.hat === 'off'
+    ? null
+    : s.hat === 'hat' ? 'wobble_hat' : `hat_${s.hat}`;
+  if (!KIP_STACK.table || !hat || KIP_STACK.table.hats.includes(hat)) KIP_STACK.hat = hat;
+  syncKipButtons();
+  return true;
+}
 function syncTruckWardrobeHead() {
   const exp = KIP_DRIVER.rig?.exp;
   if (!exp) return;
-  const wid = wardrobeId(KIP_STACK.head);
+  const wid = sharedKip ? (kipSession.state.head || 'kid') : wardrobeId(KIP_STACK.head);
   exp.altHeadsGroup.visible = true;
   for (const [k, hm] of Object.entries(exp.headMeshes)) hm.visible = (k === wid);
+  if (exp.customHeadContainer) exp.customHeadContainer.visible = wid === 'custom';
   exp.altCrownBuds.visible = false;
   const isHuman = HUMAN_HEAD_IDS.has(wid);
   exp.faceplateGroup.visible = isHuman;
@@ -1616,14 +1701,13 @@ function syncTruckWardrobeHead() {
 
   // One Kip hair and hats: use the wardrobe slots, exactly like Kip-Demo.html. The stack keeps its
   // CAD-style selection IDs; only the ID prefixes are translated here.
-  const stackHairWid = typeof KIP_STACK.hair === 'string' ? KIP_STACK.hair.replace(/^hair_/, '') : 'off';
+  const stackHairWid = sharedKip
+    ? (kipSession.state.hair || 'off')
+    : typeof KIP_STACK.hair === 'string' ? KIP_STACK.hair.replace(/^hair_/, '') : 'off';
   const hairWid = isHuman ? stackHairWid : 'off';
   const hairOpt = HAIR_OPTIONS.find((h) => h.id === hairWid) || HAIR_OPTIONS[0];
   const hasHair = isHuman && hairOpt.id !== 'off';
-  const stackHatRaw = typeof KIP_STACK.hat === 'string' ? KIP_STACK.hat : 'off';
-  const hatWid = stackHatRaw === 'hat_wobble_hat' || stackHatRaw === 'wobble_hat'
-    ? 'hat'
-    : stackHatRaw.replace(/^hat_/, '');
+  const hatWid = sharedKip ? (kipSession.state.hat || 'buds') : wardrobeHatId(KIP_STACK.hat);
   const canWearHat = hairOpt.hatReady;
   const headCrownY = (WARDROBE_HEADS.find((h) => h.id === wid) || WARDROBE_HEADS[0]).crownY;
   const hatOpt = HAT_OPTIONS.find((h) => h.id === hatWid);
@@ -1649,9 +1733,9 @@ function syncTruckWardrobeHead() {
 // Load the Kip Pro (8+) & Snap (3+) body rig from kip-rig.js (same STLs, creases and joints as Kip-Demo.html).
 async function loadKipDriver() {
   try {
-    const K = createKipRig({ THREE, STLLoader, mergeVertices, toCreasedNormals, KIP_BUILD_VERSION: 'truck-1' });
-    const { geos, baseParts } = await K.loadGeos();
-    const rig = K.buildKipRig(geos, baseParts);
+    const shared = await kipSession.load();
+    if (!shared?.rig) return;
+    const { K, geos, baseParts, rig } = shared;
     for (const [n, g] of Object.entries(geos)) KIP_DRIVER.geoNames.set(g, 'stls/' + n);
     for (const [n, g] of Object.entries(baseParts)) KIP_DRIVER.geoNames.set(g, 'partspec/' + n);
 
@@ -1661,22 +1745,16 @@ async function loadKipDriver() {
     } catch (e) { console.warn('Kip wardrobe unavailable:', e); }
 
     const skinMat = makeMat('#F3BA95', 1, 0.42);
-    const slotById = Object.fromEntries(rig.partSlots.map((s) => [s.id, s.grp]));
-    const paintSlot = (id, mat) => slotById[id]?.traverse((o) => { if (o.isMesh) o.material = mat; });
-
-    // Use unmutated rigid Snap limb STLs in the seated cab so __truckProbe() maps o.geometry 1:1 to geos.snap_arm / geos.snap_leg.
-    for (const sTag of ['l', 'r']) {
-      if (slotById[`snap_arm_${sTag}`]) {
-        slotById[`snap_arm_${sTag}`].clear();
-        const sa = K.scadMesh(geos.snap_arm, skinMat);
-        sa.position.y = -34.6;
-        slotById[`snap_arm_${sTag}`].add(sa);
-      }
-      if (slotById[`snap_leg_${sTag}`]) {
-        slotById[`snap_leg_${sTag}`].clear();
-        const sl = K.scadMesh(geos.snap_leg, MATS.denim);
-        sl.position.y = -38.6;
-        slotById[`snap_leg_${sTag}`].add(sl);
+    if (!sharedKip) {
+      const slotById = Object.fromEntries(rig.partSlots.map((s) => [s.id, s.grp]));
+      const paintSlot = (id, mat) => slotById[id]?.traverse((o) => { if (o.isMesh) o.material = mat; });
+      for (const sTag of ['l', 'r']) {
+        paintSlot(`upper_arm_${sTag}`, MATS.spark);
+        paintSlot(`forearm_${sTag}`, skinMat);
+        paintSlot(`hand_${sTag}`, skinMat);
+        paintSlot(`thigh_${sTag}`, MATS.denim);
+        paintSlot(`shin_${sTag}`, MATS.denim);
+        paintSlot(`boot_${sTag}`, MATS.tire);
       }
       paintSlot(`upper_arm_${sTag}`, MATS.spark);
       paintSlot(`forearm_${sTag}`, skinMat);
@@ -1690,6 +1768,7 @@ async function loadKipDriver() {
     rig.backStudsSlot.visible = false;
 
     KIP_DRIVER.K = K;
+  if (sharedKip) kipSession.setDriverState({ edition: state.driver }, 'truck');
     KIP_DRIVER.geos = geos;
     KIP_DRIVER.rig = rig;
     KIP_DRIVER.skinMat = skinMat;
@@ -1724,7 +1803,12 @@ function syncKipButtons() {
   const hatBtn = $el('btn-hat');
   const hr = isHuman && KIP_STACK.hair && T && T.hairs[KIP_STACK.hair];
   const blocked = hr && hr.top === null;   // sculpted-top wig: no studs for a hat
-  hatBtn.textContent = blocked ? 'Hat: n/a (sculpted wig)' : `Hat: ${KIP_STACK.hat ? kipLabel(KIP_STACK.hat) : 'off'}`;
+  const sharedHat = sharedKip ? kipSession.state.hat : null;
+  if (sharedKip) publishSharedDriverState();
+  const hatLabel = sharedKip
+    ? (sharedHat && sharedHat !== 'buds' && sharedHat !== 'off' ? kipLabel(sharedHat) : 'off')
+    : (KIP_STACK.hat ? kipLabel(KIP_STACK.hat) : 'off');
+  hatBtn.textContent = blocked ? 'Hat: n/a (sculpted wig)' : `Hat: ${hatLabel}`;
   hatBtn.disabled = !!blocked;
 }
 function cycleKip(kind) {
@@ -1833,9 +1917,23 @@ async function init() {
     syncKipButtons();
   }
   rebuildScene();
+    if (sharedKip) {
+      if (!kipSession.state.source && !kipSession.owners.includes('kip')) {
+        publishSharedDriverState();
+      } else {
+        const patch = {};
+        if (drv) patch.edition = state.driver;
+        if (h) patch.head = wardrobeId(h);
+        if (w !== undefined) patch.hair = w ? w.replace(/^hair_/, '') : 'off';
+        if (t !== undefined || q0.get('hat') === 'wobble_hat') patch.hat = wardrobeHatId(KIP_STACK.hat);
+        if (Object.keys(patch).length) kipSession.setDriverState(patch, 'truck');
+        adoptSharedDriverState();
+      }
+    }
   // Deep-link / debug params: ?stage=pro&steer=22&tip=10&cam=top&explode=40&wheels=giant
   const q = new URLSearchParams(getSearch());
   if (q.get('wheels') === 'giant') $el('btn-wheels').click();
+  truckLoaded = true;
   if (q.get('stage')) benchRoot.querySelector(`[data-stage="${q.get('stage')}"]`)?.click();
   if (state.stage === 'jet') {   // ?stage=jet&balloon=200&lean=30&nozzle=8
     if (q.has('balloon')) state.balloonD = Number(q.get('balloon'));
@@ -2208,6 +2306,7 @@ function teardown() {
   globals.truckPrint?.dispose?.();
   disposeThreeScene({ scene, renderer: hosted ? null : renderer, controls: hosted ? null : controls, pmrem });
 }
+  kipSession.releaseRef('truck');
 function dispose() {
   if (disposed) return;
   disposed = true;
@@ -2235,7 +2334,14 @@ function setActive(on) {
   } else {
     drive.keys.clear(); // a key held when the bench is switched away must not keep driving it
     drive.v = 0;        // and the truck is not left rolling for when it comes back
+    if (truckLoaded) {
+      if (sharedKip) adoptSharedDriverState();
+      rebuildScene();
+      updateKinematics();
+      updateHUD();
+    }
     camPose.position.copy(camera.position);
+    kipSession.release('truck');
     camPose.target.copy(controls.target);
     camera.clearViewOffset();
     camera.updateProjectionMatrix();

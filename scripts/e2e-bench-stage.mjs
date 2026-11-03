@@ -24,7 +24,7 @@ const SHOTS = process.env.E2E_SHOTS ?? path.join(os.tmpdir(), "bench-stage-shots
 // The Kip is compared with its UI hidden: the blurred hint pill's glyph anti-aliasing differs by compositing layer (the scene itself is identical).
 const KIP_Q = "?screenshot=1&clean=1";
 // The Truck is compared with its UI hidden too (ui=0): bar and card shadows differ by one level at their edges between layers.
-const TRUCK_Q = "?stage=pro&steer=22&tip=10&demoT=1.9&hold=1&cam=hero&ui=0";
+const TRUCK_Q = "?stage=pro&steer=22&tip=10&demoT=1.9&hold=1&cam=hero&ui=0&driver=pro&head=kid&hair=off&hat=off";
 
 // Counts window/document/media-query listeners and animation frames from before any page script runs.
 const INSTRUMENT = `(() => {
@@ -53,16 +53,23 @@ const chrome = await launchChrome();
 try {
   // ---- reference screenshots: the same two states, standalone ----
   console.log("reference: standalone pages");
-  const shotOf = async (url, ready) => {
+  const shotOf = async (url, ready, beforeShot = null) => {
     const t = await chrome.open(`${server.base}${url}`);
     await t.waitFor(ready, 240000);
     await settle(3000);
+    if (beforeShot) {
+      await t.evaluate(beforeShot);
+      await settle(600);
+    }
     const f = await t.shot(path.join(SHOTS, `${ready.includes("KIP") ? "kip" : "truck"}-standalone.png`));
     t.close();
     return sha(fs.readFileSync(f));
   };
   const refKip = await shotOf(`/kip/Kip-Demo.html${KIP_Q}`, "window.__KIP_READY__ === true");
-  const refTruck = await shotOf(`/kip/Truck-Mockup.html${TRUCK_Q}`, "window.__TRUCK_READY__ === true");
+  // The shared driver intentionally keeps Kip's wardrobe colours in the Truck, while standalone Truck paints its
+  // private driver orange/blue. Compare the Truck itself with the driver hidden on both sides; shared-driver state
+  // and appearance are checked separately below.
+  const refTruck = await shotOf(`/kip/Truck-Mockup.html${TRUCK_Q}`, "window.__TRUCK_READY__ === true", "document.getElementById('btn-kip')?.click()");
 
   // ---- hosted ----
   console.log("hosted: both benches on one stage");
@@ -72,27 +79,43 @@ try {
   check("the standalone page loads (to borrow its origin)", await t.waitFor("typeof window.kipBench?.dispose === 'function' && window.__KIP_READY__ === true", 240000));
   await t.evaluate("window.kipBench.dispose()");
 
+  await t.evaluate("performance.clearResourceTimings()");
   await t.evaluate(`(async () => {
     const { createStage } = await import('/kip/bench-stage.js');
-    const { THREE, OrbitControls } = await import('/kip/vendor/three-kip.js');
+    const { THREE, OrbitControls, STLLoader, mergeVertices, toCreasedNormals } = await import('/kip/vendor/three-kip.js');
+    const { createKipSession } = await import('/kip/kip-session.js?v=10.0');
     const { mountKipBench } = await import('/kip/kip-bench.js?v=10.0');
     const { mountTruckBench } = await import('/kip/truck-bench.js');
     const host = document.getElementById('app');
     const stage = createStage({ THREE, OrbitControls, host });
+    const sharedKip = createKipSession({ THREE, STLLoader, mergeVertices, toCreasedNormals });
     const kipG = {}, truckG = {};
-    const kip = mountKipBench(host, { stage, globals: kipG, getSearch: () => ${JSON.stringify(KIP_Q)}, getHash: () => '' });
-    const truck = mountTruckBench(host, { stage, globals: truckG, getSearch: () => ${JSON.stringify(TRUCK_Q)} });
+    const kip = mountKipBench(host, { stage, sharedKip, globals: kipG, getSearch: () => ${JSON.stringify(KIP_Q)}, getHash: () => '' });
+    const truck = mountTruckBench(host, { stage, sharedKip, globals: truckG, getSearch: () => ${JSON.stringify(TRUCK_Q)} });
     stage.add('kip', kip).add('truck', truck);
     // record which scene each draw call uses (a bench draws only its own scene)
     const drawn = [];
     const render = stage.renderer.render.bind(stage.renderer);
     stage.renderer.render = (s, c) => { drawn.push(s.uuid); return render(s, c); };
-    window.__t = { THREE, stage, kip, truck, kipG, truckG, host, drawn };
+    window.__t = { THREE, stage, sharedKip, kip, truck, kipG, truckG, host, drawn };
   })()`);
   const T = "window.__t";
   check("both benches report hosted", await t.evaluate(`${T}.kip.hosted === true && ${T}.truck.hosted === true`));
   check("hosted benches start hidden and the stage has no active bench", await t.evaluate(`${T}.kip.root.hidden && ${T}.truck.root.hidden && ${T}.stage.activeId === null`));
   check("both benches finish loading while hidden", await t.waitFor(`${T}.kipG.__KIP_READY__ === true && ${T}.truckG.__TRUCK_READY__ === true`, 240000));
+  const sharedLoad = await t.evaluate(`(() => {
+    ${T}.mover = ${T}.sharedKip.rig.mover;
+    const names = performance.getEntriesByType('resource').map((e) => e.name);
+    const count = (needle) => names.filter((n) => n.includes(needle)).length;
+    return {
+      torso: count('/kip/stls/torso.stl'),
+      head: count('toyventor_char_head_kid_S.stl'),
+      lease: ${T}.sharedKip.leaseOwner,
+      owners: ${T}.sharedKip.owners,
+    };
+  })()`);
+  check("the shared session loaded the rig and wardrobe STLs once for both benches", sharedLoad.torso === 1 && sharedLoad.head === 1, JSON.stringify(sharedLoad));
+  check("the shared session has both bench owners and no lease while both are hidden", sharedLoad.lease === null && JSON.stringify(sharedLoad.owners) === '["kip","truck"]', JSON.stringify(sharedLoad));
 
   await t.evaluate(`${T}.stage.activate('kip'); ${T}.stage.start();`);
   await framesDrawn(8);
@@ -105,11 +128,15 @@ try {
     minD: ${T}.stage.controls.minDistance, maxD: ${T}.stage.controls.maxDistance, maxPolar: ${T}.stage.controls.maxPolarAngle,
     scenes: [...new Set(${T}.drawn)].length,
     glContexts: ${T}.stage.renderer.info.programs?.length ?? -1,
+    sameMover: ${T}.sharedKip.rig.mover === ${T}.mover,
+    moverInScene: ${T}.mover.parent?.isScene === true,
+    lease: ${T}.sharedKip.leaseOwner,
   })`);
   check("one WebGL canvas for two mounted benches", k1.canvases === 1, String(k1.canvases));
   check("the canvas sits inside the active bench (Kip) and only the Kip root is visible", k1.canvasIn && JSON.stringify(k1.visible) === "[false,true]", JSON.stringify(k1));
   check("Kip look applied: exposure 0.92, fov 34, near 5, far 4000, orbit 85..1600 and polar limit", k1.exposure === 0.92 && k1.fov === 34 && k1.near === 5 && k1.far === 4000 && k1.minD === 85 && k1.maxD === 1600 && Math.abs(k1.maxPolar - Math.PI * 0.495) < 1e-9, JSON.stringify(k1));
   check("only one scene is drawn while Kip is active", k1.scenes === 1, String(k1.scenes));
+  check("the shared mover is leased to Kip and parented to the Kip scene", k1.sameMover && k1.moverInScene && k1.lease === "kip", JSON.stringify(k1));
 
   // hosted == standalone, pixel for pixel (Kip)
   const shot1 = await t.shot(path.join(SHOTS, "kip-hosted.png"));
@@ -136,15 +163,25 @@ try {
     pos: ${T}.stage.camera.position.toArray(), target: ${T}.stage.controls.target.toArray(),
     sceneRuns: (() => { const d = ${T}.drawn.slice(${drawnBefore}); const runs = d.filter((u, i) => i === 0 || u !== d[i - 1]); return runs.length; })(),
     viewOffset: ${T}.stage.camera.view,
+    sameMover: ${T}.sharedKip.rig.mover === ${T}.mover,
+    moverInTruck: ${T}.mover.parent?.isScene !== true && !!${T}.mover.parent?.parent?.parent,
+    lease: ${T}.sharedKip.leaseOwner,
   })`);
   check("still one canvas, now inside the Truck; only the Truck root is visible", t1.canvases === 1 && t1.canvasIn && JSON.stringify(t1.visible) === "[true,false]", JSON.stringify(t1));
   check("Truck look applied: exposure 1.04, fov 36, near 1, far 2000, orbit limits reset", t1.exposure === 1.04 && t1.fov === 36 && t1.near === 1 && t1.far === 2000 && t1.minD === 0 && t1.maxDInf === true && t1.maxPolar === Math.PI, JSON.stringify(t1));
   check("after the switch only the Truck's scene is drawn (no Kip frame, no alternating)", t1.sceneRuns === 1, String(t1.sceneRuns));
   check("the Kip's menu camera offset is cleared on the shared camera when Kip stands down", t1.viewOffset === null || t1.viewOffset?.enabled === false, JSON.stringify(t1.viewOffset));
+  check("the same shared mover is leased to Truck and seated under its CAD root", t1.sameMover && t1.moverInTruck && t1.lease === "truck", JSON.stringify(t1));
 
-  // hosted == standalone (Truck)
+  // hosted == standalone (Truck, with the intentionally different shared driver hidden on both sides)
+  let truckShotDrawn = await t.evaluate(`${T}.drawn.length`);
+  await t.evaluate(`${T}.truck.root.querySelector('#btn-kip')?.click()`);
+  await framesDrawn(3, truckShotDrawn);
   const shot2 = await t.shot(path.join(SHOTS, "truck-hosted.png"));
-  check("hosted Truck is pixel-identical to the standalone Truck page", sha(fs.readFileSync(shot2)) === refTruck, "screenshots differ: see " + SHOTS);
+  check("hosted Truck is pixel-identical to the standalone Truck page with the driver hidden", sha(fs.readFileSync(shot2)) === refTruck, "screenshots differ: see " + SHOTS);
+  truckShotDrawn = await t.evaluate(`${T}.drawn.length`);
+  await t.evaluate(`${T}.truck.root.querySelector('#btn-kip')?.click()`);
+  await framesDrawn(3, truckShotDrawn);
 
   // input isolation: the Kip's H key must not reach a Kip that is not active
   await t.key("h");
@@ -176,6 +213,44 @@ try {
   check("the Truck gets its own camera pose back after the Kip", near(t2.pose, truckPose), JSON.stringify([t2.pose, truckPose]));
   check("the Truck kept its state (menu open) while switched away", t2.menu === true);
 
+  // ---- shared Kip wardrobe state round trip ----
+  let sharedDrawn = await t.evaluate(`${T}.drawn.length`);
+  await t.evaluate(`${T}.stage.activate('kip')`);
+  await framesDrawn(4, sharedDrawn);
+  await t.evaluate(`${T}.kipG.kipMenu.ctx.act.setHead('fox'); ${T}.kipG.kipMenu.ctx.act.setHat('ballcap');`);
+  await settle(300);
+  const kipShared = await t.evaluate(`({
+    state: ${T}.sharedKip.state,
+    loco: { head: ${T}.kipG.kipMenu.ctx.loco.head, hat: ${T}.kipG.kipMenu.ctx.loco.hat, edition: ${T}.kipG.kipMenu.ctx.loco.edition },
+    fox: ${T}.sharedKip.rig.exp.headMeshes.fox.visible,
+    ballcap: ${T}.sharedKip.rig.exp.hatMeshes.ballcap.visible,
+    moverInScene: ${T}.mover.parent?.isScene === true,
+  })`);
+  check("Kip publishes its fox head and ballcap to the shared driver state", kipShared.state.head === "fox" && kipShared.state.hat === "ballcap" && kipShared.loco.head === "fox" && kipShared.fox && kipShared.ballcap && kipShared.moverInScene, JSON.stringify(kipShared));
+  sharedDrawn = await t.evaluate(`${T}.drawn.length`);
+  await t.evaluate(`${T}.stage.activate('truck')`);
+  await framesDrawn(4, sharedDrawn);
+  const truckShared = await t.evaluate(`({
+    state: ${T}.sharedKip.state,
+    headButton: ${T}.truck.root.querySelector('#btn-head')?.textContent,
+    hatButton: ${T}.truck.root.querySelector('#btn-hat')?.textContent,
+    fox: ${T}.sharedKip.rig.exp.headMeshes.fox.visible,
+    ballcap: ${T}.sharedKip.rig.exp.hatMeshes.ballcap.visible,
+    sameMover: ${T}.sharedKip.rig.mover === ${T}.mover,
+    moverInTruck: ${T}.mover.parent?.isScene !== true && !!${T}.mover.parent?.parent?.parent,
+  })`);
+  check("Truck adopts the same fox head and ballcap from Kip", truckShared.state.head === "fox" && truckShared.state.hat === "ballcap" && /fox/i.test(truckShared.headButton ?? "") && /ballcap/i.test(truckShared.hatButton ?? "") && truckShared.fox && truckShared.ballcap && truckShared.sameMover && truckShared.moverInTruck, JSON.stringify(truckShared));
+  sharedDrawn = await t.evaluate(`${T}.drawn.length`);
+  await t.evaluate(`${T}.stage.activate('kip')`);
+  await framesDrawn(4, sharedDrawn);
+  const kipReturn = await t.evaluate(`({
+    loco: { head: ${T}.kipG.kipMenu.ctx.loco.head, hat: ${T}.kipG.kipMenu.ctx.loco.hat, edition: ${T}.kipG.kipMenu.ctx.loco.edition },
+    fox: ${T}.sharedKip.rig.exp.headMeshes.fox.visible,
+    ballcap: ${T}.sharedKip.rig.exp.hatMeshes.ballcap.visible,
+    moverInScene: ${T}.mover.parent?.isScene === true,
+  })`);
+  check("Kip gets the same fox head and ballcap back after Truck", kipReturn.loco.head === "fox" && kipReturn.loco.hat === "ballcap" && kipReturn.fox && kipReturn.ballcap && kipReturn.moverInScene, JSON.stringify(kipReturn));
+
   // ---- size comes from the host box ----
   await t.evaluate(`${T}.stage.activate('kip'); ${T}.host.style.height = '600px'; ${T}.host.style.width = '1000px';`);
   // the stage resizes on a ResizeObserver tick and the Kip menu applies its camera offset on a 100 ms timer: wait for both, not for a fixed time
@@ -185,6 +260,21 @@ try {
   check("the canvas follows the host box (1000 x 600), not the window", sz.w === 1000 && sz.h === 600, JSON.stringify(sz));
   check("the camera aspect follows the host box", Math.abs(sz.aspect - 1000 / 600) < 1e-9, String(sz.aspect));
   check("the Kip menu's camera offset is computed for the host box, not the window", sz.viewFull !== null && sz.viewFull[0] === 1000 && sz.viewFull[1] === 600, JSON.stringify(sz.viewFull));
+
+  // ---- disposing one bench leaves the shared rig usable by the other ----
+  sharedDrawn = await t.evaluate(`${T}.drawn.length`);
+  await t.evaluate(`${T}.stage.activate('truck')`);
+  await framesDrawn(4, sharedDrawn);
+  await t.evaluate(`${T}.kip.dispose()`);
+  sharedDrawn = await t.evaluate(`${T}.drawn.length`);
+  await framesDrawn(4, sharedDrawn);
+  const afterKipDispose = await t.evaluate(`({
+    disposed: ${T}.sharedKip.disposed,
+    lease: ${T}.sharedKip.leaseOwner,
+    moverInTruck: ${T}.mover.parent?.isScene !== true && !!${T}.mover.parent?.parent?.parent,
+    drawn: ${T}.drawn.length,
+  })`);
+  check("disposing Kip while Truck owns the shared rig leaves Truck drawing", afterKipDispose.disposed === false && afterKipDispose.lease === "truck" && afterKipDispose.moverInTruck && afterKipDispose.drawn > sharedDrawn, JSON.stringify(afterKipDispose));
 
   // ---- dispose ----
   const raf0 = await t.evaluate("window.__live().rafCalls");
