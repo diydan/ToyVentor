@@ -236,7 +236,7 @@ export interface WorldRuntimeHandle {
   unbolt?: (hit: any) => void;
   go?: (w: string) => void;
   /** Compose and enter a level from the level kit. Returns the seed code, or null when busy. */
-  playSeed?: (code?: string) => string | null;
+  playSeed?: (code?: string, theme?: string, opts?: { tier?: 1 | 2 | 3; mood?: "day" | "dusk" | "night" }) => string | null;
   worldName?: (id: string) => string;
   open?: () => void;
   close?: () => void;
@@ -564,7 +564,7 @@ $("#tray").innerHTML=["speed","spin","glow","torque"].map(function(k){return '<b
 $$(".mv[data-k]").forEach(function(b){b.addEventListener("click",function(){ctx();ability(b.getAttribute("data-k")||"")})});
 $("#act").addEventListener("click",function(){ctx();if(P.nearJunk)unboltNext(P.nearJunk)});
 /* Compose a level from a seed code (or a fresh random one) out of the level kit and walk into it. Composed worlds live under seed-<code>; only the newest is kept. */
-function playSeed(code?: string): string|null{if(P.busy||P.showcase||ED.on)return null;var seed=code?codeToSeed(code):Math.floor(Math.random()*0xffffff)+1,L=composeLevel({seed:seed,owned:new Set(Object.keys(S.found||{}))}),w=levelWorld(L);w.spots=w.spots.filter(function(s){return Boolean(PART[s.k])});Object.keys(WORLDS).forEach(function(k){if(k.indexOf("seed-")===0&&k!==L.id)delete WORLDS[k]});WORLDS[L.id]=w;if(S.world===L.id)S.world="garden";switchWorld(L.id);return L.seed}
+function playSeed(code?: string,theme?: string,opts?: { tier?: 1 | 2 | 3; mood?: "day" | "dusk" | "night" }): string|null{if(P.busy||P.showcase||ED.on)return null;var seed=code?codeToSeed(code):Math.floor(Math.random()*0xffffff)+1,L=composeLevel({seed:seed,theme:theme,tier:opts&&opts.tier,mood:opts&&opts.mood,owned:new Set(Object.keys(S.found||{}))}),w=levelWorld(L);w.spots=w.spots.filter(function(s){return Boolean(PART[s.k])});Object.keys(WORLDS).forEach(function(k){if(k.indexOf("seed-")===0&&k!==L.id)delete WORLDS[k]});WORLDS[L.id]=w;if(S.world===L.id)S.world="garden";switchWorld(L.id);return L.seed}
 function switchWorld(w: string){if(P.busy)return;if(w===S.world)return;S.world=w;mUpdateCur=null;mpOpen=false;save();flash();buildWorld(w);P.pos.set(2,0,0);P.prevX=2;P.elev=0;P.target=null;P.face=P.tface=0;cam.x=3;streetCd=.6;sfx.pop();showIntro(w)}
 function streetCross(dir: "west" | "east"): boolean {
  var nb=(!ED.on&&!ED.testing)?townNeighbors(S.world):null;
@@ -955,7 +955,7 @@ function mLift(m: Mission){var x=m.x,px=x+.7,mt=metal("#c9d3f0"),dk=plastic("#2a
  m.gx0=px-1.5;m.gy=3.0;add(M(rbox(.3,3.3,.3,.05),dk,m.gx0-.4,1.65,-1.35));add(M(rbox(2.9,.22,.3,.05),dk,m.gx0+1.0,3.42,-1.35));m.drv=faceGear(.34,plastic("#ff9d5c"));m.drv.position.set(m.gx0,m.gy,-1.1);add(m.drv);var arm=M(new T.CylinderGeometry(.035,.035,.26,8),mt,.22,0,.12);arm.rotation.x=Math.PI/2;m.drv.add(arm);m.drv.add(M(new T.SphereGeometry(.08,10,8),plastic("#ffd24d"),.22,0,.27));m.drv.add(M(new T.CylinderGeometry(.06,.06,.1,10),mt,0,0,.08).rotateX(Math.PI/2));
  m.drum=M(new T.CylinderGeometry(.18,.18,.3,16),plastic("#6b4423",{roughness:.7}),0,0,0);m.drum.rotation.x=Math.PI/2;add(m.drum);m.rope=M(new T.CylinderGeometry(.025,.025,1,6),plastic("#f4f0e0",{roughness:.8}),0,0,0);add(m.rope);m.gm={};mSync(m)}
 
-function buildMissions(R: any){W.missions=[];(R.missions||[]).forEach(function(d: any){var m: Mission={type:d.type,x:d.x,free:!!d.free,done:false};m.done=!!S.mdone[mid(m)];if(d.type==="bridge")mBridge(m);else if(d.type==="lift")mLift(m);else if(MT[d.type])MT[d.type]!.build(m);else return;if(m.done&&m.chest){m.chest.userData.lid.rotation.x=-1.9;m.chest.userData.glow.visible=false;m.opened=true}W.missions.push(m)})}
+function buildMissions(R: any){W.missions=[];(R.missions||[]).forEach(function(d: any){var m: Mission={type:d.type,x:d.x,free:!!d.free,done:false};if((d.tier===2||d.tier===3)&&!(S.ms[mid(m)]&&S.ms[mid(m)].tier))S.ms[mid(m)]=Object.assign({},S.ms[mid(m)],{tier:d.tier});m.done=!!S.mdone[mid(m)];if(d.type==="bridge")mBridge(m);else if(d.type==="lift")mLift(m);else if(MT[d.type])MT[d.type]!.build(m);else return;if(m.done&&m.chest){m.chest.userData.lid.rotation.x=-1.9;m.chest.userData.glow.visible=false;m.opened=true}W.missions.push(m)})}
 function mBounds(): [number, number]{var nb=(!ED.on&&!ED.testing)?townNeighbors(S.world):null,lo=nb?.2:.5,hi=nb?44.6:43.5,pk=activePerk(),skim=!!(pk&&pk.waterSkim);(W.missions||[]).forEach(function(m: Mission){if(m.type==="bridge"&&!m.done&&!skim)hi=Math.min(hi,m.x-1.75);if(MT[m.type]&&!m.done&&!(skim&&(m.type==="measure"||m.type==="raft")))hi=Math.min(hi,MT[m.type]!.hold(m));if(m.type==="lift"){var px=m.px;if(!m.done)hi=Math.min(hi,px);else{var on=Math.abs(P.pos.x-px)<1.0;if(on||P.pos.x>=px){if(m.py>.05)lo=Math.max(lo,px-.9);if(m.py<2.55)hi=Math.min(hi,px+.9)}}}});return [lo,hi]}
 function walkTo(x: number): Promise<boolean>{return new Promise(function(res){autoWalk=true;P.target=new T.Vector3(x,0,0);var last=P.pos.x,still=0,lf=FR,iv=setInterval(function(){if(!P.target||Math.abs(P.pos.x-x)<.08){clearInterval(iv);P.target=null;autoWalk=false;res(true);return}if(FR===lf)return;lf=FR;if(Math.abs(P.pos.x-last)<.003){if(++still>60){clearInterval(iv);P.target=null;autoWalk=false;res(false)}}else{still=0;last=P.pos.x}},30)})}
 

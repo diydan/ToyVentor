@@ -15,6 +15,7 @@ import {
   newlyShown,
   roadKey,
   seenEntries,
+  TIER_WORD,
   type ExplorerGraph,
   type ExplorerNode,
   type ExplorerReveal,
@@ -82,7 +83,18 @@ function placeInfo(node: ExplorerNode | undefined): { title: string; sub: string
     return { title: "A new place?", sub: "Hidden in the clouds", action: "Go!" };
   }
   if (node.kind === "frontier") {
-    return { title: "New path", sub: "A surprise level", action: "Go!" };
+    return {
+      title: "New path",
+      sub: `Surprise level · ${TIER_WORD[node.tier ?? 1]}`,
+      action: "Go!",
+    };
+  }
+  if (node.kind === "secret") {
+    return {
+      title: "Secret exit",
+      sub: `Bonus level${node.complete ? " ★" : ""} · ${TIER_WORD[node.tier ?? 1]}`,
+      action: "Go!",
+    };
   }
   if (node.kind === "ask") {
     return { title: "Who is playing?", sub: "A grown-up sets the age", action: "Open" };
@@ -99,7 +111,12 @@ function placeInfo(node: ExplorerNode | undefined): { title: string; sub: string
 const nodeLabel = (node: ExplorerNode, here: boolean): string => {
   const stand = here ? ", the guide is here" : "";
   if (node.fog === "clouded") return `A place hidden in the clouds${stand}`;
-  if (node.kind === "frontier") return `New path, a surprise level${stand}`;
+  if (node.kind === "frontier") {
+    return `New path, a surprise level, ${TIER_WORD[node.tier ?? 1]}${stand}`;
+  }
+  if (node.kind === "secret") {
+    return `Secret exit, a bonus level, ${TIER_WORD[node.tier ?? 1]}${node.complete ? ", done" : ""}${stand}`;
+  }
   if (node.kind === "ask") return `Who is playing? A grown-up sets the age${stand}`;
   const progress = node.total > 0 ? `: ${node.done} of ${node.total}${node.complete ? ", done" : ""}` : "";
   return `${node.label}, ${KIND_WORD[node.kind]}${progress}${stand}`;
@@ -129,12 +146,17 @@ export function ExplorerMap({
 }: ExplorerMapProps) {
   const scrollerRef = useRef<HTMLDivElement>(null);
   const [rungsOf, setRungsOf] = useState<LadderState | null>(null);
-  const [notice, setNotice] = useState("");
   // Fixed at open: the diff must not change when the record updates below,
   // or the animation classes would drop off mid-play.
   const [reveal] = useState<ExplorerReveal>(() =>
     newlyShown(graph, seen ? new Set(seen) : null),
   );
+  // A secret exit that has just opened says so, once.
+  const [notice, setNotice] = useState(() => {
+    const opened = graph.nodes.find((n) => n.kind === "secret" && reveal.appear.has(n.id));
+    const from = opened ? graph.nodes.find((n) => n.id === opened.id.slice("secret:".length)) : undefined;
+    return opened ? `A secret exit opened${from ? ` near ${from.label}` : ""}! Look for the star.` : "";
+  });
   useEffect(() => {
     onSeen?.(seenEntries(graph));
     // Once, on open.
@@ -265,7 +287,7 @@ export function ExplorerMap({
   const open = (node: ExplorerNode) => {
     setNotice("");
     if (node.kind === "ask") return onAskAge();
-    if (node.kind === "frontier") {
+    if (node.kind === "frontier" || node.kind === "secret") {
       if (!onGoFrontier(node)) {
         setNotice("That new path can't start right now. Try again in a moment.");
       }

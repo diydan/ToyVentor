@@ -7,6 +7,13 @@ import {
   FRONTIER_BRANCHES,
   FRONTIER_MAX_DEPTH,
   frontierSeedCode,
+  frontierTier,
+  maxTierForAge,
+  secretId,
+  SECRET_EXITS,
+  TIER_2_FROM_DEPTH,
+  TIER_3_FROM_DEPTH,
+  TIER_WORD,
   newlyShown,
   roadKey,
   seenEntries,
@@ -22,6 +29,7 @@ import {
   type ProgressionState,
 } from "../src/lib/progression";
 import {
+  checkLevel,
   codeToSeed,
   composeLevel,
 } from "../src/features/game/world/runtime/levelKit";
@@ -426,5 +434,171 @@ describe("explorer seen in progression", () => {
     const g = buildExplorerGraph({ cards: cards({ ageBand: null }), visited: deepWalk() });
     const entries = seenEntries(g);
     expect(markExplorerSeen(prog(), entries).next.explorerSeen).toEqual(entries);
+  });
+});
+
+/** Problems with a graph's geometry: shared spots, crossing roads, a road under a place it skips. */
+function geometryProblems(g: ExplorerGraph): string[] {
+  const out: string[] = [];
+  const by = new Map(g.nodes.map((n) => [n.id, n]));
+  const spots = g.nodes.map((n) => `${n.x},${n.y}`);
+  if (new Set(spots).size !== spots.length) out.push("two places share a spot");
+  const segs = g.edges.map((e) => ({ a: by.get(e.a)!, b: by.get(e.b)! }));
+  const orient = (o: { x: number; y: number }, p: { x: number; y: number }, q: { x: number; y: number }) =>
+    (p.x - o.x) * (q.y - o.y) - (p.y - o.y) * (q.x - o.x);
+  for (let i = 0; i < segs.length; i++) {
+    for (let j = i + 1; j < segs.length; j++) {
+      const A = segs[i]!;
+      const B = segs[j]!;
+      if ([A.a.id, A.b.id].some((id) => id === B.a.id || id === B.b.id)) continue;
+      if (orient(A.a, A.b, B.a) * orient(A.a, A.b, B.b) < 0 && orient(B.a, B.b, A.a) * orient(B.a, B.b, A.b) < 0) {
+        out.push(`${A.a.id}-${A.b.id} crosses ${B.a.id}-${B.b.id}`);
+      }
+    }
+  }
+  for (const sg of segs) {
+    const vx = sg.b.x - sg.a.x;
+    const vy = sg.b.y - sg.a.y;
+    for (const n of g.nodes) {
+      if (n.id === sg.a.id || n.id === sg.b.id) continue;
+      const t = Math.max(0, Math.min(1, ((n.x - sg.a.x) * vx + (n.y - sg.a.y) * vy) / (vx * vx + vy * vy)));
+      if (Math.hypot(sg.a.x + t * vx - n.x, sg.a.y + t * vy - n.y) < 0.6) out.push(`${sg.a.id}-${sg.b.id} under ${n.id}`);
+    }
+  }
+  return out;
+}
+
+describe("difficulty by depth", () => {
+  it("easy for the first few paths, tricky from the 4th, hard from the 8th", () => {
+    expect([TIER_2_FROM_DEPTH, TIER_3_FROM_DEPTH]).toEqual([4, 8]);
+    const at = (d: number) => frontierTier(d, 4);
+    expect([1, 2, 3].map(at)).toEqual([1, 1, 1]);
+    expect([4, 5, 6, 7].map(at)).toEqual([2, 2, 2, 2]);
+    expect([8, 9, 12].map(at)).toEqual([3, 3, 3]);
+    expect(TIER_WORD).toEqual({ 1: "Easy", 2: "Tricky", 3: "Hard" });
+  });
+
+  it("age caps it: the youngest never see more than Easy, an unset age no more than Tricky", () => {
+    expect([0, 1, 2, 3, 4, 5].map((b) => maxTierForAge(b))).toEqual([1, 1, 2, 3, 3, 3]);
+    expect(maxTierForAge(null)).toBe(2);
+    expect(maxTierForAge(undefined)).toBe(2);
+    for (const d of [1, 5, 12]) {
+      expect(frontierTier(d, 0)).toBe(1);
+      expect(frontierTier(d, 1)).toBe(1);
+      expect(frontierTier(d, null)).toBeLessThanOrEqual(2);
+    }
+    expect(frontierTier(12, 2)).toBe(2);
+  });
+
+  it("every generated path in the graph carries its depth and the matching tier", () => {
+    for (const ageBand of [null, 1, 3]) {
+      const g = buildExplorerGraph({ cards: cards({ ageBand }), visited: deepWalk(), ageBand });
+      const frontier = g.nodes.filter((n) => n.kind === "frontier");
+      expect(frontier.length).toBeGreaterThan(0);
+      for (const n of frontier) {
+        const d = Number(n.id.split(":")[2]);
+        expect(n.depth, n.id).toBe(d);
+        expect(n.tier, n.id).toBe(frontierTier(d, ageBand));
+      }
+    }
+    // The first paths are tier 1 whatever the age: existing seeds play as they always did.
+    const g = buildExplorerGraph({ cards: cards({ ageBand: 3 }), ageBand: 3 });
+    expect(g.nodes.filter((n) => n.kind === "frontier").every((n) => n.tier === 1)).toBe(true);
+  });
+
+  it("a tiered path plays through the level kit at that tier, and still passes its checks", () => {
+    const g = buildExplorerGraph({ cards: cards({ ageBand: 3 }), visited: deepWalk(), ageBand: 3 });
+    for (const n of g.nodes.filter((x) => x.kind === "frontier" && (x.tier ?? 1) > 1)) {
+      const l = composeLevel({ seed: codeToSeed(n.seedCode!), theme: n.theme, tier: n.tier });
+      expect(checkLevel(l).filter((c) => !c.ok), n.id).toEqual([]);
+      for (const m of l.missions ?? []) expect(m.tier).toBe(n.tier);
+    }
+  });
+});
+
+describe("secret exits", () => {
+  const gardenGoals = () => MAP_STOPS.find((s) => s.id === "garden")!.goals;
+  const worldDone = (...ids: string[]) =>
+    new Set(ids.flatMap((id) => MAP_STOPS.find((s) => s.id === id)!.goals));
+  const secrets = (g: ExplorerGraph) => g.nodes.filter((n) => n.kind === "secret").map((n) => n.id).sort();
+
+  it("none show until a world's hidden parts are all found", () => {
+    expect(secrets(buildExplorerGraph({ cards: cards({ ageBand: 3 }) }))).toEqual([]);
+    // Most of the garden found is not enough.
+    const some = new Set(gardenGoals().slice(0, gardenGoals().length - 1));
+    expect(secrets(buildExplorerGraph({ cards: cards({ ageBand: 3, found: some }) }))).toEqual([]);
+  });
+
+  it("the one world that is complete opens its own exit and no other", () => {
+    const g = buildExplorerGraph({ cards: cards({ ageBand: 3, found: worldDone("garden") }), ageBand: 3 });
+    expect(secrets(g)).toEqual([secretId("garden")]);
+    const exit = byId(g, secretId("garden"))!;
+    expect(exit.kind).toBe("secret");
+    expect(exit.theme).toBe(byId(g, "garden")!.theme);
+    // Joined to its world by a road, shown as a silhouette until walked to.
+    expect(g.edges.some((e) => [e.a, e.b].sort().join() === [ "garden", exit.id ].sort().join())).toBe(true);
+    expect(exit.fog).toBe("next");
+    // The hardest level this age is offered, in a dusk mood.
+    expect(exit.tier).toBe(3);
+    expect(exit.mood).toBe("dusk");
+    expect(maxTierForAge(0)).toBe(1);
+    expect(buildExplorerGraph({ cards: cards({ ageBand: 1, found: worldDone("garden") }), ageBand: 1 }).nodes.find((n) => n.kind === "secret")!.tier).toBe(1);
+
+    const two = buildExplorerGraph({ cards: cards({ ageBand: 3, found: worldDone("garden", "snow") }) });
+    expect(secrets(two)).toEqual([secretId("garden"), secretId("snow")].sort());
+  });
+
+  it("walking to one reveals and completes it; sandbox shows all five", () => {
+    const walked = buildExplorerGraph({
+      cards: cards({ ageBand: 3, found: worldDone("garden") }),
+      visited: new Set([secretId("garden")]),
+    });
+    const exit = byId(walked, secretId("garden"))!;
+    expect(exit.fog).toBe("revealed");
+    expect(exit.complete).toBe(true);
+    expect(exit.done).toBe(1);
+    const all = buildExplorerGraph({ cards: cards({ ageBand: 3 }), openAll: true });
+    expect(secrets(all)).toEqual(SECRET_EXITS.map((x) => secretId(x.from)).sort());
+    expect(all.nodes.every((n) => n.fog === "revealed")).toBe(true);
+  });
+
+  it("each plays a bonus level through the level kit, with its own seed", () => {
+    const all = buildExplorerGraph({ cards: cards({ ageBand: 3 }), openAll: true, ageBand: 3 });
+    const ex = all.nodes.filter((n) => n.kind === "secret");
+    expect(new Set(ex.map((n) => n.seedCode)).size).toBe(ex.length);
+    for (const n of ex) {
+      expect(n.seedCode).toBe(frontierSeedCode(n.id));
+      const l = composeLevel({ seed: codeToSeed(n.seedCode!), theme: n.theme, mood: n.mood, tier: n.tier });
+      expect(l.theme).toBe(n.theme);
+      expect(l.mood).toBe("dusk");
+      expect(checkLevel(l).filter((c) => !c.ok), n.id).toEqual([]);
+    }
+  });
+
+  it("their space is reserved even while locked: nothing moves when one opens", () => {
+    const where = (g: ExplorerGraph) =>
+      new Map(g.nodes.filter((n) => n.kind === "frontier").map((n) => [n.id, `${n.x},${n.y}`]));
+    const locked = buildExplorerGraph({ cards: cards({ ageBand: 3 }), visited: deepWalk() });
+    const open = buildExplorerGraph({ cards: cards({ ageBand: 3 }), visited: deepWalk(), openAll: true });
+    for (const [id, at] of where(locked)) expect(where(open).get(id), id).toBe(at);
+    // And no generated path sits on any secret exit's spot.
+    const taken = new Set(locked.nodes.map((n) => `${n.x},${n.y}`));
+    for (const sx of SECRET_EXITS) expect(taken.has(`${sx.pos[0]},${sx.pos[1]}`), sx.from).toBe(false);
+  });
+
+  it("with every exit open and every branch walked to the end: clean geometry, any age", () => {
+    for (const ageBand of [null, 0, 1, 2, 3, 4, 5]) {
+      const g = buildExplorerGraph({ cards: cards({ ageBand }), visited: deepWalk(), openAll: true, ageBand });
+      expect(g.nodes.filter((n) => n.kind === "secret").length, `band ${ageBand}`).toBe(5);
+      expect(geometryProblems(g), `band ${ageBand}`).toEqual([]);
+    }
+  });
+
+  it("an exit that opens is new on the map: it appears and its road draws from the world", () => {
+    const before = buildExplorerGraph({ cards: cards({ ageBand: 3 }) });
+    const after = buildExplorerGraph({ cards: cards({ ageBand: 3, found: worldDone("beach") }) });
+    const reveal = newlyShown(after, new Set(seenEntries(before)));
+    expect(reveal.appear.has(secretId("beach"))).toBe(true);
+    expect(reveal.roads.get(roadKey("beach", secretId("beach")))).toBeDefined();
   });
 });

@@ -48,6 +48,26 @@ have found.
   but keep heading outward (a step may bend one octant either side of
   the branch's own heading), and a step that would cross a road, land
   on a place, or crowd one ends the chain.
+- **Difficulty rises with depth** (decided Nov 3). A generated path's
+  tier is set by how far out it is: paths 1-3 are Easy (tier 1,
+  byte-identical to before, so every early seed code replays the same
+  level), 4-7 Tricky (tier 2), 8+ Hard (tier 3). A tiered level has a
+  third free station and every station starts at that tier (the same
+  1-3 the mission panel offers); the five hiding spots never change.
+  Age caps it: bands 2-3 and 3-4 are never above Easy, 5-6 never above
+  Tricky, an unset age never above Tricky. The plate says which it is
+  ("Surprise level · Tricky").
+- **Secret exits** (decided Nov 3). Finding every hidden part in a
+  world (its card complete) opens a secret side route off it: Garden,
+  Beach, Junkyard, Snow Peak and Sky Meadow (not Toy Room). It is one
+  violet star dot a short road away, a Bonus level in a dusk mood at
+  the hardest tier the age is offered, with its own seed. Until the
+  world is complete it is not on the map at all (no cloud, no hint);
+  sandbox shows all five. When one opens, the map says so once and it
+  draws in like anything else that is new. The trigger is a default
+  chosen for the Mario "second exit" feel (find everything, get a
+  secret), not a settled design: it is a one-line rule in
+  `buildExplorerGraph` to change.
 - **What is new draws itself in.** The map remembers what it has shown
   (`explorerSeen`). On the next open only what is new animates: the
   clouds part around it, new roads draw out from the end that was
@@ -85,7 +105,10 @@ neighbours.
   so drawing and hopping agree). Walked roads are solid dirt with a
   dark edge; a road to a silhouette is dotted footprints.
 - **Markers.** Level dot (yellow until cleared, blue once cleared, with
-  a tick), red `?` dot for a generated path (the "secret exit"),
+  a tick) for the learning ladders; a world keeps its own colour and
+  gains a gold ring and a tick when cleared (two worlds are blue, and
+  blue also means cleared on the plain dots); red `?` dot for a
+  generated path; violet star dot with sparkles for a secret exit;
   castle for each lab (flag in the world's colour), house for Toy Room,
   a sign for the grown-up age prompt, a `?` cloud for a hidden place.
   The suggested place gets a bouncing arrow.
@@ -118,7 +141,10 @@ neighbours.
   order, so **a place that exists never moves when any branch grows**),
   fog states, `newlyShown` and `seenEntries` (the reveal diff),
   `explorerNeighbor` (arrow-key travel), `explorerRoute` (the walk the
-  toy hops along), and `defaultMapView`. Unit-tested in
+  toy hops along), `defaultMapView`, `frontierTier` / `maxTierForAge`
+  (difficulty by depth and age) and `SECRET_EXITS` (fixed positions,
+  always reserved in the frontier layout, locked or not, so nothing
+  moves when one opens). Unit-tested in
   `tests/explorer-map.test.ts` (including a cross-check that every
   frontier seed code round-trips through `composeLevel`) and
   `tests/explorer-art.test.ts`.
@@ -147,23 +173,30 @@ neighbours.
   opens in under 300 ms, scenery is placed through a bucket grid (about
   50 ms for the biggest world) and the cloud bank is held to about
   1,200 puffs by making them larger, not more numerous.
+- Difficulty plumbing: `composeLevel({ tier })` in `levelKit.ts` (tier 1
+  or absent is byte-identical, tested over 600 seeds), `playSeed(code,
+  theme, { tier, mood })` through `engine.ts` and `world.ts`, and
+  `buildMissions` starting a seeded level's stations at the tier it asks
+  for unless the child already chose one. `GameCanvas` passes the age
+  band to the graph and the node's tier and mood to `playSeed`.
 - `npm run e2e:trail` (`scripts/e2e-trail.mjs`) drives it in headless
   Chrome: default view by age and the swap between views, full screen
   over the dock, fog, the toy's hop and the plate, arrow keys, the
   rung sheet over the map, the busy and ready frontier paths, a
-  branch growing when it is walked, the reveal animation (first open
+  branch growing when it is walked, difficulty by depth (a 4th path is
+  Tricky and its stations start at tier 2), a secret exit (hidden,
+  opens when the Garden's parts are found, notice and animation, plays
+  at tier 3), the reveal animation (first open
   quiet, the next open animates, the one after quiet), and layout (tap size, alignment, no overlap, the toy in view).
 
 ## Not in this slice
 
 - No hard gates, secret-exit locks, or vehicle gates on roads.
   Vehicle perks stay soft (connected-town slice 1).
-- Generated levels do not get harder with depth: every path is a
-  seeded level-kit level in its branch's theme. Difficulty by depth
-  is a `composeLevel` input, not a map change.
-- Secret exits (a hidden side route that opens when something
-  specific is found) are not built. They need a decision on what
-  triggers them.
+- No secret exit off Toy Room (its roads are crowded), and none off a
+  lab or ladder. A secret exit has no reward beyond the level itself.
+- Tier 2 and 3 only add a station and raise its starting tier; the
+  level kit has no other difficulty knob (five spots is a shared rule).
 - The overworld is drawn in SVG with stand-in art (shapes and a glyph
   per place). Hand-made art would replace `ExplorerWorldArt` and
   `ExplorerNodeArt` without touching the graph or the e2e.

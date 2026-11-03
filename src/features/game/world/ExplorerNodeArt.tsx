@@ -20,18 +20,20 @@ function Dot({
   glyph,
   scale,
   complete,
+  sparkle = false,
 }: {
   color: string;
   glyph: string;
   scale: number;
   complete: boolean;
+  sparkle?: boolean;
 }) {
   const dark = darken(color, 0.55);
   return (
     <svg viewBox="0 0 64 64" aria-hidden="true">
       <ellipse cx="32" cy="52" rx="19" ry="6" fill={SHADOW} />
       <g transform={`translate(32 31) scale(${scale}) translate(-32 -31)`}>
-        <circle cx="32" cy="31" r="22" fill="#fffaf0" stroke={INK} strokeWidth="3" />
+        <circle cx="32" cy="31" r="22" fill={complete ? "#ffe9a0" : "#fffaf0"} stroke={INK} strokeWidth="3" />
         <circle cx="32" cy="31" r="16.5" fill={color} stroke={dark} strokeWidth="2.2" />
         <ellipse
           cx="25.5"
@@ -57,6 +59,12 @@ function Dot({
           >
             {glyph}
           </text>
+        ) : null}
+        {sparkle ? (
+          <g fill="#ffe066" stroke={INK} strokeWidth="1.4" strokeLinejoin="round">
+            <path d="M8 12l2.2 4.6L15 19l-4.8 2.4L8 26l-2.2-4.6L1 19l4.8-2.4z" />
+            <path d="M55 40l1.8 3.8 3.8 1.8-3.8 1.8L55 51l-1.8-3.8-3.8-1.8 3.8-1.8z" />
+          </g>
         ) : null}
         {complete ? (
           <g transform="translate(47 14)">
@@ -143,11 +151,17 @@ export function NodeArt({ node }: { node: ExplorerNode }) {
   if (node.kind === "frontier") {
     return <Dot color="#ff5148" glyph="?" scale={1} complete={false} />;
   }
+  // A secret exit: a violet star dot, with sparkles so it reads as special.
+  if (node.kind === "secret") {
+    return <Dot color="#a78bff" glyph="★" scale={1.08} complete={node.complete} sparkle />;
+  }
   const world = node.kind === "world";
-  const color = node.complete
-    ? "#3d9bff"
-    : world
-      ? (THEME_COLOR[node.theme] ?? "#ffd23f")
+  // Worlds keep their own colour when cleared (the tick says so), because two
+  // of them are blue and blue also means "cleared" on the plain level dots.
+  const color = world
+    ? (THEME_COLOR[node.theme] ?? "#ffd23f")
+    : node.complete
+      ? "#3d9bff"
       : "#ffd23f";
   return (
     <Dot

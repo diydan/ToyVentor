@@ -3,6 +3,8 @@ import { buildMapCards } from "../src/lib/mapCards";
 import {
   buildExplorerGraph,
   defaultMapView,
+  FRONTIER_BRANCHES,
+  FRONTIER_MAX_DEPTH,
   explorerRoute,
   TRAIL_DEFAULT_FROM_BAND,
   type ExplorerGraph,
@@ -120,6 +122,29 @@ describe("winding roads", () => {
               Math.hypot(p.x - n.x, p.y - n.y),
               `band ${band}: ${r.a}-${r.b} passes ${n.id}`,
             ).toBeGreaterThanOrEqual(CLEAR);
+          }
+        }
+      }
+    }
+  });
+});
+
+describe("winding roads with every secret exit open and every branch grown", () => {
+  it("still never run under a node they skip, in any age band", () => {
+    const CLEAR = 0.3 * UNIT;
+    const walked = new Set(FRONTIER_BRANCHES.map((b) => `frontier:${b.from}:${FRONTIER_MAX_DEPTH}`));
+    for (const band of BANDS) {
+      const g = buildExplorerGraph({
+        cards: buildMapCards({ ageBand: band, prog: emptyProgression(), found: new Set(), missionsDone: new Set() }),
+        visited: walked,
+        openAll: true,
+      });
+      const { nodes, roads } = worldOf(g);
+      for (const r of roads) {
+        for (const n of nodes) {
+          if (n.id === r.a || n.id === r.b) continue;
+          for (const p of r.curve.points) {
+            expect(Math.hypot(p.x - n.x, p.y - n.y), `band ${band}: ${r.a}-${r.b} passes ${n.id}`).toBeGreaterThanOrEqual(CLEAR);
           }
         }
       }

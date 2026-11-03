@@ -177,3 +177,63 @@ describe("moods re-skin any theme", () => {
     for (let seed = 1; seed <= 200; seed++) for (const p of composeLevel({ seed }).props) expect(PROPS[p.type], p.type).toBeTruthy();
   });
 });
+
+describe("level kit difficulty tier", () => {
+  const N = 600;
+
+  it("tier 1 (or none) is byte-identical to the plain composer, so every shared seed replays the same", () => {
+    for (let seed = 1; seed <= N; seed++) {
+      const plain = JSON.stringify(composeLevel({ seed }));
+      expect(JSON.stringify(composeLevel({ seed, tier: 1 })), `seed ${seed}`).toBe(plain);
+    }
+    // A forced theme and mood are unaffected too.
+    expect(JSON.stringify(composeLevel({ seed: 9, theme: "beach", mood: "dusk", tier: 1 }))).toBe(
+      JSON.stringify(composeLevel({ seed: 9, theme: "beach", mood: "dusk" })),
+    );
+  });
+
+  it("tier 2 and 3 start every station at that tier and never carry more than three", () => {
+    for (const tier of [2, 3] as const) {
+      for (let seed = 1; seed <= N; seed++) {
+        const l = composeLevel({ seed, tier });
+        const ms = l.missions ?? [];
+        expect(ms.length, `seed ${seed} tier ${tier}`).toBeLessThanOrEqual(3);
+        for (const m of ms) {
+          expect(m.tier).toBe(tier);
+          expect(m.free).toBe(true);
+        }
+      }
+    }
+    // Tier 1 stations carry no tier field at all (the byte-identical shape).
+    for (let seed = 1; seed <= 50; seed++) {
+      for (const m of composeLevel({ seed }).missions ?? []) expect("tier" in m).toBe(false);
+    }
+  });
+
+  it("a higher tier is genuinely more to do: more stations on average", () => {
+    const mean = (tier?: 1 | 2 | 3) => {
+      let n = 0;
+      for (let seed = 1; seed <= N; seed++) n += (composeLevel({ seed, tier }).missions ?? []).length;
+      return n / N;
+    };
+    expect(mean(2)).toBeGreaterThan(mean(1) + 0.5);
+    expect(mean(3)).toBeGreaterThan(mean(1) + 0.5);
+  });
+
+  it("every tiered level still passes the editor's own checks, and keeps exactly five spots", () => {
+    for (const tier of [2, 3] as const) {
+      for (let seed = 1; seed <= N; seed++) {
+        const l = composeLevel({ seed, tier });
+        const bad = checkLevel(l).filter((c) => !c.ok).map((c) => c.n);
+        expect(bad, `seed ${seed} tier ${tier} ${l.theme}`).toEqual([]);
+        expect(l.spots).toHaveLength(5);
+        // Stations keep clear of the spots and of each other.
+        const ms = l.missions ?? [];
+        for (const m of ms) for (const s of l.spots) expect(Math.abs(s.x - m.x)).toBeGreaterThanOrEqual(3.5);
+        for (let i = 0; i < ms.length; i++) {
+          for (let j = i + 1; j < ms.length; j++) expect(Math.abs(ms[i]!.x - ms[j]!.x)).toBeGreaterThanOrEqual(6);
+        }
+      }
+    }
+  });
+});

@@ -109,6 +109,12 @@ export interface ComposeOptions {
    * composed around them. Absent or empty = the plain seeded composer, byte-identical output.
    */
   pinnedProps?: readonly LevelPropRef[];
+  /**
+   * Difficulty. 1 (or absent) is the plain seeded composer, byte-identical to before so every shared
+   * seed code replays the same level. 2 and 3 add a third free station and start every station at
+   * that tier (the same 1-3 the mission panel offers); the five hiding spots never change.
+   */
+  tier?: 1 | 2 | 3;
 }
 export interface ComposedLevel extends LevelDef { seed: string; mood: Mood }
 
@@ -212,13 +218,14 @@ export function composeLevel(opts: ComposeOptions): ComposedLevel {
   // 5. Stations: one or two free STEM stations, kept clear of the spots.
   const missions: LevelMissionRef[] = [];
   const stationPool = shuffle(r, STATIONS);
-  const want = r() < 0.5 ? 1 : 2;
+  const tier = opts.tier === 2 || opts.tier === 3 ? opts.tier : 1;
+  const want = Math.min(3, (r() < 0.5 ? 1 : 2) + (tier > 1 ? 1 : 0));
   for (const type of stationPool) {
     if (missions.length >= want) break;
     for (let tries = 0; tries < 12; tries++) {
       const x = Math.round((10 + r() * 30) * 2) / 2;
       if (spots.every((s) => Math.abs(s.x - x) >= 3.5) && missions.every((m) => Math.abs(m.x - x) >= 6) && !pinnedNear(x, 2.5)) {
-        missions.push({ type, x, free: true });
+        missions.push(tier > 1 ? { type, x, free: true, tier } : { type, x, free: true });
         break;
       }
     }

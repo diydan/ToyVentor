@@ -20,6 +20,11 @@
 //     what is new on a later open animates (clouds part, roads draw in,
 //     places pop in) and is not replayed on the open after that;
 //   - walking a generated path grows its branch (two more appear beyond it);
+//   - difficulty by depth: a 4th path is labelled Tricky and plays with its
+//     stations at tier 2;
+//   - a secret exit stays hidden until a world's hidden parts are all found,
+//     then opens (with a notice and the reveal animation) and plays a bonus
+//     level at the hardest tier the age is offered;
 //   - layout measured in the DOM: tap targets, node-on-road alignment, no
 //     overlapping nodes, the toy in view;
 //   - no uncaught exception in any scenario.
@@ -419,6 +424,64 @@ async function scenarioPlay(cdp) {
     ids.includes("frontier:lab3:3") && ids.includes("frontier:lab3:4") && !ids.includes("frontier:lab3:5"),
     JSON.stringify(ids),
   );
+
+  // Difficulty by depth: the 4th path is Tricky and plays at tier 2 (path 2 was Easy).
+  await tapNode(cdp, "frontier:lab3:4");
+  await waitKipAt(cdp, "frontier:lab3:4");
+  const kicker = await cdp.evaluate(`document.querySelector(".tv-trail-plate-kicker")?.textContent||""`);
+  check("the 4th path is labelled Tricky", /Tricky/.test(kicker), kicker);
+  await clickPlay(cdp);
+  await sleep(1500);
+  const lvl = await levelTiers(cdp);
+  check("the 4th path starts its stations at tier 2", lvl.world.startsWith("seed-") && lvl.tiers.length > 0 && lvl.tiers.every((t) => t === 2), JSON.stringify(lvl));
+}
+
+/** The seeded level now playing, and the tier each of its stations starts at. */
+const levelTiers = (cdp) =>
+  cdp.evaluate(`(()=>{const S=window.__tvWorld.handle.S;const w=String(S.world);return {world:w,tiers:Object.entries(S.ms||{}).filter(([k])=>k.startsWith(w+".")).map(([,v])=>v&&v.tier)}})()`);
+
+// Garden's five hidden parts (catalog LEVELS garden spots); the map reads them from the save.
+const GARDEN_PARTS = ["character.hat.flower", "character.ears.antennae", "character.back.cape", "vehicle.front.lightbar", "vehicle.shell.bubble"];
+
+// A secret exit: hidden, then opens when a world is complete, then plays a bonus level.
+async function scenarioSecret(cdp) {
+  await loadApp(cdp, { version: 1, totalXp: 0, ageBand: 3 });
+  await openMap(cdp); // records what is shown (no secret yet)
+  const secretIds = () =>
+    cdp.evaluate(`[...document.querySelectorAll('[data-node-id^="secret:"]')].map((b) => b.dataset.nodeId)`);
+  check("secret exits are hidden until a world is complete", (await secretIds()).length === 0);
+  await clickButton(cdp, ".tv-trail-hud button", "Home");
+  await sleep(300);
+
+  // Find every hidden part in the Garden. The engine reports the save when the
+  // game notifies it (a world change does), not on a timer, so nudge it.
+  const hasHandle = (await cdp.evaluate(`typeof window.__tvWorld`)) === "object";
+  check("dev handle window.__tvWorld present", hasHandle);
+  if (!hasHandle) return;
+  await cdp.evaluate(`(()=>{const h=window.__tvWorld.handle;for(const k of ${JSON.stringify(GARDEN_PARTS)})h.S.found[k]=true;h.go("room")})()`);
+  await sleep(1800);
+  await openMap(cdp);
+  const ids = await secretIds();
+  check("finishing the Garden opens its secret exit, and only that one", ids.length === 1 && ids[0] === "secret:garden", JSON.stringify(ids));
+  const notice = await cdp.evaluate(`document.querySelector(".tv-trail-notice")?.textContent||""`);
+  check("the map says a secret exit opened", /secret exit opened near Garden/i.test(notice), JSON.stringify(notice));
+  check(
+    "the new exit animates in like anything else that is new",
+    await cdp.evaluate(`document.querySelector('[data-node-id="secret:garden"]')?.classList.contains("tv-trail-node-new")===true`),
+  );
+  await sleep(2600);
+
+  await tapNode(cdp, "secret:garden");
+  await waitKipAt(cdp, "secret:garden");
+  const kicker = await cdp.evaluate(`document.querySelector(".tv-trail-plate-kicker")?.textContent||""`);
+  const title = await cdp.evaluate(`document.querySelector(".tv-trail-plate-title")?.textContent||""`);
+  check("the plate calls it a Secret exit, a Hard bonus level", title === "Secret exit" && /Bonus level/.test(kicker) && /Hard/.test(kicker), `${title} / ${kicker}`);
+  await clickPlay(cdp);
+  await sleep(1500);
+  const lvl = await levelTiers(cdp);
+  check("the secret exit plays a seeded level", lvl.world.startsWith("seed-"), lvl.world);
+  check("its stations start at tier 3 (the hardest this age is offered)", lvl.tiers.length > 0 && lvl.tiers.every((t) => t === 3), JSON.stringify(lvl.tiers));
+  check("walking it is recorded", (await visited(cdp)).includes("secret:garden"));
 }
 
 // What is new animates once: first open records, later open reveals, then quiet.
@@ -537,6 +600,7 @@ async function main() {
     await run("older", scenarioOlder);
     await run("play", scenarioPlay);
     await run("reveal", scenarioReveal);
+    await run("secret", scenarioSecret);
   } finally {
     killAll();
   }

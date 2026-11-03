@@ -7,7 +7,11 @@
 import type { CardKind, MapCard } from "./mapCards";
 
 export type ExplorerFog = "revealed" | "next" | "clouded";
-export type ExplorerKind = CardKind | "frontier";
+export type ExplorerKind = CardKind | "frontier" | "secret";
+
+/** Difficulty of a seeded level: its stations start at this tier (1-3). */
+export type SeedTier = 1 | 2 | 3;
+export const TIER_WORD: Record<SeedTier, string> = { 1: "Easy", 2: "Tricky", 3: "Hard" };
 
 export interface ExplorerNode {
   id: string;
@@ -26,8 +30,13 @@ export interface ExplorerNode {
   locked: false;
   /** The carousel card this node was derived from (absent for frontier). */
   card?: MapCard;
-  /** Frontier only: level-kit seed code to hand to playSeed. */
+  /** Frontier and secret exits: level-kit seed code to hand to playSeed. */
   seedCode?: string;
+  /** Frontier and secret exits: difficulty, and (secret) the mood to play in. */
+  tier?: SeedTier;
+  mood?: "day" | "dusk" | "night";
+  /** Frontier only: how many paths out from the branch end (1 = the first). */
+  depth?: number;
   /** District (world id) whose structured area holds this node, if any. */
   district?: string;
 }
@@ -69,6 +78,8 @@ export interface ExplorerInput {
   /** Generated paths kept ahead of the furthest one walked on each branch
    *  (default FRONTIER_AHEAD). A branch grows as the child walks it. */
   frontierDepth?: number;
+  /** The player's age band: caps how hard a generated level may be. */
+  ageBand?: number | null;
 }
 
 /** Authored layout. Home (Toy Room) sits at the centre; worlds ring it. */
@@ -216,6 +227,43 @@ export const FRONTIER_MAX_DEPTH = 12;
 /** Generated paths kept ahead of the furthest one the child has walked. */
 export const FRONTIER_AHEAD = 2;
 
+/** First path on a branch that is Tricky (tier 2) and Hard (tier 3). Paths
+ *  before the first keep tier 1, so every early seed plays exactly as it did. */
+export const TIER_2_FROM_DEPTH = 4;
+export const TIER_3_FROM_DEPTH = 8;
+
+/** The hardest level this age band is offered. Unknown age is kept gentle. */
+export function maxTierForAge(ageBand: number | null | undefined): SeedTier {
+  if (typeof ageBand !== "number") return 2;
+  return ageBand <= 1 ? 1 : ageBand === 2 ? 2 : 3;
+}
+
+/** Difficulty of the generated path this many steps out, for this age. */
+export function frontierTier(depth: number, ageBand: number | null | undefined): SeedTier {
+  const wanted: SeedTier = depth >= TIER_3_FROM_DEPTH ? 3 : depth >= TIER_2_FROM_DEPTH ? 2 : 1;
+  return Math.min(wanted, maxTierForAge(ageBand)) as SeedTier;
+}
+
+/**
+ * A secret exit: a side route off a world that opens once every hidden part
+ * in that world has been found (the world's card is complete). Its position
+ * is fixed and always reserved, locked or not, so a generated path never
+ * takes the space and nothing moves when one opens. Plays a bonus level in
+ * the world's theme at the hardest tier the player's age is offered.
+ */
+export const SECRET_EXITS: ReadonlyArray<{
+  from: string;
+  pos: readonly [number, number];
+}> = [
+  { from: "garden", pos: [-3, 3] },
+  { from: "beach", pos: [-1, 4] },
+  { from: "junk", pos: [5, 1] },
+  { from: "snow", pos: [5, -2] },
+  { from: "sky", pos: [-1, -4] },
+];
+
+export const secretId = (world: string): string => `secret:${world}`;
+
 const FRONTIER_ID = /^frontier:([^:]+):(\d+)$/;
 
 /** Furthest generated path walked to on each branch (absent = none). */
@@ -274,13 +322,24 @@ interface Placed {
  * branch's own heading, so chains wind but keep heading outward; a step
  * that would cross a road, land on a place, or crowd one ends the chain.
  */
-function frontierLayout(authored: ReadonlyMap<string, ExplorerNode>): Map<string, Placed[]> {
+function frontierLayout(
+  authored: ReadonlyMap<string, ExplorerNode>,
+  secrets: ReadonlyArray<{ from: string; pos: readonly [number, number] }>,
+): Map<string, Placed[]> {
   const places: Array<Cell & { id: string }> = [...authored.values()].map((n) => ({ id: n.id, x: n.x, y: n.y }));
   const roads: Array<{ a: string; b: string; p: Cell; q: Cell }> = [];
   for (const [a, b] of EXPLORER_EDGES) {
     const na = authored.get(a);
     const nb = authored.get(b);
     if (na && nb) roads.push({ a, b, p: na, q: nb });
+  }
+  // Secret exits keep their space whether or not they have opened yet.
+  for (const sx of secrets) {
+    const from = authored.get(sx.from);
+    if (!from) continue;
+    const at = { x: sx.pos[0], y: sx.pos[1] };
+    places.push({ id: secretId(sx.from), ...at });
+    roads.push({ a: sx.from, b: secretId(sx.from), p: from, q: at });
   }
   const live = FRONTIER_BRANCHES.filter((br) => authored.has(br.from));
   const chains = new Map<string, Placed[]>(live.map((br) => [br.from, []]));
@@ -331,10 +390,11 @@ function frontierNodes(
   authored: ReadonlyMap<string, ExplorerNode>,
   ahead: number,
   visited: ReadonlySet<string>,
+  ageBand: number | null | undefined,
 ): { nodes: ExplorerNode[]; edges: Array<readonly [string, string]> } {
   const extra = Math.max(0, Math.floor(ahead));
   const walked = walkedDepths(visited);
-  const layout = frontierLayout(authored);
+  const layout = frontierLayout(authored, SECRET_EXITS);
   const nodes: ExplorerNode[] = [];
   const edges: Array<readonly [string, string]> = [];
   for (const br of FRONTIER_BRANCHES) {
@@ -342,7 +402,7 @@ function frontierNodes(
     const chain = layout.get(br.from);
     if (!leaf || !chain) continue;
     const depth = Math.min(FRONTIER_MAX_DEPTH, (walked.get(br.from) ?? 0) + extra);
-    for (const p of chain.slice(0, depth)) {
+    for (const [i, p] of chain.slice(0, depth).entries()) {
       nodes.push({
         id: p.id,
         kind: "frontier",
@@ -357,6 +417,8 @@ function frontierNodes(
         fog: "clouded",
         locked: false,
         seedCode: frontierSeedCode(p.id),
+        depth: i + 1,
+        tier: frontierTier(i + 1, ageBand),
       });
       edges.push([p.prevId, p.id]);
     }
@@ -396,10 +458,44 @@ export function buildExplorerGraph(input: ExplorerInput): ExplorerGraph {
       district: districtOf(card.id),
     });
   }
-  const frontier = frontierNodes(authored, input.frontierDepth ?? FRONTIER_AHEAD, visited);
-  const nodes = [...authored.values(), ...frontier.nodes];
+  const frontier = frontierNodes(
+    authored,
+    input.frontierDepth ?? FRONTIER_AHEAD,
+    visited,
+    input.ageBand,
+  );
+  // A secret exit shows once its world is complete (every hidden part found),
+  // or everywhere in sandbox.
+  const secrets: ExplorerNode[] = [];
+  const secretRoads: Array<readonly [string, string]> = [];
+  for (const sx of SECRET_EXITS) {
+    const world = authored.get(sx.from);
+    if (!world || !(input.openAll || world.complete)) continue;
+    const id = secretId(sx.from);
+    const walked = visited.has(id);
+    secrets.push({
+      id,
+      kind: "secret",
+      label: "Secret exit",
+      theme: world.theme,
+      x: sx.pos[0],
+      y: sx.pos[1],
+      done: walked ? 1 : 0,
+      total: 1,
+      complete: walked,
+      suggested: false,
+      fog: "clouded",
+      locked: false,
+      district: districtOf(sx.from),
+      seedCode: frontierSeedCode(id),
+      tier: maxTierForAge(input.ageBand),
+      mood: "dusk",
+    });
+    secretRoads.push([sx.from, id]);
+  }
+  const nodes = [...authored.values(), ...secrets, ...frontier.nodes];
   const byNodeId = new Map(nodes.map((n) => [n.id, n]));
-  const roadPairs = [...EXPLORER_EDGES, ...frontier.edges].filter(
+  const roadPairs = [...EXPLORER_EDGES, ...secretRoads, ...frontier.edges].filter(
     ([a, b]) => byNodeId.has(a) && byNodeId.has(b),
   );
 

@@ -780,13 +780,21 @@ export function nextZoom(zoom: ZoomLevel): ZoomLevel {
   return ((zoom + 1) % ZOOM_LEVELS.length) as ZoomLevel;
 }
 
+/** Knobs for a seeded level (the explorer map's generated paths and secret exits). */
+export interface SeedOptions {
+  tier?: 1 | 2 | 3;
+  mood?: "day" | "dusk" | "night";
+}
+
 export interface EngineHandle {
   /** Apply this contract in-memory (or stock when null); no reload. */
   setToy: (contract: ToyContract | null) => void;
   /** Switch world through the engine's own world tabs. Queued until ready. */
   goWorld: (world: WorldId) => void;
   /** Compose a level from the level kit (a seed code, or random when omitted) and play it. Returns the code. */
-  playSeed: (code?: string) => string | null;
+  /** Play a seeded level. `theme` forces the world's look; `opts` sets its difficulty tier
+   *  (1-3, stations start at that tier) and mood. Null = it could not start. */
+  playSeed: (code?: string, theme?: string, opts?: SeedOptions) => string | null;
   /** Set the camera zoom level in the runtime. */
   setZoom: (zoom: ZoomLevel) => void;
   /** Start a carousel Learn run over the given rung plan. */
@@ -899,7 +907,7 @@ interface LegacyHooks {
   S?: LegacySave;
   P?: LegacyPlayer;
   go?: (world: string) => void;
-  playSeed?: (code?: string) => string | null;
+  playSeed?: (code?: string, theme?: string, opts?: SeedOptions) => string | null;
   worldName?: (id: string) => string;
   start?: (build: boolean) => void;
   open?: () => void;
@@ -1318,9 +1326,9 @@ export function createEngine(
       if (ready && api?.go) api.go(world);
       else pendingWorld = world;
     },
-    playSeed: (code) => {
+    playSeed: (code, theme, opts) => {
       if (disposed) return null;
-      return hooks()?.playSeed?.(code) ?? null;
+      return hooks()?.playSeed?.(code, theme, opts) ?? null;
     },
     setZoom: (target) => {
       hooks()?.setZoom?.(target);

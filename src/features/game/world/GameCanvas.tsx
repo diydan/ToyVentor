@@ -1256,6 +1256,7 @@ export function GameCanvas({
               visited: new Set(progression.explorerVisited ?? []),
               currentId: state.world,
               openAll: progression.sandboxUnlockAll,
+              ageBand: progression.ageBand ?? null,
             })}
             currentId={state.world}
             lastVisitedId={progression.explorerVisited?.at(-1) ?? null}
@@ -1281,7 +1282,10 @@ export function GameCanvas({
               // playSeed returns null when the level cannot start (player
               // busy, showcase, editor). Reveal and close only when it began.
               if (!node.seedCode) return false;
-              const started = engine()?.playSeed(node.seedCode, node.theme);
+              const started = engine()?.playSeed(node.seedCode, node.theme, {
+                tier: node.tier,
+                mood: node.mood,
+              });
               if (!started) return false;
               visitExplorerNode(node.id);
               setMapOpen(false);
