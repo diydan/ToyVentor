@@ -2,6 +2,7 @@
 // GET /api/voice?lang=es&p=veh_wheel_sport&hex=262d40  ->  audio/wav of "rueda deportiva negra"  (a Describe & Build part, in the
 //                                                       colour the exploded view drew it; the hex is reduced to one of 12 words)
 // GET /api/voice?lang=es&w=cuchara&g=f&c=red&sig=...   ->  audio/wav of "cuchara roja"        (a Forge object: a SIGNED name, see below)
+// GET /api/voice?lang=es&h=wooden_spoon                ->  audio/wav of "cuchara de madera"  (a household library item, the BARE noun, no colour)
 // All reply with the spoken text in the x-voice-text header (URL-encoded) so a caption can show it.
 //
 // Spoken by Gemini 3.8 Flash-Lite TTS, spoken by Gemini 3.8 Flash-Lite TTS through the
@@ -23,6 +24,7 @@
 // rejected with 7003), and an instruction in the text ("Say in Brazilian Portuguese: casa verde") is spoken aloud, not obeyed (4.0 s against 1.2 s).
 import { COLOR_KEYS, LANGUAGES, NOUN_KEYS, colorKeyFromHex, nounPhrase, propNoun, propPhrase, type ColorKey, type LangCode, type Noun, type NounKey } from "../src/lib/propNames";
 import { isPartId, partPhrase } from "../src/lib/partNames";
+import { householdName, householdTextHash, isHouseholdId } from "../src/lib/householdNames";
 import { isSpeakableWord, verifySpeech, type SigningEnv } from "./forgeNames";
 
 export const VOICE_MODEL = "google/gemini-3.8-flash-lite-tts";
@@ -69,11 +71,13 @@ function json(data: unknown, status: number, extra: Record<string, string> = {})
 export type VoiceKey =
   | { lang: LangCode; noun: NounKey; color: ColorKey | null }
   | { lang: LangCode; part: string; color: ColorKey | null }
-  | { lang: LangCode; name: Noun; sig: string; color: ColorKey | null };
+  | { lang: LangCode; name: Noun; sig: string; color: ColorKey | null }
+  | { lang: LangCode; household: string; color: null };
 
 /**
  * Validate the query. Anything outside the controlled vocabulary is rejected, which is what bounds the cost: a language, then
- * exactly one of a prop noun (n), a Describe & Build part id (p) or a signed Forge name (w, with g, optional pl=1, and sig; the signature is
+ * exactly one of a prop noun (n), a Describe & Build part id (p), a household library item id (h, the bare noun: no colour allowed, so it is at
+ * most one clip per item and language) or a signed Forge name (w, with g, optional pl=1, and sig; the signature is
  * checked by handleVoice before anything else), and an optional colour word (c) or hex (hex) that is reduced to one of 12 colour words,
  * so a hex can never multiply the clip set.
  */
@@ -83,10 +87,12 @@ export function parseVoiceKey(url: URL): VoiceKey | null {
   const noun = q.get("n");
   const part = q.get("p");
   const word = q.get("w");
+  const house = q.get("h");
   const c = q.get("c");
   const hex = q.get("hex");
   if (!LANGUAGES.some((l) => l.code === lang)) return null;
-  if ([noun, part, word].filter((v) => v !== null).length !== 1) return null; // exactly one of n / p / w
+  if ([noun, part, word, house].filter((v) => v !== null).length !== 1) return null; // exactly one of n / p / w / h
+  if (house !== null) return isHouseholdId(house) && c === null && hex === null ? { lang: lang as LangCode, household: house, color: null } : null;
   let color: ColorKey | null = null;
   if (c !== null) {
     if (!(COLOR_KEYS as readonly string[]).includes(c)) return null;
@@ -111,6 +117,7 @@ export function parseVoiceKey(url: URL): VoiceKey | null {
 }
 
 export function voiceText(key: VoiceKey): string {
+  if ("household" in key) return householdName(key.household, key.lang) ?? "";
   if ("part" in key) return partPhrase(key.part, key.color, key.lang) ?? key.part;
   if ("name" in key) return nounPhrase(key.name, key.color, key.lang);
   return key.color ? propPhrase(key.noun, key.color, key.lang) : propNoun(key.noun, key.lang);
@@ -200,11 +207,15 @@ export async function handleVoice(request: Request, env: VoiceEnv, ctx?: Ctx): P
   if (!key) return json({ error: "bad request" }, 400);
   // A Forge name is spoken only if this Worker signed exactly this language and noun. Checked first: an unsigned request costs nothing and reads nothing.
   if ("name" in key && !(await verifySpeech(env, key.lang, key.name, key.sig))) return json({ error: "not signed" }, 403, { "cache-control": "no-store" });
+  // A household item with no name in this language yet (the Muse run has not filled it): nothing to speak, so no cache read and no model call; the client says
+  // the English name instead.
+  if ("household" in key && !householdName(key.household, key.lang)) return json({ error: "no name yet" }, 404, { "cache-control": "no-store" });
   const voice = voiceName(env);
   const text = voiceText(key);
 
   const edge = (globalThis as unknown as { caches?: { default?: CacheLike } }).caches?.default;
-  const what = "part" in key ? `p-${key.part}` : "name" in key ? `w-${encodeURIComponent(key.name.w)}.${key.name.g}${key.name.pl ? "p" : ""}` : key.noun;
+  // A household clip's key carries a fingerprint of its text, so a noun a native reviewer corrects is a NEW clip, not the old one served for a year.
+  const what = "household" in key ? `h-${key.household}.${householdTextHash(text)}` : "part" in key ? `p-${key.part}` : "name" in key ? `w-${encodeURIComponent(key.name.w)}.${key.name.g}${key.name.pl ? "p" : ""}` : key.noun;
   const cacheReq = new Request(`https://voice.toyventor.internal/${CACHE_VERSION}/${voice}/${key.lang}/${what}/${key.color ?? "-"}`);
   if (edge) {
     const hit = await edge.match(cacheReq);
@@ -229,7 +240,7 @@ export async function handleVoice(request: Request, env: VoiceEnv, ctx?: Ctx): P
     console.error("voice synth failed:", e instanceof Error ? e.message.slice(0, 200) : "error");
     return json({ error: "voice failed" }, 502, { "cache-control": "no-store" });
   }
-  const headers = { "content-type": "audio/wav", "cache-control": `public, max-age=${ONE_YEAR}, immutable`, "x-voice-text": encodeURIComponent(text) };
+  const headers = { "content-type": "audio/wav", "cache-control": `public, max-age=${ONE_YEAR}, immutable`, "x-voice-text": encodeURIComponent(text), "x-voice-voice": voice };
   if (edge) {
     const put = edge.put(cacheReq, new Response(asBody(bytes), { headers }));
     if (ctx) ctx.waitUntil(put);

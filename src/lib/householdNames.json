@@ -1,0 +1,189 @@
+{
+  "version": 1,
+  "pending": ["es", "fr", "de", "it", "pt", "tr"],
+  "names": {
+    "ball": {
+      "en": { "w": "ball", "source": "catalog", "review": "unreviewed" }
+    },
+    "mug": {
+      "en": { "w": "mug", "source": "catalog", "review": "unreviewed" }
+    },
+    "water_bottle": {
+      "en": { "w": "water bottle", "source": "catalog", "review": "unreviewed" }
+    },
+    "flask": {
+      "en": { "w": "flask", "source": "catalog", "review": "unreviewed" }
+    },
+    "drinking_glass": {
+      "en": { "w": "drinking glass", "source": "catalog", "review": "unreviewed" }
+    },
+    "jam_jar": {
+      "en": { "w": "jam jar", "source": "catalog", "review": "unreviewed" }
+    },
+    "soda_can": {
+      "en": { "w": "soda can", "source": "edited:a lone 'can' reads as the verb when spoken", "review": "unreviewed" }
+    },
+    "cookie_tin": {
+      "en": { "w": "cookie tin", "source": "catalog", "review": "unreviewed" }
+    },
+    "bowl": {
+      "en": { "w": "bowl", "source": "catalog", "review": "unreviewed" }
+    },
+    "plate": {
+      "en": { "w": "plate", "source": "catalog", "review": "unreviewed" }
+    },
+    "bucket": {
+      "en": { "w": "bucket", "source": "catalog", "review": "unreviewed" }
+    },
+    "watering_can": {
+      "en": { "w": "watering can", "source": "catalog", "review": "unreviewed" }
+    },
+    "potted_plant": {
+      "en": { "w": "potted plant", "source": "catalog", "review": "unreviewed" }
+    },
+    "spinning_top": {
+      "en": { "w": "spinning top", "source": "catalog", "review": "unreviewed" }
+    },
+    "yo_yo": {
+      "en": { "w": "yo-yo", "source": "catalog", "review": "unreviewed" }
+    },
+    "flying_disc": {
+      "en": { "w": "flying disc", "source": "catalog", "review": "unreviewed" }
+    },
+    "marble": {
+      "en": { "w": "marble", "source": "catalog", "review": "unreviewed" }
+    },
+    "apple": {
+      "en": { "w": "apple", "source": "catalog", "review": "unreviewed" }
+    },
+    "orange": {
+      "en": { "w": "orange", "source": "catalog", "review": "unreviewed" }
+    },
+    "lemon": {
+      "en": { "w": "lemon", "source": "catalog", "review": "unreviewed" }
+    },
+    "banana": {
+      "en": { "w": "banana", "source": "catalog", "review": "unreviewed" }
+    },
+    "carrot": {
+      "en": { "w": "carrot", "source": "catalog", "review": "unreviewed" }
+    },
+    "avocado": {
+      "en": { "w": "avocado", "source": "catalog", "review": "unreviewed" }
+    },
+    "wooden_spoon": {
+      "en": { "w": "wooden spoon", "source": "catalog", "review": "unreviewed" }
+    },
+    "fork": {
+      "en": { "w": "fork", "source": "catalog", "review": "unreviewed" }
+    },
+    "key": {
+      "en": { "w": "key", "source": "catalog", "review": "unreviewed" }
+    },
+    "comb": {
+      "en": { "w": "comb", "source": "catalog", "review": "unreviewed" }
+    },
+    "hairbrush": {
+      "en": { "w": "hairbrush", "source": "catalog", "review": "unreviewed" }
+    },
+    "toothbrush": {
+      "en": { "w": "toothbrush", "source": "catalog", "review": "unreviewed" }
+    },
+    "paintbrush": {
+      "en": { "w": "paintbrush", "source": "catalog", "review": "unreviewed" }
+    },
+    "pencil": {
+      "en": { "w": "pencil", "source": "catalog", "review": "unreviewed" }
+    },
+    "marker": {
+      "en": { "w": "marker", "source": "catalog", "review": "unreviewed" }
+    },
+    "crayon": {
+      "en": { "w": "crayon", "source": "catalog", "review": "unreviewed" }
+    },
+    "eraser": {
+      "en": { "w": "eraser", "source": "catalog", "review": "unreviewed" }
+    },
+    "ruler": {
+      "en": { "w": "ruler", "source": "catalog", "review": "unreviewed" }
+    },
+    "scissors": {
+      "en": { "w": "scissors", "source": "catalog", "review": "unreviewed" }
+    },
+    "glue_stick": {
+      "en": { "w": "glue stick", "source": "catalog", "review": "unreviewed" }
+    },
+    "stapler": {
+      "en": { "w": "stapler", "source": "catalog", "review": "unreviewed" }
+    },
+    "tape_dispenser": {
+      "en": { "w": "tape dispenser", "source": "catalog", "review": "unreviewed" }
+    },
+    "dice": {
+      "en": { "w": "dice", "source": "catalog", "review": "unreviewed" }
+    },
+    "toy_brick": {
+      "en": { "w": "toy brick", "source": "catalog", "review": "unreviewed" }
+    },
+    "bubble_wand": {
+      "en": { "w": "bubble wand", "source": "catalog", "review": "unreviewed" }
+    },
+    "toy_sword": {
+      "en": { "w": "toy sword", "source": "catalog", "review": "unreviewed" }
+    },
+    "hammer": {
+      "en": { "w": "hammer", "source": "catalog", "review": "unreviewed" }
+    },
+    "screwdriver": {
+      "en": { "w": "screwdriver", "source": "catalog", "review": "unreviewed" }
+    },
+    "pliers": {
+      "en": { "w": "pliers", "source": "catalog", "review": "unreviewed" }
+    },
+    "flashlight": {
+      "en": { "w": "flashlight", "source": "catalog", "review": "unreviewed" }
+    },
+    "tape_measure": {
+      "en": { "w": "tape measure", "source": "catalog", "review": "unreviewed" }
+    },
+    "alarm_clock": {
+      "en": { "w": "alarm clock", "source": "catalog", "review": "unreviewed" }
+    },
+    "desk_lamp": {
+      "en": { "w": "desk lamp", "source": "catalog", "review": "unreviewed" }
+    },
+    "board_game": {
+      "en": { "w": "board game", "source": "catalog", "review": "unreviewed" }
+    },
+    "jigsaw": {
+      "en": { "w": "jigsaw piece", "source": "catalog", "review": "unreviewed" }
+    },
+    "notebook": {
+      "en": { "w": "notebook", "source": "catalog", "review": "unreviewed" }
+    },
+    "book": {
+      "en": { "w": "book", "source": "catalog", "review": "unreviewed" }
+    },
+    "playing_cards": {
+      "en": { "w": "playing cards", "source": "catalog", "review": "unreviewed" }
+    },
+    "pencil_case": {
+      "en": { "w": "pencil case", "source": "catalog", "review": "unreviewed" }
+    },
+    "soap": {
+      "en": { "w": "bar of soap", "source": "catalog", "review": "unreviewed" }
+    },
+    "sponge": {
+      "en": { "w": "sponge", "source": "catalog", "review": "unreviewed" }
+    },
+    "cereal_box": {
+      "en": { "w": "cereal box", "source": "catalog", "review": "unreviewed" }
+    },
+    "lunchbox": {
+      "en": { "w": "lunchbox", "source": "catalog", "review": "unreviewed" }
+    },
+    "support_tool": {
+      "en": { "w": "toy tool", "source": "catalog", "review": "unreviewed" }
+    }
+  }
+}

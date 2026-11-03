@@ -3,7 +3,13 @@
 //
 //   npx tsx scripts/prewarm-voice.ts https://toyventor.com          # generate/warm everything (calls the TTS model once per new clip)
 //   npx tsx scripts/prewarm-voice.ts https://toyventor.com --list   # just print what it would request
-//   options: --concurrency 4
+//   npx tsx scripts/prewarm-voice.ts --missing                      # print only the household clips the ledger lacks (no network)
+//   npx tsx scripts/prewarm-voice.ts https://toyventor.com --only banana,mug   # ONLY those household items (every language that has a name): a few clips to listen to
+//   options: --concurrency 4   --force (ask for every household clip again, even ones the ledger lists as made)
+//
+// The household items' names (src/lib/householdNames.json, `h=<id>` of /api/voice) are tracked in a committed ledger, src/lib/householdVoice.ledger.json: a clip the
+// ledger lists as made for the same text is not asked for again; a new item, a changed noun or an earlier failure is. Each run rewrites the ledger. An item with no
+// name in a language yet (the Muse run has not filled it) has no clip and is only counted.
 //
 // The clip set is exactly what the game can say: each built-in prop's own noun + colour, plus a lantern's light in every colour (a
 // level may give a lantern any light colour), and each Describe & Build part in the colour the exploded view draws it, in all seven
@@ -15,12 +21,28 @@ import { PART_IDS } from "../src/lib/partNames";
 import { voiceUrl } from "../src/lib/propVoice";
 // @ts-expect-error viewer JS modules ship without d.ts
 import { partColour } from "../parts/kip/viewer/kip-describe-view.js";
+import { HOUSEHOLD_IDS } from "../src/lib/householdNames";
+import { householdClips, missingClips, readLedger, warmHousehold, writeLedger } from "./lib/household-voice-ledger";
 
 const args = process.argv.slice(2);
 const base = args.find((a) => /^https?:\/\//.test(a));
 const listOnly = args.includes("--list");
 const cIdx = args.indexOf("--concurrency");
 const concurrency = cIdx >= 0 ? Math.max(1, Number(args[cIdx + 1]) || 4) : 4;
+const force = args.includes("--force");
+const missingOnly = args.includes("--missing");
+const onlyIdx = args.indexOf("--only");
+const onlyIds = onlyIdx >= 0 ? (args[onlyIdx + 1] ?? "").split(",").map((x) => x.trim()).filter(Boolean) : null;
+const everyHouse = householdClips();
+if (onlyIds) {
+  const unknown = onlyIds.filter((id) => !HOUSEHOLD_IDS.includes(id));
+  if (unknown.length || !onlyIds.length) {
+    console.error(`--only needs household item ids; unknown: ${unknown.join(", ") || "(none given)"}`);
+    process.exit(2);
+  }
+}
+const house = onlyIds ? { ...everyHouse, clips: everyHouse.clips.filter((c) => onlyIds.includes(c.id)) } : everyHouse;
+const ledger = readLedger();
 
 const combos = new Map<string, { noun: NounKey; color: ColorKey }>();
 for (const s of Object.values(PROP_SPECS)) if (s.noun) combos.set(`${s.noun}|${s.color}`, { noun: s.noun, color: s.color });
@@ -28,13 +50,21 @@ for (const color of COLOR_KEYS) combos.set(`light|${color}`, { noun: "light", co
 
 const partsData = JSON.parse(readFileSync(new URL("../parts/kip/viewer/kip-describe-parts.json", import.meta.url), "utf8"));
 const paths: string[] = [];
-for (const l of LANGUAGES) for (const c of combos.values()) paths.push(voiceUrl(c.noun, c.color, l.code));
-for (const l of LANGUAGES) for (const id of PART_IDS) paths.push(`/api/voice?lang=${l.code}&p=${id}&hex=${(partColour(partsData, id) as string).slice(1)}`);
+if (!onlyIds) { // --only is a sample of household items: it leaves the props and parts alone
+  for (const l of LANGUAGES) for (const c of combos.values()) paths.push(voiceUrl(c.noun, c.color, l.code));
+  for (const l of LANGUAGES) for (const id of PART_IDS) paths.push(`/api/voice?lang=${l.code}&p=${id}&hex=${(partColour(partsData, id) as string).slice(1)}`);
+}
 
-console.log(`${paths.length} clips (${combos.size} props + ${PART_IDS.length} parts, x ${LANGUAGES.length} languages)`);
+console.log(`${paths.length + house.clips.length} clips (${combos.size} props + ${PART_IDS.length} parts, x ${LANGUAGES.length} languages, + ${house.clips.length} household names; ${house.withoutName} household names have no text yet)`);
+if (missingOnly) {
+  const missing = missingClips(house.clips, ledger);
+  for (const c of missing) console.log(c.path);
+  console.log(`${missing.length} household clip(s) the ledger lacks, ${house.clips.length - missing.length} made`);
+  process.exit(0);
+}
 if (listOnly || !base) {
   if (!listOnly) console.log("give a base URL to warm them, e.g. https://toyventor.com (or --list to print the paths)");
-  else for (const p of paths) console.log(p);
+  else for (const p of [...paths, ...house.clips.map((c) => c.path)]) console.log(p);
   process.exit(0);
 }
 
@@ -57,4 +87,10 @@ async function worker() {
 await Promise.all(Array.from({ length: concurrency }, worker));
 console.log(`warmed: ${stats.miss} generated, ${stats.hit} already cached, ${stats.failed} failed, ${(stats.bytes / 1e6).toFixed(1)} MB total`);
 for (const f of failures.slice(0, 10)) console.log("  FAILED", f);
-process.exit(stats.failed ? 1 : 0);
+
+// the household names: only what the ledger lacks (or everything with --force), every outcome recorded
+const h = await warmHousehold({ base, clips: house.clips, ledger, force, concurrency });
+writeLedger(h.ledger);
+console.log(`household names: ${h.stats.made} generated, ${h.stats.alreadyCached} already cached, ${h.stats.failed} failed, ${h.stats.skipped} skipped (the ledger lists them as made), ${(h.stats.bytes / 1e6).toFixed(1)} MB; ledger written`);
+for (const f of h.failures.slice(0, 10)) console.log("  FAILED", f);
+process.exit(stats.failed || h.stats.failed ? 1 : 0);

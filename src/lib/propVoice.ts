@@ -7,6 +7,8 @@ import { speakPhrase } from "./propSpeech";
 export interface SpokenObject {
   /** Vocabulary key; absent for free-text (generated) names, which only the device voice can say. */
   noun?: NounKey;
+  /** A ready-made /api/voice URL for a clip that is not a prop (a household item: see householdVoice.ts); wins over `noun`. */
+  url?: string;
   color?: ColorKey | null;
   lang: LangCode;
   /** The caption / device-voice text. */
@@ -53,9 +55,10 @@ export function resetVoiceBackoff(): void {
 export function sayObject(obj: SpokenObject, now: number = Date.now()): "clip" | "device" | "none" {
   stopObjectVoice();
   const fallback = () => speakPhrase(obj.text, obj.lang);
-  if (obj.noun && now >= downUntil && typeof Audio !== "undefined") {
+  const clipUrl = obj.url ?? (obj.noun ? voiceUrl(obj.noun, obj.color, obj.lang) : null);
+  if (clipUrl && now >= downUntil && typeof Audio !== "undefined") {
     try {
-      const audio = new Audio(voiceUrl(obj.noun, obj.color, obj.lang));
+      const audio = new Audio(clipUrl);
       current = audio;
       const fail = () => {
         if (current !== audio) return; // a newer tap already replaced this one
