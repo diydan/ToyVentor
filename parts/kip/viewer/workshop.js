@@ -85,6 +85,9 @@ function ensureStyle(doc) {
  *         menuModule = '/kip/kip-menu.js?v=10.0', printModule = '/kip/bench-print.js', printViewModule = '/kip/kip-print-view.js?v=10.0', downloads = true }
  *   downloads  false: no bench hands a file out (no Print group, no photo "Print it", no selfie sticker). A host that has no grown-up check for downloads yet (the game,
  *              docs/specs/workshop-spec.md "4d scope") mounts with false; the viewer's own gate only engages inside a frame, so a top-level mount would otherwise be ungated.
+ *              'gated': the Print group is there and every export asks a grown-up first (bench-gate.js, the shell's own dialog, one question at a time; docs/specs/workshop-print-gate-spec.md).
+ *              The exits that are not behind the print view (the photo "Print it", the selfie sticker, Make-from-words files) stay hidden until they are gated too, and so does
+ *              "Open on its own page" (the standalone page has no gate).
  *   urlSync  true: the shell owns ?bench= in the address bar (push on tab pick, Back works) and sets document.title.
  *            false: it touches neither (for a host such as the game that owns the URL).
  * Returns { select(id, { push = true, forward }) -> Promise, current(), bench(id), handles(id), stage(), ready(), benches, destroy() }.
@@ -100,6 +103,10 @@ export function mountWorkshop(root, opts = {}) {
   const menuModule = opts.menuModule ?? '/kip/kip-menu.js?v=10.0';
   const printModule = opts.printModule ?? '/kip/bench-print.js';
   const printViewModule = opts.printViewModule ?? '/kip/kip-print-view.js?v=10.0';
+  const gateModule = opts.gateModule ?? '/kip/bench-gate.js';
+  const gateUiModule = opts.gateUiModule ?? '/kip/bench-gate-ui.js';
+  const cloudModule = opts.cloudModule ?? '/kip/kip-selfie-cloud.js?v=10.0'; // the same URL the selfie imports, so there is one module (and one proof) in the page
+  const gated = opts.downloads === 'gated';
   const doc = root.ownerDocument;
   const win = doc.defaultView;
   ensureStyle(doc);
@@ -122,7 +129,7 @@ export function mountWorkshop(root, opts = {}) {
   pop.target = '_blank';
   pop.rel = 'noopener';
   pop.textContent = 'Open on its own page';
-  if (opts.downloads === false) pop.hidden = true; // the standalone page has downloads: no way round the switch from inside the shell
+  if (opts.downloads === false || gated) pop.hidden = true; // the standalone page has downloads and no gate: no way round the switch from inside the shell
   bar.append(brand, tabs, note, pop);
   const stageEl = doc.createElement('main');
   stageEl.className = 'ws-stage';
@@ -151,6 +158,8 @@ export function mountWorkshop(root, opts = {}) {
   let stagePromise = null;
   let loadingEl = null;
   let destroyed = false;
+  let downloadGate = null; // 'gated' only: the grown-up question in front of every export
+  let sharedCloud = null; //  ... and the parent-gate client it asks through (the proof lives in its memory)
   let queue = Promise.resolve();
   const mounted = new Map(); // id -> { handle, globals, forward }
 
@@ -182,13 +191,15 @@ export function mountWorkshop(root, opts = {}) {
 
   /** The one stage (renderer, camera, controls, loop) every bench draws on; made the first time a bench is needed. */
   function ensureStage() {
-    stagePromise ??= Promise.all([import(stageModule), import(threeModule), import(kipSessionModule), import(menuModule), import(printModule), import(printViewModule)]).then(([
+    stagePromise ??= Promise.all([import(stageModule), import(threeModule), import(kipSessionModule), import(menuModule), import(printModule), import(printViewModule),
+      gated ? Promise.all([import(gateModule), import(gateUiModule), import(cloudModule)]) : null]).then(([
       { createStage },
       { THREE, OrbitControls, STLLoader, mergeVertices, toCreasedNormals },
       { createKipSession },
       { createMenuHost },
       { createPrintHost },
       { mountPrintView },
+      gateMods,
     ]) => {
       if (!destroyed) {
         stage = createStage({ THREE, OrbitControls, host: stageEl });
@@ -196,7 +207,14 @@ export function mountWorkshop(root, opts = {}) {
         sharedKip.acquire('workshop'); // the host keeps the session alive across bench unmount/remount
         // One menu and one print view for every bench (stage 4c): a bench shows its own declaration on the menu and offers the view its own source while it is active.
         sharedMenu = createMenuHost();
-        sharedPrint = createPrintHost({ mountPrintView, THREE, stage });
+        let printGate;
+        if (gateMods) {
+          const [{ createDownloadGate, createInProcessPrintGate }, { createGateModal }, { createSelfieCloud }] = gateMods;
+          sharedCloud = createSelfieCloud();
+          downloadGate = createDownloadGate({ cloud: sharedCloud, ui: createGateModal({ root }) }); // the dialog sits in the shell's root: a layer the host's Escape rule already knows
+          printGate = createInProcessPrintGate(downloadGate);
+        }
+        sharedPrint = createPrintHost({ mountPrintView, THREE, stage, printGate });
       }
       return stage;
     });
@@ -231,7 +249,7 @@ export function mountWorkshop(root, opts = {}) {
         sharedKip,
         sharedMenu,
         sharedPrint,
-        features: { downloads: opts.downloads !== false },
+        features: { downloads: opts.downloads !== false, gated },
         globals,
         getSearch: () => (f ? `?${f}` : ''),
         getHash: () => '',
@@ -317,6 +335,8 @@ export function mountWorkshop(root, opts = {}) {
     sharedKip: () => sharedKip,
     sharedMenu: () => sharedMenu,
     sharedPrint: () => sharedPrint,
+    sharedGate: () => downloadGate,
+    sharedCloud: () => sharedCloud, // 'gated' only: the one parent-gate client (and proof) the exits share; null otherwise
     ready: () => queue,
     destroy() {
       if (destroyed) return;
@@ -324,6 +344,10 @@ export function mountWorkshop(root, opts = {}) {
       win.removeEventListener('popstate', onPop);
       stageEl.removeEventListener('click', onStageClick, true);
       stage?.stop();
+      downloadGate?.cancel(); // a question still open is settled as Cancel and its dialog removed
+      downloadGate = null;
+      sharedCloud?.clearProof(); // the grown-up's answer does not outlive the shell
+      sharedCloud = null;
       for (const id of [...mounted.keys()]) unmount(id);
       sharedPrint?.dispose();
       sharedPrint = null;

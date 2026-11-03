@@ -121,11 +121,13 @@ describe("a host with no file exits (Workshop 4d: the game mounts with downloads
 
   it("the shell passes the switch to every bench, and each bench drops its file exits when it is off", () => {
     const read = (f: string) => readFileSync(join(root, "parts/kip/viewer", f), "utf8");
-    expect(read("workshop.js")).toContain("features: { downloads: opts.downloads !== false }");
-    expect(read("workshop.js")).toContain("if (opts.downloads === false) pop.hidden = true;");
+    expect(read("workshop.js")).toContain("features: { downloads: opts.downloads !== false, gated }");
+    expect(read("workshop.js")).toContain("if (opts.downloads === false || gated) pop.hidden = true;");
     const kip = read("kip-bench.js");
-    expect(kip).toContain("const downloadsOn = env.features?.downloads !== false;");
-    expect(kip).toContain("if (!downloadsOn) delete kipMenuCtx.print;");
+    // The Print group follows `downloads`; the exits that are not behind the gated print view (photo "Print it", selfie sticker, Make-from-words files) also need the gate to be off.
+    expect(kip).toContain("const printOn = env.features?.downloads !== false;");
+    expect(kip).toContain("const downloadsOn = printOn && !env.features?.gated;");
+    expect(kip).toContain("if (!printOn) delete kipMenuCtx.print;");
     expect(kip).toContain("if (!downloadsOn) $el('btn-print-photo').hidden = true;");
     expect(kip).toContain("downloads: downloadsOn,");
     expect(read("kip-selfie.js")).toContain("if (ctx.downloads === false) $('sf-sticker').hidden = true;");
@@ -133,9 +135,23 @@ describe("a host with no file exits (Workshop 4d: the game mounts with downloads
     expect(bench).toContain("renderStickerSources: truckStickerSources({ makeFace: createDecalExpressionCanvas, makeShirt: createTorsoOutfitDecalCanvas, skinTones: SKIN_TONES })");
   });
 
-  it("the game launcher mounts the shell with downloads off and pauses the world while it is open", () => {
+  it("'gated': the shell builds the grown-up gate and hands the print host its in-process form; the print view waits for its answer", () => {
+    const shell = readFileSync(join(root, "parts/kip/viewer/workshop.js"), "utf8");
+    expect(shell).toContain("const gated = opts.downloads === 'gated';");
+    expect(shell).toContain("createInProcessPrintGate(downloadGate)");
+    expect(shell).toContain("createPrintHost({ mountPrintView, THREE, stage, printGate })");
+    expect(shell).toContain("downloadGate?.cancel();"); // a question still open when the shell closes is settled as Cancel
+    expect(shell).toContain("sharedCloud?.clearProof();"); // and the grown-up's answer does not outlive the shell
+    const view = readFileSync(join(root, "parts/kip/viewer/kip-print-view.js"), "utf8");
+    expect(view).toContain("typeof answer.then === 'function'");
+    expect(view).toContain("let verdict = 'denied'; // fail closed");
+    expect(view).toContain("if (verdict !== 'granted') {");
+  });
+
+  it("the game launcher mounts the shell with downloads off unless the grown-up checks are switched off, and pauses the world while it is open", () => {
     const src = readFileSync(join(root, "src/features/game/world/WorkshopLauncher.tsx"), "utf8");
-    expect(src).toContain("downloads: false");
+    expect(src).toContain("downloads = false,"); // the default: no files
+    expect(src).toContain("downloads: downloadsRef.current");
     expect(src).toContain("urlSync: false");
     expect(src).toContain("setPaused(true)");
     expect(src).toContain("setPaused(false)");

@@ -188,6 +188,8 @@ describe("Kip modular character rig & 3D demo viewer integration", () => {
       "parts/kip/viewer/truck-drive.js",
       "parts/kip/viewer/truck-menu.js",
       "parts/kip/viewer/bench-print.js",
+      "parts/kip/viewer/bench-gate.js",
+      "parts/kip/viewer/bench-gate-ui.js",
       "parts/kip/viewer/yard-menu.js",
       "parts/kip/viewer/yard-bench.js",
       "parts/kip/viewer/yard-vehicles.js",

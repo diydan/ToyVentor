@@ -964,7 +964,23 @@ export function mountPrintView(ctx) {
   }
 
   async function download(kind) {
-    if (gate.request(kind) === 'pending') {
+    if (summary.gatePending) return; // a grown-up question is already open for a download: one at a time
+    const answer = gate.request(kind);
+    // An in-process gate (a bench inside the game: there is no frame to post to) answers with a PROMISE of 'granted' | 'denied' (bench-gate.js createInProcessPrintGate).
+    if (answer && typeof answer.then === 'function') {
+      summary.gatePending = true;
+      summary.exportError = null;
+      let verdict = 'denied'; // fail closed: anything but a clear 'granted' delivers nothing
+      try { verdict = await answer; } catch { /* denied */ }
+      summary.gatePending = false;
+      if (!on) return; // the view was closed while the question was open: nothing is delivered
+      if (verdict !== 'granted') {
+        summary.exportError = 'A grown-up did not approve this download.';
+        return;
+      }
+      return downloadNow(kind);
+    }
+    if (answer === 'pending') {
       summary.gatePending = true;
       summary.exportError = null;
       return;
