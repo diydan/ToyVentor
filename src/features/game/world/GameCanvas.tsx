@@ -581,7 +581,7 @@ export function GameCanvas({
   // The household weekends' pictures, loaded the first time the Garage sheet or the Grown-Ups sheet is open on one.
   const housePictures = useHouseholdPictures((garageOpen || grownUpsOpen) && garage.kind === "household");
   // The roof stars: gold for a build weekend or a household weekend that was found, hollow for one that was skipped.
-  const garageTrophies = garageTrophyCounts(progression.garageDone, progression.garageFound);
+  const garageTrophies = garageTrophyCounts(progression.garageDone, progression.garageFound, progression.garageSkipped);
 
   // Garage grace: a mission underway when today's limit runs out may finish,
   // for up to 10 minutes a weekend, never in quiet hours. Spent only while the

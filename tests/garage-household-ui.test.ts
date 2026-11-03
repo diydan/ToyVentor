@@ -225,3 +225,11 @@ describe("the grown-up's “We found it”", () => {
     expect(out).toContain("Who&#x27;s that shape?");
   });
 });
+
+describe("the roof reads the stored skips", () => {
+  it("passes garageSkipped to the trophy count, so a hollow star is a stored skip and not a guess from the Build Day rule", () => {
+    const src = readFileSync(join(ROOT, "src/features/game/world/GameCanvas.tsx"), "utf8");
+    expect(src).toContain("garageTrophyCounts(progression.garageDone, progression.garageFound, progression.garageSkipped)");
+  });
+});
+

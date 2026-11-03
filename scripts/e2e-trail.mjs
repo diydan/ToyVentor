@@ -83,8 +83,9 @@ async function waitFor(fn, { timeoutMs = 30000, everyMs = 250, label = "?" } = {
 }
 
 class Cdp {
-  constructor(url) {
+  constructor(url, targetId = null) {
     this.url = url;
+    this.targetId = targetId;
     this.nextId = 1;
     this.pending = new Map();
     this.exceptions = [];
@@ -137,6 +138,25 @@ class Cdp {
       this.ws.close();
     } catch {}
   }
+  /**
+   * Close the browser TAB as well as the socket. `close()` only drops the socket: the tab stays open and keeps running the app, which keeps saving into the
+   * localStorage every scenario shares (one Chrome profile), and a late save from an earlier scenario's tab could overwrite the next scenario's seeded save.
+   * That showed up now and then as the weekend chip carrying the youngest group's title (an earlier scenario had saved ageBand 1), on a clean checkout too.
+   */
+  async dispose() {
+    this.close();
+    if (!this.targetId) return;
+    try {
+      await fetch(`http://localhost:${DEBUG_PORT}/json/close/${this.targetId}`);
+      await waitFor(
+        async () => {
+          const list = await (await fetch(`http://localhost:${DEBUG_PORT}/json/list`)).json();
+          return list.some((t) => t.id === this.targetId) ? null : true;
+        },
+        { timeoutMs: 5000, label: "tab closed" },
+      );
+    } catch {}
+  }
 }
 
 async function waitHttpOk(url, timeoutMs = 90000) {
@@ -162,7 +182,7 @@ async function openPage() {
     },
     { timeoutMs: 15000, label: "new tab" },
   );
-  const cdp = new Cdp(target.webSocketDebuggerUrl);
+  const cdp = new Cdp(target.webSocketDebuggerUrl, target.id);
   await cdp.connect();
   await cdp.send("Runtime.enable");
   await cdp.send("Page.enable");
@@ -1048,7 +1068,7 @@ async function main() {
     } catch (err) {
       check(`scenario-${name}`, false, String((err && err.message) || err));
     } finally {
-      page.close();
+      await page.dispose();
     }
   };
   try {
