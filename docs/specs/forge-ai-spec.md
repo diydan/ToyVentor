@@ -184,10 +184,15 @@ rejected, numbers are clamped to bounds, and nothing is executed.
     recipe put them (round ears still stay under the top). The dome outline is
     inset 0.03 mm from the wall: flush, the seam left hair-thin triangles that
     failed G1 and G3 (the same trap as the stud cut). Plain, bunny, cat and bear
-    heads with a dome all print_ready, design verified. **Not wired through
-    yet:** `worker/forgeOptimizer.ts` and `shared/forgeOptimizer.ts` whitelist shape
-    fields, so `top` is dropped there until a line is added to each, and the
-    Spark prompt does not mention it. **Brand check for the owner:** the brand file
+    heads with a dome all print_ready, design verified. **Worker allowlist
+    (done 2026-11-03, Dan OK):** `shared/forgeOptimizer.ts` and
+    `worker/forgeOptimizer.ts` now carry `shape.top`, ear `z_frac`, spike `layout`
+    and `wall_mm`, and the `ribs`, `star` and `hollow` ops (before, an op the
+    Worker did not know made the whole request a 422, and `top` and `z_frac` were
+    dropped without a word). Enum values live in shared constants
+    (`FORGE_HEAD_TOPS`, `FORGE_EAR_STYLES`, `FORGE_SNOUT_STYLES`,
+    `FORGE_SPIKE_LAYOUTS`); `tests/forge-recipe-passthrough.test.ts` checks every
+    field reaches the daemon and that the enums match the daemon's. **Brand check for the owner:** the brand file
     (`parts/partspec/BRAND_STYLE.md`) rule 1 says "every head carries two studs on
     its crown... they stay functional (hats, ears and horns fit on them)", and the
     family test counts "two crown buds"; a head without studs is an exception to
@@ -211,7 +216,9 @@ rejected, numbers are clamped to bounds, and nothing is executed.
     **Brand check for the owner:** `BRAND_STYLE.md` keeps expressions and fixed facial relief on the swappable
     face insert, "never in the head shell", and says it for human heads; a
     snout is silhouette, not an expression, but it takes the decal area of the
-    face, so whether custom creature heads may carry one is a product decision.
+    face. **Decided (Dan, 2026-11-03): yes, custom creature heads may carry a
+    snout.** `BRAND_STYLE.md` itself is unchanged (its relief rule is about human
+    heads).
   - An op the slot cannot use, or an unknown op, is dropped and listed in
     `legalizer.features_ignored`.
   - Planned, not in the compiler: `fin`, `antenna`, `band`, and a curled brim.
@@ -1627,8 +1634,8 @@ same prompts can be compared.
   least 0.25 mm inside the wall. Prompt v5 gives Spark the pumpkin recipe (count 8,
   5 wide, 3 deep). A head needs about 5.5 groove widths of wall height or the op is
   reported in `features_dropped`. **Brand check for the owner:** ribs are relief on
-  the head shell, like the snout; the front stays smooth, but whether a custom
-  head may carry them is a product call. **Spark v5 on the 8 heads:** 7 of 8 on
+  the head shell, like the snout; the front stays smooth. **Decided (Dan,
+  2026-11-03): yes, custom heads may carry ribs.** **Spark v5 on the 8 heads:** 7 of 8 on
   the first attempt (the pumpkin failed P1 once and was repaired), 8 of 8 final,
   1.13 calls; all 8 print_ready under the final daemon. 40 forge tests. Round 11
   on the taste page: `r11_h01` to `r11_h08`.
@@ -1742,6 +1749,16 @@ same prompts can be compared.
   Panda patches and tiger stripes are colour, so they belong to the face insert or
   the skin; a mane and a brow ridge are geometry that has not been built (a mane
   radiating sideways has the same overhang problem as big flap ears). 42 forge tests.
+- **Dan's answers on the open questions (2026-11-03).** (1) **Supports: allowed but
+  not preferred.** The default stays support-free; nothing new is built that needs
+  them. A snout, flap ears or a trunk that only work with supports on the face stay
+  out until one is wanted enough to be worth the print-plan cost (the M2 gate caps
+  face supports at 80 mm2); if one is built, it is opt-in per recipe, never the
+  default. (2) **Worker and shared types: OK**, done (see the Worker allowlist note
+  under the dome head). (3) **Custom heads may carry snouts and ribs: yes.** (4) The
+  Sketchfab key stays in the scratch folder until Dan says he is done searching; he
+  will clean up later. Still not authorised: mane, brow ridge, cheek tufts, ball
+  antennae and headphone cups, a dome-head crest, a pumpkin stem.
 - **Reading:** the taste gate is still tripped for heads and partly lifted for
   crowns. The parts still at 1 or 2 are body-shape problems (dome helmet,
   astronaut, pumpkin, wizard cone, chef puff, fez), which the feature ops cannot

@@ -14,8 +14,12 @@
 //    and never leaks upstream text or server filesystem paths.
 import {
   checkForgeRecipeBrandSafety,
+  FORGE_EAR_STYLES,
+  FORGE_HEAD_TOPS,
   FORGE_MAX_PROFILE_POINTS,
   FORGE_SLOTS,
+  FORGE_SNOUT_STYLES,
+  FORGE_SPIKE_LAYOUTS,
   type ForgeFastPreviewRequest,
   type ForgeLoftSlice,
   type ForgeRecipeV1,
@@ -272,10 +276,12 @@ function sanitizeRecipe(raw: unknown): { ok: true; recipe: ForgeRecipeV1 } | { o
         ...(isFiniteNum(s.y) ? { y: s.y } : {}),
       });
     }
+    const top = oneOf(shapeObj.top, FORGE_HEAD_TOPS);
     cleanShape = {
       kind: "loft",
       slices,
       ...(isFiniteNum(shapeObj.height_mm) ? { height_mm: shapeObj.height_mm } : {}),
+      ...(top ? { top } : {}),
     };
   } else {
     return { ok: false };
@@ -300,26 +306,34 @@ function sanitizeRecipe(raw: unknown): { ok: true; recipe: ForgeRecipeV1 } | { o
           ...(isFiniteNum(f.thickness_mm) ? { thickness_mm: f.thickness_mm } : {}),
         });
       } else if (f.op === "ears") {
-        const style = oneOf(f.style, ["round", "pointy", "tall"] as const);
+        const style = oneOf(f.style, FORGE_EAR_STYLES);
         cleanFeatures.push({
           op: "ears",
           ...(style ? { style } : {}),
-          ...numFields(f, ["width_mm", "height_mm", "thickness_mm", "tilt_deg"] as const),
+          ...numFields(f, ["width_mm", "height_mm", "thickness_mm", "tilt_deg", "z_frac"] as const),
         });
       } else if (f.op === "horns") {
         cleanFeatures.push({ op: "horns", ...numFields(f, ["length_mm", "base_mm", "curl"] as const) });
       } else if (f.op === "spikes") {
+        const layout = oneOf(f.layout, FORGE_SPIKE_LAYOUTS);
         cleanFeatures.push({
           op: "spikes",
-          ...numFields(f, ["count", "height_mm", "base_mm", "center_boost_mm"] as const),
+          ...(layout ? { layout } : {}),
+          ...numFields(f, ["count", "height_mm", "base_mm", "center_boost_mm", "wall_mm"] as const),
         });
       } else if (f.op === "snout") {
-        const style = oneOf(f.style, ["muzzle", "beak", "bill"] as const);
+        const style = oneOf(f.style, FORGE_SNOUT_STYLES);
         cleanFeatures.push({
           op: "snout",
           ...(style ? { style } : {}),
           ...numFields(f, ["length_mm", "width_mm", "height_mm", "z_frac"] as const),
         });
+      } else if (f.op === "ribs") {
+        cleanFeatures.push({ op: "ribs", ...numFields(f, ["count", "depth_mm", "width_mm"] as const) });
+      } else if (f.op === "star") {
+        cleanFeatures.push({ op: "star", ...numFields(f, ["size_mm", "thickness_mm"] as const) });
+      } else if (f.op === "hollow") {
+        cleanFeatures.push({ op: "hollow", ...numFields(f, ["wall_mm", "depth_mm"] as const) });
       } else {
         return { ok: false };
       }

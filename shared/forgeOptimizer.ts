@@ -30,6 +30,12 @@ export const FORGE_SLOTS = [
 
 export type ForgeSlot = (typeof FORGE_SLOTS)[number];
 export type ForgeSupportPolicy = "none" | "minimal";
+export type ForgeHeadTop = "studs" | "dome";
+/** Allowed values of the recipe fields the Worker whitelists; the daemon (scripts/forge_optimizer_daemon.py) clamps the numbers. */
+export const FORGE_HEAD_TOPS = ["studs", "dome"] as const satisfies readonly ForgeHeadTop[];
+export const FORGE_EAR_STYLES = ["round", "pointy", "tall"] as const;
+export const FORGE_SNOUT_STYLES = ["muzzle", "beak", "bill"] as const;
+export const FORGE_SPIKE_LAYOUTS = ["row", "ring"] as const;
 
 export interface ForgeLoftSlice {
   z: number;
@@ -56,7 +62,13 @@ export interface ForgeRecipeV1 {
   slot: ForgeSlot;
   support_policy?: ForgeSupportPolicy;
   shape:
-    | { kind?: "loft"; slices: ForgeLoftSlice[]; height_mm?: number }
+    | {
+        kind?: "loft";
+        slices: ForgeLoftSlice[];
+        height_mm?: number;
+        /** Heads only. `studs` (default) is the brand head with its two crown studs; `dome` has none and a rounded top. */
+        top?: ForgeHeadTop;
+      }
     | { kind: "star2d"; points?: number; outer_r_mm?: number; inner_r_mm?: number; grip_tu?: number }
     | { kind: "profile2d"; points: [number, number][]; fillet_r_mm?: number; grip_tu?: number };
   /** Every number is optional and clamped by the daemon; an op the slot cannot use is ignored and reported. */
@@ -65,22 +77,39 @@ export interface ForgeRecipeV1 {
     | { op: "brim"; width_mm?: number; depth_mm?: number; thickness_mm?: number }
     | {
         op: "ears";
-        style?: "round" | "pointy" | "tall";
+        style?: (typeof FORGE_EAR_STYLES)[number];
         width_mm?: number;
         height_mm?: number;
         thickness_mm?: number;
         tilt_deg?: number;
+        /** Heads only: where up the head the ear is rooted, 0.3 to 0.9 (0.84 top corner, 0.5 middle of the side). */
+        z_frac?: number;
       }
     | { op: "horns"; length_mm?: number; base_mm?: number; curl?: number }
-    | { op: "spikes"; count?: number; height_mm?: number; base_mm?: number; center_boost_mm?: number }
+    | {
+        op: "spikes";
+        /** Crowns only: `ring` puts the points round the rim and hollows the top out into a ring. */
+        layout?: (typeof FORGE_SPIKE_LAYOUTS)[number];
+        count?: number;
+        height_mm?: number;
+        base_mm?: number;
+        center_boost_mm?: number;
+        wall_mm?: number;
+      }
     | {
         op: "snout";
-        style?: "muzzle" | "beak" | "bill";
+        style?: (typeof FORGE_SNOUT_STYLES)[number];
         length_mm?: number;
         width_mm?: number;
         height_mm?: number;
         z_frac?: number;
       }
+    /** Heads only: vertical grooves round the sides (a pumpkin, a melon); the front stays smooth. */
+    | { op: "ribs"; count?: number; depth_mm?: number; width_mm?: number }
+    /** Crowns only: a five-point star standing on the very top. */
+    | { op: "star"; size_mm?: number; thickness_mm?: number }
+    /** Crowns only: an open-top pocket, so the crown is a cup or a ring. */
+    | { op: "hollow"; wall_mm?: number; depth_mm?: number }
   >;
 }
 
