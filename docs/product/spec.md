@@ -116,7 +116,7 @@ this demo.
   Grown-ups gate (`⚙️`); only Pack Rip and Reveal take the full stage.
 - Zero-reload in-place switching runs across Kip on foot and ten playable
   vehicles (starter `Red Racer` plus all nine Rank 2-6 vehicles through Rank 6
-  `Bolt Power Mech`), backed by live STL hero rigs with bounded caching and
+  `Bolt Power Pro`), backed by live STL hero rigs with bounded caching and
   procedural fallback, plus per-vehicle traversal perks (`cruiser`, `sprint`,
   `hauler`, `water-skim`, `sky-lift`, `bolt-mech`).
 - Opening any sheet closes the others first; the stage stays live behind them.
@@ -152,7 +152,7 @@ remain additive inside the daily cap, and progression stays auditable on-device
   attempt count and measurement tolerance, with anti-farming daily delta +
   `0.25x` practice replay caps, `+10%` stat-match bonus, Tier `1-3` mastery
   gates, and Maker Ranks `1-6` (`0` to `2,700 XP`) unlocking vehicles through
-  Rank 6 `Bolt Power Mech` ([xp-system-spec.md](../specs/xp-system-spec.md)).
+  Rank 6 `Bolt Power Pro` ([xp-system-spec.md](../specs/xp-system-spec.md)).
 - **Daily Quest Board & 11 Concept Badges:** Three deterministic daily quests
   (`+40 XP` once/day) and 11 STEM Concept Badges (`Sprout / Tinker / Master`)
   surface plain-English skills practiced in the Grown-ups summary.
@@ -176,7 +176,7 @@ so new audio never implies new mechanics.
 ## Forge Club
 
 The canonical bridge maps all 19 PartSpec stats onto speed, spin, glow, and
-torque, derives 1-3 rarity values, includes Snap, Pro, Momentum, and Mech
+torque, derives 1-3 rarity values, includes Snap, Pro, Motion, and Pro Powered Add-On
 parts on the 12.5/25 mm TU grid, populates meshes and warnings, and emits five
 tuned sets (63 entries total, 62 printable):
 
@@ -184,7 +184,7 @@ tuned sets (63 entries total, 62 printable):
 - `racer-garage.json`: eight parts.
 - `kip-wardrobe.json`: nine parts.
 - `modular-craft.json`: 19 flat-pack watercraft and aircraft parts.
-- `mech-robotics.json`: 13 Pro steering, Momentum, and Bolt Power Mech parts.
+- `mech-robotics.json`: 13 Pro steering, Motion, and Bolt Power Pro parts.
 
 App IDs hyphenate PartSpec underscores. The bridge removes the obsolete demo
 set and keeps one small compatibility subset for tests. A green bridge alone
@@ -235,7 +235,7 @@ generated ahead of time or synthesized deterministically.
 | 3D print | Verified STL/GLB + Kip `.3mf` plate & sticker packs | Delivery handoff; `F1`/`F2` bench coupon pending |
 | Reveal | Entrance animation, card, synth theme | External song API not wired |
 | Packs | Seeded daily pulls with equip flow | Billing |
-| Pro & Mech lines | TU-lattice beams, pins, gears, Momentum, Rank 6 Mech trays | Live electronics bench test pending |
+| Pro & Pro Powered Add-On lines | TU-lattice beams, pins, gears, Motion, Rank 6 powered-module trays | Live electronics bench test pending |
 
 Every bridged printable part ships a real STL/GLB pair (`62` STL/GLB pairs in
 `public/parts-stl` and `public/parts-glb`; `370` STL and `64` GLB files served
@@ -394,7 +394,7 @@ physics check.
   Ephemeral `SAM 3.1` target-noun masks (zero background room pixels stored)
   verify tidy-up deltas and real-home lever/gear scavenger hunts.
 - **`Max` Robotics Training Exhaust:** Parent-approved scans, `TU` socket
-  mates, and Rank 6 `Bolt Power Mech` runs emit grounded `(mask, grasp_anchor,
+  mates, and Rank 6 `Bolt Power Pro` runs emit grounded `(mask, grasp_anchor,
   mm_scale, mass/torque)` priors for real household and sumo robots.
 
 

@@ -12,7 +12,7 @@ the canonical contract and **Stretch goals** register in
   `+25 XP/day`, pause-never-reset Workshop Day stamps) and **Connected Town
   Slice 1** (6-district `TOWN_RING` street crossings + signposts across
   `room <-> garden <-> beach <-> junk <-> snow <-> sky`, zero-reload switching
-  across Kip and 10 vehicles through Rank 6 `Bolt Power Mech`, `VEHICLE_PERKS`,
+  across Kip and 10 vehicles through Rank 6 `Bolt Power Pro`, `VEHICLE_PERKS`,
   and 12 calm `TOWN_SPARKLE_SPOTS`).
 - **Scoped as Stretch Goals (post-Nov 4 freeze):** Central `Plaza` + enterable
   Lab building doors (`toyventor.town/1`), in-world NPC quest givers & story
