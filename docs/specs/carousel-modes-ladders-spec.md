@@ -563,6 +563,13 @@ Keyboard keeps left/right on the lane centre (up/down nudge z).
 Acceptance joins §13: tap-a-spot reaches all four facing
 quadrants; existing labs/worlds complete unchanged on the centre
 line.
+**Shipped 2026-11-03** (except street crossings, still x-only):
+taps/drag walk ground points via `lanePoint()` (z ∈ [−1.2, 1.2],
+centre-line easing on ←/→, ↑/↓ nudge), `atan2` facing, z-aware
+near/mission/tidy detection, blob + camera follow z. Headless
+390×844 probe: far/near taps z −1.17/+1.14, diagonal face −0.93,
+↑/↓ nudge with edge clamp, 72 unit tests green. Editor keeps an
+x-only `laneX` getter backed by `lanePoint()`.
 
 ### 11.7 Prop reaction contract (decided 2026-11-02, binds C3+)
 
