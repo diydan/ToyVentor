@@ -25,8 +25,21 @@ const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.json': 'applic
 
 // static server: /kip/tools/<f> and /kip/<f> from the viewer folder, everything else from public/
 const voice = { seen: [], fail: false };
+const describeStub = { seen: [], fail: false, id: 'skateboard' };   // stand-in for the app's /api/describe (Muse picks a checked build); never calls a model
 const tinyWav = (() => { const n = 2400, b = Buffer.alloc(44 + n * 2); b.write('RIFF', 0); b.writeUInt32LE(36 + n * 2, 4); b.write('WAVEfmt ', 8); b.writeUInt32LE(16, 16); b.writeUInt16LE(1, 20); b.writeUInt16LE(1, 22); b.writeUInt32LE(24000, 24); b.writeUInt32LE(48000, 28); b.writeUInt16LE(2, 32); b.writeUInt16LE(16, 34); b.write('data', 36); b.writeUInt32LE(n * 2, 40); return b; })();
 const web = http.createServer((req, res) => {
+  if (new URL(req.url, 'http://x').pathname === '/api/describe') {
+    let raw = '';
+    req.on('data', (c) => { raw += c; });
+    req.on('end', () => {
+      try { describeStub.seen.push(JSON.parse(raw || '{}')); } catch { describeStub.seen.push({ bad: raw }); }
+      if (describeStub.fail) { res.writeHead(503, { 'content-type': 'application/json' }); res.end('{"error":"muse is not configured"}'); return; }
+      const r = doc.recipes.find((x) => x.id === describeStub.id);
+      res.writeHead(200, { 'content-type': 'application/json' });
+      res.end(JSON.stringify({ contract: 1, title: r.title, note: `Muse picked "${r.title}", a checked build. Hello!`, validated: true, steps: r.steps, poses: r.reference.poses }));
+    });
+    return;
+  }
   if (new URL(req.url, 'http://x').pathname === '/api/voice') {   // stand-in for the app's voice route: records the request, never calls a model
     voice.seen.push(req.url);
     if (voice.fail) { res.writeHead(503); res.end('voice unavailable'); return; }
@@ -259,6 +272,30 @@ try {
   await ev("[...document.querySelectorAll('.kdb-panel button')].find((b) => b.textContent === 'Test connection').click()");
   check('Test connection reports the checker state', await page.waitFor("document.querySelector('.kdb-panel details p').textContent.includes('Fit checker: ready')", 20000), await ev("document.querySelector('.kdb-panel details p').textContent"));
   await page.shot(path.join(SHOTS, 'scooter-sample.png'));
+
+
+  console.log('\n[5b] the app\'s own route: Muse picks a checked build (default on in the app, off in this harness unless ?de=)');
+  const page2 = await chrome.open(`${base}/kip/tools/describe-harness.html?stepMs=300&de=/api/describe`);
+  const ev2 = (expr) => page2.evaluate(expr);
+  check('a second tab loads with the built-in route set', await page2.waitFor('window.__describeReady === true', 120000));
+  describeStub.seen.length = 0;
+  await ev2("document.querySelector('#kdb-text').value = 'quiero un monopatín'; document.querySelector('.kdb-go').click()");
+  check('building draws the build Muse picked (the skateboard: 7 parts)', await page2.waitFor('window.__describe.view && window.__describe.view.meshes.length === 7', 180000), `meshes: ${await ev2('window.__describe.view ? window.__describe.view.meshes.length : 0')}`);
+  check('it asked the app route with the child\'s own words (Spanish) and the allowed parts, and nothing else', describeStub.seen.length === 1 && describeStub.seen[0].description === 'quiero un monopatín' && Array.isArray(describeStub.seen[0].allowedIds) && describeStub.seen[0].allowedIds.length === 30 && Object.keys(describeStub.seen[0]).sort().join() === 'allowedIds,contract,description', JSON.stringify(describeStub.seen[0]).slice(0, 140));
+  const badge2 = await ev2("document.querySelector('.kdb-badge').textContent");
+  check('the badge says Muse picked it from the checked builds (honest: it did not invent it)', badge2 === 'Picked by Muse from the checked builds · checked: every part fits', badge2);
+  check('the note carries Muse\'s line', (await ev2("document.querySelector('.kdb-status').textContent")).includes('Muse picked "Skateboard"'), await ev2("document.querySelector('.kdb-status').textContent"));
+  describeStub.fail = true; describeStub.seen.length = 0;
+  await ev2("document.querySelector('#kdb-text').value = 'a race car'; document.querySelector('.kdb-go').click()");
+  check('with the route unavailable the sample build still arrives (10 parts)', await page2.waitFor('window.__describe.view.meshes.length === 10', 180000), `meshes: ${await ev2('window.__describe.view.meshes.length')}`);
+  const st2 = await ev2("document.querySelector('.kdb-status').textContent");
+  check('and the child is told nothing technical: no "endpoint", no "model said", no "could not be used"', !/endpoint|model said|could not be used|answered 503/i.test(st2) && st2.includes('Roadster'), st2);
+  check('the badge falls back to the plain sample-build label', (await ev2("document.querySelector('.kdb-badge').textContent")).startsWith('A sample build'), await ev2("document.querySelector('.kdb-badge').textContent"));
+  describeStub.fail = false;
+  await ev2("document.querySelector('.kdb-panel details').open = true; document.querySelector('#kdb-endpoint').value = 'http://127.0.0.1:1/describe'; document.querySelector('#kdb-text').value = 'a race car'; document.querySelector('.kdb-go').click()");
+  await page2.waitFor("document.querySelector('.kdb-status').textContent.length > 0 && !document.querySelector('.kdb-go').disabled", 60000);
+  describeStub.seen.length = 0;
+  check('a typed address wins: with one set, the built-in route is not asked', await page2.waitFor("document.querySelector('.kdb-go').disabled === false", 20000) && describeStub.seen.length === 0, JSON.stringify(describeStub.seen));
 
   console.log('\n[6] privacy, errors, narrow layout');
   const origins = new Set(page.requests.map((r) => { try { return new URL(r.url).origin; } catch { return r.url.slice(0, 5); } }));

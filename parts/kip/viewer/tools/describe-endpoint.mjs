@@ -7,10 +7,10 @@
 // contract's three bodies. Nothing but loopback can reach it, the key is never logged or returned, and the model's raw text never leaves this
 // process: only the whitelisted recipe fields do.
 //
-//   node parts/kip/viewer/tools/describe-endpoint.mjs --model <model id>
+//   node parts/kip/viewer/tools/describe-endpoint.mjs [--model <model id>]
 //
 // Config, first match wins. Key: DESCRIBE_API_KEY, else MODEL_API_KEY, else any variable ending in MODEL_API_KEY. URL: DESCRIBE_API_URL, else any
-// variable ending in MODEL_API_URL. Model id: --model or DESCRIBE_MODEL (no default, so the repo names no provider). Env file: --env-file,
+// variable ending in MODEL_API_URL. Model id: --model or DESCRIBE_MODEL, default muse-spark-1.3 (the same Muse the Worker's Create and Describe routes use). Env file: --env-file,
 // DESCRIBE_ENV_FILE, or the nearest .dev.vars in this directory or any parent (works from a git worktree).
 // Wire format: POST {url}/responses with {model, input} and a bearer key; the reply text is read from output_text or output[].content[].text.
 //
@@ -22,6 +22,7 @@
 //
 // Options: --port 8788  --effort low (sent as reasoning.effort; retried without it if the model rejects it; --effort none to omit)
 //          --validator off (skip the worker)  --python PATH  --retries 1
+const DEFAULT_MODEL = 'muse-spark-1.3';   // Muse, like worker/muse.ts; --model or DESCRIBE_MODEL overrides
 import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import http from 'node:http';
@@ -73,11 +74,10 @@ export function resolveConfig({ env = process.env, args = {} } = {}) {
   const pick = (exact, suffix) => exact.find((k) => vars[k]) ?? Object.keys(vars).find((k) => k.endsWith(suffix) && vars[k]);
   const keyVar = pick(['DESCRIBE_API_KEY', 'MODEL_API_KEY'], 'MODEL_API_KEY');
   const urlVar = pick(['DESCRIBE_API_URL'], 'MODEL_API_URL');
-  const model = args.model ?? env.DESCRIBE_MODEL;
+  const model = args.model ?? env.DESCRIBE_MODEL ?? DEFAULT_MODEL;
   const missing = [];
   if (!keyVar) missing.push('an API key variable (DESCRIBE_API_KEY, or a name ending in MODEL_API_KEY)');
   if (!urlVar) missing.push('an API URL variable (DESCRIBE_API_URL, or a name ending in MODEL_API_URL)');
-  if (!model) missing.push('a model id (--model or DESCRIBE_MODEL)');
   return {
     key: keyVar ? vars[keyVar] : undefined,
     url: urlVar ? vars[urlVar] : undefined,

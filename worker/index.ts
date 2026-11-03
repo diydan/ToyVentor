@@ -23,6 +23,7 @@ import {
   handleForgePreview,
   type ForgeOptimizerEnv,
 } from "./forgeOptimizer";
+import { handleDescribe } from "./describe";
 import { handleMuseSpark, museConfigured, type MuseEnv } from "./muse";
 import { handleOwnership, type OwnershipEnv } from "./ownership";
 import { handleParent, type ParentEnv } from "./parent";
@@ -272,6 +273,9 @@ export default {
       if (request.method === "POST") return handleSkinPost(request, env);
       return json({ error: "method not allowed" }, 405);
     }
+
+    // Describe & Build: Muse picks one of the ready, validator-checked builds for the child's words (worker/describe.ts).
+    if (url.pathname === "/api/describe") return handleDescribe(request, env);
 
     if (url.pathname === "/api/muse/spark") {
       // Create mode in ToyVentor World: the game asks for a level recipe

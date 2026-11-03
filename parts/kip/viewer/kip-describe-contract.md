@@ -159,6 +159,10 @@ examples (the recipe book's own ranking, topped up with defaults). The tested co
 everything: without them a live model put a scooter rider on the wrong connector and used the wrong axle, and the fit checker refused it twice; with
 them, six live descriptions went 4 for 4 on the first model call for builds that exist, and the two that cannot be built were refused plainly.
 
+## The app's own route (`/api/describe`)
+
+With the Settings address empty, the tab POSTs the same body to `/api/describe` (`worker/describe.ts`, `defaultEndpoint` in `mountDescribe`; pass `''` to turn it off). The Worker asks Muse to **choose** one of the ten ready builds in `kip-describe-recipes.json` and replies with the third body above (`steps`, `title`, `note`, `validated: true`, that build's reference `poses`), or `{ "clarifyingQuestion": "..." }` when the words are unclear. It never invents steps, because poses must come from the real validator, which cannot run in a Worker. Any failure is a non-200, and the tab then falls back quietly (`describe(..., { quiet: true })` leaves out the "endpoint could not be used" aside; a typed address always wins and is never quiet). The badge reads "Picked by Muse from the checked builds".
+
 ## Matcher result (step 2)
 
 `describe(description, { endpoint, book, parts })` in `kip-describe.js` always resolves to `{ steps, title, source, confidence, note, validated, poses? }` with

@@ -45,7 +45,7 @@ const MODEL_TIMEOUT_MS = 13_000;
 const THEMES = ["garden", "sky", "junk", "beach", "snow", "room"];
 
 /** Kid-facing rules, applied to every request. */
-const SAFETY = [
+export const SAFETY = [
   "You help a young child (ages 4 to 10) build a pretend play world.",
   "Keep it kind and safe: nothing scary, violent, adult, or personal.",
   "Never include real names, addresses, phone numbers, or details that identify a person.",
@@ -70,7 +70,7 @@ function isHex(v: unknown): v is string {
 
 /** Model ids this route will call. Anything else is refused, so a client
  *  cannot use the kid-facing route to reach another model. */
-function resolveModel(requested: unknown, env: MuseEnv): string | null {
+export function resolveModel(requested: unknown, env: MuseEnv): string | null {
   const wanted = typeof requested === "string" ? requested : "";
   if (wanted && !/^muse-spark/i.test(wanted)) return null;
   const configured = env.MUSE_SPARK_MODEL?.trim();
@@ -78,20 +78,20 @@ function resolveModel(requested: unknown, env: MuseEnv): string | null {
   return DEFAULT_MODEL;
 }
 
-function apiUrl(env: MetaEnv, path: string): string {
+export function apiUrl(env: MetaEnv, path: string): string {
   const base = (env.META_MODEL_API_URL ?? "https://api.meta.ai/v1")
     .replace(/\/+$/, "")
     .replace(/\/responses$/, "");
   return `${base}${path}`;
 }
 
-function apiKey(env: MetaEnv): string | undefined {
+export function apiKey(env: MetaEnv): string | undefined {
   return env.MODEL_API_KEY ?? env.META_MODEL_API_KEY;
 }
 
 /** Pull the plain text out of a Responses API body. The SDK exposes
  *  output_text; the raw body carries it in output[].content[].text. */
-function outputTextOf(body: unknown): string {
+export function outputTextOf(body: unknown): string {
   if (!isRecord(body)) return "";
   if (typeof body.output_text === "string") return body.output_text;
   const output = Array.isArray(body.output) ? body.output : [];
@@ -108,7 +108,7 @@ function outputTextOf(body: unknown): string {
 
 /** The model sometimes wraps JSON in a code fence. Take the first JSON
  *  object in the text. */
-function firstJsonObject(text: string): unknown {
+export function firstJsonObject(text: string): unknown {
   const start = text.indexOf("{");
   const end = text.lastIndexOf("}");
   if (start < 0 || end <= start) return null;
@@ -142,13 +142,13 @@ function childSaidOf(input: string): string {
 /** Redact what looks like contact details before the child's words reach
  *  the model. Narrow on purpose: emails and phone-like digit runs only,
  *  so ordinary world descriptions pass through untouched. */
-function scrubContactDetails(text: string): string {
+export function scrubContactDetails(text: string): string {
   return text
     .replace(/[\w.+-]+@[\w-]+(?:\.[\w-]+)+/g, "[email removed]")
     .replace(/\+?\d[\d\s().-]{6,}\d/g, "[number removed]");
 }
 
-function kidSafeText(text: string, childSaid = ""): boolean {
+export function kidSafeText(text: string, childSaid = ""): boolean {
   if (!text) return true;
   if (UNSAFE_TERMS.test(text) || LINKISH.test(text) || CONTACTISH.test(text)) return false;
   if (childSaid.length >= 8) {
@@ -163,7 +163,7 @@ function kidSafeText(text: string, childSaid = ""): boolean {
 }
 
 /** House style for anything a kid reads: no em dashes, no long lines. */
-function tidy(text: string): string {
+export function tidy(text: string): string {
   return text
     .replace(/\u2014/g, ",")
     .replace(/\u2013/g, "-")

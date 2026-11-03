@@ -192,9 +192,9 @@ async function askEndpoint(endpoint, description, allowedIds, fetchImpl, timeout
  * recipe book, true for a model recipe only when the endpoint says so and sends usable poses. A model recipe that is not validated is returned with
  * confidence 'low' and a note, so the tab can warn. When the endpoint asks a question instead, the recipe book's best guess comes back with
  * `clarifyingQuestion` set so the tab can show a build and ask at once.
- * Options: { endpoint, book, parts (indexed kip-describe-parts.json: also runs the browser-side rules), fetchImpl, timeoutMs }.
+ * Options: { endpoint, book, parts (indexed kip-describe-parts.json: also runs the browser-side rules), fetchImpl, timeoutMs, quiet }.
  */
-export async function describe(description, { endpoint, book, parts, fetchImpl = globalThis.fetch, timeoutMs = DEFAULT_TIMEOUT_MS } = {}) {
+export async function describe(description, { endpoint, book, parts, fetchImpl = globalThis.fetch, timeoutMs = DEFAULT_TIMEOUT_MS, quiet = false } = {}) {
   const text = oneLine(description, 300);
   if (!text) throw new Error('describe() needs a description');
   if (!book) throw new Error('describe() needs the recipe book (loadRecipeBook)');
@@ -221,7 +221,9 @@ export async function describe(description, { endpoint, book, parts, fetchImpl =
       const guess = matchRecipeBook(text, book);
       return { ...guess, clarifyingQuestion: r.question, note: `${guess.note} The model asked: ${r.question}` };
     }
-    if (r.kind !== 'rejected') aside = r.kind === 'error' ? `The model said: "${r.message}" ` : `The model's answer could not be used (${r.why}). `;
+    // `quiet` is for the app's built-in route: when it is simply unavailable (not deployed, offline, not configured) the child just gets the sample build,
+    // with no technical aside. A model reply the fit rules refused (kind 'rejected') is still told.
+    if (r.kind !== 'rejected' && !quiet) aside = r.kind === 'error' ? `The model said: "${r.message}" ` : `The model's answer could not be used (${r.why}). `;
   }
   const guess = matchRecipeBook(text, book);
   return { ...guess, note: `${aside}${guess.note}` };

@@ -119,7 +119,7 @@ let c = resolveConfig({ env: {}, args: { 'env-file': envFile, model: 'm1' } });
 check('exact MODEL_API_KEY beats an earlier suffix match', c.key === 'main-key' && c.source.keyVar === 'MODEL_API_KEY');
 check('URL comes from the suffix match', c.url === 'http://upstream.example/v1' && c.source.urlVar === 'OLD_MODEL_API_URL' && c.model === 'm1' && c.missing.length === 0);
 c = resolveConfig({ env: {}, args: { 'env-file': envFile } });
-check('no model id -> reported as missing, not defaulted', c.missing.length === 1 && c.missing[0].includes('model id'));
+check('no model id -> defaults to Muse (the same model the Worker routes use), and nothing is reported missing', c.model === 'muse-spark-1.3' && c.missing.length === 0);
 c = resolveConfig({ env: { DESCRIBE_API_KEY: 'env-key', DESCRIBE_MODEL: 'm2' }, args: { 'env-file': envFile } });
 check('DESCRIBE_* environment overrides the file', c.key === 'env-key' && c.model === 'm2');
 c = resolveConfig({ env: {}, args: { 'env-file': path.join(tmp, 'nope'), model: 'm' } });

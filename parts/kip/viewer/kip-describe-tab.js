@@ -85,6 +85,7 @@ export function mountDescribe({
   recipeUrl = '/kip/kip-describe-recipes.json', partsUrl = '/kip/kip-describe-parts.json', stlBase = '/kip/partspec/describe/', fetchImpl = globalThis.fetch,
   stepMs = 1100,   // how long each step of a playing build takes
   voiceUrl = '/api/voice',   // the game's "say what it is" route; absent (a plain static server) means captions only
+  defaultEndpoint = '/api/describe',   // the app's own route (Muse picks a checked build); used when the Settings address is empty; '' turns it off
 }) {
   if (!document.getElementById('kdb-style')) document.head.append(el('style', { id: 'kdb-style' }, CSS));
   let book = null, parts = null, view = null, loading = null, busy = false, last = null, isOpen = false;
@@ -116,9 +117,9 @@ export function mountDescribe({
   const epNote = el('p', {}, '');
   const test = el('button', { type: 'button' }, 'Test connection');
   const settings = el('details', {}, el('summary', {}, 'Settings: model endpoint (optional)'), epInput, test, epNote,
-    el('p', {}, 'With no address the page uses its sample builds. To let a language model answer, start the local endpoint with ', el('code', {}, 'node parts/kip/viewer/tools/describe-endpoint.mjs --model <model id>'),
-      ' and paste the address it prints. The page never holds a key: the endpoint reads it from your own .dev.vars.'),
-    el('p', {}, 'What is sent: your description and the list of part names, only to the address above. Nothing is stored except that address, and only for this browser tab.'));
+    el('p', {}, 'With no address, the app asks its own server, which asks Muse to pick the sample build that fits your words (in any language). If that is not available the page matches your words to the sample builds itself. To let a language model design a NEW build instead, start the local endpoint with ', el('code', {}, 'node parts/kip/viewer/tools/describe-endpoint.mjs'),
+      ' and paste the address it prints. The page never holds a key: the server and the endpoint read it from your own .dev.vars.'),
+    el('p', {}, 'What is sent: with an address, your description and the list of part names go only to that address. With no address, your description (phone numbers and emails removed first) goes to the app\'s server and on to Muse, only to pick a build. Nothing is stored except that address, and only for this browser tab.'));
   const close = el('button', { type: 'button', 'aria-label': 'Close' }, 'Close');
   const panel = el('section', { class: 'kdb-panel', 'aria-label': 'Describe and build', hidden: '' }, el('h2', {}, 'Describe & build', close),
     el('label', { for: 'kdb-text' }, 'What should we build?'), text, examples, go, status, badge, buildBox, sliderBox, langBox, list, caption, settings);
@@ -237,11 +238,13 @@ export function mountDescribe({
       say('Thinking…');
       const ep = epInput.value.trim();
       store.set(ep);
-      const result = await describe(q, { endpoint: ep || undefined, book, parts });
+      const useDefault = !ep && Boolean(defaultEndpoint);               // no address typed: try the app's own route, and fall back quietly if it is not there
+      const result = await describe(q, { endpoint: ep || defaultEndpoint || undefined, quiet: useDefault, book, parts });
       last = result;
       badge.hidden = false;
       badge.className = `kdb-badge ${result.validated ? 'ok' : 'warn'}`;
-      badge.textContent = `${SOURCE_LABEL[result.source] ?? result.source} · ${result.validated ? 'checked: every part fits' : 'not checked for fit'}`;
+      const sourceLabel = result.source === 'model' && useDefault ? 'Picked by Muse from the checked builds' : (SOURCE_LABEL[result.source] ?? result.source);
+      badge.textContent = `${sourceLabel} · ${result.validated ? 'checked: every part fits' : 'not checked for fit'}`;
       stop();
       if (!result.poses) {
         view.clear(); list.replaceChildren(); sliderBox.hidden = true; buildBox.hidden = true; n = 0; p = 0;
