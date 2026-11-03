@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { COLOR_KEYS, NOUN_KEYS } from "../src/lib/propNames";
 import { PROP_LANG_KEY } from "../src/lib/propSpeech";
 import { resetVoiceBackoff } from "../src/lib/propVoice";
-import { FALLBACK_SPEC, PROP_SPECS, PROP_TYPES, createPropFx, specFor, type PropFxDeps } from "../src/features/game/world/runtime/propReactions";
+import { FALLBACK_SPEC, FRUIT, FRUIT_REST_SECONDS, PROP_SPECS, PROP_TYPES, createPropFx, specFor, type PropFxDeps } from "../src/features/game/world/runtime/propReactions";
 
 const root = new URL("..", import.meta.url).pathname;
 
@@ -312,7 +312,7 @@ describe("tapping: picking and naming", () => {
     miss.setFromCamera(new THREE.Vector2(0.95, 0.95), camera);
     expect(fx.tap(miss)).toBe(false);
   });
-  it("glow sprites and loose fruit never steal a tap", () => {
+  it("glow sprites never steal a tap", () => {
     const { fx, g, ray } = scene();
     const sprite = new THREE.Sprite(new THREE.SpriteMaterial({}));
     sprite.position.set(0, 2, 3); sprite.scale.set(6, 6, 1);
@@ -513,5 +513,111 @@ describe("hanging apples sit on the real foliage, face the camera, and are big e
     const inst = fx.register("tree", [g])!;
     expect(inst.slots).toHaveLength(3);
     for (const s of inst.slots) expect(s.local.z).toBeGreaterThan(0.9); // the box's front face is at z = 1, the apple rests against it
+  });
+});
+
+// ---- fruit is a prop now (Dan, playtest 2026-11-03: "when the apples fall, tapping an apple should say red apple") ---------------------------------------------
+describe("fruit you can tap: it says its name and reacts, and rests long enough to be reached", () => {
+  function orchard(lang?: string) {
+    if (lang) setLang(lang);
+    const ctx = setup();
+    ctx.camera.position.set(5, 2, 10);
+    ctx.camera.lookAt(5, 2, 0);
+    ctx.camera.updateMatrixWorld(true);
+    const g = new THREE.Group();
+    g.position.set(5, 0, 0);
+    g.add(box(2, 4, 2, 2));
+    ctx.world.add(g);
+    const inst = ctx.fx.register("tree", [g])!;
+    g.updateMatrixWorld(true);
+    return { ...ctx, g, inst };
+  }
+  /** A ray straight at a mesh from the camera's side. */
+  const rayAt = (m: THREE.Object3D) => { const p = m.getWorldPosition(new THREE.Vector3()); return new THREE.Raycaster(new THREE.Vector3(p.x, p.y, p.z + 8), new THREE.Vector3(0, 0, -1)); };
+  const hanging = (inst: ReturnType<typeof orchard>["inst"]) => inst.slots.filter((sl) => sl.mesh).length;
+
+  it("every fruit with a name has a real noun and colour, and snow and rain stay untouchable decoration", () => {
+    for (const [kind, f] of Object.entries(FRUIT)) {
+      expect(f.r, kind).toBeGreaterThan(0);
+      expect(f.glow ?? 0, `${kind} glow stays under the 0.3 the lamp-glow scan uses`).toBeLessThan(0.3);
+      if (f.noun) {
+        expect(NOUN_KEYS as readonly string[], kind).toContain(f.noun);
+        if (f.say) expect(COLOR_KEYS as readonly string[], kind).toContain(f.say);
+        expect(f.say, `${kind} must not call its colour by its own name ("orange orange")`).not.toBe(f.noun);
+      } else {
+        expect(["snow", "rain"], `${kind} has no name, so it must be decoration`).toContain(kind);
+      }
+    }
+    expect(Object.values(FRUIT).filter((f) => f.noun).length).toBeGreaterThanOrEqual(11);
+  });
+  it("a tap on a hanging apple says 'Red apple', plucks that one apple, and does not shake the whole tree", () => {
+    const { fx, inst, toast } = orchard();
+    expect(hanging(inst)).toBe(3);
+    expect(fx.tap(rayAt(inst.slots[1]!.mesh!))).toBe(true);
+    expect(toast).toHaveBeenCalledWith("Red apple");
+    expect(toast).not.toHaveBeenCalledWith("Green tree");
+    expect(hanging(inst)).toBe(2);       // one apple, not the two a shake drops
+    expect(fx.fallerCount()).toBe(1);
+    expect(inst.slots[1]!.regrowAt).toBeGreaterThan(0); // it grows back
+  });
+  it("a tap on the tree away from the apples still shakes it and says the tree's name", () => {
+    const { fx, inst, toast, g } = orchard();
+    const low = new THREE.Raycaster(new THREE.Vector3(5, 0.4, 8), new THREE.Vector3(0, 0, -1)); // the trunk's foot, nowhere near the crown
+    g.updateMatrixWorld(true);
+    expect(fx.tap(low)).toBe(true);
+    expect(toast).toHaveBeenCalledWith("Green tree");
+    expect(hanging(inst)).toBe(1);       // a shake drops two
+  });
+  it("a tap on a fallen apple says its name and gives a hop instead of nothing", () => {
+    const { fx, inst, toast } = orchard();
+    fx.activate(inst);
+    run(fx, 2);                          // the two apples have landed
+    toast.mockClear();
+    const landed = fx.fallers;
+    expect(landed.length).toBe(2);
+    const apple = landed[0]!;
+    expect(apple.state).toBe(1);         // resting
+    expect(fx.tap(rayAt(apple.mesh))).toBe(true);
+    expect(toast).toHaveBeenCalledWith("Red apple");
+    expect(apple.state).toBe(0);         // airborne again
+    expect(apple.vy).toBeGreaterThan(0.5);
+    expect(apple.t).toBe(0);             // its rest starts over, so it is not tidied away mid-hop
+    run(fx, 1.5);
+    expect(apple.state).toBe(1);         // and it came back down and settled
+    expect(fx.fallerCount()).toBe(2);
+  });
+  it("says it in the chosen language, and nothing at all when the setting is Off (but it still reacts)", () => {
+    for (const [lang, said] of [["es", "Manzana roja"], ["fr", "Pomme rouge"], ["de", "Roter Apfel"], ["it", "Mela rossa"], ["pt", "Maçã vermelha"], ["tr", "Kırmızı elma"]] as const) {
+      const { fx, inst, toast } = orchard(lang);
+      fx.tap(rayAt(inst.slots[0]!.mesh!));
+      expect(toast, lang).toHaveBeenCalledWith(said);
+    }
+    const off = orchard("off");
+    expect(off.fx.tap(rayAt(off.inst.slots[0]!.mesh!))).toBe(true);
+    expect(off.toast).not.toHaveBeenCalled();
+    expect(hanging(off.inst)).toBe(2);
+  });
+  it("named fruit rests long enough to tap and, next, to feed to a toy; then it is tidied away", () => {
+    expect(FRUIT_REST_SECONDS).toBeGreaterThanOrEqual(8);
+    const { fx, inst } = orchard();
+    fx.activate(inst);
+    run(fx, FRUIT_REST_SECONDS - 3);
+    expect(fx.fallerCount()).toBe(2);    // still there well after landing
+    run(fx, 6, FRUIT_REST_SECONDS - 3);
+    expect(fx.fallerCount()).toBe(0);    // gone once its time is up
+  });
+  it("snow and rain are not fruit: they are not tappable and are tidied away quickly, as before", () => {
+    const ctx = setup();
+    const g = new THREE.Group();
+    g.position.set(5, 0, 0);
+    g.add(box(2, 5, 2, 2.5));
+    ctx.world.add(g);
+    const pine = ctx.fx.register("pine", [g])!;
+    ctx.fx.activate(pine);
+    const fallers = ctx.fx.fallers;
+    expect(fallers.length).toBeGreaterThan(0);
+    for (const f of fallers) { expect(f.mesh.userData.noPick).toBe(true); expect(f.mesh.userData.fruitKind).toBeUndefined(); }
+    run(ctx.fx, 4);
+    expect(ctx.fx.fallerCount()).toBe(0);
   });
 });

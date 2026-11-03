@@ -10,14 +10,15 @@
 // built-in ones. A prop type nobody wrote a spec for still gets the generic wiggle and an English name (see FALLBACK_SPEC); the
 // registry test (tests/prop-reactions.test.ts) fails if a built-in prop builder has no entry in PROP_SPECS.
 import * as THREE from "three";
-import { colorKeyFromHex, describeObject, languageInfo, type ColorKey, type LangCode, type NounKey } from "../../../../lib/propNames";
+import { colorKeyFromHex, describeObject, languageInfo, type ColorKey, type Described, type LangCode, type NounKey } from "../../../../lib/propNames";
 import { getPropLang } from "../../../../lib/propSpeech";
+import { kindById, slotDirs } from "./treeKinds";
 import { prefetchObjectVoices, sayObject } from "../../../../lib/propVoice";
 import { sfx, sound, tone } from "./audio";
 
 export const PROP_TYPES = [
   "lantern", "windmill", "cottage", "tree", "bushes", "cloud", "island", "tire", "drum", "shed", "cranebg", "palm", "umbrella",
-  "sandcastle", "pine", "snowman", "igloo", "lamp", "blocks", "books", "chair", "plant", "teddy", "ball", "cushions",
+  "sandcastle", "pine", "snowman", "igloo", "lamp", "blocks", "books", "chair", "plant", "teddy", "ball", "cushions", "bed",
 ] as const;
 export type PropType = (typeof PROP_TYPES)[number];
 
@@ -25,7 +26,7 @@ type IdleKind = "sway" | "bob" | "none";
 type PokeKind = "wiggle" | "hop" | "squash" | "shake" | "swing";
 export type UseKind =
   | "light" | "fruit" | "coconuts" | "snow" | "berries" | "rain" | "sprout" | "topple" | "flutter" | "roll" | "settle" | "squish"
-  | "spin" | "boom" | "windmill" | "hat" | "none";
+  | "spin" | "boom" | "windmill" | "hat" | "sleep" | "none";
 
 export interface PropSpec {
   /** The vocabulary noun it is called; null only for the fallback spec of an unknown prop type. */
@@ -63,6 +64,8 @@ export const PROP_SPECS: Record<PropType, PropSpec> = {
   teddy: { noun: "teddy", color: "brown", idle: "none", poke: "squash", use: "squish" },
   ball: { noun: "ball", color: "red", idle: "none", poke: "hop", use: "roll" },
   cushions: { noun: "cushions", color: "colorful", idle: "none", poke: "squash", use: "squish" },
+  // The Toy Room bed (runtime/bed.ts): a tap puts the toy to sleep (runtime/sleepRoutine.ts); the world decides what that means through `deps.onBed`.
+  bed: { noun: "bed", color: "colorful", idle: "none", poke: "squash", use: "sleep" },
 };
 
 /** A prop type with no spec (something added later, or generated): it still reacts and is still named, in English. */
@@ -94,6 +97,9 @@ export interface PropInst {
   glows: Array<{ m: THREE.MeshStandardMaterial; i: number }>;
   kids: Map<THREE.Object3D, ChildBase>;
   slots: Slot[];
+  /** The fruit this prop grows and drops (a tree's `userData.treeKind` says which; apples otherwise) and how many hang at once. */
+  fruit: FruitKind;
+  fruitSlots: number;
   dir: number;
   taps: number;
   /** Invisible tap target, bigger than the prop. */
@@ -101,7 +107,16 @@ export interface PropInst {
 }
 
 interface Anim { inst: PropInst; kind: string; t: number; d: number; step: (k: number, o: Off, amp: number) => void; end?: () => void }
-interface Faller { mesh: THREE.Mesh; vx: number; vy: number; vz: number; ground: number; t: number; state: 0 | 1 | 2; bounced: boolean; rain: boolean }
+/**
+ * Loose fruit. `state`: 0 falling or hopping, 1 resting on the ground (tidied after `rest` seconds), 2 shrinking away, 3 CARRIED (a finger owns it: no physics, no tidying),
+ * 4 being EATEN (flying into a toy's mouth along `from` to `to` over `secs`, then gone).
+ */
+interface Faller { mesh: THREE.Mesh; vx: number; vy: number; vz: number; ground: number; t: number; state: 0 | 1 | 2 | 3 | 4; bounced: boolean; rain: boolean; kind: FruitKind; rest: number; from?: THREE.Vector3; to?: THREE.Vector3; secs?: number }
+
+/** A fruit a finger has landed on: the mesh (a hanging fruit's mesh changes when it is lifted, so the holder keeps this object, not the mesh) and what it is. */
+export interface FruitRef { mesh: THREE.Object3D; kind: FruitKind }
+/** How much bigger a carried fruit is drawn, so it reads under a finger. */
+export const CARRY_SCALE = 1.25;
 
 export interface PropFxDeps {
   /** The world root: loose things (fruit, rain) live here so they do not sway with the prop they fell from. */
@@ -113,6 +128,8 @@ export interface PropFxDeps {
   reduced: () => boolean;
   /** False when the kid has muted sound: no speech, no effects (the caption still shows). */
   canSpeak?: () => boolean;
+  /** A bed was tapped: the world sends the toy to it (`inst.holder.position` is where the bed stands). */
+  onBed?: (inst: PropInst) => void;
 }
 
 /** World-space box around a prop's real meshes only: glow sprites (a lantern's is 4 units wide) and our own hit proxy do not count. */
@@ -133,16 +150,35 @@ const easeOutBack = (k: number) => { const c1 = 1.70158, c3 = c1 + 1; return 1 +
 /** Capitalise by the language's own rules (Turkish i -> İ, not I). */
 const cap = (s: string, lang: LangCode) => s.charAt(0).toLocaleUpperCase(languageInfo(lang).bcp47) + s.slice(1);
 
-type FruitKind = "apple" | "coconut" | "snow" | "berry" | "rain";
-/** `glow`: a little emissive of its own colour so it still reads against dark foliage (kept under 0.3, the level the lamp-glow scan treats as a light). */
-const FRUIT: Record<FruitKind, { r: number; color: string; rough: number; sy?: number; glow?: number }> = {
+export type FruitKind =
+  | "apple" | "pear" | "orange" | "lemon" | "cherry" | "banana" | "plum" | "strawberry" | "blueberry" | "coconut" | "pumpkin"
+  | "snow" | "berry" | "rain";
+/**
+ * `r` is the radius, `color` the material colour, `sy` a vertical stretch (a pear is tall, a pumpkin squat). `noun` and `say` are what a tap on it says
+ * ("red apple"): a fruit with a `noun` is tappable; snow and rain have none and stay untouchable decoration. `glow`: a little emissive of its own colour so it
+ * still reads against dark foliage (kept under 0.3, the level the lamp-glow scan treats as a light). Adding a fruit is one row here plus a noun in propNames.ts.
+ */
+export const FRUIT: Record<FruitKind, { r: number; color: string; rough: number; sy?: number; glow?: number; noun?: NounKey; say?: ColorKey }> = {
   // 0.24, up from 0.15 (2026-11-03): at 0.15 a hanging apple was about 9 px on a phone, dark red on a dark crown, and easy to miss.
-  apple: { r: 0.24, color: "#e5392b", rough: 0.35, glow: 0.28 },
-  coconut: { r: 0.17, color: "#6b4423", rough: 0.8 },
+  apple: { r: 0.24, color: "#e5392b", rough: 0.35, glow: 0.28, noun: "apple", say: "red" },
+  pear: { r: 0.21, color: "#a8c23a", rough: 0.5, sy: 1.3, glow: 0.2, noun: "pear", say: "green" },
+  orange: { r: 0.24, color: "#ff9a1f", rough: 0.6, glow: 0.2, noun: "orange" },   // no `say`: named for its colour, so it says "orange", never "orange orange"
+  lemon: { r: 0.19, color: "#ffe23f", rough: 0.5, sy: 1.15, glow: 0.2, noun: "lemon", say: "yellow" },
+  cherry: { r: 0.19, color: "#c4102f", rough: 0.3, glow: 0.2, noun: "cherries", say: "red" },
+  banana: { r: 0.15, color: "#ffd83a", rough: 0.55, sy: 2.0, glow: 0.2, noun: "banana", say: "yellow" },
+  plum: { r: 0.2, color: "#7a3b8f", rough: 0.35, glow: 0.2, noun: "plum", say: "purple" },
+  strawberry: { r: 0.15, color: "#e8283c", rough: 0.45, sy: 1.15, glow: 0.2, noun: "strawberry", say: "red" },
+  blueberry: { r: 0.11, color: "#3d5ad6", rough: 0.4, glow: 0.2, noun: "blueberries", say: "blue" },
+  coconut: { r: 0.17, color: "#6b4423", rough: 0.8, noun: "coconut", say: "brown" },
+  pumpkin: { r: 0.34, color: "#ff8a1f", rough: 0.6, sy: 0.8, glow: 0.2, noun: "pumpkin", say: "orange" },
   snow: { r: 0.2, color: "#f4f8ff", rough: 0.7 },
-  berry: { r: 0.09, color: "#d62d4a", rough: 0.4 },
+  berry: { r: 0.09, color: "#d62d4a", rough: 0.4, noun: "strawberry", say: "red" },
   rain: { r: 0.045, color: "#7ec8ff", rough: 0.2, sy: 2.4 },
 };
+/** How long a fallen fruit rests before it is tidied away: long enough to tap it, hear it and (next) feed it to a toy. It was 1.6 s, which was gone before a finger got there. */
+export const FRUIT_REST_SECONDS = 12;
+/** Size a fruit mesh at `k` times normal, keeping its own stretch (a pear is tall, a pumpkin squat): `setScalar` would flatten that. */
+function setFruitScale(mesh: THREE.Object3D, kind: FruitKind, k: number) { mesh.scale.set(k, k * (FRUIT[kind].sy ?? 1), k); }
 
 export function createPropFx(deps: PropFxDeps) {
   const insts: PropInst[] = [];
@@ -171,7 +207,8 @@ export function createPropFx(deps: PropFxDeps) {
     const m = new THREE.Mesh(kit(kind).geo, kit(kind).mat);
     m.castShadow = kind !== "rain";
     if (FRUIT[kind].sy) m.scale.y = FRUIT[kind].sy!;
-    m.userData.noPick = true;
+    if (FRUIT[kind].noun) m.userData.fruitKind = kind;   // tappable: says its name
+    else m.userData.noPick = true;                       // snow and rain are decoration
     return m;
   };
 
@@ -223,24 +260,37 @@ export function createPropFx(deps: PropFxDeps) {
     else tone(440, 0, 0.09, "triangle", 0.06, 220);
   }
 
-  function spawnFaller(kind: FruitKind, world: THREE.Vector3, vx: number, vy: number, vz: number) {
-    while (fallers.length >= MAX_FALLERS) { const old = fallers.shift()!; old.mesh.parent?.remove(old.mesh); }
+  function spawnFaller(kind: FruitKind, world: THREE.Vector3, vx: number, vy: number, vz: number): Faller {
+    // Make room by dropping the oldest loose fruit, but never one a finger is carrying or a toy is eating.
+    while (fallers.length >= MAX_FALLERS) {
+      const i = fallers.findIndex((f) => f.state < 3);
+      if (i < 0) break;
+      const old = fallers.splice(i, 1)[0]!;
+      old.mesh.parent?.remove(old.mesh);
+    }
     const mesh = makeFruit(kind);
     mesh.position.copy(world);
     deps.root().add(mesh);
-    fallers.push({ mesh, vx, vy, vz, ground: FRUIT[kind].r * (FRUIT[kind].sy ?? 1), t: 0, state: 0, bounced: false, rain: kind === "rain" });
+    const f: Faller = { mesh, vx, vy, vz, ground: FRUIT[kind].r * (FRUIT[kind].sy ?? 1), t: 0, state: 0, bounced: false, rain: kind === "rain", kind, rest: FRUIT[kind].noun ? FRUIT_REST_SECONDS : 1.6 };
+    fallers.push(f);
+    return f;
   }
   const worldOf = (inst: PropInst, local: THREE.Vector3) => inst.holder.localToWorld(local.clone());
 
+  /** One hanging fruit comes loose: it leaves its slot, falls from where it hung, and the slot regrows in about 10 s. */
+  function dropSlot(inst: PropInst, slot: Slot, kind: FruitKind) {
+    if (!slot.mesh) return;
+    const w = worldOf(inst, slot.local);
+    slot.mesh.parent?.remove(slot.mesh);
+    slot.mesh = null;
+    slot.regrowAt = clock + 8 + Math.random() * 4;
+    spawnFaller(kind, w, (Math.random() - 0.5) * 0.8, 0, 0.2 + Math.random() * 0.5);
+  }
   function useFruit(inst: PropInst) {
     let dropped = 0;
     for (const slot of inst.slots) {
       if (!slot.mesh || dropped >= 2) continue;
-      const w = worldOf(inst, slot.local);
-      slot.mesh.parent?.remove(slot.mesh);
-      slot.mesh = null;
-      slot.regrowAt = clock + 8 + Math.random() * 4;
-      spawnFaller("apple", w, (Math.random() - 0.5) * 0.8, 0, 0.2 + Math.random() * 0.5);
+      dropSlot(inst, slot, inst.fruit);
       dropped++;
     }
   }
@@ -249,6 +299,20 @@ export function createPropFx(deps: PropFxDeps) {
       const a = (i / n) * Math.PI * 2 + inst.phase;
       const local = new THREE.Vector3(Math.cos(a) * spread * (0.4 + Math.random() * 0.6), inst.size.y * ySpot, Math.sin(a) * spread * 0.5 + 0.2);
       spawnFaller(kind, worldOf(inst, local), Math.cos(a) * 0.5, up + Math.random() * 0.8, Math.sin(a) * 0.3 + 0.2);
+    }
+  }
+  // ---- bedtime: the room's lamps go out while the toy sleeps and come back exactly as they were (docs/specs/playful-interactions-spec.md section 6) ----
+  let lampsOut: PropInst[] | null = null;
+  /** `true`: every light that is on goes out (and is remembered). `false`: those lights come back on. A lamp the kid had switched off stays off. Idempotent. */
+  function lightsOut(out: boolean) {
+    if (out) {
+      if (lampsOut) return;
+      lampsOut = insts.filter((i) => i.on && i.lights.length > 0);
+      for (const i of lampsOut) setLight(i, false);
+    } else if (lampsOut) {
+      const back = lampsOut;
+      lampsOut = null;
+      for (const i of back) setLight(i, true);
     }
   }
   function useRain(inst: PropInst) {
@@ -352,6 +416,7 @@ export function createPropFx(deps: PropFxDeps) {
       case "boom": useBoom(inst); break;
       case "windmill": deps.boostWindmill(); break;
       case "hat": useHat(inst); break;
+      case "sleep": deps.onBed?.(inst); break;
       case "none": break;
     }
   }
@@ -366,14 +431,91 @@ export function createPropFx(deps: PropFxDeps) {
     const color = colorOf(inst);
     return inst.spec.noun ? describeObject({ noun: inst.spec.noun, color }, lang) : describeObject({ label: inst.type, color }, lang);
   }
-  function announce(inst: PropInst) {
-    const d = nameOf(inst);
-    if (!d) return;
+  /** Show a name as the toast and say it (the Gemini clip, the device voice, or just the caption). */
+  function speakName(d: Described, noun: NounKey | undefined, color: ColorKey | undefined) {
     const now = performance.now();
     if (d.text === lastSay && now - lastSayAt < 900) return; // quick repeat taps do not stutter the same word
     lastSay = d.text; lastSayAt = now;
     deps.toast(cap(d.text, d.lang));
-    if (deps.canSpeak ? deps.canSpeak() : sound) sayObject({ noun: inst.spec.noun ?? undefined, color: colorOf(inst), lang: d.lang, text: d.text });
+    if (deps.canSpeak ? deps.canSpeak() : sound) sayObject({ noun, color, lang: d.lang, text: d.text });
+  }
+  function announce(inst: PropInst) {
+    const d = nameOf(inst);
+    if (d) speakName(d, inst.spec.noun ?? undefined, colorOf(inst));
+  }
+  const fruitKindOf = (o: THREE.Object3D): FruitKind | null => (o.userData.fruitKind as FruitKind | undefined) ?? null;
+  /**
+   * A tap on a fruit, hanging or fallen: it says its name ("red apple") and reacts. A hanging one is plucked (it drops and the slot regrows); a fallen one hops.
+   * Feeding a fruit to a toy is the next step (a drag onto the character, docs/specs/playful-interactions-spec.md section 4).
+   */
+  function tapFruit(mesh: THREE.Object3D, kind: FruitKind) {
+    const f = FRUIT[kind];
+    const d = f.noun ? describeObject({ noun: f.noun, color: f.say }, getPropLang()) : null;
+    if (d && f.noun) speakName(d, f.noun, f.say);
+    tone(520, 0, 0.07, "triangle", 0.07, 780);
+    const fall = fallers.find((x) => x.mesh === mesh);
+    if (fall) {                       // a fallen fruit hops, and gets a fresh rest so it is not tidied away mid-hop
+      setFruitScale(fall.mesh, fall.kind, 1);
+      fall.state = 0; fall.t = 0; fall.vy = 2.2 * amp() + 0.4; fall.bounced = true; fall.vx = 0; fall.vz = 0;
+      return;
+    }
+    const inst = instOf(mesh);
+    const slot = inst?.slots.find((sl) => sl.mesh === mesh);
+    if (inst && slot) dropSlot(inst, slot, kind);
+  }
+
+  // ---- drag to feed (docs/specs/playful-interactions-spec.md section 4) -----------------------------------------------------
+  /** The fruit under a ray, hanging or fallen, WITHOUT acting on it: a press may turn out to be a tap or a carry. A fruit already carried or being eaten is not pickable. */
+  function pickFruit(ray: THREE.Raycaster): FruitRef | null {
+    if (!insts.length && !fallers.length) return null;
+    const hits = ray.intersectObjects([...insts.map((i) => i.holder), ...fallers.filter((f) => f.state < 3).map((f) => f.mesh)], true);
+    for (const h of hits) {
+      const k = fruitKindOf(h.object);
+      if (k && h.object.visible) return { mesh: h.object, kind: k };
+    }
+    return null;
+  }
+  const fallerOf = (ref: FruitRef) => fallers.find((f) => f.mesh === ref.mesh);
+  /**
+   * The carry begins: take the fruit out of the physics. A fallen fruit is simply held; a hanging one is plucked first (the slot regrows like any picked apple) and `ref.mesh`
+   * becomes the new loose mesh. Returns false if the fruit is no longer there (a world change since the press).
+   */
+  function liftFruit(ref: FruitRef): boolean {
+    let f = fallerOf(ref);
+    if (!f) {
+      const inst = instOf(ref.mesh);
+      const slot = inst?.slots.find((sl) => sl.mesh === ref.mesh);
+      if (!inst || !insts.includes(inst) || !slot) return false;      // a prop from a world that has since been reset is not ours any more
+      const w = worldOf(inst, slot.local);
+      slot.mesh!.parent?.remove(slot.mesh!);
+      slot.mesh = null;
+      slot.regrowAt = clock + 8 + Math.random() * 4;
+      f = spawnFaller(ref.kind, w, 0, 0, 0);
+      ref.mesh = f.mesh;
+    }
+    f.state = 3; f.t = 0; f.vx = f.vy = f.vz = 0;
+    setFruitScale(f.mesh, f.kind, CARRY_SCALE);
+    tone(440, 0, 0.05, "triangle", 0.05, 600);
+    return true;
+  }
+  /** Show a carried fruit at this world position. */
+  function carryFruit(ref: FruitRef, at: THREE.Vector3) {
+    const f = fallerOf(ref);
+    if (f && f.state === 3) f.mesh.position.copy(at);
+  }
+  /** Let a carried fruit go from where it is: it falls, bounces once and rests like any other loose fruit. */
+  function dropFruit(ref: FruitRef) {
+    const f = fallerOf(ref);
+    if (!f || f.state !== 3) return;
+    setFruitScale(f.mesh, f.kind, 1);
+    f.state = 0; f.t = 0; f.vx = f.vy = f.vz = 0; f.bounced = false; f.rest = FRUIT_REST_SECONDS;
+  }
+  /** A toy takes the carried fruit: it flies to `to` (the mouth), shrinking, and is gone. Returns false if it was not being carried. */
+  function eatFruit(ref: FruitRef, to: THREE.Vector3, secs = 0.35): boolean {
+    const f = fallerOf(ref);
+    if (!f || f.state !== 3) return false;
+    f.state = 4; f.t = 0; f.from = f.mesh.position.clone(); f.to = to.clone(); f.secs = Math.max(0.05, secs);
+    return true;
   }
 
   /** The whole tap: react now, change state, then say the name. */
@@ -419,7 +561,7 @@ export function createPropFx(deps: PropFxDeps) {
       base: { px: holder.position.x, py: holder.position.y, pz: holder.position.z, rx: holder.rotation.x, ry: holder.rotation.y, rz: holder.rotation.z, sx: holder.scale.x, sy: holder.scale.y, sz: holder.scale.z },
       phase: Math.random() * Math.PI * 2, size, on: true,
       lightColor: type === "lantern" && typeof arg === "string" && /^#[0-9a-f]{6}$/i.test(arg) ? arg : null,
-      lights: [], sprites: [], glows: [], kids: new Map(), slots: [], dir: 1, taps: 0, proxy: null,
+      lights: [], sprites: [], glows: [], kids: new Map(), slots: [], fruit: "apple", fruitSlots: 3, dir: 1, taps: 0, proxy: null,
     };
     for (const c of (pivot ?? holder).children) inst.kids.set(c, { pos: c.position.clone(), rot: c.rotation.clone(), scale: c.scale.clone() });
 
@@ -451,7 +593,11 @@ export function createPropFx(deps: PropFxDeps) {
         }
       });
     }
-    if (type === "tree") hangApples(inst);
+    if (type === "tree") {
+      const tk = kindById(String(holder.userData.treeKind ?? ""));      // an orchard tree grows its own fruit; anything else grows apples as it always did
+      if (tk) { inst.fruit = tk.fruit; inst.fruitSlots = tk.slots; }
+      hangFruit(inst);
+    }
 
     holder.userData.propInst = inst;
     insts.push(inst);
@@ -462,8 +608,8 @@ export function createPropFx(deps: PropFxDeps) {
     return inst;
   }
 
-  function appleAt(inst: PropInst, slot: Slot) {
-    const m = makeFruit("apple");
+  function fruitAt(inst: PropInst, slot: Slot) {
+    const m = makeFruit(inst.fruit);
     m.position.copy(slot.local);
     inst.holder.add(m);
     slot.mesh = m;
@@ -473,7 +619,6 @@ export function createPropFx(deps: PropFxDeps) {
    * silhouette edge, and all hang in the lower half of the crown: the toast bar that names a prop (and every "+1 scrap" line) covers the middle of the
    * crown on a phone, which hid two of the three when they hung higher (looked at in the real Garden, 2026-11-03). Lower is also where a kid can reach.
    */
-  const APPLE_DIRS: ReadonlyArray<readonly [number, number]> = [[-38, -8], [12, -24], [50, -6]];
 
   /**
    * The point where a ray from the crown's centre leaves the real foliage, in the holder's own space, or null when nothing is hit. The crown is lumpy: a
@@ -491,25 +636,25 @@ export function createPropFx(deps: PropFxDeps) {
     const hit = ray.intersectObjects(targets, false)[0];
     return hit ? holder.worldToLocal(hit.point.clone()) : null;
   }
-  function hangApples(inst: PropInst) {
+  function hangFruit(inst: PropInst) {
     const W = Math.max(inst.size.x, inst.size.z), H = inst.size.y;
     const rx = W * 0.4, rz = W * 0.36, ry = H * 0.2;
     const centre = new THREE.Vector3(inst.proxy?.position.x ?? 0, H * 0.64, inst.proxy?.position.z ?? 0);
-    APPLE_DIRS.forEach(([azi, el]) => {
+    slotDirs(inst.fruitSlots).forEach(([azi, el]) => {
       const phi = (azi * Math.PI) / 180, th = (el * Math.PI) / 180;
       const dir = new THREE.Vector3(Math.cos(th) * Math.sin(phi), Math.sin(th), Math.cos(th) * Math.cos(phi));
       const surface = foliageSurface(inst.holder, centre, dir, Math.max(W, H) * 2);
       // Resting on the foliage with about half of it outside, so it reads as hanging in front of the leaves. No hit (a crown the ray cannot see): the old fitted ellipsoid.
       const local = surface
-        ? surface.addScaledVector(dir, FRUIT.apple.r * 0.5)
+        ? surface.addScaledVector(dir, FRUIT[inst.fruit].r * 0.5)
         : new THREE.Vector3(centre.x + rx * Math.cos(th) * Math.sin(phi) * 0.95, centre.y + ry * Math.sin(th), centre.z + rz * Math.cos(th) * Math.cos(phi) * 0.95);
       const slot: Slot = { local, mesh: null, regrowAt: 0 };
-      appleAt(inst, slot);
+      fruitAt(inst, slot);
       inst.slots.push(slot);
     });
   }
-  function growApple(inst: PropInst, slot: Slot) {
-    appleAt(inst, slot);
+  function growFruit(inst: PropInst, slot: Slot) {
+    fruitAt(inst, slot);
     const m = slot.mesh!;
     m.scale.setScalar(0.01);
     play(inst, `grow${inst.slots.indexOf(slot)}`, 0.6, (k) => { m.scale.setScalar(Math.max(0.01, easeOutBack(clamp01(k)))); }, () => m.scale.setScalar(1));
@@ -522,8 +667,13 @@ export function createPropFx(deps: PropFxDeps) {
   }
   /** Tap test on an already-aimed ray. Returns true (and reacts) when a prop was hit. */
   function tap(ray: THREE.Raycaster): boolean {
-    if (!insts.length) return false;
-    const hits = ray.intersectObjects(insts.map((i) => i.holder), true);
+    if (!insts.length && !fallers.length) return false;
+    const hits = ray.intersectObjects([...insts.map((i) => i.holder), ...fallers.filter((f) => f.state < 3).map((f) => f.mesh)], true);
+    // A fruit the finger landed on wins over the tree behind it: a child who aimed at an apple meant the apple.
+    for (const h of hits) {
+      const k = fruitKindOf(h.object);
+      if (k && h.object.visible) { tapFruit(h.object, k); return true; }
+    }
     for (const h of hits) {
       const o = h.object as THREE.Object3D & { isSprite?: boolean; isPoints?: boolean; isLine?: boolean };
       if (o.isSprite || o.isPoints || o.isLine || o.userData.noPick) continue;
@@ -544,7 +694,7 @@ export function createPropFx(deps: PropFxDeps) {
       else if (inst.spec.idle === "bob") o.dy += Math.sin(t * 0.7 + inst.phase) * 0.08 * a;
       if (inst.on) for (const s of inst.sprites) s.s.scale.setScalar(s.k * (1 + 0.05 * Math.sin(t * 2.6 + inst.phase)));
       offs.set(inst, o);
-      for (const slot of inst.slots) if (!slot.mesh && slot.regrowAt > 0 && t >= slot.regrowAt) { slot.regrowAt = 0; growApple(inst, slot); }
+      for (const slot of inst.slots) if (!slot.mesh && slot.regrowAt > 0 && t >= slot.regrowAt) { slot.regrowAt = 0; growFruit(inst, slot); }
     }
     for (let i = anims.length - 1; i >= 0; i--) {
       const an = anims[i]!;
@@ -573,10 +723,17 @@ export function createPropFx(deps: PropFxDeps) {
           else { f.state = 1; f.t = 0; f.vy = 0; }
         }
       } else if (f.state === 1) {
-        if (f.t > 1.6) { f.state = 2; f.t = 0; }
+        if (f.t > f.rest) { f.state = 2; f.t = 0; }
+      } else if (f.state === 3) {
+        // carried: the finger moves it (carryFruit); nothing here may fall, rest or tidy it
+      } else if (f.state === 4) {
+        const k = clamp01(f.t / (f.secs ?? 0.35)), e = k * k * (3 - 2 * k);
+        f.mesh.position.lerpVectors(f.from!, f.to!, e);
+        setFruitScale(f.mesh, f.kind, Math.max(0.001, CARRY_SCALE * (1 - 0.9 * e)));
+        if (k >= 1) { f.mesh.parent?.remove(f.mesh); fallers.splice(i, 1); tone(330, 0, 0.06, "sine", 0.06, 220); }
       } else {
         const k = clamp01(f.t / (f.rain ? 0.12 : 0.35));
-        f.mesh.scale.setScalar(Math.max(0.001, 1 - k));
+        setFruitScale(f.mesh, f.kind, Math.max(0.001, 1 - k));
         if (k >= 1) { f.mesh.parent?.remove(f.mesh); fallers.splice(i, 1); }
       }
     }
@@ -584,20 +741,25 @@ export function createPropFx(deps: PropFxDeps) {
 
   function reset() {
     for (const f of fallers) f.mesh.parent?.remove(f.mesh);
-    fallers.length = 0; anims.length = 0; insts.length = 0; lastSay = "";
+    fallers.length = 0; anims.length = 0; insts.length = 0; lastSay = ""; lampsOut = null;
   }
 
-  /** Where an instance is on screen, in client pixels (for tests and the dev bench). */
-  function screenPos(inst: PropInst): { x: number; y: number; visible: boolean } {
-    const v = inst.holder.localToWorld(new THREE.Vector3(0, inst.size.y * 0.5, 0)).project(deps.camera());
+  /** Where an instance is on screen, in client pixels (for tests and the dev bench). `frac` is how far up the prop (0 the foot, 1 the top); a tree is tapped at its trunk, because its apples hang in the middle. */
+  function screenPos(inst: PropInst, frac = 0.5): { x: number; y: number; visible: boolean } {
+    const v = inst.holder.localToWorld(new THREE.Vector3(0, inst.size.y * frac, 0)).project(deps.camera());
     const r = deps.canvas.getBoundingClientRect();
     return { x: r.left + (v.x * 0.5 + 0.5) * r.width, y: r.top + (-v.y * 0.5 + 0.5) * r.height, visible: v.z < 1 && Math.abs(v.x) < 1 && Math.abs(v.y) < 1 };
   }
 
   return {
     register, tap, update, reset, activate, screenPos, nameOf,
+    pickFruit, liftFruit, carryFruit, dropFruit, eatFruit, lightsOut,
+    /** A tap on a fruit the drag handler already picked (it said "no move", so it was a tap): says its name and reacts like `tap` does. */
+    tapFruitRef: (ref: FruitRef) => tapFruit(ref.mesh, ref.kind),
     list: () => insts.slice(),
     fallerCount: () => fallers.length,
+    /** The loose fruit, live (not a copy), for tests and the dev bench. Read it; do not hold on to it across a reset. */
+    get fallers(): readonly Faller[] { return fallers; },
     setLight,
   };
 }

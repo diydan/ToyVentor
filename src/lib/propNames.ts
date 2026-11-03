@@ -41,7 +41,9 @@ export interface Noun {
 /** The controlled vocabulary: every scene prop the game can build. Generated objects pick from this list too. */
 export const NOUN_KEYS = [
   "light", "lamp", "house", "tree", "bushes", "cloud", "island", "tire", "drum", "shed", "crane", "windmill", "palm", "umbrella",
-  "sandcastle", "pine", "snowman", "igloo", "blocks", "books", "chair", "plant", "teddy", "ball", "cushions",
+  "sandcastle", "pine", "snowman", "igloo", "blocks", "books", "chair", "plant", "teddy", "ball", "cushions", "bed",
+  // Fruit (docs/specs/playful-interactions-spec.md section 3): what a tapped apple says ("red apple"). A fruit is a prop now.
+  "apple", "pear", "orange", "lemon", "cherries", "banana", "plum", "strawberry", "blueberries", "coconut", "pumpkin",
 ] as const;
 export type NounKey = (typeof NOUN_KEYS)[number];
 
@@ -57,43 +59,57 @@ const NOUNS: Record<LangCode, Record<NounKey, Noun>> = {
     light: m("light"), lamp: m("lamp"), house: m("house"), tree: m("tree"), bushes: mp("bushes"), cloud: m("cloud"), island: m("island"),
     tire: m("tire"), drum: m("drum"), shed: m("shed"), crane: m("crane"), windmill: m("windmill"), palm: m("palm tree"), umbrella: m("umbrella"),
     sandcastle: m("sandcastle"), pine: m("pine tree"), snowman: m("snowman"), igloo: m("igloo"), blocks: mp("blocks"), books: mp("books"),
-    chair: m("chair"), plant: m("plant"), teddy: m("teddy bear"), ball: m("ball"), cushions: mp("cushions"),
+    chair: m("chair"), plant: m("plant"), teddy: m("teddy bear"), ball: m("ball"), cushions: mp("cushions"), bed: m("bed"),
+    apple: m("apple"), pear: m("pear"), orange: m("orange"), lemon: m("lemon"), cherries: mp("cherries"), banana: m("banana"), plum: m("plum"),
+    strawberry: m("strawberry"), blueberries: mp("blueberries"), coconut: m("coconut"), pumpkin: m("pumpkin"),
   },
   es: {
     light: f("luz"), lamp: f("lámpara"), house: f("casa"), tree: m("árbol"), bushes: mp("arbustos"), cloud: f("nube"), island: f("isla"),
     tire: m("neumático"), drum: m("tambor"), shed: m("cobertizo"), crane: f("grúa"), windmill: m("molino"), palm: f("palmera"), umbrella: f("sombrilla"),
     sandcastle: m("castillo de arena"), pine: m("pino"), snowman: m("muñeco de nieve"), igloo: m("iglú"), blocks: mp("bloques"), books: mp("libros"),
-    chair: f("silla"), plant: f("planta"), teddy: m("osito de peluche"), ball: f("pelota"), cushions: mp("cojines"),
+    chair: f("silla"), plant: f("planta"), teddy: m("osito de peluche"), ball: f("pelota"), cushions: mp("cojines"), bed: f("cama"),
+    apple: f("manzana"), pear: f("pera"), orange: f("naranja"), lemon: m("limón"), cherries: fp("cerezas"), banana: m("plátano"), plum: f("ciruela"),
+    strawberry: f("fresa"), blueberries: mp("arándanos"), coconut: m("coco"), pumpkin: f("calabaza"),
   },
   fr: {
     light: f("lumière"), lamp: f("lampe"), house: f("maison"), tree: m("arbre"), bushes: mp("buissons"), cloud: m("nuage"), island: f("île"),
     tire: m("pneu"), drum: m("tambour"), shed: f("cabane"), crane: f("grue"), windmill: m("moulin"), palm: m("palmier"), umbrella: m("parasol"),
     sandcastle: m("château de sable"), pine: m("sapin"), snowman: m("bonhomme de neige"), igloo: m("igloo"), blocks: mp("cubes"), books: mp("livres"),
-    chair: f("chaise"), plant: f("plante"), teddy: m("nounours"), ball: m("ballon"), cushions: mp("coussins"),
+    chair: f("chaise"), plant: f("plante"), teddy: m("nounours"), ball: m("ballon"), cushions: mp("coussins"), bed: m("lit"),
+    apple: f("pomme"), pear: f("poire"), orange: f("orange"), lemon: m("citron"), cherries: fp("cerises"), banana: f("banane"), plum: f("prune"),
+    strawberry: f("fraise"), blueberries: fp("myrtilles"), coconut: f("noix de coco"), pumpkin: f("citrouille"),
   },
   de: {
     light: n("Licht"), lamp: f("Lampe"), house: n("Haus"), tree: m("Baum"), bushes: np("Büsche"), cloud: f("Wolke"), island: f("Insel"),
     tire: m("Reifen"), drum: f("Trommel"), shed: m("Schuppen"), crane: m("Kran"), windmill: f("Windmühle"), palm: f("Palme"), umbrella: m("Sonnenschirm"),
     sandcastle: f("Sandburg"), pine: f("Tanne"), snowman: m("Schneemann"), igloo: m("Iglu"), blocks: np("Bauklötze"), books: np("Bücher"),
-    chair: m("Stuhl"), plant: f("Pflanze"), teddy: m("Teddybär"), ball: m("Ball"), cushions: np("Kissen"),
+    chair: m("Stuhl"), plant: f("Pflanze"), teddy: m("Teddybär"), ball: m("Ball"), cushions: np("Kissen"), bed: n("Bett"),
+    apple: m("Apfel"), pear: f("Birne"), orange: f("Orange"), lemon: f("Zitrone"), cherries: np("Kirschen"), banana: f("Banane"), plum: f("Pflaume"),
+    strawberry: f("Erdbeere"), blueberries: np("Blaubeeren"), coconut: f("Kokosnuss"), pumpkin: m("Kürbis"),
   },
   it: {
     light: f("luce"), lamp: f("lampada"), house: f("casa"), tree: m("albero"), bushes: mp("cespugli"), cloud: f("nuvola"), island: f("isola"),
     tire: f("gomma"), drum: m("tamburo"), shed: m("capanno"), crane: f("gru"), windmill: m("mulino"), palm: f("palma"), umbrella: m("ombrellone"),
     sandcastle: m("castello di sabbia"), pine: m("pino"), snowman: m("pupazzo di neve"), igloo: m("igloo"), blocks: mp("blocchi"), books: mp("libri"),
-    chair: f("sedia"), plant: f("pianta"), teddy: m("orsacchiotto"), ball: f("palla"), cushions: mp("cuscini"),
+    chair: f("sedia"), plant: f("pianta"), teddy: m("orsacchiotto"), ball: f("palla"), cushions: mp("cuscini"), bed: m("letto"),
+    apple: f("mela"), pear: f("pera"), orange: f("arancia"), lemon: m("limone"), cherries: fp("ciliegie"), banana: f("banana"), plum: f("prugna"),
+    strawberry: f("fragola"), blueberries: mp("mirtilli"), coconut: f("noce di cocco"), pumpkin: f("zucca"),
   },
   pt: {
     light: f("luz"), lamp: f("luminária"), house: f("casa"), tree: f("árvore"), bushes: mp("arbustos"), cloud: f("nuvem"), island: f("ilha"),
     tire: m("pneu"), drum: m("tambor"), shed: m("galpão"), crane: m("guindaste"), windmill: m("moinho"), palm: f("palmeira"), umbrella: m("guarda-sol"),
     sandcastle: m("castelo de areia"), pine: m("pinheiro"), snowman: m("boneco de neve"), igloo: m("iglu"), blocks: mp("blocos"), books: mp("livros"),
-    chair: f("cadeira"), plant: f("planta"), teddy: m("ursinho de pelúcia"), ball: f("bola"), cushions: fp("almofadas"),
+    chair: f("cadeira"), plant: f("planta"), teddy: m("ursinho de pelúcia"), ball: f("bola"), cushions: fp("almofadas"), bed: f("cama"),
+    apple: f("maçã"), pear: f("pera"), orange: f("laranja"), lemon: m("limão"), cherries: fp("cerejas"), banana: f("banana"), plum: f("ameixa"),
+    strawberry: m("morango"), blueberries: mp("mirtilos"), coconut: m("coco"), pumpkin: f("abóbora"),
   },
   tr: {
     light: m("ışık"), lamp: m("lamba"), house: m("ev"), tree: m("ağaç"), bushes: mp("çalılar"), cloud: m("bulut"), island: m("ada"),
     tire: m("lastik"), drum: m("davul"), shed: m("kulübe"), crane: m("vinç"), windmill: m("yel değirmeni"), palm: m("palmiye"), umbrella: m("şemsiye"),
     sandcastle: m("kumdan kale"), pine: m("çam ağacı"), snowman: m("kardan adam"), igloo: m("iglu"), blocks: mp("bloklar"), books: mp("kitaplar"),
-    chair: m("sandalye"), plant: m("bitki"), teddy: m("oyuncak ayı"), ball: m("top"), cushions: mp("yastıklar"),
+    chair: m("sandalye"), plant: m("bitki"), teddy: m("oyuncak ayı"), ball: m("top"), cushions: mp("yastıklar"), bed: m("yatak"),
+    apple: m("elma"), pear: m("armut"), orange: m("portakal"), lemon: m("limon"), cherries: mp("kirazlar"), banana: m("muz"), plum: m("erik"),
+    strawberry: m("çilek"), blueberries: mp("yaban mersinleri"), coconut: m("hindistan cevizi"), pumpkin: m("balkabağı"),
   },
 };
 

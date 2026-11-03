@@ -8,6 +8,7 @@
 // world build while bloom thresholded at 1.0. Night worlds survived that; every day world (Sky Meadow, Beach,
 // Snow Peak) rendered as a white-out with the hero almost invisible.
 import * as THREE from "three";
+import { duskGrade, duskLightScale } from "./dusk";
 import {
   renderer, scene, hemi, sun, rim, hero, bloom, grade,
   setEnvironment, setEnvScale, DEFAULT_ENV, type EnvPalette,
@@ -186,6 +187,26 @@ export function syncPost(): void {
     u.uSat!.value = rig.grade.sat;
     u.uVig!.value = rig.grade.vig;
     u.uTint!.value.set(rig.grade.tint[0], rig.grade.tint[1], rig.grade.tint[2]);
+  }
+}
+
+/**
+ * Tint the whole picture towards a soft dusk blue and dim every light a little, `level` 0 (the world's own look) to 1 (asleep): the room at bedtime (sleepRoutine.ts).
+ * It is computed from the CURRENT rig every call, so it never accumulates, and `setDusk(0)` (or the next `applyLightRig`) puts the world back exactly.
+ */
+export function setDusk(level: number): void {
+  const rig = current;
+  const k = duskLightScale(level);
+  hemi.intensity = rig.hemi.i * k;
+  sun.intensity = rig.key.i * k;
+  rim.intensity = rig.rim.i * k;
+  hero.intensity = rig.hero.i * k;
+  if (grade && grade.uniforms) {
+    const u = grade.uniforms as Record<string, { value: any }>;
+    const g = duskGrade(rig.grade, level);
+    u.uSat!.value = g.sat;
+    u.uVig!.value = g.vig;
+    u.uTint!.value.set(g.tint[0], g.tint[1], g.tint[2]);
   }
 }
 

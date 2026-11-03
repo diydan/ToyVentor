@@ -102,7 +102,7 @@ async function bringIntoView(cdp, type) {
   await cdp.ev(`(() => { const w = window.__tvWorld; w.P.pos.x = ${info.x}; w.P.target = null; })()`);
   try {
     await waitFor(async () => {
-      const s = await props(cdp, `(() => { const i = fx.list().find((p) => p.type === ${JSON.stringify(type)} && p.holder.position.x >= 3 && p.holder.position.x <= 41); return fx.screenPos(i); })()`);
+      const s = await props(cdp, `(() => { const i = fx.list().find((p) => p.type === ${JSON.stringify(type)} && p.holder.position.x >= 3 && p.holder.position.x <= 41); return fx.screenPos(i, ${type === "tree" ? 0.12 : 0.5}); })()`);
       return s && s.visible && s.x > 30 && s.x < 360 && s.y > 70 && s.y < 760 ? s : null;
     }, { timeoutMs: 15000, label: `${type} on screen` });
   } catch (err) {
@@ -110,7 +110,7 @@ async function bringIntoView(cdp, type) {
     throw new Error(`${err.message} | ${diag}`);
   }
   await sleep(600);
-  return props(cdp, `(() => { const i = fx.list().find((p) => p.type === ${JSON.stringify(type)} && p.holder.position.x >= 3 && p.holder.position.x <= 41); return fx.screenPos(i); })()`);
+  return props(cdp, `(() => { const i = fx.list().find((p) => p.type === ${JSON.stringify(type)} && p.holder.position.x >= 3 && p.holder.position.x <= 41); return fx.screenPos(i, ${type === "tree" ? 0.12 : 0.5}); })()`);
 }
 
 async function main() {
@@ -164,6 +164,34 @@ async function main() {
       check("tree: asks for the English clip for exactly this object", cdp.voiceUrls.includes("/api/voice?lang=en&n=tree&c=green"), JSON.stringify(cdp.voiceUrls));
       const targetAfter = await cdp.ev(`JSON.stringify(window.__tvWorld.P.target && window.__tvWorld.P.target.x)`);
       check("tree: tapping it does not send the toy walking", targetBefore === targetAfter, `${targetBefore} -> ${targetAfter}`);
+    }
+
+    // ---- 2b. tap the apples themselves: the FRUIT says its name; a hanging one is plucked, a fallen one hops (Dan's playtest, 2026-11-03) ----
+    if (treeAt) {
+      const applePos = (which) => props(cdp, `(() => { const which = ${JSON.stringify(which)}; const i = fx.list().find((p) => p.type === "tree" && ${LANE_JS}); const m = which === "hanging" ? (i.slots.find((s) => s.mesh) || {}).mesh : (fx.fallers.find((f) => f.state === 1) || {}).mesh; if (!m) return null; const v = m.getWorldPosition(new window.__tvDebug.camera.position.constructor()).project(window.__tvDebug.camera); const r = document.querySelector("canvas").getBoundingClientRect(); return { x: r.left + (v.x * 0.5 + 0.5) * r.width, y: r.top + (-v.y * 0.5 + 0.5) * r.height, on: Math.abs(v.x) < 1 && Math.abs(v.y) < 1 }; })()`);
+      await sleep(1500); // the two shaken apples have landed
+      const hangAt = await applePos("hanging");
+      check("apple: one apple is still hanging and on screen", hangAt && hangAt.on, JSON.stringify(hangAt));
+      if (hangAt && hangAt.on) {
+        await clearToast(cdp); cdp.voiceUrls.length = 0;
+        await cdp.tapAt(hangAt.x, hangAt.y);
+        await sleep(500);
+        check("apple: tapping the hanging apple says 'Red apple', not the tree", (await toastText(cdp)) === "Red apple", String(await toastText(cdp)));
+        check("apple: and asks for the English clip for exactly that fruit", cdp.voiceUrls.includes("/api/voice?lang=en&n=apple&c=red"), JSON.stringify(cdp.voiceUrls));
+        check("apple: it is plucked (nothing left hanging) and joins the two on the ground", (await props(cdp, `fx.list().find((p) => p.type === "tree" && ${LANE_JS}).slots.filter((s) => s.mesh).length`)) === 0 && (await props(cdp, `fx.fallerCount()`)) === 3);
+      }
+      await sleep(1600);
+      const fallenAt = await applePos("fallen");
+      check("apple: a fallen apple is lying on the ground, on screen", fallenAt && fallenAt.on, JSON.stringify(fallenAt));
+      if (fallenAt && fallenAt.on) {
+        await clearToast(cdp); cdp.voiceUrls.length = 0;
+        await cdp.tapAt(fallenAt.x, fallenAt.y);
+        await sleep(250);
+        check("apple: tapping a fallen apple says 'Red apple' too", (await toastText(cdp)) === "Red apple", String(await toastText(cdp)));
+        check("apple: and it hops (airborne again)", (await props(cdp, `fx.fallers.some((f) => f.state === 0)`)) === true);
+        await sleep(1800);
+        check("apple: still on the ground afterwards, not tidied away mid-hop", (await props(cdp, `fx.fallerCount()`)) === 3 && (await props(cdp, `fx.fallers.every((f) => f.state === 1)`)) === true);
+      }
     }
 
     // ---- 3. tap a lantern: light off, then on ----

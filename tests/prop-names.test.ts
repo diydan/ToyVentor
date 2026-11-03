@@ -128,3 +128,33 @@ describe("language validation", () => {
     for (const bad of ["EN", "ja", "", null, undefined, 3]) expect(isPropLang(bad)).toBe(false);
   });
 });
+
+describe("fruit: what a tap on an apple says (playful-interactions-spec section 3)", () => {
+  const FRUIT_NOUNS = ["apple", "pear", "orange", "lemon", "cherries", "banana", "plum", "strawberry", "blueberries", "coconut", "pumpkin"] as const;
+  it("has all eleven fruit nouns, and every one has a clean phrase in every colour and language", () => {
+    for (const n of FRUIT_NOUNS) expect(NOUN_KEYS as readonly string[], n).toContain(n);
+    for (const n of FRUIT_NOUNS) for (const lang of LANGUAGES.map((l) => l.code)) for (const c of COLOR_KEYS) {
+      const p = propPhrase(n, c, lang);
+      expect(p, `${n}/${c}/${lang}`).toMatch(/^\S.*\S$/);
+      expect(p).not.toMatch(/undefined|null|NaN|\s{2,}|:/);
+    }
+  });
+  it("builds the phrase with the colour agreeing with the fruit's gender and number", () => {
+    const say = (n: (typeof FRUIT_NOUNS)[number], c: ColorKey, l: LangCode) => propPhrase(n, c, l);
+    expect(say("apple", "red", "en")).toBe("red apple");
+    expect(say("apple", "red", "es")).toBe("manzana roja");      // feminine
+    expect(say("lemon", "yellow", "es")).toBe("limón amarillo"); // masculine
+    expect(say("apple", "red", "fr")).toBe("pomme rouge");
+    expect(say("cherries", "red", "fr")).toBe("cerises rouges"); // feminine plural
+    expect(say("apple", "red", "de")).toBe("roter Apfel");       // masculine
+    expect(say("pear", "green", "de")).toBe("grüne Birne");      // feminine
+    expect(say("cherries", "red", "de")).toBe("rote Kirschen");  // plural
+    expect(say("apple", "red", "it")).toBe("mela rossa");
+    expect(say("blueberries", "blue", "it")).toBe("mirtilli blu"); // blu does not change
+    expect(say("apple", "red", "pt")).toBe("maçã vermelha");
+    expect(say("lemon", "yellow", "pt")).toBe("limão amarelo");
+    expect(say("blueberries", "blue", "es")).toBe("arándanos azules");
+    expect(say("apple", "red", "tr")).toBe("kırmızı elma");      // colour first, never inflected
+    expect(say("coconut", "brown", "en")).toBe("brown coconut");
+  });
+});

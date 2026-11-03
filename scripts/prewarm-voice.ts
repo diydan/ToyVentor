@@ -13,9 +13,9 @@
 //
 // The clip set is exactly what the game can say: each built-in prop's own noun + colour, plus a lantern's light in every colour (a
 // level may give a lantern any light colour), and each Describe & Build part in the colour the exploded view draws it, in all seven
-// languages. About 460 clips; a full cold run is a few minutes.
+// languages, plus every named fruit in its own colour. About 540 clips (77 phrases x 7 languages) plus the household names; a full cold run is a few minutes.
 import { readFileSync } from "node:fs";
-import { PROP_SPECS } from "../src/features/game/world/runtime/propReactions";
+import { FRUIT, PROP_SPECS } from "../src/features/game/world/runtime/propReactions";
 import { COLOR_KEYS, LANGUAGES, type ColorKey, type NounKey } from "../src/lib/propNames";
 import { PART_IDS } from "../src/lib/partNames";
 import { voiceUrl } from "../src/lib/propVoice";
@@ -44,9 +44,11 @@ if (onlyIds) {
 const house = onlyIds ? { ...everyHouse, clips: everyHouse.clips.filter((c) => onlyIds.includes(c.id)) } : everyHouse;
 const ledger = readLedger();
 
-const combos = new Map<string, { noun: NounKey; color: ColorKey }>();
+const combos = new Map<string, { noun: NounKey; color: ColorKey | null }>();
 for (const s of Object.values(PROP_SPECS)) if (s.noun) combos.set(`${s.noun}|${s.color}`, { noun: s.noun, color: s.color });
 for (const color of COLOR_KEYS) combos.set(`light|${color}`, { noun: "light", color });
+// Every named fruit in the colour it is called by ("red apple"): what a tap on a hanging or fallen fruit says.
+for (const f of Object.values(FRUIT)) if (f.noun) combos.set(`${f.noun}|${f.say ?? "-"}`, { noun: f.noun, color: f.say ?? null });
 
 const partsData = JSON.parse(readFileSync(new URL("../parts/kip/viewer/kip-describe-parts.json", import.meta.url), "utf8"));
 const paths: string[] = [];

@@ -207,7 +207,7 @@ export interface PropDef {
   y?: number;
 }
 export var PROPS: Record<string, PropDef> = {lantern:{z:-1.6,n:"Lantern"},tree:{z:-4,n:"Tree"},bushes:{z:-2.5,n:"Bushes"},windmill:{z:-5.5,n:"Windmill"},cottage:{z:-16,n:"Cottage"},cloud:{z:-18,n:"Cloud"},island:{z:-15,y:6,n:"Floating island"},tire:{z:-2,n:"Tire"},drum:{z:-2.2,n:"Oil drum"},shed:{z:-12,n:"Shed"},cranebg:{z:-14,n:"Big crane"},
- palm:{z:-3,n:"Palm tree"},umbrella:{z:-2.2,n:"Beach umbrella"},sandcastle:{z:-2.6,n:"Sandcastle"},pine:{z:-4,n:"Pine tree"},snowman:{z:-2.4,n:"Snowman"},igloo:{z:-7,n:"Igloo"},lamp:{z:-3,n:"Floor lamp"},blocks:{z:-3.5,n:"Toy blocks"},books:{z:-2.6,n:"Book stack"},chair:{z:-2.4,n:"Little chair"},plant:{z:-2.8,n:"Potted plant"},teddy:{z:-2.2,n:"Teddy bear"},ball:{z:-2,n:"Play ball"},cushions:{z:-2.6,n:"Cushion pile"}};
+ palm:{z:-3,n:"Palm tree"},umbrella:{z:-2.2,n:"Beach umbrella"},sandcastle:{z:-2.6,n:"Sandcastle"},pine:{z:-4,n:"Pine tree"},snowman:{z:-2.4,n:"Snowman"},igloo:{z:-7,n:"Igloo"},lamp:{z:-3,n:"Floor lamp"},blocks:{z:-3.5,n:"Toy blocks"},books:{z:-2.6,n:"Book stack"},chair:{z:-2.4,n:"Little chair"},plant:{z:-2.8,n:"Potted plant"},teddy:{z:-2.2,n:"Teddy bear"},ball:{z:-2,n:"Play ball"},cushions:{z:-2.6,n:"Cushion pile"},bed:{z:-2.6,n:"Bed"}};
 export var THEMES: Record<string, number> = {garden:0,sky:1,junk:2,beach:3,snow:4,room:5},KCOL: Record<string, string> = {junk:"#f4f7ff",glow:"#5af0b0",torque:"#a78bff",speed:"#52b7ff",spin:"#ffd24d"};
 /* level files: each world is data in the same format the editor exports */
 export interface LevelPropRef {
@@ -242,7 +242,7 @@ export interface LevelDef {
   missions?: LevelMissionRef[];
 }
 export var LEVELS: LevelDef[] = [
- {"format":"toyventor.level/1","id":"garden","name":"Garden","theme":"garden","props":[{"type":"lantern","x":3},{"type":"lantern","x":17,"z":-1.7},{"type":"lantern","x":32},{"type":"lantern","x":38.2},{"type":"windmill","x":23},{"type":"cottage","x":33},{"type":"tree","x":-4},{"type":"tree","x":9.5,"z":-3.5},{"type":"tree","x":26.5,"z":-3.5},{"type":"bushes","x":44}],
+ {"format":"toyventor.level/1","id":"garden","name":"Garden","theme":"garden","props":[{"type":"lantern","x":3},{"type":"lantern","x":17,"z":-1.7},{"type":"lantern","x":32},{"type":"lantern","x":38.2},{"type":"windmill","x":23},{"type":"cottage","x":33},{"type":"tree","x":-4},{"type":"tree","x":9.5,"z":-3.5},{"type":"tree","x":16,"z":-5},{"type":"tree","x":26.5,"z":-3.5},{"type":"tree","x":40.5,"z":-5.2},{"type":"bushes","x":44}],
   "spots":[{"part":"character.hat.flower","hide":"scarecrow","x":6},{"part":"character.ears.antennae","hide":"bush","x":13},{"part":"character.back.cape","hide":"rock","x":20},{"part":"vehicle.front.lightbar","hide":"branch","x":28.9},{"part":"vehicle.shell.bubble","hide":"pond","x":36}],"missions":[{"type":"bridge","x":40.9}]},
  {"format":"toyventor.level/1","id":"sky","name":"Sky Meadow","theme":"sky","props":[{"type":"cloud","x":3,"z":-17},{"type":"cloud","x":18,"z":-20},{"type":"cloud","x":31},{"type":"cloud","x":44,"z":-19},{"type":"island","x":9},{"type":"island","x":30,"z":-20,"y":8},{"type":"island","x":44,"z":-14,"y":5}],
   "spots":[{"part":"character.back.wings","hide":"kite","x":6},{"part":"vehicle.chassis.buggy","hide":"island","x":13.9},{"part":"character.eyes.sparkle","hide":"fog","x":20},{"part":"robot.head.cams","hide":"cloudblock","x":27},{"part":"robot.top.gearcrown","hide":"windmill","x":35}]},

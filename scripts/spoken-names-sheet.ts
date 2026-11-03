@@ -8,7 +8,7 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { COLOR_KEYS, LANGUAGES, NOUN_KEYS, colorKeyFromHex, propNoun, propPhrase, type ColorKey, type LangCode } from "../src/lib/propNames";
-import { PROP_SPECS } from "../src/features/game/world/runtime/propReactions";
+import { FRUIT, PROP_SPECS } from "../src/features/game/world/runtime/propReactions";
 import { PART_IDS, partPhrase } from "../src/lib/partNames";
 import { HOUSEHOLD_IDS, HOUSEHOLD_NAMES, NAME_LANGS } from "../src/lib/householdNames";
 
@@ -103,12 +103,13 @@ const partsJson = JSON.parse(readFileSync(join(root, "parts/kip/viewer/kip-descr
 const viewSrc = readFileSync(join(root, "parts/kip/viewer/kip-describe-view.js"), "utf8");
 const palette = /const CATEGORY_COLOURS = \{([\s\S]*?)\};/.exec(viewSrc)?.[1] ?? "";
 const drawnColour = (cat: string): ColorKey | null => { const hex = new RegExp(`${cat}:\\s*\\[\\s*'(#[0-9a-fA-F]{6})'`).exec(palette)?.[1]; return hex ? colorKeyFromHex(hex) : null; };
-const spokenCombos = new Map<string, { noun: (typeof NOUN_KEYS)[number]; color: ColorKey }>();
+const spokenCombos = new Map<string, { noun: (typeof NOUN_KEYS)[number]; color: ColorKey | null }>();
 for (const sp of Object.values(PROP_SPECS) as Array<{ noun?: (typeof NOUN_KEYS)[number]; color: ColorKey }>) if (sp.noun) spokenCombos.set(`${sp.noun}|${sp.color}`, { noun: sp.noun, color: sp.color });
 for (const c of COLOR_KEYS) spokenCombos.set(`light|${c}`, { noun: "light", color: c });
+for (const f of Object.values(FRUIT)) if (f.noun) spokenCombos.set(`${f.noun}|${f.say ?? "-"}`, { noun: f.noun, color: f.say ?? null });   // a tap on a fruit says its name
 const spoken: Phrase[] = [];
 for (const lang of langs) {
-  for (const c of spokenCombos.values()) spoken.push({ text: propPhrase(c.noun, c.color, lang), lang, what: `${c.noun}/${c.color}` });
+  for (const c of spokenCombos.values()) spoken.push({ text: c.color ? propPhrase(c.noun, c.color, lang) : propNoun(c.noun, lang), lang, what: `${c.noun}/${c.color ?? "-"}` });
   for (const id of PART_IDS) spoken.push({ text: partPhrase(id, drawnColour(partsJson.parts[id]!.category), lang)!, lang, what: id });
 }
 const spokenByText = new Map<string, Phrase[]>();
