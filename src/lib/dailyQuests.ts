@@ -584,11 +584,30 @@ export const REAL_LIFE_CHORES: readonly RealLifeChoreSpec[] = [
     goal: "Set napkins and spoons or clear your plate after a meal.",
     parentHint: "Helping with family meal setup or cleanup",
   },
+  // Scavenger quests (SAM spec S1, Q5): ids and titles match src/lib/scavenger.ts quests.
+  {
+    id: "scavenge-lever",
+    title: "Find a Lever",
+    goal: "Find a real lever at home, like a door handle or a tap.",
+    parentHint: "Scavenger hunt: spot a lever indoors",
+  },
+  {
+    id: "scavenge-gear",
+    title: "Find a Gear",
+    goal: "Find a real gear or cog, like on a bike or a clock.",
+    parentHint: "Scavenger hunt: spot a gear indoors",
+  },
+  {
+    id: "scavenge-wheel",
+    title: "Find a Wheel",
+    goal: "Find a real wheel, like on a toy car, bike, or chair.",
+    parentHint: "Scavenger hunt: spot a wheel indoors",
+  },
 ];
 
 const CHORE_DAY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
-/** Return all 5 parent-configurable routines with enabled + today's completion state. */
+/** Return all parent-configurable routines with enabled + today's completion state. */
 export function allChoresWithState(
   day: string,
   prog: ProgressionState,
@@ -640,7 +659,8 @@ export interface ChoreCompleteResult {
 
 /**
  * Mark an enabled real-life routine done for `day` (`YYYY-MM-DD`).
- * Awards `+25 XP` at most once per day and stamps `workshopDays` without streak loss.
+ * One shared `+25 XP`/day ceiling across ALL real-life quests (SAM spec Q10): the first
+ * completion of the day pays; later ones still tick the board and stamp `workshopDays`.
  */
 export function completeRealLifeChore(
   prog: ProgressionState,
@@ -690,9 +710,11 @@ export function completeRealLifeChore(
     ...new Set([...(prog.workshopDays ?? []), day]),
   ].sort();
 
+  // Q10 shared ceiling, enforced here (the one place chore XP is awarded).
+  const awardedXp = existingDone.size > 0 ? 0 : CHORE_QUEST_XP;
   const next: ProgressionState = {
     ...prog,
-    totalXp: prog.totalXp + CHORE_QUEST_XP,
+    totalXp: prog.totalXp + awardedXp,
     completedChoresByDay,
     workshopDays,
   };
@@ -703,7 +725,7 @@ export function completeRealLifeChore(
 
   return {
     next,
-    awarded: CHORE_QUEST_XP,
+    awarded: awardedXp,
     chore: {
       ...spec,
       enabled: true,

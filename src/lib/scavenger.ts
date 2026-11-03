@@ -2,9 +2,10 @@
 //
 // A quest is a STEM concept plus a CLOSED set of SAM target nouns. Verification is counts only: the
 // Worker returns noun -> count facts from an ephemeral photo (zero background pixels stored), and this
-// module turns counts into a verdict. No XP, storage, or copy lives here — chore-list integration
-// (new REAL_LIFE_CHORES entries), the +25/day cap question (spec Q10), launch concept list (Q5), and
-// every kid-facing privacy sentence (Q7) land with the S1 UI step, after those answers exist.
+// module turns counts into a verdict. No XP, storage, or copy lives here. Chore-list integration
+// (REAL_LIFE_CHORES entries) and the shared +25/day ceiling (Q10) landed in dailyQuests.ts; the
+// photo capture UI that feeds counts in, and every kid-facing privacy sentence (Q7), land with the
+// S1 UI step.
 
 export type ScavengerConcept = "lever" | "gear" | "wheel";
 

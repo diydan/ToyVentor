@@ -29,6 +29,7 @@ import {
   type ProgressionState,
   type SolveInput,
 } from "../src/lib/progression";
+import { SCAVENGER_QUESTS } from "../src/lib/scavenger";
 
 const ROOT = resolve(__dirname, "..");
 
@@ -273,7 +274,7 @@ describe("Daily Quest Board & non-resetting Workshop Days", () => {
 describe("Real-Life Chore & Habit Quests ('Real Life Counts')", () => {
   it("keeps chores off by default, toggles in canonical order, and is em-dash-free", () => {
     const fresh = emptyProgression();
-    expect(REAL_LIFE_CHORES).toHaveLength(5);
+    expect(REAL_LIFE_CHORES).toHaveLength(8);
     for (const spec of REAL_LIFE_CHORES) {
       expect(spec.title).not.toContain("\u2014");
       expect(spec.goal).not.toContain("\u2014");
@@ -281,7 +282,7 @@ describe("Real-Life Chore & Habit Quests ('Real Life Counts')", () => {
     }
 
     expect(choresForDay("2026-11-01", fresh)).toEqual([]);
-    expect(allChoresWithState("2026-11-01", fresh)).toHaveLength(5);
+    expect(allChoresWithState("2026-11-01", fresh)).toHaveLength(8);
 
     const step1 = toggleChoreEnabled(fresh, "read-10m");
     const step2 = toggleChoreEnabled(step1, "brush-teeth");
@@ -299,7 +300,7 @@ describe("Real-Life Chore & Habit Quests ('Real Life Counts')", () => {
     expect(choresForDay("2026-11-01", disabledAgain)).toEqual([]);
   });
 
-  it("awards +25 XP once per day per enabled chore and stamps Workshop Days without streak loss", () => {
+  it("shares one +25 XP/day ceiling across all real-life quests (SAM spec Q10) and stamps Workshop Days without streak loss", () => {
     let prog = toggleChoreEnabled(emptyProgression(), "brush-teeth");
     prog = toggleChoreEnabled(prog, "tidy-bench");
 
@@ -323,26 +324,50 @@ describe("Real-Life Chore & Habit Quests ('Real Life Counts')", () => {
     expect(repeat.awarded).toBe(0);
     expect(repeat.next.totalXp).toBe(25);
 
-    // Second enabled chore on same day pays +25 XP; Workshop Day count stays 1
+    // Second enabled chore on same day still ticks the board but pays 0 XP (Q10 shared ceiling)
     const done2 = completeRealLifeChore(
       repeat.next,
       "tidy-bench",
       "2026-11-01",
     );
-    expect(done2.awarded).toBe(CHORE_QUEST_XP);
-    expect(done2.next.totalXp).toBe(50);
+    expect(done2.awarded).toBe(0);
+    expect(done2.next.totalXp).toBe(25);
+    expect(done2.next.completedChoresByDay?.["2026-11-01"]).toContain(
+      "tidy-bench",
+    );
     expect(workshopDaysCount(done2.next)).toBe(1);
 
-    // Skipping days (Nov 2..4) and completing on Nov 5 increments Workshop Day to 2
+    // Skipping days (Nov 2..4) and completing on Nov 5 pays again and increments Workshop Day to 2
     const doneNov5 = completeRealLifeChore(
       done2.next,
       "brush-teeth",
       "2026-11-05",
     );
     expect(doneNov5.awarded).toBe(CHORE_QUEST_XP);
-    expect(doneNov5.next.totalXp).toBe(75);
+    expect(doneNov5.next.totalXp).toBe(50);
     expect(workshopDaysCount(doneNov5.next)).toBe(2);
     expect(doneNov5.next.workshopDays).toEqual(["2026-11-01", "2026-11-05"]);
+  });
+
+  it("scavenger quests join as chores and share the same daily ceiling (S1, Q5/Q10)", () => {
+    const choreIds = REAL_LIFE_CHORES.map((c) => c.id);
+    for (const quest of SCAVENGER_QUESTS) {
+      expect(choreIds).toContain(quest.id);
+      const chore = REAL_LIFE_CHORES.find((c) => c.id === quest.id)!;
+      expect(chore.title).toBe(quest.title);
+    }
+
+    let prog = toggleChoreEnabled(emptyProgression(), "brush-teeth");
+    prog = toggleChoreEnabled(prog, "scavenge-wheel");
+    const hunt = completeRealLifeChore(prog, "scavenge-wheel", "2026-11-02");
+    expect(hunt.awarded).toBe(CHORE_QUEST_XP);
+    const routine = completeRealLifeChore(
+      hunt.next,
+      "brush-teeth",
+      "2026-11-02",
+    );
+    expect(routine.awarded).toBe(0); // scavenger already paid today's shared +25
+    expect(routine.next.totalXp).toBe(25);
   });
 
   it("persists enabledChoreIds across normalize, merge (respecting local disable), and XP reset", () => {
