@@ -1,17 +1,18 @@
 // The Toy Room things Kip does with its toys (docs/specs/playful-interactions-spec.md section 6): tap the TEDDY and Kip walks over and gives it a hug (hearts float up), tap the CUSHIONS and Kip hops
-// up onto the pile, bounces on it with a cheer and hops down, tap the BALL and Kip walks to it and kicks it across the room. Each is a `Visit` (visitRoutine.ts: walk over, then act) built here from the prop that was
+// up onto the pile, bounces on it with a cheer and hops down, tap the BALL and Kip walks to it and kicks it across the room, tap a BOOK and Kip reads three names aloud, tap the GUITAR and Kip picks it up and
+// strums a tune (notes float up), tap the BUBBLE set and Kip blows bubbles (which can be popped), tap the DOG and Kip pets it (it wags and the hearts float up). Each is a `Visit` (visitRoutine.ts: walk over, then act) built here from the prop that was
 // tapped; this file also draws the floating hearts. world.ts supplies the facts and the toy's little effects through `ActsWorld`; only a character does these (a vehicle just lets the prop react as it always did).
 import * as THREE from "three";
 import { BALL_BOUNDS } from "./ballKick";
 import type { EaterKind } from "./fruitAppetite";
-import { HUG_SQUEEZE_S, KICK_CONTACT_S } from "./proceduralClips";
+import { BLOW_PUFFS_S, HUG_SQUEEZE_S, KICK_CONTACT_S, PET_STROKES_S, READ_PAGES_S, STRUM_COUNT, STRUM_EVERY_S } from "./proceduralClips";
 import type { PropInst } from "./propReactions";
 import type { P3 } from "./sleepRoutine";
 import { createVisitor, type Visit, type VisitAdapter, type VisitPhase } from "./visitRoutine";
 
-export type ActKind = "hug" | "kick" | "jump";
+export type ActKind = "hug" | "kick" | "jump" | "read" | "play" | "blow" | "pet";
 /** Which prop type starts which act. */
-export const ACT_FOR_PROP: Readonly<Record<string, ActKind>> = { teddy: "hug", ball: "kick", cushions: "jump" };
+export const ACT_FOR_PROP: Readonly<Record<string, ActKind>> = { teddy: "hug", ball: "kick", cushions: "jump", books: "read", guitar: "play", bubbles: "blow", dog: "pet" };
 
 /** How far from the prop's centre the toy stands, in x. */
 export const HUG_STAND = 1.05;
@@ -35,6 +36,22 @@ export const JUMP_BOUNCES: ReadonlyArray<{ end: number; height: number }> = [{ e
 export const JUMP_DOWN_S = 2.35;
 export const JUMP_UP_HEIGHT = 1.1;
 export const JUMP_DOWN_HEIGHT = 0.8;
+export const READ_STAND = 1.4;
+export const PLAY_STAND = 1.25;
+export const BLOW_STAND = 1.15;
+export const PET_STAND = 1.9;
+export const READ_S = 6.6;
+export const PLAY_S = 4.4;
+export const BLOW_S = 3.6;
+export const PET_S = 2.6;
+/** When the dog is told it is being petted (it has just barked from the tap: let the woofs finish before the happy wagging takes over). */
+export const PET_CUE_S = 0.6;
+/** How many names Kip reads from the book: the nearest named props, one on each page. */
+export const READ_NAMES = 3;
+/** How many bubbles come out on each puff. */
+export const BUBBLES_PER_PUFF = 4;
+/** The tune Kip strums: the pitch of each of the STRUM_COUNT strums (C major pentatonic). An even strum is a downstroke (a three-note chord), an odd one an upstroke (one high note). */
+export const RIFF: readonly number[] = [392, 330, 392, 523, 440, 392, 330, 262, 330, 392, 440, 392, 330, 262];
 export const HEART_RISE_S = 1.6;
 export const HEART_RISE = 1.3;
 
@@ -69,20 +86,45 @@ export interface ActsWorld extends Omit<VisitAdapter, "onPhase"> {
   /** False while an act must not start (paused, a showcase, a mission cinematic, the editor, asleep, an ability running). */
   allowed(): boolean;
   /** Play a character clip; false if it cannot (reduced motion, not loaded). */
-  clip(action: "hug" | "kick" | "cheer"): boolean;
+  clip(action: "hug" | "kick" | "cheer" | "read" | "strum" | "blow" | "pet"): boolean;
+  /** Put something in Kip's hands (a book, the guitar, the bubble wand) and take it away again (safe to call when it holds nothing). */
+  hold(item: "book" | "guitar" | "wand"): void;
+  release(): void;
+  /** Where Kip's mouth is while it faces `dir`. */
+  mouth(dir: 1 | -1): P3;
+  bubbles: { blow(from: P3, dir: 1 | -1, n: number): void };
   /** Place the toy (during the cushion jump). */
   setPosition(x: number, y: number, z: number): void;
   tone(freq: number, delay: number, dur: number, type: OscillatorType, vol: number, slideTo?: number): void;
   /** The phase changed (the world marks the toy busy while it acts). */
   phase(phase: VisitPhase, previous: VisitPhase): void;
-  fx: { squish(inst: PropInst): void; kickBall(inst: PropInst, vx: number, vy: number): boolean };
+  fx: {
+    squish(inst: PropInst): void;
+    kickBall(inst: PropInst, vx: number, vy: number): boolean;
+    /** Flutter a book's pages. */
+    flutter(inst: PropInst): void;
+    /** Say a prop's name (caption and voice). */
+    say(inst: PropInst): void;
+    setVisible(inst: PropInst, visible: boolean): void;
+    /** Tell a self-animating prop (the dog) something happened. */
+    cue(inst: PropInst, name: string): void;
+    /** The named props nearest to x, except these types. */
+    nearby(x: number, n: number, exclude?: ReadonlyArray<string>): PropInst[];
+  };
 }
 
-const heartMaterial = (() => {
-  let mat: THREE.SpriteMaterial | null = null;
-  return (): THREE.SpriteMaterial => {
-    if (mat) return mat;
-    const opts: THREE.SpriteMaterialParameters = { color: 0xff7aa8, transparent: true, depthWrite: false, fog: false };
+type Glyph = "heart" | "note";
+const GLYPH: Record<Glyph, { ch: string; fill: string; glow: string; color: number }> = {
+  heart: { ch: "\u2665", fill: "#ff6f9c", glow: "rgba(255,120,170,0.9)", color: 0xff7aa8 },
+  note: { ch: "\u266A", fill: "#ffe27a", glow: "rgba(255,210,90,0.9)", color: 0xffd24d },
+};
+const glyphMaterial = (() => {
+  const cache = new Map<Glyph, THREE.SpriteMaterial>();
+  return (glyph: Glyph): THREE.SpriteMaterial => {
+    const have = cache.get(glyph);
+    if (have) return have;
+    const spec = GLYPH[glyph];
+    const opts: THREE.SpriteMaterialParameters = { color: spec.color, transparent: true, depthWrite: false, fog: false };
     if (typeof document !== "undefined") {
       const c = document.createElement("canvas");
       c.width = c.height = 96;
@@ -90,23 +132,24 @@ const heartMaterial = (() => {
       if (g) {
         g.font = "bold 76px system-ui, sans-serif";
         g.textAlign = "center"; g.textBaseline = "middle";
-        g.shadowColor = "rgba(255,120,170,0.9)"; g.shadowBlur = 12;
-        g.fillStyle = "#ff6f9c";
-        g.fillText("♥", 48, 50);
+        g.shadowColor = spec.glow; g.shadowBlur = 12;
+        g.fillStyle = spec.fill;
+        g.fillText(spec.ch, 48, 50);
         const tex = new THREE.CanvasTexture(c);
         tex.colorSpace = THREE.SRGBColorSpace;
         opts.map = tex; opts.color = 0xffffff;
       }
     }
-    mat = new THREE.SpriteMaterial(opts);
+    const mat = new THREE.SpriteMaterial(opts);
+    cache.set(glyph, mat);
     return mat;
   };
 })();
 
-interface Heart { sprite: THREE.Sprite; t: number; from: THREE.Vector3; size: number; sway: number }
+interface Floater { sprite: THREE.Sprite; glyph: Glyph; t: number; from: THREE.Vector3; size: number; sway: number }
 
 export function createActs(w: ActsWorld) {
-  const hearts: Heart[] = [];
+  const hearts: Floater[] = [];                                       // every glyph floating up: hearts and notes
   /** The ball Kip has just kicked and will follow once it stops, and which way it was kicked. */
   let following: { inst: PropInst; dir: 1 | -1 } | null = null;
   const visitor = createVisitor({
@@ -118,14 +161,15 @@ export function createActs(w: ActsWorld) {
     onPhase: (p, prev) => w.phase(p, prev),
   });
 
-  function heart(at: THREE.Vector3, size = 0.4) {
-    const sprite = new THREE.Sprite(heartMaterial().clone());
+  function floater(glyph: Glyph, at: THREE.Vector3, size = 0.4) {
+    const sprite = new THREE.Sprite(glyphMaterial(glyph).clone());
     sprite.scale.setScalar(size);
     sprite.position.copy(at);
     sprite.renderOrder = 10;
     w.root().add(sprite);
-    hearts.push({ sprite, t: 0, from: at.clone(), size, sway: hearts.length % 2 ? 1 : -1 });
+    hearts.push({ sprite, glyph, t: 0, from: at.clone(), size, sway: hearts.length % 2 ? 1 : -1 });
   }
+  const heart = (at: THREE.Vector3, size = 0.4) => floater("heart", at, size);
   function clearHearts() {
     for (const h of hearts) { h.sprite.parent?.remove(h.sprite); h.sprite.material.dispose(); }
     hearts.length = 0;
@@ -172,10 +216,68 @@ export function createActs(w: ActsWorld) {
     };
   }
 
+  function readVisit(inst: PropInst): Visit {
+    const x = inst.base.px;
+    let names: PropInst[] = [];
+    return {
+      standX: x - READ_STAND, face: 1, seconds: READ_S,
+      begin: () => {
+        names = w.fx.nearby(x, READ_NAMES, ["books"]);
+        if (!names.length) names = [inst];                                // nothing else around: it reads out the book's own name
+        w.hold("book");
+        w.clip("read");
+      },
+      cues: READ_PAGES_S.map((at, i) => ({ at, fn: () => { w.fx.flutter(inst); w.fx.say(names[i % names.length]!); w.tone(560, 0, 0.06, "triangle", 0.04, 420); } })),
+      end: () => { w.release(); },
+    };
+  }
+
+  function playVisit(inst: PropInst): Visit {
+    const x = inst.base.px, z = inst.base.pz;
+    const cues = Array.from({ length: STRUM_COUNT }, (_, i) => {
+      const f = RIFF[i % RIFF.length]!;
+      return {
+        at: 0.2 + (i + 1) * STRUM_EVERY_S,
+        fn: () => {
+          if (i % 2 === 0) { [f, f * 1.25, f * 1.5].forEach((n, k) => w.tone(n, k * 0.025, 0.4, "triangle", 0.07)); }        // a downstroke: a chord, strummed
+          else w.tone(f * 2, 0, 0.3, "triangle", 0.06);                                                                      // an upstroke: one bright note
+          if (i % 2 === 0) floater("note", new THREE.Vector3(x - PLAY_STAND + 0.9 + (i % 4) * 0.1, 2.3, z + 0.5), 0.45);
+        },
+      };
+    });
+    return {
+      standX: x - PLAY_STAND, face: 1, seconds: PLAY_S,
+      begin: () => { w.fx.setVisible(inst, false); w.hold("guitar"); w.clip("strum"); },
+      cues,
+      end: () => { w.release(); w.fx.setVisible(inst, true); },                // the guitar is back on its stand, even if it was cut short
+    };
+  }
+
+  function blowVisit(inst: PropInst): Visit {
+    const x = inst.base.px;
+    return {
+      standX: x - BLOW_STAND, face: 1, seconds: BLOW_S,
+      begin: () => { w.hold("wand"); w.clip("blow"); },
+      cues: BLOW_PUFFS_S.map((at) => ({ at, fn: () => w.bubbles.blow(w.mouth(1), 1, BUBBLES_PER_PUFF) })),
+      end: () => { w.release(); },
+    };
+  }
+
+  function petVisit(inst: PropInst): Visit {
+    const x = inst.base.px, z = inst.base.pz;
+    return {
+      standX: x - PET_STAND, face: 1, seconds: PET_S,
+      begin: () => { w.clip("pet"); },
+      cues: [{ at: PET_CUE_S, fn: () => w.fx.cue(inst, "pet") }, ...PET_STROKES_S.map((at, i) => ({ at, fn: () => { heart(new THREE.Vector3(x - 0.2, inst.size.y + 0.25, z + 0.3), 0.36); if (i % 2 === 1) w.tone(700, 0, 0.1, "triangle", 0.05, 900); } }))],
+      end: () => {},
+    };
+  }
+
   return {
     get phase(): VisitPhase { return visitor.phase; },
     get busy(): boolean { return visitor.busy; },
-    get heartCount(): number { return hearts.length; },
+    get heartCount(): number { return hearts.filter((h) => h.glyph === "heart").length; },
+    get noteCount(): number { return hearts.filter((h) => h.glyph === "note").length; },
     /**
      * A prop was tapped. A character at rest goes to hug the teddy, jump on the cushions or kick the ball; returns true if it set off. Anything else (another prop, a vehicle, an act already under
      * way, a world that says no) changes nothing: the prop has already reacted by itself.
@@ -184,7 +286,8 @@ export function createActs(w: ActsWorld) {
       const kind = ACT_FOR_PROP[inst.type];
       if (!kind || !w.allowed() || w.eater() !== "character") return false;                // (an act already under way refuses a second start itself)
       following = null;
-      return visitor.start(kind === "hug" ? hugVisit(inst) : kind === "kick" ? kickVisit(inst) : jumpVisit(inst));
+      const visit = { hug: hugVisit, kick: kickVisit, jump: jumpVisit, read: readVisit, play: playVisit, blow: blowVisit, pet: petVisit }[kind](inst);
+      return visitor.start(visit);
     },
     /** Call first in the world's pointerdown: true means a tap during the action, which must NOT also walk the toy or tap a prop. A tap while the toy is still walking over drops the visit and returns false. */
     consume(): boolean { return visitor.busy ? visitor.tapElsewhere() : false; },

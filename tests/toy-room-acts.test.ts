@@ -4,10 +4,10 @@ import path from "node:path";
 import * as THREE from "three";
 import { describe, expect, it, vi } from "vitest";
 import { BALL_BOUNDS } from "../src/features/game/world/runtime/ballKick";
-import { HUG_SQUEEZE_S, KICK_CONTACT_S } from "../src/features/game/world/runtime/proceduralClips";
+import { BLOW_PUFFS_S, HUG_SQUEEZE_S, KICK_CONTACT_S, PET_STROKES_S, READ_PAGES_S, STRUM_COUNT, STRUM_EVERY_S } from "../src/features/game/world/runtime/proceduralClips";
 import type { PropInst } from "../src/features/game/world/runtime/propReactions";
 import {
-  ACT_FOR_PROP, CUSHION_TOP, HEART_RISE, HEART_RISE_S, HUG_S, HUG_SECOND_SQUEEZE_S, HUG_STAND, JUMP_BOUNCES, JUMP_DOWN_S, JUMP_STAND, JUMP_UP_S, FOLLOW_STAND, KICK_ROOM, KICK_S, KICK_STAND, KICK_VX, KICK_VY,
+  ACT_FOR_PROP, BLOW_S, BLOW_STAND, BUBBLES_PER_PUFF, CUSHION_TOP, HEART_RISE, HEART_RISE_S, HUG_S, HUG_SECOND_SQUEEZE_S, HUG_STAND, JUMP_BOUNCES, JUMP_DOWN_S, JUMP_STAND, JUMP_UP_S, FOLLOW_STAND, PET_CUE_S, PET_S, PET_STAND, PLAY_S, PLAY_STAND, READ_NAMES, READ_S, READ_STAND, RIFF, KICK_ROOM, KICK_S, KICK_STAND, KICK_VX, KICK_VY,
   createActs, jumpPath, type JumpPlan,
 } from "../src/features/game/world/runtime/toyRoomActs";
 import type { VisitPhase } from "../src/features/game/world/runtime/visitRoutine";
@@ -89,6 +89,11 @@ function game(opts: { eater?: "character" | "robot" | "vehicle"; allowed?: boole
   const squished: PropInst[] = [];
   const kicks: Array<{ inst: PropInst; vx: number; vy: number }> = [];
   const tones: number[] = [];
+  const held: string[] = [];
+  const blows: Array<{ from: { x: number; y: number; z: number }; dir: number; n: number }> = [];
+  const says: PropInst[] = [], flutters: PropInst[] = [], cues: Array<[PropInst, string]> = [], visibility: Array<[PropInst, boolean]> = [];
+  const nearbyCalls: Array<[number, number, ReadonlyArray<string> | undefined]> = [];
+  const nearbyList: PropInst[] = [];
   const w = {
     position: () => ({ ...s.pos }), targetX: () => s.target,
     walkTo: (x: number, z: number) => { s.target = x; log.push(`walkTo:${+x.toFixed(3)},${z}`); },
@@ -99,19 +104,29 @@ function game(opts: { eater?: "character" | "robot" | "vehicle"; allowed?: boole
     setPosition: (x: number, y: number, z: number) => { s.pos = { x, y, z }; places.push([x, y, z]); },
     tone: (f: number) => { tones.push(f); },
     phase: (p: VisitPhase) => phases.push(p),
-    fx: { squish: (i: PropInst) => { squished.push(i); }, kickBall: (i: PropInst, vx: number, vy: number) => { kicks.push({ inst: i, vx, vy }); return true; } },
+    hold: (i: string) => { held.push(`hold:${i}`); log.push(`hold:${i}`); },
+    release: () => { held.push("release"); log.push("release"); },
+    mouth: (d: number) => ({ x: s.pos.x + 0.5 * d, y: 1.8, z: s.pos.z }),
+    bubbles: { blow: (from: { x: number; y: number; z: number }, dir: number, n: number) => { blows.push({ from, dir, n }); } },
+    fx: {
+      squish: (i: PropInst) => { squished.push(i); }, kickBall: (i: PropInst, vx: number, vy: number) => { kicks.push({ inst: i, vx, vy }); return true; },
+      flutter: (i: PropInst) => { flutters.push(i); }, say: (i: PropInst) => { says.push(i); },
+      setVisible: (i: PropInst, v: boolean) => { visibility.push([i, v]); log.push(`visible:${v}`); },
+      cue: (i: PropInst, n: string) => { cues.push([i, n]); },
+      nearby: (x: number, n: number, ex?: ReadonlyArray<string>) => { nearbyCalls.push([x, n, ex]); return nearbyList.slice(0, n); },
+    },
   };
   const acts = createActs(w as never);
   const run = (seconds: number, dt = 1 / 30) => { for (let t = 0; t < seconds - 1e-9; t += dt) acts.update(dt); };
   const arriveAt = (x: number) => { s.pos.x = x; s.target = null; };
-  return { acts, s, log, phases, places, squished, kicks, tones, root, run, arriveAt };
+  return { acts, s, log, phases, places, squished, kicks, tones, root, run, arriveAt, held, blows, says, flutters, cues, visibility, nearbyCalls, nearbyList };
 }
 
 describe("which props do something", () => {
-  it("the teddy is hugged, the ball is kicked, the cushions are jumped on; nothing else starts an act", () => {
-    expect(ACT_FOR_PROP).toEqual({ teddy: "hug", ball: "kick", cushions: "jump" });
+  it("the teddy is hugged, the ball kicked, the cushions jumped on, a book read, the guitar played, the bubbles blown and the dog petted; nothing else starts an act", () => {
+    expect(ACT_FOR_PROP).toEqual({ teddy: "hug", ball: "kick", cushions: "jump", books: "read", guitar: "play", bubbles: "blow", dog: "pet" });
     const g = game();
-    for (const type of ["lamp", "blocks", "books", "chair", "plant", "bed", "tree", "unknown"]) expect(g.acts.tap(inst(type, 20)), type).toBe(false);
+    for (const type of ["lamp", "blocks", "chair", "plant", "bed", "tree", "unknown"]) expect(g.acts.tap(inst(type, 20)), type).toBe(false);
     expect(g.log).toEqual([]);
   });
 });
@@ -208,6 +223,198 @@ describe("kicking the ball", () => {
     g.acts.tap(b);
     const stand = +g.log[0]!.split(":")[1]!.split(",")[0]!;
     expect(stand).toBeGreaterThanOrEqual(BALL_BOUNDS[0]);
+  });
+});
+
+describe("reading a book", () => {
+  const books = inst("books", 16.5, -2.6, 1.2);
+  const teddy = inst("teddy", 15), ball = inst("ball", 18), cush = inst("cushions", 19);
+  it("walks to just left of the stack, picks up a book and reads the names of the three nearest things aloud, turning a page for each", () => {
+    const g = game();
+    g.nearbyList.push(teddy, ball, cush);
+    expect(g.acts.tap(books)).toBe(true);
+    expect(g.log).toEqual([`walkTo:${16.5 - READ_STAND},0.4`]);
+    g.arriveAt(16.5 - READ_STAND);
+    g.run(0.1);
+    expect(g.log.slice(1)).toEqual(["face:1", "hold:book", "clip:read"]);
+    expect(g.nearbyCalls).toEqual([[16.5, READ_NAMES, ["books"]]]);          // the nearest three things that are not books
+    g.run(READ_PAGES_S[0]!);
+    expect(g.says).toEqual([teddy]);
+    expect(g.flutters).toEqual([books]);
+    g.run(READ_PAGES_S[1]! - READ_PAGES_S[0]!);
+    expect(g.says).toEqual([teddy, ball]);
+    g.run(READ_PAGES_S[2]! - READ_PAGES_S[1]!);
+    expect(g.says).toEqual([teddy, ball, cush]);
+    expect(g.flutters).toHaveLength(3);
+    expect(g.acts.busy).toBe(true);
+    g.run(READ_S - READ_PAGES_S[2]! + 0.2);
+    expect(g.acts.busy).toBe(false);
+    expect(g.log.at(-1)).toBe("release");                                    // the book is put away
+  });
+
+  it("with nothing else around it reads out the book's own name on every page", () => {
+    const g = game();
+    g.acts.tap(books);
+    g.arriveAt(16.5 - READ_STAND);
+    g.run(READ_S + 0.2);
+    expect(g.says).toEqual([books, books, books]);
+  });
+
+  it("with fewer than three things around it goes round them again", () => {
+    const g = game();
+    g.nearbyList.push(teddy);
+    g.acts.tap(books);
+    g.arriveAt(16.5 - READ_STAND);
+    g.run(READ_S + 0.2);
+    expect(g.says).toEqual([teddy, teddy, teddy]);
+    g.nearbyList.push(ball);
+    const h = game();
+    h.nearbyList.push(teddy, ball);
+    h.acts.tap(books);
+    h.arriveAt(16.5 - READ_STAND);
+    h.run(READ_S + 0.2);
+    expect(h.says).toEqual([teddy, ball, teddy]);
+  });
+
+  it("cut short, the book is still put away", () => {
+    const g = game();
+    g.acts.tap(books);
+    g.arriveAt(16.5 - READ_STAND);
+    g.run(1.5);
+    g.acts.reset();
+    expect(g.log.at(-1)).toBe("release");
+    g.run(5);
+    expect(g.says.length).toBe(1);
+  });
+});
+
+describe("playing the guitar", () => {
+  const guitar = inst("guitar", 18, -2.4, 3);
+  it("picks the guitar up off its stand (it disappears from the stand), strums the tune and puts it back", () => {
+    const g = game();
+    expect(g.acts.tap(guitar)).toBe(true);
+    expect(g.log).toEqual([`walkTo:${18 - PLAY_STAND},0.4`]);
+    g.arriveAt(18 - PLAY_STAND);
+    g.run(0.1);
+    expect(g.log.slice(1)).toEqual(["face:1", "visible:false", "hold:guitar", "clip:strum"]);
+    g.run(PLAY_S + 0.2);
+    expect(g.acts.busy).toBe(false);
+    expect(g.log.slice(-2)).toEqual(["release", "visible:true"]);
+    expect(g.visibility).toEqual([[guitar, false], [guitar, true]]);
+  });
+
+  it("plays a chord on every downstroke and one bright note on every upstroke, to the tune, one strum after another", () => {
+    const g = game();
+    g.acts.tap(guitar);
+    g.arriveAt(18 - PLAY_STAND);
+    g.run(0.1);
+    expect(g.tones).toEqual([]);                                             // nothing before the first strum
+    g.run(PLAY_S + 0.2);
+    const expected: number[] = [];
+    for (let i = 0; i < STRUM_COUNT; i++) {
+      const f = RIFF[i]!;
+      if (i % 2 === 0) expected.push(f, f * 1.25, f * 1.5); else expected.push(f * 2);
+    }
+    expect(g.tones).toEqual(expected);
+    expect(g.tones.length).toBe(Math.ceil(STRUM_COUNT / 2) * 3 + Math.floor(STRUM_COUNT / 2));
+  });
+
+  it("the first strum comes after the hand has settled (about 0.5 s), then one every STRUM_EVERY_S", () => {
+    const g = game();
+    g.acts.tap(guitar);
+    g.arriveAt(18 - PLAY_STAND);
+    g.run(0.3);
+    expect(g.tones).toHaveLength(0);
+    g.run(0.25);
+    expect(g.tones).toHaveLength(3);
+    g.run(STRUM_EVERY_S);
+    expect(g.tones).toHaveLength(4);
+    g.run(STRUM_EVERY_S);
+    expect(g.tones).toHaveLength(7);
+  });
+
+  it("music notes float up from the guitar as it plays and are gone afterwards", () => {
+    const g = game();
+    g.acts.tap(guitar);
+    g.arriveAt(18 - PLAY_STAND);
+    g.run(1.5);
+    expect(g.acts.noteCount).toBeGreaterThanOrEqual(2);
+    expect(g.acts.heartCount).toBe(0);
+    const n = g.root.children[0] as THREE.Sprite;
+    expect(n.position.y).toBeGreaterThan(2.2);
+    g.run(PLAY_S + HEART_RISE_S + 0.5);
+    expect(g.acts.noteCount).toBe(0);
+    expect(g.root.children).toHaveLength(0);
+  });
+
+  it("cut short, the guitar goes back on its stand and is not left in Kip's hands", () => {
+    const g = game();
+    g.acts.tap(guitar);
+    g.arriveAt(18 - PLAY_STAND);
+    g.run(1);
+    g.acts.reset();
+    expect(g.log.slice(-2)).toEqual(["release", "visible:true"]);
+  });
+});
+
+describe("blowing bubbles", () => {
+  const bottle = inst("bubbles", 37.8, -2.2, 2);
+  it("picks up the wand and blows four puffs of bubbles from its mouth, then puts the wand back", () => {
+    const g = game({ start: { x: 34, y: 0, z: 0.4 } });
+    expect(g.acts.tap(bottle)).toBe(true);
+    expect(g.log).toEqual([`walkTo:${37.8 - BLOW_STAND},0.4`]);
+    g.arriveAt(37.8 - BLOW_STAND);
+    g.run(0.1);
+    expect(g.log.slice(1)).toEqual(["face:1", "hold:wand", "clip:blow"]);
+    expect(g.blows).toHaveLength(0);
+    g.run(BLOW_PUFFS_S[0]!);
+    expect(g.blows).toHaveLength(1);
+    g.run(BLOW_S);
+    expect(g.blows).toHaveLength(BLOW_PUFFS_S.length);
+    for (const b of g.blows) { expect(b.n).toBe(BUBBLES_PER_PUFF); expect(b.dir).toBe(1); expect(b.from.y).toBeCloseTo(1.8, 6); expect(b.from.x).toBeGreaterThan(37.8 - BLOW_STAND); }
+    expect(g.log.at(-1)).toBe("release");
+    expect(g.acts.busy).toBe(false);
+  });
+
+  it("cut short, the wand is put away and no more bubbles come", () => {
+    const g = game({ start: { x: 34, y: 0, z: 0.4 } });
+    g.acts.tap(bottle);
+    g.arriveAt(37.8 - BLOW_STAND);
+    g.run(0.8);
+    g.acts.reset();
+    const n = g.blows.length;
+    expect(g.log.at(-1)).toBe("release");
+    g.run(4);
+    expect(g.blows.length).toBe(n);
+  });
+});
+
+describe("petting the dog", () => {
+  const dog = inst("dog", 42, -2, 1.6);
+  it("walks to just left of the dog, crouches to pet it (the dog is told, and answers by wagging) with a heart at each stroke", () => {
+    const g = game({ start: { x: 38, y: 0, z: 0.4 } });
+    expect(g.acts.tap(dog)).toBe(true);
+    expect(g.log).toEqual([`walkTo:${42 - PET_STAND},0.4`]);
+    g.arriveAt(42 - PET_STAND);
+    g.run(0.1);
+    expect(g.log.slice(1)).toEqual(["face:1", "clip:pet"]);
+    expect(g.cues).toEqual([]);                                              // not at once: the dog has just barked at the tap, let it finish
+    g.run(PET_CUE_S + 0.1);
+    expect(g.cues).toEqual([[dog, "pet"]]);
+    let most = 0;
+    for (let t = 0; t < PET_S + 0.3; t += 1 / 30) { g.acts.update(1 / 30); most = Math.max(most, g.acts.heartCount); }
+    expect(most).toBe(PET_STROKES_S.length);                                  // a heart on each stroke
+    expect(g.acts.busy).toBe(false);
+  });
+
+  it("hearts rise from just above the dog's back", () => {
+    const g = game({ start: { x: 38, y: 0, z: 0.4 } });
+    g.acts.tap(dog);
+    g.arriveAt(42 - PET_STAND);
+    g.run(PET_STROKES_S[0]! + 0.3);
+    const h = g.root.children[0] as THREE.Sprite;
+    expect(h.position.y).toBeGreaterThan(1.7);
+    expect(Math.abs(h.position.x - 42)).toBeLessThan(0.6);
   });
 });
 
@@ -388,7 +595,21 @@ describe("wiring in world.ts", () => {
   it("the toy is busy only while it acts, and its walk target is cleared when it starts (so it does not wander off afterwards)", () => {
     expect(world).toContain('phase:function(p: string){P.busy=p==="acting";if(p==="acting")P.target=null;if(p!=="acting")P.hop=0},fx:PFX});');
   });
-  it("the default Toy Room has a teddy, a pile of cushions and a ball to play with", () => {
-    for (const t of ["teddy", "cushions", "ball"]) expect(catalog, t).toMatch(new RegExp(`"id":"room".*?\\{"type":"${t}","x":[0-9.]+\\}`, "s"));
+  it("the new toys' builders are in the prop table, and the bubbles are popped, updated and cleared with the world", () => {
+    expect(world).toContain("guitar:function(x,z){return add(buildGuitarProp(x,z))}");
+    expect(world).toContain("bubbles:function(x,z){return add(buildBubbleBottle(x,z))}");
+    expect(world).toContain("dog:function(x,z){return add(buildDog(x,z))}");
+    expect(world).toContain("if(BUBBLES.count&&BUBBLES.popAt(ray))return;");                  // a tap on a bubble is used before anything else
+    expect(world).toContain("SLEEPH.update(dt);ACTS.update(dt);BUBBLES.update(dt);");
+    expect(world).toContain("SLEEPH.reset();ACTS.reset();BUBBLES.reset();HELD.release();");
+  });
+  it("Kip can hold a book, the guitar and the wand: the right arm is arms[1] and the mouth is found from Kip's own box", () => {
+    expect(world).toContain("hold:function(i: \"book\"|\"guitar\"|\"wand\"){HELD.hold(i,P.model,P.rig&&P.rig.arms&&P.rig.arms[1])}");
+    expect(world).toContain("release:function(){HELD.release()}");
+    expect(world).toContain("bubbles:BUBBLES,");
+    expect(world).toMatch(/mouth:function\(d: number\)\{var b=new T\.Box3\(\)\.setFromObject\(P\.root\)/);
+  });
+  it("the default Toy Room has a teddy, a pile of cushions, a ball, books, a guitar, a bubble set and a dog to play with", () => {
+    for (const t of ["teddy", "cushions", "ball", "books", "guitar", "bubbles", "dog"]) expect(catalog, t).toMatch(new RegExp(`"id":"room".*?\\{"type":"${t}","x":[0-9.]+\\}`, "s"));
   });
 });

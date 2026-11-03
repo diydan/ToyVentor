@@ -2,7 +2,7 @@ import * as THREE from "three";
 import { describe, expect, it } from "vitest";
 import { stockCol, stockSel } from "../src/features/game/world/runtime/catalog";
 import { DEFAULT_TUNING, MixamoDriver, sampleClip, newPose, type ClipBank } from "../src/features/game/world/runtime/mixamo";
-import { HUG_SQUEEZE_S, KICK_CONTACT_S, PROCEDURAL_ACTIONS, PROCEDURAL_CLIPS, bake, gainFor } from "../src/features/game/world/runtime/proceduralClips";
+import { BLOW_PUFFS_S, HUG_SQUEEZE_S, KICK_CONTACT_S, PET_STROKES_S, PROCEDURAL_ACTIONS, PROCEDURAL_CLIPS, READ_PAGES_S, STRUM_COUNT, STRUM_EVERY_S, bake, gainFor } from "../src/features/game/world/runtime/proceduralClips";
 import { buildToy } from "../src/features/game/world/runtime/playerRig";
 
 // Hand-authored clips (eat, sour, belly_pat, yawn, sleep) baked into the Mixamo clip format and played by the real MixamoDriver.
@@ -21,8 +21,8 @@ const run = (d: MixamoDriver, rig: ReturnType<typeof characterRig>["rig"], secon
 const pose = (clip: ClipBank[string], t: number) => { const p = newPose(); sampleClip(clip, t, p); return p; };
 
 describe("the baked clips are well formed", () => {
-  it("has the eight actions and each is a real clip in the Mixamo format", () => {
-    expect([...PROCEDURAL_ACTIONS].sort()).toEqual(["belly_pat", "cheer", "eat", "hug", "kick", "sleep", "sour", "yawn"]);
+  it("has the twelve actions and each is a real clip in the Mixamo format", () => {
+    expect([...PROCEDURAL_ACTIONS].sort()).toEqual(["belly_pat", "blow", "cheer", "eat", "hug", "kick", "pet", "read", "sleep", "sour", "strum", "yawn"]);
     for (const [name, c] of Object.entries(PROCEDURAL_CLIPS)) {
       expect(c.name).toBe(name);
       expect(c.frames).toBe(Math.round(c.duration * 30) + 1);
@@ -43,7 +43,7 @@ describe("the baked clips are well formed", () => {
     }
   });
   it("one-shots start and end at rest so they blend in and out cleanly; sleep loops", () => {
-    for (const n of ["eat", "sour", "belly_pat", "yawn", "hug", "kick", "cheer"] as const) {
+    for (const n of ["eat", "sour", "belly_pat", "yawn", "hug", "kick", "cheer", "read", "strum", "blow", "pet"] as const) {
       const c = PROCEDURAL_CLIPS[n]!;
       expect(c.loop, n).toBe(false);
       for (const t of [0, c.duration]) {
@@ -162,7 +162,7 @@ describe("cheer: both arms go up", () => {
 });
 
 describe("the new clips play through the real driver and finish by themselves", () => {
-  for (const name of ["hug", "kick", "cheer"] as const) {
+  for (const name of ["hug", "kick", "cheer", "read", "strum", "blow", "pet"] as const) {
     it(`${name}: triggers, plays for its length, then the driver is idle again`, () => {
       const { rig } = characterRig();
       const d = new MixamoDriver(REST_BANK);
@@ -174,6 +174,87 @@ describe("the new clips play through the real driver and finish by themselves", 
       expect(d.busyAction).toBeNull();
     });
   }
+});
+
+describe("read: a book held in both hands, a page turned at each of READ_PAGES_S", () => {
+  const c = PROCEDURAL_CLIPS.read!;
+  it("holds the book forward at the chest with the head down on the page", () => {
+    const p = pose(c, 2);
+    expect(p.armL.z).toBeGreaterThan(0.7);
+    expect(p.armR.z).toBeGreaterThan(0.7);
+    expect(p.armL.y).toBeLessThan(-0.3);
+    expect(2 * Math.asin(Math.abs(p.head.x))).toBeGreaterThan(0.2);          // head tipped down
+  });
+  it("at each page the right hand flicks up and the head lifts, and between pages the hand is back on the book", () => {
+    for (const t of READ_PAGES_S) {
+      const p = pose(c, t);
+      expect(p.armR.y, `page at ${t}`).toBeGreaterThan(-0.2);
+      expect(2 * Math.asin(Math.abs(p.head.x)), `head at ${t}`).toBeLessThan(0.15);
+      const between = pose(c, t + 0.6);
+      expect(between.armR.y, `between after ${t}`).toBeLessThan(-0.4);
+    }
+    expect(READ_PAGES_S).toHaveLength(3);
+  });
+  it("the left hand never leaves the book", () => {
+    for (let t = 0.6; t <= 6.0; t += 0.2) expect(pose(c, t).armL.z, `at ${t}`).toBeGreaterThan(0.7);
+  });
+});
+
+describe("strum: the left hand on the neck, the right hand strumming in time", () => {
+  const c = PROCEDURAL_CLIPS.strum!;
+  it("the left hand is out front on the neck the whole time", () => {
+    for (let t = 0.3; t <= 4.0; t += 0.2) expect(pose(c, t).armL.z, `at ${t}`).toBeGreaterThan(0.9);
+  });
+  it("the right hand alternates down and up on every strum, STRUM_COUNT times", () => {
+    const ys: number[] = [];
+    for (let i = 0; i < STRUM_COUNT; i++) ys.push(pose(c, 0.2 + (i + 1) * STRUM_EVERY_S).armR.y);
+    for (let i = 0; i < ys.length; i++) expect(ys[i]!, `strum ${i}`).toBeCloseTo(i % 2 === 0 ? -0.72 / Math.hypot(0.3, 0.72, 0.62) : -0.35 / Math.hypot(0.3, 0.35, 0.9), 1);                // (30 fps frames: a strum time between two frames is a hair off its key)
+    expect(STRUM_COUNT * STRUM_EVERY_S + 0.2).toBeLessThan(c.duration);
+  });
+  it("the body sways side to side with the strumming and the hips bob", () => {
+    const rolls = Array.from({ length: 8 }, (_, i) => pose(c, 0.2 + (i + 1) * STRUM_EVERY_S).body.z);
+    for (let i = 1; i < rolls.length; i++) expect(Math.sign(rolls[i]!)).toBe(-Math.sign(rolls[i - 1]!));
+    expect(Math.max(...Array.from({ length: 20 }, (_, i) => pose(c, 0.4 + i * 0.1).hips.y))).toBeGreaterThan(0.01);
+  });
+});
+
+describe("blow: the wand at the mouth, four puffs", () => {
+  const c = PROCEDURAL_CLIPS.blow!;
+  it("the right hand comes up to the mouth and stays there through the puffs", () => {
+    for (const t of BLOW_PUFFS_S) {
+      const p = pose(c, t);
+      expect(p.armR.y, `at ${t}`).toBeGreaterThan(0.3);
+      expect(p.armR.z, `at ${t}`).toBeGreaterThan(0.7);
+    }
+    expect(pose(c, 0.1).armR.y).toBeLessThan(0);                              // still on its way up at the very start
+  });
+  it("leans in before each puff and back on it, four times", () => {
+    for (const t of BLOW_PUFFS_S) {
+      expect(pose(c, t - 0.12).body.x, `before ${t}`).toBeGreaterThan(0.02);
+      expect(pose(c, t).body.x, `on ${t}`).toBeLessThan(-0.01);
+    }
+    expect(BLOW_PUFFS_S).toHaveLength(4);
+  });
+});
+
+describe("pet: a crouch with the right hand stroking", () => {
+  const c = PROCEDURAL_CLIPS.pet!;
+  it("leans forward and crouches, the hand out in front and low, the head down", () => {
+    const p = pose(c, 1.0);
+    expect(2 * Math.asin(p.body.x)).toBeGreaterThan(0.25);
+    expect(p.hips.y).toBeLessThan(-0.05);
+    expect(p.armR.z).toBeGreaterThan(0.6);
+    expect(p.armR.y).toBeLessThan(-0.4);
+    expect(p.armR.y).toBeGreaterThan(-0.9);
+    expect(pose(c, 0.45).armR.y).toBeLessThan(-0.4);           // already reaching down when the crouch is complete
+  });
+  it("strokes four times: the hand goes down and back up, once for each of PET_STROKES_S", () => {
+    const ys = Array.from({ length: 61 }, (_, i) => pose(c, 0.5 + (i / 60) * 1.6).armR.y);
+    let peaks = 0;
+    for (let i = 1; i < ys.length - 1; i++) if (ys[i]! > ys[i - 1]! && ys[i]! >= ys[i + 1]!) peaks++;
+    expect(peaks).toBeGreaterThanOrEqual(3);
+    expect(PET_STROKES_S).toHaveLength(4);
+  });
 });
 
 describe("sleep: lies down for real, stays until woken, gets up again", () => {

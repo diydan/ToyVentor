@@ -19,7 +19,7 @@ import { sfx, sound, tone } from "./audio";
 
 export const PROP_TYPES = [
   "lantern", "windmill", "cottage", "tree", "bushes", "cloud", "island", "tire", "drum", "shed", "cranebg", "palm", "umbrella",
-  "sandcastle", "pine", "snowman", "igloo", "lamp", "blocks", "books", "chair", "plant", "teddy", "ball", "cushions", "bed",
+  "sandcastle", "pine", "snowman", "igloo", "lamp", "blocks", "books", "chair", "plant", "teddy", "ball", "cushions", "bed", "guitar", "bubbles", "dog",
 ] as const;
 export type PropType = (typeof PROP_TYPES)[number];
 
@@ -27,7 +27,7 @@ type IdleKind = "sway" | "bob" | "none";
 type PokeKind = "wiggle" | "hop" | "squash" | "shake" | "swing";
 export type UseKind =
   | "light" | "fruit" | "coconuts" | "snow" | "berries" | "rain" | "sprout" | "topple" | "flutter" | "roll" | "settle" | "squish"
-  | "spin" | "boom" | "windmill" | "hat" | "sleep" | "none";
+  | "spin" | "boom" | "windmill" | "hat" | "sleep" | "pluck" | "pop" | "bark" | "none";
 
 export interface PropSpec {
   /** The vocabulary noun it is called; null only for the fallback spec of an unknown prop type. */
@@ -67,6 +67,10 @@ export const PROP_SPECS: Record<PropType, PropSpec> = {
   cushions: { noun: "cushions", color: "colorful", idle: "none", poke: "squash", use: "squish" },
   // The Toy Room bed (runtime/bed.ts): a tap puts the toy to sleep (runtime/sleepRoutine.ts); the world decides what that means through `deps.onBed`.
   bed: { noun: "bed", color: "colorful", idle: "none", poke: "squash", use: "sleep" },
+  // Things Kip plays with (runtime/toyRoomActs.ts): a tap makes the prop's own little sound at once and sends Kip over.
+  guitar: { noun: "guitar", color: "orange", idle: "none", poke: "wiggle", use: "pluck" },
+  bubbles: { noun: "bubbles", color: "blue", idle: "none", poke: "wiggle", use: "pop" },
+  dog: { noun: "dog", color: "brown", idle: "none", poke: "hop", use: "bark" },
 };
 
 /** A prop type with no spec (something added later, or generated): it still reacts and is still named, in English. */
@@ -234,6 +238,15 @@ export function createPropFx(deps: PropFxDeps) {
   const chirp = (inst: PropInst) => tone(360 + ((inst.phase * 37) % 220), 0, 0.07, "triangle", 0.05, 560 + ((inst.phase * 53) % 200));
 
   // ---- pokes (the immediate tap reaction) -------------------------------------------------------------------------------
+  /**
+   * Tell a prop that animates itself (the dog: `holder.userData.tick`) that something happened. It reads `holder.userData.cue` ({ name, at }: the name and the clock when it was cued)
+   * in its own tick, so what it does with it (a bark, a wag) lives with its builder, not here.
+   */
+  function cue(inst: PropInst, name: string) { inst.holder.userData.cue = { name, at: clock }; }
+  /** The `n` named props nearest to x (not the ones whose type is in `exclude`), for Kip to read the names of. */
+  function nearby(x: number, n: number, exclude: ReadonlyArray<string> = []): PropInst[] {
+    return insts.filter((i) => i.spec.noun && !exclude.includes(i.type)).sort((a, b) => Math.abs(a.base.px - x) - Math.abs(b.base.px - x)).slice(0, Math.max(0, n));
+  }
   /** The prop gets a squish and nothing else (no name, no sound beyond its own chirp): the teddy being hugged, the cushions being landed on. */
   function squish(inst: PropInst) { useSquish(inst); }
   /**
@@ -436,6 +449,9 @@ export function createPropFx(deps: PropFxDeps) {
       case "windmill": deps.boostWindmill(); break;
       case "hat": useHat(inst); break;
       case "sleep": deps.onBed?.(inst); break;
+      case "pluck": [262, 330, 392].forEach((f, i) => tone(f, i * 0.07, 0.35, "triangle", 0.09)); break;
+      case "pop": tone(820, 0, 0.07, "sine", 0.08, 300); break;
+      case "bark": tone(300, 0, 0.09, "sawtooth", 0.08, 180); tone(260, 0.17, 0.1, "sawtooth", 0.08, 160); cue(inst, "bark"); break;
       case "none": break;
     }
   }
@@ -724,6 +740,8 @@ export function createPropFx(deps: PropFxDeps) {
       if (inst.spec.idle === "sway") o.rz += Math.sin(t * 0.9 + inst.phase) * 0.011 * a;
       else if (inst.spec.idle === "bob") o.dy += Math.sin(t * 0.7 + inst.phase) * 0.08 * a;
       if (inst.on) for (const s of inst.sprites) s.s.scale.setScalar(s.k * (1 + 0.05 * Math.sin(t * 2.6 + inst.phase)));
+      const tick = inst.holder.userData.tick as ((t: number, dt: number) => void) | undefined;
+      if (tick) tick(t, dt);                                  // a prop that animates its own parts (the dog)
       if (inst.kick) {                                       // a kicked ball: along the floor and up, turning as it rolls
         const next = stepBall(inst.kick, dt, BALL_BOUNDS[0], BALL_BOUNDS[1]);
         inst.base.px = next.x;
@@ -791,7 +809,13 @@ export function createPropFx(deps: PropFxDeps) {
 
   return {
     register, tap, update, reset, activate, screenPos, nameOf,
-    pickFruit, liftFruit, carryFruit, dropFruit, eatFruit, lightsOut, squish, kickBall,
+    pickFruit, liftFruit, carryFruit, dropFruit, eatFruit, lightsOut, squish, kickBall, cue, nearby,
+    /** Flutter a prop's pages (the book being read) without a tap. */
+    flutter: useFlutter,
+    /** Say a prop's name (caption and voice), exactly as a tap does, without reacting. */
+    say: announce,
+    /** Show or hide a prop (the guitar while Kip is playing it). */
+    setVisible: (inst: PropInst, visible: boolean) => { inst.holder.visible = visible; },
     /** A tap on a fruit the drag handler already picked (it said "no move", so it was a tap): says its name and reacts like `tap` does. */
     tapFruitRef: (ref: FruitRef) => tapFruit(ref.mesh, ref.kind),
     list: () => insts.slice(),

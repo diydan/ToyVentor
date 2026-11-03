@@ -1,4 +1,4 @@
-// Hand-authored clips for the in-game Character (Kip): eat, sour, belly_pat, yawn, sleep, hug, kick and cheer.
+// Hand-authored clips for the in-game Character (Kip): eat, sour, belly_pat, yawn, sleep, hug, kick, cheer, read, strum, blow and pet.
 //
 // The world's character has only the five baked Mixamo actions (dance, nod, no, sneak, sad), so nothing in the game could eat or sleep
 // (docs/specs/playful-interactions-spec.md). Mixamo needs an Adobe login, so these are written by hand, as keyframes, and BAKED INTO THE SAME
@@ -92,6 +92,36 @@ const LIE_FORWARD = 0.5;
 export const KICK_CONTACT_S = 0.42;
 /** The first, deeper squeeze of the `hug` clip (seconds): a heart floats up on this cue. */
 export const HUG_SQUEEZE_S = 0.8;
+/** When each page of the `read` clip turns (seconds): the world says a name on each. */
+export const READ_PAGES_S: readonly number[] = [0.9, 3.1, 5.3];
+/** When each strum of the `strum` clip lands (seconds): a chord on each. */
+export const STRUM_EVERY_S = 0.28;
+export const STRUM_COUNT = 14;
+/** When Kip puffs in the `blow` clip (seconds): a burst of bubbles on each. */
+export const BLOW_PUFFS_S: readonly number[] = [0.6, 1.0, 1.4, 1.8];
+/** The strokes of the `pet` clip (seconds): the hand lands on the dog's back on each. */
+export const PET_STROKES_S: readonly number[] = [0.7, 1.1, 1.5, 1.9];
+
+/** Read a book held in both hands: the head down on the page, and at each of READ_PAGES_S the right hand flicks a page over and the head lifts for a moment. 6.6 s. */
+const readKeys: Key[] = [
+  { t: 0 },
+  { t: 0.5, armL: [0.25, -0.45, 0.85], armR: [-0.25, -0.45, 0.85], body: [0.08, 0, 0], head: [0.3, 0, 0] },
+];
+for (const t of READ_PAGES_S) {
+  readKeys.push({ t: t - 0.15, armR: [-0.25, -0.45, 0.85], head: [0.3, 0, 0] });
+  readKeys.push({ t, armR: [-0.1, -0.1, 0.99], head: [0.05, 0, 0.04] });
+  readKeys.push({ t: t + 0.35, armR: [-0.25, -0.45, 0.85], head: [0.3, 0, 0] });
+}
+readKeys.push({ t: 6.6, armL: REST.armL, armR: REST.armR, body: [0, 0, 0], head: [0, 0, 0] });
+
+/** Strum a guitar held across the body: the left hand on the neck out front, the right hand brushing the strings in time (one strum each STRUM_EVERY_S), the body swaying and bobbing, the head nodding. 4.4 s. */
+const strumKeys: Key[] = [{ t: 0 }, { t: 0.2, armL: [0.2, -0.2, 0.97], armR: [-0.3, -0.35, 0.9], body: [0.04, 0, 0.06], head: [0.12, 0, 0] }];
+for (let i = 0; i < STRUM_COUNT; i++) {
+  const t = 0.2 + (i + 1) * STRUM_EVERY_S;
+  const down = i % 2 === 0;
+  strumKeys.push({ t, armR: down ? [-0.3, -0.72, 0.62] : [-0.3, -0.35, 0.9], body: [0.04, 0, down ? -0.06 : 0.06], head: [down ? 0.2 : 0.1, 0, 0], hips: [0, down ? 0.02 : 0, 0] });
+}
+strumKeys.push({ t: 4.4, armL: REST.armL, armR: REST.armR, body: [0, 0, 0], head: [0, 0, 0], hips: [0, 0, 0] });
 
 /** Authored in real angles. Each is the whole motion, ending back at rest so it can blend out cleanly. */
 export const PROCEDURAL_CLIPS: ClipBank = {
@@ -153,6 +183,27 @@ export const PROCEDURAL_CLIPS: ClipBank = {
     { t: 0.85, armL: [0.3, 0.92, 0.2], armR: [-0.3, 0.92, 0.2], hips: [0, 0.04, 0] },
     { t: 1.3, armL: REST.armL, armR: REST.armR, head: [0, 0, 0], hips: [0, 0, 0] },
   ]),
+  // Read a book aloud, turning a page at each of READ_PAGES_S. 6.6 s.
+  read: bake("read", 6.6, false, readKeys),
+  // Strum a guitar. 4.4 s.
+  strum: bake("strum", 4.4, false, strumKeys),
+  // Blow bubbles through a wand: the right hand brings it to the mouth, four puffs (BLOW_PUFFS_S) with the head going back and forward, then the hand lowers. 3.6 s.
+  blow: bake("blow", 3.6, false, [
+    { t: 0 },
+    { t: 0.45, armR: HAND_TO_MOUTH, head: [0.1, 0, 0], body: [0.02, 0, 0] },
+    ...BLOW_PUFFS_S.flatMap((t): Key[] => [{ t: t - 0.12, head: [0.18, 0, 0], body: [0.06, 0, 0] }, { t, head: [-0.1, 0, 0], body: [-0.05, 0, 0] }]),
+    { t: 2.2, head: [0.05, 0, 0], body: [0, 0, 0] },
+    { t: 2.7, armR: HAND_TO_MOUTH },
+    { t: 3.6, armR: REST.armR, head: [0, 0, 0], body: [0, 0, 0] },
+  ]),
+  // Pet a dog: lean forward and crouch a little, the right hand reaching down in front and stroking four times (PET_STROKES_S), the left hand resting on the knee, the head down. 2.6 s.
+  pet: bake("pet", 2.6, false, [
+    { t: 0 },
+    { t: 0.45, armR: [-0.2, -0.55, 0.8], armL: [0.3, -0.75, 0.45], body: [0.3, 0, 0], head: [0.25, 0, 0], hips: [0, -0.1, 0.1] },
+    ...PET_STROKES_S.flatMap((t, i): Key[] => [{ t: t - 0.2, armR: [-0.2, -0.7, 0.7] }, { t, armR: [-0.2, -0.5, 0.85], head: [0.25 - (i % 2) * 0.04, 0, 0] }]),
+    { t: 2.2, armR: [-0.2, -0.6, 0.78], body: [0.25, 0, 0] },
+    { t: 2.6, armR: REST.armR, armL: REST.armL, body: [0, 0, 0], head: [0, 0, 0], hips: [0, 0, 0] },
+  ]),
   // Asleep on its back, held until released: a true 90 degrees (after the driver's body gain), arms and legs along the body, head on the pillow,
   // a slow breath (the chest rises) and a slight head roll. The hips lift the body clear of the surface it lies on. 4 s, loops.
   sleep: bake("sleep", 4, true, [
@@ -163,4 +214,4 @@ export const PROCEDURAL_CLIPS: ClipBank = {
 };
 
 /** The names, for the driver's action type and for tests. */
-export const PROCEDURAL_ACTIONS = Object.keys(PROCEDURAL_CLIPS) as Array<"eat" | "sour" | "belly_pat" | "yawn" | "sleep" | "hug" | "kick" | "cheer">;
+export const PROCEDURAL_ACTIONS = Object.keys(PROCEDURAL_CLIPS) as Array<"eat" | "sour" | "belly_pat" | "yawn" | "sleep" | "hug" | "kick" | "cheer" | "read" | "strum" | "blow" | "pet">;
