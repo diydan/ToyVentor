@@ -449,7 +449,7 @@ describe("kip viewer build wiring", () => {
 
 describe("kip menu: the Party group (docs/specs/dance-party-spec.md 5.1)", () => {
   const stateful = () => {
-    const s = { on: false, mood: "bouncy", tempo: "medium", band: "0", started: 0, stopped: 0 };
+    const s = { on: false, mood: "bouncy", tempo: "medium", dance: "auto", song: "practice", click: false, band: "0", started: 0, stopped: 0 };
     return {
       s,
       party: {
@@ -457,7 +457,12 @@ describe("kip menu: the Party group (docs/specs/dance-party-spec.md 5.1)", () =>
         moods: [{ value: "bouncy", label: "Bouncy" }, { value: "sleepy", label: "Sleepy" }],
         tempos: [{ value: "slow", label: "Slow (90)" }, { value: "medium", label: "Medium (110)" }],
         bands: [{ value: "0", label: "2–3" }, { value: "2", label: "5–6" }],
-        mood: () => s.mood, tempo: () => s.tempo, band: () => s.band,
+        songs: () => [{ value: "practice", label: "Practice beat (made here)" }, { value: "bouncy_b", label: "Bouncy: Hop, Skip, Jump (109)" }],
+        song: () => s.song, setSong: (v: string) => { s.song = v; },
+        click: () => s.click, setClick: (v: boolean) => { s.click = v; },
+        dances: () => [{ value: "auto", label: "Auto (the tempo picks)" }, { value: "dance_silly", label: "Silly Dance (×1.02)" }],
+        mood: () => s.mood, tempo: () => s.tempo, dance: () => s.dance, band: () => s.band,
+        setDance: (v: string) => { s.dance = v; },
         start: () => { s.on = true; s.started++; }, stop: () => { s.on = false; s.stopped++; },
         setMood: (v: string) => { s.mood = v; }, setTempo: (v: string) => { s.tempo = v; }, setBand: (v: string) => { s.band = v; },
         status: () => (s.on ? "Hip Hop · 110 bpm · 3 · taps 4" : "Pick a mood"),
@@ -478,7 +483,7 @@ describe("kip menu: the Party group (docs/specs/dance-party-spec.md 5.1)", () =>
   it("has an on switch, the mood, tempo and age pickers, and a readout, and each does what it says", () => {
     const { s, party } = stateful();
     const ctx = ctxWith(party);
-    expect(ids(ctx).filter((i: string) => i.startsWith("party"))).toEqual(["partyOn", "partyMood", "partyTempo", "partyBand", "partyInfo"]);
+    expect(ids(ctx).filter((i: string) => i.startsWith("party"))).toEqual(["partyOn", "partySong", "partyMood", "partyTempo", "partyDance", "partyBand", "partyClick", "partyInfo"]);
     expect(byId(ctx, "partyOn").get()).toBe(false);
     byId(ctx, "partyOn").set(true);
     expect([s.on, s.started]).toEqual([true, 1]);
@@ -488,6 +493,22 @@ describe("kip menu: the Party group (docs/specs/dance-party-spec.md 5.1)", () =>
     byId(ctx, "partyMood").set("sleepy");
     byId(ctx, "partyTempo").set("slow");
     byId(ctx, "partyBand").set("2");
+    expect(byId(ctx, "partySong").get()).toBe("practice");
+    expect(resolveOptions(byId(ctx, "partySong")).map((o: any) => o.value)).toEqual(["practice", "bouncy_b"]);
+    // the practice beat's own pickers are only there while the practice beat is the song
+    expect(byId(ctx, "partyMood").visibleWhen()).toBe(true);
+    expect(byId(ctx, "partyTempo").visibleWhen()).toBe(true);
+    byId(ctx, "partySong").set("bouncy_b");
+    expect(byId(ctx, "partySong").get()).toBe("bouncy_b");
+    expect(byId(ctx, "partyMood").visibleWhen()).toBe(false);
+    expect(byId(ctx, "partyTempo").visibleWhen()).toBe(false);
+    expect(byId(ctx, "partyClick").get()).toBe(false);
+    byId(ctx, "partyClick").set(true);
+    expect(byId(ctx, "partyClick").get()).toBe(true);
+    expect(byId(ctx, "partyDance").get()).toBe("auto");
+    byId(ctx, "partyDance").set("dance_silly");
+    expect(byId(ctx, "partyDance").get()).toBe("dance_silly");
+    expect(resolveOptions(byId(ctx, "partyDance")).map((o: any) => o.value)).toEqual(["auto", "dance_silly"]);
     expect([byId(ctx, "partyMood").get(), byId(ctx, "partyTempo").get(), byId(ctx, "partyBand").get()]).toEqual(["sleepy", "slow", "2"]);
     expect(resolveOptions(byId(ctx, "partyTempo")).map((o: any) => o.label)).toEqual(["Slow (90)", "Medium (110)"]);
     expect(byId(ctx, "partyInfo").text()).toBe("Pick a mood");

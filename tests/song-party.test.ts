@@ -5,7 +5,7 @@
 import { describe, expect, it } from "vitest";
 import { MAX_BEATS, beatAt, clipTime, type BeatMap, type DanceClip } from "../shared/songBeat";
 import { MOODS, TEMPOS, TEMPO_BPM } from "../shared/songCards";
-import { newTapRun, partyFrame, planParty, practiceBeatMap, registerTap, tapFlashes, tapSummary } from "../shared/songParty";
+import { fittingClips, newTapRun, partyFrame, planParty, practiceBeatMap, registerTap, tapFlashes, tapSummary, type PartyClip } from "../shared/songParty";
 import { LOOP_BEATS, MAX_MIDI, MIN_MIDI, MOOD_SYNTH, loopEvents, midiToHz } from "../shared/songSynth";
 
 const DANCES: DanceClip[] = [
@@ -106,6 +106,91 @@ describe("planning a party from a tempo", () => {
     const a = planParty(125, DANCES, 0).dance!.clip.id;
     const b = planParty(125, DANCES, 1).dance!.clip.id;
     expect(a).not.toBe(b);
+  });
+});
+
+// ---- choosing a move ----------------------------------------------------------------------------------------------------------------
+
+describe("the Dance picker: choosing a move instead of letting the tempo pick", () => {
+  const CLIPS: PartyClip[] = [
+    { id: "dance_sway", bpm: 80, beats: 8, group: "dance" },
+    { id: "dance_boogie", bpm: 120, beats: 16, group: "dance" },
+    { id: "dance_silly", bpm: 125.22, beats: 8, group: "dance" },
+    { id: "move_jacks", bpm: 112.5, beats: 2, group: "move" }, // a movement-break move: never picked by the tempo, only chosen
+    { id: "music_guitar", bpm: 100.7, beats: 8, group: "music" },
+    { id: "dance_chicken", bpm: 0, beats: 0, group: "dance" }, // no tempo: never offered
+  ];
+
+  it("lists every clip a tempo fits, nearest its natural speed first, and none outside a quarter either way", () => {
+    const fit = fittingClips(110, CLIPS);
+    expect(fit.map((f) => f.clip.id)).toEqual(["move_jacks", "dance_boogie", "music_guitar", "dance_silly"]); // rates 0.98, 0.92, 1.09, 0.88
+    for (const f of fit) {
+      expect(f.rate).toBeGreaterThanOrEqual(0.8 - 1e-12);
+      expect(f.rate).toBeLessThanOrEqual(1.25 + 1e-12);
+    }
+    expect(fittingClips(110, CLIPS).some((f) => f.clip.id === "dance_chicken")).toBe(false);
+    expect(fittingClips(200, CLIPS)).toEqual([]);
+    expect(fittingClips(85, CLIPS).map((f) => f.clip.id)).toEqual(["dance_sway", "music_guitar"]); // the jacks would have to run at 0.76 of their speed
+  });
+
+  /** The picker's rules as a function of the planner, so it can be run on a broken one. Returns the failures. */
+  function pickerFailures(plan: typeof planParty): string[] {
+    const bad: string[] = [];
+    const id = (p: ReturnType<typeof planParty>) => p.dance?.clip.id ?? null;
+    if (id(plan(110, CLIPS, 0, "dance_silly")) !== "dance_silly") bad.push("a chosen clip that fits must be played");
+    const p1 = plan(110, CLIPS, 0, "dance_silly");
+    if (!p1.chosen || p1.fellBack) bad.push("a chosen clip must say it was chosen");
+    if (id(plan(110, CLIPS, 0, "move_jacks")) !== "move_jacks") bad.push("a movement-break move can be chosen");
+    if (id(plan(110, CLIPS, 0, "music_guitar")) !== "music_guitar") bad.push("the guitar strum can be chosen");
+    const unfit = plan(85, CLIPS, 0, "dance_silly"); // 85 / 125 = 0.68: too slow for this dance
+    if (id(unfit) === "dance_silly") bad.push("a clip that does not fit the tempo must NOT be stretched to it");
+    if (!unfit.fellBack || unfit.chosen) bad.push("an unfit choice must fall back and say so");
+    if (id(unfit) !== "dance_sway") bad.push(`the fallback is the tempo's own pick, got ${id(unfit)}`);
+    for (const bpm of [64, 80, 90, 100, 110, 120, 128, 140]) {
+      const auto = plan(bpm, CLIPS);
+      const kind = CLIPS.find((c) => c.id === auto.dance?.clip.id)?.group; // the clip's real group, not whatever the planner under test says
+      if (auto.dance && kind !== "dance") bad.push(`the tempo picked a ${kind} at ${bpm} bpm; only dances are picked automatically`);
+      if (auto.chosen) bad.push("an automatic pick is not a chosen one");
+    }
+    if (id(plan(110, CLIPS, 0, "nonsense")) === "nonsense") bad.push("an id that is not a clip is never played");
+    if (id(plan(110, CLIPS, 0, "dance_chicken")) === "dance_chicken") bad.push("a clip with no tempo is never played");
+    return bad;
+  }
+
+  it("follows the picker's rules: choose what fits, never stretch, never pick a move automatically", () => {
+    expect(pickerFailures(planParty)).toEqual([]);
+  });
+
+  it("fails the same rules on a planner that stretches a chosen clip to any tempo (so the check can fail)", () => {
+    const stretcher: typeof planParty = (bpm, clips, variant, choose) => {
+      const hit = choose ? clips.find((c) => c.id === choose && c.bpm > 0) : undefined;
+      return hit ? { songBpm: bpm, dance: { clip: hit, rate: bpm / hit.bpm }, chosen: true, fellBack: false } : planParty(bpm, clips, variant, choose);
+    };
+    expect(pickerFailures(stretcher).length).toBeGreaterThan(0);
+  });
+
+  it("fails the same rules on a planner that lets the tempo pick a movement-break move", () => {
+    const greedy: typeof planParty = (bpm, clips, variant, choose) => planParty(bpm, clips.map((c) => ({ ...c, group: "dance" })), variant, choose);
+    expect(pickerFailures(greedy).length).toBeGreaterThan(0);
+  });
+
+  it("choosing nothing is exactly what the tempo picks, and the plan is the same shape as before", () => {
+    for (let bpm = 64; bpm <= 150; bpm++) {
+      expect(planParty(bpm, CLIPS, 0, null)).toEqual(planParty(bpm, CLIPS));
+      expect(planParty(bpm, CLIPS, 0, undefined)).toEqual(planParty(bpm, CLIPS));
+    }
+    expect(planParty(110, CLIPS).fellBack).toBe(false);
+  });
+
+  it("a chosen move is held on the beat the same way (its tempo is its beats per loop)", () => {
+    const plan = planParty(112.5, CLIPS, 0, "move_jacks");
+    const map = practiceBeatMap(112.5);
+    const iv = 60 / 112.5;
+    for (let k = 0; k < 12; k++) {
+      const f = partyFrame(plan, map, k * iv);
+      expect(f.danceId).toBe("move_jacks");
+      expect(f.danceTime!).toBeCloseTo((k % 2) * iv, 9); // 2 beats per jack
+    }
   });
 });
 
@@ -264,5 +349,91 @@ describe("tapping the beat, by age band", () => {
       expect(beatAt(map, t).index).toBe(k);
       expect(clipTime(map, t, { bpm: 120, beats: 16 })).toBeCloseTo((k % 16) * 0.5, 9);
     }
+  });
+});
+
+// ---- the starter library ------------------------------------------------------------------------------------------------------------------
+
+import { MAX_SONG_BYTES, parseSongIndex, songBeatMap, songInterval } from "../shared/songParty";
+
+describe("the starter library's index is checked before anything is played", () => {
+  const good = () => ({ id: "bouncy_b", title: "Hop, Skip, Jump", mood: "bouncy", file: "bouncy_b.m4a", bytes: 657392, dur: 63.866, bpm: 108.99, beats: 116, bars: 29, offset: 0.02, ai: true });
+  const idx = (songs: unknown[]) => ({ v: 1, songs });
+
+  /** The checks as a function of the parser, so they can be run on a broken one. Returns the failures. */
+  function indexFailures(parse: typeof parseSongIndex): string[] {
+    const bad: string[] = [];
+    const kept = (over: Record<string, unknown>) => parse(idx([{ ...good(), ...over }])).songs.length === 1;
+    if (!kept({})) bad.push("a good song must be kept");
+    const refuse: [string, Record<string, unknown>][] = [
+      ["a path in the file name", { file: "../../etc/passwd.m4a" }],
+      ["a file that is not m4a", { file: "bouncy_b.exe" }],
+      ["an id with a slash", { id: "a/b" }],
+      ["a mood that is not a card", { mood: "scary" }],
+      ["a tempo no dance follows", { bpm: 220, dur: (60 * 116) / 220 }],
+      ["a length that does not match the tempo", { dur: 90 }],
+      ["a loop that is not whole bars", { beats: 115, bars: 28.75 }],
+      ["a song not labelled as made by AI", { ai: false }],
+      ["a huge file", { bytes: MAX_SONG_BYTES + 1 }],
+      ["an offset past the first beat", { offset: 2 }],
+    ];
+    for (const [why, over] of refuse) if (kept(over)) bad.push(`must refuse ${why}`);
+    return bad;
+  }
+
+  it("keeps a good song and refuses each thing that cannot be trusted", () => {
+    expect(indexFailures(parseSongIndex)).toEqual([]);
+  });
+
+  it("fails the same checks on a parser that trusts the index (so the check can fail)", () => {
+    const trusting: typeof parseSongIndex = (raw) => ({ songs: ((raw as { songs: unknown[] }).songs ?? []) as never, skipped: [] });
+    expect(indexFailures(trusting).length).toBeGreaterThan(5);
+  });
+
+  it("leaves a bad song out and names why, keeps the others, refuses a duplicate id, and reads nonsense as an empty library", () => {
+    const r = parseSongIndex(idx([good(), { ...good(), id: "bad one" }, { ...good(), file: "zz.m4a" }]));
+    expect(r.songs.map((s) => s.id)).toEqual(["bouncy_b"]);
+    expect(r.skipped).toHaveLength(2);
+    expect(parseSongIndex(idx([good(), good()])).skipped.join()).toContain("duplicate");
+    for (const junk of [null, undefined, 5, "x", [], { v: 2, songs: [] }, { v: 1 }, { v: 1, songs: "no" }]) expect(parseSongIndex(junk).songs, String(junk)).toEqual([]);
+    expect(parseSongIndex(idx([null, 5, "x", []])).songs).toEqual([]);
+  });
+
+  it("keeps only the fields it checked (no extra field rides along into the page)", () => {
+    const withExtra = { ...good(), evil: "<script>", source: { prompt: "x" } };
+    expect(Object.keys(parseSongIndex(idx([withExtra])).songs[0]!).sort()).toEqual(["ai", "bars", "beats", "bpm", "bytes", "dur", "file", "id", "mood", "offset", "title"]);
+  });
+});
+
+describe("a library song's beat grid", () => {
+  const song = { dur: 63.866, beats: 116, offset: 0.02 };
+
+  it("puts beat k at offset + k x interval, from the exact loop length", () => {
+    const m = songBeatMap(song);
+    const iv = songInterval(song);
+    expect(iv).toBeCloseTo(63.866 / 116, 12);
+    for (const k of [0, 1, 57, 115, 116, 117, 500, 1000]) expect(m.beats[k]!).toBeCloseTo(0.02 + k * iv, 9);
+  });
+
+  it("is on the beat at every loop of the file: the first beat of loop n is exactly n x the loop length after the first beat of loop 0", () => {
+    const m = songBeatMap(song);
+    for (let n = 1; n < 9; n++) expect(m.beats[n * song.beats]! - m.beats[0]!).toBeCloseTo(n * song.dur, 7);
+  });
+
+  it("covers a ten-minute party, and a dance held to it stays on its beat across loops", () => {
+    const m = songBeatMap(song, 600);
+    expect(m.beats[m.beats.length - 1]!).toBeGreaterThan(590);
+    const plan = planParty(109, DANCES);
+    const clip = plan.dance!.clip;
+    const loop = clip.beats * (60 / clip.bpm);
+    for (let k = 0; k < m.beats.length - 1; k += 37) {
+      const f = partyFrame(plan, m, m.beats[k]!);
+      expect(f.danceTime!, `beat ${k}`).toBeCloseTo((k % clip.beats) * (60 / clip.bpm), 6);
+      expect(f.danceTime!).toBeLessThan(loop);
+    }
+  });
+
+  it("refuses a loop whose tempo no party can follow (30 bpm: 4 beats in 8 s)", () => {
+    expect(() => songBeatMap({ dur: 8, beats: 4, offset: 0 })).toThrow();
   });
 });

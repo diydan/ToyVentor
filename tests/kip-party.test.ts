@@ -74,25 +74,36 @@ describe("party mode wiring", () => {
     expect(page).toMatch(/let partyApi = null;/); // declared before the frame loop can run, so the loop can ask it safely
   });
 
-  it("the page only offers dances that carry a tempo, from the procedural set and the baked clips", () => {
+  it("the page offers the clips that carry a tempo, from the procedural dances and the baked dances, moves and strum", () => {
     const page = read("parts/kip/viewer/kip-bench.js");
     expect(page).toContain("entry.group === 'dance' && entry.bpm");
-    expect(page).toContain("item.baked.group === 'dance' && item.baked.beats");
+    expect(page).toContain("['dance', 'move', 'music'].includes(item.baked.group) && item.baked.beats");
   });
 
   it("the party ends when the bench stands down (a Workshop tab switch) or the page is hidden, and does not listen after dispose", () => {
     const page = read("parts/kip/viewer/kip-bench.js");
     const standDown = page.slice(page.indexOf("function setActive(on)"), page.indexOf("return { root: benchRoot"));
-    expect(standDown).toContain("partyApi?.stop()");
-    expect(standDown.indexOf("partyApi?.stop()")).toBeGreaterThan(standDown.indexOf("} else {")); // in the way-out branch, not the way in
+    expect(standDown).toContain("partyApi?.stop('tab')");
+    expect(standDown.indexOf("partyApi?.stop('tab')")).toBeGreaterThan(standDown.indexOf("} else {")); // in the way-out branch, not the way in
     const glue = read("parts/kip/viewer/kip-party.js");
     expect(glue).toContain("addEventListener('visibilitychange'");
     expect(glue).toContain("removeEventListener('visibilitychange'");
     expect(glue).toContain("document.hidden");
+    expect(glue).toContain("api.stop('hidden')"); // and it records WHY a party ended (state().ended), for \"it stopped by itself\"
+    for (const reason of ["'other-clip'", "'time'", "'switch'", "'error'"]) expect(glue).toContain(reason);
   });
 
   it("the status line names a baked clip by its label, not its id", () => {
     expect(read("parts/kip/viewer/kip-bench.js")).toContain("(clipChoices.find(c => c.id === activeClipName) || {}).label");
+  });
+
+  it("the tap makes the audio context BEFORE it fetches the song (Safari starts sound only from the gesture itself), and a failure says why", () => {
+    const glue = read("parts/kip/viewer/kip-party.js");
+    const start = glue.slice(glue.indexOf("async function start()"), glue.indexOf("/** Everything undone:"));
+    expect(start).toContain("audio.unlock()");
+    expect(start.indexOf("audio.unlock()")).toBeLessThan(start.indexOf("await host.loadSongData"));
+    expect(start.indexOf("audio.unlock()")).toBeLessThan(start.search(/\bawait\b/)); // before the FIRST await of any kind
+    expect(start).toMatch(/The song could not be played \(\$\{why\}\)/);
   });
 
   it("the glue never keeps time of its own: one clock, the audio clock", () => {

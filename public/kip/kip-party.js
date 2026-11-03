@@ -11,7 +11,8 @@
 //   party.menu            what the menu's Party group reads (buildPartyGroup in kip-menu.js)
 //
 // `host` is the bench's side (it owns the rig):
-//   dances()                 [{ id, bpm, beats }] the clips that carry a tempo (procedural and baked dances)
+//   dances()                 [{ id, bpm, beats, group, label }] every clip that carries a tempo: the dances (picked by the tempo), and the movement-break
+//                            moves and the guitar strum (offered only when a child chooses them in the Dance picker)
 //   label(id)                the clip's menu label
 //   playClip(id)             start the clip the way the menu does
 //   holdClip(id, seconds)    freeze the clip at that time (called every frame while dancing)
@@ -21,20 +22,26 @@
 //   glow(level, beatIndex)   0 to 1 flash on the headphones (0 clears it)
 //   ring(level, downbeat)    0 to 1 flash on the floor ring (0 clears it)
 //   band()                   the age band 0 to 5
-// No storage, no network.
+//   loadSongIndex()          Promise of the starter library's index.json (raw: it is checked here before anything is played), or null
+//   loadSongData(file)       Promise of a song file's bytes (an ArrayBuffer)
+// No storage, and no network of its own: the bench fetches, the glue only decides.
 import {
   MOODS,
   TEMPOS,
   TEMPO_BPM,
   beatPlayFor,
   buildSongRequest,
+  fittingClips,
   loopEvents,
   midiToHz,
   newTapRun,
+  parseSongIndex,
   partyFrame,
   planParty,
   practiceBeatMap,
   registerTap,
+  songBeatMap,
+  songInterval,
   tapFlashes,
   tapSummary,
 } from './kip-party-core.js?v=10.0';
@@ -52,7 +59,8 @@ export function mountParty(host) {
   const st = {
     on: false, starting: false,
     mood: 'bouncy', tempo: 'medium', band: Number.isInteger(host.band?.()) ? host.band() : 1,
-    bpm: TEMPO_BPM.medium, plan: null, map: null, run: null, frame: null, frameT: -Infinity,
+    song: 'practice', songs: [], note: '', ended: '', bufferSeconds: 0,
+    dance: 'auto', bpm: TEMPO_BPM.medium, plan: null, map: null, run: null, frame: null, frameT: -Infinity,
     worn: false, flash: 0, lastOutcome: null,
   };
   const now = () => performance.now(); // only ever used to ask the audio clock where the song is; the party keeps no time of its own
@@ -63,29 +71,75 @@ export function mountParty(host) {
     api.tap(at);
   }
   host.stage?.addEventListener('pointerdown', onTap);
+  // The starter library: whatever the index lists and passes the checks. A missing or broken index leaves just the practice beat.
+  Promise.resolve(host.loadSongIndex ? host.loadSongIndex() : null)
+    .then((raw) => { if (raw) st.songs = parseSongIndex(raw).songs; })
+    .catch(() => { st.songs = []; });
   // a hidden page plays no party: the sound would go on with nobody looking, and a phone locked mid-dance should not keep playing
-  const onVisibility = () => { if (typeof document !== 'undefined' && document.hidden) api.stop(); };
+  const onVisibility = () => { if (typeof document !== 'undefined' && document.hidden) api.stop('hidden'); };
   if (typeof document !== 'undefined') document.addEventListener('visibilitychange', onVisibility);
+
+  /** The clip the child chose, or null for Auto. */
+  const chosenId = () => (st.dance === 'auto' ? null : st.dance);
+  /** The tempo the party is (or would be) at: the running song's, else the tempo card's. */
+  const chosenSong = () => (st.song === 'practice' ? null : st.songs.find((x) => x.id === st.song) ?? null);
+  const currentBpm = () => (st.on || st.starting ? st.bpm : chosenSong() ? chosenSong().bpm : TEMPO_BPM[st.tempo]);
+  /** What the Dance picker offers at this tempo: Auto, then every clip that fits it (nearest its natural speed first), each with the speed it would play at. */
+  function danceOptions() {
+    const fit = fittingClips(currentBpm(), host.dances());
+    return [
+      { value: 'auto', label: 'Auto (the tempo picks)' },
+      ...fit.map(({ clip, rate }) => ({ value: clip.id, label: `${host.label(clip.id)} (${clip.group === 'dance' || !clip.group ? '' : clip.group + ', '}×${rate.toFixed(2)})` })),
+    ];
+  }
+  /** A chosen clip that no longer fits the tempo goes back to Auto (a move is never stretched to a tempo it does not fit). */
+  function dropChoiceIfUnfit() {
+    if (st.dance !== 'auto' && !fittingClips(currentBpm(), host.dances()).some((f) => f.clip.id === st.dance)) st.dance = 'auto';
+  }
+
+  /**
+   * Re-plan while the party plays (the child picked another dance): the sound keeps going, the old clip is let go and the new one takes over on the
+   * same song clock, so it is on the beat from its first frame.
+   */
+  function replan() {
+    if (!st.on || !st.plan) return;
+    const before = st.plan.dance?.clip.id ?? null;
+    st.plan = planParty(st.bpm, host.dances(), 0, chosenId());
+    const after = st.plan.dance?.clip.id ?? null;
+    if (before === after) return;
+    if (before) host.releaseClip(before);
+    if (after) host.playClip(after);
+    st.frame = null;
+  }
 
   async function start() {
     if (st.on || st.starting) return false;
+    const song = chosenSong();
     const req = buildSongRequest({ mood: st.mood, tempo: st.tempo });
     if (!req.ok) return false;
     st.starting = true;
+    st.note = '';
+    audio.unlock(); // inside the tap, before anything is fetched (see unlock): a song's file has to be awaited and Safari would not start sound after that
     try {
-      st.bpm = req.bpm;
-      st.plan = planParty(req.bpm, host.dances());
-      st.map = practiceBeatMap(req.bpm, PARTY_SECONDS);
+      st.bpm = song ? 60 / songInterval(song) : req.bpm;
+      st.plan = planParty(st.bpm, host.dances(), 0, chosenId());
+      st.map = song ? songBeatMap(song, PARTY_SECONDS) : practiceBeatMap(req.bpm, PARTY_SECONDS);
       st.run = newTapRun(st.band);
+      // the file is fetched BEFORE anything on the rig changes, so a song that cannot be had leaves Kip exactly as he was
+      const data = song ? await host.loadSongData(song.file) : null;
       st.worn = Boolean(host.headphones?.wear());
       if (st.plan.dance) host.playClip(st.plan.dance.clip.id);
-      await audio.start({ mood: st.mood, bpm: req.bpm });
+      if (song) st.bufferSeconds = (await audio.startSong({ data, offset: song.offset, interval: songInterval(song), loopSeconds: song.dur })).bufferSeconds;
+      else await audio.start({ mood: st.mood, bpm: req.bpm });
       st.on = true;
       st.flash = 0;
       st.lastOutcome = null;
       return true;
     } catch (err) {
       console.warn('party could not start', err);
+      st.ended = 'error';
+      const why = String(err && err.message ? err.message : err).slice(0, 90);
+      st.note = song ? `The song could not be played (${why}): the practice beat is still here.` : `The party could not start (${why}).`;
       finish();
       return false;
     } finally {
@@ -94,8 +148,9 @@ export function mountParty(host) {
   }
 
   /** Everything undone: sound off, the clip released, the glow cleared, the old crown back. Safe to call twice. */
-  function finish() {
+  function finish(reason = 'switch') {
     const wasDancing = st.plan?.dance?.clip.id;
+    st.ended = reason; // why the party ended (the switch, another clip, a hidden page, the Workshop tab, the ten minutes, an error): `state().ended`, for "it stopped by itself"
     st.on = false;
     audio.stop();
     if (wasDancing) host.releaseClip(wasDancing);
@@ -108,9 +163,9 @@ export function mountParty(host) {
     st.frameT = -Infinity;
   }
 
-  function stop() {
+  function stop(reason = 'switch') {
     if (!st.on && !st.starting) return;
-    finish();
+    finish(reason);
   }
 
   function update(dt) {
@@ -119,12 +174,12 @@ export function mountParty(host) {
     // The browser refreshes its output position now and then and the estimate between refreshes can land a few milliseconds behind the last frame: the DANCE
     // never steps backwards (the audio is untouched, and a tap is timed from its own event, not from this).
     const t = Math.max(audio.songTime(now()), st.frameT);
-    if (t > PARTY_SECONDS - 1) { stop(); return; }
+    if (t > PARTY_SECONDS - 1) { stop('time'); return; }
     const f = partyFrame(st.plan, st.map, t);
     st.frame = f;
     st.frameT = t;
     if (f.danceId) {
-      if (host.activeClip() !== f.danceId) { stop(); return; } // the child picked another clip: the party is over
+      if (host.activeClip() !== f.danceId) { stop('other-clip'); return; } // the child picked another clip: the party is over
       host.holdClip(f.danceId, f.danceTime);
     }
     const level = Math.max(f.pulse, st.flash);
@@ -146,7 +201,7 @@ export function mountParty(host) {
   }
 
   function describe() {
-    if (!st.on && !st.starting) return 'Pick a mood, a tempo and the ages, then switch Party on. Tap the stage on the beat.';
+    if (!st.on && !st.starting) return st.note || 'Pick a song (or the practice beat), the ages and a dance, then switch Party on. Tap the stage on the beat.';
     const plan = st.plan;
     const dance = plan?.dance ? host.label(plan.dance.clip.id) : 'lights only (no dance fits this tempo)';
     const f = st.frame;
@@ -154,14 +209,16 @@ export function mountParty(host) {
     const play = beatPlayFor(st.band);
     const tapNote = play.judged ? `on the beat ${sum.hits}/${sum.taps}` : `taps ${sum.taps}`;
     const heads = st.worn ? '' : ' · no headphones on this head';
-    return `${dance} · ${Math.round(st.bpm)} bpm · ${f ? f.count : '–'} · ${tapNote}${heads}`;
+    const song = chosenSong();
+    const source = song ? `${song.title} (made by AI)` : 'practice beat';
+    return `${source} · ${dance} · ${Math.round(st.bpm)} bpm · ${f ? f.count : '–'} · ${tapNote}${heads}`;
   }
 
   function state() {
     const f = st.frame;
     const sum = st.run ? tapSummary(st.run) : { taps: 0, hits: 0, meanAbsErrorMs: 0 };
     return {
-      on: st.on, mood: st.mood, tempo: st.tempo, band: st.band, bpm: st.bpm,
+      on: st.on, ended: st.ended, startedAt: audio.startedAt, bufferSeconds: st.bufferSeconds, song: st.song, songs: st.songs.map((x) => x.id), click: audio.isClick(), note: st.note, mood: st.mood, tempo: st.tempo, band: st.band, bpm: st.bpm, dance: st.dance, chosen: Boolean(st.plan?.chosen), fellBack: Boolean(st.plan?.fellBack),
       danceId: st.plan?.dance?.clip.id ?? null, lightsOnly: Boolean(st.plan && !st.plan.dance),
       headphones: st.worn, songTime: st.on ? audio.songTime(now()) : 0,
       count: f ? f.count : null, pulse: f ? f.pulse : 0, danceTime: f ? f.danceTime : null, frameSongTime: Number.isFinite(st.frameT) ? st.frameT : 0,
@@ -171,9 +228,16 @@ export function mountParty(host) {
   }
 
   const api = {
-    start, stop, update, tap, state,
+    start, stop: (reason) => stop(reason), update, tap, state,
+    /** 'practice' or a library song's id. */
+    setSong(id) { if (id === 'practice' || st.songs.some((x) => x.id === id)) { st.song = id; dropChoiceIfUnfit(); restartIfOn(); } },
+    setClick(on) { audio.setClick(Boolean(on)); },
     setMood(m) { if (MOODS.includes(m)) { st.mood = m; restartIfOn(); } },
-    setTempo(t) { if (TEMPOS.includes(t)) { st.tempo = t; restartIfOn(); } },
+    setTempo(t) { if (TEMPOS.includes(t)) { st.tempo = t; dropChoiceIfUnfit(); restartIfOn(); } },
+    /** 'auto' or a clip id from the picker. A clip that does not fit the tempo is ignored (the picker never offers one). */
+    setDance(id) {
+      if (id === 'auto' || fittingClips(currentBpm(), host.dances()).some((f) => f.clip.id === id)) { st.dance = id; replan(); }
+    },
     setBand(b) { if (Number.isInteger(b) && b >= 0 && b < PARTY_BANDS.length) { st.band = b; if (st.run) st.run = newTapRun(b); } },
     setGain: (g) => audio.setGain(g),
     dispose() {
@@ -187,12 +251,20 @@ export function mountParty(host) {
       moods: MOODS.map((m) => ({ value: m, label: cap(m) })),
       tempos: TEMPOS.map((t) => ({ value: t, label: `${cap(t)} (${TEMPO_BPM[t]})` })),
       bands: PARTY_BANDS.map((label, i) => ({ value: String(i), label })),
+      songs: () => [{ value: 'practice', label: 'Practice beat (made here)' }, ...st.songs.map((x) => ({ value: x.id, label: `${cap(x.mood)}: ${x.title} (${Math.round(x.bpm)})` }))],
+      song: () => (chosenSong() ? st.song : 'practice'),
+      click: () => audio.isClick(),
+      setClick: (on) => api.setClick(on),
+      setSong: (id) => api.setSong(id),
       mood: () => st.mood,
       tempo: () => st.tempo,
+      dances: danceOptions,
+      dance: () => { dropChoiceIfUnfit(); return st.dance; },
       band: () => String(st.band),
-      start, stop,
+      start, stop: () => stop('switch'),
       setMood: (m) => api.setMood(m),
       setTempo: (t) => api.setTempo(t),
+      setDance: (d) => api.setDance(d),
       setBand: (b) => api.setBand(Number(b)),
       status: describe,
     },

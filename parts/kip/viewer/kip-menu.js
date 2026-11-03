@@ -15,7 +15,7 @@
 //   ctx.ready()               true once the scene is built
 //   ctx.camera                three PerspectiveCamera (recentred with setViewOffset)
 //   ctx.selfie                optional { open(), remove() }; without it there are no selfie controls
-//   ctx.party                 optional party adapter (kip-party.js `party.menu`: isOn moods tempos bands mood tempo band start stop setMood setTempo setBand status);
+//   ctx.party                 optional party adapter (kip-party.js `party.menu`: isOn songs moods tempos bands dances song mood tempo band dance click start stop setSong setMood setTempo setBand setDance setClick status);
 //                             without it there is no Party group
 //   ctx.print                 optional print-view adapter; without it there is no Print group:
 //                             isOn() setOn(bool) busy() summary() plateCount() plateIndex() setPlate(i) download(kind)
@@ -374,18 +374,31 @@ export function buildPartyGroup(party) {
       { kind: 'toggle', id: 'partyOn', label: 'Party',
         title: 'Put on the headphones, play a practice beat and dance on the beat. Tap the stage along with it.',
         get: () => party.isOn(), set: (v) => { if (v) party.start(); else party.stop(); } },
+      sel('partySong', 'Song', {
+        title: 'The practice beat, or one of the starter songs (made by AI with Mureka: instrumental, an excerpt, looped on its beat)',
+        options: () => party.songs(), get: () => party.song(), set: (v) => party.setSong(v),
+      }),
       sel('partyMood', 'Mood', {
         title: 'The feel of the practice beat',
+        visibleWhen: () => party.song() === 'practice',
         options: () => party.moods, get: () => party.mood(), set: (v) => party.setMood(v),
       }),
       sel('partyTempo', 'Tempo', {
         title: 'Slow, medium or fast (beats a minute in brackets); the dance is the one that fits it',
+        visibleWhen: () => party.song() === 'practice',
         options: () => party.tempos, get: () => party.tempo(), set: (v) => party.setTempo(v),
+      }),
+      sel('partyDance', 'Dance', {
+        title: 'Auto lets the tempo pick the dance. Or choose a move: only those that fit this tempo are listed (the number is how much faster or slower than its own speed it plays)',
+        options: () => party.dances(), get: () => party.dance(), set: (v) => party.setDance(v),
       }),
       sel('partyBand', 'Ages', {
         title: 'The age band: the youngest two tap anywhere, from 5 to 6 a tap must land on the beat to flash',
         options: () => party.bands, get: () => party.band(), set: (v) => party.setBand(v),
       }),
+      { kind: 'toggle', id: 'partyClick', label: 'Beat click',
+        title: 'A tick on every beat, higher on the 1 of each bar, over the music: to hear whether the beat is where the dance thinks it is',
+        get: () => party.click(), set: (v) => party.setClick(v) },
       { kind: 'info', id: 'partyInfo', title: 'The dance, the tempo, the count and your taps', text: () => party.status() },
     ],
   };

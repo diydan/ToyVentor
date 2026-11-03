@@ -32,6 +32,23 @@ import from the Worker and retain the local box parser in `shared/sam.ts`.
   data rule in `docs/specs/forge-ai-spec.md`) and out of any dataset exported from this repository.
 - The earlier sample clips (Xbot, Michelle) are the three.js ones above; the hand-built clips in `kip-clips.js` are original work.
 
+## Mureka-generated starter songs (Kip bench, dance party)
+
+- Source: instrumental songs generated with the Mureka API (`https://api.mureka.ai`, model `mureka-9`) on the project owner's own paid API account on
+  2026-11-03, one request per mood card, each from a fixed prompt built only from the song maker's closed lists (a mood, a tempo, up to two instruments;
+  "Instrumental only: no vocals, no lyrics, no spoken words"; `shared/songCards.ts`). The prompt, model, task id and date of every song are recorded in
+  `public/kip/songs/index.json`, and a test checks each prompt is exactly the one the cards make.
+- What ships: `public/kip/songs/`, about 64-second excerpts (a whole number of bars from the middle of each song, cut on its beat grid) encoded as MP3 at
+  96 kb/s (every browser decodes MP3, including the open-source Chromium builds that leave AAC out) and levelled in loudness, labelled "made by AI" in the app. The full-length originals stay in the git-ignored `.local/songs/` on the owner's machine
+  and are never committed.
+- Terms: Mureka's published FAQ says content generated through paid API calls carries full commercial usage rights (read in `docs/specs/mureka-api-reference.md`),
+  and the owner confirmed the licence from his own account (`docs/specs/dance-party-spec.md` D9). Mureka also appends an audio watermark to the END of generated
+  files (its FAQ and changelog); the excerpts are cut from the middle of each song and do not include the end of the file. Recheck Mureka's current terms,
+  including this watermark, before release.
+- Tools: the beat of each song is measured by our own code (`shared/songAnalyze.ts`); cutting and encoding use FFmpeg as a command-line tool on the developer's
+  machine (`scripts/song-ingest.ts`); FFmpeg is not shipped.
+- The API key lives only in `.dev.vars` (git-ignored) and is never printed or written anywhere (`scripts/mureka-songs.ts`).
+
 ## Rubik and Figtree typefaces (self-hosted)
 
 - Files: `public/fonts/rubik-latin.woff2`, `public/fonts/rubik-latin-ext.woff2`,

@@ -1223,7 +1223,7 @@ async function init() {
   for (const entry of KIP_CLIPS) {
     actions.set(entry.id, kipMixer.clipAction(makeKipClip(THREE, entry)));
     registerClip(entry.id, entry.label);
-    if (entry.group === 'dance' && entry.bpm) danceTempos.push({ id: entry.id, bpm: entry.bpm, beats: entry.beats }); // the party picks from these
+    if (entry.group === 'dance' && entry.bpm) danceTempos.push({ id: entry.id, bpm: entry.bpm, beats: entry.beats, group: 'dance' }); // the party picks from these
   }
 
   xbotVis.scale.multiplyScalar(83.5);
@@ -1262,7 +1262,8 @@ async function init() {
       if (!item) continue;
       actions.set(item.baked.id, kipMixer.clipAction(bakedToClip(THREE, item.baked)));
       registerClip(item.baked.id, item.c.label);
-      if (item.baked.group === 'dance' && item.baked.beats) danceTempos.push({ id: item.baked.id, bpm: item.baked.bpm, beats: item.baked.beats });
+      // a baked clip with a tempo is offered to the party: a dance is picked by the tempo, a movement-break move or a guitar strum only when a child chooses it
+      if (['dance', 'move', 'music'].includes(item.baked.group) && item.baked.beats) danceTempos.push({ id: item.baked.id, bpm: item.baked.bpm, beats: item.baked.beats, group: item.baked.group });
     }
   } catch (err) {
     console.warn('baked Mixamo clips not loaded', err);
@@ -3257,6 +3258,13 @@ const selfie = mountSelfie({
     selfieBefore = null;
   },
 });
+  // the starter library (public/kip/songs/, scripts/song-ingest.ts): the party checks the index before it plays anything from it
+  loadSongIndex: async () => { const r = await fetch('/kip/songs/index.json'); return r.ok ? r.json() : null; },
+  loadSongData: async (file) => {
+    const r = await fetch(`/kip/songs/${encodeURIComponent(file)}`);
+    if (!r.ok) throw new Error(`song ${file}: HTTP ${r.status}`);
+    return r.arrayBuffer();
+  },
 globals.kipSelfie = selfie;
 const leaveSelfie = () => { if (loco.expr === 'selfie') selfie.remove(); };
 // The menu: one panel for every bench (stage 4c). Hosted, the Workshop's panel (`env.sharedMenu`) shows this bench's declaration while it is active; mounted on its own the bench has its own.
@@ -3384,7 +3392,7 @@ function setActive(on) {
     if (kip && kipSession.state.source) adoptSharedDriverState();
     showMenu();
   } else {
-    partyApi?.stop(); // a party does not play on in a tab the child has left: the sound stops and the crown is put back
+    partyApi?.stop('tab'); // a party does not play on in a tab the child has left: the sound stops and the crown is put back
     sharedPrint?.release('kip'); // plates open on this bench's character close first, so the pose saved below is the bench's own
     menuHost.hide('kip');
     kipSession.release('kip');

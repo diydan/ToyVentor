@@ -13,6 +13,7 @@
  *
  * Pure: no DOM, no audio, no clock. Times are seconds of SONG time (the audio clock minus the song's start), supplied by the caller.
  */
+import { MOODS, type Mood } from "./songCards";
 import {
   MAX_BEATS,
   TAP_WINDOW_MS,
@@ -23,26 +24,59 @@ import {
   judgeTap,
   makeBeatMap,
   pickDance,
+  tempoRate,
   type BeatMap,
   type BeatPlace,
   type DanceClip,
 } from "./songBeat";
 
+/** A clip the party can play to a song: the tempo it was authored at, and what kind of move it is. */
+export interface PartyClip extends DanceClip {
+  /** `dance` (picked automatically), or `move` / `music` (a movement-break move, a guitar strum): offered only when a child chooses it. */
+  group?: string;
+  label?: string;
+}
+
 export interface PartyPlan {
   songBpm: number;
   /** The dance the tempo fits, or `null`: then the party is lights only, it never stretches a dance (3.3). */
-  dance: { clip: DanceClip; rate: number } | null;
+  dance: { clip: PartyClip; rate: number } | null;
+  /** True when this clip was CHOSEN by the child (the Dance picker), false when the tempo picked it. */
+  chosen: boolean;
+  /** True when a clip was asked for but does not fit this tempo, so the tempo's own pick was used. */
+  fellBack: boolean;
+}
+
+const usable = (clips: readonly PartyClip[]) => clips.filter((d) => d.bpm > 0 && Number.isInteger(d.beats) && d.beats > 0);
+
+/**
+ * Every clip a tempo fits (a quarter either way, 3.3), nearest its natural speed first, then by id. This is what the Dance picker offers: a move that
+ * cannot fit is not on the list, so nothing is ever stretched.
+ */
+export function fittingClips(songBpm: number, clips: readonly PartyClip[]): { clip: PartyClip; rate: number }[] {
+  return usable(clips)
+    .map((clip) => ({ clip, ...tempoRate(songBpm, clip.bpm) }))
+    .filter((c) => c.inRange)
+    .sort((a, b) => Math.abs(Math.log(a.rate)) - Math.abs(Math.log(b.rate)) || (a.clip.id < b.clip.id ? -1 : a.clip.id > b.clip.id ? 1 : 0))
+    .map(({ clip, rate }) => ({ clip, rate }));
 }
 
 /**
- * `dances` are the clips that carry a tempo (kip-clips.js dances and the baked Mixamo ones). `variant` steps down the fitting list, for a second
- * Kip or the next song. A clip without a positive `bpm` and a whole `beats` is never picked.
+ * `clips` are everything that carries a tempo (kip-clips.js dances and the baked Mixamo ones: dances, movement-break moves, a guitar strum). With no
+ * `choose` the tempo picks, among the `dance` clips only (a clip with no group counts as a dance); `variant` steps down that list, for a second Kip or the
+ * next song. With `choose` (a clip id) that clip is played if it fits this tempo, whatever its group; if it does not fit, the tempo's own pick is used and
+ * `fellBack` says so. A clip without a positive `bpm` and a whole `beats` is never picked or offered.
  */
-export function planParty(songBpm: number, dances: readonly DanceClip[], variant = 0): PartyPlan {
-  const usable = dances.filter((d) => d.bpm > 0 && Number.isInteger(d.beats) && d.beats > 0);
-  const pick = pickDance(songBpm, usable, variant);
-  const clip = pick ? usable.find((d) => d.id === pick.id) : undefined;
-  return { songBpm, dance: pick && clip ? { clip, rate: pick.rate } : null };
+export function planParty(songBpm: number, clips: readonly PartyClip[], variant = 0, choose?: string | null): PartyPlan {
+  const fit = fittingClips(songBpm, clips);
+  if (choose) {
+    const hit = fit.find((f) => f.clip.id === choose);
+    if (hit) return { songBpm, dance: hit, chosen: true, fellBack: false };
+  }
+  const dances = usable(clips).filter((d) => d.group === undefined || d.group === "dance");
+  const pick = pickDance(songBpm, dances, variant);
+  const clip = pick ? dances.find((d) => d.id === pick.id) : undefined;
+  return { songBpm, dance: pick && clip ? { clip, rate: pick.rate } : null, chosen: false, fellBack: Boolean(choose) };
 }
 
 /**
@@ -129,6 +163,79 @@ export function registerTap(run: TapRun, map: BeatMap, songTime: number, opts: {
 export function tapSummary(run: TapRun): { taps: number; hits: number; meanAbsErrorMs: number } {
   const e = run.errors;
   return { taps: run.taps, hits: run.hits, meanAbsErrorMs: e.length ? e.reduce((s, x) => s + Math.abs(x), 0) / e.length : 0 };
+}
+
+// ---- the starter library -----------------------------------------------------------------------------------------------------------
+
+/**
+ * One song of the starter library (public/kip/songs/index.json, written by scripts/song-ingest.ts): an excerpt of a Mureka song, a whole number of bars long,
+ * cut ON its beat grid so it loops in time. `offset` is when its first beat (a downbeat) sounds; `dur` is the exact loop length, `beats` x one beat.
+ */
+export interface LibrarySong {
+  id: string;
+  title: string;
+  mood: Mood;
+  file: string;
+  bytes: number;
+  dur: number;
+  bpm: number;
+  beats: number;
+  bars: number;
+  offset: number;
+  ai: true;
+}
+
+const SONG_ID = /^[a-z0-9_]{1,40}$/;
+const SONG_FILE = /^[a-z0-9_]{1,40}\.(mp3|m4a)$/;
+/** Songs are small excerpts (about 64 s, under a megabyte): anything bigger is not one of ours. */
+export const MAX_SONG_BYTES = 3_000_000;
+export const MIN_SONG_BPM = 64;
+export const MAX_SONG_BPM = 170;
+
+/**
+ * The library index as it came over the network, checked field by field: a song that does not pass is left out and named, never played. Only songs
+ * from our own folder with a plain file name, a tempo the dances can follow, a loop that is a whole number of bars at that tempo, and the AI label.
+ */
+export function parseSongIndex(raw: unknown): { songs: LibrarySong[]; skipped: string[] } {
+  const out: LibrarySong[] = [];
+  const skipped: string[] = [];
+  const list = typeof raw === "object" && raw !== null && !Array.isArray(raw) && (raw as { v?: unknown }).v === 1 ? (raw as { songs?: unknown }).songs : null;
+  if (!Array.isArray(list)) return { songs: [], skipped: ["the index is not a version 1 song list"] };
+  const seen = new Set<string>();
+  for (const item of list) {
+    const s = (typeof item === "object" && item !== null ? item : {}) as Record<string, unknown>;
+    const id = typeof s.id === "string" ? s.id : "?";
+    const bad = (why: string) => { skipped.push(`${id}: ${why}`); };
+    const num = (x: unknown): x is number => typeof x === "number" && Number.isFinite(x);
+    if (typeof s.id !== "string" || !SONG_ID.test(s.id)) { bad("id"); continue; }
+    if (seen.has(s.id)) { bad("duplicate id"); continue; }
+    if (typeof s.title !== "string" || s.title.length < 1 || s.title.length > 40) { bad("title"); continue; }
+    if (typeof s.mood !== "string" || !(MOODS as readonly string[]).includes(s.mood)) { bad("mood"); continue; }
+    if (typeof s.file !== "string" || !SONG_FILE.test(s.file)) { bad("file name"); continue; }
+    if (!num(s.bytes) || !Number.isInteger(s.bytes) || s.bytes < 1 || s.bytes > MAX_SONG_BYTES) { bad("size"); continue; }
+    if (!num(s.dur) || s.dur < 8 || s.dur > 180) { bad("length"); continue; }
+    if (!num(s.beats) || !Number.isInteger(s.beats) || s.beats < 8 || s.beats > 400 || s.beats % 4 !== 0) { bad("beats must be a whole number of bars"); continue; }
+    if (!num(s.bars) || s.bars * 4 !== s.beats) { bad("bars"); continue; }
+    if (!num(s.bpm) || s.bpm < MIN_SONG_BPM || s.bpm > MAX_SONG_BPM) { bad("tempo outside what the dances follow"); continue; }
+    if (Math.abs((60 * s.beats) / s.dur - s.bpm) / s.bpm > 0.01) { bad("length does not match the tempo"); continue; }
+    if (!num(s.offset) || s.offset < 0 || s.offset >= 0.5) { bad("offset"); continue; }
+    if (s.ai !== true) { bad("not labelled as made by AI"); continue; }
+    seen.add(s.id);
+    out.push({ id: s.id, title: s.title, mood: s.mood as Mood, file: s.file, bytes: s.bytes, dur: s.dur, bpm: s.bpm, beats: s.beats, bars: s.bars, offset: s.offset, ai: true });
+  }
+  return { songs: out, skipped };
+}
+
+/** Seconds from one beat to the next: the exact loop length divided by its beats, so a looping song stays on its grid however long the party runs. */
+export const songInterval = (song: Pick<LibrarySong, "dur" | "beats">): number => song.dur / song.beats;
+
+/** The beat grid of a library song looped for `seconds` of party: beat k at `offset + k x interval`, exact because the file is cut on that grid. */
+export function songBeatMap(song: Pick<LibrarySong, "dur" | "beats" | "offset">, seconds = 600): BeatMap {
+  const iv = songInterval(song);
+  const n = Math.min(MAX_BEATS, Math.max(8, Math.floor((seconds - song.offset) / iv)));
+  const r = makeBeatMap(Array.from({ length: n }, (_, i) => song.offset + i * iv));
+  if (!r.ok) throw new Error(`songBeatMap: not a beat grid a party can follow (${r.reason})`);
+  return r.map;
 }
 
 // The browser bundle (public/kip/kip-party-core.js, built from this file) carries these too, so the page imports ONE module.

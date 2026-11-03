@@ -1,0 +1,443 @@
+{
+ "v": 1,
+ "songs": [
+  {
+   "id": "bouncy_a",
+   "title": "Bounce Along",
+   "mood": "bouncy",
+   "asked": {
+    "tempo": "medium",
+    "instruments": [
+     "xylophone"
+    ],
+    "bpm": 110
+   },
+   "file": "bouncy_a.mp3",
+   "bytes": 529180,
+   "dur": 44.0386,
+   "bpm": 108.9953,
+   "beats": 80,
+   "bars": 20,
+   "offset": 0.02,
+   "loop": true,
+   "ai": true,
+   "source": {
+    "task": "169995017453569",
+    "model": "mureka-9",
+    "prompt": "A bouncy and playful children's tune, medium pace, about 110 BPM, featuring xylophone. Instrumental only: no vocals, no lyrics, no spoken words.",
+    "madeAt": "2026-11-03T20:39:58.397Z",
+    "fullSeconds": 78.8,
+    "excerptFrom": 11.119
+   },
+   "analysis": {
+    "gridRmsMs": 9.4,
+    "gridMaxMs": 25.5,
+    "tempoStrength": 1.4,
+    "alternateBpm": null,
+    "downbeatMargin": 1.49
+   }
+  },
+  {
+   "id": "bouncy_b",
+   "title": "Hop, Skip, Jump",
+   "mood": "bouncy",
+   "asked": {
+    "tempo": "medium",
+    "instruments": [
+     "xylophone"
+    ],
+    "bpm": 110
+   },
+   "file": "bouncy_b.mp3",
+   "bytes": 767103,
+   "dur": 63.8596,
+   "bpm": 108.989,
+   "beats": 116,
+   "bars": 29,
+   "offset": 0.02,
+   "loop": true,
+   "ai": true,
+   "source": {
+    "task": "169995017453569",
+    "model": "mureka-9",
+    "prompt": "A bouncy and playful children's tune, medium pace, about 110 BPM, featuring xylophone. Instrumental only: no vocals, no lyrics, no spoken words.",
+    "madeAt": "2026-11-03T20:39:58.397Z",
+    "fullSeconds": 167.8,
+    "excerptFrom": 18.014
+   },
+   "analysis": {
+    "gridRmsMs": 5.1,
+    "gridMaxMs": 17.5,
+    "tempoStrength": 1.44,
+    "alternateBpm": null,
+    "downbeatMargin": 1.24
+   }
+  },
+  {
+   "id": "sleepy_a",
+   "title": "Moonlight Rock",
+   "mood": "sleepy",
+   "asked": {
+    "tempo": "slow",
+    "instruments": [
+     "piano",
+     "bells"
+    ],
+    "bpm": 90
+   },
+   "file": "sleepy_a.mp3",
+   "bytes": 768670,
+   "dur": 63.9856,
+   "bpm": 82.5186,
+   "beats": 88,
+   "bars": 22,
+   "offset": 0.02,
+   "loop": true,
+   "ai": true,
+   "source": {
+    "task": "169995239686146",
+    "model": "mureka-9",
+    "prompt": "A soft, gentle and sleepy, like a lullaby children's tune, slow, about 90 BPM, featuring piano and bells. Instrumental only: no vocals, no lyrics, no spoken words.",
+    "madeAt": "2026-11-03T20:41:50.946Z",
+    "fullSeconds": 163.8,
+    "excerptFrom": 31.357
+   },
+   "analysis": {
+    "gridRmsMs": 4.5,
+    "gridMaxMs": 14.1,
+    "tempoStrength": 1.02,
+    "alternateBpm": 82.5,
+    "downbeatMargin": 1
+   }
+  },
+  {
+   "id": "sleepy_b",
+   "title": "Cozy Clouds",
+   "mood": "sleepy",
+   "asked": {
+    "tempo": "slow",
+    "instruments": [
+     "piano",
+     "bells"
+    ],
+    "bpm": 90
+   },
+   "file": "sleepy_b.mp3",
+   "bytes": 768984,
+   "dur": 64.0034,
+   "bpm": 89.9953,
+   "beats": 96,
+   "bars": 24,
+   "offset": 0.02,
+   "loop": true,
+   "ai": true,
+   "source": {
+    "task": "169995239686146",
+    "model": "mureka-9",
+    "prompt": "A soft, gentle and sleepy, like a lullaby children's tune, slow, about 90 BPM, featuring piano and bells. Instrumental only: no vocals, no lyrics, no spoken words.",
+    "madeAt": "2026-11-03T20:41:50.946Z",
+    "fullSeconds": 149,
+    "excerptFrom": 29.1
+   },
+   "analysis": {
+    "gridRmsMs": 4.4,
+    "gridMaxMs": 10.2,
+    "tempoStrength": 1.14,
+    "alternateBpm": 179.75,
+    "downbeatMargin": 1.06
+   }
+  },
+  {
+   "id": "silly_a",
+   "title": "Silly Parade",
+   "mood": "silly",
+   "asked": {
+    "tempo": "fast",
+    "instruments": [
+     "trumpet"
+    ],
+    "bpm": 128
+   },
+   "file": "silly_a.mp3",
+   "bytes": 776194,
+   "dur": 64.6158,
+   "bpm": 129.9991,
+   "beats": 140,
+   "bars": 35,
+   "offset": 0.02,
+   "loop": true,
+   "ai": true,
+   "source": {
+    "task": "169995239751681",
+    "model": "mureka-9",
+    "prompt": "A silly and goofy, like a cartoon children's tune, fast and lively, about 128 BPM, featuring trumpet. Instrumental only: no vocals, no lyrics, no spoken words.",
+    "madeAt": "2026-11-03T20:41:32.136Z",
+    "fullSeconds": 98.1,
+    "excerptFrom": 11.43
+   },
+   "analysis": {
+    "gridRmsMs": 7.8,
+    "gridMaxMs": 26.9,
+    "tempoStrength": 1.49,
+    "alternateBpm": null,
+    "downbeatMargin": 1.11
+   }
+  },
+  {
+   "id": "silly_b",
+   "title": "Goofy Gallop",
+   "mood": "silly",
+   "asked": {
+    "tempo": "fast",
+    "instruments": [
+     "trumpet"
+    ],
+    "bpm": 128
+   },
+   "file": "silly_b.mp3",
+   "bytes": 765849,
+   "dur": 63.751,
+   "bpm": 127.9979,
+   "beats": 136,
+   "bars": 34,
+   "offset": 0.02,
+   "loop": true,
+   "ai": true,
+   "source": {
+    "task": "169995239751681",
+    "model": "mureka-9",
+    "prompt": "A silly and goofy, like a cartoon children's tune, fast and lively, about 128 BPM, featuring trumpet. Instrumental only: no vocals, no lyrics, no spoken words.",
+    "madeAt": "2026-11-03T20:41:32.136Z",
+    "fullSeconds": 101.7,
+    "excerptFrom": 15.814
+   },
+   "analysis": {
+    "gridRmsMs": 5.1,
+    "gridMaxMs": 18.1,
+    "tempoStrength": 1.27,
+    "alternateBpm": null,
+    "downbeatMargin": 1.22
+   }
+  },
+  {
+   "id": "space_a",
+   "title": "Orbit Dance",
+   "mood": "space",
+   "asked": {
+    "tempo": "medium",
+    "instruments": [
+     "synth",
+     "bells"
+    ],
+    "bpm": 110
+   },
+   "file": "space_a.mp3",
+   "bytes": 774313,
+   "dur": 64.4543,
+   "bpm": 107.9835,
+   "beats": 116,
+   "bars": 29,
+   "offset": 0.02,
+   "loop": true,
+   "ai": true,
+   "source": {
+    "task": "169995239686145",
+    "model": "mureka-9",
+    "prompt": "A dreamy space adventure with twinkly sounds children's tune, medium pace, about 110 BPM, featuring soft synth and bells. Instrumental only: no vocals, no lyrics, no spoken words.",
+    "madeAt": "2026-11-03T20:41:56.862Z",
+    "fullSeconds": 147.2,
+    "excerptFrom": 55.66
+   },
+   "analysis": {
+    "gridRmsMs": 4.5,
+    "gridMaxMs": 12.1,
+    "tempoStrength": 1.48,
+    "alternateBpm": null,
+    "downbeatMargin": 1.11
+   }
+  },
+  {
+   "id": "space_b",
+   "title": "Comet Trail",
+   "mood": "space",
+   "asked": {
+    "tempo": "medium",
+    "instruments": [
+     "synth",
+     "bells"
+    ],
+    "bpm": 110
+   },
+   "file": "space_b.mp3",
+   "bytes": 771492,
+   "dur": 64.2204,
+   "bpm": 108.3767,
+   "beats": 116,
+   "bars": 29,
+   "offset": 0.02,
+   "loop": true,
+   "ai": true,
+   "source": {
+    "task": "169995239686145",
+    "model": "mureka-9",
+    "prompt": "A dreamy space adventure with twinkly sounds children's tune, medium pace, about 110 BPM, featuring soft synth and bells. Instrumental only: no vocals, no lyrics, no spoken words.",
+    "madeAt": "2026-11-03T20:41:56.862Z",
+    "fullSeconds": 146.3,
+    "excerptFrom": 11.706
+   },
+   "analysis": {
+    "gridRmsMs": 6.1,
+    "gridMaxMs": 20.8,
+    "tempoStrength": 1.37,
+    "alternateBpm": null,
+    "downbeatMargin": 1.15
+   }
+  },
+  {
+   "id": "kitchen_b",
+   "title": "Pots and Pans",
+   "mood": "kitchen",
+   "asked": {
+    "tempo": "medium",
+    "instruments": [
+     "guitar",
+     "maracas"
+    ],
+    "bpm": 110
+   },
+   "file": "kitchen_b.mp3",
+   "bytes": 781209,
+   "dur": 65.0429,
+   "bpm": 107.0064,
+   "beats": 116,
+   "bars": 29,
+   "offset": 0.02,
+   "loop": true,
+   "ai": true,
+   "source": {
+    "task": "169995239751682",
+    "model": "mureka-9",
+    "prompt": "A cheerful kitchen groove with a light swing children's tune, medium pace, about 110 BPM, featuring acoustic guitar and maracas. Instrumental only: no vocals, no lyrics, no spoken words.",
+    "madeAt": "2026-11-03T20:41:50.495Z",
+    "fullSeconds": 138.8,
+    "excerptFrom": 40.612
+   },
+   "analysis": {
+    "gridRmsMs": 5,
+    "gridMaxMs": 13.8,
+    "tempoStrength": 1.46,
+    "alternateBpm": null,
+    "downbeatMargin": 1.11
+   }
+  },
+  {
+   "id": "kitchen_c",
+   "title": "Spoon Shuffle",
+   "mood": "kitchen",
+   "asked": {
+    "tempo": "medium",
+    "instruments": [
+     "guitar",
+     "maracas"
+    ],
+    "bpm": 110
+   },
+   "file": "kitchen_c.mp3",
+   "bytes": 781209,
+   "dur": 65.0415,
+   "bpm": 107.0086,
+   "beats": 116,
+   "bars": 29,
+   "offset": 0.02,
+   "loop": true,
+   "ai": true,
+   "source": {
+    "task": "169997727170561",
+    "model": "mureka-9",
+    "prompt": "A cheerful kitchen groove with a light swing children's tune, medium pace, about 110 BPM, featuring acoustic guitar and maracas. Instrumental only: no vocals, no lyrics, no spoken words.",
+    "madeAt": "2026-11-03T21:01:11.216Z",
+    "fullSeconds": 95.4,
+    "excerptFrom": 9.217
+   },
+   "analysis": {
+    "gridRmsMs": 5.2,
+    "gridMaxMs": 17,
+    "tempoStrength": 1.49,
+    "alternateBpm": null,
+    "downbeatMargin": 1.18
+   }
+  },
+  {
+   "id": "cleanup_a",
+   "title": "Tidy-Up March",
+   "mood": "cleanup",
+   "asked": {
+    "tempo": "fast",
+    "instruments": [
+     "drums"
+    ],
+    "bpm": 128
+   },
+   "file": "cleanup_a.mp3",
+   "bytes": 765849,
+   "dur": 63.7483,
+   "bpm": 128.0034,
+   "beats": 136,
+   "bars": 34,
+   "offset": 0.02,
+   "loop": true,
+   "ai": true,
+   "source": {
+    "task": "169995239948289",
+    "model": "mureka-9",
+    "prompt": "A upbeat tidy-up march with a steady driving beat children's tune, fast and lively, about 128 BPM, featuring drums. Instrumental only: no vocals, no lyrics, no spoken words.",
+    "madeAt": "2026-11-03T20:41:44.796Z",
+    "fullSeconds": 114.1,
+    "excerptFrom": 8.768
+   },
+   "analysis": {
+    "gridRmsMs": 6.5,
+    "gridMaxMs": 20.1,
+    "tempoStrength": 1.31,
+    "alternateBpm": null,
+    "downbeatMargin": 1.02
+   }
+  },
+  {
+   "id": "cleanup_b",
+   "title": "Sparkle Sweep",
+   "mood": "cleanup",
+   "asked": {
+    "tempo": "fast",
+    "instruments": [
+     "drums"
+    ],
+    "bpm": 128
+   },
+   "file": "cleanup_b.mp3",
+   "bytes": 765849,
+   "dur": 63.747,
+   "bpm": 128.006,
+   "beats": 136,
+   "bars": 34,
+   "offset": 0.02,
+   "loop": true,
+   "ai": true,
+   "source": {
+    "task": "169995239948289",
+    "model": "mureka-9",
+    "prompt": "A upbeat tidy-up march with a steady driving beat children's tune, fast and lively, about 128 BPM, featuring drums. Instrumental only: no vocals, no lyrics, no spoken words.",
+    "madeAt": "2026-11-03T20:41:44.796Z",
+    "fullSeconds": 153.2,
+    "excerptFrom": 63.96
+   },
+   "analysis": {
+    "gridRmsMs": 5.3,
+    "gridMaxMs": 18,
+    "tempoStrength": 1.52,
+    "alternateBpm": null,
+    "downbeatMargin": 1.04
+   }
+  }
+ ]
+}

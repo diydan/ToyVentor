@@ -6,7 +6,9 @@
 // read (shared/songParty.ts `practiceBeatMap`). The page asks `songTime()` for "where the song is" and everything else follows from that.
 //
 //   const audio = createPartyAudio({ AudioContextClass, loopEvents, midiToHz });
-//   await audio.start({ mood: 'bouncy', bpm: 105 });     // from a tap or click (browsers only allow sound after one)
+//   await audio.start({ mood: 'bouncy', bpm: 105 });     // the practice beat, from a tap or click (browsers only allow sound after one)
+//   await audio.startSong({ data, offset, interval, loopSeconds });  // a starter-library song (an ArrayBuffer of an MP3), looped on its beat grid
+//   audio.setClick(true);                                 // a tick on every beat, a higher one on the 1: to HEAR whether the beat map is right
 //   audio.songTime()                                      // seconds of song time that are being HEARD now (output latency removed)
 //   audio.stop();
 //
@@ -27,6 +29,19 @@ export const START_DELAY_S = 0.12;
 // the lead voice's waveform per mood: a lullaby is soft, a march is bright
 const LEAD_WAVE = { bouncy: 'square', sleepy: 'sine', silly: 'sawtooth', space: 'triangle', kitchen: 'square', cleanup: 'square' };
 
+/** What a file's first bytes say it is, for the message when a browser will not decode it: so "Unable to decode audio data" says what it was given. */
+export function describeBytes(buf) {
+  const n = buf ? buf.byteLength : 0;
+  const u = new Uint8Array(buf || 0, 0, Math.min(12, n));
+  const ascii = Array.from(u, (b) => (b >= 0x20 && b < 0x7f ? String.fromCharCode(b) : '.')).join('');
+  let kind = 'not an audio file this page knows';
+  if (n === 0) kind = 'an empty file';
+  else if (ascii.startsWith('<')) kind = 'a web page, not audio';
+  else if (ascii.slice(4, 8) === 'ftyp') kind = 'an MP4/AAC audio file';
+  else if (ascii.startsWith('ID3') || (u[0] === 0xff && (u[1] & 0xe0) === 0xe0)) kind = 'an MP3 file';
+  return `${n} bytes, ${kind}`;
+}
+
 const clampGain = (g) => Math.min(PARTY_GAIN_MAX, Math.max(0, Number.isFinite(g) ? g : PARTY_GAIN_DEFAULT));
 
 export function createPartyAudio({ AudioContextClass, loopEvents, midiToHz, gain = PARTY_GAIN_DEFAULT, schedule = (fn, ms) => setInterval(fn, ms), unschedule = (id) => clearInterval(id) }) {
@@ -38,6 +53,11 @@ export function createPartyAudio({ AudioContextClass, loopEvents, midiToHz, gain
   let startedAt = 0;
   let bpm = 0;
   let mood = 'bouncy';
+  let mode = 'synth'; // 'synth' (the practice beat) or 'song' (a library file)
+  let song = null;    // the playing BufferSource, in song mode
+  let grid = { offset: 0, interval: 0.5 }; // where the beats fall in song time: beat k at offset + k x interval
+  let clickOn = false;
+  let clickIdx = 0;
   let events = [];
   let loopBeats = 16;
   let idx = 0;       // next event of the loop to schedule
@@ -115,11 +135,26 @@ export function createPartyAudio({ AudioContextClass, loopEvents, midiToHz, gain
     }
   }
 
+  /** A short tick for the beat check: higher on the 1. Its own level, so it can be heard over a song. */
+  function clickAt(when, accent) {
+    tone(when, 'sine', accent ? 1760 : 1175, 1, 0.5, 0.001, 0.004, 0.035);
+  }
+  function tickClicks(horizon) {
+    for (let guard = 0; guard < 100; guard++) {
+      const when = startedAt + grid.offset + clickIdx * grid.interval;
+      if (when > horizon) break;
+      if (when >= ctx.currentTime - 0.01) clickAt(Math.max(when, ctx.currentTime), clickIdx % 4 === 0);
+      clickIdx++;
+    }
+  }
+
   /** Hand every event that falls before `ctx.currentTime + LOOKAHEAD_S` to the audio thread. Called by a timer; tests call it by hand. */
   function tick() {
     if (!running) return;
-    const secPerBeat = 60 / bpm;
     const horizon = ctx.currentTime + LOOKAHEAD_S;
+    if (clickOn) tickClicks(horizon);
+    if (mode !== 'synth') return; // a song is one buffer, started once; only the clicks are scheduled
+    const secPerBeat = 60 / bpm;
     for (let guard = 0; guard < 400; guard++) {
       const e = events[idx];
       const when = startedAt + (loops * loopBeats + e.beat) * secPerBeat;
@@ -130,31 +165,92 @@ export function createPartyAudio({ AudioContextClass, loopEvents, midiToHz, gain
     }
   }
 
+  /** A fresh context, resumed, with the master gain and compressor. Shared by the practice beat and a song. */
+  async function open() {
+    if (!ctx) ctx = new AudioContextClass(); // already made by unlock(), when the tap that started the party made it
+    if (ctx.state === 'suspended' && typeof ctx.resume === 'function') await ctx.resume();
+    const comp = ctx.createDynamicsCompressor();
+    master = ctx.createGain();
+    master.gain.setValueAtTime(level, ctx.currentTime);
+    master.connect(comp);
+    comp.connect(ctx.destination);
+  }
+
   return {
     /** Start the loop. Resolves with { startedAt }: the audio-clock time at which song time 0 (beat 0) sounds. Must follow a tap or click. */
     async start({ mood: m = 'bouncy', bpm: tempo }) {
       if (running) this.stop();
       if (!(tempo > 0)) throw new Error(`createPartyAudio.start: ${tempo} is not a tempo`);
-      ctx = new AudioContextClass();
-      if (ctx.state === 'suspended' && typeof ctx.resume === 'function') await ctx.resume();
+      await open();
+      mode = 'synth';
+      song = null;
       mood = m;
       bpm = tempo;
+      grid = { offset: 0, interval: 60 / tempo };
+      clickIdx = 0;
       events = loopEvents(m);
       loopBeats = 16;
       idx = 0;
       loops = 0;
       noise = makeNoise(ctx);
-      const comp = ctx.createDynamicsCompressor();
-      master = ctx.createGain();
-      master.gain.setValueAtTime(level, ctx.currentTime);
-      master.connect(comp);
-      comp.connect(ctx.destination);
       startedAt = ctx.currentTime + START_DELAY_S;
       running = true;
       tick();
       timer = schedule(tick, TICK_MS);
       return { startedAt };
     },
+    /**
+     * Make the audio context NOW and ask it to run. Call it synchronously inside the tap that starts the party, BEFORE anything is fetched: Safari (and
+     * iOS above all) only lets sound start from the gesture itself, and a song's file has to be fetched first, so a context made after that wait stays
+     * suspended and the song never plays. Safe to call twice; `start` and `startSong` use the context it made.
+     */
+    unlock() {
+      if (ctx) return;
+      ctx = new AudioContextClass();
+      if (ctx.state === 'suspended' && typeof ctx.resume === 'function') {
+        try { Promise.resolve(ctx.resume()).catch(() => {}); } catch { /* the real resume is awaited in open() */ }
+      }
+    },
+    /**
+     * Play a starter-library song: `data` is the file's bytes (an ArrayBuffer; decoding takes it), `offset` and `interval` are where its beats fall (the first
+     * beat at `offset`, one every `interval` seconds, the file cut on that grid), `loopSeconds` the exact loop length. It loops until stopped.
+     * Resolves with { startedAt, bufferSeconds }: song time 0 is the start of the file.
+     */
+    async startSong({ data, offset = 0, interval, loopSeconds }) {
+      if (running) this.stop();
+      if (!(interval > 0)) { this.stop(); throw new Error(`createPartyAudio.startSong: ${interval} is not a beat length`); }
+      await open();
+      let buffer;
+      try {
+        buffer = await ctx.decodeAudioData(data.slice(0)); // a copy: decoding takes the bytes it is given, and a failure should still be able to say what they were
+      } catch (err) {
+        const c = ctx; ctx = null; master = null;
+        try { c.close(); } catch { /* already closed */ }
+        throw new Error(`the song could not be decoded (${describeBytes(data)}): ${err && err.message ? err.message : err}`);
+      }
+      mode = 'song';
+      grid = { offset, interval };
+      clickIdx = 0;
+      bpm = 60 / interval;
+      song = ctx.createBufferSource();
+      song.buffer = buffer;
+      song.loop = true;
+      song.loopStart = 0;
+      song.loopEnd = Number.isFinite(loopSeconds) && loopSeconds > 0 ? Math.min(buffer.duration, loopSeconds) : buffer.duration;
+      song.connect(master);
+      startedAt = ctx.currentTime + START_DELAY_S;
+      song.start(startedAt);
+      running = true;
+      tick();
+      timer = schedule(tick, TICK_MS);
+      return { startedAt, bufferSeconds: buffer.duration };
+    },
+    /** The beat check: a tick on every beat (higher on the 1), on top of whatever is playing. */
+    setClick(on) {
+      clickOn = Boolean(on);
+      if (clickOn && ctx && running) clickIdx = Math.max(0, Math.ceil((ctx.currentTime - startedAt - grid.offset) / grid.interval));
+    },
+    isClick: () => clickOn,
     stop() {
       if (!running && !ctx) return;
       running = false;
@@ -164,6 +260,8 @@ export function createPartyAudio({ AudioContextClass, loopEvents, midiToHz, gain
         const c = ctx;
         setTimeout(() => { try { c.close(); } catch { /* already closed */ } }, 150);
       } catch { /* the context is gone; nothing to fade */ }
+      try { if (song) song.stop(); } catch { /* not started, or already stopped */ }
+      song = null;
       ctx = null; master = null; noise = null;
     },
     /**
