@@ -138,6 +138,48 @@ rejected, numbers are clamped, nothing is executed.
 - `shape.top`: `studs` (default) or `dome`; `shape.height_mm` 24–38 sets head
   height. `id` gets a `custom_` prefix server-side. Brand terms are rejected
   before and after the model call.
+- **Head relief limit (found 2026-11-03).** Heads flare out from the collar, so
+  the front wall leans forward 30° or more over its lower 20 mm, and a bump on
+  it may tilt only about 15° more before it passes the 45° overhang limit. Only
+  the receding upper part can carry relief. That is why a trunk, a lion mane
+  (sunk spheres, then hanging locks), floppy ears and a tall gorilla muzzle were
+  tried and dropped, while `brow` (a ramp underside) works. Supports are
+  allowed but not preferred (Dan, 2026-11-03), so none of these is built with
+  them. Custom heads may carry snouts, ribs and brows (Dan, 2026-11-03).
+  Worker allowlist carries `shape.top`, ear `z_frac`, spike `layout`, `ribs`,
+  `star`, `hollow`, `brow` (`tests/forge-recipe-passthrough.test.ts`). The
+  round-by-round ratings and fixes were cut from this file in the 2026-11-03
+  rewrite; they are in git history (`544b2eb`) and the Taste Check page.
+- **Hard rule: ears and horns never touch the crown studs (Dan, 2026-11-03).**
+  A head's ears and horns must not enter the keep-out over the hat pad (the pad
+  plus 3.5 mm). Zero tolerance (0.01 mm3, rounding noise). The fitter searches for
+  a clear placement first (move down, lean, move apart, shrink), then cuts the
+  pair by the keep-out, and a pair with nothing left is dropped and reported in
+  `features_dropped`. Last line of defence: `_enforce_stud_clearance` cuts any
+  pair that still overlaps, and the finished head is checked again and the job
+  fails rather than print ears that block the hat. Before this the fitter allowed
+  0.3 mm3 and, when nothing fitted, left the pair "where asked" on the seat.
+  Test: "HARD RULE: no ear or horn ever touches the crown studs". The keep-out is a
+  full-height column over the pad (a cut at the old box top left a flat underside
+  that failed P4), and each cut candidate must still pass the gate's own overhang
+  measure or the pair is left off.
+- **Daemon race found 2026-11-03.** `parts/partspec/preprint_check.py` keeps the
+  last ray-cast result in a module-level list (`_SAMPLED`), so two jobs gating in
+  the daemon's two worker threads can read each other's hits: one of six
+  concurrent jobs failed with an IndexError, the same recipe passing alone. The
+  daemon now runs the gate step under one lock (`_GATE_LOCK`). The real fix is in
+  that file (return the hits instead of sharing them), which belongs to the
+  partspec lane. Job errors now log a traceback on the server (never to the client).
+- **A smooth top is a cover, not a head variant (Dan, 2026-11-03).** The curved,
+  stud-free top (`shape.top: "dome"`, rated 5 on the bunny, cat and bear) should be a
+  cover that clips onto the studs of any head: the printed version carries one
+  head body with studs and a cover for the smooth look, and the cover is worn by
+  default on any head with no other head accessory. That removes the exception to
+  the brand rule (every head carries two studs) and means one head per design, not
+  two. Not built yet; `dome` stays as the preview until the cover exists, then goes.
+  Nearest thing in the repo: the Kip `hat: 'blank'` option (`crown_cap_blank`). A
+  forge cover must be sized to each head's top face, so it is a crown-slot recipe
+  (pad footprint widening to the head top, domed, no features) chosen per head.
 
 ### Pipeline (every feature)
 

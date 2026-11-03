@@ -35,6 +35,7 @@ import sys
 import tempfile
 import threading
 import time
+import traceback
 import uuid
 from pathlib import Path
 from typing import Any, Callable
@@ -651,6 +652,9 @@ def _socket_keepout(head: manifold3d.Manifold) -> manifold3d.Manifold | None:
 
 
 CROWN_SEAT_MARGIN_MM = 3.5  # clear space round the hat's whole 2x1 pad: 1.0 still "will block studs" (Dan, round 10: "move ears further apart"); the 26 mm round crown reaches 13.0 each side, a 30 mm hat 15
+STUD_KEEPOUT_ABOVE_MM = 60.0  # how far the keep-out column reaches above the pad: past any ear
+STUD_CUT_TRIES = 4  # cut placements checked for printing, best first, before the pair is dropped
+STUD_OVERLAP_MAX_MM3 = 0.01  # HARD RULE (Dan, 2026-11-03): a head's ears and horns never touch the crown studs' keep-out (the pad plus its margin). This is rounding noise, not a tolerance: boolean volume of two parts that only touch is 0
 EAR_FIT_DROPS_MM = (0.0, 1.5, 3.0, 4.5, 6.0, 8.0, 10.0, -1.5, -3.0, -4.5, -6.0)  # how far down (or, negative, up) a head's ear or horn pair may move
 EAR_FIT_TILTS_DEG = (0.0, 6.0, 12.0, 18.0)  # how far further out an ear may lean
 EAR_FIT_SHIFTS_MM = (0.0, 1.5, 3.0, 4.5, 6.0, 7.5, 9.0)  # how far each side may move outward (the pair ends up twice as far apart)
@@ -785,7 +789,10 @@ def _stud_keepout(head: manifold3d.Manifold, head_height_mm: float) -> manifold3
         fx0, fy0, fx1, fy1, pad_h = -12.2, -5.95, 12.2, 5.95, 4.8
     m = CROWN_SEAT_MARGIN_MM
     x0, x1, y0, y1 = fx0 - m, fx1 + m, fy0 - m, fy1 + m
-    return manifold3d.Manifold.cube((x1 - x0, y1 - y0, pad_h + 3.0)).translate((x0, y0, head_height_mm))
+    # A column, not a box: a cut at the old box top (pad + 3 mm) left the rest of a big ear hanging over it, and that flat
+    # underside failed P4 (34 mm2). The hat's space above the pad is no place for an ear either, and a vertical cut face is
+    # never an overhang.
+    return manifold3d.Manifold.cube((x1 - x0, y1 - y0, pad_h + STUD_KEEPOUT_ABOVE_MM)).translate((x0, y0, head_height_mm))
 
 
 def _intersect_volume(a: manifold3d.Manifold, b: manifold3d.Manifold) -> float:
@@ -853,9 +860,9 @@ def _fit_head_pair(
         return float(sdk.tp.overhang_area(tm)[0])
 
     asked = visible(base)
-    clear = _intersect_volume(base, studs) < 0.3 and not above_top_face(base)
+    clear = _intersect_volume(base, studs) <= STUD_OVERLAP_MAX_MM3 and not above_top_face(base)
     if asked < 1.0:
-        return base, None  # nothing shows
+        return (base - studs if _intersect_volume(base, studs) > STUD_OVERLAP_MAX_MM3 else base), None  # nothing shows
     if clear and head is None:
         return base, None
     if clear and head is not None:
@@ -907,7 +914,7 @@ def _fit_head_pair(
             )
             if cand is None or above_top_face(cand) or not half_width_ok(cand) or cand.bounding_box()[2] < EAR_MIN_Z_MM:
                 continue
-            if _intersect_volume(cand, studs) > 0.3 or _overhang_area(cand - body, z_min=1.0) > ov_limit:
+            if _intersect_volume(cand, studs) > STUD_OVERLAP_MAX_MM3 or _overhang_area(cand - body, z_min=1.0) > ov_limit:
                 continue
             kept = min(1.0, visible(cand) / asked)
             if kept < EAR_FIT_MIN_KEPT:
@@ -919,8 +926,11 @@ def _fit_head_pair(
                 why = (why + ", " if why else "") + f"made {round((1.0 - scale) * 100)}% smaller so it prints without supports"
             return cand, {"op": op, "why": why, "kept_share": f"{kept:.2f}"}
 
-    # Pass 2: nothing clears the studs without a cut. Keep the placement with the most ear showing, and cut it.
-    best: tuple[float, float, float, manifold3d.Manifold, float, float] | None = None  # (score, drop, tilt, cut, kept, trimmed)
+    # Pass 2: nothing clears the studs without a cut. Cut the placements, best first (most ear showing, fewest moves), and take
+    # the first that still prints: a cut must not trade an overlap for a P1 or P4 failure, so each is checked by the gate's own
+    # measure. The pair as asked is the last candidate. If none prints, the pair is dropped and the job says so (the hard rule:
+    # an ear never touches the studs, and a bare head is better than a part that cannot be printed).
+    cuts: list[tuple[float, float, float, manifold3d.Manifold, float, float]] = []  # (score, drop, tilt, cut, kept, trimmed)
     for drop in EAR_FIT_DROPS_MM:
         for tilt in tilts:
             cand = _ears_or_horns_solid(op, "head", body, rows, feat, head_height_mm, fs, z_shift=-drop, tilt_add=tilt)
@@ -930,22 +940,38 @@ def _fit_head_pair(
             kept = min(1.0, visible(cut) / asked)
             trimmed = _intersect_volume(cand, studs) / asked
             score = kept - 0.5 * trimmed - 0.02 * abs(drop) - 0.005 * tilt  # a clean move beats a cut
-            if best is None or score > best[0] + 1e-9:
-                best = (score, drop, tilt, cut, kept, trimmed)
-    if best is None:
-        # Nothing clears the seat inside the limits. Losing the ears altogether is worse than ears that touch the hat's
-        # seat (Dan, round 11: a bear with no ears scored 1), so the pair stays where it was asked, and the job says so.
-        return base, {"op": op, "why": "no placement clears the hat seat inside the limits; left where asked"}
-    _score, drop, tilt, cut, kept, trimmed = best
-    # Drop pieces the cut left floating: a part that does not touch the body is a separate island.
-    pieces = [c for c in cut.decompose() if _intersect_volume(c, body) > 0.5]
-    solid = manifold3d.Manifold.batch_boolean(pieces, manifold3d.OpType.Add) if pieces else None
-    if solid is not None:
+            cuts.append((score, drop, tilt, cut, kept, trimmed))
+    cuts.sort(key=lambda c: -c[0])
+    base_cut = base - studs
+    cuts = cuts[:STUD_CUT_TRIES] + [(-1.0, 0.0, 0.0, base_cut, min(1.0, visible(base_cut) / asked), _intersect_volume(base, studs) / asked)]
+    for _score, drop, tilt, cut, kept, trimmed in cuts:
+        if kept < EAR_FIT_MIN_KEPT:
+            continue
+        # Drop pieces the cut left floating: a part that does not touch the body is a separate island.
+        pieces = [c for c in cut.decompose() if _intersect_volume(c, body) > 0.5]
+        if not pieces:
+            continue
         # The cut leaves hair-thin triangles that collapse to zero-volume "bodies" when the mesh is exported.
-        solid = solid.simplify(STUD_CUT_SIMPLIFY_MM)
-    if solid is None or kept < EAR_FIT_MIN_KEPT:
-        return None, {"op": op, "why": "no room beside the crown studs; the part would be mostly cut away"}
-    return solid, {"op": op, "why": describe(drop, tilt, 0.0, trimmed * asked > 0.3), "kept_share": f"{kept:.2f}"}
+        solid = manifold3d.Manifold.batch_boolean(pieces, manifold3d.OpType.Add).simplify(STUD_CUT_SIMPLIFY_MM)
+        if head is not None and steep_with(solid) >= max(PAIR_STEEP_MAX_MM2, bare_steep + 0.05):
+            continue
+        return solid, {"op": op, "why": describe(drop, tilt, 0.0, trimmed * asked > 0.3), "kept_share": f"{kept:.2f}"}
+    return None, {"op": op, "why": "no placement clears the crown studs and prints without supports; left off"}
+
+
+def _enforce_stud_clearance(
+    solid: manifold3d.Manifold, studs: manifold3d.Manifold | None, body: manifold3d.Manifold
+) -> tuple[manifold3d.Manifold | None, bool]:
+    """Backstop for the hard rule that ears and horns never touch the crown studs (Dan, 2026-11-03). The fitter already
+    searches for a clear placement and cuts as a last resort; this makes the rule hold whatever the fitter returned. A pair
+    that overlaps is cut by the keep-out and its floating bits dropped; None when nothing attached is left.
+    Returns (solid or None, whether it had to be cut)."""
+    if studs is None or _intersect_volume(solid, studs) <= STUD_OVERLAP_MAX_MM3:
+        return solid, False
+    pieces = [c for c in (solid - studs).decompose() if _intersect_volume(c, body) > 0.5]
+    if not pieces:
+        return None, True
+    return manifold3d.Manifold.batch_boolean(pieces, manifold3d.OpType.Add).simplify(STUD_CUT_SIMPLIFY_MM), True
 
 
 def _wall_y(body: manifold3d.Manifold, z: float) -> float | None:
@@ -1360,6 +1386,7 @@ def compile_recipe_to_partspec(recipe: dict[str, Any]) -> dict[str, Any]:
                         after_builder.append(solid)
                         if why:
                             features_adjusted.append({"op": feat["op"], "why": why})
+            studs = None
             if head_pairs:
                 # With studs, ears and horns keep off them; on the domed head there are none to avoid.
                 studs = _stud_keepout(m, head_height_mm) if head_top == "studs" else None
@@ -1368,13 +1395,22 @@ def compile_recipe_to_partspec(recipe: dict[str, Any]) -> dict[str, Any]:
                     solid, note = _fit_head_pair(
                         feat["op"], body, rows, feat, head_height_mm, fs, studs, head=m, socket=socket_keepout
                     )
+                    cut_by_backstop = False
+                    if solid is not None:
+                        solid, cut_by_backstop = _enforce_stud_clearance(solid, studs, body)
+                        if solid is None:
+                            note = {"op": feat["op"], "why": "it would touch the crown studs and nothing is left once that is cut away"}
                     if solid is None:
                         features_dropped.append(
                             note or {"op": feat["op"], "why": "the body is too narrow where this op attaches"}
                         )
                     else:
                         after_builder.append(solid)
-                        why = "; ".join(t for t in (sturdy, note["why"] if note else None) if t)
+                        why = "; ".join(
+                            t
+                            for t in (sturdy, note["why"] if note else None, "trimmed where it met the crown studs" if cut_by_backstop else None)
+                            if t
+                        )
                         if why:
                             entry = {"op": feat["op"], "why": why}
                             if note and "kept_share" in note:
@@ -1382,8 +1418,13 @@ def compile_recipe_to_partspec(recipe: dict[str, Any]) -> dict[str, Any]:
                             features_adjusted.append(entry)
             if after_builder:
                 keepout = socket_keepout
+                m_bare = m
                 for solid in after_builder:
                     m = m + (solid - keepout if keepout is not None else solid)
+                if studs is not None and _intersect_volume(m - m_bare, studs) > STUD_OVERLAP_MAX_MM3:
+                    # The hard rule, checked on the finished head. The fitter and the backstop make this unreachable; if it ever
+                    # fires, fail the job loudly rather than print a head whose ears block the hat.
+                    raise ValueError("a part added to the head touches the crown studs' keep-out")
             return m, conns, ex
         if slot == "back":
             return sdk.backpack_addon(body, support_policy=support_policy)
@@ -1609,6 +1650,14 @@ def build_print_pose_manifold(spec: dict[str, Any]) -> manifold3d.Manifold:
     return optimize_assets.snap_manifold_to_bed(m)
 
 
+# One gate run at a time. `parts/partspec/preprint_check.py` keeps the last ray-cast result in a module-level list (`_SAMPLED`: reset
+# at the start of `wall_thickness`, read back as `_SAMPLED[1]` by `thin_regions`), so two jobs gating in the daemon's two worker
+# threads can read each other's hit array: an IndexError ("index 7508 is out of bounds for axis 0 with size 5512", a job failed
+# that passes alone) or, worse, a thin-wall verdict computed from another part. Found 2026-11-03. The real fix is to return the hits
+# from `wall_thickness` instead of sharing them (partspec lane's file); until then the gate step is serialized here.
+_GATE_LOCK = threading.Lock()
+
+
 class OptimizerJobManager:
     def __init__(self, out_dir: Path, workers: int = 2, max_queue: int = 8) -> None:
         self.out_dir = out_dir.resolve()
@@ -1707,24 +1756,26 @@ class OptimizerJobManager:
                 # Run SDK validation inside an isolated temp dir so canonical filenames
                 # (`custom_wizard_hat.*`) can never collide across jobs or overwrite static files.
                 with tempfile.TemporaryDirectory(prefix="tv-job-", dir=str(self.out_dir)) as tmp_job_dir:
-                    res = sdk.validate_and_export(
-                        compiled_spec,
-                        out_dir=tmp_job_dir,
-                        optimize=True,
-                        export_web_on_fail=True,
-                    )
+                    with _GATE_LOCK:
+                        res = sdk.validate_and_export(
+                            compiled_spec,
+                            out_dir=tmp_job_dir,
+                            optimize=True,
+                            export_web_on_fail=True,
+                        )
                     if L2_ENABLED and res["small_part"]["status"] == "marginal" and compiled_spec.get("_l2"):
                         # L2: only when the gate has just said `marginal`. Rescale, then gate again.
                         new_spec, l2_note = l2_rescale(compiled_spec, res["small_part"].get("min_enclosing_diameter_mm"))
                         legalizer["l2"] = l2_note
                         if new_spec is not None:
                             compiled_spec = new_spec
-                            res = sdk.validate_and_export(
-                                compiled_spec,
-                                out_dir=tmp_job_dir,
-                                optimize=True,
-                                export_web_on_fail=True,
-                            )
+                            with _GATE_LOCK:
+                                res = sdk.validate_and_export(
+                                    compiled_spec,
+                                    out_dir=tmp_job_dir,
+                                    optimize=True,
+                                    export_web_on_fail=True,
+                                )
                     if compiled_spec.get("_features_dropped"):
                         legalizer["features_dropped"] = [dict(d) for d in compiled_spec["_features_dropped"]]
                     if compiled_spec.get("_features_adjusted"):
@@ -1772,15 +1823,16 @@ class OptimizerJobManager:
 
             self._update_job(job_id, status="optimizing")
             # Mandatory `verify_preprint=True` — never controlled by request body.
-            opt = optimize_assets.optimize_single_part(
-                part_id,
-                stl_bytes=stl_bytes,
-                slot=slot,
-                support_policy=support_policy,
-                validation_dir=PARTSPEC_DIR / "validation",
-                verify_preprint=True,
-                partspec_dir=PARTSPEC_DIR,
-            )
+            with _GATE_LOCK:
+                opt = optimize_assets.optimize_single_part(
+                    part_id,
+                    stl_bytes=stl_bytes,
+                    slot=slot,
+                    support_policy=support_policy,
+                    validation_dir=PARTSPEC_DIR / "validation",
+                    verify_preprint=True,
+                    partspec_dir=PARTSPEC_DIR,
+                )
             c_hash = opt["content_hash"]
             stl_artifact_name: str | None = None
             if opt["print_ok"] and c_hash and opt["stl_bytes"] is not None:
@@ -1809,7 +1861,7 @@ class OptimizerJobManager:
                 elapsed_ms=elapsed_ms,
             )
         except Exception as exc:  # noqa: BLE001
-            sys.stderr.write(f"[forge-optimizer] job {job_id} error: {exc}\n")
+            sys.stderr.write(f"[forge-optimizer] job {job_id} error: {exc}\n{traceback.format_exc()}")  # server log only; the client sees "optimization failed"
             elapsed_ms = round((time.perf_counter() - t0) * 1000.0, 1)
             self._update_job(
                 job_id,

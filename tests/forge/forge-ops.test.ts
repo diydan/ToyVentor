@@ -281,6 +281,37 @@ describe.skipIf(!PYTHON)("Recipe v1 feature ops through the optimizer daemon", (
     }
   }, 540_000);
 
+  it("HARD RULE: no ear or horn ever touches the crown studs, however it is asked for", async () => {
+    // Dan, 2026-11-03: "we should have a hard rule that ears should not overlap studs". The fitter tolerated 0.3 mm3 and, when
+    // nothing fitted, left the pair "where asked" on the hat seat. Now a pair that cannot clear is cut by the keep-out, and a
+    // pair with nothing left is dropped and reported. These are the asks that used to land on the seat: big, upright, high.
+    // (Not asked here: a 24 mm round ear, which cannot be printed on this slim head with or without studs, and a 14 mm round ear
+    // at z_frac 0.9, which pushes this 18 mm-top fixture into the small-parts band, where the automatic shrink leaves the 24 mm hat
+    // pad overhanging the narrow top (P4). Both are limits of this fixture head, not stud overlaps.)
+    const slices = [
+      { z: 0, w: 24.6, d: 12.1, r: 3 },
+      { z: 10, w: 25, d: 14, r: 5 },
+      { z: 20, w: 22, d: 14.5, r: 6 },
+      { z: 30.5, w: 18, d: 13, r: 5 },
+    ];
+    const withHeight = (r: object) => ({ ...r, shape: { kind: "loft", slices, height_mm: 30.5 } });
+    const plain = await run(withHeight(recipe("ops_test_hard_plain", "head", slices, [])));
+    expect(plain.status).toBe("print_ready");
+    const studVertices = studZoneVertices(join(outDir, plain.stl_artifact!));
+    for (const [id, feats] of [
+      ["ops_test_hard_tall", [{ op: "ears", style: "tall", width_mm: 16, height_mm: 26, tilt_deg: 0 }]],
+      ["ops_test_hard_round", [{ op: "ears", style: "round", width_mm: 14 }]],
+      ["ops_test_hard_pointy", [{ op: "ears", style: "pointy", width_mm: 16, height_mm: 26, tilt_deg: 0 }]],
+      ["ops_test_hard_horns", [{ op: "horns", length_mm: 30, base_mm: 9, curl: 0 }]],
+      ["ops_test_hard_antenna", [{ op: "horns", length_mm: 20, base_mm: 3, curl: 0 }]],
+    ] as const) {
+      const job = await run(withHeight(recipe(id, "head", slices, [...feats])));
+      expect(job.status, id).toBe("print_ready");
+      const extra = [...studZoneVertices(join(outDir, job.stl_artifact!))].filter((v) => !studVertices.has(v));
+      expect(extra, id).toEqual([]);
+    }
+  }, 540_000);
+
   it("moves a snout up the face before shortening it, and cuts ribs round a head's sides", async () => {
     // Dan, round 10: the dinosaur had "no snout" (a 14 mm snout was shortened to about 3 mm), and the pumpkin was "blank".
     const kid = [
