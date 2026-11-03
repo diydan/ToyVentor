@@ -3,10 +3,11 @@
 // spelled the same in two languages (the voice picks its language from the text alone, so "casa verde" may come out Spanish, Italian
 // or Portuguese) and the doubts I have about specific words. Regenerate after any change to src/lib/propNames.ts or partNames.ts:
 //   npx tsx scripts/spoken-names-sheet.ts
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { COLOR_KEYS, LANGUAGES, NOUN_KEYS, propNoun, propPhrase, type ColorKey, type LangCode } from "../src/lib/propNames";
+import { COLOR_KEYS, LANGUAGES, NOUN_KEYS, colorKeyFromHex, propNoun, propPhrase, type ColorKey, type LangCode } from "../src/lib/propNames";
+import { PROP_SPECS } from "../src/features/game/world/runtime/propReactions";
 import { PART_IDS, partPhrase } from "../src/lib/partNames";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -94,6 +95,24 @@ for (const lang of langs) {
   for (const n of NOUN_KEYS) for (const c of COLOR_KEYS) all.push({ text: propPhrase(n, c, lang), lang, what: `${n}/${c}` });
   for (const id of PART_IDS) for (const c of [null, ...COLOR_KEYS] as Array<ColorKey | null>) all.push({ text: partPhrase(id, c, lang)!, lang, what: `${id}/${c ?? "-"}` });
 }
+// What the game ACTUALLY speaks (the same list scripts/prewarm-voice.ts warms): every scene prop in its own colour, the light in every colour, and every
+// Describe & Build part in the colour the exploded view draws it. This is the real exposure; the all-combinations count above it is an upper bound.
+const partsJson = JSON.parse(readFileSync(join(root, "parts/kip/viewer/kip-describe-parts.json"), "utf8")) as { parts: Record<string, { category: string }> };
+const viewSrc = readFileSync(join(root, "parts/kip/viewer/kip-describe-view.js"), "utf8");
+const palette = /const CATEGORY_COLOURS = \{([\s\S]*?)\};/.exec(viewSrc)?.[1] ?? "";
+const drawnColour = (cat: string): ColorKey | null => { const hex = new RegExp(`${cat}:\\s*\\[\\s*'(#[0-9a-fA-F]{6})'`).exec(palette)?.[1]; return hex ? colorKeyFromHex(hex) : null; };
+const spokenCombos = new Map<string, { noun: (typeof NOUN_KEYS)[number]; color: ColorKey }>();
+for (const sp of Object.values(PROP_SPECS) as Array<{ noun?: (typeof NOUN_KEYS)[number]; color: ColorKey }>) if (sp.noun) spokenCombos.set(`${sp.noun}|${sp.color}`, { noun: sp.noun, color: sp.color });
+for (const c of COLOR_KEYS) spokenCombos.set(`light|${c}`, { noun: "light", color: c });
+const spoken: Phrase[] = [];
+for (const lang of langs) {
+  for (const c of spokenCombos.values()) spoken.push({ text: propPhrase(c.noun, c.color, lang), lang, what: `${c.noun}/${c.color}` });
+  for (const id of PART_IDS) spoken.push({ text: partPhrase(id, drawnColour(partsJson.parts[id]!.category), lang)!, lang, what: id });
+}
+const spokenByText = new Map<string, Phrase[]>();
+for (const p of spoken) spokenByText.set(p.text.toLowerCase(), [...(spokenByText.get(p.text.toLowerCase()) ?? []), p]);
+const spokenShared = [...spokenByText.entries()].filter(([, ps]) => new Set(ps.map((p) => p.lang)).size > 1);
+
 const byText = new Map<string, Phrase[]>();
 for (const p of all) {
   const k = p.text.toLowerCase();
@@ -112,9 +131,19 @@ for (const [, ps] of shared) {
 
 w("## Same spelling in more than one language (the voice may use the wrong one)");
 w();
-w("The text-to-speech model is given only the words and decides the language itself. A phrase spelled identically in two languages has no");
-w("signal: `casa verde` is valid Spanish, Italian and Portuguese; `luz azul` is Spanish and Portuguese. The voice may answer in the other");
-w("language or accent. Counts below are over every noun/part in every colour (not all are used by the game at once).");
+w("The text-to-speech model is given only the words and decides the language itself (probed 2026-11-03: it has no language setting, and an");
+w("instruction written into the text is read aloud, not obeyed). A phrase spelled identically in two languages has no signal: `luz azul` is valid");
+w("Spanish and Portuguese. The voice may answer in the other language or accent.");
+w();
+w(`**What the game speaks today:** ${spoken.length / langs.length} phrases in ${langs.length} languages = ${spoken.length} clips. **${spokenShared.length} texts** are spelled the same in two languages:`);
+w();
+for (const [text, ps] of spokenShared) w(`- \`${text}\`: ${[...new Set(ps.map((p) => label(p.lang)))].join(" + ")} (${[...new Set(ps.map((p) => p.what))].join(", ")})`);
+w();
+w("**Please listen to these and tell us which language and accent you hear.** If one is wrong, the fix is to speak that phrase with the device voice and");
+w("its explicit language tag, which cannot mis-detect. Free-form Forge names (spec: forge-ai-spec.md) are the larger risk: a short word such as `taco`");
+w("reads the same in several languages.");
+w();
+w("For comparison, over every noun and part in every colour (an upper bound; the game never says most of these):");
 w();
 w("| Language | Phrases | Spelled the same as another language | Share |");
 w("|---|---:|---:|---:|");

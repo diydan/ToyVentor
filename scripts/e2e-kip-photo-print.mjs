@@ -73,14 +73,16 @@ function boxStl() {
 }
 const PLATE_BYTES = boxStl();
 const PASS = { ok: true, design_status: "ok", small_part: { status: "above_cylinder", min_enclosing_diameter_mm: 61 }, blocking_failures: [], brand_errors: [] };
-let daemonMode = "pass"; // pass | down
+let daemonMode = "pass"; // pass | down | slow (the preview answers after SLOW_MS, so the printer check lasts long enough to watch)
+const SLOW_MS = 3500;
 const daemon = { recipes: [], artifactRequests: [] };
 
-function daemonFetch(url, init) {
+async function daemonFetch(url, init) {
   const j = (body, status = 200) => new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
   const p = url.pathname;
   if (p === "/v1/fast-preview") {
     if (daemonMode === "down") return j({ ok: false }, 503);
+    if (daemonMode === "slow") await new Promise((r) => setTimeout(r, SLOW_MS));
     daemon.recipes.push(JSON.parse(String(init?.body)));
     return j({ ok: true, status: "preview_ready", part_id: "custom_photo_outline", job_id: `fjob_${String(daemon.recipes.length).padStart(12, "0")}`, draft_artifact: "", glb_size: 1, orig_tris: 1, web_verts: 1, web_tris: 1, finish_class: "show_curved", elapsed_ms: 1 });
   }
@@ -275,6 +277,31 @@ try {
   const url0 = await ev(`document.querySelector('.kpp-back .kpp-links a').href`);
   await ev("window.__kpp.dispose()");
   check("dispose removes the panel from the page, and lets go of the files", (await ev(`!document.querySelector('.kpp-back')`)) && (await ev(`fetch(${JSON.stringify(url0)}).then(() => false, () => true)`)));
+
+  // 7b. a slow printer check shows the little workshop, driven by the flow's real stages, and leaves nothing behind -------------------------
+  resetForgeRateLimit();
+  daemonMode = "slow";
+  await mount();
+  await upload();
+  await page.waitFor("window.__kpp.state.hasPhoto", 15000);
+  await setWord("spoon");
+  await press("Find the shape");
+  await page.waitFor("window.__kpp.state.hasScan", 30000);
+  await press("Check it prints");
+  await page.waitFor("window.__kpp.state.step === 'gate'", 15000);
+  await page.waitFor(`/what is \\d+ × \\d+/i.test(document.querySelector('.kpp-gate .kpp-status').textContent)`, 15000);
+  const q4 = /what is (\d+) × (\d+)/i.exec(await text(".kpp-gate .kpp-status"));
+  check("before the check starts the working view is not showing, and no strip exists outside the panel", (await ev(`document.querySelector('.kpp-back .kpp-work').hidden`)) && (await ev(`document.querySelectorAll('.kww-workshop').length === 1 && !!document.querySelector('.kpp-back .kpp-work .kww-workshop')`)));
+  await answer(Number(q4[1]) * Number(q4[2]));
+  // one atomic look: the strip is showing, the status line has the panel's own words for the real stage, the scan light is on, five bricks on the pile, hidden from a screen reader
+  const working = `(() => { const w = document.querySelector('.kpp-back .kww-workshop'); return !w.hidden && document.querySelector('.kpp-back .kpp-status:last-child').textContent === 'Checking with the printer… (try 1)' && w.classList.contains('kww-scan') && w.getAttribute('aria-hidden') === 'true' && document.querySelectorAll('.kpp-back .kww-pb.on').length === 5; })()`;
+  check("while the printer check runs: the strip shows, the status is the panel's own words for the real stage, the scan light is on, five bricks on the pile", await page.waitFor(working, 20000), await text(".kpp-back .kpp-status:last-child"));
+  await page.shot(path.join(SHOTS, "3b-working.png"));
+  check("the slow check still ends on the done step", await page.waitFor("window.__kpp.state.step === 'done'", 60000));
+  check("then the strip is gone with no bricks left, and the status line is clear", (await page.waitFor(`document.querySelector('.kpp-back .kww-workshop').hidden && document.querySelectorAll('.kpp-back .kww-brick').length === 0`, 5000)) && (await text(".kpp-back .kpp-status:last-child")) === "");
+  await ev("window.__kpp.dispose()");
+  check("disposing leaves no panel and no workshop strip behind", await ev(`!document.querySelector('.kpp-back') && !document.querySelector('.kww-workshop')`));
+
   resetForgeRateLimit();
   daemonMode = "down";
   await mount();

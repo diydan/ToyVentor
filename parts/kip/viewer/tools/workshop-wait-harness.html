@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Workshop wait harness</title>
+</head>
+<body style="margin:16px;width:340px;font:14px/1.4 system-ui,sans-serif">
+<!--
+  Development harness for kip-workshop-wait.js (the waiting state shared by the Describe & build tab and the photo print panel): the module and a status line,
+  nothing else. NOT shipped (build:kip does not copy tools/). Served with the viewer files at /kip/ (the page itself at /kip/tools/workshop-wait-harness.html).
+  window.__ws is the workshop; window.__labels is every wording it reported, in order. tools/e2e_workshop_wait.mjs drives it.
+-->
+<div id="label" role="status"></div>
+<div id="host"></div>
+<script type="module">
+import { createWorkshop } from '/kip/kip-workshop-wait.js';
+const labels = [];
+const ws = createWorkshop({ doc: document, onLabel: (t) => { document.getElementById('label').textContent = t; labels.push(t); } });
+document.getElementById('host').append(ws.node);
+window.__ws = ws;
+window.__labels = labels;
+window.__ready = true;
+</script>
+</body>
+</html>

@@ -18,9 +18,26 @@ Reply with the corrected word next to the old one; that is all we need.
 
 ## Same spelling in more than one language (the voice may use the wrong one)
 
-The text-to-speech model is given only the words and decides the language itself. A phrase spelled identically in two languages has no
-signal: `casa verde` is valid Spanish, Italian and Portuguese; `luz azul` is Spanish and Portuguese. The voice may answer in the other
-language or accent. Counts below are over every noun/part in every colour (not all are used by the game at once).
+The text-to-speech model is given only the words and decides the language itself (probed 2026-11-03: it has no language setting, and an
+instruction written into the text is read aloud, not obeyed). A phrase spelled identically in two languages has no signal: `luz azul` is valid
+Spanish and Portuguese. The voice may answer in the other language or accent.
+
+**What the game speaks today:** 66 phrases in 7 languages = 462 clips. **8 texts** are spelled the same in two languages:
+
+- `luz azul`: Español + Português (light/blue)
+- `casa azul`: Español + Português (house/blue)
+- `pino verde`: Español + Italiano (pine/green)
+- `arbustos verdes`: Español + Português (bushes/green)
+- `tambor rosa`: Español + Português (drum/pink)
+- `planta verde`: Español + Português (plant/green)
+- `luz verde`: Español + Português (light/green)
+- `luz rosa`: Español + Português (light/pink)
+
+**Please listen to these and tell us which language and accent you hear.** If one is wrong, the fix is to speak that phrase with the device voice and
+its explicit language tag, which cannot mis-detect. Free-form Forge names (spec: forge-ai-spec.md) are the larger risk: a short word such as `taco`
+reads the same in several languages.
+
+For comparison, over every noun and part in every colour (an upper bound; the game never says most of these):
 
 | Language | Phrases | Spelled the same as another language | Share |
 |---|---:|---:|---:|

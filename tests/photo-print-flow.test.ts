@@ -892,14 +892,18 @@ describe("the print panel: its bundle and its own source", () => {
     // The one storage access is a read of the app's anonymous device id.
     expect([...code.matchAll(/localStorage/g)]).toHaveLength(1);
     expect(code).toMatch(/localStorage\.getItem\(DEVICE_KEY\)/);
-    // Every timer it starts is one it clears.
-    expect([...code.matchAll(/setInterval\(/g)]).toHaveLength(1);
-    expect(code).toMatch(/clearInterval\(timer\)/);
+    // It starts no timer of its own. The waiting strip (kip-workshop-wait.js) starts the timers while the printer check runs, and the panel stops it
+    // on every way out: when the check ends, when it is reset, and when it is disposed (the strip clears every timer in stop(); tools/e2e_workshop_wait.mjs).
+    expect([...code.matchAll(/setInterval\(|setTimeout\(/g)]).toHaveLength(0);
+    expect([...code.matchAll(/workshop\.stop\(/g)].length).toBeGreaterThanOrEqual(3);
+    expect(code).toMatch(/workshop\.stop\(\{ finished: Boolean\(r\.ok\) \}\)/);
+    expect(code.slice(code.indexOf("dispose() {"))).toMatch(/workshop\.stop\(\)/);
+    expect(code.slice(code.indexOf("function reset() {"), code.indexOf("function reset() {") + 120)).toMatch(/workshop\.stop\(\)/);
     // It talks to no address of its own: every request goes through the flow module's routes.
     expect(code).not.toMatch(/['"`]\/api\//);
   });
 
-  it("the panel imports the flow and the sticker module, and nothing else", () => {
-    expect([...panel.matchAll(/^import[\s\S]*?from '(.*)';/gm)].map((m) => m[1]).sort()).toEqual(["./kip-photo-print-core.js?v=10.0", "./kip-print-stickers.js"]);
+  it("the panel imports the flow, the sticker module and the shared waiting strip, and nothing else", () => {
+    expect([...panel.matchAll(/^import[\s\S]*?from '(.*)';/gm)].map((m) => m[1]).sort()).toEqual(["./kip-photo-print-core.js?v=10.0", "./kip-print-stickers.js", "./kip-workshop-wait.js"]);
   });
 });

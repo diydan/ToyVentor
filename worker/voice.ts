@@ -1,7 +1,8 @@
 // GET /api/voice?lang=es&n=tree&c=green        ->  audio/wav of "árbol verde"        (a scene prop)
 // GET /api/voice?lang=es&p=veh_wheel_sport&hex=262d40  ->  audio/wav of "rueda deportiva negra"  (a Describe & Build part, in the
 //                                                       colour the exploded view drew it; the hex is reduced to one of 12 words)
-// Both reply with the spoken text in the x-voice-text header (URL-encoded) so a caption can show it.
+// GET /api/voice?lang=es&w=cuchara&g=f&c=red&sig=...   ->  audio/wav of "cuchara roja"        (a Forge object: a SIGNED name, see below)
+// All reply with the spoken text in the x-voice-text header (URL-encoded) so a caption can show it.
 //
 // Spoken by Gemini 3.8 Flash-Lite TTS, spoken by Gemini 3.8 Flash-Lite TTS through the
 // Workers AI binding (Unified Billing via AI Gateway: no provider key lives in this repo).
@@ -11,11 +12,18 @@
 // 1,800 distinct clips), nothing a child typed or said. Each clip is generated once and then served from the edge cache with a
 // one-year immutable lifetime, so cost is bounded by the vocabulary, not by taps. No personal data is sent anywhere.
 //
+// Forge objects are free text, so the vocabulary cannot name them. Their names come from worker/forgeNames.ts: the model returns a name per language, the
+// Worker filters it and signs the noun entry (HMAC, secret VOICE_SIGNING_KEY), and this route speaks a `w=` request ONLY when the signature checks out, before
+// any cache read or model call. So it still never speaks text this Worker did not produce and filter. The colour (c or hex) is not signed: it is one of the 12
+// colour words and is attached here by nounPhrase(), so a signed name costs at most 13 clips per language. Without the secret a signed request is refused.
+//
 // Probed 2026-11-03 against the live binding: input is exactly { text, voice } (style/prompt are rejected with 7003), output is
 // { audio: "data:audio/wav;base64,..." } (24 kHz, mono, 16-bit PCM), the language is auto-detected from the text, an unknown
-// voice name is rejected with 7003.
-import { COLOR_KEYS, LANGUAGES, NOUN_KEYS, colorKeyFromHex, propNoun, propPhrase, type ColorKey, type LangCode, type NounKey } from "../src/lib/propNames";
+// voice name is rejected with 7003. Also probed: there is NO language hint (language, language_code, languageCode, lang, locale and speech_language are all
+// rejected with 7003), and an instruction in the text ("Say in Brazilian Portuguese: casa verde") is spoken aloud, not obeyed (4.0 s against 1.2 s).
+import { COLOR_KEYS, LANGUAGES, NOUN_KEYS, colorKeyFromHex, nounPhrase, propNoun, propPhrase, type ColorKey, type LangCode, type Noun, type NounKey } from "../src/lib/propNames";
 import { isPartId, partPhrase } from "../src/lib/partNames";
+import { isSpeakableWord, verifySpeech, type SigningEnv } from "./forgeNames";
 
 export const VOICE_MODEL = "google/gemini-3.8-flash-lite-tts";
 export const DEFAULT_VOICE = "Leda"; // Gemini's "youthful" voice; swap here (or set VOICE_NAME) to change it everywhere
@@ -33,7 +41,7 @@ const ONE_YEAR = 31_536_000;
 export interface AiBinding {
   run(model: string, input: unknown, options?: unknown): Promise<unknown>;
 }
-export interface VoiceEnv {
+export interface VoiceEnv extends SigningEnv {
   AI?: AiBinding;
   /** Optional: one of GEMINI_VOICES. */
   VOICE_NAME?: string;
@@ -60,22 +68,25 @@ function json(data: unknown, status: number, extra: Record<string, string> = {})
 
 export type VoiceKey =
   | { lang: LangCode; noun: NounKey; color: ColorKey | null }
-  | { lang: LangCode; part: string; color: ColorKey | null };
+  | { lang: LangCode; part: string; color: ColorKey | null }
+  | { lang: LangCode; name: Noun; sig: string; color: ColorKey | null };
 
 /**
  * Validate the query. Anything outside the controlled vocabulary is rejected, which is what bounds the cost: a language, then
- * exactly one of a prop noun (n) or a Describe & Build part id (p), and an optional colour word (c) or hex (hex) that is reduced to
- * one of 12 colour words, so a hex can never multiply the clip set.
+ * exactly one of a prop noun (n), a Describe & Build part id (p) or a signed Forge name (w, with g, optional pl=1, and sig; the signature is
+ * checked by handleVoice before anything else), and an optional colour word (c) or hex (hex) that is reduced to one of 12 colour words,
+ * so a hex can never multiply the clip set.
  */
 export function parseVoiceKey(url: URL): VoiceKey | null {
   const q = url.searchParams;
   const lang = q.get("lang");
   const noun = q.get("n");
   const part = q.get("p");
+  const word = q.get("w");
   const c = q.get("c");
   const hex = q.get("hex");
   if (!LANGUAGES.some((l) => l.code === lang)) return null;
-  if ((noun === null) === (part === null)) return null; // exactly one of n / p
+  if ([noun, part, word].filter((v) => v !== null).length !== 1) return null; // exactly one of n / p / w
   let color: ColorKey | null = null;
   if (c !== null) {
     if (!(COLOR_KEYS as readonly string[]).includes(c)) return null;
@@ -83,6 +94,13 @@ export function parseVoiceKey(url: URL): VoiceKey | null {
   } else if (hex !== null) {
     if (!/^#?[0-9a-fA-F]{6}$/.test(hex)) return null;
     color = colorKeyFromHex(hex.startsWith("#") ? hex : `#${hex}`);
+  }
+  if (word !== null) {
+    const g = q.get("g");
+    const pl = q.get("pl");
+    const sig = q.get("sig");
+    if (!isSpeakableWord(word) || (g !== "m" && g !== "f" && g !== "n") || (pl !== null && pl !== "1") || sig === null || !/^[A-Za-z0-9_-]{43}$/.test(sig)) return null;
+    return { lang: lang as LangCode, name: pl ? { w: word, g, pl: true } : { w: word, g }, sig, color };
   }
   if (noun !== null) {
     if (!(NOUN_KEYS as readonly string[]).includes(noun)) return null;
@@ -94,6 +112,7 @@ export function parseVoiceKey(url: URL): VoiceKey | null {
 
 export function voiceText(key: VoiceKey): string {
   if ("part" in key) return partPhrase(key.part, key.color, key.lang) ?? key.part;
+  if ("name" in key) return nounPhrase(key.name, key.color, key.lang);
   return key.color ? propPhrase(key.noun, key.color, key.lang) : propNoun(key.noun, key.lang);
 }
 
@@ -179,11 +198,13 @@ export async function handleVoice(request: Request, env: VoiceEnv, ctx?: Ctx): P
   if (request.method !== "GET") return json({ error: "method not allowed" }, 405, { allow: "GET" });
   const key = parseVoiceKey(new URL(request.url));
   if (!key) return json({ error: "bad request" }, 400);
+  // A Forge name is spoken only if this Worker signed exactly this language and noun. Checked first: an unsigned request costs nothing and reads nothing.
+  if ("name" in key && !(await verifySpeech(env, key.lang, key.name, key.sig))) return json({ error: "not signed" }, 403, { "cache-control": "no-store" });
   const voice = voiceName(env);
   const text = voiceText(key);
 
   const edge = (globalThis as unknown as { caches?: { default?: CacheLike } }).caches?.default;
-  const what = "part" in key ? `p-${key.part}` : key.noun;
+  const what = "part" in key ? `p-${key.part}` : "name" in key ? `w-${encodeURIComponent(key.name.w)}.${key.name.g}${key.name.pl ? "p" : ""}` : key.noun;
   const cacheReq = new Request(`https://voice.toyventor.internal/${CACHE_VERSION}/${voice}/${key.lang}/${what}/${key.color ?? "-"}`);
   if (edge) {
     const hit = await edge.match(cacheReq);
