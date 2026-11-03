@@ -7,8 +7,10 @@ import { HAIR_OPTIONS, HAT_COLORS, HAT_OPTIONS } from "../parts/kip/viewer/kip-v
 const root = process.cwd();
 // Since Workshop stage 4a the Truck page script lives in truck-bench.js (Truck-Mockup.html is a loader).
 const source = readFileSync(join(root, "parts/kip/viewer/truck-bench.js"), "utf8");
+// The stack table is read from the copy the app serves (public/kip/partspec/mockup/, tracked: the app serves it with no build step). The viewer's own
+// copy under parts/kip/viewer/partspec/ is a local-only mirror (.gitignore) and is not there in a fresh clone, so it cannot be what a test reads.
 const table = JSON.parse(
-  readFileSync(join(root, "parts/kip/viewer/partspec/mockup/kip_stack.json"), "utf8"),
+  readFileSync(join(root, "public/kip/partspec/mockup/kip_stack.json"), "utf8"),
 );
 
 const wardrobeHatId = (stackHatId: string) =>

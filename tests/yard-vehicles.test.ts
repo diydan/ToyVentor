@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 // The viewer modules are plain browser JS with no declaration files.
@@ -120,7 +120,16 @@ describe("yard vehicles: the numbers match the CAD, not just each other", () => 
     expect(cz / vol).toBeLessThan(DRUM.width / 2 - 2); // centroid well below mid-width
   });
 
-  it("the viewer's own copy of those STLs is identical to the served one", () => {
+  it("the STLs the Yard page loads are in git, in the copy the app serves", () => {
+    // The Yard page loads /kip/partspec/mockup/<id>.stl, so those files have to be tracked: the app serves public/ with no build step.
+    for (const id of ["kit_drum_roller", "kit_barbell_shaft_wide", "kit_keel_base", "kit_windscreen"]) {
+      expect(existsSync(join(root, "public/kip/partspec/mockup", `${id}.stl`)), id).toBe(true);
+    }
+  });
+
+  // The viewer's own copy under parts/kip/viewer/partspec/ is a local-only mirror (.gitignore), so this guard runs only where that mirror exists: it
+  // catches a stale mirror before a deploy ships the served copy beside it.
+  it.skipIf(!existsSync(join(root, "parts/kip/viewer/partspec/mockup")))("the viewer's own copy of those STLs is identical to the served one", () => {
     for (const f of ["kit_drum_roller.stl", "kit_barbell_shaft_wide.stl"]) {
       const a = readFileSync(join(root, "public/kip/partspec/mockup", f));
       const b = readFileSync(join(root, "parts/kip/viewer/partspec/mockup", f));
