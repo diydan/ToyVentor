@@ -676,6 +676,19 @@ The software items 12.1 listed as still open from M4, plus the optional 9.1 menu
 
 **Still physical / external after 12.9:** break-off and peg/turret coupons (Decision 7, 12.7 Gate 4), stencil printed fit (12.8), `F1_printed_fit` / `F2_breakage`, Bambu Studio + PrusaSlicer GUI imports (M1 gate d), a PrusaSlicer CLI slice (6.5 check 5 as written), preprint stage-2 brim values, and the host half of the grown-up gate.
 
+### 12.10 Plates: split by colour is a choice (2026-11-03)
+
+Dan: "print plates only has 1 part per plate: by default put all on one plate, and split by colour as an option." The planner (`planColorPlates`) buckets parts by character or vehicle, colour and support tier, and a single-extruder printer is forced to one plate per colour (you swap filament between plates). That is right for the Kip, whose colours are real choices (skin, shirt, hair), and wrong for the Truck, whose every part has its own display colour: the Truck's powered build gave one part per plate.
+
+| Item | Record |
+| :--- | :--- |
+| **Option** | `planColorPlates(items, profile, { splitByColour })`. `false` treats every item as one colour (`#F4EFE6`, named "All parts"), so plates are grouped only by character/vehicle and by needing supports, and filled to the bed; the plates are labelled "Plate 1 of 2: All parts" with no placeholder hex. Absent or `true` is the old behaviour, unchanged. The items passed in are not modified. |
+| **Per bench, not per printer** | It is a setting of the print view (`mountPrintView({ splitByColour })`, `splitByColour()`, `setSplitByColour(v)`, which repacks if the plate view is open), not of the shared printer profile, so choosing it on one bench does not change the other. The Kip starts split by colour (default unchanged); the Truck starts packed together. |
+| **UI** | Kip menu, Print group: "Plates" (Split by colour / All together; the existing "Colours" strategy stays for multi-slot printers). Truck plate panel: a "Colours: all together / split by colour" button. |
+| **Result** | Pro-stage truck: 24 parts on **2 plates** together (20 + 4) against 8 plates split by colour; powered truck: 32 parts on **2 plates** against 8. Every part on exactly one plate, inside the bed, clear by the plan's gap, in both modes (`tests/print-plate-grouping.test.ts`, `npm run e2e:truck-print`). |
+| **Bug found on the way** | The Truck's part provider counts visible meshes, and entering the plate view hides the truck, so any repack from inside the plate view found zero parts. The provider now ignores its own root's visibility flag. Nothing repacked before, so it never showed. |
+| **Not done** | A genuinely multi-colour single plate (per-object filament assignment in the 3MF) for multi-slot printers: together-mode collapses to one colour, so on a multi-slot printer the Truck prints in one filament unless split by colour is chosen. |
+
 ---
 
 ## Appendix A. Review Log, Verification Status & Sources

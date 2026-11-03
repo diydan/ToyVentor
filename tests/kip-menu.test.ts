@@ -178,6 +178,7 @@ describe("kip menu optional groups", () => {
   it("M1 Print group exposes printer presets, custom bed/slots, fit, overflow, vehicle, stickers, stencils, support check, and pack download", () => {
     let on = true;
     let sup = false;
+    let split = true; // plates split by colour: the Kip's default
     let prof: any = {
       presetId: "compact_180", slicer: "orca_bambu", changerType: "single", maxSlots: 1,
       multiColorStrategy: "split-plates", flatPackMode: "loose", bedXmm: 180, bedYmm: 180,
@@ -205,6 +206,8 @@ describe("kip menu optional groups", () => {
         supportCheck: () => sup,
         setSupportCheck: (v: boolean) => { sup = v; },
         download: (k: string) => { downloadedKind = k; },
+        splitByColour: () => split,
+        setSplitByColour: (v: boolean) => { split = v; },
       },
     };
 
@@ -212,6 +215,15 @@ describe("kip menu optional groups", () => {
     expect(visible(ctx, "printer")).toBe(true);
     expect(visible(ctx, "fit")).toBe(true);
     expect(visible(ctx, "layout")).toBe(true);
+    // plates: split by colour (the Kip's default) or everything together
+    expect(visible(ctx, "plateSplit")).toBe(true);
+    expect(byId(ctx, "plateSplit").options().map((o: any) => o.value)).toEqual(["colour", "together"]);
+    expect(byId(ctx, "plateSplit").get()).toBe("colour");
+    byId(ctx, "plateSplit").set("together");
+    expect(split).toBe(false);
+    expect(byId(ctx, "plateSplit").get()).toBe("together");
+    byId(ctx, "plateSplit").set("colour");
+    expect(split).toBe(true);
     expect(byId(ctx, "layout").options().find((o: any) => o.value === "sprue")).toMatchObject({ value: "sprue", label: "Kit tray" });
     byId(ctx, "layout").set("sprue");
     expect(byId(ctx, "layout").get()).toBe("sprue");

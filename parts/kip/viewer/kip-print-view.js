@@ -181,6 +181,9 @@ export function mountPrintView(ctx) {
   let validationIndex = null;
   let partspecManifest = null; // file name -> manifest part entry (print.anchors / slice_z03)
   let profile = readStoredProfile();
+  // Plates grouped by colour (the Kip: its colours are real choices) or everything packed together (the Truck: its colours are only for looking). Not part of
+  // the printer profile, which is shared by every bench; each bench starts from its own default (`ctx.splitByColour`).
+  let splitByColour = ctx.splitByColour !== false;
   let supportCheckOn = false;
   let on = false;
   let busy = false;
@@ -341,7 +344,7 @@ export function mountPrintView(ctx) {
     }
 
     const sceneColorCount = new Set(prepared.map(p => p.hex)).size;
-    const plan = planColorPlates(prepared, profile);
+    const plan = planColorPlates(prepared, profile, { splitByColour });
     const est = plan.estimate;
     const totalParts = plan.rawPlates.reduce((n, pl) => n + pl.length, 0);
 
@@ -979,6 +982,14 @@ export function mountPrintView(ctx) {
     exportBytes,
     download,
     getState: () => ctx.getState(),
+    splitByColour: () => splitByColour,
+    /** Group plates by colour (true) or pack every part together (false); repacks if the plate view is open. */
+    async setSplitByColour(value) {
+      const next = value !== false;
+      if (next === splitByColour) return;
+      splitByColour = next;
+      if (on && !busy) await enter();
+    },
     /** Unmount: leave print mode (scene, camera and character restored), stop watching and forget the gate message listener. */
     dispose() {
       exit();

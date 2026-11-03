@@ -3201,6 +3201,7 @@ globals.kipMenu = mountKipMenu({
     plateLabel: printView.plateLabel, setPlate: printView.setPlate,
     profile: printView.profile, setPreset: printView.setPreset, updateProfile: printView.updateProfile,
     supportCheck: printView.supportCheck, setSupportCheck: printView.setSupportCheck,
+    splitByColour: printView.splitByColour, setSplitByColour: printView.setSplitByColour,
     download: printView.download,
   },
   ready: () => globals.__KIP_READY__ === true,

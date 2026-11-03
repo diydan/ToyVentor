@@ -423,6 +423,16 @@ export function buildMenu(ctx) {
         get: () => readProf().flatPackMode || 'loose',
         set: (v) => patchProf({ flatPackMode: v }),
       }),
+      sel('plateSplit', 'Plates', {
+        title: 'One set of plates per colour (default), or pack every part together whatever its colour',
+        visibleWhen: () => pr.isOn() && typeof pr.setSplitByColour === 'function',
+        options: () => [
+          { value: 'colour', label: 'Split by colour' },
+          { value: 'together', label: 'All together' },
+        ],
+        get: () => (pr.splitByColour?.() === false ? 'together' : 'colour'),
+        set: (v) => pr.setSplitByColour(v !== 'together'),
+      }),
       sel('colours', 'Colours', {
         title: 'Multi-colour plate strategy when more than one filament slot is available',
         visibleWhen: () => pr.isOn() && readProf().maxSlots > 1,

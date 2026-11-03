@@ -1385,6 +1385,9 @@ export function supportSummaryLine(platesOrPlan) {
  * Plan colour-separated (and support-separated + vehicle-separated) plates for any printer (§5.1, §7.2),
  * including M4/M6 flat-pack kit trays + adjacent loose zones when `profile.flatPackMode === 'sprue'` (§6, §12).
  */
+/** The one colour every item takes when the plan ignores colour (the default cream the print view uses for uncoloured parts). */
+const ONE_COLOUR_HEX = '#F4EFE6';
+
 export function planColorPlates(preparedItems, rawProfile = createDefaultProfile(), options = {}) {
   const profile = clampProfile(rawProfile);
   const bound = plateBound(profile.bedXmm, profile.brimMarginMm, profile.bedYmm);
@@ -1392,10 +1395,16 @@ export function planColorPlates(preparedItems, rawProfile = createDefaultProfile
     ? { ...SPRUE_SPEC, ...options.sprueSpec }
     : (rawProfile?.allowPegsAndTurrets ? { ...SPRUE_SPEC, allowPegsAndTurrets: true } : SPRUE_SPEC);
 
-  let workingItems = preparedItems;
+  // `options.splitByColour === false` packs everything together whatever its colour: every item is treated as one colour, so plates are only
+  // grouped by character/vehicle and by whether they need supports, and filled to the bed. (The Truck's part colours are for looking at the model, not
+  // a filament plan, and splitting on them gave one part per plate.) The default is the old behaviour: one set of plates per colour.
+  const sourceItems = options?.splitByColour === false
+    ? preparedItems.map((it) => ({ ...it, hex: ONE_COLOUR_HEX, colorName: 'All parts' }))
+    : preparedItems;
+  let workingItems = sourceItems;
   let merges = [];
   if (profile.maxSlots > 1 && profile.tooManyColours === 'merge') {
-    const merged = consolidateColors(preparedItems, profile.maxSlots);
+    const merged = consolidateColors(sourceItems, profile.maxSlots);
     workingItems = merged.items;
     merges = merged.merges;
   }
@@ -1607,7 +1616,8 @@ export function planColorPlates(preparedItems, rawProfile = createDefaultProfile
     if (pl.requiresSupports) tags.push('Supports');
     if (pl.group === 'vehicle') tags.push('Vehicle');
     const suffix = tags.length ? ` · ${tags.join(' · ')}` : '';
-    pl.label = `Plate ${i + 1} of ${totalPlates}: ${pl.colorName} (${pl.hex})${suffix}`;
+    // Packed together there is no colour to name: "All parts", without the placeholder hex.
+    pl.label = `Plate ${i + 1} of ${totalPlates}: ${pl.colorName}${options?.splitByColour === false ? '' : ` (${pl.hex})`}${suffix}`;
     const fileTag = [pl.slug, pl.hex.slice(1).toLowerCase()];
     if (pl.sprue) fileTag.push('kitcard');
     if (pl.requiresSupports) fileTag.push('supports');

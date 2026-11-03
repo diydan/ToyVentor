@@ -390,10 +390,10 @@ export const TRUCK_BENCH_MARKUP = `
   <div class="row stage-row">
     <span class="row-label">Stage</span>
     <button data-stage="snap" class="active">1 · Snap (3+)</button>
-    <button data-stage="pro">2 · Pro (8+) Rack Steer</button>
-    <button data-stage="band">3A · Motion Pull-Back Band</button>
-    <button data-stage="jet" title="Proposal: balloon upright on top of mom_jet_valve_body, no dump tub (docs/specs/motion-stage-options-spec.md)">3B′ · Balloon Jet (proposal)</button>
-    <button data-stage="mech">4 · Pro Powered Add-On (10+) Smart RC X-Ray</button>
+    <button data-stage="band">2a · Motion (8+) Pull-Back Band</button>
+    <button data-stage="jet" title="Proposal: balloon upright on top of mom_jet_valve_body, no dump tub (docs/specs/motion-stage-options-spec.md)">2b · Motion (8+) Balloon Jet (proposal)</button>
+    <button data-stage="pro">3 · Pro (8+) Rack Steer</button>
+    <button data-stage="mech">3+ · Pro Powered Add-On (10+) Smart RC X-Ray</button>
     <span class="sep"></span>
     <button id="btn-demo" class="spark-on">▶ Action Demo</button>
   </div>
@@ -451,6 +451,7 @@ export const TRUCK_BENCH_MARKUP = `
 <div id="print-panel">
   <div id="print-status">Planning plates…</div>
   <div id="print-actions">
+    <button id="print-colours" title="Pack every part together (default) or give each colour its own plates">Colours: all together</button>
     <button id="print-prev">← Plate</button>
     <button id="print-next">Plate →</button>
     <button id="print-3mf">Download 3MF</button>
@@ -647,7 +648,6 @@ const MATS = {
   spark: makeMat('#FF6B4A', 1, 0.36),
   mint: makeMat('#1FA97C', 1, 0.36),
   mintGlass: makeMat('#1FA97C', 0.48, 0.25),
-  violet: makeMat('#7C4DFF', 1, 0.38),
   tire: makeMat('#262D40', 1, 0.55),
   steel: makeMat('#7A8291', 1, 0.32),
   knuckle: makeMat('#495266', 1, 0.38),
@@ -661,8 +661,6 @@ const MATS = {
   balloon: makeMat('#FF5252', 0.68, 0.25),
   rubberBand: makeMat('#FF6600', 1, 0.35),
   ghost: makeMat('#FFD166', 0.5, 0.4), // viewer-only illustration: no catalog part exists for this yet
-  pneumaticTube: makeMat('#50C8FF', 0.75, 0.25),
-  exhaustRing: new THREE.MeshBasicMaterial({ color: 0xFFFFFF, transparent: true, opacity: 0.65 }),
 };
 
 const state = {
@@ -679,9 +677,9 @@ const state = {
   demoRunning: false,
   demoT: 0,
   wheelSpin: 0,
-  spoolSpin: 0,     // independent of wheelSpin so Stage 3A's overrunning clutch halts the spool at slack while wheels coast
+  spoolSpin: 0,     // independent of wheelSpin so Stage 2a's overrunning clutch halts the spool at slack while wheels coast
   sweepRunning: false,
-  balloonD: 175, balloonLean: 0, jetNozzle: 6, jetFill: 1,   // Stage 3B' balloon jet (proposal): balloon diameter mm, lean-back deg, nozzle bore mm, inflation 0..1
+  balloonD: 175, balloonLean: 0, jetNozzle: 6, jetFill: 1,   // Stage 2b balloon jet (proposal): balloon diameter mm, lean-back deg, nozzle bore mm, inflation 0..1
 };
 
 // ---------------------------------------------------------------------------
@@ -758,7 +756,7 @@ function meshOf(pid, mat) {
   return m;
 }
 
-// Stage 3B' balloon jet (proposal; docs/specs/motion-stage-options-spec.md section 2, parts/kip/viewer/JetCar-Lab.html). mom_jet_valve_body is repo CAD; the nozzle insert,
+// Stage 2b balloon jet (proposal; docs/specs/motion-stage-options-spec.md section 2, parts/kip/viewer/JetCar-Lab.html). mom_jet_valve_body is repo CAD; the nozzle insert,
 // balloon and jet stream below are procedural stand-ins. The collar top is at (0, 47.0, 40.5); the balloon is a sphere on a 25 mm neck, upright unless balloonLean > 0.
 const JET_NECK = 25.0;
 function jetNozzleGeo(d) {   // tapered plug into the body's rear socket (y 8.5..14.7), flange, convergent exit; body frame, axis +y
@@ -881,7 +879,7 @@ function rebuildScene() {
       dynamicRefs.yoke = yoke;
     }
   } else {
-    // Stage 2 Pro & Stage 4 Mech Captive Ackermann Row-0 Steering Linkage
+    // Stage 3 Pro & Stage 3+ Pro Powered Add-On Captive Ackermann Row-0 Steering Linkage
     const bridge = meshOf('pro_steer_bridge', MATS.mint);
     bridge.position.set(0, -50.0, 12.5);
     addExplodeTag(bridge, 0, -14, 14);
@@ -912,7 +910,7 @@ function rebuildScene() {
       cadRoot.add(sWheel);
       dynamicRefs.steerWheel = sWheel;
     } else {
-      // Stage 4 (Card F PETG): pro_pilot_pin + mech_servo_pinion_z10 + nylon horn + mech_servo_mount + SG90 + mech_servo_lid
+      // Stage 3+ (Card F PETG): pro_pilot_pin + mech_servo_pinion_z10 + nylon horn + mech_servo_mount + SG90 + mech_servo_lid
       const pilot = meshOf('pro_pilot_pin', MATS.steel);
       pilot.position.set(0, -37.5, STEER.pilotPinZ);
       addExplodeTag(pilot, 0, -10, -22);
@@ -1042,7 +1040,7 @@ function rebuildScene() {
       const leg = rig.joints[`${tag}Leg`];
       const foot = rig.joints[`${tag}Foot`];
       if (isPro) {
-        const rc = state.stage === 'mech'; // Stage 4 replaces the manual wheel with the tall SG90 servo pod (z = 52.1 mm)
+        const rc = state.stage === 'mech'; // Stage 3+ replaces the manual wheel with the tall SG90 servo pod (z = 52.1 mm)
         arm.rotation.set(d2r(rc ? -85 : -60), 0, d2r(side * (rc ? 15 : 30)));
         fore.position.set(0, -23.8, 0);
         fore.rotation.set(d2r(rc ? -42 : -18), 0, d2r(side * (rc ? -10 : -14)));
@@ -1361,32 +1359,32 @@ function updateHUD() {
       bed: `Enclosed Barrel Hinge · Tip ${Math.round(state.tipDeg)}° (Z=12.5 mm)`,
     },
     pro: {
-      badge: 'Stage 2 · Pro 8+',
-      title: '2 · Pro (8+) Captive Row-0 Rack-Steered Hauler',
+      badge: 'Stage 3 · Pro 8+',
+      title: '3 · Pro (8+) Captive Row-0 Rack-Steered Hauler',
       cards: 'Card A + Card B + Card E1',
       steer: `Double-Shear Clevis + Ø23 Wheel Skirt (${Math.round(state.steerDeg)}° Lock)`,
       power: 'Rear Z10 PTO Ready · Closed 360° Axle Bore',
       bed: `Enclosed Barrel Hinge · Tip ${Math.round(state.tipDeg)}° (Z=12.5 mm)`,
     },
     band: {
-      badge: 'Stage 3A · Motion 8+',
-      title: '3A · Motion Pull-Back Doubled-#32 Band + Overrunning Clutch',
+      badge: 'Stage 2a · Motion 8+',
+      title: '2a · Motion (8+) Pull-Back Doubled-#32 Band + Overrunning Clutch',
       cards: 'Card A + Card B + Card E2 (Pull-Back Band Core)',
       steer: 'Closed Through-Bore Barbell · pull back to wind, no key, latch or bumper',
       power: '4-Leaf Freewheel Spool + Double-Shear PTO (Z=31.25 mm)',
       bed: `Lid Barrel Knuckles · Tip ${Math.round(state.tipDeg)}° (Z=50.0 mm)`,
     },
     jet: {
-      badge: "Stage 3B′ · Motion 8+ (proposal)",
-      title: "3B′ · Motion Balloon Jet · upright balloon on top (proposal)",
+      badge: "Stage 2b · Motion 8+ (proposal)",
+      title: "2b · Motion (8+) Balloon Jet · upright balloon on top (proposal)",
       cards: 'Card A + Card B + mom_jet_valve_body + mom_jet_slide_valve (Card E3)',
       steer: 'Closed Through-Bore Barbell · no tub, no axle gear',
       power: `Balloon Ø${state.balloonD} · lean ${state.balloonLean}° · nozzle Ø${state.jetNozzle} · thrust: see spec §2`,
       bed: 'No dump tub: balloon on the collar, rows 8..9',
     },
     mech: {
-      badge: 'Stage 4 · Pro Add-On 10+',
-      title: '4 · Pro Powered Add-On (10+) Printable PETG RC Servo + Drive/Brain',
+      badge: 'Stage 3+ · Pro Add-On 10+',
+      title: '3+ · Pro Powered Add-On (10+) Printable PETG RC Servo + Drive/Brain',
       cards: 'Cards A + B + E1 + Card F (PETG, 11 Parts)',
       steer: `Row-2 9g Servo + Horn-Pocket Z10 (${srvDeg.toFixed(1)}° / ${srvUs} µs)`,
       power: 'Double-Shear N20 + 602535 LiPo + XIAO → 25 mm PTO',
@@ -1477,7 +1475,7 @@ benchRoot.querySelectorAll('[data-stage]').forEach((btn) => {
   });
 });
 
-// Stage 3B' options: cycle balloon diameter, lean and nozzle (balloon lean 0 = straight up, as the vertical collar gives it)
+// Stage 2b options: cycle balloon diameter, lean and nozzle (balloon lean 0 = straight up, as the vertical collar gives it)
 const JET_D = [125, 150, 175, 200], JET_LEAN = [0, 15, 30, 45], JET_NOZ = [3, 4.5, 6, 8];
 const cycle = (list, v) => list[(Math.max(0, list.indexOf(v)) + 1) % list.length];
 $el('btn-jet-balloon').addEventListener('click', (e) => { state.balloonD = cycle(JET_D, state.balloonD); e.target.textContent = `Balloon: Ø${state.balloonD}`; rebuildScene(); updateHUD(); });
@@ -1519,7 +1517,7 @@ $el('rng-explode').addEventListener('input', (e) => {
 
 $el('btn-wheels').addEventListener('click', (e) => {
   if (state.stage === 'band' && !state.giantWheels) {
-    $el('status-text').textContent = 'Ø50 giant tires have not been checked against the pull-back core yet, so Stage 3A keeps the Ø36 wheels.';
+    $el('status-text').textContent = 'Ø50 giant tires have not been checked against the pull-back core yet, so Stage 2a keeps the Ø36 wheels.';
     return;
   }
   state.giantWheels = !state.giantWheels;
@@ -1550,6 +1548,7 @@ const truckPrint = mountPrintView({
   getState: () => ({ stage: state.stage, driver: state.driver, head: KIP_STACK.head }),
   getParts: () => truckGetParts({ cadRoot, geos: GEOS, partFiles: PART_FILES }),
   setCharacterVisible: (on) => { cadRoot.visible = on; },
+  splitByColour: false, // the Truck's part colours are only for looking at it: pack the plates full, whatever the colour (the button below splits them)
 });
 globals.truckPrint = truckPrint;
 const printPanel = $el('print-panel');
@@ -1566,6 +1565,12 @@ function syncPrintPanel() {
 }
 $el('btn-print').addEventListener('click', async () => { syncPrintPanel(); printPanel.style.display = 'block'; printStatus.textContent = 'Planning plates…'; await truckPrint.enter(); syncPrintPanel(); });
 $el('print-back').addEventListener('click', () => { truckPrint.exit(); syncPrintPanel(); });
+$el('print-colours').addEventListener('click', async (e) => {
+  const split = !truckPrint.splitByColour();
+  e.currentTarget.textContent = split ? 'Colours: split by colour' : 'Colours: all together';
+  await truckPrint.setSplitByColour(split);
+  syncPrintPanel();
+});
 $el('print-prev').addEventListener('click', () => { truckPrint.setPlate(truckPrint.plateIndex() - 1); syncPrintPanel(); });
 $el('print-next').addEventListener('click', () => { truckPrint.setPlate(truckPrint.plateIndex() + 1); syncPrintPanel(); });
 $el('print-3mf').addEventListener('click', async () => { await truckPrint.download('3mf'); syncPrintPanel(); });
@@ -2028,7 +2033,7 @@ function driveFrame(dt, input) {
   if (drive.hudAt > 0.12 || changed) { drive.hudAt = 0; updateDriveHud(p); }
 }
 
-// Test hook for the 3A pull-back loop: freezes the demo clock at demoT and reports what the parts are doing, so a script can step the cycle frame by frame.
+// Test hook for the 2a pull-back loop: freezes the demo clock at demoT and reports what the parts are doing, so a script can step the cycle frame by frame.
 globals.__truckBand = {
   step(t) { state.demoT = t; stepBandDemo(t, state.giantWheels ? 25.0 : 18.0); }, // the same function the loop calls, no frame needed
   snap: () => ({
@@ -2082,7 +2087,7 @@ function hubRoll(side, a, aPrev, v, psiDot, dt) {
   return body * dt - side * 15.0 * (a - aPrev);
 }
 
-/** One pose of the 3A pull-back loop at demo time `demoT` (s). The animation loop and the test hook both call this, so what the test steps is what runs. */
+/** One pose of the 2a pull-back loop at demo time `demoT` (s). The animation loop and the test hook both call this, so what the test steps is what runs. */
 function stepBandDemo(demoT, wRad) {
   const smooth = (u) => { const c = Math.max(0, Math.min(1, u)); return c * c * (3 - 2 * c); };
   // 6 s Pull-Back Band Core loop, in SLOW MOTION (pull-back only, as decided: no key, no latch, no bumper). One wheel turn is one spool turn

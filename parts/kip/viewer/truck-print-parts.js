@@ -8,7 +8,9 @@ export function countSceneParts(root, geoToId) {
   const byId = new Map();
   root.traverse((o) => {
     if (!o.isMesh) return;
-    for (let p = o; p; p = p.parent) if (p.visible === false) return;
+    // Hidden parts are not printed, but `root` itself is hidden while the plate view is open (it hides the truck): its own flag must not count,
+    // or every repack from inside the plate view would find nothing.
+    for (let p = o; p && p !== root; p = p.parent) if (p.visible === false) return;
     const id = geoToId.get(o.geometry);
     if (!id) return;
     const colour = o.material?.color?.getHexString ? `#${o.material.color.getHexString()}` : '#F4EFE6';
