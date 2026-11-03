@@ -59,6 +59,7 @@ function bellTone(k: string): void {var b=PB[k];if(!b)return;tone(b.f,0,.7,"sine
 
 export function toggleSound(): boolean {
   sound = !sound;
+  if (!sound) stopSay();
   if (MUS.on) musGain(sound ? 0.7 : 0, 0.3);
   return sound;
 }
@@ -66,7 +67,32 @@ export function toggleSound(): boolean {
 export function muteAudio(): void {
   if (!sound) return;
   sound = false;
+  stopSay();
   if (MUS.on) musGain(0, 0.3);
+}
+/**
+ * Speech twin (carousel §11.1 `tell`): every spoken scene prompt
+ * also renders as a toast, so muted play stays fully playable.
+ * No-op without a speech engine or while muted.
+ */
+export function say(text: string): void {
+  try {
+    if (typeof window === "undefined" || !sound) return;
+    var synth = window.speechSynthesis;
+    if (!synth || !text) return;
+    synth.cancel();
+    var u = new SpeechSynthesisUtterance(text);
+    u.lang = "en-US";
+    u.rate = 0.95;
+    u.pitch = 1.1;
+    synth.speak(u);
+  } catch (e) {}
+}
+/** Stop any in-flight utterance (mute, teardown). */
+export function stopSay(): void {
+  try {
+    if (typeof window !== "undefined" && window.speechSynthesis) window.speechSynthesis.cancel();
+  } catch (e) {}
 }
 export function noteGesture(): void {
   gestured = true;

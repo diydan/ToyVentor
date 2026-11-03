@@ -141,6 +141,7 @@ muteAudio,
 noteGesture,
 resetAudio,
 buzz,
+say,
 } from "./audio";
 import { createMissions } from "./missions";
 import { createEditor } from "./editor";
@@ -571,6 +572,8 @@ function icon(st: string,s?: number){s=s||30;var c=(STATS[st]||LOOK).c,o='<svg w
 var BOLTI='<svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="#d8def5" stroke="#5a6aa0" stroke-width="2"/><path d="M7.5 12 H16.5" stroke="#5a6aa0" stroke-width="2.6" stroke-linecap="round"/></svg>';
 var toastH=0,showCardH=0,hintH=0;
 function toast(t: string){notify();var e=$("#toast");e.textContent=t;e.classList.add("on");clearTimeout(toastH);toastH=setTimeout(function(){e.classList.remove("on")},2800)}
+/** Scene prompt twin (carousel §11.1 `tell`): toast pill + speech. Muted play still gets the toast. */
+function sayT(t: string){toast(t);say(t)}
 function moves(){var st=creStats();$$(".mv").forEach(function(b){b.classList.toggle("off",!st[b.getAttribute("data-k")])})}
 function updHud(){}
 
@@ -668,8 +671,8 @@ function lanePoint(){return ray.ray.intersectPlane(ground,hitP)?{x:hitP.x,z:clam
 function junkHit(){var arr=spots.filter(function(s){return s.junk&&!s.got&&!s.broken}).map(function(s){return s.junk as THREE.Object3D});if(!arr.length)return null;var h=ray.intersectObjects(arr,true);if(!h.length)return null;var o: THREE.Object3D | null=h[0]!.object;while(o&&arr.indexOf(o)<0)o=o.parent;return spots.filter(function(s){return s.junk===o})[0]||null}
 function clampPathZ(z: number){return Math.max(-1.2,Math.min(1.2,z))}
 function setTarget(x: number,z?: number){var nb=(!ED.on&&!ED.testing)?townNeighbors(S.world):null,lo=nb?.2:.5,hi=nb?44.6:43.5;var tz=z===undefined?P.pos.z:clampPathZ(z);P.target=new T.Vector3(Math.max(lo,Math.min(hi,x)),0,tz);marker.position.set(P.target.x,.06,tz);markT=0}
-canvas.addEventListener("pointerdown",function(e: PointerEvent){ctx();if(P.showcase||P.mDrive)return;rayAt(e.clientX,e.clientY);var hb=ray.intersectObjects(bolts,false);if(hb.length){unbolt(hb[0]!.object);return}var js=junkHit();if(js){unboltNext(js);return}var th=ray.intersectObjects(tidySpots.filter(function(s){return !s.done}).map(function(s){return s.hit}),false);if(th.length&&th[0]!.object.userData.tidy){var te=th[0]!.object.userData.tidy;if(Math.abs(P.pos.x-te.x)<3.2){tidyUp(te);return}setTarget(te.x);return}if(sceneVisit){var vh=ray.intersectObjects(sceneMarks.filter(function(mk){return mk.live}).map(function(mk){return mk.hit}),false);var vref=null as null|{kind:string;id:string};for(var vi=0;vi<vh.length;vi++){var vcand=vh[vi]!.object.userData.sceneCarry;if(vcand&&vcand.kind==="spot"&&vh[vi]!.distance-vh[0]!.distance<2.5){vref=vcand;break}}if(vref){var vmk=sceneMarks.filter(function(m){return m.kind==="spot"&&m.id===vref!.id})[0]!;var vr=tapSceneSpot(sceneVisit,vref.id,vmk.x);if(vr.action==="goto")setTarget(vr.x,vmk.g.position.z);toast(vr.say);return}}
-if(sceneCarry){var ch=ray.intersectObjects(sceneMarks.filter(function(mk){return mk.live}).map(function(mk){return mk.hit}),false);var ref=null as null|{kind:string;id:string};for(var ci=0;ci<ch.length;ci++){var cand=ch[ci]!.object.userData.sceneCarry;if(cand&&ch[ci]!.distance-ch[0]!.distance<2.5){ref=cand;break}}if(ref){var refId=ref.id;if(ref.kind==="item"){var mk2=sceneMarks.filter(function(m){return m.kind==="item"&&m.id===refId})[0]!;var ri=tapSceneItem(sceneCarry,refId,mk2.x);if(ri.action==="goto")setTarget(ri.x,mk2.g.position.z);toast(ri.say);return}var mk3=sceneMarks.filter(function(m){return m.kind==="target"&&m.id===refId})[0]!;var rt=tapSceneTarget(sceneCarry,refId,mk3.x);if(rt.action==="goto")setTarget(rt.x,mk3.g.position.z);toast(rt.say);return}}
+canvas.addEventListener("pointerdown",function(e: PointerEvent){ctx();if(P.showcase||P.mDrive)return;rayAt(e.clientX,e.clientY);var hb=ray.intersectObjects(bolts,false);if(hb.length){unbolt(hb[0]!.object);return}var js=junkHit();if(js){unboltNext(js);return}var th=ray.intersectObjects(tidySpots.filter(function(s){return !s.done}).map(function(s){return s.hit}),false);if(th.length&&th[0]!.object.userData.tidy){var te=th[0]!.object.userData.tidy;if(Math.abs(P.pos.x-te.x)<3.2){tidyUp(te);return}setTarget(te.x);return}if(sceneVisit){var vh=ray.intersectObjects(sceneMarks.filter(function(mk){return mk.live}).map(function(mk){return mk.hit}),false);var vref=null as null|{kind:string;id:string};for(var vi=0;vi<vh.length;vi++){var vcand=vh[vi]!.object.userData.sceneCarry;if(vcand&&vcand.kind==="spot"&&vh[vi]!.distance-vh[0]!.distance<2.5){vref=vcand;break}}if(vref){var vmk=sceneMarks.filter(function(m){return m.kind==="spot"&&m.id===vref!.id})[0]!;var vr=tapSceneSpot(sceneVisit,vref.id,vmk.x);if(vr.action==="goto")setTarget(vr.x,vmk.g.position.z);sayT(vr.say);return}}
+if(sceneCarry){var ch=ray.intersectObjects(sceneMarks.filter(function(mk){return mk.live}).map(function(mk){return mk.hit}),false);var ref=null as null|{kind:string;id:string};for(var ci=0;ci<ch.length;ci++){var cand=ch[ci]!.object.userData.sceneCarry;if(cand&&ch[ci]!.distance-ch[0]!.distance<2.5){ref=cand;break}}if(ref){var refId=ref.id;if(ref.kind==="item"){var mk2=sceneMarks.filter(function(m){return m.kind==="item"&&m.id===refId})[0]!;var ri=tapSceneItem(sceneCarry,refId,mk2.x);if(ri.action==="goto")setTarget(ri.x,mk2.g.position.z);sayT(ri.say);return}var mk3=sceneMarks.filter(function(m){return m.kind==="target"&&m.id===refId})[0]!;var rt=tapSceneTarget(sceneCarry,refId,mk3.x);if(rt.action==="goto")setTarget(rt.x,mk3.g.position.z);sayT(rt.say);return}}
 var sh=ray.intersectObjects(signHits,false);if(sh.length&&!P.busy){var sdir=sh[0]!.object.userData.signDir;setTarget(sdir==="west"?.25:44.55);return}if(!ED.on&&PFX.tap(ray))return;if(P.busy)return;var lp=lanePoint();if(!lp)return;hold={id:e.pointerId};try{canvas.setPointerCapture(e.pointerId)}catch(_){}setTarget(lp.x,lp.z)});
 canvas.addEventListener("pointermove",function(e: PointerEvent){if(!hold||hold.id!==e.pointerId||P.busy||P.showcase)return;rayAt(e.clientX,e.clientY);var lp2=lanePoint();if(lp2)setTarget(lp2.x,lp2.z)});
 function endHold(e: PointerEvent){if(hold&&hold.id===e.pointerId)hold=null}
@@ -698,11 +701,11 @@ var FR=0;function frame(){if(disposed)return;FR++;timer.update();var dt=Math.min
  for(var i=0;i<sceneMarks.length;i++){var cand=sceneMarks[i]!;if("itemId" in pd){if(cand.kind==="item"&&cand.id===(pd as {itemId:string}).itemId){mk=cand;break}}else if(cand.kind==="target"&&cand.id===(pd as {targetId:string}).targetId){mk=cand;break}}
  if(!mk||Math.abs(P.pos.x-mk.x)>=1.25||Math.abs(P.pos.z)>1||(P.elev||0)>=.8)return;
  var ar=arriveScene(session);if(!ar)return;
- if(ar.event==="picked"){sfx.pop();toast(ar.say);return}
- if(ar.event==="placed"){sfx.pop();burst(new T.Vector3(mk.x,.6,0));var placed=null as null|{g: THREE.Group};for(var j=0;j<sceneMarks.length;j++){var c2=sceneMarks[j]!;if(c2.kind==="item"&&c2.id===ar.itemId){placed=c2;break}}if(placed)placed.g.visible=false;toast(ar.say);return}
- if(ar.event==="wrong"){if(curMission)mFailNote(curMission);if(sfx.bump)sfx.bump();toast(ar.say+" "+ar.hint);var wmk=mk.g;fx.push({t:0,d:.5,f:function(k){wmk.scale.setScalar(1+.2*Math.sin(Math.PI*k))},end:function(){wmk.scale.setScalar(1)}});var ctid=correctTargetFor(session);setTimeout(function(){cueSceneMark(ctid)},800);return}
+ if(ar.event==="picked"){sfx.pop();sayT(ar.say);return}
+ if(ar.event==="placed"){sfx.pop();burst(new T.Vector3(mk.x,.6,0));var placed=null as null|{g: THREE.Group};for(var j=0;j<sceneMarks.length;j++){var c2=sceneMarks[j]!;if(c2.kind==="item"&&c2.id===ar.itemId){placed=c2;break}}if(placed)placed.g.visible=false;sayT(ar.say);return}
+ if(ar.event==="wrong"){if(curMission)mFailNote(curMission);if(sfx.bump)sfx.bump();sayT(ar.say+" "+ar.hint);var wmk=mk.g;fx.push({t:0,d:.5,f:function(k){wmk.scale.setScalar(1+.2*Math.sin(Math.PI*k))},end:function(){wmk.scale.setScalar(1)}});var ctid=correctTargetFor(session);setTimeout(function(){cueSceneMark(ctid)},800);return}
  var doneMk=null as null|{g: THREE.Group};for(var k=0;k<sceneMarks.length;k++){var c3=sceneMarks[k]!;if(c3.kind==="item"&&c3.id===ar.itemId){doneMk=c3;break}}
- if(doneMk)doneMk.g.visible=false;sfx.found();if(curMission){var wdef=learnRungDef(session.missionId);mtWin(curMission,wdef?wdef.winText:"All done!")}sceneCarry=null;clearSceneMarks()}
+ if(doneMk)doneMk.g.visible=false;sfx.found();if(curMission){var wdef=learnRungDef(session.missionId);var wtxt=wdef?wdef.winText:"All done!";mtWin(curMission,wtxt);say(wtxt)}sceneCarry=null;clearSceneMarks()}
 if(!P.showcase&&!P.busy&&!P.mDrive){resolveSceneArrival();resolveVisitArrival()}
 if(!P.showcase&&!P.busy&&!P.mDrive){tidySpots.forEach(function(ts){if(ts.done)return;if(ts.g.userData.spark)ts.g.userData.spark.scale.setScalar(.7+.15*Math.sin(t*4+ts.x));if(Math.abs(P.pos.x-ts.x)<1.25&&Math.abs(P.pos.z)<1.6&&(P.elev||0)<.8)tidyUp(ts)})}
  if(nb0&&!P.mDrive&&!P.showcase&&!P.busy&&!autoWalk&&streetCd<=0){if(P.pos.x<=.48&&wantWest)streetCross("west");else if(P.pos.x>=44.38&&(P.elev||0)<1.5&&wantEast)streetCross("east")}
@@ -1041,7 +1044,7 @@ function mpLater(m: Mission | null){if(m){if(m.replaying)mCancelReplay(m);m.dism
 function openLearnRung(){if(!learnRun)return;var lad=ladderById(learnRun.track);if(!lad){learnRun=null;notify();return}var rung=lad.rungs[learnRun.plan[learnRun.at]!]!;learnRun.rungMissionId=rung.missionId;
  if(rung.missionId.indexOf("lab")===0){var parts=rung.missionId.split("."),lw=parts[0]!,lt=parts[1]!;if(S.world!==lw)switchWorld(lw);var m: Mission|undefined=(W.missions||[]).find(function(x: Mission){return x.type===lt});if(!m){toast("That level is not here yet.");learnRun=null;notify();return}var st0=mst(m);st0.tier=rung.tier;m.dismissed=false;var entry=MT[m.type];if(entry){if(entry.st)entry.st(m);entry.sync(m)}else mSync(m);P.pos.x=entry?entry.hold(m):m.x-2;P.target=null;mUpdateCur=m;save();mPanel(m);notify();return}
  var ldef2=learnRungDef(rung.missionId);if(!ldef2){learnRun=null;notify();return}if(!S.ms[rung.missionId])S.ms[rung.missionId]={};S.ms[rung.missionId].tier=rung.tier;var vm: Mission={type:"learn",learnId:rung.missionId,x:P.pos.x,done:!!S.mdone[rung.missionId]};curMission=vm;mUpdateCur=vm;save();mtPanel(vm);startSceneMarkers(rung.missionId);notify()}
-function startSceneMarkers(missionId: string){clearSceneMarks();sceneCarry=startSceneCarry(missionId);sceneVisit=null;if(!sceneCarry){var vs0=startSceneVisit(missionId);if(!vs0)return;sceneVisit=vs0;startVisitMarkers(vs0);toast(vs0.recipe.intro);return}var session=sceneCarry;
+function startSceneMarkers(missionId: string){clearSceneMarks();sceneCarry=startSceneCarry(missionId);sceneVisit=null;if(!sceneCarry){var vs0=startSceneVisit(missionId);if(!vs0)return;sceneVisit=vs0;startVisitMarkers(vs0);sayT(vs0.recipe.intro);return}var session=sceneCarry;
  session.params.items.forEach(function(item,idx){var x=itemMarkerX(idx);var g=new T.Group();g.position.set(x,0,0);
   g.add(M(rbox(.55,.5,.55,.1),plastic("#3c55b8"),0,.28,0));var lb=textSprite(item.label||item.id,"#e8ecff",.5);lb.position.set(0,1.15,0);g.add(lb);
   var hit=new T.Mesh(new T.SphereGeometry(1.35,8,6),new T.MeshBasicMaterial({visible:false}));hit.position.set(0,.5,0);hit.userData={sceneCarry:{kind:"item",id:item.id}};g.add(hit);add(g);
@@ -1051,19 +1054,19 @@ function startSceneMarkers(missionId: string){clearSceneMarks();sceneCarry=start
   var lb2=textSprite(target.label||target.id,"#5af0b0",.5);lb2.position.set(0,1.5,0);g2.add(lb2);
   var hit2=new T.Mesh(new T.SphereGeometry(1.35,8,6),new T.MeshBasicMaterial({visible:false}));hit2.position.set(0,.5,0);hit2.userData={sceneCarry:{kind:"target",id:target.id}};g2.add(hit2);add(g2);
   sceneMarks.push({kind:"target",id:target.id,x:target.x,g:g2,hit:hit2,live:true})});
- toast(session.params.items.length+" things to put away. Tap one.")}
+ sayT(session.params.items.length+" things to put away. Tap one.")}
 function resolveVisitArrival(){if(!sceneVisit||!sceneVisit.pending)return;var session=sceneVisit;var pd=session.pending;if(!pd)return;
  var mk=null as null|{kind: string;id: string;x: number;g: THREE.Group;hit: THREE.Object3D;live: boolean};
  for(var i=0;i<sceneMarks.length;i++){var cand=sceneMarks[i]!;if(cand.kind==="spot"&&cand.id===pd.spotId){mk=cand;break}}
  if(!mk||Math.abs(P.pos.x-mk.x)>=1.25||Math.abs(P.pos.z)>1||(P.elev||0)>=.8)return;
  var ar=arriveSceneVisit(session);if(!ar)return;var mg=mk.g;
- if(ar.event==="wrong"){if(curMission)mFailNote(curMission);if(sfx.bump)sfx.bump();toast(ar.say+" "+ar.hint);var wmg=mg;fx.push({t:0,d:.5,f:function(k){wmg.scale.setScalar(1+.2*Math.sin(Math.PI*k))},end:function(){wmg.scale.setScalar(1)}});var nxt=session.recipe.spots[session.at];if(nxt){var nid=nxt.id;setTimeout(function(){cueSceneMark(nid)},800)}return}
+ if(ar.event==="wrong"){if(curMission)mFailNote(curMission);if(sfx.bump)sfx.bump();sayT(ar.say+" "+ar.hint);var wmg=mg;fx.push({t:0,d:.5,f:function(k){wmg.scale.setScalar(1+.2*Math.sin(Math.PI*k))},end:function(){wmg.scale.setScalar(1)}});var nxt=session.recipe.spots[session.at];if(nxt){var nid=nxt.id;setTimeout(function(){cueSceneMark(nid)},800)}return}
  if(ar.effect==="hide"){sfx.pop();burst(new T.Vector3(mk.x,.9,0));mg.visible=false}
  else if(ar.effect==="green"){sfx.pop();if(mg.userData.disc)mg.userData.disc.material.color.set(0x5af0b0)}
  else if(ar.effect==="reveal"){sfx.pop();var nx2=session.recipe.spots[session.at];if(nx2){var nm=sceneMarks.filter(function(m){return m.id===nx2!.id})[0];if(nm){nm.g.visible=true;nm.live=true}cueSceneMark(nx2.id)}}
  else{sfx.pop();fx.push({t:0,d:.6,f:function(k){mg.scale.setScalar(1+.25*Math.sin(Math.PI*k))},end:function(){mg.scale.setScalar(1)}})}
- toast(ar.say);
- if(ar.event==="done"){sfx.found();if(curMission){var wdef2=learnRungDef(session.missionId);mtWin(curMission,wdef2?wdef2.winText:"All done!")}sceneVisit=null;clearSceneMarks()}}
+ sayT(ar.say);
+ if(ar.event==="done"){sfx.found();if(curMission){var wdef2=learnRungDef(session.missionId);var wtxt2=wdef2?wdef2.winText:"All done!";mtWin(curMission,wtxt2);say(wtxt2)}sceneVisit=null;clearSceneMarks()}}
 function startVisitMarkers(vs: SceneVisitSession){var mid=vs.missionId;
  vs.recipe.spots.forEach(function(spot){var g=new T.Group();g.position.set(spot.x,0,0);var hidden=mid==="little.peek"&&spot.id==="bunny";if(hidden)g.visible=false;
   if(mid==="little.pop"){var pr=spot.id==="big"?.85:.4,py=spot.id==="big"?1:.55;var bub=new T.Mesh(new T.SphereGeometry(pr,20,14),new T.MeshBasicMaterial({color:0x9adcff,transparent:true,opacity:.5}));bub.position.y=py;g.add(bub);var bl=textSprite(spot.label,"#cfeaff",.45);bl.position.set(0,py+pr+.35,0);g.add(bl)}

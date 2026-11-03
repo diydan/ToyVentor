@@ -23,7 +23,10 @@ keeps, and in what order. No implementation starts until §14 sign-off.
 > marker taps steer z to the marker so arrivals always resolve.
 > Wrong taps hop the tapped marker and cue the right one ~0.8 s
 > later (`reactThenHint`); copy never says "wrong".
-> Toast twins every prompt; speech twin still open.
+> Toast twins every prompt; speech twin shipped (`say()` in
+> `audio.ts`, en-US, silent while muted or engineless) and heard
+> in headless Chrome speaking the scene intros. Keyboard-only
+> panel path verified end to end (Tab + Enter completes Pop).
 > C2 as shipped: `startLearnRun`/`stopLearnRun`/`learnState` on the
 > engine facade with `LearnSnapshot` + `learnFinished` events; lab
 > rungs ride the real lab missions at the rung tier; the 21 new-id
@@ -31,7 +34,8 @@ keeps, and in what order. No implementation starts until §14 sign-off.
 > `learn`, scored by the stock attempts/win pipeline); finishing a
 > run returns to the Map; `Free world` exits a run from the dock
 > menu. Tier chips hide during a run so the XP tier clamp cannot
-> rewrite a rung's tier. `Hear it` speech arrives with C3 (§11).
+> rewrite a rung's tier. `Hear it` speech arrived with C3 (§11):
+scene prompts speak via `say()` with the toast as twin.
 > C1 as shipped: `src/lib/{age,learn,ladders,mapCards}.ts`, `ageBand` in
 > `progression:v1` (§9.3), §9.4 one-time import, `MapCarousel` +
 > `RungSheet` behind dock `⋯` → `Map`, grown-up Age/Levels rows, and
