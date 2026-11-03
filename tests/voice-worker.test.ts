@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { DEFAULT_VOICE, VOICE_MODEL, handleVoice, parseVoiceKey, trimWav, voiceName, voiceText, type VoiceEnv } from "../worker/voice";
+import { DEFAULT_VOICE, VOICE_MODEL, TARGET_RMS, handleVoice, levelWav, parseVoiceKey, trimWav, voiceName, voiceText, type VoiceEnv } from "../worker/voice";
 
 const RATE = 24000;
 
@@ -226,5 +226,61 @@ describe("trimWav", () => {
     expect(trimWav(silent)).toBe(silent);
     const tight = makeWav(Int16Array.from({ length: 4000 }, (_, i) => Math.round(Math.sin(i / 9) * 9000)));
     expect(trimWav(tight).length).toBe(tight.length);
+  });
+});
+
+describe("levelWav", () => {
+  const samplesOf = (wav: Uint8Array) => {
+    const dv = new DataView(wav.buffer, wav.byteOffset, wav.byteLength);
+    return Int16Array.from({ length: (wav.length - 44) / 2 }, (_, i) => dv.getInt16(44 + i * 2, true));
+  };
+  const rmsOf = (wav: Uint8Array) => Math.sqrt(samplesOf(wav).reduce((a, v) => a + v * v, 0) / samplesOf(wav).length);
+  const sine = (amp: number, n = 6000) => Int16Array.from({ length: n }, (_, i) => Math.round(Math.sin(i / 9) * amp));
+
+  it("raises a quiet clip and lowers a loud one towards the same loudness", () => {
+    const quiet = makeWav(sine(2000));
+    const loud = makeWav(sine(11000));
+    expect(rmsOf(levelWav(quiet))).toBeGreaterThan(rmsOf(quiet) * 3);
+    expect(Math.abs(rmsOf(levelWav(quiet)) - TARGET_RMS) / TARGET_RMS).toBeLessThan(0.05);
+    expect(Math.abs(rmsOf(levelWav(loud)) - TARGET_RMS) / TARGET_RMS).toBeLessThan(0.05);
+    expect(rmsOf(levelWav(loud))).toBeLessThan(rmsOf(loud));
+  });
+  it("clamps the gain (0.5 to 4) so a whisper is not turned into noise and a shout is not flattened", () => {
+    const whisper = makeWav(sine(200)); // would need a gain of 35
+    expect(rmsOf(levelWav(whisper)) / rmsOf(whisper)).toBeCloseTo(4, 1);
+    const shout = makeWav(sine(30000)); // would need 0.24
+    expect(rmsOf(levelWav(shout)) / rmsOf(shout)).toBeCloseTo(0.5, 1);
+  });
+  it("never lets the peak past 95 percent of full scale, so a spike in a quiet clip limits the gain instead of clipping", () => {
+    const s = sine(1000);
+    s[100] = 20000;
+    const out = levelWav(makeWav(s));
+    expect(Math.max(...Array.from(samplesOf(out), Math.abs))).toBeLessThanOrEqual(Math.round(0.95 * 32767));
+    expect(Math.max(...Array.from(samplesOf(out), Math.abs))).toBeGreaterThan(20000); // it still went up
+  });
+  it("keeps the header and the length, and leaves non-WAV bytes, silence and a clip already at the level alone (the same array)", () => {
+    const quiet = makeWav(sine(2000));
+    const out = levelWav(quiet);
+    expect(out.length).toBe(quiet.length);
+    expect(Array.from(out.subarray(0, 44))).toEqual(Array.from(quiet.subarray(0, 44)));
+    expect(out).not.toBe(quiet);
+    expect(Array.from(quiet.subarray(44, 60))).toEqual(Array.from(makeWav(sine(2000)).subarray(44, 60))); // the input was not changed in place
+    const junk = new Uint8Array([1, 2, 3, 4, 5]);
+    expect(levelWav(junk)).toBe(junk);
+    const silent = makeWav(new Int16Array(RATE));
+    expect(levelWav(silent)).toBe(silent);
+    const onTarget = makeWav(sine(Math.round(TARGET_RMS * Math.SQRT2)));
+    expect(levelWav(onTarget)).toBe(onTarget);
+  });
+  it("is applied to every clip the route generates, after trimming", async () => {
+    const store = new Map<string, Response>();
+    vi.stubGlobal("caches", { default: { match: async (r: Request) => store.get(r.url)?.clone(), put: async (r: Request, res: Response) => void store.set(r.url, res.clone()) } });
+    const loud = makeWav(sine(12000, RATE));
+    const run = vi.fn(async () => ({ audio: `data:audio/wav;base64,${btoa(String.fromCharCode(...loud))}` }));
+    const res = await handleVoice(get("lang=en&n=tree&c=green"), { AI: { run } });
+    expect(res.status).toBe(200);
+    const body = new Uint8Array(await res.arrayBuffer());
+    expect(Math.abs(rmsOf(body) - TARGET_RMS) / TARGET_RMS).toBeLessThan(0.06);
+    vi.unstubAllGlobals();
   });
 });

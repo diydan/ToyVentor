@@ -171,6 +171,20 @@ describe("householdVoiceUrl and speakHouseholdName (the client)", () => {
     expect(householdVoiceUrl("support_tool", "es")).toBeNull();
     expect(householdVoiceUrl("dragon", "en")).toBeNull();
   });
+  it("gives no clip URL for a noun spelled the same in another language: the clip voice might speak it in the wrong accent", () => {
+    // in this fixture the English and the Portuguese banana are spelled alike (the real file's list is tested in tests/household-names.test.ts)
+    for (const [id, lang] of [["banana", "en"], ["banana", "pt"]] as const) expect(householdVoiceUrl(id, lang), `${id} ${lang}`).toBeNull();
+    for (const [id, lang] of [["banana", "es"], ["wooden_spoon", "en"], ["wooden_spoon", "es"]] as const) expect(householdVoiceUrl(id, lang), `${id} ${lang}`).not.toBeNull();
+  });
+  it("goes straight to the device voice, with the explicit language tag and no clip request, for such a noun", () => {
+    const r = speakHouseholdName("banana", { lang: "pt" });
+    expect(r).toEqual({ via: "device", text: "banana", lang: "pt" });
+    expect(audios).toHaveLength(0);
+    expect(spoken).toEqual([{ text: "banana", lang: "pt-BR" }]);
+    spoken.length = 0;
+    expect(speakHouseholdName("banana", { lang: "en" })!.via).toBe("device"); // the English "banana" is spelled like the Portuguese one
+    expect(spoken).toEqual([{ text: "banana", lang: "en-US" }]);
+  });
   it("plays the clip in the chosen language when the item has a name there", () => {
     const r = speakHouseholdName("wooden_spoon", { lang: "es" });
     expect(r).toEqual({ via: "clip", text: "cuchara de madera", lang: "es" });
@@ -186,8 +200,8 @@ describe("householdVoiceUrl and speakHouseholdName (the client)", () => {
     expect(audios[0]!.url).toContain("h=support_tool");
   });
   it("uses the player's language setting when none is given, and English when nothing is stored", () => {
-    const r = speakHouseholdName("banana");
-    expect(r).toEqual({ via: "clip", text: "banana", lang: "en" }); // no localStorage here: the default is English
+    const r = speakHouseholdName("wooden_spoon");
+    expect(r).toEqual({ via: "clip", text: "wooden spoon", lang: "en" }); // no localStorage here: the default is English
   });
   it("says nothing when the player chose Off, or for an id that is not a household item", () => {
     expect(speakHouseholdName("wooden_spoon", { lang: "off" })).toBeNull();
@@ -197,10 +211,10 @@ describe("householdVoiceUrl and speakHouseholdName (the client)", () => {
     expect(spoken).toHaveLength(0);
   });
   it("falls back to the device voice with an EXPLICIT language tag when the clip fails, so a word spelled alike in two languages cannot be mis-detected", () => {
-    speakHouseholdName("banana", { lang: "pt" });
+    speakHouseholdName("banana", { lang: "es" });
     expect(spoken).toHaveLength(0); // the clip is trying
     audios[0]!.listeners.error!(); // the server answered 404/502/offline
-    expect(spoken).toEqual([{ text: "banana", lang: "pt-BR" }]);
+    expect(spoken).toEqual([{ text: "plátano", lang: "es-ES" }]);
   });
   it("goes straight to the device voice, tagged, while the server is backed off after a failure", () => {
     speakHouseholdName("wooden_spoon", { lang: "es", now: 1_000 });

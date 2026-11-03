@@ -7,7 +7,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
-  HOUSEHOLD_IDS, HOUSEHOLD_NAMES, NAME_LANGS, householdName, householdSpeech, householdTextHash, isHouseholdId, type NamesFile,
+  HOUSEHOLD_IDS, HOUSEHOLD_NAMES, NAME_LANGS, householdName, householdSpeech, householdTextHash, isHouseholdId, spelledInOtherLanguage, type NamesFile,
 } from "../src/lib/householdNames";
 import { expectedPending, missingNames, validateName, validateNamesFile } from "../src/lib/householdNamesCheck";
 import { handleVoice, parseVoiceKey, voiceText } from "../worker/voice";
@@ -180,5 +180,43 @@ describe("the native-review sheet (docs/review/spoken-names.md)", () => {
     const unreviewed = pairs.filter((p) => p.review === "unreviewed").length;
     expect(committed).toContain(`${HOUSEHOLD_IDS.length} items x ${NAME_LANGS.length} languages = ${HOUSEHOLD_IDS.length * NAME_LANGS.length} names; ${pairs.length} exist, ${unreviewed} unreviewed, ${pairs.length - unreviewed} approved.`);
     for (const l of HOUSEHOLD_NAMES.pending) if (!HOUSEHOLD_IDS.some((id) => HOUSEHOLD_NAMES.names[id]![l])) expect(committed).toMatch(new RegExp(`No names yet in:[^\\n]*`));
+  });
+});
+
+describe("nouns spelled the same in another language (the clip voice might use the wrong accent, so the device voice says them)", () => {
+  const spellings = (file: NamesFile) => {
+    const by = new Map<string, Set<string>>();
+    for (const entry of Object.values(file.names)) for (const [lang, e] of Object.entries(entry)) {
+      const k = e!.w.normalize("NFC").toLowerCase();
+      by.set(k, (by.get(k) ?? new Set()).add(lang));
+    }
+    return by;
+  };
+
+  it("compares spellings ignoring case, and only across languages: the same word twice in one language is not a collision", () => {
+    const f = fileOf({ a: { en: entry("ball"), de: entry("Ball"), es: entry("pelota") }, b: { es: entry("pelota") } }); // pelota twice, both Spanish
+    expect(spelledInOtherLanguage("ball", "en", f)).toBe(true);
+    expect(spelledInOtherLanguage("Ball", "de", f)).toBe(true);
+    expect(spelledInOtherLanguage("pelota", "es", f)).toBe(false);
+    expect(spelledInOtherLanguage("nothing here", "en", f)).toBe(false);
+  });
+
+  it("finds exactly the texts the review sheet lists, in the real file: 22 spellings, 49 (item, language) pairs, none of them in a single language", () => {
+    const by = spellings(HOUSEHOLD_NAMES);
+    const colliding = [...by].filter(([, langs]) => langs.size > 1);
+    expect(colliding.length).toBe(22);
+    let pairs = 0;
+    for (const [id, entry] of Object.entries(HOUSEHOLD_NAMES.names)) for (const lang of Object.keys(entry) as (typeof NAME_LANGS)[number][]) {
+      const expected = by.get(HOUSEHOLD_NAMES.names[id]![lang]!.w.normalize("NFC").toLowerCase())!.size > 1;
+      expect(spelledInOtherLanguage(HOUSEHOLD_NAMES.names[id]![lang]!.w, lang), `${lang}/${id}`).toBe(expected);
+      if (expected) pairs++;
+    }
+    expect(pairs).toBe(49);
+    const sheet = readFileSync(join(root, "docs/review/spoken-names.md"), "utf8");
+    for (const [text] of colliding) expect(sheet, `the sheet lists ${text}`).toContain(`\`${text}\``);
+    for (const [id, lang] of [["banana", "en"], ["banana", "it"], ["banana", "pt"], ["ball", "de"], ["flask", "es"], ["soda_can", "pt"]] as const)
+      expect(spelledInOtherLanguage(householdName(id, lang)!, lang), `${lang}/${id}`).toBe(true);
+    for (const [id, lang] of [["banana", "tr"], ["wooden_spoon", "en"], ["soap", "pt"], ["jigsaw", "es"]] as const)
+      expect(spelledInOtherLanguage(householdName(id, lang)!, lang), `${lang}/${id}`).toBe(false);
   });
 });

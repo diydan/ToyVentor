@@ -8,7 +8,7 @@ import {
   LEDGER_PATH, clipKey, emptyLedger, householdClips, isMade, missingClips, planClips, readLedger, serializeLedger, validateLedger, warmHousehold,
   type Ledger, type LedgerClip,
 } from "../scripts/lib/household-voice-ledger";
-import { HOUSEHOLD_IDS, HOUSEHOLD_NAMES, NAME_LANGS, householdTextHash, type NamesFile } from "../src/lib/householdNames";
+import { HOUSEHOLD_IDS, HOUSEHOLD_NAMES, NAME_LANGS, householdTextHash, spelledInOtherLanguage, type NamesFile } from "../src/lib/householdNames";
 import { DEFAULT_VOICE, VOICE_MODEL } from "../worker/voice";
 
 const e = (w: string) => ({ w, source: "test", review: "unreviewed" as const });
@@ -37,17 +37,24 @@ function stubRoute(over: Partial<{ status: number; hit: boolean; voice: string |
 
 describe("the clip list", () => {
   it("is one clip per (item, language) that has a name, with the route path a client would ask for, and counts the pairs that have none yet", () => {
-    const { clips, withoutName } = householdClips(names(), IDS);
-    expect(clips.map((c) => c.key).sort()).toEqual(["en/banana", "en/spoon", "en/tool", "es/banana", "es/spoon", "pt/banana"]);
-    expect(withoutName).toBe(IDS.length * NAME_LANGS.length - clips.length);
+    const { clips, withoutName, deviceOnly } = householdClips(names(), IDS);
+    // the fixture's English and Portuguese "banana" are spelled alike, so neither is a clip (the device voice says them): they are `deviceOnly`
+    expect(clips.map((c) => c.key).sort()).toEqual(["en/spoon", "en/tool", "es/banana", "es/spoon"]);
+    expect(deviceOnly).toBe(2);
+    expect(withoutName).toBe(IDS.length * NAME_LANGS.length - clips.length - deviceOnly);
     const spoon = clips.find((c) => c.key === "es/spoon")!;
     expect(spoon).toMatchObject({ id: "spoon", lang: "es", text: "cuchara", textHash: householdTextHash("cuchara") });
     expect(spoon.path).toBe(`/api/voice?lang=es&h=spoon&v=${householdTextHash("cuchara")}`);
   });
   it("covers the real file: every name in the file is a clip, and every clip path is the route's own key", () => {
-    const { clips, withoutName } = householdClips();
-    expect(clips.length + withoutName).toBe(HOUSEHOLD_IDS.length * NAME_LANGS.length);
-    for (const c of clips) expect(HOUSEHOLD_NAMES.names[c.id]![c.lang]!.w, c.key).toBe(c.text);
+    const { clips, withoutName, deviceOnly } = householdClips();
+    expect(clips.length + withoutName + deviceOnly).toBe(HOUSEHOLD_IDS.length * NAME_LANGS.length);
+    expect(deviceOnly, "the (item, language) pairs spelled the same as another language: 22 spellings").toBe(49);
+    expect(clips.length).toBe(378);
+    for (const c of clips) {
+      expect(HOUSEHOLD_NAMES.names[c.id]![c.lang]!.w, c.key).toBe(c.text);
+      expect(spelledInOtherLanguage(c.text, c.lang), `${c.key} is spelled like another language`).toBe(false);
+    }
     expect(new Set(clips.map((c) => c.path)).size).toBe(clips.length);
   });
 });
@@ -60,14 +67,14 @@ describe("what a run asks for", () => {
     expect(p.skipped).toEqual([]);
   });
   it("skips a clip the ledger lists as made for the same text", () => {
-    const ledger: Ledger = { version: 1, clips: { "es/spoon": made("cuchara"), "en/banana": made("banana") } };
+    const ledger: Ledger = { version: 1, clips: { "es/spoon": made("cuchara"), "es/banana": made("plátano") } };
     const p = planClips(clips, ledger);
-    expect(p.skipped.map((c) => c.key).sort()).toEqual(["en/banana", "es/spoon"]);
+    expect(p.skipped.map((c) => c.key).sort()).toEqual(["es/banana", "es/spoon"]);
     expect(p.todo).toHaveLength(clips.length - 2);
     expect(isMade(clips.find((c) => c.key === "es/spoon")!, ledger)).toBe(true);
   });
   it("asks again for a changed noun (the hash differs), a failure, and a new item", () => {
-    const ledger: Ledger = { version: 1, clips: { "es/spoon": made("cucharón"), "en/spoon": made("spoon", { status: "failed", error: "HTTP 502" }), "en/banana": made("banana") } };
+    const ledger: Ledger = { version: 1, clips: { "es/spoon": made("cucharón"), "en/spoon": made("spoon", { status: "failed", error: "HTTP 502" }), "es/banana": made("plátano") } };
     const keys = planClips(clips, ledger).todo.map((c) => c.key);
     expect(keys).toContain("es/spoon"); // its text is "cuchara" now
     expect(keys).toContain("en/spoon"); // it failed

@@ -179,6 +179,11 @@ or world per item. A household weekend is **"find one at home"**, with a way to 
   spelled the same in two or more languages** (listed in `docs/review/spoken-names.md`: ball, tasse, termo, lata, bol, planta, yoyo, orange, banana, banane,
   avocado, pincel, crayon, dados, espada, hammer, despertador, lampe, puzzle, libro, cartas, esponja), so the Gemini voice may speak them in the wrong
   accent; the device voice with an explicit language tag cannot. Not verified: any real audio (samples pending), a deployed `h=` route.
+  **After Dan's "go" (2026-11-03):** a noun spelled the same in another language is never asked of the clip voice: the client says it with the device voice and
+  an explicit language tag, and the prewarm skips it (`spelledInOtherLanguage` in `householdNames.ts`; 22 spellings, 49 of the 427 (item, language) clips
+  become device voice, 378 stay clips). Every clip the route generates is **levelled** to an RMS of 5,000 (gain clamped to 0.5 to 4, peak held under 95
+  percent of full scale: `levelWav` in `worker/voice.ts`) because the same voice's clips ranged from 1,700 to 9,000; clips already in the edge cache are not
+  re-levelled.
 - **The offer when the helper is offline** (answered, Dan's question 4): offer the 3D item for transport failures only (`offline`, `helper_off`, `busy`,
   `slow_down`), by the child's own word, inside the child's band, with its own reason (`word_only`) and its own sentence that does not mention tracing
   ("You said spoon. Here is the 3D wooden spoon."); never for the child's own faults (`invalid_input`, `too_large`).
@@ -202,10 +207,11 @@ or world per item. A household weekend is **"find one at home"**, with a way to 
 `GarageSheet.tsx`, `GrownUpsSheet.tsx`, `GameCanvas.tsx`, `index.css`; tests `tests/garage-household.test.ts` (66) and `garage-household-ui.test.ts` (21);
 `scripts/e2e-trail.mjs` gains three household scenarios.
 
-- **Build Days.** The weekend whose Friday has day-of-month 1 to 7 keeps a build drop (`dropForWeekend` unchanged); every other weekend is a household
-  weekend, **but weekends before launch are all Build Days** (the pinned pre-launch scenarios expect build drops); household numbering starts at 0 on
-  2026-11-13, an orange. After the first twelve Build Days a build drop can return as soon as 3 Build Days later (the formula counts weekends and months
-  have 4 or 5), most gaps are 11 to 14: a month-by-month count would make every gap exactly 12.
+- **Build Days.** The weekend whose Friday has day-of-month 1 to 7 is a Build Day, **but weekends before launch are all Build Days** (the pinned
+  pre-launch scenarios expect build drops); household numbering starts at 0 on 2026-11-13, an orange. **From launch the Build Days run through the build
+  drops month by month** (`buildDropForWeekend`, Dan 2026-11-03 "go" on my suggestion): the launch weekend gets the first drop, then one per month, so every
+  drop comes back after exactly twelve Build Days (the per-weekend `dropForWeekend` counted weekends, and months have 4 or 5, so a drop could return after as
+  few as 3). `dropForWeekend` itself is unchanged and still serves the weekends before launch and any caller that gives no household drop.
 - **Household rotation.** Every 8th household weekend is a tool weekend. The others follow a hand-written order of 54 items, round-robin by group with the
   simple ones first, the six tools excluded (they are the tool weekends); items added later are appended. An age gate substitutes the next allowed item
   in the order, and the youngest only get simple items.
@@ -232,12 +238,15 @@ or world per item. A household weekend is **"find one at home"**, with a way to 
   star); a mutation round of 81 single-line breakages, all killed (five survivors at first got tests). Trap: a mutation run that overlaps a browser run
   reloads the app through Vite and breaks the browser run.
 - **Not verified.** The grown-up's "We found it" in a browser (behind the parent gate: unit and markup tests only); a real phone; the voice (no-op hook); a
-  production `vite build` (the code imports the catalog and pictures JSON from `public/` by relative path, fine in dev and in tests, untested in a build:
-  run `npm run build` before a deploy).
-- **Open for Dan.** (1) Keep the weekend-counting rotation, or count Build Days month by month (a one-line change, every gap 12)? (2) A skipped weekend can't
-  be upgraded to a find later (`completeGarageHousehold` is a no-op once done): should a grown-up be able to turn a skip into a find, adding the minutes?
-  (3) A find needs the real-life leg on, so a family that switched real-life tasks off can only skip. (4) Skips are judged by weekend type, not stored, so
-  if the Build Day rule ever changes old weekends would flip: store skips explicitly?
+  production `vite build` was untested by the agent; the main session then ran it in an isolated copy of the committed tree (2026-11-03): exit 0 in 42 s, the
+  pictures file is its own lazy 72 KB chunk, the Garage code is in the main chunk. (Run `npm run build` again before a deploy: other lanes' work lands too.)
+- **Decided by Dan (2026-11-03, "go" on my suggestions) and built.** The month-by-month Build Day count (above). **Skips are stored explicitly**
+  (`garageSkipped`, a subset of `garageDone`, never overlapping `garageFound`; a weekend one device found and another skipped merges as found), and
+  `garageTrophyCounts(done, found, skipped?)` draws a hollow star as exactly a weekend in that list when it is given. **Still to do (one line):**
+  `GameCanvas.tsx` calls it without the third argument today, so the roof still derives hollow stars the old way until that call passes
+  `progression.garageSkipped` (`GameCanvas.tsx` holds another lane's uncommitted work, so it waits for that lane). **Decided as they were:** a skip cannot
+  be upgraded to a find later (it would pay minutes after the fact); a find needs the real-life leg switched on (a family that turned real-life tasks off
+  can only skip).
 
 ## Rewards and what it counts for
 

@@ -141,6 +141,9 @@ export interface ProgressionState {
   /** The household weekends among `garageDone` that were finished by a find (the grown-up's "We found it"), not by a skip: the roof draws a
    *  skipped weekend as a hollow star. Always a subset of `garageDone`. */
   garageFound?: string[];
+  /** The household weekends among `garageDone` that were finished by a skip ("Who's that shape?"), stored explicitly so the roof's hollow stars do not
+   *  depend on the Build Day rule staying as it is. Always a subset of `garageDone`, never overlapping `garageFound`. */
+  garageSkipped?: string[];
   /** Grown-up switch: the Garage weekend drop is on (absent = on). */
   garageDrop?: boolean;
   /** Grown-up switch: which days the Garage drop is live, as day-of-week
@@ -638,6 +641,7 @@ export function normalizeProgression(raw: unknown): ProgressionState {
   const explorerSeen = cleanExplorerSeen(v.explorerSeen);
   const garageDone = cleanGarageDone(v.garageDone);
   const garageFound = cleanGarageDone(v.garageFound).filter((d) => garageDone.includes(d));
+  const garageSkipped = cleanGarageDone(v.garageSkipped).filter((d) => garageDone.includes(d) && !garageFound.includes(d));
   const garageDrop = typeof v.garageDrop === "boolean" ? v.garageDrop : undefined;
   const garageDays = cleanGarageDays(v.garageDays);
   const garageRealLife =
@@ -669,6 +673,7 @@ export function normalizeProgression(raw: unknown): ProgressionState {
     ...(explorerSeen.length > 0 ? { explorerSeen } : {}),
     ...(garageDone.length > 0 ? { garageDone } : {}),
     ...(garageFound.length > 0 ? { garageFound } : {}),
+    ...(garageSkipped.length > 0 ? { garageSkipped } : {}),
     ...(garageDrop !== undefined ? { garageDrop } : {}),
     ...(garageDays !== undefined ? { garageDays } : {}),
     ...(garageRealLife !== undefined ? { garageRealLife } : {}),
@@ -797,6 +802,11 @@ export function mergeProgression(
     ...(remote.garageFound ?? []),
     ...(local.garageFound ?? []),
   ]).filter((d) => garageDone.includes(d));
+  // a weekend one device found and another skipped counts as found (the better outcome wins)
+  const garageSkipped = cleanGarageDone([
+    ...(remote.garageSkipped ?? []),
+    ...(local.garageSkipped ?? []),
+  ]).filter((d) => garageDone.includes(d) && !garageFound.includes(d));
   const garageDrop = mergedGarageSwitch(local, remote, (p) => p.garageDrop);
   const garageDays = cleanGarageDays([
     ...(remote.garageDays ?? []),
@@ -833,6 +843,7 @@ export function mergeProgression(
     ...(explorerSeen.length > 0 ? { explorerSeen } : {}),
     ...(garageDone.length > 0 ? { garageDone } : {}),
     ...(garageFound.length > 0 ? { garageFound } : {}),
+    ...(garageSkipped.length > 0 ? { garageSkipped } : {}),
     ...(garageDrop !== undefined ? { garageDrop } : {}),
     ...(garageDays !== undefined ? { garageDays } : {}),
     ...(garageRealLife !== undefined ? { garageRealLife } : {}),

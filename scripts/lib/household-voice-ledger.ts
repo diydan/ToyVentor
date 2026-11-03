@@ -5,7 +5,7 @@ import { createHash } from "node:crypto";
 import { readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { HOUSEHOLD_IDS, HOUSEHOLD_NAMES, NAME_LANGS, householdName, householdTextHash, type NamesFile } from "../../src/lib/householdNames";
+import { HOUSEHOLD_IDS, HOUSEHOLD_NAMES, NAME_LANGS, householdName, householdTextHash, type NamesFile, spelledInOtherLanguage } from "../../src/lib/householdNames";
 import type { LangCode } from "../../src/lib/propNames";
 import { DEFAULT_VOICE, VOICE_MODEL } from "../../worker/voice";
 
@@ -32,21 +32,29 @@ export interface HouseholdClip { key: string; id: string; lang: LangCode; text: 
 
 export const clipKey = (lang: LangCode, id: string) => `${lang}/${id}`;
 
-/** Every clip the game can ask for (an item with a name in a language), and how many (item, language) pairs have no name yet and so no clip. */
-export function householdClips(file: NamesFile = HOUSEHOLD_NAMES, ids: readonly string[] = HOUSEHOLD_IDS): { clips: HouseholdClip[]; withoutName: number } {
+/**
+ * Every clip the game can ask for (an item with a name in a language), how many (item, language) pairs have no name yet and so no clip, and how many are
+ * spelled the same in another language and so are never asked of the clip voice (the device voice says them, with an explicit language tag).
+ */
+export function householdClips(file: NamesFile = HOUSEHOLD_NAMES, ids: readonly string[] = HOUSEHOLD_IDS): { clips: HouseholdClip[]; withoutName: number; deviceOnly: number } {
   const clips: HouseholdClip[] = [];
   let withoutName = 0;
+  let deviceOnly = 0;
   for (const lang of NAME_LANGS) for (const id of ids) {
     const text = householdName(id, lang, file);
     if (!text) {
       withoutName++;
       continue;
     }
+    if (spelledInOtherLanguage(text, lang, file)) {
+      deviceOnly++;
+      continue;
+    }
     const textHash = householdTextHash(text);
     // the same URL the client asks for (householdVoiceUrl in src/lib/householdVoice.ts): the fingerprint keeps a corrected noun a new request
     clips.push({ key: clipKey(lang, id), id, lang, text, textHash, path: `/api/voice?${new URLSearchParams({ lang, h: id, v: textHash }).toString()}` });
   }
-  return { clips, withoutName };
+  return { clips, withoutName, deviceOnly };
 }
 
 /** A clip is done when the ledger lists it as made for exactly this text. */

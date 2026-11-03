@@ -538,6 +538,21 @@ export function dropForWeekend(weekendKey: string): GarageDrop {
 }
 
 /**
+ * The build drop of a Build Day (household-library spec / garage spec "The rotation", Dan 2026-11-03: count them month by month). From launch the Build
+ * Days are one a month, so they run through the catalog one per MONTH, and every drop comes back after exactly as many Build Days as there are drops.
+ * (Counting weekends, as `dropForWeekend` does, would bring one back after as few as 3 Build Days, because months have 4 or 5 weekends.) The first
+ * Build Day, the launch weekend's, gets the first drop, as `dropForWeekend` gives it. A weekend before launch keeps the per-weekend rotation, and so does
+ * a key that is not a date.
+ */
+export function buildDropForWeekend(weekendKey: string): GarageDrop {
+  const w = weekendOf(weekendKey);
+  if (w === null || dayNumber(w.weekendKey)! < dayNumber(FIRST_WEEKEND)!) return dropForWeekend(weekendKey);
+  const months = Number(w.weekendKey.slice(0, 4)) * 12 + Number(w.weekendKey.slice(5, 7)) - (Number(FIRST_WEEKEND.slice(0, 4)) * 12 + Number(FIRST_WEEKEND.slice(5, 7)));
+  const len = GARAGE_DROPS.length;
+  return GARAGE_DROPS[((months % len) + len) % len]!;
+}
+
+/**
  * Is this weekend a Build Day? The first weekend of each month (the Friday's day of the month is 1 to 7) keeps a build drop from the rotation
  * above, which is unchanged for it; every other weekend is a household weekend (garageHousehold.ts). Dan, 2026-11-03: without it, adding the
  * household drops to the same rotation would bring a household weekend round only every sixth weekend. A key that is not a date is a Build Day,
@@ -613,7 +628,8 @@ export function garageStatus(input: {
   const dow = dayOfWeek(input.dayKey);
   const live = preview || (dow !== null && days.includes(dow) && real.isWeekend);
   const household = !isBuildDayWeekend(weekendKey) ? (input.householdDrop?.(weekendKey) ?? null) : null;
-  const drop = household ?? dropForWeekend(weekendKey);
+  // a Build Day runs through the catalog month by month; a weekend with no household drop given (the callers from before household weekends) stays per weekend
+  const drop = household ?? (isBuildDayWeekend(weekendKey) ? buildDropForWeekend(weekendKey) : dropForWeekend(weekendKey));
   const group = bandGroupOf(input.ageBand);
   const done = (input.done ?? []).includes(weekendKey);
   const dropEnabled = input.dropEnabled !== false;
@@ -784,7 +800,7 @@ export function completeGarageHousehold(
             [dayKey]: [...new Set([...(prog.garageRealByDay?.[dayKey] ?? []), weekendKey])],
           },
         }
-      : {}),
+      : { garageSkipped: [...(prog.garageSkipped ?? []), weekendKey].sort().slice(-GARAGE_DONE_MAX) }),
   };
   return {
     next,
@@ -797,17 +813,23 @@ export function completeGarageHousehold(
 
 /**
  * The roof stars (a Garage trophy per finished weekend): gold for a build weekend and for a household weekend that was found, hollow for a household
- * weekend that was skipped, so the roof stays a true picture of real-world effort. A skipped one is a finished weekend that is a household weekend and is
- * not in `garageFound`.
+ * weekend that was skipped, so the roof stays a true picture of real-world effort. With `skipped` (`garageSkipped`, stored when a skip is finished) a
+ * hollow star is exactly a finished weekend in that list, whatever the Build Day rule is later. Without it (a caller that does not pass it yet) a skipped
+ * one is a finished weekend that is a household weekend and is not in `garageFound`.
  */
 export function garageTrophyCounts(
   done: readonly string[] | undefined,
   found: readonly string[] | undefined,
+  skipped?: readonly string[] | undefined,
 ): { gold: number; hollow: number } {
-  const foundSet = new Set(found ?? []);
-  let hollow = 0;
   const all = new Set(done ?? []);
-  for (const key of all) if (!isBuildDayWeekend(key) && !foundSet.has(key)) hollow++;
+  let hollow = 0;
+  if (skipped !== undefined) {
+    for (const key of all) if (skipped.includes(key)) hollow++;
+  } else {
+    const foundSet = new Set(found ?? []);
+    for (const key of all) if (!isBuildDayWeekend(key) && !foundSet.has(key)) hollow++;
+  }
   return { gold: all.size - hollow, hollow };
 }
 

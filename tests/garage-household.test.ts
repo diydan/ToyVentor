@@ -18,6 +18,7 @@ import {
   dropForWeekend,
   FIRST_WEEKEND,
   GARAGE_DROPS,
+  buildDropForWeekend,
   GARAGE_REAL_XP,
   GARAGE_XP,
   garageMissionId,
@@ -121,23 +122,39 @@ describe("Build Days and household weekends", () => {
     for (const bad of ["", "soon", "2026-02-30", "2026-11-6"]) expect(isBuildDayWeekend(bad), bad).toBe(true);
   });
 
-  it("leaves the build rotation as it was on Build Days: no drop twice running, every drop in the first twelve, and a repeat is at least three Build Days away", () => {
+  it("runs the Build Days through the catalog month by month: the launch weekend gets the first drop, then one per month, every drop back after exactly twelve", () => {
+    expect(buildDropForWeekend(FIRST_WEEKEND)).toBe(GARAGE_DROPS[0]);
+    expect(buildDropForWeekend("2026-12-04")).toBe(GARAGE_DROPS[1]);
+    expect(buildDropForWeekend("2027-01-01")).toBe(GARAGE_DROPS[2]);
+    expect(buildDropForWeekend("2027-10-01")).toBe(GARAGE_DROPS[11]);
+    expect(buildDropForWeekend("2027-11-05")).toBe(GARAGE_DROPS[0]); // twelve months after the launch: the first drop again
     const builds = fridays(8).filter(isBuildDayWeekend);
-    expect(dropForWeekend(FIRST_WEEKEND)).toBe(GARAGE_DROPS[0]);
-    expect(dropForWeekend("2026-12-04")).toBe(GARAGE_DROPS[4]); // four weeks after the first: the old formula, unchanged
-    const ids = builds.map((k) => dropForWeekend(k).id);
+    const ids = builds.map((k) => buildDropForWeekend(k).id);
     for (let i = 1; i < ids.length; i++) expect(ids[i], `build day ${i}`).not.toBe(ids[i - 1]);
     expect(new Set(ids.slice(0, GARAGE_DROPS.length)).size, "the first twelve Build Days show every drop").toBe(GARAGE_DROPS.length);
-    // The formula counts weekends, and a month has four or five of them, so after the first year a drop can come back sooner than twelve Build Days
-    // later. Measured over eight years: most repeats are 11 to 14 Build Days apart, the nearest is 3 (a month-by-month count would make it exactly 12).
     const last = new Map<string, number>();
     const gaps: number[] = [];
     ids.forEach((id, i) => {
       if (last.has(id)) gaps.push(i - last.get(id)!);
       last.set(id, i);
     });
-    expect(Math.min(...gaps)).toBeGreaterThanOrEqual(3);
-    expect(gaps.filter((g) => g >= 11).length / gaps.length).toBeGreaterThan(0.85);
+    expect(gaps.length).toBeGreaterThan(50);
+    for (const g of gaps) expect(g, "a drop returns after exactly as many Build Days as there are drops").toBe(GARAGE_DROPS.length);
+  });
+
+  it("keeps the per-weekend rotation for the weekends before launch and for what is not a date, and `dropForWeekend` itself as it was", () => {
+    for (const k of ["2026-10-30", "2026-10-23", "2025-06-13"]) expect(buildDropForWeekend(k), k).toBe(dropForWeekend(k));
+    expect(buildDropForWeekend("soon")).toBe(dropForWeekend("soon"));
+    expect(dropForWeekend(FIRST_WEEKEND)).toBe(GARAGE_DROPS[0]);
+    expect(dropForWeekend("2026-12-04")).toBe(GARAGE_DROPS[4]); // four weeks after the first: the old formula, unchanged
+  });
+
+  it("gives garageStatus the month-by-month drop on a Build Day, and the old per-weekend one where no household drop is supplied for a weekend", () => {
+    const build = garageStatus({ dayKey: "2026-12-04", ageBand: 3, done: [], householdDrop: (k) => householdDropFor(k, ITEMS) });
+    expect(build.kind).toBe("build");
+    expect(build.drop).toBe(GARAGE_DROPS[1]);
+    const legacy = garageStatus({ dayKey: "2026-11-13", ageBand: 3, done: [] }); // no householdDrop given: every weekend is a build weekend, per weekend
+    expect(legacy.drop).toBe(dropForWeekend("2026-11-13"));
   });
 });
 
@@ -891,5 +908,61 @@ describe("the Garage's status for a household weekend", () => {
   it("keeps the drop switch and the days as they were", () => {
     expect(status("2026-11-14", { dropEnabled: false })).toMatchObject({ kind: "household", dropEnabled: false, open: false });
     expect(status("2026-11-16")).toMatchObject({ isWeekend: false, open: false, kind: "household" }); // a Monday points at the last Friday's drop
+  });
+});
+
+/* ---------------------------------------------------- skips are stored */
+
+describe("skipped household weekends are stored explicitly", () => {
+  const HW = "2026-11-13"; // the first household weekend
+  const DAY = "2026-11-14";
+
+  it("remembers a skip in garageSkipped and a find in garageFound, never both, and both as done", () => {
+    const skipped = completeGarageHousehold(prog(), HW, DAY, "skipped").next;
+    expect(skipped.garageSkipped).toEqual([HW]);
+    expect(skipped.garageFound).toBeUndefined();
+    expect(skipped.garageDone).toEqual([HW]);
+    const found = completeGarageHousehold(prog(), HW, DAY, "found").next;
+    expect(found.garageFound).toEqual([HW]);
+    expect(found.garageSkipped).toBeUndefined();
+    expect(found.garageDone).toEqual([HW]);
+  });
+
+  it("does not record a second skip, and a finished weekend cannot be finished again as a find", () => {
+    const once = completeGarageHousehold(prog(), HW, DAY, "skipped").next;
+    const again = completeGarageHousehold(once, HW, DAY, "skipped");
+    expect(again.awarded).toBe(0);
+    expect(again.next).toBe(once);
+    expect(completeGarageHousehold(once, HW, DAY, "found").awarded).toBe(0);
+  });
+
+  it("keeps garageSkipped through a save and a load, only for finished weekends that were not found, and loads an old save as it was", () => {
+    const p = completeGarageHousehold(prog(), HW, DAY, "skipped").next;
+    expect(normalizeProgression(JSON.parse(JSON.stringify(p))).garageSkipped).toEqual([HW]);
+    const messy = normalizeProgression({ ...p, garageSkipped: [HW, "2026-11-20", "not a date", HW] } as unknown as ProgressionState);
+    expect(messy.garageSkipped).toEqual([HW]); // 2026-11-20 is not finished
+    const both = normalizeProgression({ ...p, garageFound: [HW] } as unknown as ProgressionState);
+    expect(both.garageFound).toEqual([HW]);
+    expect(both.garageSkipped, "a weekend found and skipped is found").toBeUndefined();
+    expect("garageSkipped" in normalizeProgression(emptyProgression())).toBe(false);
+  });
+
+  it("merges two devices: a skip and a find of the same weekend merge as a find, a skip on its own survives", () => {
+    const a = completeGarageHousehold(prog(), HW, DAY, "skipped").next;
+    const b = completeGarageHousehold(prog(), HW, DAY, "found").next;
+    expect(mergeProgression(a, b).garageFound).toEqual([HW]);
+    expect(mergeProgression(a, b).garageSkipped).toBeUndefined();
+    const c = completeGarageHousehold(prog(), "2026-11-20", "2026-11-21", "skipped").next;
+    expect(mergeProgression(a, c).garageSkipped).toEqual([HW, "2026-11-20"]);
+  });
+
+  it("draws the roof from the stored list when it is given, whatever the Build Day rule would say, and derives it as before when it is not", () => {
+    const done = ["2026-11-06", HW, "2026-11-20"]; // a build weekend, a skip, a find
+    expect(garageTrophyCounts(done, ["2026-11-20"], [HW])).toEqual({ gold: 2, hollow: 1 });
+    // a finished household weekend that is in neither list is NOT hollow when the stored list is given (old data, or a changed rule)
+    expect(garageTrophyCounts(done, ["2026-11-20"], [])).toEqual({ gold: 3, hollow: 0 });
+    // without the list: the old derivation, unchanged
+    expect(garageTrophyCounts(done, ["2026-11-20"])).toEqual({ gold: 2, hollow: 1 });
+    expect(garageTrophyCounts(undefined, undefined, undefined)).toEqual({ gold: 0, hollow: 0 });
   });
 });

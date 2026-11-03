@@ -1,18 +1,21 @@
 // Saying a household item's name aloud ("cuchara"): the client half of the `h=` key of /api/voice (worker/voice.ts). The order is the one every spoken name
 // in the game uses: the Gemini clip, then the device's own voice with an EXPLICIT language tag (so a word spelled the same in two languages cannot be
 // mis-detected), and the caller's caption always shows the text either way. With no name in the chosen language yet, it says the English name, in English.
-import { householdName, householdSpeech, householdTextHash } from "./householdNames";
+import { householdName, householdSpeech, householdTextHash, spelledInOtherLanguage } from "./householdNames";
 import type { LangCode, PropLang } from "./propNames";
 import { sayObject } from "./propVoice";
 import { getPropLang } from "./propSpeech";
 
 /**
- * The URL of an item's clip in a language, or null when that language has no name for it (the route would answer 404). The `v` is a fingerprint of the
- * spoken text: a noun a reviewer corrects gets a new URL, so a browser that cached the old clip for a year fetches the new one.
+ * The URL of an item's clip in a language, or null when there is no clip to ask for: that language has no name for it (the route would answer 404), or
+ * the noun is spelled the same in another language, so the clip voice might speak it in the wrong accent and the device voice (with an explicit language
+ * tag) says it instead. The `v` is a fingerprint of the spoken text: a noun a reviewer corrects gets a new URL, so a browser that cached the old clip for
+ * a year fetches the new one.
  */
 export function householdVoiceUrl(itemId: string, lang: LangCode): string | null {
   const text = householdName(itemId, lang);
-  return text ? `/api/voice?${new URLSearchParams({ lang, h: itemId, v: householdTextHash(text) }).toString()}` : null;
+  if (!text || spelledInOtherLanguage(text, lang)) return null;
+  return `/api/voice?${new URLSearchParams({ lang, h: itemId, v: householdTextHash(text) }).toString()}`;
 }
 
 export interface HouseholdSpoken {

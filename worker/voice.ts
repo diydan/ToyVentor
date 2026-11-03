@@ -188,6 +188,58 @@ export function trimWav(wav: Uint8Array): Uint8Array {
   return out;
 }
 
+/** The loudness every clip is levelled to: root-mean-square of the 16-bit samples (about -16 dBFS). The model's clips differ five-fold in loudness. */
+export const TARGET_RMS = 5000;
+const MIN_GAIN = 0.5;
+const MAX_GAIN = 4;
+
+/**
+ * Level a 16-bit PCM WAV to TARGET_RMS so no word in the game is much quieter or louder than the next (probed 2026-11-03: the same voice's clips
+ * ranged from an RMS of 1,700 to 9,000, a fifth-fold gap a child hears as one word mumbled). The gain is clamped to 0.5 to 4 and never lets the peak
+ * past 95 percent of full scale, so nothing clips. A WAV already within 5 percent of the target, a silent one, and anything this does not understand
+ * come back untouched (the same array).
+ */
+export function levelWav(wav: Uint8Array, targetRms = TARGET_RMS): Uint8Array {
+  if (wav.length < 44 || ascii(wav, 0, 4) !== "RIFF" || ascii(wav, 8, 4) !== "WAVE") return wav;
+  const dv = new DataView(wav.buffer, wav.byteOffset, wav.byteLength);
+  let pos = 12;
+  let channels = 0, bits = 0, fmt = 0, dataAt = -1, dataLen = 0;
+  while (pos + 8 <= wav.length) {
+    const id = ascii(wav, pos, 4);
+    const size = dv.getUint32(pos + 4, true);
+    if (id === "fmt ") {
+      fmt = dv.getUint16(pos + 8, true);
+      channels = dv.getUint16(pos + 10, true);
+      bits = dv.getUint16(pos + 22, true);
+    } else if (id === "data") {
+      dataAt = pos + 8;
+      dataLen = Math.min(size, wav.length - dataAt);
+      break;
+    }
+    pos += 8 + size + (size % 2);
+  }
+  if (fmt !== 1 || bits !== 16 || channels < 1 || dataAt < 0) return wav;
+  const samples = Math.floor(dataLen / 2);
+  if (samples < 2) return wav;
+  let sumSq = 0, peak = 0;
+  for (let i = 0; i < samples; i++) {
+    const v = dv.getInt16(dataAt + i * 2, true);
+    sumSq += v * v;
+    peak = Math.max(peak, Math.abs(v));
+  }
+  if (peak === 0) return wav;
+  const rms = Math.sqrt(sumSq / samples);
+  const gain = Math.min(Math.min(MAX_GAIN, Math.max(MIN_GAIN, targetRms / rms)), (0.95 * 32767) / peak);
+  if (Math.abs(gain - 1) < 0.05) return wav;
+  const out = new Uint8Array(wav);
+  const od = new DataView(out.buffer);
+  for (let i = 0; i < samples; i++) {
+    const v = Math.round(dv.getInt16(dataAt + i * 2, true) * gain);
+    od.setInt16(dataAt + i * 2, Math.max(-32768, Math.min(32767, v)), true);
+  }
+  return out;
+}
+
 // TS 5.9 types a Uint8Array<ArrayBufferLike> as not-a-BodyInit; ours always own a whole ArrayBuffer, so this cast is safe.
 const asBody = (b: Uint8Array): BodyInit => b as unknown as BodyInit;
 
@@ -198,7 +250,7 @@ async function synthesize(env: VoiceEnv, text: string, voice: string): Promise<U
   const audio = typeof out?.audio === "string" ? out.audio : "";
   const m = /^data:audio\/(?:wav|x-wav|wave);base64,(.+)$/s.exec(audio);
   if (!m) throw new Error("voice model returned no WAV audio");
-  return trimWav(b64ToBytes(m[1]!));
+  return levelWav(trimWav(b64ToBytes(m[1]!)));
 }
 
 export async function handleVoice(request: Request, env: VoiceEnv, ctx?: Ctx): Promise<Response> {
