@@ -950,5 +950,7 @@ Two presentation items, neither blocking C3–C5:
    (hill spheres) with generated-image planes on stepped depths,
    keeping all gameplay geometry 3D. Approach, measured layer
    order, sizes, and fallback live in
-   [parallax-backdrops-spec.md](parallax-backdrops-spec.md);
-   nothing ships until its interactive mockup is approved.
+   [parallax-backdrops-spec.md](parallax-backdrops-spec.md).
+   **Garden shipped 2026-11-03** (night Garden only; the Toy Room keeps its
+   flat wall and 3D props by design; other worlds, a day Garden and real
+   art for them are open: see that spec's section 7).

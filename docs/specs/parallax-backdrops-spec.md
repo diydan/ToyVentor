@@ -1,8 +1,11 @@
 # Parallax image backdrops (draft, mockup-first)
 
-> Status: **DRAFT — mockup v5 built (v1 was distorted and looped;
-> see §4), awaiting approval.**
-> Nothing ships until the mockup is approved (decided 2026-11-02).
+> Status: **The Garden's backdrop is in the real game (2026-11-03, §7).**
+> Dan approved the mockup's look ("perfect"; the indoor themes use the Toy
+> Room technique instead of image layers, §2b) and asked for the Garden and
+> the Toy Room first. The other worlds, a day Garden, a near strip and
+> real art for them are not done. (Original status: draft, mockup v5 built,
+> nothing ships until the mockup is approved, decided 2026-11-02.)
 > Mockup: `docs/mockups/parallax/` (`sh docs/mockups/parallax/serve.sh`,
 > then `http://127.0.0.1:8765/index.html`; `?cam=16&explode=0&motion=0`
 > gives deterministic stills; see its README). Recorded in carousel spec
@@ -490,3 +493,57 @@ screenshot-checked at cam x 6 / 22 / 38 and exploded:**
 - No camera, fog-rig, or lighting changes beyond `fog:false` on
   the new planes.
 - No day/night variants until the base six land.
+
+## 7. In the game: the Garden (built 2026-11-03)
+
+**What shipped.** The Garden (and any Create-mode level whose theme is `garden`) now draws two image planes instead of the sphere hills: the moonlit far
+band (`z -34`, scroll factor .85, opaque) behind the hills-and-trees cut-out (`z -22`, factor .65, tinted `0xbfc8ff`, fitted to 86% of the visible
+slice). Files: `runtime/backdrop.ts` (geometry, loading, lifecycle), three small hooks in `runtime/world.ts` (build, per-frame layout, teardown),
+`runtime/assets/garden-far-night.webp` and `garden-mid.webp`, baked by `scripts/make-backdrops.py` from the mockup's images. Tests:
+`tests/backdrop.test.ts` (35, mutation-checked twelve ways) and the real-GPU `scripts/e2e-backdrop.mjs` (21 checks, portrait and landscape).
+
+**The Toy Room: nothing to apply, by decision.** §2b's finding and review round 12 stand: the game's Toy Room is a flat wall on the ground line plus a
+baseboard, a glossy floor, a rug and chunky 3D props, and that is the technique every indoor theme was told to copy. It has no hills to replace and no
+depth to parallax, so it has no backdrop (`BACKDROPS` holds only `garden`) and the e2e checks it is untouched. A scene *behind* the wall (a window onto a night
+city, say) would be new work, not a port.
+
+**Findings that changed the design (the mockup could not have seen them).**
+
+- **The camera is not at a fixed distance.** The mockup froze it at 10. In the game it is `clamp(view width / ..., 10, 22)` times a zoom step of 1, 1.5 or 2.1, so
+  it runs from 10 to about 46 units back, sits at about 16 on a phone in portrait, and the title/showcase view adds an asymmetric view offset. The visible slice
+  (§2) therefore changes with the device, the zoom and the screen. Each layer is now laid out every frame from the live camera's own projection (its top ray
+  and four corner rays unprojected onto the layer's plane); nothing assumes a camera. Checked at three lane positions x three zoom levels in both orientations
+  plus the showcase view: every layer's base sits on the ground line (to 0.03 units), the art is never stretched (aspect within 1%), the plane spans the window,
+  and the far band reaches the top of the screen. The slice formulas also reproduce this spec's own table at the mockup's camera (−3.0…+3.15 at z −22).
+- **Phone portrait, the case §4 left unverified, works and reads well.** The window is only about 13 units wide there, so the mid strip needs no mirroring
+  (repeat 1.0). The art looks bigger on a phone than on desktop because the band above the horizon is about twice as tall (the camera looks nearly level at
+  distance 22); it still fits the band, so it keeps the same share of the screen. If it feels too large, `fitFrac` in `GARDEN_BACKDROP` is the knob.
+- **A world rebuild must not pop.** The game rebuilds the world on every world or level change. With per-build loading, each rebuild showed the old sphere hills
+  for a few frames and then snapped to the painting. Fix: loaded images live in a per-runtime cache (a rebuild resolves within the same tick, before any frame), the
+  planes are laid out the moment they are ready and only then are the old hills hidden. Measured across 109 frames of a rebuild: 0 frames of old hills, 0 without the
+  backdrop. A failed load is not cached, so the next build retries.
+- **Fallback is the old world, exactly.** The sphere hills (and the star points and orb) are built first and hidden only when both images are in. With the image
+  requests blocked the game boots, the hills show, nothing throws and the toy walks (checked).
+- **The mid art is now a real cut-out.** The mockup keyed the black surround to transparency in the browser at load (a 2.4 MP canvas pass per world load). The bake
+  script does it once with the same rule (flood-fill the near-black surround from the border, two more rings of dark fringe, crop), then colours the transparent
+  pixels like their nearest art pixel and softens the alpha edge by one pixel, so a filtered edge fades to the art's own colour, not to black (verified on a bright
+  background: no dark halo). Result 1831 x 370, 44 KB. The far band is 4096 x 542 (the widest texture every phone GPU takes; the mockup's 5742 is not), 18 KB.
+- **No leak from the backdrop.** The game itself leaks about 5 GPU textures per world switch (`buildWorld` does not free the last world's textures: a finding for
+  whoever owns it, separate from this work). Measured under identical conditions the backdrop adds nothing to that (5 per cycle with it, 5.3 without).
+
+**Known and not fixed.**
+
+- **The second cottage on wide canvases (§4, unchanged).** At the lane ends of a desktop-wide window the mid strip mirror-extends (repeat 2.5) and a second house
+  appears. Phones never show it. Real fix: art authored at 10:1 or wider (§3), which the Muse generation spec covers.
+- **Garden at night only.** There is no day Garden because `timeOfDay.ts` is not applied to the 3D worlds yet (its header says "later"). The mockup's `far-day.png`
+  exists and would drop in as a second `BackdropSpec` once that is wired.
+- **The other worlds have no backdrop art:** Sky Meadow, Junkyard, Beach and Snow Peak still use their sphere hills. Each needs a far band and a mid cut-out
+  in its own palette, authored for the slice (§3). Muse Image can paint both layers as native 8:1 strips (measured 2026-11-03, with samples):
+  see [generated-worlds-spec.md](generated-worlds-spec.md), which also covers new worlds from a child's wish and indoor worlds.
+- **Ground and path.** §2a's textured ground and generated path were not ported: the real Garden keeps its current ground, and its stepping stones are mission spots,
+  not a path. Whether the real game wants a wide path is a design decision for Dan.
+- **Performance is unmeasured on a phone.** Two extra draw calls and about 15 MB of GPU texture (the far band at 4096 x 542 RGBA with mipmaps, the mid at 1831 x 370);
+  the headless Metal run says nothing about a phone's GPU or fill rate. Rides with the real-phone pass (carousel §13.3).
+
+**Commands.** Rebake the art: `python3 scripts/make-backdrops.py` (Pillow with WebP and numpy; not `python3 -I`). Unit tests: `npx vitest run tests/backdrop.test.ts`.
+Real game: `node scripts/e2e-backdrop.mjs` (real GPU; screenshots go to `E2E_SHOTS`, default the OS temp folder).
