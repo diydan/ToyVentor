@@ -45,7 +45,14 @@ export interface PartyPlan {
   chosen: boolean;
   /** True when a clip was asked for but does not fit this tempo, so the tempo's own pick was used. */
   fellBack: boolean;
+  /** The Dance MIX: the dances that fit, in the order they take turns, and how many beats each gets. `null` unless the child chose Mix and at least two dances fit. */
+  mix: { list: { clip: PartyClip; rate: number }[]; every: number } | null;
 }
+
+/** What the Dance picker's Mix is called in a choice. */
+export const MIX_CHOICE = "mix";
+/** A new dance every 16 beats: 4 bars, on the bar line. */
+export const MIX_BEATS = 16;
 
 const usable = (clips: readonly PartyClip[]) => clips.filter((d) => d.bpm > 0 && Number.isInteger(d.beats) && d.beats > 0);
 
@@ -62,21 +69,46 @@ export function fittingClips(songBpm: number, clips: readonly PartyClip[]): { cl
 }
 
 /**
+ * The dances a Mix takes turns with: the `dance` clips (never a movement-break move or the strum) that fit the tempo, the one nearest its natural speed first, so a
+ * mix always opens on the dance the tempo would have picked on its own.
+ */
+export function mixList(songBpm: number, clips: readonly PartyClip[]): { clip: PartyClip; rate: number }[] {
+  return fittingClips(songBpm, clips.filter((d) => d.group === undefined || d.group === "dance"));
+}
+
+/**
+ * Which dance a Mix is on at `position` (beats since the first beat of the song, as `beatAt` gives it): the first for the first `every` beats, then the next, round the
+ * list and back to the start. A pure function of the position: nothing is remembered, so a restart or a loop of the song cannot lose its place, a dance is never followed
+ * by itself (when there are two or more), and the switch always falls on the same beat of the bar. A position before the first beat (a count-in) is the first dance.
+ */
+export function danceForMix<T>(list: readonly T[], position: number, every = MIX_BEATS): T {
+  if (!list.length) throw new Error("danceForMix: nothing to mix");
+  const block = Number.isFinite(position) ? Math.max(0, Math.floor(position / every)) : 0;
+  return list[block % list.length]!;
+}
+
+/**
  * `clips` are everything that carries a tempo (kip-clips.js dances and the baked Mixamo ones: dances, movement-break moves, a guitar strum). With no
  * `choose` the tempo picks, among the `dance` clips only (a clip with no group counts as a dance); `variant` steps down that list, for a second Kip or the
  * next song. With `choose` (a clip id) that clip is played if it fits this tempo, whatever its group; if it does not fit, the tempo's own pick is used and
- * `fellBack` says so. A clip without a positive `bpm` and a whole `beats` is never picked or offered.
+ * `fellBack` says so. `choose === "mix"` (the picker's Mix) takes turns with every dance that fits, every `MIX_BEATS`, when at least two do; with fewer it is just the
+ * tempo's own pick. A clip without a positive `bpm` and a whole `beats` is never picked or offered.
  */
 export function planParty(songBpm: number, clips: readonly PartyClip[], variant = 0, choose?: string | null): PartyPlan {
   const fit = fittingClips(songBpm, clips);
+  if (choose === MIX_CHOICE) {
+    const list = mixList(songBpm, clips);
+    if (list.length >= 2) return { songBpm, dance: list[0]!, chosen: true, fellBack: false, mix: { list, every: MIX_BEATS } };
+    return { ...planParty(songBpm, clips, variant, null), fellBack: false };
+  }
   if (choose) {
     const hit = fit.find((f) => f.clip.id === choose);
-    if (hit) return { songBpm, dance: hit, chosen: true, fellBack: false };
+    if (hit) return { songBpm, dance: hit, chosen: true, fellBack: false, mix: null };
   }
   const dances = usable(clips).filter((d) => d.group === undefined || d.group === "dance");
   const pick = pickDance(songBpm, dances, variant);
   const clip = pick ? dances.find((d) => d.id === pick.id) : undefined;
-  return { songBpm, dance: pick && clip ? { clip, rate: pick.rate } : null, chosen: false, fellBack: Boolean(choose) };
+  return { songBpm, dance: pick && clip ? { clip, rate: pick.rate } : null, chosen: false, fellBack: Boolean(choose), mix: null };
 }
 
 /**
@@ -98,7 +130,7 @@ export interface PartyFrame {
   downbeat: boolean;
   /** 0 to 1: the flash for the lights and the headphone cups, 1 on the beat. */
   pulse: number;
-  /** The clip to play, or `null` (lights only). */
+  /** The clip to play, or `null` (lights only). In a Mix it changes every `MIX_BEATS`. */
   danceId: string | null;
   /** Seconds into that clip for this frame. Follows the song's beats, not a stopwatch. */
   danceTime: number | null;
@@ -107,13 +139,15 @@ export interface PartyFrame {
 export function partyFrame(plan: PartyPlan, map: BeatMap, t: number): PartyFrame {
   const place = beatAt(map, t);
   const count = (place.beatInBar + 1) as 1 | 2 | 3 | 4;
+  // a Mix is on whichever dance this beat of the song belongs to; otherwise the one dance of the plan
+  const clip = plan.mix ? danceForMix(plan.mix.list, place.position, plan.mix.every).clip : plan.dance ? plan.dance.clip : null;
   return {
     place,
     count,
     downbeat: place.beatInBar === 0,
     pulse: beatPulse(place.phase),
-    danceId: plan.dance ? plan.dance.clip.id : null,
-    danceTime: plan.dance ? clipTime(map, t, plan.dance.clip) : null,
+    danceId: clip ? clip.id : null,
+    danceTime: clip ? clipTime(map, t, clip) : null,
   };
 }
 

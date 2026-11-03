@@ -31,9 +31,11 @@ import {
   TEMPO_BPM,
   beatPlayFor,
   buildSongRequest,
+  danceForMix,
   fittingClips,
   loopEvents,
   midiToHz,
+  mixList,
   newTapRun,
   parseSongIndex,
   partyFrame,
@@ -60,7 +62,7 @@ export function mountParty(host) {
     on: false, starting: false,
     mood: 'bouncy', tempo: 'medium', band: Number.isInteger(host.band?.()) ? host.band() : 1,
     song: 'practice', songs: [], note: '', ended: '', bufferSeconds: 0,
-    dance: 'auto', bpm: TEMPO_BPM.medium, plan: null, map: null, run: null, frame: null, frameT: -Infinity,
+    dance: 'auto', playing: null, bpm: TEMPO_BPM.medium, plan: null, map: null, run: null, frame: null, frameT: -Infinity,
     worn: false, flash: 0, lastOutcome: null,
   };
   const now = () => performance.now(); // only ever used to ask the audio clock where the song is; the party keeps no time of its own
@@ -89,11 +91,14 @@ export function mountParty(host) {
     const fit = fittingClips(currentBpm(), host.dances());
     return [
       { value: 'auto', label: 'Auto (the tempo picks)' },
+      // a Mix takes turns with the dances that fit, so it needs at least two
+      ...(mixList(currentBpm(), host.dances()).length >= 2 ? [{ value: 'mix', label: 'Mix (a new dance every 4 bars)' }] : []),
       ...fit.map(({ clip, rate }) => ({ value: clip.id, label: `${host.label(clip.id)} (${clip.group === 'dance' || !clip.group ? '' : clip.group + ', '}×${rate.toFixed(2)})` })),
     ];
   }
   /** A chosen clip that no longer fits the tempo goes back to Auto (a move is never stretched to a tempo it does not fit). */
   function dropChoiceIfUnfit() {
+    if (st.dance === 'mix') { if (mixList(currentBpm(), host.dances()).length < 2) st.dance = 'auto'; return; }
     if (st.dance !== 'auto' && !fittingClips(currentBpm(), host.dances()).some((f) => f.clip.id === st.dance)) st.dance = 'auto';
   }
 
@@ -103,12 +108,14 @@ export function mountParty(host) {
    */
   function replan() {
     if (!st.on || !st.plan) return;
-    const before = st.plan.dance?.clip.id ?? null;
+    const before = st.playing;
     st.plan = planParty(st.bpm, host.dances(), 0, chosenId());
-    const after = st.plan.dance?.clip.id ?? null;
+    // a Mix opens on whichever of its dances this beat belongs to, not on its first, so the next frame does not swap again
+    const after = st.plan.mix ? danceForMix(st.plan.mix.list, st.frame ? st.frame.place.position : 0, st.plan.mix.every).clip.id : (st.plan.dance?.clip.id ?? null);
     if (before === after) return;
     if (before) host.releaseClip(before);
     if (after) host.playClip(after);
+    st.playing = after;
     st.frame = null;
   }
 
@@ -128,7 +135,8 @@ export function mountParty(host) {
       // the file is fetched BEFORE anything on the rig changes, so a song that cannot be had leaves Kip exactly as he was
       const data = song ? await host.loadSongData(song.file) : null;
       st.worn = Boolean(host.headphones?.wear());
-      if (st.plan.dance) host.playClip(st.plan.dance.clip.id);
+      st.playing = st.plan.dance ? st.plan.dance.clip.id : null;
+      if (st.playing) host.playClip(st.playing);
       if (song) st.bufferSeconds = (await audio.startSong({ data, offset: song.offset, interval: songInterval(song), loopSeconds: song.dur })).bufferSeconds;
       else await audio.start({ mood: st.mood, bpm: req.bpm });
       st.on = true;
@@ -149,7 +157,7 @@ export function mountParty(host) {
 
   /** Everything undone: sound off, the clip released, the glow cleared, the old crown back. Safe to call twice. */
   function finish(reason = 'switch') {
-    const wasDancing = st.plan?.dance?.clip.id;
+    const wasDancing = st.playing;
     st.ended = reason; // why the party ended (the switch, another clip, a hidden page, the Workshop tab, the ten minutes, an error): `state().ended`, for "it stopped by itself"
     st.on = false;
     audio.stop();
@@ -161,6 +169,7 @@ export function mountParty(host) {
     st.flash = 0;
     st.frame = null;
     st.frameT = -Infinity;
+    st.playing = null;
   }
 
   function stop(reason = 'switch') {
@@ -179,6 +188,12 @@ export function mountParty(host) {
     st.frame = f;
     st.frameT = t;
     if (f.danceId) {
+      // the Mix has reached its next dance (a bar line, every 16 beats): let the old one go and bring in the new, which crossfades
+      if (st.playing && f.danceId !== st.playing) {
+        host.releaseClip(st.playing);
+        host.playClip(f.danceId);
+        st.playing = f.danceId;
+      }
       if (host.activeClip() !== f.danceId) { stop('other-clip'); return; } // the child picked another clip: the party is over
       host.holdClip(f.danceId, f.danceTime);
     }
@@ -203,7 +218,7 @@ export function mountParty(host) {
   function describe() {
     if (!st.on && !st.starting) return st.note || 'Pick a song (or the practice beat), the ages and a dance, then switch Party on. Tap the stage on the beat.';
     const plan = st.plan;
-    const dance = plan?.dance ? host.label(plan.dance.clip.id) : 'lights only (no dance fits this tempo)';
+    const dance = st.playing ? `${host.label(st.playing)}${plan?.mix ? ' (mix)' : ''}` : 'lights only (no dance fits this tempo)';
     const f = st.frame;
     const sum = st.run ? tapSummary(st.run) : { taps: 0, hits: 0 };
     const play = beatPlayFor(st.band);
@@ -219,7 +234,7 @@ export function mountParty(host) {
     const sum = st.run ? tapSummary(st.run) : { taps: 0, hits: 0, meanAbsErrorMs: 0 };
     return {
       on: st.on, ended: st.ended, startedAt: audio.startedAt, bufferSeconds: st.bufferSeconds, song: st.song, songs: st.songs.map((x) => x.id), click: audio.isClick(), note: st.note, mood: st.mood, tempo: st.tempo, band: st.band, bpm: st.bpm, dance: st.dance, chosen: Boolean(st.plan?.chosen), fellBack: Boolean(st.plan?.fellBack),
-      danceId: st.plan?.dance?.clip.id ?? null, lightsOnly: Boolean(st.plan && !st.plan.dance),
+      danceId: st.playing ?? st.plan?.dance?.clip.id ?? null, mix: Boolean(st.plan?.mix), lightsOnly: Boolean(st.plan && !st.plan.dance),
       headphones: st.worn, songTime: st.on ? audio.songTime(now()) : 0,
       count: f ? f.count : null, pulse: f ? f.pulse : 0, danceTime: f ? f.danceTime : null, frameSongTime: Number.isFinite(st.frameT) ? st.frameT : 0,
       taps: sum.taps, hits: sum.hits, meanAbsErrorMs: sum.meanAbsErrorMs, lastOutcome: st.lastOutcome, mode: st.run?.mode ?? null,
@@ -234,9 +249,10 @@ export function mountParty(host) {
     setClick(on) { audio.setClick(Boolean(on)); },
     setMood(m) { if (MOODS.includes(m)) { st.mood = m; restartIfOn(); } },
     setTempo(t) { if (TEMPOS.includes(t)) { st.tempo = t; dropChoiceIfUnfit(); restartIfOn(); } },
-    /** 'auto' or a clip id from the picker. A clip that does not fit the tempo is ignored (the picker never offers one). */
+    /** 'auto', 'mix' or a clip id from the picker. A clip that does not fit the tempo is ignored (the picker never offers one), and so is a mix when fewer than two dances fit. */
     setDance(id) {
-      if (id === 'auto' || fittingClips(currentBpm(), host.dances()).some((f) => f.clip.id === id)) { st.dance = id; replan(); }
+      const ok = id === 'auto' || (id === 'mix' && mixList(currentBpm(), host.dances()).length >= 2) || fittingClips(currentBpm(), host.dances()).some((f) => f.clip.id === id);
+      if (ok) { st.dance = id; replan(); }
     },
     setBand(b) { if (Number.isInteger(b) && b >= 0 && b < PARTY_BANDS.length) { st.band = b; if (st.run) st.run = newTapRun(b); } },
     setGain: (g) => audio.setGain(g),

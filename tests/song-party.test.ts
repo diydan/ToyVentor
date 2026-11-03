@@ -5,7 +5,7 @@
 import { describe, expect, it } from "vitest";
 import { MAX_BEATS, beatAt, clipTime, type BeatMap, type DanceClip } from "../shared/songBeat";
 import { MOODS, TEMPOS, TEMPO_BPM } from "../shared/songCards";
-import { fittingClips, newTapRun, partyFrame, planParty, practiceBeatMap, registerTap, tapFlashes, tapSummary, type PartyClip } from "../shared/songParty";
+import { MIX_BEATS, MIX_CHOICE, danceForMix, fittingClips, mixList, newTapRun, partyFrame, planParty, practiceBeatMap, registerTap, tapFlashes, tapSummary, type PartyClip } from "../shared/songParty";
 import { LOOP_BEATS, MAX_MIDI, MIN_MIDI, MOOD_SYNTH, loopEvents, midiToHz } from "../shared/songSynth";
 
 const DANCES: DanceClip[] = [
@@ -164,7 +164,7 @@ describe("the Dance picker: choosing a move instead of letting the tempo pick", 
   it("fails the same rules on a planner that stretches a chosen clip to any tempo (so the check can fail)", () => {
     const stretcher: typeof planParty = (bpm, clips, variant, choose) => {
       const hit = choose ? clips.find((c) => c.id === choose && c.bpm > 0) : undefined;
-      return hit ? { songBpm: bpm, dance: { clip: hit, rate: bpm / hit.bpm }, chosen: true, fellBack: false } : planParty(bpm, clips, variant, choose);
+      return hit ? { songBpm: bpm, dance: { clip: hit, rate: bpm / hit.bpm }, chosen: true, fellBack: false, mix: null } : planParty(bpm, clips, variant, choose);
     };
     expect(pickerFailures(stretcher).length).toBeGreaterThan(0);
   });
@@ -437,3 +437,100 @@ describe("a library song's beat grid", () => {
     expect(() => songBeatMap({ dur: 8, beats: 4, offset: 0 })).toThrow();
   });
 });
+
+// ---- the Dance mix ---------------------------------------------------------------------------------------------------------------------
+
+describe("the Dance mix: a new dance every four bars, on the bar line", () => {
+  const CLIPS: PartyClip[] = [
+    { id: "dance_sway", bpm: 80, beats: 8, group: "dance" },
+    { id: "dance_boogie", bpm: 120, beats: 16, group: "dance" },
+    { id: "dance_silly", bpm: 125.22, beats: 8, group: "dance" },
+    { id: "dance_hiphop", bpm: 101.4, beats: 8, group: "dance" },
+    { id: "move_jacks", bpm: 112.5, beats: 2, group: "move" }, // a movement-break move: never in a mix
+    { id: "music_guitar", bpm: 100.7, beats: 8, group: "music" }, // nor the strum
+  ];
+
+  it("takes turns with the dances that fit, nearest its natural speed first, never a movement-break move or the strum", () => {
+    const list = mixList(110, CLIPS);
+    expect(list.map((x) => x.clip.id)).toEqual(["dance_hiphop", "dance_boogie", "dance_silly"]); // rates 1.085, 0.917, 0.878: nearest to 1 first
+    for (const x of list) expect(["dance", undefined]).toContain(x.clip.group);
+    expect(mixList(200, CLIPS)).toEqual([]);
+    expect(mixList(85, CLIPS).map((x) => x.clip.id)).toEqual(["dance_sway", "dance_hiphop"]);
+  });
+
+  /** The mix's rules as a function of the chooser, so it can be run on a broken one. Returns the failures. */
+  function mixFailures(pick: <T>(list: readonly T[], position: number, every?: number) => T): string[] {
+    const bad: string[] = [];
+    const list = ["a", "b", "c"];
+    if (pick(list, 0) !== "a" || pick(list, 15.99) !== "a") bad.push("the first 16 beats are the first dance");
+    if (pick(list, 16) !== "b" || pick(list, 31.99) !== "b") bad.push("beats 16 to 32 are the second");
+    if (pick(list, 32) !== "c" || pick(list, 48) !== "a") bad.push("the third, then back to the first");
+    if (pick(list, -3) !== "a" || pick(list, -0.001) !== "a") bad.push("a count-in is the first dance");
+    for (let b = 0; b < 400; b += 0.5) if (pick(list, b) !== pick(list, b)) bad.push("it must be a function of the position");
+    for (let block = 0; block < 12; block++) if (pick(list, block * 16) === pick(list, (block + 1) * 16)) { bad.push("a dance must never follow itself"); break; }
+    for (let b = 1; b < 16; b++) if (pick(list, 16 + b) !== pick(list, 16)) { bad.push("the dance must hold for the whole block"); break; }
+    if (pick(["only"], 123) !== "only") bad.push("one dance is just that dance");
+    if (pick(list, NaN) !== "a") bad.push("a position that is not a number is the first dance");
+    return bad;
+  }
+
+  it("follows the rules: 16 beats each, in order, round the list, held for the whole block, never repeating", () => {
+    expect(MIX_BEATS).toBe(16);
+    expect(mixFailures(danceForMix)).toEqual([]);
+  });
+
+  it("fails the same rules on a mixer that switches every beat and on one that picks at random (so the check can fail)", () => {
+    const everyBeat = <T,>(l: readonly T[], p: number) => danceForMix(l, p, 1);
+    expect(mixFailures(everyBeat).length).toBeGreaterThan(0);
+    let n = 0;
+    const random = <T,>(l: readonly T[]) => l[(n++ * 7 + 3) % l.length]!;
+    expect(mixFailures(random).length).toBeGreaterThan(0);
+  });
+
+  it("a plan that is a mix opens on the dance the tempo would have picked, says it was chosen, and carries its list", () => {
+    const mix = planParty(110, CLIPS, 0, MIX_CHOICE);
+    const auto = planParty(110, CLIPS);
+    expect(mix.dance!.clip.id).toBe(auto.dance!.clip.id);
+    expect(mix.chosen).toBe(true);
+    expect(mix.fellBack).toBe(false);
+    expect(mix.mix!.list.length).toBe(3);
+    expect(mix.mix!.every).toBe(MIX_BEATS);
+    expect(auto.mix).toBeNull();
+  });
+
+  it("with fewer than two dances that fit, a mix is just the tempo's own pick (nothing to take turns with)", () => {
+    const one = planParty(128, [{ id: "dance_silly", bpm: 125.22, beats: 8, group: "dance" }, { id: "move_jacks", bpm: 112.5, beats: 2, group: "move" }], 0, MIX_CHOICE);
+    expect(one.mix).toBeNull();
+    expect(one.dance!.clip.id).toBe("dance_silly");
+    expect(planParty(300, CLIPS, 0, MIX_CHOICE).dance).toBeNull();
+  });
+
+  it("the frame follows the mix: the dance changes only on a block line, and each one is on the beat (its time is its beat position in its own loop)", () => {
+    const plan = planParty(110, CLIPS, 0, MIX_CHOICE);
+    const map = practiceBeatMap(110);
+    const iv = 60 / 110;
+    const order = plan.mix!.list.map((x) => x.clip);
+    let last: string | null = null;
+    const changes: number[] = [];
+    for (let k = 0; k < 16 * 7; k++) {
+      const f = partyFrame(plan, map, k * iv);
+      const clip = order[Math.floor(k / 16) % order.length]!;
+      expect(f.danceId, `beat ${k}`).toBe(clip.id);
+      expect(f.danceTime!, `beat ${k}`).toBeCloseTo((k % clip.beats) * (60 / clip.bpm), 6);
+      if (f.danceId !== last) { changes.push(k); last = f.danceId; }
+    }
+    expect(changes).toEqual([0, 16, 32, 48, 64, 80, 96]); // every one on a multiple of 16 beats, which is a bar line
+    for (const c of changes) expect(c % 4).toBe(0);
+  });
+
+  it("a dance picked by hand, or the tempo's own, is not a mix and never changes", () => {
+    for (const choose of [null, "dance_silly", undefined]) {
+      const plan = planParty(110, CLIPS, 0, choose);
+      const map = practiceBeatMap(110);
+      const ids = new Set<string | null>();
+      for (let k = 0; k < 120; k += 3) ids.add(partyFrame(plan, map, k * (60 / 110)).danceId);
+      expect(ids.size, String(choose)).toBe(1);
+    }
+  });
+});
+

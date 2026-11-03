@@ -117,6 +117,17 @@ describe("party mode wiring", () => {
     expect(page).toMatch(/const plantedClips = new Set\(\);/);
   });
 
+  it("a Mix swaps the held clip on a bar line BEFORE it checks whether the child chose another clip, and lets go of the one it is actually holding", () => {
+    const glue = read("parts/kip/viewer/kip-party.js");
+    const update = glue.slice(glue.indexOf("function update(dt)"), glue.indexOf("/** A tap, at"));
+    expect(update).toContain("f.danceId !== st.playing");
+    expect(update.indexOf("f.danceId !== st.playing")).toBeLessThan(update.indexOf("stop('other-clip')")); // else every swap would look like the child picking another clip
+    expect(update.indexOf("host.releaseClip(st.playing)")).toBeLessThan(update.indexOf("host.playClip(f.danceId)"));
+    expect(glue).toContain("const wasDancing = st.playing;"); // finish() releases what is held, not what the plan started with
+    expect(glue).toMatch(/value: 'mix', label: 'Mix \(a new dance every 4 bars\)'/);
+    expect(glue).toContain("mixList(currentBpm(), host.dances()).length >= 2"); // offered only when there are two dances to take turns with
+  });
+
   it("the glue never keeps time of its own: one clock, the audio clock", () => {
     const code = read("parts/kip/viewer/kip-party.js").replace(/\/\/.*$/gm, "");
     expect(code).not.toMatch(/\b(setInterval|setTimeout|Date\.now)\b/); // performance.now() is only used to ask the audio clock "where is the song now?"

@@ -308,12 +308,13 @@ check(`on a song too: no foot slides (${w2.slide.toFixed(1)} mm), the body stays
 
 // the Dance picker, while the song plays: only what fits is offered, a choice takes over at once without restarting the sound, Auto gives the tempo's pick back
 const picker = await ev("[...window.kipMenu.fields.get('partyDance').select.options].map((o) => ({ value: o.value, label: o.textContent }))");
-const rates = picker.filter((o) => o.value !== "auto").map((o) => Number(/×([\d.]+)/.exec(o.label)?.[1]));
-check(`the Dance picker lists Auto and ${picker.length - 1} moves that fit ${Math.round(s.bpm)} bpm, each between x0.80 and x1.25 (${picker.length - 1} offered)`, picker[0].value === "auto" && picker.length > 2 && rates.every((r) => r >= 0.8 && r <= 1.25), JSON.stringify(rates));
+const moves = picker.filter((o) => o.value !== "auto" && o.value !== "mix"); // Auto and Mix are not moves: they have no speed of their own
+const rates = moves.map((o) => Number(/×([\d.]+)/.exec(o.label)?.[1]));
+check(`the Dance picker lists Auto, Mix and ${moves.length} moves that fit ${Math.round(s.bpm)} bpm, each between x0.80 and x1.25`, picker[0].value === "auto" && moves.length > 2 && rates.every((r) => r >= 0.8 && r <= 1.25), JSON.stringify(rates));
 const unfit = await ev(`(async () => { const idx = await (await fetch('/kip/mixamo/baked/index.json')).json(); const all = [...window.kipClips.entries.filter((c) => c.group === 'dance' && c.bpm).map((c) => ({ id: c.id, bpm: c.bpm })), ...idx.clips.filter((c) => c.beats).map((c) => ({ id: c.id, bpm: c.bpm }))]; return all.filter((c) => ${s.bpm} / c.bpm < 0.8 || ${s.bpm} / c.bpm > 1.25).map((c) => c.id); })()`);
 check(`a move that does not fit is NOT offered (${unfit.slice(0, 3).join(", ")} would have to be stretched)`, unfit.length > 0 && unfit.every((id) => !picker.some((o) => o.value === id)));
 const started0 = (await state()).startedAt;
-const other = picker.find((o) => o.value !== "auto" && o.value !== s.danceId);
+const other = moves.find((o) => o.value !== s.danceId);
 await choose("partyDance", other.value);
 check(`choosing ${other.label.replace(/ \(.*/, "")} switches to it at once`, await page.waitFor(`window.kipParty.state().danceId === ${JSON.stringify(other.value)} && window.kipMenu.ctx.read.clip() === ${JSON.stringify(other.value)}`, 3000, 50));
 const after2 = await state();
@@ -330,6 +331,30 @@ if (jacks) {
   await choose("partyDance", "auto");
   await sleep(300);
 }
+
+// the Dance MIX: a new dance every 4 bars, on the bar line, one at a time, through the crossfades without sliding or jerking
+const mixOpt = (await ev("[...window.kipMenu.fields.get('partyDance').select.options].map((o) => o.value)")).includes("mix");
+check("the Dance picker offers Mix when at least two dances fit", mixOpt);
+await choose("partyDance", "mix");
+check("choosing Mix is a mix, and it joins on the dance for the bar the song is in (a dance, never a movement-break move or the strum)", await page.waitFor("window.kipParty.state().mix === true", 3000, 50) && /^dance_/.test((await state()).danceId), String((await state()).danceId));
+const mixRec = await ev(`new Promise((resolve) => {
+  const out = [], t0 = performance.now();
+  (function f() { const st = window.kipParty.state(); out.push({ ft: st.frameSongTime, id: st.danceId, clip: window.kipMenu.ctx.read.clip(), on: st.on }); if (performance.now() - t0 < 20500) requestAnimationFrame(f); else resolve(out); })();
+})`);
+const swaps = [];
+for (let i = 1; i < mixRec.length; i++) if (mixRec[i].id !== mixRec[i - 1].id) swaps.push({ ft: mixRec[i].ft, from: mixRec[i - 1].id, to: mixRec[i].id });
+check(`over 20 s on a song the mix changed dance ${swaps.length} times (${swaps.map((x) => x.to.replace(/^dance_/, "")).join(", ")})`, swaps.length >= 2 && swaps.length <= 4, String(swaps.length));
+const onBarLine = swaps.every((x) => { const pos = (x.ft - song.offset) / iv; const off = ((pos % 16) + 16) % 16; return Math.min(off, 16 - off) < 0.35; }); // within a frame of a multiple of 16 beats
+check("every change falls on a bar line: a multiple of 16 beats of the song's grid", onBarLine, swaps.map((x) => (((x.ft - song.offset) / iv) % 16).toFixed(2)).join(" "));
+check("a dance never follows itself, and the party was still on throughout", swaps.every((x) => x.from !== x.to) && mixRec.every((x) => x.on));
+// the clip that is actually playing is the one the party says (allowing the frame of the swap itself)
+let mismatch = 0;
+for (let i = 1; i < mixRec.length; i++) if (mixRec[i].clip !== mixRec[i].id && mixRec[i - 1].clip !== mixRec[i - 1].id) mismatch++;
+check("the clip playing is always the dance the party says (no frame of disagreement beyond the swap itself)", mismatch === 0, String(mismatch));
+const wMix = worldReport(await recordWorld(9500)); // across at least one more crossfade
+check(`through the crossfades: no foot slides (${wMix.slide.toFixed(1)} mm), the body stays put (${wMix.lurch.toFixed(2)} mm a frame), the hands do not jerk (${wMix.spikes})`, wMix.slide <= 4 && wMix.lurch <= 1 && wMix.spikes === 0, JSON.stringify(wMix));
+await choose("partyDance", "auto");
+check("choosing Auto ends the mix and holds one dance", await page.waitFor("window.kipParty.state().mix === false", 3000, 50));
 
 // the beat click, for checking by ear
 await toggle("partyClick");
