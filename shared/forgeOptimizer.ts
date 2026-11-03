@@ -36,6 +36,7 @@ export const FORGE_HEAD_TOPS = ["studs", "dome"] as const satisfies readonly For
 export const FORGE_EAR_STYLES = ["round", "pointy", "tall"] as const;
 export const FORGE_SNOUT_STYLES = ["muzzle", "beak", "bill"] as const;
 export const FORGE_SPIKE_LAYOUTS = ["row", "ring"] as const;
+export const FORGE_CROWN_BASES = ["pad", "flush"] as const;
 
 export interface ForgeLoftSlice {
   z: number;
@@ -68,6 +69,11 @@ export interface ForgeRecipeV1 {
         height_mm?: number;
         /** Heads only. `studs` (default) is the brand head with its two crown studs; `dome` has none and a rounded top. */
         top?: ForgeHeadTop;
+        /**
+         * Crowns only. `pad` (default) is the crown add-on built on the 2x1 pad: hats, hair, crowns. `flush` is a cover: flat on
+         * the head's top face, footprint as wide as the head top (24.4 x 11.9 up to 30 x 17.6 mm), no pad and no neck.
+         */
+        base?: (typeof FORGE_CROWN_BASES)[number];
       }
     | { kind: "star2d"; points?: number; outer_r_mm?: number; inner_r_mm?: number; grip_tu?: number }
     | { kind: "profile2d"; points: [number, number][]; fillet_r_mm?: number; grip_tu?: number };

@@ -233,6 +233,31 @@ def crown_addon(
     return tp._finish(size, (2, 1), foot, lock, clipped, fh, "integrated")
 
 
+def cover_addon(body_on_head_top: Manifold) -> tuple[Manifold, list[dict], dict]:
+    """Build a smooth cover for a head's top: a flat-bottomed dome that sits straight on the head's top face and clips onto its
+    two crown studs (Dan, 2026-11-03: the curved no-studs top is a cover that goes on any head, not a head variant).
+
+    Unlike `crown_addon` there is no 4.8 mm pad under the body: a crown is built on that pad and may only flare out of it at 41
+    degrees, which leaves a visible neck between the head and anything wider than the pad. A cover is flat on the bed
+    instead (`z = 0` is the head's top face), so its footprint can be as wide as the head's top and the dome narrows upwards,
+    which needs no support. The two stud sockets are cut into its underside by `integrated_sockets` (it needs room for a full
+    wall round each: about 22 x 10 mm at the studs' 12.5 mm pitch)."""
+    m, conns, ex = tp.integrated_sockets(body_on_head_top, "small", True)
+    # `integrated_sockets` puts holes wherever the footprint has room for a full wall, on whichever grid gives the most, and cuts a
+    # conical relief wherever a stud of the grid would only clip the edge. A cover wider than about 34 mm gets three holes along x
+    # and one deeper than about 21.5 mm gets four (y = +/-6.25): none of those lands on the head's studs, so it would not fit. One
+    # wider than about 30.2 mm or deeper than about 17.8 mm gets reliefs, which show as notches in its bottom edge. Fail loudly
+    # instead of returning a part that does not seat or has notches.
+    pitch = float(tp.STUD["small"]["pitch"])
+    want = [(-pitch / 2.0, 0.0), (pitch / 2.0, 0.0)]
+    got = sorted((round(float(x), 2), round(float(y), 2)) for x, y in tp.hole_positions(conns[0]))
+    if got != [(round(a, 2), round(b, 2)) for a, b in want]:
+        raise ValueError(f"cover sockets {got} do not land on the head's two studs {want}: the footprint must stay between 24.4 x 11.9 and 30.0 x 17.6 mm")
+    if ex.get("sockets", {}).get("reliefs", 0):
+        raise ValueError("cover footprint is wide enough to need relief cuts (notches in its bottom edge): keep it within 30.0 x 17.6 mm")
+    return m, conns, ex
+
+
 # The catalog heads (`toyventor_char_head_*`) reach 12 to 18 mm behind the neck from about 5 mm up, so the rear clip
 # that keeps the collar clear of the backpack row only needs to hold at the collar. It ramps back at the same 0.78 x dz
 # slope as the loft's own growth limit (so it never adds a ledge) up to HEAD_REAR_MAX_MM behind the neck centre.

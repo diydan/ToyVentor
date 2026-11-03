@@ -6,6 +6,7 @@ import type { Readable } from "node:stream";
 import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
+import { UNIVERSAL_COVER, coverRecipe, coverRecipeForHead } from "../../shared/forgeCover";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 const ROOT = resolve(__dirname, "../..");
@@ -310,6 +311,31 @@ describe.skipIf(!PYTHON)("Recipe v1 feature ops through the optimizer daemon", (
       const extra = [...studZoneVertices(join(outDir, job.stl_artifact!))].filter((v) => !studVertices.has(v));
       expect(extra, id).toEqual([]);
     }
+  }, 540_000);
+
+  it("prints a smooth cover that sits flat on a head's top face, and holds an oversized ask to the size that seats", async () => {
+    // Dan, 2026-11-03: the curved no-studs top is a cover that goes on any head. A crown recipe with `shape.base: "flush"`.
+    const universal = await run({ ...UNIVERSAL_COVER });
+    expect(universal.status).toBe("print_ready");
+    expect(universal.gate_report?.design_status).toBe("verified");
+    const [ux0, ux1] = stlXRange(join(outDir, universal.stl_artifact!));
+    expect(ux1 - ux0).toBeCloseTo(24.4, 0); // the pad's footprint: fits every head
+    const uz = stlVertices(join(outDir, universal.stl_artifact!)).map((v) => v[2]);
+    expect(Math.min(...uz)).toBeCloseTo(0, 1); // flat on the head's top face, no pad under it
+    expect(Math.max(...uz)).toBeGreaterThan(7.5); // tall enough to roof the stud sockets (a lower one shows them as two bumps)
+
+    const head = { ...recipe("ops_test_cover_head", "head", HEAD, []), shape: { kind: "loft", slices: HEAD, height_mm: 30.5 } };
+    const forHead = coverRecipeForHead(head as never)!;
+    const sized = await run({ ...forHead });
+    expect(sized.status).toBe("print_ready");
+    expect(sized.legalizer?.features_adjusted).toBeUndefined(); // already within the range that seats
+
+    // far too big: the daemon holds it to 30 x 17.6 so the two sockets land on the head's studs, and says so
+    const huge = await run({ ...coverRecipe(30, 17.6, "ops_test_cover_huge"), shape: { kind: "loft", base: "flush", slices: [{ z: 0, w: 44, d: 30, r: 9 }, { z: 9, w: 20, d: 12, r: 4 }] } });
+    expect(huge.status).toBe("print_ready");
+    expect(huge.legalizer?.features_adjusted?.[0]?.op).toBe("cover");
+    const [hx0, hx1] = stlXRange(join(outDir, huge.stl_artifact!));
+    expect(hx1 - hx0).toBeLessThanOrEqual(30.1);
   }, 540_000);
 
   it("moves a snout up the face before shortening it, and cuts ribs round a head's sides", async () => {

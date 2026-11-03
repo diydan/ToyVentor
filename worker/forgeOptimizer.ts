@@ -14,6 +14,7 @@
 //    and never leaks upstream text or server filesystem paths.
 import {
   checkForgeRecipeBrandSafety,
+  FORGE_CROWN_BASES,
   FORGE_EAR_STYLES,
   FORGE_HEAD_TOPS,
   FORGE_MAX_PROFILE_POINTS,
@@ -277,11 +278,13 @@ function sanitizeRecipe(raw: unknown): { ok: true; recipe: ForgeRecipeV1 } | { o
       });
     }
     const top = oneOf(shapeObj.top, FORGE_HEAD_TOPS);
+    const base = oneOf(shapeObj.base, FORGE_CROWN_BASES);
     cleanShape = {
       kind: "loft",
       slices,
       ...(isFiniteNum(shapeObj.height_mm) ? { height_mm: shapeObj.height_mm } : {}),
       ...(top ? { top } : {}),
+      ...(base ? { base } : {}),
     };
   } else {
     return { ok: false };

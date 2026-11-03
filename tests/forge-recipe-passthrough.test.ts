@@ -113,6 +113,18 @@ describe("Worker recipe allowlist keeps the head and crown fields the daemon rea
     expect(r.recipe.features).toEqual([{ op: "ribs", count: 8, depth_mm: 3, width_mm: 5 }]);
   });
 
+  it("forwards a flush crown base (a cover)", async () => {
+    const cover = await forwarded({ name: "Smooth Cover", slot: "crown", shape: { slices: SLICES, base: "flush" } });
+    expect(cover.status).toBe(200);
+    expect(cover.recipe.shape.base).toBe("flush");
+  });
+
+  it("drops an unknown crown base", async () => {
+    const odd = await forwarded({ name: "Odd Cover", slot: "crown", shape: { slices: SLICES, base: "floating" } });
+    expect(odd.status).toBe(200);
+    expect(odd.recipe.shape.base).toBeUndefined();
+  });
+
   it("forwards a brow on a head", async () => {
     const r = await forwarded({
       name: "Gorilla Head",

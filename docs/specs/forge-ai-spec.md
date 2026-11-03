@@ -170,16 +170,36 @@ rejected, numbers are clamped, nothing is executed.
   daemon now runs the gate step under one lock (`_GATE_LOCK`). The real fix is in
   that file (return the hits instead of sharing them), which belongs to the
   partspec lane. Job errors now log a traceback on the server (never to the client).
-- **A smooth top is a cover, not a head variant (Dan, 2026-11-03).** The curved,
-  stud-free top (`shape.top: "dome"`, rated 5 on the bunny, cat and bear) should be a
-  cover that clips onto the studs of any head: the printed version carries one
-  head body with studs and a cover for the smooth look, and the cover is worn by
-  default on any head with no other head accessory. That removes the exception to
-  the brand rule (every head carries two studs) and means one head per design, not
-  two. Not built yet; `dome` stays as the preview until the cover exists, then goes.
-  Nearest thing in the repo: the Kip `hat: 'blank'` option (`crown_cap_blank`). A
-  forge cover must be sized to each head's top face, so it is a crown-slot recipe
-  (pad footprint widening to the head top, domed, no features) chosen per head.
+- **The smooth cover (Dan, 2026-11-03; built).** The curved, stud-free top is a cover
+  that clips onto the studs of any head, not a head variant: one head body per
+  design, the printed version ships with a cover for the smooth look, and a head
+  with no other head accessory wears it by default. That removes the dome head as
+  an exception to the brand rule (two studs). It is a crown-slot recipe with
+  `shape.base: "flush"` (daemon `CROWN_BASES`, SDK `cover_addon`): flat on the
+  head's top face, no pad and no neck, the dome narrowing upwards (no support), the
+  two stud sockets cut into its underside by `integrated_sockets`. A normal crown
+  cannot do this: it is built on a 4.8 mm pad and may only flare out of it at 41
+  degrees, which leaves a visible neck. **Limits found by building it:** the
+  footprint stays between 24.4 x 11.9 mm (the pad, the smallest that wraps a socket)
+  and 30 x 17.6 mm, because the sockets sit on a 12.5 mm grid: wider than about 34
+  mm gives three holes along x, deeper than about 21.5 mm gives four holes at the
+  wrong y (the cover would not fit), and wider than 30.2 or deeper than 17.8 gives
+  conical relief cuts that show as notches. The daemon clamps the footprint and
+  reports it in `features_adjusted`; `cover_addon` refuses any cover whose holes are
+  not exactly the head's two studs or that needs reliefs. The dome is at least 8 mm
+  tall: a socket is about 6 mm tall and needs a roof, so a lower dome shows two
+  bumps. Measured: every cover seats on its head with 0.00 mm3 of interference, 2
+  locked sockets and 0 reliefs, print_ready and design verified. `shared/forgeCover.ts`
+  makes the recipes: `UNIVERSAL_COVER` (the pad's footprint, fits every head, including
+  the catalog heads) and `coverRecipeForHead(head)` (the head's top slice less 0.6 mm,
+  held to the range above). A head wider than 30 mm at the top shows a rim of its own
+  top round the cover. Round 16 on the taste page (version 17): five heads with a
+  cover seated, `r16_c01` to `r16_c05`. `shape.top: "dome"` stays as a preview and
+  goes once the app wears the cover by default. **Not done:** the app does not yet
+  request or wear a cover by default (that is the Describe and Build tab and the
+  Kip bench, other lanes), and the catalog heads' real top outlines are not measured,
+  so they get the universal cover.
+
 
 ### Pipeline (every feature)
 

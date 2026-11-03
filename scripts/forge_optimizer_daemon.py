@@ -703,6 +703,12 @@ def _sturdy_head_ear(feat: dict[str, Any]) -> tuple[dict[str, Any], str | None]:
 
 
 HEAD_TOPS = ("studs", "dome")
+CROWN_BASES = ("pad", "flush")
+# A cover's footprint: at least the 2x1 pad (the smallest that wraps a socket with a full wall) and at most what keeps the two stud
+# sockets on the head's studs and its bottom edge free of relief notches (a wider or deeper one gets extra holes in the wrong places, or
+# conical reliefs at its edge, from the 12.5 mm stud grid; `sdk.cover_addon` refuses both).
+COVER_MIN_MM = (24.4, 11.9)
+COVER_MAX_MM = (30.0, 17.6)
 HEAD_DOME_MAX_MM = 5.0
 
 
@@ -1006,6 +1012,31 @@ def _snout_root_y(body: manifold3d.Manifold, z_lo: float) -> float | None:
     return max(w for w in walls if w is not None) + SNOUT_ROOT_DEPTH
 
 
+def _clamp_cover_rows(
+    rows: list[tuple[float, float, float, float, float, float]]
+) -> tuple[list[tuple[float, float, float, float, float, float]], str | None]:
+    """A cover (`shape.base: "flush"`) sits flat on the head's top face: its first slice is at z = 0, no slice is wider or deeper than
+    COVER_MAX_MM, and the first is at least the pad size. Returns the rows and a note when anything changed."""
+    z0 = rows[0][0]
+    out: list[tuple[float, float, float, float, float, float]] = []
+    changed = abs(z0) > 1e-6
+    for i, (z, w, d, r, x, y) in enumerate(rows):
+        nw = min(w, COVER_MAX_MM[0])
+        nd = min(d, COVER_MAX_MM[1])
+        if i == 0:
+            nw, nd = max(nw, COVER_MIN_MM[0]), max(nd, COVER_MIN_MM[1])
+        if (nw, nd) != (w, d):
+            changed = True
+        out.append((z - z0, nw, nd, max(0.8, min(0.48 * min(nw, nd), r)), x, y))
+    note = None
+    if changed:
+        note = (
+            f"footprint kept between {COVER_MIN_MM[0]:g} x {COVER_MIN_MM[1]:g} and {COVER_MAX_MM[0]:g} x {COVER_MAX_MM[1]:g} mm and "
+            "set on the head's top face, so the two sockets land on the head's studs"
+        )
+    return out, note
+
+
 def _snout_ramp(
     body: manifold3d.Manifold, length: float, tip_r: float, z_top: float, y_ref: float, min_slope_deg: float
 ) -> tuple[float, float, float] | None:
@@ -1251,6 +1282,11 @@ def compile_recipe_to_partspec(recipe: dict[str, Any]) -> dict[str, Any]:
     head_top = str(shape.get("top", "studs")).strip().lower()
     if head_top not in HEAD_TOPS:
         head_top = "studs"
+    # `pad` (default) is the crown add-on built on the 2x1 pad (hats, hair, crowns); `flush` is a cover: flat on the head's top face,
+    # footprint as wide as the head top, no pad, no neck (`sdk.cover_addon`). Crowns only.
+    crown_base = str(shape.get("base", "pad")).strip().lower()
+    if crown_base not in CROWN_BASES or slot != "crown":
+        crown_base = "pad"
 
     # A brim or a horn hangs in the air, and the support-free flare clip in the slot builders would
     # shave it back to a 41 degree cone. `minimal` keeps it, at the price of a few supports. This is a
@@ -1270,6 +1306,9 @@ def compile_recipe_to_partspec(recipe: dict[str, Any]) -> dict[str, Any]:
     features_dropped: list[dict[str, str]] = []
     # Ops built, but moved or trimmed to fit (reported as `legalizer.features_adjusted`).
     features_adjusted: list[dict[str, str]] = []
+    cover_note: str | None = None
+    if crown_base == "flush":
+        slices_legal, cover_note = _clamp_cover_rows(slices_legal)
 
     def build_for(
         rows: list[tuple[float, float, float, float, float, float]],
@@ -1278,6 +1317,8 @@ def compile_recipe_to_partspec(recipe: dict[str, Any]) -> dict[str, Any]:
         """`fs` scales every feature's size (L2 passes the same factor it applies to the slices)."""
         features_dropped.clear()
         features_adjusted.clear()
+        if cover_note:  # (inside the build, because each build starts the lists afresh)
+            features_adjusted.append({"op": "cover", "why": cover_note})
         if slot == "hand":
             if kind == "profile2d":
                 cs = sdk.polygon_2d(pts_clamped, fillet_r=fillet_r)
@@ -1362,6 +1403,8 @@ def compile_recipe_to_partspec(recipe: dict[str, Any]) -> dict[str, Any]:
                         features_dropped.append({"op": "spikes", "why": "no room for a ring of points on this top"})
                     else:
                         body = (body + teeth).simplify(STUD_CUT_SIMPLIFY_MM)
+            if crown_base == "flush":
+                return sdk.cover_addon(body)
             return sdk.crown_addon(body, support_policy=support_policy)
         if slot == "head":
             m, conns, ex = sdk.character_head(body, height_mm=head_height_mm, support_policy=support_policy)
