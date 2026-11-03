@@ -1082,6 +1082,7 @@ function playClip(rawName, fadeSec = 0.22) {
 
 function updateStatusText() {
   syncHouseholdChip();
+  syncForgeStorage();
   const edTag = loco.edition === 'pro' ? 'Pro 8+' : 'Snap 3+';
   const vehObj = VEHICLE_OPTIONS.find(v => v.id === loco.vehicle);
   const vehTag = loco.vehicle !== 'none' ? ` · ${vehObj ? vehObj.label : loco.vehicle}` : '';
@@ -1387,6 +1388,9 @@ async function init() {
   if (!hosted) animate(); // hosted: the stage's loop calls frame()
   started = true;
   globals.__KIP_READY__ = true;
+  // put back the part the child made from words last time, unless this visit asked for a look of its own (a #toy= link or a look in the address)
+  const askedForLook = Boolean(toyContract) || ['head', 'crown', 'hat', 'loadout', 'preset'].some((k) => params.get(k));
+  if (!askedForLook) restoreForgeParts();
 }
 
 // --- 5. EDITION (PRO 8+ vs SNAP 3+), WARDROBE, MODULAR TU VEHICLES, LLM SDK & PHOTO FORGE ---
@@ -2029,7 +2033,8 @@ $el('btn-copy-prompt').addEventListener('click', async () => {
   }
 });
 
-// Memory-only custom STL bytes & Photo-Forge craft slot state for the print pack (never persisted or sent over network).
+// Memory-only custom STL bytes & Photo-Forge craft slot state for the print pack (never persisted or sent over network). The one exception is the part a child
+// made from words (text-to-part): it is kept in this browser so it survives a reload; see "Text to part, kept across a reload" below.
 const customStlSlots = { crown: null, hand: null, back: null, head: null, hood: null };
 const photoAccessorySlots = { crown: null, wings: null, hand: null, hood: null };
 // A household library item in the hand (docs/specs/household-library-spec.md): digital only, so it is NOT in the slots the print pack reads.
@@ -2399,7 +2404,66 @@ async function equipHouseholdItem(item, extras = {}) {
 // Text to part (F1, kip-forge-make.js): "Wear it" puts the part the child just made on Kip. The Worker's first look is a GLB in glTF's y-up space, which
 // is the space scadMesh turns an STL part into, so it goes into the same custom crown / custom head containers a loaded .stl uses, with no rotation of
 // its own; but it is in metres where the bench works in millimetres, so it is scaled up by 1000 (found on the real page: it was drawn 1000 times too small).
-async function equipForgePart({ slot, glbBase64, name, colorHex }) {
+// Text to part, kept across a reload (Dan, 2026-11-03: "local storage for now"). The part Kip wears from the Make-from-words panel is saved in this browser only:
+// one record per slot (crown, head) holding the generated part's file, its generated name and its colour, never the child's words and never sent anywhere. The
+// record always says what Kip is wearing NOW: updateStatusText() runs syncForgeStorage(), which drops a record the moment the slot holds anything else (another
+// hat or head, an imported file, a photo part, a reset). A #toy= link or an explicit ?head= / ?crown= / ?hat= / ?loadout= / ?preset= is the child (or a link) asking for
+// a look, so the saved part is not put on over it, and it is NOT erased either: it stays saved for the next plain visit (a Toybox link must never cost a child
+// the part they made). It is tracked again once the child makes or wears a part made from words in that visit. `var`, not `let`: updateStatusText runs during init.
+var FORGE_PART_KEYS = { crown: 'toyforge:kip:forge-part:crown:v1', head: 'toyforge:kip:forge-part:head:v1' };
+var FORGE_PART_MAX_B64 = 600000; // a real part is 25 to 50 kB of base64; refuse anything absurd
+var forgeSaved = { crown: false, head: false }; // a record for the slot is in storage (this page wrote it, or is restoring it)
+var forgeRestoring = false; // while a saved part is being put back, nothing is dropped
+function forgeStoreGet(key) { try { return localStorage.getItem(key); } catch { return null; } }
+function saveForgePart(slot, rec) {
+  try {
+    localStorage.setItem(FORGE_PART_KEYS[slot], JSON.stringify({ v: 1, slot, name: rec.name, colorHex: rec.colorHex, glbBase64: rec.glbBase64, savedAt: Date.now() }));
+    forgeSaved[slot] = true;
+  } catch { forgeSaved[slot] = false; } // private window or no room: Kip still wears it, it just will not be there after a reload
+}
+function forgetForgePart(slot) {
+  try { localStorage.removeItem(FORGE_PART_KEYS[slot]); } catch { /* nothing to forget */ }
+  forgeSaved[slot] = false;
+}
+/** True when the slot holds the part made from words (its group is named `forge:`), and Kip is in custom mode for it. */
+function forgePartWorn(slot) {
+  const box = slot === 'crown' ? kip.exp.customCrownContainer : kip.exp.customHeadContainer;
+  const custom = slot === 'crown' ? loco.hat === 'custom' : loco.head === 'custom';
+  return custom && box.children.length === 1 && String(box.children[0].name || '').startsWith('forge:');
+}
+function syncForgeStorage() {
+  if (forgeRestoring || !kip || !kip.exp) return;
+  for (const slot of ['crown', 'head']) if (forgeSaved[slot] && !forgePartWorn(slot)) forgetForgePart(slot);
+}
+/** A saved record, checked field by field (it came from storage, so it is data): null when it is missing or not a part this bench wrote. */
+function readForgePart(slot) {
+  const raw = forgeStoreGet(FORGE_PART_KEYS[slot]);
+  if (!raw) return null;
+  try {
+    const r = JSON.parse(raw);
+    if (!r || r.v !== 1 || r.slot !== slot || typeof r.glbBase64 !== 'string' || r.glbBase64.length < 20 || r.glbBase64.length > FORGE_PART_MAX_B64 || !/^[A-Za-z0-9+/]+={0,2}$/.test(r.glbBase64)) return null;
+    return { slot, glbBase64: r.glbBase64, name: typeof r.name === 'string' ? r.name.slice(0, 40) : slot, colorHex: /^#[0-9a-f]{6}$/i.test(r.colorHex || '') ? r.colorHex : undefined };
+  } catch { return null; }
+}
+async function restoreForgeParts() {
+  forgeRestoring = true;
+  try {
+    for (const slot of ['head', 'crown']) { // the head first: the hat goes on the head last
+      if (forgeStoreGet(FORGE_PART_KEYS[slot]) === null) continue;
+      const rec = readForgePart(slot);
+      if (!rec) { forgetForgePart(slot); continue; } // not a record this bench wrote: drop it
+      forgeSaved[slot] = true;
+      const r = await equipForgePart({ ...rec, restore: true });
+      if (disposed) return;
+      if (!r.ok) forgetForgePart(slot); // a file that will not load is not retried on every visit
+    }
+  } finally {
+    forgeRestoring = false;
+    if (!disposed) syncForgeStorage();
+  }
+}
+
+async function equipForgePart({ slot, glbBase64, name, colorHex, restore = false }) {
   if ((slot !== 'crown' && slot !== 'head') || typeof glbBase64 !== 'string' || !glbBase64) return { ok: false };
   try {
     const bin = atob(glbBase64);
@@ -2408,7 +2472,8 @@ async function equipForgePart({ slot, glbBase64, name, colorHex }) {
     const gltf = await gltfLoader.parseAsync(bytes.buffer, '');
     if (disposed) return { ok: false };
     const mat = kip.exp.expMats.custom.clone();
-    mat.color.set(/^#[0-9a-f]{6}$/i.test(colorHex || '') ? colorHex : '#7c4dff'); // the child's colour (shared/forgeColors.ts), or the custom-part purple
+    const hex = /^#[0-9a-f]{6}$/i.test(colorHex || '') ? colorHex : '#7c4dff'; // the child's colour (shared/forgeColors.ts), or the custom-part purple
+    mat.color.set(hex);
     const group = new THREE.Group();
     group.name = `forge:${String(name || slot).slice(0, 40)}`;
     gltf.scene.traverse((o) => { if (o.isMesh) { o.material = mat; o.castShadow = true; o.receiveShadow = true; } });
@@ -2427,6 +2492,7 @@ async function equipForgePart({ slot, glbBase64, name, colorHex }) {
       kip.exp.customHeadContainer.add(group);
       setHeadMode('custom');
     }
+    if (!restore && glbBase64.length <= FORGE_PART_MAX_B64) saveForgePart(slot, { name: String(name || slot).slice(0, 40), colorHex: hex, glbBase64 });
     updateStatusText();
     return { ok: true };
   } catch (err) {

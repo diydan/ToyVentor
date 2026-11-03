@@ -115,6 +115,15 @@ const setText = (t) => ev(`(() => { const i = document.querySelector('.kfm-back 
 const pickSlot = (v) => ev(`(() => { const r = [...document.querySelectorAll('.kfm-slot input')].find((x) => x.value === ${JSON.stringify(v)}); r.checked = true; })()`);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const loco = () => ev("JSON.stringify({ hat: window.kipMenu.ctx.loco.hat, head: window.kipMenu.ctx.loco.head, hasPhotoAccessory: window.kipMenu.ctx.loco.hasPhotoAccessory })");
+const CROWN_KEY = "toyforge:kip:forge-part:crown:v1";
+const HEAD_KEY = "toyforge:kip:forge-part:head:v1";
+const stored = (k) => ev(`localStorage.getItem(${JSON.stringify(k)})`);
+// a reload inside the same Chrome profile (so storage survives): mark the old page, navigate, wait for the NEW page to be ready
+const reload = async (url = `${server.base}/kip/Kip-Demo.html`) => {
+  await ev("window.__stale = 1");
+  await page.send("Page.navigate", { url });
+  return page.waitFor("!window.__stale && window.__KIP_READY__ === true", 180000);
+};
 
 const inspect = (name) => ev(`(() => { const { THREE, kip } = window.kipRig(); const c = kip.exp.${name}; const box = new THREE.Box3().setFromObject(c); const first = []; c.traverse((o) => { if (o.isMesh) first.push({ type: o.type, vis: o.visible, verts: o.geometry.attributes.position.count, norm: o.geometry.attributes.position.normalized, bs: o.geometry.boundingSphere ? [o.geometry.boundingSphere.radius] : null, scale: o.getWorldScale(new THREE.Vector3()).toArray().map((v) => +v.toFixed(4)), mat: o.material && o.material.type, opacity: o.material && o.material.opacity, transparent: o.material && o.material.transparent }); }); let anc = c, chain = []; while (anc) { chain.push(anc.name + ':' + anc.visible); anc = anc.parent; } return JSON.stringify({ visible: c.visible, children: c.children.length, box: [box.min.toArray().map((v) => +v.toFixed(1)), box.max.toArray().map((v) => +v.toFixed(1))], worldPos: c.getWorldPosition(new THREE.Vector3()).toArray().map((v) => +v.toFixed(1)), meshes: first.slice(0, 3), chain: chain.slice(0, 8) }); })()`);
 await ev(`localStorage.setItem('toyforge:device:v1', ${JSON.stringify(DEVICE)})`);
@@ -159,6 +168,23 @@ await page.waitFor("document.querySelector('.kfm-wearnote').textContent.includes
 check("Kip wears the head as a custom head", (await loco()).includes('"head":"custom"'));
 const hd = JSON.parse(await inspect("customHeadContainer"));
 check("the worn head is drawn at a size and place a child can see: 8 to 120 mm each way, up at Kip's head", sane(hd), JSON.stringify(hd.box));
+
+// 3b. kept across a reload (local storage, written by the bench): what is saved, that it holds no words, and that a reload puts both parts back
+const crownRec = JSON.parse((await stored(CROWN_KEY)) || "null");
+const headRec = JSON.parse((await stored(HEAD_KEY)) || "null");
+check("wearing saved one record per slot: the part's file, its generated name and the colour the child picked", crownRec?.v === 1 && crownRec.slot === "crown" && crownRec.name === "Dome Hat" && crownRec.colorHex === "#43a047" && crownRec.glbBase64 === DOME && headRec?.slot === "head" && headRec.name === "Robot Head" && headRec.colorHex === "#43a047" && headRec.glbBase64 === ROBOT, JSON.stringify({ c: crownRec && Object.keys(crownRec), h: headRec && headRec.name }));
+check("the records hold no words the child typed", !(await stored(CROWN_KEY)).includes("dome hat") && !(await stored(HEAD_KEY)).includes("robot head") && !(await stored(CROWN_KEY)).includes("a dome"));
+check("those are the only two forge-part keys in storage (one per slot)", (await ev("Object.keys(localStorage).filter((k) => k.startsWith('toyforge:kip:forge-part')).sort().join(',')")) === `${CROWN_KEY},${HEAD_KEY}`);
+check("the page reloads", await reload());
+check("after the reload Kip is wearing the saved hat and the saved head", (await loco()).includes('"hat":"custom"') && (await loco()).includes('"head":"custom"'), await loco());
+const hatBack = JSON.parse(await meshInfo("customCrownContainer"));
+const headBack = JSON.parse(await meshInfo("customHeadContainer"));
+check("the hat came back in the green the child picked, as one group", hatBack.groups === 1 && hatBack.hex.join() === "43a047", JSON.stringify(hatBack));
+check("the head came back as one group in the same green (the colour the child picked carries to the next part)", headBack.groups === 1 && headBack.hex.join() === "43a047", JSON.stringify(headBack));
+check("both are drawn at a size and place a child can see", sane(JSON.parse(await inspect("customCrownContainer"))) && sane(JSON.parse(await inspect("customHeadContainer"))));
+check("restoring did not write the records again or lose them", (await stored(CROWN_KEY)) !== null && (await stored(HEAD_KEY)) !== null);
+await ev("window.kipMenu.ctx.act.openForgeMake()");
+await page.waitFor("window.kipForgeMake && window.kipForgeMake.isOpen()", 20000);
 await ev("window.kipForgeMake.close()");
 await sleep(1500);
 await page.shot(`${SHOTS}/bench-head.png`);
@@ -176,6 +202,27 @@ for (const [wish, slot, label, key, want] of [["a pirate hat", "crown", "Tricorn
 }
 clearInterval(clock);
 model.mode = "ok";
+
+// 5. the saved part always says what Kip wears now: the ready-made hat and head just put on replaced them, so nothing is saved, and a reload brings nothing back
+check("wearing a ready-made hat and head dropped both saved parts", (await stored(CROWN_KEY)) === null && (await stored(HEAD_KEY)) === null);
+check("a reload after that puts nothing made-from-words on Kip", (await reload()) && !(await loco()).includes('"hat":"custom"') && !(await loco()).includes('"head":"custom"'), await loco());
+
+// a record written by hand (a good one) is restored; the same with a look asked for in the address is not, and is dropped
+const putRecord = (slot, rec) => ev(`localStorage.setItem(${JSON.stringify(slot === "crown" ? CROWN_KEY : HEAD_KEY)}, ${JSON.stringify(JSON.stringify(rec))})`);
+await putRecord("crown", { v: 1, slot: "crown", name: "Hand Hat", colorHex: "#e53935", glbBase64: DOME, savedAt: 1 });
+check("the page reloads with a hand-written good record", await reload());
+check("it was put on Kip, in its red", (await loco()).includes('"hat":"custom"') && JSON.parse(await meshInfo("customCrownContainer")).hex.join() === "e53935");
+check("a reload with a look asked for in the address (?head=fox) keeps that look and does not put the saved hat on", (await reload(`${server.base}/kip/Kip-Demo.html?head=fox`)) && (await loco()).includes('"head":"fox"') && !(await loco()).includes('"hat":"custom"'), await loco());
+check("and the saved hat is NOT erased by that visit (a link never costs a child the part they made)", (await stored(CROWN_KEY)) !== null);
+check("the next plain visit puts it back on, still in its red", (await reload()) && (await loco()).includes('"hat":"custom"') && JSON.parse(await meshInfo("customCrownContainer")).hex.join() === "e53935", await loco());
+
+// records that are not what the bench wrote are dropped quietly, and never crash the page
+await putRecord("crown", { v: 1, slot: "crown", name: "Bad", glbBase64: "not base64 !!" });
+await putRecord("head", { v: 1, slot: "head", name: "Broken file", glbBase64: Buffer.from("this is not a glb file at all, just text").toString("base64") });
+check("the page reloads with a record that is not base64 and one that is not a file", await reload());
+check("neither is worn, both are dropped, and the page is calm", !(await loco()).includes('"hat":"custom"') && !(await loco()).includes('"head":"custom"') && (await stored(CROWN_KEY)) === null && (await stored(HEAD_KEY)) === null, await loco());
+await ev("localStorage.setItem('toyforge:kip:forge-part:crown:v1', '{not json')");
+check("a record that is not even JSON is dropped too", (await reload()) && (await stored(CROWN_KEY)) === null);
 check("the page raised no exception", (page.exceptions ?? []).length === 0, JSON.stringify((page.exceptions ?? []).slice(0, 2)).slice(0, 400));
 page.close();
 await chrome.close();

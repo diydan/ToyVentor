@@ -92,8 +92,9 @@ describe("the text-to-part panel in the Kip page", () => {
 
   it("the colour choice: swatches from the shared palette, a validated hex into the bench, the spoken name coloured only after a pick, Kip dressed again only when already dressed", () => {
     const fn = bench.slice(bench.indexOf("async function equipForgePart("), bench.indexOf("// The text-to-part panel (F1"));
-    expect(fn).toContain("{ slot, glbBase64, name, colorHex }");
-    expect(fn).toContain("/^#[0-9a-f]{6}$/i.test(colorHex || '')"); // a bad or missing hex never reaches the material: the custom-part purple instead
+    expect(fn).toContain("{ slot, glbBase64, name, colorHex, restore = false }");
+    expect(fn).toContain("const hex = /^#[0-9a-f]{6}$/i.test(colorHex || '') ? colorHex : '#7c4dff'"); // a bad or missing hex never reaches the material: the custom-part purple instead
+    expect(fn).toContain("mat.color.set(hex)");
     expect(fn).toContain("'#7c4dff'");
     expect(fn).not.toMatch(/mat\.color\.set\('#7c4dff'\);/); // the old hard-coded colour is gone
     expect(panel).toContain("for (const c of flow.FORGE_COLORS)"); // the swatches are the palette's, not a second list
@@ -104,6 +105,32 @@ describe("the text-to-part panel in the Kip page", () => {
     expect(panel).toContain("if (state.wearing) { state.wearAgain = true; return; }"); // two quick picks never run two dressings at once
     const code = panel.replace(/\/\/.*$/gm, "");
     expect(code).not.toMatch(/colou?r.*(localStorage|sessionStorage)/); // the pick is not stored
+  });
+
+  it("the worn part is kept across a reload by the bench, not the panel: one record per slot, no words, dropped when Kip wears something else, never over a look asked for", () => {
+    const start = bench.indexOf("// Text to part, kept across a reload");
+    const fn = bench.slice(start, bench.indexOf("// The text-to-part panel (F1"));
+    expect(start).toBeGreaterThan(0);
+    expect(fn).toContain("crown: 'toyforge:kip:forge-part:crown:v1'");
+    expect(fn).toContain("head: 'toyforge:kip:forge-part:head:v1'");
+    // what is written: the file, the generated name, the colour, a version and a time. Nothing the child typed is available to this function at all.
+    expect(fn).toContain("JSON.stringify({ v: 1, slot, name: rec.name, colorHex: rec.colorHex, glbBase64: rec.glbBase64, savedAt: Date.now() })");
+    expect(fn).toContain("if (!restore && glbBase64.length <= FORGE_PART_MAX_B64) saveForgePart(");
+    // a record is data: checked field by field before it is used, and one that will not load is dropped
+    expect(fn).toContain("r.v !== 1 || r.slot !== slot");
+    expect(fn).toMatch(/\^\[A-Za-z0-9\+\/\]\+=\{0,2\}\$/);
+    expect(fn).toContain("if (!r.ok) forgetForgePart(slot)");
+    expect(fn).toContain("for (const slot of ['head', 'crown'])"); // the hat goes on the head last
+    // storage always says what Kip wears now: every status update re-checks, and storage failures never throw
+    expect(bench).toMatch(/function updateStatusText\(\) \{\n  syncHouseholdChip\(\);\n  syncForgeStorage\(\);/);
+    expect(fn).toContain("if (forgeRestoring || !kip || !kip.exp) return;"); // nothing is dropped while a saved part is being put back
+    expect(fn).toContain("String(box.children[0].name || '').startsWith('forge:')");
+    expect((fn.match(/try \{/g) ?? []).length).toBeGreaterThanOrEqual(4); // get, save, forget, read all guarded
+    // a #toy= link or a look in the address is not overridden, and is not erased either
+    expect(bench).toContain("const askedForLook = Boolean(toyContract) || ['head', 'crown', 'hat', 'loadout', 'preset'].some((k) => params.get(k));");
+    expect(bench).toContain("if (!askedForLook) restoreForgeParts();");
+    // the panel itself still writes nothing (the next test checks the whole file for storage calls)
+    expect(panel).not.toContain("forge-part");
   });
 
   it("leaves out the save button when the bench hands no file out", () => {
