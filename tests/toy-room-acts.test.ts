@@ -421,7 +421,7 @@ describe("petting the dog", () => {
 });
 
 describe("a dog that fetches", () => {
-  const ball = () => ({ ...inst("ball", 10, -2), kick: null as unknown });
+  const ball = () => ({ ...inst("ball", 10, -2), kick: null });
   it("is sent after the ball at the moment of contact, once, and not before", () => {
     const g = game({ fetch: true });
     const b = ball();
