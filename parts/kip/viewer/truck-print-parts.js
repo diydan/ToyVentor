@@ -70,3 +70,41 @@ export function truckDriverPrintState({ driver, kip = null }) {
 export function partsSignature(parts) {
   return parts.map((p) => `${p.id}:${p.count}:${p.colour}`).join(',');
 }
+
+/** Pixels of a canvas as the sticker planner wants them ({ w, h, data }), or null for an empty or unreadable canvas. */
+function canvasToRgba(c) {
+  if (!c || !c.width || !c.height) return null;
+  const g = c.getContext('2d');
+  if (!g) return null;
+  return { w: c.width, h: c.height, data: g.getImageData(0, 0, c.width, c.height).data };
+}
+
+/**
+ * `renderStickerSources` for the Truck's print source (Workshop stage 4c leftover): the artwork of the DRIVER's decals, so a face sticker and the shirt
+ * print from the Truck tab as they do from the Kip tab. Only the kinds a seated driver can have: the face (human plate, selfie, creature) and the shirt.
+ * Craft cut-outs (a photographed prop, crown or hood) cannot occur, because `truckDriverPrintState` clears every slot that holds them.
+ * The canvas makers are passed in (kip-forge-sdk.js), so this file stays free of browser globals and the Node tests can use fakes.
+ *   makeFace(expr, head, insertMode, { onPlate }) -> canvas      makeShirt(shirtId, pantsId, skinHex) -> canvas      skinTones: [{ id, hex }]
+ */
+export function truckStickerSources({ makeFace, makeShirt, skinTones }) {
+  return (state, bom, bonusExprs = []) => {
+    const out = {};
+    const skin = (skinTones || []).find((s) => s.id === state.skin) || (skinTones || [])[0];
+    for (const dec of bom?.decals || []) {
+      if (dec.kind === 'selfie_face') {
+        out['face:selfie'] = canvasToRgba(makeFace('selfie', state.head, 'flat', { onPlate: true }));
+        for (const e of bonusExprs) out[`face:${e}:flat`] = canvasToRgba(makeFace(e, state.head, 'flat', { onPlate: true }));
+      } else if (dec.kind === 'human_face') {
+        const ins = dec.faceInsert || 'sculpted';
+        out[`face:${dec.expr || 'spark'}:${ins}`] = canvasToRgba(makeFace(dec.expr || 'spark', state.head, ins, { onPlate: true }));
+        if (ins === 'flat') for (const e of bonusExprs) out[`face:${e}:flat`] = canvasToRgba(makeFace(e, state.head, 'flat', { onPlate: true }));
+      } else if (dec.kind === 'creature_face') {
+        const head = dec.head || state.head || 'fox';
+        out[`creature:${head}:${dec.expr || 'spark'}`] = canvasToRgba(makeFace(dec.expr || 'spark', head, 'sculpted', { onPlate: false }));
+      } else if (dec.kind === 'shirt') {
+        out[`shirt:${dec.shirtId}`] = canvasToRgba(makeShirt(dec.shirtId, state.pants || 'off', skin?.hex));
+      }
+    }
+    return out;
+  };
+}

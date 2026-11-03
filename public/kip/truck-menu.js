@@ -117,6 +117,6 @@ export function buildTruckMenu(api) {
   };
 
   // The same Print group the Kip's menu has, over the same print view; a vehicle of its own it has none (the mechanism is what prints).
-  const print = buildPrintGroup(api.print);
-  return [stage, motion, options, driver, view, print];
+  // Without `api.print` (a host that lets no file out) there is no Print group.
+  return [stage, motion, options, driver, view, ...(api.print ? [buildPrintGroup(api.print)] : [])];
 }

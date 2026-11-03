@@ -82,7 +82,9 @@ function ensureStyle(doc) {
 /**
  * Mount the shell into `root` (an element with a size: the shell fills it).
  * opts: { benches = DEFAULT_BENCHES, urlSync = true, stageModule = '/kip/bench-stage.js', threeModule = '/kip/vendor/three-kip.js', kipSessionModule = '/kip/kip-session.js?v=10.0',
- *         menuModule = '/kip/kip-menu.js?v=10.0', printModule = '/kip/bench-print.js', printViewModule = '/kip/kip-print-view.js?v=10.0' }
+ *         menuModule = '/kip/kip-menu.js?v=10.0', printModule = '/kip/bench-print.js', printViewModule = '/kip/kip-print-view.js?v=10.0', downloads = true }
+ *   downloads  false: no bench hands a file out (no Print group, no photo "Print it", no selfie sticker). A host that has no grown-up check for downloads yet (the game,
+ *              docs/specs/workshop-spec.md "4d scope") mounts with false; the viewer's own gate only engages inside a frame, so a top-level mount would otherwise be ungated.
  *   urlSync  true: the shell owns ?bench= in the address bar (push on tab pick, Back works) and sets document.title.
  *            false: it touches neither (for a host such as the game that owns the URL).
  * Returns { select(id, { push = true, forward }) -> Promise, current(), bench(id), handles(id), stage(), ready(), benches, destroy() }.
@@ -120,6 +122,7 @@ export function mountWorkshop(root, opts = {}) {
   pop.target = '_blank';
   pop.rel = 'noopener';
   pop.textContent = 'Open on its own page';
+  if (opts.downloads === false) pop.hidden = true; // the standalone page has downloads: no way round the switch from inside the shell
   bar.append(brand, tabs, note, pop);
   const stageEl = doc.createElement('main');
   stageEl.className = 'ws-stage';
@@ -228,6 +231,7 @@ export function mountWorkshop(root, opts = {}) {
         sharedKip,
         sharedMenu,
         sharedPrint,
+        features: { downloads: opts.downloads !== false },
         globals,
         getSearch: () => (f ? `?${f}` : ''),
         getHash: () => '',

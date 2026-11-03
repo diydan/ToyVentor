@@ -7,7 +7,7 @@ import * as truckPartsMod from "../parts/kip/viewer/truck-print-parts.js";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 const { resolveProviderBom, resolveSceneBom, mergeBoms, resolvePrintBom } = bomMod as any;
-const { countSceneParts, truckGetParts, truckDriverPrintState, partsSignature } = truckPartsMod as any;
+const { countSceneParts, truckGetParts, truckDriverPrintState, partsSignature, truckStickerSources } = truckPartsMod as any;
 
 const IDX = {
   files: {
@@ -156,5 +156,46 @@ describe("One print BOM for the driver and the mechanism (Workshop stage 4c)", (
     expect(partsSignature([{ ...MECH[0], count: 5 }, MECH[1]])).not.toBe(a);
     expect(partsSignature([{ ...MECH[0], colour: "#ffffff" }, MECH[1]])).not.toBe(a);
     expect(partsSignature([...MECH, { id: "kit_scoop_blade", colour: "#fff", count: 1 }])).not.toBe(a);
+  });
+});
+
+describe("The driver's stickers print from a mechanism bench that can draw them (Workshop stage 4c leftover)", () => {
+  const MECH = [{ id: "kit_wheel_med", colour: "#262D40", count: 4 }];
+  const kipState = truckDriverPrintState({ driver: { edition: "pro", head: "kid", hair: "off", hat: "buds" } });
+  const make = (extra: object = {}) => ({ getParts: () => MECH, getState: () => ({}), ...extra });
+  const canvas = (w = 2, h = 1) => ({ width: w, height: h, getContext: () => ({ getImageData: () => ({ data: new Uint8ClampedArray(w * h * 4) }) }) });
+
+  it("keeps the driver's decals only when the source brings a renderer, and never the vehicle's", () => {
+    const without = resolvePrintBom(make(), { parts: MECH, kipState, validationIndex: IDX });
+    expect(without.decals).toEqual([]);
+    const withRenderer = resolvePrintBom(make({ renderStickerSources: () => ({}) }), { parts: MECH, kipState, validationIndex: IDX });
+    expect(withRenderer.decals.map((d: any) => d.kind)).toContain("human_face");
+    expect(withRenderer.items.filter((i: any) => i.group === "vehicle")).toEqual([]);
+  });
+
+  it("draws the face of a human plate, a creature face, a selfie and a shirt, and ignores craft cut-outs", () => {
+    const calls: unknown[][] = [];
+    const render = truckStickerSources({
+      makeFace: (...a: unknown[]) => { calls.push(a); return canvas(); },
+      makeShirt: (...a: unknown[]) => { calls.push(["shirt", ...a]); return canvas(3, 1); },
+      skinTones: [{ id: "vinyl_cream", hex: "#F1D6C1" }, { id: "dark", hex: "#7A4A2A" }],
+    });
+    const out = render(
+      { head: "fox", skin: "dark", pants: "jeans" },
+      { decals: [{ kind: "human_face", expr: "happy", faceInsert: "flat" }, { kind: "creature_face", head: "fox", expr: "spark" }, { kind: "selfie_face" }, { kind: "shirt", shirtId: "tee" }, { kind: "craft_cutout", slot: "hand" }] },
+      ["wink"],
+    );
+    expect(Object.keys(out).sort()).toEqual(["creature:fox:spark", "face:happy:flat", "face:selfie", "face:wink:flat", "shirt:tee"]);
+    expect(out["shirt:tee"]).toMatchObject({ w: 3, h: 1 });
+    expect(calls).toContainEqual(["happy", "fox", "flat", { onPlate: true }]);
+    expect(calls).toContainEqual(["spark", "fox", "sculpted", { onPlate: false }]);
+    expect(calls).toContainEqual(["shirt", "tee", "jeans", "#7A4A2A"]); // the skin tone the state names
+  });
+
+  it("an empty or unreadable canvas gives null, not a crash, and no decals gives nothing", () => {
+    const render = truckStickerSources({ makeFace: () => ({ width: 0, height: 0 }), makeShirt: () => ({ width: 2, height: 2, getContext: () => null }), skinTones: [] });
+    expect(render({ head: "kid" }, { decals: [{ kind: "human_face" }, { kind: "shirt", shirtId: "tee" }] })).toEqual({ "face:spark:sculpted": null, "shirt:tee": null });
+    expect(render({ head: "kid" }, { decals: [] })).toEqual({});
+    expect(render({ head: "kid" }, undefined)).toEqual({});
   });
 });

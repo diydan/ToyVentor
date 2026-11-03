@@ -5,7 +5,11 @@
      opens offline with seed content.
    - Content-hashed build assets and versioned static payloads
      (/assets/..., /fonts/..., /parts-glb/..., /parts-stl/..., /kip/...)
-     are cache-first: their URLs change whenever their bytes change.
+     are cache-first. /assets/ and /fonts/ change URL when their bytes
+     change; /kip/ does NOT (kip-menu.js?v=10.0, partspec/*.stl keep their
+     URL when regenerated), so a deploy that changes anything under /kip/
+     must bump CACHE below, or returning visitors keep the old copies
+     (and, for the Workshop overlay, can mix old and new modules).
    - /api/* always goes to the network so scan results are never stale.
    - /sw.js itself is never cached: a cached worker can never update itself.
    Bump the version when this file's strategy changes. */

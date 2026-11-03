@@ -10,12 +10,12 @@ import {
   toCreasedNormals,
 } from './vendor/three-kip.js';
 import { createKipSession } from '/kip/kip-session.js?v=10.0'; // one loaded Kip rig, shared with kip-bench.js (Workshop stage 4b-3)
-import { createDecalExpressionCanvas } from '/kip/kip-forge-sdk.js?v=10.0';
+import { createDecalExpressionCanvas, createTorsoOutfitDecalCanvas } from '/kip/kip-forge-sdk.js?v=10.0';
 import { mountPrintView } from '/kip/kip-print-view.js?v=10.0';
 import { createMenuHost } from '/kip/kip-menu.js?v=10.0';
-import { truckGetParts, truckDriverPrintState, partsSignature } from './truck-print-parts.js';
+import { truckGetParts, truckDriverPrintState, partsSignature, truckStickerSources } from './truck-print-parts.js';
 import { buildTruckMenu, TRUCK_STAGES, TRUCK_CAMERAS } from './truck-menu.js';
-import { WARDROBE_HEADS, HUMAN_HEAD_IDS, HAIR_OPTIONS, HAT_OPTIONS, HAT_COLORS, FACE_STEM_MM } from '/kip/kip-vehicles-wardrobe.js?v=10.0';
+import { SKIN_TONES, WARDROBE_HEADS, HUMAN_HEAD_IDS, HAIR_OPTIONS, HAT_OPTIONS, HAT_COLORS, FACE_STEM_MM } from '/kip/kip-vehicles-wardrobe.js?v=10.0';
 import { FACEPLATE_SEAT_MM } from '/kip/kip-faceplate-shape.js?v=10.0';
 import { disposeThreeScene } from '/kip/bench-lifecycle.js?v=10.0';
 import { BLUEPRINT } from '/kip/bench-look.js?v=10.0';
@@ -1321,6 +1321,8 @@ const printSource = {
   // The Kip driver prints with the truck, as the Kip bench has it dressed when that bench is mounted (outfit, skin, colours), else in the wardrobe defaults.
   getKipState: () => (state.showKip ? truckDriverPrintState({ driver: driverWardrobe(), kip: kipSession.printState() }) : null),
   setCharacterVisible: (on) => { cadRoot.visible = on; }, // the seated Kip is inside cadRoot, so the plates replace the driver too
+  // The driver's face and shirt artwork, so stickers and stencils print from this tab too (the kinds a seated driver can have; see truckStickerSources).
+  renderStickerSources: truckStickerSources({ makeFace: createDecalExpressionCanvas, makeShirt: createTorsoOutfitDecalCanvas, skinTones: SKIN_TONES }),
 };
 const sharedPrint = env.sharedPrint ?? null;
 const truckPrint = sharedPrint ? sharedPrint.view : mountPrintView({ THREE, camera, controls, ...printSource });
@@ -1556,7 +1558,7 @@ async function init() {
   let loaded = 0;
   const kipLoading = loadKipDriver();
   await Promise.all(PART_FILES.map(async (pid) => {
-    const raw = await loader.loadAsync(`./partspec/mockup/${pid}.stl`);
+    const raw = await loader.loadAsync(`/kip/partspec/mockup/${pid}.stl`);
     const merged = mergeVertices(raw, 1e-4);
     GEOS[pid] = toCreasedNormals(merged, THREE.MathUtils.degToRad(32));
     loaded++;
@@ -1564,7 +1566,7 @@ async function init() {
   }));
   statusIdleReady = true;
   setIdleStatus();
-  KIP_STACK.table = await (await fetch('./partspec/mockup/kip_stack.json', { cache: 'no-cache' })).json();
+  KIP_STACK.table = await (await fetch('/kip/partspec/mockup/kip_stack.json', { cache: 'no-cache' })).json();
   await kipLoading;
   {
     const q0 = new URLSearchParams(getSearch());   // ?driver=snap&head=fox&hair=bob&hat=ballcap  (hair=off / hat=off allowed)
@@ -2006,6 +2008,7 @@ const truckMenuCtx = {
   isActive: () => active,
   ready: () => globals.__TRUCK_READY__ === true,
 };
+if (env.features?.downloads === false) delete truckMenuApi.print; // a host with no file exits: no Print group (see workshop.js `downloads`)
 const sharedMenu = env.sharedMenu ?? null;
 const menuHost = sharedMenu ?? createMenuHost();
 // The published handle is the panel's, except that `.ctx` stays THIS bench's even while another bench holds the shared panel.

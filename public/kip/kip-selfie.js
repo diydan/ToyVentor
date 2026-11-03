@@ -327,7 +327,7 @@ export function mountSelfie(ctx) {
   const sampleCache = new Map();
   for (const f of SAMPLE_FACES) {
     const im = new Image();
-    im.src = `./selfie-faces/${f.file}`;
+    im.src = `/kip/selfie-faces/${f.file}`;
     sampleCache.set(f.id, im);
   }
 
@@ -591,7 +591,7 @@ export function mountSelfie(ctx) {
       let img = face && sampleCache.get(face.id);
       if (!img || !img.complete || !img.naturalWidth) {
         img = new Image();
-        img.src = `./selfie-faces/${face.file}`;
+        img.src = `/kip/selfie-faces/${face.file}`;
         await img.decode();
         sampleCache.set(face.id, img);
       }
@@ -1025,6 +1025,7 @@ export function mountSelfie(ctx) {
   root.querySelectorAll('input[name="sf-style"]').forEach((r) => r.addEventListener('change', () => { style = r.value; syncControls(); if (bitmap) render(); }));
   $('sf-use').addEventListener('click', use);
   $('sf-sticker').addEventListener('click', downloadSticker);
+  if (ctx.downloads === false) $('sf-sticker').hidden = true; // a host with no file exits: the sticker is a file to print
   // The camera must never outlive the page being visible.
   const onHide = () => { if (document.hidden) stopCamera(); };
   document.addEventListener('visibilitychange', onHide);

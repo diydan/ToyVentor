@@ -328,7 +328,7 @@ export function mountPrintView(ctx) {
       manifestParts: [...manifestByFile.values()],
       notes: [...(source.notes ?? [])],
     });
-    const art = !mechanism; // stickers and stencils are the Kip scene's: a mechanism bench has no artwork renderer
+    const art = !mechanism || Boolean(source.renderStickerSources); // stickers and stencils need artwork: a Kip scene has it, a mechanism bench only if it brings a renderer (the Truck does, for its driver)
 
     const prepared = [];
     const errors = [];

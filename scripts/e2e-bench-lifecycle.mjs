@@ -32,8 +32,8 @@ const BENCHES = [
   },
   {
     id: "yard", page: "Yard-Bench.html", module: "yard-bench.js", mount: "mountYardBench", handle: "yardBench", ready: "__YARD_READY__", rootClass: "yard-bench", cssId: "yard-bench-css",
-    published: ["__YARD_READY__", "__yardProbe", "__yardDrive"],
-    strays: [],
+    published: ["__YARD_READY__", "__yardProbe", "__yardDrive", "yardMenu"],
+    strays: [".km", ".km-fab", ".km-backdrop", "#km-style"], // the Yard's settings are the shared menu since stage 4c
   },
 ].filter((b) => fs.existsSync(path.join(VIEWER, b.module)));
 

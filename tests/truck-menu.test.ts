@@ -5,6 +5,8 @@ import { describe, expect, it } from "vitest";
 import { buildTruckMenu, TRUCK_STAGES, TRUCK_CAMERAS } from "../parts/kip/viewer/truck-menu.js";
 // @ts-expect-error untyped JS module
 import { flattenMenu, buildPrintGroup, createMenuHost } from "../parts/kip/viewer/kip-menu.js";
+// @ts-expect-error untyped JS module
+import { buildYardMenu, YARD_FLOATS } from "../parts/kip/viewer/yard-menu.js";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 const root = process.cwd();
@@ -105,6 +107,80 @@ describe("Truck sections for the one menu (Workshop stage 4c)", () => {
     pr.summary = () => ({ art: true, hasDecals: true });
     const shown = flattenMenu([buildPrintGroup(pr)]);
     for (const id of ["stencils", "exportStencils"]) expect(shown.find((c: any) => c.id === id).visibleWhen(), id).toBe(true);
+  });
+});
+
+describe("a host with no file exits (Workshop 4d: the game mounts with downloads: false)", () => {
+  it("the Truck's declaration has no Print group without a print adapter, and everything else is unchanged", () => {
+    const withPrint = buildTruckMenu(fakeApi()).map((g: any) => g.id);
+    const { print: _print, ...noPrint } = fakeApi();
+    const without = buildTruckMenu(noPrint).map((g: any) => g.id);
+    expect(withPrint).toEqual(["stage", "motion", "options", "driver", "view", "print"]);
+    expect(without).toEqual(["stage", "motion", "options", "driver", "view"]);
+  });
+
+  it("the shell passes the switch to every bench, and each bench drops its file exits when it is off", () => {
+    const read = (f: string) => readFileSync(join(root, "parts/kip/viewer", f), "utf8");
+    expect(read("workshop.js")).toContain("features: { downloads: opts.downloads !== false }");
+    expect(read("workshop.js")).toContain("if (opts.downloads === false) pop.hidden = true;");
+    const kip = read("kip-bench.js");
+    expect(kip).toContain("const downloadsOn = env.features?.downloads !== false;");
+    expect(kip).toContain("if (!downloadsOn) delete kipMenuCtx.print;");
+    expect(kip).toContain("if (!downloadsOn) $el('btn-print-photo').hidden = true;");
+    expect(kip).toContain("downloads: downloadsOn,");
+    expect(read("kip-selfie.js")).toContain("if (ctx.downloads === false) $('sf-sticker').hidden = true;");
+    expect(bench).toContain("if (env.features?.downloads === false) delete truckMenuApi.print;");
+    expect(bench).toContain("renderStickerSources: truckStickerSources({ makeFace: createDecalExpressionCanvas, makeShirt: createTorsoOutfitDecalCanvas, skinTones: SKIN_TONES })");
+  });
+
+  it("the game launcher mounts the shell with downloads off and pauses the world while it is open", () => {
+    const src = readFileSync(join(root, "src/features/game/world/WorkshopLauncher.tsx"), "utf8");
+    expect(src).toContain("downloads: false");
+    expect(src).toContain("urlSync: false");
+    expect(src).toContain("setPaused(true)");
+    expect(src).toContain("setPaused(false)");
+    expect(src).toMatch(/new URL\(WORKSHOP_ENTRY, window\.location\.origin\)/); // the full-origin entry import (spiked): a literal /kip path breaks Vite
+    expect(src).not.toMatch(/<iframe/i);
+    expect(readFileSync(join(root, "src/features/game/world/GameCanvas.tsx"), "utf8")).toContain("<WorkshopLauncher engine={engineRef}");
+  });
+});
+
+describe("Yard sections for the one menu (Workshop 4c leftover)", () => {
+  const api = () => {
+    let f = "0";
+    const calls: string[] = [];
+    return { calls, api: { float: { get: () => f, set: (v: string) => { f = v; } }, home: () => calls.push("home"), readout: () => "Speed 0 m/s" } };
+  };
+
+  it("declares a Roller group (front axle, back to the start, the readout) and a Keys group, and no Print group", () => {
+    const { api: a } = api();
+    const groups = buildYardMenu(a);
+    expect(groups.map((g: any) => g.id)).toEqual(["roller", "keys"]);
+    expect(flattenMenu(groups).map((c: any) => c.id)).toEqual(["yardFloat", "yardHome", "yardReadout", "yardKeys"]);
+    const ids = flattenMenu(groups).map((c: any) => c.id);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it("the front-axle control offers the three positions and writes through; Home calls the bench; the readout is the bench's text", () => {
+    const { api: a, calls } = api();
+    const c = flattenMenu(buildYardMenu(a));
+    const float = c.find((x: any) => x.id === "yardFloat");
+    expect(float.options().map((o: any) => o.value)).toEqual(YARD_FLOATS.map((o: any) => o.value));
+    float.set("2");
+    expect(float.get()).toBe("2");
+    c.find((x: any) => x.id === "yardHome").run();
+    expect(calls).toEqual(["home"]);
+    expect(c.find((x: any) => x.id === "yardReadout").text()).toBe("Speed 0 m/s");
+  });
+
+  it("the Yard bench shows it through the shared host, keeps its published handle's ctx, and tears down the menu with the bench", () => {
+    const src = readFileSync(join(root, "parts/kip/viewer/yard-bench.js"), "utf8");
+    expect(src).toContain("buildYardMenu({");
+    expect(src).toContain("menuHost.show('yard', yardMenuCtx, { root: benchRoot })");
+    expect(src).toContain("{ ctx: { get: () => yardMenuCtx, enumerable: true } }");
+    expect(src).toContain("if (sharedMenu) sharedMenu.hide('yard'); else menuHost.destroy();");
+    expect(src).toContain("'yardMenu'");
+    expect(src).toContain("menuHost.hide('yard');");
   });
 });
 

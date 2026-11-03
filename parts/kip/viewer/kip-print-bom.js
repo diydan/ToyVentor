@@ -873,7 +873,8 @@ export function resolvePrintBom(source, { parts = null, kipState = null, validat
   }
   const mechanism = resolveProviderBom(parts || [], { validationIndex, manifestParts, notes });
   const driver = kipState ? resolveSceneBom(kipState, { includeVehicle: false, validationIndex }) : null;
-  return mergeBoms([driver, mechanism], { stickers: false });
+  // The driver's decals (face, shirt) are kept only when the bench can draw their artwork (`source.renderStickerSources`): without a renderer a sticker sheet would be empty.
+  return mergeBoms([driver, mechanism], { stickers: Boolean(source.renderStickerSources) });
 }
 
 /**

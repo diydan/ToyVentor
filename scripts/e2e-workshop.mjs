@@ -265,7 +265,7 @@ try {
   check("the plate view opens on the Truck", await f.waitFor(`${W}.sharedPrint().view.isOn() && !${W}.sharedPrint().view.isBusy() && ${W}.sharedPrint().view.summary().parts > 0`, 240000));
   const TP = await f.evaluate(`(() => { const v = ${W}.sharedPrint().view; return { id: v.sourceId(), split: v.splitByColour(), ids: v.plannedPlates().flatMap((x) => x.placed.map((q) => q.partId)), stencil: ${menu.visible("stencils")} }; })()`);
   check("the Truck's plates belong to the Truck source, pack everything together by default, and carry the driver and the keel", TP.id === "truck" && TP.split === false && TP.ids.some((id) => /^kit_keel_base/.test(id)) && TP.ids.some((id) => /^(torso|snap_torso)$/.test(id)), JSON.stringify({ id: TP.id, split: TP.split, n: TP.ids.length }));
-  check("stickers and stencils are not offered on the Truck's plates", TP.stencil === false);
+  check("the driver's stickers and stencils are offered on the Truck's plates too (the Truck draws its driver's face and shirt)", TP.stencil === true);
 
   // leaving for the Kip closes the Truck's plates and brings the truck back
   await pick("kip");
@@ -291,7 +291,10 @@ try {
 
   // the Yard has no menu of its own: the panel is parked
   await pick("yard");
-  check("on the Yard tab the panel is out of the page (the Yard has none)", await f.waitFor(`!document.getElementById('kip-menu')`, 20000));
+  check("on the Yard tab the same panel shows the Yard's sections, inside the Yard bench", await f.waitFor(`!!document.querySelector('.yard-bench #kip-menu') && document.querySelectorAll('#kip-menu').length === 1 && document.querySelector('#kip-menu .km-title')?.textContent === 'Yard controls' && [...document.querySelectorAll('#kip-menu .km-group')].map((g) => g.dataset.group).join() === 'roller,keys'`, 60000));
+  await f.waitFor(YARD_READY, 240000); // the Yard's own start-up ends by centring the front axle, so a choice made while it still loads would be undone
+  await f.evaluate(menu.select("yardFloat", "1"));
+  check("choosing the front-axle position in the menu moves the roller's front axle (the bench's own button says so too)", await f.waitFor(`/slid left/.test(document.getElementById('btn-float').textContent)`, 10000));
   check("no uncaught exception across the three tabs", f.exceptions.length === 0, f.exceptions.slice(0, 3).join(" || "));
   await f.evaluate(`${W}.destroy()`);
   check("destroying the shell leaves no panel, no menu style and no print listener behind", await f.evaluate(`!document.getElementById('kip-menu') && !document.getElementById('km-style') && !document.querySelector('.km-fab')`));

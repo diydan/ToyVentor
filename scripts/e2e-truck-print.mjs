@@ -31,7 +31,9 @@ try {
     const driverIds = together.ids.filter((id) => isDriver(id.split("#")[0]));
     check(`${stage}: the Kip driver prints with the truck (torso, head and limbs among ${together.parts} parts, beside the keel)`, driverIds.length >= 15 && driverIds.some((id) => /^(torso|snap_torso)#/.test(id)) && driverIds.some((id) => /^char_head_kid#/.test(id)) && together.ids.some((id) => /^kit_keel_base#/.test(id)), JSON.stringify({ driver: driverIds.slice(0, 6), all: together.ids.length }));
     check(`${stage}: the driver's face plate is counted once, not once from the cab and once from the Kip`, together.ids.filter((id) => id.startsWith("char_faceplate#")).length <= 1, "");
-    check(`${stage}: stickers and stencils are not offered here (a mechanism has no artwork renderer)`, await t.evaluate(`${menu.visible("stencils")} === false && ${menu.visible("stickers")} === false`));
+    check(`${stage}: the driver's stickers and 3D stencils are offered from the Truck tab too (it draws its driver's face and shirt)`, await t.evaluate(`${menu.visible("stencils")} === true && ${menu.visible("stickers")} === true`));
+    const pdf = await t.evaluate(`window.truckPrint.exportBytes('stickers-pdf').then((b) => ({ n: b.length, head: String.fromCharCode(...b.slice(0, 5)) }))`);
+    check(`${stage}: and a real sticker sheet comes out of the Truck's print (a PDF of ${pdf.n} bytes)`, pdf.head === "%PDF-" && pdf.n > 2000, JSON.stringify(pdf));
     check(`${stage}: ${together.parts} parts on ${together.plates} plate(s) when together: several parts per plate, far fewer plates than parts`, together.plates >= 1 && together.plates <= Math.ceil(together.parts / 3) && together.perPlate.some((n) => n > 1), JSON.stringify(together.perPlate));
     check(`${stage}: every part is on exactly one plate, inside the bed`, together.ids.length === together.parts && new Set(together.ids).size === together.parts && together.legal && together.errors.length === 0, JSON.stringify(together.errors));
     check(`${stage}: the plates are named "All parts" with no placeholder colour`, /^Plate 1 of \d+: All parts$/.test(together.label0), together.label0);

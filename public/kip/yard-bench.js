@@ -17,6 +17,8 @@ import {
 import { disposeThreeScene } from '/kip/bench-lifecycle.js?v=10.0';
 import { BLUEPRINT } from '/kip/bench-look.js?v=10.0';
 import { driveParams, stepSpeed } from '/kip/truck-drive.js?v=10.0';
+import { createMenuHost } from '/kip/kip-menu.js?v=10.0';
+import { buildYardMenu } from './yard-menu.js';
 import { AXLE_Y, AXLE_Z, AXLE_FLOAT_MM, DRUM, rollerParts, bom, partIds, spinAfter, clampFloat } from '/kip/yard-vehicles.js?v=10.0';
 
 export const YARD_BENCH_CSS = `
@@ -49,7 +51,7 @@ export const YARD_BENCH_CSS = `
   & .title { font-weight: 750; }
   & .sub { color: var(--muted); }
   & .hud-card { min-width: 250px; max-width: 330px; }
-  & h3 { font-size: 13px; margin-bottom: 6px; }
+  & .hud-card h3 { font-size: 13px; margin-bottom: 6px; } /* class-qualified: a host's heading reset (the game's Workshop overlay) must not undo it */
   & .bom { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; margin-bottom: 8px; }
   & .bom span:nth-child(even) { text-align: right; font-variant-numeric: tabular-nums; color: var(--amber); }
   & .note { color: var(--muted); font-size: 12px; margin-bottom: 8px; }
@@ -57,6 +59,11 @@ export const YARD_BENCH_CSS = `
   & button { font: inherit; font-weight: 700; color: var(--ink); background: rgba(214, 235, 255, 0.12); border: 1px solid var(--line); border-radius: 10px; padding: 7px 12px; cursor: pointer; touch-action: none; }
   & button:hover { background: rgba(214, 235, 255, 0.22); }
   & button.held, & button:active { background: var(--spark); border-color: var(--spark); }
+  /* The shared menu (kip-menu.js) is drawn in the light theme the Kip and the Truck use; this bench's own theme is dark, so the menu takes its colours back. */
+  & .km, & .km-fab, & .km-backdrop { --ink: #1b2238; --muted: #5d657c; --line: rgba(27, 34, 56, 0.12); --glass: rgba(255, 255, 255, 0.88); }
+  & .km button { color: var(--ink); background: rgba(255, 255, 255, 0.76); border: 1px solid var(--line); }
+  & .km-fab { color: var(--ink); }
+  & .km button:hover { background: #fff; }
   & .readout { font-variant-numeric: tabular-nums; color: var(--muted); font-size: 12px; margin-top: 6px; }
 }
 `;
@@ -65,7 +72,7 @@ export const YARD_BENCH_MARKUP = `
 <div id="viewport"></div>
 <div class="topbar">
   <div class="pill">
-    <a href="./Workshop.html" style="color:var(--ink);text-decoration:none;font-weight:750;padding:2px 8px;border-radius:999px;border:1px solid var(--line)">Workshop</a>
+    <a id="yard-back" href="./Workshop.html" style="color:var(--ink);text-decoration:none;font-weight:750;padding:2px 8px;border-radius:999px;border:1px solid var(--line)">Workshop</a>
     <span class="badge">Yard</span>
     <span class="title">Road roller</span>
     <span class="sub" id="status-text">Loading verified CAD solids…</span>
@@ -93,8 +100,13 @@ const PART_NAMES = {
   kit_drum_roller: 'Smooth road-roller drum',
 };
 
+/**
+ * `env` (all optional): { stage, globals, embedded }. `embedded` (default: the page is in a frame) hides the bench's own "Workshop" link, which in a
+ * Workshop shell would only reload the shell and lose every bench's state.
+ */
 export function mountYardBench(host, env = {}) {
   const globals = env.globals ?? window;
+  const embedded = env.embedded ?? (window.self !== window.top);
   const stage = env.stage ?? null; // a host's shared renderer, camera and controls (bench-stage.js); null: this bench builds its own
   const hosted = stage !== null;
 
@@ -111,6 +123,7 @@ export function mountYardBench(host, env = {}) {
     document.head.append(styleEl);
   }
   const $el = (id) => benchRoot.querySelector('#' + id);
+  if (embedded) $el('yard-back').hidden = true;
   const offs = [];
   let active = !hosted; // a hosted bench draws and reads input only while the host has it active
   const listen = (target, type, fn, opts) => {
@@ -311,7 +324,7 @@ export function mountYardBench(host, env = {}) {
 
   async function init() {
     await Promise.all(partIds(parts).map(async (id) => {
-      const raw = await loader.loadAsync(`./partspec/mockup/${id}.stl`);
+      const raw = await loader.loadAsync(`/kip/partspec/mockup/${id}.stl`);
       GEOS[id] = toCreasedNormals(mergeVertices(raw, 1e-4), THREE.MathUtils.degToRad(32));
     }));
     build();
@@ -358,8 +371,9 @@ export function mountYardBench(host, env = {}) {
     target: () => controls.target.toArray(),
   };
 
-  const PUBLISHED = ['__YARD_READY__', '__yardProbe', '__yardDrive'];
+  const PUBLISHED = ['__YARD_READY__', '__yardProbe', '__yardDrive', 'yardMenu'];
   function teardown() {
+    if (sharedMenu) sharedMenu.hide('yard'); else menuHost.destroy();
     disposeThreeScene({ scene, renderer: hosted ? null : renderer, controls: hosted ? null : controls, pmrem });
   }
   function dispose() {
@@ -387,7 +401,9 @@ export function mountYardBench(host, env = {}) {
       viewport.appendChild(renderer.domElement);
       applyLook();
       last = performance.now();
+      showMenu();
     } else {
+      menuHost.hide('yard');
       drive.keys.clear(); // a key held when the bench is switched away must not keep pushing it
       drive.held.clear();
       drive.v = 0;        // and the roller is not left rolling for when it comes back
@@ -397,6 +413,26 @@ export function mountYardBench(host, env = {}) {
       camera.updateProjectionMatrix();
     }
   }
+  // The one menu (Workshop stage 4c): this bench declares a few settings (yard-menu.js) over the functions above; the hold-to-push pad stays on its card.
+  // Hosted, the panel is the Workshop's (`env.sharedMenu`) and is shown while this bench is active; standalone, the bench has a host of its own.
+  const yardMenuCtx = {
+    title: 'Yard controls',
+    fabLabel: '☰ Yard controls',
+    groups: () => buildYardMenu({
+      float: { get: () => String(floatIdx), set: (v) => setFloat(Number(v)) },
+      home: () => home(),
+      readout: () => $el('yard-readout')?.textContent ?? '',
+    }),
+    camera,
+    viewSize: () => (hosted ? stage.size() : { width: window.innerWidth, height: window.innerHeight }),
+    isActive: () => active,
+    ready: () => globals.__YARD_READY__ === true,
+  };
+  const sharedMenu = env.sharedMenu ?? null;
+  const menuHost = sharedMenu ?? createMenuHost();
+  // The published handle is the panel's, except that `.ctx` stays THIS bench's even while another bench holds the shared panel.
+  const showMenu = () => { globals.yardMenu = Object.create(menuHost.show('yard', yardMenuCtx, { root: benchRoot }), { ctx: { get: () => yardMenuCtx, enumerable: true } }); };
+  if (!hosted) showMenu(); // hosted: setActive() shows it when this bench becomes the active one
   if (hosted) benchRoot.hidden = true; // a hosted bench starts hidden until the stage activates one
   return { root: benchRoot, ready, dispose, frame, setActive, hosted };
 }
