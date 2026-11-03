@@ -36,6 +36,7 @@ import {
   familyStars,
   grandfatherToyIds,
   loadProgression,
+  markExplorerSeen,
   markExplorerVisited,
   mergeProgression,
   MISSION_STAT,
@@ -196,6 +197,16 @@ export function GameCanvas({
       progressionRef.current,
       nodeId,
     );
+    if (!changed) return;
+    saveProgression(next);
+    setProgression(next);
+    void pushProgression(next);
+  }, []);
+
+  // The trail map records what it showed, so the next open animates only
+  // what is new since then.
+  const recordExplorerSeen = useCallback((entries: string[]) => {
+    const { next, changed } = markExplorerSeen(progressionRef.current, entries);
     if (!changed) return;
     saveProgression(next);
     setProgression(next);
@@ -1248,6 +1259,8 @@ export function GameCanvas({
             })}
             currentId={state.world}
             lastVisitedId={progression.explorerVisited?.at(-1) ?? null}
+            seen={progression.explorerSeen ?? null}
+            onSeen={recordExplorerSeen}
             guide={
               <ToyMiniIcon
                 toy={toy}

@@ -110,6 +110,34 @@ export interface ArtNode extends Pt {
   theme: string;
 }
 
+/** A plain bucket grid, so "what is near here" stays cheap on a big map. */
+class Grid<T extends Pt> {
+  private cells = new Map<string, T[]>();
+  constructor(private size: number) {}
+  private key(cx: number, cy: number): string {
+    return `${cx},${cy}`;
+  }
+  add(p: T): void {
+    const k = this.key(Math.floor(p.x / this.size), Math.floor(p.y / this.size));
+    (this.cells.get(k) ?? this.cells.set(k, []).get(k)!).push(p);
+  }
+  /** Everything in the buckets that overlap the square of radius r around x,y. */
+  near(x: number, y: number, r: number): T[] {
+    const out: T[] = [];
+    const x0 = Math.floor((x - r) / this.size);
+    const x1 = Math.floor((x + r) / this.size);
+    const y0 = Math.floor((y - r) / this.size);
+    const y1 = Math.floor((y + r) / this.size);
+    for (let cy = y0; cy <= y1; cy++) {
+      for (let cx = x0; cx <= x1; cx++) {
+        const cell = this.cells.get(this.key(cx, cy));
+        if (cell) out.push(...cell);
+      }
+    }
+    return out;
+  }
+}
+
 /**
  * Scenery on the land around the nodes and roads, never on a node or a
  * road. A jittered grid, thinned so no two pieces crowd, nearest node's
@@ -120,11 +148,17 @@ export function scatterDecor(
   roads: ReadonlyArray<readonly Pt[]>,
   frame: Pick<WorldFrame, "width" | "height">,
 ): Decor[] {
-  const roadPts = roads.flat();
   const STEP = 0.5 * UNIT;
   const LAND_NODE = 1.0 * UNIT;
   const LAND_ROAD = 0.6 * UNIT;
   const SPACING = 0.42 * UNIT;
+  // The nearest node that can matter is within a road's reach of a land point.
+  const NODE_REACH = 3 * UNIT;
+  const nodeGrid = new Grid<ArtNode>(UNIT);
+  for (const n of nodes) nodeGrid.add(n);
+  const roadGrid = new Grid<Pt>(0.5 * UNIT);
+  for (const r of roads) for (const p of r) roadGrid.add(p);
+  const placed = new Grid<Decor>(SPACING);
   const out: Decor[] = [];
   for (let gy = STEP / 2; gy < frame.height; gy += STEP) {
     for (let gx = STEP / 2; gx < frame.width; gx += STEP) {
@@ -133,7 +167,7 @@ export function scatterDecor(
       const y = gy + (((h >>> 8) % 61) - 30) * 0.7;
       let nearest: ArtNode | null = null;
       let nd = Infinity;
-      for (const n of nodes) {
+      for (const n of nodeGrid.near(x, y, NODE_REACH)) {
         const d = Math.hypot(n.x - x, n.y - y);
         if (d < nd) {
           nd = d;
@@ -142,17 +176,21 @@ export function scatterDecor(
       }
       if (!nearest || nd < DECOR_NODE_CLEAR) continue;
       let rd = Infinity;
-      for (const r of roadPts) rd = Math.min(rd, Math.hypot(r.x - x, r.y - y));
+      for (const r of roadGrid.near(x, y, LAND_ROAD)) {
+        rd = Math.min(rd, Math.hypot(r.x - x, r.y - y));
+      }
       if (rd < DECOR_ROAD_CLEAR) continue;
       if (nd > LAND_NODE && rd > LAND_ROAD) continue;
-      if (out.some((o) => Math.hypot(o.x - x, o.y - y) < SPACING)) continue;
+      if (placed.near(x, y, SPACING).some((o) => Math.hypot(o.x - x, o.y - y) < SPACING)) continue;
       const pool = DECOR_BY_THEME[nearest.theme] ?? DECOR_BY_THEME.garden!;
-      out.push({
+      const item: Decor = {
         kind: pool[(h >>> 16) % pool.length]!,
         x,
         y,
         s: 0.8 + ((h >>> 4) % 46) / 100,
-      });
+      };
+      out.push(item);
+      placed.add(item);
     }
   }
   return out.sort((a, b) => a.y - b.y);
@@ -165,16 +203,22 @@ export interface Puff {
   r: number;
 }
 
+/** Most puffs the cloud bank draws; a bigger world gets bigger puffs, not more. */
+export const FOG_PUFF_BUDGET = 1200;
+
 export function fogPuffs(frame: Pick<WorldFrame, "width" | "height">): Puff[] {
-  const STEP = 0.9 * UNIT;
+  const base = 0.9 * UNIT;
+  const area = (frame.width + base * 2) * (frame.height + base * 2);
+  const STEP = Math.max(base, Math.sqrt(area / FOG_PUFF_BUDGET));
+  const scale = STEP / base;
   const out: Puff[] = [];
   for (let gy = -STEP / 2; gy < frame.height + STEP; gy += STEP) {
     for (let gx = -STEP / 2; gx < frame.width + STEP; gx += STEP) {
       const h = fnv1a(`puff:${Math.round(gx)},${Math.round(gy)}`);
       out.push({
-        x: gx + ((h % 71) - 35),
-        y: gy + (((h >>> 8) % 71) - 35),
-        r: 34 + ((h >>> 16) % 30),
+        x: gx + ((h % 71) - 35) * scale,
+        y: gy + (((h >>> 8) % 71) - 35) * scale,
+        r: (34 + ((h >>> 16) % 30)) * scale,
       });
     }
   }

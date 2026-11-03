@@ -66,7 +66,8 @@ export interface ExplorerInput {
   currentId?: string | null;
   /** Demo/sandbox: the whole map in colour. */
   openAll?: boolean;
-  /** Frontier chain length per branch (default 2). */
+  /** Generated paths kept ahead of the furthest one walked on each branch
+   *  (default FRONTIER_AHEAD). A branch grows as the child walks it. */
   frontierDepth?: number;
 }
 
@@ -207,58 +208,157 @@ function octantIndex(dir: readonly [number, number]): number {
   return at >= 0 ? at : 0;
 }
 
-/** Generated frontier nodes + their roads, winding off each branch end. */
-function frontierNodes(
-  authored: ReadonlyMap<string, ExplorerNode>,
-  depthWanted: number,
-): { nodes: ExplorerNode[]; edges: Array<readonly [string, string]> } {
-  const depth = Math.max(0, Math.floor(depthWanted));
-  const occupied = new Set([...authored.values()].map((n) => `${n.x},${n.y}`));
-  const nodes: ExplorerNode[] = [];
-  const edges: Array<readonly [string, string]> = [];
-  for (const branch of FRONTIER_BRANCHES) {
-    const leaf = authored.get(branch.from);
-    if (!leaf) continue;
-    let prevId = leaf.id;
-    let x = leaf.x;
-    let y = leaf.y;
-    let dirAt = octantIndex(branch.dir);
-    for (let d = 1; d <= depth; d++) {
-      const id = `frontier:${branch.from}:${d}`;
-      // First step heads straight out; later steps may bend one octant.
+/** A branch never grows past this many generated paths (6 branches, 72
+ *  levels in all). Not a design limit: a safety valve on the size of the
+ *  world the browser has to draw. Measured smooth to 20 on a desktop; kept
+ *  at 12 until it has been tried on a real phone. */
+export const FRONTIER_MAX_DEPTH = 12;
+/** Generated paths kept ahead of the furthest one the child has walked. */
+export const FRONTIER_AHEAD = 2;
+
+const FRONTIER_ID = /^frontier:([^:]+):(\d+)$/;
+
+/** Furthest generated path walked to on each branch (absent = none). */
+function walkedDepths(visited: ReadonlySet<string>): Map<string, number> {
+  const out = new Map<string, number>();
+  for (const id of visited) {
+    const m = FRONTIER_ID.exec(id);
+    if (!m) continue;
+    const d = Number(m[2]);
+    if (d > (out.get(m[1]!) ?? 0)) out.set(m[1]!, d);
+  }
+  return out;
+}
+
+interface Cell {
+  x: number;
+  y: number;
+}
+
+const cross = (o: Cell, a: Cell, b: Cell): number =>
+  (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x);
+
+/** Do two segments properly cross? (Touching at a shared end does not count.) */
+function segmentsCross(a: Cell, b: Cell, c: Cell, d: Cell): boolean {
+  const d1 = cross(a, b, c);
+  const d2 = cross(a, b, d);
+  const d3 = cross(c, d, a);
+  const d4 = cross(c, d, b);
+  return d1 * d2 < 0 && d3 * d4 < 0;
+}
+
+function distToSegment(p: Cell, a: Cell, b: Cell): number {
+  const vx = b.x - a.x;
+  const vy = b.y - a.y;
+  const len2 = vx * vx + vy * vy || 1;
+  const t = Math.max(0, Math.min(1, ((p.x - a.x) * vx + (p.y - a.y) * vy) / len2));
+  return Math.hypot(a.x + t * vx - p.x, a.y + t * vy - p.y);
+}
+
+/** How close (grid units) a new path may sit to a place or road it skips. */
+const FRONTIER_CLEAR = 0.7;
+
+interface Placed {
+  id: string;
+  x: number;
+  y: number;
+  prevId: string;
+}
+
+/**
+ * Every branch's full chain, laid out once, a layer at a time in a fixed
+ * branch order. Because layer d only looks at layers before it (and at
+ * earlier branches in the same layer), a path's position never depends on
+ * how far any branch has been walked: nodes that exist never move when
+ * another branch grows. A step may bend one octant either side of the
+ * branch's own heading, so chains wind but keep heading outward; a step
+ * that would cross a road, land on a place, or crowd one ends the chain.
+ */
+function frontierLayout(authored: ReadonlyMap<string, ExplorerNode>): Map<string, Placed[]> {
+  const places: Array<Cell & { id: string }> = [...authored.values()].map((n) => ({ id: n.id, x: n.x, y: n.y }));
+  const roads: Array<{ a: string; b: string; p: Cell; q: Cell }> = [];
+  for (const [a, b] of EXPLORER_EDGES) {
+    const na = authored.get(a);
+    const nb = authored.get(b);
+    if (na && nb) roads.push({ a, b, p: na, q: nb });
+  }
+  const live = FRONTIER_BRANCHES.filter((br) => authored.has(br.from));
+  const chains = new Map<string, Placed[]>(live.map((br) => [br.from, []]));
+  const head = new Map<string, Cell & { id: string }>(
+    live.map((br) => {
+      const leaf = authored.get(br.from)!;
+      return [br.from, { id: leaf.id, x: leaf.x, y: leaf.y }];
+    }),
+  );
+  const fits = (from: Cell & { id: string }, to: Cell): boolean => {
+    for (const pl of places) {
+      if (Math.hypot(pl.x - to.x, pl.y - to.y) < FRONTIER_CLEAR) return false;
+      if (pl.id !== from.id && distToSegment(pl, from, to) < FRONTIER_CLEAR) return false;
+    }
+    for (const r of roads) {
+      if (segmentsCross(from, to, r.p, r.q)) return false;
+      if (r.a !== from.id && r.b !== from.id && distToSegment(to, r.p, r.q) < FRONTIER_CLEAR) {
+        return false;
+      }
+    }
+    return true;
+  };
+  for (let d = 1; d <= FRONTIER_MAX_DEPTH; d++) {
+    for (const br of live) {
+      const chain = chains.get(br.from)!;
+      if (chain.length < d - 1) continue; // this chain already ended
+      const from = head.get(br.from)!;
+      const id = `frontier:${br.from}:${d}`;
+      const base = octantIndex(br.dir);
       const bend = d === 1 ? 0 : (fnv1a(id) % 3) - 1;
-      let placed = false;
-      for (const turn of [bend, 0, 1, -1, 2, -2]) {
-        const at = (dirAt + turn + OCTANTS.length * 2) % OCTANTS.length;
-        const step = OCTANTS[at]!;
-        const nx = x + step[0];
-        const ny = y + step[1];
-        if (occupied.has(`${nx},${ny}`)) continue;
-        occupied.add(`${nx},${ny}`);
-        dirAt = at;
-        x = nx;
-        y = ny;
-        placed = true;
+      for (const turn of new Set([bend, 0, 1, -1])) {
+        const step = OCTANTS[(base + turn + OCTANTS.length) % OCTANTS.length]!;
+        const to = { x: from.x + step[0], y: from.y + step[1] };
+        if (!fits(from, to)) continue;
+        places.push({ id, ...to });
+        roads.push({ a: from.id, b: id, p: from, q: to });
+        chain.push({ id, ...to, prevId: from.id });
+        head.set(br.from, { id, ...to });
         break;
       }
-      if (!placed) break;
+    }
+  }
+  return chains;
+}
+
+/** Generated frontier nodes + their roads, as far as each branch has been walked. */
+function frontierNodes(
+  authored: ReadonlyMap<string, ExplorerNode>,
+  ahead: number,
+  visited: ReadonlySet<string>,
+): { nodes: ExplorerNode[]; edges: Array<readonly [string, string]> } {
+  const extra = Math.max(0, Math.floor(ahead));
+  const walked = walkedDepths(visited);
+  const layout = frontierLayout(authored);
+  const nodes: ExplorerNode[] = [];
+  const edges: Array<readonly [string, string]> = [];
+  for (const br of FRONTIER_BRANCHES) {
+    const leaf = authored.get(br.from);
+    const chain = layout.get(br.from);
+    if (!leaf || !chain) continue;
+    const depth = Math.min(FRONTIER_MAX_DEPTH, (walked.get(br.from) ?? 0) + extra);
+    for (const p of chain.slice(0, depth)) {
       nodes.push({
-        id,
+        id: p.id,
         kind: "frontier",
         label: "New path",
         theme: leaf.theme,
-        x,
-        y,
+        x: p.x,
+        y: p.y,
         done: 0,
         total: 0,
         complete: false,
         suggested: false,
         fog: "clouded",
         locked: false,
-        seedCode: frontierSeedCode(id),
+        seedCode: frontierSeedCode(p.id),
       });
-      edges.push([prevId, id]);
-      prevId = id;
+      edges.push([p.prevId, p.id]);
     }
   }
   return { nodes, edges };
@@ -296,7 +396,7 @@ export function buildExplorerGraph(input: ExplorerInput): ExplorerGraph {
       district: districtOf(card.id),
     });
   }
-  const frontier = frontierNodes(authored, input.frontierDepth ?? 2);
+  const frontier = frontierNodes(authored, input.frontierDepth ?? FRONTIER_AHEAD, visited);
   const nodes = [...authored.values(), ...frontier.nodes];
   const byNodeId = new Map(nodes.map((n) => [n.id, n]));
   const roadPairs = [...EXPLORER_EDGES, ...frontier.edges].filter(
@@ -421,6 +521,78 @@ export function explorerRoute(
     }
   }
   return null;
+}
+
+/**
+ * What the child has already seen on the map, so only what is new animates
+ * when it opens again. A place seen as a silhouette is its plain id; a place
+ * seen in full colour also gets `id#`. Stored as `explorerSeen` in progression.
+ */
+export function seenEntries(graph: ExplorerGraph): string[] {
+  const out: string[] = [];
+  for (const n of graph.nodes) {
+    if (n.fog === "clouded") continue;
+    out.push(n.id);
+    if (n.fog === "revealed") out.push(`${n.id}#`);
+  }
+  return out;
+}
+
+export type RoadDraw = "from-start" | "from-end" | "fade";
+
+export interface ExplorerReveal {
+  /** Places that were hidden and are now on the map. */
+  appear: ReadonlySet<string>;
+  /** Places that were a silhouette and are now in full colour. */
+  clear: ReadonlySet<string>;
+  /** Roads to draw in, keyed `lo|hi` (ids sorted), and how. */
+  roads: ReadonlyMap<string, RoadDraw>;
+  isEmpty: boolean;
+}
+
+const EMPTY_REVEAL: ExplorerReveal = {
+  appear: new Set(),
+  clear: new Set(),
+  roads: new Map(),
+  isEmpty: true,
+};
+
+export const roadKey = (a: string, b: string): string => (a < b ? `${a}|${b}` : `${b}|${a}`);
+
+/**
+ * What is new since the child last looked. With no record at all (a first
+ * open, or an existing player before this was tracked) nothing is new: the
+ * map just records what is there, rather than replaying all of it.
+ */
+export function newlyShown(
+  graph: ExplorerGraph,
+  seen: ReadonlySet<string> | null | undefined,
+): ExplorerReveal {
+  if (!seen) return EMPTY_REVEAL;
+  const appear = new Set<string>();
+  const clear = new Set<string>();
+  const byId = new Map(graph.nodes.map((n) => [n.id, n]));
+  for (const n of graph.nodes) {
+    if (n.fog === "clouded") continue;
+    if (!seen.has(n.id) && !seen.has(`${n.id}#`)) appear.add(n.id);
+    else if (n.fog === "revealed" && !seen.has(`${n.id}#`)) clear.add(n.id);
+  }
+  const roads = new Map<string, RoadDraw>();
+  for (const e of graph.edges) {
+    if (e.fog === "clouded") continue;
+    const [lo, hi] = e.a < e.b ? [e.a, e.b] : [e.b, e.a];
+    if (!byId.has(lo) || !byId.has(hi)) continue;
+    if (e.fog === "revealed") {
+      const loSeen = seen.has(`${lo}#`);
+      const hiSeen = seen.has(`${hi}#`);
+      if (loSeen && hiSeen) continue;
+      roads.set(roadKey(lo, hi), hiSeen && !loSeen ? "from-end" : "from-start");
+    } else if (appear.has(lo) || appear.has(hi)) {
+      roads.set(roadKey(lo, hi), "fade");
+    }
+  }
+  const isEmpty = appear.size === 0 && clear.size === 0 && roads.size === 0;
+  return { appear, clear, roads, isEmpty };
 }
 
 export type ExplorerDirection = "up" | "down" | "left" | "right";

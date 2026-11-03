@@ -4,6 +4,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type CSSProperties,
   type KeyboardEvent,
   type PointerEvent,
   type ReactNode,
@@ -11,8 +12,12 @@ import {
 import {
   explorerNeighbor,
   explorerRoute,
+  newlyShown,
+  roadKey,
+  seenEntries,
   type ExplorerGraph,
   type ExplorerNode,
+  type ExplorerReveal,
 } from "../../../lib/explorerMap";
 import {
   fogPuffs,
@@ -39,6 +44,11 @@ export interface ExplorerMapProps {
   lastVisitedId?: string | null;
   /** The equipped toy, hopping along the roads. */
   guide?: ReactNode;
+  /** What the child has already seen here (progression explorerSeen); only
+   *  what is new since then animates in. null = no record: nothing animates,
+   *  the map just records what it shows. */
+  seen?: readonly string[] | null;
+  onSeen?: (entries: string[]) => void;
   onClose: () => void;
   /** Back to the swipe-card view of the same places. */
   onShowCards: () => void;
@@ -57,7 +67,13 @@ const prefersReducedMotion = (): boolean =>
   typeof window !== "undefined" &&
   window.matchMedia?.("(prefers-reduced-motion: reduce)").matches === true;
 
-const edgeKey = (a: string, b: string): string => (a < b ? `${a}|${b}` : `${b}|${a}`);
+const edgeKey = roadKey;
+
+// Reveal timeline (ms): the clouds part first, then roads draw out, then the
+// new places pop in, one after another.
+const ROAD_DELAY = 350;
+const NODE_DELAY = 850;
+const NODE_STAGGER = 90;
 
 /** What the name plate says about the place the guide is standing on. */
 function placeInfo(node: ExplorerNode | undefined): { title: string; sub: string; action: string } {
@@ -101,6 +117,8 @@ export function ExplorerMap({
   currentId,
   lastVisitedId,
   guide,
+  seen,
+  onSeen,
   onClose,
   onShowCards,
   onAskAge,
@@ -112,6 +130,16 @@ export function ExplorerMap({
   const scrollerRef = useRef<HTMLDivElement>(null);
   const [rungsOf, setRungsOf] = useState<LadderState | null>(null);
   const [notice, setNotice] = useState("");
+  // Fixed at open: the diff must not change when the record updates below,
+  // or the animation classes would drop off mid-play.
+  const [reveal] = useState<ExplorerReveal>(() =>
+    newlyShown(graph, seen ? new Set(seen) : null),
+  );
+  useEffect(() => {
+    onSeen?.(seenEntries(graph));
+    // Once, on open.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Everything geometric depends only on the shape of the map, and the graph
   // object is rebuilt on every progress tick, so key on the shape.
@@ -177,7 +205,24 @@ export function ExplorerMap({
     });
   };
   useLayoutEffect(() => {
-    centerOn(kipPt, false);
+    const el = scrollerRef.current;
+    let target = kipPt;
+    if (el && !reveal.isEmpty) {
+      const fresh = [...reveal.appear, ...reveal.clear]
+        .map((id) => world.pos.get(id))
+        .filter((p): p is Pt => p !== undefined);
+      if (fresh.length > 0) {
+        const cx = fresh.reduce((t, p) => t + p.x, 0) / fresh.length;
+        const cy = fresh.reduce((t, p) => t + p.y, 0) / fresh.length;
+        const reach = Math.min(el.clientWidth, el.clientHeight) / 2 - 90;
+        // Frame the toy and what is new together; if that is too far apart
+        // to fit, stay on the toy.
+        if (Math.hypot(cx - kipPt.x, cy - kipPt.y) / 2 < reach) {
+          target = { x: (kipPt.x + cx) / 2, y: (kipPt.y + cy) / 2 };
+        }
+      }
+    }
+    centerOn(target, false);
     // Once, on open.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -298,6 +343,18 @@ export function ExplorerMap({
   const info = placeInfo(kipNode);
   const { frame } = world;
   const fogged = graph.nodes.some((n) => n.fog !== "revealed");
+  const isNew = (id: string): boolean => reveal.appear.has(id) || reveal.clear.has(id);
+  // New places pop in one after another, nearest the toy first.
+  const popOrder = new Map<string, number>(
+    graph.nodes
+      .filter((n) => isNew(n.id))
+      .sort(
+        (a, b) =>
+          Math.hypot((world.pos.get(a.id)?.x ?? 0) - kipPt.x, (world.pos.get(a.id)?.y ?? 0) - kipPt.y) -
+          Math.hypot((world.pos.get(b.id)?.x ?? 0) - kipPt.x, (world.pos.get(b.id)?.y ?? 0) - kipPt.y),
+      )
+      .map((n, i) => [n.id, i]),
+  );
 
   return (
     <section
@@ -329,13 +386,31 @@ export function ExplorerMap({
             {graph.edges.map((e) => {
               const curve = world.curves.get(edgeKey(e.a, e.b));
               if (!curve || e.fog === "clouded") return null;
+              const draw = reveal.roads.get(edgeKey(e.a, e.b));
+              const drawStyle = draw
+                ? ({ "--draw-from": draw === "from-end" ? -1 : 1, "--draw-delay": `${ROAD_DELAY}ms` } as CSSProperties)
+                : undefined;
               return e.fog === "revealed" ? (
                 <g key={`${e.a}-${e.b}`}>
-                  <path d={curve.d} className="tv-trail-road-edge" />
-                  <path d={curve.d} className="tv-trail-road-done" />
+                  <path
+                    d={curve.d}
+                    pathLength={draw ? 1 : undefined}
+                    className={`tv-trail-road-edge${draw ? " tv-trail-draw" : ""}`}
+                    style={drawStyle}
+                  />
+                  <path
+                    d={curve.d}
+                    pathLength={draw ? 1 : undefined}
+                    className={`tv-trail-road-done${draw ? " tv-trail-draw" : ""}`}
+                    style={drawStyle}
+                  />
                 </g>
               ) : (
-                <g key={`${e.a}-${e.b}`}>
+                <g
+                  key={`${e.a}-${e.b}`}
+                  className={draw ? "tv-trail-fade" : undefined}
+                  style={drawStyle}
+                >
                   <path d={curve.d} className="tv-trail-road-dots-edge" />
                   <path d={curve.d} className="tv-trail-road-dots" />
                 </g>
@@ -366,9 +441,24 @@ export function ExplorerMap({
                     <g filter="url(#tvt-reveal-blur)" fill="#000" stroke="#000" strokeLinecap="round">
                       {graph.edges.map((e) => {
                         const curve = world.curves.get(edgeKey(e.a, e.b));
-                        return curve && e.fog !== "clouded" ? (
-                          <path key={`${e.a}-${e.b}`} d={curve.d} fill="none" strokeWidth={UNIT * 0.95} />
-                        ) : null;
+                        if (!curve || e.fog === "clouded") return null;
+                        const draw = reveal.roads.get(edgeKey(e.a, e.b));
+                        const solid = draw === "from-start" || draw === "from-end";
+                        return (
+                          <path
+                            key={`${e.a}-${e.b}`}
+                            d={curve.d}
+                            fill="none"
+                            strokeWidth={UNIT * 0.95}
+                            pathLength={solid ? 1 : undefined}
+                            className={solid ? "tv-trail-draw" : draw ? "tv-trail-fade" : undefined}
+                            style={
+                              draw
+                                ? ({ "--draw-from": draw === "from-end" ? -1 : 1, "--draw-delay": `${ROAD_DELAY}ms` } as CSSProperties)
+                                : undefined
+                            }
+                          />
+                        );
                       })}
                       {graph.nodes.map((n) => {
                         const p = world.pos.get(n.id)!;
@@ -379,6 +469,7 @@ export function ExplorerMap({
                             cy={p.y}
                             r={(n.fog === "revealed" ? 1.5 : 1.05) * UNIT}
                             strokeWidth="0"
+                            className={isNew(n.id) ? "tv-trail-open" : undefined}
                           />
                         );
                       })}
@@ -400,8 +491,14 @@ export function ExplorerMap({
                 key={node.id}
                 type="button"
                 data-node-id={node.id}
-                className={`tv-trail-node tv-trail-node-${node.fog}${here ? " tv-trail-node-here" : ""}`}
-                style={{ left: p.x, top: p.y }}
+                className={`tv-trail-node tv-trail-node-${node.fog}${here ? " tv-trail-node-here" : ""}${isNew(node.id) ? " tv-trail-node-new" : ""}`}
+                style={
+                  {
+                    left: p.x,
+                    top: p.y,
+                    "--pop-delay": `${NODE_DELAY + Math.min(popOrder.get(node.id) ?? 0, 8) * NODE_STAGGER}ms`,
+                  } as CSSProperties
+                }
                 aria-label={nodeLabel(node, here)}
                 aria-current={here ? "true" : undefined}
                 onClick={() => onNodeClick(node)}

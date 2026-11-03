@@ -35,9 +35,28 @@ have found.
 - **Structured areas plus a generated frontier.** Six authored
   districts (world + its lab building + its ladder trail) sit on the
   town ring around Toy Room home. Off six branch ends, seeded
-  frontier nodes are generated two deep. Each frontier node carries
+  frontier nodes are generated. Each frontier node carries
   a level-kit seed code and plays through the existing `playSeed`
   path, so new levels appear on the map without new engine code.
+- **The frontier grows as it is walked** (decided Nov 3). A branch
+  always shows two generated paths beyond the furthest one the child
+  has walked: the next (a silhouette) and one more under cloud.
+  Walking path 2 shows paths 3 and 4. A branch stops at
+  `FRONTIER_MAX_DEPTH` (12 paths, 72 levels over six branches); that
+  is a safety valve on how much the browser must draw, not a design
+  limit, and it should be revisited on a real phone. Branches wind
+  but keep heading outward (a step may bend one octant either side of
+  the branch's own heading), and a step that would cross a road, land
+  on a place, or crowd one ends the chain.
+- **What is new draws itself in.** The map remembers what it has shown
+  (`explorerSeen`). On the next open only what is new animates: the
+  clouds part around it, new roads draw out from the end that was
+  already in colour (dotted roads fade in), and the new places pop in
+  one after another, nearest the toy first. The camera frames the toy
+  and the new places together when they fit. The first open (no
+  record yet, including a player from before this existed) animates
+  nothing and just records; the open after a reveal replays nothing.
+  `prefers-reduced-motion` shows the finished map at once.
 - **Two-step travel, like a console map.** The toy stands on a place.
   Tap another place and the toy hops there along the roads (the plate
   at the top names it); tap the place the toy is standing on, or the
@@ -95,7 +114,9 @@ neighbours.
 
 - `src/lib/explorerMap.ts` — pure graph derivation: authored
   positions/roads/districts, deterministic frontier generation
-  (octant walk with hashed bends, collision-free), fog states,
+  (every chain is laid out once, a layer at a time in a fixed branch
+  order, so **a place that exists never moves when any branch grows**),
+  fog states, `newlyShown` and `seenEntries` (the reveal diff),
   `explorerNeighbor` (arrow-key travel), `explorerRoute` (the walk the
   toy hops along), and `defaultMapView`. Unit-tested in
   `tests/explorer-map.test.ts` (including a cross-check that every
@@ -111,25 +132,38 @@ neighbours.
   `ExplorerMap.tsx` (state, HUD, the toy's hop, fog mask, keys, mouse
   drag; touch scrolls natively). `GameCanvas` opens the Map through
   `openMap`, which picks the view from the saved age.
-- Visits persist as `explorerVisited` in `progression:v1`
-  (validated in normalize, union-merged, wiped by XP reset).
+- Visits persist as `explorerVisited` and what the map has shown as
+  `explorerSeen` in `progression:v1` (both validated in normalize,
+  union-merged, wiped by XP reset). `explorerSeen` entries are `id`
+  for a silhouette and `id#` for a place seen in full colour, so a
+  road that turns from dotted to solid draws in.
   Visiting a frontier node reveals the next generated node beyond it,
   so the frontier opens one hop at a time. A frontier node counts as
   explored on entry; its hidden parts still feed the normal found
   set while played. The toy starts on the world the child is in, or on
   the last place walked to when the child is in a generated level.
+- Cost at depth, measured on a desktop: scrolling stays at 60 fps from
+  27 to 117 places (a 2,256 x 2,136 world up to 6,576 x 6,456), the Map
+  opens in under 300 ms, scenery is placed through a bucket grid (about
+  50 ms for the biggest world) and the cloud bank is held to about
+  1,200 puffs by making them larger, not more numerous.
 - `npm run e2e:trail` (`scripts/e2e-trail.mjs`) drives it in headless
   Chrome: default view by age and the swap between views, full screen
   over the dock, fog, the toy's hop and the plate, arrow keys, the
-  rung sheet over the map, the busy and ready frontier paths, and
-  layout (tap size, alignment, no overlap, the toy in view).
+  rung sheet over the map, the busy and ready frontier paths, a
+  branch growing when it is walked, the reveal animation (first open
+  quiet, the next open animates, the one after quiet), and layout (tap size, alignment, no overlap, the toy in view).
 
 ## Not in this slice
 
 - No hard gates, secret-exit locks, or vehicle gates on roads.
   Vehicle perks stay soft (connected-town slice 1).
-- Frontier depth is a fixed 2 per branch. Unbounded growth, if
-  wanted, is a `frontierDepth` change plus a visited-depth rule.
+- Generated levels do not get harder with depth: every path is a
+  seeded level-kit level in its branch's theme. Difficulty by depth
+  is a `composeLevel` input, not a map change.
+- Secret exits (a hidden side route that opens when something
+  specific is found) are not built. They need a decision on what
+  triggers them.
 - The overworld is drawn in SVG with stand-in art (shapes and a glyph
   per place). Hand-made art would replace `ExplorerWorldArt` and
   `ExplorerNodeArt` without touching the graph or the e2e.

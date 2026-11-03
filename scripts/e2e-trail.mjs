@@ -16,6 +16,10 @@
 //   - a frontier go that cannot start keeps the map open, shows a notice and
 //     records no visit; once it can start it closes, plays the seed, records it;
 //   - the rung sheet opens over the map without losing the map's scroll;
+//   - the map remembers what it showed: the first open animates nothing,
+//     what is new on a later open animates (clouds part, roads draw in,
+//     places pop in) and is not replayed on the open after that;
+//   - walking a generated path grows its branch (two more appear beyond it);
 //   - layout measured in the DOM: tap targets, node-on-road alignment, no
 //     overlapping nodes, the toy in view;
 //   - no uncaught exception in any scenario.
@@ -218,6 +222,14 @@ const visited = (cdp) =>
     `(()=>{try{return JSON.parse(localStorage.getItem(${JSON.stringify(STORAGE_KEY)})||"{}").explorerVisited||[]}catch(e){return null}})()`,
   );
 
+const seenOf = (cdp) =>
+  cdp.evaluate(
+    `(()=>{try{return JSON.parse(localStorage.getItem(${JSON.stringify(STORAGE_KEY)})||"{}").explorerSeen||null}catch(e){return null}})()`,
+  );
+
+const animCount = (cdp) =>
+  cdp.evaluate(`document.querySelectorAll(".tv-trail-node-new,.tv-trail-draw,.tv-trail-fade,.tv-trail-open").length`);
+
 // Age 3-4: the carousel opens first; the trail map is one tap away and back.
 async function scenarioYoung(cdp) {
   await loadApp(cdp, { version: 1, totalXp: 0, ageBand: 1 });
@@ -396,6 +408,81 @@ async function scenarioPlay(cdp) {
   check("ready frontier go: map closes", !(await hasTrail(cdp)));
   check("ready frontier go: seeded level is the current world", world.startsWith("seed-"), world);
   check("ready frontier go: visit recorded", Array.isArray(v2) && v2.includes(node), JSON.stringify(v2));
+
+  // Walking a generated path grows its branch: two more beyond the one walked.
+  await openTrail(cdp);
+  const ids = await cdp.evaluate(
+    `[...document.querySelectorAll('[data-node-id^="frontier:lab3:"]')].map((b) => b.dataset.nodeId)`,
+  );
+  check(
+    "walking path 2 grew the branch: paths 3 and 4 appear, 5 does not",
+    ids.includes("frontier:lab3:3") && ids.includes("frontier:lab3:4") && !ids.includes("frontier:lab3:5"),
+    JSON.stringify(ids),
+  );
+}
+
+// What is new animates once: first open records, later open reveals, then quiet.
+async function scenarioReveal(cdp) {
+  await loadApp(cdp, { version: 1, totalXp: 0, ageBand: 3 });
+  await openMap(cdp);
+  const seen1 = await seenOf(cdp);
+  check("first open: nothing animates (there is no record yet)", (await animCount(cdp)) === 0);
+  check(
+    "first open: the map records what it showed",
+    Array.isArray(seen1) && seen1.includes("room") && seen1.includes("room#"),
+    JSON.stringify((seen1 || []).slice(0, 6)),
+  );
+
+  // Walk to the beach and go in, then look at the map again.
+  await tapNode(cdp, "beach");
+  await waitKipAt(cdp, "beach");
+  await clickPlay(cdp);
+  await sleep(1200);
+  check("went to the beach (the map closed)", !(await hasTrail(cdp)));
+  const shot = async (name) => {
+    if (!SHOTS) return;
+    mkdirSync(SHOTS, { recursive: true });
+    const r = await cdp.send("Page.captureScreenshot", { format: "png" });
+    writeFileSync(path.join(SHOTS, `${name}.png`), Buffer.from(r.data, "base64"));
+  };
+  await openMap(cdp);
+
+  // Early in the animation: new places are waiting to pop, a new road is part-drawn.
+  const early = await cdp.evaluate(`(()=>{
+    const fresh = [...document.querySelectorAll(".tv-trail-node-new")];
+    const draw = [...document.querySelectorAll("svg .tv-trail-draw")];
+    return {
+      ids: fresh.map((b) => b.dataset.nodeId),
+      waiting: fresh.filter((b) => parseFloat(getComputedStyle(b.querySelector("svg")).opacity) < 1).length,
+      drawing: draw.filter((p) => Math.abs(parseFloat(getComputedStyle(p).strokeDashoffset)) > 0.001).length,
+      fades: document.querySelectorAll("svg .tv-trail-fade").length,
+      opens: document.querySelectorAll("svg .tv-trail-open").length,
+    };
+  })()`);
+  check("reopened: the beach clears and its lab appears", early.ids.includes("beach") && early.ids.includes("lab3"), JSON.stringify(early.ids));
+  check("reopened: new places are waiting to pop in", early.waiting > 0, `${early.waiting} waiting`);
+  check("reopened: a new road is part-way through drawing", early.drawing > 0, `${early.drawing} drawing`);
+  check("reopened: dotted roads fade in and the fog parts", early.fades > 0 && early.opens > 0, `fades ${early.fades}, opens ${early.opens}`);
+  await shot("trail-reveal-1");
+  await sleep(300);
+  await shot("trail-reveal-2");
+  await sleep(2300);
+  await shot("trail-reveal-3");
+  const done = await cdp.evaluate(`(()=>{
+    const fresh = [...document.querySelectorAll(".tv-trail-node-new svg")];
+    const draw = [...document.querySelectorAll("svg .tv-trail-draw")];
+    return {
+      shown: fresh.every((v) => getComputedStyle(v).opacity === "1"),
+      drawn: draw.every((p) => Math.abs(parseFloat(getComputedStyle(p).strokeDashoffset)) < 0.001),
+    };
+  })()`);
+  check("settled: every new place is fully shown and every new road fully drawn", done.shown && done.drawn, JSON.stringify(done));
+
+  // Close and reopen: already seen, so nothing replays.
+  await clickButton(cdp, ".tv-trail-hud button", "Home");
+  await sleep(300);
+  await openMap(cdp);
+  check("the open after that replays nothing", (await animCount(cdp)) === 0);
 }
 
 async function main() {
@@ -449,6 +536,7 @@ async function main() {
     await run("young", scenarioYoung);
     await run("older", scenarioOlder);
     await run("play", scenarioPlay);
+    await run("reveal", scenarioReveal);
   } finally {
     killAll();
   }

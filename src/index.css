@@ -3183,12 +3183,56 @@ button.tv-badge-pill:hover {
   border-radius: 12px;
 }
 
+/* New since the last look: the clouds part, roads draw themselves in, then
+   the new places pop in. Each class only animates; the resting state is the
+   plain picture, so turning motion off (below) just shows the finished map. */
+/* Gap longer than the road, so a not-yet-drawn road leaves no round-capped dot. */
+.tv-trail-draw {
+  stroke-dasharray: 1 2;
+  animation: tv-trail-draw 750ms ease-out var(--draw-delay, 350ms) both;
+}
+
+@keyframes tv-trail-draw {
+  from { stroke-dashoffset: var(--draw-from, 1); }
+  to { stroke-dashoffset: 0; }
+}
+
+.tv-trail-fade { animation: tv-trail-fade 600ms ease-out var(--draw-delay, 350ms) both; }
+
+@keyframes tv-trail-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.tv-trail-open {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: tv-trail-open 900ms ease-out both;
+}
+
+@keyframes tv-trail-open {
+  from { transform: scale(0.1); }
+  to { transform: scale(1); }
+}
+
+.tv-trail-node-new svg { animation: tv-trail-pop 520ms cubic-bezier(0.2, 1.4, 0.4, 1) var(--pop-delay, 850ms) both; }
+
+@keyframes tv-trail-pop {
+  from { transform: scale(0); opacity: 0; }
+  60% { opacity: 1; }
+  to { transform: scale(1); opacity: 1; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .tv-trail-full,
   .tv-trail-waves,
   .tv-trail-puffs,
   .tv-trail-node-here::after,
   .tv-trail-flag,
+  .tv-trail-draw,
+  .tv-trail-fade,
+  .tv-trail-open,
+  .tv-trail-node-new svg,
   .tv-trail-kip-body { animation: none; }
   .tv-trail-kip { transition: none; }
 }

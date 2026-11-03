@@ -3,11 +3,18 @@ import { buildMapCards, MAP_STOPS } from "../src/lib/mapCards";
 import {
   buildExplorerGraph,
   explorerNeighbor,
+  FRONTIER_AHEAD,
+  FRONTIER_BRANCHES,
+  FRONTIER_MAX_DEPTH,
   frontierSeedCode,
+  newlyShown,
+  roadKey,
+  seenEntries,
   type ExplorerGraph,
 } from "../src/lib/explorerMap";
 import {
   emptyProgression,
+  markExplorerSeen,
   markExplorerVisited,
   mergeProgression,
   normalizeProgression,
@@ -233,5 +240,191 @@ describe("explorer visited in progression", () => {
     expect(
       resetProgression(prog({ explorerVisited: ["garden"] })).explorerVisited,
     ).toBeUndefined();
+  });
+});
+
+const deepWalk = (): Set<string> =>
+  new Set(FRONTIER_BRANCHES.map((b) => `frontier:${b.from}:${FRONTIER_MAX_DEPTH}`));
+
+const frontierOf = (g: ExplorerGraph, from: string) =>
+  g.nodes.filter((n) => n.id.startsWith(`frontier:${from}:`));
+
+describe("a growing frontier", () => {
+  it("keeps a couple of paths ahead of the furthest one walked, per branch", () => {
+    expect(FRONTIER_AHEAD).toBe(2);
+    const fresh = buildExplorerGraph({ cards: cards() });
+    expect(frontierOf(fresh, "lab3")).toHaveLength(2);
+
+    const one = buildExplorerGraph({ cards: cards(), visited: new Set(["frontier:lab3:1"]) });
+    expect(frontierOf(one, "lab3").map((n) => n.id)).toEqual([
+      "frontier:lab3:1",
+      "frontier:lab3:2",
+      "frontier:lab3:3",
+    ]);
+    // Other branches are untouched.
+    expect(frontierOf(one, "gears")).toHaveLength(2);
+
+    // Walking straight to a deeper path (clouds do not lock) grows past it.
+    const jump = buildExplorerGraph({ cards: cards(), visited: new Set(["frontier:lab3:5"]) });
+    expect(frontierOf(jump, "lab3")).toHaveLength(7);
+  });
+
+  it("never grows past the cap, and ids stay in order with no gaps", () => {
+    const g = buildExplorerGraph({ cards: cards({ ageBand: null }), visited: deepWalk() });
+    for (const br of FRONTIER_BRANCHES) {
+      const chain = frontierOf(g, br.from);
+      expect(chain.length, br.from).toBeLessThanOrEqual(FRONTIER_MAX_DEPTH);
+      chain.forEach((n, i) => expect(n.id).toBe(`frontier:${br.from}:${i + 1}`));
+    }
+    expect(frontierOf(g, "lab3").length).toBeGreaterThan(8);
+  });
+
+  it("a place that exists never moves when any branch grows", () => {
+    const base = buildExplorerGraph({ cards: cards() });
+    const where = (g: ExplorerGraph) => new Map(g.nodes.map((n) => [n.id, `${n.x},${n.y}`]));
+    const before = where(base);
+    for (const visited of [
+      new Set(["frontier:lab3:2"]),
+      new Set(["frontier:bridges:2", "frontier:code:2"]),
+      deepWalk(),
+    ]) {
+      const after = where(buildExplorerGraph({ cards: cards(), visited }));
+      for (const [id, at] of before) expect(after.get(id), id).toBe(at);
+    }
+  });
+
+  it("every chain, at full depth, in every age band: no crossings, no overlaps", () => {
+    for (const ageBand of [null, 0, 1, 2, 3, 4, 5]) {
+      const g = buildExplorerGraph({ cards: cards({ ageBand }), visited: deepWalk() });
+      const by = new Map(g.nodes.map((n) => [n.id, n]));
+      // One place per spot, one id each.
+      const spots = g.nodes.map((n) => `${n.x},${n.y}`);
+      expect(new Set(spots).size, `band ${ageBand} spots`).toBe(spots.length);
+      // No two roads properly cross, and none runs close to a place it skips.
+      const segs = g.edges.map((e) => ({ a: by.get(e.a)!, b: by.get(e.b)! }));
+      const orient = (o: { x: number; y: number }, p: { x: number; y: number }, q: { x: number; y: number }) =>
+        (p.x - o.x) * (q.y - o.y) - (p.y - o.y) * (q.x - o.x);
+      for (let i = 0; i < segs.length; i++) {
+        for (let j = i + 1; j < segs.length; j++) {
+          const A = segs[i]!;
+          const B = segs[j]!;
+          const shared = [A.a.id, A.b.id].some((id) => id === B.a.id || id === B.b.id);
+          if (shared) continue;
+          const crosses =
+            orient(A.a, A.b, B.a) * orient(A.a, A.b, B.b) < 0 &&
+            orient(B.a, B.b, A.a) * orient(B.a, B.b, A.b) < 0;
+          expect(crosses, `band ${ageBand}: ${A.a.id}-${A.b.id} crosses ${B.a.id}-${B.b.id}`).toBe(false);
+        }
+      }
+      for (const sg of segs) {
+        const vx = sg.b.x - sg.a.x;
+        const vy = sg.b.y - sg.a.y;
+        for (const n of g.nodes) {
+          if (n.id === sg.a.id || n.id === sg.b.id) continue;
+          const t = Math.max(0, Math.min(1, ((n.x - sg.a.x) * vx + (n.y - sg.a.y) * vy) / (vx * vx + vy * vy)));
+          const d = Math.hypot(sg.a.x + t * vx - n.x, sg.a.y + t * vy - n.y);
+          expect(d, `band ${ageBand}: ${sg.a.id}-${sg.b.id} under ${n.id}`).toBeGreaterThanOrEqual(0.6);
+        }
+      }
+    }
+  });
+
+  it("every generated path has its own seed, and each plays through the level kit", () => {
+    const g = buildExplorerGraph({ cards: cards({ ageBand: null }), visited: deepWalk() });
+    const frontier = g.nodes.filter((n) => n.kind === "frontier");
+    expect(new Set(frontier.map((n) => n.seedCode)).size).toBe(frontier.length);
+    for (const n of frontier) {
+      expect(composeLevel({ seed: codeToSeed(n.seedCode!), theme: n.theme }).seed, n.id).toBe(n.seedCode);
+    }
+  });
+});
+
+describe("what is new on the map", () => {
+  const g0 = () => buildExplorerGraph({ cards: cards({ ageBand: 3 }) });
+  const withVisit = (...ids: string[]) =>
+    buildExplorerGraph({ cards: cards({ ageBand: 3 }), visited: new Set(ids) });
+
+  it("nothing is new without a record, or when nothing changed", () => {
+    expect(newlyShown(g0(), null).isEmpty).toBe(true);
+    expect(newlyShown(g0(), undefined).isEmpty).toBe(true);
+    expect(newlyShown(g0(), new Set(seenEntries(g0()))).isEmpty).toBe(true);
+  });
+
+  it("a place walked to clears, its neighbours appear, its roads draw in", () => {
+    const seen = new Set(seenEntries(g0()));
+    const after = withVisit("beach");
+    const reveal = newlyShown(after, seen);
+    expect(reveal.isEmpty).toBe(false);
+    // Beach was a silhouette, now it is in colour.
+    expect(reveal.clear.has("beach")).toBe(true);
+    // Its lab was hidden under cloud and now shows.
+    expect(reveal.appear.has("lab3")).toBe(true);
+    // The road from home to the beach is solid now, drawn out from home. The
+    // road runs beach to room (ids sorted), so home is its end.
+    expect(reveal.roads.get(roadKey("room", "beach"))).toBe("from-end");
+    // The road from the beach to the lab is dotted: it fades in.
+    expect(reveal.roads.get(roadKey("beach", "lab3"))).toBe("fade");
+    // Home and a far world are not new.
+    expect(reveal.appear.has("room")).toBe(false);
+    expect(reveal.clear.has("room")).toBe(false);
+    expect(reveal.appear.has("snow")).toBe(false);
+  });
+
+  it("a road draws out from the end that was already in colour", () => {
+    // Walk to the lab after the beach: the beach-lab road is drawn out from the beach.
+    const seen = new Set(seenEntries(withVisit("beach")));
+    const reveal = newlyShown(withVisit("beach", "lab3"), seen);
+    // beach < lab3, beach was seen in colour: draw from the start (the beach).
+    expect(reveal.roads.get(roadKey("beach", "lab3"))).toBe("from-start");
+    // From the other side: seen only lab3's end in colour, draw from the end.
+    const seenLab = new Set(["lab3", "lab3#", "beach"]);
+    expect(newlyShown(withVisit("beach", "lab3"), seenLab).roads.get(roadKey("beach", "lab3"))).toBe("from-end");
+  });
+
+  it("walking a generated path makes the next ones appear", () => {
+    const seen = new Set(seenEntries(withVisit("beach", "lab3", "frontier:lab3:1")));
+    const reveal = newlyShown(withVisit("beach", "lab3", "frontier:lab3:1", "frontier:lab3:2"), seen);
+    expect(reveal.clear.has("frontier:lab3:2")).toBe(true);
+    // Walking path 2 grows the branch: path 3 is the new silhouette, path 4 stays under cloud.
+    expect(reveal.appear.has("frontier:lab3:3")).toBe(true);
+    expect(reveal.appear.has("frontier:lab3:4")).toBe(false);
+    expect(reveal.roads.get(roadKey("frontier:lab3:1", "frontier:lab3:2"))).toBe("from-start");
+  });
+});
+
+describe("explorer seen in progression", () => {
+  it("records what was shown, only ever adds, validates, merges by union, resets clean", () => {
+    const first = markExplorerSeen(prog(), ["room", "room#", "garden"]);
+    expect(first.changed).toBe(true);
+    expect(first.next.explorerSeen).toEqual(["room", "room#", "garden"]);
+    // Same entries again change nothing; new ones are added, none removed.
+    expect(markExplorerSeen(first.next, ["garden", "room"]).changed).toBe(false);
+    const more = markExplorerSeen(first.next, ["garden#", "frontier:lab3:1"]);
+    expect(more.changed).toBe(true);
+    expect(more.next.explorerSeen).toEqual(["room", "room#", "garden", "garden#", "frontier:lab3:1"]);
+    expect(markExplorerSeen(prog(), []).changed).toBe(false);
+    expect(markExplorerSeen(prog(), ["bad id!", "x#y"]).changed).toBe(false);
+
+    expect(
+      normalizeProgression({
+        explorerSeen: ["garden", "garden", "garden#", "bad id!", "frontier:lab3:2#", 7, "##"],
+      }).explorerSeen,
+    ).toEqual(["garden", "garden#", "frontier:lab3:2#"]);
+
+    const merged = mergeProgression(
+      prog({ explorerSeen: ["garden"] }),
+      prog({ explorerSeen: ["sky#", "garden"] }),
+    );
+    expect([...(merged.explorerSeen ?? [])].sort()).toEqual(["garden", "sky#"]);
+
+    expect(
+      resetProgression(prog({ explorerSeen: ["garden"] })).explorerSeen,
+    ).toBeUndefined();
+  });
+
+  it("the entries the map writes are exactly the entries the map accepts", () => {
+    const g = buildExplorerGraph({ cards: cards({ ageBand: null }), visited: deepWalk() });
+    const entries = seenEntries(g);
+    expect(markExplorerSeen(prog(), entries).next.explorerSeen).toEqual(entries);
   });
 });
