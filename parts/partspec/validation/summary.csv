@@ -100,20 +100,20 @@ mech_servo_mount,toyventor_mech_servo_mount_S.stl,pass_with_warnings,Warnings: V
 mech_servo_pinion_z10,toyventor_mech_servo_pinion_z10_P.stl,pass,Prints as is,,,,0,8.8,413.6,0.43,0.62
 mech_sill_duct,toyventor_mech_sill_duct_S.stl,pass_with_warnings,Warnings: V8_wall_thickness,,,,0,11.6,889.9,0.39,0.55
 mini_plate,toyventor_mini_plate_S.stl,pass,Prints as is,,,,0,7.8,840.4,0.27,
-mom_band_core_lid,toyventor_mom_band_core_lid_S.stl,pass,Prints as is,,,,0,16.6,1671.3,0.41,
-mom_band_core_tray,toyventor_mom_band_core_tray_S.stl,pass,Prints as is,,,,0,35.1,1523.6,0.9,0.623
-mom_band_spool_pawl,toyventor_mom_band_spool_pawl_P.stl,pass,Prints as is,,,,0,13.0,96.5,1.32,0.733
+mom_band_core_lid,toyventor_mom_band_core_lid_S.stl,pass,Prints as is,,,,0,16.6,1723.0,0.4,
+mom_band_core_tray,toyventor_mom_band_core_tray_S.stl,pass_with_warnings,Warnings: V8_wall_thickness,,,,0,35.1,1523.6,0.9,0.33
+mom_band_spool_pawl,toyventor_mom_band_spool_pawl_P.stl,pass,Prints as is,,,,0,13.0,97.3,1.32,
 mom_bellows_base,toyventor_mom_bellows_base_S.stl,pass_with_warnings,Warnings: V8_wall_thickness,,,,0,19.15,2049.1,0.42,0.292
 mom_bellows_leaf,toyventor_mom_bellows_leaf_S.stl,pass,Prints as is,,,,0,11.4,1907.7,0.26,
 mom_bumper_trigger,toyventor_mom_bumper_trigger_P.stl,pass,Prints as is,,,,0,12.5,930.2,0.41,
 mom_flywheel_lid,toyventor_mom_flywheel_lid_S.stl,pass,Prints as is,,,,0,8.0,1703.1,0.19,
 mom_flywheel_rotor,toyventor_mom_flywheel_rotor_P.stl,pass,Prints as is,,,,0,12.0,1255.0,0.34,
 mom_flywheel_tray,toyventor_mom_flywheel_tray_S.stl,pass,Prints as is,,,,0,35.1,1731.0,0.84,
-mom_jet_slide_valve,toyventor_mom_jet_slide_valve_P.stl,pass,Prints as is,,,,0,9.17,182.8,0.68,
-mom_jet_valve_body,toyventor_mom_jet_valve_body_S.stl,pass,Prints as is,,,,0,28.0,852.2,0.96,0.451
+mom_jet_slide_valve,toyventor_mom_jet_slide_valve_P.stl,pass_with_warnings,Warnings: V7_min_feature,,,,0,10.11,222.8,0.68,
+mom_jet_valve_body,toyventor_mom_jet_valve_body_S.stl,pass,Prints as is,,,,0,28.0,852.2,0.96,0.294
 mom_latch_pawl,toyventor_mom_latch_pawl_P.stl,pass,Prints as is,,,,0,5.2,192.8,0.37,
-mom_nozzle_set,toyventor_mom_nozzle_set_P.stl,pass,Prints as is,,,,0,13.5,430.9,0.65,
-mom_pto_gear_z10,toyventor_mom_pto_gear_z10_P.stl,pass,Prints as is,,,,0,9.6,420.0,0.47,0.658
+mom_nozzle_set,toyventor_mom_nozzle_set_P.stl,pass,Prints as is,,,,0,8.2,412.0,0.4,
+mom_pto_gear_z10,toyventor_mom_pto_gear_z10_P.stl,pass_with_warnings,Warnings: V7_min_feature,,,,0,9.6,420.0,0.47,0.627
 mom_ripcord_rack_150,toyventor_mom_ripcord_rack_150_P.stl,pass,Prints as is,,,,0,6.25,1376.5,0.17,
 mom_slam_base,toyventor_mom_slam_base_P.stl,pass,Prints as is,,,,0,21.0,2212.2,0.45,0.389
 mom_slam_plunger,toyventor_mom_slam_plunger_P.stl,pass,Prints as is,,,,0,5.0,823.6,0.17,

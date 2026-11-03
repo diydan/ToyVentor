@@ -1,25 +1,25 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_mom_band_core_lid_S.stl",
-  "file_sha256": "3aae2697569b4bf45e65bced82b0c7c7afe54a4a592c8d4852ec27cffcb8d1a3",
+  "file_sha256": "c3b3f75eb479e6df43cdc8f5b11cbeb0db92f5b1b6fed745e43e474cdd8404dd",
   "part_id": "mom_band_core_lid",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-11-02T12:06:33Z",
+  "checked_at": "2026-11-02T23:56:11Z",
   "metrics": {
     "bbox_mm": [
       49.8,
       61.5,
       16.6
     ],
-    "volume_cm3": 12.9,
-    "surface_cm2": 89.83,
-    "triangles": 34158,
+    "volume_cm3": 13.17,
+    "surface_cm2": 89.35,
+    "triangles": 34042,
     "ledges": [],
     "floating_contours": [],
     "layers": 83,
-    "bed_contact_mm2": 1671.3,
+    "bed_contact_mm2": 1723.0,
     "height_mm": 16.6,
-    "slenderness": 0.41,
+    "slenderness": 0.4,
     "centre_of_mass_over_contact": true,
     "min_wall_mm": null,
     "thin_wall_regions": []
@@ -116,9 +116,9 @@
       "id": "V9_bed_contact",
       "level": "info",
       "result": "pass",
-      "value": 1671.3,
+      "value": 1723.0,
       "limit": null,
-      "detail": "height / sqrt(contact) = 0.41; above about 3 the slicer often asks for a brim"
+      "detail": "height / sqrt(contact) = 0.4; above about 3 the slicer often asks for a brim"
     },
     {
       "id": "V8_wall_thickness",

@@ -1,19 +1,19 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_mom_jet_valve_body_S.stl",
-  "file_sha256": "31a64e20a72365723e5bcf538106e46d25e1258cc08835938227c72d2cbbab02",
+  "file_sha256": "c6e1e72b0c2723121f144471810cdf35367d1d632535f69d8b286a3124aba30a",
   "part_id": "mom_jet_valve_body",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-11-02T12:06:36Z",
+  "checked_at": "2026-11-02T23:56:21Z",
   "metrics": {
     "bbox_mm": [
       49.8,
       27.8,
       28.0
     ],
-    "volume_cm3": 16.08,
-    "surface_cm2": 67.51,
-    "triangles": 7502,
+    "volume_cm3": 15.08,
+    "surface_cm2": 69.32,
+    "triangles": 7584,
     "ledges": [],
     "floating_contours": [],
     "layers": 140,
@@ -21,7 +21,7 @@
     "height_mm": 28.0,
     "slenderness": 0.96,
     "centre_of_mass_over_contact": true,
-    "min_wall_mm": 0.451,
+    "min_wall_mm": 0.294,
     "thin_wall_regions": []
   },
   "bridges": [

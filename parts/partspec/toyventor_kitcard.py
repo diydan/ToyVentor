@@ -1403,8 +1403,8 @@ def mom_band_core_lid(size="small", grid=(4, 4), lock=True, **_):
 def mom_pto_gear_z10(**_):
     """Stage-3 Momentum Z10 PTO Spur Gear With Internal 8-Tooth Radial Freewheel Cup (30.0 x 30.0 x 9.6 mm).
     - z = 0.00..6.25: module-2.5 Z10 spur gear (fixed double-D bore locks onto internal PTO shaft);
-    - z = 6.25..9.60: 45-deg corbeled cup (OD 24.4 mm, R_valley = 10.35 mm, R_crest = 9.60 mm, alpha = 5.5 deg)
-      engaging mom_band_spool_pawl's spiral XY cantilever pawls (< 0.67% strain, 2.1 N*mm overrun drag = 0.12 N at tire).
+    - z = 6.25..9.60: 45-deg corbeled cup (OD 24.4 mm, R_valley = 10.55 mm, R_crest = 9.60 mm, alpha = 6.9 deg)
+      engaging mom_band_spool_pawl's spiral XY cantilever pawls (0.78 mm nominal radial bite, 0.69% PLA strain).
     """
     T_gear = pro.GEAR["thickness_tu"] * TU  # 6.25 mm
     H = 9.60
@@ -1414,15 +1414,15 @@ def mom_pto_gear_z10(**_):
         Manifold.cylinder(0.3, 9.30, 9.30, 96).translate((0.0, 0.0, T_gear - 0.3)),
         Manifold.cylinder(0.6, 12.20, 12.20, 96).translate((0.0, 0.0, H - 0.6)),
     ])
-    # Internal 8-tooth radial sawtooth cavity (mirrored 2026-11-02 so the clutch locks on pull-back:
-    # R_crest = 9.60 mm at sector end ramping outward to R_valley = 10.35 mm at sector start):
+    # Internal 8-tooth radial sawtooth cavity (mirrored so the clutch locks on pull-back;
+    # R_crest = 9.60 mm at sector end ramping outward to R_valley = 10.55 mm at sector start):
     cav_pts = []
     for k in range(8):
         a0 = math.radians(45.0 * k)
-        cav_pts.append((10.35 * math.cos(a0), 10.35 * math.sin(a0)))
+        cav_pts.append((10.55 * math.cos(a0), 10.55 * math.sin(a0)))
         for s in range(1, 7):
             ang = math.radians(45.0 * k + 43.0 * s / 6.0)
-            rr = 10.35 - 0.75 * (s / 6.0)
+            rr = 10.55 - 0.95 * (s / 6.0)
             cav_pts.append((rr * math.cos(ang), rr * math.sin(ang)))
     cup_cav = Manifold.extrude(_ccw_poly(cav_pts), 3.10).translate((0.0, 0.0, H - 2.90))
     m = ((gear_body + cup_outer) - cup_cav) - pro.bore_cutter("fixed", H)
@@ -1433,12 +1433,12 @@ def mom_pto_gear_z10(**_):
 
 
 def mom_band_spool_pawl(**_):
-    """Stage-3 Momentum Coaxial Freewheel Band Spool & Spiral XY Pawl Hub (21.6 x 21.6 x 13.0 mm, printed pawl-down on z = 0).
+    """Stage-3 Momentum Coaxial Freewheel Band Spool & Spiral XY Pawl Hub (20.3 x 20.8 x 13.0 mm, printed pawl-down on z = 0).
     - Free Ø7.00 mm center bore so the spool halts at slack while the PTO shaft and wheels coast freely;
-    - Bottom z = 0.0..2.30 deck carrying twin 1.28 mm-thick x 14.5 mm-long free-flexing spiral XY cantilever pawl arms
-      (0 overhangs, 0 bridges, 0.67% peak strain at 0.75 mm tooth rise, 0.87 N PLA radial force -> 0.12 N wheel drag);
-    - Central Ø12.8 x 6.6 mm drum with 43-deg captive T-hook anchor keeping the #64/#32 band attached at zero tension;
-    - Upper 42-deg corbeled 8-tooth radial hold-ratchet flange (z = 10.5..13.0) with twin Ø3.8 mm winding-key sockets.
+    - Bottom z = 0.0..2.30 deck carrying twin 1.28 mm-thick x 14.7 mm-long free-flexing spiral XY cantilever pawl arms
+      (R_tip = 10.38 mm over R_crest = 9.60 mm -> 0.78 mm nominal bite, 0.69% peak PLA strain, 0 overhangs, 0 bridges);
+    - Central Ø12.8 x 6.6 mm drum with 43-deg captive T-hook anchor and a R7.2 mm retaining lip (48-deg printable underside) keeping a slack band out of the pawls;
+    - Upper 41.8-deg smooth convex hub cone (z = 6.2..13.0, pull-back-only architecture).
     """
     H = 13.0
     pawl_hub_cs = CrossSection.circle(5.80, 96)
@@ -1446,7 +1446,7 @@ def mom_band_spool_pawl(**_):
     for s in range(11):
         t = s / 10.0
         ang = math.radians(-112.0 * t)  # mirrored 2026-11-02 to match the mirrored pocket (locks on pull-back)
-        rr = 5.30 + 4.22 * t  # spirals from R = 5.30 out to R = 9.52 (with r=0.64 -> R_outer = 10.16 mm in R_valley = 10.35 mm)
+        rr = 5.30 + 4.44 * t  # spirals from R = 5.30 out to R = 9.74 (with r=0.64 -> R_outer = 10.38 mm in R_valley = 10.55 mm)
         arm_pts.append((rr * math.cos(ang), rr * math.sin(ang)))
     arm_cs = _stroke(arm_pts, 0.64)
     pawl_top_cs = pawl_hub_cs + arm_cs + arm_cs.rotate(180.0)
@@ -1461,14 +1461,15 @@ def mom_band_spool_pawl(**_):
         Manifold.cylinder(0.30, 6.35, 6.35, 96).translate((0.0, 0.0, 6.20)),
         Manifold.cylinder(2.50, 10.15, 10.15, 96).translate((0.0, 0.0, 10.50)),
     ])
-    # Drum left retaining flange (2026-11-02): 55-deg conical skirt at the drum base keeps a slack
-    # band out of the pawls (conical, not a flat disc, so P4 sees no ledge).
+    # Drum left retaining lip (2026-11-03): keeps a slack band out of the pawls. The pawl zone below z = 2.3 is open
+    # (hub + two arms), so the lip must undercut at >= 45 deg: a 48-deg conical underside rising from the hub top
+    # (R5.6, z2.3) to a R7.2 rim underside at z4.1, then a 0.5 mm rim and a flat top at z4.6. The first draft (lens disc
+    # R8.4, 21-deg underside) left 124 mm2 steeper than 45 deg (P1), and its R5.8 base nearly coincided with the
+    # R5.75..5.79 drum and R5.80 hub, which made the exported mesh non-manifold (G1/G3). Revolved, base buried at R5.6.
     # (Hold-ratchet teeth + winding-key sockets removed with the pull-back-only decision, Option B.)
-    flange = Manifold.batch_hull([
-        Manifold.cylinder(0.3, 5.8, 5.8, 64).translate((0.0, 0.0, 2.3)),
-        Manifold.cylinder(0.3, 8.4, 8.4, 64).translate((0.0, 0.0, 3.3)),
-        Manifold.cylinder(0.3, 6.4, 6.4, 64).translate((0.0, 0.0, 4.6)),
-    ])
+    flange = Manifold.revolve(
+        CrossSection([[(5.2, 2.3), (5.6, 2.3), (7.2, 4.1), (7.2, 4.6), (5.2, 4.6)]]), 96,
+    )
     m = (pawl_bed + drum + hook_up + flare_cone + flange) - pro.bore_cutter("free", H)
     c_hub = {
         "id": "hub",
@@ -1649,10 +1650,10 @@ def _flat_floor_teardrop(d, floor_y):
 def mom_jet_valve_body(size="small", grid=(4, 2), lock=True, **_):
     """Stage-3 Momentum Self-Wedging Taper-Sealed Balloon Jet & Valve Body (49.8 x 27.8 x 28.0 mm, 0 mouthpiece).
     - Low 5.4 mm side mounting wings + central 24.0 mm-wide valve turret (z = 0..20.6) & smooth top balloon collar at (0, -3.0);
-    - Continuous Ø6.0 mm vertical inlet (z = 12.5..28.0, >= 3.8 mm solid floor over socket ceilings) + horizontal +Y tunnel;
-    - 3.5-deg tapered flat-floor 50-deg teardrop transverse X valve seat (x in [-4.0, +12.3]) giving 360-deg CLOSED seal
-      contact adjacent to an 8.0 mm Pro `free` guide bore (x in [-12.0, -4.0]);
-    - Rear 4.0-deg tapered female 50-deg teardrop Luer socket (y = +8.4..+14.6, z = 12.50) sealing mom_nozzle_set coaxially.
+    - Continuous Ø8.0 mm (50.1 mm2) vertical inlet (y = -4.70, z = 12.8..28.8) + 8.36 mm (52.6 mm2) flat-floor teardrop +Y tunnel;
+    - 3.5-deg tapered flat-floor 50-deg teardrop transverse X valve seat (x in [-4.0, +12.3], d = 8.30 -> 9.30 mm) giving 360-deg
+      CLOSED seal contact adjacent to an 8.0 mm Pro `free` guide bore (x in [-12.0, -4.0]);
+    - Rear 4.0-deg tapered female 50-deg teardrop Luer socket (y = +8.5..+14.7, z = 12.50, d = 9.60 -> 10.45 mm) seating mom_nozzle_set.
     """
     wings = tp._flat_box(49.8, 24.8, 5.4, r=2.4, bed_ch=0.4)
     turret = Manifold.batch_hull([
@@ -1664,16 +1665,16 @@ def mom_jet_valve_body(size="small", grid=(4, 2), lock=True, **_):
         Manifold.cylinder(1.6, 10.4, 10.4, 64).translate((0.0, -3.0, 26.4)),
     ])
     m, conns, ex = tp.integrated_sockets(wings + turret + collar, size, lock)
-    inlet = Manifold.cylinder(16.0, 3.90, 3.90, 48).translate((0.0, -4.60, 12.8))  # O7.8 inlet offset aft: at y=-3.3 its rim would reach past the tunnel lip (y=-0.1) and bypass the spool plug in CLOSED
-    tun_sec = _flat_floor_teardrop(7.16, -2.50)  # identical to the spool plug tip profile: the plug covers the tunnel cross-section at every station (a taller tunnel roof leaks over the plug shoulder in CLOSED)
+    inlet = Manifold.cylinder(16.0, 4.00, 4.00, 48).translate((0.0, -4.70, 12.8))  # O8.0 inlet offset aft so its front rim (y=-0.70) stays 0.60 mm behind the tunnel lip (y=-0.10) in CLOSED
+    tun_sec = _flat_floor_teardrop(8.36, -2.50)  # matches the spool plug tip profile (8.36 mm) so CLOSED covers 100% of the tunnel cross-section
     tunnel = Manifold.extrude(tun_sec, 9.30).rotate((90, 0, 0)).translate((0.0, 9.2, 12.50))
-    # Rear 4-deg tapered 50-deg teardrop female nozzle socket (y = +8.4..+14.6, d = 7.45 -> 8.30 mm):
-    noz_lo = Manifold.extrude(pro._teardrop(7.45, roof_deg=50, segs=48), 0.1).rotate((90, 0, 0)).translate((0.0, 8.5, 12.50))
-    noz_hi = Manifold.extrude(pro._teardrop(8.30, roof_deg=50, segs=48), 0.1).rotate((90, 0, 0)).translate((0.0, 14.7, 12.50))
+    # Rear 4-deg tapered 50-deg teardrop female nozzle socket (y = +8.5..+14.7, d = 9.60 -> 10.45 mm, clearing full O8.0 bore):
+    noz_lo = Manifold.extrude(pro._teardrop(9.60, roof_deg=50, segs=64), 0.1).rotate((90, 0, 0)).translate((0.0, 8.5, 12.50))
+    noz_hi = Manifold.extrude(pro._teardrop(10.45, roof_deg=50, segs=64), 0.1).rotate((90, 0, 0)).translate((0.0, 14.7, 12.50))
     noz_sock = Manifold.batch_hull([noz_lo, noz_hi])
     # Transverse X valve bore at (y = -3.0, z = 12.50): -X free Ø7.00 guide bore + [-4.0, +12.3] 3.5-deg tapered flat-floor teardrop seat:
-    v_lo = Manifold.extrude(_flat_floor_teardrop(7.10, -2.48).rotate(90), 0.1).rotate((0, 90, 0)).translate((-4.0, -3.0, 12.50))
-    v_hi = Manifold.extrude(_flat_floor_teardrop(8.10, -2.48).rotate(90), 0.1).rotate((0, 90, 0)).translate((12.3, -3.0, 12.50))
+    v_lo = Manifold.extrude(_flat_floor_teardrop(8.30, -2.48).rotate(90), 0.1).rotate((0, 90, 0)).translate((-4.0, -3.0, 12.50))
+    v_hi = Manifold.extrude(_flat_floor_teardrop(9.30, -2.48).rotate(90), 0.1).rotate((0, 90, 0)).translate((12.3, -3.0, 12.50))
     valve_taper = Manifold.batch_hull([v_lo, v_hi])
     valve_guide = pro.bore_cutter_axis("free", 8.4, (-8.1, -3.0, 12.50), "x")
     m = m - inlet - tunnel - noz_sock - valve_taper - valve_guide
@@ -1682,60 +1683,64 @@ def mom_jet_valve_body(size="small", grid=(4, 2), lock=True, **_):
 
 
 def mom_jet_slide_valve(**_):
-    """Stage-3 Momentum Taper-Wedging Jet Shutoff Spool (9.6 x 38.0 x 9.2 mm LAY_FLAT).
-    - z = 2.0..18.5: 3.5-deg tapered flat-floor 50-deg-gabled sealing plug that wedges 360 deg tight across both sides of the
-      balloon inlet when pushed CLOSED (0 topological gap in CAD; <= 15% balloon diameter loss over 15 s staging hold);
-    - z = 21.5: 50-deg teardrop Ø4.8 mm cross-port (apex along +Y_assy = +Z_print, 0.90 mm solid bed floor) aligning OPEN;
-    - z = 25.0..38.0: pure Ø6.60 mm Pro pin_free guide stem.
+    """Stage-3 Momentum Taper-Wedging Jet Shutoff Spool (9.6 x 38.0 x 8.5 mm LAY_FLAT).
+    - z = 2.0..18.0: 3.5-deg tapered flat-floor 50-deg-gabled sealing plug (d = 9.38 -> 8.36 mm) that wedges 360 deg tight across
+      both sides of the balloon inlet when pushed CLOSED (0 topological gap in CAD);
+    - z = 21.5: fully enclosed 38.1 mm2 (O6.96 mm equiv) flat-floor 50-deg teardrop cross-port aligning OPEN;
+    - z = 26.5..38.0: pure Ø6.60 mm Pro pin_free guide stem.
     """
     pf = tp.IF["interfaces"]["pin_free"]
     flats = pf["shaft_flats"]
     fy = -flats / 2
     head_cs = pro._double_d(9.6, flats, corners=False)
-    s_lo_cs = _flat_floor_teardrop(8.18, fy)
-    s_hi_cs = _flat_floor_teardrop(7.16, fy)
+    s_lo_cs = _flat_floor_teardrop(9.38, fy)
+    s_hi_cs = _flat_floor_teardrop(8.36, fy)
     rod_cs = pro._double_d(pro.BORE["shaft_d"], flats)
     head = Manifold.extrude(head_cs, 2.2)
     taper_plug = Manifold.batch_hull([
         Manifold.extrude(s_lo_cs, 0.2).translate((0.0, 0.0, 2.0)),
-        Manifold.extrude(s_hi_cs, 0.2).translate((0.0, 0.0, 18.5)),
+        Manifold.extrude(s_hi_cs, 0.2).translate((0.0, 0.0, 18.0)),
     ])
-    port_zone = Manifold.extrude(s_hi_cs, 5.4).translate((0.0, 0.0, 18.3))
+    port_zone = Manifold.extrude(s_hi_cs, 7.6).translate((0.0, 0.0, 17.8))
     ramp_to_rod = Manifold.batch_hull([
-        Manifold.extrude(_flat_floor_teardrop(7.05, fy), 0.2).translate((0.0, 0.0, 23.4)),
-        Manifold.extrude(rod_cs, 0.2).translate((0.0, 0.0, 25.0)),
+        Manifold.extrude(_flat_floor_teardrop(8.20, fy), 0.2).translate((0.0, 0.0, 25.2)),
+        Manifold.extrude(rod_cs, 0.2).translate((0.0, 0.0, 26.8)),
     ])
-    rod = pro._tapered_dd_extrude(pro.BORE["shaft_d"], flats, 13.3, bot_tip=False, top_tip=True).translate((0.0, 0.0, 24.7))
-    # Cross-port along X_assy with 50-deg teardrop apex along +Y_assy (+Z_print in LAY_FLAT = [90, 0, 0]) and 0.90 mm bed floor:
-    port = Manifold.extrude(pro._teardrop(6.6, roof_deg=50, segs=48), 10.0).rotate((0, 90, 0)).translate((-5.0, 0.40, 21.5))
+    rod = pro._tapered_dd_extrude(pro.BORE["shaft_d"], flats, 11.5, bot_tip=False, top_tip=True).translate((0.0, 0.0, 26.5))
+    # Fully enclosed flat-floor 50-deg teardrop cross-port (38.1 mm2 = O6.96 mm equiv; solid bed floor y=-2.50..-1.70 and solid top bridge):
+    port_cs = _flat_floor_teardrop(7.30, -1.85).translate((0.0, 0.15))
+    port = Manifold.extrude(port_cs, 10.0).rotate((0, 90, 0)).translate((-5.0, 0.0, 21.5))
     m = (head + taper_plug + port_zone + ramp_to_rod + rod) - port
-    conn = pro._pin_conn("pin_free", "round", 11.0, z0=26.0, flats_mm=flats)
+    conn = pro._pin_conn("pin_free", "round", 11.0, z0=27.0, flats_mm=flats)
     return m, [conn], {"print_rotation_deg": pro.LAY_FLAT}
 
 
 def mom_nozzle_set(**_):
-    """Stage-3 Momentum Individual Rear-Orifice Nozzle Inserts (42.2 x 9.2 x 8.2 mm sprue: Ø3.0 / Ø4.5 / Ø6.0 / Ø8.0 mm).
-    Four individual 4-deg Luer-tapered inserts on 1.80 x 0.60 mm breakaway tabs (snap apart before use);
-    each insert's taper plug (teardrop 8.25 -> 7.50, z = 2.0..8.2) press-wedges alone into
-    mom_jet_valve_body's rear socket (7.45 -> 8.30) -- the old monolithic 3-plug bar could never seat.
-    Orifice converges to the rear grip face (orifice at the rear, per the 2026-11-02 audit).
+    """Stage-3 Momentum Individual Rear-Orifice Nozzle Inserts (63.0 x 14.1 x 8.2 mm sprue: Ø3.0 / Ø4.5 / Ø6.0 / Ø8.0 mm).
+    Four individual 4-deg Luer-tapered inserts on 1.80 x 0.60 mm breakaway tabs flanking a central Ø10.4 mm storage hub (free bore, stores on a pin);
+    each insert's taper plug (teardrop 10.40 -> 9.65, z = 2.0..8.2) press-wedges alone into mom_jet_valve_body's rear socket
+    (9.60 -> 10.45) with an unblocked Ø8.0 mm front entry converging cleanly to its rear exit orifice (Ø3.0 / Ø4.5 / Ø6.0 / Ø8.0).
     """
     inserts = None
-    for xc, d_exit in ((-19.5, 3.0), (-6.5, 4.5), (6.5, 6.0), (19.5, 8.0)):
-        flange = Manifold.cylinder(2.0, 5.6, 5.6, 48).translate((xc, 0.0, 0.0))
-        p_lo = Manifold.extrude(pro._teardrop(8.25, roof_deg=50, segs=64), 0.2).translate((xc, 0.0, 2.0))
-        p_hi = Manifold.extrude(pro._teardrop(7.50, roof_deg=50, segs=64), 0.2).translate((xc, 0.0, 8.0))
+    for xc, d_exit in ((-25.5, 3.0), (-12.0, 4.5), (12.0, 6.0), (25.5, 8.0)):
+        # Flange = hull of the R6.0 grip disc and the plug's own teardrop footprint, so the plug apex (y up to +8.1) stands on
+        # flange instead of overhanging it (P4: 5.1 mm2 of flat underside at z = 2.0 with a plain R6.0 disc).
+        flange = Manifold.batch_hull([
+            Manifold.cylinder(2.0, 6.0, 6.0, 64),
+            Manifold.extrude(pro._teardrop(10.40, roof_deg=50, segs=64), 2.0),
+        ]).translate((xc, 0.0, 0.0))
+        p_lo = Manifold.extrude(pro._teardrop(10.40, roof_deg=50, segs=64), 0.2).translate((xc, 0.0, 2.0))
+        p_hi = Manifold.extrude(pro._teardrop(9.65, roof_deg=50, segs=64), 0.2).translate((xc, 0.0, 8.0))
         plug = Manifold.batch_hull([p_lo, p_hi])
-        bore = Manifold.cylinder(8.6, d_exit / 2, 3.0, 48).translate((xc, 0.0, -0.2))
+        bore = Manifold.cylinder(8.6, d_exit / 2, 4.00, 64).translate((xc, 0.0, -0.2))
         ins = (flange + plug) - bore
         inserts = ins if inserts is None else inserts + ins
+    hub = Manifold.cylinder(2.0, 5.2, 5.2, 64) - pro.bore_cutter("free", 2.4, 0.0, 0.0, 0.0)
     tabs = None
-    for xc in (-13.0, 13.0):
-        tab = Manifold.cube((2.2, 1.8, 0.6)).translate((xc - 1.1, -0.9, 0.7))
+    for x0, x1 in ((-19.7, -17.8), (-6.2, -5.0), (5.0, 6.2), (17.8, 19.7)):
+        tab = Manifold.cube((x1 - x0, 1.8, 0.6)).translate((x0, -0.9, 0.7))
         tabs = tab if tabs is None else tabs + tab
-    # Center storage plate between the middle inserts, with a free bore so the set stores on a pin:
-    plate = Manifold.cube((13.0, 10.4, 2.0)).translate((-6.5, -5.2, 0.0))
-    m = (inserts + tabs + plate) - pro.bore_cutter("free", 2.4, 0.0, 0.0, 0.0)
+    m = inserts + hub + tabs
     conn = {
         "id": "mount_bore",
         "kind": "bore_grid",
@@ -2303,7 +2308,7 @@ CARD_LAYOUTS = {
         "material": "PLA/PETG",
         "items": [
             ("ripcord", "mom_ripcord_rack_150", 3.0, 3.0, 150.0, 12.0),
-            ("nozzles", "mom_nozzle_set", 52.8, 20.0, 50.2, 12.0),
+            ("nozzles", "mom_nozzle_set", 44.0, 20.0, 63.0, 14.1),
             ("fw_tray", "mom_flywheel_tray", 3.0, 93.8, 49.8, 49.8),
             ("fw_lid", "mom_flywheel_lid", 57.8, 93.8, 49.8, 49.8),
             ("spindle", "mom_spindle_shaft", 3.0, 148.6, 78.0, 6.6),
@@ -2588,10 +2593,10 @@ def _pneumatic_jet_check(cache):
     vb = _raw_geo("mom_jet_valve_body", cache)
     sv = _raw_geo("mom_jet_slide_valve", cache)
     ns = _raw_geo("mom_nozzle_set", cache)
-    # Seat the Ø4.5 mm insert (local xc = -5.5, snapped off its sprue) coaxially into the rear
+    # Seat the Ø4.5 mm insert (sprue xc = -12.0, snapped off its tabs: window = its R6.0 flange) coaxially into the rear
     # 4-deg Luer socket (y = 8.5..14.7, z = 12.50), tip toward -Y reaching y ~= 9.0:
-    ins45 = ns ^ Manifold.cube((9.8, 12.0, 10.0)).translate((-11.4, -6.0, 0.0))
-    noz_seated = ins45.rotate((90, 0, 0)).translate((6.5, 17.2, 12.50))
+    ins45 = ns ^ Manifold.cube((11.9, 16.0, 10.0)).translate((-12.0 - 5.95, -8.0, 0.0))
+    noz_seated = ins45.rotate((90, 0, 0)).translate((12.0, 17.2, 12.50))
     # Seating assertion (2026-11-02): the insert must actually enter the socket with ~0 overlap.
     _seat_fail = []
     _ibb = noz_seated.bounding_box()

@@ -1,24 +1,24 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_mom_jet_slide_valve_P.stl",
-  "file_sha256": "07ee4afa6f81b00b400d96f87f84e04839fe4d5be2c1776cf619434ac959da2a",
+  "file_sha256": "b95279db95ac865e9bf69bb1bc16e52833366230321026ba6bb204059fb773d6",
   "part_id": "mom_jet_slide_valve",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-11-02T12:07:37Z",
+  "checked_at": "2026-11-02T23:56:38Z",
   "metrics": {
     "bbox_mm": [
       9.6,
       38.0,
-      9.17
+      10.11
     ],
-    "volume_cm3": 1.43,
-    "surface_cm2": 10.58,
-    "triangles": 1024,
+    "volume_cm3": 1.61,
+    "surface_cm2": 11.74,
+    "triangles": 922,
     "ledges": [],
     "floating_contours": [],
-    "layers": 46,
-    "bed_contact_mm2": 182.8,
-    "height_mm": 9.17,
+    "layers": 51,
+    "bed_contact_mm2": 222.8,
+    "height_mm": 10.11,
     "slenderness": 0.68,
     "centre_of_mass_over_contact": true,
     "min_wall_mm": null,
@@ -49,7 +49,7 @@
       "value": [
         9.6,
         38.0,
-        9.2
+        10.1
       ],
       "limit": [
         180,
@@ -62,7 +62,7 @@
       "id": "V4_no_steep_overhang",
       "level": "block",
       "result": "pass",
-      "value": 0.07,
+      "value": 0.03,
       "limit": 1.0,
       "detail": "mm2 of downward surface steeper than 45 deg (flat bridges excluded)"
     },
@@ -101,16 +101,16 @@
     {
       "id": "V7_min_feature",
       "level": "warn",
-      "result": "pass",
-      "value": 0,
+      "result": "warn",
+      "value": 1,
       "limit": 0,
-      "detail": "layer pieces narrower than 0.4 mm"
+      "detail": "layer pieces narrower than 0.4 mm; first at z 9.9 mm"
     },
     {
       "id": "V9_bed_contact",
       "level": "info",
       "result": "pass",
-      "value": 182.8,
+      "value": 222.8,
       "limit": null,
       "detail": "height / sqrt(contact) = 0.68; above about 3 the slicer often asks for a brim"
     },
@@ -125,6 +125,6 @@
   ],
   "print_settings": {},
   "slicer": null,
-  "verdict": "pass",
-  "summary": "Prints as is"
+  "verdict": "pass_with_warnings",
+  "summary": "Warnings: V7_min_feature"
 }

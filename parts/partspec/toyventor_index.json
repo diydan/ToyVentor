@@ -26475,9 +26475,6 @@
         "pro_fork_rake_adpt": [
           "fork_bores"
         ],
-        "mom_band_core_tray": [
-          "latch_bore"
-        ],
         "mom_band_core_lid": [
           "hinge_bore"
         ],
@@ -26777,10 +26774,6 @@
         },
         {
           "male": "pin_friction.axis",
-          "female": "mom_band_core_tray.latch_bore"
-        },
-        {
-          "male": "pin_friction.axis",
           "female": "mom_band_core_lid.hinge_bore"
         },
         {
@@ -27066,10 +27059,6 @@
         {
           "male": "pin_friction_long.axis",
           "female": "pro_fork_rake_adpt.fork_bores"
-        },
-        {
-          "male": "pin_friction_long.axis",
-          "female": "mom_band_core_tray.latch_bore"
         },
         {
           "male": "pin_friction_long.axis",
@@ -27388,10 +27377,6 @@
         },
         {
           "male": "pin_free.axis",
-          "female": "mom_band_core_tray.latch_bore"
-        },
-        {
-          "male": "pin_free.axis",
           "female": "mom_band_core_lid.hinge_bore"
         },
         {
@@ -27677,10 +27662,6 @@
         {
           "male": "veh_steering_wheel.axis",
           "female": "pro_fork_rake_adpt.fork_bores"
-        },
-        {
-          "male": "veh_steering_wheel.axis",
-          "female": "mom_band_core_tray.latch_bore"
         },
         {
           "male": "veh_steering_wheel.axis",
@@ -27972,10 +27953,6 @@
         },
         {
           "male": "pro_tie_rod_link.rack_stub",
-          "female": "mom_band_core_tray.latch_bore"
-        },
-        {
-          "male": "pro_tie_rod_link.rack_stub",
           "female": "mom_band_core_lid.hinge_bore"
         },
         {
@@ -28261,10 +28238,6 @@
         {
           "male": "pin_free_tu03.axis",
           "female": "pro_fork_rake_adpt.fork_bores"
-        },
-        {
-          "male": "pin_free_tu03.axis",
-          "female": "mom_band_core_tray.latch_bore"
         },
         {
           "male": "pin_free_tu03.axis",
@@ -28556,10 +28529,6 @@
         },
         {
           "male": "mom_jet_slide_valve.axis",
-          "female": "mom_band_core_tray.latch_bore"
-        },
-        {
-          "male": "mom_jet_slide_valve.axis",
           "female": "mom_band_core_lid.hinge_bore"
         },
         {
@@ -28848,10 +28817,6 @@
         },
         {
           "male": "mech_n20_pinion_z10.axis",
-          "female": "mom_band_core_tray.latch_bore"
-        },
-        {
-          "male": "mech_n20_pinion_z10.axis",
           "female": "mom_band_core_lid.hinge_bore"
         },
         {
@@ -29137,10 +29102,6 @@
         {
           "male": "pro_pilot_pin.axis",
           "female": "pro_fork_rake_adpt.fork_bores"
-        },
-        {
-          "male": "pro_pilot_pin.axis",
-          "female": "mom_band_core_tray.latch_bore"
         },
         {
           "male": "pro_pilot_pin.axis",
@@ -29634,10 +29595,6 @@
         },
         {
           "male": "shaft_tu03.axis",
-          "female": "mom_band_core_tray.latch_bore"
-        },
-        {
-          "male": "shaft_tu03.axis",
           "female": "mom_band_core_lid.hinge_bore"
         },
         {
@@ -30050,10 +30007,6 @@
         },
         {
           "male": "shaft_tu05.axis",
-          "female": "mom_band_core_tray.latch_bore"
-        },
-        {
-          "male": "shaft_tu05.axis",
           "female": "mom_band_core_lid.hinge_bore"
         },
         {
@@ -30466,10 +30419,6 @@
         },
         {
           "male": "shaft_tu07.axis",
-          "female": "mom_band_core_tray.latch_bore"
-        },
-        {
-          "male": "shaft_tu07.axis",
           "female": "mom_band_core_lid.hinge_bore"
         },
         {
@@ -30882,10 +30831,6 @@
         },
         {
           "male": "racer_axle.axis",
-          "female": "mom_band_core_tray.latch_bore"
-        },
-        {
-          "male": "racer_axle.axis",
           "female": "mom_band_core_lid.hinge_bore"
         },
         {
@@ -31298,10 +31243,6 @@
         },
         {
           "male": "char_faceplate.axis",
-          "female": "mom_band_core_tray.latch_bore"
-        },
-        {
-          "male": "char_faceplate.axis",
           "female": "mom_band_core_lid.hinge_bore"
         },
         {
@@ -31714,10 +31655,6 @@
         },
         {
           "male": "char_faceplate_vinyl.axis",
-          "female": "mom_band_core_tray.latch_bore"
-        },
-        {
-          "male": "char_faceplate_vinyl.axis",
           "female": "mom_band_core_lid.hinge_bore"
         },
         {
@@ -32130,10 +32067,6 @@
         },
         {
           "male": "char_faceplate_flat.axis",
-          "female": "mom_band_core_tray.latch_bore"
-        },
-        {
-          "male": "char_faceplate_flat.axis",
           "female": "mom_band_core_lid.hinge_bore"
         },
         {
@@ -32546,10 +32479,6 @@
         },
         {
           "male": "prop_wrench.axis",
-          "female": "mom_band_core_tray.latch_bore"
-        },
-        {
-          "male": "prop_wrench.axis",
           "female": "mom_band_core_lid.hinge_bore"
         },
         {
@@ -32959,10 +32888,6 @@
         {
           "male": "prop_star_shield.axis",
           "female": "pro_fork_rake_adpt.fork_bores"
-        },
-        {
-          "male": "prop_star_shield.axis",
-          "female": "mom_band_core_tray.latch_bore"
         },
         {
           "male": "prop_star_shield.axis",
@@ -33378,10 +33303,6 @@
         },
         {
           "male": "prop_hammer.axis",
-          "female": "mom_band_core_tray.latch_bore"
-        },
-        {
-          "male": "prop_hammer.axis",
           "female": "mom_band_core_lid.hinge_bore"
         },
         {
@@ -33791,10 +33712,6 @@
         {
           "male": "prop_mop.axis",
           "female": "pro_fork_rake_adpt.fork_bores"
-        },
-        {
-          "male": "prop_mop.axis",
-          "female": "mom_band_core_tray.latch_bore"
         },
         {
           "male": "prop_mop.axis",
@@ -34210,10 +34127,6 @@
         },
         {
           "male": "prop_guitar.axis",
-          "female": "mom_band_core_tray.latch_bore"
-        },
-        {
-          "male": "prop_guitar.axis",
           "female": "mom_band_core_lid.hinge_bore"
         },
         {
@@ -34623,10 +34536,6 @@
         {
           "male": "prop_screwdriver.axis",
           "female": "pro_fork_rake_adpt.fork_bores"
-        },
-        {
-          "male": "prop_screwdriver.axis",
-          "female": "mom_band_core_tray.latch_bore"
         },
         {
           "male": "prop_screwdriver.axis",
@@ -35042,10 +34951,6 @@
         },
         {
           "male": "prop_paint_roller.axis",
-          "female": "mom_band_core_tray.latch_bore"
-        },
-        {
-          "male": "prop_paint_roller.axis",
           "female": "mom_band_core_lid.hinge_bore"
         },
         {
@@ -35455,10 +35360,6 @@
         {
           "male": "prop_broom.axis",
           "female": "pro_fork_rake_adpt.fork_bores"
-        },
-        {
-          "male": "prop_broom.axis",
-          "female": "mom_band_core_tray.latch_bore"
         },
         {
           "male": "prop_broom.axis",
@@ -35874,10 +35775,6 @@
         },
         {
           "male": "prop_scrub_brush.axis",
-          "female": "mom_band_core_tray.latch_bore"
-        },
-        {
-          "male": "prop_scrub_brush.axis",
           "female": "mom_band_core_lid.hinge_bore"
         },
         {
@@ -36287,10 +36184,6 @@
         {
           "male": "prop_vacuum.axis",
           "female": "pro_fork_rake_adpt.fork_bores"
-        },
-        {
-          "male": "prop_vacuum.axis",
-          "female": "mom_band_core_tray.latch_bore"
         },
         {
           "male": "prop_vacuum.axis",
@@ -36706,10 +36599,6 @@
         },
         {
           "male": "prop_trumpet.axis",
-          "female": "mom_band_core_tray.latch_bore"
-        },
-        {
-          "male": "prop_trumpet.axis",
           "female": "mom_band_core_lid.hinge_bore"
         },
         {
@@ -37119,10 +37008,6 @@
         {
           "male": "prop_maracas.axis",
           "female": "pro_fork_rake_adpt.fork_bores"
-        },
-        {
-          "male": "prop_maracas.axis",
-          "female": "mom_band_core_tray.latch_bore"
         },
         {
           "male": "prop_maracas.axis",
@@ -37538,10 +37423,6 @@
         },
         {
           "male": "prop_flag.axis",
-          "female": "mom_band_core_tray.latch_bore"
-        },
-        {
-          "male": "prop_flag.axis",
           "female": "mom_band_core_lid.hinge_bore"
         },
         {
@@ -37951,10 +37832,6 @@
         {
           "male": "prop_magnifier.axis",
           "female": "pro_fork_rake_adpt.fork_bores"
-        },
-        {
-          "male": "prop_magnifier.axis",
-          "female": "mom_band_core_tray.latch_bore"
         },
         {
           "male": "prop_magnifier.axis",
@@ -38370,10 +38247,6 @@
         },
         {
           "male": "veh_handlebar_fork.axis",
-          "female": "mom_band_core_tray.latch_bore"
-        },
-        {
-          "male": "veh_handlebar_fork.axis",
           "female": "mom_band_core_lid.hinge_bore"
         },
         {
@@ -38783,10 +38656,6 @@
         {
           "male": "kit_barbell_shaft.axis",
           "female": "pro_fork_rake_adpt.fork_bores"
-        },
-        {
-          "male": "kit_barbell_shaft.axis",
-          "female": "mom_band_core_tray.latch_bore"
         },
         {
           "male": "kit_barbell_shaft.axis",
@@ -39202,10 +39071,6 @@
         },
         {
           "male": "kit_spinner_pin.axis",
-          "female": "mom_band_core_tray.latch_bore"
-        },
-        {
-          "male": "kit_spinner_pin.axis",
           "female": "mom_band_core_lid.hinge_bore"
         },
         {
@@ -39615,10 +39480,6 @@
         {
           "male": "kit_yoke_hbar.axis",
           "female": "pro_fork_rake_adpt.fork_bores"
-        },
-        {
-          "male": "kit_yoke_hbar.axis",
-          "female": "mom_band_core_tray.latch_bore"
         },
         {
           "male": "kit_yoke_hbar.axis",
@@ -40034,10 +39895,6 @@
         },
         {
           "male": "pro_steer_knuckle_l.wheel_stub",
-          "female": "mom_band_core_tray.latch_bore"
-        },
-        {
-          "male": "pro_steer_knuckle_l.wheel_stub",
           "female": "mom_band_core_lid.hinge_bore"
         },
         {
@@ -40447,10 +40304,6 @@
         {
           "male": "pro_steer_knuckle_r.wheel_stub",
           "female": "pro_fork_rake_adpt.fork_bores"
-        },
-        {
-          "male": "pro_steer_knuckle_r.wheel_stub",
-          "female": "mom_band_core_tray.latch_bore"
         },
         {
           "male": "pro_steer_knuckle_r.wheel_stub",
@@ -40866,10 +40719,6 @@
         },
         {
           "male": "mom_slam_plunger.axis",
-          "female": "mom_band_core_tray.latch_bore"
-        },
-        {
-          "male": "mom_slam_plunger.axis",
           "female": "mom_band_core_lid.hinge_bore"
         },
         {
@@ -41279,10 +41128,6 @@
         {
           "male": "mom_spindle_shaft.axis",
           "female": "pro_fork_rake_adpt.fork_bores"
-        },
-        {
-          "male": "mom_spindle_shaft.axis",
-          "female": "mom_band_core_tray.latch_bore"
         },
         {
           "male": "mom_spindle_shaft.axis",
@@ -41698,10 +41543,6 @@
         },
         {
           "male": "pro_captive_pin_28.axis",
-          "female": "mom_band_core_tray.latch_bore"
-        },
-        {
-          "male": "pro_captive_pin_28.axis",
           "female": "mom_band_core_lid.hinge_bore"
         },
         {
@@ -42114,10 +41955,6 @@
         },
         {
           "male": "pro_steer_column.axis",
-          "female": "mom_band_core_tray.latch_bore"
-        },
-        {
-          "male": "pro_steer_column.axis",
           "female": "mom_band_core_lid.hinge_bore"
         },
         {
@@ -42527,10 +42364,6 @@
         {
           "male": "mom_wind_key.axis",
           "female": "pro_fork_rake_adpt.fork_bores"
-        },
-        {
-          "male": "mom_wind_key.axis",
-          "female": "mom_band_core_tray.latch_bore"
         },
         {
           "male": "mom_wind_key.axis",
@@ -44024,7 +43857,6 @@
     },
     "mom_band_core_tray": {
       "interfaces": [
-        "bore_grid",
         "stud_small"
       ],
       "design_status": "verified",
@@ -44780,7 +44612,6 @@
         "pin_free_tu03": "fail",
         "pro_fork_rake_adpt": "fail",
         "mom_band_spool_pawl": "fail",
-        "mom_nozzle_set": "fail",
         "pro_tub_hinge": "fail",
         "pro_captive_pin_28": "fail",
         "pro_steer_column": "fail",

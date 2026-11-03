@@ -169,7 +169,7 @@ pro_steer_rack [pro, pro] tags=pro,steering,kitcard,gear stat=Balance connectors
 pro_tie_rod_link [pro, pro] tags=pro,steering,kitcard,joint stat=Balance connectors=(rack_stub:pin/M/pro/1x1; pivot_bore:bore_grid/F/pro/1x1)
 pin_free_tu03 [pro, pro] tags=pin,free,pivot,steering stat=Spin connectors=(axis:pin/M/pro/1x1)
 pro_fork_rake_adpt [pro, pro] tags=pro,steering,kitcard,motorbike stat=Balance connectors=(fork_bores:bore_grid/F/pro/1x2)
-mom_band_core_tray [snap, small] tags=momentum,power,kitcard,band stat=Power connectors=(under_sockets:socket_grid/F/small/4x4; rim_studs:stud_grid/M/small/4x4; latch_bore:bore_grid/F/pro/1x1)
+mom_band_core_tray [snap, small] tags=momentum,power,kitcard,band stat=Power connectors=(under_sockets:socket_grid/F/small/4x4; rim_studs:stud_grid/M/small/4x4)
 mom_band_core_lid [snap, small] tags=momentum,power,kitcard,band stat=Sturdiness connectors=(under_sockets:socket_grid/F/small/4x4; top_studs:stud_grid/M/small/4x4; hinge_bore:bore_grid/F/pro/1x1)
 mom_band_spool_pawl [pro, pro] tags=momentum,power,kitcard,band stat=Torque connectors=(hub:bore_grid/F/pro/1x1)
 mom_bumper_trigger [pro, pro] tags=momentum,trigger,kitcard,bumper stat=Awareness connectors=(mount_bores:bore_grid/F/pro/1x1)

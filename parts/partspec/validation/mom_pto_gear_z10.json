@@ -1,19 +1,19 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_mom_pto_gear_z10_P.stl",
-  "file_sha256": "6eca3c557d8d0b23d3344c598042d85fc109cfa3f8fc2ee24547e5f7adcef427",
+  "file_sha256": "9dc01a06f28cefbe407efa70b1785dcec9e0cbe1a03c71a2b76b9a1f72bd8d8d",
   "part_id": "mom_pto_gear_z10",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-11-02T12:07:37Z",
+  "checked_at": "2026-11-02T23:56:37Z",
   "metrics": {
     "bbox_mm": [
       30.0,
       28.92,
       9.6
     ],
-    "volume_cm3": 3.05,
-    "surface_cm2": 26.81,
-    "triangles": 9864,
+    "volume_cm3": 3.04,
+    "surface_cm2": 26.69,
+    "triangles": 9912,
     "ledges": [],
     "floating_contours": [],
     "layers": 48,
@@ -21,7 +21,7 @@
     "height_mm": 9.6,
     "slenderness": 0.47,
     "centre_of_mass_over_contact": true,
-    "min_wall_mm": 0.658,
+    "min_wall_mm": 0.627,
     "thin_wall_regions": []
   },
   "bridges": [],
@@ -101,10 +101,10 @@
     {
       "id": "V7_min_feature",
       "level": "warn",
-      "result": "pass",
-      "value": 0,
+      "result": "warn",
+      "value": 8,
       "limit": 0,
-      "detail": "layer pieces narrower than 0.4 mm"
+      "detail": "layer pieces narrower than 0.4 mm; first at z 6.7 mm"
     },
     {
       "id": "V9_bed_contact",
@@ -125,6 +125,6 @@
   ],
   "print_settings": {},
   "slicer": null,
-  "verdict": "pass",
-  "summary": "Prints as is"
+  "verdict": "pass_with_warnings",
+  "summary": "Warnings: V7_min_feature"
 }

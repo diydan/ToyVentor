@@ -8334,19 +8334,6 @@
     },
     {
       "male": "pin_friction.axis",
-      "female": "mom_band_core_tray.latch_bore",
-      "size_class": "pro",
-      "fit": "friction",
-      "studs": 0,
-      "gap_min_mm": null,
-      "gap_max_mm": null,
-      "as_designed": true,
-      "in_window": true,
-      "window_mm": null,
-      "measured": false
-    },
-    {
-      "male": "pin_friction.axis",
       "female": "mom_band_core_lid.hinge_bore",
       "size_class": "pro",
       "fit": "friction",
@@ -9271,19 +9258,6 @@
     {
       "male": "pin_friction_long.axis",
       "female": "pro_fork_rake_adpt.fork_bores",
-      "size_class": "pro",
-      "fit": "friction",
-      "studs": 0,
-      "gap_min_mm": null,
-      "gap_max_mm": null,
-      "as_designed": true,
-      "in_window": true,
-      "window_mm": null,
-      "measured": false
-    },
-    {
-      "male": "pin_friction_long.axis",
-      "female": "mom_band_core_tray.latch_bore",
       "size_class": "pro",
       "fit": "friction",
       "studs": 0,
@@ -10379,22 +10353,6 @@
     {
       "male": "pin_free.axis",
       "female": "pro_fork_rake_adpt.fork_bores",
-      "size_class": "pro",
-      "fit": "free",
-      "studs": 1,
-      "gap_min_mm": 0.2,
-      "gap_max_mm": 0.2,
-      "as_designed": true,
-      "in_window": true,
-      "window_mm": [
-        -0.075,
-        0.1
-      ],
-      "measured": true
-    },
-    {
-      "male": "pin_free.axis",
-      "female": "mom_band_core_tray.latch_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -11947,22 +11905,6 @@
     {
       "male": "shaft_tu03.axis",
       "female": "pro_fork_rake_adpt.fork_bores",
-      "size_class": "pro",
-      "fit": "free",
-      "studs": 1,
-      "gap_min_mm": 0.2,
-      "gap_max_mm": 0.2,
-      "as_designed": true,
-      "in_window": true,
-      "window_mm": [
-        -0.075,
-        0.1
-      ],
-      "measured": true
-    },
-    {
-      "male": "shaft_tu03.axis",
-      "female": "mom_band_core_tray.latch_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -13626,22 +13568,6 @@
     },
     {
       "male": "shaft_tu05.axis",
-      "female": "mom_band_core_tray.latch_bore",
-      "size_class": "pro",
-      "fit": "free",
-      "studs": 1,
-      "gap_min_mm": 0.2,
-      "gap_max_mm": 0.2,
-      "as_designed": true,
-      "in_window": true,
-      "window_mm": [
-        -0.075,
-        0.1
-      ],
-      "measured": true
-    },
-    {
-      "male": "shaft_tu05.axis",
       "female": "mom_band_core_lid.hinge_bore",
       "size_class": "pro",
       "fit": "free",
@@ -15275,22 +15201,6 @@
     {
       "male": "shaft_tu07.axis",
       "female": "pro_fork_rake_adpt.fork_bores",
-      "size_class": "pro",
-      "fit": "free",
-      "studs": 1,
-      "gap_min_mm": 0.2,
-      "gap_max_mm": 0.2,
-      "as_designed": true,
-      "in_window": true,
-      "window_mm": [
-        -0.075,
-        0.1
-      ],
-      "measured": true
-    },
-    {
-      "male": "shaft_tu07.axis",
-      "female": "mom_band_core_tray.latch_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -21013,22 +20923,6 @@
     {
       "male": "racer_axle.axis",
       "female": "pro_fork_rake_adpt.fork_bores",
-      "size_class": "pro",
-      "fit": "free",
-      "studs": 1,
-      "gap_min_mm": 0.2,
-      "gap_max_mm": 0.2,
-      "as_designed": true,
-      "in_window": true,
-      "window_mm": [
-        -0.075,
-        0.1
-      ],
-      "measured": true
-    },
-    {
-      "male": "racer_axle.axis",
-      "female": "mom_band_core_tray.latch_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -33556,22 +33450,6 @@
     },
     {
       "male": "char_faceplate.axis",
-      "female": "mom_band_core_tray.latch_bore",
-      "size_class": "pro",
-      "fit": "free",
-      "studs": 1,
-      "gap_min_mm": 0.2,
-      "gap_max_mm": 0.2,
-      "as_designed": true,
-      "in_window": true,
-      "window_mm": [
-        -0.075,
-        0.1
-      ],
-      "measured": true
-    },
-    {
-      "male": "char_faceplate.axis",
       "female": "mom_band_core_lid.hinge_bore",
       "size_class": "pro",
       "fit": "free",
@@ -35220,22 +35098,6 @@
     },
     {
       "male": "char_faceplate_vinyl.axis",
-      "female": "mom_band_core_tray.latch_bore",
-      "size_class": "pro",
-      "fit": "free",
-      "studs": 1,
-      "gap_min_mm": 0.2,
-      "gap_max_mm": 0.2,
-      "as_designed": true,
-      "in_window": true,
-      "window_mm": [
-        -0.075,
-        0.1
-      ],
-      "measured": true
-    },
-    {
-      "male": "char_faceplate_vinyl.axis",
       "female": "mom_band_core_lid.hinge_bore",
       "size_class": "pro",
       "fit": "free",
@@ -36869,22 +36731,6 @@
     {
       "male": "char_faceplate_flat.axis",
       "female": "pro_fork_rake_adpt.fork_bores",
-      "size_class": "pro",
-      "fit": "free",
-      "studs": 1,
-      "gap_min_mm": 0.2,
-      "gap_max_mm": 0.2,
-      "as_designed": true,
-      "in_window": true,
-      "window_mm": [
-        -0.075,
-        0.1
-      ],
-      "measured": true
-    },
-    {
-      "male": "char_faceplate_flat.axis",
-      "female": "mom_band_core_tray.latch_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -60276,22 +60122,6 @@
     },
     {
       "male": "prop_wrench.axis",
-      "female": "mom_band_core_tray.latch_bore",
-      "size_class": "pro",
-      "fit": "free",
-      "studs": 1,
-      "gap_min_mm": 0.2,
-      "gap_max_mm": 0.2,
-      "as_designed": true,
-      "in_window": true,
-      "window_mm": [
-        -0.075,
-        0.1
-      ],
-      "measured": true
-    },
-    {
-      "male": "prop_wrench.axis",
       "female": "mom_band_core_lid.hinge_bore",
       "size_class": "pro",
       "fit": "free",
@@ -61925,22 +61755,6 @@
     {
       "male": "prop_star_shield.axis",
       "female": "pro_fork_rake_adpt.fork_bores",
-      "size_class": "pro",
-      "fit": "free",
-      "studs": 1,
-      "gap_min_mm": 0.2,
-      "gap_max_mm": 0.2,
-      "as_designed": true,
-      "in_window": true,
-      "window_mm": [
-        -0.075,
-        0.1
-      ],
-      "measured": true
-    },
-    {
-      "male": "prop_star_shield.axis",
-      "female": "mom_band_core_tray.latch_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -63604,22 +63418,6 @@
     },
     {
       "male": "prop_hammer.axis",
-      "female": "mom_band_core_tray.latch_bore",
-      "size_class": "pro",
-      "fit": "free",
-      "studs": 1,
-      "gap_min_mm": 0.2,
-      "gap_max_mm": 0.2,
-      "as_designed": true,
-      "in_window": true,
-      "window_mm": [
-        -0.075,
-        0.1
-      ],
-      "measured": true
-    },
-    {
-      "male": "prop_hammer.axis",
       "female": "mom_band_core_lid.hinge_bore",
       "size_class": "pro",
       "fit": "free",
@@ -65253,22 +65051,6 @@
     {
       "male": "prop_mop.axis",
       "female": "pro_fork_rake_adpt.fork_bores",
-      "size_class": "pro",
-      "fit": "free",
-      "studs": 1,
-      "gap_min_mm": 0.2,
-      "gap_max_mm": 0.2,
-      "as_designed": true,
-      "in_window": true,
-      "window_mm": [
-        -0.075,
-        0.1
-      ],
-      "measured": true
-    },
-    {
-      "male": "prop_mop.axis",
-      "female": "mom_band_core_tray.latch_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -66932,22 +66714,6 @@
     },
     {
       "male": "prop_guitar.axis",
-      "female": "mom_band_core_tray.latch_bore",
-      "size_class": "pro",
-      "fit": "free",
-      "studs": 1,
-      "gap_min_mm": 0.2,
-      "gap_max_mm": 0.2,
-      "as_designed": true,
-      "in_window": true,
-      "window_mm": [
-        -0.075,
-        0.1
-      ],
-      "measured": true
-    },
-    {
-      "male": "prop_guitar.axis",
       "female": "mom_band_core_lid.hinge_bore",
       "size_class": "pro",
       "fit": "free",
@@ -68581,22 +68347,6 @@
     {
       "male": "prop_screwdriver.axis",
       "female": "pro_fork_rake_adpt.fork_bores",
-      "size_class": "pro",
-      "fit": "free",
-      "studs": 1,
-      "gap_min_mm": 0.2,
-      "gap_max_mm": 0.2,
-      "as_designed": true,
-      "in_window": true,
-      "window_mm": [
-        -0.075,
-        0.1
-      ],
-      "measured": true
-    },
-    {
-      "male": "prop_screwdriver.axis",
-      "female": "mom_band_core_tray.latch_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -70260,22 +70010,6 @@
     },
     {
       "male": "prop_paint_roller.axis",
-      "female": "mom_band_core_tray.latch_bore",
-      "size_class": "pro",
-      "fit": "free",
-      "studs": 1,
-      "gap_min_mm": 0.2,
-      "gap_max_mm": 0.2,
-      "as_designed": true,
-      "in_window": true,
-      "window_mm": [
-        -0.075,
-        0.1
-      ],
-      "measured": true
-    },
-    {
-      "male": "prop_paint_roller.axis",
       "female": "mom_band_core_lid.hinge_bore",
       "size_class": "pro",
       "fit": "free",
@@ -71909,22 +71643,6 @@
     {
       "male": "prop_broom.axis",
       "female": "pro_fork_rake_adpt.fork_bores",
-      "size_class": "pro",
-      "fit": "free",
-      "studs": 1,
-      "gap_min_mm": 0.2,
-      "gap_max_mm": 0.2,
-      "as_designed": true,
-      "in_window": true,
-      "window_mm": [
-        -0.075,
-        0.1
-      ],
-      "measured": true
-    },
-    {
-      "male": "prop_broom.axis",
-      "female": "mom_band_core_tray.latch_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -73588,22 +73306,6 @@
     },
     {
       "male": "prop_scrub_brush.axis",
-      "female": "mom_band_core_tray.latch_bore",
-      "size_class": "pro",
-      "fit": "free",
-      "studs": 1,
-      "gap_min_mm": 0.2,
-      "gap_max_mm": 0.2,
-      "as_designed": true,
-      "in_window": true,
-      "window_mm": [
-        -0.075,
-        0.1
-      ],
-      "measured": true
-    },
-    {
-      "male": "prop_scrub_brush.axis",
       "female": "mom_band_core_lid.hinge_bore",
       "size_class": "pro",
       "fit": "free",
@@ -75237,22 +74939,6 @@
     {
       "male": "prop_vacuum.axis",
       "female": "pro_fork_rake_adpt.fork_bores",
-      "size_class": "pro",
-      "fit": "free",
-      "studs": 1,
-      "gap_min_mm": 0.2,
-      "gap_max_mm": 0.2,
-      "as_designed": true,
-      "in_window": true,
-      "window_mm": [
-        -0.075,
-        0.1
-      ],
-      "measured": true
-    },
-    {
-      "male": "prop_vacuum.axis",
-      "female": "mom_band_core_tray.latch_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -76916,22 +76602,6 @@
     },
     {
       "male": "prop_trumpet.axis",
-      "female": "mom_band_core_tray.latch_bore",
-      "size_class": "pro",
-      "fit": "free",
-      "studs": 1,
-      "gap_min_mm": 0.2,
-      "gap_max_mm": 0.2,
-      "as_designed": true,
-      "in_window": true,
-      "window_mm": [
-        -0.075,
-        0.1
-      ],
-      "measured": true
-    },
-    {
-      "male": "prop_trumpet.axis",
       "female": "mom_band_core_lid.hinge_bore",
       "size_class": "pro",
       "fit": "free",
@@ -78565,22 +78235,6 @@
     {
       "male": "prop_maracas.axis",
       "female": "pro_fork_rake_adpt.fork_bores",
-      "size_class": "pro",
-      "fit": "free",
-      "studs": 1,
-      "gap_min_mm": 0.2,
-      "gap_max_mm": 0.2,
-      "as_designed": true,
-      "in_window": true,
-      "window_mm": [
-        -0.075,
-        0.1
-      ],
-      "measured": true
-    },
-    {
-      "male": "prop_maracas.axis",
-      "female": "mom_band_core_tray.latch_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -80244,22 +79898,6 @@
     },
     {
       "male": "prop_flag.axis",
-      "female": "mom_band_core_tray.latch_bore",
-      "size_class": "pro",
-      "fit": "free",
-      "studs": 1,
-      "gap_min_mm": 0.2,
-      "gap_max_mm": 0.2,
-      "as_designed": true,
-      "in_window": true,
-      "window_mm": [
-        -0.075,
-        0.1
-      ],
-      "measured": true
-    },
-    {
-      "male": "prop_flag.axis",
       "female": "mom_band_core_lid.hinge_bore",
       "size_class": "pro",
       "fit": "free",
@@ -81893,22 +81531,6 @@
     {
       "male": "prop_magnifier.axis",
       "female": "pro_fork_rake_adpt.fork_bores",
-      "size_class": "pro",
-      "fit": "free",
-      "studs": 1,
-      "gap_min_mm": 0.2,
-      "gap_max_mm": 0.2,
-      "as_designed": true,
-      "in_window": true,
-      "window_mm": [
-        -0.075,
-        0.1
-      ],
-      "measured": true
-    },
-    {
-      "male": "prop_magnifier.axis",
-      "female": "mom_band_core_tray.latch_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -96737,22 +96359,6 @@
     {
       "male": "veh_steering_wheel.axis",
       "female": "pro_fork_rake_adpt.fork_bores",
-      "size_class": "pro",
-      "fit": "free",
-      "studs": 1,
-      "gap_min_mm": 0.2,
-      "gap_max_mm": 0.2,
-      "as_designed": true,
-      "in_window": true,
-      "window_mm": [
-        -0.075,
-        0.1
-      ],
-      "measured": true
-    },
-    {
-      "male": "veh_steering_wheel.axis",
-      "female": "mom_band_core_tray.latch_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -111900,22 +111506,6 @@
     },
     {
       "male": "veh_handlebar_fork.axis",
-      "female": "mom_band_core_tray.latch_bore",
-      "size_class": "pro",
-      "fit": "free",
-      "studs": 1,
-      "gap_min_mm": 0.2,
-      "gap_max_mm": 0.2,
-      "as_designed": true,
-      "in_window": true,
-      "window_mm": [
-        -0.075,
-        0.1
-      ],
-      "measured": true
-    },
-    {
-      "male": "veh_handlebar_fork.axis",
       "female": "mom_band_core_lid.hinge_bore",
       "size_class": "pro",
       "fit": "free",
@@ -117638,22 +117228,6 @@
     },
     {
       "male": "kit_barbell_shaft.axis",
-      "female": "mom_band_core_tray.latch_bore",
-      "size_class": "pro",
-      "fit": "free",
-      "studs": 1,
-      "gap_min_mm": 0.2,
-      "gap_max_mm": 0.2,
-      "as_designed": true,
-      "in_window": true,
-      "window_mm": [
-        -0.075,
-        0.1
-      ],
-      "measured": true
-    },
-    {
-      "male": "kit_barbell_shaft.axis",
       "female": "mom_band_core_lid.hinge_bore",
       "size_class": "pro",
       "fit": "free",
@@ -119287,22 +118861,6 @@
     {
       "male": "kit_spinner_pin.axis",
       "female": "pro_fork_rake_adpt.fork_bores",
-      "size_class": "pro",
-      "fit": "free",
-      "studs": 1,
-      "gap_min_mm": 0.2,
-      "gap_max_mm": 0.2,
-      "as_designed": true,
-      "in_window": true,
-      "window_mm": [
-        -0.075,
-        0.1
-      ],
-      "measured": true
-    },
-    {
-      "male": "kit_spinner_pin.axis",
-      "female": "mom_band_core_tray.latch_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -123682,22 +123240,6 @@
     },
     {
       "male": "kit_yoke_hbar.axis",
-      "female": "mom_band_core_tray.latch_bore",
-      "size_class": "pro",
-      "fit": "free",
-      "studs": 1,
-      "gap_min_mm": 0.2,
-      "gap_max_mm": 0.2,
-      "as_designed": true,
-      "in_window": true,
-      "window_mm": [
-        -0.075,
-        0.1
-      ],
-      "measured": true
-    },
-    {
-      "male": "kit_yoke_hbar.axis",
       "female": "mom_band_core_lid.hinge_bore",
       "size_class": "pro",
       "fit": "free",
@@ -125331,22 +124873,6 @@
     {
       "male": "pro_steer_knuckle_l.wheel_stub",
       "female": "pro_fork_rake_adpt.fork_bores",
-      "size_class": "pro",
-      "fit": "free",
-      "studs": 1,
-      "gap_min_mm": 0.2,
-      "gap_max_mm": 0.2,
-      "as_designed": true,
-      "in_window": true,
-      "window_mm": [
-        -0.075,
-        0.1
-      ],
-      "measured": true
-    },
-    {
-      "male": "pro_steer_knuckle_l.wheel_stub",
-      "female": "mom_band_core_tray.latch_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -127010,22 +126536,6 @@
     },
     {
       "male": "pro_steer_knuckle_r.wheel_stub",
-      "female": "mom_band_core_tray.latch_bore",
-      "size_class": "pro",
-      "fit": "free",
-      "studs": 1,
-      "gap_min_mm": 0.2,
-      "gap_max_mm": 0.2,
-      "as_designed": true,
-      "in_window": true,
-      "window_mm": [
-        -0.075,
-        0.1
-      ],
-      "measured": true
-    },
-    {
-      "male": "pro_steer_knuckle_r.wheel_stub",
       "female": "mom_band_core_lid.hinge_bore",
       "size_class": "pro",
       "fit": "free",
@@ -128274,22 +127784,6 @@
     },
     {
       "male": "pro_tie_rod_link.rack_stub",
-      "female": "mom_band_core_tray.latch_bore",
-      "size_class": "pro",
-      "fit": "free",
-      "studs": 1,
-      "gap_min_mm": 0.2,
-      "gap_max_mm": 0.2,
-      "as_designed": true,
-      "in_window": true,
-      "window_mm": [
-        -0.075,
-        0.1
-      ],
-      "measured": true
-    },
-    {
-      "male": "pro_tie_rod_link.rack_stub",
       "female": "mom_band_core_lid.hinge_bore",
       "size_class": "pro",
       "fit": "free",
@@ -129427,22 +128921,6 @@
     {
       "male": "pin_free_tu03.axis",
       "female": "pro_fork_rake_adpt.fork_bores",
-      "size_class": "pro",
-      "fit": "free",
-      "studs": 1,
-      "gap_min_mm": 0.2,
-      "gap_max_mm": 0.2,
-      "as_designed": true,
-      "in_window": true,
-      "window_mm": [
-        -0.075,
-        0.1
-      ],
-      "measured": true
-    },
-    {
-      "male": "pin_free_tu03.axis",
-      "female": "mom_band_core_tray.latch_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -133711,22 +133189,6 @@
     {
       "male": "mom_slam_plunger.axis",
       "female": "pro_fork_rake_adpt.fork_bores",
-      "size_class": "pro",
-      "fit": "free",
-      "studs": 1,
-      "gap_min_mm": 0.2,
-      "gap_max_mm": 0.2,
-      "as_designed": true,
-      "in_window": true,
-      "window_mm": [
-        -0.075,
-        0.1
-      ],
-      "measured": true
-    },
-    {
-      "male": "mom_slam_plunger.axis",
-      "female": "mom_band_core_tray.latch_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -139464,22 +138926,6 @@
     },
     {
       "male": "mom_spindle_shaft.axis",
-      "female": "mom_band_core_tray.latch_bore",
-      "size_class": "pro",
-      "fit": "free",
-      "studs": 1,
-      "gap_min_mm": 0.2,
-      "gap_max_mm": 0.2,
-      "as_designed": true,
-      "in_window": true,
-      "window_mm": [
-        -0.075,
-        0.1
-      ],
-      "measured": true
-    },
-    {
-      "male": "mom_spindle_shaft.axis",
       "female": "mom_band_core_lid.hinge_bore",
       "size_class": "pro",
       "fit": "free",
@@ -141113,22 +140559,6 @@
     {
       "male": "pro_captive_pin_28.axis",
       "female": "pro_fork_rake_adpt.fork_bores",
-      "size_class": "pro",
-      "fit": "free",
-      "studs": 1,
-      "gap_min_mm": 0.2,
-      "gap_max_mm": 0.2,
-      "as_designed": true,
-      "in_window": true,
-      "window_mm": [
-        -0.075,
-        0.1
-      ],
-      "measured": true
-    },
-    {
-      "male": "pro_captive_pin_28.axis",
-      "female": "mom_band_core_tray.latch_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -142792,22 +142222,6 @@
     },
     {
       "male": "pro_steer_column.axis",
-      "female": "mom_band_core_tray.latch_bore",
-      "size_class": "pro",
-      "fit": "free",
-      "studs": 1,
-      "gap_min_mm": 0.2,
-      "gap_max_mm": 0.2,
-      "as_designed": true,
-      "in_window": true,
-      "window_mm": [
-        -0.075,
-        0.1
-      ],
-      "measured": true
-    },
-    {
-      "male": "pro_steer_column.axis",
       "female": "mom_band_core_lid.hinge_bore",
       "size_class": "pro",
       "fit": "free",
@@ -144456,22 +143870,6 @@
     },
     {
       "male": "mom_wind_key.axis",
-      "female": "mom_band_core_tray.latch_bore",
-      "size_class": "pro",
-      "fit": "free",
-      "studs": 1,
-      "gap_min_mm": 0.2,
-      "gap_max_mm": 0.2,
-      "as_designed": true,
-      "in_window": true,
-      "window_mm": [
-        -0.075,
-        0.1
-      ],
-      "measured": true
-    },
-    {
-      "male": "mom_wind_key.axis",
       "female": "mom_band_core_lid.hinge_bore",
       "size_class": "pro",
       "fit": "free",
@@ -145705,22 +145103,6 @@
     {
       "male": "mom_jet_slide_valve.axis",
       "female": "pro_fork_rake_adpt.fork_bores",
-      "size_class": "pro",
-      "fit": "free",
-      "studs": 1,
-      "gap_min_mm": 0.2,
-      "gap_max_mm": 0.2,
-      "as_designed": true,
-      "in_window": true,
-      "window_mm": [
-        -0.075,
-        0.1
-      ],
-      "measured": true
-    },
-    {
-      "male": "mom_jet_slide_valve.axis",
-      "female": "mom_band_core_tray.latch_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,
@@ -149604,22 +148986,6 @@
     },
     {
       "male": "mech_n20_pinion_z10.axis",
-      "female": "mom_band_core_tray.latch_bore",
-      "size_class": "pro",
-      "fit": "free",
-      "studs": 1,
-      "gap_min_mm": 0.2,
-      "gap_max_mm": 0.2,
-      "as_designed": true,
-      "in_window": true,
-      "window_mm": [
-        -0.075,
-        0.1
-      ],
-      "measured": true
-    },
-    {
-      "male": "mech_n20_pinion_z10.axis",
       "female": "mom_band_core_lid.hinge_bore",
       "size_class": "pro",
       "fit": "free",
@@ -153473,22 +152839,6 @@
     {
       "male": "pro_pilot_pin.axis",
       "female": "pro_fork_rake_adpt.fork_bores",
-      "size_class": "pro",
-      "fit": "free",
-      "studs": 1,
-      "gap_min_mm": 0.2,
-      "gap_max_mm": 0.2,
-      "as_designed": true,
-      "in_window": true,
-      "window_mm": [
-        -0.075,
-        0.1
-      ],
-      "measured": true
-    },
-    {
-      "male": "pro_pilot_pin.axis",
-      "female": "mom_band_core_tray.latch_bore",
       "size_class": "pro",
       "fit": "free",
       "studs": 1,

@@ -2,11 +2,11 @@
   "validator": "preprint_check 1.2.0",
   "profile": "fdm_pla_0.4",
   "slicer": "PrusaSlicer-2.8.1",
-  "generated_at": "2026-11-02T19:45:08Z",
+  "generated_at": "2026-11-02T23:56:38Z",
   "counts": {
-    "pass": 180,
+    "pass": 177,
     "pass_with_settings": 0,
-    "pass_with_warnings": 29,
+    "pass_with_warnings": 32,
     "fail": 0
   },
   "parts": [
@@ -1434,15 +1434,15 @@
       "filament_cost_usd": null,
       "brim_mm": 0,
       "height_mm": 16.6,
-      "bed_contact_mm2": 1671.3,
-      "slenderness": 0.41,
+      "bed_contact_mm2": 1723.0,
+      "slenderness": 0.4,
       "min_wall_mm": null
     },
     {
       "part_id": "mom_band_core_tray",
       "file": "toyventor_mom_band_core_tray_S.stl",
-      "verdict": "pass",
-      "summary": "Prints as is",
+      "verdict": "pass_with_warnings",
+      "summary": "Warnings: V8_wall_thickness",
       "filament_g": null,
       "print_time_min": null,
       "filament_cost_usd": null,
@@ -1450,7 +1450,7 @@
       "height_mm": 35.1,
       "bed_contact_mm2": 1523.6,
       "slenderness": 0.9,
-      "min_wall_mm": 0.623
+      "min_wall_mm": 0.33
     },
     {
       "part_id": "mom_band_spool_pawl",
@@ -1462,9 +1462,9 @@
       "filament_cost_usd": null,
       "brim_mm": 0,
       "height_mm": 13.0,
-      "bed_contact_mm2": 96.5,
+      "bed_contact_mm2": 97.3,
       "slenderness": 1.32,
-      "min_wall_mm": 0.733
+      "min_wall_mm": null
     },
     {
       "part_id": "mom_bellows_base",
@@ -1553,14 +1553,14 @@
     {
       "part_id": "mom_jet_slide_valve",
       "file": "toyventor_mom_jet_slide_valve_P.stl",
-      "verdict": "pass",
-      "summary": "Prints as is",
+      "verdict": "pass_with_warnings",
+      "summary": "Warnings: V7_min_feature",
       "filament_g": null,
       "print_time_min": null,
       "filament_cost_usd": null,
       "brim_mm": 0,
-      "height_mm": 9.17,
-      "bed_contact_mm2": 182.8,
+      "height_mm": 10.11,
+      "bed_contact_mm2": 222.8,
       "slenderness": 0.68,
       "min_wall_mm": null
     },
@@ -1576,7 +1576,7 @@
       "height_mm": 28.0,
       "bed_contact_mm2": 852.2,
       "slenderness": 0.96,
-      "min_wall_mm": 0.451
+      "min_wall_mm": 0.294
     },
     {
       "part_id": "mom_latch_pawl",
@@ -1601,16 +1601,16 @@
       "print_time_min": null,
       "filament_cost_usd": null,
       "brim_mm": 0,
-      "height_mm": 13.5,
-      "bed_contact_mm2": 430.9,
-      "slenderness": 0.65,
+      "height_mm": 8.2,
+      "bed_contact_mm2": 412.0,
+      "slenderness": 0.4,
       "min_wall_mm": null
     },
     {
       "part_id": "mom_pto_gear_z10",
       "file": "toyventor_mom_pto_gear_z10_P.stl",
-      "verdict": "pass",
-      "summary": "Prints as is",
+      "verdict": "pass_with_warnings",
+      "summary": "Warnings: V7_min_feature",
       "filament_g": null,
       "print_time_min": null,
       "filament_cost_usd": null,
@@ -1618,7 +1618,7 @@
       "height_mm": 9.6,
       "bed_contact_mm2": 420.0,
       "slenderness": 0.47,
-      "min_wall_mm": 0.658
+      "min_wall_mm": 0.627
     },
     {
       "part_id": "mom_ripcord_rack_150",

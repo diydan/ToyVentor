@@ -39108,7 +39108,7 @@
         49.8,
         35.1
       ],
-      "volume_cm3": 25.93,
+      "volume_cm3": 25.39,
       "connectors": [
         {
           "id": "under_sockets",
@@ -39209,36 +39209,6 @@
               ]
             ]
           }
-        },
-        {
-          "id": "latch_bore",
-          "kind": "bore_grid",
-          "gender": "F",
-          "interface": "bore_grid",
-          "size_class": "pro",
-          "fit_class": "PIN",
-          "bore_class": "free",
-          "depth_mm": 5.0,
-          "lattice": "pivot",
-          "frame": {
-            "origin": [
-              18.1,
-              -15.25,
-              23.5
-            ],
-            "normal": [
-              1,
-              0,
-              0
-            ]
-          },
-          "grid": {
-            "nx": 1,
-            "ny": 1,
-            "pitch": 12.5,
-            "anchor": "corner"
-          },
-          "print_profile": "teardrop"
         }
       ],
       "safety": {
@@ -39256,59 +39226,15 @@
       },
       "design_status": "verified",
       "fit": {
-        "studs_measured": 18,
+        "studs_measured": 16,
         "design_gap_mm": 0.05,
         "gap_min_mm": 0.048,
-        "gap_max_mm": 0.2,
+        "gap_max_mm": 0.048,
         "surface_offset_window_mm": [
-          -0.075,
+          -0.076,
           0.074
         ],
-        "residual_error_mm": 0.05,
-        "snap": {
-          "studs_measured": 16,
-          "design_gap_mm": 0.05,
-          "gap_min_mm": 0.048,
-          "gap_max_mm": 0.048,
-          "surface_offset_window_mm": [
-            -0.076,
-            0.074
-          ],
-          "residual_error_mm": 0.05
-        },
-        "pro": {
-          "studs_measured": 2,
-          "design_gap_mm": 0.20000000000000018,
-          "pairs": [
-            {
-              "pin": "pin_free",
-              "bore": "free",
-              "fit": "free",
-              "gap_min_mm": 0.2,
-              "gap_max_mm": 0.2
-            },
-            {
-              "pin": "shaft_drive",
-              "bore": "free",
-              "fit": "free",
-              "gap_min_mm": 0.2,
-              "gap_max_mm": 0.2
-            },
-            {
-              "pin": "pin_friction",
-              "bore": "free",
-              "fit": "friction",
-              "measured": false
-            }
-          ],
-          "gap_min_mm": 0.2,
-          "gap_max_mm": 0.2,
-          "surface_offset_window_mm": [
-            -0.075,
-            0.1
-          ],
-          "residual_error_mm": 0.05
-        }
+        "residual_error_mm": 0.05
       },
       "checks": [
         {
@@ -39345,7 +39271,7 @@
           "id": "P1_no_supports",
           "level": "block",
           "result": "pass",
-          "detail": "0.3 mm2 steeper than 45 deg"
+          "detail": "0.0 mm2 steeper than 45 deg"
         },
         {
           "id": "P4_no_ledges",
@@ -39375,25 +39301,13 @@
           "id": "I2_connectors_on_part",
           "level": "block",
           "result": "pass",
-          "detail": "3 connector(s)"
+          "detail": "2 connector(s)"
         },
         {
           "id": "I3_seats_on_reference",
           "level": "block",
           "result": "pass",
-          "detail": "overlap 0.000 mm3 with matching reference part"
-        },
-        {
-          "id": "I4_bore_on_grid",
-          "level": "block",
-          "result": "pass",
-          "detail": "1 bore(s) on the lattice and present"
-        },
-        {
-          "id": "I5_pin_fits_bore",
-          "level": "block",
-          "result": "pass",
-          "detail": "1 pin/bore feature(s) match the interface"
+          "detail": "overlap -0.000 mm3 with matching reference part"
         },
         {
           "id": "S1_small_part_screen",
@@ -39405,19 +39319,19 @@
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "16 stud(s) gap +0.048 to +0.048 mm; 2 pin/bore pair(s) gap +0.200 to +0.200 mm"
+          "detail": "16 stud(s): gap +0.048 to +0.048 mm, design 0.050, allowed +0.045 to +0.060"
         },
         {
           "id": "T2_fit_tolerance_window",
           "level": "warn",
           "result": "pass",
-          "detail": "surface offset window -0.075 to +0.074 mm vs calibrated error +/-0.05"
+          "detail": "surface offset window -0.076 to +0.074 mm vs calibrated error +/-0.05"
         },
         {
           "id": "F1_printed_fit",
           "level": "block",
           "result": "pending",
-          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.074 mm"
+          "detail": "needs calibration print: printer surface offset must land in -0.076 to +0.074 mm"
         },
         {
           "id": "F2_breakage",
@@ -39455,7 +39369,7 @@
         61.5,
         16.6
       ],
-      "volume_cm3": 12.9,
+      "volume_cm3": 13.17,
       "connectors": [
         {
           "id": "under_sockets",
@@ -39770,11 +39684,11 @@
       ],
       "file": "toyventor_mom_band_spool_pawl_P.stl",
       "bbox_mm": [
-        21.6,
-        21.6,
+        20.3,
+        20.3,
         13.0
       ],
-      "volume_cm3": 2.0,
+      "volume_cm3": 2.09,
       "connectors": [
         {
           "id": "hub",
@@ -39808,8 +39722,8 @@
       ],
       "safety": {
         "small_part_status": "small_part",
-        "min_enclosing_diameter_mm": 21.63,
-        "margin_pct": -31.9,
+        "min_enclosing_diameter_mm": 20.75,
+        "margin_pct": -34.6,
         "print_page_warning": [
           "Printed at home or by a print service. Not tested to toy-safety standards. Adult supervision required. Check for cracks, sharp edges and loose pieces before each use, and stop using anything that has broken.",
           "CHOKING HAZARD - Small parts. Not for children under 3 years."
@@ -39882,7 +39796,7 @@
           "id": "G5_fits_bed",
           "level": "block",
           "result": "pass",
-          "detail": "[21.6, 21.6, 13.0] vs [180, 180, 180]"
+          "detail": "[20.3, 20.3, 13.0] vs [180, 180, 180]"
         },
         {
           "id": "P1_no_supports",
@@ -39936,7 +39850,7 @@
           "id": "S1_small_part_screen",
           "level": "warn",
           "result": "fail",
-          "detail": "small_part: best-fit diameter 21.63 mm vs 31.75 mm cylinder"
+          "detail": "small_part: best-fit diameter 20.75 mm vs 31.75 mm cylinder"
         },
         {
           "id": "T1_fit_as_designed",
@@ -40679,7 +40593,7 @@
         27.8,
         28.0
       ],
-      "volume_cm3": 16.08,
+      "volume_cm3": 15.08,
       "connectors": [
         {
           "id": "under_sockets",
@@ -40959,11 +40873,11 @@
       ],
       "file": "toyventor_mom_nozzle_set_P.stl",
       "bbox_mm": [
-        42.0,
-        14.0,
-        13.5
+        63.0,
+        14.1,
+        8.2
       ],
-      "volume_cm3": 2.97,
+      "volume_cm3": 2.02,
       "connectors": [
         {
           "id": "mount_bore",
@@ -40973,11 +40887,11 @@
           "size_class": "pro",
           "fit_class": "PIN",
           "bore_class": "free",
-          "depth_mm": 4.5,
+          "depth_mm": 2.0,
           "lattice": "axis8",
           "frame": {
             "origin": [
-              -15.625,
+              0.0,
               0.0,
               0.0
             ],
@@ -40996,12 +40910,12 @@
         }
       ],
       "safety": {
-        "small_part_status": "small_part",
-        "min_enclosing_diameter_mm": 17.48,
-        "margin_pct": -45.0,
+        "small_part_status": "above_cylinder",
+        "min_enclosing_diameter_mm": 37.52,
+        "margin_pct": 18.2,
         "print_page_warning": [
           "Printed at home or by a print service. Not tested to toy-safety standards. Adult supervision required. Check for cracks, sharp edges and loose pieces before each use, and stop using anything that has broken.",
-          "CHOKING HAZARD - Small parts. Not for children under 3 years."
+          "Larger than the small-parts test size in our size check. This is not a safety certification, and it is not rated for children under 3 years."
         ]
       },
       "print": {
@@ -41071,7 +40985,7 @@
           "id": "G5_fits_bed",
           "level": "block",
           "result": "pass",
-          "detail": "[42.0, 14.0, 13.5] vs [180, 180, 180]"
+          "detail": "[63.0, 14.1, 8.2] vs [180, 180, 180]"
         },
         {
           "id": "P1_no_supports",
@@ -41124,8 +41038,8 @@
         {
           "id": "S1_small_part_screen",
           "level": "warn",
-          "result": "fail",
-          "detail": "small_part: best-fit diameter 17.48 mm vs 31.75 mm cylinder"
+          "result": "pass",
+          "detail": "above_cylinder: best-fit diameter 37.52 mm vs 31.75 mm cylinder"
         },
         {
           "id": "T1_fit_as_designed",
@@ -43974,7 +43888,7 @@
         28.9,
         9.6
       ],
-      "volume_cm3": 3.05,
+      "volume_cm3": 3.04,
       "connectors": [
         {
           "id": "hub",
@@ -44621,9 +44535,9 @@
       "bbox_mm": [
         9.6,
         38.0,
-        9.2
+        10.1
       ],
-      "volume_cm3": 1.43,
+      "volume_cm3": 1.61,
       "connectors": [
         {
           "id": "axis",
@@ -44638,7 +44552,7 @@
             "origin": [
               0.0,
               0.0,
-              26.0
+              27.0
             ],
             "normal": [
               0,
@@ -44657,8 +44571,8 @@
       ],
       "safety": {
         "small_part_status": "small_part",
-        "min_enclosing_diameter_mm": 10.83,
-        "margin_pct": -65.9,
+        "min_enclosing_diameter_mm": 11.61,
+        "margin_pct": -63.4,
         "print_page_warning": [
           "Printed at home or by a print service. Not tested to toy-safety standards. Adult supervision required. Check for cracks, sharp edges and loose pieces before each use, and stop using anything that has broken.",
           "CHOKING HAZARD - Small parts. Not for children under 3 years."
@@ -44723,13 +44637,13 @@
           "id": "G5_fits_bed",
           "level": "block",
           "result": "pass",
-          "detail": "[9.6, 38.0, 9.2] vs [180, 180, 180]"
+          "detail": "[9.6, 38.0, 10.1] vs [180, 180, 180]"
         },
         {
           "id": "P1_no_supports",
           "level": "block",
           "result": "pass",
-          "detail": "0.1 mm2 steeper than 45 deg"
+          "detail": "0.0 mm2 steeper than 45 deg"
         },
         {
           "id": "P4_no_ledges",
@@ -44771,7 +44685,7 @@
           "id": "S1_small_part_screen",
           "level": "warn",
           "result": "fail",
-          "detail": "small_part: best-fit diameter 10.83 mm vs 31.75 mm cylinder"
+          "detail": "small_part: best-fit diameter 11.61 mm vs 31.75 mm cylinder"
         },
         {
           "id": "T1_fit_as_designed",
