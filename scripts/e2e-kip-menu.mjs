@@ -188,16 +188,16 @@ try {
   console.log("\n[4] keyboard shortcuts");
   await tab.evaluate(`window.kipMenu.ctx.act.applyPreset('clean'); document.getElementById('km-speed').focus();`);
   await tab.key("e"); await tab.key("h"); await tab.key("b");
-  const whileFocused = await tab.evaluate(`({ explode: window.kipMenu.ctx.loco.explodeTarget, clean: document.body.classList.contains('clean-ui'), mode: window.kipMenu.ctx.loco.buildMode, focus: document.activeElement.id })`);
+  const whileFocused = await tab.evaluate(`({ explode: window.kipMenu.ctx.loco.explodeTarget, clean: document.querySelector('.kip-bench').classList.contains('clean-ui'), mode: window.kipMenu.ctx.loco.buildMode, focus: document.activeElement.id })`);
   check("E, H, B ignored while a select is focused", whileFocused.explode === 0 && !whileFocused.clean && whileFocused.mode === 'assembled' && whileFocused.focus === 'km-speed', JSON.stringify(whileFocused));
   await tab.evaluate(`document.activeElement.blur()`);
   await tab.key("e");
   check("E toggles explode once focus is back on the scene", await tab.evaluate(`window.kipMenu.ctx.loco.explodeTarget === 1`));
   await tab.key("e");
   await tab.key("h");
-  check("H hides the panel and releases the camera offset", await tab.waitFor(`document.body.classList.contains('clean-ui') && getComputedStyle(document.getElementById('kip-menu')).display === 'none' && !(window.kipMenu.ctx.camera.view && window.kipMenu.ctx.camera.view.enabled)`, 15000));
+  check("H hides the panel and releases the camera offset", await tab.waitFor(`document.querySelector('.kip-bench').classList.contains('clean-ui') && getComputedStyle(document.getElementById('kip-menu')).display === 'none' && !(window.kipMenu.ctx.camera.view && window.kipMenu.ctx.camera.view.enabled)`, 15000));
   await tab.key("h");
-  check("H brings it back and re-centres Kip", await tab.waitFor(`!document.body.classList.contains('clean-ui') && window.kipMenu.ctx.camera.view && window.kipMenu.ctx.camera.view.enabled && Math.round(window.kipMenu.ctx.camera.view.offsetX) === -151`, 15000));
+  check("H brings it back and re-centres Kip", await tab.waitFor(`!document.querySelector('.kip-bench').classList.contains('clean-ui') && window.kipMenu.ctx.camera.view && window.kipMenu.ctx.camera.view.enabled && Math.round(window.kipMenu.ctx.camera.view.offsetX) === -151`, 15000));
   check("selects keep keyboard focus after a keyboard change", await tab.evaluate(`(() => { const s = document.getElementById('km-edition'); s.focus(); s.value = 'snap'; s.dispatchEvent(new Event('change', { bubbles: true })); const kept = document.activeElement === s; s.value = 'pro'; s.dispatchEvent(new Event('change', { bubbles: true })); return kept; })()`));
 
   // ---- 5. layout -------------------------------------------------------------------------

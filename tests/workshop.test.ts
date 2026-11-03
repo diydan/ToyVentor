@@ -6,7 +6,7 @@ import { describe, expect, it } from "vitest";
 import * as shell from "../parts/kip/viewer/workshop.js";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
-const { DEFAULT_BENCHES, parseWorkshopSearch, benchSrc, workshopSearch } = shell as any;
+const { DEFAULT_BENCHES, parseWorkshopSearch, benchSrc, workshopSearch, linkFile } = shell as any;
 
 const root = join(__dirname, "..");
 const read = (rel: string) => readFileSync(join(root, rel), "utf8");
@@ -30,7 +30,7 @@ describe("workshop shell: URL rules", () => {
     expect(parseWorkshopSearch("?bench=kip&hat=top%20hat&hat=cap").forward).toBe("hat=top+hat&hat=cap");
   });
 
-  it("builds the bench URL with the forwarded params, whether or not the bench URL already has a query", () => {
+  it("builds the bench's own page URL (the 'open on its own page' link) with the forwarded params, whether or not it already has a query", () => {
     const [kip] = DEFAULT_BENCHES;
     expect(benchSrc(kip)).toBe("/kip/Kip-Demo.html");
     expect(benchSrc(kip, "")).toBe("/kip/Kip-Demo.html");
@@ -41,6 +41,17 @@ describe("workshop shell: URL rules", () => {
   it("writes the shell's own query as just the bench id", () => {
     expect(workshopSearch("truck")).toBe("?bench=truck");
     expect(workshopSearch("a b")).toBe("?bench=a%20b");
+  });
+
+  it("recognises a bench's link to another bench's page by its file name, wherever the page is served from", () => {
+    expect(linkFile("./Kip-Demo.html")).toBe("Kip-Demo.html");
+    expect(linkFile("/kip/Kip-Demo.html?vehicle=truck#x")).toBe("Kip-Demo.html");
+    expect(linkFile("https://example.com/a/b/Truck-Mockup.html")).toBe("Truck-Mockup.html");
+    expect(linkFile("/")).toBe("");
+    expect(linkFile(null)).toBe("");
+    // every bench is recognised by its own page, and the app's "/" link is not a bench
+    for (const b of DEFAULT_BENCHES) expect(linkFile(b.src)).toBe(b.src.split("/").pop());
+    expect(DEFAULT_BENCHES.some((b: any) => linkFile(b.src) === linkFile("/"))).toBe(false);
   });
 });
 
@@ -61,19 +72,41 @@ describe("workshop shell: benches and build wiring", () => {
     }
   });
 
-  it("ships both Workshop files through build:kip, and the page loads the module the build copies", () => {
+  it("points every bench at a module that exists in the viewer folder and exports the mount function the shell calls", () => {
+    for (const b of DEFAULT_BENCHES) {
+      const m = /^\/kip\/([\w.-]+\.js)(\?v=[\d.]+)?$/.exec(b.module);
+      expect(m, `bench ${b.id} module ${b.module}`).not.toBeNull();
+      const file = join(root, "parts/kip/viewer", m![1]!);
+      expect(existsSync(file), `${m![1]} missing from parts/kip/viewer`).toBe(true);
+      expect(readFileSync(file, "utf8"), `${m![1]} must export ${b.mount}`).toMatch(new RegExp(`export function ${b.mount}\\(`));
+      expect(read("scripts/build-kip.ts"), `${m![1]} is not copied by build:kip`).toContain(`viewer/${m![1]}`);
+    }
+  });
+
+  it("ships the Workshop files and the shared stage through build:kip, and the page loads the module the build copies", () => {
     const build = read("scripts/build-kip.ts");
     expect(build).toContain("viewer/Workshop.html");
     expect(build).toContain("viewer/workshop.js");
+    expect(build).toContain("viewer/bench-stage.js");
     expect(read("parts/kip/viewer/Workshop.html")).toMatch(/from '\/kip\/workshop\.js(\?[^']*)?'/);
+    // the shell loads the stage and three.js with import(); both must be files the build serves
+    const shellSrc = read("parts/kip/viewer/workshop.js");
+    expect(shellSrc).toContain("'/kip/bench-stage.js'");
+    expect(shellSrc).toContain("'/kip/vendor/three-kip.js'");
   });
 
-  it("stays self-contained: the shell imports nothing, so it can be mounted anywhere without a build step", () => {
+  it("has no static imports, so Node can load the pure URL functions and the shell can be mounted anywhere (the stage, three.js and the benches arrive with import())", () => {
     expect(read("parts/kip/viewer/workshop.js")).not.toMatch(/^\s*import\s/m);
   });
 
-  it("does not edit the benches: the shell talks to a bench only through its URL and its window", () => {
+  it("does not reach into the benches: the shell talks to a bench only through its mount function, the stage and the handle it returns", () => {
     const src = read("parts/kip/viewer/workshop.js");
     expect(src).not.toMatch(/kipMenu|kipDescribe|__KIP_READY__|__TRUCK_READY__/);
+  });
+
+  it("uses no iframe: a bench is a module on the shared stage (Dan, 2026-11-03)", () => {
+    const code = read("parts/kip/viewer/workshop.js").replace(/\/\/.*$/gm, "").replace(/\/\*[\s\S]*?\*\//g, "");
+    expect(code).not.toMatch(/iframe/i);
+    expect(read("parts/kip/viewer/Workshop.html")).not.toMatch(/<iframe/i);
   });
 });

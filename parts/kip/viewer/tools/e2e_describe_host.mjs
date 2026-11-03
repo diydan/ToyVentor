@@ -59,7 +59,7 @@ try {
   await page.shot(path.join(SHOTS, 'host-open-built.png'));
 
   console.log('\n[3] the host shortcuts stay quiet while typing');
-  const hostState = () => ev("({ explode: window.kipMenu.ctx.loco.explodeTarget, clean: document.body.classList.contains('clean-ui'), mode: window.kipMenu.ctx.loco.buildMode })");
+  const hostState = () => ev("({ explode: window.kipMenu.ctx.loco.explodeTarget, clean: document.querySelector('.kip-bench').classList.contains('clean-ui'), mode: window.kipMenu.ctx.loco.buildMode })");
   const s0 = await hostState();
   await ev("document.querySelector('#kdb-text').focus(); document.querySelector('#kdb-text').value = ''");
   for (const k of ['e', 'h', 'b']) await page.key(k, `Key${k.toUpperCase()}`);
@@ -102,7 +102,7 @@ try {
   const origins = new Set(page.requests.map((r) => { try { return new URL(r.url).origin; } catch { return r.url.slice(0, 5); } }));
   // 'null' is the origin of about:blank / data: / blob: URLs, which are not network requests to anywhere
   check('the page only talked to its own server (the tab made no outside request)', [...origins].every((o) => o === server.base || o === 'null' || o.startsWith('data:') || o.startsWith('blob:')), [...origins].join(', '));
-  const hide = () => ev("document.body.classList.contains('clean-ui')");
+  const hide = () => ev("document.querySelector('.kip-bench').classList.contains('clean-ui')");
   await page.key('h', 'KeyH');
   await sleep(300);
   check('the host\'s "hide UI" key (H) hides the tab\'s toggle too, so clean screenshots stay clean', (await hide()) && (await ev("getComputedStyle(document.querySelector('.kdb-toggle')).display")) === 'none');

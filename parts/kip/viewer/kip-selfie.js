@@ -449,7 +449,7 @@ export function mountSelfie(ctx) {
       <p class="sf-err" id="sf-error" role="alert" hidden></p>
     </div>
   </div>`;
-  document.body.append(root);
+  (ctx.root ?? document.body).append(root);
   const $ = (id) => root.querySelector(`#${id}`);
   $('sf-adjust-guide').innerHTML = guideMarkup();
   const show = (step) => {
@@ -1028,10 +1028,18 @@ export function mountSelfie(ctx) {
   // The camera must never outlive the page being visible.
   const onHide = () => { if (document.hidden) stopCamera(); };
   document.addEventListener('visibilitychange', onHide);
-  window.addEventListener('pagehide', () => { stopCamera(); dropImage(); });
+  const onPageHide = () => { stopCamera(); dropImage(); };
+  window.addEventListener('pagehide', onPageHide);
 
   return {
     open, close, remove, snapNow, loadFile, exportSticker, promptFace, loadSample, lineUp,
+    /** Unmount: stop the camera, drop the picture, remove the modal and its own <style>, and detach the page-level listeners. */
+    dispose() {
+      document.removeEventListener('visibilitychange', onHide);
+      window.removeEventListener('pagehide', onPageHide);
+      stopCamera(); dropImage();
+      root.remove(); css.remove();
+    },
     active: () => isActive,
     state,
     samples: () => SAMPLE_FACES.map((f) => f.id),

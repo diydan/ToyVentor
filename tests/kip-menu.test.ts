@@ -351,19 +351,20 @@ describe("kip menu visibility vs kip-manifest.json categoryControls", () => {
 describe("retired bottom dock", () => {
   // Parity was proven (aa60423: 165 one-step comparisons of a dock click against the same menu choice, all equal, every
   // dock option reachable, nothing extra) and then the dock was removed. These guard that result.
-  const html = read("parts/kip/viewer/Kip-Demo.html");
+  // Since Workshop stage 4a the page's markup, style and script live in kip-bench.js (Kip-Demo.html is a loader).
+  const html = read("parts/kip/viewer/kip-bench.js");
 
   it("the page has no dock, no dock buttons, and no ?menu= gate", () => {
     expect(html).not.toContain('class="dock"');
     expect(html).not.toContain('id="row-clips"');
     expect(html).not.toMatch(/id="btn-(category|head|face|face-insert|hair|crown|hat-col|skin|hair-col|shirt|pants|back|prop-cat|hand|ears|tail|veh-[a-z]+|racer-kit|preset|edition|explode|pile|build|open-llm|open-photo|Skeleton|speed)"/);
     expect(html).not.toMatch(/params\.get\(['"]menu['"]\)/);
-    expect(html).toMatch(/window\.kipMenu = mountKipMenu\(/);
+    expect(html).toMatch(/globals\.kipMenu = mountKipMenu\(/);
   });
 
   it("the page code no longer reaches for any retired dock element", () => {
-    const script = html.slice(html.indexOf('<script type="module">'));
-    expect(script).not.toMatch(/getElementById\(['"](btn-(?!close-|copy-|ex-|clear-|kid-|cam-|sam-|equip-|sync-)[\w-]+|rng-explode|file-input)['"]\)/);
+    const script = html.slice(html.indexOf("export function mountKipBench"));
+    expect(script).not.toMatch(/(?:getElementById|\$el)\(['"](btn-(?!close-|copy-|ex-|clear-|kid-|cam-|sam-|equip-|sync-|print-)[\w-]+|rng-explode|file-input)['"]\)/);
     expect(script).not.toContain("row-clips");
     expect(script).not.toContain("data-veh");
   });
@@ -388,7 +389,7 @@ describe("retired bottom dock", () => {
 describe("kip viewer build wiring", () => {
   it("copies every local viewer module the demo imports into public/kip", () => {
     const build = read("scripts/build-kip.ts");
-    for (const rel of ["parts/kip/viewer/Kip-Demo.html", "parts/kip/viewer/kip-menu.js"]) {
+    for (const rel of ["parts/kip/viewer/Kip-Demo.html", "parts/kip/viewer/kip-bench.js", "parts/kip/viewer/truck-bench.js", "parts/kip/viewer/kip-menu.js"]) {
       const src = read(rel);
       for (const m of src.matchAll(/from\s+['"]\/kip\/([\w.-]+\.js)(?:\?[^'"]*)?['"]/g)) {
         expect(build, `${m[1]} imported by ${rel} but missing from scripts/build-kip.ts`).toContain(`viewer/${m[1]}`);
@@ -398,7 +399,7 @@ describe("kip viewer build wiring", () => {
 
   it("copies every sibling module the viewer modules import by relative path", () => {
     const build = read("scripts/build-kip.ts");
-    for (const rel of ["kip-menu.js", "kip-print-view.js", "kip-selfie.js", "kip-selfie-image.js", "kip-forge-sdk.js", "kip-vehicles-wardrobe.js"]) {
+    for (const rel of ["kip-menu.js", "kip-print-view.js", "kip-selfie.js", "kip-selfie-image.js", "kip-forge-sdk.js", "kip-vehicles-wardrobe.js", "truck-bench.js"]) {
       const src = read(`parts/kip/viewer/${rel}`);
       for (const m of src.matchAll(/from\s+['"]\.\/([\w.-]+\.js)(?:\?[^'"]*)?['"]/g)) {
         expect(build, `${m[1]} imported by ${rel} but missing from scripts/build-kip.ts`).toContain(`viewer/${m[1]}`);
@@ -407,7 +408,7 @@ describe("kip viewer build wiring", () => {
   });
 
   it("imports siblings with the same ?v= specifier as the page so each module loads once", () => {
-    const page = read("parts/kip/viewer/Kip-Demo.html");
+    const page = read("parts/kip/viewer/kip-bench.js");
     const menu = read("parts/kip/viewer/kip-menu.js");
     const version = (src: string, file: string) => new RegExp(`${file.replace(".", "\\.")}(\\?v=[\\d.]+)`).exec(src)?.[1];
     expect(version(menu, "kip-vehicles-wardrobe.js")).toBe(version(page, "kip-vehicles-wardrobe.js"));

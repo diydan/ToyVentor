@@ -5,7 +5,8 @@ import { describe, expect, it } from "vitest";
 import { HAIR_OPTIONS, HAT_COLORS, HAT_OPTIONS } from "../parts/kip/viewer/kip-vehicles-wardrobe.js";
 
 const root = process.cwd();
-const source = readFileSync(join(root, "parts/kip/viewer/Truck-Mockup.html"), "utf8");
+// Since Workshop stage 4a the Truck page script lives in truck-bench.js (Truck-Mockup.html is a loader).
+const source = readFileSync(join(root, "parts/kip/viewer/truck-bench.js"), "utf8");
 const table = JSON.parse(
   readFileSync(join(root, "parts/kip/viewer/partspec/mockup/kip_stack.json"), "utf8"),
 );

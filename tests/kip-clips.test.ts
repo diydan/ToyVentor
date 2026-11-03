@@ -124,7 +124,7 @@ describe("kip clips: wiring", () => {
   it("is copied by build:kip and covered by the brand scan, and the page imports it with the same ?v= as its siblings", () => {
     expect(read("scripts/build-kip.ts")).toContain("viewer/kip-clips.js");
     expect(read("tests/kip.test.ts")).toContain("parts/kip/viewer/kip-clips.js");
-    const page = read("parts/kip/viewer/Kip-Demo.html");
+    const page = read("parts/kip/viewer/kip-bench.js"); // the page's script, since Workshop stage 4a
     const v = /kip-menu\.js\?v=([\d.]+)/.exec(page)?.[1];
     expect(page).toContain(`'/kip/kip-clips.js?v=${v}'`);
   });

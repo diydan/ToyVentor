@@ -27,8 +27,8 @@ const CSS = `
    button, and Escape, dismiss it). */
 @media (max-width: 900px) { .kdb-toggle { bottom: 52px; } }
 @media (max-width: 640px) { .kdb-panel { top: auto; bottom: 96px; left: 16px; right: 16px; width: auto; max-height: min(72vh, calc(100vh - 286px)); } }
-/* the host's "hide UI" key (H) adds this class to the body */
-body.clean-ui .kdb-toggle, body.clean-ui .kdb-panel { display: none !important; }
+/* the host's "hide UI" key (H) adds this class to the container (or any ancestor of it) */
+.clean-ui .kdb-toggle, .clean-ui .kdb-panel { display: none !important; }
 .kdb-panel h2 { margin: 0 0 8px; font-size: 16px; display: flex; justify-content: space-between; align-items: center; }
 .kdb-panel textarea { width: 100%; box-sizing: border-box; resize: vertical; min-height: 54px; padding: 8px 10px; border: 1px solid #c9cfdc; border-radius: 10px; font: inherit; }
 .kdb-panel button { font: 600 13px/1 system-ui, sans-serif; border: 1px solid #c9cfdc; background: #fff; color: #1b2238; border-radius: 999px; padding: 8px 12px; cursor: pointer; }
@@ -271,5 +271,11 @@ export function mountDescribe({
     get progress() { return p; },
     get playing() { return playing; },
     ready,
+    /** Unmount: hand the camera and the character back, stop the player, remove the toggle and panel (the shared <style> stays). */
+    dispose() {
+      if (isOpen) closePanel(); else stop();
+      view?.dispose?.();
+      toggle.remove(); panel.remove();
+    },
   };
 }

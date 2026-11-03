@@ -177,6 +177,11 @@ describe("Kip modular character rig & 3D demo viewer integration", () => {
       "parts/kip/viewer/kip-describe-parts.json",
       "parts/kip/viewer/Truck-Mockup.html",
       "parts/kip/viewer/Kip-Demo.html",
+      "parts/kip/viewer/kip-bench.js",
+      "parts/kip/viewer/truck-bench.js",
+      "parts/kip/viewer/bench-lifecycle.js",
+      "parts/kip/viewer/bench-stage.js",
+      "parts/kip/viewer/kip-photo-print.js",
       "parts/kip/kip_partspec.py",
     ];
     for (const rel of filesToScan) {

@@ -11,8 +11,9 @@
 </head>
 <body>
 <!--
-  ToyVentor Workshop (standalone; docs/specs/workshop-spec.md). One page, a tab per bench: Kip (Kip-Demo.html) and Truck (Truck-Mockup.html).
-  The shell is workshop.js; this page only gives it a full-window box. The benches are untouched and still run on their own pages.
+  ToyVentor Workshop (standalone; docs/specs/workshop-spec.md). One page, a tab per bench: Kip (kip-bench.js) and Truck (truck-bench.js).
+  The shell is workshop.js; this page only gives it a full-window box. The benches are modules mounted on one shared stage (no iframes); each
+  also still runs on its own page (Kip-Demo.html, Truck-Mockup.html), which is a short loader for the same module.
   Query: ?bench=kip|truck picks the bench; every other param goes to that bench (?bench=kip&vehicle=truck, ?bench=truck&driver=snap&head=fox).
   Hand-test from source without build:kip:  npm run kip:serve   then open  <printed base>/kip/Workshop.html
 -->

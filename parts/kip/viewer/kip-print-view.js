@@ -979,6 +979,16 @@ export function mountPrintView(ctx) {
     exportBytes,
     download,
     getState: () => ctx.getState(),
+    /** Unmount: leave print mode (scene, camera and character restored), stop watching and forget the gate message listener. */
+    dispose() {
+      exit();
+      clearInterval(watcher);
+      watcher = 0;
+      previewToken++;
+      setStickerPreviewUrl(null);
+      if (typeof window !== 'undefined') window.removeEventListener('message', onGateMessage);
+      cache.clear();
+    },
     isOn: () => on,
     isBusy: () => busy,
     gatePending: () => gate.isPending(),

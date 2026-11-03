@@ -53,10 +53,11 @@ describe("Kip-Demo 'Describe & build' exploded-view tab", () => {
       expect(item.state, `${item.file} drifted`).toBe("same");
     }
 
-    const viewerHtml = readFileSync(join(viewerDir, "Kip-Demo.html"), "utf8");
-    const publicHtml = readFileSync(join(publicKipDir, "Kip-Demo.html"), "utf8");
-    expect(publicHtml).toBe(viewerHtml);
-    expect(viewerHtml).toContain("mountDescribe(");
+    for (const f of ["Kip-Demo.html", "kip-bench.js"]) {
+      expect(readFileSync(join(publicKipDir, f), "utf8"), `public/kip/${f} drifted (run npm run build:kip)`).toBe(readFileSync(join(viewerDir, f), "utf8"));
+    }
+    // Since Workshop stage 4a the page script (and its mountDescribe call) lives in kip-bench.js.
+    expect(readFileSync(join(viewerDir, "kip-bench.js"), "utf8")).toContain("mountDescribe(");
   });
 
   it("validates all 10 curated recipes against fit_matrix connector rules and matches offline", async () => {

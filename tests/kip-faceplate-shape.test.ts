@@ -107,7 +107,7 @@ describe("face plate selfie window", () => {
     expect(S.FACEPLATE_DECAL.centerY).toBeCloseTo((S.WINDOW_ZB.min + S.WINDOW_ZB.max) / 2, 3);
     const wardrobe = read("parts/kip/viewer/kip-vehicles-wardrobe.js");
     expect(wardrobe).toMatch(/selfie:\s+buildConformalFaceplateDecalGeo\(expGeos\.charFaceplateFlat, FACEPLATE_DECAL\.width, FACEPLATE_DECAL\.height, FACEPLATE_DECAL\.centerY\)/);
-    expect(read("parts/kip/viewer/Kip-Demo.html")).toMatch(/faceplateDecalGeos\[loco\.expr === 'selfie' \? 'selfie' : loco\.faceInsert\]/);
+    expect(read("parts/kip/viewer/kip-bench.js")).toMatch(/faceplateDecalGeos\[loco\.expr === 'selfie' \? 'selfie' : loco\.faceInsert\]/);
   });
 
   it("is taller than the old 10.1 mm rectangle and about as wide, so a face gets more height", () => {
@@ -148,8 +148,8 @@ describe("face plate eyes are human-proportioned", () => {
 
   it("the seated plate sits in the kid pocket: chin at its bottom edge, rim not proud of the lip", () => {
     // Holder wiring: both seat sites must apply the shared correction.
-    expect(read("parts/kip/viewer/Kip-Demo.html")).toContain("dt.faceY - 2.50 + FACEPLATE_SEAT_MM.raise");
-    expect(read("parts/kip/viewer/Kip-Demo.html")).toContain("FACE_STEM_MM - FACEPLATE_SEAT_MM.sink");
+    expect(read("parts/kip/viewer/kip-bench.js")).toContain("dt.faceY - 2.50 + FACEPLATE_SEAT_MM.raise");
+    expect(read("parts/kip/viewer/kip-bench.js")).toContain("FACE_STEM_MM - FACEPLATE_SEAT_MM.sink");
     expect(read("parts/kip/viewer/kip-vehicles-wardrobe.js")).toContain("FACEPLATE_SEAT_MM.raise");
     const seat = S.FACEPLATE_SEAT_MM as { raise: number; sink: number };
     const head = parseStl(readFileSync(join(root, "public/kip/partspec/toyventor_char_head_kid_S.stl"))) as Float32Array;

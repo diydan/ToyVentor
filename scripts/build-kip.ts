@@ -103,7 +103,7 @@ copyFileSync(
   join(kipSrcDir, "viewer/kip-rig.js"),
   join(kipOutDir, "kip-rig.js"),
 );
-// Truck print parts provider (Workshop stage 3), imported by Truck-Mockup.html.
+// Truck print parts provider (Workshop stage 3), imported by truck-bench.js.
 copyFileSync(
   join(kipSrcDir, "viewer/truck-print-parts.js"),
   join(kipOutDir, "truck-print-parts.js"),
@@ -111,6 +111,43 @@ copyFileSync(
 copyFileSync(
   join(kipSrcDir, "viewer/Truck-Mockup.html"),
   join(kipOutDir, "Truck-Mockup.html"),
+);
+// Bench modules (Workshop stage 4a): Kip-Demo.html and Truck-Mockup.html are loaders that mount these; bench-lifecycle.js is their shared teardown.
+copyFileSync(
+  join(kipSrcDir, "viewer/kip-bench.js"),
+  join(kipOutDir, "kip-bench.js"),
+);
+copyFileSync(
+  join(kipSrcDir, "viewer/truck-bench.js"),
+  join(kipOutDir, "truck-bench.js"),
+);
+copyFileSync(
+  join(kipSrcDir, "viewer/bench-lifecycle.js"),
+  join(kipOutDir, "bench-lifecycle.js"),
+);
+// Shared stage (Workshop stage 4b): the one renderer, camera, controls and loop the Workshop gives hosted benches; workshop.js loads it with import().
+copyFileSync(
+  join(kipSrcDir, "viewer/bench-stage.js"),
+  join(kipOutDir, "bench-stage.js"),
+);
+// Photo-to-print panel (F2b): the panel is a viewer file, and its logic is TypeScript (shared/photoPrintFlow.ts), bundled here into one ES module.
+// tests/photo-print-flow.test.ts rebuilds it and compares it with the committed copy, so a stale bundle fails a test.
+copyFileSync(
+  join(kipSrcDir, "viewer/kip-photo-print.js"),
+  join(kipOutDir, "kip-photo-print.js"),
+);
+execFileSync(
+  esbuildBin,
+  [
+    join(root, "shared/photoPrintFlow.ts"),
+    "--bundle",
+    "--format=esm",
+    "--target=es2022",
+    "--minify",
+    "--legal-comments=none",
+    `--outfile=${join(kipOutDir, "kip-photo-print-core.js")}`,
+  ],
+  { stdio: "inherit" },
 );
 // Hand-built reaction, dance and prop clips (kip-clips.js), imported by Kip-Demo.html.
 copyFileSync(

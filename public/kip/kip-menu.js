@@ -631,7 +631,7 @@ const CSS = `
 }
 .km-fab { display: none; position: fixed; left: 12px; bottom: 40px; z-index: 13; padding: 9px 14px; font-size: 13px; border-radius: 999px; box-shadow: 0 8px 20px rgba(27, 34, 56, 0.16); background: var(--glass); backdrop-filter: blur(12px); }
 .km-backdrop { display: none; position: fixed; inset: 0; z-index: 11; background: rgba(27, 34, 56, 0.28); }
-body.clean-ui .km, body.clean-ui .km-fab, body.clean-ui .km-backdrop { display: none !important; }
+.clean-ui .km, .clean-ui .km-fab, .clean-ui .km-backdrop { display: none !important; }
 @media (max-width: ${DRAWER_BELOW_PX - 0.02}px) {
   .km { top: 0; bottom: 0; left: 0; width: min(86vw, 330px); border-radius: 0 18px 18px 0; transform: translateX(-105%); visibility: hidden; transition: transform 0.2s ease, visibility 0s linear 0.2s; }
   .km--collapsed { width: min(86vw, 330px); }
@@ -640,7 +640,7 @@ body.clean-ui .km, body.clean-ui .km-fab, body.clean-ui .km-backdrop { display: 
   .km-rail { display: none; }
   .km-fab { display: inline-flex; }
   .km-backdrop.km--open { display: block; }
-  body.menu-open .km-fab, body.menu-open #version-pill { display: none; }
+  .menu-open .km-fab, .menu-open #version-pill { display: none; }
 }
 @media (prefers-reduced-motion: reduce) { .km, .km-fab { transition: none !important; } }
 `;
@@ -916,7 +916,8 @@ export function mountKipMenu(ctx, { root = document.body } = {}) {
   const onDocKey = (e) => { if (e.key === 'Escape' && open && narrow.matches) { setOpen(false); fab.focus(); } };
   document.addEventListener('keydown', onDocKey, true); // capture: the panel's stopPropagation must not hide Escape from it
   backdrop.addEventListener('click', () => setOpen(false));
-  narrow.addEventListener('change', () => { setOpen(false); applyViewOffset(); });
+  const onNarrow = () => { setOpen(false); applyViewOffset(); };
+  narrow.addEventListener('change', onNarrow);
   window.addEventListener('resize', applyViewOffset); // registered after the demo's own resize handler, so it runs second
 
   let lastOffsetKey = '';
@@ -925,8 +926,7 @@ export function mountKipMenu(ctx, { root = document.body } = {}) {
     if (!cam || typeof cam.setViewOffset !== 'function') return;
     const hidden = root.classList.contains('clean-ui');
     const covered = hidden || narrow.matches ? 0 : (collapsed ? RAIL_W : PANEL_W) + 14;
-    const w = window.innerWidth;
-    const h = window.innerHeight;
+    const { width: w, height: h } = ctx.viewSize ? ctx.viewSize() : { width: window.innerWidth, height: window.innerHeight };
     const key = `${covered}|${w}|${h}`;
     if (key === lastOffsetKey) return;
     lastOffsetKey = key;
@@ -939,7 +939,7 @@ export function mountKipMenu(ctx, { root = document.body } = {}) {
   // ---- tick ------------------------------------------------------------------------------
   // A timer, not requestAnimationFrame: sync cost must not depend on how slow a frame renders.
   const tick = () => {
-    if (document.hidden) return;
+    if (document.hidden || ctx.isActive?.() === false) return; // a bench that is switched away must not touch the shared camera
     sync();
     applyViewOffset(); // also reacts to H / ?clean=1 toggling the clean-ui class
   };
@@ -953,10 +953,14 @@ export function mountKipMenu(ctx, { root = document.body } = {}) {
     fields,
     sync,
     applyViewOffset,
+    /** Forget the camera offset applied last (the stage cleared it when this bench stood down), so the next tick applies it again. */
+    resetViewOffset() { lastOffsetKey = ''; },
     get presetSig() { return presetSig; },
     destroy() {
       clearInterval(timer);
       document.removeEventListener('keydown', onDocKey, true);
+      window.removeEventListener('resize', applyViewOffset);
+      narrow.removeEventListener('change', onNarrow);
       panel.remove(); fab.remove(); backdrop.remove(); style.remove();
       root.classList.remove('menu-side', 'menu-open');
       ctx.camera?.clearViewOffset?.();
