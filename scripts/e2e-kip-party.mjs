@@ -147,19 +147,24 @@ function worldReport(rec) {
   }
   const lurch = Math.max(...rec.slice(1).map((f, i) => Math.abs(f.g - rec[i].g)));
   const gx = rec.map((f) => f.g);
-  let spikes = 0, top = 0;
+  let spikes = 0, top = 0, topAngle = 0, topMs = 0;
   for (const h of [0, 1]) {
-    const speeds = rec.slice(1).map((f, i) => angle(rec[i].hands[h], f.hands[h]) / Math.max(1, f.p - rec[i].p) * 1000); // degrees a second
+    // frame pairs closer than 6 ms are two callbacks of one displayed frame, not two poses on screen: a tiny step over a tiny time is a big "speed" and no jerk at all
+    const pairs = rec.slice(1).map((f, i) => ({ a: angle(rec[i].hands[h], f.hands[h]), ms: f.p - rec[i].p })).filter((x) => x.ms >= 6);
+    const speeds = pairs.map((x) => (x.a / x.ms) * 1000); // degrees a second
     const sorted = [...speeds].sort((a, b) => a - b);
     const p95 = sorted[Math.floor(sorted.length * 0.95)];
-    for (const s of speeds) if (s > Math.max(400, 4 * p95)) { spikes++; top = Math.max(top, s); }
+    pairs.forEach((x, i) => {
+      // a real jerk is a real angle (15 degrees and more in a frame when the wrist snapped) AND far above the hand's usual speed
+      if (x.a > 6 && speeds[i] > Math.max(400, 4 * p95)) { spikes++; if (speeds[i] > top) { top = speeds[i]; topAngle = x.a; topMs = x.ms; } }
+    });
   }
-  return { slide, lurch, range: Math.max(...gx) - Math.min(...gx), spikes, top };
+  return { slide, lurch, range: Math.max(...gx) - Math.min(...gx), spikes, top, topAngle, topMs };
 }
 const w1 = worldReport(await recordWorld(5000));
 check(`a foot on the floor does not slide across it (${w1.slide.toFixed(1)} mm in the world; it was 20 mm when the body re-centred on the lower foot)`, w1.slide <= 4, JSON.stringify(w1));
 check(`the body does not lurch sideways (${w1.lurch.toFixed(2)} mm a frame at most; it was 8) and stays put over its feet (${w1.range.toFixed(1)} mm in all)`, w1.lurch <= 1 && w1.range <= 4);
-check(`the hands do not jerk (${w1.spikes} frames where a hand turns more than 4 times its usual speed${w1.spikes ? `, up to ${w1.top.toFixed(0)} degrees a second` : ""})`, w1.spikes === 0);
+check(`the hands do not jerk (${w1.spikes} frames where a hand turns more than 4 times its usual speed${w1.spikes ? `, up to ${w1.top.toFixed(0)} degrees a second: ${w1.topAngle.toFixed(1)} degrees in ${w1.topMs.toFixed(1)} ms` : ""})`, w1.spikes === 0);
 await page.shot(path.join(SHOTS, "party-dancing.png")).catch(() => {});
 
 // ---- tapping, age band 5 to 6: a tap within 80 ms of a beat is a hit, once per beat. Real mouse presses (the page's own pointer path), aimed at the beat ----------
