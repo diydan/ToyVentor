@@ -16,7 +16,7 @@ import path from "node:path";
 
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), "../..");
 const PUB = path.join(ROOT, "public");
-const VIEWER = path.join(ROOT, "parts/kip/viewer");
+const VIEWER = process.env.E2E_VIEWER ?? path.join(ROOT, "parts/kip/viewer"); // E2E_VIEWER: serve a copy of the viewer files instead (a mutation round runs against one, never the working tree)
 const CHROME =
   process.env.E2E_CHROME ?? "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
 const TYPES = {
@@ -95,7 +95,8 @@ export async function launchChrome({ width = 1440, height = 900 } = {}) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "kip-e2e-"));
   const proc = spawn(CHROME, [
     "--headless=new", `--remote-debugging-port=${port}`, `--user-data-dir=${dir}`,
-    "--enable-unsafe-swiftshader", "--use-angle=swiftshader", "--ignore-gpu-blocklist",
+    // Software GL by default; E2E_GPU=metal uses the machine's GPU, which the 3D bench needs to load in reasonable time (game-browser-testing memory).
+    ...(process.env.E2E_GPU === "metal" ? ["--use-angle=metal"] : ["--enable-unsafe-swiftshader", "--use-angle=swiftshader"]), "--ignore-gpu-blocklist",
     "--no-first-run", "--no-default-browser-check", "--disable-background-timer-throttling",
     "--use-fake-ui-for-media-stream", "--use-fake-device-for-media-stream",
     `--window-size=${width},${height}`, "about:blank",
