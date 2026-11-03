@@ -4,19 +4,23 @@
 // server another session is running. Exits nonzero on any failing check.
 // Run: npm run e2e:trail
 // Overrides: E2E_CHROME (binary), E2E_PORT, E2E_DEBUG_PORT, E2E_PROFILE,
-//            E2E_SHOTS (dir; when set, saves a trail-map screenshot).
+//            E2E_SHOTS (dir; when set, saves trail-map screenshots).
 //
 // Guards, in the real React overlay (unit tests cannot see these):
-//   - the scroll position survives opening and closing the RungSheet;
-//   - a frontier tap that cannot start keeps the map open, shows a notice and
+//   - which view the Map opens in by age (carousel for 2-6 and unset, trail
+//     map from the 7-9 band up) and that each is one tap from the other;
+//   - the trail map is full screen and covers the dock;
+//   - travel is two-step: tap a place and the toy hops there (HUD names it),
+//     tap it again or press the big button to go in; arrow keys walk the roads;
+//   - fog is drawing only: clouded places stay enabled buttons;
+//   - a frontier go that cannot start keeps the map open, shows a notice and
 //     records no visit; once it can start it closes, plays the seed, records it;
-//   - fog is drawing only: clouded nodes stay enabled buttons;
-//   - arrow keys walk the roads; Cards and Trail map swap views;
-//   - layout (measured in the real DOM): each node circle is centred on the
-//     point its roads end at, and no label runs into another node or label;
+//   - the rung sheet opens over the map without losing the map's scroll;
+//   - layout measured in the DOM: tap targets, node-on-road alignment, no
+//     overlapping nodes, the toy in view;
 //   - no uncaught exception in any scenario.
-// A road passing under a node it skips is pure geometry and lives in
-// tests/explorer-map.test.ts.
+// A road passing under a node it skips, and scenery on a road, are pure
+// geometry and live in tests/explorer-map.test.ts and tests/explorer-art.test.ts.
 import { spawn } from "node:child_process";
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
 import os from "node:os";
@@ -170,87 +174,88 @@ const clickButton = (cdp, scope, text) =>
     `(()=>{const b=[...document.querySelectorAll(${JSON.stringify(scope)})].find(x=>(x.textContent||"").trim().startsWith(${JSON.stringify(text)}));if(!b)return false;b.click();return true})()`,
   );
 
-/** Dock ⋯ -> Map, then the Trail map view. */
-async function openTrail(cdp) {
+/** Dock ⋯ -> Map. Opens in the view that suits the saved age. */
+async function openMap(cdp) {
   await cdp.evaluate(
     `(()=>{const b=[...document.querySelectorAll(".tv-dock-right button")].find(x=>(x.textContent||"").includes("⋯"));b&&b.click()})()`,
   );
   await waitFor(() => cdp.evaluate(`!!document.querySelector(".tv-more-menu")`), { label: "more menu" });
   await clickButton(cdp, ".tv-more-menu [role=menuitem]", "Map");
-  await waitFor(() => cdp.evaluate(`!!document.querySelector(".tv-sheet-map")`), { label: "map sheet" });
-  if (!(await cdp.evaluate(`!!document.querySelector(".tv-trail-scroll")`))) {
-    await clickButton(cdp, ".tv-sheet-map button", "Trail map");
-    await waitFor(() => cdp.evaluate(`!!document.querySelector(".tv-trail-scroll")`), { label: "trail view" });
-  }
-  await sleep(300);
+  await waitFor(() => cdp.evaluate(`!!document.querySelector(".tv-sheet-map, .tv-trail-full")`), { label: "map" });
+  await sleep(400);
 }
+
+const hasTrail = (cdp) => cdp.evaluate(`!!document.querySelector(".tv-trail-full")`);
+const hasCarousel = (cdp) => cdp.evaluate(`!!document.querySelector(".tv-sheet-map")`);
+
+/** Open the Map and make sure it is the trail map. */
+async function openTrail(cdp) {
+  await openMap(cdp);
+  if (!(await hasTrail(cdp))) {
+    await clickButton(cdp, ".tv-sheet-map button", "Trail map");
+    await waitFor(() => hasTrail(cdp), { label: "trail view" });
+    await sleep(400);
+  }
+}
+
+/** Wait for the toy to be standing on a place, hop finished. */
+const waitKipAt = (cdp, id) =>
+  waitFor(
+    () =>
+      cdp.evaluate(
+        `(()=>{const s=document.querySelector(".tv-trail-full");return !!s&&s.dataset.kipAt===${JSON.stringify(id)}&&s.dataset.moving==="0"})()`,
+      ),
+    { timeoutMs: 20000, label: `toy at ${id}` },
+  );
+
+const tapNode = (cdp, id) =>
+  cdp.evaluate(`(()=>{const b=document.querySelector('[data-node-id="${id}"]');if(!b)return false;b.click();return true})()`);
+
+const clickPlay = (cdp) => cdp.evaluate(`document.querySelector(".tv-trail-play")?.click()`);
 
 const visited = (cdp) =>
   cdp.evaluate(
     `(()=>{try{return JSON.parse(localStorage.getItem(${JSON.stringify(STORAGE_KEY)})||"{}").explorerVisited||[]}catch(e){return null}})()`,
   );
 
-// Sandbox-open so the Bridges ladder offers several rungs (opens the RungSheet).
-async function scenarioScrollAndFrontier(cdp) {
-  await loadApp(cdp, { version: 1, totalXp: 0, ageBand: 3, sandboxUnlockAll: true });
-  await openTrail(cdp);
-
-  // Scroll restore after the RungSheet.
-  const before = await cdp.evaluate(
-    `(()=>{const s=document.querySelector(".tv-trail-scroll");s.scrollLeft=230;s.scrollTop=170;return {l:s.scrollLeft,t:s.scrollTop,scrollable:s.scrollWidth>s.clientWidth}})()`,
-  );
-  check("trail scroller scrolls (restore test is meaningful)", before.scrollable && before.l > 0, JSON.stringify(before));
-  await cdp.evaluate(`document.querySelector('[data-node-id="bridges"]')?.click()`);
-  const sheet = await waitFor(() => cdp.evaluate(`!!document.querySelector(".tv-rung-list")`), {
-    timeoutMs: 5000,
-    label: "rung sheet",
-  }).catch(() => false);
-  check("Bridges opens the rung sheet", sheet === true);
-  if (sheet) {
-    await clickButton(cdp, ".tv-sheet-rungs .tv-ctl", "");
-    await waitFor(() => cdp.evaluate(`!!document.querySelector(".tv-trail-scroll")`), { label: "trail back" });
-    await sleep(200);
-    const after = await cdp.evaluate(
-      `(()=>{const s=document.querySelector(".tv-trail-scroll");return {l:s.scrollLeft,t:s.scrollTop}})()`,
-    );
-    check(
-      "scroll position restored after closing the rung sheet",
-      Math.abs(after.l - before.l) <= 1 && Math.abs(after.t - before.t) <= 1,
-      `before ${before.l},${before.t} after ${after.l},${after.t}`,
-    );
-  }
-
-  // Frontier tap that cannot start, then one that can.
-  const hasHandle = (await cdp.evaluate(`typeof window.__tvWorld`)) === "object";
-  check("dev handle window.__tvWorld present", hasHandle);
-  if (!hasHandle) return;
-  const node = "frontier:lab3:2";
-  await cdp.evaluate(`window.__tvWorld.P.busy = true`);
-  await cdp.evaluate(`document.querySelector('[data-node-id="${node}"]').click()`);
-  await sleep(400);
-  const notice = await cdp.evaluate(
-    `document.querySelector(".tv-sheet-map .tv-moves[role=status]")?.textContent||""`,
-  );
-  const v1 = await visited(cdp);
-  check("busy frontier tap: map stays open", await cdp.evaluate(`!!document.querySelector(".tv-trail-scroll")`));
-  check("busy frontier tap: notice shown", /can't start/i.test(notice), JSON.stringify(notice));
-  check("busy frontier tap: no visit recorded", Array.isArray(v1) && !v1.includes(node), JSON.stringify(v1));
-
-  await cdp.evaluate(`window.__tvWorld.P.busy = false`);
-  await cdp.evaluate(`document.querySelector('[data-node-id="${node}"]').click()`);
-  await sleep(1200);
-  const world = await cdp.evaluate(`String(window.__tvWorld.handle?.S?.world ?? "?")`);
-  const v2 = await visited(cdp);
-  check("ready frontier tap: map closes", await cdp.evaluate(`!document.querySelector(".tv-sheet-map")`));
-  check("ready frontier tap: seeded level is the current world", world.startsWith("seed-"), world);
-  check("ready frontier tap: visit recorded", Array.isArray(v2) && v2.includes(node), JSON.stringify(v2));
+// Age 3-4: the carousel opens first; the trail map is one tap away and back.
+async function scenarioYoung(cdp) {
+  await loadApp(cdp, { version: 1, totalXp: 0, ageBand: 1 });
+  await openMap(cdp);
+  check("age 3-4: Map opens as the carousel", (await hasCarousel(cdp)) && !(await hasTrail(cdp)));
+  await clickButton(cdp, ".tv-sheet-map button", "Trail map");
+  await waitFor(() => hasTrail(cdp), { label: "trail view" });
+  check("age 3-4: Trail map button opens the trail map", (await hasTrail(cdp)) && !(await hasCarousel(cdp)));
+  await clickButton(cdp, ".tv-trail-hud button", "Cards");
+  await waitFor(() => hasCarousel(cdp), { label: "carousel back" });
+  check("age 3-4: Cards button returns to the carousel", !(await hasTrail(cdp)));
+  // Closing and reopening starts from the age's default again, not the last view.
+  await clickButton(cdp, ".tv-sheet-map button", "Trail map");
+  await waitFor(() => hasTrail(cdp), { label: "trail again" });
+  await clickButton(cdp, ".tv-trail-hud button", "Home");
+  await sleep(300);
+  await openMap(cdp);
+  check("age 3-4: reopening the Map starts on the carousel again", (await hasCarousel(cdp)) && !(await hasTrail(cdp)));
 }
 
-// Fresh age-1 save: real fog, keyboard travel, view toggle.
-async function scenarioFogKeysToggle(cdp) {
-  await loadApp(cdp, { version: 1, totalXp: 0, ageBand: 1 });
-  await openTrail(cdp);
+// Age 7-9 fresh save: trail map by default, full screen, fog, two-step travel.
+async function scenarioOlder(cdp) {
+  await loadApp(cdp, { version: 1, totalXp: 0, ageBand: 3 });
+  await openMap(cdp);
+  check("age 7-9: Map opens as the trail map", (await hasTrail(cdp)) && !(await hasCarousel(cdp)));
 
+  // Full screen, over the dock.
+  const fs = await cdp.evaluate(
+    `(()=>{const r=document.querySelector(".tv-trail-full").getBoundingClientRect();const d=document.querySelector(".tv-dock").getBoundingClientRect();const el=document.elementFromPoint(d.x+d.width/2,d.y+d.height/2);return {x:r.x,y:r.y,w:r.width,h:r.height,vw:innerWidth,vh:innerHeight,overDock:!!el?.closest(".tv-trail-full")}})()`,
+  );
+  check(
+    "trail map fills the whole screen",
+    fs.x === 0 && fs.y === 0 && fs.w === fs.vw && fs.h === fs.vh,
+    JSON.stringify(fs),
+  );
+  check("trail map covers the dock", fs.overDock === true);
+
+  // Fog is drawing only.
   const fog = await cdp.evaluate(
     `(()=>{const m={};for(const b of document.querySelectorAll("[data-node-id]")){m[b.dataset.nodeId]={cls:b.className,disabled:b.disabled}}return m})()`,
   );
@@ -259,21 +264,63 @@ async function scenarioFogKeysToggle(cdp) {
   check("fog: a far world is clouded", has("snow", "clouded"));
   check("fog: a neighbour of home is a silhouette", has("daily", "next"));
   check(
-    "fog never locks: every node is an enabled button",
+    "fog never locks: every place is an enabled button",
     Object.values(fog).length > 20 && Object.values(fog).every((n) => n.disabled === false),
   );
 
-  // Arrow keys walk the roads (real keydown through the React handler).
-  const key = (k) =>
-    cdp.evaluate(
-      `(()=>{const el=document.activeElement;el.dispatchEvent(new KeyboardEvent("keydown",{key:${JSON.stringify(k)},bubbles:true}));return document.activeElement?.dataset?.nodeId||null})()`,
+  // The toy starts on the world you are in, in view.
+  const start = await cdp.evaluate(`document.querySelector(".tv-trail-full").dataset.kipAt`);
+  check("the toy starts on the current world", start === "garden", start);
+  const inView = await cdp.evaluate(
+    `(()=>{const k=document.querySelector(".tv-trail-kip").getBoundingClientRect();const v=document.querySelector(".tv-trail-scroll").getBoundingClientRect();return k.x>=v.x&&k.x<=v.x+v.width&&k.y>=v.y&&k.y<=v.y+v.height})()`,
+  );
+  check("the toy is in view when the map opens", inView === true);
+
+  // Two-step travel: first tap hops, the plate names the place, nothing is entered.
+  await tapNode(cdp, "beach");
+  const hopping = await cdp.evaluate(`document.querySelector(".tv-trail-full").dataset.moving`);
+  await waitKipAt(cdp, "beach");
+  const plate = await cdp.evaluate(`document.querySelector(".tv-trail-plate-title")?.textContent||""`);
+  check("first tap hops the toy (map stays open)", hopping === "1" && (await hasTrail(cdp)));
+  check("the name plate names the place the toy stands on", plate === "Beach", plate);
+  check("play button is the way in (Go! for a world)", (await cdp.evaluate(`document.querySelector(".tv-trail-play")?.textContent`)) === "Go!");
+
+  // Arrow keys walk the roads like a d-pad.
+  await cdp.evaluate(`document.querySelector('[data-node-id="room"]').focus()`);
+  const key = async (k, expect) => {
+    await cdp.evaluate(
+      `document.activeElement.dispatchEvent(new KeyboardEvent("keydown",{key:${JSON.stringify(k)},bubbles:true}))`,
     );
-  await cdp.evaluate(`document.querySelector('[data-node-id="room"]').focus()`);
-  check("arrow right from Toy Room reaches Junkyard", (await key("ArrowRight")) === "junk");
-  await cdp.evaluate(`document.querySelector('[data-node-id="room"]').focus()`);
-  check("arrow left from Toy Room reaches Garden", (await key("ArrowLeft")) === "garden");
-  await cdp.evaluate(`document.querySelector('[data-node-id="room"]').focus()`);
-  check("arrow up from Toy Room reaches Sky Meadow", (await key("ArrowUp")) === "sky");
+    await waitKipAt(cdp, expect).catch(() => {});
+    return cdp.evaluate(`document.querySelector(".tv-trail-full").dataset.kipAt`);
+  };
+  await tapNode(cdp, "room");
+  await waitKipAt(cdp, "room");
+  check("arrow right from Toy Room walks to Junkyard", (await key("ArrowRight", "junk")) === "junk");
+  check("arrow left from Junkyard walks back to Toy Room", (await key("ArrowLeft", "room")) === "room");
+  check("arrow up from Toy Room walks to Sky Meadow", (await key("ArrowUp", "sky")) === "sky");
+
+  // Layout, measured in the DOM.
+  const m = await cdp.evaluate(`(()=>{
+    const canvas = document.querySelector(".tv-trail-canvas").getBoundingClientRect();
+    return [...document.querySelectorAll(".tv-trail-node")].map((b) => {
+      const r = b.getBoundingClientRect();
+      return { id: b.dataset.nodeId, w: r.width, h: r.height,
+        cx: r.x + r.width / 2 - canvas.x, cy: r.y + r.height / 2 - canvas.y,
+        px: parseFloat(b.style.left), py: parseFloat(b.style.top) };
+    });
+  })()`);
+  check("layout: measured every place", m.length >= 25, `${m.length} places`);
+  check("layout: every tap target is at least 56px", m.every((n) => n.w >= 56 && n.h >= 56), `${Math.min(...m.map((n) => Math.min(n.w, n.h)))}px`);
+  const off = m.filter((n) => Math.hypot(n.cx - n.px, n.cy - n.py) > 2);
+  check("layout: each place is centred on the point its roads end at", off.length === 0, off.slice(0, 3).map((n) => n.id).join(", "));
+  const touching = [];
+  for (let i = 0; i < m.length; i++) {
+    for (let j = i + 1; j < m.length; j++) {
+      if (Math.abs(m[i].cx - m[j].cx) < 56 && Math.abs(m[i].cy - m[j].cy) < 56) touching.push(`${m[i].id}/${m[j].id}`);
+    }
+  }
+  check("layout: no two places overlap", touching.length === 0, touching.slice(0, 4).join(", "));
 
   if (SHOTS) {
     mkdirSync(SHOTS, { recursive: true });
@@ -281,92 +328,74 @@ async function scenarioFogKeysToggle(cdp) {
     writeFileSync(path.join(SHOTS, "trail-map.png"), Buffer.from(shot.data, "base64"));
   }
 
-  // Cards <-> Trail map.
-  await clickButton(cdp, ".tv-sheet-map button", "Cards");
-  await sleep(300);
-  check(
-    "Cards swaps to the carousel (trail gone, Trail map button back)",
-    await cdp.evaluate(
-      `!document.querySelector(".tv-trail-scroll") && [...document.querySelectorAll(".tv-sheet-map button")].some(b=>(b.textContent||"").trim()==="Trail map")`,
-    ),
-  );
+  // Cards <-> Trail map from the trail side.
+  await clickButton(cdp, ".tv-trail-hud button", "Cards");
+  await waitFor(() => hasCarousel(cdp), { label: "carousel" });
+  check("Cards button swaps to the carousel", !(await hasTrail(cdp)));
   await clickButton(cdp, ".tv-sheet-map button", "Trail map");
-  await sleep(300);
-  check("Trail map swaps back to the trail view", await cdp.evaluate(`!!document.querySelector(".tv-trail-scroll")`));
+  await waitFor(() => hasTrail(cdp), { label: "trail" });
+  check("Trail map button swaps back", !(await hasCarousel(cdp)));
 }
 
-// Everything revealed (all 31 labels at full length): measure the real DOM.
-// The unit tests see grid coordinates; only the browser knows how big a node
-// and its label are, so overlap is checked here.
-async function scenarioLayout(cdp) {
+// Sandbox-open so the Bridges ladder offers several rungs (opens the RungSheet).
+async function scenarioPlay(cdp) {
   await loadApp(cdp, { version: 1, totalXp: 0, ageBand: 3, sandboxUnlockAll: true });
   await openTrail(cdp);
-  const m = await cdp.evaluate(`(()=>{
-    const canvas = document.querySelector(".tv-trail-canvas").getBoundingClientRect();
-    const nodes = [...document.querySelectorAll(".tv-trail-node-wrap")].map((w) => {
-      const btn = w.querySelector("button");
-      const b = btn.getBoundingClientRect();
-      const lab = w.querySelector(".tv-trail-node-label");
-      const range = document.createRange();
-      range.selectNodeContents(lab);
-      const lines = [...range.getClientRects()]
-        .filter((r) => r.width > 0 && r.height > 0)
-        .map((r) => ({ x: r.x - canvas.x, y: r.y - canvas.y, w: r.width, h: r.height }));
-      return {
-        id: btn.dataset.nodeId,
-        px: parseFloat(w.style.left), py: parseFloat(w.style.top),
-        cx: b.x + b.width / 2 - canvas.x, cy: b.y + b.height / 2 - canvas.y,
-        r: b.width / 2, lines,
-      };
-    });
-    return nodes;
-  })()`);
-  check("layout: measured every node", m.length >= 30, `${m.length} nodes`);
 
-  // 1. The circle sits on the point its roads are drawn to.
-  const off = m.filter((n) => Math.hypot(n.cx - n.px, n.cy - n.py) > 2);
-  check(
-    "layout: each circle is centred on its road endpoint",
-    off.length === 0,
-    off.slice(0, 4).map((n) => `${n.id} off by ${Math.round(Math.hypot(n.cx - n.px, n.cy - n.py))}px`).join(", "),
+  // The rung sheet opens over the map; the map keeps its scroll.
+  await tapNode(cdp, "bridges");
+  await waitKipAt(cdp, "bridges");
+  const before = await cdp.evaluate(
+    `(()=>{const s=document.querySelector(".tv-trail-scroll");return {l:s.scrollLeft,t:s.scrollTop,scrollable:s.scrollWidth>s.clientWidth}})()`,
   );
-
-  // 2. No label text runs into another node's circle.
-  const hitsCircle = [];
-  for (const a of m) {
-    for (const line of a.lines) {
-      for (const b of m) {
-        if (b.id === a.id) continue;
-        const dx = Math.max(line.x - b.cx, 0, b.cx - (line.x + line.w));
-        const dy = Math.max(line.y - b.cy, 0, b.cy - (line.y + line.h));
-        if (dx * dx + dy * dy < b.r * b.r) hitsCircle.push(`${a.id} label under ${b.id}`);
-      }
-    }
+  check("map scrolls (rung-sheet test is meaningful)", before.scrollable && before.l > 0, JSON.stringify(before));
+  await clickPlay(cdp);
+  const sheet = await waitFor(() => cdp.evaluate(`!!document.querySelector(".tv-trail-full .tv-rung-list")`), {
+    timeoutMs: 5000,
+    label: "rung sheet",
+  }).catch(() => false);
+  check("Play on Bridges opens the rung sheet over the map", sheet === true);
+  if (sheet) {
+    const sheetTop = await cdp.evaluate(
+      `(()=>{const r=document.querySelector(".tv-trail-full .tv-sheet-rungs").getBoundingClientRect();const el=document.elementFromPoint(r.x+r.width/2,r.y+20);return !!el?.closest(".tv-sheet-rungs")})()`,
+    );
+    check("the rung sheet is on top of the map, not hidden behind it", sheetTop === true);
+    await clickButton(cdp, ".tv-sheet-rungs .tv-ctl", "");
+    await sleep(300);
+    const after = await cdp.evaluate(
+      `(()=>{const s=document.querySelector(".tv-trail-scroll");return {l:s.scrollLeft,t:s.scrollTop}})()`,
+    );
+    check(
+      "closing the rung sheet leaves the map where it was",
+      Math.abs(after.l - before.l) <= 1 && Math.abs(after.t - before.t) <= 1,
+      `before ${before.l},${before.t} after ${after.l},${after.t}`,
+    );
   }
-  check(
-    "layout: no label text runs into another node's circle",
-    hitsCircle.length === 0,
-    [...new Set(hitsCircle)].slice(0, 6).join(", "),
-  );
 
-  // 3. No label text overlaps another node's label text.
-  const hitsLabel = [];
-  for (let i = 0; i < m.length; i++) {
-    for (let j = i + 1; j < m.length; j++) {
-      for (const p of m[i].lines) {
-        for (const q of m[j].lines) {
-          if (p.x < q.x + q.w - 1 && q.x < p.x + p.w - 1 && p.y < q.y + q.h - 1 && q.y < p.y + p.h - 1) {
-            hitsLabel.push(`${m[i].id} / ${m[j].id}`);
-          }
-        }
-      }
-    }
-  }
-  check(
-    "layout: no two labels overlap",
-    hitsLabel.length === 0,
-    [...new Set(hitsLabel)].slice(0, 6).join(", "),
-  );
+  // Frontier go that cannot start, then one that can.
+  const hasHandle = (await cdp.evaluate(`typeof window.__tvWorld`)) === "object";
+  check("dev handle window.__tvWorld present", hasHandle);
+  if (!hasHandle) return;
+  const node = "frontier:lab3:2";
+  await tapNode(cdp, node);
+  await waitKipAt(cdp, node);
+  await cdp.evaluate(`window.__tvWorld.P.busy = true`);
+  await clickPlay(cdp);
+  await sleep(400);
+  const notice = await cdp.evaluate(`document.querySelector(".tv-trail-notice")?.textContent||""`);
+  const v1 = await visited(cdp);
+  check("busy frontier go: map stays open", await hasTrail(cdp));
+  check("busy frontier go: notice shown", /can't start/i.test(notice), JSON.stringify(notice));
+  check("busy frontier go: no visit recorded", Array.isArray(v1) && !v1.includes(node), JSON.stringify(v1));
+
+  await cdp.evaluate(`window.__tvWorld.P.busy = false`);
+  await clickPlay(cdp);
+  await sleep(1200);
+  const world = await cdp.evaluate(`String(window.__tvWorld.handle?.S?.world ?? "?")`);
+  const v2 = await visited(cdp);
+  check("ready frontier go: map closes", !(await hasTrail(cdp)));
+  check("ready frontier go: seeded level is the current world", world.startsWith("seed-"), world);
+  check("ready frontier go: visit recorded", Array.isArray(v2) && v2.includes(node), JSON.stringify(v2));
 }
 
 async function main() {
@@ -417,9 +446,9 @@ async function main() {
   };
   try {
     await waitHttpOk(APP_URL);
-    await run("scroll-frontier", scenarioScrollAndFrontier);
-    await run("fog-keys-toggle", scenarioFogKeysToggle);
-    await run("layout", scenarioLayout);
+    await run("young", scenarioYoung);
+    await run("older", scenarioOlder);
+    await run("play", scenarioPlay);
   } finally {
     killAll();
   }

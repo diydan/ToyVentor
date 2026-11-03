@@ -62,7 +62,7 @@ import {
 } from "./engine";
 import { GrownUpsSheet } from "./GrownUpsSheet";
 import { composeRoomPhotoLevel } from "./runtime/roomPhoto";
-import { buildExplorerGraph } from "../../../lib/explorerMap";
+import { buildExplorerGraph, defaultMapView } from "../../../lib/explorerMap";
 import { planFor } from "../../../lib/learn";
 import { buildMapCards } from "../../../lib/mapCards";
 import { ExplorerMap } from "./ExplorerMap";
@@ -202,6 +202,14 @@ export function GameCanvas({
     void pushProgression(next);
   }, []);
 
+  // The Map opens in the view that suits the player's age: the carousel for
+  // the youngest (and an unset age), the trail map from the 7-9 band up.
+  // Each is one tap from the other.
+  const openMap = useCallback(() => {
+    setMapView(defaultMapView(progressionRef.current.ageBand));
+    setMapOpen(true);
+  }, []);
+
   // Sync Play Time settings + today's ledger on boot.
   useEffect(() => {
     void pullParentTime().then(setParentSnapshot);
@@ -245,7 +253,7 @@ export function GameCanvas({
             );
           }
           if (event.type === "learnFinished") {
-            setMapOpen(true);
+            openMap();
           }
           if (event.type === "missionSolved") {
             const { key, attempts, error, stats, tier: solvedTier } =
@@ -311,7 +319,7 @@ export function GameCanvas({
       engine.dispose();
       if (engineRef.current === engine) engineRef.current = null;
     };
-  }, [store]);
+  }, [store, openMap]);
 
   // Active-play 5-second heartbeat (paused while backgrounded, locked, or in Grown-ups).
   useEffect(() => {
@@ -750,7 +758,7 @@ export function GameCanvas({
                   onClick={() => {
                     closeEngineSheets();
                     closeReactOverlays();
-                    setMapOpen(true);
+                    openMap();
                   }}
                 >
                   <span>Map</span>
@@ -1239,10 +1247,15 @@ export function GameCanvas({
               openAll: progression.sandboxUnlockAll,
             })}
             currentId={state.world}
+            lastVisitedId={progression.explorerVisited?.at(-1) ?? null}
             guide={
-              <ToyMiniIcon toy={toy} accentColor={toyColor} skinVersion={skinTick} />
+              <ToyMiniIcon
+                toy={toy}
+                accentColor={toyColor}
+                skinVersion={skinTick}
+                size="tile"
+              />
             }
-            guideName={label}
             onClose={() => setMapOpen(false)}
             onShowCards={() => setMapView("cards")}
             onAskAge={() => openGrownUps(false)}
@@ -1391,7 +1404,7 @@ export function GameCanvas({
             setGrownUpsOpen(false);
             closeEngineSheets();
             closeReactOverlays();
-            setMapOpen(true);
+            openMap();
           }}
           onToggleChore={(choreId: string) => {
             const next = toggleChoreEnabled(progressionRef.current, choreId);

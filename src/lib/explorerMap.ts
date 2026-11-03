@@ -170,7 +170,21 @@ const OCTANTS: ReadonlyArray<readonly [number, number]> = [
   [1, -1],
 ];
 
-function fnv1a(text: string): number {
+export type MapView = "cards" | "trail";
+
+/** The trail map is the default view from this age band up. Bands are 2-3,
+ *  3-4, 5-6, 7-9, 10-12, 13+ and cannot split at 8, so 7-9 (band 3) counts
+ *  as "8 plus". Younger players, and an unset age, open the carousel. */
+export const TRAIL_DEFAULT_FROM_BAND = 3;
+
+/** Which Map view opens first. Either is one tap away from the other. */
+export function defaultMapView(ageBand: number | null | undefined): MapView {
+  return typeof ageBand === "number" && ageBand >= TRAIL_DEFAULT_FROM_BAND
+    ? "trail"
+    : "cards";
+}
+
+export function fnv1a(text: string): number {
   let h = 0x811c9dc5;
   for (let i = 0; i < text.length; i++) {
     h ^= text.charCodeAt(i);
@@ -367,6 +381,46 @@ export function buildExplorerGraph(input: ExplorerInput): ExplorerGraph {
       maxY: Math.max(...ys, 0),
     },
   };
+}
+
+/**
+ * Shortest walk between two nodes along the roads (fog is drawing only, so
+ * every road counts). Node ids from `from` to `to` inclusive, or null when
+ * either is missing or they are not connected. Used to hop the guide along
+ * the map instead of teleporting it.
+ */
+export function explorerRoute(
+  graph: ExplorerGraph,
+  from: string,
+  to: string,
+): string[] | null {
+  const ids = new Set(graph.nodes.map((n) => n.id));
+  if (!ids.has(from) || !ids.has(to)) return null;
+  if (from === to) return [from];
+  const next = new Map<string, string[]>();
+  for (const e of graph.edges) {
+    (next.get(e.a) ?? next.set(e.a, []).get(e.a)!).push(e.b);
+    (next.get(e.b) ?? next.set(e.b, []).get(e.b)!).push(e.a);
+  }
+  const prev = new Map<string, string>([[from, from]]);
+  const queue = [from];
+  for (let i = 0; i < queue.length; i++) {
+    const at = queue[i]!;
+    for (const n of next.get(at) ?? []) {
+      if (prev.has(n)) continue;
+      prev.set(n, at);
+      if (n === to) {
+        const path = [to];
+        for (let c = to; c !== from; ) {
+          c = prev.get(c)!;
+          path.push(c);
+        }
+        return path.reverse();
+      }
+      queue.push(n);
+    }
+  }
+  return null;
 }
 
 export type ExplorerDirection = "up" | "down" | "left" | "right";
