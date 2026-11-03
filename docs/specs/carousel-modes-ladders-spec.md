@@ -8,14 +8,18 @@ Source mockup: `/Users/dan/Downloads/toyventor` (`README.md`,
 `CONTINUE.md`). This spec decides what ports into ToyForge, what ToyForge
 keeps, and in what order. No implementation starts until §14 sign-off.
 
-> Status: **SIGNED OFF 2026-11-02 — C1+C2 landed, C3 first level in progress.**
+> Status: **SIGNED OFF 2026-11-02 — C1+C2 landed, C3 first level landed.**
 > Decisions in §6 bind implementation.
-> C3 as building: `runtime/level2Scene.ts` (pure tap/arrive session
-> over the carry core) + scene markers in `world.ts`: recipe rungs
-> (`little.pack`, `little.tidy` so far) spawn tappable item/target
-> markers; tap walks the toy there; arrivals resolve through the
-> same carry rules as the panel proxy, so scene and panel can never
-> disagree. Toast twins every prompt; speech twin still open.
+> C3 as shipped (first level): `runtime/level2Scene.ts` (pure
+> tap/arrive session over the carry core) + scene markers in
+> `world.ts`: recipe rungs (`little.pack`, `little.tidy`) spawn
+> tappable item/target markers; tap walks the toy there; arrivals
+> resolve through the same carry rules as the panel proxy, so scene
+> and panel can never disagree. Play-verified in headless Chrome:
+> full Pack-the-car run in-world (2★ with accuracy math), run
+> advance, miss counting. Marker taps win over occluding props
+> within range; marker hit areas meet the band 0–1 target size.
+> Toast twins every prompt; speech twin still open.
 > C2 as shipped: `startLearnRun`/`stopLearnRun`/`learnState` on the
 > engine facade with `LearnSnapshot` + `learnFinished` events; lab
 > rungs ride the real lab missions at the rung tier; the 21 new-id
