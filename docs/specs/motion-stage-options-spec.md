@@ -1,6 +1,6 @@
 # Spec: First Motion Stage, Key-Wound vs Pull-Back, and the `Snap -> Motion -> Pro` Ladder
 
-**Status:** draft 6, 2026-11-03 — **Decisions locked by Dan (section 6); CAD pass complete: [`verify_band_jet.py`](../../parts/partspec/verify_band_jet.py) `8/8` PASS (`0` FAIL, `0` UNKNOWN), `Gate G1` `13/13` PASS, all `205` parts pass the part gate and `8/8` kit cards pack at `>= 5.00 mm`. Outstanding: the physical print tests (section 10) and the viewer/app stage-ladder rename.**
+**Status:** draft 6, 2026-11-03 — **Decisions locked by Dan (section 6); CAD pass complete: [`verify_band_jet.py`](../../parts/partspec/verify_band_jet.py) `8/8` PASS (`0` FAIL, `0` UNKNOWN), `Gate G1` `13/13` PASS, all `205` parts pass the part gate and `8/8` kit cards pack at `>= 5.00 mm`. Outstanding: the physical print tests (section 10). The viewer and app stage-ladder rename is done (Truck bench buttons `1 Snap`, `2a/2b Motion`, `3 Pro`, `3+ Pro Powered Add-On`, 2026-11-03).**
 - **Decided & applied in specs + `CARD_LAYOUTS`:** Ladder **`Snap -> Motion -> Pro`** (no separate `Mech` stage; `Card F` = optional **Pro Powered Add-On** `10+`, servo replaces hand column/wheel); pull-back-only Band Core (`key`, `latch pawl`, `bumper`, and `bellows` dropped from `Cards E2–E3`; rear axle `gear_spur_z10` added to `Card E2`); `Ø50` wheels first-class in every stage; top-balloon jet (`mom_jet_valve_body`) selected.
 - **Done in `toyventor_kitcard.py` (CAD pass closed 2026-11-03):** Band Core clutch mirrored (`C1` PASS: clear window `24.5..30.5 deg`; `Gate G1` `3c` PASS); tray saddles closed to `360 deg` teardrop `free` bores (`C3` PASS, `0.35 mm` max `+Z` lift); pawl bite `0.78 mm` (`C2` PASS: pawl tip `R10.38` over pocket crest `R9.60`, valley deepened to `R10.55`); nozzle set redrawn as four unblocked inserts (`C4` PASS: rear orifices `O3.2 / O4.6 / O6.1 / O8.0` measured, each the narrowest section, `<= 0.5 mm3` seat overlap); air path widened (`C5` PASS: inlet `50.1`, valve port `38.1`, tunnel `52.6 mm2`, narrowest `O6.96`; best `9.4 gf = 1.38x` rolling drag at `150 g` against the `>= 1.3x` rule); `C6`/`C8` placement and gear-mesh checks pass; `C7` passes at the viewer phases `17.5 / 46.5 deg` (`0.00 mm3`, about `1.5 deg` of margin inside the `24.5..30.5 deg` window).
 - **Found and fixed while exporting (2026-11-03):** the earlier `Gate G1` / `verify_band_jet.py` passes did not run the part gate (`toyventor_parts.py`), and two parts failed it. **`mom_band_spool_pawl`** failed `G1_watertight`, `G3_single_body` (`45` bodies) and `P1_no_supports` (`124 mm2`): the conical drum flange (`R8.4`, `21 deg` underside over the open pawl zone) could not print without supports, and its `R5.8` base nearly coincided with the `R5.75..5.79` drum and `R5.80` hub. It is now a revolved `R7.2` retaining lip with a `48 deg` underside and a base buried at `R5.6` (watertight, `0` overhang); **the lip leaves about `1.6 mm` of drum between lip top (`z 4.6`) and hub cone (`z 6.2`) for a `6.4 mm` band, so whether it still keeps a slack band out of the pawls is a print-test question, not a CAD one.** **`mom_nozzle_set`** failed `P4_no_ledges` (`5.1 mm2`: the plug's teardrop apex overhung the `R6.0` flange); the flange is now the hull of the disc and the plug footprint. The gate's own seat pose in `_pneumatic_jet_check` still used the pre-redraw insert position and now seats the real `O4.5` insert (`xc = -12.0`). The set is `63.0 x 14.1 x 8.2 mm` (slot on `Card E3` moved to `x = 44.0`, outer `162.4 x 162.8 mm <= 164`). Companion specs [progressive-power-system-spec.md](progressive-power-system-spec.md) and [functional-print-mechanics-spec.md](functional-print-mechanics-spec.md) are synced to this scorecard.
@@ -240,7 +240,7 @@ Still open:
 - Jet truck checks: `parts/kip/jetcar_table.py` -> `parts/kip/viewer/jetcar-clearance.json`; driver pose snapshot `parts/kip/viewer/jetcar-kip-pose.json` (from the Truck page's `?probe=sweep`); interactive: `parts/kip/viewer/JetCar-Lab.html`. Nozzle-seat and mass probes: scratch scripts on the generator's own geometry (`toyventor_kitcard._raw_geo`).
 - Balloon-car research: [NASA Glenn balloon rocket car](https://www.grc.nasa.gov/WWW/K-12/BGP/Ashlie/BalloonRocketCar_easy.html); [SMU balloon-powered car lab](https://s2.smu.edu/propulsion/Pages/balloonlab.htm); [Eurobricks balloon brick-car thread](https://www.eurobricks.com/forum/forums/topic/9183-help-for-school-project); [Mombrite](https://www.mombrite.com/balloon-powered-le%67o-cars/); [Science Sparks](https://www.science-sparks.com/balloon-powered-le%67o-car/). Read, not just listed. Jet-valve CAD: `mom_jet_valve_body` in `parts/partspec/toyventor_kitcard.py`.
 
-- Overlap table: `parts/kip/windkey_table.py` -> `parts/kip/viewer/windkey-overlaps.json` (per spin, 30 deg steps); interactive: `parts/kip/viewer/WindKey-Lab.html`.
+- Overlap table and interactive lab (`windkey_table.py`, `windkey-overlaps.json`, `WindKey-Lab.html`): **removed 2026-11-03**, the key is dropped (pull-back only); they remain in git history.
 - Clutch, pawl, saddle, key and wall measurements: probes of the committed mockup STLs in `public/kip/partspec/mockup/` (scratch scripts, not kept in the repo).
 - Reuse table: part lists in the motion-suite probe frames (`J2_tip`, `J6_demo`) of the committed `Truck-Mockup.html`; tray/lid pairs from the PartSpec catalog; card lists from [functional-print-mechanics-spec.md](functional-print-mechanics-spec.md) section 5.
 - Stage definitions and band numbers: [progressive-power-system-spec.md](progressive-power-system-spec.md) section 3.2 and [functional-print-mechanics-spec.md](functional-print-mechanics-spec.md) section 3.1.
@@ -281,12 +281,52 @@ Still open:
 | both | Measuring | kitchen scale (`0.1 g`), tape measure, flat board with a ruler, spring scale or newton gauge (to `15 N`), phone camera at 60 fps on a stand, masking-tape marks every 25 cm | |
 | both | Track | smooth tile or laminate, `4 m` or more | |
 
-Slice at your normal PLA settings (`0.4 mm` nozzle, `0.20 mm` layers, no supports) and **write down infill, perimeters and finished weights**; mass is a first-order input. The part gate ran geometry checks only (no slicer on the machine), so a slicer warning on the pawls, the lip or the valve apex is a result worth recording: the gate flags three warnings the print should confirm or clear (`mom_pto_gear_z10` thin cup base, `mom_jet_slide_valve` teardrop apex tip, `mom_band_core_tray` a `0.33 mm` plate over one socket ceiling).
+Slice at your normal PLA settings (`0.4 mm` nozzle, `0.20 mm` layers, no supports) and **write down infill, perimeters and finished weights**; mass is a first-order input. The part gate ran geometry checks only; a first real-slicer pre-check was run on 2026-11-03 (section 10.1a). A slicer warning on the pawls, the lip or the valve apex is still a result worth recording: the gate flags three warnings the print should confirm or clear (`mom_pto_gear_z10` thin cup base, `mom_jet_slide_valve` teardrop apex tip, `mom_band_core_tray` a `0.33 mm` plate over one socket ceiling).
+
+### 10.1a Slicer pre-check (OrcaSlicer 2.4.2 CLI, 2026-11-03, before anything is printed)
+
+**Method.** Every Motion part (E2 and E3) and the four E2/E3 card plates, as exported (`_S`/`_P` STLs and `parts/partspec/cards/`), centred on a `300 x 300` bed, one part per 3MF, with Dan's own project settings from `parts/partspec/calibration/Print2_Verify.3mf`: Ender-3 Pro `0.4 mm`, `0.20 mm` Standard, `2` walls, `15%` infill, Creality Generic PLA `220 C`, supports `normal(auto)` at `30 deg`. Each part was sliced with supports **ON** (Dan's own default, so it shows where his slicer would add them) and **OFF** (what this sheet asks for), then the G-code was read for support extrusion, filament and time. The method was checked against controls whose answer is known: a flat `22 mm` table gets supports (`2102 mm` of filament, up to the slab underside), a `45 deg` ramp gets none, and an `8 x 8 mm` flat socket roof gets supports (`73 mm`). All `49` slices (parts, cards, controls) exited `0`.
+
+| Part | Filament (supports off) | Time | Supports ON (Dan's default) |
+| :--- | :--- | :--- | :--- |
+| `mom_jet_valve_body` | `10.6 g` | `1 h 16` | none |
+| `mom_jet_slide_valve` | `1.5 g` | `12 min` | none (the teardrop apex is not flagged) |
+| `mom_nozzle_set` | `2.4 g` | `21 min` | `3` blocks, `25 mm`, only at z `0.2..0.8` (four small flat faces, one per insert, `0.7 mm` above the bed) |
+| `mom_band_spool_pawl` | `1.95 g` | `15 min` | none (the lip and the pawls slice clean) |
+| `mom_pto_gear_z10` | `2.7 g` | `25 min` | `34` blocks, `370 mm` (`12%` of the part) under the `45..60 deg` cup walls |
+| `mom_band_core_tray` | `24.5 g` | `2 h 39` | `33` blocks, `586 mm`, z `0.2..16.6`: under one connected flat roof at z `5.0` (`146 mm2`, spread over the whole `49.8 x 49.8` footprint) and `4 mm2` at z `16.5`; which tray feature that is was not traced |
+| `mom_band_core_lid` | `12.3 g` | `1 h 33` | `23` blocks, `141 mm`, z `0.2..2.2`: one `7.1 x 14.9 mm` flat roof at z `2.2` |
+| `mom_slam_base` | `22.5 g` | `2 h 12` | `45` blocks, `670 mm`: flat roofs at z `12.0` and z `17.0` (`62.3 x 13.3 mm`, the longest bridge on E2) |
+| `shaft_tu03`, `gear_spur_z10`, `mom_slam_plunger`, `pro_captive_pin_28` | `1.2 / 2.3 / 4.0 / 0.9 g` | `9 / 20 / 24 / 8 min` | none (the pin has one first-layer block) |
+| Card E2 loose / sprue | `72.4 / 74.2 g` | `8 h 00 / 8 h 14` | `158 / 154` blocks (`~4%` of the plate) |
+| Card E3 loose / sprue | `67.0 / 68.8 g` | `7 h 27 / 7 h 40` | `124 / 126` blocks (`~3%`) |
+
+**Truck parts (second pass, same settings, supports off; the figures 10.3 needs).**
+
+| Part | Solid PLA (10.1 estimate) | Sliced, `15%` infill | Time | Supports ON (Dan's default) |
+| :--- | ---: | ---: | :--- | :--- |
+| `kit_keel_base` | `71 g` | `32.8 g` | `3 h 12` | `45` blocks, `298 mm`, `+0.18 g` |
+| `kit_wheel_med` (O36), each | `13 g` | `6.6 g` | `50 min` | none |
+| `kit_wheel_giant` (O50), each | `26 g` | `11.9 g` | `1 h 25` | `49` blocks, `1459 mm`, `+0.37 g` |
+| `kit_barbell_shaft`, each | `2.5 g` | `2.5 g` | `16 min` | none |
+| `kit_windscreen` | not listed | `12.0 g` | `1 h 25` | `13` blocks, `286 mm`, `+0.52 g` |
+| `kit_tilting_tub` (not on the Test A truck) | not listed | `15.9 g` | `1 h 49` | none |
+| Kip driver, 30 pieces (15 distinct) at the truck bench's `0.52` scale | not listed | `17.0 g` | about `3 h 45` summed | not sliced with supports on |
+
+Test A truck, summed: keel + 2 shafts + 4 `O36` wheels + windscreen + jet body + slide valve + one nozzle insert (a quarter of the set) = `88.6 g`; with Kip `105.6 g`; with a `3 g` balloon (my assumption, not measured) `108.6 g`. With four `O50` wheels instead: `129.8 g`. Two assumptions sit in those sums: the balloon mass, and that the old T6 body weighs about what the new one does (it was not sliced). The `kit_wheel_giant` in the tree is another session's uncommitted redesign, so the `O50` figure moves if that changes again. The Kip pieces were sliced as separate scaled STLs from `jetcar-kip-pose.json`; the sum counts the faceplate and all twelve spark pegs.
+
+**Reading.**
+- **Supports must be OFF for the trays, lids and slam base.** Dan's default adds supports under flat roofs, even small socket-style ones (an `8 x 8 mm` control roof got `73 mm`): the same effect as the "female-socket supports" on the calibration print. The 3MF writers in `kip-print.js` write `enable_support = 0` per object; a hand-made project with supports on will not. With supports off every part and card slices cleanly, with no support and no more than `14 mm` of overhang-wall filament in any part.
+- **The Test A and Test B parts the sheet worries about are clean:** the jet body, slide valve, spool pawl (lip included) and PTO gear need no supports to slice. The nozzle-set pegs are a first-layer detail.
+- **The longest flat bridge is the slam base's `62.3 x 13.3 mm` roof at z `17.0`, then the `7.1 x 14.9 mm` roof in the band lid.** Both are inside the gate's `20 mm` bridge limit; whether they sag is a print question, not a slicer result.
+- **What the slicer cannot say.** It did not flag the three gate warnings (PTO gear cup base, valve apex, the `0.33 mm` tray plate), but it cannot judge a `0.33 mm` plate or a thin base either: those stay print checks.
+- **Masses.** At `15%` infill the jet body is `10.6 g`, about half the solid-PLA `20 g` that the `150 g` truck in 10.3 assumes, so the printed truck will be lighter, drag lower and the thrust/drag ratios higher than predicted there. The truck parts were sliced in a second pass (next table): the Snap truck as Test A uses it comes to about `106 g` with Kip and about `109 g` with a deflated balloon, against `150 g` solid before Kip. 10.3 carries both columns; the T0 weighing still decides, because slicer grams are not scale grams.
+- **Limit of this check:** one part per bed, no brim or first-layer tuning, nothing about fit, strength or bridging quality.
 
 ### 10.2 Test A: balloon jet, measurements in order
 
-1. **Mass (T0).** Weigh the finished truck (Kip and a deflated balloon on the collar), the body and the valve. Model: about `150 g` solid PLA.
-2. **Rolling drag (T1).** Tilt the board slowly until the truck, pushed gently, just keeps rolling: coefficient = rise / run. Model `0.045` (`2.6 deg`, `4.6 cm` rise per metre); drag force = coefficient x weight (`0.066 N = 6.75 gf` at `150 g`).
+1. **Mass (T0).** Weigh the finished truck (Kip and a deflated balloon on the collar), the body and the valve. Model: about `109 g` sliced at `15%` infill with Kip and a `3 g` balloon (10.1a); `150 g` was the solid-PLA figure before Kip.
+2. **Rolling drag (T1).** Tilt the board slowly until the truck, pushed gently, just keeps rolling: coefficient = rise / run. Model `0.045` (`2.6 deg`, `4.6 cm` rise per metre); drag force = coefficient x weight (`4.9 gf` at `109 g`, `6.75 gf = 0.066 N` at `150 g`).
 3. **Seal (T2).** With the valve OPEN, inflate to about `15 cm`, close it, take the pump off, and watch `15 s`.
 4. **Balloon posture (T3).** At `125`, `150` and `175 mm`: does it stand upright, lean, or rest on Kip's hat and back? Film the first run from the side for trail angle, whether it reaches the jet axis, and whether it folds over the nozzle at the end of the burn.
 5. **Runs (T4).** For each of the four inserts (`O3.2`, `O4.6`, `O6.1`, `O8.0` as measured; `O3.0 / 4.5 / 6.0 / 8.0` as drawn) and then the bare socket, 3 runs from the same mark with a full `175 mm` balloon: distance, time to stop, acceleration from the video. Thrust = mass x acceleration + drag during the burn.
@@ -295,16 +335,18 @@ Slice at your normal PLA settings (`0.4 mm` nozzle, `0.20 mm` layers, no support
 
 ### 10.3 Test A: predictions to beat (written first, so the print can fail)
 
-Model: `2.5 kPa`, two orifices in series (the `38.1 mm2` valve port and the insert), rolling drag `6.75 gf` at `150 g`. Insert figures are from `verify_band_jet.py` `C5`; the bare-socket line is my estimate from the same model.
+Model: `2.5 kPa`, two orifices in series (the `38.1 mm2` valve port and the insert), rolling drag `0.045` x mass. Insert figures are from `verify_band_jet.py` `C5`; the bare-socket line is my estimate from the same model. Two mass columns: `150 g` is the original solid-PLA figure (kept so the first prediction stays on the record), `109 g` is the sliced truck with Kip and a balloon (10.1a, drag `4.9 gf`). The `109 g` column was added on 2026-11-03, still before any print.
 
-| Configuration | Predicted thrust | Over drag at `150 g` |
-| :--- | ---: | ---: |
-| `O3.2` insert | `3.9 gf` | `0.6x` |
-| `O4.6` insert | `7.2 gf` | `1.1x` |
-| `O6.1` insert | `9.3 gf` | `1.4x` |
-| `O8.0` insert | `9.4 gf` | `1.4x` |
-| bare socket (tunnel exit, `52.6 mm2`) | about `9.2 gf` | about `1.4x` |
-| T6 old body, bare socket (`O5` passages) | about `5.1 gf` | about `0.75x` |
+| Configuration | Predicted thrust | Over drag at `150 g` (solid) | Over drag at `109 g` (sliced) |
+| :--- | ---: | ---: | ---: |
+| `O3.2` insert | `3.9 gf` | `0.6x` | `0.8x` |
+| `O4.6` insert | `7.2 gf` | `1.1x` | `1.5x` |
+| `O6.1` insert | `9.3 gf` | `1.4x` | `1.9x` |
+| `O8.0` insert | `9.4 gf` | `1.4x` | `1.9x` |
+| bare socket (tunnel exit, `52.6 mm2`) | about `9.2 gf` | about `1.4x` | about `1.9x` |
+| T6 old body, bare socket (`O5` passages) | about `5.1 gf` | about `0.75x` | about `1.0x` (assumes the old body weighs the same; not sliced) |
+
+With four `O50` wheels the sliced truck is about `130 g`, so the same row reads `0.7x / 1.2x / 1.6x / 1.6x / 1.6x` on mass alone: bigger wheels cost `21 g`, and T5 only pays off if the rolling coefficient falls by more than that.
 
 **What moves the ratio (read this first if the truck only just fails).** Over drag = thrust / (rolling coefficient x mass), and thrust scales with balloon pressure. Starting from the best insert (`9.4 gf` at `2.5 kPa`, `0.045`, `150 g`):
 
@@ -323,7 +365,7 @@ The valve port (`38.1 mm2`) is the limit: the series ceiling is `9.7 gf`, so `O8
 | Result | Rule | If it fails or surprises |
 | :--- | :--- | :--- |
 | Seal | `15%` diameter loss or less in `15 s` | thicken the `0.60 mm` web between the inlet rim and the tunnel lip; the jet is not usable until it holds |
-| Moves | thrust over drag `1.3x` or more with some insert, as drawn | predicted pass with `O6.1` and `O8.0`. Fix order: lower mass (infill, Kip off), `O50` wheels, then a larger valve port (the limit; needs a bigger spool, not drawn) |
+| Moves | thrust over drag `1.3x` or more with some insert, as drawn | predicted pass with `O6.1` and `O8.0` at `150 g`; at the sliced `109 g` `O4.6` clears it as well (`1.5x`). Fix order: lower mass (infill, Kip off), `O50` wheels, then a larger valve port (the limit; needs a bigger spool, not drawn) |
 | Goes | mean of 3 runs of `2 m` or more on tile | lower mass, `O50` wheels, or larger passages |
 | Balloon clear | trail angle under `45 deg` in every frame, jet never obstructed | add a rear stop; if it folds over the nozzle at the end of the burn, a cradle or a shorter neck |
 | Soft contact | tracks straight within `10 cm` over `2 m`, Kip not knocked over | hold the balloon back about `30 deg` (an angled neck seat) or use a smaller balloon |

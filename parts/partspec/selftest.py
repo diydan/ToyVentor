@@ -573,12 +573,15 @@ import toyventor_kitcard as _kc
 w10_ids = [r["id"] for r in tp.CATALOG["parts"] if r.get("wave") == "W10"]
 w11_ids = [r["id"] for r in tp.CATALOG["parts"] if r.get("wave") == "W11"]
 w13_ids = [r["id"] for r in tp.CATALOG["parts"] if r.get("wave") == "W13"]
+w14_ids = [r["id"] for r in tp.CATALOG["parts"] if r.get("wave") == "W14"]
 test("W10 flat-pack modular craft: all 19 parts are verified and 100% clear the S1 small-parts cylinder",
      len(w10_ids) == 19 and all(by_id[i]["design_status"] == "verified" and by_id[i]["safety"]["small_part_status"] == "above_cylinder" for i in w10_ids))
 test("W11 Pro steering & Momentum stored-energy cores: all 30 parts are verified with zero blocking failures",
      len(w11_ids) == 30 and all(by_id[i]["design_status"] == "verified" for i in w11_ids))
 test("W13 Stage-4 PETG RC/Mech housings & couplers: all 11 parts are verified with zero blocking failures",
      len(w13_ids) == 11 and all(by_id[i]["design_status"] == "verified" for i in w13_ids))
+test("W14 construction line (road-roller drum and wide-track axle): both parts are verified and 100% clear the S1 small-parts cylinder",
+     len(w14_ids) == 2 and all(by_id[i]["design_status"] == "verified" and by_id[i]["safety"]["small_part_status"] == "above_cylinder" for i in w14_ids))
 _kn_l, _kn_l_conns, _ = _kc.pro_steer_knuckle_l()
 _kn_pivots = [c for c in _kn_l_conns if c["id"] in ("kingpin_bore", "tierod_bore")]
 test("knuckle cheek relief: 0.4 mm shave with pivot bores off-lattice but re-based with the body",
@@ -608,13 +611,13 @@ test("bridge deck is stud-free so the pinion and rack run 0.2 mm above it (the r
      all(c["id"] != "top_studs" for c in _br_conns) and abs(_kc.RACK_Z - (_kc.DECK_Z + 0.2)) < 1e-9
      and abs(_br.bounding_box()[5] - (_kc.LINK_TOP_Z - _kc.BRIDGE_Z)) < 1e-6)
 _g1 = _kc.verify_gate_g1()
-test("Gate G1: all 9 canonical craft, 3-point rack capture & bi-directional pin lock, 55-deg dump tip, Momentum packs & 3D jet seal, and Stage-4 Mech COTS keep-outs pass",
-     _g1["ok"] and len(_g1["crafts"]) == 13 and "1b_rack_travel_stop" in _g1["crafts"] and "2b_dump_truck_tip_sweep" in _g1["crafts"]
+test("Gate G1: all 9 canonical craft, the road roller, 3-point rack capture & bi-directional pin lock, 55-deg dump tip, Momentum packs & 3D jet seal, and Stage-4 Mech COTS keep-outs pass",
+     _g1["ok"] and len(_g1["crafts"]) == 14 and "10_road_roller" in _g1["crafts"] and "1b_rack_travel_stop" in _g1["crafts"] and "2b_dump_truck_tip_sweep" in _g1["crafts"]
      and "3b_momentum_packs_and_jet_seal" in _g1["crafts"] and "3c_band_clutch_and_shaft_capture" in _g1["crafts"])
 if (out / "cards" / "kitcard_manifest.json").exists():
     _kcm = json.loads((out / "cards" / "kitcard_manifest.json").read_text())["cards"]
-    test("kit-card plates: all 8 loose and 8 sprue STLs exist within <= 170/164 mm bounds and >= 5.0 mm inter-part gap",
-         len(_kcm) == 8 and all(
+    test("kit-card plates: all 9 loose and 9 sprue STLs exist within <= 170/164 mm bounds and >= 5.0 mm inter-part gap",
+         len(_kcm) == 9 and all(
              (out / m["loose_stl"]).exists() and (out / m["sprue_stl"]).exists()
              and max(m["outer_mm"]) <= m["limit_mm"] and m["min_gap_mm"] >= 5.0
              for m in _kcm.values()

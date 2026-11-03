@@ -16,7 +16,7 @@
   ],
   "targets": {
     "snap": 120,
-    "pro": 85
+    "pro": 87
   },
   "waves": [
     {
@@ -148,6 +148,15 @@
       ],
       "effort": "L",
       "scope": "11 parts (6 Snap Small, 5 Pro): PETG Stage-4 drop-in RC and robotics housings across Card F (<= 164 x 164 mm) coupling standard off-the-shelf N20 micro gearmotors, 9g micro servos (capturing the factory nylon horn with zero printed micro-splines), XIAO ESP32 / H-bridge electronics, and tool-locked 1S 602535 LiPo batteries onto the universal 12.5 mm craft keel with double-shear Pro pilot bearings."
+    },
+    {
+      "id": "W14",
+      "name": "Construction: Road Roller and Dozer (Card G)",
+      "requires": [
+        "W10"
+      ],
+      "effort": "S",
+      "scope": "2 parts (2 Pro): the first construction-line parts across Card G (<= 164 x 164 mm): the 103.0 mm wide-track barbell axle and the 50.0 x 24.8 mm smooth dished road-roller drum, so a keel on two wide axles and four drums is a double-drum road roller (Gate G1 craft 10). A dozer's C-frame arms pivot on the same wide axle (docs/specs/construction-vehicles-spec.md)."
     }
   ],
   "parts": [
@@ -5957,6 +5966,59 @@
         ],
         "base": "integrated",
         "lock": true
+      }
+    },
+    {
+      "id": "kit_barbell_shaft_wide",
+      "name": "Wide-Track Barbell Axle",
+      "line": "pro",
+      "family": "shaft",
+      "size": "pro",
+      "wave": "W14",
+      "note": "103.0 mm (8.24 TU) LAY_FLAT Pro drive shaft, the 78.0 mm barbell's wide-track brother: room for a 24.8 mm road-roller drum, or a 12.3 mm wheel plus a 12.3 mm dozer arm, outboard of the 49.8 mm keel (49.8 + 2 x (24.8 + 1.8) = 103.0).",
+      "stat": "Spin",
+      "type": "Drive shaft",
+      "behavior": "103 mm wide-track axle for road-roller drums and dozer arms",
+      "tags": [
+        "vehicle",
+        "craft",
+        "kitcard",
+        "axle",
+        "shaft",
+        "construction"
+      ],
+      "build": {
+        "fn": "kit_barbell_shaft_wide"
+      }
+    },
+    {
+      "id": "kit_drum_roller",
+      "name": "Smooth 2-TU Road-Roller Drum",
+      "line": "pro",
+      "family": "wheel",
+      "size": "pro",
+      "wave": "W14",
+      "note": "50.0 x 50.0 x 24.8 mm (2 TU wide) smooth dished road-roller drum with central fixed Pro hub, four ribs, a 4.0 mm floor and a 2.4 mm rim, printed face-down without supports.",
+      "stat": "Grip",
+      "type": "Vehicle wheel",
+      "behavior": "50 mm x 24.8 mm smooth road-roller drum",
+      "tags": [
+        "vehicle",
+        "craft",
+        "kitcard",
+        "wheel",
+        "roller",
+        "construction"
+      ],
+      "build": {
+        "fn": "kit_drum_roller"
+      },
+      "attach": {
+        "kind": "vehicle",
+        "slots": [
+          "wheels"
+        ],
+        "front": "symmetric"
       }
     }
   ],

@@ -19,7 +19,7 @@ try {
   // a small window: this check is about numbers, and software rendering of a big one is slow
   const t = await chrome.open(`${server.base}/kip/Truck-Mockup.html?stage=band&ui=0`, { width: 480, height: 320 });
   check("the Truck loads on the band stage", await t.waitFor("window.__TRUCK_READY__ === true && !!window.__truckBand", 240000), "never ready");
-  check("the stage list has no 3B bellows button any more, and 3A is the pull-back band", await t.evaluate(`!document.querySelector('[data-stage="bellows"]') && /Pull-Back/.test(document.querySelector('[data-stage="band"]').textContent)`));
+  check("the stage list has no bellows button any more, and 2a is the pull-back band", await t.evaluate(`!document.querySelector('[data-stage="bellows"]') && /Pull-Back/.test(document.querySelector('[data-stage="band"]').textContent)`));
   const meshes = await t.evaluate(`JSON.stringify(window.__truckProbe().map((r) => r.geo))`);
   const geos = JSON.parse(meshes);
   check("the band stage draws no wind key, no latch pawl, no bumper trigger, no bellows part", !geos.some((g) => /wind_key|latch_pawl|bumper_trigger|bellows/.test(g)), JSON.stringify(geos.filter((g) => /wind|latch|bumper|bellows/.test(g))));

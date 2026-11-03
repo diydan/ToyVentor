@@ -7,7 +7,7 @@
 | Line | Verified | Built, not verified | Target |
 | --- | --- | --- | --- |
 | Snap | 120 | 0 | 120 |
-| Pro | 85 | 0 | 85 |
+| Pro | 87 | 0 | 87 |
 
 ## Waves
 
@@ -27,6 +27,7 @@
 | W11 | Progressive Power: Pro Steering & Momentum Cores (Cards E1-E2) | 30 | 30 | W4, W5, W10 | L | done |
 | W12 | Workshop Props | 12 | 12 | none | M | done |
 | W13 | Stage-4 Mech Drop-In Printable Robotics (Card F) | 11 | 11 | W11 | L | done |
+| W14 | Construction: Road Roller and Dozer (Card G) | 2 | 2 | W10 | S | done |
 
 - **W0:** Done: catalog-driven registration (one catalog row per part), the block, tile, slope and dome families, Pro checks I4 to I6 and pin-and-bore mating in the validator, all proven on fixtures. The round block was replaced by a dome because a round outline cannot carry studs on the lattice.
 - **W1:** 11 parts, all from the block, tile, slope and dome families on the existing foot and tube code.
@@ -42,6 +43,7 @@
 - **W11:** 30 parts (8 Snap Small, 22 Pro): captive Stage-2 Pro row-0 Ackermann rack steering linkage (bridge with fixed kingpins, rack guide and travel stop, rack, tall-tower knuckles, tie-rod link, headed captive drive pins, steering column and wheel), rear dump-tub barrel hinge adapter, and positive-trail bike fork adapter, plus functional Stage-3 Momentum stored-energy propulsion and actuator modules (enclosed #64 band core with coaxial freewheel PTO gear, pawl spool, armed/pull-back latch and winding key, compliant bumper trigger, captive slam launcher, leak-free horizontal balloon jet + shutoff slide valve + 3-orifice nozzle selector, interleaved 10-deg hinged bellows clamshell, and un-jammed shrouded 42 mm vertical rip-cord turbine core) across Cards E1-E2 (<= 164 x 164 mm).
 - **W12:** 12 parts (12 Pro): handheld workshop and play props that clip onto Kip's Pro grip shaft in the hand port, in 4 Kip-Demo.html prop categories (with the 5 earlier props, 17 in all): Tools (Claw Hammer, Flat Screwdriver, Paint Roller), Cleaning (String Mop, Bristle Broom, Scrub Brush, Handheld Vacuum), Instruments (Acoustic Guitar, Brass Trumpet, Rattle Maraca) and Play (Swallow-Tail Flag, Magnifying Glass).
 - **W13:** 11 parts (6 Snap Small, 5 Pro): PETG Stage-4 drop-in RC and robotics housings across Card F (<= 164 x 164 mm) coupling standard off-the-shelf N20 micro gearmotors, 9g micro servos (capturing the factory nylon horn with zero printed micro-splines), XIAO ESP32 / H-bridge electronics, and tool-locked 1S 602535 LiPo batteries onto the universal 12.5 mm craft keel with double-shear Pro pilot bearings.
+- **W14:** 2 parts (2 Pro): the first construction-line parts across Card G (<= 164 x 164 mm): the 103.0 mm wide-track barbell axle and the 50.0 x 24.8 mm smooth dished road-roller drum, so a keel on two wide axles and four drums is a double-drum road roller (Gate G1 craft 10). A dozer's C-frame arms pivot on the same wide axle (docs/specs/construction-vehicles-spec.md).
 
 ## How parts were picked
 
@@ -232,6 +234,8 @@
 | `mech_servo_lid` | Mech Screwless 9g Servo Clamp Cap | joint | pro | W13 | verified | Sturdiness. 48.0 x 12.4 x 6.2 mm PETG upper servo clamp strap pinning onto mech_servo_mount's 3-TU ears to lock the 9g micro servo tabs without tiny screws. |
 | `mech_servo_pinion_z10` | Mech Horn-Pocket Z10 Servo Pinion | gear | pro | W13 | verified | Balance. 30.0 x 28.9 x 8.8 mm PETG module-2.5 10-tooth steering pinion with top pocket capturing the servo's factory nylon horn (zero printed micro-splines), 23.0 mm rack-keeper flange, and bottom Pro pilot bore. |
 | `pro_pilot_pin` | Pro 30 mm Under-Keel Servo Pilot Pin | pin | pro | W13 | verified | Balance. 9.6 x 31.5 x 5.6 mm LAY_FLAT headed round pilot pin entering from beneath #1 steer_bore into mech_servo_pinion_z10 with a split-cantilever snap-barb tip to support the servo pinion in double shear. |
+| `kit_barbell_shaft_wide` | Wide-Track Barbell Axle | shaft | pro | W14 | verified | Spin. 103.0 mm (8.24 TU) LAY_FLAT Pro drive shaft, the 78.0 mm barbell's wide-track brother: room for a 24.8 mm road-roller drum, or a 12.3 mm wheel plus a 12.3 mm dozer arm, outboard of the 49.8 mm keel (49.8 + 2 x (24.8 + 1.8) = 103.0). |
+| `kit_drum_roller` | Smooth 2-TU Road-Roller Drum | wheel | pro | W14 | verified | Grip. 50.0 x 50.0 x 24.8 mm (2 TU wide) smooth dished road-roller drum with central fixed Pro hub, four ribs, a 4.0 mm floor and a 2.4 mm rim, printed face-down without supports. |
 | `beam_str_tu03` | Beam STR RND TU03x01x01 | beam | pro | W2 | verified | Reach.  |
 | `beam_str_tu05` | Beam STR RND TU05x01x01 | beam | pro | W2 | verified | Reach. Hackathon part. |
 | `beam_str_tu07` | Beam STR RND TU07x01x01 | beam | pro | W2 | verified | Reach.  |

@@ -103,8 +103,10 @@ the items.
   needs one), goes through the same print panel and photo path as any scan, and gets the match offer: "This looks like a spoon. Want the 3D spoon,
   coloured from your photo?" A photo the model cannot trace but whose word is right still gets the library item.
 - **Remix kind:** swap the held item for another of the same family (a mug for a bowl), then add the twist.
-- **Age bands:** the pre-reader versions pick between two items by picture. Tools and sharp-looking items follow the age rule that
-  household-library-spec.md leaves as an open question; until it is decided the garage tools are held back from bands 0 and 1.
+- **Age bands:** the pre-reader versions pick between two items by picture. Tools and sharp-looking items follow the age rule decided in
+  household-library-spec.md ("Decided after phase 2"): limited by band, with a simplified item or one multi-purpose support tool standing in for the
+  young, and more real tools needed in the older bands. Its band cut-offs are proposed, not confirmed; until they are, the garage tools stay held back
+  from bands 0 and 1.
 - **The check** reads the equipped hand item, so `buildSummary()` gains one field, the item id. No new events.
 - **Build it for real** uses the printable relief where it passed the gates; an item that did not is digital-only, and the sheet says so.
 - **Rewards:** unchanged. The mission id, the STEM minutes, the XP, the stamp and the trophy do not depend on which item the drop used.
@@ -290,8 +292,9 @@ Saturday Nov 7). **Not tried on a real phone.**
 
 ## Still open
 
-- How a household library item is equipped in the game, whether Phase 1's launch drops can use the pilot items, and whether the garage tools
-  and sharp-looking items are shown to every age band (household-library-spec.md, open questions 1 to 3).
+- Whether Phase 1's launch drops can use the pilot items, and the age rule's exact cut-offs and "a job needs 1, 2, 3 tools" numbers
+  (household-library-spec.md: the rule is decided, the numbers are proposed). Equipping a library item is settled in that spec's phase 4;
+  keeping a loaner is decided (scan the real one, finding it in a room as the fallback).
 - The 10-minute Garage grace (length, and whether it should also apply on
   weekday drops).
 - Time-of-day look for the Garage and the worlds: see "Time of day" below.

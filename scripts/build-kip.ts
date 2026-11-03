@@ -173,15 +173,6 @@ copyFileSync(
   join(kipSrcDir, "viewer/workshop.js"),
   join(kipOutDir, "workshop.js"),
 );
-// Wind Key Lab: a stand-alone test page for mom_wind_key against the Band core (its overlap table comes from parts/kip/windkey_table.py).
-copyFileSync(
-  join(kipSrcDir, "viewer/WindKey-Lab.html"),
-  join(kipOutDir, "WindKey-Lab.html"),
-);
-copyFileSync(
-  join(kipSrcDir, "viewer/windkey-overlaps.json"),
-  join(kipOutDir, "windkey-overlaps.json"),
-);
 // Jet Car Lab: balloon on top of the Snap truck (clearance table from parts/kip/jetcar_table.py, driver pose snapshot from the Truck probe).
 for (const f of ["JetCar-Lab.html", "jetcar-clearance.json", "jetcar-kip-pose.json"]) {
   copyFileSync(join(kipSrcDir, "viewer", f), join(kipOutDir, f));

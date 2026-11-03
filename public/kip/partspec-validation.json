@@ -307,6 +307,12 @@
    "verdict": "pass",
    "brim_width_mm": 0
   },
+  "toyventor_kit_barbell_shaft_wide_P.stl": {
+   "part": "kit_barbell_shaft_wide",
+   "sha256": "30d717a792fd79b5f1815fd8dc9d9826fd20e7b3326599d30ba1a7e8ac14663c",
+   "verdict": "pass",
+   "brim_width_mm": 0
+  },
   "toyventor_kit_booster_pod_S.stl": {
    "part": "kit_booster_pod",
    "sha256": "901cad6cddb92cd14e563acaf8d8a07c876f1ea77088131a055222db1dc6d397",
@@ -316,6 +322,12 @@
   "toyventor_kit_clevis_spine_S.stl": {
    "part": "kit_clevis_spine",
    "sha256": "8b92a7f798cb1c5176212aa46ce2a85c9cedde58cb52a8b2c9a9fcd6ba5ae0a5",
+   "verdict": "pass",
+   "brim_width_mm": 0
+  },
+  "toyventor_kit_drum_roller_P.stl": {
+   "part": "kit_drum_roller",
+   "sha256": "c837858900d016ea327e6e8dfad1fc5b3a05a22f9346219b2c7822c5c9abeeb6",
    "verdict": "pass",
    "brim_width_mm": 0
   },
@@ -369,7 +381,7 @@
   },
   "toyventor_kit_wheel_giant_P.stl": {
    "part": "kit_wheel_giant",
-   "sha256": "cf06a325da984a601cbb05c17bef754aefcf9c66279ed0605034e1de9b479cad",
+   "sha256": "a855503748455cf3f76f7d72a20a006cf00d95fec17e372f97088f96b70237c1",
    "verdict": "pass",
    "brim_width_mm": 0
   },

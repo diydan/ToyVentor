@@ -27,8 +27,7 @@ PARTS = [
     "pro_steer_bridge", "pro_steer_knuckle_l", "pro_steer_knuckle_r", "pro_steer_rack", "pro_tie_rod_link",
     "pro_captive_pin_28", "pro_steer_column", "pro_steer_wheel", "pin_free_tu03", "pin_free",
     "gear_spur_z10", "shaft_tu03",
-    "mom_band_core_tray", "mom_band_core_lid", "mom_pto_gear_z10", "mom_band_spool_pawl", "mom_latch_pawl", "mom_wind_key", "mom_bumper_trigger",
-    "mom_bellows_base", "mom_bellows_leaf",
+    "mom_band_core_tray", "mom_band_core_lid", "mom_pto_gear_z10", "mom_band_spool_pawl",   # (the wind key, latch pawl, bumper trigger and bellows parts were dropped from the viewer 2026-11-03)
     "mom_jet_valve_body",   # Jet Car Lab (parts/kip/viewer/JetCar-Lab.html); the slide valve and nozzle set are print-orientation parts and are not drawn
     "mech_drive_tray", "mech_drive_lid", "mech_n20_pinion_z10",
     "mech_brain_tray", "mech_brain_lid", "mech_bat_door_screw",

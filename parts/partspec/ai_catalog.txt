@@ -203,3 +203,5 @@ mech_servo_lid [pro, pro] tags=mech,rc,steering,kitcard stat=Sturdiness connecto
 mech_servo_pinion_z10 [pro, pro] tags=mech,rc,steering,gear stat=Balance connectors=(pilot_bore:bore_grid/F/pro/1x1)
 pro_pilot_pin [pro, pro] tags=pro,mech,steering,pin stat=Balance connectors=(axis:pin/M/pro/1x1)
 mech_sill_duct [snap, small] tags=mech,rc,kitcard,petg stat=Sturdiness connectors=(under_sockets:socket_grid/F/small/4x3)
+kit_barbell_shaft_wide [pro, pro] tags=vehicle,craft,kitcard,axle,shaft,construction stat=Spin connectors=(axis:pin/M/pro/1x1)
+kit_drum_roller [pro, pro] tags=vehicle,craft,kitcard,wheel,roller,construction stat=Grip connectors=(hub:bore_grid/F/pro/1x1)

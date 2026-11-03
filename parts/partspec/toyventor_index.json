@@ -26542,6 +26542,9 @@
         ],
         "mech_servo_pinion_z10": [
           "pilot_bore"
+        ],
+        "kit_drum_roller": [
+          "hub"
         ]
       },
       "mates": []
@@ -29274,6 +29277,9 @@
         ],
         "mom_wind_key": [
           "axis"
+        ],
+        "kit_barbell_shaft_wide": [
+          "axis"
         ]
       },
       "mates": [
@@ -29690,6 +29696,10 @@
           "female": "mech_servo_pinion_z10.pilot_bore"
         },
         {
+          "male": "shaft_tu03.axis",
+          "female": "kit_drum_roller.hub"
+        },
+        {
           "male": "shaft_tu05.axis",
           "female": "beam_str_tu03.bores"
         },
@@ -30102,6 +30112,10 @@
           "female": "mech_servo_pinion_z10.pilot_bore"
         },
         {
+          "male": "shaft_tu05.axis",
+          "female": "kit_drum_roller.hub"
+        },
+        {
           "male": "shaft_tu07.axis",
           "female": "beam_str_tu03.bores"
         },
@@ -30514,6 +30528,10 @@
           "female": "mech_servo_pinion_z10.pilot_bore"
         },
         {
+          "male": "shaft_tu07.axis",
+          "female": "kit_drum_roller.hub"
+        },
+        {
           "male": "racer_axle.axis",
           "female": "beam_str_tu03.bores"
         },
@@ -30926,6 +30944,10 @@
           "female": "mech_servo_pinion_z10.pilot_bore"
         },
         {
+          "male": "racer_axle.axis",
+          "female": "kit_drum_roller.hub"
+        },
+        {
           "male": "char_faceplate.axis",
           "female": "beam_str_tu03.bores"
         },
@@ -31338,6 +31360,10 @@
           "female": "mech_servo_pinion_z10.pilot_bore"
         },
         {
+          "male": "char_faceplate.axis",
+          "female": "kit_drum_roller.hub"
+        },
+        {
           "male": "char_faceplate_vinyl.axis",
           "female": "beam_str_tu03.bores"
         },
@@ -31750,6 +31776,10 @@
           "female": "mech_servo_pinion_z10.pilot_bore"
         },
         {
+          "male": "char_faceplate_vinyl.axis",
+          "female": "kit_drum_roller.hub"
+        },
+        {
           "male": "char_faceplate_flat.axis",
           "female": "beam_str_tu03.bores"
         },
@@ -32162,6 +32192,10 @@
           "female": "mech_servo_pinion_z10.pilot_bore"
         },
         {
+          "male": "char_faceplate_flat.axis",
+          "female": "kit_drum_roller.hub"
+        },
+        {
           "male": "prop_wrench.axis",
           "female": "beam_str_tu03.bores"
         },
@@ -32574,6 +32608,10 @@
           "female": "mech_servo_pinion_z10.pilot_bore"
         },
         {
+          "male": "prop_wrench.axis",
+          "female": "kit_drum_roller.hub"
+        },
+        {
           "male": "prop_star_shield.axis",
           "female": "beam_str_tu03.bores"
         },
@@ -32986,6 +33024,10 @@
           "female": "mech_servo_pinion_z10.pilot_bore"
         },
         {
+          "male": "prop_star_shield.axis",
+          "female": "kit_drum_roller.hub"
+        },
+        {
           "male": "prop_hammer.axis",
           "female": "beam_str_tu03.bores"
         },
@@ -33398,6 +33440,10 @@
           "female": "mech_servo_pinion_z10.pilot_bore"
         },
         {
+          "male": "prop_hammer.axis",
+          "female": "kit_drum_roller.hub"
+        },
+        {
           "male": "prop_mop.axis",
           "female": "beam_str_tu03.bores"
         },
@@ -33810,6 +33856,10 @@
           "female": "mech_servo_pinion_z10.pilot_bore"
         },
         {
+          "male": "prop_mop.axis",
+          "female": "kit_drum_roller.hub"
+        },
+        {
           "male": "prop_guitar.axis",
           "female": "beam_str_tu03.bores"
         },
@@ -34222,6 +34272,10 @@
           "female": "mech_servo_pinion_z10.pilot_bore"
         },
         {
+          "male": "prop_guitar.axis",
+          "female": "kit_drum_roller.hub"
+        },
+        {
           "male": "prop_screwdriver.axis",
           "female": "beam_str_tu03.bores"
         },
@@ -34634,6 +34688,10 @@
           "female": "mech_servo_pinion_z10.pilot_bore"
         },
         {
+          "male": "prop_screwdriver.axis",
+          "female": "kit_drum_roller.hub"
+        },
+        {
           "male": "prop_paint_roller.axis",
           "female": "beam_str_tu03.bores"
         },
@@ -35046,6 +35104,10 @@
           "female": "mech_servo_pinion_z10.pilot_bore"
         },
         {
+          "male": "prop_paint_roller.axis",
+          "female": "kit_drum_roller.hub"
+        },
+        {
           "male": "prop_broom.axis",
           "female": "beam_str_tu03.bores"
         },
@@ -35458,6 +35520,10 @@
           "female": "mech_servo_pinion_z10.pilot_bore"
         },
         {
+          "male": "prop_broom.axis",
+          "female": "kit_drum_roller.hub"
+        },
+        {
           "male": "prop_scrub_brush.axis",
           "female": "beam_str_tu03.bores"
         },
@@ -35870,6 +35936,10 @@
           "female": "mech_servo_pinion_z10.pilot_bore"
         },
         {
+          "male": "prop_scrub_brush.axis",
+          "female": "kit_drum_roller.hub"
+        },
+        {
           "male": "prop_vacuum.axis",
           "female": "beam_str_tu03.bores"
         },
@@ -36282,6 +36352,10 @@
           "female": "mech_servo_pinion_z10.pilot_bore"
         },
         {
+          "male": "prop_vacuum.axis",
+          "female": "kit_drum_roller.hub"
+        },
+        {
           "male": "prop_trumpet.axis",
           "female": "beam_str_tu03.bores"
         },
@@ -36694,6 +36768,10 @@
           "female": "mech_servo_pinion_z10.pilot_bore"
         },
         {
+          "male": "prop_trumpet.axis",
+          "female": "kit_drum_roller.hub"
+        },
+        {
           "male": "prop_maracas.axis",
           "female": "beam_str_tu03.bores"
         },
@@ -37106,6 +37184,10 @@
           "female": "mech_servo_pinion_z10.pilot_bore"
         },
         {
+          "male": "prop_maracas.axis",
+          "female": "kit_drum_roller.hub"
+        },
+        {
           "male": "prop_flag.axis",
           "female": "beam_str_tu03.bores"
         },
@@ -37518,6 +37600,10 @@
           "female": "mech_servo_pinion_z10.pilot_bore"
         },
         {
+          "male": "prop_flag.axis",
+          "female": "kit_drum_roller.hub"
+        },
+        {
           "male": "prop_magnifier.axis",
           "female": "beam_str_tu03.bores"
         },
@@ -37930,6 +38016,10 @@
           "female": "mech_servo_pinion_z10.pilot_bore"
         },
         {
+          "male": "prop_magnifier.axis",
+          "female": "kit_drum_roller.hub"
+        },
+        {
           "male": "veh_handlebar_fork.axis",
           "female": "beam_str_tu03.bores"
         },
@@ -38342,6 +38432,10 @@
           "female": "mech_servo_pinion_z10.pilot_bore"
         },
         {
+          "male": "veh_handlebar_fork.axis",
+          "female": "kit_drum_roller.hub"
+        },
+        {
           "male": "kit_barbell_shaft.axis",
           "female": "beam_str_tu03.bores"
         },
@@ -38754,6 +38848,10 @@
           "female": "mech_servo_pinion_z10.pilot_bore"
         },
         {
+          "male": "kit_barbell_shaft.axis",
+          "female": "kit_drum_roller.hub"
+        },
+        {
           "male": "kit_spinner_pin.axis",
           "female": "beam_str_tu03.bores"
         },
@@ -39166,6 +39264,10 @@
           "female": "mech_servo_pinion_z10.pilot_bore"
         },
         {
+          "male": "kit_spinner_pin.axis",
+          "female": "kit_drum_roller.hub"
+        },
+        {
           "male": "kit_yoke_hbar.axis",
           "female": "beam_str_tu03.bores"
         },
@@ -39578,6 +39680,10 @@
           "female": "mech_servo_pinion_z10.pilot_bore"
         },
         {
+          "male": "kit_yoke_hbar.axis",
+          "female": "kit_drum_roller.hub"
+        },
+        {
           "male": "pro_steer_knuckle_l.wheel_stub",
           "female": "beam_str_tu03.bores"
         },
@@ -39990,6 +40096,10 @@
           "female": "mech_servo_pinion_z10.pilot_bore"
         },
         {
+          "male": "pro_steer_knuckle_l.wheel_stub",
+          "female": "kit_drum_roller.hub"
+        },
+        {
           "male": "pro_steer_knuckle_r.wheel_stub",
           "female": "beam_str_tu03.bores"
         },
@@ -40402,6 +40512,10 @@
           "female": "mech_servo_pinion_z10.pilot_bore"
         },
         {
+          "male": "pro_steer_knuckle_r.wheel_stub",
+          "female": "kit_drum_roller.hub"
+        },
+        {
           "male": "mom_slam_plunger.axis",
           "female": "beam_str_tu03.bores"
         },
@@ -40814,6 +40928,10 @@
           "female": "mech_servo_pinion_z10.pilot_bore"
         },
         {
+          "male": "mom_slam_plunger.axis",
+          "female": "kit_drum_roller.hub"
+        },
+        {
           "male": "mom_spindle_shaft.axis",
           "female": "beam_str_tu03.bores"
         },
@@ -41226,6 +41344,10 @@
           "female": "mech_servo_pinion_z10.pilot_bore"
         },
         {
+          "male": "mom_spindle_shaft.axis",
+          "female": "kit_drum_roller.hub"
+        },
+        {
           "male": "pro_captive_pin_28.axis",
           "female": "beam_str_tu03.bores"
         },
@@ -41638,6 +41760,10 @@
           "female": "mech_servo_pinion_z10.pilot_bore"
         },
         {
+          "male": "pro_captive_pin_28.axis",
+          "female": "kit_drum_roller.hub"
+        },
+        {
           "male": "pro_steer_column.axis",
           "female": "beam_str_tu03.bores"
         },
@@ -42050,6 +42176,10 @@
           "female": "mech_servo_pinion_z10.pilot_bore"
         },
         {
+          "male": "pro_steer_column.axis",
+          "female": "kit_drum_roller.hub"
+        },
+        {
           "male": "mom_wind_key.axis",
           "female": "beam_str_tu03.bores"
         },
@@ -42460,6 +42590,426 @@
         {
           "male": "mom_wind_key.axis",
           "female": "mech_servo_pinion_z10.pilot_bore"
+        },
+        {
+          "male": "mom_wind_key.axis",
+          "female": "kit_drum_roller.hub"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "beam_str_tu03.bores"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "beam_str_tu05.bores"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "beam_str_tu07.bores"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "beam_str_tu10.bores"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "beam_str_tu14.bores"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "bushing_half.hub"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "bushing_tu01.hub"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "gear_spur_z10.hub"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "gear_spur_z15.hub"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "gear_spur_z20.hub"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "gear_spur_z30.hub"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "gear_rack_tu05.bores"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "gear_ring_z40.frame_bores"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "gear_spur_z25.hub"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "beam_l_tu03x03.bores"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "beam_l_tu05x03.bores"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "beam_t_tu05x03.bores"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "beam_ang45_tu05.bores"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "forge_mount_pro.bores"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "adapter_snap_pro.bores"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "wheel_tu04.hub"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "wheel_tu04.cranks"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "wheel_tu06.hub"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "wheel_tu06.cranks"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "hinge_tu02.bores"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "hinge_tu02.knuckle0"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "hinge_tu02.knuckle1"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "cross_connector_tu01.axle_z"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "cross_connector_tu01.axle_y"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "racer_axle_block.axle"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "racer_wheel.hub"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "char_head_kid.face_slot"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "char_head_chibi.face_slot"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "char_head_jumbo.face_slot"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "char_head_tall.face_slot"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "prop_skateboard_deck.axle_front"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "prop_skateboard_deck.axle_rear"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "veh_wheel_sport.hub"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "veh_wheel_offroad.hub"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "veh_wheel_moto.hub"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "veh_car_chassis.dash_bore"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "veh_car_chassis.axle_front"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "veh_car_chassis.axle_rear"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "veh_truck_chassis.dash_bore"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "veh_truck_chassis.axle_front"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "veh_truck_chassis.axle_rear"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "veh_scooter_frame.headtube"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "veh_scooter_frame.axle_front"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "veh_scooter_frame.axle_front_r"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "veh_scooter_frame.axle_rear"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "veh_scooter_frame.axle_rear_r"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "kit_keel_base.steer_bore"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "kit_keel_base.axle_row0"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "kit_keel_base.axle_row7_l"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "kit_keel_base.axle_row7_r"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "kit_keel_base.axle_row8_l"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "kit_keel_base.axle_row8_r"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "kit_clevis_spine.headtube"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "kit_clevis_spine.kickstand_bore"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "kit_clevis_spine.clevis_front_l"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "kit_clevis_spine.clevis_front_r"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "kit_clevis_spine.clevis_rear_l"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "kit_clevis_spine.clevis_rear_r"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "kit_wheel_med.hub"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "kit_wheel_giant.hub"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "kit_wheel_giant.face_bores"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "kit_rotor_blade.hub"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "kit_aero_wedge.prop_bore"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "kit_aero_wedge.mast_bore"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "kit_tilting_tub.hinge_bore"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "kit_turntable.center_bore"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "pro_steer_bridge.kingpins"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "pro_steer_knuckle_l.kingpin_bore"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "pro_steer_knuckle_l.tierod_bore"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "pro_steer_knuckle_r.kingpin_bore"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "pro_steer_knuckle_r.tierod_bore"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "pro_steer_rack.tierod_bores"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "pro_tie_rod_link.pivot_bore"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "pro_fork_rake_adpt.fork_bores"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "mom_band_core_lid.hinge_bore"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "mom_band_spool_pawl.hub"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "mom_bumper_trigger.mount_bores"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "mom_slam_base.stop_bore"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "mom_slam_base.anchor_bores"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "mom_jet_valve_body.valve_bore"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "mom_nozzle_set.mount_bore"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "mom_bellows_base.hinge_bore"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "mom_bellows_leaf.hinge_bore"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "mom_flywheel_tray.spindle_step"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "mom_flywheel_lid.spindle_journal"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "mom_flywheel_rotor.hub"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "mom_ripcord_rack_150.pull_bore"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "pro_tub_hinge.hitch_bore"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "pro_tub_hinge.hinge_bore"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "pro_steer_wheel.hub"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "mom_pto_gear_z10.hub"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "mom_latch_pawl.pivot_bore"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "mech_drive_tray.pto_pilot_bore"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "mech_brain_lid.hinge_bore"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "mech_bat_door_screw.hitch_bore"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "mech_servo_mount.clamp_bores"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "mech_servo_lid.clamp_bores"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "mech_servo_pinion_z10.pilot_bore"
+        },
+        {
+          "male": "kit_barbell_shaft_wide.axis",
+          "female": "kit_drum_roller.hub"
         }
       ]
     }
@@ -44135,6 +44685,22 @@
       "design_status": "verified",
       "size_class": "small",
       "line": "snap"
+    },
+    "kit_barbell_shaft_wide": {
+      "interfaces": [
+        "shaft_drive"
+      ],
+      "design_status": "verified",
+      "size_class": "pro",
+      "line": "pro"
+    },
+    "kit_drum_roller": {
+      "interfaces": [
+        "bore_grid"
+      ],
+      "design_status": "verified",
+      "size_class": "pro",
+      "line": "pro"
     }
   },
   "checks": {
@@ -44345,7 +44911,9 @@
         "mech_servo_lid": "pending",
         "mech_servo_pinion_z10": "pending",
         "pro_pilot_pin": "pending",
-        "mech_sill_duct": "pending"
+        "mech_sill_duct": "pending",
+        "kit_barbell_shaft_wide": "pending",
+        "kit_drum_roller": "pending"
       }
     },
     "F2_breakage": {
@@ -44555,7 +45123,9 @@
         "mech_servo_lid": "pending",
         "mech_servo_pinion_z10": "pending",
         "pro_pilot_pin": "pending",
-        "mech_sill_duct": "pending"
+        "mech_sill_duct": "pending",
+        "kit_barbell_shaft_wide": "pending",
+        "kit_drum_roller": "pending"
       }
     },
     "S1_small_part_screen": {

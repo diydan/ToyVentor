@@ -251,18 +251,45 @@ def kit_wheel_med(**_):
 
 
 def kit_wheel_giant(**_):
-    """#5 Giant 1-TU Tractor / Monster / Paddle Wheel (50.0 x 50.0 x 12.3 mm, fixed hub + 4x Ø7.0 face bores)."""
+    """#5 Giant 1-TU Tractor / Monster / Paddle Wheel (50.0 x 50.0 x 12.3 mm, fixed hub + 4x O7.0 face bores).
+
+    Dished like the medium wheel: a four-arm cross carries the hub and the four crank bosses, between them four open windows down to a 5.8 mm floor,
+    inside a stepped-tread tyre. The whole wheel is the old solid disc with material REMOVED (nothing added outside the old envelope: the new solid
+    is intersected with the old tyre hull), so every clearance already proven for the old wheel holds, and it prints face-down on z = 0 with no
+    overhang (the pocket walls lean outward going up; the arms and bosses rise from the floor)."""
     D, H = 50.0, 12.3
     R = D / 2
-    tire = Manifold.batch_hull([
+    hull = Manifold.batch_hull([
         Manifold.cylinder(0.02, R - 1.6, R - 1.6, 112),
         Manifold.cylinder(H - 3.4, R, R, 112).translate((0.0, 0.0, 1.7)),
         Manifold.cylinder(0.02, R - 1.8, R - 1.8, 112).translate((0.0, 0.0, H - 0.02)),
     ])
-    lug = Manifold.cube((2.2, 1.8, H + 2.0)).translate((R - 1.2, -0.9, -1.0))
+    # Staggered shoulder blocks: 20 stations, lower-half grooves and upper-half grooves offset by half a pitch, a continuous centre rib between.
+    # (A chevron would be handed: the left and right wheels are the same part turned round, so it would point the wrong way on one side.
+    # This pattern looks the same from either side.)
+    tire = hull
+    groove = Manifold.cube((2.6, 1.9, H / 2 + 0.7)).translate((R - 1.5, -0.95, -0.7))
+    groove_hi = Manifold.cube((2.6, 1.9, H / 2 + 0.7)).translate((R - 1.5, -0.95, H / 2))
     for k in range(20):
-        tire = tire - lug.rotate((0.0, 0.0, 18.0 * k))
-    body = tire - pro.bore_cutter("fixed", H)
+        tire = tire - groove.rotate((0.0, 0.0, 18.0 * k)) - groove_hi.rotate((0.0, 0.0, 18.0 * k + 9.0))
+    # Dished face: conical pocket, floor O34.8 at z 5.8 opening to O42.8 at the top, leaving a 1.8 mm rim at the top edge.
+    dish = Manifold.batch_hull([
+        Manifold.cylinder(0.05, 17.4, 17.4, 112).translate((0.0, 0.0, 5.8)),
+        Manifold.cylinder(0.8, 21.4, 21.4, 112).translate((0.0, 0.0, H - 0.5)),
+    ])
+    body = tire - dish
+    # Hub collar, four arms along the axes (11.2 wide: a 2.1 mm wall round each O7.0 crank bore) and a domed boss on each bore.
+    hub = Manifold.cylinder(H, 7.4, 7.4, 64)
+    arms = None
+    for k in range(4):
+        arm = rbox(11.2, 20.0, 5.7, 1.2, 0.3).translate((0.0, 15.0, 5.0)).rotate((0.0, 0.0, 90.0 * k))
+        arms = arm if arms is None else arms + arm
+    bosses = None
+    for x, y in [(-TU, 0.0), (TU, 0.0), (0.0, -TU), (0.0, TU)]:
+        b = Manifold.cylinder(H - 0.8 - 5.8, 5.6, 5.0, 64).translate((x, y, 5.8))
+        bosses = b if bosses is None else bosses + b
+    body = body + ((hub + arms + bosses) ^ hull)
+    body = body - pro.bore_cutter("fixed", H)
     cranks = [(-TU, 0.0), (TU, 0.0), (0.0, -TU), (0.0, TU)]
     for x, y in cranks:
         body = body - pro.bore_cutter("free", H, x, y)
@@ -281,6 +308,39 @@ def kit_wheel_giant(**_):
         "grid": {"nx": 3, "ny": 3, "pitch": TU, "anchor": "corner", "omit_cells": omit},
     }
     return body, [pro._hub_conn(H), c_crank], {}
+
+
+def kit_barbell_shaft_wide(**_):
+    """#3c Wide-Track Barbell Shaft (6.6 x 103.0 x 5.0 mm LAY_FLAT): the 78.0 mm barbell's long brother. 49.8 mm keel + 2 x (24.8 mm drum + 1.8 mm gap)
+    = 103.0 mm, so a 2 TU road-roller drum, or a 12.3 mm wheel plus a 12.3 mm dozer arm, fits outboard of the keel on each side."""
+    m, conn = _cruciform_tip_shaft(103.0, conn_len=103.0, z0=0.0)
+    return m, [conn], {"print_rotation_deg": pro.LAY_FLAT}
+
+
+def kit_drum_roller(**_):
+    """#5b Smooth 2-TU Road-Roller Drum (50.0 x 50.0 x 24.8 mm, fixed hub). A smooth tyre-less drum, dished from the open face like the wheels so it is
+    about a third of the mass of a solid one: a 4.0 mm floor on the bed side, a hub collar and four ribs, inside a 2.4 mm wall. Prints face-down on z = 0
+    with no overhang (the pocket wall leans outward going up; hub and ribs rise from the floor)."""
+    D, H = 50.0, 24.8
+    R = D / 2
+    hull = Manifold.batch_hull([
+        Manifold.cylinder(0.02, R - 1.6, R - 1.6, 112),
+        Manifold.cylinder(H - 3.2, R, R, 112).translate((0.0, 0.0, 1.6)),
+        Manifold.cylinder(0.02, R - 1.6, R - 1.6, 112).translate((0.0, 0.0, H - 0.02)),
+    ])
+    dish = Manifold.batch_hull([
+        Manifold.cylinder(0.05, 20.2, 20.2, 112).translate((0.0, 0.0, 4.0)),
+        Manifold.cylinder(0.8, 22.6, 22.6, 112).translate((0.0, 0.0, H - 0.5)),
+    ])
+    body = hull - dish
+    hub = Manifold.cylinder(H, 7.4, 7.4, 64)
+    ribs = None
+    for k in range(4):
+        rib = rbox(5.0, 20.0, H - 4.0 - 2.0, 1.0, 0.3).translate((0.0, 15.0, 4.0)).rotate((0.0, 0.0, 90.0 * k))
+        ribs = rib if ribs is None else ribs + rib
+    body = body + ((hub + ribs) ^ hull)
+    body = body - pro.bore_cutter("fixed", H)
+    return body, [pro._hub_conn(H)], {}
 
 
 def kit_rotor_blade(**_):
@@ -2339,6 +2399,19 @@ CARD_LAYOUTS = {
             ("sill_duct", "mech_sill_duct", 112.6, 101.5, 37.3, 49.8),
         ],
     },
+    "card_g": {
+        "name": "Card G — Construction: Road-Roller Drums & Wide-Track Axles",
+        "limit_mm": 164.0,
+        "material": "PLA/PETG",
+        "items": [
+            ("drum_1", "kit_drum_roller", 3.0, 3.0, 50.0, 50.0),
+            ("drum_2", "kit_drum_roller", 58.0, 3.0, 50.0, 50.0),
+            ("drum_3", "kit_drum_roller", 3.0, 58.0, 50.0, 50.0),
+            ("drum_4", "kit_drum_roller", 58.0, 58.0, 50.0, 50.0),
+            ("wide_axle_1", "kit_barbell_shaft_wide", 3.0, 113.0, 103.0, 6.6),
+            ("wide_axle_2", "kit_barbell_shaft_wide", 3.0, 124.6, 103.0, 6.6),
+        ],
+    },
 }
 
 
@@ -2640,7 +2713,7 @@ def _pneumatic_jet_check(cache):
 
 def verify_gate_g1():
     """Run deterministic 3D boolean overlap, capture, retention, pneumatic seal, and COTS keep-out checks across
-    all 9 canonical craft, G1-Steer, G1-Momentum, and G1-Mech.
+    all 9 canonical craft, the road roller, G1-Steer, G1-Momentum, and G1-Mech.
     """
     cache = {}
     keel = _raw_geo("kit_keel_base", cache)
@@ -2924,6 +2997,41 @@ def verify_gate_g1():
         if (pilot_pin.translate((0.0, 0.0, dz_p)) ^ keel).volume() < 0.05:
             res9.append(("pro_pilot_pin", f"dz={dz_p:+.2f}", "unretained on keel"))
     results["9_shuttle_and_mech_keepouts"] = res9
+
+    # 10. Road roller (construction line, 2026-11-03): four smooth 2 TU drums, fixed to two 103 mm wide-track axles at rows 0 and 8, no rack steering.
+    # Placement is the mirrored pair the viewer's wheels use: each drum's closed 4.0 mm floor (part z = 0) faces the keel, its dish opens outward.
+    # The keel is NOT the same width at both axles. Row 8 is the full 49.8 mm hull: the drums sit 1.8 mm clear each side and that holds the axle
+    # sideways. Row 0 is the 24.8 mm nose (half width 12.4): the drums sit 26.7 - 12.4 = 14.3 mm clear, so the axle floats +-14.3 mm until a
+    # drum meets the nose; the unsteered 78 mm barbell front axle of the existing trucks has the same float. This check proves the float is
+    # free over that whole travel and that the keel is what stops it (a dish turned toward the keel also stops at about 14.8 mm: orientation
+    # is a looks choice, not what holds the axle).
+    # Each wide axle must also end flush with its drums' outer faces (49.8 + 2 x (24.8 + 1.8) = 103.0 at the rear).
+    drum = _raw_geo("kit_drum_roller", cache)
+    wide = _raw_geo("kit_barbell_shaft_wide", cache)
+    res10 = []
+    cockpit = [("windscreen", wind.translate((0.0, -6.25, 12.5))), ("kip", kip)]
+    for role, y_c, float_mm in (("rear", 43.75, 1.8), ("front", -56.25, 14.3)):
+        dl = drum.rotate((0, -90, 0)).translate((-26.7, y_c, 6.25))
+        dr = drum.rotate((0, 90, 0)).translate((26.7, y_c, 6.25))
+        sh = wide.rotate((0, 90, 0)).translate((-51.5, y_c, 6.25))
+        sx = (sh.bounding_box()[0], sh.bounding_box()[3])
+        dx = (dl.bounding_box()[0], dr.bounding_box()[3])
+        if abs(sx[0] - dx[0]) > 0.01 or abs(sx[1] - dx[1]) > 0.01:
+            res10.append((f"{role}_wide_axle", "drums", f"shaft ends {sx[0]:.2f}..{sx[1]:.2f} are not flush with the drum faces {dx[0]:.2f}..{dx[1]:.2f}"))
+        def float_set(shift):
+            return [("keel", keel), *cockpit, (f"{role}_drum_l", dl.translate((shift, 0.0, 0.0))), (f"{role}_drum_r", dr.translate((shift, 0.0, 0.0))),
+                    (f"{role}_shaft", sh.translate((shift, 0.0, 0.0)))]
+        # free over the whole float (0.1 mm short of contact each way) ...
+        for shift in (-(float_mm - 0.1), 0.0, float_mm - 0.1):
+            res10 += [(f"{role}_float_{shift:+.1f}", b, v) for _, b, v in _check_non_overlapping(float_set(shift))]
+        # ... and stopped just past it: the keel must be what ends the float, or the axle is not held sideways at all
+        for shift in (-(float_mm + 0.5), float_mm + 0.5):
+            hit = [p for p in _check_non_overlapping(float_set(shift)) if "drum" in p[0] + p[1] and "keel" in p[0] + p[1]]
+            if not hit:
+                res10.append((f"{role}_float_{shift:+.1f}", "keel", f"no contact at {shift:+.1f} mm: the {role} axle is not held sideways by the keel"))
+    # both axles together: front drums against rear drums
+    res10 += _check_non_overlapping([(f"{r}_{t}", drum.rotate((0, 90 if t == "r" else -90, 0)).translate((x, y, 6.25))) for r, y in (("front", -56.25), ("rear", 43.75)) for t, x in (("l", -26.7), ("r", 26.7))])
+    results["10_road_roller"] = res10
 
     ok = all(not v for v in results.values())
     return {"ok": ok, "crafts": results}

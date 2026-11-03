@@ -2,9 +2,9 @@
   "validator": "preprint_check 1.2.0",
   "profile": "fdm_pla_0.4",
   "slicer": "PrusaSlicer-2.8.1",
-  "generated_at": "2026-11-02T23:56:38Z",
+  "generated_at": "2026-11-03T09:25:56Z",
   "counts": {
-    "pass": 177,
+    "pass": 179,
     "pass_with_settings": 0,
     "pass_with_warnings": 32,
     "fail": 0
@@ -1075,6 +1075,20 @@
       "min_wall_mm": null
     },
     {
+      "part_id": "kit_barbell_shaft_wide",
+      "file": "toyventor_kit_barbell_shaft_wide_P.stl",
+      "verdict": "pass",
+      "summary": "Prints as is",
+      "filament_g": null,
+      "print_time_min": null,
+      "filament_cost_usd": null,
+      "brim_mm": 0,
+      "height_mm": 5.0,
+      "bed_contact_mm2": 460.9,
+      "slenderness": 0.23,
+      "min_wall_mm": null
+    },
+    {
       "part_id": "kit_booster_pod",
       "file": "toyventor_kit_booster_pod_S.stl",
       "verdict": "pass",
@@ -1100,6 +1114,20 @@
       "height_mm": 15.3,
       "bed_contact_mm2": 1745.6,
       "slenderness": 0.37,
+      "min_wall_mm": null
+    },
+    {
+      "part_id": "kit_drum_roller",
+      "file": "toyventor_kit_drum_roller_P.stl",
+      "verdict": "pass",
+      "summary": "Prints as is",
+      "filament_g": null,
+      "print_time_min": null,
+      "filament_cost_usd": null,
+      "brim_mm": 0,
+      "height_mm": 24.8,
+      "bed_contact_mm2": 1695.1,
+      "slenderness": 0.6,
       "min_wall_mm": null
     },
     {
