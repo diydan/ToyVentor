@@ -140,7 +140,7 @@ function edCopy(id: string): LevelDef {var w=WORLDS[id]!;return {format:"toyvent
  spots:w.spots.map(function(s): LevelSpotRef {var hideKey=s.obj||s.cover||"",o: LevelSpotRef={part:s.k,hide:hideKey,x:s.x},h=HIDE[o.hide];if(h&&s.z!==h.z)o.z=s.z;return o}),missions:(w.missions||[]).slice()}}
 function edEngine(R: LevelDef){var w=levelWorld(R);w.spots=w.spots.filter(function(s){return Boolean(PART[s.k])});return w}
 function edValid(R: any): R is LevelDef {return Boolean(R&&R.format==="toyventor.level/1"&&THEMES[R.theme]!=null&&Array.isArray(R.props)&&Array.isArray(R.spots)&&R.props.every(function(p: any){return p&&PROPS[p.type]&&typeof p.x==="number"})&&R.spots.every(function(s: any){return s&&HIDE[s.hide]&&PART[s.part]&&typeof s.x==="number"}))}
-// K3: the editor Checks ARE checkLevel — one shared bar for hand-made, composed, and Claude-drafted levels.
+// K3: the editor Checks ARE checkLevel — one shared bar for hand-made, composed
 function edChecks(R: LevelDef): EditorCheck[] {return checkLevel(R)}
 function edSnapX(x: number){return Math.round(Math.max(0,Math.min(45,x))*2)/2}
 function edItem(k: string,i: number): any {if(!ED.R)return null;return k==="spot"?ED.R.spots[i]:ED.R.props[i]}
