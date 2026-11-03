@@ -42,6 +42,7 @@ def main():
     os.chdir(PS)
     import numpy as np
     import trimesh
+    from manifold3d import Manifold, Mesh
     import toyventor_kitcard as kc
 
     cache = {}
@@ -55,6 +56,11 @@ def main():
             if f.exists():
                 old = trimesh.load(f)
                 same = abs(old.volume - fresh.volume) < 0.05 and np.abs(old.bounds - fresh.bounds).max() < 0.005
+                if same:
+                    # Equal volume and bounds does not mean equal part: a MIRRORED part (the PTO gear pocket and spool pawls, 2026-11-02) matches both.
+                    # Compare the solids themselves: the symmetric difference of the old STL and the fresh geometry (identical parts give ~0.00 mm3).
+                    om = Manifold(Mesh(vert_properties=np.asarray(old.vertices, np.float32), tri_verts=np.asarray(old.faces, np.uint32)))
+                    same = ((m - om).volume() + (om - m).volume()) <= 0.5
                 if same:
                     continue
             stale.append(f"{pid} ({'missing' if not f.exists() else 'differs'}) in {d.relative_to(ROOT)}")

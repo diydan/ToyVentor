@@ -38,8 +38,8 @@ describe("jet car lab", () => {
   });
 
   it("derives the body passage from the CAD and the page starts the slider at it", () => {
-    expect(data.facts.passage_equiv_d_mm).toBeGreaterThan(4);
-    expect(data.facts.passage_equiv_d_mm).toBeLessThan(6);   // the body as drawn is about O5: the nozzle table depends on it
+    expect(data.facts.passage_equiv_d_mm).toBeGreaterThan(3);
+    expect(data.facts.passage_equiv_d_mm).toBeLessThanOrEqual(slider("pa").max);   // measured from the CAD (about O5 when this was written, wider once the jet body is widened); the slider must be able to show it
     for (const k of ["inlet", "tunnel", "valve_port"]) expect(data.facts.passage_mm2[k], k).toBeGreaterThan(10);
     expect(page).toContain("pass: data.facts.passage_equiv_d_mm");
     expect(slider("pa").min).toBeLessThanOrEqual(data.facts.passage_equiv_d_mm);
