@@ -4,7 +4,9 @@ A library of 50 household objects, each a small, optimised 3D part that the game
 from a child's word or photo. Companion to [forge-ai-spec.md](forge-ai-spec.md) (F2 and F2b, the photo routes),
 [garage-weekend-spec.md](garage-weekend-spec.md) (where these become the weekend parts), and `tests/fixtures/scan-targets.json` (the ranked
 list this is chosen from). **Status (2026-11-03): phases 2, 3 and 5 are built.** All 60 items (the 50, then the next ten) have a builder, a game
-GLB and a catalog entry; see "Phase 2: what was built" and "Phases 3 and 5: what was built". The game side (phase 4) is its own section when it lands.
+GLB and a catalog entry; see "Phase 2: what was built" and "Phases 3 and 5: what was built". **Phase 4 (the game side) is built through the matcher, the
+equip step and the offer in the print panel; there is no weekend loaner (dropped, Dan, 2026-11-03: the weekend is "find one at home", see "In the Garage
+weekends")**, see "Phase 4: what was built".
 
 ## Decisions (Dan, 2026-11-03)
 
@@ -165,7 +167,9 @@ What this showed:
   items: 168 to 848 triangles, 5.2 to 13.8 KB each (168 KB for all 19), at most 3 zones, so the proposed budget stands with room. Measured on all
   60: 52 to 848 triangles, 2.9 to 16.1 KB each, 499 KB in all; 17 items have one zone, 27 two and 16 three.
 - **Photo as colour:** the game projects the photo onto the whole asset from the front, as `buildPhotoAccessoryMesh` does for the digital
-  accessory. The colour zones are the fallback for an item with no photo.
+  accessory. The colour zones are the fallback for an item with no photo. **Decided (Dan, 2026-11-03):** the photo's colours are for the game asset
+  only; whether a print takes colour depends on a multi-colour printer, and the printer here is single-colour, so a printed library item is one colour
+  (probably no photo colours on a print, ever). Built after phase 4 (a forked agent): see "Colours from the photo: what was built".
 - **Printable version:** only called printable if the gates pass (the honest-claims rule in forge-ai-spec.md). Items that do not pass are digital-only
   and say so.
 - **Safe shapes:** items tagged `sharp-looking` (fork, scissors, toy sword, screwdriver) get blunt, rounded ends (radius at least 1.6 mm); tools carry
@@ -194,9 +198,18 @@ result, and is the strongest argument for the library.
 
 ## In the Garage weekends
 
-The 60 items are 60 weekend loaners, a little over a year of Fridays. See "Household library drops" in
-[garage-weekend-spec.md](garage-weekend-spec.md): the weekend's New part is a library item; the Idea kind can be "find one at home";
-the garage tools are a natural weekend pack.
+The 60 items are 60 weekends, a little over a year of Fridays. **Simplified (Dan, 2026-11-03): no 3D loaner.** A household weekend names one item and
+asks the child to **find one at home**; a grown-up confirms it (the Garage's existing real-life confirm), or the child can **skip** by playing "Who's that
+shape?" (pick the item's silhouette from a few pictures, right in a row, less reward). Nothing is equipped in the game, so there is no hand slot, vehicle
+or per-item stat question. A scan in the Kip viewer is a bonus: the match offer and the 3D item coloured from the photo. The full rules, the numbers and
+the tool weekends are in "Household library drops" in [garage-weekend-spec.md](garage-weekend-spec.md). From this library the Garage needs a **front
+picture of each item** (an SVG: each colour zone's outline from the front, back to front, plus the whole outline as the silhouette), written by the
+library build; **built 2026-11-03**, see "Pictures: what was built". The review of the weekend proposal (docs/review/household-weekends-review.md, 2026-11-03) widened that: the build also
+writes the **three-quarter silhouette**, a hand-written **`group`** on each row (cutlery, tools, fruit, containers, stationery, toys, bath, kitchen; the
+`family` column is a construction family, not a household one) and a **`confusableWith`** list per item (the items whose real silhouette overlaps it
+above a threshold), because the picture decides whether the shape game is playable: measured on the real outlines (96 x 96, in a common box), 31 of the
+1,770 pairs overlap 90 percent or more from the front and 15 of the 190 pairs among the 20 `simple` items do (all discs: ball, plate, flying disc, yo-yo,
+marble, orange); from a three-quarter view 20 of 1,770 and 8 of 190.
 
 ## Tests
 
@@ -260,6 +273,26 @@ the front, the pencil is held by its eraser with the point up.
 see "Decided after phase 2"); the spinning top was held by its point (it passed with 33 mm3 of contact, a thin join); Dan chose the blunt peg
 (71), see "Decided after phase 2".
 
+## Printable versions (measured 2026-11-03)
+
+Digital first, a printable version on demand (Dan). `parts/kip/household/printable_probe.py` measured what happens today if a weekend asked for a printed
+one: each item's front surface is kept as a height field (no undercut by construction), put on the Kip hand-prop grip by the part SDK and run through the
+real gates, with none of the "make it printable" tuning. About 47 minutes for all 60 (a few items take over a minute; the ball 80 s, the tape dispenser
+406 s). **10 of the 60 pass every blocking gate as they are**; the other 50 are digital only until they are tuned, and the sheet must say so.
+
+| Result | Items |
+| --- | --- |
+| Prints as a relief (10) | banana, avocado, wooden spoon, paintbrush, pencil, marker, crayon, ruler, bubble wand, toy sword |
+| Misses only by a small overhang, 12 mm2 or less (13) | ball, flying disc, marble, orange, lemon, fork, comb, eraser, glue stick, hammer, screwdriver, pliers, pencil case |
+| Misses only by a larger overhang (15) | flask, cookie tin, yo-yo, apple, stapler, tape dispenser, dice, toy brick, tape measure, board game, jigsaw piece, playing cards, soap, sponge (270 mm2, the worst), cereal box |
+| Fails the watertight gate, with or without an overhang (22) | mug, water bottle, drinking glass, jam jar, can, bowl, plate, bucket, watering can, potted plant, spinning top, carrot, key, hairbrush, toothbrush, scissors, flashlight, alarm clock, desk lamp, notebook, book, lunchbox |
+
+By cause, an item can have more than one: 47 break `P1_no_supports` (an overhang steeper than 45 degrees), 22 break `G1_watertight`, and 7 break
+`G3_single_body` because the relief came out as several pieces (watering can, potted plant, carrot, hairbrush, toothbrush, alarm clock, desk lamp: the
+thin parts of those float free of the cut). The pilot's reading holds: the 13 near misses and most of the watertight failures look like tuning of the
+height-field edge (smooth it, close tiny holes, a minimum thickness), not a rethink; the larger overhangs (boxes, the sponge) may need the relief to be
+cut differently. Nothing in the game or the Garage depends on any of this.
+
 ## Phases 3 and 5: what was built (2026-11-03)
 
 The other 31 of the first 50 (phase 3) and the next ten (phase 5) were built the way phase 2 was: one builder each in `household_builders.py`, a GLB
@@ -293,14 +326,108 @@ each, a catalog row, the same build rules and the same tests. `parts/partspec/.v
 - **What phase 5 did not do.** The properly soft items (sneaker, slipper, sock, sunglasses) are still out. The age rule's data (`minBand`, `simple`,
   the support tool) and the blunt-peg top were built after Dan confirmed them, below.
 
+## Phase 4: what was built (2026-11-03, a forked agent; checked by the main session)
+
+Built in the Kip viewer and the print panel, in `shared/householdMatch.ts` (the matcher), `shared/photoPrintFlow.ts` (`loadHouseholdCatalog`,
+`offerForScan`), `parts/kip/viewer/kip-photo-print.js` (the offer box), `kip-forge-sdk.js` (`buildHouseholdHandMesh`) and `kip-bench.js`
+(`equipHouseholdItem`, `readAgeBand`, the dev handles `act.equipHousehold` and `read.household`). Tests: `tests/household-match.test.ts`,
+`household-offer.test.ts`, `household-equip.test.ts`; browser: `E2E_GPU=metal tsx scripts/e2e-kip-household.mjs` (`npm run e2e:kip-household`).
+
+- **Equip frame (measured in a real browser).** A library GLB sits in the hand slot exactly as a photo plate does (handle 6.6 x 28 mm, collar, head at
+  y = 26, the grip group turned -90 degrees about z at (-12, -11.4, 2.3); a test compares the numbers with `buildPhotoAccessoryMesh`). The half turn
+  about the up axis is needed: without it the item's front points exactly opposite a plate's front; with it the fronts match (dot 0.99). That alone does
+  not face the camera: at rest the hand points the item behind Kip, so a child sees only a handle (true of photo plates too). Equip therefore plays the
+  existing "Inspect" clip (`prop_magnifier`) and turns the item a further quarter turn (`HOUSEHOLD_HOLD_YAW = pi / 2`). Across the 60 items the front
+  points at the camera with its lowest z at 0.965 and its up at least 0.973 (y). The quarter turn belongs to that clip: change the clip and the yaw has
+  to be measured again. So Dan's "turn 180 degrees about z" was right as the frame match and not enough on its own.
+- **Matching, as built.** A word must be in exactly one built item's list; an exact word wins. Normalising is case, spacing, punctuation to a space and
+  a leading "a", "an" or "the". A plural (`s`, or `es` after a hissing sound) is read only when the word is not listed and it reaches one item. "glasses"
+  is blocked (it means spectacles). An ambiguous word finds nothing, and a near word finds nothing. A good outline is fidelity of at least 0.95 with no
+  warning other than `POINT_BUDGET_NOT_MET`, `NOT_SYMMETRIC` or `GATE_REWROTE_OUTLINE` (an unknown warning counts as bad). A good outline gets the offer
+  beside the flat plate; a poor outline, or a failed trace (`no_match`, `no_outline`, `outline_failed`), gets the item on its own ("I could not trace your
+  photo, but here is the 3D scissors"); an offline, busy or rate-limited scan offers nothing. The support tool list is ignored. Nothing is ever applied
+  without the child choosing.
+- **Age.** The matcher reads each row's `minBand`; an item above the child's band is not offered (reason `above_age_band`) and the plate flow is
+  untouched. No band, or `null`, means no limit; a value that is not a band reads as band 0. The bench reads `ageBand` from `toyforge:progression:v1`, as
+  the app does; a missing, corrupt or invalid value counts as unset.
+- **Real data.** The one real photo (the steel spoon) scores fidelity 0.924 with no warnings, so under the 0.95 rule it is offered the item on its
+  own ("outline not clear"), not beside the plate. The threshold needs more photos before it is changed.
+- **Verified.** Unit: 12 related files, 1,102 tests and `tsc` clean (the agent's run). Main session: re-ran seven files (818 tests) and `tsc`, clean.
+  Browser (the agent's run, headless Chrome on the GPU, `/api/scan` standing in with the spoon's real outline): 60 of 60, every built item equipped and
+  measured, the offer in a plain page and in the bench; the existing photo-print e2e still 57 of 57. Mutation rounds: 57 of 57 unit and 23 of 23 browser
+  mutants killed in the end (two of each survived at first and got a test).
+- **Not verified:** a real phone, the React game, a real Worker returning a good outline.
+- **Not built:** a printed library item (the print pack ignores one, so it is digital only; photo colours are built, see below). There is no weekend
+  loaner any more (see above).
+- **Traps:** the e2e harness defaults to SwiftShader, which cannot load the 3D bench in reasonable time: use `E2E_GPU=metal`. The bundle
+  `./kip-photo-print-core.js?v=10.0` is pinned by a test and was not bumped: a browser holding an old core lacks `loadHouseholdCatalog`, so bump the
+  version on deploy. Any later edit of the viewer sources needs the same copy into `public/kip` (`npm run build:kip`, which a peer's lane also runs).
+
+## Colours from the photo: what was built (2026-11-03, a forked agent; checked by the main session)
+
+Game asset only (Dan: single-colour printer, so no photo colours in any print). `shared/photoPrintFlow.ts` builds the **skin**, the photo cut to the
+object's outline and made whole; `parts/kip/viewer/kip-forge-sdk.js` `applyHouseholdSkin` puts it on the item (planar UVs from the item's bounding box at
+equip time, a shader patch, per-vertex front-facing weights); `kip-photo-print.js` builds the skin when the child takes the item; `kip-bench.js` applies it and
+shows a chip. No UV data is stored in the GLBs. A test (`tests/household-skin.test.ts`) fails if the print pack, the print view or the sticker sheet ever
+mentions a skin.
+
+- **When.** Only when the scan produced an outline, whether the offer is beside the plate or on its own with a poor outline (the child sees the cut line
+  first). A word-only offer, or any take with no outline, keeps the zone colours and never says "coloured". The offer says the item "can wear the colours of
+  your photo" only when an outline exists; after taking it a chip reads "3D mug: coloured from your photo", with a button to switch to the item's own colours
+  and back (a steel spoon on a wooden-spoon item is a real case).
+- **Mapping.** The photo's box is laid over the item's front box. The scan turns an object so its long axis is up (which laid a mug on its side); the skin
+  uses the photo as photographed and takes the scan's turned frame only when that fits the item's front clearly better (a 5 percent tie-break to upright):
+  a cup photo on a mug stays upright, on a toothbrush it turns. A shape mismatch above 1.6 times uses "contain", so a spoon photo on a mug is not stretched.
+  The photo fades per vertex from 75 degrees to 37 degrees off the front (smoothstep): none at or past 75, all within 37, none on the back.
+- **The skin picture.** 384 px on the longest side; the outline's outer 4 px ring is dropped (a rounded cut can include table colour); edge colours are
+  carried out 10 px and the object's mean colour fills the rest, so the photo's background never reaches the item.
+- **Verified.** Unit: 14 files, 1,380 tests (the agent's run); main session re-ran 8 files, 1,060 tests, `tsc` clean apart from another lane's
+  `tests/yard-vehicles.test.ts`. Browser (`E2E_GPU=metal`, the agent's run): `e2e-kip-household` 101 of 101 including part C (`E2E_PART=C`), photo-print
+  57 of 57. Pictures looked at: the real spoon mask on the wooden spoon, the real cup mask drawn red and white on the mug and the ball, and the spoon photo on
+  the mug in all three fit modes, each from the front, side and back. Share of the item's pixels that change: spoon 0.71 front, 0.42 side, 0.00 back; mug
+  0.59, 0.26, 0.00; ball 0.43, 0.20, 0.00. A skin red on the left and blue on the right reads that way from the front (not mirrored). Mutation rounds: unit 47
+  of 47, browser 16 of 16, each survivor given a test.
+- **Not verified / limits.** The repo holds no real photos: the spoon and the cup are real masks with drawn colours. The React game and a real phone; the
+  chip on a small screen. A hole the outline fills (a cup handle's gap) shows the background colour through it, visible as a tan patch on the cup-on-ball
+  picture. The 590 KB skin texture is not disposed when the item is replaced. The `?v=10.0` import is not bumped: a cached old core bundle would lack the new
+  functions, so bump it on deploy.
+- **Open for Dan.** (1) Colour on a poor outline too (it does now)? (2) The chip, or the panel, for the way back? (3) Where the photographed object does not
+  reach, the photo's mean colour (now) or the item's own zone colours?
+
+## Pictures: what was built (2026-11-03)
+
+For the Garage sheet, the grown-up's confirm and the shape game. `parts/kip/household/household_pictures.py`; the build writes
+`public/kip/household/pictures.json` (72 KB; one entry per item and for the support tool) and adds `group` and `confusableWith` to every catalog row.
+`--check` compares the pictures file too, so it cannot drift.
+
+- **Per item, in a 100 x 100 box** (aspect kept, centred, y down, SVG path data drawn with the even-odd rule): `front` (the whole outline from +y, for the
+  grown-up's confirm), `threeQuarter` (turned 35 degrees and tipped 20, the shape game's picture) and `zones` (each colour zone's outline from the front,
+  back to front, with its colour: the coloured picture on the sheet). Each zone is the union of its pieces, moved exactly as the whole item was fitted, so
+  zones sit where the finished solid does.
+- **`group`:** hand-written, nine names (cutlery, kitchen, containers, fruit, tools, stationery, toys, bath, home), every item and the support tool in one,
+  none holding a single item (cutlery has two); the checker refuses an unknown group or a group of one. It is not the `family` column.
+- **`confusableWith`:** the items whose three-quarter outline overlaps the item's by at least 0.75 (intersection over union, both fitted to the box;
+  symmetric). The round things form one clique (ball, marble, plate, flying disc, yo-yo, orange, ...); 19 items, among them the spoon, banana, key, hammer
+  and scissors, look like nothing; the mean is 4.4 look-alikes. The build refuses a catalog in which any item has fewer than three wrong answers to use,
+  drawn from the pool its youngest band may ask it in (a simple item from the simple ones, any other from the items its own band may see). The fewest any
+  item has is 36 in its own band pool and 11 in the simple pool (the orange).
+- **Checked:** the tests read `pictures.json` themselves (not the build's code): every item has all three pictures and the catalog's zones in their
+  colours; each front outline fills the box and has the proportions of the item's own size; groups; the look-alike table is symmetric and names real items;
+  the round things are alike and the spoon is not; every item has three wrong answers; zones are back to front. Canaries feed the picture maths broken
+  inputs (overlap, the box path, the distractor rule with too few, too old and not-simple wrong answers, a build whose outlines all look alike). A mutation
+  round on the picture code killed 11 of 11 (two only when the output was rebuilt, which is how the independent checks see a builder change).
+- **Not built:** the shape game, the weekend drops, the completion and the roof mark (the Garage spec); the picture of the item on the sheet and the
+  confirm (the game draws these paths).
+
 ## Phases
 
 1. **Spec and pilot** (this document): the list, the pilot, the numbers. Done.
 2. **The 15 simplest** (the pure revolved items, family R): builders, the GLB for each, the catalog JSON and the tests. **Done 2026-11-03**, with
    the four pilot items kept (mug, wooden spoon, pencil, banana): 19 built. See below.
 3. **The rest of the 50**, including the composites and the organic items; the build test. **Done 2026-11-03**: all 50 built. The printable-relief step is on demand (decided after phase 2); its measurement is in "Printable versions".
-4. **The game side:** equipping a library item in the hand slot, the match offer in the print panel, the weekend loaner. Needs a decision on how a
-   GLB part is equipped in the game (the Kip viewer already loads a custom prop into the hand; the React game does not yet).
+4. **The game side:** equipping a library item in the hand slot, the match offer in the print panel. **Built 2026-11-03** in the Kip viewer (the React
+   game does not load a GLB hand part, and no longer needs to: the weekend loaner was dropped). The weekend itself is the Garage's "find one at home"
+   (Garage spec), not built.
 5. **The next ten** (plain boxes, a puzzle piece, soap and a sponge). **Done 2026-11-03**: board game, jigsaw piece, notebook, book, playing cards,
    pencil case, soap, sponge, cereal box and lunchbox, all from the scan list. The properly soft items come after.
 
@@ -330,9 +457,12 @@ each, a catalog row, the same build rules and the same tests. `parts/partspec/.v
      `maxBand` and the support list; `src/lib/garage.ts` is where it lands), and per-item simplified shapes (the `simple` pool picks items that are
      already simple; an item that is complicated, such as the comb or the ruler, is simply not in it).
 2. **Equip in the game: ok.** Decided in phase 4 by loading one library GLB through the Kip viewer's custom-prop hand path and seeing which way it
-   faces; if it faces away, the equip step turns it 180 degrees about z and the assets stay in the printed-part frame.
-3. **Keeping a weekend loaner: scan the real one** (the real-life leg), **with finding it in a room of the map as the fallback** for a child who cannot
-   scan.
+   faces; if it faces away, the equip step turns it 180 degrees about z and the assets stay in the printed-part frame. (Result, "Phase 4: what was
+   built": the half turn matches a plate's frame but the hand points the item behind Kip, so equip also plays the Inspect clip and turns it a quarter
+   turn more; the assets stay in the printed-part frame.)
+3. **The weekend: find one at home, or skip it** (Dan, 2026-11-03, replacing the earlier "keep a loaner by scanning the real one, with a room of the
+   map as the fallback"; "these seem unnecessary complicated, can we simplify?"). No loaner. A grown-up confirms the find; the skip is a "Who's that
+   shape?" game, not one tap ("think about a not so easy way to skip, maybe item based or clue based"). Details and numbers in the Garage spec.
 4. **Printable versions: digital first, a printable version on demand.** Built only for an item a weekend asks for, and called printable only if it
    passes the gates.
 5. **The spinning top gets a short blunt peg** (Dan, 2026-11-03: "agreed yes to both"). Done: the 6.8 mm peg gives 71 of 72 mm3 of contact with the
@@ -342,6 +472,10 @@ each, a catalog row, the same build rules and the same tests. `parts/partspec/.v
 
 1. **The silhouette check** in the confidence rule needs a threshold from real photos: the photo batch tool can supply it once there are more
    photos of forks, spatulas and wands.
-2. **Tool jobs in the Garage:** the counts (1, 2, 3 tools) and the support tool standing in are decided and not yet in the Garage's code; they come
-   with the weekend loaner wiring.
+2. **Tool jobs in the Garage:** the counts (1, 2, 3 tools) and the support tool standing in are decided and not yet in the Garage's code. The drops
+   are already written per band group (`bandGroupOf` in `src/lib/garage.ts`: tiny = bands 0-1, early = 2, mid = 3, older = 4-5, the same cut-offs), so a
+   tool weekend is one variant per group.
 3. **The soft items** (sneaker, slipper, sock, sunglasses) are not built and need a decision on how a soft shape is drawn as a held, rigid part.
+4. **The household weekend, to confirm** (my proposals, in the Garage spec): the skip game's numbers (2/3/4/4 pictures, 2/2/3/3 right in a row), skip
+   paying XP, stamp and trophy but no play-time minutes, and the front pictures to build. Smaller: whether the offer also appears when the helper is
+   offline, by the child's own word (I would say yes), and the 0.95 fidelity threshold (keep it until there are more real photos).

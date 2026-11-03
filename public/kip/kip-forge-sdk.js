@@ -1400,6 +1400,191 @@ export function buildPhotoAccessoryMesh(THREE, sourceCanvas, seg, opts = {}) {
   return root;
 }
 
+/**
+ * A household library item (public/kip/household/<id>.glb; docs/specs/household-library-spec.md) in Kip's hand, as a digital prop.
+ * `scene` is the parsed GLB's scene. The library's frame is mm, z up, the grip point at the origin and the front on +y; the GLB holds it as
+ * (x, z, -y) / 1000: y up, metres, the front on -z. The hand slot is the one `buildPhotoAccessoryMesh` builds for a photo: a 6.6 mm handle
+ * along local +Y, the head standing on it at y = 26 with its front on +z, the whole group turned -90 deg about z so +Y lies along the hand's
+ * +X grip axis. So the scene is scaled metres to mm, turned half a turn about its up axis (front -z to +z) and stood on the handle, and the
+ * handle, its collar and the group's pose are the photo accessory's, number for number. `yaw` (radians, default 0) turns the item a further
+ * amount about its own up axis: 0 leaves its front where a photo plate's front is; the bench passes a quarter turn so, in the "Inspect" hold it
+ * plays, the front meets the camera (measured in the real page: tests/e2e-kip-household).
+ */
+export function buildHouseholdHandMesh(THREE, scene, opts = {}) {
+  const { rimColor = '#ff6b4a', id = '', label = '', yaw = 0 } = opts;
+  const rimMat = new THREE.MeshPhysicalMaterial({ color: rimColor, roughness: 0.34, clearcoat: 0.42 });
+  const item = scene.clone(true);
+  item.scale.setScalar(1000);
+  item.rotation.y = Math.PI + yaw;
+  let triCount = 0;
+  item.traverse((o) => {
+    if (!o.isMesh) return;
+    o.castShadow = true;
+    o.receiveShadow = true;
+    const g = o.geometry;
+    triCount += Math.round((g.index ? g.index.count : g.attributes.position.count) / 3);
+  });
+  const head = new THREE.Group();
+  head.position.y = 26;
+  head.add(item);
+
+  const grip = new THREE.Group();
+  const handle = new THREE.Mesh(new THREE.CylinderGeometry(3.3, 3.3, 28, 20), rimMat);
+  handle.castShadow = true;
+  handle.position.y = 12;
+  const collar = new THREE.Mesh(new THREE.CylinderGeometry(5.2, 5.2, 4, 20), rimMat);
+  collar.position.y = 25;
+  grip.add(handle, collar, head);
+  grip.rotation.z = -Math.PI / 2;
+  grip.position.set(-12, -11.4, 2.3);
+
+  const root = new THREE.Group();
+  root.add(grip);
+  root.userData = { digitalOnly: true, prints: false, slot: 'hand', household: { id, label }, triCount, itemRoot: item };
+  return root;
+}
+
+// ---- the photo's colours on a household item (game asset only: a print stays single-colour) ------------------------------------------------
+//
+// The child's photo, cut to the object's own outline, is projected onto the item from the FRONT (the library's +y, glTF -z) with planar UVs
+// worked out here from the mesh's own bounding box: the GLBs carry no UVs. The object's bounding box is laid over the item's front bounding box
+// (x by up). Where the surface turns away from the front the photo fades out to the zone colours, by the angle of the surface normal, so the sides,
+// the back and the bottom never smear it. Seen from the front, glTF -x is on the viewer's right, so u runs against x.
+
+/** The cosine of the angle between a surface normal and the front: no photo at or below the first number, all of it at or above the second. */
+export const HOUSEHOLD_FRONT_FADE = Object.freeze([0.25, 0.8]);
+
+/** 0 to 1: how much of the photo shows on a surface whose normal makes `cosToFront` with the front (smoothstep between the fade ends). */
+export function householdFrontWeight(cosToFront, fade = HOUSEHOLD_FRONT_FADE) {
+  if (typeof cosToFront !== 'number' || !Number.isFinite(cosToFront)) return 0;
+  const t = Math.min(1, Math.max(0, (cosToFront - fade[0]) / (fade[1] - fade[0])));
+  return t * t * (3 - 2 * t);
+}
+
+/**
+ * Planar UV of a point of the item (glTF frame, metres or mm: only ratios matter) onto the skin. `box` is the item's front bounding box
+ * `{ minX, maxX, minY, maxY }` (x across, y up). `aspect` is the object's width over height. `mode` `fit` lays the object's box exactly over the item's;
+ * `contain` keeps the object's proportions and centres it (the rest of the item reads the skin's edge colour). v is 0 at the TOP of the picture.
+ * `rect` is where the object's box sits inside the skin picture, `{ u0, v0, u1, v1 }` (the whole picture by default).
+ */
+export function householdPhotoUv(x, y, box, aspect = 1, mode = 'fit', rect = { u0: 0, v0: 0, u1: 1, v1: 1 }) {
+  const bw = box.maxX - box.minX;
+  const bh = box.maxY - box.minY;
+  let u = bw > 0 ? (box.maxX - x) / bw : 0.5;
+  let v = bh > 0 ? (box.maxY - y) / bh : 0.5;
+  if (mode === 'contain' && bw > 0 && bh > 0 && aspect > 0) {
+    const boxAspect = bw / bh;
+    if (boxAspect > aspect) u = 0.5 + (u - 0.5) * (boxAspect / aspect); // the box is wider than the object: the object takes a middle strip
+    else v = 0.5 + (v - 0.5) * (aspect / boxAspect);
+  }
+  return [rect.u0 + u * (rect.u1 - rect.u0), rect.v0 + v * (rect.v1 - rect.v0)];
+}
+
+/** How far apart the object's proportions and the item's front box may be before the photo is no longer stretched to fit (then `contain` keeps them). */
+export const HOUSEHOLD_FIT_MAX_MISMATCH = 1.6;
+
+/** `fit` when the two shapes are alike enough, `contain` when stretching the photo would distort it more than `maxMismatch` times. */
+export function householdSkinMode(boxAspect, objectAspect, maxMismatch = HOUSEHOLD_FIT_MAX_MISMATCH) {
+  if (!(boxAspect > 0) || !(objectAspect > 0)) return 'fit';
+  return Math.max(boxAspect / objectAspect, objectAspect / boxAspect) <= maxMismatch ? 'fit' : 'contain';
+}
+
+const SKIN_SHADER_KEY = 'household-photo-skin-v1';
+
+/** The shader change that mixes the skin over a material's own colour; exported so a test can read it without a GPU. */
+export function patchSkinShader(shader, map, mixUniform) {
+  shader.uniforms.skinMap = { value: map };
+  shader.uniforms.skinMix = mixUniform;
+  shader.vertexShader = shader.vertexShader
+    .replace('#include <common>', '#include <common>\nattribute vec2 skinUv;\nattribute float skinW;\nvarying vec2 vSkinUv;\nvarying float vSkinW;')
+    .replace('#include <begin_vertex>', '#include <begin_vertex>\nvSkinUv = skinUv;\nvSkinW = skinW;');
+  shader.fragmentShader = shader.fragmentShader
+    .replace('#include <common>', '#include <common>\nuniform sampler2D skinMap;\nuniform float skinMix;\nvarying vec2 vSkinUv;\nvarying float vSkinW;')
+    .replace('#include <color_fragment>', '#include <color_fragment>\ndiffuseColor.rgb = mix(diffuseColor.rgb, texture2D(skinMap, vSkinUv).rgb, clamp(vSkinW, 0.0, 1.0) * skinMix);');
+}
+
+/**
+ * Colour a household item (from `buildHouseholdHandMesh`) from a photo skin `{ w, h, data (RGBA, w*h*4), widthMm, heightMm, rect? }`. The item's
+ * geometry and materials are copied first (the loaded scene is shared), then each vertex gets a skin UV and a front weight, and each material mixes the
+ * skin over its zone colour by that weight. Returns `{ look(), setLook('photo' | 'standard'), vertices }`, or null when the skin cannot be used.
+ */
+export function applyHouseholdSkin(THREE, hand, skin, opts = {}) {
+  const item = hand && hand.userData && hand.userData.itemRoot;
+  const ok = skin && Number.isInteger(skin.w) && Number.isInteger(skin.h) && skin.w > 0 && skin.h > 0 && skin.data && skin.data.length === skin.w * skin.h * 4
+    && skin.widthMm > 0 && skin.heightMm > 0;
+  if (!item || !ok) return null;
+  hand.updateMatrixWorld(true);
+  const inv = new THREE.Matrix4().copy(item.matrixWorld).invert();
+  const meshes = [];
+  item.traverse((o) => { if (o.isMesh) meshes.push(o); });
+  // item-local positions and normals (the frame of the GLB itself: y up, front on -z), and the front bounding box
+  const data = meshes.map((m) => {
+    const rel = new THREE.Matrix4().multiplyMatrices(inv, m.matrixWorld);
+    const rot = new THREE.Matrix3().setFromMatrix4(rel);
+    const pos = m.geometry.attributes.position;
+    const nor = m.geometry.attributes.normal;
+    const p = new THREE.Vector3();
+    const n = new THREE.Vector3();
+    const P = new Float32Array(pos.count * 3);
+    const N = new Float32Array(pos.count * 3);
+    for (let i = 0; i < pos.count; i++) {
+      p.fromBufferAttribute(pos, i).applyMatrix4(rel).toArray(P, i * 3);
+      if (nor) n.fromBufferAttribute(nor, i).applyMatrix3(rot).normalize().toArray(N, i * 3); else N.set([0, 0, 1], i * 3);
+    }
+    return { m, P, N, count: pos.count };
+  });
+  const box = { minX: Infinity, maxX: -Infinity, minY: Infinity, maxY: -Infinity };
+  for (const d of data) for (let i = 0; i < d.count; i++) {
+    box.minX = Math.min(box.minX, d.P[i * 3]); box.maxX = Math.max(box.maxX, d.P[i * 3]);
+    box.minY = Math.min(box.minY, d.P[i * 3 + 1]); box.maxY = Math.max(box.maxY, d.P[i * 3 + 1]);
+  }
+  const aspect = skin.widthMm / skin.heightMm;
+  const boxAspect = (box.maxX - box.minX) / Math.max(1e-9, box.maxY - box.minY);
+  const mode = opts.mode === 'fit' || opts.mode === 'contain' ? opts.mode : householdSkinMode(boxAspect, aspect);
+  const tex = new THREE.DataTexture(new Uint8Array(skin.data), skin.w, skin.h, THREE.RGBAFormat);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.flipY = false;
+  tex.wrapS = THREE.ClampToEdgeWrapping;
+  tex.wrapT = THREE.ClampToEdgeWrapping;
+  tex.magFilter = THREE.LinearFilter;
+  tex.minFilter = THREE.LinearMipmapLinearFilter;
+  tex.generateMipmaps = true;
+  tex.needsUpdate = true;
+  const mix = { value: 1 };
+  const uvs = [];
+  const weights = [];
+  for (const d of data) {
+    const g = d.m.geometry.clone(); // the loaded scene's geometry and materials are shared: never edit them
+    const uv = new Float32Array(d.count * 2);
+    const w = new Float32Array(d.count);
+    for (let i = 0; i < d.count; i++) {
+      const [u, v] = householdPhotoUv(d.P[i * 3], d.P[i * 3 + 1], box, aspect, mode, skin.rect);
+      uv[i * 2] = u; uv[i * 2 + 1] = v;
+      w[i] = householdFrontWeight(-d.N[i * 3 + 2]); // the front is -z in the GLB's frame
+    }
+    g.setAttribute('skinUv', new THREE.BufferAttribute(uv, 2));
+    g.setAttribute('skinW', new THREE.BufferAttribute(w, 1));
+    d.m.geometry = g;
+    const own = Array.isArray(d.m.material) ? d.m.material : [d.m.material];
+    const cloned = own.map((mat) => {
+      const c = mat.clone();
+      c.onBeforeCompile = (shader) => patchSkinShader(shader, tex, mix);
+      c.customProgramCacheKey = () => SKIN_SHADER_KEY;
+      c.needsUpdate = true;
+      return c;
+    });
+    d.m.material = Array.isArray(d.m.material) ? cloned : cloned[0];
+    uvs.push(uv);
+    weights.push(w);
+  }
+  return {
+    look: () => (mix.value > 0.5 ? 'photo' : 'standard'),
+    setLook(look) { mix.value = look === 'standard' ? 0 : 1; },
+    mode,
+    vertices: { uvs, weights, box },
+  };
+}
+
 export function encodeToyContractHash(state) {
   const payload = {
     format: 'toyventor.toy/1',

@@ -855,7 +855,7 @@ describe("printAccessory: every way it can end is a sentence", () => {
 describe("photoPrintFlow.ts", () => {
   it("imports only the modules it drives, and nothing of the browser or a clock of its own", () => {
     const src = readFileSync(join(__dirname, "..", "shared", "photoPrintFlow.ts"), "utf8");
-    expect([...src.matchAll(/^import[\s\S]*?from "(.*)";$/gm)].map((m) => m[1]).sort()).toEqual(["./outlineFit", "./outlineGate", "./outlineScan", "./outlineSymmetry", "./photoAccessory", "./photoOutline"]);
+    expect([...src.matchAll(/^import[\s\S]*?from "(.*)";$/gm)].map((m) => m[1]).sort()).toEqual(["./householdMatch", "./outlineFit", "./outlineGate", "./outlineScan", "./outlineSticker", "./outlineSymmetry", "./photoAccessory", "./photoOutline"]);
     const code = src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
     expect(code.length).toBeGreaterThan(6000);
     expect(code).not.toMatch(/\bwindow\b|\bdocument\b|localStorage|sessionStorage|indexedDB|\bprocess\.|Math\.random/);

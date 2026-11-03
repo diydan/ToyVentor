@@ -10,6 +10,8 @@
  *                  sentence for every way it can end
  *   hintsFor       warnings on an outline, as sentences (never a raw code)
  *   overlayPoints  the outline in photo pixels, to draw the cut line on the photo
+ *   loadHouseholdCatalog, offerForScan  the household library: after a scan, offer the matching 3D item beside the plate, or on its own
+ *                  when the photo could not be traced (the matching rules are in householdMatch.ts)
  *
  * The Worker allows 3 gate calls a minute a device and the real spoon needs 4, so `printAccessory` waits out a refused call (for the
  * time the Worker names in `retry-after`, or a full window and a second when it names none) and asks again (spec question 30 f is the owner's call on a
@@ -18,14 +20,19 @@
  * No DOM, no clock of its own (`sleep`, `now` and `fetch` are passed in), no storage. Imports only the modules it drives.
  */
 
+import { HOUSEHOLD_CATALOG_URL, offerFor, parseHouseholdCatalog, type HouseholdCatalog, type HouseholdOffer } from "./householdMatch";
 import { type OutlineGate } from "./outlineFit";
 import { fetchPlateStl, forgeRouteGate, OutlineGateError } from "./outlineGate";
 import { parseScanOutline, type ScanOutlineSuccess } from "./outlineScan";
+import { photoStickerItem, type PhotoStickerItem } from "./outlineSticker";
 import { symmetrizeOutline } from "./outlineSymmetry";
 import { preparePhotoAccessory, type PhotoAccessory, type PhotoAccessoryOptions } from "./photoAccessory";
-import { applyAffine, invertAffine, type OutlineFailure, type OutlineSuccess, withFlipped, withScaled } from "./photoOutline";
+import { applyAffine, invertAffine, type Affine, type OutlineFailure, type OutlineSuccess, withFlipped, withScaled } from "./photoOutline";
 
 export type Fetch = (url: string, init?: RequestInit) => Promise<Response>;
+
+// The household library's matcher, bundled with this module so the panel imports one file (docs/specs/household-library-spec.md).
+export { glbUrl, offerSentence, type HouseholdCatalog, type HouseholdItem, type HouseholdOffer } from "./householdMatch";
 
 const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === "object" && v !== null && !Array.isArray(v);
 
@@ -135,6 +142,207 @@ export async function scanPhoto(doFetch: Fetch, args: ScanPhotoArgs): Promise<Sc
   if (outline) return scanFail("outline_failed", outlineFailureText(outline), outline);
   if (sam.status === "no-match" || sam.matches === 0) return scanFail("no_match", `I could not find a ${args.word.trim()} in the photo. Try a clearer photo or another word.`);
   return scanFail("no_outline", "The helper could not draw an outline. Try another photo.");
+}
+
+// ---- the household library's offer ---------------------------------------------------------------------------------------
+
+/**
+ * The library's catalog, fetched once (a static file next to the game assets: no photo, no word, no device id goes with it). Never throws:
+ * a catalog that is missing, not JSON or wrong in any field is `null`, and the panel then makes no offer and works as it always did.
+ */
+export async function loadHouseholdCatalog(doFetch: Fetch): Promise<HouseholdCatalog | null> {
+  try {
+    const res = await doFetch(HOUSEHOLD_CATALOG_URL, { method: "GET", credentials: "omit", cache: "no-store" });
+    if (!res.ok) return null;
+    const parsed = parseHouseholdCatalog(await res.json());
+    return parsed.ok ? parsed.catalog : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * What to offer after a scan, from the child's word and how the scan ended. A photo that could not be traced (`no_match`, `no_outline`,
+ * `outline_failed`) with the right word still gets the library item on its own. Any other failure (offline, too many tries, a bad
+ * request) is not about the photo, so it offers nothing: the child sees that sentence instead. `ageBand` (0 to 5; undefined or null for no limit) holds
+ * back items for older children; see householdMatch.ts.
+ */
+export function offerForScan(catalog: HouseholdCatalog, word: string, scan: ScanPhotoResult, ageBand?: unknown): HouseholdOffer {
+  if (scan.ok) return offerFor(catalog, word, { kind: "outline", fidelity: scan.scan.fidelity, warnings: scan.scan.warnings }, ageBand);
+  if (scan.reason === "no_match" || scan.reason === "no_outline" || scan.reason === "outline_failed") return offerFor(catalog, word, { kind: "failed" }, ageBand);
+  return { offer: "none", reason: "scan_not_run" };
+}
+
+// ---- the photo's colours on the 3D item (the game asset only: a print stays single-colour) ---------------------------------
+
+/**
+ * The outline in the photo's own frame, as photographed: up in the photo is up on the plate, so a mug photographed upright stays upright. (A scan turns an
+ * object so its long axis is up, to make a hand accessory; a mug's long axis is its width, so it comes back on its side.) Same points, same size in mm.
+ * Null when the photo map cannot be turned round.
+ */
+export function uprightOutline(scan: ScanOutlineSuccess): ScanOutlineSuccess | null {
+  const back = invertAffine(scan.photoToPlate);
+  if (!back) return null;
+  const s = Math.hypot(scan.photoToPlate[0], scan.photoToPlate[1]); // mm per photo pixel
+  if (!(s > 0) || !Number.isFinite(s)) return null;
+  const points = scan.points.map(([x, z]): [number, number] => {
+    const [px, py] = applyAffine(back, x, z);
+    return [s * px, -s * py];
+  });
+  const xs = points.map((p) => p[0]);
+  const zs = points.map((p) => p[1]);
+  const photoToPlate: Affine = [s, 0, 0, -s, 0, 0];
+  const { rowShift: _drop, ...rest } = scan; // the symmetric row slide belongs to the turned frame
+  void _drop;
+  return { ...rest, points, photoToPlate, widthMm: Math.max(...xs) - Math.min(...xs), heightMm: Math.max(...zs) - Math.min(...zs) };
+}
+
+/**
+ * The outline to colour a library item from: the photo as photographed, unless the object's turned frame (long axis up) fits the item's front better.
+ * `frontAspect` is the item's front, across over up (a mug 1.4, a spoon 0.2). Upright wins a tie, and anything within 5% of one.
+ */
+export function skinOutline(scan: ScanOutlineSuccess, frontAspect?: number): ScanOutlineSuccess {
+  const up = uprightOutline(scan);
+  if (!up) return scan;
+  if (!(typeof frontAspect === "number" && frontAspect > 0 && Number.isFinite(frontAspect))) return up;
+  const mismatch = (o: { widthMm: number; heightMm: number }) => {
+    const a = o.widthMm / o.heightMm;
+    return Math.max(a / frontAspect, frontAspect / a);
+  };
+  return mismatch(up) <= mismatch(scan) * 1.05 ? up : scan;
+}
+
+/**
+ * The sticker item for the outline: the cut path of the object and the map from the photo onto it. Rendering it with the sticker module gives the photo
+ * cut to the object's own outline, background gone, which is what colours the library item.
+ */
+export function skinStickerItem(scan: ScanOutlineSuccess): PhotoStickerItem {
+  return photoStickerItem(scan, { id: "library_skin", label: "Library skin" });
+}
+
+/** The longest side of the skin picture, in pixels (a texture the game can hold: 384 x 384 x 4 is 590 KB). */
+export const SKIN_LONGEST_PX = 384;
+/** The dpi that renders an object `widthMm` by `heightMm` with its longest side `SKIN_LONGEST_PX` pixels. */
+export function skinDpi(widthMm: number, heightMm: number): number {
+  const longest = Math.max(widthMm, heightMm);
+  return longest > 0 && Number.isFinite(longest) ? (SKIN_LONGEST_PX * 25.4) / longest : 100;
+}
+
+/** At least this share of the picture must be the object, or there is nothing worth colouring from. */
+export const SKIN_MIN_COVERAGE = 0.02;
+/** How far, in pixels, the object's edge colours are carried outwards before the rest is filled with its mean colour. */
+export const SKIN_REACH_PX = 10;
+/**
+ * The object's outermost ring of pixels, this many wide, is not trusted: the cut path is the outline with its corners rounded, so it can run a little
+ * past the real edge and take in the photo's background (a table's colour). The ring is dropped and grown back from the colours just inside it.
+ */
+export const SKIN_ERODE_PX = 4;
+
+export interface HouseholdSkin {
+  w: number;
+  h: number;
+  /** RGBA, w * h * 4, every pixel opaque: the object inside its outline, its edge colours carried a little way out, its mean colour beyond. */
+  data: Uint8ClampedArray;
+  /** The object's size, mm: its bounding box is what is laid over the item's front. */
+  widthMm: number;
+  heightMm: number;
+  /** The share of the picture that is the object, 0 to 1. */
+  coverage: number;
+  /** The object's mean colour. */
+  mean: [number, number, number];
+}
+
+/**
+ * Make a skin from the photo as the sticker renderer cut it (RGBA; alpha 255 inside the object's outline, 0 outside). Outside the outline the item still
+ * needs a colour (its shape is not the photographed object's), so the object's edge colours are carried outwards `SKIN_REACH_PX` pixels and the rest is
+ * the object's mean colour; the photo's background never reaches the item (the outline's outermost `SKIN_ERODE_PX` pixels are not trusted either). Null
+ * when the object covers under `SKIN_MIN_COVERAGE` of the picture or the input is not a picture.
+ */
+export function householdSkin(art: { w: number; h: number; data: ArrayLike<number> }, widthMm: number, heightMm: number): HouseholdSkin | null {
+  const { w, h } = art;
+  if (!Number.isInteger(w) || !Number.isInteger(h) || w <= 0 || h <= 0 || art.data.length !== w * h * 4 || !(widthMm > 0) || !(heightMm > 0)) return null;
+  const out = new Uint8ClampedArray(w * h * 4);
+  let inside = 0;
+  let sr = 0;
+  let sg = 0;
+  let sb = 0;
+  const inOutline = new Uint8Array(w * h);
+  let outlinePx = 0;
+  for (let i = 0; i < w * h; i++) if (art.data[i * 4 + 3]! >= 128) { inOutline[i] = 1; outlinePx++; }
+  if (outlinePx === 0 || outlinePx / (w * h) < SKIN_MIN_COVERAGE) return null;
+  // drop the outer ring (keep the whole outline for an object so thin that nothing would be left)
+  let core = inOutline;
+  for (let step = 0; step < SKIN_ERODE_PX; step++) {
+    const next = new Uint8Array(core.length);
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      const i = y * w + x;
+      next[i] = core[i] && x > 0 && y > 0 && x < w - 1 && y < h - 1 && core[i - 1] && core[i + 1] && core[i - w] && core[i + w] ? 1 : 0;
+    }
+    core = next;
+  }
+  if (core.reduce((n, v) => n + v, 0) < outlinePx * 0.15) core = inOutline;
+  const known = new Uint8Array(w * h); // 1 once a pixel has a colour
+  for (let i = 0; i < w * h; i++) {
+    if (core[i]) {
+      out[i * 4] = art.data[i * 4]!;
+      out[i * 4 + 1] = art.data[i * 4 + 1]!;
+      out[i * 4 + 2] = art.data[i * 4 + 2]!;
+      out[i * 4 + 3] = 255;
+      known[i] = 1;
+      inside++;
+      sr += out[i * 4]!;
+      sg += out[i * 4 + 1]!;
+      sb += out[i * 4 + 2]!;
+    }
+  }
+  if (inside === 0) return null;
+  const mean: [number, number, number] = [Math.round(sr / inside), Math.round(sg / inside), Math.round(sb / inside)];
+  // carry the edge colours outwards one ring at a time: each new pixel is the average of its already coloured neighbours
+  let ring = known;
+  for (let step = 0; step < SKIN_REACH_PX; step++) {
+    const next = new Uint8Array(ring);
+    let grew = false;
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        const i = y * w + x;
+        if (ring[i]) continue;
+        let r = 0;
+        let g = 0;
+        let b = 0;
+        let n = 0;
+        for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1]] as const) {
+          const nx = x + dx;
+          const ny = y + dy;
+          if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
+          const j = ny * w + nx;
+          if (!ring[j]) continue;
+          r += out[j * 4]!;
+          g += out[j * 4 + 1]!;
+          b += out[j * 4 + 2]!;
+          n++;
+        }
+        if (n) {
+          out[i * 4] = Math.round(r / n);
+          out[i * 4 + 1] = Math.round(g / n);
+          out[i * 4 + 2] = Math.round(b / n);
+          out[i * 4 + 3] = 255;
+          next[i] = 1;
+          grew = true;
+        }
+      }
+    }
+    ring = next;
+    if (!grew) break;
+  }
+  for (let i = 0; i < w * h; i++) {
+    if (!ring[i]) {
+      out[i * 4] = mean[0];
+      out[i * 4 + 1] = mean[1];
+      out[i * 4 + 2] = mean[2];
+      out[i * 4 + 3] = 255;
+    }
+  }
+  return { w, h, data: out, widthMm, heightMm, coverage: outlinePx / (w * h), mean };
 }
 
 // ---- what to tell the child ----------------------------------------------------------------------------------------------

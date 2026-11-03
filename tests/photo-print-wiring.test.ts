@@ -32,7 +32,8 @@ describe("the print panel in the Kip page", () => {
   });
 
   it("the bench hands the panel its own root, publishes it, and lets go of it when it is torn down", () => {
-    expect(bench).toContain("createPhotoPrint({ root: benchRoot })");
+    // the bench also hands it the hook that puts a household library item in Kip's hand (the panel offers one after a scan; docs/specs/household-library-spec.md)
+    expect(bench).toContain("createPhotoPrint({ root: benchRoot, onLibraryItem: equipHouseholdItem, ageBand: readAgeBand })");
     expect(bench).toMatch(/const PUBLISHED = \[[^\]]*"kipPhotoPrint"/);
     const teardown = bench.slice(bench.indexOf("function teardown()"), bench.indexOf("function dispose()"));
     expect(teardown).toContain("photoPrint?.dispose?.()");

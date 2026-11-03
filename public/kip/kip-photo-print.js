@@ -13,6 +13,11 @@
 //   - All DOM and CSS sit inside the root it is given; no listener on window or document; timers and object URLs are let go by dispose().
 //   - Every message is a sentence from the flow module or written here; a server's words and raw codes are never shown. Text is set with
 //     textContent, never as HTML.
+//   - The household library (docs/specs/household-library-spec.md): when the page gives `onLibraryItem`, a scan that matches a library item
+//     (the matching rules are in shared/householdMatch.ts) shows an OFFER with the child's choice of the 3D item, both, or only the photo plate.
+//     Nothing is equipped until a button is pressed, and without `onLibraryItem` no offer is made and the catalog is never fetched.
+//     When there is an outline, taking the 3D item also hands the page the photo cut to the object's outline (a "skin") to colour the item with: the game
+//     asset only, never a print. The status line says "coloured from your photo" only when the page says it did.
 
 import * as flow from './kip-photo-print-core.js?v=10.0';
 import * as ST from './kip-print-stickers.js'; // the same specifier kip-print-view.js uses, so the browser loads it once
@@ -51,6 +56,8 @@ const CSS = `
 .kpp-links{display:flex;flex-wrap:wrap;gap:8px}
 .kpp-links a{font-size:12.5px;font-weight:700;color:#fff;background:#1fa97c;padding:6px 11px;border-radius:9px;text-decoration:none}
 .kpp-sheet{max-width:100%;max-height:340px;object-fit:contain;align-self:center;border:1px solid rgba(27,34,56,.15);border-radius:10px;background:#fff}
+.kpp-offer{display:flex;flex-direction:column;gap:8px;background:#eef7f2;border:1px solid rgba(31,169,124,.4);border-radius:14px;padding:10px 12px}
+.kpp-offer p{margin:0;font-size:13.5px;font-weight:700;line-height:1.4}
 .kpp-card [hidden]{display:none!important}
 `;
 
@@ -97,9 +104,13 @@ function shrink(doc, img, side) {
 
 /**
  * The panel. `root` is the element it lives in (the bench root); nothing is added anywhere else.
- * @param {{ root: Element, fetch?: (url: string, init?: RequestInit) => Promise<Response>, deviceId?: () => string | null }} options
+ * `onLibraryItem(item, { skin })` puts a library item in Kip's hand and says whether it worked (`{ ok: boolean, coloured?: boolean }`); item is
+ * `{ id, label, glb, propMm }`; `skin` is the photo cut to the object's outline (see shared/photoPrintFlow.ts `householdSkin`), or null when there is no outline.
+ * `ageBand` is the child's age band (0 to 5), or a function that returns it each time a scan ends; an item the catalog holds back for an older band is
+ * never offered (the photo plate is). Undefined or null is no limit. The panel reads no storage for it: the page decides where it comes from.
+ * @param {{ root: Element, fetch?: (url: string, init?: RequestInit) => Promise<Response>, deviceId?: () => string | null, onLibraryItem?: (item: { id: string, label: string, glb: string | null, propMm: number }, extras: { skin: object | null }) => Promise<{ ok: boolean, coloured?: boolean } | void>, ageBand?: number | null | (() => number | null | undefined) }} options
  */
-export function createPhotoPrint({ root, fetch: fetchFn, deviceId = defaultDeviceId } = {}) {
+export function createPhotoPrint({ root, fetch: fetchFn, deviceId = defaultDeviceId, onLibraryItem, ageBand } = {}) {
   if (!root) throw new Error('createPhotoPrint needs a root element');
   const doc = root.ownerDocument;
   const doFetch = fetchFn ?? ((url, init) => fetch(url, init));
@@ -117,6 +128,11 @@ export function createPhotoPrint({ root, fetch: fetchFn, deviceId = defaultDevic
     message: '',
     bad: false,
     result: null,
+    catalog: undefined, // the household catalog: undefined until asked for, null when it could not be had
+    offer: null, // the library offer on screen, or null
+    equipped: null, // the id of the library item the child took, if any
+    coloured: false, // whether the page coloured it from the photo
+    skin: null, // the skin last handed to the page (kept so a test can hand the same one to the bench again)
   };
 
   let built = null;
@@ -200,8 +216,17 @@ export function createPhotoPrint({ root, fetch: fetchFn, deviceId = defaultDevic
     $.restart = el(doc, 'button', { type: 'button', text: '↩ Start again' });
     $.done.append($.summary, $.doneHints, $.links, $.sheet, el(doc, 'div', { class: 'kpp-row' }, $.restart));
 
+    // the household library's offer (hidden until a scan matches an item)
+    $.offer = el(doc, 'div', { class: 'kpp-offer', role: 'group', 'aria-label': 'A 3D version', hidden: true });
+    $.offerText = el(doc, 'p');
+    $.offerSkin = el(doc, 'p', { class: 'kpp-note', text: 'The 3D one can wear the colours of your photo. You can switch back to its own colours.' });
+    $.offerTake = el(doc, 'button', { type: 'button', class: 'kpp-ok' });
+    $.offerBoth = el(doc, 'button', { type: 'button' });
+    $.offerKeep = el(doc, 'button', { type: 'button' });
+    $.offer.append($.offerText, $.offerSkin, el(doc, 'div', { class: 'kpp-row' }, $.offerTake, $.offerBoth, $.offerKeep));
+
     $.status = el(doc, 'div', { class: 'kpp-status', role: 'status', 'aria-live': 'polite' });
-    card.append($.pick, $.shape, $.gate, $.work, $.done, $.status);
+    card.append($.pick, $.offer, $.shape, $.gate, $.work, $.done, $.status);
     root.append($.back);
     built = $;
     wire($);
@@ -225,6 +250,102 @@ export function createPhotoPrint({ root, fetch: fetchFn, deviceId = defaultDevic
     built.gate.hidden = step !== 'gate';
     built.work.hidden = step !== 'working';
     built.done.hidden = step !== 'done';
+    renderOffer();
+  }
+
+  /** The offer is on screen in the first two steps, while it is still the child's choice what to do with the photo. */
+  function renderOffer() {
+    if (!built) return;
+    const $ = built;
+    const o = state.offer;
+    $.offer.hidden = !o || !(state.step === 'pick' || state.step === 'shape');
+    if (!o) return;
+    const label = o.item.label.toLowerCase();
+    $.offerText.textContent = flow.offerSentence(o);
+    $.offerSkin.hidden = !(state.scan && state.photo); // only said when there is an outline to colour from
+    $.offerTake.textContent = `🧩 Use the 3D ${label}`;
+    $.offerTake.disabled = state.busy;
+    // With an outline the plate is still possible, so there are three choices; with none, the choice is the 3D item or another photo.
+    const plate = Boolean(state.scan);
+    $.offerBoth.hidden = !plate;
+    $.offerBoth.textContent = '➕ Both: the 3D one and the plate';
+    $.offerBoth.disabled = state.busy;
+    $.offerKeep.textContent = plate ? '🖼️ Just the photo plate' : '↩ Try another photo';
+    $.offerKeep.disabled = state.busy;
+  }
+
+  async function loadCatalog() {
+    if (state.catalog === undefined) state.catalog = await flow.loadHouseholdCatalog(doFetch);
+    return state.catalog;
+  }
+
+  /** After a scan: does the word (and how the scan ended) name a library item? Quiet when there is no hook, no catalog, or no match. */
+  async function considerOffer(scanResult) {
+    state.offer = null;
+    if (typeof onLibraryItem !== 'function') return;
+    const catalog = await loadCatalog();
+    if (disposed || !catalog) return;
+    let band = ageBand;
+    if (typeof ageBand === 'function') {
+      try { band = ageBand(); } catch { band = Number.NaN; } // a band that cannot be read is not a band: the library reads that as the strictest
+    }
+    const o = flow.offerForScan(catalog, state.word, scanResult, band);
+    state.offer = o.offer === 'none' ? null : o;
+  }
+
+  /** The photo cut to the object's own outline, as a skin for the 3D item; null when there is no outline or too little of the object to colour from. */
+  function makeSkin(libItem) {
+    if (!state.scan || !state.photo) return null;
+    // the photo as photographed (a mug stays upright), turned the way the scan turned it only when that fits the item's front better
+    const front = libItem && libItem.frontMm;
+    const item = flow.skinStickerItem(flow.skinOutline(state.scan, front ? front[0] / front[1] : undefined));
+    const plan = ST.planStickerSheet([{ kind: 'photo_accessory', item, spare: false }], {});
+    const it = plan.items[0];
+    if (!it) return null;
+    const art = ST.renderStickerItemRgba(it, { [it.sampler.sourceKey]: state.photo.source }, flow.skinDpi(it.w, it.h), 0);
+    return flow.householdSkin({ w: art.w, h: art.h, data: art.data }, it.w, it.h);
+  }
+
+  /** The child took the 3D item: put it in Kip's hand. `withPlate` keeps the panel open for the plate; otherwise the panel closes. */
+  async function takeLibraryItem(withPlate) {
+    const o = state.offer;
+    if (!o || state.busy || typeof onLibraryItem !== 'function') return;
+    const label = o.item.label.toLowerCase();
+    state.busy = true;
+    renderOffer();
+    let ok = false;
+    let coloured = false;
+    let skin = null;
+    try { skin = makeSkin(o.item); } catch { skin = null; } // no skin is not a failure: the item keeps its own colours
+    state.skin = skin;
+    try {
+      const r = await onLibraryItem({ id: o.item.id, label: o.item.label, glb: o.item.glb, propMm: o.item.propMm }, { skin });
+      ok = !r || r.ok !== false;
+      coloured = ok && skin !== null && Boolean(r && r.coloured);
+    } catch {
+      ok = false;
+    }
+    state.busy = false;
+    if (disposed) return;
+    if (!ok) { say(`The 3D ${label} could not be put in Kip's hand. Try again.`, true); renderOffer(); return; }
+    state.equipped = o.item.id;
+    state.coloured = coloured;
+    state.offer = null;
+    renderOffer();
+    refreshPick();
+    const inHand = `The 3D ${label} is in Kip's hand${coloured ? ', coloured from your photo' : ''}.`;
+    if (withPlate) { say(`${inHand} The photo plate is still here.`); return; }
+    say(inHand);
+    api.close();
+  }
+
+  /** "Just the photo plate" (or "Try another photo" when there was no outline): the child said no to the 3D item. */
+  function declineLibraryItem() {
+    const keepPlate = Boolean(state.scan);
+    state.offer = null;
+    if (!keepPlate) { reset(); return; }
+    renderOffer();
+    say('Okay. Here is the photo plate.');
   }
 
   function refreshPick() {
@@ -306,14 +427,20 @@ export function createPhotoPrint({ root, fetch: fetchFn, deviceId = defaultDevic
     state.busy = true;
     refreshPick();
     say('Looking for the shape…');
+    state.offer = null;
+    state.equipped = null;
+    state.coloured = false;
+    renderOffer();
     const r = await flow.scanPhoto(doFetch, { imageDataUrl: state.photo.dataUrl, word: state.word, targetHeightMm: state.heightMm });
+    await considerOffer(r);
     state.busy = false;
-    if (!r.ok) { say(r.message, true); refreshPick(); return; }
+    if (disposed) return;
+    if (!r.ok) { say(r.message, true); renderOffer(); refreshPick(); return; }
     state.scan = r.scan;
     state.choices = { flip: false, scale: 1, symmetry: undefined };
     state.preview = r.scan;
     show('shape');
-    say('Here is the cut line. Flip it, change the size, then check it prints.');
+    say(state.offer ? 'Here is the cut line. Choose what to do with the 3D one, or flip it, change the size, then check it prints.' : 'Here is the cut line. Flip it, change the size, then check it prints.');
     drawShape();
   }
 
@@ -430,6 +557,9 @@ export function createPhotoPrint({ root, fetch: fetchFn, deviceId = defaultDevic
     state.preview = null;
     state.result = null;
     state.busy = false;
+    state.offer = null;
+    state.equipped = null;
+    state.coloured = false;
     state.choices = { flip: false, scale: 1, symmetry: undefined };
     if (built) {
       built.file.value = '';
@@ -460,6 +590,9 @@ export function createPhotoPrint({ root, fetch: fetchFn, deviceId = defaultDevic
     $.gateIn.addEventListener('keydown', (e) => { if (e.key === 'Enter') submitGate(); });
     $.gateNo.addEventListener('click', () => gateWaiter?.resolve(false));
     $.restart.addEventListener('click', reset);
+    $.offerTake.addEventListener('click', () => takeLibraryItem(false));
+    $.offerBoth.addEventListener('click', () => takeLibraryItem(true));
+    $.offerKeep.addEventListener('click', declineLibraryItem);
   }
 
   const api = {
@@ -480,8 +613,10 @@ export function createPhotoPrint({ root, fetch: fetchFn, deviceId = defaultDevic
     isOpen: () => Boolean(built && built.back.classList.contains('open')),
     /** A copy of the panel's state, for tests: the step and the message, and whether a photo and an outline are held. */
     get state() {
-      return { step: state.step, message: state.message, bad: state.bad, hasPhoto: Boolean(state.photo), hasScan: Boolean(state.scan), busy: state.busy, choices: { ...state.choices }, hasProof: gate.hasProof() };
+      return { step: state.step, message: state.message, bad: state.bad, hasPhoto: Boolean(state.photo), hasScan: Boolean(state.scan), busy: state.busy, choices: { ...state.choices }, hasProof: gate.hasProof(), offer: state.offer ? { kind: state.offer.offer, item: state.offer.item.id, why: state.offer.why ?? null, text: flow.offerSentence(state.offer) } : null, equipped: state.equipped, coloured: state.coloured };
     },
+    /** The skin last handed to the page by taking a 3D item (the photo cut to the object's outline), or null; for tests. */
+    get lastSkin() { return state.skin; },
     /** Let go of everything: timers, object URLs, the photo, the proof, and the DOM. Safe to call twice. */
     dispose() {
       if (disposed) return;
@@ -494,6 +629,8 @@ export function createPhotoPrint({ root, fetch: fetchFn, deviceId = defaultDevic
       state.scan = null;
       state.preview = null;
       state.result = null;
+      state.offer = null;
+      state.skin = null;
       if (built) { built.back.remove(); built = null; }
     },
   };
