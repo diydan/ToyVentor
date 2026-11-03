@@ -244,6 +244,10 @@ export function mountParty(host) {
 
   const api = {
     start, stop: (reason) => stop(reason), update, tap, state,
+    /** Ask the host for its song index again (a child's new theme song was added) and check it like the first time. A failure leaves the list as it was. */
+    async refreshSongs() {
+      try { const raw = host.loadSongIndex ? await host.loadSongIndex() : null; if (raw) st.songs = parseSongIndex(raw).songs; } catch { /* keep the list we have */ }
+    },
     /** 'practice' or a library song's id. */
     setSong(id) { if (id === 'practice' || st.songs.some((x) => x.id === id)) { st.song = id; dropChoiceIfUnfit(); restartIfOn(); } },
     setClick(on) { audio.setClick(Boolean(on)); },
@@ -267,7 +271,7 @@ export function mountParty(host) {
       moods: MOODS.map((m) => ({ value: m, label: cap(m) })),
       tempos: TEMPOS.map((t) => ({ value: t, label: `${cap(t)} (${TEMPO_BPM[t]})` })),
       bands: PARTY_BANDS.map((label, i) => ({ value: String(i), label })),
-      songs: () => [{ value: 'practice', label: 'Practice beat (made here)' }, ...st.songs.map((x) => ({ value: x.id, label: `${cap(x.mood)}: ${x.title} (${Math.round(x.bpm)})` }))],
+      songs: () => [{ value: 'practice', label: 'Practice beat (made here)' }, ...st.songs.map((x) => ({ value: x.id, label: `${x.id.startsWith('my_') ? 'My song' : cap(x.mood)}: ${x.title} (${Math.round(x.bpm)})` }))],
       song: () => (chosenSong() ? st.song : 'practice'),
       click: () => audio.isClick(),
       setClick: (on) => api.setClick(on),

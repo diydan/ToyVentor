@@ -11,6 +11,7 @@ import { describe, loadRecipeBook } from './kip-describe.js';
 import { loadPartsData } from './kip-describe-validate.js';
 import { createDescribeView, partColour } from './kip-describe-view.js';
 import { createWorkshop, THINK_LINES, DRAW_LINES, LOAD_LINES } from './kip-workshop-wait.js';   // the waiting state: belt, bricks, parts pile
+import { createThemeSong } from './kip-theme-song.js';   // a name and a sung theme song for the build, started with it (the card stays hidden when the route is off)
 
 const STORE_KEY = 'kipDescribeEndpoint';
 
@@ -87,6 +88,8 @@ export function mountDescribe({
   stepMs = 1100,   // how long each step of a playing build takes
   voiceUrl = '/api/voice',   // the game's "say what it is" route; absent (a plain static server) means captions only
   defaultEndpoint = '/api/describe',   // the app's own route (Muse picks a checked build); used when the Settings address is empty; '' turns it off
+  themeUrl = '/api/theme-song',   // the app's own route (a name and a sung theme song, worker/themeSong.ts); '' turns the card off; a server where it is off just hides the card
+  themeOptions = {},   // createThemeSong overrides (a test shortens the poll)
 }) {
   if (!document.getElementById('kdb-style')) document.head.append(el('style', { id: 'kdb-style' }, CSS));
   let book = null, parts = null, view = null, loading = null, busy = false, last = null, isOpen = false;
@@ -101,6 +104,7 @@ export function mountDescribe({
   const status = el('p', { class: 'kdb-status', role: 'status', 'aria-live': 'polite' }, 'Say what you would like to build.');
   const workshop = createWorkshop({ doc: document, onLabel: (msg) => { status.textContent = msg; } });
   const badge = el('span', { class: 'kdb-badge', hidden: '' });
+  const theme = themeUrl ? createThemeSong({ url: themeUrl, fetchImpl, ...themeOptions }) : null;
   const playBtn = el('button', { type: 'button' }, 'Play build');
   const backBtn = el('button', { type: 'button', 'aria-label': 'Back one step' }, 'Back');
   const nextBtn = el('button', { type: 'button', 'aria-label': 'Next step' }, 'Next');
@@ -121,10 +125,10 @@ export function mountDescribe({
   const settings = el('details', {}, el('summary', {}, 'Settings: model endpoint (optional)'), epInput, test, epNote,
     el('p', {}, 'With no address, the app asks its own server, which asks Muse to pick the sample build that fits your words (in any language). If that is not available the page matches your words to the sample builds itself. To let a language model design a NEW build instead, start the local endpoint with ', el('code', {}, 'node parts/kip/viewer/tools/describe-endpoint.mjs'),
       ' and paste the address it prints. The page never holds a key: the server and the endpoint read it from your own .dev.vars.'),
-    el('p', {}, 'What is sent: with an address, your description and the list of part names go only to that address. With no address, your description (phone numbers and emails removed first) goes to the app\'s server and on to Muse, only to pick a build. Nothing is stored except that address, and only for this browser tab.'));
+    el('p', {}, 'What is sent: with an address, your description and the list of part names go only to that address. With no address, your description (phone numbers and emails removed first) goes to the app\'s server and on to Muse, to pick a build. When theme songs are switched on, the same description also goes to the app\'s server to write a name and a song, and the finished words go to a song service that sings them (nothing else about you does). Songs you make are kept in this browser only. Nothing else is stored except that address, and only for this browser tab.'));
   const close = el('button', { type: 'button', 'aria-label': 'Close' }, 'Close');
   const panel = el('section', { class: 'kdb-panel', 'aria-label': 'Describe and build', hidden: '' }, el('h2', {}, 'Describe & build', close),
-    el('label', { for: 'kdb-text' }, 'What should we build?'), text, examples, go, status, workshop.node, badge, buildBox, sliderBox, langBox, list, caption, settings);
+    el('label', { for: 'kdb-text' }, 'What should we build?'), text, examples, go, status, workshop.node, badge, ...(theme ? [theme.node] : []), buildBox, sliderBox, langBox, list, caption, settings);
   const toggle = el('button', { class: 'kdb-toggle', type: 'button', 'aria-expanded': 'false', 'aria-controls': 'kdb-panel' }, 'Describe & build');
   panel.id = 'kdb-panel';
   container.append(toggle, panel);
@@ -251,6 +255,7 @@ export function mountDescribe({
     const q = text.value.trim();
     if (!q) { say('Type what you would like to build first.'); text.focus(); return; }
     busy = true; go.disabled = true;
+    theme?.start(q).catch(() => { /* a song that cannot start never stops the build */ });   // the name and the song start WITH the build, not after it
     try {
       hideStale();
       await ready();
@@ -302,7 +307,7 @@ export function mountDescribe({
   }
   function closePanel() {
     if (playing) { stop(); labels(); }
-    stopVoice();
+    stopVoice(); theme?.silence();
     isOpen = false; panel.hidden = true; toggle.setAttribute('aria-expanded', 'false');
     if (view) view.group.visible = false;
     if (camSaved) {
@@ -348,12 +353,13 @@ export function mountDescribe({
     sayPart,
     get language() { return lang.get(); },
     get caption() { return caption.textContent; },
+    get theme() { return theme; },
     get progress() { return p; },
     get playing() { return playing; },
     ready,
     /** Unmount: hand the camera and the character back, stop the player, remove the toggle and panel (the shared <style> stays). */
     dispose() {
-      stopVoice(); workshop.stop();
+      stopVoice(); workshop.stop(); theme?.dispose();
       if (isOpen) closePanel(); else stop();
       view?.dispose?.();
       toggle.remove(); panel.remove();

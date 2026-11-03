@@ -46,6 +46,8 @@ const tab = mountDescribe({
   THREE, STLLoader, mergeVertices, toCreasedNormals, scene, camera, controls,
   endpoint: q.get('endpoint') ?? '',
   defaultEndpoint: q.get('de') ?? '',      // the app sets '/api/describe'; the harness leaves it off unless ?de=<url>
+  themeUrl: q.get('theme') ?? '',          // the app sets '/api/theme-song'; the harness leaves the theme-song card off unless ?theme=<path>
+  themeOptions: { pollMs: Number(q.get('themePoll') ?? 4000) },
   stepMs: Number(q.get('stepMs') ?? 1100),
   setCharacterVisible: (on) => { (window.__characterCalls ??= []).push(on); },   // a host would show or hide its own character here
 });

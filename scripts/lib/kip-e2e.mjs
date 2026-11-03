@@ -65,7 +65,8 @@ export async function startServer({ port = 0 } = {}) {
           return;
         }
         if (!h) { res.writeHead(404, { "content-type": "application/json" }); res.end('{"error":"not found"}'); return; }
-        const r = h({ json, body, headers: req.headers }) ?? {};
+        const r = h({ json, body, headers: req.headers, search: new URL(req.url, "http://x").searchParams }) ?? {};
+        if (r.raw) { res.writeHead(r.status ?? 200, { "content-type": r.type ?? "application/octet-stream", "cache-control": "no-store" }); res.end(r.raw); return; } // a handler may answer with bytes (a song)
         res.writeHead(r.status ?? 200, { "content-type": "application/json", "cache-control": "no-store" });
         res.end(JSON.stringify(r.json ?? {}));
       });

@@ -5,6 +5,11 @@
 MODEL_API_KEY=
 META_MODEL_API_URL=https://api.meta.ai/v1
 MUREKA_API_KEY=
+# Theme songs (worker/themeSong.ts): a name and a sung song for a build, written by the text model and sung by Mureka. OFF unless this is exactly "on".
+# Each song costs one text-model call and about $0.04 at Mureka (measured 2026-11-03). The real weekly quota (shared/songQuota.ts, kept in D1) is NOT wired yet:
+# until it is, THEME_SONG_MAX_STARTS caps the songs one Worker instance may order (default 25) and each address gets 3 an hour.
+THEME_SONG=
+THEME_SONG_MAX_STARTS=
 # Optional: model id for Create mode (/api/muse/spark). Empty means the
 # default in worker/muse.ts.
 MUSE_SPARK_MODEL=

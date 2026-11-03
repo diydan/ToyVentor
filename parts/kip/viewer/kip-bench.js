@@ -57,6 +57,7 @@ import { KIP_CLIPS, clipForProp, isPropClip, makeKipClip, plantBakedClip, limitH
 import { findMixamoBones, retargetMixamoClipToKip as retargetMixamoClip } from '/kip/kip-mixamo-retarget.js?v=10.0';
 import { bakedToClip, checkBaked } from '/kip/kip-baked-clips.js?v=10.0';
 import { mountParty } from '/kip/kip-party.js?v=10.0';
+import { createMySongs } from '/kip/kip-my-songs.js?v=10.0';   // a child's own theme songs, measured so Kip can dance to them
 import { createKipSession } from '/kip/kip-session.js?v=10.0';
 import { FACEPLATE_SEAT_MM } from '/kip/kip-faceplate-shape.js?v=10.0';
 import { disposeThreeScene } from '/kip/bench-lifecycle.js?v=10.0';
@@ -3263,13 +3264,23 @@ function readAgeBand() { // the band a grown-up set (src/lib/age.ts, stored in p
   } catch { return 0; }
 }
 const PARTY_HUES = [0.92, 0.55, 0.14, 0.36]; // the cups change colour with each beat of the bar
+// "My songs": the theme songs a child made in Describe & build, measured in the page (kip-my-songs.js) and offered in the Song picker beside the starter library.
+const mySongs = createMySongs({ onChange: () => { partyApi?.refreshSongs?.(); } });
+globals.kipMySongs = mySongs;
 partyApi = mountParty({
   AudioContextClass: window.AudioContext || window.webkitAudioContext,
   stage: renderer.domElement,
   band: readAgeBand,
-  // the starter library (public/kip/songs/, scripts/song-ingest.ts): the party checks the index before it plays anything from it
-  loadSongIndex: async () => { const r = await fetch('/kip/songs/index.json'); return r.ok ? r.json() : null; },
+  // the starter library (public/kip/songs/, scripts/song-ingest.ts) plus the child's own songs: the party checks the index before it plays anything from it
+  loadSongIndex: async () => {
+    const r = await fetch('/kip/songs/index.json').catch(() => null);
+    const base = r && r.ok ? await r.json().catch(() => null) : null;
+    const mine = mySongs.entries();
+    if (!mine.length) return base;
+    return { v: 1, ...(base && typeof base === 'object' ? base : {}), songs: [...(Array.isArray(base?.songs) ? base.songs : []), ...mine] };
+  },
   loadSongData: async (file) => {
+    if (String(file).startsWith('my_')) return mySongs.data(file);   // a theme song: cut to its bars in the page, never a file of ours
     const r = await fetch(`/kip/songs/${encodeURIComponent(file)}`);
     if (!r.ok) throw new Error(`song ${file}: HTTP ${r.status}`);
     return r.arrayBuffer();
@@ -3315,9 +3326,11 @@ globals.kipParty = partyApi;
 // and toggle button and draws in its own group; while it is open the character is hidden. `kip` is only set once init() has run, hence the guard.
 const describeTab = mountDescribe({
   THREE, STLLoader, mergeVertices, toCreasedNormals, scene, camera, controls, container: benchRoot,
+  themeOptions: { onSong: song => mySongs.add(song) },   // a new theme song is measured at once, so it is in the party's Song picker when the child gets there
   setCharacterVisible: on => { if (kip) kip.mover.visible = on; originRing.visible = on; },
 });
 globals.kipDescribe = describeTab;
+mySongs.catchUp().catch(() => { /* songs made before, measured quietly in the background; a failure just leaves them off the picker */ });
 // Selfie face (memory only, never in the URL or storage): wears a photo on the flat face insert and puts the
 // previous face back on Remove. Anything that would leave a human head first removes it, so a photo never lingers.
 let selfieBefore = null;

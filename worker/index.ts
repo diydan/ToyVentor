@@ -25,6 +25,7 @@ import {
 } from "./forgeOptimizer";
 import { handleForgeMake, handleForgeMakeJobStatus } from "./forgeMake";
 import { handleDescribe } from "./describe";
+import { handleThemeSong, type ThemeSongEnv } from "./themeSong";
 import { handleMuseSpark, museConfigured, type MuseEnv } from "./muse";
 import { handleOwnership, type OwnershipEnv } from "./ownership";
 import { handleParent, type ParentEnv } from "./parent";
@@ -39,6 +40,7 @@ export interface Env
     ParentEnv,
     SelfieEnv,
     ForgeOptimizerEnv,
+    ThemeSongEnv,
     VoiceEnv {
   MUREKA_API_KEY?: string;
   ASSETS?: { fetch: (request: Request) => Promise<Response> };
@@ -285,6 +287,9 @@ export default {
 
     // Describe & Build: Muse picks one of the ready, validator-checked builds for the child's words (worker/describe.ts).
     if (url.pathname === "/api/describe") return handleDescribe(request, env);
+
+    // A name and a sung theme song for what a child just made: text model writes it, the gate checks it, Mureka sings it (worker/themeSong.ts). Off unless THEME_SONG=on.
+    if (url.pathname === "/api/theme-song") return handleThemeSong(request, env);
 
     if (url.pathname === "/api/muse/spark") {
       // Create mode in ToyVentor World: the game asks for a level recipe

@@ -76,6 +76,19 @@ export function promptFor(req: SongRequest): string {
   );
 }
 
+/**
+ * The style text for a SUNG song (a theme song with lyrics): the same closed cards, a fixed template, and the one thing the instrumental prompt forbids, vocals.
+ * The words themselves never go in here: they are the `lyrics` field, which shared/songLyrics.ts builds and checks line by line.
+ */
+export function vocalPromptFor(req: SongRequest): string {
+  const inst = req.instruments.map((i) => INSTRUMENT_TEXT[i]);
+  const feature = inst.length ? `featuring ${inst.join(" and ")}` : "with a friendly mix of instruments";
+  return (
+    `A ${MOOD_TEXT[req.mood]} children's theme song, ${TEMPO_TEXT[req.tempo]}, about ${TEMPO_BPM[req.tempo]} BPM, ${feature}. ` +
+    `A warm, clear, cheerful singer with a simple melody that is easy to sing along to.`
+  );
+}
+
 /** A card pick, as the client sent it, to a request the Worker can send. */
 export function buildSongRequest(raw: unknown): SongRequestResult {
   if (typeof raw !== "object" || raw === null || Array.isArray(raw)) return { ok: false, reason: "not_object" };

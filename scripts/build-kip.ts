@@ -259,6 +259,24 @@ execFileSync(
   ],
   { stdio: "inherit" },
 );
+// "My songs" for the party: a child's own theme songs measured and cut to dance to in the browser (shared/themeParty.ts, bundled with the beat analyzer it uses).
+execFileSync(
+  esbuildBin,
+  [
+    join(root, "shared/themeParty.ts"),
+    "--bundle",
+    "--format=esm",
+    "--target=es2022",
+    "--minify",
+    "--legal-comments=none",
+    `--outfile=${join(kipOutDir, "kip-theme-core.js")}`,
+  ],
+  { stdio: "inherit" },
+);
+copyFileSync(
+  join(kipSrcDir, "viewer/kip-my-songs.js"),
+  join(kipOutDir, "kip-my-songs.js"),
+);
 // Workshop shell (docs/specs/workshop-spec.md): one page with a tab per bench (Kip, Truck); the benches themselves are copied above.
 copyFileSync(
   join(kipSrcDir, "viewer/Workshop.html"),
@@ -281,6 +299,11 @@ copyFileSync(
 copyFileSync(
   join(kipSrcDir, "viewer/kip-workshop-wait.js"),
   join(kipOutDir, "kip-workshop-wait.js"),
+);
+// The theme song card the Describe & build tab shows beside a build (a name and a sung song; hidden when the route is off).
+copyFileSync(
+  join(kipSrcDir, "viewer/kip-theme-song.js"),
+  join(kipOutDir, "kip-theme-song.js"),
 );
 copyFileSync(
   join(kipSrcDir, "viewer/kip-describe.js"),
