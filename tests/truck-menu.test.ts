@@ -121,12 +121,16 @@ describe("a host with no file exits (Workshop 4d: the game mounts with downloads
 
   it("the shell passes the switch to every bench, and each bench drops its file exits when it is off", () => {
     const read = (f: string) => readFileSync(join(root, "parts/kip/viewer", f), "utf8");
-    expect(read("workshop.js")).toContain("features: { downloads: opts.downloads !== false, gated }");
+    expect(read("workshop.js")).toContain("features: { downloads: opts.downloads !== false, gated, askGrownUp:");
     expect(read("workshop.js")).toContain("if (opts.downloads === false || gated) pop.hidden = true;");
     const kip = read("kip-bench.js");
-    // The Print group follows `downloads`; the exits that are not behind the gated print view (photo "Print it", selfie sticker, Make-from-words files) also need the gate to be off.
+    // The Print group follows `downloads`. Under 'gated' the photo "Print it" and the selfie sticker are offered only when the shell handed this bench its grown-up check; Make-from-words files stay hidden.
     expect(kip).toContain("const printOn = env.features?.downloads !== false;");
-    expect(kip).toContain("const downloadsOn = printOn && !env.features?.gated;");
+    expect(kip).toContain("const askGrownUp = env.features?.askGrownUp ?? null;");
+    expect(kip).toContain("const downloadsOn = printOn && (!env.features?.gated || askGrownUp !== null);");
+    expect(kip).toContain("const forgeFilesOn = printOn && !env.features?.gated;");
+    expect(kip).toContain("downloads: forgeFilesOn });");
+    expect(kip).toContain("cloud: env.features?.cloud ?? undefined,");
     expect(kip).toContain("if (!printOn) delete kipMenuCtx.print;");
     expect(kip).toContain("if (!downloadsOn) $el('btn-print-photo').hidden = true;");
     expect(kip).toContain("downloads: downloadsOn,");
@@ -140,6 +144,8 @@ describe("a host with no file exits (Workshop 4d: the game mounts with downloads
     expect(shell).toContain("const gated = opts.downloads === 'gated';");
     expect(shell).toContain("createInProcessPrintGate(downloadGate)");
     expect(shell).toContain("createPrintHost({ mountPrintView, THREE, stage, printGate })");
+    expect(shell).toContain("askGrownUp: downloadGate ? (kind) => downloadGate.ask(kind) : null, cloud: sharedCloud"); // benches get the check and the one parent-gate client
+    expect(readFileSync(join(root, "parts/kip/viewer/kip-selfie.js"), "utf8")).toContain("ok = (await ctx.askGrownUp('sticker'))?.ok === true; } catch { ok = false; } // fail closed");
     expect(shell).toContain("downloadGate?.cancel();"); // a question still open when the shell closes is settled as Cancel
     expect(shell).toContain("sharedCloud?.clearProof();"); // and the grown-up's answer does not outlive the shell
     const view = readFileSync(join(root, "parts/kip/viewer/kip-print-view.js"), "utf8");

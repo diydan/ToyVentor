@@ -249,7 +249,8 @@ export function mountWorkshop(root, opts = {}) {
         sharedKip,
         sharedMenu,
         sharedPrint,
-        features: { downloads: opts.downloads !== false, gated },
+        // Under 'gated' a bench also gets the grown-up check for exits that are not behind the print view (the selfie sticker), and the one parent-gate client, so one answer covers them all.
+        features: { downloads: opts.downloads !== false, gated, askGrownUp: downloadGate ? (kind) => downloadGate.ask(kind) : null, cloud: sharedCloud },
         globals,
         getSearch: () => (f ? `?${f}` : ''),
         getHash: () => '',
