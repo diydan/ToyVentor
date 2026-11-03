@@ -18,9 +18,9 @@ describe("the book", () => {
 
 describe("HELD", () => {
   it("describes every item: where it goes, how it sits and how big, and each builds a real mesh", () => {
-    expect(Object.keys(HELD).sort()).toEqual(["book", "guitar", "wand"]);
+    expect(Object.keys(HELD).sort()).toEqual(["book", "guitar", "mallets", "wand"]);
     for (const [name, spec] of Object.entries(HELD)) {
-      expect(["model", "armR"], name).toContain(spec.parent);
+      expect(["model", "armR", "arms"], name).toContain(spec.parent);
       for (const v of [...spec.position, ...spec.rotation, spec.scale]) expect(Number.isFinite(v), name).toBe(true);
       expect(spec.scale, name).toBeGreaterThan(0);
       expect(spec.build().children.length, name).toBeGreaterThan(1);
@@ -36,6 +36,12 @@ describe("HELD", () => {
   });
   it("the book and the guitar ride on the body, the wand on the right arm", () => {
     expect([HELD.book.parent, HELD.guitar.parent, HELD.wand.parent]).toEqual(["model", "model", "armR"]);
+  });
+  it("the mallets are a pair, one for each hand, each a stick about 0.7 long", () => {
+    expect(HELD.mallets.parent).toBe("arms");
+    const m = size(HELD.mallets.build());
+    expect(m.y).toBeGreaterThan(0.7);
+    expect(m.y).toBeLessThan(0.9);
   });
   it("the guitar is held smaller than the one on its stand", () => {
     expect(HELD.guitar.scale).toBeLessThan(1);
@@ -98,6 +104,57 @@ describe("createHeld", () => {
     expect(h.hold("wand", model, undefined)).toBe(false);
     expect(h.hold("book", null, null)).toBe(false);
     expect(h.item).toBeNull();
+  });
+
+  it("the mallets go one in each hand: the right arm and the left arm each carry one, nothing on the body", () => {
+    const { model, armR } = rig();
+    const armL = new THREE.Group();
+    const h = createHeld();
+    expect(h.hold("mallets", model, armR, armL)).toBe(true);
+    expect(h.item).toBe("mallets");
+    expect(armR.children).toHaveLength(1);
+    expect(armL.children).toHaveLength(1);
+    expect(model.children).toHaveLength(0);
+    expect(armR.children[0]).not.toBe(armL.children[0]);
+    expect(h.meshes).toHaveLength(2);
+    expect(h.mesh).toBe(armR.children[0]);
+    for (const a of [armR, armL]) {
+      expect(a.children[0]!.position.toArray()).toEqual([...HELD.mallets.position]);
+      expect(a.children[0]!.rotation.z).toBeCloseTo(Math.PI, 9);
+    }
+    h.release();
+    expect(armR.children).toHaveLength(0);
+    expect(armL.children).toHaveLength(0);
+    expect(h.meshes).toHaveLength(0);
+    expect(h.item).toBeNull();
+  });
+
+  it("a pair needs both hands: with no left arm (or no right) nothing is attached and nothing is held", () => {
+    const { model, armR } = rig();
+    const armL = new THREE.Group();
+    const h = createHeld();
+    expect(h.hold("mallets", model, armR)).toBe(false);
+    expect(armR.children).toHaveLength(0);
+    expect(h.item).toBeNull();
+    expect(h.hold("mallets", model, null, armL)).toBe(false);
+    expect(armL.children).toHaveLength(0);
+    expect(h.item).toBeNull();
+  });
+
+  it("picking up a pair lets go of a single item, and a single item lets go of a pair", () => {
+    const { model, armR } = rig();
+    const armL = new THREE.Group();
+    const h = createHeld();
+    h.hold("wand", model, armR, armL);
+    const wand = h.mesh!;
+    h.hold("mallets", model, armR, armL);
+    expect(wand.parent).toBeNull();
+    expect(armR.children).toHaveLength(1);
+    const pair = [...h.meshes];
+    h.hold("book", model, armR, armL);
+    expect(pair.every((p) => p.parent === null)).toBe(true);
+    expect(armL.children).toHaveLength(0);
+    expect(h.meshes).toHaveLength(1);
   });
 
   it("a failed pick-up still lets go of what was held", () => {

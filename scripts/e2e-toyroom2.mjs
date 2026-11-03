@@ -144,6 +144,60 @@ const dogParts = (cdp) => world(cdp, `(() => { const i = w.props.list().find((p)
 /** The screen position of the first live bubble. */
 const bubbleScreen = (cdp) => cdp.ev(`(() => { const sp = window.__tvWorld.bubbles.sprites[0]; if (!sp) return null; const cam = window.__tvDebug.camera; const v = sp.position.clone().project(cam); const r = document.querySelector("canvas").getBoundingClientRect(); return { x: r.left + (v.x * 0.5 + 0.5) * r.width, y: r.top + (-v.y * 0.5 + 0.5) * r.height, on: Math.abs(v.x) < 1 && Math.abs(v.y) < 1 }; })()`);
 
+const barScreen = (cdp, i) => cdp.ev(`(() => { const inst = window.__tvWorld.props.list().find((p) => p.type === "xylophone"); const bar = inst.holder.userData.bars[${i}]; const v = bar.getWorldPosition(new window.__tvDebug.camera.position.constructor()).project(window.__tvDebug.camera); const r = document.querySelector("canvas").getBoundingClientRect(); return { x: r.left + (v.x * 0.5 + 0.5) * r.width, y: r.top + (-v.y * 0.5 + 0.5) * r.height, on: Math.abs(v.x) < 1 && Math.abs(v.y) < 1 }; })()`);
+const barYs = (cdp) => cdp.ev(`(() => { const inst = window.__tvWorld.props.list().find((p) => p.type === "xylophone"); return inst.holder.userData.bars.map((b) => +(b.position.y - 0.04).toFixed(4)); })()`);
+async function check_xylophone(cdp) {
+  check("setup: the Toy Room has a xylophone", Boolean(await prop(cdp, "xylophone")));
+  await stage(cdp, "xylophone", 1.9);
+  await shot(cdp, "6-xylophone");
+  // a tap on a bar: it rings (dips), nothing is said, Kip is not sent over
+  await clearToast(cdp);
+  const b4 = await barScreen(cdp, 4);
+  check("xylophone: a bar is on screen to tap", b4.on && b4.x > 20 && b4.x < 370 && b4.y > 150, JSON.stringify(b4));
+  await cdp.tapAt(b4.x, b4.y);
+  const ring = await sample(cdp, 400, async () => barYs(cdp), 25);
+  check("xylophone: tapping a bar rings that bar (it dips) and no other", Math.min(...ring.map((r) => r[4])) < -0.02 && ring.every((r) => r.every((y, i) => i === 4 || Math.abs(y) < 0.001)), JSON.stringify(ring.map((r) => r[4]).slice(0, 8)));
+  check("xylophone: a bar tap says nothing and does not send Kip over", (await toastText(cdp)) === null && (await phase(cdp)) === "idle" && (await toy(cdp)).target === null, JSON.stringify({ toast: await toastText(cdp), phase: await phase(cdp) }));
+  // tap each bar in turn: every one rings
+  const seen = new Set();
+  for (let i = 0; i < 8; i++) {
+    const b = await barScreen(cdp, i);
+    if (!(b.on && b.x > 10 && b.x < 380)) continue;
+    await cdp.tapAt(b.x, b.y);
+    const ys = await sample(cdp, 160, async () => barYs(cdp), 25);
+    if (Math.min(...ys.map((r) => r[i])) < -0.02) seen.add(i);
+  }
+  check("xylophone: every bar on screen rings when it is tapped", seen.size >= 6, JSON.stringify([...seen]));
+  // a tap on the frame: Kip plays the tune
+  await sleep(700);
+  await clearToast(cdp);
+  const inst = await propScreen(cdp, "xylophone");
+  const legs = await cdp.ev(`(() => { const i = window.__tvWorld.props.list().find((p) => p.type === "xylophone"); const v = i.holder.localToWorld(new window.__tvDebug.camera.position.constructor(-1.55, 0.3, 0.35)).project(window.__tvDebug.camera); const r = document.querySelector("canvas").getBoundingClientRect(); return { x: r.left + (v.x * 0.5 + 0.5) * r.width, y: r.top + (-v.y * 0.5 + 0.5) * r.height }; })()`);
+  await cdp.tapAt(legs.x, legs.y);
+  await sleep(250);
+  check("xylophone: a tap on its frame names it", (await toastText(cdp)) === "Colorful xylophone", JSON.stringify({ toast: await toastText(cdp), legs, inst }));
+  let shotTune = false;
+  const tune = await sample(cdp, 6500, async () => { const a = (await toy(cdp)).action; const ys = await barYs(cdp); const notes = await world(cdp, `w.acts.noteCount`); if (!shotTune && a === "mallet" && notes >= 2) { shotTune = true; await shot(cdp, "7-xylophone-tune"); } const held = await world(cdp, `w.held.item`); const mallets = (await world(cdp, `w.held.meshes.length`)); const floor = await world(cdp, `w.props.list().find((p) => p.type === "xylophone").holder.userData.mallets.visible`); return { a, ys, notes, held, mallets, floor }; }, 40);
+  check("xylophone: Kip plays the mallet clip", tune.some((s) => s.a === "mallet"), JSON.stringify([...new Set(tune.map((s) => s.a))]));
+  const rung = new Set(); for (const s of tune) s.ys.forEach((y, i) => { if (y < -0.02) rung.add(i); });
+  check("xylophone: it plays a tune over several different bars", rung.size >= 4, JSON.stringify([...rung]));
+  check("xylophone: music notes float up", Math.max(...tune.map((s) => s.notes)) >= 2, String(Math.max(...tune.map((s) => s.notes))));
+  check("xylophone: Kip holds a mallet in each hand while it plays", tune.some((s) => s.held === "mallets" && s.mallets === 2), JSON.stringify([...new Set(tune.map((s) => `${s.held}/${s.mallets}`))]));
+  check("xylophone: the mallets leave the ledge while Kip has them, and are back on it afterwards", tune.some((s) => s.held === "mallets" && s.floor === false) && !tune.some((s) => s.held === "mallets" && s.floor === true) && tune.at(-1).floor === true && tune.at(-1).held === null, JSON.stringify([...new Set(tune.map((s) => `${s.held}/${s.floor}`))]));
+  check("xylophone: Kip is free again afterwards", (await phase(cdp)) === "idle" && (await toy(cdp)).busy === false);
+  // the base plank is the big, plain, visible part of the frame: a tap on its front edge starts the tune too
+  await sleep(500);
+  await clearToast(cdp);
+  const edge = await cdp.ev(`(() => { const i = window.__tvWorld.props.list().find((p) => p.type === "xylophone"); const v = i.holder.localToWorld(new window.__tvDebug.camera.position.constructor(1.0, 0.14, 0.8)).project(window.__tvDebug.camera); const r = document.querySelector("canvas").getBoundingClientRect(); return { x: r.left + (v.x * 0.5 + 0.5) * r.width, y: r.top + (-v.y * 0.5 + 0.5) * r.height }; })()`);
+  const before = await barYs(cdp);
+  await cdp.tapAt(edge.x, edge.y);
+  await sleep(350);
+  const plankToast = await toastText(cdp);
+  const plankPhase = await phase(cdp);
+  check("xylophone: a tap on the front of the base plank names it and sends Kip over, and rings no bar", plankToast === "Colorful xylophone" && plankPhase !== "idle" && before.every((y) => Math.abs(y) < 0.001), JSON.stringify({ edge, plankToast, plankPhase }));
+  await cdp.ev(`(() => { const w = window.__tvWorld; w.acts.reset(); w.P.busy = false; w.P.hop = 0; return true; })()`);
+}
+
 async function main() {
   rmSync(PROFILE, { recursive: true, force: true });
   const dev = spawn("npx", ["vite", "--port", String(DEV_PORT), "--strictPort"], { cwd: ROOT, stdio: "ignore" });
@@ -260,6 +314,10 @@ async function main() {
       const second = await sample(cdp, 9000, async () => ({ ph: await world(cdp, `w.fetch.phase`), b: await ballNow() }), 80);
       check("fetch: kick it again and the dog fetches it again", second.some((s) => s.ph === "returning") && second.at(-1).ph === "idle", JSON.stringify([...new Set(second.map((s) => s.ph))]));
     } else check("fetch: the ball is on screen to kick again", false, JSON.stringify(again));
+
+    // ---- the xylophone: tap a bar to hear it; tap the frame and Kip plays a tune ----
+    await cdp.ev(`(() => { const w = window.__tvWorld; if (w.acts) w.acts.reset(); w.fetch.cancel(); w.P.busy = false; w.P.hop = 0; return true; })()`);
+    await check_xylophone(cdp);
 
     check("no page exceptions", cdp.exceptions.length === 0, cdp.exceptions.slice(0, 3).join(" | "));
     killAll();

@@ -190,9 +190,11 @@ async function main() {
 
     // ---- 2. let go away from Kip: it falls and rests; nothing is eaten ----
     await mouse(cdp, "mouseReleased", away.x, away.y);
-    await sleep(2800);                           // it may be let go high up: a fall, a bounce, a settle
+    // It may be let go high up: a fall, a bounce, a settle. Watch the whole time for any eating clip (Kip's random idle fidget, a nod or a head shake, may play too: that is not eating).
+    const clipsSeen = new Set();
+    for (let k = 0; k < 28; k++) { clipsSeen.add(await action(cdp)); await sleep(100); }
     check("drop: it fell and is resting on the ground", (await fallerStates(cdp)) === "[1]", String(await fallerStates(cdp)));
-    check("drop: Kip did not eat it", (await action(cdp)) === null, String(await action(cdp)));
+    check("drop: Kip did not eat it (no eat, belly pat or sour clip at any time)", !["eat", "belly_pat", "sour"].some((a) => clipsSeen.has(a)), JSON.stringify([...clipsSeen]));
     check("drop: still nothing said", (await toastText(cdp)) === null && cdp.voiceUrls.length === 0);
 
     // ---- 3. a press and release without moving is still a tap: it says the name (on release) ----

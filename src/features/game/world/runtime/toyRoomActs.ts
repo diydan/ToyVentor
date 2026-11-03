@@ -5,14 +5,15 @@
 import * as THREE from "three";
 import { BALL_BOUNDS } from "./ballKick";
 import type { EaterKind } from "./fruitAppetite";
-import { BLOW_PUFFS_S, HUG_SQUEEZE_S, KICK_CONTACT_S, PET_STROKES_S, READ_PAGES_S, STRUM_COUNT, STRUM_EVERY_S } from "./proceduralClips";
+import { BLOW_PUFFS_S, HUG_SQUEEZE_S, KICK_CONTACT_S, MALLET_COUNT, MALLET_EVERY_S, MALLET_START_S, PET_STROKES_S, READ_PAGES_S, STRUM_COUNT, STRUM_EVERY_S } from "./proceduralClips";
+import { barX } from "./xylophone";
 import type { PropInst } from "./propReactions";
 import type { P3 } from "./sleepRoutine";
 import { createVisitor, type Visit, type VisitAdapter, type VisitPhase } from "./visitRoutine";
 
-export type ActKind = "hug" | "kick" | "jump" | "read" | "play" | "blow" | "pet";
+export type ActKind = "hug" | "kick" | "jump" | "read" | "play" | "blow" | "pet" | "mallet";
 /** Which prop type starts which act. */
-export const ACT_FOR_PROP: Readonly<Record<string, ActKind>> = { teddy: "hug", ball: "kick", cushions: "jump", books: "read", guitar: "play", bubbles: "blow", dog: "pet" };
+export const ACT_FOR_PROP: Readonly<Record<string, ActKind>> = { teddy: "hug", ball: "kick", cushions: "jump", books: "read", guitar: "play", bubbles: "blow", dog: "pet", xylophone: "mallet" };
 
 /** How far from the prop's centre the toy stands, in x. */
 export const HUG_STAND = 1.05;
@@ -52,6 +53,10 @@ export const READ_NAMES = 3;
 export const BUBBLES_PER_PUFF = 4;
 /** The tune Kip strums: the pitch of each of the STRUM_COUNT strums (C major pentatonic). An even strum is a downstroke (a three-note chord), an odd one an upstroke (one high note). */
 export const RIFF: readonly number[] = [392, 330, 392, 523, 440, 392, 330, 262, 330, 392, 440, 392, 330, 262];
+export const MALLET_STAND = 1.9;
+/** The tune Kip plays on the xylophone: which bar on each of the MALLET_COUNT strokes ("Twinkle, twinkle, little star"). */
+export const TUNE: readonly number[] = [0, 0, 4, 4, 5, 5, 4, 3, 3, 2, 2, 1, 1, 0];
+export const MALLET_S = MALLET_START_S + MALLET_COUNT * MALLET_EVERY_S + 0.3;
 export const HEART_RISE_S = 1.6;
 export const HEART_RISE = 1.3;
 
@@ -86,9 +91,9 @@ export interface ActsWorld extends Omit<VisitAdapter, "onPhase"> {
   /** False while an act must not start (paused, a showcase, a mission cinematic, the editor, asleep, an ability running). */
   allowed(): boolean;
   /** Play a character clip; false if it cannot (reduced motion, not loaded). */
-  clip(action: "hug" | "kick" | "cheer" | "read" | "strum" | "blow" | "pet"): boolean;
+  clip(action: "hug" | "kick" | "cheer" | "read" | "strum" | "blow" | "pet" | "mallet"): boolean;
   /** Put something in Kip's hands (a book, the guitar, the bubble wand) and take it away again (safe to call when it holds nothing). */
-  hold(item: "book" | "guitar" | "wand"): void;
+  hold(item: "book" | "guitar" | "wand" | "mallets"): void;
   release(): void;
   /** Where Kip's mouth is while it faces `dir`. */
   mouth(dir: 1 | -1): P3;
@@ -102,6 +107,8 @@ export interface ActsWorld extends Omit<VisitAdapter, "onPhase"> {
   phase(phase: VisitPhase, previous: VisitPhase): void;
   fx: {
     squish(inst: PropInst): void;
+    /** Ring bar `i` of a xylophone (with its note); returns the pitch or null. */
+    strike(inst: PropInst, i: number): number | null;
     kickBall(inst: PropInst, vx: number, vy: number): boolean;
     /** Flutter a book's pages. */
     flutter(inst: PropInst): void;
@@ -276,6 +283,24 @@ export function createActs(w: ActsWorld) {
     };
   }
 
+  /** Show or hide the mallets lying on the xylophone's ledge (Kip holds a pair while it plays). */
+  function setMallets(inst: PropInst, on: boolean) {
+    const m = inst.holder?.userData?.mallets as THREE.Object3D | undefined;
+    if (m) m.visible = on;
+  }
+  function malletVisit(inst: PropInst): Visit {
+    const x = inst.base.px, z = inst.base.pz;
+    return {
+      standX: x - MALLET_STAND, face: 1, seconds: MALLET_S,
+      begin: () => { setMallets(inst, false); w.hold("mallets"); w.clip("mallet"); },
+      cues: TUNE.slice(0, MALLET_COUNT).map((bar, i) => ({
+        at: MALLET_START_S + i * MALLET_EVERY_S,
+        fn: () => { w.fx.strike(inst, bar); if (i % 2 === 0) floater("note", new THREE.Vector3(x + barX(bar), inst.size.y + 0.5, z + 0.4), 0.4); },
+      })),
+      end: () => { w.release(); setMallets(inst, true); },                   // the mallets are back on the ledge, even if the tune was cut short
+    };
+  }
+
   return {
     get phase(): VisitPhase { return visitor.phase; },
     get busy(): boolean { return visitor.busy; },
@@ -289,7 +314,7 @@ export function createActs(w: ActsWorld) {
       const kind = ACT_FOR_PROP[inst.type];
       if (!kind || !w.allowed() || w.eater() !== "character") return false;                // (an act already under way refuses a second start itself)
       following = null;
-      const visit = { hug: hugVisit, kick: kickVisit, jump: jumpVisit, read: readVisit, play: playVisit, blow: blowVisit, pet: petVisit }[kind](inst);
+      const visit = { hug: hugVisit, kick: kickVisit, jump: jumpVisit, read: readVisit, play: playVisit, blow: blowVisit, pet: petVisit, mallet: malletVisit }[kind](inst);
       return visitor.start(visit);
     },
     /** Call first in the world's pointerdown: true means a tap during the action, which must NOT also walk the toy or tap a prop. A tap while the toy is still walking over drops the visit and returns false. */

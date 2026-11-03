@@ -1,4 +1,4 @@
-// Hand-authored clips for the in-game Character (Kip): eat, sour, belly_pat, yawn, sleep, hug, kick, cheer, read, strum, blow and pet.
+// Hand-authored clips for the in-game Character (Kip): eat, sour, belly_pat, yawn, sleep, hug, kick, cheer, read, strum, blow, pet and mallet.
 //
 // The world's character has only the five baked Mixamo actions (dance, nod, no, sneak, sad), so nothing in the game could eat or sleep
 // (docs/specs/playful-interactions-spec.md). Mixamo needs an Adobe login, so these are written by hand, as keyframes, and BAKED INTO THE SAME
@@ -99,6 +99,10 @@ export const STRUM_EVERY_S = 0.28;
 export const STRUM_COUNT = 14;
 /** When Kip puffs in the `blow` clip (seconds): a burst of bubbles on each. */
 export const BLOW_PUFFS_S: readonly number[] = [0.6, 1.0, 1.4, 1.8];
+/** The `mallet` clip: one mallet stroke every MALLET_EVERY_S from MALLET_START_S, MALLET_COUNT of them, the left hand on the even ones and the right on the odd ones. */
+export const MALLET_START_S = 0.5;
+export const MALLET_EVERY_S = 0.3;
+export const MALLET_COUNT = 14;
 /** The strokes of the `pet` clip (seconds): the hand lands on the dog's back on each. */
 export const PET_STROKES_S: readonly number[] = [0.7, 1.1, 1.5, 1.9];
 
@@ -122,6 +126,14 @@ for (let i = 0; i < STRUM_COUNT; i++) {
   strumKeys.push({ t, armR: down ? [-0.3, -0.72, 0.62] : [-0.3, -0.35, 0.9], body: [0.04, 0, down ? -0.06 : 0.06], head: [down ? 0.2 : 0.1, 0, 0], hips: [0, down ? 0.02 : 0, 0] });
 }
 strumKeys.push({ t: 4.4, armL: REST.armL, armR: REST.armR, body: [0, 0, 0], head: [0, 0, 0], hips: [0, 0, 0] });
+
+/** Play a xylophone with a mallet in each hand: both arms out in front, striking down in turn (the left on the even strokes, the right on the odd ones), the body swaying and the head nodding with the beat. 5.2 s. */
+const malletKeys: Key[] = [{ t: 0 }, { t: MALLET_START_S - 0.2, armL: [0.25, -0.35, 0.9], armR: [-0.25, -0.35, 0.9], body: [0.1, 0, 0], head: [0.12, 0, 0] }];
+for (let i = 0; i < MALLET_COUNT; i++) {
+  const t = MALLET_START_S + i * MALLET_EVERY_S, left = i % 2 === 0;
+  malletKeys.push({ t, armL: left ? [0.25, -0.8, 0.55] : [0.25, -0.35, 0.9], armR: left ? [-0.25, -0.35, 0.9] : [-0.25, -0.8, 0.55], body: [0.1, 0, left ? 0.05 : -0.05], head: [left ? 0.2 : 0.12, 0, 0] });
+}
+malletKeys.push({ t: MALLET_START_S + MALLET_COUNT * MALLET_EVERY_S + 0.3, armL: REST.armL, armR: REST.armR, body: [0, 0, 0], head: [0, 0, 0] });
 
 /** Authored in real angles. Each is the whole motion, ending back at rest so it can blend out cleanly. */
 export const PROCEDURAL_CLIPS: ClipBank = {
@@ -204,6 +216,8 @@ export const PROCEDURAL_CLIPS: ClipBank = {
     { t: 2.2, armR: [-0.2, -0.6, 0.78], body: [0.25, 0, 0] },
     { t: 2.6, armR: REST.armR, armL: REST.armL, body: [0, 0, 0], head: [0, 0, 0], hips: [0, 0, 0] },
   ]),
+  // Play a xylophone, one mallet stroke at a time. 5.0 s.
+  mallet: bake("mallet", MALLET_START_S + MALLET_COUNT * MALLET_EVERY_S + 0.3, false, malletKeys),
   // Asleep on its back, held until released: a true 90 degrees (after the driver's body gain), arms and legs along the body, head on the pillow,
   // a slow breath (the chest rises) and a slight head roll. The hips lift the body clear of the surface it lies on. 4 s, loops.
   sleep: bake("sleep", 4, true, [
@@ -214,4 +228,4 @@ export const PROCEDURAL_CLIPS: ClipBank = {
 };
 
 /** The names, for the driver's action type and for tests. */
-export const PROCEDURAL_ACTIONS = Object.keys(PROCEDURAL_CLIPS) as Array<"eat" | "sour" | "belly_pat" | "yawn" | "sleep" | "hug" | "kick" | "cheer" | "read" | "strum" | "blow" | "pet">;
+export const PROCEDURAL_ACTIONS = Object.keys(PROCEDURAL_CLIPS) as Array<"eat" | "sour" | "belly_pat" | "yawn" | "sleep" | "hug" | "kick" | "cheer" | "read" | "strum" | "blow" | "pet" | "mallet">;

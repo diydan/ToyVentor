@@ -4,9 +4,10 @@
 import { T, M, rbox, plastic } from "./worldScene";
 import { HELD_GUITAR_SCALE, buildGuitarMesh } from "./guitar";
 import { buildWandMesh } from "./bubbleWand";
+import { buildMalletMesh } from "./xylophone";
 import type * as THREE from "three";
 
-export type HeldItem = "book" | "guitar" | "wand";
+export type HeldItem = "book" | "guitar" | "wand" | "mallets";
 
 /** A small hardback book: a coloured cover, cream pages and a spine, flat, about 0.7 by 0.5. */
 export function buildBookMesh(): THREE.Group {
@@ -20,8 +21,8 @@ export function buildBookMesh(): THREE.Group {
 }
 
 export interface HeldSpec {
-  /** What it is attached to: the rig's body group, or the right arm (rig.arms[1]). */
-  parent: "model" | "armR";
+  /** What it is attached to: the rig's body group, the right arm (rig.arms[1]), or both arms (one copy in each hand). */
+  parent: "model" | "armR" | "arms";
   position: readonly [number, number, number];
   rotation: readonly [number, number, number];
   scale: number;
@@ -35,30 +36,38 @@ export const HELD: Readonly<Record<HeldItem, HeldSpec>> = {
   guitar: { parent: "model", position: [0.3, 1.0, 0.28], rotation: [0, 0, -1.15], scale: HELD_GUITAR_SCALE, build: buildGuitarMesh },
   // In the right hand, the ring end continuing the line of the arm (the arm points along its own -y).
   wand: { parent: "armR", position: [0, -0.42, 0.05], rotation: [0, 0, Math.PI], scale: 1, build: buildWandMesh },
+  // A mallet in each hand, the stick continuing the line of the arm and the head at its far end.
+  mallets: { parent: "arms", position: [0, -0.38, 0.05], rotation: [0, 0, Math.PI], scale: 1, build: buildMalletMesh },
 };
 
 export function createHeld() {
-  let current: { item: HeldItem; mesh: THREE.Object3D } | null = null;
+  let current: { item: HeldItem; meshes: THREE.Object3D[] } | null = null;
   const release = () => {
     if (!current) return;
-    current.mesh.parent?.remove(current.mesh);
+    for (const m of current.meshes) m.parent?.remove(m);
     current = null;
   };
   return {
     get item(): HeldItem | null { return current ? current.item : null; },
-    get mesh(): THREE.Object3D | null { return current ? current.mesh : null; },
-    /** Put `item` in Kip's hands: attach it to the right part of the rig (`model` is the body group, `armR` the right arm, if the rig has one). Whatever was held is let go first. False if it cannot be attached. */
-    hold(item: HeldItem, model: THREE.Object3D | null | undefined, armR: THREE.Object3D | null | undefined): boolean {
+    /** The thing held (for a pair, the one in the right hand). */
+    get mesh(): THREE.Object3D | null { return current ? current.meshes[0]! : null; },
+    /** Everything attached: one mesh, or two for a pair (right hand first, then left). */
+    get meshes(): readonly THREE.Object3D[] { return current ? current.meshes : []; },
+    /** Put `item` in Kip's hands: attach it to the right part of the rig (`model` is the body group, `armR` the right arm, `armL` the left, if the rig has them). Whatever was held is let go first. False if it cannot be attached. */
+    hold(item: HeldItem, model: THREE.Object3D | null | undefined, armR: THREE.Object3D | null | undefined, armL?: THREE.Object3D | null): boolean {
       release();
       const spec = HELD[item];
-      const parent = spec.parent === "armR" ? armR : model;
-      if (!parent) return false;
-      const mesh = spec.build();
-      mesh.position.set(...spec.position);
-      mesh.rotation.set(...spec.rotation);
-      mesh.scale.setScalar(spec.scale);
-      parent.add(mesh);
-      current = { item, mesh };
+      const parents = spec.parent === "arms" ? [armR, armL] : [spec.parent === "armR" ? armR : model];
+      if (parents.some((p) => !p)) return false;
+      const meshes = parents.map((parent) => {
+        const mesh = spec.build();
+        mesh.position.set(...spec.position);
+        mesh.rotation.set(...spec.rotation);
+        mesh.scale.setScalar(spec.scale);
+        parent!.add(mesh);
+        return mesh;
+      });
+      current = { item, meshes };
       return true;
     },
     release,

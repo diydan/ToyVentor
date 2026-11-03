@@ -4,10 +4,10 @@ import path from "node:path";
 import * as THREE from "three";
 import { describe, expect, it, vi } from "vitest";
 import { BALL_BOUNDS } from "../src/features/game/world/runtime/ballKick";
-import { BLOW_PUFFS_S, HUG_SQUEEZE_S, KICK_CONTACT_S, PET_STROKES_S, READ_PAGES_S, STRUM_COUNT, STRUM_EVERY_S } from "../src/features/game/world/runtime/proceduralClips";
+import { BLOW_PUFFS_S, HUG_SQUEEZE_S, KICK_CONTACT_S, MALLET_COUNT, MALLET_EVERY_S, MALLET_START_S, PET_STROKES_S, READ_PAGES_S, STRUM_COUNT, STRUM_EVERY_S } from "../src/features/game/world/runtime/proceduralClips";
 import type { PropInst } from "../src/features/game/world/runtime/propReactions";
 import {
-  ACT_FOR_PROP, BLOW_S, BLOW_STAND, BUBBLES_PER_PUFF, CUSHION_TOP, HEART_RISE, HEART_RISE_S, HUG_S, HUG_SECOND_SQUEEZE_S, HUG_STAND, JUMP_BOUNCES, JUMP_DOWN_S, JUMP_STAND, JUMP_UP_S, FOLLOW_STAND, PET_CUE_S, PET_S, PET_STAND, PLAY_S, PLAY_STAND, READ_NAMES, READ_S, READ_STAND, RIFF, KICK_ROOM, KICK_S, KICK_STAND, KICK_VX, KICK_VY,
+  ACT_FOR_PROP, MALLET_S, MALLET_STAND, TUNE, BLOW_S, BLOW_STAND, BUBBLES_PER_PUFF, CUSHION_TOP, HEART_RISE, HEART_RISE_S, HUG_S, HUG_SECOND_SQUEEZE_S, HUG_STAND, JUMP_BOUNCES, JUMP_DOWN_S, JUMP_STAND, JUMP_UP_S, FOLLOW_STAND, PET_CUE_S, PET_S, PET_STAND, PLAY_S, PLAY_STAND, READ_NAMES, READ_S, READ_STAND, RIFF, KICK_ROOM, KICK_S, KICK_STAND, KICK_VX, KICK_VY,
   createActs, jumpPath, type JumpPlan,
 } from "../src/features/game/world/runtime/toyRoomActs";
 import type { VisitPhase } from "../src/features/game/world/runtime/visitRoutine";
@@ -95,6 +95,7 @@ function game(opts: { eater?: "character" | "robot" | "vehicle"; allowed?: boole
   const nearbyCalls: Array<[number, number, ReadonlyArray<string> | undefined]> = [];
   const nearbyList: PropInst[] = [];
   const fetches: PropInst[] = [];
+  const strikes: Array<[PropInst, number]> = [];
   const w = {
     position: () => ({ ...s.pos }), targetX: () => s.target,
     walkTo: (x: number, z: number) => { s.target = x; log.push(`walkTo:${+x.toFixed(3)},${z}`); },
@@ -111,7 +112,7 @@ function game(opts: { eater?: "character" | "robot" | "vehicle"; allowed?: boole
     mouth: (d: number) => ({ x: s.pos.x + 0.5 * d, y: 1.8, z: s.pos.z }),
     bubbles: { blow: (from: { x: number; y: number; z: number }, dir: number, n: number) => { blows.push({ from, dir, n }); } },
     fx: {
-      squish: (i: PropInst) => { squished.push(i); }, kickBall: (i: PropInst, vx: number, vy: number) => { kicks.push({ inst: i, vx, vy }); return true; },
+      squish: (i: PropInst) => { squished.push(i); }, strike: (i: PropInst, b: number) => { strikes.push([i, b]); return 262; }, kickBall: (i: PropInst, vx: number, vy: number) => { kicks.push({ inst: i, vx, vy }); return true; },
       flutter: (i: PropInst) => { flutters.push(i); }, say: (i: PropInst) => { says.push(i); },
       setVisible: (i: PropInst, v: boolean) => { visibility.push([i, v]); log.push(`visible:${v}`); },
       cue: (i: PropInst, n: string) => { cues.push([i, n]); },
@@ -121,12 +122,12 @@ function game(opts: { eater?: "character" | "robot" | "vehicle"; allowed?: boole
   const acts = createActs(w as never);
   const run = (seconds: number, dt = 1 / 30) => { for (let t = 0; t < seconds - 1e-9; t += dt) acts.update(dt); };
   const arriveAt = (x: number) => { s.pos.x = x; s.target = null; };
-  return { acts, s, log, phases, places, squished, kicks, tones, root, run, arriveAt, held, blows, says, flutters, cues, visibility, nearbyCalls, nearbyList, fetches };
+  return { acts, s, log, phases, places, squished, kicks, tones, root, run, arriveAt, held, blows, says, flutters, cues, visibility, nearbyCalls, nearbyList, fetches, strikes };
 }
 
 describe("which props do something", () => {
   it("the teddy is hugged, the ball kicked, the cushions jumped on, a book read, the guitar played, the bubbles blown and the dog petted; nothing else starts an act", () => {
-    expect(ACT_FOR_PROP).toEqual({ teddy: "hug", ball: "kick", cushions: "jump", books: "read", guitar: "play", bubbles: "blow", dog: "pet" });
+    expect(ACT_FOR_PROP).toEqual({ teddy: "hug", ball: "kick", cushions: "jump", books: "read", guitar: "play", bubbles: "blow", dog: "pet", xylophone: "mallet" });
     const g = game();
     for (const type of ["lamp", "blocks", "chair", "plant", "bed", "tree", "unknown"]) expect(g.acts.tap(inst(type, 20)), type).toBe(false);
     expect(g.log).toEqual([]);
@@ -470,6 +471,106 @@ describe("a dog that fetches", () => {
   });
 });
 
+describe("playing the xylophone", () => {
+  const mallets = new THREE.Group();
+  const xylo = { ...inst("xylophone", 3.6, -2.6, 2), holder: { userData: { mallets } } } as unknown as PropInst;
+  it("walks to just left of it, plays the tune with a mallet in each hand, a bar at a time, and finishes", () => {
+    const g = game({ start: { x: 1, y: 0, z: 0.4 } });
+    expect(g.acts.tap(xylo)).toBe(true);
+    expect(g.log).toEqual([`walkTo:${+(3.6 - MALLET_STAND).toFixed(3)},0.4`]);
+    g.arriveAt(3.6 - MALLET_STAND);
+    g.run(0.1);
+    expect(g.log.slice(1)).toEqual(["face:1", "hold:mallets", "clip:mallet"]);
+    expect(g.strikes).toHaveLength(0);                                      // nothing before the first stroke
+    g.run(MALLET_S + 0.2);
+    expect(g.strikes).toEqual(TUNE.slice(0, MALLET_COUNT).map((bar) => [xylo, bar]));
+    expect(g.acts.busy).toBe(false);
+    expect(g.log.at(-1)).toBe("release");
+  });
+
+  it("takes the mallets off the ledge into its hands while it plays, and puts them back when it is done", () => {
+    const g = game({ start: { x: 1, y: 0, z: 0.4 } });
+    mallets.visible = true;
+    g.acts.tap(xylo);
+    expect(mallets.visible).toBe(true);                                     // still walking over: they are on the ledge
+    g.arriveAt(3.6 - MALLET_STAND);
+    g.run(1.5);
+    expect(mallets.visible).toBe(false);
+    expect(g.held).toEqual(["hold:mallets"]);
+    g.run(MALLET_S + 0.2);
+    expect(mallets.visible).toBe(true);
+    expect(g.held).toEqual(["hold:mallets", "release"]);
+  });
+
+  it("cut short, the mallets are back on the ledge and out of its hands", () => {
+    const g = game({ start: { x: 1, y: 0, z: 0.4 } });
+    mallets.visible = true;
+    g.acts.tap(xylo);
+    g.arriveAt(3.6 - MALLET_STAND);
+    g.run(1.2);
+    expect(mallets.visible).toBe(false);
+    g.acts.reset();
+    expect(mallets.visible).toBe(true);
+    expect(g.held.at(-1)).toBe("release");
+  });
+
+  it("a xylophone with no mallet group (built some other way) is still played", () => {
+    const g = game({ start: { x: 1, y: 0, z: 0.4 } });
+    const bare = inst("xylophone", 3.6, -2.6, 2);
+    expect(g.acts.tap(bare)).toBe(true);
+    g.arriveAt(3.6 - MALLET_STAND);
+    g.run(MALLET_S + 0.2);
+    expect(g.strikes).toHaveLength(MALLET_COUNT);
+  });
+
+  it("strikes each bar when its stroke lands: the first after about half a second, then one every MALLET_EVERY_S", () => {
+    const g = game({ start: { x: 1, y: 0, z: 0.4 } });
+    g.acts.tap(xylo);
+    g.arriveAt(3.6 - MALLET_STAND);
+    g.run(MALLET_START_S - 0.1);
+    expect(g.strikes).toHaveLength(0);
+    g.run(0.25);
+    expect(g.strikes).toHaveLength(1);
+    g.run(MALLET_EVERY_S);
+    expect(g.strikes).toHaveLength(2);
+    g.run(MALLET_EVERY_S);
+    expect(g.strikes).toHaveLength(3);
+  });
+
+  it("is a tune: it climbs and falls over the bars, ending where it began (twinkle, twinkle)", () => {
+    expect(TUNE).toHaveLength(MALLET_COUNT);
+    expect(TUNE[0]).toBe(TUNE.at(-1));
+    expect(Math.max(...TUNE)).toBeLessThan(8);
+    expect(Math.min(...TUNE)).toBeGreaterThanOrEqual(0);
+    expect(new Set(TUNE).size).toBeGreaterThanOrEqual(5);
+  });
+
+  it("music notes float up from the bars it hits", () => {
+    const g = game({ start: { x: 1, y: 0, z: 0.4 } });
+    g.acts.tap(xylo);
+    g.arriveAt(3.6 - MALLET_STAND);
+    g.run(1.8);
+    expect(g.acts.noteCount).toBeGreaterThanOrEqual(2);
+    const n = g.root.children[0] as THREE.Sprite;
+    expect(n.position.y).toBeGreaterThan(2.4);
+    expect(Math.abs(n.position.x - 3.6)).toBeLessThan(2.2);
+    g.run(MALLET_S + 2);
+    expect(g.acts.noteCount).toBe(0);
+  });
+
+  it("cut short, no more bars are struck", () => {
+    const g = game({ start: { x: 1, y: 0, z: 0.4 } });
+    g.acts.tap(xylo);
+    g.arriveAt(3.6 - MALLET_STAND);
+    g.run(1.2);
+    const n = g.strikes.length;
+    expect(n).toBeGreaterThan(0);
+    g.acts.reset();
+    g.run(4);
+    expect(g.strikes.length).toBe(n);
+  });
+});
+
 describe("following the ball", () => {
   const ball = () => ({ ...inst("ball", 10, -2), kick: null });
   function kicked(g: ReturnType<typeof game>, b: ReturnType<typeof ball>) {
@@ -647,6 +748,10 @@ describe("wiring in world.ts", () => {
   it("the toy is busy only while it acts, and its walk target is cleared when it starts (so it does not wander off afterwards)", () => {
     expect(world).toContain('phase:function(p: string){P.busy=p==="acting";if(p==="acting")P.target=null;if(p!=="acting")P.hop=0},fx:PFX});');
   });
+  it("the xylophone is in the prop table and the default Toy Room", () => {
+    expect(world).toContain("xylophone:function(x,z){return add(buildXylophone(x,z))}");
+    expect(catalog).toMatch(/"id":"room".*?\{"type":"xylophone","x":[0-9.]+\}/s);
+  });
   it("the new toys' builders are in the prop table, and the bubbles are popped, updated and cleared with the world", () => {
     expect(world).toContain("guitar:function(x,z){return add(buildGuitarProp(x,z))}");
     expect(world).toContain("bubbles:function(x,z){return add(buildBubbleBottle(x,z))}");
@@ -662,8 +767,8 @@ describe("wiring in world.ts", () => {
     expect(world).toContain('onTap:function(inst: any){if(inst.type==="dog")DOGF.cancel();ACTS.tap(inst)}');
     expect(world).toContain("bubbles:BUBBLES,held:HELD,fetch:DOGF,");
   });
-  it("Kip can hold a book, the guitar and the wand: the right arm is arms[1] and the mouth is found from Kip's own box", () => {
-    expect(world).toContain("hold:function(i: \"book\"|\"guitar\"|\"wand\"){HELD.hold(i,P.model,P.rig&&P.rig.arms&&P.rig.arms[1])}");
+  it("Kip can hold a book, the guitar, the wand and a pair of mallets: the right arm is arms[1], the left arms[0] and the mouth is found from Kip's own box", () => {
+    expect(world).toContain("hold:function(i: \"book\"|\"guitar\"|\"wand\"|\"mallets\"){HELD.hold(i,P.model,P.rig&&P.rig.arms&&P.rig.arms[1],P.rig&&P.rig.arms&&P.rig.arms[0])}");
     expect(world).toContain("release:function(){HELD.release()}");
     expect(world).toContain("bubbles:BUBBLES,");
     expect(world).toMatch(/mouth:function\(d: number\)\{var b=new T\.Box3\(\)\.setFromObject\(P\.root\)/);

@@ -102,7 +102,7 @@ async function bringIntoView(cdp, type) {
   await cdp.ev(`(() => { const w = window.__tvWorld; w.P.pos.x = ${info.x}; w.P.target = null; })()`);
   try {
     await waitFor(async () => {
-      const s = await props(cdp, `(() => { const i = fx.list().find((p) => p.type === ${JSON.stringify(type)} && p.holder.position.x >= 3 && p.holder.position.x <= 41); return fx.screenPos(i, ${type === "tree" ? 0.12 : 0.5}); })()`);
+      const s = await props(cdp, `(() => { const i = fx.list().find((p) => p.type === ${JSON.stringify(type)} && p.holder.position.x >= 3 && p.holder.position.x <= 41); return fx.screenPos(i, ${type === "tree" || type === "xylophone" ? 0.12 : 0.5}); })()`);
       return s && s.visible && s.x > 30 && s.x < 360 && s.y > 70 && s.y < 760 ? s : null;
     }, { timeoutMs: 15000, label: `${type} on screen` });
   } catch (err) {
@@ -110,7 +110,7 @@ async function bringIntoView(cdp, type) {
     throw new Error(`${err.message} | ${diag}`);
   }
   await sleep(600);
-  return props(cdp, `(() => { const i = fx.list().find((p) => p.type === ${JSON.stringify(type)} && p.holder.position.x >= 3 && p.holder.position.x <= 41); return fx.screenPos(i, ${type === "tree" ? 0.12 : 0.5}); })()`);
+  return props(cdp, `(() => { const i = fx.list().find((p) => p.type === ${JSON.stringify(type)} && p.holder.position.x >= 3 && p.holder.position.x <= 41); return fx.screenPos(i, ${type === "tree" || type === "xylophone" ? 0.12 : 0.5}); })()`);
 }
 
 async function main() {

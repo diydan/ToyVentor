@@ -22,7 +22,7 @@ The text-to-speech model is given only the words and decides the language itself
 instruction written into the text is read aloud, not obeyed). A phrase spelled identically in two languages has no signal: `luz azul` is valid
 Spanish and Portuguese. The voice may answer in the other language or accent.
 
-**What the game speaks today:** 81 phrases in 7 languages = 567 clips. **10 texts** are spelled the same in two languages:
+**What the game speaks today:** 82 phrases in 7 languages = 574 clips. **10 texts** are spelled the same in two languages:
 
 - `orange`: English + Français + Deutsch (orange/-)
 - `luz azul`: Español + Português (light/blue)
@@ -44,13 +44,13 @@ For comparison, over every noun and part in every colour (an upper bound; the ga
 
 | Language | Phrases | Spelled the same as another language | Share |
 |---|---:|---:|---:|
-| English | 870 | 5 | 1% |
-| Español | 870 | 25 | 3% |
-| Français | 870 | 3 | 0% |
-| Deutsch | 870 | 3 | 0% |
-| Italiano | 870 | 9 | 1% |
-| Português | 870 | 24 | 3% |
-| Türkçe | 870 | 0 | 0% |
+| English | 882 | 5 | 1% |
+| Español | 882 | 25 | 3% |
+| Français | 882 | 3 | 0% |
+| Deutsch | 882 | 3 | 0% |
+| Italiano | 882 | 9 | 1% |
+| Português | 882 | 24 | 3% |
+| Türkçe | 882 | 0 | 0% |
 
 Which languages collide (distinct spellings):
 
@@ -143,6 +143,7 @@ A few examples (first 24):
 | guitar | guitar | guitar | green guitar | orange guitar | |
 | bubbles | bubbles | bubbles | green bubbles | orange bubbles | |
 | dog | dog | dog | green dog | orange dog | |
+| xylophone | xylophone | xylophone | green xylophone | orange xylophone | |
 | apple | apple | apple | green apple | orange apple | |
 | pear | pear | pear | green pear | orange pear | |
 | orange | orange | orange | green orange | orange orange | |
@@ -249,6 +250,7 @@ A few examples (first 24):
 | guitar | guitar | guitarra | guitarra verde | guitarra naranja | |
 | bubbles | bubbles | burbujas | burbujas verdes | burbujas naranjas | |
 | dog | dog | perro | perro verde | perro naranja | |
+| xylophone | xylophone | xilófono | xilófono verde | xilófono naranja | |
 | apple | apple | manzana | manzana verde | manzana naranja | |
 | pear | pear | pera | pera verde | pera naranja | |
 | orange | orange | naranja | naranja verde | naranja naranja | |
@@ -354,6 +356,7 @@ A few examples (first 24):
 | guitar | guitar | guitare | guitare verte | guitare orange | |
 | bubbles | bubbles | bulles | bulles vertes | bulles orange | |
 | dog | dog | chien | chien vert | chien orange | |
+| xylophone | xylophone | xylophone | xylophone vert | xylophone orange | |
 | apple | apple | pomme | pomme verte | pomme orange | |
 | pear | pear | poire | poire verte | poire orange | |
 | orange | orange | orange | orange verte | orange orange | |
@@ -460,6 +463,7 @@ A few examples (first 24):
 | guitar | guitar | Gitarre | grüne Gitarre | orange Gitarre | |
 | bubbles | bubbles | Seifenblasen | grüne Seifenblasen | orange Seifenblasen | |
 | dog | dog | Hund | grüner Hund | oranger Hund | |
+| xylophone | xylophone | Xylophon | grünes Xylophon | oranges Xylophon | |
 | apple | apple | Apfel | grüner Apfel | oranger Apfel | |
 | pear | pear | Birne | grüne Birne | orange Birne | |
 | orange | orange | Orange | grüne Orange | orange Orange | |
@@ -566,6 +570,7 @@ A few examples (first 24):
 | guitar | guitar | chitarra | chitarra verde | chitarra arancione | |
 | bubbles | bubbles | bolle di sapone | bolle di sapone verdi | bolle di sapone arancione | |
 | dog | dog | cane | cane verde | cane arancione | |
+| xylophone | xylophone | xilofono | xilofono verde | xilofono arancione | |
 | apple | apple | mela | mela verde | mela arancione | |
 | pear | pear | pera | pera verde | pera arancione | |
 | orange | orange | arancia | arancia verde | arancia arancione | |
@@ -672,6 +677,7 @@ A few examples (first 24):
 | guitar | guitar | violão | violão verde | violão laranja | |
 | bubbles | bubbles | bolhas de sabão | bolhas de sabão verdes | bolhas de sabão laranjas | |
 | dog | dog | cachorro | cachorro verde | cachorro laranja | |
+| xylophone | xylophone | xilofone | xilofone verde | xilofone laranja | |
 | apple | apple | maçã | maçã verde | maçã laranja | |
 | pear | pear | pera | pera verde | pera laranja | |
 | orange | orange | laranja | laranja verde | laranja laranja | |
@@ -778,6 +784,7 @@ A few examples (first 24):
 | guitar | guitar | gitar | yeşil gitar | turuncu gitar | |
 | bubbles | bubbles | baloncuklar | yeşil baloncuklar | turuncu baloncuklar | |
 | dog | dog | köpek | yeşil köpek | turuncu köpek | |
+| xylophone | xylophone | ksilofon | yeşil ksilofon | turuncu ksilofon | |
 | apple | apple | elma | yeşil elma | turuncu elma | |
 | pear | pear | armut | yeşil armut | turuncu armut | |
 | orange | orange | portakal | yeşil portakal | turuncu portakal | |

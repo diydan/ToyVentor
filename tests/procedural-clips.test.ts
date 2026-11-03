@@ -2,7 +2,7 @@ import * as THREE from "three";
 import { describe, expect, it } from "vitest";
 import { stockCol, stockSel } from "../src/features/game/world/runtime/catalog";
 import { DEFAULT_TUNING, MixamoDriver, sampleClip, newPose, type ClipBank } from "../src/features/game/world/runtime/mixamo";
-import { BLOW_PUFFS_S, HUG_SQUEEZE_S, KICK_CONTACT_S, PET_STROKES_S, PROCEDURAL_ACTIONS, PROCEDURAL_CLIPS, READ_PAGES_S, STRUM_COUNT, STRUM_EVERY_S, bake, gainFor } from "../src/features/game/world/runtime/proceduralClips";
+import { BLOW_PUFFS_S, HUG_SQUEEZE_S, KICK_CONTACT_S, MALLET_COUNT, MALLET_EVERY_S, MALLET_START_S, PET_STROKES_S, PROCEDURAL_ACTIONS, PROCEDURAL_CLIPS, READ_PAGES_S, STRUM_COUNT, STRUM_EVERY_S, bake, gainFor } from "../src/features/game/world/runtime/proceduralClips";
 import { buildToy } from "../src/features/game/world/runtime/playerRig";
 
 // Hand-authored clips (eat, sour, belly_pat, yawn, sleep) baked into the Mixamo clip format and played by the real MixamoDriver.
@@ -21,8 +21,8 @@ const run = (d: MixamoDriver, rig: ReturnType<typeof characterRig>["rig"], secon
 const pose = (clip: ClipBank[string], t: number) => { const p = newPose(); sampleClip(clip, t, p); return p; };
 
 describe("the baked clips are well formed", () => {
-  it("has the twelve actions and each is a real clip in the Mixamo format", () => {
-    expect([...PROCEDURAL_ACTIONS].sort()).toEqual(["belly_pat", "blow", "cheer", "eat", "hug", "kick", "pet", "read", "sleep", "sour", "strum", "yawn"]);
+  it("has the thirteen actions and each is a real clip in the Mixamo format", () => {
+    expect([...PROCEDURAL_ACTIONS].sort()).toEqual(["belly_pat", "blow", "cheer", "eat", "hug", "kick", "mallet", "pet", "read", "sleep", "sour", "strum", "yawn"]);
     for (const [name, c] of Object.entries(PROCEDURAL_CLIPS)) {
       expect(c.name).toBe(name);
       expect(c.frames).toBe(Math.round(c.duration * 30) + 1);
@@ -43,7 +43,7 @@ describe("the baked clips are well formed", () => {
     }
   });
   it("one-shots start and end at rest so they blend in and out cleanly; sleep loops", () => {
-    for (const n of ["eat", "sour", "belly_pat", "yawn", "hug", "kick", "cheer", "read", "strum", "blow", "pet"] as const) {
+    for (const n of ["eat", "sour", "belly_pat", "yawn", "hug", "kick", "cheer", "read", "strum", "blow", "pet", "mallet"] as const) {
       const c = PROCEDURAL_CLIPS[n]!;
       expect(c.loop, n).toBe(false);
       for (const t of [0, c.duration]) {
@@ -162,7 +162,7 @@ describe("cheer: both arms go up", () => {
 });
 
 describe("the new clips play through the real driver and finish by themselves", () => {
-  for (const name of ["hug", "kick", "cheer", "read", "strum", "blow", "pet"] as const) {
+  for (const name of ["hug", "kick", "cheer", "read", "strum", "blow", "pet", "mallet"] as const) {
     it(`${name}: triggers, plays for its length, then the driver is idle again`, () => {
       const { rig } = characterRig();
       const d = new MixamoDriver(REST_BANK);
@@ -254,6 +254,25 @@ describe("pet: a crouch with the right hand stroking", () => {
     for (let i = 1; i < ys.length - 1; i++) if (ys[i]! > ys[i - 1]! && ys[i]! >= ys[i + 1]!) peaks++;
     expect(peaks).toBeGreaterThanOrEqual(3);
     expect(PET_STROKES_S).toHaveLength(4);
+  });
+});
+
+describe("mallet: both hands strike in turn", () => {
+  const c = PROCEDURAL_CLIPS.mallet!;
+  it("the arms are out in front, and on every stroke one comes down hard while the other waits up: left on the even strokes, right on the odd", () => {
+    for (let i = 0; i < MALLET_COUNT; i++) {
+      const p = pose(c, MALLET_START_S + i * MALLET_EVERY_S);
+      const [down, up] = i % 2 === 0 ? [p.armL, p.armR] : [p.armR, p.armL];
+      expect(down.y, `stroke ${i} down`).toBeLessThan(-0.7);
+      expect(up.y, `stroke ${i} up`).toBeGreaterThan(-0.5);
+      expect(down.z, `stroke ${i} forward`).toBeGreaterThan(0.4);
+      expect(up.z).toBeGreaterThan(0.8);
+    }
+  });
+  it("the body sways with the beat, side to side, and the clip is longer than its last stroke", () => {
+    const rolls = Array.from({ length: 6 }, (_, i) => pose(c, MALLET_START_S + i * MALLET_EVERY_S).body.z);
+    for (let i = 1; i < rolls.length; i++) expect(Math.sign(rolls[i]!)).toBe(-Math.sign(rolls[i - 1]!));
+    expect(c.duration).toBeGreaterThan(MALLET_START_S + (MALLET_COUNT - 1) * MALLET_EVERY_S);
   });
 });
 
