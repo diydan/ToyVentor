@@ -1,0 +1,146 @@
+--- a/parts/partspec/toyventor_kitcard.py
++++ b/parts/partspec/toyventor_kitcard.py
+@@ -354,6 +354,14 @@
+     return m, [conn], {"print_rotation_deg": pro.LAY_FLAT}
+ 
+ 
++def kit_barbell_shaft_9tu(**_):
++    """#3d 9 TU Dozer Barbell Shaft (6.6 x 112.5 x 5.0 mm LAY_FLAT): the bulldozer's rear axle. A medium wheel (12.3 mm), a 1.0 mm gap and a 12.5 mm kit
++    beam (the lift arm) fit outboard of the 49.8 mm keel on each side: 2 x (39.0 + 1.0 + 12.5) = 105.0 mm, and 112.5 mm = 9 TU leaves 3.75 mm of shaft beyond
++    each beam for a retainer (not designed yet). The 103.0 mm wide-track shaft would leave the beam touching the wheel face (39.0 + 12.5 = 51.5)."""
++    m, conn = _cruciform_tip_shaft(112.5, conn_len=112.5, z0=0.0)
++    return m, [conn], {"print_rotation_deg": pro.LAY_FLAT}
++
++
+ def kit_drum_roller(**_):
+     """#5b Smooth 2-TU Road-Roller Drum (50.0 x 50.0 x 24.8 mm, fixed hub). A smooth tyre-less drum, dished from the open face like the wheels so it is
+     about a third of the mass of a solid one: a 4.0 mm floor on the bed side, a hub collar and four ribs, inside a 2.4 mm wall. Prints face-down on z = 0
+@@ -2469,7 +2477,7 @@
+         ],
+     },
+     "card_g": {
+-        "name": "Card G — Construction: Road-Roller Drums & Wide-Track Axles",
++        "name": "Card G — Construction: Road-Roller Drums, Wide-Track Axles & Dozer Axle",
+         "limit_mm": 164.0,
+         "material": "PLA/PETG",
+         "items": [
+@@ -2479,6 +2487,7 @@
+             ("drum_4", "kit_drum_roller", 58.0, 58.0, 50.0, 50.0),
+             ("wide_axle_1", "kit_barbell_shaft_wide", 3.0, 113.0, 103.0, 6.6),
+             ("wide_axle_2", "kit_barbell_shaft_wide", 3.0, 124.6, 103.0, 6.6),
++            ("dozer_axle", "kit_barbell_shaft_9tu", 3.0, 136.2, 112.5, 6.6),
+         ],
+     },
+ }
+@@ -3116,6 +3125,37 @@
+     # both axles together: front drums against rear drums
+     res10 += _check_non_overlapping([(f"{r}_{t}", drum.rotate((0, 90 if t == "r" else -90, 0)).translate((x, y, 6.25))) for r, y in (("front", -56.25), ("rear", 43.75)) for t, x in (("l", -26.7), ("r", 26.7))])
+     results["10_road_roller"] = res10
++
++    # 11. Dozer axle (construction line, 2026-11-03): the 112.5 mm (9 TU) rear axle carries a medium wheel, a 1.0 mm gap and a kit beam (the lift arm) on each
++    # side. The roller's 103.0 mm axle would leave the beam touching the wheel face (39.0 + 12.5 = 51.5). Each arm is one beam_str_tu10 pivoting on the axle through
++    # its first bore; across the lift range from the blade-on-ground pose to +25 deg it must keep 1.0 mm to every wheel, clear the keel and both axles, and not touch
++    # the shaft, and the shaft must stand 3 mm or more beyond the beam for a retainer. (The crossbar and blades are not designed, so they are not in this craft.)
++    axle9 = _raw_geo("kit_barbell_shaft_9tu", cache)
++    beam11 = _raw_geo("beam_str_tu10", cache).transform([[0, 0, 1, 0], [-1, 0, 0, 0], [0, -1, 0, 0]])   # length -> -y, bores -> x
++    bb11 = beam11.bounding_box()
++    arms11 = [beam11.translate((x_lo - bb11[0], (43.75 + 6.25) - bb11[4], 6.25 - (bb11[2] + bb11[5]) / 2)) for x_lo in (-52.5, 40.0)]
++    shaft9 = axle9.rotate((0, 90, 0)).translate((-56.25, 43.75, 6.25))
++    shaft78 = _raw_geo("kit_barbell_shaft", cache).rotate((0, 90, 0)).translate((-39.0, -56.25, 6.25))
++    res11 = []
++    sb = shaft9.bounding_box()
++    if abs(sb[0] + 56.25) > 0.01 or abs(sb[3] - 56.25) > 0.01:
++        res11.append(("dozer_axle", "length", f"x {sb[0]:.2f}..{sb[3]:.2f}, expected -56.25..56.25"))
++    if sb[3] - 52.5 < 3.0:
++        res11.append(("dozer_axle", "retainer room", f"{sb[3] - 52.5:.2f} mm beyond the beam, need >= 3.0"))
++    fixed11 = [("keel", keel), ("shaft9", shaft9), ("shaft78", shaft78), *outboard_wheels(w_med, -56.25), *outboard_wheels(w_med, 43.75)]
++    for lift in (-4.5, 0.0, 10.0, 25.0):
++        moved = [a.translate((0.0, -43.75, -6.25)).rotate((-lift, 0.0, 0.0)).translate((0.0, 43.75, 6.25)) for a in arms11]
++        for i, arm_i in enumerate(moved):
++            for nm, solid in fixed11:
++                if nm.startswith("w"):
++                    gap = arm_i.min_gap(solid, 5.0)
++                    if gap < 0.95:
++                        res11.append((f"arm{i}_lift{lift:+.1f}", nm, f"clearance {gap:.3f} mm, need >= 1.0"))
++            gs = arm_i.min_gap(shaft9, 5.0)
++            if gs < 0.15:
++                res11.append((f"arm{i}_lift{lift:+.1f}", "shaft9", f"bore clearance {gs:.3f} mm, need >= 0.15"))
++        res11 += _check_non_overlapping([(f"arm{i}", a) for i, a in enumerate(moved)] + fixed11)
++    results["11_dozer_axle_beams"] = res11
+ 
+     ok = all(not v for v in results.values())
+     return {"ok": ok, "crafts": results}
+--- a/parts/partspec/catalog.json
++++ b/parts/partspec/catalog.json
+@@ -16,7 +16,7 @@
+   ],
+   "targets": {
+     "snap": 120,
+-    "pro": 89
++    "pro": 90
+   },
+   "waves": [
+     {
+@@ -156,7 +156,7 @@
+         "W10"
+       ],
+       "effort": "S",
+-      "scope": "2 parts (2 Pro): the first construction-line parts across Card G (<= 164 x 164 mm): the 103.0 mm wide-track barbell axle and the 50.0 x 24.8 mm smooth dished road-roller drum, so a keel on two wide axles and four drums is a double-drum road roller (Gate G1 craft 10). A dozer's C-frame arms pivot on the same wide axle (docs/specs/construction-vehicles-spec.md)."
++      "scope": "3 parts (3 Pro): the construction-line parts across Card G (<= 164 x 164 mm): the 103.0 mm wide-track barbell axle, the 50.0 x 24.8 mm smooth dished road-roller drum and the 112.5 mm (9 TU) dozer axle, so a keel on two wide axles and four drums is a double-drum road roller (Gate G1 craft 10). A dozer's C-frame arms pivot on the same wide axle (docs/specs/construction-vehicles-spec.md)."
+     }
+   ],
+   "parts": [
+@@ -6035,6 +6035,29 @@
+       }
+     },
+     {
++      "id": "kit_barbell_shaft_9tu",
++      "name": "9 TU Dozer Barbell Axle",
++      "line": "pro",
++      "family": "shaft",
++      "size": "pro",
++      "wave": "W14",
++      "note": "112.5 mm (9 TU) LAY_FLAT Pro drive shaft, the dozer's rear axle: a 12.3 mm medium wheel, a 1.0 mm gap and a 12.5 mm kit beam (the lift arm) fit outboard of the 49.8 mm keel on each side (2 x (39.0 + 1.0 + 12.5) = 105.0 mm), with 3.75 mm of shaft left beyond each beam for a retainer. The 103.0 mm wide-track shaft would leave the beam touching the wheel face.",
++      "stat": "Spin",
++      "type": "Drive shaft",
++      "behavior": "112.5 mm axle for a bulldozer's lift arms",
++      "tags": [
++        "vehicle",
++        "craft",
++        "kitcard",
++        "axle",
++        "shaft",
++        "construction"
++      ],
++      "build": {
++        "fn": "kit_barbell_shaft_9tu"
++      }
++    },
++    {
+       "id": "kit_drum_roller",
+       "name": "Smooth 2-TU Road-Roller Drum",
+       "line": "pro",
+--- a/parts/partspec/selftest.py
++++ b/parts/partspec/selftest.py
+@@ -580,8 +580,8 @@
+      len(w11_ids) == 32 and all(by_id[i]["design_status"] == "verified" for i in w11_ids))
+ test("W13 Pro Powered Add-On PETG RC housings & couplers: all 11 parts are verified with zero blocking failures",
+      len(w13_ids) == 11 and all(by_id[i]["design_status"] == "verified" for i in w13_ids))
+-test("W14 construction line (road-roller drum and wide-track axle): both parts are verified and 100% clear the S1 small-parts cylinder",
+-     len(w14_ids) == 2 and all(by_id[i]["design_status"] == "verified" and by_id[i]["safety"]["small_part_status"] == "above_cylinder" for i in w14_ids))
++test("W14 construction line (road-roller drum, wide-track axle and 9 TU dozer axle): all three parts are verified and 100% clear the S1 small-parts cylinder",
++     len(w14_ids) == 3 and all(by_id[i]["design_status"] == "verified" and by_id[i]["safety"]["small_part_status"] == "above_cylinder" for i in w14_ids))
+ _kn_l, _kn_l_conns, _ = _kc.pro_steer_knuckle_l()
+ _kn_pivots = [c for c in _kn_l_conns if c["id"] in ("kingpin_bore", "tierod_bore")]
+ test("knuckle cheek relief: 0.4 mm shave with pivot bores off-lattice but re-based with the body",
+@@ -622,8 +622,8 @@
+      all(c["id"] != "top_studs" for c in _br_conns) and abs(_kc.RACK_Z - (_kc.DECK_Z + 0.2)) < 1e-9
+      and abs(_br.bounding_box()[5] - (_kc.LINK_TOP_Z - _kc.BRIDGE_Z)) < 1e-6)
+ _g1 = _kc.verify_gate_g1()
+-test("Gate G1: all 9 canonical craft, the road roller, 3-point rack capture & bi-directional pin lock, 55-deg dump tip, Motion packs & 3D jet seal, and Pro Powered Add-On COTS keep-outs pass",
+-     _g1["ok"] and len(_g1["crafts"]) == 14 and "10_road_roller" in _g1["crafts"] and "1b_rack_travel_stop" in _g1["crafts"] and "2b_dump_truck_tip_sweep" in _g1["crafts"]
++test("Gate G1: all 9 canonical craft, the road roller, the dozer axle, 3-point rack capture & bi-directional pin lock, 55-deg dump tip, Motion packs & 3D jet seal, and Pro Powered Add-On COTS keep-outs pass",
++     _g1["ok"] and len(_g1["crafts"]) == 15 and "10_road_roller" in _g1["crafts"] and "11_dozer_axle_beams" in _g1["crafts"] and "1b_rack_travel_stop" in _g1["crafts"] and "2b_dump_truck_tip_sweep" in _g1["crafts"]
+      and "3b_motion_packs_and_jet_seal" in _g1["crafts"] and "3c_band_clutch_and_shaft_capture" in _g1["crafts"])
+ if (out / "cards" / "kitcard_manifest.json").exists():
+     _kcm = json.loads((out / "cards" / "kitcard_manifest.json").read_text())["cards"]
