@@ -446,3 +446,52 @@ describe("kip viewer build wiring", () => {
     }
   });
 });
+
+describe("kip menu: the Party group (docs/specs/dance-party-spec.md 5.1)", () => {
+  const stateful = () => {
+    const s = { on: false, mood: "bouncy", tempo: "medium", band: "0", started: 0, stopped: 0 };
+    return {
+      s,
+      party: {
+        isOn: () => s.on,
+        moods: [{ value: "bouncy", label: "Bouncy" }, { value: "sleepy", label: "Sleepy" }],
+        tempos: [{ value: "slow", label: "Slow (90)" }, { value: "medium", label: "Medium (110)" }],
+        bands: [{ value: "0", label: "2–3" }, { value: "2", label: "5–6" }],
+        mood: () => s.mood, tempo: () => s.tempo, band: () => s.band,
+        start: () => { s.on = true; s.started++; }, stop: () => { s.on = false; s.stopped++; },
+        setMood: (v: string) => { s.mood = v; }, setTempo: (v: string) => { s.tempo = v; }, setBand: (v: string) => { s.band = v; },
+        status: () => (s.on ? "Hip Hop · 110 bpm · 3 · taps 4" : "Pick a mood"),
+      },
+    };
+  };
+  const ctxWith = (party: any) => ({ ...fakeCtx(), party });
+  const ids = (ctx: any) => flat(ctx).map((c: any) => c.id);
+
+  it("exists only when the page supplies a party, after Animation and before Build view", () => {
+    expect(ids(fakeCtx()).filter((i: string) => i.startsWith("party"))).toEqual([]);
+    const { party } = stateful();
+    const groups = buildMenu(ctxWith(party));
+    expect(groups.map((g: any) => g.id)).toEqual(["character", "outfit", "ride", "animation", "party", "build", "tools"]);
+    expect(groups.find((g: any) => g.id === "party").label).toBe("Party");
+  });
+
+  it("has an on switch, the mood, tempo and age pickers, and a readout, and each does what it says", () => {
+    const { s, party } = stateful();
+    const ctx = ctxWith(party);
+    expect(ids(ctx).filter((i: string) => i.startsWith("party"))).toEqual(["partyOn", "partyMood", "partyTempo", "partyBand", "partyInfo"]);
+    expect(byId(ctx, "partyOn").get()).toBe(false);
+    byId(ctx, "partyOn").set(true);
+    expect([s.on, s.started]).toEqual([true, 1]);
+    expect(byId(ctx, "partyOn").get()).toBe(true);
+    byId(ctx, "partyOn").set(false);
+    expect([s.on, s.stopped]).toEqual([false, 1]);
+    byId(ctx, "partyMood").set("sleepy");
+    byId(ctx, "partyTempo").set("slow");
+    byId(ctx, "partyBand").set("2");
+    expect([byId(ctx, "partyMood").get(), byId(ctx, "partyTempo").get(), byId(ctx, "partyBand").get()]).toEqual(["sleepy", "slow", "2"]);
+    expect(resolveOptions(byId(ctx, "partyTempo")).map((o: any) => o.label)).toEqual(["Slow (90)", "Medium (110)"]);
+    expect(byId(ctx, "partyInfo").text()).toBe("Pick a mood");
+    s.on = true;
+    expect(byId(ctx, "partyInfo").text()).toBe("Hip Hop · 110 bpm · 3 · taps 4");
+  });
+});

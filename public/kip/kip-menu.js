@@ -15,6 +15,8 @@
 //   ctx.ready()               true once the scene is built
 //   ctx.camera                three PerspectiveCamera (recentred with setViewOffset)
 //   ctx.selfie                optional { open(), remove() }; without it there are no selfie controls
+//   ctx.party                 optional party adapter (kip-party.js `party.menu`: isOn moods tempos bands mood tempo band start stop setMood setTempo setBand status);
+//                             without it there is no Party group
 //   ctx.print                 optional print-view adapter; without it there is no Print group:
 //                             isOn() setOn(bool) busy() summary() plateCount() plateIndex() setPlate(i) download(kind)
 //   ctx.groups                optional () => groups: a bench that DECLARES its own sections (the Truck, truck-menu.js); without it the Kip's buildMenu(ctx) is drawn
@@ -354,7 +356,39 @@ export function buildMenu(ctx) {
   };
 
   const print = ctx.print && buildPrintGroup(ctx.print, { hasVehicle: () => loco.vehicle !== 'none' });
-  return [character, outfit, ride, animation, build, ...(print ? [print] : []), tools];
+  const party = ctx.party && buildPartyGroup(ctx.party);
+  return [character, outfit, ride, animation, ...(party ? [party] : []), build, ...(print ? [print] : []), tools];
+}
+
+/**
+ * The Party group (docs/specs/dance-party-spec.md 5.1), built over the adapter `party` that kip-party.js makes. Pick a mood, a tempo and the child's age band,
+ * switch Party on: Kip puts on the headphones, a practice beat plays and Kip dances on the beat. Changing the mood or the tempo while it plays restarts it.
+ */
+export function buildPartyGroup(party) {
+  const sel = (id, label, o) => ({ kind: 'select', id, label, ...o });
+  return {
+    id: 'party',
+    label: 'Party',
+    icon: '🎉',
+    controls: [
+      { kind: 'toggle', id: 'partyOn', label: 'Party',
+        title: 'Put on the headphones, play a practice beat and dance on the beat. Tap the stage along with it.',
+        get: () => party.isOn(), set: (v) => { if (v) party.start(); else party.stop(); } },
+      sel('partyMood', 'Mood', {
+        title: 'The feel of the practice beat',
+        options: () => party.moods, get: () => party.mood(), set: (v) => party.setMood(v),
+      }),
+      sel('partyTempo', 'Tempo', {
+        title: 'Slow, medium or fast (beats a minute in brackets); the dance is the one that fits it',
+        options: () => party.tempos, get: () => party.tempo(), set: (v) => party.setTempo(v),
+      }),
+      sel('partyBand', 'Ages', {
+        title: 'The age band: the youngest two tap anywhere, from 5 to 6 a tap must land on the beat to flash',
+        options: () => party.bands, get: () => party.band(), set: (v) => party.setBand(v),
+      }),
+      { kind: 'info', id: 'partyInfo', title: 'The dance, the tempo, the count and your taps', text: () => party.status() },
+    ],
+  };
 }
 
 /**

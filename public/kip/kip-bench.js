@@ -56,6 +56,7 @@ import { mountDescribe } from '/kip/kip-describe-tab.js?v=10.0';
 import { KIP_CLIPS, clipForProp, isPropClip, makeKipClip, plantBakedClip, limitHands } from '/kip/kip-clips.js?v=10.0';
 import { findMixamoBones, retargetMixamoClipToKip as retargetMixamoClip } from '/kip/kip-mixamo-retarget.js?v=10.0';
 import { bakedToClip, checkBaked } from '/kip/kip-baked-clips.js?v=10.0';
+import { mountParty } from '/kip/kip-party.js?v=10.0';
 import { createKipSession } from '/kip/kip-session.js?v=10.0';
 import { FACEPLATE_SEAT_MM } from '/kip/kip-faceplate-shape.js?v=10.0';
 import { disposeThreeScene } from '/kip/bench-lifecycle.js?v=10.0';
@@ -501,8 +502,12 @@ const hosted = stage !== null;
 const kipSession = env.sharedKip ?? createKipSession({ THREE, STLLoader, mergeVertices, toCreasedNormals });
 kipSession.acquire('kip');
 const printOn = env.features?.downloads !== false; // false: this bench hands no file out (Print group, photo "Print it", selfie sticker): see workshop.js `downloads`
-// Under 'gated' the Print group is on (its exports ask a grown-up), but the photo "Print it", the selfie sticker and Make-from-words files have exits of their own that are not gated yet.
-const downloadsOn = printOn && !env.features?.gated;
+// Under 'gated' the shell hands this bench its grown-up check (`askGrownUp`) and its one parent-gate client (`cloud`, so the selfie's Smart face and its sticker share one proof).
+// The Print group asks through the print view; the selfie sticker asks before it saves; the photo "Print it" needs a real grown-up proof before anything is made (kip-photo-print.js,
+// its own check). Make-from-words files have their own exit and stay hidden under 'gated' until it is gated too.
+const askGrownUp = env.features?.askGrownUp ?? null;
+const downloadsOn = printOn && (!env.features?.gated || askGrownUp !== null); // the photo "Print it" and the selfie sticker
+const forgeFilesOn = printOn && !env.features?.gated; // Make-from-words files
 let unregisterKipSync = null;
 let unregisterKipPrintState = null;
 let active = !hosted; // a hosted bench draws and reads input only while the host has it active
@@ -968,6 +973,11 @@ let kip = null;
 let kipMixer = null;
 const actions = new Map();
 let activeClipName = null;
+// Dance party (kip-party.js): the clips that carry a tempo, and the party itself once mounted. `partyApi` is declared here so the frame loop can ask it
+// safely before the mount below has run.
+const danceTempos = [];
+let partyApi = null;
+let partyCrownBefore = null;
 
 let refSkeletonGroup = null;
 let refMixer = null;
@@ -1080,7 +1090,7 @@ function updateStatusText() {
   } else if (loco.explodeTarget > 0.02 || loco.explodeAmount > 0.02) {
     statusEl.innerHTML = `${edTag}${vehTag} · <b>Exploded (${Math.round(loco.explodeAmount * 100)}%)</b>${digTag}`;
   } else {
-    const lbl = NICE_CLIP_LABELS[activeClipName] || activeClipName || 'Idle';
+    const lbl = NICE_CLIP_LABELS[activeClipName] || (clipChoices.find(c => c.id === activeClipName) || {}).label || activeClipName || 'Idle';
     statusEl.innerHTML = `${edTag}${vehTag} · <b>${lbl}</b>${digTag}`;
   }
 }
@@ -1213,6 +1223,7 @@ async function init() {
   for (const entry of KIP_CLIPS) {
     actions.set(entry.id, kipMixer.clipAction(makeKipClip(THREE, entry)));
     registerClip(entry.id, entry.label);
+    if (entry.group === 'dance' && entry.bpm) danceTempos.push({ id: entry.id, bpm: entry.bpm, beats: entry.beats }); // the party picks from these
   }
 
   xbotVis.scale.multiplyScalar(83.5);
@@ -1251,6 +1262,7 @@ async function init() {
       if (!item) continue;
       actions.set(item.baked.id, kipMixer.clipAction(bakedToClip(THREE, item.baked)));
       registerClip(item.baked.id, item.c.label);
+      if (item.baked.group === 'dance' && item.baked.beats) danceTempos.push({ id: item.baked.id, bpm: item.baked.bpm, beats: item.baked.beats });
     }
   } catch (err) {
     console.warn('baked Mixamo clips not loaded', err);
@@ -2381,7 +2393,7 @@ async function equipHouseholdItem(item, extras = {}) {
 // Text to part (F1, kip-forge-make.js): "Wear it" puts the part the child just made on Kip. The Worker's first look is a GLB in glTF's y-up space, which
 // is the space scadMesh turns an STL part into, so it goes into the same custom crown / custom head containers a loaded .stl uses, with no rotation of
 // its own; but it is in metres where the bench works in millimetres, so it is scaled up by 1000 (found on the real page: it was drawn 1000 times too small).
-async function equipForgePart({ slot, glbBase64, name }) {
+async function equipForgePart({ slot, glbBase64, name, colorHex }) {
   if ((slot !== 'crown' && slot !== 'head') || typeof glbBase64 !== 'string' || !glbBase64) return { ok: false };
   try {
     const bin = atob(glbBase64);
@@ -2390,7 +2402,7 @@ async function equipForgePart({ slot, glbBase64, name }) {
     const gltf = await gltfLoader.parseAsync(bytes.buffer, '');
     if (disposed) return { ok: false };
     const mat = kip.exp.expMats.custom.clone();
-    mat.color.set('#7c4dff');
+    mat.color.set(/^#[0-9a-f]{6}$/i.test(colorHex || '') ? colorHex : '#7c4dff'); // the child's colour (shared/forgeColors.ts), or the custom-part purple
     const group = new THREE.Group();
     group.name = `forge:${String(name || slot).slice(0, 40)}`;
     gltf.scene.traverse((o) => { if (o.isMesh) { o.material = mat; o.castShadow = true; o.receiveShadow = true; } });
@@ -2439,7 +2451,7 @@ async function openForgeMake() {
     if (!forgeMake) {
       const { createForgeMake } = await import('/kip/kip-forge-make.js?v=10.0');
       if (disposed) return;
-      forgeMake = createForgeMake({ root: benchRoot, onWear: equipForgePart, onReadyMade: equipReadyMade, downloads: downloadsOn });
+      forgeMake = createForgeMake({ root: benchRoot, onWear: equipForgePart, onReadyMade: equipReadyMade, downloads: forgeFilesOn });
       globals.kipForgeMake = forgeMake;
     }
     forgeMake.open();
@@ -2981,6 +2993,7 @@ function animate() {
 
   // Advance skeletal animation + Snap 3+ digital fake-joint limb flex
   const mixerDt = (loco.buildMode === 'assembled') ? dt : 0;
+  partyApi?.update(dt); // party mode holds its dance at the song's beat BEFORE the mixer evaluates it
   if (kipMixer) kipMixer.update(mixerDt);
   if (refMixer) refMixer.update(mixerDt);
   applySnapJointOverrides();
@@ -3165,6 +3178,56 @@ globals.kipClips = {
     return id;
   },
 };
+// Party mode (parts/kip/viewer/kip-party.js; docs/specs/dance-party-spec.md phase 3): a practice beat, Kip in the headphones dancing ON the beat, the cups and the
+// floor ring flashing on it, and tap-along by age band. The bench only supplies what it owns (the rig); the decisions are pure and tested.
+function readAgeBand() { // the band a grown-up set (src/lib/age.ts, stored in progression:v1); none chosen reads as the youngest
+  try {
+    const b = JSON.parse(localStorage.getItem('progression:v1') || 'null')?.ageBand;
+    return Number.isInteger(b) && b >= 0 && b <= 5 ? b : 0;
+  } catch { return 0; }
+}
+const PARTY_HUES = [0.92, 0.55, 0.14, 0.36]; // the cups change colour with each beat of the bar
+partyApi = mountParty({
+  AudioContextClass: window.AudioContext || window.webkitAudioContext,
+  stage: renderer.domElement,
+  band: readAgeBand,
+  dances: () => danceTempos,
+  label: id => (clipChoices.find(c => c.id === id) || {}).label || id,
+  playClip: id => triggerClip(id),
+  holdClip: (id, t) => { const a = actions.get(id); if (a) { a.paused = true; a.time = t; } },
+  releaseClip: id => { const a = actions.get(id); if (a) a.paused = false; loco.manualOverride = false; },
+  activeClip: () => activeClipName,
+  headphones: {
+    wear() { // false on a head that cannot wear them: the party is then lights only
+      const before = { hat: loco.hat, hair: loco.hair };
+      setCrownMode('headphones');
+      if (loco.hat !== 'headphones') return false;
+      partyCrownBefore = before;
+      return true;
+    },
+    restore() {
+      const b = partyCrownBefore;
+      partyCrownBefore = null;
+      if (!b) return;
+      setCrownMode(b.hat);
+      if (loco.hair !== b.hair) setHairMode(b.hair);
+    },
+  },
+  glow(level, beatIndex) {
+    const m = kip?.exp?.hatMeshes?.headphones?.material;
+    if (!m) return;
+    if (level <= 0) { m.emissive.setRGB(0, 0, 0); m.emissiveIntensity = 0; return; }
+    if (loco.hat !== 'headphones') return;
+    m.emissive.setHSL(PARTY_HUES[((beatIndex % 4) + 4) % 4], 1, 0.55);
+    m.emissiveIntensity = 1.4 * level;
+  },
+  ring(level, downbeat) {
+    originRing.material.opacity = 0.45 + 0.45 * level;
+    const k = 1 + (downbeat ? 0.14 : 0.07) * level;
+    originRing.scale.set(k, k, 1);
+  },
+});
+globals.kipParty = partyApi;
 // Describe & build (parts/kip/viewer/kip-describe-contract.md): type what to build, see it as an exploded view, watch it go together. It owns its panel
 // and toggle button and draws in its own group; while it is open the character is hidden. `kip` is only set once init() has run, hence the guard.
 const describeTab = mountDescribe({
@@ -3178,6 +3241,8 @@ let selfieBefore = null;
 const selfie = mountSelfie({
   root: benchRoot,
   downloads: downloadsOn,
+  askGrownUp,
+  cloud: env.features?.cloud ?? undefined,
   plateColor: () => (SKIN_TONES.find(s => s.id === loco.skin) || SKIN_TONES[0]).hex,
   apply: canvas => {
     if (loco.expr !== 'selfie') selfieBefore = { expr: loco.expr, insert: loco.faceInsert };
@@ -3201,6 +3266,7 @@ const kipMenuCtx = {
   viewSize: () => (hosted ? stage.size() : { width: window.innerWidth, height: window.innerHeight }),
   isActive: () => active,
   selfie: { open: selfie.open, remove: selfie.remove },
+  party: partyApi.menu,
   print: {
     isOn: printView.isOn, busy: printView.isBusy, summary: printView.summary,
     setOn: on => (on ? printView.enter() : printView.exit()),
@@ -3264,7 +3330,7 @@ const ready = init().catch(err => {
   statusEl.textContent = `Error: ${err.message}`;
 });
 
-const PUBLISHED = ["__KIP_READY__", "kipClips", "kipDescribe", "kipForgeMake", "kipMenu", "kipPhotoPrint", "kipPrint", "kipRig", "kipSelfie"];
+const PUBLISHED = ["__KIP_READY__", "kipClips", "kipDescribe", "kipForgeMake", "kipMenu", "kipParty", "kipPhotoPrint", "kipPrint", "kipRig", "kipSelfie"];
 function teardown() {
   householdChip?.root.remove();
   householdChip = null;
@@ -3274,6 +3340,8 @@ function teardown() {
   unregisterKipPrintState = null;
   kipSession.releaseRef('kip');
   if (sharedMenu) sharedMenu.hide('kip'); else menuHost.destroy();
+  partyApi?.dispose();
+  partyApi = null;
   globals.kipSelfie?.dispose?.();
   globals.kipDescribe?.dispose?.();
   if (sharedPrint) unregisterPrint(); else globals.kipPrint?.dispose?.();
@@ -3316,6 +3384,7 @@ function setActive(on) {
     if (kip && kipSession.state.source) adoptSharedDriverState();
     showMenu();
   } else {
+    partyApi?.stop(); // a party does not play on in a tab the child has left: the sound stops and the crown is put back
     sharedPrint?.release('kip'); // plates open on this bench's character close first, so the pose saved below is the bench's own
     menuHost.hide('kip');
     kipSession.release('kip');

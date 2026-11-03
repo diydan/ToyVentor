@@ -236,6 +236,29 @@ copyFileSync(
   join(kipSrcDir, "viewer/kip-baked-clips.js"),
   join(kipOutDir, "kip-baked-clips.js"),
 );
+// Dance party (docs/specs/dance-party-spec.md phase 3): the bench glue, the Web Audio practice beat, and the party's pure logic (shared/songParty.ts, which
+// carries the beat clock, the tempo rule, the tap judge and the practice-beat pattern) bundled into the one module the glue imports.
+copyFileSync(
+  join(kipSrcDir, "viewer/kip-party.js"),
+  join(kipOutDir, "kip-party.js"),
+);
+copyFileSync(
+  join(kipSrcDir, "viewer/kip-party-audio.js"),
+  join(kipOutDir, "kip-party-audio.js"),
+);
+execFileSync(
+  esbuildBin,
+  [
+    join(root, "shared/songParty.ts"),
+    "--bundle",
+    "--format=esm",
+    "--target=es2022",
+    "--minify",
+    "--legal-comments=none",
+    `--outfile=${join(kipOutDir, "kip-party-core.js")}`,
+  ],
+  { stdio: "inherit" },
+);
 // Workshop shell (docs/specs/workshop-spec.md): one page with a tab per bench (Kip, Truck); the benches themselves are copied above.
 copyFileSync(
   join(kipSrcDir, "viewer/Workshop.html"),

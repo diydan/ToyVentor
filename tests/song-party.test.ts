@@ -1,0 +1,268 @@
+// The dance party's brain and the practice beat's pattern (shared/songParty.ts, shared/songSynth.ts; docs/specs/dance-party-spec.md 4.3, 5.1).
+//
+// The tap game and the dance-follows-the-clock checks are functions of an implementation, and are also run on versions broken on purpose (a
+// stopwatch clock, a tap game that lets a beat count twice, a planner that stretches a dance): each must be caught, or the check proves nothing.
+import { describe, expect, it } from "vitest";
+import { MAX_BEATS, beatAt, clipTime, type BeatMap, type DanceClip } from "../shared/songBeat";
+import { MOODS, TEMPOS, TEMPO_BPM } from "../shared/songCards";
+import { newTapRun, partyFrame, planParty, practiceBeatMap, registerTap, tapFlashes, tapSummary } from "../shared/songParty";
+import { LOOP_BEATS, MAX_MIDI, MIN_MIDI, MOOD_SYNTH, loopEvents, midiToHz } from "../shared/songSynth";
+
+const DANCES: DanceClip[] = [
+  { id: "dance_sway", bpm: 80, beats: 8 },
+  { id: "dance_boogie", bpm: 120, beats: 16 },
+  { id: "dance_silly", bpm: 125.22, beats: 8 },
+  { id: "dance_swing", bpm: 137.8, beats: 48 },
+];
+
+// ---- the practice beat's pattern ----------------------------------------------------------------------------------------------------------
+
+describe("the practice beat: a pattern as data, on the same grid the dance reads", () => {
+  it("has a loop for every mood card, 16 beats long, deterministic", () => {
+    expect(LOOP_BEATS).toBe(16);
+    for (const mood of MOODS) {
+      const a = loopEvents(mood);
+      expect(a.length, mood).toBeGreaterThan(10);
+      expect(loopEvents(mood), mood).toEqual(a);
+    }
+    expect(Object.keys(MOOD_SYNTH).sort()).toEqual([...MOODS].sort());
+  });
+
+  it("every event is inside the loop, in time order, and a drum lands on the grid (a straight beat or an eighth, or a shuffled eighth)", () => {
+    for (const mood of MOODS) {
+      const ev = loopEvents(mood);
+      const swing = MOOD_SYNTH[mood].swing;
+      let last = -1;
+      for (const e of ev) {
+        expect(e.beat, mood).toBeGreaterThanOrEqual(0);
+        expect(e.beat, mood).toBeLessThan(LOOP_BEATS);
+        expect(e.beat, mood).toBeGreaterThanOrEqual(last);
+        last = e.beat;
+        expect(e.dur, `${mood} ${e.voice}`).toBeGreaterThan(0);
+        expect(e.vel, `${mood} ${e.voice}`).toBeGreaterThan(0);
+        expect(e.vel, `${mood} ${e.voice}`).toBeLessThanOrEqual(1);
+        if (e.voice === "kick" || e.voice === "snare") expect(Number.isInteger(e.beat), `${mood} ${e.voice} at ${e.beat}`).toBe(true);
+        const frac = e.beat % 1;
+        const allowed = [0, 0.5, 0.5 + swing].map((x) => Math.round(x * 1e6) / 1e6);
+        expect(allowed, `${mood} ${e.voice} at beat ${e.beat}`).toContain(Math.round(frac * 1e6) / 1e6);
+      }
+    }
+  });
+
+  it("every mood has a kick on the downbeat of every bar, so the count 1 2 3 4 has something under it", () => {
+    for (const mood of MOODS) {
+      const kicks = loopEvents(mood).filter((e) => e.voice === "kick").map((e) => e.beat);
+      for (const bar of [0, 4, 8, 12]) expect(kicks, `${mood} bar at ${bar}`).toContain(bar);
+    }
+  });
+
+  it("pitched voices stay in a range a toy speaker plays, and every pitched event carries a note", () => {
+    for (const mood of MOODS) {
+      for (const e of loopEvents(mood)) {
+        if (e.voice === "bass" || e.voice === "lead") {
+          expect(e.midi, `${mood} ${e.voice}`).toBeDefined();
+          expect(e.midi!, `${mood} ${e.voice}`).toBeGreaterThanOrEqual(MIN_MIDI);
+          expect(e.midi!, `${mood} ${e.voice}`).toBeLessThanOrEqual(MAX_MIDI);
+        } else expect(e.midi, `${mood} ${e.voice}`).toBeUndefined();
+      }
+    }
+    expect(midiToHz(69)).toBeCloseTo(440, 9);
+    expect(midiToHz(57)).toBeCloseTo(220, 9);
+  });
+
+  it("the moods sound different from each other (a lullaby is not a march)", () => {
+    const sig = (m: (typeof MOODS)[number]) => JSON.stringify(loopEvents(m));
+    expect(new Set(MOODS.map(sig)).size).toBe(MOODS.length);
+    const kicks = (m: (typeof MOODS)[number]) => loopEvents(m).filter((e) => e.voice === "kick").length;
+    expect(kicks("sleepy")).toBeLessThan(kicks("cleanup"));
+    const loud = (m: (typeof MOODS)[number]) => Math.max(...loopEvents(m).map((e) => e.vel));
+    expect(loud("sleepy")).toBeLessThan(loud("cleanup"));
+  });
+});
+
+// ---- the plan and the frame ---------------------------------------------------------------------------------------------------------------
+
+describe("planning a party from a tempo", () => {
+  it("every tempo card gets a dance, from the real tempos the dances carry", () => {
+    for (const t of TEMPOS) expect(planParty(TEMPO_BPM[t], DANCES).dance, t).not.toBeNull();
+    expect(planParty(TEMPO_BPM.slow, DANCES).dance!.clip.id).toBe("dance_sway");
+  });
+
+  it("never stretches a dance: a song no clip fits is lights only", () => {
+    expect(planParty(200, DANCES).dance).toBeNull();
+    expect(planParty(45, DANCES).dance).toBeNull();
+    for (let bpm = 40; bpm <= 220; bpm++) {
+      const d = planParty(bpm, DANCES).dance;
+      if (d) {
+        expect(d.rate).toBeGreaterThanOrEqual(0.8 - 1e-12);
+        expect(d.rate).toBeLessThanOrEqual(1.25 + 1e-12);
+      }
+    }
+  });
+
+  it("ignores a clip with no tempo, and steps to the next dance for a second Kip", () => {
+    const withBare = [...DANCES, { id: "dance_chicken", bpm: 0, beats: 0 } as DanceClip, { id: "dance_x", bpm: 100, beats: 2.5 } as DanceClip];
+    for (let bpm = 64; bpm <= 170; bpm++) expect(["dance_chicken", "dance_x"]).not.toContain(planParty(bpm, withBare).dance?.clip.id);
+    const a = planParty(125, DANCES, 0).dance!.clip.id;
+    const b = planParty(125, DANCES, 1).dance!.clip.id;
+    expect(a).not.toBe(b);
+  });
+});
+
+describe("the practice beat map", () => {
+  it("holds the tempo exactly, starts on a downbeat at 0, and is long enough for a party", () => {
+    for (const bpm of [80, 105, 128, 160]) {
+      const m = practiceBeatMap(bpm);
+      expect(m.bpm).toBeCloseTo(bpm, 6);
+      expect(m.beats[0]).toBe(0);
+      expect(m.beats[1]! - m.beats[0]!).toBeCloseTo(60 / bpm, 12);
+      expect(m.beats[m.beats.length - 1]!).toBeGreaterThan(bpm >= 100 ? 590 : 590 * (bpm / 120)); // about ten minutes, bounded by MAX_BEATS
+      expect(m.beats.length).toBeLessThanOrEqual(MAX_BEATS);
+    }
+  });
+
+  it("refuses a tempo a party cannot follow", () => {
+    expect(() => practiceBeatMap(20)).toThrow();
+    expect(() => practiceBeatMap(400)).toThrow();
+  });
+});
+
+describe("a frame of the party", () => {
+  const map = practiceBeatMap(125.22);
+  const plan = planParty(125.22, DANCES);
+
+  /** The no-drift check as a function of the clock, so it can be run on a broken one. Returns the worst error, seconds, over 60 s of frames. */
+  function worstDrift(danceTime: (t: number) => number): number {
+    const clip = plan.dance!.clip;
+    const loop = clip.beats * (60 / clip.bpm);
+    let worst = 0;
+    for (let k = 0; k < 60 * 2; k++) {
+      const t = (k * 60) / 125.22; // every beat of the first 60 s
+      if (t > 60) break;
+      const want = (k % clip.beats) * (60 / clip.bpm);
+      const e = Math.abs(((danceTime(t) - want + loop / 2) % loop + loop) % loop - loop / 2);
+      worst = Math.max(worst, e);
+    }
+    return worst;
+  }
+
+  it("keeps the dance on the beat for 60 s: every song beat is the same point of the clip", () => {
+    expect(worstDrift((t) => partyFrame(plan, map, t).danceTime!)).toBeLessThan(1e-9);
+  });
+
+  it("fails the same check on a stopwatch that is a hair off the song's tempo (so the check can fail)", () => {
+    const clip = plan.dance!.clip;
+    const loop = clip.beats * (60 / clip.bpm);
+    const stopwatch = (t: number) => (t * 1.002) % loop; // a clock 0.2 % fast: 120 ms off after a minute
+    expect(worstDrift(stopwatch)).toBeGreaterThan(0.08);
+  });
+
+  it("counts 1 2 3 4, flashes on the beat and is dark before the next", () => {
+    const iv = 60 / 125.22;
+    for (let k = 0; k < 8; k++) {
+      const f = partyFrame(plan, map, k * iv);
+      expect(f.count).toBe(((k % 4) + 1) as 1 | 2 | 3 | 4);
+      expect(f.downbeat).toBe(k % 4 === 0);
+      expect(f.pulse).toBe(1);
+      expect(partyFrame(plan, map, k * iv + 0.9 * iv).pulse).toBe(0);
+    }
+  });
+
+  it("a lights-only party has a pulse and a count but no dance", () => {
+    const fast = planParty(200, DANCES);
+    const f = partyFrame(fast, practiceBeatMap(160), 1.234);
+    expect(f.danceId).toBeNull();
+    expect(f.danceTime).toBeNull();
+    expect(f.count).toBeGreaterThanOrEqual(1);
+  });
+
+  it("is defined before the song starts (a count-in) and never goes negative inside a clip", () => {
+    for (const t of [-2, -0.5, 0, 0.001]) {
+      const f = partyFrame(plan, map, t);
+      expect(f.danceTime!).toBeGreaterThanOrEqual(0);
+      expect(f.danceTime!).toBeLessThan(plan.dance!.clip.beats * (60 / plan.dance!.clip.bpm));
+      expect(f.count).toBeGreaterThanOrEqual(1);
+      expect(f.count).toBeLessThanOrEqual(4);
+    }
+  });
+});
+
+// ---- taps ---------------------------------------------------------------------------------------------------------------------------------
+
+describe("tapping the beat, by age band", () => {
+  const map: BeatMap = practiceBeatMap(120); // a beat every 0.5 s from 0
+
+  it("bands 0 and 1: any tap is a hit and flashes, there are no wrong taps", () => {
+    for (const band of [0, 1]) {
+      const run = newTapRun(band);
+      for (const t of [0.01, 0.13, 0.25, 0.33, 0.49]) {
+        const o = registerTap(run, map, t);
+        expect(o.kind).toBe("free");
+        expect(tapFlashes(o)).toBe(true);
+      }
+      expect(tapSummary(run)).toEqual({ taps: 5, hits: 5, meanAbsErrorMs: 0 });
+    }
+  });
+
+  /** The tap game as a function of an implementation, so it can be run on a broken one. Returns the failures. */
+  function gameFailures(register: typeof registerTap): string[] {
+    const bad: string[] = [];
+    const run = newTapRun(2);
+    const a = register(run, map, 2.0);
+    if (a.kind !== "hit") bad.push("a tap on the beat must hit");
+    const b = register(run, map, 2.02);
+    if (b.kind !== "repeat") bad.push("a second tap on the same beat must not count again");
+    if (register(run, map, 2.25).kind !== "miss") bad.push("a tap between beats must miss");
+    if (register(run, map, 2.5 + 0.079).kind !== "hit") bad.push("79 ms late must hit");
+    if (register(run, map, 3.0 + 0.081).kind !== "miss") bad.push("81 ms late must miss");
+    const s = tapSummary(run);
+    if (s.hits !== 2) bad.push(`two beats were hit, the run says ${s.hits}`);
+    if (s.taps !== 5) bad.push(`five taps were made, the run says ${s.taps}`);
+    return bad;
+  }
+
+  it("from band 2: a tap within 80 ms of a beat is a hit, once per beat, and only a hit flashes", () => {
+    expect(gameFailures(registerTap)).toEqual([]);
+    const run = newTapRun(2);
+    expect(tapFlashes(registerTap(run, map, 4.0))).toBe(true);
+    expect(tapFlashes(registerTap(run, map, 4.01))).toBe(false); // a repeat is silent
+    expect(tapFlashes(registerTap(run, map, 4.25))).toBe(false); // a miss is silent
+  });
+
+  it("fails the same check on a game that lets a beat count twice (so the check can fail)", () => {
+    const lax: typeof registerTap = (run, m, t, o) => { run.claimed.clear(); return registerTap(run, m, t, o); };
+    expect(gameFailures(lax).length).toBeGreaterThan(0);
+  });
+
+  it("bands 3 to 5 play the on-beat game for now (copy and compose are not built), and a corrupt band is the youngest", () => {
+    for (const band of [3, 4, 5]) expect(newTapRun(band).mode).toBe("on_beat");
+    for (const bad of [undefined, null, -1, 6, 2.5, "3", NaN]) expect(newTapRun(bad).mode, String(bad)).toBe("free");
+  });
+
+  it("takes output latency off a tap: the child taps on what they hear", () => {
+    const run = newTapRun(2);
+    expect(registerTap(run, map, 2.12).kind).toBe("miss");
+    expect(registerTap(newTapRun(2), map, 2.12, { latencyMs: 120 }).kind).toBe("hit");
+  });
+
+  it("measures the mean error of the hits it counted", () => {
+    const run = newTapRun(2);
+    registerTap(run, map, 1.0 + 0.02);
+    registerTap(run, map, 1.5 - 0.04);
+    registerTap(run, map, 1.75); // a miss, not counted in the error
+    const s = tapSummary(run);
+    expect(s.hits).toBe(2);
+    expect(s.taps).toBe(3);
+    expect(s.meanAbsErrorMs).toBeCloseTo(30, 6);
+  });
+
+  it("agrees with the clock that placed the dance: the beat a tap hits is the beat the frame says it is on", () => {
+    for (let k = 3; k < 20; k++) {
+      const t = k * 0.5;
+      const o = registerTap(newTapRun(2), map, t + 0.01);
+      expect(o.kind === "hit" && o.beatIndex).toBe(k);
+      expect(beatAt(map, t).index).toBe(k);
+      expect(clipTime(map, t, { bpm: 120, beats: 16 })).toBeCloseTo((k % 16) * 0.5, 9);
+    }
+  });
+});
