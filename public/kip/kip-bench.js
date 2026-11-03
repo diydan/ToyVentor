@@ -3201,6 +3201,13 @@ partyApi = mountParty({
   AudioContextClass: window.AudioContext || window.webkitAudioContext,
   stage: renderer.domElement,
   band: readAgeBand,
+  // the starter library (public/kip/songs/, scripts/song-ingest.ts): the party checks the index before it plays anything from it
+  loadSongIndex: async () => { const r = await fetch('/kip/songs/index.json'); return r.ok ? r.json() : null; },
+  loadSongData: async (file) => {
+    const r = await fetch(`/kip/songs/${encodeURIComponent(file)}`);
+    if (!r.ok) throw new Error(`song ${file}: HTTP ${r.status}`);
+    return r.arrayBuffer();
+  },
   dances: () => danceTempos,
   label: id => (clipChoices.find(c => c.id === id) || {}).label || id,
   playClip: id => triggerClip(id),
@@ -3267,13 +3274,6 @@ const selfie = mountSelfie({
     selfieBefore = null;
   },
 });
-  // the starter library (public/kip/songs/, scripts/song-ingest.ts): the party checks the index before it plays anything from it
-  loadSongIndex: async () => { const r = await fetch('/kip/songs/index.json'); return r.ok ? r.json() : null; },
-  loadSongData: async (file) => {
-    const r = await fetch(`/kip/songs/${encodeURIComponent(file)}`);
-    if (!r.ok) throw new Error(`song ${file}: HTTP ${r.status}`);
-    return r.arrayBuffer();
-  },
 globals.kipSelfie = selfie;
 const leaveSelfie = () => { if (loco.expr === 'selfie') selfie.remove(); };
 // The menu: one panel for every bench (stage 4c). Hosted, the Workshop's panel (`env.sharedMenu`) shows this bench's declaration while it is active; mounted on its own the bench has its own.
