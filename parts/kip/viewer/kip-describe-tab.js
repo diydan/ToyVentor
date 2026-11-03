@@ -172,7 +172,9 @@ export function mountDescribe({
         view = createDescribeView({ THREE, STLLoader, mergeVertices, toCreasedNormals, partsData: parts, base: stlBase });
         view.group.visible = isOpen;
         scene.add(view.group);
-        for (const r of book.recipes) {
+        // The book can hold many more builds than make sensible example buttons: the ones marked `featured` are shown, every build can still be matched and built.
+        const featured = book.recipes.filter((r) => r.featured);
+        for (const r of (featured.length ? featured : book.recipes)) {
           examples.append(el('button', { type: 'button', title: r.title, onclick: () => { text.value = r.description; build(); } }, r.description));
         }
         workshop.stop({ finished: true });

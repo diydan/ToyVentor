@@ -137,7 +137,7 @@ describe("/api/describe: what a child reads is filtered", () => {
 describe("/api/describe request rules", () => {
   it("GET reports the route, the model and whether it is configured; other methods are refused", async () => {
     const info = await (await handleDescribe(new Request("https://x/api/describe"), ENV)).json() as Record<string, unknown>;
-    expect(info).toMatchObject({ ok: true, route: "describe", model: "muse-spark-1.3", configured: true, builds: 10 });
+    expect(info).toMatchObject({ ok: true, route: "describe", model: "muse-spark-1.3", configured: true, builds: (book as { recipes: unknown[] }).recipes.length });
     expect((await handleDescribe(new Request("https://x/api/describe", { method: "PUT" }), ENV)).status).toBe(405);
   });
   it("needs JSON, a description, and a short one", async () => {

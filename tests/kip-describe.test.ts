@@ -60,8 +60,11 @@ describe("Kip-Demo 'Describe & build' exploded-view tab", () => {
     expect(readFileSync(join(viewerDir, "kip-bench.js"), "utf8")).toContain("mountDescribe(");
   });
 
-  it("validates all 10 curated recipes against fit_matrix connector rules and matches offline", async () => {
-    expect(book.recipes).toHaveLength(10);
+  it("validates every recipe in the book against fit_matrix connector rules and matches offline", async () => {
+    // The first ten are the hand-picked originals, shown as the tab's example buttons (`featured`); the rest were invented by Muse and passed the real validator.
+    expect(book.recipes.filter((r: { featured?: boolean }) => r.featured)).toHaveLength(10);
+    expect(book.recipes.length).toBeGreaterThanOrEqual(30);
+    expect(book.recipes.map((r: { id: string }) => r.id)).toContain("tractor");
     expect(book.allowedIds).toHaveLength(30);
 
     for (const recipe of book.recipes) {
@@ -119,7 +122,7 @@ describe("Kip-Demo 'Describe & build' exploded-view tab", () => {
         ) as number[];
         const expected = recipe.reference.boxes[step.id] as number[];
         for (let k = 0; k < 6; k++) {
-          expect(Math.abs(computed[k]! - expected[k]!)).toBeLessThan(0.02);
+          expect(Math.abs(computed[k]! - expected[k]!), `${recipe.id} / ${step.id} (${step.part}) box[${k}]: page ${computed[k]} vs validator ${expected[k]}`).toBeLessThan(0.02);
         }
       }
 
