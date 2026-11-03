@@ -611,6 +611,9 @@ re-stack; books flutter; ball rolls out and back; chair wobble-settles; teddy an
 snowman's hat hops; windmill blades spin up. Tests: `tests/prop-reactions.test.ts` (the registry guard parses the real
 `propBuilders` table and fails if a builder has no `PROP_SPECS` entry) and the real-app `scripts/e2e-props.mjs`. A prop type
 nobody wrote a spec for still gets the generic wiggle and an English name (`FALLBACK_SPEC`).
+Learn scene markers (carry items/targets, visit spots) meet the same bar: every tap walks + says, arrivals visibly change
+the world, and a quiet spell (~9 s, no taps, toy idle) wiggles the next useful marker (`idleCue`; verified: one cue fires,
+run undisturbed).
 
 Taps hit an invisible hit box a little bigger than the prop, not its thin parts (a lantern pole is a few pixels wide, a tire is
 hollow). A tap on a prop reacts and names it but does **not** send the toy walking; empty ground still does. Under
