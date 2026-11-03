@@ -8,6 +8,8 @@
 2. **`npm run build` (and so `npm run deploy`) failed on a clean HEAD**: `tsc --noEmit` covers `tests/`, and 53 strict-mode "possibly undefined" errors in `tests/yard-vehicles.test.ts` (44) and `tests/kip-baked-clips.test.ts` (9) aborted it. Type-only fixes, no behaviour change; with them the same export builds (`tsc` and `vite build`, exit 0).
 3. **The service worker serves `/kip/` cache-first** (`public/sw.js`, `IMMUTABLE_PREFIXES`) and `/kip/` URLs do not change when their bytes do, so a deploy that touches `/kip/` must bump `CACHE` (still `toyventor-v3` at the time of writing) or returning visitors keep the old copies. A network-first or stale-while-revalidate strategy for `/kip/` is an open decision (`workshop-spec.md`); until then, bump.
 
+**Status (2026-11-04):** steps 1 and 2 are done and committed (`bd49a81`: the 19 files are tracked, `CACHE` is `toyventor-v4`). Export and build only after your last commit: `git archive HEAD` contains committed files only, so an export made earlier does not contain later commits and a check against it proves nothing about what you ship.
+
 ## Steps (run from the repo root; nothing here deploys until step 8)
 
 1. **Add the files git is missing** (force, they are ignored), and commit them with the type fixes:

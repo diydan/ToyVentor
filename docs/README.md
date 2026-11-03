@@ -8,7 +8,7 @@ on geometry conflicts, [parts-tu-spec.md](parts/parts-tu-spec.md) and
 ## Layout
 
 - `product/`: vision, submission story, canonical spec and review copy, plan,
-  journal, demo script.
+  journal, demo script, deploy checklist.
 - `ux/`: one-stage World spec, interactive mockups, and design guide.
 - `specs/`: `app-continuation-spec.md`, `native-world-port-spec.md`, `toyventor-town-vision.md`
   (Phase 0), `stage-simplification-and-kip-spec.md`, `xp-system-spec.md`
@@ -50,7 +50,9 @@ on geometry conflicts, [parts-tu-spec.md](parts/parts-tu-spec.md) and
 | [parent-time-gate.md](specs/parent-time-gate.md) | Implemented parent caps and earned STEM time. |
 | [flatpack-modular-craft-spec.md](specs/flatpack-modular-craft-spec.md) | Proposed flat-pack vehicle/craft grammar. |
 | [kip-demo-implementation.md](specs/kip-demo-implementation.md) | **Proposed:** Kip demo left side menu with dropdowns, flat-pack 3D print view, and selfie face plate — the build plan, superseding the deleted design spec. |
-| [workshop-spec.md](specs/workshop-spec.md) | **Stage 1 built:** Workshop shell (`/kip/Workshop.html`) hosting the Kip and Truck benches in one tested tab/URL contract; unification stages 2–4 not started. |
+| [workshop-spec.md](specs/workshop-spec.md) | **Stages 1 to 4 built:** the Workshop shell (`/kip/Workshop.html`) hosts the Kip, Truck and Yard benches with one stage, one menu and one print view, and opens in the game as an overlay (downloads off; the game switch-on is deferred). |
+| [workshop-print-gate-spec.md](specs/workshop-print-gate-spec.md) | **Phases 1 to 3 built, switched off:** the grown-up question in front of the Workshop's exports and the selfie sticker; Dan's decisions, the file exits a child can reach today, and the post-hackathon order. |
+| [parent-controls-off-spec.md](specs/parent-controls-off-spec.md) | **Built:** a showcase switch that turns the grown-up checks and play-time limits off (build flag, or per tab in Demo Mode); photo-upload gates stay on. |
 | [progressive-power-system-spec.md](specs/progressive-power-system-spec.md) | Proposed momentum-to-robotics stages. |
 | [scan-to-3d.md](specs/scan-to-3d.md) | Recommended scan-body route and acceptance tests. |
 | [play-design-spec.md](specs/play-design-spec.md) | Play design: level primitives, recipe format, composition kit, generation pipeline, and playtest bar. Owns the level lane and its one ordered Plan. |

@@ -1,6 +1,6 @@
 # An option to turn off the grown-up checks and the limits (draft 2, 2026-11-03)
 
-**Status: built 2026-11-03 (draft 2), uncommitted; the one decision below was answered "no" (the photo-upload gates stay on).** Dan asked for "an option to disable all parent gating and limits". This is what that touches today, what an off switch exposes, how it is built so a child cannot reach it by accident, and what changed from draft 1 (section 8: no Worker variable was needed).
+**Status: built and committed 2026-11-03 (draft 2; `096780b`; real-browser e2e `scripts/e2e-parent-controls.mjs`, 35 checks); the one decision below was answered "no" (the photo-upload gates stay on).** Dan asked for "an option to disable all parent gating and limits". This is what that touches today, what an off switch exposes, how it is built so a child cannot reach it by accident, and what changed from draft 1 (section 8: no Worker variable was needed).
 
 ## 1. What "all" covers today (read in the code)
 
