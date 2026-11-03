@@ -14,6 +14,8 @@
 // The clip set is exactly what the game can say: each built-in prop's own noun + colour, plus a lantern's light in every colour (a
 // level may give a lantern any light colour), and each Describe & Build part in the colour the exploded view draws it, in all seven
 // languages, plus every named fruit in its own colour. About 540 clips (77 phrases x 7 languages) plus the household names; a full cold run is a few minutes.
+// The Carousel scenes' spoken prompts (src/lib/scenePrompts.json, `s=<id>`, English only, one clip each) are in the list too. Each is also made the first time a child
+// hears it, so this run is optional for them: it just makes the first hearing instant.
 import { readFileSync } from "node:fs";
 import { FRUIT, PROP_SPECS } from "../src/features/game/world/runtime/propReactions";
 import { COLOR_KEYS, LANGUAGES, type ColorKey, type NounKey } from "../src/lib/propNames";
@@ -22,6 +24,7 @@ import { voiceUrl } from "../src/lib/propVoice";
 // @ts-expect-error viewer JS modules ship without d.ts
 import { partColour } from "../parts/kip/viewer/kip-describe-view.js";
 import { HOUSEHOLD_IDS } from "../src/lib/householdNames";
+import { SCENE_PROMPTS, scenePromptUrl } from "../src/lib/scenePrompts";
 import { householdClips, missingClips, readLedger, warmHousehold, writeLedger } from "./lib/household-voice-ledger";
 
 const args = process.argv.slice(2);
@@ -55,9 +58,10 @@ const paths: string[] = [];
 if (!onlyIds) { // --only is a sample of household items: it leaves the props and parts alone
   for (const l of LANGUAGES) for (const c of combos.values()) paths.push(voiceUrl(c.noun, c.color, l.code));
   for (const l of LANGUAGES) for (const id of PART_IDS) paths.push(`/api/voice?lang=${l.code}&p=${id}&hex=${(partColour(partsData, id) as string).slice(1)}`);
+  for (const p of SCENE_PROMPTS) paths.push(scenePromptUrl(p.id));
 }
 
-console.log(`${paths.length + house.clips.length} clips (${combos.size} props + ${PART_IDS.length} parts, x ${LANGUAGES.length} languages, + ${house.clips.length} household names; ${house.withoutName} household names have no text yet)`);
+console.log(`${paths.length + house.clips.length} clips (${combos.size} props + ${PART_IDS.length} parts, x ${LANGUAGES.length} languages, + ${onlyIds ? 0 : SCENE_PROMPTS.length} scene prompts, + ${house.clips.length} household names; ${house.withoutName} household names have no text yet)`);
 if (missingOnly) {
   const missing = missingClips(house.clips, ledger);
   for (const c of missing) console.log(c.path);

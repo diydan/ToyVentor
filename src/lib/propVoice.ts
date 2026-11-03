@@ -3,6 +3,7 @@
 // device's own speech voice, so a child hears one voice for every name. If the clip is unavailable (offline, not deployed, model error) nothing is said and the
 // on-screen caption, which always shows, carries the name.
 import type { ColorKey, LangCode, NounKey } from "./propNames";
+import { stopPrompt } from "./promptVoice";
 
 export interface SpokenObject {
   /** Vocabulary key; a name with neither this nor `url` has no clip and is only captioned. */
@@ -36,11 +37,7 @@ export function stopObjectVoice(): void {
     }
     current = null;
   }
-  try {
-    window.speechSynthesis?.cancel();
-  } catch {
-    // No device speech.
-  }
+  stopPrompt(); // a name tapped while a scene prompt is still playing replaces it: one voice at a time
 }
 
 /** Test hook: forget a previous failure. */

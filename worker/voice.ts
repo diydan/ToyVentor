@@ -3,6 +3,7 @@
 //                                                       colour the exploded view drew it; the hex is reduced to one of 12 words)
 // GET /api/voice?lang=es&w=cuchara&g=f&c=red&sig=...   ->  audio/wav of "cuchara roja"        (a Forge object: a SIGNED name, see below)
 // GET /api/voice?lang=es&h=wooden_spoon                ->  audio/wav of "cuchara de madera"  (a household library item, the BARE noun, no colour)
+// GET /api/voice?s=a3a3bb51                           ->  audio/wav of "2 bubbles to pop. Tap the biggest one."  (a Carousel scene prompt, English, by ID)
 // All reply with the spoken text in the x-voice-text header (URL-encoded) so a caption can show it.
 //
 // Spoken by Gemini 3.8 Flash-Lite TTS, spoken by Gemini 3.8 Flash-Lite TTS through the
@@ -18,6 +19,10 @@
 // any cache read or model call. So it still never speaks text this Worker did not produce and filter. The colour (c or hex) is not signed: it is one of the 12
 // colour words and is attached here by nounPhrase(), so a signed name costs at most 13 clips per language. Without the secret a signed request is refused.
 //
+// The Carousel scenes' spoken prompts ("Where does the teddy go?", "All done!") are a closed list too: src/lib/scenePrompts.json, generated from the scene code. `s=` takes the
+// ID of a line in that list (the fingerprint of its text), is English only, and an ID that is not in the list is refused before any cache read or model call. One clip per
+// line, so the cost is the length of the list, and a reworded line is a new ID and a new clip.
+//
 // Probed 2026-11-03 against the live binding: input is exactly { text, voice } (style/prompt are rejected with 7003), output is
 // { audio: "data:audio/wav;base64,..." } (24 kHz, mono, 16-bit PCM), the language is auto-detected from the text, an unknown
 // voice name is rejected with 7003. Also probed: there is NO language hint (language, language_code, languageCode, lang, locale and speech_language are all
@@ -25,6 +30,7 @@
 import { COLOR_KEYS, LANGUAGES, NOUN_KEYS, colorKeyFromHex, nounPhrase, propNoun, propPhrase, type ColorKey, type LangCode, type Noun, type NounKey } from "../src/lib/propNames";
 import { isPartId, partPhrase } from "../src/lib/partNames";
 import { householdName, householdTextHash, isHouseholdId } from "../src/lib/householdNames";
+import { isPromptId, promptText } from "../src/lib/scenePrompts";
 import { isSpeakableWord, verifySpeech, type SigningEnv } from "./forgeNames";
 
 export const VOICE_MODEL = "google/gemini-3.8-flash-lite-tts";
@@ -72,18 +78,25 @@ export type VoiceKey =
   | { lang: LangCode; noun: NounKey; color: ColorKey | null }
   | { lang: LangCode; part: string; color: ColorKey | null }
   | { lang: LangCode; name: Noun; sig: string; color: ColorKey | null }
-  | { lang: LangCode; household: string; color: null };
+  | { lang: LangCode; household: string; color: null }
+  | { lang: "en"; prompt: string; color: null };
 
 /**
  * Validate the query. Anything outside the controlled vocabulary is rejected, which is what bounds the cost: a language, then
  * exactly one of a prop noun (n), a Describe & Build part id (p), a household library item id (h, the bare noun: no colour allowed, so it is at
  * most one clip per item and language) or a signed Forge name (w, with g, optional pl=1, and sig; the signature is
  * checked by handleVoice before anything else), and an optional colour word (c) or hex (hex) that is reduced to one of 12 colour words,
- * so a hex can never multiply the clip set.
+ * so a hex can never multiply the clip set. Or `s`, the id of a Carousel scene prompt (src/lib/scenePrompts.json): English, nothing else may come with it, and an id
+ * that is not in the list is refused here, so it can never cost a cache read or a model call.
  */
 export function parseVoiceKey(url: URL): VoiceKey | null {
   const q = url.searchParams;
   const lang = q.get("lang");
+  const prompt = q.get("s");
+  if (prompt !== null) {
+    const mixed = ["n", "p", "w", "h", "c", "hex"].some((k) => q.has(k));
+    return !mixed && (lang === null || lang === "en") && isPromptId(prompt) ? { lang: "en", prompt, color: null } : null;
+  }
   const noun = q.get("n");
   const part = q.get("p");
   const word = q.get("w");
@@ -117,6 +130,7 @@ export function parseVoiceKey(url: URL): VoiceKey | null {
 }
 
 export function voiceText(key: VoiceKey): string {
+  if ("prompt" in key) return promptText(key.prompt) ?? "";
   if ("household" in key) return householdName(key.household, key.lang) ?? "";
   if ("part" in key) return partPhrase(key.part, key.color, key.lang) ?? key.part;
   if ("name" in key) return nounPhrase(key.name, key.color, key.lang);
@@ -367,7 +381,7 @@ export async function handleVoice(request: Request, env: VoiceEnv, ctx?: Ctx): P
 
   const edge = (globalThis as unknown as { caches?: { default?: CacheLike } }).caches?.default;
   // A household clip's key carries a fingerprint of its text, so a noun a native reviewer corrects is a NEW clip, not the old one served for a year.
-  const what = "household" in key ? `h-${key.household}.${householdTextHash(text)}` : "part" in key ? `p-${key.part}` : "name" in key ? `w-${encodeURIComponent(key.name.w)}.${key.name.g}${key.name.pl ? "p" : ""}` : key.noun;
+  const what = "prompt" in key ? `s-${key.prompt}` : "household" in key ? `h-${key.household}.${householdTextHash(text)}` : "part" in key ? `p-${key.part}` : "name" in key ? `w-${encodeURIComponent(key.name.w)}.${key.name.g}${key.name.pl ? "p" : ""}` : key.noun;
   const cacheReq = new Request(`https://voice.toyventor.internal/${CACHE_VERSION}/${voice}/${key.lang}/${what}/${key.color ?? "-"}`);
   if (edge) {
     const hit = await edge.match(cacheReq);

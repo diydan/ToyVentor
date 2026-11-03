@@ -3,6 +3,7 @@
 // Lifted verbatim from runtime/world.ts. No behavior change: statements keep
 // their relative order and run once at import time, as before.
 import { PART, PB } from "./catalog";
+import { sayPrompt, stopPrompt } from "../../../../lib/promptVoice";
 
 /* ---------- sound ---------- */
 var AC: AudioContext | null = null, sound = true;
@@ -71,27 +72,20 @@ export function muteAudio(): void {
   if (MUS.on) musGain(0, 0.3);
 }
 /**
- * Speech twin (carousel §11.1 `tell`): every spoken scene prompt
- * also renders as a toast, so muted play stays fully playable.
- * No-op without a speech engine or while muted.
+ * Speech twin (carousel §11.1 `tell`): every spoken scene prompt also renders as a toast, so muted play stays fully playable.
+ * Spoken with the game's one voice, the Gemini clip (src/lib/promptVoice.ts), never the phone's own: only a line in the closed
+ * list src/lib/scenePrompts.json is spoken. No-op while muted, for empty text, or when no clip can be played.
  */
 export function say(text: string): void {
   try {
-    if (typeof window === "undefined" || !sound) return;
-    var synth = window.speechSynthesis;
-    if (!synth || !text) return;
-    synth.cancel();
-    var u = new SpeechSynthesisUtterance(text);
-    u.lang = "en-US";
-    u.rate = 0.95;
-    u.pitch = 1.1;
-    synth.speak(u);
+    if (typeof window === "undefined" || !sound || !text) return;
+    sayPrompt(text);
   } catch (e) {}
 }
-/** Stop any in-flight utterance (mute, teardown). */
+/** Stop any prompt still playing (mute, teardown). */
 export function stopSay(): void {
   try {
-    if (typeof window !== "undefined" && window.speechSynthesis) window.speechSynthesis.cancel();
+    stopPrompt();
   } catch (e) {}
 }
 export function noteGesture(): void {
