@@ -1,0 +1,41 @@
+--- a/parts/partspec/toyventor_kitcard.py
++++ b/parts/partspec/toyventor_kitcard.py
+@@ -282,8 +282,9 @@
+ 
+     Dished like the medium wheel: a four-arm cross carries the hub and the four crank bosses, between them four open windows down to a 5.8 mm floor,
+     inside a stepped-tread tyre. The whole wheel is the old solid disc with material REMOVED (nothing added outside the old envelope: the new solid
+-    is intersected with the old tyre hull), so every clearance already proven for the old wheel holds, and it prints face-down on z = 0 with no
+-    overhang (the pocket walls lean outward going up; the arms and bosses rise from the floor)."""
++    is intersected with the old tyre hull), so the envelope is the old wheel's, and it prints face-down on z = 0 without supports (the pocket walls
++    lean outward going up; the arms and bosses rise from the floor; every tread groove that opens onto the bed has a gabled roof, see below).
++    Checked in OrcaSlicer 2.4.2 with the Ender-3 Pro profile (supports on, auto, 30 deg): 0 support and 0 overhang-wall moves."""
+     D, H = 50.0, 12.3
+     R = D / 2
+     hull = Manifold.batch_hull([
+@@ -295,7 +296,14 @@
+     # (A chevron would be handed: the left and right wheels are the same part turned round, so it would point the wrong way on one side.
+     # This pattern looks the same from either side.)
+     tire = hull
+-    groove = Manifold.cube((2.6, 1.9, H / 2 + 0.7)).translate((R - 1.5, -0.95, -0.7))
++    # The lower-half grooves open onto the bed, so a flat 1.9 mm roof gets slicer supports (OrcaSlicer 2.4.2, supports auto at 30 deg: 3400 support moves
++    # in the 20 notches, which the part gate's ledge check missed because each roof is held on both sides). Each groove therefore has a steep gable:
++    # vertical walls to 5.05 mm, then roof faces rising 1.1 mm over 0.95 mm (49 deg from flat, normal z -0.66 against the -0.707 limit) to a ridge at
++    # 6.15 mm, the old roof height.
++    groove = Manifold.batch_hull([
++        Manifold.cube((2.6, 1.9, 5.05 + 0.7)).translate((R - 1.5, -0.95, -0.7)),
++        Manifold.cube((2.6, 0.02, 0.02)).translate((R - 1.5, -0.01, H / 2 - 0.01)),
++    ])
+     groove_hi = Manifold.cube((2.6, 1.9, H / 2 + 0.7)).translate((R - 1.5, -0.95, H / 2))
+     for k in range(20):
+         tire = tire - groove.rotate((0.0, 0.0, 18.0 * k)) - groove_hi.rotate((0.0, 0.0, 18.0 * k + 9.0))
+@@ -316,6 +324,10 @@
+         b = Manifold.cylinder(H - 0.8 - 5.8, 5.6, 5.0, 64).translate((x, y, 5.8))
+         bosses = b if bosses is None else bosses + b
+     body = body + ((hub + arms + bosses) ^ hull)
++    # The arms start at z 5.0 and fill the top of the lower groove at the four axis stations, which would leave a flat 5.0 mm roof: cut the gabled
++    # lower grooves again so all 20 stations are self-supporting.
++    for k in range(20):
++        body = body - groove.rotate((0.0, 0.0, 18.0 * k))
+     body = body - _wheel_bore(hub_kind, H)
+     cranks = [(-TU, 0.0), (TU, 0.0), (0.0, -TU), (0.0, TU)]
+     for x, y in cranks:
