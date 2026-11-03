@@ -217,6 +217,19 @@ describe.skipIf(!PYTHON)("Recipe v1 feature ops through the optimizer daemon", (
     expect(ears.status).toBe("print_ready");
   }, 360_000);
 
+  it("prints ears on a crown (a hat with ears) in every style", async () => {
+    // Regression, 2026-11-03: the ear height option (`z_frac`) was only set for heads, so any ear on a crown raised UnboundLocalError and the
+    // daemon answered 422. A "unicorn hat" or "cat ears hat" failed all 4 calls in the live text-to-part check. No test had built an ear on a crown.
+    for (const style of ["round", "pointy", "tall"] as const) {
+      const job = await run(recipe(`ops_test_crown_ears_${style}`, "crown", HAT, [{ op: "ears", style, width_mm: 9, height_mm: style === "round" ? 0 : 14, tilt_deg: 10 }]));
+      expect(job.status, style).toBe("print_ready");
+      expect(job.legalizer?.features_dropped, style).toBeUndefined();
+    }
+    // ears and horns together on one crown, the way a model asks for a unicorn
+    const both = await run(recipe("ops_test_crown_ears_horns", "crown", HAT, [{ op: "ears", style: "pointy", width_mm: 8, height_mm: 12, tilt_deg: 10 }, { op: "horns", length_mm: 18, base_mm: 6, curl: 0 }]));
+    expect(both.status).toBe("print_ready");
+  }, 540_000);
+
   it("prints heads with a muzzle, a beak and a bill, and a beak on a flared round head", async () => {
     for (const [id, slices, feats] of [
       ["ops_test_muzzle", HEAD, [{ op: "snout" }]],

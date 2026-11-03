@@ -593,8 +593,11 @@ def _ears_or_horns_solid(
     width at that height), so the pair always fuses with it; the tilt carries the tip clear of the crown pad.
     `z_shift` (negative = lower), `tilt_add` (degrees outward, ears only) and `x_shift` (mm further apart) let
     `_fit_head_pair` move a head's pair off the crown studs."""
+    # where up the head an ear is rooted (z_frac): a head only. It is set for every slot (None on a crown or back), because the ear branch
+    # below reads it: before 2026-11-03 it was set only under `slot == "head"`, so any ear on a crown (a hat with cat ears) raised
+    # UnboundLocalError and the daemon answered 422. No test built an ear on a crown; the live text-to-part check found it.
+    zf = feat.get("z_frac") if (slot == "head" and op == "ears") else None
     if slot == "head":
-        zf = feat.get("z_frac") if op == "ears" else None
         z_root = (float(zf) * head_height_mm if zf is not None else head_height_mm - 5.0) + z_shift  # default: just under the crown seat
     else:
         z_lo, z_hi = float(rows[0][0]), float(rows[-1][0])

@@ -38,11 +38,11 @@ export interface ForgeOptimizerEnv extends ParentEnv {
 
 export const MAX_FORGE_BODY_BYTES = 3_600_000;
 export const MAX_FORGE_STL_BYTES = 2_500_000;
-const UPSTREAM_PREVIEW_TIMEOUT_MS = 8_000;
-const UPSTREAM_POLL_TIMEOUT_MS = 4_000;
+export const UPSTREAM_PREVIEW_TIMEOUT_MS = 8_000;
+export const UPSTREAM_POLL_TIMEOUT_MS = 4_000;
 const MAX_UPSTREAM_JSON_BYTES = 3_600_000;
 
-const JOB_ID_RE = /^fjob_[a-f0-9]{12}$/;
+export const JOB_ID_RE = /^fjob_[a-f0-9]{12}$/;
 const ARTIFACT_NAME_RE =
   /^[a-z0-9_]{2,64}\.(?:[a-f0-9]{12}|[a-f0-9]{8}\.draft)\.(?:glb|stl)$/;
 const LOOPBACK_HOSTS = new Set(["127.0.0.1", "localhost", "[::1]", "::1"]);
@@ -100,7 +100,7 @@ export function resetForgeRateLimit(): void {
   hits.clear();
 }
 
-function reply(
+export function reply(
   status: number,
   body: Record<string, unknown>,
   extraHeaders?: Record<string, string>,
@@ -115,7 +115,7 @@ function reply(
   });
 }
 
-function logEvent(event: string, status: string | number, extra?: Record<string, unknown>): void {
+export function logEvent(event: string, status: string | number, extra?: Record<string, unknown>): void {
   console.log(JSON.stringify({ event, status, ...(extra ?? {}) }));
 }
 
@@ -139,12 +139,12 @@ export function forgeOptimizerConfigured(env: ForgeOptimizerEnv): boolean {
   return parseConfiguredUpstream(env) !== null;
 }
 
-function upstreamUrl(base: URL, path: string): string {
+export function upstreamUrl(base: URL, path: string): string {
   const prefix = base.toString().replace(/\/+$/, "");
   return `${prefix}${path}`;
 }
 
-function upstreamHeaders(env: ForgeOptimizerEnv): Record<string, string> {
+export function upstreamHeaders(env: ForgeOptimizerEnv): Record<string, string> {
   const headers: Record<string, string> = { "content-type": "application/json" };
   const tok = env.FORGE_OPTIMIZER_TOKEN?.trim();
   if (tok) {
@@ -190,7 +190,7 @@ function validStlBase64(v: unknown): string | null {
   return trimmed;
 }
 
-function sanitizeRecipe(raw: unknown): { ok: true; recipe: ForgeRecipeV1 } | { ok: false } {
+export function sanitizeRecipe(raw: unknown): { ok: true; recipe: ForgeRecipeV1 } | { ok: false } {
   if (!isRecord(raw)) return { ok: false };
   if ("legalize" in raw && raw.legalize === false) {
     // Disallow opting out of deterministic slope/dimension clamps.
@@ -455,7 +455,7 @@ function sanitizePreviewRequest(
   };
 }
 
-async function gateForge(
+export async function gateForge(
   request: Request,
   env: ForgeOptimizerEnv,
   expectedMethod: "GET" | "POST",
@@ -495,7 +495,7 @@ async function gateForge(
   return { ok: true, baseUrl };
 }
 
-async function fetchUpstreamJson(
+export async function fetchUpstreamJson(
   url: string,
   init: RequestInit,
   timeoutMs: number,
@@ -551,7 +551,7 @@ async function fetchUpstreamJson(
   return { ok: true, data: parsed.value, status: res.status };
 }
 
-function scrubPreviewOutput(d: Record<string, unknown>): Record<string, unknown> {
+export function scrubPreviewOutput(d: Record<string, unknown>): Record<string, unknown> {
   return {
     ok: Boolean(d.ok),
     status: "preview_ready",

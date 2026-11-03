@@ -163,6 +163,50 @@ rejected, numbers are clamped, nothing is executed.
   full-height column over the pad (a cut at the old box top left a flat underside
   that failed P4), and each cut candidate must still pass the gate's own overhang
   measure or the pair is left off.
+- **Text to part (F1) built (2026-11-03, Dan: "yes we want text-to-part in the Nov 4 build").**
+  `POST /api/forge/make` (`worker/forgeMake.ts`). One request is one model call that returns the
+  recipe and the object's name in seven languages (the design in "Naming and the waiting state");
+  everything the model says is data. **Gate order, before any model call is spent:** model key
+  present (else 503), the grown-up proof, the device, the per-device rate limit (it shares the
+  `/api/forge/preview` budget of 3 a minute, because each call ends in one preview), then intake:
+  1 to 120 characters, contact details scrubbed, unsafe words and brand words refused (422
+  `not-allowed`, `brand-rejected`). **The reply** is checked field by field: the recipe goes through
+  the same allowlist as every Forge route (`sanitizeRecipe`: no code, no unknown keys, bounded
+  numbers), is held to a crown or a head (`MAKE_SLOTS`; the slot asked for wins), is brand-checked,
+  its name and one-line behaviour are filtered like any model text (a fixed safe line replaces an
+  unsafe one), then goes to the daemon's `/v1/fast-preview` with the first-look GLB included. The
+  names go through `parseNames` and `issueSpokenNames` (signed, so `/api/voice` can speak them;
+  empty when `VOICE_SIGNING_KEY` is not set). **Repair (F3)** is a second request carrying
+  `attempt` (2 to 4) and `repair: {job_id, recipe}` or `{bad_recipe: true, recipe}`: the Worker asks
+  the daemon what failed (never the client), tells the model only `{gate, measured, limit, hint}`
+  (`buildFeedback`, the same table the harness uses), and refuses a repair of a part that already
+  passed (409) or is still being checked (409). Nothing holds a request open for minutes: one
+  request is about 15 to 40 s (Spark), and the client counts its own calls (`MAKE_MAX_CALLS` = 4,
+  the F1 budget). **Prompt:** `shared/forgePrompt.ts` (moved out of the eval harness with no change
+  to a word, proved by golden files in `tests/forge/golden/`) plus `shared/forgeMakePrompt.ts` (the
+  wish, the reply envelope, the names rule, the repair section); the version is v5, the one the eval
+  measured best. **Client loop:** `shared/forgeMakeFlow.ts` (`makeFromText`): real stages for the
+  waiting strip (`proposing`, `preview`, `checking`, `fixing`, `waiting` with the Worker's real
+  `retry-after`, `asking_again` when the grown-up proof ran out), polls every 2.2 s (the Worker allows
+  30 a minute), stops after 4 calls or when the same recipe fails the same check twice, and always ends
+  usefully: a part that never passes is returned as fine on screen (not printable) with the best
+  first look. It never throws. 35 tests: `tests/forge-make.test.ts` (15, the route, stubbed model and
+  daemon), `tests/forge-make-flow.test.ts` (12, the loop through the real Worker routes),
+  `tests/forge/forge-prompt.test.ts` (golden prompts). **Live check, real Spark and real daemon
+  and the real Worker handlers, no stubs:** pirate hat, troll head, robot head, unicorn hat: each
+  `print_ready`, design verified, on the first call, 29 to 68 s, with all seven names kept and
+  signed. **What the live check found (the reason to run it):** (1) a daemon bug of mine, an ear on a
+  crown raised `UnboundLocalError` (the ear-height option was only set for heads), so a "unicorn hat"
+  or any "hat with ears" failed all 4 calls with `bad-recipe`; no test had built an ear on a crown;
+  fixed, with a regression test. (2) The model wrote the Portuguese and Turkish names without
+  accents ("chapeu", "sapkasi"), which a voice reads wrongly; the prompt now says to spell each
+  name with its accents. **Not built:** the screen. There is no Forge screen yet (nothing in the app
+  calls `/api/forge/make`); `shared/forgeMakeFlow.ts` is what it calls. Not decided: the grown-up
+  gate. Every Forge route sits behind the parent proof (a 2-minute maths check), so as built a child
+  needs a grown-up present to make a part; an ungated digital preview would be a product and safety
+  decision. Needs Dan: `wrangler secret put VOICE_SIGNING_KEY` (at least 16 characters) before any
+  name can be spoken, and `FORGE_OPTIMIZER_URL` (and token) pointing at a daemon the deployed Worker
+  can reach: the daemon runs on a Mac today.
 - **Worker to daemon, end to end (2026-11-03).** `tests/forge-worker-daemon.test.ts` sends
   recipes through the real Worker routes (`/api/forge/preview`, the job route, the gated
   artifact route) to the real daemon, nothing stubbed: a head with a brow and ears, the
