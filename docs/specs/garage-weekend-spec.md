@@ -158,12 +158,12 @@ or world per item. A household weekend is **"find one at home"**, with a way to 
   directly** (a script that loads the key itself, like `scripts/kip-gen-faces.ts`; never via the Cloudflare AI binding; Dan runs it), each entry marked
   unreviewed until a native speaker approves it. The household items join the voice route as vocabulary keys (`h=<item id>`, never free text, like the part
   names); each clip is generated once on first use by the Google TTS binding and kept in the edge cache; a committed **ledger** records which clips exist,
-  the text each speaks and a hash of the audio, so a new item gets its clip later and nothing is regenerated. The device voice (explicit language tag)
-  speaks the name until a clip exists. Samples first: Dan approves a sample of names (and a few clips) before the full run of about 420 clips.
+  the text each speaks and a hash of the audio, so a new item gets its clip later and nothing is regenerated. There is no device voice: until a
+  clip exists the caption carries the name. Samples first: Dan approves a sample of names (and a few clips) before the full run of about 420 clips.
   **Built (2026-11-03, a forked agent; checked by the main session):** `src/lib/householdNames.json` (61 ids; English from the catalog label, `soda can` for
   the can; the six other languages empty until the Muse script runs), `householdNames.ts` (lookup, `HOUSEHOLD_IDS`), `householdNamesCheck.ts` (validator:
   bare noun, 1 to 3 words, no article or colour word, kid-safe, no two items sharing a noun in a language), `householdVoice.ts` (`speakHouseholdName(itemId)`:
-  Gemini clip, then the device voice with an explicit language tag, English in English where a language has no name), `scripts/household-names.ts` (Muse,
+  the Gemini clip only, English in English where a language has no name), `scripts/household-names.ts` (Muse,
   direct, reads the key from the environment or `.dev.vars`, never printed, budget 16 calls, stops on 401/403/429, never overwrites an approved name),
   the `h=<item id>` key in `worker/voice.ts` (closed vocabulary, no free text, the cache key carries a fingerprint of the text so a corrected noun is a new
   clip), `scripts/prewarm-voice.ts` (`--list`, `--missing`, `--force`, `--only`) with the ledger `src/lib/householdVoice.ledger.json`, and a "Household names"
@@ -179,11 +179,22 @@ or world per item. A household weekend is **"find one at home"**, with a way to 
   spelled the same in two or more languages** (listed in `docs/review/spoken-names.md`: ball, tasse, termo, lata, bol, planta, yoyo, orange, banana, banane,
   avocado, pincel, crayon, dados, espada, hammer, despertador, lampe, puzzle, libro, cartas, esponja), so the Gemini voice may speak them in the wrong
   accent; the device voice with an explicit language tag cannot. Not verified: any real audio (samples pending), a deployed `h=` route.
-  **After Dan's "go" (2026-11-03):** a noun spelled the same in another language is never asked of the clip voice: the client says it with the device voice and
-  an explicit language tag, and the prewarm skips it (`spelledInOtherLanguage` in `householdNames.ts`; 22 spellings, 49 of the 427 (item, language) clips
-  become device voice, 378 stay clips). Every clip the route generates is **levelled** to an RMS of 5,000 (gain clamped to 0.5 to 4, peak held under 95
+  **After Dan's "go" (2026-11-03):** every clip the route generates is the Gemini clip; the 22 same-spelling nouns (49 of the 427 (item, language) pairs) were first sent to the device voice, a rule since removed (see "No phone voice" below). Every clip the route generates is **levelled** to an RMS of 5,000 (gain clamped to 0.5 to 4, peak held under 95
   percent of full scale: `levelWav` in `worker/voice.ts`) because the same voice's clips ranged from 1,700 to 9,000; clips already in the edge cache are not
   re-levelled.
+  **Samples REJECTED (Dan, 2026-11-03, after listening again: "they are always an English speaker trying to say foreign words, we need to indicate the
+  language, not just the spelling"):** the 14 clips (banana and mug in 7 languages) have an English accent on the foreign words. Cause: Cloudflare's Gemini
+  TTS accepts only `text`, `voice`, `temperature`, `topP`, `topK`, `maxOutputTokens`, `stopSequences` (no language field; developers.cloudflare.com/ai/models/
+  google/gemini-3.8-flash-tts) and detects the language from the words, and a single word gives it nothing. This affects every spoken name in the game, not
+  only the household ones. **Fixed and approved by ear (Dan, 2026-11-03: "perfect approved", English and Spanish through the real route):** a short word in the SAME
+  language is said first ("Mira. <short pause> cuchara.") so the model recognises the language and uses a native accent, and `cutLeadIn` then cuts the
+  lead-in out of the audio (the longest quiet gap of at least 0.3 s; a clip with no such gap is left whole), so the clip is still only the name.
+  `LEAD_IN` in `worker/voice.ts`: es "Mira.", fr "Regarde.", de "Schau.", it "Guarda.", pt "Olha."; **none for English** (the default accent) **and none for
+  Turkish** (Dan listened to both and preferred the bare word). It applies to every spoken name in the game (props, parts, household, signed Forge words), the
+  cache version is now v2 so the English-accent clips are never served, and the order is lead-in cut, edge trim, level. Probe numbers: the gap after the
+  lead-in was 0.5 to 1.1 s in 24 of 24 clips, against under 0.3 s inside a word. **Heard and approved:** English and Spanish (7 pairs). **Not yet heard through
+  the final route:** French, German, Italian and Portuguese (their lead-ins were chosen from the earlier set-1 listen), and whether the 22 same-spelling nouns
+  could go back to clips now that Italian and Portuguese have lead-ins (they used the device voice at that point). **Dan, 2026-11-03:** happy with the approach, no need to sample the other languages; the full voice run is deferred until the first deploy. **No phone voice (Dan, 2026-11-03: "no phone use (google/gemini-3.8-flash-lite-tts) for everything in the game"):** with the lead-ins none of the 22 same-spelling texts is still ambiguous (no text is shared by English and Turkish), so all 427 names are clips and the device-voice rule and its helper are removed; `sayObject` (`src/lib/propVoice.ts`) plays the Gemini clip and nothing else, and `speakPhrase` is deleted, so a failed or missing clip means the caption alone and no speech (the server is left alone for a minute after a failure). A test makes any use of the phone's speech for a name fail. **Still on the phone's voice, and not changed:** the Carousel's spoken scene prompts (`say()` in `src/features/game/world/runtime/audio.ts`, English, 7 call sites in `GameCanvas.tsx`, `world.ts` and `toyRoomActs.ts`): they are free strings made at run time, not a closed vocabulary, so moving them to the Gemini voice needs their own prompt list and a route key; asked Dan.
 - **The offer when the helper is offline** (answered, Dan's question 4): offer the 3D item for transport failures only (`offline`, `helper_off`, `busy`,
   `slow_down`), by the child's own word, inside the child's band, with its own reason (`word_only`) and its own sentence that does not mention tracing
   ("You said spoon. Here is the 3D wooden spoon."); never for the child's own faults (`invalid_input`, `too_large`).
@@ -242,9 +253,7 @@ or world per item. A household weekend is **"find one at home"**, with a way to 
   pictures file is its own lazy 72 KB chunk, the Garage code is in the main chunk. (Run `npm run build` again before a deploy: other lanes' work lands too.)
 - **Decided by Dan (2026-11-03, "go" on my suggestions) and built.** The month-by-month Build Day count (above). **Skips are stored explicitly**
   (`garageSkipped`, a subset of `garageDone`, never overlapping `garageFound`; a weekend one device found and another skipped merges as found), and
-  `garageTrophyCounts(done, found, skipped?)` draws a hollow star as exactly a weekend in that list when it is given. **Still to do (one line):**
-  `GameCanvas.tsx` calls it without the third argument today, so the roof still derives hollow stars the old way until that call passes
-  `progression.garageSkipped` (`GameCanvas.tsx` holds another lane's uncommitted work, so it waits for that lane). **Decided as they were:** a skip cannot
+  `garageTrophyCounts(done, found, skipped?)` draws a hollow star as exactly a weekend in that list when it is given. **The roof now reads it:** `GameCanvas.tsx` passes `progression.garageSkipped` as the third argument (a wiring test pins the call; the parent-controls lane's edits to that file had been committed first). **Decided as they were:** a skip cannot
   be upgraded to a find later (it would pay minutes after the fact); a find needs the real-life leg switched on (a family that turned real-life tasks off
   can only skip).
 

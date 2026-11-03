@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { DEFAULT_VOICE, VOICE_MODEL, TARGET_RMS, handleVoice, levelWav, parseVoiceKey, trimWav, voiceName, voiceText, type VoiceEnv } from "../worker/voice";
+import { DEFAULT_VOICE, LEAD_IN, VOICE_MODEL, TARGET_RMS, cutLeadIn, handleVoice, levelWav, modelText, parseVoiceKey, trimWav, voiceName, voiceText, type VoiceEnv } from "../worker/voice";
 
 const RATE = 24000;
 
@@ -80,7 +80,7 @@ describe("/api/voice parts (Describe & Build)", () => {
     const { env, run } = fakeAi();
     const res = await handleVoice(get("lang=es&p=veh_wheel_sport&hex=262d40"), env);
     expect(res.status).toBe(200);
-    expect(run.mock.calls[0]![1]).toEqual({ text: "rueda deportiva negra", voice: "Leda" });
+    expect(run.mock.calls[0]![1]).toEqual({ text: modelText("es", "rueda deportiva negra"), voice: "Leda" });
     expect(decodeURIComponent(res.headers.get("x-voice-text")!)).toBe("rueda deportiva negra");
   });
   it("accepts a hex with or without #, and a colour word instead; both end in the same clip", async () => {
@@ -90,7 +90,7 @@ describe("/api/voice parts (Describe & Build)", () => {
     await handleVoice(get("lang=de&p=hat_cowboy&hex=f5c518"), env);
     await handleVoice(get("lang=de&p=hat_cowboy&c=yellow"), env);
     expect(run).toHaveBeenCalledTimes(1); // one clip: the hex is reduced to the word "yellow" before caching
-    expect(run.mock.calls[0]![1]).toEqual({ text: "gelber Cowboyhut", voice: "Leda" });
+    expect(run.mock.calls[0]![1]).toEqual({ text: modelText("de", "gelber Cowboyhut"), voice: "Leda" });
   });
   it("says just the part when no colour is given, in Turkish too", async () => {
     const { env, run } = fakeAi();
@@ -128,7 +128,7 @@ describe("/api/voice synthesis", () => {
     const [model, input, opts] = run.mock.calls[0]!;
     expect(model).toBe(VOICE_MODEL);
     expect(VOICE_MODEL).toBe("google/gemini-3.8-flash-lite-tts");
-    expect(input).toEqual({ text: "árbol verde", voice: "Leda" });
+    expect(input).toEqual({ text: modelText("es", "árbol verde"), voice: "Leda" });
     expect(opts).toEqual({ gateway: { id: "default" } });
   });
   it("returns a trimmed WAV that browsers and the edge can cache for a year", async () => {
@@ -284,3 +284,95 @@ describe("levelWav", () => {
     vi.unstubAllGlobals();
   });
 });
+
+describe("the language lead-in (a word in the same language said first, then cut out)", () => {
+  const burst = (ms: number, amp = 12000) => Int16Array.from({ length: Math.round((RATE * ms) / 1000) }, (_, i) => Math.round(Math.sin(i / 9) * amp));
+  const quiet = (ms: number) => new Int16Array(Math.round((RATE * ms) / 1000));
+  const cat = (...parts: Int16Array[]) => {
+    const out = new Int16Array(parts.reduce((n, p) => n + p.length, 0));
+    let at = 0;
+    for (const p of parts) { out.set(p, at); at += p.length; }
+    return out;
+  };
+  const seconds = (w: Uint8Array) => (w.length - 44) / 2 / RATE;
+  const samples = (w: Uint8Array) => new Int16Array(w.buffer.slice(w.byteOffset + 44, w.byteOffset + w.length));
+  // what the model returns for "Mira. <short pause> cuchara.": a beat of quiet, the lead-in, a pause, the name, a beat of quiet
+  const leadInClip = () => makeWav(cat(quiet(250), burst(350), quiet(750), burst(450), quiet(300)));
+
+  it("gives Spanish, French, German, Italian and Portuguese a lead-in, and neither English nor Turkish (set by ear: English is the default accent, Turkish sounded best without)", () => {
+    expect(Object.keys(LEAD_IN).sort()).toEqual(["de", "es", "fr", "it", "pt"]);
+    expect(modelText("es", "cuchara")).toBe("Mira. <short pause> cuchara.");
+    expect(modelText("de", "Löffel")).toBe("Schau. <short pause> Löffel.");
+    expect(modelText("fr", "cuillère")).toBe("Regarde. <short pause> cuillère.");
+    expect(modelText("it", "cucchiaio")).toBe("Guarda. <short pause> cucchiaio.");
+    expect(modelText("pt", "colher")).toBe("Olha. <short pause> colher.");
+    expect(modelText("en", "spoon")).toBe("spoon");
+    expect(modelText("tr", "kaşık")).toBe("kaşık");
+  });
+  it("does not double the full stop of a text that already ends in one, or in ! or ?", () => {
+    expect(modelText("es", "¡hola!")).toBe("Mira. <short pause> ¡hola!");
+    expect(modelText("es", "cuchara.")).toBe("Mira. <short pause> cuchara.");
+    expect(modelText("es", "¿cuchara?")).toBe("Mira. <short pause> ¿cuchara?");
+  });
+  it("keeps what follows the lead-in's gap, with 60 ms in front, and drops the lead-in", () => {
+    const clip = leadInClip();
+    const out = cutLeadIn(clip);
+    expect(seconds(out)).toBeLessThan(seconds(clip) - 1.0); // the beat, the lead-in and the pause are gone
+    expect(seconds(out)).toBeGreaterThan(0.45 + 0.06); // the name (0.45 s) and the 60 ms in front survive
+    expect(seconds(out)).toBeLessThan(0.45 + 0.06 + 0.35); // and no more than the beat after it
+    const s = samples(out);
+    const head = s.subarray(0, Math.round(RATE * 0.05));
+    expect(Math.max(...Array.from(head, Math.abs)), "the first 50 ms are quiet: the lead-in is not there").toBe(0);
+    expect(dataLen(out)).toBe(out.length - 44);
+    expect(new DataView(out.buffer).getUint32(24, true)).toBe(RATE);
+  });
+  it("cuts at the LONGEST gap: a pause inside the lead-in itself (0.4 s, over the minimum) must not end it early, or half the lead-in would stay", () => {
+    const clip = makeWav(cat(quiet(200), burst(200), quiet(400), burst(150), quiet(900), burst(450), quiet(200)));
+    const out = cutLeadIn(clip);
+    expect(seconds(out)).toBeGreaterThan(0.45 + 0.06); // the name and the 60 ms in front
+    expect(seconds(out)).toBeLessThan(0.45 + 0.06 + 0.35); // and nothing of the lead-in: cutting at the first gap would keep the 0.9 s gap and 150 ms more
+  });
+  it("leaves a clip with no clear gap alone (the same array): one stretch of speech, a pause under 0.3 s, silence, a short file, or something that is not a WAV", () => {
+    const one = makeWav(cat(quiet(200), burst(400), quiet(200)));
+    expect(cutLeadIn(one)).toBe(one);
+    const shortPause = makeWav(cat(quiet(100), burst(300), quiet(200), burst(300), quiet(100)));
+    expect(cutLeadIn(shortPause)).toBe(shortPause);
+    const silent = makeWav(new Int16Array(RATE));
+    expect(cutLeadIn(silent)).toBe(silent);
+    const tiny = makeWav(new Int16Array(100));
+    expect(cutLeadIn(tiny)).toBe(tiny);
+    const junk = new Uint8Array([1, 2, 3, 4, 5]);
+    expect(cutLeadIn(junk)).toBe(junk);
+  });
+  it("is used by the route for Spanish only where the language has a lead-in: the model gets the lead-in text and the served clip has the lead-in cut out", async () => {
+    installEdgeCache();
+    const { env, run } = fakeAi(leadInClip());
+    const res = await handleVoice(get("lang=es&n=tree&c=green"), env);
+    expect(res.status).toBe(200);
+    expect(run.mock.calls[0]![1]).toEqual({ text: modelText("es", "árbol verde"), voice: DEFAULT_VOICE });
+    const body = new Uint8Array(await res.arrayBuffer());
+    expect(seconds(body)).toBeLessThan(0.45 + 0.06 + 0.2 + 0.1); // the name only (then trimmed of its tail)
+    expect(seconds(body)).toBeGreaterThan(0.4);
+    expect(decodeURIComponent(res.headers.get("x-voice-text")!)).toBe("árbol verde"); // the caption is the name, never the lead-in
+  });
+  it("sends English and Turkish as they are, and does not cut a clip that has two stretches of speech", async () => {
+    installEdgeCache();
+    for (const lang of ["en", "tr"] as const) {
+      const clip = leadInClip(); // two stretches with a long gap, which a lead-in language would be cut at
+      const { env, run } = fakeAi(clip);
+      const res = await handleVoice(get(`lang=${lang}&n=tree&c=green`), env);
+      expect(res.status, lang).toBe(200);
+      expect((run.mock.calls[0]![1] as { text: string }).text, lang).toBe(voiceText({ lang, noun: "tree", color: "green" }));
+      const body = new Uint8Array(await res.arrayBuffer());
+      expect(seconds(body), lang).toBeGreaterThan(1.5); // whole: the gap and both stretches are still there
+    }
+  });
+  it("caches under a new version, so the English-accent clips of the first version are never served", async () => {
+    const store = installEdgeCache();
+    const { env } = fakeAi(leadInClip());
+    await handleVoice(get("lang=es&n=tree&c=green"), env);
+    expect([...store.keys()].every((k) => k.includes("/v2/"))).toBe(true);
+    expect(store.size).toBeGreaterThan(0);
+  });
+});
+

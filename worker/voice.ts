@@ -37,7 +37,7 @@ export const GEMINI_VOICES = [
 ] as const;
 
 const GATEWAY_ID = "default";
-const CACHE_VERSION = "v1";
+const CACHE_VERSION = "v2"; // v2: language lead-in (clips from v1 had an English accent on every foreign word)
 const ONE_YEAR = 31_536_000;
 
 export interface AiBinding {
@@ -188,6 +188,105 @@ export function trimWav(wav: Uint8Array): Uint8Array {
   return out;
 }
 
+/**
+ * Telling the model the language (Dan, 2026-11-03: "we need to indicate the language, not just the spelling"). The model has no language setting and detects the
+ * language from the words, and a single foreign word gives it nothing, so it came out in an English accent. A short word in the SAME language said first
+ * ("Mira. <short pause> cuchara.") makes it recognise the language and use a native accent, and the lead-in is then cut out of the audio (`cutLeadIn`), so the
+ * clip is still only the name. English needs none (it is the default) and Turkish sounded best without (Dan listened to both). One word per language, a setting
+ * to change by ear: add or remove an entry here.
+ */
+export const LEAD_IN: Partial<Record<LangCode, string>> = { es: "Mira.", fr: "Regarde.", de: "Schau.", it: "Guarda.", pt: "Olha." };
+/** The shortest quiet gap taken for the end of the lead-in. The model leaves 0.5 to 1.1 s after it; a pause inside a word is under 0.2 s. */
+const LEAD_IN_MIN_GAP_S = 0.3;
+
+/** What is sent to the model: the name, behind its language's lead-in and a pause when the language has one. */
+export function modelText(lang: LangCode, text: string): string {
+  const lead = LEAD_IN[lang];
+  if (!lead) return text;
+  return `${lead} <short pause> ${text}${/[.!?]$/.test(text) ? "" : "."}`;
+}
+
+/**
+ * Cut the lead-in off a clip made from `modelText`: find the longest quiet gap (at least 0.3 s) between stretches of speech and keep what follows it (with
+ * 60 ms in front). A clip with no such gap (one stretch of speech, or only short pauses) comes back untouched, the same array, so a model that skipped the pause
+ * still gives a clip that says the name, with the lead-in. Does not understand anything but 16-bit PCM WAV: returns the input.
+ */
+export function cutLeadIn(wav: Uint8Array): Uint8Array {
+  if (wav.length < 44 || ascii(wav, 0, 4) !== "RIFF" || ascii(wav, 8, 4) !== "WAVE") return wav;
+  const dv = new DataView(wav.buffer, wav.byteOffset, wav.byteLength);
+  let pos = 12;
+  let channels = 0, rate = 0, bits = 0, fmt = 0, dataAt = -1, dataLen = 0;
+  while (pos + 8 <= wav.length) {
+    const id = ascii(wav, pos, 4);
+    const size = dv.getUint32(pos + 4, true);
+    if (id === "fmt ") {
+      fmt = dv.getUint16(pos + 8, true);
+      channels = dv.getUint16(pos + 10, true);
+      rate = dv.getUint32(pos + 12, true);
+      bits = dv.getUint16(pos + 22, true);
+    } else if (id === "data") {
+      dataAt = pos + 8;
+      dataLen = Math.min(size, wav.length - dataAt);
+      break;
+    }
+    pos += 8 + size + (size % 2);
+  }
+  if (fmt !== 1 || bits !== 16 || channels < 1 || rate < 1 || dataAt < 0) return wav;
+  const frame = 2 * channels;
+  const frames = Math.floor(dataLen / frame);
+  const win = Math.max(1, Math.round(rate * 0.01)); // 10 ms windows
+  const wins = Math.floor(frames / win);
+  if (wins < 4) return wav;
+  const rms: number[] = [];
+  let peak = 0;
+  for (let w = 0; w < wins; w++) {
+    let sum = 0;
+    for (let i = 0; i < win; i++) {
+      let m = 0;
+      for (let c = 0; c < channels; c++) m = Math.max(m, Math.abs(dv.getInt16(dataAt + (w * win + i) * frame + c * 2, true)));
+      sum += m * m;
+    }
+    const r = Math.sqrt(sum / win);
+    rms.push(r);
+    peak = Math.max(peak, r);
+  }
+  if (peak === 0) return wav;
+  const thr = Math.max(150, peak * 0.06);
+  // stretches of speech, joining pauses shorter than 60 ms
+  const segs: Array<[number, number]> = [];
+  let cur: [number, number] | null = null;
+  for (let w = 0; w < wins; w++) {
+    const t = w * 0.01;
+    if (rms[w]! > thr) {
+      if (!cur) cur = [t, t];
+      else cur[1] = t;
+    } else if (cur && t - cur[1] > 0.06) {
+      segs.push(cur);
+      cur = null;
+    }
+  }
+  if (cur) segs.push(cur);
+  if (segs.length < 2) return wav;
+  let best = -1, bestGap = 0;
+  for (let i = 0; i < segs.length - 1; i++) {
+    const gap = segs[i + 1]![0] - segs[i]![1];
+    if (gap > bestGap) { bestGap = gap; best = i; }
+  }
+  if (best < 0 || bestGap < LEAD_IN_MIN_GAP_S) return wav;
+  const startFrame = Math.max(0, Math.round((segs[best + 1]![0] - 0.06) * rate));
+  const outFrames = frames - startFrame;
+  if (outFrames <= 0) return wav;
+  const outBytes = outFrames * frame;
+  const out = new Uint8Array(44 + outBytes);
+  const od = new DataView(out.buffer);
+  out.set([0x52, 0x49, 0x46, 0x46], 0); od.setUint32(4, 36 + outBytes, true); out.set([0x57, 0x41, 0x56, 0x45], 8);
+  out.set([0x66, 0x6d, 0x74, 0x20], 12); od.setUint32(16, 16, true); od.setUint16(20, 1, true); od.setUint16(22, channels, true);
+  od.setUint32(24, rate, true); od.setUint32(28, rate * frame, true); od.setUint16(32, frame, true); od.setUint16(34, 16, true);
+  out.set([0x64, 0x61, 0x74, 0x61], 36); od.setUint32(40, outBytes, true);
+  out.set(wav.subarray(dataAt + startFrame * frame, dataAt + frames * frame), 44);
+  return out;
+}
+
 /** The loudness every clip is levelled to: root-mean-square of the 16-bit samples (about -16 dBFS). The model's clips differ five-fold in loudness. */
 export const TARGET_RMS = 5000;
 const MIN_GAIN = 0.5;
@@ -245,12 +344,13 @@ const asBody = (b: Uint8Array): BodyInit => b as unknown as BodyInit;
 
 const inflight = new Map<string, Promise<Uint8Array>>();
 
-async function synthesize(env: VoiceEnv, text: string, voice: string): Promise<Uint8Array> {
-  const out = (await env.AI!.run(VOICE_MODEL, { text, voice }, { gateway: { id: GATEWAY_ID } })) as { audio?: unknown } | null;
+async function synthesize(env: VoiceEnv, text: string, voice: string, lang: LangCode): Promise<Uint8Array> {
+  const out = (await env.AI!.run(VOICE_MODEL, { text: modelText(lang, text), voice }, { gateway: { id: GATEWAY_ID } })) as { audio?: unknown } | null;
   const audio = typeof out?.audio === "string" ? out.audio : "";
   const m = /^data:audio\/(?:wav|x-wav|wave);base64,(.+)$/s.exec(audio);
   if (!m) throw new Error("voice model returned no WAV audio");
-  return levelWav(trimWav(b64ToBytes(m[1]!)));
+  const raw = b64ToBytes(m[1]!);
+  return levelWav(trimWav(LEAD_IN[lang] ? cutLeadIn(raw) : raw));
 }
 
 export async function handleVoice(request: Request, env: VoiceEnv, ctx?: Ctx): Promise<Response> {
@@ -282,7 +382,7 @@ export async function handleVoice(request: Request, env: VoiceEnv, ctx?: Ctx): P
   const id = `${voice}|${key.lang}|${text}`;
   let job = inflight.get(id);
   if (!job) {
-    job = synthesize(env, text, voice).finally(() => inflight.delete(id));
+    job = synthesize(env, text, voice, key.lang).finally(() => inflight.delete(id));
     inflight.set(id, job);
   }
   let bytes: Uint8Array;

@@ -54,38 +54,6 @@ export function householdSpeech(id: string, lang: LangCode, file: NamesFile = HO
   return en ? { text: en, lang: "en" } : null;
 }
 
-/** A spoken noun in the form two spellings are compared in: NFC and lower case, so German "Ball" and English "ball" are the same spelling. */
-const spelling = (text: string) => text.normalize("NFC").toLowerCase();
-
-const spellingIndexes = new WeakMap<NamesFile, Map<string, Set<LangCode>>>();
-function spellingIndex(file: NamesFile): Map<string, Set<LangCode>> {
-  let idx = spellingIndexes.get(file);
-  if (!idx) {
-    idx = new Map();
-    for (const entry of Object.values(file.names))
-      for (const [lang, e] of Object.entries(entry) as [LangCode, NameEntry | undefined][]) {
-        if (!e) continue;
-        const k = spelling(e.w);
-        if (!idx.has(k)) idx.set(k, new Set());
-        idx.get(k)!.add(lang);
-      }
-    spellingIndexes.set(file, idx);
-  }
-  return idx;
-}
-
-/**
- * Is this noun spelled the same in another language (for some item)? The clip voice is given only the words and picks the language itself, so such a noun
- * ("banana", "puzzle", "lata") may come out in the wrong accent. The game never asks the clip voice for it: the device voice takes an explicit language
- * tag and cannot mis-pick (householdVoice.ts), and the prewarm skips it (scripts/lib/household-voice-ledger.ts). The list is in docs/review/spoken-names.md.
- */
-export function spelledInOtherLanguage(text: string, lang: LangCode, file: NamesFile = HOUSEHOLD_NAMES): boolean {
-  const langs = spellingIndex(file).get(spelling(text));
-  if (!langs) return false;
-  for (const l of langs) if (l !== lang) return true;
-  return false;
-}
-
 /**
  * A short fingerprint of a spoken text (FNV-1a over its NFC form, 8 hex digits). It is part of the clip's cache key and its URL, so a noun a
  * reviewer changes becomes a NEW clip instead of the old one served for a year, and the ledger uses it to see what changed. Not a secret.

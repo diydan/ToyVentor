@@ -1,21 +1,21 @@
-// Plays what an object is called. Preferred voice: the Gemini clip from /api/voice (worker/voice.ts), one cached WAV per
-// (language, object, colour). If that is unavailable (offline, not deployed, model error) it falls back to the device's own
-// speech voice, and the on-screen caption always shows either way, so nothing depends on any of this working.
+// Plays what an object is called, in ONE voice: the Gemini clip from /api/voice (worker/voice.ts, google/gemini-3.8-flash-lite-tts), one cached WAV per
+// (language, object, colour). Dan, 2026-11-03: "no phone use (google/gemini-3.8-flash-lite-tts) for everything in the game": there is no fallback to the
+// device's own speech voice, so a child hears one voice for every name. If the clip is unavailable (offline, not deployed, model error) nothing is said and the
+// on-screen caption, which always shows, carries the name.
 import type { ColorKey, LangCode, NounKey } from "./propNames";
-import { speakPhrase } from "./propSpeech";
 
 export interface SpokenObject {
-  /** Vocabulary key; absent for free-text (generated) names, which only the device voice can say. */
+  /** Vocabulary key; a name with neither this nor `url` has no clip and is only captioned. */
   noun?: NounKey;
   /** A ready-made /api/voice URL for a clip that is not a prop (a household item: see householdVoice.ts); wins over `noun`. */
   url?: string;
   color?: ColorKey | null;
   lang: LangCode;
-  /** The caption / device-voice text. */
+  /** The caption text. */
   text: string;
 }
 
-/** A failed clip request switches to the device voice for this long before the server is tried again. */
+/** After a failed clip request nothing is requested (or said) for this long before the server is tried again. */
 export const SERVER_BACKOFF_MS = 60_000;
 
 let current: HTMLAudioElement | null = null;
@@ -49,12 +49,12 @@ export function resetVoiceBackoff(): void {
 }
 
 /**
- * Say an object's name. Returns which voice was used: "clip" (Gemini, may still fail asynchronously and then falls back),
- * "device" (the browser's voice), or "none" (nothing could speak; the caller's caption is all there is).
+ * Say an object's name with its Gemini clip. Returns "clip" when a clip was started (it may still fail asynchronously, and then nothing is said and the server is
+ * left alone for a minute) and "none" when no clip could be asked for (no URL, the server is backed off, no audio on this device): the caller's caption is all
+ * there is. Never uses the device's own voice.
  */
-export function sayObject(obj: SpokenObject, now: number = Date.now()): "clip" | "device" | "none" {
+export function sayObject(obj: SpokenObject, now: number = Date.now()): "clip" | "none" {
   stopObjectVoice();
-  const fallback = () => speakPhrase(obj.text, obj.lang);
   const clipUrl = obj.url ?? (obj.noun ? voiceUrl(obj.noun, obj.color, obj.lang) : null);
   if (clipUrl && now >= downUntil && typeof Audio !== "undefined") {
     try {
@@ -64,17 +64,16 @@ export function sayObject(obj: SpokenObject, now: number = Date.now()): "clip" |
         if (current !== audio) return; // a newer tap already replaced this one
         downUntil = Date.now() + SERVER_BACKOFF_MS;
         current = null;
-        fallback();
       };
       audio.addEventListener("error", fail, { once: true });
       const started = audio.play();
       if (started && typeof started.catch === "function") started.catch(fail);
       return "clip";
     } catch {
-      // Fall through to the device voice.
+      // No clip: the caption stands alone.
     }
   }
-  return fallback() ? "device" : "none";
+  return "none";
 }
 
 /** Warm the browser cache with the clips a world will need, so the first tap on each object is instant. Fire and forget. */

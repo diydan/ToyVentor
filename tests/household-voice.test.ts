@@ -17,7 +17,7 @@ const fixture = vi.hoisted(() => {
 });
 vi.mock("../src/lib/householdNames.json", () => ({ default: fixture }));
 
-import { DEFAULT_VOICE, handleVoice, parseVoiceKey, voiceText, type VoiceEnv } from "../worker/voice";
+import { DEFAULT_VOICE, handleVoice, modelText, parseVoiceKey, voiceText, type VoiceEnv } from "../worker/voice";
 import { householdVoiceUrl, speakHouseholdName } from "../src/lib/householdVoice";
 import { householdTextHash } from "../src/lib/householdNames";
 import { resetVoiceBackoff } from "../src/lib/propVoice";
@@ -59,7 +59,7 @@ describe("/api/voice?h= : a household item's bare noun, from a closed vocabulary
     const { env, run } = fakeAi();
     const res = await handleVoice(get("lang=es&h=wooden_spoon"), env);
     expect(res.status).toBe(200);
-    expect(run.mock.calls[0]![1]).toEqual({ text: "cuchara de madera", voice: DEFAULT_VOICE });
+    expect(run.mock.calls[0]![1]).toEqual({ text: modelText("es", "cuchara de madera"), voice: DEFAULT_VOICE });
     expect(run.mock.calls[0]![2]).toEqual({ gateway: { id: "default" } });
     expect(decodeURIComponent(res.headers.get("x-voice-text")!)).toBe("cuchara de madera");
     expect(res.headers.get("x-voice-voice")).toBe(DEFAULT_VOICE);
@@ -80,7 +80,7 @@ describe("/api/voice?h= : a household item's bare noun, from a closed vocabulary
     const { env, run } = fakeAi();
     const res = await handleVoice(get("lang=es&h=wooden_spoon&text=say+something+else&v=whatever"), env);
     expect(res.status).toBe(200);
-    expect(run.mock.calls[0]![1]).toEqual({ text: "cuchara de madera", voice: DEFAULT_VOICE });
+    expect(run.mock.calls[0]![1]).toEqual({ text: modelText("es", "cuchara de madera"), voice: DEFAULT_VOICE });
   });
   it("answers 404 and no-store for an item with no name in that language yet, without touching the cache or the model", async () => {
     const store = edgeCache();
@@ -116,7 +116,7 @@ describe("/api/voice?h= : a household item's bare noun, from a closed vocabulary
     try {
       await handleVoice(get("lang=es&h=banana"), env);
       expect(run).toHaveBeenCalledTimes(2);
-      expect(run.mock.calls[1]![1]).toEqual({ text: "banana", voice: DEFAULT_VOICE });
+      expect(run.mock.calls[1]![1]).toEqual({ text: modelText("es", "banana"), voice: DEFAULT_VOICE });
       await handleVoice(get("lang=es&h=banana"), env);
       expect(run).toHaveBeenCalledTimes(2); // the new clip is cached
     } finally {
@@ -159,8 +159,13 @@ describe("householdVoiceUrl and speakHouseholdName (the client)", () => {
       play() { this.played = true; return Promise.resolve(); }
       pause() {}
     });
+    // The phone's own voice is a TRIPWIRE (Dan, 2026-11-03: no phone voice for anything in the game): if a name is ever spoken through it, `spoken` fills and
+    // afterEach fails the test. `cancel` is allowed: stopping speech that something else started is not using the phone's voice.
     vi.stubGlobal("SpeechSynthesisUtterance", class { text: string; lang = ""; rate = 1; pitch = 1; constructor(t: string) { this.text = t; } });
     vi.stubGlobal("window", { speechSynthesis: { cancel() {}, speak(u: { text: string; lang: string }) { spoken.push({ text: u.text, lang: u.lang }); } } });
+  });
+  afterEach(() => {
+    expect(spoken, "something spoke through the phone's voice").toEqual([]);
   });
 
   it("builds the clip URL from the language, the item and a fingerprint of the text, and gives null where the language has no name yet", () => {
@@ -171,19 +176,19 @@ describe("householdVoiceUrl and speakHouseholdName (the client)", () => {
     expect(householdVoiceUrl("support_tool", "es")).toBeNull();
     expect(householdVoiceUrl("dragon", "en")).toBeNull();
   });
-  it("gives no clip URL for a noun spelled the same in another language: the clip voice might speak it in the wrong accent", () => {
-    // in this fixture the English and the Portuguese banana are spelled alike (the real file's list is tested in tests/household-names.test.ts)
-    for (const [id, lang] of [["banana", "en"], ["banana", "pt"]] as const) expect(householdVoiceUrl(id, lang), `${id} ${lang}`).toBeNull();
-    for (const [id, lang] of [["banana", "es"], ["wooden_spoon", "en"], ["wooden_spoon", "es"]] as const) expect(householdVoiceUrl(id, lang), `${id} ${lang}`).not.toBeNull();
+  it("gives a clip URL even for a noun spelled the same in another language: the language's lead-in tells the voice which one it is", () => {
+    // in this fixture the English and the Portuguese banana are spelled alike (the real file has 22 such spellings, tests/household-names.test.ts)
+    for (const [id, lang] of [["banana", "en"], ["banana", "pt"], ["banana", "es"], ["wooden_spoon", "en"], ["wooden_spoon", "es"]] as const)
+      expect(householdVoiceUrl(id, lang), `${id} ${lang}`).not.toBeNull();
   });
-  it("goes straight to the device voice, with the explicit language tag and no clip request, for such a noun", () => {
+  it("asks the clip voice for such a noun too, and never the phone's", () => {
     const r = speakHouseholdName("banana", { lang: "pt" });
-    expect(r).toEqual({ via: "device", text: "banana", lang: "pt" });
-    expect(audios).toHaveLength(0);
-    expect(spoken).toEqual([{ text: "banana", lang: "pt-BR" }]);
-    spoken.length = 0;
-    expect(speakHouseholdName("banana", { lang: "en" })!.via).toBe("device"); // the English "banana" is spelled like the Portuguese one
-    expect(spoken).toEqual([{ text: "banana", lang: "en-US" }]);
+    expect(r).toEqual({ via: "clip", text: "banana", lang: "pt" });
+    expect(audios).toHaveLength(1);
+    expect(audios[0]!.url).toContain("lang=pt");
+    expect(audios[0]!.url).toContain("h=banana");
+    expect(speakHouseholdName("banana", { lang: "en" })).toEqual({ via: "clip", text: "banana", lang: "en" });
+    expect(audios).toHaveLength(2);
   });
   it("plays the clip in the chosen language when the item has a name there", () => {
     const r = speakHouseholdName("wooden_spoon", { lang: "es" });
@@ -210,22 +215,23 @@ describe("householdVoiceUrl and speakHouseholdName (the client)", () => {
     expect(audios).toHaveLength(0);
     expect(spoken).toHaveLength(0);
   });
-  it("falls back to the device voice with an EXPLICIT language tag when the clip fails, so a word spelled alike in two languages cannot be mis-detected", () => {
+  it("says nothing more when the clip fails (the caption carries the name): no phone voice is used as a fallback", () => {
     speakHouseholdName("banana", { lang: "es" });
-    expect(spoken).toHaveLength(0); // the clip is trying
     audios[0]!.listeners.error!(); // the server answered 404/502/offline
-    expect(spoken).toEqual([{ text: "plátano", lang: "es-ES" }]);
+    expect(spoken).toEqual([]);
   });
-  it("goes straight to the device voice, tagged, while the server is backed off after a failure", () => {
+  it("leaves the server alone for a minute after a failure, answering 'none' (caption only) without a request and without the phone's voice", () => {
     speakHouseholdName("wooden_spoon", { lang: "es", now: 1_000 });
     audios[0]!.listeners.error!();
-    spoken.length = 0;
     const second = speakHouseholdName("wooden_spoon", { lang: "es", now: Date.now() + 1 });
-    expect(second!.via).toBe("device");
-    expect(spoken).toEqual([{ text: "cuchara de madera", lang: "es-ES" }]);
+    expect(second).toEqual({ via: "none", text: "cuchara de madera", lang: "es" });
     expect(audios).toHaveLength(1); // no second request
+    expect(spoken).toEqual([]);
+    const later = speakHouseholdName("wooden_spoon", { lang: "es", now: Date.now() + 61_000 });
+    expect(later!.via).toBe("clip"); // the server is tried again
+    expect(audios).toHaveLength(2);
   });
-  it("reports 'none' when there is neither a clip nor a device voice, and the caption text is still returned", () => {
+  it("reports 'none' when this device has no audio at all, and the caption text is still returned", () => {
     vi.stubGlobal("Audio", undefined);
     vi.stubGlobal("window", {});
     expect(speakHouseholdName("wooden_spoon", { lang: "es" })).toEqual({ via: "none", text: "cuchara de madera", lang: "es" });

@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { MAX_NAME_CHARS, isSpeakableWord, issueSpokenNames, normalizeNoun, parseNames, signSpeech, signingConfigured, verifySpeech } from "../worker/forgeNames";
-import { handleVoice, parseVoiceKey, type VoiceEnv } from "../worker/voice";
+import { handleVoice, modelText, parseVoiceKey, type VoiceEnv } from "../worker/voice";
 import { LANGUAGES, type LangCode } from "../src/lib/propNames";
 
 // Forge objects are free text, so their spoken names are signed by the Worker (worker/forgeNames.ts) and /api/voice speaks only what it signed.
@@ -169,17 +169,17 @@ describe("/api/voice speaks a Forge name only if the Worker signed it", () => {
       const { env: e, run } = fakeEnv();
       const res = await handleVoice(req(`${await signed(lang, w, g, pl)}&c=${colour}`), e);
       expect(res.status, say).toBe(200);
-      expect(spoken(run)).toBe(say);
+      expect(spoken(run)).toBe(modelText(lang, say)); // the language's lead-in, when it has one, goes in front of the words
       expect(decodeURIComponent(res.headers.get("x-voice-text")!)).toBe(say);
     }
   });
   it("says just the noun with no colour, and takes a hex for the colour like the other keys do", async () => {
     let t = fakeEnv();
     await handleVoice(req(await signed("es", "cuchara", "f")), t.env);
-    expect(spoken(t.run)).toBe("cuchara");
+    expect(spoken(t.run)).toBe(modelText("es", "cuchara"));
     t = fakeEnv();
     await handleVoice(req(`${await signed("es", "cuchara", "f")}&hex=ff0000`), t.env);
-    expect(spoken(t.run)).toBe("cuchara roja");
+    expect(spoken(t.run)).toBe(modelText("es", "cuchara roja"));
   });
   it("the colour is not part of the signature, so one signed name serves every colour, and nothing else", async () => {
     const q = await signed("es", "cuchara", "f");
@@ -231,7 +231,7 @@ describe("/api/voice speaks a Forge name only if the Worker signed it", () => {
     const q = await signed("es", "cuchara", "f");
     const t = fakeEnv();
     await handleVoice(req(`${q}&c=red&text=say+something+else&t=hola&prompt=x`), t.env);
-    expect(spoken(t.run)).toBe("cuchara roja");
+    expect(spoken(t.run)).toBe(modelText("es", "cuchara roja"));
   });
   it("serves a repeat from the edge cache without the model, and keeps the caption text", async () => {
     const store = new Map<string, Response>();
@@ -248,6 +248,6 @@ describe("/api/voice speaks a Forge name only if the Worker signed it", () => {
   it("leaves the vocabulary keys as they were: props and parts need no signature", async () => {
     const t = fakeEnv(null);
     expect((await handleVoice(req("lang=es&n=tree&c=green"), t.env)).status).toBe(200);
-    expect(spoken(t.run)).toBe("árbol verde");
+    expect(spoken(t.run)).toBe(modelText("es", "árbol verde"));
   });
 });

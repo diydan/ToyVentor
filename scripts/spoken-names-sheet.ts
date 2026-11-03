@@ -142,8 +142,9 @@ w(`**What the game speaks today:** ${spoken.length / langs.length} phrases in ${
 w();
 for (const [text, ps] of spokenShared) w(`- \`${text}\`: ${[...new Set(ps.map((p) => label(p.lang)))].join(" + ")} (${[...new Set(ps.map((p) => p.what))].join(", ")})`);
 w();
-w("**Please listen to these and tell us which language and accent you hear.** If one is wrong, the fix is to speak that phrase with the device voice and");
-w("its explicit language tag, which cannot mis-detect. Free-form Forge names (spec: forge-ai-spec.md) are the larger risk: a short word such as `taco`");
+w("**Please listen to these and tell us which language and accent you hear.** The game says a short word in the phrase's own language first and cuts it out of");
+w("the audio (`LEAD_IN` in worker/voice.ts), which tells the voice the language; if one is still wrong, change that language's lead-in word. There is no");
+w("fallback to the device's own voice: the game uses one voice. Free-form Forge names (spec: forge-ai-spec.md) are the larger risk: a short word such as `taco`");
 w("reads the same in several languages.");
 w();
 w("For comparison, over every noun and part in every colour (an upper bound; the game never says most of these):");
@@ -226,8 +227,9 @@ for (const p of present) {
 const hShared = [...hByText.entries()].filter(([, ps]) => new Set(ps.map((p) => p.l)).size > 1);
 w("### Household nouns spelled the same in more than one language");
 w();
-w("The voice is told only the word and picks the language itself (see the section above), so a noun spelled the same in two languages may be spoken with the other");
-w("language's accent. The game's device-voice fallback always carries an explicit language tag, which cannot mis-detect.");
+w("The voice picks the language from the words (see the section above), so a noun spelled the same in two languages could be spoken with the other language's");
+w("accent. In Spanish, French, German, Italian and Portuguese the clip starts with a short word in that language that is cut out afterwards, so the voice knows");
+w("which one it is; English and Turkish have none. The game uses this one voice for every name, with no device-voice fallback.");
 w();
 if (hShared.length === 0) w("None yet" + (emptyLangs.length ? ` (${emptyLangs.length} language(s) have no names, so this is not the final count)` : "") + ".");
 else {

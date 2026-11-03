@@ -40,23 +40,3 @@ export const PROP_LANG_CHOICES: ReadonlyArray<{ value: PropLang; label: string }
   ...LANGUAGES.map((l) => ({ value: l.code as PropLang, label: l.label })),
   { value: "off", label: "Off" },
 ];
-
-/**
- * Speak a phrase in a language. Cancels anything still being said first, so quick taps never queue up into a long ramble.
- * Returns false when this device cannot speak (no speechSynthesis), so the caller can lean on the caption.
- */
-export function speakPhrase(text: string, lang: LangCode): boolean {
-  try {
-    const synth = typeof window !== "undefined" ? window.speechSynthesis : undefined;
-    if (!synth || typeof SpeechSynthesisUtterance === "undefined") return false;
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = languageInfo(lang).bcp47;
-    u.rate = 0.9; // a little slower and brighter than default, for small ears
-    u.pitch = 1.1;
-    synth.cancel();
-    synth.speak(u);
-    return true;
-  } catch {
-    return false;
-  }
-}

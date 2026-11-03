@@ -35,8 +35,9 @@ Spanish and Portuguese. The voice may answer in the other language or accent.
 - `luz rosa`: Español + Português (light/pink)
 - `pera verde`: Español + Italiano + Português (pear/green)
 
-**Please listen to these and tell us which language and accent you hear.** If one is wrong, the fix is to speak that phrase with the device voice and
-its explicit language tag, which cannot mis-detect. Free-form Forge names (spec: forge-ai-spec.md) are the larger risk: a short word such as `taco`
+**Please listen to these and tell us which language and accent you hear.** The game says a short word in the phrase's own language first and cuts it out of
+the audio (`LEAD_IN` in worker/voice.ts), which tells the voice the language; if one is still wrong, change that language's lead-in word. There is no
+fallback to the device's own voice: the game uses one voice. Free-form Forge names (spec: forge-ai-spec.md) are the larger risk: a short word such as `taco`
 reads the same in several languages.
 
 For comparison, over every noun and part in every colour (an upper bound; the game never says most of these):
@@ -838,8 +839,9 @@ Is it singular, or the usual plural for an object that is plural by nature (scis
 
 ### Household nouns spelled the same in more than one language
 
-The voice is told only the word and picks the language itself (see the section above), so a noun spelled the same in two languages may be spoken with the other
-language's accent. The game's device-voice fallback always carries an explicit language tag, which cannot mis-detect.
+The voice picks the language from the words (see the section above), so a noun spelled the same in two languages could be spoken with the other language's
+accent. In Spanish, French, German, Italian and Portuguese the clip starts with a short word in that language that is cut out afterwards, so the voice knows
+which one it is; English and Turkish have none. The game uses this one voice for every name, with no device-voice fallback.
 
 **22 texts** are spelled the same in two or more languages. **Please listen to these and tell us which language and accent you hear:**
 
