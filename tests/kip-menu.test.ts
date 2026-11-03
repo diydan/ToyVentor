@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import kipManifest from "../parts/kip/kip-manifest.json";
@@ -425,5 +425,22 @@ describe("kip viewer build wiring", () => {
     const version = (src: string, file: string) => new RegExp(`${file.replace(".", "\\.")}(\\?v=[\\d.]+)`).exec(src)?.[1];
     expect(version(menu, "kip-vehicles-wardrobe.js")).toBe(version(page, "kip-vehicles-wardrobe.js"));
     expect(version(menu, "kip-forge-sdk.js")).toBe(version(page, "kip-forge-sdk.js"));
+  });
+
+  it("uses one specifier for the shared wardrobe and faceplate modules across the viewer", () => {
+    const page = read("parts/kip/viewer/kip-bench.js");
+    const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const version = (src: string, file: string) => new RegExp(`${escape(file)}(\\?v=[\\d.]+)`).exec(src)?.[1];
+    const viewerDir = join(root, "parts/kip/viewer");
+    for (const shared of ["kip-vehicles-wardrobe.js", "kip-faceplate-shape.js"]) {
+      const expected = version(page, shared);
+      expect(expected, `${shared} version on the Kip bench`).toBeDefined();
+      for (const rel of readdirSync(viewerDir).filter((f) => f.endsWith(".js"))) {
+        const src = read(`parts/kip/viewer/${rel}`);
+        for (const match of src.matchAll(new RegExp(`(?:from\\s+|import\\()(['"])[^'"]*${escape(shared)}(\\?v=[\\d.]+)?\\1`, "g"))) {
+          expect(match[2], `${rel} imports ${shared}`).toBe(expected);
+        }
+      }
+    }
   });
 });

@@ -6,7 +6,7 @@
 // `kip-print.js`); this file handles STL fetching, Three.js plate rendering, canvas sheet drawing, and downloads.
 
 import { resolveSceneBom, resolveProviderBom } from './kip-print-bom.js';
-import { resolveBodyColors } from './kip-vehicles-wardrobe.js';
+import { resolveBodyColors } from './kip-vehicles-wardrobe.js?v=10.0';
 import {
   BONUS_EXPRESSIONS,
   planStickerSheet,

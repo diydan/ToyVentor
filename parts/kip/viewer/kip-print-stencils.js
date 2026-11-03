@@ -14,9 +14,9 @@ import {
   FACE_TARGET_MM,
   plateHalfWidth,
   windowHalfWidth,
-} from './kip-faceplate-shape.js';
+} from './kip-faceplate-shape.js?v=10.0';
 import { normHex } from './kip-print-bom.js';
-import { HUMAN_HEAD_IDS } from './kip-vehicles-wardrobe.js';
+import { HUMAN_HEAD_IDS } from './kip-vehicles-wardrobe.js?v=10.0';
 import {
   SPRUE_SPEC,
   sprueMarginMm,

@@ -15,7 +15,7 @@ import {
   HUMAN_HEAD_IDS,
   EXP_PALETTE,
   resolveBodyColors,
-} from './kip-vehicles-wardrobe.js';
+} from './kip-vehicles-wardrobe.js?v=10.0';
 
 export const DEFAULT_BASE_COLORS = Object.freeze({
   shell:    '#F4EFE6',

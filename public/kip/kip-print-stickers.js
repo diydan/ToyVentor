@@ -6,7 +6,7 @@
 //  - Selfie and Photo-Forge pixels stay strictly in transient memory buffers passed to `stickersToPdf` / `stickersToPng`
 //    and never enter `planStickerSheet`, `layout.json`, `README.txt`, or printer profiles.
 
-import { WINDOW_MM, WINDOW_ZB, windowPolygon } from './kip-faceplate-shape.js';
+import { WINDOW_MM, WINDOW_ZB, windowPolygon } from './kip-faceplate-shape.js?v=10.0';
 import { normHex } from './kip-print-bom.js';
 import { PRINT_PAGE_WARNINGS } from './kip-print.js';
 
