@@ -28,6 +28,7 @@ sys.path.insert(0, str(ROOT / "parts/kip/sdk"))
 
 import household_builders as hb  # noqa: E402
 import household_catalog as hc  # noqa: E402
+import household_pictures as hp  # noqa: E402
 from household_glb import HEX_RE, zoned_glb  # noqa: E402
 from kip_partspec_sdk import FORBIDDEN_BRAND_RE  # noqa: E402
 
@@ -139,7 +140,25 @@ def build_item(row: dict) -> Tuple[dict, Optional[bytes], List[str]]:
     return entry, glb, problems
 
 
-def build_all(only: Optional[List[str]] = None) -> Tuple[dict, Dict[str, bytes], List[str]]:
+def build_pictures(rows: List[dict], colours: Dict[str, Dict[str, str]]) -> Tuple[dict, Dict[str, List[str]]]:
+    """The pictures of every built item and the table of which look alike. Each colour zone is the union of its pieces, moved the way `fit_longest`
+    moved the whole item, so the zones sit exactly where the finished solid does."""
+    pictures: Dict[str, dict] = {}
+    outlines = {}
+    for row in rows:
+        iid = row["id"]
+        pieces = hb.BUILDERS[iid]()
+        solid, _ = hb.assemble(pieces)
+        k, lift = hb.fit_transform(solid, row["propMm"])
+        zone_solids = []
+        for zone, hex_ in colours[iid].items():
+            parts = [p.scale((k, k, k)).translate((0.0, 0.0, lift)) for z, p in pieces if z == zone]
+            zone_solids.append((zone, hb.union3d(parts), hex_))
+        pictures[iid], outlines[iid] = hp.pictures_for(hb.fit_longest(solid, row["propMm"]), zone_solids)
+    return pictures, hp.confusable_with(outlines)
+
+
+def build_all(only: Optional[List[str]] = None) -> Tuple[dict, Dict[str, bytes], List[str], dict]:
     rows = hc.static_rows()
     support_rows = hc.support_rows()
     problems = hc.problems(rows) + hc.support_problems(support_rows)
@@ -167,6 +186,15 @@ def build_all(only: Optional[List[str]] = None) -> Tuple[dict, Dict[str, bytes],
         support.append(entry)
         if glb is not None:
             glbs[row["id"]] = glb
+    pictures_doc: dict = {}
+    if not only:
+        built_rows = [e for e in items + support if e["built"]]
+        pictures, confusable = build_pictures(built_rows, {r["id"]: hb.COLOURS[r["id"]] for r in built_rows})
+        problems += hp.distractor_problems([e for e in items if e["built"]], confusable)
+        for e in items + support:
+            e["confusableWith"] = confusable.get(e["id"], [])
+        problems += [f"{p}" for p in hc.group_problems(rows)]
+        pictures_doc = {"version": 1, "box": hp.BOX, "confusableIou": hp.CONFUSABLE_IOU, "items": pictures}
     doc = {
         "version": 1,
         "frame": {
@@ -177,7 +205,7 @@ def build_all(only: Optional[List[str]] = None) -> Tuple[dict, Dict[str, bytes],
         "items": items,
         "support": support,
     }
-    return doc, glbs, problems
+    return doc, glbs, problems, pictures_doc
 
 
 def main(argv: Optional[List[str]] = None) -> int:
@@ -188,7 +216,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     args = ap.parse_args(argv)
     only = [s for s in args.only.split(",") if s]
 
-    doc, glbs, problems = build_all(only or None)
+    doc, glbs, problems, pictures_doc = build_all(only or None)
     for e in doc["items"] + doc["support"]:
         if e["built"]:
             zs = "/".join(f"{z['name']}:{z['tris']}" for z in e["zones"])
@@ -199,6 +227,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         print(f"{len(problems)} problem(s): nothing written", file=sys.stderr)
         return 1
     text = json.dumps(doc, indent=1, ensure_ascii=False) + "\n"
+    pictures_text = json.dumps(pictures_doc, ensure_ascii=False, separators=(",", ":")) + "\n" if pictures_doc else ""
 
     if args.check:
         drift: List[str] = []
@@ -213,6 +242,12 @@ def main(argv: Optional[List[str]] = None) -> int:
             drift.append("catalog.json is missing")
         elif cat.read_text("utf-8") != text:
             drift.append("catalog.json differs from a fresh build")
+        pics = args.out / "pictures.json"
+        if not only:
+            if not pics.exists():
+                drift.append("pictures.json is missing")
+            elif pics.read_text("utf-8") != pictures_text:
+                drift.append("pictures.json differs from a fresh build")
         stray = sorted(p.name for p in args.out.glob("*.glb") if p.stem not in glbs) if args.out.exists() else []
         drift += [f"{n} is not in the catalog" for n in stray]
         for d in drift:
@@ -225,7 +260,8 @@ def main(argv: Optional[List[str]] = None) -> int:
         (args.out / f"{iid}.glb").write_bytes(glb)
     if not only:
         (args.out / "catalog.json").write_text(text, "utf-8")
-    print(f"wrote {len(glbs)} GLB(s)" + ("" if only else " and catalog.json") + f" to {args.out}")
+        (args.out / "pictures.json").write_text(pictures_text, "utf-8")
+    print(f"wrote {len(glbs)} GLB(s)" + ("" if only else " and catalog.json and pictures.json") + f" to {args.out}")
     return 0
 
 

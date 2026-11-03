@@ -63,12 +63,17 @@ def assemble(pieces: List[Piece]) -> Tuple[Manifold, Dict[int, str]]:
     return solid, zone_of_id
 
 
-def fit_longest(m: Manifold, longest_mm: float) -> Manifold:
-    """Uniformly scale (about the origin, so the grip point stays put) so the longest side is `longest_mm`, then stand it on z = 0."""
+def fit_transform(m: Manifold, longest_mm: float) -> Tuple[float, float]:
+    """(scale, lift) that `fit_longest` applies: the scale about the origin that makes the longest side `longest_mm`, and the lift that stands it on z = 0."""
     x0, y0, z0, x1, y1, z1 = m.bounding_box()
     k = longest_mm / max(x1 - x0, y1 - y0, z1 - z0)
-    m = m.scale((k, k, k))
-    return m.translate((0.0, 0.0, -m.bounding_box()[2]))
+    return k, -m.scale((k, k, k)).bounding_box()[2]
+
+
+def fit_longest(m: Manifold, longest_mm: float) -> Manifold:
+    """Uniformly scale (about the origin, so the grip point stays put) so the longest side is `longest_mm`, then stand it on z = 0."""
+    k, lift = fit_transform(m, longest_mm)
+    return m.scale((k, k, k)).translate((0.0, 0.0, lift))
 
 
 def on_edge(m: Manifold, grip_axial: Optional[float] = None) -> Manifold:

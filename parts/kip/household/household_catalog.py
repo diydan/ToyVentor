@@ -105,6 +105,21 @@ def min_band(tags: List[str]) -> int:
     return 0
 
 
+# Household groups (a hand-written column, one line per group): the shape game takes its wrong answers from the right one's group first. This is NOT the
+# `family` column, which says how an item is built (revolve, extrude, ...), not what it is.
+GROUP_NAMES = ("cutlery", "kitchen", "containers", "fruit", "tools", "stationery", "toys", "bath", "home")
+GROUPS: Dict[str, str] = {
+    **{i: "cutlery" for i in ("wooden_spoon", "fork")},
+    **{i: "kitchen" for i in ("plate", "bowl", "mug", "drinking_glass", "jam_jar", "soda_can", "cookie_tin", "water_bottle", "flask", "cereal_box")},
+    **{i: "containers" for i in ("bucket", "watering_can", "potted_plant", "lunchbox", "pencil_case")},
+    **{i: "fruit" for i in ("apple", "orange", "lemon", "banana", "carrot", "avocado")},
+    **{i: "tools" for i in ("hammer", "screwdriver", "pliers", "flashlight", "tape_measure", "support_tool")},
+    **{i: "stationery" for i in ("pencil", "marker", "crayon", "paintbrush", "eraser", "ruler", "scissors", "glue_stick", "stapler", "tape_dispenser", "notebook", "book")},
+    **{i: "toys" for i in ("ball", "spinning_top", "yo_yo", "flying_disc", "marble", "toy_brick", "toy_sword", "bubble_wand", "dice", "board_game", "jigsaw", "playing_cards")},
+    **{i: "bath" for i in ("toothbrush", "hairbrush", "comb", "soap", "sponge")},
+    **{i: "home" for i in ("alarm_clock", "desk_lamp", "key")},
+}
+
 # Items that read at a glance for ages 2 to 4: a plain rounded or chunky shape, one or two colours, nothing fine. They are the pool the youngest
 # bands pick between ("which one is the ball?", by picture). My choice from the pictures; edit the list, the tests keep it honest (never a tool, never
 # sharp-looking, at most two colour zones).
@@ -137,7 +152,7 @@ def static_rows() -> List[dict]:
         {
             "id": iid, "label": label, "scanRank": rank, "realMm": real, "propMm": prop_mm(real),
             "family": family, "words": list(words), "tags": list(tags), "note": note,
-            "minBand": min_band(list(tags)), "simple": iid in SIMPLE_IDS,
+            "minBand": min_band(list(tags)), "simple": iid in SIMPLE_IDS, "group": GROUPS.get(iid),
         }
         for (iid, label, rank, real, family, words, tags, note) in ITEMS
     ]
@@ -149,7 +164,7 @@ def support_rows() -> List[dict]:
         {
             "id": iid, "label": label, "scanRank": None, "realMm": real, "propMm": prop_mm(real),
             "family": family, "words": [], "tags": [], "note": note,
-            "minBand": 0, "maxBand": SUPPORT_LAST_BAND, "simple": True,
+            "minBand": 0, "maxBand": SUPPORT_LAST_BAND, "simple": True, "group": GROUPS.get(iid),
         }
         for (iid, label, real, family, note) in SUPPORT_ITEMS
     ]
@@ -194,6 +209,8 @@ def problems(rows: List[dict]) -> List[str]:
             ranks[rank] = iid
         if r.get("propMm") != prop_mm(r.get("realMm", 0)):
             out.append(f"{iid}: propMm {r.get('propMm')} is not realMm {r.get('realMm')} clamped to {PROP_MIN_MM}..{PROP_MAX_MM}")
+        if r.get("group") not in GROUP_NAMES:
+            out.append(f"{iid}: group {r.get('group')!r} is not one of {GROUP_NAMES}")
         want = min_band(list(r.get("tags", [])))
         if r.get("minBand") != want:
             out.append(f"{iid}: minBand {r.get('minBand')!r} is not {want}, what its tags ({', '.join(r.get('tags', [])) or 'none'}) give")
@@ -202,6 +219,14 @@ def problems(rows: List[dict]) -> List[str]:
         elif r["simple"] and want != 0:
             out.append(f"{iid}: a simple item (for the youngest bands) cannot be tagged {', '.join(r.get('tags', []))}")
     return out
+
+
+def group_problems(rows: List[dict]) -> List[str]:
+    """No group holds a single item (the shape game needs a same-group wrong answer to draw from)."""
+    counts: Dict[str, int] = {}
+    for r in rows:
+        counts[r.get("group")] = counts.get(r.get("group"), 0) + 1
+    return [f"group {g!r} holds {n} item: a group needs at least two" for g, n in sorted(counts.items(), key=lambda kv: str(kv[0])) if n < 2]
 
 
 def support_problems(rows: List[dict]) -> List[str]:
@@ -221,7 +246,7 @@ def support_problems(rows: List[dict]) -> List[str]:
 def main(argv: List[str]) -> int:
     if "--verify" in argv:  # python3 household_catalog.py --verify <catalog.json>: check the rows of a written catalog; exit 1 and print every fault
         doc = json.load(open(argv[argv.index("--verify") + 1]))
-        found = problems(doc["items"])
+        found = problems(doc["items"]) + group_problems(doc["items"])
         support = doc.get("support")
         if not support:
             found.append("no support tool")
@@ -234,7 +259,7 @@ def main(argv: List[str]) -> int:
         print(f"{len(doc['items'])} items checked, {len(found)} problems")
         return 1 if found else 0
     rows = static_rows()
-    bad = problems(rows)
+    bad = problems(rows) + group_problems(rows)
     if "--json-support" in argv:
         json.dump(support_rows(), sys.stdout, indent=1)
         print()

@@ -27,6 +27,7 @@
    "note": "A stripe as a second colour zone.",
    "minBand": 0,
    "simple": true,
+   "group": "toys",
    "built": true,
    "glb": "ball.glb",
    "bytes": 8000,
@@ -50,7 +51,21 @@
     90.0,
     90.0
    ],
-   "volumeMm3": 370929.1
+   "volumeMm3": 370929.1,
+   "confusableWith": [
+    "alarm_clock",
+    "apple",
+    "board_game",
+    "cookie_tin",
+    "dice",
+    "flying_disc",
+    "jam_jar",
+    "marble",
+    "mug",
+    "orange",
+    "plate",
+    "yo_yo"
+   ]
   },
   {
    "id": "mug",
@@ -70,6 +85,7 @@
    "note": "Revolved body, opening, D handle.",
    "minBand": 0,
    "simple": true,
+   "group": "kitchen",
    "built": true,
    "glb": "mug.glb",
    "bytes": 9748,
@@ -88,7 +104,18 @@
     65.27,
     65.27
    ],
-   "volumeMm3": 165400.9
+   "volumeMm3": 165400.9,
+   "confusableWith": [
+    "apple",
+    "ball",
+    "cookie_tin",
+    "dice",
+    "flying_disc",
+    "marble",
+    "orange",
+    "plate",
+    "yo_yo"
+   ]
   },
   {
    "id": "water_bottle",
@@ -105,6 +132,7 @@
    "note": "Cap as a second colour zone.",
    "minBand": 0,
    "simple": true,
+   "group": "kitchen",
    "built": true,
    "glb": "water_bottle.glb",
    "bytes": 10416,
@@ -128,7 +156,10 @@
     28.0,
     90.0
    ],
-   "volumeMm3": 41463.0
+   "volumeMm3": 41463.0,
+   "confusableWith": [
+    "flask"
+   ]
   },
   {
    "id": "flask",
@@ -146,6 +177,7 @@
    "note": "Cap as a second colour zone.",
    "minBand": 0,
    "simple": false,
+   "group": "kitchen",
    "built": true,
    "glb": "flask.glb",
    "bytes": 8716,
@@ -169,7 +201,11 @@
     30.0,
     90.0
    ],
-   "volumeMm3": 61900.3
+   "volumeMm3": 61900.3,
+   "confusableWith": [
+    "flashlight",
+    "water_bottle"
+   ]
   },
   {
    "id": "drinking_glass",
@@ -187,6 +223,7 @@
    "note": "Open top, shallow.",
    "minBand": 0,
    "simple": true,
+   "group": "kitchen",
    "built": true,
    "glb": "drinking_glass.glb",
    "bytes": 6032,
@@ -205,7 +242,16 @@
     63.0,
     90.0
    ],
-   "volumeMm3": 54158.3
+   "volumeMm3": 54158.3,
+   "confusableWith": [
+    "book",
+    "cereal_box",
+    "jam_jar",
+    "lemon",
+    "notebook",
+    "playing_cards",
+    "soda_can"
+   ]
   },
   {
    "id": "jam_jar",
@@ -222,6 +268,7 @@
    "note": "Lid as a second colour zone.",
    "minBand": 0,
    "simple": false,
+   "group": "kitchen",
    "built": true,
    "glb": "jam_jar.glb",
    "bytes": 7744,
@@ -245,7 +292,22 @@
     78.55,
     90.0
    ],
-   "volumeMm3": 427564.3
+   "volumeMm3": 427564.3,
+   "confusableWith": [
+    "alarm_clock",
+    "apple",
+    "avocado",
+    "ball",
+    "board_game",
+    "book",
+    "drinking_glass",
+    "flying_disc",
+    "marble",
+    "orange",
+    "plate",
+    "playing_cards",
+    "yo_yo"
+   ]
   },
   {
    "id": "soda_can",
@@ -264,6 +326,7 @@
    "note": "Plain: no label, no brand.",
    "minBand": 0,
    "simple": false,
+   "group": "kitchen",
    "built": true,
    "glb": "soda_can.glb",
    "bytes": 11084,
@@ -282,7 +345,14 @@
     46.29,
     90.0
    ],
-   "volumeMm3": 144143.9
+   "volumeMm3": 144143.9,
+   "confusableWith": [
+    "book",
+    "cereal_box",
+    "drinking_glass",
+    "lemon",
+    "notebook"
+   ]
   },
   {
    "id": "cookie_tin",
@@ -300,6 +370,7 @@
    "note": "",
    "minBand": 0,
    "simple": true,
+   "group": "kitchen",
    "built": true,
    "glb": "cookie_tin.glb",
    "bytes": 7364,
@@ -318,7 +389,17 @@
     90.0,
     61.81
    ],
-   "volumeMm3": 366791.8
+   "volumeMm3": 366791.8,
+   "confusableWith": [
+    "apple",
+    "ball",
+    "dice",
+    "flying_disc",
+    "marble",
+    "mug",
+    "orange",
+    "yo_yo"
+   ]
   },
   {
    "id": "bowl",
@@ -337,6 +418,7 @@
    "note": "Shallow recess.",
    "minBand": 0,
    "simple": true,
+   "group": "kitchen",
    "built": true,
    "glb": "bowl.glb",
    "bytes": 8020,
@@ -355,7 +437,8 @@
     90.0,
     40.8
    ],
-   "volumeMm3": 64470.9
+   "volumeMm3": 64470.9,
+   "confusableWith": []
   },
   {
    "id": "plate",
@@ -373,6 +456,7 @@
    "note": "Added: the commonest table item the scan list lacks.",
    "minBand": 0,
    "simple": true,
+   "group": "kitchen",
    "built": true,
    "glb": "plate.glb",
    "bytes": 9092,
@@ -391,7 +475,22 @@
     11.25,
     90.0
    ],
-   "volumeMm3": 21522.1
+   "volumeMm3": 21522.1,
+   "confusableWith": [
+    "alarm_clock",
+    "apple",
+    "avocado",
+    "ball",
+    "board_game",
+    "dice",
+    "flying_disc",
+    "jam_jar",
+    "marble",
+    "mug",
+    "orange",
+    "playing_cards",
+    "yo_yo"
+   ]
   },
   {
    "id": "bucket",
@@ -410,6 +509,7 @@
    "note": "Added (garage). Handle as a thin arc.",
    "minBand": 2,
    "simple": false,
+   "group": "containers",
    "built": true,
    "glb": "bucket.glb",
    "bytes": 15048,
@@ -433,7 +533,12 @@
     65.75,
     90.0
    ],
-   "volumeMm3": 32164.4
+   "volumeMm3": 32164.4,
+   "confusableWith": [
+    "avocado",
+    "lemon",
+    "playing_cards"
+   ]
   },
   {
    "id": "watering_can",
@@ -449,6 +554,7 @@
    "note": "Spout and handle.",
    "minBand": 0,
    "simple": false,
+   "group": "containers",
    "built": true,
    "glb": "watering_can.glb",
    "bytes": 10396,
@@ -477,7 +583,8 @@
     39.78,
     49.39
    ],
-   "volumeMm3": 47577.4
+   "volumeMm3": 47577.4,
+   "confusableWith": []
   },
   {
    "id": "potted_plant",
@@ -496,6 +603,7 @@
    "note": "Pot plus a few leaf lofts.",
    "minBand": 0,
    "simple": false,
+   "group": "containers",
    "built": true,
    "glb": "potted_plant.glb",
    "bytes": 14508,
@@ -524,7 +632,8 @@
     49.17,
     90.0
    ],
-   "volumeMm3": 47027.2
+   "volumeMm3": 47027.2,
+   "confusableWith": []
   },
   {
    "id": "spinning_top",
@@ -541,6 +650,7 @@
    "note": "Spins in the game.",
    "minBand": 0,
    "simple": false,
+   "group": "toys",
    "built": true,
    "glb": "spinning_top.glb",
    "bytes": 11088,
@@ -559,7 +669,8 @@
     52.63,
     60.0
    ],
-   "volumeMm3": 40673.8
+   "volumeMm3": 40673.8,
+   "confusableWith": []
   },
   {
    "id": "yo_yo",
@@ -576,6 +687,7 @@
    "note": "",
    "minBand": 0,
    "simple": true,
+   "group": "toys",
    "built": true,
    "glb": "yo_yo.glb",
    "bytes": 10516,
@@ -594,7 +706,21 @@
     30.0,
     60.0
    ],
-   "volumeMm3": 79533.7
+   "volumeMm3": 79533.7,
+   "confusableWith": [
+    "alarm_clock",
+    "apple",
+    "ball",
+    "board_game",
+    "cookie_tin",
+    "dice",
+    "flying_disc",
+    "jam_jar",
+    "marble",
+    "mug",
+    "orange",
+    "plate"
+   ]
   },
   {
    "id": "flying_disc",
@@ -612,6 +738,7 @@
    "note": "Spins in the game.",
    "minBand": 0,
    "simple": true,
+   "group": "toys",
    "built": true,
    "glb": "flying_disc.glb",
    "bytes": 7800,
@@ -630,7 +757,22 @@
     15.75,
     90.0
    ],
-   "volumeMm3": 87987.6
+   "volumeMm3": 87987.6,
+   "confusableWith": [
+    "alarm_clock",
+    "apple",
+    "avocado",
+    "ball",
+    "board_game",
+    "cookie_tin",
+    "dice",
+    "jam_jar",
+    "marble",
+    "mug",
+    "orange",
+    "plate",
+    "yo_yo"
+   ]
   },
   {
    "id": "marble",
@@ -646,6 +788,7 @@
    "note": "Prop scale is larger than life so it can be held.",
    "minBand": 0,
    "simple": true,
+   "group": "toys",
    "built": true,
    "glb": "marble.glb",
    "bytes": 7444,
@@ -664,7 +807,21 @@
     40.0,
     40.0
    ],
-   "volumeMm3": 32761.8
+   "volumeMm3": 32761.8,
+   "confusableWith": [
+    "alarm_clock",
+    "apple",
+    "ball",
+    "board_game",
+    "cookie_tin",
+    "dice",
+    "flying_disc",
+    "jam_jar",
+    "mug",
+    "orange",
+    "plate",
+    "yo_yo"
+   ]
   },
   {
    "id": "apple",
@@ -680,6 +837,7 @@
    "note": "Stem and leaf as colour zones.",
    "minBand": 0,
    "simple": false,
+   "group": "fruit",
    "built": true,
    "glb": "apple.glb",
    "bytes": 11800,
@@ -708,7 +866,21 @@
     79.93,
     80.0
    ],
-   "volumeMm3": 244245.2
+   "volumeMm3": 244245.2,
+   "confusableWith": [
+    "alarm_clock",
+    "ball",
+    "board_game",
+    "cookie_tin",
+    "dice",
+    "flying_disc",
+    "jam_jar",
+    "marble",
+    "mug",
+    "orange",
+    "plate",
+    "yo_yo"
+   ]
   },
   {
    "id": "orange",
@@ -724,6 +896,7 @@
    "note": "Stem nub as a second colour zone.",
    "minBand": 0,
    "simple": true,
+   "group": "fruit",
    "built": true,
    "glb": "orange.glb",
    "bytes": 8648,
@@ -747,7 +920,23 @@
     80.0,
     77.38
    ],
-   "volumeMm3": 243122.9
+   "volumeMm3": 243122.9,
+   "confusableWith": [
+    "alarm_clock",
+    "apple",
+    "ball",
+    "board_game",
+    "cookie_tin",
+    "dice",
+    "flying_disc",
+    "jam_jar",
+    "lunchbox",
+    "marble",
+    "mug",
+    "plate",
+    "soap",
+    "yo_yo"
+   ]
   },
   {
    "id": "lemon",
@@ -764,6 +953,7 @@
    "note": "",
    "minBand": 0,
    "simple": true,
+   "group": "fruit",
    "built": true,
    "glb": "lemon.glb",
    "bytes": 9704,
@@ -782,7 +972,17 @@
     56.25,
     90.0
    ],
-   "volumeMm3": 132402.5
+   "volumeMm3": 132402.5,
+   "confusableWith": [
+    "avocado",
+    "book",
+    "bucket",
+    "cereal_box",
+    "drinking_glass",
+    "notebook",
+    "playing_cards",
+    "soda_can"
+   ]
   },
   {
    "id": "banana",
@@ -798,6 +998,7 @@
    "note": "Stem as a second colour zone.",
    "minBand": 0,
    "simple": true,
+   "group": "fruit",
    "built": true,
    "glb": "banana.glb",
    "bytes": 7936,
@@ -821,7 +1022,8 @@
     21.17,
     90.0
    ],
-   "volumeMm3": 23559.6
+   "volumeMm3": 23559.6,
+   "confusableWith": []
   },
   {
    "id": "carrot",
@@ -837,6 +1039,7 @@
    "note": "",
    "minBand": 0,
    "simple": true,
+   "group": "fruit",
    "built": true,
    "glb": "carrot.glb",
    "bytes": 9976,
@@ -860,7 +1063,8 @@
     22.96,
     90.0
    ],
-   "volumeMm3": 14943.0
+   "volumeMm3": 14943.0,
+   "confusableWith": []
   },
   {
    "id": "avocado",
@@ -876,6 +1080,7 @@
    "note": "",
    "minBand": 0,
    "simple": false,
+   "group": "fruit",
    "built": true,
    "glb": "avocado.glb",
    "bytes": 6960,
@@ -904,7 +1109,17 @@
     47.18,
     90.0
    ],
-   "volumeMm3": 122382.9
+   "volumeMm3": 122382.9,
+   "confusableWith": [
+    "alarm_clock",
+    "book",
+    "bucket",
+    "flying_disc",
+    "jam_jar",
+    "lemon",
+    "plate",
+    "playing_cards"
+   ]
   },
   {
    "id": "wooden_spoon",
@@ -923,6 +1138,7 @@
    "note": "Bowl dished.",
    "minBand": 0,
    "simple": true,
+   "group": "cutlery",
    "built": true,
    "glb": "wooden_spoon.glb",
    "bytes": 13796,
@@ -941,7 +1157,8 @@
     10.58,
     90.0
    ],
-   "volumeMm3": 4274.1
+   "volumeMm3": 4274.1,
+   "confusableWith": []
   },
   {
    "id": "fork",
@@ -959,6 +1176,7 @@
    "note": "Blunt tines (radius 1.6 mm or more).",
    "minBand": 3,
    "simple": false,
+   "group": "cutlery",
    "built": true,
    "glb": "fork.glb",
    "bytes": 5356,
@@ -977,7 +1195,10 @@
     4.6,
     90.0
    ],
-   "volumeMm3": 4447.9
+   "volumeMm3": 4447.9,
+   "confusableWith": [
+    "marker"
+   ]
   },
   {
    "id": "key",
@@ -993,6 +1214,7 @@
    "note": "",
    "minBand": 0,
    "simple": false,
+   "group": "home",
    "built": true,
    "glb": "key.glb",
    "bytes": 6076,
@@ -1011,7 +1233,8 @@
     4.1,
     60.0
    ],
-   "volumeMm3": 3209.7
+   "volumeMm3": 3209.7,
+   "confusableWith": []
   },
   {
    "id": "comb",
@@ -1027,6 +1250,7 @@
    "note": "Teeth wide enough to print (at least 1.6 mm).",
    "minBand": 0,
    "simple": false,
+   "group": "bath",
    "built": true,
    "glb": "comb.glb",
    "bytes": 9088,
@@ -1045,7 +1269,13 @@
     3.6,
     36.0
    ],
-   "volumeMm3": 8352.0
+   "volumeMm3": 8352.0,
+   "confusableWith": [
+    "eraser",
+    "pencil_case",
+    "sponge",
+    "toy_brick"
+   ]
   },
   {
    "id": "hairbrush",
@@ -1062,6 +1292,7 @@
    "note": "",
    "minBand": 0,
    "simple": false,
+   "group": "bath",
    "built": true,
    "glb": "hairbrush.glb",
    "bytes": 15776,
@@ -1090,7 +1321,8 @@
     15.08,
     90.0
    ],
-   "volumeMm3": 20302.8
+   "volumeMm3": 20302.8,
+   "confusableWith": []
   },
   {
    "id": "toothbrush",
@@ -1107,6 +1339,7 @@
    "note": "",
    "minBand": 0,
    "simple": true,
+   "group": "bath",
    "built": true,
    "glb": "toothbrush.glb",
    "bytes": 8052,
@@ -1130,7 +1363,8 @@
     10.4,
     90.0
    ],
-   "volumeMm3": 3132.0
+   "volumeMm3": 3132.0,
+   "confusableWith": []
   },
   {
    "id": "paintbrush",
@@ -1148,6 +1382,7 @@
    "note": "The bare word 'brush' goes here: hair and tooth brushes need their own word.",
    "minBand": 0,
    "simple": false,
+   "group": "stationery",
    "built": true,
    "glb": "paintbrush.glb",
    "bytes": 8088,
@@ -1176,7 +1411,11 @@
     9.6,
     90.0
    ],
-   "volumeMm3": 4426.6
+   "volumeMm3": 4426.6,
+   "confusableWith": [
+    "crayon",
+    "pencil"
+   ]
   },
   {
    "id": "pencil",
@@ -1192,6 +1431,7 @@
    "note": "Held by the eraser end. Ferrule and eraser as colour zones.",
    "minBand": 0,
    "simple": false,
+   "group": "stationery",
    "built": true,
    "glb": "pencil.glb",
    "bytes": 5188,
@@ -1220,7 +1460,11 @@
     8.49,
     90.0
    ],
-   "volumeMm3": 3811.1
+   "volumeMm3": 3811.1,
+   "confusableWith": [
+    "crayon",
+    "paintbrush"
+   ]
   },
   {
    "id": "marker",
@@ -1239,6 +1483,7 @@
    "note": "",
    "minBand": 0,
    "simple": false,
+   "group": "stationery",
    "built": true,
    "glb": "marker.glb",
    "bytes": 5988,
@@ -1262,7 +1507,11 @@
     12.4,
     90.0
    ],
-   "volumeMm3": 8803.5
+   "volumeMm3": 8803.5,
+   "confusableWith": [
+    "crayon",
+    "fork"
+   ]
   },
   {
    "id": "crayon",
@@ -1279,6 +1528,7 @@
    "note": "One crayon, not the box.",
    "minBand": 0,
    "simple": true,
+   "group": "stationery",
    "built": true,
    "glb": "crayon.glb",
    "bytes": 6736,
@@ -1302,7 +1552,12 @@
     9.8,
     90.0
    ],
-   "volumeMm3": 5320.0
+   "volumeMm3": 5320.0,
+   "confusableWith": [
+    "marker",
+    "paintbrush",
+    "pencil"
+   ]
   },
   {
    "id": "eraser",
@@ -1319,6 +1574,7 @@
    "note": "",
    "minBand": 0,
    "simple": false,
+   "group": "stationery",
    "built": true,
    "glb": "eraser.glb",
    "bytes": 4900,
@@ -1342,7 +1598,14 @@
     13.2,
     23.2
    ],
-   "volumeMm3": 16065.3
+   "volumeMm3": 16065.3,
+   "confusableWith": [
+    "comb",
+    "pencil_case",
+    "sponge",
+    "stapler",
+    "toy_brick"
+   ]
   },
   {
    "id": "ruler",
@@ -1358,6 +1621,7 @@
    "note": "Tick marks as raised ribs.",
    "minBand": 0,
    "simple": false,
+   "group": "stationery",
    "built": true,
    "glb": "ruler.glb",
    "bytes": 11296,
@@ -1381,7 +1645,12 @@
     3.8,
     90.0
    ],
-   "volumeMm3": 5251.5
+   "volumeMm3": 5251.5,
+   "confusableWith": [
+    "flashlight",
+    "glue_stick",
+    "pliers"
+   ]
   },
   {
    "id": "scissors",
@@ -1399,6 +1668,7 @@
    "note": "Blunt blades, loops left open as relief only.",
    "minBand": 3,
    "simple": false,
+   "group": "stationery",
    "built": true,
    "glb": "scissors.glb",
    "bytes": 10104,
@@ -1422,7 +1692,8 @@
     5.0,
     90.0
    ],
-   "volumeMm3": 5497.7
+   "volumeMm3": 5497.7,
+   "confusableWith": []
   },
   {
    "id": "glue_stick",
@@ -1439,6 +1710,7 @@
    "note": "",
    "minBand": 0,
    "simple": false,
+   "group": "stationery",
    "built": true,
    "glb": "glue_stick.glb",
    "bytes": 5712,
@@ -1462,7 +1734,11 @@
     19.2,
     90.0
    ],
-   "volumeMm3": 23327.5
+   "volumeMm3": 23327.5,
+   "confusableWith": [
+    "flashlight",
+    "ruler"
+   ]
   },
   {
    "id": "stapler",
@@ -1478,6 +1754,7 @@
    "note": "",
    "minBand": 0,
    "simple": false,
+   "group": "stationery",
    "built": true,
    "glb": "stapler.glb",
    "bytes": 2908,
@@ -1501,7 +1778,13 @@
     16.0,
     27.0
    ],
-   "volumeMm3": 28481.0
+   "volumeMm3": 28481.0,
+   "confusableWith": [
+    "eraser",
+    "pencil_case",
+    "sponge",
+    "toy_brick"
+   ]
   },
   {
    "id": "tape_dispenser",
@@ -1518,6 +1801,7 @@
    "note": "",
    "minBand": 0,
    "simple": false,
+   "group": "stationery",
    "built": true,
    "glb": "tape_dispenser.glb",
    "bytes": 8980,
@@ -1546,7 +1830,8 @@
     22.5,
     68.52
    ],
-   "volumeMm3": 65971.1
+   "volumeMm3": 65971.1,
+   "confusableWith": []
   },
   {
    "id": "dice",
@@ -1563,6 +1848,7 @@
    "note": "Pips as shallow dimples.",
    "minBand": 0,
    "simple": false,
+   "group": "toys",
    "built": true,
    "glb": "dice.glb",
    "bytes": 14280,
@@ -1586,7 +1872,19 @@
     40.0,
     39.23
    ],
-   "volumeMm3": 55357.1
+   "volumeMm3": 55357.1,
+   "confusableWith": [
+    "apple",
+    "ball",
+    "cookie_tin",
+    "flying_disc",
+    "marble",
+    "mug",
+    "orange",
+    "plate",
+    "soap",
+    "yo_yo"
+   ]
   },
   {
    "id": "toy_brick",
@@ -1605,6 +1903,7 @@
    "note": "Studs match the Snap line; generic, no brand.",
    "minBand": 0,
    "simple": true,
+   "group": "toys",
    "built": true,
    "glb": "toy_brick.glb",
    "bytes": 9328,
@@ -1623,7 +1922,14 @@
     20.0,
     14.5
    ],
-   "volumeMm3": 10129.0
+   "volumeMm3": 10129.0,
+   "confusableWith": [
+    "comb",
+    "eraser",
+    "pencil_case",
+    "sponge",
+    "stapler"
+   ]
   },
   {
    "id": "bubble_wand",
@@ -1640,6 +1946,7 @@
    "note": "",
    "minBand": 0,
    "simple": false,
+   "group": "toys",
    "built": true,
    "glb": "bubble_wand.glb",
    "bytes": 7088,
@@ -1663,7 +1970,8 @@
     7.41,
     90.0
    ],
-   "volumeMm3": 4485.8
+   "volumeMm3": 4485.8,
+   "confusableWith": []
   },
   {
    "id": "toy_sword",
@@ -1682,6 +1990,7 @@
    "note": "Blunt, rounded edge.",
    "minBand": 3,
    "simple": false,
+   "group": "toys",
    "built": true,
    "glb": "toy_sword.glb",
    "bytes": 5544,
@@ -1710,7 +2019,8 @@
     10.4,
     90.0
    ],
-   "volumeMm3": 3481.4
+   "volumeMm3": 3481.4,
+   "confusableWith": []
   },
   {
    "id": "hammer",
@@ -1730,6 +2040,7 @@
    "note": "Added (garage).",
    "minBand": 2,
    "simple": false,
+   "group": "tools",
    "built": true,
    "glb": "hammer.glb",
    "bytes": 5128,
@@ -1753,7 +2064,8 @@
     12.27,
     90.0
    ],
-   "volumeMm3": 14688.9
+   "volumeMm3": 14688.9,
+   "confusableWith": []
   },
   {
    "id": "screwdriver",
@@ -1773,6 +2085,7 @@
    "note": "Added (garage). Blunt tip.",
    "minBand": 3,
    "simple": false,
+   "group": "tools",
    "built": true,
    "glb": "screwdriver.glb",
    "bytes": 6996,
@@ -1796,7 +2109,8 @@
     19.2,
     90.0
    ],
-   "volumeMm3": 10239.5
+   "volumeMm3": 10239.5,
+   "confusableWith": []
   },
   {
    "id": "pliers",
@@ -1815,6 +2129,7 @@
    "note": "Added (garage).",
    "minBand": 2,
    "simple": false,
+   "group": "tools",
    "built": true,
    "glb": "pliers.glb",
    "bytes": 4508,
@@ -1838,7 +2153,10 @@
     7.16,
     90.0
    ],
-   "volumeMm3": 10047.9
+   "volumeMm3": 10047.9,
+   "confusableWith": [
+    "ruler"
+   ]
   },
   {
    "id": "flashlight",
@@ -1857,6 +2175,7 @@
    "note": "Added (garage). Lens as a glow zone.",
    "minBand": 2,
    "simple": false,
+   "group": "tools",
    "built": true,
    "glb": "flashlight.glb",
    "bytes": 10420,
@@ -1885,7 +2204,12 @@
     30.43,
     90.0
    ],
-   "volumeMm3": 35646.2
+   "volumeMm3": 35646.2,
+   "confusableWith": [
+    "flask",
+    "glue_stick",
+    "ruler"
+   ]
   },
   {
    "id": "tape_measure",
@@ -1905,6 +2229,7 @@
    "note": "Added (garage).",
    "minBand": 2,
    "simple": false,
+   "group": "tools",
    "built": true,
    "glb": "tape_measure.glb",
    "bytes": 4588,
@@ -1928,7 +2253,8 @@
     20.87,
     48.7
    ],
-   "volumeMm3": 47442.4
+   "volumeMm3": 47442.4,
+   "confusableWith": []
   },
   {
    "id": "alarm_clock",
@@ -1945,6 +2271,7 @@
    "note": "Bells and feet as a composite.",
    "minBand": 0,
    "simple": false,
+   "group": "home",
    "built": true,
    "glb": "alarm_clock.glb",
    "bytes": 16096,
@@ -1973,7 +2300,21 @@
     30.26,
     90.0
    ],
-   "volumeMm3": 144167.1
+   "volumeMm3": 144167.1,
+   "confusableWith": [
+    "apple",
+    "avocado",
+    "ball",
+    "board_game",
+    "book",
+    "flying_disc",
+    "jam_jar",
+    "marble",
+    "orange",
+    "plate",
+    "playing_cards",
+    "yo_yo"
+   ]
   },
   {
    "id": "desk_lamp",
@@ -1990,6 +2331,7 @@
    "note": "Shade revolved, arm as a hulled chain.",
    "minBand": 0,
    "simple": false,
+   "group": "home",
    "built": true,
    "glb": "desk_lamp.glb",
    "bytes": 16468,
@@ -2018,7 +2360,8 @@
     53.8,
     90.0
    ],
-   "volumeMm3": 24488.7
+   "volumeMm3": 24488.7,
+   "confusableWith": []
   },
   {
    "id": "board_game",
@@ -2036,6 +2379,7 @@
    "note": "A box on its edge; the lid carries a four by four board as a second colour zone.",
    "minBand": 0,
    "simple": false,
+   "group": "toys",
    "built": true,
    "glb": "board_game.glb",
    "bytes": 5872,
@@ -2059,7 +2403,18 @@
     20.8,
     90.0
    ],
-   "volumeMm3": 161198.8
+   "volumeMm3": 161198.8,
+   "confusableWith": [
+    "alarm_clock",
+    "apple",
+    "ball",
+    "flying_disc",
+    "jam_jar",
+    "marble",
+    "orange",
+    "plate",
+    "yo_yo"
+   ]
   },
   {
    "id": "jigsaw",
@@ -2078,6 +2433,7 @@
    "note": "One edge piece stands for the puzzle: a flat bottom edge to hold, two knobs and a socket.",
    "minBand": 0,
    "simple": false,
+   "group": "toys",
    "built": true,
    "glb": "jigsaw.glb",
    "bytes": 6492,
@@ -2096,7 +2452,8 @@
     9.17,
     90.0
    ],
-   "volumeMm3": 46247.1
+   "volumeMm3": 46247.1,
+   "confusableWith": []
   },
   {
    "id": "notebook",
@@ -2115,6 +2472,7 @@
    "note": "Cover, pages and an elastic strap as colour zones.",
    "minBand": 0,
    "simple": false,
+   "group": "stationery",
    "built": true,
    "glb": "notebook.glb",
    "bytes": 5244,
@@ -2143,7 +2501,15 @@
     9.4,
     90.0
    ],
-   "volumeMm3": 47681.2
+   "volumeMm3": 47681.2,
+   "confusableWith": [
+    "book",
+    "cereal_box",
+    "drinking_glass",
+    "lemon",
+    "playing_cards",
+    "soda_can"
+   ]
   },
   {
    "id": "book",
@@ -2163,6 +2529,7 @@
    "note": "Rounded spine; a plain label with no title.",
    "minBand": 0,
    "simple": false,
+   "group": "stationery",
    "built": true,
    "glb": "book.glb",
    "bytes": 5252,
@@ -2191,7 +2558,18 @@
     16.8,
     90.0
    ],
-   "volumeMm3": 83005.1
+   "volumeMm3": 83005.1,
+   "confusableWith": [
+    "alarm_clock",
+    "avocado",
+    "cereal_box",
+    "drinking_glass",
+    "jam_jar",
+    "lemon",
+    "notebook",
+    "playing_cards",
+    "soda_can"
+   ]
   },
   {
    "id": "playing_cards",
@@ -2211,6 +2589,7 @@
    "note": "A squared deck with one heart: a single card is too thin to hold.",
    "minBand": 0,
    "simple": false,
+   "group": "toys",
    "built": true,
    "glb": "playing_cards.glb",
    "bytes": 4972,
@@ -2234,7 +2613,19 @@
     16.8,
     90.0
    ],
-   "volumeMm3": 89419.6
+   "volumeMm3": 89419.6,
+   "confusableWith": [
+    "alarm_clock",
+    "avocado",
+    "book",
+    "bucket",
+    "cereal_box",
+    "drinking_glass",
+    "jam_jar",
+    "lemon",
+    "notebook",
+    "plate"
+   ]
   },
   {
    "id": "pencil_case",
@@ -2252,6 +2643,7 @@
    "note": "Zip and puller as a second colour zone.",
    "minBand": 0,
    "simple": false,
+   "group": "containers",
    "built": true,
    "glb": "pencil_case.glb",
    "bytes": 5472,
@@ -2275,7 +2667,14 @@
     30.0,
     36.0
    ],
-   "volumeMm3": 72771.1
+   "volumeMm3": 72771.1,
+   "confusableWith": [
+    "comb",
+    "eraser",
+    "sponge",
+    "stapler",
+    "toy_brick"
+   ]
   },
   {
    "id": "soap",
@@ -2292,6 +2691,7 @@
    "note": "Stands on its long edge; a plain oval, no lettering.",
    "minBand": 0,
    "simple": true,
+   "group": "bath",
    "built": true,
    "glb": "soap.glb",
    "bytes": 5276,
@@ -2315,7 +2715,12 @@
     26.8,
     56.0
    ],
-   "volumeMm3": 119508.6
+   "volumeMm3": 119508.6,
+   "confusableWith": [
+    "dice",
+    "lunchbox",
+    "orange"
+   ]
   },
   {
    "id": "sponge",
@@ -2333,6 +2738,7 @@
    "note": "Lying flat, so the front shows the two layers and the holes.",
    "minBand": 0,
    "simple": true,
+   "group": "bath",
    "built": true,
    "glb": "sponge.glb",
    "bytes": 8240,
@@ -2356,7 +2762,14 @@
     60.0,
     28.0
    ],
-   "volumeMm3": 147836.3
+   "volumeMm3": 147836.3,
+   "confusableWith": [
+    "comb",
+    "eraser",
+    "pencil_case",
+    "stapler",
+    "toy_brick"
+   ]
   },
   {
    "id": "cereal_box",
@@ -2374,6 +2787,7 @@
    "note": "A plain box: window and band as colour zones, no print. The scan list's own word for it is the bare 'box'.",
    "minBand": 0,
    "simple": false,
+   "group": "kitchen",
    "built": true,
    "glb": "cereal_box.glb",
    "bytes": 6244,
@@ -2402,7 +2816,15 @@
     19.1,
     90.0
    ],
-   "volumeMm3": 91784.3
+   "volumeMm3": 91784.3,
+   "confusableWith": [
+    "book",
+    "drinking_glass",
+    "lemon",
+    "notebook",
+    "playing_cards",
+    "soda_can"
+   ]
   },
   {
    "id": "lunchbox",
@@ -2419,6 +2841,7 @@
    "note": "Base, lid, and a latch and handle as the third zone.",
    "minBand": 0,
    "simple": false,
+   "group": "containers",
    "built": true,
    "glb": "lunchbox.glb",
    "bytes": 11248,
@@ -2447,7 +2870,11 @@
     37.2,
     64.7
    ],
-   "volumeMm3": 153022.1
+   "volumeMm3": 153022.1,
+   "confusableWith": [
+    "orange",
+    "soap"
+   ]
   }
  ],
  "support": [
@@ -2464,6 +2891,7 @@
    "minBand": 0,
    "maxBand": 2,
    "simple": true,
+   "group": "tools",
    "built": true,
    "glb": "support_tool.glb",
    "bytes": 9324,
@@ -2492,7 +2920,8 @@
     29.03,
     90.0
    ],
-   "volumeMm3": 58852.6
+   "volumeMm3": 58852.6,
+   "confusableWith": []
   }
  ]
 }

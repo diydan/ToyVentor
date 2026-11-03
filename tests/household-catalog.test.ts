@@ -17,7 +17,7 @@ const CATALOG_PY = join(ROOT, "parts/kip/household/household_catalog.py");
 interface Zone { name: string; hex: string; tris: number }
 interface Item {
   id: string; label: string; scanRank: number | null; realMm: number; propMm: number; family: string; words: string[]; tags: string[]; note: string;
-  minBand: number; maxBand?: number; simple: boolean;
+  minBand: number; maxBand?: number; simple: boolean; group: string; confusableWith?: string[];
   built: boolean; glb: string | null;
   bytes?: number; sha256?: string; tris?: number; verts?: number; zones?: Zone[]; bboxMm?: [number, number, number]; volumeMm3?: number;
 }
@@ -31,7 +31,23 @@ const ALL_BUILT = [...BUILT, ...SUPPORT.filter((i) => i.built)]; // the support 
 const SCAN = new Map(
   (JSON.parse(readFileSync(join(ROOT, "tests/fixtures/scan-targets.json"), "utf8")) as { items: { rank: number; lengthMm: number; widthMm: number }[] }).items.map((t) => [t.rank, t]),
 );
-const STATIC_FIELDS = ["id", "label", "scanRank", "realMm", "propMm", "family", "words", "tags", "note", "minBand", "simple"] as const;
+const STATIC_FIELDS = ["id", "label", "scanRank", "realMm", "propMm", "family", "words", "tags", "note", "minBand", "simple", "group"] as const;
+const GROUP_NAMES = ["cutlery", "kitchen", "containers", "fruit", "tools", "stationery", "toys", "bath", "home"];
+interface Picture { front: string; threeQuarter: string; zones: { zone: string; hex: string; d: string }[] }
+const PICTURES = JSON.parse(readFileSync(join(DIR, "pictures.json"), "utf8")) as { version: number; box: number; confusableIou: number; items: Record<string, Picture> };
+/** Every number pair of a path's contours, the contour count, and the box they span: read here, not by the build. */
+function readPath(d: string) {
+  const contours = d.split("Z").map((c) => c.trim()).filter(Boolean);
+  const pts = contours.flatMap((c) => {
+    const n = (c.match(/-?\d+(?:\.\d+)?/g) ?? []).map(Number);
+    expect(n.length % 2, `odd number of coordinates in ${c.slice(0, 40)}`).toBe(0);
+    expect(c.startsWith("M"), "a contour starts with M").toBe(true);
+    return Array.from({ length: n.length / 2 }, (_, i) => [n[2 * i]!, n[2 * i + 1]!] as const);
+  });
+  const xs = pts.map((p) => p[0]);
+  const ys = pts.map((p) => p[1]);
+  return { contours: contours.length, w: Math.max(...xs) - Math.min(...xs), h: Math.max(...ys) - Math.min(...ys), minX: Math.min(...xs), maxX: Math.max(...xs), minY: Math.min(...ys), maxY: Math.max(...ys) };
+}
 
 // ---- an independent GLB reader -------------------------------------------------------------------------------------------------------
 
@@ -198,6 +214,19 @@ describe("household catalog: data", () => {
     expect(t.built).toBe(true);
   });
 
+  it("puts every item in one of the nine household groups, none holding a single item (a hand-written column, not the build family)", () => {
+    const count = new Map<string, number>();
+    for (const i of [...ITEMS, ...SUPPORT]) {
+      expect(GROUP_NAMES, `${i.id}: ${i.group}`).toContain(i.group);
+      count.set(i.group, (count.get(i.group) ?? 0) + 1);
+    }
+    for (const [g, n] of count) expect(n, `group ${g}`).toBeGreaterThanOrEqual(2);
+    expect(new Set(ITEMS.map((i) => i.group)).size, "all nine groups are used").toBe(GROUP_NAMES.length);
+    expect(ITEMS.find((i) => i.id === "wooden_spoon")!.group).toBe("cutlery");
+    expect(ITEMS.find((i) => i.id === "hammer")!.group).toBe("tools");
+    expect(SUPPORT[0]!.group).toBe("tools");
+  });
+
   it("tags the garage items and the sharp-looking ones as the spec lists them", () => {
     const tagged = (t: string) => ITEMS.filter((i) => i.tags.includes(t)).map((i) => i.id).sort();
     expect(tagged("sharp-looking")).toEqual(["fork", "scissors", "screwdriver", "toy_sword"]);
@@ -345,6 +374,75 @@ describe("household catalog: built items", () => {
   });
 });
 
+// ---- the pictures (for the Garage sheet, the grown-up's confirm and the shape game) ------------------------------------------------------
+
+describe("household pictures", () => {
+  const ALL = [...ITEMS, ...SUPPORT];
+
+  it("has a front, a three-quarter and a coloured zone picture for every item and the support tool, and nothing else", () => {
+    expect(PICTURES.version).toBe(1);
+    expect(PICTURES.box).toBe(100);
+    expect(Object.keys(PICTURES.items).sort()).toEqual(ALL.map((i) => i.id).sort());
+  });
+
+  describe.each(ALL.map((i) => [i.id, i] as const))("%s", (_id, item) => {
+    const pic = PICTURES.items[item.id]!;
+
+    it("draws the zones the catalog lists, in their colours, each with a contour", () => {
+      expect(pic.zones.map((z) => z.zone).sort()).toEqual(item.zones!.map((z) => z.name).sort());
+      for (const z of pic.zones) {
+        expect(z.hex, z.zone).toBe(item.zones!.find((q) => q.name === z.zone)!.hex);
+        expect(readPath(z.d).contours, `${z.zone} has a contour`).toBeGreaterThan(0);
+      }
+    });
+
+    it("fits the front outline to the 100 box, aspect kept, in the proportions of the item's own size", () => {
+      const f = readPath(pic.front);
+      expect(Math.max(f.w, f.h), "fills the box").toBeGreaterThan(99);
+      expect(Math.max(f.w, f.h)).toBeLessThanOrEqual(100.01);
+      for (const v of [f.minX, f.minY]) expect(v).toBeGreaterThanOrEqual(-0.01);
+      for (const v of [f.maxX, f.maxY]) expect(v).toBeLessThanOrEqual(100.01);
+      const want = item.bboxMm![0]! / item.bboxMm![2]!; // across over up, which is the front the build draws
+      expect(Math.abs(f.w / f.h - want) / want, "the picture's proportions against the item's").toBeLessThan(0.03);
+      const q = readPath(pic.threeQuarter);
+      expect(Math.max(q.w, q.h)).toBeGreaterThan(99);
+      expect(q.contours).toBeGreaterThan(0);
+    });
+  });
+
+  it("draws the zones back to front (the face over the clock's body, the gear over the toy tool's head) and the shape game's view differs from the front", () => {
+    const order = (id: string) => PICTURES.items[id]!.zones.map((z) => z.zone);
+    expect(order("alarm_clock").indexOf("body")).toBeLessThan(order("alarm_clock").indexOf("face"));
+    expect(order("support_tool").indexOf("head")).toBeLessThan(order("support_tool").indexOf("gear"));
+    for (const id of ["dice", "book", "notebook", "toy_brick", "stapler"]) expect(PICTURES.items[id]!.threeQuarter, id).not.toBe(PICTURES.items[id]!.front);
+  });
+
+  it("lists what looks like what: no item is its own look-alike, the table is symmetric and names real items", () => {
+    const m = new Map(ALL.map((i) => [i.id, new Set(i.confusableWith)]));
+    for (const i of ALL) {
+      expect(i.confusableWith, i.id).toBeDefined();
+      expect(m.get(i.id)!.has(i.id), `${i.id} looks like itself`).toBe(false);
+      for (const o of m.get(i.id)!) {
+        expect(m.has(o), `${i.id} lists ${o}`).toBe(true);
+        expect(m.get(o)!.has(i.id), `${o} does not list ${i.id} back`).toBe(true);
+      }
+    }
+  });
+
+  it("knows the round things are alike and the spoon is not like them (the point of the table)", () => {
+    const like = (a: string, b: string) => ITEMS.find((i) => i.id === a)!.confusableWith!.includes(b);
+    for (const [a, b] of [["ball", "marble"], ["plate", "flying_disc"], ["ball", "yo_yo"], ["ball", "orange"]] as const) expect(like(a, b), `${a} and ${b}`).toBe(true);
+    for (const o of ["ball", "plate", "flying_disc", "yo_yo", "orange", "marble"]) expect(like("wooden_spoon", o), `spoon and ${o}`).toBe(false);
+  });
+
+  it("leaves every item at least three items it does not look like, in the pool its youngest band may ask it in (simple items from the simple ones)", () => {
+    for (const i of ITEMS) {
+      const free = ITEMS.filter((o) => o.id !== i.id && o.minBand <= i.minBand && (o.simple || !i.simple) && !i.confusableWith!.includes(o.id));
+      expect(free.length, `${i.id} has ${free.length} wrong answers to use`).toBeGreaterThanOrEqual(3);
+    }
+  });
+});
+
 // ---- the catalog checker, shown to fail ------------------------------------------------------------------------------------------------
 
 function python3(): string | null {
@@ -403,6 +501,8 @@ describe.skipIf(!PY3)("household catalog: the checker (household_catalog.py)", (
     ["a simple item that is a tool", (d) => (d.items.find((i) => i.id === "hammer")!.simple = true), /hammer: a simple item .* cannot be tagged garage, tool/],
     ["a simple flag that is not a boolean", (d) => ((d.items[0] as unknown as { simple: unknown }).simple = "yes"), /ball: simple must be true or false/],
     ["no support tool", (d) => (d.support = []), /no support tool/],
+    ["an item in no known group", (d) => (d.items[0]!.group = "fruitz"), /ball: group 'fruitz'/],
+    ["a group of one item", (d) => (d.items.find((i) => i.id === "fork")!.group = "home"), /group 'cutlery' holds 1 item/],
     ["a support tool with a word", (d) => d.support[0]!.words.push("mallet"), /support_tool: a support tool has no words/],
     ["a support tool shown past band 2", (d) => (d.support[0]!.maxBand = 5), /support_tool: a support tool is shown in bands 0 to 2, not 0 to 5/],
   ];

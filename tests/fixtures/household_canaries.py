@@ -127,6 +127,48 @@ out["glb_sound_mesh"] = zoned_glb("t", verts, faces, ["a"] * 4, [("a", "#112233"
 out["glb_sliver"] = zoned_glb("t", sliver_verts, sliver_faces, ["a"] * 5, [("a", "#112233")])[1]["zeroAreaTris"]
 out["sliver_is_real_in_floats"] = float(np.linalg.norm(np.cross(sliver_verts[4] - sliver_verts[0], sliver_verts[1] - sliver_verts[0])) / 2)
 
+# the picture maths: overlap, the box path, the distractor rule
+import household_pictures as hp  # noqa: E402
+from manifold3d import CrossSection  # noqa: E402
+
+sq = CrossSection.square((10, 10))
+out["pic_iou_same"] = hp.iou(sq, sq)
+out["pic_iou_apart"] = hp.iou(sq, sq.translate((50, 0)))
+out["pic_path_square"] = hp.path(sq, hp.fit_box(sq))
+_outl = {}
+_catalog = {r["id"]: r for r in hc.static_rows()}
+for _id in ("ball", "marble", "wooden_spoon"):
+    _s, _ = hb.assemble(hb.BUILDERS[_id]())
+    _fin = hb.fit_longest(_s, _catalog[_id]["propMm"])
+    _outl[_id] = hp.to_box(hp.silhouette(_fin, hp.YAW_DEG, hp.PITCH_DEG), hp.fit_box(hp.silhouette(_fin, hp.YAW_DEG, hp.PITCH_DEG)))
+out["pic_ball_marble"] = hp.iou(_outl["ball"], _outl["marble"])
+out["pic_ball_spoon"] = hp.iou(_outl["ball"], _outl["wooden_spoon"])
+_conf = hp.confusable_with(_outl)
+out["pic_confusable_symmetric"] = all(a in _conf[b] for a in _conf for b in _conf[a])
+out["pic_confusable_ball"] = _conf["ball"]
+
+
+def _rows(*specs):  # (id, minBand, simple)
+    return [{"id": i, "minBand": b, "simple": s} for i, b, s in specs]
+
+
+_five = _rows(("a", 0, False), ("b", 0, False), ("c", 0, False), ("d", 0, False), ("e", 0, False))
+out["pic_distractors_enough"] = hp.distractor_problems(_five, {"a": ["b"], "b": ["a"], "c": [], "d": [], "e": []})  # a has 3 free: c, d, e
+out["pic_distractors_short"] = hp.distractor_problems(_five, {"a": ["b", "c"], "b": ["a"], "c": ["a"], "d": [], "e": []})  # a has 2 free: d, e
+_banded = _rows(("a", 0, False), ("b", 0, False), ("c", 0, False), ("e", 3, False), ("f", 3, False))
+out["pic_distractors_age_gate"] = [p for p in hp.distractor_problems(_banded, {}) if p.startswith("a:")]  # b, c only: e and f are too old
+_mix = _rows(("a", 0, True), ("b", 0, True), ("c", 0, True), ("d", 0, False), ("e", 0, False), ("f", 0, False))
+out["pic_distractors_simple_pool"] = [p for p in hp.distractor_problems(_mix, {}) if p.startswith("a:")]  # a is simple: only b, c count, d, e, f are not simple
+
+# the build refuses when too few items are told apart (everything made to look alike)
+_saved_iou = hp.CONFUSABLE_IOU
+try:
+    hp.CONFUSABLE_IOU = 0.01
+    out["pic_build_refuses_all_alike"] = [p for p in bh.build_all()[2] if "does not look like" in p][:2]
+finally:
+    hp.CONFUSABLE_IOU = _saved_iou
+out["pic_build_accepts_real"] = [p for p in bh.build_all()[2] if "does not look like" in p]
+
 # an edge that is not shared by exactly two faces: two cubes that touch only along a line (the first checkerboard did), and a surface with a hole
 def mesh_of(m):
     mesh = m.to_mesh()

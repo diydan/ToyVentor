@@ -99,6 +99,19 @@ describe.skipIf(!PYTHON)("household build", () => {
       expect(r.err).toContain("stray.glb is not in the catalog");
     }, 120_000);
 
+    it("catches an edited or missing pictures file", () => {
+      fresh();
+      const f = join(copy, "pictures.json");
+      writeFileSync(f, readFileSync(f, "utf8").replace("M", "M "));  // the first M only
+      const edited = run(BUILD, ["--check", "--out", copy]);
+      expect(edited.code).toBe(1);
+      expect(edited.err).toContain("pictures.json differs from a fresh build");
+      rmSync(f);
+      const missing = run(BUILD, ["--check", "--out", copy]);
+      expect(missing.code).toBe(1);
+      expect(missing.err).toContain("pictures.json is missing");
+    }, 120_000);
+
     it("catches an edited catalog", () => {
       fresh();
       const f = join(copy, "catalog.json");
@@ -155,6 +168,29 @@ describe.skipIf(!PYTHON)("household build", () => {
     it("refuses the first board game (squares meeting at their corners pinch the surface) and accepts the one in the library", () => {
       expect(c.pinched_checkerboard).toEqual([expect.stringMatching(/board_game: \d+ edge\(s\) that are open or pinched in the file/)]);
       expect(c.real_board_game).toEqual([]);
+    });
+    it("measures overlap between outlines (identical = 1, apart = 0, a ball and a marble confusable, a ball and a spoon not) and keeps the table symmetric", () => {
+      expect(c.pic_iou_same).toBeCloseTo(1, 6);
+      expect(c.pic_iou_apart).toBe(0);
+      expect(c.pic_ball_marble).toBeGreaterThanOrEqual(0.75);
+      expect(c.pic_ball_spoon).toBeLessThan(0.5);
+      expect(c.pic_confusable_symmetric).toBe(true);
+      expect(c.pic_confusable_ball).toContain("marble");
+      expect(c.pic_confusable_ball).not.toContain("wooden_spoon");
+    });
+    it("writes a path with a closed contour per outline, y pointing down, inside the 100 box", () => {
+      expect(c.pic_path_square).toBe("M0 100 L100 100 L100 0 L0 0 Z");
+    });
+    it("refuses an item with too few items it does not look like to use as wrong answers, and accepts one with enough", () => {
+      expect(c.pic_distractors_enough).toEqual([]);
+      expect(c.pic_distractors_short).toEqual([expect.stringMatching(/a: only 2 items it does not look like/)]);
+      expect(c.pic_distractors_age_gate).toEqual([expect.stringMatching(/a: only 2 items/)]); // an older-band item is not a wrong answer for a younger one
+      expect(c.pic_distractors_simple_pool).toEqual([expect.stringMatching(/a: only 2 items/)]); // a simple item draws only from simple ones
+    });
+    it("makes the build refuse when the outlines are made to look alike (no wrong answers left), and accept the real ones", () => {
+      expect(c.pic_build_refuses_all_alike.length).toBeGreaterThan(0);
+      expect(c.pic_build_refuses_all_alike[0]).toMatch(/only \d+ items it does not look like/);
+      expect(c.pic_build_accepts_real).toEqual([]);
     });
     it("catches triangles from a piece that was never tagged", () => {
       expect(c.untagged_pieces.length).toBeGreaterThan(0);
