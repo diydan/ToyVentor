@@ -1,11 +1,15 @@
 import { describe, expect, it } from "vitest";
 import {
   arriveScene,
+  arriveSceneVisit,
   itemMarkerX,
   recipeForRung,
   startSceneCarry,
+  startSceneVisit,
   tapSceneItem,
+  tapSceneSpot,
   tapSceneTarget,
+  visitForRung,
 } from "../src/features/game/world/runtime/level2Scene";
 
 describe("scene carry sessions (carousel C3, §11)", () => {
@@ -97,5 +101,62 @@ describe("scene carry sessions (carousel C3, §11)", () => {
   it("arrival with nothing pending is a no-op", () => {
     const session = startSceneCarry("little.pack")!;
     expect(arriveScene(session)).toBeNull();
+  });
+});
+
+describe("scene visit sessions (carousel C3, §11.3)", () => {
+  it("visit recipes exist for the four non-carry rungs", () => {
+    for (const id of ["little.pop", "little.animals", "little.peek", "little.gogo"]) {
+      expect(visitForRung(id)?.missionId).toBe(id);
+      expect(startSceneVisit(id)?.at).toBe(0);
+    }
+    expect(startSceneVisit("little.pack")).toBeNull();
+    expect(startSceneVisit("lab1.bridge")).toBeNull();
+  });
+
+  it("spots are ordered, spread out, and say their prompt twin", () => {
+    for (const id of ["little.pop", "little.animals", "little.peek", "little.gogo"]) {
+      const recipe = visitForRung(id)!;
+      expect(recipe.spots.length).toBeGreaterThan(1);
+      const xs = recipe.spots.map((s) => s.x);
+      expect(new Set(xs).size).toBe(xs.length);
+      for (const s of recipe.spots) {
+        expect(s.tap.length).toBeGreaterThan(5);
+        expect(s.arrive.length).toBeGreaterThan(5);
+        expect(s.hint.length).toBeGreaterThan(5);
+      }
+      expect(recipe.oops.toLowerCase()).not.toContain("wrong");
+    }
+  });
+
+  it("tap-then-tap plays Pop the bubbles to done", () => {
+    const session = startSceneVisit("little.pop")!;
+    const go = tapSceneSpot(session, "big", 6);
+    expect(go.action).toBe("goto");
+    if (go.action !== "goto") throw new Error("unreachable");
+    expect(go.x).toBe(6);
+    const first = arriveSceneVisit(session);
+    expect(first?.event).toBe("advanced");
+    // Finished spots hint instead of walking.
+    expect(tapSceneSpot(session, "big", 6).action).toBe("hint");
+    tapSceneSpot(session, "tiny", 10);
+    const last = arriveSceneVisit(session);
+    expect(last?.event).toBe("done");
+    expect(session.done).toBe(true);
+    expect(arriveSceneVisit(session)).toBeNull();
+  });
+
+  it("out-of-order arrivals miss with the expected hint", () => {
+    const session = startSceneVisit("little.pop")!;
+    tapSceneSpot(session, "tiny", 10);
+    const bad = arriveSceneVisit(session);
+    expect(bad?.event).toBe("wrong");
+    if (bad?.event !== "wrong") throw new Error("unreachable");
+    expect(bad.say.length).toBeGreaterThan(3);
+    expect(bad.hint).toContain("biggest");
+    expect(session.at).toBe(0); // no progress on a miss
+    // The expected spot still resolves after the miss.
+    tapSceneSpot(session, "big", 6);
+    expect(arriveSceneVisit(session)?.event).toBe("advanced");
   });
 });

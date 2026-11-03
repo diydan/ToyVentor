@@ -8,17 +8,21 @@ Source mockup: `/Users/dan/Downloads/toyventor` (`README.md`,
 `CONTINUE.md`). This spec decides what ports into ToyForge, what ToyForge
 keeps, and in what order. No implementation starts until §14 sign-off.
 
-> Status: **SIGNED OFF 2026-11-02 — C1+C2 landed, C3 first level landed.**
+> Status: **SIGNED OFF 2026-11-02 — C1+C2 landed, C3 all six little rungs landed.**
 > Decisions in §6 bind implementation.
-> C3 as shipped (first level): `runtime/level2Scene.ts` (pure
-> tap/arrive session over the carry core) + scene markers in
-> `world.ts`: recipe rungs (`little.pack`, `little.tidy`) spawn
-> tappable item/target markers; tap walks the toy there; arrivals
-> resolve through the same carry rules as the panel proxy, so scene
+> C3 as shipped (all six): `runtime/level2Scene.ts` (pure
+> tap/arrive sessions over the carry core + ordered visit sessions
+> for `little.pop`, `little.animals`, `little.peek`, `little.gogo`)
+> + scene markers in `world.ts`; tap walks the toy there; arrivals
+> resolve through the same rules as the panel proxy, so scene
 > and panel can never disagree. Play-verified in headless Chrome:
-> full Pack-the-car run in-world (2★ with accuracy math), run
-> advance, miss counting. Marker taps win over occluding props
-> within range; marker hit areas meet the band 0–1 target size.
+> full Pack-the-car run in-world (2★ with accuracy math), full
+> Pop/Animals/Peekaboo/Go runs in-world (Pop 2★ after a scene miss),
+> run advance, miss counting. Marker taps win over occluding props
+> within range; marker hit areas meet the band 0–1 target size;
+> marker taps steer z to the marker so arrivals always resolve.
+> Wrong taps hop the tapped marker and cue the right one ~0.8 s
+> later (`reactThenHint`); copy never says "wrong".
 > Toast twins every prompt; speech twin still open.
 > C2 as shipped: `startLearnRun`/`stopLearnRun`/`learnState` on the
 > engine facade with `LearnSnapshot` + `learnFinished` events; lab
