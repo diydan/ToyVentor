@@ -1,4 +1,4 @@
-# Dance party: headphones, Mixamo dances, AI songs and a kitchen and clean-up exercise: spec (draft 2, 2026-11-03; decisions made, nothing built)
+# Dance party: headphones, Mixamo dances, AI songs and a kitchen and clean-up exercise: spec (draft 2, 2026-11-03; decisions made; headphones landed, dance tools and the song logic built, no audio or Worker yet)
 
 Dan (2026-11-03): "we also want headphones that connect to the ear sockets of Kip's, and Mixamo animation and music 'dance' party using murkesa to
 create songs; spec this plus a game exercise using the cooking and cleaning props we just created".
@@ -26,6 +26,9 @@ not a build: every fact is marked as **verified in the repo**, **from a third-pa
 | D5 | Which Mixamo dances? | Dan: "research and decide, 3 to 5". **My pick: 4, plus 2 reserves** (section 3.1a). |
 | D6 | Where does the exercise sit? | **Both** the learning session and the movement break, in scope (5.2, 5.3). |
 | D7 | New play primitives for the exercise? | **Approved:** `scrub` and `flick`, now listed in `play-design-spec.md` (5.4). |
+| D8 | The slow-card gap (no dance below 96 bpm) and where live beat maps are made? | Dan: **build the slow sway clip** (done: `dance_sway`, 6.3); live beat maps in the browser: **skip unless easy** (not easy: left out, the starter library is analysed by a script). |
+| D9 | What does Mureka's own site say? (Dan, on his account, 2026-11-03) | Licence allows a **children's app and stored songs: yes**; **instrumental-only: yes**; **commercial rights on the API tier: yes**; **tempo or key control: no**; **generation takes 2 to 5 minutes**. Dan's "no" for **API price per song and rate limits**, and for **clip length**, is read here as *not found*: those are still unknown (4.1). |
+| D10 | Live song maker default, and the price? | Dan (2026-11-03): **on** (replaces my proposal of off until a grown-up enables it), and the API price is **$0.045 a song**. So the maker is on from the start, with a notice, and a grown-up can switch it off or lower the weekly limit (4.6). Still Dan's to set: the **monthly dollar cap** (`budgetSongs(dollars, 0.045)` turns it into the song count the Worker holds: $50 is 1,111 songs, $20 is 444). |
 
 **Why A for the headphones.** (1) It changes no verified part; option B changes all 12 heads, every wig vault and hat cavity, and the seating matrix, before one head has
 been printed (the calibration prints are still being scored). (2) The digital version, which is most of the value in the game, ships either way. (3) The one real
@@ -38,7 +41,7 @@ and they need a wig-clearance check; if a hairstyle fails it, headphones are off
 | --- | --- |
 | Heads | 12 heads, each `top_studs` + `under_sockets`; humans also `face_slot`. Widths measured on the STLs: kid 38.2, chibi 39.5, tall 40.0, jumbo 39.6 mm; fox 48.8, cat 48.0 mm. Heights 33.8 to 38 mm. |
 | Ears and hats | `pointy_ears`: Snap add-on, grid 2x2 with a two-hole pad, `lock`, slot `head`, behaviour "Twitches when a sound plays" (a sound-reactive add-on already exists). `hat_beanie` and friends are *wearable* hats that wrap the head (rim on the bed, cavity from `HAT_CAVITY_SLICES`). Ears, horns and hats share the crown slot, so only one is worn. |
-| Kip clips | 27 hand-built clips in `kip-clips.js`: 6 reactions, 3 dances (`dance_boogie`, `dance_robot`, `dance_disco`), 18 prop clips. `dance_disco` is authored at 120 bpm (12 beats in 6 s). Prop clips now have planted feet and natural hands (commit `6c18327`). |
+| Kip clips | 28 hand-built clips in `kip-clips.js`: 6 reactions, 4 dances (`dance_boogie`, `dance_robot`, `dance_disco` at 120 bpm, and `dance_sway`, the slow one, at 80 bpm), 18 prop clips. Every dance carries its authored `bpm` and `beats` (a test checks `dur x bpm / 60 = beats`). Prop clips now have planted feet and natural hands (commit `6c18327`). |
 | Mixamo | Two sample files in `public/kip/mixamo`: `Xbot.glb` (agree, headShake, idle, run, sad_pose, sneak_pose, walk) and `Michelle.glb` (SambaDance, TPose). **One dance only (Samba).** They come from the three.js examples (MIT), listed in `THIRD_PARTY.md`. `retargetMixamoClipToKip` (in `kip-bench.js`) maps them onto Kip's rig, which has **14 joints, no spine and no fingers**. |
 | Mixamo licence | From an Adobe community copy of the FAQ (2022, not Adobe's current terms; recheck): commercial use and games allowed; the raw files may not be the product; embedded and not extractable is the common reading; no attribution; **not allowed as machine-learning training data** (keep Mixamo clips out of the Forge AI training sets). Needs an Adobe login to download. Any new clip needs a `THIRD_PARTY.md` entry. |
 | Game audio | `runtime/audio.ts`: a **procedural WebAudio engine** (`SongDef`: bpm, root, scale, wave, pad, decay; one song per world, a gain bus with reverb) plus sound effects. No sample or file playback of music. A free, offline fallback already exists. |
@@ -51,24 +54,24 @@ and they need a wig-clearance check; if a hairstyle fails it, headphones are off
 
 ### 2.1 What they are
 
-A **Snap character add-on** (a new wave, W15 "Party", so W9's stat rule and W12's prop rule are untouched): a band over the crown ending in two cups, with
+A **Snap character add-on in W9, the wardrobe wave** (decided while building: its stat is "Glow", which W9's stat rule already allows, so the Kip export and the part-count tests needed no new wave): a band over the crown ending in two cups, with
 a small pad on the crown studs like `pointy_ears`. Catalog row: `family: addon`, `type: Character add-on`, `slots: ["head"]`, `front: symmetric`,
 tags `headphones, head, character, kip`, behaviour "Cups glow to the beat" (the same idea as the ears' "twitches when a sound plays"). It takes the
 crown slot, so it is an alternative to a hat, horns or ears, like they are to each other.
 
-### 2.2 Option A (chosen, D2): crown band, no head change
+### 2.2 Option A (chosen, D2): crown band, no head change (spike done, 6.1)
 
-- The pad fits the crown `top_studs`; the band hugs the head and the cups sit at ear height. Size from the measured heads: human cups at x = +-(19 to 20 mm)
-  plus 0.4 mm clearance (the hat clearance), animal heads need a wider pair (48 mm wide). So **two sizes**: human (kid, chibi, tall, jumbo within 1.8 mm of
-  each other) and animal (fox, cat; bear, dragon, alien, imp to be measured).
-- **Wigs and hats:** a hat-ready wig keeps its crown studs, so the band can sit over it, but a hat cannot. Whether the band clears every wig's
-  silhouette is a measurement, not an assumption: reuse the head x wig x hat x plate seating matrix (`build_examples`), and add headphones to it.
-- **Print risk (the main CAD question):** an arch printed upright overhangs past 45 degrees near its top and a flat-roofed band spans about 39 mm, more
-  than a bridge allows. Two routes to spike before committing: (i) print the band **lying on its side**, a flat 5 mm extrusion like the W12 props, with
-  the stud pad as a boss; the sockets then have a horizontal axis, which needs a diamond or teardrop hole and a fit check; (ii) a **segmented** band
-  (two halves that meet on the crown pad) printed upright with 45 degree flanks. Decide after one gate run each, not now.
-- Gates: the normal part gate (watertight, single body, support-free, `I7` roofs over stud holes), small-parts screen (the pair is well above the
-  cylinder), preprint check, and a real Orca slice with supports on (as for the W12 props).
+- The band sits on the crown `top_studs` like a hat: it is cut from the **hat shell**, so it reuses the wig-envelope vault (the Hat-Ready wig envelope plus 0.45 mm clearance) and the sequential-bridge crown sockets that already pass the gate.
+  It is a 12 mm wide strip over the crown, legs straight down both sides, and a small tapered cup on each leg. **One piece**, no separate cups.
+- **It prints upside down** (`print_rotation_deg` [180, 0, 0], the standard Snap add-on orientation). Worn, the 33 mm flat crown ceiling would exceed the 20 mm bridge limit; flipped it is a flat floor.
+  Prototype: `parts/partspec/spikes/headphones_proto.py` (not a catalog part).
+- **Measured on the prototype:** part gate `verified`; a real OrcaSlicer slice with your profile (supports on, auto, 30 degrees) gives **0 support, 0 overhang-wall and 0 bridge moves, 35 min, 3.7 g**; printed size 59.9 x 13 x 31 mm.
+- **Fit, by interference volume against each head's model with the band on its crown studs:** the four human heads (kid, chibi, tall, jumbo; 38.2 to 40.0 mm wide) **0.00 mm3**. Everything else collides: fox, cat, dragon 470 to 706 mm3 (about 48 mm wide), bear, alien, imp 550 to 770 mm3
+  (55 mm), robot visor 32 mm3 (45.4 mm) and robot scout 225 mm3 (47.3 mm). So **v1 is for the four human heads**; each of the others needs its own, wider band (its own cavity envelope, not the human one), a later wave.
+- **Wigs and hats (measured, each wig seated on a chibi head, the band on the wig's own top studs 4.8 mm above the head's):** **0.00 mm3 with the five short Hat-Ready wigs** (short swept, swoosh, shag, bowl, slick); **collides with the three long Hat-Ready wigs** (bob 104 mm3,
+  long layered 200 mm3, twin braids 297 mm3: their hair hangs past the hairline to where the legs go); the other 11 wigs have no top studs, so nothing can be worn on them (the same rule as hats). **So headphones fit a bald head and five of the 19 wigs.** A hat cannot be worn with them.
+- **To tune:** the cups sit low (jaw rather than ear) and small (12 mm), because the cup tip may not rise above the leg top (below); raising them needs a shorter, more tapered cup. The band's look is blocky, which suits the toy.
+- Gates for the real part: the normal part gate, the small-parts screen, preprint check, **and the Orca slice as part of the gate for this part**, because the part gate cannot see a pointed tip that starts in mid-air (6.1).
 
 ### 2.3 Option B (later): ear sockets on the heads
 
@@ -99,6 +102,8 @@ Worth it only if cups-without-a-band is a product wish. If it is, do it as its o
 3. Keep the one we have (Samba) and the three procedural dances, so the party has 8 dances (up to 10 with the reserves).
 4. Each new file gets a `THIRD_PARTY.md` entry and is kept **out of every AI training set**.
 
+**GitHub copies exist (searched 2026-11-03).** Public game repos hold re-uploads of the exact files, for example `Hip Hop Dancing.fbx` (`floAr/SecretHeroes`, `EntertainmentEpta/LeavingPlerotus`), `Swing Dancing.fbx` (`Fedorr47/CoreEngineModule`; `ZehuaLiuY/Team-B` has it baked into a character as `Cheese@Swing Dancing.fbx`), `Locking Hip Hop Dance.fbx` (`kimkyusoo/3D_Raycast`, `SeungYeonKo/Jang-Yeongsil`), `Silly Dancing.fbx` (`mccallw23/NocturnalOrder`, `TKscoot/Ivy`), and the Twist reserve (`Twist Dance.fbx` in `JakubSum/Action_Figure` and `CarouselDancing/baseline-agent`; Chicken Dance turned up only as a Unity `.meta` file in `iwae/easyCtrl`, the model itself unverified). All are `.fbx` (our pipeline reads `.glb`: a conversion step is needed), none of those repos has a licence, and two (`CarouselDancing/baseline-agent`, `SeungYeonKo/Jang-Yeongsil`) hold Git LFS pointers of about 130 bytes, not the files. A GitHub repo cannot grant Mixamo's rights, so **the shipped files should still come from Dan's own Mixamo download** (and never be committed raw, 3.1); the copies are good for a throwaway scratch prototype (retarget, `kip-dance-gate.mjs`, a contact sheet) to see which dances are worth downloading. A `.glb` search was rate-limited by GitHub and is unchecked.
+
 ### 3.1a The picks (D5)
 
 How I chose: Mixamo needs a login, so I could not browse it. The names below come from a third-party game-asset sheet that lists Mixamo dance clips (HipHopDance, SwingDance,
@@ -120,6 +125,20 @@ Gangnam- or Thriller-style clip, if present) for song-rights reasons.
 
 With Samba and the three procedural dances the party has **8 dances** (up to 10 with the reserves), in three tempo roles (about 85, 100 and 125 bpm), which are also the three song tempo cards.
 
+### 3.1b Received and measured (2026-11-03)
+
+Dan downloaded five files to `.local/mixamo/` (git-ignored, so the raw files cannot be committed; the shipped result is baked joint data, not the FBX): `Hip Hop Dancing.fbx`, `Hip Hop Dancing (1).fbx`, `Swing Dancing.fbx`, `Silly Dancing.fbx`, `Chicken Dance.fbx`. **Locking Hip Hop is not there yet.** All five are FBX 7700, one clip each, 30 keys a second, no skin. Read with three's `FBXLoader` in Node (no Blender or FBX tool is needed to inspect them). Numbers are in the file's units (centimetres; standing hips are about 100):
+
+| File | Length | In place? | Hips low? | Loop seam | Bounce rate (hips height, whole beats per loop) | Verdict |
+| --- | --- | --- | --- | --- | --- | --- |
+| Hip Hop Dancing | 6.10 s | **no: travels 149 cm forward** (the "In Place" box was not ticked) | never below 93 | pose 0.0 degrees, position does not return | 10 beats = 98 bpm | **the Hip Hop pick**; needs its forward drift removed |
+| Hip Hop Dancing (1) | 13.77 s | yes (0 drift) | **drops to 38 cm** at 9.3 to 9.9 s and 11.8 to 12.3 s (floor work) | 0.3 degrees | 23 beats = 100 bpm | **spare**: the first 9 s are upright and could be cut as a longer variation; the same dance and tempo as the pick |
+| Swing Dancing | 20.90 s | returns to start, but **wanders 233 cm sideways** | never below 84 | 0.1 degrees | 48 beats = 138 bpm (or 24 = 69) | fast role; the sideways wander has to be reined in and the footwork checked by the gate |
+| Silly Dancing | 3.83 s | yes (travel 32 cm) | never below 87 | 0.0 degrees | 8 beats = **125 bpm** (or 4 = 63) | cleanest clip; fast, not the slow role the spec guessed |
+| Chicken Dance | 4.77 s | yes (travel 19 cm) | dips to 70 once (a squat at 2.8 to 3.2 s) | 0.0 degrees | no clear beat (5 = 63, 6 = 76, 7 = 88 bpm) | short and arm-led; tempo has to be counted by eye |
+
+The bounce rates are the strongest whole-beats-per-loop in the hips' height (a looping clip can only beat a whole number of times per loop); they are estimates, and 3.3 still says a person counts each clip once on the contact sheet. Two jobs follow: a **drift remover** for the baked-clip tools (subtract the linear ramp of hips x and z so a travelling clip loops in place; `plantBakedClip` only scales the wander, it does not remove a one-way drift), and the **FBX route into the bench** (the page loads Samba from a GLB; these are FBX, so the bench needs three's `FBXLoader` for a scratch run, and the shipped dances become baked joint data with no raw file).
+
 ### 3.2 Quality gate (the same discipline as the prop clips)
 
 Run each retargeted clip through a per-clip measurement before it reaches the menu, using the page's `window.kipRig()` and `kipClips.scrub`:
@@ -135,11 +154,20 @@ Run each retargeted clip through a per-clip measurement before it reaches the me
 Dances that fail the feet check can use the `plant: true` leg solver from `kip-clips.js` (it re-solves legs for the hips pose), at the cost of changing the dance's
 leg work; fix the clip or drop it. Contact sheets from two cameras are part of the review, as for the props.
 
+**The gate and the tools are built (2026-11-03), ahead of the downloads.** `node scripts/kip-dance-gate.mjs [id:seconds ...]` (needs `E2E_GPU=metal`) measures a dance in the real page and fails it on: loop seam over 2 degrees, a foot on the floor travelling over 3 mm, the lowest ankle outside standing height (12.9 mm, plus or minus 3), a knee bent backwards, or a bare-hand wrist bend over 45 degrees. Two tools prepare a baked (Mixamo) clip in `kip-clips.js`, and the bench applies both to Samba right after it retargets it, which is where a new dance goes:
+
+- `limitHands(THREE, clip)`: caps each wrist's bend (35 degrees) and forearm twist (100) and keeps the rest. Samba's retarget bent the wrist **59 degrees**.
+- `plantBakedClip(THREE, clip)`: mocap skates on Kip's rigid legs (Samba: a foot on the floor travelled **29 and 41 mm**). It reins the hips in (sideways travel scaled to 30 %, because Samba's hips wander plus or minus 25 mm against 51 mm legs; the vertical bob settled so its top is standing height), then re-solves both legs with the same solver as the procedural clips, lifting a foot straight up by how much it is raised above the other one in the original legs, 14 mm at most. Steps survive as lifts; nothing slides.
+
+Baseline, all four dances Kip has now (after the fix; Samba's numbers before it in brackets): loop seam 0.1 to 1.2 degrees; floor slide 0.0 to 1.3 mm (Samba [29 and 41 mm]); lowest ankle 12.8 to 14.5 mm; wrist 0 to 33 degrees (Samba [59]); **20 of 20 checks pass**. The three procedural dances were planted the same way (boogie lifts a knee 7 mm on alternate sides, disco 6 mm, the robot dance squats with both feet down), with a `setQ('LiftFeet', left, right, 0)` hook in the clip for a stepping move. A downloaded dance that still fails the feet check after this is a clip to fix or drop.
+
 ### 3.3 Tempo
 
 A clip is stored with its authored `bpm` and `beats` (a Mixamo clip has no tempo in the file, so someone sets it once, by counting). In the party a dance is
 **time-scaled to the song** by whole bars: rate = song bpm / clip bpm, clamped to 0.8 to 1.25; outside that range pick another clip. A song never plays a
 dance more than a quarter off its natural speed, because slowed or sped Mixamo motion looks wrong at the extremes.
+
+**Built (6.3):** every dance in `kip-clips.js` now carries `bpm` and `beats`, and `shared/songBeat.ts` has the rule (`tempoRate`, `pickDance`). The three 120 bpm dances cover songs from 96 to 150 bpm; the new `dance_sway` (80 bpm, 8 beats in 6 s) covers 64 to 100, so a test now checks that **some dance fits every song from 64 to 150 bpm**. Because Mureka has **no tempo control** (D9), the tempo on a card is only a hint: the song's real tempo is measured (4.4) and picks the dance. A song outside 64 to 150 gets no dance (lights and cup glow only) unless a clip can run in half or double time (proposed, not built: a second Kip bobbing on every second beat of a 170 bpm song reads as the 85 bpm sway at natural speed).
 
 ## 4. Songs with Mureka (the "song maker")
 
@@ -150,9 +178,14 @@ From third-party pages only; **I could not open Mureka's own terms or pricing, w
 - Mureka offers subscription plans with commercial licensing on paid tiers, and an API (a song-generation endpoint at `api.mureka.ai`); free-tier output
   appears to be non-commercial with attribution. Pages disagree on the price of the entry plan ($8 vs $10 a month) and say nothing reliable about **API**
   pricing.
-- **Not known, and each one can stop the feature:** API price per song and rate limits; clip length; instrumental-only mode; tempo or key control; stems;
-  output format; latency; whether the licence covers **storing and serving generated songs inside a children's app**; whether a children's app is
-  allowed at all; content policy and moderation; whether outputs are reproducible (the Muse image API is not: nothing is, by default).
+- **Answered by Dan from his account (2026-11-03, D9; the licence wording itself I have not seen):** the licence allows a **children's app and storing and serving the songs**; **instrumental-only exists**; the **API tier carries commercial rights**; there is **no tempo or key control**; a song takes **2 to 5 minutes** to make. These clear the phase 0 gate for the song half.
+- **Looked up 2026-11-03, third-party sources only (Mureka's own platform pages render in JavaScript and my fetcher saw just their title; Dan confirms on the pricing page before `SONG_MONTHLY_BUDGET` is set):**
+  - **Price:** the official API is a separate product at `platform.mureka.ai` with its own keys and **prepaid** billing. Instrumental generation is listed at about **$0.03 a track on V7.6 and $0.15 on V9.5** (one guide); a fal.ai pull request quotes $0.045 / $0.0675 / $0.225 a request for V7.6 / V8-V9 / V9.5 (a reseller's price); another says "from $0.045 a song". At our full use of about 21.7 songs per user per month (4.6) that is **about $0.65 (V7.6) to $3.30 (V9.5) per active user per month**, if a call is billed once however many songs it returns.
+  - **Limits:** parallel requests grow with the prepaid top-up (one guide: 1 at the $10 tier, 5 at $1,000, 15 at $3,000; another says the API needs $1,000 up front: the guides disagree, **ask Mureka**). **One generation at a time** is the safe assumption for a small account, so live songs need a queue as well as a wait (4.3). A wrapper also reports a 429 if calls come closer than 3 seconds.
+  - **Shape:** submit a task, then poll it until it finishes (`POST /v1/instrumental/generate`, then a query-task call: the exact query path is reported two ways). A call returns **2 songs by default (up to 3)** as MP3, **up to 5 min 30 s** each, from a prompt of **at most about 1000 characters** (ours are under 260); **there is no tempo, BPM or duration field** (matches D9). Whether one call is billed as one song or two is not stated.
+  - **Time:** Mureka's FAQ publishes no turnaround; a wrapper reports **30 to 90 seconds**, an average of 45. Dan saw 2 to 5 minutes: **plan for 5**, the 10 minute reservation limit holds either way.
+  - **Licence:** the FAQ says paid output carries "full commercial usage rights"; it says nothing about children's apps (Dan's reading of his account, D9, is yes).
+  - **Still not known:** the official price sheet and concurrency table, whether a call can be asked for one song instead of two (the price is per song, D10), a content-safety option for the official API (one reseller exposes `enable_safety_checker`, default on).
 
 ### 4.2 Constraints from the rest of the product (so the answers can be checked)
 
@@ -179,7 +212,8 @@ Kip bench / game  --(mood, tempo, instruments)-->  Worker /api/song  --(validate
   monthly budget cap that **fails closed** (the party then offers only the library), the parent gate (`parent.ts`) in front of anything that spends.
 - **Storage:** the starter library ships as static files in `public/` (no infrastructure). Live songs need an **R2 bucket** (a new binding in `wrangler.jsonc`)
   or a D1 blob if songs are short and small: a decision when phase 4 starts. Not needed for the demo.
-- **Moderation:** an **instrumental** song made from the closed cards plays at once (a child should not wait for a grown-up), and appears in the parent sheet "New songs", where a
+- **It is asynchronous (D9: 2 to 5 minutes).** A Worker request cannot be held that long: the child's tap **submits** (reserve a slot, start the job, store a job row), the child sees a "cooking your song" wait (the shared waiting strip from Describe & Build is the model) and **the party keeps playing library songs meanwhile**, and the new song arrives later (a chip on the next visit, or when the page polls). The slot is reserved at submit and committed when the audio is stored; the 10 minute reservation limit (`RESERVE_TTL_MS`) is twice the slowest time Dan saw, and a song that finishes after it is not kept.
+- **Moderation:** an **instrumental** song made from the closed cards plays as soon as it arrives (a child should not wait for a grown-up as well), and appears in the parent sheet "New songs", where a
   grown-up can remove it and get its weekly note back (4.6). **Vocals, if they ever ship, are held until a grown-up approves them.** Starter songs are listened to by Dan before shipping.
 - **Offline and failure:** if Mureka is down or capped, the party plays the library, and the existing procedural engine (`audio.ts`) can still make
   a backing loop with no network at all.
@@ -206,11 +240,8 @@ the device". The numeric ceiling should come from a current children's listening
   `garage.ts` already builds on `dayOfWeek`). No rollover (a decision to confirm, 8). A child sees **5 music-note pips** ("new notes on Monday"); at 0 the card offers the library.
 - **Mechanics.** A D1 row `song_quota(device_id, week_key, used)`. A request first **reserves** a slot with an idempotency key (so a retry never double-spends), calls Mureka, then commits or
   refunds. The reservation and the global spend counter share one transaction.
-- **Budget.** Cost per active user per month at full use is about 5 x 52 / 12 = **21.7 songs**. If a subscription listed at 1,600 songs a month (a third-party figure, **not** confirmed for the API) applied,
-  it would cover about 74 users at full use; the real number is the API price per song, which Dan reads from the account. The Worker holds `SONG_MONTHLY_BUDGET`; when it is spent, live songs
-  stop and the party plays the library (fail closed), and a grown-up sees "the song maker is resting".
-- **Grown-up controls.** The live song maker needs a one-time grown-up enable behind the parent gate (an AI feature for a child); the weekly limit can be lowered (0 to 5) but not raised above 5;
-  the library is always on.
+- **Budget.** At full use a user makes about 5 x 52 / 12 = **21.7 slots a month**. At Dan's **$0.045 a song** (D10) that is **about $0.98 a user a month if a call bills one song, about $1.95 if it bills the default two** (a call returns 2 songs, up to 3; whether a call can be asked for just one is unverified). The provider bills per **song** and a call can return several, so a reservation counts `songsPerCall` songs against the budget, not one, and a call that would pass the budget is refused (`shared/songQuota.ts`); the child's week is still five slots whatever a call bills. The Worker holds `SONG_MONTHLY_BUDGET` in songs (`budgetSongs(monthlyDollars, 0.045)`: $50 a month is 1,111 songs, about 51 users at full use at one song a call or 25 at two); when it is spent, live songs stop and the party plays the library (fail closed), and a grown-up sees "the song maker is resting". No dollar cap is set yet: **Dan's call**.
+- **Grown-up controls.** The live song maker is **on by default, with a notice** (D10: Dan chose this over a one-time grown-up enable; it sends no child data and only closed-list cards, 4.2); a grown-up can **switch it off** behind the parent gate (`songMakerOn`: not set is on, only a plain `true` is on once set, so a corrupt setting reads as off), and can lower the weekly limit (0 to 5) but not raise it above 5; the library is always on.
 
 ## 5. The party, and the kitchen and clean-up exercise
 
@@ -283,13 +314,64 @@ Order is chosen so each step is useful alone and each can be stopped.
 
 | Phase | Work | Gate before the next |
 | --- | --- | --- |
-| **0 Decisions and spikes** (about a day) | Decisions are made. Dan checks Mureka's terms on his account and makes one test song (and reads the API price per song). Dan downloads the dances. Spike: **a prop in the game's hand** (load the Kip rig in the game, mount a prop through the same grip node, play `makeKipClip`): answers whether the game rig has the 14 joints. Spike: the headphone print route (section 2.2) on one part. | Mureka allows a children's app and stored songs; the print route passes one gate run; the game spike works or the exercise stays in the Kip bench. |
+| **0 Decisions and spikes** (about a day) | Decisions are made. Dan checks Mureka's terms on his account and makes one test song (and reads the API price per song). Dan downloads the dances. Spike: **a prop in the game's hand**: done, answered by reading the code (6.1): the game's rig has rigid arms, so two routes. Spike: the headphone print route: done (6.1), support-free as one piece for the human heads. | Mureka allows a children's app and stored songs; the print route passes one gate run; the game spike works or the exercise stays in the Kip bench. |
 | **1 Headphones** | Catalog row and part (option A), viewer slot, glow hook, print BOM, regeneration through the landing checklist (one batch), selftest, Orca slice. | Part gate verified; Orca 0 supports; head x wig matrix passes; menu and print e2e. |
 | **2 Mixamo dances** | Intake the 4 picks (and a reserve if one fails), retarget, the section 3.2 gate, `THIRD_PARTY.md`, contact sheets, menu entries. | Every shipped dance passes the gate; Samba and the three procedural dances still pass `tests/kip-clips.test.ts`. |
 | **3 Songs and the party in the Kip bench** | Starter library (about 12 instrumental songs made once, listened to, beat-mapped), beat clock, tempo-scaled dances, cup glow, party panel, age-band beat play. No Worker needed. | Beat error: a tap within 80 ms of a beat counts, measured on a real song; the dance does not drift against the clock over 60 s. |
 | **4 Live song maker** | `worker/song.ts`, caps, parent gate, moderation queue, storage decision, "new song" card. | Cost per song known and capped; a failed or capped call falls back to the library; a moderation pass by a grown-up exists. |
-| **5 The exercise in the game** | Game prop-in-hand (generalise `resolveCharacterPropUrl` to a data table: Kip prop id to STL, `flip`, `mat` and clip, read from the wardrobe rows so the viewer and the game cannot drift), the cook and clean sessions, the movement break, the two primitives or their plain forms. | Every prop the sessions use renders in the game's hand with its clip; the sessions are completable by the "random toddler" robot (`play-design-spec.md`). |
+| **5 The exercise in the game** | Game prop-in-hand via Route 1 (6.1: a wrist pivot on the game's hand and a baked arm-direction plus hand-orientation track from the retargeter; generalise `resolveCharacterPropUrl` to a data table: Kip prop id to STL, `flip`, `mat` and clip, read from the wardrobe rows so the viewer and the game cannot drift), the cook and clean sessions, the movement break, the two primitives or their plain forms. | Every prop the sessions use renders in the game's hand with its clip; the sessions are completable by the "random toddler" robot (`play-design-spec.md`). |
 | **6 Carousel and map** | A party entry in the carousel and a map stop, parent controls, the Garage-style weekend variant if wanted. | After the real-phone pass (C4 is waiting on it). |
+
+### 6.1 Phase 0 results
+
+**Spike: a prop in the game's hand (done 2026-11-03, by reading the code; nothing was run in the game).** The answer is **no, not as the game stands**, and it points to two routes.
+
+- **What the game's Kip is.** The in-world character (`stlRigLoader.ts`, `mixamo.ts`) is the **Snap figure with rigid one-piece arms**: `snapArm` is one STL, the hand mesh is fixed on its end, and the Mixamo driver bakes each clip into
+  per-frame data where **each arm is only a shoulder-to-hand direction ("no twist")**, the torso and head are rotations, and the hips a small bob. There is **no elbow, no wrist, no forearm and no hand orientation**. It has no 14-joint skeleton,
+  so `kip-clips.js` cannot play on it, and the retargeted natural-hand arms cannot be copied across.
+- **Reach differs too:** the viewer's chain is 46.4 mm from the shoulder to the hand joint (23.8 + 22.6); the game's hand mesh origin is 35.8 mm from the shoulder (constants read from the code, not measured in a render). A baked prop track has to be solved for the game's
+  reach, not copied.
+- **Route 1, in-world sessions (Help cook, Clean up):** add a **wrist pivot** to the game's hand (the hand wrap is already its own group), and bake, for each prop clip, the arm *direction* plus the hand's *world orientation* (the retargeter already solves the natural hand, so it can emit
+  this); the prop is a child of the hand with the `flip` mount. Small: one new baked track, one pivot, one prop table keyed by the wardrobe rows. Cost: a stick arm with a turning hand, which is what the physical Snap toy does too.
+- **Route 2, the party:** Workshop stage **4d** mounts the benches (the articulated Kip, all 28 clips, the props, the dances) inside the game as a Factory-tab host. **The party lives there at no extra rig work** and gets the print gate with it. 4d has a
+  grown-up print gate blocker of its own (`workshop-spec.md`, 4d scope).
+- **Decision for phase 5:** the party ships in the Kip bench and rides 4d into the game; the in-world cook and clean sessions use Route 1. If Route 1 proves too costly, the sessions can run in the mounted bench too.
+
+**Spike: the headphone print route (done 2026-11-03).** Answer: **yes, support-free, in the flipped orientation, as one piece** (numbers in 2.2). What it took, so the real part does not repeat it:
+
+- The worn-orientation print fails `P4_no_ledges` (211 mm2): the flat crown ceiling spans 33 mm along the band, past the 20 mm bridge limit; a hat avoids it by bridging across the head's 20 mm depth, a narrow strip cannot. Flipping removes it.
+- Flipped, every joint that is narrower or wider than its neighbour becomes a downward ledge (the gate allows 1.0 mm2 of steep face and 1.0 mm2 of ledge, per `interfaces.json`): the legs must be the shell itself, extended straight down (rings and cavity), not a separate box.
+- A cup that is a horizontal cylinder fails P1 and P4 (flat or shallow underside). A **teardrop** section (a point at 52 degrees on the lowest side) fixes it. **Trap:** the point must be in angular order in the polygon, or it is silently dropped and the "teardrop" is a plain circle (this cost most of the spike).
+- **The part gate has a blind spot:** a cup whose pointed tip starts above the bed with nothing under it passes every face-angle check and would still need a support. The render showed it; the **Orca slice is the real check**, so keep it as a gate for this part (and consider it for every new part).
+- Not done: the viewer and print BOM, a catalog row, adding the band to the head x wig x hat x plate seating matrix (the wig numbers above came from a one-off script), and a physical print.
+
+### 6.2 Phase 1: headphones landed (2026-11-03)
+
+`hat_headphones` ("Party Headphones", W9, family `hair` like the hats, 2x1 crown sockets, stat Glow) is a catalog part, built by `hat_headphones` in `toyventor_parts.py`, with the Kip viewer wired and tested. **Not a print yet.**
+
+- **Part:** printed 59.9 x 13.0 x 24.5 mm, 3.43 cm3; part gate `verified`; `preprint_check` "Prints as is"; a real OrcaSlicer slice of the landed STL (your profile, supports on) **0 support, 0 overhang and 0 bridge moves, 30 min 30 s, 3.35 g**. The cups were raised to ear height after the spike by embedding their pointed tips in the shell wall.
+- **Fit:** the four human heads **0.00 mm3 interference**. `kip_partspec.py` now has four headphone assemblies (bald kid; chibi with Swept; tall with Bowl; jumbo with Sleek Part) that pass the real collision validation with no warnings, so the export is **74 parts and 50 assemblies**. The long Hat-Ready wigs collide (Bob 100 mm3, Long Flow 145 mm3, Twin Braids 259 mm3) and so do the animal and robot heads: not offered there.
+- **Fit matrix:** 66 new pairs (as designed); the same loop reproduced the 66 tracked `hat_beanie` pairs exactly first.
+- **Viewer:** a "Party Headphones" entry in the hat list; `earReady` on the six hair options that fit (None, Swept, Swoosh, Shag, Bowl, Sleek Part); one helper, `headphonesFit(head, hair)`, used by the bench, the print BOM and the menu, so they cannot disagree. Choosing the headphones on a long wig switches the hair to Swept; on a non-human head the request is ignored; changing hair or head to something that does not fit puts the crown back to the studs. The viewer turns the upside-down STL back (+90 degrees about x, lifted by the 4 mm roof). The print BOM lists it like a hat and says so when it is left out.
+- **Checked in the real viewer** from three cameras (bald chibi, kid with Swept, full figure): right way up, on the crown, cups at the ears.
+- **Not done:** wider bands for the animal and robot heads, a physical print, and the cups' glow to the beat (phase 3, it needs the song clock).
+
+### 6.3 Phases 3 and 4: the pure logic (2026-11-03; built and tested, not connected to anything)
+
+Three modules in `shared/` that need nothing from Mureka or Mixamo, with 84 tests (`tests/song-beat.test.ts`, `song-quota.test.ts`, `song-cards.test.ts`; typecheck clean). The app, the Worker and the viewer do not import them yet.
+
+- **`shared/songBeat.ts`: the song clock (3.3, 4.4, 5.1).** `makeBeatMap` / `parseBeatMap` turn beat times into `{ bpm, beats, bars }` with the tempo **measured from the beats**; a stored map whose `bpm` is not what its beats measure (the tempo that was asked for, not the audio's) is rejected, as is a missed or invented beat (a gap outside 0.6 to 1.6 of the median), fewer than four beats, or a tempo outside 40 to 220. `beatAt` places a song time on its beat from the song's own beats. `clipTime` plays a dance against **beats, not seconds**, so every song beat is the same point of the clip every loop: over a 60 s song whose tempo wanders by 6 % the stopwatch clock (`t x rate`) is more than the 80 ms tap window off the beat and `clipTime` is exact (the phase 3 "no drift over 60 s" gate, tested on both, so the check can fail). `tempoRate` / `pickDance` implement the 0.8 to 1.25 rule (nearest to natural speed first, then by id, `variant` for a second Kip, none when nothing fits). `beatPulse` is the flash for the lights and the headphone cups. `judgeTap` / `scoreTaps`: a tap within 80 ms counts (79 hits, 81 misses, both tested), one hit per beat, the nearer tap wins, order does not matter, and output latency is taken off the tap because the child taps on what they hear. `beatPlayFor(band)` is the 5.1 table (0 and 1 free with no wrong taps, 2 on the beat, 3 copy 4, 4 and 5 compose 8; a corrupt band reads as the youngest).
+- **`shared/songQuota.ts`: 5 new songs a week (4.6, D4).** Pure transitions over a serialisable state: `reserve` (idempotent on the key; checks, in order, request, grown-up enable, **monthly budget**, week), `commit`, `refund`, `status` (pips left and the Monday they return). The week is Monday to Sunday by the **family's timezone** (parent-time `localDay`), tested at Sunday 23:59 and Monday 00:00 in UTC, Los Angeles and Auckland, across a new year and a leap day, and the same check fails on a UTC week. A slot counts for the week it was **reserved** in. The grown-up's limit is 0 to 5, never above 5, and a corrupt value reads as 0; a budget that is not a whole number reads as 0 (fail closed). A failed or refused call frees the slot **and** the budget; a song a grown-up removes frees the slot but **not** the budget; a reservation held 10 minutes (`RESERVE_TTL_MS`) expires, frees the slot and keeps counting against the budget. A cleared device id gets a fresh week but cannot get past the budget (tested: 20 fresh ids, budget 7, 7 songs). **Added after D10:** the live maker is on unless a grown-up turned it off (`songMakerOn`), the budget counts **songs billed** (`songsPerCall`, a wrong value reads as 3, the most a call bills) and refuses a call that would pass it, and `budgetSongs(dollars, price)` turns a dollar cap into songs (tests: 92 across the three song files; the random-sequence check also holds at 2 and 3 songs a call and catches a budget that counts calls).
+- **`shared/songCards.ts`: cards, never words (4.2).** Six moods, three tempos, eight instruments (up to two; unknown ones dropped), each an id from a closed list; the prompt is a fixed template filled only from that list's own text. All 666 pick combinations make a plain-text prompt that says instrumental, no vocals, no lyrics, and names no song, artist or person; hostile text in every field (an injection line, a pop star's name, an address, markup, SQL) never reaches the prompt, and the same check fails on a builder that lets the client's words in.
+
+**The tests found real faults; these are fixed.** (1) A random-sequence check with its own spend ledger (so a version that forgets a record cannot hide it) found that a key reused after a **removed or expired** attempt overwrote the old record and **erased that spend** from the budget; the old attempt now moves to `key~n` (which no valid key can be) and keeps counting. The same test file fails on the version without the fix. (2) `commit` and `refund` only noticed an expired reservation if some other request had swept it first, so whether a late song was kept depended on traffic; both now take the time and expire first. (3) A numeric key (`12345678`) passed the id check because `RegExp.test` turns it into text.
+
+**What this changes or leaves open:**
+- **The slow card now has a dance (D8).** It had none: `TEMPO_BPM.slow` is 90, 0.75 of the 120 bpm dances. `dance_sway` ("Slow sway", 8 beats at 80 bpm, a lullaby rock with soft arms and a 4 mm free-foot lift) closes it. It passes the part tests (loop, no teleports, feet planted under 0.5 mm, lift 3 to 6 mm, mutation-checked three ways), the real-page dance gate (seam 0.2 degrees, slide 0 mm, standing height, wrist 6 degrees) and a contact sheet. Its motion is subtle by design. (The Mixamo picks' tempo is still uncounted: each needs a `bpm` and `beats` set by counting, section 3.3.)
+- **Where do live beat maps come from? (D8: skipped for now.)** 4.4 says "the Worker for live songs", but a Worker cannot realistically run a beat tracker. Proposal, **not built**: analyse in the browser on first play (an `OfflineAudioContext` and a simple onset pass), and treat the result as **client data**: `parseBeatMap` is exactly the check that makes that safe (bounded, ascending, plausible, tempo must be what the beats measure). The starter library is analysed by a script on Dan's machine. Needs a decision before phase 4.
+- **Tap tolerance is untuned.** 80 ms is the spec's gate; whether a 5 to 6 year old can land inside it is unmeasured (`windowMs` is the knob). Output-latency compensation expects the caller to pass `AudioContext.outputLatency`; **not checked** whether iOS Safari exposes it (if not: no compensation, or one calibration tap).
+- **Assumed, to confirm with Mureka's real numbers:** the reservation TTL (10 minutes, must exceed the longest generation; latency unknown), the budget unit (songs a month, UTC month, counted per song at $0.045 and `songsPerCall` songs a call; Dan sets the dollar cap), and the prompt format (the sentences are a draft; the closed-id structure is the rule).
+- **Next, once Dan wants it:** the Worker route and D1 tables for `worker/song.ts` (a `song_reservation` table with a unique key and an attempt column in place of the `key~n` trick; `song_quota` as a view or counter over it), the beat-clock hookup in the Kip bench against `AudioContext.currentTime`, and the beat-analysis script for the starter library. None of that needs Mureka until the real songs exist.
 
 Tests that should exist before each phase lands: part-gate and fit-matrix runs (phase 1), per-clip metrics and contact sheets (phase 2), a beat-clock unit test and an
 end-to-end that measures tap-to-beat error (phase 3), a Worker test with the limiter, cap and fail-closed behaviour and a stub Mureka (phase 4), a game e2e that holds
@@ -302,25 +384,25 @@ each prop and plays its clip (phase 5). Mutation-check the new tests once each, 
 | Mureka terms forbid a children's app or stored songs | The whole song half | Phase 0 check; fall back to the procedural engine plus licensed-free loops, or a different service |
 | Lyrics and content | Child safety | Instrumental v1, cards not text, grown-up approval |
 | Cost per song unknown | A bill with no ceiling | Library first, hard cap, fail closed |
-| The headphone arch cannot print support-free | Part fails the gate | Spike both routes in phase 0; the digital version ships either way |
+| A part that passes the face-angle gate still needs a support (a tip starting in mid-air) | A failed print the gate did not predict | Orca slice as a gate for the headphones (done on the spike: 0 supports); consider it for new parts |
 | Mixamo clips fail on a 14-joint rig | Dances look wrong | Selection criteria and the gate; keep procedural dances |
-| Game rig differs from the Kip rig | Phase 5 grows | The phase 0 spike decides before anything is promised |
+| The game's Kip has rigid arms (confirmed, 6.1) | Props cannot be held with the viewer's clips | Route 1: a wrist pivot plus a baked arm-direction and hand-orientation track; the party rides stage 4d |
 | Mixamo licence reading | Legal | Recheck Adobe's current terms before shipping; keep clips out of training data |
 
 ## 8. Open questions (what is still open after D1 to D7)
 
-1. **Mureka's terms and API price** (Dan, on his account): does the licence allow a children's app, and storing and serving generated songs inside it? Price per song, clip length, instrumental mode, tempo control. Any "no" changes section 4.
+1. **Mureka's official price sheet and concurrency table** (Dan, on `platform.mureka.ai`). Third-party figures are in 4.1 (about $0.03 to $0.15 an instrumental, songs up to 5 min 30 s, 2 songs a call, no tempo field); the licence, instrumental mode and generation time are answered (D9). Without a confirmed price the live maker cannot be switched on, and one decision follows from it: a call returns two songs, so **offer both (the child picks one, one slot used)** or keep the first?
 2. **Mixamo availability:** are Hip Hop Dancing, Swing Dancing, Locking Hip Hop and Silly Dancing in the Dance list today (and the two reserves)?
-3. **One size or two** for the headphones (human and animal heads)? The spike measures bear, dragon, alien and imp, which I have not.
+3. **Headphones for the non-human heads.** Measured: the human size fits the four human heads only; the animal, creature and robot heads (45 to 55 mm wide) each need their own wider band. Build them in the same wave, or ship humans first (my proposal)?
 4. **Quota rollover:** none (my proposal), or unused songs carry over up to a cap? And does a family with several children on one device get one quota or one each (needs per-child profiles)?
 5. **Do movement breaks earn STEM minutes**, or only the learning session (`xp-system-spec.md`)?
-6. **Live song maker default:** off until a grown-up enables it (my proposal), or on with a notice?
+6. ~~**Live song maker default**~~ **Decided (D10): on, with a notice.** A grown-up can switch it off.
 7. **Vocals:** ever, for a young audience? (Not in this plan.)
 8. **Safe-listening ceiling:** the numeric limit for the party's gain, from a current children's reference I have not checked.
 
 ## 9. Verified and not
 
-**Verified in the repo today:** head connectors and widths; `pointy_ears` and hat catalog rows; the 27 clips and their bpm facts; the two Mixamo files and their clip names; the licence
+**Built and tested, not yet connected (2026-11-03):** the beat clock, tempo rule, tap judge, weekly quota and song cards (6.3). **Verified in the repo today:** head connectors and widths; `pointy_ears` and hat catalog rows; the 27 clips and their bpm facts; the two Mixamo files and their clip names; the licence
 summary in memory; the audio engine's `SongDef`; the Worker's bindings and routes; `resolveCharacterPropUrl`; the `daily.cook` and `daily.clean` content and the clean mission's tools.
 
 **From third-party pages, not confirmed:** that Mureka has an API and paid commercial tiers, and the prices. **Not checked:** Mureka's own terms, API behaviour, tempo control, instrumental

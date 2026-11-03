@@ -7,9 +7,11 @@ import { describe, expect, it } from "vitest";
 import * as clipsMod from "../parts/kip/viewer/kip-clips.js";
 // @ts-expect-error untyped JS module
 import * as wardrobe from "../parts/kip/viewer/kip-vehicles-wardrobe.js";
+import { MAX_BPM, MIN_BPM, TEMPO_RATE_MAX, TEMPO_RATE_MIN, pickDance, tempoRate } from "../shared/songBeat";
+import { TEMPO_BPM, TEMPOS } from "../shared/songCards";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
-const { KIP_CLIPS, KIP_CLIP_JOINTS, PROP_CLIPS, clipForProp, makeKipClip, HIP_Y, REST_LEGS, LEG_RIG, legFK, FLIPPED_PROP_CLIPS } = clipsMod as any;
+const { KIP_CLIPS, KIP_CLIP_JOINTS, PROP_CLIPS, clipForProp, makeKipClip, HIP_Y, REST_LEGS, LEG_RIG, legFK, FLIPPED_PROP_CLIPS, buildKipClip, plantBakedClip, limitHands } = clipsMod as any;
 const { PROP_OPTIONS, WORKSHOP_PROPS } = wardrobe as any;
 
 const root = join(__dirname, "..");
@@ -27,9 +29,9 @@ const angleBetween = (a: number[], b: number[]) => 2 * Math.acos(Math.min(1, Mat
 const deg = (r: number) => (r * 180) / Math.PI;
 
 describe("kip clips: the registry", () => {
-  it("adds 6 reactions, 3 dances and one clip per prop, with unique ids and labels that do not shadow an existing clip", () => {
+  it("adds 6 reactions, 4 dances and one clip per prop, with unique ids and labels that do not shadow an existing clip", () => {
     const by = (g: string) => KIP_CLIPS.filter((c: any) => c.group === g).length;
-    expect([by("reaction"), by("dance")]).toEqual([6, 3]);
+    expect([by("reaction"), by("dance")]).toEqual([6, 4]);
     expect(by("prop")).toBeGreaterThanOrEqual(15);
     const ids = KIP_CLIPS.map((c: any) => c.id);
     expect(new Set(ids).size).toBe(ids.length);
@@ -135,9 +137,9 @@ describe("kip clips: planted feet and natural hands", () => {
   };
   const stance = (side: "L" | "R") => legFK(THREE, [0, 0, 0], [0, HIP_Y, 0], REST_LEGS[side]).ankle as THREE.Vector3;
 
-  it("keeps both feet where they started in every prop clip and reaction (no sliding on the floor)", () => {
+  it("keeps both feet where they started in every clip: reactions, dances and props (no sliding on the floor)", () => {
     const planted = (KIP_CLIPS as any[]).filter((c) => c.plant);
-    expect(planted.length).toBeGreaterThanOrEqual(22);
+    expect(planted.length, "every clip is planted").toBe(KIP_CLIPS.length);
     for (const entry of planted) {
       const clip = built.get(entry.id);
       const n = quatTrack(clip, "Hips").values.length / 4;
@@ -152,8 +154,65 @@ describe("kip clips: planted feet and natural hands", () => {
     }
   });
 
-  it("leaves the dances' steps alone (they move their feet on purpose)", () => {
-    for (const entry of (KIP_CLIPS as any[]).filter((c) => c.group === "dance")) expect(entry.plant, entry.id).toBeUndefined();
+  it("lifts a foot only straight up in the stepping dances (a knee lift that never slides, never sinks)", () => {
+    for (const [id, minLift, maxLift] of [["dance_boogie", 5, 12], ["dance_disco", 4, 10], ["dance_sway", 3, 6]] as const) {
+      const clip = built.get(id);
+      const n = quatTrack(clip, "Hips").values.length / 4;
+      for (const side of ["L", "R"] as const) {
+        let hi = -1e9, lo = 1e9;
+        for (let i = 0; i < n; i++) { const dy = ankle(clip, i, side).y - stance(side).y; hi = Math.max(hi, dy); lo = Math.min(lo, dy); }
+        expect(hi, `${id}: ${side} foot never lifts`).toBeGreaterThanOrEqual(minLift);
+        expect(hi, `${id}: ${side} foot lifts too far (${hi.toFixed(1)} mm)`).toBeLessThanOrEqual(maxLift);
+        expect(lo, `${id}: ${side} foot sinks ${lo.toFixed(1)} mm below the floor`).toBeGreaterThanOrEqual(-0.6);
+      }
+    }
+  });
+
+  // A clip like a retargeted Mixamo dance: the hips wander 40 mm sideways (past the legs' reach) and bob above standing height, the legs are just the rest stance (so the feet skate), and the left knee
+  // comes up in the middle. This is what `plantBakedClip` exists for.
+  const bakedLike = () => buildKipClip(THREE, "baked_like", 2, (ph: number, setQ: any) => {
+    setQ("Hips", 0, 10 * Math.sin(ph), 0);
+    for (const k of ["L", "R"] as const) { const l = REST_LEGS[k]; setQ(l.names[0], ...l.up); setQ(l.names[1], l.knee, 0, 0); setQ(l.names[2], ...l.foot); }
+    if (Math.sin(ph) > 0.3) { setQ("LeftUpLeg", -35, 3, 3); setQ("LeftLeg", 45, 0, 0); }              // a knee lift
+    return [40 * Math.sin(ph), HIP_Y + 6 * Math.abs(Math.sin(ph * 2)), 0];
+  });
+  const worstXZ = (clip: any) => {
+    let w = 0; const n = quatTrack(clip, "Hips").values.length / 4;
+    for (const side of ["L", "R"] as const) for (let i = 0; i < n; i++) { const a = ankle(clip, i, side), s = stance(side); w = Math.max(w, Math.hypot(a.x - s.x, a.z - s.z)); }
+    return w;
+  };
+
+  it("plants the feet of a baked clip: they skated more than 10 mm, now at most 1.5 mm, with the knee lift kept as a lift", () => {
+    const before = bakedLike();
+    expect(worstXZ(before), "the synthetic clip must skate, or this test proves nothing").toBeGreaterThan(10);
+    const clip = plantBakedClip(THREE, bakedLike());
+    expect(worstXZ(clip)).toBeLessThan(1.5);
+    const n = quatTrack(clip, "Hips").values.length / 4;
+    let liftL = 0, sinkL = 0, sinkR = 0;
+    for (let i = 0; i < n; i++) {
+      liftL = Math.max(liftL, ankle(clip, i, "L").y - stance("L").y);
+      sinkL = Math.min(sinkL, ankle(clip, i, "L").y - stance("L").y); sinkR = Math.min(sinkR, ankle(clip, i, "R").y - stance("R").y);
+    }
+    expect(liftL, "the knee lift is gone").toBeGreaterThan(3);
+    expect(liftL, "the lift is too tall").toBeLessThanOrEqual(14.5);
+    expect(Math.min(sinkL, sinkR), "a foot sinks into the floor").toBeGreaterThanOrEqual(-0.6);
+  });
+
+  it("caps a baked clip's wrist bend and forearm twist, and keeps everything else", () => {
+    const clip = buildKipClip(THREE, "wrists", 1, (_ph: number, setQ: any) => {
+      setQ("RightHand", 20, 150, 70); setQ("LeftHand", 0, 30, 10);                    // a bent, twisted right hand; a gentle left one
+      return [0, HIP_Y, 0];
+    });
+    const read = (name: string) => frames(quatTrack(clip, name), 4).map((f) => new THREE.Quaternion(f[0], f[1], f[2], f[3]));
+    const leftBefore = read("LeftHand")[0]!.clone();
+    const bend = (q: THREE.Quaternion) => deg(new THREE.Vector3(0, 1, 0).applyQuaternion(q).angleTo(new THREE.Vector3(0, 1, 0)));
+    expect(bend(read("RightHand")[0]!), "the right wrist must start too bent").toBeGreaterThan(40);
+    limitHands(THREE, clip, { maxBend: 35, maxTwist: 100 });
+    const r = read("RightHand")[0]!;
+    expect(bend(r)).toBeLessThanOrEqual(35.5);
+    const twist = deg(2 * Math.atan2(r.y, r.w));
+    expect(Math.abs(twist), "twist cap").toBeLessThanOrEqual(100.5);
+    expect(read("LeftHand")[0]!.angleTo(leftBefore), "a hand inside the limits must not change").toBeLessThan(0.01);
   });
 
   it("never bends a wrist more than 20 degrees in a prop clip with a retargeted arm (a natural grip)", () => {
@@ -173,6 +232,49 @@ describe("kip clips: planted feet and natural hands", () => {
       expect(Boolean(p.flip), `${p.id} flip flag disagrees with the arm table for ${clip}`).toBe(FLIPPED_PROP_CLIPS.includes(clip));
     }
     expect(FLIPPED_PROP_CLIPS.length).toBeGreaterThanOrEqual(5);
+  });
+});
+
+describe("kip clips: dance tempo (the party time-scales a dance to a song, spec 3.3)", () => {
+  const dances = () => (KIP_CLIPS as any[]).filter((c) => c.group === "dance");
+
+  it("every dance carries the tempo it was authored at, and its loop is a whole number of beats at that tempo", () => {
+    for (const c of dances()) {
+      expect(c.bpm, `${c.id} has no bpm`).toBeGreaterThanOrEqual(MIN_BPM);
+      expect(c.bpm, `${c.id} bpm`).toBeLessThanOrEqual(MAX_BPM);
+      expect(Number.isInteger(c.beats) && c.beats > 0, `${c.id} beats`).toBe(true);
+      expect(c.dur * (c.bpm / 60), `${c.id}: ${c.dur} s at ${c.bpm} bpm is not ${c.beats} beats`).toBeCloseTo(c.beats, 9);
+    }
+  });
+
+  it("only dances carry a tempo (a prop clip is not played to a song)", () => {
+    for (const c of KIP_CLIPS as any[]) if (c.group !== "dance") expect(c.bpm, c.id).toBeUndefined();
+  });
+
+  it("some dance fits every song from 64 to 150 bpm, so the slow sway closes the gap the 120 bpm dances leave below 96", () => {
+    const list = dances().map((c) => ({ id: c.id, bpm: c.bpm }));
+    for (let bpm = 64; bpm <= 150; bpm++) expect(pickDance(bpm, list), `no dance for ${bpm} bpm`).not.toBeNull();
+    // without the sway the same sweep has a hole
+    const withoutSway = list.filter((c) => c.id !== "dance_sway");
+    expect(pickDance(80, withoutSway)).toBeNull();
+    expect(pickDance(90, withoutSway)).toBeNull();
+  });
+
+  it("each tempo card (shared/songCards.ts) gets a dance, and the slow card gets the sway", () => {
+    const list = dances().map((c) => ({ id: c.id, bpm: c.bpm }));
+    for (const t of TEMPOS) expect(pickDance(TEMPO_BPM[t], list), `no dance for the ${t} card`).not.toBeNull();
+    expect(pickDance(TEMPO_BPM.slow, list)?.id).toBe("dance_sway");
+    expect(["dance_boogie", "dance_disco", "dance_robot"]).toContain(pickDance(TEMPO_BPM.medium, list)?.id);
+  });
+
+  it("the sway is at its natural speed or within the quarter-either-way limit for a lullaby", () => {
+    const sway = dances().find((c) => c.id === "dance_sway");
+    for (const bpm of [64, 70, 80, 90, 100]) {
+      const { rate, inRange } = tempoRate(bpm, sway.bpm);
+      expect(inRange, `${bpm} bpm gives rate ${rate}`).toBe(true);
+      expect(rate).toBeGreaterThanOrEqual(TEMPO_RATE_MIN);
+      expect(rate).toBeLessThanOrEqual(TEMPO_RATE_MAX);
+    }
   });
 });
 

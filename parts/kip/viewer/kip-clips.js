@@ -67,7 +67,11 @@ function stance(THREE) {
 
 /** Solve one leg so its ankle sits on `target.ankle` with the foot attitude `target.qf`. Returns degrees for UpLeg, Leg (knee) and Foot. */
 export function solveLeg(THREE, hipsEuler, hipsPos, leg, target) {
-  const qh = eulerQ(THREE, hipsEuler);
+  return solveLegQ(THREE, eulerQ(THREE, hipsEuler), hipsPos, leg, target);
+}
+
+/** Same as `solveLeg` with the hips attitude as a quaternion (what a baked clip stores). */
+export function solveLegQ(THREE, qh, hipsPos, leg, target) {
   const hip = new THREE.Vector3(leg.side * LEG_RIG.hipX, 0, 0).applyQuaternion(qh).add(new THREE.Vector3(hipsPos[0], hipsPos[1], hipsPos[2]));
   const u = target.ankle.clone().sub(hip);
   const [, sy, sz] = LEG_RIG.shin;
@@ -96,15 +100,113 @@ export function solveLeg(THREE, hipsEuler, hipsPos, leg, target) {
 }
 
 /** Re-solve both legs for the hips pose of this frame (called by buildKipClip for a clip with `plant`). */
-function plantLegs(THREE, hipsEuler, hipsPos, setQ) {
+function plantLegs(THREE, hipsEuler, hipsPos, setQ, lift = [0, 0]) {
   const st = stance(THREE);
-  for (const key of ['L', 'R']) {
+  for (const [i, key] of ['L', 'R'].entries()) {
     const leg = REST_LEGS[key];
-    const sol = solveLeg(THREE, hipsEuler, hipsPos, leg, st[key]);
+    // A clip may lift a foot (`setQ('LiftFeet', leftMm, rightMm, 0)`): straight up from its stance spot, so a stepping dance has real knee lifts and still no sliding.
+    const target = lift[i] ? { ankle: st[key].ankle.clone().add(new THREE.Vector3(0, lift[i], 0)), qf: st[key].qf } : st[key];
+    const sol = solveLeg(THREE, hipsEuler, hipsPos, leg, target);
     setQ(leg.names[0], ...sol.up);
     setQ(leg.names[1], sol.knee, 0, 0);
     setQ(leg.names[2], ...sol.foot);
   }
+}
+
+/**
+ * Plant the feet of a BAKED clip (a retargeted Mixamo dance): same format as `buildKipClip` output, `kip_<Joint>.quaternion` tracks plus `kip_Hips.position`, all on one set of times.
+ * Mocap is authored for another skeleton: on Kip's rigid legs the feet skate (Samba: a foot on the floor travels 29 to 41 mm). This reins the hips in so the feet CAN stay put, then
+ * re-solves both legs with the same solver the procedural clips use:
+ *   - hips sideways and fore-aft travel is scaled by `xzScale` about its mean (Samba's hips wander +-25 mm, the legs reach 51 mm);
+ *   - the vertical bob is shifted down so its top is standing height (the leg cannot stretch past it; it would lift the foot);
+ *   - a foot is lifted straight up by how much it is raised above the other foot in the ORIGINAL legs (a step or a knee lift), minus `deadzone`, at most `maxLift` mm.
+ * Mutates and returns the clip. Not for clips whose feet should travel (a walk): those stay as baked.
+ */
+export function plantBakedClip(THREE, clip, { xzScale = 0.3, maxLift = 14, deadzone = 2 } = {}) {
+  const trk = (n) => clip.tracks.find((t) => t.name === n);
+  const hipsPos = trk('kip_Hips.position'), hipsQ = trk('kip_Hips.quaternion');
+  if (!hipsPos || !hipsQ) return clip;
+  const n = hipsQ.times.length;
+  const legTracks = {};
+  for (const k of ['L', 'R']) legTracks[k] = REST_LEGS[k].names.map((nm) => trk(`kip_${nm}.quaternion`));
+  if (Object.values(legTracks).some((a) => a.some((t) => !t))) return clip;
+  const Q = (t, i) => new THREE.Quaternion(t.values[i * 4], t.values[i * 4 + 1], t.values[i * 4 + 2], t.values[i * 4 + 3]);
+  const st = stance(THREE);
+  // 1. the original ankles (before any change), for the lifts
+  const raw = [];
+  for (let i = 0; i < n; i++) {
+    const qh = Q(hipsQ, i), p = new THREE.Vector3(hipsPos.values[i * 3], hipsPos.values[i * 3 + 1], hipsPos.values[i * 3 + 2]);
+    const row = {};
+    for (const k of ['L', 'R']) {
+      const qu = qh.clone().multiply(Q(legTracks[k][0], i)), qk = qu.clone().multiply(Q(legTracks[k][1], i));
+      const hip = new THREE.Vector3(REST_LEGS[k].side * LEG_RIG.hipX, 0, 0).applyQuaternion(qh).add(p);
+      const knee = new THREE.Vector3(0, -LEG_RIG.thigh, 0).applyQuaternion(qu).add(hip);
+      row[k] = new THREE.Vector3(...LEG_RIG.shin).applyQuaternion(qk).add(knee).y;
+    }
+    raw.push(row);
+  }
+  // 2. the hips, reined in
+  let mx = 0, mz = 0, top = -Infinity;
+  for (let i = 0; i < n; i++) { mx += hipsPos.values[i * 3] / n; mz += hipsPos.values[i * 3 + 2] / n; top = Math.max(top, hipsPos.values[i * 3 + 1]); }
+  const dy = Math.max(0, top - HIP_Y);
+  for (let i = 0; i < n; i++) {
+    hipsPos.values[i * 3] = mx + (hipsPos.values[i * 3] - mx) * xzScale;
+    hipsPos.values[i * 3 + 1] -= dy;
+    hipsPos.values[i * 3 + 2] = mz + (hipsPos.values[i * 3 + 2] - mz) * xzScale;
+  }
+  // 3. the legs, solved
+  const prev = {};
+  for (let i = 0; i < n; i++) {
+    const qh = Q(hipsQ, i), p = [hipsPos.values[i * 3], hipsPos.values[i * 3 + 1], hipsPos.values[i * 3 + 2]];
+    const base = Math.min(raw[i].L, raw[i].R);
+    for (const k of ['L', 'R']) {
+      const lift = Math.min(maxLift, Math.max(0, raw[i][k] - base - deadzone));
+      const target = lift ? { ankle: st[k].ankle.clone().add(new THREE.Vector3(0, lift, 0)), qf: st[k].qf } : st[k];
+      const sol = solveLegQ(THREE, qh, p, REST_LEGS[k], target);
+      const quats = [eulerQ(THREE, sol.up), eulerQ(THREE, [sol.knee, 0, 0]), eulerQ(THREE, sol.foot)];
+      for (let j = 0; j < 3; j++) {
+        const q = quats[j], buf = legTracks[k][j].values, key = `${k}${j}`;
+        const pq = prev[key];
+        if (pq && pq.dot(q) < 0) { q.x = -q.x; q.y = -q.y; q.z = -q.z; q.w = -q.w; }       // the near hemisphere: no long-way-round slerp
+        prev[key] = q;
+        buf[i * 4] = q.x; buf[i * 4 + 1] = q.y; buf[i * 4 + 2] = q.z; buf[i * 4 + 3] = q.w;
+      }
+    }
+  }
+  return clip;
+}
+
+/**
+ * Natural hands for a BAKED clip (a retargeted Mixamo dance). The retarget copies the source hand, and on Kip's arm that can bend the wrist 60 degrees or more (Samba: 59) and
+ * twist the forearm until the thumb points down. Each hand's local attitude is split into a twist about the forearm and a swing (the wrist bend); the bend is capped at `maxBend`
+ * degrees and the twist at `maxTwist`, the rest is kept. Mutates and returns the clip.
+ */
+export function limitHands(THREE, clip, { maxBend = 35, maxTwist = 100 } = {}) {
+  const D = Math.PI / 180;
+  for (const nm of ['LeftHand', 'RightHand']) {
+    const t = clip.tracks.find((x) => x.name === `kip_${nm}.quaternion`);
+    if (!t) continue;
+    const q = new THREE.Quaternion(), tw = new THREE.Quaternion(), sw = new THREE.Quaternion(), id = new THREE.Quaternion();
+    let prev = null;
+    for (let i = 0; i < t.values.length / 4; i++) {
+      q.set(t.values[i * 4], t.values[i * 4 + 1], t.values[i * 4 + 2], t.values[i * 4 + 3]);
+      const l = Math.hypot(q.y, q.w);
+      if (l < 1e-6) tw.set(0, 0, 0, 1); else tw.set(0, q.y / l, 0, q.w / l);
+      sw.copy(q).multiply(tw.clone().invert());
+      if (sw.w < 0) { sw.x = -sw.x; sw.y = -sw.y; sw.z = -sw.z; sw.w = -sw.w; }
+      const bend = 2 * Math.acos(Math.min(1, sw.w)) / D;
+      if (bend > maxBend) sw.copy(id).slerp(sw, maxBend / bend);
+      let twist = 2 * Math.atan2(tw.y, tw.w) / D;
+      if (twist > 180) twist -= 360; else if (twist < -180) twist += 360;
+      twist = Math.max(-maxTwist, Math.min(maxTwist, twist));
+      tw.set(0, Math.sin(twist * D / 2), 0, Math.cos(twist * D / 2));
+      q.copy(sw).multiply(tw);
+      if (prev && prev.dot(q) < 0) { q.x = -q.x; q.y = -q.y; q.z = -q.z; q.w = -q.w; }
+      prev = prev ? prev.copy(q) : q.clone();
+      t.values[i * 4] = q.x; t.values[i * 4 + 1] = q.y; t.values[i * 4 + 2] = q.z; t.values[i * 4 + 3] = q.w;
+    }
+  }
+  return clip;
 }
 
 /**
@@ -124,7 +226,9 @@ export function buildKipClip(THREE, name, dur, poseFn, { plant = false } = {}) {
     const ph = (i / (steps - 1)) * Math.PI * 2;
     times[i] = t;
     const hipsE = [0, 0, 0];
+    const lift = [0, 0];
     const setQ = (nm, rx, ry, rz) => {
+      if (nm === 'LiftFeet') { lift[0] = rx; lift[1] = ry; return; }      // not a joint: how far each foot is lifted this frame (mm), used by the leg solver
       if (nm === 'Hips') { hipsE[0] = rx; hipsE[1] = ry; hipsE[2] = rz; }
       q.setFromEuler(e.set(d2r(rx), d2r(ry), d2r(rz), 'ZYX'));
       const b = bufs[nm];
@@ -134,7 +238,7 @@ export function buildKipClip(THREE, name, dur, poseFn, { plant = false } = {}) {
       b[i * 4] = q.x; b[i * 4 + 1] = q.y; b[i * 4 + 2] = q.z; b[i * 4 + 3] = q.w;
     };
     const hp = poseFn(ph, setQ, t);
-    if (plant) plantLegs(THREE, hipsE, hp, setQ);
+    if (plant) plantLegs(THREE, hipsE, hp, setQ, lift);
     pBuf[i * 3] = hp[0]; pBuf[i * 3 + 1] = hp[1]; pBuf[i * 3 + 2] = hp[2];
   }
   const tracks = [new THREE.VectorKeyframeTrack('kip_Hips.position', times, pBuf)];
@@ -256,7 +360,7 @@ const reactions = [
 // ---------------------------------------------------------------------------------------------------------------------------------
 const dances = [
   {
-    id: 'dance_boogie', label: 'Boogie', dur: 8,
+    id: 'dance_boogie', label: 'Boogie', dur: 8, bpm: 120, beats: 16,
     pose(ph, setQ) {
       const b = ph * 16;                  // 16 beats at 120 bpm
       const sway = S(b * 0.5);            // side to side every two beats
@@ -265,13 +369,13 @@ const dances = [
       setQ('Head', -2 + bounce * 2, -sway * 10, -sway * 5);
       setQ('LeftArm', -30 + C(b * 0.5) * 36, 8, 22 + S(b * 0.5 + 1) * 10); setQ('LeftForeArm', -40 - bounce * 24, 0, 0); setQ('LeftHand', 0, 0, -6);
       setQ('RightArm', -30 - C(b * 0.5) * 36, -8, -22 + S(b * 0.5 + 1) * 10); setQ('RightForeArm', -40 - bounce * 24, 0, 0); setQ('RightHand', 0, 0, 6);
-      setQ('LeftUpLeg', -4 - Math.max(0, S(b * 0.5)) * 26, 2, 5 + Math.max(0, -S(b * 0.5)) * 6); setQ('LeftLeg', 6 + Math.max(0, S(b * 0.5)) * 30 + bounce * 10, 0, 0); setQ('LeftFoot', 0, 0, -3);
-      setQ('RightUpLeg', -4 - Math.max(0, -S(b * 0.5)) * 26, -2, -5 - Math.max(0, S(b * 0.5)) * 6); setQ('RightLeg', 6 + Math.max(0, -S(b * 0.5)) * 30 + bounce * 10, 0, 0); setQ('RightFoot', 0, 0, 3);
+      // the legs are solved from the hips (feet planted), with a knee lift on the side the weight is leaving: 8 mm straight up, nothing slides
+      setQ('LiftFeet', 8 * Math.max(0, S(b * 0.5)), 8 * Math.max(0, -S(b * 0.5)), 0);
       return [sway * 3, HIP_Y - 3 + (1 - bounce) * 3, 0];
     },
   },
   {
-    id: 'dance_robot', label: 'Robot dance', dur: 8,
+    id: 'dance_robot', label: 'Robot dance', dur: 8, bpm: 120, beats: 16, // eight one-second slots = two beats a slot
     pose(ph, setQ) {
       // Eight one-second slots: hold, then snap. Right angles only, the way a toy robot would.
       const aL = steps(ph, [-90, -90, -10, -90, -10, -90, -90, -10]);   // left upper arm, forward swing
@@ -284,13 +388,11 @@ const dances = [
       setQ('Head', 0, -turn * 0.6, steps(ph, [0, 8, 0, -8, 0, 8, 0, -8], 0.25));
       setQ('LeftArm', aL, 0, 14); setQ('LeftForeArm', fL, 0, 0); setQ('LeftHand', 0, 0, 0);
       setQ('RightArm', aR, 0, -14); setQ('RightForeArm', fR, 0, 0); setQ('RightHand', 0, 0, 0);
-      setQ('LeftUpLeg', -4 - dip * 22, 0, 4); setQ('LeftLeg', 4 + dip * 40, 0, 0); setQ('LeftFoot', 0, 0, -3);
-      setQ('RightUpLeg', -4 - dip * 22, 0, -4); setQ('RightLeg', 4 + dip * 40, 0, 0); setQ('RightFoot', 0, 0, 3);
-      return [0, HIP_Y - dip * 5, 0];
+      return [0, HIP_Y - dip * 5, 0];                  // both feet planted, the hips dip: the knees bend by themselves
     },
   },
   {
-    id: 'dance_disco', label: 'Disco point', dur: 6,
+    id: 'dance_disco', label: 'Disco point', dur: 6, bpm: 120, beats: 12,
     pose(ph, setQ) {
       const b = ph * 12;                          // 12 beats at 120 bpm
       const up = steps(ph, [1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0], 0.7);   // left arm points up
@@ -301,9 +403,26 @@ const dances = [
       setQ('Head', -4, side * 10, side * 6);
       setQ('LeftArm', -4, 0, 14 + up * 128); setQ('LeftForeArm', 0, 0, up * 4); setQ('LeftHand', 0, 0, 0);
       setQ('RightArm', -4, 0, -14 - dn * 128); setQ('RightForeArm', 0, 0, -dn * 4); setQ('RightHand', 0, 0, 0);
-      setQ('LeftUpLeg', -2 - dn * 18, 0, 4 + dn * 10); setQ('LeftLeg', 3 + dn * 22, 0, 0); setQ('LeftFoot', 0, 0, -3);
-      setQ('RightUpLeg', -2 - up * 18, 0, -4 - up * 10); setQ('RightLeg', 3 + up * 22, 0, 0); setQ('RightFoot', 0, 0, 3);
+      setQ('LiftFeet', 6 * dn, 6 * up, 0);               // the knee comes up on the side opposite the pointing arm
       return [side * 2.5, HIP_Y - 1 + bob * 2, 0];
+    },
+  },
+  {
+    // The slow dance: a lullaby pace the 120 bpm dances cannot follow (rate 0.8 to 1.25 puts them at 96 to 150; this one covers 64 to 100).
+    id: 'dance_sway', label: 'Slow sway', dur: 6, bpm: 80, beats: 8,
+    pose(ph, setQ) {
+      const b = ph * 8;                               // 8 beats at 80 bpm: two slow rocks
+      const sway = S(b * 0.25);                       // one rock, side to side, every four beats
+      const swing = C(b * 0.25);                      // a quarter of a rock behind: the arms float on it
+      const give = (1 - C(b * 0.5)) * 0.5;            // 0 to 1 every second beat: the knees give a little
+      setQ('Hips', 1 + give * 1.5, sway * 6, sway * 4);
+      setQ('Head', -1, -sway * 8, -sway * 6);         // looks the other way, tilts into the rock
+      // arms hang soft and swing a little against each other, elbows bent, hands at rest
+      setQ('LeftArm', -10 + swing * 10, 4, 18 + sway * 6); setQ('LeftForeArm', -26 - give * 8, 0, 0); setQ('LeftHand', 0, 0, -6);
+      setQ('RightArm', -10 - swing * 10, -4, -18 + sway * 6); setQ('RightForeArm', -26 - give * 8, 0, 0); setQ('RightHand', 0, 0, 6);
+      // the hips rock toward +x (the character's left), so the right foot is the free one then: it comes up 4 mm, straight up, nothing slides
+      setQ('LiftFeet', 4 * Math.max(0, -sway), 4 * Math.max(0, sway), 0);
+      return [sway * 2.5, HIP_Y - give * 2, 0];
     },
   },
 ];
@@ -505,11 +624,11 @@ function applyArmTrack(id, ph, setQ) {
 }
 
 function describe(group, list, { plant = false } = {}) {
-  return list.map((c) => Object.freeze({ id: c.id, label: c.label, group, dur: c.dur, ...(c.prop ? { prop: c.prop } : {}), ...(plant ? { plant: true } : {}), pose: TRACKS[c.id] ? (ph, setQ, t) => { const hp = c.pose(ph, setQ, t); applyArmTrack(c.id, ph, setQ); return hp; } : c.pose }));
+  return list.map((c) => Object.freeze({ id: c.id, label: c.label, group, dur: c.dur, ...(c.bpm ? { bpm: c.bpm, beats: c.beats } : {}), ...(c.prop ? { prop: c.prop } : {}), ...(plant ? { plant: true } : {}), pose: TRACKS[c.id] ? (ph, setQ, t) => { const hp = c.pose(ph, setQ, t); applyArmTrack(c.id, ph, setQ); return hp; } : c.pose }));
 }
 
 /** Every clip this module adds, in menu order: reactions, dances, prop clips. */
-export const KIP_CLIPS = Object.freeze([...describe('reaction', reactions, { plant: true }), ...describe('dance', dances), ...describe('prop', props, { plant: true })]);
+export const KIP_CLIPS = Object.freeze([...describe('reaction', reactions, { plant: true }), ...describe('dance', dances, { plant: true }), ...describe('prop', props, { plant: true })]);
 
 /** prop id (a PROP_OPTIONS id) -> clip id. The page plays the clip when the prop is equipped on foot, as it does for the skateboard. */
 export const PROP_CLIPS = Object.freeze(Object.fromEntries(KIP_CLIPS.filter((c) => c.prop).map((c) => [c.prop, c.id])));
