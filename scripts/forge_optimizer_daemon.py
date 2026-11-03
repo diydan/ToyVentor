@@ -162,7 +162,7 @@ def legalize_loft_slices(raw_slices: Any) -> list[tuple[float, float, float, flo
 # ---------------------------------------------------------------------------
 SYMMETRY_MIN_IOU = 0.93  # mirror overlap (intersection over union) that counts as "meant to be symmetric"
 SYMMETRY_SNAP_X_MM = 1.0  # a centre line or loft slice offset this close to x = 0 is noise and snaps to 0
-SYMMETRY_MAX_POINTS = 64  # the profile2d contract
+SYMMETRY_MAX_POINTS = 256  # the profile2d contract: 3 to 256 points (the check on `pts_raw` below, and the Worker's FORGE_MAX_PROFILE_POINTS)
 
 
 def _mirror_x(cs: manifold3d.CrossSection, axis: float) -> manifold3d.CrossSection:
