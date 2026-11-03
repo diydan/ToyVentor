@@ -29954,6 +29954,15 @@
         "prop_vacuum": [
           "axis"
         ],
+        "prop_spatula": [
+          "axis"
+        ],
+        "prop_frying_pan": [
+          "axis"
+        ],
+        "prop_upright_vacuum": [
+          "axis"
+        ],
         "prop_trumpet": [
           "axis"
         ],
@@ -37275,6 +37284,1290 @@
         },
         {
           "male": "prop_vacuum.axis",
+          "female": "kit_drum_roller.hub"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "beam_str_tu03.bores"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "beam_str_tu05.bores"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "beam_str_tu07.bores"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "beam_str_tu10.bores"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "beam_str_tu14.bores"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "bushing_half.hub"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "bushing_tu01.hub"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "gear_spur_z10.hub"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "gear_spur_z15.hub"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "gear_spur_z20.hub"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "gear_spur_z30.hub"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "gear_rack_tu05.bores"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "gear_ring_z40.frame_bores"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "gear_spur_z25.hub"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "beam_l_tu03x03.bores"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "beam_l_tu05x03.bores"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "beam_t_tu05x03.bores"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "beam_ang45_tu05.bores"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "forge_mount_pro.bores"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "adapter_snap_pro.bores"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "wheel_tu04.hub"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "wheel_tu04.cranks"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "wheel_tu06.hub"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "wheel_tu06.cranks"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "hinge_tu02.bores"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "hinge_tu02.knuckle0"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "hinge_tu02.knuckle1"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "cross_connector_tu01.axle_z"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "cross_connector_tu01.axle_y"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "racer_axle_block.axle"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "racer_wheel.hub"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "char_head_kid.face_slot"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "char_head_chibi.face_slot"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "char_head_jumbo.face_slot"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "char_head_tall.face_slot"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "prop_skateboard_deck.axle_front"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "prop_skateboard_deck.axle_rear"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "veh_wheel_sport.hub"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "veh_wheel_offroad.hub"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "veh_wheel_moto.hub"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "veh_car_chassis.dash_bore"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "veh_car_chassis.axle_front"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "veh_car_chassis.axle_rear"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "veh_truck_chassis.dash_bore"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "veh_truck_chassis.axle_front"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "veh_truck_chassis.axle_rear"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "veh_scooter_frame.headtube"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "veh_scooter_frame.axle_front"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "veh_scooter_frame.axle_front_r"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "veh_scooter_frame.axle_rear"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "veh_scooter_frame.axle_rear_r"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "kit_keel_base.steer_bore"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "kit_keel_base.axle_row0"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "kit_keel_base.axle_row7_l"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "kit_keel_base.axle_row7_r"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "kit_keel_base.axle_row8_l"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "kit_keel_base.axle_row8_r"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "kit_clevis_spine.headtube"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "kit_clevis_spine.kickstand_bore"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "kit_clevis_spine.clevis_front_l"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "kit_clevis_spine.clevis_front_r"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "kit_clevis_spine.clevis_rear_l"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "kit_clevis_spine.clevis_rear_r"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "kit_wheel_med.hub"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "kit_wheel_giant.hub"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "kit_wheel_giant.face_bores"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "kit_rotor_blade.hub"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "kit_aero_wedge.prop_bore"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "kit_aero_wedge.mast_bore"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "kit_tilting_tub.hinge_bore"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "kit_turntable.center_bore"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "pro_steer_bridge.kingpins"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "pro_steer_knuckle_l.kingpin_bore"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "pro_steer_knuckle_l.tierod_bore"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "pro_steer_knuckle_r.kingpin_bore"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "pro_steer_knuckle_r.tierod_bore"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "kit_wheel_med_free.hub"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "kit_wheel_giant_free.hub"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "kit_wheel_giant_free.face_bores"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "pro_steer_rack.tierod_bores"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "pro_tie_rod_link.pivot_bore"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "pro_fork_rake_adpt.fork_bores"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "mom_band_core_lid.hinge_bore"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "mom_band_spool_pawl.hub"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "mom_bumper_trigger.mount_bores"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "mom_slam_base.stop_bore"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "mom_slam_base.anchor_bores"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "mom_jet_valve_body.valve_bore"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "mom_nozzle_set.mount_bore"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "mom_bellows_base.hinge_bore"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "mom_bellows_leaf.hinge_bore"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "mom_flywheel_tray.spindle_step"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "mom_flywheel_lid.spindle_journal"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "mom_flywheel_rotor.hub"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "mom_ripcord_rack_150.pull_bore"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "pro_tub_hinge.hitch_bore"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "pro_tub_hinge.hinge_bore"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "pro_steer_wheel.hub"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "mom_pto_gear_z10.hub"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "mom_latch_pawl.pivot_bore"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "mech_drive_tray.pto_pilot_bore"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "mech_brain_lid.hinge_bore"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "mech_bat_door_screw.hitch_bore"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "mech_servo_mount.clamp_bores"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "mech_servo_lid.clamp_bores"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "mech_servo_pinion_z10.pilot_bore"
+        },
+        {
+          "male": "prop_spatula.axis",
+          "female": "kit_drum_roller.hub"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "beam_str_tu03.bores"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "beam_str_tu05.bores"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "beam_str_tu07.bores"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "beam_str_tu10.bores"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "beam_str_tu14.bores"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "bushing_half.hub"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "bushing_tu01.hub"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "gear_spur_z10.hub"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "gear_spur_z15.hub"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "gear_spur_z20.hub"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "gear_spur_z30.hub"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "gear_rack_tu05.bores"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "gear_ring_z40.frame_bores"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "gear_spur_z25.hub"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "beam_l_tu03x03.bores"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "beam_l_tu05x03.bores"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "beam_t_tu05x03.bores"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "beam_ang45_tu05.bores"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "forge_mount_pro.bores"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "adapter_snap_pro.bores"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "wheel_tu04.hub"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "wheel_tu04.cranks"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "wheel_tu06.hub"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "wheel_tu06.cranks"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "hinge_tu02.bores"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "hinge_tu02.knuckle0"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "hinge_tu02.knuckle1"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "cross_connector_tu01.axle_z"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "cross_connector_tu01.axle_y"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "racer_axle_block.axle"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "racer_wheel.hub"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "char_head_kid.face_slot"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "char_head_chibi.face_slot"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "char_head_jumbo.face_slot"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "char_head_tall.face_slot"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "prop_skateboard_deck.axle_front"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "prop_skateboard_deck.axle_rear"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "veh_wheel_sport.hub"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "veh_wheel_offroad.hub"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "veh_wheel_moto.hub"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "veh_car_chassis.dash_bore"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "veh_car_chassis.axle_front"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "veh_car_chassis.axle_rear"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "veh_truck_chassis.dash_bore"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "veh_truck_chassis.axle_front"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "veh_truck_chassis.axle_rear"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "veh_scooter_frame.headtube"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "veh_scooter_frame.axle_front"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "veh_scooter_frame.axle_front_r"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "veh_scooter_frame.axle_rear"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "veh_scooter_frame.axle_rear_r"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "kit_keel_base.steer_bore"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "kit_keel_base.axle_row0"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "kit_keel_base.axle_row7_l"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "kit_keel_base.axle_row7_r"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "kit_keel_base.axle_row8_l"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "kit_keel_base.axle_row8_r"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "kit_clevis_spine.headtube"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "kit_clevis_spine.kickstand_bore"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "kit_clevis_spine.clevis_front_l"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "kit_clevis_spine.clevis_front_r"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "kit_clevis_spine.clevis_rear_l"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "kit_clevis_spine.clevis_rear_r"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "kit_wheel_med.hub"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "kit_wheel_giant.hub"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "kit_wheel_giant.face_bores"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "kit_rotor_blade.hub"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "kit_aero_wedge.prop_bore"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "kit_aero_wedge.mast_bore"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "kit_tilting_tub.hinge_bore"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "kit_turntable.center_bore"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "pro_steer_bridge.kingpins"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "pro_steer_knuckle_l.kingpin_bore"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "pro_steer_knuckle_l.tierod_bore"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "pro_steer_knuckle_r.kingpin_bore"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "pro_steer_knuckle_r.tierod_bore"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "kit_wheel_med_free.hub"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "kit_wheel_giant_free.hub"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "kit_wheel_giant_free.face_bores"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "pro_steer_rack.tierod_bores"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "pro_tie_rod_link.pivot_bore"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "pro_fork_rake_adpt.fork_bores"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "mom_band_core_lid.hinge_bore"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "mom_band_spool_pawl.hub"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "mom_bumper_trigger.mount_bores"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "mom_slam_base.stop_bore"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "mom_slam_base.anchor_bores"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "mom_jet_valve_body.valve_bore"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "mom_nozzle_set.mount_bore"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "mom_bellows_base.hinge_bore"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "mom_bellows_leaf.hinge_bore"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "mom_flywheel_tray.spindle_step"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "mom_flywheel_lid.spindle_journal"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "mom_flywheel_rotor.hub"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "mom_ripcord_rack_150.pull_bore"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "pro_tub_hinge.hitch_bore"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "pro_tub_hinge.hinge_bore"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "pro_steer_wheel.hub"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "mom_pto_gear_z10.hub"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "mom_latch_pawl.pivot_bore"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "mech_drive_tray.pto_pilot_bore"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "mech_brain_lid.hinge_bore"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "mech_bat_door_screw.hitch_bore"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "mech_servo_mount.clamp_bores"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "mech_servo_lid.clamp_bores"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "mech_servo_pinion_z10.pilot_bore"
+        },
+        {
+          "male": "prop_frying_pan.axis",
+          "female": "kit_drum_roller.hub"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "beam_str_tu03.bores"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "beam_str_tu05.bores"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "beam_str_tu07.bores"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "beam_str_tu10.bores"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "beam_str_tu14.bores"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "bushing_half.hub"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "bushing_tu01.hub"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "gear_spur_z10.hub"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "gear_spur_z15.hub"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "gear_spur_z20.hub"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "gear_spur_z30.hub"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "gear_rack_tu05.bores"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "gear_ring_z40.frame_bores"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "gear_spur_z25.hub"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "beam_l_tu03x03.bores"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "beam_l_tu05x03.bores"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "beam_t_tu05x03.bores"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "beam_ang45_tu05.bores"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "forge_mount_pro.bores"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "adapter_snap_pro.bores"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "wheel_tu04.hub"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "wheel_tu04.cranks"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "wheel_tu06.hub"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "wheel_tu06.cranks"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "hinge_tu02.bores"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "hinge_tu02.knuckle0"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "hinge_tu02.knuckle1"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "cross_connector_tu01.axle_z"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "cross_connector_tu01.axle_y"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "racer_axle_block.axle"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "racer_wheel.hub"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "char_head_kid.face_slot"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "char_head_chibi.face_slot"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "char_head_jumbo.face_slot"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "char_head_tall.face_slot"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "prop_skateboard_deck.axle_front"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "prop_skateboard_deck.axle_rear"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "veh_wheel_sport.hub"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "veh_wheel_offroad.hub"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "veh_wheel_moto.hub"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "veh_car_chassis.dash_bore"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "veh_car_chassis.axle_front"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "veh_car_chassis.axle_rear"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "veh_truck_chassis.dash_bore"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "veh_truck_chassis.axle_front"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "veh_truck_chassis.axle_rear"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "veh_scooter_frame.headtube"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "veh_scooter_frame.axle_front"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "veh_scooter_frame.axle_front_r"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "veh_scooter_frame.axle_rear"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "veh_scooter_frame.axle_rear_r"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "kit_keel_base.steer_bore"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "kit_keel_base.axle_row0"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "kit_keel_base.axle_row7_l"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "kit_keel_base.axle_row7_r"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "kit_keel_base.axle_row8_l"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "kit_keel_base.axle_row8_r"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "kit_clevis_spine.headtube"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "kit_clevis_spine.kickstand_bore"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "kit_clevis_spine.clevis_front_l"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "kit_clevis_spine.clevis_front_r"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "kit_clevis_spine.clevis_rear_l"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "kit_clevis_spine.clevis_rear_r"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "kit_wheel_med.hub"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "kit_wheel_giant.hub"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "kit_wheel_giant.face_bores"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "kit_rotor_blade.hub"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "kit_aero_wedge.prop_bore"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "kit_aero_wedge.mast_bore"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "kit_tilting_tub.hinge_bore"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "kit_turntable.center_bore"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "pro_steer_bridge.kingpins"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "pro_steer_knuckle_l.kingpin_bore"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "pro_steer_knuckle_l.tierod_bore"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "pro_steer_knuckle_r.kingpin_bore"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "pro_steer_knuckle_r.tierod_bore"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "kit_wheel_med_free.hub"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "kit_wheel_giant_free.hub"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "kit_wheel_giant_free.face_bores"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "pro_steer_rack.tierod_bores"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "pro_tie_rod_link.pivot_bore"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "pro_fork_rake_adpt.fork_bores"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "mom_band_core_lid.hinge_bore"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "mom_band_spool_pawl.hub"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "mom_bumper_trigger.mount_bores"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "mom_slam_base.stop_bore"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "mom_slam_base.anchor_bores"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "mom_jet_valve_body.valve_bore"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "mom_nozzle_set.mount_bore"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "mom_bellows_base.hinge_bore"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "mom_bellows_leaf.hinge_bore"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "mom_flywheel_tray.spindle_step"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "mom_flywheel_lid.spindle_journal"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "mom_flywheel_rotor.hub"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "mom_ripcord_rack_150.pull_bore"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "pro_tub_hinge.hitch_bore"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "pro_tub_hinge.hinge_bore"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "pro_steer_wheel.hub"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "mom_pto_gear_z10.hub"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "mom_latch_pawl.pivot_bore"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "mech_drive_tray.pto_pilot_bore"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "mech_brain_lid.hinge_bore"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "mech_bat_door_screw.hitch_bore"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "mech_servo_mount.clamp_bores"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "mech_servo_lid.clamp_bores"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
+          "female": "mech_servo_pinion_z10.pilot_bore"
+        },
+        {
+          "male": "prop_upright_vacuum.axis",
           "female": "kit_drum_roller.hub"
         },
         {
@@ -44718,6 +46011,30 @@
       "size_class": "pro",
       "line": "pro"
     },
+    "prop_spatula": {
+      "interfaces": [
+        "shaft_drive"
+      ],
+      "design_status": "verified",
+      "size_class": "pro",
+      "line": "pro"
+    },
+    "prop_frying_pan": {
+      "interfaces": [
+        "shaft_drive"
+      ],
+      "design_status": "verified",
+      "size_class": "pro",
+      "line": "pro"
+    },
+    "prop_upright_vacuum": {
+      "interfaces": [
+        "shaft_drive"
+      ],
+      "design_status": "verified",
+      "size_class": "pro",
+      "line": "pro"
+    },
     "prop_trumpet": {
       "interfaces": [
         "shaft_drive"
@@ -45543,6 +46860,9 @@
         "prop_broom": "pending",
         "prop_scrub_brush": "pending",
         "prop_vacuum": "pending",
+        "prop_spatula": "pending",
+        "prop_frying_pan": "pending",
+        "prop_upright_vacuum": "pending",
         "prop_trumpet": "pending",
         "prop_maracas": "pending",
         "prop_flag": "pending",
@@ -45758,6 +47078,9 @@
         "prop_broom": "pending",
         "prop_scrub_brush": "pending",
         "prop_vacuum": "pending",
+        "prop_spatula": "pending",
+        "prop_frying_pan": "pending",
+        "prop_upright_vacuum": "pending",
         "prop_trumpet": "pending",
         "prop_maracas": "pending",
         "prop_flag": "pending",

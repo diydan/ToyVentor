@@ -2,9 +2,9 @@
   "validator": "preprint_check 1.2.0",
   "profile": "fdm_pla_0.4",
   "slicer": "PrusaSlicer-2.8.1",
-  "generated_at": "2026-11-03T12:36:07Z",
+  "generated_at": "2026-11-03T13:40:04Z",
   "counts": {
-    "pass": 182,
+    "pass": 185,
     "pass_with_settings": 0,
     "pass_with_warnings": 32,
     "fail": 0
@@ -2111,6 +2111,20 @@
       "min_wall_mm": null
     },
     {
+      "part_id": "prop_frying_pan",
+      "file": "toyventor_prop_frying_pan_P.stl",
+      "verdict": "pass",
+      "summary": "Prints as is",
+      "filament_g": null,
+      "print_time_min": null,
+      "filament_cost_usd": null,
+      "brim_mm": 0,
+      "height_mm": 7.0,
+      "bed_contact_mm2": 1717.7,
+      "slenderness": 0.17,
+      "min_wall_mm": null
+    },
+    {
       "part_id": "prop_guitar",
       "file": "toyventor_prop_guitar_P.stl",
       "verdict": "pass",
@@ -2237,6 +2251,20 @@
       "min_wall_mm": null
     },
     {
+      "part_id": "prop_spatula",
+      "file": "toyventor_prop_spatula_P.stl",
+      "verdict": "pass",
+      "summary": "Prints as is",
+      "filament_g": null,
+      "print_time_min": null,
+      "filament_cost_usd": null,
+      "brim_mm": 0,
+      "height_mm": 6.8,
+      "bed_contact_mm2": 1208.1,
+      "slenderness": 0.2,
+      "min_wall_mm": null
+    },
+    {
       "part_id": "prop_star_shield",
       "file": "toyventor_prop_star_shield_P.stl",
       "verdict": "pass",
@@ -2262,6 +2290,20 @@
       "height_mm": 7.2,
       "bed_contact_mm2": 1218.4,
       "slenderness": 0.21,
+      "min_wall_mm": null
+    },
+    {
+      "part_id": "prop_upright_vacuum",
+      "file": "toyventor_prop_upright_vacuum_P.stl",
+      "verdict": "pass",
+      "summary": "Prints as is",
+      "filament_g": null,
+      "print_time_min": null,
+      "filament_cost_usd": null,
+      "brim_mm": 0,
+      "height_mm": 6.6,
+      "bed_contact_mm2": 1245.0,
+      "slenderness": 0.19,
       "min_wall_mm": null
     },
     {

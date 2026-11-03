@@ -7,7 +7,7 @@
 | Line | Verified | Built, not verified | Target |
 | --- | --- | --- | --- |
 | Snap | 120 | 0 | 120 |
-| Pro | 90 | 0 | 90 |
+| Pro | 93 | 0 | 93 |
 
 ## Waves
 
@@ -25,7 +25,7 @@
 | W9 | Kip wardrobe and modular TU vehicles | 58 | 58 | W5, W6, W8 | M | done |
 | W10 | Universal Flat-Pack Modular Craft (Cards A-D) | 19 | 19 | W5, W6, W8, W9 | L | done |
 | W11 | Progressive Power: Pro Steering & Momentum Cores (Cards E1-E2) | 32 | 32 | W4, W5, W10 | L | done |
-| W12 | Workshop Props | 12 | 12 | none | M | done |
+| W12 | Workshop Props | 15 | 15 | none | M | done |
 | W13 | Stage-4 Mech Drop-In Printable Robotics (Card F) | 11 | 11 | W11 | L | done |
 | W14 | Construction: Road Roller and Dozer (Card G) | 3 | 3 | W10 | S | done |
 
@@ -41,7 +41,7 @@
 - **W9:** 58 parts (48 Snap Small, 10 Pro): eleven Wave 9 character and robot heads across 4 categories (4 smooth organic humanoid heads that share one universal face zone, wig vault and hat cavity: Soft Youth (neutral), Sweet Heart (feminine), Heroic Jaw (masculine) and Jumbo Vinyl, all listed in Kip-Demo.html; 1 Mecha Scout robot head pairing with Kip Classic & Bolt Robot; 3 animal critter heads: Fox, Bear, Whisker Cat; 3 creature heads: Drake Dragon, Starling Alien, Yeti Imp) with 2x1 crown buds, three universal interchangeable 1 TU facial inserts (3D Nose & Smile Face Insert, 3D Button Eyes & Nose Face Insert, and Smooth Flush Decal Face Insert), nineteen sculpted multi-strand wrap-around 2x1 crown wigs (8 Hat-Ready with top 2x1 crown studs + 11 Sculpted-Top; every wig leaves a groove for the shared ear spot), seven wearable 2x1 crown hats, Explorer Rucksack, Builder Spanner, Star Emblem Wand, Street Skateboard Deck, Seated Snap Legs, three stylized Pro vehicle wheels, and V2 modular rolling vehicle chassis with interchangeable snap-on body covers.
 - **W10:** 19 parts (13 Snap Small, 6 Pro): 16 rigid flat-pack modular craft modules plus 3 smooth 0.80 mm PETG/TPU flex skins across Cards A-D (<= 170 x 170 mm), unlocking 9 canonical craft (Race Car, Dump Truck, Tractor, Trailer, Motorbike/Trike, Aeroplane, Catamaran, Helicopter, Space Shuttle) with 100% intact parts clearing the S1 small-parts cylinder.
 - **W11:** 32 parts (8 Snap Small, 24 Pro): captive Stage-2 Pro row-0 Ackermann rack steering linkage (bridge with fixed kingpins, rack guide and travel stop, rack, tall-tower knuckles with a barbed round wheel stub, the two free-hub front wheels (36 and 50 mm) that turn on it, tie-rod link, headed captive drive pins, steering column and wheel), rear dump-tub barrel hinge adapter, and positive-trail bike fork adapter, plus functional Stage-3 Momentum stored-energy propulsion and actuator modules (enclosed #64 band core with coaxial freewheel PTO gear, pawl spool, armed/pull-back latch and winding key, compliant bumper trigger, captive slam launcher, leak-free horizontal balloon jet + shutoff slide valve + 3-orifice nozzle selector, interleaved 10-deg hinged bellows clamshell, and un-jammed shrouded 42 mm vertical rip-cord turbine core) across Cards E1-E2 (<= 164 x 164 mm).
-- **W12:** 12 parts (12 Pro): handheld workshop and play props that clip onto Kip's Pro grip shaft in the hand port, in 4 Kip-Demo.html prop categories (with the 5 earlier props, 17 in all): Tools (Claw Hammer, Flat Screwdriver, Paint Roller), Cleaning (String Mop, Bristle Broom, Scrub Brush, Handheld Vacuum), Instruments (Acoustic Guitar, Brass Trumpet, Rattle Maraca) and Play (Swallow-Tail Flag, Magnifying Glass).
+- **W12:** 15 parts (15 Pro): handheld workshop, kitchen and play props that clip onto Kip's Pro grip shaft in the hand port, in 5 Kip-Demo.html prop categories (with the 5 earlier props, 20 in all): Tools (Claw Hammer, Flat Screwdriver, Paint Roller), Cleaning (String Mop, Bristle Broom, Scrub Brush, Handheld Vacuum, Upright Vacuum), Cooking (Pancake Spatula, Frying Pan), Instruments (Acoustic Guitar, Brass Trumpet, Rattle Maraca) and Play (Swallow-Tail Flag, Magnifying Glass).
 - **W13:** 11 parts (6 Snap Small, 5 Pro): PETG Stage-4 drop-in RC and robotics housings across Card F (<= 164 x 164 mm) coupling standard off-the-shelf N20 micro gearmotors, 9g micro servos (capturing the factory nylon horn with zero printed micro-splines), XIAO ESP32 / H-bridge electronics, and tool-locked 1S 602535 LiPo batteries onto the universal 12.5 mm craft keel with double-shear Pro pilot bearings.
 - **W14:** 3 parts (3 Pro): the construction-line parts across Card G (<= 164 x 164 mm): the 103.0 mm wide-track barbell axle, the 50.0 x 24.8 mm smooth dished road-roller drum and the 112.5 mm (9 TU) dozer axle, so a keel on two wide axles and four drums is a double-drum road roller (Gate G1 craft 10). A dozer's C-frame arms pivot on the same wide axle (docs/specs/construction-vehicles-spec.md).
 
@@ -221,6 +221,7 @@
 | `pro_tub_hinge` | Pro Rear Dump-Tub Barrel Hinge Adapter | joint | pro | W11 | verified | Lift. 29.4 x 19.3 x 19.4 mm flat-printed rear dump-tub barrel hinge adapter keying into #1 rear transom mortises with a vertical hitch bore and twin enclosed barrel-hinge knuckles pinned by shaft_tu03. |
 | `prop_broom` | Bristle Broom | shaft | pro | W12 | verified | Balance. Tapered bristle broom with slotted gaps on a 3 TU 6.6 mm flat-sided Pro grip shaft; prints lying on a flat. Category: Cleaning. |
 | `prop_flag` | Swallow-Tail Flag | shaft | pro | W12 | verified | Style. Pennant flag with star-dot hole and ball finial on a 3 TU 6.6 mm flat-sided Pro grip shaft; prints lying on a flat. Category: Play. |
+| `prop_frying_pan` | Frying Pan | shaft | pro | W12 | verified | Grip. Round frying pan with a raised rim and a sunny-side-up egg; the 3 TU 6.6 mm flat-sided Pro grip shaft is the pan handle; prints lying on a flat. Category: Cooking. |
 | `prop_guitar` | Acoustic Guitar | shaft | pro | W12 | verified | Glow. Chunky figure-8 guitar with neck, headstock and sound hole on a 3 TU 6.6 mm flat-sided Pro grip shaft; prints lying on a flat. Category: Instruments. |
 | `prop_hammer` | Claw Hammer | shaft | pro | W12 | verified | Torque. Chunky claw hammer on a 3 TU 6.6 mm flat-sided Pro grip shaft; prints lying on a flat. Category: Tools. |
 | `prop_magnifier` | Magnifying Glass | shaft | pro | W12 | verified | Glow. Magnifying glass with open lens window on a 3 TU 6.6 mm flat-sided Pro grip shaft; prints lying on a flat. Category: Play. |
@@ -229,7 +230,9 @@
 | `prop_paint_roller` | Paint Roller | shaft | pro | W12 | verified | Grip. Striped paint roller on a stem on a 3 TU 6.6 mm flat-sided Pro grip shaft; prints lying on a flat. Category: Tools. |
 | `prop_screwdriver` | Flat Screwdriver | shaft | pro | W12 | verified | Torque. Fat-handled screwdriver with shank and flared tip on a 3 TU 6.6 mm flat-sided Pro grip shaft; prints lying on a flat. Category: Tools. |
 | `prop_scrub_brush` | Scrub Brush | shaft | pro | W12 | verified | Grip. Oval scrub brush with bristle-dot holes on a 3 TU 6.6 mm flat-sided Pro grip shaft; prints lying on a flat. Category: Cleaning. |
+| `prop_spatula` | Pancake Spatula | shaft | pro | W12 | verified | Balance. Pancake turner with a funnel neck, four blade slots and a raised edge on a 3 TU 6.6 mm flat-sided Pro grip shaft; prints lying on a flat. Category: Cooking. |
 | `prop_trumpet` | Brass Trumpet | shaft | pro | W12 | verified | Glow. Trumpet with three valve lobes and flared bell on a 3 TU 6.6 mm flat-sided Pro grip shaft; prints lying on a flat. Category: Instruments. |
+| `prop_upright_vacuum` | Upright Vacuum | shaft | pro | W12 | verified | Speed. Upright vacuum with a bell-shaped motor body and dust window, a long wand and a floor head hinged 40 degrees so it lies flat when the wand leans, on a 3 TU 6.6 mm flat-sided Pro grip shaft; prints lying on a flat. Category: Cleaning. |
 | `prop_vacuum` | Handheld Vacuum | shaft | pro | W12 | verified | Speed. Handheld vacuum with dust window and flared nozzle on a 3 TU 6.6 mm flat-sided Pro grip shaft; prints lying on a flat. Category: Cleaning. |
 | `mech_bat_door_screw` | Mech Tool-Locked LiPo Battery Door | beam | pro | W13 | verified | Sturdiness. 33.6 x 10.6 x 5.8 mm PETG tool-locked rear battery compartment door with keyed hook tab, captive M2.5 screw recess (ASTM F963-23 battery accessibility; exact clause TBD), and central Pro accessory bore. |
 | `mech_n20_pinion_z10` | Mech N20 Double-Shear Z10 Motor Pinion | gear | pro | W13 | verified | Torque. 30.0 x 28.9 x 20.0 mm PETG module-2.5 10-tooth pinion with dogbone-relieved 3.0 mm N20 D-bore, M2.5 set-screw boss, and integral 6.6 mm outboard Pro pilot journal. |

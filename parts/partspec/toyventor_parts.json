@@ -27254,6 +27254,639 @@
       ]
     },
     {
+      "id": "prop_spatula",
+      "name": "Pancake Spatula",
+      "type": "Hand prop",
+      "line": "pro",
+      "family": "shaft",
+      "size_class": "pro",
+      "stat": "Balance",
+      "behavior": "Pancake spatula on a 6.6 mm flat Pro grip shaft",
+      "prints": true,
+      "tags": [
+        "prop",
+        "hand",
+        "cooking",
+        "cat-cooking",
+        "kip"
+      ],
+      "file": "toyventor_prop_spatula_P.stl",
+      "bbox_mm": [
+        32.0,
+        83.5,
+        6.8
+      ],
+      "volume_cm3": 6.44,
+      "connectors": [
+        {
+          "id": "axis",
+          "kind": "pin",
+          "gender": "M",
+          "interface": "shaft_drive",
+          "size_class": "pro",
+          "fit_class": "PIN_DRIVE",
+          "profile": "flats",
+          "length_mm": 37.5,
+          "frame": {
+            "origin": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "normal": [
+              0,
+              0,
+              1
+            ]
+          },
+          "grid": {
+            "nx": 1,
+            "ny": 1,
+            "pitch": 12.5,
+            "anchor": "corner"
+          }
+        }
+      ],
+      "safety": {
+        "small_part_status": "above_cylinder",
+        "min_enclosing_diameter_mm": 70.26,
+        "margin_pct": 121.3,
+        "print_page_warning": [
+          "Printed at home or by a print service. Not tested to toy-safety standards. Adult supervision required. Check for cracks, sharp edges and loose pieces before each use, and stop using anything that has broken.",
+          "Larger than the small-parts test size in our size check. This is not a safety certification, and it is not rated for children under 3 years."
+        ]
+      },
+      "print": {
+        "orientation": "bed = z0; lying on a flat, axis horizontal",
+        "supports": false,
+        "rotation_deg": [
+          90,
+          0,
+          0
+        ]
+      },
+      "design_status": "verified",
+      "fit": {
+        "studs_measured": 2,
+        "design_gap_mm": 0.125,
+        "pairs": [
+          {
+            "pin": "shaft_drive",
+            "bore": "free",
+            "fit": "free",
+            "gap_min_mm": 0.2,
+            "gap_max_mm": 0.2
+          },
+          {
+            "pin": "shaft_drive",
+            "bore": "fixed",
+            "fit": "press",
+            "gap_min_mm": 0.125,
+            "gap_max_mm": 0.125
+          }
+        ],
+        "gap_min_mm": 0.125,
+        "gap_max_mm": 0.2,
+        "surface_offset_window_mm": [
+          -0.062,
+          0.088
+        ],
+        "residual_error_mm": 0.05
+      },
+      "checks": [
+        {
+          "id": "G1_watertight",
+          "level": "block",
+          "result": "pass",
+          "detail": ""
+        },
+        {
+          "id": "G2_winding",
+          "level": "block",
+          "result": "pass",
+          "detail": ""
+        },
+        {
+          "id": "G3_single_body",
+          "level": "block",
+          "result": "pass",
+          "detail": "1 body(ies)"
+        },
+        {
+          "id": "G4_on_bed",
+          "level": "block",
+          "result": "pass",
+          "detail": "zmin=0.000"
+        },
+        {
+          "id": "G5_fits_bed",
+          "level": "block",
+          "result": "pass",
+          "detail": "[32.0, 83.5, 6.8] vs [180, 180, 180]"
+        },
+        {
+          "id": "P1_no_supports",
+          "level": "block",
+          "result": "pass",
+          "detail": "0.0 mm2 steeper than 45 deg"
+        },
+        {
+          "id": "P4_no_ledges",
+          "level": "block",
+          "result": "pass",
+          "detail": "0.0 mm2 of flat underside held on one side only"
+        },
+        {
+          "id": "P2_bridge_span",
+          "level": "block",
+          "result": "pass",
+          "detail": "no cavity"
+        },
+        {
+          "id": "P3_wall_min",
+          "level": "info",
+          "result": "pass",
+          "detail": "no bores"
+        },
+        {
+          "id": "I1_lattice",
+          "level": "warn",
+          "result": "pass",
+          "detail": "pitch [12.5] mm vs TU 12.5 mm"
+        },
+        {
+          "id": "I2_connectors_on_part",
+          "level": "block",
+          "result": "pass",
+          "detail": "1 connector(s)"
+        },
+        {
+          "id": "I5_pin_fits_bore",
+          "level": "block",
+          "result": "pass",
+          "detail": "1 pin/bore feature(s) match the interface"
+        },
+        {
+          "id": "S1_small_part_screen",
+          "level": "warn",
+          "result": "pass",
+          "detail": "above_cylinder: best-fit diameter 70.26 mm vs 31.75 mm cylinder"
+        },
+        {
+          "id": "T1_fit_as_designed",
+          "level": "block",
+          "result": "pass",
+          "detail": "2 of 2 pin/bore pair(s) measured: gap +0.125 to +0.200 mm"
+        },
+        {
+          "id": "T2_fit_tolerance_window",
+          "level": "warn",
+          "result": "pass",
+          "detail": "surface offset window -0.062 to +0.088 mm vs calibrated error +/-0.05"
+        },
+        {
+          "id": "F1_printed_fit",
+          "level": "block",
+          "result": "pending",
+          "detail": "needs calibration print: printer surface offset must land in -0.062 to +0.088 mm"
+        },
+        {
+          "id": "F2_breakage",
+          "level": "block",
+          "result": "pending",
+          "detail": "needs break/impact test: no piece may fit the cylinder after failure"
+        },
+        {
+          "id": "M1_manifest_schema",
+          "level": "block",
+          "result": "pass",
+          "detail": ""
+        }
+      ]
+    },
+    {
+      "id": "prop_frying_pan",
+      "name": "Frying Pan",
+      "type": "Hand prop",
+      "line": "pro",
+      "family": "shaft",
+      "size_class": "pro",
+      "stat": "Grip",
+      "behavior": "Frying pan with egg on a 6.6 mm flat Pro grip shaft",
+      "prints": true,
+      "tags": [
+        "prop",
+        "hand",
+        "cooking",
+        "cat-cooking",
+        "kip"
+      ],
+      "file": "toyventor_prop_frying_pan_P.stl",
+      "bbox_mm": [
+        44.0,
+        85.5,
+        7.0
+      ],
+      "volume_cm3": 9.71,
+      "connectors": [
+        {
+          "id": "axis",
+          "kind": "pin",
+          "gender": "M",
+          "interface": "shaft_drive",
+          "size_class": "pro",
+          "fit_class": "PIN_DRIVE",
+          "profile": "flats",
+          "length_mm": 37.5,
+          "frame": {
+            "origin": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "normal": [
+              0,
+              0,
+              1
+            ]
+          },
+          "grid": {
+            "nx": 1,
+            "ny": 1,
+            "pitch": 12.5,
+            "anchor": "corner"
+          }
+        }
+      ],
+      "safety": {
+        "small_part_status": "above_cylinder",
+        "min_enclosing_diameter_mm": 69.88,
+        "margin_pct": 120.1,
+        "print_page_warning": [
+          "Printed at home or by a print service. Not tested to toy-safety standards. Adult supervision required. Check for cracks, sharp edges and loose pieces before each use, and stop using anything that has broken.",
+          "Larger than the small-parts test size in our size check. This is not a safety certification, and it is not rated for children under 3 years."
+        ]
+      },
+      "print": {
+        "orientation": "bed = z0; lying on a flat, axis horizontal",
+        "supports": false,
+        "rotation_deg": [
+          90,
+          0,
+          0
+        ]
+      },
+      "design_status": "verified",
+      "fit": {
+        "studs_measured": 2,
+        "design_gap_mm": 0.125,
+        "pairs": [
+          {
+            "pin": "shaft_drive",
+            "bore": "free",
+            "fit": "free",
+            "gap_min_mm": 0.2,
+            "gap_max_mm": 0.2
+          },
+          {
+            "pin": "shaft_drive",
+            "bore": "fixed",
+            "fit": "press",
+            "gap_min_mm": 0.125,
+            "gap_max_mm": 0.125
+          }
+        ],
+        "gap_min_mm": 0.125,
+        "gap_max_mm": 0.2,
+        "surface_offset_window_mm": [
+          -0.062,
+          0.088
+        ],
+        "residual_error_mm": 0.05
+      },
+      "checks": [
+        {
+          "id": "G1_watertight",
+          "level": "block",
+          "result": "pass",
+          "detail": ""
+        },
+        {
+          "id": "G2_winding",
+          "level": "block",
+          "result": "pass",
+          "detail": ""
+        },
+        {
+          "id": "G3_single_body",
+          "level": "block",
+          "result": "pass",
+          "detail": "1 body(ies)"
+        },
+        {
+          "id": "G4_on_bed",
+          "level": "block",
+          "result": "pass",
+          "detail": "zmin=0.000"
+        },
+        {
+          "id": "G5_fits_bed",
+          "level": "block",
+          "result": "pass",
+          "detail": "[44.0, 85.5, 7.0] vs [180, 180, 180]"
+        },
+        {
+          "id": "P1_no_supports",
+          "level": "block",
+          "result": "pass",
+          "detail": "0.0 mm2 steeper than 45 deg"
+        },
+        {
+          "id": "P4_no_ledges",
+          "level": "block",
+          "result": "pass",
+          "detail": "0.0 mm2 of flat underside held on one side only"
+        },
+        {
+          "id": "P2_bridge_span",
+          "level": "block",
+          "result": "pass",
+          "detail": "no cavity"
+        },
+        {
+          "id": "P3_wall_min",
+          "level": "info",
+          "result": "pass",
+          "detail": "no bores"
+        },
+        {
+          "id": "I1_lattice",
+          "level": "warn",
+          "result": "pass",
+          "detail": "pitch [12.5] mm vs TU 12.5 mm"
+        },
+        {
+          "id": "I2_connectors_on_part",
+          "level": "block",
+          "result": "pass",
+          "detail": "1 connector(s)"
+        },
+        {
+          "id": "I5_pin_fits_bore",
+          "level": "block",
+          "result": "pass",
+          "detail": "1 pin/bore feature(s) match the interface"
+        },
+        {
+          "id": "S1_small_part_screen",
+          "level": "warn",
+          "result": "pass",
+          "detail": "above_cylinder: best-fit diameter 69.88 mm vs 31.75 mm cylinder"
+        },
+        {
+          "id": "T1_fit_as_designed",
+          "level": "block",
+          "result": "pass",
+          "detail": "2 of 2 pin/bore pair(s) measured: gap +0.125 to +0.200 mm"
+        },
+        {
+          "id": "T2_fit_tolerance_window",
+          "level": "warn",
+          "result": "pass",
+          "detail": "surface offset window -0.062 to +0.088 mm vs calibrated error +/-0.05"
+        },
+        {
+          "id": "F1_printed_fit",
+          "level": "block",
+          "result": "pending",
+          "detail": "needs calibration print: printer surface offset must land in -0.062 to +0.088 mm"
+        },
+        {
+          "id": "F2_breakage",
+          "level": "block",
+          "result": "pending",
+          "detail": "needs break/impact test: no piece may fit the cylinder after failure"
+        },
+        {
+          "id": "M1_manifest_schema",
+          "level": "block",
+          "result": "pass",
+          "detail": ""
+        }
+      ]
+    },
+    {
+      "id": "prop_upright_vacuum",
+      "name": "Upright Vacuum",
+      "type": "Hand prop",
+      "line": "pro",
+      "family": "shaft",
+      "size_class": "pro",
+      "stat": "Speed",
+      "behavior": "Upright vacuum with dust-cup window and floor head on a 6.6 mm flat Pro grip shaft",
+      "prints": true,
+      "tags": [
+        "prop",
+        "hand",
+        "cleaning",
+        "cat-cleaning",
+        "kip"
+      ],
+      "file": "toyventor_prop_upright_vacuum_P.stl",
+      "bbox_mm": [
+        34.0,
+        118.0,
+        6.6
+      ],
+      "volume_cm3": 6.43,
+      "connectors": [
+        {
+          "id": "axis",
+          "kind": "pin",
+          "gender": "M",
+          "interface": "shaft_drive",
+          "size_class": "pro",
+          "fit_class": "PIN_DRIVE",
+          "profile": "flats",
+          "length_mm": 37.5,
+          "frame": {
+            "origin": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "normal": [
+              0,
+              0,
+              1
+            ]
+          },
+          "grid": {
+            "nx": 1,
+            "ny": 1,
+            "pitch": 12.5,
+            "anchor": "corner"
+          }
+        }
+      ],
+      "safety": {
+        "small_part_status": "above_cylinder",
+        "min_enclosing_diameter_mm": 109.04,
+        "margin_pct": 243.4,
+        "print_page_warning": [
+          "Printed at home or by a print service. Not tested to toy-safety standards. Adult supervision required. Check for cracks, sharp edges and loose pieces before each use, and stop using anything that has broken.",
+          "Larger than the small-parts test size in our size check. This is not a safety certification, and it is not rated for children under 3 years."
+        ]
+      },
+      "print": {
+        "orientation": "bed = z0; lying on a flat, axis horizontal",
+        "supports": false,
+        "rotation_deg": [
+          90,
+          0,
+          0
+        ]
+      },
+      "design_status": "verified",
+      "fit": {
+        "studs_measured": 2,
+        "design_gap_mm": 0.125,
+        "pairs": [
+          {
+            "pin": "shaft_drive",
+            "bore": "free",
+            "fit": "free",
+            "gap_min_mm": 0.2,
+            "gap_max_mm": 0.2
+          },
+          {
+            "pin": "shaft_drive",
+            "bore": "fixed",
+            "fit": "press",
+            "gap_min_mm": 0.125,
+            "gap_max_mm": 0.125
+          }
+        ],
+        "gap_min_mm": 0.125,
+        "gap_max_mm": 0.2,
+        "surface_offset_window_mm": [
+          -0.062,
+          0.088
+        ],
+        "residual_error_mm": 0.05
+      },
+      "checks": [
+        {
+          "id": "G1_watertight",
+          "level": "block",
+          "result": "pass",
+          "detail": ""
+        },
+        {
+          "id": "G2_winding",
+          "level": "block",
+          "result": "pass",
+          "detail": ""
+        },
+        {
+          "id": "G3_single_body",
+          "level": "block",
+          "result": "pass",
+          "detail": "1 body(ies)"
+        },
+        {
+          "id": "G4_on_bed",
+          "level": "block",
+          "result": "pass",
+          "detail": "zmin=0.000"
+        },
+        {
+          "id": "G5_fits_bed",
+          "level": "block",
+          "result": "pass",
+          "detail": "[34.0, 118.0, 6.6] vs [180, 180, 180]"
+        },
+        {
+          "id": "P1_no_supports",
+          "level": "block",
+          "result": "pass",
+          "detail": "0.0 mm2 steeper than 45 deg"
+        },
+        {
+          "id": "P4_no_ledges",
+          "level": "block",
+          "result": "pass",
+          "detail": "0.0 mm2 of flat underside held on one side only"
+        },
+        {
+          "id": "P2_bridge_span",
+          "level": "block",
+          "result": "pass",
+          "detail": "no cavity"
+        },
+        {
+          "id": "P3_wall_min",
+          "level": "info",
+          "result": "pass",
+          "detail": "no bores"
+        },
+        {
+          "id": "I1_lattice",
+          "level": "warn",
+          "result": "pass",
+          "detail": "pitch [12.5] mm vs TU 12.5 mm"
+        },
+        {
+          "id": "I2_connectors_on_part",
+          "level": "block",
+          "result": "pass",
+          "detail": "1 connector(s)"
+        },
+        {
+          "id": "I5_pin_fits_bore",
+          "level": "block",
+          "result": "pass",
+          "detail": "1 pin/bore feature(s) match the interface"
+        },
+        {
+          "id": "S1_small_part_screen",
+          "level": "warn",
+          "result": "pass",
+          "detail": "above_cylinder: best-fit diameter 109.04 mm vs 31.75 mm cylinder"
+        },
+        {
+          "id": "T1_fit_as_designed",
+          "level": "block",
+          "result": "pass",
+          "detail": "2 of 2 pin/bore pair(s) measured: gap +0.125 to +0.200 mm"
+        },
+        {
+          "id": "T2_fit_tolerance_window",
+          "level": "warn",
+          "result": "pass",
+          "detail": "surface offset window -0.062 to +0.088 mm vs calibrated error +/-0.05"
+        },
+        {
+          "id": "F1_printed_fit",
+          "level": "block",
+          "result": "pending",
+          "detail": "needs calibration print: printer surface offset must land in -0.062 to +0.088 mm"
+        },
+        {
+          "id": "F2_breakage",
+          "level": "block",
+          "result": "pending",
+          "detail": "needs break/impact test: no piece may fit the cylinder after failure"
+        },
+        {
+          "id": "M1_manifest_schema",
+          "level": "block",
+          "result": "pass",
+          "detail": ""
+        }
+      ]
+    },
+    {
       "id": "prop_trumpet",
       "name": "Brass Trumpet",
       "type": "Hand prop",

@@ -76551,6 +76551,5142 @@
       "measured": true
     },
     {
+      "male": "prop_spatula.axis",
+      "female": "beam_str_tu03.bores",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "beam_str_tu05.bores",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "beam_str_tu07.bores",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "beam_str_tu10.bores",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "beam_str_tu14.bores",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "bushing_half.hub",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "bushing_tu01.hub",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "gear_spur_z10.hub",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "gear_spur_z15.hub",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "gear_spur_z20.hub",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "gear_spur_z30.hub",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "gear_rack_tu05.bores",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "gear_ring_z40.frame_bores",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "gear_spur_z25.hub",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "beam_l_tu03x03.bores",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "beam_l_tu05x03.bores",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "beam_t_tu05x03.bores",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "beam_ang45_tu05.bores",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "forge_mount_pro.bores",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "adapter_snap_pro.bores",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "wheel_tu04.hub",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "wheel_tu04.cranks",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "wheel_tu06.hub",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "wheel_tu06.cranks",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "hinge_tu02.bores",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "hinge_tu02.knuckle0",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "hinge_tu02.knuckle1",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "cross_connector_tu01.axle_z",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "cross_connector_tu01.axle_y",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "racer_axle_block.axle",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "racer_wheel.hub",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "char_head_kid.face_slot",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "char_head_chibi.face_slot",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "char_head_jumbo.face_slot",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "char_head_tall.face_slot",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "prop_skateboard_deck.axle_front",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "prop_skateboard_deck.axle_rear",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "veh_wheel_sport.hub",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "veh_wheel_offroad.hub",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "veh_wheel_moto.hub",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "veh_car_chassis.dash_bore",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "veh_car_chassis.axle_front",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "veh_car_chassis.axle_rear",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "veh_truck_chassis.dash_bore",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "veh_truck_chassis.axle_front",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "veh_truck_chassis.axle_rear",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "veh_scooter_frame.headtube",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "veh_scooter_frame.axle_front",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "veh_scooter_frame.axle_front_r",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "veh_scooter_frame.axle_rear",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "veh_scooter_frame.axle_rear_r",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "kit_keel_base.steer_bore",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "kit_keel_base.axle_row0",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "kit_keel_base.axle_row7_l",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "kit_keel_base.axle_row7_r",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "kit_keel_base.axle_row8_l",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "kit_keel_base.axle_row8_r",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "kit_clevis_spine.headtube",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "kit_clevis_spine.kickstand_bore",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "kit_clevis_spine.clevis_front_l",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "kit_clevis_spine.clevis_front_r",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "kit_clevis_spine.clevis_rear_l",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "kit_clevis_spine.clevis_rear_r",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "kit_wheel_med.hub",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "kit_wheel_giant.hub",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "kit_wheel_giant.face_bores",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "kit_rotor_blade.hub",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "kit_aero_wedge.prop_bore",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "kit_aero_wedge.mast_bore",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "kit_tilting_tub.hinge_bore",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "kit_turntable.center_bore",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "pro_steer_bridge.kingpins",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "pro_steer_knuckle_l.kingpin_bore",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "pro_steer_knuckle_l.tierod_bore",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "pro_steer_knuckle_r.kingpin_bore",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "pro_steer_knuckle_r.tierod_bore",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "kit_wheel_med_free.hub",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "kit_wheel_giant_free.hub",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "kit_wheel_giant_free.face_bores",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "pro_steer_rack.tierod_bores",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "pro_tie_rod_link.pivot_bore",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "pro_fork_rake_adpt.fork_bores",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "mom_band_core_lid.hinge_bore",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "mom_band_spool_pawl.hub",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "mom_bumper_trigger.mount_bores",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "mom_slam_base.stop_bore",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "mom_slam_base.anchor_bores",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "mom_jet_valve_body.valve_bore",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "mom_nozzle_set.mount_bore",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "mom_bellows_base.hinge_bore",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "mom_bellows_leaf.hinge_bore",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "mom_flywheel_tray.spindle_step",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "mom_flywheel_lid.spindle_journal",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "mom_flywheel_rotor.hub",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "mom_ripcord_rack_150.pull_bore",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "pro_tub_hinge.hitch_bore",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "pro_tub_hinge.hinge_bore",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "pro_steer_wheel.hub",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "mom_pto_gear_z10.hub",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "mom_latch_pawl.pivot_bore",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "mech_drive_tray.pto_pilot_bore",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "mech_brain_lid.hinge_bore",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "mech_bat_door_screw.hitch_bore",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "mech_servo_mount.clamp_bores",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "mech_servo_lid.clamp_bores",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "mech_servo_pinion_z10.pilot_bore",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_spatula.axis",
+      "female": "kit_drum_roller.hub",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "beam_str_tu03.bores",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "beam_str_tu05.bores",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "beam_str_tu07.bores",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "beam_str_tu10.bores",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "beam_str_tu14.bores",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "bushing_half.hub",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "bushing_tu01.hub",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "gear_spur_z10.hub",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "gear_spur_z15.hub",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "gear_spur_z20.hub",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "gear_spur_z30.hub",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "gear_rack_tu05.bores",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "gear_ring_z40.frame_bores",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "gear_spur_z25.hub",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "beam_l_tu03x03.bores",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "beam_l_tu05x03.bores",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "beam_t_tu05x03.bores",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "beam_ang45_tu05.bores",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "forge_mount_pro.bores",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "adapter_snap_pro.bores",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "wheel_tu04.hub",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "wheel_tu04.cranks",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "wheel_tu06.hub",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "wheel_tu06.cranks",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "hinge_tu02.bores",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "hinge_tu02.knuckle0",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "hinge_tu02.knuckle1",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "cross_connector_tu01.axle_z",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "cross_connector_tu01.axle_y",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "racer_axle_block.axle",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "racer_wheel.hub",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "char_head_kid.face_slot",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "char_head_chibi.face_slot",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "char_head_jumbo.face_slot",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "char_head_tall.face_slot",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "prop_skateboard_deck.axle_front",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "prop_skateboard_deck.axle_rear",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "veh_wheel_sport.hub",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "veh_wheel_offroad.hub",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "veh_wheel_moto.hub",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "veh_car_chassis.dash_bore",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "veh_car_chassis.axle_front",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "veh_car_chassis.axle_rear",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "veh_truck_chassis.dash_bore",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "veh_truck_chassis.axle_front",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "veh_truck_chassis.axle_rear",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "veh_scooter_frame.headtube",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "veh_scooter_frame.axle_front",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "veh_scooter_frame.axle_front_r",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "veh_scooter_frame.axle_rear",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "veh_scooter_frame.axle_rear_r",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "kit_keel_base.steer_bore",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "kit_keel_base.axle_row0",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "kit_keel_base.axle_row7_l",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "kit_keel_base.axle_row7_r",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "kit_keel_base.axle_row8_l",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "kit_keel_base.axle_row8_r",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "kit_clevis_spine.headtube",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "kit_clevis_spine.kickstand_bore",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "kit_clevis_spine.clevis_front_l",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "kit_clevis_spine.clevis_front_r",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "kit_clevis_spine.clevis_rear_l",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "kit_clevis_spine.clevis_rear_r",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "kit_wheel_med.hub",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "kit_wheel_giant.hub",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "kit_wheel_giant.face_bores",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "kit_rotor_blade.hub",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "kit_aero_wedge.prop_bore",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "kit_aero_wedge.mast_bore",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "kit_tilting_tub.hinge_bore",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "kit_turntable.center_bore",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "pro_steer_bridge.kingpins",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "pro_steer_knuckle_l.kingpin_bore",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "pro_steer_knuckle_l.tierod_bore",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "pro_steer_knuckle_r.kingpin_bore",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "pro_steer_knuckle_r.tierod_bore",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "kit_wheel_med_free.hub",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "kit_wheel_giant_free.hub",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "kit_wheel_giant_free.face_bores",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "pro_steer_rack.tierod_bores",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "pro_tie_rod_link.pivot_bore",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "pro_fork_rake_adpt.fork_bores",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "mom_band_core_lid.hinge_bore",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "mom_band_spool_pawl.hub",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "mom_bumper_trigger.mount_bores",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "mom_slam_base.stop_bore",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "mom_slam_base.anchor_bores",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "mom_jet_valve_body.valve_bore",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "mom_nozzle_set.mount_bore",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "mom_bellows_base.hinge_bore",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "mom_bellows_leaf.hinge_bore",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "mom_flywheel_tray.spindle_step",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "mom_flywheel_lid.spindle_journal",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "mom_flywheel_rotor.hub",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "mom_ripcord_rack_150.pull_bore",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "pro_tub_hinge.hitch_bore",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "pro_tub_hinge.hinge_bore",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "pro_steer_wheel.hub",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "mom_pto_gear_z10.hub",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "mom_latch_pawl.pivot_bore",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "mech_drive_tray.pto_pilot_bore",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "mech_brain_lid.hinge_bore",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "mech_bat_door_screw.hitch_bore",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "mech_servo_mount.clamp_bores",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "mech_servo_lid.clamp_bores",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "mech_servo_pinion_z10.pilot_bore",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_frying_pan.axis",
+      "female": "kit_drum_roller.hub",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "beam_str_tu03.bores",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "beam_str_tu05.bores",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "beam_str_tu07.bores",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "beam_str_tu10.bores",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "beam_str_tu14.bores",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "bushing_half.hub",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "bushing_tu01.hub",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "gear_spur_z10.hub",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "gear_spur_z15.hub",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "gear_spur_z20.hub",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "gear_spur_z30.hub",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "gear_rack_tu05.bores",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "gear_ring_z40.frame_bores",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "gear_spur_z25.hub",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "beam_l_tu03x03.bores",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "beam_l_tu05x03.bores",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "beam_t_tu05x03.bores",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "beam_ang45_tu05.bores",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "forge_mount_pro.bores",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "adapter_snap_pro.bores",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "wheel_tu04.hub",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "wheel_tu04.cranks",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "wheel_tu06.hub",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "wheel_tu06.cranks",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "hinge_tu02.bores",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "hinge_tu02.knuckle0",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "hinge_tu02.knuckle1",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "cross_connector_tu01.axle_z",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "cross_connector_tu01.axle_y",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "racer_axle_block.axle",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "racer_wheel.hub",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "char_head_kid.face_slot",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "char_head_chibi.face_slot",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "char_head_jumbo.face_slot",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "char_head_tall.face_slot",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "prop_skateboard_deck.axle_front",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "prop_skateboard_deck.axle_rear",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "veh_wheel_sport.hub",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "veh_wheel_offroad.hub",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "veh_wheel_moto.hub",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "veh_car_chassis.dash_bore",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "veh_car_chassis.axle_front",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "veh_car_chassis.axle_rear",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "veh_truck_chassis.dash_bore",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "veh_truck_chassis.axle_front",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "veh_truck_chassis.axle_rear",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "veh_scooter_frame.headtube",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "veh_scooter_frame.axle_front",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "veh_scooter_frame.axle_front_r",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "veh_scooter_frame.axle_rear",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "veh_scooter_frame.axle_rear_r",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "kit_keel_base.steer_bore",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "kit_keel_base.axle_row0",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "kit_keel_base.axle_row7_l",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "kit_keel_base.axle_row7_r",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "kit_keel_base.axle_row8_l",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "kit_keel_base.axle_row8_r",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "kit_clevis_spine.headtube",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "kit_clevis_spine.kickstand_bore",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "kit_clevis_spine.clevis_front_l",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "kit_clevis_spine.clevis_front_r",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "kit_clevis_spine.clevis_rear_l",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "kit_clevis_spine.clevis_rear_r",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "kit_wheel_med.hub",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "kit_wheel_giant.hub",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "kit_wheel_giant.face_bores",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "kit_rotor_blade.hub",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "kit_aero_wedge.prop_bore",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "kit_aero_wedge.mast_bore",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "kit_tilting_tub.hinge_bore",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "kit_turntable.center_bore",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "pro_steer_bridge.kingpins",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "pro_steer_knuckle_l.kingpin_bore",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "pro_steer_knuckle_l.tierod_bore",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "pro_steer_knuckle_r.kingpin_bore",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "pro_steer_knuckle_r.tierod_bore",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "kit_wheel_med_free.hub",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "kit_wheel_giant_free.hub",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "kit_wheel_giant_free.face_bores",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "pro_steer_rack.tierod_bores",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "pro_tie_rod_link.pivot_bore",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "pro_fork_rake_adpt.fork_bores",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "mom_band_core_lid.hinge_bore",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "mom_band_spool_pawl.hub",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "mom_bumper_trigger.mount_bores",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "mom_slam_base.stop_bore",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "mom_slam_base.anchor_bores",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "mom_jet_valve_body.valve_bore",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "mom_nozzle_set.mount_bore",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "mom_bellows_base.hinge_bore",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "mom_bellows_leaf.hinge_bore",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "mom_flywheel_tray.spindle_step",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "mom_flywheel_lid.spindle_journal",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "mom_flywheel_rotor.hub",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "mom_ripcord_rack_150.pull_bore",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "pro_tub_hinge.hitch_bore",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "pro_tub_hinge.hinge_bore",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "pro_steer_wheel.hub",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "mom_pto_gear_z10.hub",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "mom_latch_pawl.pivot_bore",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "mech_drive_tray.pto_pilot_bore",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "mech_brain_lid.hinge_bore",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "mech_bat_door_screw.hitch_bore",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "mech_servo_mount.clamp_bores",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "mech_servo_lid.clamp_bores",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "mech_servo_pinion_z10.pilot_bore",
+      "size_class": "pro",
+      "fit": "free",
+      "studs": 1,
+      "gap_min_mm": 0.2,
+      "gap_max_mm": 0.2,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.075,
+        0.1
+      ],
+      "measured": true
+    },
+    {
+      "male": "prop_upright_vacuum.axis",
+      "female": "kit_drum_roller.hub",
+      "size_class": "pro",
+      "fit": "press",
+      "studs": 1,
+      "gap_min_mm": 0.125,
+      "gap_max_mm": 0.125,
+      "as_designed": true,
+      "in_window": true,
+      "window_mm": [
+        -0.062,
+        0.088
+      ],
+      "measured": true
+    },
+    {
       "male": "prop_trumpet.axis",
       "female": "beam_str_tu03.bores",
       "size_class": "pro",

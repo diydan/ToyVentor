@@ -697,6 +697,12 @@
    "verdict": "pass",
    "brim_width_mm": 0
   },
+  "toyventor_prop_frying_pan_P.stl": {
+   "part": "prop_frying_pan",
+   "sha256": "03aa700b2a2afbdc5127c9f6e5878b781b51031bbe0f1030bffb0fc1cb2a53bc",
+   "verdict": "pass",
+   "brim_width_mm": 0
+  },
   "toyventor_prop_guitar_P.stl": {
    "part": "prop_guitar",
    "sha256": "3ce061d149cb8ec41b2c71d6e9d9890ae5b9b6122e6962f061ef4c1f482f99ba",
@@ -751,6 +757,12 @@
    "verdict": "pass",
    "brim_width_mm": 0
   },
+  "toyventor_prop_spatula_P.stl": {
+   "part": "prop_spatula",
+   "sha256": "092a55c6df1c771794b0d931e929645263051d8c9203b5c4fe02cd2bb92250b8",
+   "verdict": "pass",
+   "brim_width_mm": 0
+  },
   "toyventor_prop_star_shield_P.stl": {
    "part": "prop_star_shield",
    "sha256": "92a4f823ccb340bb122abe585c819405683a1154654f26cebed74566a7951fa7",
@@ -760,6 +772,12 @@
   "toyventor_prop_trumpet_P.stl": {
    "part": "prop_trumpet",
    "sha256": "6a8ef64f04d418d047f844a9a3e34fc41a0eb64478941e3b46984fbba27a1d18",
+   "verdict": "pass",
+   "brim_width_mm": 0
+  },
+  "toyventor_prop_upright_vacuum_P.stl": {
+   "part": "prop_upright_vacuum",
+   "sha256": "0e8ab50a6504557b53f065efe8a4cbf4886fdf580f4e5ce6bf38ea334d4d509c",
    "verdict": "pass",
    "brim_width_mm": 0
   },
