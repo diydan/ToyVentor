@@ -122,6 +122,44 @@ for (const f of fr.filter((x) => x.ft > 1.5 && x.ft + loopSec < fr[fr.length - 1
   differ = Math.max(differ, dist(f.q, h));
 }
 check(`the rig is on the beat: the pose a dance loop (${loopSec.toFixed(2)} s) later is the same pose (worst ${same.toFixed(3)} rad over ${pairs} pairs), half a loop later it differs (${differ.toFixed(2)} rad)`, pairs >= 5 && same < 0.1 && differ > 0.2, `pairs ${pairs}`);
+
+// ---- what the child SEES of the feet and hands, in the world: no sliding, no lurching, no jerks ---------------------------------------------------------------------------
+/** Record the world positions of both feet, the body's re-centring offset and both hands' rotations for `ms`, one entry per frame. */
+const recordWorld = (ms) => ev(`new Promise((resolve) => {
+  const { kip, THREE } = window.kipRig();
+  const J = kip.joints, v = new THREE.Vector3(), out = [], t0 = performance.now();
+  const wp = (n) => { J[n].getWorldPosition(v); return [v.x, v.y, v.z]; };
+  const qq = (n) => { const e = J[n].quaternion; return [e.x, e.y, e.z, e.w]; };
+  (function f() {
+    out.push({ p: performance.now(), L: wp('LeftFoot'), R: wp('RightFoot'), g: kip.grounder.position.x, hands: [qq('LeftHand'), qq('RightHand')] });
+    if (performance.now() - t0 < ${ms}) requestAnimationFrame(f); else resolve(out);
+  })();
+})`);
+const angle = (a, b) => 2 * Math.acos(Math.min(1, Math.abs(a[0] * b[0] + a[1] * b[1] + a[2] * b[2] + a[3] * b[3]))) * 180 / Math.PI;
+function worldReport(rec) {
+  let slide = 0;
+  for (const side of ["L", "R"]) { // a foot ON the floor (within 2.5 mm of its lowest) must not travel across it
+    const lo = Math.min(...rec.map((f) => f[side][1]));
+    let start = null;
+    for (const f of rec) {
+      if (f[side][1] < lo + 2.5) { start ??= f[side]; slide = Math.max(slide, Math.hypot(f[side][0] - start[0], f[side][2] - start[2])); } else start = null;
+    }
+  }
+  const lurch = Math.max(...rec.slice(1).map((f, i) => Math.abs(f.g - rec[i].g)));
+  const gx = rec.map((f) => f.g);
+  let spikes = 0, top = 0;
+  for (const h of [0, 1]) {
+    const speeds = rec.slice(1).map((f, i) => angle(rec[i].hands[h], f.hands[h]) / Math.max(1, f.p - rec[i].p) * 1000); // degrees a second
+    const sorted = [...speeds].sort((a, b) => a - b);
+    const p95 = sorted[Math.floor(sorted.length * 0.95)];
+    for (const s of speeds) if (s > Math.max(400, 4 * p95)) { spikes++; top = Math.max(top, s); }
+  }
+  return { slide, lurch, range: Math.max(...gx) - Math.min(...gx), spikes, top };
+}
+const w1 = worldReport(await recordWorld(5000));
+check(`a foot on the floor does not slide across it (${w1.slide.toFixed(1)} mm in the world; it was 20 mm when the body re-centred on the lower foot)`, w1.slide <= 4, JSON.stringify(w1));
+check(`the body does not lurch sideways (${w1.lurch.toFixed(2)} mm a frame at most; it was 8) and stays put over its feet (${w1.range.toFixed(1)} mm in all)`, w1.lurch <= 1 && w1.range <= 4);
+check(`the hands do not jerk (${w1.spikes} frames where a hand turns more than 4 times its usual speed${w1.spikes ? `, up to ${w1.top.toFixed(0)} degrees a second` : ""})`, w1.spikes === 0);
 await page.shot(path.join(SHOTS, "party-dancing.png")).catch(() => {});
 
 // ---- tapping, age band 5 to 6: a tap within 80 ms of a beat is a hit, once per beat. Real mouse presses (the page's own pointer path), aimed at the beat ----------
@@ -251,6 +289,7 @@ const rec2 = await ev(`new Promise((resolve) => { const out = []; const t0 = per
 let worst2 = 0, worstFrame = null;
 const loopLen2 = (info2.beats * 60) / info2.bpm;
 for (const f of rec2) {
+  if (f.dt === null) continue; // the party has not set a dance time yet (null, not 0: the first frames after the song starts)
   const pos = (f.ft - song.offset) / iv;
   const want = ((((pos % info2.beats) + info2.beats) % info2.beats) * 60) / info2.bpm;
   // on the wrap (the end of one loop is the start of the next) a difference of a whole loop is the same instant
@@ -258,6 +297,9 @@ for (const f of rec2) {
   if (e > worst2) { worst2 = e; worstFrame = { ...f, want, pos }; }
 }
 check(`the dance is on the SONG's beats: every frame's dance time is its beat position from the song's grid (worst ${(worst2 * 1000).toFixed(3)} ms)`, worst2 < 1e-6, JSON.stringify(worstFrame));
+
+const w2 = worldReport(await recordWorld(4000));
+check(`on a song too: no foot slides (${w2.slide.toFixed(1)} mm), the body stays put (${w2.lurch.toFixed(2)} mm a frame), the hands do not jerk (${w2.spikes})`, w2.slide <= 4 && w2.lurch <= 1 && w2.spikes === 0, JSON.stringify(w2));
 
 // the Dance picker, while the song plays: only what fits is offered, a choice takes over at once without restarting the sound, Auto gives the tempo's pick back
 const picker = await ev("[...window.kipMenu.fields.get('partyDance').select.options].map((o) => ({ value: o.value, label: o.textContent }))");
