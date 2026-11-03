@@ -292,7 +292,7 @@ async function scenarioXp1800(cdp) {
     "rank5-craft-selectable",
     body.includes("Rescue Helicopter") &&
       body.includes("Space Shuttle") &&
-      !body.includes("Bolt Power Mech"),
+      !body.includes("Bolt Power Pro"),
     "Rank 5 craft unlocked, unverified Rank 6 mech held back",
   );
 }
