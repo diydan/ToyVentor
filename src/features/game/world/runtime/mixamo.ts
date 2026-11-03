@@ -272,7 +272,8 @@ export function mixPose(into: Pose, other: Pose, w: number): void {
 
 /* ---------- driving the rig ---------- */
 
-export type MixAction = "dance" | "nod" | "no" | "sneak" | "sad";
+/** The baked Mixamo gestures, then the hand-authored ones (runtime/proceduralClips.ts: eat, sour, belly_pat, yawn, and sleep, which is a HELD pose). */
+export type MixAction = "dance" | "nod" | "no" | "sneak" | "sad" | "eat" | "sour" | "belly_pat" | "yawn" | "sleep";
 
 interface Joints {
   g: THREE.Object3D;
@@ -302,6 +303,9 @@ const AXIS_Y = new THREE.Vector3(0, 1, 0);
 const AXIS_X = new THREE.Vector3(1, 0, 0);
 
 const ACTION_FADE = 0.28;
+/** A held pose (sleep) eases in slowly and wakes a little faster. */
+const HOLD_FADE_IN = 0.8;
+const HOLD_FADE_OUT = 0.6;
 const ACTION_ENV = (t: number, dur: number): number => Math.max(0, Math.min(1, Math.min(t / ACTION_FADE, (dur - t) / ACTION_FADE)));
 const smooth = (a: number, b: number, x: number): number => {
   const t = Math.max(0, Math.min(1, (x - a) / (b - a)));
@@ -334,6 +338,8 @@ export class MixamoDriver {
   private tWalk = 0;
   private tRun = 0;
   private action: { clip: BakedClip; t: number } | null = null;
+  /** A pose that stays until releaseHold(): w eases 0 to 1 while it is held and back to 0 while it is leaving. */
+  private held: { clip: BakedClip; t: number; w: number; leaving: boolean } | null = null;
   private readonly p = newPose();
   private readonly a = newPose();
   private readonly q = new THREE.Quaternion();
@@ -357,6 +363,22 @@ export class MixamoDriver {
   }
 
   get busyAction(): string | null { return this.action ? this.action.clip.name : null; }
+
+  /**
+   * Take a pose and keep it (looping) until releaseHold(): the toy lies down and sleeps until it is woken. Eases in, replaces any one-shot, and (unlike
+   * a one-shot) is not cancelled by walking, because a sleeping toy is not walking. Returns false if the clip is not in the bank.
+   */
+  holdAction(name: MixAction): boolean {
+    const clip = this.bank[name];
+    if (!clip) return false;
+    this.held = { clip, t: 0, w: this.held && !this.held.leaving ? this.held.w : 0, leaving: false };
+    this.action = null;
+    return true;
+  }
+  /** Ease the held pose out. The rig is back to idle when it has gone. Safe to call when nothing is held. */
+  releaseHold(): void { if (this.held) this.held.leaving = true; }
+  /** Name of the pose being held (and not yet released), or null. */
+  get holding(): string | null { return this.held && !this.held.leaving ? this.held.clip.name : null; }
 
   /**
    * Advance the clocks, blend idle / walk / run by speed, layer any one-shot on top and write the result onto the rig.
@@ -396,6 +418,14 @@ export class MixamoDriver {
       mixPose(p, this.a, w);
       if (act.t >= dur) this.action = null;
     }
+    const h = this.held;
+    if (h) {
+      h.t += dt;
+      h.w = Math.max(0, Math.min(1, h.w + (h.leaving ? -dt / HOLD_FADE_OUT : dt / HOLD_FADE_IN)));
+      sampleClip(h.clip, h.t, this.a);
+      mixPose(p, this.a, smooth(0, 1, h.w));
+      if (h.leaving && h.w <= 0) this.held = null;
+    }
     this.apply(j, p);
   }
 
@@ -408,6 +438,7 @@ export class MixamoDriver {
     j.head?.quaternion.identity();
     j.arms?.forEach((o) => o.quaternion.identity());
     j.hips?.forEach((o) => o.quaternion.identity());
+    this.held = null;
     this.j = null;
     this.rig = null;
   }
