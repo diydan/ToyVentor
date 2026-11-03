@@ -1,0 +1,1207 @@
+{
+ "version": 1,
+ "frame": {
+  "catalogUnits": "mm; z up; the object stands on z = 0; the grip point is the origin; the front is +y; the longest side is propMm",
+  "glbUnits": "metres, y up: the library's (x, y, z) mm become (x, z, -y) / 1000; the node carries the quantisation transform"
+ },
+ "budget": {
+  "maxTris": 1000,
+  "maxBytes": 25600,
+  "maxZones": 3
+ },
+ "items": [
+  {
+   "id": "ball",
+   "label": "Ball",
+   "scanRank": 6,
+   "realMm": 190,
+   "propMm": 90,
+   "family": "R",
+   "words": [
+    "ball",
+    "football",
+    "soccer ball",
+    "beach ball"
+   ],
+   "tags": [],
+   "note": "A stripe as a second colour zone.",
+   "built": true,
+   "glb": "ball.glb",
+   "bytes": 8000,
+   "sha256": "df3f74d96a252de3ad50cc7962595212b61fabb843be472fca227b2b58badf75",
+   "tris": 528,
+   "verts": 266,
+   "zones": [
+    {
+     "name": "body",
+     "hex": "#E24A3B",
+     "tris": 432
+    },
+    {
+     "name": "stripe",
+     "hex": "#F5F1E8",
+     "tris": 96
+    }
+   ],
+   "bboxMm": [
+    90.0,
+    90.0,
+    90.0
+   ],
+   "volumeMm3": 370929.1
+  },
+  {
+   "id": "mug",
+   "label": "Mug",
+   "scanRank": 51,
+   "realMm": 95,
+   "propMm": 90,
+   "family": "RC",
+   "words": [
+    "mug",
+    "cup",
+    "coffee cup",
+    "teacup",
+    "coffee mug"
+   ],
+   "tags": [],
+   "note": "Revolved body, opening, D handle.",
+   "built": true,
+   "glb": "mug.glb",
+   "bytes": 9748,
+   "sha256": "76b0c739d255f4bac5f01e74d00b7a4fd1cee8c4767eb497a5317cfc69c38d3f",
+   "tris": 468,
+   "verts": 470,
+   "zones": [
+    {
+     "name": "body",
+     "hex": "#F5F5F0",
+     "tris": 468
+    }
+   ],
+   "bboxMm": [
+    90.0,
+    65.27,
+    65.27
+   ],
+   "volumeMm3": 165400.9
+  },
+  {
+   "id": "water_bottle",
+   "label": "Water bottle",
+   "scanRank": 52,
+   "realMm": 210,
+   "propMm": 90,
+   "family": "R",
+   "words": [
+    "bottle",
+    "water bottle"
+   ],
+   "tags": [],
+   "note": "Cap as a second colour zone.",
+   "built": true,
+   "glb": "water_bottle.glb",
+   "bytes": 10416,
+   "sha256": "68290130a3082f63c944cecea684297f8d89b26e88343fe27d16c29ab286389a",
+   "tris": 560,
+   "verts": 450,
+   "zones": [
+    {
+     "name": "body",
+     "hex": "#4FA3E0",
+     "tris": 420
+    },
+    {
+     "name": "cap",
+     "hex": "#F5F5F0",
+     "tris": 140
+    }
+   ],
+   "bboxMm": [
+    28.0,
+    28.0,
+    90.0
+   ],
+   "volumeMm3": 41463.0
+  },
+  {
+   "id": "flask",
+   "label": "Flask",
+   "scanRank": 53,
+   "realMm": 200,
+   "propMm": 90,
+   "family": "R",
+   "words": [
+    "flask",
+    "travel mug",
+    "vacuum flask"
+   ],
+   "tags": [],
+   "note": "Cap as a second colour zone.",
+   "built": true,
+   "glb": "flask.glb",
+   "bytes": 8716,
+   "sha256": "9a7ae6032f28c6201d83365a9f496c6323d64c6044543ef491b0051beada98bc",
+   "tris": 448,
+   "verts": 366,
+   "zones": [
+    {
+     "name": "body",
+     "hex": "#2E7D6B",
+     "tris": 252
+    },
+    {
+     "name": "cap",
+     "hex": "#D9DDE0",
+     "tris": 196
+    }
+   ],
+   "bboxMm": [
+    30.0,
+    30.0,
+    90.0
+   ],
+   "volumeMm3": 61900.3
+  },
+  {
+   "id": "drinking_glass",
+   "label": "Drinking glass",
+   "scanRank": 54,
+   "realMm": 150,
+   "propMm": 90,
+   "family": "R",
+   "words": [
+    "glass",
+    "drinking glass",
+    "tumbler"
+   ],
+   "tags": [],
+   "note": "Open top, shallow.",
+   "built": true,
+   "glb": "drinking_glass.glb",
+   "bytes": 6032,
+   "sha256": "726553a99b82fbd1fe55f254af840a10c324226bd433077857308be57b221e3e",
+   "tris": 280,
+   "verts": 254,
+   "zones": [
+    {
+     "name": "body",
+     "hex": "#BFE3F2",
+     "tris": 280
+    }
+   ],
+   "bboxMm": [
+    63.0,
+    63.0,
+    90.0
+   ],
+   "volumeMm3": 54158.3
+  },
+  {
+   "id": "jam_jar",
+   "label": "Jam jar",
+   "scanRank": 72,
+   "realMm": 150,
+   "propMm": 90,
+   "family": "R",
+   "words": [
+    "jar",
+    "jam jar"
+   ],
+   "tags": [],
+   "note": "Lid as a second colour zone.",
+   "built": true,
+   "glb": "jam_jar.glb",
+   "bytes": 7744,
+   "sha256": "c4f69993751c94c94868e35abfa1ef0c7ab96d917e551f318766a9f5fad835bd",
+   "tris": 392,
+   "verts": 310,
+   "zones": [
+    {
+     "name": "body",
+     "hex": "#B8473F",
+     "tris": 252
+    },
+    {
+     "name": "lid",
+     "hex": "#D4A22C",
+     "tris": 140
+    }
+   ],
+   "bboxMm": [
+    78.55,
+    78.55,
+    90.0
+   ],
+   "volumeMm3": 427564.3
+  },
+  {
+   "id": "soda_can",
+   "label": "Can",
+   "scanRank": 70,
+   "realMm": 120,
+   "propMm": 90,
+   "family": "R",
+   "words": [
+    "can",
+    "soda can",
+    "tin can",
+    "drink can"
+   ],
+   "tags": [],
+   "note": "Plain: no label, no brand.",
+   "built": true,
+   "glb": "soda_can.glb",
+   "bytes": 11084,
+   "sha256": "a8989bedf9d94806fa2fb9604f9a42ce9b664efbb0daefe84388f304718068b4",
+   "tris": 616,
+   "verts": 506,
+   "zones": [
+    {
+     "name": "body",
+     "hex": "#C9CDD3",
+     "tris": 616
+    }
+   ],
+   "bboxMm": [
+    46.29,
+    46.29,
+    90.0
+   ],
+   "volumeMm3": 144143.9
+  },
+  {
+   "id": "cookie_tin",
+   "label": "Cookie tin",
+   "scanRank": 71,
+   "realMm": 150,
+   "propMm": 90,
+   "family": "R",
+   "words": [
+    "tin",
+    "cookie tin",
+    "biscuit tin"
+   ],
+   "tags": [],
+   "note": "",
+   "built": true,
+   "glb": "cookie_tin.glb",
+   "bytes": 7364,
+   "sha256": "61a6d1607336229782c1d59f8521764c5f1a5bc4ab7caedaa8bc4eccf83407c0",
+   "tris": 336,
+   "verts": 338,
+   "zones": [
+    {
+     "name": "body",
+     "hex": "#D4A22C",
+     "tris": 336
+    }
+   ],
+   "bboxMm": [
+    90.0,
+    90.0,
+    61.81
+   ],
+   "volumeMm3": 366791.8
+  },
+  {
+   "id": "bowl",
+   "label": "Bowl",
+   "scanRank": 97,
+   "realMm": 200,
+   "propMm": 90,
+   "family": "R",
+   "words": [
+    "bowl",
+    "pet bowl",
+    "food bowl",
+    "cereal bowl"
+   ],
+   "tags": [],
+   "note": "Shallow recess.",
+   "built": true,
+   "glb": "bowl.glb",
+   "bytes": 8020,
+   "sha256": "221d666d2f3a77a004536f0a674a1faf4536c5c911c5c55710d3b1cd6da9ef02",
+   "tris": 448,
+   "verts": 338,
+   "zones": [
+    {
+     "name": "body",
+     "hex": "#F2E3C6",
+     "tris": 448
+    }
+   ],
+   "bboxMm": [
+    90.0,
+    90.0,
+    40.8
+   ],
+   "volumeMm3": 64470.9
+  },
+  {
+   "id": "plate",
+   "label": "Plate",
+   "scanRank": null,
+   "realMm": 250,
+   "propMm": 90,
+   "family": "R",
+   "words": [
+    "plate",
+    "dish",
+    "dinner plate"
+   ],
+   "tags": [],
+   "note": "Added: the commonest table item the scan list lacks.",
+   "built": true,
+   "glb": "plate.glb",
+   "bytes": 9092,
+   "sha256": "f5bbe42ce5745d9294972370b1d0935c090507dd21eeafc86acc8cb110b0d9fd",
+   "tris": 576,
+   "verts": 362,
+   "zones": [
+    {
+     "name": "body",
+     "hex": "#F4F0E8",
+     "tris": 576
+    }
+   ],
+   "bboxMm": [
+    90.0,
+    11.25,
+    90.0
+   ],
+   "volumeMm3": 21522.1
+  },
+  {
+   "id": "bucket",
+   "label": "Bucket",
+   "scanRank": null,
+   "realMm": 280,
+   "propMm": 90,
+   "family": "RC",
+   "words": [
+    "bucket",
+    "pail"
+   ],
+   "tags": [
+    "garage"
+   ],
+   "note": "Added (garage). Handle as a thin arc.",
+   "built": false,
+   "glb": null
+  },
+  {
+   "id": "watering_can",
+   "label": "Watering can",
+   "scanRank": 98,
+   "realMm": 250,
+   "propMm": 90,
+   "family": "RC",
+   "words": [
+    "watering can"
+   ],
+   "tags": [],
+   "note": "Spout and handle.",
+   "built": false,
+   "glb": null
+  },
+  {
+   "id": "potted_plant",
+   "label": "Potted plant",
+   "scanRank": 80,
+   "realMm": 180,
+   "propMm": 90,
+   "family": "RC",
+   "words": [
+    "plant",
+    "potted plant",
+    "houseplant",
+    "flower pot"
+   ],
+   "tags": [],
+   "note": "Pot plus a few leaf lofts.",
+   "built": false,
+   "glb": null
+  },
+  {
+   "id": "spinning_top",
+   "label": "Spinning top",
+   "scanRank": 21,
+   "realMm": 60,
+   "propMm": 60,
+   "family": "R",
+   "words": [
+    "top",
+    "spinning top"
+   ],
+   "tags": [],
+   "note": "Spins in the game.",
+   "built": true,
+   "glb": "spinning_top.glb",
+   "bytes": 11088,
+   "sha256": "5f4bd8303b90676e607f14e1b88a81921d7668c71ce5467976def701af5a6dc8",
+   "tris": 616,
+   "verts": 506,
+   "zones": [
+    {
+     "name": "body",
+     "hex": "#E6B422",
+     "tris": 616
+    }
+   ],
+   "bboxMm": [
+    52.63,
+    52.63,
+    60.0
+   ],
+   "volumeMm3": 40090.4
+  },
+  {
+   "id": "yo_yo",
+   "label": "Yo-yo",
+   "scanRank": 20,
+   "realMm": 60,
+   "propMm": 60,
+   "family": "R",
+   "words": [
+    "yo-yo",
+    "yoyo"
+   ],
+   "tags": [],
+   "note": "",
+   "built": true,
+   "glb": "yo_yo.glb",
+   "bytes": 10516,
+   "sha256": "94de782e4942b278300859c3f950631607ed43034b2179eb095a644f45fc12cc",
+   "tris": 512,
+   "verts": 514,
+   "zones": [
+    {
+     "name": "body",
+     "hex": "#7E57C2",
+     "tris": 512
+    }
+   ],
+   "bboxMm": [
+    60.0,
+    30.0,
+    60.0
+   ],
+   "volumeMm3": 79533.7
+  },
+  {
+   "id": "flying_disc",
+   "label": "Flying disc",
+   "scanRank": 22,
+   "realMm": 220,
+   "propMm": 90,
+   "family": "R",
+   "words": [
+    "flying disc",
+    "disc",
+    "throwing disc"
+   ],
+   "tags": [],
+   "note": "Spins in the game.",
+   "built": true,
+   "glb": "flying_disc.glb",
+   "bytes": 7800,
+   "sha256": "7880669d440518d7deb10f9c56917464d3fe17647a0cb0fc244b2c30698e6c4b",
+   "tris": 432,
+   "verts": 326,
+   "zones": [
+    {
+     "name": "body",
+     "hex": "#F57C00",
+     "tris": 432
+    }
+   ],
+   "bboxMm": [
+    90.0,
+    15.75,
+    90.0
+   ],
+   "volumeMm3": 87987.6
+  },
+  {
+   "id": "marble",
+   "label": "Marble",
+   "scanRank": 19,
+   "realMm": 16,
+   "propMm": 40,
+   "family": "R",
+   "words": [
+    "marble"
+   ],
+   "tags": [],
+   "note": "Prop scale is larger than life so it can be held.",
+   "built": true,
+   "glb": "marble.glb",
+   "bytes": 7444,
+   "sha256": "c766c1249c906907855f8e73ffbfd1b8ffd9d7d77d7b47c2b3d99126588621dc",
+   "tris": 512,
+   "verts": 258,
+   "zones": [
+    {
+     "name": "body",
+     "hex": "#3F8EFC",
+     "tris": 512
+    }
+   ],
+   "bboxMm": [
+    40.0,
+    40.0,
+    40.0
+   ],
+   "volumeMm3": 32761.8
+  },
+  {
+   "id": "apple",
+   "label": "Apple",
+   "scanRank": 73,
+   "realMm": 80,
+   "propMm": 80,
+   "family": "RC",
+   "words": [
+    "apple"
+   ],
+   "tags": [],
+   "note": "Stem and leaf as colour zones.",
+   "built": false,
+   "glb": null
+  },
+  {
+   "id": "orange",
+   "label": "Orange",
+   "scanRank": 75,
+   "realMm": 80,
+   "propMm": 80,
+   "family": "R",
+   "words": [
+    "orange"
+   ],
+   "tags": [],
+   "note": "Stem nub as a second colour zone.",
+   "built": true,
+   "glb": "orange.glb",
+   "bytes": 8648,
+   "sha256": "6c322e49463323593b8d472c6dc0a70eab06787dedcf15e62a4295362729256e",
+   "tris": 558,
+   "verts": 305,
+   "zones": [
+    {
+     "name": "body",
+     "hex": "#F28C28",
+     "tris": 524
+    },
+    {
+     "name": "stem",
+     "hex": "#4F8F3A",
+     "tris": 34
+    }
+   ],
+   "bboxMm": [
+    80.0,
+    80.0,
+    77.38
+   ],
+   "volumeMm3": 243122.9
+  },
+  {
+   "id": "lemon",
+   "label": "Lemon",
+   "scanRank": 76,
+   "realMm": 90,
+   "propMm": 90,
+   "family": "R",
+   "words": [
+    "lemon",
+    "lime"
+   ],
+   "tags": [],
+   "note": "",
+   "built": true,
+   "glb": "lemon.glb",
+   "bytes": 9704,
+   "sha256": "e6078c32da7c815b940ef06063bfe4ce57ef7e6cf2f0f43351b2409e5c8dabe0",
+   "tris": 636,
+   "verts": 384,
+   "zones": [
+    {
+     "name": "body",
+     "hex": "#F5E050",
+     "tris": 636
+    }
+   ],
+   "bboxMm": [
+    56.25,
+    56.25,
+    90.0
+   ],
+   "volumeMm3": 132402.5
+  },
+  {
+   "id": "banana",
+   "label": "Banana",
+   "scanRank": 74,
+   "realMm": 200,
+   "propMm": 90,
+   "family": "L",
+   "words": [
+    "banana"
+   ],
+   "tags": [],
+   "note": "Stem as a second colour zone.",
+   "built": true,
+   "glb": "banana.glb",
+   "bytes": 7936,
+   "sha256": "923a1454faf6debb8a04efbb3193e3ffed9f6372845abb08c4d96351a84a9bcf",
+   "tris": 484,
+   "verts": 280,
+   "zones": [
+    {
+     "name": "body",
+     "hex": "#F7DC4E",
+     "tris": 438
+    },
+    {
+     "name": "stem",
+     "hex": "#7A5C2E",
+     "tris": 46
+    }
+   ],
+   "bboxMm": [
+    67.8,
+    21.17,
+    90.0
+   ],
+   "volumeMm3": 23559.6
+  },
+  {
+   "id": "carrot",
+   "label": "Carrot",
+   "scanRank": 78,
+   "realMm": 180,
+   "propMm": 90,
+   "family": "L",
+   "words": [
+    "carrot"
+   ],
+   "tags": [],
+   "note": "",
+   "built": false,
+   "glb": null
+  },
+  {
+   "id": "avocado",
+   "label": "Avocado",
+   "scanRank": 77,
+   "realMm": 120,
+   "propMm": 90,
+   "family": "L",
+   "words": [
+    "avocado"
+   ],
+   "tags": [],
+   "note": "",
+   "built": false,
+   "glb": null
+  },
+  {
+   "id": "wooden_spoon",
+   "label": "Wooden spoon",
+   "scanRank": 67,
+   "realMm": 180,
+   "propMm": 90,
+   "family": "E",
+   "words": [
+    "spoon",
+    "wooden spoon",
+    "cooking spoon",
+    "ladle"
+   ],
+   "tags": [],
+   "note": "Bowl dished.",
+   "built": true,
+   "glb": "wooden_spoon.glb",
+   "bytes": 13796,
+   "sha256": "1a165b10871ab761eb6f44751c7476925910f2e08628baaff614b2240419cc45",
+   "tris": 848,
+   "verts": 615,
+   "zones": [
+    {
+     "name": "body",
+     "hex": "#A9743F",
+     "tris": 848
+    }
+   ],
+   "bboxMm": [
+    19.89,
+    10.58,
+    90.0
+   ],
+   "volumeMm3": 4274.1
+  },
+  {
+   "id": "fork",
+   "label": "Fork",
+   "scanRank": 68,
+   "realMm": 190,
+   "propMm": 90,
+   "family": "E",
+   "words": [
+    "fork"
+   ],
+   "tags": [
+    "sharp-looking"
+   ],
+   "note": "Blunt tines (radius 1.6 mm or more).",
+   "built": false,
+   "glb": null
+  },
+  {
+   "id": "key",
+   "label": "Key",
+   "scanRank": 58,
+   "realMm": 60,
+   "propMm": 60,
+   "family": "E",
+   "words": [
+    "key"
+   ],
+   "tags": [],
+   "note": "",
+   "built": false,
+   "glb": null
+  },
+  {
+   "id": "comb",
+   "label": "Comb",
+   "scanRank": 61,
+   "realMm": 180,
+   "propMm": 90,
+   "family": "E",
+   "words": [
+    "comb"
+   ],
+   "tags": [],
+   "note": "Teeth wide enough to print (at least 1.6 mm).",
+   "built": false,
+   "glb": null
+  },
+  {
+   "id": "hairbrush",
+   "label": "Hairbrush",
+   "scanRank": 60,
+   "realMm": 200,
+   "propMm": 90,
+   "family": "E",
+   "words": [
+    "hairbrush",
+    "hair brush"
+   ],
+   "tags": [],
+   "note": "",
+   "built": false,
+   "glb": null
+  },
+  {
+   "id": "toothbrush",
+   "label": "Toothbrush",
+   "scanRank": 63,
+   "realMm": 190,
+   "propMm": 90,
+   "family": "E",
+   "words": [
+    "toothbrush",
+    "tooth brush"
+   ],
+   "tags": [],
+   "note": "",
+   "built": false,
+   "glb": null
+  },
+  {
+   "id": "paintbrush",
+   "label": "Paintbrush",
+   "scanRank": 44,
+   "realMm": 180,
+   "propMm": 90,
+   "family": "C",
+   "words": [
+    "paintbrush",
+    "paint brush",
+    "brush"
+   ],
+   "tags": [],
+   "note": "The bare word 'brush' goes here: hair and tooth brushes need their own word.",
+   "built": false,
+   "glb": null
+  },
+  {
+   "id": "pencil",
+   "label": "Pencil",
+   "scanRank": 33,
+   "realMm": 180,
+   "propMm": 90,
+   "family": "C",
+   "words": [
+    "pencil"
+   ],
+   "tags": [],
+   "note": "Held by the eraser end. Ferrule and eraser as colour zones.",
+   "built": true,
+   "glb": "pencil.glb",
+   "bytes": 5188,
+   "sha256": "841ca4a9dac0eacd9157ad134e848e513f5fc2f09d754d97ba52160b0c52d4a3",
+   "tris": 168,
+   "verts": 178,
+   "zones": [
+    {
+     "name": "body",
+     "hex": "#F2C230",
+     "tris": 52
+    },
+    {
+     "name": "ferrule",
+     "hex": "#B8BEC6",
+     "tris": 76
+    },
+    {
+     "name": "eraser",
+     "hex": "#E8837E",
+     "tris": 40
+    }
+   ],
+   "bboxMm": [
+    8.7,
+    8.49,
+    90.0
+   ],
+   "volumeMm3": 3811.1
+  },
+  {
+   "id": "marker",
+   "label": "Marker",
+   "scanRank": 32,
+   "realMm": 140,
+   "propMm": 90,
+   "family": "C",
+   "words": [
+    "marker",
+    "felt tip",
+    "felt-tip pen",
+    "pen"
+   ],
+   "tags": [],
+   "note": "",
+   "built": false,
+   "glb": null
+  },
+  {
+   "id": "crayon",
+   "label": "Crayon",
+   "scanRank": 31,
+   "realMm": 180,
+   "propMm": 90,
+   "family": "C",
+   "words": [
+    "crayon",
+    "crayons"
+   ],
+   "tags": [],
+   "note": "One crayon, not the box.",
+   "built": false,
+   "glb": null
+  },
+  {
+   "id": "eraser",
+   "label": "Eraser",
+   "scanRank": 34,
+   "realMm": 60,
+   "propMm": 60,
+   "family": "C",
+   "words": [
+    "eraser",
+    "rubber"
+   ],
+   "tags": [],
+   "note": "",
+   "built": false,
+   "glb": null
+  },
+  {
+   "id": "ruler",
+   "label": "Ruler",
+   "scanRank": 36,
+   "realMm": 300,
+   "propMm": 90,
+   "family": "E",
+   "words": [
+    "ruler"
+   ],
+   "tags": [],
+   "note": "Tick marks as raised ribs.",
+   "built": false,
+   "glb": null
+  },
+  {
+   "id": "scissors",
+   "label": "Scissors",
+   "scanRank": 37,
+   "realMm": 180,
+   "propMm": 90,
+   "family": "E",
+   "words": [
+    "scissors"
+   ],
+   "tags": [
+    "sharp-looking"
+   ],
+   "note": "Blunt blades, loops left open as relief only.",
+   "built": false,
+   "glb": null
+  },
+  {
+   "id": "glue_stick",
+   "label": "Glue stick",
+   "scanRank": 38,
+   "realMm": 100,
+   "propMm": 90,
+   "family": "C",
+   "words": [
+    "glue stick",
+    "glue"
+   ],
+   "tags": [],
+   "note": "",
+   "built": false,
+   "glb": null
+  },
+  {
+   "id": "stapler",
+   "label": "Stapler",
+   "scanRank": 43,
+   "realMm": 150,
+   "propMm": 90,
+   "family": "C",
+   "words": [
+    "stapler"
+   ],
+   "tags": [],
+   "note": "",
+   "built": false,
+   "glb": null
+  },
+  {
+   "id": "tape_dispenser",
+   "label": "Tape dispenser",
+   "scanRank": 46,
+   "realMm": 140,
+   "propMm": 90,
+   "family": "C",
+   "words": [
+    "tape",
+    "tape dispenser"
+   ],
+   "tags": [],
+   "note": "",
+   "built": false,
+   "glb": null
+  },
+  {
+   "id": "dice",
+   "label": "Dice",
+   "scanRank": 41,
+   "realMm": 16,
+   "propMm": 40,
+   "family": "C",
+   "words": [
+    "dice",
+    "die"
+   ],
+   "tags": [],
+   "note": "Pips as shallow dimples.",
+   "built": false,
+   "glb": null
+  },
+  {
+   "id": "toy_brick",
+   "label": "Toy brick",
+   "scanRank": 3,
+   "realMm": 32,
+   "propMm": 40,
+   "family": "C",
+   "words": [
+    "brick",
+    "building brick",
+    "toy brick",
+    "block"
+   ],
+   "tags": [],
+   "note": "Studs match the Snap line; generic, no brand.",
+   "built": false,
+   "glb": null
+  },
+  {
+   "id": "bubble_wand",
+   "label": "Bubble wand",
+   "scanRank": 29,
+   "realMm": 160,
+   "propMm": 90,
+   "family": "E",
+   "words": [
+    "bubble wand",
+    "bubble blower"
+   ],
+   "tags": [],
+   "note": "",
+   "built": false,
+   "glb": null
+  },
+  {
+   "id": "toy_sword",
+   "label": "Toy sword",
+   "scanRank": 50,
+   "realMm": 700,
+   "propMm": 90,
+   "family": "E",
+   "words": [
+    "sword",
+    "toy sword"
+   ],
+   "tags": [
+    "sharp-looking"
+   ],
+   "note": "Blunt, rounded edge.",
+   "built": false,
+   "glb": null
+  },
+  {
+   "id": "hammer",
+   "label": "Hammer",
+   "scanRank": null,
+   "realMm": 300,
+   "propMm": 90,
+   "family": "C",
+   "words": [
+    "hammer",
+    "mallet"
+   ],
+   "tags": [
+    "garage",
+    "tool"
+   ],
+   "note": "Added (garage).",
+   "built": false,
+   "glb": null
+  },
+  {
+   "id": "screwdriver",
+   "label": "Screwdriver",
+   "scanRank": null,
+   "realMm": 220,
+   "propMm": 90,
+   "family": "C",
+   "words": [
+    "screwdriver"
+   ],
+   "tags": [
+    "garage",
+    "tool",
+    "sharp-looking"
+   ],
+   "note": "Added (garage). Blunt tip.",
+   "built": false,
+   "glb": null
+  },
+  {
+   "id": "pliers",
+   "label": "Pliers",
+   "scanRank": null,
+   "realMm": 180,
+   "propMm": 90,
+   "family": "E",
+   "words": [
+    "pliers"
+   ],
+   "tags": [
+    "garage",
+    "tool"
+   ],
+   "note": "Added (garage).",
+   "built": false,
+   "glb": null
+  },
+  {
+   "id": "flashlight",
+   "label": "Flashlight",
+   "scanRank": null,
+   "realMm": 150,
+   "propMm": 90,
+   "family": "RC",
+   "words": [
+    "flashlight",
+    "torch"
+   ],
+   "tags": [
+    "garage"
+   ],
+   "note": "Added (garage). Lens as a glow zone.",
+   "built": false,
+   "glb": null
+  },
+  {
+   "id": "tape_measure",
+   "label": "Tape measure",
+   "scanRank": null,
+   "realMm": 80,
+   "propMm": 80,
+   "family": "RC",
+   "words": [
+    "tape measure",
+    "measuring tape"
+   ],
+   "tags": [
+    "garage",
+    "tool"
+   ],
+   "note": "Added (garage).",
+   "built": false,
+   "glb": null
+  },
+  {
+   "id": "alarm_clock",
+   "label": "Alarm clock",
+   "scanRank": 91,
+   "realMm": 120,
+   "propMm": 90,
+   "family": "RC",
+   "words": [
+    "clock",
+    "alarm clock"
+   ],
+   "tags": [],
+   "note": "Bells and feet as a composite.",
+   "built": false,
+   "glb": null
+  },
+  {
+   "id": "desk_lamp",
+   "label": "Desk lamp",
+   "scanRank": 92,
+   "realMm": 200,
+   "propMm": 90,
+   "family": "RC",
+   "words": [
+    "lamp",
+    "desk lamp"
+   ],
+   "tags": [],
+   "note": "Shade revolved, arm as a hulled chain.",
+   "built": false,
+   "glb": null
+  }
+ ]
+}
