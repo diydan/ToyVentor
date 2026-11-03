@@ -8,7 +8,8 @@ import {
 } from "react";
 import type { Placement } from "../../../../shared/build";
 import { buildSignature } from "../../../../shared/reveal";
-import type { Toy } from "../../../../shared/toy";
+import { isBuiltInToy, type Toy } from "../../../../shared/toy";
+import { loadToyPortrait, PORTRAIT_PX, saveToyPortrait } from "../../../lib/toyPortrait";
 import type { ToyContract } from "../../../../shared/toycontract";
 import { revealForBuild } from "../../../state/reveals";
 import { buildStats } from "../../../../shared/build";
@@ -213,13 +214,44 @@ export function GameCanvas({
     void pushProgression(next);
   }, []);
 
+  // The map's character token is a picture of the toy as it is dressed right
+  // now, taken from the live 3D rig and kept on the device per outfit. Built-in
+  // toys only: a scanned toy keeps its own photo cut-out, because the rig in the
+  // world is not that toy. Until the rig has loaded (or when it cannot be taken)
+  // the token falls back to the toy's plain icon.
+  const [portrait, setPortrait] = useState<string | null>(null);
+  const toyRef = useRef(toy);
+  toyRef.current = toy;
+  const refreshPortrait = useCallback(() => {
+    const api = engineRef.current;
+    const t = toyRef.current;
+    const sig = api?.portraitSig() ?? null;
+    if (!api || !sig || !isBuiltInToy(t)) {
+      setPortrait(null);
+      return;
+    }
+    const kept = loadToyPortrait(t.id, sig);
+    if (kept) {
+      setPortrait(kept);
+      return;
+    }
+    const shot = api.capturePortrait(PORTRAIT_PX);
+    if (shot && shot.toyId === t.id) {
+      saveToyPortrait(shot);
+      setPortrait(shot.url);
+    } else {
+      setPortrait(null);
+    }
+  }, []);
+
   // The Map opens in the view that suits the player's age: the carousel for
   // the youngest (and an unset age), the trail map from the 7-9 band up.
   // Each is one tap from the other.
   const openMap = useCallback(() => {
+    refreshPortrait();
     setMapView(defaultMapView(progressionRef.current.ageBand));
     setMapOpen(true);
-  }, []);
+  }, [refreshPortrait]);
 
   // Sync Play Time settings + today's ledger on boot.
   useEffect(() => {
@@ -601,6 +633,11 @@ export function GameCanvas({
   const hasSavedCard = Boolean(
     themeSignature && revealForBuild(toy.id, themeSignature),
   );
+  // Opening the Character Card for a build that has never had its Reveal is that build's one Reveal: the overlay saves the
+  // card on mount, so without this it would be consumed silently with no entrance theme ("plays once, then saves").
+  const characterCardIsFirst = () =>
+    placements.length > 0 &&
+    !revealForBuild(toy.id, buildSignature(placements));
 
   const moreAriaLabel = liveStatus.listening
     ? "More (microphone listening)"
@@ -805,7 +842,7 @@ export function GameCanvas({
                   onClick={() => {
                     closeEngineSheets();
                     closeReactOverlays();
-                    setRevealState({ first: false });
+                    setRevealState({ first: characterCardIsFirst() });
                   }}
                 >
                   <span>Character Card</span>
@@ -1130,7 +1167,7 @@ export function GameCanvas({
           onOpenCharacterCard={() => {
             closeEngineSheets();
             closeReactOverlays();
-            setRevealState({ first: false });
+            setRevealState({ first: characterCardIsFirst() });
           }}
           onCompleteChore={(choreId: string) => {
             const dayKey = localDay(
@@ -1206,7 +1243,7 @@ export function GameCanvas({
             hasCharacterCard={hasSavedCard}
             onOpenCharacterCard={() => {
               engine()?.closeCustomizer();
-              setRevealState({ first: false });
+              setRevealState({ first: characterCardIsFirst() });
             }}
             snapshot={customizer}
             progression={progression}
@@ -1263,12 +1300,18 @@ export function GameCanvas({
             seen={progression.explorerSeen ?? null}
             onSeen={recordExplorerSeen}
             guide={
-              <ToyMiniIcon
-                toy={toy}
-                accentColor={toyColor}
-                skinVersion={skinTick}
-                size="tile"
-              />
+              portrait ? (
+                <span className="tv-toy-roster-thumb" aria-hidden="true">
+                  <img src={portrait} alt="" className="tv-toy-mini-img" />
+                </span>
+              ) : (
+                <ToyMiniIcon
+                  toy={toy}
+                  accentColor={toyColor}
+                  skinVersion={skinTick}
+                  size="tile"
+                />
+              )
             }
             onClose={() => setMapOpen(false)}
             onShowCards={() => setMapView("cards")}

@@ -3036,10 +3036,10 @@ button.tv-badge-pill:hover {
 
 .tv-trail-kip-body {
   position: absolute;
-  left: -30px;
-  top: -74px;
-  width: 60px;
-  height: 66px;
+  left: -35px;
+  top: -80px;
+  width: 70px;
+  height: 72px;
   display: flex;
   align-items: flex-end;
   justify-content: center;
@@ -3050,8 +3050,8 @@ button.tv-badge-pill:hover {
 
 /* The toy's tile becomes a round token with a wooden rim, like a game piece. */
 .tv-trail-kip-body .tv-toy-roster-thumb {
-  width: 54px;
-  height: 54px;
+  width: 64px;
+  height: 64px;
   border: 3px solid #1e2a6b;
   border-radius: 50%;
   background: #f4f7ff;

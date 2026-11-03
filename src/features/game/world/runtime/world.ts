@@ -145,6 +145,7 @@ buzz,
 import { createMissions } from "./missions";
 import { createEditor } from "./editor";
 import { ladderById } from "../../../../lib/ladders";
+import { toyPortraitSignature } from "../../../../lib/toyPortrait";
 import { learnRungDef } from "./learnRungs";
 import {
 renderer,
@@ -237,6 +238,10 @@ export interface WorldRuntimeHandle {
   go?: (w: string) => void;
   /** Compose and enter a level from the level kit. Returns the seed code, or null when busy. */
   playSeed?: (code?: string, theme?: string, opts?: { tier?: 1 | 2 | 3; mood?: "day" | "dusk" | "night" }) => string | null;
+  /** Signature of the outfit the rig was built with, once it has finished loading; null until then. */
+  portraitSig?: () => string | null;
+  /** A square picture of the toy as dressed now (head and shoulders, or the whole vehicle). */
+  capturePortrait?: (size: number) => { toyId: string; sig: string; url: string } | null;
   worldName?: (id: string) => string;
   open?: () => void;
   close?: () => void;
@@ -469,7 +474,63 @@ var P: Record<string, any>={pos:new T.Vector3(2,0,0),face:0,tface:0,speed:0,phas
 scene.add(P.root);
 function buildPlayer(drop: string | null){if(P.stlToken)P.stlToken.cancelled=true;if(P.model)P.root.remove(P.model);P.rig=buildToy(S.type,cur() as any,S.col);P.model=new T.Group();P.model.add(P.rig.g);P.root.add(P.model);P.dropSlot=null;
  if(drop&&!reduce&&P.rig.slots[drop]){var g=P.rig.slots[drop];g.userData.y0=g.position.y;P.dropSlot=g;P.dropT=0}linearize(P.root);
- var tok={cancelled:false};P.stlToken=tok;void upgradeRigWithStl(P.rig,{type:S.type,sel:Object.assign({},cur()) as any,col:Object.assign({},S.col),toyId:S.toyId||null,token:tok})}
+ var tok={cancelled:false};P.stlToken=tok;
+ // The portrait is keyed to the outfit the rig was built with, and only taken once its STL parts have loaded.
+ P.rigReady=false;P.rigSig=toyPortraitSignature({toyId:S.toyId||null,type:S.type,sel:cur(),col:S.col});
+ var rigDone=function(){if(!tok.cancelled)P.rigReady=true};
+ upgradeRigWithStl(P.rig,{type:S.type,sel:Object.assign({},cur()) as any,col:Object.assign({},S.col),toyId:S.toyId||null,token:tok}).then(rigDone,rigDone)}
+
+/* A small studio portrait of the toy as it is dressed now, for the trail map's character token. Rendered once from the live rig
+   (head and shoulders for a character or robot, the whole thing for a vehicle) with its own neutral light and a plain backdrop, so
+   it looks the same in a night world as a day one. Everything it borrows (visibility, lights, background, viewport) is put back,
+   and the pixels are copied out in the same task, so the stage never shows it and the next frame repaints the whole canvas. */
+var PORTRAIT_BG="#d8ebff";
+function toyPortrait(size: number): {toyId: string;sig: string;url: string}|null{
+ if(disposed||!P.rig||!P.rigReady||!P.rigSig||P.showcase||ED.on)return null;
+ var g: any=P.rig.g;
+ for(var up: any=g;up;up=up.parent)if(!up.visible)return null;
+ g.updateWorldMatrix(true,true);
+ // Frame the solid body only. A plain bounding box of the whole rig also counts glow sprites and soft effects, which pulse,
+ // so the framing would change from one capture to the next.
+ var box=new T.Box3(),tmpBox=new T.Box3();
+ g.traverse(function(o: any){
+  if(!o.isMesh||!o.visible||!o.geometry)return;
+  var m=Array.isArray(o.material)?o.material[0]:o.material;
+  if(m&&(m.depthWrite===false||m.visible===false))return;
+  if(!o.geometry.boundingBox)o.geometry.computeBoundingBox();
+  if(o.geometry.boundingBox)box.union(tmpBox.copy(o.geometry.boundingBox).applyMatrix4(o.matrixWorld))});
+ if(box.isEmpty())return null;
+ var sz=box.getSize(new T.Vector3()),ctr=box.getCenter(new T.Vector3());
+ var upper=S.type!=="vehicle",span=upper?sz.y*0.5:Math.max(sz.x,sz.y,sz.z);
+ var target=new T.Vector3(ctr.x,upper?box.max.y-span*0.5:ctr.y,ctr.z);
+ var q=new T.Quaternion();g.getWorldQuaternion(q);
+ var toCam=new T.Vector3(1,0.14,0.34).normalize().applyQuaternion(q);
+ var fov=30,dist=(span*1.08)/(2*Math.tan(T.MathUtils.degToRad(fov/2)));
+ var cam=new T.PerspectiveCamera(fov,1,0.05,400);
+ cam.position.copy(target).addScaledVector(toCam,dist);cam.lookAt(target);cam.updateMatrixWorld();
+ var cssSize=renderer.getSize(new T.Vector2()),pr=renderer.getPixelRatio(),side=Math.floor(Math.min(cssSize.x,cssSize.y,320));
+ if(side<64)return null;
+ var mine=new Set<unknown>();g.traverse(function(n: any){mine.add(n)});
+ var hidden: any[]=[];
+ scene.traverse(function(n: any){if(!n.visible||mine.has(n))return;if(n.isMesh||n.isSprite||n.isPoints||n.isLine||n.isLight){n.visible=false;hidden.push(n)}});
+ var key=new T.DirectionalLight(0xffffff,2.6),fill=new T.HemisphereLight(0xffffff,0xbcd0ff,1.4);
+ key.position.copy(target).add(new T.Vector3(3,2.2,1.4).applyQuaternion(q).multiplyScalar(span));key.target.position.copy(target);
+ var sc: any=scene,bg=sc.background,fog=sc.fog,envI=sc.environmentIntensity;
+ var vp=new T.Vector4(),scis=new T.Vector4();renderer.getViewport(vp);renderer.getScissor(scis);var scisOn=renderer.getScissorTest();
+ var url="";
+ try{
+  scene.add(key,key.target,fill);sc.background=new T.Color(PORTRAIT_BG);sc.fog=null;sc.environmentIntensity=1;
+  renderer.setViewport(0,0,side,side);renderer.setScissor(0,0,side,side);renderer.setScissorTest(true);
+  renderer.render(scene,cam);
+  var src=renderer.domElement,px=Math.round(side*pr),out=document.createElement("canvas");out.width=out.height=size;
+  var c2=out.getContext("2d");
+  if(c2){c2.drawImage(src,0,src.height-px,px,px,0,0,size,size);url=out.toDataURL("image/png")}
+ }finally{
+  scene.remove(key,key.target,fill);sc.background=bg;sc.fog=fog;sc.environmentIntensity=envI;
+  hidden.forEach(function(n){n.visible=true});
+  renderer.setViewport(vp);renderer.setScissor(scis);renderer.setScissorTest(scisOn);
+ }
+ return url.indexOf("data:image/png")===0?{toyId:String(S.toyId||""),sig:String(P.rigSig),url:url}:null}
 /* ---------- effects ---------- */
 var fx: FxItem[]=[];
 function tween(d: number,f: (k: number, dt: number) => void): Promise<void> {return new Promise<void>(function(res){fx.push({t:0,d:d,f:f,end:res})})}
@@ -1107,7 +1168,7 @@ function startPlay(build: boolean){if(!P.title)return;P.title=false;S.started=tr
 setTimeout(function(){var ld=$("#load");if(ld)ld.classList.add("gone")},150);
 rafId=requestAnimationFrame(frame);
 
-const handle: WorldRuntimeHandle = { MT:MT,Wm:function(){return W.missions},cr:{enter:crEnter,make:crMake,exit:crExit,R:function(){return ED.R},CR:CR},ed:{ED:ED,enter:edEnter,play:edPlay,back:edBack,exit:edExit,checks:function(){return edChecks(ED.R)},scr:function(x,y){var v=new T.Vector3(x,y,0).project(camera),r=canvas.getBoundingClientRect();return [(v.x+1)/2*r.width+r.left,(1-v.y)/2*r.height+r.top]}},face:function(a){facA=a},start:startPlay,composer:function(){return !!composer},P:P,spots:spots,bolts:bolts,ability:ability,S:S,unbolt:unbolt,go:function(w){switchWorld(w)},playSeed:playSeed,worldName:function(id: string){var wd=WORLDS[id];return wd?wd.n:id},open:openSheet,close:closeSheet,
+const handle: WorldRuntimeHandle = { MT:MT,Wm:function(){return W.missions},cr:{enter:crEnter,make:crMake,exit:crExit,R:function(){return ED.R},CR:CR},ed:{ED:ED,enter:edEnter,play:edPlay,back:edBack,exit:edExit,checks:function(){return edChecks(ED.R)},scr:function(x,y){var v=new T.Vector3(x,y,0).project(camera),r=canvas.getBoundingClientRect();return [(v.x+1)/2*r.width+r.left,(1-v.y)/2*r.height+r.top]}},face:function(a){facA=a},start:startPlay,composer:function(){return !!composer},P:P,spots:spots,bolts:bolts,ability:ability,S:S,unbolt:unbolt,go:function(w){switchWorld(w)},portraitSig:function(){return P.rigReady?String(P.rigSig):null},capturePortrait:toyPortrait,playSeed:playSeed,worldName:function(id: string){var wd=WORLDS[id];return wd?wd.n:id},open:openSheet,close:closeSheet,
 setToy:function(contract){ if(!contract){ S.type="character"; S.sel=stockSel(); S.col=stockCol(); S.toyId=null; buildPlayer(null); moves(); notify(); return; } var c=toyApply(JSON.parse(JSON.stringify(contract))); if(c){ buildPlayer(null); moves(); notify(); } },
 seedDemo:function(){ mInit(); S.scrap=Math.max(S.scrap||0,12); S.bp.beam=1; S.bp.brace=1; S.bp.sgear=1; S.bp.bgear=1; S.bp.gearpair=1; S.bin.beam=Math.max(S.bin.beam||0,2); S.bin.brace=Math.max(S.bin.brace||0,2); S.bin.sgear=Math.max(S.bin.sgear||0,2); S.bin.bgear=Math.max(S.bin.bgear||0,2); delete S.mdone["garden.bridge"]; delete S.ms["garden.bridge"]; mpOpen=false; S.world="garden"; buildWorld("garden"); P.pos.set(6.5,0,0); P.target=null; P.elev=0; cam.x=7.5; save(); toast("Demo save ready in Garden."); notify(); },
 getWorld:function(){return S.world},

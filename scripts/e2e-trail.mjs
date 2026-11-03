@@ -22,6 +22,9 @@
 //   - walking a generated path grows its branch (two more appear beyond it);
 //   - difficulty by depth: a 4th path is labelled Tricky and plays with its
 //     stations at tier 2;
+//   - the toy's token is a picture of the toy as it is dressed now, rendered
+//     from the live 3D rig, kept per outfit, and different after the child
+//     changes the outfit (built-in toys; scanned toys keep their own icon);
 //   - a secret exit stays hidden until a world's hidden parts are all found,
 //     then opens (with a notice and the reveal animation) and plays a bonus
 //     level at the hardest tier the age is offered;
@@ -154,10 +157,13 @@ async function openPage() {
   return cdp;
 }
 
-/** Load the app with a seeded save in place before any app code runs. */
-async function loadApp(cdp, seed) {
+/** Load the app with a seeded save in place before any app code runs.
+ *  `fresh` first wipes everything else on the device (the toy, the game save,
+ *  kept portraits), because scenarios share one Chrome profile and an earlier
+ *  one (sandbox unlocks vehicles) can leave a different toy selected. */
+async function loadApp(cdp, seed, { fresh = false } = {}) {
   const { identifier } = await cdp.send("Page.addScriptToEvaluateOnNewDocument", {
-    source: `try{localStorage.setItem(${JSON.stringify(STORAGE_KEY)},${JSON.stringify(JSON.stringify(seed))});}catch(e){}`,
+    source: `${fresh ? "try{localStorage.clear();}catch(e){}" : ""}try{localStorage.setItem(${JSON.stringify(STORAGE_KEY)},${JSON.stringify(JSON.stringify(seed))});}catch(e){}`,
   });
   try {
     await cdp.send("Page.navigate", { url: APP_URL });
@@ -443,6 +449,53 @@ const levelTiers = (cdp) =>
 // Garden's five hidden parts (catalog LEVELS garden spots); the map reads them from the save.
 const GARDEN_PARTS = ["character.hat.flower", "character.ears.antennae", "character.back.cape", "vehicle.front.lightbar", "vehicle.shell.bubble"];
 
+// The toy's token on the map: a studio picture of the toy as dressed now.
+async function scenarioPortrait(cdp) {
+  await loadApp(cdp, { version: 1, totalXp: 0, ageBand: 3 }, { fresh: true });
+  const hasHandle = (await cdp.evaluate(`typeof window.__tvWorld`)) === "object";
+  check("dev handle window.__tvWorld present", hasHandle);
+  if (!hasHandle) return;
+  const sigNow = () => cdp.evaluate(`window.__tvWorld.handle.portraitSig()`);
+  // The rig loads its wardrobe parts first; until then there is no picture to take.
+  const sigA = await waitFor(sigNow, { timeoutMs: 20000, label: "rig ready" }).catch(() => null);
+  check("the toy's parts load and a portrait signature appears", typeof sigA === "string" && sigA.length > 0, String(sigA));
+
+  const tokenSrc = () => cdp.evaluate(`document.querySelector(".tv-trail-kip img")?.src||""`);
+  await openTrail(cdp);
+  const a = await tokenSrc();
+  check("the token is an image taken from the toy (a PNG data URL)", /^data:image\/png;base64,/.test(a), a.slice(0, 40));
+
+  // Not blank, not just the backdrop: a good share of its pixels differ from the corner colour.
+  const ink = await cdp.evaluate(`new Promise((res)=>{const i=new Image();i.onload=()=>{const c=document.createElement("canvas");c.width=i.naturalWidth;c.height=i.naturalHeight;const x=c.getContext("2d");x.drawImage(i,0,0);const d=x.getImageData(0,0,c.width,c.height).data;const r=d[0],g=d[1],b=d[2];let n=0;for(let k=0;k<d.length;k+=4)if(Math.abs(d[k]-r)+Math.abs(d[k+1]-g)+Math.abs(d[k+2]-b)>40)n++;res({w:c.width,h:c.height,share:n/(d.length/4)})};i.onerror=()=>res(null);i.src=${JSON.stringify(a)}})`);
+  check("the picture is square and the toy fills a fair share of it", ink && ink.w === ink.h && ink.share > 0.25 && ink.share < 0.95, JSON.stringify(ink));
+
+  // Kept on the device, per toy, against the outfit it was taken for.
+  const kept = await cdp.evaluate(`(()=>{try{const v=JSON.parse(localStorage.getItem("tvToyPortrait:v1:seed-kip")||"null");return v?{sig:v.sig,same:v.url===document.querySelector(".tv-trail-kip img")?.src}:null}catch(e){return null}})()`);
+  check("it is kept on the device against the outfit's signature", kept && kept.sig === sigA && kept.same === true, JSON.stringify(kept));
+
+  // Same outfit, opened again: the kept picture is reused (identical bytes), not retaken.
+  await clickButton(cdp, ".tv-trail-hud button", "Home");
+  await sleep(400);
+  await openTrail(cdp);
+  check("opening the map again with the same outfit reuses it", (await tokenSrc()) === a);
+
+  // A new outfit: new signature, and a new picture on the map.
+  await clickButton(cdp, ".tv-trail-hud button", "Home");
+  await sleep(400);
+  await cdp.evaluate(`(()=>{const h=window.__tvWorld.handle;h.cuSlot("ears");h.cuPart("bunny")})()`);
+  await sleep(300);
+  const sigB = await waitFor(async () => {
+    const v = await sigNow();
+    return v && v !== sigA ? v : null;
+  }, { timeoutMs: 20000, label: "new outfit ready" }).catch(() => null);
+  check("changing the outfit changes the signature", typeof sigB === "string" && sigB !== sigA, `${sigA} -> ${sigB}`);
+  await openTrail(cdp);
+  const b = await tokenSrc();
+  check("the map now shows the new outfit (a different picture)", /^data:image\/png/.test(b) && b !== a, `${a.length} -> ${b.length}`);
+  const kept2 = await cdp.evaluate(`(()=>{try{return JSON.parse(localStorage.getItem("tvToyPortrait:v1:seed-kip")||"null")?.sig||null}catch(e){return null}})()`);
+  check("only the newest outfit is kept for the toy", kept2 === sigB, String(kept2));
+}
+
 // A secret exit: hidden, then opens when a world is complete, then plays a bonus level.
 async function scenarioSecret(cdp) {
   await loadApp(cdp, { version: 1, totalXp: 0, ageBand: 3 });
@@ -601,6 +654,7 @@ async function main() {
     await run("play", scenarioPlay);
     await run("reveal", scenarioReveal);
     await run("secret", scenarioSecret);
+    await run("portrait", scenarioPortrait);
   } finally {
     killAll();
   }

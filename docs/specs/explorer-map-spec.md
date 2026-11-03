@@ -100,7 +100,7 @@ neighbours.
 - **Scenery** is a deterministic scatter on the land, never on a place
   or a road, picked by the nearest place's theme: trees and flowers,
   palms, barrels and tyres, snowy pines and peaks, cloud puffs, toy
-  blocks, and the little hills with eyes.
+  blocks, and plain rounded green hills.
 - **Roads** wind a little (a gentle curve fixed by the two place ids,
   so drawing and hopping agree). Walked roads are solid dirt with a
   dark edge; a road to a silhouette is dotted footprints.
@@ -112,10 +112,33 @@ neighbours.
   castle for each lab (flag in the world's colour), house for Toy Room,
   a sign for the grown-up age prompt, a `?` cloud for a hidden place.
   The suggested place gets a bouncing arrow.
-- **The toy** is the equipped toy's face on a round token with a wooden
-  rim, with a shadow, idling with a small bob and hopping between
-  places. `prefers-reduced-motion` turns the hop, waves, drift and
-  bounce off and moves the toy straight to its place.
+- **The toy** is a picture of the equipped toy **as it is dressed right
+  now** on a round token with a navy rim, with a shadow, idling with a
+  small bob and hopping between places. `prefers-reduced-motion` turns
+  the hop, waves, drift and bounce off and moves the toy straight to
+  its place. How the picture is chosen (decided Nov 3):
+  1. **Built-in toys** (Kip, the car, the figure, audited vehicles) get
+     a studio portrait rendered once from the live 3D rig: head and
+     shoulders for a character, the whole vehicle at three-quarter view
+     for a car. Its own neutral light and a plain pale-blue backdrop, so
+     it looks the same in a night world as a day one. A new hat, ears,
+     body or colour is a new signature and a new picture.
+  2. It is taken when the Map opens, only if no picture is kept for the
+     current outfit, and only after the rig has finished loading its
+     wardrobe parts (until then, or if it cannot be taken, the token is
+     the toy's plain icon). About 2 ms, once per outfit.
+  3. **Scanned or uploaded toys keep their own icon** (the SAM cut-out,
+     or the Muse sticker upgrade): the rig in the world is a generic one,
+     not that toy, so a rendered portrait would be less like it, not more.
+  The pictures are 128 px PNGs kept on the device, one per toy (a newer
+  outfit replaces the older), and only a PNG data URL of a sane size is
+  ever shown from storage.
+  **Not the selfie.** The Kip viewer's selfie or portrait plate is a real
+  photo of a child and is memory-only by its own privacy rules
+  (`kip-selfie.js`: no localStorage, IndexedDB or any other storage, tested),
+  in a separate viewer page, with the COPPA review still pending. Using it
+  here would break those rules, so it is not used; that is a policy
+  decision for the compliance owner, not a code change.
 - **Same product as the rest of the app.** The map is bright daylight
   on purpose, but its chrome is the app's own: the name plate is the
   navy-glass sheet header (gold kicker over a white title), `Cards`
@@ -153,6 +176,15 @@ neighbours.
   scatter, and the fog puffs. Tests assert determinism, that no
   winding road runs under a place it skips, and that scenery never
   sits on a place or a road, in every age band.
+- The toy's picture: `src/lib/toyPortrait.ts` (pure: the outfit signature,
+  strict validation of what comes back from storage, load and save),
+  `toyPortrait()` in `runtime/world.ts` (framed from the solid body only,
+  because a plain bounding box also counts pulsing glow sprites and the
+  framing drifts; renders into a square viewport of the live canvas with
+  its own lights, hides everything else, copies the pixels out in the same
+  task and puts every borrowed setting back, so the stage never shows it),
+  `portraitSig` / `capturePortrait` on the engine, and `refreshPortrait` in
+  `GameCanvas`, which `openMap` calls.
 - `ExplorerWorldArt.tsx` (sea, land, scenery, cloud bank; memoised, it
   does not change with progress), `ExplorerNodeArt.tsx` (the markers),
   `ExplorerMap.tsx` (state, HUD, the toy's hop, fog mask, keys, mouse
@@ -186,7 +218,8 @@ neighbours.
   branch growing when it is walked, difficulty by depth (a 4th path is
   Tricky and its stations start at tier 2), a secret exit (hidden,
   opens when the Garden's parts are found, notice and animation, plays
-  at tier 3), the reveal animation (first open
+  at tier 3), the toy's token being a real picture of the toy that is
+  kept per outfit and changes when the outfit does, the reveal animation (first open
   quiet, the next open animates, the one after quiet), and layout (tap size, alignment, no overlap, the toy in view).
 
 ## Not in this slice

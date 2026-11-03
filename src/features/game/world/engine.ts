@@ -11,6 +11,7 @@ import {
   type ToyContract,
 } from "../../../../shared/toycontract";
 import { createWorldRuntime } from "./runtime";
+import { PORTRAIT_PX, type ToyPortrait } from "../../../lib/toyPortrait";
 
 export const WORLDS = [
   { id: "garden", label: "Garden", lab: false },
@@ -795,6 +796,10 @@ export interface EngineHandle {
   /** Play a seeded level. `theme` forces the world's look; `opts` sets its difficulty tier
    *  (1-3, stations start at that tier) and mood. Null = it could not start. */
   playSeed: (code?: string, theme?: string, opts?: SeedOptions) => string | null;
+  /** Signature of the toy's current outfit once its parts have finished loading; null until then. */
+  portraitSig: () => string | null;
+  /** A small picture of the toy as it is dressed now (the Map's character token). Null when it cannot be taken. */
+  capturePortrait: (size?: number) => ToyPortrait | null;
   /** Set the camera zoom level in the runtime. */
   setZoom: (zoom: ZoomLevel) => void;
   /** Start a carousel Learn run over the given rung plan. */
@@ -908,6 +913,8 @@ interface LegacyHooks {
   P?: LegacyPlayer;
   go?: (world: string) => void;
   playSeed?: (code?: string, theme?: string, opts?: SeedOptions) => string | null;
+  portraitSig?: () => string | null;
+  capturePortrait?: (size: number) => ToyPortrait | null;
   worldName?: (id: string) => string;
   start?: (build: boolean) => void;
   open?: () => void;
@@ -1330,6 +1337,9 @@ export function createEngine(
       if (disposed) return null;
       return hooks()?.playSeed?.(code, theme, opts) ?? null;
     },
+    portraitSig: () => (disposed ? null : (hooks()?.portraitSig?.() ?? null)),
+    capturePortrait: (size = PORTRAIT_PX) =>
+      disposed ? null : (hooks()?.capturePortrait?.(size) ?? null),
     setZoom: (target) => {
       hooks()?.setZoom?.(target);
       poll();
