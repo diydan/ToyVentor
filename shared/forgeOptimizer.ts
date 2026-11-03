@@ -104,6 +104,8 @@ export interface ForgeRecipeV1 {
         height_mm?: number;
         z_frac?: number;
       }
+    /** Heads only: a heavy ridge across the front, above the eyes (a gorilla, a troll). `thickness_mm` is how far it stands out. */
+    | { op: "brow"; width_mm?: number; thickness_mm?: number; height_mm?: number; z_frac?: number }
     /** Heads only: vertical grooves round the sides (a pumpkin, a melon); the front stays smooth. */
     | { op: "ribs"; count?: number; depth_mm?: number; width_mm?: number }
     /** Crowns only: a five-point star standing on the very top. */

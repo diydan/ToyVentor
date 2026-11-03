@@ -328,6 +328,8 @@ function sanitizeRecipe(raw: unknown): { ok: true; recipe: ForgeRecipeV1 } | { o
           ...(style ? { style } : {}),
           ...numFields(f, ["length_mm", "width_mm", "height_mm", "z_frac"] as const),
         });
+      } else if (f.op === "brow") {
+        cleanFeatures.push({ op: "brow", ...numFields(f, ["width_mm", "thickness_mm", "height_mm", "z_frac"] as const) });
       } else if (f.op === "ribs") {
         cleanFeatures.push({ op: "ribs", ...numFields(f, ["count", "depth_mm", "width_mm"] as const) });
       } else if (f.op === "star") {

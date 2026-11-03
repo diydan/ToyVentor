@@ -1,2368 +1,336 @@
-# Forge AI and assists: prompt workflows first, custom models on a gated roadmap
+# Forge AI and assists: prompt workflows first, custom models gated
 
 ## Status
 
-**Proposed.** Written 2026-10-31, extended the same day with four assist
-features (A1, A2, A4, A5), and on 2026-11-01 with a fifth (A6, failed-print
-triage), a print-optimisation scope note, and a Glimmer-first training plan
-(phases G0 to G6, plus a G7 stretch for Muse Spark Open). Nothing here is built
-except the pieces listed under "Already in the repo". No custom model is in
-scope for the Nov 4 build. The whole own-model track (Glimmer phases G1 to G7
-and the brick sculptor) is a stretch goal (Dan, 2026-11-01): nothing in it is
-required for the submission. If it goes ahead, two own-model tracks (a Forge
-recipe writer and a brick sculptor) run behind explicit gates, both starting
-from Muse Glimmer (Muse Spark Open is a stretch option); see "Custom model
-roadmap". The prompt
-workflows stay as the fallback throughout.
+**Proposed.** Only the pieces under "Already in the repo" exist. No custom
+model is in scope for the Nov 4 build. The own-model track (G1–G7, brick
+sculptor) is a stretch goal and never blocks submission. Prompt workflows stay
+as the fallback throughout.
 
-## One-paragraph version
+## Rule
 
-Six AI features share one engine (the sixth, F6, is mostly geometry; see its
-section). A hosted Muse Spark call proposes a small
-JSON **recipe** (never a mesh, never code). Deterministic code legalizes it,
-the existing Python gates build and verify it, and a repair loop feeds
-structured gate failures back until it passes or falls back to something
-usable. Every attempt is logged, so the eval harness can say, with numbers,
-whether a custom model would ever be worth it.
+One engine for F1–F6 (F6 is mostly geometry). A hosted model call proposes a
+small JSON **recipe** (never a mesh, never code). Deterministic code legalizes
+it, the existing Python gates build and verify it, and a repair loop feeds
+structured failures back until it passes or falls back to something usable.
+Every attempt is logged. Part geometry is built by gated, deterministic code;
+the model only chooses parameters.
 
-Five smaller assist features (scan assist, build coach, speech edits,
-kit-card text, failed-print triage) follow one rule: the model supplies words or a choice
-among enumerated options, and code supplies every fact and every action. They
-need no Python validator, each has a no-model fallback, and the first two can
-ship from the Worker alone.
+Five assists (A1, A2, A4–A6) follow one rule: the model supplies words or a
+choice among enumerated options; code supplies every fact and every action.
+Each has a no-model fallback, and A1/A2 can ship from the Worker alone.
 
-This keeps the standing rule in [spec.md](../product/spec.md) true in spirit:
-part geometry is built by gated, deterministic code. The model only chooses
-parameters. The "never model-generated" wording in that spec must be updated
-when this ships (see "Docs impact").
+## Features
 
-## The six features
-
-| # | Feature | Input | Output | Model's job | Deterministic job |
+| # | Feature | Input | Output | Model picks | Code guarantees |
 | --- | --- | --- | --- | --- | --- |
-| F1 | Describe it | Short text, optional slot | Verified printable accessory | Pick slot, write recipe | Legalize, build, gate |
-| F2 | Scan it, wear it | Photo of any object | Accessory shaped like the object | Name it, pick role and slot, add allowed features | Mask to profile to recipe, gate |
-| F3 | Repair loop | A failing recipe plus gate report | A passing recipe | Patch parameters | Hint table, legalizers, retry limits |
-| F4 | Fits this one | Description plus a host (head, vehicle) | Accessory that seats on that host | Shape for the envelope numbers it is given | Host check through the assembly gate |
-| F5 | Build planner | Goal text plus current build | Ordered, valid build | Choose parts from a compact catalog | Retrieval, assembly validation |
-| F6 | Finish it (draft) | An assembled snap-part build | One smooth, polished object for the game and for printing | Optional: pick a finish style and which parts stay crisp | Strip connectors, merge, smooth, gates, both exports |
+| F1 | Describe it | Short text, optional slot | Verified printable accessory | Slot, recipe | Legalize, build, gate |
+| F2 | Scan it, wear it | Photo of an object | Accessory shaped like the object | Name, role, slot, allowlisted features | Mask to profile to recipe, gate |
+| F3 | Repair loop | Failing recipe + gate report | Passing recipe | Patched parameters | Hint table, legalizers, retry limits |
+| F4 | Fits this one | Description + host | Accessory that seats on that host | Shape for given envelope numbers | Host check through assembly gate |
+| F5 | Build planner | Goal text + current build | Ordered, valid build | Parts from compact catalog | Retrieval, assembly validation |
+| F6 | Finish it (draft) | Assembled snap-part build | One smooth object for game + print | Optional finish style, keep-list | Strip, merge, smooth, gate both exports |
 
-F3 is not a separate screen. It is the engine F1, F2, F4 and F5 all run on.
+F3 is not a screen. It is the engine F1, F2, F4, and F5 run on.
 
-The assist features (detailed after the Forge sections):
+- **F1 acceptance:** >= 80% of eval prompts verified within 4 calls; zero
+  brand-term violations; no code-execution path.
+- **F2 shape first:** profile to `loft` for round objects, contour to
+  `profile2d` for flat ones. Only gated geometry is called printable.
+  Routes: A cut-out (`profile2d`, hand only, compiles today), B round (`loft`
+  from width profile), C chunky (front + side photos to loft slices). The fit
+  loop retries fillet and size within a call budget.
+- **F4 split:** (1) slot add-ons checked against the equipped host via a
+  `host` argument; (2) later, cavity hats seating over head + wig. Clearance
+  (0.4–0.45 mm) applied by a legalizer; seating matrix guards regressions.
+- **F5 output:** `{say, build:[{id, part, pose}]}` with catalog-enum parts,
+  validated with longest-valid-prefix rollback. Also feeds A4 edits, kit-card
+  text, and kid-facing "why" lines. Acceptance: 100% of returned builds legal;
+  >= 70% judged on-goal on 30 goals.
+- **F6 pipeline:** strip connectors, merge, smooth, keep-list, gate (existing
+  + no-connector-remains + volume/bbox bounds), export game mesh + print STL.
+  Modes: display vs wearable (keeps snap footprint). On failure show the brick
+  build with a short reason. Source build is kept, so Finish is undoable.
 
-| # | Feature | Model chooses or writes | Code guarantees | Fallback if the model fails |
+## Assists (Worker-only)
+
+One shared model helper: structured JSON, low effort, timeout, safety prefix,
+brand filter, per-IP limits. On failure it returns `null` and the caller uses
+its fallback.
+
+| # | Assist | Model chooses | Code guarantees | Fallback |
 | --- | --- | --- | --- | --- |
-| A1 | Scan assist | Ranked nouns for SAM | The SAM mask | Client noun as today, with photo-derived features off |
-| A2 | Build coach | A kid-friendly sentence | Check results, the legal fix, the applied action | One template line per check id |
-| A4 | Speech or typed edits | Intent parsed into enumerated ops | Placement, legality, preview then apply, undo | Tap or typed catalog search |
-| A5 | Kit-card step text | Optional age-band rewrite | Step order, part names, fixed warning text | Template steps |
-| A6 | Failed-print triage | One cause id from a closed list | The fix card for that cause and slicer; no setting comes from the model | Manual symptom picker |
+| A1 | Scan assist | Ranked nouns | Mask, outline | Client noun as today |
+| A2 | Build coach | Kid-friendly sentence | Check results, legal fix, applied action | One template line per check id |
+| A4 | Speech / typed edits | Intent as enumerated ops | Placement, legality, preview + undo | Tap or typed catalog search |
+| A5 | Kit-card text | Optional age-band rewrite | Step order, part names, fixed warnings | Template steps |
+| A6 | Failed-print triage | One cause id from closed list | Fix card for that cause + slicer | Manual symptom picker |
+
+- **A1:** one vision call returns `{nouns}`; segmentation starts on the client
+  noun or `nouns[0]`; retries share one time budget. Needs a one-hour spike
+  first: does the hosted model read images.
+- **A2:** code computes the fix (`findPlacement`, `snapMm`, rotate/move/remove
+  rules); the model words it (20 words max, real part names only, no blame).
+  Template table ships first and stays as fallback.
+- **A4:** same planner as F5 (`mode: "edit"`); output `{ops, say}` with
+  `add/remove/swap/boost`; code places, validates, previews, then applies with
+  undo. Offline set is adult phrasing; real child speech only in consented
+  playtests.
+- **A5:** steps come from attach edges in valid order; the model pass cannot
+  reorder steps or rename parts.
+- **A6:** grown-up photo in, `{cause, confidence}` out over ~10 hand-written
+  causes (`unsure` allowed); code shows the hand-written fix card. Depends on
+  the A1 vision spike.
 
 ## Already in the repo (do not rebuild)
 
-- `parts/kip/sdk/kip_partspec_sdk.py`: slot builders, helpers, and
-  `validate_and_export()` returning a JSON report (`--json`): gate
-  failures, small-part screen, brand errors, and a real attach test against
-  a reference parent.
-- `public/kip/LLM_PART_PROMPT.md` plus `npm run kip:validate-part`: the
-  paste-into-any-LLM workflow. Three verified examples in `public/kip/custom/`.
-- `public/kip/kip-forge-sdk.js` (Phase 4 forge): SAM mask to traced contour to
-  extruded, photo-textured **digital-only** accessory (`prints: false`).
-- `worker/meta.ts`: live SAM 3.1 and image edits. `worker/muse.ts`: the
-  Responses-API call pattern, low reasoning effort with retry, kid-safety
-  prefix, per-IP limit.
+- `parts/kip/sdk/kip_partspec_sdk.py`: slot builders, `validate_and_export()`
+  with JSON report, attach test against a reference parent.
+- `public/kip/LLM_PART_PROMPT.md` + `npm run kip:validate-part` workflow with
+  three verified examples in `public/kip/custom/`.
+- `public/kip/kip-forge-sdk.js`: mask to contour to extruded digital-only
+  accessory (`prints: false`).
+- `worker/meta.ts`, `worker/muse.ts`: segmentation + image-edit path and the
+  model call pattern (structured JSON, low effort, retry, safety prefix,
+  per-IP limit).
 - `shared/sam.ts`: mask summary with silhouette path and anchors.
-- `parts/partspec/ai_catalog.txt` (180 lines, 24 KB: id, line, size, tags,
-  stat, connectors) and `build_examples.json` (38 builds, valid and
-  deliberately invalid).
-- `shared/partspec.ts`: `convertPartSpecPart` bridges a verified part into the
-  app's part model.
-- `shared/checks.ts` (`runChecks`, results shaped `{id, label, pass, detail}`
-  for on-grid, fits-toy, support-free, fits-bed) and `shared/build.ts`
-  (`canPlace`, `findPlacement`, `snapMm`, `buildStats`): the builder's own
-  deterministic checks and placement helpers. The assist features build on these.
-- `worker/index.ts` `handleScanPost`: takes a client-supplied `prompt` noun
-  (at most 60 characters) with the image and calls `segmentToy`.
-- [play-design-spec.md](play-design-spec.md): the nine-step level drafting
-  pipeline that level review follows.
-- The forge-optimizer lane (`feat/parts-asset-optimization`, in `main` through
-  `058cf61`; read and smoke-run 2026-11-02): `shared/forgeOptimizer.ts`
-  (`ForgeRecipeV1`, job and gate-report types, brand check),
-  `scripts/forge_optimizer_daemon.py` (warm daemon started by
-  `npm run forge:optimizer`: `compile_recipe_to_partspec`, the mandatory L1
-  slope clamp, `validate_and_export`, which re-runs the print gate on the
-  optimized mesh (`verify_preprint=True` is set inside the SDK, not by the
-  request), a bounded queue, bearer auth, content-addressed artifacts)
-  and `worker/forgeOptimizer.ts` behind `POST /api/forge/preview`,
-  `GET /api/forge/jobs/:id` and `GET /api/forge/artifacts/:name` (off until
-  `FORGE_OPTIMIZER_URL` is set). It has an opt-in minimal-support tier
-  (`support_policy: "minimal"`) for crown, head and back slots. It calls no
-  model. A later commit (`6f8f2b1`: gate parity test, slow-client and cache
-  bounds) is on `feat/parts-asset-optimization-followups`, not in `main`.
+- `parts/partspec/ai_catalog.txt` + `build_examples.json`: compact catalog and
+  38 valid/invalid builds for retrieval and regression.
+- `shared/partspec.ts`, `shared/checks.ts`, `shared/build.ts`: part bridge and
+  the builder's deterministic checks and placement helpers.
+- `worker/index.ts` `handleScanPost`: client noun (60 chars max) + `segmentToy`.
+- Forge optimizer lane: `shared/forgeOptimizer.ts`,
+  `scripts/forge_optimizer_daemon.py` (`compile_recipe_to_partspec`, mandatory
+  L1 slope clamp, `validate_and_export`), worker routes behind
+  `POST /api/forge/preview` (off until configured). Calls no model.
+- [play-design-spec.md](play-design-spec.md): level-drafting pipeline for level
+  review.
 
 ## Shared engine
 
 ### Recipe v1 (the only thing the model emits)
 
 JSON, schema-validated in TypeScript and again in Python. Unknown keys are
-rejected, numbers are clamped to bounds, and nothing is executed.
+rejected, numbers are clamped, nothing is executed.
 
 ```json
 {
-  "v": 1,
-  "id": "wizard_hat",
-  "name": "Wizard Hat",
-  "stat": "Glow",
-  "behavior": "Tall hat that clicks onto the crown studs",
-  "slot": "crown",
-  "host": "char_head_kid",
+  "v": 1, "id": "wizard_hat", "name": "Wizard Hat", "stat": "Glow",
+  "slot": "crown", "host": "char_head_kid",
   "shape": { "kind": "loft",
              "slices": [ { "z": 0, "w": 23.4, "d": 11.4, "r": 4.6 } ] },
   "features": [ { "op": "brim", "radius_mm": 16, "thickness_mm": 2 } ]
 }
 ```
 
-- `slot`: `crown | head | back | hand | front | rollbar | spoiler | hood | roof | exhaust`
-  (the builders already in the SDK prompt table).
-- `shape.kind`: `loft` (all slots except hand; the compiler enforces 2 to 16
-  slices and the prompt asks for 3 to 12), `profile2d` (hand slot, polygon in
-  x,z, 3 to 256 points), `star2d` (hand slot, the default there).
-- `features`: at most 6, from an allowlist. Each is a parametric op with bounded
-  numbers (clamped, never rejected), so the model can add character without
-  being able to break geometry. Built in the daemon (2026-11-02), all with
-  tests in `tests/forge/forge-ops.test.ts`:
-  - `knob` (ball on top) and `brim` (flat brim, `width_mm`, `depth_mm`,
-    `thickness_mm`). Not for heads: `character_head` clips above the crown seat
-    and flare-clips the sides, so a knob changed nothing and a brim added 68 mm3;
-    both are now ignored on a head and listed in `features_ignored`.
-  - `ears`: a mirrored pair on the upper corners, `style` `round | pointy |
-    tall`, `width_mm`, `height_mm`, `tilt_deg`. Heads and crowns only. On a head
-    they are added after `character_head`, because that builder clips everything
-    above the crown seat.
-  - `horns`: a mirrored pair of curved horns, `length_mm`, `base_mm`, `curl`.
-    Heads and crowns only.
-  - **Head ears and horns keep off the crown studs** (`_fit_head_pair`). The studs
-    (two columns at x 3.0 to 9.6 mm each side, y +-3.3, z 30.5 to 33.3; a hat seats
-    on them) fill most of a head's 18 to 20 mm wide top, so a pair rooted at the
-    upper corners used to grow into them. The daemon now keeps a stud keep-out
-    (one plain box per stud column, grown 1.5 mm, from the crown plane up; 0.6 mm
-    at first, Dan found it too tight) free of ear and horn material, in two passes.
-    Pass 1 (Dan, round 5: "no cuts to the ears, just make the ears further
-    apart") looks for a placement that needs no cut: the pair as asked, then lower
-    (up to 10 mm), leaning further out (ears, up to 18 degrees) and moved further
-    apart (up to 9 mm each side), cheapest change first. A candidate must also add
-    no P1 overhang (a pre-check on its faces, 3 mm2), keep the head's width out of
-    the 31.75 to 34.9 mm band that fails the small-parts gate (either within 31
-    mm or above 35.2 mm, which passes as above the cylinder), and a root that hangs
-    well outside the wall gets a longer 45-degree ramp. Pass 2 runs only when
-    nothing clears the studs uncut: the placement with the most ear still showing
-    is cut by the keep-out, and any piece the cut leaves floating is dropped.
-    `round` ears also must not rise above the head's top face (z = `height_mm`):
-    the bear's ears used to poke 1 mm above it. What it did is listed in
-    `legalizer.features_adjusted` (for example "moved down 3 mm, moved 3 mm
-    further apart"; pass 2 adds "trimmed where it met the crown studs"); a pair
-    with no room left is listed in
-    `features_dropped`. Test: `forge-ops.test.ts` compares the mesh vertices inside
-    the stud column with a plain head's.
-  - **Sturdy head ears** (`_sturdy_head_ear`; Dan, round 6, on the bunny: "looks
-    fragile, not sure we need the bend, can we make shorter"). A head ear that is
-    over 15 mm tall or over 2.4 widths is cut back to at most 15 mm and 2.2 widths,
-    widened to at least 8 mm and stood up to at most 3 degrees (the 22 x 7 mm
-    bunny ear with a 10 degree tilt becomes 15 x 8 mm, 3 degrees). Stout ears (the
-    cat's 12 x 8 mm, the bear's discs) are left as asked. A lean now costs the
-    fitter as much as a move, so ears are moved apart before they are leaned. The
-    note lands in `features_adjusted` ("kept sturdy: cut from 22 to 15 mm tall, ...").
-  - **No-studs head** (`shape.top: "dome"`, default `"studs"`; Dan, round 6: "a
-    version with and without studs; the one without should have a curved top rather
-    than flat"). Built in the daemon without touching the SDK (`_domed_top`):
-    `character_head` runs as usual, then the studs are cut off, the `top_studs`
-    connector is dropped, and the last 5 mm under the crown plane are rebuilt as
-    the hull of the head's own outline shrinking along a cosine curve to the apex, so
-    the head keeps its height and the top is a smooth ellipsoidal dome with no
-    overhang. Ears and horns need not dodge studs there, so they sit where the
-    recipe put them (round ears still stay under the top). The dome outline is
-    inset 0.03 mm from the wall: flush, the seam left hair-thin triangles that
-    failed G1 and G3 (the same trap as the stud cut). Plain, bunny, cat and bear
-    heads with a dome all print_ready, design verified. **Worker allowlist
-    (done 2026-11-03, Dan OK):** `shared/forgeOptimizer.ts` and
-    `worker/forgeOptimizer.ts` now carry `shape.top`, ear `z_frac`, spike `layout`
-    and `wall_mm`, and the `ribs`, `star` and `hollow` ops (before, an op the
-    Worker did not know made the whole request a 422, and `top` and `z_frac` were
-    dropped without a word). Enum values live in shared constants
-    (`FORGE_HEAD_TOPS`, `FORGE_EAR_STYLES`, `FORGE_SNOUT_STYLES`,
-    `FORGE_SPIKE_LAYOUTS`); `tests/forge-recipe-passthrough.test.ts` checks every
-    field reaches the daemon and that the enums match the daemon's. **Brand check for the owner:** the brand file
-    (`parts/partspec/BRAND_STYLE.md`) rule 1 says "every head carries two studs on
-    its crown... they stay functional (hats, ears and horns fit on them)", and the
-    family test counts "two crown buds"; a head without studs is an exception to
-    that rule, so whether and where it ships is a product call.
-  - `spikes`: a row of 2 to 7 points along the top, for crown points and
-    feathers. Crowns and backs only (the head top is the crown seat).
-  - `snout` (heads only): `style` `muzzle | beak | bill`, `length_mm`,
-    `width_mm`, `height_mm`, `z_frac` (how high on the face). A hull of a tip
-    sphere and two root spheres at the front wall (-y), added after
-    `character_head` like head ears. The top is flat; the underside is a ramp
-    that rises at least 55 degrees (50 as a fallback), so it prints without
-    supports. That is the limit on its looks: a beak reads well, a muzzle reads as a nose with a long
-    ramp down the face, and a true flat-bottomed dinosaur snout would need
-    supports on the front (the show face), which the M2 gate caps at 80 mm2. It
-    is cut away from the neck-socket cavities (`_socket_keepout`) and kept inside
-    the flat part of the front wall, because the wall leans and the corners are
-    far back. 13 of 13 probe recipes passed the gates after four fixes (see "Head
-    ops and prompt v3" below). An op the compiler accepts but cannot build on the
-    given body (a snout on a head whose front already leans forward, an ear on a
-    body too narrow at that height) is listed in `legalizer.features_dropped`.
-    **Brand check for the owner:** `BRAND_STYLE.md` keeps expressions and fixed facial relief on the swappable
-    face insert, "never in the head shell", and says it for human heads; a
-    snout is silhouette, not an expression, but it takes the decal area of the
-    face. **Decided (Dan, 2026-11-03): yes, custom creature heads may carry a
-    snout.** `BRAND_STYLE.md` itself is unchanged (its relief rule is about human
-    heads).
-  - An op the slot cannot use, or an unknown op, is dropped and listed in
-    `legalizer.features_ignored`.
-  - Planned, not in the compiler: `fin`, `antenna`, `band`, and a curled brim.
-    A curled brim was tried and fails the gates (P1 steeper than 45 degrees,
-    P4 ledges, M2 and M3 minimal-support checks), so a cowboy brim stays flat.
-  - **Why the old recipes had no brims.** The loft is one convex hull, and the
-    slot builders clip with a 41 degree support-free flare, which shaved a 40 x
-    30 mm brim down to about 32 x 19 mm. The compiler now promotes
-    `support_policy` from `none` to `minimal` when a recipe has a `brim` or
-    `horns` (the lane's opt-in minimal-support tier), and says so in
-    `legalizer.support_policy_promoted`. `--no-auto-minimal` turns it off. This
-    changes the print plan (a few supports), so it is a decision for the owner
-    of the print workflow, not only a compiler detail.
-  - The worker (`worker/forgeOptimizer.ts`) and `shared/forgeOptimizer.ts`
-    now accept all six ops (2026-11-02): it keeps only finite numbers and known
-    style names, still refuses an op it does not know, and leaves the clamping
-    to the daemon. Tests: `tests/forge/forge-worker-features.test.ts`.
-- `support_policy` (optional): `none` (default) or `minimal`; `minimal` is only
-  allowed on `crown`, `head` and `back`. `shape.height_mm` (optional, 24 to 38)
-  sets a head's height.
-- `id` gets a `custom_` prefix server-side. `stat` is one of Speed, Spin,
-  Torque, Glow. Brand terms are rejected before and after the model call.
-- **As built.** `ForgeRecipeV1` in `shared/forgeOptimizer.ts` and
-  `compile_recipe_to_partspec` in `scripts/forge_optimizer_daemon.py` already
-  implement this recipe as listed here (read, and smoke-run with 12 crown
-  jobs, 2026-11-02). Where
-  this section and that code differ, the code wins until the optimizer lane
-  agrees a change (open question 19).
+- `slot`: `crown | head | back | hand | front | rollbar | spoiler | hood | roof | exhaust`.
+- `shape.kind`: `loft` (all slots except hand; 2–16 slices), `profile2d`
+  (hand, x/z polygon, 3–256 points), `star2d` (hand default).
+- `features`: at most 6 parametric ops from an allowlist (clamped, never
+  rejected for range): `knob`, `brim`, `ears`, `horns`, `spikes`, `snout`,
+  `brow`, `ribs`, `star`, `hollow`, `relief` (planned: `fin`, `antenna`,
+  `band`). Unknown or slot-incompatible ops are dropped and listed in
+  `features_ignored` / `features_dropped`; adjustments in
+  `features_adjusted`. Head pairs keep clear of the crown seat; snouts and
+  brows use support-free ramps (55°, 50° fallback).
+- `support_policy`: `none` (default) or `minimal` (crown, head, back only).
+  A `brim` or `horns` promotes `none` to `minimal` and logs it.
+- `shape.top`: `studs` (default) or `dome`; `shape.height_mm` 24–38 sets head
+  height. `id` gets a `custom_` prefix server-side. Brand terms are rejected
+  before and after the model call.
 
 ### Pipeline (every feature)
 
-1. **Intake.** Length cap, kid-safety rules, brand-term filter (TypeScript
-   mirror of the SDK's `FORBIDDEN_BRAND_RE`).
-2. **Propose.** Muse Spark through the existing Responses API pattern in
-   `worker/muse.ts`, structured JSON output against the Recipe schema, low
-   reasoning effort first. Prompt = adapted `LLM_PART_PROMPT.md` + the three
-   verified examples + one example per slot builder + host numbers if any.
-3. **Legalize (no model call).** Deterministic fixes applied before any
-   gate runs:
-   - L1 slope clamp: outward growth per side <= 0.78 x dz between slices
-     (the P1/P4 rule from the prompt). Built: `legalize_loft_slices` in the
-     daemon, always on.
-   - L2 size band: if the minimum enclosing cylinder lands in the
-     small-parts marginal band, move it out by the smaller change
-     (< 29.5 mm or > 36.0 mm guidance), never below the slot pad. Not built yet; the prompt v1 eval run says it is
-     now worth building (see "Eval harness").
-     The gate's own edges (`interfaces.json`, `toyventor_parts.py`): at most
-     31.75 mm is `small_part` and passes, 31.75 to 34.925 mm (+10%) is
-     `marginal` and fails, above that is `above_cylinder`. The smoke run hit the
-     band at 31.86 mm and 33.48 mm. The 29.5 and 36.0 mm figures are guidance
-     with margin around that band.
-   - L3 clamp every number to the slot's bounds. Built in the daemon for loft
-     slices, hand shapes and features.
-   - L4 symmetry (Dan, 2026-11-02: "check if there is symmetry and if so split in
-     centers and make symmetrical"). Built in the daemon (`_symmetrize_polygon`,
-     `_symmetrize_loft_rows`), reported as `legalizer.symmetry`. A `profile2d`
-     outline is mirrored on its vertical centre line (the bounding-box centre,
-     snapped to x = 0 within 1 mm) and measured by how much it overlaps its own
-     mirror image (intersection over union). At 0.93 or more it is treated as
-     meant to be symmetric: it is split on the centre line, the larger half is
-     kept, and the outline is rebuilt from that half and its mirror (at most 256
-     points, the profile2d limit); `iou_after` is then 1.0. Below 0.93 (a lightning bolt scores 0.52)
-     it stays as drawn and the note says `kept_asymmetric`; an already symmetric
-     outline gets no note. A loft is symmetric when every slice is centred on
-     x = 0: offsets up to 1 mm are noise and snap to 0 (reported as
-     `snapped_x_to_centre`, not as an L1/L3 change); bigger ones are a deliberate
-     lean, like a bent hat tip, and stay (`kept_asymmetric`, with the mirror
-     overlap). The 0.93 threshold is the knob: false positives (flattening a
-     deliberately lopsided shape) cost more than false negatives, so it is set
-     high; a heart whose right half was 4% narrower scored 0.956 and was fixed,
-     at 12% it scored 0.87 and was left. Not applied to the photo outline
-     (C-legalizers above) yet. The same change fixed a hole found while testing:
-     `sdk.polygon_2d` fills counter-clockwise outlines only, so a clockwise
-     `profile2d` built an empty part with no error; the points are now turned
-     round (`legalizer.profile2d_reversed`). Tests: `forge-ops.test.ts`, three.
-   Ship L1 and L2 first. Add more only when the eval shows a gate dominating.
-4. **Build and gate.** Python compiler (`compile_recipe_to_partspec` in
-   `scripts/forge_optimizer_daemon.py`) turns the recipe
-   into an SDK `part_spec` and runs `validate_and_export()`. Output is the
-   slim JSON report plus STL and manifest on success.
-5. **Repair (F3).** On failure, send the model only the structured failures
-   (gate id, detail, measured value versus limit, plus the matching line from
-   a hint table) and ask for a corrected recipe. Effort rises to medium on
-   attempts 2 and 3. Hard cap: 4 model calls per job.
-6. **Always end with something usable.** If the cap is hit: F1 and F4 offer
-   the closest ready-made catalog part (retrieval over `ai_catalog.txt`); F2
-   falls back to the existing digital-only accessory; F5 returns the nearest
-   verified `build_examples` build. A kid never sees a dead end.
-7. **Bridge.** A verified result passes through `convertPartSpecPart` so the
-   builder, Toybox and Kip viewer treat it like any other part, tagged
+1. **Intake.** Length cap, kid-safety rules, brand-term filter.
+2. **Propose.** Hosted model call, structured JSON against the Recipe schema,
+   low effort first. Prompt is the adapted `LLM_PART_PROMPT.md` + verified
+   examples + one example per slot + host numbers if any.
+3. **Legalize (no model call).** L1 slope clamp (at most 0.78 × dz per side,
+   always on), L2 size band (move out of the small-parts marginal band by the
+   smaller change), L3 clamp to slot bounds, L4 symmetry (mirror at overlap
+   0.93+, snap centre offsets under 1 mm). Each change is logged.
+4. **Build and gate.** Compiler turns the recipe into a `part_spec` and runs
+   `validate_and_export()`. Output: slim JSON report + STL + manifest.
+5. **Repair (F3).** On failure send only `{gate, measured, limit, hint}` per
+   failure. Effort rises on attempts 2–3. Hard cap: 4 model calls per job.
+6. **Always end usable.** F1/F4 fall back to the nearest ready-made catalog
+   part; F2 to the digital-only accessory; F5 to the nearest verified
+   `build_examples` build.
+7. **Bridge.** Verified results pass through `convertPartSpecPart`, tagged
    `custom`.
 
 ### Gatekeeper (where Python runs)
 
-The gates are Python and `manifold3d`; they cannot run in a Worker. Options:
-
-| Option | Verdict |
-| --- | --- |
-| A. Local validator server. Partly built as the optimizer daemon (`npm run forge:optimizer`, `scripts/forge_optimizer_daemon.py`); the Worker proxies when `FORGE_OPTIMIZER_URL` is set (`worker/forgeOptimizer.ts`, off by default) | **Phase 0/1.** No new infra, works for the Nov 4 demo and for pre-generating a showcase set. |
-| B. Cloudflare Container or Sandbox running the venv | **Phase 1b.** Same HTTP contract as A, so swapping is config. |
-| C. Port gates to TypeScript with `manifold-3d` WASM | **Rejected.** Large port, and a second copy of the gates will drift from the Python source of truth. |
+Gates run in Python and cannot run in a Worker. Two options: local validator
+server (the optimizer daemon; Phase 0/1, works for demo and pre-generated
+showcase), or a hosted container/sandbox running the same HTTP contract
+(Phase 1b, config swap). A TypeScript port is rejected (drift risk).
 
 The contract is a pure function: `POST /validate {recipe, host?}` returns the
-slim report. Jobs are asynchronous (`POST /api/forge` returns `jobId`; poll
-`GET /api/forge/:id`) with stages `queued, proposing, checking, repairing,
-done, failed`. A job is several calls long, far past the 13 s single-call
-budget in `muse.ts`, so the UI shows staged "Forging..." progress. The wait
-is part of the experience, not a bug.
-
-The optimizer lane already has routes (`POST /api/forge/preview`,
-`GET /api/forge/jobs/:id`, `GET /api/forge/artifacts/:name`) and job states
-(`queued, preview_ready, validating, optimizing, print_ready, digital_only,
-failed`) that cover compile and gate only. Proposal: the Forge job (propose and
-repair) stays the outer layer with the stages above, hands each recipe to an
-optimizer job and returns that job's `job_id`; since `/api/forge/jobs/:id`
-belongs to the optimizer, the outer poll route needs a different name (open
-question 19).
+slim report. Jobs are async with staged "Forging..." progress
+(`queued → proposing → checking → repairing → done/failed`).
 
 ### Guards
 
-- Kid-facing safety prefix reused from `muse.ts`; recipe text fields are
-  re-checked after the model returns.
-- Rate limit: tighter than the Create-mode 10/min/IP because one job is up to
-  4 model calls plus validation. Proposal: 3 jobs/min/IP and a per-device daily
-  cap, enforced by a Cloudflare rule as `spec.md` already does for Spark.
-- Model-written Python is never executed server-side. The dev CLI may run
-  trusted local scripts; the production path accepts JSON only.
-- Photos: SAM sees the image (existing path); A1 adds a Spark vision call on
-  the same approved endpoint. The Forge recipe calls receive numbers (profile,
-  anchors) as text only. No photo is stored.
-- Logging: recipe, per-gate outcome, attempt count and latency. Free-text kid
-  prompts are not stored, and no prompt hash is kept. Prompt text is stored
-  only for the internal eval set.
-
-## F1: Describe it
-
-- **Flow:** text in, slot inferred if not given, pipeline above, verified STL
-  plus preview on the equipped host.
-- **Fastest cut:** the prompt, validator, compiler and gate server already
-  exist (the optimizer daemon). Phase 0 is just the model call, L2, and a CLI
-  loop (`npm run forge:run`) that calls Spark, sends each recipe to the daemon
-  and writes verified parts to `public/kip/custom/`.
-- **Acceptance (targets, to be confirmed by the first eval run):**
-  - >= 80% of the eval prompts end verified within 4 model calls.
-  - 0 brand-term violations in shipped output (hard requirement).
-  - No code-execution path in the production route.
-
-## F2: Scan it, wear it
-
-Two outputs from one scan. The digital accessory already exists. The new part
-is the **printable** one.
-
-- **Extend the scan summary** (`shared/sam.ts`, `worker/meta.ts`): add a
-  normalized width profile, about 32 to 48 rows of half-widths, and a
-  simplified contour polygon, both computed from the already-decoded mask in
-  the Worker. The current `silhouette` is a coarse path meant for display, not
-  for geometry.
-- **Deterministic shape first.** Profile to `loft` slices (revolve-like
-  objects: cup, bottle, bowl, bell) or contour to `profile2d` (flat objects:
-  drawings, swords, wings). The model does not redraw the shape. It chooses the
-  role, the slot, the name, a stat, whether to invert the profile, and
-  allowlisted features.
-- **What "cup into X" honestly means:**
-
-  | Target | How |
-  | --- | --- |
-  | Hat | Cup profile (optionally inverted) as a `crown` loft |
-  | Character | Cup profile as a `head` (neck collar added by the builder) or `back` piece. Not a full ball-jointed figure. |
-  | Car | A `hood`, `roof` or `front` shell on a vehicle. Not a whole chassis. |
-
-- **Honest claims:** only gated geometry is called printable. If gates fail
-  after legalizing and repair, the existing digital-only accessory is shown
-  and labeled digital.
-- **Acceptance (targets):** with 10 photos (cup, bottle, bowl, shoe, toy car,
-  kid drawing and others) and 3 roles each, >= 70% yield a verified printable
-  recipe with no model repair, and 100% yield something usable via fallback.
-
-### F2b: Photo-shaped accessories (plan, 2026-11-02)
-
-Dan's decisions (2026-11-02): the printed result is an **accessory Kip wears or
-holds**, not a keepsake, and the SAM path below is approved for the beta as it
-stands. Keepsakes (cookie cutter, playdough stamp, charm) would reuse the same
-contour code; they are parked until accessories work. The connector always comes
-from the slot builder, so every route below ends on a part that attaches.
-
-What the compiler accepts decides the routes (read in the code, 2026-11-02):
-
-| Route | Photos | Shape handed to the compiler | Slots | Status |
-| --- | --- | --- | --- | --- |
-| A. Cut-out | 1, object looks flat (drawing, wing, sword, paddle) | `profile2d`: one outline, 3 to 256 points, x within 45 mm, z from -45 to 90 mm | `hand` only | Compiles today; outline, fit loop and sticker path built (`shared/photoOutline.ts`, `outlineFit.ts`, `outlineSticker.ts`), not wired to the Worker |
-| B. Round | 1, object looks round (cup, bottle, bowl) | `loft` slices, depth `d` taken from width `w` | `crown`, `head`, `back`, vehicle slots | Compiles today; profile extraction not built |
-| C. Chunky | 2 (front, side) | `loft` slices, `w` from the front outline, `d` from the side outline | as B | Compiles today; fitter not built |
-
-**Route A: cut-out.**
-
-- **What the hand builder does with an outline** (`handheld_prop`): joins it to a
-  grip shaft (6.60 mm across the flats, `grip_tu` 2 to 4) through a 6.4 mm neck,
-  rounds it twice (by the recipe's `fillet_r_mm`, then by 0.8 mm; each is shrink,
-  then grow), extrudes a 5.0 mm plate printed lay-flat, and adds a 1.6 mm crest
-  inset 2.4 mm. So the outline is one polygon: holes are lost, two separate
-  pieces fail `G3_single_body`, and anything thinner than twice the larger
-  rounding vanishes (3.2 mm at the fillet F2b uses, 1.6).
-- **Measured on the real gates (2026-11-02, 33 legalized outlines, daemon at
-  `0f60e97`, `validate_and_export`):** at the daemon's default `fillet_r_mm` of 1.2
-  only 8 pass; every failure is `G1_watertight` plus `G3_single_body`. At 1.6 all
-  33 pass, at 2.0 32, at 3.0 32. The failures are zero-volume two-triangle
-  slivers beside the main body (a star at 54 mm: 4 slivers, 816 faces in the
-  body), not a real split. They come and go with the radius, not with size
-  (fails at 0.8, 1.2 and 2.4, passes at 0.4, 1.6, 2.0, 3.0 and 4.0; 0.8 and 2.4
-  are the builder's own rounding and crest inset), so a bigger radius is not
-  safer in general. On the production path (`optimize=True`, about 0.4 s each)
-  all 33 pass at 1.6 on the first try. Across 77 more outlines at asked heights
-  of 24, 33, 34, 40, 70 and 90 mm, 68 passed first try, 7 came back `marginal`
-  (below) and 2 were slivers. Rule: F2b writes 1.6, and an F3 hint-table entry
-  for `G1_watertight` or `G3_single_body` on a hand `profile2d` walks
-  `RETRY_LADDER` in `shared/photoOutline.ts`: same fillet at 1.02 and 1.04 times
-  the size, then fillet 2.0, then 3.0. Both slivers passed after a 2% nudge with
-  the same shape. Fillets 2.0 and 3.0 also passed them, but only by raising the
-  smallest feature to 4 and 6 mm, which removed the paddle's stick, so they come
-  last. Nudges alone are no substitute for 1.6: at 1.2 they rescued 14 of 33.
-  Do not compute a radius.
-- **Contour legalizers** (pure TypeScript in the Worker, no model call; each one
-  reports what it changed, as in F3, so the eval can count them):
-  - C1 one body: keep the largest piece and fill holes.
-  - C2 minimum feature: apply the same rounding (the larger of the fillet and
-    0.8 mm) to the outline first, so the preview and the print agree. Which parts
-    are too thin is decided at the requested size and the size is kept; with
-    `keepThinParts` the outline grows (within the 90 mm box) to the smallest
-    size at which they survive. A refit after removal flip-flops (the part
-    survives at the new size, then not at the next), so there is none.
-  - C3 fit: scale into the clamp box above (default 54 mm tall). L2 does not
-    handle hand plates ("L2 only handles loft slots"), so a `marginal`
-    small-parts result is rescaled by the measured cylinder and gated again.
-    The band cannot be avoided in advance, because it follows the final shape,
-    not the asked height: a paddle asked for 33 mm came out 17.7 mm tall, its
-    stick being thinner than 3.2 mm. Of the 77 outlines across sizes, all 7
-    marginal ones had an asked height of 33 or 34 mm (cylinders 32.3 to 34.1 mm).
-  - **The fit loop** (`shared/outlineFit.ts`; pure, the gate is passed in).
-    `fitOutline(mask, options, gate)` gates the outline, and on a failure walks
-    `RETRY_LADDER`, re-running the legalizers from the mask at each rung so the
-    change log stays true. A `marginal` result is rescaled by the measured
-    cylinder: grow first (a legalized outline already sits at the minimum
-    feature, so a shrunk one can lose its thinnest part), aiming 0.75 mm past the
-    band edge (the daemon's own L2 margin), re-aiming once from the new
-    measurement because the cylinder is not proportional to the outline (the grip
-    shaft and neck are fixed size), shrinking only when the 90 mm box blocks
-    growth. It never gates the same shape twice and stops at 8 gate calls.
-    `fitPolygon` and `fitFlipped` do the same on a finished polygon, for after the
-    mask is gone (the kid pressed flip or resize); their fillet rungs change the
-    recipe fillet only. `verdictFromGateReport` reads the daemon's `gate_report`:
-    a marginal part is `ok: false` with an empty failure list, so `small_part` is
-    the only signal.
-  - **Measured on the real compile and gates (2026-11-02, 70 fits: 5 shapes and 5
-    random blobs at asked heights of 24, 33, 34, 40, 54, 70 and 90 mm,
-    `optimize=True`, run at daemon `0f60e97` and again at `13d30f8` with the same
-    outcome and the same attempts for all 70):** 69 end on a passing part and 61
-    of those on the first gate call. The 7 marginal ones (first cylinders 31.95 to
-    34.75 mm, asked heights 33 and 34) each cleared the band with one rescale, a
-    growth of 2 to 12% over the asked height. The one sliver (a paddle asked for
-    40 mm) passed on the 2% nudge. The one that did not end on a part is a 24 mm
-    blade, which the legalizer refuses before any gate call (2.7 mm wide, under
-    the 3.2 mm minimum). Each fit took 2.1 to 3.1 s on average (two runs) and
-    14.8 s at most, nearly all of it the gate, on a machine at load average 55 to 65.
-  - **Through the Worker's routes (2026-11-02, 6 fits against the real Worker
-    handlers and the real daemon).** `shared/outlineGate.ts` (`forgeRouteGate`) is
-    the loop's gate over `POST /api/forge/preview` and then `GET
-    /api/forge/jobs/:id`, with the hand recipe and `enqueue_background: true`. All
-    6 fits ended on a passing part with the same attempts as the direct runs (a
-    sliver cleared by the nudge, a marginal 33.46 mm cleared by a rescale).
-    `small_part` survives the Worker's scrub, so `verdictFromGateReport` needed no
-    change, and the allowlist forwards every outline the legalizer made, point for
-    point (tested on 6 shapes and 4 blobs at 24, 54 and 90 mm). A gate call is a
-    preview of about 20 ms plus a job of under 1.5 s at load average 20. Job states
-    are `queued`, `validating`, `optimizing`, then `print_ready` or `digital_only`
-    (a refused or marginal part is `digital_only`, not an error) or `failed` (no
-    report). The gate never turns "could not run" into a verdict: 429, 401, 503,
-    422, 502, 504, a failed job and a malformed reply each throw an
-    `OutlineGateError` with a `kind`, and the loop rejects. Two limits decide where
-    the loop can run (question 31): the preview budget is 3 a minute per device,
-    and the limiter counts a refused call, so a caller that retries inside the
-    minute stays locked out (six retries 15 s apart were all refused); and a
-    parent proof lasts 2 or 5 minutes.
-  - **A real SAM mask (the one captured cup, 2026-11-02).** The repo holds one live
-    mask, the cup in `tests/sam-worker.test.ts` (491 by 371 pixels, 6.1% of the filled
-    object enclosed holes). `legalizeOutline` turns it into 60 points at fidelity
-    0.996, rotated 98 degrees because the cup lies on its side, with the holes filled,
-    in 0.5 to 0.9 s of CPU (the same mask enlarged to 2.9 MP took 0.9 s, so the cost
-    is not the pixel count). Carried back through the photo map into photo pixels it
-    overlaps the hole-filled mask by 0.995 and the raw mask by 0.933; the gap is the
-    holes, which C1 fills on purpose. One real mask is a smoke test, not a survey.
-  - **The wire (question 31, option a; built 2026-11-02).** `POST /api/scan` takes an
-    opt-in `scan.outline: {targetHeightMm?, orient?, flip?}` (strictly parsed; a bad
-    one is a 422 before SAM is called) and, only then, returns `sam.outline`: the
-    legalized outline, or a failure with its reason. Without the field nothing runs
-    and the reply is as before. `shared/outlineScan.ts` does the work and holds the
-    reader. Thin parts are kept (the outline grows inside the 90 mm box), a mask over
-    4 MP is refused, and `photoToPlate` in the reply maps a pixel of the UPLOADED
-    image to plate millimetres (the Worker folds in where the mask's crop sits), with
-    `photoSize` so the device can check it is the same photo. The device reads the reply
-    with `scanOutlineOf` (`src/lib/api.ts`), which rebuilds it field by field and
-    returns nothing for a reply that is cut, changed or out of the clamp box. No
-    photo and no mask come back; the log says only that an outline was made. A fault
-    in the outline step costs the scan nothing: it becomes a failure and the box and
-    mask are still returned.
-  - **The print step (built 2026-11-02, question 31 option a).**
-    `preparePhotoAccessory(scan, gate, options)` in `shared/photoAccessory.ts` takes
-    what `scanOutlineOf` returned. It applies the kid's flip and resize (the 90 mm box
-    may cap a resize; `appliedScale` says what was used), fits the outline with
-    `fitPolygon` and the injected gate, and returns the recipe that passed (a hand
-    `profile2d` part, exactly the shape the gate passed), the final outline with its
-    change log and attempts, the sticker item and its decal for
-    `buildStickerPackFiles`, and the plate of the job that passed. It has no network,
-    DOM or photo code. Every failure leaves the digital-only fallback: `no_outline`,
-    `invalid_options` and `brand_rejected` (all before any gate call), `gate_error` (the
-    gate could not run: a limit, no grown-up proof, the optimizer off or down, a job
-    that failed, with the typed error and its `retryAfterS`), and the fit's own
-    `gate_failed`, `marginal_unresolved` and `out_of_budget`, with the attempts and the
-    first outline. A gate that could not run is never turned into a verdict; an error
-    that is not the gate's own is thrown on. `forgeRouteGate` now returns `artifacts`
-    on a pass (job id, the plate name `<part>.<12 hex>.stl`, the model file and the
-    hash), only for a `print_ready` job with a passing report and a plate name the
-    artifacts route would take. `fetchPlateStl` (`shared/outlineGate.ts`) fetches that
-    plate through `/api/forge/artifacts/:name` with the same typed errors, refuses any
-    other name before asking, and accepts 84 bytes up to the Worker's 2.5 MB cap.
-    Checked through the real Worker routes: a scan reply as JSON, read back by
-    `parseScanOutline`, flipped, a marginal result rescaled, the plate bytes equal to
-    the daemon's, and the four sticker files built. The sticker's overlap with the
-    object stays above 0.95 for a lollipop under flip, resize, rescale and nudge. A
-    star is lower at small sizes (0.949 at 33 mm, 0.974 at 54 mm, 0.980 at 70 mm, the
-    same with or without a flip) because its thin tips are rounded like the printed
-    plate. Tests: `tests/photo-accessory.test.ts` (22) and `tests/outline-gate.test.ts`
-    (now 89), with the Worker and fake daemon shared in
-    `tests/fixtures/forgeWorkerHarness.ts`; 38 of 38 mutants caught. Nothing calls it
-    yet, and in production it needs the fit budget of question 30 (f): without it a
-    kid who flips a few times meets the Worker's 3 a minute.
-  - **A real photo with a thin handle: the steel spoon (2026-11-02).** Dan's photo of a
-    steel spoon on a paper towel went through the whole chain: a real SAM call through
-    the real `/api/scan` handler (0.7 to 1.0 s), the device-side read, the fit through
-    the Worker's forge routes to a real daemon, the plate, and the sticker sheet drawn
-    from the full-size photo. SAM's mask was good (91 by 447 px, the handle 10 to 22 px
-    wide). The first run shipped a **bowl with no handle** and called it a success:
-    at the default 1.6 mm rounding nothing narrower than 3.2 mm survives, the spoon's
-    neck is 2.0 mm at the 90 mm maximum, so the legalizer took the handle off at every
-    size (a 21 mm bowl at 54 mm asked), and the gates passed the bowl as readily as a
-    spoon, because they check that a part is safe to print and not that it is the
-    photo. Three fixes, each checked against the real mask and the real daemon.
-    (1) `scanOutline` rounds more gently when parts would be lost: it tries 1.2, 1.0
-    then 0.8 mm and keeps the first that leaves the whole object (`lowered_fillet_to_keep_parts`
-    in the change log); the spoon keeps its handle at 1.0, at 81 mm. (2) `fitPolygon`'s
-    rungs are relative to the outline's own fillet: its size nudges used to reset the
-    fillet to 1.6, which would have rounded a gently rounded outline harder and taken the
-    handle off again, and a gentler outline gets one more rung, 0.8. (3) `fitPolygon` skips
-    a bigger-fillet rung (2.0, 3.0) that would take a part off the polygon
-    (`roundingRemovesParts`, the polygon-only form of the legalizer's own thin-part test);
-    the builder rounds by the recipe fillet itself, so those rungs could remove a part from
-    the plate while the polygon, and the sticker cut to it, still showed it.
-    Real gate results for the whole spoon (fillet by size, 2026-11-02): at 90 mm 1.0, 0.8
-    and 0.4 pass and 0.6 slivers; at 72 mm only 0.8 passes; at 54 mm all fail. The fit
-    that shipped: 16.4 by 81 mm at fillet 1.0 slivered three times (81, 82.6, 84.2 mm), then
-    0.8 passed, 4 gate calls. The plate is one watertight body, 16.4 by 109 by 6.6 mm (the
-    spoon plus the builder's grip peg), with a 2.0 mm neck. `tests/fixtures/spoon-sam-reply.sse`
-    keeps the SAM stream (4.7 KB, the mask and ids, no photo, no key) as a second real
-    fixture, a thin object where the cup is a fat one. A UI must show `outline.warnings`: an
-    object that no gentler rounding can keep (a stick under 1.6 mm) still ends as `ok` with
-    `THIN_PARTS_REMOVED` on its outline.
-  - **Smooth edges (2026-11-02, from the spoon).** The plate and the sticker's cut line
-    had notches. The legalizer traced the working raster along its pixel corners (a
-    staircase, one step per 0.2 mm), then simplified with a tolerance of 0.6 of a pixel,
-    smaller than a one-pixel step, so every step survived as a vertex. On the real spoon
-    that was 16 corners of 90 degrees (a run of fourteen down the handle), 38 of 60
-    vertices alternating left and right, and 8 edges under 0.4 mm. The outline is now
-    smoothed before it is simplified: the working raster is blurred (a Gaussian, sigma 2
-    source pixels, kept between 0.3 and 0.8 mm; option `smoothMm`, 0 turns it off) and the
-    0.5 contour is traced at sub-pixel precision (marching squares, with a saddle rule).
-    Measured against the old trace on the real spoon, the real cup and 20 synthetic masks:
-    the spoon's stair corners fall from 16 to 0, zig-zag from 36 to 4, edges under 0.4 mm
-    from 8 to 0, total turning from 2394 to 633 degrees, and its points from 60 to 55; a
-    disc reaches exactly the 360 degrees of turning a circle has; the overlap with the mask
-    moves by 0.005 at most (the spoon's goes up, 0.9826 to 0.9891). The plate section the
-    printer follows goes from 376 vertices to 228 and the STL from 74 to 53 KB; the
-    sticker's cut line has no corner of 80 degrees or more where it had at least 4. The
-    gates do not mind: 52 real gate calls each way gave the same verdict but for one (a
-    paddle that slivered and now passes), 3 slivers against 4. What smoothing cannot do:
-    roughness bigger than the blur (the deliberately rough synthetic discs, 2706 to 1897
-    degrees, still zig-zag), the flat chords the 64-point recipe cap leaves between
-    vertices (about 2.8 mm long with at most 0.12 mm of sag on the spoon's bowl), and the
-    scalloped bleed band outside the cut line, which is trimmed away. A rounded -0.00 in an
-    outline is now 0, because JSON cannot carry a negative zero and the outline would not
-    survive the wire unchanged. Tests: `tests/photo-outline.test.ts` (now 79), with the
-    turning-angle helpers in `tests/fixtures/outlineMasks.ts`; 21 of 21 smoothing mutants
-    caught.
-  - **Smoother still: the point cap (2026-11-02, Dan: "still not smooth enough").** What was
-    left after the smoothing above was faceting. The plate took at most 64 points, so the
-    spoon's rim was straight chords of 5 to 10 mm meeting at visible corners; a flat-shaded
-    view showed each as its own band, with a largest kink of 8.9 degrees. The limit was in the
-    daemon (`3 <= len(pts_raw) <= 64`) and in the Worker's allowlist; the SDK has none. On a
-    scratch copy of the daemon with it raised, the real gate and builder took 100, 160 and 250
-    points (print-ready at fillet 0.8, slivers at 1.0, exactly as at 55 points) and the
-    250-point plate rendered as a smooth curve. With Dan's approval the limit is now 256 in
-    both, one shared constant (`FORGE_MAX_PROFILE_POINTS`); `tests/forge/profile-points.test.ts`
-    builds 256 points on the real daemon and refuses 257, and the optimizer lane's own tests
-    still pass. More points help only if the contour under them is smoother than the tolerance:
-    below a 0.08 mm tolerance a disc's total turning rose from 360 to 608 degrees, the polygon
-    following ripple. So the outline is also low-pass filtered along its own length (Taubin
-    smoothing, option `curveMm`, default a tenth of the longer side kept between 3 and 8 mm; it
-    does not shrink, so the spoon's neck is still 1.8 mm wide), and the simplifier's tolerance
-    is now a target sag (`sagMm`, default 0.015 mm) with a default budget of 240 points. My
-    first version of the filter was unstable (the spoon's zig-zag went from 4 to 63): a Taubin
-    filter needs its pass-band edge near 0.1, so the loop is resampled at a twentieth of the
-    cut-off. Measured on the real spoon: 55 points became 145, the overlap with the mask 0.9826
-    before any smoothing, 0.9891 after the first round and 0.9904 now, the worst corner 49
-    degrees (it was 19 once the stairs went), zig-zag 0. Against the exact circle a disc's
-    vertices are 0.026 mm RMS away (0.109 mm for the pixel trace, four times closer, 0.069 mm at
-    worst). In the 50 against 250 point test, rim edges over 1.5 mm on the bowl fell from 18 to
-    2 and the longest from 5.1 mm to 2.1 mm. The unsmoothed fallback keeps its old budget of 60.
-    The sticker's cut path leaves a gentle corner as a vertex (an arc starting within 0.2 mm of
-    it would move the path by 0.012 mm at most), so it stays about as long as the outline, and
-    the sticker module takes up to 1200 points. The real spoon through the whole chain: 145
-    points, the Worker and the real daemon took it, the same four gate calls, a plate of
-    16.42 by 109.07 by 6.6 mm in 65 KB, one watertight body. A measurement of mine that I
-    corrected on the way: counting only kinks between edges over 0.8 mm made 250 points look
-    like 0.6 degrees; the largest turn at any vertex is still 6.9 degrees, on edges a quarter of
-    a millimetre long, so the gain is in the width of the flat bands (what the eye sees), not
-    in the angle. Tests: `tests/photo-outline.test.ts` (now 88); 24 mutants, 23 caught, and the
-    survivor (the loop that raises the tolerance when the budget binds) gives the same outlines
-    as plain pruning, 10 to 30% faster on rough shapes, so it stays as a speed step.
-  - **Outline mirror symmetry (2026-11-02, Dan: check for symmetry and, if there is some, split it down the
-    centre and make both sides the same).** `shared/outlineSymmetry.ts`, called by `scanOutline`
-    after the fillet ladder (request option `symmetry`: `auto` by default, `off`, or `mirror`) and
-    by the print step as a button (`preparePhotoAccessory(..., { symmetry: "mirror" })`).
-    *Detecting.* The best mirror axis is searched within 12 degrees of upright (coarse to fine,
-    ties go to the most upright, so a disc stays upright), scored by overlap with the mirror image
-    on a 0.15 mm raster. Overlap alone does not decide it: the real spoon (bowl off its handle) and
-    the real cup (a handle on one side) overlap their mirror images by 0.86 and 0.87. What tells
-    them apart is the shape of the mismatch. Open it with a disc the size of the fillet: for the
-    spoon every bit of it is a sliver along an edge and goes (lump share 0); for the cup the handle
-    survives (over 5% of the area). Symmetric means a lump share of at most 0.5%.
-    *Making it.* At each height the left and right edge are read and the symmetric half-width is
-    their average, so every row keeps its width exactly (area is kept to 0.5%, a thin handle off the
-    axis keeps its width) and the outline is centred on its centre of mass. An earlier version
-    averaged a blurred raster with its mirror image and lost the spoon's off-axis handle; that is
-    now only the fallback for an outline where some height has more than one piece (a star's side
-    arms), and it is refused (`parts_lost`) if it would drop a piece wider than 1 mm and over
-    1 mm^2. One half is simplified to the 0.015 mm sag within the point budget (240, half each
-    side) and reflected, so every vertex has an exact twin at (-x, z). The photo map carries the
-    straightening, centring and lowering, so the sticker artwork stays registered. Automatic mode
-    declines to move any edge more than 1.0 mm (`moved_too_far`); the button allows 15% of the
-    size, and an object that overlaps its mirror image by under 70% is never touched. Every refusal
-    comes back as the same outline object with a reason, `NOT_SYMMETRIC` is a warning only when the
-    caller asked for `mirror`, and the change log gets a `made_symmetric` entry with the largest
-    move. Running it twice is a no-op.
-    *Measured on the real spoon, through the real SAM call, Worker and daemon:* 138 points (145
-    before), no edge moved more than 0.63 mm, the axis straightened by 0.5 degrees, fidelity 0.997
-    to 0.924. The same four gate calls (fillet 1.0 slivers, two size nudges sliver, 0.8 passes),
-    one watertight body, 65 KB. The plate STL mirrored about its own centre plane overlaps itself
-    by 0.909 before and 1.0000 after (volume 4145 and 4144 mm^3, checked with the real boolean
-    engine, not the outline). The cost was the one a user would expect: the sticker's cut line
-    follows the symmetric outline, and the photographed bowl leans a little, so on the bowl the
-    line stood up to 0.6 mm off the spoon's edge and a fringe of background showed on the sticker.
-    *The per-row slide* (2026-11-03) closes that. Each row of the symmetric outline has the width
-    the object has in the photo and is only re-centred, so the object sits sideways of the outline
-    by an amount that depends on the row, `s(z)`. The outline now carries that as `rowShift`, a
-    table of at most 256 `[z, shift]` pairs (the rows read every 0.05 mm, simplified to 0.01 mm,
-    rounded to a micron; only when the outline was made row by row, not by the blend), and the
-    sticker artwork at plate point (x, z) is read from the photo at `photoToPlate`^-1 of
-    (x + s(z), z): a slide, not a stretch, so nothing is distorted. `withFlipped` and `withScaled`
-    carry it (a half turn maps (z, s) to (zMax - z, -s), a resize by f to (fz, fs)); the strict
-    parser takes it and rejects an outline whose table is there and wrong; `photoStickerItem` turns
-    it into sticker rows (`sampler.rowShiftMm`, Y = z1 - z); `kip-print-stickers.js` applies it
-    before its photo map and quietly ignores a table it cannot trust. Measured on the real spoon,
-    with a photo drawn from its mask: the share of the sticker that is table instead of spoon
-    falls from 3.45% to 0.37%, about ninefold. What is left is the resolution of a 288 by 512
-    photo (the cut line is within half a photo pixel, 0.14 mm, of a hard-edged mask along the
-    handle), which no slide can remove. Where the symmetric outline came from the blend (a star's
-    arms, a notch) there is no row table and so no slide.
-    *Limits found.* The legalizer's own low-pass filter can leave a hairline notch row (0.19 mm
-    wide) at a sharp concave corner, and a shape with a real crevice (a step beside a rounded head)
-    has rows of two pieces; both send the shape to the blend, which in `mirror` mode may refuse as
-    `parts_lost`. Bridging hairline gaps would help the first and was left out. The legalizer keeps
-    one connected piece, so separate parts never reach this module.
-    *The daemon's own L4 symmetry (above) also runs on a photo outline*, because it runs on every
-    `profile2d` that reaches the gate. Measured with its own function: an outline that is exactly
-    symmetric (what this module produces, also after the fit loop's scale and flip) is left alone,
-    and `tests/forge/profile-points.test.ts` now pins that on the real daemon. An outline that is
-    only nearly symmetric is rewritten there: the paddle with `symmetry: "off"` (overlap 0.997)
-    went from 112 points to 63, and the plate then no longer matches the sticker's cut line. This
-    module's automatic mode makes most such outlines exact first, so it can only happen with
-    `symmetry: "off"`, or when this module declines an object the daemon accepts (a move over
-    1.0 mm on a large object). Fixed with Dan's approval (2026-11-02): the daemon's
-    `SYMMETRY_MAX_POINTS` was 64, the old profile2d contract, which squeezed a 112-point outline to
-    63 and left its `iou_after` at 0.997; it is now 256, and the same outline comes back with 114
-    points and 1.0 (`tests/forge/profile-points.test.ts`, on the real daemon). The notes are on the
-    job record (`legalizer.symmetry`) and the Worker's `scrubJobOutput` used to drop them; it now
-    passes that one note and nothing else of the daemon's legalizer notes, four fields with fixed
-    types (`action`, `iou_before`, `iou_after`, `points`; `legalizer` is `null` when there is none).
-    `forgeRouteGate` reads it into the verdict (`daemonSymmetry`), and `preparePhotoAccessory`
-    reports a rewrite (`mirrored_left_half` or `mirrored_right_half` on the job that made the plate)
-    as `gateRewrite` and the outline warning `GATE_REWROTE_OUTLINE`: the plate then differs from
-    the outline and the sticker, more the lower `iouBefore` (the outline's own overlap with its
-    mirror image) was. Only the final job counts. A rewrite still
-    happens for a near-symmetric outline when symmetry is off or declined here; it is now exact,
-    full-resolution and reported, not squeezed and silent. Not done: making the plate and the sticker
-    agree in that case (the daemon does not send back the points it built from).
-    Tests: `tests/outline-symmetry.test.ts` (64, nine of them for the slide): detection table, exact twins, an independent
-    mirror-overlap check, per-row averaging, the off-axis thin part, the real spoon and cup, the
-    centre of mass carried through the photo map, fidelity against a separately computed overlap,
-    hand-drawn outlines for the cases the legalizer cannot produce (a lump, a long spike), and the
-    scan and button wiring. Mutation testing: 32 mutants, 21 caught the first time; the 11
-    survivors were nine test gaps (centring, fidelity, the 15% cap, `parts_lost`, mirror versus
-    auto in the scan and the button), now closed and all killed, and two dead lines (a reversal of
-    the half that never ran, a negative-zero guard that cannot occur), removed after a throwing
-    probe showed neither fires on any test or variant. Because auto is now the default, the
-    photo-fit tests that compare against the raw trace are pinned to `symmetry: "off"`. The slide:
-    30 mutants across the table's frame, flip and resize, the sticker conversion, the parser and the
-    renderer, all caught (one needed a new test, for rows that repeat a height). The strongest
-    check is independent of the module: each vertex of the symmetric outline, slid and carried
-    back through the photo, must land on the original traced outline (within 0.08 mm on the
-    spoon, a leaning bumpy paddle and a bumpy paddle; a one-row tolerance on a square lump, whose
-    vertical steps no single slide can satisfy within one 0.05 mm row).
-  - **The print panel (2026-11-03, uncommitted).** The screen over `preparePhotoAccessory`:
-    `parts/kip/viewer/kip-photo-print.js` (buttons and pictures only) over
-    `shared/photoPrintFlow.ts` (every decision, bundled by `scripts/build-kip.ts` into
-    `public/kip/kip-photo-print-core.js`, 36 KB). It lives in the Kip viewer, in the existing
-    Photo-to-Accessory modal's neighbourhood and for the hand slot only (`profile2d` is
-    hand-only), and has its own full-aspect photo picker, because that modal crops its photo
-    to a 256 px square and would cut a spoon in half. Steps: what is it (a word, at most 60
-    characters) and a photo (shrunk to 512 px for the helper, 1024 px kept in memory for the
-    sticker) and a size of 30 to 90 mm; find the shape (one request, to `/api/scan` only); the
-    cut line drawn on the photo with flip, bigger and smaller and, when the scan did not
-    already do it, "make both sides the same" (`previewChoices` applies the choices in the
-    print step's order and a test pins that the first gate call gets exactly the previewed
-    points); the grown-up question (the app's parent gate, proof kept in the closure); the fit;
-    then the plate (.stl) and the sticker sheet (.pdf, .png, .svg, .dxf) as downloads.
-    Every message is one calm sentence written in the flow module, never a server's words or a
-    raw code (`hintsFor` turns the outline's warnings into sentences and says nothing for a code
-    it does not know). The screen copy says the photo goes to the online helper and that our
-    server does not keep it, which is the Worker's behaviour only (decision 0007 says not to
-    promise more until the provider's terms are in); question 26 stays open for a public release.
-    *Two findings, both fixed (2026-11-03).* (1) The Worker's own limiter refused the fourth gate call
-    in a minute with `429` and no `retry-after`, and a refused call counts as a hit, so asking again
-    at 20 s only extended the lock-out. A fit that needs four calls (the real spoon does) cannot
-    finish in one go under a limit of three a minute, so the flow waits out a refusal, shows the
-    countdown, and asks the same call again, and renews an expired grown-up check through the screen
-    in the middle of the fit. The Worker now names the wait: `forgeRateLimitWait` returns the
-    seconds until a call would be let in (the hit `limit` places from the end of the window is a
-    window old, plus a second's rounding up; the address's budget is counted too and the longer wait
-    wins) and the 429 carries it as `retry-after`; a test shows that a call at the named time is
-    let in and one a second sooner is not, over 500 random call patterns. Without a time (an older
-    Worker, or any other 429) the flow waits a full window and a second, 61 s. A spoon through the
-    panel therefore waits a little under a minute at the fourth call and no longer. (2) The sticker
-    fringe: see "The per-row slide" under the symmetry note above. In the real bench page the
-    bowl's arc of table is gone; what is left on a 2 mm handle is the photo's own resolution.
-    *In the Kip page.* The Photo modal's button row has a "Print it" button
-    (`btn-print-photo`, in `parts/kip/viewer/kip-bench.js`, where the page's script lives since
-    Workshop stage 4a). The bench loads the panel with a dynamic `import()` on the first click, not a
-    static import, so the bench loads the same with or without the generated bundle; the panel
-    gets the bench root, is published as `kipPhotoPrint`, and is disposed by the bench's teardown
-    (a test pins each of these). `scripts/build-kip.ts` copies the panel and bundles the flow
-    module, and `tests/photo-print-flow.test.ts` rebuilds the bundle and compares it with the
-    committed `public/kip/kip-photo-print-core.js`, so a stale copy fails a test. Seen only in
-    the real page: the bench has a bare `canvas { width: 100%; height: 100% }` rule for its 3D
-    view, which stretched the photo canvas to the card's width and pushed the buttons off screen;
-    the panel now sets its canvas size itself and the e2e checks the size and that the main
-    buttons are on screen, inside the bench, at the cut-line step and at the done step.
-    Tests: `tests/photo-print-flow.test.ts` (110: request, scan against scripted replies and the
-    real `/api/scan` with the captured spoon, the gate client, the print step through the real
-    Worker and a misbehaving backend, the previews, the page wiring, the panel's own promises
-    read from its source); 58 mutants on the flow module, 57 caught, the survivor
-    equivalent (a rethrow into the same `try`); the wiring tests read text and were not
-    mutated, because the files they read belong to another session's live suites.
-    `scripts/e2e-kip-photo-print.mjs` (52 checks, `npm
-    run e2e:kip-photo-print`): headless Chrome drives the panel against the REAL Worker routes
-    (parent gate, forge routes, allowlist, scrub, limiter) with only the model provider and the
-    daemon stood in, using the real spoon's mask drawn as a photo; it checks that nothing is sent
-    before "Find the shape", the one scan request, the cut line on the photo, the gate with a
-    wrong answer, the proof on every forge request, no photo in the forge request, the plate
-    link byte for byte, the sticker PNG, no cookie or storage write, a daemon that is down as a
-    calm sentence, Escape, and `dispose()`; and then in the real Kip bench page: the button, the
-    panel inside the bench root, the whole way to the done step, and disposing the whole bench
-    with the panel open leaves nothing of it in the page. Of its 52 checks one is the fringe on
-    the sticker picture the child gets, calibrated in-process against the same spoon with and
-    without the slide. The other Kip suites pass with the new button in the page (menu 41,
-    workshop 43, print 29, bench lifecycle 32). Not yet done: a real print-and-stick, and the
-    budget question (30 f): the exact retry time makes a four-call fit workable, it is not a
-    bigger budget.
-  - C4 orientation: long axis to z, handle end down, with a flip button. The kid
-    decides which end is the handle; the model is not asked.
-- **Relief ("puffy").** The builder's crest is one level. Repeating the inward
-  offset for 2 to 4 levels gives a stepped dome. Each level sits inside the one
-  below it, so it prints support-free by construction, and it invents no shape.
-  It needs one allowlisted feature, `relief`, with bounded levels and height (a
-  Recipe v1 change; the optimizer lane agrees it first, question 19).
-- **Colour on a one-colour printer.** The legalized polygon also becomes the cut
-  path of a photo sticker, as in the craft cutout for photo accessories
-  ([kip-print-workflow-spec.md](kip-print-workflow-spec.md) 4.3 and 8.1 C). The
-  plate is a custom-outline version of the `craft_grip_card_P` blank that spec
-  lists as not yet authored. The sticker goes on the face that lay on the bed,
-  which is flat; over the crest or a relief it would wrinkle (that spec found the
-  same with a 0.55 mm ridge). The sticker is built on the device from the local
-  photo and the returned contour, so no picture comes back from the server.
-  Built in `shared/outlineSticker.ts` (`photoStickerItem`), which returns the
-  item shape the sticker sheet module plans with.
-  - **The cut path is the polygon with the builder's rounding applied, not the raw
-    polygon.** Simplifying the traced outline leaves sharp convex corners, and the
-    builder's shrink-then-grow takes their tips off. Measured on 14 outlines
-    against the built plate (a section of the real part, 0.1 mm raster): with the
-    raw polygon the sticker overhung the plate by up to 0.28 mm on regular shapes
-    and 0.85 mm on rough ones; with the rounded path, 0.20 and 0.54 mm. Concave
-    corners are not rounded (the builder leaves them), so the path keeps every
-    concave vertex of the recipe exactly. Where an edge is too short for the full
-    radius that corner stays a little sharp, which is the 0.54 mm.
-  - **The artwork (built 2026-11-02).** `parts/kip/viewer/kip-print-stickers.js` plans
-    a `{kind: 'photo_accessory', item}` decal as one sticker and one spare
-    (`spare: false` for one), and draws it with a `photo_outline` sampler: each
-    sticker pixel goes through the item's `stickerToPhoto` map to a place in the photo,
-    and the colour is read from `renderedSources['photo:<id>']`, which the device fills
-    from its own picture at any resolution (pixel centres are matched, so half size and
-    double size draw the same sticker). The item is rebuilt field by field on the way in
-    and an unusable one (no cut path, no invertible map, a side over 120 mm) is skipped
-    without an error; the id and label are made safe for the PDF. The plan carries
-    geometry only and no pixels, as that module's privacy rules require. Where the cut
-    path touches the photo's edge the edge colour repeats, never white. Checked with a
-    photo whose object is red and everything else blue: through the real outline and
-    the real cup mask, 98% or more of the sticker is the object, and a mirrored,
-    upside-down or turned map drops that below 80% (a canary test). A mask-sized source
-    with no photo size also works. Tests: `tests/photo-sticker-art.test.ts` (38 tests,
-    30 of 30 mutants caught). Written to `parts/kip/viewer/` and copied to `public/kip/`
-    as that one file (not a full `build:kip`, which would take other sessions'
-    half-finished viewer files with it). Nothing calls it yet. One thing to watch on a
-    real print: the cut path is the simplified, rounded outline, so a hair of
-    background colour can show at the edge (under 2% of the sticker on the test shapes).
-  - **The plate is the outline plus a neck.** `handheld_prop` unions a 6.4 mm neck
-    (2.5 mm below the polygon's bottom, rising to 35% of its height), so a thin
-    handle shows bare plate beside the sticker (up to 52 mm2 on a star). The
-    sticker never has plate missing behind it.
-  - **Which face, which way round.** `-Y` is the front in the part frame and the
-    bed face is `y = -2.5`, so the sticker sits on the front face, seen from the
-    front: x right, z up, nothing mirrored.
-  - **The photo map.** `legalizeOutline` returns `photoToPlate`, an exact affine
-    from a mask pixel to plate millimetres. The photo is not stored, so without it
-    the device could not place the artwork. `withFlipped` and `withScaled` carry it
-    through the kid's flip and resize, and the retry loop's nudges and rescales do
-    too. Tests check it against the mask itself: the polygon carried back through
-    the map overlaps the mask by 0.98 to 0.996 on the eight cases I printed (tilted,
-    upside down, on its side, flipped, grown), the tests require above 0.95 on all
-    nine, and a map that was not updated by a flip is caught.
-
-**Routes B and C: round and chunky.**
-
-- **B.** The width profile in F2's first bullet gives `w(z)`. One silhouette
-  cannot tell a drawing of a cup from a cup, so the kid answers one question,
-  "flat like a drawing, or round like a cup?" (A1's vision call could pre-select
-  it as a second enumerated field; that changes A1's contract, so propose it,
-  do not assume it).
-- **C.** The front photo gives `w(z)` and the x centre. The side photo gives
-  `d(z)` and the y centre. Both are scaled to the same object height. Each of 6
-  to 12 slices becomes `{z, w, d, r, x, y}`, fields the loft already has, with
-  `r` a fraction of the smaller of `w` and `d`. The compiler then runs L1 to L3
-  as for any recipe. Each slice is a rounded rectangle, so concavities are lost
-  (a mug handle, a horn, a spoon bowl). Label it a chunky stand-in, never a scan.
-- **Question 24 is the same fitter** fed with generated front and side images.
-  Real photos need no image-generation access, so build it on photos first and
-  let question 24 reuse it.
-- **SAM 3D slices** (the optional depth source named under "Runtime workflow")
-  are a third source of `d(z)` in the same slice format. Compare all three on one
-  eval. A model's mesh cannot become a Recipe and never prints; only slice
-  numbers cross over.
-- **Scale comes from the slot.** The accessory is fitted to the slot's envelope
-  (the crown pad is 23.8 by 11.6 mm), not to the photo's real size, so no
-  reference tile is needed. The 1x1 TU tile stays with stretch goal 6, where the
-  real size matters.
-
-**Privacy and beta.**
-
-- Object photos use `POST /api/scan` and SAM as today. That route has no parent
-  gate in the Worker code; the gate and consent apply to the opt-in selfie cloud,
-  and printing stays behind the grown-up gate. No photo is stored; only the mask
-  summary (contour, profile) is kept. Approved for the beta as it is (Dan,
-  2026-11-02). Whether a public release needs more is question 26.
-- No on-device masking spike. The local colour cut-out in `kip-forge-sdk.js`
-  (flood fill from the corners; plain backgrounds only) stays as the offline
-  fallback. Revisit only if the release review says photos must not leave the
-  device.
-
-**Order of work** (each step tests alone):
-
-1. **Done (2026-11-02, uncommitted):** `shared/photoOutline.ts`
-   (`legalizeOutline`: mask in, `profile2d` points and a change log out; plus
-   `flipOutline` and `scaleOutline`, which work on the polygon because the photo
-   and its mask are gone after the SAM call) and `tests/photo-outline.test.ts`
-   with masks in `tests/fixtures/outlineMasks.ts`. The fixtures in
-   `tests/fixtures/scan-targets.json` hold nouns, not masks, so these masks are
-   new: rasterised shapes, 40 random blobs and 10 rough discs. It also returns
-   `photoToPlate`, the exact photo-pixel-to-plate map the sticker needs (a gap in
-   the first contract: the photo is gone after the SAM call). Still to do: a few
-   real photos, and the Worker wiring (the mask is only in memory there).
-2. **Built, not yet on real photos (2026-11-02, uncommitted):** the fit loop,
-   `shared/outlineFit.ts` with `tests/outline-fit.test.ts` (33 tests, 10 of 10
-   mutants caught), and its real-gate run above. Its gate over the Worker's
-   routes is built too: `shared/outlineGate.ts` with `tests/outline-gate.test.ts`
-   (53 tests, 22 of 22 mutants caught), run against the real handlers and daemon
-   (note under Route A). The Worker now returns the outline with a scan, which is the
-   decision in question 31 (a): `shared/outlineScan.ts` and the opt-in on `/api/scan`
-   (`tests/outline-scan.test.ts` and `tests/scan-outline-worker.test.ts`, 85 tests, 37
-   of 37 mutants caught). The device's print step is built too, as one function
-   (`shared/photoAccessory.ts`, the print-step note under Route A). The screen that
-   calls it is built too and is in the Kip page's Photo modal (2026-11-03, see "The print
-   panel" under Route A). Not built: a budget for the fit (question 30 f).
-   Still to do:
-   Route A on the flat objects among the 10 F2 photos.
-3. **Built for the path and the photo map (2026-11-02, uncommitted):**
-   `shared/outlineSticker.ts` with `tests/outline-sticker.test.ts` (28 tests, 8
-   of 8 mutants caught): the cut path, as the item shape the sticker sheet module
-   plans with, and the map from the photo onto it. The artwork is built too (see the
-   artwork note under "Colour on a one-colour printer"): the sheet module has a
-   `photo_accessory` decal and a `photo_outline` sampler, and the print step builds the
-   decal. The screen that hands over the device's photo is built (the print panel). Still to do: sticking a
-   real sticker on a printed plate.
-4. The relief spike (question 28).
-5. Route B profile extraction.
-6. Route C fitter, after question 29.
-
-**Acceptance (targets, to be confirmed by the first run):**
-
-- Route A: >= 70% of the flat photos verified with no model repair (the F2
-  figure), and 100% usable via the existing digital-only fallback.
-- C1 to C4 turn every synthetic mask into a polygon that compiles, and log every
-  change they make. First run, met: 33 of 33 pass the production gate at the first
-  try (see the measured note under Route A).
-- Loop: every legalized outline ends on a passing part inside the call budget,
-  or says why it did not. First run, met: 69 of 70, the other refused as too thin
-  before any gate call (see the measured note under Route A).
-- Sticker path: the recipe outline with the builder's rounding applied, not the
-  raw polygon (the raw one overhangs the built plate by up to 0.85 mm). Unit
-  tests: every concave vertex of the recipe is kept exactly, the SVG and DXF the
-  sheet module writes hold the path unchanged, and the path lies on the object in
-  the mask, also after a flip or resize. Against the real built plate it
-  overhangs by at most 0.20 mm on regular shapes and 0.54 mm on rough outlines
-  (measured; target to confirm on a real print).
-- Route C: report the overlap (IoU) between the built loft and each photo's mask,
-  per object. No pass mark until the first run says what is reachable.
-
-**Not doing in F2b:** a model-drawn outline; printing the photo itself (the print
-is the shape plus a sticker); concave 3D reconstruction (scan-to-3d.md Routes A
-and E stay experiments).
-
-## F3: Repair loop
-
-- **Inputs:** recipe plus slim report (`blocking_failures`, `small_part`,
-  `brand_errors`, `assembly`).
-- **Order:** legalizers first (free, instant), then model repair.
-- **Feedback format to the model:** per failure, `{gate, measured, limit,
-  hint}`. No raw logs. Example hint: "P1: slice 3 grows 6.1 mm per side over
-  dz 5.0; limit 3.9. Reduce growth or add slices."
-- **What the daemon returns today (smoke run, 2026-11-02, 12 jobs):**
-  - A marginal small-parts result comes back `ok: false`,
-    `design_status: "needs_reproportion"` and `blocking_failures: []`. The only
-    signal is `small_part` (`status`, `min_enclosing_diameter_mm`,
-    `margin_pct`), so repair feedback must be built from `small_part` and
-    `design_status` as well as `blocking_failures`.
-  - A recipe that fails to compile (an unknown slot, for example) gets HTTP 422
-    `invalid payload` with no reason, by design. The repair loop cannot learn
-    from it unless the outer layer checks the same bounds first or the daemon
-    gains a safe detail channel (open question 19).
-  - The L1 clamp changes slices silently: an over-flared hat (a 40 mm slice
-    2 mm above a 24 mm base) came back `print_ready`, and by the clamp rule that
-    slice is cut to about 27 mm, but the response lists nothing that moved.
-    Legalizers should report each change so the eval can count them.
-- **Stops:** passes, 4 calls used, or the same gate fails twice on the same
-  recipe (no progress).
-- **Deliverable beyond the loop:** `npm run forge:repair -- my_part.py` for
-  dev use, replacing the manual paste-fix cycle.
-- **Metric:** repair success rate per gate id. This tells us which legalizer
-  to write next.
-
-## F4: Fits this one
-
-- **Phase split, because the existing builders only cover part of this:**
-  1. *Slot add-ons onto a chosen host.* `validate_and_export()` currently
-     attaches to a fixed reference parent per slot. Add a `host` argument
-     (default unchanged) so a crown piece is checked against the head the kid
-     has equipped, and a vehicle piece against that vehicle. Cheap, uses the
-     existing assembly gate.
-  2. *Cavity hats that seat over head and wig* (like `hat_ballcap`). The SDK
-     has no builder for these. Needs a `hat_shell(body, host)` that subtracts
-     the host cavity. Larger change, later.
-- **Host envelopes as data.** Export the measured head, wig-vault and
-  hat-cavity numbers (today constants in `toyventor_parts.py`) to a generated
-  `public/kip/host-envelopes.json` through `kip_partspec.py`. The prompt gets
-  these numbers as text. The 0.4 to 0.45 mm clearance rule is applied by a
-  legalizer, not left to the model.
-- **Guardrail:** the head x wig x hat x plate seating matrix, extended to
-  custom parts.
-- **Coordination:** other sessions and agents edit `parts/partspec/` and
-  `catalog.json`. This spec adds new files and one additive export only. Do
-  not touch geometry constants; regenerate into a scratch directory.
-
-## F5: Build planner
-
-- **Retrieval, not a vector database.** The compact catalog is about 24 KB, so
-  it goes in the prompt whole (`ai_catalog.txt`), plus the 3 to 5 nearest
-  verified `build_examples` builds chosen by tag and stat overlap.
-- **Output:** JSON `{say, build:[{id, part, pose:{x,y,z,rot}}]}` in the
-  same shape as `build_examples.json`, with part ids constrained to the
-  catalog by enum.
-- **Validate:** run the assembly validation (same Gatekeeper service) on the
-  proposed build. Invalid builds go through the repair loop with the validator's
-  error text. The 38 existing examples, including the `INVALID_*` ones, are
-  the regression suite.
-- **Prefix-keeping repair** (longest-valid-prefix rollback): validate the
-  proposed build part by part in order, keep the longest valid prefix, and ask
-  the model only to continue from there. Cheaper and more stable than
-  regenerating the whole build, and it applies to A4 edits too.
-- **Out of scope for the model:** mechanical truth such as steering or
-  kinematics. Those stay in the deterministic vehicle checks. The planner picks
-  from combinations that already pass.
-- **Output also feeds** kit-card step text and kid-facing "why this works"
-  lines (short, kid-safety prefix applied).
-- **Acceptance (targets):** 30 goal prompts; 100% of returned builds pass
-  assembly validation (by construction, since invalid ones are rejected), and
-  >= 70% judged "matches the goal" by a human.
-
-## F6: Finish it (draft, added 2026-11-02)
-
-**What it is.** A child or parent takes a build made of snap-together parts and
-presses "Finish". The result is one smooth, polished object: no studs, sockets
-or seams, rounded edges, one continuous surface. It exists twice from one
-source: a polished model in the game and a polished single-piece STL to print.
-The brick build stays the source and is never replaced, so Finish can be undone.
-
-**Assumptions from Dan's request, not yet confirmed.** "Brick-based" means a
-build from the Snap line's stud-and-socket parts. "Polished" means smooth
-surfaces merged into one solid, finished enough to look like a product rather
-than a model kit. Open questions 20 to 23 are the forks.
-
-**Why it fits.** Same rule as the rest of this spec: the model chooses, code
-builds, the gates decide. The model's part is small and optional (a finish style
-and which parts stay crisp, from closed lists), and three presets (soft,
-rounded, blobby) work without it. The geometry is code, and the model never
-edits a mesh. The catalog already has smooth cover parts (`skin_*`, game-only)
-and `optimize_assets.py` already makes the quantized, smooth-normal GLB and the
-finish-safe print STL, so the game and print exports are not new.
-
-**Pipeline.**
-1. Source: the assembled build (part ids, poses, colours) from the toy contract.
-2. Strip: remove every stud, socket and tube, using the connector cells in the
-   manifest, and close the holes they leave.
-3. Merge: union the parts into one body, bridging small gaps between touching
-   parts so the result is one connected solid.
-4. Smooth: round the surface by a chosen amount. Candidate methods are a voxel
-   blur then marching cubes, Manifold's own smoothing, or a signed-distance
-   smooth union. A spike on three real builds picks one. Features finer than
-   about twice the smoothing radius soften or vanish, and each style says so.
-5. Keep list: parts marked crisp (a face plate, a wheel hub) are held out of the
-   smoothing and put back.
-6. Gates: the existing set (watertight, single body, on bed, fits bed, overhang,
-   ledges, bridge, small-parts screen) plus three new ones: no connector remains
-   (unless wearable, below), volume within a stated percentage of the source, and
-   bounding box within a stated distance of the source.
-7. Two exports from the one solid: a game mesh (decimated, smooth normals, colour
-   zones) and a print STL oriented by the existing preprint check.
-
-**Two modes (open question 20).** Display piece: free-standing, no connectors,
-optional base. Wearable: keeps the 2x1 or 2x2 socket footprint underneath so it
-still snaps onto a head or vehicle, like the catalog's add-ons.
-
-**Fallback.** If a style fails the gates, try the next smoother or crisper
-preset. If all fail, show the brick build unchanged with a short reason and
-offer the ordinary kit-card print.
-
-**Acceptance (targets; the spike sets the real numbers).** On 10 real builds: at
-least 8 produce a polished solid that passes every gate on the first preset; a
-person rates at least 7 of the 10 four or higher for "looks finished"; the game
-and print meshes match within the stated bounding-box distance.
-
-**Not in the first version, unless the open questions say otherwise:** moving
-parts, multi-material printing, and any claim that a finished print is safe for
-children under 3.
-
-## Assist features (prompt workflows, Worker-only)
-
-Shared rule: **the model supplies words or a choice among enumerated options;
-code supplies every fact and every action.** Each feature has a no-model
-fallback, so a model failure degrades the feature and never breaks the screen.
-
-Shared wrapper (`worker/assist.ts`): one `callMuse()` helper reusing the
-`worker/muse.ts` pattern (Responses API, structured JSON output, low reasoning
-effort, a per-call timeout, the kid-safety prefix, a brand-term filter on
-returned text, the same per-IP limits). On a timeout, malformed JSON or a filter
-hit it returns `null` and the caller uses its fallback. A1, A2, A4 and A6 run in
-the Worker alone, so they need no validator service.
-
-### A1: Scan assist
-
-- **Problem today:** the client sends the noun SAM searches for (at most 60
-  characters). A wrong noun means zero matches (`worker/meta.ts` notes "retry
-  with a shorter noun").
-- **Flow:** one Spark vision call returns structured JSON:
-  `{ nouns: string[] }`. If the client supplied a noun, SAM starts immediately
-  and the inspection runs in parallel; otherwise inspect first, then SAM with
-  `nouns[0]`. On zero SAM matches, retry the next noun, then a shorter one. All
-  retries share one overall time budget, set after measuring.
-- **Contract:** `prompt` becomes an optional hint on `POST /api/scan`; the
-  response gains `inspect: { nouns, checked }`. `toyventor.toy/1` and
-  the toy contract are unchanged.
-- **Call failed (`checked: false`):** the outline works as today. Skins and
-  photo-derived accessories stay off for that scan.
-- **Acceptance (targets):** on 20 staged photos, SAM first-try match rate at
-  least equal to the client-noun baseline, with fewer retries.
-- **First task:** a one-hour spike on 10 photos to confirm hosted Spark reads
-  images through the Responses API. Everything else in A1 waits on this.
-
-### A2: Build coach
-
-- **Trigger:** at least one check fails, or the kid taps "why?".
-- **Input:** `{checks: CheckResult[], stats, placements, ageBand}`. Output:
-  `{say, highlight?: {partId}}`.
-- **Code computes the fix, the model words it.** Candidate fixes come from
-  `findPlacement` and `snapMm` (on-grid) and simple rotate, move or remove rules
-  (fits-toy, support-free, fits-bed). The fix chip applies the code's action,
-  never the model's.
-- **Output filter:** at most 20 words (proposal), only part names present in the
-  build, no blame wording, no brand terms. Any miss falls back to the template.
-- **Template first:** a four-row table (one line per check id) ships before any
-  model call and is the permanent fallback.
-- **Scope:** the TypeScript builder checks first. Pro-line assembly errors from
-  the Python gate join later through the Gatekeeper, with the same contract.
-- **Acceptance (targets):** 20 scripted failing builds covering all four check
-  ids; 100% get a template line; at least 95% of model lines pass the output
-  filter; a human reviewer rates mean helpfulness at least 4 of 5.
-
-### A4: Speech or typed edits
-
-- **Same planner as F5** (`worker/planner.ts`, `mode: "edit"`). Input: the
-  utterance (typed, or a transcript from the planned Muse Voice Transcribe;
-  voice is off by default and audio is deleted, per the Town spec), the current
-  build, and the catalog enum.
-- **Output:** `{ops: [{op: "add" | "remove" | "swap" | "boost", ...}], say}`.
-  `boost` names a stat from the catalog's stat list; code picks a part with a
-  higher stat value (`statValueForPart`), places it with `findPlacement`, and
-  validates with `canPlace` and `runChecks`.
-- **Preview, then apply:** the kid sees the change and taps to confirm; the
-  builder's undo stays. Illegal ops are dropped; when everything is dropped, A2
-  explains why.
-- **Acceptance (targets):** 40 adult-written utterances imitating kid phrasing;
-  at least 85% parse to the intended ops; 100% of applied results legal by
-  construction. Limit: this is not real kid speech. Real-child speech is tested
-  only in consented, supervised playtests.
-
-### A5: Kit-card step text
-
-- **Deterministic core:** steps come from the build's attach edges in a valid
-  physical order, as `[{step, part, attachTo, connector}]`, rendered with one
-  template line per step. Card layouts and the fixed print-page warnings are
-  never model-written.
-- **Optional model pass:** an age-band rewrite under the A2 output filter. The
-  model cannot reorder steps or rename parts.
-- **Acceptance (targets):** every step names a real part and connector; text
-  fits its card slot; 0 changes to fixed warning text.
-
-### A6: Failed-print triage
-
-- **Problem:** a print fails (stringing, lifting, elephant foot, layer shift,
-  under-extrusion, spaghetti, a joint too tight or too loose) and the grown-up
-  does not know which setting to change. Live monitors (Obico, some printers)
-  already watch a camera during the print; this covers the after-the-fact case
-  on printers with no camera.
-- **Flow:** the grown-up uploads a photo of the failed print, optionally with the
-  part id and slicer. One Spark vision call returns
-  `{ cause: <enum id>, confidence: "high" | "low", also?: <enum id> }`. Code
-  then shows the hand-written fix card for that cause and slicer. Fix text is
-  authored once per cause and slicer, like the hint ladders. The model never
-  writes a setting, a number or a G-code line.
-- **Cause list:** a closed list of about 10 ids, written by hand and checked
-  against coupons printed wrong on purpose before it ships. `unsure` is a valid
-  answer and shows a generic checklist.
-- **Where:** Worker only (`worker/assist.ts`), in the grown-up area behind the
-  PIN gate, never offered to kids. The photo is processed and not stored.
-- **Fallback:** a manual symptom picker over the same cause list, no model.
-- **Dependency:** the A1 vision spike (does hosted Spark read images through
-  the Responses API). Open question 13 covers the people-in-frame screen.
-- **Acceptance (targets):** 30 photos, about 3 per cause, of coupons printed
-  wrong on purpose and labelled by whoever made the fault. At least 80%
-  top-1 on clear cases; at most 10% confident wrong answers, the rest `unsure`
-  or `low`; 100% of answers land on a fix card.
-- **Custom model:** none. A closed-set image classifier is the only fine-tune
-  candidate here, and only if the eval shows Spark missing the target and
-  hundreds of consented, labelled photos exist.
+- Kid-safety prefix reused; recipe text fields re-checked after return.
+- Rate limit tighter than Create mode (one job is up to 4 model calls):
+  3 jobs/min/IP plus a per-device daily cap.
+- Model-written Python never runs server-side. Production accepts JSON only.
+- Photos: segmentation sees the image; recipe calls receive numbers only.
+  No photo stored; no photo in the forge request.
+- Logging: recipe, per-gate outcome, attempt count, latency. Kid prompts are
+  not stored (eval set excepted).
 
 ## Level hint ladders (hand-authored)
 
-Three tiers per level, written by hand at authoring time and reviewed before
-the level ships. No model writes a hint.
+Three tiers per level (nudge, clue, show) from a closed vocabulary, written
+and reviewed by humans, stored as an optional `hints` field. No live
+generation. The kid gets the stored tier.
 
-- **Position:** in the [play-design-spec.md](play-design-spec.md) pipeline,
-  alongside its review step.
-- **Tiers:** nudge, clue, show, drawn from the closed vocabulary. All three
-  are written by hand and reviewed by the same humans who approve the level.
-- **Storage:** an optional `hints` field proposed for `toyventor.level/2`;
-  coordinate with the play-design spec.
-- **No live generation:** hints are authored, not generated on the fly. The
-  kid gets the tier the level stores.
+## Print optimisation (stays deterministic)
 
-## Print optimisation (what stays deterministic)
-
-Printability is already decided by code, and a model neither beats nor replaces
-those checks. Sources: [kip-print-workflow-spec.md](kip-print-workflow-spec.md)
-sections 5 to 7, `parts/partspec/preprint_check.py`,
-`parts/partspec/print_profiles/fdm_pla_0.4.json` and the limits in
-`parts/partspec/interfaces.json`.
-
-| Job | Model? | Basis |
-| --- | --- | --- |
-| Orientation, supports, bridges, brim | No | `preprint_check.py` gates overhang, floating islands, bridge span and ledges at the catalog bar (1.0 mm² steep overhang, 20 mm bridge). Orientation is a search over a few poses. The open work is browser parity with the gate and exporting each part's brim width (print workflow spec 7.1). |
-| Plate packing, kit-card and sprue layout, colour consolidation | No | Packing and clustering algorithms (print workflow spec 5 and 6). |
-| Printable generated parts | Already here | The L1 slope clamp is the 45° rule and the F3 loop reads gate failures. The eval already counts failures per gate id; support-free yield is read from those counts. The optimizer daemon (see "Already in the repo") already runs `validate_and_export`, which re-runs the print gate on the optimized mesh, and returns a `slicer_recipe`; it calls no model. |
-| Existing Kip parts that fail the overhang check (9 of 30 per print workflow spec 7.3) | Not a product feature | CAD work. A model could propose `.scad` edits with the gate as accept or reject, but a parameter sweep gets most of that value, so keep it a dev-time tool. |
-| Per-printer tolerance | Statistics, not an LLM | A prior by printer, nozzle and material, updated from the hidden 1/2/3 fit choice ([parts-tu-spec.md](../parts/parts-tu-spec.md) section 2). The photo variant is stretch item 7. Waits on `F1_printed_fit` data; the calibration print started 2026-10-31. |
-| Failed-print triage | Yes | A6 above. |
+Orientation, supports, bridges, brim, packing, and printable-part yield are
+code gates and search, not model work. Per-printer tolerance is statistics.
+Failed-print triage is A6. CAD fixes for existing parts are dev-time only.
 
 ## Eval harness (built first; decides everything else)
 
-`scripts/forge-eval.ts` plus `tests/forge/prompts.json` (about 60 prompts
-across slots, 10 photos for F2, 30 goals for F5). Runs three modes on the same
-set so each layer's value is measured:
+`scripts/forge-eval.ts` + `tests/forge/prompts.json` (~60 prompts, 10 photos,
+30 goals). Three modes per prompt: single shot, + legalizers, + repair.
+Reports first-attempt/final pass rate, mean calls, latency p50/p95, tokens,
+failures per gate, and a 1–5 taste rating. Gates prove validity, not appeal.
 
-1. Single shot, no legalizer, no repair.
-2. Plus legalizers.
-3. Plus repair loop.
+Current signal on the latest prompt + ops: 100% final pass rate
+(first attempt ~80–90%, ~1.1–1.3 calls/job). Taste lags validity: early mean
+1.5/5, now 2.4 overall and 3.6 on the variety set. Crowns improved most;
+heads still need body-shape work. Richer recipe ops + taste loop come before
+any tuning.
 
-**Built (2026-11-02, uncommitted):** `scripts/forge-eval.ts`,
-`scripts/lib/forgeEvalCore.ts` and `tests/forge/` (60 text prompts over the ten
-slots; 13 tests, strict `tsc` clean). It sends each prompt to a proposer and
-each recipe to the optimizer daemon (`npm run forge:optimizer`). The Spark
-proposer calls the Responses API as `worker/muse.ts` does and reads its key only
-from `MODEL_API_KEY` or `META_MODEL_API_KEY`; its prompt is a v0. The stub
-proposer tests plumbing and measures no model. The Spark proposer has run the
-full set once (below). The report is rewritten after every prompt and
-`--resume` continues a killed run. Two deviations from the three modes above:
-- The daemon always applies L1, so "no legalizer" cannot be measured directly.
-  The harness reports how many recipes the clamp would have changed
-  (`recipesTouchedByLegalizer`), using a TypeScript mirror checked against the
-  Python clamp on three cases.
-- Mode 1 is `--max-calls 1` and mode 3 is the default of up to 4 calls; the
-  loop stops early when the same gates fail twice on the same recipe. Mode 2
-  waits for L2.
-
-**First Spark baseline (2026-11-02, `muse-spark-1.3`, prompt v0, 60 prompts, up
-to 4 calls, one run, star fillet bug still in the daemon; validity only, no
-taste ratings yet):**
-
-| Slot | Prompts | First attempt | Final |
-| --- | --- | --- | --- |
-| crown | 14 | 14 | 14 |
-| head | 8 | 0 | 0 |
-| hand | 8 | 3 | 6 |
-| back, hood, roof, front, rollbar, spoiler, exhaust | 30 | 30 | 30 |
-| All | 60 | 47 (78%) | 50 (83%) |
-
-- **Calls and tokens:** 94 calls for 60 prompts (mean 1.57); 69,850 tokens in and
-  149,396 out, about 740 in and 1,590 out per call (the output figure may
-  include reasoning tokens). Spark's price is not stated, so there is no cost
-  figure.
-- **Repair loop:** it recovered 3 of the 13 first-attempt failures (all hand
-  recipes) for 34 extra calls; 24 of those went to heads, which never passed.
-- **Gates:** over all attempts `G3_single_body` failed 42 times, `P4_no_ledges`
-  32 and `G1_watertight` 13. None was `small_part_marginal`, and the clamp
-  changed 2 of 60 first-attempt recipes (bounds only, no slope). This v0 run gave
-  no reason to build L2 or more L1; the v1 run below changes that.
-- **Heads, 0 of 8:** always `G3_single_body` and `P4_no_ledges`, whatever the
-  shape. SDK tests found the cause. `character_head` puts the crown studs at
-  `z = height_mm` (30.5), and the v0 prompt never said so, so Spark's heads
-  stopped near 17 mm and left the studs floating. They also started 16 mm deep
-  on a 12.1 mm collar, which makes a ledge. Two hand-written heads that start at
-  the 24.6 x 12.1 mm collar, grow at most 0.78 x dz per side and span 0 to
-  30.5 mm both pass. This is a prompt gap (per-slot footprint and z span from
-  `LLM_PART_PROMPT.md`'s slot table), not evidence that the model cannot do
-  heads.
-- **Hands, 6 of 8 after repair:** the three first-try stars (wand, lollipop,
-  flower) failed because the daemon built stars at the SDK's 1.4 fillet; fixed
-  after the run (see open question 19). The flag on a stick failed on all 4
-  calls. Hypothesis, not isolated: the SDK centres a profile's bounding box on
-  the grip, so a pole at the edge of the flag never touches the grip neck.
-- **Latency:** validation p50 2.5 s, p95 16.3 s; whole job p50 9.9 s, p95 26.4 s
-  including the model call. The machine's load average fell from 73 to 20 during
-  the run, so read p95 as an upper bound.
-- **Not measured:** taste, photos (F2), or any tuned-versus-prompted comparison.
-  One run, so differences of a few prompts are noise.
-
-**Prompt v1 run (2026-11-02, same 60 prompts, star fillet fixed).** The v1
-prompt and the fillet fix changed together, so this shows their combined effect.
-
-| Slot | Prompts | v0 first | v0 final | v1 first | v1 final |
-| --- | --- | --- | --- | --- | --- |
-| crown | 14 | 14 | 14 | 13 | 14 |
-| head | 8 | 0 | 0 | 4 | 8 |
-| back | 6 | 6 | 6 | 2 | 6 |
-| hand | 8 | 3 | 6 | 6 | 8 |
-| hood, roof | 10 | 10 | 10 | 8 | 10 |
-| front, rollbar, spoiler, exhaust | 14 | 14 | 14 | 14 | 14 |
-| All | 60 | 47 (78%) | 50 (83%) | 47 (78%) | 60 (100%) |
-
-- **Calls and tokens:** 78 calls for 60 prompts (mean 1.30; v0 was 94 and 1.57).
-  13 prompts needed repair: 9 took 2 calls, 3 took 3 and 1 took 4. Tokens per
-  call rose to about 1,150 in and 1,700 out (v0: 740 and 1,590) because the
-  prompt is longer; the run total is about the same (222k against 219k).
-- **First-attempt failures (13):** 8 `small_part_marginal`, 4 `P4_no_ledges`
-  (heads) and 2 each of `G1_watertight` and `G3_single_body` (hands; one hand
-  also had a marginal size).
-- **New marginal sizes:** v0 had none. With real footprints in the prompt Spark
-  builds bigger parts, and they landed in the 31.75 to 34.925 mm band: all four
-  back pieces regressed from first-time passes, and a crown, a hood and a roof
-  joined them. All were fixed by repair, but 11 of the 18 extra calls went to
-  prompts that failed only on size.
-- **L2 now qualifies.** The spec's rule is to add a legalizer when a gate
-  dominates, and size is 8 of the 13 first-attempt failures. A deterministic
-  rescale would spend no model calls on it.
-- **Heads, 8 of 8 after repair:** 4 passed first time; the other 4 failed
-  `P4_no_ledges` once and were repaired in one call each. Not examined further.
-- **Caveats:** one run per prompt version; the two changes are not separated;
-  validity only, no taste ratings; Spark's price is unknown.
-
-**First taste check (2026-11-02, Dan, 19 of the 60 v1 parts: 14 crowns and 5
-heads).** Scale: 1 "not what I asked", 2 "odd or ugly", 3 "fine", 4 "good", 5
-"cute, on-brand". Dan stopped after 19 because many were not close.
-- **Result:** mean 1.47; 14 ones, 1 two, 4 threes, no 4 or 5. Crowns average
-  1.64; all 5 heads are 1.
-- **Pattern:** the only 3s are cones and tapered cylinders (wizard hat, cone
-  party hat, pointy hat, fez). The rest ask for what the recipe cannot make or
-  Spark did not use: a brim (cowboy, pirate), points (crown), horns, ears
-  (bunny, cat). The heads are the same box with two studs whatever was asked.
-- **Viewer:** the first rating page was washed out, which made shapes hard to
-  read. It was fixed after these ratings, and a render of the same meshes with
-  proper lighting agrees with them.
-- **Reading:** the validity gates are not the weak spot; fidelity to the request
-  is. Two likely causes, not yet separated: Recipe v1 cannot express points,
-  ears, horns or curled brims (only `brim` and `knob` were built at the time),
-  and the v1 prompt's slot footprints may have narrowed the variety. A tuned
-  model cannot add shapes the recipe cannot express.
-- **Ideas raised, untested:** concept images from the text, SAM silhouettes, and
-  slices fitted to the front and side outlines; and iterating until an automated
-  judge scores at least "fine". See open questions 24 and 25.
-- **Causes, measured afterwards (2026-11-02).** Both were real. In the v1 run
-  Spark left `features` empty for 18 of the 22 crowns and heads, even for "a
-  pirate hat with a wide brim", and every recipe used `support_policy: none`.
-  Under `none` the slot builders clip anything outside a 41 degree support-free
-  flare, so the existing `brim` was shaved from 40 x 30 mm to about 32 x 19 mm,
-  and the loft is a single convex hull, so nothing else could stick out either.
-- **Text-to-image check (2026-11-02):** `POST /images/generations` with
-  `muse-image-1.0` and a text-only prompt returned a clean white-background
-  1920 x 1280 image in 17 s with the existing Meta key (a pirate hat with a
-  curved brim and a skull badge). So the concept-image path in open question 24
-  is feasible; its price per image is not known.
-
-**Prompt v2 run (2026-11-02, 22 prompts: the 14 crowns and 8 heads, after the new
-feature ops).** Prompt v2 documents `ears`, `horns`, `spikes`, a brim that
-survives, and tells Spark to keep the body simple and put the character in the
-features. The daemon has the ops (see "Recipe v1"). Report in the scratchpad
-`forge-eval-spark-v2.json`.
-- **Validity:** first attempt 18 of 22 (82%), final 22 of 22 (100%), 1.23 model
-  calls per prompt, job latency p50 9.6 s and p95 17.6 s, L2 applied once. First
-  attempt failures: `P4_no_ledges` 3, `P1_no_supports` 2, `M_minimal_support` 1.
-- **Op use:** Spark put a feature op on 13 of 22 prompts, against 4 of 22 in v1
-  (brim 4, ears 3, knob 3, spikes 2, horns 1).
-- **Looks (my read of a contact sheet; Dan's re-rating is pending):** pirate,
-  cowboy, top and sun hats now have brims, "five points" has five points, the
-  horned helmet has horns, and the bunny and cat heads have ears. Still weak:
-  every head without ears is the same box (robot, alien, astronaut, dinosaur,
-  pumpkin); the bear's round ears are small lumps; the dinosaur has no snout; the
-  graduation cap is an inverted funnel rather than a flat board on a stem; the
-  chef hat and fez are blocks.
-- **Next in the recipe:** heads need ops of their own (a `snout`, a face
-  bulge, ridges for a pumpkin), and a hat body needs a way to be non-convex
-  (a hollow crown, a stem under a plate).
-- **Caveats:** one run, one prompt change plus the op change together, my own
-  rating only until Dan re-rates on the round 2 page.
-
-**Head ops and prompt v3 (2026-11-02, same 22 prompts).** Prompt v3 adds the
-`snout` op, says that only ears, horns and snout do anything on a head (knob,
-brim and spikes are now ignored there), suggests horns with `base_mm` 3 and
-`curl` 0 for robot and alien antennae, and says the face looks toward -y. It no
-longer says "do not model noses". Report `forge-eval-spark-v3.json` in the
-scratchpad (the first v3 run, before the last prompt edit, is
-`forge-eval-spark-v3-first.json`).
-- **Validity:** first attempt 20 of 22 (91%), final 22 of 22 (100%), 1.09 model
-  calls per prompt, job latency p50 10.0 s and p95 14.5 s, L2 applied 2 of 2
-  tried. All 8 heads passed first time. Failures were on crowns (P1 2, P4 1,
-  M_minimal_support 1), none from the new ops.
-- **Op use:** 15 of 22 prompts have a feature op (v2: 13, v1: 4): brim 4, horns
-  3, ears 3, spikes 2, knob 2, snout 1. Robot and alien got antenna-style horns,
-  the dinosaur got a snout, bunny, cat and bear got ears. The astronaut and the
-  pumpkin got nothing.
-- **A silent failure the run found, and its fix.** In the first v3 run the
-  dinosaur's snout was dropped without a word: Spark had leaned the whole front of
-  the head forward (depth growing from 12 to 23 mm), the wall already overhangs
-  29 degrees, and a support-free underside (at least 45 degrees from horizontal)
-  gains only about 0.45 mm of reach per mm of height over it, so no ramp could
-  land on that wall. Now (a) the daemon lists any op it accepted but could not
-  build in `legalizer.features_dropped` (snout, ears, horns; test in
-  `forge-ops.test.ts`), (b) it tries a 50 degree ramp when 55 does not fit, and
-  (c) the prompt tells Spark to keep a snout head's front upright (depth 12 to
-  16 mm, `y` 0). In the rerun all 8 heads followed that rule and the snout
-  printed. The cost: heads are slimmer and more slab-like than in v2.
-- **Looks (my read of a contact sheet, scratchpad `v3-heads.png`; Dan has not
-  rated these):** the antennae, the bunny and cat ears and the dinosaur's snout
-  read as what was asked. The bear's ears are still a small lump on the side. The
-  astronaut and pumpkin heads are plain boxes and every head still reads as the
-  same tall slab; a head's silhouette is limited by the 24.6 x 12.1 mm collar and
-  the 41 degree flare, so a rounder or wider head needs a body op, not a face op.
-  A muzzle is a nose-shaped bump with a long ramp down the face; a beak reads
-  best.
-- **Caveats:** one run per prompt version, prompt and ops changed together, my
-  own rating only. The round 3 heads are appended to the Forge Taste Check page
-  (ids `r3_h01` to `r3_h08`, marked "(new)") so Dan can rate them with the round 2
-  parts. Dan rated all 30 afterwards; see the next block.
-
-**Dan's ratings of rounds 2 and 3 (2026-11-02, all 30 parts on the Forge Taste
-Check page, 1 to 5).** Round 1 (prompt v1) covered 14 crowns and 5 heads, so the
-same prompts can be compared.
-- **Crowns, prompt v2, same 14 prompts as round 1:** mean 1.64 to 2.64; 7 of 14
-  at 3 or above (round 1: 4 of 14). Best: the beanie with a bobble (5) and the
-  horned helmet (4). Worst: the space helmet dome (1). Wizard, chef, pirate,
-  five-point crown, bent pointy hat and fez are all 2. Three prompts that scored 3
-  in round 1 (wizard, bent pointy hat, fez) scored 2 now, so the new ops did not
-  help the hats whose problem is the body shape.
-- **Heads:** v2 mean 1.62, v3 mean 1.88 (robot 1, alien 3, bunny 3, cat 2,
-  astronaut 1, dinosaur 2, pumpkin 1, bear 2). On the five heads that were also in
-  round 1 the mean went 1.0 to 1.6 to 2.0. The alien (1 to 3), the bunny (2 to 3)
-  and the dinosaur (1 to 2) gained from v3. The cat (3 to 2) and the bear (3 to 2)
-  lost, and both carry a note.
-- **All 22 prompts, best current version (crowns v2, heads v3):** mean 2.36, 9 of 22
-  at 3 or above, against 4 of 19 in round 1.
-- **Dan's notes:** the cat "good but overlaps studs", the bear "ears overlap
-  studs".
-- **Cause of the stud overlap, measured, then fixed (same day).** `character_head`
-  puts two crown studs on every head, at x from 3.0 to 9.6 mm each side, y +-3.3,
-  z 30.5 to 33.3 (hats seat on them). A head's top is only 18 to 20 mm wide, so ears placed
-  at the upper corners (root at z = height - 5, x = half-width - 0.35 x radius)
-  landed on the studs. Extra ear volume inside the stud columns grown by 0.6 mm:
-  bunny 88 mm3, cat 16 mm3, bear 1.5 mm3 (the bear's ear cap merges into the stud
-  instead of adding volume). Robot and alien antennae sit at x +-12 to +-15.6 and
-  touched nothing. No gate checked this: all 8 heads passed. Dan's answer was "1 or
-  move ear down or increase angle", so the daemon now fits head ears and horns
-  around the studs (see the `ears` bullet under `features`). Result on the saved v3
-  recipes and six stress cases (tall pointy, big and huge round, wide pointy, horns,
-  ears plus beak): all 11 print_ready with design status verified, 0.0 mm3 inside
-  the stud keep-out, one body each. The bunny and cat moved down 3 mm, the bear lost a
-  1 mm cap, a wide pointy ear leaned out 18 degrees. The cost is looks: the cat's
-  ears are now flat blades hugging the sides of the head, and a wide ear is cut to
-  fit the strip beside the studs, because the 31.75 mm small-parts width leaves
-  only about 6 mm of room there. Two traps on the way: a rounded stud outline left
-  hair-thin triangles on the cut face that export as zero-volume "bodies" (G1 and
-  G3 failed on bunny and cat), so the keep-out is plain boxes; and scoring the cut
-  by volume above the crown plane wrongly dropped the bear's ear, so it is scored by the part that
-  shows outside the head. Not rerun through Spark: the recipes are unchanged, so the
-  eval numbers above stand; Dan has not seen the fixed meshes.
-- **Later the same day (rounds 4 and 5).** Dan re-rated and added notes. The
-  chef hat went from 2 to 3 (crowns 2.71, 8 of 14 at 3 or above; all 22 parts: 2.41,
-  10 at 3 or above). Crown notes, not yet acted on: the wizard hat "no star" (the
-  little stars did not show; the `spikes` op gives points, not stars) and the
-  five-point crown "does not look like a crown at all, crowns should be round" (a
-  loft is one convex hull, so `spikes` on it reads as a bumpy cone, not a ring of
-  points; a crown needs a hollow ring body, which is the non-convex body gap).
-  Fixed-ear round 4 (margin 0.6 mm): bunny 2 (no note), cat 2 "needs more space around
-  studs, ears can be lower", bear unrated with "make ears lower so they do not go
-  above the top stud face". Read as the flat top face the studs stand on (z 30.5),
-  because the bear's ears were already below the stud tips. Round 5 changes: stud
-  margin 1.5 mm, drops up to 10 mm, round ears kept under the top face. Result: the
-  bunny and cat keep 1.45 mm clear of the studs (bunny moved down 3 mm, cat 4.5 mm,
-  top now 33.9 mm, level with the stud tips), the bear moved down 1.5 mm and is not
-  trimmed; all print_ready, design verified. The three are on the taste page as
-  `r5_h03`, `r5_h04`, `r5_h08` ("(lower ears)"), not yet rated.
-- **Round 5 and 6 (same day).** Round 5 (margin 1.5 mm, lower ears) scored: bear
-  5, bunny 3, cat 2 with "i'd prefer no cuts to the ears and just make the ears
-  further apart". The first 5 for any part. So pass 1 above now moves ears
-  apart instead of cutting them. Result on the saved recipes: bunny moved 9 mm
-  further apart (head 39.3 mm wide, above the cylinder, so it passes), cat moved
-  down 3 mm and 3 mm further apart (31.2 mm wide), bear unchanged (moved down 1.5
-  mm); all print_ready, design verified, gap to the studs 5.2 mm (bunny) and 3.1 mm
-  (cat), no part cut. Round 6 on the taste page: `r6_h03`, `r6_h04` ("(ears
-  apart)"), not yet rated; the bear is not repeated because it scored 5. Dan's
-  round 6 reply on the bunny was "looks fragile, not sure we need the bend, can we
-  make shorter" and on the cat and bear "good" (cat and bear are unchanged since:
-  same content hashes). Round 7 on the taste page: `r7_h03` (sturdy bunny), and the
-  no-studs dome heads `r7_h03d`, `r7_h04d`, `r7_h08d`; the straightened bunny with
-  studs now sits 12 mm further apart than before, a 37 mm wide head, because an
-  upright 8 mm ear needs about 11 mm of clear space beside the studs.
-- **Forge heads against the catalog (Kip) heads (Dan, round 7: "the heads are very
-  narrow, how do they compare to the latest kip heads on other angles").** Measured
-  from `public/kip/partspec/toyventor_*head*_S.stl`: the twelve catalog heads are
-  38 to 55 mm wide, 27 to 38 mm deep and 32 to 38 mm high, 19,000 to 31,000 mm3. The
-  forge heads are 25 to 31 mm wide (37 with the bunny's ears), 13 mm deep, 30.5 to
-  33 mm high, about 9,000 mm3: under half the volume, a third to half the depth. A
-  Kip kid head grows from the 26 x 12.7 mm collar to 38 x 26 mm at z 15 and keeps
-  that to z 25; forge heads stay at the collar size. Three causes. (1)
-  `character_head` clips the back flat at y <= +6.15 over the whole height ("to
-  clear backpacks"), where the catalog heads reach y +12.6 to +18.4 above z 5. (2)
-  Prompt v3's upright-face rule (depth 12 to 16, y 0, there so a snout can attach)
-  and examples near the collar size keep Spark slim. (3) L2 only shrinks, so a
-  head in the 31.75 to 34.9 mm band is made smaller, where a Kip-sized head wants to
-  grow a little to clear it. It is not the 41 degree flare limit: a recipe copied
-  from the kid head's own slices (26 x 12.7 growing to 38.1 x 25.7) builds with no
-  blocking gate failure; with the clip it comes out D-shaped from above (front
-  -14.5, back +6.2). Pictures (front, side, top): scratchpad `kip-views.png`.
-  **Fixed (Dan said yes to all three, same day).** (1) SDK: `character_head`'s rear clip
-  is now a ramp, y <= +6.15 at the collar growing 0.78 mm per mm of height up to 20
-  mm behind the neck centre (`HEAD_REAR_RAMP`, `HEAD_REAR_MAX_MM`); only the forge
-  daemon calls it, the catalog heads are built elsewhere. A first version with a hard
-  step at z 3 left a 24 mm2 flat ledge (P4); the ramp has the loft's own slope so
-  it adds none. The kid-profile head now reaches y +12.6, like the catalog kid. (2)
-  Prompt v4 (`--prompt v4`, `--print-prompt` prints it): heads are "BIG and ROUND,
-  38 to 55 mm wide and 26 to 38 deep", the kid head's seven slices are given as the
-  standard, the sizes 31.75 to 34.9 are called out, and the v3 "keep d 12 to 16 and
-  y at 0" rule is replaced by "the front may move forward at most 0.5 mm per mm of
-  height" after checking that snouts attach (beak, muzzle and bill, no drops) to
-  Kip-shaped heads with a 22 degree forward lean. (3) L2 can grow a head: for
-  heads it now also searches a growth of up to 25% that clears the band's top edge
-  (cylinder x 1.10 + 0.4 mm) and takes the smaller change, with growth winning up
-  to 1.3 x the shrink; the note says `direction`. The Kip-profile head measured
-  34.77 mm and now grows 11% to 35.3 mm (above the cylinder) instead of shrinking
-  21%; a head at 32.3 mm still shrinks 5%. Note the measure is the smallest
-  cylinder around the part, so it depends on height as well as width, which is
-  why growth needs about 11% for 0.6 mm. **Spark v4 on the 8 head prompts:** 8
-  of 8 on the first attempt (v3: 8 of 8), 1.0 calls, job p50 16.5 s and p95 44 s,
-  L2 grew the dinosaur 10%. Sizes now 40 to 59 mm wide (robot and alien 57 to 59
-  because their antennae count), 27 to 31 mm deep, 33 to 44 mm high, 22,000 to
-  30,000 mm3, against the catalog's 38 to 55 x 27 to 38 x 32 to 38 and 19,000 to
-  31,000 mm3. On the taste page as `r8_h01` to `r8_h08`, not yet rated. Ears and
-  studs are small next to the bigger heads. Not done: the Spark run covered the
-  heads only, so the crown prompts did not change; the worker and shared types
-  still drop `shape.top`.
-- **Round crowns (Dan, round 2: five-point crown "does not look like a crown at
-  all, crowns should be round"; same day, after "continue").** The loft is one
-  convex hull, so points on it were a bumpy cone. Two crown ops, built in the daemon
-  without touching the SDK: `spikes` with `layout: "ring"` (3 to 12 points, `base_mm`
-  3 to 9, `wall_mm` 1.6 to 4) and `hollow` (`wall_mm`, `depth_mm`, a pot or bowl
-  hat). Both carve an open-top pocket (`_hollow_pocket`: the top outline inset by
-  the wall, floor at least 4 mm above the socket seat, open upward so it prints
-  without help); the ring then puts `count` wedge-shaped teeth round the rim
-  (`_ring_teeth`), the first at the front centre so the crown is mirror symmetric,
-  each a flat foot as wide as the wall rising to a small tip, so every face is
-  steeper than 45 degrees. A ring on a top too small to hollow is reported in
-  `features_dropped` (`hollow`). Two traps: the carve left hair-thin triangles that
-  export as zero-volume bodies (G1, G3), fixed by `simplify(0.03)` after the carve
-  and after the teeth, and a hull to a tiny sphere tip did the same, so the tips
-  are small boxes. A round body is w = d = 26 from z 9.5 up (it can only grow
-  from the 23.8 x 11.6 pad at 0.78 mm per mm), a flared cup, which also reads as a
-  crown. Prompt v5 (`--prompt v5`) documents both ops and gives the standard round
-  crown's slices. **Spark v5 on the 14 crown prompts:** 13 of 14 first attempt, 14 of
-  14 final, 1.07 calls, p50 16.6 s; the five-point crown came out as a ring crown
-  (26 x 26 x 27 mm, `spikes:ring`); the space helmet used `hollow` on a dome, an
-  open cup, which is probably wrong for a helmet. The others are unchanged in kind.
-  Taste page: `r9_c04`, `r9_c11`, not yet rated. Not done: stars for the wizard
-  hat; the worker and shared types do not know `hollow` or the ring layout yet
-  (they drop them).
-- **Dan's ratings of rounds 7 to 9 (2026-11-02, late) and the changes they led to
-  (2026-11-03).** Round 7: the sturdy bunny with studs 3, and the three no-studs dome
-  heads (bunny, cat, bear) **all 5**. Round 8, the Kip-sized heads: robot 3 and alien
-  3 ("antenna are too thin"), astronaut 2 (same note), bunny 2 and cat 2 ("ears will
-  block studs"), dinosaur 1, pumpkin 1, bear 5. Round 9: the ring crown 3 ("triangles
-  are not smooth on seam to crown"), the hollow helmet 1. Then, in chat: the wizard
-  hat "still has no star on top" and the five-point crown "is still not a crown".
-  Changes, all in the daemon, with tests: (1) **`star` op** (crowns): an upright
-  five-point star on the very top, plump (inner radius 0.55 of the outer one) with the
-  lower inner vertex pulled into a 54 degree stem that goes 1.5 mm into the hat, so
-  nothing under it is shallower than 45 degrees (a plain star's lower legs have a
-  24 degree underside and failed P1). A winding trap: the stem polygon first ran
-  clockwise, which `CrossSection` reads as empty, so the star floated. (2) **Zigzag
-  crown rim** replaces the thorn teeth: each of `count` (4 to 12) points is built
-  straight, as a trapezoid with a 1 mm flat tip, then bent round the rim with
-  `warp_batch`, so the rim is one smooth zigzag with no seam; neighbouring points
-  overlap by 0.4 mm, the teeth sit 0.1 mm inside the wall (a 0.03 mm step collapsed
-  under the 0.03 mm simplify into slivers), and a 3-point crown still left slivers,
-  so the minimum is 4. (3) **Ears keep clear of the whole hat seat** (the 2x1 crown
-  pad, 24.4 x 11.9 mm, plus 1 mm; it was the two studs plus 1.5 mm, which let the
-  Kip-sized heads' ears stand in the pad column). (4) **Antennae**: a head's horn is
-  at least 5.5 mm thick at its base (`HEAD_HORN_MIN_BASE_MM`) and prompt v5 tells Spark
-  6 mm. (5) **Ear root ramp**: three faults found by the new Spark run (the bear
-  failed P1 on all four attempts): the ramp was sized from the head's width at the
-  ear's height rather than the narrower width where it ends; its slope was measured
-  between sphere centres, but the outer tangent is shallower (43, not 52 degrees);
-  and the check ignored the part below z 6. It now ends inside the narrowest wall
-  along its drop, runs at a rise of 1.7 per run, stays 3 mm over the bed, and every
-  candidate is checked with the gate's own measure (`toyventor_parts.overhang_area`,
-  under 1.0 mm2) on the real head with the pair on it. (6) **Prompt v5** also keeps
-  `hollow` for bowl, pot and basket hats only, so a helmet stays a closed dome.
-  **Spark v5 on the 14 crown and 8 head prompts:** the wizard hat used `star`, the
-  five-point crown used the ring, the helmet is a closed dome, robot, alien and
-  astronaut have 6 mm antennae; all 11 recipes that changed (wizard, crown, helmet,
-  the heads) print_ready with design verified under the final daemon. 39 forge tests.
-  Round 10 on the taste page: `r10_c01`, `r10_c04`, `r10_c11`, `r10_h01` to
-  `r10_h08`. **Not fixed:** the dinosaur (1): its muzzle is built but only about
-  3 mm long, because a support-free ramp from a front that leans forward cannot be
-  long (z_tip - 2 mm, over the ramp slope); a long snout needs supports on the show
-  face (the print-plan call flagged earlier). The pumpkin (1) is a plain slab: it
-  needs lobes, which no op makes. The wizard hat's "little stars" are one star on
-  the tip, not several on the sides.
-- **Round 10 ratings (2026-11-02, late) and round 11.** Zigzag crown **5**, wizard
-  hat with a star 4, bear 5, closed helmet dome 3, robot, alien and astronaut 3 (no
-  note: the thicker antennae fixed the earlier "too thin"), bunny 2 and cat 2 ("ears
-  will block studs, move ears further apart"), dinosaur 1 ("no snout"), pumpkin 1
-  ("blank"). Changes, with tests: (1) the seat margin is 3.5 mm, not 1.0, so ears
-  keep clear of a 26 to 30 mm hat: the round crown reaches 13.0 mm each side of
-  the centre and the pad is 12.2. (2) **Snout**: it is moved up the face, 1.5 mm at a
-  time, before it is shortened, and `features_adjusted` says so. A 14 mm muzzle
-  used to be shortened to about 3 mm; it now sticks out about 10 mm (8.5 after the
-  size check), high on the face where a support-free ramp fits. (3) **`ribs` op**
-  (heads only): `count` 6 to 12 vertical grooves (`width_mm` 2 to 6, `depth_mm` 0.8
-  to 3.5) round the sides, front centre skipped so it stays smooth for decals;
-  each groove follows the wall as a chain of spheres ending in a point (ceiling 62
-  degrees) so it prints without help. Trap: a groove centred exactly on the faceted
-  wall grazed it and left 40 zero-volume bodies (G1, G3); the centre is now at
-  least 0.25 mm inside the wall. Prompt v5 gives Spark the pumpkin recipe (count 8,
-  5 wide, 3 deep). A head needs about 5.5 groove widths of wall height or the op is
-  reported in `features_dropped`. **Brand check for the owner:** ribs are relief on
-  the head shell, like the snout; the front stays smooth. **Decided (Dan,
-  2026-11-03): yes, custom heads may carry ribs.** **Spark v5 on the 8 heads:** 7 of 8 on
-  the first attempt (the pumpkin failed P1 once and was repaired), 8 of 8 final,
-  1.13 calls; all 8 print_ready under the final daemon. 40 forge tests. Round 11
-  on the taste page: `r11_h01` to `r11_h08`.
-- **Round 11 ratings and round 12 (2026-11-03).** Bunny **5**, cat **5** (ears
-  3.5 mm further from the hat seat worked), alien 4, robot 3, astronaut 3, pumpkin 3
-  (ribs: 1 to 3), dinosaur 2 ("weird snout", up from 1), bear **1** with no note. The
-  bear had no ears: the ear fitter rejected every lowered placement as "wider than
-  asked", because on a head that widens downward lowering an ear moves it outward,
-  and dropped the pair; the job reported it in `features_dropped`, which nobody
-  sees in the render. Fixes: only the marginal small-parts band (31.75 to 34.9 mm
-  across) is avoided, not "wider than asked"; and a pair that cannot be fitted now
-  stays where it was asked, with a note, instead of vanishing (losing the ears
-  is worse than ears that touch the hat seat). A second fault showed once the ears
-  were back: the root ramp's lowest sphere stuck out 1.6 mm2 at z 8, because the
-  wall was sampled at the sphere's centre but its bottom is 4.8 mm lower where the
-  head tapers in; the ramp now also samples the wall under the sphere. Regression
-  test: a bear widest part way up keeps its ears. The dinosaur's snout is the best the
-  support-free rule allows (8.5 mm out, high on the face); blunter tips came out
-  shorter (5.5 to 6 mm), so the current shape stays. A snout that looks right
-  needs a flat underside and therefore supports on the face (the print-plan call).
-  41 forge tests. Round 12 on the taste page: `r12_h08`, the bear with its ears,
-  which Dan rated 5 ("bear is good").
-- **Inspiration review: Sketchfab (2026-11-03, Dan: "all the heads are too basic,
-  I'd like more variety").** Dan gave a Sketchfab API key (kept only in a temporary
-  file in the scratchpad, not in the repo or memory). 24 searches of the form
-  "cute ... head" (dinosaur, cat, dog, bear, bunny, fox, panda, owl, dragon, robot,
-  alien, monster, pumpkin, frog, pig, penguin, unicorn, monkey, lion, elephant, shark)
-  returned 226 usable results after dropping restricted, very heavy (over 80,000
-  faces) and irrelevant ones. Only titles, licences, likes, links and small
-  thumbnails were fetched, no models, because Sketchfab content is fine for browsing
-  as inspiration but not for training (NoAI tags, Creative Commons leakage; see
-  "Data plan"). The relevance of the search is poor (full characters, hats, swords),
-  so the page groups and filters them. Private gallery with a heart on each:
-  https://claude.ai/artifact/RtLEyJBkvkjurFRubkE8ju (hearts go to the page's `picks`
-  collection). What the examples have that ours do not: (1) **body shape**: round,
-  squat "emoji" heads with a rounded chin and a muzzle bulge, where ours are boxy
-  slabs; the catalog (Kip) heads vary a lot too (fox, bear, cat, alien, chibi, jumbo,
-  tall, imp, dragon, robot visor and scout) but the v4/v5 prompt gives Spark one
-  profile (the kid head). (2) **Ears**: tall bunny, round side ears at mid height
-  (monkey, panda, bear), pointed (fox, cat), big flaps (elephant), floppy, owl tufts.
-  (3) **Muzzles and noses**: pig snout disc, fox and dog cone muzzle, bills and
-  beaks (duck, penguin, owl), ball noses. (4) **Cheeks and manes**: fox cheek tufts,
-  lion mane ring. (5) **Horns**: a single unicorn horn, swept-back dragon horns,
-  antlers; robots with ball-tipped antennae and headphone cups. (6) **Crests and
-  spines** along the top for dinosaurs and dragons (on the no-studs head, where
-  nothing sits on top). (7) Spots, eye patches and faces are decals (the face
-  insert), not geometry. Candidate work, cheapest first: a **head library** in the
-  prompt (measured slice tables for all 12 catalog heads, named) instead of the
-  single kid profile; new **ear styles** (side round, flap, floppy); **horn styles**
-  (single, swept) and ball-tipped antennae and headphone cups; **cheek tufts**
-  (down-pointing leaves, steeper than 45 degrees); a **nose ball or disc** and a
-  **crest** for dome heads. A flat-bottomed snout or disc nose still needs the
-  print-plan decision on supports.
-- **Dan's Sketchfab picks and round 13 (2026-11-03).** Dan hearted 43 of the 155
-  gallery items: round, squat emoji-style heads of dogs (beagle, corgi, chihuahua,
-  dachshund), cats, a tiger, bears, a red panda, monkeys, a gorilla, a fennec and a
-  fox, a lion, pigs, an owl, two elephants, a rabbit, three dinosaurs, three
-  pumpkins, three robots, three aliens and a devil, and the 12-head animal pack. What
-  they share: a squat round head with a rounded chin and simple, distinct ears. Built
-  from that, all in the daemon with tests: (1) **ear styles**: `floppy` (since removed, see the next block), `z_frac` (0.3 to 0.9 up the
-  head: 0.5 to 0.7 puts ears on the sides, the default is the top corner) and round
-  ears up to 24 mm wide. A round ear with `z_frac` stands mostly outside the wall
-  (centre 0.1 radius out), where the top-corner ears keep 35% in, so the bear,
-  bunny and cat that Dan rated 5 are unchanged. (2) **Fitting every head pair**: the
-  fitter now also runs for ears that never touch the hat seat, tries raising as
-  well as lowering, and when nothing prints at the asked size makes the pair 10, 20
-  and 30% smaller (a 22 mm elephant flap on a 30 mm head cannot be held up without
-  supports, a 15 mm one can; tried at the cheapest 60 placements only, since each
-  candidate costs a boolean and a mesh check). Every candidate is judged with the
-  gate's own overhang measure and must also be one watertight body, because hair-thin
-  slivers fail G1 and G3. The ramp sphere on a big ear is capped at 6 mm so it fits
-  above the bed. (3) **Head library in prompt v5**: seven named shapes measured from
-  the 12 catalog heads (kid, chibi, round_cheeky, wedge, big_forehead, robot,
-  pumpkin), each as `[z, w, d, r]` rows that already respect the 0.78 per mm growth
-  limit, replacing the single kid profile. (4) **Prompt v5 ear guidance** per animal
-  (bear, panda, tiger, lion round at the top; monkey and elephant round on the sides;
-  fox, cat, fennec, corgi, devil pointy; bunny tall; beagle and lop rabbit floppy).
-  (5) A 14-prompt set, `tests/forge/head-variety-prompts.json` (beagle, monkey,
-  elephant, pig, lion, panda, tiger, fox, owl, devil, fennec, lop bunny, gorilla,
-  corgi). **Spark v5 on it:** 12 of 14 first attempt, 14 of 14 final, 1.14 calls;
-  it used `floppy` for the beagle and lop bunny, round ears with `z_frac` for the
-  monkey, elephant and gorilla, a snout for the pig, owl, fennec, gorilla and corgi,
-  and the right body (round_cheeky or wedge) most of the time. All 14 print_ready
-  under the final daemon. **What it does not fix:** the bodies are still nearly the
-  same bowl, because every head has to flare from the 24.6 mm collar at 0.78 mm per
-  mm, so the lower half is always a cone and Spark mostly chose round_cheeky or wedge,
-  which are close; the difference between animals is in the ears, snouts and horns,
-  not the silhouette of the skull. Not built: cheek tufts, a mane or ruff, ball-tipped
-  antennae, headphone cups, a crest, a pumpkin stem on the dome head. Jobs with a
-  searched pair take 20 to 30 s. 42 forge tests. Round 13 on the taste page:
-  `r13_v01` to `r13_v14`.
-- **Round 13 ratings and the follow-up (2026-11-03).** Monkey **5**, fox **5**, fennec
-  **5**, corgi **5**, pig 4, owl 4, devil 3, lion 2 ("does not look like a lion"),
-  gorilla 2 ("does not look like a gorilla"), beagle 1 ("normal ears no floppy"),
-  and no score but notes on the elephant ("ears too small and no trunk"), the panda
-  ("does not look like a panda"), the tiger (same) and the lop bunny ("ears are not
-  floppy"). Of the 10 scored, mean 3.6. What came of it: **floppy ears were built and
-  then dropped at Dan's request** ("omit floppy, I think we have enough"): the first
-  version (a straight leaf from the top corner) sank into the head's widest part and
-  read as a plain ear; a second (a flap following the cheek's outline, attached along
-  its whole length) did read as floppy and printed at lengths up to about 20 mm, but is
-  gone from the daemon, the prompt, the test and the variety set (v01 and v12 removed).
-  The beagle and lop bunny prompts are out, so 12 variety prompts remain. **Elephant**:
-  the big flaps are made 20 to 30% smaller by the support-free fit, and a trunk was
-  tried (a tapered ridge down the face, a chain of ellipsoids behind the front wall)
-  and removed: the front wall already leans forward going up (up to 38 degrees), so a
-  trunk that narrows downward passes the 45 degree limit unless it is only 3 to 4 mm
-  proud, which does not read as a trunk. Both need supports (the print-plan call, as
-  for the dinosaur's snout). **Lion, panda, tiger, gorilla**: they are told apart by a
-  mane, black eye patches and ears, stripes and a brow, not by the shape of the skull.
-  Panda patches and tiger stripes are colour, so they belong to the face insert or
-  the skin; a mane and a brow ridge are geometry that has not been built (a mane
-  radiating sideways has the same overhang problem as big flap ears). 42 forge tests.
-- **Dan's answers on the open questions (2026-11-03).** (1) **Supports: allowed but
-  not preferred.** The default stays support-free; nothing new is built that needs
-  them. A snout, flap ears or a trunk that only work with supports on the face stay
-  out until one is wanted enough to be worth the print-plan cost (the M2 gate caps
-  face supports at 80 mm2); if one is built, it is opt-in per recipe, never the
-  default. (2) **Worker and shared types: OK**, done (see the Worker allowlist note
-  under the dome head). (3) **Custom heads may carry snouts and ribs: yes.** (4) The
-  Sketchfab key stays in the scratch folder until Dan says he is done searching; he
-  will clean up later. Still not authorised: mane, brow ridge, cheek tufts, ball
-  antennae and headphone cups, a dome-head crest, a pumpkin stem.
-- **Reading:** the taste gate is still tripped for heads and partly lifted for
-  crowns. The parts still at 1 or 2 are body-shape problems (dome helmet,
-  astronaut, pumpkin, wizard cone, chef puff, fez), which the feature ops cannot
-  express.
-
-Reports first-attempt pass rate, final pass rate, mean model calls per job,
-latency p50 and p95, token usage per job, failure counts per gate id, and a
-manual 1 to 5 "cute and on-brand" rating. The gates prove a part is valid and
-printable, not that it is appealing, and the design log shows taste has needed
-human correction before.
-
-The assist features add four small sets to the same harness: 20 scan photos
-(A1), 20 scripted failing builds (A2), 40 utterances (A4), and 30 photos of
-coupons printed wrong on purpose (A6). Each reports its
-own acceptance numbers above, plus model calls, latency p50 and p95, and tokens
-per request.
+Assists add four small sets: 20 scan photos (A1), 20 failing builds (A2),
+40 utterances (A4), 30 failure photos (A6).
 
 ## Data plan
 
-Two candidate models, two data pipelines. No public dataset matches our
-formats (a printable, lattice-sized recipe per slot; a brick structure on our
-lattice), so the data is mostly built from what we already own.
+No public dataset matches our formats, so the data is built from what we own.
+Every source still needs a recorded license check before commercial training.
 
-**Assumption (Dan, 2026-10-31):** external dataset licenses are acceptable for
-this roadmap, and the work is planned beyond the hackathon. The assumption is
-recorded, not verified: every dataset manifest must still record each source's
-license, and the assumption should be revisited before any commercial release
-of a trained model.
+- **Have:** catalog geometry + generators, 3 verified example parts, eval sets
+  (60 prompts, 30 goals, 40 utterances, 20 failing builds), own photos.
+- **Create:** 10–20 exemplar recipes measured from our STLs; 20–50k
+  gate-filtered (caption, recipe) pairs sampled within slot bounds;
+  failure→fix pairs from broken passing recipes; the live attempt log (slow,
+  do not depend on it); human taste ratings (1–2 days per thousand).
+- **Long poles:** stability simulator (weeks), recipe compiler/sampler, taste
+  ratings. None GPU-bound. A sampler only samples what it was told to sample;
+  exemplars + usage widen it.
 
-Evidence tags used below: **M** measured (from the baseline text-to-brick paper, a dataset
-card, or this repo), **D** derived from a measured number, **E** estimate (not
-measured; replace with real numbers as they come in). Status: **Have**, **Get**
-(exists, free to download), **Create** (we build it).
+## Custom model roadmap (stretch, after submission)
 
-### Brick sculptor data
+Only G0 is committed (Phase 0, no GPU). G1–G7 start if time and budget allow
+and never block Nov 4. Two models, not one: Forge recipe writer + brick
+sculptor. Prompted workflows stay as fallback and baseline. Each stage has a
+gate; when a gate fails, stop spending and record numbers.
 
-| Data | Status | Source or method | Time to create / cost to get |
+| Stage | Track | Work | Gate |
 | --- | --- | --- | --- |
-| 47,389 brick structures, 5 captions each | Get | public brick-structure set, MIT, 44.3 MB (M) | Free, minutes. Uses 1-unit-tall cuboids on a 20x20x20 grid, not our lattice, so it is warm-start data. |
-| Clean-license source meshes | Get | Objaverse CC0/CC-BY subset, Thingi10K Creative Commons subset, Google Scanned Objects | Free. No GB figures found, so filter to a few thousand objects instead of whole sets. Filtering script about 1 day (E). |
-| Stability simulator (the training filter) | Create | Reimplement the paper's stability analysis. The paper uses Gurobi, a commercial solver; license and price not checked, so budget a license or a rewrite on an open-source solver. | Engineering only, about 1 to 3 weeks (E). Runs at 0.35 s per structure under 200 bricks (M). |
-| Structures on our lattice | Create | Voxelize meshes, random brick layouts, keep the stable ones | About 5 CPU-hours per 50k analyzed (D); more with rejects, which the paper does not quantify. Tens of dollars (E). |
-| Captions for those structures | Create | Render views, caption with a vision model | $50 to $300 self-hosted (E). API cost unknown (Spark price not found). |
-| Brick vocabulary (which Snap parts) | Create | Design decision. Only 8 of 114 Snap parts are tagged stackable, 3 brick, 5 plate (M). | A few days to decide and verify seating (E) |
-| Recognizability test set | Create | About 100 prompts, human-rated | Hours of rater time (E) |
+| R0 | Both | Prompted workflow + attempt log + eval (Phases 0–1) | Eval report exists |
+| R1 | Sculptor | Stability simulator; Snap brick vocabulary | Sim matches hand-checked cases; vocabulary seats cleanly |
+| R2 | Sculptor | Warm-start spike, lattice-native set, one tune + rollback | Structures stand and read clearly |
+| R3 | Forge | Compiler + sampler, gate-filtered pairs, fix pairs, exemplars | Style/diversity spot-checked |
+| R4 | Forge | Small tune, then rejection-sampling rounds (taste as objective) | Beats prompted baseline on rate + rating, cheaper per job |
+| R5 | Both | Serve behind Worker + Gatekeeper; fallback verified | Model switch in eval works |
 
-### Forge data
+Tuning trains only on our gate-filtered pairs + attempt log. Optimizing pass
+rate alone teaches boring shapes; watch pass rate + human rating together.
 
-| Data | Status | Source or method | Time to create / cost to get |
-| --- | --- | --- | --- |
-| Catalog geometry and generators | Have | 185 catalog rows, 185 generated STLs, 218 functions in `toyventor_parts.py`; 30 vehicle, 26 hair, 23 add-on rows (M) | Free. Other sessions regenerate this tree, so read from a scratch copy. |
-| 3 verified SDK example parts | Have | `public/kip/custom/` (M) | Free |
-| 10 to 20 exemplar recipes | Create | Measure our own STLs into Recipe v1 | About 1 to 2 days for the first 20 (E); faster once the F2 extractor exists |
-| Eval sets (60 prompts, 30 goals, 40 utterances, 20 failing builds) | Create | Written in-house | About 1 to 2 days (E) |
-| 10 to 20 object photos | Get / create | Our own photos, plus Google Scanned Objects (Creative Commons, variant unconfirmed) | An afternoon for the first 20 (E); the dataset is free |
-| 20 to 50k (caption, recipe) pairs | Create | Sample random recipes within slot bounds, keep gate-passers, render, caption | Gates about 24 CPU-hours per 50k (D, from about 1.7 s per part: the 180-part gate takes about 5 minutes). Captions $50 to $300 (E). |
-| Failure to fix pairs | Create | Break passing recipes on purpose, record the gate report | Minutes to hours of CPU (E); gate reports are automatic |
-| Real attempt log | Create, slowly | Accrues from live use | Unbounded. Low traffic yields very little, so do not depend on it. |
-| Taste ratings | Create | Humans only; nothing public exists | 1,000 ratings at about 10 s each is about 3 hours (E). Preference tuning likely needs several thousand: 1 to 2 days of rater time (E). |
-| Shape-diversity corpora | Get | Text2CAD and Objaverse with Cap3D captions (see below) | Free once license conditions are accepted. Formats do not match recipes, so pretraining at best; transfer is unproven. |
+### Forge phases (G0–G7)
 
-### External sources checked (2026-10-31)
+| Phase | Scope | Gate / stop rule |
+| --- | --- | --- |
+| G0 | Baseline + eval (schema, compiler, L1/L3, L2, call + repair, CLI, ~60 prompts, showcase) | Eval report exists; before Nov 4 |
+| G1 | Base-model baseline + small tune smoke test; constrained decoding; tokens/s, memory, cold start | Valid JSON 99%+; if it will not train/serve, stop |
+| G2 | Data: exemplars, sampler, gate-filtered + fix pairs, captions, held-out split, license manifest | No eval leak; diversity measured |
+| G3 | Pilot tune (3–5k pairs, 1–3 epochs, 2–3 variants) vs G1 baselines | Beats prompted first-attempt rate with no rating drop, else stop |
+| G4 | Full tune (20–50k if curve says so) + 1–3 taste-filtered rounds | Beats baseline on rate + rating together |
+| G5 | Serve behind `/api/forge` + Gatekeeper; fallback chain; "AI-made" label | p95 in budget; cost/job measured |
+| G6 | Operate: retrain on waves/schema/slots/drift | Every retrain re-passes full eval |
+| G7 | Larger open base as option: repeat G1 + one pilot vs best adapter | Ships only if it beats the incumbent on rate + rating at viable cost |
 
-| Source | What it offers | License as found | Use for us |
-| --- | --- | --- | --- |
-| Public brick-structure set (Hugging Face) | 47,389 brick structures from 28,000+ objects, 5 captions each, 21 categories, 20x20x20 grid, 1-unit-tall bricks | MIT. Built from ShapeNet objects, whose terms limit use to non-commercial research and education. | Warm start for the brick sculptor |
-| Text2CAD (Hugging Face, gated) | About 170K CAD models, 660K text annotations | CC BY-NC-SA 4.0 | Pretraining at best; CAD sequences differ from recipes |
-| DeepCAD and ABC | CAD construction sequences | Differs across mirrors; unresolved | Same as Text2CAD, if resolved |
-| Objaverse plus Cap3D | About 660K object-caption pairs | Captions ODC-By 1.0; per-object licenses vary and some are non-commercial; two Cap3D card revisions state the license differently | Source meshes (filter to CC0 and CC-BY), diversity |
-| Thingi10K | 10,000 printable models | Per-model, filterable to Creative Commons | Source meshes for the sculptor |
-| Google Scanned Objects | 1,000+ scanned household items | Creative Commons, variant not confirmed | Photo and shape tests |
-| ShapeNet | Large object corpus | Non-commercial research and education only | Only indirectly, via the public brick-structure set |
-| Toys4K | 3D toys | Not verified | Unknown |
-
-Conclusion: everything we can get is free and fast, but none of it is in our
-formats, so it serves as warm-start or diversity data and cannot supply the
-core pairs. The long poles are all "create": the stability simulator (weeks),
-the recipe compiler and sampler (the compiler comes before any data), and
-human taste ratings. None of them is GPU-bound. A sampler we design produces
-what we thought to sample, so a model trained only on it may be no more
-inventive than the sampler; exemplars from the real catalog and real usage
-widen it.
-
-## Custom model roadmap (after submission)
-
-**Stretch goal (Dan, 2026-11-01).** The whole own-model track in this section
-and in "Glimmer Forge: workflow and phases" is a stretch goal. Only G0 is
-committed, because it is Phase 0 (the eval and the prompted baseline) and costs
-no GPU time. Everything else starts only if time and budget allow, and none of
-it blocks the Nov 4 submission or the prompted workflows.
-
-Two separate models, not one: different inputs, outputs, checks and retraining
-schedules. The prompted workflows stay as the fallback and the baseline to
-beat. Each stage proceeds only through its gate.
-
-**Base model constraint (Dan, 2026-11-01).** Every model we train starts from
-Muse Glimmer or Muse Spark Open. Glimmer is the default; Spark Open is an
-option, set as a stretch goal (phase G7; see "Base model" below). The prompted
-baseline runs on Glimmer. The Forge stages R3 to R5 are broken into phases G2 to
-G5 in "Glimmer Forge: workflow and phases".
-
-| Stage | Track | Work | Gate to proceed |
-| --- | --- | --- | --- |
-| R0 | Both | Prompted Forge workflow, attempt log, eval harness (Phases 0 and 1) | An eval report exists: per-gate failure counts, first-attempt and final pass rates, cost and latency per job |
-| R1 | Sculptor | Write the stability simulator; choose the brick vocabulary from Snap parts | Simulator agrees with hand-checked stable and unstable cases; the vocabulary seats cleanly in the assembly gate |
-| R2 | Sculptor | Spike: warm-start on the public brick-structure set, generate a lattice-native set from clean meshes, fine-tune Glimmer once (QLoRA), run with rollback | Structures stand, and people recognize what they are against a bar written down before the run |
-| R3 | Forge | Recipe compiler and sampler; gate-filtered (caption, recipe) set; failure to fix pairs; exemplars | Humans spot-check style and diversity; sampler diversity is measured |
-| R4 | Forge | Glimmer QLoRA SFT, then rejection-sampling rounds with gates as a filter and taste as the objective (GRPO only if validity plateaus); detailed as phases G3 and G4 | Beats the prompted Glimmer baseline on pass rate and rating together, at lower cost per job |
-| R5 | Both | Serve behind the same Worker and Gatekeeper contract; prompted workflow stays as fallback; define retrain triggers for catalog waves | Fallback verified by switching models in the eval |
-
-Gate validity is a filter on training examples, not the thing maximized.
-Optimizing pass rate alone teaches the model to emit boring shapes that always
-pass, so watch pass rate and human rating together.
-
-### Compute time and cost
-
-| Stage | Wall-clock | Est. cost | Basis |
-| --- | --- | --- | --- |
-| Sculptor: generate about 50k structures | About 5 CPU-hours | Tens of dollars | D, from 0.35 s per structure (M) |
-| Sculptor: captions | Unknown | $50 to $300 self-hosted | E |
-| Sculptor: the paper's 1B baseline (reference only) | 12 h on 8 GPUs, about 96 GPU-hours | $150 to $350 per run at A100 rates | M: paper used 8x RTX A6000 for 3 epochs; the A6000 was not priced. Reference only, since the base model is now Glimmer. |
-| Sculptor: Glimmer QLoRA spike (10k structures, 1 epoch) | About 4 days on 1 A100-80GB, or about 13 to 16 h on 8 | $250 to $350 | D, crude: the baseline scaled by 30x parameters and 1/14 of the data, with an A100 assumed at 2x an A6000 |
-| Sculptor: Glimmer QLoRA full run | About 4 days on 8 H100 | $3k to $5k per run | D, crude, same basis |
-| Forge: gate 50k recipes | About 24 CPU-hours | Tens of dollars | D |
-| Forge: render and caption | Unknown | $50 to $300 | E |
-| Forge: smoke test (30 to 100 steps) | Under 1 h | $3 to $5 | E |
-| Forge: Glimmer QLoRA SFT pilot, 3k to 5k pairs | 3 to 5 h on A100; 1 to 2 h on H100 | $8 to $12 (A100); $4 to $8 (H100) | E: about 6 x 28B parameters x tokens at 70 to 110 TFLOPS effective, 600-token recipes, 2 to 3 epochs |
-| Forge: Glimmer QLoRA SFT, 50k pairs, 3 epochs (about 90M tokens) | 2 to 3 days on A100; 15 to 22 h on H100 | $100 to $160 (A100); $60 to $90 (H100) | E, same basis. The linear bound from the paper (96 GPU-hours x 30) is $4k to $10k and assumes 4096-token samples. |
-| Forge: one rejection-sampling round (16k to 40k samples, gates, short SFT) | About 5 to 8 h | $15 to $25 | E |
-| Forge: GRPO (optional) | Unknown | Unknown; at least the SFT cost | No verified number. Only if validity plateaus. |
-| Serving Glimmer (adapter or merged) | A recipe call about 10 to 20 s and a brick design about 40 to 80 s on one A100-80GB | $0.01 to $0.03 per recipe call; an always-warm A100 is about $1,800 per month | E: BF16 weights are about 60 GB, so decode is about 25 to 30 tokens per second; Modal A100-80GB at $2.50 per hour |
-
-Cheapest first tuned Forge model on Modal: about $15 to $40 (smoke test, a
-3k-pair pilot, one small rejection-sampling round), if 3k pairs are enough. With
-a full SFT run and two rounds: about $200 to $300. The sculptor spike is the
-largest line item. Multiply per-run costs by 3 to 5 for iteration.
-
-GPU rates used: A100 80GB about $1.49 to $3.43 per GPU-hour; H100 about $2 to
-$7 with a median near $3.37. Sources are vendor blogs from March to August 2026
-and conflict, so check live pricing.
-
-**Modal list prices (modal.com/pricing, read 2026-11-01).** A100-80GB $2.50 per
-hour, A100-40GB $2.10, H100 $3.95, L40S $1.95, A10 $1.10, L4 $0.80; CPU about
-$0.047 per physical core-hour. The Starter plan includes $30 per month in
-credits and 10 concurrent GPUs. GPU functions are always preemptible (the
-non-preemptible 3x price applies to CPU and memory only), so every training job
-checkpoints to a Volume and retries.
-
-**Local machines (updated 2026-11-01).** None can tune Glimmer. QLoRA of the 30B
-model needs about 24 GB of GPU memory (Unsloth), so an 8 GB card (RTX 4060 or
-3050) cannot, and a 32 GB Apple M5 would take weeks to months (E, scaled from a
-1B run). Local machines are for debugging the pipeline on a small stand-in model,
-CPU data generation (gating 50k recipes is about 4 to 8 hours on the M5, E), and
-Glimmer 4-bit inference spikes (about 18 GB; MLX and llama.cpp support was still
-rolling out). All Glimmer tuning runs on Modal. A 100-step timing run on Modal
-gives the real tokens per second and replaces every compute estimate here.
-
-**Base model (constraint, Dan, 2026-11-01).** Every model we train starts from
-Muse Glimmer or Muse Spark Open. Glimmer is the default and the whole plan
-below is costed on it. Spark Open is an option, not a constraint, and is set as
-a stretch goal (G7): it is not ruled out, it just is not the starting point.
-Glimmer: 30B dense (29.6B parameters, of which about 1.8B are a frozen vision
-encoder), Apache 2.0 plus a separate usage policy, text and image in, text out.
-Why Spark Open waits: about 816B total and 42B active parameters (inferred from
-its model name, not stated on its page), no license text on its page, and about
-410 GB of weights even at 4-bit (D); no tuning recipe for it was found, so it
-has no cost estimate here. Unsloth's
-Glimmer guide supports QLoRA (measured peak 22.57 GiB at sequence length 1024,
-batch 1, r=16; plan on 24 GB). NVIDIA NeMo AutoModel has Glimmer recipes for
-LoRA and full SFT but no QLoRA. Smaller open models (1B to 8B) are no longer the
-plan; the published 1B baseline stays as a reference for time and cost only. A
-linear scaling of its 96 GPU-hours by 30x gives a crude $4k to $10k per
-full-data run (D); the token-based estimates above are far lower because Forge
-recipes are short.
-
-**Not in these numbers:** people time (the stability simulator, the eval
-harness, exemplar recipes and the human taste ratings will likely cost more
-than the GPUs); Spark's API price, which blocks a break-even comparison with
-the prompted workflow; the share of rejected layouts in structure generation;
-and retraining after catalog waves or schema changes.
-
-## Glimmer Forge: workflow and phases
-
-**Stretch goal (Dan, 2026-11-01).** This whole section is a stretch goal. Only
-G0 is committed (it is Phase 0). G1 to G7 start if time and budget allow and
-never block the Nov 4 submission.
-
-**Constraint (Dan, 2026-11-01).** Every model we train starts from Muse Glimmer
-or Muse Spark Open. Glimmer is the default for G1 to G6; Spark Open is an
-option, set as a stretch goal (G7, see "Base model"). The prompted baseline runs
-on Glimmer too, so the bar a tuned adapter must clear is base Glimmer with good
-prompts, not a weaker model. Hosted Spark stays as the last model fallback.
-
-**End state.** A kid describes something, photographs an object, or picks a
-host (a head or a vehicle). A Glimmer adapter writes a Recipe v1. Legalizers
-clamp it, the Python gates verify it, and a repair loop patches failures. The
-result is a part that prints and seats on the toy, or a usable fallback: never a
-blank screen, and never an unverified part called printable.
-
-### Runtime workflow (every request)
-
-1. **Intake.** The client calls `POST /api/forge` with text, a photo or a host
-   id, then polls the job. The Worker applies the kid-safety prefix, the
-   brand-term filter and the per-IP limits. Printing stays behind the grown-up
-   gate.
-2. **Photo path (F2).** Glimmer looks at the photo and returns ranked nouns, a
-   role and a slot (A1). Hosted SAM 3.1 cuts the mask for `nouns[0]`. Code turns
-   the mask into a width profile or contour. Later, optionally, SAM 3D slices
-   add depth; adopt them only if the eval shows a lift.
-3. **Context.** Code adds the slot bounds, the host envelope numbers (F4) and
-   three to five nearest exemplar recipes. The base model needs the exemplars;
-   the tuned adapter needs fewer.
-4. **Write.** Glimmer, under one fixed system prompt (`Reasoning strength: low`),
-   emits Recipe v1 with JSON-schema constrained decoding. The decoder removes
-   syntax failures, so the adapter only has to learn what is valid and good.
-5. **Legalize.** L1 slope clamp, L2 small-parts size band, L3 clamp.
-   Deterministic and logged.
-6. **Compile and gate.** The daemon's `compile_recipe_to_partspec` builds a `part_spec`;
-   `validate_and_export()` runs the gates: overhang, islands, bridges, ledges,
-   the small-parts screen, brand errors and the attach test on a reference
-   parent.
-7. **Repair.** On failure, code turns the report into `{gate, value, limit,
-   hint}` and Glimmer patches parameters. At most 4 model calls per job.
-8. **Return.** Pass: STL, preview, check results and an "AI-made" label. Still
-   failing: the fallback chain, which is the nearest passing exemplar, then the
-   closest catalog part, then "try this instead".
-9. **Log.** Every attempt: recipe, gate report, model and adapter version,
-   calls, latency and tokens. This is the next round's data.
-
-### Training workflow (what makes it better)
-
-1. **Data (G2).** Exemplars measured from the catalog, a sampler for random
-   recipes within slot bounds, gate-filtered pairs, failure-to-fix pairs from
-   deliberately broken recipes, and the attempt log. Eval prompts and slots are
-   held out of training.
-2. **Pilot SFT (G3).** Glimmer QLoRA on Modal with 3k to 5k pairs.
-3. **Eval.** Same prompts, four contenders: hosted Spark prompted, base Glimmer
-   prompted, base Glimmer with constrained decoding, and the adapter. Each runs
-   the harness's three modes (single shot, plus legalizers, plus repair). Report
-   first-attempt and final pass rate, mean calls, latency p50 and p95, tokens,
-   failures per gate id, and a manual 1 to 5 taste rating.
-4. **Refine (G4).** Rejection sampling: sample 8 recipes per prompt from the
-   current model, keep gate-passers that humans rate well, and run SFT on them.
-   Gates are a filter; taste is the objective.
-5. **Ship (G5).** Serve on Modal; the prompted chain stays as the fallback.
-6. **Retrain (G6).** On a catalog wave, a schema change, a new slot or pass-rate
-   drift. Ship only if the new model beats the live one on the full eval.
-
-### Modal setup
-
-- **Training.** One image with Unsloth (versions pinned after G1) and
-  `unsloth/Muse-Glimmer-30B-unsloth-bnb-4bit` (about 21 GB). Three Volumes:
-  weights, data, checkpoints. `gpu=["H100","A100-80GB"]` (Modal may upgrade H100
-  to H200 at no extra cost). GPU functions are always preemptible, so use
-  `modal.Retries(max_retries=10, initial_delay=0)`, `single_use_containers=True`,
-  a checkpoint every 50 to 100 steps, and resume from the last checkpoint.
-  Launch with `.spawn()` and `modal run --detach`: the timeout caps at 24 hours
-  per attempt and `.remote()` calls expire at 24 hours. One GPU per run; run 3 to
-  5 variants side by side (Starter allows 10 concurrent GPUs).
-- **Config start.** r=16 and alpha=16 (r=32 if the eval says the task is harder),
-  learning rate 2e-4, 1 to 3 epochs, packing, `train_on_responses_only`,
-  `adamw_8bit`, bf16, `finetune_vision_layers=False`, max sequence 1024 to 2048.
-  Training prompts are short: no few-shot exemplars.
-- **Serving.** vLLM or SGLang on Modal (OpenAI-compatible, per the model card),
-  JSON-schema constrained decoding, scale to zero, and a GPU memory snapshot to
-  cut cold start (not measured at 60 GB). If adapter serving fails, run
-  `merge_and_unload()` and serve the merged weights.
-- **Gates on CPU.** The Python gates run on Modal CPU or the local validator
-  server, fanned out for batch jobs (about 24 CPU-hours per 50k recipes).
-
-### Phases
-
-| Phase | Scope | Needs | Cost (E) | Gate or stop rule | Target |
-| --- | --- | --- | --- | --- | --- |
-| G0 | Baseline and eval: Recipe v1 schema and compiler (built in the optimizer daemon, with L1 and L3), legalizer L2, model call and repair loop, CLI loop, eval harness (about 60 prompts), pre-generated showcase; prompted baseline on hosted Spark | Local venv and Spark key | No GPU spend | An eval report exists: per-gate failure counts, first-attempt and final pass rates, cost and latency per job | Before Nov 4 (this is Phase 0) |
-| G1 | Glimmer baseline and smoke test: serve base Glimmer on Modal; run the eval prompted, with and without constrained decoding; 30 to 100 step QLoRA smoke test on about 50 recipes; record tokens per second, peak memory and cold start; test adapter serving | Modal account, G0 eval set | $5 to $20 | The smoke test saves an adapter; constrained output is valid JSON on at least 99% of calls (target); baseline numbers recorded; open question 15 answered. If Glimmer will not train or serve, stop and report. | Stretch goal; not needed for Nov 4 |
-| G2 | Data: 10 to 20 exemplar recipes measured from catalog STLs; sampler within slot bounds; gate-filtered pairs; failure-to-fix pairs; programmatic captions first, Glimmer captions for a subset; held-out eval split; license manifest | G0 compiler and legalizers; gates on Modal CPU or the local validator | $1 to $3 CPU per 50k gate runs; captions $0 to $300 | Humans spot-check style and diversity; sampler diversity measured; no eval prompt or slot appears in training | After G1 |
-| G3 | Pilot SFT: 3k to 5k pairs, QLoRA, 1 to 3 epochs, 2 to 3 variants in parallel; held-out eval against the G1 baselines. Starts only if the G1 baseline trips a Forge-model gate. | G1, G2 | $8 to $12 per run; about $30 for a three-way sweep | Beats the best prompted Glimmer baseline on first-attempt pass rate with no drop in rating. If not, stop spending: improve the data, try r=32, or stay prompted. | After G2 |
-| G4 | Scale and refine: full SFT at 20k to 50k pairs if the pilot curve says more data helps; 1 to 3 rejection-sampling rounds; GRPO only if validity plateaus and a gate reward is stable; about 1,000 human taste ratings for filtering | G3 passed | $60 to $160 per full SFT; $15 to $25 per round | Beats the prompted baseline on pass rate and human rating together, at lower cost per job | After G3 |
-| G5 | Serve and integrate: vLLM or SGLang on Modal behind `/api/forge` and the Gatekeeper contract; constrained decoding; adapter or merged weights; scale to zero; fallback chain tuned adapter, then base Glimmer prompted, then hosted Spark prompted, then catalog; "AI-made" label | G4 passed or G3 good enough | $0.01 to $0.03 per recipe call; avoid an always-warm GPU ($1,800 per month on an A100) | Fallback verified by switching models in the eval; p95 latency inside a budget set after measuring; cost per job measured | After G4 |
-| G6 | Operate: retrain on catalog waves, schema changes, new slots and pass-rate drift; attempt log feeds the next rounds; optional SAM 3D depth experiment for F2; A6 failure-photo data | G5 live | Per retrain, as G3 and G4 | Every retrain reruns the full eval and ships only if it beats the live model | Ongoing |
-| G7 (stretch) | Muse Spark Open as a base: repeat G1 on Spark Open (serve it, run the eval prompted, find a tuning path) and, only if that works, one pilot SFT as in G3 against the best Glimmer adapter | G5 live; Meta's license and terms for Spark Open stated; a tuning recipe and a serving stack that fit Modal; a reason to try it (the Glimmer adapter plateaus below the quality gate, or a larger model is wanted) | Not estimated: about 410 GB of weights at 4-bit means multi-GPU, and no recipe was found | Ship only if it beats the best Glimmer adapter on pass rate and rating together, at a cost per job the product can carry. If the license, tuning path or cost fails, stop; Glimmer stays. | Post-submission, after G5 |
-
-Every phase has a stop rule: when its gate fails, stop spending, record the
-numbers, and either fix the data or stay on the prompted chain.
-
-**How this maps to the other tables.** G0 is Phase 0 and R0. G2 is R3. G3 and G4
-are R4. G5 is R5 on the Forge side. Phases 0b to 2c (assists, F4, F5, A6) are
-unchanged. The brick sculptor stays parked at R1 and R2 until it has its own
-product spec; its Glimmer spike ($250 to $350) is the largest GPU line item.
-
-**Budget.** The cheapest path to a first tuned Forge model is G1, G3 and one
-small round of G4: about $15 to $40 (E), if 3k pairs are enough. With a full SFT
-run and two rounds: about $200 to $300. People time (compiler, sampler, taste
-ratings) is not included and will likely exceed the GPU bill.
+Cheapest first tuned model: G1 + G3 + one small G4 round. People time exceeds
+GPU cost. Local machines handle debug + CPU gating; tuning runs on hosted GPUs.
 
 ## Phases
 
-| Phase | Scope | Needs | Target |
-| --- | --- | --- | --- |
-| 0 | Model call and repair loop, legalizer L2, CLI loop, eval harness, pre-generated showcase set (F1, F3 core); the Recipe v1 compiler, L1, L3 and the gate server already exist in the optimizer daemon | Local venv and Spark key only | Before Nov 4 |
-| 0b | A1 vision spike then flow, A2 template table then model rewrite, `worker/assist.ts` | Spark key only; no validator | Before Nov 4 if the vision spike passes |
-| 1 | `/api/forge` job route, local validator server (the optimizer daemon, partly built), F2 profile extraction and printable path, attempt log, UI entry points | Phase 0 | Nov 4 stretch, otherwise right after |
-| 1b | Validator in a Container or Sandbox | Phase 1 | After submission |
-| 2 | F5 planner (plan and edit modes, which also delivers A4), F4 host argument, host-envelope export, A5 templates | Phase 1 validator | After submission |
-| 2b | F4 cavity-hat builder | Phase 2 | Later |
-| 2c | A6: print about 10 failure coupons, photograph and label them, run the eval, then build the triage flow and fix cards | Phase 0b vision spike | After submission |
-| 2d | F6 Finish it: a spike on 3 real assembled builds (smoothing method, gates, time), then the game path (polished GLB), then the print path | Phase 2 (F5 supplies assembled builds); open questions 20 to 23 answered | After submission |
-| 3 | Forge model track G0 to G6, G7 as a stretch (see "Glimmer Forge: workflow and phases"); sculptor stages R1 and R2 behind their own gate | Phase 1 attempt log and eval numbers | G0 is Phase 0 (before Nov 4); G1 to G7 and the sculptor are a stretch goal |
+| Phase | Scope | Target |
+| --- | --- | --- |
+| 0 | Model call + repair, L2, CLI, eval, pre-generated showcase (F1/F3 core) | Before Nov 4 |
+| 0b | A1 vision spike then flow; A2 templates then rewrite | Before Nov 4 if spike passes |
+| 1 | `/api/forge` job route, local validator, F2 extraction, attempt log, UI | Nov 4 stretch, else after |
+| 1b | Validator in container/sandbox | After submission |
+| 2 | F5 planner (plan + edit = A4), F4 host arg + envelopes, A5 templates | After submission |
+| 2b | F4 cavity-hat builder | Later |
+| 2c | A6: print ~10 failure coupons, label, eval, triage + cards | After submission |
+| 2d | F6 spike on 3 builds, then game path, then print path | After submission |
+| 3 | Forge G0–G6, G7 as stretch; sculptor R1–R2 behind its gate | G0 before Nov 4; rest stretch |
 
-Honest demo framing for Nov 4: Phase 0 outputs are pre-generated and
-verified; the live flow, if any, is one hero path. Say so in the demo script,
-as `spec.md` already does with its "mocked or pre-made" column.
+Demo framing for Nov 4: Phase 0 outputs are pre-generated and verified; any
+live flow is one hero path. Say so in the demo script.
 
 ## Gates for the Forge model
 
-The Forge model (roadmap R3 and R4, phases G2 to G5) is trained only if the eval shows one of
-these after legalizers and repair are in place:
+Train only if the eval shows one of these after legalizers + repair: final
+pass rate below ~70% for prompt-unteachable geometric reasons; cost/latency
+unacceptable at volume; hard self-hosted-weights requirement; or taste stays
+low on valid parts.
 
-- Final pass rate stays below about 70% because the geometric intuition behind
-  the gates is not prompt-teachable.
-- Cost or latency per job is unacceptable at expected volume.
-- A hard privacy requirement for self-hosted weights.
-- Taste: ratings stay low on valid parts.
+Current reading: pass-rate gate not tripped (100% final); taste gate tripped
+for heads. Richer recipe ops + taste loop come before any tuning.
 
-**First reading (2026-11-02, updated after the first taste check).** The Spark
-baseline's final pass rate was 83% with prompt v0 and is 100% with prompt v1 (78%
-on the first attempt both times), well above the 70% line, so the pass-rate gate
-is not tripped. The taste gate looks tripped: Dan's first 19 ratings average 1.47
-with none above 3. The cause is open (see "First taste check"): the recipe cannot
-express many requests, and the prompt may be narrowing variety. A tuned model
-cannot add shapes the recipe cannot make, so richer recipe ops and a taste loop
-come before any tuning. The first round of new ops (prompt v2) kept the final
-pass rate at 100% and lifted feature-op use from 4 of 22 prompts to 13 of 22;
-brims, points, horns and ears now show, and heads are still mostly boxes. Head ops
-and prompt v3 raised op use to 15 of 22 and gave the robot, alien and dinosaur
-something (antennae, a snout) without hurting validity (22 of 22 final), but
-the astronaut and pumpkin are still plain slabs. Dan's re-rating of the 22 parts
-lifted the mean from 1.47 (round 1, 19 parts) to 2.36 and the share at 3 or above
-from 4 of 19 to 9 of 22: crowns improved clearly (1.64 to 2.64), heads only a
-little (1.0 to 2.0 on the same five prompts). The taste gate is therefore still
-tripped for heads. Two heads lost points because ears overlap the crown studs;
-head ears and horns are now fitted around the studs (see "Dan's ratings of rounds
-2 and 3"), and that fix is not yet re-rated. Latency is fine and
-Spark's price is unknown.
+## Stretch goals (post-freeze)
 
-If tuning is chosen, the training set is the gate-filtered sampler output plus
-the attempt log (see "Data plan"). The base model is Muse Glimmer (Dan's
-constraint, 2026-11-01; see "Custom model roadmap"). These gates decide how much
-to spend on tuning, not whether Glimmer is used: the prompted baseline runs on
-Glimmer too. Spark Open is a stretch option (G7) and would face the same gates.
-The license assumption in "Data
-plan" covers external datasets; Meta's terms on training from Spark outputs are
-not stated on the pages reviewed, so caption with self-hosted Glimmer (Apache
-2.0; its separate usage policy does not mention fine-tuning, derivatives or
-training on outputs) or confirm Spark's terms first.
+Parked behind Nov 4; same contract (model proposes JSON, code verifies):
 
-The brick sculptor (roadmap R1 and R2) has its own gate: the spike must
-produce structures that stand and that people recognize. It is a separate
-feature from Forge and needs its own product spec before any user-facing work;
-this document covers only its data and training plan. A published text-to-brick model is the precedent:
-a fine-tuned 1B model with a physics check and rollback, backed by an MIT
-dataset. Keep third-party brand names out of user-facing copy.
-
-## Stretch goals (post-freeze `SAM 3.1` + `Muse` extensions)
-
-All items below stay parked behind the Nov 4 core freeze and obey the same
-contract as `F1-F5` and `A1-A6`: `SAM 3.1` emits masks/silhouettes with zero
-room pixels persisted, `Muse` emits schema-validated JSON recipes, and
-deterministic code verifies geometry, fit, and physics.
-
-1. **Live `Muse Spark` behind `Describe & Build`:** Connect `/api/muse/spark`
-   to propose `kip-describe` part graphs validated by `fit_matrix` and the 8 mm
-   exploded-view timeline, with deterministic recipe-book fallback.
-2. **Adaptive Town Quests & Playable Create Lots (`Muse Spark` + `Muse Voice`):**
-   Generate `toyventor.quest/1` NPC commissions from unpracticed
-   `CONCEPT_BADGES` and age band, and let Create mode emit mission beacons and
-   vehicle terrain gates inside `toyventor.level/1`.
-3. **Kid Sketch / Clay -> Printable Snap Part:** `SAM 3.1` paper/clay contour
-   -> `Muse` slot & stat -> `Recipe v1` extrusion/loft + `12.5 mm` TU socket
-   verified through `kip_partspec_sdk.py`.
-4. **Physical Build -> Digital Twin Sync:** Multi-prompt `SAM 3.1` desk photo
-   across printed modules (`head`, `hat`, `wheels`, `chassis`) matched against
-   `ai_catalog.txt` into `toyventor.toy/1`, plus `Muse Image` sticker/marker lift.
-5. **Living-Room Course -> Playable 2.5D Level:** Side-view `SAM 3.1` floor
-   segmentation (`book`, `cup`, `pillow`, `box`) mapped by `Muse Spark` into a
-   playable `toyventor.level/1` obstacle and ramp course.
-6. **Upcycle Lab (Cardboard & Bottle Adapters):** `SAM 3.1` household box/bottle
-   scaled against a printed `1x1 TU` reference tile -> parametric clip/axle
-   collar `Recipe v1`.
-7. **Photo Print-Fit & Calibration Doctor:** `SAM 3.1` + `Muse` inspect a photo
-   of the printed `1/2/3-dot` calibration strip to set per-printer XY fit
-   compensation automatically.
-8. **Privacy-Safe STEM Scavenger & `Max` Robotics Exhaust:** Ephemeral
-   `SAM 3.1` target-noun masks for `Real Life Counts` tidy/scavenger quests, and
-   parent-approved `(mask, TU_grasp_anchor, mm_scale, torque)` priors feeding
-   the `Max` real-robot track ([scan-to-3d.md](scan-to-3d.md)).
-9. **Own models (Glimmer Forge G1 to G6, Spark Open G7, brick sculptor):** The
-   whole track in "Glimmer Forge: workflow and phases" is a stretch goal; only
-   G0 (Phase 0) is committed. Spark Open (G7) is an option under Dan's
-   constraint, not a requirement; it needs Meta's license terms, a tuning path
-   and a serving stack first (open question 18).
+1. Model behind Describe & Build with deterministic fallback.
+2. Quest + Create-lot generation from badges and age band.
+3. Sketch/clay contour to slot/stat to Recipe extrusion + socket.
+4. Desk-photo to part-graph twin + sticker lift.
+5. Room-photo to playable 2.5D level obstacles/ramps.
+6. Household box/bottle to parametric clip/axle collar.
+7. Printed-strip photo to per-printer fit compensation.
+8. Ephemeral masks for tidy/scavenger quests + robot priors.
+9. Own models (G1–G6, larger base G7, sculptor) per above.
 
 ## Not doing
 
-- Model-generated meshes, or any path where the model's geometry skips the gates.
-- Executing model-written Python in production.
-- Porting the gates to TypeScript.
-- A vector store for 185 parts.
-- Fine-tuning Forge before the eval says to, or training any model before its
-  roadmap gate.
-- A single combined model for Forge and the brick sculptor.
-- Open-ended chat with kids, mood reading from faces, or live-generated audio.
-- Live print monitoring or printer control by a model (Obico and some printers
-  already watch the camera), and any model-written slicer setting or G-code.
-- Training a model that starts from neither Muse Glimmer nor Muse Spark Open
-  (Dan's constraint, 2026-11-01). Spark Open is a stretch option (G7), not a
-  requirement.
+- Model-generated meshes or any geometry skipping the gates.
+- Executing model-written Python in production. Porting gates to TypeScript.
+- A vector store for ~185 parts. One combined Forge + sculptor model.
+- Tuning before the eval says to. Open-ended kid chat, mood reading, live audio.
+- Model-driven live print monitoring, slicer settings, or G-code.
+- Training from any base outside the two approved ones (larger base is G7 only).
 
-## Open questions (resolve by measurement, not debate)
+## Open questions (measurement, not debate)
 
-1. Validation latency per recipe, including the assembly attach test; it sets
-   the job time budget. First numbers (2026-11-02, crown hats through the
-   optimizer daemon, one worker): 3.0 to 5.4 s for the first three jobs (load
-   not measured), then 7.3 to 31.3 s for nine more, with a load average of 55
-   measured afterwards. Budget 5 to 30 s per validation until it is measured on
-   a quiet machine; four repair rounds then add 20 s to 2 min before model time.
-   Baseline run (94 jobs, load average 73 falling to 20): validation p50 2.5 s,
-   p95 16.3 s.
-2. Whether hosted Muse Spark accepts image input through the Responses API.
-   Muse Spark Open's page says it perceives images; hosted behavior is
-   unverified here. F2 does not depend on it; A1 does.
-3. Spark pricing and Spark Open's license. Neither was stated on the page
-   reviewed.
-4. How often Spark produces a usable loft from text alone. The eval's
-   first-attempt rate answers this and is the main quality risk.
-5. Gate trip frequency for accessories (as opposed to heads and wigs, where
-   it is known). The eval's per-gate counts decide the next legalizer.
-6. A4: no real kid-speech data exists and COPPA limits collecting it, so adult
-   phrasing is the only offline test set.
-7. Brick sculptor: the stability analysis in the paper uses a commercial
-   solver. Is its license acceptable, or does an open-source solver give
-   equivalent verdicts on a hand-checked set?
-8. Brick sculptor: is the Snap brick and plate subset (8 stackable, 3 brick,
-   5 plate of 114 Snap parts) expressive enough to build recognizable things?
-9. Sampler diversity ceiling: how much of the shape space the Forge recipe
-   sampler covers, and whether exemplars and usage widen it enough.
-10. Caption quality and cost: self-hosted open model versus the hosted API,
-    and the terms on training from either's outputs.
-11. Whether kids use a brick sculptor at all. Product need is unvalidated.
-12. Every cost figure tagged E in "Data plan" and "Compute time and cost" is an
-    estimate; the first real numbers come from building the recipe compiler and
-    timing the gates per recipe.
-13. A6: no public benchmark was found for photo of a failed print to cause to
-    settings change (the nearest work, LLM-3D Print, monitors live prints and
-    adjusts settings through the printer's API). Does Spark reach the accuracy
-    target on our coupons, and is a people-in-frame screen needed before a
-    grown-up's photo reaches a vision call?
-14. Per-printer tolerance: how many printers it takes before a prior by
-    printer, nozzle and material beats the single 1/2/3 choice, and whether the
-    photo variant (stretch item 7) is worth building.
-15. Glimmer training: tokens per second, peak memory at 1024 and 2048 tokens,
-    whether text-only LoRA works with `finetune_vision_layers=False`, the LoRA
-    target-module names, and whether vLLM or SGLang serve a Glimmer LoRA
-    adapter. The G1 smoke test answers all four.
-16. Glimmer's usage policy says it is "not intended for individuals under the
-    age of 18", bars inferring private information about individuals, and bars
-    presenting outputs as human-made. Our users are children, though the model
-    is only called server-side. Does that need a policy review, and does Meta's
-    safety post-training survive fine-tuning (the model card does not say)?
-17. Which model runs the prompted baseline: hosted Spark or self-hosted base
-    Glimmer. Base Glimmer with good prompts and constrained decoding is the bar
-    a tuned adapter must clear; running the baseline on Glimmer also keeps it
-    comparable with the tuned adapter.
-18. Spark Open as a base (stretch G7): Meta's license and terms for it, whether
-    its parameter counts are as inferred (816B total, 42B active), whether any
-    tuning recipe exists, and what serving costs on Modal. G7 does not start
-    until these are answered.
-19. Contract alignment with the optimizer lane. The outer Forge job
-    (`POST /api/forge`; stages `proposing`, `checking`, `repairing`) versus the
-    lane's routes and job states (`/api/forge/preview`, `/api/forge/jobs/:id`;
-    `queued` to `print_ready` or `digital_only`). Proposal: keep the Forge job
-    as an outer layer that hands each recipe to an optimizer job and returns its
-    `job_id`; give the outer poll route another name; treat the lane's Recipe v1
-    limits (2 to 16 slices, `knob` and `brim` only, `support_policy`) as
-    canonical and add `ears`, `fin`, `antenna` and `band` only when the eval
-    shows a need. The lane's owner agrees this before any Phase 0 change to its
-    files. Also for that owner: the daemon's hand path hardcodes
-    `fillet_r = 1.4` for `star2d`, while the verified `custom_star_wand` uses
-    1.6. In an SDK-only test (2026-11-02) the same star passes at 1.6 and fails
-    `G1_watertight` and `G3_single_body` at 1.4 (`center_z` made no difference),
-    and 5 of the 6 star shapes tried through the daemon failed. A first fix
-    changed a variable that star shapes never read, so the baseline below still
-    ran at 1.4. The real fix (uncommitted, 2026-11-02) passes `fillet_r` into
-    `star_2d`; Spark's three failing first-try stars (5 points 14/6.5, 6 points
-    14/7, 10 points 12/9) now pass through the daemon's compile path. The lane's
-    follow-up branch still has the original line.
-20. F6, display or wearable? Should a finished object stand alone, or keep its
-    socket footprint so it still attaches to a head or vehicle? One finish
-    recipe can serve both; the gates differ.
-21. F6, moving parts. Do wheels, hands and hinges fuse into the body (a static
-    display model) or stay separate printed pieces with their axles?
-22. F6, size. A finished car can exceed the print bed (`limits.bed_mm` in
-    `interfaces.json`). Scale it down, split it into pinned pieces, or refuse and
-    offer a smaller finish?
-23. F6, colour. Game-only colour zones, one printed colour, or multi-colour
-    printing as separate bodies per colour?
-24. Concept-image path for F1. Can Muse Image generate from text alone? The repo
-    uses it for edits only. If so: front and side images, SAM masks, width and
-    depth per height, loft slices fitted to the outlines and scored by overlap
-    with the mask. Needs image-generation access, latency and cost, a kid-safety
-    and brand filter on generated images, and richer recipe ops, because an
-    outline cannot make separate ears, horns or crown points.
-25. Taste loop. Iterate until a judge scores "fine" (3) or better. The judge is
-    either silhouette overlap with a concept image, or a vision model scoring
-    renders against the request, calibrated on Dan's ratings with some held out.
-    Cap the iterations, stop early when the recipe cannot express the request,
-    and fall back to the nearest catalog part.
-26. F2b, photo privacy before release. Beta is approved on the current
-    `/api/scan` path. Does a public release need the parent gate and consent for
-    object photos, as the selfie cloud has, and what happens when a person is in
-    frame? A1's vision call could flag it.
-27. F2b, back plaque. Can a flat outline sit on the 2x2 backpack pad
-    support-free? By the flare rule (outward growth at most 0.78 x dz per side) a
-    4 mm plate overhangs about 3 mm per side, so about 31 mm across on the
-    24.6 mm pad (an estimate from the rule; nothing built or printed). Anything
-    wider needs `support_policy: minimal` (allowed on `back`) or a tapered
-    pedestal. Spike `backpack_addon` with an extruded outline before promising a
-    back slot for Route A.
-28. F2b, relief. Do 2 to 4 stepped levels read as a dome or as terraces on the
-    Ender at 0.2 mm layers, and what is the smallest step that survives? Print
-    three coupons before the `relief` feature goes into Recipe v1.
-29. F2b, capture. Does a kid or parent take a usable side photo (upright, the
-    object filling the frame to the same height as the front one)? Try about 5
-    attempts before building the Route C screen. The fallback is Route B.
-30. F2b, for the optimizer lane's owner (the daemon and SDK are theirs; I changed
-    nothing there). (a) The daemon's default `fillet_r_mm` for `profile2d` is 1.2
-    and fails the gates on 25 of 33 traced outlines; 1.6 passes 33 of 33 (open
-    question 19 has the star version). A default of 1.6 would help every caller.
-    (b) L2 skips hand plates, so a marginal hand part has no automatic fix.
-    (c) The failing meshes are the main body plus zero-volume two-face pieces
-    (found by splitting the converted mesh; one star at 54 mm, not a survey).
-    Whether the gate should ignore degenerate faces, or the SDK should drop them
-    before the gate, is the owner's call. Until then F2b works around it with the
-    retry ladder. (d) The sticker has to be cut to the built plate, and the plate
-    is the recipe polygon rounded again by the builder (plus the neck). The daemon
-    could return the built outline (the `CrossSection` after `handheld_prop`), which
-    would make the sticker exact; F2b rounds the polygon itself in TypeScript, which
-    is within 0.2 mm on regular shapes. (e) `gate_report` in
-    `shared/forgeOptimizer.ts` does not list `small_part`, though the daemon's job
-    record carries it and the fit loop depends on it for the marginal case.
-    (f) The preview route allows 3 calls a minute per device (6 per IP), and its
-    limiter counts a refused call as a hit, so a caller that retries inside the
-    minute is never let back in. One fit is 1 call about 7 times in 8 and 2 calls
-    otherwise (70 fits), and the loop may use up to 8; a kid who flips the handle
-    and resizes twice spends 3 more. A separate budget for fits, or a limiter that
-    does not count refused calls, would let the loop run. Both are security
-    choices in `worker/forgeOptimizer.ts`, so they are the owner's call. The gate
-    driver never retries, for this reason. The real spoon fit needed 4 gate calls (three
-    slivers, then a pass) and met the limit on its fourth until the limiter was reset
-    by hand; so 3 a minute is below what one real fit can use.
-    (g) Done with Dan's approval on 2026-11-02: the point limit of a hand `profile2d` is
-    256, not 64, in `scripts/forge_optimizer_daemon.py` (the check at the start of the
-    `profile2d` branch) and in the Worker's allowlist (now the shared constant
-    `FORGE_MAX_PROFILE_POINTS`). The SDK needed nothing. `tests/forge/profile-points.test.ts`
-    covers the daemon; the eval's prompt text (`scripts/forge-eval.ts`,
-    `scripts/lib/forgeEvalCore.ts`) still says 3 to 64, which stays true as a sub-range, and
-    is the owner's to widen if a model should draw denser outlines.
-31. F2b, where the fit loop runs. Only the Worker holds the mask raster, and the
-    gate is the daemon behind the forge routes, which need a live parent proof (2
-    or 5 minutes) and are rate limited. No client calls those routes today. Three
-    ways to split the work. (a) The Worker runs `legalizeOutline` on the raster
-    and returns the outline with the scan (about 0.1 to 0.5 s of CPU on a 400 by
-    400 mask in Node; `wrangler.jsonc` sets no CPU limit and I do not know the
-    plan, so check it). The device keeps the polygon and, at the print step behind
-    the grown-up gate, runs `fitPolygon` with `forgeRouteGate`. (b) The Worker
-    returns the mask as run-length data (a few KB, no photo) and the device runs
-    everything. (c) The Worker runs the whole loop and calls the daemon itself: no
-    per-device budget to fight, but one request that can run for a minute. My pick
-    is (a): the digital accessory needs no gate, the fit is a print step, and the
-    print already sits behind the grown-up gate. **Decided (Dan, 2026-11-02): (a).**
-    The Worker half is built. The device half needs question 30 (f) settled first, and the peer plan for a contour in the mask summary
-    ([sam-physical-to-digital-spec.md](sam-physical-to-digital-spec.md), section
-    3) can be filled from the same outline instead of a second tracer.
-
-32. F2b, thin necks. The spoon's printed plate has a 2.0 mm wide neck, 5 mm thick,
-    and the gates pass it (they test printability, not strength). In plane the weak
-    direction is the 2.0 mm width. Is that sturdy enough for a prop a child holds, or
-    should the legalizer refuse or thicken necks under some width (say 3.2 mm, by a small
-    global outward offset, a tenth of a millimetre or two on a 90 mm outline) and say so?
-    Cheapest answer: print the spoon plate and bend it. I have not built a thickening step.
+1. Validation latency per recipe (sets job budget; plan 5–30 s + repair).
+2. Does the hosted model read images (A1/A6 depend on it)?
+3. Hosted model pricing and open-base license terms.
+4. Usable-loft rate from text alone (eval first-attempt rate).
+5. Per-gate trip frequency (decides next legalizer).
+6. No real kid-speech data; adult phrasing only, plus consented playtests.
+7. Sculptor stability check: solver approach, Snap subset expressive enough,
+   do kids want it?
+8. Sampler diversity ceiling; caption quality/cost and training-use terms.
+9. Taste-loop judge (silhouette overlap vs vision-score, calibrated + held out).
+10. Concept-image path needs generation access, safety/brand filters, richer
+    ops. Photo privacy for release (parent gate, people-in-frame).
+11. Fit-loop budget and limiter behavior; thin-neck strength; back-slot and
+    relief spikes before promising them.
 
 ## Docs impact when this ships
 
-- [spec.md](../product/spec.md) "Where we use Meta models": add rows for
-  recipe authoring and the build planner; reword the "part geometry is never
-  model-generated" line to "models propose parameters; gated deterministic code
-  builds all geometry".
-- [spec.md](../product/spec.md) "Where we use Meta models": also add rows for
-  scan assist (Spark vision), the build coach and failed-print triage (Spark
-  vision).
-- [LLM_PART_PROMPT.md](../../parts/kip/sdk/LLM_PART_PROMPT.md): document
-  Recipe v1 alongside the Python script format.
-- [kip-print-workflow-spec.md](kip-print-workflow-spec.md): when F2b Route A
-  lands, the photo accessory's `craft_grip_card_P` blank (listed there as not
-  authored) is replaced by the F2b plate. Its owner decides the wording.
-- [README.md](../README.md): index this spec (done with this file).
+- Product spec "Where we use models": add recipe authoring, planner, scan
+  assist, build coach, triage rows; reword "never model-generated" to "models
+  propose parameters; gated code builds all geometry".
+- `LLM_PART_PROMPT.md`: document Recipe v1 alongside the script format.
+- Print-workflow spec: F2b plate replaces the un-authored photo-blank wording.
+- `README.md`: index this spec.

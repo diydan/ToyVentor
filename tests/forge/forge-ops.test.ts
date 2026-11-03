@@ -307,6 +307,33 @@ describe.skipIf(!PYTHON)("Recipe v1 feature ops through the optimizer daemon", (
     expect(stlVertices(join(outDir, ribbed.stl_artifact!)).length).toBeGreaterThan(stlVertices(join(outDir, plain.stl_artifact!)).length);
   }, 540_000);
 
+  it("stands a brow ridge out of a head's face and prints it without supports", async () => {
+    // Round 13: the gorilla "does not look like a gorilla". A brow ridge above the eyes is geometry that needs no colour.
+    // (A mane was tried the same day, as locks of fur lying on the wall: the lower front leans forward 30 degrees or more,
+    // so only the top rim could carry any relief, it read as bumps, and it was removed.)
+    const kid = [
+      { z: 0, w: 26, d: 12.7, r: 5 },
+      { z: 5, w: 28.6, d: 17.6, r: 6, y: -0.3 },
+      { z: 10, w: 33.5, d: 23.6, r: 8 },
+      { z: 15, w: 38.1, d: 25.7, r: 9, y: -0.45 },
+      { z: 20, w: 34.8, d: 27.1, r: 9, y: -0.95 },
+      { z: 25, w: 33.9, d: 25.5, r: 8, y: -1.25 },
+      { z: 30.5, w: 30.7, d: 17.8, r: 6, y: -0.5 },
+    ];
+    const withHeight = (r: object) => ({ ...r, shape: { kind: "loft", slices: kid, height_mm: 30.5 } });
+    const plain = await run(withHeight(recipe("ops_test_brow_plain", "head", kid, [])));
+    const brow = await run(withHeight(recipe("ops_test_brow", "head", kid, [{ op: "brow", width_mm: 20, thickness_mm: 3.5, height_mm: 6, z_frac: 0.72 }])));
+    expect(brow.status).toBe("print_ready");
+    expect(brow.gate_report?.design_status).toBe("verified");
+    expect(brow.legalizer?.features_dropped).toBeUndefined();
+    // The head's frontmost point is lower down (the wall leans forward up to about z = 20), so compare in the brow's own band.
+    const frontIn = (j: Job) => Math.min(...stlVertices(join(outDir, j.stl_artifact!)).filter((v) => v[2] > 20 && v[2] < 27).map((v) => v[1]));
+    expect(frontIn(plain) - frontIn(brow)).toBeGreaterThan(1); // the ridge stands out of the face (3.5 mm from the wall at its own height, about 1.8 past the plain head's frontmost point in the band)
+    // a brow is for a head: on a crown it is ignored and reported
+    const crown = await run(recipe("ops_test_brow_crown", "crown", HELMET, [{ op: "brow" }]));
+    expect(crown.legalizer?.features_ignored).toContain("brow");
+  }, 540_000);
+
   it("builds ears on the sides of a head and prints them without supports", async () => {
     // Dan's Sketchfab picks (2026-11-03): a monkey's round side ears, an elephant's flaps. (Floppy ears were built and then dropped at his request.)
     const slices = [

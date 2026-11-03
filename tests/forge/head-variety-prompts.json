@@ -1,6 +1,6 @@
 {
  "version": 1,
- "note": "Head variety set (2026-11-03): requests drawn from Dan's Sketchfab picks. Slot head, kid phrasing, one object each. v01 (beagle) and v12 (lop bunny) were dropped when floppy ears were.",
+ "note": "Head variety set (2026-11-03): requests drawn from Dan's Sketchfab picks. Slot head, kid phrasing, one object each. v01 (beagle) and v12 (lop bunny) were dropped when floppy ears were. v15 (troll) was added with the brow op.",
  "prompts": [
   {
    "id": "v02",
@@ -61,6 +61,11 @@
    "id": "v14",
    "slot": "head",
    "text": "a corgi head with big upright ears and a short snout"
+  },
+  {
+   "id": "v15",
+   "slot": "head",
+   "text": "a grumpy troll head"
   }
  ]
 }

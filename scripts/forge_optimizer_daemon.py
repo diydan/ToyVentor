@@ -251,7 +251,7 @@ def _symmetrize_loft_rows(
 # ---------------------------------------------------------------------------
 AUTO_MINIMAL_FOR_OVERHANG = True  # `--no-auto-minimal` turns the none -> minimal promotion off
 SLAB_THICKNESS_MM = 0.8  # `sdk.loft_slabs` default slab thickness
-FEATURE_OPS = ("knob", "brim", "ears", "horns", "spikes", "snout", "hollow", "star", "ribs")
+FEATURE_OPS = ("knob", "brim", "ears", "horns", "spikes", "snout", "hollow", "star", "ribs", "brow")
 _EAR_STYLES = {
     # style: (height_mm, width_mm, tilt_deg) defaults; "round" is a flat disc, "pointy" a leaf, "tall" a bunny ear
     "round": (0.0, 11.0, 8.0),
@@ -335,6 +335,17 @@ def _parse_feature(feat: dict[str, Any], slot: str) -> dict[str, Any] | None:
             "width_mm": _clamp(feat.get("width_mm"), 6.0, 22.0, w0, "width_mm"),
             "height_mm": _clamp(feat.get("height_mm"), 4.0, 16.0, h0, "height_mm"),
             "z_frac": _clamp(feat.get("z_frac"), 0.2, 0.65, 0.4, "z_frac"),
+        }
+    if op == "brow":
+        # a heavy ridge across the front of a head, above the eyes (a gorilla, a grumpy troll)
+        if slot != "head":
+            return None
+        return {
+            "op": "brow",
+            "width_mm": _clamp(feat.get("width_mm"), 10.0, 26.0, 18.0, "width_mm"),
+            "thickness_mm": _clamp(feat.get("thickness_mm"), 1.5, 5.0, 3.0, "thickness_mm"),  # how far it stands out of the face
+            "height_mm": _clamp(feat.get("height_mm"), 3.0, 8.0, 5.0, "height_mm"),
+            "z_frac": _clamp(feat.get("z_frac"), 0.5, 0.9, 0.7, "z_frac"),
         }
     if op == "ribs":
         # vertical grooves round the sides of a head (a pumpkin, a melon, a beehive); the front stays smooth
@@ -1000,11 +1011,15 @@ def _snout_solid(
     head_height_mm: float,
     fs: float,
     info: dict[str, float] | None = None,
+    tip_fracs: tuple[float, float] | None = None,
 ) -> manifold3d.Manifold | None:
     """A snout on the front (-y) of a head: a hull of a tip sphere and two root spheres at the wall.
     The head is clipped at z = height_mm, and the snout is added after `character_head` (like head ears) so
     its flare clip does not shave it back."""
-    _l0, _w0, _h0, tip_w_frac, tip_r_frac = _SNOUT_STYLES[str(feat["style"])]
+    if tip_fracs is not None:  # a brow: the same ramp-and-ridge shape, full width at the tip
+        tip_w_frac, tip_r_frac = tip_fracs
+    else:
+        _l0, _w0, _h0, tip_w_frac, tip_r_frac = _SNOUT_STYLES[str(feat["style"])]
     length = float(feat["length_mm"]) * fs
     width = float(feat["width_mm"]) * fs
     height = float(feat["height_mm"]) * fs
@@ -1066,6 +1081,55 @@ def _snout_solid(
     root_lo = ball(SNOUT_ROOT_R, _snout_root_y(body, z_lo) or (y_ref + SNOUT_ROOT_DEPTH), z_lo, width / 2.0)
     tip = ball(tip_r, y_tip, z_tip, max(0.9, tip_w_frac * width / 2.0))
     return sdk.hull([root_up, root_lo, tip])
+
+
+BROW_TIP_FRACS = (1.0, 0.55)  # a brow's tip is as wide as the ridge; the rest of the shape is the snout's
+BROW_SCALES = (1.0, 0.85, 0.7)  # a thinner brow is tried when the one asked for will not print
+
+
+def _relief_prints(
+    head: manifold3d.Manifold, solid: manifold3d.Manifold, socket: manifold3d.Manifold | None, bare_steep: float
+) -> bool:
+    """True when `solid` added to `head` is one watertight body and adds no real overhang by the gate's own P1 measure
+    (the same test the ear fitter uses: a candidate that only looks right in a render can still fail P1 or G3)."""
+    final = head + (solid - socket if socket is not None else solid)
+    tm = sdk.tp.to_trimesh(final)
+    if not tm.is_watertight or len(tm.split(only_watertight=False)) != 1:
+        return False
+    return float(sdk.tp.overhang_area(tm)[0]) < max(PAIR_STEEP_MAX_MM2, bare_steep + 0.05)
+
+
+def _brow_solid(
+    head: manifold3d.Manifold,
+    feat: dict[str, Any],
+    head_height_mm: float,
+    fs: float,
+    socket: manifold3d.Manifold | None,
+    bare_steep: float,
+) -> tuple[manifold3d.Manifold | None, str]:
+    """A ridge across the front of a head above the eyes: the snout's ramp-and-ridge shape (support-free underside), wide
+    and shallow and high on the face. Thinner versions are tried when the one asked for will not print."""
+    for scale in BROW_SCALES:
+        snout_like = {
+            "style": "brow",
+            "length_mm": float(feat["thickness_mm"]) * scale,
+            "width_mm": float(feat["width_mm"]),
+            "height_mm": float(feat["height_mm"]),
+            "z_frac": float(feat["z_frac"]),
+        }
+        info: dict[str, float] = {}
+        solid = _snout_solid(head, snout_like, head_height_mm, fs, info, tip_fracs=BROW_TIP_FRACS)
+        if solid is None:
+            continue
+        solid = solid.simplify(STUD_CUT_SIMPLIFY_MM)
+        if _relief_prints(head, solid, socket, bare_steep):
+            why = []
+            if scale < 1.0:
+                why.append(f"made {round((1.0 - scale) * 100)}% thinner so it prints without supports")
+            if info.get("raised", 0.0) > 0.0:
+                why.append(f"moved up {info['raised']:g} mm so a support-free ramp fits")
+            return solid, ", ".join(why)
+    return None, ""
 
 
 def compile_recipe_to_partspec(recipe: dict[str, Any]) -> dict[str, Any]:
@@ -1199,6 +1263,7 @@ def compile_recipe_to_partspec(recipe: dict[str, Any]) -> dict[str, Any]:
         hollow_feat: dict[str, Any] | None = None
         ring_spikes: dict[str, Any] | None = None
         ribs_feat: dict[str, Any] | None = None
+        relief_feats: list[dict[str, Any]] = []  # head brow: built on the finished head
         after_builder: list[manifold3d.Manifold] = []  # head snout: `character_head` clips above the seat
         head_pairs: list[dict[str, Any]] = []  # head ears and horns, placed once the crown studs exist
         for feat in clean_features:
@@ -1226,6 +1291,8 @@ def compile_recipe_to_partspec(recipe: dict[str, Any]) -> dict[str, Any]:
                 ribs_feat = feat
             elif op == "star":
                 body = body + _star_topper(rows, feat, fs)
+            elif op == "brow":
+                relief_feats.append(feat)
             elif op == "snout":
                 snout_info: dict[str, float] = {}
                 snout = _snout_solid(body, feat, head_height_mm, fs, snout_info)
@@ -1281,6 +1348,18 @@ def compile_recipe_to_partspec(recipe: dict[str, Any]) -> dict[str, Any]:
                 else:
                     m = (m - grooves).simplify(STUD_CUT_SIMPLIFY_MM)
             socket_keepout = _socket_keepout(m)
+            if relief_feats:
+                bare_steep = float(sdk.tp.overhang_area(sdk.tp.to_trimesh(m))[0])
+                for feat in relief_feats:
+                    solid, why = _brow_solid(m, feat, head_height_mm, fs, socket_keepout, bare_steep)
+                    if solid is None:
+                        features_dropped.append(
+                            {"op": feat["op"], "why": "no printable version fits this head's front wall; keep the head's front upright (depth d about 12 to 16, y offsets 0)"}
+                        )
+                    else:
+                        after_builder.append(solid)
+                        if why:
+                            features_adjusted.append({"op": feat["op"], "why": why})
             if head_pairs:
                 # With studs, ears and horns keep off them; on the domed head there are none to avoid.
                 studs = _stud_keepout(m, head_height_mm) if head_top == "studs" else None

@@ -113,6 +113,17 @@ describe("Worker recipe allowlist keeps the head and crown fields the daemon rea
     expect(r.recipe.features).toEqual([{ op: "ribs", count: 8, depth_mm: 3, width_mm: 5 }]);
   });
 
+  it("forwards a brow on a head", async () => {
+    const r = await forwarded({
+      name: "Gorilla Head",
+      slot: "head",
+      shape: { slices: SLICES },
+      features: [{ op: "brow", width_mm: 20, thickness_mm: 3.5, height_mm: 6, z_frac: 0.75, extra: 1 }],
+    });
+    expect(r.status).toBe(200);
+    expect(r.recipe.features).toEqual([{ op: "brow", width_mm: 20, thickness_mm: 3.5, height_mm: 6, z_frac: 0.75 }]);
+  });
+
   it("forwards a ring crown, a star and a hollow on a crown", async () => {
     const r = await forwarded({
       name: "Ring Crown",
