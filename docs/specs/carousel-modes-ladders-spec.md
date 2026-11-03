@@ -47,6 +47,11 @@ scene prompts speak via `say()` with the toast as twin.
 > until C2. Scoring map note: `circuits` mints `circuits.series` (the
 > three `lab4.circuit` tiers are consumed by the first three rungs).
 > Open questions in §15 block the phases named beside them.
+> Scoped 2026-11-03 (nothing built): C4 rides one generic pick session
+> (§11.8, voice + animation + emoji, tap = hear + answer); C5 shrinks to
+> the 8 kid-band rungs (§12.2); both follow the real-phone pass.
+> Also 2026-11-03: stage Map button, orientation-based Map view and a
+> landscape stage fix (§13.4).
 
 ## 1. Problem & goal
 
@@ -557,8 +562,11 @@ mockup rung is still panel-based.
 
 `bridges`/`gears`/`circuits`/`code`/`early`/`daily` rungs beyond the
 reference six ship on ToyForge's existing `MissionPanel` (with §11.4
-panel-visibility rules) and convert per §12. Kid mode may tuck the
-tool belt behind the panel, but moves, dock, and `Hear it` remain.
+panel-visibility rules) and convert per §12. *Updated 2026-11-03: `early`
+and `daily` convert in C4 (§11.8); only the kid-band `bridges`/`gears`/
+`circuits`/`code` rungs convert in C5; ages 7+ keep the panel.* Kid mode
+may tuck the tool belt behind the panel, but moves, dock, and `Hear it`
+remain.
 
 ### 11.6 Path depth (decided 2026-11-02, lands first in C3)
 
@@ -667,6 +675,58 @@ Decision (Dan, 2026-11-03): a tap also says the object and its colour, in a lang
   to the *built* `dist/toyventor/wrangler.json`, so rebuild before deploying or the route and binding will be missing (a
   stale `dist` returned 404 for `/api/voice` in testing).
 
+### 11.8 Pick sessions and the C4 contract (decided 2026-11-03, binds C4+)
+
+Why: all 12 C4 rungs (`early` 4, `daily` 8) and the 3 panel-only older
+C5 rungs are pick-one data (`LearnStep` in `learnRungs.ts`: say, three
+choices, answer, hint). Carry sessions are data-only (generic markers),
+but visit-marker art is hard-coded per mission id in `world.ts` with a
+grey-disc fallback, and no pick session exists. Decisions (Dan):
+
+1. **One generic pick session**, pure, in `level2Scene.ts` beside carry
+   and visit. It renders any `LearnStep` as up to three tappable world
+   markers. Picks resolve through the same rules as the panel proxy
+   (wrong pick calls `mFailNote`, the last step wins through `mtWin`),
+   so scene and panel can never disagree.
+2. **Tap = hear + answer.** A tap animates the choice and says its word
+   in the same tap; there is no confirm tap, because hearing the word is
+   the learning for a child who cannot read yet. A wrong pick hops that
+   marker, says what it is, and cues the right one ~`0.8 s` later
+   (`reactThenHint`); copy never says "wrong".
+3. **Emoji is the picture; the word is a small caption** for the grown-up.
+   Marker hit areas meet the band 0-1 target (`>= 96 px`).
+4. **Animation reuses hop and wiggle** (never rotate a sprite; no live
+   skeleton, §16). Data adds an optional per-choice `act`: `hop`,
+   `slide`, `sway` (with a small emoji puff such as 💤). "Run" slides,
+   "jump" hops high, "sleep" sways.
+5. **Voice is `say()`** (browser, en-US) with the toast twin, as in §11.1.
+   The Gemini voice binding (§11.7a, billed remotely, six languages) is a
+   later upgrade, not C4. Muted or engineless play stays fully playable
+   on toasts.
+6. **Errorless miss rule at bands 0-1:** the first miss on a pick rung is
+   free (hop + hint); stars count misses from the second (play-design
+   preset: errorless always for 2-3). Confirm in the first C4 playtest
+   (Q11).
+7. **Visit spots gain an optional `emoji`**, so ordered routines need no
+   per-rung art code in `world.ts`; the grey disc stays only as the
+   fallback for a spot with no emoji.
+8. **Phrases is rebuilt around kindness:** pick the kind way to say it
+   (🙏 against 😠), spoken aloud. No nonsense-word distractors ("…banana
+   the") and no sentence completions with several right answers.
+
+Proposed session per rung (settled when each is built; a rung's content
+stays in one place): pick for `early.colors/numbers/words/phrases`,
+`daily.meal` and the knowledge steps of `daily.brush`/`daily.cook`;
+carry for `daily.toys`, `daily.tidy`, `daily.clean`; ordered visit for
+`daily.wash`, `daily.dress`. Build order: the pick session first (it
+unblocks 12 + 3 rungs), then the carry recipes, then the visits.
+
+Gate: C4 code starts after the real-phone and real-child pass results
+(§13.3-§13.4, Dan runs it) are in. Per-rung tests: solvable, wrong pick
+hints, no "wrong" in copy, ids resolve, a muted run finishes on toasts,
+a keyboard (`proxyPanel`) run finishes, a headless scene run at
+`390 x 844` plus a landscape fit check.
+
 ## 12. Engine-facade changes & rollout
 
 All changes go through [engine.ts](../../src/features/game/world/engine.ts)
@@ -695,8 +755,8 @@ extend to Learn runs unchanged.
 | **C1 — Carousel shell** | `age.ts`/`learn.ts`/`ladders.ts`/`mapCards.ts` + `ageBand` in progression + `MapCarousel`/`RungSheet`/`AgePicker`; World/Lab cards live; Learn cards visible with correct pips/suggestion; toy-as-guide | §13 carousel + age-map checks green; no Learn run yet (Learn tap → "coming soon" toast) |
 | **C2 — Learn runs (panel)** | Facade `startLearnRun`; all 38 rungs playable via `MissionPanel`; §10.2 scoring; post-run return to map | Every rung solvable + scored; XP/quest badges update; grace/curtain hold |
 | **C3 — World-first little** | §11 runtime contracts + six reference levels; toast-twin prompts; `proxyPanel` | Six e2e scenarios pass muted + keyboard-only; play-design checks pass. **Landed 2026-11-03** (`73166c0` path depth, `658f635` visit sessions, `abf5b41` speech twin, `a35815e` idleCue): headless-verified; real-phone gate (§13.3, Q6) open, gating C4 |
-| **C4 — early + daily** | World-first `early` (4) + `daily` (8); routine copy split (§10.3) | No panel button needed for bands 0–2 |
-| **C5 — Banded polish** | World-first `bridges`/`gears`/`circuits`/`code` (20 rungs), tier mapping review | Panel only as §11.4 fallback everywhere |
+| **C4 — early + daily** | Generic pick session + emoji visit spots (§11.8); World-first `early` (4) + `daily` (8); routine copy split (§10.3). Starts after the real-phone pass; scheduled after the Nov 4 freeze | No panel button needed for bands 0–2 |
+| **C5 — Banded polish (kid bands only)** | World-first for the 8 rungs at ages 3-4 and 5-6 that ride lab missions (One plank, Measure the gap, Turn the crank, Big gear small gear, Tap to light, Metal or not, Tap the arrows, Sequence cards). Ages 7+ stay on panels. The 3 panel-only older rungs (`gears.ratio`, `gears.gearbox`, `circuits.series`) ride the pick session. First change the Code lab copy "A wrong card turns red". Tier mapping review | The 8 kid-band rungs need no panel; the 7+ panel is the intended surface, not a fallback |
 
 C1 depends on nothing new in the runtime. C2–C5 each build on the
 previous; none touches `PackOverlay`, roster gating, or print flows.
@@ -833,6 +893,9 @@ theme scenes without captured art); Q4 follows the §9.3 recommendation
 - [ ] **Q6 (blocks C3 ship):** Who runs the first real-phone + real-child sessions (§13.3–13.4), and at which bands? Mockup testing was headless-Chromium only. *2026-11-03: run sheet and robot baseline written (§13.4); still needs a runner, a device and the bands. Nothing in the sheet has been run by a person.*
 - [ ] **Q7 (blocks C2 copy):** Mission-card voice for bands 0–1 — character speaking in-world with card fallback (play-design open question), or card + `Hear it` only at launch?
 - [ ] **Q8 (post-C5):** Do converted rungs become `toyventor.level/2` recipes immediately (play-design plan steps 2–3), or ship as hand-coded missions first and become recipes in the generator phase?
+- [x] **Q9 — RESOLVED 2026-11-03 (Dan):** Pre-readers on Words, Phrases and every pick rung get voice + animation + emoji, with tap = hear + answer (§11.8).
+- [x] **Q10 — RESOLVED 2026-11-03 (Dan):** C5 shrinks to the 8 kid-band rungs; ages 7+ stay on panels (§12.2). Measured 2026-11-03: 17 of the 20 C5 rungs already run as the labs' own missions, only 3 are panel-only, all ages 10+.
+- [ ] **Q11 (blocks C4 stars):** Errorless miss rule for pick rungs at bands 0-1 (first miss free, §11.8 item 6). Agreed in principle; confirm in the first C4 playtest.
 
 ## 16. Animation (Mixamo baked curves + procedural)
 
