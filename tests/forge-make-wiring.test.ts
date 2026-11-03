@@ -49,7 +49,7 @@ describe("the text-to-part panel in the Kip page", () => {
   it("the bench loads the panel on the first click and not before, hands it its own root and the wear hook, publishes it and lets go of it", () => {
     expect(bench).not.toMatch(/^import[^;]*kip-forge-make/m); // a static import would make every bench page depend on the generated bundle
     expect(bench).toContain("await import('/kip/kip-forge-make.js?v=10.0')");
-    expect(bench).toContain("createForgeMake({ root: benchRoot, onWear: equipForgePart, onReadyMade: equipReadyMade, downloads: downloadsOn })");
+    expect(bench).toContain("createForgeMake({ root: benchRoot, onWear: equipForgePart, onReadyMade: equipReadyMade, downloads: forgeFilesOn })"); // the panel's own files have their own exit (forgeFilesOn), not the photo's (downloadsOn)
     expect(bench).toMatch(/const PUBLISHED = \[[^\]]*"kipForgeMake"/);
     const teardown = bench.slice(bench.indexOf("function teardown()"), bench.indexOf("function dispose()"));
     expect(teardown).toContain("forgeMake?.dispose?.()");
