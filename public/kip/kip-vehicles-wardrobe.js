@@ -164,11 +164,12 @@ export const PROP_CATEGORIES = [
   { id: 'all',         label: 'All' },
   { id: 'tools',       label: 'Tools' },
   { id: 'cleaning',    label: 'Cleaning' },
+  { id: 'cooking',     label: 'Cooking' },
   { id: 'instruments', label: 'Instruments' },
   { id: 'play',        label: 'Play & Gear' },
 ];
 
-// W12 categorised hand props: every one is a flat-printed head on the same 6.6 mm flat-sided Pro grip shaft as prop_wrench.
+// W12 categorised hand props (Tools, Cleaning, Cooking, Instruments, Play): every one is a flat-printed head on the same 6.6 mm flat-sided Pro grip shaft as prop_wrench.
 export const WORKSHOP_PROPS = [
   { id: 'hammer',       part: 'prop_hammer',       geo: 'propHammer',      cat: 'tools',       label: 'Claw Hammer',       mat: 'cobalt' },
   { id: 'screwdriver',  part: 'prop_screwdriver',  geo: 'propScrewdriver', cat: 'tools',       label: 'Screwdriver',       mat: 'spark' },
@@ -177,6 +178,9 @@ export const WORKSHOP_PROPS = [
   { id: 'broom',        part: 'prop_broom',        geo: 'propBroom',       cat: 'cleaning',    label: 'Bristle Broom',     mat: 'teal' },
   { id: 'scrub_brush',  part: 'prop_scrub_brush',  geo: 'propScrubBrush',  cat: 'cleaning',    label: 'Scrub Brush',       mat: 'plum' },
   { id: 'vacuum',       part: 'prop_vacuum',       geo: 'propVacuum',      cat: 'cleaning',    label: 'Handheld Vacuum',   mat: 'cobalt' },
+  { id: 'upright_vacuum', part: 'prop_upright_vacuum', geo: 'propUprightVacuum', cat: 'cleaning', label: 'Upright Vacuum',    mat: 'dragon' },
+  { id: 'spatula',      part: 'prop_spatula',      geo: 'propSpatula',     cat: 'cooking',     label: 'Pancake Spatula',   mat: 'fox' },
+  { id: 'frying_pan',   part: 'prop_frying_pan',   geo: 'propFryingPan',   cat: 'cooking',     label: 'Frying Pan',        mat: 'botSilv' },
   { id: 'guitar',       part: 'prop_guitar',       geo: 'propGuitar',      cat: 'instruments', label: 'Acoustic Guitar',   mat: 'sun' },
   { id: 'trumpet',      part: 'prop_trumpet',      geo: 'propTrumpet',     cat: 'instruments', label: 'Brass Trumpet',     mat: 'sun' },
   { id: 'maracas',      part: 'prop_maracas',      geo: 'propMaracas',     cat: 'instruments', label: 'Rattle Maraca',     mat: 'spark' },

@@ -141,6 +141,9 @@
       "prop_broom",
       "prop_scrub_brush",
       "prop_vacuum",
+      "prop_upright_vacuum",
+      "prop_spatula",
+      "prop_frying_pan",
       "prop_guitar",
       "prop_trumpet",
       "prop_maracas",
@@ -149,7 +152,8 @@
     ],
     "propCategories": {
       "tools": ["prop_wrench", "pro_spinner", "prop_hammer", "prop_screwdriver", "prop_paint_roller"],
-      "cleaning": ["prop_mop", "prop_broom", "prop_scrub_brush", "prop_vacuum"],
+      "cleaning": ["prop_mop", "prop_broom", "prop_scrub_brush", "prop_vacuum", "prop_upright_vacuum"],
+      "cooking": ["prop_spatula", "prop_frying_pan"],
       "instruments": ["prop_guitar", "prop_trumpet", "prop_maracas"],
       "play": ["prop_star_shield", "prop_skateboard_deck", "prop_flag", "prop_magnifier"]
     },

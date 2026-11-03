@@ -44,7 +44,7 @@ The machine-readable version of this section is [`kip-manifest.json`](kip-manife
 | **Hats** | 7 wearable hats that wrap down over the head (each rim hangs about `10 mm` below its sockets) with 8 `Hat Tone` filament colours, plus `Spark Buds`, `Wobble Hat`, `Pointy Ears`, `Bumper Horns`, `Blank Cap` |
 | **Outfit** | 5 skin tones (Human), 6 shirts and 5 pants as solid-filament colour zones with front chest stencil stickers |
 | **Back / Ears / Tail** | `Explorer Pack`, `Bolt Jetpack`, `Cloud Wings`, `Pro 2:1 Gears` · `Comm-Pods`, `Pro Scanner` (Kip Classic only) · `Wag-Tail`, `Pro Wheelie` (not on Human) |
-| **Props** | `Prop Type` filters 17 props in 4 categories. Tools: `Pro Wrench`, `Pro Spinner`, `Claw Hammer`, `Screwdriver`, `Paint Roller` · Cleaning: `String Mop`, `Bristle Broom`, `Scrub Brush`, `Handheld Vacuum` · Instruments: `Acoustic Guitar`, `Brass Trumpet`, `Rattle Maraca` · Play & Gear: `Star Shield`, `Skateboard`, `Swallow-Tail Flag`, `Magnifying Glass` |
+| **Props** | `Prop Type` filters 20 props in 5 categories. Tools: `Pro Wrench`, `Pro Spinner`, `Claw Hammer`, `Screwdriver`, `Paint Roller` · Cleaning: `String Mop`, `Bristle Broom`, `Scrub Brush`, `Handheld Vacuum`, `Upright Vacuum` · Cooking: `Pancake Spatula`, `Frying Pan` · Instruments: `Acoustic Guitar`, `Brass Trumpet`, `Rattle Maraca` · Play & Gear: `Star Shield`, `Skateboard`, `Swallow-Tail Flag`, `Magnifying Glass` |
 | **Vehicles** | `Roadster Car`, `Hauler Truck`, `Motor Scooter`, `Sport Motorbike` with snap-on body covers and the Wave 6 Racer Kit |
 | **Presets** | `Clean`, `Leo Explorer`, `Maya Skater`, `Kai Moto`, `Mecha Scout`, `Whisker Cat Scooter`, `Fox Scooter`, `Drake Dragon`, `Yeti Imp`, `Bolt Pro 8+` |
 

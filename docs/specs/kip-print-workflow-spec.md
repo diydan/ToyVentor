@@ -229,7 +229,7 @@ Part ids resolve through the catalog; quantities and colours are what `Kip-Demo.
 | `back = explorer / jetpack / wings` | `pack_explorer` `#1FA6A0` / `robot_back_jetpack` `#FF6B4A` / `cloud_wings` `#4EB3FC`. |
 | `prop = shaft` | `shaft_tu05` `#36405C`; `gear_spur_z10` **`#4EB3FC`**; `bushing_half` ×**1** coral. |
 | `prop = skateboard` | `prop_skateboard_deck` coral; `racer_axle` ×2 `#36405C`; `racer_wheel` ×4 `#20232A`. |
-| `prop = wrench / shield` + the 12 `WORKSHOP_PROPS` | wrench `#2E6FDB`, shield `#FFB830`; workshop props take the colour named by their `mat` field. `screwdriver` and `maracas` name `mat: 'spark'`, which `expMats` does not contain, so they render in the default material on screen (inferred from three.js defaults, not run): the BOM prints them coral and the viewer bug is filed (4.5). |
+| `prop = wrench / shield` + the 15 `WORKSHOP_PROPS` | wrench `#2E6FDB`, shield `#FFB830`; workshop props take the colour named by their `mat` field. `screwdriver` and `maracas` name `mat: 'spark'`, which `expMats` does not contain, so they render in the default material on screen (inferred from three.js defaults, not run): the BOM prints them coral and the viewer bug is filed (4.5). |
 | `wizardHat` / `prop = wand` | `/kip/custom/toyventor_custom_wizard_hat_S.stl` / `toyventor_custom_star_wand_P.stl`, both `#7C4DFF` (`expMats.plum`). The SDK hood-crest example prints `toyventor_custom_hood_crest_S.stl` in `#FFB830`. |
 
 **Vehicles** (`vehCovers` and `racerKit` are the two toggles; scooter and moto share frame, fork and wheels and differ only by the moto cowling):

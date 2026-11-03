@@ -885,6 +885,44 @@ def prop_vacuum(grip_tu=3, **_):
     return _prop_on_grip(collar + can + tube + mouth, grip_tu, relief_cs=ring, relief_h=1.6, cuts_cs=window)
 
 
+def prop_spatula(grip_tu=3, **_):
+    """Cooking: pancake turner, funnel neck into a 32 x 24 mm blade with four slots and a raised edge (LAY_FLAT)."""
+    L = grip_tu * pro.TU
+    neck = CrossSection.batch_hull([_box_cs(8.0, 2.0, 0.0, L), _box_cs(30.0, 2.0, 0.0, L + 22.0)])
+    blade = _box_cs(32.0, 24.0, 0.0, L + 22.0).offset(-4.0, JoinType.Round).offset(4.0, JoinType.Round)
+    edge = blade.offset(-0.8, JoinType.Round) - blade.offset(-3.4, JoinType.Round)
+    slots = _union([_stroke([(x, L + 28.0), (x, L + 40.0)], 1.2) for x in (-10.5, -3.5, 3.5, 10.5)])
+    return _prop_on_grip(neck + blade, grip_tu, relief_cs=edge, relief_h=1.8, cuts_cs=slots)
+
+
+def prop_frying_pan(grip_tu=3, **_):
+    """Cooking: frying pan, 44 mm round pan with a raised rim and a sunny-side-up egg; the grip shaft is the pan handle (LAY_FLAT)."""
+    L = grip_tu * pro.TU
+    cz = L + 26.0
+    collar = _box_cs(8.0, 8.0, 0.0, L)
+    disc = _circ(22.0, 0.0, cz, 64)
+    rim = _circ(20.4, 0.0, cz, 64) - _circ(17.2, 0.0, cz, 64)
+    white = _circ(7.5, -4.0, cz + 3.0, 40) + _circ(8.0, 3.5, cz - 1.0, 40) + _circ(6.0, -1.0, cz - 5.0, 40)
+    yolk = _circ(4.4, 1.0, cz + 1.0, 32)
+    egg = (white - yolk.offset(1.5, JoinType.Round)) + yolk
+    return _prop_on_grip(collar + disc, grip_tu, relief_cs=rim + egg, relief_h=2.0)
+
+
+def prop_upright_vacuum(grip_tu=3, foot_deg=40.0, **_):
+    """Cleaning: upright vacuum, bell-shaped motor body with dust window, long wand and a floor head hinged at the wand's end (LAY_FLAT).
+
+    The floor head is turned `foot_deg` from square to the wand, so it lies flat on the floor when Kip leans the wand that far."""
+    L = grip_tu * pro.TU
+    collar = _box_cs(8.0, 6.0, 0.0, L)
+    wand = _box_cs(6.4, 60.0, 0.0, L + 3.0)
+    body = CrossSection.batch_hull([_box_cs(26.0, 2.0, 0.0, L + 10.0), _box_cs(14.0, 2.0, 0.0, L + 40.0)]).offset(-3.0, JoinType.Round).offset(3.0, JoinType.Round)
+    foot = (CrossSection.square((40.0, 8.0), center=True).translate((6.0, 0.0)).offset(-3.0, JoinType.Round).offset(3.0, JoinType.Round)
+            .rotate(foot_deg).translate((0.0, L + 62.0)))
+    window = _circ(3.8, 0.0, L + 22.0, 32)
+    ring = _circ(7.0, 0.0, L + 22.0, 32) - _circ(4.8, 0.0, L + 22.0, 32)
+    return _prop_on_grip(collar + wand + body + foot, grip_tu, relief_cs=ring, relief_h=1.6, cuts_cs=window)
+
+
 def prop_guitar(grip_tu=3, **_):
     """Instruments: acoustic guitar, waist curves, soundhole, rosette and headstock (LAY_FLAT)."""
     L = grip_tu * pro.TU

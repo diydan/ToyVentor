@@ -264,6 +264,22 @@ const props = [
     pose(ph, setQ) { const s = S(ph);
       work(setQ, { arm: [-38, -10 + s * 20, -8], fore: [-42, 0, 0], hand: [0, 0, 70], hips: [10, s * 8, 0], head: [10, -s * 6, 0], crouch: 0.3 });
       return [0, HIP_Y - 2, 0]; } },
+  // Upright vacuum: the wand leans about 36 degrees and the hinged floor head lies flat on the floor; the shoulder and elbow swing against each other
+  // (15 and 18 degrees) so the hand slides back and forth while the head stays within 3 mm of the floor (solved and measured on the real prop mesh).
+  { id: 'prop_upright_vacuum', prop: 'upright_vacuum', label: 'Vacuum (upright)', dur: 2.4,
+    pose(ph, setQ) { const s = S(ph);
+      work(setQ, { arm: [-40 + s * 15, -6, -8], fore: [-50 - s * 18, 0, 0], hand: [45, 15, -180], hips: [10, 0, 0], head: [12, 0, 0], crouch: 0.3 });
+      return [0, HIP_Y - 2, 0]; } },
+  // Spatula and frying pan: the hand turns the prop so its head points forward along the forearm with the blade (or pan) level and the raised
+  // side up (the egg, the rim); the forearm then lifts, which tips the head up in a flick.
+  { id: 'prop_spatula', prop: 'spatula', label: 'Flip (spatula)', dur: 1.6,
+    pose(ph, setQ) { const k = Math.pow(0.5 - 0.5 * C(ph), 2); // slide under low, then a quick flick up
+      work(setQ, { arm: [-40 - k * 24, -6, -8], fore: [-60 - k * 30, 0, 0], hand: [-75, -105, 15], hips: [4, 0, 0], head: [10 + k * 4, 0, 0] });
+      return [0, HIP_Y - 1, 0]; } },
+  { id: 'prop_frying_pan', prop: 'frying_pan', label: 'Toss (frying pan)', dur: 1.6,
+    pose(ph, setQ) { const k = Math.pow(0.5 - 0.5 * C(ph), 2);
+      work(setQ, { arm: [-40 - k * 24, -6, -8], fore: [-60 - k * 30, 0, 0], hand: [-75, -105, 15], hips: [4, 0, 0], head: [10 + k * 4, 0, 0] });
+      return [0, HIP_Y - 1, 0]; } },
   { id: 'prop_paint_roller', prop: 'paint_roller', label: 'Paint (roller)', dur: 2.0,
     pose(ph, setQ) { const s = S(ph);
       work(setQ, { arm: [-96 - s * 26, -4, -6], fore: [-14 + s * 6, 0, 0], hand: [0, 180, 0], hips: [0, 0, 0], head: [-12 - s * 5, 0, 0] });

@@ -126,7 +126,7 @@ describe("kip menu schema", () => {
     const opts = byId(fakeCtx(), "prop").options();
     expect(new Set(opts.map((o: any) => o.value))).toEqual(new Set(PROP_OPTIONS.map((p: any) => p.id)));
     expect(opts[0]).toMatchObject({ value: "off" });
-    expect(opts.filter((o: any) => o.group).every((o: any) => ["Tools", "Cleaning", "Instruments", "Play & Gear"].includes(o.group))).toBe(true);
+    expect(opts.filter((o: any) => o.group).every((o: any) => ["Tools", "Cleaning", "Cooking", "Instruments", "Play & Gear"].includes(o.group))).toBe(true);
   });
 
   it("labels follow the head type", () => {

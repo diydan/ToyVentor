@@ -16,7 +16,7 @@
   ],
   "targets": {
     "snap": 120,
-    "pro": 90
+    "pro": 93
   },
   "waves": [
     {
@@ -138,7 +138,7 @@
       "name": "Workshop Props",
       "requires": [],
       "effort": "M",
-      "scope": "12 parts (12 Pro): handheld workshop and play props that clip onto Kip's Pro grip shaft in the hand port, in 4 Kip-Demo.html prop categories (with the 5 earlier props, 17 in all): Tools (Claw Hammer, Flat Screwdriver, Paint Roller), Cleaning (String Mop, Bristle Broom, Scrub Brush, Handheld Vacuum), Instruments (Acoustic Guitar, Brass Trumpet, Rattle Maraca) and Play (Swallow-Tail Flag, Magnifying Glass)."
+      "scope": "15 parts (15 Pro): handheld workshop, kitchen and play props that clip onto Kip's Pro grip shaft in the hand port, in 5 Kip-Demo.html prop categories (with the 5 earlier props, 20 in all): Tools (Claw Hammer, Flat Screwdriver, Paint Roller), Cleaning (String Mop, Bristle Broom, Scrub Brush, Handheld Vacuum, Upright Vacuum), Cooking (Pancake Spatula, Frying Pan), Instruments (Acoustic Guitar, Brass Trumpet, Rattle Maraca) and Play (Swallow-Tail Flag, Magnifying Glass)."
     },
     {
       "id": "W13",
@@ -3944,6 +3944,75 @@
       ],
       "build": {
         "fn": "prop_vacuum",
+        "grip_tu": 3
+      }
+    },
+    {
+      "id": "prop_spatula",
+      "name": "Pancake Spatula",
+      "line": "pro",
+      "family": "shaft",
+      "size": "pro",
+      "wave": "W12",
+      "note": "Pancake flipper with three blade slots and a raised rim on a 3 TU 6.6 mm flat-sided Pro grip shaft; prints lying on a flat. Category: Cooking.",
+      "stat": "Balance",
+      "type": "Hand prop",
+      "behavior": "Pancake spatula on a 6.6 mm flat Pro grip shaft",
+      "tags": [
+        "prop",
+        "hand",
+        "cooking",
+        "cat-cooking",
+        "kip"
+      ],
+      "build": {
+        "fn": "prop_spatula",
+        "grip_tu": 3
+      }
+    },
+    {
+      "id": "prop_frying_pan",
+      "name": "Frying Pan",
+      "line": "pro",
+      "family": "shaft",
+      "size": "pro",
+      "wave": "W12",
+      "note": "Round frying pan with a raised rim and a sunny-side-up egg; the 3 TU 6.6 mm flat-sided Pro grip shaft is the pan handle; prints lying on a flat. Category: Cooking.",
+      "stat": "Grip",
+      "type": "Hand prop",
+      "behavior": "Frying pan with egg on a 6.6 mm flat Pro grip shaft",
+      "tags": [
+        "prop",
+        "hand",
+        "cooking",
+        "cat-cooking",
+        "kip"
+      ],
+      "build": {
+        "fn": "prop_frying_pan",
+        "grip_tu": 3
+      }
+    },
+    {
+      "id": "prop_upright_vacuum",
+      "name": "Upright Vacuum",
+      "line": "pro",
+      "family": "shaft",
+      "size": "pro",
+      "wave": "W12",
+      "note": "Upright vacuum with a long pole, dust-cup window and a wide floor head on a 3 TU 6.6 mm flat-sided Pro grip shaft; prints lying on a flat. Category: Cleaning.",
+      "stat": "Speed",
+      "type": "Hand prop",
+      "behavior": "Upright vacuum with dust-cup window and floor head on a 6.6 mm flat Pro grip shaft",
+      "tags": [
+        "prop",
+        "hand",
+        "cleaning",
+        "cat-cleaning",
+        "kip"
+      ],
+      "build": {
+        "fn": "prop_upright_vacuum",
         "grip_tu": 3
       }
     },
