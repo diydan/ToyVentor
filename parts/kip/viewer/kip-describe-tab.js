@@ -9,9 +9,18 @@
 // See kip-describe-contract.md.
 import { describe, loadRecipeBook } from './kip-describe.js';
 import { loadPartsData } from './kip-describe-validate.js';
-import { createDescribeView } from './kip-describe-view.js';
+import { createDescribeView, partColour } from './kip-describe-view.js';
 
 const STORE_KEY = 'kipDescribeEndpoint';
+
+// "Say what it is": the same setting and the same voice as the game's props. This page is served from the app's own origin, so the
+// language picked in the game's menu is read from the same localStorage key, and the picker below writes it back.
+const LANG_KEY = 'toyforge:prop-lang:v1';
+const LANGS = [['en', 'English'], ['es', 'Español'], ['fr', 'Français'], ['de', 'Deutsch'], ['it', 'Italiano'], ['pt', 'Português'], ['tr', 'Türkçe'], ['off', 'Off']];
+const lang = {
+  get() { try { const v = globalThis.localStorage?.getItem(LANG_KEY); return LANGS.some(([c]) => c === v) ? v : 'en'; } catch { return 'en'; } },
+  set(v) { try { globalThis.localStorage?.setItem(LANG_KEY, v); } catch { /* storage blocked: the choice holds for this session only */ } },
+};
 const SOURCE_LABEL = { model: 'Built by the model', 'recipe-book': 'A sample build', closest: 'Nearest sample build' };
 
 const CSS = `
@@ -44,6 +53,8 @@ const CSS = `
 .kdb-build { margin: 8px 0 2px; } .kdb-controls { display: flex; flex-wrap: wrap; gap: 6px; } .kdb-progress { margin: 6px 0 0; font-size: 13px; min-height: 1.3em; }
 .kdb-slider { display: block; margin: 10px 0 6px; font-weight: 600; } .kdb-slider input { width: 100%; margin-top: 4px; }
 .kdb-slider.locked { opacity: .5; }
+.kdb-lang { display: flex; align-items: center; gap: 8px; margin: 10px 0 0; font-weight: 600; } .kdb-lang select { font: inherit; padding: 4px 6px; border-radius: 8px; }
+.kdb-caption { margin: 6px 0 0; min-height: 1.3em; font-weight: 700; }
 .kdb-steps { margin: 6px 0 0; padding-left: 22px; } .kdb-steps li { padding: 2px 4px; border-radius: 6px; cursor: pointer; }
 .kdb-steps li:hover, .kdb-steps li.on { background: #eef1f7; }
 .kdb-panel details { margin-top: 10px; font-size: 13px; } .kdb-panel details input { width: 100%; box-sizing: border-box; margin: 6px 0; padding: 7px 9px; border: 1px solid #c9cfdc; border-radius: 8px; font: inherit; }
@@ -73,12 +84,14 @@ export function mountDescribe({
   setCharacterVisible = () => {}, container = document.body, endpoint = '',
   recipeUrl = '/kip/kip-describe-recipes.json', partsUrl = '/kip/kip-describe-parts.json', stlBase = '/kip/partspec/describe/', fetchImpl = globalThis.fetch,
   stepMs = 1100,   // how long each step of a playing build takes
+  voiceUrl = '/api/voice',   // the game's "say what it is" route; absent (a plain static server) means captions only
 }) {
   if (!document.getElementById('kdb-style')) document.head.append(el('style', { id: 'kdb-style' }, CSS));
   let book = null, parts = null, view = null, loading = null, busy = false, last = null, isOpen = false;
   // the build player: progress p runs from 0 (nothing seated) to n (finished), one unit per step; `target` is where a playing build stops
   let n = 0, p = 0, target = 0, playing = false, raf = 0, lastFrame = 0;
   let camSaved = null;   // the host camera (position and orbit target) from when the panel opened
+  let voiceAudio = null, voiceDownUntil = 0, voiceSeq = 0, spokenStep = -1;   // the part voice: current clip, back-off after a failure, newest-tap-wins counter, last step spoken while playing
 
   const text = el('textarea', { id: 'kdb-text', maxlength: '300', rows: '2', placeholder: 'For example: a race car, or Kip with a cowboy hat' });
   const go = el('button', { class: 'kdb-go', type: 'button' }, 'Build it');
@@ -95,6 +108,10 @@ export function mountDescribe({
   const slider = el('input', { type: 'range', min: '0', max: '100', value: '0', 'aria-label': 'Exploded view' });
   const sliderBox = el('label', { class: 'kdb-slider', hidden: '' }, 'Exploded view', slider);
   const list = el('ol', { class: 'kdb-steps', 'aria-label': 'Build steps' });
+  const langSel = el('select', { id: 'kdb-lang', 'aria-label': 'Language for part names' }, ...LANGS.map(([c, name]) => el('option', { value: c }, name)));
+  langSel.value = lang.get();
+  const langBox = el('label', { class: 'kdb-lang' }, 'Words in', langSel);
+  const caption = el('p', { class: 'kdb-caption', role: 'status', 'aria-live': 'polite' }, '');
   const epInput = el('input', { type: 'url', id: 'kdb-endpoint', placeholder: 'http://127.0.0.1:8788/describe', value: endpoint || store.get(), 'aria-label': 'Model endpoint address' });
   const epNote = el('p', {}, '');
   const test = el('button', { type: 'button' }, 'Test connection');
@@ -104,7 +121,7 @@ export function mountDescribe({
     el('p', {}, 'What is sent: your description and the list of part names, only to the address above. Nothing is stored except that address, and only for this browser tab.'));
   const close = el('button', { type: 'button', 'aria-label': 'Close' }, 'Close');
   const panel = el('section', { class: 'kdb-panel', 'aria-label': 'Describe and build', hidden: '' }, el('h2', {}, 'Describe & build', close),
-    el('label', { for: 'kdb-text' }, 'What should we build?'), text, examples, go, status, badge, buildBox, sliderBox, list, settings);
+    el('label', { for: 'kdb-text' }, 'What should we build?'), text, examples, go, status, badge, buildBox, sliderBox, langBox, list, caption, settings);
   const toggle = el('button', { class: 'kdb-toggle', type: 'button', 'aria-expanded': 'false', 'aria-controls': 'kdb-panel' }, 'Describe & build');
   panel.id = 'kdb-panel';
   container.append(toggle, panel);
@@ -113,6 +130,35 @@ export function mountDescribe({
 
   const label = (part) => parts?.parts?.[part]?.label ?? part;
   const say = (msg) => { status.textContent = msg; };
+
+  // ---- say the part ("blue car chassis", "rueda deportiva negra") ---------------------------------------------------------
+  function stopVoice() { if (voiceAudio) { try { voiceAudio.pause(); } catch { /* already stopped */ } voiceAudio = null; } }
+  /** Caption + spoken name of step i, in the chosen language, in the colour the view draws it. Falls back to the English label. */
+  async function sayPart(i) {
+    const part = last?.steps?.[i]?.part;
+    const l = lang.get();
+    stopVoice();
+    const seq = ++voiceSeq;                                             // a newer tap always wins
+    if (!part || !parts) return;
+    if (l === 'off') { caption.textContent = ''; return; }
+    if (Date.now() < voiceDownUntil) { caption.textContent = label(part); return; }   // the voice route failed a moment ago: just the caption
+    try {
+      const q = new URLSearchParams({ lang: l, p: part, hex: partColour(parts, part).slice(1) });
+      const res = await fetchImpl(`${voiceUrl}?${q}`);
+      if (!res.ok) throw new Error(String(res.status));
+      const spoken = decodeURIComponent(res.headers.get('x-voice-text') ?? '');
+      const blob = await res.blob();
+      if (seq !== voiceSeq) return;
+      caption.textContent = spoken || label(part);
+      const url = URL.createObjectURL(blob);
+      voiceAudio = new Audio(url);
+      voiceAudio.addEventListener('ended', () => URL.revokeObjectURL(url), { once: true });
+      voiceAudio.play().catch(() => { /* the browser blocked autoplay: the caption is there */ });
+    } catch {
+      voiceDownUntil = Date.now() + 60000;
+      if (seq === voiceSeq) caption.textContent = label(part);
+    }
+  }
 
   async function ready() {
     if (book && parts && view) return;
@@ -132,7 +178,8 @@ export function mountDescribe({
   function renderSteps(result) {
     list.replaceChildren(...result.steps.map((s, i) => {
       const host = s.mate ? ` on the ${label(result.steps.find((x) => x.id === s.mate.host)?.part).toLowerCase()}` : ' (the base)';
-      return el('li', { tabindex: '0', onmouseenter: () => view.highlight(i), onmouseleave: () => view.highlight(null), onfocus: () => view.highlight(i), onblur: () => view.highlight(null) },
+      return el('li', { tabindex: '0', onmouseenter: () => view.highlight(i), onmouseleave: () => view.highlight(null), onfocus: () => view.highlight(i), onblur: () => view.highlight(null),
+        onclick: () => sayPart(i), onkeydown: (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); sayPart(i); } } },
         `${label(s.part)}${host}`);
     }));
   }
@@ -146,6 +193,8 @@ export function mountDescribe({
     const cur = p <= 0 ? -1 : Math.min(n, Math.ceil(p - 1e-9)) - 1;      // the step whose slot we are in
     [...list.children].forEach((li, i) => li.classList.toggle('on', i === cur && p < n));
     view?.highlight(p > 0 && p < n ? cur : null);
+    if (playing && cur >= 0 && cur !== spokenStep) { spokenStep = cur; sayPart(cur); }   // say each part as its turn begins
+    if (!playing) spokenStep = -1;
     progress.textContent = p <= 0 ? `Ready: press Play build to watch all ${n} parts go together.`
       : p >= n ? `Built: all ${n} parts are seated.` : `Step ${cur + 1} of ${n}: ${stepName(cur)}`;
     backBtn.disabled = p <= 0;
@@ -202,6 +251,7 @@ export function mountDescribe({
       say('Drawing…');
       await view.show(result);
       renderSteps(result);
+      spokenStep = -1; caption.textContent = '';
       slider.value = '0';
       sliderBox.hidden = false;
       n = result.steps.length; p = n; target = n;                           // a new recipe is shown finished; Play build replays it from nothing
@@ -227,6 +277,7 @@ export function mountDescribe({
   }
   function closePanel() {
     if (playing) { stop(); labels(); }
+    stopVoice();
     isOpen = false; panel.hidden = true; toggle.setAttribute('aria-expanded', 'false');
     if (view) view.group.visible = false;
     if (camSaved) {
@@ -248,6 +299,7 @@ export function mountDescribe({
   nextBtn.addEventListener('click', stepForward);
   backBtn.addEventListener('click', stepBack);
   replayBtn.addEventListener('click', replay);
+  langSel.addEventListener('change', () => { lang.set(langSel.value); stopVoice(); if (langSel.value === 'off') caption.textContent = ''; else if (last?.steps?.length) sayPart(0); });   // choosing a language says the first part, as the preview
   panel.addEventListener('keydown', (e) => { if (e.key === 'Escape') closePanel(); });
   test.addEventListener('click', async () => {
     const ep = epInput.value.trim();
@@ -268,11 +320,15 @@ export function mountDescribe({
     /** Jump the build to progress x (0 to the number of steps) without playing; for tests and deep links. */
     setBuildProgress(x) { if (!ready_()) return; stop(); p = Math.min(n, Math.max(0, x)); slider.value = '0'; showBuild(); },
     play, pause() { if (playing) { stop(); labels(); } }, stepForward, stepBack, replay,
+    sayPart,
+    get language() { return lang.get(); },
+    get caption() { return caption.textContent; },
     get progress() { return p; },
     get playing() { return playing; },
     ready,
     /** Unmount: hand the camera and the character back, stop the player, remove the toggle and panel (the shared <style> stays). */
     dispose() {
+      stopVoice();
       if (isOpen) closePanel(); else stop();
       view?.dispose?.();
       toggle.remove(); panel.remove();

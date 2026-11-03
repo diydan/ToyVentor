@@ -8,7 +8,14 @@ Source mockup: `/Users/dan/Downloads/toyventor` (`README.md`,
 `CONTINUE.md`). This spec decides what ports into ToyForge, what ToyForge
 keeps, and in what order. No implementation starts until §14 sign-off.
 
-> Status: **SIGNED OFF 2026-11-02 — C1+C2 landed.** Decisions in §6 bind implementation.
+> Status: **SIGNED OFF 2026-11-02 — C1+C2 landed, C3 first level in progress.**
+> Decisions in §6 bind implementation.
+> C3 as building: `runtime/level2Scene.ts` (pure tap/arrive session
+> over the carry core) + scene markers in `world.ts`: recipe rungs
+> (`little.pack`, `little.tidy` so far) spawn tappable item/target
+> markers; tap walks the toy there; arrivals resolve through the
+> same carry rules as the panel proxy, so scene and panel can never
+> disagree. Toast twins every prompt; speech twin still open.
 > C2 as shipped: `startLearnRun`/`stopLearnRun`/`learnState` on the
 > engine facade with `LearnSnapshot` + `learnFinished` events; lab
 > rungs ride the real lab missions at the rung tier; the 21 new-id
@@ -592,21 +599,21 @@ hollow). A tap on a prop reacts and names it but does **not** send the toy walki
 Decision (Dan, 2026-11-03): a tap also says the object and its colour, in a language the kid picks: "green tree", "blue light",
 "árbol verde", "grüner Baum".
 
-- **Setting.** More menu → *Words & Language*: English, Español, Français, Deutsch, Italiano, Português, or Off (default English;
+- **Setting.** More menu → *Words & Language*: English, Español, Français, Deutsch, Italiano, Português, Türkçe, or Off (default English;
   stored per device as `toyforge:prop-lang:v1`). I put it in the kid-facing menu rather than behind the grown-ups gate — say if
-  it should be gated. Choosing a language plays a sample ("árbol verde") so the tap doubles as the preview.
-- **Names are built, not translated.** `src/lib/propNames.ts` holds a closed vocabulary (25 nouns × 12 colours × 6 languages) with
+  it should be gated — **decided 2026-11-03: not gated.** Choosing a language plays a sample ("árbol verde") so the tap doubles as the preview.
+- **Names are built, not translated.** `src/lib/propNames.ts` holds a closed vocabulary (25 nouns × 12 colours × 7 languages) with
   gender and number agreement ("árbol verde" but "lámpara azul", "bloques rojos", "blaue Lampe" but "blaues Licht"). Colours
   were chosen by looking at what each builder draws (the lantern is a *blue light* — its pole; a level can give it any light
-  colour, which then names it, e.g. "pink light"). The six-language wording is mine and unreviewed by native speakers.
+  colour, which then names it, e.g. "pink light"). Turkish puts the colour first and never inflects it ("yeşil ağaç", "kırmızı bloklar"). The seven-language wording is mine and unreviewed by native speakers (Dan asked for that review; I cannot supply it).
 - **Voice.** `google/gemini-3.8-flash-lite-tts` through the Workers AI binding `AI` (AI Gateway Unified Billing: no provider key
   in the repo). Route `GET /api/voice?lang=es&n=tree&c=green` (`worker/voice.ts`) takes **vocabulary keys only, never text**, so
-  it can only say what the game can say and the clip set is bounded (≤ 1,800 possible, 216 used). Each clip is generated once,
+  it can only say what the game can say and the clip set is bounded (462 used: 36 prop/colour pairs and 30 parts, × 7 languages). Each clip is generated once,
   silence-trimmed (≈ 56 KB), and cached at the edge and in the browser for a year (`immutable`). Probed live against the real
   binding: input is exactly `{ text, voice }`, output `{ audio: "data:audio/wav;base64,…" }`; language is auto-detected; `style`
   and `prompt` are rejected (7003), so there is no "say it cheerfully" knob; the voice is `DEFAULT_VOICE = "Leda"` (Gemini's
   "youthful"; set `VOICE_NAME` or change the constant). A first request takes ≈ 2.3 s, a cached one ≈ 10 ms.
-  `scripts/prewarm-voice.ts <base-url>` warms all 216 clips after a deploy; the world also prefetches the clips for the props it
+  `scripts/prewarm-voice.ts <base-url>` warms all 462 clips after a deploy; the world also prefetches the clips for the props it
   placed.
 - **Fallbacks, in order:** the Gemini clip → the device's own speech voice → the on-screen caption, which always shows. A failed
   clip request switches to the device voice for 60 s. Muting sound silences speech but not the caption. `/api/*` bypasses the
@@ -614,12 +621,18 @@ Decision (Dan, 2026-11-03): a tap also says the object and its colour, in a lang
 - **Privacy / cost.** No text a child typed or said, no identifiers, nothing personal is sent. Spend is bounded by the vocabulary,
   not by taps.
 - **Generated objects.** Anything created through Create, Muse recipes, room photos or the editor is covered automatically (above).
-  Forge and Describe & Build make **toy parts**, not scene props, so lights and fruit do not apply to them; what carries over is
-  the naming contract: a generator that wants its object spoken returns a `noun` key from `NOUN_KEYS` and a `color` key or hex
-  (`describeObject`). Free-text names it cannot map are spoken in English only, never half-translated. **Not built:** speaking
-  part names in the Build sheet or the Kip viewer; the part catalogue's names are English free text with no colour, and the
-  Describe & Build tab is another lane's file. Needs a decision: a small translation table for the catalogue, or make the
-  generators emit noun keys.
+  **Describe & Build** (the Kip viewer tab) is covered too: its matcher only ever picks from 30 curated parts, so a table is
+  complete (`src/lib/partNames.ts`; `tests/part-names.test.ts` fails if a part is added to `kip-describe-parts.json` without
+  names). Tapping a step in the list (or pressing Enter on it), or the build player reaching it, says the part in the colour the
+  exploded view *draws* ("negra rueda deportiva" is wrong, "rueda deportiva negra" is built): the tab sends the part id and that
+  hex to `/api/voice?lang=&p=&hex=` and the Worker reduces the hex to one of 12 colour words, so a hex cannot multiply the clip
+  set. The tab has its own language picker (same `toyforge:prop-lang:v1` key, so the game's menu and the tab agree), shows the
+  spoken text as a caption, and falls back to the English part name if the voice route is down (then it leaves the route alone for
+  a minute). **Forge** has no screen yet, and its parts are free-form so no table can cover them. The plan when it exists: the
+  generator returns its object's name in all seven languages in the same call that makes the object, and the Worker signs that
+  text so `/api/voice` can speak it without becoming an open text-to-speech endpoint. Until then a generator that wants its
+  object spoken returns a `noun` key from `NOUN_KEYS` and a `color` (`describeObject`); free text is spoken in English only,
+  never half-translated.
 - **Content change.** The Garden's only tree sat at x = −4, off the left edge of the playable lane, so no kid could ever tap one.
   Two trees were added on the lane (x = 9.5 and 26.5, behind the toy, clear of the hidden-part spots and the windmill).
 - **Deploy.** The `ai` binding in `wrangler.jsonc` bills even under `wrangler dev`. Wrangler follows `.wrangler/deploy/config.json`

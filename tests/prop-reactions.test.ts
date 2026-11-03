@@ -320,7 +320,7 @@ describe("tapping: picking and naming", () => {
     expect(fx.tap(ray)).toBe(true);
   });
   it("says the object and colour in the chosen language", () => {
-    for (const [lang, said] of [["en", "Green tree"], ["es", "Árbol verde"], ["fr", "Arbre vert"], ["de", "Grüner Baum"], ["it", "Albero verde"], ["pt", "Árvore verde"]] as const) {
+    for (const [lang, said] of [["en", "Green tree"], ["es", "Árbol verde"], ["fr", "Arbre vert"], ["de", "Grüner Baum"], ["it", "Albero verde"], ["pt", "Árvore verde"], ["tr", "Yeşil ağaç"]] as const) {
       const { fx, ray, toast } = scene(lang);
       fx.tap(ray);
       expect(toast, lang).toHaveBeenCalledWith(said);

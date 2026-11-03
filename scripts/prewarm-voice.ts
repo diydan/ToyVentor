@@ -6,10 +6,15 @@
 //   options: --concurrency 4
 //
 // The clip set is exactly what the game can say: each built-in prop's own noun + colour, plus a lantern's light in every colour (a
-// level may give a lantern any light colour), in all six languages. About 216 clips; a full cold run is a couple of minutes.
+// level may give a lantern any light colour), and each Describe & Build part in the colour the exploded view draws it, in all seven
+// languages. About 460 clips; a full cold run is a few minutes.
+import { readFileSync } from "node:fs";
 import { PROP_SPECS } from "../src/features/game/world/runtime/propReactions";
 import { COLOR_KEYS, LANGUAGES, type ColorKey, type NounKey } from "../src/lib/propNames";
+import { PART_IDS } from "../src/lib/partNames";
 import { voiceUrl } from "../src/lib/propVoice";
+// @ts-expect-error viewer JS modules ship without d.ts
+import { partColour } from "../parts/kip/viewer/kip-describe-view.js";
 
 const args = process.argv.slice(2);
 const base = args.find((a) => /^https?:\/\//.test(a));
@@ -21,10 +26,12 @@ const combos = new Map<string, { noun: NounKey; color: ColorKey }>();
 for (const s of Object.values(PROP_SPECS)) if (s.noun) combos.set(`${s.noun}|${s.color}`, { noun: s.noun, color: s.color });
 for (const color of COLOR_KEYS) combos.set(`light|${color}`, { noun: "light", color });
 
+const partsData = JSON.parse(readFileSync(new URL("../parts/kip/viewer/kip-describe-parts.json", import.meta.url), "utf8"));
 const paths: string[] = [];
 for (const l of LANGUAGES) for (const c of combos.values()) paths.push(voiceUrl(c.noun, c.color, l.code));
+for (const l of LANGUAGES) for (const id of PART_IDS) paths.push(`/api/voice?lang=${l.code}&p=${id}&hex=${(partColour(partsData, id) as string).slice(1)}`);
 
-console.log(`${paths.length} clips (${combos.size} objects x ${LANGUAGES.length} languages)`);
+console.log(`${paths.length} clips (${combos.size} props + ${PART_IDS.length} parts, x ${LANGUAGES.length} languages)`);
 if (listOnly || !base) {
   if (!listOnly) console.log("give a base URL to warm them, e.g. https://toyventor.com (or --list to print the paths)");
   else for (const p of paths) console.log(p);

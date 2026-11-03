@@ -57,6 +57,17 @@ describe("propPhrase: the object and its colour, in the chosen language", () => 
     expect(propPhrase("lamp", "purple", "de")).toBe("lila Lampe");
   });
 
+  it("Turkish puts the colour first and never inflects it for gender or number", () => {
+    expect(propPhrase("tree", "green", "tr")).toBe("yeşil ağaç");
+    expect(propPhrase("light", "blue", "tr")).toBe("mavi ışık");
+    expect(propPhrase("lamp", "yellow", "tr")).toBe("sarı lamba");
+    expect(propPhrase("blocks", "red", "tr")).toBe("kırmızı bloklar"); // plural noun, same adjective
+    expect(propPhrase("books", "colorful", "tr")).toBe("renkli kitaplar");
+    expect(propPhrase("teddy", "brown", "tr")).toBe("kahverengi oyuncak ayı");
+    expect(propPhrase("chair", "orange", "tr")).toBe("turuncu sandalye");
+    expect(propPhrase("cloud", "white", "tr")).toBe("beyaz bulut");
+  });
+
   it("covers every noun x colour x language with a clean, non-empty phrase", () => {
     for (const lang of langs) {
       for (const noun of NOUN_KEYS) {
@@ -82,6 +93,7 @@ describe("colorKeyFromHex: kid colour words for generated objects", () => {
     expect(colorKeyFromHex("#c98d5a")).toBe("brown");
     expect(colorKeyFromHex("#ffffff")).toBe("white");
     expect(colorKeyFromHex("#10163a")).toBe("black");
+    expect(colorKeyFromHex("#262d40")).toBe("black"); // the exploded view's wheels: dark navy reads as black
     expect(colorKeyFromHex("#8a8f96")).toBe("gray");
     expect(colorKeyFromHex("#ff9db0")).toBe("pink");
   });
@@ -111,7 +123,7 @@ describe("describeObject: named objects, generated or not", () => {
 });
 
 describe("language validation", () => {
-  it("accepts the six languages and off, nothing else", () => {
+  it("accepts the seven languages and off, nothing else", () => {
     for (const l of [...langs, "off"]) expect(isPropLang(l)).toBe(true);
     for (const bad of ["EN", "ja", "", null, undefined, 3]) expect(isPropLang(bad)).toBe(false);
   });

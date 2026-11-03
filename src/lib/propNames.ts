@@ -6,7 +6,7 @@
 // Anything generated (Muse recipes, Forge parts, Describe & Build) names itself by picking a noun key and a colour key
 // from here; free text it cannot map falls back to English (see describeObject), never to a half-translated phrase.
 
-export type LangCode = "en" | "es" | "fr" | "de" | "it" | "pt";
+export type LangCode = "en" | "es" | "fr" | "de" | "it" | "pt" | "tr";
 export type PropLang = LangCode | "off";
 
 export interface LanguageInfo {
@@ -24,13 +24,14 @@ export const LANGUAGES: readonly LanguageInfo[] = [
   { code: "de", label: "Deutsch", bcp47: "de-DE" },
   { code: "it", label: "Italiano", bcp47: "it-IT" },
   { code: "pt", label: "Português", bcp47: "pt-BR" },
+  { code: "tr", label: "Türkçe", bcp47: "tr-TR" },
 ];
 
 export const COLOR_KEYS = ["red", "orange", "yellow", "green", "blue", "purple", "pink", "brown", "white", "black", "gray", "colorful"] as const;
 export type ColorKey = (typeof COLOR_KEYS)[number];
 
 type Gender = "m" | "f" | "n";
-interface Noun {
+export interface Noun {
   w: string;
   g: Gender;
   /** The noun is a plural in this language ("blocks", "Bücher"), so the adjective takes its plural form. */
@@ -88,6 +89,12 @@ const NOUNS: Record<LangCode, Record<NounKey, Noun>> = {
     sandcastle: m("castelo de areia"), pine: m("pinheiro"), snowman: m("boneco de neve"), igloo: m("iglu"), blocks: mp("blocos"), books: mp("livros"),
     chair: f("cadeira"), plant: f("planta"), teddy: m("ursinho de pelúcia"), ball: f("bola"), cushions: fp("almofadas"),
   },
+  tr: {
+    light: m("ışık"), lamp: m("lamba"), house: m("ev"), tree: m("ağaç"), bushes: mp("çalılar"), cloud: m("bulut"), island: m("ada"),
+    tire: m("lastik"), drum: m("davul"), shed: m("kulübe"), crane: m("vinç"), windmill: m("yel değirmeni"), palm: m("palmiye"), umbrella: m("şemsiye"),
+    sandcastle: m("kumdan kale"), pine: m("çam ağacı"), snowman: m("kardan adam"), igloo: m("iglu"), blocks: mp("bloklar"), books: mp("kitaplar"),
+    chair: m("sandalye"), plant: m("bitki"), teddy: m("oyuncak ayı"), ball: m("top"), cushions: mp("yastıklar"),
+  },
 };
 
 // Adjective forms. en: one word. es/fr/it/pt: [masc, fem, masc-plural, fem-plural], placed AFTER the noun. de: [masc, fem, neut, plural]
@@ -126,6 +133,10 @@ const COLORS: Record<LangCode, Record<ColorKey, string | Forms>> = {
     brown: ["marrom", "marrom", "marrons", "marrons"], white: ["branco", "branca", "brancos", "brancas"], black: ["preto", "preta", "pretos", "pretas"],
     gray: ["cinza", "cinza", "cinzas", "cinzas"], colorful: ["colorido", "colorida", "coloridos", "coloridas"],
   },
+  tr: {
+    red: "kırmızı", orange: "turuncu", yellow: "sarı", green: "yeşil", blue: "mavi", purple: "mor", pink: "pembe", brown: "kahverengi",
+    white: "beyaz", black: "siyah", gray: "gri", colorful: "renkli",
+  },
 };
 
 export function isLangCode(v: unknown): v is LangCode {
@@ -145,11 +156,16 @@ function adjective(lang: LangCode, color: ColorKey, noun: Noun): string {
   return noun.pl ? (noun.g === "f" ? entry[3] : entry[2]) : noun.g === "f" ? entry[1] : entry[0];
 }
 
+/** Any noun (a prop, or a part from partNames.ts) with an optional colour, in word order and agreement for the language. */
+export function nounPhrase(nn: Noun, color: ColorKey | null, lang: LangCode): string {
+  if (!color) return nn.w;
+  const adj = adjective(lang, color, nn);
+  return lang === "en" || lang === "de" || lang === "tr" ? `${adj} ${nn.w}` : `${nn.w} ${adj}`;
+}
+
 /** "green tree" / "árbol verde" / "grüner Baum": the object and its colour, in the chosen language. */
 export function propPhrase(noun: NounKey, color: ColorKey, lang: LangCode): string {
-  const nn = NOUNS[lang][noun];
-  const adj = adjective(lang, color, nn);
-  return lang === "en" || lang === "de" ? `${adj} ${nn.w}` : `${nn.w} ${adj}`;
+  return nounPhrase(NOUNS[lang][noun], color, lang);
 }
 
 /** The bare noun in a language ("tree", "árbol"), for places that show a name without a colour. */
@@ -169,7 +185,7 @@ export function colorKeyFromHex(hex: string): ColorKey {
   const max = Math.max(r, g, b), min = Math.min(r, g, b), l = (max + min) / 2, d = max - min;
   const s = d === 0 ? 0 : d / (1 - Math.abs(2 * l - 1));
   if (l > 0.9) return "white";
-  if (l < 0.2) return "black";
+  if (l < 0.22) return "black"; // very dark navy reads as black to a kid (the exploded view's wheels are #262D40)
   if (s < 0.18) return l < 0.25 ? "black" : l > 0.78 ? "white" : "gray";
   let h = 0;
   if (d !== 0) {

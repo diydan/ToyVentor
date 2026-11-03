@@ -238,6 +238,12 @@ const CATEGORY_COLOURS = {
 
 const hash = (s) => [...s].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7);
 
+/** The hex colour the view draws a part in, so a voice can name the colour a child actually sees. */
+export function partColour(partsData, part) {
+  const palette = CATEGORY_COLOURS[partsData?.parts?.[part]?.category] ?? ['#9AA3B5'];
+  return palette[hash(part) % palette.length];
+}
+
 /**
  * Draw recipes. `THREE`, `STLLoader`, `mergeVertices` and `toCreasedNormals` come from the host page (the same bundle Kip-Demo uses).
  * Options: { THREE, STLLoader, mergeVertices, toCreasedNormals, partsData (indexed or plain kip-describe-parts.json), base: '/kip/partspec/describe/' }.
@@ -257,8 +263,7 @@ export function createDescribeView({ THREE, STLLoader, mergeVertices, toCreasedN
 
   // One material per mesh, not per part: highlighting one wheel must not light the other three.
   const material = (part) => {
-    const palette = CATEGORY_COLOURS[partsData?.parts?.[part]?.category] ?? ['#9AA3B5'];
-    return new THREE.MeshStandardMaterial({ color: new THREE.Color(palette[hash(part) % palette.length]), roughness: 0.42, metalness: 0.05 });
+    return new THREE.MeshStandardMaterial({ color: new THREE.Color(partColour(partsData, part)), roughness: 0.42, metalness: 0.05 });
   };
 
   async function geometry(part) {

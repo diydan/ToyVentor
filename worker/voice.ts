@@ -1,4 +1,9 @@
-// GET /api/voice?lang=es&n=tree&c=green  ->  audio/wav of "árbol verde", spoken by Gemini 3.8 Flash-Lite TTS through the
+// GET /api/voice?lang=es&n=tree&c=green        ->  audio/wav of "árbol verde"        (a scene prop)
+// GET /api/voice?lang=es&p=veh_wheel_sport&hex=262d40  ->  audio/wav of "rueda deportiva negra"  (a Describe & Build part, in the
+//                                                       colour the exploded view drew it; the hex is reduced to one of 12 words)
+// Both reply with the spoken text in the x-voice-text header (URL-encoded) so a caption can show it.
+//
+// Spoken by Gemini 3.8 Flash-Lite TTS, spoken by Gemini 3.8 Flash-Lite TTS through the
 // Workers AI binding (Unified Billing via AI Gateway: no provider key lives in this repo).
 //
 // Safety and cost: the request carries VOCABULARY KEYS, never text. The phrase is built here from src/lib/propNames.ts, so
@@ -9,7 +14,8 @@
 // Probed 2026-11-03 against the live binding: input is exactly { text, voice } (style/prompt are rejected with 7003), output is
 // { audio: "data:audio/wav;base64,..." } (24 kHz, mono, 16-bit PCM), the language is auto-detected from the text, an unknown
 // voice name is rejected with 7003.
-import { COLOR_KEYS, LANGUAGES, NOUN_KEYS, propNoun, propPhrase, type ColorKey, type LangCode, type NounKey } from "../src/lib/propNames";
+import { COLOR_KEYS, LANGUAGES, NOUN_KEYS, colorKeyFromHex, propNoun, propPhrase, type ColorKey, type LangCode, type NounKey } from "../src/lib/propNames";
+import { isPartId, partPhrase } from "../src/lib/partNames";
 
 export const VOICE_MODEL = "google/gemini-3.8-flash-lite-tts";
 export const DEFAULT_VOICE = "Leda"; // Gemini's "youthful" voice; swap here (or set VOICE_NAME) to change it everywhere
@@ -52,24 +58,42 @@ function json(data: unknown, status: number, extra: Record<string, string> = {})
   return new Response(JSON.stringify(data), { status, headers: { "content-type": "application/json", ...extra } });
 }
 
-export interface VoiceKey {
-  lang: LangCode;
-  noun: NounKey;
-  color: ColorKey | null;
-}
+export type VoiceKey =
+  | { lang: LangCode; noun: NounKey; color: ColorKey | null }
+  | { lang: LangCode; part: string; color: ColorKey | null };
 
-/** Validate the query. Anything outside the controlled vocabulary is rejected, which is what bounds the cost. */
+/**
+ * Validate the query. Anything outside the controlled vocabulary is rejected, which is what bounds the cost: a language, then
+ * exactly one of a prop noun (n) or a Describe & Build part id (p), and an optional colour word (c) or hex (hex) that is reduced to
+ * one of 12 colour words, so a hex can never multiply the clip set.
+ */
 export function parseVoiceKey(url: URL): VoiceKey | null {
-  const lang = url.searchParams.get("lang");
-  const noun = url.searchParams.get("n");
-  const color = url.searchParams.get("c");
+  const q = url.searchParams;
+  const lang = q.get("lang");
+  const noun = q.get("n");
+  const part = q.get("p");
+  const c = q.get("c");
+  const hex = q.get("hex");
   if (!LANGUAGES.some((l) => l.code === lang)) return null;
-  if (!(NOUN_KEYS as readonly string[]).includes(noun ?? "")) return null;
-  if (color !== null && !(COLOR_KEYS as readonly string[]).includes(color)) return null;
-  return { lang: lang as LangCode, noun: noun as NounKey, color: color as ColorKey | null };
+  if ((noun === null) === (part === null)) return null; // exactly one of n / p
+  let color: ColorKey | null = null;
+  if (c !== null) {
+    if (!(COLOR_KEYS as readonly string[]).includes(c)) return null;
+    color = c as ColorKey;
+  } else if (hex !== null) {
+    if (!/^#?[0-9a-fA-F]{6}$/.test(hex)) return null;
+    color = colorKeyFromHex(hex.startsWith("#") ? hex : `#${hex}`);
+  }
+  if (noun !== null) {
+    if (!(NOUN_KEYS as readonly string[]).includes(noun)) return null;
+    return { lang: lang as LangCode, noun: noun as NounKey, color };
+  }
+  if (!isPartId(part)) return null;
+  return { lang: lang as LangCode, part, color };
 }
 
 export function voiceText(key: VoiceKey): string {
+  if ("part" in key) return partPhrase(key.part, key.color, key.lang) ?? key.part;
   return key.color ? propPhrase(key.noun, key.color, key.lang) : propNoun(key.noun, key.lang);
 }
 
@@ -159,7 +183,8 @@ export async function handleVoice(request: Request, env: VoiceEnv, ctx?: Ctx): P
   const text = voiceText(key);
 
   const edge = (globalThis as unknown as { caches?: { default?: CacheLike } }).caches?.default;
-  const cacheReq = new Request(`https://voice.toyventor.internal/${CACHE_VERSION}/${voice}/${key.lang}/${key.noun}/${key.color ?? "-"}`);
+  const what = "part" in key ? `p-${key.part}` : key.noun;
+  const cacheReq = new Request(`https://voice.toyventor.internal/${CACHE_VERSION}/${voice}/${key.lang}/${what}/${key.color ?? "-"}`);
   if (edge) {
     const hit = await edge.match(cacheReq);
     if (hit) {
@@ -183,7 +208,7 @@ export async function handleVoice(request: Request, env: VoiceEnv, ctx?: Ctx): P
     console.error("voice synth failed:", e instanceof Error ? e.message.slice(0, 200) : "error");
     return json({ error: "voice failed" }, 502, { "cache-control": "no-store" });
   }
-  const headers = { "content-type": "audio/wav", "cache-control": `public, max-age=${ONE_YEAR}, immutable` };
+  const headers = { "content-type": "audio/wav", "cache-control": `public, max-age=${ONE_YEAR}, immutable`, "x-voice-text": encodeURIComponent(text) };
   if (edge) {
     const put = edge.put(cacheReq, new Response(asBody(bytes), { headers }));
     if (ctx) ctx.waitUntil(put);

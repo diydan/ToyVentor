@@ -24,7 +24,16 @@ const { check, finish } = createChecks('describe tab e2e');
 const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.json': 'application/json', '.stl': 'model/stl', '.css': 'text/css' };
 
 // static server: /kip/tools/<f> and /kip/<f> from the viewer folder, everything else from public/
+const voice = { seen: [], fail: false };
+const tinyWav = (() => { const n = 2400, b = Buffer.alloc(44 + n * 2); b.write('RIFF', 0); b.writeUInt32LE(36 + n * 2, 4); b.write('WAVEfmt ', 8); b.writeUInt32LE(16, 16); b.writeUInt16LE(1, 20); b.writeUInt16LE(1, 22); b.writeUInt32LE(24000, 24); b.writeUInt32LE(48000, 28); b.writeUInt16LE(2, 32); b.writeUInt16LE(16, 34); b.write('data', 36); b.writeUInt32LE(n * 2, 40); return b; })();
 const web = http.createServer((req, res) => {
+  if (new URL(req.url, 'http://x').pathname === '/api/voice') {   // stand-in for the app's voice route: records the request, never calls a model
+    voice.seen.push(req.url);
+    if (voice.fail) { res.writeHead(503); res.end('voice unavailable'); return; }
+    res.writeHead(200, { 'content-type': 'audio/wav', 'x-voice-text': encodeURIComponent(`spoken:${new URL(req.url, 'http://x').searchParams.get('lang')}:${new URL(req.url, 'http://x').searchParams.get('p')}`) });
+    res.end(tinyWav);
+    return;
+  }
   const p = decodeURIComponent(new URL(req.url, 'http://x').pathname);
   const cands = [];
   if (p.startsWith('/kip/tools/')) cands.push(path.join(VIEWER, 'tools', p.slice('/kip/tools/'.length)));
@@ -100,6 +109,38 @@ try {
   check('hovering step 6 lights only that wheel (the other sport wheels stay dark)', g[5] !== 0 && g.filter((x) => x !== 0).length === 1, JSON.stringify(g));
   await ev("document.querySelectorAll('.kdb-steps li')[5].dispatchEvent(new MouseEvent('mouseleave'))");
   check('leaving clears the highlight', (await glow()).every((x) => x === 0));
+
+
+  console.log('\n[3a] say the part (the game\'s "say what it is", for parts)');
+  const caption = () => ev("document.querySelector('.kdb-caption').textContent");
+  const stepLis = "document.querySelectorAll('.kdb-steps li')";
+  await ev("localStorage.removeItem('toyforge:prop-lang:v1')");
+  check('the language picker is there with eight choices, English first and Turkish among them', await ev("(() => { const o = [...document.querySelectorAll('#kdb-lang option')].map((x) => x.value + ':' + x.textContent); return o.length === 8 && o[0] === 'en:English' && o.includes('tr:Türkçe') && o.at(-1) === 'off:Off'; })()"));
+  voice.seen.length = 0;
+  await ev(`${stepLis}[5].click()`);
+  check('tapping step 6 (a sport wheel) asks for that part, in English, in the colour the view draws it', await page.waitFor('true', 100) && await (async () => { for (let i = 0; i < 40 && !voice.seen.length; i++) await new Promise((r) => setTimeout(r, 100)); return voice.seen.length === 1 && voice.seen[0] === '/api/voice?lang=en&p=veh_wheel_sport&hex=262D40'; })(), JSON.stringify(voice.seen));
+  check('the caption shows the text the voice route spoke', await page.waitFor("document.querySelector('.kdb-caption').textContent === 'spoken:en:veh_wheel_sport'", 5000), await caption());
+  voice.seen.length = 0;
+  await ev("(() => { const s = document.querySelector('#kdb-lang'); s.value = 'es'; s.dispatchEvent(new Event('change', { bubbles: true })); })()");
+  check('choosing Español is saved and says the first part, in Spanish', await page.waitFor("localStorage.getItem('toyforge:prop-lang:v1') === 'es'", 3000) && await (async () => { for (let i = 0; i < 40 && !voice.seen.length; i++) await new Promise((r) => setTimeout(r, 100)); return voice.seen[0]?.startsWith('/api/voice?lang=es&p=veh_car_chassis'); })(), JSON.stringify(voice.seen));
+  voice.seen.length = 0;
+  await ev(`${stepLis}[2].dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))`);
+  check('pressing Enter on a step says it too (keyboard), now in Spanish', await (async () => { for (let i = 0; i < 40 && !voice.seen.length; i++) await new Promise((r) => setTimeout(r, 100)); return voice.seen.length === 1 && voice.seen[0].startsWith('/api/voice?lang=es&p='); })(), JSON.stringify(voice.seen));
+  voice.seen.length = 0;
+  await ev("(() => { const s = document.querySelector('#kdb-lang'); s.value = 'off'; s.dispatchEvent(new Event('change', { bubbles: true })); })()");
+  await ev(`${stepLis}[5].click()`);
+  await new Promise((r) => setTimeout(r, 600));
+  check('Off says nothing and asks for nothing, and clears the caption', voice.seen.length === 0 && (await caption()) === '', JSON.stringify(voice.seen));
+  await ev("(() => { const s = document.querySelector('#kdb-lang'); s.value = 'en'; s.dispatchEvent(new Event('change', { bubbles: true })); })()");
+  voice.fail = true; voice.seen.length = 0;
+  await ev(`${stepLis}[5].click()`);
+  check('if the voice route is down the caption falls back to the English part name (and the tab keeps working)', await page.waitFor("document.querySelector('.kdb-caption').textContent === 'Sport wheel'", 5000), await caption());
+  voice.seen.length = 0;
+  await ev(`${stepLis}[6].click()`);
+  await new Promise((r) => setTimeout(r, 500));
+  check('and it does not hammer a failing route: the next tap makes no request for a minute', voice.seen.length === 0, JSON.stringify(voice.seen));
+  voice.fail = false;
+  await ev("localStorage.removeItem('toyforge:prop-lang:v1')");
 
   console.log('\n[3b] the build player');
   const D = 'window.__describe';

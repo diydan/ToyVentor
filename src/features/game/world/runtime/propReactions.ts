@@ -10,7 +10,7 @@
 // built-in ones. A prop type nobody wrote a spec for still gets the generic wiggle and an English name (see FALLBACK_SPEC); the
 // registry test (tests/prop-reactions.test.ts) fails if a built-in prop builder has no entry in PROP_SPECS.
 import * as THREE from "three";
-import { colorKeyFromHex, describeObject, type ColorKey, type NounKey } from "../../../../lib/propNames";
+import { colorKeyFromHex, describeObject, languageInfo, type ColorKey, type LangCode, type NounKey } from "../../../../lib/propNames";
 import { getPropLang } from "../../../../lib/propSpeech";
 import { prefetchObjectVoices, sayObject } from "../../../../lib/propVoice";
 import { sfx, sound, tone } from "./audio";
@@ -130,7 +130,8 @@ function meshBox(root: THREE.Object3D): THREE.Box3 {
 
 const clamp01 = (k: number) => Math.max(0, Math.min(1, k));
 const easeOutBack = (k: number) => { const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(k - 1, 3) + c1 * Math.pow(k - 1, 2); };
-const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+/** Capitalise by the language's own rules (Turkish i -> İ, not I). */
+const cap = (s: string, lang: LangCode) => s.charAt(0).toLocaleUpperCase(languageInfo(lang).bcp47) + s.slice(1);
 
 type FruitKind = "apple" | "coconut" | "snow" | "berry" | "rain";
 const FRUIT: Record<FruitKind, { r: number; color: string; rough: number; sy?: number }> = {
@@ -369,7 +370,7 @@ export function createPropFx(deps: PropFxDeps) {
     const now = performance.now();
     if (d.text === lastSay && now - lastSayAt < 900) return; // quick repeat taps do not stutter the same word
     lastSay = d.text; lastSayAt = now;
-    deps.toast(cap(d.text));
+    deps.toast(cap(d.text, d.lang));
     if (deps.canSpeak ? deps.canSpeak() : sound) sayObject({ noun: inst.spec.noun ?? undefined, color: colorOf(inst), lang: d.lang, text: d.text });
   }
 

@@ -213,6 +213,22 @@ async function main() {
       check("language: and asks for the Spanish clip", cdp.voiceUrls.includes("/api/voice?lang=es&n=tree&c=green"), JSON.stringify(cdp.voiceUrls));
     }
 
+    // ---- 5b. Türkçe is offered with the others, and works ----
+    await clickButton(cdp, "button", "More"); await sleep(500);
+    await clickButton(cdp, '[role="menuitem"]', "Words"); await sleep(600);
+    const offered = await cdp.ev(`[...document.querySelectorAll('[aria-label="Words and Language"] button.tv-sc')].map((b) => (b.querySelector("span") || b).textContent.trim()).join(",")`);
+    check("language: the picker offers all seven languages and Off", offered === "English,Español,Français,Deutsch,Italiano,Português,Türkçe,Off", String(offered));
+    cdp.voiceUrls.length = 0;
+    await clickButton(cdp, "button.tv-sc", "Türkçe"); await sleep(700);
+    check("language: choosing Türkçe plays its sample", cdp.voiceUrls.includes("/api/voice?lang=tr&n=tree&c=green"), JSON.stringify(cdp.voiceUrls));
+    await clickButton(cdp, "button", "Done"); await sleep(500);
+    const tree3 = await bringIntoView(cdp, "tree");
+    if (tree3) {
+      await clearToast(cdp); await sleep(1000);
+      await cdp.tapAt(tree3.x, tree3.y); await sleep(500);
+      check("language: the tree now says 'Yeşil ağaç'", (await toastText(cdp)) === "Yeşil ağaç", String(await toastText(cdp)));
+    }
+
     // ---- 6. persists across a reload, and Off silences the naming but not the reaction ----
     await loadApp(cdp, "es");
     const t3 = await bringIntoView(cdp, "tree");

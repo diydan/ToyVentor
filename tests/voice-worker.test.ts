@@ -75,6 +75,50 @@ describe("/api/voice request validation: only vocabulary keys, never text", () =
   });
 });
 
+describe("/api/voice parts (Describe & Build)", () => {
+  it("speaks a part in the colour the exploded view drew, built on the server from a hex", async () => {
+    const { env, run } = fakeAi();
+    const res = await handleVoice(get("lang=es&p=veh_wheel_sport&hex=262d40"), env);
+    expect(res.status).toBe(200);
+    expect(run.mock.calls[0]![1]).toEqual({ text: "rueda deportiva negra", voice: "Leda" });
+    expect(decodeURIComponent(res.headers.get("x-voice-text")!)).toBe("rueda deportiva negra");
+  });
+  it("accepts a hex with or without #, and a colour word instead; both end in the same clip", async () => {
+    installEdgeCache();
+    const { env, run } = fakeAi();
+    await handleVoice(get("lang=de&p=hat_cowboy&hex=%23F5C518"), env);
+    await handleVoice(get("lang=de&p=hat_cowboy&hex=f5c518"), env);
+    await handleVoice(get("lang=de&p=hat_cowboy&c=yellow"), env);
+    expect(run).toHaveBeenCalledTimes(1); // one clip: the hex is reduced to the word "yellow" before caching
+    expect(run.mock.calls[0]![1]).toEqual({ text: "gelber Cowboyhut", voice: "Leda" });
+  });
+  it("says just the part when no colour is given, in Turkish too", async () => {
+    const { env, run } = fakeAi();
+    await handleVoice(get("lang=tr&p=racer_spoiler"), env);
+    expect(run.mock.calls[0]![1]).toEqual({ text: "spoyler", voice: "Leda" });
+  });
+  it("rejects unknown parts, junk hex, and a request that names both a prop and a part, without calling the model", async () => {
+    const { env, run } = fakeAi();
+    for (const qs of ["lang=en&p=dragon_wing", "lang=en&p=constructor", "lang=en&p=hat_cowboy&hex=zzzzzz", "lang=en&p=hat_cowboy&hex=fff", "lang=en&p=hat_cowboy&n=tree", "lang=en&p=hat_cowboy&c=chartreuse"]) {
+      expect((await handleVoice(get(qs), env)).status, qs).toBe(400);
+    }
+    expect(run).not.toHaveBeenCalled();
+  });
+  it("props also report their spoken text for captions", async () => {
+    const { env } = fakeAi();
+    const res = await handleVoice(get("lang=tr&n=tree&c=green"), env);
+    expect(decodeURIComponent(res.headers.get("x-voice-text")!)).toBe("yeşil ağaç");
+  });
+  it("a cached clip keeps its caption text", async () => {
+    installEdgeCache();
+    const { env } = fakeAi();
+    await handleVoice(get("lang=fr&p=hair_bob&c=brown"), env);
+    const hit = await handleVoice(get("lang=fr&p=hair_bob&c=brown"), env);
+    expect(hit.headers.get("x-voice-cache")).toBe("hit");
+    expect(decodeURIComponent(hit.headers.get("x-voice-text")!)).toBe("cheveux marron");
+  });
+});
+
 describe("/api/voice synthesis", () => {
   it("asks Gemini 3.8 Flash-Lite TTS for exactly the phrase, with the default voice and the default gateway", async () => {
     const { env, run } = fakeAi();
