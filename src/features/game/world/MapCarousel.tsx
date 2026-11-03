@@ -34,12 +34,16 @@ export interface MapCarouselProps {
   planForRung?: (track: string, rung: number) => number[];
   /** Switch to the branching trail-map view of the same places. */
   onShowExplorer?: () => void;
+  /** Open the Garage sheet (the always-open build place with the weekend drop). */
+  onOpenGarage?: () => void;
 }
 
 const cardLabel = (card: MapCard): string =>
   card.kind === "ask"
     ? "Who is playing? A grown-up sets the age, to open the right levels"
-    : `${card.label}, ${KIND_WORD[card.kind]}: ${card.done} of ${card.total}${card.complete ? ", done" : ""}`;
+    : card.kind === "garage"
+      ? `Garage, a place to build new things${card.badge === "new" ? ". A new drop is waiting this weekend" : ""}${card.complete ? ". Done this weekend" : ""}`
+      : `${card.label}, ${KIND_WORD[card.kind]}: ${card.done} of ${card.total}${card.complete ? ", done" : ""}`;
 
 /**
  * The level carousel (carousel spec §7): one swipeable row over the
@@ -57,6 +61,7 @@ export function MapCarousel({
   onStartLearn,
   planForRung,
   onShowExplorer,
+  onOpenGarage,
 }: MapCarouselProps) {
   const trackRef = useRef<HTMLOListElement>(null);
   const [rungsOf, setRungsOf] = useState<LadderState | null>(null);
@@ -113,6 +118,7 @@ export function MapCarousel({
   const open = (card: MapCard) => {
     setNotice("");
     if (card.kind === "ask") return onAskAge();
+    if (card.kind === "garage") return onOpenGarage?.();
     if (card.kind === "learn" && card.ladder) {
       if (card.ladder.choices > 1) return setRungsOf(card.ladder);
       if (onStartLearn) return onStartLearn(card.id, card.ladder.plan);
@@ -176,7 +182,12 @@ export function MapCarousel({
         aria-label="Places to play"
       >
         {cards.map((card) => (
-          <li key={card.id} className="tv-map-card" data-id={card.id}>
+          <li
+            key={card.id}
+            className={`tv-map-card${card.badge === "new" ? " tv-map-card-hot" : ""}`}
+            data-id={card.id}
+          >
+            {card.badge === "new" ? <span className="tv-map-new">NEW</span> : null}
             {card.suggested && guide ? (
               <span className="tv-map-guide" aria-hidden="true">
                 {guide}

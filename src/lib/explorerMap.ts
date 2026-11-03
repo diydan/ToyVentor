@@ -106,6 +106,9 @@ export const EXPLORER_POS: Record<string, [number, number]> = {
   circuits: [5, -4],
   code: [2, -5],
   ask: [-1, -2],
+  // The Garage: a short road off Lab 6, just east of home. It is the one spot
+  // within reach of Toy Room that clears every road and place.
+  garage: [2, -1],
 };
 
 /** Authored roads: the town ring, home spokes, lab doors, ladder trails. */
@@ -139,6 +142,7 @@ export const EXPLORER_EDGES: ReadonlyArray<readonly [string, string]> = [
   ["little", "garden"],
   ["early", "sky"],
   ["room", "ask"],
+  ["lab6", "garage"],
 ];
 
 /** Structured areas: each world district holds its lab and ladder trail. */
@@ -504,6 +508,7 @@ export function buildExplorerGraph(input: ExplorerInput): ExplorerGraph {
     if (
       input.openAll ||
       n.id === "room" ||
+      n.id === "garage" ||
       n.id === input.currentId ||
       visited.has(n.id) ||
       n.done > 0

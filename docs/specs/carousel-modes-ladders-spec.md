@@ -572,6 +572,60 @@ A registry test lists every prop builder and fails if a prop has no
 reaction entry. Existing partial credit (tidy spots, bolts, lamp
 circuit, windmill blades) is grandfathered as their `use`.
 
+**Status (2026-11-03): built for every scene prop.** `runtime/propReactions.ts` wraps each prop placed through the level's
+`props` list, which is the single path for authored levels, the level kit, Muse "describe a world" recipes, room photos and the
+editor's play-test (`propBuilders` is used in exactly one place), so created and generated props behave exactly like built-in
+ones. The 25 built-ins each declare `idle` / `poke` / `use` in `PROP_SPECS`: lantern, lamp and cottage window switch on and off
+(the real lights, glow sprite and glass); tree, palm, pine and bushes drop apples, coconuts, snow and berries (a tree shows
+three apples hanging so it looks shakeable, and grows them back after ≈10 s); cloud rains; plant sprouts; blocks topple and
+re-stack; books flutter; ball rolls out and back; chair wobble-settles; teddy and cushions squish; drum booms; umbrella spins;
+snowman's hat hops; windmill blades spin up. Tests: `tests/prop-reactions.test.ts` (the registry guard parses the real
+`propBuilders` table and fails if a builder has no `PROP_SPECS` entry) and the real-app `scripts/e2e-props.mjs`. A prop type
+nobody wrote a spec for still gets the generic wiggle and an English name (`FALLBACK_SPEC`).
+
+Taps hit an invisible hit box a little bigger than the prop, not its thin parts (a lantern pole is a few pixels wide, a tire is
+hollow). A tap on a prop reacts and names it but does **not** send the toy walking; empty ground still does. Under
+`prefers-reduced-motion` reactions are softened to 40 % but never removed; idle motion is a ~0.6° sway or an 8 cm bob.
+
+### 11.7a Say what it is: language option
+
+Decision (Dan, 2026-11-03): a tap also says the object and its colour, in a language the kid picks: "green tree", "blue light",
+"árbol verde", "grüner Baum".
+
+- **Setting.** More menu → *Words & Language*: English, Español, Français, Deutsch, Italiano, Português, or Off (default English;
+  stored per device as `toyforge:prop-lang:v1`). I put it in the kid-facing menu rather than behind the grown-ups gate — say if
+  it should be gated. Choosing a language plays a sample ("árbol verde") so the tap doubles as the preview.
+- **Names are built, not translated.** `src/lib/propNames.ts` holds a closed vocabulary (25 nouns × 12 colours × 6 languages) with
+  gender and number agreement ("árbol verde" but "lámpara azul", "bloques rojos", "blaue Lampe" but "blaues Licht"). Colours
+  were chosen by looking at what each builder draws (the lantern is a *blue light* — its pole; a level can give it any light
+  colour, which then names it, e.g. "pink light"). The six-language wording is mine and unreviewed by native speakers.
+- **Voice.** `google/gemini-3.8-flash-lite-tts` through the Workers AI binding `AI` (AI Gateway Unified Billing: no provider key
+  in the repo). Route `GET /api/voice?lang=es&n=tree&c=green` (`worker/voice.ts`) takes **vocabulary keys only, never text**, so
+  it can only say what the game can say and the clip set is bounded (≤ 1,800 possible, 216 used). Each clip is generated once,
+  silence-trimmed (≈ 56 KB), and cached at the edge and in the browser for a year (`immutable`). Probed live against the real
+  binding: input is exactly `{ text, voice }`, output `{ audio: "data:audio/wav;base64,…" }`; language is auto-detected; `style`
+  and `prompt` are rejected (7003), so there is no "say it cheerfully" knob; the voice is `DEFAULT_VOICE = "Leda"` (Gemini's
+  "youthful"; set `VOICE_NAME` or change the constant). A first request takes ≈ 2.3 s, a cached one ≈ 10 ms.
+  `scripts/prewarm-voice.ts <base-url>` warms all 216 clips after a deploy; the world also prefetches the clips for the props it
+  placed.
+- **Fallbacks, in order:** the Gemini clip → the device's own speech voice → the on-screen caption, which always shows. A failed
+  clip request switches to the device voice for 60 s. Muting sound silences speech but not the caption. `/api/*` bypasses the
+  service worker, so offline a clip plays only if it was heard before; otherwise the device voice speaks.
+- **Privacy / cost.** No text a child typed or said, no identifiers, nothing personal is sent. Spend is bounded by the vocabulary,
+  not by taps.
+- **Generated objects.** Anything created through Create, Muse recipes, room photos or the editor is covered automatically (above).
+  Forge and Describe & Build make **toy parts**, not scene props, so lights and fruit do not apply to them; what carries over is
+  the naming contract: a generator that wants its object spoken returns a `noun` key from `NOUN_KEYS` and a `color` key or hex
+  (`describeObject`). Free-text names it cannot map are spoken in English only, never half-translated. **Not built:** speaking
+  part names in the Build sheet or the Kip viewer; the part catalogue's names are English free text with no colour, and the
+  Describe & Build tab is another lane's file. Needs a decision: a small translation table for the catalogue, or make the
+  generators emit noun keys.
+- **Content change.** The Garden's only tree sat at x = −4, off the left edge of the playable lane, so no kid could ever tap one.
+  Two trees were added on the lane (x = 9.5 and 26.5, behind the toy, clear of the hidden-part spots and the windmill).
+- **Deploy.** The `ai` binding in `wrangler.jsonc` bills even under `wrangler dev`. Wrangler follows `.wrangler/deploy/config.json`
+  to the *built* `dist/toyventor/wrangler.json`, so rebuild before deploying or the route and binding will be missing (a
+  stale `dist` returned 404 for `/api/voice` in testing).
+
 ## 12. Engine-facade changes & rollout
 
 All changes go through [engine.ts](../../src/features/game/world/engine.ts)

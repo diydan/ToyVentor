@@ -81,7 +81,8 @@ export type DecorKind =
   | "peak"
   | "puff"
   | "junk"
-  | "block";
+  | "block"
+  | "lamp";
 
 export interface Decor {
   kind: DecorKind;
@@ -93,12 +94,13 @@ export interface Decor {
 
 /** Scenery per world theme, in the order the picker walks it. */
 const DECOR_BY_THEME: Record<string, readonly DecorKind[]> = {
-  garden: ["tree", "tree", "hill", "flower", "flower", "tree"],
-  beach: ["palm", "palm", "rock", "flower"],
-  junk: ["junk", "rock", "junk", "rock"],
-  snow: ["pine", "pine", "peak", "rock"],
+  // A lamp post in most themes: plain by day, lit at night.
+  garden: ["tree", "tree", "hill", "flower", "flower", "lamp"],
+  beach: ["palm", "palm", "rock", "lamp"],
+  junk: ["junk", "rock", "junk", "lamp"],
+  snow: ["pine", "pine", "peak", "lamp"],
   sky: ["puff", "puff", "tree", "flower"],
-  room: ["block", "block", "flower", "hill"],
+  room: ["block", "block", "flower", "lamp"],
 };
 
 /** Keep scenery this far (px) from any node centre and from any road sample. */
@@ -224,3 +226,16 @@ export function fogPuffs(frame: Pick<WorldFrame, "width" | "height">): Puff[] {
   }
   return out;
 }
+
+/** Blend two #rrggbb colours: t = 0 gives a, t = 1 gives b. */
+export function mixColor(a: string, b: string, t: number): string {
+  const pa = Number.parseInt(a.slice(1), 16);
+  const pb = Number.parseInt(b.slice(1), 16);
+  const k = Math.max(0, Math.min(1, t));
+  const ch = (shift: number) =>
+    Math.round(((pa >> shift) & 255) * (1 - k) + ((pb >> shift) & 255) * k)
+      .toString(16)
+      .padStart(2, "0");
+  return `#${ch(16)}${ch(8)}${ch(0)}`;
+}
+

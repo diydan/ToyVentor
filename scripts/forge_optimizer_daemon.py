@@ -37,7 +37,7 @@ import threading
 import time
 import uuid
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
 SCRIPTS_DIR = ROOT_DIR / "scripts"
@@ -251,12 +251,14 @@ def _symmetrize_loft_rows(
 # ---------------------------------------------------------------------------
 AUTO_MINIMAL_FOR_OVERHANG = True  # `--no-auto-minimal` turns the none -> minimal promotion off
 SLAB_THICKNESS_MM = 0.8  # `sdk.loft_slabs` default slab thickness
-FEATURE_OPS = ("knob", "brim", "ears", "horns", "spikes", "snout")
+FEATURE_OPS = ("knob", "brim", "ears", "horns", "spikes", "snout", "hollow", "star", "ribs")
 _EAR_STYLES = {
     # style: (height_mm, width_mm, tilt_deg) defaults; "round" is a flat disc, "pointy" a leaf, "tall" a bunny ear
     "round": (0.0, 11.0, 8.0),
     "pointy": (11.0, 9.0, 22.0),
     "tall": (22.0, 7.0, 12.0),
+    # "floppy" hangs down the side of the head like a beagle's or a lop rabbit's: `height_mm` is its length
+    "floppy": (16.0, 9.0, 12.0),
 }
 _SNOUT_STYLES = {
     # style: (length_mm, width_mm, height_mm, tip_width_frac, tip_radius_frac) defaults;
@@ -304,9 +306,13 @@ def _parse_feature(feat: dict[str, Any], slot: str) -> dict[str, Any] | None:
             "op": "ears",
             "style": style,
             "height_mm": _clamp(feat.get("height_mm"), 0.0, 26.0, h0, "height_mm") if style != "round" else 0.0,
-            "width_mm": _clamp(feat.get("width_mm"), 5.0, 16.0, w0, "width_mm"),
+            # round ears may be big (an elephant's flaps); the other styles stay narrow
+            "width_mm": _clamp(feat.get("width_mm"), 5.0, 24.0 if style == "round" else 16.0, w0, "width_mm"),
             "thickness_mm": _clamp(feat.get("thickness_mm"), 2.4, 6.0, 3.6, "thickness_mm"),
             "tilt_deg": _clamp(feat.get("tilt_deg"), 0.0, 35.0, t0, "tilt_deg"),
+            # where up the head the ear is rooted, as a fraction of its height (a head only): 0.84 is the top corner, 0.5 the
+            # middle of the side (a monkey's or an elephant's ears). None keeps the top corner.
+            "z_frac": _clamp(feat.get("z_frac"), 0.3, 0.9, 0.84, "z_frac") if feat.get("z_frac") is not None else None,
         }
     if op == "horns":
         if slot not in ("head", "crown"):
@@ -332,15 +338,47 @@ def _parse_feature(feat: dict[str, Any], slot: str) -> dict[str, Any] | None:
             "height_mm": _clamp(feat.get("height_mm"), 4.0, 16.0, h0, "height_mm"),
             "z_frac": _clamp(feat.get("z_frac"), 0.2, 0.65, 0.4, "z_frac"),
         }
-    # spikes: a row of points along x on top of a crown or back piece (the head top is the crown seat)
+    if op == "ribs":
+        # vertical grooves round the sides of a head (a pumpkin, a melon, a beehive); the front stays smooth
+        if slot != "head":
+            return None
+        return {
+            "op": "ribs",
+            "count": int(_clamp(feat.get("count"), 6, 12, 8, "count")),
+            "depth_mm": _clamp(feat.get("depth_mm"), 0.8, 3.5, 2.4, "depth_mm"),
+            "width_mm": _clamp(feat.get("width_mm"), 2.0, 6.0, 4.0, "width_mm"),
+        }
+    if op == "star":
+        # a five-point star standing on the very top of a crown (a wizard hat's tip, a fairy's wand-top)
+        if slot != "crown":
+            return None
+        return {
+            "op": "star",
+            "size_mm": _clamp(feat.get("size_mm"), 6.0, 16.0, 10.0, "size_mm"),
+            "thickness_mm": _clamp(feat.get("thickness_mm"), 1.6, 3.6, 2.4, "thickness_mm"),
+        }
+    if op == "hollow":
+        # an open-top pocket: a crown that is a ring, a chef hat or a pot that is a cup (crowns only)
+        if slot != "crown":
+            return None
+        return {
+            "op": "hollow",
+            "wall_mm": _clamp(feat.get("wall_mm"), 1.6, 4.0, 2.4, "wall_mm"),
+            "depth_mm": _clamp(feat.get("depth_mm"), 2.0, 20.0, 6.0, "depth_mm"),
+        }
+    # spikes: a row of points along x on top of a crown or back piece (the head top is the crown seat), or on a crown a
+    # ring of points around its rim (`layout: "ring"`, which also hollows the top out into a ring)
     if slot not in ("crown", "back"):
         return None
+    ring = slot == "crown" and str(feat.get("layout", "row")).strip().lower() == "ring"
     return {
         "op": "spikes",
-        "count": int(_clamp(feat.get("count"), 2, 7, 5, "count")),
+        "layout": "ring" if ring else "row",
+        "count": int(_clamp(feat.get("count"), 4 if ring else 2, 12 if ring else 7, 5, "count")),
         "height_mm": _clamp(feat.get("height_mm"), 3.0, 16.0, 7.0, "height_mm"),
-        "base_mm": _clamp(feat.get("base_mm"), 2.5, 7.0, 4.0, "base_mm"),
+        "base_mm": _clamp(feat.get("base_mm"), 3.0 if ring else 2.5, 9.0 if ring else 7.0, 5.0 if ring else 4.0, "base_mm"),
         "center_boost_mm": _clamp(feat.get("center_boost_mm"), 0.0, 6.0, 0.0, "center_boost_mm"),
+        "wall_mm": _clamp(feat.get("wall_mm"), 1.6, 4.0, 2.4, "wall_mm"),
     }
 
 
@@ -357,12 +395,36 @@ def _mirror_pair(m: manifold3d.Manifold) -> manifold3d.Manifold:
     return m + m.mirror((1.0, 0.0, 0.0))
 
 
-def _root_fill(rb: float, x_root: float, z_root: float, hw: float, y_scale: float) -> manifold3d.Manifold:
+ROOT_RAMP_SLOPE = 1.7  # rise per run of an ear or horn root's ramp: 1.4 (54 degrees) left 1.3 to 1.8 mm2 on some sizes, over the gate's 1.0
+
+
+def _root_fill(
+    rb: float,
+    x_root: float,
+    z_root: float,
+    hw: float,
+    y_scale: float,
+    hw_of: "Callable[[float], float] | None" = None,
+) -> manifold3d.Manifold:
     """A teardrop under a root sphere, tangent to the body wall, so the root's underside is steep enough to print.
-    Without it the sphere's lower half hangs off the wall and fails P1 (steeper than 45 degrees)."""
-    r_low = 0.8 * rb
+    Without it the sphere's lower half hangs off the wall and fails P1 (steeper than 45 degrees). A root moved well
+    outside the wall gets a longer ramp (45 degrees plus). `hw_of(z)` is the body's half-width at height z: on a head
+    that is 46 mm wide at the ear and 29 mm wide lower down, the ramp has to end inside the narrower wall, not at the
+    width of the ear's own height (it hung 3 mm out of the wall and failed P1 with 7 to 10 mm2)."""
+    r_low = 0.8 * rb if rb <= 7.5 else 6.0  # a big ear (an elephant's flap) gets a smaller ramp sphere that fits above the bed
     x_low = max(0.0, hw - r_low) - x_root
-    depth = max(2.0 * rb, 1.3 * (-x_low))  # a root moved well outside the wall needs a longer, 45-degree-plus ramp
+    # The ramp's outer edge is the tangent line from the big sphere's outer side to the small one's, so its run is the
+    # centre distance plus the radius difference: measured from the centres alone it came out 43 degrees, not 52.
+    depth = max(2.0 * rb, ROOT_RAMP_SLOPE * (-x_low + rb - r_low))
+    if hw_of is not None:
+        floor_depth = max(1.0, z_root - r_low - 3.0)  # the ramp's lowest sphere stays 3 mm above the bed (clear of the collar)
+        for _ in range(3):
+            # ...and the narrowest wall under the lowest sphere too: its bottom is r_low below its centre, where a head that
+            # tapers in toward the collar is narrower still (the sphere stuck out 1.6 mm2 at z 8 on a 46 mm wide head)
+            samples = [z_root - depth * f for f in (0.25, 0.5, 0.75, 1.0)] + [z_root - depth - r_low]
+            hw_low = min(hw, *(hw_of(z) or hw for z in samples))
+            x_low = max(0.0, hw_low - r_low) - x_root
+            depth = min(max(2.0 * rb, ROOT_RAMP_SLOPE * (-x_low + rb - r_low)), floor_depth)
     drop = sdk.hull([sdk.sphere(rb, (0.0, 0.0, 0.0)), sdk.sphere(r_low, (x_low, 0.0, -depth))])
     return drop.scale((1.0, y_scale, 1.0)).translate((x_root, 0.0, z_root))
 
@@ -394,6 +456,117 @@ def _spikes_solid(
     return sdk.union(pts)
 
 
+HOLLOW_MIN_FLOOR_MM = 4.0  # the pocket floor stays this far above the top of the crown pad (the socket seat is below)
+
+
+def _hollow_pocket(
+    body: manifold3d.Manifold, z_top: float, wall: float, depth: float
+) -> manifold3d.Manifold | None:
+    """An open-top pocket under the crown's top: the top outline inset by `wall`, `depth` deep. Open upward, so it prints
+    without help. None when the wall leaves nothing or there is no room above the socket seat."""
+    outline = body.slice(z_top - 0.3)
+    if outline.is_empty():
+        return None
+    inner = outline.hull().offset(-wall, manifold3d.JoinType.Round)
+    depth = min(depth, z_top - HOLLOW_MIN_FLOOR_MM)
+    if inner.is_empty() or inner.area() < 6.0 or depth < 2.0:
+        return None
+    return manifold3d.Manifold.extrude(inner, depth + 3.0).translate((0.0, 0.0, z_top - depth))
+
+
+def _ray_radii(poly: np.ndarray, cx: float, cy: float, thetas: np.ndarray) -> np.ndarray:
+    """Distance from (cx, cy) along each angle in `thetas` to the outline `poly` (one convex outline round the centre)."""
+    p = poly - np.array([cx, cy])
+    e = np.roll(p, -1, axis=0) - p
+    out = np.empty(len(thetas))
+    for k, th in enumerate(thetas):
+        d = np.array([math.cos(th), math.sin(th)])
+        den = d[0] * e[:, 1] - d[1] * e[:, 0]
+        with np.errstate(divide="ignore", invalid="ignore"):
+            t = (p[:, 0] * e[:, 1] - p[:, 1] * e[:, 0]) / den
+            u = (p[:, 0] * d[1] - p[:, 1] * d[0]) / den
+        ok = (np.abs(den) > 1e-12) & (t > 0.0) & (u >= -1e-9) & (u <= 1.0 + 1e-9)
+        out[k] = float(t[ok].min()) if ok.any() else float("nan")
+    return out
+
+
+def _ring_teeth(
+    body: manifold3d.Manifold, z_top: float, feat: dict[str, Any], fs: float
+) -> manifold3d.Manifold | None:
+    """A crown's zigzag rim: `count` wide triangular points that touch their neighbours, standing on the wall of the
+    round top (Dan, round 9: five thin thorns on a cup were "still not a crown", and "triangles are not smooth on seam
+    to crown"). Each point is built straight, as a trapezoid with a flat 1 mm tip, then bent round the rim, so the
+    rim is one smooth zigzag with no seam. The first point is at the front centre, so the crown is mirror symmetric."""
+    outline = body.slice(z_top - 0.3)
+    if outline.is_empty():
+        return None
+    wall = float(feat["wall_mm"])
+    hull = outline.hull()
+    # 0.1 mm inside the body's own wall (more than the simplify tolerance, or the step collapses into slivers)
+    outer = hull.offset(-0.1, manifold3d.JoinType.Round)
+    inner = hull.offset(-wall + 0.1, manifold3d.JoinType.Round)
+    if outer.is_empty() or inner.is_empty():
+        return None
+    po, pi = np.asarray(outer.to_polygons()[0], dtype=float), np.asarray(inner.to_polygons()[0], dtype=float)
+    x0, y0, x1, y1 = hull.bounds()
+    cx, cy = 0.5 * (x0 + x1), 0.5 * (y0 + y1)
+    height = float(feat["height_mm"]) * fs
+    count = int(feat["count"])
+    z_base, z_floor = -0.6, 0.3  # the points start 0.6 mm inside the wall; the valleys between them are 0.3 mm over it
+    ov = 0.4  # neighbouring points overlap by this much along the rim
+    teeth = []
+    for k in range(count):
+        a_k = -0.5 * math.pi + 2.0 * math.pi * k / count  # the first point at the front (-y)
+        r_o, r_i = (float(_ray_radii(q, cx, cy, np.array([a_k]))[0]) for q in (po, pi))
+        r_c = 0.5 * (r_o + r_i)
+        half = math.pi * r_c / count  # half the arc one point takes up
+        profile = manifold3d.CrossSection(
+            [[(-half - ov, z_base), (half + ov, z_base), (half + ov, z_floor), (0.5, height), (-0.5, height), (-half - ov, z_floor)]]
+        )
+        band = manifold3d.Manifold.extrude(profile, 1.0).refine_to_length(1.5)
+
+        def bend(v: np.ndarray, a_k: float = a_k, r_c: float = r_c) -> np.ndarray:
+            s_, up, u = v[:, 0], v[:, 1], v[:, 2]  # along the rim, up, across the wall (0 inside, 1 outside)
+            th = a_k + s_ / r_c
+            ro, ri = _ray_radii(po, cx, cy, th), _ray_radii(pi, cx, cy, th)
+            rad = ri + u * (ro - ri)
+            return np.stack([cx + rad * np.cos(th), cy + rad * np.sin(th), z_top + up], axis=1)
+
+        teeth.append(band.warp_batch(bend))
+    crown = sdk.union(teeth).simplify(STUD_CUT_SIMPLIFY_MM)
+    return crown if not crown.is_empty() else None
+
+
+STAR_INNER_RATIO = 0.55  # inner radius / outer radius: a plump star, so no arm's underside is shallower than 45 degrees
+STAR_EMBED_MM = 1.5  # how far the star's stem goes into the top of the hat
+
+
+def _star_topper(rows: list[tuple[float, float, float, float, float, float]], feat: dict[str, Any], fs: float) -> manifold3d.Manifold:
+    """An upright five-point star (in the x-z plane, facing the front) standing on top of the crown on a V-shaped stem.
+    The star is plump (inner radius 0.55 of the outer one), which keeps the underside of each arm at 48 degrees or
+    more; the stem fills the notch between the two lower legs and tapers at 54 degrees to a point that sits in the top
+    of the hat, so nothing under the star is shallower than 45 degrees."""
+    z, _w, _d, _r, cx, cy = rows[-1]
+    z_top = z + SLAB_THICKNESS_MM
+    R = 0.5 * float(feat["size_mm"]) * fs
+    r = STAR_INNER_RATIO * R
+    t = float(feat["thickness_mm"])
+    leg_x, leg_z = R * math.cos(math.radians(234.0)), R * math.sin(math.radians(234.0))  # the lower left tip
+    stem_depth = abs(leg_x) * 1.4  # the two inner edges of the lower legs fall 54 degrees from horizontal
+    pts: list[tuple[float, float]] = []
+    for k in range(5):
+        a = math.radians(90.0 + 72.0 * k)
+        pts.append((R * math.cos(a), R * math.sin(a)))
+        b = math.radians(126.0 + 72.0 * k)
+        # The inner vertex at the bottom (270 degrees) is pulled down into a point: that is the stem. Without it the two
+        # lower legs have a shallow V-shaped underside (24 degrees), which does not print without support.
+        pts.append((0.0, leg_z - stem_depth) if k == 2 else (r * math.cos(b), r * math.sin(b)))
+    shape = manifold3d.CrossSection([pts]).simplify(0.01)
+    c_z = z_top - STAR_EMBED_MM - (leg_z - stem_depth)  # the star's centre height: the stem's point is STAR_EMBED_MM into the hat
+    solid = manifold3d.Manifold.extrude(shape, t).translate((0.0, 0.0, -0.5 * t))
+    return solid.rotate((90.0, 0.0, 0.0)).translate((cx, cy, c_z)).simplify(STUD_CUT_SIMPLIFY_MM)
+
+
 def _ears_or_horns_solid(
     op: str,
     slot: str,
@@ -411,7 +584,8 @@ def _ears_or_horns_solid(
     `z_shift` (negative = lower), `tilt_add` (degrees outward, ears only) and `x_shift` (mm further apart) let
     `_fit_head_pair` move a head's pair off the crown studs."""
     if slot == "head":
-        z_root = head_height_mm - 5.0 + z_shift  # just under the crown seat
+        zf = feat.get("z_frac") if op == "ears" else None
+        z_root = (float(zf) * head_height_mm if zf is not None else head_height_mm - 5.0) + z_shift  # default: just under the crown seat
     else:
         z_lo, z_hi = float(rows[0][0]), float(rows[-1][0])
         z_root = z_hi - 0.12 * (z_hi - z_lo) if op == "ears" else z_lo + 0.62 * (z_hi - z_lo)
@@ -423,12 +597,39 @@ def _ears_or_horns_solid(
         height = float(feat["height_mm"]) * fs
         thick = float(feat["thickness_mm"])
         rb = width / 2.0
+        if str(feat["style"]) == "floppy":
+            # A flap lying along the cheek (Dan, round 13: the leaf that hung from the top corner sank into the head's widest part,
+            # which is part way up, and read as a plain ear). A chain of flat ellipsoids follows the wall's own outline from the
+            # root down, each standing off the wall by about a fifth of the flap's thickness, tapering to a point at the bottom.
+            # It is attached along its whole length, so there is no overhang to hold up and no tip hanging in the air.
+            n = 7
+            drop = max(4.0, min(height, z_root - 6.0))  # the flap stops 6 mm above the bed, clear of the collar's flare
+            t_full = max(thick, 3.6) * 1.4  # a flap is thicker than a standing ear so it shows from the front
+            spheres = []
+            for i in range(n + 1):
+                t = i / n
+                z = z_root - drop * t
+                hw_i = min(_half_width_at(body, z), 12.3 + 0.869 * (z - 1.0))  # the loft, trimmed to the 41 degree flare
+                r = rb * (0.55 + 0.45 * math.sin(math.pi * min(1.0, (t + 0.18) / 0.9) * 0.5)) * (1.0 - 0.8 * t**2)  # widest near the top
+                r = max(r, 0.7)
+                x_half = max(0.45, 0.5 * t_full * r / rb)  # half-thickness in x: full at the widest, tapering with the flap to a point
+                sx = x_half / r
+                # centre outside the wall, but never by more than 60% of this sphere's own half-thickness: past that the flap lifts off
+                # the wall and its tip hangs in the air (an overhang and a floating island)
+                stand_off = min((0.5 * t_full - 0.8) * (1.0 - 0.7 * t), 0.6 * r * sx)
+                spheres.append(
+                    sdk.sphere(1.0, (0.0, 0.0, 0.0)).scale((r * sx, r, r)).translate((hw_i + stand_off + x_shift, 0.0, z))
+                )
+            flap = sdk.union([sdk.hull(spheres[i : i + 2]) for i in range(n)])
+            return _mirror_pair(flap.simplify(STUD_CUT_SIMPLIFY_MM))
         tip = {"round": rb, "pointy": max(0.9, rb * 0.28), "tall": max(1.4, rb * 0.7)}[str(feat["style"])]
-        x_root = max(2.0, hw - 0.35 * rb) + x_shift
+        # an ear on the side of the head (z_frac given) stands mostly outside the wall, like a monkey's or an elephant's; one at
+        # the top corner sits 35% into it, as before (the bear, bunny and cat were rated on that)
+        x_root = (max(2.0, hw + 0.1 * rb) if zf is not None and str(feat["style"]) == "round" else max(2.0, hw - 0.35 * rb)) + x_shift
         ear = sdk.hull([sdk.sphere(rb, (0.0, 0.0, 0.0)), sdk.sphere(tip, (0.0, 0.0, height))])
         ear = ear.scale((1.0, thick / width, 1.0)).rotate((0.0, float(feat["tilt_deg"]) + tilt_add, 0.0))
-        fill = _root_fill(rb, x_root, z_root, hw, thick / width)
-        return _mirror_pair(ear.translate((x_root, 0.0, z_root)) + fill)
+        fill = _root_fill(rb, x_root, z_root, hw, thick / width, hw_of=lambda z: _half_width_at(body, z))
+        return _mirror_pair((ear.translate((x_root, 0.0, z_root)) + fill).simplify(STUD_CUT_SIMPLIFY_MM))
     length = float(feat["length_mm"]) * fs
     rb = float(feat["base_mm"]) * fs / 2.0
     curl = float(feat["curl"])
@@ -450,7 +651,7 @@ def _ears_or_horns_solid(
             for i in range(n)
         ]
     )
-    return _mirror_pair(horn + _root_fill(rb, x_root, z_root, hw, 1.0))
+    return _mirror_pair(horn + _root_fill(rb, x_root, z_root, hw, 1.0, hw_of=lambda z: _half_width_at(body, z)))
 
 
 def _socket_keepout(head: manifold3d.Manifold) -> manifold3d.Manifold | None:
@@ -465,11 +666,16 @@ def _socket_keepout(head: manifold3d.Manifold) -> manifold3d.Manifold | None:
     return manifold3d.Manifold.extrude(holes.offset(0.6, manifold3d.JoinType.Round), 10.0)
 
 
-STUD_KEEPOUT_MARGIN_MM = 1.5  # Dan, round 4: "needs more space around studs" (0.6 was too tight)
-EAR_FIT_DROPS_MM = (0.0, 1.5, 3.0, 4.5, 6.0, 8.0, 10.0)  # how far down a head's ear or horn pair may move
+CROWN_SEAT_MARGIN_MM = 3.5  # clear space round the hat's whole 2x1 pad: 1.0 still "will block studs" (Dan, round 10: "move ears further apart"); the 26 mm round crown reaches 13.0 each side, a 30 mm hat 15
+EAR_FIT_DROPS_MM = (0.0, 1.5, 3.0, 4.5, 6.0, 8.0, 10.0, -1.5, -3.0, -4.5, -6.0)  # how far down (or, negative, up) a head's ear or horn pair may move
 EAR_FIT_TILTS_DEG = (0.0, 6.0, 12.0, 18.0)  # how far further out an ear may lean
 EAR_FIT_SHIFTS_MM = (0.0, 1.5, 3.0, 4.5, 6.0, 7.5, 9.0)  # how far each side may move outward (the pair ends up twice as far apart)
-EAR_FIT_OVERHANG_MM2 = 3.0  # a placement that adds more than this much P1 overhang is not used
+# P1's own measure: a face whose underside is shallower than 45 degrees from horizontal. The check must count from z 1 up and
+# the ramp must account for the sphere radii (see `_root_fill`), or it passes pairs the gate then rejects.
+PAIR_STEEP_MAX_MM2 = 0.9  # the gate fails at 1.0
+EAR_MIN_Z_MM = 3.0  # a pair's lowest point: below this it reaches the collar and the neck (G4 on the bed, I3 on the reference part)
+OVERHANG_NZ = -0.7071
+EAR_FIT_OVERHANG_MM2 = 0.8  # a placement that adds more than this much overhang is not used (a clean pair measures 0.6; 1.4 failed the gate at 1.8 after L2)
 STUD_CUT_SIMPLIFY_MM = 0.03
 EAR_FIT_MIN_KEPT = 0.3  # below this share of the asked-for visible volume the pair is reported as dropped
 
@@ -479,13 +685,19 @@ EAR_TALL_MAX_MM = 15.0
 EAR_SLENDER_RATIO = 2.2  # the height a fragile ear is cut back to, in widths
 EAR_MIN_WIDTH_MM = 8.0
 EAR_MAX_TILT_FRAGILE = 3.0  # a fragile ear also stands up straight
+HEAD_HORN_MIN_BASE_MM = 5.5  # a head's horn or antenna is at least this thick at its base
 
 
 def _sturdy_head_ear(feat: dict[str, Any]) -> tuple[dict[str, Any], str | None]:
     """Dan, round 6, on the bunny: "looks fragile, not sure we need the bend, can we make shorter". A head ear that is
     tall and thin (over 15 mm, or over 2.4 widths) is cut back to at most 15 mm and 2.2 widths, widened to at least
     8 mm, and stood up straight. Ears that are already stout (the cat, the bear) are left exactly as asked."""
-    if feat.get("op") != "ears" or str(feat.get("style")) == "round":
+    if feat.get("op") == "horns":
+        # Dan, round 8: "antenna are too thin" (the prompt told Spark base 3 mm for antennae)
+        if float(feat["base_mm"]) >= HEAD_HORN_MIN_BASE_MM:
+            return feat, None
+        return dict(feat, base_mm=HEAD_HORN_MIN_BASE_MM), f"kept sturdy: base widened from {float(feat['base_mm']):g} to {HEAD_HORN_MIN_BASE_MM:g} mm"
+    if feat.get("op") != "ears" or str(feat.get("style")) in ("round", "floppy"):
         return feat, None
     h, w, tilt = float(feat["height_mm"]), float(feat["width_mm"]), float(feat["tilt_deg"])
     if h <= EAR_TALL_MAX_MM and h <= EAR_SLENDER_MAX * w:
@@ -528,20 +740,68 @@ def _domed_top(
     return below + sdk.hull(slabs), [c for c in conns if c.get("id") != "top_studs"]
 
 
-def _stud_keepout(head: manifold3d.Manifold, head_height_mm: float) -> manifold3d.Manifold | None:
-    """The crown studs of a built head grown by 0.6 mm and extruded up from the crown plane. A hat seats on the
-    studs, so nothing a recipe adds to a head may sit in this volume."""
-    cs = head.slice(head_height_mm + 1.0)
-    if cs.is_empty():
+RIB_Z_LOW_MM = 7.0  # grooves start above the neck sockets' roofs
+RIB_Z_TOP_GAP_MM = 3.5  # and stop this far under the top of the head
+
+
+def _rib_grooves(
+    head: manifold3d.Manifold, feat: dict[str, Any], head_height_mm: float, fs: float
+) -> manifold3d.Manifold | None:
+    """Vertical grooves round the sides of a head, like the ribs of a pumpkin (Dan, round 10: the pumpkin was "blank").
+    `count` grooves are spaced evenly from the front centre, which is skipped, so the front stays smooth for decals. Each
+    follows the wall (the head tapers) as a chain of spheres that ends at the top in a point, so the groove's ceiling
+    slopes 62 degrees and prints without help; the bottom end is an upward-facing floor."""
+    count = int(feat["count"])
+    r_g = 0.5 * float(feat["width_mm"]) * fs
+    # A groove whose centre sits exactly on the wall meets the faceted loft wall at a graze and leaves hair-thin triangles
+    # (40 zero-volume bodies), so the centre is at least 0.25 mm inside the wall.
+    depth = max(float(feat["depth_mm"]) * fs, r_g + 0.25)
+    z0 = RIB_Z_LOW_MM
+    z_hi = head_height_mm - RIB_Z_TOP_GAP_MM
+    if z_hi - z0 < 5.5 * r_g:  # a groove needs its pointed top (1.9 radii), a rounded floor and a little length between
         return None
-    # One plain box per stud column: a rounded outline would leave hair-thin triangles on the cut face.
-    m = STUD_KEEPOUT_MARGIN_MM
-    boxes = []
-    for poly in cs.to_polygons():
-        xs, ys = poly[:, 0], poly[:, 1]
-        x0, x1, y0, y1 = float(xs.min()) - m, float(xs.max()) + m, float(ys.min()) - m, float(ys.max()) + m
-        boxes.append(manifold3d.Manifold.cube((x1 - x0, y1 - y0, 40.0)).translate((x0, y0, head_height_mm)))
-    return manifold3d.Manifold.batch_boolean(boxes, manifold3d.OpType.Add) if boxes else None
+    zs = [z0, 0.5 * (z0 + z_hi), z_hi - 1.9 * r_g]
+    polys = []
+    for z in zs:
+        cs = head.slice(z)
+        if cs.is_empty():
+            return None
+        hull = cs.hull()
+        x0, y0, x1, y1 = hull.bounds()
+        polys.append((np.asarray(hull.to_polygons()[0], dtype=float), 0.5 * (x0 + x1), 0.5 * (y0 + y1)))
+    grooves = []
+    for k in range(1, count):  # k = 0 is the front centre
+        a = -0.5 * math.pi + 2.0 * math.pi * k / count
+        centres = []
+        for z, (poly, cx, cy) in zip(zs, polys):
+            r = float(_ray_radii(poly, cx, cy, np.array([a]))[0])
+            if not math.isfinite(r):
+                return None
+            rad = r + (r_g - depth)  # the groove's centre line sits r_g - depth outside the wall, so it cuts `depth` in
+            centres.append((cx + rad * math.cos(a), cy + rad * math.sin(a), z))
+        # the pointed top: a small sphere one cone-length above the last, still following the wall's slope
+        (xa, ya, za), (xb, yb, zb) = centres[1], centres[2]
+        t = 1.9 * r_g / max(zb - za, 1e-6)
+        top = (xb + (xb - xa) * t, yb + (yb - ya) * t, zb + 1.9 * r_g)
+        spheres = [sdk.sphere(r_g, c) for c in centres] + [sdk.sphere(0.45, top)]
+        grooves.append(sdk.union([sdk.hull(spheres[i : i + 2]) for i in range(len(spheres) - 1)]))
+    return sdk.union(grooves) if grooves else None
+
+
+def _stud_keepout(head: manifold3d.Manifold, head_height_mm: float) -> manifold3d.Manifold | None:
+    """The seat a hat needs on top of a head: the whole 2x1 crown pad footprint (24.4 x 11.9 mm, wider than the two
+    studs it clips onto) plus a 1 mm margin, from the crown plane up past the pad's height. Dan, round 8: "ears will
+    block studs" (on the Kip-sized heads the ears stood inside the pad column, where the hat's foot goes). One plain
+    box: a rounded outline would leave hair-thin triangles on the cut face."""
+    try:
+        _, fh, foot = sdk.kp._crown_pad_2x1("small")
+        fx0, fy0, _fz0, fx1, fy1, _fz1 = foot.bounding_box()
+        pad_h = float(fh)
+    except Exception:  # noqa: BLE001
+        fx0, fy0, fx1, fy1, pad_h = -12.2, -5.95, 12.2, 5.95, 4.8
+    m = CROWN_SEAT_MARGIN_MM
+    x0, x1, y0, y1 = fx0 - m, fx1 + m, fy0 - m, fy1 + m
+    return manifold3d.Manifold.cube((x1 - x0, y1 - y0, pad_h + 3.0)).translate((x0, y0, head_height_mm))
 
 
 def _intersect_volume(a: manifold3d.Manifold, b: manifold3d.Manifold) -> float:
@@ -558,7 +818,7 @@ def _overhang_area(m: manifold3d.Manifold, z_min: float = 6.0) -> float:
     twice = np.linalg.norm(n, axis=1)
     nz = n[:, 2] / np.maximum(twice, 1e-12)
     zc = (a[:, 2] + b[:, 2] + c[:, 2]) / 3.0
-    return float((0.5 * twice)[(nz < -0.7071) & (zc > z_min)].sum())
+    return float((0.5 * twice)[(nz < OVERHANG_NZ) & (zc > z_min)].sum())
 
 
 def _fit_head_pair(
@@ -569,6 +829,8 @@ def _fit_head_pair(
     head_height_mm: float,
     fs: float,
     studs: manifold3d.Manifold | None,
+    head: manifold3d.Manifold | None = None,
+    socket: manifold3d.Manifold | None = None,
 ) -> tuple[manifold3d.Manifold | None, dict[str, str] | None]:
     """Place a head's ear or horn pair so it clears the crown studs. A head's top is only about 18 to 20 mm wide and
     the studs fill most of it, so a pair rooted at the upper corners lands on them.
@@ -591,23 +853,53 @@ def _fit_head_pair(
         # Round ears sit on the side of the head, not above its top face (Dan, round 4).
         return op == "ears" and str(feat.get("style")) == "round" and m.bounding_box()[5] > head_height_mm - 0.2
 
-    asked = visible(base)
-    if asked < 1.0 or (_intersect_volume(base, studs) < 0.3 and not above_top_face(base)):
-        return base, None  # nothing shows, or the pair is already clear of the studs
-    bx0, _by0, _bz0, bx1, _by1, _bz1 = base.bounding_box()
-    x_cap = max((_small_cylinder_mm() - L2_MARGIN_MM) / 2.0, max(abs(bx0), abs(bx1))) + 0.3  # never wider than asked
-    x_above = (_small_cylinder_mm() * 1.1) / 2.0 + 0.4  # wide enough to be above the cylinder, clear of the marginal band
-    tilts = EAR_FIT_TILTS_DEG if op == "ears" else (0.0,)
+    # The gate's own P1 measure (toyventor_parts.overhang_area, under 1.0 mm2) on the real head with the pair on it. The cheap
+    # estimate above misjudged pairs by 0.5 to 1 mm2 (a larger head gave 1.2 mm2 for every candidate, yet some failed at 1.8).
+    bare_steep = 0.0
+    if head is not None:
+        bare_steep = float(sdk.tp.overhang_area(sdk.tp.to_trimesh(head))[0])
 
-    def half_width_ok(m: manifold3d.Manifold, allow_wide: bool) -> bool:
+    def steep_with(cand: manifold3d.Manifold) -> float:
+        assert head is not None
+        final = head + (cand - socket if socket is not None else cand)
+        tm = sdk.tp.to_trimesh(final)
+        # G1 and G3 fail on hair-thin triangles that export as zero-volume "bodies": count that as a failed candidate
+        if not tm.is_watertight or len(tm.split(only_watertight=False)) != 1:
+            return 1e9
+        return float(sdk.tp.overhang_area(tm)[0])
+
+    asked = visible(base)
+    clear = _intersect_volume(base, studs) < 0.3 and not above_top_face(base)
+    if asked < 1.0:
+        return base, None  # nothing shows
+    if clear and head is None:
+        return base, None
+    if clear and head is not None:
+        # Already clear of the hat seat: keep it if it also prints, judged by the gate's own measure on the real head. A pair
+        # on the side of the head (a monkey's or an elephant's ears) never touches the seat but can still have an overhang.
+        if steep_with(base) < max(PAIR_STEEP_MAX_MM2, bare_steep + 0.05):
+            return base, None
+    x_small = (_small_cylinder_mm() - L2_MARGIN_MM) / 2.0  # a pair this narrow keeps the head a small part
+    x_above = (_small_cylinder_mm() * 1.1) / 2.0 + 0.4  # a pair this wide puts it above the cylinder, clear of the marginal band
+    tilts = EAR_FIT_TILTS_DEG if op == "ears" else (0.0,)
+    # A placement may add no more overhang than the pair as asked has: even a clean pair measures 0.6 to 1.2 mm2 where it meets
+    # the wall, and the figure grows with the head's size, so a fixed limit rejected every candidate on a larger head.
+    ov_limit = max(EAR_FIT_OVERHANG_MM2, _overhang_area(base - body, z_min=1.0) + 0.15)
+
+    def half_width_ok(m: manifold3d.Manifold, allow_wide: bool = True) -> bool:
+        # Only the marginal band (31.75 to 34.9 mm across) fails the small-parts gate; a pair wider than it passes. The old
+        # rule "never wider than asked" dropped the bear's ears on a head that widens downward, where lowering an ear
+        # moves it outward (Dan, round 11: bear rated 1, no ears).
         x0, _y0, _z0, x1, _y1, _z1 = m.bounding_box()
         half = max(abs(x0), abs(x1))
-        return half <= x_cap or (allow_wide and half >= x_above)
+        return half <= x_small or half >= x_above
 
     def describe(drop: float, tilt: float, shift: float, trimmed: bool) -> str:
         moved = []
         if drop > 0:
             moved.append(f"moved down {drop:g} mm")
+        elif drop < 0:
+            moved.append(f"moved up {-drop:g} mm")
         if shift > 0:
             moved.append(f"moved {2 * shift:g} mm further apart")
         if tilt > 0:
@@ -619,36 +911,47 @@ def _fit_head_pair(
     # Pass 1: no cut. Cheapest change first.
     combos = sorted(
         ((d, t, sh) for d in EAR_FIT_DROPS_MM for t in tilts for sh in EAR_FIT_SHIFTS_MM),
-        key=lambda c: 0.02 * c[0] + 0.02 * c[1] + 0.02 * c[2],  # a lean costs as much as a move: no bend unless needed
+        key=lambda c: 0.02 * abs(c[0]) + 0.02 * c[1] + 0.02 * c[2],  # a lean costs as much as a move: no bend unless needed
     )
-    for drop, tilt, shift in combos:
-        cand = _ears_or_horns_solid(
-            op, "head", body, rows, feat, head_height_mm, fs, z_shift=-drop, tilt_add=tilt, x_shift=shift
-        )
-        if cand is None or above_top_face(cand) or not half_width_ok(cand, allow_wide=shift > 0):
-            continue
-        if _intersect_volume(cand, studs) > 0.3 or _overhang_area(cand - body) > EAR_FIT_OVERHANG_MM2:
-            continue
-        kept = min(1.0, visible(cand) / asked)
-        if kept < EAR_FIT_MIN_KEPT:
-            continue
-        return cand, {"op": op, "why": describe(drop, tilt, shift, False), "kept_share": f"{kept:.2f}"}
+    # The pair as asked first; only when nothing prints at that size is it made 10, 20, 30 % smaller (a 22 mm elephant flap
+    # on a 30 mm head cannot be held up without supports, a 15 mm one can).
+    for scale in (1.0, 0.9, 0.8, 0.7):
+        # each candidate costs a boolean and a mesh check, so a smaller pair is tried at its cheapest 60 placements only
+        for drop, tilt, shift in (combos if scale == 1.0 else combos[:60]):
+            cand = _ears_or_horns_solid(
+                op, "head", body, rows, feat, head_height_mm, fs * scale, z_shift=-drop, tilt_add=tilt, x_shift=shift
+            )
+            if cand is None or above_top_face(cand) or not half_width_ok(cand) or cand.bounding_box()[2] < EAR_MIN_Z_MM:
+                continue
+            if _intersect_volume(cand, studs) > 0.3 or _overhang_area(cand - body, z_min=1.0) > ov_limit:
+                continue
+            kept = min(1.0, visible(cand) / asked)
+            if kept < EAR_FIT_MIN_KEPT:
+                continue
+            if head is not None and steep_with(cand) >= max(PAIR_STEEP_MAX_MM2, bare_steep + 0.05):
+                continue
+            why = describe(drop, tilt, shift, False)
+            if scale < 1.0:
+                why = (why + ", " if why else "") + f"made {round((1.0 - scale) * 100)}% smaller so it prints without supports"
+            return cand, {"op": op, "why": why, "kept_share": f"{kept:.2f}"}
 
     # Pass 2: nothing clears the studs without a cut. Keep the placement with the most ear showing, and cut it.
     best: tuple[float, float, float, manifold3d.Manifold, float, float] | None = None  # (score, drop, tilt, cut, kept, trimmed)
     for drop in EAR_FIT_DROPS_MM:
         for tilt in tilts:
             cand = _ears_or_horns_solid(op, "head", body, rows, feat, head_height_mm, fs, z_shift=-drop, tilt_add=tilt)
-            if cand is None or not half_width_ok(cand, allow_wide=False) or above_top_face(cand):
+            if cand is None or not half_width_ok(cand) or above_top_face(cand) or cand.bounding_box()[2] < EAR_MIN_Z_MM:
                 continue
             cut = cand - studs
             kept = min(1.0, visible(cut) / asked)
             trimmed = _intersect_volume(cand, studs) / asked
-            score = kept - 0.5 * trimmed - 0.02 * drop - 0.005 * tilt  # a clean move beats a cut
+            score = kept - 0.5 * trimmed - 0.02 * abs(drop) - 0.005 * tilt  # a clean move beats a cut
             if best is None or score > best[0] + 1e-9:
                 best = (score, drop, tilt, cut, kept, trimmed)
     if best is None:
-        return None, {"op": op, "why": "no placement beside the crown studs fits inside the small-parts width"}
+        # Nothing clears the seat inside the limits. Losing the ears altogether is worse than ears that touch the hat's
+        # seat (Dan, round 11: a bear with no ears scored 1), so the pair stays where it was asked, and the job says so.
+        return base, {"op": op, "why": "no placement clears the hat seat inside the limits; left where asked"}
     _score, drop, tilt, cut, kept, trimmed = best
     # Drop pieces the cut left floating: a part that does not touch the body is a separate island.
     pieces = [c for c in cut.decompose() if _intersect_volume(c, body) > 0.5]
@@ -719,7 +1022,11 @@ def _snout_ramp(
 
 
 def _snout_solid(
-    body: manifold3d.Manifold, feat: dict[str, Any], head_height_mm: float, fs: float
+    body: manifold3d.Manifold,
+    feat: dict[str, Any],
+    head_height_mm: float,
+    fs: float,
+    info: dict[str, float] | None = None,
 ) -> manifold3d.Manifold | None:
     """A snout on the front (-y) of a head: a hull of a tip sphere and two root spheres at the wall.
     The head is clipped at z = height_mm, and the snout is added after `character_head` (like head ears) so
@@ -730,32 +1037,49 @@ def _snout_solid(
     height = float(feat["height_mm"]) * fs
     z_c = float(feat["z_frac"]) * head_height_mm
     r_up = min(height / 2.0, 4.5)
-    z_top = min(z_c + height / 2.0, head_height_mm - 2.5)
-    z_top = max(z_top, 2.0 + 2.0 * r_up)  # the upper root sphere's bottom stays above the collar
-    if z_top > head_height_mm - 2.5:
-        return None
-    z_up = z_top - r_up
-    y_ref = _wall_y(body, z_up)
-    cs = body.slice(z_up)
-    if y_ref is None or cs.is_empty():
-        return None
-    x0, _y0, x1, _y1 = cs.bounds()
-    cx = 0.5 * (x0 + x1)
-    width = min(width, 1.7 * 0.5 * (x1 - x0))
-    if width < 3.0:
-        return None
+    z_top0 = min(z_c + height / 2.0, head_height_mm - 2.5)
+    z_top0 = max(z_top0, 2.0 + 2.0 * r_up)  # the upper root sphere's bottom stays above the collar
     tip_r = max(0.9, tip_r_frac * height / 2.0)
+    # A support-free underside rises at 55 degrees (50 as a fallback), so a snout of length L needs about 1.4 x L of wall
+    # under its tip. Dan, round 10, on the dinosaur ("no snout"): the old code shortened a 14 mm snout to about 3 mm
+    # rather than put it higher. Now the snout is first moved up the face (up to the top, 1.5 mm at a time) and only then
+    # shortened.
     ramp = None
-    while length >= 3.0:  # shorten until a printable ramp fits above the collar
-        for slope in (SNOUT_MIN_SLOPE_DEG, SNOUT_FALLBACK_SLOPE_DEG):
-            ramp = _snout_ramp(body, length, tip_r, z_top, y_ref, slope)
+    length_used = length
+    raised = 0.0
+    z_top = z_top0
+    y_ref = 0.0
+    z_up = z_top0 - r_up
+    width_cap = width
+    cx = 0.0
+    while length_used >= 3.0 and ramp is None:
+        raise_mm = 0.0
+        while z_top0 + raise_mm <= head_height_mm - 2.5:
+            z_try = z_top0 + raise_mm
+            z_up_try = z_try - r_up
+            y_try = _wall_y(body, z_up_try)
+            cs = body.slice(z_up_try)
+            if y_try is None or cs.is_empty():
+                raise_mm += 1.5
+                continue
+            for slope in (SNOUT_MIN_SLOPE_DEG, SNOUT_FALLBACK_SLOPE_DEG):
+                ramp = _snout_ramp(body, length_used, tip_r, z_try, y_try, slope)
+                if ramp is not None:
+                    break
             if ramp is not None:
+                z_top, z_up, y_ref, raised = z_try, z_up_try, y_try, raise_mm
+                x0, _y0, x1, _y1 = cs.bounds()
+                cx = 0.5 * (x0 + x1)
+                width_cap = min(width, 1.7 * 0.5 * (x1 - x0))
                 break
-        if ramp is not None:
-            break
-        length -= 0.5
-    if ramp is None:
+            raise_mm += 1.5
+        if ramp is None:
+            length_used -= 0.5
+    if ramp is None or width_cap < 3.0:
         return None
+    width = width_cap
+    if info is not None:
+        info.update({"length_asked": length, "length_used": length_used, "raised": raised})
     y_tip, z_tip, z_lo = ramp
     flat = min(_flat_front_half_width(body, z_up), _flat_front_half_width(body, z_lo))
     width = min(width, 2.0 * flat)
@@ -899,6 +1223,9 @@ def compile_recipe_to_partspec(recipe: dict[str, Any]) -> dict[str, Any]:
             return sdk.handheld_prop(cs, grip_tu=grip_tu)
 
         body = sdk.loft_slabs(rows)
+        hollow_feat: dict[str, Any] | None = None
+        ring_spikes: dict[str, Any] | None = None
+        ribs_feat: dict[str, Any] | None = None
         after_builder: list[manifold3d.Manifold] = []  # head snout: `character_head` clips above the seat
         head_pairs: list[dict[str, Any]] = []  # head ears and horns, placed once the crown studs exist
         for feat in clean_features:
@@ -916,11 +1243,28 @@ def compile_recipe_to_partspec(recipe: dict[str, Any]) -> dict[str, Any]:
                 else:
                     body = body + sdk.rounded_slab(bw, bd, bt, r=min(bw, bd) * 0.35, z=1.5)
             elif op == "spikes":
-                body = body + _spikes_solid(rows, feat, fs)
+                if feat.get("layout") == "ring":
+                    ring_spikes = feat  # built after the pocket, from the finished top outline
+                else:
+                    body = body + _spikes_solid(rows, feat, fs)
+            elif op == "hollow":
+                hollow_feat = feat
+            elif op == "ribs":
+                ribs_feat = feat
+            elif op == "star":
+                body = body + _star_topper(rows, feat, fs)
             elif op == "snout":
-                snout = _snout_solid(body, feat, head_height_mm, fs)
+                snout_info: dict[str, float] = {}
+                snout = _snout_solid(body, feat, head_height_mm, fs, snout_info)
                 if snout is not None:
                     after_builder.append(snout)
+                    bits = []
+                    if snout_info.get("raised", 0.0) > 0.0:
+                        bits.append(f"moved up {snout_info['raised']:g} mm so a support-free ramp fits")
+                    if snout_info.get("length_used", 0.0) < snout_info.get("length_asked", 0.0) - 0.4:
+                        bits.append(f"shortened from {snout_info['length_asked']:g} to {snout_info['length_used']:g} mm")
+                    if bits:
+                        features_adjusted.append({"op": "snout", "why": ", ".join(bits)})
                 else:
                     features_dropped.append(
                         {"op": "snout", "why": "no printable underside fits this front wall; keep the head's front upright (depth d about 12 to 16, y offsets 0)"}
@@ -936,17 +1280,42 @@ def compile_recipe_to_partspec(recipe: dict[str, Any]) -> dict[str, Any]:
                     body = body + solid
 
         if slot == "crown":
+            if hollow_feat is not None or ring_spikes is not None:
+                # A ring of points implies a hollow top: a crown is a ring, not a cone with bumps.
+                wall = float((hollow_feat or ring_spikes or {}).get("wall_mm", 2.4))
+                depth = float(hollow_feat["depth_mm"]) if hollow_feat is not None else 6.0
+                z_top = float(rows[-1][0]) + SLAB_THICKNESS_MM
+                pocket = _hollow_pocket(body, z_top, wall, depth)
+                if pocket is None:
+                    features_dropped.append({"op": "hollow", "why": "the top is too small or too low to hollow out (needs a wall of %.1f mm and 4 mm above the socket seat)" % wall})
+                else:
+                    body = (body - pocket).simplify(STUD_CUT_SIMPLIFY_MM)  # the carve leaves hair-thin triangles
+                if ring_spikes is not None:
+                    teeth = _ring_teeth(body, z_top, ring_spikes, fs)
+                    if teeth is None:
+                        features_dropped.append({"op": "spikes", "why": "no room for a ring of points on this top"})
+                    else:
+                        body = (body + teeth).simplify(STUD_CUT_SIMPLIFY_MM)
             return sdk.crown_addon(body, support_policy=support_policy)
         if slot == "head":
             m, conns, ex = sdk.character_head(body, height_mm=head_height_mm, support_policy=support_policy)
             if head_top == "dome":
                 m, conns = _domed_top(m, conns, head_height_mm)
+            if ribs_feat is not None:
+                grooves = _rib_grooves(m, ribs_feat, head_height_mm, fs)
+                if grooves is None:
+                    features_dropped.append({"op": "ribs", "why": "no room for grooves on this head (it needs about 14 mm of wall between the sockets and the top)"})
+                else:
+                    m = (m - grooves).simplify(STUD_CUT_SIMPLIFY_MM)
+            socket_keepout = _socket_keepout(m)
             if head_pairs:
                 # With studs, ears and horns keep off them; on the domed head there are none to avoid.
                 studs = _stud_keepout(m, head_height_mm) if head_top == "studs" else None
                 for feat in head_pairs:
                     feat, sturdy = _sturdy_head_ear(feat)
-                    solid, note = _fit_head_pair(feat["op"], body, rows, feat, head_height_mm, fs, studs)
+                    solid, note = _fit_head_pair(
+                        feat["op"], body, rows, feat, head_height_mm, fs, studs, head=m, socket=socket_keepout
+                    )
                     if solid is None:
                         features_dropped.append(
                             note or {"op": feat["op"], "why": "the body is too narrow where this op attaches"}
@@ -960,7 +1329,7 @@ def compile_recipe_to_partspec(recipe: dict[str, Any]) -> dict[str, Any]:
                                 entry["kept_share"] = note["kept_share"]
                             features_adjusted.append(entry)
             if after_builder:
-                keepout = _socket_keepout(m)
+                keepout = socket_keepout
                 for solid in after_builder:
                     m = m + (solid - keepout if keepout is not None else solid)
             return m, conns, ex
@@ -1087,8 +1456,16 @@ def _l2_candidate(
     return legalize_loft_slices(out)
 
 
+L2_MAX_GROW = 1.25  # a head may grow at most 25% to clear the marginal band
+L2_GROW_BIAS = 1.3  # grow when its change is under 1.3 x the shrink's: heads were too narrow, not too wide
+L2_GROW_MARGIN_MM = 0.4  # aim this far over the band's upper edge (cylinder x 1.10), not at it
+
+
 def l2_rescale(spec: dict[str, Any], measured_mm: float | None = None) -> tuple[dict[str, Any] | None, dict[str, Any]]:
-    """Find the smallest shrink that takes a marginal part under the small-parts cylinder.
+    """Move a marginal part out of the small-parts band by the smaller change: shrink it under the cylinder, or (heads
+    only) grow it past the band's upper edge (cylinder x 1.10), whichever changes it less (growing wins up to 1.3 x the
+    size of the shrink). Growing is for the Kip-sized
+    heads: one measuring 34.8 mm sits 0.1 mm under the band's top, and shrinking it 11% to 31 mm would undo its size.
 
     Heads never shrink in height: `character_head` puts the crown studs at z = height_mm, so a
     shorter body leaves them floating. Returns (rebuilt spec or None, note for the job response)."""
@@ -1097,6 +1474,7 @@ def l2_rescale(spec: dict[str, Any], measured_mm: float | None = None) -> tuple[
     if not ctx:
         return None, {"applied": False, "reason": "L2 only handles loft slots"}
     target = _small_cylinder_mm() - L2_MARGIN_MM
+    target_hi = _small_cylinder_mm() * 1.10 + L2_GROW_MARGIN_MM
     rows0 = ctx["rows"]
     paths = ("xy",) if ctx["slot"] == "head" else ("height", "xy", "both")
     evals = 0
@@ -1106,43 +1484,65 @@ def l2_rescale(spec: dict[str, Any], measured_mm: float | None = None) -> tuple[
         evals += 1
         return float(_measure_small(ctx["rebuild"](rows, fs))["min_enclosing_diameter_mm"])
 
+    def finish(path: str, f: float, d_after: float, direction: str) -> tuple[dict[str, Any], dict[str, Any]]:
+        fs = f if path in ("xy", "both") else 1.0
+        rows = _l2_candidate(rows0, path, f)
+        new_spec = ctx["rebuild"](rows, fs)
+        new_spec["legalizer_notes"] = dict(spec.get("legalizer_notes") or {})
+        new_spec["_features_dropped"] = spec.get("_features_dropped") or []
+        new_spec["_features_adjusted"] = spec.get("_features_adjusted") or []
+        new_spec["_l2"] = {**ctx, "rows": rows}
+        return new_spec, {
+            "applied": True,
+            "path": path,
+            "direction": direction,
+            "scale": round(f, 3),
+            "from_mm": measured_mm,
+            "to_mm": round(d_after, 2),
+            "target_mm": round(target if direction == "shrink" else target_hi, 2),
+            "evals": evals,
+            "elapsed_ms": round((time.perf_counter() - t0) * 1000.0, 1),
+        }
+
     for path in paths:
         try:
-            # Features (brim, ears, horns, points) shrink with the slices; a height-only shrink leaves them alone.
+            # Features (brim, ears, horns, points) scale with the slices; a height-only shrink leaves them alone.
             fs_of = (lambda f: f) if path in ("xy", "both") else (lambda f: 1.0)
+            shrink: tuple[float, float] | None = None
             lo, hi = L2_MIN_SCALE, 1.0
             d_lo = diameter(_l2_candidate(rows0, path, lo), fs_of(lo))
-            if d_lo > target:
-                continue  # even the full shrink does not clear the band on this path
-            for _ in range(L2_BISECT_STEPS):
-                mid = (lo + hi) / 2
-                d_mid = diameter(_l2_candidate(rows0, path, mid), fs_of(mid))
-                if d_mid <= target:
-                    lo, d_lo = mid, d_mid
-                else:
-                    hi = mid
-            rows = _l2_candidate(rows0, path, lo)
-            new_spec = ctx["rebuild"](rows, fs_of(lo))
-            new_spec["legalizer_notes"] = dict(spec.get("legalizer_notes") or {})
-            new_spec["_features_dropped"] = spec.get("_features_dropped") or []
-            new_spec["_features_adjusted"] = spec.get("_features_adjusted") or []
-            new_spec["_l2"] = {**ctx, "rows": rows}
-            return new_spec, {
-                "applied": True,
-                "path": path,
-                "scale": round(lo, 3),
-                "from_mm": measured_mm,
-                "to_mm": round(d_lo, 2),
-                "target_mm": round(target, 2),
-                "evals": evals,
-                "elapsed_ms": round((time.perf_counter() - t0) * 1000.0, 1),
-            }
+            if d_lo <= target:  # else even the full shrink does not clear the band on this path
+                for _ in range(L2_BISECT_STEPS):
+                    mid = (lo + hi) / 2
+                    d_mid = diameter(_l2_candidate(rows0, path, mid), fs_of(mid))
+                    if d_mid <= target:
+                        lo, d_lo = mid, d_mid
+                    else:
+                        hi = mid
+                shrink = (lo, d_lo)
+            grow: tuple[float, float] | None = None
+            if ctx["slot"] == "head" and path == "xy":
+                g_lo, g_hi = 1.0, L2_MAX_GROW
+                d_hi = diameter(_l2_candidate(rows0, path, g_hi), fs_of(g_hi))
+                if d_hi >= target_hi:
+                    for _ in range(L2_BISECT_STEPS):
+                        mid = (g_lo + g_hi) / 2
+                        d_mid = diameter(_l2_candidate(rows0, path, mid), fs_of(mid))
+                        if d_mid >= target_hi:
+                            g_hi, d_hi = mid, d_mid
+                        else:
+                            g_lo = mid
+                    grow = (g_hi, d_hi)
+            if grow is not None and (shrink is None or grow[0] - 1.0 < L2_GROW_BIAS * (1.0 - shrink[0])):
+                return finish(path, grow[0], grow[1], "grow")
+            if shrink is not None:
+                return finish(path, shrink[0], shrink[1], "shrink")
         except Exception as exc:  # noqa: BLE001
             sys.stderr.write(f"[forge-optimizer] L2 path {path} failed: {exc}\n")
             continue
     return None, {
         "applied": False,
-        "reason": "no shrink of at most 40% reached the target",
+        "reason": "no shrink of at most 40% (or growth of at most 25%) cleared the band",
         "evals": evals,
         "elapsed_ms": round((time.perf_counter() - t0) * 1000.0, 1),
     }

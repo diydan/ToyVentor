@@ -144,8 +144,10 @@ buzz,
 } from "./audio";
 import { createMissions } from "./missions";
 import { createEditor } from "./editor";
+import { createPropFx } from "./propReactions";
 import { ladderById } from "../../../../lib/ladders";
 import { toyPortraitSignature } from "../../../../lib/toyPortrait";
+import type { BuildSummary, StatId } from "../../../../lib/garage";
 import { learnRungDef } from "./learnRungs";
 import {
 renderer,
@@ -238,6 +240,10 @@ export interface WorldRuntimeHandle {
   go?: (w: string) => void;
   /** Compose and enter a level from the level kit. Returns the seed code, or null when busy. */
   playSeed?: (code?: string, theme?: string, opts?: { tier?: 1 | 2 | 3; mood?: "day" | "dusk" | "night" }) => string | null;
+  /** The toy as built right now (type, part per slot, stats), for the Garage's goal checks. */
+  buildSummary?: () => BuildSummary;
+  /** Open these parts to try (the Garage's loaner). Any `known` loaner not in `active`, still worn and not found, is handed back. */
+  setLoanKeys?: (active: string[], known: string[]) => void;
   /** Signature of the outfit the rig was built with, once it has finished loading; null until then. */
   portraitSig?: () => string | null;
   /** A square picture of the toy as dressed now (head and shoulders, or the whole vehicle). */
@@ -350,12 +356,15 @@ function migrateRobotToKip(){if(!S.sel)S.sel=stockSel();if(!S.sel.character||!S.
 function save(){if(S.world!=="custom"){try{localStorage.setItem("tf25",JSON.stringify(S))}catch(e){}}notify();}
 (function(){try{var d=JSON.parse(localStorage.getItem("tf25")||"null");if(d&&d.sel)Object.assign(S,d)}catch(e){}})();
 migrateRobotToKip();if(!S.col.skin||S.col.skin==="#f0c08a")S.col.skin="#f2b98c";function cur(): Record<string, string> {return S.sel[S.type]}
-function isOpen(k: string){var p=PART[k];return !p||!p.w||!!S.found[k]}
+var loanKeys: Record<string, boolean>={};
+function isOpen(k: string){var p=PART[k];return !p||!p.w||!!S.found[k]||!!loanKeys[k]}
 function activePerk(): VehiclePerkSpec | null {return S.type==="vehicle"?vehiclePerkForToy(S.toyId,S.type):null}
 function creStats(): Record<string, boolean> {var o: Record<string, boolean>={},td=TYPES[S.type];if(td)td.slots.forEach(function(s){var p=slotPartObj(S.type,s,cur()[s]||"none");if(p&&p.st&&p.st!=="none")o[p.st]=true});var pk=activePerk();if(pk)pk.innateStats.forEach(function(st){o[st]=true});return o}
 
 var W: Record<string, any>={root:null},spots: any[]=[],bolts: THREE.Object3D[]=[],signHits: THREE.Object3D[]=[],tidySpots: Array<{ id: string; x: number; label: string; g: THREE.Group; hit: THREE.Object3D; done: boolean }>=[],streetCd=0,autoWalk=false;
 function add<T extends THREE.Object3D>(o: T): T {W.root.add(o);return o}
+/* "No dead props" (carousel spec 11.7): every placed prop is tappable, reacts, and says what it is. See propReactions.ts. */
+var PFX=createPropFx({root:function(){return W.root},camera:function(){return camera},canvas:canvas,toast:function(s: string){toast(s)},boostWindmill:function(){W.fast=4},reduced:function(){return reduce}});
 function cottage(x: number,z: number){var g=new T.Group();g.position.set(x,0,z);g.add(M(new T.BoxGeometry(2.4,1.6,1.8),matte("#141f55"),0,.8,0));var rf=M(new T.ConeGeometry(1.9,1.2,4),matte("#101a4a"),0,2.2,0);rf.rotation.y=Math.PI/4;g.add(rf);g.add(M(new T.BoxGeometry(.4,.4,.05),glowMat("#ffd24d",2),.4,.9,.92));var cg=glowSprite("rgba(255,210,77,0.4)",2.5);cg.position.set(.4,.9,1);g.add(cg);return add(g)}
 function island(x: number,z: number,y?: number,s?: number){var g=new T.Group();g.position.set(x,y||0,z);g.scale.setScalar(s||1);g.add(M(new T.CylinderGeometry(1.6,1.6,.3,24),matte("#43c29a"),0,0,0));g.add(M(new T.ConeGeometry(1.5,1.8,8),matte("#7a6aa8",true),0,-1.05,0).rotateX(Math.PI));for(var i=0;i<5;i++){var a=i/5*6.28;g.add(M(new T.ConeGeometry(.06,.3,4),matte("#2f8a6e",true),Math.cos(a)*1.1,.3,Math.sin(a)*1.1))}return add(g)}
 function drum(x: number,z: number){var g=new T.Group();g.position.set(x,0,z);g.add(M(new T.CylinderGeometry(.45,.45,1.1,20),plastic("#b0566a"),0,.55,0));[.2,.9].forEach(function(y){var r=M(new T.TorusGeometry(.46,.04,8,24),plastic("#7a3a4a"),0,y,0);r.rotation.x=Math.PI/2;g.add(r)});return add(g)}
@@ -436,7 +445,7 @@ function tidyUp(ts: { id: string; x: number; label: string; g: THREE.Group; hit:
  return true;
 }
 function buildWorld(id: string){
- if(W.root){scene.remove(W.root)}W={root:new T.Group(),blades:[],blink:[]};scene.add(W.root);spots.length=0;bolts.length=0;signHits.length=0;tidySpots.length=0;
+ if(W.root){scene.remove(W.root)}W={root:new T.Group(),blades:[],blink:[]};scene.add(W.root);PFX.reset();spots.length=0;bolts.length=0;signHits.length=0;tidySpots.length=0;
  var R=WORLDS[id]!;
  scene.background=canv(4,512,function(g,w,h){var gr=g.createLinearGradient(0,0,0,h);gr.addColorStop(0,R.sky[0]);gr.addColorStop(.3,R.sky[1]);gr.addColorStop(.52,R.sky[2]);gr.addColorStop(1,R.sky[2]);g.fillStyle=gr;g.fillRect(0,0,w,h)});
  applyLightRig(R,id);
@@ -455,7 +464,7 @@ function buildWorld(id: string){
  if(E.cloudFloor){for(var cx=-6;cx<50;cx+=4.4){cloud(cx,-3.6,.9,-.4);cloud(cx+2.2,7.2,1.0,-1.8)}}extras2(E);
  if(E.fireflies)W.ff=points(R.night?30:26,[0,44,-5,2,.6,3.4],E.fireflies,R.night?.45:.35);
  var propBuilders: Record<string, (x: number, z: number, y?: any) => any>={lantern:lantern,windmill:function(x,z){windmill(x,z,1)},cottage:cottage,tree:tree,bushes:bushes,cloud:function(x,z){cloud(x,z,1.5,6+Math.random()*3)},island:function(x,z,y){island(x,z,y,1.1)},tire:tire,drum:drum,shed:shed,cranebg:cranebg,palm:palm,umbrella:umbrella,sandcastle:sandcastle,pine:pine,snowman:snowman,igloo:igloo,lamp:roomLamp,blocks:toyBlocks,books:bookStack,chair:kidChair,plant:potPlant,teddy:teddyBear,ball:playBall,cushions:cushionPile};
- R.props.forEach(function(p){var f=propBuilders[p[0]];if(f)f(p[1],p[2],p[3])});
+ R.props.forEach(function(p){var f=propBuilders[p[0]];if(!f)return;var n0=W.root.children.length;f(p[1],p[2],p[3]);PFX.register(p[0],W.root.children.slice(n0),p[3])});
  R.spots.forEach(function(d,i){var sp: any={d:d,i:i,got:!!S.found[d.k],hidden:d.t!=="speed",spark:makeSpark(),cover:null,bolts:0};spots.push(sp);if(sp.got)return;
   if(d.t==="junk")junkMachine(sp);else buildCover(sp,R.theme||id);
   var y=sp.spY!=null?sp.spY:(d.y||.8);sp.spark.position.set(d.x,y,sp.spZ!=null?sp.spZ:d.z);sp.spark.visible=!sp.hidden;add(sp.spark);if(sp.hidden){var gl=glowSprite("rgba(255,240,180,0.9)",.9);gl.position.set(d.x,d.t==="junk"?3.8:d.cover==="pipe"?2.7:d.cover==="windmill"?4.2:2.3,d.z);add(gl);sp.glint=gl}});
@@ -479,6 +488,23 @@ function buildPlayer(drop: string | null){if(P.stlToken)P.stlToken.cancelled=tru
  P.rigReady=false;P.rigSig=toyPortraitSignature({toyId:S.toyId||null,type:S.type,sel:cur(),col:S.col});
  var rigDone=function(){if(!tok.cancelled)P.rigReady=true};
  upgradeRigWithStl(P.rig,{type:S.type,sel:Object.assign({},cur()) as any,col:Object.assign({},S.col),toyId:S.toyId||null,token:tok}).then(rigDone,rigDone)}
+
+/* The Garage reads the toy as it is built right now (which part is worn in each slot, and the stats those parts give) to check a mission. */
+function buildSummary(): BuildSummary{
+ var stats: StatId[]=[],cs=creStats();
+ Object.keys(cs).forEach(function(k){if(cs[k]&&(k==="speed"||k==="spin"||k==="glow"||k==="torque"))stats.push(k as StatId)});
+ return {type:String(S.type),sel:Object.assign({},cur()),stats:stats}}
+/* A weekend's loaner part is open to try, and goes back when the weekend ends (unless the child has since found it). `known` lists every
+   loaner the Garage has ever offered, so one still worn from an earlier session is handed back too. */
+function setLoanKeys(active: string[],known: string[]){
+ var next: Record<string,boolean>={},back=false;
+ active.forEach(function(k){if(PART[k])next[k]=true});
+ known.forEach(function(k){
+  if(next[k]||S.found[k]||!PART[k])return;
+  var parts=k.split("."),type=parts[0]!,slot=parts[1]!,id=parts.slice(2).join("."),sel=S.sel&&S.sel[type];
+  if(sel&&(sel[slot]===id||sel[slot]===k)){var stock=(stockSel() as any)[type];sel[slot]=stock&&stock[slot]?stock[slot]:"none";back=true}});
+ loanKeys=next;
+ if(back){save();buildPlayer(null);if(typeof renderSheet==="function")renderSheet()}}
 
 /* A small studio portrait of the toy as it is dressed now, for the trail map's character token. Rendered once from the live rig
    (head and shoulders for a character or robot, the whole thing for a vehicle) with its own neutral light and a plain backdrop, so
@@ -640,7 +666,7 @@ function rayAt(cx: number,cy: number){var r=canvas.getBoundingClientRect();ndc.s
 function laneX(){return ray.ray.intersectPlane(lane,hitP)?hitP.x:null}
 function junkHit(){var arr=spots.filter(function(s){return s.junk&&!s.got&&!s.broken}).map(function(s){return s.junk as THREE.Object3D});if(!arr.length)return null;var h=ray.intersectObjects(arr,true);if(!h.length)return null;var o: THREE.Object3D | null=h[0]!.object;while(o&&arr.indexOf(o)<0)o=o.parent;return spots.filter(function(s){return s.junk===o})[0]||null}
 function setTarget(x: number){var nb=(!ED.on&&!ED.testing)?townNeighbors(S.world):null,lo=nb?.2:.5,hi=nb?44.6:43.5;P.target=new T.Vector3(Math.max(lo,Math.min(hi,x)),0,0);marker.position.set(P.target.x,.06,0);markT=0}
-canvas.addEventListener("pointerdown",function(e: PointerEvent){ctx();if(P.showcase||P.mDrive)return;rayAt(e.clientX,e.clientY);var hb=ray.intersectObjects(bolts,false);if(hb.length){unbolt(hb[0]!.object);return}var js=junkHit();if(js){unboltNext(js);return}var th=ray.intersectObjects(tidySpots.filter(function(s){return !s.done}).map(function(s){return s.hit}),false);if(th.length&&th[0]!.object.userData.tidy){var te=th[0]!.object.userData.tidy;if(Math.abs(P.pos.x-te.x)<3.2){tidyUp(te);return}setTarget(te.x);return}var sh=ray.intersectObjects(signHits,false);if(sh.length&&!P.busy){var sdir=sh[0]!.object.userData.signDir;setTarget(sdir==="west"?.25:44.55);return}if(P.busy)return;var x=laneX();if(x==null)return;hold={id:e.pointerId};try{canvas.setPointerCapture(e.pointerId)}catch(_){}setTarget(x)});
+canvas.addEventListener("pointerdown",function(e: PointerEvent){ctx();if(P.showcase||P.mDrive)return;rayAt(e.clientX,e.clientY);var hb=ray.intersectObjects(bolts,false);if(hb.length){unbolt(hb[0]!.object);return}var js=junkHit();if(js){unboltNext(js);return}var th=ray.intersectObjects(tidySpots.filter(function(s){return !s.done}).map(function(s){return s.hit}),false);if(th.length&&th[0]!.object.userData.tidy){var te=th[0]!.object.userData.tidy;if(Math.abs(P.pos.x-te.x)<3.2){tidyUp(te);return}setTarget(te.x);return}var sh=ray.intersectObjects(signHits,false);if(sh.length&&!P.busy){var sdir=sh[0]!.object.userData.signDir;setTarget(sdir==="west"?.25:44.55);return}if(!ED.on&&PFX.tap(ray))return;if(P.busy)return;var x=laneX();if(x==null)return;hold={id:e.pointerId};try{canvas.setPointerCapture(e.pointerId)}catch(_){}setTarget(x)});
 canvas.addEventListener("pointermove",function(e: PointerEvent){if(!hold||hold.id!==e.pointerId||P.busy||P.showcase)return;rayAt(e.clientX,e.clientY);var x=laneX();if(x!=null)setTarget(x)});
 function endHold(e: PointerEvent){if(hold&&hold.id===e.pointerId)hold=null}
 canvas.addEventListener("pointerup",endHold);canvas.addEventListener("pointercancel",endHold);
@@ -655,6 +681,7 @@ function resize(){var r=hostEl.getBoundingClientRect(),w=Math.max(1,r.width),h=M
 winOn("resize",resize);
 var FR=0;function frame(){if(disposed)return;FR++;timer.update();var dt=Math.min(.05,timer.getDelta())*(1);t+=dt;streetCd=Math.max(0,streetCd-dt);
  for(var i=fx.length-1;i>=0;i--){var e=fx[i]!;e.t+=dt;var k=Math.min(1,e.t/e.d);e.f(k,dt);if(k>=1){fx.splice(i,1);if(e.end)e.end()}}
+ PFX.update(dt,t);
  var pk=activePerk(),nb0=(!ED.on&&!ED.testing)?townNeighbors(S.world):null,kLo=nb0?.2:.5,kHi=nb0?44.6:43.5;
  var sp=0,kd=(keys.r?1:0)-(keys.l?1:0),vmax=pk?pk.vmax:(S.type==="vehicle"?5.2:3.4);
  if(kd&&!P.busy&&!P.showcase&&!P.mDrive){P.target=null;P.pos.x=Math.max(kLo,Math.min(kHi,P.pos.x+kd*vmax*dt));P.tface=kd>0?0:Math.PI;sp=vmax}
@@ -1168,7 +1195,7 @@ function startPlay(build: boolean){if(!P.title)return;P.title=false;S.started=tr
 setTimeout(function(){var ld=$("#load");if(ld)ld.classList.add("gone")},150);
 rafId=requestAnimationFrame(frame);
 
-const handle: WorldRuntimeHandle = { MT:MT,Wm:function(){return W.missions},cr:{enter:crEnter,make:crMake,exit:crExit,R:function(){return ED.R},CR:CR},ed:{ED:ED,enter:edEnter,play:edPlay,back:edBack,exit:edExit,checks:function(){return edChecks(ED.R)},scr:function(x,y){var v=new T.Vector3(x,y,0).project(camera),r=canvas.getBoundingClientRect();return [(v.x+1)/2*r.width+r.left,(1-v.y)/2*r.height+r.top]}},face:function(a){facA=a},start:startPlay,composer:function(){return !!composer},P:P,spots:spots,bolts:bolts,ability:ability,S:S,unbolt:unbolt,go:function(w){switchWorld(w)},portraitSig:function(){return P.rigReady?String(P.rigSig):null},capturePortrait:toyPortrait,playSeed:playSeed,worldName:function(id: string){var wd=WORLDS[id];return wd?wd.n:id},open:openSheet,close:closeSheet,
+const handle: WorldRuntimeHandle = { MT:MT,Wm:function(){return W.missions},cr:{enter:crEnter,make:crMake,exit:crExit,R:function(){return ED.R},CR:CR},ed:{ED:ED,enter:edEnter,play:edPlay,back:edBack,exit:edExit,checks:function(){return edChecks(ED.R)},scr:function(x,y){var v=new T.Vector3(x,y,0).project(camera),r=canvas.getBoundingClientRect();return [(v.x+1)/2*r.width+r.left,(1-v.y)/2*r.height+r.top]}},face:function(a){facA=a},start:startPlay,composer:function(){return !!composer},P:P,spots:spots,bolts:bolts,ability:ability,S:S,unbolt:unbolt,go:function(w){switchWorld(w)},buildSummary:buildSummary,setLoanKeys:setLoanKeys,portraitSig:function(){return P.rigReady?String(P.rigSig):null},capturePortrait:toyPortrait,playSeed:playSeed,worldName:function(id: string){var wd=WORLDS[id];return wd?wd.n:id},open:openSheet,close:closeSheet,
 setToy:function(contract){ if(!contract){ S.type="character"; S.sel=stockSel(); S.col=stockCol(); S.toyId=null; buildPlayer(null); moves(); notify(); return; } var c=toyApply(JSON.parse(JSON.stringify(contract))); if(c){ buildPlayer(null); moves(); notify(); } },
 seedDemo:function(){ mInit(); S.scrap=Math.max(S.scrap||0,12); S.bp.beam=1; S.bp.brace=1; S.bp.sgear=1; S.bp.bgear=1; S.bp.gearpair=1; S.bin.beam=Math.max(S.bin.beam||0,2); S.bin.brace=Math.max(S.bin.brace||0,2); S.bin.sgear=Math.max(S.bin.sgear||0,2); S.bin.bgear=Math.max(S.bin.bgear||0,2); delete S.mdone["garden.bridge"]; delete S.ms["garden.bridge"]; mpOpen=false; S.world="garden"; buildWorld("garden"); P.pos.set(6.5,0,0); P.target=null; P.elev=0; cam.x=7.5; save(); toast("Demo save ready in Garden."); notify(); },
 getWorld:function(){return S.world},
@@ -1227,6 +1254,6 @@ dispose:function(){ if(disposed)return; disposed=true; if(P.stlToken)P.stlToken.
 // Scoped sizing: host rect via ResizeObserver with window-resize fallback (winOn above).
 resize();
 try { const ro = new ResizeObserver(() => resize()); ro.observe(hostEl); const origDispose = handle.dispose; handle.dispose = () => { try{ro.disconnect();}catch{} origDispose(); }; } catch {}
-if(import.meta.env?.DEV)(window as unknown as Record<string,unknown>).__tvWorld={handle:handle,mixGo:mixGo,getMix:function(){return mix},P:P};
+if(import.meta.env?.DEV)(window as unknown as Record<string,unknown>).__tvWorld={handle:handle,mixGo:mixGo,getMix:function(){return mix},P:P,props:PFX};
 return handle;
 }

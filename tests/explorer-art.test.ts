@@ -13,6 +13,7 @@ import {
   DECOR_NODE_CLEAR,
   DECOR_ROAD_CLEAR,
   fogPuffs,
+  mixColor,
   roadCurve,
   scatterDecor,
   UNIT,
@@ -27,6 +28,7 @@ const graphFor = (ageBand: number | null): ExplorerGraph =>
       prog: emptyProgression(),
       found: new Set<string>(),
       missionsDone: new Set<string>(),
+      garage: { weekend: false, done: false },
     }),
   });
 
@@ -135,7 +137,7 @@ describe("winding roads with every secret exit open and every branch grown", () 
     const walked = new Set(FRONTIER_BRANCHES.map((b) => `frontier:${b.from}:${FRONTIER_MAX_DEPTH}`));
     for (const band of BANDS) {
       const g = buildExplorerGraph({
-        cards: buildMapCards({ ageBand: band, prog: emptyProgression(), found: new Set(), missionsDone: new Set() }),
+        cards: buildMapCards({ ageBand: band, prog: emptyProgression(), found: new Set(), missionsDone: new Set(), garage: { weekend: false, done: false } }),
         visited: walked,
         openAll: true,
       });
@@ -188,5 +190,29 @@ describe("scenery", () => {
     expect(Math.min(...puffs.map((p) => p.x))).toBeLessThan(0);
     expect(Math.max(...puffs.map((p) => p.x))).toBeGreaterThan(frame.width);
     expect(Math.max(...puffs.map((p) => p.y))).toBeGreaterThan(frame.height);
+  });
+});
+
+describe("night on the map", () => {
+  it("mixes colours between day and night, clamped", () => {
+    expect(mixColor("#000000", "#ffffff", 0)).toBe("#000000");
+    expect(mixColor("#000000", "#ffffff", 1)).toBe("#ffffff");
+    expect(mixColor("#000000", "#ffffff", 0.5)).toBe("#808080");
+    expect(mixColor("#ff0000", "#0000ff", 0.5)).toBe("#800080");
+    // Out-of-range amounts clamp, so a later continuous clock cannot overshoot.
+    expect(mixColor("#102030", "#f0e0d0", -3)).toBe("#102030");
+    expect(mixColor("#102030", "#f0e0d0", 7)).toBe("#f0e0d0");
+    // Day to night clouds: the night end is darker than the day end.
+    const lum = (hex: string) => Number.parseInt(hex.slice(1, 3), 16) + Number.parseInt(hex.slice(3, 5), 16) + Number.parseInt(hex.slice(5, 7), 16);
+    expect(lum(mixColor("#ffffff", "#3c4f9a", 1))).toBeLessThan(lum(mixColor("#ffffff", "#3c4f9a", 0.5)));
+  });
+
+  it("the scenery has lamp posts to light, away from every place and road", () => {
+    const { frame, nodes, roads } = worldOf(graphFor(3));
+    const decor = scatterDecor(nodes, roads.map((r) => r.curve.points), frame);
+    const lamps = decor.filter((d) => d.kind === "lamp");
+    expect(lamps.length).toBeGreaterThanOrEqual(3);
+    // Fewer lamps than other scenery: they are an accent, not the landscape.
+    expect(lamps.length).toBeLessThan(decor.length / 2);
   });
 });

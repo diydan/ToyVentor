@@ -6,7 +6,7 @@
 import { learnStates, type LadderState } from "./learn";
 import type { ProgressionState } from "./progression";
 
-export type CardKind = "ask" | "learn" | "world" | "lab";
+export type CardKind = "ask" | "learn" | "world" | "lab" | "garage";
 
 export interface Pip {
   /** Part slot for world pips (e.g. "hat"), "check" elsewhere. */
@@ -28,6 +28,8 @@ export interface MapCard {
   complete: boolean;
   /** The one card the child's toy points at. */
   suggested: boolean;
+  /** A small flag on the card; the Garage carries "new" on the weekend its drop is waiting. */
+  badge?: "new";
 }
 
 export interface MapStop {
@@ -76,6 +78,7 @@ export const STOP_GLYPH: Record<string, string> = {
   lab5: "{}",
   lab6: "✦",
   ask: "?",
+  garage: "🔧",
 };
 
 export const THEME_COLOR: Record<string, string> = {
@@ -92,6 +95,7 @@ export const KIND_WORD: Record<CardKind, string> = {
   learn: "Learn",
   world: "World",
   lab: "Lab",
+  garage: "Garage",
 };
 
 /** A part goal key is "character.hat.flower": the middle word is the slot. */
@@ -104,12 +108,19 @@ export interface MapCardsInput {
   found: ReadonlySet<string>;
   /** Missions done, "lab1.bridge" keys (engine facade snapshot). */
   missionsDone: ReadonlySet<string>;
+  /**
+   * The Garage (garage-weekend-spec.md). Absent = no Garage card, which keeps the
+   * plain list the carousel tests were written against. The game always passes it.
+   */
+  garage?: { weekend: boolean; done: boolean };
 }
 
 /**
  * The carousel cards in order: [ask?] -> age-suited Learn ladders ->
- * worlds -> labs. Suggestion: ask first, else first incomplete Learn,
- * else first incomplete card.
+ * [Garage] -> worlds -> labs. Suggestion: ask first, else the Garage while
+ * its weekend drop is waiting, else first incomplete Learn, else first
+ * incomplete card. The Garage is always there; on a weekend with its drop
+ * not done it moves to the front, with a NEW flag.
  */
 export function buildMapCards(input: MapCardsInput): MapCard[] {
   const learn = learnStates(input.ageBand, input.prog);
@@ -141,6 +152,25 @@ export function buildMapCards(input: MapCardsInput): MapCard[] {
       suggested: false,
     });
   }
+  let garageCard: MapCard | null = null;
+  if (input.garage) {
+    const hot = input.garage.weekend && !input.garage.done;
+    garageCard = {
+      id: "garage",
+      kind: "garage",
+      label: "Garage",
+      theme: "junk",
+      pips: [{ icon: "check", done: input.garage.done, silhouette: false }],
+      done: input.garage.done ? 1 : 0,
+      total: 1,
+      complete: input.garage.done,
+      suggested: false,
+      ...(hot ? { badge: "new" as const } : {}),
+    };
+    // Weekend and waiting: first in the row. Otherwise it sits before the worlds.
+    if (hot) cards.unshift(garageCard);
+    else cards.push(garageCard);
+  }
   for (const stop of MAP_STOPS) {
     const source = stop.kind === "world" ? input.found : input.missionsDone;
     const goals = stop.goals.map((g) => source.has(g));
@@ -163,6 +193,7 @@ export function buildMapCards(input: MapCardsInput): MapCard[] {
   }
   const pick =
     cards.find((c) => c.kind === "ask") ??
+    (garageCard?.badge === "new" ? garageCard : undefined) ??
     cards.find((c) => c.kind === "learn" && !c.complete) ??
     cards.find((c) => !c.complete);
   if (pick) pick.suggested = true;

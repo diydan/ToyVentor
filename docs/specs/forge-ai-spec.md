@@ -1682,6 +1682,47 @@ same prompts can be compared.
   (down-pointing leaves, steeper than 45 degrees); a **nose ball or disc** and a
   **crest** for dome heads. A flat-bottomed snout or disc nose still needs the
   print-plan decision on supports.
+- **Dan's Sketchfab picks and round 13 (2026-11-03).** Dan hearted 43 of the 155
+  gallery items: round, squat emoji-style heads of dogs (beagle, corgi, chihuahua,
+  dachshund), cats, a tiger, bears, a red panda, monkeys, a gorilla, a fennec and a
+  fox, a lion, pigs, an owl, two elephants, a rabbit, three dinosaurs, three
+  pumpkins, three robots, three aliens and a devil, and the 12-head animal pack. What
+  they share: a squat round head with a rounded chin and simple, distinct ears. Built
+  from that, all in the daemon with tests: (1) **ear styles**: `floppy` (a pointed leaf
+  hanging down the side, its tip resting on the wall: a hanging tip is a floating
+  island, V5, so the leaf leans to follow the wall, which on a head that is widest
+  part way up means leaning inward by up to 25 degrees), `z_frac` (0.3 to 0.9 up the
+  head: 0.5 to 0.7 puts ears on the sides, the default is the top corner) and round
+  ears up to 24 mm wide. A round ear with `z_frac` stands mostly outside the wall
+  (centre 0.1 radius out), where the top-corner ears keep 35% in, so the bear,
+  bunny and cat that Dan rated 5 are unchanged. (2) **Fitting every head pair**: the
+  fitter now also runs for ears that never touch the hat seat, tries raising as
+  well as lowering, and when nothing prints at the asked size makes the pair 10, 20
+  and 30% smaller (a 22 mm elephant flap on a 30 mm head cannot be held up without
+  supports, a 15 mm one can; tried at the cheapest 60 placements only, since each
+  candidate costs a boolean and a mesh check). Every candidate is judged with the
+  gate's own overhang measure and must also be one watertight body, because hair-thin
+  slivers fail G1 and G3. The ramp sphere on a big ear is capped at 6 mm so it fits
+  above the bed. (3) **Head library in prompt v5**: seven named shapes measured from
+  the 12 catalog heads (kid, chibi, round_cheeky, wedge, big_forehead, robot,
+  pumpkin), each as `[z, w, d, r]` rows that already respect the 0.78 per mm growth
+  limit, replacing the single kid profile. (4) **Prompt v5 ear guidance** per animal
+  (bear, panda, tiger, lion round at the top; monkey and elephant round on the sides;
+  fox, cat, fennec, corgi, devil pointy; bunny tall; beagle and lop rabbit floppy).
+  (5) A 14-prompt set, `tests/forge/head-variety-prompts.json` (beagle, monkey,
+  elephant, pig, lion, panda, tiger, fox, owl, devil, fennec, lop bunny, gorilla,
+  corgi). **Spark v5 on it:** 12 of 14 first attempt, 14 of 14 final, 1.14 calls;
+  it used `floppy` for the beagle and lop bunny, round ears with `z_frac` for the
+  monkey, elephant and gorilla, a snout for the pig, owl, fennec, gorilla and corgi,
+  and the right body (round_cheeky or wedge) most of the time. All 14 print_ready
+  under the final daemon. **What it does not fix:** the bodies are still nearly the
+  same bowl, because every head has to flare from the 24.6 mm collar at 0.78 mm per
+  mm, so the lower half is always a cone and Spark mostly chose round_cheeky or wedge,
+  which are close; the difference between animals is in the ears, snouts and horns,
+  not the silhouette of the skull. Not built: cheek tufts, a mane or ruff, ball-tipped
+  antennae, headphone cups, a crest, a pumpkin stem on the dome head. Jobs with a
+  searched pair take 20 to 30 s. 42 forge tests. Round 13 on the taste page:
+  `r13_v01` to `r13_v14`.
 - **Reading:** the taste gate is still tripped for heads and partly lifted for
   crowns. The parts still at 1 or 2 are body-shape problems (dome helmet,
   astronaut, pumpkin, wizard cone, chef puff, fez), which the feature ops cannot

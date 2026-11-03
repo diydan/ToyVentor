@@ -16,6 +16,8 @@ import { truckGetParts } from './truck-print-parts.js';
 import { loadExpansionGeos, attachExpansionToKipRig, WARDROBE_HEADS, HUMAN_HEAD_IDS, HAIR_OPTIONS, HAT_OPTIONS, HAT_COLORS, FACE_STEM_MM } from '/kip/kip-vehicles-wardrobe.js?v=10.0';
 import { FACEPLATE_SEAT_MM } from '/kip/kip-faceplate-shape.js?v=10.0';
 import { disposeThreeScene } from '/kip/bench-lifecycle.js?v=10.0';
+import { BLUEPRINT } from '/kip/bench-look.js?v=10.0';
+import { driveParams, stepSpeed, stepSteer, yawRate, advancePose } from '/kip/truck-drive.js?v=10.0';
 
 export const TRUCK_BENCH_CSS = `
 :where(.truck-bench) {
@@ -38,8 +40,8 @@ export const TRUCK_BENCH_CSS = `
     height: 100%;
     overflow: hidden;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    /* Blueprint ground: the canvas is transparent (as in the Kip bench) and this shows through it. */
-    background: radial-gradient(circle at 50% 38%, #2b66b3 0%, #1c4a8c 55%, #102f5c 100%);
+    /* Blueprint ground (bench-look.js, shared with the Kip bench): the canvas is transparent and this shows through it. */
+    background: ${BLUEPRINT.gradient};
     color: var(--ink);
   }
   #viewport { position: fixed; inset: 0; }
@@ -310,6 +312,42 @@ export const TRUCK_BENCH_CSS = `
     }
   }
 
+  .drive-hud {
+    position: fixed;
+    left: 50%;
+    bottom: 14px;
+    transform: translateX(-50%);
+    z-index: 12;
+    max-width: calc(100vw - 28px);
+    background: var(--glass);
+    backdrop-filter: blur(14px);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 8px 14px;
+    box-shadow: 0 8px 24px rgba(27, 34, 56, 0.16);
+    font-size: 12px;
+    font-weight: 650;
+    line-height: 1.55;
+    text-align: center;
+    color: var(--ink);
+    pointer-events: none;
+  }
+  .drive-hud[hidden] { display: none; }
+  .drive-hud kbd {
+    display: inline-block;
+    min-width: 20px;
+    padding: 0 5px;
+    margin: 0 1px;
+    border: 1px solid var(--line);
+    border-bottom-width: 2px;
+    border-radius: 6px;
+    background: #fff;
+    font: inherit;
+    font-size: 11px;
+    font-weight: 800;
+  }
+  .drive-hud b { color: var(--cobalt); }
+
   @media (prefers-reduced-motion: reduce) {
     .dock,
     .truck-menu-toggle { transition: none !important; }
@@ -325,7 +363,7 @@ export const TRUCK_BENCH_MARKUP = `
     <a href="./Kip-Demo.html" style="text-decoration:none;color:var(--ink);font-size:12px;font-weight:750;padding:4px 9px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,0.8);">← Kip Viewer</a>
     <span class="badge" id="stage-badge">Stage 1 · Snap 3+</span>
     <span class="title">Modular Dump Truck Progression Mockup</span>
-    <span class="sub" id="status-text">Loading 43 verified CAD solids…</span>
+    <span class="sub" id="status-text">Loading verified CAD solids…</span>
   </div>
 
   <div class="hud-card">
@@ -353,8 +391,7 @@ export const TRUCK_BENCH_MARKUP = `
     <span class="row-label">Stage</span>
     <button data-stage="snap" class="active">1 · Snap (3+)</button>
     <button data-stage="pro">2 · Pro (8+) Rack Steer</button>
-    <button data-stage="band">3A · Motion Band + Bumper</button>
-    <button data-stage="bellows">3B · Motion Balloon Bellows</button>
+    <button data-stage="band">3A · Motion Pull-Back Band</button>
     <button data-stage="jet" title="Proposal: balloon upright on top of mom_jet_valve_body, no dump tub (docs/specs/motion-stage-options-spec.md)">3B′ · Balloon Jet (proposal)</button>
     <button data-stage="mech">4 · Pro Powered Add-On (10+) Smart RC X-Ray</button>
     <span class="sep"></span>
@@ -396,6 +433,7 @@ export const TRUCK_BENCH_MARKUP = `
     <button id="btn-hat" title="Cycle the hat">Hat: hardhat</button>
     <button id="btn-xray">X-Ray Shells: Auto</button>
     <button id="btn-sweep">Auto Steer: Off</button>
+    <button id="btn-drive" title="Drive the truck with the keyboard (G): W/S speed, A/D steer, Space brake, Q/E tip the bed, R back to the start">Drive: Off</button>
     <span class="sep"></span>
     <span class="row-label cam-label">Cam:</span>
     <button data-cam="hero">3/4 Hero</button>
@@ -404,6 +442,11 @@ export const TRUCK_BENCH_MARKUP = `
     <button data-cam="cab">Cockpit</button>
   </div>
 </aside>
+
+<div id="drive-hud" class="drive-hud" hidden>
+  <div><kbd>W</kbd><kbd>S</kbd> speed · <kbd>A</kbd><kbd>D</kbd> steer · <kbd>Space</kbd> brake · <kbd>Q</kbd><kbd>E</kbd> tip the bed · <kbd>R</kbd> start · <kbd>G</kbd> stop driving</div>
+  <div><b id="drive-mode">Pushed by hand</b> · <span id="drive-speed">0.00 m/s</span> · steer <span id="drive-steer">fixed axle</span><span id="drive-note"></span></div>
+</div>
 
 <div id="print-panel">
   <div id="print-status">Planning plates…</div>
@@ -511,18 +554,28 @@ sun.shadow.bias = -0.0004;
 scene.add(sun);
 
 const groundGeo = new THREE.PlaneGeometry(900, 900);
-const groundMat = new THREE.ShadowMaterial({ opacity: 0.3 }); // darker than on the Kip's light floor so the shadow reads on blueprint blue
+const groundMat = new THREE.ShadowMaterial({ opacity: BLUEPRINT.shadowOpacity });
 const ground = new THREE.Mesh(groundGeo, groundMat);
 ground.rotation.x = -Math.PI / 2;
 ground.receiveShadow = true;
 scene.add(ground);
 
 // 12.5 mm TU Grid on tabletop, drawn as blueprint lines (light cyan-white on the blue ground).
-const grid = new THREE.GridHelper(300, 24, 0xd6ebff, 0x8db8ee);
+const grid = new THREE.GridHelper(300, 24, BLUEPRINT.gridCentre, BLUEPRINT.gridLine);
 grid.position.y = 0.05;
 grid.material.opacity = 0.55;
 grid.material.transparent = true;
 scene.add(grid);
+
+// Drive mode (below): a large grid that follows the truck, snapped to the 12.5 mm cell so its lines stay put in the world, one colour so no
+// bright centre cross travels with the truck; the floor shadow and the sun follow it too, or the shadows would leave the lit area.
+const driveGrid = new THREE.GridHelper(1500, 120, BLUEPRINT.gridLine, BLUEPRINT.gridLine);
+driveGrid.position.y = 0.05;
+driveGrid.material.opacity = 0.55;
+driveGrid.material.transparent = true;
+driveGrid.visible = false;
+scene.add(driveGrid);
+scene.add(sun.target); // at the origin it is where the light has always pointed; drive mode moves it
 
 // Root container converting PartSpec CAD frame (X right, -Y front, +Z up) -> Three.js (X right, +Z front, +Y up):
 const vehicleWrap = new THREE.Group();
@@ -543,8 +596,7 @@ const PART_FILES = [
   'pro_captive_pin_28', 'pro_steer_column', 'pro_steer_wheel',
   'gear_spur_z10', 'shaft_tu03',
   'mom_band_core_tray', 'mom_band_core_lid', 'mom_pto_gear_z10',
-  'mom_band_spool_pawl', 'mom_latch_pawl', 'mom_wind_key', 'mom_bumper_trigger',
-  'mom_bellows_base', 'mom_bellows_leaf', 'mom_jet_valve_body',
+  'mom_band_spool_pawl', 'mom_jet_valve_body',
   'mech_drive_tray', 'mech_drive_lid', 'mech_n20_pinion_z10',
   'mech_brain_tray', 'mech_brain_lid', 'mech_bat_door_screw',
   'mech_servo_mount', 'mech_servo_lid', 'mech_servo_pinion_z10',
@@ -655,7 +707,6 @@ const STEER = {
   ptoPhaseRad: THREE.MathUtils.degToRad(17.5),   // valley-in-tooth phase for upper Z10 PTO gear vs row-8 axle Z10 gear
   spoolPhaseRad: THREE.MathUtils.degToRad(45.0), // seats 4 spiral ratchet leaves into 8-tooth axial sawtooth valleys; 45.0 = PTO phase + 27.5 deg, the centre of the clear 24.5..30.5 deg window of the mirrored clutch pocket (about 2.5 deg each side; was 46.5, and 27.0 before the mirror; checked by parts/partspec/verify_band_jet.py C7, which reads this line)
   tubTrunnionY: 30.95, tubTrunnionZ: 5.75,       // enclosed cylindrical barrel-hinge axis on kit_tilting_tub pinned by shaft_tu03
-  bellowsHingeY: 38.25, bellowsBaseHingeZ: 13.50, bellowsLeafHingeZ: 5.75,
   wheelbase: 100.0,              // kingpin line -> rear axle
   kpSpan: 37.5,                  // kingpin-to-kingpin
 };
@@ -776,7 +827,7 @@ function rebuildScene() {
   addExplodeTag(rWR, 18, 0, 0);
   rearAxle.add(rWR);
 
-  if (state.stage !== 'snap' && state.stage !== 'bellows' && state.stage !== 'jet') {   // the jet stage has no PTO, and the gear would overlap mom_jet_valve_body by 442 mm3
+  if (state.stage !== 'snap' && state.stage !== 'jet') {   // the jet stage has no PTO, and the gear would overlap mom_jet_valve_body by 442 mm3
     const ptoGear = meshOf('gear_spur_z10', MATS.spark);
     ptoGear.rotation.y = Math.PI / 2;
     ptoGear.position.set(-3.125, 0, 0);
@@ -810,16 +861,7 @@ function rebuildScene() {
     dynamicRefs.frontAxle = frontAxle;
 
     if (state.stage === 'band') {
-      const trig = meshOf('mom_bumper_trigger', MATS.spark);
-      trig.position.set(0, -50.0, 12.5);
-      addExplodeTag(trig, 0, -24, 10);
-      cadRoot.add(trig);
-      dynamicRefs.bumper = trig;
-
-      const bPin = meshOf('pro_captive_pin_28', MATS.tub);
-      bPin.position.set(0, -37.5, -1.525);
-      addExplodeTag(bPin, 0, -14, -18);
-      cadRoot.add(bPin);
+      // Pull-back only (motion-stage-options-spec, decided 2026-11-02): no bumper trigger, no winding key, no latch pawl, so the nose is bare.
     } else if (state.bulldogHood) {
       const wedge = meshOf('kit_aero_wedge', MATS.spark);
       wedge.position.set(0, -43.75, 12.5);
@@ -1095,22 +1137,6 @@ function rebuildScene() {
     cadRoot.add(spoolSpinG);
     dynamicRefs.coreSpool = spoolSpinG;
 
-    // Captive sear pivot pin + removable winding key (key shown during stationary wind phase of Action Demo)
-    const lPin = meshOf('pro_captive_pin_28', MATS.tub);
-    lPin.rotation.y = -Math.PI / 2;
-    lPin.position.set(24.775, 22.25, 36.0);
-    addExplodeTag(lPin, 22, 10, 26);
-    cadRoot.add(lPin);
-
-    const wKeyWrap = new THREE.Group();
-    wKeyWrap.position.set(28.0, 43.75, 31.25);
-    wKeyWrap.visible = false;
-    const wKeyOrient = new THREE.Group(); wKeyOrient.rotation.y = -Math.PI / 2;
-    const wKey = meshOf('mom_wind_key', MATS.spark);
-    wKeyOrient.add(wKey); wKeyWrap.add(wKeyOrient);
-    cadRoot.add(wKeyWrap);
-    dynamicRefs.windKey = wKeyWrap;
-
     // Doubled #32 elastomer band loop wrapped from spool drum around twin front posts
     const bandCurve = new THREE.CatmullRomCurve3([
       new THREE.Vector3(7.0, 43.75, 31.25),
@@ -1143,66 +1169,6 @@ function rebuildScene() {
     tubHinge.add(tub);
     cadRoot.add(tubHinge);
     dynamicRefs.tubHinge = tubHinge;
-  } else if (state.stage === 'bellows') {
-    const bBase = meshOf('mom_bellows_base', MATS.violet);
-    bBase.position.set(0, 37.5, 12.5);
-    addExplodeTag(bBase, 0, 14, 14);
-    cadRoot.add(bBase);
-
-    const bPin = meshOf('shaft_tu03', MATS.steel);
-    bPin.rotation.y = Math.PI / 2;
-    bPin.position.set(-18.75, 37.5 + STEER.bellowsHingeY, 12.5 + STEER.bellowsBaseHingeZ);
-    addExplodeTag(bPin, -26, 18, 20);
-    cadRoot.add(bPin);
-
-    const balGeo = new THREE.SphereGeometry(15.5, 32, 24);
-    const bal = new THREE.Mesh(balGeo, MATS.balloon);
-    bal.scale.set(1.15, 1.15, 0.52);
-    bal.position.set(0, 35.0, 24.0);
-    addExplodeTag(bal, 0, 14, 22);
-    cadRoot.add(bal);
-    dynamicRefs.balloon = bal;
-
-    // Pin-hinged upper bellows leaf carrying #14 turntable + #11 dump tub snapped onto its 4x4 top studs (10..50 deg stroke)
-    const leafHinge = new THREE.Group();
-    leafHinge.position.set(0, 37.5 + STEER.bellowsHingeY, 12.5 + STEER.bellowsBaseHingeZ);
-    addExplodeTag(leafHinge, 0, 18, 28);
-    const bLeaf = meshOf('mom_bellows_leaf', MATS.violet);
-    bLeaf.position.set(0, -STEER.bellowsHingeY, -STEER.bellowsLeafHingeZ);
-    const bTurn = meshOf('kit_turntable', MATS.mint);
-    bTurn.position.set(0, -STEER.bellowsHingeY, -STEER.bellowsLeafHingeZ + 8.0);
-    addExplodeTag(bTurn, 0, 0, 10);
-    const tub = meshOf('kit_tilting_tub', MATS.tub);
-    tub.position.set(0, -STEER.bellowsHingeY, -STEER.bellowsLeafHingeZ + 16.0);
-    addExplodeTag(tub, 0, 0, 24);
-    leafHinge.add(bLeaf, bTurn, tub);
-    cadRoot.add(leafHinge);
-    dynamicRefs.leafHinge = leafHinge;
-
-    // Flexible silicone pneumatic hose (COTS 4x6 mm tube) + jet impulse exhaust puff rings
-    const hoseCurve = new THREE.CatmullRomCurve3([
-      new THREE.Vector3(0.0, 46.0, 23.0),
-      new THREE.Vector3(0.0, 56.0, 27.0),
-      new THREE.Vector3(0.0, 66.0, 22.0),
-      new THREE.Vector3(0.0, 72.0, 19.0),
-    ]);
-    const hoseGeo = new THREE.TubeGeometry(hoseCurve, 24, 1.8, 12, false);
-    const hoseMesh = new THREE.Mesh(hoseGeo, MATS.pneumaticTube);
-    cadRoot.add(hoseMesh);
-    dynamicRefs.hose = hoseMesh;
-
-    const exGroup = new THREE.Group();
-    exGroup.position.set(0, 76.0, 19.0);
-    const ringGeo = new THREE.TorusGeometry(3.2, 0.7, 8, 24);
-    for (let k = 0; k < 3; k++) {
-      const r = new THREE.Mesh(ringGeo, MATS.exhaustRing.clone());
-      r.position.set(0, k * 6.0, 0);
-      r.rotation.x = Math.PI / 2;
-      exGroup.add(r);
-    }
-    exGroup.visible = false;
-    cadRoot.add(exGroup);
-    dynamicRefs.exhaust = exGroup;
   } else if (state.stage === 'jet') {
     // Proposal: no dump tub. mom_jet_valve_body sits on the keel's rear rows 8..9 (centre y 50.0, corner studs only) with the balloon upright on its vertical collar.
     const jet = meshOf('mom_jet_valve_body', MATS.mint);
@@ -1314,16 +1280,6 @@ function updateKinematics() {
   if (dynamicRefs.tubHinge) {
     dynamicRefs.tubHinge.rotation.x = -tipRad;
   }
-  if (dynamicRefs.leafHinge) {
-    const belDeg = Math.max(10, Math.min(50, state.tipDeg));
-    dynamicRefs.leafHinge.rotation.x = -THREE.MathUtils.degToRad(belDeg);
-  }
-  if (dynamicRefs.balloon) {
-    const belDeg = Math.max(10, Math.min(50, state.tipDeg));
-    const lift = 0.32 + ((belDeg - 10) / 40) * 0.68;
-    dynamicRefs.balloon.scale.set(1.15, 1.15, lift);
-    dynamicRefs.balloon.position.z = 20.5 + lift * 7.5;
-  }
 
   if (dynamicRefs.kpL && dynamicRefs.kpR) {
     // Rigid tie-rod linkage solved from the real hardpoints (see STEER): rack travel -> both knuckle angles.
@@ -1395,7 +1351,6 @@ function updateKinematics() {
 function updateHUD() {
   const srvDeg = ((lastRackDx / STEER.pinionR) * 180 / Math.PI);
   const srvUs = Math.round(1500 + (srvDeg / 23.8) * 132);
-  const belDeg = Math.round(Math.max(10, Math.min(50, state.tipDeg)));
   const META = {
     snap: {
       badge: 'Stage 1 · Snap 3+',
@@ -1415,19 +1370,11 @@ function updateHUD() {
     },
     band: {
       badge: 'Stage 3A · Motion 8+',
-      title: '3A · Motion Doubled-#32 Band + Overrunning Clutch',
-      cards: 'Card A + Card B + Card E1 (0.22 J Band Core)',
-      steer: 'Captive Bumper Trigger (IF-Contact-THEN-Dump)',
+      title: '3A · Motion Pull-Back Doubled-#32 Band + Overrunning Clutch',
+      cards: 'Card A + Card B + Card E2 (Pull-Back Band Core)',
+      steer: 'Closed Through-Bore Barbell · pull back to wind, no key, latch or bumper',
       power: '4-Leaf Freewheel Spool + Double-Shear PTO (Z=31.25 mm)',
       bed: `Lid Barrel Knuckles · Tip ${Math.round(state.tipDeg)}° (Z=50.0 mm)`,
-    },
-    bellows: {
-      badge: 'Stage 3B · Motion 8+',
-      title: '3B · Motion Pin-Hinged Pneumatic Bellows Tipper',
-      cards: 'Card A + Card B + Card E2',
-      steer: 'Closed Through-Bore Barbell',
-      power: 'shaft_tu03 Barrel Hinge + 9" Balloon Clamshell',
-      bed: `Pneumatic Lift · ${belDeg}° (10°..50° Stroke, Rated 100 g)`,
     },
     jet: {
       badge: "Stage 3B′ · Motion 8+ (proposal)",
@@ -1455,7 +1402,6 @@ function updateHUD() {
   $el('hud-bed').textContent = META.bed;
   const illus = [];
   if (state.stage === 'band') illus.push('#32 rubber band (COTS)');
-  if (state.stage === 'bellows') illus.push('9" balloon + 4×6 silicone tube (COTS)');
   if (state.stage === 'jet') illus.push('9" latex balloon + hand pump + tube nozzle (COTS)');
   if (state.stage === 'mech') illus.push('N20 + SG90 + 602535 LiPo + PCBA/XIAO (COTS)');
   if (state.showKip && KIP_DRIVER.rig) illus.push(`Kip ${state.driver === 'snap' ? 'Snap 3+' : 'Pro 8+'} rig (${KIP_DRIVER.scale}× cab scale)`);
@@ -1505,7 +1451,7 @@ benchRoot.querySelectorAll('[data-stage]').forEach((btn) => {
     state.stage = btn.dataset.stage;
     state.demoRunning = false;
     resetVehiclePose();
-    if (state.stage === 'band' && state.giantWheels) { // giant tires lead the trigger face by 12.6 mm: it could never be touched
+    if (state.stage === 'band' && state.giantWheels) { // the pull-back core has not been through the Ø50 rear-wheel check yet
       state.giantWheels = false;
       const bw = $el('btn-wheels');
       bw.textContent = 'Tires: Ø36 Med (#4)';
@@ -1517,9 +1463,6 @@ benchRoot.querySelectorAll('[data-stage]').forEach((btn) => {
     } else if (state.stage === 'band') {
       state.steerDeg = 0;
       state.tipDeg = 42;
-    } else if (state.stage === 'bellows') {
-      state.steerDeg = 0;
-      state.tipDeg = 28;
     } else if (state.stage === 'jet') {
       state.steerDeg = 0;
       state.tipDeg = 0;
@@ -1576,7 +1519,7 @@ $el('rng-explode').addEventListener('input', (e) => {
 
 $el('btn-wheels').addEventListener('click', (e) => {
   if (state.stage === 'band' && !state.giantWheels) {
-    $el('status-text').textContent = 'Ø50 giant tires are not supported in Stage 3A: they extend 12.6 mm past the bumper trigger face.';
+    $el('status-text').textContent = 'Ø50 giant tires have not been checked against the pull-back core yet, so Stage 3A keeps the Ø36 wheels.';
     return;
   }
   state.giantWheels = !state.giantWheels;
@@ -1800,16 +1743,35 @@ $el('btn-xray').addEventListener('click', (e) => {
 });
 
 $el('btn-sweep').addEventListener('click', (e) => {
+  if (drive.on) setDrive(false);
   state.sweepRunning = !state.sweepRunning;
   e.target.textContent = `Auto Steer: ${state.sweepRunning ? 'On' : 'Off'}`;
   e.target.classList.toggle('mint-on', state.sweepRunning);
 });
 
 $el('btn-demo').addEventListener('click', () => {
+  if (drive.on) setDrive(false);
   state.demoRunning = !state.demoRunning;
   state.demoT = 0;
   resetVehiclePose();
 });
+
+$el('btn-drive').addEventListener('click', (e) => {
+  setDrive(!drive.on);
+  e.currentTarget.blur(); // so Space (brake) does not press the button again
+});
+
+const DRIVE_KEYS = ['w', 'a', 's', 'd', 'q', 'e', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' '];
+listen(window, 'keydown', (e) => {
+  if (e.ctrlKey || e.metaKey || e.altKey || e.target?.closest?.('input, textarea, select')) return;
+  const k = e.key.toLowerCase();
+  if (k === 'g' && !e.repeat) { setDrive(!drive.on); return; }
+  if (!drive.on) return;
+  if (DRIVE_KEYS.includes(k)) { drive.keys.add(k); e.preventDefault(); }
+  else if (k === 'r' && !e.repeat) driveHome();
+});
+listen(window, 'keyup', (e) => { drive.keys.delete(e.key.toLowerCase()); });
+listen(window, 'blur', () => drive.keys.clear());
 
 benchRoot.querySelectorAll('[data-cam]').forEach((btn) => {
   btn.addEventListener('click', () => {
@@ -1830,7 +1792,7 @@ if (!hosted) { // a hosted bench is sized by the stage
   });
 }
 
-// Load all 43 verified CAD solids in parallel
+// Load all the verified CAD solids in parallel
 async function init() {
   let loaded = 0;
   const kipLoading = loadKipDriver();
@@ -1904,7 +1866,6 @@ globals.__truckProbeSweep = (cases = [
   { stage: 'mech', steerDeg: 30, tipDeg: 22 }, { stage: 'mech', steerDeg: 0, tipDeg: 55 },
   { stage: 'mech', driver: 'snap', steerDeg: 0, tipDeg: 18 },
   { stage: 'band', steerDeg: 0, tipDeg: 0 }, { stage: 'band', tipDeg: 55 },
-  { stage: 'bellows', tipDeg: 10 }, { stage: 'bellows', tipDeg: 48 },
   { stage: 'jet', tipDeg: 0 },
   { stage: 'snap', tipDeg: 0 }, { stage: 'snap', tipDeg: 55 },
 ]) => cases.map((c) => {
@@ -1935,24 +1896,13 @@ globals.__truckProbe = () => {
 // ---------------------------------------------------------------------------
 const REAR_AXLE_Z = -43.75; // rear axle center in the vehicle frame (CAD y = +43.75 -> three z = -43.75)
 const pose = { px: 0, pz: -90, psi: 0, spinPlus: 0, spinMinus: 0, prevPlus: null, prevMinus: null }; // rear-axle-center pose, steered hub spin angles, last knuckle angles
-// Obstacle for the Stage 3A demo: a 48 mm bollard that fits BETWEEN the front tires (inner faces are 53.4 mm apart), so
-// only the bumper trigger can touch it. (A full-width wall would hit the tires first: they reach 5.6 mm past the trigger face.)
-const wall = new THREE.Mesh(
-  new THREE.BoxGeometry(48, 34, 6),
-  new THREE.MeshStandardMaterial({ color: 0xb9c2d0, roughness: 0.7, transparent: true, opacity: 0.85 }),
-);
-wall.visible = false;
-wall.castShadow = true;
-wall.receiveShadow = true;
-scene.add(wall);
-
+const drive = { on: false, v: 0, keys: new Set(), hudAt: 0, lastX: 0, lastZ: 0 };
 function resetVehiclePose() {
   pose.px = 0; pose.pz = -90; pose.psi = 0; pose.prevPlus = null; pose.prevMinus = null;
   state.spoolSpin = 0;
   vehicleWrap.position.set(0, 0, 0);
   vehicleWrap.rotation.y = 0;
-  wall.visible = false;
-  if (dynamicRefs.windKey) dynamicRefs.windKey.visible = false;
+  if (drive.on) driveHome(); // a stage change while driving puts the truck back at the start
 }
 
 function applyPose() { // place the wrap so the REAR AXLE CENTER sits at (pose.px, pose.pz) with heading pose.psi
@@ -1960,6 +1910,151 @@ function applyPose() { // place the wrap so the REAR AXLE CENTER sits at (pose.p
   vehicleWrap.position.set(
     pose.px - REAR_AXLE_Z * Math.sin(pose.psi), 0, pose.pz - REAR_AXLE_Z * Math.cos(pose.psi));
 }
+
+// ---------------------------------------------------------------------------
+// Keyboard driving (Workshop, 2026-11-03). The model is truck-drive.js (pure, unit-tested): speed from the keys, steering from the real rack linkage,
+// yaw from the two solved wheel angles, rolling without slip. G toggles it, W/S speed, A/D steer, Space brake, Q/E tip the bed, R back to the start.
+// Only the Pro Powered Add-On is powered (there the keys play the remote); every other stage is pushed by hand, and only the two rack-steered stages steer.
+// ---------------------------------------------------------------------------
+const SUN_OFFSET = { x: -140, y: 240, z: 160 };
+const DRIVE_CELL = 12.5;
+
+function driveInput() {
+  const k = drive.keys;
+  const has = (...names) => names.some((n) => k.has(n));
+  return {
+    throttle: (has('w', 'arrowup') ? 1 : 0) - (has('s', 'arrowdown') ? 1 : 0),
+    brake: k.has(' '),
+    steerDir: (has('a', 'arrowleft') ? 1 : 0) - (has('d', 'arrowright') ? 1 : 0), // + = left (the vehicle's left is +X)
+    tip: (k.has('e') ? 1 : 0) - (k.has('q') ? 1 : 0),
+  };
+}
+
+function drivePlace() { // the grid, floor shadow and sun follow the truck
+  const wx = vehicleWrap.position.x, wz = vehicleWrap.position.z;
+  driveGrid.position.x = Math.round(wx / DRIVE_CELL) * DRIVE_CELL;
+  driveGrid.position.z = Math.round(wz / DRIVE_CELL) * DRIVE_CELL;
+  ground.position.set(wx, 0, wz);
+  sun.position.set(wx + SUN_OFFSET.x, SUN_OFFSET.y, wz + SUN_OFFSET.z);
+  sun.target.position.set(wx, 0, wz);
+  sun.target.updateMatrixWorld();
+}
+
+function driveHome() { // truck, camera and world back to the start (the camera keeps its view of the truck)
+  const dx = vehicleWrap.position.x, dz = vehicleWrap.position.z;
+  camera.position.x -= dx; camera.position.z -= dz;
+  controls.target.x -= dx; controls.target.z -= dz;
+  pose.px = 0; pose.pz = REAR_AXLE_Z; pose.psi = 0; pose.prevPlus = null; pose.prevMinus = null;
+  applyPose();
+  drive.v = 0;
+  drive.lastX = vehicleWrap.position.x; drive.lastZ = vehicleWrap.position.z;
+  state.steerDeg = 0;
+  drivePlace();
+  updateKinematics();
+  syncSliders();
+}
+
+function updateDriveHud(p) {
+  $el('drive-mode').textContent = p.powered ? 'RC drive: the keys are the remote' : 'Pushed by hand';
+  $el('drive-speed').textContent = `${(Math.abs(drive.v) / 1000).toFixed(2)} m/s${drive.v < -0.5 ? ' (reverse)' : ''}`;
+  $el('drive-steer').textContent = p.steered ? `${state.steerDeg >= 0 ? 'left' : 'right'} ${Math.abs(Math.round(state.steerDeg))}°` : 'fixed axle';
+  $el('drive-note').textContent = p.powered ? ' · viewer model, no firmware built yet' : '';
+}
+
+function setDrive(on) {
+  if (on === drive.on) return;
+  const btn = $el('btn-drive');
+  btn.textContent = `Drive: ${on ? 'On' : 'Off'}`;
+  btn.classList.toggle('mint-on', on);
+  $el('drive-hud').hidden = !on;
+  if (on) {
+    state.demoRunning = false;
+    if (state.sweepRunning) { state.sweepRunning = false; const bs = $el('btn-sweep'); bs.textContent = 'Auto Steer: Off'; bs.classList.remove('mint-on'); }
+    state.demoT = 0;
+    drive.on = true;
+    drive.keys.clear();
+    resetVehiclePose(); // (drive.on is set, so this ends in driveHome())
+    grid.visible = false;
+    driveGrid.visible = true;
+    updateDriveHud(driveParams({ stage: state.stage, giantWheels: state.giantWheels }));
+  } else {
+    driveHome();
+    drive.on = false;
+    drive.keys.clear();
+    resetVehiclePose();
+    ground.position.set(0, 0, 0);
+    sun.position.set(SUN_OFFSET.x, SUN_OFFSET.y, SUN_OFFSET.z);
+    sun.target.position.set(0, 0, 0);
+    sun.target.updateMatrixWorld();
+    grid.visible = true;
+    driveGrid.visible = false;
+    updateKinematics();
+    updateHUD();
+  }
+}
+
+/** One frame of driving; the loop calls it with the real dt, the test hook with a fixed one. */
+function driveFrame(dt, input) {
+  const p = driveParams({ stage: state.stage, giantWheels: state.giantWheels });
+  drive.v = stepSpeed(drive.v, input, p, dt);
+  const steerWas = state.steerDeg;
+  state.steerDeg = p.steered ? stepSteer(state.steerDeg, input.steerDir, p, dt) : 0;
+  const sol = p.steered ? steerSolution(state.steerDeg) : null;
+  const psiDot = sol ? yawRate(drive.v, sol, STEER.wheelbase) : 0;
+  advancePose(pose, drive.v, psiDot, dt);
+  applyPose();
+  state.wheelSpin += (drive.v * dt) / p.wRad; // rolling without slip
+  if (sol) {
+    if (pose.prevPlus === null) { pose.prevPlus = sol.aPlus; pose.prevMinus = sol.aMinus; }
+    pose.spinPlus += hubRoll(1, sol.aPlus, pose.prevPlus, drive.v, psiDot, dt) / p.wRad;
+    pose.spinMinus += hubRoll(-1, sol.aMinus, pose.prevMinus, drive.v, psiDot, dt) / p.wRad;
+    pose.prevPlus = sol.aPlus;
+    pose.prevMinus = sol.aMinus;
+  }
+  applyWheelSpin();
+  let changed = state.steerDeg !== steerWas;
+  if (input.tip) {
+    state.tipDeg = Math.max(tipMinDeg(), Math.min(55, state.tipDeg + input.tip * 40 * dt));
+    changed = true;
+  }
+  if (changed) { updateKinematics(); syncSliders(); }
+  // the camera keeps its orbit around the truck: it travels with it
+  const dx = vehicleWrap.position.x - drive.lastX, dz = vehicleWrap.position.z - drive.lastZ;
+  camera.position.x += dx; camera.position.z += dz;
+  controls.target.x += dx; controls.target.z += dz;
+  drive.lastX = vehicleWrap.position.x; drive.lastZ = vehicleWrap.position.z;
+  drivePlace();
+  drive.hudAt += dt;
+  if (drive.hudAt > 0.12 || changed) { drive.hudAt = 0; updateDriveHud(p); }
+}
+
+// Test hook for the 3A pull-back loop: freezes the demo clock at demoT and reports what the parts are doing, so a script can step the cycle frame by frame.
+globals.__truckBand = {
+  step(t) { state.demoT = t; stepBandDemo(t, state.giantWheels ? 25.0 : 18.0); }, // the same function the loop calls, no frame needed
+  snap: () => ({
+    t: state.demoT, phase: state.demoPhase, z: vehicleWrap.position.z, y: vehicleWrap.position.y, wheelSpin: state.wheelSpin,
+    spool: dynamicRefs.coreSpool ? dynamicRefs.coreSpool.rotation.x : null, gear: dynamicRefs.coreGear ? dynamicRefs.coreGear.rotation.x : null,
+    wRad: state.giantWheels ? 25.0 : 18.0, stage: state.stage, status: $el('status-text').textContent,
+  }),
+};
+
+// Test hook: the same driveFrame the loop calls, stepped with a fixed dt, so a script can drive deterministically.
+globals.__truckDrive = {
+  set: setDrive,
+  get on() { return drive.on; },
+  step(dt, input = {}) { driveFrame(dt, { throttle: 0, brake: false, steerDir: 0, tip: 0, ...input }); },
+  pose: () => ({
+    px: pose.px, pz: pose.pz, psi: pose.psi, v: drive.v, steerDeg: state.steerDeg, wheelSpin: state.wheelSpin,
+    spinPlus: pose.spinPlus, spinMinus: pose.spinMinus, wrapX: vehicleWrap.position.x, wrapZ: vehicleWrap.position.z, tipDeg: state.tipDeg,
+  }),
+  params: () => driveParams({ stage: state.stage, giantWheels: state.giantWheels }),
+  solution: (deg) => steerSolution(deg),
+  wheelbase: STEER.wheelbase,
+  rearAxleZ: REAR_AXLE_Z,
+  camera: () => camera.position.toArray(),
+  target: () => controls.target.toArray(),
+  hud: () => ({ shown: !$el('drive-hud').hidden, mode: $el('drive-mode').textContent, speed: $el('drive-speed').textContent, steer: $el('drive-steer').textContent, note: $el('drive-note').textContent }),
+};
 
 function driveStraight(z, wRad) { // straight-line drive along the vehicle's +Z (forward)
   const dz = z - vehicleWrap.position.z;
@@ -1987,6 +2082,55 @@ function hubRoll(side, a, aPrev, v, psiDot, dt) {
   return body * dt - side * 15.0 * (a - aPrev);
 }
 
+/** One pose of the 3A pull-back loop at demo time `demoT` (s). The animation loop and the test hook both call this, so what the test steps is what runs. */
+function stepBandDemo(demoT, wRad) {
+  const smooth = (u) => { const c = Math.max(0, Math.min(1, u)); return c * c * (3 - 2 * c); };
+  // 6 s Pull-Back Band Core loop, in SLOW MOTION (pull-back only, as decided: no key, no latch, no bumper). One wheel turn is one spool turn
+  // (1:1 Z10 PTO), so the band winds exactly as far as the wheels roll backward and unwinds exactly as far as they roll forward; once it is slack
+  // the overrunning clutch frees the wheels and the truck coasts. Spool angle = pull-back distance / wheel radius, locked to the PTO gear:
+  // 0.0..0.5 s  set on the line, band slack
+  // 0.5..2.0 s  pull back by hand: wheels roll backward, the clutch locks, the band winds onto the spool
+  // 2.0..2.4 s  held, wound
+  // 2.4..3.8 s  release: the band turns the spool back, the clutch locks the other way and drives the wheels forward over the same distance
+  // 3.8 s on    slack: the spool stops, the wheels coast to a stop on their own (rolling drag)
+  // 5.0..6.0 s  lift and set back on the line (wheels off the floor: nothing winds)
+  const TURNS = 1.25;                       // shown; the spec's full wind is 2.5 turns (about 28 cm, too long for this view)
+  const D = TURNS * 2 * Math.PI * wRad;     // pull-back distance, 141 mm on the O36 wheel
+  const ZS = 20.0;                          // the line
+  const K = 1.3, T_D = 1.4;                 // drive: s(u) = (3-K) u^2 + (K-2) u^3 starts from rest and ends at K x the mean speed
+  const v0 = (K * D) / T_D;                 // mm/s when the band goes slack
+  const tStop = 1.1;                        // s: the coast ends well before the lift (5.0 s), so the truck is at rest when it is picked up
+  const DECEL = v0 / tStop;                 // mm/s^2: slow-motion rolling drag, constant
+  const dc = 0.5 * v0 * tStop;              // coast distance
+  const cyc = demoT % 6.0;
+  let z = ZS, spool = 0, lift = 0, phase = 'set', roll = true;
+  if (cyc < 0.5) { z = ZS; roll = false; } // resting on the line: the wheels do not turn
+  else if (cyc < 2.0) { z = ZS - D * smooth((cyc - 0.5) / 1.5); spool = (ZS - z) / wRad; phase = 'pull'; }
+  else if (cyc < 2.4) { z = ZS - D; spool = D / wRad; phase = 'hold'; }
+  else if (cyc < 3.8) {
+    const u = (cyc - 2.4) / T_D;
+    z = ZS - D + D * ((3 - K) * u * u + (K - 2) * u * u * u);
+    spool = (ZS - z) / wRad;
+    phase = 'drive';
+  } else if (cyc < 3.8 + tStop) { const t = cyc - 3.8; z = ZS + v0 * t - 0.5 * DECEL * t * t; phase = 'coast'; }
+  else if (cyc < 5.0) { z = ZS + dc; phase = 'coast'; }
+  else { const u = smooth((cyc - 5.0) / 1.0); z = ZS + dc * (1 - u); lift = 12 * Math.sin(Math.PI * u); phase = 'setback'; roll = false; }
+  if (roll) driveStraight(z, wRad); else vehicleWrap.position.set(0, lift, z);
+  state.spoolSpin = spool;
+  applyWheelSpin();
+  if (state.demoPhase !== phase) {
+    state.demoPhase = phase;
+    $el('status-text').textContent = {
+      set: 'Pull-back band, slow motion. Set on the line: the band is slack.',
+      pull: 'Pull back: the wheels roll backward, the clutch locks and the band winds onto the spool, one turn for one wheel turn.',
+      hold: `Held: ${TURNS} turns wound (the spec's full wind is 2.5 turns, about 28 cm).`,
+      drive: 'Release: the band unwinds, the clutch locks the other way and drives the wheels forward over the same distance.',
+      coast: 'Band slack: the spool stops, the overrunning clutch frees the wheels and the truck coasts.',
+      setback: 'Lift and set back on the line: with the wheels off the floor nothing winds.',
+    }[phase];
+  }
+}
+
 const clock = new THREE.Clock();
 function animate() {
   if (disposed) return;
@@ -1999,12 +2143,13 @@ function animate() {
     updateKinematics();
   }
 
+  if (drive.on && GEOS.kit_keel_base) driveFrame(dt, driveInput());
+
   if (state.demoRunning && GEOS.kit_keel_base) {
     state.demoT += dt;
     const lim = state.giantWheels ? 25 : 34;
     const wRad = state.giantWheels ? 25.0 : 18.0; // matches kit_wheel_giant R = 24.97 / kit_wheel_med R = 17.98
     const smooth = (u) => { const c = Math.max(0, Math.min(1, u)); return c * c * (3 - 2 * c); };
-    wall.visible = state.stage === 'band';
 
     if (state.stage === 'pro' || state.stage === 'mech') {
       // Slalom: kinematic bicycle at the rear axle. The yaw rate comes from the two REAL solved wheel angles
@@ -2031,98 +2176,7 @@ function animate() {
         state.tipDeg = 15.0 + Math.sin(state.demoT * 1.5) * 15.0;
       }
     } else if (state.stage === 'band') {
-      // 5.2 s 4-state Band Core + Overrunning Clutch + Bumper Auto-Dump loop:
-      // 0.0..1.0s: Key Wind (mom_wind_key winds spool 2.5 turns while PTO gear & wheels stand still)
-      // 1.0..1.3s: Key Withdraw & Sear Latch Hold
-      // 1.3..2.5s: Band Drive Burst (spool + PTO gear + rear axle spin locked 1:1 until band unwinds)
-      // 2.5..3.5s: Overrunning Freewheel Coast (spool halts at slack while PTO gear & wheels keep rolling!)
-      // 3.5..4.4s: Bumper Contact -> 3.75 mm depress -> Sear Trip -> 55 deg Auto-Dump
-      // 4.4..5.2s: Reset
-      const Z0 = -50.0, ZM = 5.0, ZC = 40.0, PRESS = 3.75, FACE = 77.5, WIND_RAD = (ZM - Z0) / wRad;
-      wall.position.set(0, 17, ZC + FACE + 3.0);
-      const cyc = state.demoT % 5.2;
-      let depress = 0;
-      if (dynamicRefs.windKey) dynamicRefs.windKey.visible = false;
-      if (cyc < 1.0) {
-        const uW = smooth(cyc / 1.0);
-        driveStraight(Z0, wRad);
-        state.spoolSpin = uW * WIND_RAD;
-        state.tipDeg = 0;
-        if (dynamicRefs.windKey) {
-          dynamicRefs.windKey.visible = true;
-          dynamicRefs.windKey.position.x = 25.0;
-          dynamicRefs.windKey.rotation.x = state.spoolSpin;
-        }
-      } else if (cyc < 1.3) {
-        const uOut = smooth((cyc - 1.0) / 0.3);
-        driveStraight(Z0, wRad);
-        state.spoolSpin = WIND_RAD;
-        state.tipDeg = 0;
-        if (dynamicRefs.windKey) {
-          dynamicRefs.windKey.visible = uOut < 0.95;
-          dynamicRefs.windKey.position.x = 25.0 + uOut * 12.0;
-          dynamicRefs.windKey.rotation.x = WIND_RAD;
-        }
-      } else if (cyc < 2.5) {
-        const uDrv = (cyc - 1.3) / 1.2;
-        const zCur = Z0 + (ZM - Z0) * uDrv;
-        driveStraight(zCur, wRad);
-        state.spoolSpin = WIND_RAD * (1 - uDrv); // unwinds in -X sense (-wheelSpin delta) down to 0
-        state.tipDeg = 0;
-      } else if (cyc < 3.5) {
-        const uCst = (cyc - 2.5) / 1.0;
-        driveStraight(ZM + (ZC - ZM) * uCst, wRad);
-        state.spoolSpin = 0; // OVERRUNNING CLUTCH: spool halts at slack while coreGear + wheels coast!
-        state.tipDeg = 0;
-      } else if (cyc < 3.9) {
-        const u = (cyc - 3.5) / 0.4;
-        depress = PRESS * smooth(u / 0.4);
-        driveStraight(ZC + depress, wRad);
-        state.spoolSpin = 0;
-        state.tipDeg = 55 * smooth((u - 0.35) / 0.65);
-      } else if (cyc < 4.5) {
-        depress = PRESS;
-        driveStraight(ZC + PRESS, wRad);
-        state.spoolSpin = 0;
-        state.tipDeg = 55;
-      } else {
-        const uRet = (cyc - 4.5) / 0.7;
-        const back = (ZC + PRESS - Z0) * uRet;
-        depress = Math.max(0, PRESS - back);
-        driveStraight(ZC + PRESS - back, wRad);
-        state.spoolSpin = 0;
-        state.tipDeg = 55 * (1 - uRet);
-      }
-      if (dynamicRefs.bumper) dynamicRefs.bumper.position.y = -50.0 + depress;
-      applyWheelSpin();
-    } else if (state.stage === 'bellows') {
-      // 3.6 s pneumatic loop (10 deg pre-angled start stop -> 48 deg lift -> slam jet impulse):
-      const cyc = state.demoT % 3.6;
-      const Z0 = -40.0;
-      if (dynamicRefs.exhaust) dynamicRefs.exhaust.visible = false;
-      if (cyc < 1.2) {
-        driveStraight(Z0, wRad);
-        state.tipDeg = 10.0 + (cyc / 1.2) * 38.0;
-      } else if (cyc < 1.5) {
-        const uSlam = (cyc - 1.2) / 0.3;
-        state.tipDeg = 48.0 - uSlam * 38.0;
-        driveStraight(Z0 + uSlam * 15.0, wRad);
-        if (dynamicRefs.exhaust) {
-          dynamicRefs.exhaust.visible = true;
-          const sc = 1.0 + uSlam * 2.5;
-          dynamicRefs.exhaust.scale.set(sc, sc, sc);
-          dynamicRefs.exhaust.children.forEach((r) => { r.material.opacity = 0.85 * (1 - uSlam); });
-        }
-      } else if (cyc < 3.0) {
-        const uCoast = (cyc - 1.5) / 1.5;
-        driveStraight(Z0 + 15.0 + (1 - Math.pow(1 - uCoast, 2)) * 75.0, wRad);
-        state.tipDeg = 10.0;
-      } else {
-        const uRet = (cyc - 3.0) / 0.6;
-        driveStraight(Z0 + 90.0 - uRet * 90.0, wRad);
-        state.tipDeg = 10.0;
-      }
-      applyWheelSpin();
+      stepBandDemo(state.demoT, wRad);
     } else if (state.stage === 'jet') {
       // 4.5 s inflate / vent loop. The truck stays put on purpose: the body as drawn is predicted too restrictive to move it (docs/specs/motion-stage-options-spec.md section 2).
       const cyc = state.demoT % 4.5;
@@ -2144,7 +2198,7 @@ function animate() {
 const ready = init();
 if (!hosted) animate(); // hosted: the stage's loop calls frame()
 
-const PUBLISHED = ["__TRUCK_READY__", "__truckProbe", "__truckProbeSweep", "truckPrint"];
+const PUBLISHED = ["__TRUCK_READY__", "__truckProbe", "__truckProbeSweep", "__truckDrive", "__truckBand", "truckPrint"];
 function teardown() {
   globals.truckPrint?.dispose?.();
   disposeThreeScene({ scene, renderer: hosted ? null : renderer, controls: hosted ? null : controls, pmrem });
@@ -2174,6 +2228,8 @@ function setActive(on) {
     viewport.appendChild(renderer.domElement);
     applyLook();
   } else {
+    drive.keys.clear(); // a key held when the bench is switched away must not keep driving it
+    drive.v = 0;        // and the truck is not left rolling for when it comes back
     camPose.position.copy(camera.position);
     camPose.target.copy(controls.target);
     camera.clearViewOffset();

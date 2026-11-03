@@ -10,6 +10,31 @@ import type { Placement } from "../../../../shared/build";
 import { buildSignature } from "../../../../shared/reveal";
 import { isBuiltInToy, type Toy } from "../../../../shared/toy";
 import { loadToyPortrait, PORTRAIT_PX, saveToyPortrait } from "../../../lib/toyPortrait";
+import {
+  completeGarage,
+  GARAGE_DROPS,
+  GARAGE_GRACE_MS,
+  garageGraceLeftMs,
+  garageStatus,
+  loanKeys,
+  missionDone,
+  missionParts,
+  type BuildSummary,
+  type GarageGoal,
+  type GoalPart,
+} from "../../../lib/garage";
+import {
+  loadGaragePreview,
+  loadGraceUsedMs,
+  saveGaragePreview,
+  saveGraceUsedMs,
+} from "../../../lib/garageDevice";
+import {
+  loadTimeOfDayMode,
+  saveTimeOfDayMode,
+  timeOfDayFor,
+  type TimeOfDayMode,
+} from "../../../lib/timeOfDay";
 import type { ToyContract } from "../../../../shared/toycontract";
 import { revealForBuild } from "../../../state/reveals";
 import { buildStats } from "../../../../shared/build";
@@ -53,6 +78,8 @@ import {
   type Tier,
 } from "../../../lib/progression";
 import { LivePlayPanel, type LivePlayStatus } from "../../liveplay/LivePlayPanel";
+import { propLangLabel } from "../../../lib/propSpeech";
+import { LanguageSheet, usePropLang } from "./LanguageSheet";
 import { CreatePanel } from "./CreatePanel";
 import { EditorPanel } from "./EditorPanel";
 import {
@@ -62,6 +89,8 @@ import {
   WORLDS,
   type EngineHandle,
 } from "./engine";
+import { GarageGoalChip } from "./GarageGoalChip";
+import { GarageSheet } from "./GarageSheet";
 import { GrownUpsSheet } from "./GrownUpsSheet";
 import { composeRoomPhotoLevel } from "./runtime/roomPhoto";
 import { buildExplorerGraph, defaultMapView } from "../../../lib/explorerMap";
@@ -76,6 +105,20 @@ import { RevealOverlay } from "./RevealOverlay";
 import { SleepCurtain } from "./SleepCurtain";
 import { ToyCustomizer } from "./ToyCustomizer";
 import { ToyMiniIcon } from "./ToyMiniIcon";
+
+/** Every part any drop ever loans, so a part from a past weekend is taken back on Monday. */
+const KNOWN_LOANERS: string[] = GARAGE_DROPS.flatMap(loanKeys);
+
+/** A Garage mission in progress: what to do, and the build it started from. */
+interface GarageMission {
+  weekendKey: string;
+  title: string;
+  brief: string;
+  goal: GarageGoal;
+  baseline: BuildSummary;
+  /** Demo Mode's Preview weekend: the flow runs, but nothing is saved or paid. */
+  preview: boolean;
+}
 
 export type InitialOverlay =
   | "toy"
@@ -148,6 +191,8 @@ export function GameCanvas({
     initialOverlay === "reveal" ? { first: false } : null,
   );
   const [moodsOpen, setMoodsOpen] = useState(false);
+  const [langOpen, setLangOpen] = useState(false);
+  const propLang = usePropLang();
   const [liveStatus, setLiveStatus] = useState<LivePlayStatus>({
     playing: false,
     listening: false,
@@ -220,6 +265,19 @@ export function GameCanvas({
   // world is not that toy. Until the rig has loaded (or when it cannot be taken)
   // the token falls back to the toy's plain icon.
   const [portrait, setPortrait] = useState<string | null>(null);
+  // The map follows the clock (day or night) unless a grown-up pinned a look.
+  const [todMode, setTodMode] = useState<TimeOfDayMode>(() => loadTimeOfDayMode());
+  // The Garage: its sheet, the mission in progress (if any) and how it is going.
+  const [garageOpen, setGarageOpen] = useState(false);
+  const [garagePreview, setGaragePreview] = useState<boolean>(() => loadGaragePreview());
+  const [garageMission, setGarageMission] = useState<GarageMission | null>(null);
+  const [garageParts, setGarageParts] = useState<GoalPart[]>([]);
+  const [garageDoneNow, setGarageDoneNow] = useState(false);
+  const [garageReward, setGarageReward] = useState<string | null>(null);
+  const [garageGraceUsed, setGarageGraceUsed] = useState(0);
+  const garageCompletingRef = useRef(false);
+  const garageMissionRef = useRef<GarageMission | null>(null);
+  garageMissionRef.current = garageMission;
   const toyRef = useRef(toy);
   toyRef.current = toy;
   const refreshPortrait = useCallback(() => {
@@ -422,6 +480,7 @@ export function GameCanvas({
     setMoodsOpen(false);
     setMoreOpen(false);
     setGrownUpsOpen(false);
+    setGarageOpen(false);
   }, [anyGameSheetOpen]);
 
   // Grant up to 25s of calm mid-mission grace if time runs out mid-lab/bridge/lift.
@@ -457,7 +516,43 @@ export function GameCanvas({
     missionGraceUntil > Date.now() &&
     missionPanel.open &&
     parentSnapshot.status.reason !== "quiet_hours";
-  const sleepActive = parentSnapshot.status.locked && !missionGraceActive;
+
+  // The Garage's state for today (weekend or not, this weekend's drop, done or not).
+  const garage = garageStatus({
+    dayKey: localDay(Date.now(), parentSnapshot.settings.timezone),
+    ageBand: progression.ageBand ?? null,
+    done: progression.garageDone,
+    preview: demoMode && garagePreview,
+  });
+  const garageRef = useRef(garage);
+  garageRef.current = garage;
+
+  // Garage grace: a mission underway when today's limit runs out may finish,
+  // for up to 10 minutes a weekend, never in quiet hours. Spent only while the
+  // mission is unfinished and the limit is what has locked the toy.
+  const garageLive = garageMission !== null && !garageDoneNow;
+  const garageGraceTicking =
+    garageLive &&
+    parentSnapshot.status.locked &&
+    parentSnapshot.status.reason !== "quiet_hours";
+  const garageGraceActive = garageGraceTicking && garageGraceLeftMs(garageGraceUsed) > 0;
+  const sleepActive = parentSnapshot.status.locked && !missionGraceActive && !garageGraceActive;
+
+  useEffect(() => {
+    setGarageGraceUsed(loadGraceUsedMs(garage.weekendKey));
+  }, [garage.weekendKey]);
+
+  useEffect(() => {
+    if (!garageGraceTicking) return;
+    const key = garageRef.current.weekendKey;
+    let used = loadGraceUsedMs(key);
+    const id = window.setInterval(() => {
+      used = Math.min(used + 1000, GARAGE_GRACE_MS);
+      saveGraceUsedMs(key, used);
+      setGarageGraceUsed(used);
+    }, 1000);
+    return () => window.clearInterval(id);
+  }, [garageGraceTicking]);
 
   // Close `⋯` or compact `Worlds` popover on outside pointerdown or Escape.
   useEffect(() => {
@@ -496,10 +591,12 @@ export function GameCanvas({
 
   const closeReactOverlays = useCallback(() => {
     setMapOpen(false);
+    setGarageOpen(false);
     setToySheetOpen(false);
     setPackOpen(false);
     setRevealState(null);
     setMoodsOpen(false);
+    setLangOpen(false);
     setMoreOpen(false);
     setWorldsOpen(false);
     setGrownUpsOpen(false);
@@ -585,6 +682,8 @@ export function GameCanvas({
     setWorldsOpen(false);
     setLiveStatus({ playing: false, listening: false });
     setMapOpen(false);
+    setGarageOpen(false);
+    setGarageMission(null);
     engine()?.stopLearnRun();
     engine()?.muteSound();
   }, [sleepActive, closeEngineSheets]);
@@ -609,6 +708,118 @@ export function GameCanvas({
       }
     }
   }, [placements, toy.id]);
+
+  const openGarage = useCallback(() => {
+    closeEngineSheets();
+    closeReactOverlays();
+    setGarageOpen(true);
+  }, [closeEngineSheets, closeReactOverlays]);
+
+  const endGarageMission = useCallback(() => {
+    setGarageMission(null);
+    setGarageParts([]);
+    setGarageDoneNow(false);
+    setGarageReward(null);
+    garageCompletingRef.current = false;
+  }, []);
+
+  // Start this weekend's drop: remember the build it starts from, open Build.
+  const startGarageMission = useCallback(() => {
+    const baseline = engineRef.current?.buildSummary() ?? null;
+    if (!baseline) return;
+    const { variant, weekendKey, preview } = garageRef.current;
+    endGarageMission();
+    setGarageMission({
+      weekendKey,
+      title: variant.title,
+      brief: variant.brief,
+      goal: variant.goal,
+      baseline,
+      preview,
+    });
+    setGarageParts(missionParts(variant.goal, baseline, baseline));
+    closeEngineSheets();
+    closeReactOverlays();
+    engineRef.current?.openCustomizer("build");
+  }, [closeEngineSheets, closeReactOverlays, endGarageMission]);
+
+  const freeBuildFromGarage = useCallback(() => {
+    endGarageMission();
+    openBuildSheet();
+  }, [endGarageMission, openBuildSheet]);
+
+  // While a mission is on, look at the build a few times a second. A change of
+  // toy type starts the mission over from the new toy. When the goal holds and
+  // the child has changed something, pay out once.
+  useEffect(() => {
+    if (!garageMission || garageDoneNow || !state.ready) return;
+    const id = window.setInterval(() => {
+      const mission = garageMissionRef.current;
+      const api = engineRef.current;
+      if (!mission || !api || garageCompletingRef.current) return;
+      const now = api.buildSummary();
+      if (!now) return;
+      if (now.type !== mission.baseline.type) {
+        setGarageMission({ ...mission, baseline: now });
+        return;
+      }
+      const parts = missionParts(mission.goal, now, mission.baseline);
+      setGarageParts((prev) =>
+        prev.length === parts.length && prev.every((p, i) => p.ok === parts[i]!.ok && p.label === parts[i]!.label)
+          ? prev
+          : parts,
+      );
+      if (!missionDone(mission.goal, now, mission.baseline)) return;
+
+      garageCompletingRef.current = true;
+      if (mission.preview) {
+        // The preview weekend is a pretend weekend: it must not mark the real
+        // one done, pay XP or credit play time.
+        setGarageReward("Preview only. Nothing is saved.");
+        setGarageDoneNow(true);
+        return;
+      }
+      const dayKey = localDay(Date.now(), getLocalParentSnapshot().settings.timezone);
+      const res = completeGarage(progressionRef.current, mission.weekendKey, dayKey);
+      if (res.awarded <= 0) {
+        // A replay (the weekend was already done): just for fun, nothing paid.
+        setGarageDoneNow(true);
+        return;
+      }
+      saveProgression(res.next);
+      setProgression(res.next);
+      void pushProgression(res.next);
+      const rankNote =
+        res.rankAfter.rank > res.rankBefore.rank
+          ? ` · Rank ${res.rankAfter.rank}: ${res.rankAfter.title}`
+          : "";
+      // Credit the STEM mission first, so any minutes it earns land before the
+      // chip flips to Done (a locked toy would otherwise flash the sleep curtain).
+      const finish = (minutes: number) => {
+        const minuteNote = minutes > 0 ? ` · +${minutes} min play time` : "";
+        setGarageReward(`+${res.awarded} XP${minuteNote}${rankNote}`);
+        setGarageDoneNow(true);
+        showXpToast(`+${res.awarded} XP · Garage${minuteNote}${rankNote}`);
+      };
+      if (res.stemMissionId) {
+        void recordPlayProgress({ completedMissionIds: [res.stemMissionId] })
+          .then(({ snapshot, awardedMinutes }) => {
+            setParentSnapshot(snapshot);
+            finish(awardedMinutes);
+          })
+          .catch(() => finish(0));
+      } else {
+        finish(0);
+      }
+    }, 400);
+    return () => window.clearInterval(id);
+  }, [garageMission, garageDoneNow, state.ready, showXpToast]);
+
+  // Weekend loaner parts: open to try on Friday to Sunday, taken back after.
+  useEffect(() => {
+    if (!state.ready) return;
+    engineRef.current?.setLoanKeys(garage.isWeekend ? loanKeys(garage.drop) : [], KNOWN_LOANERS);
+  }, [state.ready, garage.isWeekend, garage.drop]);
 
   const toggleFullscreen = () => {
     const host = hostRef.current as
@@ -761,6 +972,7 @@ export function GameCanvas({
               aria-pressed={
                 moreOpen ||
                 moodsOpen ||
+                langOpen ||
                 editor.open ||
                 Boolean(revealState)
               }
@@ -832,6 +1044,21 @@ export function GameCanvas({
                         ? "Playing"
                         : "Voice"}
                   </span>
+                </button>
+
+                <button
+                  type="button"
+                  role="menuitem"
+                  className="tv-menu-item"
+                  disabled={sleepActive}
+                  onClick={() => {
+                    closeEngineSheets();
+                    closeReactOverlays();
+                    setLangOpen(true);
+                  }}
+                >
+                  <span>Words &amp; Language</span>
+                  <span className="tv-menu-meta">{propLangLabel(propLang)}</span>
                 </button>
 
                 <button
@@ -1272,6 +1499,14 @@ export function GameCanvas({
             onStatusChange={setLiveStatus}
           />
         </section>
+        <section
+          className="tv-sheet"
+          role="dialog"
+          aria-label="Words and Language"
+          hidden={!langOpen}
+        >
+          {langOpen && <LanguageSheet onClose={() => setLangOpen(false)} />}
+        </section>
 
         <PackOverlay
           open={packOpen}
@@ -1289,6 +1524,7 @@ export function GameCanvas({
                 prog: progression,
                 found: new Set(state.foundKeys),
                 missionsDone: new Set(state.missionsDoneKeys),
+                garage: { weekend: garage.isWeekend, done: garage.done },
               }),
               visited: new Set(progression.explorerVisited ?? []),
               currentId: state.world,
@@ -1296,6 +1532,11 @@ export function GameCanvas({
               ageBand: progression.ageBand ?? null,
             })}
             currentId={state.world}
+            darkness={
+              timeOfDayFor(Date.now(), undefined, todMode) === "night"
+                ? 1
+                : 0
+            }
             lastVisitedId={progression.explorerVisited?.at(-1) ?? null}
             seen={progression.explorerSeen ?? null}
             onSeen={recordExplorerSeen}
@@ -1315,6 +1556,7 @@ export function GameCanvas({
             }
             onClose={() => setMapOpen(false)}
             onShowCards={() => setMapView("cards")}
+            onOpenGarage={openGarage}
             onAskAge={() => openGrownUps(false)}
             onGoWorld={(worldId) => {
               visitExplorerNode(worldId);
@@ -1362,6 +1604,7 @@ export function GameCanvas({
               prog: progression,
               found: new Set(state.foundKeys),
               missionsDone: new Set(state.missionsDoneKeys),
+              garage: { weekend: garage.isWeekend, done: garage.done },
             })}
             ageBand={progression.ageBand ?? null}
             guide={
@@ -1392,8 +1635,41 @@ export function GameCanvas({
               ) ?? [rung]
             }
             onShowExplorer={() => setMapView("trail")}
+            onOpenGarage={openGarage}
           />
         )}
+
+        {garageOpen && !sleepActive && (
+          <GarageSheet
+            status={garage}
+            onStart={startGarageMission}
+            onFreeBuild={freeBuildFromGarage}
+            onClose={() => setGarageOpen(false)}
+          />
+        )}
+
+        {garageMission &&
+          !sleepActive &&
+          !mapOpen &&
+          !garageOpen &&
+          !grownUpsOpen &&
+          !toySheetOpen &&
+          !packOpen &&
+          !revealState &&
+          !missionPanel.open &&
+          !create.open &&
+          !editor.open && (
+            <GarageGoalChip
+              title={garageMission.title}
+              brief={garageMission.brief}
+              parts={garageParts}
+              done={garageDoneNow}
+              reward={garageReward}
+              buildOpen={customizer.open}
+              onOpenBuild={openBuildSheet}
+              onStop={endGarageMission}
+            />
+          )}
 
         <RevealOverlay
           open={Boolean(revealState)}
@@ -1442,6 +1718,17 @@ export function GameCanvas({
             saveProgression(next);
             setProgression(next);
             void pushProgression(next);
+          }}
+          garagePreview={garagePreview}
+          onToggleGaragePreview={() => {
+            const next = !garagePreview;
+            saveGaragePreview(next);
+            setGaragePreview(next);
+          }}
+          timeOfDayMode={todMode}
+          onSetTimeOfDayMode={(mode) => {
+            saveTimeOfDayMode(mode);
+            setTodMode(mode);
           }}
           onToggleSandbox={() => {
             const next = {

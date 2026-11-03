@@ -233,6 +233,13 @@ def crown_addon(
     return tp._finish(size, (2, 1), foot, lock, clipped, fh, "integrated")
 
 
+# The catalog heads (`toyventor_char_head_*`) reach 12 to 18 mm behind the neck from about 5 mm up, so the rear clip
+# that keeps the collar clear of the backpack row only needs to hold at the collar. It ramps back at the same 0.78 x dz
+# slope as the loft's own growth limit (so it never adds a ledge) up to HEAD_REAR_MAX_MM behind the neck centre.
+HEAD_REAR_RAMP = 0.78  # mm of extra rear reach per mm of height
+HEAD_REAR_MAX_MM = 20.0
+
+
 def character_head(
     body: Manifold,
     *,
@@ -242,15 +249,25 @@ def character_head(
     """Build a Universal Swappable Head (`2x1` neck sockets + mandatory `#FF6B4A` `2x1` Crown Buds).
 
     Conforms to `BRAND_STYLE.md`:
-      - Back face automatically clipped at `y <= +6.15 mm` to clear backpacks!
+      - Back face clipped at `y <= +6.15 mm` at the collar, then ramping back at 0.78 mm per mm of height (up to 20 mm
+        behind the neck centre), so it clears the backpack row at the collar and can be as deep as the catalog
+        heads above it (it used to be clipped flat at +6.15 mm over the whole height, which made generated heads
+        13 mm deep slabs).
       - Crown studs placed at `(x = +/-6.25, y = 0, z = height_mm)`.
       - Do NOT carve moulded 3D eyes/mouths; leave the `-Y` front face smooth for decal skins.
     """
     size = "small"
     hx, hy = kp._half(size, 2), kp._half(size, 1)
     collar = rounded_slab(2 * hx, 2 * hy, 1.2, r=3.2, z=0.0)
-    # Keep rear clear of backpack row (y <= hy) and trim z <= height_mm flat crown seat
-    keep_box = Manifold.cube((120.0, 80.0 + hy, height_mm)).translate((-60.0, -80.0, 0.0))
+    # Trim z <= height_mm flat crown seat; keep the rear clear of the backpack row (y <= hy) at the collar, then let it
+    # ramp back (a hull of the collar-height slab and the full-reach slab: one smooth sloped rear face, no ledge).
+    z_ramp = (HEAD_REAR_MAX_MM - hy) / HEAD_REAR_RAMP
+    slab_lo = Manifold.cube((120.0, 80.0 + hy, 0.01)).translate((-60.0, -80.0, 0.0))
+    slab_hi = Manifold.cube((120.0, 80.0 + HEAD_REAR_MAX_MM, 0.01)).translate((-60.0, -80.0, z_ramp))
+    keep_box = Manifold.batch_hull([slab_lo, slab_hi]) + Manifold.cube(
+        (120.0, 80.0 + HEAD_REAR_MAX_MM, max(0.01, height_mm - z_ramp))
+    ).translate((-60.0, -80.0, z_ramp))
+    keep_box = keep_box ^ Manifold.cube((120.0, 200.0, height_mm)).translate((-60.0, -100.0, 0.0))
     shaped = flare_from_pad(body ^ keep_box, collar, z_cut=1.0, support_policy=support_policy)
     m, conns, ex = tp.integrated_sockets(shaped, size, True)
     m, c_top = kp.add_studs_at(m, size, 2, 1, 0.0, 0.0, height_mm, "top_studs")

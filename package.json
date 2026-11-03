@@ -14,6 +14,8 @@
     "e2e:workshop": "node scripts/e2e-workshop.mjs",
     "e2e:bench-lifecycle": "node scripts/e2e-bench-lifecycle.mjs",
     "e2e:bench-stage": "node scripts/e2e-bench-stage.mjs",
+    "e2e:truck-drive": "node scripts/e2e-truck-drive.mjs",
+    "e2e:truck-band": "node scripts/e2e-truck-band.mjs",
     "build": "tsc --noEmit && vite build && rm -f dist/toyventor/.dev.vars",
     "build:kip": "tsx scripts/build-kip.ts",
     "kip:validate-part": "tsx scripts/validate-llm-part.ts",

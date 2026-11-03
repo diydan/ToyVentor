@@ -45,6 +45,8 @@ export interface ExplorerMapProps {
   lastVisitedId?: string | null;
   /** The equipped toy, hopping along the roads. */
   guide?: ReactNode;
+  /** 0 = the day look, 1 = night (the same scene with the lights on; timeOfDay.ts). */
+  darkness?: number;
   /** What the child has already seen here (progression explorerSeen); only
    *  what is new since then animates in. null = no record: nothing animates,
    *  the map just records what it shows. */
@@ -57,6 +59,8 @@ export interface ExplorerMapProps {
   onGoWorld: (world: WorldId) => void;
   /** Start the node's seeded level. False = it could not start (stay here). */
   onGoFrontier: (node: ExplorerNode) => boolean;
+  /** Open the Garage sheet. */
+  onOpenGarage?: () => void;
   onStartLearn?: (track: string, plan: number[]) => void;
   planForRung?: (track: string, rung: number) => number[];
 }
@@ -99,6 +103,13 @@ function placeInfo(node: ExplorerNode | undefined): { title: string; sub: string
   if (node.kind === "ask") {
     return { title: "Who is playing?", sub: "A grown-up sets the age", action: "Open" };
   }
+  if (node.kind === "garage") {
+    return {
+      title: "Garage",
+      sub: node.card?.badge === "new" ? "New this weekend" : node.complete ? "Built it ★" : "Always open",
+      action: "Build!",
+    };
+  }
   const progress =
     node.total > 0 ? ` · ${node.done} of ${node.total}${node.complete ? " ★" : ""}` : "";
   return {
@@ -118,6 +129,9 @@ const nodeLabel = (node: ExplorerNode, here: boolean): string => {
     return `Secret exit, a bonus level, ${TIER_WORD[node.tier ?? 1]}${node.complete ? ", done" : ""}${stand}`;
   }
   if (node.kind === "ask") return `Who is playing? A grown-up sets the age${stand}`;
+  if (node.kind === "garage") {
+    return `Garage, a place to build new things${node.card?.badge === "new" ? ", a new drop is waiting" : ""}${node.complete ? ", done" : ""}${stand}`;
+  }
   const progress = node.total > 0 ? `: ${node.done} of ${node.total}${node.complete ? ", done" : ""}` : "";
   return `${node.label}, ${KIND_WORD[node.kind]}${progress}${stand}`;
 };
@@ -134,6 +148,7 @@ export function ExplorerMap({
   currentId,
   lastVisitedId,
   guide,
+  darkness = 0,
   seen,
   onSeen,
   onClose,
@@ -141,6 +156,7 @@ export function ExplorerMap({
   onAskAge,
   onGoWorld,
   onGoFrontier,
+  onOpenGarage,
   onStartLearn,
   planForRung,
 }: ExplorerMapProps) {
@@ -287,6 +303,7 @@ export function ExplorerMap({
   const open = (node: ExplorerNode) => {
     setNotice("");
     if (node.kind === "ask") return onAskAge();
+    if (node.kind === "garage") return onOpenGarage?.();
     if (node.kind === "frontier" || node.kind === "secret") {
       if (!onGoFrontier(node)) {
         setNotice("That new path can't start right now. Try again in a moment.");
@@ -365,6 +382,7 @@ export function ExplorerMap({
   const info = placeInfo(kipNode);
   const { frame } = world;
   const fogged = graph.nodes.some((n) => n.fog !== "revealed");
+  const night = darkness >= 0.5;
   const isNew = (id: string): boolean => reveal.appear.has(id) || reveal.clear.has(id);
   // New places pop in one after another, nearest the toy first.
   const popOrder = new Map<string, number>(
@@ -380,7 +398,8 @@ export function ExplorerMap({
 
   return (
     <section
-      className="tv-trail-full"
+      className={`tv-trail-full${night ? " tv-trail-night" : ""}`}
+      data-tod={night ? "night" : "day"}
       role="region"
       aria-label="Trail map"
       data-kip-at={kipAt}
@@ -404,6 +423,7 @@ export function ExplorerMap({
               nodes={world.artNodes}
               roadPaths={world.roadPaths}
               decor={world.decor}
+              darkness={darkness}
             />
             {graph.edges.map((e) => {
               const curve = world.curves.get(edgeKey(e.a, e.b));
@@ -499,7 +519,12 @@ export function ExplorerMap({
                   </mask>
                 </defs>
                 <g mask="url(#tvt-fog-mask)">
-                  <FogBank width={frame.width} height={frame.height} puffs={world.puffs} />
+                  <FogBank
+                    width={frame.width}
+                    height={frame.height}
+                    puffs={world.puffs}
+                    darkness={darkness}
+                  />
                 </g>
               </>
             ) : null}
@@ -525,7 +550,7 @@ export function ExplorerMap({
                 aria-current={here ? "true" : undefined}
                 onClick={() => onNodeClick(node)}
               >
-                <NodeArt node={node} />
+                <NodeArt node={node} night={night} />
                 {node.suggested && !here ? (
                   <span className="tv-trail-flag" aria-hidden="true">
                     ▼

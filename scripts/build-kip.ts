@@ -130,6 +130,16 @@ copyFileSync(
   join(kipSrcDir, "viewer/bench-stage.js"),
   join(kipOutDir, "bench-stage.js"),
 );
+// Blueprint look shared by both benches (colours of the ground, grid, fog and shadow).
+copyFileSync(
+  join(kipSrcDir, "viewer/bench-look.js"),
+  join(kipOutDir, "bench-look.js"),
+);
+// Truck keyboard-driving model (pure maths, unit-tested), imported by truck-bench.js.
+copyFileSync(
+  join(kipSrcDir, "viewer/truck-drive.js"),
+  join(kipOutDir, "truck-drive.js"),
+);
 // Photo-to-print panel (F2b): the panel is a viewer file, and its logic is TypeScript (shared/photoPrintFlow.ts), bundled here into one ES module.
 // tests/photo-print-flow.test.ts rebuilds it and compares it with the committed copy, so a stale bundle fails a test.
 copyFileSync(

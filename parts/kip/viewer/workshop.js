@@ -48,25 +48,25 @@ export function linkFile(href) {
 
 const STYLE_ID = 'ws-style';
 const CSS = `
-.ws-root { display: flex; flex-direction: column; width: 100%; height: 100%; min-height: 0; background: #ece5d6; color: #1b2238;
+.ws-root { display: flex; flex-direction: column; width: 100%; height: 100%; min-height: 0; background: #102f5c; color: #fff;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
 .ws-root *, .ws-root *::before, .ws-root *::after { box-sizing: border-box; }
 .ws-bar { flex: none; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; padding: 5px 12px; min-height: 44px;
-  background: #fbf8f1; border-bottom: 1px solid rgba(27, 34, 56, 0.12); }
+  background: #0c2749; border-bottom: 1px solid rgba(214, 235, 255, 0.22); }
 .ws-brand { font-size: 14px; font-weight: 800; letter-spacing: -0.01em; }
 .ws-tabs { display: flex; gap: 4px; }
-.ws-tab { font: inherit; font-size: 13px; font-weight: 750; color: #5d657c; background: transparent; border: 0; border-radius: 999px;
+.ws-tab { font: inherit; font-size: 13px; font-weight: 750; color: #b9d3f2; background: transparent; border: 0; border-radius: 999px;
   padding: 7px 14px; min-height: 34px; cursor: pointer; }
-.ws-tab:hover { background: rgba(27, 34, 56, 0.06); color: #1b2238; }
-.ws-tab[aria-selected="true"] { background: #1b2238; color: #fff; }
-.ws-tab:focus-visible, .ws-pop:focus-visible { outline: 2px solid #2e6fdb; outline-offset: 2px; }
-.ws-note { flex: 1 1 200px; min-width: 0; font-size: 12px; font-weight: 600; color: #5d657c; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ws-pop { font-size: 12px; font-weight: 700; color: #1b2238; text-decoration: none; padding: 5px 10px; border-radius: 999px;
-  border: 1px solid rgba(27, 34, 56, 0.18); white-space: nowrap; }
-.ws-pop:hover { background: #fff; }
-.ws-stage { position: relative; flex: 1 1 auto; min-height: 0; overflow: hidden; background: radial-gradient(circle at 50% 38%, #f5f0e6 0%, #e4dccd 68%, #d2c7b5 100%); }
+.ws-tab:hover { background: rgba(214, 235, 255, 0.12); color: #fff; }
+.ws-tab[aria-selected="true"] { background: #d6ebff; color: #0c2749; }
+.ws-tab:focus-visible, .ws-pop:focus-visible { outline: 2px solid #d6ebff; outline-offset: 2px; }
+.ws-note { flex: 1 1 200px; min-width: 0; font-size: 12px; font-weight: 600; color: #9fc0e8; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ws-pop { font-size: 12px; font-weight: 700; color: #fff; text-decoration: none; padding: 5px 10px; border-radius: 999px;
+  border: 1px solid rgba(214, 235, 255, 0.4); white-space: nowrap; }
+.ws-pop:hover { background: rgba(214, 235, 255, 0.14); }
+.ws-stage { position: relative; flex: 1 1 auto; min-height: 0; overflow: hidden; background: radial-gradient(circle at 50% 38%, #2b66b3 0%, #1c4a8c 55%, #102f5c 100%); /* = BLUEPRINT.gradient in bench-look.js: a test keeps them equal (workshop.js has no imports) */ }
 .ws-stage > :not(.ws-loading) { position: absolute; inset: 0; }
-.ws-loading { position: absolute; inset: 0; z-index: 5; display: grid; place-items: center; font-size: 13px; font-weight: 700; color: #5d657c; pointer-events: none; }
+.ws-loading { position: absolute; inset: 0; z-index: 5; display: grid; place-items: center; font-size: 13px; font-weight: 700; color: #cfe3ff; pointer-events: none; }
 @media (max-width: 700px) { .ws-note { display: none; } .ws-bar { padding: 4px 8px; } }
 `;
 

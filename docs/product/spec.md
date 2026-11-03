@@ -398,6 +398,19 @@ physics check.
   mm_scale, mass/torque)` priors for real household and sumo robots.
 
 
+### Time of day and weather stretch ([environment-spec.md](../specs/environment-spec.md))
+
+- **Day and night** (map first, then the 3D worlds on the parallax mid and far
+  backgrounds): the same scene with the lights on at night; indoor scenes
+  unchanged. The map's two looks are built.
+- **Continuous light:** dawn, dusk and a deeper midnight, blended rather than
+  switched; **weather** (rain, snow, fog) in the world and on the map.
+- **Privacy gate:** weather where the child is needs a location, which the
+  Safety and privacy section says is never collected. Ship **manual weather**
+  first; **weather by a grown-up-chosen city** only after a policy decision and
+  the COPPA review.
+
+
 ## Roadmap
 
 Today: the unified one-stage ToyVentor World (in-process `three.js` 0.183,

@@ -104,6 +104,19 @@ describe("workshop shell: benches and build wiring", () => {
     expect(src).not.toMatch(/kipMenu|kipDescribe|__KIP_READY__|__TRUCK_READY__/);
   });
 
+  it("paints the stage with the same blueprint gradient the benches use (workshop.js has no imports, so it repeats the string)", () => {
+    const look = read("parts/kip/viewer/bench-look.js");
+    const gradient = /gradient: '([^']+)'/.exec(look)?.[1];
+    expect(gradient, "BLUEPRINT.gradient").toMatch(/^radial-gradient\(/);
+    expect(read("parts/kip/viewer/workshop.js")).toContain(`background: ${gradient};`);
+    // both benches take their ground from it rather than carrying their own copy
+    for (const f of ["kip-bench.js", "truck-bench.js"]) {
+      const src = read(`parts/kip/viewer/${f}`);
+      expect(src, f).toContain("${BLUEPRINT.gradient}");
+      expect(src, f).toMatch(/from '\/kip\/bench-look\.js\?v=10\.0'/);
+    }
+  });
+
   it("uses no iframe: a bench is a module on the shared stage (Dan, 2026-11-03)", () => {
     const code = read("parts/kip/viewer/workshop.js").replace(/\/\/.*$/gm, "").replace(/\/\*[\s\S]*?\*\//g, "");
     expect(code).not.toMatch(/iframe/i);

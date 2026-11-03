@@ -1,0 +1,76 @@
+{
+ "version": 1,
+ "note": "Head variety set (2026-11-03): requests drawn from Dan's Sketchfab picks. Slot head, kid phrasing, one object each.",
+ "prompts": [
+  {
+   "id": "v01",
+   "slot": "head",
+   "text": "a beagle head with long floppy ears"
+  },
+  {
+   "id": "v02",
+   "slot": "head",
+   "text": "a monkey head with round ears on the sides"
+  },
+  {
+   "id": "v03",
+   "slot": "head",
+   "text": "an elephant head with big flappy ears"
+  },
+  {
+   "id": "v04",
+   "slot": "head",
+   "text": "a pig head with a round snout"
+  },
+  {
+   "id": "v05",
+   "slot": "head",
+   "text": "a lion head"
+  },
+  {
+   "id": "v06",
+   "slot": "head",
+   "text": "a panda head"
+  },
+  {
+   "id": "v07",
+   "slot": "head",
+   "text": "a tiger head with round ears"
+  },
+  {
+   "id": "v08",
+   "slot": "head",
+   "text": "a fox head with big pointy ears"
+  },
+  {
+   "id": "v09",
+   "slot": "head",
+   "text": "an owl head with ear tufts"
+  },
+  {
+   "id": "v10",
+   "slot": "head",
+   "text": "a devil head with little horns"
+  },
+  {
+   "id": "v11",
+   "slot": "head",
+   "text": "a fennec fox head with huge ears"
+  },
+  {
+   "id": "v12",
+   "slot": "head",
+   "text": "a floppy-eared bunny head"
+  },
+  {
+   "id": "v13",
+   "slot": "head",
+   "text": "a gorilla head"
+  },
+  {
+   "id": "v14",
+   "slot": "head",
+   "text": "a corgi head with big upright ears and a short snout"
+  }
+ ]
+}

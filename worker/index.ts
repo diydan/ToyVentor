@@ -28,6 +28,7 @@ import { handleOwnership, type OwnershipEnv } from "./ownership";
 import { handleParent, type ParentEnv } from "./parent";
 import { handleRoomScan } from "./roomScan";
 import { handleSelfieCartoon, handleSelfieFaceParts, selfieCloudEnabled, type SelfieEnv } from "./selfie";
+import { handleVoice, voiceConfigured, type VoiceEnv } from "./voice";
 
 export interface Env
   extends MetaEnv,
@@ -35,7 +36,8 @@ export interface Env
     OwnershipEnv,
     ParentEnv,
     SelfieEnv,
-    ForgeOptimizerEnv {
+    ForgeOptimizerEnv,
+    VoiceEnv {
   MUREKA_API_KEY?: string;
   ASSETS?: { fetch: (request: Request) => Promise<Response> };
 }
@@ -221,7 +223,7 @@ async function handleSkinPost(request: Request, env: Env): Promise<Response> {
 }
 
 export default {
-  async fetch(request: Request, env: Env): Promise<Response> {
+  async fetch(request: Request, env: Env, ctx?: { waitUntil(p: Promise<unknown>): void }): Promise<Response> {
     const url = new URL(request.url);
 
     if (url.pathname === "/world/ToyVentor-World.html") {
@@ -237,8 +239,12 @@ export default {
         museConfigured: museConfigured(env),
         selfieCloud: selfieCloudEnabled(env),
         forgeOptimizerConfigured: forgeOptimizerConfigured(env),
+        voiceConfigured: voiceConfigured(env),
       });
     }
+
+    // "Say what it is": vocabulary keys in, one cached WAV out (worker/voice.ts). Never takes free text.
+    if (url.pathname === "/api/voice") return handleVoice(request, env, ctx);
 
     if (url.pathname === "/api/forge/preview") {
       return handleForgePreview(request, env);

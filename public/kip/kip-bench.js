@@ -57,6 +57,7 @@ import { KIP_CLIPS, clipForProp, isPropClip, makeKipClip } from '/kip/kip-clips.
 import { createKipRig } from '/kip/kip-rig.js?v=10.0';
 import { FACEPLATE_SEAT_MM } from '/kip/kip-faceplate-shape.js?v=10.0';
 import { disposeThreeScene } from '/kip/bench-lifecycle.js?v=10.0';
+import { BLUEPRINT } from '/kip/bench-look.js?v=10.0';
 
 export const KIP_BENCH_CSS = `
 :where(.kip-bench) {
@@ -76,7 +77,7 @@ export const KIP_BENCH_CSS = `
     height: 100%;
     overflow: hidden;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    background: radial-gradient(circle at 50% 38%, #f5f0e6 0%, #e4dccd 68%, #d2c7b5 100%);
+    background: ${BLUEPRINT.gradient};
     color: var(--ink);
   }
   #viewport { position: fixed; inset: 0; }
@@ -539,7 +540,7 @@ if (!hosted) {
 }
 
 const scene = new THREE.Scene();
-scene.fog = new THREE.FogExp2(0xded5c5, 0.00050);
+scene.fog = new THREE.FogExp2(BLUEPRINT.fog, 0.00050);
 
 const pmrem = new THREE.PMREMGenerator(renderer);
 scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
@@ -592,19 +593,19 @@ scene.add(fillLight);
 // Seamless Infinite 12.5 mm TU Lattice Floor Grid + Contact Shadow Receiver
 const floorShadow = new THREE.Mesh(
   new THREE.PlaneGeometry(8000, 8000),
-  new THREE.ShadowMaterial({ opacity: 0.22 })
+  new THREE.ShadowMaterial({ opacity: BLUEPRINT.shadowOpacity })
 );
 floorShadow.rotation.x = -Math.PI / 2;
 floorShadow.receiveShadow = true;
 scene.add(floorShadow);
 
-const minorGrid = new THREE.GridHelper(2000, 80, 0xc3b8a6, 0xd4cab9);
+const minorGrid = new THREE.GridHelper(2000, 80, BLUEPRINT.gridFine, BLUEPRINT.gridFine);
 minorGrid.position.y = 0.1;
 minorGrid.material.transparent = true;
 minorGrid.material.opacity = 0.55;
 scene.add(minorGrid);
 
-const majorGrid = new THREE.GridHelper(2000, 20, 0xff6b4a, 0xb3a794);
+const majorGrid = new THREE.GridHelper(2000, 20, BLUEPRINT.gridCentre, BLUEPRINT.gridMajor);
 majorGrid.position.y = 0.2;
 majorGrid.material.transparent = true;
 majorGrid.material.opacity = 0.45;
@@ -612,7 +613,7 @@ scene.add(majorGrid);
 
 const originRing = new THREE.Mesh(
   new THREE.RingGeometry(48, 50, 64),
-  new THREE.MeshBasicMaterial({ color: 0xff6b4a, side: THREE.DoubleSide, transparent: true, opacity: 0.35 })
+  new THREE.MeshBasicMaterial({ color: BLUEPRINT.ring, side: THREE.DoubleSide, transparent: true, opacity: 0.45 })
 );
 originRing.rotation.x = -Math.PI / 2;
 originRing.position.y = 0.3;

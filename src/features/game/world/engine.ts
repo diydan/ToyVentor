@@ -12,6 +12,7 @@ import {
 } from "../../../../shared/toycontract";
 import { createWorldRuntime } from "./runtime";
 import { PORTRAIT_PX, type ToyPortrait } from "../../../lib/toyPortrait";
+import type { BuildSummary } from "../../../lib/garage";
 
 export const WORLDS = [
   { id: "garden", label: "Garden", lab: false },
@@ -796,6 +797,10 @@ export interface EngineHandle {
   /** Play a seeded level. `theme` forces the world's look; `opts` sets its difficulty tier
    *  (1-3, stations start at that tier) and mood. Null = it could not start. */
   playSeed: (code?: string, theme?: string, opts?: SeedOptions) => string | null;
+  /** The toy as built right now (type, part per slot, stats): what the Garage checks a mission against. */
+  buildSummary: () => BuildSummary | null;
+  /** Open these parts to try (the Garage's loaner); any `known` loaner not in `active` and still worn goes back. */
+  setLoanKeys: (active: string[], known: string[]) => void;
   /** Signature of the toy's current outfit once its parts have finished loading; null until then. */
   portraitSig: () => string | null;
   /** A small picture of the toy as it is dressed now (the Map's character token). Null when it cannot be taken. */
@@ -913,6 +918,8 @@ interface LegacyHooks {
   P?: LegacyPlayer;
   go?: (world: string) => void;
   playSeed?: (code?: string, theme?: string, opts?: SeedOptions) => string | null;
+  buildSummary?: () => BuildSummary;
+  setLoanKeys?: (active: string[], known: string[]) => void;
   portraitSig?: () => string | null;
   capturePortrait?: (size: number) => ToyPortrait | null;
   worldName?: (id: string) => string;
@@ -1336,6 +1343,10 @@ export function createEngine(
     playSeed: (code, theme, opts) => {
       if (disposed) return null;
       return hooks()?.playSeed?.(code, theme, opts) ?? null;
+    },
+    buildSummary: () => (disposed ? null : (hooks()?.buildSummary?.() ?? null)),
+    setLoanKeys: (active, known) => {
+      if (!disposed) hooks()?.setLoanKeys?.(active, known);
     },
     portraitSig: () => (disposed ? null : (hooks()?.portraitSig?.() ?? null)),
     capturePortrait: (size = PORTRAIT_PX) =>

@@ -82,12 +82,12 @@ function stlVertices(path: string): [number, number, number][] {
   return out;
 }
 
-// A head's crown studs are two columns at |x| 3.0 to 9.6, |y| up to 3.3, above the crown plane (z 30.5). A hat seats
-// on them, so an ear or horn must not add geometry within 1.5 mm of them (Dan, round 4: "needs more space around
-// studs"). Returns the distinct mesh vertices (to 0.01 mm) strictly inside that zone: a head with ears must have
-// exactly the vertices a plain head has.
+// A hat seats on the head's whole 2x1 crown pad (24.4 x 11.9 mm, two studs inside it), so an ear or horn must not add
+// geometry within 1 mm of that footprint above the crown plane (z 30.5). Dan, round 8: "ears will block studs".
+// Returns the distinct mesh vertices (to 0.01 mm) strictly inside that column: a head with ears must have exactly the
+// vertices a plain head has.
 function studZoneVertices(path: string): Set<string> {
-  const keep = stlVertices(path).filter(([x, y, z]) => Math.abs(x) > 1.6 && Math.abs(x) < 11.0 && Math.abs(y) < 4.7 && z > 30.7);
+  const keep = stlVertices(path).filter(([x, y, z]) => Math.abs(x) < 13.1 && Math.abs(y) < 6.8 && z > 30.7);
   return new Set(keep.map((v) => v.map((c) => c.toFixed(2)).join(",")));
 }
 
@@ -124,13 +124,14 @@ function handRecipe(id: string, points: number[][]) {
 interface Job {
   status: string;
   stl_artifact?: string;
-  gate_report?: { small_part?: { status?: string }; design_status?: string };
+  gate_report?: { small_part?: { status?: string; min_enclosing_diameter_mm?: number }; design_status?: string };
   legalizer?: {
     support_policy_promoted?: string;
     features_ignored?: string[];
     features_dropped?: { op: string; why: string }[];
     features_adjusted?: { op: string; why: string }[];
     symmetry?: { kind: string; action: string; iou_before: number; iou_after?: number };
+    l2?: { applied: boolean; direction?: string; scale?: number } | null;
     profile2d_reversed?: boolean;
     l1_l3_changed?: number;
   } | null;
@@ -227,7 +228,7 @@ describe.skipIf(!PYTHON)("Recipe v1 feature ops through the optimizer daemon", (
     }
   }, 540_000);
 
-  it("reports a snout it cannot build instead of dropping it silently", async () => {
+  it("reports what it did with a snout that cannot be built as asked, instead of doing it silently", async () => {
     // The front of this head leans forward about 29 degrees, so no support-free underside can reach back to the wall.
     const leaning = [
       { z: 0, w: 24.6, d: 12.1, r: 3 },
@@ -238,7 +239,11 @@ describe.skipIf(!PYTHON)("Recipe v1 feature ops through the optimizer daemon", (
     ];
     const job = await run(recipe("ops_test_leaning_snout", "head", leaning, [{ op: "snout", length_mm: 14, width_mm: 14, height_mm: 8 }]));
     expect(job.status).toBe("print_ready");
-    expect(job.legalizer?.features_dropped?.map((f) => f.op)).toEqual(["snout"]);
+    // Since 2026-11-03 a snout that cannot land where it was asked is first moved up the face and shortened, which the job
+    // reports in `features_adjusted`; it is listed in `features_dropped` only when nowhere on the face works. Either way it
+    // is never silent.
+    const reported = [...(job.legalizer?.features_dropped ?? []), ...(job.legalizer?.features_adjusted ?? [])].map((f) => f.op);
+    expect(reported).toContain("snout");
   }, 180_000);
 
   it("keeps head ears and horns off the crown studs and says what it moved", async () => {
@@ -270,11 +275,165 @@ describe.skipIf(!PYTHON)("Recipe v1 feature ops through the optimizer daemon", (
       expect(extra, id).toEqual([]);
       if (id === "ops_test_stud_bear") {
         // Round ears sit on the side of the head, not above its top face (Dan, round 4).
-        const above = stlVertices(join(outDir, job.stl_artifact!)).filter(([x, , z]) => Math.abs(x) > 11.2 && z > 30.7);
+        const above = stlVertices(join(outDir, job.stl_artifact!)).filter(([x, , z]) => Math.abs(x) > 13.3 && z > 30.7);
         expect(above, id).toEqual([]);
       }
     }
   }, 540_000);
+
+  it("moves a snout up the face before shortening it, and cuts ribs round a head's sides", async () => {
+    // Dan, round 10: the dinosaur had "no snout" (a 14 mm snout was shortened to about 3 mm), and the pumpkin was "blank".
+    const kid = [
+      { z: 0, w: 26, d: 12.7, r: 5 },
+      { z: 5, w: 28.6, d: 17.6, r: 6, y: -0.3 },
+      { z: 10, w: 33.5, d: 23.6, r: 8 },
+      { z: 15, w: 38.1, d: 25.7, r: 9, y: -0.45 },
+      { z: 20, w: 34.8, d: 27.1, r: 9, y: -0.95 },
+      { z: 25, w: 33.9, d: 25.5, r: 8, y: -1.25 },
+      { z: 30.5, w: 30.7, d: 17.8, r: 6, y: -0.5 },
+    ];
+    const withHeight = (r: object) => ({ ...r, shape: { kind: "loft", slices: kid, height_mm: 30.5 } });
+    const plain = await run(withHeight(recipe("ops_test_head_plain_kid", "head", kid, [])));
+    const frontOf = (j: Job) => Math.min(...stlVertices(join(outDir, j.stl_artifact!)).map((v) => v[1]));
+    const snout = await run(withHeight(recipe("ops_test_head_dino", "head", kid, [{ op: "snout", style: "muzzle", length_mm: 14, width_mm: 16, height_mm: 10 }])));
+    expect(snout.status).toBe("print_ready");
+    expect(frontOf(plain) - frontOf(snout)).toBeGreaterThan(8); // it sticks out, where it used to be about 3 mm
+    expect(snout.legalizer?.features_adjusted?.[0]?.why ?? "").toContain("moved up");
+
+    const ribbed = await run(withHeight(recipe("ops_test_head_ribs", "head", kid, [{ op: "ribs", count: 8, width_mm: 5, depth_mm: 3 }])));
+    expect(ribbed.status).toBe("print_ready");
+    expect(ribbed.legalizer?.features_dropped).toBeUndefined();
+    // The grooves add faces and leave the front smooth: nothing is cut within 20 degrees of the front centre line.
+    expect(stlVertices(join(outDir, ribbed.stl_artifact!)).length).toBeGreaterThan(stlVertices(join(outDir, plain.stl_artifact!)).length);
+  }, 540_000);
+
+  it("builds floppy ears and ears on the sides of a head, and prints them without supports", async () => {
+    // Dan's Sketchfab picks (2026-11-03): a beagle's floppy ears, a monkey's round side ears, an elephant's flaps.
+    const slices = [
+      { z: 0, w: 26, d: 12.7, r: 5 },
+      { z: 5, w: 33.7, d: 20, r: 7 },
+      { z: 10, w: 40.6, d: 27.8, r: 10 },
+      { z: 15, w: 44.2, d: 34.5, r: 12 },
+      { z: 20, w: 45.7, d: 36.8, r: 12 },
+      { z: 25, w: 42, d: 33, r: 10 },
+      { z: 30.5, w: 36, d: 24, r: 8 },
+    ];
+    const withHeight = (r: object) => ({ ...r, shape: { kind: "loft", slices, height_mm: 30.5 } });
+    const plain = await run(withHeight(recipe("ops_test_variety_plain", "head", slices, [])));
+    expect(plain.status).toBe("print_ready");
+    const [px0, px1] = stlXRange(join(outDir, plain.stl_artifact!));
+    const floppy = await run(withHeight(recipe("ops_test_floppy", "head", slices, [{ op: "ears", style: "floppy", width_mm: 10, height_mm: 18, z_frac: 0.8 }])));
+    expect(floppy.status).toBe("print_ready");
+    expect(floppy.legalizer?.features_dropped).toBeUndefined();
+    const fv = stlVertices(join(outDir, floppy.stl_artifact!));
+    expect(Math.max(...fv.map((v) => Math.abs(v[0])))).toBeGreaterThan(Math.max(Math.abs(px0), px1) - 0.5); // it hangs on the side
+    const side = await run(withHeight(recipe("ops_test_side_ears", "head", slices, [{ op: "ears", style: "round", width_mm: 14, z_frac: 0.55 }])));
+    expect(side.status).toBe("print_ready");
+    expect(side.legalizer?.features_dropped).toBeUndefined();
+    const [sx0, sx1] = stlXRange(join(outDir, side.stl_artifact!));
+    expect(sx1 - sx0).toBeGreaterThan(px1 - px0 + 4); // the ears stand out beyond the head's own width
+  }, 540_000);
+
+  it("keeps a head's round ears when the head is widest part way up, instead of dropping them", async () => {
+    // Dan, round 11: a bear head rated 1, with no ears at all. The fitter rejected every lowered placement as "wider than
+    // asked" (lowering an ear on a head that widens downward moves it outward) and dropped the pair without a word.
+    const bear = [
+      { z: 0, w: 24.6, d: 12.1, r: 4 },
+      { z: 5, w: 30, d: 18, r: 6, y: -0.3 },
+      { z: 10, w: 37, d: 24, r: 8 },
+      { z: 15, w: 44.5, d: 30, r: 9, y: -1.5 },
+      { z: 20, w: 46, d: 31, r: 9, y: -1 },
+      { z: 25, w: 42, d: 29, r: 8, y: -1.2 },
+      { z: 30.5, w: 36, d: 20, r: 6, y: -0.5 },
+    ];
+    const job = await run({
+      ...recipe("ops_test_wide_bear", "head", bear, [{ op: "ears", style: "round", width_mm: 12, height_mm: 12, tilt_deg: 10 }]),
+      shape: { kind: "loft", slices: bear, height_mm: 30.5 },
+    });
+    expect(job.status).toBe("print_ready");
+    expect(job.legalizer?.features_dropped).toBeUndefined();
+    const [x0, x1] = stlXRange(join(outDir, job.stl_artifact!));
+    expect(x1 - x0).toBeGreaterThan(48); // the head is 46 wide: the ears stand outside it
+  }, 360_000);
+
+  it("stands a five-point star on the tip of a hat and prints it without supports", async () => {
+    // Dan, round 2 and again on 2026-11-03: "a tall wizard hat with little stars still has no star on top".
+    const wizard = [
+      { z: 0, w: 23.4, d: 11.4, r: 4.6 },
+      { z: 7.5, w: 27.5, d: 17, r: 6.2, y: -1.8 },
+      { z: 17, w: 11, d: 11, r: 4.5, y: -0.5 },
+      { z: 23.5, w: 5.6, d: 5.6, r: 2.4, y: 1.2 },
+    ];
+    const plain = await run(recipe("ops_test_wizard_plain", "crown", wizard, []));
+    const starred = await run(recipe("ops_test_wizard_star", "crown", wizard, [{ op: "star", size_mm: 10 }]));
+    expect(plain.status).toBe("print_ready");
+    expect(starred.status).toBe("print_ready");
+    const topOf = (j: Job) => Math.max(...stlVertices(join(outDir, j.stl_artifact!)).map((v) => v[2]));
+    expect(topOf(starred) - topOf(plain)).toBeGreaterThan(8); // the star stands clear above the tip
+    const star = stlVertices(join(outDir, starred.stl_artifact!)).filter((v) => v[2] > topOf(plain) + 1);
+    expect(Math.max(...star.map((v) => v[0])) - Math.min(...star.map((v) => v[0]))).toBeGreaterThan(8); // as wide as a 10 mm star
+  }, 360_000);
+
+  it("builds a round crown as a ring with points round its rim, and hollows a cup hat", async () => {
+    // Dan, round 2 on the five-point crown: "does not look like a crown at all, crowns should be round".
+    const round = [
+      { z: 0, w: 23.8, d: 11.6, r: 4 },
+      { z: 9.5, w: 26, d: 26, r: 12.4 },
+      { z: 14, w: 26, d: 26, r: 12.4 },
+    ];
+    const crown = await run(recipe("ops_test_ring_crown", "crown", round, [{ op: "spikes", layout: "ring", count: 5, height_mm: 7, base_mm: 5 }]));
+    expect(crown.status).toBe("print_ready");
+    const verts = stlVertices(join(outDir, crown.stl_artifact!));
+    const xs = verts.map((v) => v[0]);
+    const ys = verts.map((v) => v[1]);
+    expect(Math.max(...xs) - Math.min(...xs)).toBeGreaterThan(25); // round: as wide as it is deep
+    expect(Math.abs(Math.max(...xs) - Math.min(...xs) - (Math.max(...ys) - Math.min(...ys)))).toBeLessThan(1);
+    // The top is hollow: nothing but the ring's wall and its points reaches the top 6 mm, so the middle is empty.
+    const high = verts.filter((v) => v[2] > Math.max(...verts.map((q) => q[2])) - 6);
+    expect(high.every((v) => Math.hypot(v[0], v[1]) > 9)).toBe(true);
+    // A ring of points on a top too small to hollow is reported, not silently dropped.
+    const cone = await run(
+      recipe(
+        "ops_test_ring_cone",
+        "crown",
+        [
+          { z: 0, w: 23.8, d: 11.6, r: 4 },
+          { z: 10, w: 14, d: 11, r: 5 },
+          { z: 18, w: 5, d: 5, r: 2 },
+        ],
+        [{ op: "spikes", layout: "ring", count: 5 }],
+      ),
+    );
+    expect(cone.legalizer?.features_dropped?.map((f) => f.op)).toContain("hollow");
+  }, 360_000);
+
+  it("lets a head reach behind the neck like the catalog heads, and grows it out of the marginal band", async () => {
+    // Dan, round 7: the heads "are very narrow" next to the Kip heads. character_head used to clip the back flat at
+    // y = +6.15 over the whole height (13 mm deep slabs) and L2 only shrank. These are the Kip kid head's own slices.
+    const kid = [
+      { z: 0, w: 26, d: 12.7, r: 5 },
+      { z: 5, w: 28.6, d: 17.6, r: 6, y: -0.3 },
+      { z: 10, w: 33.5, d: 23.6, r: 8 },
+      { z: 15, w: 38.1, d: 25.7, r: 9, y: -0.45 },
+      { z: 20, w: 34.8, d: 27.1, r: 9, y: -0.95 },
+      { z: 25, w: 33.9, d: 25.5, r: 8, y: -1.25 },
+      { z: 30.5, w: 30.7, d: 17.8, r: 6, y: -0.5 },
+    ];
+    const job = await run({ ...recipe("ops_test_kip_sized_head", "head", kid, []), shape: { kind: "loft", slices: kid, height_mm: 30.5 } });
+    expect(job.status).toBe("print_ready");
+    const verts = stlVertices(join(outDir, job.stl_artifact!));
+    expect(Math.max(...verts.map((v) => v[1]))).toBeGreaterThan(11); // the back is no longer cut flat at +6.15
+    expect(Math.max(...verts.filter((v) => v[2] < 1.5).map((v) => v[1]))).toBeLessThan(6.4); // still clear at the collar
+    // 34.8 mm sits in the 31.75 to 34.9 band: the 0.1 mm to the band's top is not worth an 11-20% shrink, so it grows.
+    expect(job.legalizer?.l2?.direction).toBe("grow");
+    expect(job.gate_report?.small_part?.status).toBe("above_cylinder");
+
+    // A head only a little over the cylinder is shrunk, not grown.
+    const small = kid.map((s, i) => (i === 0 ? s : { ...s, w: s.w * 0.84, d: s.d * 0.84, y: (s.y ?? 0) * 0.84 }));
+    const shrunk = await run({ ...recipe("ops_test_kip_small_head", "head", small, []), shape: { kind: "loft", slices: small, height_mm: 30.5 } });
+    expect(shrunk.status).toBe("print_ready");
+    expect(shrunk.legalizer?.l2?.direction).toBe("shrink");
+  }, 360_000);
 
   it("keeps tall thin head ears sturdy and leaves stout ones exactly as asked", async () => {
     // Dan, round 6, on the bunny: "looks fragile, not sure we need the bend, can we make shorter".

@@ -1,5 +1,6 @@
 import { memo } from "react";
-import { UNIT, type ArtNode, type Decor, type Puff } from "../../../lib/explorerArt";
+import { fnv1a } from "../../../lib/explorerMap";
+import { mixColor, UNIT, type ArtNode, type Decor, type Puff } from "../../../lib/explorerArt";
 
 // The still part of the overworld: sea, land, scenery, and the cloud bank.
 // Nothing here depends on progress, so the component is memoised and React
@@ -16,6 +17,9 @@ const GROUND: Record<string, string> = {
   room: "#e9bb80",
 };
 const MEADOW = "#86da60";
+
+/** How much the night overlay darkens the map at full darkness. */
+const NIGHT_VEIL = 0.6;
 
 // Fat enough that loops of road close into solid land, not little lagoons.
 const LAND_NODE_R = 1.1 * UNIT;
@@ -77,8 +81,6 @@ function DecorSymbols() {
         <ellipse cx="0" cy="2" rx="30" ry="6" fill="rgba(20,40,10,0.2)" />
         <path d="M-28 0Q-28-38 0-38Q28-38 28 0Z" fill="#6fd05a" stroke="#2f8a3b" strokeWidth="2.4" />
         <path d="M-17-22Q-12-30-4-31" fill="none" stroke="#a6ec8a" strokeWidth="3" strokeLinecap="round" />
-        <ellipse cx="-8" cy="-17" rx="2.8" ry="5" fill="#1b1b1b" />
-        <ellipse cx="8" cy="-17" rx="2.8" ry="5" fill="#1b1b1b" />
       </g>
       <g id="tvt-rock">
         {shadow}
@@ -117,6 +119,17 @@ function DecorSymbols() {
         <circle cx="16" cy="-9" r="10" fill="#2e3440" stroke="#161a20" strokeWidth="2" />
         <circle cx="16" cy="-9" r="4.2" fill="#8b95a5" />
       </g>
+      <g id="tvt-lamp">
+        {shadow}
+        <rect x="-2.5" y="-34" width="5" height="36" rx="2" fill="#56616d" />
+        <path d="M-10-34 10-34 7-47-7-47Z" fill="#6f7c8a" stroke="#2f3944" strokeWidth="2" strokeLinejoin="round" />
+        <rect x="-5.5" y="-45" width="11" height="11" rx="3" fill="#f6efc4" stroke="#2f3944" strokeWidth="1.6" />
+      </g>
+      <radialGradient id="tvt-lamp-glow">
+        <stop offset="0" stopColor="#ffe9a0" stopOpacity="0.85" />
+        <stop offset="0.45" stopColor="#ffd866" stopOpacity="0.32" />
+        <stop offset="1" stopColor="#ffd866" stopOpacity="0" />
+      </radialGradient>
       <g id="tvt-block">
         {shadow}
         <g transform="rotate(-7)">
@@ -143,6 +156,8 @@ export interface WorldArtProps {
   nodes: readonly ArtNode[];
   roadPaths: readonly string[];
   decor: readonly Decor[];
+  /** 0 = day, 1 = night. The same scene, darker, with the lights on. */
+  darkness?: number;
 }
 
 export const WorldArt = memo(function WorldArt({
@@ -151,6 +166,7 @@ export const WorldArt = memo(function WorldArt({
   nodes,
   roadPaths,
   decor,
+  darkness = 0,
 }: WorldArtProps) {
   return (
     <g>
@@ -186,34 +202,89 @@ export const WorldArt = memo(function WorldArt({
           transform={`translate(${d.x.toFixed(1)} ${d.y.toFixed(1)}) scale(${d.s.toFixed(2)})`}
         />
       ))}
+      {darkness > 0 ? <NightLights width={width} height={height} decor={decor} darkness={darkness} /> : null}
     </g>
   );
 });
+
+/**
+ * Night on the map: the same scene under a deep-blue veil, with its lights on.
+ * Lamp posts glow and a few fireflies drift over the meadow. These sit above
+ * the veil so they stay bright. `darkness` scales it, so a later continuous
+ * time of day (environment-spec.md) is a different number, not different art.
+ */
+function NightLights({
+  width,
+  height,
+  decor,
+  darkness,
+}: {
+  width: number;
+  height: number;
+  decor: readonly Decor[];
+  darkness: number;
+}) {
+  const lamps = decor.filter((d) => d.kind === "lamp");
+  const flies = decor.filter((d, i) => i % 6 === 1 && d.kind !== "lamp" && d.kind !== "puff");
+  return (
+    <g className="tv-trail-nightfall" aria-hidden="true">
+      <rect width={width} height={height} fill="#0b1a55" fillOpacity={NIGHT_VEIL * darkness} />
+      <g opacity={darkness}>
+        {lamps.map((d, i) => (
+          <g key={`l${i}`} transform={`translate(${d.x.toFixed(1)} ${(d.y - 40 * d.s).toFixed(1)})`}>
+            <circle r={58 * d.s} fill="url(#tvt-lamp-glow)" />
+            <circle r={6 * d.s} fill="#fff6c2" />
+          </g>
+        ))}
+        {flies.map((d, i) => {
+          const h = fnv1a(`fly:${Math.round(d.x)},${Math.round(d.y)}`);
+          return (
+            <g
+              key={`f${i}`}
+              className="tv-trail-firefly"
+              style={{ animationDelay: `${((h % 9) * 0.37).toFixed(2)}s` }}
+              transform={`translate(${(d.x + ((h >>> 4) % 31) - 15).toFixed(1)} ${(d.y - 22 - ((h >>> 9) % 28)).toFixed(1)})`}
+            >
+              <circle r="9" fill="url(#tvt-lamp-glow)" />
+              <circle r="2.2" fill="#fff8b8" />
+            </g>
+          );
+        })}
+      </g>
+    </g>
+  );
+}
 
 export interface FogBankProps {
   width: number;
   height: number;
   puffs: readonly Puff[];
+  /** 0 = day clouds, 1 = night clouds. */
+  darkness?: number;
 }
 
 /** The cloud bank itself. ExplorerMap masks it so revealed places show through. */
-export const FogBank = memo(function FogBank({ width, height, puffs }: FogBankProps) {
+export const FogBank = memo(function FogBank({ width, height, puffs, darkness = 0 }: FogBankProps) {
+  const top = mixColor("#f2f9ff", "#2d3d7e", darkness);
+  const bottom = mixColor("#d3e6fa", "#18234f", darkness);
+  const shade = mixColor("#c2dcf6", "#111a44", darkness);
+  const cloud = mixColor("#ffffff", "#3c4f9a", darkness);
   return (
     <g>
       <defs>
         <linearGradient id="tvt-fog" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#f2f9ff" />
-          <stop offset="1" stopColor="#d3e6fa" />
+          <stop offset="0" stopColor={top} />
+          <stop offset="1" stopColor={bottom} />
         </linearGradient>
       </defs>
       <rect width={width} height={height} fill="url(#tvt-fog)" opacity="0.95" />
       <g className="tv-trail-puffs">
         {puffs.map((p, i) => (
           <g key={i}>
-            <circle cx={p.x} cy={p.y + 10} r={p.r} fill="#c2dcf6" opacity="0.7" />
-            <circle cx={p.x} cy={p.y} r={p.r} fill="#fff" />
-            <circle cx={p.x - p.r * 0.7} cy={p.y + p.r * 0.2} r={p.r * 0.7} fill="#fff" />
-            <circle cx={p.x + p.r * 0.75} cy={p.y + p.r * 0.25} r={p.r * 0.65} fill="#fff" />
+            <circle cx={p.x} cy={p.y + 10} r={p.r} fill={shade} opacity="0.7" />
+            <circle cx={p.x} cy={p.y} r={p.r} fill={cloud} />
+            <circle cx={p.x - p.r * 0.7} cy={p.y + p.r * 0.2} r={p.r * 0.7} fill={cloud} />
+            <circle cx={p.x + p.r * 0.75} cy={p.y + p.r * 0.25} r={p.r * 0.65} fill={cloud} />
           </g>
         ))}
       </g>

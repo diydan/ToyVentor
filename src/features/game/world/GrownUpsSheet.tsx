@@ -7,6 +7,7 @@ import {
 } from "../../../../shared/parent-time";
 import { kipDemoUrl } from "../../../../shared/toycontract";
 import { postRoomPhoto } from "../../../lib/api";
+import type { TimeOfDayMode } from "../../../lib/timeOfDay";
 import { downscalePhoto } from "../../scan/scan";
 import {
   getLocalPinCooldownUntil,
@@ -43,6 +44,9 @@ export interface GrownUpsSheetProps {
   localDayKey?: string;
   demoMode?: boolean;
   onToggleDemoMode?: (next: boolean) => void;
+  /** Demo Mode only: show the weekend Garage drop on a weekday. */
+  garagePreview?: boolean;
+  onToggleGaragePreview?: () => void;
   onSeedDemoSave?: () => void;
   onOpenEditor?: () => void;
   /** Feature 3 (dark, Demo Mode): photo segments -> composed room level in the editor. Returns a status line. */
@@ -56,6 +60,9 @@ export interface GrownUpsSheetProps {
   onSetAgeBand?: (band: number | null) => void;
   /** Open the Map carousel (Levels row). */
   onOpenMap?: () => void;
+  /** The map's look: follow the time of day, or pin day or night (device setting). */
+  timeOfDayMode?: TimeOfDayMode;
+  onSetTimeOfDayMode?: (mode: TimeOfDayMode) => void;
   onToggleChore?: (choreId: string) => void;
   onSnapshotChange: (next: ParentSnapshot) => void;
   onClose: () => void;
@@ -86,6 +93,8 @@ export function GrownUpsSheet({
   localDayKey,
   demoMode = false,
   onToggleDemoMode,
+  garagePreview = false,
+  onToggleGaragePreview,
   onSeedDemoSave,
   onOpenEditor,
   onRoomPhoto,
@@ -96,6 +105,8 @@ export function GrownUpsSheet({
   onToggleSandbox,
   onSetAgeBand,
   onOpenMap,
+  timeOfDayMode,
+  onSetTimeOfDayMode,
   onToggleChore,
   onSnapshotChange,
   onClose,
@@ -909,6 +920,22 @@ export function GrownUpsSheet({
 
             {demoMode && (
               <div className="tv-demo-tools">
+                {onToggleGaragePreview && (
+                  <div style={{ marginBottom: 8 }}>
+                    <button
+                      type="button"
+                      className={garagePreview ? "tv-ctl tv-ctl-sky" : "tv-ctl"}
+                      aria-pressed={garagePreview}
+                      onClick={onToggleGaragePreview}
+                    >
+                      {garagePreview ? "Preview weekend: On" : "Preview weekend: Off"}
+                    </button>
+                    <p className="tv-moves" style={{ fontSize: 12 }}>
+                      Shows the Garage&apos;s weekend drop (the next one) on any day, so the
+                      animation and the mission can be shown on a weekday.
+                    </p>
+                  </div>
+                )}
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
                   {onSeedDemoSave && (
                     <button
@@ -1009,6 +1036,38 @@ export function GrownUpsSheet({
                         Levels: open the Map
                       </button>
                     )}
+                  </div>
+                )}
+
+                {onSetTimeOfDayMode && (
+                  <div>
+                    <span className="tv-parent-stat-k" style={{ marginBottom: 4 }}>
+                      Map look
+                    </span>
+                    <div className="tv-chips" role="group" aria-label="Map look">
+                      {(
+                        [
+                          ["auto", "Auto"],
+                          ["day", "Day"],
+                          ["night", "Night"],
+                        ] as const
+                      ).map(([mode, label]) => (
+                        <button
+                          key={mode}
+                          type="button"
+                          className="tv-sc"
+                          aria-pressed={(timeOfDayMode ?? "auto") === mode}
+                          onClick={() => onSetTimeOfDayMode(mode)}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                    <p className="tv-moves" style={{ fontSize: 12 }}>
+                      Auto shows the day look from 7 am to 7 pm and the night look
+                      after that, on this device&apos;s clock. Day or Night keeps one
+                      look all the time.
+                    </p>
                   </div>
                 )}
 

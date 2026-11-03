@@ -149,6 +149,19 @@ neighbours.
   defined once in `index.css`; every translucent fill derives from
   those two RGB triplets, so lifting or darkening the app is a token
   change, not a hunt through the stylesheet.
+- **Day and night** (decided Nov 3; one clock, `timeOfDay.ts`, shared with the
+  rest of the game; see environment-spec.md). Two looks only. Night is the
+  **same map**, not a different one: a deep-blue veil over the sea and land
+  (drawn in the art, scaled by one `darkness` number so a later continuous
+  time of day is a different input and not different art), indigo cloud bank,
+  and the **lights on**: lamp posts glow (plain posts by day), the castle and
+  house windows are lit, level dots get a warm halo, a few fireflies drift.
+  The path stays bright so it reads in the dark. The HUD, tap sizes and
+  every behaviour are identical. Day is 07:00 to 18:59 on the device's own
+  clock, the user's local time (confirmed by Dan); **Grown-ups -> Map look** pins Auto, Day or Night
+  (a device setting, `tvTimeOfDay:v1`), which also shows either look on
+  demand. The 3D worlds follow later on the parallax day and night mid and
+  far images, with indoor scenes unchanged.
 - **Tap targets** are 64px (72px with padding) and HUD buttons at
   least 48px tall, above the 48px the 7–9 band needs (play-design age
   presets). The trail map is built for readers (a text plate, no
@@ -219,13 +232,15 @@ neighbours.
   Tricky and its stations start at tier 2), a secret exit (hidden,
   opens when the Garden's parts are found, notice and animation, plays
   at tier 3), the toy's token being a real picture of the toy that is
-  kept per outfit and changes when the outfit does, the reveal animation (first open
+  kept per outfit and changes when the outfit does, the day and night looks (pinned, and Auto from the clock), the reveal animation (first open
   quiet, the next open animates, the one after quiet), and layout (tap size, alignment, no overlap, the toy in view).
 
 ## Not in this slice
 
 - No hard gates, secret-exit locks, or vehicle gates on roads.
   Vehicle perks stay soft (connected-town slice 1).
+- The Garage (an always-open build place with a weekend drop, on the map and
+  in the carousel) is specified in garage-weekend-spec.md and not built.
 - No secret exit off Toy Room (its roads are crowded), and none off a
   lab or ladder. A secret exit has no reward beyond the level itself.
 - Tier 2 and 3 only add a station and raise its starting tier; the

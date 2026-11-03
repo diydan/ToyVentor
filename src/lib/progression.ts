@@ -136,6 +136,8 @@ export interface ProgressionState {
   /** What the child has already seen on the trail map (explorerMap
    *  seenEntries), so only what is new animates on the next open. */
   explorerSeen?: string[];
+  /** Weekends (the Friday's "YYYY-MM-DD") whose Garage drop was finished. */
+  garageDone?: string[];
 }
 
 export function emptyProgression(): ProgressionState {
@@ -380,6 +382,23 @@ export function cleanExplorerVisited(raw: unknown): string[] {
   ];
 }
 
+const GARAGE_WEEKEND_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+const GARAGE_DONE_MAX = 200;
+
+/** The finished-weekend list: real-looking dates only, no repeats, oldest first, bounded. */
+export function cleanGarageDone(raw: unknown): string[] {
+  if (!Array.isArray(raw)) return [];
+  return [
+    ...new Set(
+      raw.filter(
+        (d): d is string => typeof d === "string" && GARAGE_WEEKEND_PATTERN.test(d),
+      ),
+    ),
+  ]
+    .sort()
+    .slice(-GARAGE_DONE_MAX);
+}
+
 /** `garden` = seen as a silhouette, `garden#` = seen in full colour. */
 export const EXPLORER_SEEN_PATTERN = /^[A-Za-z0-9_-]+(?::[A-Za-z0-9_-]+)*#?$/;
 /** Room for every place on a fully grown map (about 200) twice over. */
@@ -561,6 +580,7 @@ export function normalizeProgression(raw: unknown): ProgressionState {
       : undefined;
   const explorerVisited = cleanExplorerVisited(v.explorerVisited);
   const explorerSeen = cleanExplorerSeen(v.explorerSeen);
+  const garageDone = cleanGarageDone(v.garageDone);
   return {
     version: 1,
     totalXp:
@@ -585,6 +605,7 @@ export function normalizeProgression(raw: unknown): ProgressionState {
     ...(ageBand !== undefined ? { ageBand } : {}),
     ...(explorerVisited.length > 0 ? { explorerVisited } : {}),
     ...(explorerSeen.length > 0 ? { explorerSeen } : {}),
+    ...(garageDone.length > 0 ? { garageDone } : {}),
   };
 }
 
@@ -688,6 +709,10 @@ export function mergeProgression(
     ...(remote.explorerSeen ?? []),
     ...(local.explorerSeen ?? []),
   ]);
+  const garageDone = cleanGarageDone([
+    ...(remote.garageDone ?? []),
+    ...(local.garageDone ?? []),
+  ]);
   return {
     version: 1,
     totalXp: Math.max(local.totalXp, remote.totalXp),
@@ -707,6 +732,7 @@ export function mergeProgression(
     ...(ageBand !== undefined ? { ageBand } : {}),
     ...(explorerVisited.length > 0 ? { explorerVisited } : {}),
     ...(explorerSeen.length > 0 ? { explorerSeen } : {}),
+    ...(garageDone.length > 0 ? { garageDone } : {}),
   };
 }
 

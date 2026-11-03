@@ -3,6 +3,7 @@ import { buildMapCards, MAP_STOPS } from "../src/lib/mapCards";
 import {
   buildExplorerGraph,
   explorerNeighbor,
+  explorerRoute,
   FRONTIER_AHEAD,
   FRONTIER_BRANCHES,
   FRONTIER_MAX_DEPTH,
@@ -47,6 +48,8 @@ const cards = (
     prog: prog(),
     found: new Set<string>(),
     missionsDone: new Set<string>(),
+    // Every map here has the Garage, as in the game.
+    garage: { weekend: false, done: false },
     ...over,
   });
 
@@ -600,5 +603,63 @@ describe("secret exits", () => {
     const reveal = newlyShown(after, new Set(seenEntries(before)));
     expect(reveal.appear.has(secretId("beach"))).toBe(true);
     expect(reveal.roads.get(roadKey("beach", secretId("beach")))).toBeDefined();
+  });
+});
+
+describe("the Garage on the trail map", () => {
+  it("is always on the map and always in colour, like home, in every age band", () => {
+    for (const ageBand of [null, 0, 1, 2, 3, 4, 5]) {
+      const g = buildExplorerGraph({ cards: cards({ ageBand }) });
+      const garage = byId(g, "garage");
+      expect(garage, `band ${ageBand}`).toBeDefined();
+      expect(garage!.kind).toBe("garage");
+      expect(garage!.fog).toBe("revealed");
+      expect(garage!.label).toBe("Garage");
+      // It is joined to the rest of the map by a road, and the toy can hop there.
+      expect(g.edges.some((e) => [e.a, e.b].includes("garage")), `band ${ageBand}`).toBe(true);
+      expect(explorerRoute(g, "room", "garage"), `band ${ageBand}`).not.toBeNull();
+    }
+  });
+
+  it("carries the weekend flag from its card, and is the suggested place until it is done", () => {
+    const quiet = buildExplorerGraph({ cards: cards({ garage: { weekend: false, done: false } }) });
+    expect(byId(quiet, "garage")!.card?.badge).toBeUndefined();
+    expect(byId(quiet, "garage")!.suggested).toBe(false);
+
+    const hot = buildExplorerGraph({ cards: cards({ garage: { weekend: true, done: false } }) });
+    expect(byId(hot, "garage")!.card?.badge).toBe("new");
+    expect(byId(hot, "garage")!.suggested).toBe(true);
+    expect(hot.suggestedId).toBe("garage");
+
+    const done = buildExplorerGraph({ cards: cards({ garage: { weekend: true, done: true } }) });
+    expect(byId(done, "garage")!.card?.badge).toBeUndefined();
+    expect(byId(done, "garage")!.complete).toBe(true);
+    expect(byId(done, "garage")!.suggested).toBe(false);
+  });
+
+  it("is absent when the game gives no Garage (so old callers are unchanged)", () => {
+    const g = buildExplorerGraph({
+      cards: buildMapCards({ ageBand: 1, prog: prog(), found: new Set<string>(), missionsDone: new Set<string>() }),
+    });
+    expect(byId(g, "garage")).toBeUndefined();
+  });
+
+  it("with it, every branch grown and every exit open, the geometry is still clean in every age band", () => {
+    for (const ageBand of [null, 0, 1, 2, 3, 4, 5]) {
+      const g = buildExplorerGraph({ cards: cards({ ageBand }), visited: deepWalk(), openAll: true, ageBand });
+      expect(geometryProblems(g), `band ${ageBand}`).toEqual([]);
+    }
+  });
+
+  it("does not move any generated path, nor any other place", () => {
+    const withGarage = buildExplorerGraph({ cards: cards({ ageBand: 3 }), visited: deepWalk() });
+    const without = buildExplorerGraph({
+      cards: buildMapCards({ ageBand: 3, prog: prog(), found: new Set<string>(), missionsDone: new Set<string>() }),
+      visited: deepWalk(),
+    });
+    const at = (g: ExplorerGraph) => new Map(g.nodes.map((n) => [n.id, `${n.x},${n.y}`]));
+    const a = at(withGarage);
+    for (const [id, pos] of at(without)) expect(a.get(id), id).toBe(pos);
+    expect(a.size).toBe(at(without).size + 1);
   });
 });
