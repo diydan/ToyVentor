@@ -2,10 +2,24 @@
 
 ## Status
 
-**Proposed.** Only the pieces under "Already in the repo" exist. No custom
-model is in scope for the Nov 4 build. The own-model track (G1–G7, brick
-sculptor) is a stretch goal and never blocks submission. Prompt workflows stay
-as the fallback throughout.
+**Updated 2026-11-04.** Text to part (F1) is built and is in the Nov 4 build, on the hosted model. The own-model track is no longer only a stretch: the Meta Model API
+terms bar under-18 users and products aimed at them (`docs/decisions/0008-meta-models-and-under-18-users.md`), so **base Muse Glimmer, self-hosted and prompted, is v1 for
+child-facing use, and the tuned model is v2, after the hackathon.** Prompt workflows stay the fallback throughout. This table is the one place to see where things stand; the detail is
+in the sections it names. Nothing is deployed.
+
+| Item | State | Evidence, and where it is written up |
+| --- | --- | --- |
+| F1 Describe it (text to part) | Built; in the Nov 4 build on hosted Spark | 40 wishes on the real stack: 36 of 37 printable, mean 1.08 calls ("Real-stack check and F1 acceptance"); panel e2e 51/51, real bench page 39/39 |
+| F3 repair loop | Built (the engine inside F1, up to 4 calls) | `shared/forgeMakeFlow.ts`, `worker/forgeMake.ts` |
+| Names in seven languages, spoken names, waiting strip | Built | "Naming and the waiting state" |
+| Ready-made fallback, colour choice, worn part kept across a reload | Built | "Ear search capped, and the ready-made fallback built", "Colour choice built", "The worn part is kept across a reload" |
+| F2b photo outline | Built by the photo lane; a real print-and-stick and the fit budget are open | that lane's notes |
+| F4, F5, F6, A2, A4 to A6 | Not built | "Phases" |
+| Model switch (`worker/modelBackend.ts`) | Built: hosted, self or off, per capability, fails closed. On it: text to part, Create mode, Describe & Build, and SAM, the image model and the photo-nouns look (hosted only: no adapter for our own models yet) | decision 0008, "The switch" |
+| Glimmer v1 (base, prompted, Modal L40S) | Serving and measured; not the default | 33 of 37 printable, all 33 returned printable, 4 endpoint failures, 1 brand slip ("Self-hosted Glimmer replaces Spark") |
+| Glimmer v2 (tuned) | Not started | G2 onward, after the hackathon |
+| Under-18 terms | Decision recorded: hosted for the Nov 4 demo only (adults operating), self-hosted for child-facing use | decision 0008 |
+| Deployment | None. Open: a Cloudflare rate-limit rule on `/api/forge/make`, the `VOICE_SIGNING_KEY` secret, a daemon the deployed Worker can reach | "Real-stack check" runbook |
 
 ## Rule
 
@@ -265,6 +279,20 @@ rejected, numbers are clamped, nothing is executed.
   voice URL has no `c` before the pick and `c=blue` after, the Worker accepts it, a pick with nothing worn does not dress Kip) and the real-bench e2e 16 to
   20 (material colour read off the Three.js meshes: purple, then green, one group, same mesh count). Test trap: an e2e limiter reset on a 20 ms timer raced when
   the machine was busy; the fake model now resets it itself on every call.
+- **The worn part is kept across a reload (2026-11-03, Dan: "local storage for now").** Until now a reload lost it (the `#toy=` link cannot carry a custom or photo
+  part; it only sets `prints:false`). The bench (not the panel, which still writes nothing) now keeps one record per slot in this browser's local storage
+  (`toyforge:kip:forge-part:crown:v1`, `...:head:v1`): the part's file (25 to 50 kB), its generated name and its colour, plus a version and a time. **Never the
+  child's words, and nothing leaves the device.** This is a deliberate exception to the bench's "custom parts are never persisted" comment (that rule is for
+  imported files). Rules: (1) saved when Kip puts the part on, again when the colour changes; (2) **storage always says what Kip wears now**: every
+  `updateStatusText()` re-checks, and a record is dropped the moment its slot holds anything else (another hat or head, an imported file, a photo part, a reset);
+  (3) put back on load, head first and hat last, after the rig is ready, without delaying it; (4) a `#toy=` link or a `?head=`, `?crown=`, `?hat=`, `?loadout=` or `?preset=`
+  is not overridden by it and does **not erase it either** (a Toybox link must never cost a child the part they made; it comes back on the next plain visit);
+  (5) a record is data: version, slot, size cap (600 kB of base64) and character set are checked, a bad one is dropped quietly, and a file that will not load is dropped
+  so it is not retried every visit; (6) every storage call is guarded (a private window just means no memory). Real-bench e2e 20 to 39 checks, including real reloads in
+  one Chrome profile (green hat and head come back as one group each; a ready-made hat or head drops both records and a reload brings nothing back; a hand-written
+  record is restored in its colour; `?head=fox` keeps the look and keeps the record; bad base64, a non-GLB file and non-JSON are dropped with no exception) and a
+  **mutation check**: with the `syncForgeStorage()` call removed, a stale hat came back over a ready-made one and two checks failed. Not covered: a shared device (a second
+  child sees the first one's last part; the part carries no name or words), Safari's seven-day storage cleanup (the part is simply gone, as before), two tabs at once.
 - **Real-stack check and F1 acceptance (2026-11-03).** The whole thing ran for real: the Kip page served by
   Vite, the Worker in the local Workers runtime (`npm run dev`), real Spark, the real daemon, the real voice binding
   (AI Gateway, billed) and the real parent gate, driven through the panel in Chrome: a wizard hat with a star, worn by
@@ -275,7 +303,7 @@ rejected, numbers are clamped, nothing is executed.
   Lego" at intake, "scary monster" by the unsafe-word list); of the 37 that should make a part, **36 came back printable on
   the first call (97%; 84% in the first pass, when the Mac was at load 188 and five wishes timed out, all five printable on a
   quiet re-run)**, and one ("mickey mouse ears") never passed P1 in 4 calls and ended as fine on screen. F1's bar is 80% within 4
-  calls and zero brand terms: **met, with margin**. Mean 1 call; time to a finished printable part: median 23 s, up to
+  calls and zero brand terms: **met, with margin**. Mean 1 call; time to a finished printable part: median 23 s (recomputed 2026-11-04 from the saved result files: 27 s for the first pass, taken at load 188, and 31 s merged; the 23 s cannot be re-derived from them), up to
   100 s or more for heads with big side ears (monkey 47 s alone). **Brand characters:** a spiderman mask became "Friendly Web
   Head", a pikachu hat "Sunny Mouse Hat", mickey ears "Little Mouse Cap", a hello kitty head "Cute Kitty Head": no
   trademark in any output, but the intake only knows building-toy brands, so `KID_BRAND_RE` now checks what the model says
@@ -390,6 +418,52 @@ slim report. Jobs are async with staged "Forging..." progress
   No photo stored; no photo in the forge request.
 - Logging: recipe, per-gate outcome, attempt count, latency. Kid prompts are
   not stored (eval set excepted).
+
+### Child safety: what is in place, and what "strict" would take (researched 2026-11-04; not legal advice)
+
+**The principle.** A "kid-friendly model" is not something to buy or certify; it is a property of the whole system, shown by a test set and enforced by gates. Glimmer's own card says so:
+deploy it "as part of an overall AI system with additional guardrails", and "build dedicated evaluation datasets for your use case". Its safety training (safety SFT and RL, privacy flows, injection
+resistance) was evaluated on general chat and agent risks, not on a 4 to 10-year-old audience. **Our strongest guard is the shape of the product: the model never talks to a child.** It
+returns a recipe (numbers and enums that deterministic code builds and gates), plus a handful of short text fields. There is no chat, no history, no tools, no browsing.
+
+**In place today (read in the code, 2026-11-04):**
+
+| Layer | Guard | Where |
+| --- | --- | --- |
+| Input | 120-character cap; control characters stripped; email and long digit runs replaced; an unsafe-word list; link and contact patterns; a brand list; the wish is quoted as data and never placed in the system role | `worker/forgeMake.ts` (`cleanWish`, `parseRequest`), `worker/muse.ts` (`scrubContactDetails`, `kidSafeText`), `shared/forgeMakePrompt.ts` |
+| Prompt | "A young child (ages 4 to 10) … kind and safe … no brands … no real names or personal details" | `shared/forgePrompt.ts`, `worker/muse.ts` (`SAFETY`) |
+| Output | The recipe passes an allowlist (no code, unknown keys dropped, bounded numbers), then the compiler and the print gates; the part's name and its seven-language names are filtered for unsafe terms, links, contact patterns and brands, must be letters only, and are spoken only if our Worker signed them; Create and Describe lines are replaced by a fixed safe line if they trip the filter or echo the child's words | `sanitizeRecipe`, `worker/forgeNames.ts`, `kidSafeText` |
+| Access | A device id is required; 3 a minute per device and 6 per IP (a Cloudflare rule is still to be set); printing and saving need the grown-up proof; the selfie cloud path is off by default; no client can choose the model | `gateForge`, `worker/modelBackend.ts` |
+| Data | Logs carry event names and counts only; nothing the child typed is stored server-side; the worn part is kept on the device only, without any words | `logEvent`, the bench's storage rules |
+| Test | The 40-wish run includes 4 injection tries, a contact-detail wish and 3 intake refusals; all ended harmlessly on Spark and on Glimmer | "Real-stack check", "Self-hosted Glimmer replaces Spark" |
+
+**Gaps, most important first:**
+
+1. **The unsafe-word list is English only and short** (about 20 terms) while the product speaks seven languages. "Messer", "cuchillo" or "bıçak" are not caught by it; in those languages only the model's own safety training stands behind the wish.
+2. **Free text still reaches a child:** the part's name, `behavior`, the seven-language names, and in Create and Describe the `say` and `question` lines (up to 160 and 200 characters). Everything else the model writes is a number or a choice.
+3. **No independent classifier** looks at the wish or at the words that come back.
+4. **No child-specific red-team set.** Seven cases is a smoke test. A release needs hundreds of prompts across categories, in all seven languages, run on every model or prompt change.
+5. **No written content policy by age band.** Today "a scary monster head" is refused while "a dragon head" and "a viking helmet" are fine; that line was drawn by one regex, not by a decision.
+6. **Weights are not pinned.** `scripts/modal/glimmer_server.py` downloads by repository name with no revision, so an upstream change would change what we serve; community "abliterated" and "uncensored" Glimmer repos exist on Hugging Face, and only the official `meta-models/` repo may be used.
+7. **A worrying message from a child** (a disclosure of harm, for instance) would quietly become a hat. Whether and how to respond is a policy decision for the owner, not a filter.
+8. **A tune can undo safety training**, and the card does not say whether Meta's survives one. Any v2 tune must re-pass the red-team gate before it ships.
+9. **Process and law, for the owner:** the amended COPPA Rule's compliance date was 2026-04-22 (a written data security program and retention policy, notices, consent; a persistent device id, a photo or a voice recording is personal information); EU AI Act Article 50 applies from 2026-08-02 (tell people when they deal with AI and mark synthetic content; reported grace until 2026-12-02 to add the machine-readable marking for systems already on the market); the UK Children's Code was not researched here (a data protection impact assessment is its usual instrument). One child-risk assessment can serve the Glimmer deployer duty, COPPA and the Children's Code together.
+
+**What strict would add, in order of value for effort:**
+
+1. **Pin the revision and check file hashes** (minutes).
+2. **Constrain decoding with a Recipe v1 JSON Schema** on the self-hosted model: structure guaranteed, and the text fields limited by pattern (name: letters and spaces, 2 to 4 words, short; behavior chosen from a list or taken off the child's screen). About half a day; the schema does not exist yet, and it must be tested against Glimmer's separate thinking channel.
+3. **"The model picks, code writes" for what is left.** Create and Describe lines chosen from reviewed lines per language; names built from an approved vocabulary, or a template name from the part's shape when a word is not on it. One to two days including a native read of seven languages.
+4. **A moderation classifier on both sides, for severe categories only.** Open-weight candidates: Qwen3Guard-Gen 0.6B, 4B and 8B (Apache 2.0, multilingual) and Qwen3Guard-Stream; Llama Guard 4 (12B) and Prompt Guard 2 (86M and 22M, for injection) under Meta's Llama community licence (marked "other": read it first); ShieldGemma under the Gemma licence. They are language models themselves and can be fooled, they are tuned for general harm taxonomies rather than "right for a 5-year-old", and Meta's own advice is to layer them on an existing stack. Use them for severe content and our own lists for age fit, and measure false positives on real children's wishes ("vampire hat", "dragon"). One to two days.
+5. **The red-team set and the release gate** from gap 4, in CI. One to two days to build with review.
+6. **The content policy per age band** (Snap 3+ and Pro 8+), written down and then turned into the lists.
+7. **Monitoring without content:** counts of filter triggers by category, a grown-up "report this" control, and the kill switch that already exists (`MODEL_BACKEND=off`).
+8. **The assessment signed off and the "AI-made" label shown**, before any child uses a self-hosted model.
+9. **For v2, a safety-preserving tune:** mix in refusal and age-appropriate examples (KidRails is an open dataset and evaluation set for ages 5 to 12, reported as Apache 2.0; its licence tag on Hugging Face is empty, so read it), then re-run the gate.
+
+**Honest limits.** Lists and classifiers reduce risk and never remove it, and "safe" depends on age and context; a 2026 paper argues for context-aware design over one universal filter, which is the case for keeping the output channel this narrow. Seven languages is the weakest link (Turkish most of all). Photos and any future chat are a different risk class and would need a stricter design of their own; chat should not be added.
+
+Sources read or searched: the Glimmer model card (Trust and Safety, read in full); Hugging Face metadata for the guard models; the Federal Register COPPA notice (2025-04-22); secondary coverage of EU AI Act Article 50 (a law-firm and a standards-body page); Jiao et al., "LLMs and Childhood Safety" (arXiv 2502.11242); the CR4T paper (arXiv 2605.21609); the KidRails announcement (Arcee AI). Legal points are from secondary sources and need a lawyer.
 
 ### Naming and the waiting state (approved by Dan 2026-11-03; the Worker side of naming and the shared waiting strip are built, the generator and the Forge screen are not)
 
@@ -512,8 +586,8 @@ Every source still needs a recorded license check before commercial training.
 
 ## Custom model roadmap (stretch, after submission)
 
-Only G0 is committed (Phase 0, no GPU). G1–G7 start if time and budget allow
-and never block Nov 4. Two models, not one: Forge recipe writer + brick
+As of 2026-11-04: G0 is done and G1 is under way (base Glimmer is served and measured, below). G2 onward is v2, after the hackathon, and none of it blocks Nov 4.
+Two models, not one: Forge recipe writer + brick
 sculptor. Prompted workflows stay as fallback and baseline. Each stage has a
 gate; when a gate fails, stop spending and record numbers.
 
@@ -531,33 +605,42 @@ rate alone teaches boring shapes; watch pass rate + human rating together.
 
 ### Forge phases (G0–G7)
 
-| Phase | Scope | Gate / stop rule |
-| --- | --- | --- |
-| G0 | Baseline + eval (schema, compiler, L1/L3, L2, call + repair, CLI, ~60 prompts, showcase) | Eval report exists; before Nov 4 |
-| G1 | Base-model baseline + small tune smoke test; constrained decoding; tokens/s, memory, cold start | Valid JSON 99%+; if it will not train/serve, stop |
-| G2 | Data: exemplars, sampler, gate-filtered + fix pairs, captions, held-out split, license manifest | No eval leak; diversity measured |
-| G3 | Pilot tune (3–5k pairs, 1–3 epochs, 2–3 variants) vs G1 baselines | Beats prompted first-attempt rate with no rating drop, else stop |
-| G4 | Full tune (20–50k if curve says so) + 1–3 taste-filtered rounds | Beats baseline on rate + rating together |
-| G5 | Serve behind `/api/forge` + Gatekeeper; fallback chain; "AI-made" label | p95 in budget; cost/job measured |
-| G6 | Operate: retrain on waves/schema/slots/drift | Every retrain re-passes full eval |
-| G7 | Larger open base as option: repeat G1 + one pilot vs best adapter | Ships only if it beats the incumbent on rate + rating at viable cost |
+| Phase | Scope | Gate / stop rule | State (2026-11-04) |
+| --- | --- | --- | --- |
+| G0 | Baseline + eval (schema, compiler, L1/L3, L2, call + repair, CLI, ~60 prompts, showcase) | Eval report exists; before Nov 4 | Done: 60-prompt harness, Spark runs (v0 83% final, v1 100%), legalizers, the make route |
+| G1 | Base-model baseline + small tune smoke test; constrained decoding; tokens/s, memory, cold start | Valid JSON 99%+; if it will not train/serve, stop | Partly: base Glimmer serves on Modal (cold start 26 s, about 104 tokens a second on a short answer) and ran the 40 wishes. Not done: constrained decoding, the QLoRA smoke test, adapter serving |
+| G2 | Data: exemplars, sampler, gate-filtered + fix pairs, captions, held-out split, license manifest | No eval leak; diversity measured | Not started |
+| G3 | Pilot tune (3–5k pairs, 1–3 epochs, 2–3 variants) vs G1 baselines | Beats prompted first-attempt rate with no rating drop, else stop | Not started (v2) |
+| G4 | Full tune (20–50k if curve says so) + 1–3 taste-filtered rounds | Beats baseline on rate + rating together | Not started (v2) |
+| G5 | Serve behind `/api/forge` + Gatekeeper; fallback chain; "AI-made" label | p95 in budget; cost/job measured | Serving and the switch exist; the label, the fallback chain's tuned step and the p95 budget do not |
+| G6 | Operate: retrain on waves/schema/slots/drift | Every retrain re-passes full eval | Not started |
+| G7 | Larger open base as option: repeat G1 + one pilot vs best adapter | Ships only if it beats the incumbent on rate + rating at viable cost | Not started |
 
 Cheapest first tuned model: G1 + G3 + one small G4 round. People time exceeds
 GPU cost. Local machines handle debug + CPU gating; tuning runs on hosted GPUs.
 
+**Self-hosted Glimmer replaces Spark on the child-facing path (Dan, 2026-11-03).** Reason: the Meta Model API terms (section 10.1) bar End Users under 18 and products targeted
+at them (`docs/decisions/0008-meta-models-and-under-18-users.md`). This reorders the track. **Serving base Glimmer, prompted, is now the critical path; tuning is optional** (only if
+prompted Glimmer is below Spark on the eval, too slow or too dear). New order: (S1) serve base Glimmer on Modal behind an OpenAI-compatible endpoint, run the 60 prompts and the
+40-wish set with prompt v5 (with and without JSON-schema constrained decoding) and record first-call printable rate, latency p50 and p95, and cost per job against Spark's 97% and
+27 to 31 s median (recomputed from the saved result files); (S2) a backend switch in `askModel` (`worker/forgeMake.ts`) so text to part can call Glimmer, ready-made fallback unchanged; (S3) the risk assessment signed off, the photo
+audit and the "AI-made" label done before any child uses it; (S4) the other routes that call the Meta API (`/api/describe`, `/api/muse/spark`, and the photo scans, which use SAM 3.1 through
+the same API, so need their own answer); (S5) tuning, only if S1 says so. The fallback chain becomes tuned adapter, base Glimmer, ready-made catalog: hosted Spark leaves it for
+children (it stays a developer tool for adult-written eval prompts). The Recipe v1 JSON Schema moves from "nice for tuning" to "needed for constrained decoding". **Serving v1 is cheaper than this spec assumed (found 2026-11-03):** Meta publishes an official, ungated, Apache 2.0 GGUF of Glimmer (`meta-models/Muse-Glimmer-30B-GGUF`: a 16.8 GB 4-bit build that fits a 24 GB GPU, plus a 1.6 GB drafter for speculative decoding) that runs in llama.cpp's `llama-server` (build b10353 or newer) with an OpenAI-compatible API; the card's own figure is about 75 tokens a second on one RTX 5090 (233 with the drafter). So the host is an L40S or A10 on Modal, not an A100-80GB. Glimmer takes its reasoning strength from the system prompt (`Reasoning strength: low`), not an API parameter, and returns its thinking in `reasoning_content`, the answer in `content`; `worker/modelBackend.ts` sends and reads accordingly. The Modal app is `scripts/modal/glimmer_server.py` (written to the Modal 1.2.6 client installed here, `@app.cls` + `@modal.web_server`; never run; the `diydan82` workspace is logged in). v1 = base Glimmer prompted; v2 = the tuned model, after the hackathon. **Measured 2026-11-04 (40 wishes, real Worker code and daemon, base Glimmer on a Modal L40S):** of the 37 that should make a part, 33 returned printable parts (89%) and all 33 returned were printable (32 first call, 1 repaired, mean 1.03 calls), median 25.7 s, p90 41 s; Spark's saved results: 36 of 37 (97%), mean 1.08 calls, median 27 to 31 s. Four wishes got no model answer (three HTTP 500s inside 1.5 s, one 55 s timeout; cause unread, the Modal logs were not available to me), and the Worker does not retry. One brand slip ("mickey mouse ears" named "Mickey Style Ears Hat"; the filter knows only "mickey mouse"). Injection and contact-detail wishes harmless. Quality is therefore at Spark's level on this set; reliability is the gap. Create mode, Describe & Build and vision are untested on Glimmer.
+
 ## Phases
 
-| Phase | Scope | Target |
-| --- | --- | --- |
-| 0 | Model call + repair, L2, CLI, eval, pre-generated showcase (F1/F3 core) | Before Nov 4 |
-| 0b | A1 vision spike then flow; A2 templates then rewrite | Before Nov 4 if spike passes |
-| 1 | `/api/forge` job route, local validator, F2 extraction, attempt log, UI | Nov 4 stretch, else after |
-| 1b | Validator in container/sandbox | After submission |
-| 2 | F5 planner (plan + edit = A4), F4 host arg + envelopes, A5 templates | After submission |
-| 2b | F4 cavity-hat builder | Later |
-| 2c | A6: print ~10 failure coupons, label, eval, triage + cards | After submission |
-| 2d | F6 spike on 3 builds, then game path, then print path | After submission |
-| 3 | Forge G0–G6, G7 as stretch; sculptor R1–R2 behind its gate | G0 before Nov 4; rest stretch |
+| Phase | Scope | Target | State (2026-11-04) |
+| --- | --- | --- | --- |
+| 0 | Model call + repair, L2, CLI, eval, pre-generated showcase (F1/F3 core) | Before Nov 4 | Built (F1/F3 core, eval harness, legalizers L1 to L4); the pre-generated showcase is not recorded here |
+| 0b | A1 vision spike then flow; A2 templates then rewrite | Before Nov 4 if spike passes | A1 committed by another lane; A2 not built |
+| 1 | `/api/forge` job route, local validator, F2 extraction, attempt log, UI | Nov 4 stretch, else after | Routes, the local daemon as validator, F2b extraction and the "Make from words" UI built; the attempt log keeps counts only (no recipes stored); not deployed |
+| 1b | Validator in container/sandbox | After submission | Not started |
+| 2 | F5 planner (plan + edit = A4), F4 host arg + envelopes, A5 templates | After submission | Not started |
+| 2b | F4 cavity-hat builder | Later | Not started |
+| 2c | A6: print ~10 failure coupons, label, eval, triage + cards | After submission | Not started |
+| 2d | F6 spike on 3 builds, then game path, then print path | After submission | Not started |
+| 3 | Forge G0–G6, G7 as stretch; sculptor R1–R2 behind its gate | G0 before Nov 4; rest stretch | G0 done, G1 under way; the rest is v2 |
 
 Demo framing for Nov 4: Phase 0 outputs are pre-generated and verified; any
 live flow is one hero path. Say so in the demo script.
@@ -569,8 +652,10 @@ pass rate below ~70% for prompt-unteachable geometric reasons; cost/latency
 unacceptable at volume; hard self-hosted-weights requirement; or taste stays
 low on valid parts.
 
-Current reading: pass-rate gate not tripped (100% final); taste gate tripped
-for heads. Richer recipe ops + taste loop come before any tuning.
+Current reading (2026-11-04): **the self-hosted-weights gate is tripped** (the Meta Model API terms, decision 0008), which is why base Glimmer is v1. The tuning gates are not:
+pass rate is not below 70% (Spark: 36 of 37 printable on the first call; base Glimmer, prompted: all 33 parts that came back were printable, 89% counting four endpoint failures). Taste
+was rated on Spark's parts only (rounds 10 to 15: most animal heads 4 or 5; manes, snouts and anything needing supports stay out) and has not been rated on Glimmer's. Richer recipe ops
+and a taste loop still come before any tuning.
 
 ## Stretch goals (post-freeze)
 
@@ -597,10 +682,10 @@ Parked behind Nov 4; same contract (model proposes JSON, code verifies):
 
 ## Open questions (measurement, not debate)
 
-1. Validation latency per recipe (sets job budget; plan 5–30 s + repair).
-2. Does the hosted model read images (A1/A6 depend on it)?
-3. Hosted model pricing and open-base license terms.
-4. Usable-loft rate from text alone (eval first-attempt rate).
+1. Validation latency per recipe (sets job budget; plan 5–30 s + repair). **Answered 2026-11-04:** about 26 s end to end on Glimmer, 27 to 31 s on Spark (the model call dominates; the daemon's first look is well under a second, and 8 CPU-seconds for the slowest head after the ear-search cap).
+2. Does the hosted model read images (A1/A6 depend on it)? **Answered:** yes (the Spark vision spike, 2026-11-02; `inspectPhotoNouns` in `worker/meta.ts`). Glimmer reads images too (its card; it needs the `mmproj` file); not tested here.
+3. Hosted model pricing and open-base license terms. **Answered in part:** Glimmer is Apache 2.0 plus a usage policy; the Meta Model API terms are read (decision 0008); Modal list prices are in the data section. The Spark Open licence is not read.
+4. Usable-loft rate from text alone (eval first-attempt rate). **Answered:** Spark v5 36 of 37 printable on the first call (97%); base Glimmer 32 of 33 on the first call and 33 of 33 printable among the parts that came back.
 5. Per-gate trip frequency (decides next legalizer).
 6. No real kid-speech data; adult phrasing only, plus consented playtests.
 7. Sculptor stability check: solver approach, Snap subset expressive enough,
@@ -611,6 +696,21 @@ Parked behind Nov 4; same contract (model proposes JSON, code verifies):
     ops. Photo privacy for release (parent gate, people-in-frame).
 11. Fit-loop budget and limiter behavior; thin-neck strength; back-slot and
     relief spikes before promising them.
+12. **Glimmer and under-18 users (read from the source 2026-11-03; needs a policy owner, not a measurement).** Two texts, both in the model's Hugging Face repo
+    (`huggingface.co/meta-models/Muse-Glimmer-30B`): the usage policy (`blob/main/USAGE_POLICY.md`, line 7: "Muse Glimmer is not intended for individuals under the
+    age of 18") and the model card (`blob/main/README.md`, Limitations, last bullet: "The model is not intended to be downloaded by or used by individuals under the age of 18.
+    Where deployed within systems that may be used by individuals under the age of 18, deployers are responsible for ensuring that any risks associated with such use ...
+    [have] been fully assessed and appropriately mitigated, and complies with all applicable laws."). So it is a duty on the deployer to assess, mitigate and comply, not a flat
+    ban on a product children use through a server. The policy also bars collecting, processing or inferring private or sensitive information about individuals (policy 1.1.5; matters
+    for photos), representing outputs as human-generated (3.5; the "AI-made" label covers it) and failing to tell end users known dangers (4). It says nothing about fine-tuning,
+    derivatives or training on outputs. **Bigger finding the same day:** the hosted route is stricter. The Meta Model API Terms of Service (updated 2026-10-09, section 10.1,
+    `dev.meta.ai/legal/terms-of-service`) say "You and your End Users must be at least 18 years of age to use the Services and Integrated Products, and you will not create
+    Integrated Products targeted at individuals under the age of 18" and the Worker calls that API today. Full record, the draft risk table and the options (ask Meta / demo only /
+    self-hosted Glimmer): `docs/decisions/0008-meta-models-and-under-18-users.md`. Open: who signs off; whether the hackathon rules change 10.1; whether Meta's safety tuning
+    survives a fine-tune (the card does not say).
+13. **Glimmer endpoint failures.** In the 40-wish run, 3 HTTP 500s inside 1.5 s and one 55 s timeout among 37 calls; the cause is unknown (the Modal logs were not read). Candidates: the logs, one retry on a 5xx in `askText`, the slot and context settings, and Modal's autoscaler starting a second container when two requests are in flight (`target_inputs` is 2). **Cold start varies a lot:** 26 s on the first check, then a first request after idle that ran past 150 s (the next answered after 52 s); the Worker's model timeout is 55 s, so the first child after idle would get the ready-made fallback. For any live use set `MIN_CONTAINERS = 1` (about $47 a day) or warm it first. `modal app logs toyforge-glimmer` fails by name on the old 1.2.6 client even though the app is deployed (the endpoint answers); use `modal app list` for the id, or the Logs tab at modal.com/apps/diydan82/main/deployed/toyforge-glimmer. Target: 95% or better with no endpoint errors on two runs.
+14. **Brand terms on Glimmer.** "mickey mouse ears" produced a part named "Mickey Style Ears Hat"; the filter list only has "mickey mouse". Whether to add bare "mickey" is a product call (the list is short on purpose).
+15. **The other text routes and vision on Glimmer.** Create mode, Describe & Build and the photo-nouns look share the text switch but have not been run on Glimmer.
 
 ## Docs impact when this ships
 
