@@ -111,17 +111,18 @@ describe("baked clips: cutting a window and closing a loop", () => {
   });
 
   /** The loop check as a function of the closer. Returns the failures. */
+  const num = (a: ArrayLike<number>, i: number): number => a[i] as number; // indexed read under noUncheckedIndexedAccess
   function loopFailures(close: (clip: any) => void): string[] {
     const bad: string[] = [];
     const clip = kipClip(5);
-    const before = Array.from(clip.tracks.find((t: any) => t.name === "kip_Head.quaternion").values) as number[];
+    const before = Array.from(clip.tracks.find((t: any) => t.name === "kip_Head.quaternion")!.values) as number[];
     close(clip);
     const baked = clipToBaked(THREE, clip, { id: "x", label: "X", group: "dance", source: "t" });
     if (checkBaked(baked, { loop: true }).length) bad.push("the last frame must be the first");
-    const after = clip.tracks.find((t: any) => t.name === "kip_Head.quaternion").values;
+    const after = clip.tracks.find((t: any) => t.name === "kip_Head.quaternion")!.values;
     const n = after.length / 4;
-    for (let i = 0; i < Math.floor(n * 0.5) * 4; i++) if (Math.abs(after[i] - before[i]) > 1e-6) { bad.push("frames before the closing window must not change"); break; }
-    for (let i = 0; i < n; i++) if (Math.abs(Math.hypot(after[i * 4], after[i * 4 + 1], after[i * 4 + 2], after[i * 4 + 3]) - 1) > 1e-4) { bad.push("every frame must stay a unit quaternion"); break; }
+    for (let i = 0; i < Math.floor(n * 0.5) * 4; i++) if (Math.abs(num(after, i) - num(before, i)) > 1e-6) { bad.push("frames before the closing window must not change"); break; }
+    for (let i = 0; i < n; i++) if (Math.abs(Math.hypot(num(after, i * 4), num(after, i * 4 + 1), num(after, i * 4 + 2), num(after, i * 4 + 3)) - 1) > 1e-4) { bad.push("every frame must stay a unit quaternion"); break; }
     return bad;
   }
 
@@ -145,9 +146,9 @@ describe("baked clips: the JSON that ships", () => {
     expect(clip.name).toBe("dance_x");
     expect(clip.duration).toBeCloseTo(2, 3);
     expect(clip.tracks).toHaveLength(15);
-    const orig = kipClip(2, false).tracks.find((t: any) => t.name === "kip_LeftArm.quaternion");
-    const back = clip.tracks.find((t) => t.name === "kip_LeftArm.quaternion")!;
-    for (let i = 0; i < orig.values.length; i++) expect(Math.abs(orig.values[i] - back.values[i])).toBeLessThan(2e-5);
+    const orig = kipClip(2, false).tracks.find((t: any) => t.name === "kip_LeftArm.quaternion")!;
+    const back = clip.tracks.find((t: any) => t.name === "kip_LeftArm.quaternion")!;
+    for (let i = 0; i < orig.values.length; i++) expect(Math.abs(orig.values[i]! - back.values[i]!)).toBeLessThan(2e-5);
   });
 
   it("derives the tempo from the beats and the duration, so they cannot disagree", () => {

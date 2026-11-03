@@ -9,17 +9,18 @@ import * as yard from "../parts/kip/viewer/yard-vehicles.js";
 const { AXLE_Y, AXLE_Z, DRUM_INNER_X, DRUM, WIDE_AXLE, KEEL_HALF_WIDTH, AXLE_FLOAT_MM, rollerParts, bom, partIds, spinAfter, clampFloat } = yard as any;
 
 const root = process.cwd();
+type V3 = [number, number, number];
 const stlBounds = (rel: string) => {
   const buf = readFileSync(join(root, rel));
   const n = buf.readUInt32LE(80);
-  const lo = [Infinity, Infinity, Infinity], hi = [-Infinity, -Infinity, -Infinity];
+  const lo: V3 = [Infinity, Infinity, Infinity], hi: V3 = [-Infinity, -Infinity, -Infinity];
   for (let t = 0; t < n; t++) {
     for (let v = 0; v < 3; v++) {
       const o = 84 + t * 50 + 12 + v * 12;
       for (let k = 0; k < 3; k++) {
         const x = buf.readFloatLE(o + k * 4);
-        if (x < lo[k]) lo[k] = x;
-        if (x > hi[k]) hi[k] = x;
+        if (x < lo[k]!) lo[k] = x;
+        if (x > hi[k]!) hi[k] = x;
       }
     }
   }
@@ -29,7 +30,7 @@ const stlBounds = (rel: string) => {
 const xRange = (p: any, zLo: number, zHi: number) => {
   const s = Math.round(Math.sin(p.rotY)), c = Math.round(Math.cos(p.rotY)); // only 0, +-90 degrees occur
   const xs = [zLo, zHi].map((z) => z * s + 0 * c + p.pos[0]);
-  return [Math.min(...xs), Math.max(...xs)];
+  return [Math.min(...xs), Math.max(...xs)] as [number, number];
 };
 
 describe("yard vehicles: the road roller's placements are the ones Gate G1 proves", () => {
@@ -108,9 +109,9 @@ describe("yard vehicles: the numbers match the CAD, not just each other", () => 
     const n = buf.readUInt32LE(80);
     let vol = 0, cz = 0;
     for (let t = 0; t < n; t++) {
-      const v: number[][] = [];
+      const v: V3[] = [];
       for (let k = 0; k < 3; k++) { const o = 84 + t * 50 + 12 + k * 12; v.push([buf.readFloatLE(o), buf.readFloatLE(o + 4), buf.readFloatLE(o + 8)]); }
-      const [a, b, c] = v;
+      const [a, b, c] = v as [V3, V3, V3];
       const dv = (a[0] * (b[1] * c[2] - b[2] * c[1]) - a[1] * (b[0] * c[2] - b[2] * c[0]) + a[2] * (b[0] * c[1] - b[1] * c[0])) / 6; // signed tetra volume to the origin
       vol += dv;
       cz += dv * ((a[2] + b[2] + c[2]) / 4);
