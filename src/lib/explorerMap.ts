@@ -193,11 +193,20 @@ export type MapView = "cards" | "trail";
  *  as "8 plus". Younger players, and an unset age, open the carousel. */
 export const TRAIL_DEFAULT_FROM_BAND = 3;
 
-/** Which Map view opens first. Either is one tap away from the other. */
-export function defaultMapView(ageBand: number | null | undefined): MapView {
-  return typeof ageBand === "number" && ageBand >= TRAIL_DEFAULT_FROM_BAND
-    ? "trail"
-    : "cards";
+/** A phone held sideways: wide and short. The carousel needs a taller screen
+ *  than that, so the Map opens as the full-screen trail map there. Keep in
+ *  step with the compact-carousel `@media` block in index.css. */
+export const PHONE_LANDSCAPE_QUERY = "(orientation: landscape) and (max-height: 500px)";
+
+/** Which Map view opens first. Either is one tap away from the other.
+ *  An unset age keeps the carousel in every orientation: its first card is
+ *  the grown-up "Who is playing?" card, and the trail map has no such stop. */
+export function defaultMapView(
+  ageBand: number | null | undefined,
+  phoneLandscape = false,
+): MapView {
+  if (typeof ageBand !== "number") return "cards";
+  return ageBand >= TRAIL_DEFAULT_FROM_BAND || phoneLandscape ? "trail" : "cards";
 }
 
 export function fnv1a(text: string): number {

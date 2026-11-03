@@ -785,6 +785,29 @@ help `< 1` per round, fun `≥ 2.5/3`, "just right" `≥ 70%`, never
 stuck. Carousel adds one target: a first-time child reaches a playable
 level from the stage in `≤ 2` taps without reading.
 
+**Robot baseline, 2026-11-03** (real touch events, 390 × 844, dev and
+production build): with age set the entry was **3 taps** (`More`
+`34 × 36 px` → `Map` `208 × 44 px` → centred card), one over the target,
+and `More`/`Map` are under the `≥ 96 px` bar (§11.4); the cards are
+all above it. Dan then added a stage **Map button** (`96 × 96 px` for
+bands 0–1, a smaller pill above; `tv-map-fab` in `GameCanvas.tsx`), so
+the entry is now **2 taps**; the `⋯` → `Map` route stays. The Map opens
+as the carousel in portrait and as the full-screen trail map on a phone
+held sideways (`PHONE_LANDSCAPE_QUERY`, `defaultMapView(band,
+phoneLandscape)`); an unset age keeps the carousel; turning the phone
+with the Map open switches views. Short landscape screens also lose the
+stage's `440 px` minimum height (it clipped the bottom 100 px of the
+stage, controls included) and show a compact carousel (cards `100 px`
+tall). The sideways mission panel is still 60% of the stage; the
+full-screen map with a compact carousel strip over it is not built. On a fresh device the carousel centres on the grown-up
+`ask` card behind the press-and-hold gate, so a session needs the
+grown-up to set the age first. Whether a 2–3 year old finds `⋯` → `Map`
+at all is what the session decides (Q1: promote `Map` to a dock icon
+only if playtesters miss it). Setup, device checks, per-rung blanks and
+the target table are in
+[carousel-playtest-runsheet.md](carousel-playtest-runsheet.md) (values
+and blanks only; rules stay here).
+
 ## 14. Sign-off
 
 - [x] §4 verdict accepted (port carousel/taxonomy/content; keep ToyForge shell; skip engine/routing/storage)
@@ -800,12 +823,12 @@ theme scenes without captured art); Q4 follows the §9.3 recommendation
 
 ## 15. Open questions
 
-- [x] **Q1 (blocks C1 polish) — RESOLVED 2026-11-02:** Carousel entry is dock `⋯` → `Map` **plus** an always-visible end-of-level "Back to Map" action. No dedicated dock `Map` icon (the `390 px` dock keeps one primary visible). Promote to a dedicated icon only if playtesters miss the `⋯` entry. §7/§8 entry points read accordingly.
+- [x] **Q1 (blocks C1 polish) — RESOLVED 2026-11-02:** Carousel entry is dock `⋯` → `Map` **plus** an always-visible end-of-level "Back to Map" action. No dedicated dock `Map` icon (the `390 px` dock keeps one primary visible). Promote to a dedicated icon only if playtesters miss the `⋯` entry. **Superseded 2026-11-03 (Dan):** `Map` is promoted now, as a stage button (§13.4); the session checks whether children find it. §7/§8 entry points read accordingly.
 - [ ] **Q2 (blocks C1 art):** Card scenes — live offscreen renders (always current, GPU cost) or regenerated stills (cheap, can go stale — the exact `capture-map.cjs` trap)? Recommendation: live renders cached per theme.
 - [ ] **Q3 (blocks C5):** Do new `little.*`/`early.*`/`daily.*` ids ever get Tier 2/3, part-match bonuses, or Daily Quest slots? Recommendation: no until band 0–2 playtests say the Tier 1 loop is fun.
 - [ ] **Q4 (blocks C1 storage):** `ageBand` conflict on multi-device merge + whether Reset XP keeps age. (§9.3 proposes: higher-XP wins; reset keeps age.) Also: one shared age per device (matching one shared XP pool) vs per-toy age? Recommendation: shared, revisited only with per-kid profiles.
 - [ ] **Q5 (post-C1):** Deep links / shareable level links (`?world=garden`, ladder rung links) for teachers and playtests, or app-internal only? The mockup needed hashes because artifacts drop query strings; ToyForge has no such limit.
-- [ ] **Q6 (blocks C3 ship):** Who runs the first real-phone + real-child sessions (§13.3–13.4), and at which bands? Mockup testing was headless-Chromium only.
+- [ ] **Q6 (blocks C3 ship):** Who runs the first real-phone + real-child sessions (§13.3–13.4), and at which bands? Mockup testing was headless-Chromium only. *2026-11-03: run sheet and robot baseline written (§13.4); still needs a runner, a device and the bands. Nothing in the sheet has been run by a person.*
 - [ ] **Q7 (blocks C2 copy):** Mission-card voice for bands 0–1 — character speaking in-world with card fallback (play-design open question), or card + `Hear it` only at launch?
 - [ ] **Q8 (post-C5):** Do converted rungs become `toyventor.level/2` recipes immediately (play-design plan steps 2–3), or ship as hand-coded missions first and become recipes in the generator phase?
 

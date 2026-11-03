@@ -95,7 +95,11 @@ import { GarageGoalChip } from "./GarageGoalChip";
 import { GarageSheet } from "./GarageSheet";
 import { GrownUpsSheet } from "./GrownUpsSheet";
 import { composeRoomPhotoLevel } from "./runtime/roomPhoto";
-import { buildExplorerGraph, defaultMapView } from "../../../lib/explorerMap";
+import {
+  buildExplorerGraph,
+  defaultMapView,
+  PHONE_LANDSCAPE_QUERY,
+} from "../../../lib/explorerMap";
 import { planFor } from "../../../lib/learn";
 import { buildMapCards } from "../../../lib/mapCards";
 import { ExplorerMap } from "./ExplorerMap";
@@ -304,14 +308,32 @@ export function GameCanvas({
     }
   }, []);
 
-  // The Map opens in the view that suits the player's age: the carousel for
-  // the youngest (and an unset age), the trail map from the 7-9 band up.
-  // Each is one tap from the other.
+  // The Map opens in the view that suits the player's age and how the phone
+  // is held: the carousel for the youngest (and an unset age), the trail map
+  // from the 7-9 band up, and the trail map on a phone held sideways (the
+  // carousel cards need a taller screen). Each is one tap from the other.
   const openMap = useCallback(() => {
     refreshPortrait();
-    setMapView(defaultMapView(progressionRef.current.ageBand));
+    setMapView(
+      defaultMapView(
+        progressionRef.current.ageBand,
+        typeof window.matchMedia === "function" &&
+          window.matchMedia(PHONE_LANDSCAPE_QUERY).matches,
+      ),
+    );
     setMapOpen(true);
   }, [refreshPortrait]);
+
+  // Turning the phone while the Map is open re-picks the view for the new
+  // orientation, so a child can spin it to switch between carousel and trail.
+  useEffect(() => {
+    if (!mapOpen || typeof window.matchMedia !== "function") return;
+    const mq = window.matchMedia(PHONE_LANDSCAPE_QUERY);
+    const onTurn = () =>
+      setMapView(defaultMapView(progressionRef.current.ageBand, mq.matches));
+    mq.addEventListener("change", onTurn);
+    return () => mq.removeEventListener("change", onTurn);
+  }, [mapOpen]);
 
   // Sync Play Time settings + today's ledger on boot.
   useEffect(() => {
@@ -1355,6 +1377,34 @@ export function GameCanvas({
               )}
             </div>
           ))}
+
+        {/* One-tap Map: the stage-to-level path is Map + a card (2 taps), not
+            More + Map + a card. 96 px for ages 2-4 (play-design touch preset). */}
+        {!sleepActive &&
+          !mapOpen &&
+          !editor.testing &&
+          !editor.open &&
+          !create.open && (
+            <button
+              type="button"
+              className={`tv-map-fab${
+                progression.ageBand == null || progression.ageBand <= 1
+                  ? " tv-map-fab-kid"
+                  : ""
+              }${demoMode ? " tv-map-fab-demo" : ""}`}
+              aria-label="Map: places to play"
+              onClick={() => {
+                closeEngineSheets();
+                closeReactOverlays();
+                openMap();
+              }}
+            >
+              <span className="tv-map-fab-glyph" aria-hidden="true">
+                🗺️
+              </span>
+              <span>Map</span>
+            </button>
+          )}
 
         {editor.testing && !editor.open && !create.open && (
           <button

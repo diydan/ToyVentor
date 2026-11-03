@@ -57,6 +57,19 @@ describe("default map view by age", () => {
       expect(defaultMapView(band), String(band)).toBe("trail");
     }
   });
+
+  it("a phone held sideways opens the trail map; an unset age keeps the carousel", () => {
+    for (const band of [0, 1, 2, 3, 4, 5]) {
+      expect(defaultMapView(band, true), String(band)).toBe("trail");
+    }
+    for (const band of [null, undefined]) {
+      expect(defaultMapView(band, true), String(band)).toBe("cards");
+    }
+    // Portrait is unchanged by the new flag.
+    for (const band of [0, 1, 2]) {
+      expect(defaultMapView(band, false), String(band)).toBe("cards");
+    }
+  });
 });
 
 describe("explorerRoute", () => {
