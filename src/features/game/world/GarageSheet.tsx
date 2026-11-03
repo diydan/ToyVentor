@@ -13,6 +13,10 @@ export interface GarageSheetProps {
   /** Just open Build with no goal. */
   onFreeBuild: () => void;
   onClose: () => void;
+  /** The real-life build leg is switched on for this family. */
+  realLifeOn?: boolean;
+  /** Open the Workshop page with the toy as it is dressed now (the grown-up confirms there). */
+  buildRealUrl?: string | null;
 }
 
 /**
@@ -21,8 +25,8 @@ export interface GarageSheetProps {
  * child's age. A bottom sheet, like the rung sheet, over the carousel or the
  * trail map.
  */
-export function GarageSheet({ status, onStart, onFreeBuild, onClose }: GarageSheetProps) {
-  const { variant, drop, done, isWeekend } = status;
+export function GarageSheet({ status, onStart, onFreeBuild, onClose, realLifeOn = true, buildRealUrl = null }: GarageSheetProps) {
+  const { variant, drop, done, isWeekend, dropEnabled } = status;
   const tag = isWeekend
     ? done
       ? "Done this weekend ★"
@@ -30,6 +34,25 @@ export function GarageSheet({ status, onStart, onFreeBuild, onClose }: GarageShe
     : done
       ? "The latest drop: done ★"
       : "The latest drop";
+  if (!dropEnabled) {
+    return (
+      <section className="tv-sheet tv-sheet-garage" role="region" aria-label="Garage">
+        <div className="tv-sh-top">
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <span className="kicker-label kicker-gold">Garage</span>
+            <b className="tv-sh-title">Build something new</b>
+          </div>
+          <button type="button" className="tv-ctl" onClick={onClose}>
+            Close
+          </button>
+        </div>
+        <p className="tv-moves">New drops are off. Ask a grown-up to switch them on.</p>
+        <button type="button" className="tv-ctl tv-garage-free" onClick={onFreeBuild}>
+          Free build
+        </button>
+      </section>
+    );
+  }
   return (
     <section className="tv-sheet tv-sheet-garage" role="region" aria-label="Garage">
       <div className="tv-sh-top">
@@ -54,6 +77,19 @@ export function GarageSheet({ status, onStart, onFreeBuild, onClose }: GarageShe
         </button>
         {done ? (
           <p className="tv-moves">Doing it again is just for fun. The reward is paid once.</p>
+        ) : null}
+        {done && realLifeOn && buildRealUrl ? (
+          <a
+            className="tv-ctl tv-garage-free"
+            href={buildRealUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Build it for real
+          </a>
+        ) : null}
+        {done && realLifeOn && buildRealUrl ? (
+          <p className="tv-moves">Build it with real parts, then a grown-up says “We built it” in Grown-Ups.</p>
         ) : null}
         {!isWeekend ? <p className="tv-moves">A new drop arrives on Friday.</p> : null}
       </div>

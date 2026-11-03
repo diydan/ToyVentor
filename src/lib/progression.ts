@@ -138,6 +138,16 @@ export interface ProgressionState {
   explorerSeen?: string[];
   /** Weekends (the Friday's "YYYY-MM-DD") whose Garage drop was finished. */
   garageDone?: string[];
+  /** Grown-up switch: the Garage weekend drop is on (absent = on). */
+  garageDrop?: boolean;
+  /** Grown-up switch: which days the Garage drop is live, as day-of-week
+   *  numbers (0 = Sunday, 5 = Friday, 6 = Saturday); absent = Fri–Sun. */
+  garageDays?: number[];
+  /** Grown-up switch: the real-life build leg is on (absent = on). */
+  garageRealLife?: boolean;
+  /** Per local day (YYYY-MM-DD), weekend keys whose real-life build a
+   *  grown-up confirmed. */
+  garageRealByDay?: Record<string, string[]>;
 }
 
 export function emptyProgression(): ProgressionState {
@@ -399,6 +409,49 @@ export function cleanGarageDone(raw: unknown): string[] {
     .slice(-GARAGE_DONE_MAX);
 }
 
+/** Day-of-week numbers the Garage drop may be live on (0 = Sunday). */
+export const GARAGE_DAY_NUMBERS = [0, 5, 6] as const;
+
+/**
+ * The grown-up-picked Garage days: valid day numbers only, no repeats,
+ * sorted. Absent or empty input means "not set" (the Garage defaults to
+ * Fri–Sun); an explicitly emptied list never survives a save.
+ */
+export function cleanGarageDays(raw: unknown): number[] | undefined {
+  if (raw === undefined) return undefined;
+  if (!Array.isArray(raw)) return undefined;
+  const days = [
+    ...new Set(
+      raw.filter(
+        (d): d is number =>
+          typeof d === "number" &&
+          Number.isInteger(d) &&
+          (GARAGE_DAY_NUMBERS as readonly number[]).includes(d),
+      ),
+    ),
+  ].sort((a, b) => a - b);
+  return days.length > 0 ? days : undefined;
+}
+
+/** Per-day real-life confirmations: weekend keys by "YYYY-MM-DD", bounded. */
+export function cleanGarageRealByDay(raw: unknown): Record<string, string[]> {
+  const out: Record<string, string[]> = {};
+  if (typeof raw !== "object" || raw === null || Array.isArray(raw)) return out;
+  for (const [day, ids] of Object.entries(raw)) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(day) || !Array.isArray(ids)) continue;
+    const cleanIds = [
+      ...new Set(
+        ids.filter(
+          (id): id is string =>
+            typeof id === "string" && GARAGE_WEEKEND_PATTERN.test(id),
+        ),
+      ),
+    ];
+    if (cleanIds.length > 0) out[day] = cleanIds;
+  }
+  return out;
+}
+
 /** `garden` = seen as a silhouette, `garden#` = seen in full colour. */
 export const EXPLORER_SEEN_PATTERN = /^[A-Za-z0-9_-]+(?::[A-Za-z0-9_-]+)*#?$/;
 /** Room for every place on a fully grown map (about 200) twice over. */
@@ -581,6 +634,11 @@ export function normalizeProgression(raw: unknown): ProgressionState {
   const explorerVisited = cleanExplorerVisited(v.explorerVisited);
   const explorerSeen = cleanExplorerSeen(v.explorerSeen);
   const garageDone = cleanGarageDone(v.garageDone);
+  const garageDrop = typeof v.garageDrop === "boolean" ? v.garageDrop : undefined;
+  const garageDays = cleanGarageDays(v.garageDays);
+  const garageRealLife =
+    typeof v.garageRealLife === "boolean" ? v.garageRealLife : undefined;
+  const garageRealByDay = cleanGarageRealByDay(v.garageRealByDay);
   return {
     version: 1,
     totalXp:
@@ -606,6 +664,10 @@ export function normalizeProgression(raw: unknown): ProgressionState {
     ...(explorerVisited.length > 0 ? { explorerVisited } : {}),
     ...(explorerSeen.length > 0 ? { explorerSeen } : {}),
     ...(garageDone.length > 0 ? { garageDone } : {}),
+    ...(garageDrop !== undefined ? { garageDrop } : {}),
+    ...(garageDays !== undefined ? { garageDays } : {}),
+    ...(garageRealLife !== undefined ? { garageRealLife } : {}),
+    ...(Object.keys(garageRealByDay).length > 0 ? { garageRealByDay } : {}),
   };
 }
 
@@ -619,6 +681,19 @@ function mergedAgeBand(
     return local.ageBand;
   }
   return local.totalXp >= remote.totalXp ? local.ageBand : remote.ageBand;
+}
+
+/** Grown-up switches merge like the age band: set wins, conflicts follow XP. */
+function mergedGarageSwitch(
+  local: ProgressionState,
+  remote: ProgressionState,
+  pick: (prog: ProgressionState) => boolean | undefined,
+): boolean | undefined {
+  const a = pick(local);
+  const b = pick(remote);
+  if (a === undefined) return b;
+  if (b === undefined || b === a) return a;
+  return local.totalXp >= remote.totalXp ? a : b;
 }
 
 /** Union merge: highest XP/stars win unless one side carries a newer parent reset. */
@@ -713,6 +788,21 @@ export function mergeProgression(
     ...(remote.garageDone ?? []),
     ...(local.garageDone ?? []),
   ]);
+  const garageDrop = mergedGarageSwitch(local, remote, (p) => p.garageDrop);
+  const garageDays = cleanGarageDays([
+    ...(remote.garageDays ?? []),
+    ...(local.garageDays ?? []),
+  ]);
+  const garageRealLife = mergedGarageSwitch(local, remote, (p) => p.garageRealLife);
+  const garageRealByDay = cleanGarageRealByDay({
+    ...(remote.garageRealByDay ?? {}),
+    ...Object.fromEntries(
+      Object.entries(local.garageRealByDay ?? {}).map(([day, ids]) => [
+        day,
+        [...(remote.garageRealByDay?.[day] ?? []), ...ids],
+      ]),
+    ),
+  });
   return {
     version: 1,
     totalXp: Math.max(local.totalXp, remote.totalXp),
@@ -733,6 +823,10 @@ export function mergeProgression(
     ...(explorerVisited.length > 0 ? { explorerVisited } : {}),
     ...(explorerSeen.length > 0 ? { explorerSeen } : {}),
     ...(garageDone.length > 0 ? { garageDone } : {}),
+    ...(garageDrop !== undefined ? { garageDrop } : {}),
+    ...(garageDays !== undefined ? { garageDays } : {}),
+    ...(garageRealLife !== undefined ? { garageRealLife } : {}),
+    ...(Object.keys(garageRealByDay).length > 0 ? { garageRealByDay } : {}),
   };
 }
 
@@ -748,6 +842,11 @@ export function resetProgression(
     ...(prog.ageBand !== undefined ? { ageBand: prog.ageBand } : {}),
     ...(prog.enabledChoreIds !== undefined
       ? { enabledChoreIds: [...prog.enabledChoreIds] }
+      : {}),
+    ...(prog.garageDrop !== undefined ? { garageDrop: prog.garageDrop } : {}),
+    ...(prog.garageDays !== undefined ? { garageDays: [...prog.garageDays] } : {}),
+    ...(prog.garageRealLife !== undefined
+      ? { garageRealLife: prog.garageRealLife }
       : {}),
     resetAt: Math.max(1, Math.floor(now)),
   };

@@ -12,6 +12,8 @@ import { isBuiltInToy, type Toy } from "../../../../shared/toy";
 import { loadToyPortrait, PORTRAIT_PX, saveToyPortrait } from "../../../lib/toyPortrait";
 import {
   completeGarage,
+  completeGarageReal,
+  GARAGE_DAYS_DEFAULT,
   GARAGE_DROPS,
   GARAGE_GRACE_MS,
   garageGraceLeftMs,
@@ -517,11 +519,13 @@ export function GameCanvas({
     missionPanel.open &&
     parentSnapshot.status.reason !== "quiet_hours";
 
-  // The Garage's state for today (weekend or not, this weekend's drop, done or not).
+  // The Garage's state for today (drop days, the drop switch, done or not).
   const garage = garageStatus({
     dayKey: localDay(Date.now(), parentSnapshot.settings.timezone),
     ageBand: progression.ageBand ?? null,
     done: progression.garageDone,
+    dropEnabled: progression.garageDrop,
+    days: progression.garageDays,
     preview: demoMode && garagePreview,
   });
   const garageRef = useRef(garage);
@@ -814,11 +818,14 @@ export function GameCanvas({
     return () => window.clearInterval(id);
   }, [garageMission, garageDoneNow, state.ready]);
 
-  // Weekend loaner parts: open to try on Friday to Sunday, taken back after.
+  // Weekend loaner parts: open to try on drop days, taken back after.
   useEffect(() => {
     if (!state.ready) return;
-    engineRef.current?.setLoanKeys(garage.isWeekend ? loanKeys(garage.drop) : [], KNOWN_LOANERS);
-  }, [state.ready, garage.isWeekend, garage.drop]);
+    engineRef.current?.setLoanKeys(
+      garage.isWeekend && garage.dropEnabled ? loanKeys(garage.drop) : [],
+      KNOWN_LOANERS,
+    );
+  }, [state.ready, garage.isWeekend, garage.dropEnabled, garage.drop]);
 
   const toggleFullscreen = () => {
     const host = hostRef.current as
@@ -1482,6 +1489,11 @@ export function GameCanvas({
             onFactoryAction={(action) => engine()?.factoryAction(action)}
             onForgeTool={(toolId) => engine()?.forgeTool(toolId)}
             onPrintTool={(toolId) => engine()?.printTool(toolId)}
+            loanerKeys={
+              new Set(
+                garage.isWeekend && garage.dropEnabled ? loanKeys(garage.drop) : [],
+              )
+            }
           />
         )}
 
@@ -1523,7 +1535,7 @@ export function GameCanvas({
                 prog: progression,
                 found: new Set(state.foundKeys),
                 missionsDone: new Set(state.missionsDoneKeys),
-                garage: { weekend: garage.isWeekend, done: garage.done },
+                garage: { weekend: garage.isWeekend && garage.dropEnabled, done: garage.done, trophies: (progression.garageDone ?? []).length },
               }),
               visited: new Set(progression.explorerVisited ?? []),
               currentId: state.world,
@@ -1603,7 +1615,7 @@ export function GameCanvas({
               prog: progression,
               found: new Set(state.foundKeys),
               missionsDone: new Set(state.missionsDoneKeys),
-              garage: { weekend: garage.isWeekend, done: garage.done },
+              garage: { weekend: garage.isWeekend && garage.dropEnabled, done: garage.done, trophies: (progression.garageDone ?? []).length },
             })}
             ageBand={progression.ageBand ?? null}
             guide={
@@ -1644,6 +1656,8 @@ export function GameCanvas({
             onStart={startGarageMission}
             onFreeBuild={freeBuildFromGarage}
             onClose={() => setGarageOpen(false)}
+            realLifeOn={progression.garageRealLife !== false}
+            buildRealUrl={kipUrl ?? null}
           />
         )}
 
@@ -1724,6 +1738,9 @@ export function GameCanvas({
             saveGaragePreview(next);
             setGaragePreview(next);
           }}
+          garageSummary={{ title: garage.variant.title, done: garage.done }}
+          garageDropOn={progression.garageDrop !== false}
+          garageDays={progression.garageDays}
           timeOfDayMode={todMode}
           onSetTimeOfDayMode={(mode) => {
             saveTimeOfDayMode(mode);
@@ -1757,6 +1774,47 @@ export function GameCanvas({
             saveProgression(next);
             setProgression(next);
             void pushProgression(next);
+          }}
+          garageRealLifeOn={progression.garageRealLife !== false}
+          garageRealDone={(progression.garageRealByDay?.[localDay(Date.now(), parentSnapshot.settings.timezone)] ?? []).includes(garage.weekendKey)}
+          onSetGarageDrop={(on: boolean) => {
+            const next = { ...progressionRef.current, garageDrop: on };
+            saveProgression(next);
+            setProgression(next);
+            void pushProgression(next);
+          }}
+          onToggleGarageDay={(dow: number) => {
+            const current = progressionRef.current.garageDays ?? [...GARAGE_DAYS_DEFAULT];
+            const nextDays = current.includes(dow)
+              ? current.filter((d) => d !== dow)
+              : [...current, dow];
+            // The last day stays: an emptied list would silently mean "every day".
+            if (nextDays.length === 0) return;
+            const next = { ...progressionRef.current, garageDays: nextDays };
+            saveProgression(next);
+            setProgression(next);
+            void pushProgression(next);
+          }}
+          onSetGarageRealLife={(on: boolean) => {
+            const next = { ...progressionRef.current, garageRealLife: on };
+            saveProgression(next);
+            setProgression(next);
+            void pushProgression(next);
+          }}
+          onConfirmGarageReal={() => {
+            const dayKey = localDay(Date.now(), parentSnapshot.settings.timezone);
+            const res = completeGarageReal(progressionRef.current, garageRef.current.weekendKey, dayKey);
+            if (res.next === progressionRef.current) return "Nothing to confirm yet: finish this weekend's drop in the app first.";
+            saveProgression(res.next);
+            setProgression(res.next);
+            void pushProgression(res.next);
+            const rankNote =
+              res.rankAfter.rank > res.rankBefore.rank
+                ? ` · Rank ${res.rankAfter.rank}: ${res.rankAfter.title}`
+                : "";
+            return res.awarded > 0
+              ? `Built it for real! +${res.awarded} XP${rankNote}`
+              : `Built it for real! The day's real-life XP was already earned.${rankNote}`;
           }}
           onSnapshotChange={setParentSnapshot}
           onClose={() => {

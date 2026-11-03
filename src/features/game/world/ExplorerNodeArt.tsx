@@ -126,7 +126,36 @@ function House({ complete, night }: { complete: boolean; night: boolean }) {
  * the door is down. On a weekend with a new drop the door is rolled up on a
  * warm-lit bay, with sparks. At night the windows are lit either way.
  */
-function Garage({ hot, done, night }: { hot: boolean; done: boolean; night: boolean }) {
+/**
+ * Finished weekends as roof trophies: up to four small stars along the roof
+ * edge, then a count. Permanent while the weekends stay finished.
+ */
+function Trophies({ count }: { count: number }) {
+  const shown = Math.min(4, count);
+  if (shown <= 0) return null;
+  return (
+    <g aria-hidden="true">
+      {Array.from({ length: shown }, (_, i) => (
+        <path
+          key={i}
+          transform={`translate(${18 + i * 9.5} 8.5) scale(0.55)`}
+          d="M0-8l2.4 4.9 5.4.8-3.9 3.8.9 5.4L0 4.4l-4.8 2.5.9-5.4-3.9-3.8 5.4-.8z"
+          fill="#ffd24d"
+          stroke={INK}
+          strokeWidth="2.4"
+          strokeLinejoin="round"
+        />
+      ))}
+      {count > shown ? (
+        <text x="58" y="12" textAnchor="end" fontSize="9" fontWeight="900" fill={INK} fontFamily="Figtree, system-ui, sans-serif">
+          +{count - shown}
+        </text>
+      ) : null}
+    </g>
+  );
+}
+
+function Garage({ hot, done, night, trophies = 0 }: { hot: boolean; done: boolean; night: boolean; trophies?: number }) {
   const lit = hot || night;
   return (
     <svg viewBox="0 0 64 64" aria-hidden="true" data-lit={lit ? "1" : undefined}>
@@ -134,6 +163,7 @@ function Garage({ hot, done, night }: { hot: boolean; done: boolean; night: bool
       <ellipse cx="32" cy="55" rx="25" ry="6" fill={SHADOW} />
       <rect x="8" y="27" width="48" height="28" rx="3" fill="#e8edf7" stroke={INK} strokeWidth="2.6" />
       <path d="M4 29 32 11l28 18z" fill="#6f7fa8" stroke={INK} strokeWidth="2.6" strokeLinejoin="round" />
+      <Trophies count={trophies} />
       <rect x="15" y="35" width="34" height="20" rx="2" fill={hot ? "#ffd866" : "#c7d2e6"} stroke={INK} strokeWidth="2.2" />
       {hot ? (
         <>
@@ -201,7 +231,14 @@ export function NodeArt({ node, night = false }: { node: ExplorerNode; night?: b
   if (node.kind === "lab") return <Castle theme={node.theme} complete={node.complete} night={night} />;
   if (node.id === "room") return <House complete={node.complete} night={night} />;
   if (node.kind === "garage") {
-    return <Garage hot={node.card?.badge === "new"} done={node.complete} night={night} />;
+    return (
+      <Garage
+        hot={node.card?.badge === "new"}
+        done={node.complete}
+        night={night}
+        trophies={node.card?.trophies ?? 0}
+      />
+    );
   }
   if (node.kind === "frontier") {
     return <Dot color="#ff5148" glyph="?" scale={1} complete={false} night={night} />;

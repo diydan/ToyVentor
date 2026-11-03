@@ -298,6 +298,216 @@ export const GARAGE_DROPS: readonly GarageDrop[] = [
       },
     },
   },
+  {
+    id: "propeller-cap",
+    kind: "newPart",
+    loan: {
+      character: "character.hat.propcap",
+      vehicle: "vehicle.rear.spoiler",
+    },
+    byGroup: {
+      tiny: { title: "Spinny hat!", brief: "Put on the spinny hat.", goal: { kind: "equip", keys: { character: "character.hat.propcap", vehicle: "vehicle.rear.spoiler" } } },
+      early: {
+        title: "Spin into the weekend",
+        brief: "Try the loaner part and give your toy spin.",
+        goal: { kind: "equip", keys: { character: "character.hat.propcap", vehicle: "vehicle.rear.spoiler" } },
+      },
+      mid: {
+        title: "Weekend loaner: spin",
+        brief: "A spinny loaner part is yours this weekend. Wear it, then keep the spin with your own parts.",
+        goal: { kind: "all", goals: [{ kind: "equip", keys: { character: "character.hat.propcap", vehicle: "vehicle.rear.spoiler" } }, { kind: "stats", need: ["spin"] }] },
+      },
+      older: {
+        title: "Loaner spin trial",
+        brief: "Wear the loaner, then rebuild the same spin from found parts and hand the loaner back.",
+        goal: { kind: "all", goals: [{ kind: "equip", keys: { character: "character.hat.propcap", vehicle: "vehicle.rear.spoiler" } }, { kind: "stats", need: ["spin", "speed"] }] },
+      },
+    },
+  },
+  {
+    id: "sky-wings",
+    kind: "newPart",
+    loan: {
+      character: "character.back.wings",
+      vehicle: "vehicle.chassis.buggy",
+    },
+    byGroup: {
+      tiny: { title: "Wings!", brief: "Put on the wings and fly.", goal: { kind: "equip", keys: { character: "character.back.wings", vehicle: "vehicle.chassis.buggy" } } },
+      early: {
+        title: "Wings for the weekend",
+        brief: "Borrow the wings and take your toy racing.",
+        goal: { kind: "equip", keys: { character: "character.back.wings", vehicle: "vehicle.chassis.buggy" } },
+      },
+      mid: {
+        title: "Weekend loaner: wings",
+        brief: "Sky wings are yours to try. Wear them and feel the speed.",
+        goal: { kind: "equip", keys: { character: "character.back.wings", vehicle: "vehicle.chassis.buggy" } },
+      },
+      older: {
+        title: "Flight test",
+        brief: "Wear the wings, then build speed and spin around them.",
+        goal: { kind: "all", goals: [{ kind: "equip", keys: { character: "character.back.wings", vehicle: "vehicle.chassis.buggy" } }, { kind: "stats", need: ["speed", "spin"] }] },
+      },
+    },
+  },
+  {
+    id: "jetpack-weekend",
+    kind: "newPart",
+    loan: {
+      character: "character.back.jetpack",
+      vehicle: "vehicle.front.lightbar",
+    },
+    byGroup: {
+      tiny: { title: "Jetpack!", brief: "Put on the jetpack. 3, 2, 1!", goal: { kind: "equip", keys: { character: "character.back.jetpack", vehicle: "vehicle.front.lightbar" } } },
+      early: {
+        title: "Blast off",
+        brief: "Borrow the jetpack and blast your toy off.",
+        goal: { kind: "equip", keys: { character: "character.back.jetpack", vehicle: "vehicle.front.lightbar" } },
+      },
+      mid: {
+        title: "Weekend loaner: jetpack",
+        brief: "A real jetpack to try. Wear it and chase the glow.",
+        goal: { kind: "all", goals: [{ kind: "equip", keys: { character: "character.back.jetpack", vehicle: "vehicle.front.lightbar" } }, { kind: "stats", need: ["glow"] }] },
+      },
+      older: {
+        title: "Jetpack trial",
+        brief: "Wear the jetpack and build glow and speed to match it.",
+        goal: { kind: "all", goals: [{ kind: "equip", keys: { character: "character.back.jetpack", vehicle: "vehicle.front.lightbar" } }, { kind: "stats", need: ["glow", "speed"] }] },
+      },
+    },
+  },
+  {
+    id: "spin-and-grip",
+    kind: "idea",
+    byGroup: {
+      tiny: { title: "Spin!", brief: "Make your toy spin around.", goal: { kind: "stats", need: ["spin"] } },
+      early: {
+        title: "Spin and grip",
+        brief: "Build something with spin and grip.",
+        goal: { kind: "stats", need: ["spin", "torque"] },
+      },
+      mid: {
+        title: "Whirl and hold",
+        brief: "Spin and grip together. Mix parts until both show up.",
+        goal: { kind: "stats", need: ["spin", "torque"] },
+      },
+      older: {
+        title: "Controlled whirl",
+        brief: "Spin, grip and speed, all three at once.",
+        goal: { kind: "stats", need: ["spin", "torque", "speed"] },
+      },
+    },
+  },
+  {
+    id: "glow-and-spin",
+    kind: "idea",
+    byGroup: {
+      tiny: { title: "Glow!", brief: "Make your toy glow bright.", goal: { kind: "stats", need: ["glow"] } },
+      early: {
+        title: "Glow and whirl",
+        brief: "Build something that glows and spins.",
+        goal: { kind: "stats", need: ["glow", "spin"] },
+      },
+      mid: {
+        title: "Bright whirl",
+        brief: "Glow and spin together. Mix parts until both show up.",
+        goal: { kind: "stats", need: ["glow", "spin"] },
+      },
+      older: {
+        title: "Light storm",
+        brief: "Glow, spin and grip, all three at once.",
+        goal: { kind: "stats", need: ["glow", "spin", "torque"] },
+      },
+    },
+  },
+  {
+    id: "speed-and-grip",
+    kind: "idea",
+    byGroup: {
+      tiny: { title: "Fast!", brief: "Make your toy super fast.", goal: { kind: "stats", need: ["speed"] } },
+      early: {
+        title: "Fast and strong",
+        brief: "Build something fast that can shove.",
+        goal: { kind: "stats", need: ["speed", "torque"] },
+      },
+      mid: {
+        title: "Muscle racer",
+        brief: "Speed and grip together. Mix parts until both show up.",
+        goal: { kind: "stats", need: ["speed", "torque"] },
+      },
+      older: {
+        title: "Two-stat tune",
+        brief: "Any two stats from your own parts, then a third.",
+        goal: { kind: "statCount", count: 3 },
+      },
+    },
+  },
+  {
+    id: "swap-two",
+    kind: "remix",
+    byGroup: {
+      tiny: { title: "Two swaps!", brief: "Swap two parts, not one.", goal: { kind: "remix", changes: 2 } },
+      early: {
+        title: "Double remix",
+        brief: "Change two parts of your toy to make it new.",
+        goal: { kind: "remix", changes: 2 },
+      },
+      mid: {
+        title: "Two-part twist",
+        brief: "Change two parts and gain a stat your toy did not have.",
+        goal: { kind: "remix", changes: 2, gainStat: true },
+      },
+      older: {
+        title: "Full rebuild",
+        brief: "Change three parts but keep every stat your toy had.",
+        goal: { kind: "remix", changes: 3, keepStats: true },
+      },
+    },
+  },
+  {
+    id: "keep-the-glow",
+    kind: "remix",
+    byGroup: {
+      tiny: { title: "One swap!", brief: "Swap one part. Keep it glowing.", goal: { kind: "remix", changes: 1 } },
+      early: {
+        title: "Keep it glowing",
+        brief: "Change a part but keep the glow.",
+        goal: { kind: "remix", changes: 1 },
+      },
+      mid: {
+        title: "Hold the shine",
+        brief: "Change two parts and keep every stat your toy had.",
+        goal: { kind: "remix", changes: 2, keepStats: true },
+      },
+      older: {
+        title: "Shine, rebuilt",
+        brief: "Change three parts, keep every stat, and gain a new one.",
+        goal: { kind: "remix", changes: 3, keepStats: true, gainStat: true },
+      },
+    },
+  },
+  {
+    id: "mirror-build",
+    kind: "remix",
+    byGroup: {
+      tiny: { title: "Copy toy!", brief: "Copy a friend's toy part.", goal: { kind: "remix", changes: 1 } },
+      early: {
+        title: "Borrow an idea",
+        brief: "Change a part to match a toy you saw today.",
+        goal: { kind: "remix", changes: 1, gainStat: true },
+      },
+      mid: {
+        title: "Tribute build",
+        brief: "Rebuild your toy as a tribute: two changed parts, same heart.",
+        goal: { kind: "remix", changes: 2, keepStats: true },
+      },
+      older: {
+        title: "Tribute, improved",
+        brief: "Two changed parts, every stat kept, one stat gained.",
+        goal: { kind: "remix", changes: 2, keepStats: true, gainStat: true },
+      },
+    },
+  },
 ];
 
 /** The first weekend with a drop (the first Friday after launch); the rotation counts from here. */
@@ -322,10 +532,15 @@ export function loanKeys(drop: GarageDrop): string[] {
 
 /* -------------------------------------------------------------- status */
 
+/** The days the Garage drop may be live on, as day-of-week numbers (0 = Sunday). */
+export const GARAGE_DAYS_DEFAULT: readonly number[] = [0, 5, 6];
+
 export interface GarageStatus {
   dayKey: string;
-  /** It is Friday to Sunday (or Preview weekend is on): the Garage is animated and in focus. */
+  /** It is a drop day (or Preview weekend is on): the Garage is animated and in focus. */
   isWeekend: boolean;
+  /** The grown-up weekend-drop switch is on. Off hides the drop card. */
+  dropEnabled: boolean;
   /** The Friday of the weekend the drop belongs to. */
   weekendKey: string;
   nextWeekendKey: string;
@@ -334,7 +549,7 @@ export interface GarageStatus {
   variant: GarageVariant;
   /** This weekend's drop is finished. */
   done: boolean;
-  /** Weekend and not finished: the badge, the animation and the suggestion. */
+  /** A drop day, the drop switch on, and not finished: the badge, the animation and the suggestion. */
   open: boolean;
   preview: boolean;
 }
@@ -343,6 +558,10 @@ export function garageStatus(input: {
   dayKey: string;
   ageBand: number | null | undefined;
   done: readonly string[] | undefined;
+  /** Grown-up switch: the weekend drop is on (absent = on). */
+  dropEnabled?: boolean;
+  /** Grown-up days: day-of-week numbers the drop is live on (absent = Fri–Sun). */
+  days?: readonly number[];
   /** Demo Mode "Preview weekend": show the weekend state on a weekday. */
   preview?: boolean;
 }): GarageStatus {
@@ -350,20 +569,27 @@ export function garageStatus(input: {
   const preview = input.preview === true && !real.isWeekend;
   // A preview on a weekday shows the next drop, so it never collides with last weekend's.
   const weekendKey = preview ? real.nextWeekendKey : real.weekendKey;
-  const isWeekend = real.isWeekend || preview;
+  const days =
+    input.days === undefined ? GARAGE_DAYS_DEFAULT : [...new Set(input.days)];
+  // A drop is live on the grown-up-picked days (within Fri–Sun); the drop
+  // switch only hides the card, never the Garage itself.
+  const dow = dayOfWeek(input.dayKey);
+  const live = preview || (dow !== null && days.includes(dow) && real.isWeekend);
   const drop = dropForWeekend(weekendKey);
   const group = bandGroupOf(input.ageBand);
   const done = (input.done ?? []).includes(weekendKey);
+  const dropEnabled = input.dropEnabled !== false;
   return {
     dayKey: input.dayKey,
-    isWeekend,
+    isWeekend: live,
     weekendKey,
     nextWeekendKey: dayKeyOf((dayNumber(weekendKey) ?? 0) + 7),
     drop,
     group,
     variant: drop.byGroup[group],
     done,
-    open: isWeekend && !done,
+    dropEnabled,
+    open: dropEnabled && !done && live,
     preview,
   };
 }
@@ -374,6 +600,9 @@ export const garageMissionId = (weekendKey: string): string => `garage.${weekend
 /* ----------------------------------------------------------- rewards */
 
 export const GARAGE_XP = DAILY_QUEST_XP;
+/** The real-life build bonus: small, once per weekend, and only when no
+ *  real-life XP was earned yet that day (shared +25 XP/day ceiling). */
+export const GARAGE_REAL_XP = 10;
 /** Room for a few years of weekends. */
 const GARAGE_DONE_MAX = 200;
 
@@ -415,6 +644,61 @@ export function completeGarage(prog: ProgressionState, weekendKey: string, dayKe
     rankBefore,
     rankAfter: rankFor(next.totalXp),
     stemMissionId: garageMissionId(weekendKey),
+  };
+}
+
+export interface GarageRealResult {
+  next: ProgressionState;
+  awarded: number;
+  rankBefore: MakerRank;
+  rankAfter: MakerRank;
+}
+
+/**
+ * The grown-up "We built it": the family built this weekend's drop for real.
+ * Only after the in-app drop is done, only with the real-life leg switched
+ * on, and once per weekend. Pays the small real-life bonus only when no
+ * real-life XP was earned yet that day (a routine or an earlier confirm).
+ */
+export function completeGarageReal(
+  prog: ProgressionState,
+  weekendKey: string,
+  dayKey: string,
+): GarageRealResult {
+  const rankBefore = rankFor(prog.totalXp);
+  const noop: GarageRealResult = {
+    next: prog,
+    awarded: 0,
+    rankBefore,
+    rankAfter: rankBefore,
+  };
+  if (dayNumber(weekendKey) === null || !DAY_RE.test(dayKey)) {
+    return noop;
+  }
+  if (prog.garageRealLife === false) return noop;
+  if (!(prog.garageDone ?? []).includes(weekendKey)) return noop;
+  const realToday = prog.garageRealByDay?.[dayKey] ?? [];
+  if (realToday.includes(weekendKey)) return noop;
+  const earnedToday =
+    (prog.completedChoresByDay?.[dayKey] ?? []).length > 0 ||
+    Object.entries(prog.garageRealByDay ?? {}).some(
+      ([day, ids]) => day === dayKey && ids.length > 0,
+    );
+  const awarded = earnedToday ? 0 : GARAGE_REAL_XP;
+  const stamps = [...new Set([...(prog.workshopDays ?? []), dayKey])].sort();
+  return {
+    next: {
+      ...prog,
+      totalXp: prog.totalXp + awarded,
+      garageRealByDay: {
+        ...(prog.garageRealByDay ?? {}),
+        [dayKey]: [...new Set([...realToday, weekendKey])],
+      },
+      workshopDays: stamps,
+    },
+    awarded,
+    rankBefore,
+    rankAfter: rankFor(prog.totalXp + awarded),
   };
 }
 

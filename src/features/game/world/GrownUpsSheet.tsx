@@ -64,9 +64,29 @@ export interface GrownUpsSheetProps {
   timeOfDayMode?: TimeOfDayMode;
   onSetTimeOfDayMode?: (mode: TimeOfDayMode) => void;
   onToggleChore?: (choreId: string) => void;
+  /** This weekend's drop for the Garage section (null when the sheet has no game state). */
+  garageSummary?: { title: string; done: boolean } | null;
+  /** The Garage place is always on; the weekend drop card can be switched off. */
+  garageDropOn?: boolean;
+  onSetGarageDrop?: (on: boolean) => void;
+  /** Grown-up-picked drop days (day-of-week numbers); absent = Fri–Sun. */
+  garageDays?: number[];
+  onToggleGarageDay?: (dow: number) => void;
+  garageRealLifeOn?: boolean;
+  onSetGarageRealLife?: (on: boolean) => void;
+  /** This weekend's real-life build already confirmed by a grown-up. */
+  garageRealDone?: boolean;
+  /** Confirm "We built it"; returns the status line to show. */
+  onConfirmGarageReal?: () => string;
   onSnapshotChange: (next: ParentSnapshot) => void;
   onClose: () => void;
 }
+
+const GARAGE_DAY_LABELS: ReadonlyArray<{ dow: number; label: string }> = [
+  { dow: 5, label: "Fri" },
+  { dow: 6, label: "Sat" },
+  { dow: 0, label: "Sun" },
+];
 
 type GateStep =
   | "hold"
@@ -108,6 +128,15 @@ export function GrownUpsSheet({
   timeOfDayMode,
   onSetTimeOfDayMode,
   onToggleChore,
+  garageSummary = null,
+  garageDropOn = true,
+  onSetGarageDrop,
+  garageDays,
+  onToggleGarageDay,
+  garageRealLifeOn = true,
+  onSetGarageRealLife,
+  garageRealDone = false,
+  onConfirmGarageReal,
   onSnapshotChange,
   onClose,
 }: GrownUpsSheetProps) {
@@ -1188,6 +1217,7 @@ export function GrownUpsSheet({
           )}
 
           {progression && (
+            <>
             <div className="tv-parent-ledger">
               <div className="tv-parent-row-head" style={{ marginBottom: 0 }}>
                 <div>
@@ -1227,6 +1257,82 @@ export function GrownUpsSheet({
                 )}
               </div>
             </div>
+            <div className="tv-parent-ledger">
+              <div className="tv-parent-row-head" style={{ marginBottom: 0 }}>
+                <div>
+                  <span
+                    className="kicker-label"
+                    style={{ margin: 0, display: "block" }}
+                  >
+                    Weekend Build
+                  </span>
+                  <b>Garage</b>
+                </div>
+                <button
+                  type="button"
+                  className="tv-ctl"
+                  aria-pressed={garageDropOn}
+                  onClick={() => onSetGarageDrop?.(!garageDropOn)}
+                >
+                  {garageDropOn ? "Weekend drop: On" : "Weekend drop: Off"}
+                </button>
+              </div>
+              <p className="tv-moves" style={{ margin: 0, fontSize: 12 }}>
+                The Garage itself stays open. Off hides only the weekend drop
+                card{garageSummary ? ` (“${garageSummary.title}”)` : ""}.
+              </p>
+              <div className="tv-chips" role="group" aria-label="Garage drop days">
+                {GARAGE_DAY_LABELS.map(({ dow, label }) => {
+                  const on = (garageDays ?? [0, 5, 6]).includes(dow);
+                  const last = on && (garageDays ?? [0, 5, 6]).length === 1;
+                  return (
+                    <button
+                      key={dow}
+                      type="button"
+                      className="tv-sc"
+                      aria-pressed={on}
+                      disabled={last}
+                      title={last ? "One day stays on" : `Drop live on ${label}s`}
+                      onClick={() => onToggleGarageDay?.(dow)}
+                    >
+                      {on ? "✓ " : ""}
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+              <div className="tv-parent-row-head" style={{ marginBottom: 0 }}>
+                <div>
+                  <b>Real-life build</b>
+                </div>
+                <button
+                  type="button"
+                  className="tv-ctl"
+                  aria-pressed={garageRealLifeOn}
+                  onClick={() => onSetGarageRealLife?.(!garageRealLifeOn)}
+                >
+                  {garageRealLifeOn ? "Real-life leg: On" : "Real-life leg: Off"}
+                </button>
+              </div>
+              <p className="tv-moves" style={{ margin: 0, fontSize: 12 }}>
+                After the in-app drop, the family rebuilds it with real parts.
+                Confirming here stamps a Workshop Day and pays +10 XP, only
+                when no real-life XP was earned yet today.
+              </p>
+              {onConfirmGarageReal && (
+                <button
+                  type="button"
+                  className="tv-ctl tv-ctl-primary"
+                  disabled={!garageSummary?.done || !garageRealLifeOn || garageRealDone}
+                  onClick={() => setStatusNote(onConfirmGarageReal())}
+                >
+                  {garageRealDone
+                    ? "Built it for real ★"
+                    : "We built it"}
+                </button>
+              )}
+            </div>
+            </>
           )}
 
           {/* 2. One-Tap Presets */}

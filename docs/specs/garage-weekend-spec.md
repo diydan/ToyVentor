@@ -227,12 +227,19 @@ How it behaves, where this differs from the design above:
   a pretend weekend: finishing it runs the chip to Done and says "Preview
   only. Nothing is saved", and pays nothing, marks nothing done and credits
   nothing, so it cannot touch the real first weekend.
-- **Not built:** parent controls (drop switch, days), the real-life leg and its
-  grown-up confirm (`garageReal`), roof trophies, the 3D loaner on the sheet,
-  a loaner label in Build, and drops beyond the three.
+- **Built (phase 2):** parent controls (drop switch, days), the real-life leg
+  and its grown-up confirm (`garageRealByDay`), roof trophies, a loaner
+  label in Build, and twelve drops. Still not built: the 3D loaner on the
+  sheet.
+- **Out of scope for phase 2:** the warm-welcome decision, the grace length,
+  the household equip question.
 
-Verified: `tests/garage.test.ts` (45; window, rotation, every goal reachable
-with parts a child has open, checks, completion, card order, device settings)
+Verified: `tests/garage.test.ts` (53+; window, rotation, every goal reachable
+with parts a child has open, checks, completion, card order, device settings,
+switches, real-life leg, twelve-drop catalog) and `npm run e2e:trail`
+scenario `garage-phase2` (trophies, Build-it-for-real link, loaner tag,
+drop switch off; the Grown-Ups confirm is unit-covered, the gate bootstrap
+is too heavy for the shared suite)
 and `npm run e2e:trail` scenarios `garage-weekday`, `garage-carousel`,
 `garage-weekend`, `garage-preview` with a pinned clock (a Wednesday and the
 Saturday Nov 7). **Not tried on a real phone.**
@@ -260,6 +267,26 @@ Saturday Nov 7). **Not tried on a real phone.**
    place), Workshop (the Kip and Truck bench page, and the Workshop Day stamps
    it leads to), Factory (the build stage). A pre-reader knows what a garage
    is, which matters in the carousel for ages 3–8.
+
+## Phase 2 — built
+
+- **Parent controls** (Grown-Ups sheet, Garage section, behind the existing
+  gate): the weekend-drop switch, drop days (Fri/Sat/Sun chips, one stays
+  on), and the real-life leg switch. Kept in `progression:v1`
+  (`garageDrop`, `garageDays`, `garageRealLife`); switches merge like the
+  age band, days merge by union, all three survive an XP reset. The Garage
+  place itself is never switched off.
+- **Real-life leg**: after the in-app drop, "Build it for real" opens the
+  Workshop page with the toy as dressed now (the Kip demo URL contract);
+  the grown-up confirms "We built it" in the Grown-Ups Garage section.
+  Pays +10 XP once per weekend, only when no real-life XP was earned yet
+  that day (shared +25 XP/day ceiling); always stamps a Workshop Day.
+- **Roof trophies**: one star per finished weekend on the map's Garage
+  (four, then a count).
+- **Loaner label**: loan parts wear a "Loaner" tag in Build while the drop
+  is live.
+- **Twelve drops**: the launch three keep their rotation slots; nine more
+  appended (three per kind from the newPart/idea/remix templates).
 
 ## Still open
 

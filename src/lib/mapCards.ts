@@ -30,6 +30,8 @@ export interface MapCard {
   suggested: boolean;
   /** A small flag on the card; the Garage carries "new" on the weekend its drop is waiting. */
   badge?: "new";
+  /** The Garage card: finished weekends, shown as roof trophies on the map. */
+  trophies?: number;
 }
 
 export interface MapStop {
@@ -112,7 +114,7 @@ export interface MapCardsInput {
    * The Garage (garage-weekend-spec.md). Absent = no Garage card, which keeps the
    * plain list the carousel tests were written against. The game always passes it.
    */
-  garage?: { weekend: boolean; done: boolean };
+  garage?: { weekend: boolean; done: boolean; trophies?: number };
 }
 
 /**
@@ -155,6 +157,7 @@ export function buildMapCards(input: MapCardsInput): MapCard[] {
   let garageCard: MapCard | null = null;
   if (input.garage) {
     const hot = input.garage.weekend && !input.garage.done;
+    const trophies = Math.max(0, Math.floor(input.garage.trophies ?? 0));
     garageCard = {
       id: "garage",
       kind: "garage",
@@ -166,6 +169,7 @@ export function buildMapCards(input: MapCardsInput): MapCard[] {
       complete: input.garage.done,
       suggested: false,
       ...(hot ? { badge: "new" as const } : {}),
+      ...(trophies > 0 ? { trophies } : {}),
     };
     // Weekend and waiting: first in the row. Otherwise it sits before the worlds.
     if (hot) cards.unshift(garageCard);

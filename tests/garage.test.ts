@@ -13,9 +13,12 @@ import {
   dropForWeekend,
   equippedKeys,
   FIRST_WEEKEND,
+  GARAGE_DAYS_DEFAULT,
   GARAGE_DROPS,
   GARAGE_GRACE_MS,
+  GARAGE_REAL_XP,
   GARAGE_XP,
+  completeGarageReal,
   garageGraceLeftMs,
   garageMissionId,
   garageStatus,
@@ -106,7 +109,8 @@ describe("the drop rotation", () => {
 
   it("a never-started drop simply comes round again on a later weekend", () => {
     const first = dropForWeekend(FIRST_WEEKEND);
-    expect(dropForWeekend("2026-11-27")).toBe(first); // three weekends later
+    expect(dropForWeekend("2026-11-27")).toBe(GARAGE_DROPS[3]); // the catalog grew past three
+    expect(dropForWeekend("2027-01-29")).toBe(first); // twelve weekends later
   });
 
   it("has all three kinds", () => {
@@ -515,5 +519,101 @@ describe("the Garage card on the carousel", () => {
   it("a grown-up still has to set the age first: Ask stays the suggestion", () => {
     const cards = buildMapCards({ ...base, ageBand: null, garage: { weekend: true, done: false } });
     expect(cards.find((c) => c.suggested)!.kind).toBe("ask");
+  });
+});
+
+describe("the grown-up Garage switches", () => {
+  const status = (dayKey: string, over: Partial<Parameters<typeof garageStatus>[0]> = {}) =>
+    garageStatus({ dayKey, ageBand: 3, done: [], ...over });
+
+  it("defaults to Fri–Sun with the drop on", () => {
+    expect([...GARAGE_DAYS_DEFAULT].sort((a, b) => a - b)).toEqual([0, 5, 6]);
+    expect(status("2026-11-07")).toMatchObject({ isWeekend: true, open: true, dropEnabled: true });
+  });
+
+  it("picked days decide which days are live, Friday key unchanged", () => {
+    expect(status("2026-11-07", { days: [5] })).toMatchObject({ isWeekend: false, open: false }); // Sat off
+    expect(status("2026-11-06", { days: [5] })).toMatchObject({ isWeekend: true, open: true, weekendKey: "2026-11-06" });
+    expect(status("2026-11-08", { days: [0] })).toMatchObject({ isWeekend: true, open: true });
+    expect(status("2026-11-09", { days: [0, 5, 6] })).toMatchObject({ isWeekend: false }); // Monday anyway
+  });
+
+  it("switching the drop off hides the card but keeps the place", () => {
+    const s = status("2026-11-07", { dropEnabled: false });
+    expect(s).toMatchObject({ isWeekend: true, open: false, done: false, dropEnabled: false });
+    expect(s.drop).toBe(GARAGE_DROPS[0]); // the drop is still known, just not shown
+  });
+});
+
+describe("the real-life build leg", () => {
+  const done = (over: Partial<ProgressionState> = {}) =>
+    prog({ garageDone: ["2026-11-06"], ...over });
+
+  it("pays the small bonus once per weekend, after the in-app drop", () => {
+    const r = completeGarageReal(done(), "2026-11-06", "2026-11-07");
+    expect(r.awarded).toBe(GARAGE_REAL_XP);
+    expect(r.next.totalXp).toBe(GARAGE_REAL_XP);
+    expect(r.next.garageRealByDay).toEqual({ "2026-11-07": ["2026-11-06"] });
+    expect(r.next.workshopDays).toContain("2026-11-07");
+    const again = completeGarageReal(r.next, "2026-11-06", "2026-11-07");
+    expect(again.awarded).toBe(0);
+    expect(again.next).toBe(r.next);
+  });
+
+  it("needs the in-app drop done and the leg switched on", () => {
+    expect(completeGarageReal(prog(), "2026-11-06", "2026-11-07").awarded).toBe(0);
+    expect(completeGarageReal(done({ garageRealLife: false }), "2026-11-06", "2026-11-07").awarded).toBe(0);
+    expect(completeGarageReal(done(), "soon", "2026-11-07").awarded).toBe(0);
+  });
+
+  it("pays nothing when real-life XP was already earned that day", () => {
+    const afterChore = done({ completedChoresByDay: { "2026-11-07": ["tidy-up"] } });
+    const r = completeGarageReal(afterChore, "2026-11-06", "2026-11-07");
+    expect(r.awarded).toBe(0);
+    // The confirm is still recorded, so the grown-up sees it as done.
+    expect(r.next.garageRealByDay).toEqual({ "2026-11-07": ["2026-11-06"] });
+  });
+});
+
+describe("garage switches in progress", () => {
+  it("are validated, merged, and survive an XP reset (confirms do not)", () => {
+    expect(normalizeProgression({ garageDrop: false }).garageDrop).toBe(false);
+    expect(normalizeProgression({ garageDrop: "yes" }).garageDrop).toBeUndefined();
+    expect(normalizeProgression({ garageDays: [6, 0, 6, 2, "x"] }).garageDays).toEqual([0, 6]);
+    expect(normalizeProgression({ garageDays: [] }).garageDays).toBeUndefined();
+    expect(normalizeProgression({ garageRealLife: 1 }).garageRealLife).toBeUndefined();
+    expect(
+      normalizeProgression({ garageRealByDay: { "2026-11-07": ["2026-11-06", "soon"] } }).garageRealByDay,
+    ).toEqual({ "2026-11-07": ["2026-11-06"] });
+
+    const merged = mergeProgression(
+      prog({ garageDrop: false, garageDays: [5], totalXp: 10 }),
+      prog({ garageDrop: true, garageDays: [0], garageRealByDay: { "2026-11-07": ["2026-11-06"] }, totalXp: 99 }),
+    );
+    expect(merged.garageDrop).toBe(true); // conflict follows the higher XP
+    expect(merged.garageDays).toEqual([0, 5]); // days union
+    expect(merged.garageRealByDay).toEqual({ "2026-11-07": ["2026-11-06"] });
+
+    const reset = resetProgression(
+      prog({ garageDrop: false, garageDays: [0], garageRealLife: false, garageRealByDay: { "2026-11-07": ["2026-11-06"] } }),
+    );
+    expect(reset.garageDrop).toBe(false);
+    expect(reset.garageDays).toEqual([0]);
+    expect(reset.garageRealLife).toBe(false);
+    expect(reset.garageRealByDay).toBeUndefined();
+  });
+});
+
+describe("the twelve-drop catalog", () => {
+  it("rotates through every drop before repeating, launch order kept", () => {
+    expect(GARAGE_DROPS.length).toBe(12);
+    expect(new Set(GARAGE_DROPS.map((d) => d.id)).size).toBe(12);
+    expect(GARAGE_DROPS.slice(0, 3).map((d) => d.id)).toEqual([
+      "new-part-trial",
+      "glow-and-go",
+      "remix-your-toy",
+    ]);
+    const kinds = new Set(GARAGE_DROPS.map((d) => d.kind));
+    expect(kinds).toEqual(new Set(["newPart", "idea", "remix"]));
   });
 });

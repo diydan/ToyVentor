@@ -28,6 +28,8 @@ export interface ToyCustomizerProps {
   onFactoryAction: (action: FactoryAction) => void;
   onForgeTool: (toolId: string) => void;
   onPrintTool: (toolId: string) => void;
+  /** Full part keys ("character.hat.crown") on loan from the Garage this weekend. */
+  loanerKeys?: ReadonlySet<string>;
 }
 
 function SegmentedChips({
@@ -83,6 +85,7 @@ export function ToyCustomizer({
   onForgeTool,
   onPrintTool,
   progression,
+  loanerKeys,
 }: ToyCustomizerProps) {
   const [mockOrderNote, setMockOrderNote] = useState(false);
   const selectedSlot =
@@ -153,6 +156,9 @@ export function ToyCustomizer({
               const classes = ["tv-opt"];
               if (option.selected) classes.push("tv-opt-on");
               if (option.locked) classes.push("tv-opt-lock");
+              const fullKey = `${resolvedToyType}.${snapshot.slot}.${option.id}`;
+              const loaner =
+                (loanerKeys?.has(option.id) ?? false) || (loanerKeys?.has(fullKey) ?? false);
               return (
                 <button
                   key={option.id}
@@ -161,7 +167,10 @@ export function ToyCustomizer({
                   aria-pressed={option.selected}
                   onClick={() => onSelectPart(option.id)}
                 >
-                  <span>{option.label}</span>
+                  <span>
+                    {option.label}
+                    {loaner ? <span className="tv-opt-loaner">Loaner</span> : null}
+                  </span>
                   {option.detail && (
                     <span className="tv-opt-meta">
                       {option.statColor && (

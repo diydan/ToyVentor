@@ -709,8 +709,8 @@ async function scenarioGarageWeekday(cdp) {
   const tag = await sheetText(cdp, ".tv-garage-tag");
   check("weekday: it shows the latest drop and when the next arrives", /latest drop/i.test(tag) && /arrives on Friday/.test(await sheetText(cdp, ".tv-sheet-garage")), tag);
   // The pinned Wednesday is before the first launch weekend, so the latest drop is the
-  // rotation's one before the first: the remix, in its 7-9 wording.
-  check("weekday: the drop is written for the age (7-9)", (await sheetText(cdp, ".tv-garage-title")) === "Remix with a twist", await sheetText(cdp, ".tv-garage-title"));
+  // rotation's one before the first: the last catalog drop (a remix), in its 7-9 wording.
+  check("weekday: the drop is written for the age (7-9)", (await sheetText(cdp, ".tv-garage-title")) === "Tribute build", await sheetText(cdp, ".tv-garage-title"));
   await shotNamed(cdp, "garage-weekday-sheet");
 
   // The loaner is a weekend thing: on a weekday it cannot be worn.
@@ -732,7 +732,7 @@ async function scenarioGarageCarousel(cdp) {
   check("carousel, weekday: the Garage is a card and not marked NEW", card && card.hot === false && card.badge === false, JSON.stringify(card) + " ids " + (await cdp.evaluate(`[...document.querySelectorAll(".tv-map-card")].map(l=>l.dataset.id).join(",")`)));
   await cdp.evaluate(`document.querySelector('.tv-map-card[data-id="garage"] .tv-map-card-btn').click()`);
   await waitFor(() => cdp.evaluate(`!!document.querySelector(".tv-sheet-garage")`), { label: "garage sheet" });
-  check("carousel: the card opens the Garage, written for age 3-4", (await sheetText(cdp, ".tv-garage-title")) === "Change one thing!", await sheetText(cdp, ".tv-garage-title"));
+  check("carousel: the card opens the Garage, written for age 3-4", (await sheetText(cdp, ".tv-garage-title")) === "Copy toy!", await sheetText(cdp, ".tv-garage-title"));
 
   // Weekend: the same card is NEW and first.
   await loadApp(cdp, { version: 1, totalXp: 0, ageBand: 1 }, { fresh: true, clock: "weekend" });
@@ -805,6 +805,40 @@ async function scenarioGarageWeekend(cdp) {
 }
 
 // Demo Mode's Preview weekend: the weekend look on a weekday, the flow runs, nothing is saved.
+// Phase 2 surfaces: roof trophies, the Build-it-for-real link, the loaner
+// tag in Build, and the drop switch off. The Grown-Ups confirm behind the
+// parent gate is covered by unit tests (the gate bootstrap is too heavy here).
+async function scenarioGaragePhase2(cdp) {
+  await loadApp(cdp, { version: 1, totalXp: 0, ageBand: 3, garageDone: ["2026-10-24", "2026-10-31", "2026-11-06"] }, { fresh: true, clock: "weekend" });
+  await openTrail(cdp);
+  const stars = await cdp.evaluate(`(() => { const g = document.querySelector('[data-node-id="garage"] svg'); return g ? g.querySelectorAll('path[d^="M0-8"]').length : -1; })()`);
+  check("phase2: three finished weekends show three roof trophies", stars === 3, `stars=${stars}`);
+  await tapNode(cdp, "garage");
+  await waitKipAt(cdp, "garage");
+  await clickPlay(cdp);
+  await waitFor(() => cdp.evaluate(`!!document.querySelector(".tv-sheet-garage")`), { label: "garage sheet" });
+  check("phase2: a done drop links out to build it for real", (await cdp.evaluate(`document.querySelector(".tv-sheet-garage a")?.textContent ?? ""`)).includes("Build it for real"));
+  await clickButton(cdp, ".tv-sheet-garage button", "Close");
+  await sleep(300);
+  // Build with the weekend loaner live: the Crown wears a Loaner tag.
+  await cdp.evaluate(`(()=>{const b=[...document.querySelectorAll("button")].find(x=>(x.textContent||"").trim()==="Build");b&&b.click()})()`);
+  await waitFor(() => cdp.evaluate(`!!document.querySelector('[aria-label="Build your toy"]')`), { label: "build sheet" });
+  await cdp.evaluate(`(()=>{const b=[...document.querySelectorAll('[aria-label="Part slot"] button')].find(x=>(x.textContent||"").includes("Crown"));b&&b.click()})()`);
+  await sleep(500);
+  check("phase2: the loaner part is tagged in Build", (await cdp.evaluate(`(()=>{const o=[...document.querySelectorAll(".tv-opt")].find(x=>(x.textContent||"").includes("Crown"));return o?(o.textContent||""):null})()`) ?? "").includes("Loaner"));
+  await clickButton(cdp, '[aria-label="Build your toy"] button', "Done");
+  await sleep(300);
+
+  // Drop switch off: the place stays, the card goes away.
+  await loadApp(cdp, { version: 1, totalXp: 0, ageBand: 3, garageDrop: false }, { fresh: true, clock: "weekend" });
+  await openTrail(cdp);
+  await tapNode(cdp, "garage");
+  await waitKipAt(cdp, "garage");
+  await clickPlay(cdp);
+  await waitFor(() => cdp.evaluate(`!!document.querySelector(".tv-sheet-garage")`), { label: "garage sheet off" });
+  check("phase2: with drops off the sheet says so and offers Free build", /New drops are off/.test(await sheetText(cdp, ".tv-sheet-garage")) && /Free build/.test(await sheetText(cdp, ".tv-sheet-garage")));
+}
+
 async function scenarioGaragePreview(cdp) {
   await loadApp(cdp, { version: 1, totalXp: 0, ageBand: 3 }, { fresh: true, extra: { "toyforge:demo-mode:v1": "1", "tvGaragePreview:v1": "1" } });
   await openTrail(cdp);
@@ -889,6 +923,7 @@ async function main() {
     await run("garage-carousel", scenarioGarageCarousel);
     await run("garage-weekend", scenarioGarageWeekend);
     await run("garage-preview", scenarioGaragePreview);
+    await run("garage-phase2", scenarioGaragePhase2);
   } finally {
     killAll();
   }

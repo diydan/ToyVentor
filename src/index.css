@@ -3547,6 +3547,20 @@ button.tv-badge-pill:hover {
   color: var(--gold);
 }
 
+.tv-opt-loaner {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--gold);
+  color: #2b1d00;
+  font-family: var(--font-body);
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1.5;
+  vertical-align: 1px;
+}
+
 .tv-paint {
   display: flex;
   gap: 10px;
