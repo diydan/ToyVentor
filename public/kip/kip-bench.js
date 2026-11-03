@@ -54,6 +54,8 @@ import { mountPrintView } from '/kip/kip-print-view.js?v=10.0';
 import { mountSelfie } from '/kip/kip-selfie.js?v=10.0';
 import { mountDescribe } from '/kip/kip-describe-tab.js?v=10.0';
 import { KIP_CLIPS, clipForProp, isPropClip, makeKipClip, plantBakedClip, limitHands } from '/kip/kip-clips.js?v=10.0';
+import { findMixamoBones, retargetMixamoClipToKip as retargetMixamoClip } from '/kip/kip-mixamo-retarget.js?v=10.0';
+import { bakedToClip, checkBaked } from '/kip/kip-baked-clips.js?v=10.0';
 import { createKipSession } from '/kip/kip-session.js?v=10.0';
 import { FACEPLATE_SEAT_MM } from '/kip/kip-faceplate-shape.js?v=10.0';
 import { disposeThreeScene } from '/kip/bench-lifecycle.js?v=10.0';
@@ -498,7 +500,9 @@ const stage = env.stage ?? null; // a host's shared renderer, camera and control
 const hosted = stage !== null;
 const kipSession = env.sharedKip ?? createKipSession({ THREE, STLLoader, mergeVertices, toCreasedNormals });
 kipSession.acquire('kip');
-const downloadsOn = env.features?.downloads !== false; // false: this bench hands no file out (Print group, photo "Print it", selfie sticker): see workshop.js `downloads`
+const printOn = env.features?.downloads !== false; // false: this bench hands no file out (Print group, photo "Print it", selfie sticker): see workshop.js `downloads`
+// Under 'gated' the Print group is on (its exports ask a grown-up), but the photo "Print it", the selfie sticker and Make-from-words files have exits of their own that are not gated yet.
+const downloadsOn = printOn && !env.features?.gated;
 let unregisterKipSync = null;
 let unregisterKipPrintState = null;
 let active = !hosted; // a hosted bench draws and reads input only while the host has it active
@@ -791,213 +795,8 @@ function layoutPartPile(kipRig, edition) {
   kipRig.mover.rotation.y = savedMoverRot;
 }
 
-// --- 3. WORLD-SPACE MIXAMO -> KIP RIGID BALL-JOINT RETARGETER (1:1 Kinematic Stride Scale!) ---
-const DOWN = new THREE.Vector3(0, -1, 0);
-
-function findMixamoBones(root) {
-  const map = {};
-  const wanted = [
-    'Hips', 'Spine', 'Spine1', 'Spine2', 'Neck', 'Head',
-    'LeftShoulder', 'LeftArm', 'LeftForeArm', 'LeftHand',
-    'RightShoulder', 'RightArm', 'RightForeArm', 'RightHand',
-    'LeftUpLeg', 'LeftLeg', 'LeftFoot', 'LeftToeBase',
-    'RightUpLeg', 'RightLeg', 'RightFoot', 'RightToeBase'
-  ];
-  root.traverse(obj => {
-    if (!obj.name) return;
-    const clean = obj.name.replace(/^.*mixamorig\d*:?/i, '');
-    for (const w of wanted) {
-      if (clean.toLowerCase() === w.toLowerCase() && !map[w]) map[w] = obj;
-    }
-  });
-  return map;
-}
-
-function retargetMixamoClipToKip(clip, sourceRoot, opts = {}) {
-  sourceRoot.traverse(o => { if (o.isSkinnedMesh && o.pose) o.pose(); });
-  let tposeMixer = null, tposeAct = null;
-  if (opts.tposeClip) {
-    tposeMixer = new THREE.AnimationMixer(sourceRoot);
-    tposeAct = tposeMixer.clipAction(opts.tposeClip);
-    tposeAct.setLoop(THREE.LoopOnce, 1);
-    tposeAct.clampWhenFinished = true;
-    tposeAct.play();
-    tposeMixer.setTime(0);
-  }
-  sourceRoot.updateMatrixWorld(true);
-
-  const bones = findMixamoBones(sourceRoot);
-  if (!bones.Hips) {
-    if (tposeAct) { tposeAct.stop(); tposeMixer.uncacheRoot(sourceRoot); }
-    return null;
-  }
-
-  const bindQuatInv = {};
-  const bindPos = {};
-  for (const [k, b] of Object.entries(bones)) {
-    bindQuatInv[k] = b.getWorldQuaternion(new THREE.Quaternion()).invert();
-    bindPos[k] = b.getWorldPosition(new THREE.Vector3());
-  }
-  if (tposeAct) {
-    tposeAct.stop();
-    tposeMixer.uncacheRoot(sourceRoot);
-  }
-
-  function segZeroToBind(a, b) {
-    if (!bindPos[a] || !bindPos[b]) return new THREE.Quaternion();
-    const dir = bindPos[b].clone().sub(bindPos[a]).normalize();
-    if (dir.lengthSq() < 0.5) return new THREE.Quaternion();
-    return new THREE.Quaternion().setFromUnitVectors(DOWN, dir);
-  }
-
-  const zeroToBind = {
-    Hips: new THREE.Quaternion(),
-    Head: new THREE.Quaternion(),
-    LeftArm: segZeroToBind('LeftArm', 'LeftForeArm'),
-    LeftForeArm: segZeroToBind('LeftForeArm', 'LeftHand'),
-    RightArm: segZeroToBind('RightArm', 'RightForeArm'),
-    RightForeArm: segZeroToBind('RightForeArm', 'RightHand'),
-    LeftUpLeg: segZeroToBind('LeftUpLeg', 'LeftLeg'),
-    LeftLeg: segZeroToBind('LeftLeg', 'LeftFoot'),
-    LeftFoot: new THREE.Quaternion(),
-    RightUpLeg: segZeroToBind('RightUpLeg', 'RightLeg'),
-    RightLeg: segZeroToBind('RightLeg', 'RightFoot'),
-    RightFoot: new THREE.Quaternion(),
-  };
-  zeroToBind.LeftHand = zeroToBind.LeftForeArm.clone();
-  zeroToBind.RightHand = zeroToBind.RightForeArm.clone();
-
-  const kipJointNames = [
-    'Hips', 'Head',
-    'LeftArm', 'LeftForeArm', 'LeftHand',
-    'RightArm', 'RightForeArm', 'RightHand',
-    'LeftUpLeg', 'LeftLeg', 'LeftFoot',
-    'RightUpLeg', 'RightLeg', 'RightFoot'
-  ];
-
-  const isPose = clip.duration < 0.05;
-  const duration = isPose ? 1.2 : clip.duration;
-  const fps = 30;
-  const steps = isPose ? 2 : Math.max(2, Math.round(duration * fps) + 1);
-  const times = new Float32Array(steps);
-
-  const qBuffers = {};
-  for (const jn of kipJointNames) qBuffers[jn] = new Float32Array(steps * 4);
-  const hipsPosBuf = new Float32Array(steps * 3);
-
-  const srcMixer = new THREE.AnimationMixer(sourceRoot);
-  const srcAction = srcMixer.clipAction(clip);
-  srcAction.setLoop(THREE.LoopOnce, 1);
-  srcAction.clampWhenFinished = true;
-  srcAction.play();
-
-  srcMixer.setTime(0);
-  sourceRoot.updateMatrixWorld(true);
-  const clipStartHips = bones.Hips.getWorldPosition(new THREE.Vector3());
-  const refHipsY = Math.max(1e-4, bindPos.Hips.y > 0.05 ? bindPos.Hips.y : clipStartHips.y);
-  // Exact 1:1 leg-length kinematic scale so hip sway matches leg tilt with zero foot-skate!
-  const posScale = 61.5 / refHipsY;
-
-  const tmpQ = new THREE.Quaternion();
-  const tmpV = new THREE.Vector3();
-  const zAxis = new THREE.Vector3(0, 0, 1);
-
-  function deltaW(name) {
-    const b = bones[name];
-    if (!b) return new THREE.Quaternion();
-    return b.getWorldQuaternion(new THREE.Quaternion()).multiply(bindQuatInv[name]);
-  }
-  function desiredW(name) {
-    return deltaW(name).multiply(zeroToBind[name]);
-  }
-
-  for (let i = 0; i < steps; i++) {
-    const t = isPose ? 0 : (i / (steps - 1)) * duration;
-    times[i] = (i / (steps - 1)) * duration;
-
-    srcMixer.setTime(t);
-    sourceRoot.updateMatrixWorld(true);
-
-    const dHips = deltaW('Hips');
-    const spineKey = bones.Spine2 ? 'Spine2' : (bones.Spine1 ? 'Spine1' : 'Spine');
-    const dSpine = bones[spineKey] ? deltaW(spineKey) : dHips;
-    const qHipsW = dHips.clone().slerp(dSpine, 0.48);
-
-    const hp = bones.Hips.getWorldPosition(tmpV);
-    const dx = THREE.MathUtils.clamp((hp.x - clipStartHips.x) * posScale, -40, 40);
-    const dy = THREE.MathUtils.clamp((hp.y - clipStartHips.y) * posScale, -26, 34);
-    const dz = opts.inPlace === false
-      ? THREE.MathUtils.clamp((hp.z - clipStartHips.z) * posScale, -45, 45)
-      : 0;
-    hipsPosBuf[i * 3 + 0] = dx;
-    hipsPosBuf[i * 3 + 1] = 61.5 + dy;
-    hipsPosBuf[i * 3 + 2] = dz;
-
-    const qHeadW = bones.Head ? deltaW('Head') : (bones.Neck ? deltaW('Neck') : qHipsW.clone());
-    const qHeadL = qHipsW.clone().invert().multiply(qHeadW);
-    const frameQuats = { Hips: qHipsW, Head: qHeadL };
-
-    for (const side of [1, -1]) {
-      const tag = side === 1 ? 'Left' : 'Right';
-      let qArmW  = desiredW(`${tag}Arm`);
-      let qForeW = desiredW(`${tag}ForeArm`);
-      let qHandW = bones[`${tag}Hand`] ? desiredW(`${tag}Hand`) : qForeW.clone();
-
-      const armDir = DOWN.clone().applyQuaternion(qArmW);
-      const downness = Math.max(0, -armDir.y);
-      const flareRad = side * THREE.MathUtils.degToRad(9.5 * downness);
-      const flareAxis = zAxis.clone().applyQuaternion(qHipsW);
-      const qFlare = tmpQ.setFromAxisAngle(flareAxis, flareRad);
-
-      qArmW.premultiply(qFlare);
-      qForeW.premultiply(qFlare);
-      qHandW.premultiply(qFlare);
-
-      frameQuats[`${tag}Arm`]     = qHipsW.clone().invert().multiply(qArmW);
-      frameQuats[`${tag}ForeArm`] = qArmW.clone().invert().multiply(qForeW);
-      frameQuats[`${tag}Hand`]    = qForeW.clone().invert().multiply(qHandW);
-    }
-
-    for (const side of [1, -1]) {
-      const tag = side === 1 ? 'Left' : 'Right';
-      let qUpW   = desiredW(`${tag}UpLeg`);
-      let qLegW  = desiredW(`${tag}Leg`);
-      let qFootW = bones[`${tag}Foot`] ? desiredW(`${tag}Foot`) : qLegW.clone();
-
-      const legFlareAxis = zAxis.clone().applyQuaternion(qHipsW);
-      const qLegFlare = tmpQ.setFromAxisAngle(legFlareAxis, side * THREE.MathUtils.degToRad(2.5));
-      qUpW.premultiply(qLegFlare);
-      qLegW.premultiply(qLegFlare);
-      qFootW.premultiply(qLegFlare);
-
-      frameQuats[`${tag}UpLeg`] = qHipsW.clone().invert().multiply(qUpW);
-      frameQuats[`${tag}Leg`]   = qUpW.clone().invert().multiply(qLegW);
-      frameQuats[`${tag}Foot`]  = qLegW.clone().invert().multiply(qFootW);
-    }
-
-    for (const jn of kipJointNames) {
-      const q = frameQuats[jn].normalize();
-      const buf = qBuffers[jn];
-      if (i > 0) {
-        const dot = buf[(i - 1) * 4] * q.x + buf[(i - 1) * 4 + 1] * q.y + buf[(i - 1) * 4 + 2] * q.z + buf[(i - 1) * 4 + 3] * q.w;
-        if (dot < 0) { q.x = -q.x; q.y = -q.y; q.z = -q.z; q.w = -q.w; }
-      }
-      buf[i * 4 + 0] = q.x;
-      buf[i * 4 + 1] = q.y;
-      buf[i * 4 + 2] = q.z;
-      buf[i * 4 + 3] = q.w;
-    }
-  }
-
-  srcAction.stop();
-  srcMixer.uncacheRoot(sourceRoot);
-
-  const tracks = [new THREE.VectorKeyframeTrack('kip_Hips.position', times, hipsPosBuf)];
-  for (const jn of kipJointNames) {
-    tracks.push(new THREE.QuaternionKeyframeTrack(`kip_${jn}.quaternion`, times, qBuffers[jn]));
-  }
-  return new THREE.AnimationClip(opts.name || clip.name, duration, tracks);
-}
+// --- 3. MIXAMO -> KIP RETARGETER: the code lives in kip-mixamo-retarget.js (pure, so scripts/mixamo-bake.mjs runs the same one); this wrapper binds THREE ---
+const retargetMixamoClipToKip = (clip, sourceRoot, opts) => retargetMixamoClip(THREE, clip, sourceRoot, opts);
 
 // Upgraded Kip ToyVentor Signature Wave (open 3-finger + thumb palm facing forward +Z!)
 function makeHeroWaveClip() {
@@ -1435,6 +1234,26 @@ async function init() {
       actions.set('SambaDance', kipMixer.clipAction(bakedSamba));
       registerClip('SambaDance', 'Samba');
     }
+  }
+  // Baked Mixamo clips (scripts/mixamo-bake.mjs -> /kip/mixamo/baked/): the dances and movement-break moves as joint data only, already
+  // retargeted, wrists capped and feet planted, so nothing is solved here and no raw Mixamo file is served. A clip that fails its own check is
+  // skipped; a missing index (an older build) changes nothing.
+  try {
+    const res = await fetch('/kip/mixamo/baked/index.json');
+    const list = res.ok ? ((await res.json()).clips || []) : [];
+    const loaded = await Promise.all(list.map(async (c) => {
+      const r = await fetch(`/kip/mixamo/baked/${encodeURIComponent(c.id)}.json`);
+      if (!r.ok) return null;
+      const baked = await r.json();
+      return checkBaked(baked, { loop: c.loop }).length === 0 ? { c, baked } : null;
+    }));
+    for (const item of loaded) {
+      if (!item) continue;
+      actions.set(item.baked.id, kipMixer.clipAction(bakedToClip(THREE, item.baked)));
+      registerClip(item.baked.id, item.c.label);
+    }
+  } catch (err) {
+    console.warn('baked Mixamo clips not loaded', err);
   }
   if (tposeClip) {
     const bakedTPose = retargetMixamoClipToKip(tposeClip, michelleGltf.scene, {
@@ -2598,6 +2417,21 @@ async function equipForgePart({ slot, glbBase64, name }) {
   }
 }
 
+// Text to part, the fallback (shared/forgeFallback.ts): when a wish cannot be made, the panel offers the nearest ready-made hat or head, and this wears it with the
+// bench's own setters (the ids are HAT_OPTIONS and WARDROBE_HEADS; setCrownMode and setHeadMode refuse an unknown id by falling back to a safe one, so a stale id is never a crash).
+function equipReadyMade({ kind, id }) {
+  try {
+    if (kind === 'hat' && HAT_OPTIONS.some((h) => h.id === id)) setCrownMode(id);
+    else if (kind === 'head' && WARDROBE_HEADS.some((h) => h.id === id)) setHeadMode(id);
+    else return { ok: false };
+    updateStatusText();
+    return { ok: true };
+  } catch (err) {
+    console.error(err);
+    return { ok: false };
+  }
+}
+
 // The text-to-part panel (F1, kip-forge-make.js): loaded on the first click, so the bench loads the same with or without its bundle.
 let forgeMake = null;
 async function openForgeMake() {
@@ -2605,7 +2439,7 @@ async function openForgeMake() {
     if (!forgeMake) {
       const { createForgeMake } = await import('/kip/kip-forge-make.js?v=10.0');
       if (disposed) return;
-      forgeMake = createForgeMake({ root: benchRoot, onWear: equipForgePart, downloads: downloadsOn });
+      forgeMake = createForgeMake({ root: benchRoot, onWear: equipForgePart, onReadyMade: equipReadyMade, downloads: downloadsOn });
       globals.kipForgeMake = forgeMake;
     }
     forgeMake.open();
@@ -3418,7 +3252,7 @@ const kipMenuCtx = {
     setHouseholdLook,
   },
 };
-if (!downloadsOn) delete kipMenuCtx.print; // no Print group in the menu
+if (!printOn) delete kipMenuCtx.print; // no Print group in the menu
 const sharedMenu = env.sharedMenu ?? null;
 const menuHost = sharedMenu ?? createMenuHost();
 // The published handle is the panel's, except that `.ctx` stays THIS bench's (its loco, read and act) even while another bench holds the shared panel.

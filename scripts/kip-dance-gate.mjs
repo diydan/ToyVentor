@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Dance quality gate (docs/specs/dance-party-spec.md 3.2): measure a dance in the REAL page and pass or fail it.
 //
-//   node scripts/kip-dance-gate.mjs                       # the four dances Kip has today
+//   node scripts/kip-dance-gate.mjs                       # the dances Kip has today and every shipped baked clip with planted feet
 //   node scripts/kip-dance-gate.mjs SambaDance:18.2333 my_new_dance:6.4     # id:duration-in-seconds (a Mixamo clip has no entry in kipClips, so say how long it is)
 //
 // Needs the machine's GPU for the 3D page: E2E_GPU=metal. Exits non-zero if any dance fails.
@@ -11,10 +11,21 @@
 //   floor          the lowest ankle is at standing height, 12.9 mm within 3 (not sunk into the floor, not floating; a leg at full reach clamps 1 to 2 mm high)
 //   knees          no knee bent backwards
 //   bare hands     wrist bend 45 degrees or less
+import fs from "node:fs";
 import { createChecks, launchChrome, startServer } from "./lib/kip-e2e.mjs";
 
 const { check, finish } = createChecks("dance quality gate");
-const DEFAULT = ["dance_boogie:8", "dance_robot:8", "dance_disco:6", "dance_sway:6", "SambaDance:18.2333"];
+// The clips scripts/mixamo-bake.mjs shipped (public/kip/mixamo/baked/index.json) join the default list when their feet are planted: a jump or a
+// cheer leaves the floor on purpose, so those are not held to the floor checks.
+function shippedClips() {
+  try {
+    const index = JSON.parse(fs.readFileSync(new URL("../public/kip/mixamo/baked/index.json", import.meta.url), "utf8"));
+    return index.clips.filter((c) => c.planted).map((c) => `${c.id}:${c.dur}`);
+  } catch {
+    return [];
+  }
+}
+const DEFAULT = ["dance_boogie:8", "dance_robot:8", "dance_disco:6", "dance_sway:6", "SambaDance:18.2333", ...shippedClips()];
 const specs = (process.argv.slice(2).length ? process.argv.slice(2) : DEFAULT).map((a) => { const [id, d] = a.split(":"); return { id, dur: Number(d) }; });
 
 process.env.E2E_STRICT_STL = "1";

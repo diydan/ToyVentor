@@ -159,6 +159,16 @@ copyFileSync(
   join(kipSrcDir, "viewer/yard-menu.js"),
   join(kipOutDir, "yard-menu.js"),
 );
+// The grown-up question in front of the Workshop's exports (docs/specs/workshop-print-gate-spec.md): the pure gate core and its dialog, imported by workshop.js
+// only when it is mounted with `downloads: 'gated'`.
+copyFileSync(
+  join(kipSrcDir, "viewer/bench-gate.js"),
+  join(kipOutDir, "bench-gate.js"),
+);
+copyFileSync(
+  join(kipSrcDir, "viewer/bench-gate-ui.js"),
+  join(kipOutDir, "bench-gate-ui.js"),
+);
 // Yard bench (Workshop's third tab, docs/specs/construction-vehicles-spec.md): the module, its pure placement maths (unit-tested) and its loader page.
 // Its two roller STLs (public/kip/partspec/mockup/, gitignored: force-add) come from parts/kip/sync_yard_parts.py, not from this build.
 copyFileSync(
@@ -215,6 +225,16 @@ execFileSync(
 copyFileSync(
   join(kipSrcDir, "viewer/kip-clips.js"),
   join(kipOutDir, "kip-clips.js"),
+);
+// Mixamo intake (docs/specs/dance-party-spec.md 3.1): the retargeter and the baked-clip reader the Kip bench imports. The baked clips themselves
+// (public/kip/mixamo/baked/) are written by scripts/mixamo-bake.mjs straight into public/, never copied from a raw Mixamo file.
+copyFileSync(
+  join(kipSrcDir, "viewer/kip-mixamo-retarget.js"),
+  join(kipOutDir, "kip-mixamo-retarget.js"),
+);
+copyFileSync(
+  join(kipSrcDir, "viewer/kip-baked-clips.js"),
+  join(kipOutDir, "kip-baked-clips.js"),
 );
 // Workshop shell (docs/specs/workshop-spec.md): one page with a tab per bench (Kip, Truck); the benches themselves are copied above.
 copyFileSync(

@@ -1,0 +1,159 @@
+{
+ "v": 1,
+ "clips": [
+  {
+   "id": "dance_silly",
+   "label": "Silly Dance",
+   "group": "dance",
+   "dur": 3.8333,
+   "beats": 8,
+   "bpm": 125.22,
+   "loop": true,
+   "planted": true,
+   "source": "Mixamo \"Silly Dancing\""
+  },
+  {
+   "id": "dance_hiphop",
+   "label": "Hip Hop",
+   "group": "dance",
+   "dur": 4.7333,
+   "beats": 8,
+   "bpm": 101.41,
+   "loop": true,
+   "planted": true,
+   "source": "Mixamo \"Hip Hop Dancing 4.7s in place\""
+  },
+  {
+   "id": "dance_chicken",
+   "label": "Chicken Dance",
+   "group": "dance",
+   "dur": 4.7667,
+   "loop": true,
+   "planted": true,
+   "source": "Mixamo \"Chicken Dance\""
+  },
+  {
+   "id": "dance_swing",
+   "label": "Swing",
+   "group": "dance",
+   "dur": 20.9,
+   "beats": 48,
+   "bpm": 137.8,
+   "loop": true,
+   "planted": true,
+   "source": "Mixamo \"Swing Dancing\""
+  },
+  {
+   "id": "dance_locking",
+   "label": "Locking",
+   "group": "dance",
+   "dur": 5.2,
+   "loop": true,
+   "planted": true,
+   "source": "Mixamo \"Locking Hip Hop Dance\""
+  },
+  {
+   "id": "move_jacks",
+   "label": "Jumping Jacks",
+   "group": "move",
+   "dur": 1.0667,
+   "beats": 2,
+   "bpm": 112.5,
+   "loop": true,
+   "planted": true,
+   "source": "Mixamo \"Jumping Jacks\""
+  },
+  {
+   "id": "move_arms",
+   "label": "Arm Stretch",
+   "group": "move",
+   "dur": 8.8667,
+   "loop": true,
+   "planted": true,
+   "source": "Mixamo \"Arm Stretching\""
+  },
+  {
+   "id": "move_neck",
+   "label": "Neck Stretch",
+   "group": "move",
+   "dur": 3.2,
+   "loop": true,
+   "planted": true,
+   "source": "Mixamo \"Neck Stretching\""
+  },
+  {
+   "id": "music_guitar",
+   "label": "Guitar Strum",
+   "group": "music",
+   "dur": 4.7667,
+   "beats": 8,
+   "bpm": 100.7,
+   "loop": true,
+   "planted": true,
+   "source": "Mixamo \"Guitar Playing\""
+  },
+  {
+   "id": "react_wave",
+   "label": "Wave (Mixamo)",
+   "group": "react",
+   "dur": 0.5333,
+   "loop": true,
+   "planted": true,
+   "source": "Mixamo \"Waving\""
+  },
+  {
+   "id": "react_clap",
+   "label": "Clap (Mixamo)",
+   "group": "react",
+   "dur": 1.1667,
+   "loop": true,
+   "planted": true,
+   "source": "Mixamo \"Clapping\""
+  },
+  {
+   "id": "react_cheer",
+   "label": "Cheer (Mixamo)",
+   "group": "react",
+   "dur": 3.4333,
+   "loop": false,
+   "planted": false,
+   "source": "Mixamo \"Standing Cheering\""
+  },
+  {
+   "id": "react_fistpump",
+   "label": "Fist Pump",
+   "group": "react",
+   "dur": 3.5,
+   "loop": false,
+   "planted": false,
+   "source": "Mixamo \"Standing Fist Pump\""
+  },
+  {
+   "id": "react_jump",
+   "label": "Jump (Mixamo)",
+   "group": "react",
+   "dur": 0.9333,
+   "loop": false,
+   "planted": false,
+   "source": "Mixamo \"Jump\""
+  },
+  {
+   "id": "act_push",
+   "label": "Push",
+   "group": "act",
+   "dur": 8,
+   "loop": false,
+   "planted": true,
+   "source": "Mixamo \"Push\""
+  },
+  {
+   "id": "act_pickup",
+   "label": "Pick Up",
+   "group": "act",
+   "dur": 7.2,
+   "loop": false,
+   "planted": true,
+   "source": "Mixamo \"Pick Up Lifting\""
+  }
+ ]
+}

@@ -1,0 +1,18 @@
+[
+  { "id": "dance_silly", "file": "Silly Dancing.fbx", "label": "Silly Dance", "group": "dance", "beats": 8, "loop": true },
+  { "id": "dance_hiphop", "file": "Hip Hop Dancing 4.7s in place.fbx", "label": "Hip Hop", "group": "dance", "beats": 8, "loop": true },
+  { "id": "dance_chicken", "file": "Chicken Dance.fbx", "label": "Chicken Dance", "group": "dance", "loop": true },
+  { "id": "dance_swing", "file": "Swing Dancing.fbx", "label": "Swing", "group": "dance", "beats": 48, "loop": true, "highpass": 2 },
+  { "id": "dance_locking", "file": "Locking Hip Hop Dance.fbx", "label": "Locking", "group": "dance", "trim": [0, 5.2], "closeLoop": 0.5, "loop": true },
+  { "id": "move_jacks", "file": "Jumping Jacks.fbx", "label": "Jumping Jacks", "group": "move", "beats": 2, "loop": true },
+  { "id": "move_arms", "file": "Arm Stretching.fbx", "label": "Arm Stretch", "group": "move", "loop": true },
+  { "id": "move_neck", "file": "Neck Stretching.fbx", "label": "Neck Stretch", "group": "move", "loop": true },
+  { "id": "music_guitar", "file": "Guitar Playing.fbx", "label": "Guitar Strum", "group": "music", "beats": 8, "loop": true },
+  { "id": "react_wave", "file": "Waving.fbx", "label": "Wave (Mixamo)", "group": "react", "loop": true },
+  { "id": "react_clap", "file": "Clapping.fbx", "label": "Clap (Mixamo)", "group": "react", "loop": true },
+  { "id": "react_cheer", "file": "Standing Cheering.fbx", "label": "Cheer (Mixamo)", "group": "react", "loop": false, "plant": false },
+  { "id": "react_fistpump", "file": "Standing Fist Pump.fbx", "label": "Fist Pump", "group": "react", "loop": false, "plant": false },
+  { "id": "react_jump", "file": "Jump.fbx", "label": "Jump (Mixamo)", "group": "react", "loop": false, "plant": false },
+  { "id": "act_push", "file": "Push.fbx", "label": "Push", "group": "act", "loop": false },
+  { "id": "act_pickup", "file": "Pick Up Lifting.fbx", "label": "Pick Up", "group": "act", "loop": false }
+]
