@@ -145,6 +145,29 @@ copyFileSync(
   join(kipSrcDir, "viewer/truck-drive.js"),
   join(kipOutDir, "truck-drive.js"),
 );
+// The one menu and the one print view (Workshop stage 4c): the Truck's declaration for the menu (pure, unit-tested) and the host that shares one print view between benches.
+copyFileSync(
+  join(kipSrcDir, "viewer/truck-menu.js"),
+  join(kipOutDir, "truck-menu.js"),
+);
+copyFileSync(
+  join(kipSrcDir, "viewer/bench-print.js"),
+  join(kipOutDir, "bench-print.js"),
+);
+// Yard bench (Workshop's third tab, docs/specs/construction-vehicles-spec.md): the module, its pure placement maths (unit-tested) and its loader page.
+// Its two roller STLs (public/kip/partspec/mockup/, gitignored: force-add) come from parts/kip/sync_yard_parts.py, not from this build.
+copyFileSync(
+  join(kipSrcDir, "viewer/yard-bench.js"),
+  join(kipOutDir, "yard-bench.js"),
+);
+copyFileSync(
+  join(kipSrcDir, "viewer/yard-vehicles.js"),
+  join(kipOutDir, "yard-vehicles.js"),
+);
+copyFileSync(
+  join(kipSrcDir, "viewer/Yard-Bench.html"),
+  join(kipOutDir, "Yard-Bench.html"),
+);
 // Photo-to-print panel (F2b): the panel is a viewer file, and its logic is TypeScript (shared/photoPrintFlow.ts), bundled here into one ES module.
 // tests/photo-print-flow.test.ts rebuilds it and compares it with the committed copy, so a stale bundle fails a test.
 copyFileSync(

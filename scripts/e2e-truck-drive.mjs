@@ -4,13 +4,14 @@
 // Run: npm run e2e:truck-drive     Exits nonzero on any failing check.
 //
 // What it proves:
-//   - G (and the Drive button) toggles drive mode, W/A/S/D, Space, Q/E and R do what the HUD says, and G again puts everything back;
+//   - G (and the Drive switch in the menu) toggles drive mode, W/A/S/D, Space, Q/E and R do what the HUD says, and G again puts everything back;
 //   - straight driving covers the integral of the speed and the wheels roll without slip (axle and steered hubs);
 //   - a full lap at steady lock is a circle of the radius the REAL solved wheel angles predict, closing back on its start, on both wheel sizes;
 //   - only the Pro Powered Add-On (stage mech) is powered; stages without the rack linkage do not steer; giant wheels cap the lock at 25 degrees;
 //   - the camera travels with the truck, a stage change puts the truck back at the start, and a bench switched away ignores the keyboard;
 //   - nothing throws.
 import { createChecks, launchChrome, startServer } from "./lib/kip-e2e.mjs";
+import { menu } from "./lib/menu-drive.mjs";
 
 const { check, finish } = createChecks("truck drive e2e");
 const settle = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -27,9 +28,13 @@ try {
   console.log("A. keyboard on the Pro Powered Add-On (stage mech)");
   const a = await chrome.open(`${server.base}/kip/Truck-Mockup.html?stage=mech`);
   check("the Truck loads", await a.waitFor("window.__TRUCK_READY__ === true && !!window.__truckDrive", 240000), "never ready");
+  const geosA = JSON.parse(await a.evaluate(`JSON.stringify(window.__truckProbe().map((r) => r.geo))`));
+  check("the steered front wheels are the free-hub part (they turn on the knuckle's round stub) and the rear pair is the keyed one",
+    geosA.filter((g) => g === "kit_wheel_med_free").length === 2 && geosA.filter((g) => g === "kit_wheel_med").length === 2,
+    JSON.stringify({ free: geosA.filter((g) => g === "kit_wheel_med_free").length, keyed: geosA.filter((g) => g === "kit_wheel_med").length }));
   check("drive mode starts off and its HUD is hidden", await a.evaluate(`${D}.on === false && ${D}.hud().shown === false`));
   await tap(a, "g");
-  check("G turns drive mode on and shows the HUD and the button state", await a.waitFor(`${D}.on === true && ${D}.hud().shown && document.getElementById('btn-drive').textContent === 'Drive: On'`, 20000));
+  check("G turns drive mode on and shows the HUD and the menu's Drive switch", await a.waitFor(`${D}.on === true && ${D}.hud().shown && ${menu.value("drive")} === true`, 20000));
   const hud0 = await a.evaluate(`${D}.hud()`);
   check("the HUD says the keys are the remote and that no firmware exists yet", /RC drive/.test(hud0.mode) && /no firmware/.test(hud0.note), JSON.stringify(hud0));
 
@@ -67,8 +72,9 @@ try {
   const home = await a.evaluate(`({ p: ${D}.pose(), rz: ${D}.rearAxleZ })`);
   check("R puts the truck back at the start", Math.abs(home.p.px) < 1e-9 && Math.abs(home.p.pz - home.rz) < 1e-9 && home.p.psi === 0 && home.p.v === 0, JSON.stringify(home));
   await tap(a, "g");
-  const off = await a.evaluate(`({ on: ${D}.on, shown: ${D}.hud().shown, w: [${D}.pose().wrapX, ${D}.pose().wrapZ], btn: document.getElementById('btn-drive').textContent })`);
-  check("G again leaves drive mode: HUD hidden, truck at the origin, button back to Off", off.on === false && off.shown === false && off.w[0] === 0 && off.w[1] === 0 && off.btn === "Drive: Off", JSON.stringify(off));
+  await a.waitFor(`${menu.value("drive")} === false`, 5000); // the menu repaints from the bench's state on its own 100 ms tick
+  const off = await a.evaluate(`({ on: ${D}.on, shown: ${D}.hud().shown, w: [${D}.pose().wrapX, ${D}.pose().wrapZ], sw: ${menu.value("drive")} })`);
+  check("G again leaves drive mode: HUD hidden, truck at the origin, the switch back to Off", off.on === false && off.shown === false && off.w[0] === 0 && off.w[1] === 0 && off.sw === false, JSON.stringify(off));
   check("no uncaught exception in the keyboard run", a.exceptions.length === 0, a.exceptions.slice(0, 2).join(" | "));
   a.close();
 
@@ -91,7 +97,7 @@ try {
   check("straight: both steered front hubs rolled the same distance", Math.abs((s.end.spinPlus - s.start.spinPlus) * s.p.wRad - s.dist) / s.dist < 0.01 && Math.abs((s.end.spinMinus - s.start.spinMinus) * s.p.wRad - s.dist) / s.dist < 0.01, JSON.stringify({ plus: s.end.spinPlus, minus: s.end.spinMinus, dist: s.dist }));
 
   for (const [label, giant] of [["O36 wheels", false], ["O50 giant wheels", true]]) {
-    if (giant) await b.evaluate("document.getElementById('btn-wheels').click(); 0");
+    if (giant) await b.evaluate(menu.toggle("giant", true));
     await b.evaluate(`${D}.set(false); ${D}.set(true)`); // fresh start at home
     const lap = await b.evaluate(`(() => {
       const d = ${D}, p = d.params(), dt = 1 / 120;
@@ -117,8 +123,8 @@ try {
   }
 
   // stage rules
-  await b.evaluate("document.getElementById('btn-wheels').click(); 0"); // back to O36
-  await b.evaluate(`document.querySelector('[data-stage="snap"]').click()`);
+  await b.evaluate(menu.toggle("giant", false)); // back to O36
+  await b.evaluate(menu.select("stage", "snap"));
   const snap = await b.evaluate(`(() => {
     const d = ${D}, dt = 1 / 120;
     d.set(false); d.set(true);
@@ -127,7 +133,7 @@ try {
   })()`);
   check("Snap (no rack linkage): A/D do nothing, it drives straight, pushed by hand at a walking pace", snap.p.steerDeg === 0 && snap.p.psi === 0 && !snap.params.steered && !snap.params.powered && Math.abs(snap.p.v - 300) < 1e-6, JSON.stringify(snap.p));
   check("Snap HUD: pushed by hand, fixed axle", /Pushed by hand/.test(snap.hud.mode) && /fixed axle/.test(snap.hud.steer), JSON.stringify(snap.hud));
-  await b.evaluate(`document.querySelector('[data-stage="pro"]').click()`);
+  await b.evaluate(menu.select("stage", "pro"));
   const pro = await b.evaluate(`(() => { const d = ${D}; return { p: d.pose(), params: d.params(), rz: d.rearAxleZ, on: d.on }; })()`);
   check("changing stage while driving puts the truck back at the start, still in drive mode", pro.on && Math.abs(pro.p.pz - pro.rz) < 1e-9 && pro.p.v === 0, JSON.stringify(pro.p));
   check("Pro is steered but pushed, not powered", pro.params.steered && !pro.params.powered && pro.params.maxSpeed === 300, JSON.stringify(pro.params));

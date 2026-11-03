@@ -5,7 +5,7 @@
 // All geometry, BOM, profile, and 3MF maths live in pure modules (`kip-print-bom.js`, `kip-print-profile.js`,
 // `kip-print.js`); this file handles STL fetching, Three.js plate rendering, canvas sheet drawing, and downloads.
 
-import { resolveSceneBom, resolveProviderBom } from './kip-print-bom.js';
+import { resolvePrintBom } from './kip-print-bom.js';
 import { resolveBodyColors } from './kip-vehicles-wardrobe.js?v=10.0';
 import {
   BONUS_EXPRESSIONS,
@@ -174,16 +174,35 @@ function wrapTextLines(ctx2d, text, maxWidth) {
   return out;
 }
 
+/**
+ * ctx: { THREE, camera, controls, fetchBytes?, printGate?, source? } plus, for a bench that mounts its own view, the source fields below.
+ * A SOURCE is what the view prints and where it draws, and the bench that owns it supplies:
+ *   id?                       names it (the plates-by-colour choice is remembered per source)
+ *   scene                     the THREE.Scene the plate view is drawn into
+ *   getState()                watched every 250 ms (a change repacks); for a Kip scene bench it is also what the BOM is made from
+ *   setCharacterVisible(on)   hide / show what the bench itself draws while the plates are up
+ *   renderStickerSources?     Kip scene benches: the sticker and stencil artwork
+ *   getParts?()               a MECHANISM bench (the Truck): [{ id, colour, count }] built on screen
+ *   getKipState?()            a mechanism bench: the Kip scene state of the driver printed with it (null: no driver)
+ *   splitByColour?, notes?    its plate default (false packs everything together) and the lines it adds to the plan
+ * A standalone bench passes its source fields in `ctx` itself. A host that shares ONE view between benches (the Workshop, stage 4c)
+ * passes `ctx.source()` instead, which answers for the bench that is active; the view keeps the source it opened with until it exits.
+ */
 export function mountPrintView(ctx) {
-  const { THREE, scene, camera, controls } = ctx;
+  const { THREE, camera, controls } = ctx;
+  const sourceNow = () => (typeof ctx.source === 'function' ? ctx.source() : ctx);
+  let src = null; // the source the plate view is open on (null while it is closed)
+  const S = () => src ?? sourceNow();
   const fetchBytes = ctx.fetchBytes ?? defaultFetchBytes;
   const cache = new Map(); // url -> { tri, sha, bytes }
   let validationIndex = null;
   let partspecManifest = null; // file name -> manifest part entry (print.anchors / slice_z03)
   let profile = readStoredProfile();
   // Plates grouped by colour (the Kip: its colours are real choices) or everything packed together (the Truck: its colours are only for looking). Not part of
-  // the printer profile, which is shared by every bench; each bench starts from its own default (`ctx.splitByColour`).
-  let splitByColour = ctx.splitByColour !== false;
+  // the printer profile, which is shared by every bench; each source starts from its own default (`source.splitByColour`) and keeps what was chosen for it.
+  const splitChosen = new Map(); // source id -> boolean
+  const splitKey = (s) => s?.id ?? 'default';
+  const splitFor = (s) => splitChosen.get(splitKey(s)) ?? (s?.splitByColour !== false);
   let supportCheckOn = false;
   let on = false;
   let busy = false;
@@ -293,20 +312,23 @@ export function mountPrintView(ctx) {
 
   /** Build colour-separated plates for the live character & optional vehicle. */
   async function build() {
-    const state = ctx.getState();
+    const source = S();
     const valIdx = await loadValidation();
     const manifestByFile = await loadManifest();
-    // Parts provider (Workshop stage 3): benches without Kip scene state supply `[{ id, colour, count }]`.
-    const bom = ctx.getParts
-      ? resolveProviderBom(await ctx.getParts(), {
-        validationIndex: valIdx,
-        manifestParts: [...manifestByFile.values()],
-        notes: ['Truck mechanism: loose plates (sprue only suits static shell parts); axles and pins print lying flat as exported.'],
-      })
-      : resolveSceneBom(state, {
-        includeVehicle: profile.includeVehicle,
-        validationIndex: valIdx,
-      });
+    // A mechanism bench (Workshop stages 3 and 4c) supplies `[{ id, colour, count }]`, and the Kip driver sitting in it (`getKipState`) prints with it.
+    // What the driver's state is also stands in for the bench's own wherever the exports want a Kip state (names, colours, layout.json).
+    const mechanism = Boolean(source.getParts);
+    const kipState = mechanism ? (source.getKipState?.() ?? null) : null;
+    const state = kipState ?? source.getState();
+    const bom = resolvePrintBom(source, {
+      parts: mechanism ? await source.getParts() : null,
+      kipState,
+      includeVehicle: profile.includeVehicle,
+      validationIndex: valIdx,
+      manifestParts: [...manifestByFile.values()],
+      notes: [...(source.notes ?? [])],
+    });
+    const art = !mechanism; // stickers and stencils are the Kip scene's: a mechanism bench has no artwork renderer
 
     const prepared = [];
     const errors = [];
@@ -344,7 +366,7 @@ export function mountPrintView(ctx) {
     }
 
     const sceneColorCount = new Set(prepared.map(p => p.hex)).size;
-    const plan = planColorPlates(prepared, profile, { splitByColour });
+    const plan = planColorPlates(prepared, profile, { splitByColour: splitFor(source) });
     const est = plan.estimate;
     const totalParts = plan.rawPlates.reduce((n, pl) => n + pl.length, 0);
 
@@ -355,7 +377,7 @@ export function mountPrintView(ctx) {
 
     const spruePlateCount = plan.plates.filter(pl => Boolean(pl.sprue)).length;
     const supportSummary = plan.supportSummary || supportSummaryLine(plan.plates);
-    const stencilInfo = profile.includeStencils ? describeStencilSet(state, { flatPackMode: profile.flatPackMode }) : null;
+    const stencilInfo = profile.includeStencils && art ? describeStencilSet(state, { flatPackMode: profile.flatPackMode }) : null;
     const lines = [
       `${totalParts} parts across ${plan.plates.length} plate${plan.plates.length === 1 ? '' : 's'} (${plan.bound.mm} mm plate on ${profile.bedXmm}×${profile.bedYmm} mm bed)`,
       supportSummary,
@@ -395,8 +417,9 @@ export function mountPrintView(ctx) {
       sceneColorCount,
       hasVehicleInScene: bom.hasVehicleInScene,
       hasDecals: (bom.decals?.length ?? 0) > 0,
-      hasStencils: Boolean(profile.includeStencils),
-      hasSprue: spruePlateCount > 0 || (Boolean(profile.includeStencils) && profile.flatPackMode === 'sprue'),
+      hasStencils: Boolean(profile.includeStencils) && art,
+      art,
+      hasSprue: spruePlateCount > 0 || (Boolean(profile.includeStencils) && art && profile.flatPackMode === 'sprue'),
       note: plan.bound.note,
       small: smallParts(plan.rawPlates),
       exportError: null,
@@ -404,7 +427,7 @@ export function mountPrintView(ctx) {
       gatePending: gate.isPending(),
       stickerPreviewUrl,
     };
-    lastBuild = { plan, bom, state };
+    lastBuild = { plan, bom, state, art, source };
     void refreshStickerPreview(bom, state);
     return plan;
   }
@@ -427,7 +450,8 @@ export function mountPrintView(ctx) {
   // URL is revoked as soon as it is replaced.
   async function refreshStickerPreview(bom, state) {
     const token = ++previewToken;
-    const want = profile.includeStickers !== false && (bom.decals?.length ?? 0) > 0 && ctx.renderStickerSources;
+    const render = lastBuild?.source?.renderStickerSources;
+    const want = profile.includeStickers !== false && (bom.decals?.length ?? 0) > 0 && render;
     if (!want) {
       setStickerPreviewUrl(null);
       return;
@@ -435,7 +459,7 @@ export function mountPrintView(ctx) {
     try {
       const bodyColors = resolveBodyColors(state);
       const opts = { headSkinHex: bodyColors.headSkinHex, shirtHex: bodyColors.chestHex };
-      const sources = await ctx.renderStickerSources(state, bom, BONUS_EXPRESSIONS);
+      const sources = await render(state, bom, BONUS_EXPRESSIONS);
       if (token !== previewToken) return;
       const sheetPlan = planStickerSheet(bom.decals, state, opts);
       const png = stickersToPng(sheetPlan, sources, { ...opts, dpi: 72 });
@@ -448,7 +472,7 @@ export function mountPrintView(ctx) {
 
   function clearView() {
     if (!view) return;
-    scene.remove(view.group);
+    view.scene.remove(view.group);
     view.group.traverse((o) => {
       if (o.geometry) o.geometry.dispose();
       if (o.material) o.material.dispose?.();
@@ -551,31 +575,42 @@ export function mountPrintView(ctx) {
       flat.add(sm);
     }
 
-    scene.add(outer);
-    view = { group: outer, meshes };
+    const into = src?.scene ?? S().scene;
+    into.add(outer);
+    view = { group: outer, meshes, scene: into };
+  }
+
+  // What the watcher compares: the source's own state and, for a mechanism bench, the Kip driver printed with it.
+  function watchSignature() {
+    const source = S();
+    const kip = source.getParts ? source.getKipState?.() : null;
+    return stateWatchSignature(source.getState(), profile) + (kip ? `|${stateWatchSignature(kip, profile)}` : '');
   }
 
   async function enter() {
-    if (busy) return;
+    if (busy || !S()) return;
     busy = true;
     try {
       const plan = await build();
+      // The bench was switched away while the plates were being planned: do not open them on a bench nobody is looking at (or move the shared camera).
+      if (!on && sourceNow() !== lastBuild.source) return;
       planned = plan.plates;
       rawPlates = plan.rawPlates;
       plateIndex = Math.min(plateIndex, Math.max(0, planned.length - 1));
       if (!on) {
         saved = { pos: camera.position.clone(), target: controls.target.clone() };
-        ctx.setCharacterVisible(false);
+        src = lastBuild.source;
+        src.setCharacterVisible(false);
       }
       on = true;
       render();
       const span = Math.max(180, profile.bedXmm, profile.bedYmm);
       camera.position.set(0, span * 1.82, span * 1.38);
       controls.target.set(0, 0, 0);
-      watchKey = stateWatchSignature(ctx.getState(), profile);
+      watchKey = watchSignature();
       if (!watcher) {
         watcher = setInterval(() => {
-          const k = stateWatchSignature(ctx.getState(), profile);
+          const k = watchSignature();
           if (k !== watchKey && !busy) {
             watchKey = k;
             enter();
@@ -595,7 +630,8 @@ export function mountPrintView(ctx) {
     clearInterval(watcher);
     watcher = 0;
     clearView();
-    ctx.setCharacterVisible(true);
+    src?.setCharacterVisible(true);
+    src = null;
     if (saved) {
       camera.position.copy(saved.pos);
       controls.target.copy(saved.target);
@@ -819,7 +855,8 @@ export function mountPrintView(ctx) {
 
   /** Bytes for an export: 'pack' | 'project-3mf' | '3mf' | 'stickers-pdf' | 'stencils-stl' | 'stl-zip' | 'sheet' (PNG). Throws on incomplete plate. */
   async function exportBytes(kind) {
-    const { plan, bom, state } = exportable();
+    const { plan, bom, state, art, source } = exportable();
+    const render = source?.renderStickerSources;
     const prof = plan.profile;
     const activePlate = plan.plates[plateIndex] || plan.plates[0];
     const bodyColors = resolveBodyColors(state);
@@ -830,13 +867,14 @@ export function mountPrintView(ctx) {
 
     if (kind === 'stickers-pdf') {
       if (!bom.decals?.length) throw new Error('No active decals to export on this character');
-      const renderedSources = ctx.renderStickerSources ? await ctx.renderStickerSources(state, bom, BONUS_EXPRESSIONS) : {};
+      const renderedSources = render ? await render(state, bom, BONUS_EXPRESSIONS) : {};
       const sheetPlan = planStickerSheet(bom.decals, state, stickerOpts);
       return stickersToPdf(sheetPlan, renderedSources, stickerOpts);
     }
 
     if (kind === 'stencils-stl') {
-      const renderedSources = ctx.renderStickerSources ? await ctx.renderStickerSources(state, bom, []) : {};
+      if (!art) throw new Error('Stencils come with the Kip tab, not with a mechanism');
+      const renderedSources = render ? await render(state, bom, []) : {};
       const stencilPlan = buildActiveStencilPlan(plan, bom, state, bodyColors, renderedSources);
       return stencilsToStl(stencilPlan);
     }
@@ -848,9 +886,9 @@ export function mountPrintView(ctx) {
     if (kind === 'pack') {
       const sheetPng = await renderSheet(plan, bom);
       const wantStickers = prof.includeStickers !== false && Boolean(bom.decals?.length);
-      const wantStencils = Boolean(prof.includeStencils);
-      const renderedSources = (wantStickers || wantStencils) && ctx.renderStickerSources
-        ? await ctx.renderStickerSources(state, bom, wantStickers ? BONUS_EXPRESSIONS : [])
+      const wantStencils = Boolean(prof.includeStencils) && art;
+      const renderedSources = (wantStickers || wantStencils) && render
+        ? await render(state, bom, wantStickers ? BONUS_EXPRESSIONS : [])
         : {};
       const stickerFiles = wantStickers
         ? buildStickerPackFiles(bom.decals, state, renderedSources, stickerOpts)
@@ -981,13 +1019,15 @@ export function mountPrintView(ctx) {
     repack,
     exportBytes,
     download,
-    getState: () => ctx.getState(),
-    splitByColour: () => splitByColour,
+    getState: () => S().getState(),
+    /** The id of the source the plate view is open on (null while it is closed): a host uses it to close the view when that bench stands down. */
+    sourceId: () => (src ? splitKey(src) : null),
+    splitByColour: () => splitFor(S()),
     /** Group plates by colour (true) or pack every part together (false); repacks if the plate view is open. */
     async setSplitByColour(value) {
       const next = value !== false;
-      if (next === splitByColour) return;
-      splitByColour = next;
+      if (next === splitFor(S())) return;
+      splitChosen.set(splitKey(S()), next);
       if (on && !busy) await enter();
     },
     /** Unmount: leave print mode (scene, camera and character restored), stop watching and forget the gate message listener. */

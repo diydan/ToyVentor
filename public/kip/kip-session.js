@@ -109,6 +109,7 @@ export function createKipSession({
   let leaseOwner = null;
   let restSnapshot = null;
   let syncWardrobe = null;
+  let printStateFn = null;
   let disposed = false;
 
   async function load() {
@@ -185,10 +186,22 @@ export function createKipSession({
     return syncWardrobe({ ...state }) !== false;
   }
 
+  // The Kip bench's full print state (outfit, skin, colours, face: what `resolveSceneBom` takes), so the Truck prints the driver as the Kip has it dressed
+  // (Workshop stage 4c). The session holds only a function: with no Kip bench mounted `printState()` is null and the Truck prints the wardrobe defaults.
+  function registerPrintState(fn) {
+    printStateFn = typeof fn === 'function' ? fn : null;
+    return () => { if (printStateFn === fn) printStateFn = null; };
+  }
+
+  function printState() {
+    return printStateFn ? printStateFn() : null;
+  }
+
   function dispose() {
     if (disposed) return;
     disposed = true;
     syncWardrobe = null;
+    printStateFn = null;
     leaseOwner = null;
     owners.clear();
     const built = data;
@@ -219,6 +232,8 @@ export function createKipSession({
     setDriverState,
     registerSync,
     syncDriver,
+    registerPrintState,
+    printState,
     dispose,
     get data() { return data; },
     get rig() { return data?.rig ?? null; },

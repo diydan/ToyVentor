@@ -11,6 +11,7 @@
 //   - the dropped parts are gone: no key, latch pin, bumper or bollard in the stage, and no 3B bellows stage;
 //   - nothing throws.
 import { createChecks, launchChrome, startServer } from "./lib/kip-e2e.mjs";
+import { menu } from "./lib/menu-drive.mjs";
 
 const { check, finish } = createChecks("truck band e2e");
 const server = await startServer();
@@ -19,7 +20,7 @@ try {
   // a small window: this check is about numbers, and software rendering of a big one is slow
   const t = await chrome.open(`${server.base}/kip/Truck-Mockup.html?stage=band&ui=0`, { width: 480, height: 320 });
   check("the Truck loads on the band stage", await t.waitFor("window.__TRUCK_READY__ === true && !!window.__truckBand", 240000), "never ready");
-  check("the stage list has no bellows button any more, and 2a is the pull-back band", await t.evaluate(`!document.querySelector('[data-stage="bellows"]') && /Pull-Back/.test(document.querySelector('[data-stage="band"]').textContent)`));
+  check("the stage list has no bellows entry any more, and 2a is the pull-back band", await t.evaluate(`(() => { const o = [...document.querySelectorAll('#km-stage option')]; return o.length === 5 && !o.some((x) => x.value === 'bellows') && /Pull-Back/.test(o.find((x) => x.value === 'band')?.textContent ?? ''); })()`));
   const meshes = await t.evaluate(`JSON.stringify(window.__truckProbe().map((r) => r.geo))`);
   const geos = JSON.parse(meshes);
   check("the band stage draws no wind key, no latch pawl, no bumper trigger, no bellows part", !geos.some((g) => /wind_key|latch_pawl|bumper_trigger|bellows/.test(g)), JSON.stringify(geos.filter((g) => /wind|latch|bumper|bellows/.test(g))));
@@ -76,6 +77,19 @@ try {
   const lap2 = rows.filter((r) => r.t >= 6.0 && r.phase === "pull");
   check("the second lap winds again from the line (the loop closes)", lap2.length > 10 && Math.max(...lap2.map((r) => r.spool)) > 5);
   check("the status line explains each phase in words", ["set", "pull", "hold", "drive", "coast", "setback"].every((p) => rows.some((r) => r.phase === p && r.status.length > 20)), "");
+  // a stage's message must not outlive the stage: the jet proposal, then the band's last phase line
+  const statusNow = `document.getElementById('status-text').textContent`;
+  const go = (id) => t.evaluate(menu.select("stage", id));
+  const idle = `/verified CAD solids/.test(${statusNow}) && !/Proposal|^Pull back/.test(${statusNow})`;
+  await go("jet");
+  check("the jet stage shows its proposal note", await t.waitFor(`/^Proposal/.test(${statusNow})`, 5000, 100), await t.evaluate(statusNow));
+  await go("snap");
+  check("leaving the jet stage puts the idle line back (no 'Proposal' left on Stage 1)", await t.waitFor(idle, 5000, 100), await t.evaluate(statusNow));
+  await go("band");
+  await t.evaluate(`window.__truckBand.step(1.0)`); // 1.0 s is mid-pull: a phase line is showing
+  check("the band stage shows a phase line", await t.waitFor(`/^Pull back/.test(${statusNow})`, 5000, 100), await t.evaluate(statusNow));
+  await go("pro");
+  check("leaving the band stage puts the idle line back (no phase line left on Stage 3)", await t.waitFor(idle, 5000, 100), await t.evaluate(statusNow));
   check("no uncaught exception", t.exceptions.length === 0, t.exceptions.slice(0, 2).join(" | "));
   t.close();
 } catch (err) {

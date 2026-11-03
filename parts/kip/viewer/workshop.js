@@ -1,6 +1,6 @@
-// ToyVentor Workshop shell: one page that hosts the Kip bench and the Truck bench (and later others) behind a tab bar.
+// ToyVentor Workshop shell: one page that hosts the Kip, Truck and Yard benches (and later others) behind a tab bar.
 //
-// Stage 4b of docs/specs/workshop-spec.md. No iframes: each bench is a module (kip-bench.js, truck-bench.js) mounted into the shell's stage
+// Stage 4b of docs/specs/workshop-spec.md. No iframes: each bench is a module (kip-bench.js, truck-bench.js, yard-bench.js) mounted into the shell's stage
 // on ONE shared renderer, camera, controls and loop (bench-stage.js). A bench is mounted the first time its tab is picked (a deep link to the
 // Truck never loads the Kip) and then stays mounted: picking another tab only switches which bench is active, so a bench keeps its models, its
 // state and its camera while you are away. The shell reaches a bench only through the mount function named in DEFAULT_BENCHES and the handle
@@ -19,6 +19,7 @@
 export const DEFAULT_BENCHES = Object.freeze([
   Object.freeze({ id: 'kip', label: 'Kip', src: '/kip/Kip-Demo.html', module: '/kip/kip-bench.js?v=10.0', mount: 'mountKipBench', note: 'Characters and vehicles, print view, selfie, describe and build' }),
   Object.freeze({ id: 'truck', label: 'Truck', src: '/kip/Truck-Mockup.html', module: '/kip/truck-bench.js', mount: 'mountTruckBench', note: 'Mechanical dump truck: Snap, Motion, Pro' }),
+  Object.freeze({ id: 'yard', label: 'Yard', src: '/kip/Yard-Bench.html', module: '/kip/yard-bench.js', mount: 'mountYardBench', note: 'Construction vehicles: the double-drum road roller (hand-pushed), the dozer next' }),
 ]);
 
 /** Which bench a location asks for, and the query params that belong to the bench. Unknown or missing ids fall back to the first bench. */
@@ -80,7 +81,8 @@ function ensureStyle(doc) {
 
 /**
  * Mount the shell into `root` (an element with a size: the shell fills it).
- * opts: { benches = DEFAULT_BENCHES, urlSync = true, stageModule = '/kip/bench-stage.js', threeModule = '/kip/vendor/three-kip.js', kipSessionModule = '/kip/kip-session.js?v=10.0' }
+ * opts: { benches = DEFAULT_BENCHES, urlSync = true, stageModule = '/kip/bench-stage.js', threeModule = '/kip/vendor/three-kip.js', kipSessionModule = '/kip/kip-session.js?v=10.0',
+ *         menuModule = '/kip/kip-menu.js?v=10.0', printModule = '/kip/bench-print.js', printViewModule = '/kip/kip-print-view.js?v=10.0' }
  *   urlSync  true: the shell owns ?bench= in the address bar (push on tab pick, Back works) and sets document.title.
  *            false: it touches neither (for a host such as the game that owns the URL).
  * Returns { select(id, { push = true, forward }) -> Promise, current(), bench(id), handles(id), stage(), ready(), benches, destroy() }.
@@ -93,6 +95,9 @@ export function mountWorkshop(root, opts = {}) {
   const stageModule = opts.stageModule ?? '/kip/bench-stage.js';
   const threeModule = opts.threeModule ?? '/kip/vendor/three-kip.js';
   const kipSessionModule = opts.kipSessionModule ?? '/kip/kip-session.js?v=10.0';
+  const menuModule = opts.menuModule ?? '/kip/kip-menu.js?v=10.0';
+  const printModule = opts.printModule ?? '/kip/bench-print.js';
+  const printViewModule = opts.printViewModule ?? '/kip/kip-print-view.js?v=10.0';
   const doc = root.ownerDocument;
   const win = doc.defaultView;
   ensureStyle(doc);
@@ -138,6 +143,8 @@ export function mountWorkshop(root, opts = {}) {
   let currentId = null;
   let stage = null;
   let sharedKip = null;
+  let sharedMenu = null;
+  let sharedPrint = null;
   let stagePromise = null;
   let loadingEl = null;
   let destroyed = false;
@@ -172,15 +179,21 @@ export function mountWorkshop(root, opts = {}) {
 
   /** The one stage (renderer, camera, controls, loop) every bench draws on; made the first time a bench is needed. */
   function ensureStage() {
-    stagePromise ??= Promise.all([import(stageModule), import(threeModule), import(kipSessionModule)]).then(([
+    stagePromise ??= Promise.all([import(stageModule), import(threeModule), import(kipSessionModule), import(menuModule), import(printModule), import(printViewModule)]).then(([
       { createStage },
       { THREE, OrbitControls, STLLoader, mergeVertices, toCreasedNormals },
       { createKipSession },
+      { createMenuHost },
+      { createPrintHost },
+      { mountPrintView },
     ]) => {
       if (!destroyed) {
         stage = createStage({ THREE, OrbitControls, host: stageEl });
         sharedKip = createKipSession({ THREE, STLLoader, mergeVertices, toCreasedNormals });
         sharedKip.acquire('workshop'); // the host keeps the session alive across bench unmount/remount
+        // One menu and one print view for every bench (stage 4c): a bench shows its own declaration on the menu and offers the view its own source while it is active.
+        sharedMenu = createMenuHost();
+        sharedPrint = createPrintHost({ mountPrintView, THREE, stage });
       }
       return stage;
     });
@@ -208,14 +221,18 @@ export function mountWorkshop(root, opts = {}) {
       if (destroyed) return;
       const f = forward ?? '';
       const globals = {};
-      const handle = mod[bench.mount](stageEl, {
+      // A bench applies its look to the shared camera as it is constructed: mounting one while another is active must not move the active bench's view,
+      // so the stage puts the camera, controls and exposure back (the new bench applies its look again when the stage activates it, just below).
+      const handle = stage.preserve(() => mod[bench.mount](stageEl, {
         stage,
         sharedKip,
+        sharedMenu,
+        sharedPrint,
         globals,
         getSearch: () => (f ? `?${f}` : ''),
         getHash: () => '',
         embedded: true, // inside a shell: the bench hides its own "back to the app" link, as it did in a frame
-      });
+      }));
       m = { handle, globals, forward: f };
       mounted.set(bench.id, m);
       stage.add(bench.id, handle);
@@ -294,6 +311,8 @@ export function mountWorkshop(root, opts = {}) {
     handles: (id) => mounted.get(id)?.globals ?? null,
     stage: () => stage,
     sharedKip: () => sharedKip,
+    sharedMenu: () => sharedMenu,
+    sharedPrint: () => sharedPrint,
     ready: () => queue,
     destroy() {
       if (destroyed) return;
@@ -302,6 +321,10 @@ export function mountWorkshop(root, opts = {}) {
       stageEl.removeEventListener('click', onStageClick, true);
       stage?.stop();
       for (const id of [...mounted.keys()]) unmount(id);
+      sharedPrint?.dispose();
+      sharedPrint = null;
+      sharedMenu?.destroy();
+      sharedMenu = null;
       sharedKip?.releaseRef('workshop');
       sharedKip = null;
       stage?.dispose();

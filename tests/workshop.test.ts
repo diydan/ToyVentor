@@ -56,8 +56,8 @@ describe("workshop shell: URL rules", () => {
 });
 
 describe("workshop shell: benches and build wiring", () => {
-  it("lists Kip first and Truck second, with unique ids, and the list cannot be edited by accident", () => {
-    expect(DEFAULT_BENCHES.map((b: any) => b.id)).toEqual(["kip", "truck"]);
+  it("lists Kip first, Truck second and Yard third, with unique ids, and the list cannot be edited by accident", () => {
+    expect(DEFAULT_BENCHES.map((b: any) => b.id)).toEqual(["kip", "truck", "yard"]);
     expect(new Set(DEFAULT_BENCHES.map((b: any) => b.label)).size).toBe(DEFAULT_BENCHES.length);
     expect(Object.isFrozen(DEFAULT_BENCHES)).toBe(true);
     expect(Object.isFrozen(DEFAULT_BENCHES[0])).toBe(true);
@@ -112,12 +112,30 @@ describe("workshop shell: benches and build wiring", () => {
     const gradient = /gradient: '([^']+)'/.exec(look)?.[1];
     expect(gradient, "BLUEPRINT.gradient").toMatch(/^radial-gradient\(/);
     expect(read("parts/kip/viewer/workshop.js")).toContain(`background: ${gradient};`);
-    // both benches take their ground from it rather than carrying their own copy
-    for (const f of ["kip-bench.js", "truck-bench.js"]) {
+    // every bench takes its ground from it rather than carrying its own copy
+    for (const f of ["kip-bench.js", "truck-bench.js", "yard-bench.js"]) {
       const src = read(`parts/kip/viewer/${f}`);
       expect(src, f).toContain("${BLUEPRINT.gradient}");
       expect(src, f).toMatch(/from '\/kip\/bench-look\.js\?v=10\.0'/);
     }
+  });
+
+  it("ships the Yard bench's module, its placement maths and its loader page through build:kip, and hides its own Workshop link inside the shell", () => {
+    const build = read("scripts/build-kip.ts");
+    for (const f of ["yard-bench.js", "yard-vehicles.js", "Yard-Bench.html"]) expect(build, `${f} is not copied by build:kip`).toContain(`viewer/${f}`);
+    expect(read("parts/kip/viewer/Yard-Bench.html")).toMatch(/from '\.\/yard-bench\.js'/);
+    const bench = read("parts/kip/viewer/yard-bench.js");
+    expect(bench).toMatch(/id="yard-back" href="\.\/Workshop\.html"/);
+    expect(bench).toMatch(/if \(embedded\) \$el\('yard-back'\)\.hidden = true;/);
+    // its served copies are the viewer's files, byte for byte (hand-synced or built)
+    for (const f of ["yard-bench.js", "yard-vehicles.js", "Yard-Bench.html"]) expect(read(`public/kip/${f}`), `public/kip/${f} differs from the viewer's`).toBe(read(`parts/kip/viewer/${f}`));
+  });
+
+  it("mounts every bench through stage.preserve, so a bench's look at construction cannot move the active bench's camera (found with the Yard, 2026-11-03)", () => {
+    expect(read("parts/kip/viewer/workshop.js")).toMatch(/stage\.preserve\(\(\) => mod\[bench\.mount\]\(/);
+    expect(read("parts/kip/viewer/bench-stage.js")).toMatch(/preserve\(fn\) \{/);
+    // the benches do apply their look at construction (that is why the shell has to guard it): if one stops, this note can go
+    for (const f of ["kip-bench.js", "truck-bench.js", "yard-bench.js"]) expect(read(`parts/kip/viewer/${f}`), f).toMatch(/\bapplyLook\(\);/);
   });
 
   it("uses no iframe: a bench is a module on the shared stage (Dan, 2026-11-03)", () => {

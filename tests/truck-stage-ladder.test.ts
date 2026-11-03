@@ -5,7 +5,12 @@ import { describe, expect, it } from "vitest";
 // The decided ladder (Dan, 2026-11-02; docs/specs/motion-stage-options-spec.md section 3.0): Snap -> Motion -> Pro.
 // Motion has two alternative cores (pull-back band, balloon jet); Pro has an optional powered add-on (Card F, the old "Mech").
 // The viewer's stage ids (`?stage=` values, the probes) never change: only the button order and the labels follow the ladder.
+// Since Workshop stage 4c the stage buttons are the Truck's declaration for the one menu (truck-menu.js), no longer markup in the bench.
+// @ts-expect-error untyped JS module
+import { TRUCK_STAGES } from "../parts/kip/viewer/truck-menu.js";
+
 const source = readFileSync(join(process.cwd(), "parts/kip/viewer/truck-bench.js"), "utf8");
+const menuSource = readFileSync(join(process.cwd(), "parts/kip/viewer/truck-menu.js"), "utf8");
 
 const LADDER = [
   { id: "snap", step: "1", label: /Snap \(3\+\)/ },
@@ -15,13 +20,13 @@ const LADDER = [
   { id: "mech", step: "3+", label: /Pro Powered Add-On \(10\+\)/ },
 ];
 
-const buttons = [...source.matchAll(/<button data-stage="(\w+)"[^>]*>([^<]+)<\/button>/g)].map((m) => ({ id: m[1] ?? "", text: (m[2] ?? "").trim() }));
+const buttons = (TRUCK_STAGES as { id: string; label: string }[]).map((s) => ({ id: s.id, text: s.label.trim() }));
 const hud = new Map(
   [...source.matchAll(/(\w+): \{\s*badge: (['"])(.*?)\2,\s*title: (['"])(.*?)\4,/g)].map((m) => [m[1] ?? "", { badge: m[3] ?? "", title: m[5] ?? "" }]),
 );
 
 describe("Truck stage ladder: Snap -> Motion -> Pro", () => {
-  it("finds the five stage buttons and five HUD entries (guards the parsing below)", () => {
+  it("finds the five stages and five HUD entries (guards the parsing below)", () => {
     expect(buttons.map((b) => b.id)).toHaveLength(LADDER.length);
     expect([...hud.keys()].sort()).toEqual(LADDER.map((s) => s.id).sort());
   });
@@ -49,10 +54,12 @@ describe("Truck stage ladder: Snap -> Motion -> Pro", () => {
   });
 
   it("keeps no step number from the old four-stage numbering (3A, 3B, Stage 4) anywhere in the bench", () => {
-    const old = [...source.matchAll(/\b3A\b|\b3B[′']|\bStage 4\b|\b4 · Pro/g)].map((m) => {
-      const line = source.slice(0, m.index).split("\n").length;
-      return `line ${line}: ${m[0]}`;
-    });
-    expect(old).toEqual([]);
+    for (const [name, text] of [["truck-bench.js", source], ["truck-menu.js", menuSource]] as const) {
+      const old = [...text.matchAll(/\b3A\b|\b3B[′']|\bStage 4\b|\b4 · Pro/g)].map((m) => {
+        const line = text.slice(0, m.index).split("\n").length;
+        return `${name} line ${line}: ${m[0]}`;
+      });
+      expect(old).toEqual([]);
+    }
   });
 });

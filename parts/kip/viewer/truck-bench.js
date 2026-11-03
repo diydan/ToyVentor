@@ -12,8 +12,10 @@ import {
 import { createKipSession } from '/kip/kip-session.js?v=10.0'; // one loaded Kip rig, shared with kip-bench.js (Workshop stage 4b-3)
 import { createDecalExpressionCanvas } from '/kip/kip-forge-sdk.js?v=10.0';
 import { mountPrintView } from '/kip/kip-print-view.js?v=10.0';
-import { truckGetParts } from './truck-print-parts.js';
-import { loadExpansionGeos, attachExpansionToKipRig, WARDROBE_HEADS, HUMAN_HEAD_IDS, HAIR_OPTIONS, HAT_OPTIONS, HAT_COLORS, FACE_STEM_MM } from '/kip/kip-vehicles-wardrobe.js?v=10.0';
+import { createMenuHost } from '/kip/kip-menu.js?v=10.0';
+import { truckGetParts, truckDriverPrintState, partsSignature } from './truck-print-parts.js';
+import { buildTruckMenu, TRUCK_STAGES, TRUCK_CAMERAS } from './truck-menu.js';
+import { WARDROBE_HEADS, HUMAN_HEAD_IDS, HAIR_OPTIONS, HAT_OPTIONS, HAT_COLORS, FACE_STEM_MM } from '/kip/kip-vehicles-wardrobe.js?v=10.0';
 import { FACEPLATE_SEAT_MM } from '/kip/kip-faceplate-shape.js?v=10.0';
 import { disposeThreeScene } from '/kip/bench-lifecycle.js?v=10.0';
 import { BLUEPRINT } from '/kip/bench-look.js?v=10.0';
@@ -115,201 +117,44 @@ export const TRUCK_BENCH_CSS = `
   }
   .hud-grid span:nth-child(even) { color: var(--ink); font-weight: 700; text-align: right; }
 
-  .dock {
-    position: fixed;
-    left: 14px;
-    top: 72px;
-    bottom: 40px;
-    width: 288px;
-    max-width: calc(100vw - 28px);
-    overflow-x: hidden;
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    scrollbar-width: thin;
-    background: var(--glass);
-    backdrop-filter: blur(16px);
-    border: 1px solid var(--line);
-    border-radius: 18px;
-    padding: 12px 14px 14px;
-    box-shadow: 0 12px 32px rgba(27, 34, 56, 0.10);
-    display: flex;
-    flex-direction: column;
-    gap: 9px;
-    z-index: 12;
-  }
-  .dock-title {
-    font-size: 13px;
-    font-weight: 800;
-    letter-spacing: -0.01em;
-  }
-  .dock .row { align-items: stretch; }
-  .dock .row-label { flex: 0 0 100%; }
-  .dock .stage-row .row-label { margin-top: 2px; }
-  .dock button {
-    flex: 1 1 calc(50% - 3px);
-    min-height: 34px;
-  }
-  .dock .stage-row button {
-    flex-basis: 100%;
-    text-align: left;
-  }
-  .dock .stage-row #btn-demo { text-align: center; }
-  .dock .sep { display: none; }
-  .dock .motion-row .slider-pill { flex: 1 1 100%; }
-  .dock .motion-row .slider-pill > span:first-child { flex: 0 0 72px; }
-  .dock .motion-row .slider-pill input[type="range"] {
-    flex: 1 1 auto;
-    width: auto;
-    min-width: 0;
-  }
-  .dock .options-row .cam-label {
-    flex: 0 0 100%;
-    margin-top: 5px;
-  }
-  .truck-menu-toggle,
-  .truck-menu-backdrop { display: none; }
-  #print-panel {
-    display: none;
-    position: fixed;
-    left: 316px;
-    bottom: 18px;
-    z-index: 30;
-    width: min(340px, calc(100vw - 346px));
-    background: #161d30;
-    color: #f4efe6;
-    border-radius: 12px;
-    padding: 12px 14px;
-    font-size: 13px;
-    line-height: 1.45;
-    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35);
-  }
-  #print-status { margin-bottom: 8px; }
-  #print-actions { display: flex; gap: 6px; flex-wrap: wrap; }
-  .row {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    flex-wrap: wrap;
-  }
-  .row-label {
-    font-size: 10.5px;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--muted);
-    min-width: 58px;
-  }
+  /* The controls are the shared menu (kip-menu.js, declared in truck-menu.js); it needs the same base button and select look the Kip bench gives it. */
   button {
+    appearance: none;
     border: 1px solid var(--line);
-    background: rgba(255, 255, 255, 0.78);
+    background: rgba(255, 255, 255, 0.76);
     color: var(--ink);
     font-family: inherit;
-    font-size: 12px;
-    font-weight: 700;
-    padding: 6px 11px;
-    border-radius: 10px;
+    font-size: 11.8px;
+    font-weight: 650;
+    padding: 5px 9.5px;
+    border-radius: 9px;
     cursor: pointer;
-    transition: all 0.14s ease;
+    transition: all 0.12s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    white-space: nowrap;
   }
-  button:hover { background: #fff; transform: translateY(-1px); }
-  button.active {
-    background: var(--ink);
-    color: #fff;
-    border-color: var(--ink);
+  button:hover {
+    background: #fff;
+    border-color: rgba(27, 34, 56, 0.25);
   }
-  button.mint-on {
-    background: var(--mint);
-    color: #fff;
-    border-color: var(--mint);
-  }
-  button.spark-on {
+  button.spark-active {
     background: var(--spark);
     color: #fff;
     border-color: var(--spark);
   }
-  .sep {
-    width: 1px;
-    height: 18px;
-    background: var(--line);
-    margin: 0 3px;
-  }
-  .slider-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    background: rgba(255, 255, 255, 0.72);
+  select {
+    appearance: none;
     border: 1px solid var(--line);
-    border-radius: 10px;
-    padding: 4px 10px;
-    font-size: 11.5px;
+    background: #fff;
+    color: var(--ink);
+    font-family: inherit;
+    font-size: 12px;
     font-weight: 700;
-  }
-  .slider-pill input[type="range"] {
-    width: 105px;
-    accent-color: var(--spark);
+    padding: 5px 10px;
+    border-radius: 9px;
     cursor: pointer;
-  }
-  .val {
-    font-variant-numeric: tabular-nums;
-    min-width: 34px;
-    text-align: right;
-    color: var(--spark);
-  }
-
-  @media (max-width: 900px) {
-    .dock { width: min(288px, calc(100vw - 28px)); }
-    #print-panel {
-      left: auto;
-      right: 14px;
-      width: min(340px, calc(100vw - 28px));
-    }
-  }
-
-  @media (max-width: 719.98px) {
-    .dock {
-      top: 0;
-      bottom: 0;
-      left: 0;
-      width: min(86vw, 330px);
-      max-width: none;
-      border-radius: 0 18px 18px 0;
-      transform: translateX(-105%);
-      visibility: hidden;
-      transition: transform 0.2s ease, visibility 0s linear 0.2s;
-      z-index: 25;
-    }
-    &.truck-menu-open .dock {
-      transform: none;
-      visibility: visible;
-      transition-delay: 0s;
-    }
-    .truck-menu-toggle {
-      display: inline-flex;
-      position: fixed;
-      left: 12px;
-      bottom: 40px;
-      z-index: 26;
-      padding: 9px 14px;
-      font-size: 13px;
-      border-radius: 999px;
-      background: var(--glass);
-      backdrop-filter: blur(12px);
-      box-shadow: 0 8px 20px rgba(27, 34, 56, 0.16);
-    }
-    &.truck-menu-open .truck-menu-toggle { display: none; }
-    .truck-menu-backdrop {
-      position: fixed;
-      inset: 0;
-      z-index: 24;
-      background: rgba(27, 34, 56, 0.28);
-    }
-    &.truck-menu-open .truck-menu-backdrop { display: block; }
-    #print-panel {
-      left: 12px;
-      right: 12px;
-      bottom: 12px;
-      width: auto;
-    }
   }
 
   .drive-hud {
@@ -347,11 +192,6 @@ export const TRUCK_BENCH_CSS = `
     font-weight: 800;
   }
   .drive-hud b { color: var(--cobalt); }
-
-  @media (prefers-reduced-motion: reduce) {
-    .dock,
-    .truck-menu-toggle { transition: none !important; }
-  }
 }
 `;
 
@@ -382,83 +222,11 @@ export const TRUCK_BENCH_MARKUP = `
   </div>
 </div>
 
-<button id="truck-menu-toggle" class="truck-menu-toggle" type="button" aria-controls="truck-dock" aria-expanded="false" aria-label="Open truck controls">☰ Truck controls</button>
-<div class="truck-menu-backdrop" aria-hidden="true"></div>
-
-<aside class="dock" id="truck-dock" aria-label="Truck controls">
-  <div class="dock-title">Truck controls</div>
-  <div class="row stage-row">
-    <span class="row-label">Stage</span>
-    <button data-stage="snap" class="active">1 · Snap (3+)</button>
-    <button data-stage="band">2a · Motion (8+) Pull-Back Band</button>
-    <button data-stage="jet" title="Proposal: balloon upright on top of mom_jet_valve_body, no dump tub (docs/specs/motion-stage-options-spec.md)">2b · Motion (8+) Balloon Jet (proposal)</button>
-    <button data-stage="pro">3 · Pro (8+) Rack Steer</button>
-    <button data-stage="mech">3+ · Pro Powered Add-On (10+) Smart RC X-Ray</button>
-    <span class="sep"></span>
-    <button id="btn-demo" class="spark-on">▶ Action Demo</button>
-  </div>
-
-  <div class="row motion-row">
-    <span class="row-label">Motion</span>
-    <span class="slider-pill">
-      <span>Dump Tip</span>
-      <input type="range" id="rng-tip" min="0" max="55" value="22" />
-      <span class="val" id="val-tip">22°</span>
-    </span>
-    <span class="slider-pill">
-      <span>Steer Lock</span>
-      <input type="range" id="rng-steer" min="-34" max="34" value="0" />
-      <span class="val" id="val-steer">0°</span>
-    </span>
-    <span class="slider-pill">
-      <span>Explode</span>
-      <input type="range" id="rng-explode" min="0" max="100" value="0" />
-      <span class="val" id="val-explode">0%</span>
-    </span>
-  </div>
-
-  <div class="row options-row">
-    <span class="row-label">Options</span>
-    <button id="btn-wheels">Tires: Ø36 Med (#4)</button>
-    <button id="btn-hood">Nose: Open Yoke</button>
-    <button id="btn-plow">Front Plow (#12): Off</button>
-    <button id="btn-jet-balloon" style="display:none" title="Cycle the balloon diameter (mm)">Balloon: Ø175</button>
-    <button id="btn-jet-lean" style="display:none" title="Lean the balloon back. 0° = straight up, as the vertical collar gives it">Lean: 0°</button>
-    <button id="btn-jet-nozzle" style="display:none" title="Cycle the nozzle insert (proposal geometry, not repo CAD)">Nozzle: Ø6</button>
-    <button id="btn-kip" class="mint-on">Kip Driver: On</button>
-    <button id="btn-print" title="Plan colour plates for the truck as built and export print files">Print plates</button>
-    <button id="btn-driver" title="Pro 8+ = 14-joint ball-and-peg Kip rig (default). Snap 3+ = 1-piece limb & swivel-turret Kip rig.">Rig: Pro 8+</button>
-    <button id="btn-head" title="Cycle all 12 Kip PartSpec heads (Human · Robot · Animal · Creature)">Head: kid</button>
-    <button id="btn-hair" title="Cycle the wig on Human heads (hat-ready wigs accept a hat)">Hair: short swept</button>
-    <button id="btn-hat" title="Cycle the hat">Hat: hardhat</button>
-    <button id="btn-xray">X-Ray Shells: Auto</button>
-    <button id="btn-sweep">Auto Steer: Off</button>
-    <button id="btn-drive" title="Drive the truck with the keyboard (G): W/S speed, A/D steer, Space brake, Q/E tip the bed, R back to the start">Drive: Off</button>
-    <span class="sep"></span>
-    <span class="row-label cam-label">Cam:</span>
-    <button data-cam="hero">3/4 Hero</button>
-    <button data-cam="side">Side Datum</button>
-    <button data-cam="top">Top Steer</button>
-    <button data-cam="cab">Cockpit</button>
-  </div>
-</aside>
-
 <div id="drive-hud" class="drive-hud" hidden>
   <div><kbd>W</kbd><kbd>S</kbd> speed · <kbd>A</kbd><kbd>D</kbd> steer · <kbd>Space</kbd> brake · <kbd>Q</kbd><kbd>E</kbd> tip the bed · <kbd>R</kbd> start · <kbd>G</kbd> stop driving</div>
   <div><b id="drive-mode">Pushed by hand</b> · <span id="drive-speed">0.00 m/s</span> · steer <span id="drive-steer">fixed axle</span><span id="drive-note"></span></div>
 </div>
 
-<div id="print-panel">
-  <div id="print-status">Planning plates…</div>
-  <div id="print-actions">
-    <button id="print-colours" title="Pack every part together (default) or give each colour its own plates">Colours: all together</button>
-    <button id="print-prev">← Plate</button>
-    <button id="print-next">Plate →</button>
-    <button id="print-3mf">Download 3MF</button>
-    <button id="print-project">Project 3MF</button>
-    <button id="print-back">Back to truck</button>
-  </div>
-</div>
 `;
 
 /**
@@ -593,7 +361,7 @@ const loader = new STLLoader();
 const GEOS = {};
 
 const PART_FILES = [
-  'kit_keel_base', 'kit_barbell_shaft', 'kit_wheel_med', 'kit_wheel_giant',
+  'kit_keel_base', 'kit_barbell_shaft', 'kit_wheel_med', 'kit_wheel_giant', 'kit_wheel_med_free', 'kit_wheel_giant_free',
   'kit_aero_wedge', 'kit_windscreen', 'kit_tilting_tub', 'kit_scoop_blade',
   'kit_yoke_hbar', 'kit_turntable', 'pro_tub_hinge',
   'pro_steer_bridge', 'pro_steer_knuckle_l', 'pro_steer_knuckle_r',
@@ -1016,10 +784,9 @@ function rebuildScene() {
       orientZ.add(tiltX);
       kpPivot.add(orientZ);
 
-      const stW = meshOf(wheelPid, MATS.tire);
-      stW.rotation.order = 'YZX';
+      // The steered front wheel is the free-hub variant: it turns on the knuckle's round barbed stub (the keyed wheel could not, and needed a 90 deg clock).
+      const stW = meshOf(state.giantWheels ? 'kit_wheel_giant_free' : 'kit_wheel_med_free', MATS.tire);
       stW.rotation.y = side < 0 ? -Math.PI / 2 : Math.PI / 2;
-      stW.rotation.z = Math.PI / 2;
       const spinG = new THREE.Group();
       spinG.position.set(side * 8.85, 0, 0);
       addExplodeTag(spinG, side * 18, 0, 0);
@@ -1074,8 +841,8 @@ function rebuildScene() {
     if (sharedKip) adoptSharedDriverState();
     const isPro = state.driver !== 'snap';
     for (const s of rig.editionParts.pro) s.visible = isPro;
-    prepareSharedKipForTruck(rig);
     for (const s of rig.editionParts.snap) s.visible = !isPro;
+    prepareSharedKipForTruck(rig);
 
     const d2r = THREE.MathUtils.degToRad;
     rig.hips.rotation.set(0, 0, 0);
@@ -1469,172 +1236,101 @@ function updateHUD() {
   }
 }
 
-// UI Bindings
-const truckDock = $el('truck-dock');
-const truckMenuToggle = $el('truck-menu-toggle');
-const truckMenuBackdrop = benchRoot.querySelector('.truck-menu-backdrop');
-const narrowTruckMenu = window.matchMedia('(max-width: 719.98px)');
-function setTruckMenu(open, { focus = true } = {}) {
-  const isOpen = Boolean(open);
-  benchRoot.classList.toggle('truck-menu-open', isOpen);
-  truckMenuToggle.setAttribute('aria-expanded', String(isOpen));
-  truckMenuToggle.setAttribute('aria-label', isOpen ? 'Close truck controls' : 'Open truck controls');
-  if (!focus) return;
-  if (isOpen) truckDock.querySelector('button:not([disabled])')?.focus({ preventScroll: true });
-  else truckMenuToggle.focus({ preventScroll: true });
-}
-truckMenuToggle.addEventListener('click', () => {
-  setTruckMenu(!benchRoot.classList.contains('truck-menu-open'));
-});
-truckMenuBackdrop.addEventListener('click', () => setTruckMenu(false));
-listen(document, 'keydown', (e) => {
-  if (e.key === 'Escape' && benchRoot.classList.contains('truck-menu-open')) {
-    e.preventDefault();
-    setTruckMenu(false);
-  }
-}, true);
-listen(narrowTruckMenu, 'change', () => setTruckMenu(false, { focus: false }));
-
-benchRoot.querySelectorAll('[data-stage]').forEach((btn) => {
-  btn.addEventListener('click', () => {
-    benchRoot.querySelectorAll('[data-stage]').forEach((b) => b.classList.remove('active'));
-    btn.classList.add('active');
-    state.stage = btn.dataset.stage;
-    state.demoRunning = false;
-    resetVehiclePose();
-    if (state.stage === 'band' && state.giantWheels) { // the pull-back core has not been through the Ø50 rear-wheel check yet
-      state.giantWheels = false;
-      const bw = $el('btn-wheels');
-      bw.textContent = 'Tires: Ø36 Med (#4)';
-      bw.classList.remove('mint-on');
-    }
-    if (state.stage === 'pro' || state.stage === 'mech') {
-      state.steerDeg = 22;
-      state.tipDeg = state.stage === 'mech' ? 18 : PRO_TIP_MIN;
-    } else if (state.stage === 'band') {
-      state.steerDeg = 0;
-      state.tipDeg = 42;
-    } else if (state.stage === 'jet') {
-      state.steerDeg = 0;
-      state.tipDeg = 0;
-    } else {
-      state.steerDeg = 0;
-      state.tipDeg = 22;
-    }
-    for (const id of ['btn-jet-balloon', 'btn-jet-lean', 'btn-jet-nozzle']) $el(id).style.display = state.stage === 'jet' ? '' : 'none';
-    if (state.stage === 'jet') $el('status-text').textContent = 'Proposal: balloon upright on mom_jet_valve_body, no tub. Thrust depends on the body\'s air path and the nozzle (spec section 2, /kip/JetCar-Lab.html). Demo = inflate and vent only.';
-    syncSliders();
-    rebuildScene();
-  });
-});
-
-// Stage 2b options: cycle balloon diameter, lean and nozzle (balloon lean 0 = straight up, as the vertical collar gives it)
-const JET_D = [125, 150, 175, 200], JET_LEAN = [0, 15, 30, 45], JET_NOZ = [3, 4.5, 6, 8];
-const cycle = (list, v) => list[(Math.max(0, list.indexOf(v)) + 1) % list.length];
-$el('btn-jet-balloon').addEventListener('click', (e) => { state.balloonD = cycle(JET_D, state.balloonD); e.target.textContent = `Balloon: Ø${state.balloonD}`; rebuildScene(); updateHUD(); });
-$el('btn-jet-lean').addEventListener('click', (e) => { state.balloonLean = cycle(JET_LEAN, state.balloonLean); e.target.textContent = `Lean: ${state.balloonLean}°`; rebuildScene(); updateHUD(); });
-$el('btn-jet-nozzle').addEventListener('click', (e) => { state.jetNozzle = cycle(JET_NOZ, state.jetNozzle); e.target.textContent = `Nozzle: Ø${state.jetNozzle}`; rebuildScene(); updateHUD(); });
-
-function syncSliders() {
-  $el('rng-tip').min = tipMinDeg();
-  $el('rng-tip').value = state.tipDeg;
-  $el('val-tip').textContent = `${Math.round(state.tipDeg)}°`;
-  $el('rng-steer').value = state.steerDeg;
-  $el('val-steer').textContent = `${Math.round(state.steerDeg)}°`;
-  $el('rng-explode').value = state.explode;
-  $el('val-explode').textContent = `${Math.round(state.explode)}%`;
-}
-
-$el('rng-tip').addEventListener('input', (e) => {
+// UI: the controls are DECLARED in truck-menu.js and drawn by the one menu (kip-menu.js; stage 4c of docs/specs/workshop-spec.md).
+// What follows are the functions those controls call, and the menu wiring is at the end of the mount.
+function setStage(id) {
+  if (!TRUCK_STAGES.some((st) => st.id === id)) return;
+  state.stage = id;
   state.demoRunning = false;
-  state.tipDeg = Number(e.target.value);
-  $el('val-tip').textContent = `${Math.round(state.tipDeg)}°`;
+  resetVehiclePose();
+  if (state.stage === 'band' && state.giantWheels) state.giantWheels = false; // the pull-back core has not been through the Ø50 rear-wheel check yet
+  if (state.stage === 'pro' || state.stage === 'mech') {
+    state.steerDeg = 22;
+    state.tipDeg = state.stage === 'mech' ? 18 : PRO_TIP_MIN;
+  } else if (state.stage === 'band') {
+    state.steerDeg = 0;
+    state.tipDeg = 42;
+  } else if (state.stage === 'jet') {
+    state.steerDeg = 0;
+    state.tipDeg = 0;
+  } else {
+    state.steerDeg = 0;
+    state.tipDeg = 22;
+  }
+  if (STAGE_NOTE[state.stage]) $el('status-text').textContent = STAGE_NOTE[state.stage];
+  else if (statusIdleReady) setIdleStatus(); // leaving a stage must not leave its message (the jet proposal, a band phase, the giant-tyre note) on the next one
+  rebuildScene();
+}
+
+// Stage 2b options: balloon diameter, lean and nozzle (balloon lean 0 = straight up, as the vertical collar gives it)
+const JET_D = [125, 150, 175, 200], JET_LEAN = [0, 15, 30, 45], JET_NOZ = [3, 4.5, 6, 8];
+const jetControl = (list, key, fmt) => ({
+  options: () => list.map((v) => ({ value: String(v), label: fmt(v) })),
+  get: () => String(state[key]),
+  set: (v) => { state[key] = Number(v); rebuildScene(); updateHUD(); },
+});
+
+function setDumpTip(deg) {
+  state.demoRunning = false;
+  state.tipDeg = Number(deg);
   updateKinematics();
   updateHUD();
-});
-
-$el('rng-steer').addEventListener('input', (e) => {
+}
+function setSteerLock(deg) {
   state.demoRunning = false;
   const lim = state.giantWheels ? 25 : 34;
-  state.steerDeg = Math.max(-lim, Math.min(lim, Number(e.target.value)));
-  $el('val-steer').textContent = `${Math.round(state.steerDeg)}°`;
+  state.steerDeg = Math.max(-lim, Math.min(lim, Number(deg)));
   updateKinematics();
   updateHUD();
-});
-
-$el('rng-explode').addEventListener('input', (e) => {
-  state.explode = Number(e.target.value);
-  $el('val-explode').textContent = `${Math.round(state.explode)}%`;
+}
+function setExplode(pct) {
+  state.explode = Number(pct);
   updateKinematics();
-});
-
-$el('btn-wheels').addEventListener('click', (e) => {
+}
+function setGiantWheels(on) {
+  if (Boolean(on) === state.giantWheels) return;
   if (state.stage === 'band' && !state.giantWheels) {
     $el('status-text').textContent = 'Ø50 giant tires have not been checked against the pull-back core yet, so Stage 2a keeps the Ø36 wheels.';
     return;
   }
-  state.giantWheels = !state.giantWheels;
+  state.giantWheels = Boolean(on);
   if (state.giantWheels && Math.abs(state.steerDeg) > 25) state.steerDeg = Math.sign(state.steerDeg) * 25;
-  e.target.textContent = state.giantWheels ? 'Tires: Ø50 Giant (#5)' : 'Tires: Ø36 Med (#4)';
-  e.target.classList.toggle('mint-on', state.giantWheels);
-  syncSliders();
   rebuildScene();
-});
-
-$el('btn-hood').addEventListener('click', (e) => {
-  state.bulldogHood = !state.bulldogHood;
-  e.target.textContent = state.bulldogHood ? 'Nose: Bulldog Wedge (#7)' : 'Nose: Open Yoke';
-  e.target.classList.toggle('mint-on', state.bulldogHood);
-  rebuildScene();
-});
-
-$el('btn-plow').addEventListener('click', (e) => {
-  state.frontPlow = !state.frontPlow;
-  e.target.textContent = state.frontPlow ? 'Front Plow (#12): On' : 'Front Plow (#12): Off';
-  e.target.classList.toggle('mint-on', state.frontPlow);
-  rebuildScene();
-});
-
-// Print plates (Workshop stage 3): the shared print view, fed by the Truck parts provider instead of Kip scene state.
-const truckPrint = mountPrintView({
-  THREE, scene, camera, controls,
-  getState: () => ({ stage: state.stage, driver: state.driver, head: KIP_STACK.head }),
-  getParts: () => truckGetParts({ cadRoot, geos: GEOS, partFiles: PART_FILES }),
-  setCharacterVisible: (on) => { cadRoot.visible = on; },
-  splitByColour: false, // the Truck's part colours are only for looking at it: pack the plates full, whatever the colour (the button below splits them)
-});
-globals.truckPrint = truckPrint;
-const printPanel = $el('print-panel');
-const printStatus = $el('print-status');
-function syncPrintPanel() {
-  const on = truckPrint.isOn();
-  printPanel.style.display = on ? 'block' : 'none';
-  if (!on) return;
-  const s = truckPrint.summary();
-  const errs = [...(s.errors || []), ...(s.unmapped || [])];
-  printStatus.textContent = truckPrint.isBusy()
-    ? 'Planning plates…'
-    : `${truckPrint.plateLabel(truckPrint.plateIndex())} · ${s.parts} parts on ${s.plates} plate(s)` + (s.exportError ? ` · ${s.exportError}` : '') + (errs.length ? ` · ${errs.join('; ')}` : '');
 }
-$el('btn-print').addEventListener('click', async () => { syncPrintPanel(); printPanel.style.display = 'block'; printStatus.textContent = 'Planning plates…'; await truckPrint.enter(); syncPrintPanel(); });
-$el('print-back').addEventListener('click', () => { truckPrint.exit(); syncPrintPanel(); });
-$el('print-colours').addEventListener('click', async (e) => {
-  const split = !truckPrint.splitByColour();
-  e.currentTarget.textContent = split ? 'Colours: split by colour' : 'Colours: all together';
-  await truckPrint.setSplitByColour(split);
-  syncPrintPanel();
-});
-$el('print-prev').addEventListener('click', () => { truckPrint.setPlate(truckPrint.plateIndex() - 1); syncPrintPanel(); });
-$el('print-next').addEventListener('click', () => { truckPrint.setPlate(truckPrint.plateIndex() + 1); syncPrintPanel(); });
-$el('print-3mf').addEventListener('click', async () => { await truckPrint.download('3mf'); syncPrintPanel(); });
-$el('print-project').addEventListener('click', async () => { await truckPrint.download('project-3mf'); syncPrintPanel(); });
-
-$el('btn-kip').addEventListener('click', (e) => {
-  state.showKip = !state.showKip;
-  e.target.textContent = state.showKip ? 'Kip Driver: On' : 'Kip Driver: Off';
-  e.target.classList.toggle('mint-on', state.showKip);
+function setBulldogHood(on) {
+  state.bulldogHood = Boolean(on);
   rebuildScene();
-});
+}
+function setFrontPlow(on) {
+  state.frontPlow = Boolean(on);
+  rebuildScene();
+}
+
+// Print plates (Workshop stages 3 and 4c): the truck's parts AND the Kip driver sitting in the cab, through the print view. Hosted in the Workshop the view is the
+// shell's ONE (`env.sharedPrint`), and this bench offers it its source; mounted on its own the bench mounts a view of its own.
+const truckParts = () => truckGetParts({ cadRoot, geos: GEOS, partFiles: PART_FILES });
+// What sits in the cab, as wardrobe ids: the shared session's once anything wrote to it, else what this bench holds.
+const driverWardrobe = () => (sharedKip && kipSession.state.source ? { ...kipSession.state } : sharedDriverPatchFromStack());
+const printSource = {
+  scene,
+  splitByColour: false, // the Truck's part colours are only for looking at it: pack the plates full, whatever the colour (the Plates control splits them)
+  notes: ['Truck mechanism: loose plates (sprue only suits static shell parts); axles and pins print lying flat as exported.'],
+  // Watched while the plate view is open: anything that changes what is built repacks it (the parts themselves, so a plow or a wheel swap is seen too).
+  getState: () => ({ stage: state.stage, driver: state.driver, head: KIP_STACK.head, kip: state.showKip, parts: partsSignature(truckParts()) }),
+  getParts: truckParts,
+  // The Kip driver prints with the truck, as the Kip bench has it dressed when that bench is mounted (outfit, skin, colours), else in the wardrobe defaults.
+  getKipState: () => (state.showKip ? truckDriverPrintState({ driver: driverWardrobe(), kip: kipSession.printState() }) : null),
+  setCharacterVisible: (on) => { cadRoot.visible = on; }, // the seated Kip is inside cadRoot, so the plates replace the driver too
+};
+const sharedPrint = env.sharedPrint ?? null;
+const truckPrint = sharedPrint ? sharedPrint.view : mountPrintView({ THREE, camera, controls, ...printSource });
+const unregisterPrint = sharedPrint ? sharedPrint.register('truck', printSource) : null;
+globals.truckPrint = truckPrint;
+
+function setKipDriver(on) {
+  state.showKip = Boolean(on);
+  rebuildScene();
+}
 
 // One Kip: the driver head is Kip-Demo's wardrobe head (same meshes, face plate, seat and decal), not the old CAD stack head.
 const wardrobeId = (stackId) => stackId.replace(/^(char_head_|robot_head_)/, '').replace('visor', 'robot');
@@ -1666,7 +1362,6 @@ function adoptSharedDriverState() {
     ? null
     : s.hat === 'hat' ? 'wobble_hat' : `hat_${s.hat}`;
   if (!KIP_STACK.table || !hat || KIP_STACK.table.hats.includes(hat)) KIP_STACK.hat = hat;
-  syncKipButtons();
   return true;
 }
 function syncTruckWardrobeHead() {
@@ -1730,7 +1425,7 @@ function syncTruckWardrobeHead() {
   exp.customCrownContainer.visible = canWearHat && (hatWid === 'custom');
 }
 
-// Load the Kip Pro (8+) & Snap (3+) body rig from kip-rig.js (same STLs, creases and joints as Kip-Demo.html).
+// Load the one Kip Pro (8+) & Snap (3+) body rig from the shared session (same STLs, creases and joints as Kip-Demo.html).
 async function loadKipDriver() {
   try {
     const shared = await kipSession.load();
@@ -1738,11 +1433,6 @@ async function loadKipDriver() {
     const { K, geos, baseParts, rig } = shared;
     for (const [n, g] of Object.entries(geos)) KIP_DRIVER.geoNames.set(g, 'stls/' + n);
     for (const [n, g] of Object.entries(baseParts)) KIP_DRIVER.geoNames.set(g, 'partspec/' + n);
-
-    try {
-      const expGeos = await loadExpansionGeos(K.loadSTL);
-      rig.exp = attachExpansionToKipRig(THREE, rig, expGeos, baseParts, K.mats, K.scadMesh, rig.createSlot);
-    } catch (e) { console.warn('Kip wardrobe unavailable:', e); }
 
     const skinMat = makeMat('#F3BA95', 1, 0.42);
     if (!sharedKip) {
@@ -1756,19 +1446,12 @@ async function loadKipDriver() {
         paintSlot(`shin_${sTag}`, MATS.denim);
         paintSlot(`boot_${sTag}`, MATS.tire);
       }
-      paintSlot(`upper_arm_${sTag}`, MATS.spark);
-      paintSlot(`forearm_${sTag}`, skinMat);
-      paintSlot(`hand_${sTag}`, skinMat);
-      paintSlot(`thigh_${sTag}`, MATS.denim);
-      paintSlot(`shin_${sTag}`, MATS.denim);
-      paintSlot(`boot_${sTag}`, MATS.tire);
+      paintSlot('torso_pro', MATS.spark);
+      paintSlot('torso_snap', MATS.spark);
+      rig.backStudsSlot.visible = false;
     }
-    paintSlot('torso_pro', MATS.spark);
-    paintSlot('torso_snap', MATS.spark);
-    rig.backStudsSlot.visible = false;
 
     KIP_DRIVER.K = K;
-  if (sharedKip) kipSession.setDriverState({ edition: state.driver }, 'truck');
     KIP_DRIVER.geos = geos;
     KIP_DRIVER.rig = rig;
     KIP_DRIVER.skinMat = skinMat;
@@ -1777,78 +1460,55 @@ async function loadKipDriver() {
   }
 }
 
-$el('btn-driver').addEventListener('click', () => {
+function setDriverRig(id) {
   if (!KIP_DRIVER.rig) return;
-  state.driver = state.driver === 'snap' ? 'pro' : 'snap';
-  syncKipButtons();
+  const next = id === 'snap' ? 'snap' : 'pro';
+  if (next === state.driver) return;
+  state.driver = next;
+  if (sharedKip) kipSession.setDriverState({ edition: state.driver }, 'truck');
   rebuildScene();
   updateHUD();
-});
-
-function syncKipButtons() {
-  const isSnap = state.driver === 'snap';
-  const dbtn = $el('btn-driver');
-  dbtn.textContent = isSnap ? 'Rig: Snap 3+' : 'Rig: Pro 8+';
-  dbtn.classList.toggle('mint-on', isSnap);
-  dbtn.disabled = !KIP_DRIVER.rig;
-  $el('btn-head').textContent = `Head: ${kipLabel(KIP_STACK.head)}`;
+}
+// Head, hair and hat are picked from the stack's own lists (partspec/mockup/kip_stack.json); null is "off".
+function setKipStack(kind, value) {
+  if (!KIP_STACK.table) return;
+  KIP_STACK[kind] = value === 'off' ? null : value;
+  if (sharedKip) publishSharedDriverState();
+  rebuildScene();
+}
+const kipIsHuman = () => {
   const T = KIP_STACK.table;
   const hd = T && T.heads[KIP_STACK.head];
-  const isHuman = !hd || !!hd.human;
-  const hairBtn = $el('btn-hair');
-  hairBtn.textContent = isHuman
-    ? `Hair: ${KIP_STACK.hair ? kipLabel(KIP_STACK.hair) : 'off'}`
-    : 'Hair: n/a (non-human)';
-  hairBtn.disabled = !isHuman;
-  const hatBtn = $el('btn-hat');
-  const hr = isHuman && KIP_STACK.hair && T && T.hairs[KIP_STACK.hair];
-  const blocked = hr && hr.top === null;   // sculpted-top wig: no studs for a hat
-  const sharedHat = sharedKip ? kipSession.state.hat : null;
-  if (sharedKip) publishSharedDriverState();
-  const hatLabel = sharedKip
-    ? (sharedHat && sharedHat !== 'buds' && sharedHat !== 'off' ? kipLabel(sharedHat) : 'off')
-    : (KIP_STACK.hat ? kipLabel(KIP_STACK.hat) : 'off');
-  hatBtn.textContent = blocked ? 'Hat: n/a (sculpted wig)' : `Hat: ${hatLabel}`;
-  hatBtn.disabled = !!blocked;
-}
-function cycleKip(kind) {
-  const T = KIP_STACK.table; if (!T) return;
-  const list = { head: KIP_HEADS, hair: [null, ...Object.keys(T.hairs)], hat: [null, ...T.hats] }[kind];
-  const cur = list.indexOf(KIP_STACK[kind]);
-  KIP_STACK[kind] = list[(cur + 1) % list.length];
-  syncKipButtons();
+  return !hd || !!hd.human;
+};
+const kipHatBlocked = () => { // a sculpted-top wig has no studs for a hat
+  const T = KIP_STACK.table;
+  const hr = kipIsHuman() && KIP_STACK.hair && T && T.hairs[KIP_STACK.hair];
+  return !!(hr && hr.top === null);
+};
+const kipStackOptions = {
+  head: () => KIP_HEADS.map((id) => ({ value: id, label: kipLabel(id) })),
+  hair: () => [{ value: 'off', label: 'Off' }, ...Object.keys(KIP_STACK.table?.hairs ?? {}).map((id) => ({ value: id, label: kipLabel(id) }))],
+  hat: () => [{ value: 'off', label: 'Off' }, ...(KIP_STACK.table?.hats ?? []).map((id) => ({ value: id, label: kipLabel(id) }))],
+};
+
+function setXray(mode) {
+  if (!['auto', 'on', 'off'].includes(mode)) return;
+  state.xrayMode = mode;
   rebuildScene();
 }
-$el('btn-head').addEventListener('click', () => cycleKip('head'));
-$el('btn-hair').addEventListener('click', () => cycleKip('hair'));
-$el('btn-hat').addEventListener('click', () => cycleKip('hat'));
-
-$el('btn-xray').addEventListener('click', (e) => {
-  const order = ['auto', 'on', 'off'];
-  state.xrayMode = order[(order.indexOf(state.xrayMode) + 1) % order.length];
-  e.target.textContent = `X-Ray Shells: ${state.xrayMode.toUpperCase()}`;
-  e.target.classList.toggle('mint-on', state.xrayMode === 'on');
-  rebuildScene();
-});
-
-$el('btn-sweep').addEventListener('click', (e) => {
+function setAutoSteer(on) {
+  if (Boolean(on) === state.sweepRunning) return;
   if (drive.on) setDrive(false);
-  state.sweepRunning = !state.sweepRunning;
-  e.target.textContent = `Auto Steer: ${state.sweepRunning ? 'On' : 'Off'}`;
-  e.target.classList.toggle('mint-on', state.sweepRunning);
-});
-
-$el('btn-demo').addEventListener('click', () => {
+  state.sweepRunning = Boolean(on);
+}
+function setDemo(on) {
   if (drive.on) setDrive(false);
-  state.demoRunning = !state.demoRunning;
+  if (Boolean(on) === state.demoRunning) return;
+  state.demoRunning = Boolean(on);
   state.demoT = 0;
   resetVehiclePose();
-});
-
-$el('btn-drive').addEventListener('click', (e) => {
-  setDrive(!drive.on);
-  e.currentTarget.blur(); // so Space (brake) does not press the button again
-});
+}
 
 const DRIVE_KEYS = ['w', 'a', 's', 'd', 'q', 'e', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' '];
 listen(window, 'keydown', (e) => {
@@ -1862,16 +1522,13 @@ listen(window, 'keydown', (e) => {
 listen(window, 'keyup', (e) => { drive.keys.delete(e.key.toLowerCase()); });
 listen(window, 'blur', () => drive.keys.clear());
 
-benchRoot.querySelectorAll('[data-cam]').forEach((btn) => {
-  btn.addEventListener('click', () => {
-    const mode = btn.dataset.cam;
-    if (mode === 'hero') { camera.position.set(-165, 118, 178); controls.target.set(0, 36, 0); }
-    if (mode === 'side') { camera.position.set(-240, 42, 0); controls.target.set(0, 36, 0); }
-    if (mode === 'top') { camera.position.set(0, 230, -15); controls.target.set(0, -45, 12); }
-    if (mode === 'cab') { camera.position.set(-95, 92, 115); controls.target.set(0, 48, 22); }
-    controls.update();
-  });
-});
+function goCamera(id) {
+  const c = TRUCK_CAMERAS.find((x) => x.id === id);
+  if (!c) return;
+  camera.position.set(...c.position);
+  controls.target.set(...c.target);
+  controls.update();
+}
 
 if (!hosted) { // a hosted bench is sized by the stage
   listen(window, 'resize', () => {
@@ -1879,6 +1536,19 @@ if (!hosted) { // a hosted bench is sized by the stage
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
   });
+}
+
+// Standing message of a stage with a caveat (shown on entering it, replaced on leaving it).
+const STAGE_NOTE = {
+  jet: 'Proposal: balloon upright on mom_jet_valve_body, no tub. Thrust depends on the body\'s air path and the nozzle (spec section 2, /kip/JetCar-Lab.html). Demo = inflate and vent only.',
+};
+// The status line's resting text (the stage's own note if it has one). A stage change puts it back once the CAD has loaded (never during
+// loading: it would hide the counter).
+let statusIdleReady = false;
+function setIdleStatus() {
+  const note = STAGE_NOTE[state.stage];
+  if (note) $el('status-text').textContent = note;
+  else $el('status-text').innerHTML = `<b>${PART_FILES.length}</b> verified CAD solids + Kip rig · Drag to orbit · Scroll to zoom`;
 }
 
 // Load all the verified CAD solids in parallel
@@ -1892,7 +1562,8 @@ async function init() {
     loaded++;
     $el('status-text').innerHTML = `Loaded <b>${loaded}/${PART_FILES.length}</b> CAD solids`;
   }));
-  $el('status-text').innerHTML = `<b>${PART_FILES.length}</b> verified CAD solids + Kip rig · Drag to orbit · Scroll to zoom`;
+  statusIdleReady = true;
+  setIdleStatus();
   KIP_STACK.table = await (await fetch('./partspec/mockup/kip_stack.json', { cache: 'no-cache' })).json();
   await kipLoading;
   {
@@ -1914,9 +1585,6 @@ async function init() {
     const w = pick(q0.get('hair'), 'hair_', (i) => i in KIP_STACK.table.hairs); if (w !== undefined) KIP_STACK.hair = w;
     const t = pick(q0.get('hat'), 'hat_', (i) => KIP_STACK.table.hats.includes(i) || i === 'hat_wobble_hat'); if (t !== undefined) KIP_STACK.hat = t;
     if (q0.get('hat') === 'wobble_hat') KIP_STACK.hat = 'wobble_hat';
-    syncKipButtons();
-  }
-  rebuildScene();
     if (sharedKip) {
       if (!kipSession.state.source && !kipSession.owners.includes('kip')) {
         publishSharedDriverState();
@@ -1930,28 +1598,27 @@ async function init() {
         adoptSharedDriverState();
       }
     }
+  }
+  rebuildScene();
+  truckLoaded = true;
   // Deep-link / debug params: ?stage=pro&steer=22&tip=10&cam=top&explode=40&wheels=giant
   const q = new URLSearchParams(getSearch());
-  if (q.get('wheels') === 'giant') $el('btn-wheels').click();
-  truckLoaded = true;
-  if (q.get('stage')) benchRoot.querySelector(`[data-stage="${q.get('stage')}"]`)?.click();
+  if (q.get('wheels') === 'giant') setGiantWheels(true);
+  if (q.get('stage')) setStage(q.get('stage'));
   if (state.stage === 'jet') {   // ?stage=jet&balloon=200&lean=30&nozzle=8
     if (q.has('balloon')) state.balloonD = Number(q.get('balloon'));
     if (q.has('lean')) state.balloonLean = Number(q.get('lean'));
     if (q.has('nozzle')) state.jetNozzle = Number(q.get('nozzle'));
-    $el('btn-jet-balloon').textContent = `Balloon: Ø${state.balloonD}`;
-    $el('btn-jet-lean').textContent = `Lean: ${state.balloonLean}°`;
-    $el('btn-jet-nozzle').textContent = `Nozzle: Ø${state.jetNozzle}`;
     rebuildScene();
   }
   if (q.has('steer')) { state.steerDeg = Number(q.get('steer')); }
   if (q.has('tip')) { state.tipDeg = Number(q.get('tip')); }
   if (q.has('demoT')) { state.demoRunning = true; state.demoT = Number(q.get('demoT')); state.demoHold = q.get('hold') === '1'; } // ?demoT=1.9&hold=1
   if (q.has('explode')) { state.explode = Number(q.get('explode')); }
-  syncSliders(); updateKinematics(); updateHUD();
-  if (q.get('cam')) benchRoot.querySelector(`[data-cam="${q.get('cam')}"]`)?.click();
+  updateKinematics(); updateHUD();
+  if (q.get('cam')) goCamera(q.get('cam'));
   if (q.get('cp')) { const [a, b, c, d2, e, f] = q.get('cp').split(',').map(Number); camera.position.set(a, b, c); controls.target.set(d2, e, f); controls.update(); }
-  if (q.get('ui') === '0') benchRoot.querySelectorAll('.dock,.topbar').forEach((el) => { el.style.display = 'none'; });
+  if (q.get('ui') === '0') { benchRoot.classList.add('clean-ui'); benchRoot.querySelectorAll('.topbar').forEach((el) => { el.style.display = 'none'; }); }
   globals.__TRUCK_READY__ = true;
   if (q.get('probe')) {   // ?probe=1&stage=pro&steer=22 dumps this pose; ?probe=sweep dumps a list of poses (below). Both write JSON into the DOM for scripts.
     const pre = document.createElement('pre');
@@ -2054,7 +1721,6 @@ function driveHome() { // truck, camera and world back to the start (the camera 
   state.steerDeg = 0;
   drivePlace();
   updateKinematics();
-  syncSliders();
 }
 
 function updateDriveHud(p) {
@@ -2066,13 +1732,10 @@ function updateDriveHud(p) {
 
 function setDrive(on) {
   if (on === drive.on) return;
-  const btn = $el('btn-drive');
-  btn.textContent = `Drive: ${on ? 'On' : 'Off'}`;
-  btn.classList.toggle('mint-on', on);
   $el('drive-hud').hidden = !on;
   if (on) {
     state.demoRunning = false;
-    if (state.sweepRunning) { state.sweepRunning = false; const bs = $el('btn-sweep'); bs.textContent = 'Auto Steer: Off'; bs.classList.remove('mint-on'); }
+    state.sweepRunning = false;
     state.demoT = 0;
     drive.on = true;
     drive.keys.clear();
@@ -2120,7 +1783,7 @@ function driveFrame(dt, input) {
     state.tipDeg = Math.max(tipMinDeg(), Math.min(55, state.tipDeg + input.tip * 40 * dt));
     changed = true;
   }
-  if (changed) { updateKinematics(); syncSliders(); }
+  if (changed) updateKinematics();
   // the camera keeps its orbit around the truck: it travels with it
   const dx = vehicleWrap.position.x - drive.lastX, dz = vehicleWrap.position.z - drive.lastZ;
   camera.position.x += dx; camera.position.z += dz;
@@ -2242,7 +1905,6 @@ function animate() {
   const dt = state.demoHold ? 0 : rawDt; // ?hold=1 freezes the demo clock for deterministic screenshots
   if (state.sweepRunning) {
     state.steerDeg = Math.sin(clock.getElapsedTime() * 2.2) * (state.giantWheels ? 25 : 34);
-    syncSliders();
     updateKinematics();
   }
 
@@ -2290,7 +1952,6 @@ function animate() {
     } else {
       state.tipDeg = 27.5 - Math.cos(state.demoT * 1.8) * 27.5;
     }
-    syncSliders();
     updateKinematics();
     updateHUD();
   }
@@ -2298,15 +1959,72 @@ function animate() {
   renderer.render(scene, camera);
 }
 
+// The one menu (stage 4c): this bench DECLARES its controls (truck-menu.js) over the functions above and the print view; the host's single panel draws them.
+// Hosted, the panel is the Workshop's (`env.sharedMenu`) and is shown while this bench is active; standalone, the bench has a host of its own.
+const pair = (get, set) => ({ get, set });
+const truckMenuApi = {
+  stage: pair(() => state.stage, setStage),
+  demo: pair(() => state.demoRunning, setDemo),
+  tip: { ...pair(() => state.tipDeg, setDumpTip), min: () => tipMinDeg() },
+  steer: pair(() => state.steerDeg, setSteerLock),
+  explode: pair(() => state.explode, setExplode),
+  giant: pair(() => state.giantWheels, setGiantWheels),
+  hood: pair(() => state.bulldogHood, setBulldogHood),
+  plow: pair(() => state.frontPlow, setFrontPlow),
+  xray: pair(() => state.xrayMode, setXray),
+  sweep: pair(() => state.sweepRunning, setAutoSteer),
+  drive: pair(() => drive.on, setDrive),
+  kip: pair(() => state.showKip, setKipDriver),
+  rig: pair(() => state.driver, setDriverRig),
+  head: { options: kipStackOptions.head, ...pair(() => KIP_STACK.head ?? 'off', (v) => setKipStack('head', v)) },
+  hair: { options: kipStackOptions.hair, visible: kipIsHuman, ...pair(() => KIP_STACK.hair ?? 'off', (v) => setKipStack('hair', v)) },
+  hat: { options: kipStackOptions.hat, visible: () => !kipHatBlocked(), ...pair(() => KIP_STACK.hat ?? 'off', (v) => setKipStack('hat', v)) },
+  jet: {
+    visible: () => state.stage === 'jet',
+    balloon: jetControl(JET_D, 'balloonD', (v) => `Ø${v}`),
+    lean: jetControl(JET_LEAN, 'balloonLean', (v) => `${v}°`),
+    nozzle: jetControl(JET_NOZ, 'jetNozzle', (v) => `Ø${v}`),
+  },
+  goCamera,
+  print: {
+    isOn: () => truckPrint.isOn(), busy: () => truckPrint.isBusy(), summary: () => truckPrint.summary(),
+    setOn: (on) => (on ? truckPrint.enter() : truckPrint.exit()),
+    plateCount: () => truckPrint.plateCount(), plateIndex: () => truckPrint.plateIndex(),
+    plateLabel: (i) => truckPrint.plateLabel(i), setPlate: (i) => truckPrint.setPlate(i),
+    profile: () => truckPrint.profile(), setPreset: (id) => truckPrint.setPreset(id), updateProfile: (p) => truckPrint.updateProfile(p),
+    supportCheck: () => truckPrint.supportCheck(), setSupportCheck: (on) => truckPrint.setSupportCheck(on),
+    splitByColour: () => truckPrint.splitByColour(), setSplitByColour: (v) => truckPrint.setSplitByColour(v),
+    download: (kind) => truckPrint.download(kind),
+  },
+};
+const truckMenuCtx = {
+  title: 'Truck controls',
+  fabLabel: '☰ Truck controls',
+  groups: () => buildTruckMenu(truckMenuApi),
+  camera,
+  viewSize: () => (hosted ? stage.size() : { width: window.innerWidth, height: window.innerHeight }),
+  isActive: () => active,
+  ready: () => globals.__TRUCK_READY__ === true,
+};
+const sharedMenu = env.sharedMenu ?? null;
+const menuHost = sharedMenu ?? createMenuHost();
+// The published handle is the panel's, except that `.ctx` stays THIS bench's even while another bench holds the shared panel.
+const showMenu = () => { globals.truckMenu = Object.create(menuHost.show('truck', truckMenuCtx, { root: benchRoot }), { ctx: { get: () => truckMenuCtx, enumerable: true } }); };
+if (!hosted) showMenu(); // hosted: setActive() shows it when this bench becomes the active one
+
+// Test hook: the bench's own state, read-only.
+globals.truckState = () => ({ ...state, kipHead: KIP_STACK.head, kipHair: KIP_STACK.hair, kipHat: KIP_STACK.hat, driveOn: drive.on });
+
 const ready = init();
 if (!hosted) animate(); // hosted: the stage's loop calls frame()
 
-const PUBLISHED = ["__TRUCK_READY__", "__truckProbe", "__truckProbeSweep", "__truckDrive", "__truckBand", "truckPrint"];
+const PUBLISHED = ["__TRUCK_READY__", "__truckProbe", "__truckProbeSweep", "__truckDrive", "__truckBand", "truckPrint", "truckMenu", "truckState"];
 function teardown() {
-  globals.truckPrint?.dispose?.();
+  kipSession.releaseRef('truck');
+  if (sharedMenu) sharedMenu.hide('truck'); else menuHost.destroy();
+  if (sharedPrint) unregisterPrint(); else globals.truckPrint?.dispose?.();
   disposeThreeScene({ scene, renderer: hosted ? null : renderer, controls: hosted ? null : controls, pmrem });
 }
-  kipSession.releaseRef('truck');
 function dispose() {
   if (disposed) return;
   disposed = true;
@@ -2331,17 +2049,20 @@ function setActive(on) {
   if (on) {
     viewport.appendChild(renderer.domElement);
     applyLook();
-  } else {
-    drive.keys.clear(); // a key held when the bench is switched away must not keep driving it
-    drive.v = 0;        // and the truck is not left rolling for when it comes back
+    showMenu();
     if (truckLoaded) {
       if (sharedKip) adoptSharedDriverState();
       rebuildScene();
       updateKinematics();
       updateHUD();
     }
-    camPose.position.copy(camera.position);
+  } else {
+    sharedPrint?.release('truck'); // plates open on this bench's parts close first, so the pose saved below is the bench's own
+    menuHost.hide('truck');
     kipSession.release('truck');
+    drive.keys.clear(); // a key held when the bench is switched away must not keep driving it
+    drive.v = 0;        // and the truck is not left rolling for when it comes back
+    camPose.position.copy(camera.position);
     camPose.target.copy(controls.target);
     camera.clearViewOffset();
     camera.updateProjectionMatrix();

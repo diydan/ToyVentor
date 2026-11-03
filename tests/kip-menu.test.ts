@@ -371,7 +371,9 @@ describe("retired bottom dock", () => {
     expect(html).not.toContain('id="row-clips"');
     expect(html).not.toMatch(/id="btn-(category|head|face|face-insert|hair|crown|hat-col|skin|hair-col|shirt|pants|back|prop-cat|hand|ears|tail|veh-[a-z]+|racer-kit|preset|edition|explode|pile|build|open-llm|open-photo|Skeleton|speed)"/);
     expect(html).not.toMatch(/params\.get\(['"]menu['"]\)/);
-    expect(html).toMatch(/globals\.kipMenu = mountKipMenu\(/);
+    // the menu is mounted by default: since stage 4c through the menu host (a private one standalone, the Workshop's when hosted)
+    expect(html).toMatch(/globals\.kipMenu = Object\.create\(menuHost\.show\('kip', kipMenuCtx, \{ root: benchRoot \}\), \{ ctx: \{ get: \(\) => kipMenuCtx/);
+    expect(html).toMatch(/if \(!hosted\) showMenu\(\);/);
   });
 
   it("the page code no longer reaches for any retired dock element", () => {

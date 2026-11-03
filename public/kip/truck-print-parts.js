@@ -21,10 +21,52 @@ export function countSceneParts(root, geoToId) {
   return [...byId.values()].sort((a, b) => a.id.localeCompare(b.id));
 }
 
-/** `getParts` for mountPrintView: the Truck CAD parts currently built (the Kip driver is not printed here). */
+/**
+ * `getParts` for mountPrintView: the Truck CAD parts currently built. The Kip driver is NOT in this list: it prints through
+ * `truckDriverPrintState` (Workshop stage 4c), so the faceplate the Truck loads for its own cab is dropped here, or it would be counted twice.
+ */
 export function truckGetParts({ cadRoot, geos, partFiles }) {
   const wanted = new Set(partFiles);
   const geoToId = new Map();
   for (const [pid, g] of Object.entries(geos)) if (wanted.has(pid) && g) geoToId.set(g, pid);
   return countSceneParts(cadRoot, geoToId).filter((p) => p.id !== 'char_faceplate');
+}
+
+// The Kip's custom-STL slots that stay on screen while it is seated in the cab (its head and crown); hand, back and hood belong to a Kip
+// that stands, holds things and drives its own vehicle, and the Truck hides all of those (prepareSharedKipForTruck).
+const SEATED_CUSTOM_SLOTS = ['head', 'crown'];
+
+/**
+ * The Kip scene state printed with the Truck (Workshop stage 4c): the driver as sat in the cab, in the shape `resolveSceneBom` takes.
+ *   driver  what the Truck itself holds, as wardrobe ids: { edition, head, hair, hat }
+ *   kip     the full print state of the Kip bench when one is mounted (outfit, skin, colours, face), else null (the BOM's own defaults)
+ * The driver fields win over the Kip's: the Truck's buttons write them first, and the Kip only adopts them when its tab is shown again.
+ * The Kip's own vehicle, prop, back and tail are hidden while it is seated, so they are not printed either.
+ */
+export function truckDriverPrintState({ driver, kip = null }) {
+  const slots = {};
+  for (const k of SEATED_CUSTOM_SLOTS) if (kip?.customStlSlots?.[k]) slots[k] = kip.customStlSlots[k];
+  return {
+    ...(kip ?? {}),
+    edition: driver.edition === 'snap' ? 'snap' : 'pro',
+    head: driver.head || 'kid',
+    hair: driver.hair || 'off',
+    hat: driver.hat || 'buds',
+    vehicle: 'none',
+    vehCovers: false,
+    racerKit: false,
+    prop: 'off',
+    back: 'off',
+    tail: 'off',
+    hasPhotoAccessory: false,
+    customHoodMode: 'none',
+    customStlSlots: slots,
+    photoAccessorySlots: {},
+    includeVehicle: false,
+  };
+}
+
+/** One line for the watcher and the tests: what a parts list contains, so adding a plough or swapping the wheels repacks an open plate view. */
+export function partsSignature(parts) {
+  return parts.map((p) => `${p.id}:${p.count}:${p.colour}`).join(',');
 }

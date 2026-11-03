@@ -3,18 +3,21 @@
 // Run: npm run e2e:workshop     Exits nonzero on any failing check.
 // Env: E2E_CHROME (binary), E2E_SHOTS (screenshot dir), E2E_STRICT_STL=1 (fail on missing STLs instead of stubbing).
 //
-// What it proves, with the REAL Kip and Truck modules inside the shell (nothing mocked):
+// What it proves, with the REAL Kip, Truck and Yard modules inside the shell (nothing mocked):
 //   - the shell is a proper tab bar (roles, one selected tab, arrow keys move focus without loading a bench) and there is no iframe;
 //   - a deep link mounts only the bench it names, forwards the other params to it, and the bench actually uses them;
 //   - picking a tab switches the active bench on the ONE canvas, keeps the bench you left mounted with its state, writes ?bench= and works with
 //     Back/Forward;
 //   - a bench's own link to another bench's page (the Truck's "Kip Viewer") switches the tab instead of leaving the page;
 //   - the stage fills the window under the bar, on a desktop and on a phone width, with no page scroll, and the bench's fixed UI stays inside it;
+//   - the Yard is a third tab: a deep link mounts it alone, it hides its own Workshop link, a held key pushes it on the shared loop, switching away
+//     stands it down, and coming back finds the same mounted bench;
 //   - none of it throws.
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { createChecks, launchChrome, startServer } from "./lib/kip-e2e.mjs";
+import { menu } from "./lib/menu-drive.mjs";
 
 const SHOTS = process.env.E2E_SHOTS ?? path.join(os.tmpdir(), "workshop-shots");
 const { check, finish } = createChecks("workshop e2e");
@@ -22,6 +25,8 @@ const { check, finish } = createChecks("workshop e2e");
 const W = "window.workshop";
 const KIP_READY = `${W}?.handles('kip')?.__KIP_READY__ === true`;
 const TRUCK_READY = `${W}?.handles('truck')?.__TRUCK_READY__ === true`;
+const YARD_READY = `${W}?.handles('yard')?.__YARD_READY__ === true`;
+const YARD = `${W}.handles('yard').__yardDrive`;
 const selected = `[...document.querySelectorAll('.ws-tab')].filter((t) => t.getAttribute('aria-selected') === 'true').map((t) => t.dataset.bench)`;
 const settle = (ms) => new Promise((r) => setTimeout(r, ms));
 fs.mkdirSync(SHOTS, { recursive: true });
@@ -42,7 +47,7 @@ try {
     labelled: document.querySelector('[role=tabpanel]').getAttribute('aria-labelledby'),
     pop: document.querySelector('.ws-pop').getAttribute('href'),
   })`);
-  check("tab bar lists Kip then Truck", JSON.stringify(shell.tabs) === '["kip","truck"]', JSON.stringify(shell.tabs));
+  check("tab bar lists Kip, Truck, then Yard", JSON.stringify(shell.tabs) === '["kip","truck","yard"]', JSON.stringify(shell.tabs));
   check("exactly one tab is selected: Kip", JSON.stringify(shell.selected) === '["kip"]', JSON.stringify(shell.selected));
   check("one tabpanel, labelled by the selected tab", shell.panels === 1 && shell.labelled === "ws-tab-kip", shell.labelled);
   check("there is no iframe anywhere", shell.iframes === 0, String(shell.iframes));
@@ -84,21 +89,23 @@ try {
 
   // keyboard: arrows move focus between tabs, they do not load a bench
   const keys = await a.evaluate(`(() => {
-    const kipTab = document.getElementById('ws-tab-kip'), truckTab = document.getElementById('ws-tab-truck');
+    const kipTab = document.getElementById('ws-tab-kip'), truckTab = document.getElementById('ws-tab-truck'), yardTab = document.getElementById('ws-tab-yard');
     const press = (el, key) => el.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }));
     kipTab.focus(); press(kipTab, 'ArrowRight');
     const afterRight = document.activeElement.dataset.bench;
     const stillKip = ${selected}.join();
-    const mountedAfter = document.querySelectorAll('.kip-bench, .truck-bench').length;
+    const mountedAfter = document.querySelectorAll('.kip-bench, .truck-bench, .yard-bench').length;
+    press(document.activeElement, 'ArrowRight');
+    const onYard = document.activeElement.dataset.bench;
     press(document.activeElement, 'ArrowRight');
     const wrapped = document.activeElement.dataset.bench;
     press(document.activeElement, 'End'); const end = document.activeElement.dataset.bench;
     press(document.activeElement, 'Home'); const home = document.activeElement.dataset.bench;
-    return { afterRight, stillKip, mountedAfter, wrapped, end, home, rove: [kipTab.tabIndex, truckTab.tabIndex] };
+    return { afterRight, stillKip, mountedAfter, onYard, wrapped, end, home, rove: [kipTab.tabIndex, truckTab.tabIndex, yardTab.tabIndex] };
   })()`);
   check("ArrowRight moves focus to Truck without switching or loading it", keys.afterRight === "truck" && keys.stillKip === "kip" && keys.mountedAfter === 1, JSON.stringify(keys));
-  check("arrows wrap, Home and End jump", keys.wrapped === "kip" && keys.end === "truck" && keys.home === "kip", JSON.stringify(keys));
-  check("only the focused tab is in the tab order (roving tabindex)", JSON.stringify(keys.rove) === "[0,-1]", JSON.stringify(keys.rove));
+  check("arrows walk Kip, Truck, Yard and wrap round to Kip; Home and End jump", keys.onYard === "yard" && keys.wrapped === "kip" && keys.end === "yard" && keys.home === "kip", JSON.stringify(keys));
+  check("only the focused tab is in the tab order (roving tabindex)", JSON.stringify(keys.rove) === "[0,-1,-1]", JSON.stringify(keys.rove));
 
   // pick Truck: the Kip stays mounted (hidden) and keeps its state; there is still one canvas
   await a.evaluate(`window.__kipRoot = ${W}.bench('kip').root; document.getElementById('ws-tab-truck').click()`);
@@ -156,7 +163,7 @@ try {
   console.log("B. ?bench=truck&driver=snap&head=fox");
   const b = await chrome.open(`${server.base}/kip/Workshop.html?bench=truck&driver=snap&head=fox`);
   check("Truck deep link loads", await b.waitFor(TRUCK_READY, 240000), "never reached __TRUCK_READY__");
-  const bt = await b.evaluate(`({ driver: document.getElementById('btn-driver')?.textContent, head: document.getElementById('btn-head')?.textContent, selected: ${selected}.join(), kipMounted: ${W}.bench('kip') !== null })`);
+  const bt = await b.evaluate(`({ driver: ${menu.value("rig")}, head: ${menu.value("head")}, selected: ${selected}.join(), kipMounted: ${W}.bench('kip') !== null })`);
   check("Truck applied ?driver=snap&head=fox itself, and Truck is the selected tab", /snap/i.test(bt.driver ?? "") && /fox/i.test(bt.head ?? "") && bt.selected === "truck", JSON.stringify(bt));
   check("the request log sees the Truck module load (control for the next check)", b.requests.some((r) => /truck-bench\.js/.test(r.url)));
   check("the Kip module was never requested for a Truck deep link", !b.requests.some((r) => /kip-bench\.js/.test(r.url)) && bt.kipMounted === false, b.requests.filter((r) => /kip-bench/.test(r.url)).map((r) => r.url).join(","));
@@ -195,6 +202,100 @@ try {
   await d.shot(path.join(SHOTS, "truck-bench-phone.png"));
   check("no uncaught exception on a phone-sized window", d.exceptions.length === 0, d.exceptions.slice(0, 3).join(" || "));
   d.close();
+
+  // ---- E. the Yard bench as the third tab ----
+  console.log("E. ?bench=yard");
+  const e = await chrome.open(`${server.base}/kip/Workshop.html?bench=yard`);
+  check("a deep link to the Yard loads it", await e.waitFor(YARD_READY, 240000), "never reached __YARD_READY__");
+  check("the Yard tab is the selected one, only the Yard is mounted, and the title says so",
+    await e.evaluate(`${selected}.join() === 'yard' && !!document.querySelector('.yard-bench') && !document.querySelector('.kip-bench') && !document.querySelector('.truck-bench') && document.title === 'Workshop · Yard'`));
+  check("the shell lists three tabs: Kip, Truck, Yard", await e.evaluate(`[...document.querySelectorAll('.ws-tab')].map((t) => t.dataset.bench).join() === 'kip,truck,yard'`));
+  check("there is one canvas and it sits in the Yard bench", await e.evaluate(`document.querySelectorAll('canvas').length === 1 && document.querySelector('.yard-bench').contains(document.querySelector('canvas'))`));
+  check("the bench's own Workshop link is hidden inside the shell (it would reload the shell and lose every bench)", await e.evaluate(`document.getElementById('yard-back').hidden === true`));
+  check("'Open on its own page' points at the Yard's page", await e.evaluate(`document.querySelector('.ws-pop').getAttribute('href') === '/kip/Yard-Bench.html'`));
+  check("the roller is drawn: 8 CAD solids, the parts list and the readout", await e.evaluate(`${W}.handles('yard').__yardProbe().length === 8 && document.querySelectorAll('#yard-bom span').length === 8`));
+  await e.send("Input.dispatchKeyEvent", { type: "keyDown", key: "w", code: "KeyW", windowsVirtualKeyCode: 87, text: "w" });
+  check("a held W (a real key event) pushes the roller on the shared stage's loop", await e.waitFor(`${YARD}.pose().v > 100`, 60000));
+  await e.send("Input.dispatchKeyEvent", { type: "keyUp", key: "w", code: "KeyW", windowsVirtualKeyCode: 87 });
+  await e.waitFor(`${YARD}.pose().v === 0`, 60000);
+  const FRAMING = `(() => { const s = ${W}.stage(), p = ${YARD}.pose().pz; return JSON.stringify([s.camera.position.x, s.camera.position.y, s.camera.position.z - p, s.controls.target.x, s.controls.target.y, s.controls.target.z - p, s.camera.fov]); })()`;
+  await e.evaluate(`window.__yardRoot = ${W}.bench('yard').root; window.__yardAt = ${YARD}.pose().pz; window.__yardFraming = ${FRAMING}; document.getElementById('ws-tab-truck').click()`);
+  check("picking the Truck tab loads it and switches", await e.waitFor(`${TRUCK_READY} && ${selected}.join() === 'truck'`, 240000), "Truck never ready");
+  check("the Yard stood down: its keys are released and its canvas is not on screen", await e.evaluate(`${YARD}.held().length === 0 && ${YARD}.pose().v === 0 && window.__yardRoot.hidden === true && !window.__yardRoot.contains(document.querySelector('canvas'))`));
+  await e.send("Input.dispatchKeyEvent", { type: "keyDown", key: "w", code: "KeyW", windowsVirtualKeyCode: 87, text: "w" });
+  await settle(700);
+  await e.send("Input.dispatchKeyEvent", { type: "keyUp", key: "w", code: "KeyW", windowsVirtualKeyCode: 87 });
+  check("a Yard bench switched away ignores the keyboard", await e.evaluate(`${YARD}.pose().pz === window.__yardAt`));
+  await e.evaluate("document.getElementById('ws-tab-yard').click()");
+  check("picking the Yard tab again brings back the same mounted bench with its canvas, where it was left",
+    await e.waitFor(`${selected}.join() === 'yard' && ${W}.bench('yard').root === window.__yardRoot && !window.__yardRoot.hidden && window.__yardRoot.contains(document.querySelector('canvas')) && ${YARD}.pose().pz === window.__yardAt`, 30000));
+  const framing = await e.evaluate(`({ before: JSON.parse(window.__yardFraming), after: JSON.parse(${FRAMING}) })`);
+  check("the roller is framed exactly as it was left: the Truck's mount did not move the shared camera, so the Yard saved the right pose",
+    framing.before.every((v, i) => Math.abs(v - framing.after[i]) < 1e-3), JSON.stringify(framing));
+  await e.shot(path.join(SHOTS, "yard-bench.png"));
+  check("no uncaught exception in the shell, Yard or Truck", e.exceptions.length === 0, e.exceptions.slice(0, 3).join(" || "));
+  e.close();
+
+  // ---- F. one menu and one print view for every bench (stage 4c) ----
+  console.log("F. one menu, one print view");
+  const f = await chrome.open(`${server.base}/kip/Workshop.html?bench=kip`);
+  check("Kip loads", await f.waitFor(KIP_READY, 240000), "never reached __KIP_READY__");
+  const pick = async (id) => { await f.evaluate(`document.getElementById('ws-tab-${id}').click()`); return f.waitFor(`${selected}.join() === '${id}'`, 60000); };
+  const panel = `document.getElementById('kip-menu')`;
+  const ONE = await f.evaluate(`({ panels: document.querySelectorAll('#kip-menu').length, styles: document.querySelectorAll('#km-style').length, title: document.querySelector('#kip-menu .km-title')?.textContent,
+    inKip: !!document.querySelector('.kip-bench #kip-menu'), groups: [...document.querySelectorAll('#kip-menu .km-group')].map((g) => g.dataset.group).join() })`);
+  check("on the Kip tab there is ONE panel, titled for the Kip, inside the Kip bench, with the Kip's groups and the Print group", ONE.panels === 1 && ONE.styles === 1 && ONE.title === "Customize Kip" && ONE.inKip && /character/.test(ONE.groups) && /print/.test(ONE.groups), JSON.stringify(ONE));
+  await f.evaluate(`(window.__panel = ${panel}, window.__kipPrint = ${W}.handles('kip').kipPrint, true)`);
+  await f.evaluate(`document.querySelector('#kip-menu .km-group[data-group="print"]').open = false`);
+  await f.evaluate(`${W}.handles('kip').kipPrint.updateProfile({ fitChoice: 'easy' })`); // the Fit control only shows while the plate view is open
+
+  check("Truck tab loads", (await pick("truck")) && await f.waitFor(TRUCK_READY, 240000), "never reached __TRUCK_READY__");
+  const TWO = await f.evaluate(`({ same: ${panel} === window.__panel, panels: document.querySelectorAll('#kip-menu').length, title: document.querySelector('#kip-menu .km-title')?.textContent,
+    inTruck: !!document.querySelector('.truck-bench #kip-menu'), groups: [...document.querySelectorAll('#kip-menu .km-group')].map((g) => g.dataset.group).join(),
+    dup: [...document.querySelectorAll('[id]')].map((e) => e.id).filter((id) => id === 'kip-menu' || id === 'km-body' || id.startsWith('km-')).filter((id, i, a) => a.indexOf(id) !== i),
+    printFolded: document.querySelector('#kip-menu .km-group[data-group="print"]').open === false, oldDock: !!document.getElementById('truck-dock') })`);
+  check("switching to the Truck re-points the SAME panel at the Truck's sections, inside the Truck bench", TWO.same && TWO.panels === 1 && TWO.title === "Truck controls" && TWO.inTruck && TWO.groups === "stage,motion,options,driver,view,print" && !TWO.oldDock, JSON.stringify(TWO));
+  check("no menu element id is repeated on the page (two panels would repeat every km-* id; viewport and status-text are the two benches' own, as before)", TWO.dup.length === 0, JSON.stringify(TWO.dup));
+  check("a group folded on the Kip tab is still folded on the Truck tab (one panel, one state)", TWO.printFolded);
+  const SAME = await f.evaluate(`({ view: ${W}.sharedPrint().view === ${W}.handles('truck').truckPrint && ${W}.handles('truck').truckPrint === window.__kipPrint, fit: ${W}.handles('truck').truckPrint.profile().fitChoice })`);
+  check("the Kip and the Truck share ONE print view, and the fit chosen on the Kip tab is what the Truck's plates use", SAME.view && SAME.fit === "easy", JSON.stringify(SAME));
+
+  // the Truck's plates: its parts and the driver as the Kip has it dressed
+  await f.evaluate(`${W}.handles('truck').truckMenu.controls.get('plateView').set(true)`);
+  check("the plate view opens on the Truck", await f.waitFor(`${W}.sharedPrint().view.isOn() && !${W}.sharedPrint().view.isBusy() && ${W}.sharedPrint().view.summary().parts > 0`, 240000));
+  const TP = await f.evaluate(`(() => { const v = ${W}.sharedPrint().view; return { id: v.sourceId(), split: v.splitByColour(), ids: v.plannedPlates().flatMap((x) => x.placed.map((q) => q.partId)), stencil: ${menu.visible("stencils")} }; })()`);
+  check("the Truck's plates belong to the Truck source, pack everything together by default, and carry the driver and the keel", TP.id === "truck" && TP.split === false && TP.ids.some((id) => /^kit_keel_base/.test(id)) && TP.ids.some((id) => /^(torso|snap_torso)$/.test(id)), JSON.stringify({ id: TP.id, split: TP.split, n: TP.ids.length }));
+  check("stickers and stencils are not offered on the Truck's plates", TP.stencil === false);
+
+  // leaving for the Kip closes the Truck's plates and brings the truck back
+  await pick("kip");
+  const AFTER = await f.evaluate(`({ on: ${W}.sharedPrint().view.isOn(), id: ${W}.sharedPrint().view.sourceId(), truckShown: ${W}.bench('truck').root.hidden === false, cad: !!document.querySelector('.truck-bench') })`);
+  check("switching to the Kip tab closes the plate view that was open on the Truck", AFTER.on === false && AFTER.id === null && AFTER.cad);
+
+  // the Kip's plates: its own default (split by colour), its own character
+  await f.evaluate(`${W}.handles('kip').kipMenu.controls.get('plateView').set(true)`);
+  check("the plate view opens on the Kip", await f.waitFor(`${W}.sharedPrint().view.isOn() && !${W}.sharedPrint().view.isBusy() && ${W}.sharedPrint().view.summary().parts > 0`, 240000));
+  const KP = await f.evaluate(`(() => { const v = ${W}.sharedPrint().view; return { id: v.sourceId(), split: v.splitByColour(), ids: v.plannedPlates().flatMap((x) => x.placed.map((q) => q.partId)), stencil: ${menu.visible("stencils")} }; })()`);
+  check("the Kip's plates belong to the Kip source, split by colour (its own default, remembered apart from the Truck's), with no truck parts", KP.id === "kip" && KP.split === true && !KP.ids.some((id) => /^kit_/.test(id)), JSON.stringify({ id: KP.id, split: KP.split, n: KP.ids.length }));
+  check("the Kip's plates do offer stickers and stencils", KP.stencil === true);
+  await f.evaluate(`${W}.handles('kip').kipMenu.controls.get('plateView').set(false)`);
+
+  // the driver prints as the Kip has it dressed: change the head on the Kip tab, then print on the Truck
+  await f.evaluate(menu.select("type", "animal"));
+  await f.evaluate(menu.select("head", "fox"));
+  check("the Kip's head is the fox", await f.waitFor(`${W}.handles('kip').kipMenu.ctx.loco.head === 'fox'`, 20000));
+  await pick("truck");
+  await f.evaluate(`${W}.handles('truck').truckMenu.controls.get('plateView').set(true)`);
+  check("the Truck's plates are made again for the driver as the Kip bench has it dressed", await f.waitFor(`${W}.sharedPrint().view.isOn() && !${W}.sharedPrint().view.isBusy() && ${W}.sharedPrint().view.plannedPlates().some((x) => x.placed.some((q) => /^char_head_fox/.test(q.partId)))`, 240000), JSON.stringify(await f.evaluate(`${W}.sharedPrint().view.plannedPlates().flatMap((x) => x.placed.map((q) => q.partId)).filter((i) => /head/.test(i))`)));
+  await f.evaluate(`${W}.handles('truck').truckMenu.controls.get('plateView').set(false)`);
+
+  // the Yard has no menu of its own: the panel is parked
+  await pick("yard");
+  check("on the Yard tab the panel is out of the page (the Yard has none)", await f.waitFor(`!document.getElementById('kip-menu')`, 20000));
+  check("no uncaught exception across the three tabs", f.exceptions.length === 0, f.exceptions.slice(0, 3).join(" || "));
+  await f.evaluate(`${W}.destroy()`);
+  check("destroying the shell leaves no panel, no menu style and no print listener behind", await f.evaluate(`!document.getElementById('kip-menu') && !document.getElementById('km-style') && !document.querySelector('.km-fab')`));
+  f.close();
 } catch (err) {
   check("e2e ran to the end", false, String(err?.stack ?? err));
 } finally {

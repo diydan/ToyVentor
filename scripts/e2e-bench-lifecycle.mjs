@@ -27,7 +27,12 @@ const BENCHES = [
   },
   {
     id: "truck", page: "Truck-Mockup.html", module: "truck-bench.js", mount: "mountTruckBench", handle: "truckBench", ready: "__TRUCK_READY__", rootClass: "truck-bench", cssId: "truck-bench-css",
-    published: ["__TRUCK_READY__", "__truckProbe", "__truckProbeSweep", "truckPrint"],
+    published: ["__TRUCK_READY__", "__truckProbe", "__truckProbeSweep", "truckPrint", "truckMenu", "truckState"],
+    strays: [".km", ".km-fab", ".km-backdrop", "#km-style"], // the Truck's controls are the shared menu since stage 4c
+  },
+  {
+    id: "yard", page: "Yard-Bench.html", module: "yard-bench.js", mount: "mountYardBench", handle: "yardBench", ready: "__YARD_READY__", rootClass: "yard-bench", cssId: "yard-bench-css",
+    published: ["__YARD_READY__", "__yardProbe", "__yardDrive"],
     strays: [],
   },
 ].filter((b) => fs.existsSync(path.join(VIEWER, b.module)));

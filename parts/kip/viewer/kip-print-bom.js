@@ -88,6 +88,7 @@ export const DEFAULT_CATALOG_PART_FILES = Object.freeze({
   pointy_ears: '/kip/partspec/toyventor_pointy_ears_S.stl',
   prop_broom: '/kip/partspec/toyventor_prop_broom_P.stl',
   prop_flag: '/kip/partspec/toyventor_prop_flag_P.stl',
+  prop_frying_pan: '/kip/partspec/toyventor_prop_frying_pan_P.stl',
   prop_guitar: '/kip/partspec/toyventor_prop_guitar_P.stl',
   prop_hammer: '/kip/partspec/toyventor_prop_hammer_P.stl',
   prop_magnifier: '/kip/partspec/toyventor_prop_magnifier_P.stl',
@@ -97,8 +98,10 @@ export const DEFAULT_CATALOG_PART_FILES = Object.freeze({
   prop_screwdriver: '/kip/partspec/toyventor_prop_screwdriver_P.stl',
   prop_scrub_brush: '/kip/partspec/toyventor_prop_scrub_brush_P.stl',
   prop_skateboard_deck: '/kip/partspec/toyventor_prop_skateboard_deck_S.stl',
+  prop_spatula: '/kip/partspec/toyventor_prop_spatula_P.stl',
   prop_star_shield: '/kip/partspec/toyventor_prop_star_shield_P.stl',
   prop_trumpet: '/kip/partspec/toyventor_prop_trumpet_P.stl',
+  prop_upright_vacuum: '/kip/partspec/toyventor_prop_upright_vacuum_P.stl',
   prop_vacuum: '/kip/partspec/toyventor_prop_vacuum_P.stl',
   prop_wrench: '/kip/partspec/toyventor_prop_wrench_P.stl',
   racer_axle: '/kip/partspec/toyventor_racer_axle_S.stl',
@@ -828,6 +831,45 @@ export function resolveSceneBom(state = {}, opts = {}) {
     notes,
     bodyColors: body,
   };
+}
+
+/**
+ * One BOM from several (Workshop stage 4c): the Kip driver's parts (`resolveSceneBom`) and a bench's mechanism
+ * parts (`resolveProviderBom`) print together. Items keep their order (character first), so plate planning is
+ * what it would be for either list alone; notes are de-duplicated; a missing list (`null`) is skipped.
+ * `stickers: false` drops the decals: a mechanism bench has no sticker renderer, so offering the Kip's face
+ * stickers there would export an empty sheet (the Kip tab prints them).
+ */
+export function mergeBoms(boms, { stickers = true } = {}) {
+  const live = (boms || []).filter(Boolean);
+  if (live.length === 0) return resolveProviderBom([], {});
+  if (live.length === 1 && stickers) return live[0];
+  return {
+    items: live.flatMap((b) => b.items || []),
+    characterItems: live.flatMap((b) => b.characterItems ?? b.items ?? []),
+    vehicleItems: live.flatMap((b) => b.vehicleItems ?? []),
+    includeVehicle: live.some((b) => b.includeVehicle),
+    hasVehicleInScene: live.some((b) => b.hasVehicleInScene),
+    unmapped: live.flatMap((b) => b.unmapped ?? []),
+    decals: stickers ? live.flatMap((b) => b.decals ?? []) : [],
+    notes: [...new Set(live.flatMap((b) => b.notes ?? []))],
+    bodyColors: Object.assign({}, ...live.map((b) => b.bodyColors ?? {})),
+  };
+}
+
+/**
+ * What a bench is asking the print view to print, resolved to one BOM. `source` is the bench's print source:
+ *   { getParts?, getKipState?, getState }  with the already-fetched `parts` (the result of `await source.getParts()`).
+ * A Kip scene bench (no `getParts`) prints its scene state. A mechanism bench prints its parts, and the Kip driver
+ * with them when it has one on screen (`kipState`, never its vehicle: the mechanism is the vehicle).
+ */
+export function resolvePrintBom(source, { parts = null, kipState = null, validationIndex, manifestParts, includeVehicle, notes = [] } = {}) {
+  if (!source.getParts) {
+    return resolveSceneBom(source.getState(), { includeVehicle, validationIndex });
+  }
+  const mechanism = resolveProviderBom(parts || [], { validationIndex, manifestParts, notes });
+  const driver = kipState ? resolveSceneBom(kipState, { includeVehicle: false, validationIndex }) : null;
+  return mergeBoms([driver, mechanism], { stickers: false });
 }
 
 /**

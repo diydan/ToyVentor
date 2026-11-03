@@ -20,11 +20,12 @@ import {
   segmentForegroundMask,
   trySamScanEndpoint,
   buildPhotoAccessoryMesh,
+  buildHouseholdHandMesh,
+  applyHouseholdSkin,
   encodeToyContractHash,
   setSelfieCanvas,
 } from '/kip/kip-forge-sdk.js?v=10.0';
 import {
-  KIP_BUILD_VERSION,
   HUMAN_HEAD_IDS,
   FACE_INSERT_MODES,
   HEAD_CATEGORIES,
@@ -42,14 +43,12 @@ import {
   BACK_OPTIONS,
   PROP_OPTIONS,
   VEHICLE_OPTIONS,
-  loadExpansionGeos,
-  attachExpansionToKipRig,
   makeDriveSitClip,
   makeScooterRideClip,
   makeMotoStraddleClip,
   makeSkateboardClip,
 } from '/kip/kip-vehicles-wardrobe.js?v=10.0';
-import { mountKipMenu } from '/kip/kip-menu.js?v=10.0';
+import { createMenuHost } from '/kip/kip-menu.js?v=10.0';
 import { mountPrintView } from '/kip/kip-print-view.js?v=10.0';
 import { mountSelfie } from '/kip/kip-selfie.js?v=10.0';
 import { mountDescribe } from '/kip/kip-describe-tab.js?v=10.0';
@@ -495,10 +494,11 @@ if (ownsStyle) {
 const $el = (id) => benchRoot.querySelector('#' + id);
 const offs = [];
 const stage = env.stage ?? null; // a host's shared renderer, camera and controls (Workshop stage 4b, bench-stage.js); null: this bench builds its own
+const hosted = stage !== null;
 const kipSession = env.sharedKip ?? createKipSession({ THREE, STLLoader, mergeVertices, toCreasedNormals });
 kipSession.acquire('kip');
 let unregisterKipSync = null;
-const hosted = stage !== null;
+let unregisterKipPrintState = null;
 let active = !hosted; // a hosted bench draws and reads input only while the host has it active
 let started = !hosted; // hosted: the stage ticks this bench from the moment it is active, but the rig is not built until init() has run (set below)
 const listen = (target, type, fn, opts) => {
@@ -1267,6 +1267,7 @@ function playClip(rawName, fadeSec = 0.22) {
 }
 
 function updateStatusText() {
+  syncHouseholdChip();
   const edTag = loco.edition === 'pro' ? 'Pro 8+' : 'Snap 3+';
   const vehObj = VEHICLE_OPTIONS.find(v => v.id === loco.vehicle);
   const vehTag = loco.vehicle !== 'none' ? ` · ${vehObj ? vehObj.label : loco.vehicle}` : '';
@@ -1339,6 +1340,7 @@ async function init() {
 
   kip = sharedKipData.rig;
   unregisterKipSync = kipSession.registerSync(adoptSharedDriverState);
+  unregisterKipPrintState = kipSession.registerPrintState(getPrintState); // the Truck prints its driver as this bench has it dressed (stage 4c)
   attachSharedKip();
   kipMixer = new THREE.AnimationMixer(kip.grounder);
 
@@ -2183,6 +2185,8 @@ $el('btn-copy-prompt').addEventListener('click', async () => {
 // Memory-only custom STL bytes & Photo-Forge craft slot state for the print pack (never persisted or sent over network).
 const customStlSlots = { crown: null, hand: null, back: null, head: null, hood: null };
 const photoAccessorySlots = { crown: null, wings: null, hand: null, hood: null };
+// A household library item in the hand (docs/specs/household-library-spec.md): digital only, so it is NOT in the slots the print pack reads.
+const householdSlots = { hand: null }; // { id, label } or null
 let customHoodMode = 'none'; // 'none' | 'sdkCrest' | 'customStl' | 'photo'
 
 function clearAllCustomMounts() {
@@ -2197,6 +2201,7 @@ function clearAllCustomMounts() {
   loco.photoWingGroup = null;
   for (const k of Object.keys(customStlSlots)) customStlSlots[k] = null;
   for (const k of Object.keys(photoAccessorySlots)) photoAccessorySlots[k] = null;
+  householdSlots.hand = null;
   customHoodMode = 'none';
 }
 
@@ -2208,6 +2213,7 @@ function equipSdkDemo(which) {
   } else if (which === 'wand') {
     customStlSlots.hand = null;
     photoAccessorySlots.hand = null;
+    householdSlots.hand = null;
     setPropMode('wand');
   } else if (which === 'hood' || which === 'crest') {
     setVehicleMode('car', true);
@@ -2251,7 +2257,7 @@ async function loadCustomStlFile(file, slotOverride = null) {
     customStlSlots[slot] = { bytes: new Uint8Array(buf.slice(0)), colorHex, name: file.name || slot };
   }
   if (slot === 'crown') photoAccessorySlots.crown = null;
-  else if (slot === 'hand') photoAccessorySlots.hand = null;
+  else if (slot === 'hand') { photoAccessorySlots.hand = null; householdSlots.hand = null; }
   else if (slot === 'back') photoAccessorySlots.wings = null;
   else if (slot === 'hood') {
     photoAccessorySlots.hood = null;
@@ -2450,6 +2456,7 @@ function equipPhotoAccessoryFromForge(closeModal = true) {
   const photoEntry = { label: currentPhotoMeta?.name || slot };
   if (slot === 'hand') {
     customStlSlots.hand = null;
+    householdSlots.hand = null;
     photoAccessorySlots.hand = photoEntry;
     kip.exp.customHandContainer.clear();
     kip.exp.customHandContainer.add(meshGrp);
@@ -2488,6 +2495,97 @@ function equipPhotoAccessoryFromForge(closeModal = true) {
 
 $el('btn-equip-photo').addEventListener('click', () => equipPhotoAccessoryFromForge(true));
 
+/**
+ * The age band a grown-up chose in the app (the `ageBand` in the progression record, src/lib/age.ts: 0 = 2-3 up to 5 = 13+), or undefined when none is
+ * set or storage cannot be read. The print panel uses it to leave out library items held back for older children; the photo plate is never held back.
+ */
+function readAgeBand() {
+  try {
+    const rec = JSON.parse(localStorage.getItem('toyforge:progression:v1') || 'null');
+    const b = rec && rec.ageBand;
+    return Number.isInteger(b) && b >= 0 && b <= 5 ? b : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+// How a household item is shown: held up in front of Kip in the existing "Inspect" clip. In that hold the hand's frame is a quarter turn from a
+// photo plate's, so the item is turned a quarter more about its up axis and its front (+y in the library) meets the camera.
+const HOUSEHOLD_HOLD_CLIP = 'prop_magnifier';
+const HOUSEHOLD_HOLD_YAW = Math.PI / 2;
+
+/**
+ * Put a household library item in the hand (the print panel's offer, or a test). The GLB is fetched from the catalog's own file name; nothing
+ * typed by a child reaches the address. Digital only: the print pack does not see it. With `extras.skin` (the photo cut to the object's outline) the
+ * item is coloured from the photo (the game asset only; a print stays single-colour) and a small chip lets the child switch back to its own colours.
+ * Resolves `{ ok, coloured }`, never throws.
+ */
+async function equipHouseholdItem(item, extras = {}) {
+  const file = item && typeof item.glb === 'string' && /^[a-z][a-z0-9_]{0,40}\.glb$/.test(item.glb) ? item.glb : null;
+  if (!file) return { ok: false };
+  try {
+    const gltf = await gltfLoader.loadAsync(`/kip/household/${file}`);
+    if (disposed) return { ok: false };
+    const meshGrp = buildHouseholdHandMesh(THREE, gltf.scene, { id: item.id, label: item.label, rimColor: '#ff6b4a', yaw: HOUSEHOLD_HOLD_YAW });
+    let skinCtl = null;
+    if (extras && extras.skin) {
+      try { skinCtl = applyHouseholdSkin(THREE, meshGrp, extras.skin, { mode: extras.skinMode }); } catch (err) { console.error(err); skinCtl = null; } // a skin that fails leaves the zone colours
+    }
+    customStlSlots.hand = null;
+    photoAccessorySlots.hand = null;
+    householdSlots.hand = { id: item.id, label: item.label };
+    householdView = { id: item.id, label: item.label, ctl: skinCtl };
+    kip.exp.customHandContainer.clear();
+    kip.exp.customHandContainer.add(meshGrp);
+    setPropMode('custom');
+    // A custom prop has no clip of its own, and at rest the hand hangs with the item pointing backwards behind Kip, so a child would see a bare
+    // handle. The "Inspect" clip (magnifier) holds a prop up in front of Kip; the item's turn above is set for it. On foot only.
+    if (loco.vehicle === 'none' && loco.buildMode === 'assembled' && actions.has(HOUSEHOLD_HOLD_CLIP)) triggerClip(HOUSEHOLD_HOLD_CLIP);
+    updateStatusText();
+    return { ok: true, coloured: skinCtl !== null };
+  } catch (err) {
+    console.error(err);
+    return { ok: false };
+  }
+}
+
+// The way back from the photo's colours: a small chip over the stage while a coloured library item is in the hand. `var`, not `let`: updateStatusText
+// (which keeps the chip in step) runs during init, before this part of the file does.
+var householdView = null; // { id, label, ctl } for the item in the hand, ctl null when it kept its own colours
+var householdChip = null; // { root, text, btn }
+function householdLook() {
+  const held = householdView && householdSlots.hand && loco.prop === 'custom' && !customStlSlots.hand && !photoAccessorySlots.hand ? householdView : null;
+  return held && held.ctl ? held.ctl.look() : null;
+}
+function setHouseholdLook(look) {
+  if (!householdLook()) return false;
+  householdView.ctl.setLook(look);
+  syncHouseholdChip();
+  return true;
+}
+function syncHouseholdChip() {
+  const look = householdLook();
+  if (!look) { if (householdChip) householdChip.root.hidden = true; return; }
+  if (!householdChip) {
+    const root = document.createElement('div');
+    root.className = 'khh-chip';
+    root.setAttribute('role', 'group');
+    root.setAttribute('aria-label', '3D item colours');
+    const css = document.createElement('style');
+    css.textContent = '.khh-chip{position:fixed;left:50%;bottom:64px;transform:translateX(-50%);z-index:30;display:flex;align-items:center;gap:8px;background:rgba(251,249,245,.94);color:#1b2238;border:1px solid rgba(27,34,56,.15);border-radius:999px;padding:5px 6px 5px 14px;font:700 12.5px -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;box-shadow:0 8px 24px rgba(27,34,56,.22)}.khh-chip[hidden]{display:none}.khh-chip button{font:inherit;color:#fff;background:#1fa97c;border:0;border-radius:999px;padding:5px 12px;cursor:pointer}';
+    const text = document.createElement('span');
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.addEventListener('click', () => setHouseholdLook(householdLook() === 'photo' ? 'standard' : 'photo'));
+    root.append(css, text, btn);
+    benchRoot.append(root);
+    householdChip = { root, text, btn };
+  }
+  householdChip.text.textContent = `3D ${householdView.label.toLowerCase()}: ${look === 'photo' ? 'coloured from your photo' : 'its own colours'}`;
+  householdChip.btn.textContent = look === 'photo' ? 'Its own colours' : 'Photo colours';
+  householdChip.root.hidden = false;
+}
+
 // The print panel (F2b, kip-photo-print.js): loaded on the first click, so the bench loads the same with or without its bundle.
 let photoPrint = null;
 $el('btn-print-photo').addEventListener('click', async () => {
@@ -2497,7 +2595,7 @@ $el('btn-print-photo').addEventListener('click', async () => {
     if (!photoPrint) {
       const { createPhotoPrint } = await import('/kip/kip-photo-print.js?v=10.0');
       if (disposed) return;
-      photoPrint = createPhotoPrint({ root: benchRoot });
+      photoPrint = createPhotoPrint({ root: benchRoot, onLibraryItem: equipHouseholdItem, ageBand: readAgeBand });
       globals.kipPhotoPrint = photoPrint;
     }
     photoPrint.open();
@@ -3140,12 +3238,16 @@ const renderStickerSources = (state, bom, bonusExprs = []) => {
   }
   return out;
 };
-const printView = mountPrintView({
-  THREE, scene, camera, controls,
+// Print: hosted in the Workshop the view is the shell's ONE (`env.sharedPrint`) and this bench offers it its source (stage 4c); mounted on its own the bench mounts its own.
+const printSource = {
+  scene,
   getState: getPrintState,
   renderStickerSources,
   setCharacterVisible: on => { kip.mover.visible = on; originRing.visible = on; },
-});
+};
+const sharedPrint = env.sharedPrint ?? null;
+const printView = sharedPrint ? sharedPrint.view : mountPrintView({ THREE, camera, controls, ...printSource });
+const unregisterPrint = sharedPrint ? sharedPrint.register('kip', printSource) : null;
 globals.kipPrint = printView;
 globals.kipRig = () => ({ THREE, kip, mats });
 // Test and contact-sheet hook for kip-clips.js: freeze the rig at time t of a clip (a registered id, or an AnimationClip the caller built). Not used by the page.
@@ -3190,7 +3292,8 @@ const selfie = mountSelfie({
 });
 globals.kipSelfie = selfie;
 const leaveSelfie = () => { if (loco.expr === 'selfie') selfie.remove(); };
-globals.kipMenu = mountKipMenu({
+// The menu: one panel for every bench (stage 4c). Hosted, the Workshop's panel (`env.sharedMenu`) shows this bench's declaration while it is active; mounted on its own the bench has its own.
+const kipMenuCtx = {
   loco,
   camera,
   viewSize: () => (hosted ? stage.size() : { width: window.innerWidth, height: window.innerHeight }),
@@ -3218,6 +3321,9 @@ globals.kipMenu = mountKipMenu({
     refOn: () => refSkeletonGroup?.visible === true,
     explodeOn: () => loco.explodeTarget >= 0.5,
     pileOn: () => loco.buildMode === 'pile',
+    household: () => (loco.prop === 'custom' && !customStlSlots.hand && !photoAccessorySlots.hand && householdSlots.hand ? { ...householdSlots.hand } : null), // only while it is the thing in the hand
+    householdLook,
+    householdMode: () => (householdLook() ? householdView.ctl.mode : null),
   },
   act: {
     setCategory: id => { if (id !== 'human') leaveSelfie(); setCategoryMode(id); },
@@ -3239,8 +3345,15 @@ globals.kipMenu = mountKipMenu({
     openLlm: () => modalLlm.classList.add('open'),
     openPhoto: openPhotoModal,
     loadFile: loadCustomMixamoOrStlFile,
+    equipHousehold: equipHouseholdItem,
+    setHouseholdLook,
   },
-}, { root: benchRoot });
+};
+const sharedMenu = env.sharedMenu ?? null;
+const menuHost = sharedMenu ?? createMenuHost();
+// The published handle is the panel's, except that `.ctx` stays THIS bench's (its loco, read and act) even while another bench holds the shared panel.
+const showMenu = () => { globals.kipMenu = Object.create(menuHost.show('kip', kipMenuCtx, { root: benchRoot }), { ctx: { get: () => kipMenuCtx, enumerable: true } }); };
+if (!hosted) showMenu(); // hosted: setActive() shows it when this bench becomes the active one
 
 const ready = init().catch(err => {
   console.error(err);
@@ -3249,10 +3362,17 @@ const ready = init().catch(err => {
 
 const PUBLISHED = ["__KIP_READY__", "kipClips", "kipDescribe", "kipMenu", "kipPhotoPrint", "kipPrint", "kipRig", "kipSelfie"];
 function teardown() {
-  globals.kipMenu?.destroy?.();
+  householdChip?.root.remove();
+  householdChip = null;
+  unregisterKipSync?.();
+  unregisterKipSync = null;
+  unregisterKipPrintState?.();
+  unregisterKipPrintState = null;
+  kipSession.releaseRef('kip');
+  if (sharedMenu) sharedMenu.hide('kip'); else menuHost.destroy();
   globals.kipSelfie?.dispose?.();
   globals.kipDescribe?.dispose?.();
-  globals.kipPrint?.dispose?.();
+  if (sharedPrint) unregisterPrint(); else globals.kipPrint?.dispose?.();
   photoPrint?.dispose?.();
   photoPrint = null;
   webcamStream?.getTracks().forEach((t) => t.stop());
@@ -3286,18 +3406,19 @@ function setActive(on) {
   if (on) {
     vp.appendChild(renderer.domElement);
     applyLook();
-    globals.kipMenu?.resetViewOffset?.();
+    attachSharedKip();
+    if (kip && kipSession.state.source) adoptSharedDriverState();
+    showMenu();
   } else {
+    sharedPrint?.release('kip'); // plates open on this bench's character close first, so the pose saved below is the bench's own
+    menuHost.hide('kip');
+    kipSession.release('kip');
     camPose.position.copy(camera.position);
     camPose.target.copy(controls.target);
     camera.clearViewOffset();
     camera.updateProjectionMatrix();
-    globals.kipMenu?.resetViewOffset?.();
   }
 }
 if (hosted) benchRoot.hidden = true; // a hosted bench starts hidden until the stage activates one
 return { root: benchRoot, ready, dispose, frame, setActive, hosted };
 }
-    attachSharedKip();
-    if (kip && kipSession.state.source) adoptSharedDriverState();
-    kipSession.release('kip');

@@ -21,6 +21,11 @@ export function createStage({ THREE, OrbitControls, host }) {
   const camera = new THREE.PerspectiveCamera(35, 1, 1, 4000);
   const controls = new OrbitControls(camera, renderer.domElement);
 
+  // Everything a bench's look can set on the shared camera and controls (exposure aside): what `preserve` puts back.
+  const CAMERA_KEYS = ['fov', 'near', 'far', 'zoom'];
+  const CONTROL_KEYS = ['enableDamping', 'dampingFactor', 'enablePan', 'enableZoom', 'enableRotate', 'zoomSpeed', 'rotateSpeed', 'panSpeed', 'autoRotate', 'autoRotateSpeed',
+    'minDistance', 'maxDistance', 'minPolarAngle', 'maxPolarAngle', 'minAzimuthAngle', 'maxAzimuthAngle', 'screenSpacePanning'];
+
   const benches = new Map();
   let activeId = null;
   let raf = 0;
@@ -73,6 +78,29 @@ export function createStage({ THREE, OrbitControls, host }) {
       activeId = id;
       benches.get(id).setActive(true);
       resize();
+    },
+    /**
+     * Run `fn` (a bench's mount function) and put back everything it did to the shared camera, controls and exposure. A bench applies its look when it
+     * is constructed as well as when the stage activates it, so mounting a bench while another is active would otherwise move the ACTIVE bench's camera,
+     * and that bench would then save the moved pose when it stands down: found 2026-11-03, the Yard came back from a Truck visit framed like the Truck.
+     * Returns what `fn` returns; restores even if `fn` throws.
+     */
+    preserve(fn) {
+      const keep = {
+        pos: camera.position.clone(), quat: camera.quaternion.clone(), target: controls.target.clone(), exposure: renderer.toneMappingExposure,
+        camera: Object.fromEntries(CAMERA_KEYS.map((k) => [k, camera[k]])), controls: Object.fromEntries(CONTROL_KEYS.map((k) => [k, controls[k]])),
+      };
+      try {
+        return fn();
+      } finally {
+        camera.position.copy(keep.pos);
+        camera.quaternion.copy(keep.quat);
+        Object.assign(camera, keep.camera);
+        camera.updateProjectionMatrix();
+        controls.target.copy(keep.target);
+        Object.assign(controls, keep.controls);
+        renderer.toneMappingExposure = keep.exposure;
+      }
     },
     start() { if (!raf && !disposed) tick(); },
     stop() { cancelAnimationFrame(raf); raf = 0; },

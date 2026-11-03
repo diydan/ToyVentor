@@ -17,6 +17,10 @@
 //   ctx.selfie                optional { open(), remove() }; without it there are no selfie controls
 //   ctx.print                 optional print-view adapter; without it there is no Print group:
 //                             isOn() setOn(bool) busy() summary() plateCount() plateIndex() setPlate(i) download(kind)
+//   ctx.groups                optional () => groups: a bench that DECLARES its own sections (the Truck, truck-menu.js); without it the Kip's buildMenu(ctx) is drawn
+//   ctx.title, ctx.fabLabel   optional panel title ("Customize Kip") and the phone drawer button's text
+//   ctx.viewSize, ctx.isActive  optional: the host box the camera offset is computed in, and whether this bench is the active one (see bench-stage.js)
+// One panel can serve several benches (Workshop stage 4c): see rebind / park on the handle and createMenuHost at the end of this file.
 import {
   HUMAN_HEAD_IDS,
   HEAD_CATEGORIES,
@@ -347,10 +351,21 @@ export function buildMenu(ctx) {
     ],
   };
 
-  const pr = ctx.print;
+  const print = ctx.print && buildPrintGroup(ctx.print, { hasVehicle: () => loco.vehicle !== 'none' });
+  return [character, outfit, ride, animation, build, ...(print ? [print] : []), tools];
+}
+
+/**
+ * The Print group, built over a print-view adapter `pr` (isOn, setOn, busy, summary, plateCount, plateIndex, plateLabel, setPlate, profile, setPreset,
+ * updateProfile, supportCheck, setSupportCheck, splitByColour, setSplitByColour, download). The Kip's menu and the Truck's declare this same group
+ * (Workshop stage 4c: one menu, one print view), so the controls, their ids and their wording cannot drift apart.
+ * `hasVehicle()` says whether the bench has a vehicle of its own to offer on dedicated plates (the Kip's `loco.vehicle`).
+ */
+export function buildPrintGroup(pr, { hasVehicle = () => false } = {}) {
+  const sel = (id, label, o) => ({ kind: 'select', id, label, ...o });
   const readProf = () => (pr?.profile ? pr.profile() : createDefaultProfile());
   const patchProf = (patch) => pr?.updateProfile?.(patch);
-  const print = pr && {
+  return {
     id: 'print',
     label: 'Print',
     icon: '🖨️',
@@ -460,7 +475,7 @@ export function buildMenu(ctx) {
         chips: () => pr.summary().merges ?? [] },
       { kind: 'toggle', id: 'includeVehicle', label: 'Include vehicle',
         title: 'Include the active vehicle on dedicated plates in the print pack',
-        visibleWhen: () => pr.isOn() && (loco.vehicle !== 'none' || !!pr.summary().hasVehicleInScene),
+        visibleWhen: () => pr.isOn() && (hasVehicle() || !!pr.summary().hasVehicleInScene),
         get: () => readProf().includeVehicle !== false,
         set: (v) => patchProf({ includeVehicle: v }) },
       { kind: 'toggle', id: 'stickers', label: 'Stickers',
@@ -474,7 +489,7 @@ export function buildMenu(ctx) {
         src: () => pr.summary().stickerPreviewUrl || '' },
       { kind: 'toggle', id: 'stencils', label: '3D stencils',
         title: 'Include support-free heightfield 3D paint & marker stencils (face, shirt, and 2x1 crown cap; Adult Tool Card in Kit tray mode)',
-        visibleWhen: () => pr.isOn(),
+        visibleWhen: () => pr.isOn() && pr.summary().art !== false,
         get: () => !!readProf().includeStencils,
         set: (v) => patchProf({ includeStencils: v }) },
       { kind: 'toggle', id: 'supportCheck', label: 'Support check',
@@ -511,15 +526,13 @@ export function buildMenu(ctx) {
         ['exportProject3mf', 'project-3mf', '🗂️ Project 3MF (all plates)', 'Download kip-project.3mf with every plate, colour slot, tree support setting, and socket guard pre-configured for 1-click slicing', () => pr.isOn()],
         ['export3mf', '3mf', '3MF (this plate)', 'Download the currently selected plate as a single-bed 3MF in your chosen slicer dialect', () => pr.isOn()],
         ['exportStickers', 'stickers-pdf', 'Sticker sheet (PDF)', 'Download the 1:1 actual-size printable sticker sheet PDF with 50.00 mm calibration bar', () => pr.isOn() && !!pr.summary().hasDecals && readProf().includeStickers !== false],
-        ['exportStencils', 'stencils-stl', 'Stencils (STL)', 'Download support-free 3D paint & marker stencils as a binary STL (joined into an Adult Tool Card in Kit tray mode)', () => pr.isOn() && !!readProf().includeStencils],
+        ['exportStencils', 'stencils-stl', 'Stencils (STL)', 'Download support-free 3D paint & marker stencils as a binary STL (joined into an Adult Tool Card in Kit tray mode)', () => pr.isOn() && pr.summary().art !== false && !!readProf().includeStencils],
         ['exportSheet', 'sheet', 'Print sheet (PNG)', 'Download the visual plate map with colour swatches and boxed small-parts safety warning', () => pr.isOn()],
         ['exportStl', 'stl-zip', 'Export STL zip', 'Download every plate as one binary STL each, plus layout.json', () => pr.isOn()]]
         .map(([id, kind, label, title, visibleWhen]) => ({ kind: 'action', id, label, title, visibleWhen,
           disabled: () => pr.busy() || (pr.summary().errors ?? []).length > 0 || !!pr.summary().gatePending, run: () => pr.download(kind) })),
     ],
   };
-
-  return [character, outfit, ride, animation, build, ...(print ? [print] : []), tools];
 }
 
 /**
@@ -675,34 +688,48 @@ function safeStorage(op, key, value) {
   }
 }
 
-/** Mount the panel. Returns a handle used by tests: { controls, groups, sync, destroy }. */
-export function mountKipMenu(ctx, { root = document.body } = {}) {
-  const loco = ctx.loco;
+/**
+ * Mount the panel. Returns a handle used by tests: { controls, groups, sync, rebind, park, destroy }.
+ *
+ * What the panel shows is the bench's DECLARATION: `ctx.groups()` (a bench that declares its own sections, such as the Truck) or, without it, the
+ * Kip's own `buildMenu(ctx)`. One panel can serve several benches (Workshop stage 4c, see createMenuHost): `rebind(ctx, { root })` points it at
+ * another bench's declaration and root, `park()` takes it out of the page. `ctx.title` names the panel ("Customize Kip" by default).
+ */
+export function mountKipMenu(firstCtx, { root: firstRoot = document.body } = {}) {
+  let ctx = firstCtx;
+  let root = firstRoot;
+  let loco = ctx.loco;
+  let groups = [];
+  let flatControls = [];
+  let byId = new Map();
+  let fields = new Map();
+  let bound = true;
 
   // Preset tracking: "Custom" once anything a preset sets has changed since the last apply. The active
   // preset id changing (from any route: this menu, a URL param, a programmatic setter) marks the moment its result
   // was applied. Re-applying the same preset after edits goes through applyPresetTracked below.
-  let presetSig = null;
-  let lastPreset = null;
+  // A bench with no looks to track (no `ctx.read.preset`, the Truck) skips it.
+  // The tracking lives on the bench's ctx, so pointing the panel at another bench and back keeps "Leo Explorer, edited" as it was.
+  const track = () => (ctx.presetTrack ??= { sig: null, last: null });
   const stateSig = () => JSON.stringify(flatControls.filter((c) => c.inPreset && c.id !== 'preset').map((c) => c.get()));
-  ctx.presetValue = () => {
-    const cur = ctx.read.preset();
-    if (!ctx.ready()) return cur;
-    const sig = stateSig();
-    if (presetSig === null || cur !== lastPreset) { presetSig = sig; lastPreset = cur; }
-    return sig === presetSig ? cur : CUSTOM_PRESET;
-  };
-  ctx.applyPresetTracked = (id) => {
-    ctx.act.applyPreset(id);
-    lastPreset = ctx.read.preset();
-    presetSig = stateSig();
-  };
+  function wirePresets() {
+    if (!ctx.read?.preset) return;
+    ctx.presetValue = () => {
+      const t = track();
+      const cur = ctx.read.preset();
+      if (!ctx.ready()) return cur;
+      const sig = stateSig();
+      if (t.sig === null || cur !== t.last) { t.sig = sig; t.last = cur; }
+      return sig === t.sig ? cur : CUSTOM_PRESET;
+    };
+    ctx.applyPresetTracked = (id) => {
+      const t = track();
+      ctx.act.applyPreset(id);
+      t.last = ctx.read.preset();
+      t.sig = stateSig();
+    };
+  }
 
-  const groups = buildMenu(ctx);
-  const flatControls = flattenMenu(groups);
-  const byId = new Map(flatControls.map((c) => [c.id, c]));
-
-  root.classList.add('menu-side');
   const style = el('style', { id: 'km-style', text: CSS });
   document.head.append(style);
 
@@ -711,36 +738,58 @@ export function mountKipMenu(ctx, { root = document.body } = {}) {
   const panel = el('aside', { id: 'kip-menu', class: 'km', 'aria-label': 'Customize Kip', 'aria-busy': 'true' });
   const body = el('div', { class: 'km-body', id: 'km-body' });
   const scroll = el('div', { class: 'km-scroll' });
-  body.append(el('div', { class: 'km-title', text: 'Customize Kip' }), scroll);
+  const titleEl = el('div', { class: 'km-title', text: 'Customize Kip' });
+  body.append(titleEl, scroll);
 
   const rail = el('div', { class: 'km-rail' });
   const toggleBtn = el('button', { type: 'button', class: 'km-toggle', 'aria-controls': 'km-body', 'aria-label': 'Collapse panel', title: 'Collapse panel' }, '‹');
   rail.append(toggleBtn);
-
-  const fields = new Map();
-  for (const g of groups) {
-    const details = el('details', { class: 'km-group', open: true, 'data-group': g.id });
-    details.append(el('summary', { text: g.label }));
-    for (const c of g.controls) {
-      const field = buildField(c);
-      fields.set(c.id, field);
-      details.append(field.root);
-    }
-    g.details = details;
-    scroll.append(details);
-    const railBtn = el('button', { type: 'button', 'aria-label': g.label, title: g.label }, g.icon);
-    railBtn.addEventListener('click', () => {
-      setCollapsed(false);
-      details.open = true;
-      details.scrollIntoView({ block: 'start' });
-    });
-    rail.append(railBtn);
-  }
   panel.append(rail, body);
 
   const fab = el('button', { type: 'button', class: 'km-fab', 'aria-controls': 'kip-menu', 'aria-expanded': 'false' }, '☰ Customize');
   const backdrop = el('div', { class: 'km-backdrop' });
-  root.append(panel, fab, backdrop);
+
+  // The groups are the bench's declaration; which ones are folded is remembered by group id across a rebind (the Print group stays as you left it).
+  const folded = new Map();
+  function buildGroups() {
+    for (const g of groups) if (g.details) folded.set(g.id, g.details.open);
+    groups = ctx.groups ? ctx.groups() : buildMenu(ctx);
+    flatControls = flattenMenu(groups);
+    byId = new Map(flatControls.map((c) => [c.id, c]));
+    fields = new Map();
+    scroll.replaceChildren();
+    rail.replaceChildren(toggleBtn);
+    for (const g of groups) {
+      const details = el('details', { class: 'km-group', open: folded.get(g.id) ?? true, 'data-group': g.id });
+      details.append(el('summary', { text: g.label }));
+      for (const c of g.controls) {
+        const field = buildField(c);
+        fields.set(c.id, field);
+        details.append(field.root);
+      }
+      g.details = details;
+      scroll.append(details);
+      const railBtn = el('button', { type: 'button', 'aria-label': g.label, title: g.label }, g.icon);
+      railBtn.addEventListener('click', () => {
+        setCollapsed(false);
+        details.open = true;
+        details.scrollIntoView({ block: 'start' });
+      });
+      rail.append(railBtn);
+    }
+  }
+  function retitle() {
+    const title = ctx.title ?? 'Customize Kip';
+    titleEl.textContent = title;
+    panel.setAttribute('aria-label', title);
+    fab.textContent = ctx.fabLabel ?? '☰ Customize';
+  }
+  function attach(nextRoot) {
+    if (root !== nextRoot) root.classList.remove('menu-side', 'menu-open');
+    root = nextRoot;
+    root.classList.add('menu-side');
+    root.append(panel, fab, backdrop);
+  }
 
   // ---- field builders --------------------------------------------------------------------
   let lastInputWasPointer = false;
@@ -771,12 +820,17 @@ export function mountKipMenu(ctx, { root = document.body } = {}) {
     if (c.kind === 'toggle') {
       const input = el('input', { id, type: 'checkbox', role: 'switch' });
       const text = el('span', { text: c.label });
-      input.addEventListener('change', () => { Promise.resolve(c.set(input.checked)).finally(sync); sync(); });
+      input.addEventListener('change', () => {
+        Promise.resolve(c.set(input.checked)).finally(sync);
+        if (lastInputWasPointer) input.blur(); // a clicked switch must not keep the keys (the Truck's drive keys, Space to brake): keyboard users keep focus
+        sync();
+      });
       const row = el('label', { class: 'km-switch', for: id, title }, text, input);
       return { root: el('div', { class: 'km-field', 'data-control': c.id }, row), input };
     }
     if (c.kind === 'range') {
-      const input = el('input', { id, type: 'range', min: c.min, max: c.max, step: c.step, title, 'aria-labelledby': `${id}-lbl` });
+      const val = (v) => (typeof v === 'function' ? v() : v); // a bench may bound a slider by its own state (the Truck's dump tip depends on the stage)
+      const input = el('input', { id, type: 'range', min: val(c.min), max: val(c.max), step: c.step, title, 'aria-labelledby': `${id}-lbl` });
       const out = el('output', { for: id });
       input.addEventListener('input', () => { c.set(Number(input.value)); out.textContent = input.value; });
       const row = el('div', { class: 'km-range' }, input, out);
@@ -861,6 +915,8 @@ export function mountKipMenu(ctx, { root = document.body } = {}) {
           const on = !!c.get();
           if (f.input.checked !== on) f.input.checked = on;
         } else if (c.kind === 'range') {
+          if (typeof c.min === 'function' && f.input.min !== String(c.min())) f.input.min = String(c.min());
+          if (typeof c.max === 'function' && f.input.max !== String(c.max())) f.input.max = String(c.max());
           const v = String(c.get());
           if (document.activeElement !== f.input && f.input.value !== v) f.input.value = v;
           f.out.textContent = f.input.value;
@@ -933,7 +989,7 @@ export function mountKipMenu(ctx, { root = document.body } = {}) {
   let lastOffsetKey = '';
   function applyViewOffset() {
     const cam = ctx.camera;
-    if (!cam || typeof cam.setViewOffset !== 'function') return;
+    if (!bound || !cam || typeof cam.setViewOffset !== 'function') return;
     const hidden = root.classList.contains('clean-ui');
     const covered = hidden || narrow.matches ? 0 : (collapsed ? RAIL_W : PANEL_W) + 14;
     const { width: w, height: h } = ctx.viewSize ? ctx.viewSize() : { width: window.innerWidth, height: window.innerHeight };
@@ -944,12 +1000,42 @@ export function mountKipMenu(ctx, { root = document.body } = {}) {
     else cam.setViewOffset(w, h, -covered / 2, 0, w, h); // negative x: scene shifts right, into the free area
     cam.updateProjectionMatrix();
   }
+  attach(root);
+  wirePresets();
+  buildGroups();
+  retitle();
   setCollapsed(collapsed);
+
+  /** Point the panel at another bench: its declaration, its root, its camera. The panel's own state (folded groups, collapsed) is kept. */
+  function rebind(nextCtx, { root: nextRoot = root } = {}) {
+    if (bound) ctx.camera?.clearViewOffset?.();
+    setOpen(false);
+    ctx = nextCtx;
+    loco = ctx.loco;
+    attach(nextRoot);
+    wirePresets();
+    buildGroups();
+    retitle();
+    bound = true;
+    lastReady = null;
+    lastOffsetKey = '';
+    sync();
+    applyViewOffset();
+  }
+  /** Take the panel out of the page (the bench that had it stood down); `rebind` puts it back. */
+  function park() {
+    if (!bound) return;
+    bound = false;
+    setOpen(false);
+    panel.remove(); fab.remove(); backdrop.remove();
+    root.classList.remove('menu-side', 'menu-open');
+    ctx.camera?.clearViewOffset?.();
+  }
 
   // ---- tick ------------------------------------------------------------------------------
   // A timer, not requestAnimationFrame: sync cost must not depend on how slow a frame renders.
   const tick = () => {
-    if (document.hidden || ctx.isActive?.() === false) return; // a bench that is switched away must not touch the shared camera
+    if (!bound || document.hidden || ctx.isActive?.() === false) return; // a bench that is switched away must not touch the shared camera
     sync();
     applyViewOffset(); // also reacts to H / ?clean=1 toggling the clean-ui class
   };
@@ -957,15 +1043,18 @@ export function mountKipMenu(ctx, { root = document.body } = {}) {
   const timer = setInterval(tick, 100);
 
   return {
-    ctx,
-    groups,
-    controls: byId,
-    fields,
+    get ctx() { return ctx; },
+    get groups() { return groups; },
+    get controls() { return byId; },
+    get fields() { return fields; },
+    get parked() { return !bound; },
     sync,
+    rebind,
+    park,
     applyViewOffset,
     /** Forget the camera offset applied last (the stage cleared it when this bench stood down), so the next tick applies it again. */
     resetViewOffset() { lastOffsetKey = ''; },
-    get presetSig() { return presetSig; },
+    get presetSig() { return track().sig; },
     destroy() {
       clearInterval(timer);
       document.removeEventListener('keydown', onDocKey, true);
@@ -974,6 +1063,40 @@ export function mountKipMenu(ctx, { root = document.body } = {}) {
       panel.remove(); fab.remove(); backdrop.remove(); style.remove();
       root.classList.remove('menu-side', 'menu-open');
       ctx.camera?.clearViewOffset?.();
+      bound = false;
+    },
+  };
+}
+
+/**
+ * The one menu a host (the Workshop) gives its benches (stage 4c). A bench mounted on its own makes a private host and shows its menu at once;
+ * in the Workshop the shell makes one and every bench that has a menu shows ITS declaration on it when it becomes active and hides it when it
+ * stands down. One panel, one set of element ids in the page (two panels would repeat every `km-*` id and a label would point into the wrong one).
+ */
+export function createMenuHost() {
+  let menu = null;
+  let owner = null;
+  return {
+    /** Bench `id` takes the menu: the first call mounts the panel, later ones re-point it at this bench's `ctx` inside its `root`. Returns the panel's handle. */
+    show(id, ctx, { root }) {
+      if (menu) menu.rebind(ctx, { root });
+      else menu = mountKipMenu(ctx, { root });
+      owner = id;
+      return menu;
+    },
+    /** Bench `id` stands down: if it still holds the menu, park it (a later `show` brings it back). */
+    hide(id) {
+      if (menu && owner === id) {
+        menu.park();
+        owner = null;
+      }
+    },
+    get owner() { return owner; },
+    get menu() { return menu; },
+    destroy() {
+      menu?.destroy();
+      menu = null;
+      owner = null;
     },
   };
 }

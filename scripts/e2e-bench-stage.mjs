@@ -15,6 +15,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { createChecks, launchChrome, startServer } from "./lib/kip-e2e.mjs";
+import { menu } from "./lib/menu-drive.mjs";
 
 const { check, finish } = createChecks("bench stage e2e");
 const settle = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -69,7 +70,7 @@ try {
   // The shared driver intentionally keeps Kip's wardrobe colours in the Truck, while standalone Truck paints its
   // private driver orange/blue. Compare the Truck itself with the driver hidden on both sides; shared-driver state
   // and appearance are checked separately below.
-  const refTruck = await shotOf(`/kip/Truck-Mockup.html${TRUCK_Q}`, "window.__TRUCK_READY__ === true", "document.getElementById('btn-kip')?.click()");
+  const refTruck = await shotOf(`/kip/Truck-Mockup.html${TRUCK_Q}`, "window.__TRUCK_READY__ === true", menu.toggle("kip", false));
 
   // ---- hosted ----
   console.log("hosted: both benches on one stage");
@@ -175,12 +176,12 @@ try {
 
   // hosted == standalone (Truck, with the intentionally different shared driver hidden on both sides)
   let truckShotDrawn = await t.evaluate(`${T}.drawn.length`);
-  await t.evaluate(`${T}.truck.root.querySelector('#btn-kip')?.click()`);
+  await t.evaluate(menu.toggle("kip", false));
   await framesDrawn(3, truckShotDrawn);
   const shot2 = await t.shot(path.join(SHOTS, "truck-hosted.png"));
   check("hosted Truck is pixel-identical to the standalone Truck page with the driver hidden", sha(fs.readFileSync(shot2)) === refTruck, "screenshots differ: see " + SHOTS);
   truckShotDrawn = await t.evaluate(`${T}.drawn.length`);
-  await t.evaluate(`${T}.truck.root.querySelector('#btn-kip')?.click()`);
+  await t.evaluate(menu.toggle("kip", true));
   await framesDrawn(3, truckShotDrawn);
 
   // input isolation: the Kip's H key must not reach a Kip that is not active
@@ -188,12 +189,9 @@ try {
   await settle(200);
   check("H pressed while the Truck is active does not toggle the hidden Kip bench", await t.evaluate(`${T}.kip.root.classList.contains('clean-ui')`) === false);
 
-  // Truck state: open its phone menu, then Escape only counts while the Truck is active
-  await t.evaluate(`${T}.truck.root.classList.add('truck-menu-open')`);
-  await t.key("Escape");
-  await settle(200);
-  check("Escape closes the Truck menu while the Truck is active", await t.evaluate(`!${T}.truck.root.classList.contains('truck-menu-open')`));
-  await t.evaluate(`${T}.truck.root.classList.add('truck-menu-open')`);
+  // The menu belongs to the active bench (stage 4c: the Truck's controls are the menu, no dock of its own): its panel is in the Truck's root while the Truck is
+  // active, and a bench that stood down has no panel in the page to hear a key.
+  check("the Truck's controls are a menu panel inside the Truck bench, and the Kip's panel is out of the page", await t.evaluate(`document.querySelectorAll('#kip-menu').length === 1 && ${T}.truck.root.contains(document.getElementById('kip-menu')) && !document.getElementById('truck-dock')`));
   await t.evaluate(`(() => { const s = ${T}.stage; s.camera.position.set(-50, 60, 90); s.controls.target.set(0, 10, 0); s.controls.update(); })()`);
   const truckPose = await t.evaluate(`(() => { const s = ${T}.stage; return [s.camera.position.x, s.camera.position.y, s.camera.position.z, s.controls.target.x, s.controls.target.y, s.controls.target.z]; })()`);
 
@@ -204,14 +202,12 @@ try {
   const near = (a, b) => a.every((v, i) => Math.abs(v - b[i]) < 1e-6);
   check("the Kip gets its own camera pose back after the Truck", near(k2.pose, kipPose), JSON.stringify([k2.pose, kipPose]));
   check("the Kip kept its state (UI shown) while switched away", k2.shown === true && k2.canvasIn && k2.fov === 34);
-  await t.key("Escape");
-  await settle(200);
-  check("Escape does not reach the Truck while the Kip is active", await t.evaluate(`${T}.truck.root.classList.contains('truck-menu-open')`) === true);
+  check("while the Kip is active the panel is the Kip's, and the Truck has none in the page", await t.evaluate(`document.querySelectorAll('#kip-menu').length === 1 && ${T}.kip.root.contains(document.getElementById('kip-menu')) && !${T}.truck.root.querySelector('#kip-menu')`));
   await t.evaluate(`${T}.stage.activate('truck')`);
   await settle(1200);
-  const t2 = await t.evaluate(`(() => { const s = ${T}.stage; return { pose: [s.camera.position.x, s.camera.position.y, s.camera.position.z, s.controls.target.x, s.controls.target.y, s.controls.target.z], menu: ${T}.truck.root.classList.contains('truck-menu-open') }; })()`);
+  const t2 = await t.evaluate(`(() => { const s = ${T}.stage; return { pose: [s.camera.position.x, s.camera.position.y, s.camera.position.z, s.controls.target.x, s.controls.target.y, s.controls.target.z], menu: ${T}.truck.root.contains(document.getElementById('kip-menu')) }; })()`);
   check("the Truck gets its own camera pose back after the Kip", near(t2.pose, truckPose), JSON.stringify([t2.pose, truckPose]));
-  check("the Truck kept its state (menu open) while switched away", t2.menu === true);
+  check("the Truck gets the panel back when it is the active bench again", t2.menu === true);
 
   // ---- shared Kip wardrobe state round trip ----
   let sharedDrawn = await t.evaluate(`${T}.drawn.length`);
@@ -232,8 +228,8 @@ try {
   await framesDrawn(4, sharedDrawn);
   const truckShared = await t.evaluate(`({
     state: ${T}.sharedKip.state,
-    headButton: ${T}.truck.root.querySelector('#btn-head')?.textContent,
-    hatButton: ${T}.truck.root.querySelector('#btn-hat')?.textContent,
+    headButton: ${menu.value("head")},
+    hatButton: ${menu.value("hat")},
     fox: ${T}.sharedKip.rig.exp.headMeshes.fox.visible,
     ballcap: ${T}.sharedKip.rig.exp.hatMeshes.ballcap.visible,
     sameMover: ${T}.sharedKip.rig.mover === ${T}.mover,
@@ -287,6 +283,41 @@ try {
   check("dispose is safe to call twice", await t.evaluate(`(() => { try { ${T}.kip.dispose(); ${T}.truck.dispose(); ${T}.stage.dispose(); return true; } catch (e) { return String(e); } })()`) === true);
   check("no uncaught exception", t.exceptions.length === 0, t.exceptions.join(" | ").slice(0, 500));
   t.close();
+
+  // ---- preserve: mounting a bench must not move the camera of the bench that is active ----
+  console.log("preserve: a mount's look does not leak onto the shared camera");
+  const p = await chrome.open(`${server.base}/kip/Yard-Bench.html`);
+  await p.waitFor("window.__YARD_READY__ === true", 240000);
+  const keep = await p.evaluate(`(async () => {
+    const { createStage } = await import('/kip/bench-stage.js');
+    const { THREE, OrbitControls } = await import('/kip/vendor/three-kip.js');
+    window.yardBench.dispose();
+    const host = document.createElement('div'); host.style.cssText = 'position:fixed;inset:0'; document.body.append(host);
+    const stage = createStage({ THREE, OrbitControls, host });
+    const { camera, controls, renderer } = stage;
+    camera.position.set(11, 22, 33); camera.fov = 40; camera.near = 2; camera.far = 900; camera.updateProjectionMatrix();
+    controls.target.set(1, 2, 3); controls.minDistance = 7; controls.maxDistance = 70; controls.minPolarAngle = 0.2; controls.maxPolarAngle = 1.4; controls.dampingFactor = 0.11;
+    renderer.toneMappingExposure = 0.8;
+    const snap = () => JSON.stringify([camera.position.toArray(), controls.target.toArray(), camera.fov, camera.near, camera.far, controls.minDistance, controls.maxDistance,
+      controls.minPolarAngle, controls.maxPolarAngle, controls.dampingFactor, renderer.toneMappingExposure]);
+    const before = snap();
+    // a bench's look, as the Truck and Kip apply it while being constructed
+    const look = () => { camera.position.set(-165, 118, 178); camera.fov = 36; camera.near = 1; camera.far = 2000; camera.updateProjectionMatrix(); controls.target.set(0, 36, 0);
+      controls.minDistance = 0; controls.maxDistance = Infinity; controls.minPolarAngle = 0; controls.maxPolarAngle = Math.PI; controls.dampingFactor = 0.07; renderer.toneMappingExposure = 1.04; return 'handle'; };
+    const returned = stage.preserve(look);
+    const after = snap();
+    let threw = false; try { stage.preserve(() => { look(); throw new Error('mount failed'); }); } catch { threw = true; }
+    const afterThrow = snap();
+    // without preserve the same look does move everything (the control, so the check above cannot pass on a no-op look)
+    look(); const moved = snap();
+    stage.dispose(); host.remove();
+    return { returned, same: after === before, threw, sameAfterThrow: afterThrow === before, lookMovesIt: moved !== before };
+  })()`);
+  check("stage.preserve returns the mount's value and puts back the camera, target, field of view, range, limits, damping and exposure", keep.returned === "handle" && keep.same, JSON.stringify(keep));
+  check("... even when the mount throws (and the error still reaches the caller)", keep.threw && keep.sameAfterThrow, JSON.stringify(keep));
+  check("... and the look it undoes really does move all of that (the check is not vacuous)", keep.lookMovesIt, JSON.stringify(keep));
+  check("no uncaught exception in the preserve check", p.exceptions.length === 0, p.exceptions.join(" | ").slice(0, 300));
+  p.close();
 } finally {
   chrome.close();
   server.close?.();
