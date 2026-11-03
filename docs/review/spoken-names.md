@@ -717,8 +717,7 @@ colour, so there is no gender or number to agree. English comes from the library
 approved until a native speaker says so**. Each name carries a review state in `src/lib/householdNames.json` (`unreviewed` or `approved`); an approved name is
 never overwritten by a new Muse run.
 
-**State:** 61 items x 7 languages = 427 names; 61 exist, 61 unreviewed, 0 approved.
-No names yet in: Español, Français, Deutsch, Italiano, Português, Türkçe (the Muse run has not been done: `npx tsx scripts/household-names.ts --sample`).
+**State:** 61 items x 7 languages = 427 names; 427 exist, 427 unreviewed, 0 approved.
 
 **How to review (about 10 minutes per language):** read each noun aloud. Is it the word a child there uses for this object (a mug, a jigsaw piece, a toy brick)?
 Is it singular, or the usual plural for an object that is plural by nature (scissors, pliers, playing cards)? Reply with the corrected word next to the old one.
@@ -728,7 +727,30 @@ Is it singular, or the usual plural for an object that is plural by nature (scis
 The voice is told only the word and picks the language itself (see the section above), so a noun spelled the same in two languages may be spoken with the other
 language's accent. The game's device-voice fallback always carries an explicit language tag, which cannot mis-detect.
 
-None yet (6 language(s) have no names, so this is not the final count).
+**22 texts** are spelled the same in two or more languages. **Please listen to these and tell us which language and accent you hear:**
+
+- `ball`: English + Deutsch (ball)
+- `tasse`: Français + Deutsch (mug)
+- `termo`: Español + Português (flask)
+- `lata`: Español + Português (soda_can)
+- `bol`: Español + Français (bowl)
+- `planta`: Español + Português (potted_plant)
+- `yoyo`: Français + Italiano + Türkçe (yo_yo)
+- `orange`: English + Français + Deutsch (orange)
+- `banana`: English + Italiano + Português (banana)
+- `banane`: Français + Deutsch (banana)
+- `avocado`: English + Deutsch + Italiano (avocado)
+- `pincel`: Español + Português (paintbrush)
+- `crayon`: Français + English (pencil, crayon)
+- `dados`: Español + Português (dice)
+- `espada`: Español + Português (toy_sword)
+- `hammer`: English + Deutsch (hammer)
+- `despertador`: Español + Português (alarm_clock)
+- `lampe`: Français + Deutsch (desk_lamp)
+- `puzzle`: Français + Deutsch + Italiano (jigsaw)
+- `libro`: Español + Italiano (book)
+- `cartas`: Español + Português (playing_cards)
+- `esponja`: Español + Português (sponge)
 
 ### Household names: English (`en`)
 
@@ -798,25 +820,397 @@ None yet (6 language(s) have no names, so this is not the final count).
 
 ### Household names: Español (`es`)
 
-_No names yet in this language._
+| Item | English | Name | Review | OK? |
+|---|---|---|---|---|
+| ball | ball | pelota | unreviewed | |
+| mug | mug | taza | unreviewed | |
+| water_bottle | water bottle | botella | unreviewed | |
+| flask | flask | termo | unreviewed | |
+| drinking_glass | drinking glass | vaso | unreviewed | |
+| jam_jar | jam jar | tarro | unreviewed | |
+| soda_can | soda can | lata | unreviewed | |
+| cookie_tin | cookie tin | lata de galletas | unreviewed | |
+| bowl | bowl | bol | unreviewed | |
+| plate | plate | plato | unreviewed | |
+| bucket | bucket | cubo | unreviewed | |
+| watering_can | watering can | regadera | unreviewed | |
+| potted_plant | potted plant | planta | unreviewed | |
+| spinning_top | spinning top | peonza | unreviewed | |
+| yo_yo | yo-yo | yoyó | unreviewed | |
+| flying_disc | flying disc | disco volador | unreviewed | |
+| marble | marble | canica | unreviewed | |
+| apple | apple | manzana | unreviewed | |
+| orange | orange | naranja | unreviewed | |
+| lemon | lemon | limón | unreviewed | |
+| banana | banana | plátano | unreviewed | |
+| carrot | carrot | zanahoria | unreviewed | |
+| avocado | avocado | aguacate | unreviewed | |
+| wooden_spoon | wooden spoon | cuchara de madera | unreviewed | |
+| fork | fork | tenedor | unreviewed | |
+| key | key | llave | unreviewed | |
+| comb | comb | peine | unreviewed | |
+| hairbrush | hairbrush | cepillo de pelo | unreviewed | |
+| toothbrush | toothbrush | cepillo de dientes | unreviewed | |
+| paintbrush | paintbrush | pincel | unreviewed | |
+| pencil | pencil | lápiz | unreviewed | |
+| marker | marker | rotulador | unreviewed | |
+| crayon | crayon | lápiz de cera | unreviewed | |
+| eraser | eraser | goma | unreviewed | |
+| ruler | ruler | regla | unreviewed | |
+| scissors | scissors | tijeras | unreviewed | |
+| glue_stick | glue stick | pegamento en barra | unreviewed | |
+| stapler | stapler | grapadora | unreviewed | |
+| tape_dispenser | tape dispenser | cinta adhesiva | unreviewed | |
+| dice | dice | dados | unreviewed | |
+| toy_brick | toy brick | bloque | unreviewed | |
+| bubble_wand | bubble wand | pompero | unreviewed | |
+| toy_sword | toy sword | espada | unreviewed | |
+| hammer | hammer | martillo | unreviewed | |
+| screwdriver | screwdriver | destornillador | unreviewed | |
+| pliers | pliers | alicates | unreviewed | |
+| flashlight | flashlight | linterna | unreviewed | |
+| tape_measure | tape measure | metro | unreviewed | |
+| alarm_clock | alarm clock | despertador | unreviewed | |
+| desk_lamp | desk lamp | lámpara | unreviewed | |
+| board_game | board game | juego de mesa | unreviewed | |
+| jigsaw | jigsaw piece | puzle | unreviewed | |
+| notebook | notebook | cuaderno | unreviewed | |
+| book | book | libro | unreviewed | |
+| playing_cards | playing cards | cartas | unreviewed | |
+| pencil_case | pencil case | estuche | unreviewed | |
+| soap | bar of soap | jabón | unreviewed | |
+| sponge | sponge | esponja | unreviewed | |
+| cereal_box | cereal box | cereales | unreviewed | |
+| lunchbox | lunchbox | fiambrera | unreviewed | |
+| support_tool | toy tool | herramienta de juguete | unreviewed | |
 
 ### Household names: Français (`fr`)
 
-_No names yet in this language._
+| Item | English | Name | Review | OK? |
+|---|---|---|---|---|
+| ball | ball | ballon | unreviewed | |
+| mug | mug | tasse | unreviewed | |
+| water_bottle | water bottle | bouteille | unreviewed | |
+| flask | flask | gourde | unreviewed | |
+| drinking_glass | drinking glass | verre | unreviewed | |
+| jam_jar | jam jar | pot | unreviewed | |
+| soda_can | soda can | canette | unreviewed | |
+| cookie_tin | cookie tin | boîte à biscuits | unreviewed | |
+| bowl | bowl | bol | unreviewed | |
+| plate | plate | assiette | unreviewed | |
+| bucket | bucket | seau | unreviewed | |
+| watering_can | watering can | arrosoir | unreviewed | |
+| potted_plant | potted plant | plante | unreviewed | |
+| spinning_top | spinning top | toupie | unreviewed | |
+| yo_yo | yo-yo | yoyo | unreviewed | |
+| flying_disc | flying disc | disque volant | unreviewed | |
+| marble | marble | bille | unreviewed | |
+| apple | apple | pomme | unreviewed | |
+| orange | orange | orange | unreviewed | |
+| lemon | lemon | citron | unreviewed | |
+| banana | banana | banane | unreviewed | |
+| carrot | carrot | carotte | unreviewed | |
+| avocado | avocado | avocat | unreviewed | |
+| wooden_spoon | wooden spoon | cuillère en bois | unreviewed | |
+| fork | fork | fourchette | unreviewed | |
+| key | key | clé | unreviewed | |
+| comb | comb | peigne | unreviewed | |
+| hairbrush | hairbrush | brosse à cheveux | unreviewed | |
+| toothbrush | toothbrush | brosse à dents | unreviewed | |
+| paintbrush | paintbrush | pinceau | unreviewed | |
+| pencil | pencil | crayon | unreviewed | |
+| marker | marker | feutre | unreviewed | |
+| crayon | crayon | crayon de cire | unreviewed | |
+| eraser | eraser | gomme | unreviewed | |
+| ruler | ruler | règle | unreviewed | |
+| scissors | scissors | ciseaux | unreviewed | |
+| glue_stick | glue stick | colle | unreviewed | |
+| stapler | stapler | agrafeuse | unreviewed | |
+| tape_dispenser | tape dispenser | ruban adhésif | unreviewed | |
+| dice | dice | dés | unreviewed | |
+| toy_brick | toy brick | brique | unreviewed | |
+| bubble_wand | bubble wand | baguette à bulles | unreviewed | |
+| toy_sword | toy sword | épée | unreviewed | |
+| hammer | hammer | marteau | unreviewed | |
+| screwdriver | screwdriver | tournevis | unreviewed | |
+| pliers | pliers | pince | unreviewed | |
+| flashlight | flashlight | lampe torche | unreviewed | |
+| tape_measure | tape measure | mètre ruban | unreviewed | |
+| alarm_clock | alarm clock | réveil | unreviewed | |
+| desk_lamp | desk lamp | lampe | unreviewed | |
+| board_game | board game | jeu de société | unreviewed | |
+| jigsaw | jigsaw piece | puzzle | unreviewed | |
+| notebook | notebook | cahier | unreviewed | |
+| book | book | livre | unreviewed | |
+| playing_cards | playing cards | cartes | unreviewed | |
+| pencil_case | pencil case | trousse | unreviewed | |
+| soap | bar of soap | savon | unreviewed | |
+| sponge | sponge | éponge | unreviewed | |
+| cereal_box | cereal box | céréales | unreviewed | |
+| lunchbox | lunchbox | boîte à goûter | unreviewed | |
+| support_tool | toy tool | outil jouet | unreviewed | |
 
 ### Household names: Deutsch (`de`)
 
-_No names yet in this language._
+| Item | English | Name | Review | OK? |
+|---|---|---|---|---|
+| ball | ball | Ball | unreviewed | |
+| mug | mug | Tasse | unreviewed | |
+| water_bottle | water bottle | Flasche | unreviewed | |
+| flask | flask | Isolierflasche | unreviewed | |
+| drinking_glass | drinking glass | Glas | unreviewed | |
+| jam_jar | jam jar | Marmeladenglas | unreviewed | |
+| soda_can | soda can | Dose | unreviewed | |
+| cookie_tin | cookie tin | Keksdose | unreviewed | |
+| bowl | bowl | Schüssel | unreviewed | |
+| plate | plate | Teller | unreviewed | |
+| bucket | bucket | Eimer | unreviewed | |
+| watering_can | watering can | Gießkanne | unreviewed | |
+| potted_plant | potted plant | Pflanze | unreviewed | |
+| spinning_top | spinning top | Kreisel | unreviewed | |
+| yo_yo | yo-yo | Jo-Jo | unreviewed | |
+| flying_disc | flying disc | Flugscheibe | unreviewed | |
+| marble | marble | Murmel | unreviewed | |
+| apple | apple | Apfel | unreviewed | |
+| orange | orange | Orange | unreviewed | |
+| lemon | lemon | Zitrone | unreviewed | |
+| banana | banana | Banane | unreviewed | |
+| carrot | carrot | Möhre | unreviewed | |
+| avocado | avocado | Avocado | unreviewed | |
+| wooden_spoon | wooden spoon | Kochlöffel | unreviewed | |
+| fork | fork | Gabel | unreviewed | |
+| key | key | Schlüssel | unreviewed | |
+| comb | comb | Kamm | unreviewed | |
+| hairbrush | hairbrush | Haarbürste | unreviewed | |
+| toothbrush | toothbrush | Zahnbürste | unreviewed | |
+| paintbrush | paintbrush | Pinsel | unreviewed | |
+| pencil | pencil | Bleistift | unreviewed | |
+| marker | marker | Filzstift | unreviewed | |
+| crayon | crayon | Wachsmalstift | unreviewed | |
+| eraser | eraser | Radiergummi | unreviewed | |
+| ruler | ruler | Lineal | unreviewed | |
+| scissors | scissors | Schere | unreviewed | |
+| glue_stick | glue stick | Klebestift | unreviewed | |
+| stapler | stapler | Hefter | unreviewed | |
+| tape_dispenser | tape dispenser | Klebeband | unreviewed | |
+| dice | dice | Würfel | unreviewed | |
+| toy_brick | toy brick | Baustein | unreviewed | |
+| bubble_wand | bubble wand | Pustestab | unreviewed | |
+| toy_sword | toy sword | Schwert | unreviewed | |
+| hammer | hammer | Hammer | unreviewed | |
+| screwdriver | screwdriver | Schraubenzieher | unreviewed | |
+| pliers | pliers | Zange | unreviewed | |
+| flashlight | flashlight | Taschenlampe | unreviewed | |
+| tape_measure | tape measure | Maßband | unreviewed | |
+| alarm_clock | alarm clock | Wecker | unreviewed | |
+| desk_lamp | desk lamp | Lampe | unreviewed | |
+| board_game | board game | Brettspiel | unreviewed | |
+| jigsaw | jigsaw piece | Puzzle | unreviewed | |
+| notebook | notebook | Heft | unreviewed | |
+| book | book | Buch | unreviewed | |
+| playing_cards | playing cards | Karten | unreviewed | |
+| pencil_case | pencil case | Mäppchen | unreviewed | |
+| soap | bar of soap | Seife | unreviewed | |
+| sponge | sponge | Schwamm | unreviewed | |
+| cereal_box | cereal box | Müsli | unreviewed | |
+| lunchbox | lunchbox | Brotdose | unreviewed | |
+| support_tool | toy tool | Spielzeugwerkzeug | unreviewed | |
 
 ### Household names: Italiano (`it`)
 
-_No names yet in this language._
+| Item | English | Name | Review | OK? |
+|---|---|---|---|---|
+| ball | ball | pallone | unreviewed | |
+| mug | mug | tazza | unreviewed | |
+| water_bottle | water bottle | bottiglia | unreviewed | |
+| flask | flask | borraccia | unreviewed | |
+| drinking_glass | drinking glass | bicchiere | unreviewed | |
+| jam_jar | jam jar | vasetto | unreviewed | |
+| soda_can | soda can | lattina | unreviewed | |
+| cookie_tin | cookie tin | scatola dei biscotti | unreviewed | |
+| bowl | bowl | ciotola | unreviewed | |
+| plate | plate | piatto | unreviewed | |
+| bucket | bucket | secchio | unreviewed | |
+| watering_can | watering can | annaffiatoio | unreviewed | |
+| potted_plant | potted plant | pianta | unreviewed | |
+| spinning_top | spinning top | trottola | unreviewed | |
+| yo_yo | yo-yo | yoyo | unreviewed | |
+| flying_disc | flying disc | disco volante | unreviewed | |
+| marble | marble | biglia | unreviewed | |
+| apple | apple | mela | unreviewed | |
+| orange | orange | arancia | unreviewed | |
+| lemon | lemon | limone | unreviewed | |
+| banana | banana | banana | unreviewed | |
+| carrot | carrot | carota | unreviewed | |
+| avocado | avocado | avocado | unreviewed | |
+| wooden_spoon | wooden spoon | cucchiaio di legno | unreviewed | |
+| fork | fork | forchetta | unreviewed | |
+| key | key | chiave | unreviewed | |
+| comb | comb | pettine | unreviewed | |
+| hairbrush | hairbrush | spazzola | unreviewed | |
+| toothbrush | toothbrush | spazzolino | unreviewed | |
+| paintbrush | paintbrush | pennello | unreviewed | |
+| pencil | pencil | matita | unreviewed | |
+| marker | marker | pennarello | unreviewed | |
+| crayon | crayon | pastello | unreviewed | |
+| eraser | eraser | gomma | unreviewed | |
+| ruler | ruler | righello | unreviewed | |
+| scissors | scissors | forbici | unreviewed | |
+| glue_stick | glue stick | colla | unreviewed | |
+| stapler | stapler | cucitrice | unreviewed | |
+| tape_dispenser | tape dispenser | nastro adesivo | unreviewed | |
+| dice | dice | dadi | unreviewed | |
+| toy_brick | toy brick | mattoncino | unreviewed | |
+| bubble_wand | bubble wand | soffiabolle | unreviewed | |
+| toy_sword | toy sword | spada | unreviewed | |
+| hammer | hammer | martello | unreviewed | |
+| screwdriver | screwdriver | cacciavite | unreviewed | |
+| pliers | pliers | pinza | unreviewed | |
+| flashlight | flashlight | torcia | unreviewed | |
+| tape_measure | tape measure | metro a nastro | unreviewed | |
+| alarm_clock | alarm clock | sveglia | unreviewed | |
+| desk_lamp | desk lamp | lampada | unreviewed | |
+| board_game | board game | gioco da tavolo | unreviewed | |
+| jigsaw | jigsaw piece | puzzle | unreviewed | |
+| notebook | notebook | quaderno | unreviewed | |
+| book | book | libro | unreviewed | |
+| playing_cards | playing cards | carte | unreviewed | |
+| pencil_case | pencil case | astuccio | unreviewed | |
+| soap | bar of soap | saponetta | unreviewed | |
+| sponge | sponge | spugna | unreviewed | |
+| cereal_box | cereal box | cereali | unreviewed | |
+| lunchbox | lunchbox | portamerenda | unreviewed | |
+| support_tool | toy tool | attrezzo giocattolo | unreviewed | |
 
 ### Household names: Português (`pt`)
 
-_No names yet in this language._
+| Item | English | Name | Review | OK? |
+|---|---|---|---|---|
+| ball | ball | bola | unreviewed | |
+| mug | mug | caneca | unreviewed | |
+| water_bottle | water bottle | garrafinha | unreviewed | |
+| flask | flask | termo | unreviewed | |
+| drinking_glass | drinking glass | copo | unreviewed | |
+| jam_jar | jam jar | pote | unreviewed | |
+| soda_can | soda can | lata | unreviewed | |
+| cookie_tin | cookie tin | lata de biscoitos | unreviewed | |
+| bowl | bowl | tigela | unreviewed | |
+| plate | plate | prato | unreviewed | |
+| bucket | bucket | balde | unreviewed | |
+| watering_can | watering can | regador | unreviewed | |
+| potted_plant | potted plant | planta | unreviewed | |
+| spinning_top | spinning top | pião | unreviewed | |
+| yo_yo | yo-yo | ioiô | unreviewed | |
+| flying_disc | flying disc | disco voador | unreviewed | |
+| marble | marble | bolinha de gude | unreviewed | |
+| apple | apple | maçã | unreviewed | |
+| orange | orange | laranja | unreviewed | |
+| lemon | lemon | limão | unreviewed | |
+| banana | banana | banana | unreviewed | |
+| carrot | carrot | cenoura | unreviewed | |
+| avocado | avocado | abacate | unreviewed | |
+| wooden_spoon | wooden spoon | colher de pau | unreviewed | |
+| fork | fork | garfo | unreviewed | |
+| key | key | chave | unreviewed | |
+| comb | comb | pente | unreviewed | |
+| hairbrush | hairbrush | escova de cabelo | unreviewed | |
+| toothbrush | toothbrush | escova de dente | unreviewed | |
+| paintbrush | paintbrush | pincel | unreviewed | |
+| pencil | pencil | lápis | unreviewed | |
+| marker | marker | canetinha | unreviewed | |
+| crayon | crayon | giz de cera | unreviewed | |
+| eraser | eraser | borracha | unreviewed | |
+| ruler | ruler | régua | unreviewed | |
+| scissors | scissors | tesoura | unreviewed | |
+| glue_stick | glue stick | cola | unreviewed | |
+| stapler | stapler | grampeador | unreviewed | |
+| tape_dispenser | tape dispenser | fita adesiva | unreviewed | |
+| dice | dice | dados | unreviewed | |
+| toy_brick | toy brick | bloquinho | unreviewed | |
+| bubble_wand | bubble wand | varinha de bolhas | unreviewed | |
+| toy_sword | toy sword | espada | unreviewed | |
+| hammer | hammer | martelo | unreviewed | |
+| screwdriver | screwdriver | chave de fenda | unreviewed | |
+| pliers | pliers | alicate | unreviewed | |
+| flashlight | flashlight | lanterna | unreviewed | |
+| tape_measure | tape measure | trena | unreviewed | |
+| alarm_clock | alarm clock | despertador | unreviewed | |
+| desk_lamp | desk lamp | abajur | unreviewed | |
+| board_game | board game | jogo de tabuleiro | unreviewed | |
+| jigsaw | jigsaw piece | quebra-cabeça | unreviewed | |
+| notebook | notebook | caderno | unreviewed | |
+| book | book | livro | unreviewed | |
+| playing_cards | playing cards | cartas | unreviewed | |
+| pencil_case | pencil case | estojo | unreviewed | |
+| soap | bar of soap | sabonete | unreviewed | |
+| sponge | sponge | esponja | unreviewed | |
+| cereal_box | cereal box | cereal | unreviewed | |
+| lunchbox | lunchbox | lancheira | unreviewed | |
+| support_tool | toy tool | ferramenta de brinquedo | unreviewed | |
 
 ### Household names: Türkçe (`tr`)
 
-_No names yet in this language._
+| Item | English | Name | Review | OK? |
+|---|---|---|---|---|
+| ball | ball | top | unreviewed | |
+| mug | mug | kupa | unreviewed | |
+| water_bottle | water bottle | şişe | unreviewed | |
+| flask | flask | termos | unreviewed | |
+| drinking_glass | drinking glass | bardak | unreviewed | |
+| jam_jar | jam jar | kavanoz | unreviewed | |
+| soda_can | soda can | içecek kutusu | unreviewed | |
+| cookie_tin | cookie tin | bisküvi kutusu | unreviewed | |
+| bowl | bowl | kase | unreviewed | |
+| plate | plate | tabak | unreviewed | |
+| bucket | bucket | kova | unreviewed | |
+| watering_can | watering can | sulama kabı | unreviewed | |
+| potted_plant | potted plant | çiçek | unreviewed | |
+| spinning_top | spinning top | topaç | unreviewed | |
+| yo_yo | yo-yo | yoyo | unreviewed | |
+| flying_disc | flying disc | uçan disk | unreviewed | |
+| marble | marble | misket | unreviewed | |
+| apple | apple | elma | unreviewed | |
+| orange | orange | portakal | unreviewed | |
+| lemon | lemon | limon | unreviewed | |
+| banana | banana | muz | unreviewed | |
+| carrot | carrot | havuç | unreviewed | |
+| avocado | avocado | avokado | unreviewed | |
+| wooden_spoon | wooden spoon | tahta kaşık | unreviewed | |
+| fork | fork | çatal | unreviewed | |
+| key | key | anahtar | unreviewed | |
+| comb | comb | tarak | unreviewed | |
+| hairbrush | hairbrush | saç fırçası | unreviewed | |
+| toothbrush | toothbrush | diş fırçası | unreviewed | |
+| paintbrush | paintbrush | fırça | unreviewed | |
+| pencil | pencil | kurşun kalem | unreviewed | |
+| marker | marker | keçeli kalem | unreviewed | |
+| crayon | crayon | pastel boya | unreviewed | |
+| eraser | eraser | silgi | unreviewed | |
+| ruler | ruler | cetvel | unreviewed | |
+| scissors | scissors | makas | unreviewed | |
+| glue_stick | glue stick | yapıştırıcı | unreviewed | |
+| stapler | stapler | zımba | unreviewed | |
+| tape_dispenser | tape dispenser | bant | unreviewed | |
+| dice | dice | zarlar | unreviewed | |
+| toy_brick | toy brick | blok | unreviewed | |
+| bubble_wand | bubble wand | baloncuk çubuğu | unreviewed | |
+| toy_sword | toy sword | kılıç | unreviewed | |
+| hammer | hammer | çekiç | unreviewed | |
+| screwdriver | screwdriver | tornavida | unreviewed | |
+| pliers | pliers | pense | unreviewed | |
+| flashlight | flashlight | el feneri | unreviewed | |
+| tape_measure | tape measure | mezura | unreviewed | |
+| alarm_clock | alarm clock | çalar saat | unreviewed | |
+| desk_lamp | desk lamp | lamba | unreviewed | |
+| board_game | board game | kutu oyunu | unreviewed | |
+| jigsaw | jigsaw piece | yapboz | unreviewed | |
+| notebook | notebook | defter | unreviewed | |
+| book | book | kitap | unreviewed | |
+| playing_cards | playing cards | oyun kartları | unreviewed | |
+| pencil_case | pencil case | kalemlik | unreviewed | |
+| soap | bar of soap | sabun | unreviewed | |
+| sponge | sponge | sünger | unreviewed | |
+| cereal_box | cereal box | mısır gevreği | unreviewed | |
+| lunchbox | lunchbox | beslenme çantası | unreviewed | |
+| support_tool | toy tool | oyuncak alet | unreviewed | |
 
