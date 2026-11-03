@@ -1,4 +1,4 @@
-# Dance party: headphones, Mixamo dances, AI songs and a kitchen and clean-up exercise: spec (draft 1, 2026-11-03; nothing built)
+# Dance party: headphones, Mixamo dances, AI songs and a kitchen and clean-up exercise: spec (draft 2, 2026-11-03; decisions made, nothing built)
 
 Dan (2026-11-03): "we also want headphones that connect to the ear sockets of Kip's, and Mixamo animation and music 'dance' party using murkesa to
 create songs; spec this plus a game exercise using the cooking and cleaning props we just created".
@@ -7,27 +7,30 @@ This spec covers four things that meet in one place, the **party**: (1) a printa
 (3) songs made with an AI music service, and (4) a game exercise built on the spatula, frying pan, mop, broom, scrub brush and vacuums. It is a plan,
 not a build: every fact is marked as **verified in the repo**, **from a third-party page**, or **not checked**.
 
-## My readings (Dan to confirm, section "Decisions")
+## Facts that shaped the plan
 
 - **"Ear sockets of Kips" do not exist today.** Every head has crown studs (`top_studs`), a socket underside (`under_sockets`) and, for the four human
-  heads, a face slot. There is no side bore or ear socket on any of the 12 heads. `pointy_ears` is a *crown* add-on in the hat slot. I read the request
-  as "headphones that plug into Kip's head the way ears and hats do", and offer two ways to do it (section 2).
-- **"murkesa" = Mureka**, the AI song generator. The Muse key lists no music model (`muse-image`, `muse-spark`, `muse-wonder`, `sam`,
-  `muse-voice-transcribe`), so Muse cannot make songs. Nothing in the repo mentions Mureka yet.
-- **"Game exercise"** = a learning-and-play activity in the existing `daily` ladder (Help cook, Clean up after meals), with a movement break that
-  links it back to the party. If you meant physical exercise only, say so; section 5 still holds.
+  heads, a face slot. There is no side bore or ear socket on any of the 12 heads. `pointy_ears` is a *crown* add-on in the hat slot.
+- **The song service is Mureka** (D1). The Muse key lists no music model (`muse-image`, `muse-spark`, `muse-wonder`, `sam`, `muse-voice-transcribe`), so Muse cannot
+  make songs. Nothing in the repo used Mureka before this spec.
+- **"Exercise" means both** a learning-and-play session and a movement break (D6): section 5.
 
-## Decisions (proposed, each needs Dan)
+## Decisions (Dan, 2026-11-03)
 
-| # | Question | My recommendation |
+| # | Question | Decision |
 | --- | --- | --- |
-| D1 | Is "murkesa" Mureka? | Yes; confirm. |
-| D2 | How do headphones attach? | **A: crown band** now (no head changes). **B: real ear sockets** (side bores on the heads) only later, if you want cups that coexist with hats and wigs. |
-| D3 | Songs: generate live per child, or ship a library? | **Pre-generated starter library (instrumental, about 12 songs)** plus an optional, parent-gated "make a new song". Live generation is phase 4, not the demo. |
-| D4 | Who owns the Mureka account, key and budget? | You: one account, key held only in the Worker, a hard monthly cap. |
-| D5 | Which Mixamo dances? | You pick 6 to 8 from Mixamo's dance list with your Adobe login (I cannot download); criteria in section 3. |
-| D6 | Where does the party live first? | The **Kip bench** (no game plumbing), then the game after the real-phone pass. |
-| D7 | New play primitives for the exercise (`scrub`, `flick`)? | Yes, two, owned by `play-design-spec.md` (section 5.4). |
+| D1 | Is "murkesa" Mureka? | **Yes, Mureka.** |
+| D2 | How do headphones attach? | Dan asked what I suggest. **Working decision: A, the crown band** (reasons below). Option B (real ear sockets) stays out of scope until a part has been printed once. Dan can still veto. |
+| D3 | Generate live per child, or ship a library? | **Both.** A pre-made starter library (always available, works offline) **and** a live song maker. The library comes first (phase 3) because it needs no Worker; the live maker follows (phase 4). |
+| D4 | Who owns the Mureka account, key and budget? | **We do** (Dan's account, one key held only in the Worker, a hard monthly cap). **Each user gets 5 new songs a week** (rules in 4.6). |
+| D5 | Which Mixamo dances? | Dan: "research and decide, 3 to 5". **My pick: 4, plus 2 reserves** (section 3.1a). |
+| D6 | Where does the exercise sit? | **Both** the learning session and the movement break, in scope (5.2, 5.3). |
+| D7 | New play primitives for the exercise? | **Approved:** `scrub` and `flick`, now listed in `play-design-spec.md` (5.4). |
+
+**Why A for the headphones.** (1) It changes no verified part; option B changes all 12 heads, every wig vault and hat cavity, and the seating matrix, before one head has
+been printed (the calibration prints are still being scored). (2) The digital version, which is most of the value in the game, ships either way. (3) The one real
+risk, the print route for the arch, is cheap to spike on a single part. (4) A does not block B later. **Cost of A:** headphones replace the hat in the crown slot,
+and they need a wig-clearance check; if a hairstyle fails it, headphones are offered with bald heads and the Hat-Ready wigs only.
 
 ## 1. What exists today (verified in the repo, 2026-11-03)
 
@@ -53,7 +56,7 @@ a small pad on the crown studs like `pointy_ears`. Catalog row: `family: addon`,
 tags `headphones, head, character, kip`, behaviour "Cups glow to the beat" (the same idea as the ears' "twitches when a sound plays"). It takes the
 crown slot, so it is an alternative to a hat, horns or ears, like they are to each other.
 
-### 2.2 Option A (recommended): crown band, no head change
+### 2.2 Option A (chosen, D2): crown band, no head change
 
 - The pad fits the crown `top_studs`; the band hugs the head and the cups sit at ear height. Size from the measured heads: human cups at x = +-(19 to 20 mm)
   plus 0.4 mm clearance (the hat clearance), animal heads need a wider pair (48 mm wide). So **two sizes**: human (kid, chibi, tall, jumbo within 1.8 mm of
@@ -86,15 +89,36 @@ Worth it only if cups-without-a-band is a product wish. If it is, do it as its o
 
 ### 3.1 Intake (Dan downloads; I retarget and gate)
 
-1. Dan signs in at mixamo.com and downloads **6 to 8 dance clips** as FBX or glTF "without skin", 30 fps, **in place** where the option exists. I cannot sign in.
+1. Dan signs in at mixamo.com and downloads the **4 picks** in 3.1a (and a reserve only if one fails the gate) as FBX or glTF "without skin", 30 fps, **in place** where the option exists. I cannot sign in.
 2. Selection criteria, so the picks work on a 14-joint rig:
    - loops cleanly in 4 or 8 beats, stays in place, stays on its feet (no floor work, spins on the head or hands, flips: the grounder keeps the lowest foot on
      the floor and a floor move will read as a squat);
    - arms and hips carry the dance (there is no spine and no fingers, so a move that is all torso twist or finger work is lost);
    - kid-appropriate: no suggestive moves, nothing that needs a prop or a partner;
    - a mix of tempos (slow sway, medium bounce, fast) so a song can pick the nearest.
-3. Keep the one we have (Samba) and the three procedural dances, so the party has 10 to 12 dances.
+3. Keep the one we have (Samba) and the three procedural dances, so the party has 8 dances (up to 10 with the reserves).
 4. Each new file gets a `THIRD_PARTY.md` entry and is kept **out of every AI training set**.
+
+### 3.1a The picks (D5)
+
+How I chose: Mixamo needs a login, so I could not browse it. The names below come from a third-party game-asset sheet that lists Mixamo dance clips (HipHopDance, SwingDance,
+LockingHipHop, HouseDance, RobotiHipHop, WaveHipHop, HeadSpin), community threads, and **my own recollection of Mixamo's Dance category, which the search did not
+confirm for "Silly Dancing", "Chicken Dance" and "Twist Dance"**. Dan checks each is in the list when downloading, and downloads the reserves only if a pick fails the gate.
+
+| # | Pick | Why it suits Kip | Tempo role | Name seen in |
+| --- | --- | --- | --- | --- |
+| 1 | **Hip Hop Dancing** | arm and hip groove, loops in 4 beats, nothing on the floor | medium, about 100 bpm | third-party sheet ("HipHopDance") and a conversion thread |
+| 2 | **Swing Dancing** (the solo version, if there are two) | big arm and hip swing, joyful, upbeat | fast, about 125 bpm | third-party sheet ("SwingDance") |
+| 3 | **Locking Hip Hop** | arm-led (points, claps, snaps) so it survives having no fingers or spine; small footprint | fast and sharp | third-party sheet ("LockingHipHop") |
+| 4 | **Silly Dancing** | loose, comic, big arms: the one a 3-year-old copies | slow to medium, about 85 bpm | my recollection, not confirmed |
+| R1 | Chicken Dance (reserve) | arm-led, easy to copy | medium | my recollection, not confirmed |
+| R2 | Twist Dance (reserve) | hip-led, simple | medium | my recollection, not confirmed |
+
+Rejected, with the reason: **House Dance 1 and 2** (fast footwork: the feet slide and the leg solver cannot hold a stepping dance), **Head Spin and breakdance moves** (floor work, the
+grounder reads it as a squat), **Wave Hip Hop** (a body wave needs a spine), **Robot Hip Hop** (`dance_robot` already exists), and any clip tied to one specific song (a Macarena-,
+Gangnam- or Thriller-style clip, if present) for song-rights reasons.
+
+With Samba and the three procedural dances the party has **8 dances** (up to 10 with the reserves), in three tempo roles (about 85, 100 and 125 bpm), which are also the three song tempo cards.
 
 ### 3.2 Quality gate (the same discipline as the prop clips)
 
@@ -155,8 +179,8 @@ Kip bench / game  --(mood, tempo, instruments)-->  Worker /api/song  --(validate
   monthly budget cap that **fails closed** (the party then offers only the library), the parent gate (`parent.ts`) in front of anything that spends.
 - **Storage:** the starter library ships as static files in `public/` (no infrastructure). Live songs need an **R2 bucket** (a new binding in `wrangler.jsonc`)
   or a D1 blob if songs are short and small: a decision when phase 4 starts. Not needed for the demo.
-- **Moderation:** a song is held until a grown-up approves it the first time (parent sheet "New songs"), then it joins the family's library. Starter songs
-  are listened to by Dan before shipping.
+- **Moderation:** an **instrumental** song made from the closed cards plays at once (a child should not wait for a grown-up), and appears in the parent sheet "New songs", where a
+  grown-up can remove it and get its weekly note back (4.6). **Vocals, if they ever ship, are held until a grown-up approves them.** Starter songs are listened to by Dan before shipping.
 - **Offline and failure:** if Mureka is down or capped, the party plays the library, and the existing procedural engine (`audio.ts`) can still make
   a backing loop with no network at all.
 
@@ -171,6 +195,23 @@ tempo, keep the measured one. Playback uses `AudioContext.currentTime` as the cl
 The party sets its own gain below the game's other sounds, with a parent-set ceiling in the grown-up sheet, a quiet-hours rule, and "volume stays with
 the device". The numeric ceiling should come from a current children's listening-safety reference, which I have not checked: **open item**.
 
+### 4.6 Weekly quota and budget (D4: 5 new songs a week per user)
+
+- **Who is a "user".** The Worker already identifies a player by an anonymous **device UUID** (`x-device-id`, `worker/ownership.ts`: "real accounts map onto the same id"). Until there are
+  per-child profiles, a user is that id; when profiles exist the quota follows the profile. A cleared device id would reset a quota, so the quota is **not the only guard**: the global
+  monthly budget cap below is, and it fails closed.
+- **What counts.** One new song = one successful generation that was stored. It does **not** count: a failed, timed-out or capped attempt; replaying any song; the starter library; a song a grown-up
+  removes in "New songs" (refunded). Asking again for the same mood counts as a new song (no seed, so it is a different song).
+- **The week.** Monday 00:00 to Sunday 24:00 in the family's timezone, using the parent-time day keys (`localDay` with the settings timezone, as the time gate does; the weekend logic in
+  `garage.ts` already builds on `dayOfWeek`). No rollover (a decision to confirm, 8). A child sees **5 music-note pips** ("new notes on Monday"); at 0 the card offers the library.
+- **Mechanics.** A D1 row `song_quota(device_id, week_key, used)`. A request first **reserves** a slot with an idempotency key (so a retry never double-spends), calls Mureka, then commits or
+  refunds. The reservation and the global spend counter share one transaction.
+- **Budget.** Cost per active user per month at full use is about 5 x 52 / 12 = **21.7 songs**. If a subscription listed at 1,600 songs a month (a third-party figure, **not** confirmed for the API) applied,
+  it would cover about 74 users at full use; the real number is the API price per song, which Dan reads from the account. The Worker holds `SONG_MONTHLY_BUDGET`; when it is spent, live songs
+  stop and the party plays the library (fail closed), and a grown-up sees "the song maker is resting".
+- **Grown-up controls.** The live song maker needs a one-time grown-up enable behind the parent gate (an AI feature for a child); the weekly limit can be lowered (0 to 5) but not raised above 5;
+  the library is always on.
+
 ## 5. The party, and the kitchen and clean-up exercise
 
 ### 5.1 Party mode (Kip bench first)
@@ -180,11 +221,15 @@ beat. Beat play by age band (`src/lib/age.ts`; band 0 = ages 2 to 3 up to band 5
 4-step pattern; bands 4 and 5 compose an 8-step loop. It earns XP as rhythm and pattern work (counting beats, repeating patterns); how many STEM minutes is for
 `xp-system-spec.md` to decide.
 
-### 5.2 Kitchen band and clean-up groove (the bridge to the props)
+### 5.2 Kitchen band, clean-up groove and the movement break (in scope, D6)
 
-No new CAD: the pan is a drum and the spatula its stick (tap the pan on the beat, a drum sample plays), the guitar, trumpet and maracas are already props,
-and the broom and mop *dance*: their clips are time-scaled to the bar and the sweep lands on the beat. One extra move, "clean-up groove", is the broom
-or mop clip at the song's tempo for one bar, repeated.
+**Kitchen band and clean-up groove.** No new CAD: the pan is a drum and the spatula its stick (tap the pan on the beat, a drum sample plays); the guitar, trumpet and maracas are already props;
+and the broom and mop *dance*: their clips are time-scaled to the bar and the sweep lands on the beat. "Clean-up groove" is the broom or mop clip at the song's tempo for one bar, repeated.
+
+**Movement break (D6, "both").** At the end of a Help cook or Clean up session, or on a grown-up's tap, a 30 to 60 second song plays and Kip dances or does the clean-up groove; the child
+is invited to **stand up and copy Kip**. It is a prompt, not a measurement: **no camera, no motion sensing, nothing scored from movement** (the rule the real-life routines already follow). Band 0 and 1: Kip
+does one simple move (arms up, stomp, spin) and counts the beats aloud. Band 2 and 3: copy a 4-move sequence. Band 4 and 5: copy, then choose the next move. A grown-up can switch it off, and it never replaces the
+parent's own time limits. Whether a movement break earns STEM minutes is for `xp-system-spec.md` (open question 5).
 
 ### 5.3 The exercise: Help cook and Clean up (two linked sessions in the `daily` ladder)
 
@@ -217,7 +262,7 @@ By band (the ladders' ages): **band 0 to 1** one mess, one tool, errorless (tap 
 messes, pick the tool, wrong tools explain themselves. **Band 4 to 5** a whole kitchen: order the jobs, a soap and water ratio, and a recipe that scales
 ("this makes 4 pancakes; make 8"): the ratio and sequencing the older rungs teach.
 
-### 5.4 New primitives (proposal for `play-design-spec.md`)
+### 5.4 New primitives (approved, D7; listed in `play-design-spec.md`)
 
 The primitive catalog is closed, and no existing primitive rubs along a path or times a flick. Two additions, each with the contract every primitive has
 (variables, band limits, errorless modifier, solver):
@@ -238,12 +283,12 @@ Order is chosen so each step is useful alone and each can be stopped.
 
 | Phase | Work | Gate before the next |
 | --- | --- | --- |
-| **0 Decisions and spikes** (about a day) | D1 to D7. Dan checks Mureka's terms and makes one test song. Dan downloads the dances. Spike: **a prop in the game's hand** (load the Kip rig in the game, mount a prop through the same grip node, play `makeKipClip`): answers whether the game rig has the 14 joints. Spike: the headphone print route (section 2.2) on one part. | Mureka allows a children's app and stored songs; the print route passes one gate run; the game spike works or the exercise stays in the Kip bench. |
+| **0 Decisions and spikes** (about a day) | Decisions are made. Dan checks Mureka's terms on his account and makes one test song (and reads the API price per song). Dan downloads the dances. Spike: **a prop in the game's hand** (load the Kip rig in the game, mount a prop through the same grip node, play `makeKipClip`): answers whether the game rig has the 14 joints. Spike: the headphone print route (section 2.2) on one part. | Mureka allows a children's app and stored songs; the print route passes one gate run; the game spike works or the exercise stays in the Kip bench. |
 | **1 Headphones** | Catalog row and part (option A), viewer slot, glow hook, print BOM, regeneration through the landing checklist (one batch), selftest, Orca slice. | Part gate verified; Orca 0 supports; head x wig matrix passes; menu and print e2e. |
-| **2 Mixamo dances** | Intake 6 to 8 clips, retarget, the section 3.2 gate, `THIRD_PARTY.md`, contact sheets, menu entries. | Every shipped dance passes the gate; Samba and the three procedural dances still pass `tests/kip-clips.test.ts`. |
+| **2 Mixamo dances** | Intake the 4 picks (and a reserve if one fails), retarget, the section 3.2 gate, `THIRD_PARTY.md`, contact sheets, menu entries. | Every shipped dance passes the gate; Samba and the three procedural dances still pass `tests/kip-clips.test.ts`. |
 | **3 Songs and the party in the Kip bench** | Starter library (about 12 instrumental songs made once, listened to, beat-mapped), beat clock, tempo-scaled dances, cup glow, party panel, age-band beat play. No Worker needed. | Beat error: a tap within 80 ms of a beat counts, measured on a real song; the dance does not drift against the clock over 60 s. |
 | **4 Live song maker** | `worker/song.ts`, caps, parent gate, moderation queue, storage decision, "new song" card. | Cost per song known and capped; a failed or capped call falls back to the library; a moderation pass by a grown-up exists. |
-| **5 The exercise in the game** | Game prop-in-hand (generalise `resolveCharacterPropUrl` to a data table: Kip prop id to STL, `flip`, `mat` and clip, read from the wardrobe rows so the viewer and the game cannot drift), the cook and clean sessions, the two primitives or their plain forms. | Every prop the sessions use renders in the game's hand with its clip; the sessions are completable by the "random toddler" robot (`play-design-spec.md`). |
+| **5 The exercise in the game** | Game prop-in-hand (generalise `resolveCharacterPropUrl` to a data table: Kip prop id to STL, `flip`, `mat` and clip, read from the wardrobe rows so the viewer and the game cannot drift), the cook and clean sessions, the movement break, the two primitives or their plain forms. | Every prop the sessions use renders in the game's hand with its clip; the sessions are completable by the "random toddler" robot (`play-design-spec.md`). |
 | **6 Carousel and map** | A party entry in the carousel and a map stop, parent controls, the Garage-style weekend variant if wanted. | After the real-phone pass (C4 is waiting on it). |
 
 Tests that should exist before each phase lands: part-gate and fit-matrix runs (phase 1), per-clip metrics and contact sheets (phase 2), a beat-clock unit test and an
@@ -262,14 +307,16 @@ each prop and plays its clip (phase 5). Mutation-check the new tests once each, 
 | Game rig differs from the Kip rig | Phase 5 grows | The phase 0 spike decides before anything is promised |
 | Mixamo licence reading | Legal | Recheck Adobe's current terms before shipping; keep clips out of training data |
 
-## 8. Open questions
+## 8. Open questions (what is still open after D1 to D7)
 
-1. Is "murkesa" Mureka, and can Dan confirm the terms and the price (D1, D4)?
-2. Option A or B for the headphones (D2)? One size or two?
-3. Which dances (D5)? Is the Macarena-style "named dance" off the table to avoid song rights? (I would avoid dance names tied to a specific song.)
-4. Does "exercise" mean the learning session, a movement break, or both (D6)?
-5. Should songs be shared between a family's Kips, or per child?
-6. Do we want vocals at all, ever, for a young audience?
+1. **Mureka's terms and API price** (Dan, on his account): does the licence allow a children's app, and storing and serving generated songs inside it? Price per song, clip length, instrumental mode, tempo control. Any "no" changes section 4.
+2. **Mixamo availability:** are Hip Hop Dancing, Swing Dancing, Locking Hip Hop and Silly Dancing in the Dance list today (and the two reserves)?
+3. **One size or two** for the headphones (human and animal heads)? The spike measures bear, dragon, alien and imp, which I have not.
+4. **Quota rollover:** none (my proposal), or unused songs carry over up to a cap? And does a family with several children on one device get one quota or one each (needs per-child profiles)?
+5. **Do movement breaks earn STEM minutes**, or only the learning session (`xp-system-spec.md`)?
+6. **Live song maker default:** off until a grown-up enables it (my proposal), or on with a notice?
+7. **Vocals:** ever, for a young audience? (Not in this plan.)
+8. **Safe-listening ceiling:** the numeric limit for the party's gain, from a current children's reference I have not checked.
 
 ## 9. Verified and not
 

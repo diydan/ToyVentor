@@ -108,6 +108,17 @@ Twelve primitives cover every interaction we've built. Each one is a tested piec
 | program | Arranges instructions | instruction set, slot limit, repeat and if allowed, track generator, text mode | the run reaches the goal on all test tracks | Code track |
 | real | Does a task in real life | steps, timers, how it's confirmed (grown-up tap or voice), the reward | every step confirmed | Daily life, Bedtime |
 
+**Two more are approved and not built** (Dan, 2026-11-03, for the Help cook and Clean up exercise in [`dance-party-spec.md`](dance-party-spec.md) section 5.4). Until they exist, the same sessions use `carry`
+(drag the mess to the bin) and `toggle` (flip the pancake), so nothing waits on them.
+
+| Primitive | The child | Key variables | Success rules it supports | Planned examples |
+| --- | --- | --- | --- | --- |
+| scrub | Drags a finger along a mess to clear it; Kip plays the held tool's clip while the finger moves | mess shape (blob, line, scatter), the tool needed (vacuum, mop, brush, broom), coverage to clear, rate limits by band, what a wrong tool says (the `CWHY` lines) | the mess is cleared with the right tool | Clean up after meals, Help cook (wipe the counter) |
+| flick | Swipes or taps inside a timing window | window length by band, direction, tries, the window widens after misses and never fails a band 0 or 1 child | N successes inside the window | Flip the pancake |
+
+Both follow the same contract as the rest: a parameter schema with band limits, world bindings, the events `touched`, `progress`, `wrong`, `done`, a solver and a "random toddler" player, and accessibility actions.
+`scrub` has a switch-control form (a "clean it" action that plays the clip once); `flick` has a button form.
+
 Three modifiers apply to any primitive: voice (answer out loud instead of touching), errorless (wiggle hint, then help after N misses), and observe (watch a demonstration before trying).
 
 What every primitive provides:
