@@ -303,6 +303,9 @@ const AXIS_Y = new THREE.Vector3(0, 1, 0);
 const AXIS_X = new THREE.Vector3(1, 0, 0);
 
 const ACTION_FADE = 0.28;
+/** The in-game dance party: the dance eases in over half a second and out over 0.4 s. */
+const BEAT_FADE_IN = 0.5;
+const BEAT_FADE_OUT = 0.4;
 /** A held pose (sleep) eases in slowly and wakes a little faster. */
 const HOLD_FADE_IN = 0.8;
 const HOLD_FADE_OUT = 0.6;
@@ -340,6 +343,8 @@ export class MixamoDriver {
   private action: { clip: BakedClip; t: number } | null = null;
   /** A pose that stays until releaseHold(): w eases 0 to 1 while it is held and back to 0 while it is leaving. */
   private held: { clip: BakedClip; t: number; w: number; leaving: boolean } | null = null;
+  /** A dance locked to a SONG clock (the dance party): sampled at whatever time `time()` answers each frame, not at a clock of its own, so it cannot drift from the sound. */
+  private beat: { clip: BakedClip; time: () => number; w: number; leaving: boolean } | null = null;
   private readonly p = newPose();
   private readonly a = newPose();
   private readonly q = new THREE.Quaternion();
@@ -362,7 +367,24 @@ export class MixamoDriver {
     return true;
   }
 
-  get busyAction(): string | null { return this.action ? this.action.clip.name : null; }
+  /** The name of the gesture or beat dance in progress. A beat dance reports itself as its clip (`dance`), so the camera push and the face-the-camera turn that a celebration gets apply to a party too. */
+  get busyAction(): string | null { return this.beat && !this.beat.leaving ? this.beat.clip.name : this.action ? this.action.clip.name : null; }
+
+  /**
+   * Start a dance that follows a song's clock: every frame the clip is sampled at `time()` seconds (looped by the clip), eased in over half a second. A one-shot in progress is
+   * replaced. Walking pulls the toy out of it (the song goes on). Returns false if the clip is not in the bank or is a one-frame pose.
+   */
+  startBeatDance(name: MixAction, time: () => number): boolean {
+    const clip = this.bank[name];
+    if (!clip || clip.pose) return false;
+    this.beat = { clip, time, w: this.beat && !this.beat.leaving ? this.beat.w : 0, leaving: false };
+    this.action = null;
+    return true;
+  }
+  /** Ease the beat dance out; the rig is back to idle when it has gone. Safe to call when none is on. */
+  stopBeatDance(): void { if (this.beat) this.beat.leaving = true; }
+  /** True while a beat dance is on (and not being eased out). */
+  get beatDancing(): boolean { return !!this.beat && !this.beat.leaving; }
 
   /**
    * Take a pose and keep it (looping) until releaseHold(): the toy lies down and sleeps until it is woken. Eases in, replaces any one-shot, and (unlike
@@ -426,6 +448,14 @@ export class MixamoDriver {
       mixPose(p, this.a, smooth(0, 1, h.w));
       if (h.leaving && h.w <= 0) this.held = null;
     }
+    const bd = this.beat;
+    if (bd) {
+      bd.w = Math.max(0, Math.min(1, bd.w + (bd.leaving ? -dt / BEAT_FADE_OUT : dt / BEAT_FADE_IN)));
+      const bt = bd.time();
+      sampleClip(bd.clip, Number.isFinite(bt) ? bt : 0, this.a);
+      mixPose(p, this.a, smooth(0, 1, bd.w) * (1 - smooth(0.4, 1.2, speed)));
+      if (bd.leaving && bd.w <= 0) this.beat = null;
+    }
     this.apply(j, p);
   }
 
@@ -439,6 +469,7 @@ export class MixamoDriver {
     j.arms?.forEach((o) => o.quaternion.identity());
     j.hips?.forEach((o) => o.quaternion.identity());
     this.held = null;
+    this.beat = null;
     this.j = null;
     this.rig = null;
   }

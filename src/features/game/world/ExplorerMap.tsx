@@ -61,6 +61,8 @@ export interface ExplorerMapProps {
   onGoFrontier: (node: ExplorerNode) => boolean;
   /** Open the Garage sheet. */
   onOpenGarage?: () => void;
+  /** Open the Songs sheet. */
+  onOpenSongs?: () => void;
   onStartLearn?: (track: string, plan: number[]) => void;
   planForRung?: (track: string, rung: number) => number[];
 }
@@ -153,6 +155,7 @@ export function ExplorerMap({
   onSeen,
   onClose,
   onShowCards,
+  onOpenSongs,
   onAskAge,
   onGoWorld,
   onGoFrontier,
@@ -581,6 +584,11 @@ export function ExplorerMap({
           <b className="tv-sh-title tv-trail-plate-title">{info.title}</b>
         </div>
         <div className="tv-trail-hud-btns">
+          {onOpenSongs ? (
+            <button type="button" className="tv-ctl tv-trail-ctl tv-map-songs" onClick={onOpenSongs}>
+              🎵 Songs
+            </button>
+          ) : null}
           <button type="button" className="tv-ctl tv-trail-ctl" onClick={onShowCards}>
             Cards
           </button>

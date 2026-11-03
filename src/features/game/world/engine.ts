@@ -801,6 +801,11 @@ export interface EngineHandle {
   buildSummary: () => BuildSummary | null;
   /** Open these parts to try (the Garage's loaner); any `known` loaner not in `active` and still worn goes back. */
   setLoanKeys: (active: string[], known: string[]) => void;
+  /** The dance party: start the character's dance on a song's clock (`time()` is the clip time in seconds, read every frame). False when it cannot dance (reduced motion, no rig). */
+  partyDanceStart: (time: () => number) => boolean;
+  partyDanceStop: () => void;
+  /** Fade the world's own music out (true) and back (false) while a song plays. */
+  partyMusicDuck: (on: boolean) => void;
   /** Signature of the toy's current outfit once its parts have finished loading; null until then. */
   portraitSig: () => string | null;
   /** A small picture of the toy as it is dressed now (the Map's character token). Null when it cannot be taken. */
@@ -922,6 +927,9 @@ interface LegacyHooks {
   playSeed?: (code?: string, theme?: string, opts?: SeedOptions) => string | null;
   buildSummary?: () => BuildSummary;
   setLoanKeys?: (active: string[], known: string[]) => void;
+  partyDanceStart?: (time: () => number) => boolean;
+  partyDanceStop?: () => void;
+  partyMusicDuck?: (on: boolean) => void;
   portraitSig?: () => string | null;
   capturePortrait?: (size: number) => ToyPortrait | null;
   worldName?: (id: string) => string;
@@ -1350,6 +1358,13 @@ export function createEngine(
     buildSummary: () => (disposed ? null : (hooks()?.buildSummary?.() ?? null)),
     setLoanKeys: (active, known) => {
       if (!disposed) hooks()?.setLoanKeys?.(active, known);
+    },
+    partyDanceStart: (time) => (disposed ? false : (hooks()?.partyDanceStart?.(time) ?? false)),
+    partyDanceStop: () => {
+      if (!disposed) hooks()?.partyDanceStop?.();
+    },
+    partyMusicDuck: (on) => {
+      if (!disposed) hooks()?.partyMusicDuck?.(on);
     },
     portraitSig: () => (disposed ? null : (hooks()?.portraitSig?.() ?? null)),
     capturePortrait: (size = PORTRAIT_PX) =>

@@ -36,6 +36,8 @@ export interface MapCarouselProps {
   onShowExplorer?: () => void;
   /** Open the Garage sheet (the always-open build place with the weekend drop). */
   onOpenGarage?: () => void;
+  /** Open the Songs sheet (make a song from an idea, dance to the songs already made). */
+  onOpenSongs?: () => void;
 }
 
 const cardLabel = (card: MapCard): string =>
@@ -62,6 +64,7 @@ export function MapCarousel({
   planForRung,
   onShowExplorer,
   onOpenGarage,
+  onOpenSongs,
 }: MapCarouselProps) {
   const trackRef = useRef<HTMLOListElement>(null);
   const [rungsOf, setRungsOf] = useState<LadderState | null>(null);
@@ -163,6 +166,11 @@ export function MapCarousel({
           <span className="kicker-label kicker-gold">Places to play</span>
           <b className="tv-sh-title">Map</b>
         </div>
+        {onOpenSongs ? (
+          <button type="button" className="tv-ctl tv-map-songs" onClick={onOpenSongs}>
+            🎵 Songs
+          </button>
+        ) : null}
         {onShowExplorer ? (
           <button type="button" className="tv-ctl" onClick={onShowExplorer}>
             Trail map

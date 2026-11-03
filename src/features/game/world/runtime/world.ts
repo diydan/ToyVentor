@@ -262,6 +262,11 @@ export interface WorldRuntimeHandle {
   buildSummary?: () => BuildSummary;
   /** Open these parts to try (the Garage's loaner). Any `known` loaner not in `active`, still worn and not found, is handed back. */
   setLoanKeys?: (active: string[], known: string[]) => void;
+  /** The dance party: start the character's dance on a song's clock (`time()` is the clip time, read every frame); false when it cannot dance (reduced motion, no rig). */
+  partyDanceStart?: (time: () => number) => boolean;
+  partyDanceStop?: () => void;
+  /** Fade the world's own music out (true) and back (false) while a song plays. */
+  partyMusicDuck?: (on: boolean) => void;
   /** Signature of the outfit the rig was built with, once it has finished loading; null until then. */
   portraitSig?: () => string | null;
   /** A square picture of the toy as dressed now (head and shoulders, or the whole vehicle). */
@@ -1298,6 +1303,9 @@ getWorld:function(){return S.world},
 setTier:function(t){t=t===2||t===3?t:1;var m=curM();if(!m||W.missions.indexOf(m)<0||P.busy||P.mDrive)return;var k=mid(m),cur=mTier(m);if(m.done&&!m.replaying){mStartReplay(m);S.ms[k]={tier:t};if(MT[m.type]){MT[m.type]!.st&&MT[m.type]!.st(m);MT[m.type]!.sync(m)}else mSync(m);save();mPanel(m);return}if(cur===t){mPanel(m);return}var old=S.ms[k]||{};if(!m.free&&!m.replaying){["deck","support","mid","drum"].forEach(function(sl){if(old[sl])S.bin[old[sl]]=(S.bin[old[sl]]||0)+1})}S.ms[k]={tier:t};if(MT[m.type]){MT[m.type]!.st&&MT[m.type]!.st(m);MT[m.type]!.sync(m)}else mSync(m);save();mPanel(m);},
 setZoom:function(z){setZoom(z)},setPaused:function(v){paused=!!v;if(MUS.on)musGain(paused?0:(sound?.7:0),paused?.3:.8)},
 mute:function(){muteAudio()},
+partyDanceStart:function(time: ()=>number){if(!(mix&&!reduce&&P.rig&&mix.canDrive(P.rig)&&mix.startBeatDance("dance",time)))return false;if(P.danceBack==null){P.danceBack=P.tface;P.tface=-Math.PI/2}return true},
+partyDanceStop:function(){if(mix)mix.stopBeatDance()},
+partyMusicDuck:function(on: boolean){if(MUS.on)musGain(on?0:(paused?0:(sound?.7:0)),.4)},
 startLearnRun:function(track,plan,kidMode){startLearnRunFn(track,plan,kidMode)},
 stopLearnRun:function(){stopLearnRunFn()},
 learnState:function(){return learnStateFn()},

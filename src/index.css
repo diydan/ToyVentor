@@ -1892,6 +1892,145 @@ a.cta {
   pointer-events: none;
 }
 
+/* The end-of-level song card and the dance party that follows (ThemeSongCard.tsx). Bottom centre of the stage, above the controls; buttons are 56 px or more. */
+.tv-song-card {
+  position: absolute;
+  left: 50%;
+  bottom: 150px; /* clear of the controls strip and the round tool button at the bottom left */
+  transform: translateX(-50%);
+  z-index: 31;
+  width: min(360px, calc(100% - 24px));
+  box-sizing: border-box;
+  padding: 10px 12px 12px;
+  border-radius: 18px;
+  background: rgba(36, 22, 84, 0.94);
+  color: #f6f1ff;
+  font-family: var(--font-display);
+  box-shadow: 0 10px 28px rgba(2, 6, 28, 0.55);
+  border: 2px solid rgba(255, 255, 255, 0.28);
+}
+.tv-song-offer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: max-content;
+  max-width: calc(100% - 24px);
+  padding: 8px;
+  border-radius: 999px;
+}
+.tv-song-make {
+  white-space: nowrap;
+  min-height: 56px;
+  padding: 0 20px;
+  border-radius: 999px;
+  border: 3px solid rgba(255, 255, 255, 0.85);
+  background: var(--gold, #ffd24d);
+  color: #2b1d00;
+  font: 800 17px var(--font-display, sans-serif);
+  cursor: pointer;
+}
+.tv-song-x {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 0;
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+  font-size: 18px;
+  cursor: pointer;
+}
+.tv-song-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.tv-song-label { font-size: 12px; font-weight: 800; letter-spacing: 0.03em; text-transform: uppercase; opacity: 0.8; }
+.tv-song-ai { font-size: 11px; font-weight: 700; opacity: 0.7; }
+.tv-song-name { margin: 2px 0 2px; font-size: 20px; font-weight: 800; }
+.tv-song-note { margin: 2px 0 6px; font-size: 14px; font-weight: 600; min-height: 1.3em; }
+.tv-song-words { margin: 4px 0 8px; font-size: 13px; }
+.tv-song-words summary { cursor: pointer; font-weight: 700; min-height: 32px; }
+.tv-song-words p { margin: 4px 0 0; white-space: pre-line; max-height: 28vh; overflow: auto; }
+.tv-song-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.tv-song-btn {
+  min-height: 56px;
+  padding: 0 16px;
+  border-radius: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.55);
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  font: 800 15px var(--font-display, sans-serif);
+  cursor: pointer;
+}
+.tv-song-primary { background: var(--gold, #ffd24d); border-color: rgba(255, 255, 255, 0.85); color: #2b1d00; }
+.tv-song-dancing { border-color: var(--gold, #ffd24d); }
+
+/* The Map's Songs sheet (SongStudioSheet.tsx): idea chips, one short text box, one big button, and the songs already made. Targets are 56 px or more. */
+.tv-sheet-songs { max-height: 78%; }
+/* The Map's Songs button: bigger and gold, so a child can find it (the other header buttons are the usual 36 px). */
+.tv-ctl.tv-map-songs {
+  min-height: 48px;
+  padding: 0 14px;
+  background: var(--gold, #ffd24d);
+  border-color: rgba(255, 255, 255, 0.85);
+  color: #2b1d00;
+  font-weight: 800;
+}
+.tv-songs-lead { margin: 2px 0 0; font-size: 16px; font-weight: 800; }
+.tv-songs-ideas { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.tv-songs-idea {
+  min-height: 56px;
+  padding: 4px 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  text-align: center;
+  border-radius: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.1);
+  color: inherit;
+  font: 700 14px var(--font-display, sans-serif);
+  line-height: 1.2;
+  cursor: pointer;
+}
+.tv-songs-idea.on { background: var(--gold, #ffd24d); border-color: rgba(255, 255, 255, 0.85); color: #2b1d00; }
+.tv-songs-field { display: flex; flex-direction: column; gap: 4px; }
+.tv-songs-label { font-size: 13px; font-weight: 700; opacity: 0.85; }
+.tv-songs-input {
+  min-height: 56px;
+  box-sizing: border-box;
+  padding: 0 14px;
+  border-radius: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  background: rgba(0, 0, 0, 0.25);
+  color: inherit;
+  font: 600 16px var(--font-display, sans-serif);
+}
+.tv-songs-make {
+  min-height: 60px;
+  border-radius: 18px;
+  border: 3px solid rgba(255, 255, 255, 0.85);
+  background: var(--gold, #ffd24d);
+  color: #2b1d00;
+  font: 800 18px var(--font-display, sans-serif);
+  cursor: pointer;
+}
+.tv-songs-make[disabled] { opacity: 0.45; cursor: default; }
+.tv-songs-note { margin: 0; font-size: 12px; opacity: 0.75; }
+.tv-songs-mine { display: flex; flex-direction: column; gap: 6px; margin-top: 4px; }
+.tv-songs-h { font-size: 15px; font-weight: 800; }
+.tv-songs-empty { margin: 0; font-size: 14px; opacity: 0.8; }
+.tv-songs-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.tv-songs-item { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 56px; }
+.tv-songs-name { flex: 1; min-width: 0; font-size: 16px; font-weight: 800; overflow-wrap: anywhere; }
+.tv-songs-dance {
+  min-height: 56px;
+  padding: 0 16px;
+  border-radius: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.55);
+  background: rgba(255, 255, 255, 0.14);
+  color: inherit;
+  font: 800 15px var(--font-display, sans-serif);
+  cursor: pointer;
+}
+
 .tv-rank-progress {
   display: grid;
   gap: 6px;

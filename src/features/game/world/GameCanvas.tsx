@@ -93,6 +93,11 @@ import { propLangLabel } from "../../../lib/propSpeech";
 import { LanguageSheet, usePropLang } from "./LanguageSheet";
 import { CreatePanel } from "./CreatePanel";
 import { EditorPanel } from "./EditorPanel";
+import { noteGesture, ctx as gameAudioCtx } from "./runtime/audio";
+import { createGameParty, type GameParty } from "./runtime/gameParty";
+import { SongStudioSheet } from "./SongStudioSheet";
+import { ThemeSongCard } from "./ThemeSongCard";
+import { createThemeSongFlow, levelDescription, readKeptSongs, type FlowState, type KeptSong, type ThemeSongFlow } from "./themeSongFlow";
 import {
   createEngine,
   createWorldStore,
@@ -266,6 +271,87 @@ export function GameCanvas({
     xpToastTimerRef.current = window.setTimeout(() => setXpToast(null), 4000);
   }, []);
 
+  // The end-of-level song and the dance party after it: a win offers "Make a song about it", the song is named and sung (themeSongFlow.ts, the app's own
+  // /api/theme-song route), and when it is ready the character dances to it IN the game (runtime/gameParty.ts). Quiet when the route is off.
+  const [songOffer, setSongOffer] = useState<string | null>(null); // the sentence about the level just finished, or null: nothing is offered
+  const [songFlow, setSongFlow] = useState<FlowState | null>(null);
+  const songOfferTimerRef = useRef<number | null>(null);
+  const songRef = useRef<{ flow: ThemeSongFlow; party: GameParty } | null>(null);
+  const getSong = useCallback(() => {
+    if (!songRef.current) {
+      const party = createGameParty({
+        ctx: () => gameAudioCtx(),
+        startDance: (time) => engineRef.current?.partyDanceStart(time) ?? false,
+        stopDance: () => engineRef.current?.partyDanceStop(),
+        duckMusic: (on) => engineRef.current?.partyMusicDuck(on),
+        onEnd: (reason) => songRef.current?.flow.partyEnded(reason),
+      });
+      const flow = createThemeSongFlow({
+        fetchImpl: (...args) => fetch(...args),
+        decode: async (bytes) => {
+          const Offline = window.OfflineAudioContext ?? (window as unknown as { webkitOfflineAudioContext?: typeof OfflineAudioContext }).webkitOfflineAudioContext;
+          if (!Offline) throw new Error("no audio decoder");
+          const buf = await new Offline(2, 1, 44100).decodeAudioData(bytes);
+          return { channels: Array.from({ length: buf.numberOfChannels }, (_, c) => buf.getChannelData(c)), sampleRate: buf.sampleRate };
+        },
+        startParty: (song) => party.start(song),
+        onState: setSongFlow,
+        storage: (() => { try { return window.localStorage; } catch { return null; } })(),
+      });
+      songRef.current = { flow, party };
+    }
+    return songRef.current;
+  }, []);
+  const offerSongRef = useRef<(missionType: string) => void>(() => {});
+  offerSongRef.current = (missionType: string) => {
+    const s = getSong();
+    const phase = s.flow.state().phase;
+    if (phase === "writing" || phase === "making" || phase === "ready" || phase === "dancing") return; // a song is already on its way, or a party is on
+    void s.flow.isOn().then((on) => {
+      if (!on) return;
+      if (phase === "over" || phase === "failed") s.flow.cancel(); // the old card gives way to the new offer
+      setSongOffer(levelDescription(missionType));
+      if (songOfferTimerRef.current !== null) window.clearTimeout(songOfferTimerRef.current);
+      songOfferTimerRef.current = window.setTimeout(() => setSongOffer(null), 25000);
+    });
+  };
+  const makeSong = useCallback(() => {
+    noteGesture(); // this tap is what lets the song play later: the browser starts sound only from a tap
+    const description = songOffer;
+    setSongOffer(null);
+    if (songOfferTimerRef.current !== null) window.clearTimeout(songOfferTimerRef.current);
+    if (description) void getSong().flow.start(description, "level");
+  }, [songOffer, getSong]);
+  // The Map's Songs sheet: make a song from an idea, or dance to one already made. Either closes the Map and hands over to the card and the party above.
+  const [songsOpen, setSongsOpen] = useState(false);
+  const [songsAvailable, setSongsAvailable] = useState(false);
+  const [keptSongs, setKeptSongs] = useState<KeptSong[]>([]);
+  const localStore = () => { try { return window.localStorage; } catch { return null; } };
+  const openSongs = useCallback(() => {
+    setKeptSongs(readKeptSongs(localStore()));
+    setSongsAvailable(false);
+    setSongsOpen(true);
+    void getSong().flow.isOn().then(setSongsAvailable);
+  }, [getSong]);
+  const startFromSheet = useCallback((begin: () => void) => {
+    noteGesture(); // this tap is what lets the song play later
+    setSongOffer(null);
+    setSongsOpen(false);
+    setMapOpen(false);
+    begin();
+  }, []);
+  const stopSongParty = useCallback(() => { songRef.current?.party.stop("stopped"); }, []);
+  const danceAgain = useCallback(() => { noteGesture(); void songRef.current?.flow.again(); }, []);
+  const closeSong = useCallback(() => {
+    songRef.current?.party.stop("stopped");
+    songRef.current?.flow.cancel();
+  }, []);
+  useEffect(() => () => {
+    songRef.current?.party.stop("stopped");
+    songRef.current?.flow.cancel();
+    if (songOfferTimerRef.current !== null) window.clearTimeout(songOfferTimerRef.current);
+  }, []);
+
   // Walking to a trail-map node reveals it (gentle fog) for next time.
   const visitExplorerNode = useCallback((nodeId: string) => {
     const { next, changed } = markExplorerVisited(
@@ -336,6 +422,8 @@ export function GameCanvas({
   // from the 7-9 band up, and the trail map on a phone held sideways (the
   // carousel cards need a taller screen). Each is one tap from the other.
   const openMap = useCallback(() => {
+    songRef.current?.party.stop("stopped"); // a party does not follow the child onto the Map
+    setSongsOpen(false); // the Map always opens on its places, not on a Songs sheet left open
     refreshPortrait();
     setMapView(
       defaultMapView(
@@ -454,6 +542,7 @@ export function GameCanvas({
             } else if (result.stars > 0) {
               showXpToast(`${starsStr}${suffix}`);
             }
+            offerSongRef.current(type);
           }
         },
       },
@@ -1540,6 +1629,18 @@ export function GameCanvas({
           </div>
         )}
 
+        {!mapOpen && ( // the card gives way to the Map (a song being made carries on underneath) and comes back when the Map closes
+          <ThemeSongCard
+            offer={songOffer !== null}
+            flow={songFlow}
+            onMake={makeSong}
+            onDismissOffer={() => setSongOffer(null)}
+            onStopParty={stopSongParty}
+            onAgain={danceAgain}
+            onClose={closeSong}
+          />
+        )}
+
         <MyToySheet
           open={toySheetOpen}
           initialStep={toySheetStep}
@@ -1695,7 +1796,7 @@ export function GameCanvas({
           onEquipped={(next) => onPlacementsChange(next)}
         />
 
-        {mapOpen && !sleepActive && mapView === "trail" && (
+        {mapOpen && !sleepActive && !songsOpen && mapView === "trail" && (
           <ExplorerMap
             graph={buildExplorerGraph({
               cards: buildMapCards({
@@ -1735,6 +1836,7 @@ export function GameCanvas({
             }
             onClose={() => setMapOpen(false)}
             onShowCards={() => setMapView("cards")}
+            onOpenSongs={openSongs}
             onOpenGarage={openGarage}
             onAskAge={() => openGrownUps(false)}
             onGoWorld={(worldId) => {
@@ -1776,7 +1878,17 @@ export function GameCanvas({
           />
         )}
 
-        {mapOpen && !sleepActive && mapView === "cards" && (
+        {mapOpen && !sleepActive && songsOpen && (
+          <SongStudioSheet
+            songs={keptSongs}
+            available={songsAvailable}
+            onMake={(idea) => startFromSheet(() => void getSong().flow.start(idea, "prompt"))}
+            onDance={(song) => startFromSheet(() => void getSong().flow.playKept(song))}
+            onClose={() => setSongsOpen(false)}
+          />
+        )}
+
+        {mapOpen && !sleepActive && !songsOpen && mapView === "cards" && (
           <MapCarousel
             cards={buildMapCards({
               ageBand: progression.ageBand ?? null,
@@ -1815,6 +1927,7 @@ export function GameCanvas({
             }
             onShowExplorer={() => setMapView("trail")}
             onOpenGarage={openGarage}
+            onOpenSongs={openSongs}
           />
         )}
 
