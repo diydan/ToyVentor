@@ -1,6 +1,6 @@
-# Workshop: the grown-up gate for file downloads (draft 1, 2026-11-03)
+# Workshop: the grown-up gate for file downloads (draft 2, 2026-11-03)
 
-**Status: a design to review, nothing built.** Written to unblock one decision: the Workshop is in the game, but it is mounted with `downloads: false` (no Print group, no photo "Print it", no selfie sticker, no pop-out link; see `workshop-spec.md`, "4d scope"). This says how to turn downloads back on behind a grown-up check, and what the owner of the Grown-Ups sheet has to decide first.
+**Status (draft 2): phases 1 and 2 built and tested (the pure core, the dialog, the print-view hook and the shell's `downloads: 'gated'` mode, with a real-browser e2e: `scripts/e2e-workshop-gate.mjs`, 28 checks). The game is still mounted with `downloads: false`: switching it to `'gated'` (phase 4) and the two exits that are not behind the print view (phase 3) wait for the decisions in section 7.** Written to unblock one decision: the Workshop is in the game, but it is mounted with `downloads: false` (no Print group, no photo "Print it", no selfie sticker, no pop-out link; see `workshop-spec.md`, "4d scope"). This says how to turn downloads back on behind a grown-up check, and what the owner of the Grown-Ups sheet has to decide first.
 
 ## 1. The gap
 
@@ -59,10 +59,10 @@ It is a **speed bump in the browser**, not a lock. The files are built client-si
 
 ## 8. Phases (rough estimate, not measured)
 
-1. The pure gate core, the in-process mode of `createPrintGate`, unit tests: about half a day.
-2. The modal, the print view hook, the `'gated'` shell option, the game e2e with the real gate: one to one and a half days.
-3. The photo-print and selfie exits (they are other lanes' files: agree a window first): about half a day.
-4. Switch the game to `'gated'`, copy and languages: about half a day.
+1. **Built.** The pure gate core, the in-process mode of `createPrintGate`, unit tests: `bench-gate.js` (16 tests).
+2. **Built.** The modal (`bench-gate-ui.js`, 8 tests, its own e2e), the print view hook (`kip-print-view.js` `download()` waits for the gate's promise and fails closed; a second click while a question is open does nothing; closing the view mid-question delivers nothing) and the `'gated'` shell option (`workshop.js`: builds the gate and dialog, hands the print host its in-process form, cancels an open question and forgets the proof on `destroy()`, hides "Open on its own page"). `scripts/e2e-workshop-gate.mjs` runs the real shell with only `/api/parent/gate` stubbed; a mutation that ignores the verdict fails three of its checks. Under `'gated'` the Kip bench keeps the Print group and hides the photo "Print it", the selfie sticker and the Make-from-words files until phase 3.
+3. The photo-print, selfie-sticker and Make-from-words exits (they are other lanes' files: agree a window first; the shell already exposes `sharedGate()` and `sharedCloud()` so they can share one proof): about half a day.
+4. Switch the game to `'gated'` (`WorkshopLauncher`: today `downloads` is false, or true only while the grown-up checks are switched off, see `parent-controls-off-spec.md`), copy and languages: about half a day.
 
 ## 9. What I did not verify
 
