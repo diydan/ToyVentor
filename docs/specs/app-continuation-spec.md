@@ -27,7 +27,7 @@ UX rules, or the TU geometry canon.
 - Phase 1 (Toy Box pill, PIN pad with dual-path lockout, Demo v1): landed.
 - Phase 2 (enabled roster, Star Scout grandfathering, Kip unification + `robot.*` wardrobe aliases): landed.
 - Phase 3 (XP math, Tier 2/3 presets, 11 STEM Concept Badges, Pro-part gating, 3 rotating Daily Quests, parent-enabled Real-Life Routines `+25 XP/day`, guilt-free Workshop Days): landed.
-- Phase 4A + 4B (all 9 Rank 2-6 vehicles promoted `ready: true` through Rank 6 `Bolt Power Mech`, backed by `modular-craft.json` + `mech-robotics.json`, E2E zero-reload switch verified): landed.
+- Phase 4A + 4B (all 9 Rank 2-6 vehicles promoted `ready: true` through Rank 6 `Bolt Power Pro` (renamed 2026-11-03 from `Bolt Power Mech`, old name kept as an alias), backed by `modular-craft.json` + `mech-robotics.json`, E2E zero-reload switch verified): landed.
 - Town Slice 1 (connected 6-district `TOWN_RING` street crossings + signposts, `VEHICLE_PERKS`, 12 `TOWN_SPARKLE_SPOTS`): landed.
 - Legacy POC tranche (Nov 2, 2026): `STAGE_HTML` trimmed to the live stage ids, dead `engine.ts` DOM-click helpers deleted, empty `game/` removed; zoom and Sleep-Curtain mute rewired to native runtime hooks (both were dead `#zoom`/`#snd` clicks).
 - Phase 5 (weekly packs) + Town Phases B-E + `SAM 3.1` & `Muse` generative extensions: parked as **Stretch Goals** behind the Nov 4 core freeze (see §8 and [spec.md](../product/spec.md)).
@@ -179,7 +179,7 @@ than rank-locked.
 | 3 | Gearhead | 600 | Sport Motorbike, Loader Tractor & Trailer |
 | 4 | Sky & Sea Pilot | 1,100 | Prop Aeroplane, Catamaran Boat |
 | 5 | Aero Captain | 1,800 | Rescue Helicopter, Space Shuttle |
-| 6 | Mech Inventor | 2,700 | Bolt Power Mech |
+| 6 | Power Pro Inventor | 2,700 | Bolt Power Pro |
 
 
 ### 4.6 Persistence, HUD Footprint & Parent Visibility

@@ -477,8 +477,12 @@ _saved = [json.loads(f.read_text()) for f in sorted((HERE / "validation").glob("
 test("pre-print: every saved report and the fixtures match the report schema",
      len(_saved) >= len([p for p in man["parts"] if p.get("file")]) and all(not list(_js.Draft202012Validator(_schema).iter_errors(r)) for r in _saved + list(_r.values())))
 _sum = json.loads((HERE / "validation" / "summary.json").read_text())
+# Judged per catalog part: validation/ also holds reports for printed parts outside the catalog (the Kip print connectors
+# spark_peg_*, snap_turret*), which the asset optimizer reads for validated brims, so the total report count is not the catalog size.
+_cat_ids = {p["id"] for p in man["parts"] if p.get("file")}
+_sum_by_id = {r["part_id"]: r for r in _sum["parts"]}
 test("pre-print: no catalog part fails the pre-print check, and every catalog part has a report",
-     _sum["counts"]["fail"] == 0 and sum(_sum["counts"].values()) == len([p for p in man["parts"] if p.get("file")]))
+     all(i in _sum_by_id and _sum_by_id[i]["verdict"] != "fail" for i in _cat_ids))
 
 # 7p. stud-hole roofs (I7)
 _hc = tp.socket_conn("small", 1, 1); _hc["style"] = "holes"

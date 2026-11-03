@@ -191,7 +191,7 @@ and reset.
 - Award = round(Base x (1 + Accuracy + PartMatch) x ReplayFactor).
   `round` is `Math.round` (halves round up: `150 × 0.25 = 37.5 → 38`).
 - Ranks: 1 Snap Sprout 0; 2 Workshop Builder 250; 3 Gearhead 600;
-  4 Sky & Sea Pilot 1,100; 5 Aero Captain 1,800; 6 Mech Inventor 2,700.
+  4 Sky & Sea Pilot 1,100; 5 Aero Captain 1,800; 6 Power Pro Inventor 2,700 (renamed 2026-11-03 from Mech Inventor).
 - Rank 2 unlocks Hauler Truck + Motor Scooter (Star Scout excluded).
 
 ## Instrumentation requirement (Phase 0B)

@@ -453,19 +453,19 @@
   },
   "toyventor_mom_band_core_lid_S.stl": {
    "part": "mom_band_core_lid",
-   "sha256": "3aae2697569b4bf45e65bced82b0c7c7afe54a4a592c8d4852ec27cffcb8d1a3",
+   "sha256": "c3b3f75eb479e6df43cdc8f5b11cbeb0db92f5b1b6fed745e43e474cdd8404dd",
    "verdict": "pass",
    "brim_width_mm": 0
   },
   "toyventor_mom_band_core_tray_S.stl": {
    "part": "mom_band_core_tray",
-   "sha256": "1c08c84638e20ed6c3274ad8586c3acdff2b4b146496062394cca1307d4f7e0c",
-   "verdict": "pass",
+   "sha256": "8958e7a0e2f2f9ecf840f23538f863830031b389f2261e070fe740330cba510c",
+   "verdict": "pass_with_warnings",
    "brim_width_mm": 0
   },
   "toyventor_mom_band_spool_pawl_P.stl": {
    "part": "mom_band_spool_pawl",
-   "sha256": "fc8fb9d44c2067d6a9bd61b16a2ea7913879c74b1fb670fe2f4daa43bd6a1e4c",
+   "sha256": "d054d369ac8fc5ce1e8c8e2b3e26adf30cd4e300289a7225001b43461a3bca63",
    "verdict": "pass",
    "brim_width_mm": 0
   },
@@ -507,13 +507,13 @@
   },
   "toyventor_mom_jet_slide_valve_P.stl": {
    "part": "mom_jet_slide_valve",
-   "sha256": "07ee4afa6f81b00b400d96f87f84e04839fe4d5be2c1776cf619434ac959da2a",
-   "verdict": "pass",
+   "sha256": "b95279db95ac865e9bf69bb1bc16e52833366230321026ba6bb204059fb773d6",
+   "verdict": "pass_with_warnings",
    "brim_width_mm": 0
   },
   "toyventor_mom_jet_valve_body_S.stl": {
    "part": "mom_jet_valve_body",
-   "sha256": "31a64e20a72365723e5bcf538106e46d25e1258cc08835938227c72d2cbbab02",
+   "sha256": "c6e1e72b0c2723121f144471810cdf35367d1d632535f69d8b286a3124aba30a",
    "verdict": "pass",
    "brim_width_mm": 0
   },
@@ -525,14 +525,14 @@
   },
   "toyventor_mom_nozzle_set_P.stl": {
    "part": "mom_nozzle_set",
-   "sha256": "606078f6f2752bcd92747114e4d52a8a2e952f6631df2fd8340046ee1350ddd2",
+   "sha256": "6362a6bad8cc6a0354f90790cccf93893c4d00a58e2eca85b8ddd25398cbd849",
    "verdict": "pass",
    "brim_width_mm": 0
   },
   "toyventor_mom_pto_gear_z10_P.stl": {
    "part": "mom_pto_gear_z10",
-   "sha256": "6eca3c557d8d0b23d3344c598042d85fc109cfa3f8fc2ee24547e5f7adcef427",
-   "verdict": "pass",
+   "sha256": "9dc01a06f28cefbe407efa70b1785dcec9e0cbe1a03c71a2b76b9a1f72bd8d8d",
+   "verdict": "pass_with_warnings",
    "brim_width_mm": 0
   },
   "toyventor_mom_ripcord_rack_150_P.stl": {

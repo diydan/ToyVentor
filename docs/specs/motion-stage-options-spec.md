@@ -261,64 +261,90 @@ Still open:
 
 **9.4 Ladder note (one line under the document banner).** "Decided 2026-11-02 (Dan): ladder Snap -> Motion -> Pro, no separate Mech stage, balloon = `mom_jet_valve_body` with the balloon on top, bellows dropped; see `motion-stage-options-spec.md`."
 
-## 10. Print-and-test plan: balloon jet on the real keel
+## 10. Print-and-test sheet: balloon jet and pull-back band (rewritten 2026-11-03)
 
-> **Export status note (`2026-11-03`):** `public/kip/partspec/` and `parts/partspec/` now carry the enlarged-passage parts (`mom_jet_valve_body` inlet `50.1`, valve port `38.1`, tunnel `52.6 mm2`, narrowest `O6.96`; `mom_nozzle_set` as `4` inserts, `63.0 x 14.1 x 8.2 mm`), re-exported from the CAD that passes `verify_band_jet.py` `8/8`. The `~O5` baseline (T0-T6 below, run with the pre-edit parts) therefore needs the pre-edit parts from git history (or a scratch copy of the old CAD passed to the lab tools with `JETCAR_PS`); print the current parts for the enlarged-passage coupon.
+> **State of the CAD this sheet tests (2026-11-03):** `verify_band_jet.py` `8/8` PASS, `Gate G1` `13/13`, all `205` parts pass the part gate, and the served copies in `public/kip/partspec/` match their validation reports (`kip-validation-index`: `159` of `159`). Nothing has been printed yet, so every number below marked *predicted* is a model result that the print is allowed to contradict.
 
-**Purpose.** Settle three things the CAD cannot: how a real balloon behaves on the vertical collar, whether the truck moves through the printed passages, and which wheel and nozzle help.
+**Purpose.** Settle what the CAD cannot: (A) does the printed jet seal and move the truck, and how does a real balloon behave on the collar; (B) does the pull-back band core wind, lock, coast and keep its band on the drum; (C) which wheel helps.
 
 ### 10.1 What to print and gather
 
-| Item | Source / spec | Note |
-| :--- | :--- | :--- |
-| `mom_jet_valve_body` | `public/kip/partspec/toyventor_mom_jet_valve_body_S.stl` (print orientation as exported, no supports) | the verified part; also a Card E3 item |
-| `mom_jet_slide_valve` | `public/kip/partspec/toyventor_mom_jet_slide_valve_P.stl` | the cross-bore leaks without it |
-| Snap truck | keel, 2 barbell shafts, 4 `kit_wheel_med` (plus 4 `kit_wheel_giant` for the wheel test), windscreen, Kip seated; **no tub, no hinge, no axle gear** | an existing Snap truck works |
-| `mom_nozzle_set` | **do not use**: one bar, three plugs, cannot seat (section 2) | |
-| Nozzles | rigid tube about 8 mm outside diameter that presses into the rear socket (7.45 mm at the inner end, 8.30 mm at the mouth), cut in lengths of about 25 mm, with bores of about 3, 4.5 and 6 mm; also the bare socket | COTS |
-| Balloons and pump | 9 inch latex balloons (a bag), a hand pump (no mouth inflation: the spec has no mouthpiece) | adults 8+, supervised; keep burst pieces from small children (spec latex warning) |
-| Measuring | kitchen scale (0.1 g), tape measure, a flat board with a ruler (for the roll-down test), phone camera at 60 fps or better on a stand, masking tape marks every 25 cm along the track | |
-| Track | smooth tile or laminate, 4 m or more | the lab method uses 10-15 m of tape |
+| Test | Print | Source | Note |
+| :--- | :--- | :--- | :--- |
+| A, jet | `mom_jet_valve_body` | `parts/partspec/toyventor_mom_jet_valve_body_S.stl` (`49.8 x 27.8 x 28.0 mm`, as exported, no supports) | also on `Card E3` |
+| A, jet | `mom_jet_slide_valve` | `toyventor_mom_jet_slide_valve_P.stl` (`9.6 x 38.0 mm`, prints lay-flat as exported) | the cross-bore leaks without it; carries the small-parts notice |
+| A, jet | `mom_nozzle_set` | `toyventor_mom_nozzle_set_P.stl` (`63.0 x 14.1 x 8.2 mm`, four inserts on tabs round a storage hub) | snap each insert off its tab when you test it; the old one-bar version is gone |
+| A+B, truck | Snap truck | keel, 2 barbell shafts, 4 `kit_wheel_med`, windscreen, Kip seated; **no tub, no hinge, no axle gear for the jet** (the jet body overlaps the rear axle gear by `442 mm3`) | an existing Snap truck works; add 4 `kit_wheel_giant` for the wheel test |
+| B, band | `Card E2` | `parts/partspec/cards/card_e2_sprue.stl` (`157.2 x 152.1 mm`): band tray and lid, PTO gear, `shaft_tu03`, slam base and plunger, axle `gear_spur_z10`, band spool, two captive pins | or print the parts singly from `parts/partspec/` |
+| B, band | Bands | `1x #64` synthetic loop (`89 x 6.4 x 1.6 mm`) for the standard setup; `2x #32` loops (`76 x 3.2 x 1.1 mm`) as the narrow-band option | latex-free synthetic rubber; the `Motion` stage carries the latex notice |
+| A | Balloons and pump | 9 inch latex balloons, a hand pump (no mouth inflation: there is no mouthpiece) | ages 8+, supervised; keep burst pieces from small children |
+| both | Measuring | kitchen scale (`0.1 g`), tape measure, flat board with a ruler, spring scale or newton gauge (to `15 N`), phone camera at 60 fps on a stand, masking-tape marks every 25 cm | |
+| both | Track | smooth tile or laminate, `4 m` or more | |
 
-Print the body in PLA at your normal settings and **write down the infill, perimeters and finished weight**; the mass is a first-order input.
+Slice at your normal PLA settings (`0.4 mm` nozzle, `0.20 mm` layers, no supports) and **write down infill, perimeters and finished weights**; mass is a first-order input. The part gate ran geometry checks only (no slicer on the machine), so a slicer warning on the pawls, the lip or the valve apex is a result worth recording: the gate flags three warnings the print should confirm or clear (`mom_pto_gear_z10` thin cup base, `mom_jet_slide_valve` teardrop apex tip, `mom_band_core_tray` a `0.33 mm` plate over one socket ceiling).
 
-### 10.2 Measurements, in order
+### 10.2 Test A: balloon jet, measurements in order
 
-1. **Mass (T0).** Weigh the finished truck (with Kip and a balloon deflated on the collar), the body and the valve. Record against the model (about 150 g solid PLA).
-2. **Rolling drag (T1).** Tilt the board slowly until the truck, pushed gently, just keeps rolling: drag coefficient = rise / run. The model assumes 0.045 (2.6 deg, 4.6 cm rise per metre); drag force = coefficient x weight. This replaces an assumption with a number.
-3. **Seal (T2).** Inflate to about 15 cm with the valve OPEN, close it, remove the pump, and watch 15 s: **pass if the balloon loses 15% of its diameter or less** (the spec's gate).
-4. **Balloon posture (T3).** At 125, 150 and 175 mm (cut a card gauge): note at rest whether it stands upright, leans, or rests on Kip's hat and back. Film the first run from the side: trail angle from video frames, and whether the balloon ever reaches the jet axis or collapses over the nozzle at the end of the burn.
-5. **Runs (T4).** For each nozzle (bare socket, then the 3, 4.5 and 6 mm tubes), 3 runs from the same start mark with a full 175 mm balloon: distance, time to stop, and acceleration from the video (marks every 25 cm). Thrust = mass x acceleration + drag during the burn.
-6. **Wheels (T5).** Repeat the best nozzle with O50 wheels (all four, or the rear pair), and note the mass change.
-7. **Optional, to test the passage limit (T6).** On a spare body, drill the inlet from the collar top and the tunnel from the rear socket out to about 7 mm, leave the slide valve out, tape the cross-bore ends, and hold the neck shut with a clothespin until release. Rerun the 4.5 and 6 mm nozzles.
+1. **Mass (T0).** Weigh the finished truck (Kip and a deflated balloon on the collar), the body and the valve. Model: about `150 g` solid PLA.
+2. **Rolling drag (T1).** Tilt the board slowly until the truck, pushed gently, just keeps rolling: coefficient = rise / run. Model `0.045` (`2.6 deg`, `4.6 cm` rise per metre); drag force = coefficient x weight (`0.066 N = 6.75 gf` at `150 g`).
+3. **Seal (T2).** With the valve OPEN, inflate to about `15 cm`, close it, take the pump off, and watch `15 s`.
+4. **Balloon posture (T3).** At `125`, `150` and `175 mm`: does it stand upright, lean, or rest on Kip's hat and back? Film the first run from the side for trail angle, whether it reaches the jet axis, and whether it folds over the nozzle at the end of the burn.
+5. **Runs (T4).** For each of the four inserts (`O3.2`, `O4.6`, `O6.1`, `O8.0` as measured; `O3.0 / 4.5 / 6.0 / 8.0` as drawn) and then the bare socket, 3 runs from the same mark with a full `175 mm` balloon: distance, time to stop, acceleration from the video. Thrust = mass x acceleration + drag during the burn.
+6. **Wheels (T5).** Repeat the best insert with `O50` wheels (all four, or the rear pair) and note the mass change.
+7. **A/B on passage size (T6, optional, cheap).** Print the pre-re-export jet body and slide valve and run the bare socket on both: `git show f60a7b2:public/kip/partspec/toyventor_mom_jet_valve_body_S.stl > old_body.stl` and `git show f125017:public/kip/partspec/toyventor_mom_jet_slide_valve_P.stl > old_valve.stl`. Same balloon, truck and track; only the passage differs (`O5` against `O7`). Predicted `5.1 gf` against `9.2 gf`.
 
-### 10.3 Predictions to beat (written before the test, so it can fail)
+### 10.3 Test A: predictions to beat (written first, so the print can fail)
 
-| Configuration | Predicted thrust (2.5 kPa, 5 L) | Predicted thrust over drag at 150 g |
+Model: `2.5 kPa`, two orifices in series (the `38.1 mm2` valve port and the insert), rolling drag `6.75 gf` at `150 g`. Insert figures are from `verify_band_jet.py` `C5`; the bare-socket line is my estimate from the same model.
+
+| Configuration | Predicted thrust | Over drag at `150 g` |
 | :--- | ---: | ---: |
-| O3 nozzle | 3.2 gf | 0.47x |
-| O4.5 nozzle | 4.9 gf | 0.73x |
-| O6 nozzle | 4.7 gf | 0.70x |
-| bare socket (about O8) | 3.4 gf | 0.50x |
-| T6: passage O7 with O4.5 / O6 | about 6.9 / 9.4 gf | about 1.0x / 1.4x |
+| `O3.2` insert | `3.9 gf` | `0.6x` |
+| `O4.6` insert | `7.2 gf` | `1.1x` |
+| `O6.1` insert | `9.3 gf` | `1.4x` |
+| `O8.0` insert | `9.4 gf` | `1.4x` |
+| bare socket (tunnel exit, `52.6 mm2`) | about `9.2 gf` | about `1.4x` |
+| T6 old body, bare socket (`O5` passages) | about `5.1 gf` | about `0.75x` |
 
-If the truck moves clearly in T4 as drawn, **my passage model is wrong** (the pressure may be higher, the mass lower, or the passage not the limit): say so in the record and fix section 2.
+The valve port (`38.1 mm2`) is the limit: the series ceiling is `9.7 gf`, so `O8.0` should buy almost nothing over `O6.1`. The margin over the `1.3x` rule is thin (`1.38x`): if the truck only just fails, check T0 and T1 first, because mass and drag move the ratio as much as the model does. If it moves clearly less than predicted, say so in the record and fix section 2; if it moves with the old body (T6), the passage model is wrong.
 
-### 10.4 Pass rules (agreed by Dan, 2026-11-02) and what each outcome means
+### 10.4 Test A: pass rules (agreed by Dan, 2026-11-02) and what each outcome means
 
 | Result | Rule | If it fails or surprises |
 | :--- | :--- | :--- |
-| Seal | 15% diameter loss or less in 15 s | thicken the 0.60 mm web between the inlet rim and the tunnel lip; the jet is not usable until it holds |
-| Moves | thrust over drag 1.3x or more with some nozzle, as drawn | **expected to fail:** enlarge the body's passages (about O8, `mom_jet_valve_body` and `mom_jet_slide_valve`) and redo with T6 as the target |
-| Goes | mean of 3 runs of 2 m or more on tile (the spec's low end) | lower mass (infill, Kip off), O50 wheels, or larger passages |
-| Balloon clear | trail angle under 45 deg in every frame, jet never obstructed | add a rear stop; if it folds over the nozzle at the end of the burn, a cradle or a shorter neck |
-| Soft contact | the truck tracks straight within 10 cm over 2 m and Kip is not knocked over | hold the balloon back about 30 deg (an angled neck seat) or use a smaller balloon |
+| Seal | `15%` diameter loss or less in `15 s` | thicken the `0.60 mm` web between the inlet rim and the tunnel lip; the jet is not usable until it holds |
+| Moves | thrust over drag `1.3x` or more with some insert, as drawn | predicted pass with `O6.1` and `O8.0`. Fix order: lower mass (infill, Kip off), `O50` wheels, then a larger valve port (the limit; needs a bigger spool, not drawn) |
+| Goes | mean of 3 runs of `2 m` or more on tile | lower mass, `O50` wheels, or larger passages |
+| Balloon clear | trail angle under `45 deg` in every frame, jet never obstructed | add a rear stop; if it folds over the nozzle at the end of the burn, a cradle or a shorter neck |
+| Soft contact | tracks straight within `10 cm` over `2 m`, Kip not knocked over | hold the balloon back about `30 deg` (an angled neck seat) or use a smaller balloon |
 
-### 10.5 Record sheet (one row per run)
+### 10.5 Test B: pull-back band core, in order
 
-date, body infill and weight, truck mass, drag coefficient, wheel size, nozzle (bore), balloon diameter at start, pressure note, distance, stop time, peak acceleration, trail angle (max), contact with Kip (none / rubs / pushes), jet obstructed (y/n), seal loss over 15 s, notes. Keep the video.
+1. **Assemble and look (B0).** Tray, lid, PTO gear and spool on `shaft_tu03` in the real saddles, axle gear below. Check by hand: the spool turns freely on the shaft, the gear meshes with the axle gear without binding, the lid closes over the gear dome. With the band off, turn the gear both ways: it should **lock the spool one way and slip the other** (the pawls click over the sawtooth). Record which way each turn goes against the truck: dragging the truck backward must wind, releasing must drive it forward.
+2. **Tyre friction (B1).** A sled or the truck itself on the real floor, four ways: `O36 / O50` x bare PLA / O-ring. Wind `2.5` turns by pulling the truck back with a hand press you can measure (a gauge on the truck). *Predicted:* bare PLA below friction `0.3` slips and fails; the O-ring or `O50` option is then the decision.
+3. **Shaft capture (B2).** With the lid on and the band wound, watch whether the shaft lifts out of a saddle. *Predicted:* `0.35 mm` worst case against the `0.5 mm` limit.
+4. **Band torque (B3).** Spring scale on the band at `2.5` turns. *Predicted:* torque `35` to `65 N.mm`, which is about `5.5` to `10 N` of force at the drum radius (`6.4 mm`). Use `1x #64` first, then `2x #32`.
+5. **Retention (B4, the open design question).** The spool carries a `R7.2` retaining lip, the smallest shape that prints without supports; it leaves about `1.6 mm` of drum above it for a `6.4 mm` band. Wind, release and repeat for `20` or more rapid launches. *Check:* does the band stay on the drum and clear of the pawls, or does it walk down into the pawl zone and jam?
+6. **Runs (B5).** 3 runs each on `O36` and `O50`, from the same mark, hard floor: distance, and whether the clutch freewheels in the coast. *Predicted:* `2.0` to `3.5 m` if the clutch freewheels cleanly, `0.8` to `1.2 m` if the pawl drag acts throughout the coast (about `0.12 N` on `O36`, `0.084 N` on `O50`); the bench settles which.
+7. **Skip torque (B6, optional).** Add torque by hand against a locked wheel until the clutch skips. *Predicted:* comfortably above the `65 N.mm` launch peak.
 
-### 10.6 Cost and time
+### 10.6 Test B: pass rules and what each outcome means
 
-Two small prints (about 20 g and 2 g of PLA at solid, less with infill), a bag of balloons and a pack of tubing; one session of about two hours for T0-T5, plus about an hour for T6. The result decides whether the next step is a cradle, wider passages, or both.
+| Result | Rule | If it fails or surprises |
+| :--- | :--- | :--- |
+| Winds | `2.5` turns with a hand press of `8 N (0.8 kgf)` or less, no slip | `O50` wheels, then an O-ring groove on both wheel sizes |
+| Locks the right way | winds on the pull-back, drives forward on release, freewheels in the coast | wrong way round means the mirror is wrong in print (it passes `C1` in CAD): stop and send the photo |
+| Skip torque | above `65 N.mm` with margin | a pawl is skipping: check the bite (`0.78 mm` drawn) and print orientation |
+| Shaft | lift `0.5 mm` or less | thicken the saddle or add a lid keeper rib |
+| Band retention | band stays on the drum over `20+` launches | **fixes, cheapest first:** (1) use the `2x #32` loops (`3.2 mm` wide each); (2) tape a ring on the drum above the pawls to confirm the diagnosis; (3) redesign: a separate flat-printed retaining ring that snaps onto the drum (needs CAD, not drawn) |
+| Goes | mean of 3 runs of `2 m` or more | `O50` wheels, O-ring tyres, lighter truck, or a higher-torque band |
 
+### 10.7 Record sheet (one row per run)
+
+**Jet:** date, body infill and weight, truck mass, drag coefficient, wheel size, insert (bore), balloon diameter at start, pressure note, distance, stop time, peak acceleration, trail angle (max), contact with Kip (none / rubs / pushes), jet obstructed (y/n), seal loss over `15 s`, notes.
+**Band:** date, wheel size and tyre (bare / O-ring), band (`#64` or `2x #32`), turns wound, hand press at `2.5` turns, scale reading, clutch direction (winds / drives / coasts), shaft lift, band on drum after `20` launches (y/n), distance, notes.
+Keep the video for both.
+
+### 10.8 Cost and time
+
+Jet: three small prints (about `19 g`, `2 g` and `3 g` at solid), a bag of balloons; about two hours for T0 to T5, plus one hour for the T6 A/B. Band: one plate (`Card E2`) and two bands; about two hours for B0 to B5. The results decide whether the next step is a cradle, a bigger valve port, a retaining ring, or a clutch tweak, and which of the parked warnings (PTO cup base, tray plate) matter.

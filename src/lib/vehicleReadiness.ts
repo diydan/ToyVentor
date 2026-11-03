@@ -460,10 +460,11 @@ export const VEHICLE_READINESS_AUDIT: readonly VehicleReadinessEntry[] = [
   }),
   defineEntry({
     id: "seed-mech",
-    name: "Bolt Power Mech",
-    contentAliases: ["Bolt Mech", "Stage 4 Mech", "Power Core Mech"],
+    name: "Bolt Power Pro",
+    // Renamed 2026-11-03 with the Snap -> Motion -> Pro ladder (no Mech stage); the old names stay as aliases so saved copies still resolve.
+    contentAliases: ["Bolt Power Mech", "Bolt Mech", "Stage 4 Mech", "Power Core Mech"],
     rank: 6,
-    rankTitle: "Mech Inventor",
+    rankTitle: "Power Pro Inventor",
     xpThreshold: 2700,
     partSpecIds: [
       "kit_keel_base",
@@ -498,7 +499,7 @@ export const VEHICLE_READINESS_AUDIT: readonly VehicleReadinessEntry[] = [
     iconVariant: "mech",
     seedToy: seedMech,
     unlockGuidance:
-      "Earn 2,700 XP across STEM Labs 1 to 6 to unlock Bolt Power Mech.",
+      "Earn 2,700 XP across STEM Labs 1 to 6 to unlock Bolt Power Pro.",
     gates: {
       partVerified: true,
       missionShipped: true,

@@ -98,7 +98,7 @@ export const RANKS: MakerRank[] = [
     xp: 1800,
     vehicles: ["Rescue Helicopter", "Space Shuttle"],
   },
-  { rank: 6, title: "Mech Inventor", xp: 2700, vehicles: ["Bolt Power Mech"] },
+  { rank: 6, title: "Power Pro Inventor", xp: 2700, vehicles: ["Bolt Power Pro"] },
 ];
 
 export interface DailyKeyState {

@@ -218,11 +218,11 @@ describe("Phase 4 per-vehicle readiness audit (§5.1)", () => {
     }
   });
 
-  it("promotes all 9 Rank 2-6 vehicles including Stage 4 Bolt Power Mech once Card F CAD + Gate G1 pass", () => {
+  it("promotes all 9 Rank 2-6 vehicles including the Pro Powered Add-On vehicle Bolt Power Pro once Card F CAD + Gate G1 pass", () => {
     const heldBack = VEHICLE_READINESS_AUDIT.filter((e) => !e.ready);
     expect(heldBack).toEqual([]);
 
-    // At Rank 5 (1800 XP) without Sandbox Unlock All, Rank 6 Bolt Power Mech remains locked until 2700 XP
+    // At Rank 5 (1800 XP) without Sandbox Unlock All, Rank 6 Bolt Power Pro remains locked until 2700 XP
     const rank5Split = resolvePhase4VehicleRoster({
       ...emptyProgression(),
       totalXp: 1_800,
@@ -268,7 +268,8 @@ describe("Phase 4 name alignment (§5.2) & crisp SVG thumbnails", () => {
       ["Catamaran / Speedboat", "seed-catamaran", "Catamaran Boat"],
       ["Twin-Blade Rescue Helicopter", "seed-helicopter", "Rescue Helicopter"],
       ["Space Shuttle Orbiter", "seed-shuttle", "Space Shuttle"],
-      ["Bolt Mech", "seed-mech", "Bolt Power Mech"],
+      ["Bolt Mech", "seed-mech", "Bolt Power Pro"],
+      ["Bolt Power Mech", "seed-mech", "Bolt Power Pro"], // pre-2026-11-03 name keeps resolving
     ];
 
     for (const [aliasName, expectedId, expectedCanonicalName] of aliasPairs) {
@@ -421,12 +422,12 @@ describe("Phase 4 locked-card guidance & grandfathering (§5.3)", () => {
       "seed-mech",
     ]);
 
-    // Rank 5 (1800 XP): all 8 Rank 2-5 vehicles unlocked; Rank 6 Bolt Power Mech stays locked
+    // Rank 5 (1800 XP): all 8 Rank 2-5 vehicles unlocked; Rank 6 Bolt Power Pro stays locked
     const rank5 = mergePhase4Roster([], { ...emptyProgression(), totalXp: 1800 });
     expect(rank5.lockedVehicles.map((l) => l.entry.id)).toEqual(["seed-mech"]);
     expect(rank5.enabledToys).toHaveLength(10);
 
-    // Rank 6 (2700 XP): all 9 Rank 2-6 vehicles including Bolt Power Mech unlocked; 0 locked
+    // Rank 6 (2700 XP): all 9 Rank 2-6 vehicles including Bolt Power Pro unlocked; 0 locked
     const rank6 = mergePhase4Roster([], { ...emptyProgression(), totalXp: 2700 });
     expect(rank6.lockedVehicles).toHaveLength(0);
     expect(rank6.enabledToys).toHaveLength(11);
