@@ -269,9 +269,11 @@ async function scenarioXp600(cdp) {
   await gotoApp(cdp, { totalXp: 600 });
   await openToyBox(cdp);
   const locked = await cdp.evaluate(
-    `[...document.querySelectorAll(".tv-roster-card-lock")].length`,
+    `[...document.querySelectorAll(".tv-roster-card-lock")].map((el) => el.getAttribute("aria-label") || "")`,
   );
-  check("promote-at-600", locked === 4, `locked=${locked}`);
+  // Ranks 4 to 6 are still locked at 600 XP: Prop Aeroplane, Catamaran Boat, Rescue Helicopter, Space Shuttle and (Phase 4
+  // promoted it to ready) the Rank 6 Bolt Power Pro. This was `=== 4` before the Rank 6 vehicle shipped.
+  check("promote-at-600", locked.length === 5, `locked=${locked.length}`);
   const body = await cdp.evaluate(`document.body.textContent || ""`);
   check(
     "motorbike-selectable",
@@ -284,16 +286,18 @@ async function scenarioXp1800(cdp) {
   await gotoApp(cdp, { totalXp: 1800 });
   await openToyBox(cdp);
   const locked = await cdp.evaluate(
-    `[...document.querySelectorAll(".tv-roster-card-lock")].length`,
+    `[...document.querySelectorAll(".tv-roster-card-lock")].map((el) => el.getAttribute("aria-label") || "")`,
   );
-  check("promote-at-1800", locked === 0, `locked=${locked}`);
+  // At 1800 XP only the Rank 6 vehicle is still locked (tests/phase4-readiness.test.ts pins lockedVehicles = ["seed-mech"]).
+  check("promote-at-1800", locked.length === 1, `locked=${locked.length}`);
   const body = await cdp.evaluate(`document.body.textContent || ""`);
   check(
     "rank5-craft-selectable",
     body.includes("Rescue Helicopter") &&
       body.includes("Space Shuttle") &&
-      !body.includes("Bolt Power Pro"),
-    "Rank 5 craft unlocked, unverified Rank 6 mech held back",
+      !locked.some((l) => l.includes("Rescue Helicopter") || l.includes("Space Shuttle")) &&
+      locked.some((l) => l.includes("Bolt Power Pro")),
+    "Rank 5 craft unlocked, Rank 6 Bolt Power Pro still locked",
   );
 }
 

@@ -306,6 +306,16 @@ Model: `2.5 kPa`, two orifices in series (the `38.1 mm2` valve port and the inse
 | bare socket (tunnel exit, `52.6 mm2`) | about `9.2 gf` | about `1.4x` |
 | T6 old body, bare socket (`O5` passages) | about `5.1 gf` | about `0.75x` |
 
+**What moves the ratio (read this first if the truck only just fails).** Over drag = thrust / (rolling coefficient x mass), and thrust scales with balloon pressure. Starting from the best insert (`9.4 gf` at `2.5 kPa`, `0.045`, `150 g`):
+
+| Change | Value | Over drag |
+| :--- | :--- | ---: |
+| Truck mass | `110 g` / `120 g` / `150 g` / `175 g` / `200 g` | `1.9x` / `1.7x` / `1.4x` / `1.2x` / `1.0x` |
+| Rolling coefficient (at `150 g`) | `0.035` / `0.045` / `0.060` | `1.8x` / `1.4x` / `1.0x` |
+| Balloon pressure (at `150 g`) | `1.5` / `2.0` / `2.5` / `3.0 kPa` | `0.8x` / `1.1x` / `1.4x` / `1.7x` |
+
+The `1.3x` rule holds up to a truck mass of about `160 g` at the model's coefficient and pressure, and the ratio reaches `1.0x` near `210 g`. The model uses a constant `2.5 kPa`; a real latex balloon's pressure is highest early in the burn and falls as it deflates, so the mean over the burn may sit below that. The video acceleration in T4 shows the actual curve: compare the first and last quarter of the burn before blaming the passages.
+
 The valve port (`38.1 mm2`) is the limit: the series ceiling is `9.7 gf`, so `O8.0` should buy almost nothing over `O6.1`. The margin over the `1.3x` rule is thin (`1.38x`): if the truck only just fails, check T0 and T1 first, because mass and drag move the ratio as much as the model does. If it moves clearly less than predicted, say so in the record and fix section 2; if it moves with the old body (T6), the passage model is wrong.
 
 ### 10.4 Test A: pass rules (agreed by Dan, 2026-11-02) and what each outcome means
