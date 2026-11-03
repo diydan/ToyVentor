@@ -24,10 +24,10 @@ export const PROP_TYPES = [
 export type PropType = (typeof PROP_TYPES)[number];
 
 type IdleKind = "sway" | "bob" | "none";
-type PokeKind = "wiggle" | "hop" | "squash" | "shake" | "swing";
+type PokeKind = "wiggle" | "hop" | "squash" | "shake" | "swing" | "none";
 export type UseKind =
   | "light" | "fruit" | "coconuts" | "snow" | "berries" | "rain" | "sprout" | "topple" | "flutter" | "roll" | "settle" | "squish"
-  | "spin" | "boom" | "windmill" | "hat" | "sleep" | "pluck" | "pop" | "bark" | "chime" | "none";
+  | "spin" | "boom" | "windmill" | "hat" | "sleep" | "pluck" | "pop" | "bark" | "chime" | "stack" | "none";
 
 export interface PropSpec {
   /** The vocabulary noun it is called; null only for the fallback spec of an unknown prop type. */
@@ -58,7 +58,7 @@ export const PROP_SPECS: Record<PropType, PropSpec> = {
   sandcastle: { noun: "sandcastle", color: "yellow", idle: "none", poke: "squash", use: "none" },
   snowman: { noun: "snowman", color: "white", idle: "none", poke: "wiggle", use: "hat" },
   igloo: { noun: "igloo", color: "white", idle: "none", poke: "squash", use: "none" },
-  blocks: { noun: "blocks", color: "colorful", idle: "none", poke: "wiggle", use: "topple" },
+  blocks: { noun: "blocks", color: "colorful", idle: "none", poke: "none", use: "stack" },
   books: { noun: "books", color: "colorful", idle: "none", poke: "wiggle", use: "flutter" },
   chair: { noun: "chair", color: "orange", idle: "none", poke: "wiggle", use: "settle" },
   plant: { noun: "plant", color: "green", idle: "sway", poke: "squash", use: "sprout" },
@@ -408,6 +408,23 @@ export function createPropFx(deps: PropFxDeps) {
     }, () => restoreKid(inst, top));
     tone(160, 0.25, 0.14, "sine", 0.12, 80);
   }
+  /**
+   * Blocks: a tap adds a block to the tower (`holder.userData.stack`, blockTower.ts: it falls, thuds, the tower wobbles, the notes climb a scale) and, on a full tower, brings it all down.
+   * A blocks prop built some other way, with no tower, topples its top block instead.
+   */
+  function useStack(inst: PropInst) {
+    const stack = inst.holder.userData.stack as (() => { kind: "added"; note: number; landsIn: number } | { kind: "crash" } | { kind: "busy" }) | undefined;
+    if (!stack) { useTopple(inst); return; }
+    const r = stack();
+    if (r.kind === "added") {
+      tone(150, r.landsIn, 0.07, "square", 0.05, 100);                                       // the thud
+      tone(r.note, r.landsIn, 0.3, "triangle", 0.12);
+      tone(r.note * 2, r.landsIn, 0.1, "sine", 0.04);
+    } else if (r.kind === "crash") {
+      for (let i = 0; i < 7; i++) tone(95 + (i % 3) * 22, 0.1 + i * 0.11, 0.16, "sawtooth", 0.08, 45);        // blocks clattering down
+      tone(70, 0.05, 0.5, "square", 0.06, 35);
+    }
+  }
   function useFlutter(inst: PropInst) {
     const ks = kidsOf(inst);
     play(inst, "use", 1.1, (k) => {
@@ -463,6 +480,7 @@ export function createPropFx(deps: PropFxDeps) {
       case "rain": useRain(inst); break;
       case "sprout": useSprout(inst); break;
       case "topple": useTopple(inst); break;
+      case "stack": useStack(inst); break;
       case "flutter": useFlutter(inst); break;
       case "roll": useRoll(inst); break;
       case "settle": useSettle(inst); break;

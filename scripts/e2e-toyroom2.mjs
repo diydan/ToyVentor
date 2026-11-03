@@ -198,6 +198,68 @@ async function check_xylophone(cdp) {
   await cdp.ev(`(() => { const w = window.__tvWorld; w.acts.reset(); w.P.busy = false; w.P.hop = 0; return true; })()`);
 }
 
+// ---- the block tower: each tap stacks a block, the tap on a full tower brings it down, then it is rebuilt ----
+const blocksState = (cdp) => cdp.ev(`(() => { const i = window.__tvWorld.props.list().find((p) => p.type === "blocks"); const b = i.holder.userData.blocks; const t = i.holder.userData.tower; return { layers: t.layers, phase: t.phase, visible: b.filter((m) => m.visible).length, ys: b.map((m) => +m.position.y.toFixed(3)), xs: b.map((m) => +m.position.x.toFixed(2)) }; })()`);
+const blockScreen = (cdp, k) => cdp.ev(`(() => { const i = window.__tvWorld.props.list().find((p) => p.type === "blocks"); const m = i.holder.userData.blocks[${k}]; const v = m.getWorldPosition(new window.__tvDebug.camera.position.constructor()).project(window.__tvDebug.camera); const r = document.querySelector("canvas").getBoundingClientRect(); return { x: r.left + (v.x * 0.5 + 0.5) * r.width, y: r.top + (-v.y * 0.5 + 0.5) * r.height, on: Math.abs(v.x) < 0.95 && Math.abs(v.y) < 0.95 }; })()`);
+async function check_blocks(cdp) {
+  await cdp.ev(`(() => { const w = window.__tvWorld; if (w.acts) w.acts.reset(); w.P.busy = false; w.P.hop = 0; return true; })()`);
+  check("setup: the Toy Room has blocks", Boolean(await prop(cdp, "blocks")));
+  await stage(cdp, "blocks", 1.9);
+  await shot(cdp, "8-blocks-pile");
+  const s0 = await blocksState(cdp);
+  check("blocks: the room starts with the old pile (two layers, three blocks showing)", s0.layers === 2 && s0.visible === 3, JSON.stringify(s0));
+  // one tap on the pile: it names them and a block falls in from above
+  await clearToast(cdp);
+  const top0 = await blockScreen(cdp, 2);
+  check("blocks: the pile is on screen to tap", top0.on, JSON.stringify(top0));
+  await cdp.tapAt(top0.x, top0.y);
+  await sleep(150);
+  const mid = await blocksState(cdp);
+  check("blocks: a tap names them and a new block is falling in from high above", (await toastText(cdp)) === "Colorful blocks" && mid.layers === 3 && mid.visible === 4 && mid.ys[3] > 1.8, JSON.stringify({ toast: await toastText(cdp), mid }));
+  await sleep(1500);
+  const landed = await blocksState(cdp);
+  check("blocks: it lands on top of the pile, one block higher than the one below", landed.layers === 3 && Math.abs(landed.ys[3] - 2.25) < 0.02 && Math.abs(landed.ys[2] - 1.35) < 0.02, JSON.stringify(landed));
+  check("blocks: Kip was not sent anywhere by it", (await phase(cdp)) === "idle");
+  // keep building, one tap on the top block each time
+  const hits = [];
+  for (let k = 0; k < 4; k++) {
+    await clearToast(cdp);
+    const st = await blocksState(cdp);
+    const t = await blockScreen(cdp, st.layers);
+    hits.push(t.on);
+    await cdp.tapAt(t.x, t.y);
+    await sleep(1300);
+  }
+  const tall = await blocksState(cdp);
+  check("blocks: it can be built up by tapping the top, to seven layers (eight blocks)", tall.layers === 7 && tall.visible === 8 && hits.every(Boolean), JSON.stringify({ tall, hits }));
+  check("blocks: every block lands where it belongs (a straight, tall tower)", tall.ys.every((y, i) => Math.abs(y - (i < 2 ? 0.45 : 0.45 + 0.9 * (i - 1))) < 0.03), JSON.stringify(tall.ys));
+  await shot(cdp, "9-block-tower");
+  // the tap on a full tower: it comes down
+  await clearToast(cdp);
+  const top = await blockScreen(cdp, 7);
+  await cdp.tapAt(top.x, top.y);
+  await sleep(120);
+  check("blocks: the tap on a full tower brings it down", (await blocksState(cdp)).phase === "crashing");
+  let shotCrash = false;
+  const fall = await sample(cdp, 2600, async () => { const s = await blocksState(cdp); if (!shotCrash && s.xs.some((x) => Math.abs(x) > 1.2)) { shotCrash = true; await shot(cdp, "10-block-crash"); } return s; }, 60);
+  const reach = Math.max(...fall.map((s) => Math.max(...s.xs.map((x) => Math.abs(x)))));
+  check("blocks: the blocks scatter over the floor, near enough to stay on screen", reach > 1.2 && reach <= 3.25, String(reach));
+  check("blocks: none goes through the floor", fall.every((s) => s.ys.every((y) => y > 0.44)), String(Math.min(...fall.map((s) => Math.min(...s.ys)))));
+  // while it falls or is put back, a tap adds nothing
+  const dur = await blocksState(cdp);
+  if (dur.phase !== "standing") {
+    const tt = await blockScreen(cdp, 0);
+    await cdp.tapAt(tt.x, tt.y);
+    await sleep(100);
+    check("blocks: a tap while it is down adds nothing", (await blocksState(cdp)).layers === dur.layers, JSON.stringify({ before: dur.layers, after: (await blocksState(cdp)).layers }));
+  }
+  await waitFor(async () => (await blocksState(cdp)).phase === "standing", { timeoutMs: 20000, label: "the pile is rebuilt" });
+  await sleep(300);
+  const back = await blocksState(cdp);
+  check("blocks: then the old pile is back as it was, ready to build again", back.layers === 2 && back.visible === 3 && Math.abs(back.ys[0] - 0.45) < 0.02 && Math.abs(back.ys[2] - 1.35) < 0.02, JSON.stringify(back));
+  await shot(cdp, "11-blocks-rebuilt");
+}
+
 async function main() {
   rmSync(PROFILE, { recursive: true, force: true });
   const dev = spawn("npx", ["vite", "--port", String(DEV_PORT), "--strictPort"], { cwd: ROOT, stdio: "ignore" });
@@ -318,6 +380,7 @@ async function main() {
     // ---- the xylophone: tap a bar to hear it; tap the frame and Kip plays a tune ----
     await cdp.ev(`(() => { const w = window.__tvWorld; if (w.acts) w.acts.reset(); w.fetch.cancel(); w.P.busy = false; w.P.hop = 0; return true; })()`);
     await check_xylophone(cdp);
+    await check_blocks(cdp);
 
     check("no page exceptions", cdp.exceptions.length === 0, cdp.exceptions.slice(0, 3).join(" | "));
     killAll();
