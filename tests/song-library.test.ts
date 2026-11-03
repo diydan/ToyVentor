@@ -113,7 +113,10 @@ describe("the starter library", () => {
   it("the long raw files are not in the repo: .local/ is ignored and no raw Mureka file is tracked", () => {
     const tracked = execSync("git ls-files", { cwd: root, encoding: "utf8", maxBuffer: 64 * 1024 * 1024 }).split("\n");
     expect(tracked.filter((f) => f.startsWith(".local/"))).toEqual([]);
-    expect(tracked.filter((f) => /\.(mp3|wav|flac)$/i.test(f) && f.includes("song"))).toEqual([]);
+    // the only song audio in the repo is the excerpts the index lists: a long raw file, or one not in the index, fails here
+    const shipped = new Set(parsed.songs.map((s) => `public/kip/songs/${s.file}`));
+    const stray = tracked.filter((f) => /\.(mp3|wav|flac|m4a|ogg)$/i.test(f) && /song/i.test(f) && !shipped.has(f));
+    expect(stray, "audio with 'song' in its path that is not in the library index").toEqual([]);
     expect(() => execSync("git check-ignore -q .local/songs/raw/x.mp3", { cwd: root })).not.toThrow();
     expect(existsSync(join(root, ".dev.vars")) ? statSync(join(root, ".dev.vars")).isFile() : true).toBe(true);
     expect(() => execSync("git check-ignore -q .dev.vars", { cwd: root })).not.toThrow(); // the key's file is never committed

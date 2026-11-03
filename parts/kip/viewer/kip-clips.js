@@ -180,13 +180,24 @@ export function plantBakedClip(THREE, clip, { xzScale = 0.3, maxLift = 14, deadz
  * Natural hands for a BAKED clip (a retargeted Mixamo dance). The retarget copies the source hand, and on Kip's arm that can bend the wrist 60 degrees or more (Samba: 59) and
  * twist the forearm until the thumb points down. Each hand's local attitude is split into a twist about the forearm and a swing (the wrist bend); the bend is capped at `maxBend`
  * degrees and the twist at `maxTwist`, the rest is kept. Mutates and returns the clip.
+ *
+ * The cap is SOFT: up to 70 % of it a hand is left exactly as it was, and beyond that it eases toward the cap (tanh), so the cap is never passed but there is no wall. A hard
+ * clamp makes the hand stop dead at the cap and the moment the source comes back inside it the hand starts again: a kink in the wrist's speed, seen as a jerk (16 degrees in one frame
+ * where 3 is usual, on Silly Dancing and the guitar strum).
  */
+export function softCap(x, cap) {
+  const knee = 0.7 * cap;
+  if (x <= knee) return x;
+  const room = cap - knee;
+  return knee + room * Math.tanh((x - knee) / room);
+}
+
 export function limitHands(THREE, clip, { maxBend = 35, maxTwist = 100 } = {}) {
   const D = Math.PI / 180;
   for (const nm of ['LeftHand', 'RightHand']) {
     const t = clip.tracks.find((x) => x.name === `kip_${nm}.quaternion`);
     if (!t) continue;
-    const q = new THREE.Quaternion(), tw = new THREE.Quaternion(), sw = new THREE.Quaternion(), id = new THREE.Quaternion();
+    const q = new THREE.Quaternion(), tw = new THREE.Quaternion(), sw = new THREE.Quaternion(), swing = new THREE.Quaternion(), id = new THREE.Quaternion();
     let prev = null;
     for (let i = 0; i < t.values.length / 4; i++) {
       q.set(t.values[i * 4], t.values[i * 4 + 1], t.values[i * 4 + 2], t.values[i * 4 + 3]);
@@ -195,10 +206,13 @@ export function limitHands(THREE, clip, { maxBend = 35, maxTwist = 100 } = {}) {
       sw.copy(q).multiply(tw.clone().invert());
       if (sw.w < 0) { sw.x = -sw.x; sw.y = -sw.y; sw.z = -sw.z; sw.w = -sw.w; }
       const bend = 2 * Math.acos(Math.min(1, sw.w)) / D;
-      if (bend > maxBend) sw.copy(id).slerp(sw, maxBend / bend);
+      const eased = bend > 1e-6 ? softCap(bend, maxBend) : bend;
+      // scale the swing's angle to `eased`: slerp from the identity toward a COPY of the swing (slerping toward `sw` itself after copying the identity into it
+      // makes both ends the identity, and every bend past the cap snapped to ZERO: a 35 degree jump in one frame)
+      if (eased < bend) { swing.copy(sw); sw.copy(id).slerp(swing, eased / bend); }
       let twist = 2 * Math.atan2(tw.y, tw.w) / D;
       if (twist > 180) twist -= 360; else if (twist < -180) twist += 360;
-      twist = Math.max(-maxTwist, Math.min(maxTwist, twist));
+      twist = Math.sign(twist) * softCap(Math.abs(twist), maxTwist);
       tw.set(0, Math.sin(twist * D / 2), 0, Math.cos(twist * D / 2));
       q.copy(sw).multiply(tw);
       if (prev && prev.dot(q) < 0) { q.x = -q.x; q.y = -q.y; q.z = -q.z; q.w = -q.w; }

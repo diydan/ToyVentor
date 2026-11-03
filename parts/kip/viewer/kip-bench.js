@@ -976,6 +976,9 @@ let activeClipName = null;
 // Dance party (kip-party.js): the clips that carry a tempo, and the party itself once mounted. `partyApi` is declared here so the frame loop can ask it
 // safely before the mount below has run.
 const danceTempos = [];
+// Clips whose feet are already solved onto the floor (every kip-clips.js clip, and each baked clip the bake tool planted): the grounder must not re-centre the body over them
+// frame by frame (see pinAndGroundKipFeet), or it drags the planted foot across the floor.
+const plantedClips = new Set();
 let partyApi = null;
 let partyCrownBefore = null;
 
@@ -1224,6 +1227,7 @@ async function init() {
     actions.set(entry.id, kipMixer.clipAction(makeKipClip(THREE, entry)));
     registerClip(entry.id, entry.label);
     if (entry.group === 'dance' && entry.bpm) danceTempos.push({ id: entry.id, bpm: entry.bpm, beats: entry.beats, group: 'dance' }); // the party picks from these
+    if (entry.plant) plantedClips.add(entry.id);
   }
 
   xbotVis.scale.multiplyScalar(83.5);
@@ -1263,6 +1267,7 @@ async function init() {
       actions.set(item.baked.id, kipMixer.clipAction(bakedToClip(THREE, item.baked)));
       registerClip(item.baked.id, item.c.label);
       // a baked clip with a tempo is offered to the party: a dance is picked by the tempo, a movement-break move or a guitar strum only when a child chooses it
+      if (item.baked.planted) plantedClips.add(item.baked.id);
       if (['dance', 'move', 'music'].includes(item.baked.group) && item.baked.beats) danceTempos.push({ id: item.baked.id, bpm: item.baked.bpm, beats: item.baked.beats, group: item.baked.group });
     }
   } catch (err) {
@@ -2784,8 +2789,12 @@ function pinAndGroundKipFeet(isLocomoting, dt = 0) {
     loco.hasPrevStance = false;
     // Stationary clips: keep weighted stance midpoint horizontally anchored inside mover so sways never skate!
     if (activeClipName !== 'SambaDance' && loco.jumpY <= 0.05) {
-      const wL = Math.exp(-Math.max(0, minYL - minY) * 0.6);
-      const wR = Math.exp(-Math.max(0, minYR - minY) * 0.6);
+      // A clip with its feet already planted gets EQUAL weights. The weighting below follows whichever foot is lower, which is right for a clip whose feet slip; for a planted
+      // clip it is the cause of slipping: each time a foot lifts the weights swing, the body jumps toward the planted foot (up to 8 mm in a frame) and that foot slides about
+      // 20 mm across the floor. The midpoint of two feet that stay put does not move, so equal weights hold the body still over them.
+      const planted = plantedClips.has(activeClipName);
+      const wL = planted ? 1 : Math.exp(-Math.max(0, minYL - minY) * 0.6);
+      const wR = planted ? 1 : Math.exp(-Math.max(0, minYR - minY) * 0.6);
       const wSum = wL + wR;
       if (wSum > 1e-4) {
         kip.grounder.position.x = -(soleLocalL.x * wL + soleLocalR.x * wR) / wSum;

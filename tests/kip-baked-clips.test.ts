@@ -265,6 +265,28 @@ describe("baked clips: the shipped data (public/kip/mixamo/baked)", () => {
     }
   });
 
+  it("the hands do not jerk: in no shipped clip does a frame turn a hand more than 3.5 times as fast as the clip's usual (95th percentile) speed", () => {
+    // The wrist limiter once snapped every bend past the cap to ZERO (a 35 degree jump in one frame; 16 degrees against a usual 3 on Silly Dancing). Smooth hands are part of a clip.
+    for (const c of index.clips) {
+      const b = baked.get(c.id)!;
+      const steps: number[] = [];
+      let top = 0;
+      for (const h of ["LeftHand", "RightHand"]) for (let i = 1; i < b.frames; i++) {
+        const a = q(b.q[h], i - 1), z = q(b.q[h], i);
+        const s = (2 * Math.acos(Math.min(1, Math.abs(a.x * z.x + a.y * z.y + a.z * z.z + a.w * z.w))) * 180) / Math.PI;
+        steps.push(s);
+        top = Math.max(top, s);
+      }
+      steps.sort((x, y) => x - y);
+      const p95 = steps[Math.floor(steps.length * 0.95)]!;
+      expect(top, `${c.id}: a hand turns ${top.toFixed(1)} degrees in one frame, usual ${p95.toFixed(1)}`).toBeLessThanOrEqual(3.5 * (p95 + 0.5));
+    }
+  });
+
+  it("every shipped dance, move and strum has planted feet, because the bench holds the body still over planted feet (a clip whose feet slip would be dragged)", () => {
+    for (const c of index.clips.filter((x: any) => ["dance", "move", "music"].includes(x.group))) expect(c.planted, c.id).toBe(true);
+  });
+
   it("with the procedural dances, some dance fits every song from 64 to 170 bpm (the song maker has no tempo control)", () => {
     const proc = (KIP_CLIPS as any[]).filter((c) => c.group === "dance").map((c) => ({ id: c.id, bpm: c.bpm }));
     const shipped = index.clips.filter((c: any) => c.group === "dance" && c.bpm).map((c: any) => ({ id: c.id, bpm: c.bpm }));

@@ -106,6 +106,17 @@ describe("party mode wiring", () => {
     expect(start).toMatch(/The song could not be played \(\$\{why\}\)/);
   });
 
+  it("the bench holds the body still over planted feet: equal foot weights for planted clips, which are every procedural clip and each baked clip the bake planted", () => {
+    const page = read("parts/kip/viewer/kip-bench.js");
+    // the weighted midpoint follows the lower foot, so it lurches (up to 8 mm in a frame) and slides a planted foot about 20 mm every time a foot lifts
+    expect(page).toContain("const planted = plantedClips.has(activeClipName);");
+    expect(page).toMatch(/const wL = planted \? 1 : Math\.exp\(/);
+    expect(page).toMatch(/const wR = planted \? 1 : Math\.exp\(/);
+    expect(page).toContain("if (entry.plant) plantedClips.add(entry.id);");
+    expect(page).toContain("if (item.baked.planted) plantedClips.add(item.baked.id);");
+    expect(page).toMatch(/const plantedClips = new Set\(\);/);
+  });
+
   it("the glue never keeps time of its own: one clock, the audio clock", () => {
     const code = read("parts/kip/viewer/kip-party.js").replace(/\/\/.*$/gm, "");
     expect(code).not.toMatch(/\b(setInterval|setTimeout|Date\.now)\b/); // performance.now() is only used to ask the audio clock "where is the song now?"

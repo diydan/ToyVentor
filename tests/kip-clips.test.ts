@@ -11,7 +11,7 @@ import { MAX_BPM, MIN_BPM, TEMPO_RATE_MAX, TEMPO_RATE_MIN, pickDance, tempoRate 
 import { TEMPO_BPM, TEMPOS } from "../shared/songCards";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
-const { KIP_CLIPS, KIP_CLIP_JOINTS, PROP_CLIPS, clipForProp, makeKipClip, HIP_Y, REST_LEGS, LEG_RIG, legFK, FLIPPED_PROP_CLIPS, buildKipClip, plantBakedClip, limitHands } = clipsMod as any;
+const { KIP_CLIPS, KIP_CLIP_JOINTS, PROP_CLIPS, clipForProp, makeKipClip, HIP_Y, REST_LEGS, LEG_RIG, legFK, FLIPPED_PROP_CLIPS, buildKipClip, plantBakedClip, limitHands, softCap } = clipsMod as any;
 const { PROP_OPTIONS, WORKSHOP_PROPS } = wardrobe as any;
 
 const root = join(__dirname, "..");
@@ -213,6 +213,57 @@ describe("kip clips: planted feet and natural hands", () => {
     const twist = deg(2 * Math.atan2(r.y, r.w));
     expect(Math.abs(twist), "twist cap").toBeLessThanOrEqual(100.5);
     expect(read("LeftHand")[0]!.angleTo(leftBefore), "a hand inside the limits must not change").toBeLessThan(0.01);
+  });
+
+  /** A hand that sweeps from straight to 71 degrees of bend (about x) over 90 frames, 0.8 degrees a frame, as one frame-by-frame list of bends in degrees after `limit`. */
+  function bendsAfter(limit: (clip: any) => void): number[] {
+    const n = 90, times = new Float32Array(n), vals = new Float32Array(n * 4);
+    for (let i = 0; i < n; i++) {
+      times[i] = i / 30;
+      new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), (i * 0.8 * Math.PI) / 180).toArray(vals, i * 4);
+    }
+    const clip = new THREE.AnimationClip("h", -1, [new THREE.QuaternionKeyframeTrack("kip_RightHand.quaternion", times, vals)]);
+    limit(clip);
+    const v = clip.tracks[0]!.values;
+    return Array.from({ length: n }, (_, i) => (2 * Math.acos(Math.min(1, Math.abs(v[i * 4 + 3]!))) * 180) / Math.PI);
+  }
+
+  /** The limiter's rules as a function of the limiter, so it can be run on a hard clamp. Returns the failures. */
+  function limiterFailures(limit: (clip: any) => void): string[] {
+    const bad: string[] = [];
+    const b = bendsAfter(limit);
+    for (let i = 0; i < b.length; i++) {
+      const src = i * 0.8;
+      if (src <= 24.5 && Math.abs(b[i]! - src) > 1e-3) { bad.push(`frame ${i}: a ${src.toFixed(1)} degree bend (under 70% of the cap) must be left alone, got ${b[i]!.toFixed(2)}`); break; }
+    }
+    if (Math.max(...b) > 35.001) bad.push(`the cap of 35 was passed: ${Math.max(...b).toFixed(2)}`);
+    for (let i = 1; i < b.length; i++) if (b[i]! < b[i - 1]! - 1e-6) { bad.push("the bend must never go back while the source keeps rising"); break; }
+    // a smooth wrist: its speed changes gently. A wall (the hand stops dead at the cap) makes the speed drop by the whole 0.8 degrees in one frame.
+    let corner = 0;
+    for (let i = 2; i < b.length; i++) corner = Math.max(corner, Math.abs(b[i]! - 2 * b[i - 1]! + b[i - 2]!));
+    if (corner > 0.3) bad.push(`the wrist's speed has a corner of ${corner.toFixed(2)} degrees a frame`);
+    return bad;
+  }
+
+  it("eases into the wrist cap: below 70 % untouched, never past it, never reversing, and no corner in the wrist's speed", () => {
+    expect(limiterFailures((c) => limitHands(THREE, c))).toEqual([]);
+    expect(softCap(10, 35)).toBe(10);
+    expect(softCap(24.5, 35)).toBe(24.5);
+    expect(softCap(1000, 35)).toBeLessThanOrEqual(35);
+    expect(softCap(1000, 35)).toBeGreaterThan(34.99);
+    for (let x = 0; x < 200; x += 0.5) expect(softCap(x + 0.5, 35), String(x)).toBeGreaterThanOrEqual(softCap(x, 35));
+  });
+
+  it("fails the same rules on a hard clamp (so the check can fail): the wrist stops dead at the cap", () => {
+    const hard = (clip: any) => {
+      const t = clip.tracks[0], q = new THREE.Quaternion();
+      for (let i = 0; i < t.values.length / 4; i++) {
+        q.set(t.values[i * 4], t.values[i * 4 + 1], t.values[i * 4 + 2], t.values[i * 4 + 3]);
+        const bend = (2 * Math.acos(Math.min(1, q.w)) * 180) / Math.PI;
+        if (bend > 35) new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), (35 * Math.PI) / 180).toArray(t.values, i * 4);
+      }
+    };
+    expect(limiterFailures(hard).join("|")).toMatch(/corner/);
   });
 
   it("never bends a wrist more than 20 degrees in a prop clip with a retargeted arm (a natural grip)", () => {
