@@ -285,6 +285,8 @@ async function main() {
       check(`tour ${w}: has props on the lane`, Array.isArray(laneTypes) && laneTypes.length > 0, JSON.stringify(laneTypes));
       for (const type of laneTypes ?? []) {
         let at = null;
+        // Tapping a toy sends Kip off to play with it (hug, kick, strum, sleep...), and a tap during that is deliberately swallowed: end whatever the last prop started, so each prop is tapped on its own.
+        await cdp.ev(`(() => { const w = window.__tvWorld; if (w.acts) w.acts.reset(); if (w.sleep) w.sleep.reset(); if (w.bubbles) w.bubbles.reset(); w.P.busy = false; w.P.hop = 0; return true; })()`);
         try { at = await bringIntoView(cdp, type); } catch { at = null; }
         await clearToast(cdp);
         await sleep(1000); // past the repeat-word guard

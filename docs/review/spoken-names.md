@@ -22,8 +22,9 @@ The text-to-speech model is given only the words and decides the language itself
 instruction written into the text is read aloud, not obeyed). A phrase spelled identically in two languages has no signal: `luz azul` is valid
 Spanish and Portuguese. The voice may answer in the other language or accent.
 
-**What the game speaks today:** 66 phrases in 7 languages = 462 clips. **8 texts** are spelled the same in two languages:
+**What the game speaks today:** 81 phrases in 7 languages = 567 clips. **10 texts** are spelled the same in two languages:
 
+- `orange`: English + Français + Deutsch (orange/-)
 - `luz azul`: Español + Português (light/blue)
 - `casa azul`: Español + Português (house/blue)
 - `pino verde`: Español + Italiano (pine/green)
@@ -32,6 +33,7 @@ Spanish and Portuguese. The voice may answer in the other language or accent.
 - `planta verde`: Español + Português (plant/green)
 - `luz verde`: Español + Português (light/green)
 - `luz rosa`: Español + Português (light/pink)
+- `pera verde`: Español + Italiano + Português (pear/green)
 
 **Please listen to these and tell us which language and accent you hear.** If one is wrong, the fix is to speak that phrase with the device voice and
 its explicit language tag, which cannot mis-detect. Free-form Forge names (spec: forge-ai-spec.md) are the larger risk: a short word such as `taco`
@@ -41,19 +43,21 @@ For comparison, over every noun and part in every colour (an upper bound; the ga
 
 | Language | Phrases | Spelled the same as another language | Share |
 |---|---:|---:|---:|
-| English | 690 | 4 | 1% |
-| Español | 690 | 16 | 2% |
-| Français | 690 | 2 | 0% |
-| Deutsch | 690 | 2 | 0% |
-| Italiano | 690 | 5 | 1% |
-| Português | 690 | 13 | 2% |
-| Türkçe | 690 | 0 | 0% |
+| English | 870 | 5 | 1% |
+| Español | 870 | 25 | 3% |
+| Français | 870 | 3 | 0% |
+| Deutsch | 870 | 3 | 0% |
+| Italiano | 870 | 9 | 1% |
+| Português | 870 | 24 | 3% |
+| Türkçe | 870 | 0 | 0% |
 
 Which languages collide (distinct spellings):
 
-- es + pt: 11
-- es + it + pt: 2
+- es + pt: 18
+- es + it + pt: 4
 - es + it: 2
+- it + pt: 2
+- de + en + fr: 1
 - de + en + fr + it: 1
 - de + en: 1
 - en + es: 1
@@ -61,6 +65,7 @@ Which languages collide (distinct spellings):
 
 A few examples (first 24):
 
+- `orange orange`: en, fr, de
 - `skateboard`: en, fr, de, it
 - `spoiler`: en, de
 - `torso`: en, es
@@ -80,6 +85,10 @@ A few examples (first 24):
 - `planta verde`: es, pt
 - `planta azul`: es, pt
 - `planta rosa`: es, pt
+- `cama verde`: es, pt
+- `cama azul`: es, pt
+- `cama rosa`: es, pt
+- `pera verde`: es, it, pt
 
 ## English (`en`)
 
@@ -129,6 +138,21 @@ A few examples (first 24):
 | teddy | teddy bear | teddy bear | green teddy bear | orange teddy bear | |
 | ball | ball | ball | green ball | orange ball | |
 | cushions | cushions | cushions | green cushions | orange cushions | |
+| bed | bed | bed | green bed | orange bed | |
+| guitar | guitar | guitar | green guitar | orange guitar | |
+| bubbles | bubbles | bubbles | green bubbles | orange bubbles | |
+| dog | dog | dog | green dog | orange dog | |
+| apple | apple | apple | green apple | orange apple | |
+| pear | pear | pear | green pear | orange pear | |
+| orange | orange | orange | green orange | orange orange | |
+| lemon | lemon | lemon | green lemon | orange lemon | |
+| cherries | cherries | cherries | green cherries | orange cherries | |
+| banana | banana | banana | green banana | orange banana | |
+| plum | plum | plum | green plum | orange plum | |
+| strawberry | strawberry | strawberry | green strawberry | orange strawberry | |
+| blueberries | blueberries | blueberries | green blueberries | orange blueberries | |
+| coconut | coconut | coconut | green coconut | orange coconut | |
+| pumpkin | pumpkin | pumpkin | green pumpkin | orange pumpkin | |
 
 **Describe & Build parts** (shown in blue):
 
@@ -220,6 +244,21 @@ A few examples (first 24):
 | teddy | teddy bear | osito de peluche | osito de peluche verde | osito de peluche naranja | |
 | ball | ball | pelota | pelota verde | pelota naranja | |
 | cushions | cushions | cojines | cojines verdes | cojines naranjas | |
+| bed | bed | cama | cama verde | cama naranja | |
+| guitar | guitar | guitarra | guitarra verde | guitarra naranja | |
+| bubbles | bubbles | burbujas | burbujas verdes | burbujas naranjas | |
+| dog | dog | perro | perro verde | perro naranja | |
+| apple | apple | manzana | manzana verde | manzana naranja | |
+| pear | pear | pera | pera verde | pera naranja | |
+| orange | orange | naranja | naranja verde | naranja naranja | |
+| lemon | lemon | limón | limón verde | limón naranja | |
+| cherries | cherries | cerezas | cerezas verdes | cerezas naranjas | |
+| banana | banana | plátano | plátano verde | plátano naranja | |
+| plum | plum | ciruela | ciruela verde | ciruela naranja | |
+| strawberry | strawberry | fresa | fresa verde | fresa naranja | |
+| blueberries | blueberries | arándanos | arándanos verdes | arándanos naranjas | |
+| coconut | coconut | coco | coco verde | coco naranja | |
+| pumpkin | pumpkin | calabaza | calabaza verde | calabaza naranja | |
 
 **Describe & Build parts** (shown in blue):
 
@@ -310,6 +349,21 @@ A few examples (first 24):
 | teddy | teddy bear | nounours | nounours vert | nounours orange | |
 | ball | ball | ballon | ballon vert | ballon orange | |
 | cushions | cushions | coussins | coussins verts | coussins orange | |
+| bed | bed | lit | lit vert | lit orange | |
+| guitar | guitar | guitare | guitare verte | guitare orange | |
+| bubbles | bubbles | bulles | bulles vertes | bulles orange | |
+| dog | dog | chien | chien vert | chien orange | |
+| apple | apple | pomme | pomme verte | pomme orange | |
+| pear | pear | poire | poire verte | poire orange | |
+| orange | orange | orange | orange verte | orange orange | |
+| lemon | lemon | citron | citron vert | citron orange | |
+| cherries | cherries | cerises | cerises vertes | cerises orange | |
+| banana | banana | banane | banane verte | banane orange | |
+| plum | plum | prune | prune verte | prune orange | |
+| strawberry | strawberry | fraise | fraise verte | fraise orange | |
+| blueberries | blueberries | myrtilles | myrtilles vertes | myrtilles orange | |
+| coconut | coconut | noix de coco | noix de coco verte | noix de coco orange | |
+| pumpkin | pumpkin | citrouille | citrouille verte | citrouille orange | |
 
 **Describe & Build parts** (shown in blue):
 
@@ -401,6 +455,21 @@ A few examples (first 24):
 | teddy | teddy bear | Teddybär | grüner Teddybär | oranger Teddybär | |
 | ball | ball | Ball | grüner Ball | oranger Ball | |
 | cushions | cushions | Kissen | grüne Kissen | orange Kissen | |
+| bed | bed | Bett | grünes Bett | oranges Bett | |
+| guitar | guitar | Gitarre | grüne Gitarre | orange Gitarre | |
+| bubbles | bubbles | Seifenblasen | grüne Seifenblasen | orange Seifenblasen | |
+| dog | dog | Hund | grüner Hund | oranger Hund | |
+| apple | apple | Apfel | grüner Apfel | oranger Apfel | |
+| pear | pear | Birne | grüne Birne | orange Birne | |
+| orange | orange | Orange | grüne Orange | orange Orange | |
+| lemon | lemon | Zitrone | grüne Zitrone | orange Zitrone | |
+| cherries | cherries | Kirschen | grüne Kirschen | orange Kirschen | |
+| banana | banana | Banane | grüne Banane | orange Banane | |
+| plum | plum | Pflaume | grüne Pflaume | orange Pflaume | |
+| strawberry | strawberry | Erdbeere | grüne Erdbeere | orange Erdbeere | |
+| blueberries | blueberries | Blaubeeren | grüne Blaubeeren | orange Blaubeeren | |
+| coconut | coconut | Kokosnuss | grüne Kokosnuss | orange Kokosnuss | |
+| pumpkin | pumpkin | Kürbis | grüner Kürbis | oranger Kürbis | |
 
 **Describe & Build parts** (shown in blue):
 
@@ -492,6 +561,21 @@ A few examples (first 24):
 | teddy | teddy bear | orsacchiotto | orsacchiotto verde | orsacchiotto arancione | |
 | ball | ball | palla | palla verde | palla arancione | |
 | cushions | cushions | cuscini | cuscini verdi | cuscini arancione | |
+| bed | bed | letto | letto verde | letto arancione | |
+| guitar | guitar | chitarra | chitarra verde | chitarra arancione | |
+| bubbles | bubbles | bolle di sapone | bolle di sapone verdi | bolle di sapone arancione | |
+| dog | dog | cane | cane verde | cane arancione | |
+| apple | apple | mela | mela verde | mela arancione | |
+| pear | pear | pera | pera verde | pera arancione | |
+| orange | orange | arancia | arancia verde | arancia arancione | |
+| lemon | lemon | limone | limone verde | limone arancione | |
+| cherries | cherries | ciliegie | ciliegie verdi | ciliegie arancione | |
+| banana | banana | banana | banana verde | banana arancione | |
+| plum | plum | prugna | prugna verde | prugna arancione | |
+| strawberry | strawberry | fragola | fragola verde | fragola arancione | |
+| blueberries | blueberries | mirtilli | mirtilli verdi | mirtilli arancione | |
+| coconut | coconut | noce di cocco | noce di cocco verde | noce di cocco arancione | |
+| pumpkin | pumpkin | zucca | zucca verde | zucca arancione | |
 
 **Describe & Build parts** (shown in blue):
 
@@ -583,6 +667,21 @@ A few examples (first 24):
 | teddy | teddy bear | ursinho de pelúcia | ursinho de pelúcia verde | ursinho de pelúcia laranja | |
 | ball | ball | bola | bola verde | bola laranja | |
 | cushions | cushions | almofadas | almofadas verdes | almofadas laranjas | |
+| bed | bed | cama | cama verde | cama laranja | |
+| guitar | guitar | violão | violão verde | violão laranja | |
+| bubbles | bubbles | bolhas de sabão | bolhas de sabão verdes | bolhas de sabão laranjas | |
+| dog | dog | cachorro | cachorro verde | cachorro laranja | |
+| apple | apple | maçã | maçã verde | maçã laranja | |
+| pear | pear | pera | pera verde | pera laranja | |
+| orange | orange | laranja | laranja verde | laranja laranja | |
+| lemon | lemon | limão | limão verde | limão laranja | |
+| cherries | cherries | cerejas | cerejas verdes | cerejas laranjas | |
+| banana | banana | banana | banana verde | banana laranja | |
+| plum | plum | ameixa | ameixa verde | ameixa laranja | |
+| strawberry | strawberry | morango | morango verde | morango laranja | |
+| blueberries | blueberries | mirtilos | mirtilos verdes | mirtilos laranjas | |
+| coconut | coconut | coco | coco verde | coco laranja | |
+| pumpkin | pumpkin | abóbora | abóbora verde | abóbora laranja | |
 
 **Describe & Build parts** (shown in blue):
 
@@ -674,6 +773,21 @@ A few examples (first 24):
 | teddy | teddy bear | oyuncak ayı | yeşil oyuncak ayı | turuncu oyuncak ayı | |
 | ball | ball | top | yeşil top | turuncu top | |
 | cushions | cushions | yastıklar | yeşil yastıklar | turuncu yastıklar | |
+| bed | bed | yatak | yeşil yatak | turuncu yatak | |
+| guitar | guitar | gitar | yeşil gitar | turuncu gitar | |
+| bubbles | bubbles | baloncuklar | yeşil baloncuklar | turuncu baloncuklar | |
+| dog | dog | köpek | yeşil köpek | turuncu köpek | |
+| apple | apple | elma | yeşil elma | turuncu elma | |
+| pear | pear | armut | yeşil armut | turuncu armut | |
+| orange | orange | portakal | yeşil portakal | turuncu portakal | |
+| lemon | lemon | limon | yeşil limon | turuncu limon | |
+| cherries | cherries | kirazlar | yeşil kirazlar | turuncu kirazlar | |
+| banana | banana | muz | yeşil muz | turuncu muz | |
+| plum | plum | erik | yeşil erik | turuncu erik | |
+| strawberry | strawberry | çilek | yeşil çilek | turuncu çilek | |
+| blueberries | blueberries | yaban mersinleri | yeşil yaban mersinleri | turuncu yaban mersinleri | |
+| coconut | coconut | hindistan cevizi | yeşil hindistan cevizi | turuncu hindistan cevizi | |
+| pumpkin | pumpkin | balkabağı | yeşil balkabağı | turuncu balkabağı | |
 
 **Describe & Build parts** (shown in blue):
 
