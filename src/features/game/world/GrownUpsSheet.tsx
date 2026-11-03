@@ -9,6 +9,7 @@ import { kipDemoUrl } from "../../../../shared/toycontract";
 import { postRoomPhoto } from "../../../lib/api";
 import type { TimeOfDayMode } from "../../../lib/timeOfDay";
 import { downscalePhoto } from "../../scan/scan";
+import { bypassGateSession, type ParentControlsSource } from "../../../lib/parentControls";
 import {
   getLocalPinCooldownUntil,
   requestGateChallenge,
@@ -44,6 +45,10 @@ export interface GrownUpsSheetProps {
   localDayKey?: string;
   demoMode?: boolean;
   onToggleDemoMode?: (next: boolean) => void;
+  /** Where the grown-up checks and limits stand: 'default' (on), or off by the 'build' flag or this tab's 'session' toggle (parentControls.ts). Absent means on. */
+  parentControlsSource?: ParentControlsSource;
+  /** Demo Mode only: turn the checks and limits off (true) or back on (false) for this tab. Returns false when the tab's storage refused. */
+  onToggleParentControls?: (off: boolean) => boolean | void;
   /** Demo Mode only: show the weekend Garage drop on a weekday. */
   garagePreview?: boolean;
   onToggleGaragePreview?: () => void;
@@ -115,6 +120,8 @@ export function GrownUpsSheet({
   localDayKey,
   demoMode = false,
   onToggleDemoMode,
+  parentControlsSource,
+  onToggleParentControls,
   garagePreview = false,
   onToggleGaragePreview,
   onSeedDemoSave,
@@ -160,6 +167,9 @@ export function GrownUpsSheet({
   const [confirmResetXp, setConfirmResetXp] = useState(false);
   const [sittingSession, setSittingSession] = useState<GateSession | null>(null);
   const [activeProof, setActiveProof] = useState<string>("local-proof");
+  // The grown-up checks are off (parentControls.ts): the sheet opens without the hold and the question. `bypassedRef`: the open sheet was opened that way.
+  const controlsMode = parentControlsSource !== undefined && parentControlsSource !== "default" ? "off" : "on";
+  const bypassedRef = useRef(false);
 
   const holdRafRef = useRef<number | null>(null);
   const holdTimerRef = useRef<number | null>(null);
@@ -255,6 +265,17 @@ export function GrownUpsSheet({
     setStatusNote(null);
     setConfirmResetXp(false);
 
+    // Grown-up checks switched off (Demo Mode toggle or a showcase build): open straight onto the settings, no hold and no question. The session is NOT kept as a
+    // sitting unlock (it must not outlive the switch), and its proof is the local-only token, so nothing reaches the Worker.
+    const bypass = bypassGateSession(controlsMode);
+    if (bypass) {
+      bypassedRef.current = true;
+      setSittingSession(null);
+      setActiveProof(bypass.proofToken);
+      setStep("unlocked");
+      return;
+    }
+
     if (
       snapshot.settings.gateStrictness === "sitting_window" &&
       sittingSession &&
@@ -276,7 +297,19 @@ export function GrownUpsSheet({
     enterGateChallenge,
     sittingSession,
     snapshot.settings.gateStrictness,
+    controlsMode,
   ]);
+
+  // The checks come back on while a bypassed sheet is open: lock it again at once, so what was opened without a question does not stay open once they are on.
+  useEffect(() => {
+    if (controlsMode === "on" && bypassedRef.current) {
+      bypassedRef.current = false;
+      cancelHold();
+      setSittingSession(null);
+      setActiveProof("local-proof");
+      setStep("hold");
+    }
+  }, [controlsMode, cancelHold]);
 
   const startHold = useCallback(() => {
     if (holdingRef.current || busy) return;
@@ -562,7 +595,11 @@ export function GrownUpsSheet({
       const imageDataUrl = await downscalePhoto(file);
       const res = await postRoomPhoto(imageDataUrl, activeProof);
       if (res.sam.status === "gate-required") {
-        setStatusNote("Room photos need a live grown-up sign-in. Re-open Grown-ups with your PIN, then try again.");
+        setStatusNote(
+          controlsMode === "off"
+            ? "Room photos still need a real grown-up check. Turn the checks back on (Showcase & Developer), answer the question once, then try again."
+            : "Room photos need a live grown-up sign-in. Re-open Grown-ups with your PIN, then try again.",
+        );
         return;
       }
       if (res.sam.status === "slow-down") {
@@ -952,6 +989,34 @@ export function GrownUpsSheet({
 
             {demoMode && (
               <div className="tv-demo-tools">
+                {onToggleParentControls && (
+                  <div style={{ marginBottom: 8 }}>
+                    {parentControlsSource === "build" ? (
+                      <p className="tv-moves" style={{ fontSize: 12 }}>
+                        This showcase build has the grown-up checks and play-time limits switched off. They cannot be turned back on here.
+                      </p>
+                    ) : (
+                      <>
+                        <button
+                          type="button"
+                          className={controlsMode === "off" ? "tv-ctl tv-ctl-sky" : "tv-ctl"}
+                          aria-pressed={controlsMode === "off"}
+                          onClick={() => {
+                            const stored = onToggleParentControls(controlsMode !== "off");
+                            if (stored === false) setStatusNote("This browser would not remember the switch, so nothing changed.");
+                          }}
+                        >
+                          {controlsMode === "off" ? "Grown-up checks and limits: Off" : "Grown-up checks and limits: On"}
+                        </button>
+                        <p className="tv-moves" style={{ fontSize: 12 }}>
+                          Off, for this tab only: no play-time limit or Sleep Curtain, no grown-up question on this sheet, and Workshop downloads work. Saved settings and
+                          today&apos;s time are not changed. Photo uploads (Smart face, room scan) still need a grown-up. Closing the tab, or turning Demo Mode off, puts the
+                          checks back on.
+                        </p>
+                      </>
+                    )}
+                  </div>
+                )}
                 {onToggleGaragePreview && (
                   <div style={{ marginBottom: 8 }}>
                     <button

@@ -10,7 +10,8 @@ import type { EngineHandle } from "./engine";
  *   appended and fails), so the entry is imported by a FULL-ORIGIN URL, which works in dev and in the build (spiked 2026-11-03).
  * - The world is paused while it is open (no drawing, no keyboard), so two WebGL scenes never draw at once and WASD drives the bench, not the toy.
  * - NO DOWNLOADS: the shell is mounted with `downloads: false`, so no bench hands a file out. The viewer's own grown-up gate only engages inside a frame, and the
- *   game has no host for it yet, so a top-level mount would otherwise let a pack download with no grown-up check.
+ *   game has no host for it yet, so a top-level mount would otherwise let a pack download with no grown-up check. The one exception is the `downloads` prop, which
+ *   GameCanvas sets only while the grown-up checks are switched off (src/lib/parentControls.ts).
  */
 
 const WORKSHOP_ENTRY = "/kip/workshop.js";
@@ -122,11 +123,16 @@ const noteStyle = {
 export function WorkshopLauncher({
   engine,
   disabled = false,
+  downloads = false,
 }: {
   /** The world's engine (`engineRef` of GameCanvas): paused while the Workshop is open. */
   engine: RefObject<EngineHandle | null>;
   disabled?: boolean;
+  /** Files may leave the Workshop. False (the default) until the grown-up download gate is wired; true only while the grown-up checks are switched off (parentControls.ts). Read when the shell mounts. */
+  downloads?: boolean;
 }) {
+  const downloadsRef = useRef(downloads);
+  downloadsRef.current = downloads;
   const [open, setOpen] = useState(false);
   const [phase, setPhase] = useState<"loading" | "ready" | "failed">("loading");
   const [attempt, setAttempt] = useState(0);
@@ -159,7 +165,7 @@ export function WorkshopLauncher({
       try {
         const mod = await loadWorkshopModule(attempt);
         if (cancelled) return;
-        shell = mod.mountWorkshop(host, { urlSync: false, downloads: false });
+        shell = mod.mountWorkshop(host, { urlSync: false, downloads: downloadsRef.current });
         if (cancelled) {
           shell.destroy();
           shell = null;

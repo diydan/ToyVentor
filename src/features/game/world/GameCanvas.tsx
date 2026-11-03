@@ -52,6 +52,13 @@ import {
 } from "../../../lib/dailyQuests";
 import { loadDemoMode, saveDemoMode } from "../../../lib/demoMode";
 import {
+  effectiveParentSnapshot,
+  parentControlsBanner,
+  parentControlsSource,
+  readParentControlsInputs,
+  setParentControlsSession,
+} from "../../../lib/parentControls";
+import {
   getLocalParentSnapshot,
   pullParentTime,
   recordPlayProgress,
@@ -222,8 +229,19 @@ export function GameCanvas({
   const gearHoldStartRef = useRef(0);
   const gearHoldingRef = useRef(false);
   const gearLongPressFiredRef = useRef(false);
-  const [parentSnapshot, setParentSnapshot] = useState<ParentSnapshot>(() =>
+  const [rawParentSnapshot, setParentSnapshot] = useState<ParentSnapshot>(() =>
     getLocalParentSnapshot(),
+  );
+  // The grown-up checks and limits master switch (docs/specs/parent-controls-off-spec.md). Default on. Off only by the build flag, or by this tab's Demo Mode toggle.
+  const [controlsInputs, setControlsInputs] = useState(() => readParentControlsInputs(demoMode));
+  const controlsSource = parentControlsSource({ ...controlsInputs, demoMode });
+  const controlsMode = controlsSource === "default" ? "on" : "off";
+  const controlsOffRef = useRef(false);
+  controlsOffRef.current = controlsMode === "off";
+  // Every consumer below reads this one: off, the status never says locked (saved settings and today's ledger are untouched, only what is read is overridden).
+  const parentSnapshot = useMemo(
+    () => effectiveParentSnapshot(rawParentSnapshot, controlsMode),
+    [rawParentSnapshot, controlsMode],
   );
   const [missionGraceUntil, setMissionGraceUntil] = useState(0);
   const prevLockedRef = useRef(parentSnapshot.status.locked);
@@ -456,7 +474,8 @@ export function GameCanvas({
     const timer = window.setInterval(() => {
       if (document.visibilityState !== "visible") return;
       const cur = getLocalParentSnapshot();
-      if (grownUpsOpen || cur.status.locked) {
+      // Controls off: refresh what is shown, but do not count play time, so a demo does not spend the child's real day.
+      if (grownUpsOpen || cur.status.locked || controlsOffRef.current) {
         setParentSnapshot(cur);
         return;
       }
@@ -705,6 +724,18 @@ export function GameCanvas({
   const handleToggleDemoMode = useCallback((next: boolean) => {
     setDemoMode(next);
     saveDemoMode(next);
+    if (!next) {
+      // Leaving Demo Mode ends the checks-off bypass for good: clear it, so turning Demo Mode on again later in this tab does not bring it back.
+      setParentControlsSession(false);
+      setControlsInputs(readParentControlsInputs(false));
+    }
+  }, []);
+
+  /** The Demo Mode toggle for the grown-up checks and limits. Returns false when the tab's storage refused (then nothing changed). */
+  const handleToggleParentControls = useCallback((off: boolean) => {
+    const stored = setParentControlsSession(off);
+    setControlsInputs(readParentControlsInputs(true));
+    return stored;
   }, []);
 
   // Calmly wind down audio, mic, and open kid sheets when the Sleep Curtain activates.
@@ -997,7 +1028,7 @@ export function GameCanvas({
             Build
           </button>
 
-          <WorkshopLauncher engine={engineRef} disabled={sleepActive} />
+          <WorkshopLauncher engine={engineRef} disabled={sleepActive} downloads={controlsMode === "off"} />
 
           <button
             type="button"
@@ -1257,6 +1288,43 @@ export function GameCanvas({
           </button>
         </div>
       </div>
+
+      {(() => {
+        const banner = parentControlsBanner(controlsSource);
+        if (!banner) return null;
+        return (
+          <div
+            role="status"
+            data-testid="parent-controls-banner"
+            style={{
+              flex: "0 0 auto",
+              display: "flex",
+              flexWrap: "wrap",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 10,
+              padding: "4px 12px",
+              background: "#b4321a",
+              color: "#fff",
+              fontSize: 13,
+              fontWeight: 700,
+              lineHeight: 1.3,
+            }}
+          >
+            <span>{banner.text}</span>
+            {banner.canTurnOn && (
+              <button
+                type="button"
+                className="tv-ctl"
+                style={{ minHeight: 26, padding: "2px 10px", fontSize: 12 }}
+                onClick={() => handleToggleParentControls(false)}
+              >
+                {banner.button}
+              </button>
+            )}
+          </div>
+        );
+      })()}
 
       <div className="tv-stage">
         <div ref={stageHostRef} className="tv-stage-canvas-host" />
@@ -1815,6 +1883,8 @@ export function GameCanvas({
           localDayKey={localDay(Date.now(), parentSnapshot.settings.timezone)}
           demoMode={demoMode}
           onToggleDemoMode={handleToggleDemoMode}
+          parentControlsSource={controlsSource}
+          onToggleParentControls={handleToggleParentControls}
           onSeedDemoSave={() => engine()?.seedDemoSave?.()}
           onOpenEditor={openEditorSheet}
           onRoomPhoto={(segments) => {
