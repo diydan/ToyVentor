@@ -27,6 +27,9 @@ keeps, and in what order. No implementation starts until §14 sign-off.
 > `audio.ts`, en-US, silent while muted or engineless) and heard
 > in headless Chrome speaking the scene intros. Keyboard-only
 > panel path verified end to end (Tab + Enter completes Pop).
+> Without-sound path verified both ways: engineless headless run
+> plays Pop by scene taps on toasts alone, and `say()` silence
+> while muted is unit-tested. Real-phone pass still open.
 > C2 as shipped: `startLearnRun`/`stopLearnRun`/`learnState` on the
 > engine facade with `LearnSnapshot` + `learnFinished` events; lab
 > rungs ride the real lab missions at the rung tier; the 21 new-id
