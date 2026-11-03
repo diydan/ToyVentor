@@ -16,6 +16,7 @@
 
 import * as flow from './kip-photo-print-core.js?v=10.0';
 import * as ST from './kip-print-stickers.js'; // the same specifier kip-print-view.js uses, so the browser loads it once
+import { createWorkshop } from './kip-workshop-wait.js'; // the waiting state: belt, bricks, parts pile, driven by the real stages below
 
 /** The app's anonymous device id lives under this key (src/lib/sync.ts); the same one kip-selfie-cloud.js reads. */
 export const DEVICE_KEY = 'toyforge:device:v1';
@@ -119,13 +120,14 @@ export function createPhotoPrint({ root, fetch: fetchFn, deviceId = defaultDevic
   };
 
   let built = null;
-  let timer = null;
   let urls = [];
   let gateWaiter = null; // { resolve } while the grown-up question is on screen
   let disposed = false;
 
   const forgetUrls = () => { for (const u of urls) URL.revokeObjectURL(u); urls = []; };
-  const stopTimer = () => { if (timer) { clearInterval(timer); timer = null; } };
+  // The printer check can take a minute (up to four gate tries, with real rests when the Worker's limiter says wait). The strip shows the real stages
+  // (see onProgress) and also owns the rest countdown; its words go to the panel's status line, which is what a screen reader hears.
+  const workshop = createWorkshop({ doc, onLabel: (text) => say(text) });
   const blobUrl = (data, type) => { const u = URL.createObjectURL(new Blob([data], { type })); urls.push(u); return u; };
 
   function build() {
@@ -187,7 +189,7 @@ export function createPhotoPrint({ root, fetch: fetchFn, deviceId = defaultDevic
 
     // working
     $.work = el(doc, 'div', { class: 'kpp-work', style: 'display:flex;flex-direction:column;gap:8px' });
-    $.work.append(el(doc, 'p', { class: 'kpp-sub', text: 'The printer check can take a minute. You can leave this open.' }));
+    $.work.append(el(doc, 'p', { class: 'kpp-sub', text: 'The printer check can take a minute. You can leave this open.' }), workshop.node);
 
     // done
     $.done = el(doc, 'div', { class: 'kpp-done', style: 'display:flex;flex-direction:column;gap:10px' });
@@ -358,17 +360,12 @@ export function createPhotoPrint({ root, fetch: fetchFn, deviceId = defaultDevic
     }
   }
 
+  /** The flow's real stages to the strip. The words are the panel's own; the rest countdown is the strip's (one tick a second, cancelled by the next stage). */
   function onProgress(e) {
-    stopTimer();
-    if (e.stage === 'checking') say(`Checking with the printer… (try ${e.call})`);
-    else if (e.stage === 'asking_again') say('The grown-up check ran out. Asking again…');
-    else if (e.stage === 'fetching_plate') say('Getting your plate file…');
-    else if (e.stage === 'waiting') {
-      let left = e.seconds;
-      const tick = () => say(`The printer check needs a short rest. Trying again in ${left} s…`);
-      tick();
-      timer = setInterval(() => { left = Math.max(0, left - 1); tick(); }, 1000);
-    }
+    if (e.stage === 'checking') workshop.setStage('checking', { call: e.call, label: `Checking with the printer… (try ${e.call})` });
+    else if (e.stage === 'asking_again') workshop.setStage('asking', { label: 'The grown-up check ran out. Asking again…' });
+    else if (e.stage === 'fetching_plate') workshop.setStage('fetching', { label: 'Getting your plate file…' });
+    else if (e.stage === 'waiting') workshop.setStage('rest', { seconds: e.seconds, label: (left) => `The printer check needs a short rest. Trying again in ${left} s…` });
   }
 
   function stickerFiles(accessory) {
@@ -383,6 +380,7 @@ export function createPhotoPrint({ root, fetch: fetchFn, deviceId = defaultDevic
     state.busy = true;
     show('working');
     say('Starting the printer check…');
+    workshop.start({ staged: true, delayMs: 300 });
     const c = state.choices;
     const options = {
       name: titleCase(state.word),
@@ -391,7 +389,7 @@ export function createPhotoPrint({ root, fetch: fetchFn, deviceId = defaultDevic
       ...(c.symmetry ? { symmetry: c.symmetry } : {}),
     };
     const r = await flow.printAccessory({ scan: state.scan, gate, fetch: doFetch, options, onProgress, renewGate: () => askGate() });
-    stopTimer();
+    workshop.stop({ finished: Boolean(r.ok) });
     state.busy = false;
     if (disposed) return;
     if (!r.ok) { show('shape'); say(r.message, true); return; }
@@ -424,7 +422,7 @@ export function createPhotoPrint({ root, fetch: fetchFn, deviceId = defaultDevic
   }
 
   function reset() {
-    stopTimer();
+    workshop.stop();
     forgetUrls();
     gateWaiter?.resolve(false);
     state.photo = null;
@@ -488,7 +486,7 @@ export function createPhotoPrint({ root, fetch: fetchFn, deviceId = defaultDevic
     dispose() {
       if (disposed) return;
       disposed = true;
-      stopTimer();
+      workshop.stop();
       forgetUrls();
       gateWaiter?.resolve(false);
       gate.clearProof();

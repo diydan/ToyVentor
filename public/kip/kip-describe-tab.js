@@ -234,12 +234,23 @@ export function mountDescribe({
   function stepBack() { if (!ready_()) return; stop(); p = Math.max(0, Math.ceil(p - 1e-9) - 1); slider.value = '0'; showBuild(); }
   function replay() { if (!ready_()) return; stop(); p = 0; slider.value = '0'; playTo(n); }
 
+  /**
+   * A new request is pending, so the last build's badge, progress line, controls, slider and caption describe something else ("Built: all 10 parts are
+   * seated" while the next build is still being found): hide them. The drawing stays, so the stage never goes blank; the next answer brings it all back. If
+   * the request fails outright the status line says so and the controls stay hidden until the next build.
+   */
+  function hideStale() {
+    stop(); stopVoice();
+    badge.hidden = true; buildBox.hidden = true; sliderBox.hidden = true; caption.textContent = '';
+  }
+
   async function build() {
     if (busy) return;
     const q = text.value.trim();
     if (!q) { say('Type what you would like to build first.'); text.focus(); return; }
     busy = true; go.disabled = true;
     try {
+      hideStale();
       await ready();
       workshop.start({ lines: THINK_LINES });   // the little workshop: bricks on a belt, a pile that fills (see createWorkshop)
       const ep = epInput.value.trim();

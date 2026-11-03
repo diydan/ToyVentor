@@ -328,6 +328,16 @@ try {
   await sleep(1200);
   check('the pile still counts up with reduced motion, and no moving bricks appear', await page2.waitFor("document.querySelectorAll('.kww-pb.on').length >= 1 && document.querySelectorAll('.kww-brick:not(.kww-static)').length === 0", 4000));
   await page2.waitFor("window.__describe.view.meshes.length === 7 && document.querySelector('.kww-workshop').hidden === true", 180000);
+
+  console.log('\n[5d] while the next build is pending, nothing from the last one is still claimed');
+  describeStub.id = 'race-car'; describeStub.delayMs = 3000;
+  const had = JSON.parse(await ev2("JSON.stringify({ badge: !document.querySelector('.kdb-badge').hidden, build: !document.querySelector('.kdb-build').hidden, slider: !document.querySelector('.kdb-slider').hidden, progress: document.querySelector('.kdb-progress').textContent })"));
+  check('guard: the skateboard just built shows its badge, controls and "Built: all 7 parts"', had.badge && had.build && had.slider && /^Built: all 7 parts/.test(had.progress), JSON.stringify(had));
+  // click, then ONE synchronous look: the hiding happens in the click handler itself, so this cannot race the 3 s answer
+  const pending = JSON.parse(await ev2("(() => { document.querySelector('#kdb-text').value = 'a race car'; document.querySelector('.kdb-go').click(); return JSON.stringify({ badge: !document.querySelector('.kdb-badge').hidden, build: !document.querySelector('.kdb-build').hidden, slider: !document.querySelector('.kdb-slider').hidden, caption: document.querySelector('.kdb-caption').textContent, meshes: window.__describe.view.meshes.length, busy: document.querySelector('.kdb-go').disabled }); })()"));
+  check('the old badge, the controls, the slider and any caption are hidden while it waits', !pending.badge && !pending.build && !pending.slider && pending.caption === '' && pending.busy, JSON.stringify(pending));
+  check('the old drawing stays, so the stage is not blank', pending.meshes === 7, JSON.stringify(pending));
+  check('the new answer brings the badge and the controls back for the NEW build', await page2.waitFor("window.__describe.view.meshes.length === 10 && !document.querySelector('.kdb-badge').hidden && !document.querySelector('.kdb-build').hidden && !document.querySelector('.kdb-slider').hidden && /^Built: all 10 parts/.test(document.querySelector('.kdb-progress').textContent)", 180000));
   describeStub.delayMs = 0;
 
   console.log('\n[6] privacy, errors, narrow layout');
