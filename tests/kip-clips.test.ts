@@ -9,8 +9,8 @@ import * as clipsMod from "../parts/kip/viewer/kip-clips.js";
 import * as wardrobe from "../parts/kip/viewer/kip-vehicles-wardrobe.js";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
-const { KIP_CLIPS, KIP_CLIP_JOINTS, PROP_CLIPS, clipForProp, makeKipClip, HIP_Y } = clipsMod as any;
-const { PROP_OPTIONS } = wardrobe as any;
+const { KIP_CLIPS, KIP_CLIP_JOINTS, PROP_CLIPS, clipForProp, makeKipClip, HIP_Y, REST_LEGS, LEG_RIG, legFK, FLIPPED_PROP_CLIPS } = clipsMod as any;
+const { PROP_OPTIONS, WORKSHOP_PROPS } = wardrobe as any;
 
 const root = join(__dirname, "..");
 const read = (rel: string) => readFileSync(join(root, rel), "utf8");
@@ -118,6 +118,62 @@ describe("kip clips: every clip, numerically", () => {
       expect(travelled).toBeGreaterThan(8);
     });
   }
+});
+
+describe("kip clips: planted feet and natural hands", () => {
+  const q = (arr: number[]) => new THREE.Quaternion(arr[0], arr[1], arr[2], arr[3]);
+  // ankle world position of one leg for frame i, straight from the baked quaternion tracks (the same chain the page's skeleton has)
+  const ankle = (clip: any, i: number, side: "L" | "R") => {
+    const names = REST_LEGS[side].names as string[];
+    const hips = q(frames(quatTrack(clip, "Hips"), 4)[i]!);
+    const hp = frames(clip.tracks.find((t: any) => t.name === "kip_Hips.position"), 3)[i]!;
+    const qu = hips.clone().multiply(q(frames(quatTrack(clip, names[0]!), 4)[i]!));
+    const qk = qu.clone().multiply(q(frames(quatTrack(clip, names[1]!), 4)[i]!));
+    const hip = new THREE.Vector3(REST_LEGS[side].side * LEG_RIG.hipX, 0, 0).applyQuaternion(hips).add(new THREE.Vector3(hp[0], hp[1], hp[2]));
+    const knee = new THREE.Vector3(0, -LEG_RIG.thigh, 0).applyQuaternion(qu).add(hip);
+    return new THREE.Vector3(...(LEG_RIG.shin as [number, number, number])).applyQuaternion(qk).add(knee);
+  };
+  const stance = (side: "L" | "R") => legFK(THREE, [0, 0, 0], [0, HIP_Y, 0], REST_LEGS[side]).ankle as THREE.Vector3;
+
+  it("keeps both feet where they started in every prop clip and reaction (no sliding on the floor)", () => {
+    const planted = (KIP_CLIPS as any[]).filter((c) => c.plant);
+    expect(planted.length).toBeGreaterThanOrEqual(22);
+    for (const entry of planted) {
+      const clip = built.get(entry.id);
+      const n = quatTrack(clip, "Hips").values.length / 4;
+      for (const side of ["L", "R"] as const) {
+        let worst = 0;
+        for (let i = 0; i < n; i++) {
+          const a = ankle(clip, i, side), s = stance(side);
+          worst = Math.max(worst, Math.hypot(a.x - s.x, a.z - s.z));
+        }
+        expect(worst, `${entry.id}: ${side} foot slides ${worst.toFixed(2)} mm across the floor`).toBeLessThan(0.5);
+      }
+    }
+  });
+
+  it("leaves the dances' steps alone (they move their feet on purpose)", () => {
+    for (const entry of (KIP_CLIPS as any[]).filter((c) => c.group === "dance")) expect(entry.plant, entry.id).toBeUndefined();
+  });
+
+  it("never bends a wrist more than 20 degrees in a prop clip with a retargeted arm (a natural grip)", () => {
+    const tracked = (KIP_CLIPS as any[]).filter((c) => c.group === "prop" && c.id !== "prop_shield" && c.id !== "prop_shaft");
+    expect(tracked.length).toBeGreaterThanOrEqual(16);
+    for (const entry of tracked) {
+      const hand = frames(quatTrack(built.get(entry.id), "RightHand"), 4);
+      let worst = 0;
+      for (const f of hand) worst = Math.max(worst, deg(new THREE.Vector3(0, 1, 0).applyQuaternion(q(f)).angleTo(new THREE.Vector3(0, 1, 0))));
+      expect(worst, `${entry.id}: wrist bent ${worst.toFixed(0)} degrees`).toBeLessThanOrEqual(20);
+    }
+  });
+
+  it("mounts exactly the props the arm table was solved for end for end (wardrobe flip === table flip)", () => {
+    for (const p of WORKSHOP_PROPS as any[]) {
+      const clip = clipForProp(p.id);
+      expect(Boolean(p.flip), `${p.id} flip flag disagrees with the arm table for ${clip}`).toBe(FLIPPED_PROP_CLIPS.includes(clip));
+    }
+    expect(FLIPPED_PROP_CLIPS.length).toBeGreaterThanOrEqual(5);
+  });
 });
 
 describe("kip clips: wiring", () => {

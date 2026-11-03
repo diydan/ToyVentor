@@ -27731,8 +27731,8 @@
       ],
       "safety": {
         "small_part_status": "above_cylinder",
-        "min_enclosing_diameter_mm": 109.04,
-        "margin_pct": 243.4,
+        "min_enclosing_diameter_mm": 109.19,
+        "margin_pct": 243.9,
         "print_page_warning": [
           "Printed at home or by a print service. Not tested to toy-safety standards. Adult supervision required. Check for cracks, sharp edges and loose pieces before each use, and stop using anything that has broken.",
           "Larger than the small-parts test size in our size check. This is not a safety certification, and it is not rated for children under 3 years."
@@ -27852,7 +27852,7 @@
           "id": "S1_small_part_screen",
           "level": "warn",
           "result": "pass",
-          "detail": "above_cylinder: best-fit diameter 109.04 mm vs 31.75 mm cylinder"
+          "detail": "above_cylinder: best-fit diameter 109.19 mm vs 31.75 mm cylinder"
         },
         {
           "id": "T1_fit_as_designed",

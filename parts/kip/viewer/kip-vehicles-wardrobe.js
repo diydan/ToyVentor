@@ -173,19 +173,19 @@ export const PROP_CATEGORIES = [
 export const WORKSHOP_PROPS = [
   { id: 'hammer',       part: 'prop_hammer',       geo: 'propHammer',      cat: 'tools',       label: 'Claw Hammer',       mat: 'cobalt' },
   { id: 'screwdriver',  part: 'prop_screwdriver',  geo: 'propScrewdriver', cat: 'tools',       label: 'Screwdriver',       mat: 'spark' },
-  { id: 'paint_roller', part: 'prop_paint_roller', geo: 'propPaintRoller', cat: 'tools',       label: 'Paint Roller',      mat: 'teal' },
+  { id: 'paint_roller', part: 'prop_paint_roller', geo: 'propPaintRoller', cat: 'tools',       label: 'Paint Roller',      mat: 'teal', flip: true },
   { id: 'mop',          part: 'prop_mop',          geo: 'propMop',         cat: 'cleaning',    label: 'String Mop',        mat: 'sun' },
   { id: 'broom',        part: 'prop_broom',        geo: 'propBroom',       cat: 'cleaning',    label: 'Bristle Broom',     mat: 'teal' },
   { id: 'scrub_brush',  part: 'prop_scrub_brush',  geo: 'propScrubBrush',  cat: 'cleaning',    label: 'Scrub Brush',       mat: 'plum' },
   { id: 'vacuum',       part: 'prop_vacuum',       geo: 'propVacuum',      cat: 'cleaning',    label: 'Handheld Vacuum',   mat: 'cobalt' },
   { id: 'upright_vacuum', part: 'prop_upright_vacuum', geo: 'propUprightVacuum', cat: 'cleaning', label: 'Upright Vacuum',    mat: 'dragon' },
-  { id: 'spatula',      part: 'prop_spatula',      geo: 'propSpatula',     cat: 'cooking',     label: 'Pancake Spatula',   mat: 'fox' },
-  { id: 'frying_pan',   part: 'prop_frying_pan',   geo: 'propFryingPan',   cat: 'cooking',     label: 'Frying Pan',        mat: 'botSilv' },
+  { id: 'spatula',      part: 'prop_spatula',      geo: 'propSpatula',     cat: 'cooking',     label: 'Pancake Spatula',   mat: 'fox', flip: true },
+  { id: 'frying_pan',   part: 'prop_frying_pan',   geo: 'propFryingPan',   cat: 'cooking',     label: 'Frying Pan',        mat: 'botSilv', flip: true },
   { id: 'guitar',       part: 'prop_guitar',       geo: 'propGuitar',      cat: 'instruments', label: 'Acoustic Guitar',   mat: 'sun' },
   { id: 'trumpet',      part: 'prop_trumpet',      geo: 'propTrumpet',     cat: 'instruments', label: 'Brass Trumpet',     mat: 'sun' },
   { id: 'maracas',      part: 'prop_maracas',      geo: 'propMaracas',     cat: 'instruments', label: 'Rattle Maraca',     mat: 'spark' },
-  { id: 'flag',         part: 'prop_flag',         geo: 'propFlag',        cat: 'play',        label: 'Swallow-Tail Flag', mat: 'plum' },
-  { id: 'magnifier',    part: 'prop_magnifier',    geo: 'propMagnifier',   cat: 'play',        label: 'Magnifying Glass',  mat: 'teal' },
+  { id: 'flag',         part: 'prop_flag',         geo: 'propFlag',        cat: 'play',        label: 'Swallow-Tail Flag', mat: 'plum', flip: true },
+  { id: 'magnifier',    part: 'prop_magnifier',    geo: 'propMagnifier',   cat: 'play',        label: 'Magnifying Glass',  mat: 'teal', flip: true },
 ];
 
 export const PROP_OPTIONS = [
@@ -456,12 +456,15 @@ export function attachExpansionToKipRig(THREE, kip, expGeos, baseParts, mats, sc
     return spinGrp;
   }
 
-  function makeHandheldProp(propGeo, mat, gripCenterZ = 14.0, halfThick = 2.5) {
+  // `flip` mounts the prop end for end (a half turn about the finger axis through the fist): the head then lies on the thumb side, so a prop whose
+  // head points up is held with the thumb up (see kip-clips.js, "Natural hands").
+  function makeHandheldProp(propGeo, mat, gripCenterZ = 14.0, halfThick = 2.5, flip = false) {
     const g = new THREE.Group();
     const m = new THREE.Mesh(propGeo, mat);
     m.castShadow = true;
     m.receiveShadow = true;
     m.position.set(0, gripCenterZ, -halfThick);
+    if (flip) { m.rotation.x = Math.PI; m.position.set(0, -gripCenterZ, halfThick); }
     g.add(m);
     g.rotation.z = Math.PI / 2;
     g.position.set(0, -11.4, 2.3);
@@ -750,7 +753,7 @@ export function attachExpansionToKipRig(THREE, kip, expGeos, baseParts, mats, sc
     grp.visible = false;
     kip.joints.rightHandCgripParent.add(grp);
     const slot = createSlot(wp.part, grp, [-98, -44, 22], 5.4, 'both', 'hand_r');
-    slot.add(makeHandheldProp(expGeos[wp.geo], expMats[wp.mat], 18.75, 2.5));
+    slot.add(makeHandheldProp(expGeos[wp.geo], expMats[wp.mat], 18.75, 2.5, Boolean(wp.flip)));
     workshopGroups[wp.id] = grp;
   }
 

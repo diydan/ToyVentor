@@ -777,7 +777,7 @@
   },
   "toyventor_prop_upright_vacuum_P.stl": {
    "part": "prop_upright_vacuum",
-   "sha256": "0e8ab50a6504557b53f065efe8a4cbf4886fdf580f4e5ce6bf38ea334d4d509c",
+   "sha256": "37254677e22ea33d2ad55b2e26b80f0970d5d8bdd88dae0a8eb0ab828fcc0cf8",
    "verdict": "pass",
    "brim_width_mm": 0
   },

@@ -916,8 +916,10 @@ def prop_upright_vacuum(grip_tu=3, foot_deg=40.0, **_):
     collar = _box_cs(8.0, 6.0, 0.0, L)
     wand = _box_cs(6.4, 60.0, 0.0, L + 3.0)
     body = CrossSection.batch_hull([_box_cs(26.0, 2.0, 0.0, L + 10.0), _box_cs(14.0, 2.0, 0.0, L + 40.0)]).offset(-3.0, JoinType.Round).offset(3.0, JoinType.Round)
-    foot = (CrossSection.square((40.0, 8.0), center=True).translate((6.0, 0.0)).offset(-3.0, JoinType.Round).offset(3.0, JoinType.Round)
-            .rotate(foot_deg).translate((0.0, L + 62.0)))
+    # the toe is on the -x side and the head is turned clockwise: the hand's finger axis lies along the part's x axis, so with the toe on -x the
+    # forearm points forward and up (a natural hand) when the foot lies flat and the wand leans back toward Kip
+    foot = (CrossSection.square((40.0, 8.0), center=True).translate((-6.0, 0.0)).offset(-3.0, JoinType.Round).offset(3.0, JoinType.Round)
+            .rotate(-foot_deg).translate((0.0, L + 62.0)))
     window = _circ(3.8, 0.0, L + 22.0, 32)
     ring = _circ(7.0, 0.0, L + 22.0, 32) - _circ(4.8, 0.0, L + 22.0, 32)
     return _prop_on_grip(collar + wand + body + foot, grip_tu, relief_cs=ring, relief_h=1.6, cuts_cs=window)

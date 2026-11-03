@@ -1,13 +1,13 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_prop_upright_vacuum_P.stl",
-  "file_sha256": "0e8ab50a6504557b53f065efe8a4cbf4886fdf580f4e5ce6bf38ea334d4d509c",
+  "file_sha256": "37254677e22ea33d2ad55b2e26b80f0970d5d8bdd88dae0a8eb0ab828fcc0cf8",
   "part_id": "prop_upright_vacuum",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-11-03T13:40:04Z",
+  "checked_at": "2026-11-03T14:26:06Z",
   "metrics": {
     "bbox_mm": [
-      33.96,
+      33.97,
       118.03,
       6.6
     ],
