@@ -1,0 +1,739 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fig 1 — Parallax image backdrops (mockup, not shipped)</title>
+<style>
+  :root { --ink:#e8ecff; --mut:#9aa8e8; --gold:#ffd24d; --card:#101a44; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:#070d2b; color:var(--ink); font: 15px/1.45 system-ui, sans-serif; }
+  main { max-width: 980px; margin: 0 auto; padding: 16px; }
+  .card { background: var(--card); border:1px solid rgba(255,255,255,.18); border-radius:16px; overflow:hidden; }
+  header { display:flex; justify-content:space-between; gap:12px; padding:10px 14px 0; }
+  header .fig { color: var(--gold); font-weight:700; letter-spacing:.04em; }
+  header .ttl { color: var(--mut); }
+  #view { position:relative; height: 520px; }
+  canvas { display:block; width:100%; height:100%; }
+  .bar { display:flex; flex-wrap:wrap; gap:14px; align-items:center; padding:10px 14px 12px; border-top:1px solid rgba(255,255,255,.12); }
+  .bar label { display:flex; gap:8px; align-items:center; color:var(--mut); font-size:13px; }
+  .bar input[type=range] { width: 180px; accent-color: var(--gold); }
+  .bar button { background:#1b2a6e; color:var(--ink); border:1px solid rgba(255,255,255,.3); border-radius:10px; padding:7px 12px; font:inherit; font-size:13px; cursor:pointer; }
+  .bar button[aria-pressed=true] { border-color: var(--gold); color: var(--gold); }
+  .themes { display:flex; gap:8px; padding:10px 14px 0; flex-wrap:wrap; }
+  .themes button { background:#1b2a6e; color:var(--ink); border:1px solid rgba(255,255,255,.3); border-radius:999px; padding:6px 14px; font:inherit; font-size:13px; cursor:pointer; }
+  .themes button[aria-pressed=true] { border-color: var(--gold); color: var(--gold); background:#26368a; }
+  .seg { display:flex; gap:6px; align-items:center; color:var(--mut); font-size:13px; }
+  .seg button { padding:6px 10px; }
+  .seg button:disabled { cursor:not-allowed; }
+  #readout { margin-left:auto; font-variant-numeric: tabular-nums; color: var(--gold); font-size:13px; }
+  .legend { padding: 10px 14px 14px; color: var(--mut); font-size: 13.5px; }
+  .legend b { color: var(--ink); }
+  code { color: var(--gold); }
+  @media (max-width: 640px) { #view { height: 420px; } }
+</style>
+</head>
+<body>
+<main>
+  <figure class="card" style="margin:0">
+    <header><span class="fig">FIG 1</span><span class="ttl" id="ttl">Parallax image backdrops</span></header>
+    <div class="themes" id="themes" role="group" aria-label="Theme"></div>
+    <div id="view" aria-label="Interactive mockup: drag the camera slider to pan along the lane"></div>
+    <div class="bar">
+      <label>Camera x <input id="camx" type="range" min="3" max="41" step="0.1" value="8"></label>
+      <label>Explode <input id="explode" type="range" min="0" max="1" step="0.01" value="0"></label>
+      <label>Path <input id="pathw" type="range" min="2.2" max="3.8" step="0.05" value="3"></label>
+      <label>Mid size <input id="midfit" type="range" min="0.6" max="1.3" step="0.02" value="0.86"></label>
+      <button id="planes" aria-pressed="true">Image planes</button>
+      <button id="fog" aria-pressed="true">Fog</button>
+      <button id="motion" aria-pressed="true">Auto-pan</button>
+      <span id="readout" role="status">—</span>
+    </div>
+    <figcaption class="legend" id="legend"></figcaption>
+  </figure>
+</main>
+<script type="module">
+import * as T from "./three.module.js";
+
+// --- measured from the game (world.ts / lighting.ts) ---
+const FOV = 36;                 // PerspectiveCamera(36, ...)
+const CAM_Y = 2.6 + 10 * 0.24;  // camera.position.set(cam.x, 2.6+dd*.24, dd), dd=10
+const CAM_Z = 10;
+const LOOK_Y = 1.1;
+const LANE = { lo: 3, hi: 41 };
+const QS = new URLSearchParams(location.search);
+
+// ================================================================================================================
+// canvas helpers
+// ================================================================================================================
+function rng(seed) { return () => (seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296; }
+const mk = (w, h) => { const c = document.createElement("canvas"); c.width = w; c.height = h; return c; };
+const wrapper = (S) => (x, y, rad, fn) => { for (const dx of [-S, 0, S]) for (const dy of [-S, 0, S]) { const X = x + dx, Y = y + dy;
+  if (X + rad < 0 || X - rad > S || Y + rad < 0 || Y - rad > S) continue; fn(X, Y); } };
+function rr(g, x, y, w, h, rad) { g.beginPath(); g.moveTo(x + rad, y); g.arcTo(x + w, y, x + w, y + h, rad); g.arcTo(x + w, y + h, x, y + h, rad);
+  g.arcTo(x, y + h, x, y, rad); g.arcTo(x, y, x + w, y, rad); g.closePath(); }
+function vgrad(g, y0, y1, c0, c1) { const gr = g.createLinearGradient(0, y0, 0, y1); gr.addColorStop(0, c0); gr.addColorStop(1, c1); return gr; }
+
+// ---- ground tiles (seamless, drawn with wrap-around so the repeat is quiet) ----
+function makeGrass(p) {          // 1024 px = 16 world units
+  const S = 1024, c = mk(S, S), g = c.getContext("2d"), r = rng(7), wrap = wrapper(S);
+  g.fillStyle = p.base; g.fillRect(0, 0, S, S);
+  for (let i = 0; i < 90; i++) { const x = r() * S, y = r() * S, rad = 40 + r() * 90, col = r() < 0.5 ? p.blobA : p.blobB;
+    wrap(x, y, rad, (X, Y) => { const gr = g.createRadialGradient(X, Y, 0, X, Y, rad);
+      gr.addColorStop(0, `rgba(${col},0.30)`); gr.addColorStop(1, `rgba(${col},0)`); g.fillStyle = gr; g.fillRect(X - rad, Y - rad, rad * 2, rad * 2); }); }
+  g.lineCap = "round"; g.lineWidth = 2;
+  for (let i = 0; i < 700; i++) { const x = r() * S, y = r() * S, len = 6 + r() * 8, a = -Math.PI / 2 + (r() - 0.5) * 0.8, col = r() < 0.5 ? p.tuftA : p.tuftB;
+    wrap(x, y, len, (X, Y) => { g.strokeStyle = col; g.beginPath(); g.moveTo(X, Y); g.lineTo(X + Math.cos(a) * len, Y + Math.sin(a) * len); g.stroke(); }); }
+  return c;
+}
+function makeDirt(p) {           // 512 px = 6 world units
+  const S = 512, c = mk(S, S), g = c.getContext("2d"), r = rng(5), wrap = wrapper(S);
+  g.fillStyle = p.base; g.fillRect(0, 0, S, S);
+  for (let i = 0; i < 70; i++) { const x = r() * S, y = r() * S, rad = 18 + r() * 50, col = r() < 0.5 ? p.blobA : p.blobB;
+    wrap(x, y, rad, (X, Y) => { const gr = g.createRadialGradient(X, Y, 0, X, Y, rad);
+      gr.addColorStop(0, `rgba(${col},0.22)`); gr.addColorStop(1, `rgba(${col},0)`); g.fillStyle = gr; g.fillRect(X - rad, Y - rad, rad * 2, rad * 2); }); }
+  for (let i = 0; i < 900; i++) { const x = r() * S, y = r() * S, rr_ = 0.8 + r() * 2.2, ang = r() * 3, fill = r() < 0.5 ? p.pebD : p.pebL;
+    wrap(x, y, rr_ * 1.4, (X, Y) => { g.fillStyle = fill; g.beginPath(); g.ellipse(X, Y, rr_ * 1.3, rr_, ang, 0, Math.PI * 2); g.fill(); }); }
+  return c;
+}
+function makeWood(p = {}) {      // floor/bench: 1024 px = 8 world units, 14 boards running along x (seamless in x and y)
+  const S = 1024, c = mk(S, S), g = c.getContext("2d"), r = rng(21), ROWS = 14, ph = S / ROWS, B = p.base || [150, 98, 58], SP = p.span || [50, 34, 22];
+  for (let i = 0; i < ROWS; i++) {
+    const y0 = i * ph, tone = 0.5 + (r() - 0.5) * 0.55;
+    g.fillStyle = `rgb(${(B[0] + tone * SP[0]) | 0},${(B[1] + tone * SP[1]) | 0},${(B[2] + tone * SP[2]) | 0})`; g.fillRect(0, y0, S, ph);
+    for (let k = 0; k < 18; k++) { const yy = y0 + 4 + r() * (ph - 8), len = 140 + r() * 400, x = r() * S, a = 0.05 + r() * 0.1, dark = r() < 0.6,
+        w1 = (r() - 0.5) * 3, w2 = (r() - 0.5) * 3, lw = 1 + r() * 2;
+      g.strokeStyle = dark ? `rgba(70,40,20,${a})` : `rgba(235,185,125,${a})`; g.lineWidth = lw;
+      for (const dx of [-S, 0, S]) { g.beginPath(); g.moveTo(x + dx, yy); g.bezierCurveTo(x + dx + len * 0.3, yy + w1, x + dx + len * 0.6, yy + w2, x + dx + len, yy); g.stroke(); } }
+    const jx = r() * S; g.fillStyle = "rgba(40,22,12,0.55)"; g.fillRect(jx, y0, 2, ph);                       // butt joint
+    if (r() < 0.4) { const kx = r() * S, ky = y0 + ph * (0.3 + r() * 0.4); g.fillStyle = "rgba(60,34,18,0.35)"; g.beginPath(); g.ellipse(kx, ky, 9, 5, 0, 0, 7); g.fill();
+      g.strokeStyle = "rgba(60,34,18,0.25)"; g.lineWidth = 1; g.beginPath(); g.ellipse(kx, ky, 15, 8, 0, 0, 7); g.stroke(); }
+    g.fillStyle = "rgba(35,20,10,0.6)"; g.fillRect(0, y0 + ph - 2, S, 2); g.fillStyle = "rgba(255,230,190,0.12)"; g.fillRect(0, y0, S, 1);
+  }
+  if (p.rings) for (const [x, y, rad] of [[300, 420, 50], [760, 150, 42], [560, 830, 54]]) { g.strokeStyle = "rgba(90,50,20,0.26)"; g.lineWidth = 6; g.beginPath(); g.arc(x, y, rad, 0.3, 6.1); g.stroke();
+    g.fillStyle = "rgba(90,50,20,0.05)"; g.beginPath(); g.arc(x, y, rad - 3, 0, 7); g.fill(); }
+  return c;
+}
+function makeRug(p = {}) {       // runner: 1024x512 px = 6 x 3 world units (square texels at the default path width of 3.0)
+  const W = 1024, H = 512, c = mk(W, H), g = c.getContext("2d"), r = rng(41);
+  const F = p.field || "#8f2f33", A = p.bandA || "#2c3a5a", CR = p.cream || "#e9d9b0", DK = p.dark || "#6e2226", GD = p.gold || "#d9b46a";
+  g.fillStyle = F; g.fillRect(0, 0, W, H);
+  const band = (y, h, col) => { g.fillStyle = col; g.fillRect(0, y, W, h); };
+  band(0, 46, A); band(46, 8, CR); band(62, 10, DK); band(H - 46, 46, A); band(H - 54, 8, CR); band(H - 72, 10, DK);
+  for (let x = 0; x < W; x += 32) { g.fillStyle = GD; g.fillRect(x + 4, 18, 14, 10); g.fillRect(x + 4, H - 28, 14, 10); }          // border dashes
+  const diamond = (cx, cy, hw, hh, col) => { g.fillStyle = col; g.beginPath(); g.moveTo(cx, cy - hh); g.lineTo(cx + hw, cy); g.lineTo(cx, cy + hh); g.lineTo(cx - hw, cy); g.closePath(); g.fill(); };
+  for (let i = 0; i < 4; i++) { const cx = 128 + i * 256, cy = H / 2;                                                                 // 4 motifs = seamless in x
+    diamond(cx, cy, 118, 150, GD); diamond(cx, cy, 98, 126, A); diamond(cx, cy, 70, 90, CR); diamond(cx, cy, 44, 56, F); diamond(cx, cy, 16, 20, GD);
+    g.fillStyle = A; g.beginPath(); g.arc(cx + 128, cy, 14, 0, 7); g.fill(); g.fillStyle = GD; g.beginPath(); g.arc(cx + 128, cy, 6, 0, 7); g.fill(); }
+  for (let i = 0; i < 3500; i++) { g.fillStyle = r() < 0.5 ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.07)"; g.fillRect(r() * W, r() * H, 2, 1); }    // woven speckle
+  for (let y = 0; y < H; y += 4) { g.fillStyle = "rgba(0,0,0,0.04)"; g.fillRect(0, y, W, 1); }
+  return c;
+}
+
+// ================================================================================================================
+// TOY ROOM, ported from the main game (src/features/game/world/runtime: world.ts roomWall/rug/plankTex/props, worldScene.ts
+// plastic/metal/rbox/environment, lighting.ts LIGHT_RIGS.room, catalog.ts level "room"). Geometry and colours are copied, not imitated.
+// ================================================================================================================
+const gPlastic = (c, o) => new T.MeshPhysicalMaterial({ color: c, roughness: 0.34, metalness: 0, clearcoat: 0.85, clearcoatRoughness: 0.16, ...(o || {}) });
+const gMetal = (c) => new T.MeshStandardMaterial({ color: c, roughness: 0.3, metalness: 0.65 });
+const gGlow = (c, i) => new T.MeshStandardMaterial({ color: c, emissive: c, emissiveIntensity: i || 1.5, roughness: 0.4 });
+const gM = (geo, mat, x, y, z) => { const m = new T.Mesh(geo, mat); m.position.set(x || 0, y || 0, z || 0); m.castShadow = true; m.receiveShadow = true; return m; };
+const gG = (...o) => { const g = new T.Group(); o.forEach((k) => g.add(k)); return g; };
+const gCapsule = (r, len, mat) => gG(gM(new T.CylinderGeometry(r, r, len, 16), mat), gM(new T.SphereGeometry(r, 16, 12), mat, 0, len / 2, 0), gM(new T.SphereGeometry(r, 16, 12), mat, 0, -len / 2, 0));
+function gRbox(w, h, d, r) { const b = Math.min(r, 0.45 * Math.min(w, h, d)), sw = w - 2 * b, sh = h - 2 * b, cr = Math.max(0.001, Math.min(b, sw / 2, sh / 2) * 0.9), s = new T.Shape(), x = -sw / 2, y = -sh / 2;
+  s.moveTo(x + cr, y); s.lineTo(x + sw - cr, y); s.quadraticCurveTo(x + sw, y, x + sw, y + cr); s.lineTo(x + sw, y + sh - cr); s.quadraticCurveTo(x + sw, y + sh, x + sw - cr, y + sh);
+  s.lineTo(x + cr, y + sh); s.quadraticCurveTo(x, y + sh, x, y + sh - cr); s.lineTo(x, y + cr); s.quadraticCurveTo(x, y, x + cr, y);
+  const dd = Math.max(0.001, d - 2 * b), g = new T.ExtrudeGeometry(s, { depth: dd, bevelEnabled: true, bevelThickness: b, bevelSize: b, bevelSegments: 6, curveSegments: 10 }); g.translate(0, 0, -dd / 2); return g; }
+function gGlowTex(col) { const c = mk(128, 128), g = c.getContext("2d"), gr = g.createRadialGradient(64, 64, 0, 64, 64, 64); gr.addColorStop(0, col); gr.addColorStop(1, "rgba(0,0,0,0)"); g.fillStyle = gr; g.fillRect(0, 0, 128, 128); const t = new T.CanvasTexture(c); t.colorSpace = T.SRGBColorSpace; return t; }
+function gGlowSprite(col, size) { const s = new T.Sprite(new T.SpriteMaterial({ map: gGlowTex(col), transparent: true, depthWrite: false, blending: T.AdditiveBlending, fog: false })); s.scale.set(size, size, 1); return s; }
+function gLetterMat(ch, bg) { const c = mk(128, 128), g = c.getContext("2d"); g.fillStyle = bg; g.fillRect(0, 0, 128, 128); g.strokeStyle = "rgba(255,255,255,.85)"; g.lineWidth = 8; g.strokeRect(10, 10, 108, 108);
+  g.fillStyle = "#ffffff"; g.font = "800 76px Rubik, system-ui, sans-serif"; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(ch, 64, 70);
+  const t = new T.CanvasTexture(c); t.colorSpace = T.SRGBColorSpace; return new T.MeshPhysicalMaterial({ map: t, roughness: 0.35, clearcoat: 0.8 }); }
+function makePlanks() {          // game plankTex(): 512 px, 8 rows of 340 px boards, repeat (7,3) over the 80x34 floor
+  const c = mk(512, 512), g = c.getContext("2d"), sh = ["#8a5a34", "#9a6a40", "#a8784a", "#93613a", "#b08050", "#9e6c42"];
+  for (let r = 0; r < 8; r++) { const y = r * 64, off = (r % 2) * 170 + ((r * 97) % 60);
+    for (let x = -off; x < 512; x += 340) { g.fillStyle = sh[(r * 3 + Math.floor((x + off) / 340)) % sh.length]; g.fillRect(x, y, 340, 64);
+      for (let q = 0; q < 14; q++) { g.strokeStyle = "rgba(60,30,10," + (0.06 + ((q * 7) % 5) * 0.02) + ")"; g.lineWidth = 1 + (q % 3); g.beginPath(); const yy = y + 4 + ((q * 37) % 56);
+        g.moveTo(x, yy); g.bezierCurveTo(x + 110, yy + ((q % 2) ? 3 : -3), x + 230, yy + ((q % 3) - 1) * 4, x + 340, yy); g.stroke(); }
+      g.fillStyle = "rgba(30,14,4,.55)"; g.fillRect(x, y, 3, 64); }
+    g.fillStyle = "rgba(30,14,4,.6)"; g.fillRect(0, y, 512, 3); }
+  return c;
+}
+function gEnvironment(p, k) {    // game setEnvironment(): a box room with four coloured light panels, prefiltered (PMREM); ROOM_ENV palette
+  const pm = new T.PMREMGenerator(renderer), es = new T.Scene();
+  es.add(new T.Mesh(new T.BoxGeometry(20, 12, 20), new T.MeshBasicMaterial({ color: p.bg, side: T.BackSide })));
+  const panel = (x, y, z, w, h, c, kk) => { const mm = new T.MeshBasicMaterial({ color: c, side: T.DoubleSide }); mm.color.multiplyScalar(kk); const m = new T.Mesh(new T.PlaneGeometry(w, h), mm); m.position.set(x, y, z); m.lookAt(0, 0, 0); es.add(m); };
+  panel(0, 5.9, 0, 10, 7, p.top, p.topK); panel(-9.9, 2, 0, 6, 4, p.left, 1.1); panel(9.9, 1.5, 2, 5, 3, p.right, 1.0); panel(0, 1.5, 9.9, 9, 2.2, p.front, 0.8);
+  scene.environment = pm.fromScene(es, 0.04).texture; scene.environmentIntensity = k;
+}
+const gProps = {                 // game props: roomLamp / toyBlocks / bookStack / kidChair / potPlant / teddyBear / playBall / cushionPile
+  lamp(x, z) { const g = new T.Group(); g.position.set(x, 0, z); g.add(gM(new T.CylinderGeometry(0.45, 0.5, 0.1, 20), gMetal("#c9a86a"), 0, 0.05, 0)); g.add(gM(new T.CylinderGeometry(0.05, 0.05, 3.2, 10), gMetal("#c9a86a"), 0, 1.65, 0));
+    g.add(gM(new T.CylinderGeometry(0.5, 0.85, 0.8, 20, 1, true), new T.MeshPhysicalMaterial({ color: "#ffe2a8", emissive: "#ffb04a", emissiveIntensity: 0.6, side: T.DoubleSide, roughness: 0.6 }), 0, 3.4, 0));
+    g.add(gM(new T.SphereGeometry(0.18, 12, 10), gGlow("#fff1c0", 2.2), 0, 3.25, 0)); const gl = gGlowSprite("rgba(255,200,120,0.6)", 4); gl.position.set(0, 3.2, 0.2); g.add(gl);
+    const pl = new T.PointLight(0xffc27a, 1.6, 9, 2); pl.position.set(0, 3.1, 0.6); g.add(pl); scene.add(g); return g; },
+  blocks(x, z) { const g = new T.Group(); g.position.set(x, 0, z);
+    [["A", "#ff5a4d", -0.5, 0.45, 0, 0.1], ["B", "#52b7ff", 0.5, 0.45, 0.1, -0.15], ["C", "#ffd24d", 0, 1.35, 0, 0.2]].forEach((b) => { const m = gM(new T.BoxGeometry(0.9, 0.9, 0.9), gLetterMat(b[0], b[1]), b[2], b[3], b[4]); m.rotation.y = b[5]; g.add(m); });
+    scene.add(g); return g; },
+  books(x, z) { const g = new T.Group(); g.position.set(x, 0, z); const cols = ["#ff5a4d", "#52b7ff", "#ffd24d", "#5af0b0", "#a78bff"]; let y = 0;
+    for (let i = 0; i < 5; i++) { const h = 0.18 + ((i * 37) % 5) * 0.02, ox = ((i * 13) % 3 - 1) * 0.06, b = gM(gRbox(1.4 - i * 0.08, h, 1.0 - i * 0.04, 0.03), gPlastic(cols[i]), ox, y + h / 2, 0); b.rotation.y = ((i * 7) % 5 - 2) * 0.06; g.add(b);
+      g.add(gM(new T.BoxGeometry(1.32 - i * 0.08, h * 0.75, 0.02), gPlastic("#fff6ea"), ox, y + h / 2, (1.0 - i * 0.04) / 2 + 0.005)); y += h; }
+    const st = gM(gRbox(0.2, 1.3, 0.9, 0.03), gPlastic("#ff9d5c"), 0.95, 0.65, 0); st.rotation.z = -0.15; g.add(st); scene.add(g); return g; },
+  chair(x, z) { const g = new T.Group(); g.position.set(x, 0, z); const wood = gPlastic("#ff9d5c", { roughness: 0.6 }); g.add(gM(gRbox(1.1, 0.12, 1.0, 0.04), wood, 0, 0.85, 0)); g.add(gM(gRbox(1.1, 1.1, 0.12, 0.04), wood, 0, 1.5, -0.46));
+    [[-0.45, -0.38], [0.45, -0.38], [-0.45, 0.38], [0.45, 0.38]].forEach((l) => g.add(gM(new T.CylinderGeometry(0.06, 0.06, 0.85, 10), wood, l[0], 0.42, l[1]))); g.add(gM(gRbox(0.9, 0.1, 0.8, 0.04), gPlastic("#52b7ff", { roughness: 0.8 }), 0, 0.94, 0)); scene.add(g); return g; },
+  plant(x, z) { const g = new T.Group(); g.position.set(x, 0, z); g.add(gM(new T.CylinderGeometry(0.42, 0.3, 0.6, 16), gPlastic("#e06a4a", { roughness: 0.7 }), 0, 0.3, 0)); g.add(gM(new T.CylinderGeometry(0.46, 0.46, 0.12, 16), gPlastic("#c8553a", { roughness: 0.7 }), 0, 0.62, 0));
+    const leaf = gPlastic("#3fbf72", { roughness: 0.75 }); [[-0.25, 1.15, 0, 0.42], [0.28, 1.3, -0.1, 0.5], [0, 1.6, 0.08, 0.46], [0.05, 1.05, 0.28, 0.34]].forEach((b) => g.add(gM(new T.SphereGeometry(b[3], 14, 10), leaf, b[0], b[1], b[2])));
+    g.add(gM(new T.CylinderGeometry(0.05, 0.07, 0.6, 8), gPlastic("#2e8f57"), 0, 0.85, 0)); scene.add(g); return g; },
+  teddy(x, z) { const g = new T.Group(); g.position.set(x, 0, z); const fur = gPlastic("#c98d5a", { roughness: 0.9 }), cream = gPlastic("#f2d8b8", { roughness: 0.9 });
+    const body = gM(new T.SphereGeometry(0.55, 18, 14), fur, 0, 0.6, 0); body.scale.set(1, 1.1, 0.85); g.add(body); g.add(gM(new T.SphereGeometry(0.42, 18, 14), fur, 0, 1.45, 0));
+    [-0.3, 0.3].forEach((e) => g.add(gM(new T.SphereGeometry(0.15, 12, 10), fur, e, 1.82, 0))); const snout = gM(new T.SphereGeometry(0.2, 12, 10), cream, 0, 1.35, 0.35); snout.scale.set(1.2, 0.8, 0.7); g.add(snout);
+    g.add(gM(new T.SphereGeometry(0.07, 10, 8), gPlastic("#5a3a28"), 0, 1.42, 0.52)); [-0.18, 0.18].forEach((e) => g.add(gM(new T.SphereGeometry(0.055, 10, 8), gPlastic("#2b1d14"), e, 1.56, 0.37)));
+    [-0.55, 0.55].forEach((a) => { const arm = gCapsule(0.13, 0.3, fur); arm.position.set(a, 0.75, 0.05); arm.rotation.z = a < 0 ? 0.5 : -0.5; g.add(arm); });
+    [-0.32, 0.32].forEach((f) => { const foot = gM(new T.SphereGeometry(0.2, 12, 10), fur, f, 0.16, 0.3); foot.scale.set(1, 0.7, 1.3); g.add(foot); }); scene.add(g); return g; },
+  ball(x, z) { const g = new T.Group(); g.position.set(x, 0, z); g.add(gM(new T.SphereGeometry(0.55, 22, 16), gPlastic("#ff5a4d", { roughness: 0.35, clearcoat: 0.6 }), 0, 0.55, 0));
+    const s1 = gM(new T.TorusGeometry(0.55, 0.09, 10, 28), gPlastic("#fff6ea", { roughness: 0.4 }), 0, 0.55, 0); s1.rotation.x = Math.PI / 2.4; g.add(s1);
+    const s2 = gM(new T.TorusGeometry(0.55, 0.07, 10, 28), gPlastic("#52b7ff", { roughness: 0.4 }), 0, 0.55, 0); s2.rotation.x = -Math.PI / 3; g.add(s2); scene.add(g); return g; },
+  cushions(x, z) { const g = new T.Group(); g.position.set(x, 0, z); const cols = ["#ffd24d", "#a78bff", "#5af0b0"];
+    [[-0.35, 0.22, 0, 0.15], [0.4, 0.2, 0.15, -0.1], [0, 0.6, 0, 0.35]].forEach((c, i) => { const m = gM(gRbox(1.15, 0.34, 1.0, 0.14), gPlastic(cols[i % 3], { roughness: 0.9 }), c[0], c[1], c[2]); m.rotation.y = c[3]; g.add(m); }); scene.add(g); return g; },
+};
+let FF = null;                   // fireflies (game: extras.fireflies "rgba(255,224,170,1)", 30 points in the lane box)
+// ================================================================================================================
+// NATIVE ROOMS: every indoor theme uses the Toy Room's technique (no painted backdrop strips): a flat wallpaper wall on the ground line + baseboard,
+// a glossy floor, a rug, and chunky clear-coated 3D props, all lit by the game's rig (hemisphere + key + rim, PMREM environment, ACES, shadows, glow, fireflies).
+// ================================================================================================================
+const BOOKCOL = ["#ff5a4d", "#52b7ff", "#ffd24d", "#5af0b0", "#a78bff", "#ff9d5c", "#e86a9a", "#3a9a5a"];
+const LIBCOL = ["#7a2a2a", "#2f5a3f", "#2a3f6a", "#a07a2a", "#5a3a22", "#d8c8a0", "#6a2f4a", "#3f6a6a", "#8a4a22", "#1f2f4a"];
+const HIDDEN_PATH = { make: () => mk(2, 2), tile: 6, uv: "world", wobble: 0, feather: 0.05, rim: 1, stones: null, hidden: true };
+const RB = (w, h, d, r, col, x, y, z, o) => gM(gRbox(w, h, d, r), gPlastic(col, o), x, y, z);
+const BX = (w, h, d, col, x, y, z, o) => gM(new T.BoxGeometry(w, h, d), gPlastic(col, o), x, y, z);
+const CY = (rt, rbm, h, col, x, y, z, seg, o) => gM(new T.CylinderGeometry(rt, rbm, h, seg || 20), gPlastic(col, o), x, y, z);
+const SP = (r, col, x, y, z, o) => gM(new T.SphereGeometry(r, 18, 14), gPlastic(col, o), x, y, z);
+const TO = (R, r, col, x, y, z, rx, ry, o) => { const m = gM(new T.TorusGeometry(R, r, 10, 28), gPlastic(col, o), x, y, z); m.rotation.set(rx || 0, ry || 0, 0); return m; };
+const tilt = (m, rx, ry, rz) => { m.rotation.set(rx || 0, ry || 0, rz || 0); return m; };
+const put = (x, z, parts, ry) => { const g = gG(...parts); g.position.set(x, 0, z); if (ry) g.rotation.y = ry; scene.add(g); return g; };
+const warm = (g, x, y, z, i) => { const pl = new T.PointLight(0xffc27a, i || 1.6, 9, 2); pl.position.set(x, y, z); g.add(pl); const gl = gGlowSprite("rgba(255,200,120,0.6)", 4); gl.position.set(x, y, z + 0.2); g.add(gl); };
+
+// ---- wall tiles (256 px, repeat 16x4 on the 130x32 plane, like the game's roomWall) ----
+function tileToy() { const c = mk(256, 256), g = c.getContext("2d"); g.fillStyle = "#2a2266"; g.fillRect(0, 0, 256, 256); g.fillStyle = "#30287a"; for (let i = 0; i < 8; i += 2) g.fillRect(i * 32, 0, 32, 256);
+  g.fillStyle = "rgba(255,226,140,.85)"; [[40, 50], [150, 96], [90, 176], [214, 212], [204, 30], [20, 220]].forEach((p) => { g.beginPath(); for (let k = 0; k < 10; k++) { const a = k / 10 * Math.PI * 2 - Math.PI / 2, r = k % 2 ? 4 : 10; g.lineTo(p[0] + Math.cos(a) * r, p[1] + Math.sin(a) * r); } g.closePath(); g.fill(); }); return c; }
+function tileLiving() { const c = mk(256, 256), g = c.getContext("2d"); g.fillStyle = "#e8d8bc"; g.fillRect(0, 0, 256, 256); g.fillStyle = "#dccaa6"; for (let i = 0; i < 4; i++) g.fillRect(i * 64 + 18, 0, 28, 256);
+  g.fillStyle = "rgba(150,100,60,.28)"; for (let y = 32; y < 256; y += 64) for (let x = 32; x < 256; x += 64) { g.beginPath(); g.moveTo(x, y - 10); g.lineTo(x + 7, y); g.lineTo(x, y + 10); g.lineTo(x - 7, y); g.fill(); } return c; }
+function tileLibrary() { const c = mk(256, 256), g = c.getContext("2d"), r = rng(5); g.fillStyle = "#22140d"; g.fillRect(0, 0, 256, 256);
+  for (let row = 0; row < 4; row++) { const y1 = (row + 1) * 64; let x = 0; while (x < 256) { let bw = 8 + r() * 14; if (x + bw > 256 || 256 - (x + bw) < 8) bw = 256 - x; const bh = 36 + r() * 20;
+      g.fillStyle = LIBCOL[(r() * LIBCOL.length) | 0]; g.fillRect(x, y1 - 6 - bh, bw, bh); g.fillStyle = "rgba(0,0,0,.25)"; g.fillRect(x + bw - 2, y1 - 6 - bh, 2, bh);
+      if (r() < 0.5) { g.fillStyle = "rgba(230,190,90,.7)"; g.fillRect(x + 1, y1 - 6 - bh + 5, bw - 3, 2); } x += bw + 1; }
+    g.fillStyle = "#4a2f1c"; g.fillRect(0, y1 - 6, 256, 6); } return c; }
+function tilePegboard() { const c = mk(256, 256), g = c.getContext("2d"); g.fillStyle = "#b89868"; g.fillRect(0, 0, 256, 256);
+  for (let y = 16; y < 256; y += 32) for (let x = 16; x < 256; x += 32) { g.fillStyle = "rgba(60,40,20,.6)"; g.beginPath(); g.arc(x, y, 3.4, 0, 7); g.fill(); g.fillStyle = "rgba(255,240,200,.3)"; g.beginPath(); g.arc(x + 1, y + 1.4, 2.6, 0, 7); g.fill(); } return c; }
+function tileGraph() { const c = mk(256, 256), g = c.getContext("2d"); g.fillStyle = "#e4f0e8"; g.fillRect(0, 0, 256, 256);
+  for (let i = 0; i <= 256; i += 16) { g.fillStyle = i % 64 === 0 ? "rgba(70,140,120,.5)" : "rgba(90,150,130,.22)"; g.fillRect(i, 0, i % 64 === 0 ? 2 : 1, 256); g.fillRect(0, i, 256, i % 64 === 0 ? 2 : 1); }
+  const star = (x, y, R, col) => { g.fillStyle = col; g.beginPath(); for (let k = 0; k < 10; k++) { const a = k / 10 * Math.PI * 2 - Math.PI / 2, r = k % 2 ? R * 0.4 : R; g.lineTo(x + Math.cos(a) * r, y + Math.sin(a) * r); } g.closePath(); g.fill(); };
+  star(48, 70, 16, "#f4b840"); star(190, 150, 12, "#e86a9a"); star(110, 210, 10, "#3a7ad9"); g.strokeStyle = "#d9453a"; g.lineWidth = 4; g.beginPath(); g.moveTo(170, 50); g.bezierCurveTo(190, 20, 230, 60, 200, 80); g.stroke(); return c; }
+// ---- rugs / mats (the game's rug is an oval at (20, 1.5); each theme gets its own at the same place) ----
+function rugToy() { const c = mk(256, 256), g = c.getContext("2d"), cols = ["#ff9d5c", "#ffd24d", "#5af0b0", "#52b7ff", "#a78bff"]; for (let i = 0; i < 5; i++) { g.fillStyle = cols[i]; g.beginPath(); g.arc(128, 128, 128 - i * 24, 0, Math.PI * 2); g.fill(); } return c; }
+function rugOval(pal) { const c = mk(256, 256), g = c.getContext("2d"); for (let i = 0; i < pal.length; i++) { g.fillStyle = pal[i]; g.beginPath(); g.arc(128, 128, 128 - i * 22, 0, 7); g.fill(); }
+  g.fillStyle = pal[1]; for (let k = 0; k < 36; k++) { const a = k / 36 * Math.PI * 2; g.beginPath(); g.arc(128 + Math.cos(a) * 108, 128 + Math.sin(a) * 108, 3.5, 0, 7); g.fill(); }
+  g.fillStyle = pal[pal.length - 2]; g.beginPath(); g.moveTo(128, 92); g.lineTo(164, 128); g.lineTo(128, 164); g.lineTo(92, 128); g.fill(); return c; }
+function rugMat() { const W = 1024, H = 340, c = mk(W, H), g = c.getContext("2d"), r = rng(61); g.fillStyle = "#2c6b52"; g.fillRect(0, 0, W, H); g.fillStyle = "#245a45"; g.fillRect(0, 0, W, 26); g.fillRect(0, H - 26, W, 26);
+  for (let x = 0; x <= W; x += 16) { g.fillStyle = "rgba(255,255,255,.7)"; const m = x % 64 === 0; g.fillRect(x, 26 - (m ? 18 : 8), 2, m ? 18 : 8); g.fillRect(x, H - 26, 2, m ? 18 : 8); }
+  for (let x = 0; x <= W; x += 64) { g.fillStyle = x % 256 === 0 ? "rgba(255,255,255,.55)" : "rgba(255,255,255,.22)"; g.fillRect(x, 26, 2, H - 52); }
+  for (let y = 26; y <= H - 26; y += 64) { g.fillStyle = "rgba(255,255,255,.3)"; g.fillRect(0, y, W, 2); }
+  g.strokeStyle = "rgba(255,230,120,.55)"; g.lineWidth = 3; g.beginPath(); g.arc(W / 2, H / 2, 100, 0, 7); g.stroke(); for (let i = 0; i < 2000; i++) { g.fillStyle = r() < 0.5 ? "rgba(255,255,255,.04)" : "rgba(0,0,0,.07)"; g.fillRect(r() * W, r() * H, 2, 1); } return c; }
+function rugPaper() { const W = 1024, H = 640, c = mk(W, H), g = c.getContext("2d"); g.fillStyle = "#fbf8ee"; g.fillRect(0, 0, W, H); g.fillStyle = "rgba(60,120,200,.5)"; for (let y = 100; y < H; y += 40) g.fillRect(0, y, W, 2);
+  g.fillStyle = "rgba(220,60,60,.6)"; g.fillRect(130, 0, 3, H); g.fillRect(138, 0, 1.5, H); [120, 320, 520].forEach((y) => { g.fillStyle = "#9a9486"; g.beginPath(); g.arc(50, y, 18, 0, 7); g.fill(); g.fillStyle = "#6a655a"; g.beginPath(); g.arc(50, y, 14, 0, 7); g.fill(); });
+  g.font = "bold 40px system-ui, sans-serif"; g.fillStyle = "rgba(60,60,80,.6)"; g.fillText("Toy log:", 170, 80); return c; }
+function makeRulerStrip() { const W = 512, H = 64, c = mk(W, H), g = c.getContext("2d"); g.fillStyle = "#e0b43a"; g.fillRect(0, 0, W, H); g.fillStyle = "#2a2018";
+  for (let x = 0; x < W; x += 8) { const k = x % 64 === 0 ? 26 : x % 32 === 0 ? 18 : 10; g.fillRect(x, 0, 2, k); } g.font = "bold 18px system-ui, sans-serif"; for (let x = 0; x < W; x += 64) g.fillText(String(x / 64 + 1), x + 5, 46); return c; }
+// ---- small decor textures ----
+function skyWindowTex(kind, seed) { const W = 320, H = 200, c = mk(W, H), g = c.getContext("2d"), r = rng(seed || 3); const sk = g.createLinearGradient(0, 0, 0, H);
+  if (kind === "night") { sk.addColorStop(0, "#14143a"); sk.addColorStop(1, "#3a3a7c"); } else { sk.addColorStop(0, "#4a5ca8"); sk.addColorStop(0.55, "#e88a8a"); sk.addColorStop(1, "#ffd9a0"); } g.fillStyle = sk; g.fillRect(0, 0, W, H);
+  if (kind === "night") { g.fillStyle = "#fff4cf"; g.beginPath(); g.arc(230, 56, 18, 0, 7); g.fill(); for (let i = 0; i < 24; i++) { g.fillStyle = "rgba(255,244,210,.85)"; g.fillRect(r() * W, r() * 110, 2, 2); } }
+  else { const sg = g.createRadialGradient(W * 0.65, H * 0.8, 4, W * 0.65, H * 0.8, 100); sg.addColorStop(0, "rgba(255,240,200,.95)"); sg.addColorStop(1, "rgba(255,200,150,0)"); g.fillStyle = sg; g.fillRect(0, 0, W, H); }
+  let bx = -10; while (bx < W) { const bw = 26 + r() * 40, bh = H * (0.16 + r() * 0.34); g.fillStyle = r() < 0.5 ? "#3a3a68" : "#4a4a7c"; g.fillRect(bx, H - bh, bw, bh);
+    for (let wy = H - bh + 8; wy < H - 8; wy += 13) for (let wx = bx + 5; wx < bx + bw - 7; wx += 11) if (r() < 0.35) { g.fillStyle = "rgba(255,226,140,.9)"; g.fillRect(wx, wy, 4, 6); } bx += bw + 2 + r() * 6; }
+  g.fillStyle = "#f6f1e6"; g.fillRect(W / 2 - 4, 0, 8, H); g.fillRect(0, H / 2 - 4, W, 8); const t = new T.CanvasTexture(c); t.colorSpace = T.SRGBColorSpace; return t; }
+function corkTex() { const W = 320, H = 220, c = mk(W, H), g = c.getContext("2d"), r = rng(9); g.fillStyle = "#c89a62"; g.fillRect(0, 0, W, H);
+  for (let i = 0; i < 1100; i++) { g.fillStyle = r() < 0.5 ? "rgba(120,80,40,.35)" : "rgba(240,205,150,.35)"; g.fillRect(r() * W, r() * H, 2 + r() * 2, 2); }
+  for (let i = 0; i < 6; i++) { const px = 20 + r() * (W - 100), py = 14 + r() * (H - 90), kind = r(); g.save(); g.translate(px + 35, py + 35); g.rotate((r() - 0.5) * 0.3);
+    if (kind < 0.5) { g.fillStyle = "rgba(0,0,0,.2)"; g.fillRect(-30, -28, 66, 66); g.fillStyle = ["#fff2a0", "#ffc2d4", "#b8e0ff", "#c8f0b8"][(r() * 4) | 0]; g.fillRect(-33, -33, 66, 66); g.fillStyle = "rgba(60,50,40,.45)"; for (let k = 0; k < 4; k++) g.fillRect(-24, -22 + k * 11, 36 + r() * 14, 2); }
+    else { g.fillStyle = "rgba(0,0,0,.2)"; g.fillRect(-26, -30, 60, 72); g.fillStyle = "#faf6ec"; g.fillRect(-30, -34, 60, 72); const sk = g.createLinearGradient(0, -28, 0, 14); sk.addColorStop(0, "#9ccbe8"); sk.addColorStop(1, "#f4d9a0"); g.fillStyle = sk; g.fillRect(-23, -27, 46, 44); g.fillStyle = "#6f9a6a"; g.beginPath(); g.moveTo(-23, 17); g.quadraticCurveTo(-4, -8, 23, 14); g.lineTo(23, 17); g.fill(); }
+    g.fillStyle = "#d9453a"; g.beginPath(); g.arc(0, -33, 5, 0, 7); g.fill(); g.restore(); } const t = new T.CanvasTexture(c); t.colorSpace = T.SRGBColorSpace; return t; }
+function artTex(seed) { const W = 160, H = 200, c = mk(W, H), g = c.getContext("2d"), r = rng(seed); const sk = g.createLinearGradient(0, 0, 0, H); const warm = r() < 0.5; sk.addColorStop(0, warm ? "#f4b78a" : "#9ecbe8"); sk.addColorStop(1, warm ? "#fbe3b0" : "#e6f2f8"); g.fillStyle = sk; g.fillRect(0, 0, W, H);
+  g.fillStyle = r() < 0.5 ? "#6f9a6a" : "#8a7aa8"; g.beginPath(); g.moveTo(0, H); g.quadraticCurveTo(W * 0.35, H * 0.4, W * 0.62, H * 0.64); g.quadraticCurveTo(W * 0.8, H * 0.52, W, H * 0.7); g.lineTo(W, H); g.fill();
+  g.fillStyle = "#fff4cf"; g.beginPath(); g.arc(W * 0.7, H * 0.28, 18, 0, 7); g.fill(); const t = new T.CanvasTexture(c); t.colorSpace = T.SRGBColorSpace; return t; }
+function clockTex() { const c = mk(128, 128), g = c.getContext("2d"); g.fillStyle = "#b98a3e"; g.beginPath(); g.arc(64, 64, 62, 0, 7); g.fill(); g.fillStyle = "#f8f2e2"; g.beginPath(); g.arc(64, 64, 54, 0, 7); g.fill();
+  g.strokeStyle = "#3a2c26"; g.lineWidth = 4; for (let k = 0; k < 12; k++) { const a = k * Math.PI / 6; g.beginPath(); g.moveTo(64 + Math.sin(a) * 42, 64 - Math.cos(a) * 42); g.lineTo(64 + Math.sin(a) * 50, 64 - Math.cos(a) * 50); g.stroke(); }
+  g.lineWidth = 5; g.beginPath(); g.moveTo(64, 64); g.lineTo(88, 44); g.stroke(); g.lineWidth = 4; g.beginPath(); g.moveTo(64, 64); g.lineTo(58, 22); g.stroke(); const t = new T.CanvasTexture(c); t.colorSpace = T.SRGBColorSpace; return t; }
+function globeTex() { const c = mk(256, 128), g = c.getContext("2d"), r = rng(4); g.fillStyle = "#3f6a9a"; g.fillRect(0, 0, 256, 128); g.fillStyle = "#6a9a5a"; for (let i = 0; i < 9; i++) { g.beginPath(); g.ellipse(r() * 256, 20 + r() * 88, 14 + r() * 24, 8 + r() * 14, r() * 3, 0, 7); g.fill(); }
+  const t = new T.CanvasTexture(c); t.colorSpace = T.SRGBColorSpace; return t; }
+
+// ---- generic native builders ----
+function gWall(cfg) {
+  const tx = new T.CanvasTexture(cfg.tile()); tx.colorSpace = T.SRGBColorSpace; tx.wrapS = tx.wrapT = T.RepeatWrapping; tx.repeat.set(...(cfg.repeat || [16, 4])); tx.anisotropy = aniso;
+  const w = new T.Mesh(new T.PlaneGeometry(130, 32), new T.MeshStandardMaterial({ map: tx, roughness: cfg.roughness ?? 0.9 })); w.position.set(20, 15.8, -10); w.receiveShadow = true; scene.add(w);
+  let bm; if (cfg.baseTex) { const bt = new T.CanvasTexture(cfg.baseTex()); bt.colorSpace = T.SRGBColorSpace; bt.wrapS = T.RepeatWrapping; bt.repeat.set(130 / 6.4, 1); bm = gPlastic("#ffffff", { map: bt, roughness: 0.5 }); } else bm = gPlastic(cfg.base, { roughness: 0.5 });
+  scene.add(gM(new T.BoxGeometry(130, 0.8, 0.25), bm, 20, 0.4, -9.86));
+}
+function gRugCfg(cfg) {
+  const tx = new T.CanvasTexture(cfg.make()); tx.colorSpace = T.SRGBColorSpace; tx.anisotropy = aniso;
+  let m; if (cfg.shape === "oval") { m = new T.Mesh(new T.CircleGeometry(1, 48), new T.MeshStandardMaterial({ map: tx, roughness: 0.95 })); m.rotation.x = -Math.PI / 2; m.scale.set(cfg.size[0], cfg.size[1], 1); }
+  else { m = new T.Mesh(new T.PlaneGeometry(cfg.size[0], cfg.size[1]), new T.MeshStandardMaterial({ map: tx, roughness: 0.9 })); m.rotation.set(-Math.PI / 2, 0, cfg.rot || 0); }
+  m.position.set(cfg.pos[0], 0.025, cfg.pos[1]); m.receiveShadow = true; scene.add(m);
+}
+function buildNativeRoom() {
+  gWall(TH.wall); if (TH.rug) gRugCfg(TH.rug); if (TH.decor) TH.decor();
+  TH.propList.forEach(([k, x, z, ...a]) => TH.propset[k](x, z, ...a));
+  const n = 30, pos = new Float32Array(n * 3), base = [], r = rng(1234);
+  for (let i = 0; i < n; i++) { const x = r() * 44, y = 0.6 + r() * 2.8, z = -5 + r() * 7; base.push([x, y, z, r() * 6]); pos.set([x, y, z], i * 3); }
+  const geo = new T.BufferGeometry(); geo.setAttribute("position", new T.BufferAttribute(pos, 3));
+  const pts = new T.Points(geo, new T.PointsMaterial({ size: 0.45, map: gGlowTex("rgba(255,224,170,1)"), transparent: true, depthWrite: false, blending: T.AdditiveBlending, fog: false, opacity: 0.45 }));
+  scene.add(pts); FF = { geo, base, n };
+}
+const wallPlane = (x, y, w, h, tex, basic) => { const m = new T.Mesh(new T.PlaneGeometry(w, h), basic ? new T.MeshBasicMaterial({ map: tex }) : new T.MeshStandardMaterial({ map: tex, roughness: 0.8 })); m.position.set(x, y, -9.77); scene.add(m); return m; };
+const frame3d = (x, y, w, h, tex, wood) => { scene.add(gM(gRbox(w + 0.36, h + 0.36, 0.14, 0.05), gPlastic(wood || "#6a4426", { roughness: 0.5 }), x, y, -9.85)); wallPlane(x, y, w, h, tex, false); };
+const curtain = (x, y, h, col) => scene.add(gM(gRbox(0.9, h, 0.35, 0.15), gPlastic(col, { roughness: 0.9 }), x, y, -9.7));
+const windowAt = (x, y, w, h, tex, wood, curt) => { scene.add(gM(gRbox(w + 0.5, h + 0.5, 0.16, 0.05), gPlastic(wood || "#f6f1e6", { roughness: 0.5 }), x, y, -9.85)); wallPlane(x, y, w, h, tex, true);
+  scene.add(gM(new T.BoxGeometry(w + 0.7, 0.18, 0.4), gPlastic(wood || "#f6f1e6"), x, y - h / 2 - 0.3, -9.7)); if (curt) { curtain(x - w / 2 - 0.55, y, h + 0.8, curt); curtain(x + w / 2 + 0.55, y, h + 0.8, curt); } };
+
+function bookBlock(w, h, d, rows, seed, cols) {
+  const r = rng(seed), g = new T.Group(), items = [], rowH = h / rows;
+  for (let row = 0; row < rows; row++) { let x = -w / 2 + 0.05; while (x < w / 2 - 0.15) { const bw = 0.12 + r() * 0.16, bh = rowH * (0.62 + r() * 0.3); if (x + bw > w / 2 - 0.05) break; items.push([x + bw / 2, row * rowH + 0.06 + bh / 2, bw, bh, cols[(r() * cols.length) | 0]]); x += bw + 0.015; } }
+  const im = new T.InstancedMesh(new T.BoxGeometry(1, 1, 1), gPlastic("#ffffff", { roughness: 0.6, clearcoat: 0.4 }), items.length), m = new T.Matrix4(), c = new T.Color(), q = new T.Quaternion();
+  items.forEach((it, i) => { m.compose(new T.Vector3(it[0], it[1], 0), q, new T.Vector3(it[2], it[3], d)); im.setMatrixAt(i, m); im.setColorAt(i, c.set(it[4])); }); im.castShadow = true; im.receiveShadow = true; g.add(im); return g;
+}
+function bookcase(x, z, w, h, seed, cols, wood) {
+  wood = wood || "#6a4426"; const parts = [RB(w, h, 0.16, 0.04, wood, 0, h / 2, -0.34), RB(0.16, h, 0.84, 0.03, wood, -w / 2, h / 2, 0), RB(0.16, h, 0.84, 0.03, wood, w / 2, h / 2, 0), RB(w + 0.3, 0.16, 0.95, 0.05, wood, 0, h + 0.08, 0)];
+  const rows = Math.max(2, Math.round(h / 1.15)); for (let i = 0; i <= rows; i++) parts.push(RB(w - 0.1, 0.1, 0.84, 0.03, "#8a5a32", 0, 0.05 + i * ((h - 0.1) / rows), 0));
+  const bb = bookBlock(w - 0.36, h - 0.15, 0.58, rows, seed, cols); bb.position.set(0, 0.1, -0.02); parts.push(bb); return put(x, z, parts);
+}
+const feet = (col, w, d, y) => [[-w, -d], [w, -d], [-w, d], [w, d]].map(([a, b]) => CY(0.1, 0.08, y || 0.2, col, a, (y || 0.2) / 2, b, 10));
+const deskLamp = (x, z, col) => { const sh = gM(new T.CylinderGeometry(0.2, 0.7, 0.85, 24, 1, true), new T.MeshPhysicalMaterial({ color: col, emissive: col, emissiveIntensity: 0.25, side: T.DoubleSide, roughness: 0.5, clearcoat: 0.6 }), 0.28, 3.95, 0); sh.rotation.z = -0.55;
+  const g = put(x, z, [CY(0.55, 0.6, 0.14, "#2a2f36", 0, 0.07, 0, 24), tilt(CY(0.06, 0.06, 2.4, "#cfd4da", -0.52, 1.17, 0, 10), 0, 0, 0.45), SP(0.13, "#cfd4da", -1.04, 2.24, 0), tilt(CY(0.06, 0.06, 2.2, "#cfd4da", -0.47, 3.18, 0, 10), 0, 0, -0.55), sh, gM(new T.SphereGeometry(0.2, 12, 10), gGlow("#fff1c0", 2.2), 0.4, 3.75, 0)]); warm(g, 0.45, 3.6, 0.4, 1.8); return g; };
+const pencil3d = (len, col) => { const g = new T.Group(); const add = (m, y, ry) => { m.position.y = y; if (ry) m.rotation.y = ry; g.add(m); return m; };
+  add(gM(new T.CylinderGeometry(0.3, 0.3, 0.24, 14), gPlastic("#e8788a")), 0.12); add(gM(new T.CylinderGeometry(0.33, 0.33, 0.22, 14), gMetal("#c8cdd2")), 0.35); add(gM(new T.CylinderGeometry(0.32, 0.32, len, 6), gPlastic(col)), 0.46 + len / 2, 0.5);
+  add(gM(new T.ConeGeometry(0.32, 0.55, 6), gPlastic("#e8c490")), 0.46 + len + 0.275, 0.5); add(gM(new T.ConeGeometry(0.11, 0.2, 10), gPlastic("#2a2a2a")), 0.46 + len + 0.65); return g; };
+
+// ================================================================================================================
+// prop sets (chunky clear-coated primitives, like the game's own props)
+// ================================================================================================================
+const PS_LIVING = {
+  lamp: gProps.lamp, plant: gProps.plant, cushions: gProps.cushions,
+  bookcase: (x, z, o) => bookcase(x, z, o.w, o.h, o.seed, BOOKCOL),
+  sofa: (x, z, col, pil) => put(x, z, [RB(3.4, 0.7, 1.4, 0.2, col, 0, 0.45, 0), RB(3.4, 1.1, 0.45, 0.2, col, 0, 1.25, -0.52), RB(0.45, 1.0, 1.4, 0.2, col, -1.5, 0.85, 0), RB(0.45, 1.0, 1.4, 0.2, col, 1.5, 0.85, 0),
+    RB(1.25, 0.34, 1.0, 0.14, col, -0.62, 0.95, 0.12), RB(1.25, 0.34, 1.0, 0.14, col, 0.62, 0.95, 0.12), tilt(RB(0.7, 0.7, 0.24, 0.12, pil, -1.0, 1.35, 0.15), 0, 0, 0.2), ...feet("#4a3020", 1.4, 0.5)]),
+  armchair: (x, z, col) => put(x, z, [RB(1.7, 0.6, 1.3, 0.18, col, 0, 0.4, 0), RB(1.7, 1.0, 0.4, 0.18, col, 0, 1.1, -0.45), RB(0.38, 0.85, 1.3, 0.16, col, -0.78, 0.75, 0), RB(0.38, 0.85, 1.3, 0.16, col, 0.78, 0.75, 0), RB(1.0, 0.3, 0.95, 0.12, col, 0, 0.8, 0.1), ...feet("#4a3020", 0.7, 0.5)]),
+  tv: (x, z) => put(x, z, [RB(3.4, 1.0, 1.0, 0.08, "#8a5a32", 0, 0.55, 0), CY(0.12, 0.12, 0.5, "#1c1f26", 0, 1.3, -0.1), RB(2.4, 1.4, 0.14, 0.06, "#1c1f26", 0, 2.25, -0.1),
+    gM(new T.PlaneGeometry(2.2, 1.2), new T.MeshStandardMaterial({ color: "#1a2a4a", emissive: "#3a6ad0", emissiveIntensity: 0.9, roughness: 0.3 }), 0, 2.25, -0.02)]),
+  table: (x, z) => { const g = put(x, z, [CY(0.9, 0.9, 0.12, "#c9a46a", 0, 1.5, 0, 28), CY(0.12, 0.12, 1.4, "#6a4426", 0, 0.75, 0), CY(0.5, 0.55, 0.1, "#6a4426", 0, 0.06, 0, 20)]); const l = gProps.lamp(x, z); l.scale.setScalar(0.5); l.position.y = 1.56; return g; },
+  coffee: (x, z) => put(x, z, [RB(2.4, 0.18, 1.2, 0.07, "#c9a46a", 0, 0.85, 0), ...[[-1, -0.45], [1, -0.45], [-1, 0.45], [1, 0.45]].map(([a, b]) => CY(0.08, 0.07, 0.8, "#6a4426", a, 0.4, b, 10)), RB(0.9, 0.12, 0.6, 0.05, "#ff5a4d", 0.3, 1.0, 0)]),
+};
+const PS_LIB = {
+  lamp: gProps.lamp, plant: gProps.plant, books: gProps.books,
+  bookcase: (x, z, o) => bookcase(x, z, o.w, o.h, o.seed, LIBCOL, "#4a2f1c"),
+  clock: (x, z) => { const face = new T.Mesh(new T.CircleGeometry(0.5, 32), new T.MeshBasicMaterial({ map: clockTex() })); face.position.set(0, 5.4, 0.52); const pen = tilt(CY(0.26, 0.26, 0.06, "#d4af5a", 0, 1.9, 0.56, 24), Math.PI / 2, 0, 0);
+    return put(x, z, [RB(1.5, 6.2, 1.0, 0.1, "#6a4426", 0, 3.1, 0), RB(1.8, 0.5, 1.2, 0.12, "#7a5230", 0, 6.35, 0), face, RB(0.9, 2.4, 0.06, 0.03, "#14100c", 0, 2.6, 0.52), CY(0.03, 0.03, 1.4, "#d4af5a", 0, 2.7, 0.56, 8), pen]); },
+  ladder: (x, z) => { const parts = [BX(0.12, 6.6, 0.12, "#8a5a32", -0.5, 3.3, 0), BX(0.12, 6.6, 0.12, "#8a5a32", 0.5, 3.3, 0), CY(0.14, 0.14, 0.1, "#2a2018", -0.5, 0.14, 0.1, 14), CY(0.14, 0.14, 0.1, "#2a2018", 0.5, 0.14, 0.1, 14)];
+    for (let i = 0; i < 9; i++) parts.push(BX(1.0, 0.08, 0.14, "#8a5a32", 0, 0.7 + i * 0.7, 0)); const g = put(x, z, parts); g.rotation.z = 0.05; return g; },
+  globe: (x, z) => { const gm = new T.Mesh(new T.SphereGeometry(0.9, 28, 20), new T.MeshPhysicalMaterial({ map: globeTex(), roughness: 0.4, clearcoat: 0.8 })); gm.position.set(0, 2.1, 0); gm.castShadow = true; gm.rotation.z = 0.4;
+    return put(x, z, [CY(0.5, 0.6, 0.12, "#4a2f1c", 0, 0.06, 0, 24), CY(0.06, 0.06, 1.3, "#d4af5a", 0, 0.75, 0, 10), gm, TO(1.05, 0.05, "#d4af5a", 0, 2.1, 0, 0, 0)]); },
+  desk: (x, z) => { const g = put(x, z, [RB(3.4, 0.2, 1.7, 0.06, "#7a4a2a", 0, 1.8, 0), RB(0.2, 1.7, 1.5, 0.05, "#5a3a22", -1.5, 0.9, 0), RB(0.2, 1.7, 1.5, 0.05, "#5a3a22", 1.5, 0.9, 0), RB(1.0, 1.0, 1.4, 0.05, "#6a4426", 1.0, 1.2, 0),
+      RB(0.9, 0.08, 0.6, 0.03, "#f2ead8", -0.7, 1.94, 0.1), BX(0.14, 0.04, 0.5, "#c0392b", -0.7, 2.0, 0.1), RB(0.4, 0.12, 0.5, 0.04, "#2a4a8a", 0.5, 1.96, 0.2)]);
+    const bl = new T.Group(); bl.add(CY(0.3, 0.34, 0.1, "#b98a3e", 0, 0.05, 0, 20), CY(0.05, 0.05, 0.7, "#b98a3e", 0, 0.45, 0, 8)); const sh = gM(new T.SphereGeometry(0.42, 18, 12, 0, Math.PI * 2, 0, Math.PI / 2), new T.MeshPhysicalMaterial({ color: "#1f6a4a", emissive: "#1f6a4a", emissiveIntensity: 0.2, roughness: 0.4, clearcoat: 0.7, side: T.DoubleSide }), 0.12, 0.8, 0); sh.rotation.z = -0.4; bl.add(sh);
+    bl.position.set(1.0, 1.9, 0.3); g.add(bl); warm(g, 1.3, 2.6, 0.5, 1.4); return g; },
+  wing: (x, z, col) => put(x, z, [RB(1.9, 0.7, 1.5, 0.2, col, 0, 0.45, 0), RB(1.7, 2.4, 0.45, 0.22, col, 0, 1.7, -0.55), RB(0.5, 1.2, 1.5, 0.2, col, -0.95, 0.95, 0), RB(0.5, 1.2, 1.5, 0.2, col, 0.95, 0.95, 0), RB(0.4, 1.0, 0.7, 0.16, col, -0.9, 2.1, -0.4), RB(0.4, 1.0, 0.7, 0.16, col, 0.9, 2.1, -0.4), RB(1.2, 0.34, 1.1, 0.14, "#5a1f2a", 0, 0.95, 0.12), ...feet("#2a1810", 0.8, 0.55)]),
+};
+const PS_WORK = {
+  spool: (x, z, col) => put(x, z, [CY(0.5, 0.5, 1.1, col, 0, 0.75, 0), CY(0.8, 0.8, 0.12, "#c9a46a", 0, 0.2, 0, 24), CY(0.8, 0.8, 0.12, "#c9a46a", 0, 1.3, 0, 24)]),
+  bolt: (x, z) => { const parts = [CY(0.26, 0.26, 2.8, "#9aa4ae", 0, 1.4, 0, 14), CY(0.62, 0.62, 0.34, "#b8c0c8", 0, 2.95, 0, 6)]; for (let i = 0; i < 9; i++) parts.push(TO(0.28, 0.04, "#7a848e", 0, 0.15 + i * 0.3, 0, Math.PI / 2, 0)); return put(x, z, parts); },
+  chest: (x, z, col) => { const parts = [RB(2.8, 3.4, 1.5, 0.1, col, 0, 1.8, 0), RB(3.0, 0.2, 1.6, 0.06, "#cfd4da", 0, 3.6, 0), CY(0.18, 0.18, 0.12, "#222", -1.1, 0.18, 0.5, 14), CY(0.18, 0.18, 0.12, "#222", 1.1, 0.18, 0.5, 14)];
+    for (let i = 0; i < 5; i++) { parts.push(RB(2.4, 0.5, 0.06, 0.03, "#1a1a1a", 0, 0.7 + i * 0.6, 0.77, { transparent: true, opacity: 0.35 })); parts.push(RB(0.9, 0.1, 0.12, 0.04, "#cfd4da", 0, 0.7 + i * 0.6, 0.82)); } return put(x, z, parts); },
+  printer: (x, z, frame, pc) => { const parts = [RB(2.8, 0.3, 2.2, 0.08, frame, 0, 0.15, 0), RB(2.8, 0.2, 2.2, 0.06, frame, 0, 3.3, 0), RB(2.2, 0.1, 1.6, 0.03, "#2a2f36", 0, 0.6, 0), RB(2.5, 0.14, 0.2, 0.04, "#3a3f46", 0, 1.9, 0), RB(0.5, 0.4, 0.4, 0.06, "#3a3f46", 0.3, 1.85, 0),
+      TO(0.55, 0.2, "#e07a30", -1.0, 3.0, -0.3, 0, 0), RB(0.7, 0.45, 0.06, 0.03, "#1a2a3a", 1.0, 0.45, 1.12), gM(new T.PlaneGeometry(0.5, 0.25), new T.MeshBasicMaterial({ color: "#6ad0ff" }), 1.0, 0.45, 1.16)];
+    for (const [a, b] of [[-1.3, -0.9], [1.3, -0.9], [-1.3, 0.9], [1.3, 0.9]]) parts.push(RB(0.2, 3.0, 0.2, 0.04, frame, a, 1.8, b));
+    for (let i = 0; i < 6; i++) parts.push(BX(1.0 - i * 0.1, 0.18, 0.8 - i * 0.08, pc, 0, 0.74 + i * 0.18, 0)); return put(x, z, parts); },
+  bins: (x, z) => { const parts = [RB(3.0, 4.6, 0.2, 0.05, "#2a2f36", 0, 2.3, -0.4)]; for (let j = 0; j < 6; j++) for (let i = 0; i < 4; i++) { const col = (i + j) % 2 ? "#2f6fb0" : "#e8b82a"; parts.push(RB(0.62, 0.55, 0.7, 0.07, col, -1.1 + i * 0.73, 0.5 + j * 0.74, 0)); parts.push(BX(0.42, 0.1, 0.02, "#ffffff", -1.1 + i * 0.73, 0.58 + j * 0.74, 0.37)); } return put(x, z, parts); },
+  cans: (x, z) => { const parts = []; [["#c0392b", 0, 0, 0], ["#2f6fb0", 1.1, 0.1, 0], ["#e8b82a", 0.5, 0.05, 1.0]].forEach(([col, dx, dz, lvl]) => { parts.push(CY(0.5, 0.5, 0.9, "#aab2ba", dx, 0.45 + lvl * 0.92, dz, 22), CY(0.505, 0.505, 0.4, col, dx, 0.45 + lvl * 0.92, dz, 22), CY(0.55, 0.55, 0.08, "#8a929a", dx, 0.94 + lvl * 0.92, dz, 22)); }); return put(x, z, parts); },
+  lumber: (x, z) => { const cols = ["#c9a46a", "#b88a52", "#d4b078", "#a87a48"], parts = []; for (let i = 0; i < 7; i++) parts.push(BX(3.2 - (i % 3) * 0.2, 0.3, 0.6, cols[i % 4], ((i * 37) % 5 - 2) * 0.06, 0.15 + i * 0.31, ((i * 13) % 3 - 1) * 0.06)); return put(x, z, parts); },
+  vise: (x, z) => put(x, z, [RB(1.4, 0.6, 1.0, 0.08, "#2a2f36", 0, 0.3, 0), RB(1.2, 0.8, 0.3, 0.06, "#c0392b", 0, 0.95, -0.25), RB(1.2, 0.8, 0.3, 0.06, "#c0392b", 0, 0.95, 0.25), CY(0.07, 0.07, 1.4, "#cfd4da", 0, 0.5, 0.6, 10), tilt(CY(0.05, 0.05, 0.9, "#cfd4da", 0, 0.5, 1.3, 8), 0, 0, Math.PI / 2)]),
+  deskLamp: (x, z) => deskLamp(x, z, "#e07a30"),
+};
+const PS_DESK = {
+  notes: (x, z) => put(x, z, ["#fff2a0", "#ffc2d4", "#b8e0ff"].map((c, i) => tilt(BX(1.3, 0.5, 1.3, c, 0, 0.25 + i * 0.5, 0), 0, (i - 1) * 0.35, 0))),
+  pencil: (x, z, col, len) => put(x, z, [pencil3d(len, col)]),
+  cup: (x, z) => { const parts = [gM(new T.CylinderGeometry(0.85, 0.75, 1.7, 28, 1, true), gPlastic("#3a7ab0", { side: T.DoubleSide }), 0, 0.85, 0), CY(0.75, 0.75, 0.08, "#2a5a80", 0, 0.04, 0, 28)];
+    [[-0.3, 0.15, -0.2, "#f0c020", 3.4], [0.25, -0.1, 0.18, "#d9453a", 3.0], [0, 0.2, 0, "#3a9a5a", 3.8], [-0.1, -0.2, 0.25, "#e07a30", 2.6], [0.35, 0.1, -0.15, "#8a4ab0", 3.2]].forEach(([dx, dz, tl, col, len]) => { const p = pencil3d(len, col); p.position.set(dx, 0.5, dz); p.rotation.z = tl; parts.push(p); }); return put(x, z, parts); },
+  books: gProps.books,
+  deskLamp: (x, z) => deskLamp(x, z, "#2f9a4a"),
+  clock: (x, z) => { const face = new T.Mesh(new T.CircleGeometry(0.82, 32), new T.MeshBasicMaterial({ map: clockTex() })); face.position.set(0, 1.6, 0.37);
+    return put(x, z, [tilt(CY(1.0, 1.0, 0.7, "#d9453a", 0, 1.6, 0, 32), Math.PI / 2, 0, 0), face, SP(0.3, "#cfd4da", -0.7, 2.7, 0), SP(0.3, "#cfd4da", 0.7, 2.7, 0), CY(0.08, 0.08, 0.5, "#2a2018", -0.6, 0.25, 0, 8), CY(0.08, 0.08, 0.5, "#2a2018", 0.6, 0.25, 0, 8)]); },
+  scissors: (x, z) => put(x, z, [tilt(BX(0.22, 3.4, 0.08, "#cfd4da", -0.12, 2.7, 0), 0, 0, 0.06), tilt(BX(0.22, 3.4, 0.08, "#cfd4da", 0.12, 2.7, 0.04), 0, 0, -0.06), SP(0.1, "#6c7680", 0, 1.1, 0.02), TO(0.5, 0.13, "#e07a30", -0.55, 0.62, 0, 0, 0), TO(0.5, 0.13, "#e07a30", 0.55, 0.62, 0, 0, 0)]),
+  files: (x, z) => { const parts = [RB(2.8, 1.6, 1.1, 0.08, "#8a929a", 0, 0.8, 0)]; ["#2f6fb0", "#c0392b", "#3a9a5a", "#e8b82a", "#7a4ab0"].forEach((col, i) => { const h = 2.6 - ((i * 37) % 7) * 0.12, bx = -1.1 + i * 0.55; parts.push(RB(0.46, h, 0.9, 0.05, col, bx, 1.2 + h / 2, 0), BX(0.3, 0.7, 0.02, "#f2ead8", bx, 1.2 + h * 0.8, 0.46)); }); return put(x, z, parts); },
+  mug: (x, z) => { const g = put(x, z, [CY(0.85, 0.8, 1.6, "#3a7ad9", 0, 0.8, 0, 28), CY(0.78, 0.78, 0.02, "#4a2c1a", 0, 1.59, 0, 28), TO(0.42, 0.12, "#3a7ad9", 0.95, 0.8, 0, 0, 0)]);
+    for (const [dx, dy, s] of [[-0.2, 2.1, 1.4], [0.15, 2.7, 1.8], [-0.05, 3.4, 2.2]]) { const sp = gGlowSprite("rgba(255,255,255,0.5)", s); sp.position.set(dx, dy, 0.2); g.add(sp); } return g; },
+  paper: (x, z) => { const parts = []; for (let i = 0; i < 14; i++) parts.push(BX(2.4, 0.07, 1.8, i % 2 ? "#f8f4ea" : "#ffffff", ((i * 37) % 5 - 2) * 0.03, 0.035 + i * 0.075, ((i * 13) % 3 - 1) * 0.04)); parts.push(RB(2.2, 0.2, 1.5, 0.05, "#2f6fb0", 0, 1.16, 0)); for (let k = 0; k < 8; k++) parts.push(TO(0.1, 0.03, "#cfd4da", -1.0 + k * 0.28, 1.28, -0.7, 0, 0)); return put(x, z, parts); },
+  tape: (x, z) => put(x, z, [TO(1.0, 0.4, "#d8c8a0", 0, 1.4, 0, 0, 0), TO(0.66, 0.16, "#c4b088", 0, 1.4, 0, 0, 0), BX(1.5, 0.04, 0.5, "#e9dcb8", 0.9, 0.03, 0.8)]),
+  crayons: (x, z) => { const parts = [RB(2.2, 1.1, 1.0, 0.06, "#2f9a4a", 0, 0.55, 0), BX(2.22, 0.3, 1.02, "#f0c020", 0, 0.65, 0)]; ["#d9453a", "#e07a30", "#f0c020", "#3a9a5a", "#3a7ad9", "#8a4ab0", "#e86a9a", "#7a4a22"].forEach((col, i) => { const len = 1.6 + ((i * 53) % 9) * 0.13, cx = -0.95 + i * 0.27; parts.push(CY(0.12, 0.12, len, col, cx, 1.1 + len / 2, -0.05, 12), gM(new T.ConeGeometry(0.12, 0.3, 12), gPlastic(col), cx, 1.1 + len + 0.15, -0.05)); }); return put(x, z, parts); },
+  calc: (x, z) => { const parts = [RB(2.1, 3.4, 0.4, 0.12, "#4a5058", 0, 1.9, 0), BX(1.7, 0.6, 0.05, "#9ad0a0", 0, 3.15, 0.22)]; for (let j = 0; j < 5; j++) for (let i = 0; i < 4; i++) parts.push(RB(0.38, 0.3, 0.1, 0.04, i === 3 ? "#e07a30" : "#cfd4da", -0.72 + i * 0.48, 2.4 - j * 0.42, 0.24)); return put(x, z, parts); },
+  glue: (x, z) => put(x, z, [CY(0.5, 0.5, 2.6, "#d9453a", 0, 1.3, 0, 24), CY(0.505, 0.505, 0.8, "#f8f2e2", 0, 1.4, 0, 24), CY(0.56, 0.56, 0.6, "#2f6fb0", 0, 2.9, 0, 24)]),
+  eraser: (x, z) => put(x, z, [RB(1.7, 1.0, 1.1, 0.16, "#e8788a", 0, 0.5, 0), RB(0.7, 1.02, 1.12, 0.1, "#2f6fb0", 0, 0.5, 0)]),
+};
+const lamps2 = (x, z) => gProps.lamp(x, z);
+
+// ================================================================================================================
+// themes: ONE config each (sky/fog, lights, ground, path, props, and the two backdrop layers)
+// ================================================================================================================
+const THEMES = {
+  night: { label: "Night garden", title: "Garden at night — real stage scale",
+    bg: 0x1d2470, fog: { color: 0x1d2470, near: 46, far: 150 }, hemi: [0x8fa0ff, 0x1f6a78, 0.95], sun: [0xcdd9ff, 2.1, [-9, 15, 7]],
+    ground: { make: () => makeGrass({ base: "#14655c", blobA: "27,125,112", blobB: "10,78,70", tuftA: "rgba(46,148,126,0.35)", tuftB: "rgba(8,64,58,0.35)" }), tile: 16 },
+    path: { make: () => makeDirt({ base: "#b09766", blobA: "214,192,140", blobB: "112,94,62", pebD: "rgba(104,88,58,0.55)", pebL: "rgba(224,206,158,0.5)" }),
+      tile: 6, uv: "world", wobble: 0.18, feather: 0.16, rim: 0.82, stones: { rim: 0x5a4a30, l: 0.66 } },
+    props: "garden", pc: { pole: 0x2c3fae, cap: 0x5a6bd8, lamp: 0xffe9b0, trunk: 0x8a5a33, leaf: 0x2fae7e }, hills: 0x1a3a8f,
+    layers: [ { name: "far", file: "far-night.png", z: -34, f: 0.85, fit: "height", fitFrac: 1.0, tint: 0xffffff },
+              { name: "mid", file: "mid-garden.png", z: -22, f: 0.65, fit: "height", fitFrac: 0.86, tint: 0xbfc8ff, key: true } ],
+    notes: "Far image = the moonlit art rebuilt as a band-shaped panorama (<code>make_far_night.py</code>); mid image = <code>mid-garden.png</code> (black keyed to alpha at load)." },
+  day: { label: "Day garden", title: "Garden by day — real stage scale",
+    bg: 0x9fd4f8, fog: { color: 0xc4e4fa, near: 60, far: 190 }, hemi: [0xcfe6ff, 0x7aa860, 1.05], sun: [0xfff0d0, 2.5, [8, 16, 8]],
+    ground: { make: () => makeGrass({ base: "#4aa850", blobA: "96,190,92", blobB: "40,128,52", tuftA: "rgba(130,214,110,0.4)", tuftB: "rgba(30,104,44,0.35)" }), tile: 16 },
+    path: { make: () => makeDirt({ base: "#c9ad76", blobA: "236,214,160", blobB: "140,116,76", pebD: "rgba(128,104,70,0.5)", pebL: "rgba(244,228,184,0.55)" }),
+      tile: 6, uv: "world", wobble: 0.18, feather: 0.16, rim: 0.86, stones: { rim: 0x7a6848, l: 0.74 } },
+    props: "garden", pc: { pole: 0x8a6a46, cap: 0xd9a35a, lamp: 0xfff4d0, trunk: 0x8a5a33, leaf: 0x58c46a }, hills: 0x6fae78,
+    layers: [ { name: "far", file: "far-day.png", z: -34, f: 0.85, fit: "height", fitFrac: 1.0, tint: 0xffffff },
+              { name: "mid", file: "mid-garden.png", z: -22, f: 0.65, fit: "height", fitFrac: 0.86, tint: 0xffffff, key: true } ],
+    notes: "Far image = the same hills recoloured, with a sun and clouds in the moon's slot (<code>make_far_day.py</code>); mid image = the same <code>mid-garden.png</code>, untinted." },
+  room: { label: "Indoor room", title: "Living room — Toy Room technique", native: true,
+    bg: 0x2e2438, fog: { color: 0x2e2438, near: 46, far: 140 }, hemi: [0xffe2c0, 0x4a3a50, 0.6], sun: [0xffe0b8, 1.7, [-5, 14, 10]], rim: [0xffb27a, 0.8, [-6, 8, -12]], exposure: 0.95,
+    env: { bg: 0x3a2c40, top: 0xffe2b8, topK: 1.5, left: 0xc9b8ff, right: 0xffc990, front: 0xffe6c8, scale: 0.9 },
+    ground: { make: () => makeWood({ base: [168, 110, 68], span: [40, 28, 18] }), tile: 8, physical: { roughness: 0.42, clearcoat: 0.5, clearcoatRoughness: 0.25 } },
+    path: HIDDEN_PATH, props: "native", pc: {}, hills: 0x2e2438, layers: [],
+    wall: { tile: tileLiving, base: "#f3eadb" }, rug: { make: () => rugOval(["#a8473f", "#e9d9b0", "#3f7a78", "#d9b46a", "#2c3a5a"]), shape: "oval", size: [9, 5], pos: [20, 1.5] },
+    decor: () => { const dusk = skyWindowTex("dusk", 3), night = skyWindowTex("night", 5);
+      windowAt(9.5, 2.5, 3.4, 3.0, dusk, "#f6f1e6", "#a8473f"); windowAt(31, 2.5, 3.4, 3.0, night, "#f6f1e6", "#3f7a78");
+      frame3d(18.4, 4.7, 1.4, 1.8, artTex(1), "#6a4426"); frame3d(20.9, 4.6, 1.1, 1.3, artTex(2), "#7a5a3c"); frame3d(36.2, 3.4, 1.5, 1.9, artTex(3), "#5a3b27");
+      const cl = new T.Mesh(new T.CircleGeometry(0.55, 32), new T.MeshBasicMaterial({ map: clockTex() })); cl.position.set(14.5, 3.6, -9.77); scene.add(cl); },
+    propset: PS_LIVING, propList: [["bookcase", 3, -8.2, { w: 3.2, h: 7.5, seed: 1 }], ["sofa", 9.5, -7.4, "#3f7a78", "#d9b46a"], ["lamp", 14, -6.6], ["tv", 19.5, -7.6], ["bookcase", 25, -8.2, { w: 2.6, h: 6.5, seed: 2 }], ["sofa", 31, -7.0, "#b65c4a", "#e9d9b0"], ["lamp", 36, -6.8], ["bookcase", 41, -8.2, { w: 3.0, h: 7, seed: 3 }],
+      ["armchair", 6.5, -3.6, "#c9962f"], ["plant", 12, -3.2], ["table", 16.5, -3.6], ["plant", 22, -3.4], ["armchair", 28, -3.8, "#3f7a78"], ["cushions", 33.5, -3.0], ["plant", 38.5, -3.4], ["coffee", 4.5, 3.0], ["coffee", 30, 3.2]],
+    notes: "<b>Rebuilt with the Toy Room technique</b>: striped wallpaper wall on the ground line with windows, frames and a clock as 3D wall decor; sofas, armchairs, bookcases, a TV unit and tables built from chunky clear-coated primitives; the game's lamps and plants; an oval rug; the same lighting rig and shadows. No painted backdrop strips and no parallax layers." },
+  library: { label: "Library", title: "Library — Toy Room technique", native: true,
+    bg: 0x2a1c14, fog: { color: 0x2a1c14, near: 46, far: 140 }, hemi: [0xffd9a8, 0x3a2418, 0.5], sun: [0xffd9a0, 1.5, [-5, 14, 10]], rim: [0xff9a60, 0.7, [-6, 8, -12]], exposure: 0.95,
+    env: { bg: 0x2a1c14, top: 0xffd9a0, topK: 1.4, left: 0xc99a70, right: 0xffb070, front: 0xffd8b0, scale: 0.9 },
+    ground: { make: () => makeWood({ base: [100, 58, 34], span: [40, 24, 14] }), tile: 8, physical: { roughness: 0.35, clearcoat: 0.6, clearcoatRoughness: 0.2 } },
+    path: HIDDEN_PATH, props: "native", pc: {}, hills: 0x2a1c14, layers: [],
+    wall: { tile: tileLibrary, base: "#3a2314" }, rug: { make: () => rugOval(["#5b1d2b", "#d4af5a", "#1f3a2e", "#e9d9b0", "#3a1018"]), shape: "oval", size: [9, 5], pos: [20, 1.5] },
+    propset: PS_LIB, propList: [["bookcase", 2.5, -8.3, { w: 3.4, h: 8, seed: 11 }], ["bookcase", 8.5, -8.3, { w: 3.0, h: 8, seed: 12 }], ["clock", 14, -8.4], ["bookcase", 19.5, -8.3, { w: 3.4, h: 8, seed: 13 }], ["ladder", 23.4, -7.8], ["bookcase", 27, -8.3, { w: 3.2, h: 8, seed: 14 }], ["bookcase", 33.5, -8.3, { w: 3.4, h: 8, seed: 15 }], ["clock", 39, -8.4], ["bookcase", 44, -8.3, { w: 3.0, h: 8, seed: 16 }],
+      ["desk", 7, -4.6], ["globe", 13.5, -3.4], ["wing", 19, -3.8, "#7a2a2a"], ["lamp", 23.5, -3.4], ["desk", 31, -4.6], ["globe", 37, -3.4], ["wing", 41, -3.6, "#2f5a3f"], ["books", 5.5, 2.6], ["plant", 16, 2.8], ["books", 26, 2.4], ["lamp", 35, 2.6]],
+    notes: "<b>Rebuilt with the Toy Room technique</b>: a wall of book spines on the ground line, tall bookcases (their tops run off the screen), a rolling ladder, grandfather clocks, globes, reading desks with banker lamps and wing chairs, all chunky clear-coated primitives; oval rug; the same rig." },
+  workshop: { label: "Workshop", title: "Workshop bench — Toy Room technique", native: true,
+    bg: 0x4a3a2c, fog: { color: 0x4a3a2c, near: 46, far: 140 }, hemi: [0xfff4e0, 0x9a7a52, 0.8], sun: [0xfff0d0, 2.0, [-5, 14, 10]], rim: [0xffe0b0, 0.8, [-6, 8, -12]], exposure: 0.95,
+    env: { bg: 0x4a4034, top: 0xfff6e0, topK: 1.5, left: 0xe0e8f0, right: 0xffe9c8, front: 0xf0f0e8, scale: 0.9 },
+    ground: { make: () => makeWood({ base: [196, 148, 96], span: [34, 26, 18] }), tile: 8, physical: { roughness: 0.55, clearcoat: 0.25, clearcoatRoughness: 0.3 } },
+    path: HIDDEN_PATH, props: "native", pc: {}, hills: 0x4a3a2c, layers: [],
+    wall: { tile: tilePegboard, base: "#6a4a32", roughness: 0.8 }, rug: { make: rugMat, shape: "rect", size: [18, 6], pos: [20, 1.5] },
+    decor: () => { const tool = (kind, x, y) => { const g = new T.Group(); g.position.set(x, y, -9.72);
+        if (kind === "hammer") g.add(RB(0.14, 1.6, 0.12, 0.05, "#b0793a", 0, 0, 0), RB(0.7, 0.34, 0.24, 0.06, "#6c7680", 0, 0.8, 0));
+        else if (kind === "wrench") g.add(RB(0.18, 1.6, 0.1, 0.05, "#9aa4ae", 0, 0, 0), TO(0.3, 0.09, "#9aa4ae", 0, 0.9, 0, 0, 0));
+        else if (kind === "saw") g.add(BX(2.0, 0.5, 0.04, "#aab2ba", 0, 0, 0), RB(0.5, 0.6, 0.1, 0.1, "#b0793a", -1.1, 0, 0));
+        else if (kind === "tape") g.add(RB(0.9, 0.9, 0.3, 0.25, "#e8b82a", 0, 0, 0), CY(0.22, 0.22, 0.32, "#6c7680", 0, 0, 0.02, 16));
+        else g.add(tilt(RB(0.2, 1.1, 0.12, 0.05, "#c0392b", -0.15, -0.4, 0), 0, 0, 0.1), tilt(RB(0.2, 1.1, 0.12, 0.05, "#c0392b", 0.15, -0.4, 0), 0, 0, -0.1), RB(0.55, 0.6, 0.14, 0.06, "#9aa4ae", 0, 0.25, 0));
+        scene.add(g); };
+      [["hammer", 6.3, 2.4], ["wrench", 12.3, 2.6], ["saw", 18, 2.6], ["tape", 22.8, 2.2], ["pliers", 28, 2.4], ["hammer", 33.5, 2.4], ["wrench", 39.5, 2.6], ["saw", 45, 2.6]].forEach(([k, x, y]) => tool(k, x, y)); },
+    propset: PS_WORK, propList: [["chest", 3.5, -7.6, "#c0392b"], ["printer", 9.5, -7.8, "#1c2026", "#e8643a"], ["bins", 15.5, -8.2], ["deskLamp", 20.5, -6.5], ["lumber", 25, -7.6], ["chest", 30.5, -7.6, "#2f6fb0"], ["printer", 36.5, -7.8, "#e8ecf0", "#3a7ad9"], ["bins", 42.5, -8.2],
+      ["cans", 7, -3.4], ["vise", 13, -3.8], ["bolt", 18, -3.0], ["spool", 23.5, -3.4, "#d9453a"], ["bolt", 29, -3.2], ["spool", 34, -3.6, "#3a7ad9"], ["cans", 39, -3.4], ["spool", 5.5, 2.6, "#e0b030"], ["bolt", 27, 2.4], ["cans", 33, 2.8]],
+    notes: "<b>Rebuilt with the Toy Room technique</b>: a pegboard wall on the ground line with tools hung on it as 3D, a workbench floor, tool chests, 3D printers with a half-printed toy, bin racks, paint cans, lumber, a vise, bolts, spools and an articulated lamp, all chunky clear-coated primitives; a cutting mat in place of the rug." },
+  desk: { label: "Desk-top", title: "Desk-top world — Toy Room technique", native: true,
+    bg: 0x3a3028, fog: { color: 0x3a3028, near: 46, far: 140 }, hemi: [0xfff0dc, 0x9a7a52, 0.8], sun: [0xfff0d0, 2.0, [-5, 14, 10]], rim: [0xffd9a8, 0.7, [-6, 8, -12]], exposure: 0.95,
+    env: { bg: 0x3a3028, top: 0xfff0d8, topK: 1.5, left: 0xcfe0f0, right: 0xffd9b0, front: 0xfff0e0, scale: 0.9 },
+    ground: { make: () => makeWood({ base: [206, 160, 104], span: [30, 24, 18], rings: true }), tile: 8, physical: { roughness: 0.45, clearcoat: 0.4, clearcoatRoughness: 0.25 } },
+    path: HIDDEN_PATH, props: "native", pc: {}, hills: 0x3a3028, layers: [],
+    wall: { tile: tileGraph, baseTex: makeRulerStrip }, rug: { make: rugPaper, shape: "rect", size: [14, 9], pos: [20, 1.5], rot: -0.06 },
+    decor: () => { const dusk = skyWindowTex("dusk", 8); frame3d(8, 2.2, 4.6, 3.1, corkTex(), "#7a5230"); windowAt(16.5, 2.2, 4.4, 3.0, dusk, "#f6f1e6", "#c9573a"); frame3d(24.5, 2.2, 4.6, 3.1, corkTex(), "#7a5230"); windowAt(33, 2.2, 4.4, 3.0, skyWindowTex("dusk", 9), "#f6f1e6", "#c9573a"); frame3d(41, 2.2, 4.6, 3.1, corkTex(), "#7a5230"); },
+    propset: PS_DESK, propList: [["cup", 3.5, -7.6], ["books", 9, -7.4], ["deskLamp", 14, -7], ["clock", 19.5, -7.4], ["scissors", 24.5, -7.6], ["files", 30, -7.8], ["mug", 36, -7.2], ["paper", 41.5, -7.4],
+      ["pencil", 6.5, -3.4, "#f0c020", 5], ["tape", 12, -3.8], ["crayons", 17.5, -3.6], ["calc", 23, -3.8], ["glue", 28.5, -3.2], ["eraser", 33, -3.4], ["pencil", 38, -3.2, "#d9453a", 3.4], ["pencil", 15, -5.2, "#3a7ad9", 4.2],
+      ["notes", 5, 2.6], ["eraser", 18, 2.6], ["notes", 25, 2.8], ["eraser", 31, 2.6], ["notes", 40, 2.4]],
+    notes: "<b>Rebuilt with the Toy Room technique</b>: a graph-paper wall on the ground line with a ruler for a baseboard, cork boards and sunset windows as 3D wall decor, a honey-wood desk with coffee rings, a page of lined paper in place of the rug, and giant stationery (pencils, a pencil cup, scissors, binders, a mug, tape, crayons, a calculator, an alarm clock…) as chunky clear-coated primitives." },
+  toyroom: { label: "Toy Room (game)", title: "Toy Room — replicated from the main game", native: true,
+    bg: 0x2a2160, fog: { color: 0x2a2058, near: 46, far: 140 }, hemi: [0xffd7b0, 0x3a2a60, 0.6], sun: [0xffe0b8, 1.7, [-5, 14, 10]], rim: [0xffb27a, 0.8, [-6, 8, -12]],
+    exposure: 0.95, env: { bg: 0x2c2058, top: 0xffe2b8, topK: 1.5, left: 0xc9a8ff, right: 0xffc990, front: 0xffe6c8, scale: 0.9 },
+    ground: { make: makePlanks, tile: 1, repeat: [7, 3], physical: { roughness: 0.42, clearcoat: 0.5, clearcoatRoughness: 0.25 } },
+    path: HIDDEN_PATH, props: "native", pc: {}, hills: 0x2a2160, layers: [],
+    wall: { tile: tileToy, base: "#efe6ff" }, rug: { make: rugToy, shape: "oval", size: [9, 5], pos: [20, 1.5] }, propset: gProps,
+    propList: [["lamp", 2, 0], ["blocks", 9.5, 0], ["books", 16.5, 0], ["lamp", 24, -5.5], ["blocks", 32.5, -4.2], ["books", 40, 0], ["lamp", 44, 0], ["chair", 5, -2.6], ["teddy", 7, 2.2], ["plant", 12.5, -3], ["ball", 14.4, 2.4], ["cushions", 20, -3.4], ["teddy", 27, 2.4], ["ball", 29.2, 2.6], ["chair", 36.5, -4.5], ["plant", 42, 2]],
+    notes: "<b>Ported from the game's own Toy Room</b> (<code>world.ts</code> roomWall / rug / plankTex / props, <code>lighting.ts</code> rig, <code>catalog.ts</code> level): a flat star-wallpaper wall at z −10 with a lavender baseboard, glossy plank floor, the oval rainbow rug, the level's lamps, blocks and books plus the K2 prop pack, warm evening lights with the same environment panels, ACES tone mapping, shadows and fireflies. <b>Not ported:</b> bloom / colour grade / vignette post-processing, and the toy character (a capsule stand-in). The game has <b>no backdrop depth</b> in this world: its wall sits on the ground line, so there is nothing to parallax." },
+};
+const THEME_KEY = THEMES[QS.get("theme")] ? QS.get("theme") : "night", TH = THEMES[THEME_KEY];
+
+// ================================================================================================================
+// scene
+// ================================================================================================================
+const host = document.getElementById("view");
+const renderer = new T.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(2, devicePixelRatio || 1));
+host.appendChild(renderer.domElement);
+const scene = new T.Scene();
+const camera = new T.PerspectiveCamera(FOV, 1, 0.1, 500);
+scene.fog = TH.fog ? new T.Fog(TH.fog.color, TH.fog.near, TH.fog.far) : null;
+scene.background = new T.Color(TH.bg);
+scene.add(new T.HemisphereLight(TH.hemi[0], TH.hemi[1], TH.hemi[2]));
+const sun = new T.DirectionalLight(TH.sun[0], TH.sun[1]); sun.position.set(...TH.sun[2]); scene.add(sun);
+if (TH.rim) { const rim = new T.DirectionalLight(TH.rim[0], TH.rim[1]); rim.position.set(...TH.rim[2]); scene.add(rim); }
+if (TH.native) {   // the game's renderer settings: ACES tone mapping, soft shadows from the key light, prefiltered environment
+  renderer.toneMapping = T.ACESFilmicToneMapping; renderer.toneMappingExposure = TH.exposure; renderer.shadowMap.enabled = true; renderer.shadowMap.type = T.PCFShadowMap;
+  sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048); sun.shadow.radius = 3; sun.shadow.bias = -0.0004; const sc = sun.shadow.camera; sc.left = -28; sc.right = 28; sc.top = 18; sc.bottom = -18; sc.near = 1; sc.far = 70; scene.add(sun.target);
+}
+const matte = (c) => new T.MeshStandardMaterial({ color: c, roughness: 0.9 });
+const aniso = renderer.capabilities.getMaxAnisotropy();
+if (TH.env) gEnvironment(TH.env, TH.env.scale);
+
+// ground: a textured plane with SQUARE texels. Top = y 0; its far edge (z -10) is the "ground line" every backdrop base sits on.
+const PLAYER_W = 1.1;
+const groundTex = new T.CanvasTexture(TH.ground.make()); groundTex.wrapS = groundTex.wrapT = T.RepeatWrapping; groundTex.repeat.set(...(TH.ground.repeat || [80 / TH.ground.tile, 34 / TH.ground.tile]));
+groundTex.colorSpace = T.SRGBColorSpace; groundTex.anisotropy = aniso;
+const gnd = new T.Mesh(new T.PlaneGeometry(80, 34), TH.ground.physical ? new T.MeshPhysicalMaterial({ map: groundTex, ...TH.ground.physical }) : new T.MeshStandardMaterial({ map: groundTex, roughness: 0.95 }));
+gnd.receiveShadow = !!TH.native;
+gnd.rotation.x = -Math.PI / 2; gnd.position.set(18, 0, 7); scene.add(gnd);   // x -22..58, z -10..24 like buildWorld's slab
+
+// ---- procedural path: ribbon mesh (edges = seeded noise), one small tile in world coords, instanced stones. Width is a parameter. ----
+const PATH = { width: +(QS.get("pathw") ?? 3.0), seed: 11, x0: -22, x1: 58, step: 0.25, ...TH.path };
+function vnoise(seed) { const r = rng(seed), lat = Array.from({ length: 256 }, () => r() * 2 - 1), at = (i) => lat[((i % 256) + 256) % 256];
+  return (x) => { const i = Math.floor(x), f = x - i, u = f * f * (3 - 2 * f); return at(i) * (1 - u) + at(i + 1) * u; }; }
+function edgeNoise(seed) { const a = vnoise(seed), b = vnoise(seed + 1), c = vnoise(seed + 2); return (x) => 0.6 * a(x / 6) + 0.3 * b(x / 2.3) + 0.1 * c(x / 0.9); }
+const topEdge = edgeNoise(PATH.seed), botEdge = edgeNoise(PATH.seed + 10);
+const pathTex = new T.CanvasTexture(PATH.make()); pathTex.wrapS = T.RepeatWrapping; pathTex.wrapT = PATH.uv === "across" ? T.ClampToEdgeWrapping : T.RepeatWrapping;
+pathTex.colorSpace = T.SRGBColorSpace; pathTex.anisotropy = aniso;
+const pathMesh = new T.Mesh(new T.BufferGeometry(), new T.MeshStandardMaterial({ map: pathTex, vertexColors: true, transparent: true, depthWrite: false,
+  roughness: 0.95, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }));
+pathMesh.position.y = 0.012; pathMesh.renderOrder = 1; pathMesh.frustumCulled = false; scene.add(pathMesh);  // centred on the lane (z 0): under the toy at every x
+function buildPath() {
+  const { width, wobble, feather: F, rim, x0, x1, step, tile } = PATH, hw = width / 2, n = Math.round((x1 - x0) / step) + 1;
+  const pos = new Float32Array(n * 12), nrm = new Float32Array(n * 12), col = new Float32Array(n * 16), uv = new Float32Array(n * 8), idx = [];
+  for (let i = 0; i < n; i++) {
+    const x = x0 + i * step, zb = -(hw + wobble * botEdge(x)), zt = hw + wobble * topEdge(x);
+    const rows = [[zb - F, 0, rim], [zb, 1, 1], [zt, 1, 1], [zt + F, 0, rim]];   // [z, alpha, shade]: soft, slightly darker rim
+    rows.forEach(([z, a, s], r) => { const v = i * 4 + r;
+      pos.set([x, 0, z], v * 3); nrm.set([0, 1, 0], v * 3); col.set([s, s, s, a], v * 4);
+      uv.set(PATH.uv === "across" ? [x / tile, 1 - (z + hw) / (2 * hw)] : [x / tile, z / tile], v * 2); });   // across: canvas top = FAR edge, so text reads upright from the camera
+    if (i < n - 1) for (let r = 0; r < 3; r++) { const a = i * 4 + r, b = a + 1, c = a + 4, d = a + 5; idx.push(a, b, c, b, d, c); }
+  }
+  const ng = new T.BufferGeometry();
+  ng.setAttribute("position", new T.BufferAttribute(pos, 3)); ng.setAttribute("normal", new T.BufferAttribute(nrm, 3));
+  ng.setAttribute("color", new T.BufferAttribute(col, 4)); ng.setAttribute("uv", new T.BufferAttribute(uv, 2)); ng.setIndex(idx);
+  pathMesh.geometry.dispose(); pathMesh.geometry = ng;
+}
+const stoneGeo = new T.CircleGeometry(1, 28); stoneGeo.rotateX(-Math.PI / 2);
+const stoneMat = (c) => new T.MeshStandardMaterial({ color: c, roughness: 0.92, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 });
+const stoneRim = new T.InstancedMesh(stoneGeo, stoneMat(PATH.stones?.rim ?? 0x5a4a30), 160), stoneTop = new T.InstancedMesh(stoneGeo, stoneMat(0xffffff), 160);
+stoneRim.frustumCulled = stoneTop.frustumCulled = false; scene.add(stoneRim, stoneTop);
+function buildStones() {
+  if (!PATH.stones) { stoneRim.count = stoneTop.count = 0; return; }
+  const r = rng(PATH.seed + 100), m = new T.Matrix4(), q = new T.Quaternion(), p = new T.Vector3(), s = new T.Vector3(), c = new T.Color(), up = new T.Vector3(0, 1, 0);
+  let i = 0, x = PATH.x0 + 1;
+  while (x < PATH.x1 - 1 && i < 160) {
+    const rx = 0.38 + r() * 0.24, rz = 0.26 + r() * 0.12, z = (r() - 0.5) * 0.5, ang = (r() - 0.5) * 0.5;
+    q.setFromAxisAngle(up, ang);
+    p.set(x, 0.016, z); s.set(rx * 1.12, 1, rz * 1.12); stoneRim.setMatrixAt(i, m.compose(p, q, s));
+    p.set(x, 0.020, z); s.set(rx, 1, rz); stoneTop.setMatrixAt(i, m.compose(p, q, s));
+    stoneTop.setColorAt(i, c.setHSL(0.11 + (r() - 0.5) * 0.02, 0.4 + (r() - 0.5) * 0.1, PATH.stones.l + (r() - 0.5) * 0.1, T.SRGBColorSpace));
+    x += rx * 2 + 0.3 + r() * 0.6; i++;
+  }
+  stoneRim.count = stoneTop.count = i; stoneRim.instanceMatrix.needsUpdate = stoneTop.instanceMatrix.needsUpdate = true; stoneTop.instanceColor.needsUpdate = true;
+}
+buildPath(); buildStones();
+if (PATH.hidden) { pathMesh.visible = false; stoneRim.count = stoneTop.count = 0; }   // the game's lane is just the floor (plus the rug)
+
+// fallback: today's hills (two sphere rows, matte) — visible when planes off
+const hillsG = new T.Group(); scene.add(hillsG);
+for (const [x, y, z, s] of [[-10,-3,-22,16],[14,-4,-26,18],[38,-3,-22,15],[60,-4,-26,18],[0,-6,-44,30],[40,-6,-46,32],[80,-6,-44,30]]) {
+  const m = new T.Mesh(new T.SphereGeometry(1, 16, 10), matte(TH.hills));
+  m.position.set(x, y, z); m.scale.set(s, s * 0.42, s * 0.6); hillsG.add(m);
+}
+hillsG.visible = false;
+
+// lane props at z=0 (gameplay stays 3D)
+const place = (grp, x, z) => { grp.position.set(x, 0, z); scene.add(grp); };
+if (TH.props === "garden") {
+  const pc = TH.pc;
+  const lantern = (x) => { const g = new T.Group();
+    const pole = new T.Mesh(new T.CylinderGeometry(0.09, 0.11, 3.2, 8), matte(pc.pole)); pole.position.y = 1.6; g.add(pole);
+    const lamp = new T.Mesh(new T.SphereGeometry(0.34, 12, 10), new T.MeshBasicMaterial({ color: pc.lamp })); lamp.position.y = 3.3; g.add(lamp);
+    const cap = new T.Mesh(new T.ConeGeometry(0.55, 0.5, 4), matte(pc.cap)); cap.position.y = 3.75; cap.rotation.y = Math.PI / 4; g.add(cap); place(g, x, 0); };
+  const tree = (x, z) => { const g = new T.Group();
+    const trunk = new T.Mesh(new T.CylinderGeometry(0.16, 0.22, 1.6, 8), matte(pc.trunk)); trunk.position.y = 0.8; g.add(trunk);
+    const top = new T.Mesh(new T.SphereGeometry(1.15, 14, 12), matte(pc.leaf)); top.position.y = 2.5; g.add(top); place(g, x, z); };
+  lantern(9); lantern(24); tree(14, -2.4); tree(31, -2.3); tree(5, 2.5);   // trees stand BESIDE the path (|z| > half the path width)
+} else {
+  buildNativeRoom();
+}
+const hero = new T.Group();
+const body = new T.Mesh(new T.CapsuleGeometry(0.55, 1.1, 6, 12), matte(0xf2b93c)); body.position.y = 1.35; hero.add(body);
+const head = new T.Mesh(new T.SphereGeometry(0.55, 14, 12), matte(0xffd24d)); head.position.y = 2.55; hero.add(head);
+scene.add(hero);
+if (TH.native) hero.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+const blobShadow = new T.Mesh(new T.CircleGeometry(0.85, 20), new T.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.4, depthWrite: false }));
+blobShadow.rotation.x = -Math.PI / 2; blobShadow.renderOrder = 2; scene.add(blobShadow);
+const propsG = new T.Group(); scene.add(propsG);   // ?clean=1 hides props + toy so a backdrop layer can be measured alone
+for (const o of [...scene.children]) if (o.isGroup && o !== propsG && o !== hillsG) propsG.add(o);
+propsG.add(blobShadow); propsG.visible = !QS.get("clean");  // after the path, so it shades it
+
+// ================================================================================================================
+// backdrop image planes
+// ================================================================================================================
+// The key fact: the camera is pitched down ~21deg, so the backdrop is only ever seen through a THIN slice of each plane:
+// top edge = the screen's top ray, bottom edge = the ray over the ground slab's far edge (z -10, y 0). Art is sized and placed
+// from the slice, ALWAYS with a uniform scale (never stretched), base on the ground line.
+const planesG = new T.Group(); scene.add(planesG);
+const PITCH = Math.atan((CAM_Y - LOOK_Y) / CAM_Z), HALF = (FOV / 2) * Math.PI / 180, SLAB_EDGE_Z = -10;
+function slice(z) {
+  const dz = CAM_Z - z;
+  const yTop = CAM_Y - Math.tan(PITCH - HALF) * dz;
+  const yBot = CAM_Y - (CAM_Y / (CAM_Z - SLAB_EDGE_Z)) * dz;
+  const depth = Math.sin(PITCH) * (CAM_Y - (yTop + yBot) / 2) + Math.cos(PITCH) * dz; // distance along view axis
+  return { yTop, yBot, depth };
+}
+// f = scroll factor: plane.x = laneMid + f*(camx-laneMid): the plane need not span the whole lane, so one undistorted image covers it.
+// Parallax modes (per theme default; ?speed=full|slow|none): `f` is how much a layer follows the camera (1 = pinned = no parallax).
+const SPEED_KEY = ["full", "slow", "none"].includes(QS.get("speed")) ? QS.get("speed") : (TH.speed || "full");
+const F_SPEED = { slow: { far: 0.97, mid: 0.92 }, none: { far: 1, mid: 1 } };
+const IMAGES = TH.merge && QS.get("images") === "1" ? 1 : 2;           // ?images=1 merges wall + furniture into ONE layer (indoor themes only)
+function mergeLayers(far, mid) {
+  // Both layers at the screen scale they had as separate layers, bottom-aligned on the floor line; the wall is mirror-tiled to the furniture's width.
+  const wall = far.make(), stuff = mid.make(), Hb = Math.round(stuff.height / mid.fitFrac), out = mk(stuff.width, Hb), g = out.getContext("2d");
+  const sc = Hb * far.fitFrac / wall.height, dw = wall.width * sc, dh = wall.height * sc;
+  for (let i = 0, x = 0; x < out.width; i++, x += dw) { g.save(); if (i % 2) { g.translate(x + dw, Hb - dh); g.scale(-1, 1); g.drawImage(wall, 0, 0, dw, dh); } else g.drawImage(wall, x, Hb - dh, dw, dh); g.restore(); }
+  const sh = Math.min(stuff.height, Hb);
+  g.drawImage(stuff, 0, stuff.height - sh, stuff.width, sh, 0, Hb - sh, stuff.width, sh);
+  return out;
+}
+let layerDefs = TH.layers;
+if (IMAGES === 1) { const far = layerDefs.find((L) => L.name === "far"), mid = layerDefs.find((L) => L.name === "mid");
+  layerDefs = [{ name: "mid", make: () => mergeLayers(far, mid), z: mid.z, f: mid.f, fit: "height", fitFrac: 1.0, tint: 0xffffff }]; }
+const LAYERS = layerDefs.map((L) => ({ ...L, f: SPEED_KEY === "full" ? L.f : F_SPEED[SPEED_KEY][L.name], fitFrac: +(QS.get(L.name) ?? L.fitFrac) }));
+const LANE_MID = (LANE.lo + LANE.hi) / 2;
+for (const L of LAYERS) L.on = !QS.get("layers") || QS.get("layers").split(",").includes(L.name);   // ?layers=far shows one layer
+const TUCK = 0.12;   // how far the art's base hides below the ground line so no hairline gap can show
+
+function keyAndCrop(img) {
+  // flood-fill the black surround from the border (interior darks survive), erode the dark fringe, crop to the art's bounding box.
+  const W = img.width, H = img.height;
+  const c = document.createElement("canvas"); c.width = W; c.height = H;
+  const g = c.getContext("2d", { willReadFrequently: true }); g.drawImage(img, 0, 0);
+  const d = g.getImageData(0, 0, W, H), px = d.data;
+  const mx = (i) => Math.max(px[i * 4], px[i * 4 + 1], px[i * 4 + 2]);
+  const bg = new Uint8Array(W * H), stack = [];
+  const push = (x, y) => { const i = y * W + x; if (!bg[i] && mx(i) < 24) { bg[i] = 1; stack.push(i); } };
+  for (let x = 0; x < W; x++) { push(x, 0); push(x, H - 1); }
+  for (let y = 0; y < H; y++) { push(0, y); push(W - 1, y); }
+  while (stack.length) { const i = stack.pop(), x = i % W, y = (i / W) | 0;
+    if (x > 0) push(x - 1, y); if (x < W - 1) push(x + 1, y); if (y > 0) push(x, y - 1); if (y < H - 1) push(x, y + 1); }
+  for (let pass = 0; pass < 2; pass++) { const add = [];
+    for (let y = 1; y < H - 1; y++) for (let x = 1; x < W - 1; x++) { const i = y * W + x;
+      if (!bg[i] && mx(i) < 80 && (bg[i - 1] || bg[i + 1] || bg[i - W] || bg[i + W])) add.push(i); }
+    for (const i of add) bg[i] = 1; }
+  let x0 = W, y0 = H, x1 = -1, y1 = -1;
+  for (let i = 0; i < W * H; i++) { if (bg[i]) { px[i * 4 + 3] = 0; continue; } px[i * 4 + 3] = 255;
+    const x = i % W, y = (i / W) | 0; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+  g.putImageData(d, 0, 0);
+  const cw = x1 - x0 + 1, ch = y1 - y0 + 1, out = document.createElement("canvas"); out.width = cw; out.height = ch;
+  out.getContext("2d").drawImage(c, x0, y0, cw, ch, 0, 0, cw, ch);
+  return out;
+}
+const loader = new T.ImageLoader();
+function addLayer(L, src) {
+  const tex = (L.key || L.make) ? new T.CanvasTexture(src) : new T.Texture(src);
+  tex.colorSpace = T.SRGBColorSpace; tex.anisotropy = aniso; tex.needsUpdate = true;
+  tex.wrapS = T.MirroredRepeatWrapping; L.tex = tex;  // mirrored, so a too-narrow strip continues seamlessly (see layout)
+  L.pxW = src.width; L.pxH = src.height;
+  L.mesh = new T.Mesh(new T.PlaneGeometry(1, 1), new T.MeshBasicMaterial({
+    map: tex, fog: false, color: L.tint, transparent: !!(L.key || L.alpha), depthWrite: !(L.key || L.alpha) }));
+  L.mesh.userData.z0 = L.z; L.mesh.visible = L.on; planesG.add(L.mesh); layout();
+}
+for (const L of LAYERS) L.make ? addLayer(L, L.make()) : loader.load(L.file, (img) => addLayer(L, L.key ? keyAndCrop(img) : img));
+// size + place every layer for the current canvas aspect: cover (window + lane travel) with ONE uniform scale.
+function layout() {
+  const aspect = camera.aspect;
+  for (const L of LAYERS) { if (!L.mesh) continue;
+    const s = slice(L.z);
+    const winW = 2 * Math.tan(HALF) * aspect * s.depth;
+    const needW = winW * 1.1 + (1 - L.f) * (LANE.hi - LANE.lo);
+    const sliceH = s.yTop - s.yBot;
+    const k = L.fit === "height" ? (sliceH * (L.fitFrac ?? 0.96) + TUCK) / L.pxH : Math.max(needW / L.pxW, (sliceH + TUCK) / L.pxH);   // world units per texel, same on both axes
+    const artW = L.pxW * k; L.h = L.pxH * k; L.w = Math.max(artW, needW);  // plane wider than the art => mirror-extend
+    L.cy = s.yBot - TUCK + L.h / 2;                  // art base = ground line
+    L.mesh.scale.set(L.w, L.h, 1); L.mesh.position.y = L.cy;
+    const rep = L.w / artW; L.tex.repeat.x = rep; L.tex.offset.x = (1 - rep) / 2;  // centre the art, mirror the overflow
+    L.slice = s;
+  }
+}
+
+// ================================================================================================================
+// controls
+// ================================================================================================================
+const $ = (id) => document.getElementById(id);
+document.getElementById("ttl").textContent = TH.title;
+document.getElementById("legend").innerHTML = `
+  <b>Themes</b> (buttons above, or <code>?theme=night|day|room|library|workshop|desk|toyroom</code>): one config each. Night and Day garden use two image backdrop layers; the five indoor themes use the Toy Room technique. ${TH.notes}<br>
+  ${LAYERS.length ? `<b>Parallax</b> (Full / Slower / None) sets how much each layer follows the camera; <b>Images</b> 1 merges the two layers into one.<br>
+  <b>How to read it:</b> slide <b>Camera x</b> — two background layers scroll at different rates (far z −34, mid z −22); the lane (z 0) moves 1:1. <b>Explode</b> pulls the camera up and back to show the stack.
+  <b>Rules:</b> uniform scale only (no stretch); every layer's base sits on the ground line; each layer follows the camera by a scroll factor (far .85, mid .65); the readout shows each layer's speed relative to the lane. The <b>far / mid</b> buttons hide a layer; <b>Mid size</b> trades how much of the far layer shows against mid-art repeats.
+  <b>Ground + path:</b> the ground is a seamless tile; the path is generated (ribbon mesh, one small tile in world coordinates${PATH.stones ? ", instanced stones" : ""}); <b>Path</b> sets its width (default 3.0 = 2.7× the toy) and it stays under the toy, which wanders ±0.8 in z with Auto-pan (<code>?hz=0.8</code> pins it).`
+  : `<b>How to read it:</b> slide <b>Camera x</b> to walk the lane; <b>Explode</b> pulls the camera up and back to show how the room is laid out (flat wall on the ground line, props in two rows behind and beside the toy, a few in front). The toy wanders ±0.8 in z with Auto-pan (<code>?hz=0.8</code> pins it). All indoor themes share the Toy Room's technique: no painted backdrop strips, no parallax layers.`}`;
+const themesEl = $("themes");
+for (const [key, th] of Object.entries(THEMES)) { const b = document.createElement("button"); b.textContent = th.label; b.setAttribute("aria-pressed", String(key === THEME_KEY));
+  b.addEventListener("click", () => { const u = new URL(location.href); u.searchParams.set("theme", key); u.searchParams.delete("speed"); u.searchParams.delete("images"); location.href = u.toString(); }); themesEl.appendChild(b); }
+const seg = (label, items, cur, param) => { const d = document.createElement("div"); d.className = "seg"; d.append(label);
+  for (const [val, text, ok = true] of items) { const b = document.createElement("button"); b.textContent = text; b.setAttribute("aria-pressed", String(val === cur)); b.disabled = !ok;
+    if (!ok) { b.style.opacity = 0.4; b.title = "indoor themes only"; }
+    b.addEventListener("click", () => { const u = new URL(location.href); u.searchParams.set(param, val); location.href = u.toString(); }); d.appendChild(b); }
+  $("readout").before(d); };
+if (LAYERS.length) { seg("Parallax", [["full", "Full"], ["slow", "Slower"], ["none", "None"]], SPEED_KEY, "speed");
+  seg("Images", [["2", "2"], ["1", "1", !!TH.merge]], String(IMAGES), "images"); }
+const Q = QS; // ?cam=16&explode=0&planes=1&fog=1&motion=0&theme=day (deterministic shots)
+const state = { camx: +(Q.get("cam") ?? 8), explode: +(Q.get("explode") ?? 0), hz: +(Q.get("hz") ?? 0), planes: Q.get("planes") !== "0", fog: Q.get("fog") !== "0",
+  motion: Q.has("motion") ? Q.get("motion") === "1" : !matchMedia("(prefers-reduced-motion: reduce)").matches };
+$("camx").value = state.camx; $("explode").value = state.explode;
+$("planes").setAttribute("aria-pressed", String(state.planes)); $("fog").setAttribute("aria-pressed", String(state.fog));
+planesG.visible = state.planes; hillsG.visible = !state.planes; if (!state.fog) scene.fog = null;
+$("motion").setAttribute("aria-pressed", String(state.motion));
+$("camx").addEventListener("input", (e) => { state.camx = +e.target.value; state.motion = false; $("motion").setAttribute("aria-pressed", "false"); });
+$("explode").addEventListener("input", (e) => { state.explode = +e.target.value; });
+$("pathw").value = PATH.width; { const mid = LAYERS.find((L) => L.name === "mid");
+  if (mid) { $("midfit").value = mid.fitFrac; $("midfit").addEventListener("input", (e) => { mid.fitFrac = +e.target.value; layout(); }); } else $("midfit").closest("label").style.display = "none"; }
+if (PATH.hidden) $("pathw").closest("label").style.display = "none";
+if (!LAYERS.length) $("planes").style.display = "none";
+$("pathw").addEventListener("input", (e) => { PATH.width = +e.target.value; buildPath(); });
+const toggle = (id, key, fn) => $(id).addEventListener("click", () => { state[key] = !state[key]; $(id).setAttribute("aria-pressed", String(state[key])); fn(state[key]); });
+toggle("planes", "planes", (on) => { planesG.visible = on; hillsG.visible = !on; });
+toggle("fog", "fog", (on) => { scene.fog = on && TH.fog ? new T.Fog(TH.fog.color, TH.fog.near, TH.fog.far) : null; });
+toggle("motion", "motion", () => {});
+for (const L of LAYERS) { const b = document.createElement("button"); b.textContent = L.name; b.title = "show/hide the " + L.name + " layer";
+  b.setAttribute("aria-pressed", String(L.on));
+  b.addEventListener("click", () => { L.on = !L.on; b.setAttribute("aria-pressed", String(L.on)); if (L.mesh) L.mesh.visible = L.on; });
+  $("readout").before(b); }
+
+function resize() {
+  const w = host.clientWidth, h = host.clientHeight;
+  renderer.setSize(w, h); camera.aspect = w / h; camera.updateProjectionMatrix(); layout();
+}
+addEventListener("resize", resize); resize();
+
+let last = performance.now(), fps = 0, frames = 0, t = 0;
+function frame(now) {
+  requestAnimationFrame(frame);
+  const dt = Math.min(0.05, (now - last) / 1000); last = now; t += dt;
+  frames++; if (frames % 20 === 0) fps = Math.round(1 / Math.max(dt, 1e-4));
+  if (state.motion) { state.camx = 22 + 17 * Math.sin(t * 0.22); $("camx").value = state.camx; }
+  const e = state.explode;
+  // explode: raise + pull back + angle the camera; spread planes in z (farther layers move farther back)
+  camera.position.set(state.camx - e * 6, CAM_Y + e * 14, CAM_Z + e * 16);
+  camera.lookAt(state.camx, LOOK_Y - e * 2, -e * 10);
+  if (TH.native) { sun.target.position.set(state.camx, 0, 0); sun.position.set(state.camx + TH.sun[2][0], TH.sun[2][1], TH.sun[2][2]); }
+  if (FF && !matchMedia("(prefers-reduced-motion: reduce)").matches) { const a = FF.geo.attributes.position; for (let i = 0; i < FF.n; i++) { const b = FF.base[i]; a.setXYZ(i, b[0] + Math.sin(t * 0.3 + b[3]) * 0.8, b[1] + Math.sin(t * 0.5 + b[3] * 2) * 0.35, b[2] + Math.cos(t * 0.25 + b[3]) * 0.5); } a.needsUpdate = true; }
+  LAYERS.forEach((L, i) => { if (!L.mesh) return; L.mesh.position.x = LANE_MID + L.f * (state.camx - LANE_MID); L.mesh.position.z = L.z - e * (LAYERS.length - 1 - i) * 8; });
+  if (state.motion) state.hz = 0.8 * Math.sin(t * 0.5);   // toy wanders the path; 0.8 + its 0.55 radius stays on the visible path; ?hz= pins it
+  hero.position.set(state.camx + 1.2, 0, state.hz); blobShadow.position.set(state.camx + 1.2, 0.03, state.hz);
+  hero.rotation.y = Math.sin(t * 0.7) * 0.12;
+  renderer.render(scene, camera);
+  $("readout").textContent = `${TH.label} · ${LAYERS.length ? SPEED_KEY + ' parallax, ' + IMAGES + ' image' + (IMAGES > 1 ? 's' : '') : 'game scene: flat wall, no backdrop layers'} · cam x ${state.camx.toFixed(1)} · ${state.planes ? "planes" : "fallback hills"} · toy z ${state.hz.toFixed(1)} ${PATH.hidden ? '' : '· path ' + PATH.width.toFixed(2) + 'u = ' + (PATH.width / PLAYER_W).toFixed(1) + '× toy '}· speed vs lane: ${LAYERS.map((L) => L.name + " " + Math.round((1 - L.f) * 10 / (CAM_Z - L.z) * 100) + "%").join(", ")} · ${fps} fps`;
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
