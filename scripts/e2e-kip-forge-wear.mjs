@@ -58,6 +58,7 @@ globalThis.fetch = async (input, init) => {
   const url = new URL(typeof input === "string" ? input : (input.url ?? String(input)));
   if (url.hostname === "127.0.0.1" || url.hostname === "localhost") return url.port === "8791" ? daemonFetch(url, init) : realFetch(input, init);
   model.calls++;
+  resetForgeRateLimit(); // the call that just got here was counted; clear it so a quick retry is never the fourth in a minute (a timer alone raced when the machine was busy)
   return json({ output_text: model.mode === "not_json" ? "Sure! Here is a hat." : JSON.stringify({ recipe: model.recipe ?? RECIPE, names: NAMES }) });
 };
 
@@ -117,6 +118,7 @@ const loco = () => ev("JSON.stringify({ hat: window.kipMenu.ctx.loco.hat, head: 
 
 const inspect = (name) => ev(`(() => { const { THREE, kip } = window.kipRig(); const c = kip.exp.${name}; const box = new THREE.Box3().setFromObject(c); const first = []; c.traverse((o) => { if (o.isMesh) first.push({ type: o.type, vis: o.visible, verts: o.geometry.attributes.position.count, norm: o.geometry.attributes.position.normalized, bs: o.geometry.boundingSphere ? [o.geometry.boundingSphere.radius] : null, scale: o.getWorldScale(new THREE.Vector3()).toArray().map((v) => +v.toFixed(4)), mat: o.material && o.material.type, opacity: o.material && o.material.opacity, transparent: o.material && o.material.transparent }); }); let anc = c, chain = []; while (anc) { chain.push(anc.name + ':' + anc.visible); anc = anc.parent; } return JSON.stringify({ visible: c.visible, children: c.children.length, box: [box.min.toArray().map((v) => +v.toFixed(1)), box.max.toArray().map((v) => +v.toFixed(1))], worldPos: c.getWorldPosition(new THREE.Vector3()).toArray().map((v) => +v.toFixed(1)), meshes: first.slice(0, 3), chain: chain.slice(0, 8) }); })()`);
 await ev(`localStorage.setItem('toyforge:device:v1', ${JSON.stringify(DEVICE)})`);
+const meshInfo = (name) => ev(`(() => { const { kip } = window.kipRig(); const c = kip.exp.${name}; const hex = []; let meshes = 0; c.traverse((o) => { if (o.isMesh) { meshes++; hex.push(o.material.color.getHexString()); } }); return JSON.stringify({ groups: c.children.length, meshes, hex: [...new Set(hex)] }); })()`);
 const sane = (j) => { const [lo, hi] = j.box; const size = [0, 1, 2].map((k) => hi[k] - lo[k]); const cy = (lo[1] + hi[1]) / 2; return j.visible && size.every((v) => v > 8 && v < 120) && cy > 90 && cy < 190; };
 
 // 1. the menu entry opens the panel
@@ -134,6 +136,14 @@ await page.waitFor("document.querySelector('.kfm-wearnote') && document.querySel
 check("Kip wears the hat as a custom hat", (await loco()).includes('"hat":"custom"'));
 const hat = JSON.parse(await inspect("customCrownContainer"));
 check("the worn hat is drawn at a size and place a child can see: 8 to 120 mm each way, up at Kip's head", sane(hat), JSON.stringify(hat.box));
+const hatMat = JSON.parse(await meshInfo("customCrownContainer"));
+check("the worn hat is in the default custom-part purple until the child picks a colour", hatMat.hex.length === 1 && hatMat.hex[0] === "7c4dff", JSON.stringify(hatMat));
+await ev("document.querySelector('.kfm-colours [data-colour=green]').click()");
+check("picking green dresses Kip again: the same one hat, now green (not a second hat on top)", await page.waitFor(`JSON.parse((() => { const { kip } = window.kipRig(); const c = kip.exp.customCrownContainer; let h = []; c.traverse((o) => { if (o.isMesh) h.push(o.material.color.getHexString()); }); return JSON.stringify({ g: c.children.length, h }); })()).h.every((x) => x === '43a047')`, 15000));
+const hatGreen = JSON.parse(await meshInfo("customCrownContainer"));
+check("one group, the same meshes as before, all green", hatGreen.groups === 1 && hatGreen.meshes === hatMat.meshes && hatGreen.hex.join() === "43a047", JSON.stringify(hatGreen));
+check("and it is still drawn at a size and place a child can see", sane(JSON.parse(await inspect("customCrownContainer"))));
+await page.shot(`${SHOTS}/bench-hat-green.png`);
 await ev("window.kipForgeMake.close()");
 await sleep(1500);
 await page.shot(`${SHOTS}/bench-hat.png`);
@@ -152,6 +162,20 @@ check("the worn head is drawn at a size and place a child can see: 8 to 120 mm e
 await ev("window.kipForgeMake.close()");
 await sleep(1500);
 await page.shot(`${SHOTS}/bench-head.png`);
+// 4. the fallback on the real bench: a wish the maker cannot make ends with the nearest ready-made hat or head, worn through the bench's own setters
+model.mode = "not_json";
+const clock = setInterval(() => resetForgeRateLimit(), 20); // the minute a fourth call would rest for passes as it happens (every 20 ms, so four quick retries never count as four in a minute)
+for (const [wish, slot, label, key, want] of [["a pirate hat", "crown", "Tricorne Hat", "hat", "pirate"], ["a robot head", "head", "Bolt Robot", "head", "robot"]]) {
+  await ev("window.kipForgeMake.open()");
+  await press("Make another");
+  await setText(wish); await pickSlot(slot); await press("Make it");
+  check(`"${wish}": the maker has no answer, and a ready-made one is offered`, await page.waitFor("(() => { const r = document.querySelector('.kfm-ready'); return Boolean(r && !r.hidden && r.offsetParent !== null); })()", 60000));
+  await press(`Wear the ${label}`);
+  check(`pressing it puts the ${label} on Kip, through the bench's own setter`, await page.waitFor(`window.kipMenu.ctx.loco.${key} === ${JSON.stringify(want)}`, 15000), await loco());
+  check("and the panel says so", (await text(".kfm-wearnote")).includes(`Kip is wearing the ${label}`));
+}
+clearInterval(clock);
+model.mode = "ok";
 check("the page raised no exception", (page.exceptions ?? []).length === 0, JSON.stringify((page.exceptions ?? []).slice(0, 2)).slice(0, 400));
 page.close();
 await chrome.close();

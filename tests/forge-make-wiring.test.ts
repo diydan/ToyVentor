@@ -49,7 +49,7 @@ describe("the text-to-part panel in the Kip page", () => {
   it("the bench loads the panel on the first click and not before, hands it its own root and the wear hook, publishes it and lets go of it", () => {
     expect(bench).not.toMatch(/^import[^;]*kip-forge-make/m); // a static import would make every bench page depend on the generated bundle
     expect(bench).toContain("await import('/kip/kip-forge-make.js?v=10.0')");
-    expect(bench).toContain("createForgeMake({ root: benchRoot, onWear: equipForgePart, downloads: downloadsOn })");
+    expect(bench).toContain("createForgeMake({ root: benchRoot, onWear: equipForgePart, onReadyMade: equipReadyMade, downloads: downloadsOn })");
     expect(bench).toMatch(/const PUBLISHED = \[[^\]]*"kipForgeMake"/);
     const teardown = bench.slice(bench.indexOf("function teardown()"), bench.indexOf("function dispose()"));
     expect(teardown).toContain("forgeMake?.dispose?.()");
@@ -73,6 +73,37 @@ describe("the text-to-part panel in the Kip page", () => {
     expect(fn).toContain("catch (err)");
     expect(fn).not.toContain("scadMesh"); // the GLB is already y-up; scadMesh would turn it on its side
     expect(fn).toContain("group.scale.setScalar(1000)"); // and it is in metres: drawn unscaled it is 1000 times too small to see
+  });
+
+  it("the fallback wears a ready-made hat or head through the bench's own setters, only for ids the wardrobe has, and never throws", () => {
+    const fn = bench.slice(bench.indexOf("function equipReadyMade("), bench.indexOf("// The text-to-part panel (F1"));
+    expect(fn).toContain("HAT_OPTIONS.some((h) => h.id === id)");
+    expect(fn).toContain("WARDROBE_HEADS.some((h) => h.id === id)");
+    expect(fn).toContain("setCrownMode(id)");
+    expect(fn).toContain("setHeadMode(id)");
+    expect(fn).toContain("catch (err)");
+    expect(bench).toMatch(/^\s*WARDROBE_HEADS,/m); // the bench already imports the list it checks against
+    // the panel offers it only when the wish could not be made (not for a refusal), and only when the page gave it a way to wear one
+    expect(panel).toContain("flow.nearestReadyMade(text, slot)");
+    expect(panel).toContain("['unavailable', 'no_recipe', 'too_many_waits'].includes(r.reason)");
+    expect(panel).toContain("if (!r.printable) offerReadyMade(state.text, selectedSlot(), true)");
+    expect(panel).toContain("if (!onReadyMade || disposed) return;");
+  });
+
+  it("the colour choice: swatches from the shared palette, a validated hex into the bench, the spoken name coloured only after a pick, Kip dressed again only when already dressed", () => {
+    const fn = bench.slice(bench.indexOf("async function equipForgePart("), bench.indexOf("// The text-to-part panel (F1"));
+    expect(fn).toContain("{ slot, glbBase64, name, colorHex }");
+    expect(fn).toContain("/^#[0-9a-f]{6}$/i.test(colorHex || '')"); // a bad or missing hex never reaches the material: the custom-part purple instead
+    expect(fn).toContain("'#7c4dff'");
+    expect(fn).not.toMatch(/mat\.color\.set\('#7c4dff'\);/); // the old hard-coded colour is gone
+    expect(panel).toContain("for (const c of flow.FORGE_COLORS)"); // the swatches are the palette's, not a second list
+    expect(panel).toContain("colorHex: flow.forgeColorHex(state.colour)");
+    expect(panel).toContain("flow.isForgeColorKey(key)"); // a click on anything that is not a swatch word does nothing
+    expect(panel).toContain("flow.voiceUrl(useLg, n, state.colourChosen ? state.colour : undefined)"); // the bare noun until the child chooses
+    expect(panel).toContain("if (state.worn) wear(currentPart())");
+    expect(panel).toContain("if (state.wearing) { state.wearAgain = true; return; }"); // two quick picks never run two dressings at once
+    const code = panel.replace(/\/\/.*$/gm, "");
+    expect(code).not.toMatch(/colou?r.*(localStorage|sessionStorage)/); // the pick is not stored
   });
 
   it("leaves out the save button when the bench hands no file out", () => {

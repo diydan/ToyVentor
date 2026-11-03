@@ -232,6 +232,39 @@ rejected, numbers are clamped, nothing is executed.
   it does not survive a reload; the colour is the custom-part purple (no colour choice yet); no catalog fallback when
   a wish never passes (it ends as "fine on screen"); the daemon must be reachable by the deployed Worker
   (`FORGE_OPTIMIZER_URL`); `VOICE_SIGNING_KEY` must be set for names to be spoken.
+- **Ear search capped, and the ready-made fallback built (2026-11-03, Dan: "agreed, go").**
+  **Ear search.** Profiled the monkey head (26 CPU-seconds): 325 candidate placements at about 46 ms each, and the winner
+  turned up at the 17th candidate of the second size, after the whole first size (308 full-size placements) found nothing.
+  `_fit_head_pair` now tries the cheapest 80 full-size placements first (`EAR_FIT_FULL_SCALE_FIRST`; every winner measured sits in the
+  first 61, one adversarial case, a 10 mm drop with an 18 degree lean, ranks 274), then the three smaller sizes at their cheapest 60,
+  and only then the rest of the full-size placements, so a head with no answer costs what it did and none loses one. **Measured on
+  21 heads with ears or horns, before and after: identical notes and drops for all 21; total CPU 167 s to 93 s;** monkey 26 s
+  to 8, elephant 27 to 13, gorilla 22 to 12, a pointy pair 18 to 7. Guard: `tests/forge/forge-fit-order.test.ts`. Use CPU seconds to time
+  the daemon (`time.process_time()`), never wall time: it lies under load. **Fallback.** A wish that never passes, or a maker that is busy or
+  has no usable answer, must still end with something Kip can wear (the spec's "always end usable"). `shared/forgeFallback.ts`
+  (`nearestReadyMade(text, slot)`, in the browser bundle) maps the child's words to the bench's own wardrobe: 12 hats
+  (a pirate hat is the Tricorne Hat, a wizard hat the Dapper Top Hat, mouse ears the Pointy Ears, a unicorn the Bumper Horns) and 10
+  heads (a dog is the Fox, a panda the Bear, a troll the Yeti Imp, a dragon the Drake Dragon). It never answers nothing: with no word in
+  common it gives a friendly default (the Wobble Hat, or Soft Youth for a head) and says so, so the screen words it as "a ready-made one" and not
+  "the one you asked for". A test checks every id and label against `kip-vehicles-wardrobe.js`, so a renamed hat fails a test and not a child.
+  The panel shows "🎩 Wear the {name}" when the part is only fine on screen (it says "the ready-made one that prints is nearly it"), and when the maker
+  was busy, found no usable answer or ran out of rests; **not** for a refused wish (a brand, an unsafe word). The bench's `equipReadyMade`
+  wears it with its own `setCrownMode` and `setHeadMode`, only for an id the wardrobe has. Checked in real Chrome: 42 panel checks
+  (the offer appears for a busy daemon, a model with no answer and a part that fails the print check; not for a refusal; pressing it hands the page
+  `{kind: 'hat', id: 'tophat'}` for a wizard hat) and 16 checks on the real Kip page (Kip ends up wearing the Tricorne Hat and the Bolt Robot).
+- **Colour choice built (2026-11-03, polish after the fallback).** A worn text-to-part was always the custom-part purple. Now the panel shows a row of
+  eleven swatches as soon as there is a first look (and in the finished screen): red, orange, yellow, green, blue, purple, pink, brown, white, black, gray.
+  The palette is one file, `shared/forgeColors.ts`, whose keys are the app's own colour words (a unit test round-trips every hex through
+  `colorKeyFromHex` and `parseVoiceKey`, which is how brown #8d6e63 was caught reading as "gray"; it is #8b5a2b now), re-exported through
+  `forgeMakeFlow.ts` into the browser bundle (about 600 bytes). Pressing a swatch sets `state.colour`; Wear it hands the bench `colorHex`; if Kip is
+  already wearing the part it is put on again in the new colour (the bench replaces the part, it never stacks a second one, and two quick picks queue
+  rather than run two dressings at once). The bench's `equipForgePart` takes only `/^#[0-9a-f]{6}$/i`, anything else is purple. **The spoken name stays
+  the bare noun until the child picks a colour** (`c=<word>` is added only after a pick; the colour is not part of the signature, so the 12 colour words
+  bound the clips at 13 per name per language), so "wizard hat" does not become "purple wizard hat" by accident. The choice is not stored anywhere and carries
+  over to the next part made in the same panel. Checked in real Chrome: panel e2e 42 to 51 checks (default purple, blue re-wears the same part and slot,
+  voice URL has no `c` before the pick and `c=blue` after, the Worker accepts it, a pick with nothing worn does not dress Kip) and the real-bench e2e 16 to
+  20 (material colour read off the Three.js meshes: purple, then green, one group, same mesh count). Test trap: an e2e limiter reset on a 20 ms timer raced when
+  the machine was busy; the fake model now resets it itself on every call.
 - **Real-stack check and F1 acceptance (2026-11-03).** The whole thing ran for real: the Kip page served by
   Vite, the Worker in the local Workers runtime (`npm run dev`), real Spark, the real daemon, the real voice binding
   (AI Gateway, billed) and the real parent gate, driven through the panel in Chrome: a wizard hat with a star, worn by

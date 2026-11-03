@@ -49,6 +49,8 @@ const CSS = `
 .kfm-sayname{font-size:13px;color:#5d657c;margin:0}
 .kfm-links{display:flex;flex-wrap:wrap;gap:8px}
 .kfm-links a{font-size:12.5px;font-weight:700;color:#fff;background:#1fa97c;padding:6px 11px;border-radius:9px;text-decoration:none}
+.kfm-card button.kfm-sw{width:26px;height:26px;border-radius:50%;padding:0;border:2px solid rgba(27,34,56,.25)}
+.kfm-card button.kfm-sw[aria-pressed=true]{outline:3px solid #1b2238;outline-offset:1px}
 .kfm-wearnote.bad{color:#b3261e}
 .kfm-card [hidden]{display:none!important}
 `;
@@ -76,12 +78,15 @@ const slug = (name) => String(name).trim().toLowerCase().replace(/[^a-z0-9]+/g, 
 
 /**
  * The panel. `root` is the element it lives in (the bench root); nothing is added anywhere else.
- * `onWear({ slot, glbBase64, name })` puts the part on Kip and says whether it worked (`{ ok: boolean }`); slot is `crown` or `head`.
+ * `onWear({ slot, glbBase64, name, colorHex })` puts the part on Kip in that colour and says whether it worked (`{ ok: boolean }`); slot is `crown` or `head`. It is
+ * called again, with the same part, when the child picks another colour while it is worn.
  * `lang` is the language code to speak the part's name in (a function, read each time the speaker is pressed); default: the prop voice's language.
+ * `onReadyMade({ kind, id })` wears the nearest ready-made hat or head (kind `hat` or `head`, an id of the bench's own wardrobe) and says whether it worked: it is offered
+ * when a wish ends as "fine on screen" or the maker could not make it, so a child always ends with something to wear. Without it there is no such button.
  * `downloads: false` (a hosted bench that hands no file out) leaves out "Save for printing".
- * @param {{ downloads?: boolean, root: Element, fetch?: (url: string, init?: RequestInit) => Promise<Response>, deviceId?: () => string | null, lang?: () => string, onWear?: (part: { slot: 'crown' | 'head', glbBase64: string, name: string }) => Promise<{ ok: boolean }> | { ok: boolean } }} options
+ * @param {{ onReadyMade?: (part: { kind: 'hat' | 'head', id: string }) => Promise<{ ok: boolean }> | { ok: boolean }, downloads?: boolean, root: Element, fetch?: (url: string, init?: RequestInit) => Promise<Response>, deviceId?: () => string | null, lang?: () => string, onWear?: (part: { slot: 'crown' | 'head', glbBase64: string, name: string }) => Promise<{ ok: boolean }> | { ok: boolean } }} options
  */
-export function createForgeMake({ root, fetch: fetchFn, deviceId = defaultDeviceId, lang = defaultLang, onWear, downloads = true } = {}) {
+export function createForgeMake({ root, fetch: fetchFn, deviceId = defaultDeviceId, lang = defaultLang, onWear, onReadyMade, downloads = true } = {}) {
   if (!root) throw new Error('createForgeMake needs a root element');
   const doc = root.ownerDocument;
   const win = doc.defaultView;
@@ -97,6 +102,11 @@ export function createForgeMake({ root, fetch: fetchFn, deviceId = defaultDevice
     firstLook: null, // { slot, glbBase64, name } as soon as the first look arrives
     result: null, // the flow's MakeResult
     worn: false,
+    readyMade: null, // the ready-made part on offer, { kind, id, label, exact }
+    colour: flow.DEFAULT_FORGE_COLOR, // one of the app's colour words (shared/forgeColors.ts)
+    wearing: false, // a Wear it call is in flight
+    wearAgain: false, // a colour was picked meanwhile
+    colourChosen: false, // false until the child picks: the spoken name then carries no colour word
   };
 
   let built = null;
@@ -169,9 +179,14 @@ export function createForgeMake({ root, fetch: fetchFn, deviceId = defaultDevice
     $.links = el(doc, 'div', { class: 'kfm-links' });
     $.done.append($.name, el(doc, 'div', { class: 'kfm-row' }, $.sayName, $.speak), $.summary, el(doc, 'div', { class: 'kfm-row' }, $.wear, $.save, $.again), $.links);
 
+    $.colourRow = el(doc, 'div', { class: 'kfm-row kfm-colours', role: 'group', 'aria-label': 'Colour', hidden: true }, el(doc, 'span', { class: 'kfm-sub', text: 'Colour:' }));
+    for (const c of flow.FORGE_COLORS) $.colourRow.append(el(doc, 'button', { type: 'button', class: 'kfm-sw', 'data-colour': c.key, 'aria-label': c.key, 'aria-pressed': c.key === state.colour ? 'true' : 'false', title: c.key, style: `background:${c.hex}` }));
+    $.readyText = el(doc, 'span', { class: 'kfm-sub' });
+    $.ready = el(doc, 'button', { type: 'button', class: 'kfm-ok' });
+    $.readyRow = el(doc, 'div', { class: 'kfm-row kfm-ready', hidden: true }, $.readyText, $.ready);
     $.wearNote = el(doc, 'div', { class: 'kfm-wearnote kfm-q', role: 'status', 'aria-live': 'polite' });
     $.status = el(doc, 'div', { class: 'kfm-status', role: 'status', 'aria-live': 'polite' });
-    card.append($.ask, $.work, $.gate, $.done, $.wearNote, $.status);
+    card.append($.ask, $.work, $.gate, $.done, $.colourRow, $.readyRow, $.wearNote, $.status);
 
     $.close.addEventListener('click', () => api.close());
     $.back.addEventListener('keydown', (e) => { if (e.key === 'Escape') api.close(); e.stopPropagation(); }); // keys typed here are not the bench's shortcuts
@@ -184,8 +199,10 @@ export function createForgeMake({ root, fetch: fetchFn, deviceId = defaultDevice
     $.wearNow.addEventListener('click', () => wear(state.firstLook));
     $.wear.addEventListener('click', () => wear(state.result ? { slot: state.result.recipe.slot === 'head' ? 'head' : 'crown', glbBase64: state.result.glbBase64, name: state.result.name } : null));
     $.save.addEventListener('click', saveFile);
+    $.colourRow.addEventListener('click', (e) => { const key = e.target?.getAttribute?.('data-colour'); if (key) setColour(key); });
+    $.ready.addEventListener('click', wearReadyMade);
     $.speak.addEventListener('click', speak);
-    $.again.addEventListener('click', () => { state.result = null; state.firstLook = null; state.worn = false; $.wearNote.textContent = ''; $.links.replaceChildren(); forgetUrls(); say(''); show('ask'); $.text.focus(); });
+    $.again.addEventListener('click', () => { state.result = null; state.firstLook = null; state.worn = false; state.readyMade = null; $.readyRow.hidden = true; $.colourRow.hidden = true; $.wearNote.textContent = ''; $.links.replaceChildren(); forgetUrls(); say(''); show('ask'); $.text.focus(); });
     $.gateGo.addEventListener('click', submitGate);
     $.gateIn.addEventListener('keydown', (e) => { if (e.key === 'Enter') submitGate(); });
     $.gateNo.addEventListener('click', () => gateWaiter?.resolve(false));
@@ -224,6 +241,7 @@ export function createForgeMake({ root, fetch: fetchFn, deviceId = defaultDevice
       $.firstName.textContent = e.name;
       $.firstName.hidden = false;
       $.wearNow.hidden = !onWear || !e.glbBase64;
+      $.colourRow.hidden = !onWear || !e.glbBase64;
       workshop.setStage('preview', { call: e.call, label: 'Here is your first look. Checking it can print…' });
     } else if (e.stage === 'checking') workshop.setStage('checking', { call: e.call, label: e.call > 1 ? `Checking it can print… (try ${e.call})` : 'Checking it can print…' });
     else if (e.stage === 'fixing') workshop.setStage('repair', { call: e.call, label: 'Fixing a thin bit…' });
@@ -241,6 +259,9 @@ export function createForgeMake({ root, fetch: fetchFn, deviceId = defaultDevice
     state.firstLook = null;
     state.result = null;
     state.worn = false;
+    state.readyMade = null;
+    $.readyRow.hidden = true;
+    $.colourRow.hidden = true;
     $.wearNote.textContent = '';
     $.firstName.hidden = true;
     $.wearNow.hidden = true;
@@ -254,7 +275,13 @@ export function createForgeMake({ root, fetch: fetchFn, deviceId = defaultDevice
     state.busy = false;
     if (disposed) return;
     workshop.stop({ finished: Boolean(r.ok) });
-    if (!r.ok) { show('ask'); say(r.message, true); return; }
+    if (!r.ok) {
+      show('ask');
+      say(r.message, true);
+      // the maker could not make it (busy, or no usable answer): a child still ends with something to wear. A refused wish (not allowed, a brand) gets no offer.
+      if (['unavailable', 'no_recipe', 'too_many_waits'].includes(r.reason)) offerReadyMade(text, slot, false);
+      return;
+    }
     state.result = r;
     finish(r);
   }
@@ -269,24 +296,70 @@ export function createForgeMake({ root, fetch: fetchFn, deviceId = defaultDevice
     $.sayName.textContent = spoken ? `${spoken.w}` : '';
     $.wear.hidden = !onWear || !r.glbBase64;
     $.save.hidden = !r.printable || !downloads;
+    $.colourRow.hidden = !((onWear && r.glbBase64) || spoken); // a colour matters when the part can be worn or its name can be said
     $.summary.textContent = r.printable
       ? 'It passed the printer check. You can wear it on Kip now, and save it for printing.'
       : 'It looks fine on screen, but it cannot be printed yet. You can still wear it on Kip, or make another one.';
     show('done');
     say(r.printable ? 'Your part is ready!' : 'Here is your part.');
+    if (!r.printable) offerReadyMade(state.text, selectedSlot(), true);
+  }
+
+  /** The ready-made part nearest to the wish, offered under the part. `own` is whether the child's own part is on screen (so the words are "instead"). */
+  function offerReadyMade(text, slot, own) {
+    if (!onReadyMade || disposed) return;
+    const near = flow.nearestReadyMade(text, slot);
+    state.readyMade = near;
+    built.readyText.textContent = near.exact
+      ? (own ? 'The ready-made one that prints is nearly it:' : 'A ready-made one is nearly it:')
+      : (own ? 'There is a ready-made one that prints:' : 'There is a ready-made one to wear:');
+    built.ready.textContent = `🎩 Wear the ${near.label}`;
+    built.readyRow.hidden = false;
+  }
+
+  async function wearReadyMade() {
+    const near = state.readyMade;
+    if (!onReadyMade || !near || disposed) return;
+    const $ = built;
+    $.ready.disabled = true;
+    let r;
+    try { r = await onReadyMade({ kind: near.kind, id: near.id }); } catch { r = { ok: false }; }
+    if (disposed) return;
+    $.ready.disabled = false;
+    $.wearNote.textContent = r && r.ok ? `Kip is wearing the ${near.label}! Close this to have a look.` : 'Kip could not wear that one. Try again.';
+    $.wearNote.classList.toggle('bad', !(r && r.ok));
   }
 
   async function wear(part) {
     if (!onWear || !part || !part.glbBase64) return;
+    if (state.wearing) { state.wearAgain = true; return; } // a colour picked while Kip is being dressed: dress again when this one is done
+    state.wearing = true;
     const $ = built;
     $.wear.disabled = $.wearNow.disabled = true;
     let r;
-    try { r = await onWear({ slot: part.slot, glbBase64: part.glbBase64, name: part.name }); } catch { r = { ok: false }; }
+    try { r = await onWear({ slot: part.slot, glbBase64: part.glbBase64, name: part.name, colorHex: flow.forgeColorHex(state.colour) }); } catch { r = { ok: false }; }
+    state.wearing = false;
     if (disposed) return;
     $.wear.disabled = $.wearNow.disabled = false;
     state.worn = Boolean(r && r.ok);
     $.wearNote.textContent = state.worn ? 'Kip is wearing it! Close this to have a look.' : 'Kip could not wear that one. Try again.';
     $.wearNote.classList.toggle('bad', !state.worn);
+    if (state.wearAgain) { state.wearAgain = false; if (state.worn) wear(currentPart()); }
+  }
+
+  /** The part on screen, as Wear it takes it: the finished one, or the first look while the checks run. */
+  function currentPart() {
+    const r = state.result;
+    return r ? { slot: r.recipe.slot === 'head' ? 'head' : 'crown', glbBase64: r.glbBase64, name: r.name } : state.firstLook;
+  }
+
+  /** A colour word from the swatches: the part is drawn in it (and put on Kip again in it if it is already worn), and the spoken name carries it. */
+  function setColour(key) {
+    if (!flow.isForgeColorKey(key) || disposed) return;
+    state.colour = key;
+    state.colourChosen = true;
+    for (const b of built.colourRow.querySelectorAll('button')) b.setAttribute('aria-pressed', b.getAttribute('data-colour') === key ? 'true' : 'false');
+    if (state.worn) wear(currentPart());
   }
 
   function speak() {
@@ -297,7 +370,7 @@ export function createForgeMake({ root, fetch: fetchFn, deviceId = defaultDevice
     const n = r.names[useLg];
     if (!n) return;
     try {
-      audio = new win.Audio(flow.voiceUrl(useLg, n));
+      audio = new win.Audio(flow.voiceUrl(useLg, n, state.colourChosen ? state.colour : undefined));
       audio.play().catch(() => { /* no clip: the caption stays */ });
     } catch { /* no audio here: the caption stays */ }
   }

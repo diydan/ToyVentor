@@ -98,6 +98,9 @@ export interface MakeArgs {
   now?: () => number;
 }
 
+export { nearestReadyMade, type ReadyMade } from "./forgeFallback";
+export { DEFAULT_FORGE_COLOR, FORGE_COLORS, forgeColorHex, isForgeColorKey, type ForgeColorKey } from "./forgeColors";
+
 export const artifactUrl = (name: string): string => `${ARTIFACT_ROUTE}${name}`;
 
 /**

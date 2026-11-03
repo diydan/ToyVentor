@@ -27,7 +27,7 @@ const STL_BYTES = (() => { const b = Buffer.alloc(84 + 50); b.writeUInt32LE(1, 8
 
 // ---- the stand-ins: the model and the daemon ----------------------------------------------------------------------------------
 const model = { calls: 0, mode: "ok" }; // ok | not_json
-const daemon = { previews: 0, polls: {}, down: false, artifactRequests: [], validatingPolls: 2 };
+const daemon = { previews: 0, polls: {}, down: false, artifactRequests: [], validatingPolls: 2, jobMode: "" };
 
 function json(body, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
@@ -43,6 +43,7 @@ function daemonFetch(url, init) {
   if (m) {
     daemon.polls[m[1]] = (daemon.polls[m[1]] ?? 0) + 1;
     if (daemon.polls[m[1]] <= daemon.validatingPolls) return json({ ok: true, job_id: m[1], status: "validating" });
+    if (daemon.jobMode === "fail") return json({ ok: true, job_id: m[1], part_id: "custom_wizard_hat", status: "digital_only", gate_report: { ok: false, design_status: "needs_reproportion", blocking_failures: [{ id: "P1_no_supports", detail: "10.7 mm2 steeper than 45 deg" }] } });
     return json({ ok: true, job_id: m[1], part_id: "custom_wizard_hat", status: "print_ready", stl_artifact: STL, glb_artifact: STL.replace(/\.stl$/, ".glb"), content_hash: "0123456789ab", gate_report: { ok: true, design_status: "verified", blocking_failures: [] } });
   }
   const a = /^\/v1\/artifacts\/(.+)$/.exec(p);
@@ -114,7 +115,7 @@ try {
   const setText = (t) => ev(`(() => { const i = document.querySelector('.kfm-back input[type=text]'); i.value = ${JSON.stringify(t)}; i.dispatchEvent(new Event('input', { bubbles: true })); })()`);
   const pickSlot = (v) => ev(`(() => { const r = [...document.querySelectorAll('.kfm-slot input')].find((x) => x.value === ${JSON.stringify(v)}); r.checked = true; })()`);
   const mount = (extra = "") =>
-    ev(`(async () => { const m = await import('/kip/kip-forge-make.js?v=10.0'); localStorage.setItem('toyforge:device:v1', ${JSON.stringify(DEVICE)}); window.__wear = []; window.__wearOk = true; window.__kfm = m.createForgeMake({ root: document.body, onWear: async (p) => { window.__wear.push(p); return { ok: window.__wearOk }; }, lang: () => window.__lang || 'en'${extra} }); window.__kfm.open(); return true; })()`);
+    ev(`(async () => { const m = await import('/kip/kip-forge-make.js?v=10.0'); localStorage.setItem('toyforge:device:v1', ${JSON.stringify(DEVICE)}); window.__wear = []; window.__wearOk = true; window.__ready = []; window.__readyOk = true; window.__kfm = m.createForgeMake({ root: document.body, onWear: async (p) => { window.__wear.push(p); return { ok: window.__wearOk }; }, onReadyMade: async (p) => { window.__ready.push(p); return { ok: window.__readyOk }; }, lang: () => window.__lang || 'en'${extra} }); window.__kfm.open(); return true; })()`);
   const apiCalls = () => server.apiCalls;
   const shot = async (name) => { try { await page.shot(path.join(SHOTS, `${name}.png`)); } catch { /* a screenshot is a convenience */ } };
 
@@ -132,7 +133,7 @@ try {
   await press("Make it");
   check("pressing Make it moves to the working step", await page.waitFor("window.__kfm.state.step === 'working'", 5000));
   check("the first look arrived", await page.waitFor("window.__kfm.state.hasFirstLook === true", 30000));
-  check("the first look arrives while the checks are still running, with its name, and the strip is showing", (await step()) === "working" && (await text(".kfm-name")).includes("Starlight Wizard Hat") && (await visible(".kww-workshop")));
+  check("the first look arrives while the checks are still running, with its name, and the strip is showing", (await step()) === "working" && (await text(".kfm-name")).includes("Starlight Wizard Hat") && (await page.waitFor("(() => { const n = document.querySelector('.kww-workshop'); return Boolean(n && !n.hidden && n.offsetParent !== null); })()", 8000))); // the strip fades in 300 ms after it starts: wait for it, do not sample it once
   check("no grown-up question was asked to make it (no proof, no gate calls)", !(await ev("window.__kfm.state.hasProof")) && !apiCalls().some((c) => c.path === "/api/parent/gate"));
   check("the make request carried the device id and no proof", apiCalls().filter((c) => c.path === "/api/forge/make").every((c) => c.headers["x-device-id"] === DEVICE && !c.headers["x-parent-proof"]));
   const wearNowShown = await visible(".kfm-ok");
@@ -158,6 +159,22 @@ try {
   const ask = (u) => realFetch(`${process.env.E2E_API_PROXY}${u}`, { headers: { "x-device-id": DEVICE } });
   check("the Worker accepts that signature (it is not refused as unsigned)", voiceUrl !== "" && (await ask(voiceUrl)).status !== 403);
   check("and refuses the same signature on a different word", voiceUrl !== "" && (await ask(voiceUrl.replace("sombrero+de+mago", "otro+sombrero"))).status === 403);
+  check("before the child picks a colour the spoken name has no colour word", Boolean(vq) && !vq.has("c"), voiceUrl);
+
+  // [3b] the colour: eleven swatches, purple until the child picks, a pick dresses Kip again in it and puts the word on the spoken name
+  check("the colour swatches are shown with the part: eleven of them, purple pressed", (await visible(".kfm-colours")) && (await ev("document.querySelectorAll('.kfm-colours button').length")) === 11 && (await ev("document.querySelector('.kfm-colours [aria-pressed=true]').getAttribute('data-colour')")) === "purple");
+  check("the first Wear it was in the default colour", (await ev("window.__wear[0].colorHex")) === "#7c4dff");
+  await ev("document.querySelector('.kfm-colours [data-colour=blue]').click()");
+  check("picking blue puts the same part on Kip again, in blue", await page.waitFor("window.__wear.length === 2", 10000));
+  const rewore = await ev("window.__wear[1]");
+  check("the second call is the same part and slot with the blue hex", rewore.colorHex === "#1e88e5" && rewore.glbBase64 === "Z2xiZ2xi" && rewore.slot === "crown" && rewore.name === "Starlight Wizard Hat", JSON.stringify(rewore));
+  check("blue is the pressed swatch, and only blue", (await ev("[...document.querySelectorAll('.kfm-colours [aria-pressed=true]')].map((b) => b.getAttribute('data-colour')).join()")) === "blue");
+  await ev("window.__audio = []");
+  await press("Say it");
+  await sleep(300);
+  const blueUrl = await ev("window.__audio[0] || ''");
+  check("Say it now carries the colour word, and the Worker accepts it", blueUrl !== "" && new URL(`http://x${blueUrl}`).searchParams.get("c") === "blue" && (await ask(blueUrl)).status !== 403, blueUrl);
+  await shot("colour");
 
   // [4] saving the file is the one step that needs the grown-up
   const gateCallsBefore = apiCalls().filter((c) => c.path === "/api/parent/gate").length;
@@ -192,7 +209,7 @@ try {
     await setText(words);
     await press("Make it");
     await page.waitFor("document.querySelector('.kfm-status.bad') !== null", 30000);
-    check(`"${words}" ends calmly on the question with a sentence (${why}), no code, and spends no model call`, (await step()) === "ask" && /try another idea|something else/i.test(await text(".kfm-status")) && model.calls === modelBefore);
+    check(`"${words}" ends calmly on the question with a sentence (${why}), no code, and spends no model call`, (await step()) === "ask" && /try another idea|something else/i.test(await text(".kfm-status")) && model.calls === modelBefore && !(await visible(".kfm-ready")));
   }
   resetForgeRateLimit();
   daemon.down = true;
@@ -200,6 +217,7 @@ try {
   await press("Make it");
   await page.waitFor("document.querySelector('.kfm-status.bad') !== null", 40000);
   check("a daemon that is down ends calmly: busy, try again", (await step()) === "ask" && /busy|try again/i.test(await text(".kfm-status")) && !/\d{3}|unreachable|fjob/i.test(await text(".kfm-status")));
+  check("and it still offers a ready-made one to wear, named as the bench names it", (await visible(".kfm-ready")) && (await text(".kfm-ready button")).includes("Dapper Top Hat"), await text(".kfm-ready"));
   daemon.down = false;
   resetForgeRateLimit();
   model.mode = "not_json";
@@ -207,14 +225,43 @@ try {
   const callsBefore = model.calls;
   // the Worker lets 3 calls through a minute, so a fourth would really rest for 60 s: let the minute pass as it happens, and check the rest was shown
   let sawRest = false;
-  const clock = setInterval(() => { resetForgeRateLimit(); }, 250);
+  const clock = setInterval(() => { resetForgeRateLimit(); }, 20);
   const watch = setInterval(async () => { try { if ((await text(".kfm-work .kfm-sub, .kfm-status")).includes("short rest")) sawRest = true; } catch { /* page busy */ } }, 400);
   await press("Make it");
   await page.waitFor("document.querySelector('.kfm-status.bad') !== null", 90000);
   clearInterval(clock);
   clearInterval(watch);
   check("a model that sends no recipe is asked again, within the budget of four, then ends calmly", (await step()) === "ask" && model.calls - callsBefore >= 2 && model.calls - callsBefore <= 4 && (await text(".kfm-status")).includes("Try another idea"));
+  check("a model with no usable answer also ends with a ready-made one on offer", await visible(".kfm-ready"));
+  await press("Wear the Dapper Top Hat");
+  await page.waitFor("window.__ready.length === 1", 10000);
+  const ready1 = await ev("window.__ready[0]");
+  check("pressing it hands the page the nearest ready-made hat: a wizard hat is the dapper top hat", ready1.kind === "hat" && ready1.id === "tophat", JSON.stringify(ready1));
+  check("and says Kip is wearing it", (await text(".kfm-wearnote")).includes("Kip is wearing the Dapper Top Hat"));
   model.mode = "ok";
+
+  // [5b] a part that never passes the print check ends as fine on screen, with the ready-made one that prints beside it
+  resetForgeRateLimit();
+  daemon.jobMode = "fail";
+  daemon.validatingPolls = 0;
+  await setText("a pirate hat");
+  await press("Make it");
+  check("a part that fails the print check still ends calmly", await page.waitFor("window.__kfm.state.step === 'done'", 90000));
+  check("it is not printable, so the words say so and there is no Save button", (await ev("window.__kfm.state.printable")) === false && (await text(".kfm-done .kfm-sub")).includes("cannot be printed yet") && (await ev("[...document.querySelectorAll('.kfm-back button')].some((b) => b.textContent.includes('Save for printing') && !b.hidden && b.offsetParent !== null)")) === false);
+  check("and the ready-made one that prints is offered under it", (await visible(".kfm-ready")) && (await text(".kfm-ready .kfm-sub")).includes("that prints"));
+  await press("Wear the Tricorne Hat");
+  await page.waitFor("window.__ready.length === 2", 10000);
+  const ready2 = await ev("window.__ready[1]");
+  check("a pirate hat is the tricorne hat", ready2.kind === "hat" && ready2.id === "pirate", JSON.stringify(ready2));
+  daemon.jobMode = "";
+  await ev("window.__readyOk = false");
+  await press("Wear the Tricorne Hat");
+  await page.waitFor("window.__ready.length === 3", 10000);
+  await sleep(300);
+  check("a ready-made part the page cannot wear gets a calm sentence", (await text(".kfm-wearnote")).includes("could not wear"));
+  await ev("window.__readyOk = true");
+  await press("Make another");
+  check("Make another clears the offer", !(await visible(".kfm-ready")));
 
   // [6] a part that will not wear ends calmly; letting go removes everything
   resetForgeRateLimit();
@@ -223,10 +270,15 @@ try {
   await setText("a wizard hat");
   await press("Make it");
   await page.waitFor("window.__kfm.state.step === 'done'", 60000);
+  const wearsBefore = await ev("window.__wear.length");
   await press("Wear it");
-  await page.waitFor("window.__wear.length >= 2", 10000);
+  await page.waitFor(`window.__wear.length > ${wearsBefore}`, 10000);
   await sleep(300);
   check("a part the page cannot put on Kip gets a calm sentence, and can be tried again", (await text(".kfm-wearnote")).includes("could not wear") && (await ev("window.__kfm.state.worn")) === false);
+  check("the colour the child chose carries over to the next part", (await ev(`window.__wear[${wearsBefore}].colorHex`)) === "#1e88e5");
+  await ev("document.querySelector('.kfm-colours [data-colour=red]').click()");
+  await sleep(300);
+  check("picking a colour for a part that is not worn does not dress Kip (nothing is worn to change)", (await ev("window.__wear.length")) === wearsBefore + 1);
   await ev("window.__kfm.dispose()");
   check("dispose removes the panel from the page", (await ev("document.querySelector('.kfm-back') === null")) === true);
   check("the panel wrote nothing to storage (only the harness's device id is there)", (await ev("Object.keys(localStorage).sort().join(',')")) === "toyforge:device:v1" && (await ev("document.cookie")) === "");

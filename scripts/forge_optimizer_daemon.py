@@ -669,6 +669,7 @@ OVERHANG_NZ = -0.7071
 EAR_FIT_OVERHANG_MM2 = 0.8  # a placement that adds more than this much overhang is not used (a clean pair measures 0.6; 1.4 failed the gate at 1.8 after L2)
 STUD_CUT_SIMPLIFY_MM = 0.03
 EAR_FIT_MIN_KEPT = 0.3  # below this share of the asked-for visible volume the pair is reported as dropped
+EAR_FIT_FULL_SCALE_FIRST = 80  # full-size placements tried before any smaller size (every winner measured on 2026-11-03 ranks 61 or better, bar one adversarial 274)
 
 
 EAR_SLENDER_MAX = 2.4  # taller than this many widths, or taller than EAR_TALL_MAX_MM, and an ear snaps on a head
@@ -914,10 +915,22 @@ def _fit_head_pair(
         key=lambda c: 0.02 * abs(c[0]) + 0.02 * c[1] + 0.02 * c[2],  # a lean costs as much as a move: no bend unless needed
     )
     # The pair as asked first; only when nothing prints at that size is it made 10, 20, 30 % smaller (a 22 mm elephant flap
-    # on a 30 mm head cannot be held up without supports, a 15 mm one can).
-    for scale in (1.0, 0.9, 0.8, 0.7):
-        # each candidate costs a boolean and a mesh check, so a smaller pair is tried at its cheapest 60 placements only
-        for drop, tilt, shift in (combos if scale == 1.0 else combos[:60]):
+    # on a 30 mm head cannot be held up without supports, a 15 mm one can). Each candidate costs a boolean and a mesh check
+    # (about 50 ms), and a pair that only prints smaller (a monkey's or an elephant's big side ears) used to scan all 308
+    # full-size placements first: 26 CPU-seconds, which the Worker's first look then waited for. So the cheapest
+    # EAR_FIT_FULL_SCALE_FIRST full-size placements go first (every winner measured sits in the first 61: a placement that
+    # needs a drop of 10 mm and a 18 degree lean is rank 274), then the smaller sizes at their cheapest 60, and only if
+    # none of that prints the rest of the full-size placements. The answer for a head that has one at full size is the same
+    # as before; a head that only prints smaller gets it in about a third of the time; a head with no answer costs what it did.
+    attempts = [
+        (1.0, combos[:EAR_FIT_FULL_SCALE_FIRST]),
+        (0.9, combos[:60]),
+        (0.8, combos[:60]),
+        (0.7, combos[:60]),
+        (1.0, combos[EAR_FIT_FULL_SCALE_FIRST:]),
+    ]
+    for scale, group in attempts:
+        for drop, tilt, shift in group:
             cand = _ears_or_horns_solid(
                 op, "head", body, rows, feat, head_height_mm, fs * scale, z_shift=-drop, tilt_add=tilt, x_shift=shift
             )
