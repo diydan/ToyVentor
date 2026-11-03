@@ -44,7 +44,7 @@ function fakeCtx(patch: Record<string, any> = {}) {
     toggleExplode: () => { loco.explodeTarget = loco.explodeTarget < 0.5 ? 1 : 0; },
     setExplode: (v: number) => { loco.explodeTarget = v; }, togglePile: () => { st.pile = !st.pile; },
     startBuild: () => { loco.buildMode = "building"; }, toggleRef: () => { st.ref = !st.ref; },
-    openLlm: () => {}, openPhoto: () => {}, loadFile: () => {},
+    openLlm: () => {}, openPhoto: () => {}, openForgeMake: () => {}, loadFile: () => {},
   };
   const ctx = {
     loco, act, camera: null, ready: () => true, speeds: [1, 0.5, 0.25, 1.5],

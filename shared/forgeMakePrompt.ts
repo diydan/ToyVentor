@@ -6,16 +6,12 @@
  * Pure: no DOM, no network, no clock. The words a child typed go in as data inside quotes; the Worker scrubs contact details and refuses unsafe
  * or brand words before this runs, and everything that comes back is validated field by field, so a prompt is never the only safeguard.
  */
+import { MAKE_MAX_TEXT_CHARS, type MakeSlot } from "./forgeMakeLimits";
 import { systemPromptFor, type PromptVersion } from "./forgePrompt";
 
 /** The prompt version the eval harness measured best (tests/forge/golden/prompt-v5.txt). */
 export const MAKE_PROMPT_VERSION: PromptVersion = "v5";
-/** At most this many model calls for one wish: the first, then up to three repairs (the spec's F1 budget of 4). */
-export const MAKE_MAX_CALLS = 4;
-export const MAKE_MAX_TEXT_CHARS = 120;
-/** What the model may build from words today: the two slots the prompt and the eval cover (a hat, a head). */
-export const MAKE_SLOTS = ["crown", "head"] as const;
-export type MakeSlot = (typeof MAKE_SLOTS)[number];
+export { MAKE_MAX_CALLS, MAKE_MAX_TEXT_CHARS, MAKE_SLOTS, type MakeSlot } from "./forgeMakeLimits";
 export const NAME_LANGS = ["en", "es", "fr", "de", "it", "pt", "tr"] as const;
 
 /** What a repair tells the model about one failed check (the same shape as FeedbackItem in scripts/lib/forgeEvalCore.ts). */

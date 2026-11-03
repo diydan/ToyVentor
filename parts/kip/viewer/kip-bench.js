@@ -27,6 +27,7 @@ import {
 } from '/kip/kip-forge-sdk.js?v=10.0';
 import {
   HUMAN_HEAD_IDS,
+  headphonesFit,
   FACE_INSERT_MODES,
   HEAD_CATEGORIES,
   WARDROBE_HEADS,
@@ -52,7 +53,7 @@ import { createMenuHost } from '/kip/kip-menu.js?v=10.0';
 import { mountPrintView } from '/kip/kip-print-view.js?v=10.0';
 import { mountSelfie } from '/kip/kip-selfie.js?v=10.0';
 import { mountDescribe } from '/kip/kip-describe-tab.js?v=10.0';
-import { KIP_CLIPS, clipForProp, isPropClip, makeKipClip } from '/kip/kip-clips.js?v=10.0';
+import { KIP_CLIPS, clipForProp, isPropClip, makeKipClip, plantBakedClip, limitHands } from '/kip/kip-clips.js?v=10.0';
 import { createKipSession } from '/kip/kip-session.js?v=10.0';
 import { FACEPLATE_SEAT_MM } from '/kip/kip-faceplate-shape.js?v=10.0';
 import { disposeThreeScene } from '/kip/bench-lifecycle.js?v=10.0';
@@ -497,6 +498,7 @@ const stage = env.stage ?? null; // a host's shared renderer, camera and control
 const hosted = stage !== null;
 const kipSession = env.sharedKip ?? createKipSession({ THREE, STLLoader, mergeVertices, toCreasedNormals });
 kipSession.acquire('kip');
+const downloadsOn = env.features?.downloads !== false; // false: this bench hands no file out (Print group, photo "Print it", selfie sticker): see workshop.js `downloads`
 let unregisterKipSync = null;
 let unregisterKipPrintState = null;
 let active = !hosted; // a hosted bench draws and reads input only while the host has it active
@@ -1428,6 +1430,8 @@ async function init() {
       name: 'SambaDance', tposeClip, inPlace: false
     });
     if (bakedSamba) {
+      limitHands(THREE, bakedSamba);       // Mixamo's wrists bend 59 degrees on Kip's arm: cap the bend and the forearm twist
+      plantBakedClip(THREE, bakedSamba);   // Mixamo's feet skate on Kip's rigid legs (29 to 41 mm on the floor): re-solve the legs with the feet planted
       actions.set('SambaDance', kipMixer.clipAction(bakedSamba));
       registerClip('SambaDance', 'Samba');
     }
@@ -1829,7 +1833,7 @@ function syncHeadHairHatLayout() {
   kip.pointyEars.visible = canWearHat && (loco.hat === 'ears');
   kip.wobbleHat.visible  = canWearHat && (loco.hat === 'hat');
   for (const [k, m] of Object.entries(kip.exp.hatMeshes)) {
-    m.visible = canWearHat && (k === loco.hat);
+    m.visible = canWearHat && (k === loco.hat) && (k !== 'headphones' || headphonesFit(loco.head, loco.hair));
   }
   kip.exp.customCrownContainer.visible = canWearHat && (loco.hat === 'custom');
 
@@ -1890,6 +1894,7 @@ function setHeadMode(headId) {
   if (!HUMAN_HEAD_IDS.has(loco.head) && loco.hair !== 'off') {
     loco.hair = 'off';
   }
+  if (loco.hat === 'headphones' && !headphonesFit(loco.head, loco.hair)) { loco.hat = 'buds'; loco.crown = 'buds'; }
   syncHeadHairHatLayout();
   refreshPileIfActive();
   updateStatusText();
@@ -1913,7 +1918,7 @@ function setFaceMode(exprId) {
 function setHairMode(hairId) {
   const found = HAIR_OPTIONS.find(h => h.id === hairId) || HAIR_OPTIONS[0];
   loco.hair = found.id;
-  if (!found.hatReady) {
+  if (!found.hatReady || (loco.hat === 'headphones' && !found.earReady)) {
     loco.hat = 'buds';
     loco.crown = 'buds';
   }
@@ -1937,6 +1942,11 @@ function setCrownMode(mode) {
   const curHair = HAIR_OPTIONS.find(h => h.id === loco.hair) || HAIR_OPTIONS[0];
   if (!curHair.hatReady && nextHat !== 'buds' && nextHat !== 'blank') {
     loco.hair = HUMAN_HEAD_IDS.has(loco.head) ? 'short_swept' : 'off';
+  }
+  // Party headphones fit only the four human heads, over a bald head or a short Hat-Ready wig (headphonesFit): on any other head the request is ignored; on a long wig the hair becomes Swept.
+  if (nextHat === 'headphones') {
+    if (!HUMAN_HEAD_IDS.has(loco.head)) { updateStatusText(); return; }
+    if (!headphonesFit(loco.head, loco.hair)) loco.hair = 'short_swept';
   }
   if (found && found.defaultCol) {
     setHatColor(found.defaultCol);
@@ -2549,6 +2559,62 @@ async function equipHouseholdItem(item, extras = {}) {
   }
 }
 
+// Text to part (F1, kip-forge-make.js): "Wear it" puts the part the child just made on Kip. The Worker's first look is a GLB in glTF's y-up space, which
+// is the space scadMesh turns an STL part into, so it goes into the same custom crown / custom head containers a loaded .stl uses, with no rotation of
+// its own; but it is in metres where the bench works in millimetres, so it is scaled up by 1000 (found on the real page: it was drawn 1000 times too small).
+async function equipForgePart({ slot, glbBase64, name }) {
+  if ((slot !== 'crown' && slot !== 'head') || typeof glbBase64 !== 'string' || !glbBase64) return { ok: false };
+  try {
+    const bin = atob(glbBase64);
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    const gltf = await gltfLoader.parseAsync(bytes.buffer, '');
+    if (disposed) return { ok: false };
+    const mat = kip.exp.expMats.custom.clone();
+    mat.color.set('#7c4dff');
+    const group = new THREE.Group();
+    group.name = `forge:${String(name || slot).slice(0, 40)}`;
+    gltf.scene.traverse((o) => { if (o.isMesh) { o.material = mat; o.castShadow = true; o.receiveShadow = true; } });
+    group.add(gltf.scene);
+    group.scale.setScalar(1000); // the web GLB is Y-up metres (optimize_assets.py: (x, z, -y) * 0.001); the bench is in millimetres, like an .stl
+    loco.hasPhotoAccessory = false;
+    if (slot === 'crown') {
+      if ('crown' in customStlSlots) customStlSlots.crown = null;
+      photoAccessorySlots.crown = null;
+      kip.exp.customCrownContainer.clear();
+      kip.exp.customCrownContainer.add(group);
+      setCrownMode('custom');
+    } else {
+      if ('head' in customStlSlots) customStlSlots.head = null;
+      kip.exp.customHeadContainer.clear();
+      kip.exp.customHeadContainer.add(group);
+      setHeadMode('custom');
+    }
+    updateStatusText();
+    return { ok: true };
+  } catch (err) {
+    console.error(err);
+    return { ok: false };
+  }
+}
+
+// The text-to-part panel (F1, kip-forge-make.js): loaded on the first click, so the bench loads the same with or without its bundle.
+let forgeMake = null;
+async function openForgeMake() {
+  try {
+    if (!forgeMake) {
+      const { createForgeMake } = await import('/kip/kip-forge-make.js?v=10.0');
+      if (disposed) return;
+      forgeMake = createForgeMake({ root: benchRoot, onWear: equipForgePart, downloads: downloadsOn });
+      globals.kipForgeMake = forgeMake;
+    }
+    forgeMake.open();
+  } catch (err) {
+    console.error(err);
+    statusEl.textContent = 'The make-from-words panel could not be loaded. Try again in a minute.';
+  }
+}
+
 // The way back from the photo's colours: a small chip over the stage while a coloured library item is in the hand. `var`, not `let`: updateStatusText
 // (which keeps the chip in step) runs during init, before this part of the file does.
 var householdView = null; // { id, label, ctl } for the item in the hand, ctl null when it kept its own colours
@@ -2588,6 +2654,7 @@ function syncHouseholdChip() {
 
 // The print panel (F2b, kip-photo-print.js): loaded on the first click, so the bench loads the same with or without its bundle.
 let photoPrint = null;
+if (!downloadsOn) $el('btn-print-photo').hidden = true; // the photo plate is a file to print
 $el('btn-print-photo').addEventListener('click', async () => {
   stopWebcamIfActive();
   modalPhoto.classList.remove('open');
@@ -3276,6 +3343,7 @@ globals.kipDescribe = describeTab;
 let selfieBefore = null;
 const selfie = mountSelfie({
   root: benchRoot,
+  downloads: downloadsOn,
   plateColor: () => (SKIN_TONES.find(s => s.id === loco.skin) || SKIN_TONES[0]).hex,
   apply: canvas => {
     if (loco.expr !== 'selfie') selfieBefore = { expr: loco.expr, insert: loco.faceInsert };
@@ -3344,11 +3412,13 @@ const kipMenuCtx = {
     startBuild: () => startPileToBuild(true), toggleRef: toggleRefSkeleton,
     openLlm: () => modalLlm.classList.add('open'),
     openPhoto: openPhotoModal,
+    openForgeMake,
     loadFile: loadCustomMixamoOrStlFile,
     equipHousehold: equipHouseholdItem,
     setHouseholdLook,
   },
 };
+if (!downloadsOn) delete kipMenuCtx.print; // no Print group in the menu
 const sharedMenu = env.sharedMenu ?? null;
 const menuHost = sharedMenu ?? createMenuHost();
 // The published handle is the panel's, except that `.ctx` stays THIS bench's (its loco, read and act) even while another bench holds the shared panel.
@@ -3360,7 +3430,7 @@ const ready = init().catch(err => {
   statusEl.textContent = `Error: ${err.message}`;
 });
 
-const PUBLISHED = ["__KIP_READY__", "kipClips", "kipDescribe", "kipMenu", "kipPhotoPrint", "kipPrint", "kipRig", "kipSelfie"];
+const PUBLISHED = ["__KIP_READY__", "kipClips", "kipDescribe", "kipForgeMake", "kipMenu", "kipPhotoPrint", "kipPrint", "kipRig", "kipSelfie"];
 function teardown() {
   householdChip?.root.remove();
   householdChip = null;
@@ -3375,6 +3445,8 @@ function teardown() {
   if (sharedPrint) unregisterPrint(); else globals.kipPrint?.dispose?.();
   photoPrint?.dispose?.();
   photoPrint = null;
+  forgeMake?.dispose?.();
+  forgeMake = null;
   webcamStream?.getTracks().forEach((t) => t.stop());
   disposeThreeScene({ scene, renderer: hosted ? null : renderer, controls: hosted ? null : controls, pmrem });
 }

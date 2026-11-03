@@ -4,10 +4,12 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MAKE_MAX_CALLS } from "../shared/forgeMakePrompt";
-import { makeFromText, type MakeArgs, type MakeProgress } from "../shared/forgeMakeFlow";
+import { makeFromText, voiceUrl, type MakeArgs, type MakeProgress } from "../shared/forgeMakeFlow";
 import type { ForgeMakeEnv } from "../worker/forgeMake";
 import { resetForgeRateLimit } from "../worker/forgeOptimizer";
+import { verifySpeech } from "../worker/forgeNames";
 import worker from "../worker/index";
+import { parseVoiceKey } from "../worker/voice";
 import type { D1Like } from "../worker/ownership";
 
 const DEVICE = "12345678-1234-1234-1234-123456789abc";
@@ -131,6 +133,35 @@ describe("makeFromText", () => {
     expect(calls.jobGets).toBe(3);
   });
 
+  it("carries the slot on the first look, so the screen can put it on Kip", async () => {
+    await makeFromText(args());
+    expect(progress.find((p) => p.stage === "preview")).toMatchObject({ slot: "crown" });
+    progress = [];
+    resetForgeRateLimit();
+    modelAnswers = () => json({ output_text: JSON.stringify({ recipe: recipeOf({ slot: "head" }), names: NAMES }) });
+    await makeFromText(args({ slot: "head" }));
+    expect(progress.find((p) => p.stage === "preview")).toMatchObject({ slot: "head" });
+  });
+
+  it("builds the address /api/voice speaks, which the Worker answers only for exactly the name it signed", async () => {
+    const r = await makeFromText(args());
+    if (!r.ok) throw new Error("not ok");
+    const es = r.names.es!;
+    const url = voiceUrl("es", es);
+    expect(url).toMatch(/^\/api\/voice\?lang=es&w=sombrero\+de\+mago&g=m&sig=[A-Za-z0-9_-]{43}$/);
+    const key = parseVoiceKey(new URL(`http://local${url}`));
+    expect(key).toMatchObject({ lang: "es", name: { w: "sombrero de mago", g: "m" }, sig: es.sig });
+    if (!key || !("name" in key)) throw new Error("not a signed name");
+    expect(await verifySpeech(env, "es", key.name, key.sig)).toBe(true);
+    // the same signature for a different word, a different language or a different gender is refused
+    expect(await verifySpeech(env, "es", { ...key.name, w: "sombrero" }, key.sig)).toBe(false);
+    expect(await verifySpeech(env, "fr", key.name, key.sig)).toBe(false);
+    expect(await verifySpeech(env, "es", { ...key.name, g: "f" }, key.sig)).toBe(false);
+    // a colour word is optional and not signed
+    expect(voiceUrl("es", es, "red")).toContain("&c=red");
+    expect(voiceUrl("en", { w: "scissors", g: "m", pl: true, sig: es.sig })).toContain("&pl=1");
+  });
+
   it("repairs a part whose checks failed, telling the model only the failure", async () => {
     jobAnswer = (id) => (id.endsWith("1") ? failedJob(id) : json({ job_id: id, status: "print_ready", stl_artifact: "custom_x.0123456789ab.stl" }));
     // a second call must differ from the first, or it is "no progress": the repaired recipe is a narrower hat
@@ -163,7 +194,15 @@ describe("makeFromText", () => {
     expect(calls.model).toHaveLength(1); // the refused call spent no model call
   });
 
-  it("asks the grown-up again when the check runs out mid-wish, and carries on", async () => {
+  it("makes a part with no grown-up proof at all (the default)", async () => {
+    proof = "";
+    const r = await makeFromText(args());
+    expect(r).toMatchObject({ ok: true, printable: true, calls: 1 });
+    expect(progress.some((p) => p.stage === "asking_again")).toBe(false);
+  });
+
+  it("asks the grown-up again when the check runs out mid-wish, and carries on (when the proof is required)", async () => {
+    env = { ...env, FORGE_MAKE_REQUIRES_PROOF: "1" };
     proof = "expired";
     const r = await makeFromText(args({ renewGate: async () => { renewals++; proof = await mintProof(); return true; } }));
     expect(r).toMatchObject({ ok: true, printable: true });
@@ -171,7 +210,8 @@ describe("makeFromText", () => {
     expect(progress.some((p) => p.stage === "asking_again")).toBe(true);
   });
 
-  it("ends calmly, with no model call, when the grown-up check has run out and nobody renews it", async () => {
+  it("ends calmly, with no model call, when the proof is required, has run out and nobody renews it", async () => {
+    env = { ...env, FORGE_MAKE_REQUIRES_PROOF: "1" };
     proof = "expired";
     const r = await makeFromText(args());
     expect(r).toMatchObject({ ok: false, reason: "gate_required" });

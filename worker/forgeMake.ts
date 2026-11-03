@@ -6,8 +6,9 @@
 // the gates; the names go through `parseNames` (kid-safety, brand, script and gender checks) and are signed so /api/voice can speak them.
 // The model never builds anything and never gets to run anything.
 //
-// Gate, in this order, before a single model call is spent: the grown-up proof, the device, the per-device rate limit (the same budget as
-// /api/forge/preview, because each call here ends in one preview), then intake (length, contact details, unsafe words, brand words).
+// Gate, in this order, before a single model call is spent: the device, the per-device and per-IP rate limit (the same budget as
+// /api/forge/preview, because each call here ends in one preview), then intake (length, contact details, unsafe words, brand words). The grown-up
+// proof is not asked for (Dan, 2026-11-03) unless FORGE_MAKE_REQUIRES_PROOF=1: making and previewing are digital; printing keeps the proof.
 //
 // One request is one model call. A repair is a second request that carries the recipe that did not pass and the daemon's job id: the Worker asks the
 // daemon what failed (never the client), tells the model only `{gate, measured, limit, hint}`, and the client counts its own calls (at most 4, the
@@ -23,6 +24,7 @@ import {
   UPSTREAM_PREVIEW_TIMEOUT_MS,
   fetchUpstreamJson,
   gateForge,
+  handleForgeJobStatus,
   logEvent,
   reply,
   sanitizeRecipe,
@@ -33,7 +35,20 @@ import {
 } from "./forgeOptimizer";
 import { type MuseEnv, apiKey, apiUrl, firstJsonObject, kidSafeText, outputTextOf, resolveModel, scrubContactDetails, tidy } from "./muse";
 
-export type ForgeMakeEnv = ForgeOptimizerEnv & MuseEnv & SigningEnv;
+export type ForgeMakeEnv = ForgeOptimizerEnv &
+  MuseEnv &
+  SigningEnv & {
+    /** Set to "1" to put the grown-up proof back in front of making a part. Unset: making and previewing need only the device id and the rate limits. */
+    FORGE_MAKE_REQUIRES_PROOF?: string;
+  };
+
+/**
+ * Dan, 2026-11-03: the grown-up check is dropped for making and previewing (the first look and the checks) and kept for what is printed: the
+ * file route (/api/forge/artifacts/) still needs the proof. What stays in front of the model call: a valid device id, the per-device and per-IP
+ * rate limits (3 and 6 a minute, shared with /api/forge/preview), and intake. The durable guard on spend is a Cloudflare rate-limit rule on this
+ * path (as for Muse, docs/product/spec.md); these in-isolate limits are best effort.
+ */
+export const makeRequiresProof = (env: ForgeMakeEnv): boolean => env.FORGE_MAKE_REQUIRES_PROOF === "1";
 
 const MAX_MAKE_BODY_BYTES = 12_000;
 /** Spark took 14 to 36 s for a recipe plus names in the eval (p95 36 s); the daemon's first look then takes about 40 ms. */
@@ -117,7 +132,7 @@ function parseRequest(raw: unknown): Parsed {
 export async function handleForgeMake(request: Request, env: ForgeMakeEnv): Promise<Response> {
   const key = apiKey(env);
   if (request.method === "POST" && !key) return reply(503, { ok: false, status: "disabled" }); // nothing to spend, nothing to gate
-  const g = await gateForge(request, env, "POST", "preview", "forge_make");
+  const g = await gateForge(request, env, "POST", "preview", "forge_make", makeRequiresProof(env));
   if (!g.ok) return g.response;
 
   const body = await readCappedJson(request, MAX_MAKE_BODY_BYTES);
@@ -193,4 +208,9 @@ export async function handleForgeMake(request: Request, env: ForgeMakeEnv): Prom
     names: signed,
     ...(names.en ? { name_en: names.en.w } : {}),
   });
+}
+
+/** GET /api/forge/make/jobs/:id: the status of a text-to-part job, with no grown-up proof unless FORGE_MAKE_REQUIRES_PROOF=1. The file route keeps its proof. */
+export function handleForgeMakeJobStatus(request: Request, env: ForgeMakeEnv, jobId: string): Promise<Response> {
+  return handleForgeJobStatus(request, env, jobId, makeRequiresProof(env));
 }

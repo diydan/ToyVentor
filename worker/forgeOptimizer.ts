@@ -461,6 +461,11 @@ export async function gateForge(
   expectedMethod: "GET" | "POST",
   rateKind: RateKind,
   event: string,
+  /**
+   * The grown-up proof is required by default, for every Forge route. Text to part (worker/forgeMake.ts) turns it off for making and
+   * previewing (Dan, 2026-11-03: "drop it for now"): the device id and the rate limits still apply, and saving the printable file keeps the proof.
+   */
+  requireProof = true,
 ): Promise<{ ok: true; baseUrl: URL } | { ok: false; response: Response }> {
   if (request.method !== expectedMethod) {
     return { ok: false, response: reply(405, { ok: false, status: "method-not-allowed" }) };
@@ -482,7 +487,7 @@ export async function gateForge(
   if (!isPlayerId(deviceId)) {
     return { ok: false, response: reply(401, { ok: false, status: "gate-required" }) };
   }
-  if (!(await verifyParentProofFromRequest(request, env))) {
+  if (requireProof && !(await verifyParentProofFromRequest(request, env))) {
     logEvent(event, "gate-required");
     return { ok: false, response: reply(401, { ok: false, status: "gate-required" }) };
   }
@@ -639,12 +644,14 @@ export async function handleForgeJobStatus(
   request: Request,
   env: ForgeOptimizerEnv,
   jobId: string,
+  /** `false` for the text-to-part job route (`/api/forge/make/jobs/`): a job's status shows no file, and saving the file keeps the proof. */
+  requireProof = true,
 ): Promise<Response> {
   const event = "forge_job_poll";
   if (request.method === "GET" && !JOB_ID_RE.test(jobId)) {
     return reply(400, { ok: false, status: "invalid" });
   }
-  const g = await gateForge(request, env, "GET", "poll", event);
+  const g = await gateForge(request, env, "GET", "poll", event, requireProof);
   if (!g.ok) return g.response;
 
   const up = await fetchUpstreamJson(

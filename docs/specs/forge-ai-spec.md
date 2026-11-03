@@ -200,13 +200,38 @@ rejected, numbers are clamped, nothing is executed.
   or any "hat with ears" failed all 4 calls with `bad-recipe`; no test had built an ear on a crown;
   fixed, with a regression test. (2) The model wrote the Portuguese and Turkish names without
   accents ("chapeu", "sapkasi"), which a voice reads wrongly; the prompt now says to spell each
-  name with its accents. **Not built:** the screen. There is no Forge screen yet (nothing in the app
-  calls `/api/forge/make`); `shared/forgeMakeFlow.ts` is what it calls. Not decided: the grown-up
-  gate. Every Forge route sits behind the parent proof (a 2-minute maths check), so as built a child
-  needs a grown-up present to make a part; an ungated digital preview would be a product and safety
-  decision. Needs Dan: `wrangler secret put VOICE_SIGNING_KEY` (at least 16 characters) before any
-  name can be spoken, and `FORGE_OPTIMIZER_URL` (and token) pointing at a daemon the deployed Worker
-  can reach: the daemon runs on a Mac today.
+  name with its accents. (The screen and the grown-up gate were open when this was first written; both are
+  decided and built, see the next entry.) Needs Dan: `wrangler secret put VOICE_SIGNING_KEY` (at least 16
+  characters) before any name can be spoken, and `FORGE_OPTIMIZER_URL` (and token) pointing at a daemon the
+  deployed Worker can reach: the daemon runs on a Mac today.
+- **The text-to-part screen is built (2026-11-03, Dan: yes to the screen, drop the grown-up check
+  for making, add Wear it).** `parts/kip/viewer/kip-forge-make.js` (the panel; its logic is
+  `shared/forgeMakeFlow.ts`, bundled by `scripts/build-kip.ts` into `public/kip/kip-forge-make-core.js`,
+  3.6 kB, no prompt text), opened from **Tools: "✨ Make from words"** in the Kip menu (a new
+  `act.openForgeMake`, loaded on the first click like the photo panel). Four states in one modal:
+  **ask** (one text box, six idea chips, *A hat / A head / Surprise me*), **making** (the shared waiting strip
+  driven by the real stages; the first look appears at once with its name and a "Put it on Kip now" button),
+  **done** (the name, a speaker button that asks `/api/voice` for the signed name in the child's language, Wear it,
+  Save for printing, Make another), and the **grown-up question**, now shown only to save the printable file.
+  **Decision (Dan, 2026-11-03): the grown-up proof is dropped for making and previewing and kept for printing.**
+  `/api/forge/make` and a new `/api/forge/make/jobs/:id` need only a valid device id and the rate limits
+  (3 a minute per device, 6 per IP, shared with preview); `/api/forge/artifacts/` (the STL) still needs the proof.
+  `FORGE_MAKE_REQUIRES_PROOF=1` puts it back. What the in-isolate limits cannot do is cap total spend across
+  isolates, so a Cloudflare rate-limit rule on `/api/forge/make` is the durable guard (as for Muse); **needs Dan to add it
+  in the dashboard before a public launch.** **Wear it** hands the page the first look (a GLB) and the slot; the bench
+  (`equipForgePart` in `kip-bench.js`) loads it with `GLTFLoader` into the same custom crown or custom head container an
+  .stl uses. **Found on the real page, not by any stub:** the preview GLB is Y-up **metres**
+  (`optimize_assets.py`: `(x, z, -y) * 0.001`) and the bench works in **millimetres**, so a worn part was drawn
+  1000 times too small to see while every state flag said it worked; the bench now scales it by 1000. The check that
+  would have caught it measures the 3D objects, not the flags (`scripts/e2e-kip-forge-wear.mjs`, mutation-checked:
+  with the scale removed both parts collapse to a point and it fails). Checks: `tests/forge-make-wiring.test.ts`
+  (hooks, bundle not stale, no innerHTML or storage writes), `scripts/e2e-kip-forge-make.mjs` (32 checks in real
+  Chrome against the real Worker: no proof to make, first look early, Wear it, signed voice URL accepted by the
+  Worker and refused when tampered, grown-up question only to save, calm refusals), `scripts/e2e-kip-forge-wear.mjs`
+  (10 checks on the real Kip page). **Not done:** the worn part is not saved in the page's share link (`#toy=`), so
+  it does not survive a reload; the colour is the custom-part purple (no colour choice yet); no catalog fallback when
+  a wish never passes (it ends as "fine on screen"); the daemon must be reachable by the deployed Worker
+  (`FORGE_OPTIMIZER_URL`); `VOICE_SIGNING_KEY` must be set for names to be spoken.
 - **Worker to daemon, end to end (2026-11-03).** `tests/forge-worker-daemon.test.ts` sends
   recipes through the real Worker routes (`/api/forge/preview`, the job route, the gated
   artifact route) to the real daemon, nothing stubbed: a head with a brow and ears, the

@@ -8,13 +8,14 @@
  * call (the Worker allows 3 a minute) is waited out for as long as `retry-after` says; an expired grown-up check is renewed. Every end is a result:
  * this never throws. A part that never passes the checks still ends usefully: the best first look, marked fine on screen and not printable.
  */
-import { MAKE_MAX_CALLS, type MakeSlot } from "./forgeMakePrompt";
+import { MAKE_MAX_CALLS, type MakeSlot } from "./forgeMakeLimits";
 import type { ForgeRecipeV1 } from "./forgeOptimizer";
 
 export type Fetch = (url: string, init?: RequestInit) => Promise<Response>;
 
 export const MAKE_ROUTE = "/api/forge/make";
-export const JOB_ROUTE = "/api/forge/jobs/";
+/** The text-to-part job route: no grown-up proof (Dan, 2026-11-03); the file route below keeps it. */
+export const JOB_ROUTE = "/api/forge/make/jobs/";
 export const ARTIFACT_ROUTE = "/api/forge/artifacts/";
 /** The Worker allows 30 polls a minute per device (worker/forgeOptimizer.ts LIMITS.poll): one every 2.2 s stays inside it. */
 export const POLL_EVERY_MS = 2200;
@@ -35,7 +36,7 @@ export type MakeProgress =
   /** Model call `call` (of at most 4) has started. */
   | { stage: "proposing"; call: number }
   /** The first look arrived: it can be shown and turned while the checks run. */
-  | { stage: "preview"; call: number; name: string; glbBase64: string }
+  | { stage: "preview"; call: number; name: string; glbBase64: string; slot: MakeSlot }
   /** The checks are running on call `call`. */
   | { stage: "checking"; call: number }
   /** The checks failed and a corrected part is being asked for: call `call` is the new one. */
@@ -98,6 +99,16 @@ export interface MakeArgs {
 }
 
 export const artifactUrl = (name: string): string => `${ARTIFACT_ROUTE}${name}`;
+
+/**
+ * The address that makes /api/voice say a name the Worker signed (worker/forgeNames.ts): `lang`, the word, its gender, the plural flag and the
+ * signature. The Worker speaks it only if the signature checks out for exactly this language and noun. `color` is one of the 12 colour words
+ * (optional: left out, the bare noun is spoken).
+ */
+export function voiceUrl(lang: string, n: SignedName, color?: string): string {
+  const q = new URLSearchParams({ lang, w: n.w, g: n.g, ...(n.pl ? { pl: "1" } : {}), sig: n.sig, ...(color ? { c: color } : {}) });
+  return `/api/voice?${q.toString()}`;
+}
 
 const defaultSleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === "object" && v !== null && !Array.isArray(v);
@@ -207,7 +218,7 @@ export async function makeFromText(args: MakeArgs): Promise<MakeResult> {
     const jobId = made.body.job_id;
     const name = typeof made.body.name === "string" ? made.body.name : recipe.name;
     const glbBase64 = typeof made.body.glb_base64 === "string" ? made.body.glb_base64 : "";
-    onProgress?.({ stage: "preview", call, name, glbBase64 });
+    onProgress?.({ stage: "preview", call, name, glbBase64, slot: recipe.slot === "head" ? "head" : "crown" });
     onProgress?.({ stage: "checking", call });
 
     // poll the job until the checks are done

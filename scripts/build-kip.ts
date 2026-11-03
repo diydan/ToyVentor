@@ -154,6 +154,11 @@ copyFileSync(
   join(kipSrcDir, "viewer/bench-print.js"),
   join(kipOutDir, "bench-print.js"),
 );
+// The Yard bench's menu declaration (pure, unit-tested), imported by yard-bench.js.
+copyFileSync(
+  join(kipSrcDir, "viewer/yard-menu.js"),
+  join(kipOutDir, "yard-menu.js"),
+);
 // Yard bench (Workshop's third tab, docs/specs/construction-vehicles-spec.md): the module, its pure placement maths (unit-tested) and its loader page.
 // Its two roller STLs (public/kip/partspec/mockup/, gitignored: force-add) come from parts/kip/sync_yard_parts.py, not from this build.
 copyFileSync(
@@ -184,6 +189,25 @@ execFileSync(
     "--minify",
     "--legal-comments=none",
     `--outfile=${join(kipOutDir, "kip-photo-print-core.js")}`,
+  ],
+  { stdio: "inherit" },
+);
+// Text-to-part panel (F1, kip-forge-make.js): a viewer file whose logic is TypeScript (shared/forgeMakeFlow.ts), bundled here into one ES module like the
+// photo panel above. The panel also imports createParentGate from kip-photo-print-core.js (the proof for saving the printable file).
+copyFileSync(
+  join(kipSrcDir, "viewer/kip-forge-make.js"),
+  join(kipOutDir, "kip-forge-make.js"),
+);
+execFileSync(
+  esbuildBin,
+  [
+    join(root, "shared/forgeMakeFlow.ts"),
+    "--bundle",
+    "--format=esm",
+    "--target=es2022",
+    "--minify",
+    "--legal-comments=none",
+    `--outfile=${join(kipOutDir, "kip-forge-make-core.js")}`,
   ],
   { stdio: "inherit" },
 );

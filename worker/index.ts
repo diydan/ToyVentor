@@ -23,7 +23,7 @@ import {
   handleForgePreview,
   type ForgeOptimizerEnv,
 } from "./forgeOptimizer";
-import { handleForgeMake } from "./forgeMake";
+import { handleForgeMake, handleForgeMakeJobStatus } from "./forgeMake";
 import { handleDescribe } from "./describe";
 import { handleMuseSpark, museConfigured, type MuseEnv } from "./muse";
 import { handleOwnership, type OwnershipEnv } from "./ownership";
@@ -251,6 +251,9 @@ export default {
     // Text to part (F1): a child's words, one model call for a recipe and its names in seven languages, then the daemon's first look.
     if (url.pathname === "/api/forge/make") {
       return handleForgeMake(request, env);
+    }
+    if (url.pathname.startsWith("/api/forge/make/jobs/")) {
+      return handleForgeMakeJobStatus(request, env, url.pathname.slice("/api/forge/make/jobs/".length));
     }
 
     if (url.pathname === "/api/forge/preview") {

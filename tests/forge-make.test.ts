@@ -134,11 +134,35 @@ describe("POST /api/forge/make", () => {
     expect(seen.model).toHaveLength(0);
   });
 
-  it("refuses without the grown-up proof, before any model call", async () => {
+  it("needs no grown-up proof to make a part (Dan, 2026-11-03), but does need a device id", async () => {
+    const noProof: Record<string, string> = { "content-type": "application/json", "x-device-id": DEVICE };
+    expect((await make({ text: "a wizard hat" }, noProof)).status).toBe(200);
+    resetForgeRateLimit();
+    expect((await make({ text: "a wizard hat" }, { "content-type": "application/json" })).status).toBe(401); // no device id: refused before the model
+    expect(seen.model).toHaveLength(1);
+  });
+
+  it("puts the grown-up proof back in front of making when FORGE_MAKE_REQUIRES_PROOF=1, before any model call", async () => {
+    const strict: ForgeMakeEnv = { ...env, FORGE_MAKE_REQUIRES_PROOF: "1" };
     for (const h of [{ "content-type": "application/json" }, { "content-type": "application/json", "x-device-id": DEVICE }] as Record<string, string>[]) {
-      expect((await make({ text: "a wizard hat" }, h)).status).toBe(401);
+      expect((await make({ text: "a wizard hat" }, h, strict)).status).toBe(401);
     }
     expect(seen.model).toHaveLength(0);
+    expect((await make({ text: "a wizard hat" }, headers, strict)).status).toBe(200); // with the proof it works as before
+  });
+
+  it("serves a make job's status without a proof, and keeps the proof in front of the printable file", async () => {
+    const noProof: Record<string, string> = { "x-device-id": DEVICE };
+    const job = await worker.fetch(new Request("http://local/api/forge/make/jobs/fjob_0123456789ab", { headers: noProof }), env as never);
+    expect(job.status).toBe(200);
+    expect(((await job.json()) as { status: string }).status).toBe("print_ready");
+    expect((await worker.fetch(new Request("http://local/api/forge/make/jobs/not-a-job", { headers: noProof }), env as never)).status).toBe(400);
+    // the proof comes back for the status when the switch is on
+    const strict = { ...env, FORGE_MAKE_REQUIRES_PROOF: "1" };
+    expect((await worker.fetch(new Request("http://local/api/forge/make/jobs/fjob_0123456789ab", { headers: noProof }), strict as never)).status).toBe(401);
+    // the printable file: always behind the proof
+    const file = await worker.fetch(new Request("http://local/api/forge/artifacts/custom_wizard_hat.0123456789ab.stl", { headers: noProof }), env as never);
+    expect(file.status).toBe(401);
   });
 
   it("turns away what intake refuses, before any model call", async () => {
