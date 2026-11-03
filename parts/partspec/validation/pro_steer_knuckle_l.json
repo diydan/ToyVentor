@@ -1,19 +1,19 @@
 {
   "validator": "preprint_check 1.2.0",
   "file": "toyventor_pro_steer_knuckle_l_P.stl",
-  "file_sha256": "fd1cb7c8fadd70f36aa0a0790a213818c905e5f8f6205ac5a91351017cc794db",
+  "file_sha256": "a08048523f4b2733db0b2bddb67c9c67cfe4b315bf04c0e8e1f407b442a47a66",
   "part_id": "pro_steer_knuckle_l",
   "profile": "fdm_pla_0.4",
-  "checked_at": "2026-11-02T12:05:52Z",
+  "checked_at": "2026-11-03T11:36:24Z",
   "metrics": {
     "bbox_mm": [
       25.6,
       25.6,
       27.1
     ],
-    "volume_cm3": 3.7,
-    "surface_cm2": 35.04,
-    "triangles": 2134,
+    "volume_cm3": 3.69,
+    "surface_cm2": 35.38,
+    "triangles": 2438,
     "ledges": [],
     "floating_contours": [],
     "layers": 136,

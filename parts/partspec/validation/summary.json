@@ -2,9 +2,9 @@
   "validator": "preprint_check 1.2.0",
   "profile": "fdm_pla_0.4",
   "slicer": "PrusaSlicer-2.8.1",
-  "generated_at": "2026-11-03T09:25:56Z",
+  "generated_at": "2026-11-03T12:36:07Z",
   "counts": {
-    "pass": 179,
+    "pass": 182,
     "pass_with_settings": 0,
     "pass_with_warnings": 32,
     "fail": 0
@@ -1075,6 +1075,20 @@
       "min_wall_mm": null
     },
     {
+      "part_id": "kit_barbell_shaft_9tu",
+      "file": "toyventor_kit_barbell_shaft_9tu_P.stl",
+      "verdict": "pass",
+      "summary": "Prints as is",
+      "filament_g": null,
+      "print_time_min": null,
+      "filament_cost_usd": null,
+      "brim_mm": 0,
+      "height_mm": 5.0,
+      "bed_contact_mm2": 503.5,
+      "slenderness": 0.22,
+      "min_wall_mm": null
+    },
+    {
       "part_id": "kit_barbell_shaft_wide",
       "file": "toyventor_kit_barbell_shaft_wide_P.stl",
       "verdict": "pass",
@@ -1257,6 +1271,20 @@
       "min_wall_mm": null
     },
     {
+      "part_id": "kit_wheel_giant_free",
+      "file": "toyventor_kit_wheel_giant_free_P.stl",
+      "verdict": "pass",
+      "summary": "Prints as is",
+      "filament_g": null,
+      "print_time_min": null,
+      "filament_cost_usd": null,
+      "brim_mm": 0,
+      "height_mm": 12.3,
+      "bed_contact_mm2": 1506.5,
+      "slenderness": 0.32,
+      "min_wall_mm": null
+    },
+    {
       "part_id": "kit_wheel_med",
       "file": "toyventor_kit_wheel_med_P.stl",
       "verdict": "pass",
@@ -1267,6 +1295,20 @@
       "brim_mm": 0,
       "height_mm": 12.3,
       "bed_contact_mm2": 835.3,
+      "slenderness": 0.43,
+      "min_wall_mm": null
+    },
+    {
+      "part_id": "kit_wheel_med_free",
+      "file": "toyventor_kit_wheel_med_free_P.stl",
+      "verdict": "pass",
+      "summary": "Prints as is",
+      "filament_g": null,
+      "print_time_min": null,
+      "filament_cost_usd": null,
+      "brim_mm": 0,
+      "height_mm": 12.3,
+      "bed_contact_mm2": 828.9,
       "slenderness": 0.43,
       "min_wall_mm": null
     },

@@ -568,7 +568,7 @@ _tab = tp.face_depth_table_from_heads()
 _drift = max(abs(a - b) for ra, rb in zip(_tab, tp.FACE_DEPTH) for a, b in zip(ra, rb))
 test("universal face plate: FACE_DEPTH matches the three human heads within 0.06 mm (the plate is never proud of a head)", _drift <= 0.06, f"max drift {_drift:.3f} mm; regenerate the table with tp.face_depth_table_from_heads()")
 
-# 7u. W10, W11 & W13: Flat-pack modular craft kit-cards, Gate G1 pose/retention/seal sweeps, Pro rack steering, Momentum & Mech cores
+# 7u. W10, W11 & W13: Flat-pack modular craft kit-cards, Gate G1 pose/retention/seal sweeps, Pro rack steering, Motion & Pro Powered Add-On cores
 import toyventor_kitcard as _kc
 w10_ids = [r["id"] for r in tp.CATALOG["parts"] if r.get("wave") == "W10"]
 w11_ids = [r["id"] for r in tp.CATALOG["parts"] if r.get("wave") == "W11"]
@@ -576,18 +576,29 @@ w13_ids = [r["id"] for r in tp.CATALOG["parts"] if r.get("wave") == "W13"]
 w14_ids = [r["id"] for r in tp.CATALOG["parts"] if r.get("wave") == "W14"]
 test("W10 flat-pack modular craft: all 19 parts are verified and 100% clear the S1 small-parts cylinder",
      len(w10_ids) == 19 and all(by_id[i]["design_status"] == "verified" and by_id[i]["safety"]["small_part_status"] == "above_cylinder" for i in w10_ids))
-test("W11 Pro steering & Momentum stored-energy cores: all 30 parts are verified with zero blocking failures",
-     len(w11_ids) == 30 and all(by_id[i]["design_status"] == "verified" for i in w11_ids))
-test("W13 Stage-4 PETG RC/Mech housings & couplers: all 11 parts are verified with zero blocking failures",
+test("W11 Pro steering, free-hub front wheels & Motion stored-energy cores: all 32 parts are verified with zero blocking failures",
+     len(w11_ids) == 32 and all(by_id[i]["design_status"] == "verified" for i in w11_ids))
+test("W13 Pro Powered Add-On PETG RC housings & couplers: all 11 parts are verified with zero blocking failures",
      len(w13_ids) == 11 and all(by_id[i]["design_status"] == "verified" for i in w13_ids))
-test("W14 construction line (road-roller drum and wide-track axle): both parts are verified and 100% clear the S1 small-parts cylinder",
-     len(w14_ids) == 2 and all(by_id[i]["design_status"] == "verified" and by_id[i]["safety"]["small_part_status"] == "above_cylinder" for i in w14_ids))
+test("W14 construction line (road-roller drum, wide-track axle and 9 TU dozer axle): all three parts are verified and 100% clear the S1 small-parts cylinder",
+     len(w14_ids) == 3 and all(by_id[i]["design_status"] == "verified" and by_id[i]["safety"]["small_part_status"] == "above_cylinder" for i in w14_ids))
 _kn_l, _kn_l_conns, _ = _kc.pro_steer_knuckle_l()
 _kn_pivots = [c for c in _kn_l_conns if c["id"] in ("kingpin_bore", "tierod_bore")]
 test("knuckle cheek relief: 0.4 mm shave with pivot bores off-lattice but re-based with the body",
      abs(_kc.KNUCKLE_FACE_RELIEF - 0.4) < 1e-9 and len(_kn_pivots) == 2
      and all(c.get("lattice") == "pivot" for c in _kn_pivots)
      and all(abs(c["frame"]["origin"][2] - (6.25 - _kc.KNUCKLE_FACE_RELIEF)) < 1e-3 for c in _kn_pivots))
+# The steered front wheels turn: a Double-D stub in a Double-D bore is a key (the wheel could only rock +-1.35 deg), so the knuckle stub is a round pin_free with a
+# snap barb and the front wheels are the free-hub variants (round free bore + O8.0 snap counterbore); the keyed wheels stay keyed (they drive the axle).
+_kn_stub = next(c for c in _kn_l_conns if c["id"] == "wheel_stub")
+_, _fwm_conns, _ = _kc.kit_wheel_med_free()
+_, _fwg_conns, _ = _kc.kit_wheel_giant_free()
+_, _kwm_conns, _ = _kc.kit_wheel_med()
+test("front wheels turn: the knuckle stub is a round pin_free, both front wheels have a free hub and both rear/keyed wheels keep the fixed hub",
+     _kn_stub["interface"] == "pin_free" and _kn_stub["profile"] == "round"
+     and all(next(c for c in cs if c["id"] == "hub")["bore_class"] == "free" for cs in (_fwm_conns, _fwg_conns))
+     and next(c for c in _kwm_conns if c["id"] == "hub")["bore_class"] == "fixed"
+     and all(by_id[i]["design_status"] == "verified" for i in ("kit_wheel_med_free", "kit_wheel_giant_free")))
 # Rack steering linkage: the shared constants must equal what the real parts say, so an edit to a knuckle, the rack or the bridge cannot
 # silently desynchronise the closure, the link length, the guide wall and the stop.
 _br, _br_conns, _ = _kc.pro_steer_bridge()
@@ -611,9 +622,9 @@ test("bridge deck is stud-free so the pinion and rack run 0.2 mm above it (the r
      all(c["id"] != "top_studs" for c in _br_conns) and abs(_kc.RACK_Z - (_kc.DECK_Z + 0.2)) < 1e-9
      and abs(_br.bounding_box()[5] - (_kc.LINK_TOP_Z - _kc.BRIDGE_Z)) < 1e-6)
 _g1 = _kc.verify_gate_g1()
-test("Gate G1: all 9 canonical craft, the road roller, 3-point rack capture & bi-directional pin lock, 55-deg dump tip, Momentum packs & 3D jet seal, and Stage-4 Mech COTS keep-outs pass",
-     _g1["ok"] and len(_g1["crafts"]) == 14 and "10_road_roller" in _g1["crafts"] and "1b_rack_travel_stop" in _g1["crafts"] and "2b_dump_truck_tip_sweep" in _g1["crafts"]
-     and "3b_momentum_packs_and_jet_seal" in _g1["crafts"] and "3c_band_clutch_and_shaft_capture" in _g1["crafts"])
+test("Gate G1: all 9 canonical craft, the road roller, the dozer axle, 3-point rack capture & bi-directional pin lock, 55-deg dump tip, Motion packs & 3D jet seal, and Pro Powered Add-On COTS keep-outs pass",
+     _g1["ok"] and len(_g1["crafts"]) == 15 and "10_road_roller" in _g1["crafts"] and "11_dozer_axle_beams" in _g1["crafts"] and "1b_rack_travel_stop" in _g1["crafts"] and "2b_dump_truck_tip_sweep" in _g1["crafts"]
+     and "3b_motion_packs_and_jet_seal" in _g1["crafts"] and "3c_band_clutch_and_shaft_capture" in _g1["crafts"])
 if (out / "cards" / "kitcard_manifest.json").exists():
     _kcm = json.loads((out / "cards" / "kitcard_manifest.json").read_text())["cards"]
     test("kit-card plates: all 9 loose and 9 sprue STLs exist within <= 170/164 mm bounds and >= 5.0 mm inter-part gap",
@@ -622,7 +633,7 @@ if (out / "cards" / "kitcard_manifest.json").exists():
              and max(m["outer_mm"]) <= m["limit_mm"] and m["min_gap_mm"] >= 5.0
              for m in _kcm.values()
          ))
-test("W10, W11 & W13 multi-stage craft builds (Race Car, Dump Truck, Helicopter, Pro Rack-Steered Racer, Momentum Band Truck, Stage-4 Mech RC Truck) validate cleanly",
+test("W10, W11 & W13 multi-stage craft builds (Race Car, Dump Truck, Helicopter, Pro Rack-Steered Racer, Motion Band Truck, Pro Powered Add-On RC Truck) validate cleanly",
      all(res[k]["ok"] and not res[k]["warnings"] for k in ("valid_kit_race_car", "valid_kit_dump_truck", "valid_kit_helicopter", "valid_pro_steered_racer", "valid_pro_tie_rod_link_on_rack", "valid_mom_band_truck", "valid_mech_rc_truck")))
 
 # 8. generated instructions list every part and nothing third-party

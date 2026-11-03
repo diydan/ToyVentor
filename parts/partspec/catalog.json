@@ -16,7 +16,7 @@
   ],
   "targets": {
     "snap": 120,
-    "pro": 87
+    "pro": 90
   },
   "waves": [
     {
@@ -131,7 +131,7 @@
         "W10"
       ],
       "effort": "L",
-      "scope": "30 parts (8 Snap Small, 22 Pro): captive Stage-2 Pro row-0 Ackermann rack steering linkage (bridge with fixed kingpins, rack guide and travel stop, rack, tall-tower knuckles, tie-rod link, headed captive drive pins, steering column and wheel), rear dump-tub barrel hinge adapter, and positive-trail bike fork adapter, plus functional Stage-3 Momentum stored-energy propulsion and actuator modules (enclosed #64 band core with coaxial freewheel PTO gear, pawl spool, armed/pull-back latch and winding key, compliant bumper trigger, captive slam launcher, leak-free horizontal balloon jet + shutoff slide valve + 3-orifice nozzle selector, interleaved 10-deg hinged bellows clamshell, and un-jammed shrouded 42 mm vertical rip-cord turbine core) across Cards E1-E2 (<= 164 x 164 mm)."
+      "scope": "32 parts (8 Snap Small, 24 Pro): captive Stage-2 Pro row-0 Ackermann rack steering linkage (bridge with fixed kingpins, rack guide and travel stop, rack, tall-tower knuckles with a barbed round wheel stub, the two free-hub front wheels (36 and 50 mm) that turn on it, tie-rod link, headed captive drive pins, steering column and wheel), rear dump-tub barrel hinge adapter, and positive-trail bike fork adapter, plus functional Stage-3 Momentum stored-energy propulsion and actuator modules (enclosed #64 band core with coaxial freewheel PTO gear, pawl spool, armed/pull-back latch and winding key, compliant bumper trigger, captive slam launcher, leak-free horizontal balloon jet + shutoff slide valve + 3-orifice nozzle selector, interleaved 10-deg hinged bellows clamshell, and un-jammed shrouded 42 mm vertical rip-cord turbine core) across Cards E1-E2 (<= 164 x 164 mm)."
     },
     {
       "id": "W12",
@@ -156,7 +156,7 @@
         "W10"
       ],
       "effort": "S",
-      "scope": "2 parts (2 Pro): the first construction-line parts across Card G (<= 164 x 164 mm): the 103.0 mm wide-track barbell axle and the 50.0 x 24.8 mm smooth dished road-roller drum, so a keel on two wide axles and four drums is a double-drum road roller (Gate G1 craft 10). A dozer's C-frame arms pivot on the same wide axle (docs/specs/construction-vehicles-spec.md)."
+      "scope": "3 parts (3 Pro): the construction-line parts across Card G (<= 164 x 164 mm): the 103.0 mm wide-track barbell axle, the 50.0 x 24.8 mm smooth dished road-roller drum and the 112.5 mm (9 TU) dozer axle, so a keel on two wide axles and four drums is a double-drum road roller (Gate G1 craft 10). A dozer's C-frame arms pivot on the same wide axle (docs/specs/construction-vehicles-spec.md)."
     }
   ],
   "parts": [
@@ -5102,6 +5102,49 @@
       }
     },
     {
+      "id": "kit_wheel_med_free",
+      "name": "Medium 1-TU Free-Hub Front Wheel",
+      "line": "pro",
+      "family": "wheel",
+      "size": "pro",
+      "wave": "W11",
+      "note": "36.0 x 36.0 x 12.3 mm steered front wheel for Pro and the Pro add-on: round 7.0 mm free hub with an 8.0 x 2.0 mm snap counterbore that takes the steering knuckle's barbed stub, so it turns freely (the keyed kit_wheel_med cannot turn on that stub).",
+      "stat": "Roll",
+      "type": "Vehicle wheel",
+      "behavior": "36 mm x 12.3 mm free-turning steered front wheel with a snap-on hub",
+      "tags": [
+        "pro",
+        "steering",
+        "kitcard",
+        "wheel"
+      ],
+      "build": {
+        "fn": "kit_wheel_med_free"
+      }
+    },
+    {
+      "id": "kit_wheel_giant_free",
+      "name": "Giant 1-TU Free-Hub Front Wheel",
+      "line": "pro",
+      "family": "wheel",
+      "size": "pro",
+      "wave": "W11",
+      "note": "50.0 x 50.0 x 12.3 mm giant steered front wheel for Pro and the Pro add-on: round 7.0 mm free hub with an 8.0 x 2.0 mm snap counterbore for the steering knuckle's barbed stub, plus the four 1-TU eccentric crank/paddle face bores of kit_wheel_giant.",
+      "stat": "Grip",
+      "type": "Vehicle wheel",
+      "behavior": "50 mm x 12.3 mm free-turning steered giant front wheel with a snap-on hub and 4 crank bores",
+      "tags": [
+        "pro",
+        "steering",
+        "kitcard",
+        "wheel",
+        "tractor"
+      ],
+      "build": {
+        "fn": "kit_wheel_giant_free"
+      }
+    },
+    {
       "id": "pro_steer_rack",
       "name": "Pro Module-2.5 Steering Gear Rack",
       "line": "pro",
@@ -5989,6 +6032,29 @@
       ],
       "build": {
         "fn": "kit_barbell_shaft_wide"
+      }
+    },
+    {
+      "id": "kit_barbell_shaft_9tu",
+      "name": "9 TU Dozer Barbell Axle",
+      "line": "pro",
+      "family": "shaft",
+      "size": "pro",
+      "wave": "W14",
+      "note": "112.5 mm (9 TU) LAY_FLAT Pro drive shaft, the dozer's rear axle: a 12.3 mm medium wheel, a 1.0 mm gap and a 12.5 mm kit beam (the lift arm) fit outboard of the 49.8 mm keel on each side (2 x (39.0 + 1.0 + 12.5) = 105.0 mm), with 3.75 mm of shaft left beyond each beam for a retainer. The 103.0 mm wide-track shaft would leave the beam touching the wheel face.",
+      "stat": "Spin",
+      "type": "Drive shaft",
+      "behavior": "112.5 mm axle for a bulldozer's lift arms",
+      "tags": [
+        "vehicle",
+        "craft",
+        "kitcard",
+        "axle",
+        "shaft",
+        "construction"
+      ],
+      "build": {
+        "fn": "kit_barbell_shaft_9tu"
       }
     },
     {

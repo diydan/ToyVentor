@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: Apache-2.0
-"""ToyVentor Flat-Pack Modular Craft, Progressive Power & Drop-In Mech Kit-Cards (Waves W10, W11, W13).
+"""ToyVentor Flat-Pack Modular Craft, Progressive Power & Drop-In Pro Powered Add-On Kit-Cards (Waves W10, W11, W13).
 
 Implements:
   - Wave W10 (Cards A-D, 19 parts): 16 rigid Snap/Pro modular craft modules (including enclosed barrel hinge knuckles on #11 dump tub)
     + 3 smooth 0.80 mm PETG/TPU flex skins (printed show-face-down on z = 0) unlocking all 9 canonical craft.
   - Wave W11 (Cards E1-E3, 30 parts): captive Stage-2 Pro row-0 Ackermann rack steering linkage (bridge with fixed kingpins,
     rack guide and travel stop, rack, tall-tower knuckles, tie-rod link, headed captive drive pins, steering column and wheel),
-    rear barrel dump-tub hinge adapter, raked bike fork adapter, and functional Stage-3 Momentum stored-energy cores.
-  - Wave W13 (Card F, 11 parts): PETG Stage-4 drop-in RC and robotics housings for N20 micro gearmotors, 9g micro servos
+    rear barrel dump-tub hinge adapter, raked bike fork adapter, and functional Motion stored-energy cores.
+  - Wave W13 (Card F, 11 parts): PETG Add-On drop-in RC and robotics housings for N20 micro gearmotors, 9g micro servos
     (stock nylon horn capture, zero printed micro-splines), XIAO ESP32 / H-bridge electronics, and tool-locked 1S LiPo cells.
   - Kit-card plate exporter (`export_kitcards`) producing `card_<id>_loose.stl` and `card_<id>_sprue.stl` across Cards A-F.
-  - Gate G1 (`verify_gate_g1`): deterministic 3D boolean pose-sweep, pneumatic air-path connectivity, and COTS Mech keep-out audit.
+  - Gate G1 (`verify_gate_g1`): deterministic 3D boolean pose-sweep, pneumatic air-path connectivity, and COTS Pro Powered Add-On keep-out audit.
 
 TARGETS ONLY: F1_printed_fit and F2_breakage remain pending until physical validation prints.
 """
@@ -225,8 +225,25 @@ def kit_spinner_pin(**_):
     return m, [conn], {"print_rotation_deg": pro.LAY_FLAT}
 
 
-def kit_wheel_med(**_):
-    """#4 Medium 1-TU Modular Wheel (36.0 x 36.0 x 12.3 mm, 5.25 mm fixed hub)."""
+# Free-hub front wheel. A Double-D stub in the keyed wheels' Double-D bore is a key (the wheel could only rock +-1.35 deg), so the STEERED front wheels
+# (Pro and the Pro add-on) turn on a round pin_free stub instead: a round free bore plus an O8.0 x 2.0 snap counterbore in the outer face that takes the
+# stub's barb (see _barbed_wheel_stub). The rear and Snap/Motion wheels stay keyed (they drive the axle). Same tyre, same envelope, so every sweep holds.
+FREE_HUB_CB_D, FREE_HUB_CB_DEPTH = 8.0, 2.0
+
+
+def _wheel_bore(hub_kind, H):
+    if hub_kind == "fixed":
+        return pro.bore_cutter("fixed", H)
+    cb = Manifold.cylinder(FREE_HUB_CB_DEPTH + 0.2, FREE_HUB_CB_D / 2, FREE_HUB_CB_D / 2, 64).translate((0.0, 0.0, H - FREE_HUB_CB_DEPTH))
+    return pro.bore_cutter("free", H) + cb
+
+
+def _wheel_hub_conn(hub_kind, H):
+    c = pro._hub_conn(H)
+    return {**c, "bore_class": "free"} if hub_kind == "free" else c
+
+
+def _wheel_med(hub_kind):
     D, H = 36.0, 12.3
     R = D / 2
     tire = Manifold.batch_hull([
@@ -246,17 +263,28 @@ def kit_wheel_med(**_):
     for k in range(5):
         sp = rbox(3.2, 8.8, 4.6, 0.9, 0.0).translate((0.0, 7.2, 7.2)).rotate((0.0, 0.0, 72.0 * k))
         spokes = sp if spokes is None else spokes + sp
-    body = (tire - dish + hub + spokes) - pro.bore_cutter("fixed", H)
-    return body, [pro._hub_conn(H)], {}
+    body = (tire - dish + hub + spokes) - _wheel_bore(hub_kind, H)
+    return body, [_wheel_hub_conn(hub_kind, H)], {}
 
 
-def kit_wheel_giant(**_):
-    """#5 Giant 1-TU Tractor / Monster / Paddle Wheel (50.0 x 50.0 x 12.3 mm, fixed hub + 4x O7.0 face bores).
+def kit_wheel_med(**_):
+    """#4 Medium 1-TU Modular Wheel (36.0 x 36.0 x 12.3 mm, 5.25 mm fixed hub)."""
+    return _wheel_med("fixed")
+
+
+def kit_wheel_med_free(**_):
+    """#4f Medium 1-TU Free-Hub Front Wheel (36.0 x 36.0 x 12.3 mm, round free hub + O8.0 snap counterbore for the steering knuckle's barbed stub)."""
+    return _wheel_med("free")
+
+
+def _wheel_giant(hub_kind):
+    """#5 Giant 1-TU Tractor / Monster / Paddle Wheel (50.0 x 50.0 x 12.3 mm, fixed or free hub + 4x O7.0 face bores).
 
     Dished like the medium wheel: a four-arm cross carries the hub and the four crank bosses, between them four open windows down to a 5.8 mm floor,
     inside a stepped-tread tyre. The whole wheel is the old solid disc with material REMOVED (nothing added outside the old envelope: the new solid
-    is intersected with the old tyre hull), so every clearance already proven for the old wheel holds, and it prints face-down on z = 0 with no
-    overhang (the pocket walls lean outward going up; the arms and bosses rise from the floor)."""
+    is intersected with the old tyre hull), so the envelope is the old wheel's, and it prints face-down on z = 0 without supports (the pocket walls
+    lean outward going up; the arms and bosses rise from the floor; every tread groove that opens onto the bed has a gabled roof, see below).
+    Checked in OrcaSlicer 2.4.2 with the Ender-3 Pro profile (supports on, auto, 30 deg): 0 support and 0 overhang-wall moves."""
     D, H = 50.0, 12.3
     R = D / 2
     hull = Manifold.batch_hull([
@@ -268,7 +296,14 @@ def kit_wheel_giant(**_):
     # (A chevron would be handed: the left and right wheels are the same part turned round, so it would point the wrong way on one side.
     # This pattern looks the same from either side.)
     tire = hull
-    groove = Manifold.cube((2.6, 1.9, H / 2 + 0.7)).translate((R - 1.5, -0.95, -0.7))
+    # The lower-half grooves open onto the bed, so a flat 1.9 mm roof gets slicer supports (OrcaSlicer 2.4.2, supports auto at 30 deg: 3400 support moves
+    # in the 20 notches, which the part gate's ledge check missed because each roof is held on both sides). Each groove therefore has a steep gable:
+    # vertical walls to 5.05 mm, then roof faces rising 1.1 mm over 0.95 mm (49 deg from flat, normal z -0.66 against the -0.707 limit) to a ridge at
+    # 6.15 mm, the old roof height.
+    groove = Manifold.batch_hull([
+        Manifold.cube((2.6, 1.9, 5.05 + 0.7)).translate((R - 1.5, -0.95, -0.7)),
+        Manifold.cube((2.6, 0.02, 0.02)).translate((R - 1.5, -0.01, H / 2 - 0.01)),
+    ])
     groove_hi = Manifold.cube((2.6, 1.9, H / 2 + 0.7)).translate((R - 1.5, -0.95, H / 2))
     for k in range(20):
         tire = tire - groove.rotate((0.0, 0.0, 18.0 * k)) - groove_hi.rotate((0.0, 0.0, 18.0 * k + 9.0))
@@ -289,7 +324,11 @@ def kit_wheel_giant(**_):
         b = Manifold.cylinder(H - 0.8 - 5.8, 5.6, 5.0, 64).translate((x, y, 5.8))
         bosses = b if bosses is None else bosses + b
     body = body + ((hub + arms + bosses) ^ hull)
-    body = body - pro.bore_cutter("fixed", H)
+    # The arms start at z 5.0 and fill the top of the lower groove at the four axis stations, which would leave a flat 5.0 mm roof: cut the gabled
+    # lower grooves again so all 20 stations are self-supporting.
+    for k in range(20):
+        body = body - groove.rotate((0.0, 0.0, 18.0 * k))
+    body = body - _wheel_bore(hub_kind, H)
     cranks = [(-TU, 0.0), (TU, 0.0), (0.0, -TU), (0.0, TU)]
     for x, y in cranks:
         body = body - pro.bore_cutter("free", H, x, y)
@@ -307,13 +346,31 @@ def kit_wheel_giant(**_):
         "frame": {"origin": [-TU, -TU, 0.0], "normal": [0, 0, 1]},
         "grid": {"nx": 3, "ny": 3, "pitch": TU, "anchor": "corner", "omit_cells": omit},
     }
-    return body, [pro._hub_conn(H), c_crank], {}
+    return body, [_wheel_hub_conn(hub_kind, H), c_crank], {}
+
+
+def kit_wheel_giant(**_):
+    """#5 Giant 1-TU Tractor / Monster / Paddle Wheel (50.0 x 50.0 x 12.3 mm, fixed hub + 4x O7.0 face bores)."""
+    return _wheel_giant("fixed")
+
+
+def kit_wheel_giant_free(**_):
+    """#5f Giant 1-TU Free-Hub Front Wheel (50.0 x 50.0 x 12.3 mm, round free hub + O8.0 snap counterbore + 4x O7.0 face bores)."""
+    return _wheel_giant("free")
 
 
 def kit_barbell_shaft_wide(**_):
     """#3c Wide-Track Barbell Shaft (6.6 x 103.0 x 5.0 mm LAY_FLAT): the 78.0 mm barbell's long brother. 49.8 mm keel + 2 x (24.8 mm drum + 1.8 mm gap)
     = 103.0 mm, so a 2 TU road-roller drum, or a 12.3 mm wheel plus a 12.3 mm dozer arm, fits outboard of the keel on each side."""
     m, conn = _cruciform_tip_shaft(103.0, conn_len=103.0, z0=0.0)
+    return m, [conn], {"print_rotation_deg": pro.LAY_FLAT}
+
+
+def kit_barbell_shaft_9tu(**_):
+    """#3d 9 TU Dozer Barbell Shaft (6.6 x 112.5 x 5.0 mm LAY_FLAT): the bulldozer's rear axle. A medium wheel (12.3 mm), a 1.0 mm gap and a 12.5 mm kit
+    beam (the lift arm) fit outboard of the 49.8 mm keel on each side: 2 x (39.0 + 1.0 + 12.5) = 105.0 mm, and 112.5 mm = 9 TU leaves 3.75 mm of shaft beyond
+    each beam for a retainer (not designed yet). The 103.0 mm wide-track shaft would leave the beam touching the wheel face (39.0 + 12.5 = 51.5)."""
+    m, conn = _cruciform_tip_shaft(112.5, conn_len=112.5, z0=0.0)
     return m, [conn], {"print_rotation_deg": pro.LAY_FLAT}
 
 
@@ -964,7 +1021,7 @@ def skin_cargo_shroud(size="small", grid=(9, 4), **_):
 
 
 # ==========================================================================
-# WAVE W11: Stage-2 Pro Steering & Stage-3 Momentum Power (Cards E1-E2, 23 parts)
+# WAVE W11: Pro Steering & Motion Power (Cards E1-E2, 23 parts)
 # ==========================================================================
 # --- Stage-2 steering geometry shared by the bridge, rack, tie-rod link and Gate G1 (world frame: front = -Y, z up) ---
 BRIDGE_Y, BRIDGE_Z, BRIDGE_H = -50.0, 12.5, 12.5   # bridge origin on kit_keel_base rows 0..1 and its body height
@@ -1068,12 +1125,40 @@ def pro_steer_bridge(size="small", grid=(2, 2), lock=True, **_):
 KNUCKLE_FACE_RELIEF = 0.4  # mm shaved off the inboard (print-bed) cheek face (holds >= 0.355 mm keel nose gap across +-5.2 mm sweep).
 
 
+# Barbed round wheel stub. The wheel's outer face carries an O8.0 x 2.0 counterbore (FREE_HUB_CB_*); the stub is a round O6.60 pin_free shaft whose tip is a
+# slotted split cantilever with an O7.30 barb (0.15 mm over the wheel's O7.00 free bore, so each half flexes 0.15 mm to pass) that sits in the counterbore.
+# The knuckle prints stub-up, so the barb's underside is a 50-degree cone (no flat ledge, past the 45-degree overhang limit) and the tip is a lead-in cone.
+# Retention is a snap, not a lock: estimated pull-off about 1 kgf, to be confirmed by a print (spec functional 2.2).
+STUB_BARB_R = 3.65
+STUB_SLOT_W, STUB_SLOT_L = 1.6, 11.0
+STUB_BARB_UNDER_DEG = 50.0
+
+
+def _barbed_wheel_stub(x, z0, z_seat, z_tip, wheel_h=12.3):
+    r0 = pro.BORE["shaft_d"] / 2
+    z_floor = z_seat + wheel_h - FREE_HUB_CB_DEPTH          # counterbore floor
+    z_sh = z_floor + 0.2                                    # barb shoulder: 0.2 mm axial play above the floor
+    dz_cone = (STUB_BARB_R - r0) * math.tan(math.radians(STUB_BARB_UNDER_DEG))
+    z_cyl_top = z_sh + dz_cone + 0.5
+    seg = pro.SEGS
+    stub = (
+        Manifold.cylinder(z_sh - z0, r0, r0, seg).translate((0.0, 0.0, z0))
+        + Manifold.cylinder(dz_cone, r0, STUB_BARB_R, seg).translate((0.0, 0.0, z_sh))
+        + Manifold.cylinder(z_cyl_top - z_sh - dz_cone, STUB_BARB_R, STUB_BARB_R, seg).translate((0.0, 0.0, z_sh + dz_cone))
+        + Manifold.cylinder(z_tip - z_cyl_top, STUB_BARB_R, 2.9, seg).translate((0.0, 0.0, z_cyl_top))
+    )
+    # The slot runs on the 45-degree diagonal, so the stub's x and y extents stay O6.60 (I5 measures them) and the two halves flex symmetrically.
+    slot = Manifold.cube((STUB_SLOT_W, 2 * STUB_BARB_R + 2.0, STUB_SLOT_L + 0.2)).translate((-STUB_SLOT_W / 2, -STUB_BARB_R - 1.0, z_tip - STUB_SLOT_L)).rotate((0.0, 0.0, 45.0))
+    return (stub - slot).translate((x, 0.0, 0.0))
+
+
 def _steer_knuckle(side):
     """Bellcrank steering knuckle (25.6 x 25.6 x 27.1 mm printed stub-up on flat cheek, side = -1 for L, +1 for R).
     - Stepped crank strap (y in [+6.40, +10.05] -> Z_world < 0 below keel nose) + 42-deg beveled kingpin free boss;
     - Tall forward tie-rod tower (y in [-15.55, +10.05] -> Z_world_top = 21.80 mm) with an 11.50 mm `fixed` bore above
       a horizontal Ø8.00 mm snap-barb latch pocket (y >= -4.05 -> Z_world <= 10.30 mm) positively retaining `pro_captive_pin_28`;
-    - Tapered hub riser up to z = 15.00 mm topped with vertical +Z shaft_drive wheel stub (15.00 mm scrub offset).
+    - Tapered hub riser up to z = 15.00 mm topped with a vertical +Z round pin_free wheel stub with a snap barb (15.00 mm scrub offset); the steered
+      front wheel is the free-hub variant, which turns on it (the keyed wheel could not: a Double-D stub in a Double-D bore is a key).
     """
     W, D_kp, H_base = 25.6, 16.0, 12.5
     xk = -side * 6.25
@@ -1098,7 +1183,7 @@ def _steer_knuckle(side):
         Manifold.cylinder(0.4, 5.3, 5.3, 64).translate((xk, 0.0, H_base - 0.4)),
         Manifold.cylinder(0.4, 5.1, 5.1, 64).translate((xk, 0.0, 15.00 - 0.4)),
     ])
-    stub = pro.pin_solid("flats", 13.0, xk, 0.0, 14.50, tip_chamfer=(False, True))
+    stub = _barbed_wheel_stub(xk, 14.50, 15.00, 27.50)
     # Horizontal Ø8.00 mm 50-deg teardrop snap-barb latch pocket for y in [-4.15, +10.50] (Z_world <= +10.40 mm, 0 overhang):
     latch_sec = pro._teardrop(8.00, roof_deg=50, segs=48)
     latch_pocket = Manifold.extrude(latch_sec, 14.65).rotate((90, 0, 0)).translate((xt, 10.50, 6.25))
@@ -1118,10 +1203,10 @@ def _steer_knuckle(side):
         "id": "wheel_stub",
         "kind": "pin",
         "gender": "M",
-        "interface": "shaft_drive",
+        "interface": "pin_free",
         "size_class": "pro",
-        "fit_class": tp.IF["interfaces"]["shaft_drive"]["fit_class"],
-        "profile": "flats",
+        "fit_class": tp.IF["interfaces"]["pin_free"]["fit_class"],
+        "profile": "round",
         "length_mm": 12.5,
         "frame": {"origin": [xk, 0.0, round(15.00 - KNUCKLE_FACE_RELIEF, 4)], "normal": [0, 0, 1]},
         "grid": {"nx": 1, "ny": 1, "pitch": TU, "anchor": "corner"},
@@ -1425,7 +1510,7 @@ def _power_core_tray_shell(size="small", omit_studs=None):
 
 
 def mom_band_core_tray(size="small", grid=(4, 4), **_):
-    """Stage-3 Momentum Self-Contained #64 Band Power Core Tray (49.8 x 49.8 x 32.3 mm + 2.8 studs).
+    """Motion Self-Contained #64 Band Power Core Tray (49.8 x 49.8 x 32.3 mm + 2.8 studs).
     - Twin front R=4.0 mm elastomer anchor posts at (+-16.0, -16.0);
     - Internal drop-in PTO spool saddles (x in [-15.1, -9.9] & [+17.1, +22.3], z = 18.75) + axial end-stops
       capturing a standard 37.5 mm `shaft_tu03` (x in [-15.20, +22.30]) inside the enclosed lid with zero exterior protrusion;
@@ -1455,13 +1540,13 @@ def mom_band_core_tray(size="small", grid=(4, 4), **_):
 
 
 def mom_band_core_lid(size="small", grid=(4, 4), lock=True, **_):
-    """Stage-3 Momentum Enclosed Band Core Safety Lid With PTO Gear Dome & Barrel Hinge (49.8 x 61.5 x 16.6 mm).
+    """Motion Enclosed Band Core Safety Lid With PTO Gear Dome & Barrel Hinge (49.8 x 61.5 x 16.6 mm).
     (Sear toggle slot removed 2026-11-02, pull-back-only Option B.)"""
     return _lid_with_pto_gear_relief(size, lock, extra_cut=None, include_knuckles=True)
 
 
 def mom_pto_gear_z10(**_):
-    """Stage-3 Momentum Z10 PTO Spur Gear With Internal 8-Tooth Radial Freewheel Cup (30.0 x 30.0 x 9.6 mm).
+    """Motion Z10 PTO Spur Gear With Internal 8-Tooth Radial Freewheel Cup (30.0 x 30.0 x 9.6 mm).
     - z = 0.00..6.25: module-2.5 Z10 spur gear (fixed double-D bore locks onto internal PTO shaft);
     - z = 6.25..9.60: 45-deg corbeled cup (OD 24.4 mm, R_valley = 10.55 mm, R_crest = 9.60 mm, alpha = 6.9 deg)
       engaging mom_band_spool_pawl's spiral XY cantilever pawls (0.78 mm nominal radial bite, 0.69% PLA strain).
@@ -1493,7 +1578,7 @@ def mom_pto_gear_z10(**_):
 
 
 def mom_band_spool_pawl(**_):
-    """Stage-3 Momentum Coaxial Freewheel Band Spool & Spiral XY Pawl Hub (20.3 x 20.8 x 13.0 mm, printed pawl-down on z = 0).
+    """Motion Coaxial Freewheel Band Spool & Spiral XY Pawl Hub (20.3 x 20.8 x 13.0 mm, printed pawl-down on z = 0).
     - Free Ø7.00 mm center bore so the spool halts at slack while the PTO shaft and wheels coast freely;
     - Bottom z = 0.0..2.30 deck carrying twin 1.28 mm-thick x 14.7 mm-long free-flexing spiral XY cantilever pawl arms
       (R_tip = 10.38 mm over R_crest = 9.60 mm -> 0.78 mm nominal bite, 0.69% peak PLA strain, 0 overhangs, 0 bridges);
@@ -1548,7 +1633,7 @@ def mom_band_spool_pawl(**_):
 
 
 def mom_latch_pawl(**_):
-    """Stage-3 Momentum Armed/Pull-Back Ratchet Sear Pawl (26.0 x 16.0 x 5.2 mm, printed flat on z = 0)."""
+    """Motion Armed/Pull-Back Ratchet Sear Pawl (26.0 x 16.0 x 5.2 mm, printed flat on z = 0)."""
     H = 5.2
     pts = [
         (-13.0, -2.0), (-4.0, -5.8), (5.5, -5.8),
@@ -1574,7 +1659,7 @@ def mom_latch_pawl(**_):
 
 
 def mom_wind_key(**_):
-    """Stage-3 Momentum Removable Band Winding Key (28.0 x 30.0 x 5.0 mm LAY_FLAT)."""
+    """Motion Removable Band Winding Key (28.0 x 30.0 x 5.0 mm LAY_FLAT)."""
     hy = pro.BORE["shaft_flats"] / 2
     wing_cs = (
         rrect(28.0, 9.0, 2.4).translate((0.0, 4.5))
@@ -1589,7 +1674,7 @@ def mom_wind_key(**_):
 
 
 def mom_bumper_trigger(**_):
-    """Stage-3 Momentum Compliant Parallelogram Bumper Trigger (48.0 x 42.0 x 12.5 mm, printed flat on z = 0).
+    """Motion Compliant Parallelogram Bumper Trigger (48.0 x 42.0 x 12.5 mm, printed flat on z = 0).
     Stationary anchor block seats over #1 kit_keel_base's nose studs (rows 0..2) and locks into #1's (0, -37.5)
     steer_bore via pro_captive_pin_28, while twin S-curved 1.44 mm compliant flexure leaves hold the 48.0 mm front
     impact bar ahead of Ø36 tires and deflect +4.2 mm aft on obstacle contact.
@@ -1629,7 +1714,7 @@ def mom_bumper_trigger(**_):
 
 
 def mom_slam_base(**_):
-    """Stage-3 Momentum Captive Slam-Launcher Base With Upright Gabled Barrel & Horizontal Stop Pin (62.3 x 38.0 x 21.0 mm).
+    """Motion Captive Slam-Launcher Base With Upright Gabled Barrel & Horizontal Stop Pin (62.3 x 38.0 x 21.0 mm).
     - Flush tabletop base (z = 0) with enclosed 5.6 x 13.4 mm upright plunger barrel along X (50-deg gabled roof, 0 bridges);
     - Horizontal +Y `fixed` stop-pin bore (y = -19.0..+6.35) + rear Ø8.00 mm snap-latch pocket locking pro_captive_pin_28
       permanently through mom_slam_plunger's 43.0 x 7.0 mm slot;
@@ -1675,7 +1760,7 @@ def mom_slam_base(**_):
 
 
 def mom_slam_plunger(**_):
-    """Stage-3 Momentum Captive 35 mm-Stroke Slotted Slam Plunger (94.0 x 18.0 x 5.0 mm LAY_FLAT).
+    """Motion Captive 35 mm-Stroke Slotted Slam Plunger (94.0 x 18.0 x 5.0 mm LAY_FLAT).
     12.6 mm-wide slide bar around the closed 43.0 x 7.0 mm oblong stop slot gives 2.80 mm solid side walls (7 perimeters,
     >> 1.60 mm rule) while riding upright inside mom_slam_base's enclosed barrel with a 12.5 mm shaft_drive tail.
     """
@@ -1708,7 +1793,7 @@ def _flat_floor_teardrop(d, floor_y):
 
 
 def mom_jet_valve_body(size="small", grid=(4, 2), lock=True, **_):
-    """Stage-3 Momentum Self-Wedging Taper-Sealed Balloon Jet & Valve Body (49.8 x 27.8 x 28.0 mm, 0 mouthpiece).
+    """Motion Self-Wedging Taper-Sealed Balloon Jet & Valve Body (49.8 x 27.8 x 28.0 mm, 0 mouthpiece).
     - Low 5.4 mm side mounting wings + central 24.0 mm-wide valve turret (z = 0..20.6) & smooth top balloon collar at (0, -3.0);
     - Continuous Ø8.0 mm (50.1 mm2) vertical inlet (y = -4.70, z = 12.8..28.8) + 8.36 mm (52.6 mm2) flat-floor teardrop +Y tunnel;
     - 3.5-deg tapered flat-floor 50-deg teardrop transverse X valve seat (x in [-4.0, +12.3], d = 8.30 -> 9.30 mm) giving 360-deg
@@ -1743,7 +1828,7 @@ def mom_jet_valve_body(size="small", grid=(4, 2), lock=True, **_):
 
 
 def mom_jet_slide_valve(**_):
-    """Stage-3 Momentum Taper-Wedging Jet Shutoff Spool (9.6 x 38.0 x 8.5 mm LAY_FLAT).
+    """Motion Taper-Wedging Jet Shutoff Spool (9.6 x 38.0 x 8.5 mm LAY_FLAT).
     - z = 2.0..18.0: 3.5-deg tapered flat-floor 50-deg-gabled sealing plug (d = 9.38 -> 8.36 mm) that wedges 360 deg tight across
       both sides of the balloon inlet when pushed CLOSED (0 topological gap in CAD);
     - z = 21.5: fully enclosed 38.1 mm2 (O6.96 mm equiv) flat-floor 50-deg teardrop cross-port aligning OPEN;
@@ -1776,7 +1861,7 @@ def mom_jet_slide_valve(**_):
 
 
 def mom_nozzle_set(**_):
-    """Stage-3 Momentum Individual Rear-Orifice Nozzle Inserts (63.0 x 14.1 x 8.2 mm sprue: Ø3.0 / Ø4.5 / Ø6.0 / Ø8.0 mm).
+    """Motion Individual Rear-Orifice Nozzle Inserts (63.0 x 14.1 x 8.2 mm sprue: Ø3.0 / Ø4.5 / Ø6.0 / Ø8.0 mm).
     Four individual 4-deg Luer-tapered inserts on 1.80 x 0.60 mm breakaway tabs flanking a central Ø10.4 mm storage hub (free bore, stores on a pin);
     each insert's taper plug (teardrop 10.40 -> 9.65, z = 2.0..8.2) press-wedges alone into mom_jet_valve_body's rear socket
     (9.60 -> 10.45) with an unblocked Ø8.0 mm front entry converging cleanly to its rear exit orifice (Ø3.0 / Ø4.5 / Ø6.0 / Ø8.0).
@@ -1823,7 +1908,7 @@ BELLOWS_LEAF_HINGE_Z = 5.75
 
 
 def mom_bellows_base(size="small", grid=(4, 4), **_):
-    """Stage-3 Momentum 4x4 TU Hinged Balloon Bellows Base (49.8 x 68.8 x 19.1 mm).
+    """Motion 4x4 TU Hinged Balloon Bellows Base (49.8 x 68.8 x 19.1 mm).
     - Tapered side balloon containment curtains (16.5 mm at front rest bar sloping to 7.5 mm aft) + 8.0 mm rear neck U-slot;
     - Interleaved rear X-hinge knuckles at |X| in [4.2, 9.6] & [15.4, 18.75] (pinned flush by 37.5 mm shaft_tu03).
     """
@@ -1848,7 +1933,7 @@ def mom_bellows_base(size="small", grid=(4, 4), **_):
 
 
 def mom_bellows_leaf(size="small", grid=(4, 4), lock=True, **_):
-    """Stage-3 Momentum 4x4 TU Hinged Upper Bellows Leaf (49.8 x 68.8 x 11.4 mm).
+    """Motion 4x4 TU Hinged Upper Bellows Leaf (49.8 x 68.8 x 11.4 mm).
     Twin rear cheeks strictly in the stud-free |X| in [10.30, 14.70] corridor carry interleaved 50-deg teardrop
     barrel hinge knuckles at (y = +38.25, z = +5.75) pinned by shaft_tu03 (I3 = 0.000 mm3).
     """
@@ -1866,7 +1951,7 @@ def mom_bellows_leaf(size="small", grid=(4, 4), lock=True, **_):
 
 
 def mom_flywheel_tray(size="small", grid=(4, 4), **_):
-    """Stage-3 Momentum Un-Jammed Shrouded Vertical-Spindle Turbine Core Tray (49.8 x 49.8 x 32.3 mm + 2.8 studs).
+    """Motion Un-Jammed Shrouded Vertical-Spindle Turbine Core Tray (49.8 x 49.8 x 32.3 mm + 2.8 studs).
     - Lowered z = 10.5 mm step bearing pedestal leaves 21.8 mm vertical cavity so the 12.0 mm Ø42 rotor + 6.25 mm
       Z10 pinion spin with +2.65 mm axial clearance under mom_flywheel_lid;
     - Enlarged 6.8 x 12.8 mm bridged side rip-cord ports at y in [-22.3, -9.5], z = 23.0..29.8 tangent to Z10 pitch y = -12.50.
@@ -1889,10 +1974,10 @@ def mom_flywheel_tray(size="small", grid=(4, 4), **_):
 
 
 # ==========================================================================
-# WAVE W13: Stage-4 Drop-In Printable RC / Mech Housings (Card F, PETG, 11 parts)
+# WAVE W13: Pro Powered Add-On Drop-In Printable RC Housings (Card F, PETG, 11 parts)
 # ==========================================================================
 def mech_drive_tray(size="small", grid=(4, 4), **_):
-    """Stage-4 PETG 4x4x3 TU N20 Double-Shear Drive Core Tray (49.8 x 49.8 x 32.3 mm + 2.8 studs, zero -X bulge).
+    """Add-On PETG 4x4x3 TU N20 Double-Shear Drive Core Tray (49.8 x 49.8 x 32.3 mm + 2.8 studs, zero -X bulge).
     - Precision saddle clamping a standard 12 x 10 x 24 mm N20 gearmotor at x in [-23.50, +0.50], y = +6.25, z = 18.75
       (leaving a 1.30 mm solid -X wall inside x = -24.90 so Giant Ø50 tires keep +1.80 mm clearance);
     - Internal +X Ø7.00 mm `free` outboard pilot bearing boss (`x in [+11.50, +17.50]`) putting mech_n20_pinion_z10
@@ -1915,13 +2000,13 @@ def mech_drive_tray(size="small", grid=(4, 4), **_):
 
 
 def mech_drive_lid(size="small", grid=(4, 4), lock=True, **_):
-    """Stage-4 PETG 4x4 TU Drive Core Intermediate Lid With PTO Gear Dome & Wire Chimney (49.8 x 49.8 x 8.0 mm)."""
+    """Add-On PETG 4x4 TU Drive Core Intermediate Lid With PTO Gear Dome & Wire Chimney (49.8 x 49.8 x 8.0 mm)."""
     chimney = Manifold.cylinder(6.0, 2.50, 2.50, 48).translate((-12.50, -12.50, -0.3))
     return _lid_with_pto_gear_relief(size, lock, extra_cut=chimney, include_knuckles=False)
 
 
 def mech_n20_pinion_z10(**_):
-    """Stage-4 PETG Centered Double-Shear N20 Motor Z10 Pinion (30.0 x 28.9 x 20.0 mm, printed gear-down on z = 0).
+    """Add-On PETG Centered Double-Shear N20 Motor Z10 Pinion (30.0 x 28.9 x 20.0 mm, printed gear-down on z = 0).
     - z = 0.0..6.25: module-2.5 Z10 involute spur gear centered at x in [-3.125, +3.125] over #1's PTO slot, with an
       internal R = 8.00 mm bell pocket (z = 0..3.65, 44-deg self-supporting cone roof) clearing the N20 gearbox nose;
     - z = 10.25..13.85: dogbone-relieved Ø3.16 mm / 2.56 mm-flat N20 D-shaft bore + radial M2.5 set-screw hole at z = 12.0;
@@ -1959,7 +2044,7 @@ def mech_n20_pinion_z10(**_):
 
 
 def mech_brain_tray(size="small", grid=(4, 4), **_):
-    """Stage-4 PETG 4x4x2 TU Low-CG Brain & LiPo Core Tray (49.8 x 49.8 x 19.8 mm + 2.8 studs; +5.2 lid = 25.0 mm = 2 TU).
+    """Add-On PETG 4x4x2 TU Low-CG Brain & LiPo Core Tray (49.8 x 49.8 x 19.8 mm + 2.8 studs; +5.2 lid = 25.0 mm = 2 TU).
     - Intact 4x4 socket_small floor + open-top rear lengthwise 602535 LiPo drawer (26.2 x 36.0 x 7.0 mm, 0 bridges, 0 ledges)
       closed from behind by mech_bat_door_screw (M2.5 captive screw into right-rear boss at x = +14.8);
     - 45-deg corbeled PCB/MCU ledges at z = 12.8 mm holding 38x38 carrier PCB or XIAO ESP32 + DRV8833;
@@ -1995,7 +2080,7 @@ def mech_brain_tray(size="small", grid=(4, 4), **_):
 
 
 def mech_brain_lid(size="small", grid=(4, 4), lock=True, **_):
-    """Stage-4 PETG 4x4 TU Vented RF-Clear Brain Lid With Rear Barrel Hinges (49.8 x 61.5 x 16.6 mm)."""
+    """Add-On PETG 4x4 TU Vented RF-Clear Brain Lid With Rear Barrel Hinges (49.8 x 61.5 x 16.6 mm)."""
     H = 5.2
     raw = tp._flat_box(49.8, 49.8, H, r=2.2, bed_ch=0.4)
     raw, c_top = _add_stud_grid(raw, size, 4, 4, H, cid="top_studs")
@@ -2008,7 +2093,7 @@ def mech_brain_lid(size="small", grid=(4, 4), lock=True, **_):
 
 
 def mech_bat_door_screw(**_):
-    """Stage-4 PETG Tool-Locked LiPo Battery Door (33.6 x 10.6 x 4.2 mm, ASTM F963-23 battery lock).
+    """Add-On PETG Tool-Locked LiPo Battery Door (33.6 x 10.6 x 4.2 mm, ASTM F963-23 battery lock).
     Left plug tab keys inside mech_brain_tray's 26.2 mm rear battery portal while a captive M2.5 screw at x = +14.8 locks
     the door flush above mech_drive_lid's dump cradles; central free Pro bore takes rear tow hitches or flags.
     """
@@ -2035,7 +2120,7 @@ def mech_bat_door_screw(**_):
 
 
 def mech_servo_mount(size="small", grid=(2, 2), lock=True, **_):
-    """Stage-4 PETG Row-2 Coaxial 9g Servo Bridge (48.0 x 21.8 x 32.8 mm, printed flat on z = 0, 0 ledges/bridges).
+    """Add-On PETG Row-2 Coaxial 9g Servo Bridge (48.0 x 21.8 x 32.8 mm, printed flat on z = 0, 0 ledges/bridges).
     - Local origin sits at world (0, -37.50, 12.50): rear pedestal (y in [+0.25, +12.40], |X| <= 12.20) seats onto
       #1 kit_keel_base Row-2 studs (+-6.25, -31.25), strictly clear of pro_steer_bridge (y <= -0.10), Kip (y >= +13.0),
       and Giant Ø50 front tires (+0.8 mm vertical clearance under clamp pins at +-25 deg lock);
@@ -2091,7 +2176,7 @@ def mech_servo_mount(size="small", grid=(2, 2), lock=True, **_):
 
 
 def mech_servo_lid(**_):
-    """Stage-4 PETG Screwless 9g Servo Clamp Cap (48.0 x 12.4 x 6.25 mm, printed flat on z = 0).
+    """Add-On PETG Screwless 9g Servo Clamp Cap (48.0 x 12.4 x 6.25 mm, printed flat on z = 0).
     Clamps down onto the rear SG90 mounting ear via 2x upward pro_captive_pin_28 at (+-18.75, 0) while straddling
     the upper SG90 body and staying strictly ahead of Y = -25.05 mm (0.000 mm3 overlap with Kip and mech_sill_duct).
     """
@@ -2117,7 +2202,7 @@ def mech_servo_lid(**_):
 
 
 def mech_servo_pinion_z10(**_):
-    """Stage-4 PETG Horn-Pocket Z10 Steering Servo Pinion (30.0 x 28.9 x 8.8 mm, printed gear-down on z = 0).
+    """Add-On PETG Horn-Pocket Z10 Steering Servo Pinion (30.0 x 28.9 x 8.8 mm, printed gear-down on z = 0).
     - z = 0.0..6.60: module-2.5 Z10 involute spur gear + bottom Ø7.00 mm `free` Pro pilot bore (z = 0..5.10, 45-deg cone roof);
     - z = 6.45..8.80: Ø23.0 mm rack-keeper flange (0.20 mm clear above 6.25 mm rack, traps rack +Z) with an upward-opening
       cross pocket capturing the 9g servo's factory-molded nylon horn + M2 center screw hole (zero printed micro-splines).
@@ -2153,7 +2238,7 @@ def mech_servo_pinion_z10(**_):
 
 
 def pro_pilot_pin(**_):
-    """Stage-4 Self-Retaining Lantern-Barb Under-Keel Servo Pilot Pin (9.6 x 31.5 x 5.6 mm LAY_FLAT).
+    """Add-On Self-Retaining Lantern-Barb Under-Keel Servo Pilot Pin (9.6 x 31.5 x 5.6 mm LAY_FLAT).
     - z = 0.0..1.50: 9.6 x 5.6 mm stop head under #1 kit_keel_base (blocks +Z pull-through);
     - z = 3.50..24.30: compliant PETG lantern bowspring (1.30 mm leaves, < 1.51% insertion strain, 0.00% seated strain)
       with +-X Ø7.70 mm (+0.35 mm/side) snap-barbs at z = 14.15..15.50 locking over #1's z = 12.50 steer_bore deck;
@@ -2176,7 +2261,7 @@ def pro_pilot_pin(**_):
 
 
 def mech_sill_duct(size="small", grid=(4, 3), lock=True, **_):
-    """Stage-4 PETG Low-Profile Cockpit Wire-Trough Sill Frame (49.8 x 37.3 x 11.6 mm).
+    """Add-On PETG Low-Profile Cockpit Wire-Trough Sill Frame (49.8 x 37.3 x 11.6 mm).
     Replaces #8 kit_windscreen on open-cockpit RC builds while keeping 6.0 x 4.0 mm side cable troughs clear of Kip.
     """
     u_plan = rrect(49.8, 37.3, 2.2) - rrect(25.2, 28.0, 1.6).translate((0.0, 7.65))
@@ -2191,7 +2276,7 @@ def mech_sill_duct(size="small", grid=(4, 3), lock=True, **_):
 
 
 def mom_flywheel_lid(size="small", grid=(4, 4), lock=True, **_):
-    """Stage-3 Momentum Shrouded Turbine Core Lid With Upper Spindle Journal (49.8 x 49.8 x 8.0 mm)."""
+    """Motion Shrouded Turbine Core Lid With Upper Spindle Journal (49.8 x 49.8 x 8.0 mm)."""
     H = 5.2
     raw = tp._flat_box(49.8, 49.8, H, r=2.2, bed_ch=0.4)
     m, conns, ex = tp.integrated_sockets(raw, size, lock)
@@ -2204,7 +2289,7 @@ def mom_flywheel_lid(size="small", grid=(4, 4), lock=True, **_):
 
 
 def mom_flywheel_rotor(**_):
-    """Stage-3 Momentum 1-Piece Solid Ø42.0 x 12.0 mm PLA Inertial Rotor (fixed hub, S1 +32.3%)."""
+    """Motion 1-Piece Solid Ø42.0 x 12.0 mm PLA Inertial Rotor (fixed hub, S1 +32.3%)."""
     D, H = 42.0, 12.0
     R = D / 2
     body = Manifold.batch_hull([
@@ -2216,7 +2301,7 @@ def mom_flywheel_rotor(**_):
 
 
 def mom_ripcord_rack_150(**_):
-    """Stage-3 Momentum 150.0 mm Module-2.5 Toothed Rip-Cord Rack (150.0 x 12.0 x 6.2 mm)."""
+    """Motion 150.0 mm Module-2.5 Toothed Rip-Cord Rack (150.0 x 12.0 x 6.2 mm)."""
     mod, a = pro.GEAR["module_mm"], math.radians(pro.GEAR["pressure_angle_deg"])
     T, L, yp = pro.GEAR["thickness_tu"] * TU, 150.0, TU / 2  # T = 6.25, yp = 6.25
     p, s = math.pi * mod, math.pi * mod / 2 - pro.GEAR["backlash_mm"] / 2
@@ -2251,7 +2336,7 @@ def mom_ripcord_rack_150(**_):
 
 
 def mom_spindle_shaft(**_):
-    """Stage-3 Momentum 78.0 mm Vertical Turbine & Helicopter Rotor Spindle Shaft (6.6 x 78.0 x 5.0 mm LAY_FLAT)."""
+    """Motion 78.0 mm Vertical Turbine & Helicopter Rotor Spindle Shaft (6.6 x 78.0 x 5.0 mm LAY_FLAT)."""
     m, conn = _cruciform_tip_shaft(78.0, conn_len=78.0, z0=0.0)
     return m, [conn], {"print_rotation_deg": pro.LAY_FLAT}
 
@@ -2322,27 +2407,31 @@ CARD_LAYOUTS = {
         ],
     },
     "card_e1": {
-        "name": "Card E1 — Captive Pro Steering, Steering Wheel & Enclosed Barrel Dump Hinge",
+        "name": "Card E1 — Captive Pro Steering, Free-Hub Front Wheels, Steering Wheel & Enclosed Barrel Dump Hinge",
         "limit_mm": 164.0,
         "material": "PLA/PETG",
         "items": [
-            ("steer_bridge", "pro_steer_bridge", 3.0, 3.0, 48.4, 31.8),
-            ("z10_a", "gear_spur_z10", 56.4, 3.0, 30.0, 30.0),
-            ("z10_b", "gear_spur_z10", 91.4, 3.0, 30.0, 30.0),
-            ("steer_wheel", "pro_steer_wheel", 126.4, 3.0, 23.0, 23.0),
-            ("knuckle_l", "pro_steer_knuckle_l", 3.0, 39.8, 25.6, 25.6),
-            ("knuckle_r", "pro_steer_knuckle_r", 33.6, 39.8, 25.6, 25.6),
-            ("fork_rake", "pro_fork_rake_adpt", 64.2, 39.8, 27.8, 24.8),
-            ("tub_hinge", "pro_tub_hinge", 97.0, 39.8, 29.4, 19.5),
-            ("steer_col", "pro_steer_column", 136.0, 39.8, 10.6, 46.6),
-            ("steer_rack", "pro_steer_rack", 3.0, 70.4, 36.0, 15.1),
-            ("link_a", "pro_tie_rod_link", 85.0, 70.4, 26.9, 11.4),
-            ("link_b", "pro_tie_rod_link", 3.0, 91.4, 26.9, 11.4),
-            ("cpin_1", "pro_captive_pin_28", 34.9, 91.4, 29.7, 9.6),
-            ("cpin_2", "pro_captive_pin_28", 69.6, 91.4, 29.7, 9.6),
-            ("cpin_3", "pro_captive_pin_28", 104.3, 91.4, 29.7, 9.6),
-            ("cpin_4", "pro_captive_pin_28", 139.0, 91.4, 9.6, 29.7),
-            ("tub_pin", "shaft_tu03", 3.0, 108.5, 37.5, 6.6),
+            ("fork_rake", "pro_fork_rake_adpt", 3.0, 3.0, 27.8, 24.8),
+            ("z10_b", "gear_spur_z10", 35.8, 3.0, 30.0, 30.0),
+            ("wheel_f50_1", "kit_wheel_giant_free", 70.8, 3.0, 50.0, 50.0),
+            ("z10_a", "gear_spur_z10", 125.8, 3.0, 30.0, 30.0),
+            ("steer_col", "pro_steer_column", 3.0, 32.8, 10.6, 46.6),
+            ("link_b", "pro_tie_rod_link", 18.6, 32.8, 11.4, 26.9),
+            ("tub_hinge", "pro_tub_hinge", 35.0, 38.0, 29.4, 19.5),
+            ("knuckle_l", "pro_steer_knuckle_l", 125.8, 38.0, 25.6, 25.6),
+            ("knuckle_r", "pro_steer_knuckle_r", 78.7, 58.0, 25.6, 25.6),
+            ("cpin_4", "pro_captive_pin_28", 18.6, 64.7, 29.7, 9.6),
+            ("steer_bridge", "pro_steer_bridge", 109.3, 68.6, 48.4, 31.8),
+            ("wheel_f36_2", "kit_wheel_med_free", 37.7, 79.3, 36.0, 36.0),
+            ("cpin_3", "pro_captive_pin_28", 3.0, 84.4, 9.6, 29.7),
+            ("steer_rack", "pro_steer_rack", 17.6, 84.4, 15.1, 36.0),
+            ("steer_wheel", "pro_steer_wheel", 78.7, 88.6, 23.0, 23.0),
+            ("wheel_f50_2", "kit_wheel_giant_free", 106.7, 105.4, 50.0, 50.0),
+            ("link_a", "pro_tie_rod_link", 78.7, 116.6, 11.4, 26.9),
+            ("tub_pin", "shaft_tu03", 95.1, 116.6, 6.6, 37.5),
+            ("cpin_2", "pro_captive_pin_28", 3.0, 119.1, 9.6, 29.7),
+            ("wheel_f36_1", "kit_wheel_med_free", 37.7, 120.3, 36.0, 36.0),
+            ("cpin_1", "pro_captive_pin_28", 17.6, 125.4, 9.6, 29.7),
         ],
     },
     "card_e2": {
@@ -2400,7 +2489,7 @@ CARD_LAYOUTS = {
         ],
     },
     "card_g": {
-        "name": "Card G — Construction: Road-Roller Drums & Wide-Track Axles",
+        "name": "Card G — Construction: Road-Roller Drums, Wide-Track Axles & Dozer Axle",
         "limit_mm": 164.0,
         "material": "PLA/PETG",
         "items": [
@@ -2410,6 +2499,7 @@ CARD_LAYOUTS = {
             ("drum_4", "kit_drum_roller", 58.0, 58.0, 50.0, 50.0),
             ("wide_axle_1", "kit_barbell_shaft_wide", 3.0, 113.0, 103.0, 6.6),
             ("wide_axle_2", "kit_barbell_shaft_wide", 3.0, 124.6, 103.0, 6.6),
+            ("dozer_axle", "kit_barbell_shaft_9tu", 3.0, 136.2, 112.5, 6.6),
         ],
     },
 }
@@ -2552,7 +2642,7 @@ def export_kitcards(out_dir):
 
 
 # ==========================================================================
-# Gate G1: 9-Craft 3D Boolean Pose-Sweep & Kip / Mech Keep-Out Collision Audit
+# Gate G1: 9-Craft 3D Boolean Pose-Sweep & Kip / Pro Powered Add-On Keep-Out Collision Audit
 # ==========================================================================
 def _kip_seated_ghost(cache, hair_id=None):
     """Assemble the live Kip seated stack positioned on #1 kit_keel_base rows 4..5 (cx=0, cy=0, z=12.50)."""
@@ -2713,13 +2803,15 @@ def _pneumatic_jet_check(cache):
 
 def verify_gate_g1():
     """Run deterministic 3D boolean overlap, capture, retention, pneumatic seal, and COTS keep-out checks across
-    all 9 canonical craft, the road roller, G1-Steer, G1-Momentum, and G1-Mech.
+    all 9 canonical craft, the road roller, G1-Steer, G1-Motion, and G1-AddOn.
     """
     cache = {}
     keel = _raw_geo("kit_keel_base", cache)
     spine = _raw_geo("kit_clevis_spine", cache)
     w_med = _raw_geo("kit_wheel_med", cache)
     w_gnt = _raw_geo("kit_wheel_giant", cache)
+    w_med_f = _raw_geo("kit_wheel_med_free", cache)         # steered front wheels turn on the knuckle's round barbed stub
+    w_gnt_f = _raw_geo("kit_wheel_giant_free", cache)
     wedge = _raw_geo("kit_aero_wedge", cache)
     wind = _raw_geo("kit_windscreen", cache)
     tub = _raw_geo("kit_tilting_tub", cache)
@@ -2742,8 +2834,8 @@ def verify_gate_g1():
     for dx in np.linspace(-RACK_STOP, RACK_STOP, 9):
         dx = float(dx)
         a_l, a_r = _tierod_angles(dx)
-        w_st_l = w_med.rotate((0, 0, 90)).rotate((0, -90, 0)).translate((-8.85, 0.0, 0.0)).rotate((0, 0, a_l)).translate((-STEER_KP_X, STEER_KP_Y, 6.25))
-        w_st_r = w_med.rotate((0, 0, 90)).rotate((0, 90, 0)).translate((8.85, 0.0, 0.0)).rotate((0, 0, a_r)).translate((STEER_KP_X, STEER_KP_Y, 6.25))
+        w_st_l = w_med_f.rotate((0, -90, 0)).translate((-8.85, 0.0, 0.0)).rotate((0, 0, a_l)).translate((-STEER_KP_X, STEER_KP_Y, 6.25))
+        w_st_r = w_med_f.rotate((0, 90, 0)).translate((8.85, 0.0, 0.0)).rotate((0, 0, a_r)).translate((STEER_KP_X, STEER_KP_Y, 6.25))
         res1 += _check_non_overlapping([
             ("keel", keel), *_steer_linkage_solids(cache, dx, phase0),
             ("windscreen", wind.translate((0.0, -6.25, 12.5))), ("kip", kip),
@@ -2785,6 +2877,19 @@ def verify_gate_g1():
             v_lock = sum((shifted ^ st0[pt]).volume() for pt in partners)
             if v_lock < 0.05:
                 stop_fail.append((pname, f"dz={dz:+.2f}", f"unretained ({v_lock:.4f} mm3)"))
+    # The steered front wheels are held on the knuckle's barbed stub (free-hub snap): free over the stub's design play, stopped inboard by the knuckle riser,
+    # held outboard by the barb (it overlaps the wheel's O7.0 bore by 0.15 mm, so the wheel only leaves by flexing the slotted tip). Both wheel sizes.
+    for tag, w_free in (("O36", w_med_f), ("O50", w_gnt_f)):
+        def _wheel_ov(shift, w_free=w_free):
+            wl = w_free.rotate((0, -90, 0)).translate((-8.85 - shift, 0.0, 0.0)).translate((-STEER_KP_X, STEER_KP_Y, 6.25))
+            return (wl ^ st0["kn_l"]).volume()
+        free_ov = max(_wheel_ov(0.0), _wheel_ov(0.2))
+        if free_ov > 0.05:
+            stop_fail.append((f"front_wheel_{tag}", "seated", f"not free on the stub ({free_ov:.3f} mm3 at 0..0.2 mm outward)"))
+        if _wheel_ov(1.0) < 0.5:
+            stop_fail.append((f"front_wheel_{tag}", "outward +1.0 mm", "not held by the barb"))
+        if _wheel_ov(-0.3) < 1.0:
+            stop_fail.append((f"front_wheel_{tag}", "inward -0.3 mm", "not stopped by the knuckle riser"))
     results["1b_rack_travel_stop"] = stop_fail
 
     # 2. Dump / Tow Truck: zero-strain stowed + 55-deg dump tip on BOTH (#1 + pro_tub_hinge) AND (3-TU Core + Lid), pinned by shaft_tu03:
@@ -2821,8 +2926,8 @@ def verify_gate_g1():
     res3 = []
     for sgn in (1.0, 0.0, -1.0):
         a_l, a_r = _tierod_angles(sgn * dx21)
-        w50_l = w_gnt.rotate((0, 0, 90)).rotate((0, 90, 0)).translate((-15.0 - 6.15, 0.0, 0.0)).rotate((0, 0, a_l)).translate((-STEER_KP_X, STEER_KP_Y, 6.25))
-        w50_r = w_gnt.rotate((0, 0, 90)).rotate((0, 90, 0)).translate((15.0 - 6.15, 0.0, 0.0)).rotate((0, 0, a_r)).translate((STEER_KP_X, STEER_KP_Y, 6.25))
+        w50_l = w_gnt_f.rotate((0, -90, 0)).translate((-8.85, 0.0, 0.0)).rotate((0, 0, a_l)).translate((-STEER_KP_X, STEER_KP_Y, 6.25))
+        w50_r = w_gnt_f.rotate((0, 90, 0)).translate((15.0 - 6.15, 0.0, 0.0)).rotate((0, 0, a_r)).translate((STEER_KP_X, STEER_KP_Y, 6.25))
         res3 += _check_non_overlapping([
             ("keel", keel), *_steer_linkage_solids(cache, sgn * dx21, phase0),
             ("wind", wind.translate((0.0, -6.25, 12.5))), ("kip", kip),
@@ -2830,7 +2935,7 @@ def verify_gate_g1():
         ])
     results["3_tractor_giant_steer"] = res3
 
-    # 3b. G1-Momentum: Band Core internal mechanism + Bumper + Slam Launcher + Hinged Bellows + Shrouded Flywheel + 3D Jet Valve seal:
+    # 3b. G1-Motion: Band Core internal mechanism + Bumper + Slam Launcher + Hinged Bellows + Shrouded Flywheel + 3D Jet Valve seal:
     axle_z10 = _raw_geo("gear_spur_z10", cache).rotate((0, 90, 0)).translate((-3.125, 43.75, 6.25))
     pto_raw = _raw_geo("mom_pto_gear_z10", cache)
     ph_pto = _gear_phase_x(pto_raw, axle_z10, 43.75, 31.25, x_pos=-3.125)
@@ -2897,7 +3002,7 @@ def verify_gate_g1():
         ("fw_rotor", fw_rotor), ("fw_z10", fw_z10), ("fw_ripcord", fw_rack_raw),
     ])
     res_mom += _pneumatic_jet_check(cache)
-    results["3b_momentum_packs_and_jet_seal"] = res_mom
+    results["3b_motion_packs_and_jet_seal"] = res_mom
 
     # 4. Modular Fifth-Wheel / Dolly Trailer (#14 turntable + front dolly row 0 + rear row 8 axles):
     results["4_modular_trailer"] = _check_non_overlapping([
@@ -2934,7 +3039,7 @@ def verify_gate_g1():
         ("kip_mohawk", kip_mohawk), ("rotor_1", r_main_1), ("rotor_2", r_main_2), ("skid_l", sk_l), ("skid_r", sk_r),
     ])
 
-    # 9. Space Shuttle Orbiter + Stage-4 Printable RC/Mech Dump Truck (Card F + COTS N20/SG90/LiPo/XIAO + 55-deg dump tip):
+    # 9. Space Shuttle Orbiter + Pro Powered Add-On Printable RC Dump Truck (Card F + COTS N20/SG90/LiPo/XIAO + 55-deg dump tip):
     res9 = _check_non_overlapping([
         ("keel", keel), ("wedge", wedge.translate((0.0, -43.75, 12.5))), ("kip", kip),
     ])
@@ -2976,8 +3081,8 @@ def verify_gate_g1():
         ghost_horn = Manifold.extrude(rrect(19.4, 4.6, 1.8) + rrect(4.6, 19.4, 1.8), 1.8).rotate((0, 0, rot_srv)).translate((0.0, PINION_Y, RACK_Z + 6.50))
         base_steer = [it for it in _steer_linkage_solids(cache, dx_rc, phase0) if it[0] not in ("steer_col", "pinion", "steer_wheel")]
         a_l, a_r = _tierod_angles(dx_rc)
-        w50_l = w_gnt.rotate((0, 0, 90)).rotate((0, 90, 0)).translate((-21.15, 0.0, 0.0)).rotate((0, 0, a_l)).translate((-STEER_KP_X, STEER_KP_Y, 6.25))
-        w50_r = w_gnt.rotate((0, 0, 90)).rotate((0, 90, 0)).translate((21.15 - 12.30, 0.0, 0.0)).rotate((0, 0, a_r)).translate((STEER_KP_X, STEER_KP_Y, 6.25))
+        w50_l = w_gnt_f.rotate((0, -90, 0)).translate((-8.85, 0.0, 0.0)).rotate((0, 0, a_l)).translate((-STEER_KP_X, STEER_KP_Y, 6.25))
+        w50_r = w_gnt_f.rotate((0, 90, 0)).translate((21.15 - 12.30, 0.0, 0.0)).rotate((0, 0, a_r)).translate((STEER_KP_X, STEER_KP_Y, 6.25))
         res9 += _check_non_overlapping([
             ("keel", keel), *base_steer,
             ("pilot_pin", pilot_pin), ("srv_pinion", srv_pin), ("ghost_horn", ghost_horn),
@@ -3032,6 +3137,37 @@ def verify_gate_g1():
     # both axles together: front drums against rear drums
     res10 += _check_non_overlapping([(f"{r}_{t}", drum.rotate((0, 90 if t == "r" else -90, 0)).translate((x, y, 6.25))) for r, y in (("front", -56.25), ("rear", 43.75)) for t, x in (("l", -26.7), ("r", 26.7))])
     results["10_road_roller"] = res10
+
+    # 11. Dozer axle (construction line, 2026-11-03): the 112.5 mm (9 TU) rear axle carries a medium wheel, a 1.0 mm gap and a kit beam (the lift arm) on each
+    # side. The roller's 103.0 mm axle would leave the beam touching the wheel face (39.0 + 12.5 = 51.5). Each arm is one beam_str_tu10 pivoting on the axle through
+    # its first bore; across the lift range from the blade-on-ground pose to +25 deg it must keep 1.0 mm to every wheel, clear the keel and both axles, and not touch
+    # the shaft, and the shaft must stand 3 mm or more beyond the beam for a retainer. (The crossbar and blades are not designed, so they are not in this craft.)
+    axle9 = _raw_geo("kit_barbell_shaft_9tu", cache)
+    beam11 = _raw_geo("beam_str_tu10", cache).transform([[0, 0, 1, 0], [-1, 0, 0, 0], [0, -1, 0, 0]])   # length -> -y, bores -> x
+    bb11 = beam11.bounding_box()
+    arms11 = [beam11.translate((x_lo - bb11[0], (43.75 + 6.25) - bb11[4], 6.25 - (bb11[2] + bb11[5]) / 2)) for x_lo in (-52.5, 40.0)]
+    shaft9 = axle9.rotate((0, 90, 0)).translate((-56.25, 43.75, 6.25))
+    shaft78 = _raw_geo("kit_barbell_shaft", cache).rotate((0, 90, 0)).translate((-39.0, -56.25, 6.25))
+    res11 = []
+    sb = shaft9.bounding_box()
+    if abs(sb[0] + 56.25) > 0.01 or abs(sb[3] - 56.25) > 0.01:
+        res11.append(("dozer_axle", "length", f"x {sb[0]:.2f}..{sb[3]:.2f}, expected -56.25..56.25"))
+    if sb[3] - 52.5 < 3.0:
+        res11.append(("dozer_axle", "retainer room", f"{sb[3] - 52.5:.2f} mm beyond the beam, need >= 3.0"))
+    fixed11 = [("keel", keel), ("shaft9", shaft9), ("shaft78", shaft78), *outboard_wheels(w_med, -56.25), *outboard_wheels(w_med, 43.75)]
+    for lift in (-4.5, 0.0, 10.0, 25.0):
+        moved = [a.translate((0.0, -43.75, -6.25)).rotate((-lift, 0.0, 0.0)).translate((0.0, 43.75, 6.25)) for a in arms11]
+        for i, arm_i in enumerate(moved):
+            for nm, solid in fixed11:
+                if nm.startswith("w"):
+                    gap = arm_i.min_gap(solid, 5.0)
+                    if gap < 0.95:
+                        res11.append((f"arm{i}_lift{lift:+.1f}", nm, f"clearance {gap:.3f} mm, need >= 1.0"))
+            gs = arm_i.min_gap(shaft9, 5.0)
+            if gs < 0.15:
+                res11.append((f"arm{i}_lift{lift:+.1f}", "shaft9", f"bore clearance {gs:.3f} mm, need >= 0.15"))
+        res11 += _check_non_overlapping([(f"arm{i}", a) for i, a in enumerate(moved)] + fixed11)
+    results["11_dozer_axle_beams"] = res11
 
     ok = all(not v for v in results.values())
     return {"ok": ok, "crafts": results}

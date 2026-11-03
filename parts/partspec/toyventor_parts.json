@@ -34033,7 +34033,7 @@
         50.0,
         12.3
       ],
-      "volume_cm3": 17.19,
+      "volume_cm3": 17.21,
       "connectors": [
         {
           "id": "hub",
@@ -34211,7 +34211,7 @@
           "id": "P4_no_ledges",
           "level": "block",
           "result": "pass",
-          "detail": "0.3 mm2 of flat underside held on one side only; worst at z 6.15 mm near [23.5, -7.6]"
+          "detail": "0.0 mm2 of flat underside held on one side only"
         },
         {
           "id": "P2_bridge_span",
@@ -37592,7 +37592,7 @@
         25.6,
         27.1
       ],
-      "volume_cm3": 3.7,
+      "volume_cm3": 3.69,
       "connectors": [
         {
           "id": "kingpin_bore",
@@ -37662,10 +37662,10 @@
           "id": "wheel_stub",
           "kind": "pin",
           "gender": "M",
-          "interface": "shaft_drive",
+          "interface": "pin_free",
           "size_class": "pro",
-          "fit_class": "PIN_DRIVE",
-          "profile": "flats",
+          "fit_class": "PIN_FREE",
+          "profile": "round",
           "length_mm": 12.5,
           "frame": {
             "origin": [
@@ -37689,8 +37689,8 @@
       ],
       "safety": {
         "small_part_status": "small_part",
-        "min_enclosing_diameter_mm": 30.49,
-        "margin_pct": -4.0,
+        "min_enclosing_diameter_mm": 30.53,
+        "margin_pct": -3.8,
         "print_page_warning": [
           "Printed at home or by a print service. Not tested to toy-safety standards. Adult supervision required. Check for cracks, sharp edges and loose pieces before each use, and stop using anything that has broken.",
           "CHOKING HAZARD - Small parts. Not for children under 3 years."
@@ -37733,18 +37733,11 @@
             "gap_max_mm": 0.125
           },
           {
-            "pin": "shaft_drive",
+            "pin": "pin_free",
             "bore": "free",
             "fit": "free",
             "gap_min_mm": 0.2,
             "gap_max_mm": 0.2
-          },
-          {
-            "pin": "shaft_drive",
-            "bore": "fixed",
-            "fit": "press",
-            "gap_min_mm": 0.125,
-            "gap_max_mm": 0.125
           }
         ],
         "gap_min_mm": 0.125,
@@ -37838,13 +37831,13 @@
           "id": "S1_small_part_screen",
           "level": "warn",
           "result": "fail",
-          "detail": "small_part: best-fit diameter 30.49 mm vs 31.75 mm cylinder"
+          "detail": "small_part: best-fit diameter 30.53 mm vs 31.75 mm cylinder"
         },
         {
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "5 of 6 pin/bore pair(s) measured: gap +0.125 to +0.200 mm"
+          "detail": "4 of 5 pin/bore pair(s) measured: gap +0.125 to +0.200 mm"
         },
         {
           "id": "T2_fit_tolerance_window",
@@ -37894,7 +37887,7 @@
         25.6,
         27.1
       ],
-      "volume_cm3": 3.7,
+      "volume_cm3": 3.69,
       "connectors": [
         {
           "id": "kingpin_bore",
@@ -37964,10 +37957,10 @@
           "id": "wheel_stub",
           "kind": "pin",
           "gender": "M",
-          "interface": "shaft_drive",
+          "interface": "pin_free",
           "size_class": "pro",
-          "fit_class": "PIN_DRIVE",
-          "profile": "flats",
+          "fit_class": "PIN_FREE",
+          "profile": "round",
           "length_mm": 12.5,
           "frame": {
             "origin": [
@@ -37991,8 +37984,8 @@
       ],
       "safety": {
         "small_part_status": "small_part",
-        "min_enclosing_diameter_mm": 30.43,
-        "margin_pct": -4.2,
+        "min_enclosing_diameter_mm": 30.54,
+        "margin_pct": -3.8,
         "print_page_warning": [
           "Printed at home or by a print service. Not tested to toy-safety standards. Adult supervision required. Check for cracks, sharp edges and loose pieces before each use, and stop using anything that has broken.",
           "CHOKING HAZARD - Small parts. Not for children under 3 years."
@@ -38035,18 +38028,11 @@
             "gap_max_mm": 0.125
           },
           {
-            "pin": "shaft_drive",
+            "pin": "pin_free",
             "bore": "free",
             "fit": "free",
             "gap_min_mm": 0.2,
             "gap_max_mm": 0.2
-          },
-          {
-            "pin": "shaft_drive",
-            "bore": "fixed",
-            "fit": "press",
-            "gap_min_mm": 0.125,
-            "gap_max_mm": 0.125
           }
         ],
         "gap_min_mm": 0.125,
@@ -38140,13 +38126,13 @@
           "id": "S1_small_part_screen",
           "level": "warn",
           "result": "fail",
-          "detail": "small_part: best-fit diameter 30.43 mm vs 31.75 mm cylinder"
+          "detail": "small_part: best-fit diameter 30.54 mm vs 31.75 mm cylinder"
         },
         {
           "id": "T1_fit_as_designed",
           "level": "block",
           "result": "pass",
-          "detail": "5 of 6 pin/bore pair(s) measured: gap +0.125 to +0.200 mm"
+          "detail": "4 of 5 pin/bore pair(s) measured: gap +0.125 to +0.200 mm"
         },
         {
           "id": "T2_fit_tolerance_window",
@@ -38159,6 +38145,514 @@
           "level": "block",
           "result": "pending",
           "detail": "needs calibration print: printer surface offset must land in -0.062 to +0.088 mm"
+        },
+        {
+          "id": "F2_breakage",
+          "level": "block",
+          "result": "pending",
+          "detail": "needs break/impact test: no piece may fit the cylinder after failure"
+        },
+        {
+          "id": "M1_manifest_schema",
+          "level": "block",
+          "result": "pass",
+          "detail": ""
+        }
+      ]
+    },
+    {
+      "id": "kit_wheel_med_free",
+      "name": "Medium 1-TU Free-Hub Front Wheel",
+      "type": "Vehicle wheel",
+      "line": "pro",
+      "family": "wheel",
+      "size_class": "pro",
+      "stat": "Roll",
+      "behavior": "36 mm x 12.3 mm free-turning steered front wheel with a snap-on hub",
+      "prints": true,
+      "tags": [
+        "pro",
+        "steering",
+        "kitcard",
+        "wheel"
+      ],
+      "file": "toyventor_kit_wheel_med_free_P.stl",
+      "bbox_mm": [
+        36.0,
+        36.0,
+        12.3
+      ],
+      "volume_cm3": 10.31,
+      "connectors": [
+        {
+          "id": "hub",
+          "kind": "bore_grid",
+          "gender": "F",
+          "interface": "bore_grid",
+          "size_class": "pro",
+          "fit_class": "PIN",
+          "bore_class": "free",
+          "depth_mm": 12.3,
+          "lattice": "axis",
+          "frame": {
+            "origin": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "normal": [
+              0,
+              0,
+              1
+            ]
+          },
+          "grid": {
+            "nx": 1,
+            "ny": 1,
+            "pitch": 12.5,
+            "anchor": "corner"
+          }
+        }
+      ],
+      "safety": {
+        "small_part_status": "above_cylinder",
+        "min_enclosing_diameter_mm": 36.0,
+        "margin_pct": 13.4,
+        "print_page_warning": [
+          "Printed at home or by a print service. Not tested to toy-safety standards. Adult supervision required. Check for cracks, sharp edges and loose pieces before each use, and stop using anything that has broken.",
+          "Larger than the small-parts test size in our size check. This is not a safety certification, and it is not rated for children under 3 years."
+        ]
+      },
+      "print": {
+        "orientation": "bed = z0; lying flat, bores and pins along z",
+        "supports": false
+      },
+      "design_status": "verified",
+      "fit": {
+        "studs_measured": 2,
+        "design_gap_mm": 0.20000000000000018,
+        "pairs": [
+          {
+            "pin": "pin_free",
+            "bore": "free",
+            "fit": "free",
+            "gap_min_mm": 0.2,
+            "gap_max_mm": 0.2
+          },
+          {
+            "pin": "shaft_drive",
+            "bore": "free",
+            "fit": "free",
+            "gap_min_mm": 0.2,
+            "gap_max_mm": 0.2
+          },
+          {
+            "pin": "pin_friction",
+            "bore": "free",
+            "fit": "friction",
+            "measured": false
+          }
+        ],
+        "gap_min_mm": 0.2,
+        "gap_max_mm": 0.2,
+        "surface_offset_window_mm": [
+          -0.075,
+          0.1
+        ],
+        "residual_error_mm": 0.05
+      },
+      "checks": [
+        {
+          "id": "G1_watertight",
+          "level": "block",
+          "result": "pass",
+          "detail": ""
+        },
+        {
+          "id": "G2_winding",
+          "level": "block",
+          "result": "pass",
+          "detail": ""
+        },
+        {
+          "id": "G3_single_body",
+          "level": "block",
+          "result": "pass",
+          "detail": "1 body(ies)"
+        },
+        {
+          "id": "G4_on_bed",
+          "level": "block",
+          "result": "pass",
+          "detail": "zmin=0.000"
+        },
+        {
+          "id": "G5_fits_bed",
+          "level": "block",
+          "result": "pass",
+          "detail": "[36.0, 36.0, 12.3] vs [180, 180, 180]"
+        },
+        {
+          "id": "P1_no_supports",
+          "level": "block",
+          "result": "pass",
+          "detail": "0.0 mm2 steeper than 45 deg"
+        },
+        {
+          "id": "P4_no_ledges",
+          "level": "block",
+          "result": "pass",
+          "detail": "0.0 mm2 of flat underside held on one side only"
+        },
+        {
+          "id": "P2_bridge_span",
+          "level": "block",
+          "result": "pass",
+          "detail": "no cavity"
+        },
+        {
+          "id": "P3_wall_min",
+          "level": "info",
+          "result": "pass",
+          "detail": "wall 2.75 mm vs minimum 1.2"
+        },
+        {
+          "id": "I1_lattice",
+          "level": "warn",
+          "result": "pass",
+          "detail": "pitch [12.5] mm vs TU 12.5 mm"
+        },
+        {
+          "id": "I2_connectors_on_part",
+          "level": "block",
+          "result": "pass",
+          "detail": "1 connector(s)"
+        },
+        {
+          "id": "I4_bore_on_grid",
+          "level": "block",
+          "result": "pass",
+          "detail": "1 bore(s) on the lattice and present"
+        },
+        {
+          "id": "I5_pin_fits_bore",
+          "level": "block",
+          "result": "pass",
+          "detail": "1 pin/bore feature(s) match the interface"
+        },
+        {
+          "id": "S1_small_part_screen",
+          "level": "warn",
+          "result": "pass",
+          "detail": "above_cylinder: best-fit diameter 36.0 mm vs 31.75 mm cylinder"
+        },
+        {
+          "id": "T1_fit_as_designed",
+          "level": "block",
+          "result": "pass",
+          "detail": "2 of 3 pin/bore pair(s) measured: gap +0.200 to +0.200 mm"
+        },
+        {
+          "id": "T2_fit_tolerance_window",
+          "level": "warn",
+          "result": "pass",
+          "detail": "surface offset window -0.075 to +0.100 mm vs calibrated error +/-0.05"
+        },
+        {
+          "id": "F1_printed_fit",
+          "level": "block",
+          "result": "pending",
+          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.100 mm"
+        },
+        {
+          "id": "F2_breakage",
+          "level": "block",
+          "result": "pending",
+          "detail": "needs break/impact test: no piece may fit the cylinder after failure"
+        },
+        {
+          "id": "M1_manifest_schema",
+          "level": "block",
+          "result": "pass",
+          "detail": ""
+        }
+      ]
+    },
+    {
+      "id": "kit_wheel_giant_free",
+      "name": "Giant 1-TU Free-Hub Front Wheel",
+      "type": "Vehicle wheel",
+      "line": "pro",
+      "family": "wheel",
+      "size_class": "pro",
+      "stat": "Grip",
+      "behavior": "50 mm x 12.3 mm free-turning steered giant front wheel with a snap-on hub and 4 crank bores",
+      "prints": true,
+      "tags": [
+        "pro",
+        "steering",
+        "kitcard",
+        "wheel",
+        "tractor"
+      ],
+      "file": "toyventor_kit_wheel_giant_free_P.stl",
+      "bbox_mm": [
+        50.0,
+        50.0,
+        12.3
+      ],
+      "volume_cm3": 17.12,
+      "connectors": [
+        {
+          "id": "hub",
+          "kind": "bore_grid",
+          "gender": "F",
+          "interface": "bore_grid",
+          "size_class": "pro",
+          "fit_class": "PIN",
+          "bore_class": "free",
+          "depth_mm": 12.3,
+          "lattice": "axis",
+          "frame": {
+            "origin": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "normal": [
+              0,
+              0,
+              1
+            ]
+          },
+          "grid": {
+            "nx": 1,
+            "ny": 1,
+            "pitch": 12.5,
+            "anchor": "corner"
+          }
+        },
+        {
+          "id": "face_bores",
+          "kind": "bore_grid",
+          "gender": "F",
+          "interface": "bore_grid",
+          "size_class": "pro",
+          "fit_class": "PIN",
+          "bore_class": "free",
+          "depth_mm": 12.3,
+          "lattice": "centre",
+          "frame": {
+            "origin": [
+              -12.5,
+              -12.5,
+              0.0
+            ],
+            "normal": [
+              0,
+              0,
+              1
+            ]
+          },
+          "grid": {
+            "nx": 3,
+            "ny": 3,
+            "pitch": 12.5,
+            "anchor": "corner",
+            "omit_cells": [
+              [
+                0,
+                0
+              ],
+              [
+                0,
+                2
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                2,
+                0
+              ],
+              [
+                2,
+                2
+              ]
+            ]
+          }
+        }
+      ],
+      "safety": {
+        "small_part_status": "above_cylinder",
+        "min_enclosing_diameter_mm": 50.0,
+        "margin_pct": 57.5,
+        "print_page_warning": [
+          "Printed at home or by a print service. Not tested to toy-safety standards. Adult supervision required. Check for cracks, sharp edges and loose pieces before each use, and stop using anything that has broken.",
+          "Larger than the small-parts test size in our size check. This is not a safety certification, and it is not rated for children under 3 years."
+        ]
+      },
+      "print": {
+        "orientation": "bed = z0; lying flat, bores and pins along z",
+        "supports": false
+      },
+      "design_status": "verified",
+      "fit": {
+        "studs_measured": 10,
+        "design_gap_mm": 0.20000000000000018,
+        "pairs": [
+          {
+            "pin": "pin_free",
+            "bore": "free",
+            "fit": "free",
+            "gap_min_mm": 0.2,
+            "gap_max_mm": 0.2
+          },
+          {
+            "pin": "shaft_drive",
+            "bore": "free",
+            "fit": "free",
+            "gap_min_mm": 0.2,
+            "gap_max_mm": 0.2
+          },
+          {
+            "pin": "pin_friction",
+            "bore": "free",
+            "fit": "friction",
+            "measured": false
+          },
+          {
+            "pin": "pin_free",
+            "bore": "free",
+            "fit": "free",
+            "gap_min_mm": 0.2,
+            "gap_max_mm": 0.2
+          },
+          {
+            "pin": "shaft_drive",
+            "bore": "free",
+            "fit": "free",
+            "gap_min_mm": 0.2,
+            "gap_max_mm": 0.2
+          },
+          {
+            "pin": "pin_friction",
+            "bore": "free",
+            "fit": "friction",
+            "measured": false
+          }
+        ],
+        "gap_min_mm": 0.2,
+        "gap_max_mm": 0.2,
+        "surface_offset_window_mm": [
+          -0.075,
+          0.1
+        ],
+        "residual_error_mm": 0.05
+      },
+      "checks": [
+        {
+          "id": "G1_watertight",
+          "level": "block",
+          "result": "pass",
+          "detail": ""
+        },
+        {
+          "id": "G2_winding",
+          "level": "block",
+          "result": "pass",
+          "detail": ""
+        },
+        {
+          "id": "G3_single_body",
+          "level": "block",
+          "result": "pass",
+          "detail": "1 body(ies)"
+        },
+        {
+          "id": "G4_on_bed",
+          "level": "block",
+          "result": "pass",
+          "detail": "zmin=0.000"
+        },
+        {
+          "id": "G5_fits_bed",
+          "level": "block",
+          "result": "pass",
+          "detail": "[50.0, 50.0, 12.3] vs [180, 180, 180]"
+        },
+        {
+          "id": "P1_no_supports",
+          "level": "block",
+          "result": "pass",
+          "detail": "0.0 mm2 steeper than 45 deg"
+        },
+        {
+          "id": "P4_no_ledges",
+          "level": "block",
+          "result": "pass",
+          "detail": "0.0 mm2 of flat underside held on one side only"
+        },
+        {
+          "id": "P2_bridge_span",
+          "level": "block",
+          "result": "pass",
+          "detail": "no cavity"
+        },
+        {
+          "id": "P3_wall_min",
+          "level": "info",
+          "result": "pass",
+          "detail": "wall 2.75 mm vs minimum 1.2"
+        },
+        {
+          "id": "I1_lattice",
+          "level": "warn",
+          "result": "pass",
+          "detail": "pitch [12.5] mm vs TU 12.5 mm"
+        },
+        {
+          "id": "I2_connectors_on_part",
+          "level": "block",
+          "result": "pass",
+          "detail": "2 connector(s)"
+        },
+        {
+          "id": "I4_bore_on_grid",
+          "level": "block",
+          "result": "pass",
+          "detail": "5 bore(s) on the lattice and present"
+        },
+        {
+          "id": "I5_pin_fits_bore",
+          "level": "block",
+          "result": "pass",
+          "detail": "5 pin/bore feature(s) match the interface"
+        },
+        {
+          "id": "S1_small_part_screen",
+          "level": "warn",
+          "result": "pass",
+          "detail": "above_cylinder: best-fit diameter 50.0 mm vs 31.75 mm cylinder"
+        },
+        {
+          "id": "T1_fit_as_designed",
+          "level": "block",
+          "result": "pass",
+          "detail": "4 of 6 pin/bore pair(s) measured: gap +0.200 to +0.200 mm"
+        },
+        {
+          "id": "T2_fit_tolerance_window",
+          "level": "warn",
+          "result": "pass",
+          "detail": "surface offset window -0.075 to +0.100 mm vs calibrated error +/-0.05"
+        },
+        {
+          "id": "F1_printed_fit",
+          "level": "block",
+          "result": "pending",
+          "detail": "needs calibration print: printer surface offset must land in -0.075 to +0.100 mm"
         },
         {
           "id": "F2_breakage",
@@ -47619,6 +48113,218 @@
           "level": "warn",
           "result": "pass",
           "detail": "above_cylinder: best-fit diameter 90.99 mm vs 31.75 mm cylinder"
+        },
+        {
+          "id": "T1_fit_as_designed",
+          "level": "block",
+          "result": "pass",
+          "detail": "2 of 2 pin/bore pair(s) measured: gap +0.125 to +0.200 mm"
+        },
+        {
+          "id": "T2_fit_tolerance_window",
+          "level": "warn",
+          "result": "pass",
+          "detail": "surface offset window -0.062 to +0.088 mm vs calibrated error +/-0.05"
+        },
+        {
+          "id": "F1_printed_fit",
+          "level": "block",
+          "result": "pending",
+          "detail": "needs calibration print: printer surface offset must land in -0.062 to +0.088 mm"
+        },
+        {
+          "id": "F2_breakage",
+          "level": "block",
+          "result": "pending",
+          "detail": "needs break/impact test: no piece may fit the cylinder after failure"
+        },
+        {
+          "id": "M1_manifest_schema",
+          "level": "block",
+          "result": "pass",
+          "detail": ""
+        }
+      ]
+    },
+    {
+      "id": "kit_barbell_shaft_9tu",
+      "name": "9 TU Dozer Barbell Axle",
+      "type": "Drive shaft",
+      "line": "pro",
+      "family": "shaft",
+      "size_class": "pro",
+      "stat": "Spin",
+      "behavior": "112.5 mm axle for a bulldozer's lift arms",
+      "prints": true,
+      "tags": [
+        "vehicle",
+        "craft",
+        "kitcard",
+        "axle",
+        "shaft",
+        "construction"
+      ],
+      "file": "toyventor_kit_barbell_shaft_9tu_P.stl",
+      "bbox_mm": [
+        6.6,
+        112.5,
+        5.0
+      ],
+      "volume_cm3": 2.9,
+      "connectors": [
+        {
+          "id": "axis",
+          "kind": "pin",
+          "gender": "M",
+          "interface": "shaft_drive",
+          "size_class": "pro",
+          "fit_class": "PIN_DRIVE",
+          "profile": "flats",
+          "length_mm": 112.5,
+          "frame": {
+            "origin": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "normal": [
+              0,
+              0,
+              1
+            ]
+          },
+          "grid": {
+            "nx": 1,
+            "ny": 1,
+            "pitch": 12.5,
+            "anchor": "corner"
+          }
+        }
+      ],
+      "safety": {
+        "small_part_status": "above_cylinder",
+        "min_enclosing_diameter_mm": 102.8,
+        "margin_pct": 223.8,
+        "print_page_warning": [
+          "Printed at home or by a print service. Not tested to toy-safety standards. Adult supervision required. Check for cracks, sharp edges and loose pieces before each use, and stop using anything that has broken.",
+          "Larger than the small-parts test size in our size check. This is not a safety certification, and it is not rated for children under 3 years."
+        ]
+      },
+      "print": {
+        "orientation": "bed = z0; lying on a flat, axis horizontal",
+        "supports": false,
+        "rotation_deg": [
+          90,
+          0,
+          0
+        ]
+      },
+      "design_status": "verified",
+      "fit": {
+        "studs_measured": 2,
+        "design_gap_mm": 0.125,
+        "pairs": [
+          {
+            "pin": "shaft_drive",
+            "bore": "free",
+            "fit": "free",
+            "gap_min_mm": 0.2,
+            "gap_max_mm": 0.2
+          },
+          {
+            "pin": "shaft_drive",
+            "bore": "fixed",
+            "fit": "press",
+            "gap_min_mm": 0.125,
+            "gap_max_mm": 0.125
+          }
+        ],
+        "gap_min_mm": 0.125,
+        "gap_max_mm": 0.2,
+        "surface_offset_window_mm": [
+          -0.062,
+          0.088
+        ],
+        "residual_error_mm": 0.05
+      },
+      "checks": [
+        {
+          "id": "G1_watertight",
+          "level": "block",
+          "result": "pass",
+          "detail": ""
+        },
+        {
+          "id": "G2_winding",
+          "level": "block",
+          "result": "pass",
+          "detail": ""
+        },
+        {
+          "id": "G3_single_body",
+          "level": "block",
+          "result": "pass",
+          "detail": "1 body(ies)"
+        },
+        {
+          "id": "G4_on_bed",
+          "level": "block",
+          "result": "pass",
+          "detail": "zmin=0.000"
+        },
+        {
+          "id": "G5_fits_bed",
+          "level": "block",
+          "result": "pass",
+          "detail": "[6.6, 112.5, 5.0] vs [180, 180, 180]"
+        },
+        {
+          "id": "P1_no_supports",
+          "level": "block",
+          "result": "pass",
+          "detail": "0.0 mm2 steeper than 45 deg"
+        },
+        {
+          "id": "P4_no_ledges",
+          "level": "block",
+          "result": "pass",
+          "detail": "0.0 mm2 of flat underside held on one side only"
+        },
+        {
+          "id": "P2_bridge_span",
+          "level": "block",
+          "result": "pass",
+          "detail": "no cavity"
+        },
+        {
+          "id": "P3_wall_min",
+          "level": "info",
+          "result": "pass",
+          "detail": "no bores"
+        },
+        {
+          "id": "I1_lattice",
+          "level": "warn",
+          "result": "pass",
+          "detail": "pitch [12.5] mm vs TU 12.5 mm"
+        },
+        {
+          "id": "I2_connectors_on_part",
+          "level": "block",
+          "result": "pass",
+          "detail": "1 connector(s)"
+        },
+        {
+          "id": "I5_pin_fits_bore",
+          "level": "block",
+          "result": "pass",
+          "detail": "1 pin/bore feature(s) match the interface"
+        },
+        {
+          "id": "S1_small_part_screen",
+          "level": "warn",
+          "result": "pass",
+          "detail": "above_cylinder: best-fit diameter 102.8 mm vs 31.75 mm cylinder"
         },
         {
           "id": "T1_fit_as_designed",

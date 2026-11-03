@@ -255,6 +255,8 @@ Each size has its own clearance value (stud_small.fit, stud_large.fit). Both sta
 | `pro_steer_bridge` | snap | small | verified | Balance | `under_sockets` socket_grid/F 2x2; `kingpins` bore_grid/F 2x1 |
 | `pro_steer_knuckle_l` | pro | pro | verified | Balance | `kingpin_bore` bore_grid/F 1x1; `tierod_bore` bore_grid/F 1x1; `wheel_stub` pin/M 1x1 |
 | `pro_steer_knuckle_r` | pro | pro | verified | Balance | `kingpin_bore` bore_grid/F 1x1; `tierod_bore` bore_grid/F 1x1; `wheel_stub` pin/M 1x1 |
+| `kit_wheel_med_free` | pro | pro | verified | Roll | `hub` bore_grid/F 1x1 |
+| `kit_wheel_giant_free` | pro | pro | verified | Grip | `hub` bore_grid/F 1x1; `face_bores` bore_grid/F 3x3 |
 | `pro_steer_rack` | pro | pro | verified | Balance | `tierod_bores` bore_grid/F 2x1 |
 | `pro_tie_rod_link` | pro | pro | verified | Balance | `rack_stub` pin/M 1x1; `pivot_bore` bore_grid/F 1x1 |
 | `pin_free_tu03` | pro | pro | verified | Spin | `axis` pin/M 1x1 |
@@ -294,6 +296,7 @@ Each size has its own clearance value (stud_small.fit, stud_large.fit). Both sta
 | `pro_pilot_pin` | pro | pro | verified | Balance | `axis` pin/M 1x1 |
 | `mech_sill_duct` | snap | small | verified | Sturdiness | `under_sockets` socket_grid/F 4x3 |
 | `kit_barbell_shaft_wide` | pro | pro | verified | Spin | `axis` pin/M 1x1 |
+| `kit_barbell_shaft_9tu` | pro | pro | verified | Spin | `axis` pin/M 1x1 |
 | `kit_drum_roller` | pro | pro | verified | Grip | `hub` bore_grid/F 1x1 |
 
 ## Building a design
@@ -499,6 +502,8 @@ After each part is built, the generator seats it on its matching reference part,
 | `pro_steer_bridge` | 6 | +0.048 to +0.125 | 0.050 | -0.062 to +0.074 |
 | `pro_steer_knuckle_l` | 5 | +0.125 to +0.200 | 0.125 | -0.062 to +0.088 |
 | `pro_steer_knuckle_r` | 5 | +0.125 to +0.200 | 0.125 | -0.062 to +0.088 |
+| `kit_wheel_med_free` | 2 | +0.200 to +0.200 | 0.200 | -0.075 to +0.100 |
+| `kit_wheel_giant_free` | 10 | +0.200 to +0.200 | 0.200 | -0.075 to +0.100 |
 | `pro_steer_rack` | 4 | +0.200 to +0.200 | 0.200 | -0.075 to +0.100 |
 | `pro_tie_rod_link` | 3 | +0.200 to +0.200 | 0.200 | -0.075 to +0.100 |
 | `pin_free_tu03` | 1 | +0.200 to +0.200 | 0.200 | -0.075 to +0.100 |
@@ -538,6 +543,7 @@ After each part is built, the generator seats it on its matching reference part,
 | `pro_pilot_pin` | 1 | +0.200 to +0.200 | 0.200 | -0.075 to +0.100 |
 | `mech_sill_duct` | 8 | +0.048 to +0.048 | 0.050 | -0.076 to +0.074 |
 | `kit_barbell_shaft_wide` | 2 | +0.125 to +0.200 | 0.125 | -0.062 to +0.088 |
+| `kit_barbell_shaft_9tu` | 2 | +0.125 to +0.200 | 0.125 | -0.062 to +0.088 |
 | `kit_drum_roller` | 1 | +0.125 to +0.125 | 0.125 | -0.062 to +0.088 |
 
 Rules: do not change a stud, tube or `fit` number without re-running `generate` and `build_check`; a fit change moves every window. A fit that passes here is a design-time result. Never report it as a printed fit; `F1_printed_fit` stays pending until a calibration print lands inside the window.
@@ -595,11 +601,11 @@ python3 toyventor_index.py out checks S1_small_part_screen
 
 | Interface | Parts using it | Mating pairs |
 | --- | --- | --- |
-| `bore_grid` | `adapter_snap_pro`, `beam_ang45_tu05`, `beam_l_tu03x03`, `beam_l_tu05x03`, `beam_str_tu03`, `beam_str_tu05`, `beam_str_tu07`, `beam_str_tu10`, `beam_str_tu14`, `beam_t_tu05x03`, `bushing_half`, `bushing_tu01`, `char_head_chibi`, `char_head_jumbo`, `char_head_kid`, `char_head_tall`, `cross_connector_tu01`, `forge_mount_pro`, `gear_rack_tu05`, `gear_ring_z40`, `gear_spur_z10`, `gear_spur_z15`, `gear_spur_z20`, `gear_spur_z25`, `gear_spur_z30`, `hinge_tu02`, `kit_aero_wedge`, `kit_clevis_spine`, `kit_drum_roller`, `kit_keel_base`, `kit_rotor_blade`, `kit_tilting_tub`, `kit_turntable`, `kit_wheel_giant`, `kit_wheel_med`, `mech_bat_door_screw`, `mech_brain_lid`, `mech_drive_tray`, `mech_servo_lid`, `mech_servo_mount`, `mech_servo_pinion_z10`, `mom_band_core_lid`, `mom_band_spool_pawl`, `mom_bellows_base`, `mom_bellows_leaf`, `mom_bumper_trigger`, `mom_flywheel_lid`, `mom_flywheel_rotor`, `mom_flywheel_tray`, `mom_jet_valve_body`, `mom_latch_pawl`, `mom_nozzle_set`, `mom_pto_gear_z10`, `mom_ripcord_rack_150`, `mom_slam_base`, `pro_fork_rake_adpt`, `pro_steer_bridge`, `pro_steer_knuckle_l`, `pro_steer_knuckle_r`, `pro_steer_rack`, `pro_steer_wheel`, `pro_tie_rod_link`, `pro_tub_hinge`, `prop_skateboard_deck`, `racer_axle_block`, `racer_wheel`, `veh_car_chassis`, `veh_scooter_frame`, `veh_truck_chassis`, `veh_wheel_moto`, `veh_wheel_offroad`, `veh_wheel_sport`, `wheel_tu04`, `wheel_tu06` | 0 |
+| `bore_grid` | `adapter_snap_pro`, `beam_ang45_tu05`, `beam_l_tu03x03`, `beam_l_tu05x03`, `beam_str_tu03`, `beam_str_tu05`, `beam_str_tu07`, `beam_str_tu10`, `beam_str_tu14`, `beam_t_tu05x03`, `bushing_half`, `bushing_tu01`, `char_head_chibi`, `char_head_jumbo`, `char_head_kid`, `char_head_tall`, `cross_connector_tu01`, `forge_mount_pro`, `gear_rack_tu05`, `gear_ring_z40`, `gear_spur_z10`, `gear_spur_z15`, `gear_spur_z20`, `gear_spur_z25`, `gear_spur_z30`, `hinge_tu02`, `kit_aero_wedge`, `kit_clevis_spine`, `kit_drum_roller`, `kit_keel_base`, `kit_rotor_blade`, `kit_tilting_tub`, `kit_turntable`, `kit_wheel_giant`, `kit_wheel_giant_free`, `kit_wheel_med`, `kit_wheel_med_free`, `mech_bat_door_screw`, `mech_brain_lid`, `mech_drive_tray`, `mech_servo_lid`, `mech_servo_mount`, `mech_servo_pinion_z10`, `mom_band_core_lid`, `mom_band_spool_pawl`, `mom_bellows_base`, `mom_bellows_leaf`, `mom_bumper_trigger`, `mom_flywheel_lid`, `mom_flywheel_rotor`, `mom_flywheel_tray`, `mom_jet_valve_body`, `mom_latch_pawl`, `mom_nozzle_set`, `mom_pto_gear_z10`, `mom_ripcord_rack_150`, `mom_slam_base`, `pro_fork_rake_adpt`, `pro_steer_bridge`, `pro_steer_knuckle_l`, `pro_steer_knuckle_r`, `pro_steer_rack`, `pro_steer_wheel`, `pro_tie_rod_link`, `pro_tub_hinge`, `prop_skateboard_deck`, `racer_axle_block`, `racer_wheel`, `veh_car_chassis`, `veh_scooter_frame`, `veh_truck_chassis`, `veh_wheel_moto`, `veh_wheel_offroad`, `veh_wheel_sport`, `wheel_tu04`, `wheel_tu06` | 0 |
 | `forge_mount.attach` | `forge_mount_pro`, `forge_mount_ring`, `forge_mount_ring_s` | 0 |
-| `pin_free` | `mech_n20_pinion_z10`, `mom_jet_slide_valve`, `pin_free`, `pin_free_tu03`, `pro_pilot_pin`, `pro_tie_rod_link`, `veh_steering_wheel` | 504 |
-| `pin_friction` | `pin_friction`, `pin_friction_long` | 144 |
-| `shaft_drive` | `char_faceplate`, `char_faceplate_flat`, `char_faceplate_vinyl`, `kit_barbell_shaft`, `kit_barbell_shaft_wide`, `kit_spinner_pin`, `kit_yoke_hbar`, `mom_slam_plunger`, `mom_spindle_shaft`, `mom_wind_key`, `pro_captive_pin_28`, `pro_steer_column`, `pro_steer_knuckle_l`, `pro_steer_knuckle_r`, `prop_broom`, `prop_flag`, `prop_guitar`, `prop_hammer`, `prop_magnifier`, `prop_maracas`, `prop_mop`, `prop_paint_roller`, `prop_screwdriver`, `prop_scrub_brush`, `prop_star_shield`, `prop_trumpet`, `prop_vacuum`, `prop_wrench`, `racer_axle`, `shaft_tu03`, `shaft_tu05`, `shaft_tu07`, `veh_handlebar_fork` | 3432 |
+| `pin_free` | `mech_n20_pinion_z10`, `mom_jet_slide_valve`, `pin_free`, `pin_free_tu03`, `pro_pilot_pin`, `pro_steer_knuckle_l`, `pro_steer_knuckle_r`, `pro_tie_rod_link`, `veh_steering_wheel` | 675 |
+| `pin_friction` | `pin_friction`, `pin_friction_long` | 150 |
+| `shaft_drive` | `char_faceplate`, `char_faceplate_flat`, `char_faceplate_vinyl`, `kit_barbell_shaft`, `kit_barbell_shaft_9tu`, `kit_barbell_shaft_wide`, `kit_spinner_pin`, `kit_yoke_hbar`, `mom_slam_plunger`, `mom_spindle_shaft`, `mom_wind_key`, `pro_captive_pin_28`, `pro_steer_column`, `prop_broom`, `prop_flag`, `prop_guitar`, `prop_hammer`, `prop_magnifier`, `prop_maracas`, `prop_mop`, `prop_paint_roller`, `prop_screwdriver`, `prop_scrub_brush`, `prop_star_shield`, `prop_trumpet`, `prop_vacuum`, `prop_wrench`, `racer_axle`, `shaft_tu03`, `shaft_tu05`, `shaft_tu07`, `veh_handlebar_fork` | 3424 |
 | `stud_large` | `big_blue_brick`, `brick_l_2x4`, `cloud_wings_l`, `forge_mount_ring`, `glow_capsule_l`, `pebble_armor_shell_l`, `plate_l_2x2`, `plate_l_2x4`, `slope_l_2x2`, `spin_capsule`, `tile_l_2x2`, `waddle_tail`, `zoom_capsule` | 60 |
 | `stud_small` | `adapter_snap_pro`, `bounce_capsule_s`, `brick_s_2x2`, `bumper_horns`, `char_head_alien`, `char_head_bear`, `char_head_cat`, `char_head_chibi`, `char_head_dragon`, `char_head_fox`, `char_head_imp`, `char_head_jumbo`, `char_head_kid`, `char_head_tall`, `char_legs_seated`, `cloud_wings`, `dome_s_2x2`, `forge_mount_ring_s`, `glow_capsule`, `hair_bob`, `hair_bowl`, `hair_curly`, `hair_long_layered`, `hair_low_bun`, `hair_mohawk`, `hair_pigtails`, `hair_pixie`, `hair_pompadour`, `hair_ponytail`, `hair_shag`, `hair_short_swept`, `hair_side_pony`, `hair_side_sweep`, `hair_slick`, `hair_spiky`, `hair_swoosh`, `hair_top_bun`, `hair_twin_braids`, `hat_ballcap`, `hat_beanie`, `hat_cowboy`, `hat_hardhat`, `hat_pirate`, `hat_ranger`, `hat_tophat`, `kit_aero_wedge`, `kit_booster_pod`, `kit_clevis_spine`, `kit_foil_wing`, `kit_keel_base`, `kit_scoop_blade`, `kit_skid_runner`, `kit_tilting_tub`, `kit_turntable`, `kit_windscreen`, `mech_brain_lid`, `mech_brain_tray`, `mech_drive_lid`, `mech_drive_tray`, `mech_servo_mount`, `mech_sill_duct`, `mini_plate`, `mom_band_core_lid`, `mom_band_core_tray`, `mom_bellows_base`, `mom_bellows_leaf`, `mom_flywheel_lid`, `mom_flywheel_tray`, `mom_jet_valve_body`, `pack_explorer`, `pebble_armor_shell`, `plate_s_2x2`, `plate_s_4x4`, `pointy_ears`, `pro_steer_bridge`, `prop_skateboard_deck`, `racer_axle_block`, `racer_bull_bar`, `racer_hood_scoop`, `racer_light_bar`, `racer_roof_rack`, `racer_spoiler`, `racer_twin_exhaust`, `ridge_fin`, `robot_arms_grabber`, `robot_back_jetpack`, `robot_head_scout`, `robot_head_visor`, `robot_legs_stomper`, `robot_torso_core`, `skin_aero_cowl`, `skin_cargo_shroud`, `skin_windscreen`, `slope_s_2x2`, `tile_s_2x2`, `veh_cab_roof_cover`, `veh_car_chassis`, `veh_car_hood_cover`, `veh_moto_cowling`, `veh_scooter_fairing`, `veh_scooter_frame`, `veh_truck_bed_cover`, `veh_truck_chassis`, `waddle_tail_s`, `wobble_hat`, `zoom_capsule_s` | 6402 |
 
@@ -610,7 +616,7 @@ The top 30 Snap parts and the top 30 Pro parts, every one verified by the genera
 | Line | Verified | Built, not verified | Target |
 | --- | --- | --- | --- |
 | Snap | 120 | 0 | 120 |
-| Pro | 87 | 0 | 87 |
+| Pro | 90 | 0 | 90 |
 
 Ready to build now: none.
 

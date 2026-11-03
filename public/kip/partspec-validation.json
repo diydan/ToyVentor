@@ -307,6 +307,12 @@
    "verdict": "pass",
    "brim_width_mm": 0
   },
+  "toyventor_kit_barbell_shaft_9tu_P.stl": {
+   "part": "kit_barbell_shaft_9tu",
+   "sha256": "c59414399ea19c6beb9084dc120eabea5beab11a1d00c091e7226a135fac605b",
+   "verdict": "pass",
+   "brim_width_mm": 0
+  },
   "toyventor_kit_barbell_shaft_wide_P.stl": {
    "part": "kit_barbell_shaft_wide",
    "sha256": "30d717a792fd79b5f1815fd8dc9d9826fd20e7b3326599d30ba1a7e8ac14663c",
@@ -381,13 +387,25 @@
   },
   "toyventor_kit_wheel_giant_P.stl": {
    "part": "kit_wheel_giant",
-   "sha256": "a855503748455cf3f76f7d72a20a006cf00d95fec17e372f97088f96b70237c1",
+   "sha256": "b054776c02e2f6be9b68f3bc77102c034c4c278c833a00d213e06c5dbb377dc5",
+   "verdict": "pass",
+   "brim_width_mm": 0
+  },
+  "toyventor_kit_wheel_giant_free_P.stl": {
+   "part": "kit_wheel_giant_free",
+   "sha256": "b8438ad47a03997631a2467ce863b1c0474424f26103efc667257e6c6512e6fe",
    "verdict": "pass",
    "brim_width_mm": 0
   },
   "toyventor_kit_wheel_med_P.stl": {
    "part": "kit_wheel_med",
    "sha256": "676c762b51d9b72aa0befddbbec5a78da32575c4e698a2fa65ea1ea2a4ede59f",
+   "verdict": "pass",
+   "brim_width_mm": 0
+  },
+  "toyventor_kit_wheel_med_free_P.stl": {
+   "part": "kit_wheel_med_free",
+   "sha256": "53d367efb9f2bb40ef6f90a2a68148f407e0c093d4481eff101f66597bec0aa1",
    "verdict": "pass",
    "brim_width_mm": 0
   },
@@ -633,13 +651,13 @@
   },
   "toyventor_pro_steer_knuckle_l_P.stl": {
    "part": "pro_steer_knuckle_l",
-   "sha256": "fd1cb7c8fadd70f36aa0a0790a213818c905e5f8f6205ac5a91351017cc794db",
+   "sha256": "a08048523f4b2733db0b2bddb67c9c67cfe4b315bf04c0e8e1f407b442a47a66",
    "verdict": "pass_with_warnings",
    "brim_width_mm": 0
   },
   "toyventor_pro_steer_knuckle_r_P.stl": {
    "part": "pro_steer_knuckle_r",
-   "sha256": "286a816197247c1c0be1e2b0671f31df90020d494d1d41d3a4e4d1248e0d4fb6",
+   "sha256": "c7f8abf0ebe710379e9a046ec7a7a8b07d47d8a36fcaf6143812164807472bb7",
    "verdict": "pass_with_warnings",
    "brim_width_mm": 0
   },
