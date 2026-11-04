@@ -46,6 +46,8 @@ SELF_TEXT_KEY=
 SELF_TEXT_MODEL=
 SELF_TEXT_API=
 SELF_TEXT_REASONING=
+# "tuned" sends the SHORT prompt (shared/forgeTunePrompt.ts) to a model trained on it (scripts/tuning/README.md). Leave empty for the base Glimmer: it needs the long prompt.
+SELF_TEXT_PROMPT=
 SELF_SEGMENT_URL=
 SELF_SEGMENT_KEY=
 SELF_IMAGE_URL=

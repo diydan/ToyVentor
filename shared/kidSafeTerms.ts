@@ -51,7 +51,7 @@ export const AGE_TERMS: Record<TermLang, readonly string[]> = {
   it: ["horror*", "incubo", "incubi", "uccid*", "uccis*", "ammazz*", "assassin*", "omicid*", "morto", "morta", "morti", "morte", "sangue", "sanguin*", "pistola*", "fucile*", "arma", "armi", "coltell*", "pugnale*", "odio", "odiare", "odiato", "nudo", "nuda", "nudi", "sexy", "sessual*", "erotic*", "droga*", "droghe", "cocaina", "birra*", "vino*", "vodka", "sigaret*", "guerra*"],
   pt: ["assombrad*", "horror*", "pesadelo*", "matar*", "assassin*", "morto", "morta", "mortos", "mortas", "morte", "sangue", "sangrent*", "pistola*", "arma", "armas", "faca", "facas", "canivete*", "punhal*", "odio", "odiar", "odiado", "nudez", "sexy", "sexual*", "erotic*", "droga*", "cocaina", "cerveja*", "vinho*", "vodka", "cigarro*", "guerra*"],
   // Turkish keeps ç ş ğ ı ö ü (see shared/kidSafeNormalize.ts); "savaş" is listed word by word because "savaşçı" is a warrior
-  tr: ["kabus*", "öldür*", "katil*", "cinayet*", "ölü", "ölüm*", "silah*", "tabanca*", "tüfek*", "bıçak*", "nefret*", "çıplak*", "seksi", "cinsel*", "erotik*", "uyuşturucu*", "eroin*", "kokain*", "bira", "şarap*", "votka", "sigara*", "savaş", "savaşı", "savaşlar", "savaşta"],
+  tr: ["kabus*", "öldür*", "katil*", "cinayet*", "ölü", "ölüm*", "silah*", "tabanca*", "tüfek*", "bıçak*", "nefret*", "kan", "kanl*", "kanay*", "çıplak*", "seksi", "cinsel*", "erotik*", "uyuşturucu*", "eroin*", "kokain*", "bira", "şarap*", "votka", "sigara*", "savaş", "savaşı", "savaşlar", "savaşta"],
 };
 
 export interface TermHit {

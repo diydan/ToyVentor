@@ -17,9 +17,9 @@ in the sections it names. Nothing is deployed.
 | F4, F5, F6, A2, A4 to A6 | Not built | "Phases" |
 | Model switch (`worker/modelBackend.ts`) | Built: hosted, self or off, per capability, fails closed. On it: text to part, Create mode, Describe & Build, and SAM, the image model and the photo-nouns look (hosted only: no adapter for our own models yet) | decision 0008, "The switch" |
 | Glimmer v1 (base, prompted, Modal L40S) | Serving and measured; not the default | 33 of 37 printable, all 33 returned printable, 4 endpoint failures, 1 brand slip ("Self-hosted Glimmer replaces Spark") |
-| Glimmer v2 (tuned) | Not started | G2 onward, after the hackathon |
+| Glimmer v2 (tuned) | **Preparation built and tested; nothing trained** | "Tuning readiness": `npm run tune:check`, runbook `scripts/tuning/README.md` |
 | Under-18 terms | Decision recorded: hosted for the Nov 4 demo only (adults operating), self-hosted for child-facing use | decision 0008 |
-| Deployment | None. Open: Cloudflare rate-limit rules on `/api/forge/make` and `/api/forge/warm`, the `VOICE_SIGNING_KEY` secret, a daemon the deployed Worker can reach | "Real-stack check" runbook |
+| Deployment | None verified from here. **Commit `5c5b383` (Dan) adds the maker as a Cloudflare Container behind a service binding**, which would answer the old gap that the daemon only runs on one Mac; I have not checked that it is deployed or works. Open: Cloudflare rate-limit rules on `/api/forge/make` and `/api/forge/warm`, the `VOICE_SIGNING_KEY` secret, a daemon the deployed Worker can reach | "Real-stack check" runbook |
 
 ## Rule
 
@@ -646,6 +646,39 @@ prompted Glimmer is below Spark on the eval, too slow or too dear). New order: (
 audit and the "AI-made" label done before any child uses it; (S4) the other routes that call the Meta API (`/api/describe`, `/api/muse/spark`, and the photo scans, which use SAM 3.1 through
 the same API, so need their own answer); (S5) tuning, only if S1 says so. The fallback chain becomes tuned adapter, base Glimmer, ready-made catalog: hosted Spark leaves it for
 children (it stays a developer tool for adult-written eval prompts). The Recipe v1 JSON Schema moves from "nice for tuning" to "needed for constrained decoding". **Serving v1 is cheaper than this spec assumed (found 2026-11-03):** Meta publishes an official, ungated, Apache 2.0 GGUF of Glimmer (`meta-models/Muse-Glimmer-30B-GGUF`: a 16.8 GB 4-bit build that fits a 24 GB GPU, plus a 1.6 GB drafter for speculative decoding) that runs in llama.cpp's `llama-server` (build b10353 or newer) with an OpenAI-compatible API; the card's own figure is about 75 tokens a second on one RTX 5090 (233 with the drafter). So the host is an L40S or A10 on Modal, not an A100-80GB. Glimmer takes its reasoning strength from the system prompt (`Reasoning strength: low`), not an API parameter, and returns its thinking in `reasoning_content`, the answer in `content`; `worker/modelBackend.ts` sends and reads accordingly. The Modal app is `scripts/modal/glimmer_server.py` (written to the Modal 1.2.6 client installed here, `@app.cls` + `@modal.web_server`; never run; the `diydan82` workspace is logged in). v1 = base Glimmer prompted; v2 = the tuned model, after the hackathon. **Measured 2026-11-04 (40 wishes, real Worker code and daemon, base Glimmer on a Modal L40S):** of the 37 that should make a part, 33 returned printable parts (89%) and all 33 returned were printable (32 first call, 1 repaired, mean 1.03 calls), median 25.7 s, p90 41 s; Spark's saved results: 36 of 37 (97%), mean 1.08 calls, median 27 to 31 s. Four wishes got no model answer (three HTTP 500s inside 1.5 s, one 55 s timeout; cause unread, the Modal logs were not available to me), and the Worker does not retry. One brand slip ("mickey mouse ears" named "Mickey Style Ears Hat"; the filter knows only "mickey mouse"). Injection and contact-detail wishes harmless. Quality is therefore at Spark's level on this set; reliability is the gap. Create mode, Describe & Build and vision are untested on Glimmer.
+
+### Tuning readiness (v2 candidate; built 2026-11-04; **nothing is trained**)
+
+Dan's brief: "even if we don't execute the training I want the repo to show that we have done all the prep and everything needed", and his point that child safety may be the strongest reason for a custom model.
+**A correction of mine first:** earlier I wrote that safety "is not a reason to tune". That was too flat. Tuning alone does not make a model safe (published research reports that even harmless fine-tuning
+can erode safety training, and Glimmer's card is silent on whether Meta's survives: background knowledge, not checked here), but a task-specialised model whose training data is safe by construction and whose
+behaviour is judged by a child-specific red-team set, against the base model, is a legitimate part of the child-safety case, and is the documented mitigation Meta's card asks a deployer for under 18. The rationale
+therefore has three parts, each to be shown by numbers and not assumed: **(1) child safety by construction, measured; (2) a narrow model for a narrow job; (3) speed and cost** (the base model reads about 3,600
+prompt tokens per call and spends about 70% of its output thinking). Full runbook: `scripts/tuning/README.md`; draft model card: `scripts/tuning/MODEL_CARD.md`.
+
+**What is built (every piece tested; run `npm run tune:check`):**
+
+| Piece | Where | Proven by |
+| --- | --- | --- |
+| The short prompt a tuned model trains on and is served with, pinned by a hash, and a default-off switch to serve it (`SELF_TEXT_PROMPT=tuned`, never for the hosted API) | `shared/forgeTunePrompt.ts`, `worker/modelBackend.ts`, `worker/forgeMake.ts` | `tests/tuning-prompt.test.ts`, `tests/forge-make.test.ts` |
+| Wish generator: deterministic English seeds, the other six languages written by our own model, every wish through the production intake, stable train/val/heldout split by hash, evaluation wishes and near-duplicates kept out | `scripts/tuning/lib/wishgen.ts`, `wishes.ts` | `tests/tuning-wishgen.test.ts` (14) |
+| Sampler: sends wishes through the REAL Worker, daemon and gates; **refuses anything but our own model with the base prompt** (never hosted Spark: Model API terms 10.1 ix), never samples heldout, resumable, spending brake, cost estimate | `scripts/tuning/lib/sampling.ts`, `lib/inprocessWorker.ts`, `sample.ts` | `tests/tuning-dataset.test.ts` (18; the guard proven by breaking it) |
+| Dataset builder: a record is kept only if wish, answer and part passed every production check (allowlist, unsafe terms and brands in seven languages, no generic name, seven names, printable); split files, leakage check, manifest with hashes and licence statements, datasheet | `scripts/tuning/lib/dataset.ts`, `build-dataset.ts` | same file; filters proven by breaking them |
+| Trainer: Modal job, QLoRA with Unsloth, settings from Unsloth's Glimmer guide; **its dataset guards run for real in the tests** (refuses a stub manifest, leaks, a tampered file, a prompt-version mismatch); `keep` (answer only, default) and `skip` (also trains answering without thinking) variants | `scripts/modal/glimmer_train.py` | `tests/tuning-train.test.ts` (14) |
+| Evaluation and the **decision rule**, fixed before any model exists: safety gates (red-team pass rate, no prompt leakage, name filters not fixing more answers than for the base, no more unanswered wishes), quality gates, then the goal (speed, safety or both) | `scripts/tuning/lib/compare.ts`, `eval.ts` | `tests/tuning-compare.test.ts` (15) |
+| Seed red-team set (75 cases, seven languages, known gaps listed) and the acceptance set as a repo fixture | `tests/fixtures/forge-redteam.json`, `forge-acceptance-wishes.json` | `tests/tuning-redteam.test.ts` |
+| A worked example of the pipeline's output, from canned recipes and labelled STUB (the trainer refuses it) | `scripts/tuning/data/example/` | `tests/tuning-readiness.test.ts` |
+| Readiness list: what exists, what has been run | `npm run tune:check` | `tests/tuning-readiness.test.ts` |
+
+**What the preparation found, on the way:** the red-team seed caught a real gap (Turkish had no word for blood in the age-fit list; fixed); Unsloth's notebook shows Glimmer needs `transformers==5.15.0`, uses a custom
+chat format with a private thinking channel (so the loss mask decides whether tuning disturbs its thinking: the default leaves it alone), and says its own GGUF export fails for Glimmer; its notebook is LGPL-3.0, so the training script
+is our own code that credits it.
+
+**Unknowns that could stop a run, none tested:** whether the trainer works first time on Modal (it has never touched a GPU); serving a tuned model on llama.cpp (convert the merged weights, or a LoRA over Meta's GGUF; vLLM unconfirmed);
+whether the HF and llama.cpp chat templates render identical text (a parity check is in the runbook); whether the speed booster (the drafter, 58% hit rate) still helps a tuned model; how fine-tuning changes safety behaviour.
+**Not generated:** failure-to-fix (repair) pairs; a JSON Schema for constrained decoding. **Still open from before:** the native read of the six translated word lists; the signed risk assessment.
+
+**What may be claimed at each point** is a table in the runbook. Today: that the pipeline is built, tested and guarded; not that anything was trained, faster or safer.
 
 ## Phases
 
