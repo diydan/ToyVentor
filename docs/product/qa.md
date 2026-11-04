@@ -142,7 +142,35 @@ Backups if a step fails (say so, do not improvise): no service: cached build; ca
 
 Run it against the live site (no Mac server needed). To test a build that is not deployed: `npx vite build && rm -f dist/toyventor/.dev.vars && npm run preview -- --host --port 5242`, open `http://<Mac IP>:5242/` on the phone on the same Wi-Fi (`ipconfig getifaddr en0` for the IP), and stop the server afterwards. Use a private tab. Write down the device: model ____ OS ____ browser ____ silent switch ____ volume ____.
 
-Setup: hold the gear 1.2 s, PIN, set Age to the child's band (2 to 3 for Little ones), close back to the stage.
+### 5.0 Robot baseline (measured 2026-11-03)
+
+The robot has already measured the stage-to-level path and the landscape
+layout, so part 5 starts from facts, not from a blank sheet. Headless Chrome,
+`390 x 844` mobile, real touch events (`touchStart`/`touchEnd`), fresh profile
+each run, dev server and `npm run build` + `vite preview`. Zero page exceptions
+in all three runs. `npm run build` (which runs `tsc --noEmit` first) passed on
+the same tree.
+
+| Fact | Measured |
+| --- | --- |
+| Stage to a started level, age already set, **before** the Map button | **3 taps**: More `34 x 36 px` -> Map `208 x 44 px` -> centred card `146 x 191 px`. Spec target is `<= 2` taps; target size for bands 0-1 is `>= 96 px`. More and Map are under it. |
+| Same, **after** the Map button (added the same day) | **2 taps**: gold Map button on the stage, `96 x 96 px` for bands 0-1 (a `59 x 63 px` pill at band 4) -> centred card. Verified with real touch events, `390 x 844`. The 3-tap route still works. |
+| Stage to a started level, fresh device (age unset) | Carousel opens centred on the grown-up card "Who is playing? A grown-up sets the age". Tapping it opens the press-and-hold 1.2 s gate, then the PIN pad. A child cannot start a level on a fresh device. |
+| Card tap to first prompt (age set, band 2-3) | "Little ones" card starts Pop the bubbles at once; toast "2 bubbles to pop. Tap the biggest one." |
+| Card sizes | All 14 cards `130-146 px` wide, `147-191 px` tall (all above 96 px). |
+| Landscape (`844 x 390`), **before** | The carousel sheet was clipped at the bottom (card titles cut off). Cause: the stage has a `440 px` minimum height, taller than a sideways phone (`390 px` minus the top bar), and its host clips it, so the bottom `100 px` of the whole stage, including the in-game controls, was off screen. |
+| Landscape (`844 x 390`), **after** | The stage shrinks to the screen (short landscape only). The Map opens as the full-screen trail map (age set); the `Cards` chip shows a compact carousel, card `174 x 100 px`, title and pips fully on screen. Turning the phone with the Map open switches views both ways. An unset age keeps the carousel. |
+| Mission panel, landscape | Pop's mission panel is `204 px` of the `340 px` stage (`60%`) and hides most of the world; its buttons are reachable now. Not changed: run Little ones in portrait. The spec says the panel on scene levels is only visually hidden; on Pop it is visible in both orientations. |
+
+Not run that day: Tidy one thing was not replayed in a scene run (it shares the
+carry core with Pack the car, which was). Dev server only: wrangler warns the
+AI bindings hit remote resources, so prop-voice taps may incur real TTS charges
+(production preview not checked for this).
+
+### 5.1 Setup
+
+Hold the gear 1.2 s, PIN, set Age to the child's band (2 to 3 for Little ones),
+close back to the stage.
 
 **Touch and layout**
 - [ ] Dragging in the world moves Kip; the page does not scroll, zoom or pull-to-refresh.
@@ -229,7 +257,13 @@ Child ID ____ age ____ band ____ date ____ observer ____
 
 Difficulty: too easy / just right / too hard. Explains back: ask "why did that work?" once at the end of a rung and write the child's words. Plays again: replays or picks the next level unprompted.
 
-**Predictions** (written before any session; not evidence): a 2 to 3 year old finds the gold Map button without help; the centred card gets tapped without help once the carousel is open; misses on Pop are 0 to 1. Observed: ____
+**Predictions** (written before any session; not evidence):
+
+| Prediction | Basis | Observed |
+| --- | --- | --- |
+| A 2 to 3 year old finds the gold Map button on the stage without help | `96 x 96 px`, top right, high contrast; the old route (`34 x 36 px` More) was the worry | |
+| Once the carousel is open, the centred card gets tapped without help | card `146 x 191 px`, Kip hovers over it | |
+| Misses on Pop are 0 to 1 | two markers, wrong tap hops the marker and cues the right one at ~0.8 s | |
 
 **Targets, ages 2 to 4** (about 10 children per band; with fewer, read them as directional):
 
@@ -304,7 +338,19 @@ Date ____ commit ____ URL ____ tester ____
 
 ## Where this came from
 
-Merged on 2026-11-04 from: [deploy-checklist.md](deploy-checklist.md) (parts 1 to 3), [carousel-qa-checklist.md](../specs/carousel-qa-checklist.md) and [carousel-playtest-runsheet.md](../specs/carousel-playtest-runsheet.md) (parts 5 to 7), [demo-script.md](demo-script.md) (4.1), the pre-recording list in [forge-ai-spec.md](../specs/forge-ai-spec.md) (4.6), the "not verified" lists in the garage, household, dance-party, explorer, parallax and sam-physical-to-digital specs (parts 4 and 5), and the room-photo run of 2026-11-02 and 2026-11-04. The originals are untouched so their links keep working; this file is the one to run.
+Merged on 2026-11-04 from: [deploy-checklist.md](deploy-checklist.md) (parts 1 to 3), `carousel-qa-checklist.md` and `carousel-playtest-runsheet.md` (parts 5 to 7, now archived), [demo-script.md](demo-script.md) (4.1), the pre-recording list in [forge-ai-spec.md](../specs/forge-ai-spec.md) (4.6), the "not verified" lists in the garage, household, dance-party, explorer, parallax and sam-physical-to-digital specs (parts 4 and 5), and the room-photo run of 2026-11-02 and 2026-11-04.
+
+The two carousel QA documents were folded in on 2026-11-04 and archived to
+[`../archive/qa/`](../archive/qa/). Everything that was unique to them was
+carried over before they were moved:
+
+- **The measured robot baseline** (the `390 x 844` tap counts, card sizes and
+  landscape measurements) was only in the run sheet. It is now section 5.0
+  above.
+- **The predictions and their basis** were only in the run sheet. They are now
+  the table in part 6.
+- The quick tick-box phone pass is now part 5, the child-session measurement
+  tables are now part 6, and the "known going in" list is now part 7.
 
 **Corrected while merging (the sources are now out of date on these):**
 - Deploy checklist step 6 says `PARENT_GATE_SECRET` "falls back to `MODEL_API_KEY`". It does not since `af9850d` (`worker/parent.ts` reads only `PARENT_GATE_SECRET`, then a random stored secret). Its secrets list also lacks the model switch, `SELFIE_CLOUD`, theme-song and `SELF_*` variables.

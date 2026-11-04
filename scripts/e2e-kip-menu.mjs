@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Kip demo side menu: headless-Chrome checks (Phase 1 of docs/specs/kip-demo-implementation.md).
+// Kip demo side menu: headless-Chrome checks (Phase 1 of docs/specs/parts-engineering-spec.md section 10.2).
 // Run: npm run e2e:kip-menu     Exits nonzero on any failing check.
 // Env: E2E_CHROME (binary), E2E_SHOTS (screenshot dir), E2E_STRICT_STL=1 (fail on missing STLs instead of stubbing).
 //
