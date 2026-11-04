@@ -5,6 +5,8 @@ Project: ToyVentor on toyventor.com (renamed from ToyForge on Oct 28). Track: in
 
 How this works: each morning say "start day N" for the Start of Day questions; each evening say "end day N" to log what shipped. Submission due Nov 4, 9:00 PM ET.
 
+**Day 1–10 above are the frozen submission record.** New work goes in "Later" entries at the bottom, not in the day rows.
+
 ---
 
 ## Day 1 — Mon Oct 26: Kickoff + Scope lock (in progress, extended into Oct 27 morning)

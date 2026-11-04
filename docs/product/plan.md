@@ -102,6 +102,14 @@ ScanDex. The privacy work is
 must be done before any real child uses a deployed build or the address is
 given to families.
 
+## Post-submission (November 2026)
+
+The hackathon table above is frozen as the submission record. Since then: the
+repository is open source under Apache-2.0 (see `LICENSE`), the service-worker
+cache moved past v11, and the tuning, game-rig, and spec work that was
+uncommitted on submission day is committed. For current state, read the
+[journal](journal.md) "Later" entries and `git log`, not the day rows above.
+
 ## Changing this file
 
 Keep it a status record, not a plan. When something lands, move it from

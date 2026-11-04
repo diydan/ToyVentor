@@ -2,8 +2,9 @@
 
 Helping the next generation grow into robotics through play: scan a toy,
 build printable upgrades on it in the browser, then play with the upgraded
-toy in AR and a mini game. Built for the Meta Global AI Developer Hackathon
-(indie track), due Nov 4, 2026.
+toy in AR and a mini game. Started as an entry to the Meta Global AI
+Developer Hackathon (indie track), November 2026; now open source under
+Apache-2.0.
 
 Docs: [index](docs/README.md) · [vision](docs/product/vision.md) ·
 [spec](docs/product/spec.md) · [plan](docs/product/plan.md) ·
@@ -52,7 +53,7 @@ npm run deploy      # build + wrangler deploy
 `sets/` content as data · `seed/` pre-made fallback content ·
 `generated/` build output (never edited by hand).
 
-## Status (November 4, 2026 — submission day)
+## Status (November 2026 — post-hackathon, open source)
 
 The one-stage app is live at https://toyventor.com. SAM scan with seed
 fallbacks, Toybox, the builder with snapping and undo, gated STL/GLB previews,

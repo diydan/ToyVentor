@@ -1,6 +1,6 @@
 # Close-out checklist: hackathon features, ship, demo, submission (one document)
 
-Written 2026-11-04 (submission day) from Dan's chore list, checked against the code, `git log`, the journal and the specs. **Nothing was run to write it** (e2e and the full suite are paused until beta), so every state below is "what the repo records", not "what I saw work". Tick a box only when a person has seen it work.
+**Submission-day record, frozen.** Written 2026-11-04 (submission day) from Dan's chore list, checked against the code, `git log`, the journal and the specs. It is kept as the record of what submission day claimed, not as a live tracker: for current state, read `git log` and the [journal](journal.md). **Nothing was run to write it** (e2e and the full suite are paused until beta), so every state below is "what the repo records", not "what I saw work". Tick a box only when a person has seen it work.
 
 This file owns the **what and in what order**. The how-to-test detail stays in [qa.md](qa.md) (deploy gates, live smoke, phone and child passes) and the run itself in [demo-script.md](demo-script.md); this file points at them and does not copy them.
 
