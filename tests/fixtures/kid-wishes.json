@@ -69,7 +69,11 @@
     "a twinkie hat",
     "an escort knight",
     "a world domination villain hat",
-    "a hat for a doll undressing game"
+    "a hat for a doll undressing game",
+    "a scary monster head",
+    "a scary pirate hat",
+    "a spooky scary skeleton hat",
+    "make it scary but friendly"
   ],
   "es": [
     "un sombrero de mago",
@@ -111,7 +115,10 @@
     "un martillo de juguete",
     "una gorra negra",
     "un sombrero para comer",
-    "una heroína con sombrero"
+    "una heroína con sombrero",
+    "una cabeza de monstruo que da miedo",
+    "un sombrero de pirata aterrador",
+    "un monstruo espeluznante"
   ],
   "fr": [
     "un chapeau de magicien",
@@ -151,7 +158,10 @@
     "une gerbe de fleurs sur le chapeau",
     "un bonnet bourré de bonbons",
     "une pédale de vélo",
-    "une suce pour le bébé"
+    "une suce pour le bébé",
+    "une tête de monstre qui fait peur",
+    "un chapeau de pirate effrayant",
+    "un monstre terrifiant"
   ],
   "de": [
     "ein Zauberhut",
@@ -190,7 +200,10 @@
     "eine Fratze als Maske",
     "eine Rosette am Hut",
     "ein kleiner Lümmel",
-    "ein Mops mit Hut"
+    "ein Mops mit Hut",
+    "ein gruseliger Monsterkopf",
+    "ein unheimlicher Piratenhut",
+    "ein furchterregendes Monster"
   ],
   "it": [
     "un cappello da mago",
@@ -233,7 +246,10 @@
     "un cappello con i piselli",
     "una quaglia",
     "una nave scuola",
-    "montare un cappello"
+    "montare un cappello",
+    "una testa di mostro spaventoso",
+    "un cappello da pirata pauroso",
+    "un mostro terrificante"
   ],
   "pt": [
     "um chapéu de mágico",
@@ -276,7 +292,10 @@
     "um frango assado",
     "um cavalo preto",
     "um chapéu para dois pais gays",
-    "uma heroína de chapéu"
+    "uma heroína de chapéu",
+    "uma cabeça de monstro assustador",
+    "um chapéu de pirata medonho",
+    "um monstro aterrorizante"
   ],
   "tr": [
     "büyücü şapkası",
@@ -315,6 +334,9 @@
     "IŞIK ŞAPKASI",
     "İSTANBUL ŞAPKASI",
     "bir tabak şapka",
-    "tabak gibi bir şapka"
+    "tabak gibi bir şapka",
+    "korkunç bir canavar kafası",
+    "korkutucu bir korsan şapkası",
+    "ürpertici bir iskelet şapkası"
   ]
 }

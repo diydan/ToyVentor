@@ -13,9 +13,9 @@ import { kidSafeText } from "../worker/muse";
 const WISHES = JSON.parse(readFileSync(join(__dirname, "fixtures", "kid-wishes.json"), "utf8")) as Record<string, string | string[]>;
 const harmless = TERM_LANGS.flatMap((l) => (Array.isArray(WISHES[l]) ? (WISHES[l] as string[]).map((w) => [l, w] as const) : []));
 
-describe("English: the list the product already used, unchanged", () => {
-  // the regex that was in worker/muse.ts until 2026-11-04
-  const OLD = /\b(scary|haunt\w*|horror|nightmare\w*|kill\w*|dead|death|blood\w*|gun|guns|knife|knives|weapon\w*|hate\w*|naked|nude|sexy|drug\w*|beer|wine|vodka|cigarette\w*)\b|\bwar\b/i;
+describe("English: the list the product already used, minus \"scary\"", () => {
+  // the regex that was in worker/muse.ts until 2026-11-04, MINUS "scary" (allowed since Dan's decision of 2026-11-04)
+  const OLD = /\b(haunt\w*|horror|nightmare\w*|kill\w*|dead|death|blood\w*|gun|guns|knife|knives|weapon\w*|hate\w*|naked|nude|sexy|drug\w*|beer|wine|vodka|cigarette\w*)\b|\bwar\b/i;
   const samples = [
     "a scary monster head", "haunted house hat", "horror hat", "nightmares", "kill the dragon", "killing time", "dead tree", "death star", "blood moon", "bloody hat", "a gun", "two guns",
     "a knife", "knives", "weapons", "a weapon hat", "i hate it", "hateful", "naked mole rat", "nude", "sexy hat", "drugs", "a drug", "beer hat", "wine glass", "vodka", "cigarettes",
@@ -50,15 +50,29 @@ describe("nothing a child could harmlessly type is refused, in any language", ()
   });
 });
 
+describe("\"scary\" is allowed, in every language (Dan, 2026-11-04)", () => {
+  it("a child may ask for a scary thing, and say so in any of the seven languages", () => {
+    for (const w of ["a scary monster head", "make it scary", "SCARY", "una cabeza que da miedo", "un monstruo espeluznante", "un chapeau effrayant", "un monstre terrifiant", "ein gruseliger Kopf", "ein unheimlicher Hut", "uno spaventoso", "um assustador", "korkunç bir şapka"]) {
+      expect(findUnsafeTerm(w), w).toBeNull();
+      expect(kidSafeText(w), w).toBe(true);
+    }
+  });
+  it("only the scary group was removed: its near neighbours and everything violent are still refused", () => {
+    for (const w of ["a haunted house hat", "horror", "a nightmare", "a scary knife", "a scary gun", "a scary monster that kills", "blood", "una pesadilla", "un cauchemar", "ein Albtraum", "un incubo", "um pesadelo", "bir kabus"]) {
+      expect(containsUnsafeTerm(w), w).toBe(true);
+    }
+  });
+});
+
 describe("what the product refuses is refused in every language", () => {
   const age: Record<string, string[]> = {
-    en: ["a knife", "scary hat", "a gun"],
-    es: ["un cuchillo", "una pistola", "da miedo", "una cerveza", "la guerra", "sangre"],
-    fr: ["un couteau", "un pistolet", "de la bière", "la guerre", "du sang", "c'est effrayant"],
-    de: ["ein Messer", "eine Pistole", "ein Bier", "der Krieg", "Blut", "ganz gruselig"],
-    it: ["un coltello", "una pistola", "una birra", "la guerra", "il sangue", "fa paura? spaventoso"],
-    pt: ["uma faca", "uma pistola", "uma cerveja", "a guerra", "sangue", "muito assustador"],
-    tr: ["bir bıçak", "bir silah", "bira", "savaş", "korkunç bir şapka", "ÖLDÜR"],
+    en: ["a knife", "haunted hat", "a gun"],
+    es: ["un cuchillo", "una pistola", "una pesadilla", "una cerveza", "la guerra", "sangre"],
+    fr: ["un couteau", "un pistolet", "de la bière", "la guerre", "du sang", "un cauchemar"],
+    de: ["ein Messer", "eine Pistole", "ein Bier", "der Krieg", "Blut", "ein Albtraum"],
+    it: ["un coltello", "una pistola", "una birra", "la guerra", "il sangue", "un incubo"],
+    pt: ["uma faca", "uma pistola", "uma cerveja", "a guerra", "sangue", "um pesadelo"],
+    tr: ["bir bıçak", "bir silah", "bira", "savaş", "bir kabus", "ÖLDÜR"],
   };
   for (const [lang, list] of Object.entries(age)) {
     it(`${lang}: age-fit words`, () => {
