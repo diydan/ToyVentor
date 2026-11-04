@@ -12,7 +12,7 @@ import {
 import {
   ANGEL_S, BITES_S, OFFER_S, OFFER_TAKE_S, PICK_S, PLAY_ACTIONS, PLAY_CLIPS, POUR_S, SIT_EAT_S, SMELL_S, SWING_S,
 } from "../src/features/game/world/runtime/playClips";
-import { BOUQUET_S, GROW_FROM_S, GROW_TO_S, HOP_S, PATH_Z, RIDE_S, SIT_DROP, TIRE_PUSH_S, TIRE_VX, WATER_S, createPlaythings, growthAt, lane, ridePath } from "../src/features/game/world/runtime/playthings";
+import { BOUQUET_S, DEEPEST_Z, FRONT_OF_PROP, GROW_FROM_S, GROW_TO_S, HOP_S, PATH_Z, RIDE_S, SIT_DROP, STEP_S, TIRE_PUSH_S, TIRE_VX, WATER_S, createPlaythings, growthAt, lane, ridePath, stepZ } from "../src/features/game/world/runtime/playthings";
 import { CRATE_REST_S, CRATE_SHRINK_S, JIB_DX, JIB_Y, LAND_Z, MAX_CRATES, attachCraneDrop, fallTime, startCrate, stepCrate } from "../src/features/game/world/runtime/craneDrop";
 import { readFileSync } from "node:fs";
 import { BLOCK_CHEER_AT, MAX_LAYERS, START_LAYERS, buildBlockTower } from "../src/features/game/world/runtime/blockTower";
@@ -328,12 +328,13 @@ function fake() {
   const root = new THREE.Group();
   const kicks: Array<{ vx: number; vy: number }> = [];
   const cues: string[] = [];
+  const pos = { x: 0, y: 0, z: 0 };
   const w = {
     root: () => root, eater: () => "character", allowed: () => true,
-    position: () => ({ x: 0, y: 0, z: 0 }), targetX: () => null, walkTo: () => {}, stopWalk: () => {}, face: () => {},
+    position: () => ({ ...pos }), targetX: () => null, walkTo: () => {}, stopWalk: () => {}, face: () => {},
     clip: (a: string) => { log.push(`clip:${a}`); return true; },
     hold: (i: string) => log.push(`hold:${i}`), release: () => log.push("release"),
-    mouth: () => ({ x: 0, y: 0, z: 0 }), bubbles: { blow: () => {} }, setPosition: (x: number, y: number, z: number) => log.push(`pos:${x.toFixed(2)},${y.toFixed(2)},${z.toFixed(2)}`),
+    mouth: () => ({ x: 0, y: 0, z: 0 }), bubbles: { blow: () => {} }, setPosition: (x: number, y: number, z: number) => { pos.x = x; pos.y = y; pos.z = z; log.push(`pos:${x.toFixed(2)},${y.toFixed(2)},${z.toFixed(2)}`); },
     tone: () => {}, phase: () => {},
     fx: { squish: () => {}, strike: () => null, kickBall: (_i: unknown, vx: number, vy: number) => { kicks.push({ vx, vy }); return true; }, flutter: () => {}, say: () => {}, setVisible: () => {}, cue: (_i: unknown, n: string) => cues.push(n), nearby: () => [] },
   } as unknown as ActsWorld;
@@ -341,7 +342,7 @@ function fake() {
   const follow: Array<[unknown, number]> = [];
   const h = { heart: () => glyphs.push("heart"), note: () => glyphs.push("note"), flake: () => glyphs.push("flake"), follow: (i: unknown, d: number) => follow.push([i, d]) };
   const things = createPlaythings(w, h);
-  return { things, log, kicks, cues, glyphs, follow, root };
+  return { things, log, kicks, cues, glyphs, follow, root, pos };
 }
 const instOf = (type: string, x: number, z: number, holder: THREE.Group = new THREE.Group()): PropInst => {
   holder.position.set(x, 0, z);
@@ -700,5 +701,74 @@ describe("the pumpkin patch", () => {
     for (let i = 0; i < 5; i++) { t += 1; a.offer("pumpkin", "character"); }
     expect(a.isFull).toBe(false);
     expect(a.offer("apple", "character")).toMatchObject({ fed: true, reaction: "eat", full: false });
+  });
+});
+
+describe("the props stand behind the lane, so Kip steps back into the scene for them", () => {
+  it("stepZ: where it began, then eased in over STEP_S, held, and eased back out for the last STEP_S (never past either end)", () => {
+    const f = (t: number) => stepZ(t, 3, -1.2, -2.5);
+    expect(f(0)).toBe(-1.2);
+    expect(f(-1)).toBe(-1.2);
+    expect(f(STEP_S)).toBeCloseTo(-2.5, 9);
+    expect(f(1.5)).toBe(-2.5);
+    expect(f(3 - STEP_S)).toBeCloseTo(-2.5, 9);
+    expect(f(3)).toBeCloseTo(-1.2, 9);
+    expect(f(99)).toBeCloseTo(-1.2, 9);
+    for (let t = 0; t <= 3; t += 0.02) { const z = f(t); expect(z).toBeLessThanOrEqual(-1.2 + 1e-9); expect(z).toBeGreaterThanOrEqual(-2.5 - 1e-9); }
+    expect(f(STEP_S / 2)).toBeLessThan(-1.2);                                            // already on its way
+    expect(f(STEP_S / 2)).toBeGreaterThan(-2.5);
+  });
+  const props = () => ({
+    tire: instOf("tire", 11, -2.8), bed: instOf("flowerbed", 10, -2.8, buildFlowerBed(10, -2.8)), bunny: instOf("bunny", 18.3, -2.8),
+    picnic: instOf("picnic", 24.5, -2.8, buildPicnic(24.5, -2.8)), pad: instOf("angelpatch", 33.4, -2.8, buildAngelPatch(33.4, -2.8)),
+  });
+  const zWhile = (f: ReturnType<typeof fake>, v: NonNullable<ReturnType<ReturnType<typeof fake>["things"]["visitFor"]>>, t: number) => { v.tick!(t); return f.pos.z; };
+  it("a hand job (the can, the carrot, the push) is done in front of the prop; sitting and lying are done ON it", () => {
+    const cases: Array<[string, "roll" | "angel" | "water" | "feed" | "picnic", number]> = [
+      ["tire", "roll", -2.6], ["bed", "water", -2.8 + FRONT_OF_PROP], ["bunny", "feed", -2.8 + FRONT_OF_PROP], ["picnic", "picnic", -2.8], ["pad", "angel", -2.8],
+    ];
+    for (const [name, kind, want] of cases) {
+      const f = fake();
+      f.pos.z = -1.2;                                                                    // Kip has walked to the lane's edge
+      const inst = (props() as unknown as Record<string, PropInst>)[name]!;
+      const v = f.things.visitFor(kind, inst)!;
+      v.begin();
+      expect(zWhile(f, v, v.seconds / 2), name).toBeCloseTo(want, 6);
+      expect(zWhile(f, v, 0.05), name).toBeLessThan(-1.2 + 1e-9);
+      v.end(true);
+      expect(f.pos.z, `${name} steps back out`).toBe(-1.2);
+    }
+  });
+  it("a cut-short visit still puts Kip back where it began, and a prop absurdly far back is not walked into past DEEPEST_Z", () => {
+    const f = fake();
+    f.pos.z = -1.2;
+    const v = f.things.visitFor("feed", instOf("bunny", 18.3, -9))!;
+    v.begin();
+    expect(zWhile(f, v, v.seconds / 2)).toBeCloseTo(DEEPEST_Z, 9);
+    v.end(false);
+    expect(f.pos.z).toBe(-1.2);
+  });
+  it("it keeps the visit's own places: the toy still walks to the lane's edge first, and the swing (which carries Kip itself) is not wrapped", () => {
+    const f = fake();
+    expect(f.things.visitFor("feed", instOf("bunny", 18.3, -2.8))!.standZ).toBe(-1.2);
+    const s = buildSwing(29.9, -2.8);
+    const v = f.things.visitFor("ride", instOf("swing", 29.9, -2.8, s))!;
+    f.pos.z = -1.2;
+    v.begin();
+    v.tick!(0.01);
+    expect(f.pos.z).toBeCloseTo(-1.2, 1);                                                // the ride's own path (still at the stand point this early), not a depth step
+  });
+});
+
+describe("the lane is clear: props are set back when the world is built", () => {
+  const world = readFileSync(new URL("../src/features/game/world/runtime/world.ts", import.meta.url), "utf8");
+  it("every prop's depth goes through clearLane, which pushes anything nearer than CLEAR_Z back to it and leaves the rest alone", () => {
+    expect(world).toContain("const CLEAR_Z=-2.8;");
+    expect(world).toContain("function clearLane(z: number){return z>CLEAR_Z?CLEAR_Z:z}");
+    expect(world).toContain("f(p[1],clearLane(p[2]),p[3]);");
+  });
+  it("CLEAR_Z is behind the walkable lane (clampPathZ is +-1.2) with room for a prop's own depth", () => {
+    expect(world).toContain("function clampPathZ(z: number){return Math.max(-1.2,Math.min(1.2,z))}");
+    expect(-2.8).toBeLessThan(-PATH_Z - 1);
   });
 });

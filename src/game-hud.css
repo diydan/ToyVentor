@@ -1,0 +1,284 @@
+/*
+ * The landscape HUD (Dan, 2026-11-04): no top bar. ONE round Kip button, top-left, opens ONE drawer from the left edge that holds everything the old bar, the world pill and the Map button did; every card
+ * (a found part, a mission, the song card, the sheets) slides in from the same edge; the small pop-ups (names, hints, scrap, the world's name) are tiny and see-through beside the Kip button, never over the
+ * middle of the stage; the abilities sit bottom-right under the right thumb and the tool belt bottom-left under the left. The game itself is landscape: upright on a touch device the rotate gate covers it
+ * (rotateGate.ts). Everything is scoped under `.tv-host`, so it wins over index.css and the stage's own CSS (stageDom.ts) by specificity, and `!important` is only used where the world sets an inline position.
+ */
+
+/* ---- the rotate gate ---------------------------------------------------------------------------------------------------------------------------- */
+.tv-rotate-gate {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: #080f2b;
+  color: #f4f7ff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 24px;
+  text-align: center;
+  font-family: var(--font-display, "Rubik", system-ui, sans-serif);
+  touch-action: none;
+}
+.tv-rotate-phone {
+  width: 62px;
+  height: 108px;
+  border-radius: 14px;
+  border: 5px solid #ffd24d;
+  position: relative;
+  margin-bottom: 14px;
+  animation: tv-rotate-phone 2.6s ease-in-out infinite;
+}
+.tv-rotate-phone::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 6px;
+  width: 16px;
+  height: 4px;
+  margin-left: -8px;
+  border-radius: 2px;
+  background: #ffd24d;
+}
+@keyframes tv-rotate-phone {
+  0%, 15% { transform: rotate(0deg); }
+  55%, 100% { transform: rotate(-90deg); }
+}
+.tv-rotate-title { margin: 0; font-size: 26px; font-weight: 800; }
+.tv-rotate-sub { margin: 0; font-size: 15px; font-weight: 600; opacity: 0.8; }
+@media (prefers-reduced-motion: reduce) {
+  .tv-rotate-phone { animation: none; transform: rotate(-90deg); }
+}
+
+/* ---- the one button ----------------------------------------------------------------------------------------------------------------------------- */
+.tv-host .tv-kip-fab {
+  position: absolute;
+  top: calc(8px + env(safe-area-inset-top, 0px));
+  left: calc(8px + env(safe-area-inset-left, 0px));
+  z-index: 32;
+  width: 54px;
+  height: 54px;
+  padding: 0;
+  border-radius: 50%;
+  border: 3px solid rgba(255, 255, 255, 0.85);
+  background: rgb(var(--surface-rgb) / 0.78);
+  box-shadow: 0 4px 12px rgba(2, 6, 28, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.tv-host .tv-kip-fab:active { transform: scale(0.95); }
+.tv-host .tv-kip-fab[aria-expanded="true"] { border-color: var(--gold, #ffd24d); }
+.tv-host .tv-kip-fab .tv-toy-mini-icon { width: 38px; height: 38px; }
+.tv-host .tv-kip-fab-dot {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: var(--gold, #ffd24d);
+  border: 2px solid #0b1235;
+  box-shadow: 0 0 8px var(--gold, #ffd24d);
+}
+
+/* ---- the drawer (the old top bar's contents) ---------------------------------------------------------------------------------------------------- */
+.tv-host .tv-drawer-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 28;
+  background: rgba(2, 6, 28, 0.28);
+}
+.tv-host .tv-dock {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: min(420px, 58vw);
+  min-height: 0;
+  z-index: 30;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: 8px;
+  padding: calc(8px + env(safe-area-inset-top, 0px)) 12px 14px calc(8px + env(safe-area-inset-left, 0px));
+  overflow-y: auto;
+  background: rgb(var(--surface-rgb) / 0.97);
+  border-bottom: 0;
+  border-right: 2px solid var(--line);
+  border-radius: 0 18px 18px 0;
+  box-shadow: 10px 0 30px rgba(2, 6, 28, 0.55);
+  transform: translateX(-104%);
+  visibility: hidden;
+  transition: transform 0.22s cubic-bezier(0.2, 0.9, 0.3, 1), visibility 0s linear 0.22s;
+}
+.tv-host .tv-dock[data-open="true"] {
+  transform: none;
+  visibility: visible;
+  transition: transform 0.22s cubic-bezier(0.2, 0.9, 0.3, 1), visibility 0s;
+}
+.tv-host .tv-dock .tv-toy-pill { flex: none; width: calc(100% - 64px); margin-left: 64px; max-width: none; min-height: 54px; font-size: 15px; padding: 0 12px; }   /* sits beside the Kip button */
+.tv-host .tv-dock .tv-toy-pill-name { flex: 1; text-align: left; }
+.tv-host .tv-dock-right { display: grid; grid-template-columns: 1fr 1fr; align-items: stretch; gap: 8px; padding: 0 4px; }
+.tv-host .tv-dock-right > div { display: contents; }       /* the menu's items join the same two columns */
+.tv-host .tv-dock-right .tv-ctl { width: 100%; min-height: 46px; padding: 0 12px; font-size: 14px; justify-content: flex-start; text-align: left; }
+.tv-host .tv-dock-right .tv-badge-dot { top: 50%; right: 12px; margin-top: -4px; }
+.tv-host .tv-dock .tv-ctl-more { display: none; }            /* the menu below is always open inside the drawer */
+.tv-host .tv-dock .tv-more-menu { display: contents; animation: none; }
+.tv-host .tv-dock .tv-menu-item { min-height: 46px; font-size: 14px; border-radius: 10px; background: rgba(255, 255, 255, 0.07); padding: 0 12px; }
+.tv-host .tv-dock .tv-menu-meta { display: none; }
+.tv-host .tv-dock .tv-ctl-gear { grid-column: 1 / -1; }
+.tv-host .tv-dock .tv-ctl-gear::after { content: "Grown-ups: hold 1.2 s"; margin-left: 8px; font: 700 13px var(--font-display, sans-serif); }
+
+/* ---- the world list is a card from the same edge, and the Map button is gone (the drawer has Map) ---------------------------------------------------- */
+.tv-host .tv-map-fab { display: none; }
+.tv-host .tv-worlds-compact { position: static; }
+.tv-host .tv-worlds-btn { display: none; }
+.tv-host .tv-worlds-popover {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: min(420px, 58vw);
+  margin: 0;
+  max-height: none;
+  overflow-y: auto;
+  z-index: 31;
+  padding: calc(70px + env(safe-area-inset-top, 0px)) 12px 14px calc(12px + env(safe-area-inset-left, 0px));
+  border-radius: 0 18px 18px 0;
+  border-left: 0;
+}
+
+/* ---- the small pop-ups: tiny, see-through, beside the Kip button -------------------------------------------------------------------------------- */
+.tv-host .tv-stage-canvas-host .toast {
+  left: calc(72px + env(safe-area-inset-left, 0px));
+  top: calc(12px + env(safe-area-inset-top, 0px));
+  transform: translateY(-6px);
+  width: auto;
+  max-width: min(44vw, 320px);
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 0;
+  background: rgba(16, 26, 68, 0.52);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  font: 700 13px var(--fb);
+  line-height: 1.25;
+  transition: opacity 0.25s, transform 0.25s;
+}
+.tv-host .tv-stage-canvas-host .toast.on { transform: none; }
+.tv-host .tv-stage-canvas-host .bubble {
+  left: calc(72px + env(safe-area-inset-left, 0px)) !important;
+  top: calc(52px + env(safe-area-inset-top, 0px)) !important;
+  transform: none !important;
+  max-width: min(44vw, 300px);
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.72);
+  font: 700 12px var(--fb);
+  box-shadow: none;
+}
+.tv-host .tv-stage-canvas-host .intro {
+  left: calc(72px + env(safe-area-inset-left, 0px));
+  top: calc(12px + env(safe-area-inset-top, 0px));
+  transform: none;
+  text-align: left;
+}
+.tv-host .tv-stage-canvas-host .intro b { font-size: 17px; line-height: 1.1; text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6); }
+.tv-host .tv-stage-canvas-host .intro span { margin-top: 2px; font-size: 12px; }
+.tv-host .tv-stage-canvas-host .intro.on { animation: tv-hud-intro 2.6s ease-out forwards; }
+@keyframes tv-hud-intro {
+  0% { opacity: 0; transform: translateX(-12px); }
+  12%, 80% { opacity: 1; transform: none; }
+  100% { opacity: 0; transform: none; }
+}
+.tv-host .tv-xp-toast {
+  left: calc(72px + env(safe-area-inset-left, 0px));
+  top: calc(44px + env(safe-area-inset-top, 0px));
+  transform: none;
+  padding: 4px 10px;
+  font-size: 12px;
+  background: rgba(10, 20, 48, 0.55);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+
+/* ---- cards: a found part and a finished mission slide in from the left edge, under the Kip button ------------------------------------------------- */
+.tv-host .tv-stage-canvas-host .pcard {
+  left: 0;
+  bottom: auto;
+  top: calc(72px + env(safe-area-inset-top, 0px));
+  transform: none;
+  width: min(330px, 46vw);
+  border-radius: 0 16px 16px 0;
+  border-left: 0;
+}
+.tv-host .tv-stage-canvas-host .pcard.on { animation: tv-hud-slide 0.3s ease-out; }
+@keyframes tv-hud-slide {
+  0% { transform: translateX(-100%); opacity: 0; }
+  100% { transform: none; opacity: 1; }
+}
+
+/* ---- the abilities under the right thumb, the tool belt under the left -------------------------------------------------------------------------- */
+.tv-host .tv-stage-canvas-host .tray {
+  left: auto;
+  right: calc(8px + env(safe-area-inset-right, 0px));
+  bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+  padding: 0;
+  gap: 6px;
+  background: none;
+}
+.tv-host .tv-stage-canvas-host .mv { max-width: 64px; font-size: 10px; }
+.tv-host .tv-stage-canvas-host .mv .pic { width: 52px; height: 52px; border-radius: 14px; }
+.tv-host .tv-stage-canvas-host .belt-b {
+  left: calc(12px + env(safe-area-inset-left, 0px));
+  bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+}
+.tv-host .tv-stage-canvas-host .belt {
+  left: calc(80px + env(safe-area-inset-left, 0px));
+  bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+}
+
+/* ---- every sheet and modal is a card from the left edge (no bottom sheets, no full-screen modals) ----------------------------------------------- */
+/* They were all drawn for a phone about 390 px wide, which is what a left panel is in landscape. While one is open the Kip button gets out of its way (the card has its own close button). */
+.tv-host .tv-sheet,
+.tv-host .tv-modal {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: min(420px, 58vw);
+  max-height: none;
+  padding: calc(10px + env(safe-area-inset-top, 0px)) 12px 14px calc(12px + env(safe-area-inset-left, 0px));
+  border: 0;
+  border-right: 2px solid var(--line);
+  border-radius: 0 18px 18px 0;
+  background: rgb(var(--surface-rgb) / 0.97);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  box-shadow: 10px 0 30px rgba(2, 6, 28, 0.55);
+  z-index: 29;
+  animation: tv-hud-slide 0.24s cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+.tv-host .tv-sheet-mission { border-right-color: var(--gold, #ffd24d); }
+.tv-host .tv-sheet-songs { max-height: none; }
+.tv-host:has(.tv-sheet:not([hidden]), .tv-modal:not([hidden])) .tv-kip-fab { display: none; }
+/* the other cards: the end-of-level song card and the garage goal chip */
+.tv-host .tv-song-card,
+.tv-host .tv-garage-chip {
+  left: 0;
+  right: auto;
+  bottom: auto;
+  top: calc(66px + env(safe-area-inset-top, 0px));
+  transform: none;
+  width: min(380px, 52vw);
+  border-radius: 0 16px 16px 0;
+  border-left: 0;
+  animation: tv-hud-slide 0.24s cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+/* a card open at the left: the small pop-ups move over to its right edge so they never sit on it */
+.tv-host:has(.tv-sheet:not([hidden]), .tv-modal:not([hidden])) .tv-stage-canvas-host .toast,
+.tv-host:has(.tv-sheet:not([hidden]), .tv-modal:not([hidden])) .tv-xp-toast { left: calc(min(420px, 58vw) + 14px); }
+.tv-host:has(.tv-sheet:not([hidden]), .tv-modal:not([hidden])) .tv-stage-canvas-host .bubble { left: calc(min(420px, 58vw) + 14px) !important; }

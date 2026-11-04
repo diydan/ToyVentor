@@ -9,6 +9,7 @@
 //        {"act":"<prop type>","i":0}  start that prop's act directly (what a tap on it does after the prop reacted), skipping the screen hit test
 //        {"activate":"<prop type>","i":0}  what a tap on the prop itself does (its own reaction, e.g. a crane drops a crate), skipping the screen hit test
 //        {"drag":{"from":"<prop type>","i":0,"toProp":"basket","j":0,"at":0.5}}  or  {"drag":{"from":"tree","to":[x,y]}}  press a hanging fruit of that prop, carry it and let go (real mouse events)
+//        {"click":"<css selector>","text":"<starts with>"}  click a page element (the HUD: ".tv-kip-fab", ".tv-menu-item" with text "Worlds")
 //        {"tapxy":[x,y]}  a real tap at a screen point      {"wait":ms}      {"shot":"name"}  a screenshot to <out>/<name>.png
 //        {"eval":"<js>"}  evaluate in the page (the dev handle is `w` = window.__tvWorld) and print the result
 // Options: --world <id> (default garden)  --time day|night (pin; default night)  --lang <code>  --out <dir>  --port <n>  --debug-port <n>
@@ -27,7 +28,9 @@ const TIME = opt("time", "night");
 const LANG = opt("lang", "en");
 const OUT = opt("out", "/tmp/toyforge-shots");
 const STEPS = JSON.parse(opt("steps", "[]"));
-const APP = `http://localhost:${DEV_PORT}/?title=0`;
+const [VW, VH] = opt("size", "844x390").split("x").map(Number);          // default 844x390 (landscape, the game's layout); --size 390x844 for portrait
+const TITLE = argv.includes("--title"), GATE = argv.includes("--gate");          // --title: stay on the main menu; --gate: do not skip the turn-your-phone gate (and emulate a touch screen so it can match)
+const APP = `http://localhost:${DEV_PORT}/?${TITLE ? "" : "title=0&"}${GATE ? "" : "rotate=0"}`;           // (the game is landscape: ?rotate=0 skips the turn-your-phone gate so a portrait size still shows the stage)
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 async function waitFor(fn, { timeoutMs = 60000, everyMs = 250, label = "?" } = {}) {
@@ -104,8 +107,9 @@ async function main() {
     const targets = await waitFor(async () => { const l = (await (await fetch(`http://localhost:${DEBUG_PORT}/json/list`)).json()).filter((t) => t.url === "about:blank"); return l.length ? l : null; }, { label: "tab" });
     cdp = new Cdp(targets[0].webSocketDebuggerUrl);
     await cdp.connect();
-    await cdp.send("Emulation.setDeviceMetricsOverride", { width: 390, height: 844, deviceScaleFactor: 2, mobile: true });
+    await cdp.send("Emulation.setDeviceMetricsOverride", { width: VW, height: VH, deviceScaleFactor: 2, mobile: true });
     await cdp.send("Runtime.enable"); await cdp.send("Page.enable");
+    if (GATE) await cdp.send("Emulation.setTouchEmulationEnabled", { enabled: true, maxTouchPoints: 5 });
     await cdp.send("Fetch.enable", { patterns: [{ urlPattern: "*/api/voice*" }] });
     const source = `try { localStorage.setItem("tvTimeOfDay:v1", ${JSON.stringify(TIME)}); localStorage.setItem("toyforge:prop-lang:v1", ${JSON.stringify(LANG)}); } catch (e) {}`;
     const { identifier } = await cdp.send("Page.addScriptToEvaluateOnNewDocument", { source });
@@ -114,6 +118,7 @@ async function main() {
       await waitFor(() => cdp.ev(`!!document.querySelector("canvas") && !!(window.__tvWorld && window.__tvWorld.props)`), { label: "stage + dev handle" });
     } finally { await cdp.send("Page.removeScriptToEvaluateOnNewDocument", { identifier }); }
     await sleep(2000);
+    if (TITLE || GATE) { for (const st of STEPS) { if (st.wait) await sleep(st.wait); else if (st.shot) { const r = await cdp.send("Page.captureScreenshot", { format: "png" }); writeFileSync(`${OUT}/${st.shot}.png`, Buffer.from(r.data, "base64")); console.log("shot", `${OUT}/${st.shot}.png`); } else if (st.eval) console.log("eval", JSON.stringify(await cdp.ev(st.eval))); } return; }
     await cdp.ev(`(() => { const t = document.querySelector("#title"); if (t && !t.hidden) document.querySelector("#play")?.click(); })()`);
     await sleep(1500);
     if (WORLD !== "room") { await cdp.ev(`window.__tvWorld.handle.go("room")`); await sleep(1500); }
@@ -135,6 +140,7 @@ async function main() {
         await cdp.send("Input.dispatchMouseEvent", { type: "mouseReleased", x: to.x, y: to.y, button: "left", clickCount: 1 });
         console.log("dragged", Math.round(from.x), Math.round(from.y), "->", Math.round(to.x), Math.round(to.y));
       }
+      else if (s.click) { const r = await cdp.ev(`(() => { const b = [...document.querySelectorAll(${JSON.stringify(s.click)})].find((x) => !${JSON.stringify(s.text ?? "")} || (x.textContent || "").trim().startsWith(${JSON.stringify(s.text ?? "")})); if (b) { b.click(); return true; } return false; })()`); console.log("click", s.click, s.text ?? "", r); }
       else if (s.tapxy) { await cdp.tapAt(s.tapxy[0], s.tapxy[1]); console.log("tapped", s.tapxy.join(",")); }
       else if (s.wait) await sleep(s.wait);
       else if (s.shot) { const r = await cdp.send("Page.captureScreenshot", { format: "png" }); writeFileSync(`${OUT}/${s.shot}.png`, Buffer.from(r.data, "base64")); console.log("shot", `${OUT}/${s.shot}.png`); }

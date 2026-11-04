@@ -128,6 +128,8 @@ import { isPackClaimedToday, PackOverlay } from "./PackOverlay";
 import { RevealOverlay } from "./RevealOverlay";
 import { SleepCurtain } from "./SleepCurtain";
 import { WorkshopLauncher } from "./WorkshopLauncher";
+import { ROTATE_GATE_QUERY, rotateGateShowing } from "./rotateGate";
+import "../../../game-hud.css";
 import { ToyCustomizer } from "./ToyCustomizer";
 import { ToyMiniIcon } from "./ToyMiniIcon";
 import { TitleMenu } from "./TitleMenu";
@@ -228,6 +230,17 @@ export function GameCanvas({
     listening: false,
   });
   const [moreOpen, setMoreOpen] = useState(false);
+  // The one menu button's drawer (the old top bar's buttons, the Map and the world list live in it), and the "turn your phone sideways" gate (rotateGate.ts).
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [uprightGate, setUprightGate] = useState(false);
+  useEffect(() => {
+    if (typeof window === "undefined" || typeof window.matchMedia !== "function") return;
+    const mq = window.matchMedia(ROTATE_GATE_QUERY);
+    const sync = () => setUprightGate(rotateGateShowing(window.location.search, mq.matches));
+    sync();
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
+  }, []);
   const [mapOpen, setMapOpen] = useState(false);
   const [mapView, setMapView] = useState<"cards" | "trail">("cards");
   const [worldsOpen, setWorldsOpen] = useState(false);
@@ -1113,7 +1126,42 @@ export function GameCanvas({
       ref={hostRef}
       className={`${isFullscreen ? "tv-host tv-host-fullscreen" : "tv-host"}${titleOpen ? " tv-host--titled" : ""}`}
     >
-      <div className="tv-dock" role="toolbar" aria-label="ToyVentor World studio">
+      {uprightGate && (
+        <div className="tv-rotate-gate" role="alert" aria-live="assertive">
+          <div className="tv-rotate-phone" aria-hidden="true" />
+          <p className="tv-rotate-title">Turn your phone sideways</p>
+          <p className="tv-rotate-sub">ToyVentor World plays best wide.</p>
+        </div>
+      )}
+      {!titleOpen && !sleepActive && !mapOpen && (
+        <button
+          type="button"
+          className="tv-kip-fab"
+          aria-label="Menu"
+          aria-expanded={menuOpen}
+          aria-controls="tv-drawer"
+          onClick={() => {
+            setMenuOpen((open) => !open);
+            setMoreOpen(false);
+          }}
+        >
+          <ToyMiniIcon toy={toy} accentColor={toyColor} skinVersion={skinTick} size="tile" />
+          {(!packClaimed || liveStatus.listening || liveStatus.playing) && <span className="tv-kip-fab-dot" aria-hidden="true" />}
+        </button>
+      )}
+      {menuOpen && <div className="tv-drawer-scrim" aria-hidden="true" onClick={() => setMenuOpen(false)} />}
+      <div
+        id="tv-drawer"
+        className="tv-dock"
+        role="toolbar"
+        aria-label="ToyVentor World studio"
+        data-open={menuOpen ? "true" : "false"}
+        onClickCapture={(e) => {
+          // any button or link in the drawer does its job and the drawer gets out of the way (the cards it opens slide in from the same edge)
+          const t = (e.target as HTMLElement).closest("button, a");
+          if (t && !t.classList.contains("tv-ctl-gear")) window.setTimeout(() => setMenuOpen(false), 0);
+        }}
+      >
         <button
           type="button"
           className="tv-toy-pill"
@@ -1234,12 +1282,26 @@ export function GameCanvas({
               ⋯
             </button>
 
-            {moreOpen && (
+            {(moreOpen || menuOpen) && (
               <div
                 className="tv-more-menu"
                 role="menu"
                 aria-label="More studio tools"
               >
+                <button
+                  type="button"
+                  role="menuitem"
+                  className="tv-menu-item tv-menu-worlds"
+                  disabled={sleepActive}
+                  onClick={() => {
+                    closeEngineSheets();
+                    closeReactOverlays();
+                    setWorldsOpen(true);
+                  }}
+                >
+                  <span>Worlds</span>
+                  <span className="tv-menu-meta">{currentWorldEntry.label}</span>
+                </button>
                 {state.learn && (
                   <button
                     type="button"

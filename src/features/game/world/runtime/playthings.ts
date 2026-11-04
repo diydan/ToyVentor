@@ -44,6 +44,19 @@ export const BOUQUET_S = PICK_S + SMELL_S;
 /** The toy can only walk within this far of the middle of the lane in depth (world.ts `clampPathZ`): a visit that asks it to stand further out would never "arrive". */
 export const PATH_Z = 1.2;
 export const lane = (z: number) => Math.max(-PATH_Z, Math.min(PATH_Z, z));
+/** Props stand behind Kip's walking lane (world.ts CLEAR_Z), so Kip walks to the lane's edge and then steps back into the scene to the prop's depth, does it, and steps out again: how long each step takes. */
+export const STEP_S = 0.45;
+/** How far in front of a prop's own depth Kip stands for a hand job (the can, the carrot, the push) and what it never goes behind. */
+export const FRONT_OF_PROP = 0.9;
+export const DEEPEST_Z = -3.4;
+/** Where Kip is in depth `t` seconds into a visit of `seconds`: where it began, eased into `z`, held there, and eased back out for the last STEP_S. */
+export function stepZ(t: number, seconds: number, z0: number, z: number): number {
+  const e = (u: number) => { const k = u < 0 ? 0 : u > 1 ? 1 : u; return k * k * (3 - 2 * k); };
+  if (!(t > 0)) return z0;
+  const out = t - (seconds - STEP_S);
+  if (out > 0) return z + (z0 - z) * e(out / STEP_S);
+  return z0 + (z - z0) * e(t / STEP_S);
+}
 const ease = (u: number) => { const k = u < 0 ? 0 : u > 1 ? 1 : u; return k * k * (3 - 2 * k); };
 const lerp = (a: number, b: number, u: number) => a + (b - a) * u;
 
@@ -70,6 +83,16 @@ export function ridePath(t: number, stand: { x: number; z: number }, swing: { x:
 interface Drop { mesh: THREE.Mesh; vy: number; age: number }
 
 export function createPlaythings(w: ActsWorld, h: ThingHelpers) {
+  /** A visit done at the prop's depth rather than the lane's: Kip steps into `zOf()` (clamped to DEEPEST_Z) for it and back to where it began, even when it is cut short. */
+  function atDepth(v: Visit, zOf: () => number): Visit {
+    let z0 = 0;
+    return {
+      ...v,
+      begin: () => { z0 = w.position().z; v.begin(); },
+      tick: (t) => { const p = w.position(); w.setPosition(p.x, p.y, stepZ(t, v.seconds, z0, Math.max(DEEPEST_Z, zOf()))); v.tick?.(t); },
+      end: (completed) => { const p = w.position(); w.setPosition(p.x, p.y, z0); v.end(completed); },
+    };
+  }
   const drops: Drop[] = [];
   const dropGeo = new THREE.SphereGeometry(0.055, 8, 6);
   const dropMat = new THREE.MeshBasicMaterial({ color: 0x6ec6ff, transparent: true, opacity: 0.9, fog: false });
@@ -208,11 +231,11 @@ export function createPlaythings(w: ActsWorld, h: ThingHelpers) {
     /** The visit a tap on this prop starts, or null when the prop is not in a state for it. */
     visitFor(kind: ThingKind, inst: PropInst): Visit | null {
       switch (kind) {
-        case "roll": return inst.kick ? null : rollVisit(inst);                         // a tire still rolling is not pushed again
-        case "angel": return angelVisit(inst);
-        case "water": { const g = inst.holder.userData.growth as (() => number) | undefined; return g && g() > 0.5 ? bouquetVisit(inst) : waterVisit(inst); }
-        case "feed": return feedVisit(inst);
-        case "picnic": return picnicVisit(inst);
+        case "roll": return inst.kick ? null : atDepth(rollVisit(inst), () => inst.base.pz + 0.2);       // a tire still rolling is not pushed again
+        case "angel": return atDepth(angelVisit(inst), () => inst.base.pz);                              // lies ON the pad
+        case "water": { const g = inst.holder.userData.growth as (() => number) | undefined; return atDepth(g && g() > 0.5 ? bouquetVisit(inst) : waterVisit(inst), () => inst.base.pz + FRONT_OF_PROP); }
+        case "feed": return atDepth(feedVisit(inst), () => inst.base.pz + FRONT_OF_PROP);
+        case "picnic": return atDepth(picnicVisit(inst), () => inst.base.pz);                            // sits ON the blanket
         case "ride": return rideVisit(inst);
       }
     },
