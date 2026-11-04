@@ -402,6 +402,13 @@ export async function segmentBoxes(
 export type InspectResult = { checked: true; nouns: string[] } | { checked: false };
 
 const INSPECT_TIMEOUT_MS = 12_000;
+/**
+ * The camera pick-up's question (worker/nameIt.ts): the photo shows ONE thing a child is holding up, so ask for that thing first and never for the person or the surface it lies on.
+ * The general question above ranks everything by prominence, and a spoon on a table would be named "table".
+ */
+const FOCUS_PROMPT =
+  'The photo shows one thing a child is holding up or has put in front of the camera. Name it as a short common noun an image segmenter can find, one or two words, like "spoon" or "toy car". ' +
+  'Reply with JSON only: {"nouns": ["...", "..."]} with the main thing first and at most three other guesses after it. Never name a person, a body part, or the surface or room around it.';
 const NOUN_RE = /^[a-z][a-z ]{0,39}$/;
 
 /** Defensively pull ranked segmenter nouns out of a Spark reply (JSON, possibly fenced). Exported for tests. */
@@ -435,6 +442,7 @@ export async function inspectPhotoNouns(
   env: BackendEnv,
   imageDataUrl: string,
   timeoutMs = INSPECT_TIMEOUT_MS,
+  opts: { focus?: boolean } = {},
 ): Promise<InspectResult> {
   const hosted = hostedOnly(env, "text");
   const key = hosted?.key;
@@ -453,7 +461,7 @@ export async function inspectPhotoNouns(
             content: [
               {
                 type: "input_text",
-                text: 'List the main objects in this photo as short nouns for an image segmenter. Reply with JSON only: {"nouns": ["...", "..."]} ranked by prominence, at most 6.',
+                text: opts.focus ? FOCUS_PROMPT : 'List the main objects in this photo as short nouns for an image segmenter. Reply with JSON only: {"nouns": ["...", "..."]} ranked by prominence, at most 6.',
               },
               { type: "input_image", image_url: imageDataUrl },
             ],

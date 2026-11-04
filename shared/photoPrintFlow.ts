@@ -144,6 +144,47 @@ export async function scanPhoto(doFetch: Fetch, args: ScanPhotoArgs): Promise<Sc
   return scanFail("no_outline", "The helper could not draw an outline. Try another photo.");
 }
 
+// ---- "what is it?": naming the object for the camera pick-up ------------------------------------------------------------------
+
+export type NameObjectResult = { ok: true; names: string[] } | { ok: false; reason: ScanFailureReason; message: string };
+
+/** The names the Worker may send back: one or two plain lowercase words. Anything else is dropped here as well, so a server that misbehaves cannot put odd text on a child's screen. */
+const NAME_RE = /^[a-z][a-z ]{1,29}$/;
+
+/**
+ * Ask the helper what is in the picture (`/api/scan` with `nameIt`): up to three names for the main thing, best first, already screened by the Worker. Used when a child points
+ * the camera at something and does not say what it is. Never throws; every failure is one calm sentence.
+ */
+export async function nameObject(doFetch: Fetch, args: { imageDataUrl: string }): Promise<NameObjectResult> {
+  const fail = (reason: ScanFailureReason, message: string): NameObjectResult => ({ ok: false, reason, message });
+  if (typeof args.imageDataUrl !== "string" || !args.imageDataUrl.startsWith("data:image/")) return fail("invalid_input", "Take a picture first.");
+  if (args.imageDataUrl.length > MAX_PHOTO_DATA_URL) return fail("too_large", "That photo is too big. Try a smaller one.");
+  let res: Response;
+  try {
+    res = await doFetch(SCAN_ROUTE, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ nameIt: { imageDataUrl: args.imageDataUrl } }), credentials: "omit", cache: "no-store" });
+  } catch {
+    return fail("offline", "No connection to the online helper. Check the internet and try again.");
+  }
+  if (res.status === 429) return fail("slow_down", "Too many tries. Please wait a minute and try again.");
+  if (res.status === 413) return fail("too_large", "That photo is too big. Try a smaller one.");
+  if (res.status === 422 || res.status === 400) return fail("invalid_input", "That photo could not be used. Try another one.");
+  if (!res.ok) return fail("busy", "The online helper is busy. Please try again in a minute.");
+  let body: unknown;
+  try {
+    body = await res.json();
+  } catch {
+    return fail("busy", "The online helper is busy. Please try again in a minute.");
+  }
+  if (!isRecord(body)) return fail("busy", "The online helper is busy. Please try again in a minute.");
+  if (body.configured === false) return fail("helper_off", "The online helper is not turned on here.");
+  const names: string[] = [];
+  if (Array.isArray(body.names)) {
+    for (const n of body.names) if (typeof n === "string" && NAME_RE.test(n) && !names.includes(n) && names.length < 3) names.push(n);
+  }
+  if (!names.length) return fail("no_match", "I could not tell what that is. Tap what it is and try again.");
+  return { ok: true, names };
+}
+
 // ---- the household library's offer ---------------------------------------------------------------------------------------
 
 /**

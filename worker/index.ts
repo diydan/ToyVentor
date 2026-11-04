@@ -30,6 +30,7 @@ import { handleTranscribe } from "./transcribe";
 import { handleMuseSpark, museConfigured, type MuseEnv } from "./muse";
 import { handleOwnership, type OwnershipEnv } from "./ownership";
 import { handleParent, type ParentEnv } from "./parent";
+import { handleNameIt } from "./nameIt";
 import { handleRoomScan } from "./roomScan";
 import { handleSelfieCartoon, handleSelfieFaceParts, selfieCloudEnabled, type SelfieEnv } from "./selfie";
 import { spendLimited, type SpendLimitEnv } from "./spendLimit";
@@ -64,6 +65,8 @@ function json(data: unknown, status = 200): Response {
 interface ScanBody {
   /** Feature 3: "room" routes to the gated multi-noun room scan (worker/roomScan.ts). Absent = toy scan. */
   mode?: unknown;
+  /** The camera pick-up: "what is in this photo?" (worker/nameIt.ts). */
+  nameIt?: unknown;
   imageDataUrl?: unknown;
   nouns?: unknown;
   toy?: unknown;
@@ -183,6 +186,8 @@ async function handleScanPost(request: Request, env: Env): Promise<Response> {
   const body = parsedScan.value as ScanBody;
 
   if (body.mode === "room") return handleRoomScan(request, env, body);
+
+  if (body.nameIt !== undefined) return handleNameIt(body.nameIt, env);
 
   if (body.scan) return handleSamScan(body.scan, env);
 
