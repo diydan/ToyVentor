@@ -143,16 +143,16 @@
   "at": "2026-11-04T02:16:52.294Z"
  },
  "junk-mid": {
-  "prompt": "A wide horizontal strip of cute rounded piles of junk: stacked old tyres, a rusty crane, round barrels, crates and a little tin shed, in muted orange, teal and purple, soft clay toy style, centered with empty space above, on a PURE SOLID BLACK background (#000000), nothing else, no ground line, no sky, no text.",
+  "prompt": "A wide horizontal strip of a long continuous scrapyard skyline that fills the WHOLE width of the picture from the far left edge to the far right edge with no gaps: low rolling heaps of scrap, stacked old tyres, round barrels, wooden crates, two rusty cranes, a tall pile of junk and a little tin shed, spread evenly along the entire strip and all different from each other, in muted orange, teal and purple, soft clay toy style, empty space above, on a PURE SOLID BLACK background (#000000), nothing else, no ground line, no sky, no text.",
   "requested": "4096x512",
   "file": "junk-mid.webp",
-  "bytes": 139374,
-  "ms": 8180,
+  "bytes": 279590,
+  "ms": 24270,
   "usage": {
-   "input_tokens": 10254,
-   "output_tokens": 1050,
-   "total_tokens": 11304
+   "input_tokens": 19152,
+   "output_tokens": 2355,
+   "total_tokens": 21507
   },
-  "at": "2026-11-04T02:17:00.474Z"
+  "at": "2026-11-04T15:18:35.506Z"
  }
 }

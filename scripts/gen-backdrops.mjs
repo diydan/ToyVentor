@@ -35,7 +35,8 @@ export const JOBS = {
   "snow-mid": MID("rounded snowy hills in white and icy blue with small round snow-covered pine trees and one tiny cozy igloo"),
   "junk-far-day": FAR("daytime scrapyard skyline for a children's game: a blue sky with a warm sun and a few fluffy clouds, distant piles of colourful scrap, old tyres and rusty cranes as soft silhouettes in muted grey, purple and orange along the bottom, hazy and light"),
   "junk-far-night": FAR("sunset scrapyard skyline for a children's game: a deep purple and orange sunset sky fading to indigo with the first stars, distant piles of scrap, old tyres and cranes as dark soft silhouettes along the bottom"),
-  "junk-mid": MID("cute rounded piles of junk: stacked old tyres, a rusty crane, round barrels, crates and a little tin shed, in muted orange, teal and purple"),
+  // The first Junkyard strip (MID(...), "centered") came back as ONE compact cluster 1800 px wide, so the game mirrored it over and over along the horizon. This one asks for the whole width (2026-11-04).
+  "junk-mid": `A wide horizontal strip of a long continuous scrapyard skyline that fills the WHOLE width of the picture from the far left edge to the far right edge with no gaps: low rolling heaps of scrap, stacked old tyres, round barrels, wooden crates, two rusty cranes, a tall pile of junk and a little tin shed, spread evenly along the entire strip and all different from each other, in muted orange, teal and purple, soft clay toy style, empty space above, on a PURE SOLID BLACK background (#000000), nothing else, no ground line, no sky, no text.`,
 };
 
 const vars = Object.fromEntries(readFileSync(path.join(ROOT, ".dev.vars"), "utf8").split("\n").filter((l) => l.includes("=") && !l.startsWith("#")).map((l) => [l.slice(0, l.indexOf("=")), l.slice(l.indexOf("=") + 1).trim().replace(/^"|"$/g, "")]));
