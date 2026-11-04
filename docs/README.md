@@ -28,6 +28,7 @@ on geometry conflicts, [parts-tu-spec.md](parts/parts-tu-spec.md) and
 | [spec.md](product/spec.md) | Canonical behavior, demo proof, safety, and delivery scope. |
 | [plan.md](product/plan.md) | Work plan to the November 4 submission. |
 | [demo-script.md](product/demo-script.md) | The 90-second run, stills, and failure replies. |
+| [close-out-checklist.md](product/close-out-checklist.md) | The submission-day master list (2026-11-04): Dan's chore list mapped to what the repo records, the ship gate, the demo beats, the submission package, and what waits. Points at qa.md rather than copying it. |
 | [qa.md](product/qa.md) | The one QA document: pre-deploy gates, live smoke, by-hand live checks, real-phone and real-child passes. |
 | [world-first-spec.md](ux/world-first-spec.md) | Active one-stage UX, dock, sheets, overflow, transitions, and demo path. |
 | [design-guide.html](ux/design-guide.html) | Tokens, components, motion, accessibility, and open design needs. |

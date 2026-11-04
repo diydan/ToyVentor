@@ -35,9 +35,11 @@ become printable, playable, and shippable.
 - **Part will not fit:** show the failed check and suggest repair, forge, or
   reprint.
 - **Pack already claimed:** show that one-claim-per-day is working.
-- **Make from words is slow or unreachable:** the maker service runs on the
-  author's machine for now, so the app offers a ready-made hat or head. Say so;
-  do not improvise.
+- **Make from words is slow or unreachable:** a wish takes about 20 seconds (the
+  model names the part in seven languages; the maker itself answers in well under a
+  second), and the maker runs in a Cloudflare Container that sleeps after 10 idle
+  minutes. If it is unreachable the app offers a ready-made hat or head. Say so;
+  do not improvise. Two live wishes on 2026-11-04 took 21.8 s and 21.9 s.
 
 ## Check before recording
 
