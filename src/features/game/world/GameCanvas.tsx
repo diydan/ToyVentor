@@ -47,6 +47,7 @@ import { localDay } from "../../../../shared/parent-time";
 import { partsById } from "../../../lib/catalog";
 import {
   applyDailyQuestProgress,
+  CHORE_QUEST_XP,
   completeRealLifeChore,
   dailyQuestsForDay,
   toggleChoreEnabled,
@@ -129,6 +130,8 @@ import "../../../game-hud.css";
 import { NavStrip } from "./NavStrip";
 import { ToyCustomizer } from "./ToyCustomizer";
 import { ToyMiniIcon } from "./ToyMiniIcon";
+import { ScavengerCamera } from "./ScavengerCamera";
+import { SCAVENGER_QUESTS, type ScavengerQuest } from "../../../lib/scavenger";
 import { TitleMenu } from "./TitleMenu";
 import { shouldShowTitle, type TitleChoice } from "./titleEntries";
 
@@ -242,6 +245,8 @@ export function GameCanvas({
   const [worldsOpen, setWorldsOpen] = useState(false);
   const [demoMode, setDemoMode] = useState<boolean>(() => loadDemoMode());
   const [skinTick, setSkinTick] = useState(0);
+  // "Find a Wheel": the scavenger chore whose camera is open, or null.
+  const [scavenge, setScavenge] = useState<ScavengerQuest | null>(null);
   const [grownUpsOpen, setGrownUpsOpen] = useState(initialOverlay === "parent");
   const [grownUpsHoldSatisfied, setGrownUpsHoldSatisfied] = useState(false);
   const [gearHoldPct, setGearHoldPct] = useState(0);
@@ -1139,6 +1144,30 @@ export function GameCanvas({
       })
     : [];
 
+  // A real-life chore done: pay it once a day (the shared +25 XP ceiling is in completeRealLifeChore) and say so. The Toy Box's "I did it!" and the scavenger camera both come here.
+  const completeChore = (choreId: string) => {
+    const dayKey = localDay(
+      Date.now(),
+      parentSnapshot.settings.timezone,
+    );
+    const res = completeRealLifeChore(
+      progressionRef.current,
+      choreId,
+      dayKey,
+    );
+    if (res.awarded <= 0) return;
+    saveProgression(res.next);
+    setProgression(res.next);
+    void pushProgression(res.next);
+    const rankNote =
+      res.rankAfter.rank > res.rankBefore.rank
+        ? ` · Rank ${res.rankAfter.rank}: ${res.rankAfter.title}`
+        : "";
+    showXpToast(
+      `+${res.awarded} XP · ${res.chore?.title ?? "Routine"}${rankNote}`,
+    );
+  };
+
   return (
     <div
       ref={hostRef}
@@ -1788,29 +1817,21 @@ export function GameCanvas({
             closeReactOverlays();
             setRevealState({ first: characterCardIsFirst() });
           }}
-          onCompleteChore={(choreId: string) => {
-            const dayKey = localDay(
-              Date.now(),
-              parentSnapshot.settings.timezone,
-            );
-            const res = completeRealLifeChore(
-              progressionRef.current,
-              choreId,
-              dayKey,
-            );
-            if (res.awarded <= 0) return;
-            saveProgression(res.next);
-            setProgression(res.next);
-            void pushProgression(res.next);
-            const rankNote =
-              res.rankAfter.rank > res.rankBefore.rank
-                ? ` · Rank ${res.rankAfter.rank}: ${res.rankAfter.title}`
-                : "";
-            showXpToast(
-              `+${res.awarded} XP · ${res.chore?.title ?? "Routine"}${rankNote}`,
-            );
+          onScavenge={(choreId: string) => {
+            setScavenge(SCAVENGER_QUESTS.find((q) => q.id === choreId) ?? null);
           }}
+          onCompleteChore={completeChore}
         />
+
+        {scavenge && (
+          <ScavengerCamera
+            key={scavenge.id}
+            quest={scavenge}
+            xp={CHORE_QUEST_XP}
+            onFound={completeChore}
+            onClose={() => setScavenge(null)}
+          />
+        )}
 
         {missionPanel.open && (
           <MissionPanel

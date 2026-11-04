@@ -110,6 +110,8 @@ export function cutoutPng(doc, r, maxSide = 256) {
 const CSS = `
 .kpu-back{position:fixed;inset:0;z-index:90;background:#000;color:#fff;display:none;overflow:hidden;touch-action:manipulation;-webkit-tap-highlight-color:transparent;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
 .kpu-back.open{display:block}
+.kpu-print{position:fixed;left:50%;bottom:166px;transform:translateX(-50%);z-index:40;font:inherit;font-size:14px;font-weight:800;color:#fff;background:#1f9d6b;border:0;border-radius:999px;min-height:44px;padding:0 18px;box-shadow:0 8px 22px rgba(20,60,45,.35);cursor:pointer;max-width:92vw}
+.kpu-print[hidden]{display:none!important}
 .kpu-back *{box-sizing:border-box}
 .kpu-video,.kpu-freeze{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#111}
 .kpu-freeze{display:none;transition:filter .3s ease}
@@ -210,6 +212,8 @@ export function createPickUp({ root, panel, getHandPoint, holdWorkshopProp, hold
     $.shutter = el(doc, 'button', { type: 'button', class: 'kpu-shutter', 'aria-label': 'Take the picture', text: '●', disabled: true });
     $.retry = el(doc, 'button', { type: 'button', class: 'on', text: '↩ Try again', hidden: true });
     $.plate = el(doc, 'button', { type: 'button', text: '🖨️ Make its plate', hidden: true });
+    // After a pick-up (the camera view closed, Kip holds it): print what was just picked up. Lives beside the bench, not in the camera view.
+    $.print = el(doc, 'button', { type: 'button', class: 'kpu-print', text: '🖨️ Print it', hidden: true, 'aria-label': 'Print what Kip just picked up' });
     $.status = el(doc, 'div', { class: 'kpu-status', role: 'status', 'aria-live': 'polite' });
     $.controls = el(doc, 'div', { class: 'kpu-controls' },
       el(doc, 'div', { class: 'kpu-cell start' }, $.fileBtn, $.plate),
@@ -217,7 +221,7 @@ export function createPickUp({ root, panel, getHandPoint, holdWorkshopProp, hold
       el(doc, 'div', { class: 'kpu-cell end' }, $.flip));
     $.bottom = el(doc, 'div', { class: 'kpu-bottom' }, $.status, $.chips, $.word, $.controls);
     $.back.append(el(doc, 'style', { text: CSS }), $.video, $.freeze, $.scan, $.top, $.bottom);
-    root.append($.back);
+    root.append($.back, $.print);
     built = $;
     wire($);
     return $;
@@ -516,6 +520,7 @@ export function createPickUp({ root, panel, getHandPoint, holdWorkshopProp, hold
     state.lastPick = { word, kind: taken.kind, id: taken.id, label: taken.label, coloured: taken.coloured, colours: r.ok ? dominantColours(r) : [], cutout, named: !wordIn };
     say(`Kip picked up the ${taken.label.toLowerCase()}!`);
     api.close();
+    if (built) built.print.hidden = !(canPrintPlate && r.ok); // only with an outline to print, and only where printing is on (a grown-up's proof still gates the file)
     try { onPicked && onPicked({ ...state.lastPick }); } catch { /* the page's hook must not break the view */ }
   }
 
@@ -533,6 +538,7 @@ export function createPickUp({ root, panel, getHandPoint, holdWorkshopProp, hold
     $.shutter.addEventListener('click', shoot);
     $.retry.addEventListener('click', () => { panel.clearScan?.(); startCamera(); });
     $.plate.addEventListener('click', () => { api.close(); panel.open?.(); });
+    $.print.addEventListener('click', () => panel.open?.()); // the panel is on its shape step: the scan is still there
     $.flip.addEventListener('click', () => { state.facing = state.facing === 'environment' ? 'user' : 'environment'; startCamera(); });
     $.file.addEventListener('change', () => useFile($.file.files && $.file.files[0]));
     $.word.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); shoot(); } });
@@ -551,6 +557,7 @@ export function createPickUp({ root, panel, getHandPoint, holdWorkshopProp, hold
       if (disposed) return;
       const $ = build();
       panel.clearScan?.();
+      $.print.hidden = true; // its scan is gone
       removeCut();
       $.back.classList.add('open');
       state.word = '';
@@ -575,7 +582,7 @@ export function createPickUp({ root, panel, getHandPoint, holdWorkshopProp, hold
       if (disposed) return;
       api.close();
       disposed = true;
-      if (built) { built.back.remove(); built = null; }
+      if (built) { built.back.remove(); built.print.remove(); built = null; }
       state.lastPick = null;
     },
   };

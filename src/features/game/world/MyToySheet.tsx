@@ -21,6 +21,7 @@ import {
   type DailyQuest,
   type RealLifeChoreStatus,
 } from "../../../lib/dailyQuests";
+import { isScavengerChore } from "../../../lib/scavenger";
 import {
   nextRankProgress,
   type ProgressionState,
@@ -158,6 +159,7 @@ export function MyToySheet({
   onJumpToWorld,
   onOpenCharacterCard,
   onCompleteChore,
+  onScavenge,
 }: {
   open: boolean;
   initialStep?: "shelf" | "scan";
@@ -172,6 +174,8 @@ export function MyToySheet({
   onJumpToWorld?: (worldId: string) => void;
   onOpenCharacterCard?: () => void;
   onCompleteChore?: (choreId: string) => void;
+  /** A scavenger chore ("Find a Wheel") opens the camera to find it, instead of waiting for a grown-up's tap. */
+  onScavenge?: (choreId: string) => void;
 }) {
   const { uploadedToys, builtInToys, selected, addToy, selectToy } = useToybox();
   const [step, setStep] = useState<"shelf" | "scan">(initialStep);
@@ -582,7 +586,16 @@ export function MyToySheet({
                       </span>
                       <span className="tv-toy-tile-sub">{chore.goal}</span>
                     </span>
-                    {!chore.completed && onCompleteChore && (
+                    {!chore.completed && onScavenge && isScavengerChore(chore.id) && (
+                      <button
+                        type="button"
+                        className="tv-ctl tv-roster-card-act"
+                        onClick={() => onScavenge(chore.id)}
+                      >
+                        📷 Find it
+                      </button>
+                    )}
+                    {!chore.completed && onCompleteChore && !(onScavenge && isScavengerChore(chore.id)) && (
                       <button
                         type="button"
                         className="tv-ctl tv-roster-card-act"
