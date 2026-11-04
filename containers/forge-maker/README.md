@@ -2,7 +2,7 @@
 
 The maker that builds and checks a part (`scripts/forge_optimizer_daemon.py`, **unchanged**) runs here, in a container, behind a Worker with no public
 address. The main Worker (`toyventor`) calls it through a service binding named `FORGE_MAKER` (`worker/forgeOptimizer.ts`), so nothing runs on a laptop and
-the daemon is never on the internet. Written 2026-11-04. **Built and tested locally; not deployed yet** (see "Deploy").
+the daemon is never on the internet. Written 2026-11-04. **Deployed 2026-11-04** (maker Worker version `7d959e1c`, main Worker version `75daf83f` from commit `5c5b383`). Two live wishes ("a wizard hat", "a tall chef hat") came back `preview_ready`, then `print_ready` with a finished STL; each request took about 22 s end to end, of which the maker's preview was about 50 ms: the time is the hosted model. See "Deploy" for the order, which the first rollout followed.
 
 ```
 child -> toyventor Worker (/api/forge/make) -> service binding -> toyventor-forge-maker Worker -> Durable Object "forge" -> container (daemon, port 8791)
@@ -45,7 +45,7 @@ Turn it off: remove the `services` entry (or the Worker); the routes then answer
 
 ## Know before relying on it
 
-- **Not tested live.** Nothing here has run on Cloudflare yet. First live request: cold start, the 90 s port wait, `max_instances`, and the real price of `standard-2` are unmeasured.
+- **Live, but only just.** Two wishes have been made through it (see the top of this file). Still unmeasured: whether a cold start is inside those 22 s, the 90 s port wait, `max_instances`, and the real price of `standard-2`.
 - **Jobs live in the container's memory.** One instance on purpose (a job started by one request is polled by the next). A restart (idle sleep after 10 minutes, a deploy, a crash) drops running jobs; the client falls back to a ready-made part.
 - **A pathological recipe can stall a background job.** My crude 3-slice "head" never finished its print check on the Mac or in the container (the daemon logs divide-by-zero warnings in `toyventor_parts.py:3939`).
   The fast preview still answers. Two stuck jobs would hold both worker threads until the container restarts. Not new, and not changed here.
