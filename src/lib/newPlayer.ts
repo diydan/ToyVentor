@@ -7,6 +7,8 @@
 //
 // Pure: no React, no DOM. Storage is injected (the page passes `localStorage`).
 
+import { KIP_HAIRSTYLES, KIP_HAIR_COLORS, KIP_SKIN_TONES } from "../features/game/world/runtime/kipLook";
+
 export const PROFILE_KEY = "toyventor:profile:v1";
 export const PROFILE_VERSION = 1;
 
@@ -85,10 +87,10 @@ export function cleanName(raw: unknown): NameResult {
 export const ADULT_AGE = 13;
 export const needsGrownUp = (under13: boolean): boolean => under13;
 
-export type StepId = "who" | "grownup" | "names" | "favourites" | "build" | "song" | "intro";
+export type StepId = "who" | "grownup" | "names" | "favourites" | "dress" | "song" | "build" | "intro";
 /** The screens in order. A player 13 or over skips only the grown-up check. The song's yes comes BEFORE the build so the grown-up answers it while still holding the device; the song itself is only asked for when the intro begins, so the wait is the tour. */
 export function stepsFor(under13: boolean): readonly StepId[] {
-  return under13 ? ["who", "grownup", "names", "favourites", "song", "build", "intro"] : ["who", "names", "favourites", "song", "build", "intro"];
+  return under13 ? ["who", "grownup", "names", "favourites", "dress", "song", "build", "intro"] : ["who", "names", "favourites", "dress", "song", "build", "intro"];
 }
 
 /** The grown-up check: one small multiplication, drawn fresh. It is an age screen and nothing more (the COPPA spec: a math question is not consent; the consent is the button on the song screen). */
@@ -99,6 +101,53 @@ export function grownUpQuestion(rng: () => number = Math.random): { a: number; b
   };
   const a = pick(6, 9), b = pick(6, 9);
   return { a, b, answer: a * b };
+}
+
+// ---- dressing Kip ---------------------------------------------------------------------------------------------------------------------------------------------------------
+
+/**
+ * "Dress your Kip" (Dan, 2026-11-04: "use a similar UI as the onboarding for the initial Kip configure: hair, pants colours, shirt colour, shoes colour, hair/hat, tail"). Every choice is a tile from a closed list, and
+ * every list is what the game's rig really draws: the shirt (paint zone c1), the pants (c2) and the skin tone (skin), the demo's nineteen hairstyles and six hair tones (runtime/kipLook.ts), and the hats and tails the
+ * character rig has models for (runtime/catalog.ts, runtime/stlRigLoader.ts resolveCharacterHatUrl). SHOES have no colour in the rig (the boots are the demo's orange), so there is no shoe row.
+ */
+export interface KipConfig { shirt: string; pants: string; skin: string; hair: string; hairColour: string; hat: string; tail: string }
+
+export const PANTS_COLOURS: readonly ColourChoice[] = [
+  { id: "navy", label: "Navy", icon: "🔵", hex: "#2b4c85" },
+  { id: "denim", label: "Light blue", icon: "🔷", hex: "#5b86c9" },
+  { id: "black", label: "Black", icon: "⚫", hex: "#2a2a33" },
+  { id: "khaki", label: "Khaki", icon: "🟤", hex: "#c9b27a" },
+  { id: "red", label: "Red", icon: "🔴", hex: "#e4573d" },
+  { id: "green", label: "Green", icon: "🟢", hex: "#3fae6a" },
+  { id: "purple", label: "Purple", icon: "🟣", hex: "#7a5cc7" },
+];
+export const SKIN_CHOICES: readonly ColourChoice[] = KIP_SKIN_TONES.map((t) => ({ id: t.id, label: t.label, icon: "🙂", hex: t.hex.toLowerCase() }));
+export const HAIR_CHOICES: readonly Choice[] = [{ id: "none", label: "No hair", icon: "🚫" }, ...KIP_HAIRSTYLES.map((h) => ({ id: h.id, label: h.label, icon: "💇" }))];
+export const HAIR_COLOUR_CHOICES: readonly ColourChoice[] = KIP_HAIR_COLORS.map((c) => ({ id: c.id, label: c.label, icon: "🎨", hex: c.hex.toLowerCase() }));
+export const HAT_CHOICES: readonly Choice[] = [
+  { id: "none", label: "No hat", icon: "🚫" }, { id: "wizard", label: "Wizard hat", icon: "🧙" }, { id: "crown", label: "Crown", icon: "👑" },
+  { id: "propcap", label: "Hard hat", icon: "👷" }, { id: "cap", label: "Cap", icon: "🧢" }, { id: "flower", label: "Ranger hat", icon: "🤠" },
+];
+export const TAIL_CHOICES: readonly Choice[] = [
+  { id: "none", label: "No tail", icon: "🚫" }, { id: "curly", label: "Curly tail", icon: "🌀" }, { id: "fox", label: "Fox tail", icon: "🦊" },
+  { id: "dragon", label: "Dragon tail", icon: "🐉" }, { id: "puff", label: "Puff tail", icon: "☁️" },
+];
+
+/** The Kip a new player starts from: the stock look (the demo's skin, jeans and chestnut Swept hair), with the shirt in `shirtHex` (the favourite colour). */
+export function defaultKipConfig(shirtHex: string = FAVOURITE_COLOURS[0]!.hex): KipConfig {
+  return { shirt: shirtHex.toLowerCase(), pants: "#2b4c85", skin: "#f3ba95", hair: "short_swept", hairColour: "#6e412a", hat: "none", tail: "none" };
+}
+
+const HEX = /^#[0-9a-f]{6}$/i;
+/** A config only ever holds values from the lists above (a hand-edited or old value is refused, never trusted). */
+export function cleanKipConfig(raw: unknown): KipConfig | null {
+  const c = raw as Partial<Record<keyof KipConfig, unknown>> | null;
+  if (!c || typeof c !== "object") return null;
+  const hex = (v: unknown, from: readonly ColourChoice[]): string | null => (typeof v === "string" && HEX.test(v) && from.some((x) => x.hex.toLowerCase() === v.toLowerCase()) ? v.toLowerCase() : null);
+  const id = (v: unknown, from: readonly Choice[]): string | null => (typeof v === "string" && from.some((x) => x.id === v) ? v : null);
+  const shirt = hex(c.shirt, FAVOURITE_COLOURS), pants = hex(c.pants, PANTS_COLOURS), skin = hex(c.skin, SKIN_CHOICES), hairColour = hex(c.hairColour, HAIR_COLOUR_CHOICES);
+  const hair = id(c.hair, HAIR_CHOICES), hat = id(c.hat, HAT_CHOICES), tail = id(c.tail, TAIL_CHOICES);
+  return shirt && pants && skin && hairColour && hair && hat && tail ? { shirt, pants, skin, hair, hairColour, hat, tail } : null;
 }
 
 // ---- the profile ---------------------------------------------------------------------------------------------------------------------------------------------------------------

@@ -4,8 +4,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import "../../../onboarding.css";
 import {
-  FAVOURITE_ANIMALS, FAVOURITE_COLOURS, FAVOURITE_FRUITS, NAME_PROBLEM_TEXT, animalOf, buildProfile, cleanName, colourOf, confetti, fruitOf, grownUpQuestion, introSlides, meetKipSlides, saveProfile, songIdea,
-  stepsFor, type Choice, type PlayerProfile, type StepId, type Store,
+  FAVOURITE_ANIMALS, FAVOURITE_COLOURS, FAVOURITE_FRUITS, HAIR_CHOICES, HAIR_COLOUR_CHOICES, HAT_CHOICES, NAME_PROBLEM_TEXT, PANTS_COLOURS, SKIN_CHOICES, TAIL_CHOICES, animalOf, buildProfile, cleanKipConfig, cleanName, colourOf, confetti, defaultKipConfig, fruitOf, grownUpQuestion, introSlides, meetKipSlides, saveProfile, songIdea,
+  stepsFor, type Choice, type KipConfig, type PlayerProfile, type StepId, type Store,
 } from "../../../lib/newPlayer";
 import type { FlowState } from "./themeSongFlow";
 
@@ -31,7 +31,25 @@ export interface OnboardingSheetProps {
 const reduced = (): boolean => { try { return window.matchMedia("(prefers-reduced-motion: reduce)").matches; } catch { return false; } };
 const todayIso = (): string => new Date().toISOString();
 
-function Tiles({ label, items, value, onPick, colour }: { label: string; items: readonly Choice[]; value: string; onPick(id: string): void; colour?: boolean }) {
+/** A little Kip that wears the choices as they are made (plain blocks: the real Kip is built in the scene that follows). */
+function KipPreview({ cfg }: { cfg: KipConfig }) {
+  const hat = HAT_CHOICES.find((h) => h.id === cfg.hat);
+  const tail = TAIL_CHOICES.find((t) => t.id === cfg.tail);
+  return (
+    <div className="tv-onb-preview" aria-hidden="true" data-preview>
+      <i className="pv-leg pv-l" style={{ background: cfg.pants }} /><i className="pv-leg pv-r" style={{ background: cfg.pants }} />
+      <i className="pv-shoe pv-l" /><i className="pv-shoe pv-r" />
+      <i className="pv-arm pv-l" style={{ background: cfg.skin }} /><i className="pv-arm pv-r" style={{ background: cfg.skin }} />
+      <i className="pv-torso" style={{ background: cfg.shirt }} />
+      <i className="pv-head" style={{ background: cfg.skin }}><b className="pv-eye pv-l" /><b className="pv-eye pv-r" /><b className="pv-mouth" /></i>
+      {cfg.hair !== "none" && <i className="pv-hair" style={{ background: cfg.hairColour }} />}
+      {hat && hat.id !== "none" && <span className="pv-hat">{hat.icon}</span>}
+      {tail && tail.id !== "none" && <span className="pv-tail">{tail.icon}</span>}
+    </div>
+  );
+}
+
+function Tiles({ label, items, value, onPick, colour, text }: { label: string; items: readonly Choice[]; value: string; onPick(id: string): void; colour?: boolean; /** Show the name on the tile (for lists with no picture, like hairstyles). */ text?: boolean }) {
   return (
     <div className="tv-onb-row" role="group" aria-label={label}>
       <b className="tv-onb-rowlabel">{label}</b>
@@ -40,7 +58,7 @@ function Tiles({ label, items, value, onPick, colour }: { label: string; items: 
           <button
             key={c.id}
             type="button"
-            className={`tv-onb-tile${colour ? " tv-onb-swatch" : ""}`}
+            className={`tv-onb-tile${colour ? " tv-onb-swatch" : ""}${text ? " tv-onb-tile-text" : ""}`}
             style={colour ? { background: (c as { hex?: string }).hex } : undefined}
             aria-pressed={value === c.id}
             aria-label={c.label}
@@ -48,7 +66,7 @@ function Tiles({ label, items, value, onPick, colour }: { label: string; items: 
             data-pick={c.id}
             onClick={() => onPick(c.id)}
           >
-            {colour ? <span aria-hidden="true">{value === c.id ? "✓" : ""}</span> : <span aria-hidden="true">{c.icon}</span>}
+            {colour ? <span aria-hidden="true">{value === c.id ? "✓" : ""}</span> : text ? <span aria-hidden="true">{c.label}</span> : <span aria-hidden="true">{c.icon}</span>}
           </button>
         ))}
       </div>
@@ -67,6 +85,13 @@ export function OnboardingSheet({ onClose, onStage, onHold, onPickUp, onIntroSta
   const [consent, setConsent] = useState<boolean | null>(null);
   const [problem, setProblem] = useState("");
   // the "meet Kip" scene: wait (the Toy Room is loading) > pile (Kip is a pile of bricks) > building > built > meet (three prop cards)
+  // "Dress your Kip": the shirt starts as the favourite colour, everything else as the stock Kip (the demo's skin, jeans and chestnut Swept hair)
+  const [cfg, setCfg] = useState<KipConfig>(() => defaultKipConfig());
+  const [tab, setTab] = useState<"clothes" | "hair" | "extras">("clothes");
+  const pickId = (key: keyof KipConfig) => (id: string) => setCfg((c) => ({ ...c, [key]: id }));
+  /** Colour tiles are named by id but the config holds the hex: translate both ways. */
+  const pickHex = (key: keyof KipConfig, list: readonly { id: string; hex: string }[]) => (id: string) => { const hit = list.find((x) => x.id === id); if (hit) setCfg((c) => ({ ...c, [key]: hit.hex })); };
+  const idOf = (list: readonly { id: string; hex: string }[], hex: string) => list.find((x) => x.hex.toLowerCase() === hex.toLowerCase())?.id ?? "";
   const [scene, setScene] = useState<"wait" | "pile" | "building" | "built" | "meet">("wait");
   const [meet, setMeet] = useState(0);
   const timers = useRef<number[]>([]);
@@ -102,7 +127,12 @@ export function OnboardingSheet({ onClose, onStage, onHold, onPickUp, onIntroSta
     setKid(k.ok ? k.name : kid);
     next();
   };
-  const checkFavourites = () => { if (!colour || !fruit || !animal) { setProblem("Pick one of each to go on."); return; } next(); };
+  const checkFavourites = () => {
+    if (!colour || !fruit || !animal) { setProblem("Pick one of each to go on."); return; }
+    setCfg((c) => ({ ...c, shirt: colourOf(colour)?.hex ?? c.shirt })); // the shirt starts as the favourite colour (and can be changed on the next screen)
+    setTab("clothes");
+    next();
+  };
 
   // entering the build step goes to the Toy Room and lays Kip out as a pile; leaving it any other way than forward puts Kip back
   const laid = useRef(false);
@@ -110,7 +140,7 @@ export function OnboardingSheet({ onClose, onStage, onHold, onPickUp, onIntroSta
     if (step !== "build") return;
     onStage("enter");
     setScene("wait");
-    const t = window.setTimeout(() => { onStage("pile", colourOf(colour)?.hex); laid.current = true; setScene("pile"); }, 1700);
+    const t = window.setTimeout(() => { onStage("pile", JSON.stringify(cleanKipConfig(cfg) ?? defaultKipConfig(colourOf(colour)?.hex))); laid.current = true; setScene("pile"); }, 1700);
     timers.current.push(t);
     return () => { window.clearTimeout(t); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -229,6 +259,41 @@ export function OnboardingSheet({ onClose, onStage, onHold, onPickUp, onIntroSta
             <Tiles label="Favourite animal" items={FAVOURITE_ANIMALS} value={animal} onPick={setAnimal} />
             {problem && <p className="tv-onb-err" role="alert">{problem}</p>}
             {nav(checkFavourites)}
+          </>
+        )}
+        {step === "dress" && (
+          <>
+            {heading(`Dress ${name}'s Kip`)}
+            <div className="tv-onb-dress">
+              <KipPreview cfg={cfg} />
+              <div className="tv-onb-dresspanel">
+                <div className="tv-onb-tabs" role="tablist" aria-label="What to change">
+                  {([["clothes", "Clothes"], ["hair", "Hair"], ["extras", "Hat & tail"]] as const).map(([id, label]) => (
+                    <button key={id} type="button" role="tab" className="tv-onb-tab" aria-selected={tab === id} onClick={() => setTab(id)} data-tab={id}>{label}</button>
+                  ))}
+                </div>
+                {tab === "clothes" && (
+                  <>
+                    <Tiles label="Shirt" items={FAVOURITE_COLOURS} value={idOf(FAVOURITE_COLOURS, cfg.shirt)} onPick={pickHex("shirt", FAVOURITE_COLOURS)} colour />
+                    <Tiles label="Pants" items={PANTS_COLOURS} value={idOf(PANTS_COLOURS, cfg.pants)} onPick={pickHex("pants", PANTS_COLOURS)} colour />
+                    <Tiles label="Skin" items={SKIN_CHOICES} value={idOf(SKIN_CHOICES, cfg.skin)} onPick={pickHex("skin", SKIN_CHOICES)} colour />
+                  </>
+                )}
+                {tab === "hair" && (
+                  <>
+                    <Tiles label="Hair" items={HAIR_CHOICES} value={cfg.hair} onPick={pickId("hair")} text />
+                    <Tiles label="Hair colour" items={HAIR_COLOUR_CHOICES} value={idOf(HAIR_COLOUR_CHOICES, cfg.hairColour)} onPick={pickHex("hairColour", HAIR_COLOUR_CHOICES)} colour />
+                  </>
+                )}
+                {tab === "extras" && (
+                  <>
+                    <Tiles label="Hat" items={HAT_CHOICES} value={cfg.hat} onPick={pickId("hat")} />
+                    <Tiles label="Tail" items={TAIL_CHOICES} value={cfg.tail} onPick={pickId("tail")} />
+                  </>
+                )}
+              </div>
+            </div>
+            {nav(next, "Next")}
           </>
         )}
         {step === "song" && (

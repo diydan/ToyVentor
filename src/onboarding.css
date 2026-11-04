@@ -102,3 +102,29 @@
 @keyframes tv-onb-pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.07); } }
 @media (prefers-reduced-motion: reduce) { .tv-onb-phones { animation: none; } }
 
+/* "Dress your Kip": a live mini Kip on the left, tabs and tiles on the right */
+.tv-onb-dress { display: flex; gap: 16px; align-items: flex-start; }
+.tv-onb-dresspanel { flex: 1; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.tv-onb-tabs { display: flex; gap: 8px; }
+.tv-onb-tab { min-height: 44px; padding: 0 16px; border-radius: 22px; border: 3px solid rgba(255, 255, 255, 0.25); background: rgba(255, 255, 255, 0.08); color: #fff; font: inherit; font-size: 16px; font-weight: 800; cursor: pointer; }
+.tv-onb-tab[aria-selected="true"] { background: #ffd24d; color: #2a1a12; border-color: #fff; }
+.tv-onb-tile-text { width: auto; min-width: 56px; padding: 0 12px; font-size: 14px; font-weight: 800; white-space: nowrap; }
+.tv-onb-dresspanel .tv-onb-tiles { max-height: 130px; overflow-y: auto; }
+.tv-onb-preview { position: relative; flex: 0 0 120px; height: 210px; }
+.tv-onb-preview i, .tv-onb-preview b, .tv-onb-preview span { position: absolute; display: block; }
+.tv-onb-preview .pv-head { left: 30px; top: 30px; width: 60px; height: 54px; border-radius: 14px; }
+.tv-onb-preview .pv-eye { top: 22px; width: 7px; height: 9px; border-radius: 50%; background: #2a1a12; }
+.tv-onb-preview .pv-eye.pv-l { left: 14px; } .tv-onb-preview .pv-eye.pv-r { right: 14px; }
+.tv-onb-preview .pv-mouth { left: 22px; top: 38px; width: 16px; height: 7px; border-bottom: 3px solid #2a1a12; border-radius: 0 0 12px 12px; }
+.tv-onb-preview .pv-hair { left: 24px; top: 18px; width: 72px; height: 34px; border-radius: 30px 30px 8px 8px; }
+.tv-onb-preview .pv-torso { left: 28px; top: 86px; width: 64px; height: 56px; border-radius: 12px; }
+.tv-onb-preview .pv-arm { top: 90px; width: 16px; height: 50px; border-radius: 8px; }
+.tv-onb-preview .pv-arm.pv-l { left: 8px; } .tv-onb-preview .pv-arm.pv-r { right: 8px; }
+.tv-onb-preview .pv-leg { top: 142px; width: 24px; height: 46px; border-radius: 6px; }
+.tv-onb-preview .pv-leg.pv-l { left: 32px; } .tv-onb-preview .pv-leg.pv-r { right: 32px; }
+.tv-onb-preview .pv-shoe { top: 186px; width: 30px; height: 14px; border-radius: 8px; background: #ff6b4a; }
+.tv-onb-preview .pv-shoe.pv-l { left: 28px; } .tv-onb-preview .pv-shoe.pv-r { right: 28px; }
+.tv-onb-preview .pv-hat { left: 38px; top: -2px; font-size: 40px; line-height: 1; }
+.tv-onb-preview .pv-tail { right: -14px; top: 128px; font-size: 30px; line-height: 1; }
+@media (max-height: 420px) { .tv-onb-preview { transform: scale(0.8); transform-origin: top left; flex-basis: 100px; } .tv-onb-dresspanel .tv-onb-tiles { max-height: 96px; } }
+

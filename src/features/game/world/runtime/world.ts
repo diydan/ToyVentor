@@ -1148,7 +1148,12 @@ function ONBS(op: string,hex?: string){
  if(op==="hide"){ONBW=true;if(P.model)P.model.visible=false;blob.visible=false;return}
  var phones=function(){var h=new T.Group(),band=new T.Mesh(new T.TorusGeometry(.44,.06,10,28,Math.PI),plastic("#ff6b4a"));h.add(band);[-.44,.44].forEach(function(x){var c=new T.Mesh(new T.CylinderGeometry(.2,.2,.18,20),plastic("#2b4c85"));c.rotation.z=Math.PI/2;c.position.set(x,0,0);h.add(c)});h.traverse(function(o: any){o.castShadow=true});linearize(h);return h};
  if(op==="pile"){
-  ONBT++;var tk=ONBT;if(ONBG){if(ONBG.parent)ONBG.parent.remove(ONBG);ONBG=null}dropPhones();ONBW=true;if(hex){S.col.c1=hex;save();buildPlayer(null)}
+  ONBT++;var tk=ONBT;if(ONBG){if(ONBG.parent)ONBG.parent.remove(ONBG);ONBG=null}dropPhones();ONBW=true;if(hex){var cf: any=null;if(hex.charAt(0)==="{"){try{cf=JSON.parse(hex)}catch(e){cf=null}} // the whole outfit from "Dress your Kip" (a JSON object), or just the shirt colour (a hex)
+   var hexOk=function(v: any){return typeof v==="string"&&/^#[0-9a-f]{6}$/i.test(v)?v:null},qq: any;
+   if(cf){if((qq=hexOk(cf.shirt)))S.col.c1=qq;if((qq=hexOk(cf.pants)))S.col.c2=qq;if((qq=hexOk(cf.skin)))S.col.skin=qq;if((qq=hexOk(cf.hairColour)))S.col.hair=qq;
+    if(typeof cf.hair==="string")S.sel.hair=cf.hair;if(typeof cf.hat==="string")S.sel.hat=cf.hat;if(typeof cf.tail==="string")S.sel.tail=cf.tail}
+   else S.col.c1=hex;
+   save();buildPlayer(null)}
   if(reduce){show();return}
   if(!ONBK){ONBK=buildWorkshop({x:P.pos.x,z:P.pos.z,accent:hex});scene.add(ONBK)} // the build starts in a WORKSHOP (Dan: not a turntable, a blueprint on the wall); the Toy Room is hidden while ONBW holds
   P.face=P.tface=-Math.PI/2; // facing the screen, as he will stand when he is built (and where "free" turns him anyway)

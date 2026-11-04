@@ -68,7 +68,7 @@ describe("the meet-Kip scene reaches the world", () => {
     expect(world).toContain("function ONBS(op: string,hex?: string){");
   });
   it("the pile paints the shirt itself, turns Kip to the screen, waits for his real STL parts, hides the real Kip until the last part lands, and gives him back on every exit", () => {
-    expect(world).toContain("if(hex){S.col.c1=hex;save();buildPlayer(null)}");
+    expect(world).toContain("save();buildPlayer(null)}"); // the shirt (and, with the outfit, the rest) is saved and the rig rebuilt before he is laid out
     expect(world).toContain("P.face=P.tface=-Math.PI/2;");
     expect(world).toContain('P.rig&&P.rig.stlMode==="stl"'); // his real parts are fetched: no pile of stand-ins
     expect(world).toContain("new T.Mesh(it.o.geometry,it.o.material)"); // every part is a clone sharing the real geometry and material
@@ -143,6 +143,27 @@ describe("the build starts in a workshop with a blueprint", () => {
 describe("the avatar", () => {
   it("gets no picture while Kip is held hidden for the build (it would be an empty scene, kept under a colour signature), so the avatar's poll waits and takes it when he is built", () => {
     expect(world).toContain("portraitSig:function(){return P.rigReady&&!ONBW?String(P.rigSig):null},");
+  });
+});
+
+describe("dress your Kip", () => {
+  it("is a step of its own between the favourites and the song; the shirt starts as the favourite colour; the whole outfit goes to the world as one JSON object when the pile is laid out", () => {
+    expect(sheet).toContain('{step === "dress" && (');
+    expect(sheet).toContain("setCfg((c) => ({ ...c, shirt: colourOf(colour)?.hex ?? c.shirt }));");
+    expect(sheet).toContain('onStage("pile", JSON.stringify(cleanKipConfig(cfg) ?? defaultKipConfig(colourOf(colour)?.hex)));');
+    expect(sheet).toContain("<KipPreview cfg={cfg} />"); // a live preview, so a pick is seen at once
+  });
+  it("the world applies only valid hex colours and plain strings, sets the colours, hair, hat and tail on the saved character, and rebuilds him", () => {
+    expect(world).toContain('if(hex.charAt(0)==="{"){try{cf=JSON.parse(hex)}catch(e){cf=null}}');
+    expect(world).toContain("/^#[0-9a-f]{6}$/i.test(v)");
+    expect(world).toContain("S.col.c1=qq;");
+    expect(world).toContain("S.col.c2=qq;");
+    expect(world).toContain("S.col.skin=qq;");
+    expect(world).toContain("S.col.hair=qq;");
+    expect(world).toContain("S.sel.hair=cf.hair;");
+    expect(world).toContain("S.sel.hat=cf.hat;");
+    expect(world).toContain("S.sel.tail=cf.tail}");
+    expect(world).toContain("else S.col.c1=hex;\n   save();buildPlayer(null)}"); // a plain hex is still just the shirt
   });
 });
 
