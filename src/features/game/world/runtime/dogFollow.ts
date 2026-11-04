@@ -1,0 +1,123 @@
+// The dog follows Kip and sits when Kip stops (docs/specs/playful-interactions-spec.md section 6). It stays at home until Kip first comes close (they have met: it hops, delighted); after that, when Kip
+// walks off, it trots after it and stops a couple of units behind it (opposite to the way Kip last walked, so it is never in the way of where Kip is going), and when Kip has stood still for a
+// while it sits down facing Kip. If a prop is standing where it stopped it tries the next place: the other side of Kip, then a little further out on each side. When Kip walks again it gets up.
+// This is the state machine, with no rendering in it: the world says where the dog and Kip are and how to place the dog (the adapter), and this decides what happens next. Something else having the dog
+// (a fetch, Kip petting it, an act, sleep, the pause screen) always wins: following just waits and starts again from standing.
+import { DOG_BOUNDS } from "./dogFetch";
+
+export type FollowPhase = "home" | "standing" | "trotting" | "sitting";
+
+export interface FollowAdapter {
+  /** Where the dog is along the floor, or null if the room has no dog. */
+  dogX(): number | null;
+  /** Where Kip is along the floor. */
+  toyX(): number;
+  /** Is Kip standing still (not walking)? */
+  toyStill(): boolean;
+  /** Is there a prop (not the dog) standing at this place along the floor? */
+  occupied(x: number): boolean;
+  /** Place the dog along the floor, facing right (+1) or left (-1). */
+  moveDog(x: number, dir: 1 | -1): void;
+  /** What the dog is doing, for its animation. */
+  cue(name: "run" | "sit" | "idle" | "happy"): void;
+  /** False while something else has the dog or Kip: a fetch, an act, sleep, the pause screen, the editor. */
+  allowed(): boolean;
+}
+
+/** Kip coming this close the first time is "meeting" the dog: from then on it follows. */
+export const ENGAGE_X = 3.2;
+/** Kip gets this far from the dog (along the floor) and the dog trots after it. */
+export const FOLLOW_START = 4.2;
+/** It stops this far from Kip, behind it. */
+export const FOLLOW_GAP = 2.2;
+/**
+ * If a prop is in the way it tries the other side of Kip at the same distance, then both sides a little further out, up to SPOT_COUNT places in all (the last is taken without asking). Even the
+ * furthest must be well inside FOLLOW_START: a dog standing where Kip counts as "far" would set off again at once and never settle.
+ */
+export const SPOT_STEP = 1.6;
+export const SPOT_COUNT = 4;
+/** How far from Kip the dog stands at its `k`th choice of place (negative: in front of Kip's heading). */
+const spotOffset = (k: number, behind: 1 | -1) => (k % 2 === 0 ? behind : -behind) * (FOLLOW_GAP + SPOT_STEP * Math.floor(k / 2));
+export const ARRIVE = 0.15;
+/** How long Kip has to stand still, with the dog by it, before the dog sits. */
+export const SIT_AFTER_S = 1.8;
+export const TROT_SPEED = 4.2;
+/** It slows down over the last stretch so it does not stop dead. */
+const SLOW_WITHIN = 1.0, SLOW_SPEED = 1.3;
+
+const clamp = (x: number) => Math.max(DOG_BOUNDS[0], Math.min(DOG_BOUNDS[1], x));
+const sign = (x: number): 1 | -1 => (x < 0 ? -1 : 1);
+
+export function createFollow(a: FollowAdapter) {
+  let phase: FollowPhase = "home";
+  let x = 0;                                                   // where the dog is while it trots (the adapter is told, not asked, so the dog moves at a steady speed)
+  let behind: 1 | -1 = -1;                                     // which side of Kip is "behind" it for this trot
+  let spot = 0;                                                // which of its choices of place it is making for (the next one when a prop is in the way)
+  let heading: 1 | -1 = 1;                                     // the way Kip last walked
+  let lastToy: number | null = null;
+  let stillFor = 0;
+  let wasAllowed = true;
+
+  const faceKip = (dx: number) => { a.moveDog(dx, sign(a.toyX() - dx)); };
+  const startTrot = (dx: number) => { x = dx; behind = heading === 1 ? -1 : 1; spot = 0; a.cue("run"); phase = "trotting"; stillFor = 0; };
+
+  return {
+    get phase(): FollowPhase { return phase; },
+    /** Has the dog met Kip (and so follows it)? */
+    get engaged(): boolean { return phase !== "home"; },
+    update(dt: number): void {
+      const ok = a.allowed();
+      const dx0 = a.dogX();
+      if (dx0 === null) { phase = "home"; wasAllowed = ok; return; }
+      if (!ok) {
+        if (wasAllowed) {                                      // something else has the dog: stop whatever this was doing and begin again from standing when it is free
+          if (phase === "trotting") a.cue("idle");
+          if (phase !== "home") phase = "standing";
+          stillFor = 0;
+        }
+        wasAllowed = false;
+        return;
+      }
+      wasAllowed = true;
+      const toy = a.toyX();
+      if (lastToy !== null && Math.abs(toy - lastToy) > 1e-4) heading = sign(toy - lastToy);
+      lastToy = toy;
+      if (phase === "home") {
+        if (Math.abs(toy - dx0) <= ENGAGE_X) { phase = "standing"; stillFor = 0; a.cue("happy"); }
+        return;
+      }
+      if (phase === "trotting") {
+        const target = clamp(toy + spotOffset(spot, behind));
+        const d = target - x;
+        const speed = Math.abs(d) < SLOW_WITHIN ? Math.max(SLOW_SPEED, TROT_SPEED * Math.abs(d)) : TROT_SPEED;
+        const move = Math.min(Math.abs(d), speed * Math.max(0, dt));
+        if (Math.abs(d) > 1e-9) { x += Math.sign(d) * move; a.moveDog(x, sign(d)); }
+        if (Math.abs(target - x) <= ARRIVE) {
+          if (spot < SPOT_COUNT - 1 && a.occupied(x)) { spot++; return; }                              // a prop is standing there: try the next place
+          phase = "standing"; stillFor = 0; a.cue("idle"); faceKip(x);
+        }
+        return;
+      }
+      const dx = dx0;
+      const far = Math.abs(toy - dx) > FOLLOW_START;
+      if (phase === "sitting") {
+        if (far) startTrot(dx);
+        else if (!a.toyStill()) { phase = "standing"; stillFor = 0; a.cue("idle"); }
+        return;
+      }
+      // standing
+      if (far) { startTrot(dx); return; }
+      if (a.toyStill()) {
+        stillFor += Math.max(0, dt);
+        if (stillFor >= SIT_AFTER_S) { faceKip(dx); a.cue("sit"); phase = "sitting"; }
+      } else stillFor = 0;
+    },
+    /** A world change or a new toy: it forgets Kip (it has not met it) and stands about. */
+    reset(): void {
+      if (phase === "trotting" || phase === "sitting") a.cue("idle");
+      phase = "home"; stillFor = 0; wasAllowed = true;
+    },
+  };
+}
+
+export type DogFollow = ReturnType<typeof createFollow>;

@@ -4,12 +4,14 @@
 import { T, M, plastic } from "./worldScene";
 import type * as THREE from "three";
 
-export type DogCue = "bark" | "pet" | "run" | "happy" | "idle";
+export type DogCue = "bark" | "pet" | "run" | "happy" | "sit" | "idle";
 /** How long a cue's reaction lasts, in seconds. */
 export const BARK_S = 0.9;
 export const PET_REACTION_S = 2.8;
 /** How long the delighted `happy` reaction lasts (after a kick, and after dropping the ball it fetched). `run` lasts until the dog is cued again. */
 export const HAPPY_S = 1.4;
+/** How quickly it sits down and gets up again: the share of the way it covers per second, roughly (the posture eases with the frame time, so it never pops). */
+export const SIT_RATE = 7;
 /** The two woofs of a bark: when each starts after the cue (seconds) and how long each lasts. */
 export const WOOFS: ReadonlyArray<{ at: number; len: number }> = [{ at: 0, len: 0.14 }, { at: 0.2, len: 0.14 }];
 
@@ -27,6 +29,9 @@ export interface DogPose {
   /** Breathing: the body's vertical scale. */
   bodyScaleY: number;
   bodyPitch: number;
+  /** How far the tail and the head are lowered when it sits (the body is lowered with `bob`); `withSit` sets them, a pose without them is a standing one. */
+  tailDrop?: number;
+  headDrop?: number;
 }
 
 const bump = (age: number, at: number, len: number) => (age >= at && age <= at + len ? Math.sin((Math.PI * (age - at)) / len) : 0);
@@ -58,6 +63,10 @@ export function dogPose(t: number, cue: string | null, age: number): DogPose {
     pose.bob = 0.03 * Math.max(0, Math.sin(t * 9));
     pose.earFlop = 0.2 + 0.1 * Math.sin(t * 5);
   }
+  else if (cue === "sit") {                          // sitting waiting for Kip: a slow, lazy wag (the posture itself is `withSit`, eased in and out by the tick)
+    pose.tailYaw = 0.3 * Math.sin(t * 2.4);
+    pose.headYaw = 0.18 * Math.sin(t * 0.7);
+  }
   else if (cue === "run") {                          // running with the ball (or after it): bouncing along, tail up and flying, ears flapping
     pose.bob = 0.05 * Math.abs(Math.sin(t * 13));
     pose.tailYaw = 0.5 * Math.sin(t * 14);
@@ -75,13 +84,22 @@ export function dogPose(t: number, cue: string | null, age: number): DogPose {
   return pose;
 }
 
-interface DogParts { tail: THREE.Group; head: THREE.Group; body: THREE.Group; earL: THREE.Mesh; earR: THREE.Mesh; baseY: number }
+interface DogParts { tail: THREE.Group; head: THREE.Group; body: THREE.Group; earL: THREE.Mesh; earR: THREE.Mesh; baseY: number; tailY: number; headY: number }
+
+/** The posture of a sitting dog, `k` of the way there (0 standing, 1 seated): the rump down, the chest and head up, the tail low and trailing. */
+export function withSit(p: DogPose, k: number): DogPose {
+  const s = Math.max(0, Math.min(1, k));
+  if (s === 0) return p;
+  return { ...p, bob: p.bob - 0.2 * s, bodyPitch: p.bodyPitch + 0.4 * s, headPitch: p.headPitch + 0.3 * s, tailLift: p.tailLift * (1 - s) + 0.02 * s, tailDrop: 0.28 * s, headDrop: 0.08 * s };
+}
 
 export function applyDogPose(parts: DogParts, p: DogPose): void {
   parts.tail.rotation.y = p.tailYaw;
   parts.tail.rotation.z = p.tailLift;
   parts.head.rotation.set(p.headRoll, p.headYaw, p.headPitch);
   parts.body.position.y = parts.baseY + p.bob;
+  parts.tail.position.y = parts.tailY - (p.tailDrop ?? 0);
+  parts.head.position.y = parts.headY - (p.headDrop ?? 0);
   parts.body.scale.y = p.bodyScaleY;
   parts.body.rotation.z = p.bodyPitch;
   parts.earL.rotation.x = p.earFlop;
@@ -125,11 +143,16 @@ export function buildDog(x: number, z: number): THREE.Group {
   tailMesh.rotation.z = 1.1;
   tail.add(tailMesh);
   g.add(tail);
-  const parts: DogParts = { tail, head, body, earL, earR, baseY: 0.78 };
+  const parts: DogParts = { tail, head, body, earL, earR, baseY: 0.78, tailY: 0.95, headY: 1.18 };
   g.userData.dogParts = parts;
-  g.userData.tick = (t: number) => {
+  let sit = 0;                                                         // how far seated it is now (0 to 1), eased towards what the cue asks for
+  g.userData.tick = (t: number, dt = 1 / 60) => {
     const cue = g.userData.cue as { name: string; at: number } | undefined;
-    applyDogPose(parts, dogPose(t, cue ? cue.name : null, cue ? t - cue.at : Infinity));
+    const want = cue && cue.name === "sit" ? 1 : 0;
+    sit += (want - sit) * (1 - Math.exp(-SIT_RATE * Math.max(0, Number.isFinite(dt) ? dt : 0)));
+    if (Math.abs(want - sit) < 0.003) sit = want;
+    g.userData.sitK = sit;
+    applyDogPose(parts, withSit(dogPose(t, cue ? cue.name : null, cue ? t - cue.at : Infinity), sit));
   };
   return g;
 }
