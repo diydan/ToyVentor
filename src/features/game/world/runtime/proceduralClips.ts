@@ -82,7 +82,12 @@ export function bake(name: string, duration: number, loop: boolean, keys: Key[],
 
 const PI = Math.PI;
 // The figure's right hand (-X) comes up to the mouth: forward, up and a little inward.
-const HAND_TO_MOUTH: V3 = [-0.2, 0.5, 0.85];
+const HAND_TO_MOUTH: V3 = [-0.2, 0.5, 0.85];                                  // the wand's hand (`blow`): out in front, the ring ahead of the mouth
+/**
+ * The right hand at the mouth when EATING: from the shoulder, toward the middle of the face (inward, up, a little forward). The arm is a straight one 0.85 long to the fist and the mouth is only 0.62
+ * from the shoulder, so this puts the fist in front of the mouth, level with it (the old direction went outward and far forward: the fist floated half a unit in front of the face, or over the head).
+ */
+export const HAND_AT_MOUTH: V3 = [0.6, 0.4, 0.45];
 const HAND_DOWN: V3 = [-0.12, -0.95, 0.15];
 // Lying down tips the figure about its FEET, so the body would stretch away behind them. Moving the hips forward by about half a body length
 // (in hip-heights) puts the middle of the lying body where the standing figure was, which is what a bed needs.
@@ -182,7 +187,7 @@ export const PROCEDURAL_CLIPS: ClipBank = {
   // One bite: hand to mouth, three chews (the head bobs), a swallow, then a little happy hop. 1.7 s.
   eat: bake("eat", 1.7, false, [
     { t: 0 },
-    { t: 0.35, armR: HAND_TO_MOUTH, head: [0.12, 0, 0], body: [0.06, 0, 0] },
+    { t: 0.35, armR: HAND_AT_MOUTH, head: [0.12, 0, 0], body: [0.06, 0, 0] },
     { t: 0.5, head: [0.3, 0, 0] }, { t: 0.65, head: [0.1, 0, 0] },
     { t: 0.8, head: [0.3, 0, 0] }, { t: 0.95, head: [0.1, 0, 0] },
     { t: 1.1, head: [0.3, 0, 0] }, { t: 1.25, head: [-0.12, 0, 0], armR: HAND_DOWN, body: [0, 0, 0] },
@@ -199,9 +204,11 @@ export const PROCEDURAL_CLIPS: ClipBank = {
   // Full: both hands pat the belly twice and the head tips back with a happy sigh. 1.6 s.
   belly_pat: bake("belly_pat", 1.6, false, [
     { t: 0 },
-    { t: 0.3, armL: [0.25, -0.55, 0.8], armR: [-0.25, -0.55, 0.8], head: [-0.15, 0, 0], body: [-0.1, 0, 0] },
-    { t: 0.5, armL: [0.25, -0.5, 0.85], armR: [-0.25, -0.5, 0.85] }, { t: 0.7, armL: [0.25, -0.6, 0.75], armR: [-0.25, -0.6, 0.75] },
-    { t: 0.9, armL: [0.25, -0.5, 0.85], armR: [-0.25, -0.5, 0.85] }, { t: 1.1, armL: [0.25, -0.6, 0.75], armR: [-0.25, -0.6, 0.75] },
+    // the hands are in front of the belly, level with the hips, one over the other (the arms are straight and 0.85 long, the belly only 0.6 from the shoulders: the nearest the fists can be is
+    // just in front of it, so they meet at the middle instead of floating half a unit out to each side)
+    { t: 0.3, armL: [-0.48, -0.6, 0.63], armR: [0.48, -0.6, 0.63], head: [-0.15, 0, 0], body: [-0.1, 0, 0] },
+    { t: 0.5, armL: [-0.48, -0.55, 0.69], armR: [0.48, -0.55, 0.69] }, { t: 0.7, armL: [-0.48, -0.66, 0.58], armR: [0.48, -0.66, 0.58] },
+    { t: 0.9, armL: [-0.48, -0.55, 0.69], armR: [0.48, -0.55, 0.69] }, { t: 1.1, armL: [-0.48, -0.66, 0.58], armR: [0.48, -0.66, 0.58] },
     { t: 1.6, armL: REST.armL, armR: REST.armR, head: [0, 0, 0], body: [0, 0, 0] },
   ]),
   // A big yawn: head back, arms stretch up and out, a settle. 1.8 s.

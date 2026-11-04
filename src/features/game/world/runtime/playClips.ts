@@ -1,7 +1,7 @@
 // Hand-authored clips for the outdoor things to do (docs/specs/playful-interactions-spec.md section 6): a snow angel, pouring from a watering can, picking and smelling flowers, offering a carrot,
 // eating a sandwich sitting down, and sitting on a swing. Authored exactly like proceduralClips.ts (keyframes baked into the Mixamo clip format) and added to the same driver bank, so they blend like any
 // other clip. Limbs are body-local unit vectors (rest is straight down), body and head Euler angles in radians (see proceduralClips.ts for the frame); a lying pose is authored at `gainFor`(real angle).
-import { bake, gainFor, type Key } from "./proceduralClips";
+import { HAND_AT_MOUTH, bake, gainFor, type Key } from "./proceduralClips";
 import type { BakedClip, ClipBank } from "./mixamo";
 
 type V3 = readonly [number, number, number];
@@ -55,7 +55,7 @@ export function swingEndTimes(rideSeconds: number): Array<{ t: number; forward: 
 
 /** Sitting down with the legs out in front: the hips drop and the legs point forward. Used under the picnic and the swing. */
 const SIT = { hips: [0, -0.4, 0.05] as V3, legL: [0.1, -0.12, 0.99] as V3, legR: [-0.1, -0.12, 0.99] as V3 };
-const HAND_TO_MOUTH: V3 = [-0.2, 0.5, 0.85];
+const HAND_TO_MOUTH: V3 = HAND_AT_MOUTH;   // eating a sandwich: the fist in front of the mouth (proceduralClips.ts)
 
 const angelKeys: Key[] = [];
 const LIE = { body: [-gainFor(PI / 2), 0, 0] as V3, head: [0, 0, 0] as V3, hips: [0, 0.08, 0.5] as V3 };

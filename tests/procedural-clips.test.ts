@@ -77,7 +77,8 @@ describe("eat: the hand goes to the mouth and the head chews", () => {
   it("the figure's right hand comes up in front of the face, and the left stays down", () => {
     const p = pose(eat, 0.5);
     expect(p.armR.y).toBeGreaterThan(0.3); // up
-    expect(p.armR.z).toBeGreaterThan(0.6); // forward
+    expect(p.armR.z).toBeGreaterThan(0.3); // forward
+    expect(p.armR.x).toBeGreaterThan(0.4); // inward, toward the middle of the face (it used to go outward and float in front of it)
     expect(p.armL.y).toBeLessThan(-0.9);
   });
   it("the head bobs three times while chewing (three distinct nods down)", () => {
