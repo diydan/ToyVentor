@@ -25,6 +25,7 @@ if (fs.existsSync(file)) {
 }
 for (const k of Object.keys(process.env)) if (/^(MODEL_API_KEY|META_MODEL_API_KEY|META_MODEL_API_URL|MUREKA_API_KEY|MUSE_SPARK_MODEL|MODEL_BACKEND|TEXT_BACKEND|SELF_TEXT_[A-Z]+)$/.test(k)) env[k] = process.env[k]!;
 env.THEME_SONG = "on";
+env.THEME_SONG_QUOTA = "off"; // a local probe: no D1, no device id (the metered path is tested in tests/theme-song-metered.test.ts)
 
 const description = process.argv[2] && !process.argv[2].startsWith("--") ? process.argv[2] : "a race car";
 const spend = process.argv.includes("--yes");

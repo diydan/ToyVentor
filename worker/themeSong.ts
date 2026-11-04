@@ -11,16 +11,22 @@
 // Dan, 2026-11-03: the theme song has lyrics, the name is made when the build starts, and the text model is behind the Spark/Glimmer switch. This
 // relaxes the instrumental-only rule of docs/specs/dance-party-spec.md 4.2 for THIS route only, with the gate in shared/songLyrics.ts instead.
 //
-// OFF BY DEFAULT. Nothing here spends money unless THEME_SONG=on and a MUREKA_API_KEY is set. This is the PLAY TEST slice, not the finished quota:
-//   - the per-device weekly limit and the monthly budget (shared/songQuota.ts, to be kept in D1) are NOT wired;
-//   - instead: a per-IP limit, and a cap on songs ordered per Worker instance (THEME_SONG_MAX_STARTS, default 25), best effort like the other routes;
-//   - the audio link is Mureka's own (valid 30 days). Copying the bytes into our own storage needs an R2 bucket, which does not exist yet.
+// OFF BY DEFAULT. Nothing here spends money unless THEME_SONG=on and a MUREKA_API_KEY is set. When it is on it is METERED (docs/specs/dance-party-spec.md 4.6, D4 and D10):
+//   - every call needs a device id (`x-device-id`); a slot is taken BEFORE any model or provider call (shared/songQuota.ts, kept in D1 by worker/songStore.ts: 5 a week per device
+//     by default, the monthly budget SONG_MONTHLY_BUDGET for everyone, unset means no budget and nothing is made) and given back if anything fails before the song is ordered;
+//   - a grown-up can switch songs off or lower the weekly limit for the device (POST /api/theme-song/settings, behind the parent proof);
+//   - a song's status and audio are answered only to the device that made it (a numeric task id is not a secret);
+//   - with an R2 bucket bound as SONGS the finished audio is copied there, so a kept song outlives the provider's 30-day link; without it the link is used, as before.
+// THEME_SONG_QUOTA=off runs it UNMETERED for local probes (no D1, no device id, a per-instance cap of THEME_SONG_MAX_STARTS): never set it in production.
 // The Mureka key is read here and sent only as the Authorization header to the Mureka host. It is never logged or returned.
+import { isPlayerId } from "../shared/ownership";
 import { readCappedJson } from "./body";
 import { askText, resolveBackend } from "./modelBackend";
 import { SAFETY, firstJsonObject, kidSafeText, scrubContactDetails, type MuseEnv } from "./muse";
 import { INSTRUMENTS, MOODS, TEMPOS } from "../shared/songCards";
 import { parseThemeReply, type ThemeSong } from "../shared/songLyrics";
+import { verifyParentProofFromRequest, type ParentEnv } from "./parent";
+import { attachSong, commitSong, markStored, parseSongSettingsUpdate, readSongSettings, refundSong, reservationOfTask, reserveSong, statusFor, writeSongSettings, type SongDb, type SongStatus } from "./songStore";
 
 export const THEME_SONG_CONTRACT = 1;
 const MAX_BODY_BYTES = 4_000;
@@ -43,7 +49,13 @@ const startHits = new Map<string, number[]>();
 const pollHits = new Map<string, number[]>();
 let startsThisInstance = 0;
 
-export interface ThemeSongEnv extends MuseEnv {
+/** The bit of an R2 bucket this route uses. */
+export interface R2Like {
+  put(key: string, value: ArrayBuffer, options?: { httpMetadata?: { contentType?: string } }): Promise<unknown>;
+  get(key: string): Promise<{ arrayBuffer(): Promise<ArrayBuffer> } | null>;
+}
+
+export interface ThemeSongEnv extends MuseEnv, ParentEnv {
   MUREKA_API_KEY?: string;
   /** "on" to let this route spend money. Anything else, or unset, is off. */
   THEME_SONG?: string;
@@ -55,7 +67,18 @@ export interface ThemeSongEnv extends MuseEnv {
   THEME_SONG_MAX_STARTS?: string;
   /** An exact file host to relay and link besides *.mureka.ai (a test uses its own). */
   MUREKA_AUDIO_HOST?: string;
+  /** Songs a month across every device (a whole number). Unset or not a number: no budget, so no song is made. */
+  SONG_MONTHLY_BUDGET?: string;
+  /** "off" runs the route unmetered (local probes only). Anything else, or unset, is metered and needs the D1 binding (`DB`). */
+  THEME_SONG_QUOTA?: string;
+  /** An R2 bucket for finished songs. Optional: without it the provider's 30-day link is all there is. */
+  SONGS?: R2Like;
 }
+
+const SONG_KEY = /^[A-Za-z0-9_-]{8,64}$/;
+export const isMetered = (env: ThemeSongEnv): boolean => (env.THEME_SONG_QUOTA ?? "").trim().toLowerCase() !== "off";
+const db = (env: ThemeSongEnv): SongDb => env.DB as unknown as SongDb;
+const r2Key = (deviceId: string, task: string) => `songs/${deviceId}/${task}.mp3`;
 
 function json(data: unknown, status = 200): Response {
   return new Response(JSON.stringify(data), { status, headers: { "content-type": "application/json", "cache-control": "no-store" } });
@@ -78,7 +101,8 @@ export function resetThemeSongLimits(): void {
 }
 
 export function themeSongEnabled(env: ThemeSongEnv): boolean {
-  return (env.THEME_SONG ?? "").trim().toLowerCase() === "on" && Boolean(env.MUREKA_API_KEY?.trim()) && resolveBackend(env, "text").mode !== "off";
+  if ((env.THEME_SONG ?? "").trim().toLowerCase() !== "on" || !env.MUREKA_API_KEY?.trim() || resolveBackend(env, "text").mode === "off") return false;
+  return !isMetered(env) || Boolean(env.DB); // metered means the quota has somewhere to live: no D1, no songs (fails closed)
 }
 
 /**
@@ -123,9 +147,10 @@ export function themePrompt(description: string, kind: ThemeKind = "build"): str
 }
 
 /** Ask the text model for a name and a song until one passes the gate (twice at most). */
-async function writeSong(env: ThemeSongEnv, description: string, kind: ThemeKind): Promise<{ ok: true; song: ThemeSong; mode: string } | { ok: false; status: number; error: string; reason?: string }> {
+/** Exported for the eval (scripts/eval-theme-song.ts): the same call the route makes, with the number of model calls it took. */
+export async function writeSong(env: ThemeSongEnv, description: string, kind: ThemeKind): Promise<{ ok: true; song: ThemeSong; mode: string; attempts: number } | { ok: false; status: number; error: string; reason?: string; attempts: number }> {
   const backend = resolveBackend(env, "text");
-  if (backend.mode === "off") return { ok: false, status: 503, error: "the song writer is not configured" };
+  if (backend.mode === "off") return { ok: false, status: 503, error: "the song writer is not configured", attempts: 0 };
   const childSaid = squish(description);
   const startedAt = Date.now();
   let lastReason = "unparseable";
@@ -135,16 +160,16 @@ async function writeSong(env: ThemeSongEnv, description: string, kind: ThemeKind
     const asked = await askText(backend, themePrompt(description, kind), { timeoutMs: left });
     if (!asked.ok) {
       console.log(JSON.stringify({ event: "theme-song", step: "text", status: asked.status === null ? "fetch-failed" : asked.status, backend: backend.mode }));
-      return { ok: false, status: 502, error: asked.status === null ? "the song writer did not answer" : `the song writer returned ${asked.status}` };
+      return { ok: false, status: 502, error: asked.status === null ? "the song writer did not answer" : `the song writer returned ${asked.status}`, attempts: attempt + 1 };
     }
     const reply = firstJsonObject(asked.text);
     if (!isRecord(reply)) { lastReason = "unparseable"; continue; }
     const checked = parseThemeReply(reply, { childSaid, extraSafe: (t) => kidSafeText(t) });
-    if (checked.ok) return { ok: true, song: checked.song, mode: backend.mode };
+    if (checked.ok) return { ok: true, song: checked.song, mode: backend.mode, attempts: attempt + 1 };
     lastReason = checked.reason;
   }
   console.log(JSON.stringify({ event: "theme-song", step: "gate", reason: lastReason, backend: backend.mode }));
-  return { ok: false, status: 502, error: "no song this time", reason: lastReason };
+  return { ok: false, status: 502, error: "no song this time", reason: lastReason, attempts: ATTEMPTS };
 }
 
 async function mureka(env: ThemeSongEnv, method: "GET" | "POST", path: string, body?: unknown): Promise<{ ok: true; data: unknown } | { ok: false; status: number | null }> {
@@ -163,45 +188,117 @@ async function mureka(env: ThemeSongEnv, method: "GET" | "POST", path: string, b
   }
 }
 
+const budgetOf = (env: ThemeSongEnv): number | undefined => {
+  const raw = env.SONG_MONTHLY_BUDGET?.trim();
+  return raw ? Number(raw) : undefined; // not a whole number: the store reads it as no budget
+};
+const timezoneOf = (request: Request): string => (request.headers.get("x-client-timezone") ?? "UTC").slice(0, 64);
+
+type Quota = Pick<SongStatus, "limit" | "used" | "left" | "resetsOn" | "makerOn">;
+const quotaOf = (s: SongStatus): Quota => ({ limit: s.limit, used: s.used, left: s.left, resetsOn: s.resetsOn, makerOn: s.makerOn });
+
+/** The reply for a slot the quota would not give, in words a child can be told. */
+function denial(reason: string, quota: Quota | null): Response {
+  switch (reason) {
+    case "week_used": return json({ error: "No new songs until Monday. Dance to the ones you made!", reason, ...(quota ? { quota } : {}) }, 429);
+    case "not_enabled": return json({ error: "Songs are switched off by a grown-up.", reason: "songs_off", ...(quota ? { quota } : {}) }, 403);
+    case "budget_spent": return json({ error: "The song studio is resting this month.", reason }, 429);
+    case "key_in_use": return json({ error: "That song belongs to someone else.", reason }, 409);
+    default: return json({ error: "Something was not right with that request.", reason: "bad_request" }, 400);
+  }
+}
+
 async function handleStart(request: Request, env: ThemeSongEnv): Promise<Response> {
   if (limited(startHits, request.headers.get("CF-Connecting-IP"), START_WINDOW_MS, STARTS_PER_WINDOW, Date.now())) return json({ error: "One song at a time. Try again in a few minutes." }, 429);
   if (!(request.headers.get("content-type") ?? "").includes("application/json")) return json({ error: "expected application/json" }, 415);
+  const metered = isMetered(env);
+  const deviceHeader = request.headers.get("x-device-id");
+  if (metered && !isPlayerId(deviceHeader)) return json({ error: "A device id is needed.", reason: "device_required" }, 401);
+  const deviceId = metered ? (deviceHeader as string) : null;
   const parsed = await readCappedJson(request, MAX_BODY_BYTES);
   if (!parsed.ok) return json({ error: parsed.over ? "request body too large" : "invalid JSON body" }, parsed.over ? 413 : 400);
   const description = isRecord(parsed.value) && typeof parsed.value.description === "string" ? parsed.value.description.replace(/\s+/g, " ").trim() : "";
   if (!description) return json({ error: "description is required" }, 422);
   if (description.length > MAX_DESCRIPTION) return json({ error: `description over ${MAX_DESCRIPTION} characters` }, 413);
 
-  const cap = Number(env.THEME_SONG_MAX_STARTS) || DEFAULT_MAX_STARTS;
+  // the unmetered probe path keeps a per-instance cap; metered runs have the real quota and only use the cap if one is set on purpose
+  const capSet = Number(env.THEME_SONG_MAX_STARTS);
+  const cap = metered ? (capSet > 0 ? capSet : Infinity) : capSet > 0 ? capSet : DEFAULT_MAX_STARTS;
   if (startsThisInstance >= cap) return json({ error: "The song studio is full for now." }, 429);
 
   const wanted = parsed.value ? (parsed.value as { kind?: unknown }).kind : undefined;
   const kind: ThemeKind = wanted === "level" ? "level" : wanted === "prompt" ? "prompt" : "build";
-  // A child's own words reach the model only for a "prompt" song, so they are screened first: contact details, links and unsafe words are turned away kindly and nothing is spent.
-  if (kind === "prompt" && !kidSafeText(description)) return json({ error: "Let's pick a different idea!", reason: "idea_not_allowed" }, 422);
-  const written = await writeSong(env, description, kind);
-  if (!written.ok) return json({ error: written.error, ...(written.reason ? { reason: written.reason } : {}) }, written.status);
-  const { song } = written;
+  // A child's own words reach the model for a "prompt" song (the Songs sheet) and for a "build" song (what they typed in Describe & build); only the "level" sentence is ours. So those two are
+  // screened first: contact details, links and unsafe words are turned away kindly and nothing is spent.
+  if (kind !== "level" && !kidSafeText(description)) return json({ error: "Let's pick a different idea!", reason: "idea_not_allowed" }, 422);
 
-  // the paid call: after the gate, one song, the words we built and the fixed style text
-  startsThisInstance++;
-  const ordered = await mureka(env, "POST", "/v1/song/generate", { lyrics: song.lyrics, model: env.MUREKA_SONG_MODEL?.trim() || DEFAULT_SONG_MODEL, n: 1, prompt: song.prompt });
-  const task = ordered.ok && isRecord(ordered.data) && (typeof ordered.data.id === "string" || typeof ordered.data.id === "number") ? String(ordered.data.id) : null;
-  if (!task) startsThisInstance--; // nothing was ordered, so nothing is spent
-  console.log(JSON.stringify({ event: "theme-song", step: "ordered", ok: task !== null, upstream: ordered.ok ? "ok" : (ordered as { status: number | null }).status, backend: written.mode, mood: song.request.mood, tempo: song.request.tempo }));
-  return json({
-    contract: THEME_SONG_CONTRACT,
-    name: song.name,
-    verse: song.verse,
-    chorus: song.chorus,
-    mood: song.request.mood,
-    tempo: song.request.tempo,
-    instruments: song.request.instruments,
-    ai: true,
-    task,
-    // the name and the words are good even when the song could not be ordered: the client shows them and says no song came
-    ...(task === null ? { songError: "The song studio could not start this one." } : {}),
-  });
+  // take a slot BEFORE any model or provider call
+  const rawKey = isRecord(parsed.value) ? parsed.value.key : undefined;
+  const key = typeof rawKey === "string" && SONG_KEY.test(rawKey) ? rawKey : crypto.randomUUID();
+  const nowMs = Date.now();
+  let slotHeld = false;
+  const giveBack = async (reason: "rejected_before_call" | "provider_failed") => {
+    if (!metered || !slotHeld) return;
+    slotHeld = false;
+    try { await refundSong(db(env), key, reason, Date.now()); } catch { /* the slot expires by itself */ }
+  };
+  const quotaNow = async (): Promise<Quota | null> => {
+    if (!metered) return null;
+    try { return quotaOf(await statusFor(db(env), deviceId!, Date.now(), timezoneOf(request))); } catch { return null; }
+  };
+  if (metered) {
+    let r;
+    try { r = await reserveSong(db(env), { key, deviceId: deviceId!, nowMs }, { monthlyBudget: budgetOf(env), timezone: timezoneOf(request) }); }
+    catch { return json({ error: "The song studio could not check your songs.", reason: "quota_unavailable" }, 503); }
+    if (!r.ok) return denial(r.reason, await quotaNow());
+    if (r.replay) {
+      // the same tap again: the song already made for it, and nothing spent
+      if (r.payload) { try { return json({ ...(JSON.parse(r.payload) as object), replay: true, quota: await quotaNow() }); } catch { /* fall through */ } }
+      return json({ error: "That song is still being written.", reason: "in_progress" }, 409);
+    }
+    slotHeld = true;
+  }
+
+  let ordered = false;
+  try {
+    const written = await writeSong(env, description, kind);
+    if (!written.ok) {
+      await giveBack("rejected_before_call");
+      return json({ error: written.error, ...(written.reason ? { reason: written.reason } : {}) }, written.status);
+    }
+    const { song } = written;
+
+    // the paid call: after the gate, one song, the words we built and the fixed style text
+    startsThisInstance++;
+    const res = await mureka(env, "POST", "/v1/song/generate", { lyrics: song.lyrics, model: env.MUREKA_SONG_MODEL?.trim() || DEFAULT_SONG_MODEL, n: 1, prompt: song.prompt });
+    const task = res.ok && isRecord(res.data) && (typeof res.data.id === "string" || typeof res.data.id === "number") ? String(res.data.id) : null;
+    if (!task) { startsThisInstance--; await giveBack("provider_failed"); } // nothing was ordered, so nothing is spent
+    else ordered = true;
+    console.log(JSON.stringify({ event: "theme-song", step: "ordered", ok: task !== null, upstream: res.ok ? "ok" : (res as { status: number | null }).status, backend: written.mode, kind, mood: song.request.mood, tempo: song.request.tempo, metered }));
+    const payload = {
+      contract: THEME_SONG_CONTRACT,
+      name: song.name,
+      verse: song.verse,
+      chorus: song.chorus,
+      mood: song.request.mood,
+      tempo: song.request.tempo,
+      instruments: song.request.instruments,
+      ai: true,
+      task,
+    };
+    if (metered && task) await attachSong(db(env), key, task, JSON.stringify(payload));
+    return json({
+      ...payload,
+      key,
+      // the name and the words are good even when the song could not be ordered: the client shows them and says no song came
+      ...(task === null ? { songError: "The song studio could not start this one." } : {}),
+      ...(metered ? { quota: await quotaNow() } : {}),
+    });
+  } catch (err) {
+    console.log(JSON.stringify({ event: "theme-song", step: "error", ordered, message: String(err instanceof Error ? err.message : err).slice(0, 120) }));
+    if (!ordered) await giveBack("provider_failed"); // once ordered the money may be spent: the slot is left to expire and keeps counting against the budget
+    return json({ error: "The song studio hiccuped. Try again in a moment." }, 502);
+  }
 }
 
 /** Only an https link on the provider's own file host is ever passed to a page or fetched by the Worker. */
@@ -230,35 +327,119 @@ async function finishedLink(env: ThemeSongEnv, id: string): Promise<{ ok: true; 
   return { ok: false, status: "making" };
 }
 
+/** Fetch the song's bytes from the provider's link, checked for size. */
+async function fetchAudio(url: string): Promise<ArrayBuffer | null> {
+  try {
+    const res = await fetch(url, { signal: AbortSignal.timeout(AUDIO_TIMEOUT_MS) });
+    if (!res.ok) return null;
+    const bytes = await res.arrayBuffer();
+    return bytes.byteLength < 1 || bytes.byteLength > MAX_AUDIO_BYTES ? null : bytes;
+  } catch { return null; }
+}
+
+/** Metered only: who may see this task. A task that is not this device's looks like a task that does not exist. */
+async function ownerCheck(request: Request, env: ThemeSongEnv, id: string): Promise<{ deviceId: string; key: string; state: string; stored: boolean } | Response> {
+  const deviceId = request.headers.get("x-device-id");
+  if (!isPlayerId(deviceId)) return json({ error: "A device id is needed.", reason: "device_required" }, 401);
+  let owner;
+  try { owner = await reservationOfTask(db(env), id); } catch { return json({ error: "The song studio could not check your songs." }, 503); }
+  if (!owner || owner.deviceId !== deviceId) return json({ status: "unknown" }, 404);
+  return { deviceId, key: owner.key, state: owner.state, stored: owner.stored };
+}
+
 async function handleAudio(request: Request, env: ThemeSongEnv, id: string): Promise<Response> {
   if (limited(pollHits, request.headers.get("CF-Connecting-IP"), POLL_WINDOW_MS, POLLS_PER_WINDOW, Date.now())) return json({ error: "Slow down." }, 429);
   if (!/^\d{6,24}$/.test(id)) return json({ error: "not a song id" }, 400);
+  const bytesResponse = (bytes: ArrayBuffer) => new Response(bytes, { status: 200, headers: { "content-type": "audio/mpeg", "content-length": String(bytes.byteLength), "cache-control": "private, max-age=3600" } });
+  let owner: { deviceId: string; key: string; state: string; stored: boolean } | null = null;
+  if (isMetered(env)) {
+    const o = await ownerCheck(request, env, id);
+    if (o instanceof Response) return o;
+    owner = o;
+    // our own copy first: it outlives the provider's 30-day link
+    if (env.SONGS && owner.stored) {
+      try { const obj = await env.SONGS.get(r2Key(owner.deviceId, id)); if (obj) return bytesResponse(await obj.arrayBuffer()); } catch { /* fall back to the provider */ }
+    }
+  }
   const link = await finishedLink(env, id);
   if (!link.ok) return json(link.status === "error" ? { error: link.code === null ? "the song studio did not answer" : `the song studio returned ${link.code}` } : { status: link.status }, link.status === "error" ? 502 : 404);
+  const bytes = await fetchAudio(link.url);
+  if (!bytes) return json({ error: "the song file did not arrive" }, 502);
+  if (owner && env.SONGS && !owner.stored) await keepCopy(env, owner, id, bytes);
+  return bytesResponse(bytes);
+}
+
+/** Copy a finished song into our own bucket (when there is one) and remember that it is there. Never throws: the song still plays from the provider's link. */
+async function keepCopy(env: ThemeSongEnv, owner: { deviceId: string; key: string }, task: string, bytes: ArrayBuffer): Promise<void> {
+  if (!env.SONGS) return;
   try {
-    const res = await fetch(link.url, { signal: AbortSignal.timeout(AUDIO_TIMEOUT_MS) });
-    if (!res.ok) return json({ error: `the song file returned ${res.status}` }, 502);
-    const bytes = await res.arrayBuffer();
-    if (bytes.byteLength < 1 || bytes.byteLength > MAX_AUDIO_BYTES) return json({ error: "the song file is not the size of a song" }, 502);
-    return new Response(bytes, { status: 200, headers: { "content-type": "audio/mpeg", "content-length": String(bytes.byteLength), "cache-control": "private, max-age=3600" } });
-  } catch {
-    return json({ error: "the song file did not arrive" }, 502);
+    await env.SONGS.put(r2Key(owner.deviceId, task), bytes, { httpMetadata: { contentType: "audio/mpeg" } });
+    await markStored(db(env), owner.key);
+  } catch (err) {
+    console.log(JSON.stringify({ event: "theme-song", step: "r2", ok: false, message: String(err instanceof Error ? err.message : err).slice(0, 100) }));
   }
 }
 
 async function handleStatus(request: Request, env: ThemeSongEnv, id: string): Promise<Response> {
   if (limited(pollHits, request.headers.get("CF-Connecting-IP"), POLL_WINDOW_MS, POLLS_PER_WINDOW, Date.now())) return json({ error: "Slow down." }, 429);
   if (!/^\d{6,24}$/.test(id)) return json({ error: "not a song id" }, 400);
+  let owner: { deviceId: string; key: string; state: string; stored: boolean } | null = null;
+  if (isMetered(env)) {
+    const o = await ownerCheck(request, env, id);
+    if (o instanceof Response) return o;
+    owner = o;
+  }
   const link = await finishedLink(env, id);
-  if (link.ok) return json({ status: "ready", url: link.url, durationMs: link.durationMs });
+  if (link.ok) {
+    if (owner) {
+      try { if (owner.state === "reserved") await commitSong(db(env), owner.key, Date.now()); } catch { /* committed on the next look */ }
+      if (env.SONGS && !owner.stored) { const bytes = await fetchAudio(link.url); if (bytes) await keepCopy(env, owner, id, bytes); }
+    }
+    return json({ status: "ready", url: link.url, durationMs: link.durationMs });
+  }
   if (link.status === "error") return json({ error: link.code === null ? "the song studio did not answer" : `the song studio returned ${link.code}` }, 502);
+  if (link.status === "failed" && owner && owner.state === "reserved") { try { await refundSong(db(env), owner.key, "provider_failed", Date.now()); } catch { /* it expires by itself */ } } // the provider could not sing it: the child's slot comes back
   return json({ status: link.status });
+}
+
+/** /api/theme-song/settings: a grown-up's choices for this device. Reading is open (the child's own screen needs to know); changing needs the parent proof. */
+async function handleSettings(request: Request, env: ThemeSongEnv): Promise<Response> {
+  if (limited(pollHits, request.headers.get("CF-Connecting-IP"), POLL_WINDOW_MS, POLLS_PER_WINDOW, Date.now())) return json({ error: "Slow down." }, 429);
+  if (!isMetered(env) || !env.DB) return json({ error: "Songs are not metered here, so there is nothing to set." }, 501);
+  const deviceId = request.headers.get("x-device-id");
+  if (!isPlayerId(deviceId)) return json({ error: "A device id is needed.", reason: "device_required" }, 401);
+  try {
+    if (request.method === "GET") {
+      const s = await statusFor(db(env), deviceId, Date.now(), timezoneOf(request));
+      return json({ settings: { makerOn: s.makerOn, limit: await readSongSettings(db(env), deviceId).then((x) => x.limit) }, quota: quotaOf(s) });
+    }
+    if (request.method !== "POST" && request.method !== "PUT") return json({ error: "method not allowed" }, 405);
+    if (!(await verifyParentProofFromRequest(request, env))) return json({ status: "gate-required", error: "A grown-up has to unlock this first." }, 401);
+    const parsed = await readCappedJson(request, 2_000);
+    if (!parsed.ok) return json({ error: parsed.over ? "request body too large" : "invalid JSON body" }, parsed.over ? 413 : 400);
+    const update = parseSongSettingsUpdate(parsed.value);
+    if (!update.ok) return json({ error: update.error }, 422);
+    const settings = await writeSongSettings(db(env), deviceId, update);
+    return json({ settings, quota: quotaOf(await statusFor(db(env), deviceId, Date.now(), timezoneOf(request))) });
+  } catch {
+    return json({ error: "The song settings could not be reached." }, 503);
+  }
 }
 
 export async function handleThemeSong(request: Request, env: ThemeSongEnv): Promise<Response> {
   const url = new URL(request.url);
+  const sub = url.pathname.replace(/^\/api\/theme-song/, "");
+  if (sub === "/settings") return handleSettings(request, env);
+  if (sub !== "" && sub !== "/") return json({ error: "not found" }, 404);
   if (request.method === "GET" && !url.searchParams.has("id")) {
-    return json({ ok: true, route: "theme-song", contract: THEME_SONG_CONTRACT, enabled: themeSongEnabled(env) });
+    // a free probe: is the route on, and (with a device id) how many songs this device has left this week
+    const enabled = themeSongEnabled(env);
+    let quota: Quota | undefined;
+    const device = request.headers.get("x-device-id");
+    if (enabled && isMetered(env) && isPlayerId(device)) {
+      try { quota = quotaOf(await statusFor(db(env), device, Date.now(), timezoneOf(request))); } catch { /* the probe still says the route is on */ }
+    }
+    return json({ ok: true, route: "theme-song", contract: THEME_SONG_CONTRACT, enabled, ...(quota ? { quota } : {}) });
   }
   if (!themeSongEnabled(env)) return json({ error: "theme songs are off" }, 503);
   if (request.method === "GET") return url.searchParams.get("audio") === "1" ? handleAudio(request, env, url.searchParams.get("id") ?? "") : handleStatus(request, env, url.searchParams.get("id") ?? "");

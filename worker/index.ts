@@ -289,7 +289,7 @@ export default {
     if (url.pathname === "/api/describe") return handleDescribe(request, env);
 
     // A name and a sung theme song for what a child just made: text model writes it, the gate checks it, Mureka sings it (worker/themeSong.ts). Off unless THEME_SONG=on.
-    if (url.pathname === "/api/theme-song") return handleThemeSong(request, env);
+    if (url.pathname === "/api/theme-song" || url.pathname.startsWith("/api/theme-song/")) return handleThemeSong(request, env);
 
     if (url.pathname === "/api/muse/spark") {
       // Create mode in ToyVentor World: the game asks for a level recipe

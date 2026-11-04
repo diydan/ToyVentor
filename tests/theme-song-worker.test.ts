@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { handleThemeSong, resetThemeSongLimits, themePrompt, themeSongEnabled } from "../worker/themeSong";
 
-const ENV = { MODEL_API_KEY: "text-key", META_MODEL_API_URL: "https://meta.example/v1", MUREKA_API_KEY: "mureka-secret", MUREKA_API_URL: "https://mureka.example", MUREKA_AUDIO_HOST: "cdn.mureka.example", THEME_SONG: "on" };
+const ENV = { MODEL_API_KEY: "text-key", META_MODEL_API_URL: "https://meta.example/v1", MUREKA_API_KEY: "mureka-secret", MUREKA_API_URL: "https://mureka.example", MUREKA_AUDIO_HOST: "cdn.mureka.example", THEME_SONG: "on", THEME_SONG_QUOTA: "off" }; // unmetered: the metered path is in tests/theme-song-metered.test.ts
 const GOOD = {
   name: "Zippy Roadster", mood: "bouncy", tempo: "fast", instruments: ["drums"],
   verse: ["Wheels go round and round", "Down the sunny road", "Little engine hums a tune", "Off we go, off we go"],
@@ -87,10 +87,10 @@ describe("POST: a name, the words, and one ordered song", () => {
     expect(JSON.stringify(await res.json())).not.toContain("mureka-secret");
     expect(JSON.stringify(calls.order)).not.toMatch(/purple dragon/);
   });
-  it("scrubs contact details before the text model sees the child's words", async () => {
+  it("scrubs contact details out of the prompt as a second layer: even on the one kind that is not screened, the model never sees them", async () => {
     stub([GOOD]);
     const f = (globalThis.fetch as unknown as ReturnType<typeof vi.fn>);
-    await handleThemeSong(post({ description: "a car, call 07700 900123 or mail me@x.com" }), ENV);
+    await handleThemeSong(post({ description: "a car, call 07700 900123 or mail me@x.com", kind: "level" }, fresh()), ENV);
     const sent = JSON.parse((f.mock.calls[0]![1] as RequestInit).body as string).input as string;
     expect(sent).not.toContain("07700");
     expect(sent).not.toContain("me@x.com");
@@ -172,7 +172,19 @@ describe("POST: a name, the words, and one ordered song", () => {
       expect(c.order, bad).toHaveLength(0); // and nothing was spent
     }
   });
-  it("the other kinds do not screen their sentence (it is ours, not the child's)", async () => {
+  it("what a child typed in Describe & build (kind 'build', the default) is screened the same way, before any model sees it", async () => {
+    for (const body of [{ description: "a gun that kills people" }, { description: "a car, mail me@x.com", kind: "build" }, { description: "see www.example.com", kind: "build" }]) {
+      const c = stub([GOOD]);
+      const res = await handleThemeSong(post(body, fresh()), ENV);
+      expect(res.status, JSON.stringify(body)).toBe(422);
+      expect(await res.json()).toMatchObject({ reason: "idea_not_allowed" });
+      expect(c.text).toBe(0);
+      expect(c.order).toHaveLength(0);
+    }
+    stub([GOOD]);
+    expect((await handleThemeSong(post({ description: "a race car", kind: "build" }, fresh()), ENV)).status).toBe(200);
+  });
+  it("the level sentence is not screened (it is ours, not the child's)", async () => {
     stub([GOOD]);
     expect((await handleThemeSong(post({ description: "I finished a game level with my toy.", kind: "level" }), ENV)).status).toBe(200);
   });

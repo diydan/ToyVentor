@@ -16,7 +16,7 @@
 // STORAGE. The measuring result per song (not the audio) is kept in localStorage under `tv.themeSongBeats.v1`, so the Song picker is complete on the next visit
 // without fetching anything. Blocked storage means it is measured again each visit.
 import { analyseTheme, cutToWav, themeIndexEntry, themeSongId } from './kip-theme-core.js?v=10.0';
-import { readSongs } from './kip-theme-song.js';
+import { readSongs, themeHeaders } from './kip-theme-song.js';
 
 const BEATS_KEY = 'tv.themeSongBeats.v1';
 const DECODE_RATE = 44100;
@@ -38,7 +38,7 @@ export function createMySongs({
   async function decode(task) {
     let bytes;
     try {
-      const res = await fetchImpl(audioUrl(task));
+      const res = await fetchImpl(audioUrl(task), { headers: themeHeaders(storage) });   // the route answers only the device that made the song
       if (!res.ok) throw retryable(`audio ${res.status}`);
       bytes = await res.arrayBuffer();
     } catch (err) {

@@ -26,7 +26,7 @@ const TYPES = { ".html": "text/html", ".js": "text/javascript", ".json": "applic
 const GOOD = { contract: 1, name: "Stompy Big Buddy", mood: "bouncy", tempo: "medium", instruments: ["drums"], ai: true, task: "170010186285057",
   verse: ["See my tall metal buddy", "He can march and sway", "Shiny tummy glows with light", "Clapping hands for happy play"],
   chorus: ["Stompy Big Buddy march with me", "We will stomp and shout hooray", "Spin around and clap with glee", "Happy steps are here to stay"] };
-const theme = { enabled: true, post: { status: 200, body: GOOD }, polls: [], seen: [], gets: 0, postAt: 0, describeAnsweredAt: 0 };
+const theme = { quota: null, enabled: true, post: { status: 200, body: GOOD }, polls: [], seen: [], gets: 0, postAt: 0, describeAnsweredAt: 0 };
 const describeStub = { delayMs: 0, seen: [] };
 const json = (res, status, body) => { res.writeHead(status, { "content-type": "application/json", "cache-control": "no-store" }); res.end(JSON.stringify(body)); };
 
@@ -36,9 +36,9 @@ const web = http.createServer((req, res) => {
     let raw = "";
     req.on("data", (c) => { raw += c; });
     req.on("end", () => {
-      if (req.method === "POST") { theme.postAt = Date.now(); theme.seen.push({ method: "POST", body: raw }); return json(res, theme.post.status, theme.post.body); }
-      if (!u.searchParams.has("id")) { theme.seen.push({ method: "GET", probe: true }); return json(res, theme.enabled ? 200 : 503, theme.enabled ? { ok: true, enabled: true } : { error: "off" }); }
-      theme.gets++; theme.seen.push({ method: "GET", id: u.searchParams.get("id") });
+      if (req.method === "POST") { theme.postAt = Date.now(); theme.seen.push({ method: "POST", body: raw, device: req.headers["x-device-id"], tz: req.headers["x-client-timezone"] }); return json(res, theme.post.status, theme.post.body); }
+      if (!u.searchParams.has("id")) { theme.seen.push({ method: "GET", probe: true, device: req.headers["x-device-id"] }); return json(res, theme.enabled ? 200 : 503, theme.enabled ? { ok: true, enabled: true, ...(theme.quota ? { quota: theme.quota } : {}) } : { error: "off" }); }
+      theme.gets++; theme.seen.push({ method: "GET", id: u.searchParams.get("id"), device: req.headers["x-device-id"] });
       return json(res, 200, theme.polls.length > 1 ? theme.polls.shift() : (theme.polls[0] ?? { status: "making" }));
     });
     return;
@@ -73,7 +73,7 @@ try {
   const ev = (expr) => page.evaluate(expr);
   const card = (sel) => ev(`document.querySelector('.kts-card ${sel}')?.textContent ?? ''`);
   const hidden = () => ev("document.querySelector('.kts-card').hidden");
-  const reset = () => { theme.seen.length = 0; theme.gets = 0; theme.polls = []; theme.post = { status: 200, body: GOOD }; theme.enabled = true; };
+  const reset = () => { theme.seen.length = 0; theme.gets = 0; theme.polls = []; theme.post = { status: 200, body: GOOD }; theme.enabled = true; theme.quota = null; };
   // a recording stand-in for the browser's Audio: headless Chrome has no speakers and a script click is not a user gesture
   await ev(`(() => { window.__audios = []; window.Audio = class { constructor(src) { this.src = src; this.playing = false; this.loop = false; window.__audios.push(this); } play() { this.playing = true; return Promise.resolve(); } pause() { this.playing = false; } addEventListener() {} }; })()`);
   const audios = () => ev("window.__audios.map((a) => ({ src: a.src, playing: a.playing, loop: a.loop }))");
@@ -89,7 +89,8 @@ try {
   theme.polls = [{ status: "making" }];            // stays "making" until the stand-in is playing (released below)
   const started = await ev("window.__describe.theme.start('a giant stomping robot')");
   check("start resolves true once the NAME is in", started === true);
-  check("the probe (a free GET) came first, then one POST with only the description", theme.seen[0]?.probe === true && theme.seen[1]?.method === "POST" && JSON.parse(theme.seen[1].body).description === "a giant stomping robot" && Object.keys(JSON.parse(theme.seen[1].body)).length === 1, JSON.stringify(theme.seen.slice(0, 2)));
+  check("the probe (a free GET) came first, then one POST with only the description and a key for this tap", theme.seen[0]?.probe === true && theme.seen[1]?.method === "POST" && JSON.parse(theme.seen[1].body).description === "a giant stomping robot" && Object.keys(JSON.parse(theme.seen[1].body)).sort().join() === "description,key" && /^[A-Za-z0-9_-]{8,64}$/.test(JSON.parse(theme.seen[1].body).key), JSON.stringify(theme.seen.slice(0, 2)));
+  check("every request carries this device's id (the weekly limit is per device) and the family's time zone", theme.seen.slice(0, 2).every((x) => /^[\w-]{8,}$/.test(x.device ?? "")) && theme.seen[0].device === theme.seen[1].device && Boolean(theme.seen[1].tz), JSON.stringify(theme.seen.slice(0, 2)));
   check("the card shows", !(await hidden()));
   check("it shows the creation's name", (await card(".kts-name")) === "Stompy Big Buddy");
   check("it says the song takes about a minute and the child can keep building", /about a minute/.test(await card(".kts-status")) && /keep building/.test(await card(".kts-status")), await card(".kts-status"));
@@ -168,6 +169,24 @@ try {
   await new Promise((r) => setTimeout(r, 1200));
   const list = await ev("JSON.parse(localStorage.getItem('tv.themeSongs.v1') || '[]').map((s) => s.name)");
   check("a stale answer never reached the saved list", !list.includes("Old Name"), JSON.stringify(list));
+
+  console.log("\n[7b] the weekly limit: a used-up week or a grown-up's switch shows a kind note, spends nothing, and the build carries on");
+  reset();
+  theme.quota = { limit: 5, used: 5, left: 0, resetsOn: "2026-11-09", makerOn: true };
+  check("start resolves false and no POST is sent when no song is left this week", (await ev("window.__describe.theme.start('a race car')")) === false && !theme.seen.some((x) => x.method === "POST"), JSON.stringify(theme.seen));
+  check("the card says no new songs until Monday, with no play buttons", /until Monday/.test(await card(".kts-status")) && (await ev("document.querySelector('.kts-play').hidden")) && !(await hidden()));
+  reset();
+  theme.quota = { limit: 5, used: 0, left: 5, makerOn: false, resetsOn: "2026-11-09" };
+  await ev("window.__describe.theme.start('a race car')");
+  check("with songs switched off by a grown-up the card says so and sends no POST", /switched off by a grown-up/.test(await card(".kts-status")) && !theme.seen.some((x) => x.method === "POST"));
+  reset();
+  theme.post = { status: 429, body: { error: "No new songs until Monday. Dance to the ones you made!", reason: "week_used" } };
+  await ev("window.__describe.theme.start('a race car')");
+  check("a refusal from the route shows the route's own kind sentence", /until Monday/.test(await card(".kts-status")));
+  reset();
+  theme.post = { status: 500, body: { error: "SQLITE_ERROR no such table", reason: "quota_unavailable" } };
+  await ev("window.__describe.theme.start('a race car')");
+  check("any other error text from the route is never shown, and the card stays out of the way", (await hidden()) && !/SQLITE/.test(await ev("document.body.innerText")));
 
   console.log("\n[8] closing the panel stops the sound and the page has no errors");
   await ev("window.__describe.theme.start('a robot')"); // makes sure something can be playing
