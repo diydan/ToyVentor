@@ -1,6 +1,6 @@
 # Carousel + Little ones — QA checklist (real phone, real child)
 
-Quick tick-box version of the pass in [carousel-playtest-runsheet.md](carousel-playtest-runsheet.md) (blanks, targets, robot baseline) and [carousel-modes-ladders-spec.md](carousel-modes-ladders-spec.md) §13.3-§13.4 (rules). Written 2026-11-03. Nothing below has been run by a person.
+Quick tick-box version of the pass in [carousel-playtest-runsheet.md](carousel-playtest-runsheet.md) (blanks, targets, robot baseline) and [carousel-modes-ladders-spec.md](../../specs/carousel-modes-ladders-spec.md) §13.3-§13.4 (rules). Written 2026-11-03. Nothing below has been run by a person.
 
 ## Setup (2 min)
 

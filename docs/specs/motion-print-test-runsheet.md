@@ -1,6 +1,6 @@
 # Motion print tests — bench run sheet
 
-Companion to [motion-stage-options-spec.md](motion-stage-options-spec.md) §10 (procedures and pass rules live there). This sheet is values only: predictions written first, blanks for measured results. CAD last re-verified 2026-11-03: `verify_band_jet.py` 8/8 PASS, 0 FAIL, 0 UNKNOWN.
+Companion to [parts-engineering-spec.md](parts-engineering-spec.md) §11.1 (procedures and pass rules live there). This sheet is values only: predictions written first, blanks for measured results. CAD last re-verified 2026-11-03: `verify_band_jet.py` 8/8 PASS, 0 FAIL, 0 UNKNOWN.
 
 ## Print manifest (PLA, 0.4 mm nozzle, 0.20 mm layers, supports OFF)
 

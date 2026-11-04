@@ -20,8 +20,8 @@ the result.
   a daily time ledger, and a Sleep Curtain are built. The grown-up check in
   front of file downloads is built and switched off in this build. Sharing
   between families, contacts, and moderation are designed, not built.
-- **Proof, not concept:** six worlds, six labs, 44 missions, STL/GLB exports,
-  and one stage from toy to game to printed part.
+- **Proof, not concept:** six worlds, six labs, eleven STEM mission types,
+  STL/GLB exports, and one stage from toy to game to printed part.
 - **Creator loop:** worlds, levels, missions, and moods built from play, and a
   part made from a child's own words.
 
