@@ -177,6 +177,7 @@ import { createMess } from "./mess";
 import { migrateOldStockKip } from "./kipLook";
 import { trimTinyCasters } from "./shadowProxy";
 import { createFaceUser } from "./faceUser";
+import { buildWorkshop, disposeWorkshop } from "./workshopScene";
 import { buildCleanCart } from "./cleanScene";
 import { buildHobProp } from "./cookScene";
 import { createActivities } from "./activities";
@@ -721,7 +722,7 @@ function idleAct(){P.idleN=(P.idleN||0)+1;if(S.type==="character"&&IDLEB.tryStar
  else if(c===1){if(S.type==="vehicle"){tone(300,0,.12,"square",.05);tone(380,.15,.14,"square",.05);fx.push({t:0,d:.6,f:function(k){r.g.rotation.x=Math.sin(k*Math.PI*6)*.06*(1-k)},end:function(){r.g.rotation.x=0}})}else fx.push({t:0,d:1.6,f:function(k){if(r.head)r.head.rotation.y=Math.sin(k*Math.PI*2)*.7},end:function(){if(r.head)r.head.rotation.y=0}})}
  else if(c===2){tone(500,0,.3,"sine",.05,900);fx.push({t:0,d:.8,f:function(k){if(!P.busy)P.spin=Math.PI*2*(1-Math.pow(1-k,3))},end:function(){if(!P.busy)P.spin=0}})}
  else{if(S.type==="character"&&r.arms[0]&&!r.wings.length){var a0=r.arms[0];fx.push({t:0,d:1.1,f:function(k){a0.rotation.x=-.35-Math.sin(Math.PI*k)*2.1;a0.rotation.z=Math.sin(k*Math.PI*6)*.3*Math.sin(Math.PI*k)},end:function(){a0.rotation.x=-.35}})}else fx.push({t:0,d:.4,f:function(k){if(!P.busy)P.hop=.25*Math.sin(Math.PI*k)},end:function(){if(!P.busy)P.hop=0}})}}
-function joy(){P.happy=1.4;var dancing=mixGo("dance");if(dancing&&P.danceBack==null){P.danceBack=P.tface;P.tface=-Math.PI/2}[523,659,784,1047].forEach(function(f,i){tone(f,i*.07,.22,"triangle",.07)});burst(new T.Vector3(P.pos.x,1.6,P.pos.z));if(dancing)return;var jumped=S.type==="character"&&mixGo("jump",{fade:.06,lift:.8});fx.push({t:0,d:jumped?.93:.75,f:function(k){if(!P.busy){if(!jumped)P.hop=.6*Math.sin(Math.PI*k);P.spin=Math.PI*2*k}},end:function(){if(!P.busy){P.hop=0;P.spin=0;squash()}}})}
+function joy(){P.happy=1.4;var dancing=mixGo("dance_silly" as MixAction)||mixGo("dance");if(dancing&&P.danceBack==null){P.danceBack=P.tface;P.tface=-Math.PI/2}[523,659,784,1047].forEach(function(f,i){tone(f,i*.07,.22,"triangle",.07)});burst(new T.Vector3(P.pos.x,1.6,P.pos.z));if(dancing)return;var jumped=S.type==="character"&&mixGo("jump",{fade:.06,lift:.8});fx.push({t:0,d:jumped?.93:.75,f:function(k){if(!P.busy){if(!jumped)P.hop=.6*Math.sin(Math.PI*k);P.spin=Math.PI*2*k}},end:function(){if(!P.busy){P.hop=0;P.spin=0;squash()}}})}
 function squash(){P.squashing=true;fx.push({t:0,d:.35,f:function(k){var q=1-.22*Math.sin(Math.PI*k);P.model.scale.set(1+(1-q)*.5,q,1+(1-q)*.5)},end:function(){P.model.scale.set(1,1,1);P.squashing=false}})}
 var ABIL: Record<string, () => Promise<void>>={
  glow:async function(){sfx.glow();var pl=new T.PointLight(0x7ff5cf,0,12,2);pl.position.set(P.pos.x,1.5,P.pos.z+.5);scene.add(pl);ringFx(P.pos,0x5af0b0,6,1.0,.4);tween(1.1,function(k){pl.intensity=6*Math.sin(Math.PI*k)}).then(function(){scene.remove(pl)});await sleep(300);spots.forEach(function(s){if(s.d.t==="glow"&&near(s,6))reveal(s)});await sleep(700)},
@@ -850,6 +851,7 @@ if(!P.showcase&&!P.busy&&!P.mDrive){tidySpots.forEach(function(ts){if(ts.done)re
  P.blinkT-=dt;if(P.blinkT<0)P.blinkT=2.5+Math.random()*3;P.happy=Math.max(0,(P.happy||0)-dt);var bl=P.blinkT<.12?.12:(P.happy>0?.42:1),fyw=P.root.rotation.y,lxw=-Math.sin(fyw),lzw=Math.cos(fyw),lkY=Math.max(-.5,Math.min(.5,Math.atan2(-lzw,lxw)))*(P.speed>1?.35:1);rig.eyes.forEach(function(m: any){m.scale.y=bl;if(m.userData.look){m.rotation.y+=(lkY-m.rotation.y)*Math.min(1,dt*6);m.rotation.z=.06}});if(rig.type==="character"&&rig.head&&!driven)rig.head.rotation.z=P.spA*.35;if(rig.hair)rig.hair.rotation.z=P.spA*.25;if(rig.tail)rig.tail.rotation.z=P.spA*1.2+Math.sin(t*2)*.05;
  if(P.danceBack!=null&&!(mix&&(mix.busyAction==="dance"||mix.busyAction===IDLE_LABEL))){if(Math.abs(P.tface+Math.PI/2)<1e-6)P.tface=P.danceBack;P.danceBack=null}
  IDLEB.update();
+ if(ONBW){if(P.model)P.model.visible=false;blob.visible=false;if(W.root)W.root.visible=false}
  if(S.type==="character"){var fnew=FACEU.step(dt,(P.showcase||P.danceBack!=null||P.mDrive||ED.on||paused||ACT.active||ACTS.busy||SLEEPH.busy||MESS.phase!=="idle"||(mix&&mix.busyAction))?"owned":idleOk()?"free":"away",P.tface);if(fnew!==null)P.tface=fnew}
  var gdx=P.pos.x-(P.gaitX==null?P.pos.x:P.gaitX),gdz=P.pos.z-(P.gaitZ==null?P.pos.z:P.gaitZ),gait=Math.sqrt(gdx*gdx+gdz*gdz)/Math.max(dt,.001);P.gaitX=P.pos.x;P.gaitZ=P.pos.z;gait=gait>8?0:Math.min(gait,4.5);
  if(driven&&mix){mix.update(rig,dt,P.speed,{headYaw:P.noticeYaw||0,headPitch:-(P.spA||0)*.35,gait:gait});if(rig.hover)rig.g.position.y+=.12+Math.sin(t*3)*.06}
@@ -1125,18 +1127,20 @@ function cuType(t: string){var nt=t==="robot"?"character":t;if(S.type!==nt){S.ty
 function cuSlot(s: string){B.slot=s;sfx.pop();renderSheet()}
 function cuPart(id: string){var slotId=B.slot||"base",k=slotPartKey(S.type,slotId,id),p=PART[k];if(!p)return;if(!isOpen(k)){toast("Find it in "+WN[p.w]+".");sfx.bump();return}cur()[slotId]=id;save();buildPlayer(slotId);partSound(k);renderSheet()}
 /* The new-player setup's "meet Kip" scene (OnboardingSheet.tsx, docs/specs/accounts-and-new-user-spec.md section 8). Kip lies in a PILE OF HIS REAL PARTS on the Toy Room floor (every mesh of his rig is cloned, sharing the real STL geometry and materials, so the pile is the demo's parts and not stand-ins), and on "build" each part is carried from the pile to its seat, lowest first, the way the Kip demo's Describe and Build carries its parts (parts/kip/viewer/kip-describe-view.js pilePlan and pileFrame): lifted, carried over, set down. The real Kip stays hidden until the last part lands, and then appears with a pop. `pile` also paints the shirt the favourite colour and turns Kip to face the screen (so the seats match where he will stand). Then the HEADPHONES: `phonesShow` floats a pair beside Kip when the song is ready, `phones` carries them to his head (they then follow it), `phonesOff` takes them away when the song is over. Ops: pile, build, abort (put Kip back, keep the headphones), end (everything), phonesShow, phones, phonesOff. */
-var ONBG: THREE.Group | null=null,ONBH: THREE.Group | null=null,ONBT=0;
+var ONBG: THREE.Group | null=null,ONBH: THREE.Group | null=null,ONBK: THREE.Group | null=null,ONBT=0,ONBW=false; // ONBW: Kip is held hidden every frame (no Kip is ever seen before the pile)
 function ONBS(op: string,hex?: string){
- var show=function(){if(ONBG){if(ONBG.parent)ONBG.parent.remove(ONBG);ONBG=null}if(P.model)P.model.visible=true;blob.visible=true};
+ var show=function(){ONBW=false;if(ONBK){disposeWorkshop(ONBK);ONBK=null}if(W.root)W.root.visible=true;if(ONBG){if(ONBG.parent)ONBG.parent.remove(ONBG);ONBG=null}if(P.model)P.model.visible=true;blob.visible=true};
  var dropPhones=function(){if(ONBH){if(ONBH.parent)ONBH.parent.remove(ONBH);ONBH=null}};
  if(op==="abort"){ONBT++;show();return}
  if(op==="end"){ONBT++;show();dropPhones();return}
  if(op==="phonesOff"){dropPhones();return}
  if(S.type!=="character")return;
+ if(op==="hide"){ONBW=true;if(P.model)P.model.visible=false;blob.visible=false;return}
  var phones=function(){var h=new T.Group(),band=new T.Mesh(new T.TorusGeometry(.44,.06,10,28,Math.PI),plastic("#ff6b4a"));h.add(band);[-.44,.44].forEach(function(x){var c=new T.Mesh(new T.CylinderGeometry(.2,.2,.18,20),plastic("#2b4c85"));c.rotation.z=Math.PI/2;c.position.set(x,0,0);h.add(c)});h.traverse(function(o: any){o.castShadow=true});linearize(h);return h};
  if(op==="pile"){
-  ONBT++;var tk=ONBT;show();dropPhones();if(hex){S.col.c1=hex;save();buildPlayer(null)}
-  if(reduce)return;
+  ONBT++;var tk=ONBT;if(ONBG){if(ONBG.parent)ONBG.parent.remove(ONBG);ONBG=null}dropPhones();ONBW=true;if(hex){S.col.c1=hex;save();buildPlayer(null)}
+  if(reduce){show();return}
+  if(!ONBK){ONBK=buildWorkshop({x:P.pos.x,z:P.pos.z,accent:hex});scene.add(ONBK)} // the build starts in a WORKSHOP (Dan: not a turntable, a blueprint on the wall); the Toy Room is hidden while ONBW holds
   P.face=P.tface=-Math.PI/2; // facing the screen, as he will stand when he is built (and where "free" turns him anyway)
   var tries=0,lay=function(){
    if(tk!==ONBT)return;
@@ -1163,13 +1167,17 @@ function ONBS(op: string,hex?: string){
   tween(TOT,function(k: number){var t=k*TOT;for(var i=0;i<n;i++){var it=seats2[i],u=Math.max(0,Math.min(1,(t-i*STAG)/DUR)),e=u*u*(3-2*u);it.m.position.lerpVectors(it.pp,it.p,e);it.m.position.y+=Math.sin(Math.PI*e)*1.4;it.m.quaternion.slerpQuaternions(it.pq,it.q,e)}}).then(function(){if(ONBG!==gg||tk2!==ONBT)return;show();burst(new T.Vector3(P.pos.x,1.3,P.pos.z),"rgba(255,255,255,1)",14);sfx.pop();P.happy=1.4;P.hop=Math.max(P.hop,.5)});
   return}
  if(op==="phonesShow"&&!ONBH){var h=phones();ONBH=h;scene.add(h);h.position.set(P.pos.x+1.7,1.3,P.pos.z+.5);sfx.pop();burst(h.position.clone(),"rgba(255,255,255,1)",10);
-  fx.push({t:0,d:600,f:function(_k: number,dt: number){if(ONBH!==h||h.userData.worn)return;h.position.y=1.3+Math.sin(performance.now()/300)*.12;h.rotation.y+=dt*1.2},end:function(){}});return}
+  fx.push({t:0,d:600,f:function(_k: number,dt: number){if(ONBH!==h||h.userData.worn||h.userData.flying)return;h.position.y=1.3+Math.sin(performance.now()/300)*.12;h.rotation.y+=dt*1.2},end:function(){}});return}
  if(op==="phones"){
   var hp=ONBH;if(!hp){hp=phones();ONBH=hp;scene.add(hp);hp.position.set(P.pos.x+1.7,1.3,P.pos.z+.5)}
+  hp.userData.flying=true; // the floating bob stops: it would keep pulling the headphones back down while they fly to his head
   var h2=hp,from=h2.position.clone(),head=P.rig&&P.rig.head?P.rig.head:P.model,wp=new T.Vector3();
   sfx.pop();
-  tween(.7,function(k: number){if(ONBH!==h2)return;head.getWorldPosition(wp);wp.y+=.2;h2.position.lerpVectors(from,wp,Math.min(1,k*1.2));h2.rotation.y+=(P.root.rotation.y+Math.PI/2-h2.rotation.y)*Math.min(1,k)}).then(function(){if(ONBH!==h2)return;h2.userData.worn=true;burst(h2.position.clone(),"rgba(255,255,255,1)",10);
-   fx.push({t:0,d:3600,f:function(){if(ONBH!==h2)return;head.getWorldPosition(wp);h2.position.set(wp.x,wp.y+.2,wp.z);h2.rotation.y=P.root.rotation.y+Math.PI/2},end:function(){}})})}
+  tween(.7,function(k: number){if(ONBH!==h2)return;head.getWorldPosition(wp);wp.y+=.2;h2.position.lerpVectors(from,wp,Math.min(1,k*1.2));h2.rotation.y+=(P.root.rotation.y+Math.PI/2-h2.rotation.y)*Math.min(1,k)}).then(function(){if(ONBH!==h2)return;scene.updateMatrixWorld(true);
+   // the head the dance really moves: the highest sizeable part mesh of his rig (the hair or the head), whose parent group carries the head's motion (rig.head alone stays put while the Snap joints turn)
+   var bb=new T.Box3(),cc=new T.Vector3(),sz=new T.Vector3(),top: any=null,topY=-1e9;
+   P.rig.g.traverse(function(o: any){if(o.isMesh&&o.visible!==false&&!o.userData.shadowProxy&&o.geometry){bb.setFromObject(o);bb.getSize(sz);if(sz.y<.3)return;bb.getCenter(cc);if(cc.y>topY){topY=cc.y;top=o}}});
+   (top&&top.parent?top.parent:head).attach(h2);h2.userData.worn=true;burst(h2.getWorldPosition(new T.Vector3()),"rgba(255,255,255,1)",10)})}
 }
 function cuZone(z: string){B.z=z;renderSheet()}
 function cuPaint(c: string){S.col[B.z]=c;save();buildPlayer(null);sfx.pop();burst(new T.Vector3(P.pos.x,1.4,P.pos.z),"rgba(255,255,255,1)",8);renderSheet()}

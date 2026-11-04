@@ -872,7 +872,7 @@ export interface EngineHandle {
   /** Apply one of the engine's paint or skin colors. */
   setPaint: (color: string) => void;
   /** The new-player setup's "meet Kip" scene (runtime/world.ts ONBS): `pile` paints the shirt `hex` and lays Kip out as a pile of bricks, `build` carries them to their seats, `end` puts Kip back as he was. */
-  onbStage: (op: "pile" | "build" | "abort" | "end" | "phonesShow" | "phones" | "phonesOff", hex?: string) => void;
+  onbStage: (op: "hide" | "pile" | "build" | "abort" | "end" | "phonesShow" | "phones" | "phonesOff", hex?: string) => void;
   /** Run a legacy Factory sheet action. `forge` toggles Forge mode. */
   factoryAction: (action: FactoryAction) => void;
   /** Forge a mission tool when its blueprint and scrap allow it. */

@@ -35,7 +35,7 @@ describe("the game opens it", () => {
   });
   it("starts the world when the intro begins, paints the shirt through the engine's own paint zone, and asks for the song through the game's song flow as a screened 'prompt'", () => {
     expect(canvas).toContain('if (titleOpen) chooseTitle("play")');
-    expect(canvas).toContain('if (op === "enter") { if (titleOpen) chooseTitle("play"); engineRef.current?.goWorld("room"); return; }');
+    expect(canvas).toContain('if (op === "enter") { engineRef.current?.onbStage("hide"); if (titleOpen) chooseTitle("play"); engineRef.current?.goWorld("room"); return; }');
     expect(canvas).toContain("engineRef.current?.onbStage(op, hex);");
     expect(canvas).toContain('startFromSheet(() => void getSong().flow.start(idea, "prompt"))');
     expect(canvas).toContain("<OnboardingSheet");
@@ -62,7 +62,7 @@ describe("the meet-Kip scene reaches the world", () => {
   it("is one hook all the way down: the sheet's onStage, GameCanvas onboardStage, the engine's onbStage, the world's ONBS", () => {
     expect(sheet).toContain("onStage(op:");
     expect(canvas).toContain("onStage={onboardStage}");
-    expect(engine).toContain('onbStage: (op: "pile" | "build" | "abort" | "end" | "phonesShow" | "phones" | "phonesOff", hex?: string) => void;');
+    expect(engine).toContain('onbStage: (op: "hide" | "pile" | "build" | "abort" | "end" | "phonesShow" | "phones" | "phonesOff", hex?: string) => void;');
     expect(engine).toContain("hooks()?.onbStage?.(op, hex);");
     expect(world).toContain("onbStage:function(op,hex){ONBS(op,hex)},");
     expect(world).toContain("function ONBS(op: string,hex?: string){");
@@ -80,7 +80,7 @@ describe("the meet-Kip scene reaches the world", () => {
     expect(world).toContain('if(S.type!=="character")return;'); // only Kip is a pile of parts
   });
   it("the headphones follow his head, turned ear to ear (his forward is +x, so ear to ear is z), and go when the song is over", () => {
-    expect(world).toContain("h2.rotation.y=P.root.rotation.y+Math.PI/2");
+    expect(world).toContain("h2.rotation.y+=(P.root.rotation.y+Math.PI/2-h2.rotation.y)*Math.min(1,k)"); // turned ear to ear on the way (his forward is +x), then the head carries them
     expect(world).toContain('if(op==="phonesOff"){dropPhones();return}');
     expect(canvas).toContain('useEffect(() => { if (songFlow?.phase === "over") engineRef.current?.onbStage("phonesOff"); }, [songFlow?.phase]);');
   });
@@ -108,3 +108,34 @@ describe("the song starts early and the dance waits for the headphones", () => {
   });
 });
 
+describe("no Kip before the pile, headphones on the head, no hovering dance", () => {
+  const idle = read("src/features/game/world/runtime/idleBehavior.ts");
+  it("Kip is hidden from the first frame of the build step and held hidden every frame until the last part lands", () => {
+    expect(canvas).toContain('engineRef.current?.onbStage("hide"); if (titleOpen) chooseTitle("play");');
+    expect(world).toContain('if(op==="hide"){ONBW=true;if(P.model)P.model.visible=false;blob.visible=false;return}');
+    expect(world).toContain(" IDLEB.update();\n if(ONBW){if(P.model)P.model.visible=false;blob.visible=false;if(W.root)W.root.visible=false}\n"); // enforced every frame (Kip and the Toy Room), so a rebuilt model or room is never seen
+    expect(world).toContain("var show=function(){ONBW=false;"); // and every way out (build done, abort, end) gives him back
+    expect(world).toContain("dropPhones();ONBW=true;"); // the pile keeps him hidden: no show() between the hide and the last part
+    expect(world).toContain("if(reduce){show();return}"); // reduced motion: no pile, so he must not stay hidden
+  });
+  it("the headphones are parented to the head the dance moves (the highest sizeable mesh's parent), and the floating bob stops when the pickup starts", () => {
+    expect(world).toContain("(top&&top.parent?top.parent:head).attach(h2);");
+    expect(world).toContain("hp.userData.flying=true;");
+    expect(world).toContain("h.userData.worn||h.userData.flying");
+  });
+  it("the Samba (no foot grounding, hovers) is only the fallback: the party list, the idle pick and the win dance prefer the baked dances", () => {
+    expect(canvas).toContain('baked = all.filter((d) => d.id !== "dance"); return baked.length ? baked : all;');
+    expect(idle).toContain("bakedDances.length ? bakedDances : [SAMBA_CLIP]");
+    expect(world).toContain('var dancing=mixGo("dance_silly" as MixAction)||mixGo("dance");');
+  });
+});
+
+
+
+describe("the build starts in a workshop with a blueprint", () => {
+  it("the workshop dressing is built when the pile is laid out, replaces the Toy Room while the build holds, and goes (with the room coming back) on every exit", () => {
+    expect(world).toContain('import { buildWorkshop, disposeWorkshop } from "./workshopScene";');
+    expect(world).toContain("if(!ONBK){ONBK=buildWorkshop({x:P.pos.x,z:P.pos.z,accent:hex});scene.add(ONBK)}");
+    expect(world).toContain("var show=function(){ONBW=false;if(ONBK){disposeWorkshop(ONBK);ONBK=null}if(W.root)W.root.visible=true;");
+  });
+});

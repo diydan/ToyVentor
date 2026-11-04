@@ -69,7 +69,9 @@ export function playSeconds(kind: IdleKind, dur: number): number {
 export function chooseIdle(rng: () => number, chain: number, have: ReadonlyMap<string, number>): IdleChoice | null {
   const r = rng();
   const pick = (kind: IdleKind): IdleChoice | null => {
-    const ids = (kind === "dance" ? [SAMBA_CLIP, ...IDLE_FILES.dance] : IDLE_FILES[kind]).filter((id) => have.has(id));
+    // the Samba has no foot grounding and hovers (measured 2026-11-04: its lowest sole median 0.23 above the floor, the baked dances within 2 mm): it is only the fallback while no baked dance is loaded
+    const bakedDances = IDLE_FILES.dance.filter((id) => have.has(id));
+    const ids = (kind === "dance" ? (bakedDances.length ? bakedDances : [SAMBA_CLIP]) : IDLE_FILES[kind]).filter((id) => have.has(id));
     if (!ids.length) return null;
     const clip = ids[Math.min(ids.length - 1, Math.floor(rng() * ids.length))]!;
     return { kind, clip, seconds: playSeconds(kind, have.get(clip)!) };

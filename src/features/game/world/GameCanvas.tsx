@@ -310,7 +310,7 @@ export function GameCanvas({
       const party = createGameParty({
         ctx: () => gameAudioCtx(),
         prepare: () => dances.prepare(),
-        dances: () => dances.list(),
+        dances: () => { const all = dances.list(), baked = all.filter((d) => d.id !== "dance"); return baked.length ? baked : all; }, // the Samba (a limb-direction clip) has no foot grounding and hovers up to half a unit; the baked dances keep the sole within 2 mm of the floor (measured 2026-11-04). The Samba stays as the fallback.
         ensureDances: (ids) => dances.ensure(ids),
         startDance: (source) => engineRef.current?.partyDanceStart(source) ?? false,
         stopDance: () => engineRef.current?.partyDanceStop(),
@@ -964,7 +964,7 @@ export function GameCanvas({
   const onboardIntroStart = useCallback(() => { if (titleOpen) chooseTitle("play"); }, [titleOpen, chooseTitle]);
   /** The "meet Kip" scene: `enter` leaves the title screen and goes to the Toy Room; `pile` paints the shirt and lays Kip out as a pile of bricks; `build` carries them to their seats; `end` puts Kip back. */
   const onboardStage = useCallback((op: "enter" | "pile" | "build" | "abort" | "end" | "phonesShow", hex?: string) => {
-    if (op === "enter") { if (titleOpen) chooseTitle("play"); engineRef.current?.goWorld("room"); return; }
+    if (op === "enter") { engineRef.current?.onbStage("hide"); if (titleOpen) chooseTitle("play"); engineRef.current?.goWorld("room"); return; } // Kip is hidden from the first frame: no Kip is seen before the pile
     engineRef.current?.onbStage(op, hex);
   }, [titleOpen, chooseTitle]);
   const onboardHold = useCallback((on: boolean) => { onboardHoldRef.current = on; }, []);
