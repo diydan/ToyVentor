@@ -135,6 +135,8 @@ export interface ActsWorld extends Omit<VisitAdapter, "onPhase"> {
     setVisible(inst: PropInst, visible: boolean): void;
     /** Tell a self-animating prop (the dog) something happened. */
     cue(inst: PropInst, name: string): void;
+    /** Move a prop (the dog stepping onto Kip's lane): optional, a world without it leaves the prop where it is. */
+    placeProp?(inst: PropInst, x: number, opts?: { ry?: number; lift?: number; z?: number; zSnap?: boolean }): void;
     /** The named props nearest to x, except these types. */
     nearby(x: number, n: number, exclude?: ReadonlyArray<string>): PropInst[];
   };
@@ -184,6 +186,7 @@ export function createActs(w: ActsWorld) {
     position: () => w.position(),
     targetX: () => w.targetX(),
     walkTo: (x, z) => w.walkTo(x, z),
+    walkDeep: w.walkDeep ? (x, z) => w.walkDeep!(x, z) : undefined,
     stopWalk: () => w.stopWalk(),
     face: (d) => w.face(d),
     onPhase: (p, prev) => w.phase(p, prev),
@@ -294,11 +297,12 @@ export function createActs(w: ActsWorld) {
   }
 
   function petVisit(inst: PropInst): Visit {
-    const x = inst.base.px, z = inst.base.pz;
+    const x = inst.base.px;
     return {
       standX: x - PET_STAND, face: 1, seconds: PET_S,
       begin: () => { w.clip("pet"); },
-      cues: [{ at: PET_CUE_S, fn: () => w.fx.cue(inst, "pet") }, ...PET_STROKES_S.map((at, i) => ({ at, fn: () => { heart(new THREE.Vector3(x - 0.2, inst.size.y + 0.25, z + 0.3), 0.36); if (i % 2 === 1) w.tone(700, 0, 0.1, "triangle", 0.05, 900); } }))],
+      // (the hearts rise from where the dog is when the hand lands: it has walked onto Kip's lane since the tap)
+      cues: [{ at: PET_CUE_S, fn: () => w.fx.cue(inst, "pet") }, ...PET_STROKES_S.map((at, i) => ({ at, fn: () => { heart(new THREE.Vector3(x - 0.2, inst.size.y + 0.25, inst.base.pz + 0.3), 0.36); if (i % 2 === 1) w.tone(700, 0, 0.1, "triangle", 0.05, 900); } }))],
       end: () => {},
     };
   }
@@ -335,7 +339,9 @@ export function createActs(w: ActsWorld) {
       if (!kind || !w.allowed() || w.eater() !== "character") return false;                // (an act already under way refuses a second start itself)
       following = null;
       const visit = THING_KINDS.has(kind) ? things.visitFor(kind as ThingKind, inst) : kind === "spill" || kind === "dump" ? w.mess?.visitFor(kind, inst) ?? null : kind === "scrub" || kind === "cook" ? w.activity?.visitFor(kind, inst) ?? null : { hug: hugVisit, kick: kickVisit, jump: jumpVisit, read: readVisit, play: playVisit, blow: blowVisit, pet: petVisit, mallet: malletVisit }[kind as "hug" | "kick" | "jump" | "read" | "play" | "blow" | "pet" | "mallet"](inst);
-      return visit ? visitor.start(visit) : false;
+      const started = visit ? visitor.start(visit) : false;
+      if (started && kind === "pet") w.fx.placeProp?.(inst, inst.base.px, { z: w.position().z });   // the dog steps onto Kip's lane while he walks over, so they stand side by side, not one behind the other
+      return started;
     },
     /** Start a visit that is not a tap on a prop (the Clean button): false (and nothing happens) if one is already under way or an act is not allowed now. */
     run(visit: Visit): boolean { return w.allowed() && w.eater() === "character" ? visitor.start(visit) : false; },

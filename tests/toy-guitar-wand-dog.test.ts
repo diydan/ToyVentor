@@ -129,7 +129,7 @@ describe("dogPose: being petted", () => {
     for (let t = 0; t < 2; t += 0.01) wag = Math.max(wag, Math.abs(dogPose(t, "pet", 0.5).tailYaw));
     expect(wag).toBeGreaterThan(0.6);
     const p = dogPose(3, "pet", 1);
-    expect(p.headPitch).toBeLessThan(-0.1);
+    expect(p.headPitch).toBeGreaterThan(0.1);                            // nose up, into the hand (positive pitch is nose up)
     expect(p.earFlop).toBeGreaterThan(0.09);
     expect(dogPose(3, "pet", PET_REACTION_S + 0.01)).toEqual(dogPose(3, null, Infinity));
   });
@@ -139,7 +139,8 @@ describe("buildDog", () => {
   it("stands on the floor facing -x: the head is at the -x end, the tail at the +x end", () => {
     const d = buildDog(42, -2);
     expect(d.position.toArray()).toEqual([42, 0, -2]);
-    const b = box(d);
+    d.updateMatrixWorld(true);
+    const b = new THREE.Box3().setFromObject(d, true);                     // (precise: the legs are bent, a loose box round a tilted paw dips below the floor)
     expect(b.min.y).toBeGreaterThanOrEqual(-0.01);
     expect(b.min.y).toBeLessThan(0.03);
     expect(b.max.y).toBeGreaterThan(1.3);
@@ -197,7 +198,7 @@ describe("dogPose: running and being delighted (the fetch)", () => {
     }
     expect(wag).toBeGreaterThan(0.45);
     expect(bobMin).toBeGreaterThanOrEqual(0);                            // it bounds: never dips below the floor
-    expect(bobSum / 400).toBeGreaterThan(0.02);
+    expect(bobSum).toBe(0);                                               // (the bounce comes with the stride now: withGait, the legs and the body move together)
     expect(ear).toBeGreaterThan(0.2);
   });
 

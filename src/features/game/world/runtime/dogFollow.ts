@@ -23,6 +23,9 @@ export interface FollowAdapter {
   moveDog(x: number, dir: 1 | -1): void;
   /** What the dog is doing, for its animation. */
   cue(name: "run" | "sit" | "idle" | "happy"): void;
+  /** Where Kip is in depth, and tell the dog to walk to a depth (its own lane is Kip's): once it has met Kip it keeps to his path, side by side along the floor, not a room behind. Optional: absent, the dog keeps its depth. */
+  toyZ?(): number;
+  laneTo?(z: number): void;
   /** False while something else has the dog or Kip: a fetch, an act, sleep, the pause screen, the editor. */
   allowed(): boolean;
 }
@@ -97,6 +100,7 @@ export function createFollow(a: FollowAdapter) {
       const toy = a.toyX();
       if (lastToy !== null && Math.abs(toy - lastToy) > 1e-4) heading = sign(toy - lastToy);
       lastToy = toy;
+      if (phase !== "home") a.laneTo?.(a.toyZ?.() ?? 0);
       if (phase === "home") {
         if (Math.abs(toy - dx0) <= ENGAGE_X) { phase = "standing"; stillFor = 0; a.cue("happy"); }
         return;

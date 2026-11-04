@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ARRIVE_X, REDIRECT_X, WALK_TIMEOUT_S, createVisitor, type Visit, type VisitPhase } from "../src/features/game/world/runtime/visitRoutine";
+import { ARRIVE_DEEP_Z, ARRIVE_X, REDIRECT_X, WALK_TIMEOUT_S, createVisitor, type Visit, type VisitPhase } from "../src/features/game/world/runtime/visitRoutine";
 
 function harness(start = { x: 10, y: 0, z: 0.5 }) {
   const s = { pos: { ...start }, target: null as number | null };
@@ -177,5 +177,46 @@ describe("only one at a time, and always a way out", () => {
     h.v.update(30);
     expect(h.log.filter((l) => l.startsWith("cue"))).toEqual(["cue0.5", "cue1.2"]);
     expect(h.log.at(-1)).toBe("end:true");
+  });
+});
+
+describe("a deep visit (foot slide: the toy walks out to its prop's depth instead of gliding there)", () => {
+  function deepHarness() {
+    const s = { pos: { x: 10, y: 0, z: -1.2 }, target: null as number | null };
+    const log: string[] = [];
+    const v = createVisitor({
+      position: () => ({ ...s.pos }), targetX: () => s.target,
+      walkTo: (x, z) => { s.target = x; log.push(`walkTo:${x},${z}`); },
+      walkDeep: (x, z) => { s.target = x; log.push(`walkDeep:${x},${z}`); },
+      stopWalk: () => { s.target = null; }, face: () => {},
+    });
+    const visit = (over: Partial<Visit> = {}): Visit => ({ standX: 15, standZ: -1.9, deep: true, face: 1, seconds: 2, begin: () => log.push("begin"), end: (ok) => log.push(`end:${ok}`), ...over });
+    return { v, s, log, visit, run: (sec: number) => { for (let t = 0; t < sec; t += 1 / 30) v.update(1 / 30); } };
+  }
+  it("walks out to the deep stand point with walkDeep, and starts only when it is that deep, not just near it", () => {
+    const h = deepHarness();
+    h.v.start(h.visit());
+    expect(h.log).toEqual(["walkDeep:15,-1.9"]);
+    h.s.pos.x = 15;                                                       // on the right spot in x, but still at the lane's edge: 0.7 short in depth
+    h.run(0.2);
+    expect(h.v.phase).toBe("walking");
+    h.s.pos.z = -1.9 + ARRIVE_DEEP_Z * 0.9;
+    h.run(0.1);
+    expect(h.v.phase).toBe("acting");
+    expect(ARRIVE_DEEP_Z).toBeLessThan(ARRIVE_X);
+  });
+  it("a plain visit still walks with walkTo and keeps the looser depth tolerance", () => {
+    const h = deepHarness();
+    h.v.start(h.visit({ deep: false, standZ: -1.2 }));
+    expect(h.log).toEqual(["walkTo:15,-1.2"]);
+    h.s.pos.x = 15; h.s.pos.z = -1.2 + ARRIVE_X * 0.9;
+    h.run(0.1);
+    expect(h.v.phase).toBe("acting");
+  });
+  it("without a walkDeep on the adapter a deep visit falls back to walkTo", () => {
+    const log: string[] = [];
+    const v = createVisitor({ position: () => ({ x: 0, y: 0, z: 0 }), targetX: () => null, walkTo: (x, z) => log.push(`walkTo:${x},${z}`), stopWalk: () => {}, face: () => {} });
+    v.start({ standX: 5, standZ: -2, deep: true, face: 1, seconds: 1, begin: () => {}, end: () => {} });
+    expect(log).toEqual(["walkTo:5,-2"]);
   });
 });

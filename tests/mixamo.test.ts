@@ -4,6 +4,7 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { beforeAll, describe, expect, it } from "vitest";
 import {
+  DEFAULT_TUNING,
   MixamoDriver,
   loadMixamoBank,
   mixPose,
@@ -190,6 +191,47 @@ describe("MixamoDriver on the Kip character rig", () => {
     const idle = swing(0);
     const walk = swing(2.4);
     expect(walk).toBeGreaterThan(idle * 3);
+  });
+
+  it("foot slide: the walk and run cycles keep pace with the REAL ground speed (extras.gait), not the eased speed, and a walking toy's planted foot goes back as fast as the ground", () => {
+    const mk = () => {
+      const rig = buildToy("character", stockSel().character as never, stockCol());
+      rig.arms.length = 0;
+      rig.arms.push(new THREE.Group(), new THREE.Group());
+      rig.head = new THREE.Group();
+      return rig;
+    };
+    const none = { headYaw: 0, headPitch: 0 };
+    // the cycle clocks advance at ground speed / reference speed (the reference speeds are the measured pace of the planted foot at rate 1)
+    const clocks = (gait: number, speed: number) => {
+      const d = new MixamoDriver(bank);
+      const rig = mk();
+      const a = d as unknown as { tWalk: number; tRun: number };
+      d.update(rig, 1 / 60, speed, { ...none, gait });
+      const w0 = a.tWalk, r0 = a.tRun;
+      for (let i = 0; i < 60; i++) d.update(rig, 1 / 60, speed, { ...none, gait });
+      return { walk: a.tWalk - w0, run: a.tRun - r0 };
+    };
+    const t = DEFAULT_TUNING;
+    expect(t.walkRefSpeed).toBeCloseTo(1.55, 2);
+    expect(t.runRefSpeed).toBeCloseTo(3.1, 2);
+    expect(clocks(1.55, 0).walk).toBeCloseTo(1.0, 2);              // a second of walking at its reference pace is one second of the cycle, though the eased speed still says 0
+    expect(clocks(3.1, 0).run).toBeCloseTo(1.0, 2);                // and the run likewise
+    expect(clocks(2.325, 0).walk).toBeCloseTo(1.5, 2);             // half as fast again on the ground, half as fast again on the clock
+    // with no gait given (older callers) the eased speed drives it, as before
+    const d = new MixamoDriver(bank);
+    const rig = mk();
+    const a = d as unknown as { wRun: number; wWalk: number };
+    d.update(rig, 1 / 60, 3.4);
+    expect(a.wRun).toBeGreaterThan(0.9);                           // no ease: the weights are the targets at once
+    // with a gait the mix eases in over a few frames instead of popping
+    const d2 = new MixamoDriver(bank);
+    const b = d2 as unknown as { wRun: number };
+    d2.update(mk(), 1 / 60, 0, { ...none, gait: 3.4 });
+    expect(b.wRun).toBeGreaterThan(0.05);
+    expect(b.wRun).toBeLessThan(0.6);
+    for (let i = 0; i < 30; i++) d2.update(mk(), 1 / 60, 0, { ...none, gait: 3.4 });
+    expect(b.wRun).toBeGreaterThan(0.99);
   });
 
   it("plays a one-shot dance and releases it", () => {

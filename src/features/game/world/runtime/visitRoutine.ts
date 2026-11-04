@@ -11,6 +11,8 @@ export interface VisitAdapter {
   /** The x the toy is currently walking to, or null if it is not walking. */
   targetX(): number | null;
   walkTo(x: number, z: number): void;
+  /** Like `walkTo` but the walk may go out past the lane's edge (to `z` as deep as -3.4), for a visit that stands at its prop's depth (`Visit.deep`). Absent: `walkTo` is used and the visit must step the rest itself. */
+  walkDeep?(x: number, z: number): void;
   stopWalk(): void;
   /** Turn the toy to face +x (1) or -x (-1). */
   face(dir: 1 | -1): void;
@@ -23,6 +25,8 @@ export interface Visit {
   standX: number;
   /** Where in depth it stands, when that matters (a puddle in front of a table); absent: wherever it is now. The toy has arrived when it is within ARRIVE_X of both. */
   standZ?: number;
+  /** The toy WALKS out to `standZ` even when that is beyond the lane (a prop set back in the scene), so there is no glide to hide: its feet carry it there and back. */
+  deep?: boolean;
   /** Which way it faces while it does it. */
   face: 1 | -1;
   /** How long the action takes, in seconds. */
@@ -38,6 +42,8 @@ export interface Visit {
 }
 
 export const ARRIVE_X = 0.3;
+/** How near a deep visit's stand depth the toy must be before it starts (the walk stops within 0.08 of its target, so this is reached): the depth is part of the act, so it is tighter than ARRIVE_X. */
+export const ARRIVE_DEEP_Z = 0.1;
 export const WALK_TIMEOUT_S = 8;
 export const REDIRECT_X = 0.8;
 
@@ -63,7 +69,8 @@ export function createVisitor(a: VisitAdapter) {
       if (phase !== "idle") return false;
       v = next;
       cue = 0;
-      a.walkTo(next.standX, next.standZ ?? a.position().z);
+      if (next.deep && a.walkDeep) a.walkDeep(next.standX, next.standZ ?? a.position().z);
+      else a.walkTo(next.standX, next.standZ ?? a.position().z);
       go("walking");
       return true;
     },
@@ -81,7 +88,7 @@ export function createVisitor(a: VisitAdapter) {
       if (phase === "walking" && v) {
         const tx = a.targetX();
         if (tx !== null && Math.abs(tx - v.standX) > REDIRECT_X) { a.stopWalk(); v = null; go("idle"); return; }   // the player sent the toy elsewhere
-        if (Math.abs(a.position().x - v.standX) < ARRIVE_X && (v.standZ === undefined || Math.abs(a.position().z - v.standZ) < ARRIVE_X)) { a.face(v.face); go("acting"); cue = 0; v.begin(); }
+        if (Math.abs(a.position().x - v.standX) < ARRIVE_X && (v.standZ === undefined || Math.abs(a.position().z - v.standZ) < (v.deep ? ARRIVE_DEEP_Z : ARRIVE_X))) { a.face(v.face); go("acting"); cue = 0; v.begin(); }
         else { t += dt; if (t >= WALK_TIMEOUT_S) { a.stopWalk(); v = null; go("idle"); } }
         return;
       }

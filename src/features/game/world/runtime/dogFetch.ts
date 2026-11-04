@@ -14,11 +14,19 @@ export interface FetchAdapter {
   /** Place the dog along the floor, facing right (+1) or left (-1). */
   moveDog(x: number, dir: 1 | -1): void;
   /** Place the ball along the floor at this height above it (0 on the floor), without any physics (the dog is carrying it). */
-  moveBall(x: number, lift: number): void;
+  moveBall(x: number, lift: number, z?: number): void;
   /** Let the ball go from where it is: it drops, bounces a little and rests. */
   dropBall(): void;
   /** What the dog is doing, for its animation: running, delighted, or just standing about. */
   cue(name: "run" | "happy" | "idle"): void;
+  /**
+   * Depth, all optional (absent: everything stays at the depth it has, as before). Where the dog and the ball and Kip are in depth, and tell the dog to walk to a depth: it runs to the ball where the ball
+   * lies and brings it to Kip's lane, so it picks the ball up with its nose on it and drops it beside Kip, not a room away.
+   */
+  dogZ?(): number;
+  ballZ?(): number;
+  toyZ?(): number;
+  laneTo?(z: number): void;
   /** A woof. */
   woof(): void;
 }
@@ -30,6 +38,8 @@ export const CARRY_LIFT = 0.55;
 /** The dog stops this far from Kip when it brings the ball back, on the side it came from. */
 export const RETURN_GAP = 1.9;
 export const ARRIVE = 0.15;
+/** It counts as in the ball's (or Kip's) lane within this much depth. */
+export const LANE_ARRIVE = 0.12;
 /** A moment after the ball stops before the dog sets off; how long it stays delighted after dropping it; the longest it waits for a ball that will not stop. */
 export const REACT_S = 0.5;
 export const DROP_S = 1.2;
@@ -53,6 +63,12 @@ export function createFetch(a: FetchAdapter) {
     const move = Math.min(Math.abs(d), DOG_SPEED * dt);
     if (Math.abs(d) > 1e-9) { x += Math.sign(d) * move; facing = sign(d); a.moveDog(x, facing); }
     return Math.abs(target - x) <= ARRIVE;
+  };
+  /** Head for a depth, and say whether it is there (always true when the world has no depth). */
+  const laneTo = (z: number): boolean => {
+    if (!a.laneTo || !a.dogZ) return true;
+    a.laneTo(z);
+    return Math.abs(a.dogZ() - z) <= LANE_ARRIVE;
   };
 
   return {
@@ -82,14 +98,16 @@ export function createFetch(a: FetchAdapter) {
       if (phase === "chasing") {
         const ball = a.ballX();
         const side = sign(ball - x);                           // which side of the ball the dog is on: it runs up to it from there
-        if (stepTo(clamp(ball - side * MOUTH), dt)) { go("returning"); a.moveBall(ball, CARRY_LIFT); }
+        const there = stepTo(clamp(ball - side * MOUTH), dt), inLane = laneTo(a.ballZ ? a.ballZ() : 0);
+        if (there && inLane) { go("returning"); a.moveBall(ball, CARRY_LIFT, a.dogZ?.()); }
         return;
       }
       if (phase === "returning") {
         const toy = a.toyX();
         const side = sign(x - toy);                            // it stays on the side of Kip it is on
-        const arrived = stepTo(clamp(toy + side * RETURN_GAP), dt);
-        a.moveBall(x + facing * MOUTH, CARRY_LIFT);
+        const there = stepTo(clamp(toy + side * RETURN_GAP), dt), inLane = laneTo(a.toyZ ? a.toyZ() : 0);
+        const arrived = there && inLane;
+        a.moveBall(x + facing * MOUTH, CARRY_LIFT, a.dogZ?.());
         if (arrived) {
           a.dropBall();
           a.cue("happy");

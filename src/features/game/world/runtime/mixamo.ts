@@ -367,7 +367,15 @@ export function jointsOf(rig: ToyRig): Joints | null {
 }
 
 /** Secondary head motion the engine still owns: a glance when something is hidden nearby, and the start/stop lean spring. */
-export interface DriverExtras { headYaw: number; headPitch: number }
+export interface DriverExtras {
+  headYaw: number;
+  headPitch: number;
+  /**
+   * How fast the toy is REALLY moving over the ground this frame (stage units per second, measured from how far the root moved). The walk and run cycles are driven by this, not by the
+   * eased `speed`, so the feet always go back at the pace the ground goes by (a foot that is down must not slide). Absent: `speed` is used, as before.
+   */
+  gait?: number;
+}
 const NO_EXTRAS: DriverExtras = { headYaw: 0, headPitch: 0 };
 const AXIS_Y = new THREE.Vector3(0, 1, 0);
 const AXIS_X = new THREE.Vector3(1, 0, 0);
@@ -391,8 +399,10 @@ const smooth = (a: number, b: number, x: number): number => {
 };
 
 export interface DriverTuning {
-  /** Stage speed at which the walk clip plays at its natural rate. */
+  /** Ground speed at which the walk clip plays at its natural rate AND its planted foot goes back exactly as fast as the ground (measured on the Snap figure: 1.55). */
   walkRefSpeed: number;
+  /** The same for the run clip (measured: 3.1). */
+  runRefSpeed: number;
   /** Speeds between which walk cross-fades into run. */
   runFrom: number;
   runTo: number;
@@ -403,7 +413,16 @@ export interface DriverTuning {
   /** Strength of a held pose (sad, sneak). Mixamo poses are staged for a full-size person; on a big-headed toy at full strength the sad slump reads as a bow. */
   poseGain: number;
 }
-export const DEFAULT_TUNING: DriverTuning = { walkRefSpeed: 2.4, runFrom: 2.9, runTo: 3.5, hipsGain: 2.2, bodyGain: 0.7, poseGain: 0.6 };
+/**
+ * Foot slide (Dan, 2026-11-04: "we have foot slide in most animations and scenes"): measured with the toy's root held still and the cycle played at a given speed, the planted foot of the
+ * baked Xbot walk goes back 1.55 stage units a second at rate 1 (the old walkRefSpeed 2.4 made a walking toy skate at 35 % over every walking speed) and the run's 3.1 (the old rates put the
+ * run at 3.04 against the game's 3.4, an 11 % skate). With a reference speed equal to the pace of the planted foot, `rate = ground speed / reference` makes the foot stand still on the ground.
+ */
+export const DEFAULT_TUNING: DriverTuning = { walkRefSpeed: 1.55, runRefSpeed: 3.1, runFrom: 2.3, runTo: 2.9, hipsGain: 2.2, bodyGain: 0.7, poseGain: 0.6 };
+/** How quickly the idle / walk / run mix follows the real ground speed (seconds): short, so a start or a stop is a quick blend and not a one-frame pop. */
+const GAIT_EASE_S = 0.06;
+/** How high the baked run's lowest sole stays above the floor, as a share of the hip height (measured on the Snap figure: 0.079 against the idle's 0.019 at a hip height of 1.14). */
+const RUN_SOLE_HOVER = 0.0527;
 
 export class MixamoDriver {
   private j: Joints | null = null;
@@ -415,6 +434,8 @@ export class MixamoDriver {
   private tIdle = 0;
   private tWalk = 0;
   private tRun = 0;
+  private wWalk = 0;
+  private wRun = 0;
   private action: { clip: BakedClip; t: number; lift: number; fade: number; rate: number; until: number } | null = null;
   /** A pose that stays until releaseHold(): w eases 0 to 1 while it is held and back to 0 while it is leaving. */
   private held: { clip: BakedClip; t: number; w: number; leaving: boolean } | null = null;
@@ -525,13 +546,20 @@ export class MixamoDriver {
     if (!j) return;
     this.extras = extras;
     const { bank, tuning: tn } = this;
-    const wRun = bank.run ? smooth(tn.runFrom, tn.runTo, speed) : 0;
-    const wWalk = smooth(0.08, 0.7, speed) * (1 - wRun);
+    // the pace the ground goes by under the feet: the toy's real speed when the world measured it, else the eased `speed` (the older callers and the tests)
+    const gait = typeof extras.gait === "number" && Number.isFinite(extras.gait) ? Math.max(0, extras.gait) : speed;
+    const wRunT = bank.run ? smooth(tn.runFrom, tn.runTo, gait) : 0;
+    // Full steps from 0.4 up (a half-weight walk shuffles: its swing foot barely lifts while it sweeps forward), and the cadence follows the ground speed so the planted foot keeps pace with it.
+    const wWalkT = smooth(0.05, 0.4, gait) * (1 - wRunT);
+    const ke = extras.gait === undefined ? 1 : 1 - Math.exp(-Math.max(0, dt) / GAIT_EASE_S);
+    this.wRun += (wRunT - this.wRun) * ke;
+    this.wWalk += (wWalkT - this.wWalk) * ke;
+    const wRun = this.wRun, wWalk = this.wWalk;
     const wIdle = Math.max(0, 1 - wWalk - wRun);
 
     this.tIdle += dt;
-    this.tWalk += dt * Math.max(0.5, Math.min(1.6, speed / tn.walkRefSpeed));
-    this.tRun += dt * Math.max(0.8, Math.min(1.25, speed / 3.4));
+    this.tWalk += dt * Math.max(0.12, Math.min(1.9, gait / tn.walkRefSpeed));
+    this.tRun += dt * Math.max(0.7, Math.min(1.4, gait / tn.runRefSpeed));
 
     // idle * wIdle + walk * wWalk + run * wRun, built as two sequential lerps (the weights sum to 1).
     const p = this.p;
@@ -590,6 +618,9 @@ export class MixamoDriver {
     }
     this.apply(j, p);
     this.applyJoints(j, p);
+    // The baked run never brings the sole lower than 0.06 stage units (5 % of the hip height) above the floor the idle stands on, so the whole run hovers and its planted foot looks like it skates
+    // on air. Bring the toy down by that much while it runs: the stance foot is on the floor, the flight phase still leaves it.
+    if (wRun > 0.001) j.g.position.y -= RUN_SOLE_HOVER * j.hipY * wRun;
   }
 
   /** Release the rig back to its rest pose (called when the driver is swapped out). */

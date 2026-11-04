@@ -324,7 +324,7 @@ function setup() {
   const fx = createPropFx({ root: () => world, camera: () => new THREE.PerspectiveCamera(36, 2, 0.1, 200), canvas, toast: () => {}, boostWindmill: () => {}, reduced: () => false, canSpeak: () => false });
   return { fx, world };
 }
-function fake() {
+function fake(extra: Record<string, unknown> = {}) {
   const log: string[] = [];
   const root = new THREE.Group();
   const kicks: Array<{ vx: number; vy: number }> = [];
@@ -337,6 +337,7 @@ function fake() {
     hold: (i: string) => log.push(`hold:${i}`), release: () => log.push("release"),
     mouth: () => ({ x: 0, y: 0, z: 0 }), bubbles: { blow: () => {} }, setPosition: (x: number, y: number, z: number) => { pos.x = x; pos.y = y; pos.z = z; log.push(`pos:${x.toFixed(2)},${y.toFixed(2)},${z.toFixed(2)}`); },
     tone: () => {}, phase: () => {},
+    ...extra,
     fx: { squish: () => {}, strike: () => null, kickBall: (_i: unknown, vx: number, vy: number) => { kicks.push({ vx, vy }); return true; }, flutter: () => {}, say: () => {}, setVisible: () => {}, cue: (_i: unknown, n: string) => cues.push(n), nearby: () => [] },
   } as unknown as ActsWorld;
   const glyphs: string[] = [];
@@ -492,6 +493,40 @@ describe("the flower bed", () => {
     expect((g.userData.can as THREE.Object3D).visible).toBe(true);
     f.things.reset();
     expect(f.things.dropCount).toBe(0);
+  });
+});
+
+describe("a visit at a prop's depth walks there (foot slide: no glide with frozen feet)", () => {
+  const bedAt = () => { const g = buildFlowerBed(10, -2.8); return instOf("flowerbed", 10, -2.8, g); };
+  it("when the world can walk out, the visit asks to stand at the prop's depth, never moves the toy itself while it acts, and walks back to the lane at the end", () => {
+    const calls: string[] = [];
+    const f = fake({ walkDeep: (x: number, z: number) => calls.push(`deep:${x},${z}`), walkTo: (x: number, z: number) => calls.push(`walk:${x.toFixed(2)},${z.toFixed(2)}`) });
+    const v = f.things.visitFor("water", bedAt())!;
+    expect(v.deep).toBe(true);
+    expect(v.standZ).toBeCloseTo(Math.max(DEEPEST_Z, -2.8 + FRONT_OF_PROP), 9);
+    v.begin();
+    for (let t = 0; t <= v.seconds; t += 1 / 60) v.tick!(t);
+    expect(f.log.filter((l) => l.startsWith("pos:"))).toEqual([]);          // no glide in or out
+    v.end(true);
+    expect(calls.some((c) => c.startsWith("walk:"))).toBe(true);            // it walks back to where it began
+    expect(f.log.filter((l) => l.startsWith("pos:"))).toEqual([]);
+  });
+  it("a visit cut short still puts the toy back at once", () => {
+    const calls: string[] = [];
+    const f = fake({ walkDeep: () => {}, walkTo: () => calls.push("walk") });
+    const v = f.things.visitFor("water", bedAt())!;
+    v.begin();
+    v.end(false);
+    expect(calls).toEqual([]);
+    expect(f.log.filter((l) => l.startsWith("pos:"))).toHaveLength(1);
+  });
+  it("a world with no walkDeep keeps the old glide (the toy is moved in depth by the visit)", () => {
+    const f = fake();
+    const v = f.things.visitFor("water", bedAt())!;
+    expect(v.deep).toBeUndefined();
+    v.begin();
+    v.tick!(STEP_S);
+    expect(f.log.some((l) => l.startsWith("pos:"))).toBe(true);
   });
 });
 

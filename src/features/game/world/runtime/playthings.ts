@@ -99,6 +99,22 @@ export function createPlaythings(w: ActsWorld, h: ThingHelpers) {
   /** A visit done at the prop's depth rather than the lane's: Kip steps into `zOf()` (clamped to DEEPEST_Z) for it and back to where it began, even when it is cut short. */
   function atDepth(v: Visit, zOf: () => number): Visit {
     let z0 = 0;
+    if (w.walkDeep) {
+      // Foot slide (Dan, 2026-11-04): the glide below moved the toy 0.7 to 3.4 units in 0.45 s with its feet frozen. When the world can walk out past the lane the toy WALKS there (diagonally, facing where
+      // it goes, its feet going back at the pace of the ground) and walks back to where it began when the act is over. A cut-short visit still puts it back at once.
+      const home = v.standZ ?? w.position().z;
+      return {
+        ...v,
+        deep: true,
+        standZ: Math.max(DEEPEST_Z, zOf()),
+        end: (completed) => {
+          const p = w.position();
+          if (completed) w.walkTo(p.x, home);
+          else w.setPosition(p.x, p.y, home);
+          v.end(completed);
+        },
+      };
+    }
     return {
       ...v,
       begin: () => { z0 = w.position().z; v.begin(); },
