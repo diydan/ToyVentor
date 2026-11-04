@@ -321,7 +321,7 @@ export function mixPose(into: Pose, other: Pose, w: number): void {
 /* ---------- driving the rig ---------- */
 
 /** The baked Mixamo gestures, then the hand-authored ones (runtime/proceduralClips.ts: eat, sour, belly_pat, yawn, and sleep, which is a HELD pose). */
-export type MixAction = "dance" | "nod" | "no" | "sneak" | "sad" | "eat" | "sour" | "belly_pat" | "yawn" | "sleep" | "hug" | "kick" | "cheer" | "read" | "strum" | "blow" | "pet" | "mallet" | "oops" | "mop" | "tidy" | "jump" | "shove";
+export type MixAction = "dance" | "nod" | "no" | "sneak" | "sad" | "eat" | "sour" | "belly_pat" | "yawn" | "sleep" | "hug" | "kick" | "cheer" | "read" | "strum" | "blow" | "pet" | "mallet" | "oops" | "mop" | "tidy" | "jump" | "shove" | "throw";
 
 interface Joints {
   g: THREE.Object3D;

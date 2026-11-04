@@ -277,6 +277,71 @@
   animation: tv-hud-slide 0.24s cubic-bezier(0.2, 0.9, 0.3, 1) both;
 }
 .tv-host .tv-sheet-mission { border-right-color: var(--gold, #ffd24d); }
+/* ---- the mission card is a slim see-through rail, not a half-screen card (Dan, 2026-11-04: "it often takes over too much of the screen") ------------------------------- */
+/* 232 px (27% of an 844 px phone, was 420 = 50%), about 60% opaque with blur so the machine shows through, as tall as its content. The Gear lift and the Bridge do not use it at all (missionBench.ts: pads in the world). */
+.tv-host .tv-sheet-mission {
+  inset: calc(8px + env(safe-area-inset-top, 0px)) auto auto 0;
+  width: min(232px, 30vw);
+  max-height: calc(100% - 16px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+  padding: 8px 8px 10px calc(10px + env(safe-area-inset-left, 0px));
+  gap: 6px;
+  background: rgb(var(--surface-rgb) / 0.72);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  border-radius: 0 16px 16px 0;
+  box-shadow: 6px 0 18px rgba(2, 6, 28, 0.3);
+}
+.tv-host .tv-sheet-mission .kicker-label { display: none; }
+.tv-host .tv-sheet-mission .tv-sh-title { font-size: 16px; line-height: 1.1; }
+.tv-host .tv-sheet-mission .tv-sh-top .tv-ctl { min-height: 34px; padding: 0 10px; font-size: 12px; }
+.tv-host .tv-sheet-mission .tv-mp-goal { font-size: 12px !important; line-height: 1.3; color: var(--ink); }
+.tv-host .tv-sheet-mission .tv-ctl { min-height: 40px; padding: 0 8px; font-size: 13px; }
+.tv-host .tv-sheet-mission .tv-mp-sb { gap: 5px; }
+.tv-host .tv-sheet-mission .tv-mp-slot { padding: 6px 8px; gap: 4px; }
+.tv-host .tv-sheet-mission .tv-mp-sn { font-size: 13px; }
+.tv-host .tv-sheet-mission .tv-cgrid { gap: 4px; }
+.tv-host .tv-sheet-mission .tv-cgrid .tv-ctl { min-height: 38px; font-size: 16px; padding: 0; }
+.tv-host .tv-sheet-mission .tv-pseq-chip { min-width: 30px; height: 30px; font-size: 13px; }
+.tv-host .tv-sheet-mission .tv-mp-tier-name { display: none; }                          /* the tier row is three small star buttons in ONE row (the names are in their aria-labels) */
+.tv-host .tv-sheet-mission [aria-label="Difficulty tier"] { flex-wrap: nowrap; }
+.tv-host .tv-sheet-mission [aria-label="Difficulty tier"] .tv-ctl { flex: 1 1 0; min-height: 34px; padding: 0 2px; font-size: 14px; letter-spacing: -1px; }
+.tv-host .tv-sheet-mission .tv-fg-b { gap: 5px; position: sticky; bottom: 0; z-index: 1; padding: 8px 0 2px; background: linear-gradient(to bottom, rgba(0, 0, 0, 0), rgb(var(--surface-rgb) / 0.92) 30%); }   /* the main button never scrolls out of sight */
+/* the Clean-up mission needs the tool belt button at the bottom left, so its rail stops above it */
+.tv-host .tv-sheet-mission[data-mission$=".clean"] { max-height: calc(100% - 82px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); }
+/* the small pop-ups step aside for the rail, not for a 420 px card */
+.tv-host:has(.tv-sheet-mission:not([hidden])) .tv-stage-canvas-host .toast,
+.tv-host:has(.tv-sheet-mission:not([hidden])) .tv-xp-toast { left: calc(min(232px, 30vw) + 12px); }
+.tv-host:has(.tv-sheet-mission:not([hidden])) .tv-stage-canvas-host .bubble { left: calc(min(232px, 30vw) + 12px) !important; }
+/* ---- the chip walking up to a mission shows (the card no longer opens by itself): top right, clear of the Kip button, the toasts and the tray ------------------------------- */
+.tv-host .tv-mission-chip {
+  position: absolute;
+  top: calc(12px + env(safe-area-inset-top, 0px));
+  right: calc(10px + env(safe-area-inset-right, 0px));
+  z-index: 8;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 4px 16px 4px 8px;
+  border-radius: 999px;
+  border: 2px solid var(--gold, #ffd24d);
+  background: rgba(16, 26, 68, 0.62);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  color: #fff;
+  text-align: left;
+  font-family: var(--font-display, sans-serif);
+  cursor: pointer;
+  touch-action: manipulation;
+  animation: tv-hud-chip 0.24s ease-out both;
+}
+.tv-host .tv-mission-chip-glyph { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: var(--gold, #ffd24d); color: #2b1d00; font-size: 17px; font-weight: 800; }
+.tv-host .tv-mission-chip-text { display: flex; flex-direction: column; line-height: 1.1; }
+.tv-host .tv-mission-chip-text b { font-size: 14px; }
+.tv-host .tv-mission-chip-text small { font-size: 11px; opacity: 0.85; }
+@keyframes tv-hud-chip { 0% { transform: translateY(-8px); opacity: 0; } 100% { transform: none; opacity: 1; } }
+.tv-host:has(.tv-sheet:not([hidden]), .tv-modal:not([hidden])) .tv-mission-chip { display: none; }
+.tv-host:has(.tv-worlds) .tv-mission-chip { top: calc(52px + env(safe-area-inset-top, 0px)); }
 .tv-host .tv-sheet-songs { max-height: none; }
 .tv-host:has(.tv-sheet:not([hidden]), .tv-modal:not([hidden])) .tv-kip-fab { display: none; }
 /* the other cards: the end-of-level song card and the garage goal chip */

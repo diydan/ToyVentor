@@ -37,8 +37,10 @@ export function resolveEffectiveMissionTier(
 }
 
 /**
- * Frosted-glass bottom sheet for bridge, lift, and STEM Playground missions.
- * Keeps the 3D scene visible above the sheet while placing parts or solving puzzles.
+ * Slim glass rail for the STEM missions that are played in the panel (the Gear lift and the Bridge
+ * are played on the bench in the world instead, runtime/missionBench.ts). It is a narrow, see-through
+ * strip at the left edge (game-hud.css) so the machine and Kip stay on screen, and it opens from a
+ * small chip, not by itself.
  */
 export function MissionPanel({
   snapshot,
@@ -77,6 +79,7 @@ export function MissionPanel({
       className="tv-sheet tv-sheet-mission"
       role="region"
       aria-label="Mission"
+      data-mission={missionId ?? snapshot.missionId ?? undefined}
     >
       <div className="tv-sh-top" style={{ alignItems: "flex-start" }}>
         <div style={{ flex: 1, minWidth: 0 }}>
@@ -95,7 +98,7 @@ export function MissionPanel({
       </div>
 
       {snapshot.goal && (
-        <p className="tv-moves" style={{ fontSize: 13 }}>
+        <p className="tv-moves tv-mp-goal" style={{ fontSize: 13 }}>
           {snapshot.goal}
         </p>
       )}
@@ -114,6 +117,7 @@ export function MissionPanel({
                 type="button"
                 disabled={!open}
                 aria-pressed={effectiveTier === t}
+                aria-label={`${TIER_LABEL[t]} tier${stars > 0 ? `, ${stars} stars` : ""}`}
                 title={
                   open
                     ? `${TIER_LABEL[t]} tier`
@@ -127,8 +131,9 @@ export function MissionPanel({
                 }}
               >
                 {"★".repeat(t)}
-                {"☆".repeat(3 - t)} {TIER_LABEL[t]}
-                {stars > 0 && ` · ${stars}★`}
+                {"☆".repeat(3 - t)}
+                <span className="tv-mp-tier-name"> {TIER_LABEL[t]}</span>
+                {stars > 0 && <span className="tv-mp-tier-name">{` · ${stars}★`}</span>}
               </button>
             );
           })}

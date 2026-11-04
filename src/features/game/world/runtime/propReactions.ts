@@ -12,7 +12,7 @@
 import * as THREE from "three";
 import { colorKeyFromHex, describeObject, languageInfo, type ColorKey, type Described, type LangCode, type NounKey } from "../../../../lib/propNames";
 import { getPropLang } from "../../../../lib/propSpeech";
-import { BALL_BOUNDS, BALL_R, kick as startKick, stepBall, type BallState } from "./ballKick";
+import { BALL_BOUNDS, BALL_R, SMALL_BALL_R, ballRadius, kick as startKick, stepBall, type BallState } from "./ballKick";
 
 /** A rolling tire turns this much for every turn the ball model does for the same distance: the ball is 0.55 across its radius, the tire 0.72. */
 const TIRE_SPIN = BALL_R / 0.72;
@@ -22,7 +22,7 @@ import { sfx, sound, tone } from "./audio";
 
 export const PROP_TYPES = [
   "lantern", "windmill", "cottage", "tree", "bushes", "cloud", "island", "tire", "drum", "shed", "cranebg", "palm", "umbrella",
-  "sandcastle", "pine", "snowman", "igloo", "lamp", "blocks", "books", "chair", "plant", "teddy", "ball", "cushions", "bed", "guitar", "bubbles", "dog", "xylophone",
+  "sandcastle", "pine", "snowman", "igloo", "lamp", "blocks", "books", "chair", "plant", "teddy", "ball", "smallball", "cushions", "bed", "guitar", "bubbles", "dog", "xylophone",
   "cup", "toybox", "cleancart", "hob",
   // Things to play with outside (runtime/playthings.ts, outdoorProps.ts).
   "puffcloud", "angelpatch", "flowerbed", "bunny", "picnic", "swing", "pumpkins", "basket",
@@ -71,6 +71,8 @@ export const PROP_SPECS: Record<PropType, PropSpec> = {
   plant: { noun: "plant", color: "green", idle: "sway", poke: "squash", use: "sprout" },
   teddy: { noun: "teddy", color: "brown", idle: "none", poke: "squash", use: "squish" },
   ball: { noun: "ball", color: "red", idle: "none", poke: "hop", use: "roll" },
+  // The small ball Kip picks up and throws for the dog (toyRoomActs.ts `throwVisit`): called a red ball too.
+  smallball: { noun: "ball", color: "red", idle: "none", poke: "hop", use: "roll" },
   cushions: { noun: "cushions", color: "colorful", idle: "none", poke: "squash", use: "squish" },
   // The Toy Room bed (runtime/bed.ts): a tap puts the toy to sleep (runtime/sleepRoutine.ts); the world decides what that means through `deps.onBed`.
   bed: { noun: "bed", color: "colorful", idle: "none", poke: "squash", use: "sleep" },
@@ -314,10 +316,11 @@ export function createPropFx(deps: PropFxDeps) {
    * Kick a ball: it flies off along the floor with the given speed and lift, bounces and rolls to a stop (ballKick.ts), staying wherever it ends up. Cancels a roll in place; ignored for a prop
    * that is not a ball. Returns false if it could not be kicked.
    */
-  function kickBall(inst: PropInst, vx: number, vy: number): boolean {
-    if (inst.type !== "ball" && inst.type !== "tire") return false;                       // (a tire is pushed and rolls like a ball, only farther round)
+  function kickBall(inst: PropInst, vx: number, vy: number, from?: { x: number; h: number }): boolean {
+    if (inst.type !== "ball" && inst.type !== "smallball" && inst.type !== "tire") return false;                       // (a tire is pushed and rolls like a ball, only farther round)
     for (let i = anims.length - 1; i >= 0; i--) { const a = anims[i]!; if (a.inst === inst && a.kind === "use") { anims.splice(i, 1); a.end?.(); } }
-    inst.kick = startKick(inst.base.px, vx, vy);
+    if (from && Number.isFinite(from.x)) inst.base.px = from.x;                          // thrown from a hand: it starts where the hand is, and as high
+    inst.kick = startKick(inst.base.px, vx, vy, from ? from.h : 0);
     tone(180, 0, 0.09, "sine", 0.1, 110);
     return true;
   }
@@ -740,8 +743,8 @@ export function createPropFx(deps: PropFxDeps) {
     }
 
     let pivot: THREE.Group | null = null;
-    if (type === "ball" || type === "tire") {                                              // both turn about their own centre: the ball's is 0.55 up, the tire's holder already sits at its centre
-      const rise = type === "ball" ? 0.55 : 0;
+    if (type === "ball" || type === "smallball" || type === "tire") {                      // both turn about their own centre: the ball's is its radius up, the tire's holder already sits at its centre
+      const rise = type === "ball" ? BALL_R : type === "smallball" ? SMALL_BALL_R : 0;
       pivot = new THREE.Group();
       pivot.position.y = rise;
       for (const c of [...holder.children]) { c.position.y -= rise; pivot.add(c); }
@@ -908,7 +911,7 @@ export function createPropFx(deps: PropFxDeps) {
       if (tick) tick(t, dt);                                  // a prop that animates its own parts (the dog)
       o.dy += inst.lift;
       if (inst.kick) {                                       // a kicked ball: along the floor and up, turning as it rolls
-        const next = stepBall(inst.kick, dt, BALL_BOUNDS[0], BALL_BOUNDS[1]);
+        const next = stepBall(inst.kick, dt, BALL_BOUNDS[0], BALL_BOUNDS[1], ballRadius(inst.type));
         inst.base.px = next.x;
         o.dy += next.h;
         if (inst.pivot) {

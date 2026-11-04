@@ -23,7 +23,7 @@ export const IDLE_FILES: Readonly<Record<IdleKind, readonly string[]>> = {
   fidget: ["mood_thinking", "mood_bored", "mood_yawn", "mood_shrug", "mood_look", "move_arms"],
 };
 /** The group a baked file says it is in, where that is not `react` (the library refuses a file whose group is not the one its name belongs to). The arm stretch is the movement break's clip; the kick and the sneak are acts (gameActions.ts). */
-const GROUP_OF: Readonly<Record<string, string>> = { move_arms: "move", act_kick: "act", act_sneak: "act" };
+const GROUP_OF: Readonly<Record<string, string>> = { move_arms: "move", act_kick: "act", act_sneak: "act", act_pickthrow: "act" };
 export const SAMBA_CLIP = "dance";
 /** What the driver's `busyAction` says while one of these is playing, so the party's checks for `dance` (and every test that reads it) never mistake an idle wave for a party. */
 export const IDLE_LABEL = "idle";

@@ -1833,6 +1833,24 @@ export function GameCanvas({
           />
         )}
 
+        {!missionPanel.open && missionPanel.hint && (
+          <button
+            type="button"
+            className="tv-mission-chip"
+            data-testid="mission-chip"
+            aria-label={`${missionPanel.hint.title}: ${missionPanel.hint.done ? "play it again" : "tap to start"}`}
+            onClick={() => engine()?.missionAction("open")}
+          >
+            <span className="tv-mission-chip-glyph" aria-hidden="true">
+              {missionPanel.hint.done ? "✓" : "★"}
+            </span>
+            <span className="tv-mission-chip-text">
+              <b>{missionPanel.hint.title}</b>
+              <small>{missionPanel.hint.done ? "Play again" : "Tap to start"}</small>
+            </span>
+          </button>
+        )}
+
         {missionPanel.open && (
           <MissionPanel
             key={missionPanel.missionId ?? "mission"}

@@ -40,8 +40,8 @@ describe("the Mixamo moves in the world", () => {
     expect(body.indexOf("sfx.shove()")).toBeLessThan(body.indexOf("reveal(s)"));          // the shove lands, then the spots show
   });
   it("the cushion act's clip is played without the clip's own lift (the act's path lifts Kip) and with a sudden take-off", () => {
-    expect(world).toContain('"mallet"|"jump"|"shove"|"angel"|"pour"|"pick"|"smell"|"offer"|"sit_eat"|"swing"){return mixGo(a as MixAction,a==="jump"?{lift:0,fade:.06}:a==="shove"?{fade:SHOVE_FADE_S,until:MOVES.shoveDur}:a==="angel"||a==="sit_eat"||a==="swing"?{fade:.4}:undefined)}');
-    expect(acts).toContain('"pet" | "mallet" | "jump" | "shove" | PlayAction): boolean;');
+    expect(world).toContain('"mallet"|"jump"|"shove"|"angel"|"pour"|"pick"|"smell"|"offer"|"sit_eat"|"swing"|"throw"){return mixGo(a as MixAction,a==="jump"?{lift:0,fade:.06}:a==="shove"?{fade:SHOVE_FADE_S,until:MOVES.shoveDur}:a==="angel"||a==="sit_eat"||a==="swing"?{fade:.4}:undefined)}');
+    expect(acts).toContain('"pet" | "mallet" | "jump" | "shove" | "throw" | PlayAction): boolean;');
     expect(acts).toContain('w.clip("jump");');
   });
 });

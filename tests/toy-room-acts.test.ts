@@ -127,8 +127,8 @@ function game(opts: { eater?: "character" | "robot" | "vehicle"; allowed?: boole
 }
 
 describe("which props do something", () => {
-  it("the teddy is hugged, the ball kicked, the cushions jumped on, a book read, the guitar played, the bubbles blown and the dog petted; nothing else starts an act", () => {
-    expect(ACT_FOR_PROP).toEqual({ teddy: "hug", ball: "kick", cushions: "jump", books: "read", guitar: "play", bubbles: "blow", dog: "pet", xylophone: "mallet", cup: "spill", toybox: "dump", cleancart: "scrub", hob: "cook", puffcloud: "jump", tire: "roll", angelpatch: "angel", flowerbed: "water", bunny: "feed", picnic: "picnic", swing: "ride" });
+  it("the teddy is hugged, the ball kicked, the small ball picked up and thrown, the cushions jumped on, a book read, the guitar played, the bubbles blown and the dog petted; nothing else starts an act", () => {
+    expect(ACT_FOR_PROP).toEqual({ teddy: "hug", ball: "kick", cushions: "jump", books: "read", guitar: "play", bubbles: "blow", dog: "pet", xylophone: "mallet", cup: "spill", toybox: "dump", cleancart: "scrub", hob: "cook", puffcloud: "jump", tire: "roll", angelpatch: "angel", flowerbed: "water", bunny: "feed", picnic: "picnic", swing: "ride", smallball: "throw" });
     const g = game();
     for (const type of ["lamp", "blocks", "chair", "plant", "bed", "tree", "unknown"]) expect(g.acts.tap(inst(type, 20)), type).toBe(false);
     expect(g.log).toEqual([]);
@@ -782,7 +782,7 @@ describe("wiring in world.ts", () => {
     expect(world).toContain("bubbles:BUBBLES,held:HELD,fetch:DOGF,");
   });
   it("Kip can hold a book, the guitar, the wand and a pair of mallets: the right arm is arms[1], the left arms[0] and the mouth is found from Kip's own box", () => {
-    expect(world).toContain("hold:function(i: \"book\"|\"guitar\"|\"wand\"|\"mallets\"|\"can\"|\"carrot\"|\"bouquet\"|\"sandwich\"){HELD.hold(i,P.model,handOf(1),handOf(0))}");
+    expect(world).toContain("hold:function(i: \"book\"|\"guitar\"|\"wand\"|\"mallets\"|\"can\"|\"carrot\"|\"bouquet\"|\"sandwich\"|\"smallball\"){HELD.hold(i,P.model,handOf(1),handOf(0))}");
     expect(world).toContain("release:function(){HELD.release()}");
     expect(world).toContain("bubbles:BUBBLES,");
     expect(world).toMatch(/mouth:function\(d: number\)\{var b=new T\.Box3\(\)\.setFromObject\(P\.root\)/);

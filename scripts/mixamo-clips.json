@@ -24,5 +24,6 @@
   { "id": "react_cheer2", "file": "Cheering 2 hands.fbx", "label": "Cheer, two hands", "group": "react", "loop": false, "plant": false },
   { "id": "react_victory", "file": "Victory.fbx", "label": "Victory", "group": "react", "trim": [0.7, 4.0], "loop": false, "plant": false },
   { "id": "act_kick", "file": "kick.fbx", "label": "Kick", "group": "act", "trim": [0.4, 1.45], "loop": false },
-  { "id": "act_sneak", "file": "Sneaking Forward.fbx", "label": "Sneak", "group": "act", "loop": false }
+  { "id": "act_sneak", "file": "Sneaking Forward.fbx", "label": "Sneak", "group": "act", "loop": false },
+  { "id": "act_pickthrow", "file": "pickup and Throw Object.fbx", "label": "Pick up and throw", "group": "act", "trim": [0, 3.8], "loop": false }
 ]

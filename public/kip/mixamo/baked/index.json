@@ -244,6 +244,15 @@
    "loop": false,
    "planted": true,
    "source": "Mixamo \"Sneaking Forward\""
+  },
+  {
+   "id": "act_pickthrow",
+   "label": "Pick up and throw",
+   "group": "act",
+   "dur": 3.8,
+   "loop": false,
+   "planted": true,
+   "source": "Mixamo \"pickup and Throw Object\""
   }
  ]
 }

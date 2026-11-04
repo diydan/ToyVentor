@@ -15,11 +15,11 @@ import type { HeldItem } from "./heldItems";
 import { createVisitor, type Visit, type VisitAdapter, type VisitPhase } from "./visitRoutine";
 
 export type ActKind = "hug" | "kick" | "jump" | "read" | "play" | "blow" | "pet" | "mallet" | "spill" | "dump" | "scrub" | "cook" | ThingKind;
-const THING_KINDS: ReadonlySet<string> = new Set<ThingKind>(["roll", "angel", "water", "feed", "picnic", "ride"]);
+const THING_KINDS: ReadonlySet<string> = new Set<ThingKind>(["roll", "angel", "water", "feed", "picnic", "ride", "throw"]);
 /** Which prop type starts which act. */
 export const ACT_FOR_PROP: Readonly<Record<string, ActKind>> = { teddy: "hug", ball: "kick", cushions: "jump", books: "read", guitar: "play", bubbles: "blow", dog: "pet", xylophone: "mallet", cup: "spill", toybox: "dump", cleancart: "scrub", hob: "cook",
   // the outdoor worlds (playthings.ts): a puffy cloud is bounced on like the cushions, a tire is pushed, the snow patch gets an angel, the flower bed is watered, the bunny is fed, the picnic eaten, the swing ridden
-  puffcloud: "jump", tire: "roll", angelpatch: "angel", flowerbed: "water", bunny: "feed", picnic: "picnic", swing: "ride" };
+  puffcloud: "jump", tire: "roll", angelpatch: "angel", flowerbed: "water", bunny: "feed", picnic: "picnic", swing: "ride", smallball: "throw" };
 
 /** How far from the prop's centre the toy stands, in x. */
 export const HUG_STAND = 1.05;
@@ -100,10 +100,12 @@ export interface ActsWorld extends Omit<VisitAdapter, "onPhase"> {
   /** False while an act must not start (paused, a showcase, a mission cinematic, the editor, asleep, an ability running). */
   allowed(): boolean;
   /** Play a character clip; false if it cannot (reduced motion, not loaded). */
-  clip(action: "hug" | "kick" | "cheer" | "read" | "strum" | "blow" | "pet" | "mallet" | "jump" | "shove" | PlayAction): boolean;
+  clip(action: "hug" | "kick" | "cheer" | "read" | "strum" | "blow" | "pet" | "mallet" | "jump" | "shove" | "throw" | PlayAction): boolean;
   /** Put something in Kip's hands (a book, the guitar, the bubble wand) and take it away again (safe to call when it holds nothing). */
-  hold(item: "book" | "guitar" | "wand" | "mallets" | Extract<HeldItem, "can" | "carrot" | "bouquet" | "sandwich">): void;
+  hold(item: "book" | "guitar" | "wand" | "mallets" | Extract<HeldItem, "can" | "carrot" | "bouquet" | "sandwich" | "smallball">): void;
   release(): void;
+  /** Where the thing Kip holds is in the world right now (its middle): a throw lets go from there. Absent, or nothing held: null. */
+  heldAt?(): { x: number; y: number } | null;
   /** Where Kip's mouth is while it faces `dir`. */
   mouth(dir: 1 | -1): P3;
   bubbles: { blow(from: P3, dir: 1 | -1, n: number): void };
@@ -124,7 +126,8 @@ export interface ActsWorld extends Omit<VisitAdapter, "onPhase"> {
     squish(inst: PropInst): void;
     /** Ring bar `i` of a xylophone (with its note); returns the pitch or null. */
     strike(inst: PropInst, i: number): number | null;
-    kickBall(inst: PropInst, vx: number, vy: number): boolean;
+    /** `from`: a ball set off from a hand starts where the hand is (x) and that high (h, its lowest point above the floor), not on the floor where it lay. */
+    kickBall(inst: PropInst, vx: number, vy: number, from?: { x: number; h: number }): boolean;
     /** Flutter a book's pages. */
     flutter(inst: PropInst): void;
     /** Say a prop's name (caption and voice). */

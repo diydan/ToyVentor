@@ -35,7 +35,15 @@ export type WorldId = (typeof WORLDS)[number]["id"];
 export const ZOOM_LEVELS = ["Close", "Mid", "Far"] as const;
 export type ZoomLevel = 0 | 1 | 2;
 
-export type MissionAction = "test" | "later" | "forge";
+/** "open" opens the mission's card from the small chip walking up to it shows (the card no longer opens by itself). */
+export type MissionAction = "test" | "later" | "forge" | "open";
+
+/** The small chip shown beside the Kip button while Kip stands at a mission whose card is closed. */
+export interface MissionHint {
+  title: string;
+  /** Solved already: the card then only offers "Play again". */
+  done: boolean;
+}
 
 export interface MissionPanelControl {
   index: number;
@@ -70,6 +78,8 @@ export interface MissionPanelSnapshot {
   actionLabel: string;
   forgeAvailable: boolean;
   binText: string;
+  /** Set only while the card is closed and Kip is at a mission that has one to open. */
+  hint: MissionHint | null;
 }
 
 export interface RawMissionPanelSnapshot {
@@ -84,6 +94,7 @@ export interface RawMissionPanelSnapshot {
   actionLabel?: string;
   forgeAvailable?: boolean;
   binText?: string;
+  hint?: { title?: string; done?: boolean } | null;
 }
 
 export const closedMissionPanelSnapshot: MissionPanelSnapshot = {
@@ -98,6 +109,7 @@ export const closedMissionPanelSnapshot: MissionPanelSnapshot = {
   actionLabel: "Test it",
   forgeAvailable: false,
   binText: "",
+  hint: null,
 };
 
 const cleanText = (text: string | undefined): string =>
@@ -107,9 +119,13 @@ const cleanText = (text: string | undefined): string =>
 export function normalizeMissionPanelSnapshot(
   raw: RawMissionPanelSnapshot = {},
 ): MissionPanelSnapshot {
-  if (!raw.open) return { ...closedMissionPanelSnapshot, lines: [], chips: [], controls: [] };
+  if (!raw.open) {
+    const title = cleanText(raw.hint?.title);
+    return { ...closedMissionPanelSnapshot, lines: [], chips: [], controls: [], hint: title ? { title, done: Boolean(raw.hint?.done) } : null };
+  }
   return {
     open: true,
+    hint: null,
     missionId: typeof raw.missionId === "string" ? raw.missionId : null,
     tier: raw.tier === 2 || raw.tier === 3 ? raw.tier : 1,
     title: cleanText(raw.title) || "Mission",

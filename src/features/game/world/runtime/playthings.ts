@@ -3,7 +3,7 @@
 // prop that was tapped; toyRoomActs.ts hands the tap over (`createActs` makes this with its own hearts) and the props themselves are in outdoorProps.ts. The only pure numbers here are the paths and timings
 // (exported so a test can pin them); the three.js part is the water drops.
 import * as THREE from "three";
-import { BALL_BOUNDS } from "./ballKick";
+import { BALL_BOUNDS, SMALL_BALL_R } from "./ballKick";
 import { SHOVE_PLAY_S } from "./gameMoves";
 import { ANGEL_START_S, ANGEL_SWEEPS, ANGEL_SWEEP_S, ANGEL_S, BITES_S, OFFER_S, OFFER_TAKE_S, PICK_GRAB_S, PICK_S, POUR_END_S, POUR_START_S, POUR_S, SIT_EAT_S, SMELL_S, SMELL_SNIFF_S, SWING_HOP_S, SWING_S } from "./playClips";
 import { SANDWICH_COUNT, seatPoint, swingAngle, FLOWER_X } from "./outdoorProps";
@@ -11,7 +11,7 @@ import type { ActsWorld } from "./toyRoomActs";
 import type { PropInst } from "./propReactions";
 import type { Visit } from "./visitRoutine";
 
-export type ThingKind = "roll" | "angel" | "water" | "feed" | "picnic" | "ride";
+export type ThingKind = "roll" | "angel" | "water" | "feed" | "picnic" | "ride" | "throw";
 
 export interface ThingHelpers {
   heart(at: THREE.Vector3, size?: number): void;
@@ -27,6 +27,18 @@ export const WATER_STAND = 2.1;
 export const PICK_STAND = 1.5;
 export const FEED_STAND = 1.45;
 export const SWING_STAND = 1.3;
+/**
+ * The throw (Dan, 2026-11-04: the Mixamo "pickup and Throw Object" clip): Kip walks to the small ball, bends and picks it up (the fist is at the floor at THROW_PICK_S: he stands THROW_STAND from it so
+ * his hand is on it there), straightens, winds up and throws it overarm at THROW_RELEASE_S, and the dog fetches it. The clip is `throw` (3.8 s of the 4.9 s: the recovery is trimmed).
+ */
+export const THROW_STAND = 1.0;
+export const THROW_PICK_S = 1.2;
+export const THROW_RELEASE_S = 2.45;
+export const THROW_S = 3.8;
+export const THROW_VX = 3.0;
+export const THROW_VY = 1.4;
+/** How much room a throw needs in front of the ball (a little more than it travels: it flies, bounces and rolls about this far). */
+export const THROW_ROOM = 8;
 /** The tire is pushed at this moment of the shove (the Mixamo push as authored: the arms are out at about 0.6 s) and rolls off at this speed (it stops about 4 units on). */
 export const TIRE_PUSH_S = 0.65;
 export const TIRE_VX = 4.4;
@@ -207,6 +219,36 @@ export function createPlaythings(w: ActsWorld, h: ThingHelpers) {
     };
   }
 
+  // ---- the small ball: picked up and thrown for the dog -------------------------------------------------------------------------
+  function throwVisit(inst: PropInst): Visit {
+    const x = inst.base.px;
+    let dir: 1 | -1 = x + THROW_ROOM > BALL_BOUNDS[1] ? -1 : 1;           // throw it to the right (where the camera shows most room), unless the wall is too close
+    if (x - dir * THROW_STAND < BALL_BOUNDS[0] || x - dir * THROW_STAND > BALL_BOUNDS[1]) dir = (-dir) as 1 | -1;
+    let fetched = false, inHand = false, thrown = false;
+    const standX = x - dir * THROW_STAND;
+    return {
+      standX, face: dir, seconds: THROW_S,
+      begin: () => { inHand = false; thrown = false; fetched = false; w.clip("throw"); },
+      cues: [
+        { at: THROW_PICK_S, fn: () => { w.fx.setVisible(inst, false); w.hold("smallball"); inHand = true; w.tone(520, 0, 0.08, "triangle", 0.05, 700); } },
+        { at: THROW_RELEASE_S, fn: () => {
+          const fist = w.heldAt?.();                                       // where the hand is right now: the ball leaves from there, and from that high
+          const from = fist ? { x: fist.x, h: Math.max(0, fist.y - SMALL_BALL_R) } : { x: standX + dir * 0.9, h: 1.9 };
+          w.release(); inHand = false;
+          w.fx.setVisible(inst, true);
+          thrown = w.fx.kickBall(inst, dir * THROW_VX, THROW_VY, from);
+          w.tone(300, 0, 0.1, "square", 0.06, 160);
+          fetched = w.fetch ? w.fetch(inst) : false;
+        } },
+      ],
+      end: () => {
+        if (inHand) { w.release(); inHand = false; }                      // cut short with it in his hand: it goes back where it was
+        w.fx.setVisible(inst, true);
+        if (thrown && !fetched) h.follow(inst, dir);                       // no dog: Kip trots after it, as he does after a kick
+      },
+    };
+  }
+
   // ---- the swing ------------------------------------------------------------------------------------------------------------
   function rideVisit(inst: PropInst): Visit {
     const x = inst.base.px, z = inst.base.pz;
@@ -239,6 +281,7 @@ export function createPlaythings(w: ActsWorld, h: ThingHelpers) {
         case "feed": return atDepth(feedVisit(inst), () => inst.base.pz + FRONT_OF_PROP);
         case "picnic": return atDepth(picnicVisit(inst), () => inst.base.pz);                            // sits ON the blanket
         case "ride": return rideVisit(inst);
+        case "throw": return atDepth(throwVisit(inst), () => inst.base.pz);                              // picks it up at the ball's own depth
       }
     },
     update(dt: number): void {

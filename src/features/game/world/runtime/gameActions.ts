@@ -13,7 +13,7 @@ import { createGestureLibrary } from "./idleBehavior";
 import type { BakedClip } from "./mixamo";
 
 /** The action the game triggers, and the baked file that plays it. */
-export const ACTION_FILES = { sad: "mood_sad", sneak: "act_sneak", kick: "act_kick" } as const;
+export const ACTION_FILES = { sad: "mood_sad", sneak: "act_sneak", kick: "act_kick", throw: "act_pickthrow" } as const;
 export type BakedAction = keyof typeof ACTION_FILES;
 const FILE_IDS: readonly string[] = Object.values(ACTION_FILES);
 const ACTION_OF: Readonly<Record<string, BakedAction>> = Object.fromEntries(Object.entries(ACTION_FILES).map(([a, f]) => [f, a as BakedAction]));

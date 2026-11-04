@@ -9,9 +9,10 @@ import { buildMopMesh } from "./mop";
 import { buildSpongeMesh, buildVacuumMesh } from "./cleanScene";
 import { buildSpatulaMesh } from "./cookScene";
 import { buildBouquetMesh, buildCanMesh, buildCarrotMesh, buildSandwichMesh } from "./outdoorProps";
+import { buildSmallBallMesh } from "./smallBall";
 import type * as THREE from "three";
 
-export type HeldItem = "book" | "guitar" | "wand" | "mallets" | "mop" | "vacuum" | "sponge" | "spatula" | "can" | "carrot" | "bouquet" | "sandwich";
+export type HeldItem = "book" | "guitar" | "wand" | "mallets" | "mop" | "vacuum" | "sponge" | "spatula" | "can" | "carrot" | "bouquet" | "sandwich" | "smallball";
 
 /** A small hardback book: a coloured cover, cream pages and a spine, flat, about 0.7 by 0.5. */
 export function buildBookMesh(): THREE.Group {
@@ -70,6 +71,8 @@ export const HELD: Readonly<Record<HeldItem, HeldSpec>> = {
   carrot: { parent: "armR", position: [0, 0, 0], rotation: [0, 0, 0], scale: 1.7, build: buildCarrotMesh },
   bouquet: { parent: "armR", position: [0, 0, 0], rotation: [0, 0, Math.PI], scale: 1, build: buildBouquetMesh },
   sandwich: { parent: "armR", position: [0, 0, 0], rotation: [0, 0, 0], scale: 1, build: buildSandwichMesh },
+  // The small ball, in the right fist (the throw: toyRoomActs.ts `throwVisit`).
+  smallball: { parent: "armR", position: [0, 0, 0], rotation: [0, 0, 0], scale: 1, build: buildSmallBallMesh },
 };
 
 export function createHeld() {

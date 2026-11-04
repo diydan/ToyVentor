@@ -98,7 +98,7 @@ describe("the actions in the driver's bank", () => {
     }
   });
   it("puts nothing in the bank when nothing can load, so the old clips all stay", async () => {
-    const { actions, bank } = make({ mood_sad: 404, act_sneak: 500, act_kick: 404 });
+    const { actions, bank } = make({ mood_sad: 404, act_sneak: 500, act_kick: 404, act_pickthrow: 404 });
     expect(await actions.load()).toEqual([]);
     expect(Object.keys(bank)).toEqual([]);
   });
