@@ -74,6 +74,15 @@
 .tv-host .tv-kip-fab:active { transform: scale(0.95); }
 .tv-host .tv-kip-fab[aria-expanded="true"] { border-color: var(--gold, #ffd24d); }
 .tv-host .tv-kip-fab .tv-toy-mini-icon { width: 38px; height: 38px; }
+/* the toy's own picture (the same one the Map's token wears) fills the round button */
+.tv-host .tv-kip-fab .tv-kip-fab-portrait {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: 50%;
+  object-fit: cover;
+  background: rgb(var(--night-rgb) / 0.65);
+}
 .tv-host .tv-kip-fab-dot {
   position: absolute;
   top: -2px;
@@ -185,8 +194,14 @@
 .tv-host .tv-stage-canvas-host .intro {
   left: calc(72px + env(safe-area-inset-left, 0px));
   top: calc(12px + env(safe-area-inset-top, 0px));
+  right: auto;
+  width: fit-content;
+  max-width: min(52vw, 340px);
   transform: none;
   text-align: left;
+  padding: 5px 12px 6px;
+  border-radius: 12px;
+  background: rgba(10, 19, 54, 0.5);      /* see-through, but the thin yellow line is readable over any scenery */
 }
 .tv-host .tv-stage-canvas-host .intro b { font-size: 17px; line-height: 1.1; text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6); }
 .tv-host .tv-stage-canvas-host .intro span { margin-top: 2px; font-size: 12px; }
@@ -282,3 +297,37 @@
 .tv-host:has(.tv-sheet:not([hidden]), .tv-modal:not([hidden])) .tv-stage-canvas-host .toast,
 .tv-host:has(.tv-sheet:not([hidden]), .tv-modal:not([hidden])) .tv-xp-toast { left: calc(min(420px, 58vw) + 14px); }
 .tv-host:has(.tv-sheet:not([hidden]), .tv-modal:not([hidden])) .tv-stage-canvas-host .bubble { left: calc(min(420px, 58vw) + 14px) !important; }
+
+/* ---- fixes from the all-screens landscape sweep (2026-11-04) ------------------------------------------------------------------------------------ */
+/* A card is only ~390 px tall in landscape and every `.tv-sheet` is a flex column that scrolls as a whole, so nothing in it may shrink: the Create card's picture-word row (an overflow scroller) was squashed to 4 px. */
+.tv-host .tv-sheet > * { flex-shrink: 0; }
+/* The Daily Pack: the stage is squeezed from 468 px to about 316 px in the card, so the ticket gets smaller and the hint is one line (the button already says "Hold to rip"), or the hint lands on the ticket's own label. */
+.tv-host .pack-float { top: 35%; width: 130px; height: 180px; margin: -90px 0 0 -65px; }
+.tv-host .pack-hint { bottom: 74px; font-size: 15px; }
+.tv-host .pack-hint small { display: none; }
+/* The Home / Map / Settings strip (NavStrip, another lane's file) is 64 px tall; in a 390 px landscape drawer it is one short row, so the drawer fits without scrolling. (Three selectors deep to win over nav-strip.css whatever the load order.) */
+@media (max-height: 480px) {
+  .tv-host .tv-dock .tv-navstrip { margin: 0 0 2px; }
+  .tv-host .tv-dock .tv-navstrip-btn { min-height: 44px; flex-direction: row; gap: 6px; padding: 0 6px; font-size: 13px; }
+  .tv-host .tv-dock .tv-navstrip-glyph { font-size: 18px; }
+  /* items 42 px (not 46) and the grown-ups gear shares the last row with Fullscreen, so every item is on screen without scrolling in a 390 px drawer */
+  .tv-host .tv-dock-right .tv-ctl,
+  .tv-host .tv-dock .tv-menu-item { min-height: 42px; }
+  .tv-host .tv-dock .tv-ctl-gear { grid-column: auto; }
+  .tv-host .tv-dock .tv-ctl-gear::after { font-size: 12px; margin-left: 6px; }
+}
+/* The grown-ups' sum box was 28 px wide (a zero flex basis in a row that shrinks to its content, so only the Continue button had any width): give it a real basis so a two-digit answer is visible. */
+.tv-host .tv-parent-input { flex: 1 1 150px; min-width: 110px; }
+/* The parent PIN pad is 4 rows of 52 px keys, which ran 25 px past the bottom of a 390 px card (the 0 key was under the fold): a tighter card and 40 px keys while the screen is short. */
+@media (max-height: 480px) {
+  .tv-host .tv-parent-gate-card { padding: 10px 14px; gap: 6px; }
+  .tv-host .tv-pin-pad { gap: 6px; }
+  .tv-host .tv-pin-key { min-height: 40px; font-size: 18px; }
+}
+/* Phones whose landscape screen is only 360-400 px tall (iPhone mini / SE 375, small Androids 360): the same drawer, a little tighter, still without scrolling. */
+@media (max-height: 400px) {
+  .tv-host .tv-dock { gap: 6px; padding-bottom: 8px; }
+  .tv-host .tv-dock-right { gap: 6px; }
+  .tv-host .tv-dock-right .tv-ctl,
+  .tv-host .tv-dock .tv-menu-item { min-height: 40px; }
+}

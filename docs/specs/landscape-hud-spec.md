@@ -41,8 +41,22 @@ prop for the can, the carrot and the push, ON it for the blanket and the angel, 
 Every world was thinned: the Garden lost two lanterns, the picnic and the pumpkin patch (25 props to 16), the Sky one puffy cloud, the Junkyard a tire and a lantern, the Beach an umbrella and the second sandcastle, Snow Peak the second snowman, the Toy Room two floor lamps
 and the second block tower (17 to 14). The picnic and the pumpkin patch still exist (the editor and the level kit can place them).
 
-## 5. Not done
+## 5. The all-screens sweep (2026-11-04)
 
-- The e2e scripts (all assume 390 x 844 and the old dock); `?rotate=0` and a landscape size are what they need, and the dock's buttons are now in the drawer.
+Every screen was opened at 844 x 390 (and the drawer, Create, Pack and the PIN keypad again at 812 x 375, 667 x 375, 640 x 360 and 932 x 430) and looked at. Fine as left cards without a change: Build, Workshop (full screen by design), Worlds, Story Moods & Mic, Words & Language, Character Card, Garage, the grown-ups' hold step, the song offer, the found-part and mission-complete cards, the Map. Found and fixed, all in `src/game-hud.css`, pinned by `tests/game-hud-sweep.test.ts`:
+
+- **Create a World**: the picture-word chips were squashed to 4 px (a scroller inside a flex column that scrolls as a whole). Children of a sheet no longer shrink.
+- **Daily Pack**: the stage is squeezed from 468 to about 316 px, so the hint ("Hold to rip / Or tap the button once") lay on the ticket's label. The ticket is 130 x 180 and the hint is one line.
+- **Grown-ups' sum box** was 28 px wide (a zero flex basis in a row that shrinks to its content), in portrait too. It has a real basis now.
+- **PIN keypad**: the 0 key was under the fold of a 390 px card. 40 px keys and a tighter card while the screen is short.
+- **World title** (Lab 1: Bridges) was bare text on the scenery; it has a see-through dark backing.
+- **The drawer** now fits without scrolling at 360, 375, 390 and 430 px tall, the grown-ups' gear included: the Home / Map / Settings strip is one 44 px row, the items are 42 px (40 px under 400 px tall) and the gear shares the last row with Fullscreen. The other lane removed the duplicate "Map / Play" item; the gear stays (it carries the 1.2 s hold and the parent dot, and tests and e2e click it).
+
+Not looked at: the Level Editor (Demo Mode only; the same `.tv-sheet` styling as the others), the rung sheet, the household weekend card, the Kip bench inside the Workshop.
+
+## 6. Not done
+
+- The e2e scripts (all assume 390 x 844 and the old dock); `?rotate=0` and a landscape size are what they need, and the dock's buttons are now in the drawer. `scripts/e2e-trail.mjs:246` still clicks the removed "Map / Play" item (it should click `.tv-navstrip [data-nav=map]`); that file belongs to the Map lane.
 - The hiding spots' big shapes (the Garden's dark bush and blue rock, Snow Peak's ice pillar) still stand on the lane.
-- Another session has put a Home / Map / Settings strip at the top of the drawer, so Map and the grown-ups' gear now appear twice; the drawer then scrolls a little.
+- The hidden `.tv-map-fab` button is still in the markup (display: none) and could go.
+- No real-phone pass yet: the rotate gate, thumb reach and the toy-tap tolerance need a real device.
