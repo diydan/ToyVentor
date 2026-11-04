@@ -1,0 +1,470 @@
+{
+ "label": "p8-slots",
+ "model": "forge-glimmer",
+ "prompt": "base",
+ "at": "2026-11-04T20:32:04.413Z",
+ "total": {
+  "n": 38,
+  "printable": 36,
+  "firstCall": 36
+ },
+ "bySlot": [
+  {
+   "slot": "back",
+   "n": 6,
+   "printable": 6,
+   "firstCall": 6,
+   "meanCalls": 1,
+   "medianSecs": 10.8,
+   "failures": []
+  },
+  {
+   "slot": "hand",
+   "n": 8,
+   "printable": 6,
+   "firstCall": 6,
+   "meanCalls": 1.5,
+   "medianSecs": 11,
+   "failures": [
+    "a02: not printable",
+    "a08: not printable"
+   ]
+  },
+  {
+   "slot": "hood",
+   "n": 5,
+   "printable": 5,
+   "firstCall": 5,
+   "meanCalls": 1,
+   "medianSecs": 12.3,
+   "failures": []
+  },
+  {
+   "slot": "roof",
+   "n": 5,
+   "printable": 5,
+   "firstCall": 5,
+   "meanCalls": 1,
+   "medianSecs": 14.8,
+   "failures": []
+  },
+  {
+   "slot": "front",
+   "n": 4,
+   "printable": 4,
+   "firstCall": 4,
+   "meanCalls": 1,
+   "medianSecs": 14.7,
+   "failures": []
+  },
+  {
+   "slot": "rollbar",
+   "n": 3,
+   "printable": 3,
+   "firstCall": 3,
+   "meanCalls": 1,
+   "medianSecs": 18.9,
+   "failures": []
+  },
+  {
+   "slot": "spoiler",
+   "n": 4,
+   "printable": 4,
+   "firstCall": 4,
+   "meanCalls": 1,
+   "medianSecs": 12.5,
+   "failures": []
+  },
+  {
+   "slot": "exhaust",
+   "n": 3,
+   "printable": 3,
+   "firstCall": 3,
+   "meanCalls": 1,
+   "medianSecs": 11,
+   "failures": []
+  }
+ ],
+ "rows": [
+  {
+   "id": "b01",
+   "slot": "back",
+   "text": "a small backpack",
+   "ok": true,
+   "printable": true,
+   "calls": 1,
+   "secs": 10.4,
+   "name": "Small Play Backpack"
+  },
+  {
+   "id": "b02",
+   "slot": "back",
+   "text": "a pair of butterfly wings",
+   "ok": true,
+   "printable": true,
+   "calls": 1,
+   "secs": 10.8,
+   "name": "Butterfly Wing Pair"
+  },
+  {
+   "id": "b03",
+   "slot": "back",
+   "text": "a jetpack with two tanks",
+   "ok": true,
+   "printable": true,
+   "calls": 1,
+   "secs": 11,
+   "name": "Jetpack Two Tanks"
+  },
+  {
+   "id": "b04",
+   "slot": "back",
+   "text": "a turtle shell",
+   "ok": true,
+   "printable": true,
+   "calls": 1,
+   "secs": 10.6,
+   "name": "Turtle Shell Back"
+  },
+  {
+   "id": "b06",
+   "slot": "back",
+   "text": "a bird tail with three feathers",
+   "ok": true,
+   "printable": true,
+   "calls": 1,
+   "secs": 10.8,
+   "name": "Three Feather Bird Tail"
+  },
+  {
+   "id": "b05",
+   "slot": "back",
+   "text": "a big round shell like a snail",
+   "ok": true,
+   "printable": true,
+   "calls": 1,
+   "secs": 11,
+   "name": "Snail Shell Back"
+  },
+  {
+   "id": "a01",
+   "slot": "hand",
+   "text": "a star wand",
+   "ok": true,
+   "printable": true,
+   "calls": 1,
+   "secs": 8,
+   "name": "Star Spark Wand"
+  },
+  {
+   "id": "a03",
+   "slot": "hand",
+   "text": "a paddle for a pretend boat",
+   "ok": true,
+   "printable": true,
+   "calls": 1,
+   "secs": 9.8,
+   "name": "Pretend Boat Paddle"
+  },
+  {
+   "id": "a04",
+   "slot": "hand",
+   "text": "a flag on a stick",
+   "ok": true,
+   "printable": true,
+   "calls": 1,
+   "secs": 11,
+   "name": "My Creation"
+  },
+  {
+   "id": "a02",
+   "slot": "hand",
+   "text": "a magic wand with a heart on top",
+   "ok": true,
+   "printable": false,
+   "calls": 4,
+   "secs": 33.4,
+   "name": "Heart Magic Wand"
+  },
+  {
+   "id": "a05",
+   "slot": "hand",
+   "text": "a lollipop",
+   "ok": true,
+   "printable": true,
+   "calls": 1,
+   "secs": 8,
+   "name": "Sweet Lollipop Pop"
+  },
+  {
+   "id": "a06",
+   "slot": "hand",
+   "text": "a flower on a stem",
+   "ok": true,
+   "printable": true,
+   "calls": 1,
+   "secs": 7.6,
+   "name": "Flower Stem Hand"
+  },
+  {
+   "id": "a07",
+   "slot": "hand",
+   "text": "a lantern on a stick",
+   "ok": true,
+   "printable": true,
+   "calls": 1,
+   "secs": 15.1,
+   "name": "Lantern On Stick"
+  },
+  {
+   "id": "a08",
+   "slot": "hand",
+   "text": "a big spoon",
+   "ok": true,
+   "printable": false,
+   "calls": 2,
+   "secs": 19.1,
+   "name": "Big Happy Spoon"
+  },
+  {
+   "id": "k01",
+   "slot": "hood",
+   "text": "a racing stripe hood scoop",
+   "ok": true,
+   "printable": true,
+   "calls": 1,
+   "secs": 11.1,
+   "name": "My Creation"
+  },
+  {
+   "id": "k02",
+   "slot": "hood",
+   "text": "a flat hood with a round badge",
+   "ok": true,
+   "printable": true,
+   "calls": 1,
+   "secs": 12.3,
+   "name": "Round Badge Flat Hood"
+  },
+  {
+   "id": "k03",
+   "slot": "hood",
+   "text": "a hood with two air vents",
+   "ok": true,
+   "printable": true,
+   "calls": 1,
+   "secs": 10.7,
+   "name": "Vented Air Hood"
+  },
+  {
+   "id": "k05",
+   "slot": "hood",
+   "text": "a smooth rounded hood bulge",
+   "ok": true,
+   "printable": true,
+   "calls": 1,
+   "secs": 15.7,
+   "name": "Smooth Hood Bulge"
+  },
+  {
+   "id": "k04",
+   "slot": "hood",
+   "text": "a bumpy off-road hood",
+   "ok": true,
+   "printable": true,
+   "calls": 1,
+   "secs": 20.2,
+   "name": "Bumpy Off-Road Hood"
+  },
+  {
+   "id": "r01",
+   "slot": "roof",
+   "text": "a roof box for luggage",
+   "ok": true,
+   "printable": true,
+   "calls": 1,
+   "secs": 10.7,
+   "name": "Luggage Roof Box"
+  },
+  {
+   "id": "r02",
+   "slot": "roof",
+   "text": "a flashing light bar on the roof",
+   "ok": true,
+   "printable": true,
+   "calls": 1,
+   "secs": 9.9,
+   "name": "Flashing Roof Light Bar"
+  },
+  {
+   "id": "r03",
+   "slot": "roof",
+   "text": "a surfboard rack",
+   "ok": true,
+   "printable": true,
+   "calls": 1,
+   "secs": 16.2,
+   "name": "Surfboard Roof Rack"
+  },
+  {
+   "id": "r04",
+   "slot": "roof",
+   "text": "a little roof fin like a shark fin",
+   "ok": true,
+   "printable": true,
+   "calls": 1,
+   "secs": 14.8,
+   "name": "Shark Fin Roof"
+  },
+  {
+   "id": "r05",
+   "slot": "roof",
+   "text": "a round satellite dish",
+   "ok": true,
+   "printable": true,
+   "calls": 1,
+   "secs": 14.9,
+   "name": "Round Satellite Dish"
+  },
+  {
+   "id": "f01",
+   "slot": "front",
+   "text": "a wide bumper with a curve",
+   "ok": true,
+   "printable": true,
+   "calls": 1,
+   "secs": 14.7,
+   "name": "Wide Curvy Front Bumper"
+  },
+  {
+   "id": "f02",
+   "slot": "front",
+   "text": "a snow plough blade",
+   "ok": true,
+   "printable": true,
+   "calls": 1,
+   "secs": 10.1,
+   "name": "Snow Plough Blade"
+  },
+  {
+   "id": "f03",
+   "slot": "front",
+   "text": "a bull bar",
+   "ok": true,
+   "printable": true,
+   "calls": 1,
+   "secs": 12.7,
+   "name": "Strong Bull Bar Guard"
+  },
+  {
+   "id": "o01",
+   "slot": "rollbar",
+   "text": "a curved rollbar",
+   "ok": true,
+   "printable": true,
+   "calls": 1,
+   "secs": 16.7,
+   "name": "Curved Rollbar Guard"
+  },
+  {
+   "id": "f04",
+   "slot": "front",
+   "text": "a round front badge plate",
+   "ok": true,
+   "printable": true,
+   "calls": 1,
+   "secs": 30.5,
+   "name": "My Creation"
+  },
+  {
+   "id": "o02",
+   "slot": "rollbar",
+   "text": "a rollbar with a little flag",
+   "ok": true,
+   "printable": true,
+   "calls": 1,
+   "secs": 23.2,
+   "name": "Flagpole Rollbar"
+  },
+  {
+   "id": "o03",
+   "slot": "rollbar",
+   "text": "a double arch rollbar",
+   "ok": true,
+   "printable": true,
+   "calls": 1,
+   "secs": 18.9,
+   "name": "Double Arch Rollbar"
+  },
+  {
+   "id": "s01",
+   "slot": "spoiler",
+   "text": "a tall wing spoiler",
+   "ok": true,
+   "printable": true,
+   "calls": 1,
+   "secs": 11,
+   "name": "Tall Wing Spoiler"
+  },
+  {
+   "id": "s02",
+   "slot": "spoiler",
+   "text": "a small duck-tail spoiler",
+   "ok": true,
+   "printable": true,
+   "calls": 1,
+   "secs": 10.2,
+   "name": "Duck Tail Spoiler"
+  },
+  {
+   "id": "s03",
+   "slot": "spoiler",
+   "text": "a curved wing with end plates",
+   "ok": true,
+   "printable": true,
+   "calls": 1,
+   "secs": 14.8,
+   "name": "My Creation"
+  },
+  {
+   "id": "s04",
+   "slot": "spoiler",
+   "text": "a flat wide spoiler",
+   "ok": true,
+   "printable": true,
+   "calls": 1,
+   "secs": 12.5,
+   "name": "Wide Flat Spoiler"
+  },
+  {
+   "id": "e01",
+   "slot": "exhaust",
+   "text": "a fat shiny exhaust pipe",
+   "ok": true,
+   "printable": true,
+   "calls": 1,
+   "secs": 12.5,
+   "name": "My Creation"
+  },
+  {
+   "id": "e02",
+   "slot": "exhaust",
+   "text": "two small exhaust pipes",
+   "ok": true,
+   "printable": true,
+   "calls": 1,
+   "secs": 11,
+   "name": "Twin Exhaust Pipes"
+  },
+  {
+   "id": "e03",
+   "slot": "exhaust",
+   "text": "a tall chimney exhaust like a steam train",
+   "ok": true,
+   "printable": true,
+   "calls": 1,
+   "secs": 10.2,
+   "name": "Tall Steam Train Chimney"
+  }
+ ]
+}
