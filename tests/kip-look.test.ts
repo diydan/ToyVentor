@@ -35,7 +35,7 @@ import {
 } from "../src/features/game/world/runtime/kipLook";
 import { buildFaceDecalGeometry } from "../src/features/game/world/runtime/kipFacePlate";
 import { buildToy, clearStlRigCache, resolveStlHeroRecipe, upgradeRigWithStl, type RigSel } from "../src/features/game/world/runtime/playerRig";
-import { FIST_IN_HOLDER } from "../src/features/game/world/runtime/stlRigLoader";
+import { FIST_IN_HOLDER, KIP_HIP_MM } from "../src/features/game/world/runtime/stlRigLoader";
 import { paintMat, plastic } from "../src/features/game/world/runtime/worldScene";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -331,6 +331,52 @@ describe("the rig wears it", () => {
     // no canvas in a unit test: the plate is plain skin (the face is added in a browser)
     expect(typeof document).toBe("undefined");
     expect((holder as unknown as THREE.Object3D).children).toHaveLength(1);
+  });
+
+  it("the joints are closed the way the bench closes them: the Snap torso, a big turret at each shoulder and hip, a small one at each wrist and ankle (Dan: \"still not ankles, wrists or shoulder joints? just a gap/void?\")", async () => {
+    // the bench's own numbers, read from its source: where each turret goes and which kind
+    const benchRig = read("parts/kip/viewer/kip-rig.js");
+    for (const line of [
+      "shoAnchor.position.set(side * 17.2, 33.5, 0);", "addSnapTurretMesh(snapShoTurret, true, 'x');",
+      "hipAnchor.position.set(side * 10.8, 0, 0);", "addSnapTurretMesh(snapHipTurret, true, 'y');",
+      "snapWriAnchor.position.set(0, -35.0, 3.8);", "addSnapTurretMesh(snapWriTurret, false, 'y');",
+      "snapAnkAnchor.position.set(0, -39.2, 0);", "addSnapTurretMesh(snapAnkTurret, false, 'y');",
+      "snapTorsoSlot.add(scadMesh(geos.snap_torso, mats.shell));",
+    ]) expect(benchRig, line).toContain(line);
+    const sel = stockSel().character as unknown as RigSel;
+    const col = stockCol();
+    const recipe = resolveStlHeroRecipe("character", { ...sel } as unknown as RigSel, "seed-kip");
+    expect(recipe.parts.find((p) => p.key === "torso")!.url).toBe("/kip/stls/snap_torso.stl");   // the Pro torso has open sockets for the Pro pegs: voids with Snap limbs
+    expect(recipe.parts.map((p) => p.key)).toEqual(expect.arrayContaining(["snapTurretBig", "snapTurret"]));
+    const rig = buildToy("character", sel, col);
+    expect(await upgradeRigWithStl(rig, { type: "character", sel, col, toyId: "seed-kip", fetcher: diskFetcher })).toBe(true);
+    rig.g.updateMatrixWorld(true);
+    const found: Record<string, THREE.Object3D[]> = { shoulder: [], hip: [], wrist: [], ankle: [] };
+    rig.g.traverse((o: THREE.Object3D) => { const k = o.userData.snapTurret as string | undefined; if (k) found[k]!.push(o); });
+    for (const k of ["shoulder", "hip", "wrist", "ankle"]) expect(found[k], k).toHaveLength(2);
+    const snap = rig.snap as { arms: Array<{ fore: THREE.Object3D }>; legs: Array<{ lower: THREE.Object3D }> };
+    // the wrist turret rides the end of the bent sleeve and the ankle turret the end of the bent leg (so they go where the elbow and knee put them); the shoulder and hip ones are fixed to the body
+    for (let i = 0; i < 2; i++) {
+      expect(snap.arms.some((a) => found.wrist![i]!.parent === a.fore), "a wrist turret on a sleeve's end").toBe(true);
+      expect(snap.legs.some((l) => found.ankle![i]!.parent === l.lower), "an ankle turret on a leg's end").toBe(true);
+    }
+    const bodyFrame = found.shoulder![0]!.parent!;
+    for (const o of [...found.shoulder!, ...found.hip!]) expect(o.parent, "fixed to the body, not to a limb").toBe(bodyFrame);
+    const xs = (list: THREE.Object3D[]) => list.map((o) => +o.position.x.toFixed(3)).sort((a, b) => a - b);
+    expect(xs(found.shoulder!)).toEqual([-17.2, 17.2]);
+    expect(xs(found.hip!)).toEqual([-10.8, 10.8]);
+    for (const o of found.shoulder!) expect(o.position.y).toBeCloseTo(KIP_HIP_MM + 33.5, 6);
+    for (const o of found.hip!) expect(o.position.y).toBeCloseTo(KIP_HIP_MM, 6);
+    // each is built the way the bench builds it (`addSnapTurretMesh`): the STL's own axis (z, h long: 17.9 for a big one, 14.6 for a small) lowered by half its length, and a shoulder's lying along x
+    for (const [kind, list] of Object.entries(found)) for (const o of list) {
+      const mesh = o.children[0] as THREE.Mesh;                                     // each turret is a holder (at the joint, turned for a shoulder) around its mesh
+      mesh.geometry.computeBoundingBox();
+      const h = mesh.geometry.boundingBox!.max.z - mesh.geometry.boundingBox!.min.z;
+      expect(h, `${kind} turret length`).toBeCloseTo(kind === "shoulder" || kind === "hip" ? 17.9 : 14.6, 0);
+      expect(mesh.position.y, `${kind} lowered by half its length`).toBeCloseTo(-h / 2, 6);
+      expect(mesh.rotation.x, `${kind} stood up like every other part`).toBeCloseTo(-Math.PI / 2, 9);
+      expect(o.rotation.z, `${kind} axis`).toBeCloseTo(kind === "shoulder" ? Math.PI / 2 : 0, 9);
+    }
   });
 
   it("each hand has a grip anchor at the fist, turned and scaled to the arm holder's own frame, so what Kip holds is in his hand", async () => {

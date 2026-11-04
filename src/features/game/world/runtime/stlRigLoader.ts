@@ -249,6 +249,23 @@ function scadMesh(
 }
 
 /**
+ * A Snap joint turret as the bench builds it (kip-rig.js `addSnapTurretMesh`): the STL's own axis is z, centred on the joint by `y = -length / 2`, and for a shoulder (`axis` "x") lying along x.
+ * `big` ones go at the shoulders and hips, the small ones at the wrists and ankles. They close the joint: without them the sleeve's and the trouser leg's open ends show the hole they plug into.
+ */
+export const SNAP_TURRET_LENGTH_MM = { big: 17.9, small: 14.6 } as const;
+function snapTurretMesh(geo: THREE.BufferGeometry, mat: THREE.Material, axis: "x" | "y", big: boolean): THREE.Object3D {
+  if (!geo.boundingBox) geo.computeBoundingBox();
+  const bb = geo.boundingBox;
+  const h = bb ? bb.max.z - bb.min.z : big ? SNAP_TURRET_LENGTH_MM.big : SNAP_TURRET_LENGTH_MM.small;
+  const m = scadMesh(geo, mat);
+  m.position.y = -h / 2;
+  const wrap = new T.Group();   // (always wrapped, so a caller can place the turret at its joint without losing the lowering above)
+  wrap.add(m);
+  if (axis === "x") wrap.rotation.z = Math.PI / 2;
+  return wrap;
+}
+
+/**
  * Reconstruct assembly-frame Y-up pose from a flex-skin STL exported in `[180, 0, 0]`
  * show-face-down print orientation (`z_print = thicknessMm - z_assy`, `y_print = -y_assy`).
  */
@@ -374,8 +391,13 @@ export function resolveStlHeroRecipe(
   if (type !== "vehicle") {
     const headSpec = resolveCharacterHeadSpec(sel);
     const parts: StlHeroPartSpec[] = [
-      { key: "torso", url: "/kip/stls/torso.stl", creaseDeg: 38, required: true },
+      // The Snap torso, as the bench's Snap figure has it (kip-rig.js `torso_snap`): a plain egg with no sockets. The Pro torso (`torso.stl`) has the sockets for the Pro pegs at the shoulders and
+      // hips, which with the Snap limbs were just open holes (Dan, 2026-11-04: "still not ankles, wrists or shoulder joints? just a gap/void?").
+      { key: "torso", url: "/kip/stls/snap_torso.stl", creaseDeg: 38, required: true },
       { key: "neckTurret", url: "/kip/stls/neck_turret_2x1.stl", creaseDeg: 38, required: true },
+      // The Snap joint turrets: a big one at each shoulder and each hip, a small one at each wrist and each ankle (kip-rig.js `addSnapTurretMesh`).
+      { key: "snapTurretBig", url: "/kip/stls/snap_turret_big.stl", creaseDeg: 38, required: false },
+      { key: "snapTurret", url: "/kip/stls/snap_turret.stl", creaseDeg: 38, required: false },
       { key: "snapArm", url: "/kip/stls/snap_arm.stl", creaseDeg: 38, required: true },
       { key: "handL", url: "/kip/stls/hand_l.stl", creaseDeg: 38, required: true },
       { key: "handR", url: "/kip/stls/hand_r.stl", creaseDeg: 38, required: true },
@@ -722,6 +744,8 @@ function applyCharacterStlRig(
     foreJoint.position.set(0, -35.0, 3.8);
     foreJoint.quaternion.copy(SNAP_CUFF_Q);
     armCad.add(foreJoint);
+    // The wrist turret (the bench's `snap_wri`): on the end of the bent sleeve, under the hand, which turns about it
+    if (geos.snapTurret) { const wt = snapTurretMesh(geos.snapTurret, limbMat, "y", false); wt.userData.snapTurret = "wrist"; foreJoint.add(wt); }
     const handJoint = new T.Group();
     handJoint.position.set(0, -0.5, 0);
     foreJoint.add(handJoint);
@@ -751,6 +775,20 @@ function applyCharacterStlRig(
     grips.push(grip);
   }
   rig.grips = grips;
+  // The shoulder and hip turrets (the bench's `sho_turret` and `hip_turret`): fixed to the body, so the sleeve and the trouser leg turn about them. In the body's own CAD frame (mm, floor at 0):
+  // the shoulder pivot is 17.2 out and 33.5 above the hips, the hip 10.8 out at the hips' own height.
+  if (geos.snapTurretBig) {
+    for (const side of [1, -1] as const) {
+      const sho = snapTurretMesh(geos.snapTurretBig, limbMat, "x", true);
+      sho.position.set(side * 17.2, KIP_HIP_MM + 33.5, 0);
+      sho.userData.snapTurret = "shoulder";
+      kipFrame.add(sho);
+      const hip = snapTurretMesh(geos.snapTurretBig, c2Mat, "y", true);
+      hip.position.set(side * 10.8, KIP_HIP_MM, 0);
+      hip.userData.snapTurret = "hip";
+      kipFrame.add(hip);
+    }
+  }
 
   // Articulated legs + sneaker boots wired to rig.feet for vertical walk step
   const bootsSlot = rig.slots.boots ?? baseSlot;
@@ -784,6 +822,8 @@ function applyCharacterStlRig(
     const lowerJoint = new T.Group(); // the bent leg's end
     lowerJoint.position.set(0, -39.2, 0);
     hipCad.add(lowerJoint);
+    // The ankle turret (the bench's `snap_ank`): on the end of the bent leg, over the boot
+    if (geos.snapTurret) { const at = snapTurretMesh(geos.snapTurret, c2Mat, "y", false); at.userData.snapTurret = "ankle"; lowerJoint.add(at); }
     const footJoint = new T.Group();
     footJoint.position.set(0, -0.4, -1.5);
     lowerJoint.add(footJoint);
