@@ -12,6 +12,9 @@
 // prefers its own axis; both only within `prefer` mm of the best alternative, so nothing flies off to keep a habit.
 //   * explode: placed parts are at their EXPLODED positions, and a part inherits its host's move (it travels with the host until it separates).
 //   * approach: placed parts are SEATED (that is what a build looks like while it plays), the part starts `APPROACH_MIN` mm or more away and slides in.
+//
+// The PILE (pilePlan, pileFrame, routePoint below): before a build plays, every part lies in a tidy pile on the ground beside where the model will stand, and each
+// part is carried from the pile to the start of its approach and slid into its seat when its step comes up. All of it is plain arithmetic on the same boxes.
 
 const DEG = Math.PI / 180;
 export const DEFAULT_MARGIN = 8;       // mm of clear space between any two parts at full spread (3 mm looked almost assembled in a render)
@@ -225,6 +228,122 @@ export function buildFrame(p, n, { motion = true, rest = 0.25 } = {}) {
 }
 
 // ---------------------------------------------------------------------------------------------------------------------------------
+// the pile
+
+export const PILE_GAP = 10;      // mm between parts in the pile, and between the pile and the model's own footprint
+export const PILE_LIFT = 12;     // mm of clear air above the highest assembled point while a part is carried across
+
+/**
+ * Where the parts lie before the build, and the way each one travels from there to its seat. Pure and deterministic (no randomness, no clock): the same recipe always
+ * gives the same pile.
+ *   * Every part keeps its assembled orientation and lies with its lowest point ON THE GROUND (`groundZ`, the lowest point of the assembled model), so the pile never goes
+ *     below the ground.
+ *   * The pile is a tidy block of rows in step order, starting `PILE_GAP` mm beyond the assembled model's highest X and centred on its Y, so it never touches the model (where
+ *     the base will stand included) and no two parts in it are closer than `PILE_GAP`.
+ *   * `offsets[id]` is the vector from a part's pose to its place in the pile (mesh position = pose + offset); `boxes[id]` its box there; `region` the box of the whole pile.
+ *   * `routes[id]` is the way from the pile to the seat as offsets from the pose, from the pile place to [0, 0, 0]: lift straight up above everything, cross over in X and Y,
+ *     come down to the start of the part's approach, then the plan's own approach slide. Of four orders of crossing the first whose legs sweep through no seated part and no part
+ *     still in the pile is used (`clear[id]` is true); if none is clear the first is used anyway and `clear[id]` is false.
+ */
+export function pilePlan(plan, { gap = PILE_GAP, lift = PILE_LIFT } = {}) {
+  const ids = plan.order;
+  const all = ids.map((id) => plan.assembled[id]).reduce(hull);
+  const groundZ = all[2];
+  // pack in rows, in step order, up to a width that makes the block roughly square
+  const sizes = ids.map((id) => { const b = plan.assembled[id]; return { id, w: b[3] - b[0], d: b[4] - b[1] }; });
+  const area = sizes.reduce((a, s) => a + (s.w + gap) * (s.d + gap), 0);
+  const rowW = Math.max(...sizes.map((s) => s.w), Math.ceil(Math.sqrt(area) * 1.25));
+  const spots = {};
+  let x = 0, y = 0, rowD = 0;
+  for (const s of sizes) {
+    if (x > 0 && x + s.w > rowW) { x = 0; y += rowD + gap; rowD = 0; }
+    spots[s.id] = [x, y];
+    x += s.w + gap;
+    rowD = Math.max(rowD, s.d);
+  }
+  const depth = y + rowD;
+  const ox = all[3] + gap, oy = (all[1] + all[4]) / 2 - depth / 2;
+  const offsets = {}, boxes = {};
+  for (const s of sizes) {
+    const b = plan.assembled[s.id];
+    const v = [ox + spots[s.id][0] - b[0], oy + spots[s.id][1] - b[1], groundZ - b[2]];
+    offsets[s.id] = v;
+    boxes[s.id] = shift(b, v);
+  }
+  const region = ids.map((id) => boxes[id]).reduce(hull);
+
+  const routes = {}, clear = {};
+  ids.forEach((id, i) => {
+    const asm = plan.assembled[id], v = offsets[id], a = plan.approach[id] ?? [0, 0, 0];
+    // everything this part must not sweep through: the parts already seated, and the parts still lying in the pile
+    const obstacles = ids.filter((o) => o !== id).map((o) => (ids.indexOf(o) < i ? plan.assembled[o] : boxes[o]));
+    const hi = Math.max(all[5] + lift - asm[2], v[2], a[2]);
+    const up = [v[0], v[1], hi];
+    const candidates = [
+      [up, [a[0], v[1], hi], [a[0], a[1], hi], a],
+      [up, [v[0], a[1], hi], [a[0], a[1], hi], a],
+      [up, [a[0], v[1], hi], [a[0], v[1], a[2]], a],
+      [up, [v[0], a[1], hi], [v[0], a[1], a[2]], a],
+    ];
+    const free = (pts) => {
+      let from = v;
+      for (const to of pts) {
+        const same = from[0] === to[0] && from[1] === to[1] && from[2] === to[2];
+        if (!same) {
+          const swept = hull(shift(asm, from), shift(asm, to));
+          if (obstacles.some((o) => near(swept, o, 0))) return false;
+        }
+        from = to;
+      }
+      return true;
+    };
+    const pick = candidates.find(free);
+    clear[id] = Boolean(pick);
+    // drop zero-length legs; the last leg is the plan's own approach slide into the seat
+    const pts = [v, ...(pick ?? candidates[0]), [0, 0, 0]];
+    routes[id] = pts.filter((q, k) => k === 0 || q[0] !== pts[k - 1][0] || q[1] !== pts[k - 1][1] || q[2] !== pts[k - 1][2]);
+  });
+  return { offsets, boxes, region, groundZ, routes, clear, order: ids };
+}
+
+/** Length of a route (a list of offset points). */
+export const routeLength = (pts) => pts.slice(1).reduce((n, q, k) => n + Math.hypot(q[0] - pts[k][0], q[1] - pts[k][1], q[2] - pts[k][2]), 0);
+
+/** The point a fraction `u` (0 the pile, 1 the seat) of the way along a route, by distance walked. */
+export function routePoint(pts, u) {
+  if (pts.length === 1 || !(u > 0)) return pts[0].slice();     // the pile itself (also a number that is not a number)
+  if (u >= 1) return pts.at(-1).slice();                          // exactly the seat, with no rounding left over
+  const total = routeLength(pts);
+  let left = Math.min(1, Math.max(0, u)) * total;
+  for (let k = 1; k < pts.length; k++) {
+    const len = Math.hypot(pts[k][0] - pts[k - 1][0], pts[k][1] - pts[k - 1][1], pts[k][2] - pts[k - 1][2]);
+    if (left <= len || k === pts.length - 1) {
+      const f = len ? Math.min(1, left / len) : 1;
+      return [0, 1, 2].map((c) => pts[k - 1][c] + (pts[k][c] - pts[k - 1][c]) * f);
+    }
+    left -= len;
+  }
+  return pts.at(-1).slice();
+}
+
+/**
+ * The state of a build with a pile at progress p (0 to n, one unit per step), one { state, u } per step. `u` is how far along its route a part is, 0 in the pile and 1 seated.
+ * Step i owns the slot p in (i, i + 1]: before it a part lies in the pile, in it the part is carried (eased: quick off the pile, gentle onto the seat) until `1 - rest` of the
+ * slot has gone, then it sits seated. Every earlier step is seated and every later one in the pile, so at most one part is ever in flight, and nothing is ever hidden.
+ */
+export function pileFrame(p, n, { rest = 0.25 } = {}) {
+  const out = [];
+  for (let i = 0; i < n; i++) {
+    if (p >= i + 1) out.push({ state: 'seated', u: 1 });
+    else if (p > i) {
+      const arrive = Math.min(1, (p - i) / (1 - rest));
+      out.push(arrive >= 1 ? { state: 'seated', u: 1 } : { state: 'flying', u: EASE(arrive) });   // the last part of the slot is rest: it has arrived
+    } else out.push({ state: 'pile', u: 0 });
+  }
+  return out;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------------------
 // drawing
 
 const CATEGORY_COLOURS = {
@@ -259,7 +378,7 @@ export function createDescribeView({ THREE, STLLoader, mergeVertices, toCreasedN
   group.add(root);
   const loader = new STLLoader();
   const geos = new Map();
-  let meshes = [], current = null, plan = null;
+  let meshes = [], current = null, plan = null, pile = null;
 
   // One material per mesh, not per part: highlighting one wheel must not light the other three.
   const material = (part) => {
@@ -293,6 +412,8 @@ export function createDescribeView({ THREE, STLLoader, mergeVertices, toCreasedN
   const api = {
     group,
     get plan() { return plan; },
+    /** The pile plan of the recipe on show (see pilePlan), or null when none is. */
+    get pile() { return pile; },
     get steps() { return current?.steps ?? []; },
     get meshes() { return meshes; },
     /** Load the recipe's parts and draw it assembled. `result` needs `steps` and `poses` (a validated result from describe()). */
@@ -304,6 +425,7 @@ export function createDescribeView({ THREE, STLLoader, mergeVertices, toCreasedN
       result.steps.forEach((s, i) => { const b = gs[i].boundingBox; local[s.part] = [b.min.x, b.min.y, b.min.z, b.max.x, b.max.y, b.max.z]; });
       current = result;
       plan = explodePlan(result.steps, result.poses, local, partsData);
+      pile = pilePlan(plan);
       meshes = result.steps.map((s, i) => {
         const m = new THREE.Mesh(gs[i], material(s.part));
         m.name = `step_${s.id}`;
@@ -318,8 +440,16 @@ export function createDescribeView({ THREE, STLLoader, mergeVertices, toCreasedN
       const k = Math.min(1, Math.max(0, t));
       meshes.forEach((_, i) => put(i, k, plan.offsets[current.steps[i].id]));
     },
-    /** The build at progress p (0 nothing yet, steps.length finished). `opts.motion = false` makes parts appear in place (reduced motion). */
+    /**
+     * The build at progress p (0 nothing built yet, steps.length finished). By default every part not yet built lies in the pile and the part whose step it is is carried from the
+     * pile to its seat (pileFrame); nothing is hidden. `opts.motion = false` (reduced motion) makes parts appear in place, one after another, with no pile and no travel;
+     * `opts.pile = false` keeps the older slide-in from the side with the later parts hidden.
+     */
     setBuild(p, opts) {
+      if (opts?.motion !== false && opts?.pile !== false && pile) {
+        pileFrame(p, meshes.length, opts).forEach((f, i) => put(i, 1, routePoint(pile.routes[current.steps[i].id], f.u), true, 1));
+        return;
+      }
       const frames = buildFrame(p, meshes.length, opts);
       frames.forEach((f, i) => put(i, f.away, plan.approach[current.steps[i].id], f.visible, f.alpha));
     },
@@ -331,10 +461,10 @@ export function createDescribeView({ THREE, STLLoader, mergeVertices, toCreasedN
         mat.emissive.set(k === i ? 0x555555 : 0x000000);
       });
     },
-    /** Point the host's camera and orbit target at the recipe (assembled and exploded together). */
-    frame(camera, controls) {
+    /** Point the host's camera and orbit target at the recipe (assembled and exploded together, and the pile beside it unless `opts.pile` is false: reduced motion has no pile). */
+    frame(camera, controls, opts) {
       if (!plan) return;
-      const b = planBounds(plan, 1);
+      const b = pile && opts?.pile !== false ? hull(planBounds(plan, 1), pile.region) : planBounds(plan, 1);
       const c = centre(b), size = Math.max(b[3] - b[0], b[4] - b[1], b[5] - b[2]);
       const target = new THREE.Vector3(c[0], c[2], -c[1]);                       // CAD -> three
       const dist = Math.max(120, size * 1.7);
@@ -344,7 +474,7 @@ export function createDescribeView({ THREE, STLLoader, mergeVertices, toCreasedN
     },
     clear() {
       for (const m of meshes) { root.remove(m); m.material.dispose(); }
-      meshes = []; current = null; plan = null;
+      meshes = []; current = null; plan = null; pile = null;
     },
     dispose() { api.clear(); geos.clear(); },
   };

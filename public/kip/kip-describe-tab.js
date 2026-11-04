@@ -11,6 +11,7 @@ import { describe, loadRecipeBook } from './kip-describe.js';
 import { loadPartsData } from './kip-describe-validate.js';
 import { createDescribeView, partColour } from './kip-describe-view.js';
 import { createWorkshop, THINK_LINES, DRAW_LINES, LOAD_LINES } from './kip-workshop-wait.js';   // the waiting state: belt, bricks, parts pile
+import { createVoiceInput } from './kip-describe-voice.js';   // the microphone: say what to build (hidden unless the app's /api/transcribe says it can listen)
 import { createThemeSong } from './kip-theme-song.js';   // a name and a sung theme song for the build, started with it (the card stays hidden when the route is off)
 
 const STORE_KEY = 'kipDescribeEndpoint';
@@ -41,6 +42,11 @@ const CSS = `
 /* the host's "hide UI" key (H) adds this class to the container (or any ancestor of it) */
 .clean-ui .kdb-toggle, .clean-ui .kdb-panel { display: none !important; }
 .kdb-panel h2 { margin: 0 0 8px; font-size: 16px; display: flex; justify-content: space-between; align-items: center; }
+.kdb-inputrow { display: flex; gap: 8px; align-items: flex-start; } .kdb-inputrow textarea { flex: 1; min-width: 0; width: auto; }
+.kdb-panel button.kdb-mic { flex: none; width: 48px; height: 48px; padding: 0; border-radius: 50%; font-size: 22px; line-height: 1; } .kdb-panel button.kdb-mic[hidden] { display: none; }
+.kdb-panel button.kdb-mic-on { background: #ff6b4a; border-color: #ff6b4a; color: #fff; animation: kdb-pulse 1s ease-in-out infinite; }
+@keyframes kdb-pulse { 50% { box-shadow: 0 0 0 8px rgba(255, 107, 74, .28); } }
+@media (prefers-reduced-motion: reduce) { .kdb-panel button.kdb-mic-on { animation: none; } }
 .kdb-panel textarea { width: 100%; box-sizing: border-box; resize: vertical; min-height: 54px; padding: 8px 10px; border: 1px solid #c9cfdc; border-radius: 10px; font: inherit; }
 .kdb-panel button { font: 600 13px/1 system-ui, sans-serif; border: 1px solid #c9cfdc; background: #fff; color: #1b2238; border-radius: 999px; padding: 8px 12px; cursor: pointer; }
 .kdb-panel button.kdb-go { background: #ff6b4a; border-color: #ff6b4a; color: #fff; margin-top: 8px; }
@@ -90,6 +96,8 @@ export function mountDescribe({
   defaultEndpoint = '/api/describe',   // the app's own route (Muse picks a checked build); used when the Settings address is empty; '' turns it off
   themeUrl = '/api/theme-song',   // the app's own route (a name and a sung theme song, worker/themeSong.ts); '' turns the card off; a server where it is off just hides the card
   themeOptions = {},   // createThemeSong overrides (a test shortens the poll)
+  transcribeUrl = '/api/transcribe',   // the app's own route (a child's voice to words, worker/transcribe.ts); '' turns the microphone off; a server where it is off just hides the button
+  voiceOptions = {},   // createVoiceInput overrides (a test shortens the limits)
 }) {
   if (!document.getElementById('kdb-style')) document.head.append(el('style', { id: 'kdb-style' }, CSS));
   let book = null, parts = null, view = null, loading = null, busy = false, last = null, isOpen = false;
@@ -105,6 +113,9 @@ export function mountDescribe({
   const workshop = createWorkshop({ doc: document, onLabel: (msg) => { status.textContent = msg; } });
   const badge = el('span', { class: 'kdb-badge', hidden: '' });
   const theme = themeUrl ? createThemeSong({ url: themeUrl, fetchImpl, ...themeOptions }) : null;
+  // the words the child said land in the text box to be SEEN and changed: the tab never builds from a voice by itself
+  const voice = transcribeUrl ? createVoiceInput({ url: transcribeUrl, fetchImpl, currentText: () => text.value, onText: (words) => { text.value = words.slice(0, 300); text.focus(); }, onStatus: (msg) => { status.textContent = msg; }, ...voiceOptions }) : null;
+  const inputRow = el('div', { class: 'kdb-inputrow' }, text, ...(voice ? [voice.node] : []));
   const playBtn = el('button', { type: 'button' }, 'Play build');
   const backBtn = el('button', { type: 'button', 'aria-label': 'Back one step' }, 'Back');
   const nextBtn = el('button', { type: 'button', 'aria-label': 'Next step' }, 'Next');
@@ -128,7 +139,7 @@ export function mountDescribe({
     el('p', {}, 'What is sent: with an address, your description and the list of part names go only to that address. With no address, your description (phone numbers and emails removed first) goes to the app\'s server and on to Muse, to pick a build. When theme songs are switched on, the same description also goes to the app\'s server to write a name and a song, and the finished words go to a song service that sings them (nothing else about you does). Songs you make are kept in this browser only. Nothing else is stored except that address, and only for this browser tab.'));
   const close = el('button', { type: 'button', 'aria-label': 'Close' }, 'Close');
   const panel = el('section', { class: 'kdb-panel', 'aria-label': 'Describe and build', hidden: '' }, el('h2', {}, 'Describe & build', close),
-    el('label', { for: 'kdb-text' }, 'What should we build?'), text, examples, go, status, workshop.node, badge, ...(theme ? [theme.node] : []), buildBox, sliderBox, langBox, list, caption, settings);
+    el('label', { for: 'kdb-text' }, 'What should we build?'), inputRow, examples, go, status, workshop.node, badge, ...(theme ? [theme.node] : []), buildBox, sliderBox, langBox, list, caption, settings);
   const toggle = el('button', { class: 'kdb-toggle', type: 'button', 'aria-expanded': 'false', 'aria-controls': 'kdb-panel' }, 'Describe & build');
   panel.id = 'kdb-panel';
   container.append(toggle, panel);
@@ -208,7 +219,7 @@ export function mountDescribe({
     view?.highlight(p > 0 && p < n ? cur : null);
     if (playing && cur >= 0 && cur !== spokenStep) { spokenStep = cur; sayPart(cur); }   // say each part as its turn begins
     if (!playing) spokenStep = -1;
-    progress.textContent = p <= 0 ? `Ready: press Play build to watch all ${n} parts go together.`
+    progress.textContent = p <= 0 ? (reduced() ? `Ready: press Play build to watch all ${n} parts go together.` : `Ready: all ${n} parts are in a pile. Press Play build to watch them go together.`)
       : p >= n ? `Built: all ${n} parts are seated.` : `Step ${cur + 1} of ${n}: ${stepName(cur)}`;
     backBtn.disabled = p <= 0;
     nextBtn.disabled = p >= n;
@@ -255,6 +266,7 @@ export function mountDescribe({
     const q = text.value.trim();
     if (!q) { say('Type what you would like to build first.'); text.focus(); return; }
     busy = true; go.disabled = true;
+    voice?.cancel();   // a recording in progress is thrown away: the child pressed Build
     theme?.start(q).catch(() => { /* a song that cannot start never stops the build */ });   // the name and the song start WITH the build, not after it
     try {
       hideStale();
@@ -285,7 +297,7 @@ export function mountDescribe({
       n = result.steps.length; p = n; target = n;                           // a new recipe is shown finished; Play build replays it from nothing
       buildBox.hidden = false;
       labels();
-      view.frame(camera, controls);
+      view.frame(camera, controls, { pile: !reduced() });
       workshop.stop({ finished: true });
       say(`${result.title}. ${result.note}${result.clarifyingQuestion ? ` Question: ${result.clarifyingQuestion}` : ''}`);
     } catch (e) {
@@ -300,14 +312,15 @@ export function mountDescribe({
     // The tab re-aims the host's camera at the drawing; remember where it was so closing puts the host's own scene back in view.
     camSaved = { pos: camera.position.clone(), target: controls?.target?.clone() };
     isOpen = true; panel.hidden = false; toggle.setAttribute('aria-expanded', 'true');
-    if (view) { view.group.visible = true; if (view.plan) view.frame(camera, controls); }
+    if (view) { view.group.visible = true; if (view.plan) view.frame(camera, controls, { pile: !reduced() }); }
     setCharacterVisible(false);
     ready().catch((e) => say(`Could not load the part list: ${e.message}`));
+    voice?.probe().catch(() => { /* no microphone button: the box still works */ });   // one free GET; the button shows only if the route says it can listen
     text.focus();
   }
   function closePanel() {
     if (playing) { stop(); labels(); }
-    stopVoice(); theme?.silence();
+    stopVoice(); theme?.silence(); voice?.cancel();
     isOpen = false; panel.hidden = true; toggle.setAttribute('aria-expanded', 'false');
     if (view) view.group.visible = false;
     if (camSaved) {
@@ -354,12 +367,13 @@ export function mountDescribe({
     get language() { return lang.get(); },
     get caption() { return caption.textContent; },
     get theme() { return theme; },
+    get voice() { return voice; },
     get progress() { return p; },
     get playing() { return playing; },
     ready,
     /** Unmount: hand the camera and the character back, stop the player, remove the toggle and panel (the shared <style> stays). */
     dispose() {
-      stopVoice(); workshop.stop(); theme?.dispose();
+      stopVoice(); workshop.stop(); theme?.dispose(); voice?.dispose();
       if (isOpen) closePanel(); else stop();
       view?.dispose?.();
       toggle.remove(); panel.remove();

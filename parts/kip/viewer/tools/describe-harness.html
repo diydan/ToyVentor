@@ -13,7 +13,7 @@
 <!--
   Development harness for kip-describe-tab.js: a bare three.js scene with the tab mounted, no host page. NOT shipped (build:kip does not copy tools/).
   Query: ?q=<description> builds it on load   &explode=0..1 sets the slider   &build=<0..steps> pauses the build part-way   &stepMs=<ms per step>
-         &endpoint=<url> uses a model endpoint   &de=<url> sets the built-in default route   &probe=1 writes the drawn boxes into <pre id="describe-probe">
+         &endpoint=<url> uses a model endpoint   &de=<url> sets the built-in default route   &transcribe=<path> turns the microphone on   &probe=1 writes the drawn boxes into <pre id="describe-probe">
   Served with the viewer files at /kip/ (the page itself at /kip/tools/describe-harness.html).
 -->
 <script type="module">
@@ -48,10 +48,23 @@ const tab = mountDescribe({
   defaultEndpoint: q.get('de') ?? '',      // the app sets '/api/describe'; the harness leaves it off unless ?de=<url>
   themeUrl: q.get('theme') ?? '',          // the app sets '/api/theme-song'; the harness leaves the theme-song card off unless ?theme=<path>
   themeOptions: { pollMs: Number(q.get('themePoll') ?? 4000) },
+  transcribeUrl: q.get('transcribe') ?? '',   // the app sets '/api/transcribe'; the harness leaves the microphone off unless ?transcribe=<path>
+  voiceOptions: q.has('voiceMs') ? { maxMs: Number(q.get('voiceMs')) } : {},
   stepMs: Number(q.get('stepMs') ?? 1100),
   setCharacterVisible: (on) => { (window.__characterCalls ??= []).push(on); },   // a host would show or hide its own character here
 });
 window.__describe = tab;
+/** What is on screen, for the e2e: every drawn mesh's box in CAD coordinates (three (x, y, z) -> CAD (x, -z, y)), and a CAD point's place on screen (-1 to 1 each way; z > 1 is behind the camera). */
+window.__describeBoxes = () => {
+  const v = tab.view;
+  v.group.updateMatrixWorld(true);
+  return v.meshes.map((m) => { const b = new THREE.Box3().setFromObject(m); return [b.min.x, -b.max.z, b.min.y, b.max.x, -b.min.z, b.max.y]; });
+};
+window.__describeNdc = ([x, y, z]) => {
+  camera.updateMatrixWorld(true);
+  const p = new THREE.Vector3(x, z, -y).project(camera);
+  return [p.x, p.y, p.z];
+};
 
 addEventListener('resize', () => { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); });
 (function loop() { requestAnimationFrame(loop); controls.update(); renderer.render(scene, camera); })();
