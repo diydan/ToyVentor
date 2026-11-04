@@ -25,6 +25,10 @@ const QP: string = "auto";
 export const MAX_PIXEL_RATIO = 1.5;
 /** The sun's shadow map (the frustum is only 28 units across, so 1024 texels is still about 36 per unit). */
 export const SHADOW_MAP = 1024;
+/** The lumpy foliage, stones and drifts (`blobGeo` in world.ts) keep this share of the segments they ask for: 24 by 18 became 17 by 13, a bush went from 864 to 442 triangles and the
+ * Garden's 267 spheres from 102k to about 52k. A bush at phone size is 60 px across, so its outline is still round; the lumpy displacement does the shape. */
+export const FOLIAGE_DETAIL = 0.7;
+export const foliageSegs = (n: number): number => Math.max(6, Math.round(n * FOLIAGE_DETAIL));
 /** Set once the adaptive quality has turned a post effect off: the light rig must then leave bloom off (lighting.ts `syncPost`). */
 export const quality = { low: false };
 

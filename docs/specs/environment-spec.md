@@ -20,7 +20,7 @@ hackathon** (Dan, 2026-11-03).
 ## Lighting presets and the cost knobs (2026-11-04)
 
 Dan: "bloom and light sometimes a bit too reflective, do a review on lighting; ideally a reusable setting for all scenes and levels, with an indoor and outdoor, night and day", and "performance is a
-bit slow, any obvious wins for animated scenes". **Built** (`runtime/lighting.ts`, `runtime/worldScene.ts`; `tests/lighting-presets.test.ts`, 21 tests).
+bit slow, any obvious wins for animated scenes". **Built** (`runtime/lighting.ts`, `runtime/worldScene.ts`, `runtime/shadowProxy.ts`; `tests/lighting-presets.test.ts`, 21 tests, `tests/shadow-proxy.test.ts`, 16).
 
 - **The setting.** Four presets, `LIGHT_PRESETS["outdoor-day" | "outdoor-night" | "indoor-day" | "indoor-night"]` and `presetFor(place, time)`. A world, a level or a generated level says where it is
   (`place`: indoor or outdoor; absent = the Toy Room indoors, everything else outdoors) and when (`mood`: day, dusk or night) and `rigFor` gives it that preset's lights, fog, reflections, bloom and grade. The
@@ -36,8 +36,20 @@ bit slow, any obvious wins for animated scenes". **Built** (`runtime/lighting.ts
 - **Cost.** Measured on the garden at phone size, the previous commit against this one, alternating runs: about 4.3 ms a frame down to about 2.9 (median 4.5 to 2.5). Largest single items, in order: the
   clearcoat, the 2048 shadow map (now 1024), the pixel ratio (a phone's 3 was capped at 2, now 1.5), bloom. The adaptive step-down used to look ONCE, 2.5 s after start, and only below 29 fps; it now judges
   every 120-frame window (a step below 33 fps, two below 22), settles for 2 s after a step, never undoes one, and a new world no longer turns bloom back on after it was lowered.
-- **Not done (next, in order of size):** the Kip's own STL parts are about 126 000 of the garden's 321 000 triangles (a decimated copy for the game); 279 foliage spheres are another 105 000 (merge or instance
-  them); 97 % of all meshes cast a shadow (small and far decor need not); the renderer's multisampling is paid for a full-screen pass the FXAA already smooths. Not judged on a real phone.
+- **Second pass (the same day).** Dan: "do all 3" (the cost cuts, the day exposure, the paid voice clips).
+  1. **Exposure.** The first pass left every world 9 to 20 mean-luma points darker than before (Toy Room 105 to 84, Garden 94 to 79, Junkyard night 60 to 48; Sky day 196 to 180). Exposure is now Outdoor day .98,
+     Outdoor night 1.07, Indoor day 1.0, Indoor night 1.03, Beach .96, Snow Peak .91, Junkyard and dusk 1.13. The Toy Room 84 to 88, Garden night 79 to 83, Sky day 180 to 185, Snow day 159 to 164. White-out stays
+     away: Sky day 17 % of pixels over 200 (69 % before the first pass), Snow day 19 % (25 %), the others under 8 %.
+  2. **Shadows.** The sun's shadow pass draws every caster again, and Kip's 13 STL parts were 126 000 of the Garden's 358 000 triangles a frame (shadow pass included). A big rigid part (3 000 triangles or more) now
+     casts through a coarse copy of itself (`runtime/shadowProxy.ts` `lightenShadow`: vertex clustering on a 28-cell grid, 4 to 10 % of the triangles, an invisible child at the identity transform so it moves with
+     the rig; six parts: torso 27 284 to 2 708, sleeves 11 600 to 2 500 and so on). The four bendable limbs (about 39 000) still cast themselves, because `snapFlex.ts` bends their geometry every frame. Meshes
+     under 0.12 world units (pebbles, seeds, sparkles; about 4 shadow-map texels) stop casting (`trimTinyCasters`, once, after a world is built; the player is skipped).
+  3. **Foliage.** `blobGeo` (lumpy bushes, stones, drifts) keeps 70 % of the segments it asks for (`foliageSegs`, `FOLIAGE_DETAIL`): 24 by 18 becomes 17 by 13, 864 triangles become 442.
+  4. **Measured** on the Garden at phone size: draw calls a frame 275 to 211 (23 %), triangles a frame (shadow pass included) 358 000 to 277 000 (23 %); the visible scene 286 000 to 263 000. Milliseconds could not be
+     compared: the headless Metal GPU runs this scene in about 2 ms before and after, inside its own noise (a phone is 5 to 8 times slower), so draw calls and triangles are the evidence. The look was checked in
+     screenshots of all six worlds (pixel diff, Kip's shadow cropped before and after, the berry bush before and after); `tests/shadow-proxy.test.ts` (16) pins the clustering, the proxy, the trim and the segments.
+- **Not done:** the four bendable limbs still cast in full (a proxy would have to bend with them); the Kip's visible STLs are still about 126 000 triangles (a decimated copy for the game would also change how
+  Kip looks, and wants an eye on a phone); the renderer's multisampling is kept, because the low-quality fallback draws straight to the canvas without the FXAA pass. Not judged on a real phone.
 
 ## One clock
 

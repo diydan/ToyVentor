@@ -169,6 +169,7 @@ import { buildDog } from "./dog";
 import { buildXylophone } from "./xylophone";
 import { createMess } from "./mess";
 import { migrateOldStockKip } from "./kipLook";
+import { trimTinyCasters } from "./shadowProxy";
 import { buildCleanCart } from "./cleanScene";
 import { buildHobProp } from "./cookScene";
 import { createActivities } from "./activities";
@@ -228,6 +229,7 @@ setupPost,
 disposeEnvironment,
 stepDown,
 qualityTick,
+foliageSegs,
 } from "./worldScene";
 import type { Mission, FxItem } from "./missions";
 import type { ToyContract } from "../../../../../shared/toycontract";
@@ -553,7 +555,7 @@ function buildWorld(id: string){
  buildMissions(R);
  var nb=(typeof ED==="undefined"||!ED.on)?townNeighbors(id):null;
  if(nb){streetSignMesh(.85,"west",WORLDS[nb.west]!.n);streetSignMesh(43.85,"east",WORLDS[nb.east]!.n);buildTownSparkles(id)}
- linearize(scene);if(R.look)PFX.setLights(R.look==="night");
+ linearize(scene);if(R.look)PFX.setLights(R.look==="night");trimTinyCasters(W.root);
 }
 /* The day and night look (worldLook.ts): the outdoor worlds show the time of day the device clock says when they are built (07:00 to 18:59 is day), or the one a grown-up pinned in the Grown-ups sheet; pinning it again while a world is up re-skins it when the toy is free. */
 var TOD: ""|"day"|"night"="",lookMode=loadTimeOfDayMode(),lookPending=false,lookAcc=0;
@@ -878,7 +880,7 @@ function tex(name: string,rep?: [number, number]){var k=name+(rep?rep.join("x"):
 function bump(name: string,rep?: [number, number]){var k="b_"+name+(rep?rep.join("x"):"");if(!TEX[k])TEX[k]=texFrom(name==="plastic"?128:256,field(name),["#000000","#ffffff"],{repeat:rep,linear:true,contrast:1.4});return TEX[k]!}
 function texMat(name: string,o?: { rep?: [number, number]; bs?: number; r?: number; env?: number; flat?: boolean; side?: THREE.Side; c?: string }){o=o||{};var k="t"+name+JSON.stringify(o);if(!MC[k]){MC[k]=new T.MeshStandardMaterial(Object.assign({map:tex(name,o.rep),bumpMap:bump(name,o.rep),bumpScale:o.bs==null?.03:o.bs,roughness:o.r==null?.85:o.r,metalness:0,envMapIntensity:o.env==null?.12:o.env,flatShading:!!o.flat,side:o.side||T.FrontSide},o.c?{color:o.c}:{}));MC[k]!.userData.lin=1}return MC[k]!}
 /* smooth, softly displaced blob for rocks, canopies, bushes and clouds */
-function blobGeo(r: number,amp: number,seed?: number,ws?: number,hs?: number){var g=new T.SphereGeometry(r,ws||28,hs||20),p=g.attributes.position!,v=new T.Vector3(),k=seed||1;for(var i=0;i<p.count;i++){v.fromBufferAttribute(p,i);var n=v.clone().normalize(),d=Math.sin(n.x*3.1+k)*Math.cos(n.y*2.7+k*1.7)*.5+Math.sin(n.z*4.3+k*2.3)*.3+Math.sin((n.x+n.y)*6.1+k)*.2;v.addScaledVector(n,d*amp*r);p.setXYZ(i,v.x,v.y,v.z)}g.computeVertexNormals();return g}
+function blobGeo(r: number,amp: number,seed?: number,ws?: number,hs?: number){var g=new T.SphereGeometry(r,foliageSegs(ws||28),foliageSegs(hs||20)),p=g.attributes.position!,v=new T.Vector3(),k=seed||1;for(var i=0;i<p.count;i++){v.fromBufferAttribute(p,i);var n=v.clone().normalize(),d=Math.sin(n.x*3.1+k)*Math.cos(n.y*2.7+k*1.7)*.5+Math.sin(n.z*4.3+k*2.3)*.3+Math.sin((n.x+n.y)*6.1+k)*.2;v.addScaledVector(n,d*amp*r);p.setXYZ(i,v.x,v.y,v.z)}g.computeVertexNormals();return g}
 function rockMesh(r: number,seed: number){var m=M(blobGeo(r,.22,seed,30,22),texMat("stone",{bs:.05,r:.7,env:.25}));m.scale.set(1,.8,.92);return m}
 /* toys: treaded tires, spoked rims, hub caps */
 /* car and truck bodies: a real side profile with wheel arches, beveled and extruded */

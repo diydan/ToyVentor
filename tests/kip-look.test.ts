@@ -294,6 +294,7 @@ describe("the rig wears it", () => {
     const colours = (root: THREE.Object3D): string[] => {
       const out = new Set<string>();
       root.traverse((o) => {
+        if (o.userData.shadowProxy) return; // the invisible stand-in that casts the part's shadow (runtime/shadowProxy.ts), not something Kip wears
         const m = (o as THREE.Mesh).material as THREE.MeshStandardMaterial | undefined;
         if (m && (o as THREE.Mesh).isMesh && m.color) out.add(m.color.getHexString());
       });
@@ -331,6 +332,7 @@ describe("the rig wears it", () => {
     const cream = plastic("#f4efe6", { roughness: 0.48, clearcoat: 0.25 }).color.getHexString();
     const found = new Set<string>();
     rig.arms[0]!.traverse((o) => {
+      if (o.userData.shadowProxy) return; // the invisible shadow stand-in is not a colour Kip wears
       const m = (o as THREE.Mesh).material as THREE.MeshStandardMaterial | undefined;
       if (m && (o as THREE.Mesh).isMesh && m.color) found.add(m.color.getHexString());
     });
