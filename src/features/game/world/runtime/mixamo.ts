@@ -51,8 +51,13 @@ export interface BakedClip {
    */
   bends?: Record<BendKey, Float32Array>;
 }
-/** The joints a direction clip can bend: elbows and knees fold (0 = straight, positive = the forearm forward / the shin back), an ankle tilts (positive = toes down). frames each. */
-export const BEND_KEYS = ["elbowL", "elbowR", "kneeL", "kneeR", "ankleL", "ankleR"] as const;
+/**
+ * The joints a direction clip can bend: elbows and knees fold (0 = straight, positive = the forearm forward / the shin back), an ankle tilts (positive = toes down), and an arm can ROLL: the turn, in
+ * radians about the upper arm's own axis, of the plane the elbow folds in (0 = the forearm folds forward, as it does for an arm hanging down; positive turns the fold toward the arm's own
+ * outside, so for the right arm's mirror the left takes the negative: a roll without a fold does nothing). With a roll the elbow can be put out wide and the forearm brought round in front of the
+ * chest, which one fold plane cannot do (a hug). frames each.
+ */
+export const BEND_KEYS = ["elbowL", "elbowR", "kneeL", "kneeR", "ankleL", "ankleR", "rollL", "rollR"] as const;
 export type BendKey = (typeof BEND_KEYS)[number];
 export type PoseBends = Record<BendKey, number>;
 /** Per-frame joint rotations (x, y, z, w; frames * 4 each), local, in the CAD frame: Hips > shoulder > elbow > wrist, Hips > hip > knee > ankle; and the hips' position in rig mm (frames * 3, absolute: standing is about (0, 61.5, 0)). */
@@ -90,7 +95,7 @@ function newPoseJoints(): PoseJoints {
 export function newPose(): Pose {
   return {
     jw: 0, gw: 0, j: newPoseJoints(),
-    bend: { elbowL: 0, elbowR: 0, kneeL: 0, kneeR: 0, ankleL: 0, ankleR: 0 },
+    bend: { elbowL: 0, elbowR: 0, kneeL: 0, kneeR: 0, ankleL: 0, ankleR: 0, rollL: 0, rollR: 0 },
     hips: new THREE.Vector3(),
     body: new THREE.Quaternion(),
     head: new THREE.Quaternion(),
@@ -454,6 +459,7 @@ export class MixamoDriver {
   private readonly sl = newSnapLegSolution();
   private readonly q3 = new THREE.Quaternion();
   private readonly qb = new THREE.Quaternion();
+  private readonly qr = new THREE.Quaternion();
   private readonly qw = new THREE.Quaternion();
   private readonly qx = new THREE.Quaternion();
   private readonly v2 = new THREE.Vector3();
@@ -713,7 +719,11 @@ export class MixamoDriver {
       this.q3.identity().slerp(p.j[a[1]], jw);
       this.qw.identity().slerp(p.j[a[2]], jw);
       const eb = i === 0 ? p.bend.elbowL : p.bend.elbowR;                                  // a direction clip's own elbow fold: on top of any the joints carry, on the bench's flex
-      if (eb > 1e-4) this.q3.multiply(this.qb.setFromAxisAngle(AXIS_X, -eb));
+      if (eb > 1e-4) {
+        const rb = i === 0 ? p.bend.rollL : p.bend.rollR;                                  // the fold's plane turned about the upper arm's own axis (CAD y): fold about X, conjugated by the roll
+        if (Math.abs(rb) > 1e-4) { this.qr.setFromAxisAngle(AXIS_Y, rb); this.q3.multiply(this.qr); this.q3.multiply(this.qb.setFromAxisAngle(AXIS_X, -eb)); this.q3.multiply(this.qr.invert()); }
+        else this.q3.multiply(this.qb.setFromAxisAngle(AXIS_X, -eb));
+      }
       solveSnapArm(p.j[a[0]], this.q3, this.qw, Math.max(flex, FLEX_ASSEMBLED * Math.min(1, eb / 0.2)), this.sa);
       if (on) j.arms[i]!.quaternion.slerp(this.qx.copy(CAD_TO_STAGE).multiply(this.sa.shoulder).multiply(STAGE_TO_CAD), jw);
       const h = sn.arms[i]!;

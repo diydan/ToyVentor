@@ -30,6 +30,8 @@ export interface Key {
   legR?: V3;
   /** Elbow and knee folds and ankle tilts, radians (see BakedClip.bends); like the directions, an omitted one carries the previous key's value, and 0 is straight. */
   elbowL?: number; elbowR?: number; kneeL?: number; kneeR?: number; ankleL?: number; ankleR?: number;
+  /** An arm's roll about its own axis, radians: turns the plane its elbow folds in (see BEND_KEYS). The left arm takes the negative of the right's for the mirror-image fold. */
+  rollL?: number; rollR?: number;
 }
 
 const REST = {
@@ -110,12 +112,13 @@ const HAND_DOWN: V3 = [-0.12, -0.95, 0.15];
  * real rig agrees with to 0.04 (tests/arm-reach.test.ts drives the real rig); the left arm is the right's mirror (`leftArm`). The fist's distance from the shoulder depends on the bend alone, so a reach is
  * a fist position, not a free choice of elbow: the elbow falls where the single fold puts it.
  */
-export interface Reach { readonly fist: V3; readonly aim: V3; readonly bend: number }
+export interface Reach { readonly fist: V3; readonly aim: V3; readonly bend: number; /** The fold plane's turn about the upper arm (radians, the right arm's sign; absent = 0: the forearm folds forward). */ readonly roll?: number }
 export const REACH = {
   // hug: arms open to take the teddy, wrap round it (the squeeze), ease off, let go
   HUG_OPEN: { fist: [-0.50, -0.18, 0.52], aim: [-0.91, -0.398, 0.118], bend: 1.11 },
-  HUG_SQUEEZE: { fist: [-0.14, -0.40, 0.60], aim: [-0.278, -0.923, 0.266], bend: 1.16 },
-  HUG_EASE: { fist: [-0.26, -0.38, 0.58], aim: [-0.497, -0.836, 0.232], bend: 1.13 },
+  // (with the roll: the elbows out wide and the forearms brought round in front of the chest, where a plane that only folds forward leaves them hanging by the sides)
+  HUG_SQUEEZE: { fist: [-0.05, -0.40, 0.55], aim: [-0.778, -0.483, 0.401], bend: 1.41, roll: 0.89 },
+  HUG_EASE: { fist: [-0.20, -0.38, 0.58], aim: [-0.84, -0.373, 0.395], bend: 1.22, roll: 0.85 },
   HUG_LET_GO: { fist: [-0.42, -0.30, 0.45], aim: [-0.844, -0.524, -0.117], bend: 1.4 },
   // read: the book held low in both hands, and the right hand flicking a page
   READ_HOLD: { fist: [-0.15, -0.45, 0.58], aim: [-0.275, -0.93, 0.244], bend: 1.08 },
@@ -148,27 +151,38 @@ export const REACH = {
   PET_FAR: { fist: [-0.17, -0.45, 0.68], aim: [-0.234, -0.728, 0.645], bend: 0.44 },
   // the other hand resting on the knee (pick, pet, offer, pour)
   KNEE_REST: { fist: [-0.24, -0.62, 0.34], aim: [-0.377, -0.91, -0.174], bend: 1.09 },
+  // sour and the yawn's first lift: both hands up by the face, the elbows out (rolled: the forearms come up in front of the cheeks)
+  HANDS_TO_FACE: { fist: [-0.20, 0.30, 0.45], aim: [-0.938, -0.21, 0.274], bend: 1.83, roll: -0.48 },
+  // oops: the hand reaching for the cup (and a little higher as it tips), then both hands up to the face with a gasp, and coming down
+  OOPS_REACH: { fist: [-0.17, 0.02, 0.78], aim: [-0.337, -0.387, 0.858], bend: 0.77 },
+  OOPS_REACH_UP: { fist: [-0.21, 0.12, 0.75], aim: [-0.469, -0.28, 0.838], bend: 0.84 },
+  OOPS_GASP: { fist: [-0.22, 0.38, 0.50], aim: [-0.894, -0.007, 0.449], bend: 1.48, roll: -0.37 },
+  OOPS_GASP_LOWER: { fist: [-0.30, 0.22, 0.42], aim: [-0.786, -0.561, 0.258], bend: 1.88, roll: -0.62 },
+  // tidy: both hands ready, and the sweeps towards the box (out, and drawn back)
+  TIDY_READY: { fist: [-0.22, -0.40, 0.58], aim: [-0.423, -0.877, 0.227], bend: 1.14 },
+  TIDY_SWEEP_OUT: { fist: [-0.15, 0.15, 0.78], aim: [-0.302, -0.197, 0.933], bend: 0.69 },
+  TIDY_SWEEP_BACK: { fist: [-0.24, -0.46, 0.62], aim: [-0.362, -0.813, 0.456], bend: 0.69 },
   // blow: the wand held up in front of the mouth
   BLOW_WAND: { fist: [-0.15, 0.38, 0.62], aim: [-0.673, 0.076, 0.735], bend: 1.12 },
 } as const satisfies Record<string, Reach>;
 const mirrorAim = (a: V3): V3 => [-a[0], a[1], a[2]];
 /** The keys that put the right (or left, or both) arm on a reach. */
-export const rightArm = (r: Reach): Pick<Key, "armR" | "elbowR"> => ({ armR: r.aim, elbowR: r.bend });
-export const leftArm = (r: Reach): Pick<Key, "armL" | "elbowL"> => ({ armL: mirrorAim(r.aim), elbowL: r.bend });
-export const bothArms = (r: Reach): Pick<Key, "armL" | "elbowL" | "armR" | "elbowR"> => ({ ...leftArm(r), ...rightArm(r) });
-/** Both elbows straight again (for a key that lets the arms go home with the rest pose). */
-const ARMS_STRAIGHT = { elbowL: 0, elbowR: 0 } as const;
+export const rightArm = (r: Reach): Pick<Key, "armR" | "elbowR" | "rollR"> => ({ armR: r.aim, elbowR: r.bend, rollR: r.roll ?? 0 });
+export const leftArm = (r: Reach): Pick<Key, "armL" | "elbowL" | "rollL"> => ({ armL: mirrorAim(r.aim), elbowL: r.bend, rollL: -(r.roll ?? 0) });
+export const bothArms = (r: Reach): Pick<Key, "armL" | "elbowL" | "rollL" | "armR" | "elbowR" | "rollR"> => ({ ...leftArm(r), ...rightArm(r) });
+/** Both elbows straight and unrolled again (for a key that lets the arms go home with the rest pose). */
+const ARMS_STRAIGHT = { elbowL: 0, elbowR: 0, rollL: 0, rollR: 0 } as const;
 
 /**
  * The driver's model of where an arm's fist goes (stage units from the shoulder; the right arm's outward is -x): the upper arm of length 0.324 along `aim`, then the forearm of 0.526 folded by
  * FLEX_ASSEMBLED (0.94, the share of the elbow's fold the sleeve takes: snapFlex.ts) of `bend` toward the front of the arm. The real rig is within 0.04 of this.
  */
-export function fistOf(aim: V3, bend: number): V3 {
+export function fistOf(aim: V3, bend: number, roll = 0): V3 {
   const u = unit(aim), A = 0.324, B = 0.526, phi = FLEX_ASSEMBLED * bend;
-  // the minimal rotation taking straight down to u, applied to the forearm's direction in the arm's own frame
+  // the minimal rotation taking straight down to u, applied to the forearm's direction in the arm's own frame (folded `phi` forward, the fold's plane turned `roll` about the arm's own axis)
   const d = new THREE.Vector3(0, -1, 0), uv = new THREE.Vector3(u[0], u[1], u[2]);
   const q = new THREE.Quaternion().setFromUnitVectors(d, uv);
-  const f = new THREE.Vector3(0, -Math.cos(phi), Math.sin(phi)).applyQuaternion(q);
+  const f = new THREE.Vector3(Math.sin(phi) * Math.sin(roll), -Math.cos(phi), Math.sin(phi) * Math.cos(roll)).applyQuaternion(q);
   return [A * u[0] + B * f.x, A * u[1] + B * f.y, A * u[2] + B * f.z];
 }
 // Lying down tips the figure about its FEET, so the body would stretch away behind them. Moving the hips forward by about half a body length
@@ -236,13 +250,13 @@ malletKeys.push({ t: MALLET_START_S + MALLET_COUNT * MALLET_EVERY_S + 0.3, armL:
 /** Oops: the right hand reaches for the cup, it tips, and both hands fly up to the face with a gasp (the head back, a little hop), a shake of the shoulders, then they come slowly down. 2.2 s. */
 const oopsKeys: Key[] = [
   { t: 0 },
-  { t: OOPS_TIP_S - 0.1, armR: [-0.2, 0.0, 0.98], body: [0.1, 0, 0], head: [0.12, 0, 0] },
-  { t: OOPS_TIP_S + 0.1, armR: [-0.25, 0.15, 0.95] },
-  { t: 0.75, armL: [0.3, 0.6, 0.72], armR: [-0.3, 0.6, 0.72], head: [-0.22, 0, 0], body: [-0.1, 0, 0], hips: [0, 0.07, 0] },
+  { t: OOPS_TIP_S - 0.1, ...rightArm(REACH.OOPS_REACH), body: [0.1, 0, 0], head: [0.12, 0, 0] },
+  { t: OOPS_TIP_S + 0.1, ...rightArm(REACH.OOPS_REACH_UP) },
+  { t: 0.75, ...bothArms(REACH.OOPS_GASP), head: [-0.22, 0, 0], body: [-0.1, 0, 0], hips: [0, 0.07, 0] },
   { t: 0.95, hips: [0, 0.02, 0] },
   { t: 1.15, body: [-0.1, 0, 0.07] }, { t: 1.35, body: [-0.1, 0, -0.07] }, { t: 1.55, body: [-0.1, 0, 0.05] },
-  { t: 1.75, armL: [0.35, 0.3, 0.6], armR: [-0.35, 0.3, 0.6], head: [-0.1, 0, 0] },
-  { t: OOPS_S, armL: REST.armL, armR: REST.armR, head: [0, 0, 0], body: [0, 0, 0], hips: [0, 0, 0] },
+  { t: 1.75, ...bothArms(REACH.OOPS_GASP_LOWER), head: [-0.1, 0, 0] },
+  { t: OOPS_S, armL: REST.armL, armR: REST.armR, ...ARMS_STRAIGHT, head: [0, 0, 0], body: [0, 0, 0], hips: [0, 0, 0] },
 ];
 
 /** Mop: both hands on the handle out in front and low, the body leaning in, and a sweep from side to side with each stroke (the body rolls and rocks, the arms swing), then back to rest. */
@@ -257,12 +271,12 @@ for (let i = 0; i < MOP_CLIP_STROKES; i++) {
 mopKeys.push({ t: MOP_CLIP_START_S + MOP_CLIP_STROKES * MOP_CLIP_EVERY_S + 0.3, armL: REST.armL, armR: REST.armR, ...ARMS_STRAIGHT, body: [0, 0, 0], head: [0, 0, 0], hips: [0, 0, 0] });
 
 /** Tidy: a sweeping wave of both arms towards the box, once for each toy going home (the left arm and the right in turn), the head nodding along. */
-const tidyKeys: Key[] = [{ t: 0 }, { t: TIDY_CLIP_START_S - 0.15, armL: [0.3, -0.5, 0.8], armR: [-0.3, -0.5, 0.8], body: [0.06, 0, 0] }];
+const tidyKeys: Key[] = [{ t: 0 }, { t: TIDY_CLIP_START_S - 0.15, ...bothArms(REACH.TIDY_READY), body: [0.06, 0, 0] }];
 for (let i = 0; i < TIDY_CLIP_MAX; i++) {
   const t = TIDY_CLIP_START_S + i * TIDY_CLIP_EVERY_S, left = i % 2 === 0;
-  tidyKeys.push({ t, armL: left ? [0.2, 0.2, 0.95] : [0.3, -0.55, 0.78], armR: left ? [-0.3, -0.55, 0.78] : [-0.2, 0.2, 0.95], body: [0.06, 0, left ? 0.05 : -0.05], head: [left ? 0.1 : 0.05, 0, 0] });
+  tidyKeys.push({ t, ...leftArm(left ? REACH.TIDY_SWEEP_OUT : REACH.TIDY_SWEEP_BACK), ...rightArm(left ? REACH.TIDY_SWEEP_BACK : REACH.TIDY_SWEEP_OUT), body: [0.06, 0, left ? 0.05 : -0.05], head: [left ? 0.1 : 0.05, 0, 0] });
 }
-tidyKeys.push({ t: TIDY_CLIP_START_S + TIDY_CLIP_MAX * TIDY_CLIP_EVERY_S + 0.2, armL: REST.armL, armR: REST.armR, body: [0, 0, 0], head: [0, 0, 0] });
+tidyKeys.push({ t: TIDY_CLIP_START_S + TIDY_CLIP_MAX * TIDY_CLIP_EVERY_S + 0.2, armL: REST.armL, armR: REST.armR, ...ARMS_STRAIGHT, body: [0, 0, 0], head: [0, 0, 0] });
 
 /** Authored in real angles. Each is the whole motion, ending back at rest so it can blend out cleanly. */
 export const PROCEDURAL_CLIPS: ClipBank = {
@@ -279,9 +293,9 @@ export const PROCEDURAL_CLIPS: ClipBank = {
   // A lemon: the head pulls back, the shoulders shiver, both hands fly up for a moment. 1.1 s.
   sour: bake("sour", 1.1, false, [
     { t: 0 },
-    { t: 0.18, head: [-0.28, 0, 0], body: [-0.08, 0, 0.06], armL: [0.55, 0.15, 0.2], armR: [-0.55, 0.15, 0.2] },
+    { t: 0.18, head: [-0.28, 0, 0], body: [-0.08, 0, 0.06], ...bothArms(REACH.HANDS_TO_FACE) },
     { t: 0.32, body: [-0.08, 0, -0.06] }, { t: 0.46, body: [-0.08, 0, 0.06] }, { t: 0.6, body: [-0.08, 0, -0.06] },
-    { t: 1.1, head: [0, 0, 0], body: [0, 0, 0], armL: REST.armL, armR: REST.armR },
+    { t: 1.1, head: [0, 0, 0], body: [0, 0, 0], armL: REST.armL, armR: REST.armR, ...ARMS_STRAIGHT },
   ]),
   // Full: both hands pat the belly twice and the head tips back with a happy sigh. 1.6 s.
   belly_pat: bake("belly_pat", 1.6, false, [
@@ -297,7 +311,9 @@ export const PROCEDURAL_CLIPS: ClipBank = {
   // A big yawn: head back, arms stretch up and out, a settle. 1.8 s.
   yawn: bake("yawn", 1.8, false, [
     { t: 0 },
-    { t: 0.55, head: [-0.4, 0, 0], body: [-0.1, 0, 0], armL: [0.55, 0.7, 0.1], armR: [-0.55, 0.7, 0.1], hips: [0, 0.04, 0] },
+    // (the hands come up past the face with the elbows folded, as a yawn starts, and open into the stretch, which is straight: arms up and out)
+    { t: 0.28, ...bothArms(REACH.HANDS_TO_FACE), head: [-0.15, 0, 0] },
+    { t: 0.55, head: [-0.4, 0, 0], body: [-0.1, 0, 0], armL: [0.55, 0.7, 0.1], armR: [-0.55, 0.7, 0.1], ...ARMS_STRAIGHT, hips: [0, 0.04, 0] },
     { t: 1.1, head: [-0.4, 0, 0] },
     { t: 1.8, head: [0, 0, 0], body: [0, 0, 0], armL: REST.armL, armR: REST.armR, hips: [0, 0, 0] },
   ]),

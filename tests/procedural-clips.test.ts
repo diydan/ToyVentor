@@ -21,8 +21,8 @@ const run = (d: MixamoDriver, rig: ReturnType<typeof characterRig>["rig"], secon
 const pose = (clip: ClipBank[string], t: number) => { const p = newPose(); sampleClip(clip, t, p); return p; };
 /** Where a fist is at a pose, from its shoulder, by the driver's own model of the arm (`fistOf`): how far OUT from the body (each arm's own side), how far DOWN from the shoulder and how far FORWARD. */
 const fist = (p: ReturnType<typeof pose>, side: "L" | "R") => {
-  const a = side === "R" ? p.armR : p.armL, bend = side === "R" ? p.bend.elbowR : p.bend.elbowL;
-  const f = fistOf([side === "R" ? a.x : -a.x, a.y, a.z], bend);   // the model is the right arm's: outward is -x
+  const a = side === "R" ? p.armR : p.armL, bend = side === "R" ? p.bend.elbowR : p.bend.elbowL, roll = side === "R" ? p.bend.rollR : -p.bend.rollL;
+  const f = fistOf([side === "R" ? a.x : -a.x, a.y, a.z], bend, roll);   // the model is the right arm's: outward is -x, and the left's roll is the negative of the mirror's
   return { out: -f[0], down: -f[1], fwd: f[2], reach: Math.hypot(f[0], f[1], f[2]) };
 };
 
@@ -122,7 +122,7 @@ describe("hug: both arms reach forward and close in", () => {
     for (const p of [open, squeeze]) {
       for (const side of ["L", "R"] as const) {
         expect(fist(p, side).fwd, side).toBeGreaterThan(0.4);   // the fists are out in front (+z)
-        expect(fist(p, side).out, side).toBeGreaterThan(0.05);  // each on its own side: the figure's left is +x
+        expect(fist(p, side).out, side).toBeGreaterThan(0);     // each on its own side of its shoulder: the figure's left is +x
         expect(fist(p, side).reach, `${side} within the arm's reach`).toBeLessThan(0.85);
       }
       expect(p.bend.elbowL, "the elbows are folded, not stiff").toBeGreaterThan(0.8);
@@ -132,6 +132,12 @@ describe("hug: both arms reach forward and close in", () => {
     expect(fist(squeeze, "R").out).toBeLessThan(fist(open, "R").out);
     expect(squeeze.armL.x).toBeCloseTo(-squeeze.armR.x, 6);               // symmetric: a hug, not a one-armed wave
     expect(squeeze.bend.elbowL).toBeCloseTo(squeeze.bend.elbowR, 6);
+    // the squeeze rolls both arms' folds (the elbows out wide, the forearms round in front of the chest), the left the mirror of the right, and the open arms and the let-go do not
+    expect(squeeze.bend.rollR, "right arm rolled").toBeGreaterThan(0.5);
+    expect(squeeze.bend.rollL).toBeCloseTo(-squeeze.bend.rollR, 6);
+    expect(open.bend.rollR, "open arms are not rolled").toBeLessThan(0.1);
+    expect(pose(c, c.duration).bend.rollR).toBe(0);
+    expect(pose(c, c.duration).bend.rollL).toBe(0);
   });
   it("the body leans in and the head tips down at the squeeze, and squeezes twice (the arms come in, ease off, come in again)", () => {
     expect(pose(c, HUG_SQUEEZE_S).body.angleTo(new THREE.Quaternion())).toBeGreaterThan(0.12);
@@ -376,12 +382,12 @@ describe("wiring", () => {
 
 describe("elbow, knee and ankle bends in hand-built clips (Dan: \"for the ankles and elbows do this\")", () => {
   it("a clip with no bends has none, so every clip that was not given any plays exactly as it did", () => {
-    for (const name of ["kick", "cheer", "yawn", "sour", "tidy", "oops", "sleep"]) {
+    for (const name of ["kick", "cheer", "sleep"]) {
       const c = PROCEDURAL_CLIPS[name];
       if (c) expect(c.bends, name).toBeUndefined();
     }
     const p = pose(PROCEDURAL_CLIPS.cheer!, 0.8);
-    expect(Object.values(p.bend)).toEqual([0, 0, 0, 0, 0, 0]);
+    expect(Object.values(p.bend)).toEqual([0, 0, 0, 0, 0, 0, 0, 0]);
   });
   it("bake() resolves a bend like a direction: an omitted one carries the previous key's value, it eases between keys, and only the joint asked for bends", () => {
     const c = bake("t", 1, false, [{ t: 0 }, { t: 0.5, elbowR: 2 }, { t: 0.8, kneeL: 0.6 }, { t: 1 }]);

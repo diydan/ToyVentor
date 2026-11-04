@@ -336,50 +336,36 @@ describe("the rig wears it", () => {
     expect((holder as unknown as THREE.Object3D).children).toHaveLength(1);
   });
 
-  it("the joints are closed the way the bench closes them: the Snap torso, a big turret at each shoulder and hip, a small one at each wrist and ankle (Dan: \"still not ankles, wrists or shoulder joints? just a gap/void?\")", async () => {
-    // the bench's own numbers, read from its source: where each turret goes and which kind
-    const benchRig = read("parts/kip/viewer/kip-rig.js");
-    for (const line of [
-      "shoAnchor.position.set(side * 17.2, 33.5, 0);", "addSnapTurretMesh(snapShoTurret, true, 'x');",
-      "hipAnchor.position.set(side * 10.8, 0, 0);", "addSnapTurretMesh(snapHipTurret, true, 'y');",
-      "snapWriAnchor.position.set(0, -35.0, 3.8);", "addSnapTurretMesh(snapWriTurret, false, 'y');",
-      "snapAnkAnchor.position.set(0, -39.2, 0);", "addSnapTurretMesh(snapAnkTurret, false, 'y');",
-      "snapTorsoSlot.add(scadMesh(geos.snap_torso, mats.shell));",
-    ]) expect(benchRig, line).toContain(line);
+  it("the joints are closed by the Snap torso (no sockets) and the ball joints, and the game wears none of the bench's 6,650-triangle turrets, which no pose or side shows (Dan: \"still not ankles, wrists or shoulder joints? just a gap/void?\"; performance 2026-11-05)", async () => {
     const sel = stockSel().character as unknown as RigSel;
     const col = stockCol();
     const recipe = resolveStlHeroRecipe("character", { ...sel } as unknown as RigSel, "seed-kip");
     expect(recipe.parts.find((p) => p.key === "torso")!.url).toBe("/kip/stls/snap_torso.stl");   // the Pro torso has open sockets for the Pro pegs: voids with Snap limbs
-    expect(recipe.parts.map((p) => p.key)).toEqual(expect.arrayContaining(["snapTurretBig", "snapTurret"]));
+    expect(recipe.parts.map((p) => p.key), "no turret files are loaded: 666 KB of STL for something no pose shows").not.toEqual(expect.arrayContaining(["snapTurretBig"]));
+    expect(recipe.parts.map((p) => p.key)).not.toContain("snapTurret");
+    expect(recipe.parts.some((p) => /snap_turret/.test(p.url))).toBe(false);
     const rig = buildToy("character", sel, col);
     expect(await upgradeRigWithStl(rig, { type: "character", sel, col, toyId: "seed-kip", fetcher: diskFetcher })).toBe(true);
-    rig.g.updateMatrixWorld(true);
-    const found: Record<string, THREE.Object3D[]> = { shoulder: [], hip: [], wrist: [], ankle: [] };
-    rig.g.traverse((o: THREE.Object3D) => { const k = o.userData.snapTurret as string | undefined; if (k) found[k]!.push(o); });
-    for (const k of ["shoulder", "hip", "wrist", "ankle"]) expect(found[k], k).toHaveLength(2);
-    const snap = rig.snap as { arms: Array<{ fore: THREE.Object3D }>; legs: Array<{ lower: THREE.Object3D }> };
-    // the wrist turret rides the end of the bent sleeve and the ankle turret the end of the bent leg (so they go where the elbow and knee put them); the shoulder and hip ones are fixed to the body
-    for (let i = 0; i < 2; i++) {
-      expect(snap.arms.some((a) => found.wrist![i]!.parent === a.fore), "a wrist turret on a sleeve's end").toBe(true);
-      expect(snap.legs.some((l) => found.ankle![i]!.parent === l.lower), "an ankle turret on a leg's end").toBe(true);
-    }
-    const bodyFrame = found.shoulder![0]!.parent!;
-    for (const o of [...found.shoulder!, ...found.hip!]) expect(o.parent, "fixed to the body, not to a limb").toBe(bodyFrame);
-    const xs = (list: THREE.Object3D[]) => list.map((o) => +o.position.x.toFixed(3)).sort((a, b) => a - b);
-    expect(xs(found.shoulder!)).toEqual([-17.2, 17.2]);
-    expect(xs(found.hip!)).toEqual([-10.8, 10.8]);
-    for (const o of found.shoulder!) expect(o.position.y).toBeCloseTo(KIP_HIP_MM + 33.5, 6);
-    for (const o of found.hip!) expect(o.position.y).toBeCloseTo(KIP_HIP_MM, 6);
-    // each is built the way the bench builds it (`addSnapTurretMesh`): the STL's own axis (z, h long: 17.9 for a big one, 14.6 for a small) lowered by half its length, and a shoulder's lying along x
-    for (const [kind, list] of Object.entries(found)) for (const o of list) {
-      const mesh = o.children[0] as THREE.Mesh;                                     // each turret is a holder (at the joint, turned for a shoulder) around its mesh
-      mesh.geometry.computeBoundingBox();
-      const h = mesh.geometry.boundingBox!.max.z - mesh.geometry.boundingBox!.min.z;
-      expect(h, `${kind} turret length`).toBeCloseTo(kind === "shoulder" || kind === "hip" ? 17.9 : 14.6, 0);
-      expect(mesh.position.y, `${kind} lowered by half its length`).toBeCloseTo(-h / 2, 6);
-      expect(mesh.rotation.x, `${kind} stood up like every other part`).toBeCloseTo(-Math.PI / 2, 9);
-      expect(o.rotation.z, `${kind} axis`).toBeCloseTo(kind === "shoulder" ? Math.PI / 2 : 0, 9);
-    }
+    let turrets = 0;
+    rig.g.traverse((o: THREE.Object3D) => { if (o.userData.snapTurret) turrets++; });
+    expect(turrets).toBe(0);
+  });
+
+  it("Kip's whole rig stays under a triangle budget (the eight turrets and their shadow stand-ins were 75,000 of 235,000 and cost a third of Kip for nothing visible), and the balls cast no shadow of their own", async () => {
+    const sel = stockSel().character as unknown as RigSel;
+    const col = stockCol();
+    const rig = buildToy("character", sel, col);
+    expect(await upgradeRigWithStl(rig, { type: "character", sel, col, toyId: "seed-kip", fetcher: diskFetcher })).toBe(true);
+    let tris = 0, meshes = 0, ballTris = 0;
+    rig.g.traverse((o: THREE.Object3D) => {
+      const m = o as THREE.Mesh;
+      if (!m.isMesh) return;
+      const g = m.geometry, n = g.index ? g.index.count / 3 : g.attributes.position!.count / 3;
+      tris += n; meshes++;
+      if (m.userData.ballJoint) { ballTris += n; expect(m.castShadow, "a ball joint casts no shadow of its own").toBe(false); }
+    });
+    expect(tris, `${tris} triangles in ${meshes} meshes`).toBeLessThan(172_000);   // 160,600 measured; with the turrets and their shadow stand-ins it was 235,600
+    expect(ballTris, "eight balls").toBeLessThan(8 * 400);
   });
 
   it("every joint where a limb meets the body or the next part has a ball joint, so nothing hangs: a ball at each shoulder and hip (fixed to the body), each wrist (on the end of the sleeve) and each ankle (on the end of the leg) (Dan: \"connected by the ball joint for aesthetics\")", async () => {
@@ -463,7 +449,7 @@ describe("every kind of character has the joints (the body is shared; only the h
     ["imp", { base: "creature" }], ["dragon", { base: "creature", ears: "horns" }], ["alien", { base: "creature", ears: "antennae" }],
     ["robot visor", { base: "robot.head.box" }], ["robot scout", { base: "robot.head.dome" }],
   ];
-  const BODY_PARTS = ["torso", "neckTurret", "snapTurretBig", "snapTurret", "snapArm", "handL", "handR", "snapLeg", "boot"];
+  const BODY_PARTS = ["torso", "neckTurret", "snapArm", "handL", "handR", "snapLeg", "boot"];
   const selOf = (over: Record<string, string>) => ({ ...stockSel().character, ears: "none", ...over }) as unknown as RigSel;
   const meshOf = (root: THREE.Object3D, geo: THREE.BufferGeometry): THREE.Mesh => { let m: THREE.Mesh | null = null; root.traverse((o) => { if ((o as THREE.Mesh).isMesh && (o as THREE.Mesh).geometry === geo) m = o as THREE.Mesh; }); return m!; };
   const colourOf = (o: THREE.Object3D) => ((o as THREE.Mesh).material as THREE.MeshStandardMaterial).color.getHexString();
@@ -476,18 +462,14 @@ describe("every kind of character has the joints (the body is shared; only the h
   });
 
   for (const [name, over] of HEADS) {
-    it(`${name}: a ball and a turret at every shoulder, hip, wrist and ankle, a grip in each hand, the neck hinge, and each ball in its limb's own colour`, async () => {
+    it(`${name}: a ball at every shoulder, hip, wrist and ankle, a grip in each hand, the neck hinge, and each ball in its limb's own colour`, async () => {
       const sel = selOf(over), col = stockCol();
       const rig = buildToy("character", sel, col);
       expect(await upgradeRigWithStl(rig, { type: "character", sel, col, toyId: "seed-kip", fetcher: diskFetcher })).toBe(true);
       rig.g.updateMatrixWorld(true);
       const balls: Record<string, THREE.Object3D[]> = { shoulder: [], hip: [], wrist: [], ankle: [] };
-      const turrets: Record<string, THREE.Object3D[]> = { shoulder: [], hip: [], wrist: [], ankle: [] };
-      rig.g.traverse((o: THREE.Object3D) => {
-        if (o.userData.ballJoint) balls[o.userData.ballJoint as string]!.push(o);
-        if (o.userData.snapTurret) turrets[o.userData.snapTurret as string]!.push(o);
-      });
-      for (const k of Object.keys(balls)) { expect(balls[k], `${k} balls`).toHaveLength(2); expect(turrets[k], `${k} turrets`).toHaveLength(2); }
+      rig.g.traverse((o: THREE.Object3D) => { if (o.userData.ballJoint) balls[o.userData.ballJoint as string]!.push(o); });
+      for (const k of Object.keys(balls)) expect(balls[k], `${k} balls`).toHaveLength(2);
       expect(rig.grips, "a grip in each hand").toHaveLength(2);
       expect(rig.head!.userData.hinge, "the head turns about the neck's foot").toBeTruthy();
       const snap = rig.snap as { arms: Array<{ flex: { geometry: THREE.BufferGeometry }; fore: THREE.Object3D }>; legs: Array<{ flex: { geometry: THREE.BufferGeometry }; lower: THREE.Object3D }> };

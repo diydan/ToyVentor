@@ -16,6 +16,8 @@ import { NOUN_KEYS, propPhrase, LANGUAGES } from "../src/lib/propNames";
 
 const bbox = (o: THREE.Object3D) => { o.updateMatrixWorld(true); return new THREE.Box3().setFromObject(o); };
 const clipPose = (name: keyof typeof PROCEDURAL_CLIPS, t: number): ClipPose => { const p = newPose(); sampleClip(PROCEDURAL_CLIPS[name]!, t, p); return p; };
+/** Where a fist is (units from its shoulder: out from the body, up, forward), by the driver's model of the arm with the elbow folded and rolled (the aim is no longer where the hand is). */
+const fistUp = (p: ClipPose, side: "L" | "R") => { const a = side === "R" ? p.armR : p.armL, f = fistOf([side === "R" ? a.x : -a.x, a.y, a.z], side === "R" ? p.bend.elbowR : p.bend.elbowL, side === "R" ? p.bend.rollR : -p.bend.rollL); return { out: -f[0], up: f[1], fwd: f[2] }; };
 
 describe("the Clean card", () => {
   class El {
@@ -219,10 +221,13 @@ describe("the three clips", () => {
     expect(OOPS_TIP_S).toBeCloseTo(SPILL_TIP_AT_S, 9);                           // the reach ends where the cup tips, in both visits
     expect(OOPS_TIP_S).toBeCloseTo(DUMP_TIP_AT_S, 9);
     const reach = clipPose("oops", OOPS_TIP_S - 0.1);
-    expect(reach.armR.z).toBeGreaterThan(0.9);
+    expect(fistUp(reach, "R").fwd).toBeGreaterThan(0.7);                          // the fist reaches out in front
+    expect(reach.bend.elbowR, "a reach, not a stiff arm").toBeGreaterThan(0.5);
     const gasp = clipPose("oops", 0.8);
-    expect(gasp.armL.y).toBeGreaterThan(0.3);
-    expect(gasp.armR.y).toBeGreaterThan(0.3);
+    expect(fistUp(gasp, "L").up, "the left hand is up by the face").toBeGreaterThan(0.2);
+    expect(fistUp(gasp, "R").up, "the right hand is up by the face").toBeGreaterThan(0.2);
+    expect(gasp.bend.elbowL, "both elbows folded").toBeGreaterThan(1);
+    expect(gasp.bend.elbowR).toBeGreaterThan(1);
     expect(gasp.hips.y).toBeGreaterThan(0.03);                                   // a little hop
     expect(baked.oops!.duration).toBeCloseTo(OOPS_S, 1);
   });
@@ -249,8 +254,9 @@ describe("the three clips", () => {
     expect(TIDY_CLIP_MAX).toBe(PILE_TOYS);
     expect(baked.tidy!.duration).toBeGreaterThanOrEqual(tidyEndsAt(PILE_TOYS) - 0.6);
     const lifted = [0, 1].map((i) => clipPose("tidy", TIDY_START_S + i * TIDY_EVERY_S));
-    expect(lifted[0]!.armL.y).toBeGreaterThan(0);                                // the left arm sweeps up on the first toy
-    expect(lifted[1]!.armR.y).toBeGreaterThan(0);                                // the right on the second
+    expect(fistUp(lifted[0]!, "L").up).toBeGreaterThan(0);                       // the left arm sweeps up on the first toy
+    expect(fistUp(lifted[1]!, "R").up).toBeGreaterThan(0);                       // the right on the second
+    expect(fistUp(lifted[0]!, "L").up, "and the arm that is not sweeping is drawn back, low").toBeGreaterThan(fistUp(lifted[0]!, "R").up + 0.3);
   });
 });
 

@@ -483,7 +483,7 @@ describe("a direction clip with an elbow bend (the hand-built clips: eat, the be
     const n = 4, c = neutral("fold", n, 1);
     const armR = new Float32Array(n * 3); for (let i = 0; i < n; i++) armR.set([-0.1, -0.7, 0.7], i * 3);
     const mk = (v: number) => new Float32Array(n).fill(v);
-    return { ...c, loop: false, armR, bends: { elbowL: mk(0), elbowR: mk(bend), kneeL: mk(0), kneeR: mk(0), ankleL: mk(0), ankleR: mk(0) } };
+    return { ...c, loop: false, armR, bends: { elbowL: mk(0), elbowR: mk(bend), kneeL: mk(0), kneeR: mk(0), ankleL: mk(0), ankleR: mk(0), rollL: mk(0), rollR: mk(0) } };
   }
   const handPos = (r: ReturnType<typeof makeRig>) => { r.world.updateMatrixWorld(true); return r.snap.arms[1].hand.getWorldPosition(new THREE.Vector3()); };
   const shoulder = (r: ReturnType<typeof makeRig>) => (r.rig as unknown as { arms: THREE.Object3D[] }).arms[1]!.getWorldPosition(new THREE.Vector3());
