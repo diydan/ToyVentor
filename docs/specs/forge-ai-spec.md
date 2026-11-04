@@ -300,7 +300,7 @@ rejected, numbers are clamped, nothing is executed.
   **40 wishes through the real route with the real client loop** (`makeFromText`, a different device id per wish): hats (10),
   animal and character heads (8), vague (8: "something cool", "a hat", "a banana hat"), other languages (3), brand
   characters (4), refused-by-design (3), prompt injection (4). **Result:** 3 refused by design (a Lego hat and "name it
-  Lego" at intake, "scary monster" by the unsafe-word list); of the 37 that should make a part, **36 came back printable on
+  Lego" at intake, "scary monster" by the unsafe-word list, which no longer refuses "scary": see "The term lists"); of the 37 that should make a part, **36 came back printable on
   the first call (97%; 84% in the first pass, when the Mac was at load 188 and five wishes timed out, all five printable on a
   quiet re-run)**, and one ("mickey mouse ears") never passed P1 in 4 calls and ended as fine on screen. F1's bar is 80% within 4
   calls and zero brand terms: **met, with margin**. Mean 1 call; time to a finished printable part: median 23 s (recomputed 2026-11-04 from the saved result files: 27 s for the first pass, taken at load 188, and 31 s merged; the 23 s cannot be re-derived from them), up to
@@ -317,16 +317,14 @@ rejected, numbers are clamped, nothing is executed.
   `scripts/lib/kip-e2e.mjs` leaves them behind when a run is killed: worth fixing. (3) Each make enqueues a background print
   check, and the daemon runs the gates one at a time (`_GATE_LOCK`), so several children at once queue. (4) The Worker's
   in-isolate limits are 3 a minute per device and 6 per IP shared with preview, so a classroom behind one address would wait.
-  (5) "Scary" is on the shared unsafe-word list, so a child's "scary monster" gets a gentle refusal; "dragon" and "ghost"
-  pass. **To run it for a demo:** `npm run forge:optimizer -- --port 8791`; `.dev.vars` needs `MODEL_API_KEY` (or
+  (5) "Scary" was on the shared unsafe-word list and a child's "scary monster" got a gentle refusal; **since 2026-11-04 (Dan) "scary" and its translations are allowed**, while "haunted", "horror", "nightmare", violence, weapons, drugs and alcohol are still refused; **To run it for a demo:** `npm run forge:optimizer -- --port 8791`; `.dev.vars` needs `MODEL_API_KEY` (or
   `META_MODEL_API_KEY`), `VOICE_SIGNING_KEY` (16+ characters), `FORGE_OPTIMIZER_URL=http://127.0.0.1:8791` and
   `PARENT_GATE_SECRET=<anything random>` (the last two were not in `.dev.vars`; passing them as process environment does
   not reach the Worker); `npm run db:migrate:local` once; `npm run build:kip` so `public/kip` has the panel; `npx vite --port 5199
   --strictPort` (a fixed port avoids a stale 5173); open `/kip/Kip-Demo.html`, Tools, "✨ Make from words". `/api/health`
   must say `forgeOptimizerConfigured: true`. Each voice clip bills through AI Gateway.
   **Pre-recording checklist for the Nov 4 demo (2026-11-04; the demo is recorded on this Mac, on the hosted model, and Glimmer is shown as the next step, not live):** (1) `.dev.vars` must NOT contain
-  `MODEL_BACKEND=self` or `TEXT_BACKEND=self` (unset means hosted); (2) set `PARENT_GATE_SECRET` in `.dev.vars` or run `npm run db:migrate:local`: since 2026-11-04 the grown-up gate no longer falls back to the Meta key
-  as its signing secret; (3) start the daemon and the dev server as above, confirm `/api/health` says `forgeOptimizerConfigured: true`; (4) make three wishes by hand first (a hat, a head, one in Spanish) and
+  `MODEL_BACKEND=self` or `TEXT_BACKEND=self` (unset means hosted); (2) `PARENT_GATE_SECRET` is **set in `.dev.vars` on this Mac (2026-11-04, a 64-character random value generated in the shell, never printed)**; the grown-up gate no longer falls back to the Meta key as its signing secret, and a deployment needs the same value as a Wrangler secret (nothing is deployed); (3) start the daemon and the dev server as above, confirm `/api/health` says `forgeOptimizerConfigured: true`; (4) make three wishes by hand first (a hat, a head, one in Spanish) and
   check each reaches "Your part is ready!", wears, changes colour, speaks and survives a reload; (5) press Make another and type a wish the filters should refuse (a knife, and "bir bıçak") to see the calm message: this also proves the new word lists run in the Workers runtime, where Turkish lowercasing (`toLocaleLowerCase("tr")`) has only been checked in Node; (6) stop any other
   session's dev server on the same port before recording; (7) the deployed site has no daemon, so Make from words answers "not turned on here" there: say so in the write-up instead of showing it;
   (8) do not claim Glimmer is live or the default, and do not claim compliance with children's privacy law.
@@ -449,8 +447,8 @@ returns a recipe (numbers and enums that deterministic code builds and gates), p
 2. **Free text still reaches a child:** the part's name, `behavior`, the seven-language names, and in Create and Describe the `say` and `question` lines (up to 160 and 200 characters). Everything else the model writes is a number or a choice.
 3. **No independent classifier** looks at the wish or at the words that come back.
 4. **No child-specific red-team set.** Seven cases is a smoke test. A release needs hundreds of prompts across categories, in all seven languages, run on every model or prompt change.
-5. **No written content policy by age band.** Today "a scary monster head" is refused while "a dragon head" and "a viking helmet" are fine; that line was drawn by one regex, not by a decision.
-6. **Weights are not pinned.** `scripts/modal/glimmer_server.py` downloads by repository name with no revision, so an upstream change would change what we serve; community "abliterated" and "uncensored" Glimmer repos exist on Hugging Face, and only the official `meta-models/` repo may be used.
+5. **No written content policy by age band.** Dan decided on 2026-11-04 that "scary" is allowed ("a scary monster head" now makes a part, and a model may name one "Scary ..."), which leaves the next words of the same family ("haunted", "horror", "nightmare") refused by a line drawn by one regex, not by a decision. Open: whether they follow "scary", and whether a name shown to a child should be held to a stricter list than a wish (a split of the input and output sides, not built).
+6. **Weights are pinned (fixed 2026-11-04).** `scripts/modal/glimmer_server.py` now downloads the official `meta-models/Muse-Glimmer-30B-GGUF` at revision `b44f1072`; community "abliterated" and "uncensored" Glimmer repos exist on Hugging Face, and only the official repo may be used. File hashes are not checked.
 7. **A worrying message from a child** (a disclosure of harm, for instance) would quietly become a hat. Whether and how to respond is a policy decision for the owner, not a filter.
 8. **A tune can undo safety training**, and the card does not say whether Meta's survives one. Any v2 tune must re-pass the red-team gate before it ships.
 9. **Process and law, for the owner:** the amended COPPA Rule's compliance date was 2026-04-22 (a written data security program and retention policy, notices, consent; a persistent device id, a photo or a voice recording is personal information); EU AI Act Article 50 applies from 2026-08-02 (tell people when they deal with AI and mark synthetic content; reported grace until 2026-12-02 to add the machine-readable marking for systems already on the market); the UK Children's Code was not researched here (a data protection impact assessment is its usual instrument). One child-risk assessment can serve the Glimmer deployer duty, COPPA and the Children's Code together.
@@ -467,7 +465,7 @@ catalog and by 560 real model-written names (none flagged): "con" (rude in Frenc
 not on the severe lists at all, and each exception is in the generator with its reason.** Identity terms ("homosexual", "lésbica") are exempt: refusing "a hat for my two moms" would fail real families. The mild toilet words children use
 ("caca", "pipi", "pedo", "poop") are allowed. *Known limits, each a test:* letters spaced apart, glued words, other misspellings, languages outside the seven, Turkish typed without its letters, and meaning ("a hat that hurts people" passes).
 *Needs a human:* a native read of the six translated age-fit lists and of all the severe lists (none has had one: `REVIEW_STATE` says so); Dan's calls on the toilet words and identity terms above; and the still-open policy question of what is allowed in a wish
-(today "scary" is refused on input and output alike, while "dragon" passes: the tiering could make the age-fit tier output-only). Tested by 31 tests (three mutation-checked) and the 1,500 that touch `kidSafeText`.
+("scary" is allowed since 2026-11-04, Dan, in all seven languages; the age-fit tier could still be made output-only, not built). Tested by 31 tests (three mutation-checked) and the 1,500 that touch `kidSafeText`.
 
 **What strict would add, in order of value for effort:**
 

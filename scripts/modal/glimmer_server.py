@@ -36,8 +36,13 @@ Setup (once, by you; nothing below prints a secret):
      and its 27 to 31 s median (recomputed from the saved results).
 
 Cost (Modal list prices read 2026-11-01, check live): L40S about $1.95 an hour while a container is up. With MIN_CONTAINERS = 0 it scales to zero after
-SCALEDOWN_MINUTES idle, so a cold first request waits for the container and for the 17 GB model to load (allow a few minutes). Set MIN_CONTAINERS = 1 for a
-demo day (about $47 a day) and back to 0 afterwards.
+SCALEDOWN_MINUTES idle, so a cold first request waits for the container and for the 17 GB model to load (allow a few minutes).
+
+DEMO DAY (set 2026-11-04, Dan): MIN_CONTAINERS now defaults to 1, so one container stays up and the first child never waits for a cold start. That is about $47 a day for as long as
+this version is deployed, whether or not anyone uses it. When the demo is over, go back to scale-to-zero with
+    GLIMMER_MIN_CONTAINERS=0 modal deploy scripts/modal/glimmer_server.py
+(the variable is read when you deploy, on your machine; a plain `modal deploy` uses 1). It takes effect on the next deploy, not before: the container that is running now was
+deployed with 0.
 """
 
 import os
@@ -52,7 +57,7 @@ MINUTES = 60
 
 # ---- settings you may change -------------------------------------------------------------------------------------------------------------------------
 GPU = "L40S"  # 48 GB. The 17 GB build plus the drafter and a 16k context is about 20 GB, so "A10" (24 GB) is the tight, cheaper option.
-MIN_CONTAINERS = 0
+MIN_CONTAINERS = int(os.environ.get("GLIMMER_MIN_CONTAINERS", "1"))  # 1 = always warm (about $47 a day); GLIMMER_MIN_CONTAINERS=0 at deploy time scales to zero
 SCALEDOWN_MINUTES = 10
 CONTEXT_TOKENS = 16384  # shared by the slots below: 8192 each. The make prompt is about 3k tokens and the reply under 2k.
 SLOTS = 2
