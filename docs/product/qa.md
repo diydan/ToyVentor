@@ -285,15 +285,15 @@ Traps: run one browser script at a time (`e2e-chrome` launches its own Chrome an
 
 ## 10. Results log
 
-Date ____ commit ____ URL ____ tester ____
+Date 2026-11-04 (partly filled at 11:45 CET by the pick-up lane; the empty rows are not done) commit `4edda11` (live) URL https://toyventor.com tester ____
 
 | Check | Pass / fail | Note |
 | --- | --- | --- |
 | 1.1 robot gates | | |
-| 1.4 clean export loads | | |
+| 1.4 clean export loads | pass | On `cefb962` (a clean export, not `4edda11`): `npm run build` exit 0; six benches ready, no failed request; the script then hung at teardown and was stopped. Not rerun on `4edda11`. |
 | 1.5 secrets and migrations | | |
-| 3 live smoke | | |
-| 3 `/api/health` as expected | | |
+| 3 live smoke | pass | `smoke-live.mjs https://toyventor.com --commit 4edda11`: 19 passed, 0 failed (146 `public/kip` files byte-identical, `/sw.js` is `toyventor-v7`, the game and the Kip, Truck and Yard benches ready, nothing threw). It compares `public/kip` and the cache name, not the Worker code. Also byte-identical to `3dd7ae3`, which changed tests only. |
+| 3 `/api/health` as expected | pass | `ok`, `samConfigured`, `museConfigured`, `selfieCloud`, `forgeOptimizerConfigured`, `voiceConfigured` all true (11:30 CET). `GET /api/transcribe` and `GET /api/theme-song` say `enabled:true`. |
 | 4.1 demo run, time ____ s | | |
 | 4.2 gate on the live Worker | | |
 | 4.3 room photo | | |

@@ -5,7 +5,7 @@
 **Updated 2026-11-04.** Text to part (F1) is built and is in the Nov 4 build, on the hosted model. The own-model track is no longer only a stretch: the Meta Model API
 terms bar under-18 users and products aimed at them (`docs/decisions/0008-meta-models-and-under-18-users.md`), so **base Muse Glimmer, self-hosted and prompted, is v1 for
 child-facing use, and the tuned model is v2, after the hackathon.** Prompt workflows stay the fallback throughout. This table is the one place to see where things stand; the detail is
-in the sections it names. Nothing is deployed.
+in the sections it names. **Deployed 2026-11-04 09:54 UTC** (Worker version `02c828d4`; the live `/kip` files are byte-identical to `4edda11`, checked with `scripts/smoke-live.mjs`); what was committed after that is not live.
 
 | Item | State | Evidence, and where it is written up |
 | --- | --- | --- |
@@ -14,12 +14,15 @@ in the sections it names. Nothing is deployed.
 | Names in seven languages, spoken names, waiting strip | Built | "Naming and the waiting state" |
 | Ready-made fallback, colour choice, worn part kept across a reload | Built | "Ear search capped, and the ready-made fallback built", "Colour choice built", "The worn part is kept across a reload" |
 | F2b photo outline | Built by the photo lane; a real print-and-stick and the fit budget are open | that lane's notes |
-| F4, F5, F6, A2, A4 to A6 | Not built | "Phases" |
+| Camera pick-up (a live camera view, SAM cuts the object out, it flies into Kip's hand; the game's Kip then holds it; the moment-song button) | Built, committed and live 2026-11-04; **never tried by a person on a phone, nor with the real SAM on a real object** | `docs/product/close-out-checklist.md` rows 3 and 4; `scripts/e2e-kip-pickup.mjs` 53 checks, `scripts/e2e-game-pickup-chain.mjs` 17 |
+| A1 Scan Assist, and naming the held object (`POST /api/scan {nameIt}`) | Built (hosted model only), live: answers `configured:true`; screened names only (no person, body part or surface) | `worker/nameIt.ts`, `tests/name-it.test.ts`; never run on a real photo of an object |
+| F4, F5, A2, A4 to A6 | Not built | "Phases" |
+| F6 Finish it (a prototyped brick toy becomes one polished piece, or as few as needed, for the game and for printing) | Not built; the brief is decided (printing first, one piece or as few as needed); open question 9 holds the rest | "F6 pipeline", stretch item 10 |
 | Model switch (`worker/modelBackend.ts`) | Built: hosted, self or off, per capability, fails closed. On it: text to part, Create mode, Describe & Build, and SAM, the image model and the photo-nouns look (hosted only: no adapter for our own models yet) | decision 0008, "The switch" |
 | Glimmer v1 (base, prompted, Modal L40S) | Serving and measured; not the default | 33 of 37 printable, all 33 returned printable, 4 endpoint failures, 1 brand slip ("Self-hosted Glimmer replaces Spark") |
 | Glimmer v2 (tuned) | **Two pilots trained and evaluated 2026-11-04; the decision rule said DO NOT SHIP for both; nothing tuned is in use** | "Tuning readiness": `npm run tune:check`, runbook `scripts/tuning/README.md` |
 | Under-18 terms | Decision recorded: hosted for the Nov 4 demo only (adults operating), self-hosted for child-facing use | decision 0008 |
-| Deployment | None verified from here. **Commit `5c5b383` (Dan) adds the maker as a Cloudflare Container behind a service binding**, which would answer the old gap that the daemon only runs on one Mac; I have not checked that it is deployed or works. Open: Cloudflare rate-limit rules on `/api/forge/make` and `/api/forge/warm`, the `VOICE_SIGNING_KEY` secret, a daemon the deployed Worker can reach | "Real-stack check" runbook |
+| Deployment | **Live since 2026-11-04 09:54 UTC.** `/api/health` says `forgeOptimizerConfigured:true` and `voiceConfigured:true`. The maker runs as a Cloudflare Container behind a service binding (`5c5b383`); two live wishes took 21.8 s and 21.9 s earlier that day; **it was not asked again after this deploy.** Open: Cloudflare rate-limit rules on `/api/forge/make` and `/api/forge/warm`, the `VOICE_SIGNING_KEY` secret, a daemon the deployed Worker can reach | "Real-stack check" runbook |
 
 ## Rule
 

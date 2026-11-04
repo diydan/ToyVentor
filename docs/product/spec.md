@@ -215,13 +215,15 @@ from reviewed stems. No toy photo or model weights leave the approved path.
 | Kip Describe & Build | Curated `fit_matrix`-validated recipe book live; custom endpoint opt-in. |
 | STEM drafts | Muse Spark, human-reviewed. |
 | Forge AI Recipe v1, Scan Assist, Build Coach | Stretch ([forge-ai-spec.md](../specs/forge-ai-spec.md)). |
-| Voice transcription (`muse-voice-transcribe-1.0`) | Stretch; demo uses browser speech. |
-| Theme songs and loops | Stretch; synth stand-ins today. |
+| Voice transcription (`muse-voice-transcribe-1.0`) | Live for the demo only, through Meta's hosted model, adults speaking (an exception recorded in decision 0008); our own Whisper is written, not deployed. |
+| Theme songs and loops | Built and live (`/api/theme-song` says enabled): a sung theme song from a description, a player with Pause/Play/Stop and a karaoke line, metered per device; a song about a camera pick-up is a button. No real song made from a pick-up yet. |
+| Camera pick-up (point the camera at a spoon or a guitar) | Built, committed and live: a camera view with an overlay on a still frame, SAM cut-out, Kip holds it, then the game's Kip. Not tracked AR. Not yet tried on a real phone. |
 
 Two rejections stand: models never emit raw untrusted meshes (models may only
 propose parameters or part assemblies that deterministic gated code builds and
-verifies, because one failed kid print collapses the pitch), and songs are
-never generated live (latency and mood whiplash); only the Reveal theme is
+verifies, because one failed kid print collapses the pitch), and songs are not
+generated live (latency and mood whiplash), with one exception: the theme song,
+generated live from its description when it is asked for; the Reveal theme is
 generated ahead of time or synthesized deterministically.
 
 
@@ -233,7 +235,7 @@ generated ahead of time or synthesized deterministically.
 | Builder | Grid snapping, live checks, two-archetype Build sheet | Part library made ahead |
 | Play | Live STL hero rigs + procedural fallback, 6-district ring, STEM XP | Town Phases B-E stretch |
 | 3D print | Verified STL/GLB + Kip `.3mf` plate & sticker packs | Delivery handoff; `F1`/`F2` bench coupon pending |
-| Reveal | Entrance animation, card, synth theme | External song API not wired |
+| Reveal | Entrance animation, card, synth theme | The sung theme song exists (see above); the reveal itself still uses the synth theme |
 | Packs | Seeded daily pulls with equip flow | Billing |
 | Pro & Pro Powered Add-On lines | TU-lattice beams, pins, gears, Motion, Rank 6 powered-module trays | Live electronics bench test pending |
 
