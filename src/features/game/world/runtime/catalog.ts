@@ -9,6 +9,7 @@
 // only the part registry and helper signatures are annotated.
 
 import { KIP_DEFAULT_CHARACTER, KIP_DEFAULT_COL, KIP_SKIN_TONES } from "./kipLook";
+import type { WorldLook } from "../../../../../shared/worldBrief";
 
 /* ---------- data ---------- */
 export interface StatDef {
@@ -153,8 +154,9 @@ export interface WorldExtrasDef {
   puddles?: number;
   sea?: number;
   shells?: number;
-  wall?: number;
-  rug?: number;
+  /** 1 for the Toy Room's own wall and rug, or the config a generated indoor look draws them from (worldLook.ts `roomLookExtras`). */
+  wall?: number | { base: string; stripe: string; motif: string; pattern: string };
+  rug?: number | { cols: string[] };
   snowfall?: number;
   aurora?: number;
 }
@@ -241,6 +243,8 @@ export interface LevelDef {
   place?: "indoor" | "outdoor";
   /** Optional seed code when the level was composed by levelKit.ts, so it can be shared and replayed. */
   seed?: string;
+  /** Optional: a generated look (shared/worldBrief.ts WorldLook, docs/specs/generated-worlds-spec.md): its own sky, fog and ground colours for day and night, and the key its backdrop art is stored under. The base `theme` still decides the physics, props and missions. */
+  look?: WorldLook;
   props: LevelPropRef[];
   spots: LevelSpotRef[];
   missions?: LevelMissionRef[];
@@ -294,7 +298,7 @@ export var MOOD_DEF: Record<string, { night: boolean; sky: [string, string, stri
  dusk:{night:true,sky:["#1d1b5c","#a24f84","#ffb27a"],fog:0x4a2f66},
  night:{night:true,sky:["#060d2c","#16226a","#463f9e"],fog:0x1d2470}
 };
-export function levelWorld(L: { theme: string; mood?: string; place?: string; name?: string; props?: LevelPropRef[]; spots?: LevelSpotRef[]; missions?: LevelMissionRef[] }): WorldDef {var b=THEME_DEF[L.theme]||THEME_DEF.garden,w: Record<string, any>={};for(var k in b)w[k]=b[k];w.n=L.name||"My world";w.theme=L.theme;
+export function levelWorld(L: { theme: string; mood?: string; place?: string; name?: string; look?: WorldLook; props?: LevelPropRef[]; spots?: LevelSpotRef[]; missions?: LevelMissionRef[] }): WorldDef {var b=THEME_DEF[L.theme]||THEME_DEF.garden,w: Record<string, any>={};for(var k in b)w[k]=b[k];w.n=L.name||"My world";w.theme=L.theme;if(L.look)w.gen=L.look;
  var md=L.mood?MOOD_DEF[L.mood]:undefined;if(md){w.mood=L.mood;w.night=md.night;w.sky=md.sky.slice();w.fog=md.fog}
  if(L.place==="indoor"||L.place==="outdoor")w.place=L.place;
  w.props=(L.props||[]).filter(function(p){return PROPS[p.type]}).map(function(p){var d=PROPS[p.type] as PropDef,a: [string, number, number, (number | string)?]=[p.type,p.x,p.z!=null?p.z:d.z];if(p.y!=null||d.y!=null)a.push(p.y!=null?p.y:(d.y as number));else if(p.type==="lantern"&&L.theme==="junk")a.push("#ff9d5c");return a});

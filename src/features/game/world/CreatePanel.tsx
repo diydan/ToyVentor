@@ -114,6 +114,30 @@ export function CreatePanel({ snapshot, onClose, onMake, onAction }: CreatePanel
         </div>
       )}
 
+      {snapshot.wishes.length > 0 && (
+        <div className="tv-cr-chips tv-cr-wishes" role="group" aria-label="Wish worlds">
+          {snapshot.wishes.map((wish) => (
+            <button
+              key={wish.id}
+              type="button"
+              className="tv-crc tv-crc-wish"
+              disabled={snapshot.busy}
+              onClick={() => onAction(`wish:${wish.id}`)}
+            >
+              {wish.name}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {snapshot.lookName && (
+        <div className="tv-ed-row">
+          <button type="button" className="tv-ctl" disabled={snapshot.busy} onClick={() => onAction("unlook")}>
+            Remove the AI-made look
+          </button>
+        </div>
+      )}
+
       <div className="tv-fg-b">
         <button
           type="button"

@@ -20,6 +20,8 @@ export interface CrSnapshot {
   canUndo: boolean;
   codeVisible: boolean;
   micAvailable: boolean;
+  wishes: Array<{ id: string; name: string }>;
+  lookName: string | null;
   recipe: unknown;
 }
 
@@ -41,11 +43,15 @@ export function createData(args: {
   canUndo: boolean;
   codeVisible: boolean;
   micAvailable: boolean;
+  wishes?: Array<{ id: string; name: string }>;
+  /** The AI-made look the world wears, if any: shown as its own card, labelled. */
+  lookName?: string | null;
   recipe: unknown;
 }): CrSnapshot {
   const cards: CrCard[] = [];
   if (args.themeName !== null) {
     cards.push({ title: "Place", text: args.themeName });
+    if (args.lookName) cards.push({ title: "Look", text: `${args.lookName} (AI-made)` });
     const ordered = args.spots.slice().sort((a, b) => a.x - b.x);
     ordered.forEach((spot, i) => {
       cards.push({
@@ -73,6 +79,8 @@ export function createData(args: {
     canUndo: args.canUndo,
     codeVisible: args.codeVisible,
     micAvailable: args.micAvailable,
+    wishes: args.wishes ?? [],
+    lookName: args.lookName ?? null,
     recipe: args.recipe,
   };
 }

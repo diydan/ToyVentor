@@ -70,14 +70,14 @@ export type Look = "day" | "night";
  * islands, the Beach's dunes with palms and a hut, Snow Peak's hills with pines and an igloo, the Junkyard's piles of tyres, barrels and a crane (art: scripts/gen-backdrops.mjs). The lane, the
  * ground line and the depths are the same everywhere (every world's ground slab is the same), so a world differs only in its pictures and how much of the slice its mid fills.
  */
-const worldBackdrop = (far: string, mid: string, midTint: number, midFit: number): BackdropSpec => ({
+export const worldBackdrop = (far: string, mid: string, midTint: number, midFit: number): BackdropSpec => ({
   laneLo: 3, laneHi: 41, groundEdgeZ: -10,
   layers: [
     { id: "far", url: far, z: -34, f: 0.85, fitFrac: 1.0, tint: 0xffffff, alpha: false },
     { id: "mid", url: mid, z: -22, f: 0.65, fitFrac: midFit, tint: midTint, alpha: true },
   ],
 });
-const NIGHT_MID = 0x9aa6e0;
+export const NIGHT_MID = 0x9aa6e0;
 export const BACKDROPS: Record<string, Record<Look, BackdropSpec>> = {
   garden: { night: GARDEN_BACKDROP, day: worldBackdrop(gardenFarDay, gardenMid, 0xffffff, 0.86) },
   sky: { day: worldBackdrop(skyFarDay, skyMid, 0xffffff, 0.5), night: worldBackdrop(skyFarNight, skyMid, NIGHT_MID, 0.5) },
@@ -85,10 +85,32 @@ export const BACKDROPS: Record<string, Record<Look, BackdropSpec>> = {
   snow: { day: worldBackdrop(snowFarDay, snowMid, 0xffffff, 0.55), night: worldBackdrop(snowFarNight, snowMid, NIGHT_MID, 0.55) },
   junk: { day: worldBackdrop(junkFarDay, junkMid, 0xffffff, 0.42), night: worldBackdrop(junkFarNight, junkMid, NIGHT_MID, 0.42) },
 };
-/** The backdrop of a world (its id or theme) in a look, or null: a world with no entry keeps whatever it has (the Toy Room is a flat wall by design), and so does a world with no look. */
-export function backdropFor(theme: string, look: string): BackdropSpec | null {
+/** The art of a generated world: URLs of its far bands and its mid strip (bundled assets for the showcase worlds, object URLs for art made on the device). A missing piece means that look has no entry. */
+export interface GeneratedArt { farDay?: string | null; farNight?: string | null; mid?: string | null }
+/** How much of the slice a generated mid strip fills: like the Beach's and Snow Peak's (the strips are the same 8:1 shape and about as full). */
+export const GENERATED_MID_FIT = 0.55;
+/** The backdrops of a generated world, per look: a look needs its far band AND the mid strip (day untinted, night tinted cool like every other world's). */
+export function generatedBackdrops(art: GeneratedArt, midFit: number = GENERATED_MID_FIT): Partial<Record<Look, BackdropSpec>> {
+  const out: Partial<Record<Look, BackdropSpec>> = {};
+  if (art.mid && art.farDay) out.day = worldBackdrop(art.farDay, art.mid, 0xffffff, midFit);
+  if (art.mid && art.farNight) out.night = worldBackdrop(art.farNight, art.mid, NIGHT_MID, midFit);
+  return out;
+}
+const GENERATED: Record<string, Partial<Record<Look, BackdropSpec>>> = Object.create(null);
+/** Give a generated world (its `look.id`) its own backdrops. Replaces an earlier registration under the same key. */
+export function registerBackdrop(key: string, specs: Partial<Record<Look, BackdropSpec>>): void { GENERATED[key] = specs; }
+export function unregisterBackdrop(key: string): void { delete GENERATED[key]; }
+export const isBackdropRegistered = (key: string): boolean => key in GENERATED;
+
+/**
+ * The backdrop of a world in a look, or null: a world with no entry keeps whatever it has (the Toy Room is a flat wall by design), and so does a world with no look. A generated world (`genKey`, its look id) is asked
+ * first; a look it has no art for (a layer failed, or it was never made) falls back to its BASE THEME's own art, so a world always has a backdrop where its theme has one.
+ */
+export function backdropFor(theme: string, look: string, genKey?: string | null): BackdropSpec | null {
+  if (look !== "day" && look !== "night") return null;
+  if (genKey && genKey in GENERATED) { const g = GENERATED[genKey]![look]; if (g) return g; }
   if (!Object.prototype.hasOwnProperty.call(BACKDROPS, theme)) return null;                  // (not the Object prototype's "toString" and friends)
-  return look === "day" || look === "night" ? BACKDROPS[theme]![look] : null;
+  return BACKDROPS[theme]![look];
 }
 
 /** How far a layer's base hides below the ground line, so no hairline gap can show between the layer and the slab in front of it. */

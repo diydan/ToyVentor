@@ -1,0 +1,30 @@
+{
+  "name": "Little Sailor Cove",
+  "kind": "indoor",
+  "day": {
+    "sky": [
+      "#ffe8b5",
+      "#aee3ff",
+      "#fff6db"
+    ],
+    "fog": "#d6eeff",
+    "ground": "#f5c98a"
+  },
+  "night": {
+    "sky": [
+      "#ffe8b5",
+      "#aee3ff",
+      "#fff6db"
+    ],
+    "fog": "#d6eeff",
+    "ground": "#f5c98a"
+  },
+  "far": "",
+  "mid": "",
+  "room": {
+    "wall": "stripes",
+    "floor": "wood",
+    "accent": "#ff8a5c"
+  },
+  "say": "Time for cozy waves and happy dreams!"
+}

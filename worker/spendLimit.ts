@@ -23,6 +23,8 @@ export const METERED_PATHS: ReadonlySet<string> = new Set([
   "/api/forge/make",
   "/api/describe",
   "/api/muse/spark",
+  "/api/world/look", // a world's look: one text call, then three image calls through /api/world/art
+  "/api/world/art",
   "/api/scan",
   "/api/skin",
   "/api/theme-song", // starting a song; its polls are /api/theme-song/<id>

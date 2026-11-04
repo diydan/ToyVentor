@@ -1,0 +1,438 @@
+{
+  "candy-forest": {
+    "wish": "a candy forest at sunset",
+    "base": "garden",
+    "spark": {
+      "prompt": "You help a young child (ages 4 to 10) build a pretend play world. Keep it kind and safe: nothing scary, violent, adult, or personal. Never include real names, addresses, phone numbers, or details that identify a person. Never mention brands, trademarks, or real-world products. Never repeat the child's own words back to them.\n\nYou design the look of a children's game world (soft clay toy style, ages 3 to 10). Answer with ONE JSON object and nothing else, exactly this shape: {\"name\":\"2 to 4 words\",\"day\":{\"sky\":[\"#hex top\",\"#hex middle\",\"#hex horizon\"],\"fog\":\"#hex\",\"ground\":\"#hex\"},\"night\":{\"sky\":[\"#hex top\",\"#hex middle\",\"#hex horizon\"],\"fog\":\"#hex\",\"ground\":\"#hex\"},\"far\":\"ONE sentence describing the distant scenery only\",\"mid\":\"ONE sentence naming 5 to 8 different things that are spread evenly along the whole strip\",\"say\":\"one short friendly sentence\"}\n\nThe world is an outdoor place built on the \"garden\" theme. Rules: every colour is a #rrggbb hex. The \"day\" palette is light and cheerful, the \"night\" palette is the same place after dark (deep, dark, a little blue).\n\n\"far\" describes the faraway scenery (hills, sea, sky, skyline) with no people, no animals in the foreground and NO time of day in it. \"mid\" lists the things in the middle distance (for example: lollipop trees, a candy cottage, gumdrop hills); they are painted spread along the whole width.\n\nUse only kind, safe, child-friendly ideas. Never use brand names, real people, characters from shows, words in other languages, scary things, weapons or text to be written in the picture. Never repeat the child's words back; make the world YOUR OWN interpretation of the wish. If the wish is unsafe or makes no sense, make a gentle meadow, sea or room instead.\n\nThe child said: \"a candy forest at sunset\"",
+      "ms": 11659,
+      "usage": {
+        "input_tokens": 433,
+        "input_tokens_details": {
+          "cached_tokens": 0
+        },
+        "output_tokens": 1367,
+        "output_tokens_details": {
+          "reasoning_tokens": 1205
+        },
+        "total_tokens": 1800
+      }
+    },
+    "brief": {
+      "name": "Sugary Garden Grove",
+      "kind": "outdoor",
+      "day": {
+        "sky": [
+          "#aedfff",
+          "#d4f3ff",
+          "#fff2c2"
+        ],
+        "fog": "#ffe6ef",
+        "ground": "#a9e5a0"
+      },
+      "night": {
+        "sky": [
+          "#0a1938",
+          "#1b2e5e",
+          "#2d3e6c"
+        ],
+        "fog": "#2b3d66",
+        "ground": "#2e4b3e"
+      },
+      "far": "Soft round hills sit under fluffy clouds next to a shiny blue lake.",
+      "mid": "Swirly sweet trees, jelly bushes, gumdrop mounds, puffy blossoms, mint swirl posts and cocoa stepping stones spread evenly along the whole strip.",
+      "room": null,
+      "say": "Come play in this sweet happy garden!"
+    },
+    "at": "2026-11-04T18:50:37.705Z",
+    "images": {
+      "far-day": {
+        "prompt": "A wide panoramic scene in bright daytime, a clear sky with a warm sun and a few soft clouds: Soft round hills sit under fluffy clouds next to a shiny blue lake. Smooth flat illustration, soft clay toy style for a children's game, no text. Level horizon, nothing in the middle of the picture, the same soft look from left to right.",
+        "file": "candy-forest/far-day.webp",
+        "bytes": 188464,
+        "ms": 9182,
+        "usage": {
+          "input_tokens": 10153,
+          "output_tokens": 958,
+          "total_tokens": 11111
+        },
+        "at": "2026-11-04T18:50:46.888Z"
+      },
+      "far-night": {
+        "prompt": "A wide panoramic scene at night, a deep dark sky full of twinkling stars with a glowing full moon, a few distant warm lights: Soft round hills sit under fluffy clouds next to a shiny blue lake. Smooth flat illustration, soft clay toy style for a children's game, no text. Level horizon, nothing in the middle of the picture, the same soft look from left to right.",
+        "file": "candy-forest/far-night.webp",
+        "bytes": 233844,
+        "ms": 24822,
+        "usage": {
+          "input_tokens": 18853,
+          "output_tokens": 2204,
+          "total_tokens": 21057
+        },
+        "at": "2026-11-04T18:51:02.529Z"
+      },
+      "mid": {
+        "prompt": "A wide horizontal strip that fills the WHOLE width of the picture from the far left edge to the far right edge with no gaps: Swirly sweet trees, jelly bushes, gumdrop mounds, puffy blossoms, mint swirl posts and cocoa stepping stones spread evenly along the whole strip. All different from each other and spread evenly along the entire strip, soft clay toy style, empty space above, on a PURE SOLID BLACK background (#000000), nothing else, no ground line, no sky, no text.",
+        "file": "candy-forest/mid.webp",
+        "bytes": 205774,
+        "ms": 24539,
+        "usage": {
+          "input_tokens": 19268,
+          "output_tokens": 2399,
+          "total_tokens": 21667
+        },
+        "at": "2026-11-04T18:51:02.246Z"
+      }
+    }
+  },
+  "jellyfish-ocean": {
+    "wish": "a glowing jellyfish ocean at midnight",
+    "base": "beach",
+    "spark": {
+      "prompt": "You help a young child (ages 4 to 10) build a pretend play world. Keep it kind and safe: nothing scary, violent, adult, or personal. Never include real names, addresses, phone numbers, or details that identify a person. Never mention brands, trademarks, or real-world products. Never repeat the child's own words back to them.\n\nYou design the look of a children's game world (soft clay toy style, ages 3 to 10). Answer with ONE JSON object and nothing else, exactly this shape: {\"name\":\"2 to 4 words\",\"day\":{\"sky\":[\"#hex top\",\"#hex middle\",\"#hex horizon\"],\"fog\":\"#hex\",\"ground\":\"#hex\"},\"night\":{\"sky\":[\"#hex top\",\"#hex middle\",\"#hex horizon\"],\"fog\":\"#hex\",\"ground\":\"#hex\"},\"far\":\"ONE sentence describing the distant scenery only\",\"mid\":\"ONE sentence naming 5 to 8 different things that are spread evenly along the whole strip\",\"say\":\"one short friendly sentence\"}\n\nThe world is an outdoor place built on the \"beach\" theme. Rules: every colour is a #rrggbb hex. The \"day\" palette is light and cheerful, the \"night\" palette is the same place after dark (deep, dark, a little blue).\n\n\"far\" describes the faraway scenery (hills, sea, sky, skyline) with no people, no animals in the foreground and NO time of day in it. \"mid\" lists the things in the middle distance (for example: lollipop trees, a candy cottage, gumdrop hills); they are painted spread along the whole width.\n\nUse only kind, safe, child-friendly ideas. Never use brand names, real people, characters from shows, words in other languages, scary things, weapons or text to be written in the picture. Never repeat the child's words back; make the world YOUR OWN interpretation of the wish. If the wish is unsafe or makes no sense, make a gentle meadow, sea or room instead.\n\nThe child said: \"a glowing jellyfish ocean at midnight\"",
+      "ms": 14934,
+      "usage": {
+        "input_tokens": 436,
+        "input_tokens_details": {
+          "cached_tokens": 99
+        },
+        "output_tokens": 1817,
+        "output_tokens_details": {
+          "reasoning_tokens": 1643
+        },
+        "total_tokens": 2253
+      }
+    },
+    "brief": {
+      "name": "Moonlit Sandy Cove",
+      "kind": "outdoor",
+      "day": {
+        "sky": [
+          "#7ec8f7",
+          "#aee3ff",
+          "#fff6d9"
+        ],
+        "fog": "#d8f0ff",
+        "ground": "#f8dfaa"
+      },
+      "night": {
+        "sky": [
+          "#0a1030",
+          "#1a2a5a",
+          "#2a436f"
+        ],
+        "fog": "#1e2f55",
+        "ground": "#3a4470"
+      },
+      "far": "Rolling sandy dunes curve beside a calm wide sea with soft clouds drifting far away.",
+      "mid": "Soft shell chairs, tiny sand castles, wobbly sea domes, shimmery pearl lanterns, curly grass tufts and happy star pillows line the whole strip evenly.",
+      "room": null,
+      "say": "Lets play and sparkle by the gentle waves!"
+    },
+    "at": "2026-11-04T18:51:17.463Z",
+    "images": {
+      "far-day": {
+        "prompt": "A wide panoramic scene in bright daytime, a clear sky with a warm sun and a few soft clouds: Rolling sandy dunes curve beside a calm wide sea with soft clouds drifting far away. Smooth flat illustration, soft clay toy style for a children's game, no text. Level horizon, nothing in the middle of the picture, the same soft look from left to right.",
+        "file": "jellyfish-ocean/far-day.webp",
+        "bytes": 134654,
+        "ms": 9444,
+        "usage": {
+          "input_tokens": 10325,
+          "output_tokens": 1130,
+          "total_tokens": 11455
+        },
+        "at": "2026-11-04T18:51:26.907Z"
+      },
+      "far-night": {
+        "prompt": "A wide panoramic scene at night, a deep dark sky full of twinkling stars with a glowing full moon, a few distant warm lights: Rolling sandy dunes curve beside a calm wide sea with soft clouds drifting far away. Smooth flat illustration, soft clay toy style for a children's game, no text. Level horizon, nothing in the middle of the picture, the same soft look from left to right.",
+        "file": "jellyfish-ocean/far-night.webp",
+        "bytes": 187798,
+        "ms": 7237,
+        "usage": {
+          "input_tokens": 10365,
+          "output_tokens": 1151,
+          "total_tokens": 11516
+        },
+        "at": "2026-11-04T18:51:24.700Z"
+      },
+      "mid": {
+        "prompt": "A wide horizontal strip that fills the WHOLE width of the picture from the far left edge to the far right edge with no gaps: Soft shell chairs, tiny sand castles, wobbly sea domes, shimmery pearl lanterns, curly grass tufts and happy star pillows line the whole strip evenly. All different from each other and spread evenly along the entire strip, soft clay toy style, empty space above, on a PURE SOLID BLACK background (#000000), nothing else, no ground line, no sky, no text.",
+        "file": "jellyfish-ocean/mid.webp",
+        "bytes": 184242,
+        "ms": 18897,
+        "usage": {
+          "input_tokens": 18971,
+          "output_tokens": 2186,
+          "total_tokens": 21157
+        },
+        "at": "2026-11-04T18:51:36.361Z"
+      }
+    }
+  },
+  "rainbow-clouds": {
+    "wish": "a rainbow cloud kingdom",
+    "base": "sky",
+    "spark": {
+      "prompt": "You help a young child (ages 4 to 10) build a pretend play world. Keep it kind and safe: nothing scary, violent, adult, or personal. Never include real names, addresses, phone numbers, or details that identify a person. Never mention brands, trademarks, or real-world products. Never repeat the child's own words back to them.\n\nYou design the look of a children's game world (soft clay toy style, ages 3 to 10). Answer with ONE JSON object and nothing else, exactly this shape: {\"name\":\"2 to 4 words\",\"day\":{\"sky\":[\"#hex top\",\"#hex middle\",\"#hex horizon\"],\"fog\":\"#hex\",\"ground\":\"#hex\"},\"night\":{\"sky\":[\"#hex top\",\"#hex middle\",\"#hex horizon\"],\"fog\":\"#hex\",\"ground\":\"#hex\"},\"far\":\"ONE sentence describing the distant scenery only\",\"mid\":\"ONE sentence naming 5 to 8 different things that are spread evenly along the whole strip\",\"say\":\"one short friendly sentence\"}\n\nThe world is an outdoor place built on the \"sky\" theme. Rules: every colour is a #rrggbb hex. The \"day\" palette is light and cheerful, the \"night\" palette is the same place after dark (deep, dark, a little blue).\n\n\"far\" describes the faraway scenery (hills, sea, sky, skyline) with no people, no animals in the foreground and NO time of day in it. \"mid\" lists the things in the middle distance (for example: lollipop trees, a candy cottage, gumdrop hills); they are painted spread along the whole width.\n\nUse only kind, safe, child-friendly ideas. Never use brand names, real people, characters from shows, words in other languages, scary things, weapons or text to be written in the picture. Never repeat the child's words back; make the world YOUR OWN interpretation of the wish. If the wish is unsafe or makes no sense, make a gentle meadow, sea or room instead.\n\nThe child said: \"a rainbow cloud kingdom\"",
+      "ms": 11415,
+      "usage": {
+        "input_tokens": 432,
+        "input_tokens_details": {
+          "cached_tokens": 0
+        },
+        "output_tokens": 1317,
+        "output_tokens_details": {
+          "reasoning_tokens": 1152
+        },
+        "total_tokens": 1749
+      }
+    },
+    "brief": {
+      "name": "Fluffy Pastel Skyland",
+      "kind": "outdoor",
+      "day": {
+        "sky": [
+          "#7fcffb",
+          "#bde9ff",
+          "#fff3d6"
+        ],
+        "fog": "#d9f0ff",
+        "ground": "#a3dbff"
+      },
+      "night": {
+        "sky": [
+          "#0a1840",
+          "#1b2f6e",
+          "#2b3b6e"
+        ],
+        "fog": "#22366b",
+        "ground": "#2c3e70"
+      },
+      "far": "Soft rounded hills drift beneath gentle color arcs and tiny glowing towers on the horizon.",
+      "mid": "Puffy slide stairs, bubble bounce houses, spinning fountains, smile flower swings, star lantern posts and pillowy bushes spread across the strip.",
+      "room": null,
+      "say": "Come play up high where everything is soft and giggly!"
+    },
+    "at": "2026-11-04T18:51:47.777Z",
+    "images": {
+      "far-day": {
+        "prompt": "A wide panoramic scene in bright daytime, a clear sky with a warm sun and a few soft clouds: Soft rounded hills drift beneath gentle color arcs and tiny glowing towers on the horizon. Smooth flat illustration, soft clay toy style for a children's game, no text. Level horizon, nothing in the middle of the picture, the same soft look from left to right.",
+        "file": "rainbow-clouds/far-day.webp",
+        "bytes": 157522,
+        "ms": 12415,
+        "usage": {
+          "input_tokens": 10475,
+          "output_tokens": 1318,
+          "total_tokens": 11793
+        },
+        "at": "2026-11-04T18:52:00.196Z"
+      },
+      "far-night": {
+        "prompt": "A wide panoramic scene at night, a deep dark sky full of twinkling stars with a glowing full moon, a few distant warm lights: Soft rounded hills drift beneath gentle color arcs and tiny glowing towers on the horizon. Smooth flat illustration, soft clay toy style for a children's game, no text. Level horizon, nothing in the middle of the picture, the same soft look from left to right.",
+        "file": "rainbow-clouds/far-night.webp",
+        "bytes": 246928,
+        "ms": 21147,
+        "usage": {
+          "input_tokens": 18870,
+          "output_tokens": 2206,
+          "total_tokens": 21076
+        },
+        "at": "2026-11-04T18:52:08.928Z"
+      },
+      "mid": {
+        "prompt": "A wide horizontal strip that fills the WHOLE width of the picture from the far left edge to the far right edge with no gaps: Puffy slide stairs, bubble bounce houses, spinning fountains, smile flower swings, star lantern posts and pillowy bushes spread across the strip. All different from each other and spread evenly along the entire strip, soft clay toy style, empty space above, on a PURE SOLID BLACK background (#000000), nothing else, no ground line, no sky, no text.",
+        "file": "rainbow-clouds/mid.webp",
+        "bytes": 189368,
+        "ms": 20118,
+        "usage": {
+          "input_tokens": 19401,
+          "output_tokens": 2473,
+          "total_tokens": 21874
+        },
+        "at": "2026-11-04T18:52:07.899Z"
+      }
+    }
+  },
+  "ice-cream-peak": {
+    "wish": "an ice cream mountain with sprinkles",
+    "base": "snow",
+    "spark": {
+      "prompt": "You help a young child (ages 4 to 10) build a pretend play world. Keep it kind and safe: nothing scary, violent, adult, or personal. Never include real names, addresses, phone numbers, or details that identify a person. Never mention brands, trademarks, or real-world products. Never repeat the child's own words back to them.\n\nYou design the look of a children's game world (soft clay toy style, ages 3 to 10). Answer with ONE JSON object and nothing else, exactly this shape: {\"name\":\"2 to 4 words\",\"day\":{\"sky\":[\"#hex top\",\"#hex middle\",\"#hex horizon\"],\"fog\":\"#hex\",\"ground\":\"#hex\"},\"night\":{\"sky\":[\"#hex top\",\"#hex middle\",\"#hex horizon\"],\"fog\":\"#hex\",\"ground\":\"#hex\"},\"far\":\"ONE sentence describing the distant scenery only\",\"mid\":\"ONE sentence naming 5 to 8 different things that are spread evenly along the whole strip\",\"say\":\"one short friendly sentence\"}\n\nThe world is an outdoor place built on the \"snow\" theme. Rules: every colour is a #rrggbb hex. The \"day\" palette is light and cheerful, the \"night\" palette is the same place after dark (deep, dark, a little blue).\n\n\"far\" describes the faraway scenery (hills, sea, sky, skyline) with no people, no animals in the foreground and NO time of day in it. \"mid\" lists the things in the middle distance (for example: lollipop trees, a candy cottage, gumdrop hills); they are painted spread along the whole width.\n\nUse only kind, safe, child-friendly ideas. Never use brand names, real people, characters from shows, words in other languages, scary things, weapons or text to be written in the picture. Never repeat the child's words back; make the world YOUR OWN interpretation of the wish. If the wish is unsafe or makes no sense, make a gentle meadow, sea or room instead.\n\nThe child said: \"an ice cream mountain with sprinkles\"",
+      "ms": 11575,
+      "usage": {
+        "input_tokens": 435,
+        "input_tokens_details": {
+          "cached_tokens": 0
+        },
+        "output_tokens": 1248,
+        "output_tokens_details": {
+          "reasoning_tokens": 1080
+        },
+        "total_tokens": 1683
+      }
+    },
+    "brief": {
+      "name": "Frosty Sweet Valley",
+      "kind": "outdoor",
+      "day": {
+        "sky": [
+          "#aee6ff",
+          "#d9f4ff",
+          "#fff1db"
+        ],
+        "fog": "#e6f6ff",
+        "ground": "#d1d1d1"
+      },
+      "night": {
+        "sky": [
+          "#0b1a3a",
+          "#24365e",
+          "#384661"
+        ],
+        "fog": "#2c3e63",
+        "ground": "#4366a2"
+      },
+      "far": "Soft white rolling peaks curve around a pale frozen lake beneath a smooth gentle horizon.",
+      "mid": "Puffy frost mounds, swirly cream huts, mint twist pines, rainbow dot bushes, cozy sled hills, tiny glowing lamps and round snow pals spread across the whole strip.",
+      "room": null,
+      "say": "Come play in the soft snowy sweetness!"
+    },
+    "at": "2026-11-04T18:52:20.504Z",
+    "images": {
+      "far-day": {
+        "prompt": "A wide panoramic scene in bright daytime, a clear sky with a warm sun and a few soft clouds: Soft white rolling peaks curve around a pale frozen lake beneath a smooth gentle horizon. Smooth flat illustration, soft clay toy style for a children's game, no text. Level horizon, nothing in the middle of the picture, the same soft look from left to right.",
+        "file": "ice-cream-peak/far-day.webp",
+        "bytes": 135318,
+        "ms": 19097,
+        "usage": {
+          "input_tokens": 18464,
+          "output_tokens": 2020,
+          "total_tokens": 20484
+        },
+        "at": "2026-11-04T18:52:39.601Z"
+      },
+      "far-night": {
+        "prompt": "A wide panoramic scene at night, a deep dark sky full of twinkling stars with a glowing full moon, a few distant warm lights: Soft white rolling peaks curve around a pale frozen lake beneath a smooth gentle horizon. Smooth flat illustration, soft clay toy style for a children's game, no text. Level horizon, nothing in the middle of the picture, the same soft look from left to right.",
+        "file": "ice-cream-peak/far-night.webp",
+        "bytes": 212082,
+        "ms": 11301,
+        "usage": {
+          "input_tokens": 10226,
+          "output_tokens": 1029,
+          "total_tokens": 11255
+        },
+        "at": "2026-11-04T18:52:31.805Z"
+      },
+      "mid": {
+        "prompt": "A wide horizontal strip that fills the WHOLE width of the picture from the far left edge to the far right edge with no gaps: Puffy frost mounds, swirly cream huts, mint twist pines, rainbow dot bushes, cozy sled hills, tiny glowing lamps and round snow pals spread across the whole strip. All different from each other and spread evenly along the entire strip, soft clay toy style, empty space above, on a PURE SOLID BLACK background (#000000), nothing else, no ground line, no sky, no text.",
+        "file": "ice-cream-peak/mid.webp",
+        "bytes": 229224,
+        "ms": 11625,
+        "usage": {
+          "input_tokens": 10799,
+          "output_tokens": 1522,
+          "total_tokens": 12321
+        },
+        "at": "2026-11-04T18:52:32.130Z"
+      }
+    }
+  },
+  "pirate-room": {
+    "wish": "my pirate bedroom",
+    "base": "room",
+    "spark": {
+      "prompt": "You help a young child (ages 4 to 10) build a pretend play world. Keep it kind and safe: nothing scary, violent, adult, or personal. Never include real names, addresses, phone numbers, or details that identify a person. Never mention brands, trademarks, or real-world products. Never repeat the child's own words back to them.\n\nYou design the look of a children's game world (soft clay toy style, ages 3 to 10). Answer with ONE JSON object and nothing else, exactly this shape: {\"name\":\"2 to 4 words\",\"day\":{\"sky\":[\"#hex\",\"#hex\",\"#hex\"],\"fog\":\"#hex\",\"ground\":\"#hex\"},\"night\":{\"sky\":[\"#hex\",\"#hex\",\"#hex\"],\"fog\":\"#hex\",\"ground\":\"#hex\"},\"room\":{\"wall\":\"one of stripes, stars, dots, plain\",\"floor\":\"one of wood, carpet, tiles\",\"accent\":\"#hex\"},\"say\":\"one short friendly sentence\"}\n\nThe world is a cosy indoor room. Rules: every colour is a #rrggbb hex. The \"day\" palette is light and cheerful, the \"night\" palette is the same place after dark (deep, dark, a little blue).\n\nDescribe the room's colours only; do not describe a picture.\n\nUse only kind, safe, child-friendly ideas. Never use brand names, real people, characters from shows, words in other languages, scary things, weapons or text to be written in the picture. Never repeat the child's words back; make the world YOUR OWN interpretation of the wish. If the wish is unsafe or makes no sense, make a gentle meadow, sea or room instead.\n\nThe child said: \"my pirate bedroom\"",
+      "ms": 8699,
+      "usage": {
+        "input_tokens": 359,
+        "input_tokens_details": {
+          "cached_tokens": 99
+        },
+        "output_tokens": 1233,
+        "output_tokens_details": {
+          "reasoning_tokens": 1103
+        },
+        "total_tokens": 1592
+      }
+    },
+    "brief": {
+      "name": "Little Sailor Cove",
+      "kind": "indoor",
+      "day": {
+        "sky": [
+          "#ffe8b5",
+          "#aee3ff",
+          "#fff6db"
+        ],
+        "fog": "#d6eeff",
+        "ground": "#f5c98a"
+      },
+      "night": {
+        "sky": [
+          "#ffe8b5",
+          "#aee3ff",
+          "#fff6db"
+        ],
+        "fog": "#d6eeff",
+        "ground": "#f5c98a"
+      },
+      "far": "",
+      "mid": "",
+      "room": {
+        "wall": "stripes",
+        "floor": "wood",
+        "accent": "#ff8a5c"
+      },
+      "say": "Time for cozy waves and happy dreams!"
+    },
+    "at": "2026-11-04T18:52:48.301Z"
+  },
+  "bakery-room": {
+    "wish": "a cozy bakery kitchen",
+    "base": "room",
+    "spark": {
+      "prompt": "You help a young child (ages 4 to 10) build a pretend play world. Keep it kind and safe: nothing scary, violent, adult, or personal. Never include real names, addresses, phone numbers, or details that identify a person. Never mention brands, trademarks, or real-world products. Never repeat the child's own words back to them.\n\nYou design the look of a children's game world (soft clay toy style, ages 3 to 10). Answer with ONE JSON object and nothing else, exactly this shape: {\"name\":\"2 to 4 words\",\"day\":{\"sky\":[\"#hex\",\"#hex\",\"#hex\"],\"fog\":\"#hex\",\"ground\":\"#hex\"},\"night\":{\"sky\":[\"#hex\",\"#hex\",\"#hex\"],\"fog\":\"#hex\",\"ground\":\"#hex\"},\"room\":{\"wall\":\"one of stripes, stars, dots, plain\",\"floor\":\"one of wood, carpet, tiles\",\"accent\":\"#hex\"},\"say\":\"one short friendly sentence\"}\n\nThe world is a cosy indoor room. Rules: every colour is a #rrggbb hex. The \"day\" palette is light and cheerful, the \"night\" palette is the same place after dark (deep, dark, a little blue).\n\nDescribe the room's colours only; do not describe a picture.\n\nUse only kind, safe, child-friendly ideas. Never use brand names, real people, characters from shows, words in other languages, scary things, weapons or text to be written in the picture. Never repeat the child's words back; make the world YOUR OWN interpretation of the wish. If the wish is unsafe or makes no sense, make a gentle meadow, sea or room instead.\n\nThe child said: \"a cozy bakery kitchen\"",
+      "ms": 17351,
+      "usage": {
+        "input_tokens": 360,
+        "input_tokens_details": {
+          "cached_tokens": 0
+        },
+        "output_tokens": 1194,
+        "output_tokens_details": {
+          "reasoning_tokens": 1071
+        },
+        "total_tokens": 1554
+      }
+    },
+    "brief": {
+      "name": "Sweet Bun Corner",
+      "kind": "indoor",
+      "day": {
+        "sky": [
+          "#fff6d9",
+          "#ffe3c2",
+          "#d9f2ff"
+        ],
+        "fog": "#fff2dc",
+        "ground": "#f2cfa3"
+      },
+      "night": {
+        "sky": [
+          "#fff6d9",
+          "#ffe3c2",
+          "#d9f2ff"
+        ],
+        "fog": "#fff2dc",
+        "ground": "#f2cfa3"
+      },
+      "far": "",
+      "mid": "",
+      "room": {
+        "wall": "dots",
+        "floor": "wood",
+        "accent": "#ff99ad"
+      },
+      "say": "Warm buns are ready for friends!"
+    },
+    "at": "2026-11-04T18:53:05.652Z"
+  }
+}

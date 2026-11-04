@@ -217,7 +217,13 @@ export interface CreateCard {
   text: string;
 }
 
-export type CreateAction = "undo" | "keep" | "play" | "code" | "mic";
+/** `wish:<id>` loads one of the wish worlds (runtime/wishWorlds.ts) into Create. */
+export type CreateAction = "undo" | "keep" | "play" | "code" | "mic" | "unlook" | `wish:${string}`;
+/** A card of the Create sheet's "wish worlds" row. */
+export interface CreateWish {
+  id: string;
+  name: string;
+}
 
 /** Data-only view of legacy Create mode for React to render. */
 export interface CreateSnapshot {
@@ -230,6 +236,10 @@ export interface CreateSnapshot {
   canUndo: boolean;
   codeVisible: boolean;
   micAvailable: boolean;
+  /** The wish worlds that can be picked (a generated look, ready made). */
+  wishes: CreateWish[];
+  /** The name of the AI-made look the world wears (shown with an "AI-made" label and a way to remove it), or null. */
+  lookName: string | null;
   recipe: WorldRecipe | null;
 }
 
@@ -247,11 +257,13 @@ export const closedCreateSnapshot: CreateSnapshot = {
   canUndo: false,
   codeVisible: false,
   micAvailable: false,
+  wishes: [],
+  lookName: null,
   recipe: null,
 };
 
 export function normalizeCreateSnapshot(raw: Partial<RawCreateSnapshot> = {}): CreateSnapshot {
-  if (!raw.open) return { ...closedCreateSnapshot, chips: [], cards: [] };
+  if (!raw.open) return { ...closedCreateSnapshot, chips: [], cards: [], wishes: [] };
   return {
     open: true,
     busy: Boolean(raw.busy),
@@ -264,6 +276,8 @@ export function normalizeCreateSnapshot(raw: Partial<RawCreateSnapshot> = {}): C
     canUndo: Boolean(raw.canUndo),
     codeVisible: Boolean(raw.codeVisible),
     micAvailable: Boolean(raw.micAvailable),
+    wishes: (raw.wishes ?? []).map((w) => ({ id: cleanText(w.id), name: cleanText(w.name) })).filter((w) => w.id && w.name),
+    lookName: cleanText(raw.lookName ?? undefined) || null,
     recipe: normalizeRecipe(raw.recipe),
   };
 }
@@ -1012,6 +1026,8 @@ interface LegacyHooks {
   crPlay?: () => void;
   crCodeToggle?: () => void;
   crMicStart?: () => void;
+  crWish?: (id: string) => void;
+  crUnlook?: () => void;
   crFromTitle?: () => void;
   ed?: {
     ED?: {
@@ -1475,6 +1491,8 @@ export function createEngine(
       else if (action === "keep") api?.crKeep?.();
       else if (action === "play") api?.crPlay?.();
       else if (action === "code") api?.crCodeToggle?.();
+      else if (action === "unlook") api?.crUnlook?.();
+      else if (typeof action === "string" && action.startsWith("wish:")) api?.crWish?.(action.slice(5));
       else api?.crMicStart?.();
       poll();
     },

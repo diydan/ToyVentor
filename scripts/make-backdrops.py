@@ -91,8 +91,11 @@ def bleed_colour(rgb: np.ndarray, opaque: np.ndarray, rings: int = 6) -> np.ndar
     return out.clip(0, 255).astype(np.uint8)
 
 
-def bake_mid(src: str | None = None, name: str = "garden-mid") -> str:
-    rgb = np.asarray(Image.open(src or os.path.join(SRC, "mid-garden.png")).convert("RGB"))
+def bake_mid(src: str | None = None, name: str = "garden-mid", max_width: int | None = None) -> str:
+    img = Image.open(src or os.path.join(SRC, "mid-garden.png")).convert("RGB")
+    if max_width and img.size[0] > max_width:  # generated worlds keep the strip at most this wide (phones: memory); the raw is resized BEFORE keying, as the browser path does
+        img = img.resize((max_width, round(img.size[1] * max_width / img.size[0])), Image.LANCZOS)
+    rgb = np.asarray(img)
     bg = surround_mask(rgb)
     ys, xs = np.nonzero(~bg)
     x0, x1, y0, y1 = xs.min(), xs.max(), ys.min(), ys.max()
@@ -107,6 +110,32 @@ def bake_mid(src: str | None = None, name: str = "garden-mid") -> str:
     return f"{path}  {im.size[0]}x{im.size[1]}  {os.path.getsize(path) // 1024} KB  ({solid:.0%} opaque)"
 
 
+LOOKS_ART = os.path.join(GEN, "looks")
+LOOKS_OUT = os.path.join(OUT, "looks")
+GEN_MID_WIDTH = 2048
+
+
+def bake_looks() -> None:
+    """Bake every generated showcase world (scripts/generate-world-art.ts): each outdoor world's far day and far night band (4096 wide) and its mid strip (keyed, at most 2048 wide) into runtime/assets/looks/<id>-*.webp.
+    An indoor world has no painted layers, so nothing to bake. A world that is missing a piece is skipped with a note (the generator is resumable)."""
+    import json
+    os.makedirs(LOOKS_OUT, exist_ok=True)
+    for wid in sorted(os.listdir(LOOKS_ART)):
+        brief = os.path.join(LOOKS_ART, wid, "brief.json")
+        if not os.path.isfile(brief):
+            continue
+        if json.load(open(brief)).get("kind") != "outdoor":
+            print(f"{wid}: indoor, no painted layers")
+            continue
+        pieces = {p: os.path.join(LOOKS_ART, wid, f"{p}.webp") for p in ("far-day", "far-night", "mid")}
+        if not all(os.path.isfile(f) for f in pieces.values()):
+            print(f"{wid}: SKIPPED, missing {[p for p, f in pieces.items() if not os.path.isfile(f)]}")
+            continue
+        print(f"{wid}-far-day: {bake_far(pieces['far-day'], f'looks/{wid}-far-day')}")
+        print(f"{wid}-far-night: {bake_far(pieces['far-night'], f'looks/{wid}-far-night')}")
+        print(f"{wid}-mid: {bake_mid(pieces['mid'], f'looks/{wid}-mid', GEN_MID_WIDTH)}")
+
+
 if __name__ == "__main__":
     os.makedirs(OUT, exist_ok=True)
     if sys.argv[1:] == ["worlds"]:
@@ -114,9 +143,11 @@ if __name__ == "__main__":
             print(f"{name}: {bake_far(src, name)}")
         for name, src in WORLD_MIDS:
             print(f"{name}: {bake_mid(src, name)}")
+    elif sys.argv[1:] == ["looks"]:
+        bake_looks()
     elif not sys.argv[1:]:
         for name, fn in (("far", bake_far), ("mid", bake_mid)):
             print(f"{name}: {fn()}")
     else:
-        print("usage: make-backdrops.py [worlds]"); sys.exit(2)
+        print("usage: make-backdrops.py [worlds | looks]"); sys.exit(2)
     sys.exit(0)

@@ -1,0 +1,26 @@
+{
+  "name": "Fluffy Pastel Skyland",
+  "kind": "outdoor",
+  "day": {
+    "sky": [
+      "#7fcffb",
+      "#bde9ff",
+      "#fff3d6"
+    ],
+    "fog": "#d9f0ff",
+    "ground": "#a3dbff"
+  },
+  "night": {
+    "sky": [
+      "#0a1840",
+      "#1b2f6e",
+      "#2b3b6e"
+    ],
+    "fog": "#22366b",
+    "ground": "#2c3e70"
+  },
+  "far": "Soft rounded hills drift beneath gentle color arcs and tiny glowing towers on the horizon.",
+  "mid": "Puffy slide stairs, bubble bounce houses, spinning fountains, smile flower swings, star lantern posts and pillowy bushes spread across the strip.",
+  "room": null,
+  "say": "Come play up high where everything is soft and giggly!"
+}

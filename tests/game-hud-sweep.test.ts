@@ -109,3 +109,11 @@ describe("Demo Mode (a grown-up shows the game): the full world bar and two more
     expect(8 + 54 + gaps + 44 + gaps + rows * items + (rows - 1) * gaps + 8).toBeLessThanOrEqual(360);
   });
 });
+
+describe("Create's test-play button", () => {
+  it("'Back to making' starts beside the Kip button, not under it (half of its label was hidden)", () => {
+    const rule = body(".tv-host .tv-ed-back");
+    expect(rule).toContain("left: calc(72px + env(safe-area-inset-left, 0px))");
+    expect(rule).toContain("top: calc(12px + env(safe-area-inset-top, 0px))");
+  });
+});

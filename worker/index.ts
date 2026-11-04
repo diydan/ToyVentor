@@ -34,6 +34,7 @@ import { handleNameIt } from "./nameIt";
 import { handleRoomScan } from "./roomScan";
 import { handleSelfieCartoon, handleSelfieFaceParts, selfieCloudEnabled, type SelfieEnv } from "./selfie";
 import { spendLimited, type SpendLimitEnv } from "./spendLimit";
+import { handleWorldArt, handleWorldLook } from "./worldLook";
 import { handleVoice, voiceConfigured, type VoiceEnv } from "./voice";
 
 export interface Env
@@ -313,6 +314,9 @@ export default {
       // and gets {say, recipe} back.
       return handleMuseSpark(request, env);
     }
+    // Generated worlds (worker/worldLook.ts): a wish becomes a validated look with signed art tickets, then each ticket paints one layer. Daily budgets in D1.
+    if (url.pathname === "/api/world/look") return handleWorldLook(request, env, ctx);
+    if (url.pathname === "/api/world/art") return handleWorldArt(request, env, ctx);
 
     // Opt-in selfie cloud: SAM eyes and mouth, Muse cartoon. Off unless SELFIE_CLOUD=on; needs the parent gate and consent.
     if (url.pathname === "/api/selfie/face-parts") return handleSelfieFaceParts(request, env);

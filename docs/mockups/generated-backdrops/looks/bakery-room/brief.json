@@ -1,0 +1,30 @@
+{
+  "name": "Sweet Bun Corner",
+  "kind": "indoor",
+  "day": {
+    "sky": [
+      "#fff6d9",
+      "#ffe3c2",
+      "#d9f2ff"
+    ],
+    "fog": "#fff2dc",
+    "ground": "#f2cfa3"
+  },
+  "night": {
+    "sky": [
+      "#fff6d9",
+      "#ffe3c2",
+      "#d9f2ff"
+    ],
+    "fog": "#fff2dc",
+    "ground": "#f2cfa3"
+  },
+  "far": "",
+  "mid": "",
+  "room": {
+    "wall": "dots",
+    "floor": "wood",
+    "accent": "#ff99ad"
+  },
+  "say": "Warm buns are ready for friends!"
+}

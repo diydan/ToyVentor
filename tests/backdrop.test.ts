@@ -465,7 +465,7 @@ describe("world.ts wiring (the outdoor worlds in the look they are built in, wit
   });
   it("builds a backdrop for a world that has one, and keeps the old hills until the images are in", () => {
     expect(world).toMatch(/from "\.\/backdrop"/);
-    expect(world).toContain('var bd=backdropFor(R.theme||id,R.look||"");if(bd){');
+    expect(world).toContain('var bd=backdropFor(R.theme||id,R.look||"",R.gen?R.gen.id:null);if(bd){');
     expect(world).not.toMatch(/BACKDROPS\[/);
     expect(world).toMatch(/createBackdrop\(/);
     expect(world).toMatch(/onReady/);

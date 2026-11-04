@@ -2,15 +2,56 @@
 
 ## Status
 
-**Proposed, 2026-11-03.** Dan's ask: "work out the spec to auto generate new worlds and new custom backgrounds, outdoor (day and night) and indoor, using
-Muse/Meta AI (the LLM and Muse Image)". Feasibility was measured today against the real service (section 2, samples in
-[docs/mockups/generated-backdrops/](../mockups/generated-backdrops/README.md)). **Nothing of the generator is built.** The consumer it feeds, the Garden's
-parallax backdrop, is: see [parallax-backdrops-spec.md](parallax-backdrops-spec.md) section 7.
+**Approved to build, 2026-11-04** (Dan: "describe a brand-new look ... including parallax background, indoor or outdoor, day and night ... it should be merge, replace or improve what we have"; five hours). Written 2026-11-03 as a
+proposal after measuring the service (section 2); section 0 below is what was decided and what changed in the code since, and where it differs from sections 3 to 5, section 0 wins.
 
-A child says or types a wish ("a candy forest at sunset", "a jellyfish ocean at midnight", "my pirate bedroom"). The game makes a new playable world with its own
-sky, hills and look. Muse Spark writes a small bounded **brief**; Muse Image paints the backdrop layers from prompts the code builds; **code does everything else**
-(sizing, keying, gates, lighting, props, the world record). It never changes physics or the engine contract (product spec: generated worlds "may change sky, music,
-props, and intro missions, but never physics").
+A child says or types a wish ("a candy forest at sunset", "a jellyfish ocean at midnight", "my pirate bedroom"). The game makes a new playable world with its own sky, hills and look. Muse Spark writes a small bounded
+**brief**; Muse Image paints the backdrop layers from prompts the code builds; **code does everything else** (sizing, keying, gates, lighting, props, the world record). It never changes physics or the engine contract (product spec:
+generated worlds "may change sky, music, props, and intro missions, but never physics").
+
+## 0. Decisions and the contract (2026-11-04)
+
+**Improve, do not replace.** The six hand-made worlds stay: they are the base themes (physics, missions, prop sets) and the fallback when anything fails. Create stays as it is (it builds a level in the Level Editor's data, `LevelDef`
+id `kid-world`, from the child's words); it gains a look. The one structural change: the static `BACKDROPS` table (`runtime/backdrop.ts`) gets a runtime registry in front of it (`registerBackdrop`), so a world can carry its own art.
+
+**Decisions (Dan):** five hours, showcase first and live generation after; both day and night looks made at creation (so three images for an outdoor world: far day, far night, one mid strip); storage on the device (IndexedDB), R2 only if it
+turns out to be easy (it is not: ownership keys and a duty to delete); proceed on the assumption that the first wishes work and fix taste after testing; live generation is capped and not behind a parent gate for the adult-operated demo, and
+every result says it is AI-made (defaults below, Dan can change the numbers).
+
+**What changed in the code since this was written (2026-11-03):** every outdoor world now has a day and a night look from the player's clock (`runtime/worldLook.ts` `lookFor`, `SKINS`, `src/lib/timeOfDay.ts`), so a generated world carries both and
+the clock picks one; every outdoor world has its own far band per look and one mid strip (`BACKDROPS`, `backdropFor(theme, look)`; art baked by `scripts/make-backdrops.py worlds`); the pipeline has been run for real (12 images, plus the Junkyard strip
+redone: a prompt about discrete objects must say "fills the WHOLE width, edge to edge" or the model draws one cluster); four lighting presets (indoor/outdoor, day/night); the Toy Room is indoors and has no backdrop by design.
+
+**The shapes (the contract every part builds to; code in `shared/worldBrief.ts`):**
+
+- `WorldLook` v1, stored inside the level (`LevelDef.look`, small JSON, no pixels): `{ v: 1, id: "gen-<10 hex>", kind: "outdoor" | "indoor", base: <theme>, name, day: Palette, night: Palette, art: { farDay, farNight, mid: boolean }, room?: { wall, floor, accent }, aiMade: true }`
+  where `Palette = { sky: [hex, hex, hex], fog: hex, ground: hex }` (an indoor world has the same palette in both). `base` is the base theme (garden, sky, junk, beach, snow, or room for indoor): it keeps the physics, props and missions.
+- `WorldBrief` v1, what Muse Spark returns (validated by code, never trusted): `{ ok, name, kind, day, night, far, mid, props, room, say }`; `far` and `mid` are one sentence each, the image prompts are templates (section 3.2) with those sentences swapped in. Colours are clamped to a luminance
+  band per look (day light, night dark, so a brief cannot make an unreadable world). Unknown keys dropped, `props` filtered to the closed prop list, sentences length-capped and passed through the child-safe filter.
+- Routes (Worker): `POST /api/world/look` ({ wish, theme }: Spark brief for that wish over that base theme -> the validated brief plus HMAC-signed art tickets) and `POST /api/world/art` ({ ticket }: the server builds the image prompt from the ticket's own signed sentence and
+  returns the raw image; free text from the client can never reach the image model). Both are model routes (the spend limiter) and count against the daily budgets below.
+- Client (new, `runtime/lookArt.ts`): asks for the look, fetches the three images in parallel, keys the mid strip off its black surround in a canvas (a TypeScript port of `scripts/make-backdrops.py`'s mid bake, tested against that script on the committed raw art), runs the
+  gates, stores the blobs in IndexedDB under `look.id`, registers the backdrop, and the world plays as soon as the CURRENT look's far band and the mid strip are ready (the other far band fills in behind it).
+- Runtime: `levelWorld` carries `look` onto the `WorldDef`; `lookFor` uses the look's day or night palette instead of the base theme's skin; `backdropFor` asks the registry first, then the theme table. A missing or failed layer falls back to the base theme's own art with the look's palette, then to the base theme.
+- Indoor: no painted layers. The brief's `room` block (wall pattern, floor, accent colour from closed lists) drives the Toy Room's builder: one text call, about 10 seconds, no image.
+- **Showcase first:** `scripts/generate-world-art.mjs` runs the same brief and image code offline and writes the raw art of record (`docs/mockups/generated-backdrops/looks/`, verbatim prompts in a manifest, a second run never spends again), `scripts/make-backdrops.py looks` bakes it
+  into `runtime/assets/looks/`, and the good ones ship as pick-able "wish worlds" (a registry entry plus a level), so the demo has real generated worlds even if live generation is off.
+- **Live caps (defaults):** a hard GLOBAL budget of 30 worlds a day for the whole app and 5 a day per address, counted in D1 (`DB`), failing closed to the pre-made wish worlds with a kind message; a friendly limit on the phone on top (one world per three minutes). Money per world is unknown (the service reports
+  tokens, about 17k in and 1 to 2k out per image); Dan reads the price off the dashboard and sets the numbers.
+- **Failure ladder:** a failed or rejected image, retry once; then the base theme's own art with the look's palette; then the base theme. The world is always playable.
+
+### 0.1 Built and verified (2026-11-04, the same evening as the decision)
+
+- **Contract** `shared/worldBrief.ts` (`tests/world-brief.test.ts`, 25 tests, 9 mutants of the rules all caught): types, the brief validator (colours clamped into brightness bands, a missing look derived from the other, a malformed one refused), the prompt templates, the signed art tickets (`worldart:` domain-separated HMAC, canonical encoding only, ten-minute expiry) and `parseLook`.
+- **Worker** `worker/worldLook.ts`: `POST /api/world/look` and `POST /api/world/art` as specified above, wired in `worker/index.ts` and in `spendLimit.ts`'s metered list (`tests/world-look-worker.test.ts`, 47 tests, a real SQLite as D1 so the budget SQL and the race for the last unit run for real, 14 mutants caught). Answers: look `200 {ok:true, brief, art:{farDay,farNight,mid}|null}`, `200 {ok:false,status:"gentle"}` for every bad model answer (never a 5xx), `503 not-configured`, `429 daily-limit` (with retry-after) or `slow-down`; art `200` raw image bytes, `403 not signed`, `409 ticket-used` (a ticket paints twice), `502 art-failed`, `503`. D1 tables `world_budget` and `world_art_redeem` are self-created (no migration). Env: `VOICE_SIGNING_KEY` (signs the tickets; already set in production), `WORLD_DAILY_GLOBAL` (default 30), `WORLD_DAILY_PER_IP` (default 5); an indoor world is counted in its own, five times larger scopes.
+- **Pixels** `runtime/lookArt.ts` (`tests/look-art.test.ts`, 23 tests): the key-and-crop is a TypeScript port of `scripts/make-backdrops.py` and matches it on all four committed raw strips (crop box within 2 px, opaque share within 0.4 %) and on the baked Junkyard asset; the gates were calibrated on the committed art (the eight far bands average 0.76 to 0.83 brightness by day and 0.24 to 0.50 by night; the strips span 74 % to 100 % of their picture; a mid strip must have gaps, so a solid slab fails).
+- **Runtime**: `backdrop.ts` registry (`registerBackdrop`, `backdropFor(theme, look, genKey)` asking it first, a missing layer falling back to the base theme's art), `worldLook.ts` (`withGen` lays the look's palette over the base theme's own day or night; an INDOOR look also dresses the Toy Room: `roomLookExtras` gives the wall's colours and pattern, the rug's rings from the accent and the floor tint, which `world.ts`'s `roomWall`, `rug` and `groundPlane` now draw from), `catalog.ts` (`LevelDef.look`, carried onto the world as `gen`), `lookStore.ts` (IndexedDB, at most 12 worlds, memory fallback), `lookMaker.ts` (the live path with every dependency injected, `tests/look-maker.test.ts` 24 tests and `tests/gen-look-runtime.test.ts` 15 tests, 11 and 6 mutants caught), `lookArtBrowser.ts` (decode and encode through a canvas).
+- **Create**: a row of "wish worlds" chips (gold-pink, ✨), the live look after a wish (status "Dreaming up a look... / Painting the sky... / Checking the pictures...", then "Here is <name>!"), a "Look: <name> (AI-made)" card and a "Remove the AI-made look" button; a refinement ("add a lantern") keeps the look and a different base theme starts without one; a friendly limit of 3 worlds a day and one per 3 minutes on the device. A failure never breaks the world: it stays exactly as Create made it and, where useful, says something kind.
+- **Showcase** (`scripts/generate-world-art.ts`, `scripts/bake-wish-worlds.ts`, `python3 scripts/make-backdrops.py looks`): six wishes made with the same code, 6 text calls and 12 image calls, all first try. Outdoor: "Sugary Garden Grove" (a candy forest at sunset, Garden), "Moonlit Sandy Cove" (a glowing jellyfish ocean at midnight, Beach), "Fluffy Pastel Skyland" (a rainbow cloud kingdom, Sky Meadow), "Frosty Sweet Valley" (an ice cream mountain with sprinkles, Snow Peak). Indoor (no pictures): "Little Sailor Cove" (a pirate bedroom: striped wall, orange rug), "Sweet Bun Corner" (a cozy bakery kitchen: dotted wall, pink rug). Raw art and verbatim prompts in `docs/mockups/generated-backdrops/looks/` (the art of record: a second run never respends), baked art in `runtime/assets/looks/` (0.73 MB), data generated into `wishWorlds.data.ts`.
+- **Measured**: an image averaged 14,700 input and 1,700 output tokens and 15.8 s (7 to 25 s); a brief 12.6 s; a live world took about 30 to 50 s from "Make" to its look. The service reported tokens and never money, so the cost per world is still unknown: Dan reads the price off the dashboard.
+- **Looked at in the real game**: every showcase world in day and night, and one LIVE wish typed into Create ("a gingerbread village with candy canes" became "Sweet Cookie Hollow": its own sky, candy canes, jelly beans and gumdrops on the horizon, day and night), which came back from IndexedDB after a page reload.
+
+**Not done / open:** sharing and a gallery (R2 was declined: device only); a vision safety check on the finished pictures (whether Muse can read images is still unmeasured); a "repaint this world" button; the wish worlds are only in Create (not in the Worlds list or on the Map); Safari encodes PNG where Chrome encodes WebP (bigger, unverified); no real-phone pass; no e2e (paused until beta); the production Worker's image backend is unverified (nothing deployed); the indoor floor is a tint only (no carpet or tile textures); a child-safe filter that is strongest in English. **Traps:** the first page load right after editing `world.ts` can leave a stale Create sheet (reload); two art tickets for the same sentence issued in the same millisecond are the same string (a test-only flake, fixed in the test).
 
 ## Rule (the Forge's rule, kept)
 
@@ -136,7 +177,7 @@ the shared workshop strip (`kip-workshop-wait.js`) already takes real stages (`a
 - **Fallback ladder:** a failed or rejected image, retry once; then the closest pre-made backdrop of the same kind (the Garden's night, and the day band once it ships) with the brief's palette;
   then the base theme with only the palette. The world is always playable.
 
-## 4. Phases and acceptance
+## 4. Phases and acceptance (2026-11-04: G1, G2 and G3 are built, G4 partly: see 0.1)
 
 | Phase | What | Acceptance |
 | --- | --- | --- |
@@ -147,7 +188,7 @@ the shared workshop strip (`kip-workshop-wait.js`) already takes real stages (`a
 | G4 | Indoor recipes from briefs, optional tiles with the seam gate | Seam gate rejects the measured bad tile and passes a good one |
 | G5 (later) | Vision safety check, sync or R2, a parent gallery | After the A1 image-reading spike |
 
-## 5. Questions for Dan
+## 5. Questions for Dan (answered 2026-11-04: see section 0)
 
 1. **Pre-made first, or live first?** Recommendation: pre-made showcase worlds (G1 and G2), then live (G3). It de-risks quality and cost and gives the hackathon demo something real.
 2. **Storage:** device only (recommended) or the server?

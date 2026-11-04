@@ -344,3 +344,9 @@
   .tv-host .tv-dock:has(a.tv-menu-item) .tv-dock-right .tv-ctl,
   .tv-host .tv-dock:has(a.tv-menu-item) .tv-menu-item { min-height: 36px; }
 }
+
+/* ---- Create: the wish worlds row (generated looks, ready made) ------------------------------------------------------------------------------------ */
+.tv-host .tv-crc-wish { background: linear-gradient(135deg, rgba(255, 210, 77, 0.28), rgba(255, 140, 190, 0.28)); border-color: rgba(255, 210, 77, 0.7); font-weight: 800; }
+.tv-host .tv-crc-wish::before { content: "✨ "; }
+/* "Back to making" (Create's and the editor's test-play button) started at the left edge, under the Kip button: half of it was hidden. It starts beside the button like the other top-left things. */
+.tv-host .tv-ed-back { left: calc(72px + env(safe-area-inset-left, 0px)); top: calc(12px + env(safe-area-inset-top, 0px)); }

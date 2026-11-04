@@ -1,0 +1,26 @@
+{
+  "name": "Sugary Garden Grove",
+  "kind": "outdoor",
+  "day": {
+    "sky": [
+      "#aedfff",
+      "#d4f3ff",
+      "#fff2c2"
+    ],
+    "fog": "#ffe6ef",
+    "ground": "#a9e5a0"
+  },
+  "night": {
+    "sky": [
+      "#0a1938",
+      "#1b2e5e",
+      "#2d3e6c"
+    ],
+    "fog": "#2b3d66",
+    "ground": "#2e4b3e"
+  },
+  "far": "Soft round hills sit under fluffy clouds next to a shiny blue lake.",
+  "mid": "Swirly sweet trees, jelly bushes, gumdrop mounds, puffy blossoms, mint swirl posts and cocoa stepping stones spread evenly along the whole strip.",
+  "room": null,
+  "say": "Come play in this sweet happy garden!"
+}

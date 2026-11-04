@@ -6,6 +6,7 @@
 // (07:00 to 18:59 is day) unless a grown-up pinned Day or Night. The Toy Room and a level that names its own mood are left alone.
 import type { WorldDef } from "./catalog";
 import type { TimeOfDay } from "../../../../lib/timeOfDay";
+import { fromHsl, toHsl, type WorldLook } from "../../../../../shared/worldBrief";
 
 /** The worlds that follow the clock (a world with a `theme` takes its theme's looks: the labs and the generated levels). The Toy Room is indoors: the same at any hour. */
 export const CLOCK_THEMES: readonly string[] = ["garden", "sky", "junk", "beach", "snow"];
@@ -73,9 +74,56 @@ export const followsClock = (def: Pick<WorldDef, "theme"> & { mood?: unknown }, 
  * the skin laid over it. `look` on the result says which time of day it shows, for the backdrop art and the lanterns.
  */
 export function lookFor(def: WorldDef, id: string, phase: TimeOfDay): WorldDef {
+  return withGen(baseLookFor(def, id, phase), phase);
+}
+
+function baseLookFor(def: WorldDef, id: string, phase: TimeOfDay): WorldDef {
   const theme = clockTheme(def, id);
   if (!theme || def.mood) return def;
   if (PAINTED_FOR[theme] === phase) return { ...def, look: phase };
   const { mood, ...skin } = SKINS[theme]!;
   return { ...def, ...skin, extras: skin.extras ?? def.extras, mood, look: phase };            // (the skin's extras REPLACE the painting's: no fireflies in a day Garden)
+}
+
+const hexInt = (h: string): number => parseInt(h.slice(1), 16);
+
+/** What world.ts draws an indoor look's wall and rug with: the wall's two colours (stripes alternate), the motif colour and the pattern; the rug's five ring colours; and the tint the wooden floor is multiplied by. */
+export interface RoomExtras {
+  wall: { base: string; stripe: string; motif: string; pattern: "stars" | "stripes" | "dots" | "plain" };
+  rug: { cols: [string, string, string, string, string] };
+  floorTint: string;
+}
+
+/**
+ * The room a WorldLook describes, from its palette and its `room` block (closed lists: the wall pattern, the accent colour). Pure numbers and colour maths, so a test can look at every pattern. The wall takes the
+ * palette's middle sky colour and a slightly lighter stripe of it; the motifs (stars, dots) and the rug take the accent, the rug's rings turning round the colour wheel from it; the floor is the wood tinted toward
+ * the palette's ground. Defaults for a look with no `room` block: plain stars on the palette colours.
+ */
+export function roomLookExtras(look: WorldLook): RoomExtras {
+  const wallBase = look.day.sky[1];
+  const [h, s, l] = toHsl(wallBase);
+  const stripe = fromHsl(h, s, Math.min(0.9, l + 0.07));
+  const accent = look.room?.accent ?? "#ffd24d";
+  const [ah, as, al] = toHsl(accent);
+  const ring = (turn: number, dl: number) => fromHsl(ah + turn, Math.max(0.45, as), Math.min(0.72, Math.max(0.4, al + dl)));
+  const [gh, gs, gl] = toHsl(look.day.ground);
+  return {
+    wall: { base: wallBase, stripe, motif: accent, pattern: look.room?.wall ?? "stars" },
+    rug: { cols: [accent, ring(40, 0.04), ring(80, 0), ring(200, 0.02), ring(260, -0.02)] },
+    floorTint: fromHsl(gh, Math.min(0.55, gs), Math.min(0.8, Math.max(0.55, gl + 0.25))),
+  };
+}
+
+/**
+ * A generated world (`def.gen`, a WorldLook from the level) wears its OWN palette for this time of day over whatever its base theme gives: the sky, the fog and the ground. Everything else (the light rig, the hills,
+ * the sun or moon, the fireflies, the props, the physics) stays the base theme's, so a generated world can change how it looks and never how it plays. An indoor look is the same at every hour (its day palette).
+ */
+export function withGen(def: WorldDef, phase: TimeOfDay): WorldDef {
+  const g = def.gen as WorldLook | undefined;
+  if (!g) return def;
+  const p = g.kind === "indoor" || phase === "day" ? g.day : g.night;
+  const out = { ...def, sky: [p.sky[0], p.sky[1], p.sky[2]] as [string, string, string], fog: hexInt(p.fog), ground: p.ground };
+  if (g.kind !== "indoor") return out;
+  const r = roomLookExtras(g);                                             // an indoor look also dresses the room: its wall, its rug and its floor
+  return { ...out, extras: { ...def.extras, wall: r.wall, rug: r.rug }, floorTint: r.floorTint };
 }

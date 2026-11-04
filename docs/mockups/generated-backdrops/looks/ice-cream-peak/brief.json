@@ -1,0 +1,26 @@
+{
+  "name": "Frosty Sweet Valley",
+  "kind": "outdoor",
+  "day": {
+    "sky": [
+      "#aee6ff",
+      "#d9f4ff",
+      "#fff1db"
+    ],
+    "fog": "#e6f6ff",
+    "ground": "#d1d1d1"
+  },
+  "night": {
+    "sky": [
+      "#0b1a3a",
+      "#24365e",
+      "#384661"
+    ],
+    "fog": "#2c3e63",
+    "ground": "#4366a2"
+  },
+  "far": "Soft white rolling peaks curve around a pale frozen lake beneath a smooth gentle horizon.",
+  "mid": "Puffy frost mounds, swirly cream huts, mint twist pines, rainbow dot bushes, cozy sled hills, tiny glowing lamps and round snow pals spread across the whole strip.",
+  "room": null,
+  "say": "Come play in the soft snowy sweetness!"
+}

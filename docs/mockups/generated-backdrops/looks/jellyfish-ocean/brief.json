@@ -1,0 +1,26 @@
+{
+  "name": "Moonlit Sandy Cove",
+  "kind": "outdoor",
+  "day": {
+    "sky": [
+      "#7ec8f7",
+      "#aee3ff",
+      "#fff6d9"
+    ],
+    "fog": "#d8f0ff",
+    "ground": "#f8dfaa"
+  },
+  "night": {
+    "sky": [
+      "#0a1030",
+      "#1a2a5a",
+      "#2a436f"
+    ],
+    "fog": "#1e2f55",
+    "ground": "#3a4470"
+  },
+  "far": "Rolling sandy dunes curve beside a calm wide sea with soft clouds drifting far away.",
+  "mid": "Soft shell chairs, tiny sand castles, wobbly sea domes, shimmery pearl lanterns, curly grass tufts and happy star pillows line the whole strip evenly.",
+  "room": null,
+  "say": "Lets play and sparkle by the gentle waves!"
+}
