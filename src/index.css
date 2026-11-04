@@ -3188,10 +3188,16 @@ button.tv-badge-pill:hover {
   border-style: dashed;
 }
 
-/* A hidden part shows what it looks like (a flower, a crown); it is dim until it is found. */
+/* A hidden part shows what it looks like (a flower, a crown), big enough to tell apart; it is dim until it is found. */
+.tv-map-pip.pic {
+  width: 25px;
+  height: 25px;
+  font-size: 15px;
+}
+
 .tv-map-pip.sil:not(.on) {
-  opacity: 0.6;
-  filter: grayscale(0.7);
+  opacity: 0.78;
+  filter: grayscale(0.35);
 }
 
 .tv-map-pip.on {
@@ -3286,7 +3292,7 @@ button.tv-badge-pill:hover {
   }
 
   .tv-map-foot {
-    padding: 6px 10px 8px;
+    padding: 5px 9px 7px;
   }
 
   .tv-map-title {
@@ -3302,6 +3308,12 @@ button.tv-badge-pill:hover {
     width: 18px;
     height: 18px;
     font-size: 10px;
+  }
+
+  .tv-map-pip.pic {
+    width: 24px;
+    height: 24px;
+    font-size: 14px;
   }
 }
 

@@ -121,7 +121,7 @@ export function MapCardStrip({ cards, guide, guideName, onOpen }: MapCardStripPr
                   {card.pips.map((pip, i) => (
                     <i
                       key={i}
-                      className={`tv-map-pip${pip.done ? " on" : ""}${pip.silhouette && !pip.done ? " sil" : ""}`}
+                      className={`tv-map-pip${pip.done ? " on" : ""}${pip.silhouette && !pip.done ? " sil" : ""}${pip.glyph ? " pic" : ""}`}
                     >
                       {pip.glyph ?? (pip.done ? "✓" : "·")}
                     </i>

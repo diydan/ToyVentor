@@ -283,9 +283,11 @@ interface MapCard {
 
 - `kind` badge + word: `Grown-up`/`Learn`/`World`/`Lab`
   (icons: `lock`/`play`/`compass`/`bridge`, per mockup `KIND_ICON`).
-- World pips: one per hidden part (`5`); icon = part slot
-  (`goal.split(".")[1]`, e.g. `hat`, `ears`, `back`); shown as outline
-  silhouette until found, filled gold when found. Lab/ladder pips:
+- World pips: one per hidden part (`5`). **Updated 2026-11-04:** each
+  circle shows a picture of the part itself (`PART_GLYPH` in `mapCards.ts`:
+  a flower, a crown, a camera; the slot's picture when a part has none),
+  not the first letter of its slot, which children could not read. Dashed
+  and dimmed until found, bright on a gold circle when found. Lab/ladder pips:
   `check` icons, filled when done. Completed card shows a `check`
   badge. "Found" reads ToyForge found/mdones via the engine facade
   snapshot — never `localStorage["tf25"]` directly.
@@ -865,9 +867,12 @@ edge** (`12 px` gutter, the suggested card scrolled to the front, so no
 empty gap before the first card); a tap on a card goes straight in (no
 hop first). Each card carries **a screenshot of its level**
 (`public/map/cards/<id>.jpg`, made by `scripts/capture-map-cards.mjs`
-sideways, day look; `CARD_SHOT_IDS` in `mapCards.ts`; the grown-up card
-and the Garage keep their glyph, a missing picture falls back to it).
-Labs show the picture of the world they run in. Top buttons (Songs,
+sideways, day look; `CARD_SHOT_IDS` in `mapCards.ts`; the Garage's
+picture is its own sheet, the grown-up card keeps its glyph, a missing
+picture falls back to it). Labs show the picture of the world they run
+in. The kind of place (`World`, `Lab`, `Learn`, `Garage`) is written on
+the picture as a small tag, so it reads before the title does, and the
+cards are 5% smaller than the first build (`167 px` wide sideways). Top buttons (Songs,
 Age, Home) share one bright `48 px` style (`tv-map-btn`). Short
 landscape screens lose the stage's `440 px` minimum height (it clipped
 the bottom 100 px of the stage, controls included) and the strip uses
