@@ -15,7 +15,7 @@ export const PACK_CAR_RECIPE: Level2Recipe = {
   card: {
     goal: "Pack everything the car needs for a trip.",
     why: "Each thing fits in its own place: big things in the trunk, soft things on the seat.",
-    finish: "Put each thing where it fits. The wrong place will not fit.",
+    finish: "Put each thing where it fits. A thing that does not fit hops back, so try another place.",
   },
   concept: { domain: "life skills", idea: "packing by fit" },
   interaction: {

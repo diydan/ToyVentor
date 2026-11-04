@@ -154,6 +154,12 @@ describe("Unit 2d missions factory (deps-injected MT table)", () => {
     }
   });
 
+  it("the Code lab's goal text never says \"wrong\" (carousel standing rule)", () => {
+    const MS = createMissions(stubDeps() as any);
+    expect(MS.MT.code.goal).not.toMatch(/\bwrong\b/i);
+    expect(MS.MT.code.goal).toContain("does not fit");
+  });
+
   it("act: code wrong-card path names the card and obstacle (CNM/CON)", async () => {
     withCanvasDocument();
     try {

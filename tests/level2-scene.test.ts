@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { LEVEL2_RECIPES } from "../src/features/game/world/runtime/level2Recipes";
 import {
   arriveScene,
   arriveSceneVisit,
@@ -158,5 +159,13 @@ describe("scene visit sessions (carousel C3, §11.3)", () => {
     // The expected spot still resolves after the miss.
     tapSceneSpot(session, "big", 6);
     expect(arriveSceneVisit(session)?.event).toBe("advanced");
+  });
+});
+
+describe("kid copy (carousel standing rule)", () => {
+  it("no recipe text a child can see says the word \"wrong\"; it says what does not fit", () => {
+    for (const r of LEVEL2_RECIPES) {
+      expect(JSON.stringify(r), r.id).not.toMatch(/\bwrong\b/i);
+    }
   });
 });
