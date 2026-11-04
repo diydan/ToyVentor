@@ -528,7 +528,7 @@ function meshOf(pid, mat) {
   return m;
 }
 
-// Stage 2b balloon jet (proposal; docs/specs/motion-stage-options-spec.md section 2, parts/kip/viewer/JetCar-Lab.html). mom_jet_valve_body is repo CAD; the nozzle insert,
+// Stage 2b balloon jet (proposal; docs/specs/parts-engineering-spec.md section 1, parts/kip/viewer/JetCar-Lab.html). mom_jet_valve_body is repo CAD; the nozzle insert,
 // balloon and jet stream below are procedural stand-ins. The collar top is at (0, 47.0, 40.5); the balloon is a sphere on a 25 mm neck, upright unless balloonLean > 0.
 const JET_NECK = 25.0;
 function jetNozzleGeo(d) {   // tapered plug into the body's rear socket (y 8.5..14.7), flange, convergent exit; body frame, axis +y
@@ -1945,7 +1945,7 @@ function animate() {
     } else if (state.stage === 'band') {
       stepBandDemo(state.demoT, wRad);
     } else if (state.stage === 'jet') {
-      // 4.5 s inflate / vent loop. The truck stays put on purpose: the body as drawn is predicted too restrictive to move it (docs/specs/motion-stage-options-spec.md section 2).
+      // 4.5 s inflate / vent loop. The truck stays put on purpose: the body as drawn is predicted too restrictive to move it (docs/specs/parts-engineering-spec.md section 5).
       const cyc = state.demoT % 4.5;
       state.jetFill = cyc < 1.5 ? smooth(cyc / 1.5) : cyc < 2.0 ? 1 : cyc < 4.0 ? 1 - 0.97 * smooth((cyc - 2.0) / 2.0) : 0.03;
       if (dynamicRefs.jetStream) dynamicRefs.jetStream.visible = cyc >= 2.0 && cyc < 4.0;

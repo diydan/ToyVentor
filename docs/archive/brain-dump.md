@@ -69,7 +69,7 @@ No locked cards, no XP language, no lock icons in this phase.
 
 ### 3c. Asset-readiness audit (required before committing the §3b roster)
 
-Readiness is overstated today: Kip has real parts; the vehicle lineup lives in spec docs ([`flatpack-modular-craft-spec.md`](../specs/flatpack-modular-craft-spec.md)), not yet as playable `Toy Box` entries (current built-ins are only the seed toys). No vehicle enters the roster table until its row is filled:
+Readiness is overstated today: Kip has real parts; the vehicle lineup lives in spec docs ([`flatpack-modular-craft-spec.md`](parts-engineering/flatpack-modular-craft-spec.md)), not yet as playable `Toy Box` entries (current built-ins are only the seed toys). No vehicle enters the roster table until its row is filled:
 
 | Vehicle (UI name) | Spec name | Model? | Rig? | Parts set? | Missions? | Roster state |
 | --- | --- | --- | --- | --- | --- | --- |

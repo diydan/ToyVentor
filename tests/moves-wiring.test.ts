@@ -16,8 +16,8 @@ describe("the Mixamo moves in the world", () => {
     expect(world).toContain("var MOVES={shoveContact:.6,shoveDur:2.2};");
   });
   it("mixGo passes the options on to the driver", () => {
-    // (the cheer-variant lane adds `if(a==="cheer")CHEERS.roll();` in front: allowed, not required)
-    expect(world).toMatch(/function mixGo\(a: MixAction,o\?: \{lift\?: number;fade\?: number;rate\?: number;until\?: number\}\)\{(if\(a==="cheer"\)CHEERS\.roll\(\);)?return !!\(mix&&!reduce&&P\.rig&&mix\.canDrive\(P\.rig\)&&mix\.trigger\(a,o\)\)\}/);
+    // the win cheer: the world asks for the next variant (one-armed, alternating) just before it triggers the cheer
+    expect(world).toContain('function mixGo(a: MixAction,o?: {lift?: number;fade?: number;rate?: number;until?: number}){if(a==="cheer")CHEERS.roll();return !!(mix&&!reduce&&P.rig&&mix.canDrive(P.rig)&&mix.trigger(a,o))}');
   });
   it("the celebration hop (joy) plays the jump clip for a character and keeps the old sine hop for everything else (or until the clip is there)", () => {
     expect(world).toContain('var jumped=S.type==="character"&&mixGo("jump",{fade:.06,lift:.8});');                 // a big one: 80% of the clip's height (about 1.3 units)
