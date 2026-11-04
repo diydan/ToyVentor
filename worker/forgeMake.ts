@@ -33,7 +33,7 @@ import {
   type ForgeOptimizerEnv,
 } from "./forgeOptimizer";
 import { buildTunePrompt } from "../shared/forgeTunePrompt";
-import { type BackendEnv, askText, resolveBackend } from "./modelBackend";
+import { type Backend, type BackendEnv, type FastMode, askText, effectiveAudience, fastMode, resolveBackend, resolveFastBackend, selfBackend } from "./modelBackend";
 import { firstJsonObject, kidSafeText, scrubContactDetails, tidy } from "./muse";
 
 export type ForgeMakeEnv = ForgeOptimizerEnv &
@@ -96,7 +96,24 @@ interface MakeRequest {
   slot?: MakeSlot;
   attempt: number;
   repair?: { jobId?: string; recipe: unknown; badRecipe: boolean };
+  /** The grown-up's choice for the fast path: false = standard model only, true = the fast path is welcome; absent = whatever the server's FORGE_FAST_MODE says. */
+  fast?: boolean;
 }
+
+/**
+ * Does THIS call try the fast (tuned) model first? Only the FIRST attempt of a hat or head wish: a repair, or any later attempt, goes to the standard model (it is the fallback and the
+ * better one at fixing), and every vehicle slot goes to the standard model (a tuned model that saw only hats and heads lost the held prop in the probe: scripts/tuning/results/slot-probe-*.md).
+ * FORGE_FAST_MODE "on": yes unless the client sent fast:false. "optin": only when the client sent fast:true. Off: never.
+ */
+export function fastEligible(a: { mode: FastMode; wantsFast: boolean | undefined; attempt: number; repaired: boolean; slot?: MakeSlot }): boolean {
+  if (a.mode === "off") return false;
+  if (a.mode === "optin" ? a.wantsFast !== true : a.wantsFast === false) return false;
+  if (a.attempt !== 1 || a.repaired) return false;
+  return !a.slot || (MAKE_CHOICE_SLOTS as readonly string[]).includes(a.slot);
+}
+/** The fast model gets a short leash so the fallback still fits in one request (a Worker request that runs past about 100 s may be cut at Cloudflare's edge). */
+export const FAST_TIMEOUT_MS = 35_000;
+const FALLBACK_AFTER_FAST_TIMEOUT_MS = 55_000;
 
 type Parsed = { ok: true; req: MakeRequest } | { ok: false; response: Response };
 
@@ -112,6 +129,11 @@ function parseRequest(raw: unknown): Parsed {
     if (typeof raw.slot !== "string" || !(MAKE_SLOTS as readonly string[]).includes(raw.slot)) return bad("invalid");
     slot = raw.slot as MakeSlot;
   }
+  let fast: boolean | undefined;
+  if (raw.fast !== undefined) {
+    if (typeof raw.fast !== "boolean") return bad("invalid");
+    fast = raw.fast;
+  }
   const attempt = raw.attempt === undefined ? 1 : raw.attempt;
   if (typeof attempt !== "number" || !Number.isInteger(attempt) || attempt < 1 || attempt > MAKE_MAX_CALLS) return bad("invalid");
   let repair: MakeRequest["repair"];
@@ -124,7 +146,7 @@ function parseRequest(raw: unknown): Parsed {
     if (jobId === undefined && !badRecipe) return bad("invalid"); // a repair says what to repair: a job, or a recipe the daemon refused
     repair = { ...(jobId ? { jobId } : {}), recipe: r.recipe, badRecipe };
   }
-  return { ok: true, req: { text, ...(slot ? { slot } : {}), attempt, ...(repair ? { repair } : {}) } };
+  return { ok: true, req: { text, ...(slot ? { slot } : {}), attempt, ...(repair ? { repair } : {}), ...(fast !== undefined ? { fast } : {}) } };
 }
 
 /**
@@ -152,7 +174,8 @@ export async function handleForgeWarm(request: Request, env: ForgeMakeEnv, ctx?:
   if (!g.ok) return g.response;
   const accepted = () => reply(202, { ok: true, status: "accepted" });
   const backend = resolveBackend(env, "text");
-  if (backend.mode !== "self" || !backend.baseUrl) {
+  const fastBackend = backend.mode === "off" ? null : resolveFastBackend(env); // the fast model is ours whatever the standard backend is
+  if ((backend.mode !== "self" || !backend.baseUrl) && !fastBackend) {
     logEvent("forge_warm", "not_needed", { backend: backend.mode });
     return accepted();
   }
@@ -161,18 +184,28 @@ export async function handleForgeWarm(request: Request, env: ForgeMakeEnv, ctx?:
     logEvent("forge_warm", "coalesced");
     return accepted();
   }
-  let health: string;
-  try {
-    health = `${new URL(backend.baseUrl).origin}/health`;
-  } catch {
-    return accepted();
+  // the standard model, and the fast one too when the fast path is on (a cold fast model would time out its short leash and make every first wish fall back)
+  const origins = [backend.mode === "self" ? backend.baseUrl : null, fastBackend?.baseUrl ?? null];
+  const healths: string[] = [];
+  for (const o of origins) {
+    if (!o) continue;
+    try {
+      const h = `${new URL(o).origin}/health`;
+      if (!healths.includes(h)) healths.push(h);
+    } catch {
+      // an unparsable address is skipped
+    }
   }
+  if (healths.length === 0) return accepted();
   lastWarmPing = now;
   const started = Date.now();
-  const ping = fetch(health, { method: "GET", signal: AbortSignal.timeout(WARM_PING_TIMEOUT_MS) }).then(
-    (r) => logEvent("forge_warm", "up", { httpStatus: r.status, ms: Date.now() - started }),
-    () => logEvent("forge_warm", "no_answer", { ms: Date.now() - started }),
+  const pings = healths.map((health) =>
+    fetch(health, { method: "GET", signal: AbortSignal.timeout(WARM_PING_TIMEOUT_MS) }).then(
+      (r) => logEvent("forge_warm", "up", { httpStatus: r.status, ms: Date.now() - started }),
+      () => logEvent("forge_warm", "no_answer", { ms: Date.now() - started }),
+    ),
   );
+  const ping = Promise.all(pings);
   if (ctx) ctx.waitUntil(ping);
   logEvent("forge_warm", "pinged");
   return accepted();
@@ -180,8 +213,8 @@ export async function handleForgeWarm(request: Request, env: ForgeMakeEnv, ctx?:
 
 export async function handleForgeMake(request: Request, env: ForgeMakeEnv): Promise<Response> {
   const backend = resolveBackend(env, "text");
-  if (request.method === "POST" && backend.mode === "off") {
-    logEvent("forge_make", "backend_off", { reason: backend.reason }); // a switch set to off, or to a model we have not configured: nothing to spend, nothing to gate
+  if (request.method === "POST" && backend.mode === "off" && backend.reason !== "not_configured") {
+    logEvent("forge_make", "backend_off", { reason: backend.reason }); // a switch set to off (or an invalid one): nothing to spend, nothing to gate, for every audience
     return reply(503, { ok: false, status: "disabled" });
   }
   const g = await gateForge(request, env, "POST", "preview", "forge_make", makeRequiresProof(env));
@@ -191,7 +224,7 @@ export async function handleForgeMake(request: Request, env: ForgeMakeEnv): Prom
   if (!body.ok) return reply(body.over ? 413 : 400, { ok: false, status: body.over ? "too-large" : "invalid" });
   const parsed = parseRequest(body.value);
   if (!parsed.ok) return parsed.response;
-  const { text, slot, attempt, repair } = parsed.req;
+  const { text, slot, attempt, repair, fast: wantsFast } = parsed.req;
 
   // A repair: ask the daemon what failed, never trust the client's account of it.
   let previous: ForgeRecipeV1 | undefined;
@@ -216,9 +249,36 @@ export async function handleForgeMake(request: Request, env: ForgeMakeEnv): Prom
   let retried = false; // our own model was asked a second time (worker/modelBackend.ts askText): said in the log line, so a retry can be counted
   // our own model, once trained on the short prompt (SELF_TEXT_PROMPT=tuned, default off): training and serving use the same text, see shared/forgeTunePrompt.ts
   const promptArgs = { text, ...(slot ? { slot } : {}), ...(previous ? { previous, feedback } : {}) };
-  const asked = await askText(backend, backend.promptStyle === "tuned" ? buildTunePrompt(promptArgs) : buildMakePrompt(promptArgs), { timeoutMs: backend.mode === "self" ? MODEL_TIMEOUT_SELF_MS : MODEL_TIMEOUT_MS, onRetry: () => { retried = true; } });
+  // WHO is asking decides what may answer. An adult's request may use the standard backend as configured (hosted or ours); a CHILD's request only ever goes to our own models: our own
+  // standard server if one is configured, else the fast model alone, else nothing (the child gets no part, never an outside one). See Audience in worker/modelBackend.ts.
+  const audience = effectiveAudience(env);
+  const ownStandard = audience === "child" ? selfBackend(env, "text") : null;
+  const standard: Backend | null = audience === "adult" ? backend : ownStandard && ownStandard.mode !== "off" ? ownStandard : null;
+  const fastBackend = fastEligible({ mode: fastMode(env), wantsFast, attempt, repaired: repair !== undefined, ...(slot ? { slot } : {}) }) ? resolveFastBackend(env) : null;
+  if ((!standard || standard.mode === "off") && !fastBackend) {
+    logEvent("forge_make", "no_model_for_audience", { audience, reason: audience === "adult" ? backend.reason : "child_has_no_own_model" });
+    return reply(503, { ok: false, status: "disabled" });
+  }
+  const promptFor = (b: Backend) => (b.promptStyle === "tuned" ? buildTunePrompt(promptArgs) : buildMakePrompt(promptArgs));
+  const timeoutOf = (b: Backend) => (b.mode === "self" ? MODEL_TIMEOUT_SELF_MS : MODEL_TIMEOUT_MS);
+  let usedFast = false;
+  let asked: Awaited<ReturnType<typeof askText>>;
+  let askedMode = standard?.mode ?? "self";
+  if (fastBackend) {
+    usedFast = true;
+    askedMode = "self";
+    asked = await askText(fastBackend, buildMakePrompt(promptArgs), { timeoutMs: standard ? FAST_TIMEOUT_MS : timeoutOf(fastBackend), onRetry: () => { retried = true; } });
+    if (!asked.ok && standard && standard.mode !== "off") {
+      logEvent("forge_make", "fast_fallback", { audience, ...(asked.status !== null ? { httpStatus: asked.status } : { timeout: true }) });
+      usedFast = false;
+      askedMode = standard.mode;
+      asked = await askText(standard, promptFor(standard), { timeoutMs: Math.min(timeoutOf(standard), FALLBACK_AFTER_FAST_TIMEOUT_MS), onRetry: () => { retried = true; } });
+    }
+  } else {
+    asked = await askText(standard!, promptFor(standard!), { timeoutMs: timeoutOf(standard!), onRetry: () => { retried = true; } });
+  }
   if (!asked.ok) {
-    logEvent("forge_make", asked.status === null ? "model_failed" : "model_status", { ...(asked.status !== null ? { httpStatus: asked.status } : {}), backend: backend.mode, ...(retried ? { retried: true } : {}) }); // error detail stays on the server
+    logEvent("forge_make", asked.status === null ? "model_failed" : "model_status", { ...(asked.status !== null ? { httpStatus: asked.status } : {}), backend: askedMode, audience, ...(retried ? { retried: true } : {}) }); // error detail stays on the server
     return reply(502, { ok: false, status: "unavailable", attempt });
   }
   const modelText = asked.text;
@@ -260,8 +320,10 @@ export async function handleForgeMake(request: Request, env: ForgeMakeEnv): Prom
   const names = Object.fromEntries(Object.entries(parsedNames.names).filter(([, n]) => !KID_BRAND_RE.test(n.w))) as typeof parsedNames.names;
   if (!names.en) for (const k of Object.keys(names)) delete names[k as keyof typeof names]; // English is every language's fallback: with no good English name nothing is kept
   const signed = await issueSpokenNames(env, names);
-  logEvent("forge_make", "ok", { backend: backend.mode, ...(retried ? { retried: true } : {}), attempt, slot: recipe.slot, repaired: repair !== undefined, namesKept: Object.keys(names).length, spoken: Object.keys(signed).length });
+  logEvent("forge_make", "ok", { backend: askedMode, audience, ...(retried ? { retried: true } : {}), attempt, slot: recipe.slot, repaired: repair !== undefined, namesKept: Object.keys(names).length, spoken: Object.keys(signed).length, model: usedFast ? "fast" : "standard" });
   return reply(200, {
+    audience, // who the request was treated as: a child's request never reaches the hosted model
+    model: usedFast ? "fast" : "standard", // which of our models wrote the recipe, so a grown-up can see what the setting did
     ...scrubPreviewOutput(up.data),
     attempt,
     calls_left: MAKE_MAX_CALLS - attempt,

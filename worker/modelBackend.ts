@@ -90,6 +90,19 @@ export interface BackendEnv extends MuseEnv {
    * model trained on it: scripts/tuning/README.md). Only "tuned", spelt exactly, selects it; anything else is "base". Never applies to the hosted API.
    */
   SELF_TEXT_PROMPT?: string;
+  /**
+   * The FAST PATH (docs/specs/forge-ai-spec.md, "Fast path"): a second model of ours, tuned on Recipe v1, asked FIRST for a hat or head wish, with the standard model above as the fallback.
+   * FORGE_FAST_MODE: "on" = every make request tries it first unless the client says fast:false; "optin" = only when the client says fast:true; anything else, unset included = never.
+   * It needs SELF_FAST_URL and SELF_FAST_MODEL; it is always our own server (chat shape) and reads the production prompt, which is the text it was trained on. The standard backend, hosted or self, is the fallback.
+   */
+  FORGE_FAST_MODE?: string;
+  /** "off" (exactly) = the server-wide child lock: the hosted model is never used, whatever a device says. See Audience. */
+  FORGE_HOSTED_FOR_ADULTS?: string;
+  /** What a request that names no audience gets: "child" or "adult"; anything else is DEFAULT_AUDIENCE. */
+  FORGE_AUDIENCE_DEFAULT?: string;
+  SELF_FAST_URL?: string;
+  SELF_FAST_KEY?: string;
+  SELF_FAST_MODEL?: string;
   SELF_SEGMENT_URL?: string;
   SELF_SEGMENT_KEY?: string;
   SELF_IMAGE_URL?: string;
@@ -174,6 +187,14 @@ export function resolveBackend(env: BackendEnv, capability: Capability): Backend
   }
 
   // self: never falls through to hosted
+  return selfBackend(env, capability);
+}
+
+/**
+ * Our own server for a capability, whatever the master switch says: the backend a CHILD's request is allowed to use (the hosted API is for adults: see Audience below). Off ("not_configured")
+ * when the address, or for text the served model name, is missing.
+ */
+export function selfBackend(env: BackendEnv, capability: Capability): Backend {
   const baseUrl = parseSelfUrl(env[SELF_URL[capability]]);
   if (!baseUrl) return OFF(capability, "not_configured");
   const model = capability === "text" ? text(env.SELF_TEXT_MODEL) : "";
@@ -183,7 +204,47 @@ export function resolveBackend(env: BackendEnv, capability: Capability): Backend
   const strength = norm(env.SELF_TEXT_REASONING) || "low";
   const reasoning = capability === "text" && ["low", "medium", "high", "xhigh"].includes(strength) ? strength : null; // anything else, "off" included, sends none
   const promptStyle = capability === "text" && norm(env.SELF_TEXT_PROMPT) === "tuned" ? "tuned" : "base";
-  return { capability, mode, reason: null, baseUrl, key, model: model || null, api, reasoning, promptStyle };
+  return { capability, mode: "self", reason: null, baseUrl, key, model: model || null, api, reasoning, promptStyle };
+}
+
+/**
+ * WHO the service treats a make request as being for. The hosted model is for adults (18+); a child's request is only ever sent to our own models, and if none is configured the child
+ * gets no part, never an outside one. The SERVICE decides, not the device: there is no parent-facing choice and a client cannot name an audience (a field that says so is ignored).
+ *  - FORGE_HOSTED_FOR_ADULTS = "off" (exactly) is the server-wide child lock: every request is a child's, so make-from-words runs on our own models only;
+ *  - otherwise FORGE_AUDIENCE_DEFAULT ("child" or "adult"), else the constant below.
+ * The constant is "adult" for the Nov 4 build only because the demo is run by adults (decision 0008, option B, like DEFAULT_MODE): it lets the hosted model stay as the fallback and the
+ * repairer while our tuned model is proven. Flip it to "child" (or set the lock) for the child-facing deployment, with the tests that say so. A practical control, not an age check and not compliance.
+ */
+export type Audience = "child" | "adult";
+export const DEFAULT_AUDIENCE: Audience = "adult";
+export function effectiveAudience(env: BackendEnv): Audience {
+  if (text(env.FORGE_HOSTED_FOR_ADULTS).toLowerCase() === "off") return "child";
+  const d = norm(env.FORGE_AUDIENCE_DEFAULT);
+  return d === "child" ? "child" : d === "adult" ? "adult" : DEFAULT_AUDIENCE;
+}
+
+export type FastMode = "on" | "optin" | "off";
+
+/** Only the exact words "on" and "optin" turn the fast path on; anything else, unset included, is off. */
+export function fastMode(env: BackendEnv): FastMode {
+  const m = norm(env.FORGE_FAST_MODE);
+  return m === "on" ? "on" : m === "optin" ? "optin" : "off";
+}
+
+/**
+ * The tuned model as a backend, or null when the fast path is off or not fully configured (an address and a served model name). It is ALWAYS our own server (mode "self", the chat
+ * shape llama.cpp serves, Glimmer's reasoning line, the production prompt it was trained on), whatever the standard text backend is: with the standard backend hosted (today's
+ * adult-operated demo) the fast path still runs our own model first and the hosted model stays the fallback and the repairer; with it self, the base Glimmer is. "off" on the standard
+ * backend still means off for everything, the fast path included (the make route answers 503 before it looks here).
+ */
+export function resolveFastBackend(env: BackendEnv): Backend | null {
+  if (fastMode(env) === "off") return null;
+  const baseUrl = parseSelfUrl(env.SELF_FAST_URL);
+  const model = text(env.SELF_FAST_MODEL);
+  if (!baseUrl || !model) return null;
+  const strength = norm(env.SELF_TEXT_REASONING) || "low";
+  const reasoning = ["low", "medium", "high", "xhigh"].includes(strength) ? strength : null;
+  return { capability: "text", mode: "self", reason: null, baseUrl, key: text(env.SELF_FAST_KEY) || null, model, api: "chat", reasoning, promptStyle: "base" };
 }
 
 /** Modes only, for logs and for a future capabilities route: never a URL, a key or a model name. */

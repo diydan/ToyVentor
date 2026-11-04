@@ -52,6 +52,27 @@ describe("what it sends", () => {
     expect(JSON.stringify(calls[0])).not.toContain(DEVICE);
   });
 
+  it("with the fast path on, the fast model's health address is pinged too (a cold fast model would time out its short leash); a missing or off fast path adds nothing", async () => {
+    const fast = { ...SELF, FORGE_FAST_MODE: "on", SELF_FAST_URL: "https://fast.example.test/v1", SELF_FAST_MODEL: "forge-fast", SELF_FAST_KEY: "fast-key" };
+    await warm(fast);
+    await Promise.all(waits);
+    expect(calls.map((c) => c.url).sort()).toEqual(["https://fast.example.test/health", "https://glimmer.example.test/health"]);
+    for (const c of calls) expect(new Headers(c.init?.headers).get("authorization")).toBeNull(); // no key goes to either
+    calls.length = 0;
+    resetForgeWarm();
+    resetForgeRateLimit();
+    await warm({ ...fast, FORGE_FAST_MODE: "off" });
+    await Promise.all(waits);
+    expect(calls.map((c) => c.url)).toEqual(["https://glimmer.example.test/health"]);
+  });
+
+  it("with a HOSTED standard backend and the fast path on, only the fast model is pinged (the hosted API is never touched)", async () => {
+    const hostedFast: ForgeMakeEnv = { FORGE_OPTIMIZER_URL: "http://127.0.0.1:8791", MODEL_API_KEY: "meta-key", FORGE_FAST_MODE: "on", SELF_FAST_URL: "https://fast.example.test/v1", SELF_FAST_MODEL: "forge-fast" };
+    await warm(hostedFast);
+    await Promise.all(waits);
+    expect(calls.map((c) => c.url)).toEqual(["https://fast.example.test/health"]);
+  });
+
   it("does not wait for the model server: it answers at once, and a hung server cannot hold the child's request", async () => {
     vi.stubGlobal("fetch", vi.fn(() => new Promise(() => undefined)));
     const res = await Promise.race([warm(), new Promise<"slow">((r) => setTimeout(() => r("slow"), 500))]);

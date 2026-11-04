@@ -48,6 +48,17 @@ SELF_TEXT_API=
 SELF_TEXT_REASONING=
 # "tuned" sends the SHORT prompt (shared/forgeTunePrompt.ts) to a model trained on it (scripts/tuning/README.md). Leave empty for the base Glimmer: it needs the long prompt.
 SELF_TEXT_PROMPT=
+# The FAST PATH (docs/specs/forge-ai-spec.md, "Fast path"): our tuned model asked first for a hat or head wish, the standard model above as the fallback. OFF unless FORGE_FAST_MODE is
+# exactly on or optin. SELF_FAST_URL is an https address (/v1 included), SELF_FAST_MODEL the served name (forge-glimmer), SELF_FAST_KEY the key that server takes.
+FORGE_FAST_MODE=
+SELF_FAST_URL=
+SELF_FAST_KEY=
+SELF_FAST_MODEL=
+# WHO the service treats a make request as being for (docs/specs/forge-ai-spec.md, "Fast path"): the hosted model is for adults only; a child's request goes to our own models only.
+# FORGE_HOSTED_FOR_ADULTS=off (exactly) = every request is a child's (make-from-words on our own models only). FORGE_AUDIENCE_DEFAULT = child or adult (the build's default is adult for the Nov 4 demo).
+# A device cannot choose: there is no setting in the app.
+FORGE_HOSTED_FOR_ADULTS=
+FORGE_AUDIENCE_DEFAULT=
 SELF_SEGMENT_URL=
 SELF_SEGMENT_KEY=
 SELF_IMAGE_URL=
