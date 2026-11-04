@@ -283,9 +283,11 @@ interface MapCard {
 
 - `kind` badge + word: `Grown-up`/`Learn`/`World`/`Lab`
   (icons: `lock`/`play`/`compass`/`bridge`, per mockup `KIND_ICON`).
-- World pips: one per hidden part (`5`); icon = part slot
-  (`goal.split(".")[1]`, e.g. `hat`, `ears`, `back`); shown as outline
-  silhouette until found, filled gold when found. Lab/ladder pips:
+- World pips: one per hidden part (`5`). **Updated 2026-11-04:** each
+  circle shows a picture of the part itself (`PART_GLYPH` in `mapCards.ts`:
+  a flower, a crown, a camera; the slot's picture when a part has none),
+  not the first letter of its slot, which children could not read. Dashed
+  and dimmed until found, bright on a gold circle when found. Lab/ladder pips:
   `check` icons, filled when done. Completed card shows a `check`
   badge. "Found" reads ToyForge found/mdones via the engine facade
   snapshot — never `localStorage["tf25"]` directly.
@@ -853,17 +855,31 @@ production build): with age set the entry was **3 taps** (`More`
 and `More`/`Map` are under the `≥ 96 px` bar (§11.4); the cards are
 all above it. Dan then added a stage **Map button** (`96 × 96 px` for
 bands 0–1, a smaller pill above; `tv-map-fab` in `GameCanvas.tsx`), so
-the entry is now **2 taps**; the `⋯` → `Map` route stays. The Map opens
-as the carousel in portrait and as the full-screen trail map on a phone
-held sideways (`PHONE_LANDSCAPE_QUERY`, `defaultMapView(band,
-phoneLandscape)`); an unset age keeps the carousel; turning the phone
-with the Map open switches views. Short landscape screens also lose the
-stage's `440 px` minimum height (it clipped the bottom 100 px of the
-stage, controls included) and show a compact carousel (cards `100 px`
-tall). The sideways mission panel is still 60% of the stage; the
-full-screen map with a compact carousel strip over it is not built. On a fresh device the carousel centres on the grown-up
-`ask` card behind the press-and-hold gate, so a session needs the
-grown-up to set the age first. Whether a 2–3 year old finds `⋯` → `Map`
+the entry is now **2 taps**; the `⋯` → `Map` route stays.
+
+**Superseded 2026-11-04 (Dan): one Map screen, at every age and in both
+orientations.** The Map is the full-screen trail map with the carousel
+as a mini strip along its bottom (`MapCardStrip.tsx` inside
+`ExplorerMap.tsx`), so a child can walk the trail or just tap a card.
+There is no `Cards` / `Trail map` switch and no `defaultMapView`
+(removed, with `PHONE_LANDSCAPE_QUERY`). The strip **starts at the left
+edge** (`12 px` gutter, the suggested card scrolled to the front, so no
+empty gap before the first card); a tap on a card goes straight in (no
+hop first). Each card carries **a screenshot of its level**
+(`public/map/cards/<id>.jpg`, made by `scripts/capture-map-cards.mjs`
+sideways, day look; `CARD_SHOT_IDS` in `mapCards.ts`; the Garage's
+picture is its own sheet, the grown-up card keeps its glyph, a missing
+picture falls back to it). Labs show the picture of the world they run
+in. The kind of place (`World`, `Lab`, `Learn`, `Garage`) is written on
+the picture as a small tag, so it reads before the title does, and the
+cards are 5% smaller than the first build (`167 px` wide sideways). Top buttons (Songs,
+Age, Home) share one bright `48 px` style (`tv-map-btn`). Short
+landscape screens lose the stage's `440 px` minimum height (it clipped
+the bottom 100 px of the stage, controls included) and the strip uses
+compact cards (`100 px` tall; Play moves to the right). The sideways
+mission panel is still 60% of the stage. On a fresh device the strip
+shows the grown-up `ask` card behind the press-and-hold gate, so a
+session needs the grown-up to set the age first. Whether a 2–3 year old finds `⋯` → `Map`
 at all is what the session decides (Q1: promote `Map` to a dock icon
 only if playtesters miss it). Setup, device checks, per-rung blanks and
 the target table are in

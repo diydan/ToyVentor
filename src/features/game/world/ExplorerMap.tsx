@@ -30,10 +30,11 @@ import {
   type RoadCurve,
 } from "../../../lib/explorerArt";
 import type { LadderState } from "../../../lib/learn";
-import { KIND_WORD } from "../../../lib/mapCards";
+import { KIND_WORD, type MapCard } from "../../../lib/mapCards";
 import type { WorldId } from "./engine";
 import { NodeArt } from "./ExplorerNodeArt";
 import { FogBank, WorldArt } from "./ExplorerWorldArt";
+import { MapCardStrip } from "./MapCardStrip";
 import { RungSheet } from "./RungSheet";
 
 export interface ExplorerMapProps {
@@ -53,8 +54,11 @@ export interface ExplorerMapProps {
   seen?: readonly string[] | null;
   onSeen?: (entries: string[]) => void;
   onClose: () => void;
-  /** Back to the swipe-card view of the same places. */
-  onShowCards: () => void;
+  /** The same places as swipeable cards with a screenshot each: the mini carousel along the bottom. */
+  cards: MapCard[];
+  guideName?: string;
+  /** Age chip text ("Age 5-6", or "Age: ask a grown-up"). */
+  ageLabel: string;
   onAskAge: () => void;
   onGoWorld: (world: WorldId) => void;
   /** Start the node's seeded level. False = it could not start (stay here). */
@@ -154,7 +158,9 @@ export function ExplorerMap({
   seen,
   onSeen,
   onClose,
-  onShowCards,
+  cards,
+  guideName,
+  ageLabel,
   onOpenSongs,
   onAskAge,
   onGoWorld,
@@ -164,6 +170,8 @@ export function ExplorerMap({
   planForRung,
 }: ExplorerMapProps) {
   const scrollerRef = useRef<HTMLDivElement>(null);
+  const stripRef = useRef<HTMLDivElement>(null);
+  const rootRef = useRef<HTMLElement>(null);
   const [rungsOf, setRungsOf] = useState<LadderState | null>(null);
   // Fixed at open: the diff must not change when the record updates below,
   // or the animation classes would drop off mid-play.
@@ -236,12 +244,27 @@ export function ExplorerMap({
 
   useEffect(() => () => void (run.current += 1), []);
 
+  // The card strip's height, so Play, the notice and the map's scroll range clear it.
+  useLayoutEffect(() => {
+    const strip = stripRef.current;
+    const root = rootRef.current;
+    if (!strip || !root) return;
+    const sync = () => root.style.setProperty("--strip-h", `${strip.offsetHeight}px`);
+    sync();
+    if (typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(sync);
+    ro.observe(strip);
+    return () => ro.disconnect();
+  }, []);
+
   const centerOn = (pt: Pt, smooth: boolean) => {
     const el = scrollerRef.current;
     if (!el) return;
+    // The card strip covers the bottom of the screen: centre in what is left above it.
+    const room = el.clientHeight - (stripRef.current?.offsetHeight ?? 0);
     el.scrollTo({
       left: pt.x - el.clientWidth / 2,
-      top: pt.y - el.clientHeight / 2,
+      top: pt.y - room / 2,
       behavior: smooth ? "smooth" : "auto",
     });
   };
@@ -320,6 +343,12 @@ export function ExplorerMap({
       return soon(node.label);
     }
     onGoWorld(node.id as WorldId);
+  };
+
+  /** A tap on a strip card goes straight in, like the old carousel: no hop first. */
+  const openCard = (card: MapCard) => {
+    const node = byId.get(card.id);
+    if (node) open(node);
   };
 
   // A mouse drags the map like a hand; touch scrolls natively.
@@ -401,6 +430,7 @@ export function ExplorerMap({
 
   return (
     <section
+      ref={rootRef}
       className={`tv-trail-full${night ? " tv-trail-night" : ""}`}
       data-tod={night ? "night" : "day"}
       role="region"
@@ -585,14 +615,14 @@ export function ExplorerMap({
         </div>
         <div className="tv-trail-hud-btns">
           {onOpenSongs ? (
-            <button type="button" className="tv-ctl tv-trail-ctl tv-map-songs" onClick={onOpenSongs}>
+            <button type="button" className="tv-ctl tv-trail-ctl tv-map-btn tv-map-songs" onClick={onOpenSongs}>
               🎵 Songs
             </button>
           ) : null}
-          <button type="button" className="tv-ctl tv-trail-ctl" onClick={onShowCards}>
-            Cards
+          <button type="button" className="tv-ctl tv-trail-ctl tv-map-btn" onClick={onAskAge}>
+            {ageLabel}
           </button>
-          <button type="button" className="tv-ctl tv-trail-ctl" onClick={onClose}>
+          <button type="button" className="tv-ctl tv-trail-ctl tv-map-btn" onClick={onClose}>
             Home
           </button>
         </div>
@@ -613,6 +643,10 @@ export function ExplorerMap({
         >
           {info.action}
         </button>
+      </div>
+
+      <div className="tv-trail-strip" ref={stripRef}>
+        <MapCardStrip cards={cards} guide={guide} guideName={guideName} onOpen={openCard} />
       </div>
 
       {rungsOf ? (

@@ -11,15 +11,13 @@ have found.
 ## Settled choices
 
 - **Which view opens first depends on age** (decided Nov 3).
-  The carousel is the default for ages 3–8 and for an unset age; the
-  trail map is the default from "8 plus". Each is one tap from the
-  other (`Trail map` on the carousel, `Cards` on the trail map), and
-  the Map always opens on the age's default, not on the last view
-  used. Age bands are 2–3, 3–4, 5–6, 7–9, 10–12, 13+ and cannot split
-  at 8, so **band 3 (7–9) counts as "8 plus"**
-  (`TRAIL_DEFAULT_FROM_BAND = 3`, `defaultMapView`). Both views derive
-  from one `buildMapCards` list, so pips, progress, and the suggested
-  place always agree.
+  **Updated 2026-11-04: the Map is one screen at every age.** The
+  trail map is always the view, with the carousel as a mini strip of
+  screenshot cards along its bottom (carousel spec §13.4); the old
+  `Cards` / `Trail map` switch and the age-based default
+  (`TRAIL_DEFAULT_FROM_BAND`, `defaultMapView`) are gone. The trail and
+  the strip derive from one `buildMapCards` list, so pips, progress,
+  and the suggested place always agree.
 - **Always full screen.** The trail map covers the whole screen, the
   dock included (`position: fixed`, above the dock, below the sleep
   curtain). It carries its own small HUD: a name plate, `Cards`,
@@ -177,7 +175,7 @@ neighbours.
   order, so **a place that exists never moves when any branch grows**),
   fog states, `newlyShown` and `seenEntries` (the reveal diff),
   `explorerNeighbor` (arrow-key travel), `explorerRoute` (the walk the
-  toy hops along), `defaultMapView`, `frontierTier` / `maxTierForAge`
+  toy hops along), `frontierTier` / `maxTierForAge`
   (difficulty by depth and age) and `SECRET_EXITS` (fixed positions,
   always reserved in the frontier layout, locked or not, so nothing
   moves when one opens). Unit-tested in

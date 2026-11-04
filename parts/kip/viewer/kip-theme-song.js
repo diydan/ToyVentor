@@ -36,6 +36,60 @@ const POLL_MS = 4000;
 const MAX_WAIT_MS = 12 * 60 * 1000;
 const MAX_POLL_FAILS = 6;
 
+/**
+ * The waiting lines and how full the bar is (the same words and curve as the game's song card, src/features/game/world/songWait.ts; tests/theme-song-card.test.ts keeps them equal).
+ * Nobody knows how far along the song is, so the bar eases towards done and never reaches it: it fills only when the song really is ready.
+ */
+export const WAIT_STAGES = [
+  { at: 0, text: 'Thinking of the tune…' }, { at: 8, text: 'Picking the instruments…' }, { at: 18, text: 'Teaching the singer the words…' },
+  { at: 30, text: 'Adding the drums…' }, { at: 44, text: 'Practising the chorus…' }, { at: 58, text: 'Nearly ready…' },
+];
+export function waitStage(seconds) {
+  const s = Number.isFinite(seconds) && seconds > 0 ? seconds : 0;
+  let line = WAIT_STAGES[0].text;
+  for (const st of WAIT_STAGES) if (s >= st.at) line = st.text;
+  return line;
+}
+export function waitProgress(seconds, done = false) {
+  if (done) return 1;
+  const s = Number.isFinite(seconds) && seconds > 0 ? seconds : 0;
+  return 0.92 * (1 - Math.exp(-s / 35));
+}
+
+/**
+ * The mini karaoke: the provider times every line it sings (start/end in ms on the song's own timeline, and a start for each word), so the line that lights up is the line being sung.
+ * `cleanLines` checks the compact shape the route sends ({s, e, t, w?}); `karaokeLine` says what to show `ms` into the song. A port of shared/songKaraoke.ts for the plain-JS bench
+ * (no loop here: the card plays the whole song); tests/theme-song-card.test.ts holds the two to the same answers. No times means no karaoke: lyrics are never paced by guesswork.
+ */
+export function cleanLines(raw) {
+  if (!Array.isArray(raw)) return [];
+  const num = (v) => (typeof v === 'number' && Number.isFinite(v) && v >= 0 && v <= 1800000 ? Math.round(v) : null);
+  const out = [];
+  for (const r of raw) {
+    if (!r || typeof r !== 'object') continue;
+    const sv = num(r.s), ev = num(r.e);
+    const t = typeof r.t === 'string' ? r.t.replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 120) : '';
+    if (sv === null || ev === null || !t || ev < sv) continue;
+    const line = { s: sv, e: ev, t };
+    if (Array.isArray(r.w)) { const w = r.w.map(num); if (w.length === t.split(' ').filter(Boolean).length && w.every((x) => x !== null)) line.w = w; }
+    out.push(line);
+  }
+  return out.sort((a, b) => a.s - b.s).slice(0, 80);
+}
+export function karaokeLine(lines, ms) {
+  if (!Array.isArray(lines) || !lines.length || !Number.isFinite(ms)) return null;
+  let i = -1;
+  for (let k = 0; k < lines.length; k++) if (lines[k].s - 150 <= ms) i = k;
+  const soon = (l) => (l && l.s - ms <= 7000 ? l.t : '');
+  if (i < 0) return { index: -1, words: [], lit: 0, next: soon(lines[0]) };
+  const l = lines[i];
+  if (ms >= l.e + 900) return { index: -1, words: [], lit: 0, next: soon(lines[i + 1]) };
+  const words = l.t.split(' ').filter(Boolean);
+  let lit = 0;
+  for (let k = 0; k < words.length; k++) if ((l.w ? l.w[k] : l.s + ((l.e - l.s) * k) / words.length) - 50 <= ms) lit++;
+  return { index: i, words, lit, next: lines[i + 1]?.t ?? '' };
+}
+
 const CSS = `
 .kts-card { margin: 10px 0 2px; padding: 10px 12px; border-radius: 12px; background: #f3efff; color: #2a2150; }
 .kts-card[hidden] { display: none; }
@@ -49,7 +103,17 @@ const CSS = `
 .kts-lyrics p { margin: 6px 0 0; white-space: pre-line; }
 .kts-lyrics b { display: block; margin-top: 6px; font-size: 11px; text-transform: uppercase; opacity: .7; }
 .kts-card button.kts-play { background: #6a4cff; border-color: #6a4cff; color: #fff; }
-@media (prefers-color-scheme: dark) { .kts-card { background: #2a2150; color: #f1ecff; } }
+.kts-wait { margin: 2px 0 6px; } .kts-wait[hidden] { display: none; }
+.kts-eq { display: flex; align-items: flex-end; justify-content: center; gap: 4px; height: 28px; }
+.kts-eq i { display: block; width: 6px; height: 100%; border-radius: 3px 3px 0 0; background: linear-gradient(#ff9d5c, #ffd24d); transform-origin: bottom; animation: kts-eq .8s ease-in-out infinite; }
+@keyframes kts-eq { 0%, 100% { transform: scaleY(.2); } 50% { transform: scaleY(1); } }
+.kts-bar { height: 6px; margin-top: 4px; border-radius: 4px; background: rgba(106, 76, 255, .18); overflow: hidden; }
+.kts-bar b { display: block; height: 100%; width: 0; background: #6a4cff; transition: width 1s linear; }
+.kts-stage { margin: 4px 0 0; font-size: 12px; font-weight: 700; text-align: center; opacity: .85; }
+.kts-kara { margin: 6px 0 0; font-size: 15px; font-weight: 800; line-height: 1.25; min-height: 1.3em; } .kts-kara[hidden] { display: none; }
+.kts-kara span { opacity: .5; transition: opacity .12s linear; } .kts-kara span.on { opacity: 1; color: #6a4cff; } .kts-kara .gap { opacity: .55; font-weight: 700; }
+@media (prefers-color-scheme: dark) { .kts-card { background: #2a2150; color: #f1ecff; } .kts-kara span.on { color: #ffd24d; } .kts-bar b { background: #ffd24d; } }
+@media (prefers-reduced-motion: reduce) { .kts-eq i { animation: none; transform: scaleY(.6); } .kts-bar b, .kts-kara span { transition: none; } }
 `;
 
 const make = (doc, tag, attrs = {}, ...kids) => {
@@ -86,16 +150,44 @@ export function createThemeSong({
   const statusEl = make(doc, 'p', { class: 'kts-status', role: 'status', 'aria-live': 'polite' }, '');
   const standIn = make(doc, 'button', { type: 'button', hidden: '' }, 'Hear a tune while you wait');
   const playBtn = make(doc, 'button', { type: 'button', class: 'kts-play', hidden: '' }, 'Play your song');
+  const eqBars = Array.from({ length: 7 }, (_, i) => make(doc, 'i', { style: `animation-delay:${-i * 0.17}s;animation-duration:${(0.55 + ((i * 37) % 5) * 0.09).toFixed(2)}s` }));
+  const barFill = make(doc, 'b', {});
+  const stageEl = make(doc, 'p', { class: 'kts-stage' }, '');
+  const waitEl = make(doc, 'div', { class: 'kts-wait', 'aria-hidden': 'true', hidden: '' }, make(doc, 'div', { class: 'kts-eq' }, ...eqBars), make(doc, 'div', { class: 'kts-bar' }, barFill), stageEl);
+  const karaEl = make(doc, 'p', { class: 'kts-kara', 'aria-hidden': 'true', hidden: '' }, '');
   const lyricsP = make(doc, 'p', {}, '');
   const lyrics = make(doc, 'details', { class: 'kts-lyrics', hidden: '' }, make(doc, 'summary', {}, 'The words'), lyricsP);
-  const node = make(doc, 'section', { class: 'kts-card', 'aria-label': 'Theme song', hidden: '' }, make(doc, 'div', { class: 'kts-head' }, label, ai), nameEl, statusEl, make(doc, 'div', { class: 'kts-row' }, standIn, playBtn), lyrics);
+  const node = make(doc, 'section', { class: 'kts-card', 'aria-label': 'Theme song', hidden: '' }, make(doc, 'div', { class: 'kts-head' }, label, ai), nameEl, statusEl, waitEl, make(doc, 'div', { class: 'kts-row' }, standIn, playBtn), karaEl, lyrics);
 
   let state = 'idle';          // idle | unavailable | writing | making | ready | failed
   let run = 0;                 // bumps on every start/cancel: an answer from an older run is dropped
   let timer = 0, audio = null, audioKind = null, available = null, library = null, current = null, song = null;
 
-  const setState = (s, text) => { state = s; if (text !== undefined) statusEl.textContent = text; onChange(s); };
-  const stopAudio = () => { if (audio) { try { audio.pause(); } catch { /* already stopped */ } audio = null; audioKind = null; } standIn.textContent = 'Hear a tune while you wait'; playBtn.textContent = 'Play your song'; };
+  // the waiting display: bars, a bar that eases towards done, and a line that changes every few seconds, while the song is written and sung
+  let waitTimer = 0, waitFrom = 0;
+  const paintWait = (done = false) => { const sec = (now() - waitFrom) / 1000; barFill.style.width = `${Math.round(waitProgress(sec, done) * 100)}%`; stageEl.textContent = done ? 'Here it comes!' : waitStage(sec); };
+  const stopWait = () => { if (waitTimer) { clearInterval(waitTimer); waitTimer = 0; } waitEl.hidden = true; };
+  const syncWait = (s) => {
+    if (s === 'writing' || s === 'making') {
+      waitEl.hidden = false;
+      if (s === 'writing' || !waitFrom) { waitFrom = now(); paintWait(); } // a new song starts its own clock, even if the last one was still being made
+      if (!waitTimer) waitTimer = setInterval(() => paintWait(), 1000);
+    } else stopWait();
+  };
+  // the karaoke: while the song plays, the line being sung with its words lighting up (only when the provider gave times)
+  let karaTimer = 0, karaKey = '';
+  const stopKara = () => { if (karaTimer) { clearInterval(karaTimer); karaTimer = 0; } karaKey = ''; karaEl.hidden = true; karaEl.replaceChildren(); };
+  const paintKara = () => {
+    const v = karaokeLine(song?.lines, Number.isFinite(audio?.currentTime) ? audio.currentTime * 1000 : NaN);
+    if (!v) { if (karaKey) { karaKey = ''; karaEl.replaceChildren(); } return; }
+    const key = `${v.index}:${v.lit}:${v.next}`;
+    if (key === karaKey) return;
+    karaKey = key;
+    karaEl.replaceChildren(...(v.index >= 0 ? v.words.map((w, i) => make(doc, 'span', i < v.lit ? { class: 'on' } : {}, `${w} `)) : [make(doc, 'span', { class: 'gap' }, v.next ? `♪ ${v.next}` : '♪')]));
+  };
+  const startKara = () => { stopKara(); if (!song?.lines?.length) return; karaEl.hidden = false; paintKara(); karaTimer = setInterval(paintKara, 100); };
+  const setState = (s, text) => { state = s; if (text !== undefined) statusEl.textContent = text; syncWait(s); onChange(s); };
+  const stopAudio = () => { stopKara(); if (audio) { try { audio.pause(); } catch { /* already stopped */ } audio = null; audioKind = null; } standIn.textContent = 'Hear a tune while you wait'; playBtn.textContent = 'Play your song'; };
   const clearTimer = () => { if (timer) { clearTimeout(timer); timer = 0; } };
 
   let quota = null;       // what this device has left this week, from the last probe (null: unknown or an unmetered route)
@@ -150,17 +242,18 @@ export function createThemeSong({
     audioKind = kind;
     audio.loop = kind === 'standin';
     audio.volume = kind === 'standin' ? 0.5 : 0.9;
-    audio.addEventListener?.('ended', () => { if (audioKind === kind) { audio = null; audioKind = null; (kind === 'song' ? playBtn : standIn).textContent = kind === 'song' ? 'Play your song' : 'Hear a tune while you wait'; } });
+    audio.addEventListener?.('ended', () => { if (audioKind === kind) { stopKara(); audio = null; audioKind = null; (kind === 'song' ? playBtn : standIn).textContent = kind === 'song' ? 'Play your song' : 'Hear a tune while you wait'; } });
     (kind === 'song' ? playBtn : standIn).textContent = kind === 'song' ? 'Stop' : 'Stop the tune';
+    if (kind === 'song') startKara();
     return Promise.resolve(audio.play?.()).catch(() => { stopAudio(); });   // blocked autoplay: the button is there to press
   }
 
-  function ready(link, durationMs) {
+  function ready(link, durationMs, timed = []) {
     clearTimer();
     const wasStandIn = audioKind === 'standin';
     standIn.hidden = true;
     setState('ready', `Your song is ready${durationMs ? ` (${Math.round(durationMs / 1000)} seconds)` : ''}!`);
-    song = { name: current.name, verse: current.verse, chorus: current.chorus, mood: current.mood, url: link, task: current.task, madeAt: new Date(now()).toISOString() };
+    song = { name: current.name, verse: current.verse, chorus: current.chorus, mood: current.mood, url: link, task: current.task, madeAt: new Date(now()).toISOString(), ...(timed.length ? { lines: timed } : {}) };
     keepSong(storage, song);
     try { Promise.resolve(onSong(song)).catch(() => {}); } catch { /* a listener that fails never spoils the song */ }
     playBtn.hidden = false; playBtn.dataset.src = link;
@@ -182,7 +275,7 @@ export function createThemeSong({
         poll(myRun, startedAt, fails + 1); return;
       }
       if (myRun !== run) return;
-      if (answer?.status === 'ready' && typeof answer.url === 'string') { ready(answer.url, answer.durationMs); return; }
+      if (answer?.status === 'ready' && typeof answer.url === 'string') { ready(answer.url, answer.durationMs, cleanLines(answer.lines)); return; }
       if (answer?.status === 'failed') { standIn.hidden = true; setState('failed', 'The song could not be finished this time. The name and the words are still yours.'); return; }
       if (now() - startedAt > maxWaitMs) { standIn.hidden = true; setState('failed', 'The song is taking too long. The name and the words are still yours.'); return; }
       poll(myRun, startedAt, 0);
@@ -236,8 +329,8 @@ export function createThemeSong({
     /** Stop everything and hide the card (a new build, or closing the panel's song). */
     /** Stop any sound but keep the card (the panel closed). */
     silence() { stopAudio(); },
-    cancel() { run++; clearTimer(); stopAudio(); node.hidden = true; if (state !== 'unavailable') state = 'idle'; },
-    dispose() { run++; clearTimer(); stopAudio(); node.remove(); },
+    cancel() { run++; clearTimer(); stopAudio(); stopWait(); node.hidden = true; if (state !== 'unavailable') state = 'idle'; },
+    dispose() { run++; clearTimer(); stopAudio(); stopWait(); node.remove(); },
     get state() { return state; },
     get name() { return current?.name ?? ''; },
     get song() { return song; },

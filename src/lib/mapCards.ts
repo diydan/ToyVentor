@@ -14,6 +14,8 @@ export interface Pip {
   done: boolean;
   /** Outline until found, so the child sees what is still hidden. */
   silhouette: boolean;
+  /** World pips: a picture of the hidden part itself (a flower, a crown), not a letter. */
+  glyph?: string;
 }
 
 export interface MapCard {
@@ -87,6 +89,21 @@ export const STOP_GLYPH: Record<string, string> = {
   garage: "🔧",
 };
 
+/**
+ * Cards that show a screenshot of their level (public/map/cards/<id>.jpg,
+ * made by scripts/capture-map-cards.mjs). The Garage's picture is its own sheet
+ * (a place to build, not a level). The grown-up card has no level, so it keeps
+ * its glyph; a missing file falls back to the glyph too.
+ */
+export const CARD_SHOT_IDS: readonly string[] = [
+  "little", "early", "daily", "bridges", "gears", "circuits", "code", "garage",
+  "garden", "sky", "junk", "beach", "snow", "room",
+  "lab1", "lab2", "lab3", "lab4", "lab5", "lab6",
+];
+
+export const cardShotUrl = (id: string): string | null =>
+  CARD_SHOT_IDS.includes(id) ? `/map/cards/${id}.jpg` : null;
+
 export const THEME_COLOR: Record<string, string> = {
   garden: "#5af0b0",
   sky: "#9bd4ff",
@@ -106,6 +123,29 @@ export const KIND_WORD: Record<CardKind, string> = {
 
 /** A part goal key is "character.hat.flower": the middle word is the slot. */
 const slotIcon = (goal: string): string => goal.split(".")[1] ?? "part";
+
+/**
+ * What each hidden part looks like, as one picture a child can read without reading:
+ * keyed by the last word of its goal ("character.hat.flower" -> "flower"). A part with no
+ * picture here falls back to its slot's.
+ */
+export const PART_GLYPH: Record<string, string> = {
+  flower: "🌸", antennae: "🐛", cape: "🦸", lightbar: "🚨", bubble: "🫧",
+  wings: "🦋", buggy: "🏎️", sparkle: "✨", cams: "📷", gearcrown: "⚙️",
+  wheels: "🛞", barrel: "🛢️", tools: "🛠️", tread: "⛓️", hook: "🪝",
+  radar: "📡", cap: "🧢", booster: "🚀", propellers: "🚁", puff: "☁️",
+  bear: "🧸", core: "🔋", plow: "🚜", springs: "🌀", sleepy: "😴",
+  tv: "📺", jetpack: "💨", open: "🚙", bulb: "💡", crown: "👑",
+};
+
+const SLOT_GLYPH: Record<string, string> = {
+  hat: "🎩", ears: "👂", back: "🎒", eyes: "👀", front: "🚗", shell: "🛡️", chassis: "🚙",
+  head: "🤖", top: "🔝", legs: "🦵", torso: "🧥", arms: "💪", wheels: "🛞", rear: "🔚", tail: "🐾",
+};
+
+/** The picture for a hidden part's goal key. */
+export const partGlyph = (goal: string): string =>
+  PART_GLYPH[goal.split(".")[2] ?? ""] ?? SLOT_GLYPH[slotIcon(goal)] ?? "◆";
 
 export interface MapCardsInput {
   ageBand: number | null;
@@ -195,6 +235,7 @@ export function buildMapCards(input: MapCardsInput): MapCard[] {
         icon: stop.kind === "world" ? slotIcon(g) : "check",
         done: goals[i] === true,
         silhouette: stop.kind === "world",
+        ...(stop.kind === "world" ? { glyph: partGlyph(g) } : {}),
       })),
       done,
       total: stop.goals.length,

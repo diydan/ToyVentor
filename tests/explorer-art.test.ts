@@ -2,11 +2,9 @@ import { describe, expect, it } from "vitest";
 import { buildMapCards } from "../src/lib/mapCards";
 import {
   buildExplorerGraph,
-  defaultMapView,
   FRONTIER_BRANCHES,
   FRONTIER_MAX_DEPTH,
   explorerRoute,
-  TRAIL_DEFAULT_FROM_BAND,
   type ExplorerGraph,
 } from "../src/lib/explorerMap";
 import {
@@ -46,31 +44,6 @@ function worldOf(g: ExplorerGraph) {
   }));
   return { frame, nodes, roads };
 }
-
-describe("default map view by age", () => {
-  it("carousel for 2-6 and an unset age, trail map from the 7-9 band up", () => {
-    expect(TRAIL_DEFAULT_FROM_BAND).toBe(3);
-    for (const band of [null, undefined, 0, 1, 2]) {
-      expect(defaultMapView(band), String(band)).toBe("cards");
-    }
-    for (const band of [3, 4, 5]) {
-      expect(defaultMapView(band), String(band)).toBe("trail");
-    }
-  });
-
-  it("a phone held sideways opens the trail map; an unset age keeps the carousel", () => {
-    for (const band of [0, 1, 2, 3, 4, 5]) {
-      expect(defaultMapView(band, true), String(band)).toBe("trail");
-    }
-    for (const band of [null, undefined]) {
-      expect(defaultMapView(band, true), String(band)).toBe("cards");
-    }
-    // Portrait is unchanged by the new flag.
-    for (const band of [0, 1, 2]) {
-      expect(defaultMapView(band, false), String(band)).toBe("cards");
-    }
-  });
-});
 
 describe("explorerRoute", () => {
   it("walks the roads, ends included, and is empty-safe", () => {

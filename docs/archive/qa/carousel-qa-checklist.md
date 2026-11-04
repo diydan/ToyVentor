@@ -28,10 +28,10 @@ Quick tick-box version of the pass in [carousel-playtest-runsheet.md](carousel-p
   - Go, car, go!: three road dots.
   - Tidy one thing: book to shelf, sock to laundry (not replayed in a scene run by the robot).
 - [ ] Rotate (phone sideways) with the Map closed: the whole stage fits, including the bottom controls (Dash, Whirl, Glow pulse, Shove).
-- [ ] Map button in landscape opens the full-screen **trail map**; the Cards chip then shows the compact carousel with the card, title and pips fully on screen.
-- [ ] Turn the phone while the Map is open: portrait shows the carousel, landscape the trail map, and turning back returns to the carousel.
+- [ ] The Map shows the **trail map with the card strip along the bottom** (portrait and sideways): the first card starts at the left edge with no gap, each card has a screenshot of its level, and the strip is a swipeable row. Sideways the cards are compact but title and pips are fully on screen.
+- [ ] Turn the phone while the Map is open: the same screen stays (trail plus strip), nothing jumps or closes.
 - [ ] Start Pop sideways and see how playable it is (see Known: the panel is big in landscape) ______.
-- [ ] The Trail map chip opens the full-screen map, Go! starts a level, Cards goes back.
+- [ ] Tap a place on the trail and the toy hops there; Go! starts it. Tapping a strip card starts it at once. The top buttons (Songs, Age, Home) look alike, bright and big.
 - [ ] Backgrounding the app mid-level and returning keeps the run going.
 - [ ] Changing the age band in grown-up settings needs the PIN and does not wipe stars.
 - [ ] 5 minutes of play: no heat or visible jank (notes) ______.
@@ -46,10 +46,10 @@ Quick tick-box version of the pass in [carousel-playtest-runsheet.md](carousel-p
 
 ## Known going in
 
-- Changed 2026-11-03 after the robot baseline: a stage **Map button** (96 x 96 px for bands 0-1, a smaller pill for older bands), so stage to level is 2 taps with age set (More -> Map -> card is still 3). The Map opens as the carousel in portrait and as the full-screen trail map on a phone held sideways (short landscape screens); an unset age keeps the carousel in both; older bands (7-9 up) open the trail map in both.
+- Changed 2026-11-03 after the robot baseline: a stage **Map button** (96 x 96 px for bands 0-1, a smaller pill for older bands), so stage to level is 2 taps with age set (More -> Map -> card is still 3). (The carousel-in-portrait / trail-in-landscape split from that day is replaced by the one-screen Map below.)
 - Changed with it: the stage had a `440 px` minimum height that a sideways phone (390 px) clipped, cutting off the bottom of the carousel and of the in-game controls. It now shrinks to the screen on short landscape screens, and the carousel cards are compacted there (`100 px` tall, still above the 96 px bar).
 - On a fresh device the carousel centres on the grown-up "Who is playing?" card behind the press-and-hold gate, so a grown-up must set the age first.
 - Sideways, the mission panel is about 60% of the stage (204 of 340 px) and hides most of the Pop markers, so the world is hard to tap. Run the Little ones levels in portrait; landscape is for the trail map. This was not changed.
 - The spec (§11.4) says the text mission panel on tap-the-scene levels is only visually hidden. On Pop it is visible, in both orientations.
 - Tapping a prop to hear its name uses the remote AI voice service and may incur charges. Skip it or accept the cost.
-- Not done: the full-screen map with a compact carousel strip on top of it (design in the session notes, later).
+- Changed 2026-11-04 (Dan): the Map is one screen, the trail map with the carousel as a strip along the bottom, at every age, in both orientations. There is no Cards / Trail map switch any more. Cards carry a screenshot of their level (Labs show the world they run in; the grown-up card and Garage keep an icon).

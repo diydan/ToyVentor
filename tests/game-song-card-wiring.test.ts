@@ -73,10 +73,9 @@ describe("the card asks only the app's own route and offers nothing to a child i
 
 describe("the Map's Songs sheet", () => {
   const canvas = read("src/features/game/world/GameCanvas.tsx");
-  it("is reached from both Map views, closes the Map when a song starts, and counts the tap as the audio gesture", () => {
-    expect(read("src/features/game/world/MapCarousel.tsx")).toContain("onOpenSongs");
+  it("is reached from the Map, closes the Map when a song starts, and counts the tap as the audio gesture", () => {
     expect(read("src/features/game/world/ExplorerMap.tsx")).toContain("onOpenSongs");
-    expect(canvas.match(/onOpenSongs=\{openSongs\}/g)).toHaveLength(2);
+    expect(canvas.match(/onOpenSongs=\{openSongs\}/g)).toHaveLength(1);
     expect(canvas).toMatch(/const startFromSheet = useCallback\(\(begin: \(\) => void\) => \{\s*noteGesture\(\);[\s\S]*?setSongsOpen\(false\);\s*setMapOpen\(false\);\s*begin\(\);/);
   });
   it("makes an idea song with kind 'prompt' and dances a kept one through playKept; the Map always opens on its places", () => {
@@ -85,8 +84,7 @@ describe("the Map's Songs sheet", () => {
     expect(canvas).toMatch(/setSongsOpen\(false\); \/\/ the Map always opens on its places/);
   });
   it("hides the Map while the sheet is open, so the two never stack", () => {
-    expect(canvas).toContain('mapOpen && !sleepActive && !songsOpen && mapView === "trail"');
-    expect(canvas).toContain('mapOpen && !sleepActive && !songsOpen && mapView === "cards"');
+    expect(canvas).toContain("{mapOpen && !sleepActive && !songsOpen && (\n          <ExplorerMap");
   });
   it("offers only a short closed list of ideas and a short typed one, and keeps typing from moving the toy", () => {
     const sheet = read("src/features/game/world/SongStudioSheet.tsx");
