@@ -36,7 +36,7 @@
   public/kip/partspec/mockup/pro_tub_hinge.stl \
   public/kip/partspec/mockup/shaft_tu03.stl
    ```
-2. **Bump the cache name** in `public/sw.js`: `const CACHE = "toyventor-v3";` to `"toyventor-v4"` (next number each time `/kip/` changes). Commit it.
+2. **Bump the cache name, every time `/kip/` changed** (the check: `git diff --stat <the commit that is live> <the commit you ship> -- public/kip`; any line means bump; the live commit is in the journal or the last deploy's smoke test). Missed twice on 2026-11-04 (a deploy that changed 8 `/kip/` files, then the voice client), caught only by re-reading `sw.js`: the smoke test checks the live cache name equals the commit's, not that it changed. Bump `public/sw.js`: `const CACHE = "toyventor-v3";` to `"toyventor-v4"` (next number each time `/kip/` changes). Commit it.
 3. **Commit everything else that should ship**, and nothing that should not: `git status` must show no file you want in production as modified or untracked. (A deploy is built from a clean export of HEAD, so uncommitted work is never in it.)
 4. **Make the clean export** and build it:
    ```
