@@ -15,6 +15,22 @@
 // WHAT IS SENT. Only the description the child typed for the build (phone numbers and emails are removed by the route before any model sees them).
 // The words and the name come back from the route; this module sends nothing to any provider itself.
 const LIST_KEY = 'tv.themeSongs.v1';
+const DEVICE_KEY = 'toyforge:device:v1';   // the same anonymous per-device id the game uses (src/lib/sync.ts): the weekly limit is per device
+/** Reasons the route gives that carry a sentence meant for the child; anything else it says is never shown. */
+const KIND_REASONS = ['idea_not_allowed', 'week_used', 'songs_off', 'budget_spent', 'in_progress'];
+
+/** The device and the family's clock: what every request to the song route carries. Never throws. */
+export function themeHeaders(storage = globalThis.localStorage) {
+  let id = '';
+  try {
+    id = storage?.getItem(DEVICE_KEY) ?? '';
+    if (!id && globalThis.crypto?.randomUUID) { id = globalThis.crypto.randomUUID(); storage?.setItem(DEVICE_KEY, id); }
+  } catch { /* storage blocked: a session-only id still works for the route */ }
+  if (!id) id = globalThis.crypto?.randomUUID ? globalThis.crypto.randomUUID() : `session-${Date.now()}`;
+  let tz = 'UTC';
+  try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'; } catch { /* UTC */ }
+  return { 'x-device-id': id, 'x-client-timezone': tz };
+}
 const MAX_KEPT = 20;
 const POLL_MS = 4000;
 const MAX_WAIT_MS = 12 * 60 * 1000;
@@ -82,13 +98,23 @@ export function createThemeSong({
   const stopAudio = () => { if (audio) { try { audio.pause(); } catch { /* already stopped */ } audio = null; audioKind = null; } standIn.textContent = 'Hear a tune while you wait'; playBtn.textContent = 'Play your song'; };
   const clearTimer = () => { if (timer) { clearTimeout(timer); timer = 0; } };
 
-  async function isOn() {
-    if (available !== null) return available;
+  let quota = null;       // what this device has left this week, from the last probe (null: unknown or an unmetered route)
+  async function isOn(fresh = false) {
+    if (available === false) return false;                 // the route said it is off: it stays off for this page, and nothing is asked again
+    if (available !== null && !fresh) return available;
     try {
-      const res = await fetchImpl(url);
-      available = res.ok && (await res.json())?.enabled === true;
-    } catch { available = false; }
+      const res = await fetchImpl(url, { headers: themeHeaders(storage) });
+      const body = res.ok ? await res.json() : null;
+      available = body?.enabled === true;
+      const q = body?.quota;
+      quota = available && q && Number.isInteger(q.left) && typeof q.makerOn === 'boolean' ? { left: q.left, makerOn: q.makerOn } : null;
+    } catch { available = false; quota = null; }
     return available;
+  }
+  /** A kind sentence in place of a song (the week is used up, a grown-up switched songs off). The card stays, the build carries on. */
+  function showNote(text) {
+    node.hidden = false; nameEl.textContent = ''; lyrics.hidden = true; standIn.hidden = true; playBtn.hidden = true;
+    setState('failed', text);
   }
 
   function show(parts) {
@@ -135,7 +161,7 @@ export function createThemeSong({
       if (myRun !== run) return;
       let answer = null;
       try {
-        const res = await fetchImpl(`${url}?id=${encodeURIComponent(current.task)}`);
+        const res = await fetchImpl(`${url}?id=${encodeURIComponent(current.task)}`, { headers: themeHeaders(storage) });
         if (res.status === 429) { poll(myRun, startedAt, fails); return; }           // told to slow down: wait one more turn, not a failure
         if (!res.ok) throw new Error(String(res.status));
         answer = await res.json();
@@ -159,16 +185,24 @@ export function createThemeSong({
     song = null; current = null; node.hidden = true; standIn.hidden = true; playBtn.hidden = true; lyrics.hidden = true;
     const text = String(description ?? '').trim();
     if (!text) { setState('idle'); return false; }
-    if (!(await isOn()) || myRun !== run) { if (myRun === run) setState('unavailable'); return false; }
+    if (!(await isOn(true)) || myRun !== run) { if (myRun === run) setState('unavailable'); return false; }
+    if (quota && quota.makerOn === false) { showNote('Songs are switched off by a grown-up.'); return false; }
+    if (quota && quota.left <= 0) { showNote('No new songs until Monday. Dance to the ones you made!'); return false; }
     node.hidden = false; nameEl.textContent = 'Thinking of a name…';
     setState('writing', 'Writing the song…');
     let body;
     try {
-      const res = await fetchImpl(url, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ description: text.slice(0, 300) }) });
-      if (!res.ok) throw new Error(String(res.status));
+      const key = globalThis.crypto?.randomUUID ? globalThis.crypto.randomUUID() : `tap-${Date.now()}-${Math.floor(Math.random() * 1e9)}`;
+      const res = await fetchImpl(url, { method: 'POST', headers: { 'content-type': 'application/json', ...themeHeaders(storage) }, body: JSON.stringify({ description: text.slice(0, 300), key }) });
+      if (!res.ok) {
+        let why = '';
+        try { const j = await res.json(); if (KIND_REASONS.includes(j?.reason) && typeof j.error === 'string') why = j.error.slice(0, 80); } catch { /* no body */ }
+        throw Object.assign(new Error(String(res.status)), { why });
+      }
       body = await res.json();
-    } catch {
+    } catch (err) {
       if (myRun !== run) return false;
+      if (err && err.why) { showNote(err.why); return false; }
       node.hidden = true; setState('unavailable'); return false;       // no song this time: the build carries on without a card
     }
     if (myRun !== run) return false;

@@ -1229,8 +1229,8 @@ async function init() {
   for (const entry of KIP_CLIPS) {
     actions.set(entry.id, kipMixer.clipAction(makeKipClip(THREE, entry)));
     registerClip(entry.id, entry.label);
-    if (entry.group === 'dance' && entry.bpm) danceTempos.push({ id: entry.id, bpm: entry.bpm, beats: entry.beats, group: 'dance' }); // the party picks from these
     if (entry.plant) plantedClips.add(entry.id);
+    if (entry.group === 'dance' && entry.bpm) danceTempos.push({ id: entry.id, bpm: entry.bpm, beats: entry.beats, group: 'dance' }); // the party picks from these
   }
 
   xbotVis.scale.multiplyScalar(83.5);
@@ -1269,8 +1269,8 @@ async function init() {
       if (!item) continue;
       actions.set(item.baked.id, kipMixer.clipAction(bakedToClip(THREE, item.baked)));
       registerClip(item.baked.id, item.c.label);
-      // a baked clip with a tempo is offered to the party: a dance is picked by the tempo, a movement-break move or a guitar strum only when a child chooses it
       if (item.baked.planted) plantedClips.add(item.baked.id);
+      // a baked clip with a tempo is offered to the party: a dance is picked by the tempo, a movement-break move or a guitar strum only when a child chooses it
       if (item.baked.group === 'move') breakMoves.push({ id: item.baked.id, bpm: item.baked.bpm ?? null, beats: item.baked.beats ?? null, group: 'move' });
       if (['dance', 'move', 'music'].includes(item.baked.group) && item.baked.beats) danceTempos.push({ id: item.baked.id, bpm: item.baked.bpm, beats: item.baked.beats, group: item.baked.group });
     }
@@ -3329,8 +3329,8 @@ globals.kipParty = partyApi;
 // and toggle button and draws in its own group; while it is open the character is hidden. `kip` is only set once init() has run, hence the guard.
 const describeTab = mountDescribe({
   THREE, STLLoader, mergeVertices, toCreasedNormals, scene, camera, controls, container: benchRoot,
-  themeOptions: { onSong: song => mySongs.add(song) },   // a new theme song is measured at once, so it is in the party's Song picker when the child gets there
   setCharacterVisible: on => { if (kip) kip.mover.visible = on; originRing.visible = on; },
+  themeOptions: { onSong: song => mySongs.add(song) },   // a new theme song is measured at once, so it is in the party's Song picker when the child gets there
 });
 globals.kipDescribe = describeTab;
 mySongs.catchUp().catch(() => { /* songs made before, measured quietly in the background; a failure just leaves them off the picker */ });
