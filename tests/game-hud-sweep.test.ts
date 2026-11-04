@@ -86,3 +86,26 @@ describe("the world's title over the scenery", () => {
     expect(rule).toContain("right: auto");
   });
 });
+
+describe("Demo Mode (a grown-up shows the game): the full world bar and two more drawer items", () => {
+  it("the world bar starts beside the Kip button, not under it (the Garden chip was hidden), and still scrolls sideways", () => {
+    const rule = body(".tv-host .tv-worlds");
+    expect(rule).toContain("left: calc(72px + env(safe-area-inset-left, 0px))");
+    expect(css.indexOf(".tv-host .tv-worlds {")).toBeGreaterThan(css.indexOf("fixes from the all-screens landscape sweep"));
+  });
+  it("the pop-ups that live at the top left (toast, world title, hint) move below the bar when it is there, one row apart, and do not move otherwise", () => {
+    const toast = body(".tv-host:has(.tv-worlds) .tv-stage-canvas-host .toast,\n.tv-host:has(.tv-worlds) .tv-stage-canvas-host .intro");
+    expect(toast).toContain("top: calc(46px + env(safe-area-inset-top, 0px))");
+    const hint = body(".tv-host:has(.tv-worlds) .tv-stage-canvas-host .bubble");
+    expect(hint).toMatch(/top:\s*calc\(84px[^;]*\) !important/);
+    expect(84 - 46).toBeGreaterThanOrEqual(30);                // (a toast line is about 28 px: the hint never lands on it)
+    expect(46).toBeGreaterThan(8 + 30);                        // (the bar is 8 to 38 px)
+  });
+  it("six rows fit a phone 360 px tall: 36 px items, 4 px gaps, and only when the drawer has the 3D Rig link (demo only)", () => {
+    const media = "@media (max-height: 400px) {\n  .tv-host .tv-dock:has(a.tv-menu-item)";
+    expect(css).toContain(media);
+    expect(body(".tv-host .tv-dock:has(a.tv-menu-item) .tv-dock-right .tv-ctl,\n  .tv-host .tv-dock:has(a.tv-menu-item) .tv-menu-item", media)).toMatch(/min-height:\s*36px/);
+    const rows = 6, items = 36, gaps = 4;
+    expect(8 + 54 + gaps + 44 + gaps + rows * items + (rows - 1) * gaps + 8).toBeLessThanOrEqual(360);
+  });
+});

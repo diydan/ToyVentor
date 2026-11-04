@@ -56,8 +56,8 @@ describe("where everything sits (game-hud.css)", () => {
     expect(d).toContain("visibility: hidden;");
     expect(rule('.tv-host .tv-dock[data-open="true"]')).toContain("visibility: visible;");
   });
-  it("the world pill and the Map button are gone from the screen (the drawer has both)", () => {
-    expect(rule(".tv-host .tv-map-fab")).toContain("display: none;");
+  it("the world pill and the big Map button are gone from the screen (the drawer has both; the Map button is not in the markup at all any more)", () => {
+    expect(canvas).not.toContain("tv-map-fab");
     expect(rule(".tv-host .tv-worlds-btn")).toContain("display: none;");
   });
   it("every sheet and every full-screen modal is a card at the left edge, never a bottom sheet", () => {

@@ -1721,34 +1721,6 @@ export function GameCanvas({
             </div>
           ))}
 
-        {/* One-tap Map: the stage-to-level path is Map + a card (2 taps), not
-            More + Map + a card. 96 px for ages 2-4 (play-design touch preset). */}
-        {!sleepActive &&
-          !mapOpen &&
-          !editor.testing &&
-          !editor.open &&
-          !create.open && (
-            <button
-              type="button"
-              className={`tv-map-fab${
-                progression.ageBand == null || progression.ageBand <= 1
-                  ? " tv-map-fab-kid"
-                  : ""
-              }${demoMode ? " tv-map-fab-demo" : ""}`}
-              aria-label="Map: places to play"
-              onClick={() => {
-                closeEngineSheets();
-                closeReactOverlays();
-                openMap();
-              }}
-            >
-              <span className="tv-map-fab-glyph" aria-hidden="true">
-                🗺️
-              </span>
-              <span>Map</span>
-            </button>
-          )}
-
         {editor.testing && !editor.open && !create.open && (
           <button
             type="button"

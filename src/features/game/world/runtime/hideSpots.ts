@@ -2,8 +2,9 @@
 // main walking rail, currently many items are on Kip's walking path"). The props got it in the landscape HUD; the hiding spots' big shapes were left on the lane, and this is the same rule for them.
 //
 // A spot's own depth comes from the catalog (HIDE: -0.6 to -1.4 for most, +2 for the lily pond), which is INSIDE the lane (z -1.2 to 1.2). `setBackSpot` gives the built spot a COPY of its data with z at
-// `clearZ` (never the catalog object: the editor and the saved worlds read the original). Not moved: the spots that are up in the air (the "speed" ones, a branch, an island, a crane at y 3.75, nothing on the
-// ground to walk into) and anything already behind `clearZ` or in front of the lane (the lily pond is a flat disc at z +2).
+// `clearZ` (never the catalog object: the editor and the saved worlds read the original). Not moved: the two spots that float (the branch's plank and the floating island, nothing on the ground to walk into)
+// and anything already behind `clearZ` or in front of the lane (the lily pond is a flat disc at z +2). The other "speed" spots DO stand on the ground (the crane's base, the lifeguard tower's legs, the ice
+// ledge's pillar, the bookshelf's posts) and are moved; Dash does not care about a spot's depth (it hops Kip to the spot's x at z 0), only `near()` does, and that is handled below.
 //
 // `near()` asks whether Kip is close enough to a spot to see it glow, peek at it or open it with an ability: it compares depths with a window of 2. With the shapes at -2.8 and Kip's lane ending at -1.2 that
 // window would only touch the back 0.4 of the lane, so a spot's depth is measured from the DEEPEST point of the lane when it is further back than that (`isNearDepth`): Kip's usual line (z = 0) is 1.2
@@ -16,11 +17,15 @@ export const LANE_BACK_Z = -1.2;
 /** How close in depth Kip must be to a spot (the window `near()` always used). */
 export const NEAR_DEPTH_WINDOW = 2;
 
-interface SpotData { t?: string; z?: number }
+/** The hide keys that float in the air (a plank in a tree, a cloud island): no ground to walk into. */
+export const AIRBORNE_COVERS: readonly string[] = ["branch", "island"];
+
+/** The parts of a built spot this needs: its depth, and which hiding place it is (`cover`, or `obj` for the junk machines). */
+interface SpotData { z?: number; cover?: string; obj?: string }
 
 /** Does this spot stand on the ground inside the lane (so it has to be moved)? */
 export function standsInLane(d: SpotData, clearZ: number): boolean {
-  if (d.t === "speed") return false;                  // up in the air
+  if (d.cover && AIRBORNE_COVERS.includes(d.cover)) return false;        // floating
   const z = d.z ?? 0;
   return z < 0 && z > clearZ;                          // behind the middle of the lane, not yet behind `clearZ` (z >= 0: the flat pond in front stays)
 }
