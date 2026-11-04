@@ -384,6 +384,68 @@ props and lets `composeLevel` fill in spots, stations and mood (K1 and K2 in the
 6. **Muse and the kit disagree.** `CR_INSTR` tells Muse "3 to 6 spots" while `edChecks` demands exactly five. The kit
    and Muse should share `checkLevel`. (K3.)
 
+## Adding a level today: what the code actually does (read 2026-11-04)
+
+Everything above is the target. This section is the reality, written from reading the code, so a person (or a model) adding a level knows what to edit, what will break, and which of the target rules apply. `R` below is `src/features/game/world/runtime/`, and `W` is `R/world.ts`, a hand-minified file with one very long line per function whose text several tests grep (an innocent reformat breaks them).
+
+**Five kinds of level exist, and they are not one system.**
+
+| Kind | What it is | A child reaches it by | Pays stars and XP? | To add one, edit |
+| --- | --- | --- | --- | --- |
+| Lab missions (legacy) | The 11 STEM `MISSION_TYPES` (bridge, measure, balance, logic, lift, lever, circuit, code, pattern, clean, raft) with a panel and a station in the world | Map "Lab N" card, the Worlds sheet, a ladder rung whose id starts `lab`, or as a station in a composed world | Yes (`mtWin`, then `applySolve`) | `MISSION_TYPES`, `MISSION_STAT`, an `MT.x` entry in `R/missions.ts`, a builder in `R/missionData.ts`, a branch in W `mpData` and `mpPress` (the final `else` of `mpData` is the clean panel, so a missing branch silently shows the wrong one), the `m.type===` lists in `mStartReplay` and `mCancelReplay`, a `CONCEPT_BADGES` entry, a `LEVELS` entry and `MAP_STOPS` goal |
+| Learn rungs (pick-one panels) | A ladder row (`src/lib/ladders.ts`, 38 rungs in 7 ladders) with 2 to 3 pick-one steps (`R/learnRungs.ts`) | Map ladder card, then `startLearnRun` | Yes, by the rung's id and tier | one `r(...)` line, one `d(...)` definition, and the pinned counts in `tests/carousel-c1.test.ts` (38 rungs, 7 ladders) and `carousel-c2.test.ts` (21 definitions) |
+| Learn rungs with a world scene | The same rung, upgraded: a `carry` recipe (`R/level2Recipes.ts`, `toyventor.level/2`) or a hand-written visit recipe (`VISIT_RECIPES` in `R/level2Scene.ts`, which has no format field and no validator: an ad hoc second format) | Same | Yes | the above plus the recipe, its `LEVEL2_RECIPES` entry, regenerated `src/lib/scenePrompts.json`, and the `scened` count in `tests/scene-prompts.test.ts` |
+| Composed worlds | A `toyventor.level/1` recipe (`LevelDef` in `R/catalog.ts`) from `composeLevel` (`R/levelKit.ts`), the editor, Create mode or a room photo | "Surprise world", the Explorer trail's frontier nodes, Create | Only through the stations inside it; Create and Muse levels have none (`crClean` and `cleanRecipe` strip `missions`) | a prop needs six coordinated edits: `PROPS`, a W `propBuilders` entry, `PROP_TYPES` and `PROP_SPECS`, `NOUN_KEYS` plus seven languages, a `CLUSTERS` entry, and optionally a word in W `WP` for offline Create |
+| Toy Room acts | A prop Kip walks to and does something with (hug, kick, read, strum, blow, pet, mallet, spill, dump) | Tapping the prop in the Toy Room | **No** (and Kip only: a robot or vehicle just gets the prop's poke) | `ACT_FOR_PROP` and a visit builder in `R/toyRoomActs.ts`, a clip in `R/proceduralClips.ts` and the `MixAction` union in `R/mixamo.ts`, a held item in `R/heldItems.ts`, and the lambdas in W that repeat the clip and hold unions |
+
+**What `toyventor.level/2` is in code.** `R/level2.ts` validates a recipe with exactly one primitive, `carry` (`R/carry.ts`, with a solver and tap-then-tap), and two recipes exist: pack the car and tidy one thing. The card, concept, one-idea and solvable checks run. The recipe parts `world`, `effects`, `progress`, `feel` and `voice`, the effect catalog, the "success follows from the effects" check, the age-preset limits, the other eleven primitives (including `scrub` and `flick`), the "random toddler" player and the Muse level/2 path are **not built**; `success.when` is carried as data and never evaluated, and `worker/muse.ts` accepts only `level/1`. (The spec's K3 looks done in code: `CR_INSTR` uses `SPOT_COUNT` and `edChecks` is `checkLevel`.)
+
+**Traps** (each found in code; read before adding anything):
+
+1. **Ids need exactly one dot** (`KEY_PATTERN` in `src/lib/progression.ts`: `^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+:t[123]$`). Any other shape loses its stars silently when progression is normalised.
+2. **The last dot-segment of a rung id is read as a mission type** (`missionTypeOf`). `daily.clean` therefore gets `MISSION_STAT.clean` (the glow part-match bonus) and counts toward the "clean" concept badge and the daily Clean Mastery job; any new id ending in one of the 11 types does the same.
+3. **Counts are pinned in tests.** A new rung breaks `carousel-c1` and `carousel-c2`; a new ladder also needs `STOP_GLYPH`, `THEME_COLOR` and Explorer placements in `src/lib/explorerMap.ts`; a new prop breaks `tests/prop-reactions.test.ts` until all registries agree; a new clip, held item or act breaks `procedural-clips`, `held-items` and `toy-room-acts` tests that pin exact lists.
+4. **Only scene rungs and props are voiced.** Panel pick-one steps and the legacy wrong-tool lines (`CWHY`, a toast) are text only. A spoken line must be a constant the generator can read, then `npx tsx scripts/scene-prompts.ts` and commit `src/lib/scenePrompts.json`; every voiced line also needs its text twin. A reworded line is a new clip. Prewarming (`scripts/prewarm-voice.ts <live url>`) warms the live cache, so it helps only after a deploy.
+5. **Age band filters Learn ladders and nothing else** (`learnStates` in `src/lib/learn.ts`). Worlds, labs, composed levels, Toy Room acts and Create ignore it, and the age presets in this spec ("Feel and age presets") are not enforced anywhere in code. Tier (Starter, Tinker, Engineer) is the only difficulty lever outside ladders, and Explorer frontier nodes take it from `maxTierForAge`.
+6. **Scene markers go wherever the toy happens to be.** A rung's scene does not switch world (lab rungs do), so a recipe's x positions must work in the world the child is in.
+7. **There is no robot playtester for levels.** The nearest things: `solveCarry`; `tests/level2-scene.test.ts` (plays a scene to done); the exhaustive scene-prompt explorer (`scripts/lib/scene-prompts-enum.ts`) and its seeded random player (400 games of 60 steps per rung, asserting every spoken line is in the list); `checkLevel` over 3,000 seeds (static only: nothing plays a composed level); and hand-run real-browser e2es (`scripts/e2e-*.mjs`, real mouse events at 390x844 through `window.__tvWorld`). None plays a lab mission or a pick-one rung.
+
+**Which kind to use.** Data first: if the idea is "carry things to places", it is a `carry` recipe. If it is a short STEM puzzle with a panel, it is a lab mission or a pick-one rung. If Kip must DO something in the world (clean, cook, spill, feed, sleep), none of the four fits, because a rung's scene cannot animate Kip with a tool and a Toy Room act pays nothing and is not reachable from the Map. That is the gap the next section fills.
+
+## Activity levels: Kip does a real task in the world (new kind, specified 2026-11-04)
+
+Dan's list (2026-11-03): "spilling a drink can be mopped up", "make mess level ... Oh no, oh no ... Clean? Clean", and separate levels on cooking and cleaning (he dropped "each activity unlocks a printable part"). Two Toy Room activities are built ([playful-interactions-spec.md](playful-interactions-spec.md) section 11: the juice cup and the toy box). This section defines the kind they belong to, so the cleaning level and the cooking level are built to one contract and later activities (feed, sleep, water the plants, set the table) are rows, not new code.
+
+**What an activity level is.** A short, errorless task a child directs Kip through by touching the world, with a visible start (something is messy, hungry or empty), a visible finish (it is tidy, fed, full), Kip's own clips, and one or more spoken lines from the closed list. It is a recipe-shaped scene, not a panel. The Toy Room props are its *entry from a prop* (the same task, started by tapping the cup); a ladder rung is its *entry from the Map*, which is what gives it stars, XP and a place on the carousel. One implementation, two doors.
+
+**The contract** (the mess work is the template: `R/messModel.ts`, `messScene.ts`, `mess.ts`, `messLines.ts`, `messPrompt.ts`, `mop.ts`):
+
+| Part | Rule |
+| --- | --- |
+| Model | Pure numbers and functions of time, no three.js: stand positions, timelines, thresholds per age band. Unit-tested and mutation-checked. |
+| Scene | The meshes only. Primitive-built stand-ins are fine; a printable part is not required. |
+| Lines | A constant list the scene-prompt generator reads (`MESS_PROMPT_LINES` is the pattern). Every spoken line has a toast twin; the activity is fully playable with the sound off. |
+| Prompt | One real `<button>` of at least 56 px for the child's next step, with an accessible name; a switch-control form that does the step in one action. |
+| State machine | `begin`, `update(dt)`, `reset()`; one activity at a time; a world change puts everything right; an interruption resumes, never loses progress. |
+| Safety | No timer, score, wrong tool or failure state, ever. A wrong move gets a kind hint and the same prompt. Nothing scary; no real-life dangerous action is shown as safe. |
+| Motion | `prefers-reduced-motion`: the result appears finished or in steps, nothing flies. |
+| Events | `touched`, `progress`, `wrong` (always a kind line), `done`, so the shared effects and the star path can hang off them. |
+| Players | A solver (finds a correct play) and a seeded random toddler (taps and drags at random for N games): both must reach `done`, and every line spoken must be in the closed list. This is the activity's robot playtest; today nothing like it exists for any kind of level except carry. |
+| Reach | A prop (Toy Room) and a ladder rung (Map). The rung is a *scene rung*: it pays through the existing `mtWin` path, so it needs an id that follows the id rules above. |
+
+**Primitives this adds (approved 2026-11-03, see the table above).**
+
+- `scrub`: the child drags a finger along a mess to clear it. Variables: shape (`blob`, `line`, `scatter`), the tool it needs (`vacuum`, `mop`, `sponge`, `brush`, `broom`), coverage to clear (a fraction), the finger-speed floor and ceiling by band, the wrong-tool lines (the existing `CWHY` pairs, now voiced). Coverage by band: 0 to 1 a single tap-and-wipe clears it ("clean it" is the switch form), band 2 needs 50%, band 3 up needs 70%.
+- `flick`: a swipe or tap inside a timing window. The window is long for bands 0 to 1 and never fails them; after two misses it widens; no band ever gets a "you lose".
+
+**Activity 1: the cleaning level.** One mess at a time on a counter or floor: crumbs (vacuum), a puddle (mop), jam (soapy sponge, after a "mix the soap" tap), the three `clean`-mission messes reused with their tool rules. Beats: "Oh no, oh no!", "Clean?", pick the tool (a wrong tool shows its `CWHY` line, now spoken, and the right one pulses), scrub, a cheer, "All clean! Hooray!". Bands 0 to 1: one mess, the right tool already in Kip's hand; band 2: two messes, choose the tool; bands 3 and up: all three, and the soap window of the existing mission. Reached by the rung `daily.clean` ("Clean up after meals", 3 to 4) and by a Toy Room prop (the spilled cup is its prop entry already).
+
+**Activity 2: the cooking level.** Pancakes, in five beats: crack the egg (a tap), count the batter into the pan (1 to 3 for bands 0 to 2, 1 to 6 from band 3; the counting is the learning), "it's hot!" (a grown-up confirms, see Q2), flip (a `flick` up on the pan), serve (carry one pancake to each plate: one to one). Reached by the rung `daily.cook` ("Help cook", 4 to 6) and a Toy Room prop (the pan on the hob). Built on the printable spatula and frying pan where the game can show them, else primitive stand-ins like the mop. No printable part is unlocked as a reward.
+
+**Quality bar for an activity level** (the definition of done): the contract table above; one concept stated in a sentence (cleaning: tool fits the mess; cooking: counting to N); an age-band table filled in; a real-browser e2e at 390x844 with real mouse events, reduced-motion and sound-off passes, and the spoken lines checked by clip id; a mutation check (break the code once to prove a new check can fail); the pinned-list tests extended on purpose; and the solver and random-toddler players green.
+
+**Where it lives in the code, so the next one is cheap.** New files `R/<name>Model.ts`, `<name>Scene.ts`, `<name>.ts`, `<name>Lines.ts`, `<name>Prompt.ts` and their tests; one small hook each into W (built, updated and reset beside `MESS`), `R/toyRoomActs.ts` (the prop entry), `R/learnRungs.ts` and `src/lib/ladders.ts` (the rung entry), and `scripts/lib/scene-prompts-enum.ts` (the lines). The `scrub` and `flick` primitives are shared modules (`R/scrub.ts`, `R/flick.ts`) with the contract above, so the second and third activity reuse them.
+
 ## Open questions
 
 - [ ] Should the mission card become a character speaking in the world for ages 2 to 4, with the card as a fallback?
@@ -391,3 +453,8 @@ props and lets `composeLevel` fill in spots, stations and mood (K1 and K2 in the
 - [ ] Who reviews generated pack levels, and how fast does a monthly pack need to turn around?
 - [ ] When do real-child playtests start, and who runs them?
 - [ ] Which traversal verb makes a prop an obstacle: hop over, push aside, carry or feed past, or a bridge? Feature 3 v2 of the photo spec (its Q8) waits on it.
+- [ ] **Q1 (activity levels): beats or one primitive?** "One concept and one primitive for ages 2 to 6" cannot describe cooking (tap, count, confirm, flick, carry). Proposal: the rule applies per BEAT (each beat is one primitive) and per CONCEPT (cooking: counting), and an activity has 1 to 5 beats. Needs Dan's decision before `toyventor.level/2` grows a `beats` list.
+- [ ] **Q2 (cooking): how does a grown-up say "it's hot"?** Proposal: one button that needs a 1.2 second hold (the gear's hold), no PIN and no maths, because the point is "hot things are a grown-up job", not a lock. The alternative is the full grown-up gate, which would stop a toddler's game for every pancake.
+- [ ] **Q3 (ids): keep `daily.clean` and `daily.cook`?** Keeping them keeps the stars already earned and is simple; the cost is the `clean` id collision (the glow bonus and the Clean Mastery job count a cleaning rung, which is arguably right). A rename (`daily.scrub`, `daily.pancakes`) avoids the collision but drops earned stars for those two rungs.
+- [ ] **Q4: should Toy Room acts pay anything?** Today they pay nothing and the Map cannot reach them. If the cup and toy box are the "prop door" of activity levels, a first completion per day could pay the rung's stars (the rung door already does). Otherwise the prop is practice only.
+- [ ] **Q5: age presets.** The presets in "Feel and age presets" are not enforced in code; activity levels would be the first to read the band (coverage, counts, help). Do they enforce them for activities only, or does a general `ageBand` reach every kind of level?

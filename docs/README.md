@@ -57,7 +57,7 @@ on geometry conflicts, [parts-tu-spec.md](parts/parts-tu-spec.md) and
 | [coppa-readiness-spec.md](specs/coppa-readiness-spec.md) | **Draft (2026-11-04), all deferred until after the hackathon:** what children's data the build holds (from the code), the posture decision, phases P0 to P5 (switches, data-map checks, notice and parent delete, consent only if needed, lawyer review), and the wording the entry may use. Condition: adult-operated demo only until P0 to P2 are done. |
 | [progressive-power-system-spec.md](specs/progressive-power-system-spec.md) | Proposed momentum-to-robotics stages. |
 | [scan-to-3d.md](specs/scan-to-3d.md) | Recommended scan-body route and acceptance tests. |
-| [play-design-spec.md](specs/play-design-spec.md) | Play design: level primitives, recipe format, composition kit, generation pipeline, and playtest bar. Owns the level lane and its one ordered Plan. |
+| [play-design-spec.md](specs/play-design-spec.md) | Play design: level primitives, recipe format, composition kit, generation pipeline, and playtest bar. Owns the level lane and its one ordered Plan. Also: how a level is actually added today (five kinds, traps, pinned tests) and the Activity levels contract (Kip does a real task: the cleaning and cooking levels). |
 | [sam-physical-to-digital-spec.md](specs/sam-physical-to-digital-spec.md) | **Draft:** `SAM 3.1` + `Muse` photo-to-digital: sketch-to-part, twin sync, room-to-level, real-life quests. Owns the photo lane; Feature 3 feeds the level lane above. |
 
 ## ToyVentor World (the 2.5D game)
