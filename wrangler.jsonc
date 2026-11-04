@@ -34,5 +34,9 @@
 	// Workers AI binding: /api/voice speaks "green tree" with google/gemini-3.8-flash-lite-tts (worker/voice.ts). Third-party
 	// models bill through AI Gateway Unified Billing, so there is no provider key to store. The binding is remote-only: it
 	// reaches Cloudflare (and bills) even under `wrangler dev`.
-	"ai": { "binding": "AI" }
+	"ai": { "binding": "AI" },
+	// The Make-from-words maker: a Container behind its own Worker with no public address (containers/forge-maker). It must be deployed FIRST,
+	// because a deploy of this Worker fails while the named service does not exist. With FORGE_OPTIMIZER_URL unset, worker/forgeOptimizer.ts uses it.
+	// Local dev (vite or wrangler dev) prints a warning that this service cannot be resolved; set FORGE_OPTIMIZER_URL in .dev.vars to use the Mac daemon.
+	"services": [{ "binding": "FORGE_MAKER", "service": "toyventor-forge-maker" }]
 }

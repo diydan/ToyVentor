@@ -1,0 +1,25 @@
+{
+	// The Make-from-words maker. No public address: the main Worker (toyventor) reaches it through a service binding named FORGE_MAKER.
+	// Deploy THIS Worker first, then the main one (the main config names this Worker in "services").
+	// Docker must be running when you deploy: wrangler builds the image for linux/amd64 and pushes it.
+	"$schema": "../../node_modules/wrangler/config-schema.json",
+	"name": "toyventor-forge-maker",
+	"main": "src/index.ts",
+	"compatibility_date": "2026-10-26",
+	"workers_dev": false,
+	"preview_urls": false,
+	// Fills ./context with the files the image needs (see stage.mjs).
+	"build": { "command": "node stage.mjs" },
+	"containers": [
+		{
+			"class_name": "ForgeMaker",
+			"image": "./Dockerfile",
+			"image_build_context": "./context",
+			"instance_type": "standard-2", // 1 vCPU, 6 GiB
+			"max_instances": 2
+		}
+	],
+	"durable_objects": { "bindings": [{ "name": "FORGE_MAKER", "class_name": "ForgeMaker" }] },
+	"migrations": [{ "tag": "v1", "new_sqlite_classes": ["ForgeMaker"] }],
+	"observability": { "enabled": true }
+}

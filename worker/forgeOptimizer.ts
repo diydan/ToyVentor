@@ -31,9 +31,32 @@ import { isPlayerId } from "../shared/ownership";
 import { readCappedJson } from "./body";
 import { verifyParentProofFromRequest, type ParentEnv } from "./parent";
 
+/** A Worker reached through a service binding (the maker, containers/forge-maker). Same call shape as `fetch`; a Cloudflare `Fetcher` fits. */
+export interface MakerBinding {
+  fetch(input: string, init?: RequestInit): Promise<Response>;
+}
+
 export interface ForgeOptimizerEnv extends ParentEnv {
   FORGE_OPTIMIZER_URL?: string;
   FORGE_OPTIMIZER_TOKEN?: string;
+  /**
+   * The maker as a Cloudflare Container behind its own Worker, reached through a service binding (wrangler.jsonc "services"). Used only when
+   * FORGE_OPTIMIZER_URL is not set, so local dev keeps using the daemon on the Mac. The maker Worker holds the daemon's token; this Worker needs none.
+   */
+  FORGE_MAKER?: MakerBinding;
+}
+
+/** A service binding ignores the host in a URL; this one is only a stand-in that carries the path. */
+const MAKER_HOST = "forge-maker.internal";
+/**
+ * The binding the current request's upstream calls go through, or null for a plain `fetch`. Set by gateForge, which every route runs first, from
+ * the environment's own bindings: those never change within a Worker instance, so one request cannot affect another.
+ */
+let makerTransport: MakerBinding | null = null;
+
+function upstreamFetch(url: string, init: RequestInit): Promise<Response> {
+  if (makerTransport && new URL(url).hostname === MAKER_HOST) return makerTransport.fetch(url, init);
+  return fetch(url, init);
 }
 
 export const MAX_FORGE_BODY_BYTES = 3_600_000;
@@ -122,7 +145,7 @@ export function logEvent(event: string, status: string | number, extra?: Record<
 
 function parseConfiguredUpstream(env: ForgeOptimizerEnv): URL | null {
   const raw = env.FORGE_OPTIMIZER_URL?.trim();
-  if (!raw) return null;
+  if (!raw) return env.FORGE_MAKER && typeof env.FORGE_MAKER.fetch === "function" ? new URL(`http://${MAKER_HOST}/`) : null;
   let parsed: URL;
   try {
     parsed = new URL(raw);
@@ -498,6 +521,7 @@ export async function gateForge(
     // Says when a retry will be let in; a caller that asks sooner only extends its own lock-out.
     return { ok: false, response: reply(429, { ok: false, status: "slow-down" }, { "retry-after": String(wait) }) };
   }
+  makerTransport = baseUrl.hostname === MAKER_HOST ? (env.FORGE_MAKER ?? null) : null;
   return { ok: true, baseUrl };
 }
 
@@ -509,7 +533,7 @@ export async function fetchUpstreamJson(
 ): Promise<{ ok: true; data: Record<string, unknown>; status: number } | { ok: false; response: Response }> {
   let res: Response;
   try {
-    res = await fetch(url, {
+    res = await upstreamFetch(url, {
       ...init,
       signal: AbortSignal.timeout(timeoutMs),
     });
@@ -683,7 +707,7 @@ export async function handleForgeArtifact(
 
   let res: Response;
   try {
-    res = await fetch(upstreamUrl(g.baseUrl, `/v1/artifacts/${artifactName}`), {
+    res = await upstreamFetch(upstreamUrl(g.baseUrl, `/v1/artifacts/${artifactName}`), {
       method: "GET",
       headers: upstreamHeaders(env),
       signal: AbortSignal.timeout(UPSTREAM_POLL_TIMEOUT_MS),
