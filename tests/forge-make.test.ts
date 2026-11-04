@@ -191,6 +191,21 @@ describe("POST /api/forge/make", () => {
       expect(seen.modelCalls[1]!.body).not.toHaveProperty("reasoning");
     });
 
+    it("SELF_TEXT_PROMPT=tuned sends the short prompt to our own model, and the default sends the long one; the hosted API always gets the long one", async () => {
+      await make({ text: "a wizard hat" }, headers, { ...env, ...SELF });
+      const long = seen.modelCalls[0]!.body.input ?? seen.modelCalls[0]!.body.messages?.[1]?.content ?? "";
+      resetForgeRateLimit();
+      await make({ text: "a wizard hat" }, headers, { ...env, ...SELF, SELF_TEXT_PROMPT: "tuned" });
+      const short = seen.modelCalls[1]!.body.input ?? seen.modelCalls[1]!.body.messages?.[1]?.content ?? "";
+      resetForgeRateLimit();
+      await make({ text: "a wizard hat" }, headers, { ...env, SELF_TEXT_PROMPT: "tuned" }); // hosted: the flag is ignored
+      const hosted = seen.modelCalls[2]!.body.input ?? "";
+      expect(long.length).toBeGreaterThan(5000);
+      expect(short.length).toBeLessThan(900);
+      expect(short).toContain("Child's wish: \"a wizard hat\"");
+      expect(hosted.length).toBeGreaterThan(5000);
+    });
+
     it("our own model is given 80 s and the hosted API 55 s, so a slow Glimmer answer finishes instead of falling back", async () => {
       const spy = vi.spyOn(AbortSignal, "timeout");
       await make({ text: "a wizard hat" }, headers, { ...env, ...SELF });
