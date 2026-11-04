@@ -76,7 +76,7 @@ F3 is not a screen. It is the engine F1, F2, F4, and F5 run on.
      parts, kit-tray packing). **Decided (Dan, 2026-11-04): optimise for printing,
      and build the toy as a single piece, or as few pieces as it needs.** So Finish
      tries one body first; if that does not fit the plate
-     ([kip-print-workflow-spec.md](kip-print-workflow-spec.md): 220 x 220 standard)
+     ([kip-print-workflow-spec.md](../archive/parts-engineering/kip-print-workflow-spec.md): 220 x 220 standard)
      or cannot be printed cleanly in one orientation, it splits at the fewest cuts
      that do, and each piece is gated on its own. A split piece joins its
      neighbour with a verified pin or key, placed where the join does not show.

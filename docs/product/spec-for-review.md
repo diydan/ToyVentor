@@ -186,11 +186,61 @@ this demo.
   it too. A song with no steady beat is not a dead end: it plays as a plain
   song. On in production (`THEME_SONG=on`) and metered: five songs a week a
   device, a monthly budget across everyone.
+- The game opens on a title, not straight into play: a toy on the turntable
+  with the factory's meshing gears, and three ways in - Play, Build, Create a
+  world (`world/titleEntries.ts`; carousel-modes-ladders-spec.md (../specs/carousel-modes-ladders-spec.md)
+  section 17, item 1). The stage behind it never went away; what came back is
+  the menu to leave it and a boot that waits for it.
+- The dog follows Kip and sits when Kip stops: it stays home until the two have
+  met (it hops, delighted), then it trots after him and stops a couple of
+  units behind, on the side opposite the way he last walked, and when Kip has
+  stood still for a while it sits down facing him. A prop in the way sends it
+  to the other side, then a little further out
+  (`runtime/dogFollow.ts`; playful-interactions-spec.md (../specs/playful-interactions-spec.md)
+  section 6).
+- Kip does things on his own: a wave, a clap and a dance, played from the
+  Mixamo clips the repo ships, after 30 to 60 s of standing still and then
+  every 45 to 120 s. He turns to face the camera for them and back afterwards,
+  and walking or a tap pulls him out (`runtime/idleBehavior.ts`). A win plays
+  the real Mixamo cheer and fist pump.
+- The outdoor worlds have things to do: a fruit basket, trees named for their
+  fruit, a pumpkin patch whose pumpkins sit in the leaves, a snow angel patch,
+  a bunny, a picnic blanket, a swing, a flower bed, a puff cloud, and a day
+  and a night look. The real Mixamo jump, shove and walk are used
+  (`runtime/outdoorProps.ts`).
+- The Toy Room has a mess and a way out of it: the juice cup spills and the toy
+  box tips into a heap, and a 60 px **Clean** button on the card rights the box,
+  flies the toys home with a count and mops the puddle in six strokes. It is a
+  button a child taps; nothing listens for the spoken word. Two more doors:
+  the cleaning cart (x 8) opens the cleaning level and the hob (x 10) the
+  cooking one, and the Map rungs `daily.clean` and `daily.cook` reach them.
 - Kip's modular 3D rig (`public/kip/Kip-Demo.html`) ships wardrobe and vehicle
   parts, Selfie / Smart Face, `Describe & Build` (10 curated assemblies,
   `fit_matrix` connector validation, and an 8 mm-margin non-overlapping
   exploded-view timeline), colour-grouped `.3mf` Plate Print view with 1:1
   sticker sheets, procedural animation, Mixamo, and GLB export.
+- **Tools > Pick it up** is the camera flow, and the flagship: a full-screen
+  live camera view (a browser feature - `getUserMedia`, inline and muted,
+  clear of the notch and home bar), so it needs https. The child taps or types
+  what the object is, or simply presses the shutter and the Worker names the
+  main thing in the picture (`POST /api/scan {nameIt}`, screened: never a
+  person, a body part or a surface). SAM finds that word through the print
+  panel's own scan, the object is cut out of the frozen frame where it lies,
+  lifts off and flies into Kip's hand. A workshop-prop word (guitar, frying
+  pan, mop...) gives Kip the bench's own prop and its clip, so a captured
+  guitar strums; any other word gives the household 3D item the scan matched,
+  coloured from the photo; with neither, the cut-out itself goes in his hand
+  as a flat card on a handle, so any object works. After the Workshop closes,
+  the game's Kip is holding it (`runtime/pickupHeld.ts`), and a tap on Kip or
+  the chip puts it away. After a pick-up, **Make a song about it** appears,
+  but only when the song route says it is on.
+- The song player has Pause and Play, Stop, and a mini karaoke that follows
+  the song's own line times, with a docked card, "New words" and an animated
+  wait.
+- The app installs: a real manifest, icons and home-screen tags. iOS ignores
+  the manifest's icons, so it gets its own 180 px PNG.
+- The game's default Kip is the Kip demo's Kip: the kid head with its inset
+  face plate, the demo's face, skin tones, a tee, jeans and orange boots.
 
 
 
@@ -275,7 +325,7 @@ exception below.
 
 | Feature | Status |
 | --- | --- |
-| Scan outline | SAM 3.1, live. |
+| Scan outline | SAM 3.1, live. The camera pick-up also uses it, and the hosted vision model names the object when the child does not say what it is (screened: no people, body parts or surfaces). |
 | Skins & Kip Smart Face | Muse Image + SAM 3.1, live (Smart Face opt-in). |
 | Create worlds | Muse Spark, live with validated recipes + word-parser fallback. |
 | Kip Describe & Build | Live: `POST /api/describe` reads the child's words and picks one of ten `fit_matrix`-validated builds; the curated recipe book is the offline fallback. |
@@ -304,6 +354,10 @@ the beat.
 | Reveal | Entrance animation, card, synth theme | The Reveal entrance keeps the synth; the Mureka song is a separate route |
 | End-of-level song and dance party | The name and the words, the song cut to whole bars, the character dancing on the beat | The song itself is ordered from Mureka and takes about a minute; it is on in production (`THEME_SONG=on`) and metered |
 | Describe & Build | The model picks one of ten validated builds, with an exploded view and a build animation | Inventing new builds is local only; the hosted validator is not deployed |
+| **Camera pick-up** | A full-screen live camera view, the object named (typed, or by the Worker), cut out of the frozen frame and lifted into Kip's hand; the game's Kip holds it afterwards | Needs https, so the live site or localhost; a real phone, the real SAM and the real naming model are not checked yet |
+| Song player | Pause and Play, Stop, and a mini karaoke on the song's own line times, with a docked card, "New words" and an animated wait | The song itself comes from the metered theme-song route |
+| Cleaning and cooking levels | The mess and the Clean button, the vacuum, the mop and the soapy sponge; crack, pour, flip and serve pancakes | Not verified end to end in a browser; the paid step is 25 English lines and 14 prop-name clips |
+| Title menu | The toy on the turntable and the factory's meshing gears, with Play, Build and Create a world | It was removed with the old HTML stage on 2026-11-02 and brought back on 2026-11-04 |
 | Packs | Seeded daily pulls with equip flow | Billing |
 | Pro & Pro Powered Add-On lines | TU-lattice beams, pins, gears, Motion, Rank 6 powered-module trays | Live electronics bench test pending |
 
@@ -338,8 +392,17 @@ user as a child. Parents approve contacts and toys, inspect builds and contact
 status, and can lock mic, camera, print, purchase, or STEM access without
 breaking play. ToyVentor never shows another player’s name, contact, location,
 voice, photo, or build unless parents approve it. Grown-up unlock uses one
-deliberate hold plus a short-lived proof token; the child UI never shows
-balances, PINs, answers, or remaining-time numbers.
+deliberate hold plus a short-lived proof token (5 minutes in the every-time
+mode, 10 minutes in the sitting mode, `worker/parent.ts`); the child UI never
+shows balances, PINs, answers, or remaining-time numbers.
+
+The camera pick-up sends the frame to the hosted vision model for an outline
+and, when the child does not say what it is, to name it. The photo is never
+stored or logged, only the count of names; the names are screened like every
+other model word a child sees - no people, body parts or surfaces, nothing the
+kid-safe lists refuse, one or two plain words (`worker/nameIt.ts`). The hosted
+model's terms are for adults, so the camera flow is adult-operated for the
+demo (decision 0008 (../decisions/0008-meta-models-and-under-18-users.md)).
 
 Named assistant modes have fixed jobs: Bench tests and reviews printable
 files; Print recommends material and orientation; STEM ties missions to
@@ -427,6 +490,14 @@ physics check.
 - **Parametric `Recipe v1` + `F3` Repair Loop:** `Muse Spark` proposes bounded
   slot parameters (`crown`, `head`, `back`, `hand`, `hood`, `roof`, `spoiler`)
   compiled by `kip_partspec_sdk.py` with up to four automated gate-repair turns.
+- **Finish it (`F6`): from a prototyped brick toy to a smooth, polished one:** the
+  snap-part build stays the prototype; Finish merges it into one polished toy with
+  fewer constraints (no studs, sockets or seams where nothing attaches) and more
+  about how it works and how it looks (blended joins, one finish, moving parts kept
+  clear), as a game mesh and a print STL from the same result. Printing comes first:
+  one piece, or as few pieces as it needs, each gated. The model picks a look
+  from a closed list; deterministic code makes and checks the geometry, and the
+  brick build is kept so Finish is undoable (forge-ai-spec.md (../specs/forge-ai-spec.md), F6).
 
 ### ToyVentor Town Phases B-E stretch (toyventor-town-vision.md (../specs/toyventor-town-vision.md))
 
