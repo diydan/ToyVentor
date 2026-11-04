@@ -13,6 +13,7 @@ import {
   GameCanvas,
   type InitialOverlay,
 } from "./features/game/world/GameCanvas";
+import { ParentGateHost } from "./features/game/world/ParentGatePrompt";
 import { seedKip } from "./features/scan/scan";
 import { loadBuild } from "./lib/builds";
 import { partsById } from "./lib/catalog";
@@ -151,6 +152,7 @@ export default function App() {
           initialOverlay={initialOverlay}
         />
       </main>
+      <ParentGateHost />
     </div>
   );
 }

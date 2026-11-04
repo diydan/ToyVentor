@@ -14,6 +14,7 @@
 // per-address limit sit in front of this too, and neither is a hard cap: the D1 counts are.
 //
 // Nothing here logs a wish, a sentence, a ticket, an address or a key.
+import { type HostedGateEnv, requireHostedGate } from "./hostedGate";
 import { signingConfigured, type SigningEnv } from "./forgeNames";
 import { readCappedJson } from "./body";
 import { SAFETY, firstJsonObject, kidSafeText, museRateLimited, scrubContactDetails } from "./muse";
@@ -21,7 +22,7 @@ import { DEFAULT_TEXT_MODEL, askText, hostedOnly, resolveBackend, resolveModel, 
 import type { D1Like } from "./ownership";
 import { BASES, IMAGE_SIZE, MAX_WISH_CHARS, TICKET_TTL_MS, briefPrompt, farPrompt, midPrompt, parseBrief, signTicket, verifyTicket, type Base } from "../shared/worldBrief";
 
-export interface WorldLookEnv extends BackendEnv, SigningEnv {
+export interface WorldLookEnv extends BackendEnv, SigningEnv, HostedGateEnv {
   DB?: D1Like;
   /** Worlds per UTC day for the whole app (default 30), and per address (default 5). Digits only; anything else means the default. */
   WORLD_DAILY_GLOBAL?: string;
@@ -250,6 +251,8 @@ export function sniffImage(bytes: Uint8Array): "image/webp" | "image/png" | "ima
 
 export async function handleWorldArt(request: Request, env: WorldLookEnv, ctx?: Ctx): Promise<Response> {
   if (request.method !== "POST") return json({ error: "method not allowed" }, 405);
+  const blocked = await requireHostedGate(request, env, "image"); // generated art is the image model: a grown-up proof at most 3 minutes old (off until PARENT_GATE_IMAGE is "on")
+  if (blocked) return blocked;
   if (!(request.headers.get("content-type") ?? "").includes("application/json")) return json({ error: "expected application/json" }, 415);
   const parsed = await readCappedJson(request, MAX_BODY_BYTES);
   if (!parsed.ok) return json({ error: parsed.over ? "request body too large" : "invalid JSON body" }, parsed.over ? 413 : 400);

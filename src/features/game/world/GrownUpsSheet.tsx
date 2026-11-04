@@ -5,6 +5,8 @@ import {
   type GateStrictness,
   type ParentSettingsUpdateInput,
 } from "../../../../shared/parent-time";
+import { rememberGrownUpProof } from "../../../lib/grownUpGate";
+import { GateMathPad } from "./GateMathPad";
 import { SongSettingsPanel } from "./SongSettingsPanel";
 import { kipDemoUrl } from "../../../../shared/toycontract";
 import { postRoomPhoto } from "../../../lib/api";
@@ -342,6 +344,7 @@ export function GrownUpsSheet({
 
   const recordUnlockedSession = useCallback(
     (session: GateSession) => {
+      rememberGrownUpProof(session); // a gate passed here also counts for the screens that ask (src/lib/grownUpGate.ts)
       setActiveProof(session.proofToken);
       if (snapshot.settings.gateStrictness === "sitting_window") {
         setSittingSession(session);
@@ -849,7 +852,7 @@ export function GrownUpsSheet({
 
       {step === "math_check" && challenge && (
         <form
-          className="tv-parent-gate-card"
+          className="tv-parent-gate-card tv-parent-gate-card-math"
           onSubmit={(e) => void submitMathCheck(e)}
         >
           <span className="tv-pin-sub">
@@ -857,38 +860,14 @@ export function GrownUpsSheet({
               ? "Reset forgotten PIN: solve once to set a new 4-tap PIN"
               : "First-time setup: solve once, then choose your 4-tap PIN"}
           </span>
-          <label htmlFor="tv-parent-answer" className="tv-parent-prompt">
-            {`What is ${challenge.a} × ${challenge.b}?`}
-          </label>
-          <div style={{ display: "flex", gap: 8 }}>
-            <input
-              id="tv-parent-answer"
-              type="text"
-              inputMode="numeric"
-              autoComplete="off"
-              autoFocus
-              maxLength={4}
-              value={answerInput}
-              onChange={(e) =>
-                setAnswerInput(e.target.value.replace(/[^0-9]/g, ""))
-              }
-              placeholder="Answer"
-              className="tv-parent-input"
-            />
-            <button
-              type="submit"
-              className="cta"
-              style={{ margin: 0, minHeight: 48, padding: "0 20px", fontSize: 16 }}
-              disabled={busy || answerInput.length === 0}
-            >
-              Continue
-            </button>
-          </div>
-          {gateError && (
-            <p className="tv-small-part-warn" style={{ margin: 0 }} role="alert">
-              {gateError}
-            </p>
-          )}
+          <GateMathPad
+            question={`What is ${challenge.a} × ${challenge.b}?`}
+            value={answerInput}
+            onChange={setAnswerInput}
+            onSubmit={() => void submitMathCheck({ preventDefault() {} } as React.FormEvent)}
+            busy={busy}
+            error={gateError}
+          />
           {mathReason === "forgot_pin" && settings.pinSet && (
             <div className="tv-pin-foot">
               <button

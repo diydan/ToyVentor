@@ -1,6 +1,7 @@
 import { parseScanOutline, type ScanOutline, type ScanOutlineRequest } from "../../shared/outlineScan";
 import type { Toy } from "../../shared/toy";
 import { deviceId } from "./sync";
+import { makeGatedFetch } from "./grownUpGate";
 
 /** Client budgets sit above the matching server budgets (worker/meta.ts)
  *  so a server-side timeout answers before the client gives up; either
@@ -74,16 +75,14 @@ export function scanOutlineOf(response: SamScanResponse): ScanOutline | undefine
   return parseScanOutline(response.sam.outline);
 }
 
+const samFetch = makeGatedFetch({ feature: "segment", timeoutMs: SAM_SCAN_TIMEOUT_MS }); // a photo for SAM: a grown-up proof at most 3 minutes old once the Worker's switch is on
+
 export async function postSamScan(scan: SamScanRequest): Promise<SamScanResponse> {
-  const res = await fetchWithTimeout(
-    "/api/scan",
-    {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ scan }),
-    },
-    SAM_SCAN_TIMEOUT_MS,
-  );
+  const res = await samFetch("/api/scan", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ scan }),
+  });
   if (!res.ok) throw new Error(`SAM scan failed: ${res.status}`);
   return (await res.json()) as SamScanResponse;
 }
@@ -147,16 +146,14 @@ export async function postRoomPhoto(imageDataUrl: string, proofToken?: string): 
   return { segments: parseRoomSegments(body.segments), sam: body.sam ?? { configured: false } };
 }
 
+const skinFetch = makeGatedFetch({ feature: "image", timeoutMs: SKIN_TIMEOUT_MS }); // the image model: a grown-up proof at most 3 minutes old once the Worker's switch is on
+
 export async function postSkin(imageDataUrl: string, style: string): Promise<SkinResponse> {
-  const res = await fetchWithTimeout(
-    "/api/skin",
-    {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ imageDataUrl, style }),
-    },
-    SKIN_TIMEOUT_MS,
-  );
+  const res = await skinFetch("/api/skin", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ imageDataUrl, style }),
+  });
   if (!res.ok) throw new Error(`skin failed: ${res.status}`);
   return (await res.json()) as SkinResponse;
 }

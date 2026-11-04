@@ -29,6 +29,7 @@ import { handleThemeSong, type ThemeSongEnv } from "./themeSong";
 import { handleTranscribe } from "./transcribe";
 import { handleMuseSpark, museConfigured, type MuseEnv } from "./muse";
 import { handleOwnership, type OwnershipEnv } from "./ownership";
+import { type HostedGateEnv, requireHostedGate } from "./hostedGate";
 import { handleParent, type ParentEnv } from "./parent";
 import { handleNameIt } from "./nameIt";
 import { handleRoomScan } from "./roomScan";
@@ -42,6 +43,7 @@ export interface Env
     MuseEnv,
     OwnershipEnv,
     ParentEnv,
+    HostedGateEnv,
     SelfieEnv,
     SpendLimitEnv,
     ForgeOptimizerEnv,
@@ -68,6 +70,8 @@ interface ScanBody {
   mode?: unknown;
   /** The camera pick-up: "what is in this photo?" (worker/nameIt.ts). */
   nameIt?: unknown;
+  /** "ar" from the Scavenger camera (its photo ends in the phone's AR viewer): the grown-up proof may then be 5 minutes old instead of 3 (worker/hostedGate.ts). Anything else is the plain 3. */
+  purpose?: unknown;
   imageDataUrl?: unknown;
   nouns?: unknown;
   toy?: unknown;
@@ -188,6 +192,12 @@ async function handleScanPost(request: Request, env: Env): Promise<Response> {
 
   if (body.mode === "room") return handleRoomScan(request, env, body);
 
+  // A photo for SAM (the outline, the camera pick-up's naming): a grown-up proof at most 3 minutes old, 5 for the AR flow. Off until PARENT_GATE_SEGMENT / PARENT_GATE_AR is "on".
+  if (body.nameIt !== undefined || body.scan) {
+    const blocked = await requireHostedGate(request, env, body.purpose === "ar" ? "ar" : "segment");
+    if (blocked) return blocked;
+  }
+
   if (body.nameIt !== undefined) return handleNameIt(body.nameIt, env);
 
   if (body.scan) return handleSamScan(body.scan, env);
@@ -209,6 +219,8 @@ async function handleSkinPost(request: Request, env: Env): Promise<Response> {
   const contentType = request.headers.get("content-type") ?? "";
   if (!contentType.includes("application/json"))
     return json({ error: "expected application/json" }, 415);
+  const blocked = await requireHostedGate(request, env, "image"); // the image model: a grown-up proof at most 3 minutes old (off until PARENT_GATE_IMAGE is "on")
+  if (blocked) return blocked;
   const parsedSkin = await readCappedJson(request, MAX_SCAN_BYTES);
   if (!parsedSkin.ok)
     return json(

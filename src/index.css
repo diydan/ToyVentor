@@ -4846,6 +4846,21 @@ button.tv-badge-pill:hover {
   min-height: 52px;
   font-size: 18px;
 }
+.tv-gate-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  background: rgba(5, 10, 30, 0.82);
+  overflow-y: auto;
+}
+.tv-gate-prompt {
+  margin: auto;
+}
+
 /* A phone held sideways has about 390 px of height: question, answer and Continue on the left, the number pad beside them on the right, so nothing needs scrolling */
 @media (orientation: landscape) and (max-height: 520px) {
   .tv-parent-gate-card-math {
@@ -4983,6 +4998,50 @@ button.tv-badge-pill:hover {
   color: var(--ink);
 }
 
+/* the title's music: a speaker button at the top right, and while the player's own theme song plays its name and the karaoke line under the name of the game (TitleMusic.tsx) */
+.tv-title-music {
+  position: absolute;
+  top: max(12px, env(safe-area-inset-top));
+  right: max(14px, env(safe-area-inset-right));
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border-radius: 50%;
+  border: 2px solid var(--line);
+  background: rgb(var(--surface-rgb) / 0.85);
+  color: var(--ink);
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  pointer-events: auto;
+  -webkit-tap-highlight-color: transparent;
+}
+.tv-title-music:active { transform: scale(0.94); }
+.tv-title-music[aria-pressed="false"] { opacity: 0.75; }
+.tv-title-now {
+  position: absolute;
+  top: 124px;                      /* under the name of the game, its tagline and the toy's name (upright); sideways it moves up, see the max-height rule below */
+  left: 50%;
+  transform: translateX(-50%);
+  display: block;
+  width: max-content;
+  max-width: min(560px, 92vw);
+  padding: 6px 14px 8px;
+  border-radius: 16px;
+  background: rgba(5, 8, 32, 0.55);
+  text-align: center;
+  pointer-events: none;
+}
+.tv-title-now-name {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--ink-muted, #b9c4f0);
+}
+.tv-title-now .tv-kara-line { margin-top: 2px; font-size: clamp(16px, 4.2vw, 22px); text-shadow: 0 2px 6px rgba(0, 0, 0, 0.6); }
+
 .tv-title-btns {
   display: flex;
   flex-wrap: wrap;
@@ -5024,6 +5083,9 @@ button.tv-badge-pill:hover {
   .tv-title-tag,
   .tv-title-toy {
     display: none;
+  }
+  .tv-title-now {
+    top: max(48px, calc(env(safe-area-inset-top) + 40px));
   }
   .tv-title-btns {
     position: absolute;

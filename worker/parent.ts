@@ -372,6 +372,8 @@ interface ProofTokenPayload {
   kind: "proof";
   playerId: string;
   exp: number;
+  /** When the grown-up passed the gate (ms). Proofs issued before 2026-11-04 night have none; a request that needs a FRESH proof refuses them. */
+  iat?: number;
 }
 
 async function requireParentProof(
@@ -403,6 +405,31 @@ export async function verifyParentProofFromRequest(
     if (!isPlayerId(playerId)) return false;
     const key = await resolveHmacKey(env, env.DB);
     return await requireParentProof(request, key, playerId, nowMs);
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Like verifyParentProofFromRequest, but the grown-up must have passed the gate within the last `maxAgeMs`: used by the routes that send a photo, a recording or a prompt to ANOTHER model
+ * (worker/hostedGate.ts). The proof's own lifetime is longer (5 or 10 minutes, the grown-up's setting); this is the shorter leash for those routes. Fails closed: a proof with no
+ * issue time (issued before this check existed), one issued in the future beyond a few seconds of clock skew, one older than `maxAgeMs`, or any error all answer false.
+ */
+export async function verifyFreshParentProofFromRequest(
+  request: Request,
+  env: ParentEnv,
+  maxAgeMs: number,
+  nowMs = Date.now(),
+): Promise<boolean> {
+  try {
+    if (!env.DB) return false;
+    const playerId = request.headers.get("x-device-id");
+    if (!isPlayerId(playerId)) return false;
+    const key = await resolveHmacKey(env, env.DB);
+    const verified = await verifySignedPayload<ProofTokenPayload>(key, request.headers.get("x-parent-proof"), nowMs);
+    if (!verified || verified.kind !== "proof" || verified.playerId !== playerId) return false;
+    if (typeof verified.iat !== "number" || !Number.isFinite(verified.iat)) return false;
+    return verified.iat <= nowMs + 5_000 && nowMs - verified.iat <= maxAgeMs;
   } catch {
     return false;
   }
@@ -556,6 +583,7 @@ export async function handleParent(
           kind: "proof",
           playerId,
           exp: expiresAt,
+          iat: nowMs,
         } satisfies ProofTokenPayload);
 
         console.log(JSON.stringify({ event: "parent_gate", status: "verified" }));

@@ -18,6 +18,7 @@
 // kind `note`) when they fail the same kid-safe text check every kid-facing route uses: the unsafe words themselves are never sent back.
 // What it never does: store the audio or the words, log either (the log line carries a status and a mode, nothing else), return the speech model's address or key, or build anything:
 // the words land in a text box for the child to see and change, and only the child's own press of "Build it" sends them anywhere else.
+import { type HostedGateEnv, requireHostedGate } from "./hostedGate";
 import { kidSafeText, scrubContactDetails } from "./muse";
 import { parseSelfUrl, resolveBackend, type BackendEnv } from "./modelBackend";
 
@@ -37,7 +38,7 @@ const RATE_WINDOW_MS = 60_000;
 const RATE_MAX_PER_WINDOW = 8;
 const recentHits = new Map<string, number[]>();
 
-export interface TranscribeEnv extends BackendEnv {}
+export interface TranscribeEnv extends BackendEnv, HostedGateEnv {}
 
 export function transcribeRateLimited(ip: string | null | undefined, now = Date.now()): boolean {
   if (!ip) return false;
@@ -212,6 +213,9 @@ export async function handleTranscribe(request: Request, env: TranscribeEnv): Pr
   const backend = resolveBackend(env, "transcribe");
   if (mode === "off" || !backend.baseUrl) return json({ error: "voice input is off" }, 503); // hosted is off unless TRANSCRIBE_BACKEND=hosted was chosen, by policy
   if (transcribeRateLimited(request.headers.get("CF-Connecting-IP"))) return json({ error: "Slow down, one at a time. Try again in a minute." }, 429);
+
+  const blocked = await requireHostedGate(request, env, "transcribe"); // a recording leaves for another model: a grown-up proof at most 3 minutes old (off until PARENT_GATE_TRANSCRIBE is "on")
+  if (blocked) return blocked;
 
   const kind = audioKindOf(request.headers.get("content-type"));
   if (!kind) return json({ error: "expected audio/webm, audio/mp4, audio/ogg or audio/wav" }, 415);

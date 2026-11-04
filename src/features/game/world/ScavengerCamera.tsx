@@ -9,6 +9,10 @@ import {
 } from "../../../lib/scavenger";
 import { PartPreview } from "../../ar/PartPreview";
 import "../../../scavenger-cam.css";
+import { makeGatedFetch } from "../../../lib/grownUpGate";
+
+/** The Scavenger camera's photo goes to SAM and then to the phone's AR viewer: a grown-up proof at most 5 minutes old (worker/hostedGate.ts "ar"). Nothing is asked while the Worker's switch is off. */
+const arFetch = makeGatedFetch({ purpose: "ar" });
 
 /** The photo the helper gets: about 512 px on the long side is all it needs (the print panel shrinks the same way). */
 const SEND_SIDE = 512;
@@ -130,7 +134,7 @@ export function ScavengerCamera({ quest, xp, onFound, onClose }: ScavengerCamera
       setPoints(null);
       setPhase("looking");
       setMessage("Looking at what it is…");
-      const named = await nameObject((url, init) => fetch(url, init), { imageDataUrl: f.dataUrl });
+      const named = await nameObject(arFetch, { imageDataUrl: f.dataUrl });
       if (run !== runRef.current) return;
       if (!named.ok) {
         setPhase("problem");
@@ -149,7 +153,7 @@ export function ScavengerCamera({ quest, xp, onFound, onClose }: ScavengerCamera
       setMessage(`That is a ${verdict.name}: a ${quest.concept}!`);
       onFoundRef.current(quest.id);
       // The glow is a bonus: a slow or failed trace never takes the find away.
-      const traced = await scanPhoto((url, init) => fetch(url, init), { imageDataUrl: f.dataUrl, word: verdict.name });
+      const traced = await scanPhoto(arFetch, { imageDataUrl: f.dataUrl, word: verdict.name });
       if (run !== runRef.current) return;
       if (traced.ok) {
         const pts = overlayPoints(traced.scan);
