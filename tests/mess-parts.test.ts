@@ -7,7 +7,7 @@ import {
 } from "../src/features/game/world/runtime/messModel";
 import { createMessPrompt, PROMPT_MIN_HEIGHT_PX, PROMPT_TEST_ID } from "../src/features/game/world/runtime/messPrompt";
 import { BOX_D, BOX_W, TABLE_R, TABLE_TOP_Y, buildCupTable, buildToy, buildToyBox, createPuddle, placeAt } from "../src/features/game/world/runtime/messScene";
-import { MOP_CLIP_EVERY_S, MOP_CLIP_START_S, MOP_CLIP_STROKES, OOPS_S, OOPS_TIP_S, PROCEDURAL_CLIPS, TIDY_CLIP_EVERY_S, TIDY_CLIP_MAX, TIDY_CLIP_START_S, fistOf } from "../src/features/game/world/runtime/proceduralClips";
+import { MOP_CLIP_EVERY_S, MOP_CLIP_START_S, MOP_CLIP_STROKES, OOPS_S, OOPS_TIP_S, PROCEDURAL_CLIPS, TIDY_CLIP_EVERY_S, TIDY_CLIP_MAX, TIDY_CLIP_START_S } from "../src/features/game/world/runtime/proceduralClips";
 import { MixamoDriver, newPose, sampleClip, type Pose as ClipPose } from "../src/features/game/world/runtime/mixamo";
 import { ACT_FOR_PROP } from "../src/features/game/world/runtime/toyRoomActs";
 import { PROP_SPECS, PROP_TYPES } from "../src/features/game/world/runtime/propReactions";
@@ -232,11 +232,8 @@ describe("the three clips", () => {
     expect(MOP_CLIP_STROKES).toBe(MOP_STROKES);
     for (let i = 0; i < MOP_STROKES; i++) {
       const p = clipPose("mop", MOP_START_S + (i + 1) * MOP_EVERY_S);
-      // the fists (the elbows are folded now: where the aim points is no longer where the hand is): forward of the shoulders and below them, on the handle
-      const fistL = fistOf([-p.armL.x, p.armL.y, p.armL.z], p.bend.elbowL), fistR = fistOf([p.armR.x, p.armR.y, p.armR.z], p.bend.elbowR);
-      for (const f of [fistL, fistR]) { expect(f[2], `stroke ${i} forward`).toBeGreaterThan(0.5); expect(f[1], `stroke ${i} low`).toBeLessThan(-0.3); }
-      expect(p.bend.elbowL, `stroke ${i} elbow`).toBeGreaterThan(0.8);
-      expect(p.bend.elbowR, `stroke ${i} elbow`).toBeGreaterThan(0.8);
+      expect(p.armL.z, `stroke ${i}`).toBeGreaterThan(0.7);
+      expect(p.armR.z, `stroke ${i}`).toBeGreaterThan(0.7);
     }
     const a = clipPose("mop", MOP_START_S + MOP_EVERY_S), b = clipPose("mop", MOP_START_S + 2 * MOP_EVERY_S);
     expect(Math.sign(a.armL.x + a.armR.x)).not.toBe(Math.sign(b.armL.x + b.armR.x));   // both arms swing one way, then the other

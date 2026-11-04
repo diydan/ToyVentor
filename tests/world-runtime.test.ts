@@ -214,6 +214,6 @@ describe("native world runtime (Phase 0A)", () => {
     expect(sceneText).toContain("function gear(r: number, th: number, mat: THREE.Material, teeth?: number)");
     expect(text).toContain("gear(.9,.2,plastic(\"#2c3f94\"),12)");
     expect(text).toContain("gear(.6,.2,plastic(\"#3c55b8\"),8)");
-    expect(text).toContain("gears[1].rotation.y-=dt*.9");
+    expect(text).toContain("gears[1].rotation.y+=tts.d*GEAR_RATIO[1]");
   });
 });
